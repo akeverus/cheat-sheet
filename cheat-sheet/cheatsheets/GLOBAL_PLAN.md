@@ -68,6 +68,17 @@
 - [x] `interview/databases/redis-interview.md` — отформатированы Java-примеры и исправлены первые блоки разметки
 - [x] `interview/api/http-rest-interview.md` — вычищены сломанные **, исправлены списки и форматирование блоков
 - [x] Автоматически разлеплены заголовки с вопросами (`?`) во всех interview файлах
+- [x] **Исправлены артефакты Key/Value в 16+ файлах:**
+  - Spring: `spring-mvc`, `spring-framework`, `spring-security`, `spring-webflux`, `spring-cloud`
+  - Java: `java-types`, `java-annotations`, `java-generics`, `java-collections`, `java-conditional-statements`
+  - Databases: `elasticsearch`, `mongodb`, `hibernate`, `database-architecture`, `cassandra`
+  - DevOps/Tools: `kubernetes`, `git`, `rxjava`, `kotlin-coroutines`, `java-string`
+- [x] Заменены все **Key** на описательный текст (ключ, ключевое слово, основной)
+- [x] Заменены все **Value** на "значение" (где это артефакт, не контекст)
+- [x] Исправлены незакрытые теги (например `**Java.` → `**Java**.`)
+- [x] Исправлена грязная разметка (`**/**` → `/`)
+- [x] Нормализованы пути файлов и команды git
+- [x] Добавлены пропущенные точки и пунктуация
 
 **Следующее:**
 - [ ] Применить тот же набор правок ко всем документам в `interview/`
