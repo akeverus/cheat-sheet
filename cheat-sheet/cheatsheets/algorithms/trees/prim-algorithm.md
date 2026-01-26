@@ -1,0 +1,476 @@
+# Prim's Algorithm
+
+Кратко: алгоритм Прима - это жадный алгоритм для нахождения минимального остовного дерева (MST) взвешенного неориентированного связного графа. Работает за время O(V²) или O(E*log(V)) с приоритетной очередью.
+
+**Дата последнего обновления:** 2025-01-15
+
+## Полезные ссылки
+
+### Официальная документация
+- [GeeksforGeeks: Prim's Minimum Spanning Tree (MST)](https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/)
+
+### Визуализация
+- [Visualgo: Minimum Spanning Tree](https://visualgo.net/en/mst)
+
+### См. также
+- `./kruskal-algorithm.md` - алгоритм Крускала
+- `./boruvka-algorithm.md` - алгоритм Борувки
+- `../graphs/dijkstra.md` - алгоритм Дейкстры
+
+## Содержание
+
+- [Описание алгоритма](#описание-алгоритма)
+- [Принцип работы](#принцип-работы)
+- [Java Implementation](#java-implementation)
+- [Kotlin Implementation](#kotlin-implementation)
+- [Сложность](#сложность)
+
+## Описание алгоритма
+
+В этом уроке мы сначала узнаем, что такое минимальные остовные деревья. После этого мы воспользуемся алгоритмом Прима, чтобы найти его.
+
+Минимальное остовное дерево (MST) - это взвешенный неориентированный связный граф, общий вес ребер которого минимизирован за счет удаления более тяжелых ребер. Другими словами, мы сохраняем все вершины графа нетронутыми, но можем удалить некоторые ребра, чтобы сумма всех ребер была минимальной.
+
+Начнем со взвешенного графа, так как нет смысла минимизировать общий вес ребер, если эти ребра вообще не имеют веса.
+
+### Пример графа
+
+```
+    A---2---B
+   /|      /|
+  3 |     2 |
+ /  |    /  |
+C   |   E   |
+ \  |    \  |
+  1 |     5 |
+   \|      \|
+    D---1---F
+```
+
+Однако MST графа не уникально. Если граф имеет более одного MST, то каждый MST имеет одинаковый общий вес ребра. Алгоритм Прима принимает взвешенный неориентированный связный граф в качестве входных данных и возвращает MST этого графа в качестве выходных данных.
+
+## Принцип работы
+
+Работает жадно. На первом шаге он выбирает произвольную вершину. После этого каждый новый шаг добавляет ближайшую вершину к построенному дереву до тех пор, пока не останется несвязанной вершины.
+
+### Пошаговый пример
+
+Предполагая, что произвольная вершина для запуска алгоритма - это B, у нас есть три варианта A, C и E. Соответствующие веса ребер равны 2, 2 и 5, поэтому минимум равен 2. В данном случае у нас есть два ребра весом 2, поэтому мы можем выбрать любое из них (неважно какое). Выберем A:
+
+```
+    A---2---B
+```
+
+Теперь у нас есть дерево с двумя вершинами A и B. Мы можем выбрать любое из еще не добавленных ребер A или B, которые ведут к недобавленной вершине. Итак, мы можем выбрать AC, BC или BE.
+
+Алгоритм Прима выбирает минимум, равный 2, или BC:
+
+```
+    A---2---B
+            |
+            2
+            |
+            C
+```
+
+Теперь у нас есть дерево с тремя вершинами и тремя возможными ребрами для продвижения вперед: CD, CE или BE. AC не включен, так как он не добавит новую вершину в дерево. Минимальный вес среди этих трех равен 1.
+
+Однако есть два ребра, каждое из которых имеет вес 1. Следовательно, алгоритм Прима выбирает одно из них (опять же не имеет значения, какое именно) на этом шаге:
+
+```
+    A---2---B
+            |
+            2
+            |
+            C---1---D
+```
+
+Осталась только одна вершина для соединения, поэтому мы можем выбрать из CE и BE. Минимальный вес, который может связать с ним наше дерево, равен 1, и его выберет алгоритм Прима:
+
+```
+    A---2---B
+            |
+            2
+            |
+            C---1---D
+            |
+            1
+            |
+            E
+```
+
+Поскольку все вершины входного графа теперь присутствуют в выходном дереве, алгоритм Прима завершается. Следовательно, это дерево является MST входного графа.
+
+## Java Implementation
+
+### Реализация
+
+Вершины и ребра составляют графы, поэтому нам нужна структура данных для хранения этих элементов.
+
+### Класс Edge
+
+Создадим класс Edge:
+
+```java
+public class Edge {
+    private int weight;
+    private boolean isIncluded = false;
+    
+    public Edge(int weight) {
+        this.weight = weight;
+    }
+    
+    public int getWeight() {
+        return weight;
+    }
+    
+    public boolean isIncluded() {
+        return isIncluded;
+    }
+    
+    public void setIncluded(boolean included) {
+        isIncluded = included;
+    }
+}
+```
+
+Каждое ребро должно иметь вес, так как алгоритм Прима работает на взвешенных графах. `isIncluded` показывает, присутствует ли Edge в минимальном связующем дереве или нет.
+
+### Класс Vertex
+
+Теперь добавим класс Vertex:
+
+```java
+public class Vertex {
+    private String label = null;
+    private Map<Vertex, Edge> edges = new HashMap<>();
+    private boolean isVisited = false;
+    
+    public Vertex(String label) {
+        this.label = label;
+    }
+    
+    public void addEdge(Vertex vertex, Edge edge) {
+        edges.put(vertex, edge);
+    }
+    
+    public boolean isVisited() {
+        return isVisited;
+    }
+    
+    public void setVisited(boolean visited) {
+        isVisited = visited;
+    }
+    
+    public Pair<Vertex, Edge> nextMinimum() {
+        Edge nextMinimum = new Edge(Integer.MAX_VALUE);
+        Vertex nextVertex = this;
+        
+        for (Map.Entry<Vertex, Edge> pair : edges.entrySet()) {
+            if (!pair.getKey().isVisited()) {
+                if (!pair.getValue().isIncluded()) {
+                    if (pair.getValue().getWeight() < nextMinimum.getWeight()) {
+                        nextMinimum = pair.getValue();
+                        nextVertex = pair.getKey();
+                    }
+                }
+            }
+        }
+        
+        return new Pair<>(nextVertex, nextMinimum);
+    }
+}
+```
+
+Каждая вершина может дополнительно иметь метку. Мы используем карту ребер для хранения соединений между вершинами. Наконец, `isVisited` показывает, посещалась ли до сих пор вершина алгоритмом Прима или нет.
+
+### Класс Prim
+
+Давайте создадим наш класс Prim, в котором мы реализуем логику:
+
+```java
+public class Prim {
+    private List<Vertex> graph;
+    
+    public Prim(List<Vertex> graph) {
+        this.graph = graph;
+    }
+    
+    public void run() {
+        if (graph.size() > 0) {
+            graph.get(0).setVisited(true);
+        }
+        
+        while (isDisconnected()) {
+            Edge nextMinimum = new Edge(Integer.MAX_VALUE);
+            Vertex nextVertex = graph.get(0);
+            
+            for (Vertex vertex : graph) {
+                if (vertex.isVisited()) {
+                    Pair<Vertex, Edge> candidate = vertex.nextMinimum();
+                    if (candidate.getValue().getWeight() < nextMinimum.getWeight()) {
+                        nextMinimum = candidate.getValue();
+                        nextVertex = candidate.getKey();
+                    }
+                }
+            }
+            
+            nextMinimum.setIncluded(true);
+            nextVertex.setVisited(true);
+        }
+    }
+    
+    private boolean isDisconnected() {
+        for (Vertex vertex : graph) {
+            if (!vertex.isVisited()) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+```
+
+Начнем с установки первого элемента графа List<Vertex> как посещенного. Первым элементом может быть любая из вершин в зависимости от порядка их добавления в список в первую очередь. `isDisconnected()` возвращает true, если какая-либо вершина еще не посещена.
+
+В то время как минимальное остовное дерево `isDisconnected()`, мы перебираем уже посещенные вершины и находим ребро с минимальным весом в качестве кандидата на следующую вершину.
+
+### Оптимизация с PriorityQueue
+
+Обратите внимание, что поскольку `nextMinimum()` выполняет итерацию по краям, временная сложность этой реализации составляет O(V²). Если вместо этого мы сохраним ребра в приоритетной очереди (отсортированной по весу), алгоритм будет выполняться за O(E*log(V)).
+
+```java
+public void runOptimized() {
+    if (graph.isEmpty()) {
+        return;
+    }
+    
+    PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(Edge::getWeight));
+    Set<Vertex> visited = new HashSet<>();
+    
+    Vertex start = graph.get(0);
+    visited.add(start);
+    
+    for (Map.Entry<Vertex, Edge> entry : start.edges.entrySet()) {
+        pq.offer(entry.getValue());
+    }
+    
+    while (!pq.isEmpty() && visited.size() < graph.size()) {
+        Edge minEdge = pq.poll();
+        Vertex nextVertex = null;
+        
+        // Найти вершину, связанную с минимальным ребром
+        for (Vertex v : graph) {
+            if (v.edges.containsValue(minEdge) && !visited.contains(v)) {
+                nextVertex = v;
+                break;
+            }
+        }
+        
+        if (nextVertex != null) {
+            visited.add(nextVertex);
+            minEdge.setIncluded(true);
+            
+            for (Map.Entry<Vertex, Edge> entry : nextVertex.edges.entrySet()) {
+                if (!visited.contains(entry.getKey())) {
+                    pq.offer(entry.getValue());
+                }
+            }
+        }
+    }
+}
+```
+
+### Пример использования
+
+```java
+public static List<Vertex> createGraph() {
+    List<Vertex> graph = new ArrayList<>();
+    
+    Vertex a = new Vertex("A");
+    Vertex b = new Vertex("B");
+    Vertex c = new Vertex("C");
+    Vertex d = new Vertex("D");
+    Vertex e = new Vertex("E");
+    
+    Edge ab = new Edge(2);
+    a.addEdge(b, ab);
+    b.addEdge(a, ab);
+    
+    Edge bc = new Edge(2);
+    b.addEdge(c, bc);
+    c.addEdge(b, bc);
+    
+    Edge cd = new Edge(1);
+    c.addEdge(d, cd);
+    d.addEdge(c, cd);
+    
+    Edge ce = new Edge(1);
+    c.addEdge(e, ce);
+    e.addEdge(c, ce);
+    
+    graph.add(a);
+    graph.add(b);
+    graph.add(c);
+    graph.add(d);
+    graph.add(e);
+    
+    return graph;
+}
+
+Prim prim = new Prim(createGraph());
+prim.run();
+```
+
+## Kotlin Implementation
+
+### Классы Edge и Vertex
+
+```kotlin
+data class EdgeK(var weight: Int, var isIncluded: Boolean = false)
+
+class VertexK(val label: String) {
+    private val edges = mutableMapOf<VertexK, EdgeK>()
+    var isVisited: Boolean = false
+    
+    fun addEdge(vertex: VertexK, edge: EdgeK) {
+        edges[vertex] = edge
+    }
+    
+    fun nextMinimum(): Pair<VertexK, EdgeK> {
+        var nextMinimum = EdgeK(Int.MAX_VALUE)
+        var nextVertex = this
+        
+        for ((vertex, edge) in edges) {
+            if (!vertex.isVisited && !edge.isIncluded) {
+                if (edge.weight < nextMinimum.weight) {
+                    nextMinimum = edge
+                    nextVertex = vertex
+                }
+            }
+        }
+        
+        return Pair(nextVertex, nextMinimum)
+    }
+}
+```
+
+### Класс Prim
+
+```kotlin
+class PrimK(private val graph: MutableList<VertexK>) {
+    fun run() {
+        if (graph.isEmpty()) return
+        
+        graph[0].isVisited = true
+        
+        while (hasUnvisitedVertices()) {
+            var nextMinimum = EdgeK(Int.MAX_VALUE)
+            var nextVertex = graph[0]
+            var currentVertex = graph[0]
+            
+            for (vertex in graph) {
+                if (vertex.isVisited) {
+                    val (candidateVertex, candidateEdge) = vertex.nextMinimum()
+                    if (candidateEdge.weight < nextMinimum.weight) {
+                        nextMinimum = candidateEdge
+                        nextVertex = candidateVertex
+                        currentVertex = vertex
+                    }
+                }
+            }
+            
+            nextMinimum.isIncluded = true
+            nextVertex.isVisited = true
+        }
+    }
+    
+    private fun hasUnvisitedVertices(): Boolean {
+        return graph.any { !it.isVisited }
+    }
+}
+```
+
+### Пример использования
+
+```kotlin
+fun main() {
+    val graph = mutableListOf<VertexK>()
+    val a = VertexK("A")
+    val b = VertexK("B")
+    val c = VertexK("C")
+    val d = VertexK("D")
+    val e = VertexK("E")
+    
+    a.addEdge(b, EdgeK(2))
+    a.addEdge(c, EdgeK(3))
+    b.addEdge(a, EdgeK(2))
+    b.addEdge(c, EdgeK(2))
+    b.addEdge(e, EdgeK(5))
+    c.addEdge(a, EdgeK(3))
+    c.addEdge(b, EdgeK(2))
+    c.addEdge(d, EdgeK(1))
+    c.addEdge(e, EdgeK(1))
+    d.addEdge(c, EdgeK(1))
+    d.addEdge(f, EdgeK(1))
+    e.addEdge(b, EdgeK(5))
+    e.addEdge(c, EdgeK(1))
+    
+    graph.addAll(listOf(a, b, c, d, e))
+    
+    val prim = PrimK(graph)
+    prim.run()
+}
+```
+
+## Сложность
+
+### Временная сложность
+
+- **Базовая реализация:** O(V²), где V - количество вершин
+- **С PriorityQueue:** O(E*log(V)), где E - количество ребер
+
+### Пространственная сложность
+
+- **Все случаи:** O(V + E) - для хранения графа и вспомогательных структур
+
+## Особенности
+
+- **Жадный алгоритм:** На каждом шаге выбирает локально оптимальное решение
+- **Гарантированный результат:** Всегда находит минимальное остовное дерево
+- **Эффективность:** Оптимизированная версия работает за O(E*log(V))
+
+## Применение
+
+Алгоритм Прима используется в:
+
+- Проектировании сетей (компьютерные, телефонные)
+- Кластеризации данных
+- Приближенных алгоритмах для задачи коммивояжера
+- Анализе изображений
+- Планировании маршрутов
+
+## Сравнение с другими алгоритмами MST
+
+| Алгоритм | Временная сложность | Применение |
+|----------|---------------------|------------|
+| Прима | O(E*log(V)) | Плотные графы |
+| Крускала | O(E*log(E)) | Разреженные графы |
+| Борувки | O(E*log(V)) | Параллельные вычисления |
+
+## Когда использовать
+
+### Используйте алгоритм Прима, когда:
+
+- Граф плотный (много ребер)
+- Нужна простая реализация
+- Важна производительность на плотных графах
+
+### Альтернативы:
+
+- **Крускала:** Для разреженных графов
+- **Борувки:** Для параллельных вычислений
+
+## Заключение
+
+В этом уроке мы рассмотрели алгоритм Прима для нахождения минимального остовного дерева. Алгоритм работает жадным образом, начиная с произвольной вершины и постепенно добавляя ближайшие вершины к построенному дереву. С использованием приоритетной очереди алгоритм достигает временной сложности O(E*log(V)), что делает его эффективным для решения задач на графах.
