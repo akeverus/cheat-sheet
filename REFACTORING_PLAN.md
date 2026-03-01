@@ -123,6 +123,9 @@
 - [x] Removed `lombok.experimental.FieldDefaults` from `InterviewService` and switched to explicit `private final` dependencies.
 - [x] Expanded `InterviewServiceTest` with `excludeQuestionId` regression for group-based topic fallback (`findQuestionIdsExcludingByTopics`).
 - [x] Removed `lombok.experimental.FieldDefaults` from `PreloadService` and switched queues/config/dependencies to explicit `private final`.
+- [x] Removed `lombok.experimental.FieldDefaults` from `ReviewService` and switched to explicit `private final` constructor-injected dependencies.
+- [x] Removed Lombok constructor/`FieldDefaults` from `SpacedRepetitionService`, leaving explicit immutable constructor wiring.
+- [x] Added `ReviewServiceTest` to cover answer application, confidence correction, and flashcard event publishing paths.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
