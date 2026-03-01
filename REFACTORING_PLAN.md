@@ -89,6 +89,8 @@
 - [x] Extracted `/api/stats` and `/api/topic-stats` orchestration to `StatsApiService` (filter normalization + DTO mapping) and kept `InterviewApiController` as HTTP adapter.
 - [x] Removed `lombok.experimental` field defaults from `InterviewApiController` in favor of explicit `private final` dependencies and constructor wiring.
 - [x] Added `StatsApiServiceTest` and updated controller tests to validate delegation for stats endpoints.
+- [x] Extracted `/api/confidence` orchestration into dedicated `ConfidenceApiService` and removed direct confidence mutation from controller.
+- [x] Added `ConfidenceApiServiceTest` and updated controller tests to verify confidence endpoint delegation contract.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

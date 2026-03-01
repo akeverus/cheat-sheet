@@ -17,6 +17,7 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.service.AnswerApiService;
+import com.cheatsheet.quiz.service.ConfidenceApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintApiService;
 import com.cheatsheet.quiz.service.InterviewFacade;
@@ -41,6 +42,7 @@ class InterviewApiControllerUnitTest {
 
     @Mock private AnswerApiService answerApiService;
     @Mock private HintApiService hintApiService;
+    @Mock private ConfidenceApiService confidenceApiService;
     @Mock private InterviewFacade facade;
     @Mock private NextQuestionApiService nextQuestionApiService;
     @Mock private QuestionInsightsApiService questionInsightsApiService;
@@ -56,7 +58,7 @@ class InterviewApiControllerUnitTest {
         controller = new InterviewApiController(
                 answerApiService,
                 hintApiService,
-                facade,
+                confidenceApiService,
                 nextQuestionApiService,
                 questionInsightsApiService,
                 regenerateEndpointService,
@@ -122,9 +124,12 @@ class InterviewApiControllerUnitTest {
     }
 
     @Test
-    void updateConfidenceReturnsSuccessAndDelegatesToFacade() {
+    void updateConfidenceReturnsSuccessAndDelegatesToService() {
         long questionId = 201L;
         int grade = 5;
+        com.cheatsheet.quiz.api.dto.response.ConfidenceResponse payload =
+                new com.cheatsheet.quiz.api.dto.response.ConfidenceResponse(true, questionId, grade);
+        when(confidenceApiService.updateConfidence(questionId, grade)).thenReturn(payload);
 
         ResponseEntity<?> response = controller.updateConfidence(questionId, grade);
 
@@ -135,7 +140,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.success()).isTrue();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.grade()).isEqualTo(grade);
-        verify(facade).updateConfidence(questionId, grade);
+        verify(confidenceApiService).updateConfidence(questionId, grade);
     }
 
     @Test

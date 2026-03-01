@@ -17,9 +17,9 @@ import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
 import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
 import com.cheatsheet.quiz.service.AnswerApiService;
+import com.cheatsheet.quiz.service.ConfidenceApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintApiService;
-import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.QuestionInsightsApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
@@ -52,7 +52,7 @@ public class InterviewApiController {
 
     private final AnswerApiService answerApiService;
     private final HintApiService hintApiService;
-    private final InterviewFacade facade;
+    private final ConfidenceApiService confidenceApiService;
     private final NextQuestionApiService nextQuestionApiService;
     private final QuestionInsightsApiService questionInsightsApiService;
     private final RegenerateEndpointService regenerateEndpointService;
@@ -63,7 +63,7 @@ public class InterviewApiController {
     public InterviewApiController(
             AnswerApiService answerApiService,
             HintApiService hintApiService,
-            InterviewFacade facade,
+            ConfidenceApiService confidenceApiService,
             NextQuestionApiService nextQuestionApiService,
             QuestionInsightsApiService questionInsightsApiService,
             RegenerateEndpointService regenerateEndpointService,
@@ -73,7 +73,7 @@ public class InterviewApiController {
     ) {
         this.answerApiService = answerApiService;
         this.hintApiService = hintApiService;
-        this.facade = facade;
+        this.confidenceApiService = confidenceApiService;
         this.nextQuestionApiService = nextQuestionApiService;
         this.questionInsightsApiService = questionInsightsApiService;
         this.regenerateEndpointService = regenerateEndpointService;
@@ -140,8 +140,7 @@ public class InterviewApiController {
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam("grade") @Min(1) @Max(5) int grade
     ) {
-        facade.updateConfidence(questionId, grade);
-        return ResponseEntity.ok(new ConfidenceResponse(true, questionId, grade));
+        return ResponseEntity.ok(confidenceApiService.updateConfidence(questionId, grade));
     }
 
     @PostMapping("/api/wrong-feedback")
