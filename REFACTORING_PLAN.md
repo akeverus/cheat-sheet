@@ -129,6 +129,9 @@
 - [x] Simplified `InterviewFlowMvcService` by extracting shared session-persistence helpers for start/study/flashcard flow endpoints.
 - [x] Expanded `InterviewFlowMvcServiceTest` with positive-path coverage for session persistence in start and study-confirm flows.
 - [x] Removed Lombok `@RequiredArgsConstructor`/`@FieldDefaults` from `SearchService` in favor of explicit immutable constructor injection.
+- [x] Removed Lombok `@FieldDefaults`/`@RequiredArgsConstructor` from `QuestionImportService`; switched to explicit `private final` dependency wiring.
+- [x] Removed Lombok `@FieldDefaults` from `QuestionExpansionService`; switched to explicit immutable constructor injection.
+- [x] Added `QuestionExpansionServiceTest` to cover variant creation and no-op behavior when alternatives are empty.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
