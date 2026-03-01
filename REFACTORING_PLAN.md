@@ -99,6 +99,10 @@
 - [x] Extracted admin endpoint orchestration into `AdminApiService` and converted `AdminController` into thin HTTP adapter with explicit constructor injection (removed `lombok.experimental.FieldDefaults` usage).
 - [x] Updated `AdminControllerTest` and `AdminControllerNoTokenTest` wiring to include `AdminApiService` in MVC context.
 - [x] Added `AdminApiServiceTest` for authorization gate behavior and admin payload mapping contracts.
+- [x] Extracted MVC flow actions (`/start`, `/study-confirm`, `/flashcard-reveal`, `/flashcard-grade`, `/finish`, `/session-summary`, `/answer`) into `InterviewFlowMvcService`.
+- [x] Simplified `InterviewMvcController` by removing direct session/flow mutation logic and delegating lifecycle actions to `InterviewFlowMvcService`.
+- [x] Removed `lombok.experimental.FieldDefaults` from `InterviewMvcController` and switched to explicit `private final` fields.
+- [x] Added `InterviewFlowMvcServiceTest` for start/session-summary/flashcard-grade lifecycle orchestration contracts.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
