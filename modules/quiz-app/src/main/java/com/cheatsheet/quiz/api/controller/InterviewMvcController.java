@@ -1,17 +1,9 @@
 package com.cheatsheet.quiz.api.controller;
 
-import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.api.dto.request.StartSessionRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
-import com.cheatsheet.quiz.api.mapper.MvcModelAttributeMapper;
-import com.cheatsheet.quiz.api.mapper.MvcRequestMapper;
-import com.cheatsheet.quiz.domain.InterviewMode;
-import com.cheatsheet.quiz.domain.InterviewFilter;
-import com.cheatsheet.quiz.domain.InterviewSession;
-import com.cheatsheet.quiz.service.FocusTrainingPageService;
 import com.cheatsheet.quiz.service.InterviewFlowMvcService;
-import com.cheatsheet.quiz.service.ReviewModeService;
-import com.cheatsheet.quiz.service.StatsPageService;
+import com.cheatsheet.quiz.service.InterviewPageMvcService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,35 +24,14 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class InterviewMvcController {
 
-    private final InterviewSessionSupport sessionSupport;
-    private final FocusTrainingPageService focusTrainingPageService;
-    private final StatsPageService statsPageService;
-    private final ReviewModeService reviewModeService;
-    private final MvcNavigationService navigationService;
-    private final MvcModelAttributeMapper modelAttributeMapper;
-    private final MvcRequestMapper requestMapper;
-    private final AppProperties appProperties;
+    private final InterviewPageMvcService interviewPageMvcService;
     private final InterviewFlowMvcService interviewFlowMvcService;
 
     public InterviewMvcController(
-            InterviewSessionSupport sessionSupport,
-            FocusTrainingPageService focusTrainingPageService,
-            StatsPageService statsPageService,
-            ReviewModeService reviewModeService,
-            MvcNavigationService navigationService,
-            MvcModelAttributeMapper modelAttributeMapper,
-            MvcRequestMapper requestMapper,
-            AppProperties appProperties,
+            InterviewPageMvcService interviewPageMvcService,
             InterviewFlowMvcService interviewFlowMvcService
     ) {
-        this.sessionSupport = sessionSupport;
-        this.focusTrainingPageService = focusTrainingPageService;
-        this.statsPageService = statsPageService;
-        this.reviewModeService = reviewModeService;
-        this.navigationService = navigationService;
-        this.modelAttributeMapper = modelAttributeMapper;
-        this.requestMapper = requestMapper;
-        this.appProperties = appProperties;
+        this.interviewPageMvcService = interviewPageMvcService;
         this.interviewFlowMvcService = interviewFlowMvcService;
     }
 
@@ -78,18 +49,17 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
-        InterviewSession interviewSession = sessionSupport.getSession(session);
-        InterviewMode selectedMode = requestMapper.resolveMode(interviewSession, mode);
-        InterviewFilter filter = requestMapper.resolveFilter(
-                interviewSession, topic, group, important, onlyWrong, shuffle, ordered
-        );
-        return renderFocusPage(
-                interviewSession,
-                filter,
-                selectedMode,
+        return interviewPageMvcService.index(
+                topic,
+                group,
+                important,
+                onlyWrong,
+                shuffle,
                 weakTopics,
+                ordered,
                 excludeQuestionId,
-                false,
+                mode,
+                session,
                 model
         );
     }
@@ -108,7 +78,19 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
-        return index(topic, group, important, onlyWrong, shuffle, weakTopics, ordered, excludeQuestionId, mode, session, model);
+        return interviewPageMvcService.index(
+                topic,
+                group,
+                important,
+                onlyWrong,
+                shuffle,
+                weakTopics,
+                ordered,
+                excludeQuestionId,
+                mode,
+                session,
+                model
+        );
     }
 
     @GetMapping("/review")
@@ -124,19 +106,16 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
-        InterviewSession interviewSession = sessionSupport.getSession(session);
-        InterviewMode selectedMode = requestMapper.resolveMode(interviewSession, mode);
-        InterviewFilter baseFilter = requestMapper.resolveReviewBaseFilter(
-                topic, group, important, shuffle, ordered
-        );
-        InterviewFilter reviewFilter = reviewModeService.apply(baseFilter);
-        return renderFocusPage(
-                interviewSession,
-                reviewFilter,
-                selectedMode,
+        return interviewPageMvcService.review(
+                topic,
+                group,
+                important,
+                shuffle,
                 weakTopics,
+                ordered,
                 excludeQuestionId,
-                true,
+                mode,
+                session,
                 model
         );
     }
@@ -154,27 +133,18 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
-        InterviewSession interviewSession = sessionSupport.getSession(session);
-        MvcRequestMapper.SettingsRequestContext context = requestMapper.resolveSettingsContext(
-                interviewSession,
+        return interviewPageMvcService.settings(
                 topic,
                 group,
                 important,
                 onlyWrong,
                 shuffle,
-                ordered,
                 weakTopics,
-                mode
+                ordered,
+                mode,
+                session,
+                model
         );
-        FocusTrainingPageService.SurfaceState surfaceState =
-                focusTrainingPageService.buildSurfaceState(
-                        context.filter(),
-                        context.selectedMode(),
-                        interviewSession,
-                        context.weakTopicsPriority()
-                );
-        modelAttributeMapper.applySurfaceState(model, surfaceState);
-        return navigationService.settingsView();
     }
 
     @PostMapping("/start")
@@ -233,34 +203,15 @@ public class InterviewMvcController {
             @RequestParam(value = "q", required = false) String query,
             Model model
     ) {
-        MvcRequestMapper.StatsRequestContext context = requestMapper.resolveStatsContext(
-                topic, group, important, onlyWrong, ordered, query
+        return interviewPageMvcService.stats(
+                topic,
+                group,
+                important,
+                onlyWrong,
+                ordered,
+                query,
+                model
         );
-        StatsPageService.StatsPageState state =
-                statsPageService.build(context.filter(), context.query(), appProperties.getSearch().getStatsResultsLimit());
-        modelAttributeMapper.applyStatsPageState(model, state);
-        return navigationService.statsView();
-    }
-
-    private String renderFocusPage(
-            InterviewSession interviewSession,
-            InterviewFilter filter,
-            InterviewMode selectedMode,
-            Boolean weakTopics,
-            Long excludeQuestionId,
-            boolean reviewMode,
-            Model model
-    ) {
-        boolean weakTopicsPriority = Boolean.TRUE.equals(weakTopics);
-        FocusTrainingPageService.FocusPageState pageState = focusTrainingPageService.buildFocusPageState(
-                interviewSession,
-                filter,
-                selectedMode,
-                weakTopicsPriority,
-                excludeQuestionId
-        );
-        modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
-        return navigationService.focusView();
     }
 
 }

@@ -109,6 +109,9 @@
 - [x] Removed `lombok.experimental.FieldDefaults` from `QualityIterationsStartupRunner` and switched to explicit `private final` fields.
 - [x] Removed `lombok.experimental.FieldDefaults` from `PromptAutoTuningService` and switched to explicit field visibility/finality.
 - [x] Added `PromptAutoTuningServiceTest` to lock config-driven rule limiting and reset behavior.
+- [x] Extracted MVC page rendering and request-to-model orchestration (`/`, `/training`, `/review`, `/settings`, `/stats`) into `InterviewPageMvcService`.
+- [x] Simplified `InterviewMvcController` to thin HTTP adapter by delegating page endpoints to `InterviewPageMvcService`.
+- [x] Added `InterviewPageMvcServiceTest` to lock focus/review/settings/stats MVC orchestration behavior.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
