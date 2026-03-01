@@ -1,8 +1,6 @@
 package com.cheatsheet.quiz.api.controller;
 
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
-import com.cheatsheet.quiz.api.dto.ApiError;
 import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
 import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
@@ -17,7 +15,6 @@ import com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto;
 import com.cheatsheet.quiz.api.dto.response.NextQuestionResponse;
 import com.cheatsheet.quiz.api.dto.response.OptionExplanationDto;
-import com.cheatsheet.quiz.api.dto.response.RegenerateResponse;
 import com.cheatsheet.quiz.api.dto.response.RelatedQuestionDto;
 import com.cheatsheet.quiz.api.dto.response.SessionInfoDto;
 import com.cheatsheet.quiz.api.dto.response.StreakResponse;
@@ -30,7 +27,7 @@ import com.cheatsheet.quiz.domain.RelatedQuestion;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintService;
 import com.cheatsheet.quiz.service.InterviewFacade;
-import com.cheatsheet.quiz.service.RegenerateService;
+import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.util.FilterUtils;
 import jakarta.validation.Valid;
@@ -52,7 +49,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -66,26 +62,23 @@ public class InterviewApiController {
 
     InterviewSessionSupport sessionSupport;
     InterviewFacade facade;
-    RegenerateService regenerateService;
+    RegenerateEndpointService regenerateEndpointService;
     FavoriteService favoriteService;
-    SensitiveEndpointAccessService accessService;
     DailyStreakService dailyStreakService;
     StatsApiMapper statsApiMapper;
 
     public InterviewApiController(
             InterviewSessionSupport sessionSupport,
             InterviewFacade facade,
-            RegenerateService regenerateService,
+            RegenerateEndpointService regenerateEndpointService,
             FavoriteService favoriteService,
-            SensitiveEndpointAccessService accessService,
             DailyStreakService dailyStreakService,
             StatsApiMapper statsApiMapper
     ) {
         this.sessionSupport = sessionSupport;
         this.facade = facade;
-        this.regenerateService = regenerateService;
+        this.regenerateEndpointService = regenerateEndpointService;
         this.favoriteService = favoriteService;
-        this.accessService = accessService;
         this.dailyStreakService = dailyStreakService;
         this.statsApiMapper = statsApiMapper;
     }
@@ -147,28 +140,17 @@ public class InterviewApiController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<ApiError> forbidden = accessService.forbiddenIfUnauthorized(token, "regenerate вариантов");
-        if (forbidden != null) {
-            return forbidden;
+        RegenerateEndpointService.RegenerateResult result =
+                regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest);
+        if (result.status() == RegenerateEndpointService.RegenerateResult.Status.FORBIDDEN) {
+            return ResponseEntity.status(403).body(result.error());
         }
-        if (!accessService.allowRegenerate(httpRequest)) {
-            long retryAfter = accessService.regenerateRetryAfterSeconds();
-            ApiError error = new ApiError(429, ApiErrorTypes.RATE_LIMIT_EXCEEDED,
-                    "Слишком много запросов к /api/regenerate, повторите позже",
-                    Map.of("retryAfterSeconds", retryAfter));
+        if (result.status() == RegenerateEndpointService.RegenerateResult.Status.RATE_LIMITED) {
             return ResponseEntity.status(429)
-                    .header("Retry-After", String.valueOf(retryAfter))
-                    .body(error);
+                    .header("Retry-After", String.valueOf(result.retryAfterSeconds()))
+                    .body(result.error());
         }
-
-        long questionId = request.getQuestionId();
-        regenerateService.regenerateQuestion(questionId);
-
-        return ResponseEntity.ok(new RegenerateResponse(
-                true,
-                questionId,
-                "Варианты, подсказки и диаграмма удалены. При следующем показе будут сгенерированы заново."
-        ));
+        return ResponseEntity.ok(result.payload());
     }
 
     @PostMapping("/api/hint")

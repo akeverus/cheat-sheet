@@ -8,12 +8,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.cheatsheet.quiz.api.dto.ApiError;
+import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
-import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.domain.AnswerDisplayMode;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.AnswerResult;
@@ -33,10 +32,9 @@ import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.InterviewFacade;
-import com.cheatsheet.quiz.service.RegenerateService;
+import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import java.util.List;
 import java.util.Optional;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,9 +50,8 @@ class InterviewApiControllerUnitTest {
 
     @Mock private InterviewSessionSupport sessionSupport;
     @Mock private InterviewFacade facade;
-    @Mock private RegenerateService regenerateService;
+    @Mock private RegenerateEndpointService regenerateEndpointService;
     @Mock private FavoriteService favoriteService;
-    @Mock private SensitiveEndpointAccessService accessService;
     @Mock private DailyStreakService dailyStreakService;
     @Mock private StatsApiMapper statsApiMapper;
 
@@ -65,9 +62,8 @@ class InterviewApiControllerUnitTest {
         controller = new InterviewApiController(
                 sessionSupport,
                 facade,
-                regenerateService,
+                regenerateEndpointService,
                 favoriteService,
-                accessService,
                 dailyStreakService,
                 statsApiMapper
         );
@@ -148,16 +144,14 @@ class InterviewApiControllerUnitTest {
         HttpServletRequest httpRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         String token = "bad-token";
         ApiError forbidden = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
-        ResponseEntity<ApiError> forbiddenResponse = ResponseEntity.status(403).body(forbidden);
-
-        when(accessService.forbiddenIfUnauthorized(token, "regenerate вариантов")).thenReturn(forbiddenResponse);
+        when(regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest))
+                .thenReturn(RegenerateEndpointService.RegenerateResult.forbidden(forbidden));
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
         assertThat(response.getStatusCode().value()).isEqualTo(403);
         assertThat(response.getBody()).isEqualTo(forbidden);
-        verify(accessService).forbiddenIfUnauthorized(token, "regenerate вариантов");
-        verify(regenerateService, never()).regenerateQuestion(request.getQuestionId());
+        verify(regenerateEndpointService).execute(request.getQuestionId(), token, httpRequest);
     }
 
     @Test
@@ -312,10 +306,12 @@ class InterviewApiControllerUnitTest {
         HttpServletRequest httpRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         String token = "admin-token";
         int retryAfterSeconds = 60;
+        ApiError error = new ApiError(429, ApiErrorTypes.RATE_LIMIT_EXCEEDED,
+                "Слишком много запросов к /api/regenerate, повторите позже",
+                java.util.Map.of("retryAfterSeconds", (long) retryAfterSeconds));
 
-        when(accessService.forbiddenIfUnauthorized(token, "regenerate вариантов")).thenReturn(null);
-        when(accessService.allowRegenerate(httpRequest)).thenReturn(false);
-        when(accessService.regenerateRetryAfterSeconds()).thenReturn(retryAfterSeconds);
+        when(regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest))
+                .thenReturn(RegenerateEndpointService.RegenerateResult.rateLimited(error, retryAfterSeconds));
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
@@ -325,11 +321,8 @@ class InterviewApiControllerUnitTest {
         ApiError body = (ApiError) response.getBody();
         assertThat(body.type()).isEqualTo(ApiErrorTypes.RATE_LIMIT_EXCEEDED);
         assertThat(body.status()).isEqualTo(429);
-        assertThat(body.details()).isEqualTo(Map.of("retryAfterSeconds", (long) retryAfterSeconds));
-        verify(accessService).forbiddenIfUnauthorized(token, "regenerate вариантов");
-        verify(accessService).allowRegenerate(httpRequest);
-        verify(accessService).regenerateRetryAfterSeconds();
-        verify(regenerateService, never()).regenerateQuestion(request.getQuestionId());
+        assertThat(body.details()).isEqualTo(java.util.Map.of("retryAfterSeconds", (long) retryAfterSeconds));
+        verify(regenerateEndpointService).execute(request.getQuestionId(), token, httpRequest);
     }
 
     @Test
@@ -338,9 +331,15 @@ class InterviewApiControllerUnitTest {
         request.setQuestionId(88L);
         HttpServletRequest httpRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         String token = "admin-token";
+        com.cheatsheet.quiz.api.dto.response.RegenerateResponse payload =
+                new com.cheatsheet.quiz.api.dto.response.RegenerateResponse(
+                        true,
+                        request.getQuestionId(),
+                        "Варианты, подсказки и диаграмма удалены. При следующем показе будут сгенерированы заново."
+                );
 
-        when(accessService.forbiddenIfUnauthorized(token, "regenerate вариантов")).thenReturn(null);
-        when(accessService.allowRegenerate(httpRequest)).thenReturn(true);
+        when(regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest))
+                .thenReturn(RegenerateEndpointService.RegenerateResult.success(payload));
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
@@ -351,9 +350,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.success()).isTrue();
         assertThat(body.questionId()).isEqualTo(request.getQuestionId());
         assertThat(body.message()).isNotBlank();
-        verify(accessService).forbiddenIfUnauthorized(token, "regenerate вариантов");
-        verify(accessService).allowRegenerate(httpRequest);
-        verify(regenerateService).regenerateQuestion(request.getQuestionId());
+        verify(regenerateEndpointService).execute(request.getQuestionId(), token, httpRequest);
     }
 
     @Test

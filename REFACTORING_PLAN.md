@@ -72,6 +72,8 @@
 - [x] Kept option quality/generation regression tests green after validator decomposition.
 - [x] Replaced `Map<String,Object>` service contracts in admin senior-rules flow with typed payload records (`OverridesPayload`, `ReplaceResult`, `KeysPayload`, `CatalogPayload`).
 - [x] Removed controller-side unsafe map casting for admin PUT `/api/admin/senior-rules` response assembly.
+- [x] Extracted `/api/regenerate` orchestration (auth/rate-limit/regenerate flow) from `InterviewApiController` into `RegenerateEndpointService` to keep controller layer as HTTP adapter.
+- [x] Added dedicated `RegenerateEndpointServiceTest` and updated `InterviewApiControllerUnitTest` to validate typed service-result mapping for forbidden/rate-limit/success branches.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
