@@ -7,6 +7,7 @@ import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate;
+import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;
 import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.google.common.util.concurrent.Striped;
@@ -74,6 +75,7 @@ public class OptionGenerationService {
             OptionGenerator optionGenerator,
             OptionCache optionCache,
             AppProperties appProperties,
+            SeniorRulePriorityOverrideStore seniorRulePriorityOverrideStore,
             Striped<Lock> questionLocks,
             TransactionTemplate transactionTemplate,
             OptionDeduplicator deduplicator,
@@ -88,7 +90,7 @@ public class OptionGenerationService {
         this.optionQualityRetryAttempts = appProperties.getInterview().getOptionQualityRetryAttempts();
         this.optionQualityRetryBackoffMs = appProperties.getInterview().getOptionQualityRetryBackoffMs();
         this.optionQualityRetryMaxElapsedMs = appProperties.getInterview().getOptionQualityRetryMaxElapsedMs();
-        this.seniorRulePriorityOverrides = appProperties.getInterview().getSeniorRulePriorityOverrides();
+        this.seniorRulePriorityOverrides = seniorRulePriorityOverrideStore.view();
         this.questionLocks = questionLocks;
         this.transactionTemplate = transactionTemplate;
         this.deduplicator = deduplicator;

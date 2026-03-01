@@ -1,6 +1,5 @@
 package com.cheatsheet.quiz.service.admin;
 
-import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.service.ai.SeniorInterviewRuleRegistry;
 import org.springframework.stereotype.Service;
 
@@ -9,8 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Сервис управления переопределениями приоритетов Senior-правил.
@@ -22,14 +19,14 @@ public class AdminSeniorRulesService {
     private static final List<SeniorInterviewRuleRegistry.RuleInfo> RULE_CATALOG =
             List.copyOf(SeniorInterviewRuleRegistry.listRules());
 
-    private final AppProperties appProperties;
+    private final SeniorRulePriorityOverrideStore overrideStore;
 
-    public AdminSeniorRulesService(AppProperties appProperties) {
-        this.appProperties = appProperties;
+    public AdminSeniorRulesService(SeniorRulePriorityOverrideStore overrideStore) {
+        this.overrideStore = overrideStore;
     }
 
     public Map<String, Integer> getOverridesSorted() {
-        return new TreeMap<>(getOrInitOverrides());
+        return overrideStore.snapshotSorted();
     }
 
     public Map<String, Object> getKeysPayload(String prefix, String query) {
@@ -61,16 +58,14 @@ public class AdminSeniorRulesService {
             normalized.put(normalizeKey(entry.getKey()), entry.getValue());
         }
 
-        Map<String, Integer> target = getOrInitOverrides();
-        target.clear();
-        target.putAll(normalized);
-        Map<String, Integer> sorted = new TreeMap<>(target);
+        overrideStore.replaceAll(normalized);
+        Map<String, Integer> sorted = overrideStore.snapshotSorted();
         return Map.of("overrides", sorted, "size", sorted.size());
     }
 
     public PatchResult patchOverrides(Map<String, Integer> updates) {
         if (updates == null || updates.isEmpty()) {
-            Map<String, Integer> sortedCurrent = new TreeMap<>(getOrInitOverrides());
+            Map<String, Integer> sortedCurrent = overrideStore.snapshotSorted();
             return new PatchResult(sortedCurrent, sortedCurrent.size(), 0, 0);
         }
 
@@ -78,20 +73,19 @@ public class AdminSeniorRulesService {
 
         int applied = 0;
         int removed = 0;
-        Map<String, Integer> target = getOrInitOverrides();
         for (Map.Entry<String, Integer> entry : updates.entrySet()) {
             String normalizedKey = normalizeKey(entry.getKey());
             Integer value = entry.getValue();
             if (value == null) {
-                if (target.remove(normalizedKey) != null) {
+                if (overrideStore.remove(normalizedKey)) {
                     removed++;
                 }
             } else {
-                target.put(normalizedKey, value);
+                overrideStore.put(normalizedKey, value);
                 applied++;
             }
         }
-        Map<String, Integer> sorted = new TreeMap<>(target);
+        Map<String, Integer> sorted = overrideStore.snapshotSorted();
         return new PatchResult(sorted, sorted.size(), applied, removed);
     }
 
@@ -100,9 +94,8 @@ public class AdminSeniorRulesService {
         if (normalizedKey.isBlank()) {
             throw new ValidationException("Ключ правила не должен быть пустым", Map.of("key", String.valueOf(key)));
         }
-        Map<String, Integer> target = getOrInitOverrides();
-        boolean deleted = target.remove(normalizedKey) != null;
-        Map<String, Integer> sorted = new TreeMap<>(target);
+        boolean deleted = overrideStore.remove(normalizedKey);
+        Map<String, Integer> sorted = overrideStore.snapshotSorted();
         return new DeleteResult(normalizedKey, deleted, sorted, sorted.size());
     }
 
@@ -127,21 +120,6 @@ public class AdminSeniorRulesService {
                 );
             }
         }
-    }
-
-    private Map<String, Integer> getOrInitOverrides() {
-        Map<String, Integer> configured = appProperties.getInterview().getSeniorRulePriorityOverrides();
-        if (configured == null) {
-            ConcurrentHashMap<String, Integer> initialized = new ConcurrentHashMap<>();
-            appProperties.getInterview().setSeniorRulePriorityOverrides(initialized);
-            return initialized;
-        }
-        if (configured instanceof ConcurrentHashMap) {
-            return configured;
-        }
-        ConcurrentHashMap<String, Integer> concurrent = new ConcurrentHashMap<>(configured);
-        appProperties.getInterview().setSeniorRulePriorityOverrides(concurrent);
-        return concurrent;
     }
 
     private String normalize(String value) {

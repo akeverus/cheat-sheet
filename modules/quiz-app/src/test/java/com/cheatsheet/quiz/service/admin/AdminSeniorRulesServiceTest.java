@@ -15,6 +15,7 @@ class AdminSeniorRulesServiceTest {
 
     private AppProperties appProperties;
     private AppProperties.Interview interview;
+    private SeniorRulePriorityOverrideStore overrideStore;
     private AdminSeniorRulesService service;
 
     @BeforeEach
@@ -23,7 +24,8 @@ class AdminSeniorRulesServiceTest {
         interview = new AppProperties.Interview();
         interview.setSeniorRulePriorityOverrides(new ConcurrentHashMap<>());
         appProperties.setInterview(interview);
-        service = new AdminSeniorRulesService(appProperties);
+        overrideStore = new SeniorRulePriorityOverrideStore(appProperties);
+        service = new AdminSeniorRulesService(overrideStore);
     }
 
     @Test
@@ -84,6 +86,8 @@ class AdminSeniorRulesServiceTest {
         Map<String, Integer> nonConcurrent = new HashMap<>();
         nonConcurrent.put("spring-transactional", 3);
         interview.setSeniorRulePriorityOverrides(nonConcurrent);
+        overrideStore = new SeniorRulePriorityOverrideStore(appProperties);
+        service = new AdminSeniorRulesService(overrideStore);
 
         service.getOverridesSorted();
 

@@ -17,6 +17,7 @@ import com.cheatsheet.quiz.domain.OptionSource;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
+import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;
 import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.google.common.util.concurrent.Striped;
@@ -46,6 +47,8 @@ class OptionGenerationServiceTest {
 
     @Mock
     AppProperties appProperties;
+    @Mock
+    SeniorRulePriorityOverrideStore seniorRulePriorityOverrideStore;
 
     @Mock
     TransactionTemplate transactionTemplate;
@@ -82,6 +85,7 @@ class OptionGenerationServiceTest {
         lenient().when(optionQualityValidator.validateQualityReportWithContext(any(), anyString(), anyString(), any()))
                 .thenReturn(new OptionQualityValidator.ValidationReport(List.of()));
         lenient().when(optionQualityValidator.hasHardBlockIssues(any())).thenReturn(false);
+        lenient().when(seniorRulePriorityOverrideStore.view()).thenReturn(interview.getSeniorRulePriorityOverrides());
 
         Striped<Lock> questionLocks = Striped.lock(16);
         optionGenerationService = new OptionGenerationService(
@@ -89,6 +93,7 @@ class OptionGenerationServiceTest {
                 optionGenerator,
                 optionCache,
                 appProperties,
+                seniorRulePriorityOverrideStore,
                 questionLocks,
                 transactionTemplate,
                 deduplicator,
@@ -222,6 +227,7 @@ class OptionGenerationServiceTest {
                 optionGenerator,
                 optionCache,
                 appProperties,
+                seniorRulePriorityOverrideStore,
                 questionLocks,
                 transactionTemplate,
                 deduplicator,

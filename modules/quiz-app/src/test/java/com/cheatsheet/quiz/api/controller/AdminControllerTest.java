@@ -21,15 +21,19 @@ import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
+import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,8 +41,9 @@ import org.springframework.test.web.servlet.MockMvc;
  * Тесты авторизации и логики очистки вариантов ответа для {@link AdminController}.
  */
 @WebMvcTest(AdminController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = "app.admin-token=test-secret-token")
-@Import(AdminSeniorRulesService.class)
+@Import({AdminSeniorRulesService.class, SeniorRulePriorityOverrideStore.class, AdminControllerTest.AppPropertiesTestConfig.class})
 class AdminControllerTest {
 
     @Autowired
@@ -50,7 +55,7 @@ class AdminControllerTest {
     @MockBean
     SensitiveEndpointAccessService accessService;
 
-    @MockBean
+    @Autowired
     AppProperties appProperties;
 
     AppProperties.Interview interview;
@@ -61,9 +66,16 @@ class AdminControllerTest {
         ApiError forbiddenError = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
         forbiddenResponse = ResponseEntity.status(403).contentType(MediaType.APPLICATION_JSON).body(forbiddenError);
         when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
-        interview = new AppProperties.Interview();
-        interview.setSeniorRulePriorityOverrides(new ConcurrentHashMap<>());
-        when(appProperties.getInterview()).thenReturn(interview);
+        interview = appProperties.getInterview();
+        if (interview == null) {
+            interview = new AppProperties.Interview();
+            appProperties.setInterview(interview);
+        }
+        if (interview.getSeniorRulePriorityOverrides() == null) {
+            interview.setSeniorRulePriorityOverrides(new ConcurrentHashMap<>());
+        } else {
+            interview.getSeniorRulePriorityOverrides().clear();
+        }
     }
 
     @Test
@@ -327,5 +339,15 @@ class AdminControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.details.deleted").value(false))
                 .andExpect(jsonPath("$.details.key").value("unknown-rule"));
+    }
+
+    @TestConfiguration
+    static class AppPropertiesTestConfig {
+        @Bean
+        AppProperties appProperties() {
+            AppProperties appProperties = new AppProperties();
+            appProperties.setInterview(new AppProperties.Interview());
+            return appProperties;
+        }
     }
 }
