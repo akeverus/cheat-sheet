@@ -68,6 +68,8 @@
 - [x] Expanded `SecurityConfigWebMvcTest` with deny/allow regression checks for sensitive endpoints (without/with valid `X-Admin-Token`).
 - [x] Added security-layer JSON parity for denied sensitive endpoints via dedicated `AuthenticationEntryPoint` + `AccessDeniedHandler` returning `ApiError`.
 - [x] Stabilized `InterviewControllerApiTest` regenerate rate-limit path by enabling trusted forwarded client key in test profile overrides.
+- [x] Split question-analysis heuristics out of `OptionQualityValidator` into dedicated `OptionQuestionAnalysisSupport` to reduce class complexity and improve cohesion.
+- [x] Kept option quality/generation regression tests green after validator decomposition.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
@@ -76,6 +78,6 @@
 - [ ] Extend security-layer error contract parity to non-sensitive API auth failures (future role-based/authenticated endpoints).
 
 ## Backlog
-- [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.
+- [ ] Continue splitting oversized AI classes (`OptionQualityValidator` remaining checks, `AbstractAiClient`) into smaller cohesive components.
 - [ ] Add broader exception-handling hardening pass (audit IDs, error correlation, API/MVC parity).
 - [ ] Expand regression coverage for refactored service boundaries and LLM failure paths.

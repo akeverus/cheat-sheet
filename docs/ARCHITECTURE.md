@@ -79,6 +79,7 @@ Question engine построен вокруг policy-driven контура:
 - `QuestionGenerationPolicy` — acceptance policy, cognitive-load guard, near-duplicate контроль.
 - `QuestionUniquenessService` — Caffeine window uniqueness по `topic::type`.
 - `QuestionGenerationService` — retry orchestration и quality logging.
+- `OptionQuestionAnalysisSupport` — выделенный модуль intent/token/relevance анализа для quality-валидации distractor-ов.
 
 Для admin-управления приоритетами senior-правил выделено отдельное runtime-хранилище:
 
