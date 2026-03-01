@@ -66,12 +66,14 @@
 - [x] Added `SeniorRulePriorityOverrideStoreTest` and aligned admin/AI service tests with new store-based architecture.
 - [x] Enforced endpoint-level authorization in `SecurityFilterChain` for `/api/admin/**`, `/api/regenerate`, `/export` using token-aware access decisions.
 - [x] Expanded `SecurityConfigWebMvcTest` with deny/allow regression checks for sensitive endpoints (without/with valid `X-Admin-Token`).
+- [x] Added security-layer JSON parity for denied sensitive endpoints via dedicated `AuthenticationEntryPoint` + `AccessDeniedHandler` returning `ApiError`.
+- [x] Stabilized `InterviewControllerApiTest` regenerate rate-limit path by enabling trusted forwarded client key in test profile overrides.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep MVC controllers as HTTP adapters only.
 - [ ] Expand quality policy from topic-local near-duplicate checks to semantic cross-topic similarity constraints.
-- [ ] Harden sensitive endpoint access responses for security-layer denials to fully match API error contract (`ApiError`) across all paths.
+- [ ] Extend security-layer error contract parity to non-sensitive API auth failures (future role-based/authenticated endpoints).
 
 ## Backlog
 - [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.

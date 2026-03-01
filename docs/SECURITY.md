@@ -17,7 +17,8 @@
   - включены security headers (`CSP`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`);
   - CORS управляется через `app.security.cors.*` (`@ConfigurationProperties`);
   - CSRF включен для MVC state-changing endpoint и отключен для `/api/**`, `/export`, `/actuator/**`;
-  - endpoint-level authorization для `/api/admin/**`, `/api/regenerate`, `/export` централизован в security-слое (token-based access decision).
+  - endpoint-level authorization для `/api/admin/**`, `/api/regenerate`, `/export` централизован в security-слое (token-based access decision);
+  - security-layer denied/unauthenticated ответы для чувствительных API endpoint возвращаются в стандартизированном формате `ApiError` (403 + `FORBIDDEN`).
 - **Admin token guard**:
   - константное сравнение через `MessageDigest.isEqual`;
   - единый `forbiddenIfUnauthorized(...)` для контроллеров.
