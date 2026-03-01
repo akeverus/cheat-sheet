@@ -17,11 +17,10 @@ import com.cheatsheet.quiz.api.dto.response.StreakResponse;
 import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
 import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
-import com.cheatsheet.quiz.domain.Hint;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
-import com.cheatsheet.quiz.service.HintService;
+import com.cheatsheet.quiz.service.HintApiService;
 import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
@@ -58,6 +57,7 @@ import java.util.Optional;
 public class InterviewApiController {
 
     AnswerApiService answerApiService;
+    HintApiService hintApiService;
     InterviewFacade facade;
     NextQuestionApiService nextQuestionApiService;
     RegenerateEndpointService regenerateEndpointService;
@@ -67,6 +67,7 @@ public class InterviewApiController {
 
     public InterviewApiController(
             AnswerApiService answerApiService,
+            HintApiService hintApiService,
             InterviewFacade facade,
             NextQuestionApiService nextQuestionApiService,
             RegenerateEndpointService regenerateEndpointService,
@@ -75,6 +76,7 @@ public class InterviewApiController {
             StatsApiMapper statsApiMapper
     ) {
         this.answerApiService = answerApiService;
+        this.hintApiService = hintApiService;
         this.facade = facade;
         this.nextQuestionApiService = nextQuestionApiService;
         this.regenerateEndpointService = regenerateEndpointService;
@@ -128,15 +130,9 @@ public class InterviewApiController {
     public ResponseEntity<HintResponse> getHint(
             @Valid @ModelAttribute HintRequest request
     ) {
-        facade.ensureQuestionExists(request.getQuestionId());
-        Optional<Hint> optHint = facade.getHint(request.getQuestionId(), request.levelOrDefault());
-        long questionId = request.getQuestionId();
-        int maxLevel = HintService.getMaxLevel();
-        if (optHint.isEmpty()) {
-            return ResponseEntity.ok(new HintResponse(questionId, maxLevel, null, null));
-        }
-        Hint hint = optHint.get();
-        return ResponseEntity.ok(new HintResponse(questionId, maxLevel, hint.hintText(), hint.level()));
+        HintApiService.HintCommand command =
+                new HintApiService.HintCommand(request.getQuestionId(), request.levelOrDefault());
+        return ResponseEntity.ok(hintApiService.buildHintResponse(command));
     }
 
     @PostMapping("/api/confidence")

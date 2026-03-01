@@ -14,7 +14,6 @@ import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
 import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
-import com.cheatsheet.quiz.domain.Hint;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.Question;
@@ -24,6 +23,7 @@ import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
+import com.cheatsheet.quiz.service.HintApiService;
 import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
@@ -43,6 +43,7 @@ import org.springframework.http.ResponseEntity;
 class InterviewApiControllerUnitTest {
 
     @Mock private AnswerApiService answerApiService;
+    @Mock private HintApiService hintApiService;
     @Mock private InterviewFacade facade;
     @Mock private NextQuestionApiService nextQuestionApiService;
     @Mock private RegenerateEndpointService regenerateEndpointService;
@@ -56,6 +57,7 @@ class InterviewApiControllerUnitTest {
     void setUp() {
         controller = new InterviewApiController(
                 answerApiService,
+                hintApiService,
                 facade,
                 nextQuestionApiService,
                 regenerateEndpointService,
@@ -151,12 +153,16 @@ class InterviewApiControllerUnitTest {
     }
 
     @Test
-    void hintReturnsHintPayloadWhenFacadeProvidesHint() {
+    void hintReturnsHintPayloadWhenServiceProvidesHint() {
         long questionId = 601L;
         HintRequest request = new HintRequest();
         request.setQuestionId(questionId);
         request.setLevel(2);
-        when(facade.getHint(questionId, 2)).thenReturn(Optional.of(new Hint(1L, questionId, 2, "Смотри на порядок stream-операций", 1_700_000_000L)));
+        com.cheatsheet.quiz.api.dto.response.HintResponse payload =
+                new com.cheatsheet.quiz.api.dto.response.HintResponse(
+                        questionId, 3, "Смотри на порядок stream-операций", 2
+                );
+        when(hintApiService.buildHintResponse(any())).thenReturn(payload);
 
         ResponseEntity<?> response = controller.getHint(request);
 
@@ -168,14 +174,17 @@ class InterviewApiControllerUnitTest {
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isEqualTo(2);
         assertThat(body.hint()).contains("stream");
+        verify(hintApiService).buildHintResponse(any());
     }
 
     @Test
-    void hintReturnsEmptyPayloadWhenFacadeReturnsEmpty() {
+    void hintReturnsEmptyPayloadWhenServiceReturnsEmptyPayload() {
         long questionId = 602L;
         HintRequest request = new HintRequest();
         request.setQuestionId(questionId);
-        when(facade.getHint(questionId, 1)).thenReturn(Optional.empty());
+        com.cheatsheet.quiz.api.dto.response.HintResponse payload =
+                new com.cheatsheet.quiz.api.dto.response.HintResponse(questionId, 3, null, null);
+        when(hintApiService.buildHintResponse(any())).thenReturn(payload);
 
         ResponseEntity<?> response = controller.getHint(request);
 
@@ -187,20 +196,21 @@ class InterviewApiControllerUnitTest {
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isNull();
         assertThat(body.hint()).isNull();
+        verify(hintApiService).buildHintResponse(any());
     }
 
     @Test
-    void hintThrowsWhenQuestionIsMissing() {
+    void hintPropagatesQuestionNotFoundFromService() {
         long questionId = 603L;
         HintRequest request = new HintRequest();
         request.setQuestionId(questionId);
-        doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId))
-                .when(facade).ensureQuestionExists(questionId);
+        doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId)).when(hintApiService)
+                .buildHintResponse(any());
 
         assertThatThrownBy(() -> controller.getHint(request))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
-        verify(facade, never()).getHint(questionId, 1);
+        verify(hintApiService).buildHintResponse(any());
     }
 
     @Test

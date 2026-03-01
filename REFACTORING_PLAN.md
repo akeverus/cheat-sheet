@@ -82,6 +82,8 @@
 - [x] Added `SeniorRuleOverridePayloadProcessorTest` and updated `AdminSeniorRulesServiceTest` wiring to keep validation and admin overrides regression coverage stable.
 - [x] Extracted `/api/next` orchestration and payload mapping from `InterviewApiController` into dedicated `NextQuestionApiService` to keep controller as HTTP adapter only.
 - [x] Moved next-question mapping/normalization regression checks to `NextQuestionApiServiceTest` and updated `InterviewApiControllerUnitTest` to verify delegation contract.
+- [x] Extracted `/api/hint` orchestration and existence precondition flow from `InterviewApiController` into dedicated `HintApiService` for cleaner controller-service separation.
+- [x] Added `HintApiServiceTest` and updated `InterviewApiControllerUnitTest` to keep hint API contract and error-propagation coverage after extraction.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
