@@ -42,6 +42,7 @@ class InterviewControllerApiTest {
     static void setInterviewPath(DynamicPropertyRegistry registry) {
         TestInterviewPath.register(registry);
         registry.add("app.regenerate-rate-limit-per-minute", () -> 1);
+        registry.add("app.trust-forwarded-for-header", () -> true);
     }
 
     @Autowired MockMvc mockMvc;

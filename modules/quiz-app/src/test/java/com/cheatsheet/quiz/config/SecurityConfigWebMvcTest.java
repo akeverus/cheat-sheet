@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = "app.admin-token=test-admin-token")
@@ -37,13 +38,17 @@ class SecurityConfigWebMvcTest {
     @Test
     void sensitiveEndpointsAreBlockedWithoutAdminToken() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/senior-rules"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").isString());
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/regenerate"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("FORBIDDEN"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/export"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.type").value("FORBIDDEN"));
     }
 
     @Test

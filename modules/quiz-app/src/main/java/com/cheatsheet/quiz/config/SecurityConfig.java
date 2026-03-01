@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.config;
 
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
+import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessDeniedHandler;
+import com.cheatsheet.quiz.api.security.SensitiveEndpointAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,7 +33,9 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
-            SensitiveEndpointAccessService sensitiveEndpointAccessService
+            SensitiveEndpointAccessService sensitiveEndpointAccessService,
+            SensitiveEndpointAccessDeniedHandler sensitiveEndpointAccessDeniedHandler,
+            SensitiveEndpointAuthenticationEntryPoint sensitiveEndpointAuthenticationEntryPoint
     ) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -61,6 +65,9 @@ public class SecurityConfig {
                                 org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                         .frameOptions(frame -> frame.sameOrigin())
                         .permissionsPolicy(policy -> policy.policy("geolocation=(), camera=(), microphone=()")))
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler(sensitiveEndpointAccessDeniedHandler)
+                        .authenticationEntryPoint(sensitiveEndpointAuthenticationEntryPoint))
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .anonymous(Customizer.withDefaults());
         return http.build();
