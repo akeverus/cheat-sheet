@@ -84,6 +84,8 @@
 - [x] Moved next-question mapping/normalization regression checks to `NextQuestionApiServiceTest` and updated `InterviewApiControllerUnitTest` to verify delegation contract.
 - [x] Extracted `/api/hint` orchestration and existence precondition flow from `InterviewApiController` into dedicated `HintApiService` for cleaner controller-service separation.
 - [x] Added `HintApiServiceTest` and updated `InterviewApiControllerUnitTest` to keep hint API contract and error-propagation coverage after extraction.
+- [x] Extracted question-insights endpoint orchestration (`/api/wrong-feedback`, `/api/takeaway`, `/api/comparison`, `/api/code-trace`) into dedicated `QuestionInsightsApiService` to remove business flow from `InterviewApiController`.
+- [x] Added `QuestionInsightsApiServiceTest` and switched controller tests to service-delegation assertions for insights endpoints.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

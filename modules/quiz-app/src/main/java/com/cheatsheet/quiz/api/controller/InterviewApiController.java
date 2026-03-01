@@ -23,6 +23,7 @@ import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintApiService;
 import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
+import com.cheatsheet.quiz.service.QuestionInsightsApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.util.FilterUtils;
@@ -34,7 +35,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -52,7 +52,6 @@ import java.util.Optional;
  */
 @RestController
 @Validated
-@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewApiController {
 
@@ -60,6 +59,7 @@ public class InterviewApiController {
     HintApiService hintApiService;
     InterviewFacade facade;
     NextQuestionApiService nextQuestionApiService;
+    QuestionInsightsApiService questionInsightsApiService;
     RegenerateEndpointService regenerateEndpointService;
     FavoriteService favoriteService;
     DailyStreakService dailyStreakService;
@@ -70,6 +70,7 @@ public class InterviewApiController {
             HintApiService hintApiService,
             InterviewFacade facade,
             NextQuestionApiService nextQuestionApiService,
+            QuestionInsightsApiService questionInsightsApiService,
             RegenerateEndpointService regenerateEndpointService,
             FavoriteService favoriteService,
             DailyStreakService dailyStreakService,
@@ -79,6 +80,7 @@ public class InterviewApiController {
         this.hintApiService = hintApiService;
         this.facade = facade;
         this.nextQuestionApiService = nextQuestionApiService;
+        this.questionInsightsApiService = questionInsightsApiService;
         this.regenerateEndpointService = regenerateEndpointService;
         this.favoriteService = favoriteService;
         this.dailyStreakService = dailyStreakService;
@@ -155,15 +157,7 @@ public class InterviewApiController {
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam("optionId") @Positive long optionId
     ) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> feedback = facade.getWrongFeedback(questionId, optionId);
-        if (feedback.isPresent()) {
-            log.info("wrong_feedback_generated questionId={} optionId={}", questionId, optionId);
-        } else {
-            log.info("wrong_feedback_unavailable questionId={} optionId={}", questionId, optionId);
-        }
-        return ResponseEntity.ok(new WrongFeedbackResponse(
-                questionId, optionId, feedback.orElse(null), feedback.isPresent()));
+        return ResponseEntity.ok(questionInsightsApiService.buildWrongFeedbackResponse(questionId, optionId));
     }
 
     @GetMapping("/api/streak")
@@ -237,9 +231,7 @@ public class InterviewApiController {
 
     @GetMapping("/api/takeaway")
     public ResponseEntity<TakeawayResponse> getTakeaway(@RequestParam("questionId") @Positive long questionId) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> takeaway = facade.getTakeaway(questionId);
-        return ResponseEntity.ok(new TakeawayResponse(takeaway.orElse(null)));
+        return ResponseEntity.ok(questionInsightsApiService.buildTakeawayResponse(questionId));
     }
 
     @GetMapping("/api/comparison")
@@ -247,16 +239,12 @@ public class InterviewApiController {
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam("selectedOptionId") @Positive long selectedOptionId
     ) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> comparison = facade.generateComparison(questionId, selectedOptionId);
-        return ResponseEntity.ok(new ComparisonResponse(comparison.orElse(null)));
+        return ResponseEntity.ok(questionInsightsApiService.buildComparisonResponse(questionId, selectedOptionId));
     }
 
     @GetMapping("/api/code-trace")
     public ResponseEntity<CodeTraceResponse> getCodeTrace(@RequestParam("questionId") @Positive long questionId) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> trace = facade.getCodeTrace(questionId);
-        return ResponseEntity.ok(new CodeTraceResponse(trace.orElse(null)));
+        return ResponseEntity.ok(questionInsightsApiService.buildCodeTraceResponse(questionId));
     }
 
 }
