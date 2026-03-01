@@ -78,6 +78,8 @@
 - [x] Added `OptionSemanticSimilaritySupportTest` and kept `OptionQualityValidatorTest` behavior stable after decomposition.
 - [x] Extracted `/api/answer` response orchestration from `InterviewApiController` into `AnswerApiService` to keep controller focused on HTTP adaptation.
 - [x] Added `AnswerApiServiceTest` and updated `InterviewApiControllerUnitTest` to preserve answer API contract coverage after service extraction.
+- [x] Extracted admin senior-rules payload normalization/validation into dedicated `SeniorRuleOverridePayloadProcessor` to reduce `AdminSeniorRulesService` responsibility and tighten service boundaries.
+- [x] Added `SeniorRuleOverridePayloadProcessorTest` and updated `AdminSeniorRulesServiceTest` wiring to keep validation and admin overrides regression coverage stable.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
