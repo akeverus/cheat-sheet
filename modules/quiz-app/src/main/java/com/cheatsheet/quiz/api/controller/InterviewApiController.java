@@ -14,16 +14,13 @@ import com.cheatsheet.quiz.api.dto.response.HintResponse;
 import com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto;
 import com.cheatsheet.quiz.api.dto.response.NextQuestionResponse;
-import com.cheatsheet.quiz.api.dto.response.OptionExplanationDto;
-import com.cheatsheet.quiz.api.dto.response.RelatedQuestionDto;
-import com.cheatsheet.quiz.api.dto.response.SessionInfoDto;
 import com.cheatsheet.quiz.api.dto.response.StreakResponse;
 import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
 import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
 import com.cheatsheet.quiz.domain.Hint;
 import com.cheatsheet.quiz.domain.InterviewFilter;
-import com.cheatsheet.quiz.domain.RelatedQuestion;
+import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintService;
 import com.cheatsheet.quiz.service.InterviewFacade;
@@ -60,7 +57,7 @@ import java.util.Optional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewApiController {
 
-    InterviewSessionSupport sessionSupport;
+    AnswerApiService answerApiService;
     InterviewFacade facade;
     RegenerateEndpointService regenerateEndpointService;
     FavoriteService favoriteService;
@@ -68,14 +65,14 @@ public class InterviewApiController {
     StatsApiMapper statsApiMapper;
 
     public InterviewApiController(
-            InterviewSessionSupport sessionSupport,
+            AnswerApiService answerApiService,
             InterviewFacade facade,
             RegenerateEndpointService regenerateEndpointService,
             FavoriteService favoriteService,
             DailyStreakService dailyStreakService,
             StatsApiMapper statsApiMapper
     ) {
-        this.sessionSupport = sessionSupport;
+        this.answerApiService = answerApiService;
         this.facade = facade;
         this.regenerateEndpointService = regenerateEndpointService;
         this.favoriteService = favoriteService;
@@ -88,7 +85,7 @@ public class InterviewApiController {
             @Valid @ModelAttribute SubmitAnswerRequest request,
             HttpSession session
     ) {
-        InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(
+        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
                 request.getQuestionId(),
                 request.getOptionId(),
                 request.getTopic(),
@@ -97,38 +94,9 @@ public class InterviewApiController {
                 request.getOnlyWrong(),
                 request.getShuffle(),
                 request.getOrdered(),
-                request.getConfidence(),
-                session
+                request.getConfidence()
         );
-
-        List<OptionExplanationDto> optionExplanations = ctx.result().options().stream()
-                .map(opt -> new OptionExplanationDto(opt.id(), opt.explanation(), opt.correct()))
-                .toList();
-
-        List<RelatedQuestion> related = facade.findRelated(
-                request.getQuestionId(), ctx.result().question().topic());
-        List<RelatedQuestionDto> relatedQuestions = related.stream()
-                .map(rq -> new RelatedQuestionDto(rq.id(), rq.questionText(), rq.topic()))
-                .toList();
-
-        SessionInfoDto sessionInfo = null;
-        if (ctx.interviewSession() != null) {
-            var s = ctx.interviewSession();
-            sessionInfo = new SessionInfoDto(s.getIndex(), s.getTotal(), s.getCorrect(), s.getWrong(), s.isFinished());
-        }
-
-        AnswerResponse body = new AnswerResponse(
-                ctx.result().correctAnswer(),
-                ctx.result().correct().id(),
-                ctx.result().selected().id(),
-                facade.renderMarkdown(ctx.result().question().answerMarkdown()),
-                optionExplanations,
-                ctx.result().answerDisplayMode().name(),
-                ctx.result().updatedState().repetitions(),
-                relatedQuestions,
-                sessionInfo
-        );
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(answerApiService.buildAnswerResponse(command, session));
     }
 
     @PostMapping("/api/regenerate")

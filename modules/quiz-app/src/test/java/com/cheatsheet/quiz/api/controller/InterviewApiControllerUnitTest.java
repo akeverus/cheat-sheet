@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.api.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,23 +14,19 @@ import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
 import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
-import com.cheatsheet.quiz.domain.AnswerDisplayMode;
 import com.cheatsheet.quiz.domain.AnswerOption;
-import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.Hint;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
 import com.cheatsheet.quiz.domain.InterviewFilter;
-import com.cheatsheet.quiz.domain.InterviewMode;
-import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
-import com.cheatsheet.quiz.domain.RelatedQuestion;
 import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.DailyStreakService;
+import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
@@ -48,7 +45,7 @@ import org.springframework.http.ResponseEntity;
 @ExtendWith(MockitoExtension.class)
 class InterviewApiControllerUnitTest {
 
-    @Mock private InterviewSessionSupport sessionSupport;
+    @Mock private AnswerApiService answerApiService;
     @Mock private InterviewFacade facade;
     @Mock private RegenerateEndpointService regenerateEndpointService;
     @Mock private FavoriteService favoriteService;
@@ -60,7 +57,7 @@ class InterviewApiControllerUnitTest {
     @BeforeEach
     void setUp() {
         controller = new InterviewApiController(
-                sessionSupport,
+                answerApiService,
                 facade,
                 regenerateEndpointService,
                 favoriteService,
@@ -208,7 +205,7 @@ class InterviewApiControllerUnitTest {
     }
 
     @Test
-    void answerApiMapsResponseAndDelegatesToSupportAndFacade() {
+    void answerApiDelegatesToAnswerApiServiceAndReturnsPayload() {
         long questionId = 701L;
         long selectedOptionId = 2L;
         SubmitAnswerRequest request = new SubmitAnswerRequest();
@@ -222,50 +219,19 @@ class InterviewApiControllerUnitTest {
         request.setOrdered(false);
         request.setConfidence(4);
         HttpSession httpSession = org.mockito.Mockito.mock(HttpSession.class);
-
-        Question question = existingQuestion(questionId);
-        AnswerOption optionA = new AnswerOption(1L, questionId, "A", false, 0, "OPENAI", "Неверно");
-        AnswerOption optionB = new AnswerOption(2L, questionId, "B", true, 1, "OPENAI", "Верно");
-        ReviewState reviewState = new ReviewState(questionId, 3, 3, 2.5, 1_700_000_000L, ReviewResult.CORRECT, 5, 2);
-        AnswerResult answerResult = new AnswerResult(
-                question,
-                List.of(optionA, optionB),
-                optionB,
-                optionB,
-                true,
-                reviewState,
-                AnswerDisplayMode.MINIMAL
-        );
-        InterviewSession interviewSession = new InterviewSession(
-                InterviewMode.TRAINING,
-                List.of(questionId, 702L),
-                "java",
-                "core",
-                true,
-                false,
-                true,
-                false
-        );
-        InterviewSessionSupport.AnswerContext context = new InterviewSessionSupport.AnswerContext(
-                answerResult,
-                new InterviewFilter("java", "core", true, false, true, false),
-                interviewSession
-        );
-        when(sessionSupport.processAnswer(
-                questionId,
-                selectedOptionId,
-                "java",
-                "core",
-                true,
-                false,
-                true,
-                false,
-                4,
-                httpSession
-        )).thenReturn(context);
-        when(facade.findRelated(questionId, "java"))
-                .thenReturn(List.of(new RelatedQuestion(900L, "Похожий вопрос", "java", 75.0)));
-        when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
+        com.cheatsheet.quiz.api.dto.response.AnswerResponse payload =
+                new com.cheatsheet.quiz.api.dto.response.AnswerResponse(
+                        true,
+                        2L,
+                        2L,
+                        "<p>Ответ</p>",
+                        List.of(new com.cheatsheet.quiz.api.dto.response.OptionExplanationDto(2L, "Верно", true)),
+                        "MINIMAL",
+                        3,
+                        List.of(new com.cheatsheet.quiz.api.dto.response.RelatedQuestionDto(900L, "Похожий вопрос", "java")),
+                        new com.cheatsheet.quiz.api.dto.response.SessionInfoDto(1, 2, 1, 0, false)
+                );
+        when(answerApiService.buildAnswerResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession))).thenReturn(payload);
 
         ResponseEntity<?> response = controller.answerApi(request, httpSession);
 
@@ -277,26 +243,13 @@ class InterviewApiControllerUnitTest {
         assertThat(body.correctOptionId()).isEqualTo(2L);
         assertThat(body.selectedOptionId()).isEqualTo(2L);
         assertThat(body.answerHtml()).isEqualTo("<p>Ответ</p>");
-        assertThat(body.optionExplanations()).hasSize(2);
+        assertThat(body.optionExplanations()).hasSize(1);
         assertThat(body.answerDisplayMode()).isEqualTo("MINIMAL");
         assertThat(body.repetitions()).isEqualTo(3);
         assertThat(body.relatedQuestions()).hasSize(1);
         assertThat(body.session()).isNotNull();
         assertThat(body.session().total()).isEqualTo(2);
-        verify(sessionSupport).processAnswer(
-                questionId,
-                selectedOptionId,
-                "java",
-                "core",
-                true,
-                false,
-                true,
-                false,
-                4,
-                httpSession
-        );
-        verify(facade).findRelated(questionId, "java");
-        verify(facade).renderMarkdown(question.answerMarkdown());
+        verify(answerApiService).buildAnswerResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession));
     }
 
     @Test

@@ -76,6 +76,8 @@
 - [x] Added dedicated `RegenerateEndpointServiceTest` and updated `InterviewApiControllerUnitTest` to validate typed service-result mapping for forbidden/rate-limit/success branches.
 - [x] Extracted semantic similarity math from `OptionQualityValidator` into dedicated `OptionSemanticSimilaritySupport` to reduce validator responsibility and centralize Jaccard/coverage calculations.
 - [x] Added `OptionSemanticSimilaritySupportTest` and kept `OptionQualityValidatorTest` behavior stable after decomposition.
+- [x] Extracted `/api/answer` response orchestration from `InterviewApiController` into `AnswerApiService` to keep controller focused on HTTP adaptation.
+- [x] Added `AnswerApiServiceTest` and updated `InterviewApiControllerUnitTest` to preserve answer API contract coverage after service extraction.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
