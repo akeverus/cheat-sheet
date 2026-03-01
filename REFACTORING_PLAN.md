@@ -57,12 +57,15 @@
 - [x] Upgraded `QuestionPromptBuilder` with explicit generation constraints block (quality/verbosity/uniqueness thresholds) to tighten LLM output contract.
 - [x] Eliminated field injection from `OpenApiConfig` by switching to constructor injection.
 - [x] Added/updated engineering documentation: `docs/QUESTION_ENGINE.md`, `docs/SECURITY.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, `README.md`.
+- [x] Added Spring Security baseline (`SecurityFilterChain`) with explicit CSRF policy (MVC protected, `/api/**` excluded), hardened HTTP security headers, and no legacy form/basic auth.
+- [x] Added `PasswordEncoder` bean and migrated CORS policy to typed configuration (`app.security.cors.*`) via `AppProperties`.
+- [x] Added `SecurityConfigWebMvcTest` coverage for CSRF policy behavior on MVC/API endpoints.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep MVC controllers as HTTP adapters only.
 - [ ] Expand quality policy from topic-local near-duplicate checks to semantic cross-topic similarity constraints.
-- [ ] Introduce explicit Spring Security `SecurityFilterChain` with endpoint-level authorization and hardened CORS/CSRF strategy.
+- [ ] Introduce endpoint-level authorization rules in Spring Security on top of admin token guards.
 
 ## Backlog
 - [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.

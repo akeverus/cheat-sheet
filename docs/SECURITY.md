@@ -12,6 +12,11 @@
 
 ## Текущие механизмы защиты
 
+- **Spring Security baseline (`SecurityFilterChain`)**:
+  - отключены `formLogin/httpBasic/logout` (нет ложной auth-модели);
+  - включены security headers (`CSP`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`);
+  - CORS управляется через `app.security.cors.*` (`@ConfigurationProperties`);
+  - CSRF включен для MVC state-changing endpoint и отключен для `/api/**`, `/export`, `/actuator/**`.
 - **Admin token guard**:
   - константное сравнение через `MessageDigest.isEqual`;
   - единый `forbiddenIfUnauthorized(...)` для контроллеров.
@@ -29,6 +34,12 @@
 - `app.admin-token`
 - `app.regenerate-rate-limit-per-minute`
 - `app.trust-forwarded-for-header`
+- `app.security.cors.allowed-origins`
+- `app.security.cors.allowed-methods`
+- `app.security.cors.allowed-headers`
+- `app.security.cors.exposed-headers`
+- `app.security.cors.allow-credentials`
+- `app.security.cors.max-age-seconds`
 
 Рекомендации:
 

@@ -46,6 +46,7 @@ Web flow построен вокруг тонкого контроллера и 
 - `api.controller` -> `api.mapper` -> `service` -> `persistence`/`llm`
 - `service` не зависит от `api.controller`
 - DTO и HTTP-контракты не просачиваются в `domain`
+- cross-cutting web security централизована в `config/SecurityConfig`.
 
 Практика, применяемая в проекте:
 
