@@ -2,12 +2,8 @@ package com.cheatsheet.quiz.api.controller;
 
 import com.cheatsheet.quiz.api.dto.response.AdminOperationResult;
 import com.cheatsheet.quiz.api.dto.response.AdminResetAllResult;
-import com.cheatsheet.quiz.api.dto.ApiError;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
-import com.cheatsheet.quiz.service.AdminMaintenanceService;
-import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
+import com.cheatsheet.quiz.service.AdminApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,28 +30,14 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin")
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AdminController {
-    private static final Map<String, String> SENIOR_RULES_HELP_EXAMPLES = Map.of(
-            "get", "curl -H \"X-Admin-Token: <token>\" http://localhost:8080/api/admin/senior-rules",
-            "put", "curl -X PUT -H \"X-Admin-Token: <token>\" -H \"Content-Type: application/json\" -d '{\"spring-transactional\":8}' http://localhost:8080/api/admin/senior-rules",
-            "patch", "curl -X PATCH -H \"X-Admin-Token: <token>\" -H \"Content-Type: application/json\" -d '{\"spring-transactional\":9,\"sql-null-semantics\":null}' http://localhost:8080/api/admin/senior-rules",
-            "delete", "curl -X DELETE -H \"X-Admin-Token: <token>\" http://localhost:8080/api/admin/senior-rules/spring-transactional"
-    );
-
-    AdminMaintenanceService adminMaintenanceService;
-    AdminSeniorRulesService adminSeniorRulesService;
-    SensitiveEndpointAccessService accessService;
+    private final AdminApiService adminApiService;
 
     public AdminController(
-            AdminMaintenanceService adminMaintenanceService,
-            AdminSeniorRulesService adminSeniorRulesService,
-            SensitiveEndpointAccessService accessService
+            AdminApiService adminApiService
     ) {
-        this.adminMaintenanceService = adminMaintenanceService;
-        this.adminSeniorRulesService = adminSeniorRulesService;
-        this.accessService = accessService;
+        this.adminApiService = adminApiService;
     }
 
     /**
@@ -72,45 +54,21 @@ public class AdminController {
     public ResponseEntity<?> clearOptions(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "очистки вариантов ответов");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        int deleted = adminMaintenanceService.clearOptions();
-        log.info("Очищены варианты ответов: удалено {} записей, кэш сброшен", deleted);
-        return ResponseEntity.ok(new AdminOperationResult(
-                "Варианты ответов очищены. При следующем показе вопросов будут сгенерированы заново.",
-                Map.of("deleted", deleted)
-        ));
+        return toResponse(adminApiService.clearOptions(token));
     }
 
     @GetMapping("/senior-rules")
     public ResponseEntity<?> getSeniorRulePriorities(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "чтения senior rule priorities");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        AdminSeniorRulesService.OverridesPayload result = adminSeniorRulesService.getOverridesPayload();
-        return ResponseEntity.ok(new AdminOperationResult(
-                "Текущие переопределения приоритетов Senior-правил.",
-                result
-        ));
+        return toResponse(adminApiService.getSeniorRulePriorities(token));
     }
 
     @GetMapping("/senior-rules/help")
     public ResponseEntity<?> getSeniorRulesHelp(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "чтения senior rules help");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        return ResponseEntity.ok(new AdminOperationResult(
-                "Примеры управления приоритетами Senior-правил.",
-                Map.of("examples", SENIOR_RULES_HELP_EXAMPLES)
-        ));
+        return toResponse(adminApiService.getSeniorRulesHelp(token));
     }
 
     @GetMapping("/senior-rules/keys")
@@ -119,14 +77,7 @@ public class AdminController {
             @RequestParam(value = "prefix", required = false) String prefix,
             @RequestParam(value = "q", required = false) String query
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "чтения senior rule keys");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        return ResponseEntity.ok(new AdminOperationResult(
-                "Доступные ключи Senior-правил.",
-                adminSeniorRulesService.getKeysPayload(prefix, query)
-        ));
+        return toResponse(adminApiService.getSeniorRuleKeys(token, prefix, query));
     }
 
     @GetMapping("/senior-rules/catalog")
@@ -135,14 +86,7 @@ public class AdminController {
             @RequestParam(value = "prefix", required = false) String prefix,
             @RequestParam(value = "q", required = false) String query
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "чтения senior rule catalog");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        return ResponseEntity.ok(new AdminOperationResult(
-                "Полный каталог Senior-правил.",
-                adminSeniorRulesService.getCatalogPayload(prefix, query)
-        ));
+        return toResponse(adminApiService.getSeniorRuleCatalog(token, prefix, query));
     }
 
     @PutMapping("/senior-rules")
@@ -150,16 +94,7 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestBody(required = false) Map<String, Integer> overrides
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "обновления senior rule priorities");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        AdminSeniorRulesService.ReplaceResult result = adminSeniorRulesService.replaceOverrides(overrides);
-        log.info("Обновлены senior rule priorities: {} записей", result.size());
-        return ResponseEntity.ok(new AdminOperationResult(
-                "Переопределения приоритетов Senior-правил обновлены.",
-                result
-        ));
+        return toResponse(adminApiService.updateSeniorRulePriorities(token, overrides));
     }
 
     @PatchMapping("/senior-rules")
@@ -167,24 +102,7 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestBody(required = false) Map<String, Integer> updates
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "patch senior rule priorities");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        AdminSeniorRulesService.PatchResult patchResult = adminSeniorRulesService.patchOverrides(updates);
-        log.info("Patch senior rule priorities: applied={}, removed={}, total={}",
-                patchResult.applied(), patchResult.removed(), patchResult.size());
-        return ResponseEntity.ok(new AdminOperationResult(
-                (updates == null || updates.isEmpty())
-                        ? "Patch применён: изменений нет."
-                        : "Patch переопределений Senior-правил применён.",
-                Map.of(
-                        "overrides", patchResult.overrides(),
-                        "size", patchResult.size(),
-                        "applied", patchResult.applied(),
-                        "removed", patchResult.removed()
-                )
-        ));
+        return toResponse(adminApiService.patchSeniorRulePriorities(token, updates));
     }
 
     @DeleteMapping("/senior-rules/{key}")
@@ -192,22 +110,7 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @PathVariable("key") String key
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "удаления senior rule priority");
-        if (forbidden != null) {
-            return forbidden;
-        }
-        AdminSeniorRulesService.DeleteResult result = adminSeniorRulesService.deleteOverride(key);
-        return ResponseEntity.ok(new AdminOperationResult(
-                result.deleted()
-                        ? "Переопределение приоритета удалено."
-                        : "Переопределение не найдено, изменений нет.",
-                Map.of(
-                        "key", result.key(),
-                        "deleted", result.deleted(),
-                        "overrides", result.overrides(),
-                        "size", result.size()
-                )
-        ));
+        return toResponse(adminApiService.deleteSeniorRulePriority(token, key));
     }
 
     /**
@@ -230,27 +133,17 @@ public class AdminController {
     public ResponseEntity<?> resetAll(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<ApiError> forbidden = forbidden(token, "полного сброса артефактов");
-        if (forbidden != null) {
-            return forbidden;
-        }
-
-        AdminMaintenanceService.ResetAllResult result = adminMaintenanceService.resetAll();
-
-        log.info("Полный сброс артефактов: options={}, hints={}, diagrams={}, regenCount={}",
-                result.deletedOptions(), result.deletedHints(), result.clearedDiagrams(), result.resetRegenCount());
-
-        return ResponseEntity.ok(new AdminResetAllResult(
-                result.deletedOptions(),
-                result.deletedHints(),
-                result.clearedDiagrams(),
-                result.resetRegenCount(),
-                "Все AI-артефакты сброшены. Варианты, подсказки и диаграммы будут пересозданы при следующем показе."
-        ));
+        return toResponse(adminApiService.resetAll(token));
     }
 
-    private ResponseEntity<ApiError> forbidden(String token, String action) {
-        return accessService.forbiddenIfUnauthorized(token, action);
+    private ResponseEntity<?> toResponse(AdminApiService.AdminApiResult result) {
+        if (result.status().is2xxSuccessful()) {
+            Object body = result.body();
+            if (body instanceof AdminOperationResult || body instanceof AdminResetAllResult) {
+                log.info("admin_endpoint_success status={} bodyType={}", result.status().value(), body.getClass().getSimpleName());
+            }
+        }
+        return ResponseEntity.status(result.status()).body(result.body());
     }
 
 }

@@ -96,6 +96,9 @@
 - [x] Extracted `/export` orchestration into `ExportApiService` (access check, format validation, export branching, serialization error mapping), reducing `ExportController` to HTTP response mapping.
 - [x] Removed manual error JSON byte-serialization path from controller and standardized JSON error responses through `ApiError` payloads.
 - [x] Added `ExportApiServiceTest` and updated `ExportControllerErrorTest` to validate the new service boundary and 500 error contract.
+- [x] Extracted admin endpoint orchestration into `AdminApiService` and converted `AdminController` into thin HTTP adapter with explicit constructor injection (removed `lombok.experimental.FieldDefaults` usage).
+- [x] Updated `AdminControllerTest` and `AdminControllerNoTokenTest` wiring to include `AdminApiService` in MVC context.
+- [x] Added `AdminApiServiceTest` for authorization gate behavior and admin payload mapping contracts.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

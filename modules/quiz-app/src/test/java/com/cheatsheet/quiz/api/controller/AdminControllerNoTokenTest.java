@@ -16,8 +16,10 @@ import com.cheatsheet.quiz.api.dto.ApiError;
 import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.service.AdminApiService;
 import com.cheatsheet.quiz.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
+import com.cheatsheet.quiz.service.admin.SeniorRuleOverridePayloadProcessor;
 import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +41,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(AdminController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = "app.admin-token=")
-@Import({AdminSeniorRulesService.class, SeniorRulePriorityOverrideStore.class, AdminControllerNoTokenTest.AppPropertiesTestConfig.class})
+@Import({AdminApiService.class, AdminSeniorRulesService.class, SeniorRuleOverridePayloadProcessor.class, SeniorRulePriorityOverrideStore.class, AdminControllerNoTokenTest.AppPropertiesTestConfig.class})
 class AdminControllerNoTokenTest {
 
     @Autowired
