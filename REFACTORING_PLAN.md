@@ -134,6 +134,7 @@
 - [x] Added `QuestionExpansionServiceTest` to cover variant creation and no-op behavior when alternatives are empty.
 - [x] Removed Lombok `@FieldDefaults` from `ConfigurableAiClient`; switched to explicit immutable provider configuration fields.
 - [x] Added `ConfigurableAiClientTest` to lock provider identity/config wiring contract.
+- [x] Removed Lombok constructor/`@FieldDefaults` from `CaffeineOptionCache`; switched to explicit immutable constructor wiring.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
