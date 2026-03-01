@@ -137,6 +137,8 @@
 - [x] Removed Lombok constructor/`@FieldDefaults` from `CaffeineOptionCache`; switched to explicit immutable constructor wiring.
 - [x] Removed Lombok `@FieldDefaults` from `SensitiveEndpointAccessService`; switched to explicit immutable dependency fields.
 - [x] Expanded `SensitiveEndpointAccessServiceTest` for missing-token forbidden contract and production-profile token guard.
+- [x] Extracted `ApiRequestMapper` to centralize API request -> service-command mapping in `InterviewApiController` and reduce controller orchestration complexity.
+- [x] Added `ApiRequestMapperTest` and updated `InterviewApiControllerUnitTest` wiring to lock command-mapping behavior.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

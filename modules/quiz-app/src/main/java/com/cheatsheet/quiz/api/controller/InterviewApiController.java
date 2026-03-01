@@ -16,6 +16,7 @@ import com.cheatsheet.quiz.api.dto.response.StreakResponse;
 import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
 import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
+import com.cheatsheet.quiz.api.mapper.ApiRequestMapper;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.ConfidenceApiService;
 import com.cheatsheet.quiz.service.FavoriteApiService;
@@ -59,6 +60,7 @@ public class InterviewApiController {
     private final FavoriteApiService favoriteApiService;
     private final StreakApiService streakApiService;
     private final StatsApiService statsApiService;
+    private final ApiRequestMapper apiRequestMapper;
 
     public InterviewApiController(
             AnswerApiService answerApiService,
@@ -69,7 +71,8 @@ public class InterviewApiController {
             RegenerateEndpointService regenerateEndpointService,
             FavoriteApiService favoriteApiService,
             StreakApiService streakApiService,
-            StatsApiService statsApiService
+            StatsApiService statsApiService,
+            ApiRequestMapper apiRequestMapper
     ) {
         this.answerApiService = answerApiService;
         this.hintApiService = hintApiService;
@@ -80,6 +83,7 @@ public class InterviewApiController {
         this.favoriteApiService = favoriteApiService;
         this.streakApiService = streakApiService;
         this.statsApiService = statsApiService;
+        this.apiRequestMapper = apiRequestMapper;
     }
 
     @PostMapping("/api/answer")
@@ -87,17 +91,7 @@ public class InterviewApiController {
             @Valid @ModelAttribute SubmitAnswerRequest request,
             HttpSession session
     ) {
-        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                request.getQuestionId(),
-                request.getOptionId(),
-                request.getTopic(),
-                request.getGroup(),
-                request.getImportant(),
-                request.getOnlyWrong(),
-                request.getShuffle(),
-                request.getOrdered(),
-                request.getConfidence()
-        );
+        AnswerApiService.AnswerCommand command = apiRequestMapper.toAnswerCommand(request);
         return ResponseEntity.ok(answerApiService.buildAnswerResponse(command, session));
     }
 
@@ -127,8 +121,7 @@ public class InterviewApiController {
     public ResponseEntity<HintResponse> getHint(
             @Valid @ModelAttribute HintRequest request
     ) {
-        HintApiService.HintCommand command =
-                new HintApiService.HintCommand(request.getQuestionId(), request.levelOrDefault());
+        HintApiService.HintCommand command = apiRequestMapper.toHintCommand(request);
         return ResponseEntity.ok(hintApiService.buildHintResponse(command));
     }
 
@@ -168,9 +161,8 @@ public class InterviewApiController {
             @RequestParam(value = "shuffle", required = false) Boolean shuffle,
             @RequestParam(value = "ordered", required = false) Boolean ordered
     ) {
-        StatsApiService.StatsCommand command = new StatsApiService.StatsCommand(
-                topic, group, important, onlyWrong, shuffle, ordered
-        );
+        StatsApiService.StatsCommand command =
+                apiRequestMapper.toStatsCommand(topic, group, important, onlyWrong, shuffle, ordered);
         return ResponseEntity.ok(statsApiService.buildStatsResponse(command));
     }
 
@@ -193,7 +185,7 @@ public class InterviewApiController {
             @RequestParam(value = "ordered", required = false) Boolean ordered,
             @RequestParam(value = "excludeQuestionId", required = false) Long excludeQuestionId
     ) {
-        NextQuestionApiService.NextQuestionCommand command = new NextQuestionApiService.NextQuestionCommand(
+        NextQuestionApiService.NextQuestionCommand command = apiRequestMapper.toNextQuestionCommand(
                 topic,
                 group,
                 important,

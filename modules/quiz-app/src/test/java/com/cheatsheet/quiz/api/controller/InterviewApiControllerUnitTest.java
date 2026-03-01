@@ -12,6 +12,7 @@ import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
+import com.cheatsheet.quiz.api.mapper.ApiRequestMapper;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
@@ -64,7 +65,8 @@ class InterviewApiControllerUnitTest {
                 regenerateEndpointService,
                 favoriteApiService,
                 streakApiService,
-                statsApiService
+                statsApiService,
+                new ApiRequestMapper()
         );
     }
 
