@@ -11,8 +11,6 @@ import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;
 import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.google.common.util.concurrent.Striped;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -34,7 +32,6 @@ import java.util.concurrent.locks.Lock;
  * @see OptionDeduplicator
  */
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class OptionGenerationService {
 
@@ -54,21 +51,18 @@ public class OptionGenerationService {
     private record DedupSelection(OptionDeduplicator.DedupResult dedupResult, boolean reducedOptions) {}
     private static final int CURRENT_OPTION_PROMPT_VERSION = AiPrompts.OPTION_PROMPT_VERSION;
     private static final int CURRENT_OPTION_QUALITY_PROFILE_VERSION = AiPrompts.OPTION_QUALITY_PROFILE_VERSION;
-    AnswerOptionRepository answerOptionRepository;
-    OptionGenerator optionGenerator;
-    OptionCache optionCache;
-    TransactionTemplate transactionTemplate;
-    OptionDeduplicator deduplicator;
-    DomainDifficultyContextBuilder domainDifficultyContextBuilder;
-    OptionQualityValidator optionQualityValidator;
+    private final AnswerOptionRepository answerOptionRepository;
+    private final OptionGenerator optionGenerator;
+    private final OptionCache optionCache;
+    private final TransactionTemplate transactionTemplate;
+    private final OptionDeduplicator deduplicator;
+    private final DomainDifficultyContextBuilder domainDifficultyContextBuilder;
+    private final OptionQualityRetryOrchestrator optionQualityRetryOrchestrator;
 
-    int optionsCount;
-    int minAcceptedOptions;
-    int optionQualityRetryAttempts;
-    long optionQualityRetryBackoffMs;
-    long optionQualityRetryMaxElapsedMs;
-    Map<String, Integer> seniorRulePriorityOverrides;
-    Striped<Lock> questionLocks;
+    private final int optionsCount;
+    private final int minAcceptedOptions;
+    private final Map<String, Integer> seniorRulePriorityOverrides;
+    private final Striped<Lock> questionLocks;
 
     public OptionGenerationService(
             AnswerOptionRepository answerOptionRepository,
@@ -87,15 +81,13 @@ public class OptionGenerationService {
         this.optionCache = optionCache;
         this.optionsCount = appProperties.getInterview().getOptionsCount();
         this.minAcceptedOptions = appProperties.getInterview().getOptionMinAcceptedCount();
-        this.optionQualityRetryAttempts = appProperties.getInterview().getOptionQualityRetryAttempts();
-        this.optionQualityRetryBackoffMs = appProperties.getInterview().getOptionQualityRetryBackoffMs();
-        this.optionQualityRetryMaxElapsedMs = appProperties.getInterview().getOptionQualityRetryMaxElapsedMs();
         this.seniorRulePriorityOverrides = seniorRulePriorityOverrideStore.view();
         this.questionLocks = questionLocks;
         this.transactionTemplate = transactionTemplate;
         this.deduplicator = deduplicator;
         this.domainDifficultyContextBuilder = domainDifficultyContextBuilder;
-        this.optionQualityValidator = optionQualityValidator;
+        this.optionQualityRetryOrchestrator =
+                new OptionQualityRetryOrchestrator(optionGenerator, optionQualityValidator, appProperties);
     }
 
     public List<AnswerOption> getOrCreateOptions(Question question) {
@@ -158,7 +150,7 @@ public class OptionGenerationService {
         String answerContext = domainDifficultyContextBuilder.sanitizeAnswerContext(question.answerMarkdown());
         String baseQualityContext = domainDifficultyContextBuilder.build(question, seniorRulePriorityOverrides);
 
-        QualityCheckedGeneration qualityChecked = generateWithQualityRetry(
+        OptionQualityRetryOrchestrator.QualityCheckedGeneration qualityChecked = optionQualityRetryOrchestrator.generateWithQualityRetry(
                 question, questionText, answerContext, codeSnippet, baseQualityContext
         );
         GeneratedOptions aiGenerated = qualityChecked.generatedOptions();
@@ -187,102 +179,6 @@ public class OptionGenerationService {
         );
     }
 
-    private record QualityCheckedGeneration(GeneratedOptions generatedOptions, boolean acceptedWithWarnings) {}
-
-    private QualityCheckedGeneration generateWithQualityRetry(
-            Question question,
-            String questionText,
-            String answerContext,
-            String codeSnippet,
-            String baseQualityContext
-    ) {
-        int maxAttempts = Math.max(1, optionQualityRetryAttempts + 1);
-        long startedAt = System.currentTimeMillis();
-        String qualityContext = baseQualityContext;
-        OptionQualityValidator.ValidationReport lastReport = null;
-
-        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-            GeneratedOptions generated = requestOptions(questionText, answerContext, codeSnippet, qualityContext)
-                    .orElseThrow(() -> new AiGenerationException(
-                            "AI не вернул валидные варианты ответа для вопроса id=" + question.id()));
-
-            OptionQualityValidator.ValidationReport report = optionQualityValidator.validateQualityReportWithContext(
-                    generated,
-                    questionText,
-                    answerContext,
-                    question.topic()
-            );
-            lastReport = report;
-            int qualityScore = Math.max(0, 100 - report.penaltyScore());
-
-            if (report.isClean()) {
-                log.info("options_quality_passed questionId={} attempt={} score={} issues=0",
-                        question.id(), attempt, qualityScore);
-                return new QualityCheckedGeneration(generated, false);
-            }
-
-            boolean critical = report.hasCritical();
-            boolean hardBlock = optionQualityValidator.hasHardBlockIssues(report);
-            log.warn("options_quality_issues questionId={} attempt={} score={} critical={} hardBlock={} issues={}",
-                    question.id(), attempt, qualityScore, critical, hardBlock, String.join("; ", report.messages()));
-
-            if (!critical && !hardBlock) {
-                return new QualityCheckedGeneration(generated, true);
-            }
-
-            boolean hasNextAttempt = attempt < maxAttempts;
-            long elapsed = System.currentTimeMillis() - startedAt;
-            if (!hasNextAttempt || elapsed >= optionQualityRetryMaxElapsedMs) {
-                if (hardBlock) {
-                    throw new AiGenerationException("AI вернул quality hard-block варианты для вопроса id=" + question.id());
-                }
-                return new QualityCheckedGeneration(generated, true);
-            }
-
-            qualityContext = appendQualityFixContext(baseQualityContext, report, attempt);
-            sleepBackoffIfNeeded(startedAt);
-        }
-
-        if (lastReport != null && optionQualityValidator.hasHardBlockIssues(lastReport)) {
-            throw new AiGenerationException("AI вернул quality hard-block варианты для вопроса id=" + question.id());
-        }
-        throw new AiGenerationException("AI не смог сгенерировать качественные варианты для вопроса id=" + question.id());
-    }
-
-    private String appendQualityFixContext(
-            String baseQualityContext,
-            OptionQualityValidator.ValidationReport report,
-            int attempt
-    ) {
-        StringBuilder sb = new StringBuilder();
-        if (baseQualityContext != null && !baseQualityContext.isBlank()) {
-            sb.append(baseQualityContext).append('\n');
-        }
-        sb.append("QUALITY_RETRY_ATTEMPT=").append(attempt).append('\n');
-        sb.append("QUALITY_FIX_REQUIRED:\n");
-        int maxHints = Math.min(5, report.messages().size());
-        for (int i = 0; i < maxHints; i++) {
-            sb.append("- ").append(report.messages().get(i)).append('\n');
-        }
-        return sb.toString();
-    }
-
-    private void sleepBackoffIfNeeded(long startedAtMs) {
-        if (optionQualityRetryBackoffMs <= 0) {
-            return;
-        }
-        long elapsed = System.currentTimeMillis() - startedAtMs;
-        long remaining = optionQualityRetryMaxElapsedMs - elapsed;
-        if (remaining <= 0) {
-            return;
-        }
-        long sleepMs = Math.min(optionQualityRetryBackoffMs, remaining);
-        try {
-            Thread.sleep(sleepMs);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
-    }
 
     private DedupSelection pickDedupResult(
             Question question,
@@ -373,18 +269,6 @@ public class OptionGenerationService {
             }
         }
         return true;
-    }
-
-    private Optional<GeneratedOptions> requestOptions(
-            String questionText,
-            String answerMarkdown,
-            String codeSnippet,
-            String qualityContext
-    ) {
-        if (qualityContext == null || qualityContext.isBlank()) {
-            return optionGenerator.generateOptions(questionText, answerMarkdown, codeSnippet);
-        }
-        return optionGenerator.generateOptions(questionText, answerMarkdown, codeSnippet, qualityContext);
     }
 
 }

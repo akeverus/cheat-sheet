@@ -112,6 +112,9 @@
 - [x] Extracted MVC page rendering and request-to-model orchestration (`/`, `/training`, `/review`, `/settings`, `/stats`) into `InterviewPageMvcService`.
 - [x] Simplified `InterviewMvcController` to thin HTTP adapter by delegating page endpoints to `InterviewPageMvcService`.
 - [x] Added `InterviewPageMvcServiceTest` to lock focus/review/settings/stats MVC orchestration behavior.
+- [x] Extracted quality retry + fix-context loop from `OptionGenerationService` into `OptionQualityRetryOrchestrator`.
+- [x] Reduced `OptionGenerationService` method complexity by delegating critical/warning/hard-block retry decisions to dedicated orchestrator.
+- [x] Added `OptionQualityRetryOrchestratorTest` for retry context enrichment and hard-block termination behavior.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
