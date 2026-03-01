@@ -107,6 +107,8 @@
 - [x] Kept `OptionQualityValidator` behavior stable while reducing method-level complexity and improving cohesion of question-option quality checks.
 - [x] Added `OptionStyleHeuristicsSupportTest` for isolated verification of extracted style heuristics.
 - [x] Removed `lombok.experimental.FieldDefaults` from `QualityIterationsStartupRunner` and switched to explicit `private final` fields.
+- [x] Removed `lombok.experimental.FieldDefaults` from `PromptAutoTuningService` and switched to explicit field visibility/finality.
+- [x] Added `PromptAutoTuningServiceTest` to lock config-driven rule limiting and reset behavior.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
