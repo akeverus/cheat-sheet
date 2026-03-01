@@ -1,7 +1,5 @@
 package com.cheatsheet.quiz.api.controller;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.dto.response.AdminOperationResult;
 import com.cheatsheet.quiz.api.dto.response.AdminResetAllResult;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
@@ -10,8 +8,6 @@ import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -157,19 +153,15 @@ public class AdminController {
         if (forbidden != null) {
             return forbidden;
         }
-        try {
-            Map<String, Object> payload = adminSeniorRulesService.replaceOverrides(overrides);
-            @SuppressWarnings("unchecked")
-            Map<String, Integer> sorted = (Map<String, Integer>) payload.get("overrides");
+        Map<String, Object> payload = adminSeniorRulesService.replaceOverrides(overrides);
+        @SuppressWarnings("unchecked")
+        Map<String, Integer> sorted = (Map<String, Integer>) payload.get("overrides");
 
-            log.info("Обновлены senior rule priorities: {} записей", sorted.size());
-            return ResponseEntity.ok(new AdminOperationResult(
-                    "Переопределения приоритетов Senior-правил обновлены.",
-                    payload
-            ));
-        } catch (AdminSeniorRulesService.ValidationException ex) {
-            return validationError(ex);
-        }
+        log.info("Обновлены senior rule priorities: {} записей", sorted.size());
+        return ResponseEntity.ok(new AdminOperationResult(
+                "Переопределения приоритетов Senior-правил обновлены.",
+                payload
+        ));
     }
 
     @PatchMapping("/senior-rules")
@@ -181,24 +173,20 @@ public class AdminController {
         if (forbidden != null) {
             return forbidden;
         }
-        try {
-            AdminSeniorRulesService.PatchResult patchResult = adminSeniorRulesService.patchOverrides(updates);
-            log.info("Patch senior rule priorities: applied={}, removed={}, total={}",
-                    patchResult.applied(), patchResult.removed(), patchResult.size());
-            return ResponseEntity.ok(new AdminOperationResult(
-                    (updates == null || updates.isEmpty())
-                            ? "Patch применён: изменений нет."
-                            : "Patch переопределений Senior-правил применён.",
-                    Map.of(
-                            "overrides", patchResult.overrides(),
-                            "size", patchResult.size(),
-                            "applied", patchResult.applied(),
-                            "removed", patchResult.removed()
-                    )
-            ));
-        } catch (AdminSeniorRulesService.ValidationException ex) {
-            return validationError(ex);
-        }
+        AdminSeniorRulesService.PatchResult patchResult = adminSeniorRulesService.patchOverrides(updates);
+        log.info("Patch senior rule priorities: applied={}, removed={}, total={}",
+                patchResult.applied(), patchResult.removed(), patchResult.size());
+        return ResponseEntity.ok(new AdminOperationResult(
+                (updates == null || updates.isEmpty())
+                        ? "Patch применён: изменений нет."
+                        : "Patch переопределений Senior-правил применён.",
+                Map.of(
+                        "overrides", patchResult.overrides(),
+                        "size", patchResult.size(),
+                        "applied", patchResult.applied(),
+                        "removed", patchResult.removed()
+                )
+        ));
     }
 
     @DeleteMapping("/senior-rules/{key}")
@@ -210,22 +198,18 @@ public class AdminController {
         if (forbidden != null) {
             return forbidden;
         }
-        try {
-            AdminSeniorRulesService.DeleteResult result = adminSeniorRulesService.deleteOverride(key);
-            return ResponseEntity.ok(new AdminOperationResult(
-                    result.deleted()
-                            ? "Переопределение приоритета удалено."
-                            : "Переопределение не найдено, изменений нет.",
-                    Map.of(
-                            "key", result.key(),
-                            "deleted", result.deleted(),
-                            "overrides", result.overrides(),
-                            "size", result.size()
-                    )
-            ));
-        } catch (AdminSeniorRulesService.ValidationException ex) {
-            return validationError(ex);
-        }
+        AdminSeniorRulesService.DeleteResult result = adminSeniorRulesService.deleteOverride(key);
+        return ResponseEntity.ok(new AdminOperationResult(
+                result.deleted()
+                        ? "Переопределение приоритета удалено."
+                        : "Переопределение не найдено, изменений нет.",
+                Map.of(
+                        "key", result.key(),
+                        "deleted", result.deleted(),
+                        "overrides", result.overrides(),
+                        "size", result.size()
+                )
+        ));
     }
 
     /**
@@ -275,15 +259,4 @@ public class AdminController {
         return accessService.buildForbiddenResponse(token);
     }
 
-    private ResponseEntity<ApiError> validationError(AdminSeniorRulesService.ValidationException ex) {
-        ApiError error = new ApiError(
-                HttpStatus.BAD_REQUEST.value(),
-                ApiErrorTypes.VALIDATION_ERROR,
-                ex.getMessage(),
-                ex.details()
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(error);
-    }
 }

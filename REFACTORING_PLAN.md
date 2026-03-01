@@ -39,10 +39,13 @@
 - [x] Added anti-duplication guard for question generation retries using candidate fingerprinting across attempts.
 - [x] Integrated policy-level violation enrichment into `QuestionGenerationService` retry pipeline and quality logging.
 - [x] Expanded question-engine tests with `QuestionGenerationPolicyTest` and duplicate-retry regression coverage.
+- [x] Moved admin senior-rules validation exception mapping out of `AdminController` into global `@ControllerAdvice`.
+- [x] Removed controller-local `try/catch` blocks from admin senior-rules endpoints (PUT/PATCH/DELETE), preserving API error contracts via centralized handler.
+- [x] Kept admin `MockMvc` regression suite green after centralized exception mapping refactor.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
-- [ ] Standardize service-level precondition checks and keep controllers as HTTP adapters only.
+- [ ] Standardize service-level precondition checks and keep MVC controllers as HTTP adapters only.
 - [ ] Expand quality policy to topic-level uniqueness constraints in generation flow.
 
 ## Backlog
