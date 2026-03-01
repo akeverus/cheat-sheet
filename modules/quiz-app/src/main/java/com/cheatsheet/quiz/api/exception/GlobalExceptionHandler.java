@@ -94,7 +94,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AdminSeniorRulesService.ValidationException.class)
     public Object handleAdminValidationException(AdminSeniorRulesService.ValidationException ex, HttpServletRequest request) {
-        List<String> details = ex.details() == null ? null : List.of(ex.details().toString());
+        List<String> details = toDetailsList(ex.details());
         return badRequest(request, ApiErrorTypes.VALIDATION_ERROR, ex.getMessage(), details);
     }
 
@@ -197,5 +197,15 @@ public class GlobalExceptionHandler {
                 .replace('\t', ' ')
                 .trim();
         return compact.length() > 300 ? compact.substring(0, 300) + "..." : compact;
+    }
+
+    private List<String> toDetailsList(java.util.Map<String, ?> details) {
+        if (details == null || details.isEmpty()) {
+            return null;
+        }
+        return details.entrySet().stream()
+                .sorted(java.util.Map.Entry.comparingByKey())
+                .map(entry -> entry.getKey() + ": " + String.valueOf(entry.getValue()))
+                .toList();
     }
 }

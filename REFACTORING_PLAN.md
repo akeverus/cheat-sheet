@@ -44,6 +44,8 @@
 - [x] Kept admin `MockMvc` regression suite green after centralized exception mapping refactor.
 - [x] Removed remaining auth-guard duplication from `AdminController` by delegating all checks to `SensitiveEndpointAccessService.forbiddenIfUnauthorized`.
 - [x] Updated admin controller tests to use centralized forbidden-guard stubbing instead of direct `isAuthorized` stubs.
+- [x] Standardized admin validation error details in `GlobalExceptionHandler` using deterministic key-sorted detail mapping.
+- [x] Added `GlobalExceptionHandlerTest` coverage for `AdminSeniorRulesService.ValidationException` API contract.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
