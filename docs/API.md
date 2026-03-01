@@ -144,7 +144,8 @@ Query params:
 {
   "status": 404,
   "type": "QUESTION_NOT_FOUND",
-  "message": "..."
+  "message": "...",
+  "details": null
 }
 ```
 

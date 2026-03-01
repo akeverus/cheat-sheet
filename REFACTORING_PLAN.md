@@ -48,13 +48,23 @@
 - [x] Added `GlobalExceptionHandlerTest` coverage for `AdminSeniorRulesService.ValidationException` API contract.
 - [x] Optimized `AdminSeniorRulesService` catalog/key endpoints by caching immutable rule metadata instead of rebuilding registries per request.
 - [x] Reduced per-request allocation in senior-rules validation via precomputed allowed-key set reuse.
+- [x] Added `QuestionUniquenessService` with Caffeine-backed topic/type fingerprint window to enforce cross-request anti-duplication in question generation.
+- [x] Integrated recent fingerprint loading/persistence into `QuestionGenerationService` acceptance flow and kept retry-level duplicate checks policy-driven.
+- [x] Extended question-engine unit coverage with `QuestionUniquenessServiceTest` and uniqueness persistence assertion in `QuestionGenerationServiceTest`.
+- [x] Consolidated question-engine runtime knobs in `AppProperties` (`app.interview.question-*`) to remove scattered inline `@Value` defaults.
+- [x] Switched `QuestionGenerationService` retry limit to configuration-driven `question-generation-max-attempts` for deterministic behavior across environments.
+- [x] Extended `QuestionGenerationPolicy` with near-duplicate semantic guard (Jaccard token similarity) in addition to exact fingerprint checks.
+- [x] Upgraded `QuestionPromptBuilder` with explicit generation constraints block (quality/verbosity/uniqueness thresholds) to tighten LLM output contract.
+- [x] Eliminated field injection from `OpenApiConfig` by switching to constructor injection.
+- [x] Added/updated engineering documentation: `docs/QUESTION_ENGINE.md`, `docs/SECURITY.md`, `docs/ARCHITECTURE.md`, `docs/API.md`, `README.md`.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep MVC controllers as HTTP adapters only.
-- [ ] Expand quality policy to topic-level uniqueness constraints in generation flow.
+- [ ] Expand quality policy from topic-local near-duplicate checks to semantic cross-topic similarity constraints.
+- [ ] Introduce explicit Spring Security `SecurityFilterChain` with endpoint-level authorization and hardened CORS/CSRF strategy.
 
 ## Backlog
 - [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.
-- [ ] Add broader exception-handling and security hardening pass (endpoint guard consistency, authz invariants).
+- [ ] Add broader exception-handling hardening pass (audit IDs, error correlation, API/MVC parity).
 - [ ] Expand regression coverage for refactored service boundaries and LLM failure paths.
