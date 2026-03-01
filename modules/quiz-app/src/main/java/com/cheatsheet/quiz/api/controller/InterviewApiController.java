@@ -1,7 +1,6 @@
 package com.cheatsheet.quiz.api.controller;
 
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
-import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
 import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
@@ -17,7 +16,6 @@ import com.cheatsheet.quiz.api.dto.response.StreakResponse;
 import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
 import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
-import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintApiService;
@@ -25,16 +23,14 @@ import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.QuestionInsightsApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
+import com.cheatsheet.quiz.service.StatsApiService;
 import com.cheatsheet.quiz.service.DailyStreakService;
-import com.cheatsheet.quiz.util.FilterUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -52,18 +48,17 @@ import java.util.Optional;
  */
 @RestController
 @Validated
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewApiController {
 
-    AnswerApiService answerApiService;
-    HintApiService hintApiService;
-    InterviewFacade facade;
-    NextQuestionApiService nextQuestionApiService;
-    QuestionInsightsApiService questionInsightsApiService;
-    RegenerateEndpointService regenerateEndpointService;
-    FavoriteService favoriteService;
-    DailyStreakService dailyStreakService;
-    StatsApiMapper statsApiMapper;
+    private final AnswerApiService answerApiService;
+    private final HintApiService hintApiService;
+    private final InterviewFacade facade;
+    private final NextQuestionApiService nextQuestionApiService;
+    private final QuestionInsightsApiService questionInsightsApiService;
+    private final RegenerateEndpointService regenerateEndpointService;
+    private final FavoriteService favoriteService;
+    private final DailyStreakService dailyStreakService;
+    private final StatsApiService statsApiService;
 
     public InterviewApiController(
             AnswerApiService answerApiService,
@@ -74,7 +69,7 @@ public class InterviewApiController {
             RegenerateEndpointService regenerateEndpointService,
             FavoriteService favoriteService,
             DailyStreakService dailyStreakService,
-            StatsApiMapper statsApiMapper
+            StatsApiService statsApiService
     ) {
         this.answerApiService = answerApiService;
         this.hintApiService = hintApiService;
@@ -84,7 +79,7 @@ public class InterviewApiController {
         this.regenerateEndpointService = regenerateEndpointService;
         this.favoriteService = favoriteService;
         this.dailyStreakService = dailyStreakService;
-        this.statsApiMapper = statsApiMapper;
+        this.statsApiService = statsApiService;
     }
 
     @PostMapping("/api/answer")
@@ -174,20 +169,15 @@ public class InterviewApiController {
             @RequestParam(value = "shuffle", required = false) Boolean shuffle,
             @RequestParam(value = "ordered", required = false) Boolean ordered
     ) {
-        InterviewFilter filter = new InterviewFilter(
-                FilterUtils.normalizeTopic(topic),
-                FilterUtils.normalizeGroup(group),
-                important,
-                onlyWrong,
-                shuffle,
-                ordered
+        StatsApiService.StatsCommand command = new StatsApiService.StatsCommand(
+                topic, group, important, onlyWrong, shuffle, ordered
         );
-        return ResponseEntity.ok(statsApiMapper.toResponse(facade.getStats(filter)));
+        return ResponseEntity.ok(statsApiService.buildStatsResponse(command));
     }
 
     @GetMapping("/api/topic-stats")
     public ResponseEntity<List<TopicStatsResponse>> getTopicStats() {
-        return ResponseEntity.ok(statsApiMapper.toTopicResponses(facade.getTopicStats()));
+        return ResponseEntity.ok(statsApiService.buildTopicStatsResponse());
     }
 
     @GetMapping("/api/next")

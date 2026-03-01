@@ -86,6 +86,9 @@
 - [x] Added `HintApiServiceTest` and updated `InterviewApiControllerUnitTest` to keep hint API contract and error-propagation coverage after extraction.
 - [x] Extracted question-insights endpoint orchestration (`/api/wrong-feedback`, `/api/takeaway`, `/api/comparison`, `/api/code-trace`) into dedicated `QuestionInsightsApiService` to remove business flow from `InterviewApiController`.
 - [x] Added `QuestionInsightsApiServiceTest` and switched controller tests to service-delegation assertions for insights endpoints.
+- [x] Extracted `/api/stats` and `/api/topic-stats` orchestration to `StatsApiService` (filter normalization + DTO mapping) and kept `InterviewApiController` as HTTP adapter.
+- [x] Removed `lombok.experimental` field defaults from `InterviewApiController` in favor of explicit `private final` dependencies and constructor wiring.
+- [x] Added `StatsApiServiceTest` and updated controller tests to validate delegation for stats endpoints.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

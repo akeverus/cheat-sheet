@@ -12,12 +12,8 @@ import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
-import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
-import com.cheatsheet.quiz.domain.InterviewFilter;
-import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
-import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.service.AnswerApiService;
@@ -27,6 +23,7 @@ import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.QuestionInsightsApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
+import com.cheatsheet.quiz.service.StatsApiService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +47,7 @@ class InterviewApiControllerUnitTest {
     @Mock private RegenerateEndpointService regenerateEndpointService;
     @Mock private FavoriteService favoriteService;
     @Mock private DailyStreakService dailyStreakService;
-    @Mock private StatsApiMapper statsApiMapper;
+    @Mock private StatsApiService statsApiService;
 
     private InterviewApiController controller;
 
@@ -65,7 +62,7 @@ class InterviewApiControllerUnitTest {
                 regenerateEndpointService,
                 favoriteService,
                 dailyStreakService,
-                statsApiMapper
+                statsApiService
         );
     }
 
@@ -547,12 +544,10 @@ class InterviewApiControllerUnitTest {
     }
 
     @Test
-    void statsNormalizesFilterAndUsesMapperResponse() {
-        InterviewStats domainStats = new InterviewStats(20, 5, 9, 33, 7);
+    void statsDelegatesToServiceAndReturnsPayload() {
         com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse mapped =
                 new com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse(20, 5, 9, 33, 7);
-        when(facade.getStats(org.mockito.ArgumentMatchers.any())).thenReturn(domainStats);
-        when(statsApiMapper.toResponse(domainStats)).thenReturn(mapped);
+        when(statsApiService.buildStatsResponse(any())).thenReturn(mapped);
 
         ResponseEntity<?> response = controller.getStats(
                 "  java  ",
@@ -565,37 +560,22 @@ class InterviewApiControllerUnitTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(mapped);
-        ArgumentCaptor<InterviewFilter> captor = ArgumentCaptor.forClass(InterviewFilter.class);
-        verify(facade).getStats(captor.capture());
-        InterviewFilter filter = captor.getValue();
-        assertThat(filter.topic()).isEqualTo("java");
-        assertThat(filter.group()).isEqualTo("core");
-        assertThat(filter.importantOnly()).isTrue();
-        assertThat(filter.onlyWrong()).isFalse();
-        assertThat(filter.shuffle()).isTrue();
-        assertThat(filter.ordered()).isFalse();
-        verify(statsApiMapper).toResponse(domainStats);
+        verify(statsApiService).buildStatsResponse(any());
     }
 
     @Test
-    void topicStatsReturnsMappedListFromMapper() {
-        List<TopicStats> domain = List.of(
-                new TopicStats("java", 10, 3, 4, 20, 5, 1),
-                new TopicStats("spring", 8, 2, 3, 15, 4, 0)
-        );
+    void topicStatsDelegatesToServiceAndReturnsPayload() {
         List<com.cheatsheet.quiz.api.dto.response.TopicStatsResponse> mapped = List.of(
                 new com.cheatsheet.quiz.api.dto.response.TopicStatsResponse("java", 10, 3, 4, 20, 5, 1),
                 new com.cheatsheet.quiz.api.dto.response.TopicStatsResponse("spring", 8, 2, 3, 15, 4, 0)
         );
-        when(facade.getTopicStats()).thenReturn(domain);
-        when(statsApiMapper.toTopicResponses(domain)).thenReturn(mapped);
+        when(statsApiService.buildTopicStatsResponse()).thenReturn(mapped);
 
         ResponseEntity<?> response = controller.getTopicStats();
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(mapped);
-        verify(facade).getTopicStats();
-        verify(statsApiMapper).toTopicResponses(domain);
+        verify(statsApiService).buildTopicStatsResponse();
     }
 
     @Test
