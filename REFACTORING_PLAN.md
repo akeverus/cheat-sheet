@@ -135,6 +135,8 @@
 - [x] Removed Lombok `@FieldDefaults` from `ConfigurableAiClient`; switched to explicit immutable provider configuration fields.
 - [x] Added `ConfigurableAiClientTest` to lock provider identity/config wiring contract.
 - [x] Removed Lombok constructor/`@FieldDefaults` from `CaffeineOptionCache`; switched to explicit immutable constructor wiring.
+- [x] Removed Lombok `@FieldDefaults` from `SensitiveEndpointAccessService`; switched to explicit immutable dependency fields.
+- [x] Expanded `SensitiveEndpointAccessServiceTest` for missing-token forbidden contract and production-profile token guard.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

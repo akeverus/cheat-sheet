@@ -5,8 +5,6 @@ import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.config.AppProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -24,7 +22,6 @@ import java.util.Arrays;
  * Политики доступа для чувствительных endpoint (admin, export, regenerate).
  */
 @Component
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class SensitiveEndpointAccessService {
 
@@ -34,9 +31,9 @@ public class SensitiveEndpointAccessService {
     private static final String REGENERATE_RATE_LIMIT_KEY = "regenerate";
     private static final String UNKNOWN_CLIENT = "unknown";
 
-    AppProperties appProperties;
-    Environment environment;
-    RequestRateLimiter requestRateLimiter;
+    private final AppProperties appProperties;
+    private final Environment environment;
+    private final RequestRateLimiter requestRateLimiter;
 
     public SensitiveEndpointAccessService(
             AppProperties appProperties,

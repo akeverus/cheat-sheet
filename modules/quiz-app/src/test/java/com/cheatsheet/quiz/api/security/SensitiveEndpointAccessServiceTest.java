@@ -15,9 +15,11 @@ import org.springframework.http.ResponseEntity;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +41,7 @@ class SensitiveEndpointAccessServiceTest {
         appProperties = new AppProperties();
         appProperties.setAdminToken("top-secret");
         appProperties.setRegenerateRateLimitPerMinute(20);
+        lenient().when(environment.getActiveProfiles()).thenReturn(new String[]{"test"});
         service = new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter);
     }
 
@@ -85,5 +88,28 @@ class SensitiveEndpointAccessServiceTest {
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(requestRateLimiter).allow(keyCaptor.capture(), anyInt(), any(Duration.class));
         assertThat(keyCaptor.getValue()).isEqualTo("regenerate:198.51.100.9");
+    }
+
+    @Test
+    void buildForbiddenResponseExplainsMissingTokenConfiguration() {
+        appProperties.setAdminToken(" ");
+
+        ResponseEntity<ApiError> response = service.buildForbiddenResponse("any");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(403);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().message()).contains("app.admin-token не настроен");
+    }
+
+    @Test
+    void validateProductionTokenConfigurationThrowsWhenTokenMissing() {
+        appProperties.setAdminToken(" ");
+        when(environment.getActiveProfiles()).thenReturn(new String[]{"prod"});
+        SensitiveEndpointAccessService prodService =
+                new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter);
+
+        assertThatThrownBy(prodService::validateProductionTokenConfiguration)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("app.admin-token");
     }
 }
