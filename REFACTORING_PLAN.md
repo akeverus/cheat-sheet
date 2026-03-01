@@ -103,6 +103,10 @@
 - [x] Simplified `InterviewMvcController` by removing direct session/flow mutation logic and delegating lifecycle actions to `InterviewFlowMvcService`.
 - [x] Removed `lombok.experimental.FieldDefaults` from `InterviewMvcController` and switched to explicit `private final` fields.
 - [x] Added `InterviewFlowMvcServiceTest` for start/session-summary/flashcard-grade lifecycle orchestration contracts.
+- [x] Extracted option-style heuristics from `OptionQualityValidator` into `OptionStyleHeuristicsSupport` (path-like detection, cliché fallback, boilerplate prefix helpers, vague placeholder checks).
+- [x] Kept `OptionQualityValidator` behavior stable while reducing method-level complexity and improving cohesion of question-option quality checks.
+- [x] Added `OptionStyleHeuristicsSupportTest` for isolated verification of extracted style heuristics.
+- [x] Removed `lombok.experimental.FieldDefaults` from `QualityIterationsStartupRunner` and switched to explicit `private final` fields.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
