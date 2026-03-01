@@ -2,6 +2,8 @@ package com.cheatsheet.quiz.api.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,12 +54,13 @@ class AdminControllerTest {
     AppProperties appProperties;
 
     AppProperties.Interview interview;
+    ResponseEntity<ApiError> forbiddenResponse;
 
     @BeforeEach
     void setUpForbiddenResponse() {
         ApiError forbiddenError = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
-        when(accessService.buildForbiddenResponse(any()))
-                .thenReturn(ResponseEntity.status(403).contentType(MediaType.APPLICATION_JSON).body(forbiddenError));
+        forbiddenResponse = ResponseEntity.status(403).contentType(MediaType.APPLICATION_JSON).body(forbiddenError);
+        when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
         interview = new AppProperties.Interview();
         interview.setSeniorRulePriorityOverrides(new ConcurrentHashMap<>());
         when(appProperties.getInterview()).thenReturn(interview);
@@ -66,7 +69,6 @@ class AdminControllerTest {
     @Test
     void clearOptionsWithValidTokenReturnsOk() throws Exception {
         when(adminMaintenanceService.clearOptions()).thenReturn(42);
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
 
         mockMvc.perform(post("/api/admin/options/clear")
                         .header("X-Admin-Token", "test-secret-token"))
@@ -79,7 +81,7 @@ class AdminControllerTest {
 
     @Test
     void clearOptionsWithInvalidTokenReturnsForbidden() throws Exception {
-        when(accessService.isAuthorized("wrong-token")).thenReturn(false);
+        when(accessService.forbiddenIfUnauthorized(eq("wrong-token"), any())).thenReturn(forbiddenResponse);
 
         mockMvc.perform(post("/api/admin/options/clear")
                         .header("X-Admin-Token", "wrong-token"))
@@ -91,7 +93,7 @@ class AdminControllerTest {
 
     @Test
     void clearOptionsWithMissingTokenReturnsForbidden() throws Exception {
-        when(accessService.isAuthorized(null)).thenReturn(false);
+        when(accessService.forbiddenIfUnauthorized(isNull(), any())).thenReturn(forbiddenResponse);
 
         mockMvc.perform(post("/api/admin/options/clear"))
                 .andExpect(status().isForbidden())
@@ -103,7 +105,6 @@ class AdminControllerTest {
     @Test
     void getSeniorRulesWithValidTokenReturnsConfiguredOverrides() throws Exception {
         interview.getSeniorRulePriorityOverrides().put("spring-transactional", 7);
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
 
         mockMvc.perform(get("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token"))
@@ -114,8 +115,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRulesHelpWithValidTokenReturnsExamples() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/help")
                         .header("X-Admin-Token", "test-secret-token"))
                 .andExpect(status().isOk())
@@ -127,8 +126,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleKeysWithValidTokenReturnsCatalogKeys() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/keys")
                         .header("X-Admin-Token", "test-secret-token"))
                 .andExpect(status().isOk())
@@ -138,8 +135,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleKeysWithPrefixReturnsFilteredSubset() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/keys")
                         .header("X-Admin-Token", "test-secret-token")
                         .param("prefix", "sql-"))
@@ -151,8 +146,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleKeysWithQueryReturnsContainsSubset() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/keys")
                         .header("X-Admin-Token", "test-secret-token")
                         .param("q", "transaction"))
@@ -164,8 +157,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleCatalogWithValidTokenReturnsDetailedRules() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/catalog")
                         .header("X-Admin-Token", "test-secret-token"))
                 .andExpect(status().isOk())
@@ -179,8 +170,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleCatalogWithPrefixReturnsFilteredSubset() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/catalog")
                         .header("X-Admin-Token", "test-secret-token")
                         .param("prefix", "spring-"))
@@ -192,8 +181,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleCatalogWithPrefixAndQueryReturnsIntersection() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/catalog")
                         .header("X-Admin-Token", "test-secret-token")
                         .param("prefix", "sql-")
@@ -207,8 +194,6 @@ class AdminControllerTest {
 
     @Test
     void getSeniorRuleCatalogWithQueryMatchesTrapHintAndNotOnlyKey() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(get("/api/admin/senior-rules/catalog")
                         .header("X-Admin-Token", "test-secret-token")
                         .param("q", "READONLY"))
@@ -221,7 +206,6 @@ class AdminControllerTest {
     @Test
     void putSeniorRulesWithValidTokenReplacesOverrides() throws Exception {
         interview.getSeniorRulePriorityOverrides().put("old-rule", 1);
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
 
         mockMvc.perform(put("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token")
@@ -245,8 +229,6 @@ class AdminControllerTest {
 
     @Test
     void putSeniorRulesWithInvalidPayloadReturnsBadRequest() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(put("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -261,8 +243,6 @@ class AdminControllerTest {
 
     @Test
     void putSeniorRulesWithUnknownKeyReturnsBadRequest() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(put("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -279,7 +259,6 @@ class AdminControllerTest {
     void patchSeniorRulesCanUpdateAndRemoveEntries() throws Exception {
         interview.getSeniorRulePriorityOverrides().put("spring-transactional", 5);
         interview.getSeniorRulePriorityOverrides().put("sql-null-semantics", 4);
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
 
         mockMvc.perform(patch("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token")
@@ -302,8 +281,6 @@ class AdminControllerTest {
 
     @Test
     void patchSeniorRulesWithInvalidPayloadReturnsBadRequest() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(patch("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -318,8 +295,6 @@ class AdminControllerTest {
 
     @Test
     void patchSeniorRulesWithUnknownKeyReturnsBadRequest() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(patch("/api/admin/senior-rules")
                         .header("X-Admin-Token", "test-secret-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -335,7 +310,6 @@ class AdminControllerTest {
     @Test
     void deleteSeniorRuleRemovesExistingOverride() throws Exception {
         interview.getSeniorRulePriorityOverrides().put("spring-transactional", 7);
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
 
         mockMvc.perform(delete("/api/admin/senior-rules/spring-transactional")
                         .header("X-Admin-Token", "test-secret-token"))
@@ -348,8 +322,6 @@ class AdminControllerTest {
 
     @Test
     void deleteSeniorRuleWithUnknownKeyReturnsNoChange() throws Exception {
-        when(accessService.isAuthorized("test-secret-token")).thenReturn(true);
-
         mockMvc.perform(delete("/api/admin/senior-rules/unknown-rule")
                         .header("X-Admin-Token", "test-secret-token"))
                 .andExpect(status().isOk())

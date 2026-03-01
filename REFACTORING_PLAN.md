@@ -42,6 +42,8 @@
 - [x] Moved admin senior-rules validation exception mapping out of `AdminController` into global `@ControllerAdvice`.
 - [x] Removed controller-local `try/catch` blocks from admin senior-rules endpoints (PUT/PATCH/DELETE), preserving API error contracts via centralized handler.
 - [x] Kept admin `MockMvc` regression suite green after centralized exception mapping refactor.
+- [x] Removed remaining auth-guard duplication from `AdminController` by delegating all checks to `SensitiveEndpointAccessService.forbiddenIfUnauthorized`.
+- [x] Updated admin controller tests to use centralized forbidden-guard stubbing instead of direct `isAuthorized` stubs.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

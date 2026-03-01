@@ -71,7 +71,7 @@ public class AdminController {
     public ResponseEntity<?> clearOptions(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "очистки вариантов ответов");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "очистки вариантов ответов");
         if (forbidden != null) {
             return forbidden;
         }
@@ -87,7 +87,7 @@ public class AdminController {
     public ResponseEntity<?> getSeniorRulePriorities(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rule priorities");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "чтения senior rule priorities");
         if (forbidden != null) {
             return forbidden;
         }
@@ -102,7 +102,7 @@ public class AdminController {
     public ResponseEntity<?> getSeniorRulesHelp(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rules help");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "чтения senior rules help");
         if (forbidden != null) {
             return forbidden;
         }
@@ -118,7 +118,7 @@ public class AdminController {
             @RequestParam(value = "prefix", required = false) String prefix,
             @RequestParam(value = "q", required = false) String query
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rule keys");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "чтения senior rule keys");
         if (forbidden != null) {
             return forbidden;
         }
@@ -134,7 +134,7 @@ public class AdminController {
             @RequestParam(value = "prefix", required = false) String prefix,
             @RequestParam(value = "q", required = false) String query
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rule catalog");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "чтения senior rule catalog");
         if (forbidden != null) {
             return forbidden;
         }
@@ -149,7 +149,7 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestBody(required = false) Map<String, Integer> overrides
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "обновления senior rule priorities");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "обновления senior rule priorities");
         if (forbidden != null) {
             return forbidden;
         }
@@ -169,7 +169,7 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestBody(required = false) Map<String, Integer> updates
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "patch senior rule priorities");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "patch senior rule priorities");
         if (forbidden != null) {
             return forbidden;
         }
@@ -194,7 +194,7 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @PathVariable("key") String key
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "удаления senior rule priority");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "удаления senior rule priority");
         if (forbidden != null) {
             return forbidden;
         }
@@ -232,7 +232,7 @@ public class AdminController {
     public ResponseEntity<?> resetAll(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "полного сброса артефактов");
+        ResponseEntity<?> forbidden = accessService.forbiddenIfUnauthorized(token, "полного сброса артефактов");
         if (forbidden != null) {
             return forbidden;
         }
@@ -249,14 +249,6 @@ public class AdminController {
                 result.resetRegenCount(),
                 "Все AI-артефакты сброшены. Варианты, подсказки и диаграммы будут пересозданы при следующем показе."
         ));
-    }
-
-    private ResponseEntity<?> forbiddenIfUnauthorized(String token, String action) {
-        if (accessService.isAuthorized(token)) {
-            return null;
-        }
-        log.warn("Неавторизованная попытка {}", action);
-        return accessService.buildForbiddenResponse(token);
     }
 
 }
