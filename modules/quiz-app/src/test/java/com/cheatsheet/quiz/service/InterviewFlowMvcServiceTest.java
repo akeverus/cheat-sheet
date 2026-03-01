@@ -101,6 +101,39 @@ class InterviewFlowMvcServiceTest {
     }
 
     @Test
+    void startPersistsSessionWhenFlowReturnsInterviewSession() {
+        StartSessionRequest request = new StartSessionRequest();
+        request.setMode("EXAM");
+        request.setCount(5);
+        InterviewFilter filter = new InterviewFilter("java", null, false, false, false, true);
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        when(requestMapper.resolveStartMode(request)).thenReturn(InterviewMode.EXAM);
+        when(requestMapper.resolveStartFilter(request)).thenReturn(filter);
+        when(sessionFlowService.startSession(InterviewMode.EXAM, 5, filter))
+                .thenReturn(new SessionFlowService.StartFlowResult(false, interviewSession));
+        when(navigationService.focusRedirect()).thenReturn("redirect:/focus");
+
+        String view = service.start(request, session);
+
+        assertThat(view).isEqualTo("redirect:/focus");
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+        verify(httpSessionStateService, never()).clearInterviewSession(session);
+    }
+
+    @Test
+    void studyConfirmPersistsSessionWhenFlowChangesState() {
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        when(sessionSupport.getSession(session)).thenReturn(interviewSession);
+        when(sessionFlowService.applyStudyConfirm(interviewSession)).thenReturn(true);
+        when(navigationService.focusRedirect()).thenReturn("redirect:/focus");
+
+        String view = service.studyConfirm(session);
+
+        assertThat(view).isEqualTo("redirect:/focus");
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
     void sessionSummaryAppliesModelAndClearsSummaryWhenExists() {
         SessionSummary summary = SessionSummary.builder()
                 .mode(InterviewMode.EXAM)

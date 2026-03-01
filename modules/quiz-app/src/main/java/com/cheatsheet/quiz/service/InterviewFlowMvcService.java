@@ -54,37 +54,35 @@ public class InterviewFlowMvcService {
         var filter = requestMapper.resolveStartFilter(request);
         SessionFlowService.StartFlowResult flowResult =
                 sessionFlowService.startSession(selected, request.getCount(), filter);
-        if (flowResult.clearSession()) {
-            httpSessionStateService.clearInterviewSession(session);
-        } else if (flowResult.interviewSession() != null) {
-            httpSessionStateService.setInterviewSession(session, flowResult.interviewSession());
-        }
+        applyStartSessionResult(session, flowResult);
         return navigationService.focusRedirect();
     }
 
     public String studyConfirm(HttpSession session) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
-        if (sessionFlowService.applyStudyConfirm(interviewSession)) {
-            httpSessionStateService.setInterviewSession(session, interviewSession);
-        }
-        return navigationService.focusRedirect();
+        return persistSessionAndFocusRedirect(
+                sessionFlowService.applyStudyConfirm(interviewSession),
+                session,
+                interviewSession
+        );
     }
 
     public String flashcardReveal(HttpSession session) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
-        if (sessionFlowService.applyFlashcardReveal(interviewSession)) {
-            httpSessionStateService.setInterviewSession(session, interviewSession);
-        }
-        return navigationService.focusRedirect();
+        return persistSessionAndFocusRedirect(
+                sessionFlowService.applyFlashcardReveal(interviewSession),
+                session,
+                interviewSession
+        );
     }
 
     public String flashcardGrade(long questionId, int grade, HttpSession session) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
-        if (!sessionFlowService.applyFlashcardGrade(interviewSession, questionId, grade)) {
-            return navigationService.focusRedirect();
-        }
-        httpSessionStateService.setInterviewSession(session, interviewSession);
-        return navigationService.focusRedirect();
+        return persistSessionAndFocusRedirect(
+                sessionFlowService.applyFlashcardGrade(interviewSession, questionId, grade),
+                session,
+                interviewSession
+        );
     }
 
     public String finish(HttpSession session) {
@@ -127,5 +125,23 @@ public class InterviewFlowMvcService {
         modelAttributeMapper.applyAnswerPageState(model, state);
 
         return navigationService.resultView();
+    }
+
+    private void applyStartSessionResult(HttpSession session, SessionFlowService.StartFlowResult flowResult) {
+        if (flowResult.clearSession()) {
+            httpSessionStateService.clearInterviewSession(session);
+            return;
+        }
+        InterviewSession interviewSession = flowResult.interviewSession();
+        if (interviewSession != null) {
+            httpSessionStateService.setInterviewSession(session, interviewSession);
+        }
+    }
+
+    private String persistSessionAndFocusRedirect(boolean sessionChanged, HttpSession session, InterviewSession interviewSession) {
+        if (sessionChanged) {
+            httpSessionStateService.setInterviewSession(session, interviewSession);
+        }
+        return navigationService.focusRedirect();
     }
 }
