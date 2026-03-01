@@ -47,7 +47,7 @@ class ExportControllerErrorTest {
         when(exportService.loadProgressRows()).thenReturn(List.of(
                 new ProgressExportRow("slug", "topic", 0, 0, 0L, 0)
         ));
-        when(accessService.isAuthorized(any())).thenReturn(true);
+        when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
 
         ExportController controller = new ExportController(exportService, objectMapper, accessService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();

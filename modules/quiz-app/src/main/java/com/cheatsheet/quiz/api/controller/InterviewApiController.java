@@ -147,8 +147,9 @@ public class InterviewApiController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             HttpServletRequest httpRequest
     ) {
-        if (!accessService.isAuthorized(token)) {
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<ApiError> forbidden = accessService.forbiddenIfUnauthorized(token, "regenerate вариантов");
+        if (forbidden != null) {
+            return forbidden;
         }
         if (!accessService.allowRegenerate(httpRequest)) {
             long retryAfter = accessService.regenerateRetryAfterSeconds();

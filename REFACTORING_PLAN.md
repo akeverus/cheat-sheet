@@ -30,9 +30,14 @@
 - [x] Reduced `AdminSeniorRulesService` duplication by unifying PUT/PATCH payload validation into a single strategy-aware validator.
 - [x] Hardened `AdminSeniorRulesService` runtime safety by normalizing non-concurrent override maps into `ConcurrentHashMap`.
 - [x] Added dedicated unit coverage for `AdminSeniorRulesService` (replace/patch/delete validation and concurrent-map migration path).
+- [x] Standardized sensitive endpoint authorization checks via shared `forbiddenIfUnauthorized` guard in `SensitiveEndpointAccessService`.
+- [x] Updated `/api/regenerate` and `/export` to use centralized auth-guard flow with preserved API contracts.
+- [x] Added unit tests for `SensitiveEndpointAccessService` (forbidden flow + trusted/untrusted client key selection).
+- [x] Added defensive property `app.trust-forwarded-for-header` (default false) for safer rate-limit key derivation.
+- [x] Kept `InterviewApiControllerUnitTest` and `ExportControllerErrorTest` green after security-guard refactor.
 
 ## In Progress
-- [ ] Continue thin-controller refactor for remaining controllers with direct persistence access and duplicated guard logic.
+- [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep controllers as HTTP adapters only.
 - [ ] Expand quality policy to topic-level uniqueness and cognitive-load constraints in generation flow.
 

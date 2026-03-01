@@ -68,11 +68,11 @@ public class ExportController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestParam(value = "format", defaultValue = "json") String format
     ) {
-        if (!accessService.isAuthorized(token)) {
-            ResponseEntity<?> forbidden = accessService.buildForbiddenResponse(token);
+        ResponseEntity<ApiError> forbidden = accessService.forbiddenIfUnauthorized(token, "export прогресса");
+        if (forbidden != null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(toJsonBytes((ApiError) forbidden.getBody()));
+                    .body(toJsonBytes(forbidden.getBody()));
         }
 
         String normalizedFormat = format == null ? StringUtils.EMPTY : format.strip().toLowerCase();

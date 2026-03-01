@@ -150,15 +150,13 @@ class InterviewApiControllerUnitTest {
         ApiError forbidden = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
         ResponseEntity<ApiError> forbiddenResponse = ResponseEntity.status(403).body(forbidden);
 
-        when(accessService.isAuthorized(token)).thenReturn(false);
-        when(accessService.buildForbiddenResponse(token)).thenReturn(forbiddenResponse);
+        when(accessService.forbiddenIfUnauthorized(token, "regenerate вариантов")).thenReturn(forbiddenResponse);
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
         assertThat(response.getStatusCode().value()).isEqualTo(403);
         assertThat(response.getBody()).isEqualTo(forbidden);
-        verify(accessService).isAuthorized(token);
-        verify(accessService).buildForbiddenResponse(token);
+        verify(accessService).forbiddenIfUnauthorized(token, "regenerate вариантов");
         verify(regenerateService, never()).regenerateQuestion(request.getQuestionId());
     }
 
@@ -315,7 +313,7 @@ class InterviewApiControllerUnitTest {
         String token = "admin-token";
         int retryAfterSeconds = 60;
 
-        when(accessService.isAuthorized(token)).thenReturn(true);
+        when(accessService.forbiddenIfUnauthorized(token, "regenerate вариантов")).thenReturn(null);
         when(accessService.allowRegenerate(httpRequest)).thenReturn(false);
         when(accessService.regenerateRetryAfterSeconds()).thenReturn(retryAfterSeconds);
 
@@ -328,7 +326,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.type()).isEqualTo(ApiErrorTypes.RATE_LIMIT_EXCEEDED);
         assertThat(body.status()).isEqualTo(429);
         assertThat(body.details()).isEqualTo(Map.of("retryAfterSeconds", (long) retryAfterSeconds));
-        verify(accessService).isAuthorized(token);
+        verify(accessService).forbiddenIfUnauthorized(token, "regenerate вариантов");
         verify(accessService).allowRegenerate(httpRequest);
         verify(accessService).regenerateRetryAfterSeconds();
         verify(regenerateService, never()).regenerateQuestion(request.getQuestionId());
@@ -341,7 +339,7 @@ class InterviewApiControllerUnitTest {
         HttpServletRequest httpRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         String token = "admin-token";
 
-        when(accessService.isAuthorized(token)).thenReturn(true);
+        when(accessService.forbiddenIfUnauthorized(token, "regenerate вариантов")).thenReturn(null);
         when(accessService.allowRegenerate(httpRequest)).thenReturn(true);
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
@@ -353,7 +351,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.success()).isTrue();
         assertThat(body.questionId()).isEqualTo(request.getQuestionId());
         assertThat(body.message()).isNotBlank();
-        verify(accessService).isAuthorized(token);
+        verify(accessService).forbiddenIfUnauthorized(token, "regenerate вариантов");
         verify(accessService).allowRegenerate(httpRequest);
         verify(regenerateService).regenerateQuestion(request.getQuestionId());
     }
