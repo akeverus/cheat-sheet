@@ -120,6 +120,8 @@
 - [x] Removed `lombok.experimental.FieldDefaults` from `QualityIterationRunner` and switched to explicit constructor-injected final fields.
 - [x] Removed `lombok.experimental.FieldDefaults` from `TrainingSessionService` and switched to explicit `private final` fields.
 - [x] Expanded `TrainingSessionServiceTest` with exam-penalty group fallback scenario (`findQuestionIdsExcludingByTopics`) to lock penalty flow behavior.
+- [x] Removed `lombok.experimental.FieldDefaults` from `InterviewService` and switched to explicit `private final` dependencies.
+- [x] Expanded `InterviewServiceTest` with `excludeQuestionId` regression for group-based topic fallback (`findQuestionIdsExcludingByTopics`).
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

@@ -24,8 +24,6 @@ import com.cheatsheet.quiz.service.event.AnswerEvent;
 import com.cheatsheet.quiz.service.strategy.DefaultSelectionStrategy;
 import com.cheatsheet.quiz.service.strategy.ShuffleSelectionStrategy;
 import com.cheatsheet.quiz.service.strategy.WeakTopicsSelectionStrategy;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -48,26 +46,25 @@ import java.util.Optional;
  * </ul>
  */
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class InterviewService {
 
-    QuestionRepository questionRepository;
-    QuestionStatsRepository questionStatsRepository;
-    AnswerOptionRepository answerOptionRepository;
-    ReviewStateRepository reviewStateRepository;
-    OptionGenerationService optionGenerationService;
-    PreloadService preloadService;
-    ApplicationEventPublisher eventPublisher;
-    DefaultSelectionStrategy defaultSelectionStrategy;
-    ShuffleSelectionStrategy shuffleSelectionStrategy;
-    WeakTopicsSelectionStrategy weakTopicsSelectionStrategy;
-    TopicCatalogService topicCatalogService;
-    TrainingSessionService trainingSessionService;
-    ReviewService reviewService;
-    Clock clock;
+    private final QuestionRepository questionRepository;
+    private final QuestionStatsRepository questionStatsRepository;
+    private final AnswerOptionRepository answerOptionRepository;
+    private final ReviewStateRepository reviewStateRepository;
+    private final OptionGenerationService optionGenerationService;
+    private final PreloadService preloadService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final DefaultSelectionStrategy defaultSelectionStrategy;
+    private final ShuffleSelectionStrategy shuffleSelectionStrategy;
+    private final WeakTopicsSelectionStrategy weakTopicsSelectionStrategy;
+    private final TopicCatalogService topicCatalogService;
+    private final TrainingSessionService trainingSessionService;
+    private final ReviewService reviewService;
+    private final Clock clock;
 
-    int learnedRepetitions;
+    private final int learnedRepetitions;
 
     public InterviewService(
             QuestionRepository questionRepository,
