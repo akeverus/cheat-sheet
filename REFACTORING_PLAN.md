@@ -80,6 +80,8 @@
 - [x] Added `AnswerApiServiceTest` and updated `InterviewApiControllerUnitTest` to preserve answer API contract coverage after service extraction.
 - [x] Extracted admin senior-rules payload normalization/validation into dedicated `SeniorRuleOverridePayloadProcessor` to reduce `AdminSeniorRulesService` responsibility and tighten service boundaries.
 - [x] Added `SeniorRuleOverridePayloadProcessorTest` and updated `AdminSeniorRulesServiceTest` wiring to keep validation and admin overrides regression coverage stable.
+- [x] Extracted `/api/next` orchestration and payload mapping from `InterviewApiController` into dedicated `NextQuestionApiService` to keep controller as HTTP adapter only.
+- [x] Moved next-question mapping/normalization regression checks to `NextQuestionApiServiceTest` and updated `InterviewApiControllerUnitTest` to verify delegation contract.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

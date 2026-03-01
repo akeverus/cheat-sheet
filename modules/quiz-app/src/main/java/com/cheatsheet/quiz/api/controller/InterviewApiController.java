@@ -12,7 +12,6 @@ import com.cheatsheet.quiz.api.dto.response.ConfidenceResponse;
 import com.cheatsheet.quiz.api.dto.response.FavoriteResponse;
 import com.cheatsheet.quiz.api.dto.response.HintResponse;
 import com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse;
-import com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto;
 import com.cheatsheet.quiz.api.dto.response.NextQuestionResponse;
 import com.cheatsheet.quiz.api.dto.response.StreakResponse;
 import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
@@ -24,6 +23,7 @@ import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.HintService;
 import com.cheatsheet.quiz.service.InterviewFacade;
+import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.util.FilterUtils;
@@ -59,6 +59,7 @@ public class InterviewApiController {
 
     AnswerApiService answerApiService;
     InterviewFacade facade;
+    NextQuestionApiService nextQuestionApiService;
     RegenerateEndpointService regenerateEndpointService;
     FavoriteService favoriteService;
     DailyStreakService dailyStreakService;
@@ -67,6 +68,7 @@ public class InterviewApiController {
     public InterviewApiController(
             AnswerApiService answerApiService,
             InterviewFacade facade,
+            NextQuestionApiService nextQuestionApiService,
             RegenerateEndpointService regenerateEndpointService,
             FavoriteService favoriteService,
             DailyStreakService dailyStreakService,
@@ -74,6 +76,7 @@ public class InterviewApiController {
     ) {
         this.answerApiService = answerApiService;
         this.facade = facade;
+        this.nextQuestionApiService = nextQuestionApiService;
         this.regenerateEndpointService = regenerateEndpointService;
         this.favoriteService = favoriteService;
         this.dailyStreakService = dailyStreakService;
@@ -211,39 +214,21 @@ public class InterviewApiController {
             @RequestParam(value = "ordered", required = false) Boolean ordered,
             @RequestParam(value = "excludeQuestionId", required = false) Long excludeQuestionId
     ) {
-        InterviewFilter filter = new InterviewFilter(
-                FilterUtils.normalizeTopic(topic),
-                FilterUtils.normalizeGroup(group),
+        NextQuestionApiService.NextQuestionCommand command = new NextQuestionApiService.NextQuestionCommand(
+                topic,
+                group,
                 important,
                 onlyWrong,
                 shuffle,
-                ordered
-        );
-        boolean weakTopicsPriority = Boolean.TRUE.equals(weakTopics);
-        Optional<com.cheatsheet.quiz.domain.InterviewQuestion> next = facade.nextQuestion(
-                filter,
-                weakTopicsPriority,
+                weakTopics,
+                ordered,
                 excludeQuestionId
         );
+        Optional<NextQuestionResponse> next = nextQuestionApiService.getNextQuestion(command);
         if (next.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        var question = next.get();
-        List<NextQuestionOptionDto> options = question.options().stream()
-                .map(opt -> new NextQuestionOptionDto(opt.id(), opt.optionText()))
-                .toList();
-        return ResponseEntity.ok(new NextQuestionResponse(
-                question.question().id(),
-                question.question().questionText(),
-                question.question().topic(),
-                question.question().questionType() == null ? "TEXT" : question.question().questionType().name(),
-                question.question().codeSnippet(),
-                question.question().diagramMermaid(),
-                options,
-                question.reviewState().repetitions(),
-                question.reviewState().correctCount(),
-                question.reviewState().wrongCount()
-        ));
+        return ResponseEntity.ok(next.get());
     }
 
     @PostMapping("/api/favorite")

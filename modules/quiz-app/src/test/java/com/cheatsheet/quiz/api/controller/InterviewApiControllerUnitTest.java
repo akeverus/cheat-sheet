@@ -14,21 +14,18 @@ import com.cheatsheet.quiz.api.dto.request.HintRequest;
 import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
 import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
-import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.Hint;
-import com.cheatsheet.quiz.domain.InterviewQuestion;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
-import com.cheatsheet.quiz.domain.ReviewResult;
-import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.FavoriteService;
 import com.cheatsheet.quiz.service.InterviewFacade;
+import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +44,7 @@ class InterviewApiControllerUnitTest {
 
     @Mock private AnswerApiService answerApiService;
     @Mock private InterviewFacade facade;
+    @Mock private NextQuestionApiService nextQuestionApiService;
     @Mock private RegenerateEndpointService regenerateEndpointService;
     @Mock private FavoriteService favoriteService;
     @Mock private DailyStreakService dailyStreakService;
@@ -59,6 +57,7 @@ class InterviewApiControllerUnitTest {
         controller = new InterviewApiController(
                 answerApiService,
                 facade,
+                nextQuestionApiService,
                 regenerateEndpointService,
                 favoriteService,
                 dailyStreakService,
@@ -307,12 +306,8 @@ class InterviewApiControllerUnitTest {
     }
 
     @Test
-    void nextReturnsNoContentWhenFacadeHasNoQuestion() {
-        when(facade.nextQuestion(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(false),
-                org.mockito.ArgumentMatchers.isNull()
-        )).thenReturn(Optional.empty());
+    void nextReturnsNoContentWhenServiceHasNoQuestion() {
+        when(nextQuestionApiService.getNextQuestion(any())).thenReturn(Optional.empty());
 
         ResponseEntity<?> response = controller.getNextQuestion(
                 null, null, null, null, null, null, null, null
@@ -323,18 +318,26 @@ class InterviewApiControllerUnitTest {
     }
 
     @Test
-    void nextReturnsQuestionPayloadWhenFacadeReturnsQuestion() {
+    void nextReturnsQuestionPayloadWhenServiceReturnsQuestion() {
         long questionId = 303L;
         Question question = existingQuestion(questionId);
-        AnswerOption optionA = new AnswerOption(1L, questionId, "A", false, 0, "OPENAI", "Неверно");
-        AnswerOption optionB = new AnswerOption(2L, questionId, "B", true, 1, "OPENAI", "Верно");
-        ReviewState reviewState = new ReviewState(questionId, 2, 3, 2.5, 1_700_000_000L, ReviewResult.CORRECT, 4, 1);
-        InterviewQuestion interviewQuestion = new InterviewQuestion(question, List.of(optionA, optionB), reviewState);
-        when(facade.nextQuestion(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(false),
-                org.mockito.ArgumentMatchers.isNull()
-        )).thenReturn(Optional.of(interviewQuestion));
+        com.cheatsheet.quiz.api.dto.response.NextQuestionResponse payload =
+                new com.cheatsheet.quiz.api.dto.response.NextQuestionResponse(
+                        questionId,
+                        question.questionText(),
+                        question.topic(),
+                        "TEXT",
+                        null,
+                        null,
+                        List.of(
+                                new com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto(1L, "A"),
+                                new com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto(2L, "B")
+                        ),
+                        2L,
+                        4,
+                        1
+                );
+        when(nextQuestionApiService.getNextQuestion(any())).thenReturn(Optional.of(payload));
 
         ResponseEntity<?> response = controller.getNextQuestion(
                 null, null, null, null, null, null, null, null
@@ -351,79 +354,12 @@ class InterviewApiControllerUnitTest {
         assertThat(body.repetitions()).isEqualTo(2L);
         assertThat(body.correctCount()).isEqualTo(4);
         assertThat(body.wrongCount()).isEqualTo(1);
+        verify(nextQuestionApiService).getNextQuestion(any());
     }
 
     @Test
-    void nextFallsBackToTextTypeWhenQuestionTypeIsNull() {
-        long questionId = 404L;
-        Question question = existingQuestionWithType(questionId, null);
-        AnswerOption option = new AnswerOption(1L, questionId, "A", true, 0, "OPENAI", "Верно");
-        ReviewState reviewState = new ReviewState(questionId, 0, 0, 2.5, 1_700_000_000L, ReviewResult.NEW, 0, 0);
-        InterviewQuestion interviewQuestion = new InterviewQuestion(question, List.of(option), reviewState);
-        when(facade.nextQuestion(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(false),
-                org.mockito.ArgumentMatchers.isNull()
-        )).thenReturn(Optional.of(interviewQuestion));
-
-        ResponseEntity<?> response = controller.getNextQuestion(
-                null, null, null, null, null, null, null, null
-        );
-
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.NextQuestionResponse.class);
-        com.cheatsheet.quiz.api.dto.response.NextQuestionResponse body =
-                (com.cheatsheet.quiz.api.dto.response.NextQuestionResponse) response.getBody();
-        assertThat(body.questionType()).isEqualTo("TEXT");
-    }
-
-    @Test
-    void nextMapsCodeSnippetAndNullableDiagramAsIs() {
-        long questionId = 505L;
-        Question question = new Question(
-                questionId,
-                "q-" + questionId,
-                "q-" + questionId,
-                "test.md",
-                "java",
-                "Что выведет код?",
-                "Ответ",
-                false,
-                "hash",
-                QuestionType.CODE,
-                "int x = 1;",
-                null,
-                0,
-                null
-        );
-        AnswerOption option = new AnswerOption(1L, questionId, "A", true, 0, "OPENAI", "Верно");
-        ReviewState reviewState = new ReviewState(questionId, 1, 1, 2.5, 1_700_000_000L, ReviewResult.CORRECT, 1, 0);
-        InterviewQuestion interviewQuestion = new InterviewQuestion(question, List.of(option), reviewState);
-        when(facade.nextQuestion(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(false),
-                org.mockito.ArgumentMatchers.isNull()
-        )).thenReturn(Optional.of(interviewQuestion));
-
-        ResponseEntity<?> response = controller.getNextQuestion(
-                null, null, null, null, null, null, null, null
-        );
-
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        com.cheatsheet.quiz.api.dto.response.NextQuestionResponse body =
-                (com.cheatsheet.quiz.api.dto.response.NextQuestionResponse) response.getBody();
-        assertThat(body.questionType()).isEqualTo("CODE");
-        assertThat(body.codeSnippet()).isEqualTo("int x = 1;");
-        assertThat(body.diagramMermaid()).isNull();
-    }
-
-    @Test
-    void nextNormalizesFilterAndPassesFlagsToFacade() {
-        when(facade.nextQuestion(
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.eq(true),
-                org.mockito.ArgumentMatchers.eq(42L)
-        )).thenReturn(Optional.empty());
+    void nextPassesCommandToService() {
+        when(nextQuestionApiService.getNextQuestion(any())).thenReturn(Optional.empty());
 
         ResponseEntity<?> response = controller.getNextQuestion(
                 "  java  ",
@@ -436,15 +372,18 @@ class InterviewApiControllerUnitTest {
                 42L
         );
 
-        ArgumentCaptor<InterviewFilter> filterCaptor = ArgumentCaptor.forClass(InterviewFilter.class);
-        verify(facade).nextQuestion(filterCaptor.capture(), org.mockito.ArgumentMatchers.eq(true), org.mockito.ArgumentMatchers.eq(42L));
-        InterviewFilter filter = filterCaptor.getValue();
-        assertThat(filter.topic()).isEqualTo("java");
-        assertThat(filter.group()).isEqualTo("core");
-        assertThat(filter.importantOnly()).isTrue();
-        assertThat(filter.onlyWrong()).isFalse();
-        assertThat(filter.shuffle()).isTrue();
-        assertThat(filter.ordered()).isFalse();
+        ArgumentCaptor<NextQuestionApiService.NextQuestionCommand> commandCaptor =
+                ArgumentCaptor.forClass(NextQuestionApiService.NextQuestionCommand.class);
+        verify(nextQuestionApiService).getNextQuestion(commandCaptor.capture());
+        NextQuestionApiService.NextQuestionCommand command = commandCaptor.getValue();
+        assertThat(command.topic()).isEqualTo("  java  ");
+        assertThat(command.group()).isEqualTo("  core ");
+        assertThat(command.important()).isTrue();
+        assertThat(command.onlyWrong()).isFalse();
+        assertThat(command.shuffle()).isTrue();
+        assertThat(command.weakTopics()).isTrue();
+        assertThat(command.ordered()).isFalse();
+        assertThat(command.excludeQuestionId()).isEqualTo(42L);
         assertThat(response.getStatusCode().value()).isEqualTo(204);
     }
 
