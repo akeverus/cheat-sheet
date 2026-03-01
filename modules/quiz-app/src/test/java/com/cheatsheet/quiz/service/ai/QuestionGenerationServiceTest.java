@@ -50,7 +50,9 @@ class QuestionGenerationServiceTest {
     @Test
     void regeneratesUntilQuestionPassesValidation() {
         when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.HARD);
-        when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
+        when(optionGenerator.generateStructuredJson(anyString()))
+                .thenReturn(Optional.of(validQuestionJson()))
+                .thenReturn(Optional.of(alternativeQuestionJson()));
         when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
                 .thenReturn(List.of("shortExplanation must be at least 30 characters"))
                 .thenReturn(List.of());
@@ -69,7 +71,9 @@ class QuestionGenerationServiceTest {
     @Test
     void retryPromptIncludesPreviousValidationViolations() {
         when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.MEDIUM);
-        when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
+        when(optionGenerator.generateStructuredJson(anyString()))
+                .thenReturn(Optional.of(validQuestionJson()))
+                .thenReturn(Optional.of(alternativeQuestionJson()));
         when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
                 .thenReturn(List.of("Need deeper detailedExplanation"))
                 .thenReturn(List.of());
@@ -84,6 +88,28 @@ class QuestionGenerationServiceTest {
         assertThat(prompts.get(0)).doesNotContain("QUALITY_FEEDBACK_FROM_PREVIOUS_ATTEMPT");
         assertThat(prompts.get(1)).contains("QUALITY_FEEDBACK_FROM_PREVIOUS_ATTEMPT");
         assertThat(prompts.get(1)).contains("Need deeper detailedExplanation");
+    }
+
+    @Test
+    void retriesWhenCandidateDuplicatesPreviousAttempt() {
+        when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString()))
+                .thenReturn(Optional.of(validQuestionJson()))
+                .thenReturn(Optional.of(validQuestionJson()))
+                .thenReturn(Optional.of(alternativeQuestionJson()));
+        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
+                .thenReturn(List.of("Need stronger first attempt"))
+                .thenReturn(List.of())
+                .thenReturn(List.of());
+        when(validationService.qualityScore(anyList())).thenReturn(80);
+
+        Question generated = service.generateQuestion("java", QuestionType.CONCEPT);
+
+        assertThat(generated.questionText()).contains("ThreadLocal");
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(optionGenerator, times(3)).generateStructuredJson(promptCaptor.capture());
+        List<String> prompts = promptCaptor.getAllValues();
+        assertThat(prompts.get(2)).contains("Question candidate duplicates previous generation attempt");
     }
 
     @Test
@@ -184,6 +210,25 @@ class QuestionGenerationServiceTest {
                 }
                 ```
                 Конец ответа.
+                """;
+    }
+
+    private String alternativeQuestionJson() {
+        return """
+                {
+                  "questionText":"Почему ThreadLocal может создавать утечки памяти в пуле потоков?",
+                  "codeSnippet":null,
+                  "options":[
+                    {"id":"A","text":"Потому что значения могут остаться привязанными к долгоживущим потокам","correct":true,"explanation":"Пулы потоков переиспользуют worker-потоки, и без remove() значения могут жить дольше ожидаемого."},
+                    {"id":"B","text":"Потому что ThreadLocal хранит данные только в static памяти класса","correct":false,"explanation":"ThreadLocal хранит значения в структуре конкретного потока, а не в глобальном static-хранилище."},
+                    {"id":"C","text":"Потому что JVM всегда очищает ThreadLocal после каждого задания","correct":false,"explanation":"Автоочистки после каждой задачи нет, если код явно не удаляет значение, оно может сохраниться."},
+                    {"id":"D","text":"Потому что ThreadLocal работает только в виртуальных потоках","correct":false,"explanation":"ThreadLocal работает и в platform threads, и в virtual threads, это не причина утечки."}
+                  ],
+                  "shortExplanation":"Утечки возникают при переиспользовании потоков из пула и отсутствии явной очистки ThreadLocal.",
+                  "detailedExplanation":"ThreadLocal хранит данные в контексте потока, а не запроса. В thread pool один и тот же поток обслуживает множество задач, поэтому оставленное значение может протечь в следующий контекст и удерживаться дольше жизненного цикла бизнес-операции. Без remove() это ухудшает изоляцию данных и может приводить к росту памяти.",
+                  "commonMistake":"Полагаться на завершение метода вместо явной очистки ThreadLocal в блоке finally.",
+                  "tags":["java","concurrency","threadlocal"]
+                }
                 """;
     }
 }

@@ -141,6 +141,10 @@ public class QuestionValidationService {
                 penalty += 35;
             } else if (v.contains("exactly 4 options")) {
                 penalty += 25;
+            } else if (v.contains("duplicate candidate")) {
+                penalty += 18;
+            } else if (v.contains("cognitive load")) {
+                penalty += 14;
             } else if (v.contains("trivial")) {
                 penalty += 20;
             } else if (v.contains("required")) {

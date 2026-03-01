@@ -11,8 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -56,11 +58,13 @@ public class QuestionGenerationService {
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         List<String> previousViolations = List.of();
+        Set<String> seenFingerprints = new HashSet<>();
         int bestScore = 0;
         for (int attempt = 1; attempt <= MAX_REGEN_ATTEMPTS; attempt++) {
             Question generated = requestQuestion(safeTopic, safeType, difficulty, previousViolations)
                     .orElseThrow(() -> new AiGenerationException("AI не вернул валидный JSON вопроса"));
-            List<String> violations = validationService.validate(generated);
+            List<String> baseViolations = validationService.validate(generated);
+            List<String> violations = questionGenerationPolicy.enrichViolations(generated, baseViolations, seenFingerprints);
             int score = validationService.qualityScore(violations);
             bestScore = Math.max(bestScore, score);
             if (questionGenerationPolicy.isAccepted(score, violations)) {

@@ -35,11 +35,15 @@
 - [x] Added unit tests for `SensitiveEndpointAccessService` (forbidden flow + trusted/untrusted client key selection).
 - [x] Added defensive property `app.trust-forwarded-for-header` (default false) for safer rate-limit key derivation.
 - [x] Kept `InterviewApiControllerUnitTest` and `ExportControllerErrorTest` green after security-guard refactor.
+- [x] Extended `QuestionGenerationPolicy` with cognitive-load constraints (question/options verbosity limits).
+- [x] Added anti-duplication guard for question generation retries using candidate fingerprinting across attempts.
+- [x] Integrated policy-level violation enrichment into `QuestionGenerationService` retry pipeline and quality logging.
+- [x] Expanded question-engine tests with `QuestionGenerationPolicyTest` and duplicate-retry regression coverage.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep controllers as HTTP adapters only.
-- [ ] Expand quality policy to topic-level uniqueness and cognitive-load constraints in generation flow.
+- [ ] Expand quality policy to topic-level uniqueness constraints in generation flow.
 
 ## Backlog
 - [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.
