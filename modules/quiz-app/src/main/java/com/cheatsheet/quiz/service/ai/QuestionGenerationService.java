@@ -25,19 +25,22 @@ public class QuestionGenerationService {
     private final QuestionValidationService validationService;
     private final AdaptiveDifficultyService adaptiveDifficultyService;
     private final QuestionPromptBuilder questionPromptBuilder;
+    private final QuestionGenerationPolicy questionGenerationPolicy;
 
     public QuestionGenerationService(
             OptionGenerator optionGenerator,
             ObjectMapper objectMapper,
             QuestionValidationService validationService,
             AdaptiveDifficultyService adaptiveDifficultyService,
-            QuestionPromptBuilder questionPromptBuilder
+            QuestionPromptBuilder questionPromptBuilder,
+            QuestionGenerationPolicy questionGenerationPolicy
     ) {
         this.optionGenerator = optionGenerator;
         this.objectMapper = objectMapper;
         this.validationService = validationService;
         this.adaptiveDifficultyService = adaptiveDifficultyService;
         this.questionPromptBuilder = questionPromptBuilder;
+        this.questionGenerationPolicy = questionGenerationPolicy;
     }
 
     /**
@@ -53,20 +56,25 @@ public class QuestionGenerationService {
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         List<String> previousViolations = List.of();
+        int bestScore = 0;
         for (int attempt = 1; attempt <= MAX_REGEN_ATTEMPTS; attempt++) {
             Question generated = requestQuestion(safeTopic, safeType, difficulty, previousViolations)
                     .orElseThrow(() -> new AiGenerationException("AI не вернул валидный JSON вопроса"));
             List<String> violations = validationService.validate(generated);
-            if (violations.isEmpty()) {
-                log.info("question_generation_succeeded topic={} type={} difficulty={} attempt={}",
-                        safeTopic, safeType, difficulty, attempt);
+            int score = validationService.qualityScore(violations);
+            bestScore = Math.max(bestScore, score);
+            if (questionGenerationPolicy.isAccepted(score, violations)) {
+                log.info("question_generation_succeeded topic={} type={} difficulty={} attempt={} qualityScore={}",
+                        safeTopic, safeType, difficulty, attempt, score);
                 return generated;
             }
-            log.warn("question_generation_validation_failed topic={} type={} difficulty={} attempt={} violations={}",
-                    safeTopic, safeType, difficulty, attempt, String.join("; ", violations));
+            log.warn("question_generation_validation_failed topic={} type={} difficulty={} attempt={} qualityScore={} minQualityScore={} violations={}",
+                    safeTopic, safeType, difficulty, attempt, score, questionGenerationPolicy.minQualityScore(),
+                    String.join("; ", violations));
             previousViolations = List.copyOf(violations);
         }
-        throw new AiGenerationException("QuestionGenerationService: не удалось сгенерировать валидный вопрос за " + MAX_REGEN_ATTEMPTS + " попытки");
+        throw new AiGenerationException("QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
+                + MAX_REGEN_ATTEMPTS + " попытки (bestQualityScore=" + bestScore + ")");
     }
 
     private Optional<Question> requestQuestion(String topic, QuestionType type, Difficulty difficulty, List<String> previousViolations) {

@@ -19,13 +19,17 @@
 - [x] Added `AdminSeniorRulesService` and extracted senior-rules business logic from `AdminController`.
 - [x] Switched `AdminController` senior-rules endpoints to service delegation with preserved API responses.
 - [x] Kept admin endpoint regression tests green after service extraction.
+- [x] Introduced `QuestionGenerationPolicy` with configurable minimum quality threshold for generated questions.
+- [x] Added quality scoring to `QuestionValidationService` and integrated score-based acceptance in `QuestionGenerationService`.
+- [x] Added retry-path test coverage for low-quality-score rejection in question generation.
+- [x] Sanitized AI and global exception logging to reduce sensitive payload leakage risk.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep controllers as HTTP adapters only.
-- [ ] Harden LLM/question-engine quality pipeline (policy, scoring, retry) in service layer.
+- [ ] Expand quality policy to topic-level uniqueness and cognitive-load constraints in generation flow.
 
 ## Backlog
 - [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.
-- [ ] Add broader exception-handling and security hardening pass (sanitized logging, endpoint guard consistency).
+- [ ] Add broader exception-handling and security hardening pass (endpoint guard consistency, authz invariants).
 - [ ] Expand regression coverage for refactored service boundaries and LLM failure paths.

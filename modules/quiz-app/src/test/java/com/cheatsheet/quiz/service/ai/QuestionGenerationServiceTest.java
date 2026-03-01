@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,7 +42,8 @@ class QuestionGenerationServiceTest {
                 new ObjectMapper(),
                 validationService,
                 adaptiveDifficultyService,
-                new QuestionPromptBuilder()
+                new QuestionPromptBuilder(),
+                new QuestionGenerationPolicy(70)
         );
     }
 
@@ -52,6 +54,7 @@ class QuestionGenerationServiceTest {
         when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
                 .thenReturn(List.of("shortExplanation must be at least 30 characters"))
                 .thenReturn(List.of());
+        when(validationService.qualityScore(anyList())).thenReturn(80);
 
         Question generated = service.generateQuestion("java", QuestionType.CODE);
 
@@ -70,6 +73,7 @@ class QuestionGenerationServiceTest {
         when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
                 .thenReturn(List.of("Need deeper detailedExplanation"))
                 .thenReturn(List.of());
+        when(validationService.qualityScore(anyList())).thenReturn(80);
 
         service.generateQuestion("java", QuestionType.CONCEPT);
 
@@ -88,6 +92,7 @@ class QuestionGenerationServiceTest {
         when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
         when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
                 .thenReturn(List.of("Question text is trivial and does not require technical reasoning"));
+        when(validationService.qualityScore(anyList())).thenReturn(50);
 
         assertThatThrownBy(() -> service.generateQuestion("spring", QuestionType.CONCEPT))
                 .isInstanceOf(AiGenerationException.class)
@@ -95,6 +100,21 @@ class QuestionGenerationServiceTest {
 
         verify(optionGenerator, times(3)).generateStructuredJson(anyString());
         verify(validationService, times(3)).validate(org.mockito.ArgumentMatchers.any(Question.class));
+    }
+
+    @Test
+    void retriesWhenQualityScoreBelowPolicyThreshold() {
+        when(adaptiveDifficultyService.resolveDifficulty("kafka")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
+        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class))).thenReturn(List.of());
+        when(validationService.qualityScore(anyList())).thenReturn(65);
+
+        assertThatThrownBy(() -> service.generateQuestion("kafka", QuestionType.ARCHITECTURE))
+                .isInstanceOf(AiGenerationException.class)
+                .hasMessageContaining("bestQualityScore=65");
+
+        verify(optionGenerator, times(3)).generateStructuredJson(anyString());
+        verify(validationService, times(3)).qualityScore(anyList());
     }
 
     @Test
@@ -114,6 +134,7 @@ class QuestionGenerationServiceTest {
         when(adaptiveDifficultyService.resolveDifficulty("jvm")).thenReturn(Difficulty.MEDIUM);
         when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(fencedJsonWithNoise()));
         when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class))).thenReturn(List.of());
+        when(validationService.qualityScore(anyList())).thenReturn(100);
 
         Question generated = service.generateQuestion("jvm", QuestionType.CONCEPT);
 
