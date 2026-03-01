@@ -32,13 +32,12 @@ class AdminSeniorRulesServiceTest {
     void replaceOverridesNormalizesKeysAndReplacesExistingValues() {
         interview.getSeniorRulePriorityOverrides().put("spring-transactional", 2);
 
-        Map<String, Object> payload = service.replaceOverrides(Map.of(
+        AdminSeniorRulesService.ReplaceResult payload = service.replaceOverrides(Map.of(
                 " Spring-Transactional ", 9,
                 "sql-null-semantics", 6
         ));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Integer> overrides = (Map<String, Integer>) payload.get("overrides");
+        Map<String, Integer> overrides = payload.overrides();
         assertThat(overrides)
                 .containsEntry("spring-transactional", 9)
                 .containsEntry("sql-null-semantics", 6);

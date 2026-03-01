@@ -92,10 +92,10 @@ public class AdminController {
         if (forbidden != null) {
             return forbidden;
         }
-        Map<String, Integer> sorted = adminSeniorRulesService.getOverridesSorted();
+        AdminSeniorRulesService.OverridesPayload result = adminSeniorRulesService.getOverridesPayload();
         return ResponseEntity.ok(new AdminOperationResult(
                 "Текущие переопределения приоритетов Senior-правил.",
-                Map.of("overrides", sorted, "size", sorted.size())
+                result
         ));
     }
 
@@ -154,14 +154,11 @@ public class AdminController {
         if (forbidden != null) {
             return forbidden;
         }
-        Map<String, Object> payload = adminSeniorRulesService.replaceOverrides(overrides);
-        @SuppressWarnings("unchecked")
-        Map<String, Integer> sorted = (Map<String, Integer>) payload.get("overrides");
-
-        log.info("Обновлены senior rule priorities: {} записей", sorted.size());
+        AdminSeniorRulesService.ReplaceResult result = adminSeniorRulesService.replaceOverrides(overrides);
+        log.info("Обновлены senior rule priorities: {} записей", result.size());
         return ResponseEntity.ok(new AdminOperationResult(
                 "Переопределения приоритетов Senior-правил обновлены.",
-                payload
+                result
         ));
     }
 

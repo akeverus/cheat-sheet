@@ -18,14 +18,18 @@ import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
+import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,8 +37,9 @@ import org.springframework.test.web.servlet.MockMvc;
  * Тесты AdminController при незаданном токене — доступ должен быть запрещен.
  */
 @WebMvcTest(AdminController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @TestPropertySource(properties = "app.admin-token=")
-@Import(AdminSeniorRulesService.class)
+@Import({AdminSeniorRulesService.class, SeniorRulePriorityOverrideStore.class, AdminControllerNoTokenTest.AppPropertiesTestConfig.class})
 class AdminControllerNoTokenTest {
 
     @Autowired
@@ -45,9 +50,6 @@ class AdminControllerNoTokenTest {
 
     @MockBean
     SensitiveEndpointAccessService accessService;
-
-    @MockBean
-    AppProperties appProperties;
 
     ResponseEntity<ApiError> forbiddenResponse;
 
@@ -134,5 +136,15 @@ class AdminControllerNoTokenTest {
         mockMvc.perform(delete("/api/admin/senior-rules/spring-transactional"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    @TestConfiguration
+    static class AppPropertiesTestConfig {
+        @Bean
+        AppProperties appProperties() {
+            AppProperties appProperties = new AppProperties();
+            appProperties.setInterview(new AppProperties.Interview());
+            return appProperties;
+        }
     }
 }

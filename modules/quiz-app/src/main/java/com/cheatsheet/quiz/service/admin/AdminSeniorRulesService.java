@@ -29,27 +29,32 @@ public class AdminSeniorRulesService {
         return overrideStore.snapshotSorted();
     }
 
-    public Map<String, Object> getKeysPayload(String prefix, String query) {
+    public OverridesPayload getOverridesPayload() {
+        Map<String, Integer> sorted = overrideStore.snapshotSorted();
+        return new OverridesPayload(sorted, sorted.size());
+    }
+
+    public KeysPayload getKeysPayload(String prefix, String query) {
         String normalizedPrefix = normalize(prefix);
         String normalizedQuery = normalize(query);
         var keys = RULE_KEYS.stream()
                 .filter(key -> normalizedPrefix.isBlank() || key.startsWith(normalizedPrefix))
                 .filter(key -> normalizedQuery.isBlank() || key.contains(normalizedQuery))
                 .toList();
-        return Map.of("keys", keys, "size", keys.size(), "prefix", normalizedPrefix, "q", normalizedQuery);
+        return new KeysPayload(keys, keys.size(), normalizedPrefix, normalizedQuery);
     }
 
-    public Map<String, Object> getCatalogPayload(String prefix, String query) {
+    public CatalogPayload getCatalogPayload(String prefix, String query) {
         String normalizedPrefix = normalize(prefix);
         String normalizedQuery = normalize(query);
         var rules = RULE_CATALOG.stream()
                 .filter(rule -> normalizedPrefix.isBlank() || rule.key().startsWith(normalizedPrefix))
                 .filter(rule -> normalizedQuery.isBlank() || matchesCatalogQuery(rule, normalizedQuery))
                 .toList();
-        return Map.of("rules", rules, "size", rules.size(), "prefix", normalizedPrefix, "q", normalizedQuery);
+        return new CatalogPayload(rules, rules.size(), normalizedPrefix, normalizedQuery);
     }
 
-    public Map<String, Object> replaceOverrides(Map<String, Integer> overrides) {
+    public ReplaceResult replaceOverrides(Map<String, Integer> overrides) {
         Map<String, Integer> safeOverrides = overrides == null ? Map.of() : overrides;
         validatePayload(safeOverrides, false);
 
@@ -60,7 +65,7 @@ public class AdminSeniorRulesService {
 
         overrideStore.replaceAll(normalized);
         Map<String, Integer> sorted = overrideStore.snapshotSorted();
-        return Map.of("overrides", sorted, "size", sorted.size());
+        return new ReplaceResult(sorted, sorted.size());
     }
 
     public PatchResult patchOverrides(Map<String, Integer> updates) {
@@ -150,6 +155,18 @@ public class AdminSeniorRulesService {
     }
 
     public record DeleteResult(String key, boolean deleted, Map<String, Integer> overrides, int size) {
+    }
+
+    public record OverridesPayload(Map<String, Integer> overrides, int size) {
+    }
+
+    public record ReplaceResult(Map<String, Integer> overrides, int size) {
+    }
+
+    public record KeysPayload(List<String> keys, int size, String prefix, String q) {
+    }
+
+    public record CatalogPayload(List<SeniorInterviewRuleRegistry.RuleInfo> rules, int size, String prefix, String q) {
     }
 
     public static class ValidationException extends RuntimeException {
