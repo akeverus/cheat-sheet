@@ -93,6 +93,9 @@
 - [x] Added `ConfidenceApiServiceTest` and updated controller tests to verify confidence endpoint delegation contract.
 - [x] Extracted `/api/streak` and `/api/favorite` orchestration into `StreakApiService` and `FavoriteApiService`, removing direct domain service calls from controller.
 - [x] Added `StreakApiServiceTest` + `FavoriteApiServiceTest` and updated `InterviewApiControllerUnitTest` to verify delegation for streak/favorite endpoints.
+- [x] Extracted `/export` orchestration into `ExportApiService` (access check, format validation, export branching, serialization error mapping), reducing `ExportController` to HTTP response mapping.
+- [x] Removed manual error JSON byte-serialization path from controller and standardized JSON error responses through `ApiError` payloads.
+- [x] Added `ExportApiServiceTest` and updated `ExportControllerErrorTest` to validate the new service boundary and 500 error contract.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

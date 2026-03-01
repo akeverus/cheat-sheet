@@ -7,20 +7,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cheatsheet.quiz.api.controller.ExportController;
+import com.cheatsheet.quiz.api.dto.ApiError;
 import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
-import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
-import com.cheatsheet.quiz.domain.ProgressExportRow;
-import com.cheatsheet.quiz.service.ExportService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
+import com.cheatsheet.quiz.service.ExportApiService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -34,31 +30,30 @@ class ExportControllerErrorTest {
     MockMvc mockMvc;
 
     @Mock
-    ExportService exportService;
-
-    @Mock
-    ObjectMapper objectMapper;
-
-    @Mock
-    SensitiveEndpointAccessService accessService;
+    ExportApiService exportApiService;
 
     @BeforeEach
     void setUp() {
-        when(exportService.loadProgressRows()).thenReturn(List.of(
-                new ProgressExportRow("slug", "topic", 0, 0, 0L, 0)
-        ));
-        when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
-
-        ExportController controller = new ExportController(exportService, objectMapper, accessService);
+        ExportController controller = new ExportController(exportApiService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
     void exportJsonWhenSerializationFailsReturns500WithStandardErrorBody() throws Exception {
-        when(exportService.exportAsJson(any())).thenThrow(new JsonProcessingException("test") {});
-        when(objectMapper.writeValueAsString(any())).thenReturn(
-                "{\"status\":500,\"type\":\"EXPORT_SERIALIZATION_ERROR\",\"message\":\"Ошибка сериализации экспорта в JSON\"}"
+        ApiError error = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                ApiErrorTypes.EXPORT_SERIALIZATION_ERROR,
+                "Ошибка сериализации экспорта в JSON",
+                null
         );
+        when(exportApiService.export(any(), any()))
+                .thenReturn(new ExportApiService.ExportResult(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        error,
+                        null,
+                        MediaType.APPLICATION_JSON,
+                        null
+                ));
 
         mockMvc.perform(get("/export").param("format", "json").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
