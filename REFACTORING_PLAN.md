@@ -118,6 +118,8 @@
 - [x] Removed `lombok.experimental.FieldDefaults` from `StartupRunner` and switched to explicit `private final` fields.
 - [x] Added `StartupRunnerTest` covering startup reset/warmup toggles and preload invocation contract.
 - [x] Removed `lombok.experimental.FieldDefaults` from `QualityIterationRunner` and switched to explicit constructor-injected final fields.
+- [x] Removed `lombok.experimental.FieldDefaults` from `TrainingSessionService` and switched to explicit `private final` fields.
+- [x] Expanded `TrainingSessionServiceTest` with exam-penalty group fallback scenario (`findQuestionIdsExcludingByTopics`) to lock penalty flow behavior.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
