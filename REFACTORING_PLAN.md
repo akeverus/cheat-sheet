@@ -27,6 +27,9 @@
 - [x] Removed duplicated validation-error mapping in `AdminController` via centralized `validationError` response builder.
 - [x] Refactored senior-rules help payload to static constant for cleaner controller method bodies.
 - [x] Kept admin controller MockMvc regression suite green after auth/error-handler refactor.
+- [x] Reduced `AdminSeniorRulesService` duplication by unifying PUT/PATCH payload validation into a single strategy-aware validator.
+- [x] Hardened `AdminSeniorRulesService` runtime safety by normalizing non-concurrent override maps into `ConcurrentHashMap`.
+- [x] Added dedicated unit coverage for `AdminSeniorRulesService` (replace/patch/delete validation and concurrent-map migration path).
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access and duplicated guard logic.

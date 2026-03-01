@@ -49,11 +49,11 @@ public class AdminSeniorRulesService {
 
     public Map<String, Object> replaceOverrides(Map<String, Integer> overrides) {
         Map<String, Integer> safeOverrides = overrides == null ? Map.of() : overrides;
-        validatePutPayload(safeOverrides);
+        validatePayload(safeOverrides, false);
 
         Map<String, Integer> normalized = new LinkedHashMap<>();
         for (Map.Entry<String, Integer> entry : safeOverrides.entrySet()) {
-            normalized.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue());
+            normalized.put(normalizeKey(entry.getKey()), entry.getValue());
         }
 
         Map<String, Integer> target = getOrInitOverrides();
@@ -69,13 +69,13 @@ public class AdminSeniorRulesService {
             return new PatchResult(sortedCurrent, sortedCurrent.size(), 0, 0);
         }
 
-        validatePatchPayload(updates);
+        validatePayload(updates, true);
 
         int applied = 0;
         int removed = 0;
         Map<String, Integer> target = getOrInitOverrides();
         for (Map.Entry<String, Integer> entry : updates.entrySet()) {
-            String normalizedKey = entry.getKey().trim().toLowerCase(Locale.ROOT);
+            String normalizedKey = normalizeKey(entry.getKey());
             Integer value = entry.getValue();
             if (value == null) {
                 if (target.remove(normalizedKey) != null) {
@@ -101,36 +101,18 @@ public class AdminSeniorRulesService {
         return new DeleteResult(normalizedKey, deleted, sorted, sorted.size());
     }
 
-    private void validatePutPayload(Map<String, Integer> overrides) {
+    private void validatePayload(Map<String, Integer> payload, boolean nullAllowed) {
         Set<String> allowedKeys = Set.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
-        for (Map.Entry<String, Integer> entry : overrides.entrySet()) {
+        for (Map.Entry<String, Integer> entry : payload.entrySet()) {
             String key = entry.getKey() == null ? "" : entry.getKey().trim();
-            String normalizedKey = key.toLowerCase(Locale.ROOT);
+            String normalizedKey = normalizeKey(entry.getKey());
             Integer value = entry.getValue();
-            if (key.isBlank() || value == null || value < 0) {
+            boolean invalidValue = nullAllowed ? value != null && value < 0 : value == null || value < 0;
+            if (key.isBlank() || invalidValue) {
                 throw new ValidationException(
-                        "Некорректный payload senior-rule-priority-overrides: ключ не должен быть пустым, priority >= 0",
-                        Map.of("entry", String.valueOf(entry))
-                );
-            }
-            if (!allowedKeys.contains(normalizedKey)) {
-                throw new ValidationException(
-                        "Неизвестный ключ Senior-правила: " + key,
-                        Map.of("allowedKeys", allowedKeys)
-                );
-            }
-        }
-    }
-
-    private void validatePatchPayload(Map<String, Integer> updates) {
-        Set<String> allowedKeys = Set.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
-        for (Map.Entry<String, Integer> entry : updates.entrySet()) {
-            String key = entry.getKey() == null ? "" : entry.getKey().trim();
-            String normalizedKey = key.toLowerCase(Locale.ROOT);
-            Integer value = entry.getValue();
-            if (key.isBlank() || (value != null && value < 0)) {
-                throw new ValidationException(
-                        "Некорректный payload senior-rule-priority-overrides: ключ не должен быть пустым, priority >= 0 или null для удаления",
+                        nullAllowed
+                                ? "Некорректный payload senior-rule-priority-overrides: ключ не должен быть пустым, priority >= 0 или null для удаления"
+                                : "Некорректный payload senior-rule-priority-overrides: ключ не должен быть пустым, priority >= 0",
                         Map.of("entry", String.valueOf(entry))
                 );
             }
@@ -150,11 +132,20 @@ public class AdminSeniorRulesService {
             appProperties.getInterview().setSeniorRulePriorityOverrides(initialized);
             return initialized;
         }
-        return configured;
+        if (configured instanceof ConcurrentHashMap) {
+            return configured;
+        }
+        ConcurrentHashMap<String, Integer> concurrent = new ConcurrentHashMap<>(configured);
+        appProperties.getInterview().setSeniorRulePriorityOverrides(concurrent);
+        return concurrent;
     }
 
     private String normalize(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeKey(String key) {
+        return normalize(key);
     }
 
     private static boolean matchesCatalogQuery(SeniorInterviewRuleRegistry.RuleInfo rule, String normalizedQuery) {
