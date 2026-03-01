@@ -4,6 +4,7 @@ import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.service.ai.SeniorInterviewRuleRegistry;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -16,6 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class AdminSeniorRulesService {
+    private static final List<String> RULE_KEYS = List.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
+    private static final Set<String> ALLOWED_RULE_KEYS = Set.copyOf(RULE_KEYS);
+    private static final List<SeniorInterviewRuleRegistry.RuleInfo> RULE_CATALOG =
+            List.copyOf(SeniorInterviewRuleRegistry.listRules());
 
     private final AppProperties appProperties;
 
@@ -30,7 +35,7 @@ public class AdminSeniorRulesService {
     public Map<String, Object> getKeysPayload(String prefix, String query) {
         String normalizedPrefix = normalize(prefix);
         String normalizedQuery = normalize(query);
-        var keys = SeniorInterviewRuleRegistry.listRuleKeys().stream()
+        var keys = RULE_KEYS.stream()
                 .filter(key -> normalizedPrefix.isBlank() || key.startsWith(normalizedPrefix))
                 .filter(key -> normalizedQuery.isBlank() || key.contains(normalizedQuery))
                 .toList();
@@ -40,7 +45,7 @@ public class AdminSeniorRulesService {
     public Map<String, Object> getCatalogPayload(String prefix, String query) {
         String normalizedPrefix = normalize(prefix);
         String normalizedQuery = normalize(query);
-        var rules = SeniorInterviewRuleRegistry.listRules().stream()
+        var rules = RULE_CATALOG.stream()
                 .filter(rule -> normalizedPrefix.isBlank() || rule.key().startsWith(normalizedPrefix))
                 .filter(rule -> normalizedQuery.isBlank() || matchesCatalogQuery(rule, normalizedQuery))
                 .toList();
@@ -102,7 +107,6 @@ public class AdminSeniorRulesService {
     }
 
     private void validatePayload(Map<String, Integer> payload, boolean nullAllowed) {
-        Set<String> allowedKeys = Set.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
         for (Map.Entry<String, Integer> entry : payload.entrySet()) {
             String key = entry.getKey() == null ? "" : entry.getKey().trim();
             String normalizedKey = normalizeKey(entry.getKey());
@@ -116,10 +120,10 @@ public class AdminSeniorRulesService {
                         Map.of("entry", String.valueOf(entry))
                 );
             }
-            if (!allowedKeys.contains(normalizedKey)) {
+            if (!ALLOWED_RULE_KEYS.contains(normalizedKey)) {
                 throw new ValidationException(
                         "Неизвестный ключ Senior-правила: " + key,
-                        Map.of("allowedKeys", allowedKeys)
+                        Map.of("allowedKeys", ALLOWED_RULE_KEYS)
                 );
             }
         }

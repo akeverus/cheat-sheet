@@ -46,6 +46,8 @@
 - [x] Updated admin controller tests to use centralized forbidden-guard stubbing instead of direct `isAuthorized` stubs.
 - [x] Standardized admin validation error details in `GlobalExceptionHandler` using deterministic key-sorted detail mapping.
 - [x] Added `GlobalExceptionHandlerTest` coverage for `AdminSeniorRulesService.ValidationException` API contract.
+- [x] Optimized `AdminSeniorRulesService` catalog/key endpoints by caching immutable rule metadata instead of rebuilding registries per request.
+- [x] Reduced per-request allocation in senior-rules validation via precomputed allowed-key set reuse.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
