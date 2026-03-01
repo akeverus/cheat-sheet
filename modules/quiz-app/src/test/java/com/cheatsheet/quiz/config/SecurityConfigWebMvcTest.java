@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.admin-token=test-admin-token")
 @AutoConfigureMockMvc
 class SecurityConfigWebMvcTest {
 
@@ -32,5 +32,32 @@ class SecurityConfigWebMvcTest {
     void csrfIsIgnoredForApiEndpoints() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/favorite"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void sensitiveEndpointsAreBlockedWithoutAdminToken() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/senior-rules"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/regenerate"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/export"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sensitiveEndpointsAllowValidAdminToken() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/senior-rules")
+                        .header("X-Admin-Token", "test-admin-token"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/regenerate")
+                        .header("X-Admin-Token", "test-admin-token"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/export")
+                        .header("X-Admin-Token", "test-admin-token"))
+                .andExpect(status().isOk());
     }
 }

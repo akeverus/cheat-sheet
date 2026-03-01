@@ -1,8 +1,10 @@
 package com.cheatsheet.quiz.config;
 
+import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -10,6 +12,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,7 +28,11 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            CorsConfigurationSource corsConfigurationSource,
+            SensitiveEndpointAccessService sensitiveEndpointAccessService
+    ) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf
@@ -37,6 +44,8 @@ public class SecurityConfig {
                         ))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/admin/**", "/api/regenerate", "/export")
+                        .access((authentication, context) -> hasValidAdminToken(context, sensitiveEndpointAccessService))
                         .requestMatchers(HttpMethod.GET, "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
                         .requestMatchers(HttpMethod.GET, "/", "/settings", "/stats", "/review").permitAll()
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -87,5 +96,13 @@ public class SecurityConfig {
                 .filter(value -> value != null && !value.isBlank())
                 .map(String::trim)
                 .toList();
+    }
+
+    private static AuthorizationDecision hasValidAdminToken(
+            RequestAuthorizationContext context,
+            SensitiveEndpointAccessService sensitiveEndpointAccessService
+    ) {
+        String token = context.getRequest().getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
+        return new AuthorizationDecision(sensitiveEndpointAccessService.isAuthorized(token));
     }
 }
