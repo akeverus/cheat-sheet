@@ -49,6 +49,22 @@ class QuestionGenerationPolicyTest {
         assertThat(second).anyMatch(v -> v.contains("duplicates previous generation attempt"));
     }
 
+    @Test
+    void enrichViolationsDetectsNearDuplicateQuestionText() {
+        QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70, 280, 520, 0.60);
+        Set<String> seen = new HashSet<>();
+        seen.add("почему hashset теряет производительность при большом числе коллизий::a|b|c|d");
+
+        Question candidate = question(
+                "Почему HashSet может терять производительность при большом числе коллизий ключей?",
+                List.of("Из-за коллизий", "Из-за GC", "Из-за JIT", "Из-за кеша CPU")
+        );
+
+        List<String> violations = policy.enrichViolations(candidate, List.of(), seen);
+
+        assertThat(violations).anyMatch(v -> v.contains("semantically too close"));
+    }
+
     private Question question(String questionText, List<String> options) {
         return new Question(
                 0L,

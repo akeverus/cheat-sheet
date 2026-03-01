@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,19 +34,27 @@ class QuestionGenerationServiceTest {
     QuestionValidationService validationService;
     @Mock
     AdaptiveDifficultyService adaptiveDifficultyService;
+    @Mock
+    QuestionUniquenessService questionUniquenessService;
 
     private QuestionGenerationService service;
 
     @BeforeEach
     void setUp() {
+        AppProperties appProperties = new AppProperties();
+        appProperties.getInterview().setQuestionGenerationMaxAttempts(3);
         service = new QuestionGenerationService(
                 optionGenerator,
                 new ObjectMapper(),
                 validationService,
                 adaptiveDifficultyService,
                 new QuestionPromptBuilder(),
-                new QuestionGenerationPolicy(70)
+                new QuestionGenerationPolicy(70),
+                questionUniquenessService,
+                appProperties
         );
+        when(questionUniquenessService.loadRecentFingerprints(anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(Set.of());
     }
 
     @Test
@@ -66,6 +76,8 @@ class QuestionGenerationServiceTest {
         assertThat(generated.options()).hasSize(4);
         verify(optionGenerator, times(2)).generateStructuredJson(anyString());
         verify(validationService, times(2)).validate(org.mockito.ArgumentMatchers.any(Question.class));
+        verify(questionUniquenessService, times(1))
+                .rememberFingerprint(anyString(), org.mockito.ArgumentMatchers.any(), anyString());
     }
 
     @Test

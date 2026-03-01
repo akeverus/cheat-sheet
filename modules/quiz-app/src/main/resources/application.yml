@@ -1,0 +1,133 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: interview-prep
+    version: "@projectVersion@"
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:./data/db/interview.db
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    enabled: true
+  thymeleaf:
+    cache: false
+
+# ===========================
+# Конфигурация приложения
+# ===========================
+app:
+  # Путь к markdown-файлам с вопросами
+  interview-path: cheatsheets/interview
+  # Каталог групп/порядка тем для UI и селектора вопросов
+  topic-groups-config: topic-groups.yaml
+
+  # AI-провайдер: openai, deepseek
+  ai-provider: ${AI_PROVIDER:openai}
+
+  # --- Безопасность чувствительных endpoint ---
+  admin-token: ${APP_ADMIN_TOKEN:}
+  regenerate-rate-limit-per-minute: ${REGENERATE_RATE_LIMIT_PER_MINUTE:20}
+
+  # --- Параметры тестирования ---
+  interview:
+    options-count: 4              # количество вариантов ответа
+    learned-repetitions: 3        # порог «выучено»
+    exam-penalty-questions: 5     # штрафные вопросы при ошибке в экзамене
+    max-option-length: 1000       # лимит только для извлечения short-answer из markdown (не quality-гейт AI-вариантов)
+    expand-per-source: 0          # число дополнительных формулировок из одного источника (0 = отключено)
+    max-session-count: 200        # максимум вопросов в сессии (защита от DoS)
+    reset-on-startup: ${INTERVIEW_RESET_ON_STARTUP:false}  # очищать варианты ответов при старте (для перегенерации через AI)
+    default-exam-count: 20       # дефолтное число вопросов в экзамене
+    default-marathon-count: 50   # дефолтное число вопросов в марафоне
+    min-sentence-dot-position: 20 # минимальная позиция точки для обрезки по предложению (AnswerTextService)
+    default-daily-goal: 10         # цель на день для streak-бара
+    senior-rule-priority-overrides: {} # пример: {spring-transactional: 5, sql-null-semantics: 4}
+    question-min-quality-score: 70
+    question-max-text-length: 280
+    question-max-options-total-text-length: 520
+    question-generation-max-attempts: 3
+    question-uniqueness-window-minutes: 120
+    question-uniqueness-max-fingerprints-per-key: 200
+    question-near-duplicate-similarity-threshold: 0.82
+
+  # --- Общие настройки AI-запросов ---
+  ai:
+    timeout-seconds: 60
+    max-retries: 3
+    retry-backoff-seconds: 2
+    max-input-length: 10000       # максимальная длина ввода в AI (символов)
+    question-preview-length: 60  # длина превью вопроса в логах
+    answer-preview-length: 500   # длина превью ответа при передаче в AI
+    correct-preview-length: 80   # длина превью правильного ответа в логах
+
+  # --- DeepSeek ---
+  deepseek:
+    base-url: https://api.deepseek.com
+    endpoint: /v1/chat/completions
+    model: deepseek-chat
+    api-key: ${DEEPSEEK_API_KEY:}
+    temperature: 0.4
+
+  # --- OpenAI (ChatGPT) ---
+  openai:
+    base-url: https://api.openai.com
+    endpoint: /v1/chat/completions
+    model: ${OPENAI_MODEL:gpt-4.1-mini}
+    api-key: ${OPENAI_API_KEY:}
+    temperature: 0.4
+
+  # --- Предзагрузка вариантов ответов ---
+  preload:
+    batch-size: 5
+    core-pool-size: 4
+    max-pool-size: 8
+    queue-capacity: 100
+    sleep-ms: 200
+    max-queue-size: 50
+    max-queues: 20
+    full-warmup: ${PRELOAD_FULL_WARMUP:true}
+    warmup-limit: ${PRELOAD_WARMUP_LIMIT:0} # 0 = все вопросы, >0 = только первые N (тестовый режим)
+    test-mode: ${PRELOAD_TEST_MODE:false}   # true + warmup-limit=0 => автолимит 10 вопросов
+    warmup-random-seed: ${PRELOAD_WARMUP_RANDOM_SEED:-1} # -1 = новый random subset на каждый прогрев
+    log-progress-every: 50       # логировать прогресс предзагрузки каждые N вопросов
+
+  # --- Цикл автоулучшения качества (10 итераций) ---
+  quality-iterations:
+    enabled: ${QUALITY_ITERATIONS_ENABLED:false}
+    iterations: ${QUALITY_ITERATIONS_COUNT:10}
+    sample-size: ${QUALITY_ITERATIONS_SAMPLE_SIZE:10}
+    target-score: ${QUALITY_ITERATIONS_TARGET_SCORE:90}
+    sleep-between-iterations-ms: ${QUALITY_ITERATIONS_SLEEP_MS:0}
+    max-prompt-rules: ${QUALITY_ITERATIONS_MAX_PROMPT_RULES:6}
+
+  # --- SQLite ---
+  sqlite:
+    enable-wal: true
+
+  # --- Кэш вариантов ответов ---
+  cache:
+    option-max-size: 500
+    ttl-hours: 1
+
+  # --- Полнотекстовый поиск ---
+  search:
+    max-limit: 100
+    preview-max-length: 300      # максимальная длина превью ответа в поиске
+    stats-results-limit: 20     # лимит результатов поиска на странице статистики
+
+  # --- Импорт вопросов из markdown ---
+  import-settings:
+    min-code-block-length: 50   # минимальная длина code block для типа CODE
+
+  # --- Директория данных (SQLite и др.) ---
+  data-dir: data
+
+# --- Actuator (health для Docker healthcheck) ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

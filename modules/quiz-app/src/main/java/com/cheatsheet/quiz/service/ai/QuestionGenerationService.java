@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionOption;
@@ -20,14 +21,14 @@ import java.util.Set;
 @Slf4j
 public class QuestionGenerationService {
 
-    private static final int MAX_REGEN_ATTEMPTS = 3;
-
     private final OptionGenerator optionGenerator;
     private final ObjectMapper objectMapper;
     private final QuestionValidationService validationService;
     private final AdaptiveDifficultyService adaptiveDifficultyService;
     private final QuestionPromptBuilder questionPromptBuilder;
     private final QuestionGenerationPolicy questionGenerationPolicy;
+    private final QuestionUniquenessService questionUniquenessService;
+    private final int maxGenerationAttempts;
 
     public QuestionGenerationService(
             OptionGenerator optionGenerator,
@@ -35,7 +36,9 @@ public class QuestionGenerationService {
             QuestionValidationService validationService,
             AdaptiveDifficultyService adaptiveDifficultyService,
             QuestionPromptBuilder questionPromptBuilder,
-            QuestionGenerationPolicy questionGenerationPolicy
+            QuestionGenerationPolicy questionGenerationPolicy,
+            QuestionUniquenessService questionUniquenessService,
+            AppProperties appProperties
     ) {
         this.optionGenerator = optionGenerator;
         this.objectMapper = objectMapper;
@@ -43,6 +46,8 @@ public class QuestionGenerationService {
         this.adaptiveDifficultyService = adaptiveDifficultyService;
         this.questionPromptBuilder = questionPromptBuilder;
         this.questionGenerationPolicy = questionGenerationPolicy;
+        this.questionUniquenessService = questionUniquenessService;
+        this.maxGenerationAttempts = Math.max(1, appProperties.getInterview().getQuestionGenerationMaxAttempts());
     }
 
     /**
@@ -58,9 +63,9 @@ public class QuestionGenerationService {
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         List<String> previousViolations = List.of();
-        Set<String> seenFingerprints = new HashSet<>();
+        Set<String> seenFingerprints = new HashSet<>(questionUniquenessService.loadRecentFingerprints(safeTopic, safeType));
         int bestScore = 0;
-        for (int attempt = 1; attempt <= MAX_REGEN_ATTEMPTS; attempt++) {
+        for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
             Question generated = requestQuestion(safeTopic, safeType, difficulty, previousViolations)
                     .orElseThrow(() -> new AiGenerationException("AI не вернул валидный JSON вопроса"));
             List<String> baseViolations = validationService.validate(generated);
@@ -70,6 +75,11 @@ public class QuestionGenerationService {
             if (questionGenerationPolicy.isAccepted(score, violations)) {
                 log.info("question_generation_succeeded topic={} type={} difficulty={} attempt={} qualityScore={}",
                         safeTopic, safeType, difficulty, attempt, score);
+                questionUniquenessService.rememberFingerprint(
+                        safeTopic,
+                        safeType,
+                        questionGenerationPolicy.fingerprint(generated)
+                );
                 return generated;
             }
             log.warn("question_generation_validation_failed topic={} type={} difficulty={} attempt={} qualityScore={} minQualityScore={} violations={}",
@@ -78,7 +88,7 @@ public class QuestionGenerationService {
             previousViolations = List.copyOf(violations);
         }
         throw new AiGenerationException("QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
-                + MAX_REGEN_ATTEMPTS + " попытки (bestQualityScore=" + bestScore + ")");
+                + maxGenerationAttempts + " попытки (bestQualityScore=" + bestScore + ")");
     }
 
     private Optional<Question> requestQuestion(String topic, QuestionType type, Difficulty difficulty, List<String> previousViolations) {

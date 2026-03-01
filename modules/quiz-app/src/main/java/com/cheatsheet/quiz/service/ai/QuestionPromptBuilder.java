@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.QuestionType;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,17 @@ import java.util.List;
  */
 @Component
 public class QuestionPromptBuilder {
+
+    private final AppProperties appProperties;
+
+    public QuestionPromptBuilder(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
+
+    // Constructor for unit tests without Spring context.
+    QuestionPromptBuilder() {
+        this(new AppProperties());
+    }
 
     /**
      * Собирает базовый prompt и, при наличии, добавляет quality-feedback с предыдущей попытки.
@@ -29,6 +41,11 @@ public class QuestionPromptBuilder {
                 safeType.name(),
                 safeTopic
         );
+        basePrompt += "\n\nGENERATION_CONSTRAINTS:\n"
+                + "- maxQuestionTextLength: " + appProperties.getInterview().getQuestionMaxTextLength() + "\n"
+                + "- maxOptionsTotalTextLength: " + appProperties.getInterview().getQuestionMaxOptionsTotalTextLength() + "\n"
+                + "- minQualityScore: " + appProperties.getInterview().getQuestionMinQualityScore() + "\n"
+                + "- nearDuplicateSimilarityThreshold: " + appProperties.getInterview().getQuestionNearDuplicateSimilarityThreshold() + "\n";
 
         if (previousViolations == null || previousViolations.isEmpty()) {
             return basePrompt;

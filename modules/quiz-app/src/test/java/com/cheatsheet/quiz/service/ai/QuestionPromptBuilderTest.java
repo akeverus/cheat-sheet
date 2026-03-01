@@ -24,6 +24,8 @@ class QuestionPromptBuilderTest {
         assertThat(prompt).contains("HARD");
         assertThat(prompt).contains("CODE");
         assertThat(prompt).contains("java");
+        assertThat(prompt).contains("GENERATION_CONSTRAINTS:");
+        assertThat(prompt).contains("minQualityScore: 70");
         assertThat(prompt).doesNotContain("QUALITY_FEEDBACK_FROM_PREVIOUS_ATTEMPT");
     }
 

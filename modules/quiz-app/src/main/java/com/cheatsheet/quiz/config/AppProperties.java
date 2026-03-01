@@ -218,6 +218,34 @@ public class AppProperties {
 
         /** Переопределение приоритетов Senior-правил по ключу (key -> priority). */
         private Map<String, Integer> seniorRulePriorityOverrides = new ConcurrentHashMap<>();
+
+        /** Минимальный quality score для принятия сгенерированного вопроса (0..100). */
+        @Min(0) @Max(100)
+        private int questionMinQualityScore = 70;
+
+        /** Верхний лимит длины текста вопроса для контроля когнитивной нагрузки. */
+        @Min(40) @Max(500)
+        private int questionMaxTextLength = 280;
+
+        /** Верхний лимит суммарной длины всех option-текстов. */
+        @Min(80) @Max(1200)
+        private int questionMaxOptionsTotalTextLength = 520;
+
+        /** Количество попыток генерации вопроса до fail-fast ошибки. */
+        @Min(1) @Max(10)
+        private int questionGenerationMaxAttempts = 3;
+
+        /** Окно хранения fingerprint для topic/type uniqueness (в минутах). */
+        @Min(5) @Max(24 * 60)
+        private int questionUniquenessWindowMinutes = 120;
+
+        /** Максимум fingerprint в окне на один ключ topic/type. */
+        @Min(10) @Max(1000)
+        private int questionUniquenessMaxFingerprintsPerKey = 200;
+
+        /** Порог near-duplicate по Jaccard-токенам (0..1). */
+        @Min(0) @Max(1)
+        private double questionNearDuplicateSimilarityThreshold = 0.82;
     }
 
     /**
