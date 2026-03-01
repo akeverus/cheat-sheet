@@ -74,6 +74,8 @@
 - [x] Removed controller-side unsafe map casting for admin PUT `/api/admin/senior-rules` response assembly.
 - [x] Extracted `/api/regenerate` orchestration (auth/rate-limit/regenerate flow) from `InterviewApiController` into `RegenerateEndpointService` to keep controller layer as HTTP adapter.
 - [x] Added dedicated `RegenerateEndpointServiceTest` and updated `InterviewApiControllerUnitTest` to validate typed service-result mapping for forbidden/rate-limit/success branches.
+- [x] Extracted semantic similarity math from `OptionQualityValidator` into dedicated `OptionSemanticSimilaritySupport` to reduce validator responsibility and centralize Jaccard/coverage calculations.
+- [x] Added `OptionSemanticSimilaritySupportTest` and kept `OptionQualityValidatorTest` behavior stable after decomposition.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

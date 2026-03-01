@@ -90,7 +90,6 @@ public class OptionQualityValidator {
     }
 
     private static final double MIN_TOPIC_SIMILARITY = 0.25;
-    private static final int MIN_TOKEN_LENGTH = 3;
     private static final int DEFAULT_OPTIONS_COUNT = 4;
     private static final int MIN_BOILERPLATE_PREFIX_WORDS = 5;
     private static final int MAX_BOILERPLATE_PREFIX_WORDS = 8;
@@ -353,24 +352,18 @@ public class OptionQualityValidator {
         if (correct == null || correct.isBlank() || wrong == null || wrong.isEmpty()) {
             return issues;
         }
-        Set<String> correctTokens = tokenize(correct.toLowerCase());
+        Set<String> correctTokens = OptionSemanticSimilaritySupport.tokenizeForSemanticSimilarity(correct);
         if (correctTokens.isEmpty()) {
             return issues;
         }
         int offTopicCount = 0;
         for (String w : wrong) {
             if (w == null || w.isBlank()) continue;
-            Set<String> wrongTokens = tokenize(w.toLowerCase());
+            Set<String> wrongTokens = OptionSemanticSimilaritySupport.tokenizeForSemanticSimilarity(w);
             if (wrongTokens.isEmpty()) continue;
-            int intersection = 0;
-            for (String token : wrongTokens) {
-                if (correctTokens.contains(token)) {
-                    intersection++;
-                }
-            }
-            int union = correctTokens.size() + wrongTokens.size() - intersection;
-            double similarity = union == 0 ? 0 : (double) intersection / union;
-            if (similarity < MIN_TOPIC_SIMILARITY) {
+            OptionSemanticSimilaritySupport.SimilarityMetrics metrics =
+                    OptionSemanticSimilaritySupport.similarityMetrics(correctTokens, wrongTokens);
+            if (metrics.jaccard() < MIN_TOPIC_SIMILARITY) {
                 offTopicCount++;
             }
         }
@@ -711,10 +704,6 @@ public class OptionQualityValidator {
         return String.join(" ", Arrays.copyOfRange(words, 0, limit));
     }
 
-    private Set<String> tokenize(String text) {
-        return OptionTextNormalizer.tokenize(text, MIN_TOKEN_LENGTH);
-    }
-
     private List<ValidationIssue> validateQuestionCoreRelevance(
             String questionText, String expectedAnswerText, GeneratedOptions opts, String topic
     ) {
@@ -960,20 +949,12 @@ public class OptionQualityValidator {
             if (wrongTokens.size() < 4) {
                 continue;
             }
-            int intersection = 0;
-            for (String token : wrongTokens) {
-                if (correctTokens.contains(token)) {
-                    intersection++;
-                }
-            }
-            if (intersection == 0) {
+            OptionSemanticSimilaritySupport.SimilarityMetrics metrics =
+                    OptionSemanticSimilaritySupport.similarityMetrics(correctTokens, wrongTokens);
+            if (metrics.intersection() == 0) {
                 continue;
             }
-            int minTokenCount = Math.min(correctTokens.size(), wrongTokens.size());
-            int union = correctTokens.size() + wrongTokens.size() - intersection;
-            double minCoverage = minTokenCount == 0 ? 0 : (double) intersection / minTokenCount;
-            double jaccard = union == 0 ? 0 : (double) intersection / union;
-            if (minCoverage >= 0.75 || jaccard >= 0.62) {
+            if (metrics.minCoverage() >= 0.75 || metrics.jaccard() >= 0.62) {
                 tooCloseCount++;
             }
         }
