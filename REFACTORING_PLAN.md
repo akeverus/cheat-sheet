@@ -60,6 +60,10 @@
 - [x] Added Spring Security baseline (`SecurityFilterChain`) with explicit CSRF policy (MVC protected, `/api/**` excluded), hardened HTTP security headers, and no legacy form/basic auth.
 - [x] Added `PasswordEncoder` bean and migrated CORS policy to typed configuration (`app.security.cors.*`) via `AppProperties`.
 - [x] Added `SecurityConfigWebMvcTest` coverage for CSRF policy behavior on MVC/API endpoints.
+- [x] Extracted shared `SeniorRulePriorityOverrideStore` to remove mutable runtime state coupling from `AppProperties` and centralize concurrent override access.
+- [x] Switched `AdminSeniorRulesService` and `OptionGenerationService` to a single override-store dependency, preserving behavior while reducing configuration leakage.
+- [x] Refactored `AdminController` auth-guard duplication into a single helper and stabilized controller tests under explicit web-slice security setup.
+- [x] Added `SeniorRulePriorityOverrideStoreTest` and aligned admin/AI service tests with new store-based architecture.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

@@ -80,6 +80,11 @@ Question engine построен вокруг policy-driven контура:
 - `QuestionUniquenessService` — Caffeine window uniqueness по `topic::type`.
 - `QuestionGenerationService` — retry orchestration и quality logging.
 
+Для admin-управления приоритетами senior-правил выделено отдельное runtime-хранилище:
+
+- `SeniorRulePriorityOverrideStore` — единый concurrent source of truth для override-map;
+- `AdminSeniorRulesService` и `OptionGenerationService` работают с одной и той же store-ссылкой без прямой мутации `AppProperties`.
+
 ## Адаптивная сложность
 
 - `AdaptiveDifficultyService` определяет текущий уровень сложности по mastery темы.
