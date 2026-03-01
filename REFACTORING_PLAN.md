@@ -70,6 +70,8 @@
 - [x] Stabilized `InterviewControllerApiTest` regenerate rate-limit path by enabling trusted forwarded client key in test profile overrides.
 - [x] Split question-analysis heuristics out of `OptionQualityValidator` into dedicated `OptionQuestionAnalysisSupport` to reduce class complexity and improve cohesion.
 - [x] Kept option quality/generation regression tests green after validator decomposition.
+- [x] Replaced `Map<String,Object>` service contracts in admin senior-rules flow with typed payload records (`OverridesPayload`, `ReplaceResult`, `KeysPayload`, `CatalogPayload`).
+- [x] Removed controller-side unsafe map casting for admin PUT `/api/admin/senior-rules` response assembly.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

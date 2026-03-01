@@ -77,6 +77,19 @@ Response (`AnswerResponse`):
 - При превышении лимита: `429 RATE_LIMIT_EXCEEDED` + header `Retry-After`.
 - При несуществующем `questionId`: `404 QUESTION_NOT_FOUND`.
 
+### `GET/PUT/PATCH/DELETE /api/admin/senior-rules*`
+
+Управление приоритетами Senior-правил.
+
+Контракт деталей ответа стандартизирован:
+
+- `GET /api/admin/senior-rules` → `details.overrides`, `details.size`
+- `GET /api/admin/senior-rules/keys` → `details.keys`, `details.size`, `details.prefix`, `details.q`
+- `GET /api/admin/senior-rules/catalog` → `details.rules`, `details.size`, `details.prefix`, `details.q`
+- `PUT /api/admin/senior-rules` → `details.overrides`, `details.size`
+- `PATCH /api/admin/senior-rules` → `details.overrides`, `details.size`, `details.applied`, `details.removed`
+- `DELETE /api/admin/senior-rules/{key}` → `details.key`, `details.deleted`, `details.overrides`, `details.size`
+
 ### `POST /api/confidence`
 
 Обновление уверенности (grade 1..5).
