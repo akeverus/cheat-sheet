@@ -16,7 +16,8 @@
   - отключены `formLogin/httpBasic/logout` (нет ложной auth-модели);
   - включены security headers (`CSP`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`);
   - CORS управляется через `app.security.cors.*` (`@ConfigurationProperties`);
-  - CSRF включен для MVC state-changing endpoint и отключен для `/api/**`, `/export`, `/actuator/**`.
+  - CSRF включен для MVC state-changing endpoint и отключен для `/api/**`, `/export`, `/actuator/**`;
+  - endpoint-level authorization для `/api/admin/**`, `/api/regenerate`, `/export` централизован в security-слое (token-based access decision).
 - **Admin token guard**:
   - константное сравнение через `MessageDigest.isEqual`;
   - единый `forbiddenIfUnauthorized(...)` для контроллеров.
@@ -55,8 +56,8 @@
 
 ## Рекомендации для hardening
 
-- Добавить Spring Security (`SecurityFilterChain`) для строгой авторизации endpoint по ролям.
-- Включить CSRF-защиту для state-changing HTTP-операций в web-интерфейсе.
+- Добавить role-based policy поверх admin-token (например, separate scopes для export/admin/regenerate).
+- Унифицировать формат 403-ответов из security-слоя и controller-guard (`ApiError`) для полной parity.
 - Ограничить CORS allow-list до доверенных origin.
 - Добавить server-level rate-limit для всех чувствительных endpoint.
 - Подключить security headers (`X-Content-Type-Options`, `Content-Security-Policy`, `X-Frame-Options`).

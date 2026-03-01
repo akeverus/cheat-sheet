@@ -64,12 +64,14 @@
 - [x] Switched `AdminSeniorRulesService` and `OptionGenerationService` to a single override-store dependency, preserving behavior while reducing configuration leakage.
 - [x] Refactored `AdminController` auth-guard duplication into a single helper and stabilized controller tests under explicit web-slice security setup.
 - [x] Added `SeniorRulePriorityOverrideStoreTest` and aligned admin/AI service tests with new store-based architecture.
+- [x] Enforced endpoint-level authorization in `SecurityFilterChain` for `/api/admin/**`, `/api/regenerate`, `/export` using token-aware access decisions.
+- [x] Expanded `SecurityConfigWebMvcTest` with deny/allow regression checks for sensitive endpoints (without/with valid `X-Admin-Token`).
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
 - [ ] Standardize service-level precondition checks and keep MVC controllers as HTTP adapters only.
 - [ ] Expand quality policy from topic-local near-duplicate checks to semantic cross-topic similarity constraints.
-- [ ] Introduce endpoint-level authorization rules in Spring Security on top of admin token guards.
+- [ ] Harden sensitive endpoint access responses for security-layer denials to fully match API error contract (`ApiError`) across all paths.
 
 ## Backlog
 - [ ] Split oversized classes (`OptionQualityValidator`, `AbstractAiClient`) into smaller cohesive components.
