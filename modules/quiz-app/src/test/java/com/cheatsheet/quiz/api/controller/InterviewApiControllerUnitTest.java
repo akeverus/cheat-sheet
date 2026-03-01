@@ -15,16 +15,16 @@ import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
-import com.cheatsheet.quiz.service.DailyStreakService;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.ConfidenceApiService;
-import com.cheatsheet.quiz.service.FavoriteService;
+import com.cheatsheet.quiz.service.FavoriteApiService;
 import com.cheatsheet.quiz.service.HintApiService;
 import com.cheatsheet.quiz.service.InterviewFacade;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.QuestionInsightsApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import com.cheatsheet.quiz.service.StatsApiService;
+import com.cheatsheet.quiz.service.StreakApiService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,8 +47,8 @@ class InterviewApiControllerUnitTest {
     @Mock private NextQuestionApiService nextQuestionApiService;
     @Mock private QuestionInsightsApiService questionInsightsApiService;
     @Mock private RegenerateEndpointService regenerateEndpointService;
-    @Mock private FavoriteService favoriteService;
-    @Mock private DailyStreakService dailyStreakService;
+    @Mock private FavoriteApiService favoriteApiService;
+    @Mock private StreakApiService streakApiService;
     @Mock private StatsApiService statsApiService;
 
     private InterviewApiController controller;
@@ -62,8 +62,8 @@ class InterviewApiControllerUnitTest {
                 nextQuestionApiService,
                 questionInsightsApiService,
                 regenerateEndpointService,
-                favoriteService,
-                dailyStreakService,
+                favoriteApiService,
+                streakApiService,
                 statsApiService
         );
     }
@@ -587,21 +587,22 @@ class InterviewApiControllerUnitTest {
     void streakReturnsDailyProgressFromService() {
         com.cheatsheet.quiz.api.dto.response.StreakResponse progress =
                 new com.cheatsheet.quiz.api.dto.response.StreakResponse(7, 10, 3, false, 5);
-        when(dailyStreakService.getTodayProgress()).thenReturn(progress);
+        when(streakApiService.buildStreakResponse()).thenReturn(progress);
 
         ResponseEntity<?> response = controller.getStreak();
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(progress);
-        verify(dailyStreakService).getTodayProgress();
+        verify(streakApiService).buildStreakResponse();
     }
 
     @Test
     void favoriteMapsServiceResultToApiDto() {
         QuestionIdRequest request = new QuestionIdRequest();
         request.setQuestionId(1101L);
-        FavoriteService.FavoriteResult result = new FavoriteService.FavoriteResult(1101L, true, true);
-        when(favoriteService.toggleFavorite(1101L)).thenReturn(result);
+        com.cheatsheet.quiz.api.dto.response.FavoriteResponse result =
+                new com.cheatsheet.quiz.api.dto.response.FavoriteResponse(true, true, 1101L);
+        when(favoriteApiService.toggleFavorite(1101L)).thenReturn(result);
 
         ResponseEntity<?> response = controller.toggleFavorite(request);
 
@@ -612,14 +613,14 @@ class InterviewApiControllerUnitTest {
         assertThat(body.questionId()).isEqualTo(1101L);
         assertThat(body.favorite()).isTrue();
         assertThat(body.synced()).isTrue();
-        verify(favoriteService).toggleFavorite(1101L);
+        verify(favoriteApiService).toggleFavorite(1101L);
     }
 
     @Test
     void favoritePropagatesQuestionNotFoundFromService() {
         QuestionIdRequest request = new QuestionIdRequest();
         request.setQuestionId(1102L);
-        when(favoriteService.toggleFavorite(1102L))
+        when(favoriteApiService.toggleFavorite(1102L))
                 .thenThrow(new QuestionNotFoundException("Вопрос не найден: id=1102"));
 
         assertThatThrownBy(() -> controller.toggleFavorite(request))

@@ -91,6 +91,8 @@
 - [x] Added `StatsApiServiceTest` and updated controller tests to validate delegation for stats endpoints.
 - [x] Extracted `/api/confidence` orchestration into dedicated `ConfidenceApiService` and removed direct confidence mutation from controller.
 - [x] Added `ConfidenceApiServiceTest` and updated controller tests to verify confidence endpoint delegation contract.
+- [x] Extracted `/api/streak` and `/api/favorite` orchestration into `StreakApiService` and `FavoriteApiService`, removing direct domain service calls from controller.
+- [x] Added `StreakApiServiceTest` + `FavoriteApiServiceTest` and updated `InterviewApiControllerUnitTest` to verify delegation for streak/favorite endpoints.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

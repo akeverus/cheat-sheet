@@ -18,13 +18,13 @@ import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
 import com.cheatsheet.quiz.service.AnswerApiService;
 import com.cheatsheet.quiz.service.ConfidenceApiService;
-import com.cheatsheet.quiz.service.FavoriteService;
+import com.cheatsheet.quiz.service.FavoriteApiService;
 import com.cheatsheet.quiz.service.HintApiService;
 import com.cheatsheet.quiz.service.NextQuestionApiService;
 import com.cheatsheet.quiz.service.QuestionInsightsApiService;
 import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import com.cheatsheet.quiz.service.StatsApiService;
-import com.cheatsheet.quiz.service.DailyStreakService;
+import com.cheatsheet.quiz.service.StreakApiService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -56,8 +56,8 @@ public class InterviewApiController {
     private final NextQuestionApiService nextQuestionApiService;
     private final QuestionInsightsApiService questionInsightsApiService;
     private final RegenerateEndpointService regenerateEndpointService;
-    private final FavoriteService favoriteService;
-    private final DailyStreakService dailyStreakService;
+    private final FavoriteApiService favoriteApiService;
+    private final StreakApiService streakApiService;
     private final StatsApiService statsApiService;
 
     public InterviewApiController(
@@ -67,8 +67,8 @@ public class InterviewApiController {
             NextQuestionApiService nextQuestionApiService,
             QuestionInsightsApiService questionInsightsApiService,
             RegenerateEndpointService regenerateEndpointService,
-            FavoriteService favoriteService,
-            DailyStreakService dailyStreakService,
+            FavoriteApiService favoriteApiService,
+            StreakApiService streakApiService,
             StatsApiService statsApiService
     ) {
         this.answerApiService = answerApiService;
@@ -77,8 +77,8 @@ public class InterviewApiController {
         this.nextQuestionApiService = nextQuestionApiService;
         this.questionInsightsApiService = questionInsightsApiService;
         this.regenerateEndpointService = regenerateEndpointService;
-        this.favoriteService = favoriteService;
-        this.dailyStreakService = dailyStreakService;
+        this.favoriteApiService = favoriteApiService;
+        this.streakApiService = streakApiService;
         this.statsApiService = statsApiService;
     }
 
@@ -156,7 +156,7 @@ public class InterviewApiController {
 
     @GetMapping("/api/streak")
     public ResponseEntity<StreakResponse> getStreak() {
-        return ResponseEntity.ok(dailyStreakService.getTodayProgress());
+        return ResponseEntity.ok(streakApiService.buildStreakResponse());
     }
 
     @GetMapping("/api/stats")
@@ -214,8 +214,7 @@ public class InterviewApiController {
     public ResponseEntity<FavoriteResponse> toggleFavorite(
             @Valid @ModelAttribute QuestionIdRequest request
     ) {
-        FavoriteService.FavoriteResult result = favoriteService.toggleFavorite(request.getQuestionId());
-        return ResponseEntity.ok(new FavoriteResponse(result.favorite(), result.synced(), result.questionId()));
+        return ResponseEntity.ok(favoriteApiService.toggleFavorite(request.getQuestionId()));
     }
 
     @GetMapping("/api/takeaway")
