@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service.ai;
 import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.QuestionType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,13 +16,9 @@ public class QuestionPromptBuilder {
 
     private final AppProperties appProperties;
 
+    @Autowired
     public QuestionPromptBuilder(AppProperties appProperties) {
         this.appProperties = appProperties;
-    }
-
-    // Constructor for unit tests without Spring context.
-    QuestionPromptBuilder() {
-        this(new AppProperties());
     }
 
     /**

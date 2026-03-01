@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.QuestionType;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class QuestionPromptBuilderTest {
 
-    private final QuestionPromptBuilder builder = new QuestionPromptBuilder();
+    private final QuestionPromptBuilder builder = new QuestionPromptBuilder(new AppProperties());
 
     @Test
     void buildsBasePromptWithoutQualityFeedbackWhenNoViolations() {

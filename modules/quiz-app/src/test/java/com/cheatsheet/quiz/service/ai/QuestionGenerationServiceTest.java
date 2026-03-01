@@ -48,7 +48,7 @@ class QuestionGenerationServiceTest {
                 new ObjectMapper(),
                 validationService,
                 adaptiveDifficultyService,
-                new QuestionPromptBuilder(),
+                new QuestionPromptBuilder(new AppProperties()),
                 new QuestionGenerationPolicy(70),
                 questionUniquenessService,
                 appProperties

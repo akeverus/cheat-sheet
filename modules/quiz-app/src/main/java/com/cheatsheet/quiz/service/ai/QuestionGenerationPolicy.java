@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service.ai;
 import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionOption;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ public class QuestionGenerationPolicy {
     private final int maxOptionsTotalTextLength;
     private final double nearDuplicateSimilarityThreshold;
 
+    @Autowired
     public QuestionGenerationPolicy(AppProperties appProperties) {
         this(
                 appProperties.getInterview().getQuestionMinQualityScore(),

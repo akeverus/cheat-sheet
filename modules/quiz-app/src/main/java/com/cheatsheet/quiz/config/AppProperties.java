@@ -83,6 +83,10 @@ public class AppProperties {
     @Valid @NotNull
     private Search search = new Search();
 
+    /** Security-параметры приложения (CORS/CSRF policy). */
+    @Valid @NotNull
+    private Security security = new Security();
+
     /** Настройки импорта вопросов из markdown. */
     @Valid @NotNull
     private Import importSettings = new Import();
@@ -484,5 +488,39 @@ public class AppProperties {
         /** Время жизни записей в кэше (часы). */
         @Min(value = 1, message = "app.cache.ttl-hours должен быть не меньше 1")
         private int ttlHours = 1;
+    }
+
+    /**
+     * Настройки security-политик приложения.
+     */
+    @Getter @Setter
+    public static class Security {
+        @Valid @NotNull
+        private Cors cors = new Cors();
+    }
+
+    /**
+     * Настройки CORS для web/api endpoint.
+     */
+    @Getter @Setter
+    public static class Cors {
+        /** Разрешённые origin для CORS. */
+        private List<String> allowedOrigins = List.of("http://localhost:8080", "http://127.0.0.1:8080");
+
+        /** Разрешённые HTTP-методы. */
+        private List<String> allowedMethods = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+
+        /** Разрешённые заголовки запроса. */
+        private List<String> allowedHeaders = List.of("Content-Type", "X-Admin-Token", "X-CSRF-TOKEN");
+
+        /** Разрешённые заголовки ответа. */
+        private List<String> exposedHeaders = List.of("Retry-After");
+
+        /** Разрешать ли credentials в CORS. */
+        private boolean allowCredentials = true;
+
+        /** Время кэширования preflight (секунды). */
+        @Min(0) @Max(86_400)
+        private long maxAgeSeconds = 3_600;
     }
 }
