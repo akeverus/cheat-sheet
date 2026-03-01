@@ -115,6 +115,9 @@
 - [x] Extracted quality retry + fix-context loop from `OptionGenerationService` into `OptionQualityRetryOrchestrator`.
 - [x] Reduced `OptionGenerationService` method complexity by delegating critical/warning/hard-block retry decisions to dedicated orchestrator.
 - [x] Added `OptionQualityRetryOrchestratorTest` for retry context enrichment and hard-block termination behavior.
+- [x] Removed `lombok.experimental.FieldDefaults` from `StartupRunner` and switched to explicit `private final` fields.
+- [x] Added `StartupRunnerTest` covering startup reset/warmup toggles and preload invocation contract.
+- [x] Removed `lombok.experimental.FieldDefaults` from `QualityIterationRunner` and switched to explicit constructor-injected final fields.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
