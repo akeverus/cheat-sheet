@@ -132,6 +132,8 @@
 - [x] Removed Lombok `@FieldDefaults`/`@RequiredArgsConstructor` from `QuestionImportService`; switched to explicit `private final` dependency wiring.
 - [x] Removed Lombok `@FieldDefaults` from `QuestionExpansionService`; switched to explicit immutable constructor injection.
 - [x] Added `QuestionExpansionServiceTest` to cover variant creation and no-op behavior when alternatives are empty.
+- [x] Removed Lombok `@FieldDefaults` from `ConfigurableAiClient`; switched to explicit immutable provider configuration fields.
+- [x] Added `ConfigurableAiClientTest` to lock provider identity/config wiring contract.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
