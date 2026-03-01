@@ -23,9 +23,13 @@
 - [x] Added quality scoring to `QuestionValidationService` and integrated score-based acceptance in `QuestionGenerationService`.
 - [x] Added retry-path test coverage for low-quality-score rejection in question generation.
 - [x] Sanitized AI and global exception logging to reduce sensitive payload leakage risk.
+- [x] Unified admin endpoint auth-guard flow in `AdminController` with shared `forbiddenIfUnauthorized` helper.
+- [x] Removed duplicated validation-error mapping in `AdminController` via centralized `validationError` response builder.
+- [x] Refactored senior-rules help payload to static constant for cleaner controller method bodies.
+- [x] Kept admin controller MockMvc regression suite green after auth/error-handler refactor.
 
 ## In Progress
-- [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
+- [ ] Continue thin-controller refactor for remaining controllers with direct persistence access and duplicated guard logic.
 - [ ] Standardize service-level precondition checks and keep controllers as HTTP adapters only.
 - [ ] Expand quality policy to topic-level uniqueness and cognitive-load constraints in generation flow.
 

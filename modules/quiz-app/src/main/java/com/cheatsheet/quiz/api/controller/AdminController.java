@@ -40,6 +40,12 @@ import java.util.Map;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class AdminController {
+    private static final Map<String, String> SENIOR_RULES_HELP_EXAMPLES = Map.of(
+            "get", "curl -H \"X-Admin-Token: <token>\" http://localhost:8080/api/admin/senior-rules",
+            "put", "curl -X PUT -H \"X-Admin-Token: <token>\" -H \"Content-Type: application/json\" -d '{\"spring-transactional\":8}' http://localhost:8080/api/admin/senior-rules",
+            "patch", "curl -X PATCH -H \"X-Admin-Token: <token>\" -H \"Content-Type: application/json\" -d '{\"spring-transactional\":9,\"sql-null-semantics\":null}' http://localhost:8080/api/admin/senior-rules",
+            "delete", "curl -X DELETE -H \"X-Admin-Token: <token>\" http://localhost:8080/api/admin/senior-rules/spring-transactional"
+    );
 
     AdminMaintenanceService adminMaintenanceService;
     AdminSeniorRulesService adminSeniorRulesService;
@@ -69,9 +75,9 @@ public class AdminController {
     public ResponseEntity<?> clearOptions(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка очистки вариантов ответов");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "очистки вариантов ответов");
+        if (forbidden != null) {
+            return forbidden;
         }
         int deleted = adminMaintenanceService.clearOptions();
         log.info("Очищены варианты ответов: удалено {} записей, кэш сброшен", deleted);
@@ -85,9 +91,9 @@ public class AdminController {
     public ResponseEntity<?> getSeniorRulePriorities(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка чтения senior rule priorities");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rule priorities");
+        if (forbidden != null) {
+            return forbidden;
         }
         Map<String, Integer> sorted = adminSeniorRulesService.getOverridesSorted();
         return ResponseEntity.ok(new AdminOperationResult(
@@ -100,19 +106,13 @@ public class AdminController {
     public ResponseEntity<?> getSeniorRulesHelp(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка чтения senior rules help");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rules help");
+        if (forbidden != null) {
+            return forbidden;
         }
-        Map<String, String> examples = Map.of(
-                "get", "curl -H \"X-Admin-Token: <token>\" http://localhost:8080/api/admin/senior-rules",
-                "put", "curl -X PUT -H \"X-Admin-Token: <token>\" -H \"Content-Type: application/json\" -d '{\"spring-transactional\":8}' http://localhost:8080/api/admin/senior-rules",
-                "patch", "curl -X PATCH -H \"X-Admin-Token: <token>\" -H \"Content-Type: application/json\" -d '{\"spring-transactional\":9,\"sql-null-semantics\":null}' http://localhost:8080/api/admin/senior-rules",
-                "delete", "curl -X DELETE -H \"X-Admin-Token: <token>\" http://localhost:8080/api/admin/senior-rules/spring-transactional"
-        );
         return ResponseEntity.ok(new AdminOperationResult(
                 "Примеры управления приоритетами Senior-правил.",
-                Map.of("examples", examples)
+                Map.of("examples", SENIOR_RULES_HELP_EXAMPLES)
         ));
     }
 
@@ -122,9 +122,9 @@ public class AdminController {
             @RequestParam(value = "prefix", required = false) String prefix,
             @RequestParam(value = "q", required = false) String query
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка чтения senior rule keys");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rule keys");
+        if (forbidden != null) {
+            return forbidden;
         }
         return ResponseEntity.ok(new AdminOperationResult(
                 "Доступные ключи Senior-правил.",
@@ -138,9 +138,9 @@ public class AdminController {
             @RequestParam(value = "prefix", required = false) String prefix,
             @RequestParam(value = "q", required = false) String query
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка чтения senior rule catalog");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "чтения senior rule catalog");
+        if (forbidden != null) {
+            return forbidden;
         }
         return ResponseEntity.ok(new AdminOperationResult(
                 "Полный каталог Senior-правил.",
@@ -153,9 +153,9 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestBody(required = false) Map<String, Integer> overrides
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка обновления senior rule priorities");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "обновления senior rule priorities");
+        if (forbidden != null) {
+            return forbidden;
         }
         try {
             Map<String, Object> payload = adminSeniorRulesService.replaceOverrides(overrides);
@@ -168,15 +168,7 @@ public class AdminController {
                     payload
             ));
         } catch (AdminSeniorRulesService.ValidationException ex) {
-            ApiError error = new ApiError(
-                    HttpStatus.BAD_REQUEST.value(),
-                    ApiErrorTypes.VALIDATION_ERROR,
-                    ex.getMessage(),
-                    ex.details()
-            );
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return validationError(ex);
         }
     }
 
@@ -185,9 +177,9 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @RequestBody(required = false) Map<String, Integer> updates
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка patch senior rule priorities");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "patch senior rule priorities");
+        if (forbidden != null) {
+            return forbidden;
         }
         try {
             AdminSeniorRulesService.PatchResult patchResult = adminSeniorRulesService.patchOverrides(updates);
@@ -205,15 +197,7 @@ public class AdminController {
                     )
             ));
         } catch (AdminSeniorRulesService.ValidationException ex) {
-            ApiError error = new ApiError(
-                    HttpStatus.BAD_REQUEST.value(),
-                    ApiErrorTypes.VALIDATION_ERROR,
-                    ex.getMessage(),
-                    ex.details()
-            );
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return validationError(ex);
         }
     }
 
@@ -222,9 +206,9 @@ public class AdminController {
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token,
             @PathVariable("key") String key
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка удаления senior rule priority");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "удаления senior rule priority");
+        if (forbidden != null) {
+            return forbidden;
         }
         try {
             AdminSeniorRulesService.DeleteResult result = adminSeniorRulesService.deleteOverride(key);
@@ -240,15 +224,7 @@ public class AdminController {
                     )
             ));
         } catch (AdminSeniorRulesService.ValidationException ex) {
-            ApiError error = new ApiError(
-                    HttpStatus.BAD_REQUEST.value(),
-                    ApiErrorTypes.VALIDATION_ERROR,
-                    ex.getMessage(),
-                    ex.details()
-            );
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return validationError(ex);
         }
     }
 
@@ -272,9 +248,9 @@ public class AdminController {
     public ResponseEntity<?> resetAll(
             @RequestHeader(value = SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER, required = false) String token
     ) {
-        if (!accessService.isAuthorized(token)) {
-            log.warn("Неавторизованная попытка полного сброса артефактов");
-            return accessService.buildForbiddenResponse(token);
+        ResponseEntity<?> forbidden = forbiddenIfUnauthorized(token, "полного сброса артефактов");
+        if (forbidden != null) {
+            return forbidden;
         }
 
         AdminMaintenanceService.ResetAllResult result = adminMaintenanceService.resetAll();
@@ -291,4 +267,23 @@ public class AdminController {
         ));
     }
 
+    private ResponseEntity<?> forbiddenIfUnauthorized(String token, String action) {
+        if (accessService.isAuthorized(token)) {
+            return null;
+        }
+        log.warn("Неавторизованная попытка {}", action);
+        return accessService.buildForbiddenResponse(token);
+    }
+
+    private ResponseEntity<ApiError> validationError(AdminSeniorRulesService.ValidationException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                ApiErrorTypes.VALIDATION_ERROR,
+                ex.getMessage(),
+                ex.details()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(error);
+    }
 }
