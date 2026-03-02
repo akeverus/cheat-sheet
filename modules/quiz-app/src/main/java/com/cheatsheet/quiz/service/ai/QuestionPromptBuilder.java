@@ -42,7 +42,8 @@ public class QuestionPromptBuilder {
                 + "- maxQuestionTextLength: " + appProperties.getInterview().getQuestionMaxTextLength() + "\n"
                 + "- maxOptionsTotalTextLength: " + appProperties.getInterview().getQuestionMaxOptionsTotalTextLength() + "\n"
                 + "- minQualityScore: " + appProperties.getInterview().getQuestionMinQualityScore() + "\n"
-                + "- nearDuplicateSimilarityThreshold: " + appProperties.getInterview().getQuestionNearDuplicateSimilarityThreshold() + "\n";
+                + "- nearDuplicateSimilarityThreshold: " + appProperties.getInterview().getQuestionNearDuplicateSimilarityThreshold() + "\n"
+                + "- distractorSimilarityThreshold: " + appProperties.getInterview().getQuestionDistractorSimilarityThreshold() + "\n";
 
         if (previousViolations == null || previousViolations.isEmpty()) {
             return basePrompt;

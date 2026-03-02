@@ -27,6 +27,7 @@ class QuestionPromptBuilderTest {
         assertThat(prompt).contains("java");
         assertThat(prompt).contains("GENERATION_CONSTRAINTS:");
         assertThat(prompt).contains("minQualityScore: 70");
+        assertThat(prompt).contains("distractorSimilarityThreshold: 0.78");
         assertThat(prompt).doesNotContain("QUALITY_FEEDBACK_FROM_PREVIOUS_ATTEMPT");
     }
 

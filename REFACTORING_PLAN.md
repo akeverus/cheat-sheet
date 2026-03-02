@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Added `QuestionRetryFeedbackNormalizer` to make retry feedback deterministic (trim + case-insensitive dedup + stable sort + config-driven limit).
+- [x] Integrated retry-feedback normalization into `QuestionGenerationService` for both parse-failure and validation-failure retries.
+- [x] Added `question-retry-feedback-max-items` configuration and expanded Question Engine tests (`QuestionRetryFeedbackNormalizerTest`, `QuestionPromptBuilderTest`, `QuestionGenerationServiceTest`) for normalized feedback flow.
 - [x] Added distractor-diversity control to `QuestionGenerationPolicy` (pairwise semantic similarity check for wrong options).
 - [x] Extended Question Engine scoring penalties for low-distractor-diversity violations in `QuestionValidationService`.
 - [x] Expanded `QuestionGenerationPolicyTest` with regression cases for low-diversity detection and diverse-distractor acceptance.

@@ -254,6 +254,10 @@ public class AppProperties {
         /** Порог схожести distractors (неверных опций), после которого они считаются слишком похожими (0..1). */
         @Min(0) @Max(1)
         private double questionDistractorSimilarityThreshold = 0.78;
+
+        /** Максимум пунктов quality-feedback, передаваемых в prompt следующей попытки. */
+        @Min(1) @Max(20)
+        private int questionRetryFeedbackMaxItems = 8;
     }
 
     /**
