@@ -118,6 +118,31 @@ class QuestionGenerationServiceTest {
     }
 
     @Test
+    void retryPromptFallsBackToViolationsWhenRetryFeedbackIsEmpty() {
+        when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString()))
+                .thenReturn(Optional.of(validQuestionJson()))
+                .thenReturn(Optional.of(alternativeQuestionJson()));
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(snapshot(
+                        List.of("Need stronger distractor quality"),
+                        List.of(),
+                        78,
+                        false
+                ))
+                .thenReturn(snapshot(List.of(), List.of(), 85, true));
+
+        service.generateQuestion("java", QuestionType.CONCEPT);
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(optionGenerator, times(2)).generateStructuredJson(promptCaptor.capture());
+        List<String> prompts = promptCaptor.getAllValues();
+        assertThat(prompts).hasSize(2);
+        assertThat(prompts.get(1)).contains("QUALITY_FEEDBACK_FROM_PREVIOUS_ATTEMPT");
+        assertThat(prompts.get(1)).contains("Need stronger distractor quality");
+    }
+
+    @Test
     void blankTopicFallsBackToGeneralInPrompt() {
         when(adaptiveDifficultyService.resolveDifficulty("   ")).thenReturn(Difficulty.MEDIUM);
         when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));

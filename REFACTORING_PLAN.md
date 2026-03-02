@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionGenerationService` retry contract: when quality snapshot has empty `retryFeedback`, retry prompt now falls back to snapshot `violations`.
+- [x] Added `QuestionGenerationServiceTest` regression to verify retry-prompt feedback fallback path for empty `retryFeedback`.
 - [x] Hardened `QuestionGenerationService` by sanitizing/null-guarding recent fingerprint input from `QuestionUniquenessService` before retry orchestration.
 - [x] Updated `QuestionGenerationServiceTest` with regression coverage for `null` recent fingerprint source.
 - [x] Hardened `QuestionQualitySnapshotFactory` with defensive score clamping (`0..100`) to preserve snapshot invariants under unexpected upstream scoring values.

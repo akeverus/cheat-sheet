@@ -100,7 +100,7 @@ public class QuestionGenerationService {
             log.warn("question_generation_validation_failed topic={} type={} difficulty={} attempt={} qualityScore={} minQualityScore={} violations={}",
                     safeTopic, safeType, difficulty, attempt, score, questionGenerationPolicy.minQualityScore(),
                     String.join("; ", violations));
-            previousViolations = qualitySnapshot.getRetryFeedback();
+            previousViolations = resolveRetryFeedback(qualitySnapshot, previousViolations);
         }
         throw new AiGenerationException(
                 "QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
@@ -112,6 +112,16 @@ public class QuestionGenerationService {
         String prompt = questionPromptBuilder.buildQuestionPrompt(difficulty, type, topic, previousViolations);
         Optional<String> raw = optionGenerator.generateStructuredJson(prompt);
         return raw.flatMap(content -> questionGeneratedJsonMapper.map(content, topic, type, difficulty));
+    }
+
+    private static List<String> resolveRetryFeedback(QuestionQualitySnapshot qualitySnapshot, List<String> previousViolations) {
+        if (qualitySnapshot.getRetryFeedback() != null && !qualitySnapshot.getRetryFeedback().isEmpty()) {
+            return qualitySnapshot.getRetryFeedback();
+        }
+        if (qualitySnapshot.getViolations() != null && !qualitySnapshot.getViolations().isEmpty()) {
+            return qualitySnapshot.getViolations();
+        }
+        return previousViolations == null ? List.of() : previousViolations;
     }
 
 }
