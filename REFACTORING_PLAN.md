@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Extracted `QuestionSeenFingerprintSanitizer` from `QuestionQualityEvaluator` to isolate fingerprint input sanitization from quality orchestration.
+- [x] Added `QuestionSeenFingerprintSanitizerTest` and updated `QuestionQualityEvaluatorTest` to verify delegation and sanitized fingerprint contract.
 - [x] Hardened `QuestionQualityEvaluator` with defensive sanitization of `seenFingerprints` (null/blank filtering + immutable set snapshot) before policy enrichment.
 - [x] Added `QuestionQualityEvaluatorTest` regression to verify sanitized `seenFingerprints` contract passed into `QuestionGenerationPolicy`.
 - [x] Removed hidden mutation side-effect from `QuestionGenerationPolicy.enrichViolations(...)` (no in-place writes to `seenFingerprints`).

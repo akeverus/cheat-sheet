@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Сервис оценки качества сгенерированного вопроса.
@@ -26,6 +24,7 @@ public class QuestionQualityEvaluator {
     private final QuestionQualitySnapshotFactory questionQualitySnapshotFactory;
     private final QuestionRequestFailureFeedbackSupplier questionRequestFailureFeedbackSupplier;
     private final QuestionQualityMessageNormalizer questionQualityMessageNormalizer;
+    private final QuestionSeenFingerprintSanitizer questionSeenFingerprintSanitizer;
 
     /**
      * Выполняет полный quality-check для кандидата.
@@ -35,7 +34,7 @@ public class QuestionQualityEvaluator {
      * @return снапшот качества с нарушениями, score и итогом приёмки
      */
     public QuestionQualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
-        Set<String> safeSeenFingerprints = sanitizeSeenFingerprints(seenFingerprints);
+        Set<String> safeSeenFingerprints = questionSeenFingerprintSanitizer.sanitize(seenFingerprints);
         List<String> baseViolations = questionQualityMessageNormalizer.normalize(validationService.validate(candidate));
         List<String> violations = questionQualityMessageNormalizer.normalize(
                 questionGenerationPolicy.enrichViolations(candidate, baseViolations, safeSeenFingerprints)
@@ -54,16 +53,5 @@ public class QuestionQualityEvaluator {
      */
     public List<String> retryFeedbackForRequestFailure() {
         return questionQualityMessageNormalizer.normalize(questionRequestFailureFeedbackSupplier.feedback());
-    }
-
-    private static Set<String> sanitizeSeenFingerprints(Set<String> seenFingerprints) {
-        if (seenFingerprints == null || seenFingerprints.isEmpty()) {
-            return Set.of();
-        }
-        return seenFingerprints.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(value -> !value.isBlank())
-                .collect(Collectors.toUnmodifiableSet());
     }
 }
