@@ -147,6 +147,8 @@
 - [x] Expanded `InterviewFlowMvcServiceTest` with positive-path coverage for `flashcardReveal` session persistence.
 - [x] Replaced parameter-clump in `InterviewSessionSupport.processAnswer` with explicit `AnswerSubmission` request object.
 - [x] Updated `AnswerApiService`/`InterviewFlowMvcService` and tests (`AnswerApiServiceTest`, `InterviewSessionSupportTest`) to use the new answer-submission boundary.
+- [x] Refactored `GlobalExceptionHandler` to centralize API error response construction and remove repeated response-building branches.
+- [x] Expanded `GlobalExceptionHandlerTest` with `MethodArgumentTypeMismatch` and `DataIntegrityViolation` API contract cases.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

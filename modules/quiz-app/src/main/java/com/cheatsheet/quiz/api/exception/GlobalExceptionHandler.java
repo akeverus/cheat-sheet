@@ -35,10 +35,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(QuestionNotFoundException.class)
     public Object handleQuestionNotFound(QuestionNotFoundException ex, HttpServletRequest request) {
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.NOT_FOUND.value(), ApiErrorTypes.QUESTION_NOT_FOUND, ex.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(HttpStatus.NOT_FOUND, ApiErrorTypes.QUESTION_NOT_FOUND, ex.getMessage(), null);
         }
         log.warn("Вопрос не найден: {}", ex.getMessage());
         return redirectToHome();
@@ -47,10 +44,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OptionNotFoundException.class)
     public Object handleOptionNotFound(OptionNotFoundException ex, HttpServletRequest request) {
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.NOT_FOUND.value(), ApiErrorTypes.OPTION_NOT_FOUND, ex.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(HttpStatus.NOT_FOUND, ApiErrorTypes.OPTION_NOT_FOUND, ex.getMessage(), null);
         }
         log.warn("Вариант не найден: {}", ex.getMessage());
         return redirectToHome();
@@ -101,11 +95,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AiGenerationException.class)
     public Object handleAiGenerationException(AiGenerationException ex, HttpServletRequest request) {
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.SERVICE_UNAVAILABLE.value(),
-                    ApiErrorTypes.AI_GENERATION_FAILED, ex.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    ApiErrorTypes.AI_GENERATION_FAILED,
+                    ex.getMessage(),
+                    null
+            );
         }
         log.warn("AI-генерация недоступна на {}: {}", safeUri(request), safeMessage(ex));
         ModelAndView mav = new ModelAndView("error");
@@ -117,11 +112,7 @@ public class GlobalExceptionHandler {
     public Object handleIllegalStateException(IllegalStateException ex, HttpServletRequest request) {
         log.warn("Неконсистентное состояние на {}: {}", safeUri(request), safeMessage(ex));
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.CONFLICT.value(),
-                    ApiErrorTypes.QUESTION_STATE_INVALID, ex.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(HttpStatus.CONFLICT, ApiErrorTypes.QUESTION_STATE_INVALID, ex.getMessage(), null);
         }
         return redirectToHome();
     }
@@ -130,11 +121,12 @@ public class GlobalExceptionHandler {
     public Object handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
         log.warn("Конфликт данных на {}: {}", safeUri(request), safeMessage(ex));
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.CONFLICT.value(),
-                    ApiErrorTypes.CONFLICT, "Конфликт данных, обновите страницу и повторите действие", null);
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(
+                    HttpStatus.CONFLICT,
+                    ApiErrorTypes.CONFLICT,
+                    "Конфликт данных, обновите страницу и повторите действие",
+                    null
+            );
         }
         return redirectToHome();
     }
@@ -143,11 +135,12 @@ public class GlobalExceptionHandler {
     public Object handleGenericException(Exception ex, HttpServletRequest request) {
         log.error("Необработанное исключение на {}: {}", safeUri(request), safeMessage(ex), ex);
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    ApiErrorTypes.INTERNAL_ERROR, "Внутренняя ошибка сервера", null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    ApiErrorTypes.INTERNAL_ERROR,
+                    "Внутренняя ошибка сервера",
+                    null
+            );
         }
         ModelAndView mav = new ModelAndView("error");
         mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -163,13 +156,17 @@ public class GlobalExceptionHandler {
 
     private Object badRequest(HttpServletRequest request, String type, String message, List<String> details) {
         if (isApiRequest(request)) {
-            ApiError error = new ApiError(HttpStatus.BAD_REQUEST.value(), type, message, details);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(error);
+            return apiErrorResponse(HttpStatus.BAD_REQUEST, type, message, details);
         }
         log.warn("Некорректный запрос на {}: {}", safeUri(request), details);
         return redirectToHome();
+    }
+
+    private ResponseEntity<ApiError> apiErrorResponse(HttpStatus status, String type, String message, List<String> details) {
+        ApiError error = new ApiError(status.value(), type, message, details);
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(error);
     }
 
     private String toConstraintMessage(ConstraintViolation<?> violation) {
