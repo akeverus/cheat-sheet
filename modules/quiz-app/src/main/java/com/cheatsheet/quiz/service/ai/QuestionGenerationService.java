@@ -73,18 +73,20 @@ public class QuestionGenerationService {
                 continue;
             }
             Question generated = generatedOpt.get();
+            String candidateFingerprint = questionGenerationPolicy.fingerprint(generated);
             QuestionQualitySnapshot qualitySnapshot =
                     questionQualityEvaluator.evaluateCandidate(generated, seenFingerprints);
             List<String> violations = qualitySnapshot.getViolations();
             int score = qualitySnapshot.getScore();
             bestScore = Math.max(bestScore, score);
+            seenFingerprints.add(candidateFingerprint);
             if (qualitySnapshot.isAccepted()) {
                 log.info("question_generation_succeeded topic={} type={} difficulty={} attempt={} qualityScore={}",
                         safeTopic, safeType, difficulty, attempt, score);
                 questionUniquenessService.rememberFingerprint(
                         safeTopic,
                         safeType,
-                        questionGenerationPolicy.fingerprint(generated)
+                        candidateFingerprint
                 );
                 return generated;
             }

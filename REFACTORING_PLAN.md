@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Removed hidden mutation side-effect from `QuestionGenerationPolicy.enrichViolations(...)` (no in-place writes to `seenFingerprints`).
+- [x] Moved fingerprint state progression into `QuestionGenerationService` orchestration for explicit and deterministic retry-state management.
+- [x] Updated `QuestionGenerationPolicyTest` to align duplicate detection contract with explicit fingerprint tracking and added non-mutation regression test.
 - [x] Extracted `QuestionQualityMessageNormalizer` from `QuestionQualityEvaluator` to isolate message canonicalization (trim/null/blank filtering + case-insensitive dedup).
 - [x] Added dedicated `QuestionQualityMessageNormalizerTest` and updated `QuestionQualityEvaluatorTest` to verify orchestrator delegation to the new normalizer component.
 - [x] Added deterministic case-insensitive deduplication of quality messages in `QuestionQualityEvaluator` normalization pipeline.

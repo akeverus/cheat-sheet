@@ -111,7 +111,7 @@ public class QuestionGenerationPolicy {
 
         if (seenFingerprints != null) {
             String fingerprint = fingerprint(candidate);
-            if (!seenFingerprints.add(fingerprint)) {
+            if (seenFingerprints.contains(fingerprint)) {
                 violations.add("Question candidate duplicates previous generation attempt");
             } else if (isNearDuplicate(candidate, seenFingerprints, fingerprint)) {
                 violations.add("Question candidate is semantically too close to previous generation attempt");

@@ -43,10 +43,25 @@ class QuestionGenerationPolicyTest {
         );
 
         List<String> first = policy.enrichViolations(candidate, List.of(), seen);
+        seen.add(policy.fingerprint(candidate));
         List<String> second = policy.enrichViolations(candidate, List.of(), seen);
 
         assertThat(first).isEmpty();
         assertThat(second).anyMatch(v -> v.contains("duplicates previous generation attempt"));
+    }
+
+    @Test
+    void enrichViolationsDoesNotMutateSeenFingerprintsSet() {
+        QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70);
+        Set<String> seen = new HashSet<>();
+        Question candidate = question(
+                "Почему HashMap может деградировать при плохом hashCode?",
+                List.of("Из-за коллизий", "Из-за GC", "Из-за JIT", "Из-за кеша CPU")
+        );
+
+        policy.enrichViolations(candidate, List.of(), seen);
+
+        assertThat(seen).isEmpty();
     }
 
     @Test
