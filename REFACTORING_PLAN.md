@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Extracted `QuestionQualityMessageNormalizer` from `QuestionQualityEvaluator` to isolate message canonicalization (trim/null/blank filtering + case-insensitive dedup).
+- [x] Added dedicated `QuestionQualityMessageNormalizerTest` and updated `QuestionQualityEvaluatorTest` to verify orchestrator delegation to the new normalizer component.
 - [x] Added deterministic case-insensitive deduplication of quality messages in `QuestionQualityEvaluator` normalization pipeline.
 - [x] Expanded `QuestionQualityEvaluatorTest` to verify duplicate/case-variant collapse before policy enrichment, scoring, and retry-feedback assembly.
 - [x] Hardened `QuestionQualityEvaluator` message contract with null/blank normalization for violations and retry-feedback paths.

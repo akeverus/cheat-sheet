@@ -30,6 +30,8 @@ class QuestionQualityEvaluatorTest {
     @Mock
     private QuestionRequestFailureFeedbackSupplier questionRequestFailureFeedbackSupplier;
     @Mock
+    private QuestionQualityMessageNormalizer questionQualityMessageNormalizer;
+    @Mock
     private Question candidate;
 
     @Test
@@ -40,15 +42,19 @@ class QuestionQualityEvaluatorTest {
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
                 questionQualitySnapshotFactory,
-                questionRequestFailureFeedbackSupplier
+                questionRequestFailureFeedbackSupplier,
+                questionQualityMessageNormalizer
         );
         Set<String> seenFingerprints = Set.of("q1::a|b|c|d");
-        List<String> baseViolations = List.of();
-        List<String> enrichedViolations = List.of();
-        List<String> retryFeedback = List.of();
+        List<String> baseViolations = List.of("base");
+        List<String> enrichedViolations = List.of("enriched");
+        List<String> retryFeedback = List.of("retry");
         when(validationService.validate(candidate)).thenReturn(baseViolations);
+        when(questionQualityMessageNormalizer.normalize(baseViolations)).thenReturn(baseViolations);
         when(questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)).thenReturn(enrichedViolations);
+        when(questionQualityMessageNormalizer.normalize(enrichedViolations)).thenReturn(enrichedViolations);
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
+        when(questionQualityMessageNormalizer.normalize(retryFeedback)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(enrichedViolations)).thenReturn(96);
         when(questionGenerationPolicy.isAccepted(96, enrichedViolations)).thenReturn(true);
         QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
@@ -63,8 +69,11 @@ class QuestionQualityEvaluatorTest {
 
         assertThat(snapshot).isEqualTo(expected);
         verify(validationService).validate(candidate);
+        verify(questionQualityMessageNormalizer).normalize(baseViolations);
         verify(questionGenerationPolicy).enrichViolations(candidate, baseViolations, seenFingerprints);
+        verify(questionQualityMessageNormalizer).normalize(enrichedViolations);
         verify(questionRetryFeedbackNormalizer).normalize(enrichedViolations);
+        verify(questionQualityMessageNormalizer).normalize(retryFeedback);
         verify(questionQualityScorer).score(enrichedViolations);
         verify(questionGenerationPolicy).isAccepted(96, enrichedViolations);
         verify(questionQualitySnapshotFactory).create(enrichedViolations, retryFeedback, 96, true);
@@ -78,7 +87,8 @@ class QuestionQualityEvaluatorTest {
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
                 questionQualitySnapshotFactory,
-                questionRequestFailureFeedbackSupplier
+                questionRequestFailureFeedbackSupplier,
+                questionQualityMessageNormalizer
         );
         Set<String> seenFingerprints = Set.of();
         List<String> baseViolations = List.of("shortExplanation must be at least 30 characters");
@@ -88,8 +98,11 @@ class QuestionQualityEvaluatorTest {
         );
         List<String> retryFeedback = List.of("Question cognitive load is too high: question text is too long");
         when(validationService.validate(candidate)).thenReturn(baseViolations);
+        when(questionQualityMessageNormalizer.normalize(baseViolations)).thenReturn(baseViolations);
         when(questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)).thenReturn(enrichedViolations);
+        when(questionQualityMessageNormalizer.normalize(enrichedViolations)).thenReturn(enrichedViolations);
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
+        when(questionQualityMessageNormalizer.normalize(retryFeedback)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(enrichedViolations)).thenReturn(54);
         when(questionGenerationPolicy.isAccepted(54, enrichedViolations)).thenReturn(false);
         QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
@@ -114,15 +127,18 @@ class QuestionQualityEvaluatorTest {
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
                 questionQualitySnapshotFactory,
-                questionRequestFailureFeedbackSupplier
+                questionRequestFailureFeedbackSupplier,
+                questionQualityMessageNormalizer
         );
         List<String> normalized = List.of("ai-request-failure");
         when(questionRequestFailureFeedbackSupplier.feedback()).thenReturn(normalized);
+        when(questionQualityMessageNormalizer.normalize(normalized)).thenReturn(normalized);
 
         List<String> retryFeedback = evaluator.retryFeedbackForRequestFailure();
 
         assertThat(retryFeedback).isEqualTo(normalized);
         verify(questionRequestFailureFeedbackSupplier).feedback();
+        verify(questionQualityMessageNormalizer).normalize(normalized);
     }
 
     @Test
@@ -133,34 +149,38 @@ class QuestionQualityEvaluatorTest {
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
                 questionQualitySnapshotFactory,
-                questionRequestFailureFeedbackSupplier
+                questionRequestFailureFeedbackSupplier,
+                questionQualityMessageNormalizer
         );
         List<String> baseViolations = List.of("  base violation  ", "BASE VIOLATION", "   ");
         List<String> enrichedViolations = Arrays.asList("  policy violation  ", "POLICY VIOLATION", null, "");
         List<String> retryFeedback = List.of("  retry hint  ", "RETRY HINT", " ");
-        List<String> normalizedViolations = List.of("policy violation");
         List<String> normalizedRetryFeedback = List.of("retry hint");
         List<String> normalizedBaseViolations = List.of("base violation");
+        List<String> normalizedEnrichedViolations = List.of("policy violation");
         when(validationService.validate(candidate)).thenReturn(baseViolations);
+        when(questionQualityMessageNormalizer.normalize(baseViolations)).thenReturn(normalizedBaseViolations);
         when(questionGenerationPolicy.enrichViolations(candidate, normalizedBaseViolations, Set.of()))
                 .thenReturn(enrichedViolations);
-        when(questionRetryFeedbackNormalizer.normalize(normalizedViolations)).thenReturn(retryFeedback);
-        when(questionQualityScorer.score(normalizedViolations)).thenReturn(88);
-        when(questionGenerationPolicy.isAccepted(88, normalizedViolations)).thenReturn(false);
+        when(questionQualityMessageNormalizer.normalize(enrichedViolations)).thenReturn(normalizedEnrichedViolations);
+        when(questionRetryFeedbackNormalizer.normalize(normalizedEnrichedViolations)).thenReturn(retryFeedback);
+        when(questionQualityMessageNormalizer.normalize(retryFeedback)).thenReturn(normalizedRetryFeedback);
+        when(questionQualityScorer.score(normalizedEnrichedViolations)).thenReturn(88);
+        when(questionGenerationPolicy.isAccepted(88, normalizedEnrichedViolations)).thenReturn(false);
         QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
-                .violations(normalizedViolations)
+                .violations(normalizedEnrichedViolations)
                 .retryFeedback(normalizedRetryFeedback)
                 .score(88)
                 .accepted(false)
                 .build();
-        when(questionQualitySnapshotFactory.create(normalizedViolations, normalizedRetryFeedback, 88, false))
+        when(questionQualitySnapshotFactory.create(normalizedEnrichedViolations, normalizedRetryFeedback, 88, false))
                 .thenReturn(expected);
 
         QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, Set.of());
 
         assertThat(snapshot).isEqualTo(expected);
         verify(questionGenerationPolicy).enrichViolations(candidate, normalizedBaseViolations, Set.of());
-        verify(questionQualityScorer).score(normalizedViolations);
-        verify(questionQualitySnapshotFactory).create(normalizedViolations, normalizedRetryFeedback, 88, false);
+        verify(questionQualityScorer).score(normalizedEnrichedViolations);
+        verify(questionQualitySnapshotFactory).create(normalizedEnrichedViolations, normalizedRetryFeedback, 88, false);
     }
 }

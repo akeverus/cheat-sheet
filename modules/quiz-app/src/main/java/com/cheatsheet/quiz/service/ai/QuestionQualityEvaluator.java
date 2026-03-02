@@ -4,11 +4,7 @@ import com.cheatsheet.quiz.domain.Question;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -27,6 +23,7 @@ public class QuestionQualityEvaluator {
     private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
     private final QuestionQualitySnapshotFactory questionQualitySnapshotFactory;
     private final QuestionRequestFailureFeedbackSupplier questionRequestFailureFeedbackSupplier;
+    private final QuestionQualityMessageNormalizer questionQualityMessageNormalizer;
 
     /**
      * Выполняет полный quality-check для кандидата.
@@ -36,11 +33,12 @@ public class QuestionQualityEvaluator {
      * @return снапшот качества с нарушениями, score и итогом приёмки
      */
     public QuestionQualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
-        List<String> baseViolations = normalizeMessages(validationService.validate(candidate));
-        List<String> violations = normalizeMessages(
+        List<String> baseViolations = questionQualityMessageNormalizer.normalize(validationService.validate(candidate));
+        List<String> violations = questionQualityMessageNormalizer.normalize(
                 questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)
         );
-        List<String> retryFeedback = normalizeMessages(questionRetryFeedbackNormalizer.normalize(violations));
+        List<String> retryFeedback =
+                questionQualityMessageNormalizer.normalize(questionRetryFeedbackNormalizer.normalize(violations));
         int score = questionQualityScorer.score(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
         return questionQualitySnapshotFactory.create(violations, retryFeedback, score, accepted);
@@ -52,19 +50,6 @@ public class QuestionQualityEvaluator {
      * @return детерминированный список нарушений для следующей попытки генерации
      */
     public List<String> retryFeedbackForRequestFailure() {
-        return normalizeMessages(questionRequestFailureFeedbackSupplier.feedback());
-    }
-
-    private static List<String> normalizeMessages(List<String> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return List.of();
-        }
-        Map<String, String> uniqueByLowerValue = new LinkedHashMap<>();
-        messages.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(value -> !value.isBlank())
-                .forEach(value -> uniqueByLowerValue.putIfAbsent(value.toLowerCase(Locale.ROOT), value));
-        return List.copyOf(uniqueByLowerValue.values());
+        return questionQualityMessageNormalizer.normalize(questionRequestFailureFeedbackSupplier.feedback());
     }
 }
