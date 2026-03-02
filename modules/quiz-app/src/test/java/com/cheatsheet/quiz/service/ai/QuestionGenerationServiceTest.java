@@ -45,7 +45,11 @@ class QuestionGenerationServiceTest {
         appProperties.getInterview().setQuestionGenerationMaxAttempts(3);
         service = new QuestionGenerationService(
                 optionGenerator,
-                new QuestionGeneratedJsonMapper(new ObjectMapper(), new QuestionGeneratedSlugFactory(Clock.systemUTC())),
+                new QuestionGeneratedJsonMapper(
+                        new ObjectMapper(),
+                        new QuestionGeneratedSlugFactory(Clock.systemUTC()),
+                        new QuestionGeneratedMetadataSupplier()
+                ),
                 questionQualityEvaluator,
                 new QuestionTopicNormalizer(),
                 adaptiveDifficultyService,

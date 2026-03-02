@@ -19,7 +19,8 @@ class QuestionGeneratedJsonMapperTest {
             new ObjectMapper(),
             new QuestionGeneratedSlugFactory(
                     Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC)
-            )
+            ),
+            new QuestionGeneratedMetadataSupplier()
     );
 
     @Test
@@ -30,6 +31,9 @@ class QuestionGeneratedJsonMapperTest {
         Question question = mapped.orElseThrow();
         assertThat(question.topic()).isEqualTo("java");
         assertThat(question.slug()).isEqualTo("generated:1704067200000");
+        assertThat(question.sourceSlug()).isEqualTo("generated");
+        assertThat(question.filePath()).isEqualTo("generated");
+        assertThat(question.sourceHash()).isEqualTo("generated");
         assertThat(question.type()).isEqualTo(QuestionType.CODE);
         assertThat(question.difficulty()).isEqualTo(Difficulty.HARD);
         assertThat(question.options()).hasSize(4);

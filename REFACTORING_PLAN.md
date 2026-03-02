@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Removed magic `"generated"` metadata literals from `QuestionGeneratedJsonMapper` by introducing `QuestionGeneratedMetadataSupplier`.
+- [x] Added deterministic metadata tests for Question Engine generated-question defaults (`QuestionGeneratedMetadataSupplierTest`, updated `QuestionGeneratedJsonMapperTest`).
 - [x] Removed magic timestamp generation from `QuestionGeneratedJsonMapper` by introducing `QuestionGeneratedSlugFactory` with `Clock`-based slug creation.
 - [x] Added deterministic Question Engine tests for generated slug behavior (`QuestionGeneratedSlugFactoryTest`, updated `QuestionGeneratedJsonMapperTest`).
 - [x] Introduced immutable `QuestionQualitySnapshot` value object (`@Value`, `@Builder`) and removed nested snapshot record from `QuestionQualityEvaluator`.

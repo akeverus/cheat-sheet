@@ -24,6 +24,7 @@ public class QuestionGeneratedJsonMapper {
 
     private final ObjectMapper objectMapper;
     private final QuestionGeneratedSlugFactory questionGeneratedSlugFactory;
+    private final QuestionGeneratedMetadataSupplier questionGeneratedMetadataSupplier;
 
     /**
      * Преобразует сырой JSON-ответ модели в {@link Question}.
@@ -72,13 +73,13 @@ public class QuestionGeneratedJsonMapper {
             Question question = new Question(
                     0L,
                     questionGeneratedSlugFactory.nextSlug(),
-                    "generated",
-                    "generated",
+                    questionGeneratedMetadataSupplier.sourceSlug(),
+                    questionGeneratedMetadataSupplier.filePath(),
                     topic,
                     questionText,
                     detailedExplanation,
                     false,
-                    "generated",
+                    questionGeneratedMetadataSupplier.sourceHash(),
                     resolvedType,
                     codeSnippet,
                     null,
