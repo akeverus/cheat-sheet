@@ -32,7 +32,7 @@ public class QuestionQualityEvaluator {
      * @param seenFingerprints отпечатки предыдущих попыток генерации
      * @return снапшот качества с нарушениями, score и итогом приёмки
      */
-    public QualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
+    public QuestionQualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
         List<String> baseViolations = validationService.validate(candidate);
         List<String> violations = questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints);
         List<String> retryFeedback = questionRetryFeedbackNormalizer.normalize(violations);
@@ -48,16 +48,5 @@ public class QuestionQualityEvaluator {
      */
     public List<String> retryFeedbackForRequestFailure() {
         return questionRetryFeedbackNormalizer.normalize(List.of(REQUEST_FAILURE_VIOLATION));
-    }
-
-    /**
-     * Immutable-снапшот результата quality-check.
-     *
-     * @param violations список нарушений
-     * @param retryFeedback нормализованный список нарушений для передачи в retry-prompt
-     * @param score         quality score (0..100)
-     * @param accepted      признак приёмки кандидата
-     */
-    public record QualitySnapshot(List<String> violations, List<String> retryFeedback, int score, boolean accepted) {
     }
 }

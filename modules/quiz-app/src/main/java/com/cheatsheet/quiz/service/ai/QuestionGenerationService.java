@@ -73,12 +73,12 @@ public class QuestionGenerationService {
                 continue;
             }
             Question generated = generatedOpt.get();
-            QuestionQualityEvaluator.QualitySnapshot qualitySnapshot =
+            QuestionQualitySnapshot qualitySnapshot =
                     questionQualityEvaluator.evaluateCandidate(generated, seenFingerprints);
-            List<String> violations = qualitySnapshot.violations();
-            int score = qualitySnapshot.score();
+            List<String> violations = qualitySnapshot.getViolations();
+            int score = qualitySnapshot.getScore();
             bestScore = Math.max(bestScore, score);
-            if (qualitySnapshot.accepted()) {
+            if (qualitySnapshot.isAccepted()) {
                 log.info("question_generation_succeeded topic={} type={} difficulty={} attempt={} qualityScore={}",
                         safeTopic, safeType, difficulty, attempt, score);
                 questionUniquenessService.rememberFingerprint(
@@ -91,7 +91,7 @@ public class QuestionGenerationService {
             log.warn("question_generation_validation_failed topic={} type={} difficulty={} attempt={} qualityScore={} minQualityScore={} violations={}",
                     safeTopic, safeType, difficulty, attempt, score, questionGenerationPolicy.minQualityScore(),
                     String.join("; ", violations));
-            previousViolations = qualitySnapshot.retryFeedback();
+            previousViolations = qualitySnapshot.getRetryFeedback();
         }
         throw new AiGenerationException(
                 "QuestionGenerationService: не удалось сгенерировать валидный вопрос за "

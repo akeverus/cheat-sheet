@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Introduced immutable `QuestionQualitySnapshot` value object (`@Value`, `@Builder`) and removed nested snapshot record from `QuestionQualityEvaluator`.
+- [x] Updated Question Engine quality snapshot assembly/tests to use the new value object across evaluator/factory/generation boundaries.
 - [x] Extracted `QuestionGeneratedJsonMapper` from `QuestionGenerationService` to isolate AI JSON parsing/mapping from generation orchestration.
 - [x] Simplified `QuestionGenerationService.requestQuestion` to a single mapping delegation path (`raw -> mapper`).
 - [x] Added `QuestionGeneratedJsonMapperTest` and updated `QuestionGenerationServiceTest` wiring for the new parsing boundary.

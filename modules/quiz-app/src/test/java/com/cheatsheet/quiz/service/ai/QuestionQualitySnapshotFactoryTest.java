@@ -15,12 +15,12 @@ class QuestionQualitySnapshotFactoryTest {
         List<String> violations = List.of("Topic is required");
         List<String> retryFeedback = List.of("Topic is required");
 
-        QuestionQualityEvaluator.QualitySnapshot snapshot =
+        QuestionQualitySnapshot snapshot =
                 factory.create(violations, retryFeedback, 85, false);
 
-        assertThat(snapshot.violations()).isEqualTo(violations);
-        assertThat(snapshot.retryFeedback()).isEqualTo(retryFeedback);
-        assertThat(snapshot.score()).isEqualTo(85);
-        assertThat(snapshot.accepted()).isFalse();
+        assertThat(snapshot.getViolations()).isEqualTo(violations);
+        assertThat(snapshot.getRetryFeedback()).isEqualTo(retryFeedback);
+        assertThat(snapshot.getScore()).isEqualTo(85);
+        assertThat(snapshot.isAccepted()).isFalse();
     }
 }

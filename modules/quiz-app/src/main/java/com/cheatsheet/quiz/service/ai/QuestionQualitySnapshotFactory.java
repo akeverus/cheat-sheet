@@ -19,12 +19,17 @@ public class QuestionQualitySnapshotFactory {
      * @param accepted      признак приёмки кандидата
      * @return готовый immutable-снапшот качества
      */
-    public QuestionQualityEvaluator.QualitySnapshot create(
+    public QuestionQualitySnapshot create(
             List<String> violations,
             List<String> retryFeedback,
             int score,
             boolean accepted
     ) {
-        return new QuestionQualityEvaluator.QualitySnapshot(violations, retryFeedback, score, accepted);
+        return QuestionQualitySnapshot.builder()
+                .violations(violations)
+                .retryFeedback(retryFeedback)
+                .score(score)
+                .accepted(accepted)
+                .build();
     }
 }

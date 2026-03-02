@@ -47,11 +47,15 @@ class QuestionQualityEvaluatorTest {
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(enrichedViolations)).thenReturn(96);
         when(questionGenerationPolicy.isAccepted(96, enrichedViolations)).thenReturn(true);
-        QuestionQualityEvaluator.QualitySnapshot expected =
-                new QuestionQualityEvaluator.QualitySnapshot(enrichedViolations, retryFeedback, 96, true);
+        QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
+                .violations(enrichedViolations)
+                .retryFeedback(retryFeedback)
+                .score(96)
+                .accepted(true)
+                .build();
         when(questionQualitySnapshotFactory.create(enrichedViolations, retryFeedback, 96, true)).thenReturn(expected);
 
-        QuestionQualityEvaluator.QualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
+        QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
 
         assertThat(snapshot).isEqualTo(expected);
         verify(validationService).validate(candidate);
@@ -83,11 +87,15 @@ class QuestionQualityEvaluatorTest {
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(enrichedViolations)).thenReturn(54);
         when(questionGenerationPolicy.isAccepted(54, enrichedViolations)).thenReturn(false);
-        QuestionQualityEvaluator.QualitySnapshot expected =
-                new QuestionQualityEvaluator.QualitySnapshot(enrichedViolations, retryFeedback, 54, false);
+        QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
+                .violations(enrichedViolations)
+                .retryFeedback(retryFeedback)
+                .score(54)
+                .accepted(false)
+                .build();
         when(questionQualitySnapshotFactory.create(enrichedViolations, retryFeedback, 54, false)).thenReturn(expected);
 
-        QuestionQualityEvaluator.QualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
+        QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
 
         assertThat(snapshot).isEqualTo(expected);
         verify(questionQualitySnapshotFactory).create(enrichedViolations, retryFeedback, 54, false);
