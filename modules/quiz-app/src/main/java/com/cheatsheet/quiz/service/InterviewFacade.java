@@ -1,7 +1,6 @@
 package com.cheatsheet.quiz.service;
 
 import com.cheatsheet.quiz.domain.*;
-import lombok.Getter;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +13,6 @@ import java.util.Optional;
  * соответствующим сервисам.</p>
  */
 @Component
-@Getter
 public class InterviewFacade {
 
     private final InterviewService interviewService;

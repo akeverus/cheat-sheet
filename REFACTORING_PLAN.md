@@ -153,6 +153,8 @@
 - [x] Simplified `InterviewFlowMvcService.answer` by removing redundant DTO copy step; updated mapper test to new boundary contract.
 - [x] Refactored `SessionFlowService` by extracting session-total normalization and flashcard/study guards into focused private operations.
 - [x] Expanded `SessionFlowServiceTest` with requested-count clamping and flashcard reveal phase-guard scenarios.
+- [x] Removed unnecessary `@Getter` exposure from `InterviewFacade` to avoid leaking internal service dependencies via facade API.
+- [x] Added `InterviewFacadeTest` to lock delegation contracts across interview/stats/hint/feedback/render flows.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
