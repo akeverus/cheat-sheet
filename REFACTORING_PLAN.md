@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Replaced hardcoded generated-question metadata marker with configuration-driven value (`app.interview.question-generated-metadata-value`) in `QuestionGeneratedMetadataSupplier`.
+- [x] Added/updated Question Engine tests to validate configurable generated metadata contract.
 - [x] Removed magic `"generated"` metadata literals from `QuestionGeneratedJsonMapper` by introducing `QuestionGeneratedMetadataSupplier`.
 - [x] Added deterministic metadata tests for Question Engine generated-question defaults (`QuestionGeneratedMetadataSupplierTest`, updated `QuestionGeneratedJsonMapperTest`).
 - [x] Removed magic timestamp generation from `QuestionGeneratedJsonMapper` by introducing `QuestionGeneratedSlugFactory` with `Clock`-based slug creation.

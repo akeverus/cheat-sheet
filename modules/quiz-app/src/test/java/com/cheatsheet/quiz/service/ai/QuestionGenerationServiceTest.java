@@ -48,7 +48,7 @@ class QuestionGenerationServiceTest {
                 new QuestionGeneratedJsonMapper(
                         new ObjectMapper(),
                         new QuestionGeneratedSlugFactory(Clock.systemUTC()),
-                        new QuestionGeneratedMetadataSupplier()
+                        new QuestionGeneratedMetadataSupplier(new AppProperties())
                 ),
                 questionQualityEvaluator,
                 new QuestionTopicNormalizer(),

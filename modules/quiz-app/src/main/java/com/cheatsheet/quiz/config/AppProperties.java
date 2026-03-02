@@ -258,6 +258,10 @@ public class AppProperties {
         /** Максимум пунктов quality-feedback, передаваемых в prompt следующей попытки. */
         @Min(1) @Max(20)
         private int questionRetryFeedbackMaxItems = 8;
+
+        /** Значение служебных метаданных для AI-сгенерированных вопросов. */
+        @NotBlank
+        private String questionGeneratedMetadataValue = "generated";
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
@@ -15,12 +16,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class QuestionGeneratedJsonMapperTest {
 
+    private final AppProperties appProperties = new AppProperties();
+
     private final QuestionGeneratedJsonMapper mapper = new QuestionGeneratedJsonMapper(
             new ObjectMapper(),
             new QuestionGeneratedSlugFactory(
                     Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC)
             ),
-            new QuestionGeneratedMetadataSupplier()
+            new QuestionGeneratedMetadataSupplier(appProperties)
     );
 
     @Test
