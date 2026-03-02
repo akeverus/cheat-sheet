@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Removed magic timestamp generation from `QuestionGeneratedJsonMapper` by introducing `QuestionGeneratedSlugFactory` with `Clock`-based slug creation.
+- [x] Added deterministic Question Engine tests for generated slug behavior (`QuestionGeneratedSlugFactoryTest`, updated `QuestionGeneratedJsonMapperTest`).
 - [x] Introduced immutable `QuestionQualitySnapshot` value object (`@Value`, `@Builder`) and removed nested snapshot record from `QuestionQualityEvaluator`.
 - [x] Updated Question Engine quality snapshot assembly/tests to use the new value object across evaluator/factory/generation boundaries.
 - [x] Extracted `QuestionGeneratedJsonMapper` from `QuestionGenerationService` to isolate AI JSON parsing/mapping from generation orchestration.

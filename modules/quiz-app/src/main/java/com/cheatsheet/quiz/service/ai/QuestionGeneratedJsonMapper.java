@@ -23,6 +23,7 @@ import java.util.Optional;
 public class QuestionGeneratedJsonMapper {
 
     private final ObjectMapper objectMapper;
+    private final QuestionGeneratedSlugFactory questionGeneratedSlugFactory;
 
     /**
      * Преобразует сырой JSON-ответ модели в {@link Question}.
@@ -70,7 +71,7 @@ public class QuestionGeneratedJsonMapper {
             QuestionType resolvedType = type == null ? QuestionType.CONCEPT : type;
             Question question = new Question(
                     0L,
-                    "generated:" + System.currentTimeMillis(),
+                    questionGeneratedSlugFactory.nextSlug(),
                     "generated",
                     "generated",
                     topic,

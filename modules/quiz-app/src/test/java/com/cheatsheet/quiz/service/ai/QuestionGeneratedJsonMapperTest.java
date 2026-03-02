@@ -6,13 +6,21 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class QuestionGeneratedJsonMapperTest {
 
-    private final QuestionGeneratedJsonMapper mapper = new QuestionGeneratedJsonMapper(new ObjectMapper());
+    private final QuestionGeneratedJsonMapper mapper = new QuestionGeneratedJsonMapper(
+            new ObjectMapper(),
+            new QuestionGeneratedSlugFactory(
+                    Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneOffset.UTC)
+            )
+    );
 
     @Test
     void mapParsesValidQuestionJson() {
@@ -21,6 +29,7 @@ class QuestionGeneratedJsonMapperTest {
         assertThat(mapped).isPresent();
         Question question = mapped.orElseThrow();
         assertThat(question.topic()).isEqualTo("java");
+        assertThat(question.slug()).isEqualTo("generated:1704067200000");
         assertThat(question.type()).isEqualTo(QuestionType.CODE);
         assertThat(question.difficulty()).isEqualTo(Difficulty.HARD);
         assertThat(question.options()).hasSize(4);

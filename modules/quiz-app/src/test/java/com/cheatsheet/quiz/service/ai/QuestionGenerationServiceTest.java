@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.time.Clock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,7 +45,7 @@ class QuestionGenerationServiceTest {
         appProperties.getInterview().setQuestionGenerationMaxAttempts(3);
         service = new QuestionGenerationService(
                 optionGenerator,
-                new QuestionGeneratedJsonMapper(new ObjectMapper()),
+                new QuestionGeneratedJsonMapper(new ObjectMapper(), new QuestionGeneratedSlugFactory(Clock.systemUTC())),
                 questionQualityEvaluator,
                 new QuestionTopicNormalizer(),
                 adaptiveDifficultyService,
