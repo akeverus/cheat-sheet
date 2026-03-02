@@ -12,8 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class QuestionValidationServiceTest {
 
-    private final QuestionValidationService validationService =
-            new QuestionValidationService(new QuestionQualityScorer());
+    private final QuestionValidationService validationService = new QuestionValidationService();
 
     @Test
     void validatesQuestionWithSingleCorrectOption() {
@@ -85,17 +84,4 @@ class QuestionValidationServiceTest {
         assertThat(violations).anyMatch(v -> v.contains("Duplicate option text"));
     }
 
-    @Test
-    void calculatesQualityScoreFromViolations() {
-        List<String> violations = List.of(
-                "Question text is trivial and does not require technical reasoning",
-                "Exactly one correct option is required",
-                "Topic is required"
-        );
-
-        int score = validationService.qualityScore(violations);
-
-        assertThat(score).isBetween(0, 99);
-        assertThat(score).isEqualTo(30);
-    }
 }

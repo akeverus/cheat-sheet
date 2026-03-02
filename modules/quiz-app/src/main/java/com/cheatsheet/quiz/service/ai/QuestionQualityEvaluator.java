@@ -20,6 +20,7 @@ public class QuestionQualityEvaluator {
     private static final String REQUEST_FAILURE_VIOLATION = "AI did not return parsable question JSON payload";
 
     private final QuestionValidationService validationService;
+    private final QuestionQualityScorer questionQualityScorer;
     private final QuestionGenerationPolicy questionGenerationPolicy;
     private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
 
@@ -34,7 +35,7 @@ public class QuestionQualityEvaluator {
         List<String> baseViolations = validationService.validate(candidate);
         List<String> violations = questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints);
         List<String> retryFeedback = questionRetryFeedbackNormalizer.normalize(violations);
-        int score = validationService.qualityScore(violations);
+        int score = questionQualityScorer.score(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
         return new QualitySnapshot(violations, retryFeedback, score, accepted);
     }

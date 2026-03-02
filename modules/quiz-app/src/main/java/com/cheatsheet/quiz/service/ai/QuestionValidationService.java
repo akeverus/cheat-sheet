@@ -4,7 +4,6 @@ import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionOption;
 import com.cheatsheet.quiz.domain.QuestionType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.Locale;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 public class QuestionValidationService {
     private static final int SHORT_EXPLANATION_MIN_LENGTH = 30;
     private static final int DETAILED_EXPLANATION_MIN_LENGTH = 80;
@@ -27,7 +25,6 @@ public class QuestionValidationService {
             "верный ответ"
     );
     private static final Set<String> REQUIRED_OPTION_IDS = Set.of("A", "B", "C", "D");
-    private final QuestionQualityScorer questionQualityScorer;
 
     /**
      * Валидирует сгенерированный вопрос по структурным и качественным правилам Question v2.
@@ -121,20 +118,6 @@ public class QuestionValidationService {
      */
     public boolean isValid(Question question) {
         return validate(question).isEmpty();
-    }
-
-    /**
-     * Рассчитывает quality score вопроса (0..100) на основе списка нарушений.
-     */
-    public int qualityScore(Question question) {
-        return qualityScore(validate(question));
-    }
-
-    /**
-     * Рассчитывает quality score (0..100) по уже вычисленным нарушениям.
-     */
-    public int qualityScore(List<String> violations) {
-        return questionQualityScorer.score(violations);
     }
 
     private static boolean isDifficultyValidForType(Difficulty difficulty, QuestionType type) {

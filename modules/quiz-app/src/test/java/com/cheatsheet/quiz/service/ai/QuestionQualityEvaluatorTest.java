@@ -19,6 +19,8 @@ class QuestionQualityEvaluatorTest {
     @Mock
     private QuestionValidationService validationService;
     @Mock
+    private QuestionQualityScorer questionQualityScorer;
+    @Mock
     private QuestionGenerationPolicy questionGenerationPolicy;
     @Mock
     private QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
@@ -29,6 +31,7 @@ class QuestionQualityEvaluatorTest {
     void evaluateCandidateBuildsAcceptedSnapshot() {
         QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
                 validationService,
+                questionQualityScorer,
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer
         );
@@ -39,7 +42,7 @@ class QuestionQualityEvaluatorTest {
         when(validationService.validate(candidate)).thenReturn(baseViolations);
         when(questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)).thenReturn(enrichedViolations);
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
-        when(validationService.qualityScore(enrichedViolations)).thenReturn(96);
+        when(questionQualityScorer.score(enrichedViolations)).thenReturn(96);
         when(questionGenerationPolicy.isAccepted(96, enrichedViolations)).thenReturn(true);
 
         QuestionQualityEvaluator.QualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
@@ -51,7 +54,7 @@ class QuestionQualityEvaluatorTest {
         verify(validationService).validate(candidate);
         verify(questionGenerationPolicy).enrichViolations(candidate, baseViolations, seenFingerprints);
         verify(questionRetryFeedbackNormalizer).normalize(enrichedViolations);
-        verify(validationService).qualityScore(enrichedViolations);
+        verify(questionQualityScorer).score(enrichedViolations);
         verify(questionGenerationPolicy).isAccepted(96, enrichedViolations);
     }
 
@@ -59,6 +62,7 @@ class QuestionQualityEvaluatorTest {
     void evaluateCandidateBuildsRejectedSnapshot() {
         QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
                 validationService,
+                questionQualityScorer,
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer
         );
@@ -72,7 +76,7 @@ class QuestionQualityEvaluatorTest {
         when(validationService.validate(candidate)).thenReturn(baseViolations);
         when(questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)).thenReturn(enrichedViolations);
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
-        when(validationService.qualityScore(enrichedViolations)).thenReturn(54);
+        when(questionQualityScorer.score(enrichedViolations)).thenReturn(54);
         when(questionGenerationPolicy.isAccepted(54, enrichedViolations)).thenReturn(false);
 
         QuestionQualityEvaluator.QualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
@@ -87,6 +91,7 @@ class QuestionQualityEvaluatorTest {
     void retryFeedbackForRequestFailureUsesNormalizer() {
         QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
                 validationService,
+                questionQualityScorer,
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer
         );

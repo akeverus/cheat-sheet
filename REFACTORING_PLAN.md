@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Completed strict separation in Question Engine between structural validation and scoring policy: `QuestionValidationService` now validates only structure, scoring is executed via `QuestionQualityScorer` in `QuestionQualityEvaluator`.
+- [x] Updated `QuestionQualityEvaluatorTest` and `QuestionValidationServiceTest` for the new validation/scoring responsibility boundary.
 - [x] Extracted `QuestionQualityScorer` from `QuestionValidationService` to separate scoring policy from structural validation logic.
 - [x] Switched `QuestionValidationService` quality-score methods to delegate into dedicated scorer service.
 - [x] Added `QuestionQualityScorerTest` and updated `QuestionValidationServiceTest` wiring for the new quality-scoring boundary.
