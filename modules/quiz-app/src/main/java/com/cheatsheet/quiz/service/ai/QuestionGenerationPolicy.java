@@ -85,6 +85,7 @@ public class QuestionGenerationPolicy {
         if (baseViolations != null) {
             violations.addAll(baseViolations);
         }
+        Set<String> safeSeenFingerprints = sanitizeSeenFingerprints(seenFingerprints);
         if (candidate == null) {
             violations.add("Question candidate is null");
             return violations;
@@ -109,11 +110,11 @@ public class QuestionGenerationPolicy {
             violations.add("Question distractors are semantically too similar to each other");
         }
 
-        if (seenFingerprints != null) {
+        if (!safeSeenFingerprints.isEmpty()) {
             String fingerprint = fingerprint(candidate);
-            if (seenFingerprints.contains(fingerprint)) {
+            if (safeSeenFingerprints.contains(fingerprint)) {
                 violations.add("Question candidate duplicates previous generation attempt");
-            } else if (isNearDuplicate(candidate, seenFingerprints, fingerprint)) {
+            } else if (isNearDuplicate(candidate, safeSeenFingerprints, fingerprint)) {
                 violations.add("Question candidate is semantically too close to previous generation attempt");
             }
         }
@@ -165,9 +166,7 @@ public class QuestionGenerationPolicy {
             if (seenFingerprint == null || seenFingerprint.equals(currentFingerprint)) {
                 continue;
             }
-            String seenQuestionText = seenFingerprint == null
-                    ? ""
-                    : seenFingerprint.split("::", 2)[0];
+            String seenQuestionText = extractQuestionText(seenFingerprint);
             if (seenQuestionText.isBlank()) {
                 continue;
             }
@@ -229,5 +228,24 @@ public class QuestionGenerationPolicy {
                 .map(String::trim)
                 .filter(token -> token.length() > 2)
                 .collect(Collectors.toSet());
+    }
+
+    private static Set<String> sanitizeSeenFingerprints(Set<String> seenFingerprints) {
+        if (seenFingerprints == null || seenFingerprints.isEmpty()) {
+            return Set.of();
+        }
+        return seenFingerprints.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static String extractQuestionText(String fingerprint) {
+        if (fingerprint == null || fingerprint.isBlank()) {
+            return "";
+        }
+        String normalized = fingerprint.trim().toLowerCase(Locale.ROOT);
+        return normalized.split("::", 2)[0].trim();
     }
 }

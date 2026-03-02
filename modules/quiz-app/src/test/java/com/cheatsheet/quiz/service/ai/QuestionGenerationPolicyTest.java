@@ -65,6 +65,21 @@ class QuestionGenerationPolicyTest {
     }
 
     @Test
+    void enrichViolationsSanitizesSeenFingerprintsForDuplicateCheck() {
+        QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70);
+        Question candidate = question(
+                "Почему HashMap может деградировать при плохом hashCode?",
+                List.of("Из-за коллизий", "Из-за GC", "Из-за JIT", "Из-за кеша CPU")
+        );
+        String fingerprint = policy.fingerprint(candidate);
+        Set<String> seen = new HashSet<>(List.of("  " + fingerprint.toUpperCase() + "  ", "   "));
+
+        List<String> violations = policy.enrichViolations(candidate, List.of(), seen);
+
+        assertThat(violations).anyMatch(v -> v.contains("duplicates previous generation attempt"));
+    }
+
+    @Test
     void enrichViolationsDetectsNearDuplicateQuestionText() {
         QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70, 280, 520, 0.60);
         Set<String> seen = new HashSet<>();

@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionGenerationPolicy` with internal `seenFingerprints` sanitization (trim/lowercase/null-blank filtering) for stable duplicate and near-duplicate checks.
+- [x] Added `QuestionGenerationPolicyTest` regression for duplicate detection against noisy/case-variant fingerprint input.
 - [x] Extracted `QuestionSeenFingerprintSanitizer` from `QuestionQualityEvaluator` to isolate fingerprint input sanitization from quality orchestration.
 - [x] Added `QuestionSeenFingerprintSanitizerTest` and updated `QuestionQualityEvaluatorTest` to verify delegation and sanitized fingerprint contract.
 - [x] Hardened `QuestionQualityEvaluator` with defensive sanitization of `seenFingerprints` (null/blank filtering + immutable set snapshot) before policy enrichment.
