@@ -139,6 +139,8 @@
 - [x] Expanded `SensitiveEndpointAccessServiceTest` for missing-token forbidden contract and production-profile token guard.
 - [x] Extracted `ApiRequestMapper` to centralize API request -> service-command mapping in `InterviewApiController` and reduce controller orchestration complexity.
 - [x] Added `ApiRequestMapperTest` and updated `InterviewApiControllerUnitTest` wiring to lock command-mapping behavior.
+- [x] Refactored `InterviewSessionSupport` by splitting filter resolution/session progression into focused private operations.
+- [x] Added `InterviewSessionSupportTest` coverage for session-aware exam penalty path and request-based filter fallback path.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
