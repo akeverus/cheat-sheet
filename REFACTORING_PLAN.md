@@ -141,6 +141,8 @@
 - [x] Added `ApiRequestMapperTest` and updated `InterviewApiControllerUnitTest` wiring to lock command-mapping behavior.
 - [x] Refactored `InterviewSessionSupport` by splitting filter resolution/session progression into focused private operations.
 - [x] Added `InterviewSessionSupportTest` coverage for session-aware exam penalty path and request-based filter fallback path.
+- [x] Removed duplicate `/` and `/training` delegation logic in `InterviewMvcController` via shared private dispatch method.
+- [x] Added `InterviewMvcControllerTest` to lock controller delegation contracts to page/flow service layers.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

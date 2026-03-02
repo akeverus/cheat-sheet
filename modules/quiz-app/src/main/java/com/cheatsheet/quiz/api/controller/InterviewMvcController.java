@@ -49,7 +49,7 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
-        return interviewPageMvcService.index(
+        return renderTrainingEntry(
                 topic,
                 group,
                 important,
@@ -78,7 +78,7 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
-        return interviewPageMvcService.index(
+        return renderTrainingEntry(
                 topic,
                 group,
                 important,
@@ -191,6 +191,34 @@ public class InterviewMvcController {
             Model model
     ) {
         return interviewFlowMvcService.answer(request, session, model);
+    }
+
+    private String renderTrainingEntry(
+            String topic,
+            String group,
+            Boolean important,
+            Boolean onlyWrong,
+            Boolean shuffle,
+            Boolean weakTopics,
+            Boolean ordered,
+            Long excludeQuestionId,
+            String mode,
+            HttpSession session,
+            Model model
+    ) {
+        return interviewPageMvcService.index(
+                topic,
+                group,
+                important,
+                onlyWrong,
+                shuffle,
+                weakTopics,
+                ordered,
+                excludeQuestionId,
+                mode,
+                session,
+                model
+        );
     }
 
     @GetMapping("/stats")
