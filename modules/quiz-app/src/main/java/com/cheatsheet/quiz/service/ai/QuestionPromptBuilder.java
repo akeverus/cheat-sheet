@@ -15,10 +15,12 @@ import java.util.List;
 public class QuestionPromptBuilder {
 
     private final AppProperties appProperties;
+    private final QuestionTopicNormalizer questionTopicNormalizer;
 
     @Autowired
-    public QuestionPromptBuilder(AppProperties appProperties) {
+    public QuestionPromptBuilder(AppProperties appProperties, QuestionTopicNormalizer questionTopicNormalizer) {
         this.appProperties = appProperties;
+        this.questionTopicNormalizer = questionTopicNormalizer;
     }
 
     /**
@@ -32,7 +34,7 @@ public class QuestionPromptBuilder {
     ) {
         Difficulty safeDifficulty = difficulty == null ? Difficulty.MEDIUM : difficulty;
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
-        String safeTopic = normalizeTopic(topic);
+        String safeTopic = questionTopicNormalizer.normalize(topic);
         String basePrompt = AiPrompts.QUESTION_V2_PROMPT_TEMPLATE.formatted(
                 safeDifficulty.name(),
                 safeType.name(),
@@ -56,13 +58,5 @@ public class QuestionPromptBuilder {
         }
         qualityFeedback.append("Regenerate the question JSON and fix every listed violation.");
         return basePrompt + qualityFeedback;
-    }
-
-    private static String normalizeTopic(String topic) {
-        if (topic == null) {
-            return "general";
-        }
-        String normalized = topic.trim();
-        return normalized.isBlank() ? "general" : normalized;
     }
 }

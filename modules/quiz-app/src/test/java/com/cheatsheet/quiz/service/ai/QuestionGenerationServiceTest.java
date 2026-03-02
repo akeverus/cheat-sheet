@@ -46,8 +46,9 @@ class QuestionGenerationServiceTest {
                 optionGenerator,
                 new ObjectMapper(),
                 questionQualityEvaluator,
+                new QuestionTopicNormalizer(),
                 adaptiveDifficultyService,
-                new QuestionPromptBuilder(new AppProperties()),
+                new QuestionPromptBuilder(new AppProperties(), new QuestionTopicNormalizer()),
                 new QuestionGenerationPolicy(70),
                 questionUniquenessService,
                 appProperties

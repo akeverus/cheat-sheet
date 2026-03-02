@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Extracted shared `QuestionTopicNormalizer` to remove duplicated topic fallback logic from `QuestionGenerationService` and `QuestionPromptBuilder`.
+- [x] Switched Question Engine generation/prompt path to single topic-normalization contract (`null/blank -> general`) through dedicated component wiring.
+- [x] Added `QuestionTopicNormalizerTest` and aligned Question Engine tests with the new dependency graph.
 - [x] Centralized request-failure retry feedback in `QuestionQualityEvaluator` via dedicated `retryFeedbackForRequestFailure()` method (removed magic-string handling from generation orchestrator).
 - [x] Hardened topic normalization contract in Question Engine (`blank topic -> general`) for both generation service and prompt builder.
 - [x] Added regression tests for evaluator request-failure feedback path and blank-topic fallback behavior (`QuestionQualityEvaluatorTest`, `QuestionGenerationServiceTest`, `QuestionPromptBuilderTest`).

@@ -11,7 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class QuestionPromptBuilderTest {
 
-    private final QuestionPromptBuilder builder = new QuestionPromptBuilder(new AppProperties());
+    private final QuestionPromptBuilder builder =
+            new QuestionPromptBuilder(new AppProperties(), new QuestionTopicNormalizer());
 
     @Test
     void buildsBasePromptWithoutQualityFeedbackWhenNoViolations() {

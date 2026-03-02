@@ -24,6 +24,7 @@ public class QuestionGenerationService {
     private final OptionGenerator optionGenerator;
     private final ObjectMapper objectMapper;
     private final QuestionQualityEvaluator questionQualityEvaluator;
+    private final QuestionTopicNormalizer questionTopicNormalizer;
     private final AdaptiveDifficultyService adaptiveDifficultyService;
     private final QuestionPromptBuilder questionPromptBuilder;
     private final QuestionGenerationPolicy questionGenerationPolicy;
@@ -34,6 +35,7 @@ public class QuestionGenerationService {
             OptionGenerator optionGenerator,
             ObjectMapper objectMapper,
             QuestionQualityEvaluator questionQualityEvaluator,
+            QuestionTopicNormalizer questionTopicNormalizer,
             AdaptiveDifficultyService adaptiveDifficultyService,
             QuestionPromptBuilder questionPromptBuilder,
             QuestionGenerationPolicy questionGenerationPolicy,
@@ -43,6 +45,7 @@ public class QuestionGenerationService {
         this.optionGenerator = optionGenerator;
         this.objectMapper = objectMapper;
         this.questionQualityEvaluator = questionQualityEvaluator;
+        this.questionTopicNormalizer = questionTopicNormalizer;
         this.adaptiveDifficultyService = adaptiveDifficultyService;
         this.questionPromptBuilder = questionPromptBuilder;
         this.questionGenerationPolicy = questionGenerationPolicy;
@@ -59,7 +62,7 @@ public class QuestionGenerationService {
      */
     public Question generateQuestion(String topic, QuestionType type) {
         Difficulty difficulty = adaptiveDifficultyService.resolveDifficulty(topic);
-        String safeTopic = normalizeTopic(topic);
+        String safeTopic = questionTopicNormalizer.normalize(topic);
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         List<String> previousViolations = List.of();
@@ -98,14 +101,6 @@ public class QuestionGenerationService {
                 "QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
                         + maxGenerationAttempts + " попытки (bestQualityScore=" + bestScore + ")"
         );
-    }
-
-    private static String normalizeTopic(String topic) {
-        if (topic == null) {
-            return "general";
-        }
-        String normalized = topic.trim();
-        return normalized.isBlank() ? "general" : normalized;
     }
 
     private Optional<Question> requestQuestion(String topic, QuestionType type, Difficulty difficulty, List<String> previousViolations) {
