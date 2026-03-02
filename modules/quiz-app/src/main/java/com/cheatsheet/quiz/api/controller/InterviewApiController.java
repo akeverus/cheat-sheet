@@ -42,7 +42,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * REST API-контроллер интерактивного режима интервью.
@@ -187,11 +186,7 @@ public class InterviewApiController {
                 ordered,
                 excludeQuestionId
         );
-        Optional<NextQuestionResponse> next = nextQuestionApiService.getNextQuestion(command);
-        if (next.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.ok(next.get());
+        return nextQuestionApiService.toHttpResponse(command);
     }
 
     @PostMapping("/api/favorite")

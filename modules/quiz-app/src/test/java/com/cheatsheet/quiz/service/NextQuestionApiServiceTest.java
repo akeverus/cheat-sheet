@@ -120,6 +120,38 @@ class NextQuestionApiServiceTest {
         assertThat(filter.ordered()).isFalse();
     }
 
+    @Test
+    void toHttpResponseReturnsNoContentWhenQuestionIsMissing() {
+        NextQuestionApiService.NextQuestionCommand command = new NextQuestionApiService.NextQuestionCommand(
+                null, null, null, null, null, null, null, null
+        );
+        when(facade.nextQuestion(any(), eq(false), eq(null))).thenReturn(Optional.empty());
+
+        var response = service.toHttpResponse(command);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(204);
+        assertThat(response.getBody()).isNull();
+    }
+
+    @Test
+    void toHttpResponseReturnsOkWhenQuestionExists() {
+        long questionId = 505L;
+        Question question = existingQuestion(questionId);
+        AnswerOption option = new AnswerOption(1L, questionId, "A", true, 0, "OPENAI", "Верно");
+        ReviewState reviewState = new ReviewState(questionId, 1, 2, 2.5, 1_700_000_000L, ReviewResult.CORRECT, 3, 1);
+        InterviewQuestion interviewQuestion = new InterviewQuestion(question, List.of(option), reviewState);
+        NextQuestionApiService.NextQuestionCommand command = new NextQuestionApiService.NextQuestionCommand(
+                null, null, null, null, null, null, null, null
+        );
+        when(facade.nextQuestion(any(), eq(false), eq(null))).thenReturn(Optional.of(interviewQuestion));
+
+        var response = service.toHttpResponse(command);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().questionId()).isEqualTo(questionId);
+    }
+
     private Question existingQuestion(long id) {
         return existingQuestionWithType(id, QuestionType.TEXT);
     }

@@ -28,7 +28,6 @@ import com.cheatsheet.quiz.service.RegenerateEndpointService;
 import com.cheatsheet.quiz.service.StatsApiService;
 import com.cheatsheet.quiz.service.StreakApiService;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -336,7 +335,7 @@ class InterviewApiControllerUnitTest {
 
     @Test
     void nextReturnsNoContentWhenServiceHasNoQuestion() {
-        when(nextQuestionApiService.getNextQuestion(any())).thenReturn(Optional.empty());
+        when(nextQuestionApiService.toHttpResponse(any())).thenReturn(ResponseEntity.noContent().build());
 
         ResponseEntity<?> response = controller.getNextQuestion(
                 null, null, null, null, null, null, null, null
@@ -344,6 +343,7 @@ class InterviewApiControllerUnitTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(204);
         assertThat(response.getBody()).isNull();
+        verify(nextQuestionApiService).toHttpResponse(any());
     }
 
     @Test
@@ -366,7 +366,7 @@ class InterviewApiControllerUnitTest {
                         4,
                         1
                 );
-        when(nextQuestionApiService.getNextQuestion(any())).thenReturn(Optional.of(payload));
+        when(nextQuestionApiService.toHttpResponse(any())).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getNextQuestion(
                 null, null, null, null, null, null, null, null
@@ -383,12 +383,12 @@ class InterviewApiControllerUnitTest {
         assertThat(body.repetitions()).isEqualTo(2L);
         assertThat(body.correctCount()).isEqualTo(4);
         assertThat(body.wrongCount()).isEqualTo(1);
-        verify(nextQuestionApiService).getNextQuestion(any());
+        verify(nextQuestionApiService).toHttpResponse(any());
     }
 
     @Test
     void nextPassesCommandToService() {
-        when(nextQuestionApiService.getNextQuestion(any())).thenReturn(Optional.empty());
+        when(nextQuestionApiService.toHttpResponse(any())).thenReturn(ResponseEntity.noContent().build());
 
         ResponseEntity<?> response = controller.getNextQuestion(
                 "  java  ",
@@ -403,7 +403,7 @@ class InterviewApiControllerUnitTest {
 
         ArgumentCaptor<NextQuestionApiService.NextQuestionCommand> commandCaptor =
                 ArgumentCaptor.forClass(NextQuestionApiService.NextQuestionCommand.class);
-        verify(nextQuestionApiService).getNextQuestion(commandCaptor.capture());
+        verify(nextQuestionApiService).toHttpResponse(commandCaptor.capture());
         NextQuestionApiService.NextQuestionCommand command = commandCaptor.getValue();
         assertThat(command.topic()).isEqualTo("  java  ");
         assertThat(command.group()).isEqualTo("  core ");

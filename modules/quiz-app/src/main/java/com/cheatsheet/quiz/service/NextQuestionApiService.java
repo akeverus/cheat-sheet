@@ -5,6 +5,7 @@ import com.cheatsheet.quiz.api.dto.response.NextQuestionResponse;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
 import com.cheatsheet.quiz.util.FilterUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -56,6 +57,14 @@ public class NextQuestionApiService {
                 question.reviewState().correctCount(),
                 question.reviewState().wrongCount()
         ));
+    }
+
+    public ResponseEntity<NextQuestionResponse> toHttpResponse(NextQuestionCommand command) {
+        Optional<NextQuestionResponse> next = getNextQuestion(command);
+        if (next.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(next.get());
     }
 
     public record NextQuestionCommand(
