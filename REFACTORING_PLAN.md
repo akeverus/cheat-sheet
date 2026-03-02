@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionQualityEvaluator` message contract with null/blank normalization for violations and retry-feedback paths.
+- [x] Added `QuestionQualityEvaluatorTest` regression for normalization of noisy dependency outputs before scoring and snapshot assembly.
 - [x] Hardened `QuestionRequestFailureFeedbackSupplier` with deterministic safe fallback to non-empty request-failure feedback message.
 - [x] Added regression coverage for fallback path when retry-feedback normalizer returns empty output.
 - [x] Hardened `QuestionQualitySnapshotFactory` with defensive copy semantics (`List.copyOf`) to prevent mutable collection leaks from quality pipeline.

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -32,9 +33,11 @@ public class QuestionQualityEvaluator {
      * @return снапшот качества с нарушениями, score и итогом приёмки
      */
     public QuestionQualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
-        List<String> baseViolations = validationService.validate(candidate);
-        List<String> violations = questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints);
-        List<String> retryFeedback = questionRetryFeedbackNormalizer.normalize(violations);
+        List<String> baseViolations = normalizeMessages(validationService.validate(candidate));
+        List<String> violations = normalizeMessages(
+                questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)
+        );
+        List<String> retryFeedback = normalizeMessages(questionRetryFeedbackNormalizer.normalize(violations));
         int score = questionQualityScorer.score(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
         return questionQualitySnapshotFactory.create(violations, retryFeedback, score, accepted);
@@ -46,6 +49,17 @@ public class QuestionQualityEvaluator {
      * @return детерминированный список нарушений для следующей попытки генерации
      */
     public List<String> retryFeedbackForRequestFailure() {
-        return questionRequestFailureFeedbackSupplier.feedback();
+        return normalizeMessages(questionRequestFailureFeedbackSupplier.feedback());
+    }
+
+    private static List<String> normalizeMessages(List<String> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return List.of();
+        }
+        return messages.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .toList();
     }
 }

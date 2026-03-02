@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -122,5 +123,42 @@ class QuestionQualityEvaluatorTest {
 
         assertThat(retryFeedback).isEqualTo(normalized);
         verify(questionRequestFailureFeedbackSupplier).feedback();
+    }
+
+    @Test
+    void evaluateCandidateNormalizesNullAndBlankMessagesBeforeScoring() {
+        QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
+                validationService,
+                questionQualityScorer,
+                questionGenerationPolicy,
+                questionRetryFeedbackNormalizer,
+                questionQualitySnapshotFactory,
+                questionRequestFailureFeedbackSupplier
+        );
+        List<String> baseViolations = List.of("  base violation  ", "   ");
+        List<String> enrichedViolations = Arrays.asList("  policy violation  ", null, "");
+        List<String> retryFeedback = List.of("  retry hint  ", " ");
+        List<String> normalizedViolations = List.of("policy violation");
+        List<String> normalizedRetryFeedback = List.of("retry hint");
+        when(validationService.validate(candidate)).thenReturn(baseViolations);
+        when(questionGenerationPolicy.enrichViolations(candidate, List.of("base violation"), Set.of()))
+                .thenReturn(enrichedViolations);
+        when(questionRetryFeedbackNormalizer.normalize(normalizedViolations)).thenReturn(retryFeedback);
+        when(questionQualityScorer.score(normalizedViolations)).thenReturn(88);
+        when(questionGenerationPolicy.isAccepted(88, normalizedViolations)).thenReturn(false);
+        QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
+                .violations(normalizedViolations)
+                .retryFeedback(normalizedRetryFeedback)
+                .score(88)
+                .accepted(false)
+                .build();
+        when(questionQualitySnapshotFactory.create(normalizedViolations, normalizedRetryFeedback, 88, false))
+                .thenReturn(expected);
+
+        QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, Set.of());
+
+        assertThat(snapshot).isEqualTo(expected);
+        verify(questionQualityScorer).score(normalizedViolations);
+        verify(questionQualitySnapshotFactory).create(normalizedViolations, normalizedRetryFeedback, 88, false);
     }
 }
