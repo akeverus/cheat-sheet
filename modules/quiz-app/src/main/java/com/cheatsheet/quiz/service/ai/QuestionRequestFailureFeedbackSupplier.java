@@ -13,6 +13,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class QuestionRequestFailureFeedbackSupplier {
 
+    private static final String DEFAULT_REQUEST_FAILURE_MESSAGE = "AI did not return parsable question JSON payload";
+
     private final AppProperties appProperties;
     private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
 
@@ -22,6 +24,19 @@ public class QuestionRequestFailureFeedbackSupplier {
      */
     public List<String> feedback() {
         String message = appProperties.getInterview().getQuestionRequestFailureViolationMessage();
-        return questionRetryFeedbackNormalizer.normalize(List.of(message));
+        String safeMessage = normalizeMessage(message);
+        List<String> normalized = questionRetryFeedbackNormalizer.normalize(List.of(safeMessage));
+        if (!normalized.isEmpty()) {
+            return normalized;
+        }
+        return List.of(safeMessage);
+    }
+
+    private static String normalizeMessage(String message) {
+        if (message == null) {
+            return DEFAULT_REQUEST_FAILURE_MESSAGE;
+        }
+        String normalized = message.trim();
+        return normalized.isBlank() ? DEFAULT_REQUEST_FAILURE_MESSAGE : normalized;
     }
 }

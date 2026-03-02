@@ -28,4 +28,21 @@ class QuestionRequestFailureFeedbackSupplierTest {
         assertThat(feedback).containsExactly("AI response is not valid JSON");
         verify(normalizer).normalize(List.of("AI response is not valid JSON"));
     }
+
+    @Test
+    void feedbackFallsBackToSafeMessageWhenNormalizerReturnsEmpty() {
+        AppProperties appProperties = new AppProperties();
+        appProperties.getInterview().setQuestionRequestFailureViolationMessage("   ");
+        QuestionRetryFeedbackNormalizer normalizer = mock(QuestionRetryFeedbackNormalizer.class);
+        when(normalizer.normalize(List.of("AI did not return parsable question JSON payload")))
+                .thenReturn(List.of());
+
+        QuestionRequestFailureFeedbackSupplier supplier =
+                new QuestionRequestFailureFeedbackSupplier(appProperties, normalizer);
+
+        List<String> feedback = supplier.feedback();
+
+        assertThat(feedback).containsExactly("AI did not return parsable question JSON payload");
+        verify(normalizer).normalize(List.of("AI did not return parsable question JSON payload"));
+    }
 }

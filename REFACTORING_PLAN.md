@@ -1,6 +1,10 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionRequestFailureFeedbackSupplier` with deterministic safe fallback to non-empty request-failure feedback message.
+- [x] Added regression coverage for fallback path when retry-feedback normalizer returns empty output.
+- [x] Hardened `QuestionQualitySnapshotFactory` with defensive copy semantics (`List.copyOf`) to prevent mutable collection leaks from quality pipeline.
+- [x] Added `QuestionQualitySnapshotFactoryTest` coverage for mutable input isolation and null-safe empty list fallback.
 - [x] Added deterministic normalization in `QuestionGeneratedJsonMapper`: canonical option id order (`A..D`), uppercased option ids, and sorted/distinct lowercase tags.
 - [x] Expanded `QuestionGeneratedJsonMapperTest` with regression coverage for unordered option ids and duplicated mixed-case tags.
 - [x] Introduced immutable `GeneratedQuestionMetadata` value object and switched `QuestionGeneratedMetadataSupplier` to return a single metadata contract object.
