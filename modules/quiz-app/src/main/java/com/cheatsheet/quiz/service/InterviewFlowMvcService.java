@@ -77,8 +77,7 @@ public class InterviewFlowMvcService {
 
     public String finish(HttpSession session) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
-        sessionFlowService.buildSummary(interviewSession)
-                .ifPresent(summary -> httpSessionStateService.setLastSessionSummary(session, summary));
+        persistSessionSummary(session, interviewSession);
         httpSessionStateService.clearInterviewSession(session);
         return navigationService.sessionSummaryRedirect();
     }
@@ -94,13 +93,8 @@ public class InterviewFlowMvcService {
     }
 
     public String answer(SubmitAnswerRequest request, HttpSession session, Model model) {
-        InterviewSessionSupport.AnswerSubmission submission = answerRequestMapper.toSubmission(request);
-        InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(submission, session);
-        AnswerPageService.AnswerPageState state = answerPageService.build(
-                ctx.result(),
-                ctx.filter(),
-                ctx.interviewSession()
-        );
+        InterviewSessionSupport.AnswerContext ctx = processAnswer(request, session);
+        AnswerPageService.AnswerPageState state = toAnswerPageState(ctx);
         modelAttributeMapper.applyAnswerPageState(model, state);
 
         return navigationService.resultView();
@@ -120,9 +114,31 @@ public class InterviewFlowMvcService {
     private String updateSessionAndFocusRedirect(HttpSession session, Function<InterviewSession, Boolean> sessionUpdater) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
         boolean sessionChanged = sessionUpdater.apply(interviewSession);
+        persistSessionIfChanged(session, interviewSession, sessionChanged);
+        return navigationService.focusRedirect();
+    }
+
+    private void persistSessionSummary(HttpSession session, InterviewSession interviewSession) {
+        sessionFlowService.buildSummary(interviewSession)
+                .ifPresent(summary -> httpSessionStateService.setLastSessionSummary(session, summary));
+    }
+
+    private InterviewSessionSupport.AnswerContext processAnswer(SubmitAnswerRequest request, HttpSession session) {
+        InterviewSessionSupport.AnswerSubmission submission = answerRequestMapper.toSubmission(request);
+        return sessionSupport.processAnswer(submission, session);
+    }
+
+    private AnswerPageService.AnswerPageState toAnswerPageState(InterviewSessionSupport.AnswerContext ctx) {
+        return answerPageService.build(
+                ctx.result(),
+                ctx.filter(),
+                ctx.interviewSession()
+        );
+    }
+
+    private void persistSessionIfChanged(HttpSession session, InterviewSession interviewSession, boolean sessionChanged) {
         if (sessionChanged) {
             httpSessionStateService.setInterviewSession(session, interviewSession);
         }
-        return navigationService.focusRedirect();
     }
 }

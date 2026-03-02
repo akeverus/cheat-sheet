@@ -4,9 +4,11 @@ import com.cheatsheet.quiz.api.controller.HttpSessionStateService;
 import com.cheatsheet.quiz.api.controller.InterviewSessionSupport;
 import com.cheatsheet.quiz.api.controller.MvcNavigationService;
 import com.cheatsheet.quiz.api.dto.request.StartSessionRequest;
+import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
 import com.cheatsheet.quiz.api.mapper.MvcAnswerRequestMapper;
 import com.cheatsheet.quiz.api.mapper.MvcModelAttributeMapper;
 import com.cheatsheet.quiz.api.mapper.MvcRequestMapper;
+import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
@@ -163,5 +165,52 @@ class InterviewFlowMvcServiceTest {
         assertThat(view).isEqualTo("session-summary");
         verify(modelAttributeMapper).applySessionSummary(model, summary);
         verify(httpSessionStateService).clearLastSessionSummary(session);
+    }
+
+    @Test
+    void finishPersistsSummaryAndClearsSession() {
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        SessionSummary summary = SessionSummary.builder()
+                .mode(InterviewMode.EXAM)
+                .duration(Duration.ofMinutes(5))
+                .totalQuestions(5)
+                .correctCount(4)
+                .wrongCount(1)
+                .build();
+        when(sessionSupport.getSession(session)).thenReturn(interviewSession);
+        when(sessionFlowService.buildSummary(interviewSession)).thenReturn(Optional.of(summary));
+        when(navigationService.sessionSummaryRedirect()).thenReturn("redirect:/session-summary");
+
+        String view = service.finish(session);
+
+        assertThat(view).isEqualTo("redirect:/session-summary");
+        verify(httpSessionStateService).setLastSessionSummary(session, summary);
+        verify(httpSessionStateService).clearInterviewSession(session);
+    }
+
+    @Test
+    void answerBuildsPageStateAndAppliesModelAttributes() {
+        SubmitAnswerRequest request = new SubmitAnswerRequest();
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                10L, 2L, "java", "core", true, false, true, false, 4
+        );
+        AnswerResult answerResult = org.mockito.Mockito.mock(AnswerResult.class);
+        InterviewFilter filter = new InterviewFilter("java", "core", true, false, true, false);
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        InterviewSessionSupport.AnswerContext context = new InterviewSessionSupport.AnswerContext(
+                answerResult,
+                filter,
+                interviewSession
+        );
+        AnswerPageService.AnswerPageState state = org.mockito.Mockito.mock(AnswerPageService.AnswerPageState.class);
+        when(answerRequestMapper.toSubmission(request)).thenReturn(submission);
+        when(sessionSupport.processAnswer(submission, session)).thenReturn(context);
+        when(answerPageService.build(answerResult, filter, interviewSession)).thenReturn(state);
+        when(navigationService.resultView()).thenReturn("result");
+
+        String view = service.answer(request, session, model);
+
+        assertThat(view).isEqualTo("result");
+        verify(modelAttributeMapper).applyAnswerPageState(model, state);
     }
 }

@@ -161,6 +161,8 @@
 - [x] Expanded `AnswerApiServiceTest` with null-session API contract coverage to lock response behavior for stateless flows.
 - [x] Removed Lombok constructor generation from `FavoriteService` and switched to explicit constructor injection for clearer dependency boundaries.
 - [x] Added `FavoriteServiceTest` to lock favorite-toggle domain behavior (mark/unmark/not-found) and markdown sync contract.
+- [x] Further decomposed `InterviewFlowMvcService` by extracting answer-processing, answer-state mapping, and session-summary persistence helpers.
+- [x] Expanded `InterviewFlowMvcServiceTest` with finish-flow summary persistence and MVC answer-state mapping coverage.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
