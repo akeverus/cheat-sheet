@@ -115,6 +115,17 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
         return sendChatRequest(request, requestTimeout(), withRetry);
     }
 
+    private ChatRequest buildChatRequest(String prompt, double requestTemperature) {
+        return new ChatRequest(
+                model(),
+                List.of(
+                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
+                        new ChatMessage("user", prompt)
+                ),
+                requestTemperature
+        );
+    }
+
     /**
      * Отправляет chat completion запрос к провайдеру и возвращает извлечённый текст ответа модели.
      *
@@ -376,14 +387,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
         String shortAnswer = AiResponseParser.truncate(answerMarkdown, aiConfig().getAnswerPreviewLength());
         String prompt = AiPrompts.ALTERNATIVE_QUESTIONS_PROMPT_TEMPLATE.formatted(
                 count, AiPrompts.wrapUserInput(questionText), AiPrompts.wrapUserInput(shortAnswer));
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
@@ -414,14 +418,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
 
         String prompt = AiPrompts.HINTS_PROMPT_TEMPLATE.formatted(
                 AiPrompts.wrapUserInput(questionText), AiPrompts.wrapUserInput(shortAnswer), wrongStr);
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
@@ -454,14 +451,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
 
         String prompt = AiPrompts.DIAGRAM_PROMPT_TEMPLATE.formatted(
                 AiPrompts.wrapUserInput(questionText), AiPrompts.wrapUserInput(shortAnswer), topicStr);
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
@@ -528,14 +518,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 AiPrompts.wrapUserInput(AiResponseParser.truncate(questionText, maxInputLength())),
                 AiPrompts.wrapUserInput(AiResponseParser.truncate(selectedOptionText, 500)),
                 AiPrompts.wrapUserInput(AiResponseParser.truncate(correctOptionText, 500)));
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         return requestContent(request, true);
     }
 
@@ -549,14 +532,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 : "нет примеров";
         String prompt = AiPrompts.REFORMAT_CORRECT_PROMPT_TEMPLATE.formatted(
                 AiPrompts.wrapUserInput(questionText), AiPrompts.wrapUserInput(correctPlain), samplesStr);
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
@@ -583,14 +559,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
         String answerTruncated = AiResponseParser.truncate(answerMarkdown, maxInputLength());
         String prompt = AiPrompts.TAKEAWAY_PROMPT_TEMPLATE.formatted(
                 AiPrompts.wrapUserInput(questionText), AiPrompts.wrapUserInput(answerTruncated));
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         Optional<String> contentOpt = requestContent(request, false);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
@@ -618,14 +587,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 AiPrompts.wrapUserInput(AiResponseParser.truncate(questionText, maxInputLength())),
                 AiPrompts.wrapUserInput(AiResponseParser.truncate(selectedOptionText, 500)),
                 AiPrompts.wrapUserInput(AiResponseParser.truncate(correctOptionText, 500)));
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         return requestContent(request, false);
     }
 
@@ -641,14 +603,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
 
         String prompt = AiPrompts.CODE_TRACE_PROMPT_TEMPLATE.formatted(
                 AiPrompts.wrapUserInput(questionText), AiPrompts.wrapUserInput(AiResponseParser.truncate(codeSnippet, maxInputLength())));
-        ChatRequest request = new ChatRequest(
-                model(),
-                List.of(
-                        new ChatMessage("system", AiPrompts.SYSTEM_PROMPT),
-                        new ChatMessage("user", prompt)
-                ),
-                temperature()
-        );
+        ChatRequest request = buildChatRequest(prompt, temperature());
         return requestContent(request, false);
     }
 

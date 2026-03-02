@@ -57,6 +57,17 @@ class AbstractAiClientTest {
         assertThat(client.calls()).isZero();
     }
 
+    @Test
+    void generateStructuredJsonUsesRetryAndReturnsContent() {
+        client.enqueue("{\"questionText\":\"Q\",\"answerMarkdown\":\"A\"}");
+
+        Optional<String> result = client.generateStructuredJson("Верни JSON");
+
+        assertThat(result).contains("{\"questionText\":\"Q\",\"answerMarkdown\":\"A\"}");
+        assertThat(client.lastWithRetry()).isTrue();
+        assertThat(client.lastTimeout()).isEqualTo(Duration.ofSeconds(12));
+    }
+
     private static final class TestAiClient extends AbstractAiClient {
         private final AppProperties.Ai aiConfig;
         private final ObjectMapper objectMapper = new ObjectMapper();

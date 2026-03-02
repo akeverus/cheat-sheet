@@ -169,6 +169,8 @@
 - [x] Expanded `RegenerateEndpointServiceTest` with dedicated HTTP mapping checks for forbidden/rate-limited/success result variants.
 - [x] Thinned `InterviewApiController` for `/api/next` by delegating `200/204` HTTP mapping to `NextQuestionApiService.toHttpResponse`.
 - [x] Expanded `NextQuestionApiServiceTest` with HTTP contract checks (no-content / ok payload) and aligned controller unit tests to the delegated response mapping.
+- [x] Removed remaining duplicated `new ChatRequest(system+user)` blocks in `AbstractAiClient` by extracting a shared request builder helper.
+- [x] Extended `AbstractAiClientTest` with `generateStructuredJson` routing contract (`withRetry=true`, timeout propagation, raw-content passthrough).
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
