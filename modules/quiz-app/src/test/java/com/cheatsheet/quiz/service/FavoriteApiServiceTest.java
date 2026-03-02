@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -36,5 +37,20 @@ class FavoriteApiServiceTest {
         assertThat(response.favorite()).isTrue();
         assertThat(response.synced()).isTrue();
         verify(favoriteService).toggleFavorite(questionId);
+    }
+
+    @Test
+    void toHttpResponseWrapsPayloadWithOkStatus() {
+        long questionId = 1102L;
+        FavoriteService.FavoriteResult domain = new FavoriteService.FavoriteResult(questionId, false, true);
+        when(favoriteService.toggleFavorite(questionId)).thenReturn(domain);
+
+        ResponseEntity<FavoriteResponse> response = service.toHttpResponse(questionId);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().questionId()).isEqualTo(questionId);
+        assertThat(response.getBody().favorite()).isFalse();
+        assertThat(response.getBody().synced()).isTrue();
     }
 }

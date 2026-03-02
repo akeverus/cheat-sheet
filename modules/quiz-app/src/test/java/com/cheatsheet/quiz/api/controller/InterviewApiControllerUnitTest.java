@@ -598,13 +598,13 @@ class InterviewApiControllerUnitTest {
     void streakReturnsDailyProgressFromService() {
         com.cheatsheet.quiz.api.dto.response.StreakResponse progress =
                 new com.cheatsheet.quiz.api.dto.response.StreakResponse(7, 10, 3, false, 5);
-        when(streakApiService.buildStreakResponse()).thenReturn(progress);
+        when(streakApiService.toHttpResponse()).thenReturn(ResponseEntity.ok(progress));
 
         ResponseEntity<?> response = controller.getStreak();
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(progress);
-        verify(streakApiService).buildStreakResponse();
+        verify(streakApiService).toHttpResponse();
     }
 
     @Test
@@ -613,7 +613,7 @@ class InterviewApiControllerUnitTest {
         request.setQuestionId(1101L);
         com.cheatsheet.quiz.api.dto.response.FavoriteResponse result =
                 new com.cheatsheet.quiz.api.dto.response.FavoriteResponse(true, true, 1101L);
-        when(favoriteApiService.toggleFavorite(1101L)).thenReturn(result);
+        when(favoriteApiService.toHttpResponse(1101L)).thenReturn(ResponseEntity.ok(result));
 
         ResponseEntity<?> response = controller.toggleFavorite(request);
 
@@ -624,14 +624,14 @@ class InterviewApiControllerUnitTest {
         assertThat(body.questionId()).isEqualTo(1101L);
         assertThat(body.favorite()).isTrue();
         assertThat(body.synced()).isTrue();
-        verify(favoriteApiService).toggleFavorite(1101L);
+        verify(favoriteApiService).toHttpResponse(1101L);
     }
 
     @Test
     void favoritePropagatesQuestionNotFoundFromService() {
         QuestionIdRequest request = new QuestionIdRequest();
         request.setQuestionId(1102L);
-        when(favoriteApiService.toggleFavorite(1102L))
+        when(favoriteApiService.toHttpResponse(1102L))
                 .thenThrow(new QuestionNotFoundException("Вопрос не найден: id=1102"));
 
         assertThatThrownBy(() -> controller.toggleFavorite(request))

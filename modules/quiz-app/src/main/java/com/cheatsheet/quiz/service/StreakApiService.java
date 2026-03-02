@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.service;
 
 import com.cheatsheet.quiz.api.dto.response.StreakResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,5 +18,9 @@ public class StreakApiService {
 
     public StreakResponse buildStreakResponse() {
         return dailyStreakService.getTodayProgress();
+    }
+
+    public ResponseEntity<StreakResponse> toHttpResponse() {
+        return ResponseEntity.ok(buildStreakResponse());
     }
 }

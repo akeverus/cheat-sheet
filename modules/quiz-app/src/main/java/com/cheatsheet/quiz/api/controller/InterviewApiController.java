@@ -140,7 +140,7 @@ public class InterviewApiController {
 
     @GetMapping("/api/streak")
     public ResponseEntity<StreakResponse> getStreak() {
-        return ResponseEntity.ok(streakApiService.buildStreakResponse());
+        return streakApiService.toHttpResponse();
     }
 
     @GetMapping("/api/stats")
@@ -193,7 +193,7 @@ public class InterviewApiController {
     public ResponseEntity<FavoriteResponse> toggleFavorite(
             @Valid @ModelAttribute QuestionIdRequest request
     ) {
-        return ResponseEntity.ok(favoriteApiService.toggleFavorite(request.getQuestionId()));
+        return favoriteApiService.toHttpResponse(request.getQuestionId());
     }
 
     @GetMapping("/api/takeaway")
