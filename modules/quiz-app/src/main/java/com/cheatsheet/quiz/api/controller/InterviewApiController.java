@@ -106,15 +106,7 @@ public class InterviewApiController {
     ) {
         RegenerateEndpointService.RegenerateResult result =
                 regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest);
-        if (result.status() == RegenerateEndpointService.RegenerateResult.Status.FORBIDDEN) {
-            return ResponseEntity.status(403).body(result.error());
-        }
-        if (result.status() == RegenerateEndpointService.RegenerateResult.Status.RATE_LIMITED) {
-            return ResponseEntity.status(429)
-                    .header("Retry-After", String.valueOf(result.retryAfterSeconds()))
-                    .body(result.error());
-        }
-        return ResponseEntity.ok(result.payload());
+        return regenerateEndpointService.toHttpResponse(result);
     }
 
     @PostMapping("/api/hint")

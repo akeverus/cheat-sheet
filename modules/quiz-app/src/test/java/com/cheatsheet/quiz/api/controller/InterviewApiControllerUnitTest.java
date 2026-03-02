@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.api.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -152,8 +153,10 @@ class InterviewApiControllerUnitTest {
         HttpServletRequest httpRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         String token = "bad-token";
         ApiError forbidden = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
+        ResponseEntity<?> expected = ResponseEntity.status(403).body(forbidden);
         when(regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest))
                 .thenReturn(RegenerateEndpointService.RegenerateResult.forbidden(forbidden));
+        doReturn(expected).when(regenerateEndpointService).toHttpResponse(any());
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
@@ -284,6 +287,10 @@ class InterviewApiControllerUnitTest {
 
         when(regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest))
                 .thenReturn(RegenerateEndpointService.RegenerateResult.rateLimited(error, retryAfterSeconds));
+        ResponseEntity<?> expected = ResponseEntity.status(429)
+                .header("Retry-After", String.valueOf(retryAfterSeconds))
+                .body(error);
+        doReturn(expected).when(regenerateEndpointService).toHttpResponse(any());
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
@@ -312,6 +319,8 @@ class InterviewApiControllerUnitTest {
 
         when(regenerateEndpointService.execute(request.getQuestionId(), token, httpRequest))
                 .thenReturn(RegenerateEndpointService.RegenerateResult.success(payload));
+        ResponseEntity<?> expected = ResponseEntity.ok(payload);
+        doReturn(expected).when(regenerateEndpointService).toHttpResponse(any());
 
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 

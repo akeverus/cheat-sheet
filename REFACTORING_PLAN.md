@@ -165,6 +165,8 @@
 - [x] Expanded `InterviewFlowMvcServiceTest` with finish-flow summary persistence and MVC answer-state mapping coverage.
 - [x] Reduced duplication in `AbstractAiClient` by extracting shared timeout/request dispatch helper for all AI generation flows.
 - [x] Added `AbstractAiClientTest` to validate retry-mode routing (`withRetry`), timeout propagation, and guard behavior for invalid alternative-question counts.
+- [x] Thinned `InterviewApiController` by moving regenerate HTTP status/header mapping into `RegenerateEndpointService.toHttpResponse`.
+- [x] Expanded `RegenerateEndpointServiceTest` with dedicated HTTP mapping checks for forbidden/rate-limited/success result variants.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

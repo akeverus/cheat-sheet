@@ -48,6 +48,18 @@ public class RegenerateEndpointService {
         ));
     }
 
+    public ResponseEntity<?> toHttpResponse(RegenerateResult result) {
+        if (result.status() == RegenerateResult.Status.FORBIDDEN) {
+            return ResponseEntity.status(403).body(result.error());
+        }
+        if (result.status() == RegenerateResult.Status.RATE_LIMITED) {
+            return ResponseEntity.status(429)
+                    .header("Retry-After", String.valueOf(result.retryAfterSeconds()))
+                    .body(result.error());
+        }
+        return ResponseEntity.ok(result.payload());
+    }
+
     public record RegenerateResult(
             Status status,
             ApiError error,

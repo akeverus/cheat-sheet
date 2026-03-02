@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.service;
 
 import com.cheatsheet.quiz.api.dto.ApiError;
+import com.cheatsheet.quiz.api.dto.response.RegenerateResponse;
 import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -80,5 +81,41 @@ class RegenerateEndpointServiceTest {
         assertThat(result.payload().questionId()).isEqualTo(questionId);
         assertThat(result.payload().success()).isTrue();
         verify(regenerateService).regenerateQuestion(questionId);
+    }
+
+    @Test
+    void toHttpResponseBuildsForbiddenPayload() {
+        ApiError error = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
+        RegenerateEndpointService.RegenerateResult result = RegenerateEndpointService.RegenerateResult.forbidden(error);
+
+        ResponseEntity<?> response = service.toHttpResponse(result);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(403);
+        assertThat(response.getBody()).isEqualTo(error);
+    }
+
+    @Test
+    void toHttpResponseBuildsRateLimitedPayloadWithRetryAfterHeader() {
+        ApiError error = new ApiError(429, ApiErrorTypes.RATE_LIMIT_EXCEEDED, "Too many requests", null);
+        RegenerateEndpointService.RegenerateResult result =
+                RegenerateEndpointService.RegenerateResult.rateLimited(error, 30);
+
+        ResponseEntity<?> response = service.toHttpResponse(result);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(429);
+        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("30");
+        assertThat(response.getBody()).isEqualTo(error);
+    }
+
+    @Test
+    void toHttpResponseBuildsSuccessPayload() {
+        RegenerateResponse payload = new RegenerateResponse(true, 44L, "ok");
+        RegenerateEndpointService.RegenerateResult result =
+                RegenerateEndpointService.RegenerateResult.success(payload);
+
+        ResponseEntity<?> response = service.toHttpResponse(result);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(payload);
     }
 }
