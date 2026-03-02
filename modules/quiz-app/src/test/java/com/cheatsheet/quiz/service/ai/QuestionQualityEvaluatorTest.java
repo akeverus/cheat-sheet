@@ -135,13 +135,14 @@ class QuestionQualityEvaluatorTest {
                 questionQualitySnapshotFactory,
                 questionRequestFailureFeedbackSupplier
         );
-        List<String> baseViolations = List.of("  base violation  ", "   ");
-        List<String> enrichedViolations = Arrays.asList("  policy violation  ", null, "");
-        List<String> retryFeedback = List.of("  retry hint  ", " ");
+        List<String> baseViolations = List.of("  base violation  ", "BASE VIOLATION", "   ");
+        List<String> enrichedViolations = Arrays.asList("  policy violation  ", "POLICY VIOLATION", null, "");
+        List<String> retryFeedback = List.of("  retry hint  ", "RETRY HINT", " ");
         List<String> normalizedViolations = List.of("policy violation");
         List<String> normalizedRetryFeedback = List.of("retry hint");
+        List<String> normalizedBaseViolations = List.of("base violation");
         when(validationService.validate(candidate)).thenReturn(baseViolations);
-        when(questionGenerationPolicy.enrichViolations(candidate, List.of("base violation"), Set.of()))
+        when(questionGenerationPolicy.enrichViolations(candidate, normalizedBaseViolations, Set.of()))
                 .thenReturn(enrichedViolations);
         when(questionRetryFeedbackNormalizer.normalize(normalizedViolations)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(normalizedViolations)).thenReturn(88);
@@ -158,6 +159,7 @@ class QuestionQualityEvaluatorTest {
         QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, Set.of());
 
         assertThat(snapshot).isEqualTo(expected);
+        verify(questionGenerationPolicy).enrichViolations(candidate, normalizedBaseViolations, Set.of());
         verify(questionQualityScorer).score(normalizedViolations);
         verify(questionQualitySnapshotFactory).create(normalizedViolations, normalizedRetryFeedback, 88, false);
     }

@@ -4,7 +4,10 @@ import com.cheatsheet.quiz.domain.Question;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -56,10 +59,12 @@ public class QuestionQualityEvaluator {
         if (messages == null || messages.isEmpty()) {
             return List.of();
         }
-        return messages.stream()
+        Map<String, String> uniqueByLowerValue = new LinkedHashMap<>();
+        messages.stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(value -> !value.isBlank())
-                .toList();
+                .forEach(value -> uniqueByLowerValue.putIfAbsent(value.toLowerCase(Locale.ROOT), value));
+        return List.copyOf(uniqueByLowerValue.values());
     }
 }

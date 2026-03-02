@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Added deterministic case-insensitive deduplication of quality messages in `QuestionQualityEvaluator` normalization pipeline.
+- [x] Expanded `QuestionQualityEvaluatorTest` to verify duplicate/case-variant collapse before policy enrichment, scoring, and retry-feedback assembly.
 - [x] Hardened `QuestionQualityEvaluator` message contract with null/blank normalization for violations and retry-feedback paths.
 - [x] Added `QuestionQualityEvaluatorTest` regression for normalization of noisy dependency outputs before scoring and snapshot assembly.
 - [x] Hardened `QuestionRequestFailureFeedbackSupplier` with deterministic safe fallback to non-empty request-failure feedback message.
