@@ -34,13 +34,13 @@ public class QuestionQualityEvaluator {
      * @return снапшот качества с нарушениями, score и итогом приёмки
      */
     public QuestionQualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
-        Set<String> safeSeenFingerprints = questionSeenFingerprintSanitizer.sanitize(seenFingerprints);
-        List<String> baseViolations = questionQualityMessageNormalizer.normalize(validationService.validate(candidate));
-        List<String> violations = questionQualityMessageNormalizer.normalize(
+        Set<String> safeSeenFingerprints = safeSanitizedFingerprints(seenFingerprints);
+        List<String> baseViolations = safeNormalizedMessages(validationService.validate(candidate));
+        List<String> violations = safeNormalizedMessages(
                 questionGenerationPolicy.enrichViolations(candidate, baseViolations, safeSeenFingerprints)
         );
         List<String> retryFeedback =
-                questionQualityMessageNormalizer.normalize(questionRetryFeedbackNormalizer.normalize(violations));
+                safeNormalizedMessages(questionRetryFeedbackNormalizer.normalize(violations));
         int score = questionQualityScorer.score(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
         return questionQualitySnapshotFactory.create(violations, retryFeedback, score, accepted);
@@ -52,6 +52,16 @@ public class QuestionQualityEvaluator {
      * @return детерминированный список нарушений для следующей попытки генерации
      */
     public List<String> retryFeedbackForRequestFailure() {
-        return questionQualityMessageNormalizer.normalize(questionRequestFailureFeedbackSupplier.feedback());
+        return safeNormalizedMessages(questionRequestFailureFeedbackSupplier.feedback());
+    }
+
+    private Set<String> safeSanitizedFingerprints(Set<String> seenFingerprints) {
+        Set<String> sanitized = questionSeenFingerprintSanitizer.sanitize(seenFingerprints);
+        return sanitized == null ? Set.of() : sanitized;
+    }
+
+    private List<String> safeNormalizedMessages(List<String> messages) {
+        List<String> normalized = questionQualityMessageNormalizer.normalize(messages);
+        return normalized == null ? List.of() : normalized;
     }
 }

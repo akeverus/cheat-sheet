@@ -239,4 +239,41 @@ class QuestionQualityEvaluatorTest {
         verify(questionSeenFingerprintSanitizer).sanitize(rawSeenFingerprints);
         verify(questionGenerationPolicy).enrichViolations(candidate, baseViolations, sanitizedSeenFingerprints);
     }
+
+    @Test
+    void evaluateCandidateFallsBackToEmptyCollectionsWhenNormalizersReturnNull() {
+        QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
+                validationService,
+                questionQualityScorer,
+                questionGenerationPolicy,
+                questionRetryFeedbackNormalizer,
+                questionQualitySnapshotFactory,
+                questionRequestFailureFeedbackSupplier,
+                questionQualityMessageNormalizer,
+                questionSeenFingerprintSanitizer
+        );
+        when(questionSeenFingerprintSanitizer.sanitize(Set.of())).thenReturn(null);
+        when(validationService.validate(candidate)).thenReturn(List.of("raw"));
+        when(questionQualityMessageNormalizer.normalize(List.of("raw"))).thenReturn(null);
+        when(questionGenerationPolicy.enrichViolations(candidate, List.of(), Set.of())).thenReturn(List.of("enriched"));
+        when(questionQualityMessageNormalizer.normalize(List.of("enriched"))).thenReturn(null);
+        when(questionRetryFeedbackNormalizer.normalize(List.of())).thenReturn(List.of("retry"));
+        when(questionQualityMessageNormalizer.normalize(List.of("retry"))).thenReturn(null);
+        when(questionQualityScorer.score(List.of())).thenReturn(100);
+        when(questionGenerationPolicy.isAccepted(100, List.of())).thenReturn(true);
+        QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
+                .violations(List.of())
+                .retryFeedback(List.of())
+                .score(100)
+                .accepted(true)
+                .build();
+        when(questionQualitySnapshotFactory.create(List.of(), List.of(), 100, true)).thenReturn(expected);
+
+        QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, Set.of());
+
+        assertThat(snapshot).isEqualTo(expected);
+        verify(questionGenerationPolicy).enrichViolations(candidate, List.of(), Set.of());
+        verify(questionQualityScorer).score(List.of());
+        verify(questionQualitySnapshotFactory).create(List.of(), List.of(), 100, true);
+    }
 }
