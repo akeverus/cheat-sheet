@@ -94,19 +94,8 @@ public class InterviewFlowMvcService {
     }
 
     public String answer(SubmitAnswerRequest request, HttpSession session, Model model) {
-        MvcAnswerRequestMapper.AnswerSubmission submission = answerRequestMapper.toSubmission(request);
-        InterviewSessionSupport.AnswerSubmission answerSubmission = new InterviewSessionSupport.AnswerSubmission(
-                submission.questionId(),
-                submission.optionId(),
-                submission.topic(),
-                submission.group(),
-                submission.important(),
-                submission.onlyWrong(),
-                submission.shuffle(),
-                submission.ordered(),
-                submission.confidence()
-        );
-        InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(answerSubmission, session);
+        InterviewSessionSupport.AnswerSubmission submission = answerRequestMapper.toSubmission(request);
+        InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(submission, session);
         AnswerPageService.AnswerPageState state = answerPageService.build(
                 ctx.result(),
                 ctx.filter(),
