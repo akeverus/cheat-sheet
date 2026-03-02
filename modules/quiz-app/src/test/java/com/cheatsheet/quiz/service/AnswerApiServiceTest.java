@@ -109,6 +109,44 @@ class AnswerApiServiceTest {
         verify(facade).renderMarkdown(eq(question.answerMarkdown()));
     }
 
+    @Test
+    void buildAnswerResponseOmitsSessionPayloadWhenSessionIsAbsent() {
+        long questionId = 801L;
+        long selectedOptionId = 9L;
+        Question question = existingQuestion(questionId);
+        AnswerOption selected = new AnswerOption(9L, questionId, "A", false, 0, "OPENAI", "Неверно");
+        AnswerOption correct = new AnswerOption(10L, questionId, "B", true, 1, "OPENAI", "Верно");
+        ReviewState reviewState = new ReviewState(questionId, 1, 1, 2.4, 1_700_000_001L, ReviewResult.WRONG, 2, 3);
+        AnswerResult answerResult = new AnswerResult(
+                question,
+                List.of(selected, correct),
+                selected,
+                correct,
+                false,
+                reviewState,
+                AnswerDisplayMode.FULL
+        );
+        InterviewSessionSupport.AnswerContext context = new InterviewSessionSupport.AnswerContext(
+                answerResult,
+                new InterviewFilter("java", "core", true, false, true, false),
+                null
+        );
+        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
+                questionId, selectedOptionId, "java", "core", true, false, true, false, 3
+        );
+
+        when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
+                .thenReturn(context);
+        when(facade.findRelated(questionId, "java")).thenReturn(List.of());
+        when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
+
+        AnswerResponse body = service.buildAnswerResponse(command, session);
+
+        assertThat(body.correct()).isFalse();
+        assertThat(body.session()).isNull();
+        assertThat(body.relatedQuestions()).isEmpty();
+    }
+
     private Question existingQuestion(long id) {
         return new Question(
                 id,

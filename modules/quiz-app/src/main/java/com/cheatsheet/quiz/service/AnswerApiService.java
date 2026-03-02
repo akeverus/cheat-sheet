@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Use-case orchestration для API-ответа `/api/answer`.
@@ -29,33 +30,11 @@ public class AnswerApiService {
     }
 
     public AnswerResponse buildAnswerResponse(AnswerCommand command, HttpSession session) {
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                command.questionId(),
-                command.optionId(),
-                command.topic(),
-                command.group(),
-                command.important(),
-                command.onlyWrong(),
-                command.shuffle(),
-                command.ordered(),
-                command.confidence()
-        );
+        InterviewSessionSupport.AnswerSubmission submission = toSubmission(command);
         InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(submission, session);
-
-        List<OptionExplanationDto> optionExplanations = ctx.result().options().stream()
-                .map(opt -> new OptionExplanationDto(opt.id(), opt.explanation(), opt.correct()))
-                .toList();
-
-        List<RelatedQuestion> related = facade.findRelated(command.questionId(), ctx.result().question().topic());
-        List<RelatedQuestionDto> relatedQuestions = related.stream()
-                .map(rq -> new RelatedQuestionDto(rq.id(), rq.questionText(), rq.topic()))
-                .toList();
-
-        SessionInfoDto sessionInfo = null;
-        if (ctx.interviewSession() != null) {
-            var s = ctx.interviewSession();
-            sessionInfo = new SessionInfoDto(s.getIndex(), s.getTotal(), s.getCorrect(), s.getWrong(), s.isFinished());
-        }
+        List<OptionExplanationDto> optionExplanations = toOptionExplanations(ctx);
+        List<RelatedQuestionDto> relatedQuestions = toRelatedQuestions(command.questionId(), ctx);
+        SessionInfoDto sessionInfo = toSessionInfo(ctx);
 
         return new AnswerResponse(
                 ctx.result().correctAnswer(),
@@ -68,6 +47,45 @@ public class AnswerApiService {
                 relatedQuestions,
                 sessionInfo
         );
+    }
+
+    private InterviewSessionSupport.AnswerSubmission toSubmission(AnswerCommand command) {
+        return new InterviewSessionSupport.AnswerSubmission(
+                command.questionId(),
+                command.optionId(),
+                command.topic(),
+                command.group(),
+                command.important(),
+                command.onlyWrong(),
+                command.shuffle(),
+                command.ordered(),
+                command.confidence()
+        );
+    }
+
+    private List<OptionExplanationDto> toOptionExplanations(InterviewSessionSupport.AnswerContext ctx) {
+        return ctx.result().options().stream()
+                .map(opt -> new OptionExplanationDto(opt.id(), opt.explanation(), opt.correct()))
+                .toList();
+    }
+
+    private List<RelatedQuestionDto> toRelatedQuestions(long questionId, InterviewSessionSupport.AnswerContext ctx) {
+        List<RelatedQuestion> related = facade.findRelated(questionId, ctx.result().question().topic());
+        return related.stream()
+                .map(rq -> new RelatedQuestionDto(rq.id(), rq.questionText(), rq.topic()))
+                .toList();
+    }
+
+    private SessionInfoDto toSessionInfo(InterviewSessionSupport.AnswerContext ctx) {
+        return Optional.ofNullable(ctx.interviewSession())
+                .map(session -> new SessionInfoDto(
+                        session.getIndex(),
+                        session.getTotal(),
+                        session.getCorrect(),
+                        session.getWrong(),
+                        session.isFinished()
+                ))
+                .orElse(null);
     }
 
     public record AnswerCommand(
