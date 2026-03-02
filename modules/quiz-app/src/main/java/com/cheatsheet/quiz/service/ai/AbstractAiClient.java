@@ -107,6 +107,14 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
         return aiConfig().getMaxInputLength();
     }
 
+    private Duration requestTimeout() {
+        return Duration.ofSeconds(aiConfig().getTimeoutSeconds());
+    }
+
+    private Optional<String> requestContent(ChatRequest request, boolean withRetry) {
+        return sendChatRequest(request, requestTimeout(), withRetry);
+    }
+
     /**
      * Отправляет chat completion запрос к провайдеру и возвращает извлечённый текст ответа модели.
      *
@@ -210,8 +218,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
 
         long startMs = System.currentTimeMillis();
         ChatRequest request = buildOptionsRequest(safeQuestionText, safeAnswerMarkdown, codeSnippet, qualityFixContext);
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             log.warn("[{}/{}] Пустой content в ответе модели", sourceId(), model());
             return Optional.empty();
@@ -339,8 +346,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 temperature(),
                 CANONICALIZE_MAX_TOKENS
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -378,8 +384,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -417,8 +422,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -458,8 +462,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -497,8 +500,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 0.1 // низкая температура — нужен точный результат
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -534,8 +536,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        return sendChatRequest(request, timeout, true);
+        return requestContent(request, true);
     }
 
     @Override
@@ -556,8 +557,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, true);
+        Optional<String> contentOpt = requestContent(request, true);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -591,8 +591,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        Optional<String> contentOpt = sendChatRequest(request, timeout, false);
+        Optional<String> contentOpt = requestContent(request, false);
         if (contentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -627,8 +626,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        return sendChatRequest(request, timeout, false);
+        return requestContent(request, false);
     }
 
     @Override
@@ -651,8 +649,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 ),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        return sendChatRequest(request, timeout, false);
+        return requestContent(request, false);
     }
 
     @Override
@@ -666,8 +663,7 @@ public abstract class AbstractAiClient implements OptionGenerator, LlmClient {
                 llmRequestBuilder.withStrictJsonContract(prompt),
                 temperature()
         );
-        Duration timeout = Duration.ofSeconds(aiConfig().getTimeoutSeconds());
-        return sendChatRequest(request, timeout, true);
+        return requestContent(request, true);
     }
 
     private static String sanitizeLogValue(String value) {
