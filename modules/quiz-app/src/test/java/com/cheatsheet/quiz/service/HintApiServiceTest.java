@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
@@ -88,5 +89,20 @@ class HintApiServiceTest {
         assertThat(body.level()).isEqualTo(3);
         assertThat(body.hint()).contains("Почти ответ");
         verify(facade).getHint(questionId, 3);
+    }
+
+    @Test
+    void toHttpResponseWrapsHintPayloadWithOkStatus() {
+        long questionId = 605L;
+        HintApiService.HintCommand command = new HintApiService.HintCommand(questionId, 2);
+        when(facade.getHint(questionId, 2))
+                .thenReturn(Optional.of(new Hint(3L, questionId, 2, "Подсказка", 1_700_000_002L)));
+
+        ResponseEntity<HintResponse> response = service.toHttpResponse(command);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().questionId()).isEqualTo(questionId);
+        assertThat(response.getBody().hint()).isEqualTo("Подсказка");
     }
 }

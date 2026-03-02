@@ -7,6 +7,7 @@ import com.cheatsheet.quiz.api.dto.response.RelatedQuestionDto;
 import com.cheatsheet.quiz.api.dto.response.SessionInfoDto;
 import com.cheatsheet.quiz.domain.RelatedQuestion;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,6 +48,10 @@ public class AnswerApiService {
                 relatedQuestions,
                 sessionInfo
         );
+    }
+
+    public ResponseEntity<AnswerResponse> toHttpResponse(AnswerCommand command, HttpSession session) {
+        return ResponseEntity.ok(buildAnswerResponse(command, session));
     }
 
     private InterviewSessionSupport.AnswerSubmission toSubmission(AnswerCommand command) {

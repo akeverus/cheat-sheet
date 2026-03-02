@@ -91,7 +91,7 @@ public class InterviewApiController {
             HttpSession session
     ) {
         AnswerApiService.AnswerCommand command = apiRequestMapper.toAnswerCommand(request);
-        return ResponseEntity.ok(answerApiService.buildAnswerResponse(command, session));
+        return answerApiService.toHttpResponse(command, session);
     }
 
     @PostMapping("/api/regenerate")
@@ -113,7 +113,7 @@ public class InterviewApiController {
             @Valid @ModelAttribute HintRequest request
     ) {
         HintApiService.HintCommand command = apiRequestMapper.toHintCommand(request);
-        return ResponseEntity.ok(hintApiService.buildHintResponse(command));
+        return hintApiService.toHttpResponse(command);
     }
 
     @PostMapping("/api/confidence")
@@ -124,7 +124,7 @@ public class InterviewApiController {
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam("grade") @Min(1) @Max(5) int grade
     ) {
-        return ResponseEntity.ok(confidenceApiService.updateConfidence(questionId, grade));
+        return confidenceApiService.toHttpResponse(questionId, grade);
     }
 
     @PostMapping("/api/wrong-feedback")

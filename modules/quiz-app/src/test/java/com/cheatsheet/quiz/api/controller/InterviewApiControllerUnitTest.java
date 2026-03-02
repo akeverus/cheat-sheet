@@ -131,7 +131,7 @@ class InterviewApiControllerUnitTest {
         int grade = 5;
         com.cheatsheet.quiz.api.dto.response.ConfidenceResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.ConfidenceResponse(true, questionId, grade);
-        when(confidenceApiService.updateConfidence(questionId, grade)).thenReturn(payload);
+        when(confidenceApiService.toHttpResponse(questionId, grade)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.updateConfidence(questionId, grade);
 
@@ -142,7 +142,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.success()).isTrue();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.grade()).isEqualTo(grade);
-        verify(confidenceApiService).updateConfidence(questionId, grade);
+        verify(confidenceApiService).toHttpResponse(questionId, grade);
     }
 
     @Test
@@ -174,7 +174,7 @@ class InterviewApiControllerUnitTest {
                 new com.cheatsheet.quiz.api.dto.response.HintResponse(
                         questionId, 3, "Смотри на порядок stream-операций", 2
                 );
-        when(hintApiService.buildHintResponse(any())).thenReturn(payload);
+        when(hintApiService.toHttpResponse(any())).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getHint(request);
 
@@ -186,7 +186,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isEqualTo(2);
         assertThat(body.hint()).contains("stream");
-        verify(hintApiService).buildHintResponse(any());
+        verify(hintApiService).toHttpResponse(any());
     }
 
     @Test
@@ -196,7 +196,7 @@ class InterviewApiControllerUnitTest {
         request.setQuestionId(questionId);
         com.cheatsheet.quiz.api.dto.response.HintResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.HintResponse(questionId, 3, null, null);
-        when(hintApiService.buildHintResponse(any())).thenReturn(payload);
+        when(hintApiService.toHttpResponse(any())).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getHint(request);
 
@@ -208,7 +208,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isNull();
         assertThat(body.hint()).isNull();
-        verify(hintApiService).buildHintResponse(any());
+        verify(hintApiService).toHttpResponse(any());
     }
 
     @Test
@@ -217,12 +217,12 @@ class InterviewApiControllerUnitTest {
         HintRequest request = new HintRequest();
         request.setQuestionId(questionId);
         doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId)).when(hintApiService)
-                .buildHintResponse(any());
+                .toHttpResponse(any());
 
         assertThatThrownBy(() -> controller.getHint(request))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
-        verify(hintApiService).buildHintResponse(any());
+        verify(hintApiService).toHttpResponse(any());
     }
 
     @Test
@@ -252,7 +252,8 @@ class InterviewApiControllerUnitTest {
                         List.of(new com.cheatsheet.quiz.api.dto.response.RelatedQuestionDto(900L, "Похожий вопрос", "java")),
                         new com.cheatsheet.quiz.api.dto.response.SessionInfoDto(1, 2, 1, 0, false)
                 );
-        when(answerApiService.buildAnswerResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession))).thenReturn(payload);
+        when(answerApiService.toHttpResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession)))
+                .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.answerApi(request, httpSession);
 
@@ -270,7 +271,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.relatedQuestions()).hasSize(1);
         assertThat(body.session()).isNotNull();
         assertThat(body.session().total()).isEqualTo(2);
-        verify(answerApiService).buildAnswerResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession));
+        verify(answerApiService).toHttpResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession));
     }
 
     @Test

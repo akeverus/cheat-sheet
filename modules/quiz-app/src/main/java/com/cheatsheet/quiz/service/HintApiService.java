@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.service;
 
 import com.cheatsheet.quiz.api.dto.response.HintResponse;
 import com.cheatsheet.quiz.domain.Hint;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -25,6 +26,10 @@ public class HintApiService {
         Optional<Hint> hint = facade.getHint(questionId, normalizedLevel);
         int maxLevel = HintService.getMaxLevel();
         return toHintResponse(questionId, maxLevel, hint);
+    }
+
+    public ResponseEntity<HintResponse> toHttpResponse(HintCommand command) {
+        return ResponseEntity.ok(buildHintResponse(command));
     }
 
     public record HintCommand(long questionId, int level) {

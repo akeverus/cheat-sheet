@@ -173,6 +173,8 @@
 - [x] Extended `AbstractAiClientTest` with `generateStructuredJson` routing contract (`withRetry=true`, timeout propagation, raw-content passthrough).
 - [x] Thinned `InterviewApiController` for `/api/streak` and `/api/favorite` by delegating `ResponseEntity` assembly to `StreakApiService` and `FavoriteApiService`.
 - [x] Expanded `StreakApiServiceTest` and `FavoriteApiServiceTest` with HTTP wrapper contract checks, and aligned `InterviewApiControllerUnitTest` to delegated API response mapping.
+- [x] Thinned `InterviewApiController` for `/api/answer`, `/api/hint`, `/api/confidence` by delegating HTTP wrapping to `AnswerApiService`, `HintApiService`, and `ConfidenceApiService`.
+- [x] Expanded `AnswerApiServiceTest`, `HintApiServiceTest`, `ConfidenceApiServiceTest` with HTTP wrapper checks and aligned `InterviewApiControllerUnitTest` stubs/verifications to service-level response mapping.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

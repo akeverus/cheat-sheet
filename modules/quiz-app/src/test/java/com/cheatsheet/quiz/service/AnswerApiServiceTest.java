@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -145,6 +146,43 @@ class AnswerApiServiceTest {
         assertThat(body.correct()).isFalse();
         assertThat(body.session()).isNull();
         assertThat(body.relatedQuestions()).isEmpty();
+    }
+
+    @Test
+    void toHttpResponseWrapsAnswerPayloadWithOkStatus() {
+        long questionId = 901L;
+        long selectedOptionId = 2L;
+        Question question = existingQuestion(questionId);
+        AnswerOption option = new AnswerOption(2L, questionId, "B", true, 1, "OPENAI", "Верно");
+        ReviewState reviewState = new ReviewState(questionId, 1, 1, 2.4, 1_700_000_001L, ReviewResult.CORRECT, 2, 0);
+        AnswerResult answerResult = new AnswerResult(
+                question,
+                List.of(option),
+                option,
+                option,
+                true,
+                reviewState,
+                AnswerDisplayMode.MINIMAL
+        );
+        InterviewSessionSupport.AnswerContext context = new InterviewSessionSupport.AnswerContext(
+                answerResult,
+                new InterviewFilter("java", "core", true, false, true, false),
+                null
+        );
+        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
+                questionId, selectedOptionId, "java", "core", true, false, true, false, 4
+        );
+        when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
+                .thenReturn(context);
+        when(facade.findRelated(questionId, "java")).thenReturn(List.of());
+        when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
+
+        ResponseEntity<AnswerResponse> response = service.toHttpResponse(command, session);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().correct()).isTrue();
+        assertThat(response.getBody().selectedOptionId()).isEqualTo(selectedOptionId);
     }
 
     private Question existingQuestion(long id) {
