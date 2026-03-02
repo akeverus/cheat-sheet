@@ -135,7 +135,7 @@ public class InterviewApiController {
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam("optionId") @Positive long optionId
     ) {
-        return ResponseEntity.ok(questionInsightsApiService.buildWrongFeedbackResponse(questionId, optionId));
+        return questionInsightsApiService.toWrongFeedbackHttpResponse(questionId, optionId);
     }
 
     @GetMapping("/api/streak")
@@ -154,12 +154,12 @@ public class InterviewApiController {
     ) {
         StatsApiService.StatsCommand command =
                 apiRequestMapper.toStatsCommand(topic, group, important, onlyWrong, shuffle, ordered);
-        return ResponseEntity.ok(statsApiService.buildStatsResponse(command));
+        return statsApiService.toStatsHttpResponse(command);
     }
 
     @GetMapping("/api/topic-stats")
     public ResponseEntity<List<TopicStatsResponse>> getTopicStats() {
-        return ResponseEntity.ok(statsApiService.buildTopicStatsResponse());
+        return statsApiService.toTopicStatsHttpResponse();
     }
 
     @GetMapping("/api/next")
@@ -198,7 +198,7 @@ public class InterviewApiController {
 
     @GetMapping("/api/takeaway")
     public ResponseEntity<TakeawayResponse> getTakeaway(@RequestParam("questionId") @Positive long questionId) {
-        return ResponseEntity.ok(questionInsightsApiService.buildTakeawayResponse(questionId));
+        return questionInsightsApiService.toTakeawayHttpResponse(questionId);
     }
 
     @GetMapping("/api/comparison")
@@ -206,12 +206,12 @@ public class InterviewApiController {
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam("selectedOptionId") @Positive long selectedOptionId
     ) {
-        return ResponseEntity.ok(questionInsightsApiService.buildComparisonResponse(questionId, selectedOptionId));
+        return questionInsightsApiService.toComparisonHttpResponse(questionId, selectedOptionId);
     }
 
     @GetMapping("/api/code-trace")
     public ResponseEntity<CodeTraceResponse> getCodeTrace(@RequestParam("questionId") @Positive long questionId) {
-        return ResponseEntity.ok(questionInsightsApiService.buildCodeTraceResponse(questionId));
+        return questionInsightsApiService.toCodeTraceHttpResponse(questionId);
     }
 
 }

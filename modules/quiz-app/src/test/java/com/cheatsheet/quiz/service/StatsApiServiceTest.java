@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -83,5 +84,34 @@ class StatsApiServiceTest {
         assertThat(response).isEqualTo(mapped);
         verify(facade).getTopicStats();
         verify(statsApiMapper).toTopicResponses(domain);
+    }
+
+    @Test
+    void toStatsHttpResponseWrapsPayloadWithOkStatus() {
+        InterviewStats domainStats = new InterviewStats(10, 2, 4, 18, 5);
+        InterviewStatsResponse mapped = new InterviewStatsResponse(10, 2, 4, 18, 5);
+        StatsApiService.StatsCommand command = new StatsApiService.StatsCommand(
+                "java", "core", true, false, true, false
+        );
+        when(facade.getStats(any())).thenReturn(domainStats);
+        when(statsApiMapper.toResponse(domainStats)).thenReturn(mapped);
+
+        ResponseEntity<InterviewStatsResponse> response = service.toStatsHttpResponse(command);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(mapped);
+    }
+
+    @Test
+    void toTopicStatsHttpResponseWrapsPayloadWithOkStatus() {
+        List<TopicStats> domain = List.of(new TopicStats("java", 10, 3, 4, 20, 5, 1));
+        List<TopicStatsResponse> mapped = List.of(new TopicStatsResponse("java", 10, 3, 4, 20, 5, 1));
+        when(facade.getTopicStats()).thenReturn(domain);
+        when(statsApiMapper.toTopicResponses(domain)).thenReturn(mapped);
+
+        ResponseEntity<List<TopicStatsResponse>> response = service.toTopicStatsHttpResponse();
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(mapped);
     }
 }

@@ -5,6 +5,7 @@ import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
 import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.util.FilterUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -37,6 +38,14 @@ public class StatsApiService {
 
     public List<TopicStatsResponse> buildTopicStatsResponse() {
         return statsApiMapper.toTopicResponses(facade.getTopicStats());
+    }
+
+    public ResponseEntity<InterviewStatsResponse> toStatsHttpResponse(StatsCommand command) {
+        return ResponseEntity.ok(buildStatsResponse(command));
+    }
+
+    public ResponseEntity<List<TopicStatsResponse>> toTopicStatsHttpResponse() {
+        return ResponseEntity.ok(buildTopicStatsResponse());
     }
 
     public record StatsCommand(

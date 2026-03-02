@@ -5,6 +5,7 @@ import com.cheatsheet.quiz.api.dto.response.ComparisonResponse;
 import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
 import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -33,9 +34,17 @@ public class QuestionInsightsApiService {
         return new WrongFeedbackResponse(questionId, optionId, feedback.orElse(null), feedback.isPresent());
     }
 
+    public ResponseEntity<WrongFeedbackResponse> toWrongFeedbackHttpResponse(long questionId, long optionId) {
+        return ResponseEntity.ok(buildWrongFeedbackResponse(questionId, optionId));
+    }
+
     public TakeawayResponse buildTakeawayResponse(long questionId) {
         Optional<String> takeaway = resolveInsight(questionId, () -> facade.getTakeaway(questionId));
         return new TakeawayResponse(takeaway.orElse(null));
+    }
+
+    public ResponseEntity<TakeawayResponse> toTakeawayHttpResponse(long questionId) {
+        return ResponseEntity.ok(buildTakeawayResponse(questionId));
     }
 
     public ComparisonResponse buildComparisonResponse(long questionId, long selectedOptionId) {
@@ -46,9 +55,17 @@ public class QuestionInsightsApiService {
         return new ComparisonResponse(comparison.orElse(null));
     }
 
+    public ResponseEntity<ComparisonResponse> toComparisonHttpResponse(long questionId, long selectedOptionId) {
+        return ResponseEntity.ok(buildComparisonResponse(questionId, selectedOptionId));
+    }
+
     public CodeTraceResponse buildCodeTraceResponse(long questionId) {
         Optional<String> trace = resolveInsight(questionId, () -> facade.getCodeTrace(questionId));
         return new CodeTraceResponse(trace.orElse(null));
+    }
+
+    public ResponseEntity<CodeTraceResponse> toCodeTraceHttpResponse(long questionId) {
+        return ResponseEntity.ok(buildCodeTraceResponse(questionId));
     }
 
     private Optional<String> resolveInsight(long questionId, Supplier<Optional<String>> loader) {

@@ -76,7 +76,8 @@ class InterviewApiControllerUnitTest {
         long optionId = 7L;
         com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse(questionId, optionId, "Причина ошибки", true);
-        when(questionInsightsApiService.buildWrongFeedbackResponse(questionId, optionId)).thenReturn(payload);
+        when(questionInsightsApiService.toWrongFeedbackHttpResponse(questionId, optionId))
+                .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getWrongAnswerFeedback(questionId, optionId);
 
@@ -88,7 +89,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.optionId()).isEqualTo(optionId);
         assertThat(body.feedback()).isEqualTo("Причина ошибки");
         assertThat(body.available()).isTrue();
-        verify(questionInsightsApiService).buildWrongFeedbackResponse(questionId, optionId);
+        verify(questionInsightsApiService).toWrongFeedbackHttpResponse(questionId, optionId);
     }
 
     @Test
@@ -97,7 +98,8 @@ class InterviewApiControllerUnitTest {
         long optionId = 999999L;
         com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse(questionId, optionId, null, false);
-        when(questionInsightsApiService.buildWrongFeedbackResponse(questionId, optionId)).thenReturn(payload);
+        when(questionInsightsApiService.toWrongFeedbackHttpResponse(questionId, optionId))
+                .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getWrongAnswerFeedback(questionId, optionId);
 
@@ -109,7 +111,7 @@ class InterviewApiControllerUnitTest {
         assertThat(body.optionId()).isEqualTo(optionId);
         assertThat(body.feedback()).isNull();
         assertThat(body.available()).isFalse();
-        verify(questionInsightsApiService).buildWrongFeedbackResponse(questionId, optionId);
+        verify(questionInsightsApiService).toWrongFeedbackHttpResponse(questionId, optionId);
     }
 
     @Test
@@ -117,12 +119,12 @@ class InterviewApiControllerUnitTest {
         long questionId = 103L;
         long optionId = 1L;
         doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId))
-                .when(questionInsightsApiService).buildWrongFeedbackResponse(questionId, optionId);
+                .when(questionInsightsApiService).toWrongFeedbackHttpResponse(questionId, optionId);
 
         assertThatThrownBy(() -> controller.getWrongAnswerFeedback(questionId, optionId))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
-        verify(questionInsightsApiService).buildWrongFeedbackResponse(questionId, optionId);
+        verify(questionInsightsApiService).toWrongFeedbackHttpResponse(questionId, optionId);
     }
 
     @Test
@@ -422,7 +424,7 @@ class InterviewApiControllerUnitTest {
         long questionId = 801L;
         com.cheatsheet.quiz.api.dto.response.TakeawayResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.TakeawayResponse("Сфокусируйся на неизменяемости и потокобезопасности.");
-        when(questionInsightsApiService.buildTakeawayResponse(questionId)).thenReturn(payload);
+        when(questionInsightsApiService.toTakeawayHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getTakeaway(questionId);
 
@@ -431,7 +433,7 @@ class InterviewApiControllerUnitTest {
         com.cheatsheet.quiz.api.dto.response.TakeawayResponse body =
                 (com.cheatsheet.quiz.api.dto.response.TakeawayResponse) response.getBody();
         assertThat(body.takeaway()).contains("потокобезопасности");
-        verify(questionInsightsApiService).buildTakeawayResponse(questionId);
+        verify(questionInsightsApiService).toTakeawayHttpResponse(questionId);
     }
 
     @Test
@@ -439,7 +441,7 @@ class InterviewApiControllerUnitTest {
         long questionId = 802L;
         com.cheatsheet.quiz.api.dto.response.TakeawayResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.TakeawayResponse(null);
-        when(questionInsightsApiService.buildTakeawayResponse(questionId)).thenReturn(payload);
+        when(questionInsightsApiService.toTakeawayHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getTakeaway(questionId);
 
@@ -448,19 +450,19 @@ class InterviewApiControllerUnitTest {
         com.cheatsheet.quiz.api.dto.response.TakeawayResponse body =
                 (com.cheatsheet.quiz.api.dto.response.TakeawayResponse) response.getBody();
         assertThat(body.takeaway()).isNull();
-        verify(questionInsightsApiService).buildTakeawayResponse(questionId);
+        verify(questionInsightsApiService).toTakeawayHttpResponse(questionId);
     }
 
     @Test
     void takeawayPropagatesQuestionNotFoundFromService() {
         long questionId = 803L;
         doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId))
-                .when(questionInsightsApiService).buildTakeawayResponse(questionId);
+                .when(questionInsightsApiService).toTakeawayHttpResponse(questionId);
 
         assertThatThrownBy(() -> controller.getTakeaway(questionId))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
-        verify(questionInsightsApiService).buildTakeawayResponse(questionId);
+        verify(questionInsightsApiService).toTakeawayHttpResponse(questionId);
     }
 
     @Test
@@ -469,8 +471,8 @@ class InterviewApiControllerUnitTest {
         long selectedOptionId = 11L;
         com.cheatsheet.quiz.api.dto.response.ComparisonResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.ComparisonResponse("Ваш ответ игнорирует edge-case с null.");
-        when(questionInsightsApiService.buildComparisonResponse(questionId, selectedOptionId))
-                .thenReturn(payload);
+        when(questionInsightsApiService.toComparisonHttpResponse(questionId, selectedOptionId))
+                .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getComparison(questionId, selectedOptionId);
 
@@ -479,7 +481,7 @@ class InterviewApiControllerUnitTest {
         com.cheatsheet.quiz.api.dto.response.ComparisonResponse body =
                 (com.cheatsheet.quiz.api.dto.response.ComparisonResponse) response.getBody();
         assertThat(body.comparison()).contains("edge-case");
-        verify(questionInsightsApiService).buildComparisonResponse(questionId, selectedOptionId);
+        verify(questionInsightsApiService).toComparisonHttpResponse(questionId, selectedOptionId);
     }
 
     @Test
@@ -488,8 +490,8 @@ class InterviewApiControllerUnitTest {
         long selectedOptionId = 12L;
         com.cheatsheet.quiz.api.dto.response.ComparisonResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.ComparisonResponse(null);
-        when(questionInsightsApiService.buildComparisonResponse(questionId, selectedOptionId))
-                .thenReturn(payload);
+        when(questionInsightsApiService.toComparisonHttpResponse(questionId, selectedOptionId))
+                .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getComparison(questionId, selectedOptionId);
 
@@ -498,7 +500,7 @@ class InterviewApiControllerUnitTest {
         com.cheatsheet.quiz.api.dto.response.ComparisonResponse body =
                 (com.cheatsheet.quiz.api.dto.response.ComparisonResponse) response.getBody();
         assertThat(body.comparison()).isNull();
-        verify(questionInsightsApiService).buildComparisonResponse(questionId, selectedOptionId);
+        verify(questionInsightsApiService).toComparisonHttpResponse(questionId, selectedOptionId);
     }
 
     @Test
@@ -506,12 +508,12 @@ class InterviewApiControllerUnitTest {
         long questionId = 903L;
         long selectedOptionId = 13L;
         doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId))
-                .when(questionInsightsApiService).buildComparisonResponse(questionId, selectedOptionId);
+                .when(questionInsightsApiService).toComparisonHttpResponse(questionId, selectedOptionId);
 
         assertThatThrownBy(() -> controller.getComparison(questionId, selectedOptionId))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
-        verify(questionInsightsApiService).buildComparisonResponse(questionId, selectedOptionId);
+        verify(questionInsightsApiService).toComparisonHttpResponse(questionId, selectedOptionId);
     }
 
     @Test
@@ -519,7 +521,7 @@ class InterviewApiControllerUnitTest {
         long questionId = 1001L;
         com.cheatsheet.quiz.api.dto.response.CodeTraceResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.CodeTraceResponse("Трассировка: i=0 -> i=1 -> return 42");
-        when(questionInsightsApiService.buildCodeTraceResponse(questionId)).thenReturn(payload);
+        when(questionInsightsApiService.toCodeTraceHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getCodeTrace(questionId);
 
@@ -528,7 +530,7 @@ class InterviewApiControllerUnitTest {
         com.cheatsheet.quiz.api.dto.response.CodeTraceResponse body =
                 (com.cheatsheet.quiz.api.dto.response.CodeTraceResponse) response.getBody();
         assertThat(body.trace()).contains("return 42");
-        verify(questionInsightsApiService).buildCodeTraceResponse(questionId);
+        verify(questionInsightsApiService).toCodeTraceHttpResponse(questionId);
     }
 
     @Test
@@ -536,7 +538,7 @@ class InterviewApiControllerUnitTest {
         long questionId = 1002L;
         com.cheatsheet.quiz.api.dto.response.CodeTraceResponse payload =
                 new com.cheatsheet.quiz.api.dto.response.CodeTraceResponse(null);
-        when(questionInsightsApiService.buildCodeTraceResponse(questionId)).thenReturn(payload);
+        when(questionInsightsApiService.toCodeTraceHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getCodeTrace(questionId);
 
@@ -545,26 +547,26 @@ class InterviewApiControllerUnitTest {
         com.cheatsheet.quiz.api.dto.response.CodeTraceResponse body =
                 (com.cheatsheet.quiz.api.dto.response.CodeTraceResponse) response.getBody();
         assertThat(body.trace()).isNull();
-        verify(questionInsightsApiService).buildCodeTraceResponse(questionId);
+        verify(questionInsightsApiService).toCodeTraceHttpResponse(questionId);
     }
 
     @Test
     void codeTracePropagatesQuestionNotFoundFromService() {
         long questionId = 1003L;
         doThrow(new QuestionNotFoundException("Вопрос не найден: id=" + questionId))
-                .when(questionInsightsApiService).buildCodeTraceResponse(questionId);
+                .when(questionInsightsApiService).toCodeTraceHttpResponse(questionId);
 
         assertThatThrownBy(() -> controller.getCodeTrace(questionId))
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
-        verify(questionInsightsApiService).buildCodeTraceResponse(questionId);
+        verify(questionInsightsApiService).toCodeTraceHttpResponse(questionId);
     }
 
     @Test
     void statsDelegatesToServiceAndReturnsPayload() {
         com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse mapped =
                 new com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse(20, 5, 9, 33, 7);
-        when(statsApiService.buildStatsResponse(any())).thenReturn(mapped);
+        when(statsApiService.toStatsHttpResponse(any())).thenReturn(ResponseEntity.ok(mapped));
 
         ResponseEntity<?> response = controller.getStats(
                 "  java  ",
@@ -577,7 +579,7 @@ class InterviewApiControllerUnitTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(mapped);
-        verify(statsApiService).buildStatsResponse(any());
+        verify(statsApiService).toStatsHttpResponse(any());
     }
 
     @Test
@@ -586,13 +588,13 @@ class InterviewApiControllerUnitTest {
                 new com.cheatsheet.quiz.api.dto.response.TopicStatsResponse("java", 10, 3, 4, 20, 5, 1),
                 new com.cheatsheet.quiz.api.dto.response.TopicStatsResponse("spring", 8, 2, 3, 15, 4, 0)
         );
-        when(statsApiService.buildTopicStatsResponse()).thenReturn(mapped);
+        when(statsApiService.toTopicStatsHttpResponse()).thenReturn(ResponseEntity.ok(mapped));
 
         ResponseEntity<?> response = controller.getTopicStats();
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isEqualTo(mapped);
-        verify(statsApiService).buildTopicStatsResponse();
+        verify(statsApiService).toTopicStatsHttpResponse();
     }
 
     @Test

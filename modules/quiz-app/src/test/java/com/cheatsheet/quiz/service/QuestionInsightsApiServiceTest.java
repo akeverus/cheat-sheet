@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Optional;
 
@@ -110,5 +111,25 @@ class QuestionInsightsApiServiceTest {
         assertThat(comparison.comparison()).isNull();
         assertThat(trace.trace()).isNull();
         verify(facade, times(2)).ensureQuestionExists(questionId);
+    }
+
+    @Test
+    void toHttpResponseMethodsWrapPayloadWithOkStatus() {
+        long questionId = 1301L;
+        long optionId = 21L;
+        when(facade.getWrongFeedback(questionId, optionId)).thenReturn(Optional.of("reason"));
+        when(facade.getTakeaway(questionId)).thenReturn(Optional.of("takeaway"));
+        when(facade.generateComparison(questionId, optionId)).thenReturn(Optional.of("comparison"));
+        when(facade.getCodeTrace(questionId)).thenReturn(Optional.of("trace"));
+
+        ResponseEntity<WrongFeedbackResponse> wrong = service.toWrongFeedbackHttpResponse(questionId, optionId);
+        ResponseEntity<TakeawayResponse> takeaway = service.toTakeawayHttpResponse(questionId);
+        ResponseEntity<ComparisonResponse> comparison = service.toComparisonHttpResponse(questionId, optionId);
+        ResponseEntity<CodeTraceResponse> trace = service.toCodeTraceHttpResponse(questionId);
+
+        assertThat(wrong.getStatusCode().value()).isEqualTo(200);
+        assertThat(takeaway.getStatusCode().value()).isEqualTo(200);
+        assertThat(comparison.getStatusCode().value()).isEqualTo(200);
+        assertThat(trace.getStatusCode().value()).isEqualTo(200);
     }
 }
