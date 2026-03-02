@@ -23,6 +23,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -98,6 +100,54 @@ class InterviewSessionSupportTest {
         assertThat(filter.topic()).isEqualTo("java");
         assertThat(filter.group()).isEqualTo("backend");
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    @Test
+    void processAnswerDoesNotMutateOrPersistWhenSessionAlreadyFinished() {
+        AnswerResult answerResult = sampleAnswerResult(true);
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.getTopic()).thenReturn("java");
+        when(interviewSession.getGroup()).thenReturn("core");
+        when(interviewSession.getImportantOnly()).thenReturn(false);
+        when(interviewSession.getOnlyWrong()).thenReturn(false);
+        when(interviewSession.getShuffle()).thenReturn(true);
+        when(interviewSession.getOrdered()).thenReturn(false);
+        when(interviewSession.isFinished()).thenReturn(true);
+        when(interviewService.submitAnswer(eq(11L), eq(2L), any(InterviewFilter.class), eq(3))).thenReturn(answerResult);
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                11L, 2L, null, null, null, null, null, null, 3
+        );
+
+        support.processAnswer(submission, session);
+
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
+        verify(interviewService, never()).addExamPenaltyQuestions(any());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    @Test
+    void processAnswerSwitchesStudySessionBackToLearnPhase() {
+        AnswerResult answerResult = sampleAnswerResult(true);
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.getTopic()).thenReturn("java");
+        when(interviewSession.getGroup()).thenReturn("core");
+        when(interviewSession.getImportantOnly()).thenReturn(false);
+        when(interviewSession.getOnlyWrong()).thenReturn(false);
+        when(interviewSession.getShuffle()).thenReturn(true);
+        when(interviewSession.getOrdered()).thenReturn(false);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
+        when(interviewService.submitAnswer(eq(31L), eq(9L), any(InterviewFilter.class), eq(5))).thenReturn(answerResult);
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                31L, 9L, null, null, null, null, null, null, 5
+        );
+
+        support.processAnswer(submission, session);
+
+        verify(interviewSession).registerAnswer(true, "java");
+        verify(interviewSession).switchToLearnPhase();
+        verify(interviewService, never()).addExamPenaltyQuestions(any());
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
     }
 
     private AnswerResult sampleAnswerResult(boolean correct) {

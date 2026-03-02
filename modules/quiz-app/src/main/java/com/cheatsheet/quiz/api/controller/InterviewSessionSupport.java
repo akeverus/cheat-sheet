@@ -7,7 +7,6 @@ import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.service.InterviewService;
 import com.cheatsheet.quiz.util.FilterUtils;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,11 +14,15 @@ import org.springframework.stereotype.Component;
  * (API и MVC) для устранения дублирования.
  */
 @Component
-@RequiredArgsConstructor
 public class InterviewSessionSupport {
 
     private final InterviewService interviewService;
     private final HttpSessionStateService httpSessionStateService;
+
+    public InterviewSessionSupport(InterviewService interviewService, HttpSessionStateService httpSessionStateService) {
+        this.interviewService = interviewService;
+        this.httpSessionStateService = httpSessionStateService;
+    }
 
     public InterviewSession getSession(HttpSession session) {
         return httpSessionStateService.getInterviewSession(session);

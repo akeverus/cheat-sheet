@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Removed Lombok constructor generation from `InterviewSessionSupport` and switched to explicit constructor injection.
+- [x] Expanded `InterviewSessionSupportTest` with finished-session no-mutation guard and STUDY-mode phase-switch regression coverage.
 - [x] Removed Lombok constructor generation from `SessionSummaryService`, `AnswerTextService`, `HintService`, and `RegenerateService`; switched to explicit constructor injection.
 - [x] Added `RegenerateServiceTest` coverage for regenerate success path and `QuestionNotFoundException` guard path.
 - [x] Hardened `QuestionGenerationService` retry contract: unparsable/empty AI payload no longer aborts first attempt and now retries up to configured max attempts.
