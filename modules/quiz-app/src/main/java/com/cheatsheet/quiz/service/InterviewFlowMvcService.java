@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
+import java.util.function.Function;
+
 /**
  * Use-case orchestration для MVC flow endpoint-ов.
  */
@@ -59,29 +61,17 @@ public class InterviewFlowMvcService {
     }
 
     public String studyConfirm(HttpSession session) {
-        InterviewSession interviewSession = sessionSupport.getSession(session);
-        return persistSessionAndFocusRedirect(
-                sessionFlowService.applyStudyConfirm(interviewSession),
-                session,
-                interviewSession
-        );
+        return updateSessionAndFocusRedirect(session, sessionFlowService::applyStudyConfirm);
     }
 
     public String flashcardReveal(HttpSession session) {
-        InterviewSession interviewSession = sessionSupport.getSession(session);
-        return persistSessionAndFocusRedirect(
-                sessionFlowService.applyFlashcardReveal(interviewSession),
-                session,
-                interviewSession
-        );
+        return updateSessionAndFocusRedirect(session, sessionFlowService::applyFlashcardReveal);
     }
 
     public String flashcardGrade(long questionId, int grade, HttpSession session) {
-        InterviewSession interviewSession = sessionSupport.getSession(session);
-        return persistSessionAndFocusRedirect(
-                sessionFlowService.applyFlashcardGrade(interviewSession, questionId, grade),
+        return updateSessionAndFocusRedirect(
                 session,
-                interviewSession
+                interviewSession -> sessionFlowService.applyFlashcardGrade(interviewSession, questionId, grade)
         );
     }
 
@@ -138,7 +128,9 @@ public class InterviewFlowMvcService {
         }
     }
 
-    private String persistSessionAndFocusRedirect(boolean sessionChanged, HttpSession session, InterviewSession interviewSession) {
+    private String updateSessionAndFocusRedirect(HttpSession session, Function<InterviewSession, Boolean> sessionUpdater) {
+        InterviewSession interviewSession = sessionSupport.getSession(session);
+        boolean sessionChanged = sessionUpdater.apply(interviewSession);
         if (sessionChanged) {
             httpSessionStateService.setInterviewSession(session, interviewSession);
         }

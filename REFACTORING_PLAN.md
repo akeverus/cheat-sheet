@@ -143,6 +143,8 @@
 - [x] Added `InterviewSessionSupportTest` coverage for session-aware exam penalty path and request-based filter fallback path.
 - [x] Removed duplicate `/` and `/training` delegation logic in `InterviewMvcController` via shared private dispatch method.
 - [x] Added `InterviewMvcControllerTest` to lock controller delegation contracts to page/flow service layers.
+- [x] Simplified `InterviewFlowMvcService` by unifying study/reveal/grade session-update flow via shared function-based helper.
+- [x] Expanded `InterviewFlowMvcServiceTest` with positive-path coverage for `flashcardReveal` session persistence.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

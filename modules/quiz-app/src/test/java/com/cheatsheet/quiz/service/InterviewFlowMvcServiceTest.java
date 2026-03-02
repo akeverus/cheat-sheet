@@ -134,6 +134,19 @@ class InterviewFlowMvcServiceTest {
     }
 
     @Test
+    void flashcardRevealPersistsSessionWhenFlowChangesState() {
+        InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
+        when(sessionSupport.getSession(session)).thenReturn(interviewSession);
+        when(sessionFlowService.applyFlashcardReveal(interviewSession)).thenReturn(true);
+        when(navigationService.focusRedirect()).thenReturn("redirect:/focus");
+
+        String view = service.flashcardReveal(session);
+
+        assertThat(view).isEqualTo("redirect:/focus");
+        verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
     void sessionSummaryAppliesModelAndClearsSummaryWhenExists() {
         SessionSummary summary = SessionSummary.builder()
                 .mode(InterviewMode.EXAM)
