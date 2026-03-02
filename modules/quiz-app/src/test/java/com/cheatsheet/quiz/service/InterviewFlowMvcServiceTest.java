@@ -123,6 +123,25 @@ class InterviewFlowMvcServiceTest {
     }
 
     @Test
+    void startClearsSessionWhenFlowReturnsNoSessionPayload() {
+        StartSessionRequest request = new StartSessionRequest();
+        request.setMode("EXAM");
+        request.setCount(7);
+        InterviewFilter filter = new InterviewFilter("java", null, false, false, true, false);
+        when(requestMapper.resolveStartMode(request)).thenReturn(InterviewMode.EXAM);
+        when(requestMapper.resolveStartFilter(request)).thenReturn(filter);
+        when(sessionFlowService.startSession(InterviewMode.EXAM, 7, filter))
+                .thenReturn(new SessionFlowService.StartFlowResult(false, null));
+        when(navigationService.focusRedirect()).thenReturn("redirect:/focus");
+
+        String view = service.start(request, session);
+
+        assertThat(view).isEqualTo("redirect:/focus");
+        verify(httpSessionStateService).clearInterviewSession(session);
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    @Test
     void studyConfirmPersistsSessionWhenFlowChangesState() {
         InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
         when(sessionSupport.getSession(session)).thenReturn(interviewSession);
@@ -146,6 +165,19 @@ class InterviewFlowMvcServiceTest {
 
         assertThat(view).isEqualTo("redirect:/focus");
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void studyConfirmClearsSessionWhenUpdaterReportsChangeWithoutSession() {
+        when(sessionSupport.getSession(session)).thenReturn(null);
+        when(sessionFlowService.applyStudyConfirm(null)).thenReturn(true);
+        when(navigationService.focusRedirect()).thenReturn("redirect:/focus");
+
+        String view = service.studyConfirm(session);
+
+        assertThat(view).isEqualTo("redirect:/focus");
+        verify(httpSessionStateService).clearInterviewSession(session);
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 
     @Test

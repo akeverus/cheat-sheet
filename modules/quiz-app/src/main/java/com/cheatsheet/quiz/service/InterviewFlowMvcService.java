@@ -108,7 +108,10 @@ public class InterviewFlowMvcService {
         InterviewSession interviewSession = flowResult.interviewSession();
         if (interviewSession != null) {
             httpSessionStateService.setInterviewSession(session, interviewSession);
+            return;
         }
+        // Defensive guard: never keep stale interview session on ambiguous start result.
+        httpSessionStateService.clearInterviewSession(session);
     }
 
     private String updateSessionAndFocusRedirect(HttpSession session, Function<InterviewSession, Boolean> sessionUpdater) {
@@ -137,8 +140,13 @@ public class InterviewFlowMvcService {
     }
 
     private void persistSessionIfChanged(HttpSession session, InterviewSession interviewSession, boolean sessionChanged) {
-        if (sessionChanged) {
-            httpSessionStateService.setInterviewSession(session, interviewSession);
+        if (!sessionChanged) {
+            return;
         }
+        if (interviewSession == null) {
+            httpSessionStateService.clearInterviewSession(session);
+            return;
+        }
+        httpSessionStateService.setInterviewSession(session, interviewSession);
     }
 }

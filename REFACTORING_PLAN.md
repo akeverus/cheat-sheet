@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `InterviewFlowMvcService` session persistence contract: ambiguous/null start results and null-changed updates now clear session deterministically to prevent stale session state.
+- [x] Expanded `InterviewFlowMvcServiceTest` with regressions for null start payload and null-session changed-update guard paths.
 - [x] Removed Lombok constructor generation from `InterviewSessionSupport` and switched to explicit constructor injection.
 - [x] Expanded `InterviewSessionSupportTest` with finished-session no-mutation guard and STUDY-mode phase-switch regression coverage.
 - [x] Removed Lombok constructor generation from `SessionSummaryService`, `AnswerTextService`, `HintService`, and `RegenerateService`; switched to explicit constructor injection.
