@@ -13,8 +13,10 @@ class QuestionGeneratedMetadataSupplierTest {
         appProperties.getInterview().setQuestionGeneratedMetadataValue("ai-generated");
         QuestionGeneratedMetadataSupplier supplier = new QuestionGeneratedMetadataSupplier(appProperties);
 
-        assertThat(supplier.sourceSlug()).isEqualTo("ai-generated");
-        assertThat(supplier.filePath()).isEqualTo("ai-generated");
-        assertThat(supplier.sourceHash()).isEqualTo("ai-generated");
+        GeneratedQuestionMetadata metadata = supplier.metadata();
+
+        assertThat(metadata.getSourceSlug()).isEqualTo("ai-generated");
+        assertThat(metadata.getFilePath()).isEqualTo("ai-generated");
+        assertThat(metadata.getSourceHash()).isEqualTo("ai-generated");
     }
 }

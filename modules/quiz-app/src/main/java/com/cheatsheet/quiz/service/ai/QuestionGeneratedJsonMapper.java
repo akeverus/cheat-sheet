@@ -70,16 +70,17 @@ public class QuestionGeneratedJsonMapper {
             }
 
             QuestionType resolvedType = type == null ? QuestionType.CONCEPT : type;
+            GeneratedQuestionMetadata metadata = questionGeneratedMetadataSupplier.metadata();
             Question question = new Question(
                     0L,
                     questionGeneratedSlugFactory.nextSlug(),
-                    questionGeneratedMetadataSupplier.sourceSlug(),
-                    questionGeneratedMetadataSupplier.filePath(),
+                    metadata.getSourceSlug(),
+                    metadata.getFilePath(),
                     topic,
                     questionText,
                     detailedExplanation,
                     false,
-                    questionGeneratedMetadataSupplier.sourceHash(),
+                    metadata.getSourceHash(),
                     resolvedType,
                     codeSnippet,
                     null,

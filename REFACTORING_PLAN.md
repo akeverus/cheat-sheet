@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Introduced immutable `GeneratedQuestionMetadata` value object and switched `QuestionGeneratedMetadataSupplier` to return a single metadata contract object.
+- [x] Updated `QuestionGeneratedJsonMapper` to consume generated metadata as a cohesive value object instead of separate field calls.
+- [x] Updated metadata supplier tests for the new immutable metadata contract.
 - [x] Replaced hardcoded request-failure retry message with configuration-driven value (`app.interview.question-request-failure-violation-message`).
 - [x] Added `QuestionRequestFailureFeedbackSupplier` to centralize and normalize request-failure retry feedback in Question Engine.
 - [x] Updated Question Engine tests for the new request-failure feedback supplier contract (`QuestionQualityEvaluatorTest`, `QuestionRequestFailureFeedbackSupplierTest`).

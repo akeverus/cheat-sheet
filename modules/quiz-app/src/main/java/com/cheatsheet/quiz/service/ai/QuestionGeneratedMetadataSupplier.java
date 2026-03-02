@@ -14,23 +14,14 @@ public class QuestionGeneratedMetadataSupplier {
     private final AppProperties appProperties;
 
     /**
-     * Возвращает значение sourceSlug для сгенерированного вопроса.
+     * Возвращает immutable-набор метаданных для сгенерированного вопроса.
      */
-    public String sourceSlug() {
-        return appProperties.getInterview().getQuestionGeneratedMetadataValue();
-    }
-
-    /**
-     * Возвращает значение filePath для сгенерированного вопроса.
-     */
-    public String filePath() {
-        return appProperties.getInterview().getQuestionGeneratedMetadataValue();
-    }
-
-    /**
-     * Возвращает значение sourceHash для сгенерированного вопроса.
-     */
-    public String sourceHash() {
-        return appProperties.getInterview().getQuestionGeneratedMetadataValue();
+    public GeneratedQuestionMetadata metadata() {
+        String value = appProperties.getInterview().getQuestionGeneratedMetadataValue();
+        return GeneratedQuestionMetadata.builder()
+                .sourceSlug(value)
+                .filePath(value)
+                .sourceHash(value)
+                .build();
     }
 }
