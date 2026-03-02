@@ -19,7 +19,6 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,7 +30,7 @@ class QuestionGenerationServiceTest {
     @Mock
     OptionGenerator optionGenerator;
     @Mock
-    QuestionValidationService validationService;
+    QuestionQualityEvaluator questionQualityEvaluator;
     @Mock
     AdaptiveDifficultyService adaptiveDifficultyService;
     @Mock
@@ -46,7 +45,7 @@ class QuestionGenerationServiceTest {
         service = new QuestionGenerationService(
                 optionGenerator,
                 new ObjectMapper(),
-                validationService,
+                questionQualityEvaluator,
                 adaptiveDifficultyService,
                 new QuestionPromptBuilder(new AppProperties()),
                 new QuestionGenerationPolicy(70),
@@ -63,10 +62,11 @@ class QuestionGenerationServiceTest {
         when(optionGenerator.generateStructuredJson(anyString()))
                 .thenReturn(Optional.of(validQuestionJson()))
                 .thenReturn(Optional.of(alternativeQuestionJson()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
-                .thenReturn(List.of("shortExplanation must be at least 30 characters"))
-                .thenReturn(List.of());
-        when(validationService.qualityScore(anyList())).thenReturn(80);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(
+                        List.of("shortExplanation must be at least 30 characters"), 80, false
+                ))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), 80, true));
 
         Question generated = service.generateQuestion("java", QuestionType.CODE);
 
@@ -75,7 +75,8 @@ class QuestionGenerationServiceTest {
         assertThat(generated.difficulty()).isEqualTo(Difficulty.HARD);
         assertThat(generated.options()).hasSize(4);
         verify(optionGenerator, times(2)).generateStructuredJson(anyString());
-        verify(validationService, times(2)).validate(org.mockito.ArgumentMatchers.any(Question.class));
+        verify(questionQualityEvaluator, times(2))
+                .evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet());
         verify(questionUniquenessService, times(1))
                 .rememberFingerprint(anyString(), org.mockito.ArgumentMatchers.any(), anyString());
     }
@@ -86,10 +87,11 @@ class QuestionGenerationServiceTest {
         when(optionGenerator.generateStructuredJson(anyString()))
                 .thenReturn(Optional.of(validQuestionJson()))
                 .thenReturn(Optional.of(alternativeQuestionJson()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
-                .thenReturn(List.of("Need deeper detailedExplanation"))
-                .thenReturn(List.of());
-        when(validationService.qualityScore(anyList())).thenReturn(80);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(
+                        List.of("Need deeper detailedExplanation"), 80, false
+                ))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), 80, true));
 
         service.generateQuestion("java", QuestionType.CONCEPT);
 
@@ -109,11 +111,14 @@ class QuestionGenerationServiceTest {
                 .thenReturn(Optional.of(validQuestionJson()))
                 .thenReturn(Optional.of(validQuestionJson()))
                 .thenReturn(Optional.of(alternativeQuestionJson()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
-                .thenReturn(List.of("Need stronger first attempt"))
-                .thenReturn(List.of())
-                .thenReturn(List.of());
-        when(validationService.qualityScore(anyList())).thenReturn(80);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(
+                        List.of("Need stronger first attempt"), 80, false
+                ))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(
+                        List.of("Question candidate duplicates previous generation attempt"), 80, false
+                ))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), 80, true));
 
         Question generated = service.generateQuestion("java", QuestionType.CONCEPT);
 
@@ -128,31 +133,34 @@ class QuestionGenerationServiceTest {
     void throwsAfterMaxAttemptsWhenValidationAlwaysFails() {
         when(adaptiveDifficultyService.resolveDifficulty("spring")).thenReturn(Difficulty.MEDIUM);
         when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class)))
-                .thenReturn(List.of("Question text is trivial and does not require technical reasoning"));
-        when(validationService.qualityScore(anyList())).thenReturn(50);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(
+                        List.of("Question text is trivial and does not require technical reasoning"), 50, false
+                ));
 
         assertThatThrownBy(() -> service.generateQuestion("spring", QuestionType.CONCEPT))
                 .isInstanceOf(AiGenerationException.class)
                 .hasMessageContaining("не удалось сгенерировать валидный вопрос за 3 попытки");
 
         verify(optionGenerator, times(3)).generateStructuredJson(anyString());
-        verify(validationService, times(3)).validate(org.mockito.ArgumentMatchers.any(Question.class));
+        verify(questionQualityEvaluator, times(3))
+                .evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet());
     }
 
     @Test
     void retriesWhenQualityScoreBelowPolicyThreshold() {
         when(adaptiveDifficultyService.resolveDifficulty("kafka")).thenReturn(Difficulty.MEDIUM);
         when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class))).thenReturn(List.of());
-        when(validationService.qualityScore(anyList())).thenReturn(65);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), 65, false));
 
         assertThatThrownBy(() -> service.generateQuestion("kafka", QuestionType.ARCHITECTURE))
                 .isInstanceOf(AiGenerationException.class)
                 .hasMessageContaining("bestQualityScore=65");
 
         verify(optionGenerator, times(3)).generateStructuredJson(anyString());
-        verify(validationService, times(3)).qualityScore(anyList());
+        verify(questionQualityEvaluator, times(3))
+                .evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet());
     }
 
     @Test
@@ -173,22 +181,23 @@ class QuestionGenerationServiceTest {
         when(optionGenerator.generateStructuredJson(anyString()))
                 .thenReturn(Optional.of("not-a-json-payload"))
                 .thenReturn(Optional.of(validQuestionJson()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class))).thenReturn(List.of());
-        when(validationService.qualityScore(anyList())).thenReturn(95);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), 95, true));
 
         Question generated = service.generateQuestion("sql", QuestionType.CONCEPT);
 
         assertThat(generated.questionText()).contains("HashMap");
         verify(optionGenerator, times(2)).generateStructuredJson(anyString());
-        verify(validationService, times(1)).validate(org.mockito.ArgumentMatchers.any(Question.class));
+        verify(questionQualityEvaluator, times(1))
+                .evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet());
     }
 
     @Test
     void parsesQuestionFromFencedJsonWithExtraText() {
         when(adaptiveDifficultyService.resolveDifficulty("jvm")).thenReturn(Difficulty.MEDIUM);
         when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(fencedJsonWithNoise()));
-        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class))).thenReturn(List.of());
-        when(validationService.qualityScore(anyList())).thenReturn(100);
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), 100, true));
 
         Question generated = service.generateQuestion("jvm", QuestionType.CONCEPT);
 
@@ -196,7 +205,8 @@ class QuestionGenerationServiceTest {
         assertThat(generated.options()).hasSize(4);
         assertThat(generated.commonMistake()).isNotBlank();
         verify(optionGenerator, times(1)).generateStructuredJson(anyString());
-        verify(validationService, times(1)).validate(org.mockito.ArgumentMatchers.any(Question.class));
+        verify(questionQualityEvaluator, times(1))
+                .evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet());
     }
 
     private String validQuestionJson() {

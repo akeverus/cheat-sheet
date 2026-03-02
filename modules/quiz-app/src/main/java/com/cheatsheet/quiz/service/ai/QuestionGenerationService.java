@@ -23,7 +23,7 @@ public class QuestionGenerationService {
 
     private final OptionGenerator optionGenerator;
     private final ObjectMapper objectMapper;
-    private final QuestionValidationService validationService;
+    private final QuestionQualityEvaluator questionQualityEvaluator;
     private final AdaptiveDifficultyService adaptiveDifficultyService;
     private final QuestionPromptBuilder questionPromptBuilder;
     private final QuestionGenerationPolicy questionGenerationPolicy;
@@ -33,7 +33,7 @@ public class QuestionGenerationService {
     public QuestionGenerationService(
             OptionGenerator optionGenerator,
             ObjectMapper objectMapper,
-            QuestionValidationService validationService,
+            QuestionQualityEvaluator questionQualityEvaluator,
             AdaptiveDifficultyService adaptiveDifficultyService,
             QuestionPromptBuilder questionPromptBuilder,
             QuestionGenerationPolicy questionGenerationPolicy,
@@ -42,7 +42,7 @@ public class QuestionGenerationService {
     ) {
         this.optionGenerator = optionGenerator;
         this.objectMapper = objectMapper;
-        this.validationService = validationService;
+        this.questionQualityEvaluator = questionQualityEvaluator;
         this.adaptiveDifficultyService = adaptiveDifficultyService;
         this.questionPromptBuilder = questionPromptBuilder;
         this.questionGenerationPolicy = questionGenerationPolicy;
@@ -74,11 +74,12 @@ public class QuestionGenerationService {
                 continue;
             }
             Question generated = generatedOpt.get();
-            List<String> baseViolations = validationService.validate(generated);
-            List<String> violations = questionGenerationPolicy.enrichViolations(generated, baseViolations, seenFingerprints);
-            int score = validationService.qualityScore(violations);
+            QuestionQualityEvaluator.QualitySnapshot qualitySnapshot =
+                    questionQualityEvaluator.evaluateCandidate(generated, seenFingerprints);
+            List<String> violations = qualitySnapshot.violations();
+            int score = qualitySnapshot.score();
             bestScore = Math.max(bestScore, score);
-            if (questionGenerationPolicy.isAccepted(score, violations)) {
+            if (qualitySnapshot.accepted()) {
                 log.info("question_generation_succeeded topic={} type={} difficulty={} attempt={} qualityScore={}",
                         safeTopic, safeType, difficulty, attempt, score);
                 questionUniquenessService.rememberFingerprint(

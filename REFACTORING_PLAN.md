@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Introduced `QuestionQualityEvaluator` as dedicated Question Engine component for validation+policy enrichment+quality scoring+acceptance decision.
+- [x] Refactored `QuestionGenerationService` to delegate quality orchestration to `QuestionQualityEvaluator`, reducing service responsibility and tightening retry pipeline boundaries.
+- [x] Added `QuestionQualityEvaluatorTest` and updated `QuestionGenerationServiceTest` for the new quality-evaluation service contract.
 - [x] Removed Lombok constructor generation from `DiagramService`; switched to explicit constructor injection.
 - [x] Added `DiagramServiceOrchestrationTest` to lock cache-hit bypass, retry-on-invalid diagram, and persistence of validated Mermaid payload.
 - [x] Hardened `InterviewFlowMvcService` session persistence contract: ambiguous/null start results and null-changed updates now clear session deterministically to prevent stale session state.
