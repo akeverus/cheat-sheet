@@ -111,6 +111,20 @@ class QuestionGenerationServiceTest {
     }
 
     @Test
+    void blankTopicFallsBackToGeneralInPrompt() {
+        when(adaptiveDifficultyService.resolveDifficulty("   ")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(new QuestionQualityEvaluator.QualitySnapshot(List.of(), List.of(), 90, true));
+
+        service.generateQuestion("   ", QuestionType.CONCEPT);
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(optionGenerator).generateStructuredJson(promptCaptor.capture());
+        assertThat(promptCaptor.getValue()).contains("general");
+    }
+
+    @Test
     void retriesWhenCandidateDuplicatesPreviousAttempt() {
         when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.MEDIUM);
         when(optionGenerator.generateStructuredJson(anyString()))

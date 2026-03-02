@@ -82,4 +82,21 @@ class QuestionQualityEvaluatorTest {
         assertThat(snapshot.retryFeedback()).isEqualTo(retryFeedback);
         assertThat(snapshot.accepted()).isFalse();
     }
+
+    @Test
+    void retryFeedbackForRequestFailureUsesNormalizer() {
+        QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
+                validationService,
+                questionGenerationPolicy,
+                questionRetryFeedbackNormalizer
+        );
+        List<String> normalized = List.of("AI did not return parsable question JSON payload");
+        when(questionRetryFeedbackNormalizer.normalize(List.of("AI did not return parsable question JSON payload")))
+                .thenReturn(normalized);
+
+        List<String> retryFeedback = evaluator.retryFeedbackForRequestFailure();
+
+        assertThat(retryFeedback).isEqualTo(normalized);
+        verify(questionRetryFeedbackNormalizer).normalize(List.of("AI did not return parsable question JSON payload"));
+    }
 }

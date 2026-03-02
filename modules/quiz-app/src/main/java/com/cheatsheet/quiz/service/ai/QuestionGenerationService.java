@@ -59,7 +59,7 @@ public class QuestionGenerationService {
      */
     public Question generateQuestion(String topic, QuestionType type) {
         Difficulty difficulty = adaptiveDifficultyService.resolveDifficulty(topic);
-        String safeTopic = topic == null ? "general" : topic.trim();
+        String safeTopic = normalizeTopic(topic);
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         List<String> previousViolations = List.of();
@@ -70,7 +70,7 @@ public class QuestionGenerationService {
             if (generatedOpt.isEmpty()) {
                 log.warn("question_generation_request_failed topic={} type={} difficulty={} attempt={}/{}",
                         safeTopic, safeType, difficulty, attempt, maxGenerationAttempts);
-                previousViolations = List.of("AI did not return parsable question JSON payload");
+                previousViolations = questionQualityEvaluator.retryFeedbackForRequestFailure();
                 continue;
             }
             Question generated = generatedOpt.get();
@@ -98,6 +98,14 @@ public class QuestionGenerationService {
                 "QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
                         + maxGenerationAttempts + " попытки (bestQualityScore=" + bestScore + ")"
         );
+    }
+
+    private static String normalizeTopic(String topic) {
+        if (topic == null) {
+            return "general";
+        }
+        String normalized = topic.trim();
+        return normalized.isBlank() ? "general" : normalized;
     }
 
     private Optional<Question> requestQuestion(String topic, QuestionType type, Difficulty difficulty, List<String> previousViolations) {

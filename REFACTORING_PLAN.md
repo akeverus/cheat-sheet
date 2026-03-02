@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Centralized request-failure retry feedback in `QuestionQualityEvaluator` via dedicated `retryFeedbackForRequestFailure()` method (removed magic-string handling from generation orchestrator).
+- [x] Hardened topic normalization contract in Question Engine (`blank topic -> general`) for both generation service and prompt builder.
+- [x] Added regression tests for evaluator request-failure feedback path and blank-topic fallback behavior (`QuestionQualityEvaluatorTest`, `QuestionGenerationServiceTest`, `QuestionPromptBuilderTest`).
 - [x] Moved retry-feedback normalization responsibility into `QuestionQualityEvaluator` snapshot to keep `QuestionGenerationService` focused on attempt orchestration only.
 - [x] Updated Question Engine quality snapshot contract (`violations`, `retryFeedback`, `score`, `accepted`) and aligned generation/evaluator tests with the new boundary.
 - [x] Added `QuestionRetryFeedbackNormalizer` to make retry feedback deterministic (trim + case-insensitive dedup + stable sort + config-driven limit).

@@ -17,6 +17,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class QuestionQualityEvaluator {
 
+    private static final String REQUEST_FAILURE_VIOLATION = "AI did not return parsable question JSON payload";
+
     private final QuestionValidationService validationService;
     private final QuestionGenerationPolicy questionGenerationPolicy;
     private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
@@ -35,6 +37,15 @@ public class QuestionQualityEvaluator {
         int score = validationService.qualityScore(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
         return new QualitySnapshot(violations, retryFeedback, score, accepted);
+    }
+
+    /**
+     * Возвращает нормализованный retry-feedback для случая, когда AI не вернул парсируемый JSON.
+     *
+     * @return детерминированный список нарушений для следующей попытки генерации
+     */
+    public List<String> retryFeedbackForRequestFailure() {
+        return questionRetryFeedbackNormalizer.normalize(List.of(REQUEST_FAILURE_VIOLATION));
     }
 
     /**

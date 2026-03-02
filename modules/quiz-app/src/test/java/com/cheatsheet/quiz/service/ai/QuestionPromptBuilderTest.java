@@ -54,4 +54,16 @@ class QuestionPromptBuilderTest {
         assertThat(prompt).contains("CONCEPT");
         assertThat(prompt).contains("general");
     }
+
+    @Test
+    void normalizesBlankTopicToGeneral() {
+        String prompt = builder.buildQuestionPrompt(
+                Difficulty.EASY,
+                QuestionType.CONCEPT,
+                "   ",
+                List.of()
+        );
+
+        assertThat(prompt).contains("general");
+    }
 }

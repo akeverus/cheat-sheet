@@ -32,7 +32,7 @@ public class QuestionPromptBuilder {
     ) {
         Difficulty safeDifficulty = difficulty == null ? Difficulty.MEDIUM : difficulty;
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
-        String safeTopic = topic == null ? "general" : topic.trim();
+        String safeTopic = normalizeTopic(topic);
         String basePrompt = AiPrompts.QUESTION_V2_PROMPT_TEMPLATE.formatted(
                 safeDifficulty.name(),
                 safeType.name(),
@@ -56,5 +56,13 @@ public class QuestionPromptBuilder {
         }
         qualityFeedback.append("Regenerate the question JSON and fix every listed violation.");
         return basePrompt + qualityFeedback;
+    }
+
+    private static String normalizeTopic(String topic) {
+        if (topic == null) {
+            return "general";
+        }
+        String normalized = topic.trim();
+        return normalized.isBlank() ? "general" : normalized;
     }
 }
