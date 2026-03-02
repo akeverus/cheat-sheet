@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Removed Lombok constructor generation from `SessionSummaryService`, `AnswerTextService`, `HintService`, and `RegenerateService`; switched to explicit constructor injection.
+- [x] Added `RegenerateServiceTest` coverage for regenerate success path and `QuestionNotFoundException` guard path.
 - [x] Hardened `QuestionGenerationService` retry contract: unparsable/empty AI payload no longer aborts first attempt and now retries up to configured max attempts.
 - [x] Added regression coverage for retry-after-unparsable-JSON and updated empty-AI-response test to validate full retry budget usage.
 - [x] Strengthened API integration smoke checks for `/api/streak` and `/api/topic-stats`.
