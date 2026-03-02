@@ -145,6 +145,8 @@
 - [x] Added `InterviewMvcControllerTest` to lock controller delegation contracts to page/flow service layers.
 - [x] Simplified `InterviewFlowMvcService` by unifying study/reveal/grade session-update flow via shared function-based helper.
 - [x] Expanded `InterviewFlowMvcServiceTest` with positive-path coverage for `flashcardReveal` session persistence.
+- [x] Replaced parameter-clump in `InterviewSessionSupport.processAnswer` with explicit `AnswerSubmission` request object.
+- [x] Updated `AnswerApiService`/`InterviewFlowMvcService` and tests (`AnswerApiServiceTest`, `InterviewSessionSupportTest`) to use the new answer-submission boundary.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.

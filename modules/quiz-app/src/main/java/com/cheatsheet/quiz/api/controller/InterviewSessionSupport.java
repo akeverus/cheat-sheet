@@ -29,20 +29,23 @@ public class InterviewSessionSupport {
      * Обрабатывает ответ пользователя: определяет фильтр из сессии или параметров,
      * отправляет ответ в сервис, обновляет сессию.
      */
-    public AnswerContext processAnswer(long questionId, long optionId,
-                                       String topic, String group, Boolean important, Boolean onlyWrong,
-                                       Boolean shuffle, Boolean ordered, Integer confidence, HttpSession session) {
+    public AnswerContext processAnswer(AnswerSubmission submission, HttpSession session) {
         InterviewSession interviewSession = getSession(session);
         InterviewFilter filter = resolveFilter(
                 interviewSession,
-                topic,
-                group,
-                important,
-                onlyWrong,
-                shuffle,
-                ordered
+                submission.topic(),
+                submission.group(),
+                submission.important(),
+                submission.onlyWrong(),
+                submission.shuffle(),
+                submission.ordered()
         );
-        AnswerResult result = interviewService.submitAnswer(questionId, optionId, filter, confidence);
+        AnswerResult result = interviewService.submitAnswer(
+                submission.questionId(),
+                submission.optionId(),
+                filter,
+                submission.confidence()
+        );
         applySessionProgress(interviewSession, result, session);
 
         return new AnswerContext(result, filter, interviewSession);
@@ -92,5 +95,18 @@ public class InterviewSessionSupport {
     }
 
     public record AnswerContext(AnswerResult result, InterviewFilter filter, InterviewSession interviewSession) {
+    }
+
+    public record AnswerSubmission(
+            long questionId,
+            long optionId,
+            String topic,
+            String group,
+            Boolean important,
+            Boolean onlyWrong,
+            Boolean shuffle,
+            Boolean ordered,
+            Integer confidence
+    ) {
     }
 }

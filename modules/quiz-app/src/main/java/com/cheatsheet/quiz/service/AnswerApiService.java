@@ -29,7 +29,7 @@ public class AnswerApiService {
     }
 
     public AnswerResponse buildAnswerResponse(AnswerCommand command, HttpSession session) {
-        InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 command.questionId(),
                 command.optionId(),
                 command.topic(),
@@ -38,9 +38,9 @@ public class AnswerApiService {
                 command.onlyWrong(),
                 command.shuffle(),
                 command.ordered(),
-                command.confidence(),
-                session
+                command.confidence()
         );
+        InterviewSessionSupport.AnswerContext ctx = sessionSupport.processAnswer(submission, session);
 
         List<OptionExplanationDto> optionExplanations = ctx.result().options().stream()
                 .map(opt -> new OptionExplanationDto(opt.id(), opt.explanation(), opt.correct()))

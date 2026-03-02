@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,18 +81,8 @@ class AnswerApiServiceTest {
                 questionId, selectedOptionId, "java", "core", true, false, true, false, 4
         );
 
-        when(sessionSupport.processAnswer(
-                questionId,
-                selectedOptionId,
-                "java",
-                "core",
-                true,
-                false,
-                true,
-                false,
-                4,
-                session
-        )).thenReturn(context);
+        when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
+                .thenReturn(context);
         when(facade.findRelated(questionId, "java"))
                 .thenReturn(List.of(new RelatedQuestion(900L, "Похожий вопрос", "java", 75.0)));
         when(facade.renderMarkdown(question.answerMarkdown())).thenReturn("<p>Ответ</p>");
@@ -109,15 +100,9 @@ class AnswerApiServiceTest {
         assertThat(body.session()).isNotNull();
         assertThat(body.session().total()).isEqualTo(2);
         verify(sessionSupport).processAnswer(
-                questionId,
-                selectedOptionId,
-                "java",
-                "core",
-                true,
-                false,
-                true,
-                false,
-                4,
+                new InterviewSessionSupport.AnswerSubmission(
+                        questionId, selectedOptionId, "java", "core", true, false, true, false, 4
+                ),
                 session
         );
         verify(facade).findRelated(questionId, "java");

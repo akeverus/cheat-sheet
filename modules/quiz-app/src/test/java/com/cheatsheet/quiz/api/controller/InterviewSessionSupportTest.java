@@ -60,10 +60,11 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
         when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(4))).thenReturn(answerResult);
-
-        InterviewSessionSupport.AnswerContext context = support.processAnswer(
-                10L, 3L, null, null, null, null, null, null, 4, session
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                10L, 3L, null, null, null, null, null, null, 4
         );
+
+        InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
 
         assertThat(context.filter().topic()).isEqualTo("java");
         assertThat(context.filter().group()).isEqualTo("core");
@@ -77,8 +78,7 @@ class InterviewSessionSupportTest {
         AnswerResult answerResult = sampleAnswerResult(true);
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(null);
         when(interviewService.submitAnswer(eq(20L), eq(5L), any(InterviewFilter.class), eq(null))).thenReturn(answerResult);
-
-        support.processAnswer(
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 20L,
                 5L,
                 "  java  ",
@@ -87,9 +87,10 @@ class InterviewSessionSupportTest {
                 false,
                 true,
                 true,
-                null,
-                session
+                null
         );
+
+        support.processAnswer(submission, session);
 
         ArgumentCaptor<InterviewFilter> filterCaptor = ArgumentCaptor.forClass(InterviewFilter.class);
         verify(interviewService).submitAnswer(eq(20L), eq(5L), filterCaptor.capture(), eq(null));
