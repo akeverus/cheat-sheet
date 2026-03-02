@@ -24,7 +24,6 @@ public class QuestionGenerationService {
     private final OptionGenerator optionGenerator;
     private final ObjectMapper objectMapper;
     private final QuestionQualityEvaluator questionQualityEvaluator;
-    private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
     private final AdaptiveDifficultyService adaptiveDifficultyService;
     private final QuestionPromptBuilder questionPromptBuilder;
     private final QuestionGenerationPolicy questionGenerationPolicy;
@@ -35,7 +34,6 @@ public class QuestionGenerationService {
             OptionGenerator optionGenerator,
             ObjectMapper objectMapper,
             QuestionQualityEvaluator questionQualityEvaluator,
-            QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer,
             AdaptiveDifficultyService adaptiveDifficultyService,
             QuestionPromptBuilder questionPromptBuilder,
             QuestionGenerationPolicy questionGenerationPolicy,
@@ -45,7 +43,6 @@ public class QuestionGenerationService {
         this.optionGenerator = optionGenerator;
         this.objectMapper = objectMapper;
         this.questionQualityEvaluator = questionQualityEvaluator;
-        this.questionRetryFeedbackNormalizer = questionRetryFeedbackNormalizer;
         this.adaptiveDifficultyService = adaptiveDifficultyService;
         this.questionPromptBuilder = questionPromptBuilder;
         this.questionGenerationPolicy = questionGenerationPolicy;
@@ -73,9 +70,7 @@ public class QuestionGenerationService {
             if (generatedOpt.isEmpty()) {
                 log.warn("question_generation_request_failed topic={} type={} difficulty={} attempt={}/{}",
                         safeTopic, safeType, difficulty, attempt, maxGenerationAttempts);
-                previousViolations = questionRetryFeedbackNormalizer.normalize(
-                        List.of("AI did not return parsable question JSON payload")
-                );
+                previousViolations = List.of("AI did not return parsable question JSON payload");
                 continue;
             }
             Question generated = generatedOpt.get();
@@ -97,7 +92,7 @@ public class QuestionGenerationService {
             log.warn("question_generation_validation_failed topic={} type={} difficulty={} attempt={} qualityScore={} minQualityScore={} violations={}",
                     safeTopic, safeType, difficulty, attempt, score, questionGenerationPolicy.minQualityScore(),
                     String.join("; ", violations));
-            previousViolations = questionRetryFeedbackNormalizer.normalize(violations);
+            previousViolations = qualitySnapshot.retryFeedback();
         }
         throw new AiGenerationException(
                 "QuestionGenerationService: не удалось сгенерировать валидный вопрос за "

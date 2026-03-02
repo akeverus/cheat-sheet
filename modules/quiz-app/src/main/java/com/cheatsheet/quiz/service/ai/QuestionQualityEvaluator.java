@@ -19,6 +19,7 @@ public class QuestionQualityEvaluator {
 
     private final QuestionValidationService validationService;
     private final QuestionGenerationPolicy questionGenerationPolicy;
+    private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
 
     /**
      * Выполняет полный quality-check для кандидата.
@@ -30,18 +31,20 @@ public class QuestionQualityEvaluator {
     public QualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
         List<String> baseViolations = validationService.validate(candidate);
         List<String> violations = questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints);
+        List<String> retryFeedback = questionRetryFeedbackNormalizer.normalize(violations);
         int score = validationService.qualityScore(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
-        return new QualitySnapshot(violations, score, accepted);
+        return new QualitySnapshot(violations, retryFeedback, score, accepted);
     }
 
     /**
      * Immutable-снапшот результата quality-check.
      *
      * @param violations список нарушений
-     * @param score      quality score (0..100)
-     * @param accepted   признак приёмки кандидата
+     * @param retryFeedback нормализованный список нарушений для передачи в retry-prompt
+     * @param score         quality score (0..100)
+     * @param accepted      признак приёмки кандидата
      */
-    public record QualitySnapshot(List<String> violations, int score, boolean accepted) {
+    public record QualitySnapshot(List<String> violations, List<String> retryFeedback, int score, boolean accepted) {
     }
 }

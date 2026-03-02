@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Moved retry-feedback normalization responsibility into `QuestionQualityEvaluator` snapshot to keep `QuestionGenerationService` focused on attempt orchestration only.
+- [x] Updated Question Engine quality snapshot contract (`violations`, `retryFeedback`, `score`, `accepted`) and aligned generation/evaluator tests with the new boundary.
 - [x] Added `QuestionRetryFeedbackNormalizer` to make retry feedback deterministic (trim + case-insensitive dedup + stable sort + config-driven limit).
 - [x] Integrated retry-feedback normalization into `QuestionGenerationService` for both parse-failure and validation-failure retries.
 - [x] Added `question-retry-feedback-max-items` configuration and expanded Question Engine tests (`QuestionRetryFeedbackNormalizerTest`, `QuestionPromptBuilderTest`, `QuestionGenerationServiceTest`) for normalized feedback flow.
