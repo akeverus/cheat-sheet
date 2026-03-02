@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Extracted `QuestionQualitySnapshotFactory` from `QuestionQualityEvaluator` to isolate immutable snapshot assembly from evaluator orchestration logic.
+- [x] Updated `QuestionQualityEvaluatorTest` to verify snapshot-factory delegation and added `QuestionQualitySnapshotFactoryTest`.
 - [x] Completed strict separation in Question Engine between structural validation and scoring policy: `QuestionValidationService` now validates only structure, scoring is executed via `QuestionQualityScorer` in `QuestionQualityEvaluator`.
 - [x] Updated `QuestionQualityEvaluatorTest` and `QuestionValidationServiceTest` for the new validation/scoring responsibility boundary.
 - [x] Extracted `QuestionQualityScorer` from `QuestionValidationService` to separate scoring policy from structural validation logic.

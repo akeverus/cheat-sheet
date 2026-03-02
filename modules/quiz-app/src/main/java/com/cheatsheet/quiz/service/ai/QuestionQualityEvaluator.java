@@ -23,6 +23,7 @@ public class QuestionQualityEvaluator {
     private final QuestionQualityScorer questionQualityScorer;
     private final QuestionGenerationPolicy questionGenerationPolicy;
     private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
+    private final QuestionQualitySnapshotFactory questionQualitySnapshotFactory;
 
     /**
      * Выполняет полный quality-check для кандидата.
@@ -37,7 +38,7 @@ public class QuestionQualityEvaluator {
         List<String> retryFeedback = questionRetryFeedbackNormalizer.normalize(violations);
         int score = questionQualityScorer.score(violations);
         boolean accepted = questionGenerationPolicy.isAccepted(score, violations);
-        return new QualitySnapshot(violations, retryFeedback, score, accepted);
+        return questionQualitySnapshotFactory.create(violations, retryFeedback, score, accepted);
     }
 
     /**

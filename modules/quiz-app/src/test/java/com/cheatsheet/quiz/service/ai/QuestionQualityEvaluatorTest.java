@@ -25,6 +25,8 @@ class QuestionQualityEvaluatorTest {
     @Mock
     private QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
     @Mock
+    private QuestionQualitySnapshotFactory questionQualitySnapshotFactory;
+    @Mock
     private Question candidate;
 
     @Test
@@ -33,7 +35,8 @@ class QuestionQualityEvaluatorTest {
                 validationService,
                 questionQualityScorer,
                 questionGenerationPolicy,
-                questionRetryFeedbackNormalizer
+                questionRetryFeedbackNormalizer,
+                questionQualitySnapshotFactory
         );
         Set<String> seenFingerprints = Set.of("q1::a|b|c|d");
         List<String> baseViolations = List.of();
@@ -44,18 +47,19 @@ class QuestionQualityEvaluatorTest {
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(enrichedViolations)).thenReturn(96);
         when(questionGenerationPolicy.isAccepted(96, enrichedViolations)).thenReturn(true);
+        QuestionQualityEvaluator.QualitySnapshot expected =
+                new QuestionQualityEvaluator.QualitySnapshot(enrichedViolations, retryFeedback, 96, true);
+        when(questionQualitySnapshotFactory.create(enrichedViolations, retryFeedback, 96, true)).thenReturn(expected);
 
         QuestionQualityEvaluator.QualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
 
-        assertThat(snapshot.score()).isEqualTo(96);
-        assertThat(snapshot.violations()).isEqualTo(enrichedViolations);
-        assertThat(snapshot.retryFeedback()).isEqualTo(retryFeedback);
-        assertThat(snapshot.accepted()).isTrue();
+        assertThat(snapshot).isEqualTo(expected);
         verify(validationService).validate(candidate);
         verify(questionGenerationPolicy).enrichViolations(candidate, baseViolations, seenFingerprints);
         verify(questionRetryFeedbackNormalizer).normalize(enrichedViolations);
         verify(questionQualityScorer).score(enrichedViolations);
         verify(questionGenerationPolicy).isAccepted(96, enrichedViolations);
+        verify(questionQualitySnapshotFactory).create(enrichedViolations, retryFeedback, 96, true);
     }
 
     @Test
@@ -64,7 +68,8 @@ class QuestionQualityEvaluatorTest {
                 validationService,
                 questionQualityScorer,
                 questionGenerationPolicy,
-                questionRetryFeedbackNormalizer
+                questionRetryFeedbackNormalizer,
+                questionQualitySnapshotFactory
         );
         Set<String> seenFingerprints = Set.of();
         List<String> baseViolations = List.of("shortExplanation must be at least 30 characters");
@@ -78,13 +83,14 @@ class QuestionQualityEvaluatorTest {
         when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
         when(questionQualityScorer.score(enrichedViolations)).thenReturn(54);
         when(questionGenerationPolicy.isAccepted(54, enrichedViolations)).thenReturn(false);
+        QuestionQualityEvaluator.QualitySnapshot expected =
+                new QuestionQualityEvaluator.QualitySnapshot(enrichedViolations, retryFeedback, 54, false);
+        when(questionQualitySnapshotFactory.create(enrichedViolations, retryFeedback, 54, false)).thenReturn(expected);
 
         QuestionQualityEvaluator.QualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, seenFingerprints);
 
-        assertThat(snapshot.score()).isEqualTo(54);
-        assertThat(snapshot.violations()).isEqualTo(enrichedViolations);
-        assertThat(snapshot.retryFeedback()).isEqualTo(retryFeedback);
-        assertThat(snapshot.accepted()).isFalse();
+        assertThat(snapshot).isEqualTo(expected);
+        verify(questionQualitySnapshotFactory).create(enrichedViolations, retryFeedback, 54, false);
     }
 
     @Test
@@ -93,7 +99,8 @@ class QuestionQualityEvaluatorTest {
                 validationService,
                 questionQualityScorer,
                 questionGenerationPolicy,
-                questionRetryFeedbackNormalizer
+                questionRetryFeedbackNormalizer,
+                questionQualitySnapshotFactory
         );
         List<String> normalized = List.of("AI did not return parsable question JSON payload");
         when(questionRetryFeedbackNormalizer.normalize(List.of("AI did not return parsable question JSON payload")))
