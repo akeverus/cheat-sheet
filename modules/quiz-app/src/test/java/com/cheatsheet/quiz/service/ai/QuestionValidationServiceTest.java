@@ -12,7 +12,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class QuestionValidationServiceTest {
 
-    private final QuestionValidationService validationService = new QuestionValidationService();
+    private final QuestionValidationService validationService =
+            new QuestionValidationService(new QuestionQualityScorer());
 
     @Test
     void validatesQuestionWithSingleCorrectOption() {

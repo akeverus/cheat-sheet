@@ -4,6 +4,7 @@ import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionOption;
 import com.cheatsheet.quiz.domain.QuestionType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Locale;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class QuestionValidationService {
     private static final int SHORT_EXPLANATION_MIN_LENGTH = 30;
     private static final int DETAILED_EXPLANATION_MIN_LENGTH = 80;
@@ -25,6 +27,7 @@ public class QuestionValidationService {
             "верный ответ"
     );
     private static final Set<String> REQUIRED_OPTION_IDS = Set.of("A", "B", "C", "D");
+    private final QuestionQualityScorer questionQualityScorer;
 
     /**
      * Валидирует сгенерированный вопрос по структурным и качественным правилам Question v2.
@@ -131,33 +134,7 @@ public class QuestionValidationService {
      * Рассчитывает quality score (0..100) по уже вычисленным нарушениям.
      */
     public int qualityScore(List<String> violations) {
-        if (violations == null || violations.isEmpty()) {
-            return 100;
-        }
-        int penalty = 0;
-        for (String violation : violations) {
-            String v = violation == null ? "" : violation.toLowerCase(Locale.ROOT);
-            if (v.contains("exactly one correct option")) {
-                penalty += 35;
-            } else if (v.contains("exactly 4 options")) {
-                penalty += 25;
-            } else if (v.contains("duplicate candidate")) {
-                penalty += 18;
-            } else if (v.contains("cognitive load")) {
-                penalty += 14;
-            } else if (v.contains("distractors are semantically too similar")) {
-                penalty += 14;
-            } else if (v.contains("trivial")) {
-                penalty += 20;
-            } else if (v.contains("required")) {
-                penalty += 15;
-            } else if (v.contains("duplicate")) {
-                penalty += 10;
-            } else {
-                penalty += 8;
-            }
-        }
-        return Math.max(0, 100 - penalty);
+        return questionQualityScorer.score(violations);
     }
 
     private static boolean isDifficultyValidForType(Difficulty difficulty, QuestionType type) {

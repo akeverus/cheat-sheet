@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Extracted `QuestionQualityScorer` from `QuestionValidationService` to separate scoring policy from structural validation logic.
+- [x] Switched `QuestionValidationService` quality-score methods to delegate into dedicated scorer service.
+- [x] Added `QuestionQualityScorerTest` and updated `QuestionValidationServiceTest` wiring for the new quality-scoring boundary.
 - [x] Extracted shared `QuestionTopicNormalizer` to remove duplicated topic fallback logic from `QuestionGenerationService` and `QuestionPromptBuilder`.
 - [x] Switched Question Engine generation/prompt path to single topic-normalization contract (`null/blank -> general`) through dedicated component wiring.
 - [x] Added `QuestionTopicNormalizerTest` and aligned Question Engine tests with the new dependency graph.
