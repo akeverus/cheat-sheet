@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -182,5 +183,45 @@ class QuestionQualityEvaluatorTest {
         verify(questionGenerationPolicy).enrichViolations(candidate, normalizedBaseViolations, Set.of());
         verify(questionQualityScorer).score(normalizedEnrichedViolations);
         verify(questionQualitySnapshotFactory).create(normalizedEnrichedViolations, normalizedRetryFeedback, 88, false);
+    }
+
+    @Test
+    void evaluateCandidateSanitizesSeenFingerprintsBeforePolicyCheck() {
+        QuestionQualityEvaluator evaluator = new QuestionQualityEvaluator(
+                validationService,
+                questionQualityScorer,
+                questionGenerationPolicy,
+                questionRetryFeedbackNormalizer,
+                questionQualitySnapshotFactory,
+                questionRequestFailureFeedbackSupplier,
+                questionQualityMessageNormalizer
+        );
+        Set<String> rawSeenFingerprints = new HashSet<>(Arrays.asList(" fp-1 ", null, "   "));
+        Set<String> sanitizedSeenFingerprints = Set.of("fp-1");
+        List<String> baseViolations = List.of();
+        List<String> enrichedViolations = List.of();
+        List<String> retryFeedback = List.of();
+        when(validationService.validate(candidate)).thenReturn(baseViolations);
+        when(questionQualityMessageNormalizer.normalize(baseViolations)).thenReturn(baseViolations);
+        when(questionGenerationPolicy.enrichViolations(candidate, baseViolations, sanitizedSeenFingerprints))
+                .thenReturn(enrichedViolations);
+        when(questionQualityMessageNormalizer.normalize(enrichedViolations)).thenReturn(enrichedViolations);
+        when(questionRetryFeedbackNormalizer.normalize(enrichedViolations)).thenReturn(retryFeedback);
+        when(questionQualityMessageNormalizer.normalize(retryFeedback)).thenReturn(retryFeedback);
+        when(questionQualityScorer.score(enrichedViolations)).thenReturn(100);
+        when(questionGenerationPolicy.isAccepted(100, enrichedViolations)).thenReturn(true);
+        QuestionQualitySnapshot expected = QuestionQualitySnapshot.builder()
+                .violations(enrichedViolations)
+                .retryFeedback(retryFeedback)
+                .score(100)
+                .accepted(true)
+                .build();
+        when(questionQualitySnapshotFactory.create(enrichedViolations, retryFeedback, 100, true))
+                .thenReturn(expected);
+
+        QuestionQualitySnapshot snapshot = evaluator.evaluateCandidate(candidate, rawSeenFingerprints);
+
+        assertThat(snapshot).isEqualTo(expected);
+        verify(questionGenerationPolicy).enrichViolations(candidate, baseViolations, sanitizedSeenFingerprints);
     }
 }

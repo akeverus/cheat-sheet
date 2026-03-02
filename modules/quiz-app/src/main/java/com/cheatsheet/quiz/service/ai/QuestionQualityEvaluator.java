@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Сервис оценки качества сгенерированного вопроса.
@@ -33,9 +35,10 @@ public class QuestionQualityEvaluator {
      * @return снапшот качества с нарушениями, score и итогом приёмки
      */
     public QuestionQualitySnapshot evaluateCandidate(Question candidate, Set<String> seenFingerprints) {
+        Set<String> safeSeenFingerprints = sanitizeSeenFingerprints(seenFingerprints);
         List<String> baseViolations = questionQualityMessageNormalizer.normalize(validationService.validate(candidate));
         List<String> violations = questionQualityMessageNormalizer.normalize(
-                questionGenerationPolicy.enrichViolations(candidate, baseViolations, seenFingerprints)
+                questionGenerationPolicy.enrichViolations(candidate, baseViolations, safeSeenFingerprints)
         );
         List<String> retryFeedback =
                 questionQualityMessageNormalizer.normalize(questionRetryFeedbackNormalizer.normalize(violations));
@@ -51,5 +54,16 @@ public class QuestionQualityEvaluator {
      */
     public List<String> retryFeedbackForRequestFailure() {
         return questionQualityMessageNormalizer.normalize(questionRequestFailureFeedbackSupplier.feedback());
+    }
+
+    private static Set<String> sanitizeSeenFingerprints(Set<String> seenFingerprints) {
+        if (seenFingerprints == null || seenFingerprints.isEmpty()) {
+            return Set.of();
+        }
+        return seenFingerprints.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 }
