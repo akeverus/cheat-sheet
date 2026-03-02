@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionGenerationService` retry-feedback pipeline with explicit message normalization before prompt reuse (request-failure, retry-feedback, violations, and carry-over paths).
+- [x] Added `QuestionGenerationServiceTest` regression for noisy/duplicated retry-feedback normalization in next-attempt prompt.
 - [x] Hardened `QuestionGenerationService` retry contract: when quality snapshot has empty `retryFeedback`, retry prompt now falls back to snapshot `violations`.
 - [x] Added `QuestionGenerationServiceTest` regression to verify retry-prompt feedback fallback path for empty `retryFeedback`.
 - [x] Hardened `QuestionGenerationService` by sanitizing/null-guarding recent fingerprint input from `QuestionUniquenessService` before retry orchestration.

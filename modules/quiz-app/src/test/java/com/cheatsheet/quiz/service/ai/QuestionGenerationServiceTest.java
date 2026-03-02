@@ -57,6 +57,7 @@ class QuestionGenerationServiceTest {
                 new QuestionGenerationPolicy(70),
                 questionUniquenessService,
                 new QuestionSeenFingerprintSanitizer(),
+                new QuestionQualityMessageNormalizer(),
                 appProperties
         );
         when(questionUniquenessService.loadRecentFingerprints(anyString(), org.mockito.ArgumentMatchers.any()))
@@ -140,6 +141,30 @@ class QuestionGenerationServiceTest {
         assertThat(prompts).hasSize(2);
         assertThat(prompts.get(1)).contains("QUALITY_FEEDBACK_FROM_PREVIOUS_ATTEMPT");
         assertThat(prompts.get(1)).contains("Need stronger distractor quality");
+    }
+
+    @Test
+    void retryPromptNormalizesNoisyRetryFeedback() {
+        when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString()))
+                .thenReturn(Optional.of(validQuestionJson()))
+                .thenReturn(Optional.of(alternativeQuestionJson()));
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(snapshot(
+                        List.of("unused"),
+                        List.of("  Improve option quality  ", "improve option quality", " "),
+                        78,
+                        false
+                ))
+                .thenReturn(snapshot(List.of(), List.of(), 85, true));
+
+        service.generateQuestion("java", QuestionType.CONCEPT);
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(optionGenerator, times(2)).generateStructuredJson(promptCaptor.capture());
+        String secondPrompt = promptCaptor.getAllValues().get(1);
+        assertThat(secondPrompt).contains("Improve option quality");
+        assertThat(secondPrompt).doesNotContain("improve option quality\n- improve option quality");
     }
 
     @Test

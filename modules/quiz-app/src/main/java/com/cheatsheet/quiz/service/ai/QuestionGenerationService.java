@@ -26,6 +26,7 @@ public class QuestionGenerationService {
     private final QuestionGenerationPolicy questionGenerationPolicy;
     private final QuestionUniquenessService questionUniquenessService;
     private final QuestionSeenFingerprintSanitizer questionSeenFingerprintSanitizer;
+    private final QuestionQualityMessageNormalizer questionQualityMessageNormalizer;
     private final int maxGenerationAttempts;
 
     public QuestionGenerationService(
@@ -38,6 +39,7 @@ public class QuestionGenerationService {
             QuestionGenerationPolicy questionGenerationPolicy,
             QuestionUniquenessService questionUniquenessService,
             QuestionSeenFingerprintSanitizer questionSeenFingerprintSanitizer,
+            QuestionQualityMessageNormalizer questionQualityMessageNormalizer,
             AppProperties appProperties
     ) {
         this.optionGenerator = optionGenerator;
@@ -49,6 +51,7 @@ public class QuestionGenerationService {
         this.questionGenerationPolicy = questionGenerationPolicy;
         this.questionUniquenessService = questionUniquenessService;
         this.questionSeenFingerprintSanitizer = questionSeenFingerprintSanitizer;
+        this.questionQualityMessageNormalizer = questionQualityMessageNormalizer;
         this.maxGenerationAttempts = Math.max(1, appProperties.getInterview().getQuestionGenerationMaxAttempts());
     }
 
@@ -76,7 +79,9 @@ public class QuestionGenerationService {
             if (generatedOpt.isEmpty()) {
                 log.warn("question_generation_request_failed topic={} type={} difficulty={} attempt={}/{}",
                         safeTopic, safeType, difficulty, attempt, maxGenerationAttempts);
-                previousViolations = questionQualityEvaluator.retryFeedbackForRequestFailure();
+                previousViolations = questionQualityMessageNormalizer.normalize(
+                        questionQualityEvaluator.retryFeedbackForRequestFailure()
+                );
                 continue;
             }
             Question generated = generatedOpt.get();
@@ -114,14 +119,14 @@ public class QuestionGenerationService {
         return raw.flatMap(content -> questionGeneratedJsonMapper.map(content, topic, type, difficulty));
     }
 
-    private static List<String> resolveRetryFeedback(QuestionQualitySnapshot qualitySnapshot, List<String> previousViolations) {
+    private List<String> resolveRetryFeedback(QuestionQualitySnapshot qualitySnapshot, List<String> previousViolations) {
         if (qualitySnapshot.getRetryFeedback() != null && !qualitySnapshot.getRetryFeedback().isEmpty()) {
-            return qualitySnapshot.getRetryFeedback();
+            return questionQualityMessageNormalizer.normalize(qualitySnapshot.getRetryFeedback());
         }
         if (qualitySnapshot.getViolations() != null && !qualitySnapshot.getViolations().isEmpty()) {
-            return qualitySnapshot.getViolations();
+            return questionQualityMessageNormalizer.normalize(qualitySnapshot.getViolations());
         }
-        return previousViolations == null ? List.of() : previousViolations;
+        return questionQualityMessageNormalizer.normalize(previousViolations == null ? List.of() : previousViolations);
     }
 
 }
