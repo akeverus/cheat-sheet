@@ -151,6 +151,8 @@
 - [x] Expanded `GlobalExceptionHandlerTest` with `MethodArgumentTypeMismatch` and `DataIntegrityViolation` API contract cases.
 - [x] Removed duplicated answer-submission DTOs by making `MvcAnswerRequestMapper` return shared `InterviewSessionSupport.AnswerSubmission`.
 - [x] Simplified `InterviewFlowMvcService.answer` by removing redundant DTO copy step; updated mapper test to new boundary contract.
+- [x] Refactored `SessionFlowService` by extracting session-total normalization and flashcard/study guards into focused private operations.
+- [x] Expanded `SessionFlowServiceTest` with requested-count clamping and flashcard reveal phase-guard scenarios.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
