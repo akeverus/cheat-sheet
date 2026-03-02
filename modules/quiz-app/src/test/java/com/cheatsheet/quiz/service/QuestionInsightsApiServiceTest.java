@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,6 +46,7 @@ class QuestionInsightsApiServiceTest {
         assertThat(response.optionId()).isEqualTo(optionId);
         assertThat(response.feedback()).isEqualTo("Причина ошибки");
         assertThat(response.available()).isTrue();
+        verify(facade).ensureQuestionExists(questionId);
     }
 
     @Test
@@ -93,5 +95,20 @@ class QuestionInsightsApiServiceTest {
 
         assertThat(response.trace()).contains("return 42");
         verify(facade).ensureQuestionExists(questionId);
+    }
+
+    @Test
+    void comparisonAndCodeTraceReturnNullPayloadWhenUnavailable() {
+        long questionId = 1201L;
+        long optionId = 15L;
+        when(facade.generateComparison(questionId, optionId)).thenReturn(Optional.empty());
+        when(facade.getCodeTrace(questionId)).thenReturn(Optional.empty());
+
+        ComparisonResponse comparison = service.buildComparisonResponse(questionId, optionId);
+        CodeTraceResponse trace = service.buildCodeTraceResponse(questionId);
+
+        assertThat(comparison.comparison()).isNull();
+        assertThat(trace.trace()).isNull();
+        verify(facade, times(2)).ensureQuestionExists(questionId);
     }
 }

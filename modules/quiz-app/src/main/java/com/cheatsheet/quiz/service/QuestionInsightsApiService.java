@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 /**
  * Use-case orchestration для question-insights API endpoint-ов.
@@ -23,8 +24,7 @@ public class QuestionInsightsApiService {
     }
 
     public WrongFeedbackResponse buildWrongFeedbackResponse(long questionId, long optionId) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> feedback = facade.getWrongFeedback(questionId, optionId);
+        Optional<String> feedback = resolveInsight(questionId, () -> facade.getWrongFeedback(questionId, optionId));
         if (feedback.isPresent()) {
             log.info("wrong_feedback_generated questionId={} optionId={}", questionId, optionId);
         } else {
@@ -34,20 +34,25 @@ public class QuestionInsightsApiService {
     }
 
     public TakeawayResponse buildTakeawayResponse(long questionId) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> takeaway = facade.getTakeaway(questionId);
+        Optional<String> takeaway = resolveInsight(questionId, () -> facade.getTakeaway(questionId));
         return new TakeawayResponse(takeaway.orElse(null));
     }
 
     public ComparisonResponse buildComparisonResponse(long questionId, long selectedOptionId) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> comparison = facade.generateComparison(questionId, selectedOptionId);
+        Optional<String> comparison = resolveInsight(
+                questionId,
+                () -> facade.generateComparison(questionId, selectedOptionId)
+        );
         return new ComparisonResponse(comparison.orElse(null));
     }
 
     public CodeTraceResponse buildCodeTraceResponse(long questionId) {
-        facade.ensureQuestionExists(questionId);
-        Optional<String> trace = facade.getCodeTrace(questionId);
+        Optional<String> trace = resolveInsight(questionId, () -> facade.getCodeTrace(questionId));
         return new CodeTraceResponse(trace.orElse(null));
+    }
+
+    private Optional<String> resolveInsight(long questionId, Supplier<Optional<String>> loader) {
+        facade.ensureQuestionExists(questionId);
+        return loader.get();
     }
 }

@@ -60,6 +60,7 @@ class HintApiServiceTest {
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isNull();
         assertThat(body.hint()).isNull();
+        verify(facade).getHint(questionId, 1);
     }
 
     @Test
@@ -73,5 +74,19 @@ class HintApiServiceTest {
                 .isInstanceOf(QuestionNotFoundException.class)
                 .hasMessageContaining("Вопрос не найден: id=" + questionId);
         verify(facade, never()).getHint(questionId, 1);
+    }
+
+    @Test
+    void buildHintResponseClampsRequestedLevelToAllowedRange() {
+        long questionId = 604L;
+        HintApiService.HintCommand command = new HintApiService.HintCommand(questionId, 99);
+        when(facade.getHint(questionId, 3))
+                .thenReturn(Optional.of(new Hint(2L, questionId, 3, "Почти ответ", 1_700_000_001L)));
+
+        HintResponse body = service.buildHintResponse(command);
+
+        assertThat(body.level()).isEqualTo(3);
+        assertThat(body.hint()).contains("Почти ответ");
+        verify(facade).getHint(questionId, 3);
     }
 }

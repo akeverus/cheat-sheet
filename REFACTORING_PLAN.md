@@ -155,6 +155,8 @@
 - [x] Expanded `SessionFlowServiceTest` with requested-count clamping and flashcard reveal phase-guard scenarios.
 - [x] Removed unnecessary `@Getter` exposure from `InterviewFacade` to avoid leaking internal service dependencies via facade API.
 - [x] Added `InterviewFacadeTest` to lock delegation contracts across interview/stats/hint/feedback/render flows.
+- [x] Refactored `QuestionInsightsApiService` by extracting shared `ensureQuestionExists + insight loader` flow into a single helper.
+- [x] Hardened `HintApiService` with explicit hint-level normalization and response mapping helper; expanded hint/insights tests for null/level-boundary contracts.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
