@@ -10,8 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Маппер JSON-ответа модели в доменный объект {@link Question}.
@@ -50,24 +53,35 @@ public class QuestionGeneratedJsonMapper {
             JsonNode optionsNode = root.path("options");
             if (optionsNode.isArray()) {
                 for (JsonNode node : optionsNode) {
+                    String optionId = node.path("id").asText("").trim().toUpperCase(Locale.ROOT);
                     options.add(new QuestionOption(
-                            node.path("id").asText(""),
+                            optionId,
                             node.path("text").asText(""),
                             node.path("correct").asBoolean(false),
                             node.path("explanation").asText("")
                     ));
                 }
             }
+            options = options.stream()
+                    .sorted(Comparator
+                            .comparingInt((QuestionOption option) -> optionOrder(option.id()))
+                            .thenComparing(QuestionOption::id))
+                    .toList();
+
             List<String> tags = new ArrayList<>();
             JsonNode tagsNode = root.path("tags");
             if (tagsNode.isArray()) {
                 for (JsonNode tagNode : tagsNode) {
                     String value = tagNode.asText("").trim();
                     if (!value.isBlank()) {
-                        tags.add(value);
+                        tags.add(value.toLowerCase(Locale.ROOT));
                     }
                 }
             }
+            tags = tags.stream()
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
 
             QuestionType resolvedType = type == null ? QuestionType.CONCEPT : type;
             GeneratedQuestionMetadata metadata = questionGeneratedMetadataSupplier.metadata();
@@ -97,5 +111,18 @@ public class QuestionGeneratedJsonMapper {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    private static int optionOrder(String optionId) {
+        if (optionId == null) {
+            return Integer.MAX_VALUE;
+        }
+        return switch (optionId) {
+            case "A" -> 0;
+            case "B" -> 1;
+            case "C" -> 2;
+            case "D" -> 3;
+            default -> 10;
+        };
     }
 }

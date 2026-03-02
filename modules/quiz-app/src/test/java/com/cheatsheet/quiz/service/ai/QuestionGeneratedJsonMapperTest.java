@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service.ai;
 import com.cheatsheet.quiz.config.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
+import com.cheatsheet.quiz.domain.QuestionOption;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class QuestionGeneratedJsonMapperTest {
         assertThat(question.type()).isEqualTo(QuestionType.CODE);
         assertThat(question.difficulty()).isEqualTo(Difficulty.HARD);
         assertThat(question.options()).hasSize(4);
-        assertThat(question.tags()).contains("java", "collections");
+        assertThat(question.tags()).containsExactly("collections", "java");
     }
 
     @Test
@@ -48,6 +49,18 @@ class QuestionGeneratedJsonMapperTest {
         Optional<Question> mapped = mapper.map("{not-valid-json", "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
 
         assertThat(mapped).isEmpty();
+    }
+
+    @Test
+    void mapNormalizesOptionOrderIdsAndTagsDeterministically() {
+        Optional<Question> mapped = mapper.map(jsonWithUnorderedOptionsAndTags(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
+
+        assertThat(mapped).isPresent();
+        Question question = mapped.orElseThrow();
+        assertThat(question.options())
+                .extracting(QuestionOption::id)
+                .containsExactly("A", "B", "C", "D");
+        assertThat(question.tags()).containsExactly("ai", "collections", "java");
     }
 
     private String validQuestionJson() {
@@ -65,6 +78,25 @@ class QuestionGeneratedJsonMapperTest {
                   "detailedExplanation":"Неравномерное распределение ключей повышает число сравнений equals внутри bucket и ухудшает среднюю стоимость операций.",
                   "commonMistake":"Считать, что equals важен, а hashCode на производительность не влияет.",
                   "tags":["java","collections"]
+                }
+                """;
+    }
+
+    private String jsonWithUnorderedOptionsAndTags() {
+        return """
+                {
+                  "questionText":"Почему важно учитывать коллизии в HashMap?",
+                  "codeSnippet":null,
+                  "options":[
+                    {"id":"d","text":"D option","correct":false,"explanation":"Объяснение D опции достаточно длинное и валидное."},
+                    {"id":"b","text":"B option","correct":false,"explanation":"Объяснение B опции достаточно длинное и валидное."},
+                    {"id":"a","text":"A option","correct":true,"explanation":"Объяснение A опции достаточно длинное и валидное."},
+                    {"id":"c","text":"C option","correct":false,"explanation":"Объяснение C опции достаточно длинное и валидное."}
+                  ],
+                  "shortExplanation":"Краткое объяснение достаточно длинное для прохождения валидации.",
+                  "detailedExplanation":"Подробное объяснение достаточно длинное для прохождения валидации и описывает влияние коллизий на производительность.",
+                  "commonMistake":"Игнорировать качество hashCode и считать коллизии несущественными.",
+                  "tags":["Java","ai","collections","java","AI"]
                 }
                 """;
     }

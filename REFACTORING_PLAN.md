@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Added deterministic normalization in `QuestionGeneratedJsonMapper`: canonical option id order (`A..D`), uppercased option ids, and sorted/distinct lowercase tags.
+- [x] Expanded `QuestionGeneratedJsonMapperTest` with regression coverage for unordered option ids and duplicated mixed-case tags.
 - [x] Introduced immutable `GeneratedQuestionMetadata` value object and switched `QuestionGeneratedMetadataSupplier` to return a single metadata contract object.
 - [x] Updated `QuestionGeneratedJsonMapper` to consume generated metadata as a cohesive value object instead of separate field calls.
 - [x] Updated metadata supplier tests for the new immutable metadata contract.
