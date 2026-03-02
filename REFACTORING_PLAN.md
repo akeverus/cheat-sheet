@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Optimized near-duplicate detection in `QuestionGenerationPolicy` by reusing pre-tokenized candidate text to reduce repeated Jaccard tokenization work.
+- [x] Hardened near-duplicate comparison by normalizing extracted question text from stored fingerprints before similarity calculation.
+- [x] Added `QuestionGenerationPolicyTest` regression for noisy fingerprint text format (uppercase/punctuation/whitespace) in semantic near-duplicate detection.
 - [x] Hardened `QuestionGenerationPolicy` with internal `seenFingerprints` sanitization (trim/lowercase/null-blank filtering) for stable duplicate and near-duplicate checks.
 - [x] Added `QuestionGenerationPolicyTest` regression for duplicate detection against noisy/case-variant fingerprint input.
 - [x] Extracted `QuestionSeenFingerprintSanitizer` from `QuestionQualityEvaluator` to isolate fingerprint input sanitization from quality orchestration.

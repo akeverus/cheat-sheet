@@ -162,15 +162,19 @@ public class QuestionGenerationPolicy {
         if (candidateText.isBlank()) {
             return false;
         }
+        Set<String> candidateTokens = tokenize(candidateText);
+        if (candidateTokens.isEmpty()) {
+            return false;
+        }
         for (String seenFingerprint : seenFingerprints) {
             if (seenFingerprint == null || seenFingerprint.equals(currentFingerprint)) {
                 continue;
             }
-            String seenQuestionText = extractQuestionText(seenFingerprint);
+            String seenQuestionText = normalizeForSimilarity(extractQuestionText(seenFingerprint));
             if (seenQuestionText.isBlank()) {
                 continue;
             }
-            double similarity = jaccardSimilarity(candidateText, seenQuestionText);
+            double similarity = jaccardSimilarity(candidateTokens, tokenize(seenQuestionText));
             if (similarity >= nearDuplicateSimilarityThreshold) {
                 return true;
             }
@@ -191,6 +195,10 @@ public class QuestionGenerationPolicy {
     private static double jaccardSimilarity(String left, String right) {
         Set<String> leftTokens = tokenize(left);
         Set<String> rightTokens = tokenize(right);
+        return jaccardSimilarity(leftTokens, rightTokens);
+    }
+
+    private static double jaccardSimilarity(Set<String> leftTokens, Set<String> rightTokens) {
         if (leftTokens.isEmpty() || rightTokens.isEmpty()) {
             return 0.0;
         }

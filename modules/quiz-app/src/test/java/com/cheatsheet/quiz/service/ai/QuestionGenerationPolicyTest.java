@@ -96,6 +96,22 @@ class QuestionGenerationPolicyTest {
     }
 
     @Test
+    void enrichViolationsDetectsNearDuplicateWithNoisyFingerprintText() {
+        QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70, 280, 520, 0.60);
+        Set<String> seen = new HashSet<>();
+        seen.add("  ПОЧЕМУ HASHSET ТЕРЯЕТ ПРОИЗВОДИТЕЛЬНОСТЬ ПРИ БОЛЬШОМ ЧИСЛЕ КОЛЛИЗИЙ?!  ");
+
+        Question candidate = question(
+                "Почему HashSet может терять производительность при большом числе коллизий ключей?",
+                List.of("Из-за коллизий", "Из-за GC", "Из-за JIT", "Из-за кеша CPU")
+        );
+
+        List<String> violations = policy.enrichViolations(candidate, List.of(), seen);
+
+        assertThat(violations).anyMatch(v -> v.contains("semantically too close"));
+    }
+
+    @Test
     void enrichViolationsDetectsLowDistractorDiversity() {
         QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70, 280, 520, 0.82, 0.55);
         Question candidate = question(
