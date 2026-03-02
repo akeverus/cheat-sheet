@@ -250,6 +250,10 @@ public class AppProperties {
         /** Порог near-duplicate по Jaccard-токенам (0..1). */
         @Min(0) @Max(1)
         private double questionNearDuplicateSimilarityThreshold = 0.82;
+
+        /** Порог схожести distractors (неверных опций), после которого они считаются слишком похожими (0..1). */
+        @Min(0) @Max(1)
+        private double questionDistractorSimilarityThreshold = 0.78;
     }
 
     /**

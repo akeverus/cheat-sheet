@@ -65,6 +65,42 @@ class QuestionGenerationPolicyTest {
         assertThat(violations).anyMatch(v -> v.contains("semantically too close"));
     }
 
+    @Test
+    void enrichViolationsDetectsLowDistractorDiversity() {
+        QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70, 280, 520, 0.82, 0.55);
+        Question candidate = question(
+                "Почему в HashMap важен качественный hashCode?",
+                List.of(
+                        "Из-за неравномерного распределения ключей по бакетам",
+                        "Из-за коллизий при распределении ключей по бакетам",
+                        "Из-за коллизий при разбиении ключей по бакетам",
+                        "Из-за коллизий при хеш-распределении ключей по бакетам"
+                )
+        );
+
+        List<String> violations = policy.enrichViolations(candidate, List.of(), new HashSet<>());
+
+        assertThat(violations).anyMatch(v -> v.contains("distractors are semantically too similar"));
+    }
+
+    @Test
+    void enrichViolationsKeepsDiverseDistractorsWithoutViolation() {
+        QuestionGenerationPolicy policy = new QuestionGenerationPolicy(70, 280, 520, 0.82, 0.75);
+        Question candidate = question(
+                "Почему в HashMap важен качественный hashCode?",
+                List.of(
+                        "Из-за коллизий в бакетах",
+                        "Потому что таблица всегда сортирует ключи по compareTo",
+                        "Потому что hashCode используется только при удалении",
+                        "Потому что equals выбирает bucket без hashCode"
+                )
+        );
+
+        List<String> violations = policy.enrichViolations(candidate, List.of(), new HashSet<>());
+
+        assertThat(violations).noneMatch(v -> v.contains("distractors are semantically too similar"));
+    }
+
     private Question question(String questionText, List<String> options) {
         return new Question(
                 0L,

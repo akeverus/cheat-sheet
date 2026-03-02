@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Added distractor-diversity control to `QuestionGenerationPolicy` (pairwise semantic similarity check for wrong options).
+- [x] Extended Question Engine scoring penalties for low-distractor-diversity violations in `QuestionValidationService`.
+- [x] Expanded `QuestionGenerationPolicyTest` with regression cases for low-diversity detection and diverse-distractor acceptance.
 - [x] Introduced `QuestionQualityEvaluator` as dedicated Question Engine component for validation+policy enrichment+quality scoring+acceptance decision.
 - [x] Refactored `QuestionGenerationService` to delegate quality orchestration to `QuestionQualityEvaluator`, reducing service responsibility and tightening retry pipeline boundaries.
 - [x] Added `QuestionQualityEvaluatorTest` and updated `QuestionGenerationServiceTest` for the new quality-evaluation service contract.

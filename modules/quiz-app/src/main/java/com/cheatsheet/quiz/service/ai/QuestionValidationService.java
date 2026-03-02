@@ -145,6 +145,8 @@ public class QuestionValidationService {
                 penalty += 18;
             } else if (v.contains("cognitive load")) {
                 penalty += 14;
+            } else if (v.contains("distractors are semantically too similar")) {
+                penalty += 14;
             } else if (v.contains("trivial")) {
                 penalty += 20;
             } else if (v.contains("required")) {

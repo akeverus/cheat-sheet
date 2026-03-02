@@ -24,6 +24,7 @@ public class QuestionGenerationPolicy {
     private final int maxQuestionTextLength;
     private final int maxOptionsTotalTextLength;
     private final double nearDuplicateSimilarityThreshold;
+    private final double distractorSimilarityThreshold;
 
     @Autowired
     public QuestionGenerationPolicy(AppProperties appProperties) {
@@ -31,12 +32,13 @@ public class QuestionGenerationPolicy {
                 appProperties.getInterview().getQuestionMinQualityScore(),
                 appProperties.getInterview().getQuestionMaxTextLength(),
                 appProperties.getInterview().getQuestionMaxOptionsTotalTextLength(),
-                appProperties.getInterview().getQuestionNearDuplicateSimilarityThreshold()
+                appProperties.getInterview().getQuestionNearDuplicateSimilarityThreshold(),
+                appProperties.getInterview().getQuestionDistractorSimilarityThreshold()
         );
     }
 
     public QuestionGenerationPolicy(int minQualityScore) {
-        this(minQualityScore, 280, 520, 0.82);
+        this(minQualityScore, 280, 520, 0.82, 0.78);
     }
 
     public QuestionGenerationPolicy(
@@ -44,7 +46,7 @@ public class QuestionGenerationPolicy {
             int maxQuestionTextLength,
             int maxOptionsTotalTextLength
     ) {
-        this(minQualityScore, maxQuestionTextLength, maxOptionsTotalTextLength, 0.82);
+        this(minQualityScore, maxQuestionTextLength, maxOptionsTotalTextLength, 0.82, 0.78);
     }
 
     public QuestionGenerationPolicy(
@@ -53,10 +55,21 @@ public class QuestionGenerationPolicy {
             int maxOptionsTotalTextLength,
             double nearDuplicateSimilarityThreshold
     ) {
+        this(minQualityScore, maxQuestionTextLength, maxOptionsTotalTextLength, nearDuplicateSimilarityThreshold, 0.78);
+    }
+
+    public QuestionGenerationPolicy(
+            int minQualityScore,
+            int maxQuestionTextLength,
+            int maxOptionsTotalTextLength,
+            double nearDuplicateSimilarityThreshold,
+            double distractorSimilarityThreshold
+    ) {
         this.minQualityScore = Math.max(0, Math.min(100, minQualityScore));
         this.maxQuestionTextLength = Math.max(40, maxQuestionTextLength);
         this.maxOptionsTotalTextLength = Math.max(80, maxOptionsTotalTextLength);
         this.nearDuplicateSimilarityThreshold = Math.max(0.6, Math.min(0.99, nearDuplicateSimilarityThreshold));
+        this.distractorSimilarityThreshold = Math.max(0.5, Math.min(0.98, distractorSimilarityThreshold));
     }
 
     public int minQualityScore() {
@@ -92,6 +105,9 @@ public class QuestionGenerationPolicy {
         if (optionsTotalLength > maxOptionsTotalTextLength) {
             violations.add("Question cognitive load is too high: options are too verbose");
         }
+        if (hasLowDistractorDiversity(candidate)) {
+            violations.add("Question distractors are semantically too similar to each other");
+        }
 
         if (seenFingerprints != null) {
             String fingerprint = fingerprint(candidate);
@@ -118,6 +134,10 @@ public class QuestionGenerationPolicy {
 
     public double nearDuplicateSimilarityThreshold() {
         return nearDuplicateSimilarityThreshold;
+    }
+
+    public double distractorSimilarityThreshold() {
+        return distractorSimilarityThreshold;
     }
 
     private static String buildFingerprint(Question question) {
@@ -178,6 +198,30 @@ public class QuestionGenerationPolicy {
         long intersection = leftTokens.stream().filter(rightTokens::contains).count();
         long union = leftTokens.size() + rightTokens.size() - intersection;
         return union == 0 ? 0.0 : (double) intersection / union;
+    }
+
+    private boolean hasLowDistractorDiversity(Question candidate) {
+        if (candidate.options() == null || candidate.options().isEmpty()) {
+            return false;
+        }
+        List<String> wrongOptionTexts = candidate.options().stream()
+                .filter(option -> option != null && !option.correct())
+                .map(QuestionOption::text)
+                .map(QuestionGenerationPolicy::normalizeForSimilarity)
+                .filter(text -> !text.isBlank())
+                .toList();
+        if (wrongOptionTexts.size() < 2) {
+            return false;
+        }
+        for (int i = 0; i < wrongOptionTexts.size(); i++) {
+            for (int j = i + 1; j < wrongOptionTexts.size(); j++) {
+                double similarity = jaccardSimilarity(wrongOptionTexts.get(i), wrongOptionTexts.get(j));
+                if (similarity >= distractorSimilarityThreshold) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static Set<String> tokenize(String text) {
