@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionGenerationService` retry contract: unparsable/empty AI payload no longer aborts first attempt and now retries up to configured max attempts.
+- [x] Added regression coverage for retry-after-unparsable-JSON and updated empty-AI-response test to validate full retry budget usage.
 - [x] Strengthened API integration smoke checks for `/api/streak` and `/api/topic-stats`.
 - [x] Synchronized `docs/API.md` with thin-controller unit coverage matrix.
 - [x] Removed repository access from `ExportController` by moving export row loading behind `ExportService`.

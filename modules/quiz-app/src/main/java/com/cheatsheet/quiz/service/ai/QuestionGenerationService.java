@@ -66,8 +66,14 @@ public class QuestionGenerationService {
         Set<String> seenFingerprints = new HashSet<>(questionUniquenessService.loadRecentFingerprints(safeTopic, safeType));
         int bestScore = 0;
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
-            Question generated = requestQuestion(safeTopic, safeType, difficulty, previousViolations)
-                    .orElseThrow(() -> new AiGenerationException("AI не вернул валидный JSON вопроса"));
+            Optional<Question> generatedOpt = requestQuestion(safeTopic, safeType, difficulty, previousViolations);
+            if (generatedOpt.isEmpty()) {
+                log.warn("question_generation_request_failed topic={} type={} difficulty={} attempt={}/{}",
+                        safeTopic, safeType, difficulty, attempt, maxGenerationAttempts);
+                previousViolations = List.of("AI did not return parsable question JSON payload");
+                continue;
+            }
+            Question generated = generatedOpt.get();
             List<String> baseViolations = validationService.validate(generated);
             List<String> violations = questionGenerationPolicy.enrichViolations(generated, baseViolations, seenFingerprints);
             int score = validationService.qualityScore(violations);
@@ -87,8 +93,10 @@ public class QuestionGenerationService {
                     String.join("; ", violations));
             previousViolations = List.copyOf(violations);
         }
-        throw new AiGenerationException("QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
-                + maxGenerationAttempts + " попытки (bestQualityScore=" + bestScore + ")");
+        throw new AiGenerationException(
+                "QuestionGenerationService: не удалось сгенерировать валидный вопрос за "
+                        + maxGenerationAttempts + " попытки (bestQualityScore=" + bestScore + ")"
+        );
     }
 
     private Optional<Question> requestQuestion(String topic, QuestionType type, Difficulty difficulty, List<String> previousViolations) {

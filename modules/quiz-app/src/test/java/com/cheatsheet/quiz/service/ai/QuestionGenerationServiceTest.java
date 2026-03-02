@@ -162,9 +162,25 @@ class QuestionGenerationServiceTest {
 
         assertThatThrownBy(() -> service.generateQuestion("sql", QuestionType.CONCEPT))
                 .isInstanceOf(AiGenerationException.class)
-                .hasMessageContaining("AI не вернул валидный JSON вопроса");
+                .hasMessageContaining("не удалось сгенерировать валидный вопрос за 3 попытки");
 
-        verify(optionGenerator, times(1)).generateStructuredJson(anyString());
+        verify(optionGenerator, times(3)).generateStructuredJson(anyString());
+    }
+
+    @Test
+    void retriesAfterUnparsableJsonAndSucceedsOnNextAttempt() {
+        when(adaptiveDifficultyService.resolveDifficulty("sql")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString()))
+                .thenReturn(Optional.of("not-a-json-payload"))
+                .thenReturn(Optional.of(validQuestionJson()));
+        when(validationService.validate(org.mockito.ArgumentMatchers.any(Question.class))).thenReturn(List.of());
+        when(validationService.qualityScore(anyList())).thenReturn(95);
+
+        Question generated = service.generateQuestion("sql", QuestionType.CONCEPT);
+
+        assertThat(generated.questionText()).contains("HashMap");
+        verify(optionGenerator, times(2)).generateStructuredJson(anyString());
+        verify(validationService, times(1)).validate(org.mockito.ArgumentMatchers.any(Question.class));
     }
 
     @Test
