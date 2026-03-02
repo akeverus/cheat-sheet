@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Removed Lombok constructor generation from `DiagramService`; switched to explicit constructor injection.
+- [x] Added `DiagramServiceOrchestrationTest` to lock cache-hit bypass, retry-on-invalid diagram, and persistence of validated Mermaid payload.
 - [x] Hardened `InterviewFlowMvcService` session persistence contract: ambiguous/null start results and null-changed updates now clear session deterministically to prevent stale session state.
 - [x] Expanded `InterviewFlowMvcServiceTest` with regressions for null start payload and null-session changed-update guard paths.
 - [x] Removed Lombok constructor generation from `InterviewSessionSupport` and switched to explicit constructor injection.
