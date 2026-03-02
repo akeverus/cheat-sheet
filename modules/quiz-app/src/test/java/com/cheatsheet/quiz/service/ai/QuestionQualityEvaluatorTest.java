@@ -27,6 +27,8 @@ class QuestionQualityEvaluatorTest {
     @Mock
     private QuestionQualitySnapshotFactory questionQualitySnapshotFactory;
     @Mock
+    private QuestionRequestFailureFeedbackSupplier questionRequestFailureFeedbackSupplier;
+    @Mock
     private Question candidate;
 
     @Test
@@ -36,7 +38,8 @@ class QuestionQualityEvaluatorTest {
                 questionQualityScorer,
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
-                questionQualitySnapshotFactory
+                questionQualitySnapshotFactory,
+                questionRequestFailureFeedbackSupplier
         );
         Set<String> seenFingerprints = Set.of("q1::a|b|c|d");
         List<String> baseViolations = List.of();
@@ -73,7 +76,8 @@ class QuestionQualityEvaluatorTest {
                 questionQualityScorer,
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
-                questionQualitySnapshotFactory
+                questionQualitySnapshotFactory,
+                questionRequestFailureFeedbackSupplier
         );
         Set<String> seenFingerprints = Set.of();
         List<String> baseViolations = List.of("shortExplanation must be at least 30 characters");
@@ -108,15 +112,15 @@ class QuestionQualityEvaluatorTest {
                 questionQualityScorer,
                 questionGenerationPolicy,
                 questionRetryFeedbackNormalizer,
-                questionQualitySnapshotFactory
+                questionQualitySnapshotFactory,
+                questionRequestFailureFeedbackSupplier
         );
-        List<String> normalized = List.of("AI did not return parsable question JSON payload");
-        when(questionRetryFeedbackNormalizer.normalize(List.of("AI did not return parsable question JSON payload")))
-                .thenReturn(normalized);
+        List<String> normalized = List.of("ai-request-failure");
+        when(questionRequestFailureFeedbackSupplier.feedback()).thenReturn(normalized);
 
         List<String> retryFeedback = evaluator.retryFeedbackForRequestFailure();
 
         assertThat(retryFeedback).isEqualTo(normalized);
-        verify(questionRetryFeedbackNormalizer).normalize(List.of("AI did not return parsable question JSON payload"));
+        verify(questionRequestFailureFeedbackSupplier).feedback();
     }
 }

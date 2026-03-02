@@ -259,6 +259,10 @@ public class AppProperties {
         @Min(1) @Max(20)
         private int questionRetryFeedbackMaxItems = 8;
 
+        /** Текст нарушения для retry при непарсабельном/пустом AI-ответе. */
+        @NotBlank
+        private String questionRequestFailureViolationMessage = "AI did not return parsable question JSON payload";
+
         /** Значение служебных метаданных для AI-сгенерированных вопросов. */
         @NotBlank
         private String questionGeneratedMetadataValue = "generated";

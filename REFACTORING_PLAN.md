@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Replaced hardcoded request-failure retry message with configuration-driven value (`app.interview.question-request-failure-violation-message`).
+- [x] Added `QuestionRequestFailureFeedbackSupplier` to centralize and normalize request-failure retry feedback in Question Engine.
+- [x] Updated Question Engine tests for the new request-failure feedback supplier contract (`QuestionQualityEvaluatorTest`, `QuestionRequestFailureFeedbackSupplierTest`).
 - [x] Replaced hardcoded generated-question metadata marker with configuration-driven value (`app.interview.question-generated-metadata-value`) in `QuestionGeneratedMetadataSupplier`.
 - [x] Added/updated Question Engine tests to validate configurable generated metadata contract.
 - [x] Removed magic `"generated"` metadata literals from `QuestionGeneratedJsonMapper` by introducing `QuestionGeneratedMetadataSupplier`.

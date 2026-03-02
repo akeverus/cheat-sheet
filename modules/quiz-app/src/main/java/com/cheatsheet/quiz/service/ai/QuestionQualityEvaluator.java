@@ -17,13 +17,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class QuestionQualityEvaluator {
 
-    private static final String REQUEST_FAILURE_VIOLATION = "AI did not return parsable question JSON payload";
-
     private final QuestionValidationService validationService;
     private final QuestionQualityScorer questionQualityScorer;
     private final QuestionGenerationPolicy questionGenerationPolicy;
     private final QuestionRetryFeedbackNormalizer questionRetryFeedbackNormalizer;
     private final QuestionQualitySnapshotFactory questionQualitySnapshotFactory;
+    private final QuestionRequestFailureFeedbackSupplier questionRequestFailureFeedbackSupplier;
 
     /**
      * Выполняет полный quality-check для кандидата.
@@ -47,6 +46,6 @@ public class QuestionQualityEvaluator {
      * @return детерминированный список нарушений для следующей попытки генерации
      */
     public List<String> retryFeedbackForRequestFailure() {
-        return questionRetryFeedbackNormalizer.normalize(List.of(REQUEST_FAILURE_VIOLATION));
+        return questionRequestFailureFeedbackSupplier.feedback();
     }
 }
