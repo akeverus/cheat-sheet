@@ -159,6 +159,8 @@
 - [x] Hardened `HintApiService` with explicit hint-level normalization and response mapping helper; expanded hint/insights tests for null/level-boundary contracts.
 - [x] Decomposed `AnswerApiService` response assembly into focused mapping helpers (`submission`, option explanations, related questions, session info) to reduce orchestration complexity.
 - [x] Expanded `AnswerApiServiceTest` with null-session API contract coverage to lock response behavior for stateless flows.
+- [x] Removed Lombok constructor generation from `FavoriteService` and switched to explicit constructor injection for clearer dependency boundaries.
+- [x] Added `FavoriteServiceTest` to lock favorite-toggle domain behavior (mark/unmark/not-found) and markdown sync contract.
 
 ## In Progress
 - [ ] Continue thin-controller refactor for remaining controllers with direct persistence access.
