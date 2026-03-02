@@ -1,6 +1,9 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Extracted `QuestionGeneratedJsonMapper` from `QuestionGenerationService` to isolate AI JSON parsing/mapping from generation orchestration.
+- [x] Simplified `QuestionGenerationService.requestQuestion` to a single mapping delegation path (`raw -> mapper`).
+- [x] Added `QuestionGeneratedJsonMapperTest` and updated `QuestionGenerationServiceTest` wiring for the new parsing boundary.
 - [x] Extracted `QuestionQualitySnapshotFactory` from `QuestionQualityEvaluator` to isolate immutable snapshot assembly from evaluator orchestration logic.
 - [x] Updated `QuestionQualityEvaluatorTest` to verify snapshot-factory delegation and added `QuestionQualitySnapshotFactoryTest`.
 - [x] Completed strict separation in Question Engine between structural validation and scoring policy: `QuestionValidationService` now validates only structure, scoring is executed via `QuestionQualityScorer` in `QuestionQualityEvaluator`.
