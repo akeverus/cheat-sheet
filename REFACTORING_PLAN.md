@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionQualitySnapshotFactory` with defensive score clamping (`0..100`) to preserve snapshot invariants under unexpected upstream scoring values.
+- [x] Expanded `QuestionQualitySnapshotFactoryTest` with boundary regression for out-of-range score input.
 - [x] Optimized near-duplicate detection in `QuestionGenerationPolicy` by reusing pre-tokenized candidate text to reduce repeated Jaccard tokenization work.
 - [x] Hardened near-duplicate comparison by normalizing extracted question text from stored fingerprints before similarity calculation.
 - [x] Added `QuestionGenerationPolicyTest` regression for noisy fingerprint text format (uppercase/punctuation/whitespace) in semantic near-duplicate detection.

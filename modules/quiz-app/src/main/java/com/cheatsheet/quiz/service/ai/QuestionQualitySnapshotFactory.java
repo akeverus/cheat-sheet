@@ -25,10 +25,13 @@ public class QuestionQualitySnapshotFactory {
             int score,
             boolean accepted
     ) {
+        List<String> safeViolations = violations == null ? List.of() : List.copyOf(violations);
+        List<String> safeRetryFeedback = retryFeedback == null ? List.of() : List.copyOf(retryFeedback);
+        int safeScore = Math.max(0, Math.min(100, score));
         return QuestionQualitySnapshot.builder()
-                .violations(violations)
-                .retryFeedback(retryFeedback)
-                .score(score)
+                .violations(safeViolations)
+                .retryFeedback(safeRetryFeedback)
+                .score(safeScore)
                 .accepted(accepted)
                 .build();
     }
