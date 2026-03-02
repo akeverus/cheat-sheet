@@ -56,6 +56,7 @@ class QuestionGenerationServiceTest {
                 new QuestionPromptBuilder(new AppProperties(), new QuestionTopicNormalizer()),
                 new QuestionGenerationPolicy(70),
                 questionUniquenessService,
+                new QuestionSeenFingerprintSanitizer(),
                 appProperties
         );
         when(questionUniquenessService.loadRecentFingerprints(anyString(), org.mockito.ArgumentMatchers.any()))
@@ -128,6 +129,20 @@ class QuestionGenerationServiceTest {
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         verify(optionGenerator).generateStructuredJson(promptCaptor.capture());
         assertThat(promptCaptor.getValue()).contains("general");
+    }
+
+    @Test
+    void generateQuestionHandlesNullRecentFingerprints() {
+        when(questionUniquenessService.loadRecentFingerprints(anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(null);
+        when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.MEDIUM);
+        when(optionGenerator.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
+        when(questionQualityEvaluator.evaluateCandidate(org.mockito.ArgumentMatchers.any(Question.class), org.mockito.ArgumentMatchers.anySet()))
+                .thenReturn(snapshot(List.of(), List.of(), 100, true));
+
+        Question generated = service.generateQuestion("java", QuestionType.CONCEPT);
+
+        assertThat(generated.questionText()).isNotBlank();
     }
 
     @Test

@@ -25,6 +25,7 @@ public class QuestionGenerationService {
     private final QuestionPromptBuilder questionPromptBuilder;
     private final QuestionGenerationPolicy questionGenerationPolicy;
     private final QuestionUniquenessService questionUniquenessService;
+    private final QuestionSeenFingerprintSanitizer questionSeenFingerprintSanitizer;
     private final int maxGenerationAttempts;
 
     public QuestionGenerationService(
@@ -36,6 +37,7 @@ public class QuestionGenerationService {
             QuestionPromptBuilder questionPromptBuilder,
             QuestionGenerationPolicy questionGenerationPolicy,
             QuestionUniquenessService questionUniquenessService,
+            QuestionSeenFingerprintSanitizer questionSeenFingerprintSanitizer,
             AppProperties appProperties
     ) {
         this.optionGenerator = optionGenerator;
@@ -46,6 +48,7 @@ public class QuestionGenerationService {
         this.questionPromptBuilder = questionPromptBuilder;
         this.questionGenerationPolicy = questionGenerationPolicy;
         this.questionUniquenessService = questionUniquenessService;
+        this.questionSeenFingerprintSanitizer = questionSeenFingerprintSanitizer;
         this.maxGenerationAttempts = Math.max(1, appProperties.getInterview().getQuestionGenerationMaxAttempts());
     }
 
@@ -62,7 +65,11 @@ public class QuestionGenerationService {
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         List<String> previousViolations = List.of();
-        Set<String> seenFingerprints = new HashSet<>(questionUniquenessService.loadRecentFingerprints(safeTopic, safeType));
+        Set<String> seenFingerprints = new HashSet<>(
+                questionSeenFingerprintSanitizer.sanitize(
+                        questionUniquenessService.loadRecentFingerprints(safeTopic, safeType)
+                )
+        );
         int bestScore = 0;
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
             Optional<Question> generatedOpt = requestQuestion(safeTopic, safeType, difficulty, previousViolations);

@@ -1,6 +1,8 @@
 # Refactoring Plan
 
 ## Completed
+- [x] Hardened `QuestionGenerationService` by sanitizing/null-guarding recent fingerprint input from `QuestionUniquenessService` before retry orchestration.
+- [x] Updated `QuestionGenerationServiceTest` with regression coverage for `null` recent fingerprint source.
 - [x] Hardened `QuestionQualitySnapshotFactory` with defensive score clamping (`0..100`) to preserve snapshot invariants under unexpected upstream scoring values.
 - [x] Expanded `QuestionQualitySnapshotFactoryTest` with boundary regression for out-of-range score input.
 - [x] Optimized near-duplicate detection in `QuestionGenerationPolicy` by reusing pre-tokenized candidate text to reduce repeated Jaccard tokenization work.
