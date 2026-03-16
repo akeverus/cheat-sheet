@@ -72,19 +72,17 @@ class QuestionGeneratedJsonMapperTest {
     }
 
     @Test
-    void mapAcceptsModelPayloadWhenOptionsArrayIsMissing() {
+    void mapReturnsEmptyWhenOptionsArrayIsMissing() {
         Optional<Question> mapped = mapper.map(jsonWithoutOptions(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
 
-        assertThat(mapped).isPresent();
-        assertThat(mapped.orElseThrow().options()).isEmpty();
+        assertThat(mapped).isEmpty();
     }
 
     @Test
-    void mapAcceptsModelPayloadWhenQuestionFieldIsMissing() {
+    void mapReturnsEmptyWhenQuestionFieldIsMissing() {
         Optional<Question> mapped = mapper.map(jsonWithoutQuestionField(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
 
-        assertThat(mapped).isPresent();
-        assertThat(mapped.orElseThrow().questionText()).isEmpty();
+        assertThat(mapped).isEmpty();
     }
 
     private String validQuestionJson() {

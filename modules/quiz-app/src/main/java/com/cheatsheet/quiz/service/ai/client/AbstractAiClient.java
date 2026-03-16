@@ -243,7 +243,7 @@ public abstract class AbstractAiClient implements AiQuestionClient, LlmClient {
         return LlmRequestBuilder.buildWithMaxTokens(
                 model(),
                 AiPrompts.SYSTEM_PROMPT,
-                prompt,
+                LlmRequestBuilder.withStrictJsonContract(prompt),
                 temperature(),
                 OPTIONS_MAX_TOKENS
         );

@@ -9,19 +9,19 @@ class AiPromptTemplatesContractTest {
 
     @Test
     void optionTemplateContainsStrictSymmetryAndExplanationRules() {
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("maxLen <= 1.15 * minLen");
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("1-2 предложения");
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("маркеры правильности");
-        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("нельзя объяснения");
+        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("maxLen <= 1.10 * minLen");
+        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("Запрещены маркеры правильности");
+        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("правдоподобны и требуют рассуждения");
+        assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("All answer options must contain roughly the same amount of information.");
         assertThat(AiPrompts.USER_PROMPT_TEMPLATE).contains("Верни только валидный JSON");
     }
 
     @Test
     void codeOptionTemplateContainsStrictSymmetryAndExplanationRules() {
-        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("maxLen <= 1.15 * minLen");
-        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("1-2 предложения");
-        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("Нет явных маркеров правильности");
-        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("запрещены объяснения");
+        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("maxLen <= 1.10 * minLen");
+        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("Дан вопрос и код. Сгенерируй варианты полностью самостоятельно.");
+        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("Дистракторы правдоподобны, технически похожи на возможные ошибки интерпретации");
+        assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("All answer options must contain roughly the same amount of information.");
         assertThat(AiPrompts.CODE_OPTIONS_PROMPT_TEMPLATE).contains("Верни только валидный JSON");
     }
 }

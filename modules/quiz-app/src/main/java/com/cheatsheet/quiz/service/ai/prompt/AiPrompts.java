@@ -76,43 +76,11 @@ public class AiPrompts {
             {"questionText":"...","answerMarkdown":"...","questionType":"TEXT|CODE","codeSnippet":"...|null"}
             """;
 
-    /** Шаблон генерации вопроса через единый JSON-контракт. */
-    public static final String QUESTION_V2_PROMPT_TEMPLATE = """
-            You are generating a %s level %s technical interview question about %s.
-
-            Return strict JSON only. Do not return markdown, comments, or any extra text.
-            The response must be a single valid JSON object with this exact schema:
-
-            {
-              "question": "string",
-              "options": [
-                {"text":"string","correct":true},
-                {"text":"string","correct":false},
-                {"text":"string","correct":false},
-                {"text":"string","correct":false}
-              ],
-              "explanation": "string"
-            }
-
-            Hard requirements:
-            - options array must have exactly 4 items.
-            - options must contain exactly one entry with "correct": true.
-            - each option item must contain only "text" (string) and "correct" (boolean).
-            - question must require technical reasoning, not pure memorization.
-            - avoid trivial factual recall questions that can be answered without reasoning.
-            - avoid yes/no question forms.
-            - difficulty must match requested level (%s).
-            - all options must answer this exact question context; no generic advice or topic drift.
-            - keep distractors realistic, unique, and plausible; avoid duplicates.
-            - do not make the correct option obviously stand out by tone, formatting, detail level, or explicit hints.
-            - use one consistent wording style and formality level across all options.
-            - keep options concise and token-efficient; avoid filler and generic prefaces.
-            - do not use "all of the above" or "none of the above".
-            - all options must contain roughly the same amount of information; no option should be noticeably longer, denser, or structurally different than others.
-            - explanation must be 1-3 sentences, strictly technical and question-local, and justify why the correct option is correct and alternatives are wrong.
-            - forbid interview meta-advice in options and explanation.
-            - output language: Russian.
-            """;
+    /**
+     * Шаблон генерации вопроса через единый JSON-контракт.
+     * Загружается из classpath (prompts/question-v2.txt), чтобы все правила жили в LLM prompt.
+     */
+    public static final String QUESTION_V2_PROMPT_TEMPLATE = PromptLoader.load("question-v2");
 
     /**
      * Оборачивает пользовательский ввод в разделители для защиты от prompt injection.

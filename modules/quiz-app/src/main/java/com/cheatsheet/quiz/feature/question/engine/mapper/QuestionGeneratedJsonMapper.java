@@ -46,24 +46,31 @@ public class QuestionGeneratedJsonMapper {
             JsonNode root = objectMapper.readTree(
                     AiResponseParser.stripCodeFences(rawContent)
             );
-            String questionText = root.path("question").asText("");
-            String explanation = root.path("explanation").asText("");
+            String questionText = root.path("question").asText("").trim();
+            if (questionText.isBlank()) {
+                return Optional.empty();
+            }
+            String explanation = root.path("explanation").asText("").trim();
             List<QuestionOption> options = new ArrayList<>();
             JsonNode optionsNode = root.path("options");
-            if (optionsNode.isArray()) {
-                for (int i = 0; i < optionsNode.size(); i++) {
-                    JsonNode node = optionsNode.get(i);
-                    if (!node.isObject()) {
-                        return Optional.empty();
-                    }
-                    String optionText = node.path("text").asText("");
-                    options.add(new QuestionOption(
-                            optionIdByIndex(i),
-                            optionText,
-                            node.path("correct").asBoolean(false),
-                            ""
-                    ));
+            if (!optionsNode.isArray()) {
+                return Optional.empty();
+            }
+            for (int i = 0; i < optionsNode.size(); i++) {
+                JsonNode node = optionsNode.get(i);
+                if (!node.isObject()) {
+                    return Optional.empty();
                 }
+                String optionText = node.path("text").asText("").trim();
+                if (optionText.isBlank()) {
+                    return Optional.empty();
+                }
+                options.add(new QuestionOption(
+                        optionIdByIndex(i),
+                        optionText,
+                        node.path("correct").asBoolean(false),
+                        ""
+                ));
             }
 
             QuestionType resolvedType = type == null ? QuestionType.CONCEPT : type;
