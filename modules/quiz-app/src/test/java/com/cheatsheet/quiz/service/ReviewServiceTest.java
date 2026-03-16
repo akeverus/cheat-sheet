@@ -4,6 +4,8 @@ import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
+import com.cheatsheet.quiz.feature.interview.service.review.ReviewService;
+import com.cheatsheet.quiz.feature.interview.service.review.SpacedRepetitionService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.persistence.UserTopicStatsRepository;

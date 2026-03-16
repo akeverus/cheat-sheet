@@ -1,6 +1,9 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.response.NextQuestionResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse;
+import com.cheatsheet.quiz.feature.interview.mapper.NextQuestionResponseMapper;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.usecase.NextQuestionApiService;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
@@ -34,7 +37,7 @@ class NextQuestionApiServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new NextQuestionApiService(facade);
+        service = new NextQuestionApiService(facade, new NextQuestionResponseMapper());
     }
 
     @Test

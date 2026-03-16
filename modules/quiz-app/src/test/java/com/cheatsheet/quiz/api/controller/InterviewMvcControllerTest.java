@@ -1,9 +1,10 @@
 package com.cheatsheet.quiz.api.controller;
 
-import com.cheatsheet.quiz.api.dto.request.StartSessionRequest;
-import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
-import com.cheatsheet.quiz.service.InterviewFlowMvcService;
-import com.cheatsheet.quiz.service.InterviewPageMvcService;
+import com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest;
+import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
+import com.cheatsheet.quiz.feature.interview.controller.InterviewMvcController;
+import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewFlowMvcService;
+import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewPageMvcService;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,11 @@
 package com.cheatsheet.quiz.service.admin;
 
-import com.cheatsheet.quiz.service.ai.SeniorInterviewRuleRegistry;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import com.cheatsheet.quiz.service.ai.profile.SeniorInterviewRuleRegistry;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import lombok.Builder;
 
 import java.util.List;
 import java.util.Map;
@@ -10,6 +14,8 @@ import java.util.Map;
  * Сервис управления переопределениями приоритетов Senior-правил.
  */
 @Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdminSeniorRulesService {
     private static final List<String> RULE_KEYS = List.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
     private static final List<SeniorInterviewRuleRegistry.RuleInfo> RULE_CATALOG =
@@ -17,14 +23,6 @@ public class AdminSeniorRulesService {
 
     private final SeniorRulePriorityOverrideStore overrideStore;
     private final SeniorRuleOverridePayloadProcessor payloadProcessor;
-
-    public AdminSeniorRulesService(
-            SeniorRulePriorityOverrideStore overrideStore,
-            SeniorRuleOverridePayloadProcessor payloadProcessor
-    ) {
-        this.overrideStore = overrideStore;
-        this.payloadProcessor = payloadProcessor;
-    }
 
     public Map<String, Integer> getOverridesSorted() {
         return overrideStore.snapshotSorted();
@@ -95,21 +93,27 @@ public class AdminSeniorRulesService {
         return new DeleteResult(normalizedKey, deleted, sorted, sorted.size());
     }
 
+    @Builder(toBuilder = true)
     public record PatchResult(Map<String, Integer> overrides, int size, int applied, int removed) {
     }
 
+    @Builder(toBuilder = true)
     public record DeleteResult(String key, boolean deleted, Map<String, Integer> overrides, int size) {
     }
 
+    @Builder(toBuilder = true)
     public record OverridesPayload(Map<String, Integer> overrides, int size) {
     }
 
+    @Builder(toBuilder = true)
     public record ReplaceResult(Map<String, Integer> overrides, int size) {
     }
 
+    @Builder(toBuilder = true)
     public record KeysPayload(List<String> keys, int size, String prefix, String q) {
     }
 
+    @Builder(toBuilder = true)
     public record CatalogPayload(List<SeniorInterviewRuleRegistry.RuleInfo> rules, int size, String prefix, String q) {
     }
 

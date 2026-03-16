@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service.admin;
 
-import com.cheatsheet.quiz.service.ai.SeniorInterviewRuleRegistry;
+import com.cheatsheet.quiz.service.ai.profile.SeniorInterviewRuleRegistry;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -12,9 +14,10 @@ import java.util.Set;
  * Нормализация и валидация payload-ов override-приоритетов Senior-правил.
  */
 @Component
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SeniorRuleOverridePayloadProcessor {
 
-    private final Set<String> allowedRuleKeys = Set.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
+    Set<String> allowedRuleKeys = Set.copyOf(SeniorInterviewRuleRegistry.listRuleKeys());
 
     public Map<String, Integer> normalizeAndValidateReplace(Map<String, Integer> payload) {
         Map<String, Integer> safePayload = payload == null ? Map.of() : payload;

@@ -6,10 +6,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.cheatsheet.quiz.api.controller.ExportController;
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
-import com.cheatsheet.quiz.service.ExportApiService;
+import com.cheatsheet.quiz.feature.export.controller.ExportController;
+import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.feature.export.usecase.ExportApiService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

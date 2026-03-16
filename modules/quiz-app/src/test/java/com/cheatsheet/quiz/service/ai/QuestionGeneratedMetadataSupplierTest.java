@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service.ai;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
+import com.cheatsheet.quiz.feature.question.engine.metadata.QuestionGeneratedMetadataSupplier;
+import com.cheatsheet.quiz.feature.question.engine.model.GeneratedQuestionMetadata;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

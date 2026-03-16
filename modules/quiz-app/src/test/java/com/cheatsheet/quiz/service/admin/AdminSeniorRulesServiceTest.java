@@ -1,6 +1,6 @@
 package com.cheatsheet.quiz.service.admin;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

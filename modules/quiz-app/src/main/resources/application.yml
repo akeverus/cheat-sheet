@@ -33,35 +33,22 @@ app:
 
   # --- Параметры тестирования ---
   interview:
-    options-count: 4              # количество вариантов ответа
     learned-repetitions: 3        # порог «выучено»
     exam-penalty-questions: 5     # штрафные вопросы при ошибке в экзамене
-    max-option-length: 1000       # лимит только для извлечения short-answer из markdown (не quality-гейт AI-вариантов)
     expand-per-source: 0          # число дополнительных формулировок из одного источника (0 = отключено)
     max-session-count: 200        # максимум вопросов в сессии (защита от DoS)
     reset-on-startup: ${INTERVIEW_RESET_ON_STARTUP:false}  # очищать варианты ответов при старте (для перегенерации через AI)
     default-exam-count: 20       # дефолтное число вопросов в экзамене
     default-marathon-count: 50   # дефолтное число вопросов в марафоне
-    min-sentence-dot-position: 20 # минимальная позиция точки для обрезки по предложению (AnswerTextService)
     default-daily-goal: 10         # цель на день для streak-бара
     senior-rule-priority-overrides: {} # пример: {spring-transactional: 5, sql-null-semantics: 4}
-    question-min-quality-score: 70
-    question-max-text-length: 280
-    question-max-options-total-text-length: 520
-    question-generation-max-attempts: 3
-    question-uniqueness-window-minutes: 120
-    question-uniqueness-max-fingerprints-per-key: 200
-    question-near-duplicate-similarity-threshold: 0.82
 
   # --- Общие настройки AI-запросов ---
   ai:
     timeout-seconds: 60
-    max-retries: 3
-    retry-backoff-seconds: 2
     max-input-length: 10000       # максимальная длина ввода в AI (символов)
     question-preview-length: 60  # длина превью вопроса в логах
     answer-preview-length: 500   # длина превью ответа при передаче в AI
-    correct-preview-length: 80   # длина превью правильного ответа в логах
 
   # --- DeepSeek ---
   deepseek:
@@ -88,6 +75,7 @@ app:
     sleep-ms: 200
     max-queue-size: 50
     max-queues: 20
+    startup-preload: ${PRELOAD_STARTUP_PRELOAD:true}
     full-warmup: ${PRELOAD_FULL_WARMUP:true}
     warmup-limit: ${PRELOAD_WARMUP_LIMIT:0} # 0 = все вопросы, >0 = только первые N (тестовый режим)
     test-mode: ${PRELOAD_TEST_MODE:false}   # true + warmup-limit=0 => автолимит 10 вопросов

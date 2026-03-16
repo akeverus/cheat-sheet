@@ -1,8 +1,10 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse;
-import com.cheatsheet.quiz.api.dto.response.TopicStatsResponse;
-import com.cheatsheet.quiz.api.mapper.StatsApiMapper;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse;
+import com.cheatsheet.quiz.api.mapper.response.StatsApiMapper;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.StatsApiService;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.TopicStats;

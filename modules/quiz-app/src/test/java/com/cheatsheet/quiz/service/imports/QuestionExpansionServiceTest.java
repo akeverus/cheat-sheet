@@ -1,12 +1,12 @@
 package com.cheatsheet.quiz.service.imports;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
-import com.cheatsheet.quiz.service.ai.OptionGenerator;
+import com.cheatsheet.quiz.service.ai.AiQuestionClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ class QuestionExpansionServiceTest {
     @Mock
     private FullTextSearchRepository fullTextSearchRepository;
     @Mock
-    private OptionGenerator optionGenerator;
+    private AiQuestionClient aiQuestionClient;
 
     private QuestionExpansionService service;
 
@@ -50,7 +50,7 @@ class QuestionExpansionServiceTest {
                 questionRepository,
                 reviewStateRepository,
                 fullTextSearchRepository,
-                optionGenerator,
+                aiQuestionClient,
                 properties,
                 fixedClock
         );
@@ -59,7 +59,7 @@ class QuestionExpansionServiceTest {
     @Test
     void expandFromBaseCreatesMissingVariantsOnly() {
         Question base = baseQuestion();
-        when(optionGenerator.generateAlternativeQuestions(base.questionText(), base.answerMarkdown(), 2))
+        when(aiQuestionClient.generateAlternativeQuestions(base.questionText(), base.answerMarkdown(), 2))
                 .thenReturn(Optional.of(List.of("Вариант 1", "Вариант 2")));
         when(questionRepository.findBySlug("topic/file.md#Q1-v1"))
                 .thenReturn(Optional.of(base));
@@ -80,7 +80,7 @@ class QuestionExpansionServiceTest {
     @Test
     void expandFromBaseSkipsWhenAlternativesAreEmpty() {
         Question base = baseQuestion();
-        when(optionGenerator.generateAlternativeQuestions(base.questionText(), base.answerMarkdown(), 2))
+        when(aiQuestionClient.generateAlternativeQuestions(base.questionText(), base.answerMarkdown(), 2))
                 .thenReturn(Optional.of(List.of()));
 
         int created = service.expandFromBase(base, "topic/file", "topic/file.md");

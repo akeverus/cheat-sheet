@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.response.HintResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.usecase.HintApiService;
 import com.cheatsheet.quiz.domain.Hint;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import org.junit.jupiter.api.BeforeEach;

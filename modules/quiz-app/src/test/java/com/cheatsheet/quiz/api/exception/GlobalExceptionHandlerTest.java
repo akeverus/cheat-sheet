@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.api.exception;
 
-import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.exception.GlobalExceptionHandler;
+import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
 import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import jakarta.validation.Valid;
@@ -8,12 +10,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Controller;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,7 +38,8 @@ class GlobalExceptionHandlerTest {
                         new ApiAiErrorController(),
                         new ApiAdminValidationController(),
                         new ApiTypeMismatchController(),
-                        new ApiConflictController()
+                        new ApiConflictController(),
+                        new FaviconController()
                 )
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -92,6 +98,12 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.message").value("Конфликт данных, обновите страницу и повторите действие"));
     }
 
+    @Test
+    void faviconMissingReturnsNoContentWithoutServerError() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/favicon.ico"))
+                .andExpect(status().isNoContent());
+    }
+
     @RestController
     static class ApiValidationController {
         @PostMapping("/api/test/validation")
@@ -140,6 +152,14 @@ class GlobalExceptionHandlerTest {
         @PostMapping("/api/test/conflict")
         String fail() {
             throw new DataIntegrityViolationException("duplicate key");
+        }
+    }
+
+    @RestController
+    static class FaviconController {
+        @GetMapping("/favicon.ico")
+        String fail() throws NoResourceFoundException {
+            throw new NoResourceFoundException(HttpMethod.GET, "/favicon.ico");
         }
     }
 }

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
+<body class="result-page">
+<a class="skip-link" href="#main-content">Перейти к результату</a>
+<header th:replace="~{fragments/header :: header(pageTitle='Результат — Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=true)}"></header>
+<main id="main-content">
+<!-- Stats + Session — compact top row -->
+<div class="top-row">
+    <section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
+
+    <section class="card flex-shrink-0" th:if="${interviewSession != null}">
+        <div class="session-bar">
+            <span>Сессия: <strong th:text="${interviewSession.mode}">MODE</strong></span>
+            <span>Прогресс: <span th:text="${(interviewSession != null ? interviewSession.getIndex() : 0) + 1}">1</span>/<span th:text="${interviewSession != null ? interviewSession.getTotal() : 0}">0</span></span>
+            <span>✅ <span th:text="${interviewSession != null ? interviewSession.getCorrect() : 0}">0</span></span>
+            <span>❌ <span th:text="${interviewSession != null ? interviewSession.getWrong() : 0}">0</span></span>
+            <form method="post" th:action="@{/finish}" class="d-inline">
+                <button type="submit" class="btn-finish">Завершить</button>
+            </form>
+        </div>
+    </section>
+</div>
+
+<!-- Result card — fills remaining space -->
+<section class="card" id="interview-card">
+    <div class="question-layout" th:classappend="${diagram != null or (result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null)} ? ' has-side' : ''">
+        <div class="question-main flow-stack-md">
+            <div class="question-header">
+                <h2>
+                    <span th:text="${result.question.questionText}">Вопрос</span>
+                </h2>
+                <div class="question-meta">
+                    <button type="button" class="btn-favorite" id="btn-favorite"
+                            th:classappend="${result.question.important} ? 'active'"
+                            th:data-question-id="${result.question.id}"
+                            th:attr="aria-pressed=${result.question.important}"
+                            th:title="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"
+                            th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'">★</button>
+                    <span class="topic-badge" th:if="${result.question.topic != null}"
+                          th:text="${@topicUtils.displayName(result.question.topic)}">topic</span>
+                    <button type="button" class="btn-regenerate" title="Удалить варианты и перегенерировать через LLM"
+                            th:data-question-id="${result.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа">🔄</button>
+                    <span th:if="${result.question.regenCount() > 0}" class="regen-badge"
+                          th:text="${result.question.regenCount()}"
+                          th:title="'Перегенерировано ' + ${result.question.regenCount()} + ' раз'">0</span>
+                </div>
+            </div>
+
+            <p class="status" th:text="${result.correctAnswer} ? '✅ Верно!' : '❌ Неверно'">Статус</p>
+
+            <div class="options" role="list" aria-label="Варианты ответа (результат)">
+                <label th:each="opt : ${result.options}"
+                       role="listitem"
+                       th:classappend="${opt.id == result.correct.id} ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-other')"
+                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Ваш ответ: ' : '')) + opt.optionText}">
+                    <span th:text="${opt.optionText}">Вариант</span>
+                    <span th:if="${opt.id == result.correct.id}" class="option-status-label option-status-correct">Правильный ответ</span>
+                    <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Ваш выбор</span>
+                    <div th:if="${opt.explanation != null}"
+                         th:class="${opt.correct} ? 'option-explanation explanation-correct' : 'option-explanation explanation-wrong'"
+                         th:text="${opt.explanation}">Объяснение</div>
+                </label>
+            </div>
+
+            <div>
+                <h3>📖 Пояснение</h3>
+                <div class="answer markdown-content" th:utext="${answerHtml}"></div>
+            </div>
+
+            <div th:replace="~{fragments/result-zone-head :: result-zone-head(
+                id='result-zone-head-main',
+                chipText='Разбор ответа',
+                hintText='Полный ответ и пояснение доступны сразу, доп. анализ — по кнопке',
+                hidden=false
+            )}"></div>
+            <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
+            <div class="result-actions">
+                <a class="btn next-btn"
+                   th:href="@{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
+                    Следующий вопрос →
+                </a>
+                <button type="button"
+                        id="extra-analysis-toggle-result"
+                        class="btn secondary-btn"
+                        th:attr="data-question-id=${result.question.id},data-selected-option-id=${result.selected.id},data-correct=${result.correctAnswer}">
+                    Показать доп. анализ
+                </button>
+            </div>
+            <div id="result-extra-analysis" class="result-feedback hidden" aria-live="polite"></div>
+
+            <div th:if="${interviewSession != null and interviewSession.finished}" class="mt-3 text-center">
+                <strong>🏁 Сессия завершена!</strong>
+            </div>
+        </div>
+
+        <div class="question-side" th:if="${diagram != null or (result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null)}">
+            <div th:if="${diagram != null}" class="question-diagram">
+                <div class="mermaid" th:text="${diagram}">diagram code</div>
+            </div>
+            <pre th:if="${result.question.questionType != null and result.question.questionType.name() == 'CODE' and result.question.codeSnippet() != null}" class="question-code"><code th:text="${result.question.codeSnippet()}">код</code></pre>
+        </div>
+    </div>
+</section>
+
+<script th:src="@{/js/app.js}"></script>
+
+<!-- Связанные вопросы -->
+<div th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block">
+    <div class="related-questions-title">🔗 Похожие вопросы для закрепления:</div>
+    <a th:each="rq : ${relatedQuestions}" class="related-question-item"
+       th:href="@{/(topic=${rq.topic()},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}"
+       th:text="${rq.questionText()}">
+    </a>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,21 @@
+---
+title: "Графы"
+description: "Алгоритмы и инструменты для графов: BFS, Dijkstra и библиотека JGraphT."
+tags: ["meta", "index"]
+type: "index"
+updated: "2026-02-11"
+---
+# Графы
+
+Алгоритмы и инструменты для графов: BFS, Dijkstra и библиотека JGraphT.
+
+## Полезные ссылки
+
+[Graphs](./)
+
+## Содержание
+
+- [BFS (поиск в ширину)](bfs.md)
+- [Алгоритм Дейкстры](dijkstra.md)
+- [JGraphT](jgrapht.md)
+

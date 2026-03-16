@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<script th:fragment="mermaid-init">
+    mermaid.initialize({startOnLoad: false, theme: 'neutral', securityLevel: 'loose'});
+    document.addEventListener('DOMContentLoaded', async function() {
+        var els = document.querySelectorAll('.mermaid');
+        for (var i = 0; i < els.length; i++) {
+            var container = els[i].closest('.question-diagram');
+            if (!container) continue;
+            try {
+                var id = 'mmd-' + Math.random().toString(36).slice(2);
+                var res = await mermaid.render(id, els[i].textContent);
+                els[i].innerHTML = res.svg;
+                var svg = els[i].querySelector('svg');
+                if (svg) {
+                    svg.removeAttribute('height');
+                    svg.style.width = '100%';
+                    svg.style.height = 'auto';
+                    svg.style.maxHeight = '100%';
+                }
+            } catch (e) {
+                container.remove();
+                /* mermaid may leave orphan error divs */
+                document.querySelectorAll('[id^="dmmd-"]').forEach(function(n){n.remove()});
+                document.querySelectorAll('.error-icon').forEach(function(n){
+                    var p = n.closest('div'); if(p) p.remove();
+                });
+            }
+        }
+    });
+</script>
+</head>
+</html>

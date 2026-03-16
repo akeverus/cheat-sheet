@@ -1,8 +1,11 @@
 package com.cheatsheet.quiz.api.security;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
-import com.cheatsheet.quiz.config.AppProperties;
+import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +26,8 @@ import java.util.Arrays;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SensitiveEndpointAccessService {
 
     public static final String ADMIN_TOKEN_HEADER = "X-Admin-Token";
@@ -34,16 +39,6 @@ public class SensitiveEndpointAccessService {
     private final AppProperties appProperties;
     private final Environment environment;
     private final RequestRateLimiter requestRateLimiter;
-
-    public SensitiveEndpointAccessService(
-            AppProperties appProperties,
-            Environment environment,
-            RequestRateLimiter requestRateLimiter
-    ) {
-        this.appProperties = appProperties;
-        this.environment = environment;
-        this.requestRateLimiter = requestRateLimiter;
-    }
 
     @PostConstruct
     void validateProductionTokenConfiguration() {

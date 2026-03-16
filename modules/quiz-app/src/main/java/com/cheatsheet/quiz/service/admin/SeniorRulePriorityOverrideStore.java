@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service.admin;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,9 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Потокобезопасное runtime-хранилище override-приоритетов Senior-правил.
  */
 @Component
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SeniorRulePriorityOverrideStore {
 
-    private final ConcurrentHashMap<String, Integer> overrides;
+    ConcurrentHashMap<String, Integer> overrides;
 
     public SeniorRulePriorityOverrideStore(AppProperties appProperties) {
         AppProperties.Interview interview = appProperties.getInterview();

@@ -1,7 +1,7 @@
 package com.cheatsheet.quiz.api.security;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

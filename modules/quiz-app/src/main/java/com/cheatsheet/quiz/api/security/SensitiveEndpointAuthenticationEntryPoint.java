@@ -1,6 +1,9 @@
 package com.cheatsheet.quiz.api.security;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
+import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import com.cheatsheet.quiz.common.model.ApiError;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,18 +19,12 @@ import java.io.IOException;
  * Возвращает JSON-ошибку авторизации для чувствительных API endpoint.
  */
 @Component
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SensitiveEndpointAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;
     private final SensitiveEndpointAccessService accessService;
-
-    public SensitiveEndpointAuthenticationEntryPoint(
-            ObjectMapper objectMapper,
-            SensitiveEndpointAccessService accessService
-    ) {
-        this.objectMapper = objectMapper;
-        this.accessService = accessService;
-    }
 
     @Override
     public void commence(

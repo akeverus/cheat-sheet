@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
+import com.cheatsheet.quiz.feature.interview.service.core.PreloadService;
+import com.cheatsheet.quiz.infrastructure.bootstrap.StartupRunner;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.cheatsheet.quiz.service.imports.QuestionImportService;

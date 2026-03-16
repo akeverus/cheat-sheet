@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.response.StreakResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse;
+import com.cheatsheet.quiz.feature.interview.service.progress.DailyStreakService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.StreakApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

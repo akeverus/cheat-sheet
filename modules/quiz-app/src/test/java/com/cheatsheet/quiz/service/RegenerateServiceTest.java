@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
+import com.cheatsheet.quiz.feature.admin.service.RegenerateService;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.HintRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;

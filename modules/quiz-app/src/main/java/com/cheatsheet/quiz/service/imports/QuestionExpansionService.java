@@ -1,11 +1,14 @@
 package com.cheatsheet.quiz.service.imports;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
-import com.cheatsheet.quiz.service.ai.OptionGenerator;
+import com.cheatsheet.quiz.service.ai.AiQuestionClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -23,30 +26,16 @@ import java.util.Optional;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class QuestionExpansionService {
 
     private final QuestionRepository questionRepository;
     private final ReviewStateRepository reviewStateRepository;
     private final FullTextSearchRepository fullTextSearchRepository;
-    private final OptionGenerator optionGenerator;
+    private final AiQuestionClient aiQuestionClient;
     private final AppProperties appProperties;
     private final Clock clock;
-
-    public QuestionExpansionService(
-            QuestionRepository questionRepository,
-            ReviewStateRepository reviewStateRepository,
-            FullTextSearchRepository fullTextSearchRepository,
-            OptionGenerator optionGenerator,
-            AppProperties appProperties,
-            Clock clock
-    ) {
-        this.questionRepository = questionRepository;
-        this.reviewStateRepository = reviewStateRepository;
-        this.fullTextSearchRepository = fullTextSearchRepository;
-        this.optionGenerator = optionGenerator;
-        this.appProperties = appProperties;
-        this.clock = clock;
-    }
 
     /**
      * Создаёт дополнительные варианты вопроса на основе LLM-генерации.
@@ -66,7 +55,7 @@ public class QuestionExpansionService {
             return 0;
         }
 
-        Optional<List<String>> alternativeQuestions = optionGenerator.generateAlternativeQuestions(
+        Optional<List<String>> alternativeQuestions = aiQuestionClient.generateAlternativeQuestions(
                 baseQuestion.questionText(),
                 baseQuestion.answerMarkdown(),
                 expandCount

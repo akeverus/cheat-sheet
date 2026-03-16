@@ -1,9 +1,12 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
+import com.cheatsheet.quiz.feature.interview.service.core.PreloadService;
+import com.cheatsheet.quiz.feature.interview.service.core.TrainingSessionService;
+import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.UserTopicStatsRepository;
 import com.cheatsheet.quiz.persistence.model.UserTopicStats;

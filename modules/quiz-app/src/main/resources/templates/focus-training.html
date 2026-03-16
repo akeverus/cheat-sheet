@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
+<body class="focus-page">
+<a class="skip-link" href="#main-content">Перейти к вопросу</a>
+<header th:replace="~{fragments/header :: header(pageTitle='Подготовка к собеседованию', statsPage=false, activePage='focus', showPrimaryNav=false)}"></header>
+
+<main id="main-content">
+    <section class="surface-toolbar card" aria-label="Режимы экрана">
+        <div th:replace="~{fragments/focus-surface-tabs :: focus-surface-tabs}"></div>
+    </section>
+    <section class="focus-training card" th:if="${current != null}">
+        <div class="focus-progress-line">
+            <span th:if="${interviewSession != null}">
+                <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
+            </span>
+            <span th:if="${reviewMode}">Режим review: только вопросы с ошибками</span>
+        </div>
+        <div class="session-progress-track"
+             role="progressbar"
+             aria-label="Прогресс сессии"
+             th:attr="aria-valuemin=0,aria-valuemax=${interviewSession != null ? interviewSession.getTotal() : 0},aria-valuenow=${interviewSession != null ? interviewSession.getIndex() + 1 : 0}">
+            <div class="session-progress-fill"
+                 th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></div>
+        </div>
+
+        <div class="question-zone-head">
+            <span class="zone-chip" th:text="${focusModeChipText}">Focus mode</span>
+            <span class="zone-hint" id="options-flow-hint" th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</span>
+        </div>
+        <h2 class="focus-question" th:text="${current.question.questionText}">Вопрос</h2>
+
+        <div class="question-code-wrap"
+             th:if="${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()}">
+            <button type="button" class="btn secondary-btn" id="toggle-code-btn">Показать пример</button>
+            <div id="codeBlock" class="hidden">
+                <pre th:text="${current.question.codeSnippet()}"></pre>
+            </div>
+        </div>
+
+        <form method="post" th:action="@{/answer}" id="interview-form">
+            <input type="hidden" name="questionId" th:value="${current.question.id}">
+            <input type="hidden" name="topic" th:value="${filter?.topic}">
+            <input type="hidden" name="group" th:value="${selectedGroup}">
+            <input type="hidden" name="important" th:if="${filter?.importantOnly}" value="true">
+            <input type="hidden" name="onlyWrong" th:if="${filter?.onlyWrong}" value="true">
+            <input type="hidden" name="shuffle" th:if="${filter?.shuffle}" value="true">
+            <input type="hidden" name="weakTopics" th:if="${weakTopics}" value="true">
+            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+
+            <div class="options" id="interview-options" role="radiogroup" aria-label="Варианты ответа" aria-describedby="options-flow-hint">
+                <label th:each="opt, iterStat : ${current.options}"
+                       th:data-option-id="${opt.id}"
+                       th:aria-label="${'Вариант ' + (iterStat.index + 1) + ': ' + opt.optionText}">
+                    <input type="radio"
+                           name="optionId"
+                           th:value="${opt.id}"
+                           required>
+                    <span th:text="${opt.optionText}">Вариант</span>
+                </label>
+            </div>
+            <div th:replace="~{fragments/training-actions :: training-actions(
+                submitId='interview-submit',
+                submitText='Проверить ответ',
+                submitDisabled=false,
+                submitTitle='Клавиши 1–9 — выбор, Enter — ответить',
+                hintText='⌨ 1-9 — выбор, ↑/↓ — навигация, Enter — отправка'
+            )}"></div>
+        </form>
+
+        <div th:replace="~{fragments/result-zone-head :: result-zone-head(
+            id='answer-flow-hint',
+            chipText='Пост-разбор',
+            hintText='Сначала итог, затем объяснение и дополнительные блоки',
+            hidden=true
+        )}"></div>
+        <div th:replace="~{fragments/post-answer-controls :: post-answer-controls(
+            extraButtonText='Показать доп. анализ'
+        )}"></div>
+    </section>
+
+    <section class="card empty empty-card-inner" th:if="${current == null}">
+        <h2 class="empty-title">Вопросы временно недоступны</h2>
+        <p class="empty-description" th:if="${generationUnavailable}">AI временно недоступен. Обнови страницу через несколько секунд.</p>
+        <p class="empty-description" th:if="${reviewMode}">Нет вопросов с ошибками для review.</p>
+        <p class="empty-description" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам.</p>
+        <p class="empty-description" th:if="${!reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
+        <p class="empty-description" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}">🏁 Сессия завершена.</p>
+        <div class="empty-actions">
+            <a class="btn secondary-btn empty-action-settings" th:href="@{/settings}">Открыть настройки</a>
+            <a class="btn empty-action-retry" th:href="${focusEmptyRetryHref}" th:text="${focusEmptyRetryText}">Обновить тренировку</a>
+        </div>
+    </section>
+</main>
+
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>

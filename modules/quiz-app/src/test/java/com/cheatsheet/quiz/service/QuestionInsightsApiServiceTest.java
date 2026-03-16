@@ -1,9 +1,11 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.response.CodeTraceResponse;
-import com.cheatsheet.quiz.api.dto.response.ComparisonResponse;
-import com.cheatsheet.quiz.api.dto.response.TakeawayResponse;
-import com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.usecase.QuestionInsightsApiService;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,18 +1,22 @@
 package com.cheatsheet.quiz.service.imports;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.Question;
-import com.cheatsheet.quiz.util.InterviewPathResolver;
+import com.cheatsheet.quiz.common.util.InterviewPathResolver;
 import org.apache.commons.lang3.StringUtils;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
-import com.cheatsheet.quiz.service.ai.OptionGenerator;
+import com.cheatsheet.quiz.service.ai.AiQuestionClient;
 import com.cheatsheet.quiz.service.cache.OptionCache;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import lombok.Builder;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,6 +41,8 @@ import java.util.Set;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class QuestionImportService {
 
     private final InterviewPathResolver interviewPathResolver;
@@ -49,36 +55,8 @@ public class QuestionImportService {
     private final MarkdownQuestionParser parser;
     private final HashingService hashingService;
     private final QuestionExpansionService questionExpansionService;
-    private final OptionGenerator optionGenerator;
+    private final AiQuestionClient aiQuestionClient;
     private final TransactionTemplate transactionTemplate;
-
-    public QuestionImportService(
-            InterviewPathResolver interviewPathResolver,
-            QuestionRepository questionRepository,
-            AnswerOptionRepository answerOptionRepository,
-            ReviewStateRepository reviewStateRepository,
-            FullTextSearchRepository fullTextSearchRepository,
-            OptionCache optionCache,
-            Clock clock,
-            MarkdownQuestionParser parser,
-            HashingService hashingService,
-            QuestionExpansionService questionExpansionService,
-            OptionGenerator optionGenerator,
-            TransactionTemplate transactionTemplate
-    ) {
-        this.interviewPathResolver = interviewPathResolver;
-        this.questionRepository = questionRepository;
-        this.answerOptionRepository = answerOptionRepository;
-        this.reviewStateRepository = reviewStateRepository;
-        this.fullTextSearchRepository = fullTextSearchRepository;
-        this.optionCache = optionCache;
-        this.clock = clock;
-        this.parser = parser;
-        this.hashingService = hashingService;
-        this.questionExpansionService = questionExpansionService;
-        this.optionGenerator = optionGenerator;
-        this.transactionTemplate = transactionTemplate;
-    }
 
     /**
      * Импортирует все markdown-файлы из директории {@code app.interview-path}.
@@ -197,7 +175,7 @@ public class QuestionImportService {
             MarkdownQuestionParser.ParsedQuestion parsed,
             String relativePath
     ) {
-        Optional<OptionGenerator.CanonicalQuestion> canonical = optionGenerator.canonicalizeQuestion(
+        Optional<AiQuestionClient.CanonicalQuestion> canonical = aiQuestionClient.canonicalizeQuestion(
                 parsed.questionText(),
                 parsed.answerMarkdown(),
                 relativePath
@@ -207,7 +185,7 @@ public class QuestionImportService {
                     relativePath, parsed.questionNumber());
             return Optional.of(parsed);
         }
-        OptionGenerator.CanonicalQuestion value = canonical.get();
+        AiQuestionClient.CanonicalQuestion value = canonical.get();
         QuestionType questionType = resolveQuestionType(parsed, value, relativePath);
         return Optional.of(new MarkdownQuestionParser.ParsedQuestion(
                 parsed.questionNumber(),
@@ -221,7 +199,7 @@ public class QuestionImportService {
 
     private QuestionType resolveQuestionType(
             MarkdownQuestionParser.ParsedQuestion parsed,
-            OptionGenerator.CanonicalQuestion canonical,
+            AiQuestionClient.CanonicalQuestion canonical,
             String relativePath
     ) {
         QuestionType parserType = parsed.questionType() == null ? QuestionType.TEXT : parsed.questionType();
@@ -298,6 +276,7 @@ public class QuestionImportService {
     }
 
     /** Результат импорта одного файла. */
+    @Builder(toBuilder = true)
     private record ImportResult(int inserted, int updated, int unchanged) {}
 
     /** Результат вставки/обновления одного вопроса. */

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Статистика — Подготовка к собеседованию', includeMermaid=false, includeChart=true)}"></head>
+<body class="stats-page">
+<header th:replace="~{fragments/header :: header(pageTitle='Подготовка к собеседованию', statsPage=true, activePage='analytics', showPrimaryNav=true)}"></header>
+<main>
+<div class="app-layout">
+<div class="main-content">
+<!-- Поиск + фильтр -->
+<section class="card stats-filter-card">
+    <div class="stats-filter-row">
+        <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1">
+            <label>
+                Группа:
+                <select name="group">
+                    <option value="">Все</option>
+                    <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
+                            th:value="${group.id()}"
+                            th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
+                            th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
+                </select>
+            </label>
+            <label>
+                Тема:
+                <select name="topic">
+                    <option value="">Все</option>
+                    <option th:each="topic : ${topics}" th:value="${topic}"
+                            th:text="${@topicUtils.displayName(topic)}" th:title="${topic}"
+                            th:selected="${filter.topic} == ${topic}"></option>
+                </select>
+            </label>
+            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+            <label><input type="checkbox" name="important" value="true" th:checked="${filter.importantOnly}"> ★ Избранные</label>
+            <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter.onlyWrong}"> Ошибки</label>
+            <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
+        </form>
+        <form method="get" th:action="@{/stats}" class="search-form stats-search-form flex-1">
+            <input type="hidden" name="topic" th:value="${filter?.topic}">
+            <input type="hidden" name="group" th:value="${selectedGroup}">
+            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+            <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
+            <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
+            <input type="text" name="q" placeholder="🔍 Поиск по вопросам..." th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам">
+            <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
+        </form>
+    </div>
+</section>
+
+<!-- Результаты поиска -->
+<section class="card" th:if="${searchResults != null and !#lists.isEmpty(searchResults)}">
+    <h3 class="mt-0">Результаты поиска</h3>
+    <div class="search-results">
+        <div th:each="item : ${searchResults}" class="search-result-item">
+            <div class="search-question"><strong th:text="${item.questionText}">Вопрос</strong></div>
+            <div class="muted" th:text="${item.topic}">Тема</div>
+            <div class="search-answer-preview" th:text="${item.answerPreview}">Превью</div>
+            <a th:href="@{/(topic=${item.topic != null ? item.topic : ''}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false}, important=${filter != null and filter.importantOnly == true}, onlyWrong=${filter != null and filter.onlyWrong == true})}">Перейти к теме →</a>
+        </div>
+    </div>
+</section>
+
+<!-- Общая статистика -->
+<section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
+
+<!-- Графики -->
+<div class="charts-row" th:if="${topicStats != null and !topicStats.isEmpty()}">
+    <section class="card chart-card">
+        <h3 class="mt-0">Прогресс по темам</h3>
+        <div class="chart-wrapper">
+            <canvas id="topicProgressChart"></canvas>
+            <p id="topicProgressChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
+                График временно недоступен. Таблица ниже содержит те же данные.
+            </p>
+        </div>
+    </section>
+    <section class="card chart-card">
+        <h3 class="mt-0">Точность по темам</h3>
+        <div class="chart-wrapper">
+            <canvas id="topicAccuracyChart"></canvas>
+            <p id="topicAccuracyChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
+                График временно недоступен. Таблица ниже содержит те же данные.
+            </p>
+        </div>
+    </section>
+</div>
+
+<!-- Таблица тем -->
+<section class="card overflow-x-auto" th:if="${topicStats != null and !topicStats.isEmpty()}">
+    <h3 class="mt-0">Детализация по темам</h3>
+    <table class="topic-table" id="topic-table">
+        <caption class="visually-hidden">Статистика по темам</caption>
+        <thead>
+        <tr>
+            <th class="sortable" data-col="0" data-sort-label="Тема" role="columnheader" aria-sort="none" tabindex="0" aria-keyshortcuts="Enter Space" aria-label="Сортировать по колонке: Тема">Тема</th>
+            <th class="sortable w-60" data-col="1" data-sort-label="Всего" role="columnheader" aria-sort="none" tabindex="0" aria-keyshortcuts="Enter Space" aria-label="Сортировать по колонке: Всего">Всего</th>
+            <th class="min-w-140" role="columnheader">Прогресс</th>
+            <th class="sortable w-80" data-col="3" data-sort-label="Точность" role="columnheader" aria-sort="none" tabindex="0" aria-keyshortcuts="Enter Space" aria-label="Сортировать по колонке: Точность">Точность</th>
+            <th class="sortable w-50" data-col="4" data-sort-label="Перезагрузки" title="Перезагрузки" role="columnheader" aria-sort="none" tabindex="0" aria-keyshortcuts="Enter Space" aria-label="Сортировать по колонке: Перезагрузки">🔄</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${topicStats}">
+            <td class="topic-name">
+                <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
+                   th:text="${@topicUtils.displayName(item.topic)}"
+                   th:title="${item.topic}">topic</a>
+            </td>
+            <td th:text="${item.total}" class="text-center">0</td>
+            <td>
+                <div class="topic-progress-bar">
+                    <div class="topic-progress-learned"
+                         th:attr="data-progress=${item.total != 0 ? (item.learned * 100.0 / item.total) : 0}"
+                         th:title="'Выучено: ' + ${item.learned}"></div>
+                    <div class="topic-progress-due"
+                         th:attr="data-progress=${item.total != 0 ? (item.due * 100.0 / item.total) : 0}"
+                         th:title="'К повтору: ' + ${item.due}"></div>
+                </div>
+                <span class="topic-progress-label"
+                      th:text="${item.learned} + '/' + ${item.total}">0/0</span>
+            </td>
+            <td class="accuracy-cell text-center"
+                th:classappend="${(item.correct + item.wrong) > 0 ?
+                    ((item.correct * 100.0 / (item.correct + item.wrong)) >= 80 ? 'accuracy-high' :
+                     ((item.correct * 100.0 / (item.correct + item.wrong)) >= 50 ? 'accuracy-mid' : 'accuracy-low'))
+                    : ''}">
+                <span th:text="${(item.correct + item.wrong) == 0 ? '—' : #numbers.formatDecimal((item.correct * 100.0) / (item.correct + item.wrong), 1, 1) + '%'}">0%</span>
+            </td>
+            <td class="text-center">
+                <span th:if="${item.regenSum() > 0}" class="regen-badge" th:text="${item.regenSum()}">0</span>
+                <span th:if="${item.regenSum() == 0}" class="muted">—</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+</section>
+</div>
+</div>
+</main>
+
+<script type="application/json" id="topic-stats-data" th:inline="text">[[${topicStatsJson}]]</script>
+<script th:src="@{/js/stats.js}"></script>
+</body>
+</html>

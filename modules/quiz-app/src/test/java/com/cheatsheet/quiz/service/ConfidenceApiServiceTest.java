@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.response.ConfidenceResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.usecase.ConfidenceApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

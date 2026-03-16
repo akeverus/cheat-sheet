@@ -1,10 +1,12 @@
 package com.cheatsheet.quiz.service.ai;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.Question;
-import com.cheatsheet.quiz.domain.QuestionOption;
 import com.cheatsheet.quiz.domain.QuestionType;
+import com.cheatsheet.quiz.feature.question.engine.mapper.QuestionGeneratedJsonMapper;
+import com.cheatsheet.quiz.feature.question.engine.metadata.QuestionGeneratedMetadataSupplier;
+import com.cheatsheet.quiz.feature.question.engine.metadata.QuestionGeneratedSlugFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -40,8 +42,11 @@ class QuestionGeneratedJsonMapperTest {
         assertThat(question.sourceHash()).isEqualTo("generated");
         assertThat(question.type()).isEqualTo(QuestionType.CODE);
         assertThat(question.difficulty()).isEqualTo(Difficulty.HARD);
+        assertThat(question.questionText()).contains("HashMap");
         assertThat(question.options()).hasSize(4);
-        assertThat(question.tags()).containsExactly("collections", "java");
+        assertThat(question.options().stream().filter(option -> option.correct())).hasSize(1);
+        assertThat(question.options().get(0).id()).isEqualTo("A");
+        assertThat(question.options().get(1).id()).isEqualTo("B");
     }
 
     @Test
@@ -52,51 +57,97 @@ class QuestionGeneratedJsonMapperTest {
     }
 
     @Test
-    void mapNormalizesOptionOrderIdsAndTagsDeterministically() {
-        Optional<Question> mapped = mapper.map(jsonWithUnorderedOptionsAndTags(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
+    void mapReturnsEmptyWhenOptionsHaveLegacyStringFormat() {
+        Optional<Question> mapped = mapper.map(jsonWithLegacyStringOptions(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
+
+        assertThat(mapped).isEmpty();
+    }
+
+    @Test
+    void mapAcceptsModelPayloadWhenOptionsCountIsNotFour() {
+        Optional<Question> mapped = mapper.map(jsonWithThreeOptions(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
 
         assertThat(mapped).isPresent();
-        Question question = mapped.orElseThrow();
-        assertThat(question.options())
-                .extracting(QuestionOption::id)
-                .containsExactly("A", "B", "C", "D");
-        assertThat(question.tags()).containsExactly("ai", "collections", "java");
+        assertThat(mapped.orElseThrow().options()).hasSize(3);
+    }
+
+    @Test
+    void mapAcceptsModelPayloadWhenOptionsArrayIsMissing() {
+        Optional<Question> mapped = mapper.map(jsonWithoutOptions(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
+
+        assertThat(mapped).isPresent();
+        assertThat(mapped.orElseThrow().options()).isEmpty();
+    }
+
+    @Test
+    void mapAcceptsModelPayloadWhenQuestionFieldIsMissing() {
+        Optional<Question> mapped = mapper.map(jsonWithoutQuestionField(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
+
+        assertThat(mapped).isPresent();
+        assertThat(mapped.orElseThrow().questionText()).isEmpty();
     }
 
     private String validQuestionJson() {
         return """
                 {
-                  "questionText":"Почему HashMap может терять производительность при плохом hashCode?",
-                  "codeSnippet":"Map<String, String> map = new HashMap<>();",
+                  "question":"Почему HashMap может терять производительность при плохом hashCode?",
                   "options":[
-                    {"id":"A","text":"Из-за роста числа коллизий и длинных цепочек поиска","correct":true,"explanation":"Плохой hashCode увеличивает коллизии и цену поиска в bucket."},
-                    {"id":"B","text":"Потому что HashMap автоматически сортирует ключи","correct":false,"explanation":"HashMap не сортирует ключи как TreeMap."},
-                    {"id":"C","text":"Потому что hashCode используется только при удалении","correct":false,"explanation":"hashCode используется при вставке, поиске и удалении."},
-                    {"id":"D","text":"Потому что equals заменяет выбор bucket","correct":false,"explanation":"bucket выбирается по hashCode, затем применяется equals."}
+                    {"text":"Из-за роста числа коллизий и длинных цепочек поиска","correct":true},
+                    {"text":"Потому что HashMap автоматически сортирует ключи","correct":false},
+                    {"text":"Потому что hashCode используется только при удалении","correct":false},
+                    {"text":"Потому что equals заменяет выбор bucket","correct":false}
                   ],
-                  "shortExplanation":"Качество hashCode влияет на распределение ключей по bucket.",
-                  "detailedExplanation":"Неравномерное распределение ключей повышает число сравнений equals внутри bucket и ухудшает среднюю стоимость операций.",
-                  "commonMistake":"Считать, что equals важен, а hashCode на производительность не влияет.",
-                  "tags":["java","collections"]
+                  "explanation":"Неравномерный hashCode ведет к коллизиям и росту числа сравнений внутри bucket."
                 }
                 """;
     }
 
-    private String jsonWithUnorderedOptionsAndTags() {
+    private String jsonWithLegacyStringOptions() {
         return """
                 {
-                  "questionText":"Почему важно учитывать коллизии в HashMap?",
-                  "codeSnippet":null,
+                  "question":"Почему важно учитывать коллизии в HashMap?",
                   "options":[
-                    {"id":"d","text":"D option","correct":false,"explanation":"Объяснение D опции достаточно длинное и валидное."},
-                    {"id":"b","text":"B option","correct":false,"explanation":"Объяснение B опции достаточно длинное и валидное."},
-                    {"id":"a","text":"A option","correct":true,"explanation":"Объяснение A опции достаточно длинное и валидное."},
-                    {"id":"c","text":"C option","correct":false,"explanation":"Объяснение C опции достаточно длинное и валидное."}
+                    "A option",
+                    "B option",
+                    "C option",
+                    "D option"
                   ],
-                  "shortExplanation":"Краткое объяснение достаточно длинное для прохождения валидации.",
-                  "detailedExplanation":"Подробное объяснение достаточно длинное для прохождения валидации и описывает влияние коллизий на производительность.",
-                  "commonMistake":"Игнорировать качество hashCode и считать коллизии несущественными.",
-                  "tags":["Java","ai","collections","java","AI"]
+                  "explanation":"Коллизии увеличивают стоимость операций и ухудшают прогнозируемость времени доступа."
+                }
+                """;
+    }
+
+    private String jsonWithThreeOptions() {
+        return """
+                {
+                  "question":"Как работает Quick Sort?",
+                  "options":[
+                    {"text":"Quick Sort выбирает pivot и делит массив на две части.","correct":true},
+                    {"text":"Quick Sort всегда требует O(n) дополнительной памяти.","correct":false},
+                    {"text":"Quick Sort стабилен во всех реализациях.","correct":false}
+                  ],
+                  "explanation":"Quick Sort использует partition вокруг pivot и рекурсивную сортировку частей."
+                }
+                """;
+    }
+
+    private String jsonWithoutOptions() {
+        return """
+                {
+                  "question":"Что делает HashMap при коллизиях?",
+                  "explanation":"HashMap разрешает коллизии внутри bucket в зависимости от реализации."
+                }
+                """;
+    }
+
+    private String jsonWithoutQuestionField() {
+        return """
+                {
+                  "options":[
+                    {"text":"Опция A","correct":true},
+                    {"text":"Опция B","correct":false}
+                  ],
+                  "explanation":"Техническое пояснение."
                 }
                 """;
     }

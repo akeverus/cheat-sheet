@@ -1,13 +1,17 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.controller.InterviewSessionSupport;
-import com.cheatsheet.quiz.api.controller.MvcNavigationService;
-import com.cheatsheet.quiz.api.mapper.MvcModelAttributeMapper;
-import com.cheatsheet.quiz.api.mapper.MvcRequestMapper;
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport;
+import com.cheatsheet.quiz.feature.interview.controller.MvcNavigationService;
+import com.cheatsheet.quiz.api.mapper.request.MvcRequestMapper;
+import com.cheatsheet.quiz.api.mapper.view.MvcModelAttributeMapper;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
+import com.cheatsheet.quiz.feature.interview.service.flow.ReviewModeService;
+import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
+import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewPageMvcService;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

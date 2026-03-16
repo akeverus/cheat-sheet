@@ -1,7 +1,8 @@
 package com.cheatsheet.quiz.service.ai;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.OptionSource;
+import com.cheatsheet.quiz.service.ai.client.ConfigurableAiClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.reactive.function.client.WebClient;

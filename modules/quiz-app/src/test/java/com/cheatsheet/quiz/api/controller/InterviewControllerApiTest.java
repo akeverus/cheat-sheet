@@ -59,8 +59,8 @@ class InterviewControllerApiTest {
             Optional<Question> q = questionRepository.findById(id);
             if (q.isPresent()) return q.get();
         }
-        // Можно также попробовать через findAllQuestionIdsWithoutOptions(0)
-        List<Long> ids = questionRepository.findAllQuestionIdsWithoutOptions(0);
+        // Можно также попробовать через findAllQuestionIdsWithoutOptions()
+        List<Long> ids = questionRepository.findAllQuestionIdsWithoutOptions();
         assumeTrue(!ids.isEmpty(), "Нет вопросов в тестовой БД");
         return questionRepository.findById(ids.get(0)).orElseThrow();
     }

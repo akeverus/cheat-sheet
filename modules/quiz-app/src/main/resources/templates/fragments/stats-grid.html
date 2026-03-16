@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Fragment: stats-grid(stats)
+  Renders the common stats grid (total, due, learned, correct, wrong, accuracy bar).
+  Pass the stats object from the page model, e.g. stats=${stats} or stats=${interviewStats}.
+-->
+<div th:fragment="stats-grid-content(stats)" th:if="${stats != null}">
+    <div class="stats-grid" id="sidebar-stats-grid">
+        <div class="stat-item"><span class="stat-label">Всего</span><div class="stat-value" data-stat-field="total" th:text="${stats.total}">0</div></div>
+        <div class="stat-item"><span class="stat-label">К повтору</span><div class="stat-value" data-stat-field="due" th:text="${stats.due}">0</div></div>
+        <div class="stat-item"><span class="stat-label">Выучено</span><div class="stat-value" data-stat-field="learned" th:text="${stats.learned}">0</div></div>
+        <div class="stat-item"><span class="stat-label">✅</span><div class="stat-value" data-stat-field="correct" th:text="${stats.correct}">0</div></div>
+        <div class="stat-item"><span class="stat-label">❌</span><div class="stat-value" data-stat-field="wrong" th:text="${stats.wrong}">0</div></div>
+        <div class="stat-item">
+            <span class="stat-label">Точность</span>
+            <div class="stat-value"><span data-stat-field="accuracy" th:text="${stats.correct + stats.wrong > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '0.0'}">0</span>%</div>
+        </div>
+    </div>
+    <div class="accuracy-bar">
+        <div class="accuracy-bar-fill"
+             id="sidebar-accuracy-bar-fill"
+             th:attr="data-progress=${stats.correct + stats.wrong > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '0.0'}"></div>
+    </div>
+</div>
+
+<section class="card" th:if="${stats != null}" th:fragment="stats-grid(stats)">
+    <div th:replace="~{fragments/stats-grid :: stats-grid-content(stats=${stats})}"></div>
+</section>
+</body>
+</html>

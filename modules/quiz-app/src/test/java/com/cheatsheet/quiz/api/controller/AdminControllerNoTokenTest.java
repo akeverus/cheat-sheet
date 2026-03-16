@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.controller;
 
+import com.cheatsheet.quiz.feature.admin.controller.AdminController;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -12,12 +13,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
+import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
-import com.cheatsheet.quiz.config.AppProperties;
-import com.cheatsheet.quiz.service.AdminApiService;
-import com.cheatsheet.quiz.service.AdminMaintenanceService;
+import com.cheatsheet.quiz.config.app.AppProperties;
+import com.cheatsheet.quiz.feature.admin.usecase.AdminApiService;
+import com.cheatsheet.quiz.feature.admin.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
 import com.cheatsheet.quiz.service.admin.SeniorRuleOverridePayloadProcessor;
 import com.cheatsheet.quiz.service.admin.SeniorRulePriorityOverrideStore;

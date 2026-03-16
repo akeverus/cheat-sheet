@@ -1,8 +1,10 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.feature.admin.service.AdminMaintenanceService;
+import com.cheatsheet.quiz.feature.admin.usecase.AdminApiService;
 import com.cheatsheet.quiz.service.admin.AdminSeniorRulesService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,9 +59,9 @@ class AdminApiServiceTest {
         AdminApiService.AdminApiResult result = service.clearOptions("ok");
 
         assertThat(result.status()).isEqualTo(HttpStatus.OK);
-        assertThat(result.body()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.AdminOperationResult.class);
-        com.cheatsheet.quiz.api.dto.response.AdminOperationResult body =
-                (com.cheatsheet.quiz.api.dto.response.AdminOperationResult) result.body();
+        assertThat(result.body()).isInstanceOf(com.cheatsheet.quiz.feature.admin.dto.response.AdminOperationResult.class);
+        com.cheatsheet.quiz.feature.admin.dto.response.AdminOperationResult body =
+                (com.cheatsheet.quiz.feature.admin.dto.response.AdminOperationResult) result.body();
         assertThat(body.details()).isEqualTo(Map.of("deleted", 12));
         verify(adminMaintenanceService).clearOptions();
     }
@@ -74,10 +76,11 @@ class AdminApiServiceTest {
         AdminApiService.AdminApiResult result = service.patchSeniorRulePriorities("ok", Map.of());
 
         assertThat(result.status()).isEqualTo(HttpStatus.OK);
-        assertThat(result.body()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.AdminOperationResult.class);
-        com.cheatsheet.quiz.api.dto.response.AdminOperationResult body =
-                (com.cheatsheet.quiz.api.dto.response.AdminOperationResult) result.body();
+        assertThat(result.body()).isInstanceOf(com.cheatsheet.quiz.feature.admin.dto.response.AdminOperationResult.class);
+        com.cheatsheet.quiz.feature.admin.dto.response.AdminOperationResult body =
+                (com.cheatsheet.quiz.feature.admin.dto.response.AdminOperationResult) result.body();
         assertThat(body.message()).contains("изменений нет");
         verify(adminSeniorRulesService).patchOverrides(Map.of());
     }
+
 }

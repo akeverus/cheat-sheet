@@ -1,9 +1,11 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
 import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.model.ApiError;
 import com.cheatsheet.quiz.domain.ProgressExportRow;
+import com.cheatsheet.quiz.feature.export.service.ExportService;
+import com.cheatsheet.quiz.feature.export.usecase.ExportApiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

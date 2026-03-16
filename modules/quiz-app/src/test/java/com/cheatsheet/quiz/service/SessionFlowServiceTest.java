@@ -1,12 +1,15 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.config.AppProperties;
+import com.cheatsheet.quiz.config.app.AppProperties;
+import com.cheatsheet.quiz.domain.FlashcardPhase;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.domain.StudyPhase;
-import com.cheatsheet.quiz.domain.FlashcardPhase;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.service.flow.SessionFlowService;
+import com.cheatsheet.quiz.feature.interview.service.flow.SessionSummaryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

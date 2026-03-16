@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
+import com.cheatsheet.quiz.feature.interview.service.progress.FavoriteService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.service.imports.MarkdownFavoriteService;
 import org.junit.jupiter.api.BeforeEach;

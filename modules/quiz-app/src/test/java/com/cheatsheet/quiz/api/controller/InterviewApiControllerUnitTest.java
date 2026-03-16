@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.controller;
 
+import com.cheatsheet.quiz.feature.interview.controller.InterviewApiController;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,25 +9,25 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.cheatsheet.quiz.api.dto.ApiError;
-import com.cheatsheet.quiz.api.exception.ApiErrorTypes;
-import com.cheatsheet.quiz.api.dto.request.HintRequest;
-import com.cheatsheet.quiz.api.dto.request.QuestionIdRequest;
-import com.cheatsheet.quiz.api.dto.request.SubmitAnswerRequest;
-import com.cheatsheet.quiz.api.mapper.ApiRequestMapper;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.api.dto.request.interview.HintRequest;
+import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
+import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
+import com.cheatsheet.quiz.api.mapper.request.ApiRequestMapper;
+import com.cheatsheet.quiz.feature.interview.usecase.ConfidenceApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.FavoriteApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.HintApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.QuestionInsightsApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.StreakApiService;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
-import com.cheatsheet.quiz.service.AnswerApiService;
-import com.cheatsheet.quiz.service.ConfidenceApiService;
-import com.cheatsheet.quiz.service.FavoriteApiService;
-import com.cheatsheet.quiz.service.HintApiService;
-import com.cheatsheet.quiz.service.InterviewFacade;
-import com.cheatsheet.quiz.service.NextQuestionApiService;
-import com.cheatsheet.quiz.service.QuestionInsightsApiService;
-import com.cheatsheet.quiz.service.RegenerateEndpointService;
-import com.cheatsheet.quiz.service.StatsApiService;
-import com.cheatsheet.quiz.service.StreakApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.admin.usecase.RegenerateEndpointService;
+import com.cheatsheet.quiz.feature.interview.usecase.NextQuestionApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.StatsApiService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,17 +75,17 @@ class InterviewApiControllerUnitTest {
     void wrongFeedbackReturnsPayloadWhenServiceProvidesFeedback() {
         long questionId = 101L;
         long optionId = 7L;
-        com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse(questionId, optionId, "Причина ошибки", true);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse(questionId, optionId, "Причина ошибки", true);
         when(questionInsightsApiService.toWrongFeedbackHttpResponse(questionId, optionId))
                 .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getWrongAnswerFeedback(questionId, optionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse.class);
-        com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse body =
-                (com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.optionId()).isEqualTo(optionId);
         assertThat(body.feedback()).isEqualTo("Причина ошибки");
@@ -96,17 +97,17 @@ class InterviewApiControllerUnitTest {
     void wrongFeedbackReturnsUnavailablePayloadWhenServiceProvidesEmptyFeedback() {
         long questionId = 102L;
         long optionId = 999999L;
-        com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse(questionId, optionId, null, false);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse(questionId, optionId, null, false);
         when(questionInsightsApiService.toWrongFeedbackHttpResponse(questionId, optionId))
                 .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getWrongAnswerFeedback(questionId, optionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse.class);
-        com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse body =
-                (com.cheatsheet.quiz.api.dto.response.WrongFeedbackResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.WrongFeedbackResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.optionId()).isEqualTo(optionId);
         assertThat(body.feedback()).isNull();
@@ -131,16 +132,16 @@ class InterviewApiControllerUnitTest {
     void updateConfidenceReturnsSuccessAndDelegatesToService() {
         long questionId = 201L;
         int grade = 5;
-        com.cheatsheet.quiz.api.dto.response.ConfidenceResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.ConfidenceResponse(true, questionId, grade);
+        com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse(true, questionId, grade);
         when(confidenceApiService.toHttpResponse(questionId, grade)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.updateConfidence(questionId, grade);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.ConfidenceResponse.class);
-        com.cheatsheet.quiz.api.dto.response.ConfidenceResponse body =
-                (com.cheatsheet.quiz.api.dto.response.ConfidenceResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse) response.getBody();
         assertThat(body.success()).isTrue();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.grade()).isEqualTo(grade);
@@ -172,8 +173,8 @@ class InterviewApiControllerUnitTest {
         HintRequest request = new HintRequest();
         request.setQuestionId(questionId);
         request.setLevel(2);
-        com.cheatsheet.quiz.api.dto.response.HintResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.HintResponse(
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse(
                         questionId, 3, "Смотри на порядок stream-операций", 2
                 );
         when(hintApiService.toHttpResponse(any())).thenReturn(ResponseEntity.ok(payload));
@@ -181,9 +182,9 @@ class InterviewApiControllerUnitTest {
         ResponseEntity<?> response = controller.getHint(request);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.HintResponse.class);
-        com.cheatsheet.quiz.api.dto.response.HintResponse body =
-                (com.cheatsheet.quiz.api.dto.response.HintResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isEqualTo(2);
@@ -196,16 +197,16 @@ class InterviewApiControllerUnitTest {
         long questionId = 602L;
         HintRequest request = new HintRequest();
         request.setQuestionId(questionId);
-        com.cheatsheet.quiz.api.dto.response.HintResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.HintResponse(questionId, 3, null, null);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse(questionId, 3, null, null);
         when(hintApiService.toHttpResponse(any())).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getHint(request);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.HintResponse.class);
-        com.cheatsheet.quiz.api.dto.response.HintResponse body =
-                (com.cheatsheet.quiz.api.dto.response.HintResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.HintResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.maxLevel()).isEqualTo(3);
         assertThat(body.level()).isNull();
@@ -242,17 +243,17 @@ class InterviewApiControllerUnitTest {
         request.setOrdered(false);
         request.setConfidence(4);
         HttpSession httpSession = org.mockito.Mockito.mock(HttpSession.class);
-        com.cheatsheet.quiz.api.dto.response.AnswerResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.AnswerResponse(
+        com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse(
                         true,
                         2L,
                         2L,
                         "<p>Ответ</p>",
-                        List.of(new com.cheatsheet.quiz.api.dto.response.OptionExplanationDto(2L, "Верно", true)),
+                        List.of(new com.cheatsheet.quiz.feature.interview.dto.response.answer.OptionExplanationDto(2L, "Верно", true)),
                         "MINIMAL",
                         3,
-                        List.of(new com.cheatsheet.quiz.api.dto.response.RelatedQuestionDto(900L, "Похожий вопрос", "java")),
-                        new com.cheatsheet.quiz.api.dto.response.SessionInfoDto(1, 2, 1, 0, false)
+                        List.of(new com.cheatsheet.quiz.feature.interview.dto.response.answer.RelatedQuestionDto(900L, "Похожий вопрос", "java")),
+                        new com.cheatsheet.quiz.feature.interview.dto.response.answer.SessionInfoDto(1, 2, 1, 0, false)
                 );
         when(answerApiService.toHttpResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession)))
                 .thenReturn(ResponseEntity.ok(payload));
@@ -260,9 +261,9 @@ class InterviewApiControllerUnitTest {
         ResponseEntity<?> response = controller.answerApi(request, httpSession);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.AnswerResponse.class);
-        com.cheatsheet.quiz.api.dto.response.AnswerResponse body =
-                (com.cheatsheet.quiz.api.dto.response.AnswerResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse) response.getBody();
         assertThat(body.correct()).isTrue();
         assertThat(body.correctOptionId()).isEqualTo(2L);
         assertThat(body.selectedOptionId()).isEqualTo(2L);
@@ -312,8 +313,8 @@ class InterviewApiControllerUnitTest {
         request.setQuestionId(88L);
         HttpServletRequest httpRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         String token = "admin-token";
-        com.cheatsheet.quiz.api.dto.response.RegenerateResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.RegenerateResponse(
+        com.cheatsheet.quiz.feature.admin.dto.response.RegenerateResponse payload =
+                new com.cheatsheet.quiz.feature.admin.dto.response.RegenerateResponse(
                         true,
                         request.getQuestionId(),
                         "Варианты, подсказки и диаграмма удалены. При следующем показе будут сгенерированы заново."
@@ -327,9 +328,9 @@ class InterviewApiControllerUnitTest {
         ResponseEntity<?> response = controller.regenerateOptions(request, token, httpRequest);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.RegenerateResponse.class);
-        com.cheatsheet.quiz.api.dto.response.RegenerateResponse body =
-                (com.cheatsheet.quiz.api.dto.response.RegenerateResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.admin.dto.response.RegenerateResponse.class);
+        com.cheatsheet.quiz.feature.admin.dto.response.RegenerateResponse body =
+                (com.cheatsheet.quiz.feature.admin.dto.response.RegenerateResponse) response.getBody();
         assertThat(body.success()).isTrue();
         assertThat(body.questionId()).isEqualTo(request.getQuestionId());
         assertThat(body.message()).isNotBlank();
@@ -353,8 +354,8 @@ class InterviewApiControllerUnitTest {
     void nextReturnsQuestionPayloadWhenServiceReturnsQuestion() {
         long questionId = 303L;
         Question question = existingQuestion(questionId);
-        com.cheatsheet.quiz.api.dto.response.NextQuestionResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.NextQuestionResponse(
+        com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse(
                         questionId,
                         question.questionText(),
                         question.topic(),
@@ -362,8 +363,8 @@ class InterviewApiControllerUnitTest {
                         null,
                         null,
                         List.of(
-                                new com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto(1L, "A"),
-                                new com.cheatsheet.quiz.api.dto.response.NextQuestionOptionDto(2L, "B")
+                                new com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionOptionDto(1L, "A"),
+                                new com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionOptionDto(2L, "B")
                         ),
                         2L,
                         4,
@@ -376,9 +377,9 @@ class InterviewApiControllerUnitTest {
         );
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.NextQuestionResponse.class);
-        com.cheatsheet.quiz.api.dto.response.NextQuestionResponse body =
-                (com.cheatsheet.quiz.api.dto.response.NextQuestionResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(questionId);
         assertThat(body.questionText()).isEqualTo(question.questionText());
         assertThat(body.topic()).isEqualTo(question.topic());
@@ -422,16 +423,16 @@ class InterviewApiControllerUnitTest {
     @Test
     void takeawayReturnsPayloadWhenServiceProvidesText() {
         long questionId = 801L;
-        com.cheatsheet.quiz.api.dto.response.TakeawayResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.TakeawayResponse("Сфокусируйся на неизменяемости и потокобезопасности.");
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse("Сфокусируйся на неизменяемости и потокобезопасности.");
         when(questionInsightsApiService.toTakeawayHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getTakeaway(questionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.TakeawayResponse.class);
-        com.cheatsheet.quiz.api.dto.response.TakeawayResponse body =
-                (com.cheatsheet.quiz.api.dto.response.TakeawayResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse) response.getBody();
         assertThat(body.takeaway()).contains("потокобезопасности");
         verify(questionInsightsApiService).toTakeawayHttpResponse(questionId);
     }
@@ -439,16 +440,16 @@ class InterviewApiControllerUnitTest {
     @Test
     void takeawayReturnsNullWhenServiceReturnsEmptyPayload() {
         long questionId = 802L;
-        com.cheatsheet.quiz.api.dto.response.TakeawayResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.TakeawayResponse(null);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse(null);
         when(questionInsightsApiService.toTakeawayHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getTakeaway(questionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.TakeawayResponse.class);
-        com.cheatsheet.quiz.api.dto.response.TakeawayResponse body =
-                (com.cheatsheet.quiz.api.dto.response.TakeawayResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.TakeawayResponse) response.getBody();
         assertThat(body.takeaway()).isNull();
         verify(questionInsightsApiService).toTakeawayHttpResponse(questionId);
     }
@@ -469,17 +470,17 @@ class InterviewApiControllerUnitTest {
     void comparisonReturnsPayloadWhenServiceProvidesText() {
         long questionId = 901L;
         long selectedOptionId = 11L;
-        com.cheatsheet.quiz.api.dto.response.ComparisonResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.ComparisonResponse("Ваш ответ игнорирует edge-case с null.");
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse("Ваш ответ игнорирует edge-case с null.");
         when(questionInsightsApiService.toComparisonHttpResponse(questionId, selectedOptionId))
                 .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getComparison(questionId, selectedOptionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.ComparisonResponse.class);
-        com.cheatsheet.quiz.api.dto.response.ComparisonResponse body =
-                (com.cheatsheet.quiz.api.dto.response.ComparisonResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse) response.getBody();
         assertThat(body.comparison()).contains("edge-case");
         verify(questionInsightsApiService).toComparisonHttpResponse(questionId, selectedOptionId);
     }
@@ -488,17 +489,17 @@ class InterviewApiControllerUnitTest {
     void comparisonReturnsNullWhenServiceReturnsEmptyPayload() {
         long questionId = 902L;
         long selectedOptionId = 12L;
-        com.cheatsheet.quiz.api.dto.response.ComparisonResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.ComparisonResponse(null);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse(null);
         when(questionInsightsApiService.toComparisonHttpResponse(questionId, selectedOptionId))
                 .thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getComparison(questionId, selectedOptionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.ComparisonResponse.class);
-        com.cheatsheet.quiz.api.dto.response.ComparisonResponse body =
-                (com.cheatsheet.quiz.api.dto.response.ComparisonResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.ComparisonResponse) response.getBody();
         assertThat(body.comparison()).isNull();
         verify(questionInsightsApiService).toComparisonHttpResponse(questionId, selectedOptionId);
     }
@@ -519,16 +520,16 @@ class InterviewApiControllerUnitTest {
     @Test
     void codeTraceReturnsPayloadWhenServiceProvidesText() {
         long questionId = 1001L;
-        com.cheatsheet.quiz.api.dto.response.CodeTraceResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.CodeTraceResponse("Трассировка: i=0 -> i=1 -> return 42");
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse("Трассировка: i=0 -> i=1 -> return 42");
         when(questionInsightsApiService.toCodeTraceHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getCodeTrace(questionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.CodeTraceResponse.class);
-        com.cheatsheet.quiz.api.dto.response.CodeTraceResponse body =
-                (com.cheatsheet.quiz.api.dto.response.CodeTraceResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse) response.getBody();
         assertThat(body.trace()).contains("return 42");
         verify(questionInsightsApiService).toCodeTraceHttpResponse(questionId);
     }
@@ -536,16 +537,16 @@ class InterviewApiControllerUnitTest {
     @Test
     void codeTraceReturnsNullWhenServiceReturnsEmptyPayload() {
         long questionId = 1002L;
-        com.cheatsheet.quiz.api.dto.response.CodeTraceResponse payload =
-                new com.cheatsheet.quiz.api.dto.response.CodeTraceResponse(null);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse payload =
+                new com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse(null);
         when(questionInsightsApiService.toCodeTraceHttpResponse(questionId)).thenReturn(ResponseEntity.ok(payload));
 
         ResponseEntity<?> response = controller.getCodeTrace(questionId);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.CodeTraceResponse.class);
-        com.cheatsheet.quiz.api.dto.response.CodeTraceResponse body =
-                (com.cheatsheet.quiz.api.dto.response.CodeTraceResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.insight.CodeTraceResponse) response.getBody();
         assertThat(body.trace()).isNull();
         verify(questionInsightsApiService).toCodeTraceHttpResponse(questionId);
     }
@@ -564,8 +565,8 @@ class InterviewApiControllerUnitTest {
 
     @Test
     void statsDelegatesToServiceAndReturnsPayload() {
-        com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse mapped =
-                new com.cheatsheet.quiz.api.dto.response.InterviewStatsResponse(20, 5, 9, 33, 7);
+        com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse mapped =
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse(20, 5, 9, 33, 7);
         when(statsApiService.toStatsHttpResponse(any())).thenReturn(ResponseEntity.ok(mapped));
 
         ResponseEntity<?> response = controller.getStats(
@@ -584,9 +585,9 @@ class InterviewApiControllerUnitTest {
 
     @Test
     void topicStatsDelegatesToServiceAndReturnsPayload() {
-        List<com.cheatsheet.quiz.api.dto.response.TopicStatsResponse> mapped = List.of(
-                new com.cheatsheet.quiz.api.dto.response.TopicStatsResponse("java", 10, 3, 4, 20, 5, 1),
-                new com.cheatsheet.quiz.api.dto.response.TopicStatsResponse("spring", 8, 2, 3, 15, 4, 0)
+        List<com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse> mapped = List.of(
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse("java", 10, 3, 4, 20, 5, 1),
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse("spring", 8, 2, 3, 15, 4, 0)
         );
         when(statsApiService.toTopicStatsHttpResponse()).thenReturn(ResponseEntity.ok(mapped));
 
@@ -599,8 +600,8 @@ class InterviewApiControllerUnitTest {
 
     @Test
     void streakReturnsDailyProgressFromService() {
-        com.cheatsheet.quiz.api.dto.response.StreakResponse progress =
-                new com.cheatsheet.quiz.api.dto.response.StreakResponse(7, 10, 3, false, 5);
+        com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse progress =
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.StreakResponse(7, 10, 3, false, 5);
         when(streakApiService.toHttpResponse()).thenReturn(ResponseEntity.ok(progress));
 
         ResponseEntity<?> response = controller.getStreak();
@@ -614,16 +615,16 @@ class InterviewApiControllerUnitTest {
     void favoriteMapsServiceResultToApiDto() {
         QuestionIdRequest request = new QuestionIdRequest();
         request.setQuestionId(1101L);
-        com.cheatsheet.quiz.api.dto.response.FavoriteResponse result =
-                new com.cheatsheet.quiz.api.dto.response.FavoriteResponse(true, true, 1101L);
+        com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse result =
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse(true, true, 1101L);
         when(favoriteApiService.toHttpResponse(1101L)).thenReturn(ResponseEntity.ok(result));
 
         ResponseEntity<?> response = controller.toggleFavorite(request);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.api.dto.response.FavoriteResponse.class);
-        com.cheatsheet.quiz.api.dto.response.FavoriteResponse body =
-                (com.cheatsheet.quiz.api.dto.response.FavoriteResponse) response.getBody();
+        assertThat(response.getBody()).isInstanceOf(com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse.class);
+        com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse body =
+                (com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(1101L);
         assertThat(body.favorite()).isTrue();
         assertThat(body.synced()).isTrue();

@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service.ai;
 
+import com.cheatsheet.quiz.feature.question.engine.metadata.QuestionGeneratedSlugFactory;
 import org.junit.jupiter.api.Test;
 
 import java.time.Clock;

@@ -1,7 +1,9 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.controller.InterviewSessionSupport;
-import com.cheatsheet.quiz.api.dto.response.AnswerResponse;
+import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport;
+import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
+import com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse;
+import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.domain.AnswerDisplayMode;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.AnswerResult;
