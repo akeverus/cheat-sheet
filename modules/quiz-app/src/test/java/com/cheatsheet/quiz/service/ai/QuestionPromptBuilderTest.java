@@ -28,6 +28,11 @@ class QuestionPromptBuilderTest {
         assertThat(prompt).contains("\"options\"");
         assertThat(prompt).contains("\"correct\"");
         assertThat(prompt).contains("\"explanation\"");
+        assertThat(prompt).contains("ДОЛЖНЫ строго оставаться внутри");
+        assertThat(prompt).contains("maxLen <= 1.10 * minLen");
+        assertThat(prompt).contains("Типичная ошибка");
+        assertThat(prompt).contains("Частично верное утверждение");
+        assertThat(prompt).contains("НЕ повторяет правильную опцию дословно");
     }
 
     @Test

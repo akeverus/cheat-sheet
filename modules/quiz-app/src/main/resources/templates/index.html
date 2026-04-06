@@ -9,40 +9,40 @@
     <div class="main-content">
         <section class="surface-toolbar card" aria-label="Режимы экрана">
             <div th:replace="~{fragments/focus-surface-tabs :: focus-surface-tabs}"></div>
-            <div class="session-progress-top" th:if="${interviewSession != null}" aria-live="polite" aria-atomic="true">
-                <div class="session-progress-head">
+            <div class="focus-toolbar-unified" aria-live="polite" aria-atomic="true">
+                <div class="focus-toolbar-row" th:if="${interviewSession != null}">
                     <span class="session-progress-mode" th:text="${interviewSession.mode}">MODE</span>
-                    <span>
+                    <span class="session-progress-inline">
                         <span class="session-progress" data-field="index"
                               th:text="${(interviewSession != null ? interviewSession.getIndex() : 0) + 1}">1</span>
                         /
                         <span class="session-progress" data-field="total"
                               th:text="${interviewSession != null ? interviewSession.getTotal() : 0}">0</span>
                     </span>
+                    <div class="session-progress-track session-progress-track-compact" role="progressbar"
+                         th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
+                        <div class="session-progress-fill"
+                             th:attr="data-progress=${interviewSession.getTotal() > 0 ? #numbers.formatDecimal(((interviewSession.getIndex() + 1) * 100.0) / interviewSession.getTotal(), 1, 1) : '0.0'}"></div>
+                    </div>
                 </div>
-                <div class="session-progress-track" role="progressbar"
-                     th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
-                    <div class="session-progress-fill"
-                         th:attr="data-progress=${interviewSession.getTotal() > 0 ? #numbers.formatDecimal(((interviewSession.getIndex() + 1) * 100.0) / interviewSession.getTotal(), 1, 1) : '0.0'}"></div>
-                </div>
-            </div>
-            <div class="focus-progress-strip" aria-live="polite" aria-atomic="true">
-                <span class="visually-hidden" data-stat-field="correct" th:text="${stats.correct}">0</span>
-                <span class="visually-hidden" data-stat-field="wrong" th:text="${stats.wrong}">0</span>
-                <div class="focus-progress-item">
-                    <span class="focus-progress-label">Точность</span>
-                    <span class="focus-progress-value" data-stat-field="accuracy"
-                          th:text="${(stats.correct + stats.wrong) > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '0.0'}">0.0</span><span class="focus-progress-suffix">%</span>
-                </div>
-                <div class="focus-progress-item">
-                    <span class="focus-progress-label">Выучено</span>
-                    <span class="focus-progress-value" data-stat-field="learned" th:text="${stats.learned}">0</span>
-                    <span class="focus-progress-muted">/</span>
-                    <span class="focus-progress-value" data-stat-field="total" th:text="${stats.total}">0</span>
-                </div>
-                <div class="focus-progress-item">
-                    <span class="focus-progress-label">К повтору</span>
-                    <span class="focus-progress-value" data-stat-field="due" th:text="${stats.due}">0</span>
+                <div class="focus-progress-strip focus-progress-strip-compact" aria-live="polite">
+                    <span class="visually-hidden" data-stat-field="correct" th:text="${stats.correct}">0</span>
+                    <span class="visually-hidden" data-stat-field="wrong" th:text="${stats.wrong}">0</span>
+                    <span class="focus-progress-inline-item">
+                        <span class="focus-progress-label">Точность</span>
+                        <span class="focus-progress-value" data-stat-field="accuracy"
+                              th:text="${(stats.correct + stats.wrong) > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '0.0'}">0.0</span><span class="focus-progress-suffix">%</span>
+                    </span>
+                    <span class="focus-progress-inline-item">
+                        <span class="focus-progress-label">Выучено</span>
+                        <span class="focus-progress-value" data-stat-field="learned" th:text="${stats.learned}">0</span>
+                        <span class="focus-progress-muted">/</span>
+                        <span class="focus-progress-value" data-stat-field="total" th:text="${stats.total}">0</span>
+                    </span>
+                    <span class="focus-progress-inline-item">
+                        <span class="focus-progress-label">К повтору</span>
+                        <span class="focus-progress-value" data-stat-field="due" th:text="${stats.due}">0</span>
+                    </span>
                 </div>
             </div>
         </section>
@@ -51,7 +51,7 @@
         <div class="training-head-main">
             <div class="question-zone-head">
                 <span class="zone-chip">Focus mode</span>
-                <span class="zone-hint" id="options-flow-hint">Выбери один вариант. Проверка и разбор идут по шагам.</span>
+                <span class="zone-hint zone-hint-subtle" id="options-flow-hint">Выбери один вариант. Проверка и разбор идут по шагам.</span>
             </div>
             <h2 class="focus-question" th:text="${current.question.questionText}">Вопрос</h2>
             <div class="training-meta">
@@ -77,53 +77,6 @@
                     title="Подсказка" aria-label="Подсказка">💡</button>
             <button type="button" class="btn-regenerate" title="Перегенерировать варианты через LLM"
                     th:data-question-id="${current.question.id}" id="btn-regenerate" aria-label="Перегенерировать варианты ответа">🔄</button>
-        </div>
-    </div>
-
-    <div class="training-kpi-row" aria-live="polite" aria-atomic="true">
-        <div class="training-kpi progress-kpi" th:if="${interviewSession != null}">
-            <div class="training-kpi-label">Прогресс сессии</div>
-            <div class="training-kpi-value">
-                <span class="session-progress" data-field="index"
-                      th:text="${(interviewSession != null ? interviewSession.getIndex() : 0) + 1}">1</span>
-                /
-                <span class="session-progress" data-field="total"
-                      th:text="${interviewSession != null ? interviewSession.getTotal() : 0}">0</span>
-            </div>
-            <div class="session-progress-track" role="progressbar"
-                 th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
-                <div class="session-progress-fill"
-                     th:attr="data-progress=${interviewSession.getTotal() > 0 ? #numbers.formatDecimal(((interviewSession.getIndex() + 1) * 100.0) / interviewSession.getTotal(), 1, 1) : '0.0'}"></div>
-            </div>
-        </div>
-        <div class="training-kpi">
-            <div class="training-kpi-label">Точность</div>
-            <div class="training-kpi-value">
-                <span class="focus-progress-value" data-stat-field="accuracy"
-                      th:text="${(stats.correct + stats.wrong) > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '0.0'}">0.0</span>%
-            </div>
-            <span class="visually-hidden" data-stat-field="correct" th:text="${stats.correct}">0</span>
-            <span class="visually-hidden" data-stat-field="wrong" th:text="${stats.wrong}">0</span>
-        </div>
-        <div class="training-kpi">
-            <div class="training-kpi-label">Mastery темы</div>
-            <div class="training-kpi-value">
-                <span class="focus-progress-value" data-stat-field="learned" th:text="${stats.learned}">0</span>
-                /
-                <span class="focus-progress-value" data-stat-field="total" th:text="${stats.total}">0</span>
-            </div>
-        </div>
-        <div class="training-kpi">
-            <div class="training-kpi-label">К повтору</div>
-            <div class="training-kpi-value"><span class="focus-progress-value" data-stat-field="due" th:text="${stats.due}">0</span></div>
-        </div>
-        <div class="training-kpi streak-kpi hidden" id="streak-bar">
-            <div class="training-kpi-label">Streak</div>
-            <div class="training-kpi-value" id="streak-days">0 дней</div>
-            <div class="session-progress-track">
-                <div class="session-progress-fill" id="streak-progress-fill" data-progress="0"></div>
-            </div>
-            <div class="zone-hint" id="streak-count">0/0</div>
         </div>
     </div>
 

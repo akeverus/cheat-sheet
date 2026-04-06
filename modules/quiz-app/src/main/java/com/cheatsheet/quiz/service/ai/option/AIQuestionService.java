@@ -6,7 +6,6 @@ import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate;
 import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import com.cheatsheet.quiz.service.ai.AiQuestionClient;
-import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.google.common.util.concurrent.Striped;
 import lombok.AccessLevel;
@@ -55,10 +54,14 @@ public class AIQuestionService {
                 return existing;
             }
 
-            GeneratedOptions generated = aiQuestionClient.generateOptions(question.questionText(), question.codeSnippet())
+            String prompt = QuestionPromptBuilderForOptions.build(question);
+            String rawJson = aiQuestionClient.generateStructuredJson(prompt)
                     .orElseThrow(() -> new AiGenerationException(
-                            "AI не вернул валидные варианты ответа для вопроса id=" + question.id()));
-            List<AnswerOptionCreate> created = QuestionResponseMapper.mapToCreates(generated, aiQuestionClient.sourceId());
+                            "AI не вернул валидный JSON с вариантами ответа для вопроса id=" + question.id()));
+            List<AnswerOptionCreate> created = QuestionResponseMapper.mapToCreates(
+                    QuestionResponseMapper.parseGeneratedOptions(rawJson),
+                    aiQuestionClient.sourceId()
+            );
             transactionTemplate.executeWithoutResult(status -> {
                 answerOptionRepository.deleteByQuestionId(question.id());
                 answerOptionRepository.insertAll(question.id(), created);

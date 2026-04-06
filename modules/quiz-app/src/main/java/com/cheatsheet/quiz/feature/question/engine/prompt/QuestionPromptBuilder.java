@@ -26,7 +26,7 @@ public class QuestionPromptBuilder {
         Difficulty safeDifficulty = difficulty == null ? Difficulty.MEDIUM : difficulty;
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         String safeTopic = questionTopicNormalizer.normalize(topic);
-        return AiPrompts.QUESTION_V2_PROMPT_TEMPLATE.formatted(
+        return AiPrompts.GENERAL_PROMPT_TEMPLATE.formatted(
                 safeDifficulty.name(),
                 safeType.name(),
                 safeTopic,

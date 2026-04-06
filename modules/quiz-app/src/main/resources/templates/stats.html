@@ -8,41 +8,47 @@
 <div class="main-content">
 <!-- Поиск + фильтр -->
 <section class="card stats-filter-card">
-    <div class="stats-filter-row">
-        <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1">
-            <label>
-                Группа:
-                <select name="group">
-                    <option value="">Все</option>
-                    <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
-                            th:value="${group.id()}"
-                            th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
-                            th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
-                </select>
-            </label>
-            <label>
-                Тема:
-                <select name="topic">
-                    <option value="">Все</option>
-                    <option th:each="topic : ${topics}" th:value="${topic}"
-                            th:text="${@topicUtils.displayName(topic)}" th:title="${topic}"
-                            th:selected="${filter.topic} == ${topic}"></option>
-                </select>
-            </label>
-            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-            <label><input type="checkbox" name="important" value="true" th:checked="${filter.importantOnly}"> ★ Избранные</label>
-            <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter.onlyWrong}"> Ошибки</label>
-            <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
-        </form>
-        <form method="get" th:action="@{/stats}" class="search-form stats-search-form flex-1">
-            <input type="hidden" name="topic" th:value="${filter?.topic}">
-            <input type="hidden" name="group" th:value="${selectedGroup}">
-            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-            <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
-            <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
-            <input type="text" name="q" placeholder="🔍 Поиск по вопросам..." th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам">
-            <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
-        </form>
+    <div class="stats-filter-row stats-filter-separated">
+        <div class="stats-filter-pane">
+            <div class="stats-pane-label">Фильтры</div>
+            <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1">
+                <label>
+                    Группа:
+                    <select name="group">
+                        <option value="">Все</option>
+                        <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
+                                th:value="${group.id()}"
+                                th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
+                                th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
+                    </select>
+                </label>
+                <label>
+                    Тема:
+                    <select name="topic">
+                        <option value="">Все</option>
+                        <option th:each="topic : ${topics}" th:value="${topic}"
+                                th:text="${@topicUtils.displayName(topic)}" th:title="${topic}"
+                                th:selected="${filter.topic} == ${topic}"></option>
+                    </select>
+                </label>
+                <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+                <label><input type="checkbox" name="important" value="true" th:checked="${filter.importantOnly}"> ★ Избранные</label>
+                <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter.onlyWrong}"> Ошибки</label>
+                <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
+            </form>
+        </div>
+        <div class="stats-search-pane">
+            <div class="stats-pane-label">Поиск</div>
+            <form method="get" th:action="@{/stats}" class="search-form stats-search-form flex-1">
+                <input type="hidden" name="topic" th:value="${filter?.topic}">
+                <input type="hidden" name="group" th:value="${selectedGroup}">
+                <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+                <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
+                <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
+                <input type="text" name="q" placeholder="Поиск по вопросам..." th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам">
+                <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
+            </form>
+        </div>
     </div>
 </section>
 

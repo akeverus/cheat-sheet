@@ -29,4 +29,12 @@ public class AdaptiveDifficultyService {
         }
         return Difficulty.HARD;
     }
+
+    public double resolveTopicAccuracy(String topic) {
+        UserTopicStats stats = userTopicStatsRepository.findByTopic(topic).orElse(null);
+        if (stats == null) {
+            return -1;
+        }
+        return Math.max(0.0, Math.min(100.0, stats.getMastery() * 100.0));
+    }
 }

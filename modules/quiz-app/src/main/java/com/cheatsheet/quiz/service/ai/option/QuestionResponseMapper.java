@@ -3,6 +3,8 @@ package com.cheatsheet.quiz.service.ai.option;
 import com.cheatsheet.quiz.domain.OptionSource;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate;
 import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
+import com.cheatsheet.quiz.service.ai.parser.AiResponseParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
@@ -35,5 +37,13 @@ public class QuestionResponseMapper {
             ));
         }
         return results;
+    }
+
+    public static GeneratedOptions parseGeneratedOptions(String rawJson) {
+        try {
+            return AiResponseParser.parseOptions(rawJson, new ObjectMapper());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Не удалось распарсить options JSON от AI", e);
+        }
     }
 }

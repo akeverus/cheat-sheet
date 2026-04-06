@@ -85,6 +85,13 @@ class QuestionGeneratedJsonMapperTest {
         assertThat(mapped).isEmpty();
     }
 
+    @Test
+    void mapReturnsEmptyWhenExplanationFieldIsMissing() {
+        Optional<Question> mapped = mapper.map(jsonWithoutExplanationField(), "java", QuestionType.CONCEPT, Difficulty.MEDIUM);
+
+        assertThat(mapped).isEmpty();
+    }
+
     private String validQuestionJson() {
         return """
                 {
@@ -146,6 +153,20 @@ class QuestionGeneratedJsonMapperTest {
                     {"text":"Опция B","correct":false}
                   ],
                   "explanation":"Техническое пояснение."
+                }
+                """;
+    }
+
+    private String jsonWithoutExplanationField() {
+        return """
+                {
+                  "question":"Почему lock-free структура может давать лучший tail latency?",
+                  "options":[
+                    {"text":"Она уменьшает блокировки и конкуренцию между потоками.","correct":true},
+                    {"text":"Она гарантирует отсутствие контекстных переключений ядра.","correct":false},
+                    {"text":"Она всегда убирает необходимость в атомарных операциях.","correct":false},
+                    {"text":"Она делает GC полностью детерминированным.","correct":false}
+                  ]
                 }
                 """;
     }

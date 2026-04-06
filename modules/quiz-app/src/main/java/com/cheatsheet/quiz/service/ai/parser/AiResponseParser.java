@@ -1,6 +1,4 @@
 package com.cheatsheet.quiz.service.ai.parser;
-import com.cheatsheet.quiz.service.ai.AiQuestionClient;
-import com.cheatsheet.quiz.service.ai.client.AbstractAiClient;
 import com.cheatsheet.quiz.service.ai.dto.GeneratedOptions;
 import com.cheatsheet.quiz.service.ai.util.CodeFenceConstants;
 import com.cheatsheet.quiz.service.ai.util.OpenAiJsonKeys;
@@ -11,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Утилитарный класс для парсинга ответов AI-модели.
@@ -22,8 +19,6 @@ import java.util.Optional;
  *   <li>удаление markdown code-fences ({@link #stripCodeFences});</li>
  *   <li>обрезание и превью текста ({@link #truncate}, {@link #preview}).</li>
  * </ul>
- *
- * <p>Используется в {@link AbstractAiClient} для устранения дублирования.</p>
  */
 @UtilityClass
 public class AiResponseParser {
@@ -52,115 +47,14 @@ public class AiResponseParser {
             if (!item.isObject()) {
                 throw new IllegalArgumentException("LLM options payload must contain object items in options[]");
             }
-            String text = item.path(OpenAiJsonKeys.TEXT_FIELD).asText(StringUtils.EMPTY);
+            String text = item.path(OpenAiJsonKeys.TEXT_FIELD).asText(StringUtils.EMPTY).trim();
+            if (text.isBlank()) {
+                throw new IllegalArgumentException("LLM options payload must contain non-blank text in options[]");
+            }
             boolean isCorrect = item.path("correct").asBoolean(false);
             options.add(new GeneratedOptions.GeneratedOption(text, isCorrect));
         }
         return new GeneratedOptions(options);
-    }
-
-    /**
-     * Парсит JSON-ответ с подсказками: {@code {"hints":["...","...","..."]}}.
-     *
-     * @param content      сырой JSON-ответ модели
-     * @param objectMapper ObjectMapper для парсинга
-     * @return список непустых подсказок (может быть пустым при ошибке или пустом массиве)
-     */
-    public static List<String> parseHints(String content, ObjectMapper objectMapper) throws Exception {
-        JsonNode node = objectMapper.readTree(content);
-        JsonNode arr = node.path(OpenAiJsonKeys.HINTS);
-        List<String> result = new ArrayList<>();
-        if (arr.isArray()) {
-            for (int i = 0; i < arr.size(); i++) {
-                String h = arr.get(i).asText(StringUtils.EMPTY).trim();
-                if (!h.isBlank()) {
-                    result.add(h);
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Парсит JSON-ответ с диаграммой: {@code {"needed": true, "mermaid": "..."}}.
-     *
-     * @param content      сырой JSON-ответ модели
-     * @param objectMapper ObjectMapper для парсинга
-     * @return Mermaid-код диаграммы или empty, если диаграмма не нужна или пуста
-     */
-    public static Optional<String> parseDiagram(String content, ObjectMapper objectMapper) throws Exception {
-        JsonNode node = objectMapper.readTree(content);
-        boolean needed = node.path(OpenAiJsonKeys.NEEDED).asBoolean(false);
-        if (!needed) {
-            return Optional.empty();
-        }
-        String mermaid = node.path(OpenAiJsonKeys.MERMAID).asText(StringUtils.EMPTY).trim();
-        return mermaid.isBlank() ? Optional.empty() : Optional.of(mermaid);
-    }
-
-    /**
-     * Парсит JSON-ответ с ключевым выводом: {@code {"takeaway": "..."}}.
-     *
-     * @param content      сырой JSON-ответ модели
-     * @param objectMapper ObjectMapper для парсинга
-     * @return текст takeaway или empty, если пусто
-     */
-    public static Optional<String> parseTakeaway(String content, ObjectMapper objectMapper) throws Exception {
-        JsonNode node = objectMapper.readTree(content);
-        String takeaway = node.path(OpenAiJsonKeys.TAKEAWAY).asText(StringUtils.EMPTY).trim();
-        return takeaway.isBlank() ? Optional.empty() : Optional.of(takeaway);
-    }
-
-    /**
-     * Парсит JSON-ответ с альтернативными вопросами: {@code {"questions": ["...", "..."]}}.
-     *
-     * @param content      сырой JSON-ответ модели
-     * @param objectMapper ObjectMapper для парсинга
-     * @return список непустых вопросов (может быть пустым)
-     */
-    public static List<String> parseAlternativeQuestions(String content, ObjectMapper objectMapper) throws Exception {
-        JsonNode node = objectMapper.readTree(content);
-        JsonNode arr = node.path(OpenAiJsonKeys.QUESTIONS);
-        List<String> result = new ArrayList<>();
-        if (arr.isArray()) {
-            for (int i = 0; i < arr.size(); i++) {
-                String raw = arr.get(i).asText(StringUtils.EMPTY).trim();
-                if (!raw.isBlank()) {
-                    result.add(raw);
-                }
-            }
-        }
-        return result;
-    }
-
-    public static Optional<AiQuestionClient.CanonicalQuestion> parseCanonicalQuestion(
-            String content,
-            ObjectMapper objectMapper
-    ) throws Exception {
-        JsonNode node = objectMapper.readTree(stripCodeFences(content));
-        String questionText = node.path("questionText").asText(StringUtils.EMPTY).trim();
-        String answerMarkdown = node.path("answerMarkdown").asText(StringUtils.EMPTY).trim();
-        String questionType = node.path("questionType").asText("TEXT").trim();
-        JsonNode codeNode = node.path("codeSnippet");
-        String codeSnippet = codeNode.isNull() ? null : codeNode.asText(null);
-        if (questionText.isBlank() || answerMarkdown.isBlank()) {
-            return Optional.empty();
-        }
-        if (!"CODE".equalsIgnoreCase(questionType)) {
-            questionType = "TEXT";
-            codeSnippet = null;
-        } else {
-            questionType = "CODE";
-            if (codeSnippet != null && codeSnippet.isBlank()) {
-                codeSnippet = null;
-            }
-        }
-        return Optional.of(new AiQuestionClient.CanonicalQuestion(
-                questionText,
-                answerMarkdown,
-                questionType,
-                codeSnippet
-        ));
     }
 
     /**

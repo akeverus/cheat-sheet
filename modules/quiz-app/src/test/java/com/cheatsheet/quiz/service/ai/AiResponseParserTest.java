@@ -41,6 +41,19 @@ class AiResponseParserTest {
     }
 
     @Test
+    void parseOptions_throwsWhenOptionTextIsBlank() {
+        String json = """
+                {"question":"Q","options":[
+                {"text":"   ","correct":true},
+                {"text":"Wrong 1","correct":false}]}
+                """;
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> AiResponseParser.parseOptions(json, objectMapper)
+        );
+    }
+
+    @Test
     void parseOptions_throwsForLegacyFormatWithoutOptionsArray() {
         String json = """
                 {"correct":"Answer","wrong":["W1","W2","W3"]}

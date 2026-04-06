@@ -51,4 +51,19 @@ class AdaptiveDifficultyServiceTest {
 
         assertThat(service.resolveDifficulty("sql")).isEqualTo(Difficulty.HARD);
     }
+
+    @Test
+    void returnsMinusOneAccuracyWhenNoTopicStatsFound() {
+        when(userTopicStatsRepository.findByTopic("spring")).thenReturn(Optional.empty());
+
+        assertThat(service.resolveTopicAccuracy("spring")).isEqualTo(-1);
+    }
+
+    @Test
+    void convertsMasteryToAccuracyPercentage() {
+        when(userTopicStatsRepository.findByTopic("sql"))
+                .thenReturn(Optional.of(new UserTopicStats(2L, "sql", 15, 3, 0.9, LocalDateTime.now())));
+
+        assertThat(service.resolveTopicAccuracy("sql")).isEqualTo(90.0);
+    }
 }

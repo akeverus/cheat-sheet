@@ -12,75 +12,17 @@ import lombok.experimental.UtilityClass;
 public class AiPrompts {
 
     /** Системный промпт: контекст для AI-модели. */
-    public static final String CODE_ONLY_SYSTEM_PROMPT =
-            "Верни только код без markdown и пояснений.";
-
-    /** Системный промпт: контекст для AI-модели. */
     public static final String SYSTEM_PROMPT =
             "Ты помощник для подготовки к собеседованию. Отвечай строго на русском языке, если не указано иное. " +
             "Отвечай строго по формату из запроса. " +
             "Если требуется JSON, верни только валидный JSON без markdown и комментариев. " +
             "Пиши кратко и по делу, без лишних вступлений.";
 
-    /** Шаблон пользовательского промпта для генерации вариантов ответа. */
-    public static final String USER_PROMPT_TEMPLATE = PromptLoader.load("option");
-
-    /** Шаблон промпта для генерации вариантов ответа на вопрос с кодом. */
-    public static final String CODE_OPTIONS_PROMPT_TEMPLATE = PromptLoader.load("code-options");
-
-    /** Шаблон промпта для генерации альтернативных формулировок вопроса. */
-    public static final String ALTERNATIVE_QUESTIONS_PROMPT_TEMPLATE = PromptLoader.load("alternative-questions");
-
-    /** Шаблон промпта для очистки фрагмента кода от комментариев-подсказок. */
-    public static final String CLEAN_CODE_PROMPT_TEMPLATE = PromptLoader.load("clean-code");
-
-    /** Шаблон промпта для генерации 3 прогрессивных подсказок к вопросу. */
-    public static final String HINTS_PROMPT_TEMPLATE = PromptLoader.load("hints");
-
-    /** Шаблон промпта для генерации Mermaid-диаграммы к вопросу. */
-    public static final String DIAGRAM_PROMPT_TEMPLATE = PromptLoader.load("diagram");
-
-    /** Шаблон промпта для персонализированного фидбэка при неправильном ответе. */
-    public static final String WRONG_ANSWER_FEEDBACK_TEMPLATE = PromptLoader.load("wrong-answer-feedback");
-
-    /** Шаблон промпта для генерации Key Takeaway -- главный вывод для запоминания. */
-    public static final String TAKEAWAY_PROMPT_TEMPLATE = PromptLoader.load("takeaway");
-
-    /** Шаблон промпта для сравнительной таблицы при неправильном ответе. */
-    public static final String COMPARISON_PROMPT_TEMPLATE = PromptLoader.load("comparison");
-
-    /** Шаблон промпта для пошагового trace кода. */
-    public static final String CODE_TRACE_PROMPT_TEMPLATE = PromptLoader.load("code-trace");
-
-    /** Шаблон промпта для канонизации вопроса из markdown-источника. */
-    public static final String CANONICALIZE_QUESTION_PROMPT_TEMPLATE = """
-            Преобразуй сырой вопрос и сырой markdown-ответ в финальную карточку для тренировки.
-            Источник: %s
-
-            Сырой вопрос: %s
-            Сырой markdown-ответ:
-            %s
-
-            Правила:
-            - Итог должен быть полезным для тестирования, но без выдумывания фактов вне исходного контекста.
-            - Язык результата — русский (кроме общепринятых технических терминов и токенов кода).
-            - questionText: чёткий проверяемый вопрос.
-            - answerMarkdown: структурированный и понятный ответ в markdown.
-            - questionType: TEXT или CODE.
-            - codeSnippet: обязателен только для questionType=CODE, иначе null.
-            - Для questionType=TEXT запрещено помещать в answerMarkdown посторонние размышления о найме/коммуникации, если их нет в источнике.
-            - Для questionType=CODE codeSnippet должен быть исполняемым и без спойлер-комментариев в стиле "правильный ответ: ...".
-            - Верни только валидный JSON без markdown-обёрток.
-
-            Формат:
-            {"questionText":"...","answerMarkdown":"...","questionType":"TEXT|CODE","codeSnippet":"...|null"}
-            """;
-
     /**
      * Шаблон генерации вопроса через единый JSON-контракт.
-     * Загружается из classpath (prompts/question-v2.txt), чтобы все правила жили в LLM prompt.
+     * Загружается из classpath (prompts/general.txt), чтобы все правила жили в LLM prompt.
      */
-    public static final String QUESTION_V2_PROMPT_TEMPLATE = PromptLoader.load("question-v2");
+    public static final String GENERAL_PROMPT_TEMPLATE = PromptLoader.load("general");
 
     /**
      * Оборачивает пользовательский ввод в разделители для защиты от prompt injection.

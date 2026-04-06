@@ -128,13 +128,7 @@ public class QuestionImportService {
                 if (item.answerMarkdown() == null || item.answerMarkdown().isBlank()) {
                     continue;
                 }
-                Optional<MarkdownQuestionParser.ParsedQuestion> canonicalized = canonicalize(item, relativePath);
-                if (canonicalized.isEmpty()) {
-                    log.warn("Канонизация вопроса {} из {} не удалась — вопрос пропущен",
-                            item.questionNumber(), relativePath);
-                    continue;
-                }
-                MarkdownQuestionParser.ParsedQuestion finalQuestion = canonicalized.get();
+                MarkdownQuestionParser.ParsedQuestion finalQuestion = item;
                 UpsertOutcome outcome = transactionTemplate.execute(status -> upsertQuestion(finalQuestion, relativePath, topic));
                 if (outcome == null) {
                     continue;
@@ -169,53 +163,6 @@ public class QuestionImportService {
      */
     private List<MarkdownQuestionParser.ParsedQuestion> parseQuestionsFromFile(Path file) throws IOException {
         return parser.parse(file);
-    }
-
-    private Optional<MarkdownQuestionParser.ParsedQuestion> canonicalize(
-            MarkdownQuestionParser.ParsedQuestion parsed,
-            String relativePath
-    ) {
-        Optional<AiQuestionClient.CanonicalQuestion> canonical = aiQuestionClient.canonicalizeQuestion(
-                parsed.questionText(),
-                parsed.answerMarkdown(),
-                relativePath
-        );
-        if (canonical.isEmpty()) {
-            log.info("Канонизация недоступна для {}#Q{} — используем fallback из исходного markdown",
-                    relativePath, parsed.questionNumber());
-            return Optional.of(parsed);
-        }
-        AiQuestionClient.CanonicalQuestion value = canonical.get();
-        QuestionType questionType = resolveQuestionType(parsed, value, relativePath);
-        return Optional.of(new MarkdownQuestionParser.ParsedQuestion(
-                parsed.questionNumber(),
-                value.questionText(),
-                value.answerMarkdown(),
-                parsed.important(),
-                questionType,
-                questionType == QuestionType.CODE ? value.codeSnippet() : null
-        ));
-    }
-
-    private QuestionType resolveQuestionType(
-            MarkdownQuestionParser.ParsedQuestion parsed,
-            AiQuestionClient.CanonicalQuestion canonical,
-            String relativePath
-    ) {
-        QuestionType parserType = parsed.questionType() == null ? QuestionType.TEXT : parsed.questionType();
-        QuestionType canonicalType = "CODE".equalsIgnoreCase(canonical.questionType()) ? QuestionType.CODE : QuestionType.TEXT;
-        boolean canonicalHasCode = canonical.codeSnippet() != null && !canonical.codeSnippet().isBlank();
-        if (canonicalType == QuestionType.CODE && !canonicalHasCode) {
-            log.warn("Канонизация вернула CODE без codeSnippet для {}#Q{} — используем parser type={}",
-                    relativePath, parsed.questionNumber(), parserType);
-            return parserType;
-        }
-        if (parserType == QuestionType.CODE && canonicalType == QuestionType.TEXT) {
-            log.warn("Type mismatch parser=CODE, canonical=TEXT для {}#Q{} — сохраняем parser type",
-                    relativePath, parsed.questionNumber());
-            return parserType;
-        }
-        return canonicalType;
     }
 
     /**

@@ -1,0 +1,331 @@
+You are generating a high-quality technical interview question designed to evaluate real engineering reasoning and conceptual understanding.
+
+Your task is to produce ONE multiple-choice question suitable for a professional technical interview.
+
+Interview level: %s  
+Question type: %s  
+Topic: "%s"
+
+Return STRICTLY one valid JSON object.
+
+Do NOT output:
+- markdown
+- code blocks
+- comments
+- explanations outside JSON
+- any additional text
+
+Return only valid JSON.
+
+--------------------------------------------
+
+JSON schema
+
+You MUST return a single JSON object in one of two shapes:
+
+1) Single-question payload (legacy, still supported):
+{
+  "question": "string",
+  "options": [
+    {"text": "string", "correct": true},
+    {"text": "string", "correct": false},
+    {"text": "string", "correct": false},
+    {"text": "string", "correct": false}
+  ],
+  "explanation": "string"
+}
+
+2) Multi-question payload (preferred):
+{
+  "questions": [
+    {
+      "difficulty": "EASY|MEDIUM|HARD",
+      "type": "CONCEPT|CODE",
+      "question": "string",
+      "options": [
+        {"text": "string", "correct": true},
+        {"text": "string", "correct": false},
+        {"text": "string", "correct": false},
+        {"text": "string", "correct": false}
+      ],
+      "explanation": "string"
+    }
+  ]
+}
+
+Structural constraints (STRICT):
+
+- options MUST contain exactly 4 elements
+- exactly ONE option must have "correct": true
+- each option MUST contain ONLY:
+  - "text"
+  - "correct"
+
+No additional fields are allowed.
+
+--------------------------------------------
+
+PRIMARY OBJECTIVE
+
+Generate a question that evaluates engineering reasoning rather than memorized knowledge.
+
+The question should resemble a realistic technical interview problem used by experienced engineers.
+
+--------------------------------------------
+
+STEP 1 — Engineering signal requirement
+
+The question MUST evaluate at least one of the following:
+
+• understanding of internal mechanisms  
+• runtime behavior  
+• cause–effect relationships  
+• trade-offs between approaches  
+• system guarantees  
+• failure modes  
+• edge-case reasoning
+
+Reject internally any question that:
+
+• relies purely on memorization  
+• tests trivial definitions  
+• depends on undocumented behavior  
+• produces multiple valid answers  
+• depends on unspecified assumptions.
+
+--------------------------------------------
+
+STEP 2 — Scenario clarity
+
+The question must provide enough context to define a clear technical situation.
+
+Avoid:
+
+• underspecified questions  
+• ambiguous assumptions  
+• hidden dependencies.
+
+All options must be interpretable solely from the question.
+
+--------------------------------------------
+
+STEP 3 — Topic scope protection
+
+The question and all options must stay strictly within the provided topic.
+
+Avoid introducing unrelated:
+
+• frameworks  
+• infrastructures  
+• programming languages  
+• architectural layers.
+
+Cross-concept references are allowed only if necessary to contrast mechanisms.
+
+Topic drift is forbidden.
+
+--------------------------------------------
+
+STEP 4 — Question type specification
+
+CONCEPT questions focus on:
+
+• internal mechanisms  
+• lifecycle behavior  
+• architecture trade-offs  
+• system guarantees  
+• failure modes  
+• runtime semantics.
+
+CODE questions focus on:
+
+• runtime output  
+• exception behavior  
+• state mutation  
+• concurrency effects  
+• side effects of execution.
+
+--------------------------------------------
+
+STEP 5 — Difficulty calibration
+
+EASY
+
+• evaluates a fundamental concept  
+• requires basic reasoning  
+• involves one key distinction.
+
+MEDIUM
+
+• includes realistic misconceptions  
+• requires reasoning about mechanisms  
+• compares related concepts.
+
+HARD
+
+• involves edge cases  
+• explores subtle runtime behavior  
+• includes concurrency or failure scenarios  
+• requires deeper conceptual reasoning.
+
+--------------------------------------------
+
+STEP 6 — Option construction
+
+Each option MUST:
+
+• be exactly ONE sentence  
+• answer the same question  
+• operate at the same abstraction level  
+• use the same technical tone.
+
+Options MUST NOT contain:
+
+• lists  
+• multi-sentence explanations  
+• filler phrases  
+• interview meta commentary.
+
+--------------------------------------------
+
+STEP 7 — Semantic balance (anti-answer bias)
+
+All options must be balanced in:
+
+• conceptual depth  
+• specificity  
+• reasoning complexity  
+• technical terminology.
+
+The correct answer must NOT stand out through:
+
+• greater precision  
+• additional explanation  
+• stronger certainty language  
+• noticeably different structure.
+
+Correctness must be determined only through technical reasoning.
+
+--------------------------------------------
+
+STEP 8 — Adversarial distractor generation
+
+Generate three strong distractors that represent realistic reasoning mistakes.
+
+Use three different patterns:
+
+1. Common misconception  
+A widespread but incorrect interpretation.
+
+2. Partially correct reasoning  
+Includes a true fragment but leads to a wrong conclusion.
+
+3. Mechanism confusion  
+Confuses similar APIs, guarantees, or mechanisms.
+
+Distractors must be:
+
+• plausible to experienced engineers  
+• technically precise  
+• logically coherent  
+• non-trivial.
+
+Distractors must NOT be:
+
+• vague  
+• generic advice  
+• obviously wrong  
+• paraphrases of each other.
+
+--------------------------------------------
+
+STEP 9 — Reasoning pressure
+
+The question must require the candidate to:
+
+• analyze mechanisms  
+• compare alternatives  
+• eliminate plausible distractors.
+
+Avoid questions that can be answered immediately without reasoning.
+
+--------------------------------------------
+
+STEP 10 — Lexical diversity
+
+Avoid identical sentence structures or openings.
+
+Example to avoid:
+
+"The JVM..."
+"The JVM..."
+"The JVM..."
+"The JVM..."
+
+Syntactic variation should be used while preserving semantic balance.
+
+--------------------------------------------
+
+STEP 11 — Anti-pattern filters
+
+Do NOT generate questions based on:
+
+• version-specific behavior  
+• vendor-specific quirks  
+• undocumented implementation details  
+• obscure trivia.
+
+Questions must evaluate durable engineering knowledge.
+
+--------------------------------------------
+
+STEP 12 — Explanation rules (anti-leakage)
+
+Explanation must:
+
+• contain 1–2 sentences  
+• explain the key technical reasoning  
+• briefly contrast incorrect reasoning patterns.
+
+Explanation must NOT:
+
+• repeat the correct option verbatim  
+• say “the correct answer is”  
+• reference option letters  
+• include interview advice  
+• include meta commentary.
+
+--------------------------------------------
+
+STEP 13 — Silent reasoning
+
+Before generating the JSON:
+
+Internally reason about:
+
+• the core mechanism being tested  
+• three adversarial distractors  
+• possible ambiguity risks  
+• answer camouflage.
+
+Do NOT output this reasoning.
+
+--------------------------------------------
+
+STEP 14 — Internal validation
+
+Before output ensure:
+
+• exactly one option has "correct": true  
+• all options express complete technical claims  
+• distractors are plausible and non-trivial  
+• no option visually stands out  
+• topic drift does not occur  
+• explanation does not leak the answer  
+• JSON syntax is valid.
+
+--------------------------------------------
+
+Output language: Russian.
+
+Return ONLY the JSON object.
