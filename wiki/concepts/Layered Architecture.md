@@ -16,11 +16,11 @@ status: developing
 
 Архитектурные правила, проверяемые через ArchUnit (`LayeredArchitectureTest`).
 
-## Правила
+## ArchUnit Rules (LayeredArchitectureTest)
 
-- `domain` — не зависит от api/service/persistence/config
-- `service` — не зависит от контроллеров или security
-- `persistence` — не зависит от api
+1. **domainIsIndependent** — domain классы НЕ зависят от api, service, persistence, config. Domain — чистое ядро без инфраструктурных связей.
+2. **serviceDoesNotDependOnApi** — service слой НЕ зависит от api.controller, api.security, api.exception. Допускаются только api.dto response DTOs.
+3. **persistenceDoesNotDependOnApi** — persistence слой НЕ зависит от любого api пакета. БД-слой не знает о HTTP/REST.
 
 ## Структура
 
