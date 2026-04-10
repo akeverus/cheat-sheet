@@ -25,7 +25,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,7 +40,6 @@ class QuestionGenerationServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(adaptiveDifficultyService.resolveTopicAccuracy(anyString())).thenReturn(-1.0);
         service = new QuestionGenerationService(
                 aiQuestionClient,
                 new QuestionGeneratedJsonMapper(
@@ -101,20 +99,6 @@ class QuestionGenerationServiceTest {
         assertThatThrownBy(() -> service.generateQuestion("sql", QuestionType.CONCEPT))
                 .isInstanceOf(AiGenerationException.class)
                 .hasMessageContaining("failed to parse question JSON");
-    }
-
-    @Test
-    void enrichesPromptWithAdaptiveDifficultyWhenTopicAccuracyIsKnown() {
-        when(adaptiveDifficultyService.resolveDifficulty("java")).thenReturn(Difficulty.HARD);
-        when(adaptiveDifficultyService.resolveTopicAccuracy("java")).thenReturn(91.0);
-        when(aiQuestionClient.generateStructuredJson(anyString())).thenReturn(Optional.of(validQuestionJson()));
-
-        service.generateQuestion("java", QuestionType.CODE);
-
-        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        verify(aiQuestionClient).generateStructuredJson(promptCaptor.capture());
-        assertThat(promptCaptor.getValue()).contains("АДАПТИВНАЯ СЛОЖНОСТЬ");
-        assertThat(promptCaptor.getValue()).contains("accuracy 91%");
     }
 
     private String validQuestionJson() {

@@ -16,7 +16,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,55 +46,25 @@ public class QuestionGeneratedJsonMapper {
             JsonNode root = objectMapper.readTree(
                     AiResponseParser.stripCodeFences(rawContent)
             );
-
-            // Поддержка как одиночного вопроса, так и массива {"questions":[...]}.
-            JsonNode payload = root.has("questions") && root.path("questions").isArray() && root.path("questions").size() > 0
-                    ? root.path("questions").get(0)
-                    : root;
-
-            String questionText = payload.path("question").asText("").trim();
-            if (questionText.isBlank()) {
-                return Optional.empty();
-            }
-            String explanation = payload.path("explanation").asText("").trim();
-            if (explanation.isBlank()) {
-                return Optional.empty();
-            }
+            String questionText = root.path("question").asText("");
+            String explanation = root.path("explanation").asText("");
             List<QuestionOption> options = new ArrayList<>();
-            JsonNode optionsNode = payload.path("options");
-            if (!optionsNode.isArray()) {
-                return Optional.empty();
-            }
-            if (optionsNode.size() != 4) {
-                return Optional.empty();
-            }
-            int correctCount = 0;
-            for (int i = 0; i < optionsNode.size(); i++) {
-                JsonNode node = optionsNode.get(i);
-                if (!node.isObject()) {
-                    return Optional.empty();
+            JsonNode optionsNode = root.path("options");
+            if (optionsNode.isArray()) {
+                for (int i = 0; i < optionsNode.size(); i++) {
+                    JsonNode node = optionsNode.get(i);
+                    if (!node.isObject()) {
+                        return Optional.empty();
+                    }
+                    String optionText = node.path("text").asText("");
+                    options.add(new QuestionOption(
+                            optionIdByIndex(i),
+                            optionText,
+                            node.path("correct").asBoolean(false),
+                            ""
+                    ));
                 }
-                String optionText = node.path("text").asText("").trim();
-                if (optionText.isBlank()) {
-                    return Optional.empty();
-                }
-                boolean correct = node.path("correct").asBoolean(false);
-                if (correct) {
-                    correctCount++;
-                }
-                options.add(new QuestionOption(
-                        optionIdByIndex(i),
-                        optionText,
-                        correct,
-                        ""
-                ));
             }
-            if (correctCount != 1) {
-                return Optional.empty();
-            }
-
-            // Перемешиваем порядок вариантов, чтобы правильный не был всегда на одном месте.
-            Collections.shuffle(options);
 
             QuestionType resolvedType = type == null ? QuestionType.CONCEPT : type;
             GeneratedQuestionMetadata metadata = questionGeneratedMetadataSupplier.metadata();

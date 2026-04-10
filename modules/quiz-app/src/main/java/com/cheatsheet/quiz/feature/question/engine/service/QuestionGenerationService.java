@@ -9,7 +9,6 @@ import com.cheatsheet.quiz.feature.question.engine.prompt.QuestionTopicNormalize
 import com.cheatsheet.quiz.feature.interview.service.topic.AdaptiveDifficultyService;
 import com.cheatsheet.quiz.service.ai.AiGenerationException;
 import com.cheatsheet.quiz.service.ai.AiQuestionClient;
-import com.cheatsheet.quiz.service.ai.prompt.AiPrompts;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +41,6 @@ public class QuestionGenerationService {
         QuestionType safeType = type == null ? QuestionType.CONCEPT : type;
         log.info("question_generation_started topic={} type={} difficulty={}", safeTopic, safeType, difficulty);
         String prompt = questionPromptBuilder.buildQuestionPrompt(difficulty, safeType, safeTopic);
-        prompt = AiPrompts.withAdaptiveDifficulty(prompt, adaptiveDifficultyService.resolveTopicAccuracy(safeTopic));
         Optional<Question> generated = aiQuestionClient.generateStructuredJson(prompt)
                 .flatMap(content -> questionGeneratedJsonMapper.map(content, safeTopic, safeType, difficulty));
         if (generated.isPresent()) {
