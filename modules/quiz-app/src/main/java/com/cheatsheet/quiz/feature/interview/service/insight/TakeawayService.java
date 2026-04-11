@@ -9,9 +9,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Сервис генерации и кэширования Key Takeaway — главного вывода для запоминания.
@@ -26,11 +24,6 @@ import java.util.regex.Pattern;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class TakeawayService {
 
-    private static final List<Pattern> META_PATTERNS = List.of(
-            Pattern.compile("[Нн]а интервью.{0,20}(ожидают|обычно)"),
-            Pattern.compile("[Пп]рактическ(ая|ий) (ценность|акцент).*обычно")
-    );
-
     QuestionRepository questionRepository;
     AiQuestionClient aiQuestionClient;
 
@@ -43,17 +36,17 @@ public class TakeawayService {
      */
     public Optional<String> getOrGenerate(Question question) {
         String cached = question.takeaway();
-        if (cached != null && !cached.isBlank() && !containsMetaPattern(cached)) {
+        if (cached != null && !cached.isBlank() && !MetaPatternFilter.containsMetaPattern(cached)) {
             return Optional.of(cached);
         }
 
-        boolean needsRegeneration = cached != null && !cached.isBlank() && containsMetaPattern(cached);
+        boolean needsRegeneration = cached != null && !cached.isBlank() && MetaPatternFilter.containsMetaPattern(cached);
 
         try {
             Optional<String> takeaway = aiQuestionClient.generateTakeaway(
                     question.questionText(), question.answerMarkdown());
 
-            if (takeaway.isPresent() && !containsMetaPattern(takeaway.get())) {
+            if (takeaway.isPresent() && !MetaPatternFilter.containsMetaPattern(takeaway.get())) {
                 questionRepository.updateTakeaway(question.id(), takeaway.get());
                 log.info("Takeaway сохранён для вопроса {} ({})", question.id(), question.slug());
                 return takeaway;
@@ -79,9 +72,5 @@ public class TakeawayService {
     public Optional<String> getOrGenerate(long questionId) {
         Optional<Question> question = questionRepository.findById(questionId);
         return question.flatMap(this::getOrGenerate);
-    }
-
-    private static boolean containsMetaPattern(String text) {
-        return META_PATTERNS.stream().anyMatch(p -> p.matcher(text).find());
     }
 }

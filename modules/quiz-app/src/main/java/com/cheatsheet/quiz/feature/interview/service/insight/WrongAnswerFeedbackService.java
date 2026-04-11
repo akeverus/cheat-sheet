@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 /**
  * Персонализированный AI-фидбэк при неправильном ответе (Observer pattern).
@@ -36,10 +35,6 @@ public class WrongAnswerFeedbackService {
 
     private static final int FEEDBACK_TIMEOUT_SECONDS = 15;
 
-    private static final List<Pattern> META_PATTERNS = List.of(
-            Pattern.compile("[Нн]а интервью.{0,20}(ожидают|обычно)"),
-            Pattern.compile("[Пп]рактическ(ая|ий) (ценность|акцент).*обычно")
-    );
 
     private final AiQuestionClient aiQuestionClient;
     private final QuestionRepository questionRepository;
@@ -105,7 +100,7 @@ public class WrongAnswerFeedbackService {
         }
         try {
             String result = future.get(FEEDBACK_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            return Optional.ofNullable(result).filter(t -> !containsMetaPattern(t));
+            return Optional.ofNullable(result).filter(t -> !MetaPatternFilter.containsMetaPattern(t));
         } catch (Exception e) {
             log.warn("Не удалось получить wrong-answer feedback для {}: {}", cacheKey, e.getMessage());
             return Optional.empty();
@@ -142,7 +137,7 @@ public class WrongAnswerFeedbackService {
             return aiQuestionClient.generateComparison(question.get().questionText(), selectedText, correctText)
                     .map(String::trim)
                     .filter(text -> !text.isBlank())
-                    .filter(text -> !containsMetaPattern(text));
+                    .filter(text -> !MetaPatternFilter.containsMetaPattern(text));
         } catch (Exception e) {
             log.warn("Ошибка генерации comparison для вопроса {}: {}", questionId, e.getMessage());
             return Optional.empty();
@@ -153,7 +148,4 @@ public class WrongAnswerFeedbackService {
         return questionId + ":" + optionId;
     }
 
-    private static boolean containsMetaPattern(String text) {
-        return META_PATTERNS.stream().anyMatch(p -> p.matcher(text).find());
-    }
 }
