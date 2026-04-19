@@ -1,0 +1,71 @@
+---
+title: "sqlmap"
+description: "Точка входа в раздел sqlmap: автоматическое обнаружение и эксплуатация SQL-инъекций."
+tags:
+  - meta
+  - index
+  - testing
+  - security-testing
+  - sqlmap
+type: "index"
+updated: "2026-04-17"
+---
+# sqlmap
+
+sqlmap — открытый инструмент для автоматического тестирования на SQL-инъекции. Поддерживает обнаружение уязвимостей, извлечение данных, чтение/запись файлов, выполнение команд ОС при подходящих условиях, обход WAF через tamper-скрипты, параметры в GET/POST/Cookie/Header, интеграцию с Burp и OWASP ZAP, CI-сценарии и ручной режим.
+
+Применяйте для проверки конкретной гипотезы об SQLi: подозрительный параметр → запустить sqlmap → получить подтверждение и PoC. Для широкого DAST-покрытия используйте Burp/ZAP, а sqlmap — как специализированный инструмент под один класс уязвимостей.
+
+**Важно:** использование sqlmap против чужих систем **без письменного разрешения владельца системы незаконно**. Инструмент может извлекать данные и исполнять команды — всегда работайте в согласованном scope с явным authorization letter.
+
+## Полезные ссылки
+
+### Основные документы
+- [sqlmap](sqlmap.md) — обнаружение, извлечение, tamper, обход WAF
+
+### Соседние разделы
+- [Security Testing](../README.md)
+- [Burp Suite](../burp-suite/README.md)
+- [OWASP ZAP](../owasp-zap/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [Security](../../../security/README.md)
+
+### Внешние ресурсы
+- [sqlmap Official](https://sqlmap.org/)
+- [sqlmap Wiki](https://github.com/sqlmapproject/sqlmap/wiki)
+- [OWASP: SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
+
+## Содержание
+
+- [Что внутри](#что-внутри)
+- [Когда использовать](#когда-использовать)
+- [Маршруты чтения](#маршруты-чтения)
+- [Куда идти дальше](#куда-идти-дальше)
+
+## Что внутри
+
+| Тема | Где читать |
+|------|-----------|
+| Установка, базовые команды | [sqlmap.md](sqlmap.md) |
+| Параметры GET/POST/Cookie/Header | [sqlmap.md](sqlmap.md) |
+| Извлечение данных: `--dbs`, `--tables`, `--dump` | [sqlmap.md](sqlmap.md) |
+| Tamper-скрипты и обход WAF | [sqlmap.md](sqlmap.md) |
+| Интеграция с Burp / ZAP, CI-сценарии | [sqlmap.md](sqlmap.md) |
+
+## Когда использовать
+
+- **sqlmap vs Burp Scanner** — Burp Scanner даёт широкий surface (XSS, SSRF и т. д.), sqlmap глубже в SQLi: tamper, DBMS fingerprint, OOB-техники.
+- **sqlmap vs ручной SQLi** — ручная работа нужна для нестандартных стеков и второго порядка; sqlmap автоматизирует проверку стандартных случаев.
+- **CI** — осторожно; активное извлечение лучше держать вне автоматических пайплайнов и использовать явный scope.
+
+## Маршруты чтения
+
+- **Быстрый старт (1 ч):** введение → базовый запуск на тестовом URL → `--dbs` → `--dump` на локальной мишени (DVWA/juice-shop).
+- **Пентест (1 день):** весь документ + tamper-скрипты + интеграция с Burp.
+
+## Куда идти дальше
+
+- Обзор security testing — [../README.md](../README.md)
+- Универсальный DAST — [../owasp-zap/README.md](../owasp-zap/README.md)
+- Платформенный пентест — [../burp-suite/README.md](../burp-suite/README.md)
+- OWASP Top 10 — [../../../security/README.md](../../../security/README.md)

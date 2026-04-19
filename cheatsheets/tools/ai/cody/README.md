@@ -1,0 +1,81 @@
+---
+title: "Sourcegraph Cody"
+description: "AI-ассистент с глубокой интеграцией в Sourcegraph code graph: контекст из большого репозитория, команды и Prompt Library."
+tags:
+  - meta
+  - index
+  - tools
+  - ai
+  - cody
+type: "index"
+updated: "2026-04-17"
+---
+# Sourcegraph Cody
+
+Cody — AI-ассистент от Sourcegraph, чья ключевая особенность — **контекст из code graph**: ассистент опирается не только на открытые файлы, но и на индекс всего репозитория (и даже нескольких). Это особенно полезно в монорепо и больших кодобазах, где «что где лежит» — нетривиальный вопрос. Поддерживает команды, Prompt Library для командного переиспользования и интеграцию с VS Code/JetBrains.
+
+Для кого: команды с большим монорепо или множеством репозиториев, где важен cross-repo контекст; организации, уже использующие Sourcegraph для поиска по коду; инженеры, которые хотят стандартизовать промпты в команде через Prompt Library.
+
+## Полезные ссылки
+
+### Основные документы
+- [cody-basics.md](cody-basics.md) — установка, чат, команды, управление контекстом, Prompt Library
+
+### Соседние разделы
+- [tools/ai/](../README.md) — родительский раздел
+- [tools/ai/copilot/](../copilot/README.md) — альтернатива с меньшим акцентом на код-граф
+- [tools/ai/claude/](../claude/README.md) — длинный контекст через окно модели
+
+### Внешние ресурсы
+- [Cody Documentation](https://sourcegraph.com/docs/cody)
+- [Cody Chat](https://sourcegraph.com/docs/cody/capabilities/chat)
+- [Cody Commands](https://sourcegraph.com/docs/cody/capabilities/commands)
+- [Cody Prompting Guide](https://sourcegraph.com/docs/cody/prompts-guide)
+
+## Содержание
+
+- [Ключевые возможности](#ключевые-возможности)
+- [Сравнение AI-инструментов](#сравнение-ai-инструментов)
+- [Когда использовать](#когда-использовать)
+- [Маршруты чтения](#маршруты-чтения)
+- [Куда идти дальше](#куда-идти-дальше)
+
+## Ключевые возможности
+
+- Чат с контекстом из проиндексированного кода (репозитория/организации).
+- Команды (Commands) — переиспользуемые шаблоны: «Explain», «Smell», «Test», кастомные.
+- Prompt Library — командный репозиторий промптов.
+- Управление контекстом через `@` (файл, символ, репозиторий).
+- Enterprise-дистрибутив с поддержкой self-hosted моделей и приватных LLM.
+
+## Сравнение AI-инструментов
+
+| Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
+|------------|--------------|-----------------|------------------|------|
+| [Cody](../cody/README.md) | VS Code, JetBrains | Частичный (commands) | Да (Enterprise/self-hosted) | Free + Pro + Enterprise |
+| [Claude Code](../claude/README.md) | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
+| [GitHub Copilot](../copilot/README.md) | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка GitHub |
+| [Cursor](../cursor/README.md) | Cursor | Да | Да (custom API) | Free + Pro |
+| [Aider](../aider/README.md) | Нет (CLI) | Частичный | Да | Open source + API |
+| [Windsurf](../windsurf/README.md) | Windsurf | Да | Нет | Free + Pro |
+| [OpenClaw](../openclaw/README.md) | Нет (CLI) | Да | Да | Open source |
+
+## Когда использовать
+
+- Большой монорепо, где поиск по коду важнее, чем размер окна контекста.
+- Команда уже использует Sourcegraph (для code search, code insights).
+- Нужно стандартизовать промпты на команду (Prompt Library).
+- Enterprise-требования: self-hosted модели, приватность, audit-logs.
+- **Хуже подходит, если:** маленький проект (избыточна инфраструктура), нужен мощный агент (возьмите Cursor/Claude), важны локальные модели бесплатно (Aider/OpenClaw).
+
+## Маршруты чтения
+
+- **Onboarding (1-2 часа):** `cody-basics.md` → установка в IDE → Chat → Commands → подключение репозитория.
+- **Командное внедрение:** `cody-basics.md` + настройка Prompt Library + политики контекста на уровне организации.
+
+## Куда идти дальше
+
+- Сравнение всех AI-инструментов — [../README.md](../README.md)
+- Ассистент с длинным контекстом — [../claude/README.md](../claude/README.md)
+- Copilot Spaces как аналог контекстных коллекций — [../copilot/README.md](../copilot/README.md)
+- Локальные модели через CLI — [../aider/README.md](../aider/README.md)

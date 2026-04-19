@@ -1,0 +1,70 @@
+---
+title: "OWASP ZAP"
+description: "Точка входа в раздел OWASP ZAP: открытый proxy и сканер безопасности веб-приложений."
+tags:
+  - meta
+  - index
+  - testing
+  - security-testing
+  - owasp-zap
+type: "index"
+updated: "2026-04-17"
+---
+# OWASP ZAP
+
+OWASP ZAP (Zed Attack Proxy) — открытый инструмент тестирования безопасности веб-приложений от OWASP Foundation. Работает как proxy (перехват трафика), включает пассивный и активный Scanner, Fuzzer, REST API для автоматизации, скрипты (Zest, Python, Groovy), Automation Framework и готовые Docker-образы для CI/CD.
+
+Применяйте, когда нужен бесплатный и полностью автоматизируемый DAST-инструмент в пайплайне, или при пентесте веб-приложения без бюджета на Burp Professional. ZAP хорош для shift-left security: baseline scan и full scan легко встраиваются в GitLab CI / Jenkins / GitHub Actions.
+
+**Важно:** любое сканирование и фаззинг проводите **только с письменного разрешения владельца системы**. Сканирование чужих систем без согласования может нарушать закон.
+
+## Полезные ссылки
+
+### Основные документы
+- [OWASP ZAP](owasp-zap.md) — Proxy, Scanner, Fuzzer, API, Automation Framework
+
+### Соседние разделы
+- [Security Testing](../README.md)
+- [Burp Suite](../burp-suite/README.md)
+- [sqlmap](../sqlmap/README.md)
+- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [Security](../../../security/README.md)
+
+### Внешние ресурсы
+- [zaproxy.org](https://www.zaproxy.org/)
+- [Getting Started](https://www.zaproxy.org/docs/getting-started/)
+- [Automation Framework](https://www.zaproxy.org/docs/automate/automation-framework/)
+
+## Содержание
+
+- [Что внутри](#что-внутри)
+- [Когда использовать](#когда-использовать)
+- [Маршруты чтения](#маршруты-чтения)
+- [Куда идти дальше](#куда-идти-дальше)
+
+## Что внутри
+
+| Тема | Где читать |
+|------|-----------|
+| Proxy: перехват, HTTPS-сертификат | [owasp-zap.md](owasp-zap.md) |
+| Scanner: passive / active, policies | [owasp-zap.md](owasp-zap.md) |
+| Fuzzer, payloads | [owasp-zap.md](owasp-zap.md) |
+| REST API, Automation Framework | [owasp-zap.md](owasp-zap.md) |
+| Скрипты Zest/Python, отчёты | [owasp-zap.md](owasp-zap.md) |
+
+## Когда использовать
+
+- **ZAP vs Burp Suite** — ZAP полностью бесплатный и открытый, лучше автоматизируется; Burp Professional сильнее в UX и Scanner для ручной работы.
+- **ZAP vs sqlmap** — ZAP универсальный DAST (XSS, SSRF, IDOR и т. д.); sqlmap — специализирован на SQL-инъекциях.
+- **CI/CD** — ZAP официально поставляется как Docker-образ с baseline / full / API scan.
+
+## Маршруты чтения
+
+- **Быстрый старт (1 ч):** введение → Proxy + browser → passive scan → отчёт.
+- **DAST в CI (1 день):** весь документ + Automation Framework + Docker baseline scan в GitLab/Jenkins.
+
+## Куда идти дальше
+
+- Обзор security testing — [../README.md](../README.md)
+- Коммерческая альтернатива — [../burp-suite/README.md](../burp-suite/README.md)
+- Специализированный SQLi — [../sqlmap/README.md](../sqlmap/README.md)

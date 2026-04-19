@@ -5,7 +5,7 @@ tags:
   - meta
   - index
 type: "index"
-updated: "2026-02-11"
+updated: "2026-04-20"
 ---
 # Безопасность
 
@@ -31,6 +31,8 @@ updated: "2026-02-11"
 - [Application Security](application/application-security.md) — OWASP Top 10, аутентификация, авторизация, токены
 - [Web Security](application/web-security.md) — XSS, CSRF, CSP, CORS, cookie-безопасность
 - [API Security](application/api-security.md) — аутентификация, авторизация, rate limiting, валидация
+- [OWASP Top 10 (2021)](application/owasp-top-10.md) — разбор всех 10 категорий с кодом
+- [JWT и OAuth2 / OIDC](application/jwt-oauth2.md) — токены, grants, Spring Security
 
 ### Данные и секреты (`data/`)
 
@@ -40,6 +42,7 @@ updated: "2026-02-11"
 ### Инфраструктура (`infrastructure/`)
 
 - [Infrastructure Security](infrastructure/infrastructure-security.md) — Docker, Kubernetes, облачная безопасность
+- [TLS / SSL](infrastructure/tls-ssl.md) — handshake, сертификаты, mTLS, Nginx / Spring Boot / JVM
 
 ### Тестирование (`testing/`)
 

@@ -1,0 +1,1078 @@
+---
+title: "Вопросы на собеседовании: Массивы и строки"
+description: "Алгоритмы и приёмы работы с массивами и строками: реверс, циклический сдвиг, two-pointers, Kadane, dutch national flag, KMP, Rabin-Karp, immutable String и char[] в Java"
+tags:
+  - interview
+  - algorithms
+  - arrays-strings-interview
+aliases:
+  - "Arrays and strings interview"
+  - "Массивы и строки собеседование"
+  - "Array algorithms interview"
+  - "String algorithms interview"
+  - "Kadane interview"
+difficulty: "intermediate"
+updated: "2026-04-18"
+---
+# Вопросы на собеседовании: `Массивы и строки`
+
+Массивы и строки — самые частые задачи на алгоритмических интервью. Большинство классических задач (`Two Sum`, `Reverse String`, `Maximum Subarray`, `Longest Substring Without Repeating`) — про правильный выбор техник: **two pointers**, **prefix sums**, **sliding window**, **hash maps**.
+
+Дата последнего обновления: 2026-04-18
+
+## Полезные ссылки
+
+### Официальная документация и авторитетные источники
+
+- [Arrays Tutorial — Oracle](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/arrays.html)
+- [Common Java Array Algorithms — Baeldung](https://www.baeldung.com/java-common-array-operations)
+- [String in Java — Baeldung](https://www.baeldung.com/java-string)
+- [Reverse a String in Java — Baeldung](https://www.baeldung.com/java-reverse-string)
+- [Kadane's Algorithm Wikipedia](https://en.wikipedia.org/wiki/Maximum_subarray_problem)
+- [Rabin-Karp Algorithm — Baeldung](https://www.baeldung.com/cs/rabin-karp-algorithm)
+- [KMP Algorithm — Baeldung](https://www.baeldung.com/cs/knuth-morris-pratt)
+- [LeetCode Top Interview Questions](https://leetcode.com/explore/interview/card/top-interview-questions-easy/)
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
+
+**Базовые операции с массивами**
+- [Q1. (!) Какие отличия между Array и ArrayList?](#q1--какие-отличия-между-array-и-arraylist)
+- [Q2. Как реверсировать массив?](#q2-как-реверсировать-массив)
+- [Q3. (!) Как реализовать циклический сдвиг массива?](#q3--как-реализовать-циклический-сдвиг-массива)
+- [Q4. Как удалить дубликаты из отсортированного массива in-place?](#q4-как-удалить-дубликаты-из-отсортированного-массива-in-place)
+- [Q5. (!) Как реализовать слияние двух отсортированных массивов?](#q5--как-реализовать-слияние-двух-отсортированных-массивов)
+
+**Поиск и подсчёт**
+- [Q6. (!) Как найти максимальную сумму подмассива (алгоритм Кадана)?](#q6--как-найти-максимальную-сумму-подмассива-алгоритм-кадана)
+- [Q7. (!) Two Sum — поиск пары с заданной суммой?](#q7--two-sum--поиск-пары-с-заданной-суммой)
+- [Q8. Three Sum — все тройки с нулевой суммой?](#q8-three-sum--все-тройки-с-нулевой-суммой)
+- [Q9. Поиск элемента, встречающегося один раз?](#q9-поиск-элемента-встречающегося-один-раз)
+- [Q10. (!) Поиск элемента большинства (>n/2)?](#q10--поиск-элемента-большинства-n2)
+- [Q11. Найти недостающее число в массиве 0..n?](#q11-найти-недостающее-число-в-массиве-0n)
+
+**Prefix sums и индексы**
+- [Q12. (!) Что такое prefix sum?](#q12--что-такое-prefix-sum)
+- [Q13. (!) Подсчёт подмассивов с заданной суммой?](#q13--подсчёт-подмассивов-с-заданной-суммой)
+- [Q14. Найти equilibrium index?](#q14-найти-equilibrium-index)
+
+**Двумерные массивы**
+- [Q15. (!) Как повернуть матрицу на 90 градусов in-place?](#q15--как-повернуть-матрицу-на-90-градусов-in-place)
+- [Q16. Spiral order — обход матрицы по спирали?](#q16-spiral-order--обход-матрицы-по-спирали)
+- [Q17. Set zeroes — обнуление строк и столбцов?](#q17-set-zeroes--обнуление-строк-и-столбцов)
+
+**Сортировка и перестановки**
+- [Q18. (!) Dutch National Flag — сортировка трёх значений за один проход?](#q18--dutch-national-flag--сортировка-трёх-значений-за-один-проход)
+- [Q19. Move Zeroes — переместить нули в конец?](#q19-move-zeroes--переместить-нули-в-конец)
+- [Q20. Next Permutation — следующая лексикографическая перестановка?](#q20-next-permutation--следующая-лексикографическая-перестановка)
+
+**Работа со строками**
+- [Q21. (!) String — алгоритм реверса строки?](#q21--string--алгоритм-реверса-строки)
+- [Q22. (!) Проверка палиндрома?](#q22--проверка-палиндрома)
+- [Q23. (!) Проверка анаграммы?](#q23--проверка-анаграммы)
+- [Q24. Группировка анаграмм?](#q24-группировка-анаграмм)
+- [Q25. (!) Самая длинная подстрока без повторов?](#q25--самая-длинная-подстрока-без-повторов)
+- [Q26. Самый длинный палиндром в строке?](#q26-самый-длинный-палиндром-в-строке)
+- [Q27. (!) Поиск подстроки — алгоритм KMP?](#q27--поиск-подстроки--алгоритм-kmp)
+- [Q28. (!) Алгоритм Рабина-Карпа?](#q28--алгоритм-рабина-карпа)
+- [Q29. Сравнение двух строк с учётом backspace?](#q29-сравнение-двух-строк-с-учётом-backspace)
+
+**Числа и битовые операции**
+- [Q30. (!) Поменять два числа без временной переменной?](#q30--поменять-два-числа-без-временной-переменной)
+- [Q31. Перевод числа в произвольную систему счисления?](#q31-перевод-числа-в-произвольную-систему-счисления)
+- [Q32. Проверка степени двойки?](#q32-проверка-степени-двойки)
+
+**Типичные ошибки и Java-специфика**
+- [Q33. (!) Почему == для строк работает не как ожидается?](#q33--почему--для-строк-работает-не-как-ожидается)
+- [Q34. Когда использовать char[] вместо String для алгоритмов?](#q34-когда-использовать-char-вместо-string-для-алгоритмов)
+- [Q35. (!) StringBuilder vs String конкатенация — где разница?](#q35--stringbuilder-vs-string-конкатенация--где-разница)
+- [Q36. Как избежать ArrayIndexOutOfBoundsException в two-pointers?](#q36-как-избежать-arrayindexoutofboundsexception-в-two-pointers)
+
+## Q1. (!) Какие отличия между Array и ArrayList?
+
+| Характеристика | Array | ArrayList |
+|---------------|-------|-----------|
+| Размер | Фиксированный | Динамический (1.5x при росте) |
+| Тип | Любые (включая примитивы `int[]`) | Только объекты (`Integer`, не `int`) |
+| Доступ | `arr[i]` — `O(1)` | `list.get(i)` — `O(1)` |
+| Вставка в конец | — | `O(1)` амортиз. |
+| Память | Меньше (нет overhead) | Больше (объекты + capacity) |
+| Generics | Нет (массивы reified) | Да (`ArrayList<T>` erasure) |
+
+```java
+// Массив примитивов — компактно, быстро
+int[] arr = new int[1000];
+
+// ArrayList — гибче, но boxing для примитивов
+List<Integer> list = new ArrayList<>(1000); // initial capacity!
+
+// Конвертация
+Integer[] boxed = list.toArray(new Integer[0]);
+List<Integer> back = Arrays.asList(boxed); // фиксированный размер!
+```
+
+**Подводный камень:** `Arrays.asList(int[])` вернёт `List<int[]>` размером 1, а не `List<Integer>`. Для примитивов — `Arrays.stream(arr).boxed().toList()`.
+
+## Q2. Как реверсировать массив?
+
+```java
+// In-place через two pointers — O(n) время, O(1) память
+void reverse(int[] arr) {
+    int left = 0, right = arr.length - 1;
+    while (left < right) {
+        int tmp = arr[left];
+        arr[left++] = arr[right];
+        arr[right--] = tmp;
+    }
+}
+
+// Через стандартную библиотеку для объектов
+Collections.reverse(list);
+
+// Reverse Stream
+int[] reversed = IntStream.rangeClosed(1, arr.length)
+                          .map(i -> arr[arr.length - i])
+                          .toArray();
+```
+
+Для примитивов в стандартной библиотеке нет прямого `Arrays.reverse()` — пишут вручную или через `Collections.reverse(Arrays.asList(boxedArr))`.
+
+## Q3. (!) Как реализовать циклический сдвиг массива?
+
+Поворот массива на `k` позиций вправо. Наивный — `O(n·k)`, оптимальный — `O(n)` через **тройной реверс**.
+
+```java
+// Метод тройного реверса — O(n) время, O(1) память
+void rotate(int[] arr, int k) {
+    int n = arr.length;
+    k = k % n; // нормализуем k
+
+    reverse(arr, 0, n - 1);       // [1,2,3,4,5] → [5,4,3,2,1]
+    reverse(arr, 0, k - 1);       // → [4,5,3,2,1] для k=2
+    reverse(arr, k, n - 1);       // → [4,5,1,2,3]
+}
+
+void reverse(int[] arr, int left, int right) {
+    while (left < right) {
+        int tmp = arr[left];
+        arr[left++] = arr[right];
+        arr[right--] = tmp;
+    }
+}
+```
+
+**Альтернативы:**
+- Скопировать в новый массив со сдвигом — `O(n)` время и память
+- Циклический алгоритм со счётчиком — `O(n)` время, `O(1)` память, но сложнее в реализации
+
+## Q4. Как удалить дубликаты из отсортированного массива in-place?
+
+```java
+// Two pointers: slow = граница уникальных, fast = идёт вперёд
+int removeDuplicates(int[] arr) {
+    if (arr.length == 0) return 0;
+
+    int slow = 0;
+    for (int fast = 1; fast < arr.length; fast++) {
+        if (arr[fast] != arr[slow]) {
+            arr[++slow] = arr[fast];
+        }
+    }
+    return slow + 1; // длина уникальной части
+}
+```
+
+После работы алгоритма первые `k` элементов содержат уникальные значения. Остальное — мусор. Время `O(n)`, память `O(1)`.
+
+Для **неотсортированного** массива требуется `HashSet` — `O(n)` время и память.
+
+## Q5. (!) Как реализовать слияние двух отсортированных массивов?
+
+```java
+// Out-of-place — O(n+m) время и память
+int[] mergeSorted(int[] a, int[] b) {
+    int[] result = new int[a.length + b.length];
+    int i = 0, j = 0, k = 0;
+
+    while (i < a.length && j < b.length) {
+        if (a[i] <= b[j]) result[k++] = a[i++];
+        else               result[k++] = b[j++];
+    }
+    while (i < a.length) result[k++] = a[i++];
+    while (j < b.length) result[k++] = b[j++];
+
+    return result;
+}
+
+// In-place в первый массив, если в нём есть место в конце (LeetCode 88)
+// Идём с конца — чтобы не затирать ещё не обработанные элементы
+void mergeInPlace(int[] a, int m, int[] b, int n) {
+    int i = m - 1, j = n - 1, k = m + n - 1;
+    while (i >= 0 && j >= 0) {
+        a[k--] = (a[i] > b[j]) ? a[i--] : b[j--];
+    }
+    while (j >= 0) a[k--] = b[j--];
+}
+```
+
+Этот же паттерн — основа `Merge Sort`. Для слияния `k` массивов используют `PriorityQueue` — `O(N log k)`, где `N` — суммарное число элементов.
+
+## Q6. (!) Как найти максимальную сумму подмассива (алгоритм Кадана)?
+
+**Kadane's algorithm** — один проход, `O(n)` по времени, `O(1)` по памяти. Идея: на каждом шаге решаем «продолжать текущий подмассив или начать новый».
+
+```java
+int maxSubarraySum(int[] arr) {
+    int currentSum = arr[0];
+    int maxSum = arr[0];
+
+    for (int i = 1; i < arr.length; i++) {
+        currentSum = Math.max(arr[i], currentSum + arr[i]);
+        maxSum = Math.max(maxSum, currentSum);
+    }
+    return maxSum;
+}
+
+// Расширенная версия: возвращает индексы подмассива
+int[] maxSubarrayWithIndices(int[] arr) {
+    int currentSum = arr[0], maxSum = arr[0];
+    int start = 0, end = 0, tempStart = 0;
+
+    for (int i = 1; i < arr.length; i++) {
+        if (arr[i] > currentSum + arr[i]) {
+            currentSum = arr[i];
+            tempStart = i;
+        } else {
+            currentSum += arr[i];
+        }
+        if (currentSum > maxSum) {
+            maxSum = currentSum;
+            start = tempStart;
+            end = i;
+        }
+    }
+    return new int[]{maxSum, start, end};
+}
+```
+
+Пример: для `[-2, 1, -3, 4, -1, 2, 1, -5, 4]` ответ `6` (подмассив `[4, -1, 2, 1]`).
+
+**Если все числа отрицательные** — возвращается максимальный элемент. Если разрешён пустой подмассив (сумма `0`), нужна корректировка: `currentSum = Math.max(0, ...)`.
+
+## Q7. (!) Two Sum — поиск пары с заданной суммой?
+
+**Вариант 1 — отсортированный массив (two pointers):** `O(n)` время, `O(1)` память.
+
+```java
+int[] twoSumSorted(int[] arr, int target) {
+    int left = 0, right = arr.length - 1;
+    while (left < right) {
+        int sum = arr[left] + arr[right];
+        if (sum == target) return new int[]{left, right};
+        if (sum < target) left++;
+        else              right--;
+    }
+    return new int[]{-1, -1};
+}
+```
+
+**Вариант 2 — неотсортированный массив (HashMap):** `O(n)` время и память.
+
+```java
+int[] twoSum(int[] arr, int target) {
+    Map<Integer, Integer> seen = new HashMap<>();
+    for (int i = 0; i < arr.length; i++) {
+        int complement = target - arr[i];
+        if (seen.containsKey(complement)) {
+            return new int[]{seen.get(complement), i};
+        }
+        seen.put(arr[i], i);
+    }
+    return new int[]{-1, -1};
+}
+```
+
+Если массив можно сортировать — first sort + two pointers (`O(n log n)`, `O(1)` доп. памяти, но теряются исходные индексы).
+
+## Q8. Three Sum — все тройки с нулевой суммой?
+
+Для каждого `i` зафиксировать `arr[i]` и решать `Two Sum` на оставшейся части. После сортировки — `O(n²)`.
+
+```java
+List<List<Integer>> threeSum(int[] arr) {
+    Arrays.sort(arr); // O(n log n)
+    List<List<Integer>> result = new ArrayList<>();
+
+    for (int i = 0; i < arr.length - 2; i++) {
+        if (i > 0 && arr[i] == arr[i - 1]) continue; // пропускаем дубликаты i
+        int left = i + 1, right = arr.length - 1;
+
+        while (left < right) {
+            int sum = arr[i] + arr[left] + arr[right];
+            if (sum == 0) {
+                result.add(List.of(arr[i], arr[left], arr[right]));
+                while (left < right && arr[left] == arr[left + 1]) left++;
+                while (left < right && arr[right] == arr[right - 1]) right--;
+                left++; right--;
+            } else if (sum < 0) {
+                left++;
+            } else {
+                right--;
+            }
+        }
+    }
+    return result;
+}
+```
+
+Сложность `O(n²)`. Скип дубликатов — критичная деталь, без него получаются повторяющиеся тройки.
+
+## Q9. Поиск элемента, встречающегося один раз?
+
+В массиве каждый элемент встречается **дважды**, кроме одного. Найти его за `O(n)` без доп. памяти.
+
+```java
+// Через XOR: a ^ a = 0, a ^ 0 = a
+int singleNumber(int[] arr) {
+    int result = 0;
+    for (int x : arr) result ^= x;
+    return result;
+}
+```
+
+XOR коммутативен и ассоциативен, парные числа сократятся до `0`, останется только одиночка. Память `O(1)`, время `O(n)`.
+
+Если каждый встречается **трижды**, кроме одного — алгоритм через подсчёт битов (`ones`, `twos`).
+
+## Q10. (!) Поиск элемента большинства (>n/2)?
+
+**Алгоритм Бойера-Мура (Boyer-Moore Voting):** `O(n)` время, `O(1)` память.
+
+```java
+int majorityElement(int[] arr) {
+    int candidate = 0, count = 0;
+    for (int x : arr) {
+        if (count == 0) candidate = x;
+        count += (x == candidate) ? 1 : -1;
+    }
+    return candidate; // гарантия — если majority существует
+}
+```
+
+**Идея:** парные «голоса» за разных кандидатов гасят друг друга. Если majority element существует (>n/2) — он останется.
+
+Для подтверждения, что элемент действительно majority — сделать второй проход и посчитать.
+
+## Q11. Найти недостающее число в массиве 0..n?
+
+В массиве из `n` чисел все значения от `0` до `n`, кроме одного. Найти пропущенное.
+
+```java
+// Метод 1: сумма арифметической прогрессии
+int missingNumberSum(int[] arr) {
+    int n = arr.length;
+    int expected = n * (n + 1) / 2;
+    int actual = 0;
+    for (int x : arr) actual += x;
+    return expected - actual;
+}
+
+// Метод 2: XOR — без переполнения
+int missingNumberXor(int[] arr) {
+    int xor = arr.length; // включаем n
+    for (int i = 0; i < arr.length; i++) {
+        xor ^= i ^ arr[i];
+    }
+    return xor;
+}
+```
+
+Оба `O(n)` время и `O(1)` память. XOR безопаснее для больших массивов (нет риска переполнения).
+
+## Q12. (!) Что такое prefix sum?
+
+**Prefix sum** — массив `prefix[i]` = сумма `arr[0..i]`. Позволяет за `O(1)` получить сумму любого подмассива:
+
+```java
+int[] buildPrefix(int[] arr) {
+    int[] prefix = new int[arr.length + 1];
+    for (int i = 0; i < arr.length; i++) {
+        prefix[i + 1] = prefix[i] + arr[i];
+    }
+    return prefix;
+}
+
+// Сумма arr[i..j] (включительно) — O(1)
+int rangeSum(int[] prefix, int i, int j) {
+    return prefix[j + 1] - prefix[i];
+}
+```
+
+**Применение:** range queries, поиск подмассива с суммой K, сложность `O(1)` на запрос после `O(n)` препроцессинга.
+
+## Q13. (!) Подсчёт подмассивов с заданной суммой?
+
+**Идея:** prefix sums + HashMap. Если `prefix[j] - prefix[i] = k`, то подмассив `arr[i..j-1]` суммируется в `k`.
+
+```java
+int subarraySum(int[] arr, int k) {
+    Map<Integer, Integer> prefixCount = new HashMap<>();
+    prefixCount.put(0, 1); // пустой префикс
+
+    int sum = 0, count = 0;
+    for (int x : arr) {
+        sum += x;
+        // Сколько раз встречали prefix sum = (sum - k)?
+        count += prefixCount.getOrDefault(sum - k, 0);
+        prefixCount.merge(sum, 1, Integer::sum);
+    }
+    return count;
+}
+```
+
+Сложность `O(n)` время и память. Работает с отрицательными числами и нулями.
+
+## Q14. Найти equilibrium index?
+
+**Equilibrium index** — индекс `i`, где сумма слева равна сумме справа.
+
+```java
+int equilibriumIndex(int[] arr) {
+    int total = 0;
+    for (int x : arr) total += x;
+
+    int leftSum = 0;
+    for (int i = 0; i < arr.length; i++) {
+        int rightSum = total - leftSum - arr[i];
+        if (leftSum == rightSum) return i;
+        leftSum += arr[i];
+    }
+    return -1;
+}
+```
+
+Сложность `O(n)` время, `O(1)` память. Один проход после подсчёта общей суммы.
+
+## Q15. (!) Как повернуть матрицу на 90 градусов in-place?
+
+**Поворот по часовой стрелке** = транспонирование + реверс каждой строки.
+
+```java
+void rotate(int[][] matrix) {
+    int n = matrix.length;
+
+    // Транспонирование (отражение по главной диагонали)
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            int tmp = matrix[i][j];
+            matrix[i][j] = matrix[j][i];
+            matrix[j][i] = tmp;
+        }
+    }
+
+    // Реверс каждой строки
+    for (int[] row : matrix) {
+        int left = 0, right = n - 1;
+        while (left < right) {
+            int tmp = row[left];
+            row[left++] = row[right];
+            row[right--] = tmp;
+        }
+    }
+}
+```
+
+Сложность `O(n²)` (по числу элементов), память `O(1)`. Для **поворота против часовой** — транспонирование + реверс столбцов (или реверс строк + транспонирование).
+
+## Q16. Spiral order — обход матрицы по спирали?
+
+```java
+List<Integer> spiralOrder(int[][] matrix) {
+    List<Integer> result = new ArrayList<>();
+    if (matrix.length == 0) return result;
+
+    int top = 0, bottom = matrix.length - 1;
+    int left = 0, right = matrix[0].length - 1;
+
+    while (top <= bottom && left <= right) {
+        // → вправо
+        for (int j = left; j <= right; j++) result.add(matrix[top][j]);
+        top++;
+        // ↓ вниз
+        for (int i = top; i <= bottom; i++) result.add(matrix[i][right]);
+        right--;
+        if (top <= bottom) {
+            // ← влево
+            for (int j = right; j >= left; j--) result.add(matrix[bottom][j]);
+            bottom--;
+        }
+        if (left <= right) {
+            // ↑ вверх
+            for (int i = bottom; i >= top; i--) result.add(matrix[i][left]);
+            left++;
+        }
+    }
+    return result;
+}
+```
+
+Сложность `O(m·n)`. Важна правильная проверка границ перед движением назад — иначе будет дублирование строк/столбцов.
+
+## Q17. Set zeroes — обнуление строк и столбцов?
+
+Если в матрице есть `0`, обнулить всю строку и столбец. **Подвох:** обнуление в процессе обхода исказит результат.
+
+```java
+// O(1) дополнительной памяти — используем первую строку/столбец как маркеры
+void setZeroes(int[][] matrix) {
+    int rows = matrix.length, cols = matrix[0].length;
+    boolean firstRowZero = false, firstColZero = false;
+
+    // Проверяем первую строку и столбец
+    for (int j = 0; j < cols; j++) if (matrix[0][j] == 0) firstRowZero = true;
+    for (int i = 0; i < rows; i++) if (matrix[i][0] == 0) firstColZero = true;
+
+    // Используем 1-ю строку/столбец как маркеры
+    for (int i = 1; i < rows; i++)
+        for (int j = 1; j < cols; j++)
+            if (matrix[i][j] == 0) {
+                matrix[i][0] = 0;
+                matrix[0][j] = 0;
+            }
+
+    // Обнуляем по маркерам
+    for (int i = 1; i < rows; i++)
+        for (int j = 1; j < cols; j++)
+            if (matrix[i][0] == 0 || matrix[0][j] == 0) matrix[i][j] = 0;
+
+    // Обнуляем 1-ю строку/столбец, если нужно
+    if (firstRowZero) for (int j = 0; j < cols; j++) matrix[0][j] = 0;
+    if (firstColZero) for (int i = 0; i < rows; i++) matrix[i][0] = 0;
+}
+```
+
+Сложность `O(m·n)` время, `O(1)` память. Альтернатива с `O(m+n)` памяти — два массива маркеров.
+
+## Q18. (!) Dutch National Flag — сортировка трёх значений за один проход?
+
+Задача Эдсгера Дейкстры: отсортировать массив из `0`, `1`, `2` за `O(n)`, `O(1)`.
+
+```java
+void sortColors(int[] arr) {
+    int low = 0, mid = 0, high = arr.length - 1;
+
+    while (mid <= high) {
+        if (arr[mid] == 0) {
+            swap(arr, low++, mid++);
+        } else if (arr[mid] == 1) {
+            mid++;
+        } else { // arr[mid] == 2
+            swap(arr, mid, high--);
+            // mid не двигаем — пришедший элемент ещё не обработан
+        }
+    }
+}
+
+void swap(int[] arr, int i, int j) {
+    int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+}
+```
+
+Идея: три указателя делят массив на 4 зоны: `[0..low)` — нули, `[low..mid)` — единицы, `[mid..high]` — необработанные, `(high..end]` — двойки.
+
+Применяется в `Quick Sort` с дублирующимися значениями (3-way partition).
+
+## Q19. Move Zeroes — переместить нули в конец?
+
+Сохранить порядок ненулевых элементов.
+
+```java
+void moveZeroes(int[] arr) {
+    int slow = 0;
+    for (int fast = 0; fast < arr.length; fast++) {
+        if (arr[fast] != 0) {
+            arr[slow++] = arr[fast];
+        }
+    }
+    while (slow < arr.length) arr[slow++] = 0;
+}
+```
+
+Two pointers, `O(n)` время, `O(1)` память. Альтернатива со swap — также `O(n)`, но больше операций.
+
+## Q20. Next Permutation — следующая лексикографическая перестановка?
+
+```java
+void nextPermutation(int[] arr) {
+    int n = arr.length;
+
+    // 1. Найти первый i справа, где arr[i] < arr[i+1]
+    int i = n - 2;
+    while (i >= 0 && arr[i] >= arr[i + 1]) i--;
+
+    if (i >= 0) {
+        // 2. Найти первый j справа, где arr[j] > arr[i]
+        int j = n - 1;
+        while (arr[j] <= arr[i]) j--;
+        // 3. Swap
+        int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+
+    // 4. Реверс правой части
+    int left = i + 1, right = n - 1;
+    while (left < right) {
+        int tmp = arr[left];
+        arr[left++] = arr[right];
+        arr[right--] = tmp;
+    }
+}
+```
+
+Сложность `O(n)` время, `O(1)` память. Для последней перестановки в лексикографическом порядке вернёт первую (отсортированный массив).
+
+## Q21. (!) String — алгоритм реверса строки?
+
+```java
+// 1. Через StringBuilder — O(n)
+String reverse1(String s) {
+    return new StringBuilder(s).reverse().toString();
+}
+
+// 2. Two pointers in-place в char[] — O(n)
+String reverse2(String s) {
+    char[] arr = s.toCharArray();
+    int left = 0, right = arr.length - 1;
+    while (left < right) {
+        char tmp = arr[left];
+        arr[left++] = arr[right];
+        arr[right--] = tmp;
+    }
+    return new String(arr);
+}
+
+// 3. Рекурсия — O(n) по времени и стеку — НЕ рекомендуется
+String reverse3(String s) {
+    if (s.length() <= 1) return s;
+    return reverse3(s.substring(1)) + s.charAt(0);
+}
+```
+
+`String` в Java **immutable** — прямой in-place реверс невозможен, нужен `char[]` или `StringBuilder`. На собеседовании ожидают вариант 2 (показывает понимание two-pointers).
+
+**Особый случай:** **юникодные surrogate pairs** (эмодзи, китайские иероглифы). Простой `char[]` реверс сломает их. Корректно — через `StringBuilder.reverse()`, который учитывает surrogates.
+
+Подробнее — в [Java String](../../programming-languages/java/java-string-interview.md).
+
+## Q22. (!) Проверка палиндрома?
+
+```java
+// Простой случай — без учёта регистра и спецсимволов
+boolean isPalindrome(String s) {
+    int left = 0, right = s.length() - 1;
+    while (left < right) {
+        if (s.charAt(left) != s.charAt(right)) return false;
+        left++;
+        right--;
+    }
+    return true;
+}
+
+// LeetCode-вариант: только alphanumeric, ignore case
+boolean isPalindromeLeet(String s) {
+    int left = 0, right = s.length() - 1;
+    while (left < right) {
+        while (left < right && !Character.isLetterOrDigit(s.charAt(left))) left++;
+        while (left < right && !Character.isLetterOrDigit(s.charAt(right))) right--;
+        if (Character.toLowerCase(s.charAt(left)) !=
+            Character.toLowerCase(s.charAt(right))) return false;
+        left++;
+        right--;
+    }
+    return true;
+}
+```
+
+`O(n)` время, `O(1)` память. Альтернатива — реверс и сравнение, но это `O(n)` доп. памяти.
+
+## Q23. (!) Проверка анаграммы?
+
+Две строки — анаграммы, если одна получается перестановкой символов другой.
+
+```java
+// Метод 1: сортировка — O(n log n) время, O(n) память (toCharArray)
+boolean isAnagramSort(String a, String b) {
+    if (a.length() != b.length()) return false;
+    char[] aArr = a.toCharArray();
+    char[] bArr = b.toCharArray();
+    Arrays.sort(aArr);
+    Arrays.sort(bArr);
+    return Arrays.equals(aArr, bArr);
+}
+
+// Метод 2: подсчёт частот — O(n) время, O(1) память для ASCII
+boolean isAnagram(String a, String b) {
+    if (a.length() != b.length()) return false;
+    int[] count = new int[26]; // только английский lowercase
+    for (int i = 0; i < a.length(); i++) {
+        count[a.charAt(i) - 'a']++;
+        count[b.charAt(i) - 'a']--;
+    }
+    for (int c : count) if (c != 0) return false;
+    return true;
+}
+
+// Универсальный для unicode — HashMap
+boolean isAnagramUnicode(String a, String b) {
+    if (a.length() != b.length()) return false;
+    Map<Integer, Integer> freq = new HashMap<>();
+    a.codePoints().forEach(c -> freq.merge(c, 1, Integer::sum));
+    b.codePoints().forEach(c -> freq.merge(c, -1, Integer::sum));
+    return freq.values().stream().allMatch(v -> v == 0);
+}
+```
+
+## Q24. Группировка анаграмм?
+
+```java
+List<List<String>> groupAnagrams(String[] strs) {
+    Map<String, List<String>> groups = new HashMap<>();
+    for (String s : strs) {
+        char[] arr = s.toCharArray();
+        Arrays.sort(arr);
+        String key = new String(arr);
+        groups.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+    }
+    return new ArrayList<>(groups.values());
+}
+```
+
+Сложность `O(n · k log k)`, где `n` — число строк, `k` — макс. длина. Альтернативный ключ — частотный массив, преобразованный в строку: `O(n · k)`, но больше memory overhead на ключи.
+
+## Q25. (!) Самая длинная подстрока без повторов?
+
+**Sliding window** + `HashMap` для отслеживания последнего вхождения.
+
+```java
+int lengthOfLongestSubstring(String s) {
+    Map<Character, Integer> lastSeen = new HashMap<>();
+    int maxLen = 0, left = 0;
+
+    for (int right = 0; right < s.length(); right++) {
+        char c = s.charAt(right);
+        if (lastSeen.containsKey(c) && lastSeen.get(c) >= left) {
+            left = lastSeen.get(c) + 1; // сдвигаем левую границу
+        }
+        lastSeen.put(c, right);
+        maxLen = Math.max(maxLen, right - left + 1);
+    }
+    return maxLen;
+}
+```
+
+Сложность `O(n)` время, `O(min(n, alphabet))` память. Для ASCII — `O(1)` память (массив 128).
+
+## Q26. Самый длинный палиндром в строке?
+
+**Expand around center** — для каждого индекса считаем максимальный палиндром с центром в нём (для чётных и нечётных длин). `O(n²)`.
+
+```java
+String longestPalindrome(String s) {
+    int start = 0, end = 0;
+
+    for (int i = 0; i < s.length(); i++) {
+        int len1 = expand(s, i, i);     // нечётная длина
+        int len2 = expand(s, i, i + 1); // чётная длина
+        int len = Math.max(len1, len2);
+
+        if (len > end - start) {
+            start = i - (len - 1) / 2;
+            end = i + len / 2;
+        }
+    }
+    return s.substring(start, end + 1);
+}
+
+int expand(String s, int left, int right) {
+    while (left >= 0 && right < s.length() && s.charAt(left) == s.charAt(right)) {
+        left--;
+        right++;
+    }
+    return right - left - 1;
+}
+```
+
+Альтернатива — **алгоритм Манакера** — `O(n)`, но сложен в реализации. На собеседовании обычно ожидают `expand around center`.
+
+## Q27. (!) Поиск подстроки — алгоритм KMP?
+
+**KMP (Knuth-Morris-Pratt)** — поиск подстроки длины `m` в тексте длины `n` за `O(n + m)`. Использует **префиксную функцию** для пропуска повторных сравнений.
+
+```java
+int kmpSearch(String text, String pattern) {
+    if (pattern.isEmpty()) return 0;
+
+    int[] lps = computeLPS(pattern);
+    int i = 0, j = 0;
+
+    while (i < text.length()) {
+        if (text.charAt(i) == pattern.charAt(j)) {
+            i++; j++;
+            if (j == pattern.length()) return i - j;
+        } else if (j > 0) {
+            j = lps[j - 1]; // используем префикс-функцию
+        } else {
+            i++;
+        }
+    }
+    return -1;
+}
+
+int[] computeLPS(String pattern) {
+    int[] lps = new int[pattern.length()];
+    int len = 0, i = 1;
+
+    while (i < pattern.length()) {
+        if (pattern.charAt(i) == pattern.charAt(len)) {
+            lps[i++] = ++len;
+        } else if (len > 0) {
+            len = lps[len - 1];
+        } else {
+            lps[i++] = 0;
+        }
+    }
+    return lps;
+}
+```
+
+`lps[i]` — длина наибольшего префикса, который также является суффиксом для `pattern[0..i]`. Препроцессинг `O(m)`, поиск `O(n)`.
+
+В стандартной библиотеке `String.indexOf()` использует **наивный алгоритм** `O(n·m)`. Для частых поисков по большим текстам — KMP или Aho-Corasick (поиск множества образцов).
+
+## Q28. (!) Алгоритм Рабина-Карпа?
+
+**Rabin-Karp** — поиск подстроки через хеширование. Использует **rolling hash** для быстрого пересчёта при сдвиге окна. Среднее `O(n + m)`, худшее `O(n·m)`.
+
+```java
+int rabinKarp(String text, String pattern) {
+    int n = text.length(), m = pattern.length();
+    if (m > n) return -1;
+
+    long base = 256, mod = 1_000_000_007L;
+    long patternHash = 0, windowHash = 0, h = 1;
+
+    for (int i = 0; i < m - 1; i++) h = (h * base) % mod;
+
+    for (int i = 0; i < m; i++) {
+        patternHash = (patternHash * base + pattern.charAt(i)) % mod;
+        windowHash  = (windowHash  * base + text.charAt(i))    % mod;
+    }
+
+    for (int i = 0; i <= n - m; i++) {
+        if (patternHash == windowHash && text.regionMatches(i, pattern, 0, m)) {
+            return i; // hash match + verify
+        }
+        if (i < n - m) {
+            windowHash = (base * (windowHash - text.charAt(i) * h)
+                          + text.charAt(i + m)) % mod;
+            if (windowHash < 0) windowHash += mod;
+        }
+    }
+    return -1;
+}
+```
+
+**Применение:** поиск нескольких образцов одной длины (хеши хранятся в `HashSet`), плагиат-детекторы, поиск дубликатов в файлах.
+
+## Q29. Сравнение двух строк с учётом backspace?
+
+`#` — обозначает backspace. Сравнить строки после применения backspaces.
+
+```java
+// O(n+m) время, O(1) память — идём с конца
+boolean backspaceCompare(String s, String t) {
+    int i = s.length() - 1, j = t.length() - 1;
+
+    while (i >= 0 || j >= 0) {
+        i = nextValidChar(s, i);
+        j = nextValidChar(t, j);
+
+        if (i < 0 && j < 0) return true;
+        if (i < 0 || j < 0) return false;
+        if (s.charAt(i) != t.charAt(j)) return false;
+        i--; j--;
+    }
+    return true;
+}
+
+int nextValidChar(String s, int i) {
+    int skip = 0;
+    while (i >= 0) {
+        if (s.charAt(i) == '#') { skip++; i--; }
+        else if (skip > 0) { skip--; i--; }
+        else return i;
+    }
+    return -1;
+}
+```
+
+Альтернатива — построить итоговые строки через `StringBuilder` или стек: `O(n+m)` память.
+
+## Q30. (!) Поменять два числа без временной переменной?
+
+```java
+// Через XOR — без переполнения, работает для целых
+void swapXor(int[] arr, int i, int j) {
+    if (i == j) return; // важно! XOR с собой даёт 0
+    arr[i] = arr[i] ^ arr[j];
+    arr[j] = arr[i] ^ arr[j];
+    arr[i] = arr[i] ^ arr[j];
+}
+
+// Через арифметику — риск переполнения
+void swapArith(int[] arr, int i, int j) {
+    arr[i] = arr[i] + arr[j];
+    arr[j] = arr[i] - arr[j];
+    arr[i] = arr[i] - arr[j];
+}
+```
+
+В реальном коде используют временную переменную — это читабельнее. XOR-трюк показывает понимание побитовых операций. Подробнее — в [Java Types](../../programming-languages/java/java-types-interview.md).
+
+## Q31. Перевод числа в произвольную систему счисления?
+
+```java
+String decimalToBase(int number, int base) {
+    if (number == 0) return "0";
+    StringBuilder sb = new StringBuilder();
+    boolean negative = number < 0;
+    number = Math.abs(number);
+
+    while (number > 0) {
+        int remainder = number % base;
+        sb.append(remainder < 10 ? (char)('0' + remainder)
+                                  : (char)('A' + remainder - 10));
+        number /= base;
+    }
+    if (negative) sb.append('-');
+    return sb.reverse().toString();
+}
+
+// Встроенные методы Java:
+String binary = Integer.toString(42, 2);   // "101010"
+String hex    = Integer.toString(42, 16);  // "2a"
+int back      = Integer.parseInt("101010", 2); // 42
+```
+
+Минимальная база — 2, максимальная для `Integer.toString` — 36 (`Character.MAX_RADIX`).
+
+## Q32. Проверка степени двойки?
+
+```java
+boolean isPowerOfTwo(int n) {
+    return n > 0 && (n & (n - 1)) == 0;
+}
+```
+
+**Идея:** степень двойки в двоичной записи имеет ровно один бит. `n - 1` инвертирует все биты после младшего единичного, поэтому `n & (n - 1) = 0` только для степеней двойки (и для `n = 0`, поэтому проверяем `n > 0`).
+
+Для `n = 0` нужно явно вернуть `false`. Для отрицательных тоже `false`.
+
+## Q33. (!) Почему == для строк работает не как ожидается?
+
+`==` сравнивает **ссылки**, а не содержимое. У строк это работает только для **interned** строк (литералов в string pool):
+
+```java
+String a = "hello";
+String b = "hello";
+a == b;  // true — обе ссылаются на pool
+
+String c = new String("hello");
+a == c;  // false — c в куче, не в pool
+
+a.equals(c);  // true — содержимое одинаковое
+
+c.intern() == a;  // true — intern возвращает ссылку из pool
+```
+
+**Правильно:** всегда использовать `.equals()` или `Objects.equals()` для строк (защита от NPE).
+
+Подробнее — в [Java String](../../programming-languages/java/java-string-interview.md).
+
+## Q34. Когда использовать char[] вместо String для алгоритмов?
+
+1. **In-place модификация** — `String` immutable, `char[]` можно менять
+2. **Безопасность** — пароли держат в `char[]`, чтобы можно было «затереть» (`Arrays.fill(arr, '\0')`); `String` остаётся в куче до GC
+3. **Производительность** — для тяжёлых алгоритмов на строках `char[]` обходит `String.charAt()` (в Java 9+ String хранится как `byte[]` с compact strings)
+
+```java
+// Работа с паролем
+char[] password = readPassword();
+try {
+    authenticate(password);
+} finally {
+    Arrays.fill(password, '\0'); // затираем
+}
+```
+
+С Java 9+ строки хранятся как `byte[]` с флагом кодировки (LATIN1 или UTF-16) — `String.charAt()` для LATIN1 вернёт значение быстро, но для алгоритмов всё ещё может быть выгоднее `toCharArray()`.
+
+## Q35. (!) StringBuilder vs String конкатенация — где разница?
+
+```java
+// O(n²) — каждая конкатенация создаёт новую строку
+String result = "";
+for (String s : list) result += s; // ужасно для большого list
+
+// O(n) — StringBuilder
+StringBuilder sb = new StringBuilder();
+for (String s : list) sb.append(s);
+String result = sb.toString();
+
+// O(n) — String.join, лаконично
+String result = String.join("", list);
+
+// O(n) — Collectors.joining
+String result = list.stream().collect(Collectors.joining(", "));
+```
+
+С Java 9+ компилятор использует **invokedynamic** + `StringConcatFactory` для `+` — для **простой** конкатенации это эффективно. Но в **цикле** `+=` всё равно проигрывает — компилятор не может объединить итерации в одну операцию.
+
+Для тред-сейф случая — `StringBuffer` (синхронизирован, медленнее).
+
+## Q36. Как избежать ArrayIndexOutOfBoundsException в two-pointers?
+
+1. **Условие в цикле перед чтением** — проверяй `left < arr.length`, `right >= 0`
+2. **Учитывай Deque/PriorityQueue null** — `pollFirst()` возвращает `null`, не кидает исключение
+3. **Используй `<=` vs `<`** аккуратно — частая ошибка в `binarySearch`
+4. **При работе со строкой:** `s.charAt(i)` кидает `StringIndexOutOfBoundsException`, проверяй границы
+
+```java
+// Опасно — проверяй с короткого замыкания
+while (i < n && j < m && arr[i] == brr[j]) { ... }
+
+// Безопаснее: явный break
+while (i < n) {
+    if (j >= m || arr[i] != brr[j]) break;
+    ...
+}
+```
+
+При работе с `char` помни про **surrogate pairs**: `String.length()` считает UTF-16 кодовые единицы, а не code points.
+
+---
+
+## See also
+
+- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
+- [Анализ сложности](../complexity/complexity-analysis-interview.md) — Big O для типичных операций
+- [Two Pointers и Sliding Window](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — глубокий разбор паттернов
+- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — Dutch National Flag и 3-way partition
+- [Алгоритмы поиска](../sorting-searching/searching-algorithms-interview.md) — линейный, бинарный
+- [Хеш-таблицы](hash-tables-interview.md) — для Two Sum, Group Anagrams
+- [Динамическое программирование](../algorithmic-paradigms/dynamic-programming-interview.md) — Kadane как пример DP
+- [Связные списки](linked-lists-interview.md) — фаст/слоу указатели для циклов
+- [Java String](../../programming-languages/java/java-string-interview.md) — immutability, intern, surrogate pairs
+- [Java Collections](../../programming-languages/java/java-collections-interview.md) — ArrayList vs LinkedList
+- [Java Types](../../programming-languages/java/java-types-interview.md) — XOR, побитовые операции
