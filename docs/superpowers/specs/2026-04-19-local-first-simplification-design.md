@@ -27,6 +27,7 @@
 ### In scope
 - Удалить production-ориентированные артефакты (Dockerfile, docker-compose, prod-профиль, postgres-профиль).
 - Удалить security-слой (admin-токен, rate-limit для regenerate, CORS-whitelist).
+- Убрать двустороннюю синхронизацию избранного в markdown-файлы: флаг `important` — единственный источник истины в БД.
 - Изменить дефолты preload/warmup на `false`.
 - Добавить режим работы без AI (`ai-provider: none` / автоопределение) с автоматическим переходом в flashcard-фазу.
 - Добавить UI-кнопку «Сбросить банк вариантов» на `/settings`.
@@ -54,6 +55,7 @@
 | `modules/quiz-persistence/src/main/resources/db/migration-postgres/` (каталог целиком) | Вместе с postgres-профилем |
 | Весь пакет `modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/security/` | Админ-токен / rate-limit / handlers не нужны. Подтверждено: `RequestRateLimiter` используется только `SensitiveEndpointAccessService` — безопасно удалить вместе. Классы: `SensitiveEndpointAccessService`, `RequestRateLimiter`, `SensitiveEndpointAuthenticationEntryPoint`, `SensitiveEndpointAccessDeniedHandler` |
 | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/web/SecurityConfig.java` | Настраивает Spring Security filter chain, CORS, CSRF — всё не нужно на localhost-only |
+| `modules/quiz-app/src/main/java/com/cheatsheet/quiz/service/imports/MarkdownFavoriteService.java` | Избранное живёт только в БД. Markdown-файлы — read-only источник вопросов |
 | Соответствующие тесты этих классов | Удаляются вместе с кодом |
 
 Все удаления — через `git rm`, чтобы история была чистой.
@@ -103,6 +105,12 @@
 **Контроллеры, отдающие вопрос в UI (`InterviewMvcController`):**
 - В модель прокидывается флаг `aiEnabled` (из `appProperties.isAiEnabled()`).
 - Если `aiEnabled == false` и у текущего вопроса пустой список вариантов — `flashcardMode = true` принудительно.
+
+**`FavoriteService` и двусторонняя синхронизация:**
+- `MarkdownFavoriteService` удаляется целиком.
+- `FavoriteService` упрощается: только `questionRepository.updateImportant(id, flag)`, markdown-файл не пишется.
+- DTO `FavoriteResult`: поле `synced` удаляется (становится неактуальным). Если фронт читает это поле — либо убрать на фронте, либо оставить заглушку `true`. Решение — по месту, смотреть потребителей на этапе имплементации.
+- `FavoriteServiceTest` упрощается: без моков `MarkdownFavoriteService`.
 
 **Admin endpoint для сброса:**
 - Уже существует `POST /api/admin/options/clear` в `AdminController` (делегирует в `AdminApiService.clearOptions(token)`).
@@ -177,7 +185,7 @@ OPENAI_API_KEY=sk-... ./gradlew bootRun
 
 1. ✅ `./gradlew bootRun` без env-ключей: приложение поднимается, главная `/` отдаёт рабочий flashcard-вопрос, можно оценить 1–4, переход к следующему.
 2. ✅ `./gradlew bootRun` c `OPENAI_API_KEY=...`: AI-варианты генерируются по запросу, 🔄/💡 работают.
-3. ✅ В репозитории отсутствуют: `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `application-prod.yml`, `application-postgres.yml`, `db/migration-postgres/`, `SensitiveEndpointAccessService.java`.
+3. ✅ В репозитории отсутствуют: `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `application-prod.yml`, `application-postgres.yml`, `db/migration-postgres/`, `SensitiveEndpointAccessService.java`, `MarkdownFavoriteService.java`.
 4. ✅ В `application.yml` нет блоков `admin-token`, `security.cors`, `quality-iterations`, `regenerate-rate-limit-per-minute`.
 5. ✅ Кнопка «Сбросить варианты» на `/settings` работает без токенов/заголовков.
 6. ✅ `./gradlew test` проходит полностью (существующие тесты должны быть обновлены или удалены вместе со своими классами).

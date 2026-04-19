@@ -100,6 +100,145 @@ EOF
 
 ---
 
+## Task 1.5: Удаление двусторонней синхронизации избранного в markdown
+
+**Files:**
+- Delete: `modules/quiz-app/src/main/java/com/cheatsheet/quiz/service/imports/MarkdownFavoriteService.java`
+- Modify: `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service/progress/FavoriteService.java`
+- Modify: `modules/quiz-app/src/main/java/com/cheatsheet/quiz/service/imports/package-info.java` (убрать упоминание в Javadoc)
+- Modify: `modules/quiz-app/src/test/java/com/cheatsheet/quiz/service/FavoriteServiceTest.java` (упростить)
+
+- [ ] **Step 1: Удалить `MarkdownFavoriteService.java`**
+
+```bash
+git rm modules/quiz-app/src/main/java/com/cheatsheet/quiz/service/imports/MarkdownFavoriteService.java
+```
+
+- [ ] **Step 2: Упростить `FavoriteService.java`**
+
+Открыть `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service/progress/FavoriteService.java`. Заменить содержимое целиком на:
+
+```java
+package com.cheatsheet.quiz.feature.interview.service.progress;
+
+import com.cheatsheet.quiz.domain.Question;
+import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
+import com.cheatsheet.quiz.persistence.QuestionRepository;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Сервис переключения состояния «избранное» для вопроса.
+ * Флаг {@code important} хранится только в БД — markdown-файлы с вопросами read-only.
+ */
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class FavoriteService {
+    QuestionRepository questionRepository;
+
+    /**
+     * Переключает флаг избранного для вопроса в БД.
+     *
+     * @param questionId идентификатор вопроса
+     * @return результат операции
+     */
+    @Transactional
+    public FavoriteResult toggleFavorite(long questionId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException("Вопрос не найден: id=" + questionId));
+        boolean newFavorite = !question.important();
+        questionRepository.updateImportant(questionId, newFavorite);
+        return new FavoriteResult(questionId, newFavorite);
+    }
+
+    /**
+     * Результат переключения избранного.
+     *
+     * @param questionId идентификатор вопроса
+     * @param favorite новое состояние «избранное»
+     */
+    @Builder(toBuilder = true)
+    public record FavoriteResult(long questionId, boolean favorite) {
+    }
+}
+```
+
+Изменения относительно исходника:
+- Убран импорт и поле `MarkdownFavoriteService`.
+- Убран вызов `markdownFavoriteService.toggleInFile(...)`.
+- Из record `FavoriteResult` убрано поле `synced`.
+
+- [ ] **Step 3: Проверить потребителей `FavoriteResult.synced`**
+
+```bash
+grep -rn "\.synced()\|\"synced\"\|isSynced\|synced:" modules/ src/ 2>/dev/null
+```
+
+Expected: либо пусто, либо ссылки только в тестах/DTO, которые чинятся следом. Если нашёлся JS/Thymeleaf-код, читающий `synced` из API-ответа — либо убрать оттуда, либо оставить в DTO `synced = true` как заглушку (проще: убрать поле везде).
+
+- [ ] **Step 4: Упростить `FavoriteServiceTest.java`**
+
+Открыть `modules/quiz-app/src/test/java/com/cheatsheet/quiz/service/FavoriteServiceTest.java`. Удалить:
+- импорт `MarkdownFavoriteService`
+- поле `@Mock MarkdownFavoriteService markdownFavoriteService`
+- передачу `markdownFavoriteService` в конструктор `FavoriteService`
+- все `when(markdownFavoriteService.toggleInFile(...))`
+- все `verify(markdownFavoriteService)...`
+- все проверки `assertThat(result.synced())...`
+
+Оставить только проверки: `updateImportant` вызван с правильным флагом, `FavoriteResult` содержит правильный `questionId` и `favorite`.
+
+- [ ] **Step 5: Подправить `package-info.java`**
+
+```bash
+grep -n "MarkdownFavoriteService" modules/quiz-app/src/main/java/com/cheatsheet/quiz/service/imports/package-info.java
+```
+
+Если упоминание есть — открыть файл и удалить строку/блок с `@see MarkdownFavoriteService`.
+
+- [ ] **Step 6: Убедиться, что компиляция чистая**
+
+```bash
+./gradlew :quiz-app:build -x test
+```
+
+Expected: `BUILD SUCCESSFUL`.
+
+- [ ] **Step 7: Прогнать тесты**
+
+```bash
+./gradlew test
+```
+
+Expected: `BUILD SUCCESSFUL`.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git commit -m "$(cat <<'EOF'
+refactor(favorites): избранное живёт только в БД
+
+Удалён MarkdownFavoriteService — больше не пишем маркер (!)
+в исходные markdown-файлы при переключении избранного.
+
+Источник истины — таблица questions, поле important.
+Markdown-файлы в cheatsheets/interview/ теперь read-only:
+их задача — инициализировать БД при первом импорте.
+
+FavoriteResult.synced удалён как более неактуальный.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
 ## Task 2: Удаление Postgres-профиля и зависимостей
 
 **Files:**
