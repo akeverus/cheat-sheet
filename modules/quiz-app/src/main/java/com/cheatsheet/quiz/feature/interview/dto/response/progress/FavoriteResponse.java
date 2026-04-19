@@ -8,6 +8,5 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 public record FavoriteResponse(
         boolean favorite,
-        boolean synced,
         long questionId
 ) {}

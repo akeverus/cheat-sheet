@@ -30,21 +30,20 @@ class FavoriteApiServiceTest {
     @Test
     void toggleFavoriteMapsDomainResultToApiResponse() {
         long questionId = 1101L;
-        FavoriteService.FavoriteResult domain = new FavoriteService.FavoriteResult(questionId, true, true);
+        FavoriteService.FavoriteResult domain = new FavoriteService.FavoriteResult(questionId, true);
         when(favoriteService.toggleFavorite(questionId)).thenReturn(domain);
 
         FavoriteResponse response = service.toggleFavorite(questionId);
 
         assertThat(response.questionId()).isEqualTo(questionId);
         assertThat(response.favorite()).isTrue();
-        assertThat(response.synced()).isTrue();
         verify(favoriteService).toggleFavorite(questionId);
     }
 
     @Test
     void toHttpResponseWrapsPayloadWithOkStatus() {
         long questionId = 1102L;
-        FavoriteService.FavoriteResult domain = new FavoriteService.FavoriteResult(questionId, false, true);
+        FavoriteService.FavoriteResult domain = new FavoriteService.FavoriteResult(questionId, false);
         when(favoriteService.toggleFavorite(questionId)).thenReturn(domain);
 
         ResponseEntity<FavoriteResponse> response = service.toHttpResponse(questionId);
@@ -53,6 +52,5 @@ class FavoriteApiServiceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().questionId()).isEqualTo(questionId);
         assertThat(response.getBody().favorite()).isFalse();
-        assertThat(response.getBody().synced()).isTrue();
     }
 }

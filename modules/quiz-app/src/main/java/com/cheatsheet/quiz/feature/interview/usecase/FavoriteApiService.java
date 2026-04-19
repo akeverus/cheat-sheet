@@ -20,7 +20,7 @@ public class FavoriteApiService {
 
     public FavoriteResponse toggleFavorite(long questionId) {
         FavoriteService.FavoriteResult result = favoriteService.toggleFavorite(questionId);
-        return new FavoriteResponse(result.favorite(), result.synced(), result.questionId());
+        return new FavoriteResponse(result.favorite(), result.questionId());
     }
 
     public ResponseEntity<FavoriteResponse> toHttpResponse(long questionId) {

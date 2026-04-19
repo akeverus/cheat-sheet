@@ -616,7 +616,7 @@ class InterviewApiControllerUnitTest {
         QuestionIdRequest request = new QuestionIdRequest();
         request.setQuestionId(1101L);
         com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse result =
-                new com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse(true, true, 1101L);
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse(true, 1101L);
         when(favoriteApiService.toHttpResponse(1101L)).thenReturn(ResponseEntity.ok(result));
 
         ResponseEntity<?> response = controller.toggleFavorite(request);
@@ -627,7 +627,6 @@ class InterviewApiControllerUnitTest {
                 (com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse) response.getBody();
         assertThat(body.questionId()).isEqualTo(1101L);
         assertThat(body.favorite()).isTrue();
-        assertThat(body.synced()).isTrue();
         verify(favoriteApiService).toHttpResponse(1101L);
     }
 

@@ -5,7 +5,6 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.feature.interview.service.progress.FavoriteService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
-import com.cheatsheet.quiz.service.imports.MarkdownFavoriteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +15,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,43 +25,38 @@ class FavoriteServiceTest {
 
     @Mock
     private QuestionRepository questionRepository;
-    @Mock
-    private MarkdownFavoriteService markdownFavoriteService;
 
     private FavoriteService service;
 
     @BeforeEach
     void setUp() {
-        service = new FavoriteService(questionRepository, markdownFavoriteService);
+        service = new FavoriteService(questionRepository);
     }
 
     @Test
     void toggleFavoriteMarksQuestionAsImportantWhenCurrentlyNotFavorite() {
-        Question question = question(301L, false);
-        when(questionRepository.findById(301L)).thenReturn(Optional.of(question));
-        when(markdownFavoriteService.toggleInFile(question, true)).thenReturn(true);
+        long questionId = 301L;
+        Question question = question(questionId, false);
+        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
 
-        FavoriteService.FavoriteResult result = service.toggleFavorite(301L);
+        FavoriteService.FavoriteResult result = service.toggleFavorite(questionId);
 
-        assertThat(result.questionId()).isEqualTo(301L);
+        assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(result.favorite()).isTrue();
-        assertThat(result.synced()).isTrue();
-        verify(questionRepository).updateImportant(301L, true);
-        verify(markdownFavoriteService).toggleInFile(question, true);
+        verify(questionRepository).updateImportant(eq(questionId), eq(true));
     }
 
     @Test
     void toggleFavoriteUnmarksQuestionWhenCurrentlyFavorite() {
-        Question question = question(302L, true);
-        when(questionRepository.findById(302L)).thenReturn(Optional.of(question));
-        when(markdownFavoriteService.toggleInFile(question, false)).thenReturn(false);
+        long questionId = 302L;
+        Question question = question(questionId, true);
+        when(questionRepository.findById(questionId)).thenReturn(Optional.of(question));
 
-        FavoriteService.FavoriteResult result = service.toggleFavorite(302L);
+        FavoriteService.FavoriteResult result = service.toggleFavorite(questionId);
 
+        assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(result.favorite()).isFalse();
-        assertThat(result.synced()).isFalse();
-        verify(questionRepository).updateImportant(302L, false);
-        verify(markdownFavoriteService).toggleInFile(question, false);
+        verify(questionRepository).updateImportant(eq(questionId), eq(false));
     }
 
     @Test
