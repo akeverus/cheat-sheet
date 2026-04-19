@@ -1,15 +1,18 @@
 ---
 title: "Go: модули"
 description: "Полное руководство по модулям в Go: go.mod, go.sum, зависимости, версионирование, vendoring"
-tags: ["go", "golang", "modules", "dependencies", "packages"]
+tags:
+  - go
+  - golang
+  - modules
+  - dependencies
+  - packages
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: модули
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

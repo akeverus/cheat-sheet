@@ -1,7 +1,15 @@
 ---
 title: "Micronaut: Serialization - JSON, XML и Custom Serializers"
 description: "Полное руководство по сериализации в Micronaut: JSON, XML, custom serializers, Jackson, Gson и best practices"
-tags: ["micronaut", "serialization", "json", "xml", "jackson", "gson", "java", "kotlin"]
+tags:
+  - micronaut
+  - serialization
+  - json
+  - xml
+  - jackson
+  - gson
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-kafka.md"]

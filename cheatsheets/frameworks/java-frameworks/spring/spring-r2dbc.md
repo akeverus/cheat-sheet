@@ -1,7 +1,13 @@
 ---
 title: "Spring Data R2DBC: Полное руководство по реактивным базам данных"
 description: "Комплексное руководство по Spring Data R2DBC: реактивные репозитории, транзакции, connection pooling, testing и best practices"
-tags: ["spring", "r2dbc", "reactive", "database", "non-blocking", "java"]
+tags:
+  - spring
+  - r2dbc
+  - reactive
+  - database
+  - non-blocking
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 next: ["spring/spring-webflux.md", "spring/spring-data-jdbc.md"]

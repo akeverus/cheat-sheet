@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Retry - Retry Logic и Circuit Breaker"
 description: "Полное руководство по retry logic в Micronaut: retry annotations, circuit breakers, exponential backoff и best practices"
-tags: ["micronaut", "retry", "circuit-breaker", "resilience", "backoff", "java", "kotlin"]
+tags:
+  - micronaut
+  - retry
+  - circuit-breaker
+  - resilience
+  - backoff
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-core.md", "micronaut-cloud.md"]

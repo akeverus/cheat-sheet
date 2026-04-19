@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Functional Programming: Basics"
 description: "Кратко: основы функционального программирования в Kotlin: Higher-Order Functions, Lambda Expressions, Function Types, Inline Functions, Tail Recursion, Partial Application и Currying."
-tags: ["languages", "kotlin", "kotlin-fp-basics"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-fp-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Functional Programming: Basics
 
 Кратко: основы функционального программирования в **Kotlin**: **Higher-Order Functions**, **Lambda Expressions**, **Function Types**, **Inline Functions**, **Tail Recursion**, **Partial Application** и **Currying**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

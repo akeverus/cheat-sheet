@@ -1,7 +1,12 @@
 ---
 title: "Quarkus: Logging - Логирование"
 description: "Полное руководство по логированию в Quarkus: SLF4J, Logback, structured logging, MDC, log levels и best practices"
-tags: ["quarkus", "logging", "slf4j", "logback", "java"]
+tags:
+  - quarkus
+  - logging
+  - slf4j
+  - logback
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-actuator.md"]

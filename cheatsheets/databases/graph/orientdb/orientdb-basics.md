@@ -1,7 +1,10 @@
 ---
 title: "OrientDB: Основы"
 description: "Комплексное руководство по использованию OrientDB — мультимодельной NoSQL базы данных."
-tags: ["databases", "graph", "orientdb-basics"]
+tags:
+  - databases
+  - graph
+  - orientdb-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **OrientDB**: Основы
 
 **Комплексное руководство по использованию `OrientDB` — мультимодельной `NoSQL` базы данных.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

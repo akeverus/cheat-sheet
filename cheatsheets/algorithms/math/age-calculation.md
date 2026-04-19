@@ -1,15 +1,16 @@
 ---
 title: "Вычисление возраста (Age Calculation)"
 description: "Описание расчёта возраста в годах (и в днях/месяцах) по дате рождения и текущей дате. Рассмотрены подходы на Java 8 (Period, LocalDate), Joda-Time и Java 7 (Calendar, DateFormat)."
-tags: ["algorithms", "math", "age-calculation"]
+tags:
+  - algorithms
+  - math
+  - age-calculation
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Вычисление возраста (`Age Calculation`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Описание расчёта возраста в годах (и в днях/месяцах) по дате рождения и текущей дате. Рассмотрены подходы на `Java` 8 (`Period`, `LocalDate`), `Joda-Time` и `Java` 7 (`Calendar`, `DateFormat`).
 

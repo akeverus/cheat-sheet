@@ -1,7 +1,10 @@
 ---
 title: "REST Assured для Java"
 description: "Краткое руководство по тестированию REST API в Java: fluent API, проверка ответов, аутентификация, data-driven тесты, интеграция со Spring Boot."
-tags: ["testing", "integration-testing", "rest-assured"]
+tags:
+  - testing
+  - integration-testing
+  - rest-assured
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # REST Assured для Java
 
 Краткое руководство по тестированию REST API в Java: fluent API, проверка ответов, аутентификация, data-driven тесты, интеграция со Spring Boot.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Управление тестированием (Test Management)"
 description: "Планирование тестов, тест-кейсы, выполнение, отчёты, интеграция с Jira/TestRail/Zephyr и CI/CD, метрики и трассируемость требований."
-tags: ["testing", "test-management", "test-management-overview"]
+tags:
+  - testing
+  - test-management
+  - test-management-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Управление тестированием (`Test Management`)
 
 Планирование тестов, тест-кейсы, выполнение, отчёты, интеграция с Jira/TestRail/Zephyr и CI/CD, метрики и трассируемость требований.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

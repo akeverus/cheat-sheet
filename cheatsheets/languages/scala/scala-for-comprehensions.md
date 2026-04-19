@@ -1,7 +1,11 @@
 ---
 title: "Scala For Comprehensions"
 description: "Полное руководство по For-comprehensions в Scala: синтаксический сахар для flatMap, фильтрация, генераторы"
-tags: ["scala", "for-comprehensions", "functional-programming", "monads"]
+tags:
+  - scala
+  - for-comprehensions
+  - functional-programming
+  - monads
 difficulty: "intermediate"
 prerequisites: ["scala/scala-fp-basics.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 # **Scala For Comprehensions**
 
 Кратко: полное руководство по **For-comprehensions** в **Scala**: синтаксический сахар для **flatMap**, фильтрация, генераторы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

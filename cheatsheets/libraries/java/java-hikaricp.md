@@ -1,7 +1,10 @@
 ---
 title: "HikariCP: Высокопроизводительный Connection Pool"
 description: "Комплексное руководство по использованию HikariCP — самого быстрого и надежного JDBC connection pool для Java приложений."
-tags: ["libraries", "java", "java-hikaricp"]
+tags:
+  - libraries
+  - java
+  - java-hikaricp
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # HikariCP: Высокопроизводительный **Connection Pool**
 
 **Комплексное руководство по использованию `HikariCP` — самого быстрого и надежного `JDBC` connection pool для `Java` приложений.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

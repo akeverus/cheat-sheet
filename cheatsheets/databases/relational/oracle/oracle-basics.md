@@ -1,7 +1,10 @@
 ---
 title: "Oracle Database: Основы"
 description: "Комплексное руководство по использованию Oracle Database — мощной реляционной системы управления базами данных от Oracle Corporation."
-tags: ["databases", "relational", "oracle-basics"]
+tags:
+  - databases
+  - relational
+  - oracle-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Oracle Database**: Основы
 
 **Комплексное руководство по использованию `Oracle Database` — мощной реляционной системы управления базами данных от `Oracle Corporation`.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

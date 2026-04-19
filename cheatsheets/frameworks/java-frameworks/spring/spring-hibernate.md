@@ -1,7 +1,15 @@
 ---
 title: "Spring Data JPA + Hibernate: ORM и работа с данными"
 description: "Полное руководство по Hibernate и Spring Data JPA: маппинг сущностей, запросы, кэширование, производительность, интеграция с Spring Boot"
-tags: ["hibernate", "spring-data-jpa", "orm", "jpa", "database", "mapping", "queries", "caching"]
+tags:
+  - hibernate
+  - spring-data-jpa
+  - orm
+  - jpa
+  - database
+  - mapping
+  - queries
+  - caching
 difficulty: "intermediate"
 prerequisites: ["spring-boot", "java-basics", "databases"]
 next: ["spring-data-jpa.md"]
@@ -11,8 +19,6 @@ updated: "2026-02-06"
 # Spring Data JPA + Hibernate: ORM и работа с данными
 
 Кратко: Полное руководство по **Hibernate ORM** и **Spring Data JPA**. Включает маппинг сущностей, запросы (**JPQL, `Criteria`, native SQL**), кэширование (**first/second level**), производительность, интеграцию с **Spring Boot**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Принципы SOLID"
 description: "Пять принципов объектно-ориентированного проектирования с примерами на Java."
-tags: ["architecture", "design-principles", "solid-principles"]
+tags:
+  - architecture
+  - design-principles
+  - solid-principles
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Принципы SOLID
 
 Пять принципов объектно-ориентированного проектирования с примерами на `Java`.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

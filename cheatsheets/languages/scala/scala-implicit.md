@@ -1,7 +1,11 @@
 ---
 title: "Scala Implicit"
 description: "Полное руководство по Implicit в Scala: implicit параметры, implicit conversions, type classes, Scala 3 given/using"
-tags: ["scala", "implicit", "type-classes", "functional-programming"]
+tags:
+  - scala
+  - implicit
+  - type-classes
+  - functional-programming
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 # **Scala Implicit**
 
 Кратко: полное руководство по **Implicit** в **Scala**: **implicit** параметры, **implicit conversions**, **type classes**, **Scala** 3 **given**/**using**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -71,7 +73,7 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 
 ## Введение в **Implicit**
 
-**Implicit** механизм в **Scala** позволяет автоматически передавать параметры и преобразовывать типы. Это мощный инструмент, который требует осторожного использования.
+**Implicit** механизм в **Scala** позволяет автоматически передавать параметры и преобразовывать типы. Это инструмент, который требует осторожного использования.
 
 ### Основные применения
 

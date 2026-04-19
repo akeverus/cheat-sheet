@@ -1,7 +1,10 @@
 ---
 title: "InfluxDB: Основы временных рядов"
 description: "Комплексное руководство по использованию InfluxDB — высокопроизводительной базы данных временных рядов."
-tags: ["databases", "time-series", "influxdb-basics"]
+tags:
+  - databases
+  - time-series
+  - influxdb-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **InfluxDB**: Основы временных рядов
 
 **Комплексное руководство по использованию `InfluxDB` — высокопроизводительной базы данных временных рядов.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

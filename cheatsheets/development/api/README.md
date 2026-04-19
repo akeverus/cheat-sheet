@@ -1,7 +1,11 @@
 ---
 title: "Development API"
 description: "Индекс раздела API: REST, GraphQL, gRPC и инструменты API."
-tags: ["meta", "index", "development", "api"]
+tags:
+  - meta
+  - index
+  - development
+  - api
 type: "index"
 updated: "2026-02-11"
 ---

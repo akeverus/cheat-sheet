@@ -1,15 +1,19 @@
 ---
 title: "Go: стандартная библиотека - HTTP"
 description: "Полное руководство по работе с HTTP в Go: клиент, сервер, handlers, middleware, routing, templates"
-tags: ["go", "golang", "http", "web", "server", "client"]
+tags:
+  - go
+  - golang
+  - http
+  - web
+  - server
+  - client
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: стандартная библиотека - **HTTP**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

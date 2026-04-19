@@ -1,687 +1,1927 @@
 ---
 title: "Вопросы на собеседовании: Hibernate"
-description: "Краткие ответы по Hibernate ORM: маппинги, Session, lazy loading, N+1, кэширование, состояния entity."
-tags: ["interview", "databases", "hibernate-interview"]
+description: "Полное покрытие Hibernate ORM: маппинги, Session, lazy loading, N+1, кэширование, состояния entity, Criteria API, JPQL, транзакции, блокировки, наследование, batch processing."
+tags:
+  - interview
+  - databases
+  - hibernate-interview
+aliases:
+  - "Hibernate"
+  - "Hibernate ORM"
+  - "Hibernate interview"
+  - "Hibernate собеседование"
+  - "JPA Hibernate"
+  - "ORM Java"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Hibernate`
 
-Краткие ответы по `Hibernate ORM`: маппинги, `Session`, lazy loading, N+1, кэширование, состояния entity.
+Полное покрытие `Hibernate ORM`: маппинги, `Session`, lazy loading, N+1, кэширование, состояния entity, `Criteria API`, `JPQL`, транзакции, блокировки, наследование, batch processing.
 
-Дата последнего обновления: 2026-02-04
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: **Hibernate** — популярная `JPA`-реализация для работы с БД. На собеседовании проверяют знание маппингов, сессий, lazy loading, N+1 и кэширования.
+Краткое введение: **Hibernate** — самая популярная реализация спецификации `JPA` для работы с реляционными БД в `Java`. На собеседовании проверяют глубокое понимание маппингов, жизненного цикла сущностей, механизмов кэширования, стратегий загрузки, N+1 проблемы, управления транзакциями и блокировок. Знание `Hibernate` тесно связано с [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) и [SQL](sql-interview.md).
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Hibernate ORM Documentation](https://hibernate.org/orm/documentation/)
-- [Hibernate User Guide](https://hibernate.org/orm/documentation/6.0/)
+- [Hibernate ORM Documentation](https://hibernate.org/orm/documentation/) — основная документация
+- [Hibernate User Guide 6.x](https://docs.jboss.org/hibernate/orm/6.4/userguide/html_single/Hibernate_User_Guide.html) — руководство пользователя
+- [JPA Specification](https://jakarta.ee/specifications/persistence/) — спецификация Jakarta Persistence
 
-### См. также
+### Статьи Baeldung
 
-- [`../frameworks/spring/spring-data-jpa-interview.md`](../frameworks/spring/spring-data-jpa-interview.md) — вопросы по Spring Data JPA
-- [`sql-interview.md`](sql-interview.md) — вопросы по SQL
-- [`../../frameworks/java-frameworks/spring/spring-hibernate.md`](../../frameworks/java-frameworks/spring/spring-hibernate.md) — Spring и Hibernate
+- [N+1 Problem in Hibernate and Spring Data JPA](https://www.baeldung.com/spring-hibernate-n1-problem) — проблема N+1 и решения
+- [Hibernate Second-Level Cache](https://www.baeldung.com/hibernate-second-level-cache) — кэш второго уровня
+- [Hibernate Entity Lifecycle](https://www.baeldung.com/hibernate-entity-lifecycle) — жизненный цикл сущностей
+- [Hibernate Inheritance Mapping](https://www.baeldung.com/hibernate-inheritance) — стратегии наследования
+- [Optimistic Locking in JPA](https://www.baeldung.com/jpa-optimistic-locking) — оптимистичная блокировка
+- [Pessimistic Locking in JPA](https://www.baeldung.com/jpa-pessimistic-locking) — пессимистичная блокировка
+- [Batch Insert/Update with Hibernate/JPA](https://www.baeldung.com/jpa-hibernate-batch-insert-update) — batch-операции
+- [JPA and Hibernate – Criteria vs. JPQL vs. HQL Query](https://www.baeldung.com/jpql-hql-criteria-query) — сравнение подходов к запросам
+- [FetchMode in Hibernate](https://www.baeldung.com/hibernate-fetchmode) — стратегии загрузки связанных сущностей
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
-**Основы Hibernate**
-- [Q1. Что такое Hibernate ORM?](#q1-что-такое-hibernate-orm)
-- [Q2. (!) Каковы преимущества Hibernate перед JDBC?](#q2-важно-каковы-преимущества-hibernate-перед-jdbc)
-- [Q3. (!) Назовите наиболее важные интерфейсы Hibernate?](#q3-важно-назовите-наиболее-важные-интерфейсы-hibernate)
-- [Q4. Что такое Session?](#q4-что-такое-session)
-- [Q5. Что такое SessionFactory?](#q5-что-такое-sessionfactory)
-- [Q6. Что вы думаете об утверждении «Session is a thread-safe object»?](#q6-что-вы-думаете-об-утверждении-session-is-a-thread-safe-object)
+**Основы Hibernate и JPA**
+- [Q1. (!) Что такое Hibernate ORM и чем он отличается от JPA?](#q1--что-такое-hibernate-orm-и-чем-он-отличается-от-jpa)
+- [Q2. (!) Каковы преимущества Hibernate перед JDBC?](#q2--каковы-преимущества-hibernate-перед-jdbc)
+- [Q3. (!) Назовите ключевые интерфейсы Hibernate](#q3--назовите-ключевые-интерфейсы-hibernate)
+- [Q4. Что такое Session и SessionFactory?](#q4-что-такое-session-и-sessionfactory)
+- [Q5. Является ли Session потокобезопасной?](#q5-является-ли-session-потокобезопасной)
+- [Q6. Объясните архитектуру Hibernate](#q6-объясните-архитектуру-hibernate)
 
-**Lazy Loading и кэширование**
-- [Q7. Что такое Lazy Loading?](#q7-что-такое-lazy-loading)
-- [Q8. (!) В чем разница между First Level Cache и Second Level Cache?](#q8-важно-в-чем-разница-между-first-level-cache-и-second-level-cache)
-- [Q9. Что такое Hibernate Configuration File?](#q9-что-такое-hibernate-configuration-file)
-- [Q10. Как создать Immutable class?](#q10-как-создать-immutable-class)
+**Жизненный цикл сущностей**
+- [Q7. (!) Какие состояния может иметь Entity?](#q7--какие-состояния-может-иметь-entity)
+- [Q8. (!) Что такое Dirty Checking и как работает flush?](#q8--что-такое-dirty-checking-и-как-работает-flush)
+- [Q9. В чём разница между persist(), save(), merge() и update()?](#q9-в-чём-разница-между-persist-save-merge-и-update)
+- [Q10. В чём разница между get() и load()?](#q10-в-чём-разница-между-get-и-load)
+- [Q11. Зачем Entity нужен конструктор без аргументов?](#q11-зачем-entity-нужен-конструктор-без-аргументов)
+- [Q12. (!) Можно ли объявить Entity класс final?](#q12--можно-ли-объявить-entity-класс-final)
 
 **Маппинг и аннотации**
-- [Q11. (!) Что такое Hibernate Inheritance Mapping?](#q11-важно-что-такое-hibernate-inheritance-mapping)
-- [Q12. Подвержен ли Hibernate атаке путем внедрения SQL-кода?](#q12-подвержен-ли-hibernate-атаке-путем-внедрения-sql-кода)
-- [Q13. Объясните Hibernate Mapping File](#q13-объясните-hibernate-mapping-file)
-- [Q14. Какие аннотации наиболее часто используются для поддержки сопоставления гибернации?](#q14-какие-аннотации-наиболее-часто-используются-для-поддержки-сопоставления-гибернации)
-- [Q15. Объясните архитектуру Hibernate](#q15-объясните-архитектуру-hibernate)
+- [Q13. Какие основные аннотации JPA используются для маппинга?](#q13-какие-основные-аннотации-jpa-используются-для-маппинга)
+- [Q14. (!) Что такое Hibernate Inheritance Mapping?](#q14--что-такое-hibernate-inheritance-mapping)
+- [Q15. Как маппить связь One-To-Many / Many-To-One?](#q15-как-маппить-связь-one-to-many--many-to-one)
+- [Q16. Как маппить связь Many-To-Many?](#q16-как-маппить-связь-many-to-many)
+- [Q17. В чём разница между @JoinColumn и mappedBy?](#q17-в-чём-разница-между-joincolumn-и-mappedby)
+- [Q18. Что такое @Embeddable и @Embedded?](#q18-что-такое-embeddable-и-embedded)
 
-**Методы Session**
-- [Q16. В чём разница между getCurrentSession() и openSession()?](#q16-в-чём-разница-между-getcurrentsession-и-opensession)
-- [Q17. В чём разница между save() и saveOrUpdate()?](#q17-в-чём-разница-между-save-и-saveorupdate)
-- [Q18. В чём разница между get() и load()?](#q18-в-чём-разница-между-get-и-load)
+**Lazy Loading и стратегии загрузки**
+- [Q19. (!) Что такое Lazy Loading и Eager Loading?](#q19--что-такое-lazy-loading-и-eager-loading)
+- [Q20. (!) Что такое проблема N+1?](#q20--что-такое-проблема-n1)
+- [Q21. (!) Как решить проблему N+1?](#q21--как-решить-проблему-n1)
+- [Q22. Что такое LazyInitializationException и как его избежать?](#q22-что-такое-lazyinitializationexception-и-как-его-избежать)
+- [Q23. Что такое Entity Graph?](#q23-что-такое-entity-graph)
 
-**Запросы: HQL и Criteria API**
-- [Q19. Что такое Criteria API?](#q19-что-такое-criteria-api)
-- [Q20. Что такое HQL?](#q20-что-такое-hql)
+**Кэширование**
+- [Q24. (!) В чём разница между First Level Cache и Second Level Cache?](#q24--в-чём-разница-между-first-level-cache-и-second-level-cache)
+- [Q25. Как настроить кэш второго уровня?](#q25-как-настроить-кэш-второго-уровня)
+- [Q26. Что такое Query Cache?](#q26-что-такое-query-cache)
+- [Q27. (!) Какие Concurrency Strategy доступны для кэша?](#q27--какие-concurrency-strategy-доступны-для-кэша)
 
-**Связи (Relationships)**
-- [Q21. Что такое связь One-To-Many?](#q21-что-такое-связь-one-to-many)
-- [Q22. Что такое связь Many-To-Many?](#q22-что-такое-связь-many-to-many)
-- [Q23. Что делает метод session.lock()?](#q23-что-делает-метод-sessionlock)
-- [Q24. (!) Что такое Hibernate Caching?](#q24-важно-что-такое-hibernate-caching)
-- [Q25. Что делает метод session.merge()?](#q25-что-делает-метод-sessionmerge)
-- [Q26. Может ли сопоставление коллекций быть выполнено с использованием связей One-To-One и Many-To-One?](#q26-может-ли-сопоставление-коллекций-быть-выполнено-с-использованием-связей-one-to-one-и-many-to-one)
-- [Q27. В чем разница между setMaxResults() и setFetchSize()?](#q27-в-чем-разница-между-setmaxresults-и-setfetchsize)
-- [Q28. Поддерживает ли Hibernate собственные SQL-запросы?](#q28-поддерживает-ли-hibernate-собственные-sql-запросы)
+**Запросы: HQL, JPQL и Criteria API**
+- [Q28. Что такое HQL и JPQL?](#q28-что-такое-hql-и-jpql)
+- [Q29. Что такое Criteria API?](#q29-что-такое-criteria-api)
+- [Q30. Что такое NamedQuery?](#q30-что-такое-namedquery)
+- [Q31. Поддерживает ли Hibernate нативные SQL-запросы?](#q31-поддерживает-ли-hibernate-нативные-sql-запросы)
+- [Q32. Подвержен ли Hibernate SQL Injection?](#q32-подвержен-ли-hibernate-sql-injection)
 
-**Entity и состояния**
-- [Q29. (!) Что происходит, когда конструктор без аргументов отсутствует в компоненте Entity?](#q29-важно-что-происходит-когда-конструктор-без-аргументов-отсутствует-в-компоненте-entity)
-- [Q30. (!) Можем ли мы объявить Entity класс final?](#q30-важно-можем-ли-мы-объявить-entity-класс-final)
-- [Q31. (!) Какие состояния могут быть у Entity?](#q31-важно-какие-состояния-могут-быть-у-entity)
-- [Q32. Что такое Query Cache?](#q32-что-такое-query-cache)
+**Транзакции и блокировки**
+- [Q33. (!) Что такое @Version и оптимистичная блокировка?](#q33--что-такое-version-и-оптимистичная-блокировка)
+- [Q34. В чём разница между оптимистичной и пессимистичной блокировкой?](#q34-в-чём-разница-между-оптимистичной-и-пессимистичной-блокировкой)
+- [Q35. Как работают транзакции в Hibernate?](#q35-как-работают-транзакции-в-hibernate)
 
-**Проблема N+1 и оптимизация**
-- [Q33. (!) Что такое проблема N+1?](#q33-важно-что-такое-проблема-n1)
-- [Q34. Как решить проблему N+1?](#q34-как-решить-проблему-n1)
-- [Q35. (!) Какие Concurrency Strategy доступны в Hibernate?](#q35-важно-какие-concurrency-strategy-доступны-в-hibernate)
-- [Q36. (!) Что такое @Version?](#q36-важно-что-такое-version)
-- [Q37. Что такое NamedQuery?](#q37-что-такое-namedquery)
-- [Q38. Какие преимущества есть у NamedQuery?](#q38-какие-преимущества-есть-у-namedquery)
+**Производительность и оптимизация**
+- [Q36. (!) Что такое Batch Processing в Hibernate?](#q36--что-такое-batch-processing-в-hibernate)
+- [Q37. В чём разница между setMaxResults() и setFetchSize()?](#q37-в-чём-разница-между-setmaxresults-и-setfetchsize)
+- [Q38. Что такое @Immutable?](#q38-что-такое-immutable)
+- [Q39. Как использовать Hibernate Statistics для мониторинга?](#q39-как-использовать-hibernate-statistics-для-мониторинга)
 
-## Q1. Что такое `Hibernate ORM`?
+**Конфигурация и интеграция**
+- [Q40. Как настроить Hibernate в Spring Boot?](#q40-как-настроить-hibernate-в-spring-boot)
+- [Q41. В чём разница между getCurrentSession() и openSession()?](#q41-в-чём-разница-между-getcurrentsession-и-opensession)
+- [Q42. Что такое Hibernate Dialect?](#q42-что-такое-hibernate-dialect)
 
-`Hibernate ORM` (`Object-Relational Mapping`) - это фреймворк для `Java`, который обеспечивает преобразование данных между объектами `Java` и реляционными базами данных. Он предоставляет удобный и гибкий способ работы с базами данных, избавляя разработчиков от необходимости напрямую работать с `SQL`-запросами и таблицами баз данных. `Hibernate ORM` использует паттерн `ORM`, который позволяет разработчикам работать с базами данных, рассматривая их как набор объектов. Он позволяет сопоставлять объекты `Java` с таблицами в базе данных с помощью аннотаций или `XML`-конфигураций. `Hibernate` автоматически генерирует `SQL`-запросы для создания, изменения, удаления и извлечения данных из базы данных на основе операций с объектами `Java`.
+**Продвинутые темы**
+- [Q43. (!) Что такое Open-in-View антипаттерн и как его избежать?](#q43--что-такое-open-in-view-антипаттерн-и-как-его-избежать)
+- [Q44. Что такое Hibernate Envers и как организовать аудит изменений?](#q44-что-такое-hibernate-envers-и-как-организовать-аудит-изменений)
+- [Q45. (!) Как использовать Projections для оптимизации запросов?](#q45--как-использовать-projections-для-оптимизации-запросов)
+- [Q46. Что такое StatelessSession и когда его использовать?](#q46-что-такое-statelesssession-и-когда-его-использовать)
+- [Q47. (!) Какие типичные ошибки производительности в Hibernate?](#q47--какие-типичные-ошибки-производительности-в-hibernate)
+- [Q48. Как тестировать Hibernate-код?](#q48-как-тестировать-hibernate-код)
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+---
+
+## Q1. (!) Что такое `Hibernate ORM` и чем он отличается от `JPA`?
+
+**JPA** (`Jakarta Persistence API`, ранее `Java Persistence API`) — это **спецификация**, определяющая стандартный API для ORM в Java. **Hibernate** — это **реализация** этой спецификации (наряду с `EclipseLink`, `OpenJPA` и др.).
+
+Ключевые различия:
+
+| Аспект | `JPA` | `Hibernate` |
+|--------|-------|-------------|
+| Тип | Спецификация (интерфейсы) | Реализация (конкретные классы) |
+| Пакет | `jakarta.persistence.*` | `org.hibernate.*` |
+| Запросы | `JPQL` | `HQL` (надмножество `JPQL`) |
+| Кэш L2 | Определяет API | Поддерживает `Ehcache`, `Infinispan` и др. |
+| Расширения | Нет | `@Formula`, `@Where`, `@BatchSize`, `@NaturalId` и др. |
+
+```java
+// JPA-стандартный код — переносимый между реализациями
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Order> orders = new ArrayList<>();
+}
+```
+
+На собеседовании важно подчеркнуть: рекомендуется программировать против `JPA` API (переносимость), а специфичные аннотации `Hibernate` использовать только когда стандартных возможностей недостаточно.
 
 ## Q2. (!) Каковы преимущества `Hibernate` перед `JDBC`?
 
-Ниже перечислены преимущества `Hibernate` по сравнению с `JDBC`:
-
-1. `Clean Readable Code`. Использование `Hibernate` помогает избавиться от большого количества шаблонных кодов на основе `JDBC API`, благодаря чему код выглядит чище и читабельнее.
-2. `HQL` (`Hibernate Query Language`): `Hibernate` предоставляет `HQL`, который ближе к `Java` и является объектно-ориентированным по своей природе. Это помогает снизить нагрузку на разработчиков по написанию независимых запросов к базе данных. В `JDBC` это не так. Разработчик должен знать коды, специфичные для базы данных.
-3. `Transaction Management`: `JDBC` не поддерживает неявное управление транзакциями. Разработчик должен написать код управления транзакциями, используя методы фиксации и отката. `Hibernate` предоставляет эту функцию.
-4. `Exception Handling`: `Hibernate` оборачивает исключения `JDBC` и генерирует unchecked исключения, такие как JDBCException или `HibernateException`. Это, наряду со встроенной системой управления транзакциями, помогает разработчикам избежать написания нескольких блоков `try-catch` для обработки исключений. В случае `JDBC` он выдаёт проверенное исключение, называемое SQLException, тем самым обязывая разработчика писать блоки `try-catch` для обработки этого исключения во время компиляции.
-5. `Special Features`: `Hibernate` поддерживает функции ООП, такие как наследование, ассоциации, а также поддерживает коллекции. Они недоступны в `JDBC`.
-
-## Q3. (!) Назовите наиболее важные интерфейсы `Hibernate`?
-
-Основные интерфейсы `Hibernate` отвечают за конфигурацию, фабрику сессий, работу с БД и запросами: **Configuration** (загрузка настроек), **SessionFactory** (создание сессий, кэш второго уровня), **Session** (единица работы, кэш первого уровня), **Transaction** (границы транзакции), **Query** / **Criteria** (выполнение запросов).
-
-Основные интерфейсы `Hibernate`:
-
-1. `Configuration`
-2. `SessionFactory`
-3. `Session`
-4. `Criteria`
-5. `Query`
-6. `Transaction`
-
-## Q4. Что такое `Session`?
-
-**Session** — объект, поддерживающий связь между приложением и БД; единица работы (`unit` of work) в `Hibernate`. Содержит кэш первого уровня (`L1`): сущности, загруженные в рамках сессии, повторно не запрашиваются из БД.
-
-`Session` предоставляет методы persist(), load(), get(), update(), delete(), merge(); фабричные методы для `Query`, `Criteria` и `Transaction`. Жизненный цикл: открыть — выполнить операции — закрыть (или отдать в управление контейнеру, например `Spring`). `Session` не потокобезопасна; типично одна сессия на поток (например, на `HTTP`-запрос).
-
-## Q5. Что такое `SessionFactory`?
-
-`SessionFactory` создаёт объект `Session`. Это фабричный класс, который предоставляет объекты `Session` на основе параметров конфигурации для установления соединения с базой данных.
-
-Как правило, приложение имеет один экземпляр `SessionFactory`. Внутреннее состояние `SessionFactory`, которое включает метаданные об `ORM`, является неизменным, т. е. после создания экземпляра его нельзя изменить.
-
-Это также предоставляет возможность получать такую информацию, как статистика и метаданные, относящиеся к классу, выполнению запросов и т. д. Он также содержит данные кэша второго уровня, если он включен.
-
-## Q6. Что вы думаете об утверждении «`Session` is a `thread-safe` object»?
-
-Нет, **Session** не потокобезопасна. Одновременный доступ из нескольких потоков к одной и той же `Session` может привести к гонкам, повреждению состояния кэша первого уровня и неопределённому поведению.
-
-Рекомендация: одна `Session` на поток (например, на `HTTP`-запрос в веб-приложении). В `Spring` при использовании `Open Session` In `View` или транзакционно-привязанной сессии каждый запрос получает свою сессию; не передавайте сессию между потоками и не храните её в статическом поле.
-
-## Q7. Что такое `Lazy Loading`?
-
-`Lazy Loading` в основном используется для повышения производительности приложения, помогая загружать дочерние объекты по требованию.
-
-Следует отметить, что, начиная с версии `Hibernate` 3, эта функция включена по умолчанию. Это означает, что дочерние объекты не загружаются до тех пор, пока не будет загружен родительский объект.
-
-## Q8. (!) В чем разница между `First Level Cache` и `Second Level Cache`?
-
-| | |
-| --- | --- |
-| `First Level Cache` | `Second Level Cache` |
-| Он является локальным для объекта `Session` и не может использоваться совместно несколькими сеансами. | Этот кеш поддерживается на уровне `SessionFactory` и используется всеми сеансами в `Hibernate`. |
-| Этот кеш включен по умолчанию, и отключить его невозможно. | По умолчанию этот кеш отключен, но мы можем включить его в настройках. |
-| Кэш первого уровня доступен только пока `Session` открыт, после закрытия `Session` кеш уничтожается. | Кэш второго уровня доступен на протяжении всего жизненного цикла приложения, он уничтожается и создаётся заново только при перезапуске приложения. |
-
-Если сущность или объект загружаются вызовом метода get(), то `Hibernate` сначала проверяет кеш первого уровня, если он не находит объект, то переходит к кешу второго уровня, если он настроен. Если объект не найден, то он, наконец, отправляется в базу данных и возвращает объект, если в таблице нет соответствующей строки, он возвращает ноль.
-
-## Q9. Что такое `Hibernate Configuration File`?
-
-Файл конфигурации `Hibernate` или `hibernate.cfg.xml` — один из наиболее необходимых файлов конфигурации в `Hibernate`. По умолчанию этот файл находится в папке src/main/resources.
-
-Файл содержит конфигурации, связанные с базой данных, и конфигурации, связанные с сеансом. `Hibernate` упрощает предоставление конфигурации либо в файле `XML` (например, `hibernate.cfg.xml`), либо в файле свойств (например, `hibernate.properties`). Этот файл используется для определения следующей информации:
-
-1. Сведения о подключении к базе данных: класс драйвера, `URL`-адрес, имя пользователя и пароль.
-2. Для каждой базы данных, используемой в приложении, должен быть один файл конфигурации, допустим, если мы хотим подключиться к 2 базам данных, то мы должны создать 2 файла конфигурации с разными именами.
-3. Свойства `Hibernate`: `Dialect`, `show_sql`, `second_level_cache` и имена файлов сопоставления.
-
-## Q10. Как создать `Immutable` class?
-
-**Immutable** сущность — та, которую `Hibernate` не обновляет в БД при изменении полей в памяти (оптимизация для справочников и данных «только чтение»).
-
-В `XML`: `mutable="`false`"` в маппинге класса. В аннотациях: **@Immutable** на классе сущности. После загрузки такие сущности не участвуют в dirty checking; вызов update() для них не приведёт к `UPDATE` в БД. Подходит для справочников (страны, статусы), логов и любых данных, которые приложение не меняет.
-
-## Q11. (!) Что такое `Hibernate Inheritance Mapping`?
-
-`Hibernate Inheritance Mapping` (наследование в `Hibernate`) — это механизм, который позволяет сопоставить иерархию классов `Java` с иерархией таблиц базы данных. `Hibernate` предоставляет несколько способов сопоставления наследования, которые позволяют моделировать наследование в объектно-ориентированных аналогичным образом в базе данных.
-
-Есть три основных подхода к сопоставлению наследования в `Hibernate`:
-
-1. `Single Table` (одна таблица): В этом подходе все классы в иерархии наследования сопоставляются с одной таблицей в базе данных. В этой таблице содержатся столбцы не только для полей каждого класса, но и для различения типов объектов. Это делает схему базы данных гибкой, но может привести к проблемам с производительностью и повысить сложность запросов.
-2. `Joined Table` (множество таблиц): В этом подходе каждый класс в иерархии наследования отображается в отдельной таблице базы данных, а поля, общие для всех классов, выносятся в отдельную общую таблицу. Каждая таблица содержит внешний ключ на общую таблицу. Это позволяет лучше контролировать нормализацию и производительность базы данных, но может привести к сложным запросам и накладным расходам на присоединение таблиц.
-3. `Table` per class (таблица на каждый класс): В этом подходе каждый класс в иерархии наследования сопоставляется с отдельной таблицей базы данных, которая содержит только поля этого класса. В результате создаётся таблица для каждого класса в иерархии. Этот подход полезен, когда наследование должно быть полностью отражено в схеме базы данных и не требуется присоединение таблиц. Однако это может привести к дублированию данных и сложности в поддержке базы данных.
-
-## Q12. Подвержен ли `Hibernate` атаке путем внедрения `SQL`-кода?
-
-Атака с внедрением `SQL / Hibernate` не обеспечивает иммунитет к `SQL Injection`. Тем не менее, следуя передовым методам, можно избежать атак с помощью `SQL`-инъекций. Всегда рекомендуется следовать любому из следующих вариантов:
-
-1. Включите подготовленные операторы, использующие параметризованные запросы.
-2. Используйте хранимые процедуры.
-3. Обеспечьте достоверность данных, выполнив проверку ввода.
-
-## Q13. Объясните `Hibernate Mapping File`
-
-Файл сопоставления `Hibernate` — это `XML`-файл, который используется для определения полей компонента управления данными и соответствующих сопоставлений столбцов базы данных.
-
-Эти файлы полезны, когда в проекте используются сторонние классы, где нельзя использовать аннотации `JPA`, предоставляемые `Hibernate`.
-
-В предыдущем примере мы определили ресурс сопоставления как `InterviewBitEmployee.hbm.xml` в файле конфигурации. Давайте посмотрим, как выглядит этот образец файла `hbm.xml`:
-
-```xml
-<?xml version = "1.0" encoding = "utf-8"?>
-<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
-<hibernate-mapping>
-  <!-- What class is mapped to what database table -->
-  <class name = "InterviewBitEmployee" table = "InterviewBitEmployee">
-    <meta attribute = "class-description">
-      This class contains the details of employees of InterviewBit.
-    </meta>
-    <id name = "id" type = "int" column = "employee_id">
-      <generator class="native"/>
-    </id>
-    <property name = "fullName" column = "full_name" type = "string"/>
-    <property name = "email" column = "email" type = "string"/>
-  </class>
-</hibernate-mapping>
-```
-
-## Q14. Какие аннотации наиболее часто используются для поддержки сопоставления гибернации?
-
-Платформа `Hibernate` обеспечивает поддержку аннотаций `JPA` и других полезных аннотаций в пакете `org.hibernate.annotations`. Вот некоторые из них:
-
-1. `javax.persistence.Entity`: эта аннотация используется в классах модели с помощью «`@Entity`» и сообщает, что классы являются объектными компонентами.
-2. `javax.persistence.Table`: эта аннотация используется в классах модели с помощью «`@Table`» и сообщает, что класс сопоставляется с именем таблицы в базе данных.
-3. `javax.persistence.Access`: используется как «`@Access`» и используется для определения типа доступа к полю или свойству. Если ничего не указано, по умолчанию принимается значение «поле».
-4. `javax.persistence.Id`: используется как «`@Id`» и используется для атрибута в классе, чтобы указать, что атрибут является первичным ключом в объекте компонента.
-5. `javax.persistence.EmbeddedId`: используется как «`@EmbeddedId`» для атрибута и указывает, что это составной первичный ключ сущности компонента.
-6. `javax.persistence.Column`: «`@Column`» используется для определения имени столбца в таблице базы данных.
-7. `javax.persistence.GeneratedValue`: «`@GeneratedValue`» используется для определения стратегии, используемой для генерации первичного ключа. Эта аннотация используется вместе с перечислением `javax.persistence.GenerationType`.
-8. `javax.persistence.OneToOne`: «`@OneToOne`» используется для определения взаимно однозначного отображения между двумя объектами компонента. Точно так же `Hibernate` предоставляет аннотации `OneToMany`, `ManyToOne` и `ManyToMany` для определения различных типов сопоставления.
-9. `org.hibernate.annotations.Cascade`: аннотация «`@Cascade`» используется для определения каскадного действия между двумя объектами компонента. Он используется с перечислением `org.hibernate.annotations.CascadeType` для определения типа каскадирования.
-
-Ниже приведен пример класса, в котором мы использовали перечисленные выше аннотации:
+| Аспект | `JDBC` | `Hibernate` |
+|--------|--------|-------------|
+| Код | Много boilerplate (`ResultSet`, `PreparedStatement`) | Чистый код, работа с объектами |
+| SQL | Ручное написание, зависимость от диалекта | `HQL`/`JPQL` — независимость от БД |
+| Транзакции | Ручное управление (`commit`/`rollback`) | Декларативное через `@Transactional` |
+| Исключения | Checked `SQLException` | Unchecked `HibernateException` |
+| Кэширование | Нет встроенного | L1 + L2 кэш |
+| Маппинг | Ручной маппинг `ResultSet` → объект | Автоматический через аннотации |
+| Ассоциации | `JOIN`-ы вручную | `@OneToMany`, `@ManyToMany` и др. |
 
 ```java
-package com.dev.interviewbit.model;
+// JDBC — много boilerplate
+try (Connection conn = dataSource.getConnection();
+     PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?")) {
+    ps.setLong(1, userId);
+    ResultSet rs = ps.executeQuery();
+    if (rs.next()) {
+        User user = new User();
+        user.setId(rs.getLong("id"));
+        user.setName(rs.getString("name"));
+    }
+}
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import org.hibernate.annotations.Cascade;
+// Hibernate — чистый код
+User user = session.get(User.class, userId);
+```
 
+## Q3. (!) Назовите ключевые интерфейсы `Hibernate`
+
+```mermaid
+graph TB
+    subgraph "Ключевые интерфейсы Hibernate"
+        CF[Configuration] -->|создаёт| SF[SessionFactory]
+        SF -->|создаёт| S[Session]
+        S -->|создаёт| TX[Transaction]
+        S -->|создаёт| Q[Query / Criteria]
+    end
+    SF -->|содержит| L2[Second Level Cache]
+    S -->|содержит| L1[First Level Cache]
+```
+
+1. **`Configuration`** — загрузка настроек из `hibernate.cfg.xml` или `persistence.xml`, регистрация маппингов
+2. **`SessionFactory`** — потокобезопасная фабрика сессий, один экземпляр на приложение, содержит кэш L2 и метаданные маппинга
+3. **`Session`** — единица работы (`unit of work`), содержит кэш L1, не потокобезопасна
+4. **`Transaction`** — управление границами транзакций (`begin`, `commit`, `rollback`)
+5. **`Query`** / **`CriteriaBuilder`** — выполнение `HQL`/`JPQL`/`Criteria`/`SQL` запросов
+
+## Q4. Что такое `Session` и `SessionFactory`?
+
+**`SessionFactory`** — тяжёлый потокобезопасный объект, создаётся один раз при старте приложения. Хранит метаданные маппинга, кэш второго уровня, пулы соединений. Создание `SessionFactory` — дорогая операция (парсинг маппингов, валидация).
+
+**`Session`** — лёгкий объект, представляющий единицу работы с БД. Содержит **кэш первого уровня** (Persistence Context): все загруженные сущности хранятся в памяти сессии и повторно не запрашиваются из БД. Типичный жизненный цикл: открыть → выполнить операции → закрыть.
+
+```java
+// Классический подход (без Spring)
+SessionFactory sf = new Configuration().configure().buildSessionFactory();
+
+try (Session session = sf.openSession()) {
+    Transaction tx = session.beginTransaction();
+    User user = session.get(User.class, 1L); // загружается в L1 cache
+    User same = session.get(User.class, 1L); // берётся из L1 cache, SQL не выполняется
+    assert user == same; // true — один и тот же объект
+    tx.commit();
+}
+```
+
+В `Spring` управление `Session` берёт на себя фреймворк через `@Transactional` — подробнее в [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md).
+
+## Q5. Является ли `Session` потокобезопасной?
+
+Нет. **`Session`** не потокобезопасна. Одновременный доступ из нескольких потоков к одной `Session` приводит к гонкам, повреждению кэша L1 и непредсказуемому поведению.
+
+**Правило**: одна `Session` на один поток (обычно — на один HTTP-запрос). В `Spring` при использовании `@Transactional` каждый поток получает свою сессию через `ThreadLocal`-привязку. Не храните `Session` в статическом поле и не передавайте между потоками.
+
+**`SessionFactory`**, напротив, **потокобезопасна** и должна быть синглтоном.
+
+## Q6. Объясните архитектуру `Hibernate`
+
+```mermaid
+graph TB
+    APP[Java Application] --> SF[SessionFactory]
+    SF --> S[Session]
+    S --> TX[Transaction]
+    S --> Q[Query / Criteria]
+    S --> L1[First Level Cache]
+    SF --> L2[Second Level Cache]
+    S --> JDBC[JDBC / Connection Pool]
+    JDBC --> DB[(Database)]
+
+    subgraph "Hibernate Runtime"
+        SF
+        S
+        TX
+        Q
+        L1
+        L2
+    end
+```
+
+Архитектура `Hibernate` состоит из следующих слоёв:
+
+1. **Java Application** — доменные сущности и бизнес-логика
+2. **Hibernate Framework** — `SessionFactory`, `Session`, `Transaction`, `Query`
+3. **Internal APIs** — `JDBC`, `JTA` (Java Transaction API), `JNDI`
+4. **Database** — `PostgreSQL`, `MySQL`, `Oracle` и др.
+
+`SessionFactory` создаёт `Session` по запросу. `Session` управляет persistence context (L1 cache), координирует dirty checking и flush. `Transaction` обеспечивает атомарность. Всё это строится поверх стандартного `JDBC`.
+
+## Q7. (!) Какие состояния может иметь `Entity`?
+
+Сущность `Hibernate` проходит через четыре состояния:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Transient: new Entity()
+    Transient --> Persistent: persist() / save()
+    Persistent --> Detached: detach() / close() / clear()
+    Persistent --> Removed: remove() / delete()
+    Detached --> Persistent: merge()
+    Removed --> Persistent: persist()
+    Removed --> [*]
+```
+
+| Состояние | Описание | В Persistence Context? | Есть в БД? |
+|-----------|----------|----------------------|------------|
+| **Transient** | Новый объект, не связан с сессией | Нет | Нет |
+| **Persistent** (Managed) | Привязан к сессии, tracked dirty checking | Да | Да (или будет при flush) |
+| **Detached** | Был persistent, но сессия закрыта | Нет | Да |
+| **Removed** | Помечен на удаление | Да | Будет удалён при flush |
+
+```java
+User user = new User("Alice"); // Transient
+
+session.persist(user);         // Persistent (managed)
+user.setName("Bob");           // dirty checking отследит изменение
+
+session.detach(user);          // Detached — изменения не синхронизируются
+
+User merged = session.merge(user); // снова Persistent (merged — новый managed объект)
+
+session.remove(merged);        // Removed — удалится при flush/commit
+```
+
+## Q8. (!) Что такое `Dirty Checking` и как работает `flush`?
+
+**Dirty Checking** — механизм `Hibernate`, который автоматически обнаруживает изменённые (dirty) сущности в persistence context и генерирует `UPDATE` SQL при `flush`. Не требует явного вызова `update()`.
+
+**Как это работает**: при загрузке сущности `Hibernate` сохраняет **snapshot** её начального состояния. При `flush` сравнивает текущие значения полей с snapshot — если есть различия, генерируется `UPDATE`.
+
+**`flush()`** — синхронизация persistence context с БД. Происходит:
+1. Автоматически перед `commit()`
+2. Автоматически перед выполнением `JPQL`/`HQL` запроса (чтобы запрос видел актуальные данные)
+3. Вручную — `session.flush()`
+
+```java
+@Transactional
+public void updateUserName(Long id, String newName) {
+    User user = entityManager.find(User.class, id);
+    user.setName(newName);
+    // НЕ нужно вызывать save() или update()!
+    // Dirty checking сам обнаружит изменение и сгенерирует UPDATE при commit
+}
+```
+
+**`FlushMode`** — управляет моментом flush:
+- `AUTO` (по умолчанию) — перед запросом и перед commit
+- `COMMIT` — только перед commit (может вернуть устаревшие данные из запроса)
+- `MANUAL` — только при явном вызове `flush()`
+
+## Q9. В чём разница между `persist()`, `save()`, `merge()` и `update()`?
+
+| Метод | Стандарт | Поведение | Возврат |
+|-------|----------|-----------|---------|
+| `persist()` | JPA | Делает transient → persistent. Не гарантирует немедленный `INSERT` | `void` |
+| `save()` | Hibernate | Делает transient → persistent. Возвращает id. Может выполнить `INSERT` сразу | `Serializable` (id) |
+| `merge()` | JPA | Копирует состояние detached объекта в managed копию | Managed entity |
+| `update()` | Hibernate | Переприсоединяет detached объект. Выбрасывает исключение если уже есть в контексте | `void` |
+
+```java
+// persist() — JPA стандарт, рекомендуется
+User user = new User("Alice");
+entityManager.persist(user); // user теперь managed
+
+// merge() — для detached объектов
+User detached = ... ; // получен из другой сессии, десериализации и т.д.
+User managed = entityManager.merge(detached);
+// managed — управляемая копия, detached — по-прежнему detached!
+managed.setName("Bob"); // будет синхронизировано с БД
+```
+
+**Рекомендация**: использовать `JPA`-стандартные `persist()` и `merge()` вместо `Hibernate`-специфичных `save()` и `update()`.
+
+## Q10. В чём разница между `get()` и `load()`?
+
+| Аспект | `get()` / `find()` | `load()` / `getReference()` |
+|--------|--------------------|-----------------------------|
+| Загрузка | Немедленная (`SELECT` сразу) | Ленивая (возвращает proxy) |
+| Если не найден | Возвращает `null` | Выбрасывает `ObjectNotFoundException` при обращении |
+| Proxy | Нет — реальный объект | Да — proxy до первого обращения к полю |
+| Когда использовать | Когда не уверены, что запись существует | Когда точно знаете, что запись существует |
+
+```java
+// get/find — немедленный SELECT
+User user = session.get(User.class, 1L);       // Hibernate
+User user = entityManager.find(User.class, 1L); // JPA
+if (user == null) { /* не найден */ }
+
+// load/getReference — возвращает proxy, SELECT при первом обращении к полю
+User ref = session.load(User.class, 1L);          // Hibernate
+User ref = entityManager.getReference(User.class, 1L); // JPA
+// SELECT ещё не выполнен
+String name = ref.getName(); // SELECT выполняется здесь
+```
+
+`getReference()` полезен, когда нужно только установить связь (FK), не загружая всю сущность:
+
+```java
+Order order = new Order();
+order.setUser(entityManager.getReference(User.class, userId)); // без SELECT для User
+entityManager.persist(order);
+```
+
+## Q11. Зачем `Entity` нужен конструктор без аргументов?
+
+`Hibernate` создаёт экземпляры сущностей через **рефлексию** при загрузке из БД. Для этого необходим конструктор без аргументов (`no-arg constructor`). Это **требование спецификации JPA**.
+
+Конструктор может быть `public` или `protected` (для инкапсуляции). Если его нет — `Hibernate` выбросит `InstantiationException`.
+
+```java
 @Entity
-@Table(name = "InterviewBitEmployee")
-@Access(value = AccessType.FIELD)
-public class InterviewBitEmployee {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "employee_id")
-    private long id;
+    private Long id;
+    private String name;
 
-    @Column(name = "full_name")
-    private String fullName;
+    protected User() {} // для Hibernate — может быть protected
 
-    @Column(name = "email")
-    private String email;
-
-    @OneToOne(mappedBy = "employee")
-    @Cascade(value = org.hibernate.annotations.CascadeType.ALL)
-    private Address address;
+    public User(String name) { // для бизнес-логики
+        this.name = name;
+    }
 }
 ```
 
-## Q15. Объясните архитектуру `Hibernate`
+## Q12. (!) Можно ли объявить `Entity` класс `final`?
 
-Архитектура `Hibernate` состоит из множества объектов, таких как постоянный объект, фабрика сеансов, сеанс, запрос, транзакция и т. д. Приложения, разработанные с использованием `Hibernate`, в основном делятся на 4 части:
+**Не рекомендуется.** `Hibernate` создаёт **прокси-подклассы** для ленивой загрузки (`lazy loading`). Если класс `final` — его нельзя расширить, и прокси создать невозможно.
 
-1. `Java Application`
-2. `Hibernate framework Configuration` and `Mapping Files`
-3. `Internal API` —:
-   - `JDBC` (`Java Database Connectivity`)
-   - `JTA` (`Java Transaction API`)
-   - `JNDI` (`Java Naming Directory Interface`)
-4. `Database` (`MySQL`, `PostgreSQL`, `Oracle`, и т. д.)
-
-Основными элементами фреймворка `Hibernate` являются:
-
-1. `SessionFactory`: предоставляет фабричный метод для получения объектов `Session` и клиентов `ConnectionProvider`. Он содержит `Second Level Cache` (необязательно).
-2. `Session`: это недолговечный объект, который действует как интерфейс между объектами `Java`-приложения и данными базы данных.
-   - `Session` можно использовать для создания транзакций, запросов и критериев.
-   - Он также имеет обязательный `First Level Cache`.
-3. `Transaction`: этот объект определяет элементарную единицу работы и имеет методы, полезные для управления транзакциями. Это необязательно.
-4. `ConnectionProvider`: это фабрика объектов соединения `JDBC`, которая обеспечивает абстракцию приложения от `DriverManager`. Это необязательно.
-5. `TransactionFactory`: это фабрика объектов `Transaction`. Это необязательно.
-
-## Q16. В чём разница между `getCurrentSession()` и `openSession()`?
-
-Оба метода предоставляются `SessionFactory`. Основные отличия приведены ниже:
-
-| | |
-| --- | --- |
-| `getCurrentSession()` | `openSession()` |
-| Этот метод возвращает `Session`, привязанный к `Hibernate Context`. | Этот метод всегда открывает новый сеанс. |
-| Эта область объекта сеанса принадлежит `Hibernate Context`, и для того, чтобы этот `Hibernate Configuration File / HibernateException`. | Для каждого запроса в многопоточной среде необходимо создавать новый объект `Session`. Следовательно, вам не нужно настраивать какое-либо свойство для вызова этого метода. |
-| Этот объект сеанса закрывается после закрытия `SessionFactory`. | Ответственность за закрытие этого объекта после завершения всех операций с базой данных лежит на разработчике. |
-| В однопоточной среде этот метод работает быстрее, чем `openSession()`. | В однопоточной среде это медленнее, чем `getCurrentSession()`. |
-
-Помимо этих двух методов, существует еще один метод `openStatelessSession()`, и этот метод возвращает объект сеанса без сохранения состояния.
-
-## Q17. В чём разница между save() и `saveOrUpdate()`?
-
-| | |
-| --- | --- |
-| save() | `saveOrUpdate()` |
-| save() генерирует новый идентификатор и `INSERT` в базу данных | `Session.saveOrUpdate()` может либо `INSERT`, либо `UPDATE` в зависимости от наличия записи. |
-| Вставка завершается ошибкой, если первичный ключ уже существует в таблице. | Если первичный ключ уже существует, запись обновляется. |
-| Тип возвращаемого значения `Serializable`, который представляет собой вновь сгенерированное значение идентификатора идентификатора в виде объекта `Serializable`. | Тип возвращаемого значения метода `saveOrUpdate()` — void. |
-| Этот метод используется для перевода только transient объекта в persistance state. | Этот метод может переводить как transient (новые), так и detached (существующие) объекты в persistance state. Он часто используется для повторного присоединения detached объекта к сеансу. |
-
-Ясно, что `saveOrUpdate()` является более гибким с точки зрения использования, но требует дополнительной обработки, чтобы выяснить, существует ли уже запись в таблице или нет.
-
-## Q18. В чём разница между get() и load()?
-
-| | |
-| --- | --- |
-| get() | load() |
-| Этот метод получает данные из базы данных, как только он вызывается. | Этот метод возвращает прокси-объект и загружает данные только тогда, когда это необходимо. |
-| База данных попадает каждый раз, когда вызывается метод. | В базу данных попадают только тогда, когда это действительно необходимо, и это называется отложенной загрузкой, что делает метод лучше. |
-| Метод возвращает `null`, если объект не найден. | Метод генерирует исключение `ObjectNotFoundException`, если объект не найден. |
-| Этот метод следует использовать, если мы не уверены в существовании данных в базе данных. | Этот метод следует использовать, когда мы точно знаем, что данные присутствуют в базе данных. |
-
-При обсуждении архитектуры важно дополнить ответ явными trade-offs: что выигрываем, чем платим и как контролируем риски в production. Хорошей практикой считается привязка решения к измеримым SLO/SLI и плану эволюции при росте нагрузки.
-
-## Q19. Что такое `Criteria API`?
-
-`Criteria API` в `Hibernate` помогает разработчикам создавать динамические запросы критериев в базе данных постоянства. `Criteria API` — это более мощная и гибкая альтернатива запросам `HQL` (`Hibernate Query Language`) для создания динамических запросов.
-
-Этот `API` позволяет программно разрабатывать объекты запроса критериев. Для этих целей используется интерфейс `org.hibernate.Criteria`. Интерфейс `Session` имеет метод `createCriteria()`, который принимает класс сущности в качестве параметра и возвращает экземпляр критериев при выполнении запроса.
-
-Это также позволяет очень легко включать ограничения для выборочного извлечения данных из базы данных. Этого можно добиться с помощью метода add(), который принимает объект `org.hibernate.criterion.Criterion`, представляющий индивидуальное ограничение.
-
-Примеры использования:
-
-Чтобы вернуть все данные класса сущностей `InterviewBitEmployee`:
+Последствия:
+- Ленивая загрузка для ассоциаций к этой сущности **не будет работать**
+- `load()` / `getReference()` вернёт реальный объект вместо прокси
+- Потенциальное снижение производительности
 
 ```java
-Criteria criteria = session.createCriteria(InterviewBitEmployee.class);
-List<InterviewBitEmployee> results = criteria.list();
+// ❌ Плохо — Hibernate не сможет создать proxy
+@Entity
+public final class User { ... }
+
+// ✅ Хорошо — @Immutable для данных «только чтение»
+@Entity
+@Immutable
+public class Country { ... }
 ```
 
-Для получения объектов, свойство которого имеет `Value`, равное ограничению, мы используем метод `Restrictions.eq()`. Например, чтобы получить все записи с именем «`Hibernate`»:
+Если нужна неизменяемость данных — используйте `@Immutable`, а не `final` на классе.
+
+## Q13. Какие основные аннотации `JPA` используются для маппинга?
 
 ```java
-Criteria criteria = session.createCriteria(InterviewBitEmployee.class);
-criteria.add(Restrictions.eq("fullName", "Hibernate"));
-List<InterviewBitEmployee> results = criteria.list();
+@Entity                          // Помечает класс как сущность
+@Table(name = "orders")          // Имя таблицы
+public class Order {
+
+    @Id                           // Первичный ключ
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Стратегия генерации ID
+    private Long id;
+
+    @Column(name = "order_date", nullable = false) // Маппинг колонки
+    private LocalDateTime orderDate;
+
+    @Enumerated(EnumType.STRING)  // Enum как строка (не ordinal!)
+    private OrderStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)  // Связь N:1
+    @JoinColumn(name = "user_id")       // FK колонка
+    private User user;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
+
+    @Transient                    // Поле не маппится в БД
+    private BigDecimal calculatedTotal;
+
+    @Version                      // Оптимистичная блокировка
+    private Integer version;
+
+    @CreationTimestamp             // Hibernate — автоматическая дата создания
+    private LocalDateTime createdAt;
+}
 ```
 
-Для получения объектов, свойство которых имеет `Value` «не равно» ограничению, мы используем метод `Restrictions.ne()`. Например, чтобы получить все записи, имя сотрудника которых не `Hibernate`:
+Ключевые стратегии `@GeneratedValue`:
+- **`IDENTITY`** — автоинкремент БД (не подходит для batch insert)
+- **`SEQUENCE`** — sequence в БД (рекомендуется для `PostgreSQL`)
+- **`TABLE`** — отдельная таблица для генерации (медленнее всего)
+- **`AUTO`** — `Hibernate` выбирает стратегию сам
 
-```java
-Criteria criteria = session.createCriteria(InterviewBitEmployee.class);
-criteria.add(Restrictions.ne("fullName", "Hibernate"));
-List<Employee> results = criteria.list();
+## Q14. (!) Что такое `Hibernate Inheritance Mapping`?
+
+Три стратегии маппинга наследования:
+
+```mermaid
+graph TD
+    subgraph "SINGLE_TABLE"
+        ST[vehicles<br/>id | type | make | payload | seats]
+    end
+
+    subgraph "JOINED"
+        JV[vehicles<br/>id | make] --> JT[trucks<br/>id | payload]
+        JV --> JC[cars<br/>id | seats]
+    end
+
+    subgraph "TABLE_PER_CLASS"
+        TT[trucks<br/>id | make | payload]
+        TC[cars<br/>id | make | seats]
+    end
 ```
 
-Чтобы получить все объекты, свойства которых соответствуют заданному шаблону, мы используем `Restrictions.like()` (для учёта регистра) и `Restrictions.ilike()` (для нечувствительности к регистру):
-
-```java
-Criteria criteria = session.createCriteria(InterviewBitEmployee.class);
-criteria.add(Restrictions.like("fullName", "Hib%", MatchMode.ANYWHERE));
-List<InterviewBitEmployee> results = criteria.list();
-```
-
-Точно так же он также имеет другие методы, такие как `isNull()`, `isNotNull()`, gt(), ge(), lt(), le() и т. д., для добавления дополнительных разновидностей ограничений. Следует отметить, что начиная с `Hibernate` 5 функции, возвращающие объект `Criteria`, устарели. Версия `Hibernate` 5 предоставляет интерфейсы `CriteriaBuilder` и `CriteriaQuery` для достижения этой цели:
-
-```java
-javax.persistence.criteria.CriteriaBuilder
-javax.persistence.criteria.CriteriaQuery
-
-CriteriaBuilder builder = session.getCriteriaBuilder();
-CriteriaQuery<YourClass> criteria = builder.createQuery(YourClass.class);
-```
-
-Для введения ограничений в `CriteriaQuery` мы можем использовать метод `CriteriaQuery.where()`, который аналогичен использованию предложения `WHERE` в запросе `JPQL`.
-
-## Q20. Что такое `HQL`?
-
-Язык запросов `Hibernate` (`HQL`) используется как расширение `SQL`. Он очень прост, эффективен и очень гибок для выполнения сложных операций с реляционными базами данных без написания сложных запросов. `HQL` — это объектно-ориентированное представление языка запросов, т. е. вместо использования имени таблицы мы используем имя класса, что делает этот язык независимым от какой-либо базы данных.
-
-Это использует интерфейс `Query`, предоставляемый `Hibernate`. Объект `Query` получается путём вызова метода `createQuery()` интерфейса `Session`.
-
-Ниже приведены наиболее часто используемые методы интерфейса запроса:
-
-1. public int `executeUpdate()`: этот метод используется для запуска запроса на обновление/удаление.
-2. public `List` list(): этот метод возвращает результат в виде списка.
-3. public `Query setFirstResult`(int `rowNumber`): этот метод принимает номер строки в качестве параметра, с помощью которого будет получена запись с этим номером строки.
-4. public `Query setMaxResult`(int `rowsCount`): этот метод возвращает максимум до указанного `rowCount` при извлечении из базы данных.
-5. public `Query setParameter`(int position, `Object / JDBC`.
-6. public `Query setParameter`(`String` name, `Object` value): этот метод устанавливает значение для именованного параметра запроса.
-
-Пример: чтобы получить список всех записей из таблицы `InterviewBitEmployee`:
-
-```java
-Query query = session.createQuery("from InterviewBitEmployee");
-List<InterviewBitEmployee> list = query.list();
-System.out.println(list.get(0));
-```
-
-## Q21. Что такое связь `One-To-Many`?
-
-Наиболее часто используется ассоциация «один ко многим», которая указывает, что один объект связан с несколькими объектами.
-
-Например, у одного человека может быть несколько автомобилей.
-
-В `Hibernate` мы можем добиться этого, используя аннотации `@OneToMany` в классах `@Entity`. Рассмотрим приведенный выше пример человека, имеющего несколько автомобилей, как показано ниже:
+| Стратегия | Аннотация | Плюсы | Минусы |
+|-----------|-----------|-------|--------|
+| **Single Table** | `@Inheritance(strategy = SINGLE_TABLE)` | Быстрые запросы, нет JOIN | NULL-колонки, нет NOT NULL constraint |
+| **Joined** | `@Inheritance(strategy = JOINED)` | Нормализовано, NOT NULL | Медленные полиморфные запросы (JOIN) |
+| **Table Per Class** | `@Inheritance(strategy = TABLE_PER_CLASS)` | Нет NULL, полные таблицы | Медленный UNION для полиморфных запросов |
 
 ```java
 @Entity
-@Table(name = "Person")
-public class Person {
-    @OneToMany(mappedBy = "owner")
-    private Set<Car> cars;
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "vehicle_type", discriminatorType = DiscriminatorType.STRING)
+public abstract class Vehicle {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String make;
+}
+
+@Entity
+@DiscriminatorValue("TRUCK")
+public class Truck extends Vehicle {
+    private Double payload;
+}
+
+@Entity
+@DiscriminatorValue("CAR")
+public class Car extends Vehicle {
+    private Integer seats;
 }
 ```
 
-В классе `Person` мы определили свойство автомобиля с ассоциацией `@OneToMany`. Класс Car должен иметь свойство, которое используется переменной `mappedBy` в классе `Person`. Класс Car показан ниже:
+**На собеседовании**: `SINGLE_TABLE` — по умолчанию и чаще всего рекомендуется. `JOINED` — если важна нормализация и NOT NULL. `TABLE_PER_CLASS` — использовать редко.
+
+## Q15. Как маппить связь `One-To-Many` / `Many-To-One`?
+
+Связь `@OneToMany` / `@ManyToOne` — самая распространённая в JPA. Владелец связи (owning side) — сторона с `@JoinColumn` (обычно `@ManyToOne`).
 
 ```java
 @Entity
-@Table(name = "Car")
-public class Car {
-    @ManyToOne
-    @JoinColumn(name = "person_id", nullable = false)
-    private Person owner;
+public class Department {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
 
-    public Car() {}
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Employee> employees = new ArrayList<>();
+
+    // Вспомогательные методы для поддержания консистентности обеих сторон
+    public void addEmployee(Employee e) {
+        employees.add(e);
+        e.setDepartment(this);
+    }
+    public void removeEmployee(Employee e) {
+        employees.remove(e);
+        e.setDepartment(null);
+    }
+}
+
+@Entity
+public class Employee {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY) // LAZY — best practice для @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 }
 ```
 
-Аннотация `@ManyToOne` указывает, что многие экземпляры объекта сопоставляются с одним экземпляром другого объекта много автомобилей одного человека.
+**Важно**: `@ManyToOne` по умолчанию `EAGER` — всегда устанавливайте `fetch = FetchType.LAZY` явно, чтобы избежать проблемы N+1.
 
-## Q22. Что такое связь `Many-To-Many`?
+## Q16. Как маппить связь `Many-To-Many`?
 
-`Many-To-Many` указывает на наличие нескольких отношений между экземплярами двух сущностей. Мы могли бы взять пример нескольких студентов, участвующих в нескольких курсах, и наоборот.
-
-Поскольку сущности студента и курса ссылаются друг на друга с помощью внешних Key, мы технически представляем эту связь, создав отдельную таблицу для хранения этих внешних Key.
-
-Здесь таблица `Student-Course` называется таблицей соединений, где `student_id` и `course_id` образуют составной первичный ключ.
-
-## Q23. Что делает метод `session.lock`()?
-
-**session.lock()** повторно присоединяет **detached** объект к сессии без проверки актуальности данных в БД. `Hibernate` считает, что объект совпадает с записью в БД; при flush состояние объекта перезапишет строку в БД. Риск: если в БД данные уже изменились, произойдёт перезапись (потеря изменений других транзакций).
-
-lock(object, `LockMode.NONE`) предполагает, что объект не изменился в БД — `Hibernate` не делает `SELECT` и не перезаписывает состояние сущности. Если в БД данные изменились, изменения в объекте перезапишут их при flush. lock(object, `LockMode.READ`) или `LockMode.UPGRADE` выполняет блокировку в БД (`SELECT` ... `FOR UPDATE` при `UPGRADE`). Предпочтительнее merge() для переприсоединения с синхронизацией или повторный get() из БД.
-
-## Q24. (!) Что такое `Hibernate Caching`?
-
-`Hibernate Caching` это стратегия повышения производительности приложения путем объединения объектов в кэше, чтобы запросы выполнялись быстрее. Кэширование в спящем режиме особенно полезно при получении одних и тех же данных, которые выполняются несколько раз. Вместо обращения к базе данных мы можем просто получить доступ к данным из кеша. Это приводит к сокращению времени обработки приложения.`First Level Cache`:
-
-1. Этот уровень включен по умолчанию.
-2. Кэш первого уровня находится в объекте сеанса гибернации.
-3. Поскольку он принадлежит объекту сеанса, область данных, хранящихся здесь, не будет доступна для всего приложения, поскольку приложение может использовать несколько объектов сеанса.`Second Level Cache`:
-
-1. Кэш второго уровня находится в объекте `SessionFactory`, и благодаря этому данные доступны всему приложению.
-2. Он выключен по умолчанию. Он должен быть включен явно.
-3. `Redis`, `EH` (`Easy Hibernate`) `Cache`, `Swarm Cache`, `OS Cache`, JBoss `Cache` вот некоторые примеры поставщиков кеша.
-
-## Q25. Что делает метод `session.merge`()?
-
-**merge()** обновляет БД на основе состояния переданного (часто detached) объекта и возвращает **управляемую** копию сущности, присоединённую к текущей сессии. Исходный переданный объект остаётся неприсоединённым; дальнейшие изменения нужно вносить в объект, возвращённый merge().
-
-Если сущность с таким id уже в контексте — merge копирует состояние переданного объекта в управляемую сущность и возвращает управляемую. Если в контексте нет — выполняется `SELECT` по id, затем копирование полей, возвращается управляемая копия. Переданный объект (detached) остаётся неприсоединённым. Используют при работе с объектами, полученными вне сессии (из кэша, другого слоя), когда нужно сохранить изменения в БД.
-
-## Q26. Может ли сопоставление коллекций быть выполнено с использованием связей `One-To-One` и `Many-To-One`?
-
-Нет. Коллекция в маппинге означает «несколько» связанных записей; **One-To-One** и **Many-To-One** — связь «один» (одно поле типа сущности), не коллекция. Коллекции используются в **One-To-Many** (например, у `User` список `Order`) и **Many-To-Many** (`User` — roles, `Role` — users).
-
-Коллекция на стороне сущности предполагает «несколько» связанных элементов: `@OneToMany List`<`Order`> orders или `@ManyToMany` Set<`Role`> roles. При `@OneToOne` или `@ManyToOne` на стороне владельца связь «один» — одно поле (`Order` order), не коллекция. Коллекция на «many» стороне `One-to-Many` (например, у `User` список `Order`) или с обеих сторон `Many-to-Many` (`User` — roles, `Role` — users) — стандартные варианты. `One-to-One` с коллекцией не имеет смысла (одна связь — один объект).
-
-## Q27. В чем разница между `setMaxResults()` и `setFetchSize()`?
-
-**setMaxResults(n)** — аналог **LIMIT n** в `SQL`: ограничивает число возвращаемых строк; поддерживается всеми драйверами. **setFetchSize(n)** — подсказка драйверу, как доставлять результат (батчами по n строк, cursor fetch); снижает пиковое потребление памяти при больших выборках; поддержка зависит от драйвера (`PostgreSQL` — потоковая выборка по курсору).
-
-`setMaxResults`(`100`) — в `SQL` добавляется `LIMIT 100`; из БД возвращается не более `100` строк. `setFetchSize`(50) — подсказка драйверу: получать по 50 строк за раз (cursor fetch), а не все сразу; уменьшает пиковое потребление памяти при больших выборках. Для `PostgreSQL setFetchSize` даёт потоковую выборку при использовании cursor; для `MySQL` поведение зависит от драйвера. `setMaxResults` влияет на результат запроса; `setFetchSize` — на способ доставки результата.
-
-## Q28. Поддерживает ли `Hibernate` собственные `SQL`-запросы?
-
-Да, это так. `Hibernate` предоставляет метод `createSQLQuery()`, позволяющий разработчику напрямую вызывать собственный оператор `SQL` и возвращать объект `Query`.
-
-Рассмотрим пример, когда вы хотите получить данные о сотруднике с полным именем «`Hibernate`». Мы не хотим использовать функции на основе `HQL`, вместо этого мы хотим писать свои собственные `SQL`-запросы. В этом случае код будет таким:
-
-```java
-Query query = session.createSQLQuery("select * from interviewbit_employee ibe where ibe.fullName =:fullName")
-    .addEntity(InterviewBitEmployee.class)
-    .setParameter("fullName", "Hibernate");
-List result = query.list();
-```
-
-Кроме того, собственные запросы также могут поддерживаться при использовании `NamedQueries`.
-
-## Q29. (!) Что происходит, когда конструктор без аргументов отсутствует в компоненте `Entity`?
-
-`Hibernate` создаёт экземпляры сущностей через рефлексию (**Reflection API**); исторически использовался **Class.`newInstance / Hibernate` не сможет создать объект сущности и выбросит **HibernateException**.
-
-В современных версиях `Hibernate` может использовать другой механизм инстанцирования (например, `ByteBuddy`), но наличие `no-arg` конструктора (public или protected) остаётся требованием `JPA` и типичной конфигурации `Hibernate` для совместимости с прокси и lazy loading.
-
-## Q30. (!) Можем ли мы объявить `Entity` класс final?
-
-Не рекомендуется. `Hibernate` строит **прокси** для **lazy loading**: подставляется подкласс сущности, который при первом обращении к полю/ассоциации выполняет загрузку из БД. Если класс сущности **final**, его нельзя расширить — прокси создать невозможно, lazy загрузка для этой сущности не будет работать (ассоциации могут загружаться eagerly или возникнет ошибка).
-
-Практика: не объявлять класс сущности final; методы и поля, используемые в прокси, не делать final. Если нужна неизменяемость данных — использовать `@Immutable`, а не final на классе.
-
-## Q31. (!) Какие состояния могут быть у `Entity`?
-
-`Entity` может находиться в любом из следующих состояний: `Transient`:
-
-1. Это состояние является начальным состоянием любого объекта сущности.
-2. Когда экземпляр класса сущностей создан, говорят, что объект перешел в `Transient` состояние. Эти объекты существуют в `Heap` памяти.
-3. В этом состоянии объект не связан ни с одним сеансом. Следовательно, он не связан ни с какой базой данных, поэтому любые изменения в объекте данных не влияют на данные в базе данных.
-
-```java
-InterviewBitEmployee employee = new InterviewBitEmployee();
-employee.setId(101);
-employee.setFullName("Hibernate");
-employee.setEmail("hibernate@interviewbit.com");
-```
-
-`Persistent`:
-
-1. Это состояние вводится всякий раз, когда объект связан с `Session`.
-2. Говорят, что объект находится в состоянии `Persistent` всякий раз, когда мы сохраняем или сохраняем объект в базе данных. Каждый объект соответствует строке в таблице базы данных. Любые модификации данных в этом состоянии вызывают изменения записи в базе данных.Следующие методы могут быть использованы для объекта сохранения:
-
-```java
-session.save(record);
-session.persist(record);
-session.update(record);
-session.saveOrUpdate(record);
-session.lock(record);
-session.merge(record);
-```
-
-`Detached`:
-
-1. Объект входит в это состояние всякий раз, когда сеанс закрывается или кеш очищается.
-2. Поскольку объект больше не является частью сеанса, любые изменения в объекте не будут отражаться в соответствующей строке базы данных. Однако он по-прежнему будет иметь свое представление в базе данных.
-3. Если разработчик хочет сохранить изменения этого объекта, его необходимо повторно подключить к `Session`.
-4. Чтобы добиться повторного присоединения, мы можем использовать методы load(), merge(), refresh(), update() или save() в новом `Session`, используя ссылку на `Detached` объект.
-
-Объект входит в это состояние всякий раз, когда вызывается любой из следующих методов:
-
-```java
-session.close();
-session.clear();
-session.detach(record);
-session.evict(record);
-```
-
-## Q32. Что такое `Query Cache`?
-
-Платформа `Hibernate` предоставляет дополнительную функцию, называемую `Cache` для результатов `Query`. Чтобы включить это, необходимо выполнить дополнительные настройки в коде. `Query Cache` полезен для тех запросов, которые чаще всего вызываются с одинаковыми параметрами. Это увеличивает скорость извлечения данных и значительно повышает производительность часто повторяющихся запросов.
-
-Это не кэширует состояние реальных сущностей в наборе результатов, а только сохраняет значения идентификатора и результаты типа значения. Следовательно, кеш запросов всегда следует использовать в сочетании с кешем второго уровня.Конфигурация:
-
-В `XML`-файле конфигурации спящего режима задайте для свойства `use_query_cache` значение `true`, как показано ниже:
-
-```xml
-<property name="hibernate.cache.use_query_cache">true</property>
-```
-
-`In the code`, we need to do the below changes for the `query` object:
-
-```java
-Query query = session.createQuery("from InterviewBitEmployee");
-query.setCacheable(true);
-query.setCacheRegion("IB_EMP");
-```
-
-## Q33. (!) Что такое проблема N+1?
-
-Проблема N+1 в `Hibernate` возникает, когда при получении объектов из базы данных `Hibernate` выполняет дополнительные запросы для загрузки связанных сущностей. Это происходит из-за `FetchType.LAZY`: `Hibernate` получает только основные данные объекта и выполняет отдельные запросы для загрузки связанных данных. В результате, если у нас есть N объектов, требующих доступа к определённому связанному объекту, будет выполнено N+1 запросов, что может привести к снижению производительности и увеличению времени выполнения запроса.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q34. Как решить проблему N+1?
-
-Вот пример для лучшего понимания проблемы N+1:
-
-У нас есть две сущности: "Автор" (`Author`) и "Книга" (`Book`). Связь между ними один ко многим, то есть один автор может иметь много книг. Если мы используем ленивую загрузку, при получении списка авторов `Hibernate` выполнит один запрос для получения всех авторов, а затем для загрузки книг каждого автора он выполнит дополнительные запросы.
-
-Пример решения проблемы N+1 это использование жадной загрузки (eager loading) вместо ленивой загрузки. Жадная загрузка позволяет указать `Hibernate` загрузить связанные объекты вместе с основным объектом в одном запросе. Таким образом, вместо N+1 запросов будет выполнен всего один запрос для загрузки всех данных.
-
-Вот пример использования жадной загрузки для нашего примера:
+`@ManyToMany` создаёт промежуточную (join) таблицу:
 
 ```java
 @Entity
-public class Author {
-    @OneToMany(mappedBy = "author", fetch = FetchType.EAGER)
-    private List<Book> books;
+public class Student {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "student_course",
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private Set<Course> courses = new HashSet<>(); // Set, не List!
+}
+
+@Entity
+public class Course {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToMany(mappedBy = "courses")
+    private Set<Student> students = new HashSet<>();
 }
 ```
 
-Таким образом, при загрузке списка авторов `Hibernate` автоматически выполнит один запрос, чтобы получить всех авторов и все их книги.
+**Best practices**:
+- Используйте `Set`, а не `List` — `Hibernate` генерирует более эффективный SQL для `Set` при удалении элементов
+- Не используйте `CascadeType.ALL` / `REMOVE` на `@ManyToMany` — это может удалить связанные сущности при удалении из коллекции
+- Для join-таблиц с дополнительными полями (дата записи, оценка и т.д.) — создавайте отдельную `@Entity`
 
-Это только одно из решений проблемы N+1 в `Hibernate`. Альтернативными решениями являются использование механизма join fetch, разделения запросов или использование вторичного кэша. Однако приведённый пример с жадной загрузкой — самый простой и популярный способ справиться с этой проблемой.
+## Q17. В чём разница между `@JoinColumn` и `mappedBy`?
 
-Вот несколько примеров других решений проблемы N+1 в `Hibernate`: 1. Использование механизма «join fetch»: вместо ленивой или жадной загрузки можно использовать join fetch, чтобы выполнить один запрос, который объединяет основные данные объекта и его связанные данные. Например:
+**`@JoinColumn`** — маркер **owning side** (владелец связи). Определяет FK-колонку в таблице владельца.
+
+**`mappedBy`** — маркер **inverse side** (обратная сторона). Указывает имя поля на стороне владельца.
+
+```java
+// Owning side — Employee владеет связью, в таблице employee есть FK department_id
+@ManyToOne
+@JoinColumn(name = "department_id")
+private Department department;
+
+// Inverse side — Department не владеет связью, ссылается на поле "department" у Employee
+@OneToMany(mappedBy = "department")
+private List<Employee> employees;
+```
+
+**Правило**: FK всегда хранится на стороне с `@JoinColumn`. Изменения на стороне `mappedBy` **не синхронизируются** с БД — нужно обновлять owning side.
+
+## Q18. Что такое `@Embeddable` и `@Embedded`?
+
+`@Embeddable` — value object, который не имеет собственного id и таблицы. Его поля встраиваются в таблицу родительской сущности.
+
+```java
+@Embeddable
+public class Address {
+    private String city;
+    private String street;
+    @Column(name = "zip_code")
+    private String zipCode;
+}
+
+@Entity
+public class Customer {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Embedded
+    private Address homeAddress;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = "city", column = @Column(name = "work_city")),
+        @AttributeOverride(name = "street", column = @Column(name = "work_street")),
+        @AttributeOverride(name = "zipCode", column = @Column(name = "work_zip"))
+    })
+    private Address workAddress;
+}
+```
+
+Результат — **одна таблица** `customer` с колонками: `id`, `city`, `street`, `zip_code`, `work_city`, `work_street`, `work_zip`.
+
+## Q19. (!) Что такое `Lazy Loading` и `Eager Loading`?
+
+| Стратегия | Описание | По умолчанию для |
+|-----------|----------|-----------------|
+| **`LAZY`** | Данные загружаются при первом обращении | `@OneToMany`, `@ManyToMany` |
+| **`EAGER`** | Данные загружаются сразу вместе с родительской сущностью | `@ManyToOne`, `@OneToOne` |
+
+**`LAZY`** — `Hibernate` возвращает прокси-объект или обёртку коллекции. Реальный `SELECT` выполняется при первом вызове метода (кроме `getId()`).
+
+**Best practice**: всегда устанавливайте `FetchType.LAZY` на все ассоциации и управляйте загрузкой через `JOIN FETCH`, `@EntityGraph` или `@BatchSize` — это предотвращает неожиданную загрузку ненужных данных.
+
+```java
+@Entity
+public class Order {
+    @ManyToOne(fetch = FetchType.LAZY) // явно LAZY для @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY) // LAZY по умолчанию
+    private List<OrderItem> items;
+}
+```
+
+## Q20. (!) Что такое проблема N+1?
+
+Проблема **N+1** — ситуация, когда `Hibernate` выполняет **1 запрос** для получения списка из N сущностей, а затем **N дополнительных запросов** для загрузки связанных данных каждой сущности.
+
+```java
+// 1 запрос: SELECT * FROM authors
+List<Author> authors = session.createQuery("FROM Author", Author.class).list();
+
+// N запросов: для каждого автора — SELECT * FROM books WHERE author_id = ?
+for (Author author : authors) {
+    System.out.println(author.getBooks().size()); // каждый вызов — отдельный SELECT
+}
+```
+
+Итого: **1 + N запросов** вместо одного. При N = 1000 авторов — 1001 запрос к БД.
+
+```
+-- 1-й запрос
+SELECT * FROM authors;
+
+-- 2-й запрос (автор #1)
+SELECT * FROM books WHERE author_id = 1;
+-- 3-й запрос (автор #2)
+SELECT * FROM books WHERE author_id = 2;
+-- ... и так N раз
+```
+
+Эта проблема — одна из главных причин performance-проблем в `Hibernate`-приложениях. Подробнее о запросах в [вопросах по SQL](sql-interview.md).
+
+## Q21. (!) Как решить проблему N+1?
+
+Существует несколько способов, от самого рекомендуемого к менее предпочтительному:
+
+**1. `JOIN FETCH` в JPQL** (рекомендуется):
+
+```java
+// 1 запрос с JOIN: SELECT a.*, b.* FROM authors a JOIN books b ON a.id = b.author_id
+List<Author> authors = entityManager
+    .createQuery("SELECT a FROM Author a JOIN FETCH a.books", Author.class)
+    .getResultList();
+```
+
+**2. `@EntityGraph`** (декларативный подход):
+
+```java
+@Entity
+@NamedEntityGraph(name = "Author.withBooks",
+    attributeNodes = @NamedAttributeNode("books"))
+public class Author { ... }
+
+// Использование
+EntityGraph<?> graph = entityManager.getEntityGraph("Author.withBooks");
+List<Author> authors = entityManager
+    .createQuery("SELECT a FROM Author a", Author.class)
+    .setHint("jakarta.persistence.fetchgraph", graph)
+    .getResultList();
+```
+
+**3. `@BatchSize`** (уменьшает N+1 до N/batch+1):
 
 ```java
 @Entity
 public class Author {
     @OneToMany(mappedBy = "author")
-    @Fetch(FetchMode.JOIN)
+    @BatchSize(size = 25) // загружает книги пачками по 25 авторов
     private List<Book> books;
+}
+// Вместо 1+N запросов будет 1 + ceil(N/25)
+```
+
+**4. `@Fetch(FetchMode.SUBSELECT)`**:
+
+```java
+@OneToMany(mappedBy = "author")
+@Fetch(FetchMode.SUBSELECT)
+private List<Book> books;
+// 2 запроса: 1 для авторов + 1 subselect для всех книг
+```
+
+**Не рекомендуется**: менять `FetchType.LAZY` на `FetchType.EAGER` — это решит N+1, но создаст проблему избыточной загрузки данных во всех запросах.
+
+## Q22. Что такое `LazyInitializationException` и как его избежать?
+
+**`LazyInitializationException`** возникает при обращении к lazy-ассоциации после закрытия `Session`:
+
+```java
+User user;
+try (Session session = sf.openSession()) {
+    user = session.get(User.class, 1L);
+} // Session закрыта
+
+user.getOrders().size(); // LazyInitializationException!
+```
+
+Способы решения:
+1. **`JOIN FETCH`** в запросе — загрузить нужные данные заранее (рекомендуется)
+2. **`@EntityGraph`** — декларативно указать что загружать
+3. **`Open Session in View`** (`spring.jpa.open-in-view=true`) — Session остаётся открытой до конца HTTP-запроса (anti-pattern для production, может привести к N+1)
+4. **DTO projection** — возвращать DTO с нужными полями вместо entity
+
+## Q23. Что такое `Entity Graph`?
+
+**Entity Graph** — механизм `JPA` 2.1+ для декларативного определения, какие ассоциации загрузить вместе с сущностью. Альтернатива `JOIN FETCH` в `JPQL`.
+
+```java
+// Через аннотацию
+@Entity
+@NamedEntityGraph(name = "Order.withItems",
+    attributeNodes = {
+        @NamedAttributeNode("items"),
+        @NamedAttributeNode("user")
+    })
+public class Order { ... }
+
+// Через API (программно)
+EntityGraph<Order> graph = entityManager.createEntityGraph(Order.class);
+graph.addAttributeNodes("items", "user");
+
+Map<String, Object> hints = Map.of("jakarta.persistence.loadgraph", graph);
+Order order = entityManager.find(Order.class, orderId, hints);
+```
+
+Два типа hint:
+- **`fetchgraph`** — загружает ТОЛЬКО указанные атрибуты (остальные LAZY)
+- **`loadgraph`** — загружает указанные + атрибуты с дефолтным EAGER
+
+В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) Entity Graph используется через аннотацию `@EntityGraph` на методе репозитория.
+
+## Q24. (!) В чём разница между `First Level Cache` и `Second Level Cache`?
+
+```mermaid
+graph TB
+    subgraph "First Level Cache (L1)"
+        S1[Session 1] --> L1_1[L1 Cache 1]
+        S2[Session 2] --> L1_2[L1 Cache 2]
+    end
+
+    subgraph "Second Level Cache (L2)"
+        SF[SessionFactory] --> L2C[L2 Cache<br/>Ehcache / Infinispan / Redis]
+    end
+
+    L1_1 -.->|miss| L2C
+    L1_2 -.->|miss| L2C
+    L2C -.->|miss| DB[(Database)]
+```
+
+| Аспект | L1 (First Level) | L2 (Second Level) |
+|--------|------------------|-------------------|
+| Область | Одна `Session` | `SessionFactory` (все сессии) |
+| По умолчанию | Включён, нельзя отключить | Выключен |
+| Жизненный цикл | Пока `Session` открыта | Пока приложение работает |
+| Настройка | Не нужна | Требует провайдера (Ehcache, Infinispan) |
+| Потокобезопасность | Нет (одна сессия = один поток) | Да |
+
+Порядок поиска: **L1 cache → L2 cache → Database**.
+
+```java
+// L1 cache в действии
+Session session = sf.openSession();
+User u1 = session.get(User.class, 1L); // SELECT из БД, сохраняется в L1
+User u2 = session.get(User.class, 1L); // Берётся из L1, SQL не выполняется
+assert u1 == u2; // true — один и тот же объект
+session.close(); // L1 очищается
+```
+
+## Q25. Как настроить кэш второго уровня?
+
+Для подключения L2 cache (на примере `Ehcache`):
+
+**1. Зависимость** (Gradle):
+```groovy
+implementation 'org.hibernate.orm:hibernate-jcache'
+implementation 'org.ehcache:ehcache:3.10.8'
+```
+
+**2. Конфигурация** (`application.yml`):
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        cache:
+          use_second_level_cache: true
+          region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
+```
+
+**3. Аннотации на сущности**:
+```java
+@Entity
+@Cacheable                                           // JPA стандарт
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)  // Hibernate — стратегия
+public class Country {
+    @Id
+    private Long id;
+    private String name;
 }
 ```
 
-2\. Использование разделения запросов (batch fetching): Можно указать `Hibernate` выполнить несколько запросов одновременно, чтобы загрузить группы связанных объектов вместо одного. Например:
+L2 cache наиболее эффективен для сущностей, которые **часто читаются и редко изменяются** (справочники, конфигурации).
+
+## Q26. Что такое `Query Cache`?
+
+**Query Cache** кэширует **результаты запросов** (список ID сущностей), а не сами сущности. Работает в паре с L2 cache — по ID из query cache достаются сущности из L2 cache.
+
+```java
+// Включение
+// hibernate.cache.use_query_cache = true
+
+// Использование
+List<Country> countries = entityManager
+    .createQuery("SELECT c FROM Country c WHERE c.region = :region", Country.class)
+    .setParameter("region", "Europe")
+    .setHint("org.hibernate.cacheable", true)
+    .getResultList();
+```
+
+**Когда использовать**: для запросов, которые выполняются часто с одинаковыми параметрами, по сущностям, которые редко меняются. При любом `INSERT`/`UPDATE`/`DELETE` в таблице — Query Cache для этой таблицы **инвалидируется целиком**.
+
+**Когда НЕ использовать**: для часто изменяемых таблиц — частая инвалидация сведёт на нет выигрыш.
+
+## Q27. (!) Какие `Concurrency Strategy` доступны для кэша?
+
+Стратегии параллелизма для L2 cache определяют, как обрабатываются конкурентные чтения/записи:
+
+| Стратегия | Описание | Когда использовать |
+|-----------|----------|--------------------|
+| **`READ_ONLY`** | Только чтение, сущность никогда не обновляется | Справочники, enum-таблицы |
+| **`NONSTRICT_READ_WRITE`** | Кэш обновляется после commit, возможно чтение устаревших данных | Данные, которые редко меняются и eventual consistency допустима |
+| **`READ_WRITE`** | Soft-lock: при обновлении ставится блокировка в кэше | Данные, которые иногда меняются, нужна consistency |
+| **`TRANSACTIONAL`** | Полная поддержка XA-транзакций (JTA) | Распределённые транзакции, кластерный кэш |
 
 ```java
 @Entity
-public class Author {
-    @OneToMany(mappedBy = "author")
-    @BatchSize(size = 10)
-    private List<Book> books;
-}
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+public class Currency { ... }
+
+@Entity
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Product { ... }
 ```
 
-3\. Использование вторичного кэша: Можно настроить вторичный кэш `Hibernate` (например, с использованием `Ehcache` или `Memcached`), чтобы кэшировать связанные объекты и избежать необходимости выполнять дополнительные запросы. Например:
+## Q28. Что такое `HQL` и `JPQL`?
+
+**`JPQL`** (`Jakarta Persistence Query Language`) — стандартный язык запросов `JPA`, объектно-ориентированный (работает с сущностями и полями, не с таблицами и колонками).
+
+**`HQL`** (`Hibernate Query Language`) — надмножество `JPQL` с дополнительными возможностями (`Hibernate`-специфичными).
+
+```java
+// JPQL — стандарт JPA
+TypedQuery<User> query = entityManager.createQuery(
+    "SELECT u FROM User u WHERE u.name LIKE :name AND u.active = true",
+    User.class
+);
+query.setParameter("name", "%Alice%");
+List<User> users = query.getResultList();
+
+// JPQL — агрегация
+List<Object[]> stats = entityManager.createQuery(
+    "SELECT u.department, COUNT(u), AVG(u.salary) " +
+    "FROM User u GROUP BY u.department HAVING COUNT(u) > 5"
+).getResultList();
+
+// JPQL — JOIN FETCH
+List<Author> authors = entityManager.createQuery(
+    "SELECT DISTINCT a FROM Author a JOIN FETCH a.books WHERE a.active = true",
+    Author.class
+).getResultList();
+
+// JPQL — UPDATE (bulk)
+int updated = entityManager.createQuery(
+    "UPDATE User u SET u.active = false WHERE u.lastLogin < :date"
+).setParameter("date", cutoffDate)
+ .executeUpdate();
+```
+
+## Q29. Что такое `Criteria API`?
+
+**Criteria API** — типобезопасный, программный способ построения запросов. Особенно полезен для **динамических запросов** (фильтры, сортировки, которые зависят от пользовательского ввода).
+
+С `Hibernate 5.2+` устаревший `org.hibernate.Criteria` заменён на стандартный `JPA Criteria API`:
+
+```java
+CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+CriteriaQuery<User> cq = cb.createQuery(User.class);
+Root<User> root = cq.from(User.class);
+
+// Динамическое построение условий
+List<Predicate> predicates = new ArrayList<>();
+
+if (nameFilter != null) {
+    predicates.add(cb.like(root.get("name"), "%" + nameFilter + "%"));
+}
+if (minAge != null) {
+    predicates.add(cb.greaterThanOrEqualTo(root.get("age"), minAge));
+}
+if (active != null) {
+    predicates.add(cb.equal(root.get("active"), active));
+}
+
+cq.where(predicates.toArray(new Predicate[0]));
+cq.orderBy(cb.asc(root.get("name")));
+
+List<User> users = entityManager.createQuery(cq).getResultList();
+```
+
+**С Metamodel** (compile-time проверка полей):
+
+```java
+// User_.name — сгенерированный metamodel, ошибка компиляции при опечатке
+predicates.add(cb.like(root.get(User_.name), "%" + nameFilter + "%"));
+```
+
+В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) для динамических запросов чаще используют `Specification` API, который оборачивает `Criteria API`.
+
+## Q30. Что такое `NamedQuery`?
+
+**NamedQuery** — предварительно определённый запрос, привязанный к сущности по имени. Проверяется при старте приложения (ошибки видны сразу, а не в рантайме).
 
 ```java
 @Entity
-public class Author {
-    @OneToMany(mappedBy = "author")
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    private List<Book> books;
-}
-```
-
-Все эти решения позволяют оптимизировать работу с `Hibernate` и избежать проблемы N+1 запросов при загрузке связанных данных из базы данных. Каждое решение имеет свои особенности и следует выбирать наиболее подходящий вариант в зависимости от требований и контекста вашего приложения.
-
-## Q35. (!) Какие `Concurrency Strategy` доступны в `Hibernate`?
-
-`Hibernate` предоставляет несколько стратегий параллелизма, которые можно использовать для оптимизации работы с базой данных. Некоторые из них включают:
-
-1. `Read-Write Locking` (чтение-запись блокировка): Это стандартная стратегия, которая блокирует таблицу целиком при выполнении операций чтения и записи. Это обеспечивает согласованность данных, но может привести к блокировке и ожиданию других запросов.
-2. `Optimistic Concurrency Control` (оптимистическое управление параллелизмом): Эта стратегия использует версионирование объектов, чтобы обнаружить конфликты параллелизма. Вместо блокировки данных, каждый объект, изменившийся в процессе выполнения операции, имеет номер версии, и если версия объекта не совпадает с ожидаемой, будет сгенерировано исключение.
-3. `Pessimistic Concurrency Control` (пессимистическое управление параллелизмом): Эта стратегия блокирует данные, связанные с объектом, при выполнении операций чтения и записи. Запросы на чтение блокируются до выполнения операции, что предотвращает другие операции записи и чтения.
-4. `Versioned Concurrency Control` (версионное управление параллелизмом): Эта стратегия использует версионирование данных и замок на уровне строк для обнаружения и решения конфликтов параллелизма. Каждая строка данных содержит информацию о версии, и при обновлении данных проверяется, соответствует ли версия ожидаемой.
-
-## Q36. (!) Что такое `@Version`?
-
-Аннотация `@Version` в `Hibernate` используется для реализации оптимистической блокировки при работе с базой данных. Она представляет версионное поле в классе сущности и обычно применяется вместе с аннотацией `@Entity`.
-
-При каждом обновлении сущности в базе данных `Hibernate` будет автоматически проверять значение поля, помеченного аннотацией `@Version`, и сравнивать его с текущим значением в базе данных. Если значения совпадают, то обновление будет выполнено успешно. Если значения не совпадают, то это означает, что кто-то другой уже изменил сущность, и `Hibernate` выбросит исключение, указывая на конфликт версий.
-
-Обычно поле, помеченное аннотацией `@Version`, имеет целочисленный или временной тип данных, и его значение увеличивается с каждым обновлением сущности.`Hibernate` автоматически обновляет это поле при выполнении операции обновления.
-
-Использование аннотации `@Version` позволяет предотвратить потерю данных при конкурентной работе сущностей и обеспечить согласованность данных в базе данных.
-
-## Q37. Что такое `NamedQuery`?
-
-`NamedQuery` — это выражение, представленное в виде таблицы. Здесь могут быть указаны выражения `SQL` для выбора/получения строк и столбцов из одной или нескольких таблиц в одной или нескольких базах данных. Это похоже на использование псевдонимов для запросов.
-
-В `Hibernate` мы можем использовать аннотации `@NameQueries` и `@NameQuery`:
-
-1. Аннотация `@NameQueries` используется для определения нескольких именованных запросов.
-2. Аннотация `@NameQuery` используется для определения одного именованного запроса. Фрагмент кода: мы можем определить именованный запрос, как показано ниже.
-
-```java
 @NamedQueries({
     @NamedQuery(
-        name = "findIBEmployeeByFullName",
-        query = "from InterviewBitEmployee e where e.fullName =:fullName"
+        name = "User.findByEmail",
+        query = "SELECT u FROM User u WHERE u.email = :email"
+    ),
+    @NamedQuery(
+        name = "User.findActive",
+        query = "SELECT u FROM User u WHERE u.active = true ORDER BY u.name"
     )
 })
+public class User { ... }
+
+// Использование
+TypedQuery<User> query = entityManager.createNamedQuery("User.findByEmail", User.class);
+query.setParameter("email", "alice@example.com");
+User user = query.getSingleResult();
 ```
 
-`:fullName` относится к параметру, который определяется программистом и может быть установлен с помощью метода `query.setParameter()` при использовании именованного запроса.
+**Преимущества**: валидация при старте, кэширование плана запроса, единое место объявления, удобство для ревью.
 
-Использование:
+## Q31. Поддерживает ли `Hibernate` нативные `SQL`-запросы?
+
+Да. Нативные SQL-запросы полезны для сложных запросов, оптимизации под конкретную СУБД или вызова хранимых процедур.
 
 ```java
-TypedQuery query = session.getNamedQuery("findIBEmployeeByFullName");
-query.setParameter("fullName", "Hibernate");
-List<InterviewBitEmployee> ibEmployees = query.getResultList();
+// Нативный SQL с маппингом на Entity
+List<User> users = entityManager.createNativeQuery(
+    "SELECT * FROM users WHERE created_at > :date", User.class
+).setParameter("date", cutoffDate)
+ .getResultList();
+
+// Нативный SQL с маппингом на DTO (через @SqlResultSetMapping или Tuple)
+List<Object[]> results = entityManager.createNativeQuery(
+    "SELECT u.name, COUNT(o.id) as order_count " +
+    "FROM users u LEFT JOIN orders o ON u.id = o.user_id " +
+    "GROUP BY u.name"
+).getResultList();
+
+// Через @NamedNativeQuery
+@NamedNativeQuery(
+    name = "User.findWithOrderCount",
+    query = "SELECT u.*, COUNT(o.id) as order_count FROM users u ...",
+    resultSetMapping = "UserWithOrderCount"
+)
 ```
 
-Метод `getNamedQuery` берет имя именованного запроса и возвращает экземпляр запроса.
+Подробнее о SQL-оптимизации — в [вопросах по SQL](sql-interview.md).
 
-## Q38. Какие преимущества есть у `NamedQuery`?
+## Q32. Подвержен ли `Hibernate` `SQL Injection`?
 
-**NamedQuery** — запрос (`HQL` или `SQL`), объявленный по имени в маппинге сущности (`@NamedQuery` или `@NamedNativeQuery`) и вызываемый по имени. Преимущества: единое место для всех запросов домена (читаемость, проще рефакторинг); проверка при старте приложения (ошибка в запросе — при загрузке, а не в рантайме); возможность переиспользования и кэширования плана запроса; удобство для ревью и документирования.
+`Hibernate` **не обеспечивает автоматическую защиту** от SQL Injection. Всё зависит от того, как пишутся запросы:
 
-Чтобы понять преимущества `NamedQuery`, давайте сначала разберёмся с недостатками `HQL` и `SQL`. Основной недостаток разбросанных по объектам доступа к данным `HQL` и `SQL` заключается в том, что код становится нечитаемым. Следовательно, в качестве хорошей практики рекомендуется сгруппировать все коды `HQL` и `SQL` в одном месте и использовать только их ссылку в фактическом коде доступа к данным. Для этого `Hibernate` даёт нам именованные запросы.
+```java
+// ❌ УЯЗВИМО — конкатенация строк
+String hql = "FROM User WHERE name = '" + userInput + "'";
+session.createQuery(hql); // SQL Injection возможен!
+
+// ✅ БЕЗОПАСНО — параметризованные запросы
+session.createQuery("FROM User WHERE name = :name")
+       .setParameter("name", userInput);
+
+// ✅ БЕЗОПАСНО — Criteria API (параметры автоматически экранируются)
+cb.equal(root.get("name"), userInput);
+
+// ✅ БЕЗОПАСНО — нативный SQL с параметрами
+entityManager.createNativeQuery("SELECT * FROM users WHERE name = ?1")
+             .setParameter(1, userInput);
+```
+
+**Правило**: всегда используйте параметризованные запросы (`setParameter()`), никогда не конкатенируйте пользовательский ввод в HQL/SQL строку.
+
+## Q33. (!) Что такое `@Version` и оптимистичная блокировка?
+
+**Оптимистичная блокировка** (`Optimistic Locking`) — стратегия, при которой конфликты обнаруживаются в момент `UPDATE`, а не при чтении. Реализуется через аннотацию `@Version`.
+
+```java
+@Entity
+public class Product {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private BigDecimal price;
+
+    @Version
+    private Integer version; // автоматически увеличивается при каждом UPDATE
+}
+```
+
+Как это работает:
+
+```sql
+-- При UPDATE Hibernate добавляет version в WHERE:
+UPDATE products SET name = 'New', price = 99.99, version = 3
+WHERE id = 1 AND version = 2;
+
+-- Если version не совпадает — 0 строк обновлено → OptimisticLockException
+```
+
+```java
+try {
+    product.setPrice(new BigDecimal("99.99"));
+    entityManager.merge(product);
+    entityManager.flush();
+} catch (OptimisticLockException e) {
+    // Кто-то другой уже обновил этот продукт
+    // Перечитать из БД и повторить операцию
+}
+```
+
+**Тип поля `@Version`**: `Integer`, `Long`, `Short`, `Timestamp`, `Instant`. Числовые типы предпочтительнее — точнее и без проблем с точностью времени.
+
+## Q34. В чём разница между оптимистичной и пессимистичной блокировкой?
+
+| Аспект | Оптимистичная | Пессимистичная |
+|--------|---------------|----------------|
+| Принцип | Конфликты редки, проверяем при commit | Конфликты вероятны, блокируем при чтении |
+| Механизм | `@Version` + проверка при UPDATE | `SELECT ... FOR UPDATE` |
+| Блокировка БД | Нет | Да — строки заблокированы |
+| Throughput | Высокий (нет ожидания) | Ниже (потоки ждут блокировки) |
+| Deadlock | Нет | Возможен |
+| Применение | Большинство web-приложений | Финансовые операции, критичные данные |
+
+```java
+// Оптимистичная — @Version на сущности
+@Version
+private Integer version;
+
+// Пессимистичная — через JPA
+Product product = entityManager.find(Product.class, id,
+    LockModeType.PESSIMISTIC_WRITE); // SELECT ... FOR UPDATE
+product.setStock(product.getStock() - 1);
+// Другие транзакции ждут, пока текущая не завершится
+
+// Пессимистичная — через JPQL
+entityManager.createQuery("SELECT p FROM Product p WHERE p.id = :id")
+    .setParameter("id", id)
+    .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+    .getSingleResult();
+```
+
+## Q35. Как работают транзакции в `Hibernate`?
+
+`Hibernate` использует `JDBC`-транзакции (или `JTA` для распределённых). В `Spring` транзакциями управляют через `@Transactional`:
+
+```java
+// Без Spring — ручное управление
+Session session = sf.openSession();
+Transaction tx = null;
+try {
+    tx = session.beginTransaction();
+    session.persist(new User("Alice"));
+    session.persist(new User("Bob"));
+    tx.commit(); // flush + commit
+} catch (Exception e) {
+    if (tx != null) tx.rollback();
+    throw e;
+} finally {
+    session.close();
+}
+
+// С Spring — декларативное управление
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final UserRepository userRepository;
+
+    @Transactional // Spring создаёт Session, управляет commit/rollback
+    public void createUsers(List<String> names) {
+        names.forEach(name -> userRepository.save(new User(name)));
+    } // commit при успешном завершении, rollback при RuntimeException
+}
+```
+
+**Уровни изоляции** задаются через `@Transactional(isolation = Isolation.READ_COMMITTED)`. Подробнее об уровнях изоляции — в [вопросах по архитектуре БД](database-architecture-interview.md).
+
+## Q36. (!) Что такое `Batch Processing` в `Hibernate`?
+
+**Batch Processing** — техника отправки нескольких SQL-операций одним пакетом, что значительно ускоряет массовые `INSERT`/`UPDATE`/`DELETE`.
+
+**Конфигурация:**
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50          # количество операций в одном batch
+          batch_versioned_data: true  # batch для @Version сущностей
+        order_inserts: true       # группировка INSERT по типу сущности
+        order_updates: true       # группировка UPDATE по типу сущности
+```
+
+**Важно**: `GenerationType.IDENTITY` **несовместим** с batch insert — `Hibernate` должен выполнить каждый `INSERT` отдельно, чтобы получить сгенерированный ID. Используйте `SEQUENCE` для batch-операций.
+
+```java
+@Transactional
+public void batchInsert(List<UserDto> dtos) {
+    for (int i = 0; i < dtos.size(); i++) {
+        entityManager.persist(toEntity(dtos.get(i)));
+
+        if (i % 50 == 0) { // batch_size = 50
+            entityManager.flush();  // отправить batch в БД
+            entityManager.clear();  // очистить L1 cache, чтобы не съесть память
+        }
+    }
+}
+```
+
+Без `flush()` + `clear()` при вставке 100K записей все сущности останутся в L1 cache — `OutOfMemoryError`.
+
+## Q37. В чём разница между `setMaxResults()` и `setFetchSize()`?
+
+| Метод | Назначение | Аналог в SQL | Влияет на |
+|-------|-----------|-------------|-----------|
+| `setMaxResults(n)` | Ограничивает число возвращаемых строк | `LIMIT n` | Результат запроса |
+| `setFetchSize(n)` | Подсказка драйверу: получать по n строк | Нет аналога | Способ доставки результата |
+
+```java
+// setMaxResults — получить первые 10 записей
+List<User> top10 = entityManager.createQuery("SELECT u FROM User u ORDER BY u.rating DESC")
+    .setMaxResults(10)
+    .getResultList();
+
+// setFetchSize — потоковая обработка большого результата (PostgreSQL)
+Query query = session.createQuery("FROM LogEntry");
+query.setFetchSize(100); // получать по 100 строк за раз через cursor
+ScrollableResults results = query.scroll(ScrollMode.FORWARD_ONLY);
+while (results.next()) {
+    LogEntry entry = (LogEntry) results.get(0);
+    process(entry);
+}
+```
+
+`setFetchSize` уменьшает пиковое потребление памяти при больших выборках. Поддержка зависит от JDBC-драйвера (для `PostgreSQL` — работает через cursor, для `MySQL` — зависит от драйвера).
+
+## Q38. Что такое `@Immutable`?
+
+**`@Immutable`** — `Hibernate`-аннотация, которая помечает сущность как неизменяемую. `Hibernate` не выполняет `dirty checking` для таких сущностей и не генерирует `UPDATE`.
+
+```java
+@Entity
+@Immutable
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY) // идеально для L2 cache
+public class Country {
+    @Id
+    private Long id;
+    private String name;
+    private String isoCode;
+}
+```
+
+**Преимущества**: отсутствие dirty checking снижает накладные расходы, идеально сочетается с `READ_ONLY` кэш-стратегией. **Применение**: справочники, конфигурации, исторические данные.
+
+Вызов `update()` или `merge()` для `@Immutable` сущности будет **проигнорирован** — `Hibernate` не сгенерирует `UPDATE`.
+
+## Q39. Как использовать `Hibernate Statistics` для мониторинга?
+
+`Hibernate Statistics` — встроенный механизм сбора метрик (количество запросов, попадания в кэш, время выполнения).
+
+```yaml
+# Включение статистики
+spring:
+  jpa:
+    properties:
+      hibernate:
+        generate_statistics: true
+```
+
+```java
+// Программный доступ к статистике
+Statistics stats = sessionFactory.getStatistics();
+stats.setStatisticsEnabled(true);
+
+// После выполнения операций
+log.info("Queries executed: {}", stats.getQueryExecutionCount());
+log.info("L2 cache hit ratio: {}/{}",
+    stats.getSecondLevelCacheHitCount(),
+    stats.getSecondLevelCacheMissCount());
+log.info("Slowest query: {} ({}ms)",
+    stats.getQueryExecutionMaxTimeQueryString(),
+    stats.getQueryExecutionMaxTime());
+
+stats.clear(); // сбросить статистику
+```
+
+Полезно для обнаружения N+1 проблем (неожиданно большое число запросов) и проверки эффективности кэша. В production рекомендуется экспортировать в систему мониторинга через `Micrometer` и `Spring Boot Actuator`.
+
+## Q40. Как настроить `Hibernate` в `Spring Boot`?
+
+`Spring Boot` автоматически настраивает `Hibernate` через `spring-boot-starter-data-jpa`:
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: app_user
+    password: secret
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # none | validate | update | create | create-drop
+    show-sql: false
+    open-in-view: false   # рекомендация: отключить в production
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 25   # глобальный @BatchSize
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+```
+
+**`ddl-auto` значения**:
+- `none` — ничего не делать (production, миграции через `Flyway`/`Liquibase`)
+- `validate` — проверить схему при старте (рекомендуется для production)
+- `update` — обновить схему (только для разработки!)
+- `create-drop` — пересоздать при старте и удалить при остановке (тесты)
+
+Подробнее о конфигурации — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
+
+## Q41. В чём разница между `getCurrentSession()` и `openSession()`?
+
+| Аспект | `getCurrentSession()` | `openSession()` |
+|--------|----------------------|-----------------|
+| Привязка | К текущему контексту (`ThreadLocal`) | Новая независимая сессия |
+| Закрытие | Автоматическое (при commit/rollback) | Ручное — разработчик обязан закрыть |
+| Конфигурация | Требует `current_session_context_class` | Не требует |
+| Использование | В managed-среде (Spring, JEE) | В standalone-приложениях |
+
+```java
+// getCurrentSession — привязана к текущей транзакции
+Session session = sf.getCurrentSession();
+session.beginTransaction();
+session.persist(user);
+session.getTransaction().commit(); // session автоматически закрывается
+
+// openSession — ручное управление
+Session session = sf.openSession();
+try {
+    session.beginTransaction();
+    session.persist(user);
+    session.getTransaction().commit();
+} finally {
+    session.close(); // обязательно!
+}
+```
+
+Также существует `openStatelessSession()` — сессия без кэша L1 и dirty checking, для bulk-операций.
+
+## Q42. Что такое `Hibernate Dialect`?
+
+**Dialect** — класс, который сообщает `Hibernate` особенности конкретной СУБД: синтаксис SQL, поддерживаемые типы данных, функции, пагинацию и т.д.
+
+| СУБД | Dialect |
+|------|---------|
+| `PostgreSQL` | `org.hibernate.dialect.PostgreSQLDialect` |
+| `MySQL` | `org.hibernate.dialect.MySQLDialect` |
+| `Oracle` | `org.hibernate.dialect.OracleDialect` |
+| `H2` | `org.hibernate.dialect.H2Dialect` |
+| `SQLite` | Требует сторонний dialect |
+
+```yaml
+spring:
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+```
+
+Начиная с **Hibernate 6**, диалект определяется **автоматически** на основе URL подключения — явное указание обычно не требуется. Явное указание полезно, когда нужно зафиксировать конкретную версию диалекта или использовать кастомный.
+
+## Q43. (!) Что такое `Open-in-View` антипаттерн и как его избежать?
+
+**Open-in-View** (`OSIV` — Open Session In View) — паттерн, при котором `Hibernate Session` (или JPA `EntityManager`) открывается на весь HTTP-запрос, включая рендеринг view. В Spring Boot **включён по умолчанию**.
+
+**Проблемы OSIV:**
+
+```mermaid
+graph LR
+    Request[HTTP Request] --> Controller
+    Controller --> Service
+    Service --> Repository
+    Repository -->|"query"| DB[(Database)]
+    Service --> Controller
+    Controller --> View[View / Serializer]
+    View -->|"lazy load — доп. запросы!"| DB
+    View --> Response[HTTP Response]
+
+    style DB fill:#f99
+```
+
+1. **Скрытые запросы к БД в слое представления** — lazy-загрузка происходит вне транзакционного контекста
+2. **Удержание соединения с БД** на всё время запроса (включая сериализацию, внешние вызовы)
+3. **Непредсказуемая производительность** — количество запросов зависит от того, какие поля сериализатор «трогает»
+
+**Диагностика:**
+
+```yaml
+# Включить логирование SQL
+spring:
+  jpa:
+    show-sql: true
+  logging:
+    level:
+      org.hibernate.SQL: DEBUG
+      org.hibernate.orm.jdbc.bind: TRACE
+```
+
+**Отключение OSIV (рекомендуется для production):**
+
+```yaml
+spring:
+  jpa:
+    open-in-view: false
+```
+
+После отключения — `LazyInitializationException` при доступе к lazy-коллекциям вне транзакции. Решение: явная загрузка нужных данных в сервисном слое.
+
+**Правильный подход — загружать всё в транзакции:**
+
+```java
+// ❌ OSIV-зависимый код
+@GetMapping("/users/{id}")
+public UserDto getUser(@PathVariable Long id) {
+    User user = userRepository.findById(id).orElseThrow();
+    // orders загрузятся лениво в сериализаторе — но OSIV это позволяет
+    return mapper.toDto(user); // lazy load здесь
+}
+
+// ✅ Явная загрузка в сервисе
+@Service
+public class UserService {
+    @Transactional(readOnly = true)
+    public UserDto getUserWithOrders(Long id) {
+        User user = userRepository.findByIdWithOrders(id); // fetch join
+        return mapper.toDto(user); // все данные уже загружены
+    }
+}
+
+// Repository с fetch join
+@Query("SELECT u FROM User u LEFT JOIN FETCH u.orders WHERE u.id = :id")
+Optional<User> findByIdWithOrders(@Param("id") Long id);
+```
+
+**Альтернатива — DTO Projection на уровне запроса:**
+
+```java
+@Transactional(readOnly = true)
+public UserSummaryDto getUserSummary(Long id) {
+    return userRepository.findUserSummaryById(id); // только нужные поля
+}
+
+// Repository
+@Query("SELECT new com.example.dto.UserSummaryDto(u.id, u.name, SIZE(u.orders)) " +
+       "FROM User u WHERE u.id = :id")
+Optional<UserSummaryDto> findUserSummaryById(@Param("id") Long id);
+```
+
+## Q44. Что такое `Hibernate Envers` и как организовать аудит изменений?
+
+**Hibernate Envers** (`Entity Versioning System`) — модуль для автоматического ведения истории изменений JPA-сущностей. Каждое изменение сохраняется в отдельную audit-таблицу.
+
+**Подключение:**
+
+```xml
+<dependency>
+    <groupId>org.hibernate.orm</groupId>
+    <artifactId>hibernate-envers</artifactId>
+</dependency>
+```
+
+**Аннотирование сущности:**
+
+```java
+@Entity
+@Audited  // Hibernate Envers отслеживает все изменения
+@Table(name = "products")
+public class Product {
+    @Id @GeneratedValue
+    private Long id;
+
+    private String name;
+    private BigDecimal price;
+
+    @NotAudited  // это поле не аудируется
+    private byte[] thumbnail;
+
+    @ManyToOne
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private Category category;  // связь аудируется, но Category — нет
+}
+```
+
+**Структура таблиц:**
+
+```sql
+-- Envers создаёт автоматически:
+-- products_aud — история изменений
+CREATE TABLE products_aud (
+    id         BIGINT,
+    rev        INTEGER,      -- номер ревизии
+    revtype    SMALLINT,     -- 0=ADD, 1=MOD, 2=DEL
+    name       VARCHAR(255),
+    price      DECIMAL(19,2)
+);
+
+-- revinfo — метаданные ревизий
+CREATE TABLE revinfo (
+    rev      INTEGER PRIMARY KEY,
+    revtstmp BIGINT   -- timestamp ревизии
+);
+```
+
+**Расширение RevisionEntity для доп. метаданных:**
+
+```java
+@Entity
+@RevisionEntity(AuditRevisionListener.class)
+public class AuditRevision extends DefaultRevisionEntity {
+    private String username;
+    private String ipAddress;
+}
+
+public class AuditRevisionListener implements RevisionListener {
+    @Override
+    public void newRevision(Object revisionEntity) {
+        AuditRevision rev = (AuditRevision) revisionEntity;
+        rev.setUsername(SecurityContextHolder.getContext()
+            .getAuthentication().getName());
+    }
+}
+```
+
+**Чтение истории через AuditReader:**
+
+```java
+@Service
+public class ProductAuditService {
+    @PersistenceContext
+    private EntityManager em;
+
+    public List<Object[]> getProductHistory(Long productId) {
+        AuditReader reader = AuditReaderFactory.get(em);
+
+        // Все ревизии сущности
+        return reader.createQuery()
+            .forRevisionsOfEntity(Product.class, false, true)
+            .add(AuditEntity.id().eq(productId))
+            .addOrder(AuditEntity.revisionNumber().asc())
+            .getResultList();
+    }
+
+    // Состояние на конкретный момент времени
+    public Product getProductAt(Long productId, Date date) {
+        AuditReader reader = AuditReaderFactory.get(em);
+        Number revNumber = reader.getRevisionNumberForDate(date);
+        return reader.find(Product.class, productId, revNumber);
+    }
+}
+```
+
+## Q45. (!) Как использовать `Projections` для оптимизации запросов?
+
+**Projection** — выборка только нужных полей вместо загрузки полных Entity. Критически важно для производительности.
+
+**1. Interface-based Projection (Spring Data JPA):**
+
+```java
+// Определяем интерфейс с нужными полями
+public interface UserSummary {
+    Long getId();
+    String getName();
+    String getEmail();
+
+    // Вычисляемое поле через SpEL
+    @Value("#{target.firstName + ' ' + target.lastName}")
+    String getFullName();
+}
+
+// Repository автоматически применит projection
+public interface UserRepository extends JpaRepository<User, Long> {
+    List<UserSummary> findByDepartmentId(Long deptId);
+
+    // Открытая проекция — Spring сам выбирает из entity (не оптимально)
+    // Закрытая проекция — Spring генерирует SELECT только нужных колонок
+}
+```
+
+**2. Class-based (DTO) Projection:**
+
+```java
+public record OrderStats(String category, Long count, BigDecimal totalRevenue) {}
+
+// JPQL с NEW — самый явный способ
+@Query("""
+    SELECT new com.example.dto.OrderStats(
+        o.category, COUNT(o), SUM(o.amount)
+    )
+    FROM Order o
+    WHERE o.createdAt >= :from
+    GROUP BY o.category
+""")
+List<OrderStats> findOrderStats(@Param("from") LocalDateTime from);
+```
+
+**3. Tuple Projection через Criteria API:**
+
+```java
+CriteriaBuilder cb = em.getCriteriaBuilder();
+CriteriaQuery<Tuple> q = cb.createTupleQuery();
+Root<Product> p = q.from(Product.class);
+
+q.multiselect(
+    p.get("id").alias("id"),
+    p.get("name").alias("name"),
+    p.get("price").alias("price")
+).where(cb.greaterThan(p.get("price"), BigDecimal.valueOf(1000)));
+
+List<Tuple> results = em.createQuery(q).getResultList();
+results.forEach(t -> {
+    Long id = t.get("id", Long.class);
+    String name = t.get("name", String.class);
+});
+```
+
+**4. Native Query с @SqlResultSetMapping:**
+
+```java
+@NamedNativeQuery(
+    name = "Product.findTopSellers",
+    query = "SELECT p.id, p.name, COUNT(oi.id) as sales " +
+            "FROM products p JOIN order_items oi ON p.id = oi.product_id " +
+            "GROUP BY p.id, p.name ORDER BY sales DESC LIMIT :limit",
+    resultSetMapping = "ProductSalesSummary"
+)
+@SqlResultSetMapping(
+    name = "ProductSalesSummary",
+    classes = @ConstructorResult(
+        targetClass = ProductSalesDto.class,
+        columns = {
+            @ColumnResult(name = "id",    type = Long.class),
+            @ColumnResult(name = "name",  type = String.class),
+            @ColumnResult(name = "sales", type = Long.class)
+        }
+    )
+)
+```
+
+**Сравнение подходов:**
+
+| Подход | Производительность | Гибкость | Когда |
+|--------|-------------------|----------|-------|
+| Interface-based | Хорошая (если закрытая) | Средняя | Простые API-ответы |
+| Class-based (DTO) | Отличная | Высокая | Аналитика, сложные агрегаты |
+| Entity загрузка | Плохая | Максимальная | Когда нужны все поля + обновление |
+
+## Q46. Что такое `StatelessSession` и когда его использовать?
+
+**StatelessSession** — облегчённый режим `Hibernate` без кэша первого уровня (`L1 cache`), dirty checking и каскадных операций. Предназначен для bulk-обработки.
+
+**Характеристики StatelessSession:**
+
+| Аспект | Session | StatelessSession |
+|--------|---------|-----------------|
+| L1 Cache | Есть | Нет |
+| Dirty checking | Есть | Нет |
+| Cascade | Есть | Нет |
+| Proxy (lazy) | Есть | Нет (реальные объекты) |
+| Interceptor | Есть | Нет |
+| Версионирование | Автоматическое | Ручное |
+
+**Когда использовать:**
+- Массовый импорт данных (тысячи/миллионы строк)
+- ETL-операции
+- Batch-обработка без необходимости накапливать объекты в памяти
+
+**Пример: bulk insert через StatelessSession:**
+
+```java
+@Service
+public class BulkImportService {
+
+    @Autowired
+    private SessionFactory sessionFactory;
+
+    public void importProducts(List<ProductDto> products) {
+        try (StatelessSession session = sessionFactory.openStatelessSession()) {
+            Transaction tx = session.beginTransaction();
+            try {
+                int batchSize = 500;
+                for (int i = 0; i < products.size(); i++) {
+                    Product p = mapper.toEntity(products.get(i));
+                    session.insert(p);  // INSERT сразу, без накопления в L1
+
+                    if (i % batchSize == 0) {
+                        // Нет flush/clear — StatelessSession не накапливает
+                    }
+                }
+                tx.commit();
+            } catch (Exception e) {
+                tx.rollback();
+                throw e;
+            }
+        }  // auto-close
+    }
+}
+```
+
+**Сравнение с обычным Session + batch:**
+
+```java
+// Session с batch — нужно периодически flush/clear
+@Transactional
+public void importWithSession(List<ProductDto> products) {
+    Session session = em.unwrap(Session.class);
+    for (int i = 0; i < products.size(); i++) {
+        em.persist(mapper.toEntity(products.get(i)));
+        if (i % 50 == 0) {
+            em.flush();
+            em.clear();  // освобождаем L1 cache
+        }
+    }
+}
+```
+
+**StatelessSession** быстрее при больших объёмах, т.к. нет overhead на dirty checking и управление L1 cache.
+
+## Q47. (!) Какие типичные ошибки производительности в `Hibernate`?
+
+Комплексный список проблем, которые часто встречаются на практике и на собеседованиях.
+
+**1. N+1 — главная проблема (см. Q20-Q21)**
+
+**2. Загрузка всей Entity там, где нужны 2 поля**
+
+```java
+// ❌ Загружаем все 30 полей User чтобы показать имя
+List<User> users = userRepo.findAll();
+users.stream().map(User::getName).collect(toList());
+
+// ✅ Projection — только нужные поля
+List<String> names = userRepo.findAllUserNames();
+
+@Query("SELECT u.name FROM User u")
+List<String> findAllUserNames();
+```
+
+**3. `@OneToMany` без `FetchType.LAZY`**
+
+```java
+// ❌ По умолчанию @OneToMany — LAZY, но если разработчик поставил EAGER:
+@OneToMany(fetch = FetchType.EAGER)  // загружает orders ВСЕГДА
+private List<Order> orders;
+
+// ✅ Оставить LAZY, загружать явно только когда нужно
+@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+private List<Order> orders;
+```
+
+**4. Cartesian Product при множественных `JOIN FETCH`**
+
+```java
+// ❌ Два fetch join с коллекциями = декартово произведение
+@Query("SELECT u FROM User u " +
+       "LEFT JOIN FETCH u.orders " +
+       "LEFT JOIN FETCH u.roles")  // MultipleBagFetchException или duplicates
+List<User> findAll();
+
+// ✅ Разделить на несколько запросов или использовать @EntityGraph
+@EntityGraph(attributePaths = {"orders", "roles"})
+List<User> findAll();  // Hibernate сам оптимизирует
+```
+
+**5. `flush()` внутри цикла**
+
+```java
+// ❌ flush на каждой итерации = N отдельных INSERT/UPDATE
+for (Product p : products) {
+    em.persist(p);
+    em.flush();  // сброс на каждый элемент
+}
+
+// ✅ batch + flush каждые N
+for (int i = 0; i < products.size(); i++) {
+    em.persist(products.get(i));
+    if (i % 50 == 0) { em.flush(); em.clear(); }
+}
+```
+
+**6. Игнорирование `@Transactional(readOnly = true)`**
+
+```java
+// ❌ Транзакция записи для read-only операции — dirty checking, snapshot overhead
+@Transactional
+public List<UserDto> getUsers() { ... }
+
+// ✅ readOnly = true — Hibernate отключает dirty checking, flush
+@Transactional(readOnly = true)
+public List<UserDto> getUsers() { ... }
+```
+
+**7. `hibernate.jdbc.batch_size` не настроен**
+
+```yaml
+# application.yml — без этого batch INSERT не работает
+spring:
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true   # группировка INSERT по типу
+        order_updates: true   # группировка UPDATE по типу
+```
+
+**8. Использование `@GeneratedValue(IDENTITY)` с batch**
+
+```java
+// IDENTITY (AUTO_INCREMENT) запрещает батчинг — Hibernate вынужден делать INSERT отдельно
+// чтобы получить сгенерированный ID
+@GeneratedValue(strategy = GenerationType.IDENTITY)  // ❌ для batch
+
+// ✅ SEQUENCE позволяет батчинг — Hibernate берёт блок ID заранее
+@SequenceGenerator(name = "product_seq", allocationSize = 50)
+@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_seq")
+private Long id;
+```
+
+## Q48. Как тестировать `Hibernate`-код?
+
+**1. Unit-тесты с Mockito (сервисный слой):**
+
+```java
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+    @Mock UserRepository userRepository;
+    @Mock EntityManager em;
+    @InjectMocks UserService userService;
+
+    @Test
+    void shouldReturnUserDto() {
+        User user = TestUserBuilder.aUser().withName("Ivan").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        UserDto dto = userService.getUser(1L);
+        assertThat(dto.getName()).isEqualTo("Ivan");
+    }
+}
+```
+
+**2. DataJpaTest — интеграционные тесты репозиториев (H2 in-memory):**
+
+```java
+@DataJpaTest
+@TestPropertySource(properties = {
+    "spring.jpa.show-sql=true",
+    "spring.jpa.properties.hibernate.format_sql=true"
+})
+class UserRepositoryTest {
+    @Autowired UserRepository userRepository;
+    @Autowired TestEntityManager tem;
+
+    @Test
+    void findByDepartment_shouldReturnCorrectUsers() {
+        Department dept = tem.persist(new Department("Engineering"));
+        User user = tem.persist(new User("Ivan", dept));
+        tem.flush();
+        tem.clear();  // очищаем L1 cache для чистого SELECT
+
+        List<User> result = userRepository.findByDepartment(dept);
+        assertThat(result).hasSize(1).extracting("name").contains("Ivan");
+    }
+}
+```
+
+**3. Testcontainers — реальная БД:**
+
+```java
+@SpringBootTest
+@Testcontainers
+class OrderRepositoryIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
+        .withDatabaseName("testdb");
+
+    @DynamicPropertySource
+    static void overrideProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired OrderRepository orderRepository;
+
+    @Test
+    void complexQueryShouldWork() {
+        // Тест с реальным PostgreSQL — диалект, функции, индексы
+    }
+}
+```
+
+**4. Проверка количества SQL-запросов (Hypersistence Utils / datasource-proxy):**
+
+```java
+// datasource-proxy — счётчик запросов
+@Test
+void shouldLoadUserWithoutNPlusOne() {
+    // Ожидаем ровно 1 запрос (fetch join), не N+1
+    assertSelectCount(1, () -> {
+        List<UserDto> users = userService.getAllUsersWithOrders();
+    });
+}
+```
+
+**5. Проверка Hibernate Statistics:**
+
+```java
+@Test
+void shouldUseSecondLevelCache() {
+    Statistics stats = sessionFactory.getStatistics();
+    stats.setStatisticsEnabled(true);
+
+    userService.getUser(1L);  // первый вызов — cache miss
+    userService.getUser(1L);  // второй — cache hit
+
+    assertThat(stats.getSecondLevelCacheHitCount()).isEqualTo(1);
+    assertThat(stats.getSecondLevelCacheMissCount()).isEqualTo(1);
+}
+
+---
+
+## See also
+
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — репозитории, query methods, спецификации
+- [SQL](sql-interview.md) — SQL-запросы, оптимизация, индексы
+- [Архитектура баз данных](database-architecture-interview.md) — архитектура СУБД, MVCC, WAL
+- [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md) — IoC/DI, AOP, управление транзакциями
+- [JVM](../jvm/jvm-interview.md) — управление памятью, GC, производительность

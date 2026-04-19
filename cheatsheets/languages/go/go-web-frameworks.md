@@ -1,15 +1,20 @@
 ---
 title: "Go: веб-фреймворки"
 description: "Полное руководство по веб-фреймворкам в Go: Gin, Echo, Fiber, Chi, Gorilla Mux"
-tags: ["go", "golang", "web", "frameworks", "gin", "echo", "fiber"]
+tags:
+  - go
+  - golang
+  - web
+  - frameworks
+  - gin
+  - echo
+  - fiber
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-stdlib-http.md"]
 updated: "2026-02-06"
 ---
 
 # Go: веб-фреймворки
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

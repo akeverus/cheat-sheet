@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: OpenAPI - API Documentation и Swagger"
 description: "Полное руководство по OpenAPI в Micronaut: API documentation, Swagger UI, code generation и best practices"
-tags: ["micronaut", "openapi", "swagger", "api-documentation", "rest", "java", "kotlin"]
+tags:
+  - micronaut
+  - openapi
+  - swagger
+  - api-documentation
+  - rest
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-testing.md"]

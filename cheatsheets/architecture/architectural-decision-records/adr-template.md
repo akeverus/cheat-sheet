@@ -1,7 +1,10 @@
 ---
 title: "Записи архитектурных решений (ADR) — Шаблон"
 description: "Шаблон для документирования архитектурных решений."
-tags: ["architecture", "architectural-decision-records", "adr-template"]
+tags:
+  - architecture
+  - architectural-decision-records
+  - adr-template
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Записи архитектурных решений (`ADR`) — Шаблон
 
 Шаблон для документирования архитектурных решений.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

@@ -1,15 +1,16 @@
 ---
 title: "Kodein"
 description: "Kodein - это dependency injection фреймворк для Kotlin, предоставляющий type-safe и компилируемый DI. Использует Kotlin-специфичные возможности для создания чистого и выразительного API."
-tags: ["libraries", "kotlin", "kotlin-kodein"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-kodein
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Kodein
-
-**Дата последнего обновления:** 2026-02-06
 
 **Kodein** - это **dependency injection** фреймворк для **Kotlin**, предоставляющий **type-safe** и компилируемый `DI`. Использует **Kotlin**-специфичные возможности для создания чистого и выразительного **API**.
 
@@ -979,5 +980,5 @@ val kodein = DI {
 ```
 ## См. также
 - [Обзор библиотек](../) — DI для **Java**/**Kotlin**
-- [Spring](../../frameworks/java-frameworks/spring/spring-core.md) — DI в **Spring**
+- [Spring](../../frameworks/spring/spring-core.md) — DI в **Spring**
 

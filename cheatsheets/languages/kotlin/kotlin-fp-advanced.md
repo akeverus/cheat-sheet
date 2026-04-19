@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Functional Programming: Advanced"
 description: "Кратко: продвинутое функциональное программирование в Kotlin: Monads (Maybe, Either, etc.), Functors, Arrow-Kt библиотека, Functional Data Structures и другие продвинутые концепции."
-tags: ["languages", "kotlin", "kotlin-fp-advanced"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-fp-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Functional Programming: Advanced
 
 Кратко: продвинутое функциональное программирование в **Kotlin**: **Monads** (**Maybe, `Either`, etc.**), **Functors**, **Arrow-Kt** библиотека, **Functional Data Structures** и другие продвинутые концепции.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

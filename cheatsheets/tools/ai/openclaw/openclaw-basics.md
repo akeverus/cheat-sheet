@@ -1,7 +1,12 @@
 ---
 title: "OpenClaw: основы"
 description: "Open-source AI automation framework и coding assistant: установка, CLI, задачи, хуки и интеграции."
-tags: ["tools", "ai", "openclaw", "automation", "cli"]
+tags:
+  - tools
+  - ai
+  - openclaw
+  - automation
+  - cli
 difficulty: "intermediate"
 prerequisites: []
 next: []

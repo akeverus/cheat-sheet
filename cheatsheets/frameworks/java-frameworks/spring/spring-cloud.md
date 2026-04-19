@@ -1,7 +1,10 @@
 ---
 title: "Spring Cloud"
 description: "Кратко: Spring Cloud - набор инструментов для создания облачных приложений. Service Discovery, Config Server, Gateway, Circuit Breaker, Load Balancing, микросервисы."
-tags: ["frameworks", "java-frameworks", "spring-cloud"]
+tags:
+  - frameworks
+  - java-frameworks
+  - spring-cloud
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring Cloud
 
 Кратко: **Spring Cloud** - набор инструментов для создания облачных приложений. **Service Discovery**, **Config Server**, **Gateway**, **Circuit Breaker**, **Load Balancing**, микросервисы.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

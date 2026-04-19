@@ -1,7 +1,12 @@
 ---
 title: "Windsurf: основы"
 description: "AI-first IDE от Codeium: установка, Command, Cascade (чат-агент), web search, интеграция с терминалом и best practices."
-tags: ["tools", "ai", "windsurf", "ide", "codeium"]
+tags:
+  - tools
+  - ai
+  - windsurf
+  - ide
+  - codeium
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -17,8 +22,6 @@ Windsurf — это IDE от Codeium, изначально спроектиро�
 - **глубокой интеграции с терминалом и web search**.
 
 Этот документ фокусируется на практическом использовании Windsurf как основного рабочего инструмента разработчика.
-
-**Дата последнего обновления:** 2026-03-16
 
 ## Полезные ссылки
 

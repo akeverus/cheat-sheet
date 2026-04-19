@@ -1,7 +1,11 @@
 ---
 title: "PostgreSQL"
 description: "Индекс раздела PostgreSQL: база, администрирование, производительность, репликация, безопасность."
-tags: ["meta", "index", "databases", "postgresql"]
+tags:
+  - meta
+  - index
+  - databases
+  - postgresql
 type: "index"
 updated: "2026-02-11"
 ---

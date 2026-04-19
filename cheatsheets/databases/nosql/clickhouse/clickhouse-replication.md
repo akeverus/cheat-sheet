@@ -1,7 +1,14 @@
 ---
 title: "ClickHouse: Репликация и кластеры - Отказоустойчивость и масштабируемость"
 description: "Комплексное руководство по репликации ClickHouse: ReplicatedMergeTree, кластеры, ZooKeeper, отказоустойчивость и распределенные запросы"
-tags: ["clickhouse", "replication", "clusters", "zookeeper", "high-availability", "distributed", "replicatedmergetree"]
+tags:
+  - clickhouse
+  - replication
+  - clusters
+  - zookeeper
+  - high-availability
+  - distributed
+  - replicatedmergetree
 difficulty: "advanced"
 prerequisites: ["databases/clickhouse-tables.md"]
 updated: "2026-02-06"
@@ -11,8 +18,6 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 # **ClickHouse**: Репликация и кластеры - Отказоустойчивость и масштабируемость
 
 Комплексное руководство по репликации **ClickHouse**: **ReplicatedMergeTree**, кластеры, **ZooKeeper**, отказоустойчивость и распределенные запросы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,9 @@
 ---
 title: "Языки программирования"
 description: "Раздел содержит шпаргалки по языкам: Go, Java, Kotlin, Scala — основы, коллекции, конкурентность и смежные темы."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

@@ -1,7 +1,10 @@
 ---
 title: "Основы проектирования систем (System Design)"
 description: "Введение в проектирование масштабируемых систем."
-tags: ["architecture", "system-design", "system-design-basics"]
+tags:
+  - architecture
+  - system-design
+  - system-design-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Основы проектирования систем (`System Design`)
 
 Введение в проектирование масштабируемых систем.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Scheduling - Task Scheduling и Async Execution"
 description: "Полное руководство по планированию задач в Micronaut: @Scheduled, task scheduling, async execution и best practices"
-tags: ["micronaut", "scheduling", "tasks", "async", "cron", "java", "kotlin"]
+tags:
+  - micronaut
+  - scheduling
+  - tasks
+  - async
+  - cron
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-reactive.md", "micronaut-testing.md"]

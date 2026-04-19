@@ -1,7 +1,10 @@
 ---
 title: "Gradle Advanced"
 description: "Gradle - это мощная система автоматизации сборки с открытым исходным кодом, которая использует Groovy или Kotlin DSL для описания build скриптов. Этот документ охватывает продвинутые концепции, паттерны и best practices для enterprise-grade проектов на Gradle."
-tags: ["development", "build-tools", "gradle-advanced"]
+tags:
+  - development
+  - build-tools
+  - gradle-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Gradle Advanced**
 
 **Gradle** - это мощная система автоматизации сборки с открытым исходным кодом, которая использует **Groovy** или **Kotlin DSL** для описания **build** скриптов. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** проектов на **Gradle**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Gradle Documentation](https://docs.gradle.org/current/userguide/userguide.html)
@@ -1277,6 +1278,6 @@ afterReleaseBuild.dependsOn("publish")
 ```
 ## См. также
 - [Maven Advanced](../maven/maven-advanced.md) — альтернативная система сборки
-- [Spring Boot](../../../frameworks/java-frameworks/spring/spring-boot.md) — **Java** фреймворк
+- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Java** фреймворк
 - [Kotlin](../../../languages/kotlin/kotlin-basics.md) — язык программирования
 - [Docker](../../../platform/containers/docker/docker-basics.md) — контейнеризация

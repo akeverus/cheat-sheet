@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Collections: Operations"
 description: "Кратко: полное руководство по операциям над коллекциями в Kotlin: трансформации, фильтрация, агрегация, группировка и другие операции."
-tags: ["languages", "kotlin", "kotlin-collections-operations"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-collections-operations
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Collections: Operations
 
 Кратко: полное руководство по операциям над коллекциями в **Kotlin**: трансформации, фильтрация, агрегация, группировка и другие операции.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

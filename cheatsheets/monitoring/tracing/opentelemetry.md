@@ -1,7 +1,10 @@
 ---
 title: "OpenTelemetry"
 description: "Кратко: OpenTelemetry — единый открытый стандарт телеметрии: трейсы (traces), метрики (metrics), логи (logs). SDK, авто- и ручная инструментация, экспортеры в Jaeger, Prometheus, Zipkin и др., контекст и baggage."
-tags: ["monitoring", "tracing", "opentelemetry"]
+tags:
+  - monitoring
+  - tracing
+  - opentelemetry
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # OpenTelemetry
 
 Кратко: **OpenTelemetry** — единый открытый стандарт телеметрии: трейсы (traces), метрики (metrics), логи (logs). SDK, авто- и ручная инструментация, экспортеры в Jaeger, Prometheus, Zipkin и др., контекст и baggage.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

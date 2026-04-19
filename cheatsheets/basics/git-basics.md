@@ -1,7 +1,9 @@
 ---
 title: "Основы Git"
 description: "Ветки, коммиты, merge, rebase и типовой workflow."
-tags: ["basics", "git-basics"]
+tags:
+  - basics
+  - git-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # Основы Git
 
 **Ветки, коммиты, merge, rebase и типовой workflow.**
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Введение
 

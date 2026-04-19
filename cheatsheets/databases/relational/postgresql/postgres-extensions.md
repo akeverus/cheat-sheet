@@ -1,7 +1,13 @@
 ---
 title: "PostgreSQL: Расширения"
 description: "Полное руководство по расширениям PostgreSQL: установка, популярные расширения (pg_stat_statements, pg_trgm, PostGIS, pg_cron, TimescaleDB), создание собственных расширений"
-tags: ["postgresql", "extensions", "postgis", "timescaledb", "pg_cron", "pg_stat_statements"]
+tags:
+  - postgresql
+  - extensions
+  - postgis
+  - timescaledb
+  - pg_cron
+  - pg_stat_statements
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
 next: ["databases/postgres-fulltext-search.md", "databases/postgres-monitoring.md"]
@@ -1901,7 +1907,5 @@ jobs:
 - [`pg_cron Documentation`](https://www.postgresql.org/docs/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

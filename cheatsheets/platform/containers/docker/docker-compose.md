@@ -1,7 +1,10 @@
 ---
 title: "Docker Compose"
 description: "Docker Compose - это инструмент для определения и запуска multi-container приложений Docker. С помощью Compose можно описать всю архитектуру приложения в YAML файле и запустить все сервисы одной командой. Это идеальный инструмент для разработки, тестирования и локального разверты"
-tags: ["platform", "containers", "docker-compose"]
+tags:
+  - platform
+  - containers
+  - docker-compose
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Docker Compose**
 
 **Docker Compose** - это инструмент для определения и запуска **multi-container** приложений **Docker**. С помощью **Compose** можно описать всю архитектуру приложения в **YAML** файле и запустить все сервисы одной командой. Это идеальный инструмент для разработки, тестирования и локального развертывания.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Docker Compose Documentation](https://docs.docker.com/compose/)

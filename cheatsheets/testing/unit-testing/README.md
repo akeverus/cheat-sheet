@@ -1,7 +1,9 @@
 ---
 title: "Unit Testing"
 description: "Индекс материалов по юнит-тестированию: JUnit, TestNG, Mockito, AssertJ, Hamcrest, pytest, Jest, xUnit."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

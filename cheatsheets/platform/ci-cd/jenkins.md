@@ -1,7 +1,10 @@
 ---
 title: "Jenkins"
 description: "Jenkins - это открытый сервер автоматизации для continuous integration и continuous delivery (CI/CD). Он позволяет автоматизировать процесс сборки, тестирования и развертывания программного обеспечения. Этот документ охватывает enterprise-grade конфигурации, продвинутые pipeline "
-tags: ["platform", "ci-cd", "jenkins"]
+tags:
+  - platform
+  - ci-cd
+  - jenkins
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Jenkins**
 
 **Jenkins** - это открытый сервер автоматизации для **continuous integration** и **continuous delivery** (**CI/CD**). Он позволяет автоматизировать процесс сборки, тестирования и развертывания программного обеспечения. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **Jenkins** в **production** средах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Jenkins Documentation](https://www.jenkins.io/doc/)

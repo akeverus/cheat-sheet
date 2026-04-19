@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Collections: Map"
 description: "Кратко: руководство по работе со словарями в Kotlin: Map, MutableMap, HashMap, TreeMap, LinkedHashMap, операции и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-collections-map"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-collections-map
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Collections: Map
 
 Кратко: руководство по работе со словарями в **Kotlin**: **Map**, **MutableMap**, **HashMap**, **TreeMap**, **LinkedHashMap**, операции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

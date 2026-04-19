@@ -1,7 +1,11 @@
 ---
 title: "Scala Stream"
 description: "Полное руководство по Stream в Scala: ленивые списки, бесконечные последовательности, отложенные вычисления"
-tags: ["scala", "stream", "lazy-evaluation", "functional-programming"]
+tags:
+  - scala
+  - stream
+  - lazy-evaluation
+  - functional-programming
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections-list.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 # **Scala Stream**
 
 Кратко: полное руководство по **Stream** в **Scala**: ленивые списки, бесконечные последовательности, отложенные вычисления.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

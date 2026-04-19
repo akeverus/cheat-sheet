@@ -1,7 +1,16 @@
 ---
 title: "Redis - Полное руководство по in-memory базе данных"
 description: "Комплексное руководство по Redis: установка, типы данных, команды, кластеризация, Lua скриптинг, производительность и enterprise использование"
-tags: ["redis", "in-memory", "cache", "database", "key-value", "performance", "clustering", "lua", "pub-sub"]
+tags:
+  - redis
+  - in-memory
+  - cache
+  - database
+  - key-value
+  - performance
+  - clustering
+  - lua
+  - pub-sub
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md", "java/java-basics.md"]
 next: ["databases/mongodb.md", "databases/clickhouse.md", "infrastructure/docker-basics.md"]

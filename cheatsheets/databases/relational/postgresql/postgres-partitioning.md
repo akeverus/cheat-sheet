@@ -1,7 +1,18 @@
 ---
 title: "PostgreSQL: партиционирование"
 description: "Комплексное руководство по партиционированию таблиц в PostgreSQL: стратегии, типы партиций, управление, производительность, обслуживание и лучшие практики для больших баз данных"
-tags: ["postgresql", "database", "partitioning", "performance", "scalability", "maintenance", "range", "list", "hash", "pruning", "sharding"]
+tags:
+  - postgresql
+  - database
+  - partitioning
+  - performance
+  - scalability
+  - maintenance
+  - range
+  - list
+  - hash
+  - pruning
+  - sharding
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-design.md"]
 next: ["databases/postgres-indexes.md"]
@@ -12,8 +23,6 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 # **PostgreSQL**: партиционирование
 
 Это подробное руководство по партиционированию таблиц в **PostgreSQL** — мощной технике для управления большими объемами данных. Вы узнаете о различных стратегиях партиционирования, их реализации, оптимизации производительности и обслуживании партиционированных таблиц.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -2580,7 +2589,7 @@ ORDER BY hour DESC;
 
 ## Заключение
 
-**Партиционирование в **PostgreSQL** — это мощный инструмент для управления большими объемами данных, обеспечивающий:**
+**Партиционирование в **PostgreSQL** — это инструмент для управления большими объемами данных, обеспечивающий:**
 
 - **Высокую производительность** через **partition pruning** и параллельную обработку
 - **Масштабируемость** для обработки растущих объемов данных

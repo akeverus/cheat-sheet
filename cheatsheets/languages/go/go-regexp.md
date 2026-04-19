@@ -1,15 +1,18 @@
 ---
 title: "Go: регулярные выражения"
 description: "Полное руководство по регулярным выражениям в Go: regexp package, паттерны, поиск, замена, группы"
-tags: ["go", "golang", "regexp", "regex", "pattern-matching"]
+tags:
+  - go
+  - golang
+  - regexp
+  - regex
+  - pattern-matching
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: регулярные выражения
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

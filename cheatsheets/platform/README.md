@@ -1,7 +1,9 @@
 ---
 title: "Платформа"
 description: "CI/CD, облака, контейнеры, IaC, инструменты."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

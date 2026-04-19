@@ -1,7 +1,13 @@
 ---
 title: "Java Memory Model (JMM)"
 description: "Шпаргалка по Java Memory Model: happens-before, volatile, synchronized, final, атомарность, видимость, упорядоченность. Практические примеры гонок и их исправления."
-tags: ["languages", "java", "jmm", "memory-model", "concurrency", "happens-before"]
+tags:
+  - languages
+  - java
+  - jmm
+  - memory-model
+  - concurrency
+  - happens-before
 difficulty: "advanced"
 prerequisites: ["java-concurrency-basics.md"]
 next: ["java-concurrency-advanced.md"]
@@ -79,7 +85,7 @@ class Broken {
 
 ### Транзитивность
 
-Транзитивность — мощный инструмент. Записав флаг в volatile, вы «публикуете» все предшествующие записи:
+Транзитивность — инструмент. Записав флаг в volatile, вы «публикуете» все предшествующие записи:
 
 ```java
 class TransitivityExample {

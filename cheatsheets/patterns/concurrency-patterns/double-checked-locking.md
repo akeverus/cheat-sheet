@@ -1,7 +1,10 @@
 ---
 title: "Двойная проверка блокировки (Double-Checked Locking)"
 description: "Double-Checked Locking — это паттерн оптимизации для lazy initialization в многопоточной среде, который минимизирует использование синхронизации."
-tags: ["patterns", "concurrency-patterns", "double-checked-locking"]
+tags:
+  - patterns
+  - concurrency-patterns
+  - double-checked-locking
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Двойная проверка блокировки (`Double-Checked Locking`)
 
 **Double-Checked Locking** — это паттерн оптимизации для **lazy initialization** в многопоточной среде, который минимизирует использование синхронизации.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

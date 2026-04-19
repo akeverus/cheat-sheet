@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Testing - Unit Tests, Integration Tests и @QuarkusTest"
 description: "Полное руководство по тестированию в Quarkus: unit tests, integration tests, @QuarkusTest, mocking и best practices"
-tags: ["quarkus", "testing", "junit", "mockito", "integration-tests", "java"]
+tags:
+  - quarkus
+  - testing
+  - junit
+  - mockito
+  - integration-tests
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-data.md"]

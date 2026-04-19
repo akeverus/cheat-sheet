@@ -1,7 +1,12 @@
 ---
 title: "JVM: архитектура и сборка мусора"
 description: "Практическое руководство по JVM: области памяти, жизненный цикл объектов, сборщики мусора (Serial, Parallel, G1, ZGC, Shenandoah), настройка и диагностика."
-tags: ["java", "jvm", "gc", "memory", "performance"]
+tags:
+  - java
+  - jvm
+  - gc
+  - memory
+  - performance
 difficulty: "intermediate"
 prerequisites: ["java-basics.md"]
 next: ["java-memory-model.md", "java-concurrency-basics.md"]
@@ -11,8 +16,6 @@ updated: "2026-04-11"
 # JVM: архитектура и сборка мусора
 
 Практическое руководство по устройству JVM, управлению памятью и выбору/настройке сборщика мусора.
-
-**Дата последнего обновления:** 2026-04-11
 
 ## Полезные ссылки
 

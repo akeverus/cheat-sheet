@@ -1,7 +1,9 @@
 ---
 title: "Infrastructure Monitoring (обзор)"
 description: "Кратко: Infrastructure Monitoring — мониторинг инфраструктуры: серверы (CPU, память, диск), сеть, контейнеры, виртуализация. Инструменты: Prometheus + Node Exporter, cAdvisor, Grafana, Datadog, Zabbix и др. Цели: доступность, использование ресурсов, планирование мощностей, алерти"
-tags: ["monitoring", "infrastructure-monitoring"]
+tags:
+  - monitoring
+  - infrastructure-monitoring
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # Infrastructure Monitoring (обзор)
 
 Кратко: **Infrastructure Monitoring** — мониторинг инфраструктуры: серверы (CPU, память, диск), сеть, контейнеры, виртуализация. Инструменты: **Prometheus** + **Node Exporter**, **cAdvisor**, **Grafana**, **Datadog**, **Zabbix** и др. Цели: доступность, использование ресурсов, планирование мощностей, алертинг.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

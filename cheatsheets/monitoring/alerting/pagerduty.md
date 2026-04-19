@@ -1,7 +1,10 @@
 ---
 title: "PagerDuty"
 description: "PagerDuty — платформа управления инцидентами и онколл-дежурствами. Принимает алерты из систем мониторинга (Prometheus, Alertmanager, Datadog, New Relic и др.), создаёт инциденты, управляет эскалациями и уведомлениями по расписанию дежурств (schedules) и политикам эскалации (escal"
-tags: ["monitoring", "alerting", "pagerduty"]
+tags:
+  - monitoring
+  - alerting
+  - pagerduty
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # PagerDuty
 
 PagerDuty — платформа управления инцидентами и онколл-дежурствами. Принимает алерты из систем мониторинга (Prometheus, Alertmanager, Datadog, New Relic и др.), создаёт инциденты, управляет эскалациями и уведомлениями по расписанию дежурств (schedules) и политикам эскалации (escalation policies).
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,13 @@
 ---
 title: "ClickHouse: Основы колоночной аналитической базы данных"
 description: "Комплексное руководство по основам ClickHouse: архитектура, установка, основные концепции и начало работы"
-tags: ["clickhouse", "columnar-database", "analytics", "olap", "database", "big-data"]
+tags:
+  - clickhouse
+  - columnar-database
+  - analytics
+  - olap
+  - database
+  - big-data
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md"]
 updated: "2026-02-06"
@@ -11,8 +17,6 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 # **ClickHouse**: Основы колоночной аналитической базы данных
 
 Комплексное руководство по основам **ClickHouse**: архитектура, установка, основные концепции и начало работы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

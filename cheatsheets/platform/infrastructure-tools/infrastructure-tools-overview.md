@@ -1,7 +1,10 @@
 ---
 title: "Обзор инфраструктурных инструментов"
 description: "Полное руководство по инструментам для управления инфраструктурой: Terraform, Ansible, Packer, Vagrant, Consul, Nginx — назначение, сценарии использования, базовые примеры, интеграция и Best Practices."
-tags: ["platform", "infrastructure-tools", "infrastructure-tools-overview"]
+tags:
+  - platform
+  - infrastructure-tools
+  - infrastructure-tools-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Обзор инфраструктурных инструментов
 
 Полное руководство по инструментам для управления инфраструктурой: **Terraform**, **Ansible**, **Packer**, **Vagrant**, **Consul**, **Nginx** — назначение, сценарии использования, базовые примеры, интеграция и **Best Practices**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

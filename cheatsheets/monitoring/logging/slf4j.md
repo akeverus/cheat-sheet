@@ -1,7 +1,10 @@
 ---
 title: "SLF4J для Java"
 description: "Руководство по Simple Logging Facade for Java (SLF4J): фасад для логирования, bridging, MDC, Markers и интеграция с Logback, Log4j, java.util.logging."
-tags: ["monitoring", "logging", "slf4j"]
+tags:
+  - monitoring
+  - logging
+  - slf4j
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # SLF4J для Java
 
 Руководство по Simple Logging Facade for Java (SLF4J): фасад для логирования, bridging, MDC, Markers и интеграция с Logback, Log4j, java.util.logging.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

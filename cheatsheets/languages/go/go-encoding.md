@@ -1,15 +1,19 @@
 ---
 title: "Go: кодирование"
 description: "Полное руководство по кодированию в Go: Base64, Hex, Binary, encoding пакеты"
-tags: ["go", "golang", "encoding", "base64", "hex", "binary"]
+tags:
+  - go
+  - golang
+  - encoding
+  - base64
+  - hex
+  - binary
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: кодирование
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

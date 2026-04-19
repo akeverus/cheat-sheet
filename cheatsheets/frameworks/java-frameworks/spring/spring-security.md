@@ -1,7 +1,14 @@
 ---
 title: "Spring Security"
 description: "Комплексное руководство по Spring Security: аутентификация, авторизация, OAuth 2.0, JWT, безопасность REST API, защита от уязвимостей"
-tags: ["spring-security", "security", "authentication", "authorization", "oauth2", "jwt", "rest-api"]
+tags:
+  - spring-security
+  - security
+  - authentication
+  - authorization
+  - oauth2
+  - jwt
+  - rest-api
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "java/java-basics.md"]
 next: ["interview/spring-security.md"]

@@ -1,7 +1,12 @@
 ---
 title: "Scala Java Interoperability"
 description: "Полное руководство по взаимодействию Scala и Java: использование Java библиотек, вызов Scala из Java, миграция"
-tags: ["scala", "java", "interop", "interoperability", "migration"]
+tags:
+  - scala
+  - java
+  - interop
+  - interoperability
+  - migration
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
 # **Scala Java Interoperability**
 
 Кратко: полное руководство по взаимодействию **Scala** и **Java**: использование **Java** библиотек, вызов **Scala** из **Java**, миграция.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

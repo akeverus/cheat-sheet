@@ -1,7 +1,9 @@
 ---
 title: "Алгоритмические задачи"
 description: "Практические задачи: pathfinding, cache, backoff, валидации, оптимизация и комбинаторика."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

@@ -1,7 +1,10 @@
 ---
 title: "Kubernetes Advanced"
 description: "Kubernetes (K8s) - это платформа для оркестрации контейнеров с открытым исходным кодом, которая автоматизирует развертывание, масштабирование и управление контейнеризованными приложениями. Этот документ охватывает продвинутые концепции и best practices для работы с Kubernetes."
-tags: ["platform", "containers", "kubernetes-advanced"]
+tags:
+  - platform
+  - containers
+  - kubernetes-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Kubernetes Advanced**
 
 **Kubernetes** (**K8s**) - это платформа для оркестрации контейнеров с открытым исходным кодом, которая автоматизирует развертывание, масштабирование и управление контейнеризованными приложениями. Этот документ охватывает продвинутые концепции и **best practices** для работы с **Kubernetes**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Kubernetes Documentation](https://kubernetes.io/docs/)

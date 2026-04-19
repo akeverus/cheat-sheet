@@ -1,7 +1,9 @@
 ---
 title: "Реляционные базы данных"
 description: "Индекс материалов по реляционным СУБД: PostgreSQL, MySQL, Oracle, SQL Server."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

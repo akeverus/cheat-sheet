@@ -1,7 +1,12 @@
 ---
 title: "Quarkus: WebSocket - Real-time Communication"
 description: "Полное руководство по WebSocket в Quarkus: server endpoints, client endpoints, message handling, broadcasting и best practices"
-tags: ["quarkus", "websocket", "real-time", "communication", "java"]
+tags:
+  - quarkus
+  - websocket
+  - real-time
+  - communication
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-reactive.md"]

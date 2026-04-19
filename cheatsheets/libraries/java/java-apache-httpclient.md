@@ -1,7 +1,10 @@
 ---
 title: "Apache HttpClient: Мощный HTTP клиент для Java"
 description: "Комплексное руководство по использованию Apache HttpClient — мощной и гибкой HTTP клиентской библиотеки для Java, которая предоставляет полную поддержку HTTP протокола и является частью Apache HttpComponents проекта."
-tags: ["libraries", "java", "java-apache-httpclient"]
+tags:
+  - libraries
+  - java
+  - java-apache-httpclient
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Apache HttpClient: Мощный **HTTP** клиент для **Java**
 
 **Комплексное руководство по использованию `Apache HttpClient` — мощной и гибкой `HTTP` клиентской библиотеки для `Java`, которая предоставляет полную поддержку `HTTP` протокола и является частью `Apache HttpComponents` проекта.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Maven Advanced"
 description: "Apache Maven - это мощная система управления проектами и сборки с открытым исходным кодом, которая использует декларативный подход для описания проекта и его зависимостей. Этот документ охватывает продвинутые концепции, enterprise паттерны, производительность и best practices для"
-tags: ["development", "build-tools", "maven-advanced"]
+tags:
+  - development
+  - build-tools
+  - maven-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Maven Advanced**
 
 **Apache Maven** - это мощная система управления проектами и сборки с открытым исходным кодом, которая использует декларативный подход для описания проекта и его зависимостей. Этот документ охватывает продвинутые концепции, **enterprise** паттерны, производительность и **best practices** для крупных проектов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Maven Documentation](https://maven.apache.org/guides/)
@@ -1467,6 +1468,6 @@ enterprise-project/
 ```
 ## См. также
 - [Gradle Advanced](../gradle/gradle-advanced.md) — альтернативная система сборки
-- [Spring Boot](../../../frameworks/java-frameworks/spring/spring-boot.md) — **Java** фреймворк
+- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Java** фреймворк
 - [Jenkins](../../../platform/ci-cd/jenkins.md) — CI/CD сервер
 - [GitHub Actions](../../../platform/ci-cd/github-actions.md) — CI/CD платформа

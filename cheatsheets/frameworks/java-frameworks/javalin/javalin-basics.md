@@ -1,7 +1,13 @@
 ---
 title: "Javalin: Основы"
 description: "Легковесный Java и Kotlin веб-фреймворк для создания RESTful API и веб-приложений"
-tags: ["javalin", "java", "kotlin", "rest", "microservices", "lightweight"]
+tags:
+  - javalin
+  - java
+  - kotlin
+  - rest
+  - microservices
+  - lightweight
 difficulty: "beginner"
 prerequisites: ["java/java-basics.md"]
 next: ["javalin-routing.md", "javalin-websocket.md"]
@@ -21,8 +27,6 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 
 
 ---
-
-**Дата последнего обновления:** 2026-01-16
 
 ## Содержание
 

@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Cache - Кеширование данных"
 description: "Полное руководство по кешированию в Quarkus: Caffeine, Redis, cache annotations, cache configuration и best practices"
-tags: ["quarkus", "cache", "caffeine", "redis", "performance", "java"]
+tags:
+  - quarkus
+  - cache
+  - caffeine
+  - redis
+  - performance
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-redis.md"]

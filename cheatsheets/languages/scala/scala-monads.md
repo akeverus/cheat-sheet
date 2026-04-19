@@ -1,7 +1,10 @@
 ---
 title: "Monads в Scala"
 description: "Краткое руководство по Monads в Scala - фундаментальная абстракция функционального программирования."
-tags: ["languages", "scala", "scala-monads"]
+tags:
+  - languages
+  - scala
+  - scala-monads
 difficulty: "intermediate"
 prerequisites: []
 next: []

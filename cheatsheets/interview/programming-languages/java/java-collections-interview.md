@@ -1,17 +1,24 @@
 ---
 title: "Вопросы на собеседовании: Java Collections"
-description: "Комплексное руководство по вопросам собеседования на тему Java Collections Framework для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java + Spring, best practices и troubleshooting."
-tags: ["interview", "programming-languages", "java-collections-interview"]
+description: "Комплексное руководство по вопросам собеседования на тему Java Collections Framework для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java, mermaid-диаграммы, best practices и troubleshooting."
+tags:
+  - interview
+  - programming-languages
+  - java-collections-interview
+aliases:
+  - "Java Collections"
+  - "Java Collections Framework"
+  - "Java Collections собеседование"
+  - "коллекции Java"
+  - "HashMap interview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Java Collections`
 
-Комплексное руководство по вопросам собеседования на тему `Java Collections Framework` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.
+Комплексное руководство по вопросам собеседования на тему `Java Collections Framework` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java`, `mermaid`-диаграммы, best practices и troubleshooting.
 
-Дата последнего обновления: 2026-02-04
+Дата последнего обновления: 2026-04-13
 
 ## Полезные ссылки
 
@@ -19,891 +26,1451 @@ updated: "2026-02-11"
 
 - [Java Collections Framework Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/package-summary.html)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
-
-### См. также
-
-- [`../../../languages/java/java-collections-list.md`](../../../languages/java/java-collections-list.md) — руководство по List
-- [`../../../languages/java/java-collections-map.md`](../../../languages/java/java-collections-map.md) — руководство по Map
-- [`../../../languages/java/java-collections-set.md`](../../../languages/java/java-collections-set.md) — руководство по Set
-- [`../../../languages/java/java-collections-queue.md`](../../../languages/java/java-collections-queue.md) — руководство по Queue
-- [`java-stream-interview.md`](java-stream-interview.md) — вопросы по Stream API
+- [Java Collections Interview Questions — Baeldung](https://www.baeldung.com/java-collections-interview-questions) — вопросы с ответами по Collections Framework
+- [The Java HashMap Under the Hood — Baeldung](https://www.baeldung.com/java-hashmap-advanced) — внутреннее устройство HashMap
+- [Java HashMap Load Factor — Baeldung](https://www.baeldung.com/java-hashmap-load-factor) — load factor и rehashing
+- [Guide to the Java Queue Interface — Baeldung](https://www.baeldung.com/java-queue) — очереди: PriorityQueue, ArrayDeque, BlockingQueue
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Иерархия и основные интерфейсы**
-- [Q1. (!) Опишите иерархию типов Collection](#q1-важно-опишите-иерархию-типов-collection)
-- [Q2. (!) Реализация Collection и оценка их быстродействия](#q2-важно-реализация-collection-и-оценка-их-быстродействия)
-- [Q3. (!) Что такое Map?](#q3-важно-что-такое-map)
+- [Q1. (!) Опишите иерархию типов Collection](#q1--опишите-иерархию-типов-collection)
+- [Q2. (!) Реализации Collection и оценка их быстродействия](#q2--реализации-collection-и-оценка-их-быстродействия)
+- [Q3. (!) Что такое Map и чем отличается от Collection?](#q3--что-такое-map-и-чем-отличается-от-collection)
 - [Q4. Как выбрать между List, Set и Map?](#q4-как-выбрать-между-list-set-и-map)
+- [Q5. Что такое интерфейс Iterable и как он связан с Collection?](#q5-что-такое-интерфейс-iterable-и-как-он-связан-с-collection)
 
 **List (ArrayList, LinkedList)**
-- [Q5. (!) В чем разница между LinkedList и ArrayList?](#q5-важно-в-чем-разница-между-linkedlist-и-arraylist)
-- [Q6. Что такое CopyOnWriteArrayList?](#q6-что-такое-copyonwritearraylist)
-- [Q7. В чём разница между List.of() и Arrays.asList()?](#q7-в-чём-разница-между-listof-и-arraysaslist)
-- [Q8. Какие операции эффективны в ArrayList и LinkedList?](#q8-какие-операции-эффективны-в-arraylist-и-linkedlist)
+- [Q6. (!) В чем разница между LinkedList и ArrayList?](#q6--в-чем-разница-между-linkedlist-и-arraylist)
+- [Q7. Как работает автоматическое расширение ArrayList?](#q7-как-работает-автоматическое-расширение-arraylist)
+- [Q8. Что такое CopyOnWriteArrayList?](#q8-что-такое-copyonwritearraylist)
+- [Q9. В чём разница между List.of() и Arrays.asList()?](#q9-в-чём-разница-между-listof-и-arraysaslist)
 
-**Set (HashSet, TreeSet)**
-- [Q9. (!) В чем разница между HashSet и TreeSet?](#q9-важно-в-чем-разница-между-hashset-и-treeset)
+**Set (HashSet, TreeSet, LinkedHashSet)**
+- [Q10. (!) В чем разница между HashSet и TreeSet?](#q10--в-чем-разница-между-hashset-и-treeset)
+- [Q11. Что такое LinkedHashSet и когда его использовать?](#q11-что-такое-linkedhashset-и-когда-его-использовать)
 
 **Map (HashMap, TreeMap, LinkedHashMap)**
-- [Q10. (!) Что такое HashMap?](#q10-важно-что-такое-hashmap)
-- [Q11. (!) Какова цель параметров initialCapacity и loadFactor?](#q11-важно-какова-цель-параметров-initialcapacity-и-loadfactor)
-- [Q12. Что такое ConcurrentHashMap?](#q12-что-такое-concurrenthashmap)
-- [Q13. Что такое TreeMap и какая сложность операций?](#q13-что-такое-treemap-и-какая-сложность-операций)
-- [Q14. В чём разница между HashMap и LinkedHashMap?](#q14-в-чём-разница-между-hashmap-и-linkedhashmap)
-- [Q15. Что такое WeakHashMap?](#q15-что-такое-weakhashmap)
-- [Q16. Что такое IdentityHashMap?](#q16-что-такое-identityhashmap)
-- [Q17. Как работает HashMap при коллизиях?](#q17-как-работает-hashmap-при-коллизиях)
+- [Q12. (!) Что такое HashMap и как он устроен внутри?](#q12--что-такое-hashmap-и-как-он-устроен-внутри)
+- [Q13. (!) Что происходит при коллизиях в HashMap и как работает treeification?](#q13--что-происходит-при-коллизиях-в-hashmap-и-как-работает-treeification)
+- [Q14. (!) Какова цель параметров initialCapacity и loadFactor?](#q14--какова-цель-параметров-initialcapacity-и-loadfactor)
+- [Q15. (!) Что такое ConcurrentHashMap и чем отличается от HashMap?](#q15--что-такое-concurrenthashmap-и-чем-отличается-от-hashmap)
+- [Q16. (!) Контракт equals и hashCode для ключей Map](#q16--контракт-equals-и-hashcode-для-ключей-map)
+- [Q17. Что такое TreeMap и какая сложность операций?](#q17-что-такое-treemap-и-какая-сложность-операций)
+- [Q18. В чём разница между HashMap и LinkedHashMap?](#q18-в-чём-разница-между-hashmap-и-linkedhashmap)
+- [Q19. Как реализовать LRU-кэш на LinkedHashMap?](#q19-как-реализовать-lru-кэш-на-linkedhashmap)
+- [Q20. Что такое WeakHashMap?](#q20-что-такое-weakhashmap)
+- [Q21. Что такое IdentityHashMap?](#q21-что-такое-identityhashmap)
+- [Q22. В чём разница между Collections.synchronizedMap и ConcurrentHashMap?](#q22-в-чём-разница-между-collectionssynchronizedmap-и-concurrenthashmap)
+- [Q23. Какие методы Java 8+ добавлены в Map?](#q23-какие-методы-java-8-добавлены-в-map)
 
 **Queue и Deque**
-- [Q18. Что такое Queue и какие реализации?](#q18-что-такое-queue-и-какие-реализации)
-- [Q19. Что такое Deque и когда использовать?](#q19-что-такое-deque-и-когда-использовать)
-- [Q20. Что такое BlockingQueue?](#q20-что-такое-blockingqueue)
+- [Q24. Что такое Queue и какие реализации?](#q24-что-такое-queue-и-какие-реализации)
+- [Q25. Что такое Deque и когда использовать?](#q25-что-такое-deque-и-когда-использовать)
+- [Q26. (!) Что такое BlockingQueue и паттерн producer-consumer?](#q26--что-такое-blockingqueue-и-паттерн-producer-consumer)
+- [Q27. В чём разница между ArrayDeque и LinkedList?](#q27-в-чём-разница-между-arraydeque-и-linkedlist)
 
 **Enum коллекции**
-- [Q21. Какие коллекции есть у Enum?](#q21-какие-коллекции-есть-у-enum)
-- [Q22. Что такое EnumSet и EnumMap?](#q22-что-такое-enumset-и-enummap)
+- [Q28. Что такое EnumSet и EnumMap?](#q28-что-такое-enumset-и-enummap)
 
 **Итераторы и модификация**
-- [Q23. (!) В чем разница между fail-fast и fail-safe итераторами?](#q23-важно-в-чем-разница-между-fail-fast-и-fail-safe-итераторами)
-- [Q24. Как итерировать и удалять элементы?](#q24-как-итерировать-и-удалять-элементы)
-- [Q25. Что такое Spliterator?](#q25-что-такое-spliterator)
-- [Q26. Что такое ConcurrentModificationException?](#q26-что-такое-concurrentmodificationexception)
+- [Q29. (!) В чем разница между fail-fast и fail-safe итераторами?](#q29--в-чем-разница-между-fail-fast-и-fail-safe-итераторами)
+- [Q30. Как итерировать и удалять элементы?](#q30-как-итерировать-и-удалять-элементы)
+- [Q31. Что такое Spliterator?](#q31-что-такое-spliterator)
+- [Q32. Что такое ConcurrentModificationException?](#q32-что-такое-concurrentmodificationexception)
 
-**Immutable и сортировка**
-- [Q27. (!) Как использовать Comparable и Comparator?](#q27-важно-как-использовать-comparable-и-comparator)
-- [Q28. Что такое Collections.unmodifiableList?](#q28-что-такое-collectionsunmodifiablelist)
-- [Q29. Что такое Immutable коллекции?](#q29-что-такое-immutable-коллекции)
-- [Q30. Какие методы сортировки коллекций доступны?](#q30-какие-методы-сортировки-коллекций-доступны)
+**Сортировка и сравнение**
+- [Q33. (!) Как использовать Comparable и Comparator?](#q33--как-использовать-comparable-и-comparator)
+- [Q34. Какие алгоритмы сортировки используются в Java?](#q34-какие-алгоритмы-сортировки-используются-в-java)
+
+**Immutable коллекции и утилиты**
+- [Q35. Что такое Collections.unmodifiableList?](#q35-что-такое-collectionsunmodifiablelist)
+- [Q36. (!) Что такое Immutable коллекции в Java 9+?](#q36--что-такое-immutable-коллекции-в-java-9)
+- [Q37. Какие утилитные методы предоставляет класс Collections?](#q37-какие-утилитные-методы-предоставляет-класс-collections)
+
+**Практические вопросы**
+- [Q38. Почему нельзя использовать мутабельные объекты как ключи HashMap?](#q38-почему-нельзя-использовать-мутабельные-объекты-как-ключи-hashmap)
+- [Q39. Как выбрать правильную коллекцию для конкретной задачи?](#q39-как-выбрать-правильную-коллекцию-для-конкретной-задачи)
+- [Q40. Какие коллекции из сторонних библиотек стоит знать?](#q40-какие-коллекции-из-сторонних-библиотек-стоит-знать)
+- [Q41. (!) Что такое `SequencedCollection`, `SequencedSet`, `SequencedMap` (Java 21)?](#q41--что-такое-sequencedcollection-sequencedset-sequencedmap-java-21)
+
+**Продвинутые коллекции**
+- [Q42. (!) Как устроен `ConcurrentHashMap` изнутри и почему он быстрее `Hashtable`?](#q42--как-устроен-concurrenthashmap-изнутри-и-почему-он-быстрее-hashtable)
+- [Q43. (!) Как реализовать LRU-кэш на `LinkedHashMap`?](#q43--как-реализовать-lru-кэш-на-linkedhashmap)
+- [Q44. Что такое `NavigableMap` и как использовать методы навигации `TreeMap`?](#q44-что-такое-navigablemap-и-как-использовать-методы-навигации-treemap)
+- [Q45. Что такое `PriorityQueue` и как реализовать кастомный порядок?](#q45-что-такое-priorityqueue-и-как-реализовать-кастомный-порядок)
+- [Q46. Что такое `WeakHashMap` и когда его использовать?](#q46-что-такое-weakhashmap-и-когда-его-использовать)
+
+---
 
 ## Q1. (!) Опишите иерархию типов `Collection`
 
-Иерархия типов `Collection` в `Java` центрируется вокруг интерфейса `Collection` и его подинтерфейсов. `Collection` — самый верхний интерфейс, описывающий основные операции: добавление, удаление, проверка наличия элемента и перебор элементов.
+Иерархия типов `Collection` в `Java` центрируется вокруг интерфейса `Iterable`, от которого наследуется `Collection` — базовый интерфейс, описывающий основные операции: добавление, удаление, проверка наличия элемента и перебор.
 
-`List` расширяет `Collection` и представляет упорядоченную последовательность с дубликатами, поддерживает индексированный доступ. `Set` также расширяет `Collection`, но хранит только уникальные элементы без гарантии порядка. `Queue` — специализированная коллекция `FIFO` (первым пришел первым ушел), где элементы добавляются в конец и извлекаются из начала. `Deque` расширяет `Queue` и добавляет функциональность двунаправленной очереди.
+```mermaid
+graph TD
+    Iterable["Iterable&lt;T&gt;"]
+    Collection["Collection&lt;T&gt;"]
+    List["List&lt;T&gt;"]
+    Set["Set&lt;T&gt;"]
+    Queue["Queue&lt;T&gt;"]
+    SortedSet["SortedSet&lt;T&gt;"]
+    NavigableSet["NavigableSet&lt;T&gt;"]
+    Deque["Deque&lt;T&gt;"]
+    Map["Map&lt;K,V&gt;"]
+    SortedMap["SortedMap&lt;K,V&gt;"]
+    NavigableMap["NavigableMap&lt;K,V&gt;"]
 
-Важно: интерфейс `Map` не наследуется от `Collection`, хотя является частью `Collections Framework`, так как работает с парами ключ-значение, а не с отдельными элементами.
+    Iterable --> Collection
+    Collection --> List
+    Collection --> Set
+    Collection --> Queue
+    Set --> SortedSet
+    SortedSet --> NavigableSet
+    Queue --> Deque
+    Map --> SortedMap
+    SortedMap --> NavigableMap
 
-Пример использования `List`:
+    List -.-> AL["ArrayList"]
+    List -.-> LL["LinkedList"]
+    List -.-> COWAL["CopyOnWriteArrayList"]
+    Set -.-> HS["HashSet"]
+    Set -.-> LHS["LinkedHashSet"]
+    NavigableSet -.-> TS["TreeSet"]
+    Queue -.-> PQ["PriorityQueue"]
+    Deque -.-> AD["ArrayDeque"]
+    Deque -.-> LL
+    Map -.-> HM["HashMap"]
+    Map -.-> LHM["LinkedHashMap"]
+    Map -.-> CHM["ConcurrentHashMap"]
+    NavigableMap -.-> TM["TreeMap"]
 
-```java
-List<String> names = new ArrayList<>();
-names.add("Alice");
-names.add("Bob");
-names.add("Alice"); // Дубликаты разрешены
-String first = names.get(0); // Индексированный доступ
+    style Map fill:#f9e79f
+    style Collection fill:#aed6f1
 ```
 
-Пример использования `Set`:
+Основные ветви:
+
+- **`List`** — упорядоченная последовательность с дубликатами и индексированным доступом
+- **`Set`** — хранит только уникальные элементы
+- **`Queue`/`Deque`** — очереди (`FIFO`) и двусторонние очереди
+- **`Map`** — пары ключ-значение; **не** наследуется от `Collection`
+
+| Интерфейс | Порядок элементов | Дубликаты | Индекс/ключ | Основное применение |
+|-----------|-------------------|-----------|-------------|---------------------|
+| `List` | Порядок вставки | Да | По индексу | Упорядоченные данные |
+| `Set` | Нет (кроме `LinkedHashSet`, `TreeSet`) | Нет | Нет | Уникальные элементы |
+| `Queue` | `FIFO` | Да | Нет | Очереди задач |
+| `Deque` | Двунаправленный | Да | Нет | Стеки и двусторонние очереди |
+| `Map` | Нет (кроме `LinkedHashMap`, `TreeMap`) | Нет (ключи) | По ключу | Пары ключ-значение |
+
+## Q2. (!) Реализации `Collection` и оценка их быстродействия
+
+Понимание временной сложности критически важно для выбора коллекции — это один из самых частых вопросов на собеседованиях.
+
+| Реализация | get/contains | add | remove | Итерация | Внутренняя структура |
+|------------|-------------|-----|--------|----------|---------------------|
+| `ArrayList` | `O(1)` / `O(n)` | `O(1)`* | `O(n)` | `O(n)` | Динамический массив |
+| `LinkedList` | `O(n)` | `O(1)` | `O(1)`** | `O(n)` | Двусвязный список |
+| `HashSet` | `O(1)` | `O(1)` | `O(1)` | `O(n)` | `HashMap` внутри |
+| `TreeSet` | `O(log n)` | `O(log n)` | `O(log n)` | `O(n)` | Красно-чёрное дерево |
+| `LinkedHashSet` | `O(1)` | `O(1)` | `O(1)` | `O(n)` | `HashMap` + двусвязный список |
+| `HashMap` | `O(1)` | `O(1)` | `O(1)` | `O(n)` | Массив bucket'ов |
+| `TreeMap` | `O(log n)` | `O(log n)` | `O(log n)` | `O(n)` | Красно-чёрное дерево |
+| `PriorityQueue` | `O(n)` | `O(log n)` | `O(log n)` | `O(n)` | Двоичная куча |
+| `ArrayDeque` | `O(n)` | `O(1)` | `O(1)` | `O(n)` | Циклический массив |
+| `EnumSet` | `O(1)` | `O(1)` | `O(1)` | `O(n)` | Битовая маска |
+
+\* амортизированно, \*\* при удалении из начала/конца
+
+> На собеседовании важно не просто назвать сложность, а объяснить **почему** — связать с внутренней структурой данных.
+
+## Q3. (!) Что такое `Map` и чем отличается от `Collection`?
+
+Интерфейс `Map` представляет отображение ключ-значение. Каждый ключ уникален, значения могут повторяться. `Map` **не наследуется** от `Collection`, потому что работает с парами, а не с отдельными элементами.
 
 ```java
-Set<String> uniqueNames = new HashSet<>();
-uniqueNames.add("Alice");
-uniqueNames.add("Bob");
-uniqueNames.add("Alice"); // Дубликат проигнорирован
-boolean contains = uniqueNames.contains("Alice"); // true
+Map<String, Integer> scores = new HashMap<>();
+scores.put("Alice", 95);
+scores.put("Bob", 87);
+scores.putIfAbsent("Alice", 100); // Не перезапишет, ключ уже есть
+
+// Итерация по Map
+for (Map.Entry<String, Integer> entry : scores.entrySet()) {
+    System.out.println(entry.getKey() + " -> " + entry.getValue());
+}
+
+// Получение представлений (views) — связь с Collection
+Set<String> keys = scores.keySet();           // Set ключей
+Collection<Integer> values = scores.values(); // Collection значений
+Set<Map.Entry<String, Integer>> entries = scores.entrySet(); // Set пар
 ```
 
-Пример использования `Queue`:
-
-```java
-Queue<String> queue = new LinkedList<>();
-queue.offer("First");
-queue.offer("Second");
-String first = queue.poll(); // "First" - FIFO
-```
-
-Пример использования `Map`:
-
-```java
-Map<String, Integer> ageMap = new HashMap<>();
-ageMap.put("Alice", 25);
-Integer age = ageMap.get("Alice"); // 25
-```
-
-Сравнительная таблица интерфейсов:
-
-| Интерфейс | Порядок элементов                  | Дубликаты              | Индексированный доступ | Основное применение                                     |
-|-----------|------------------------------------|------------------------|------------------------|---------------------------------------------------------|
-| `List`  | Да (порядок вставки)               | Да                     | Да                     | Хранение упорядоченных данных с возможностью дубликатов |
-| `Set` | Нет (кроме `LinkedHashSet`, `TreeSet`) | Нет                    | Нет                    | Хранение уникальных элементов                           |
-| `Queue` | Да (`FIFO`)                          | Да                     | Нет                    | Очереди задач, обработка в порядке поступления          |
-| `Deque` | Да (двунаправленный)               | Да                     | Нет                    | Стеки и очереди с доступом с обеих сторон               |
-| `Map` | Нет (кроме `LinkedHashMap`, `TreeMap`) | Нет (уникальные ключи) | Нет (доступ по ключу)  | Хранение пар ключ-значение                              |
-
-## Q2. (!) Реализация `Collection` и оценка их быстродействия
-
-`Java Collections Framework` предоставляет множество реализаций коллекций, каждая оптимизирована для определенных сценариев. Понимание временной сложности операций критически важно для выбора правильной коллекции.
-
-`ArrayList` — динамический массив: доступ по индексу `O(1)`, добавление в конец `O(1)` амортизированно, вставка/удаление в середину `O(n)`. Внутренняя структура — массив, при переполнении создается новый массив большего размера.
-
-`LinkedList` — вставка/удаление в начале/конце `O(1)`, доступ по индексу `O(n)`, поиск `O(n)`. Внутренняя структура — узлы со ссылками на предыдущий и следующий элементы.
-
-`HashSet / HashMap`, где элемент является ключом.
-
-`TreeSet / TreeMap`.
-
-`LinkedHashSet` — `HashSet` с сохранением порядка вставки: операции `O(1)` в среднем, итерация `O(n)` в порядке вставки. Внутренняя структура — комбинация хэш-таблицы и двусвязного списка.
-
-`HashMap` — хэш-таблица для пар ключ-значение: операции `O(1)` в среднем, `O(log n)` в худшем случае (`Java 8+`). Внутренняя структура — массив bucket'ов со списками или деревьями.
-
-`TreeMap` — отсортированное отображение на красно-черном дереве: операции `O(log n)`. `LinkedHashMap` — `HashMap` с сохранением порядка вставки: операции `O(1)` в среднем.
-
-`PriorityQueue` — приоритетная очередь на двоичной куче: операции `O(log n)`. `EnumSet` — специализированный Set для enum: операции `O(1)`, внутренняя структура — битовая маска или массив.
-
-`Stack` устарел, рекомендуется использовать `Deque` (например, `ArrayDeque`) для стека.
-
-Пример сравнения `ArrayList` и `LinkedList`:
-
-```java
-// ArrayList - быстрый доступ по индексу O(1)
-List<Integer> arrayList = new ArrayList<>();
-arrayList.add(1);
-Integer element = arrayList.get(0); // O(1)
-
-// LinkedList - быстрая вставка/удаление в начало/конец O(1)
-LinkedList<Integer> linkedList = new LinkedList<>();
-linkedList.addFirst(1); // O(1)
-linkedList.removeFirst(); // O(1)
-```
-
-Пример сравнения `HashSet` и `TreeSet`:
-
-```java
-// HashSet - быстрые операции O(1) в среднем
-Set<Integer> hashSet = new HashSet<>();
-hashSet.add(1); // O(1)
-
-// TreeSet - отсортированный, но медленнее O(log n)
-Set<Integer> treeSet = new TreeSet<>();
-treeSet.add(1); // O(log n)
-```
-
-Пример `PriorityQueue`:
-
-```java
-PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.reverseOrder());
-pq.offer(10);
-pq.offer(5);
-Integer max = pq.poll(); // 10 - максимальный элемент
-```
-
-Пример `EnumSet`:
-
-```java
-enum Status { PENDING, PROCESSING, COMPLETED }
-EnumSet<Status> statuses = EnumSet.of(Status.PENDING, Status.PROCESSING);
-statuses.add(Status.COMPLETED); // O(1)
-```
-
-## Q3. (!) Что такое `Map`?
-
-Интерфейс Map представляет сопоставление ключ-значение, где каждый ключ уникален, а значение может повторяться. Map не наследуется от `Collection`, так как работает с парами ключ-значение, а не с отдельными элементами.
-
-`HashMap` основан на хэш-таблице: высокая производительность `O(1)` в среднем, ключи не упорядочены. `TreeMap` — отсортированное отображение на красно-черном дереве: операции `O(log n)`, ключи в отсортированном порядке. `LinkedHashMap` сохраняет порядок вставки элементов: операции `O(1)` в среднем, итерация в порядке добавления. `ConcurrentHashMap` — потокобезопасная реализация для многопоточной среды: безопасность потоков и хорошая производительность при одновременных операциях чтения и записи.
-
-Пример использования `HashMap`:
-
-```java
-Map<String, Integer> ageMap = new HashMap<>();
-ageMap.put("Alice", 25);
-ageMap.put("Bob", 30);
-Integer age = ageMap.get("Alice"); // 25
-```
-
-Пример использования `TreeMap`:
-
-```java
-Map<String, Integer> sortedMap = new TreeMap<>();
-sortedMap.put("Charlie", 28);
-sortedMap.put("Alice", 25);
-// Итерация в отсортированном порядке: Alice, Charlie
-```
-
-Пример использования `LinkedHashMap`:
-
-```java
-Map<String, Integer> orderedMap = new LinkedHashMap<>();
-orderedMap.put("Charlie", 28);
-orderedMap.put("Alice", 25);
-// Итерация в порядке вставки: Charlie, Alice
-```
-
-Пример использования `ConcurrentHashMap`:
-
-```java
-Map<String, Integer> concurrentMap = new ConcurrentHashMap<>();
-concurrentMap.put("Alice", 25);
-Integer age = concurrentMap.computeIfAbsent("Bob", k -> 30);
-```
-
-Сравнительная таблица реализаций Map:
-
-| Реализация            | Порядок элементов           | Производительность | Потокобезопасность | Основное применение              |
-|-----------------------|-----------------------------|--------------------|--------------------|----------------------------------|
-| `HashMap`           | Не гарантирован             | `O(1)` в среднем     | Нет                | Общее использование, кэширование |
-| `TreeMap`           | Отсортированный (по ключам) | `O(log n)`           | Нет                | Когда нужна сортировка ключей    |
-| `LinkedHashMap`     | Порядок вставки             | `O(1)` в среднем     | Нет                | `LRU` кэш, сохранение порядка      |
-| `ConcurrentHashMap` | Не гарантирован             | `O(1)` в среднем     | Да                 | Многопоточные приложения         |
-
-Рекомендации: `HashMap` для производительности без порядка, `TreeMap` для сортировки ключей, `LinkedHashMap` для сохранения порядка вставки, `ConcurrentHashMap` для многопоточных приложений.
+| Реализация | Порядок | Производительность | `null` ключи | Потокобезопасность |
+|------------|---------|-------------------|-------------|-------------------|
+| `HashMap` | Не гарантирован | `O(1)` | Да (один) | Нет |
+| `TreeMap` | Отсортированный | `O(log n)` | Нет | Нет |
+| `LinkedHashMap` | Порядок вставки | `O(1)` | Да | Нет |
+| `ConcurrentHashMap` | Не гарантирован | `O(1)` | **Нет** | Да |
 
 ## Q4. Как выбрать между `List`, `Set` и `Map`?
 
-Выбор коллекции зависит от семантики данных и операций. `List` используется когда важен порядок элементов, допускаются дубликаты и нужен индексированный доступ: списки элементов, последовательности, стеки, очереди. Set применяется когда нужна уникальность элементов и быстрая проверка наличия: множества уникальных значений, фильтрация дубликатов, проверка членства. Map используется для пар ключ-значение с быстрым поиском по ключу: словари, кэши, индексы, отображения идентификаторов на объекты.
+Выбор коллекции определяется семантикой данных:
 
-Критерии выбора: если данные — последовательность с возможными дубликатами → `List`; если нужна уникальность и быстрая проверка → Set; если данные — пары ключ-значение с поиском по ключу → Map. Дополнительно учитывается порядок (нужен ли), производительность операций и требования к памяти.
-
-Примеры выбора:
+- **`List`** — важен порядок, допускаются дубликаты, нужен индексированный доступ: история событий, очередь сообщений, результаты запроса
+- **`Set`** — нужна уникальность и быстрая проверка наличия: уникальные ID, фильтрация дубликатов, теги
+- **`Map`** — пары ключ-значение с быстрым поиском по ключу: кэши, словари, индексы
 
 ```java
-// List - порядок важен, дубликаты допустимы
-List<String> history = new ArrayList<>(); // История действий
+// List — последовательность с возможными дубликатами
+List<String> history = new ArrayList<>();
 
-// Set - уникальность важна
-Set<String> uniqueIds = new HashSet<>(); // Уникальные идентификаторы
+// Set — уникальные элементы
+Set<String> uniqueIds = new HashSet<>();
 
-// Map - поиск по ключу
-Map<String, User> userCache = new HashMap<>(); // Кэш пользователей по ID
+// Map — поиск по ключу
+Map<String, User> userCache = new HashMap<>();
 ```
 
-## Q5. (!) В чем разница между `LinkedList` и `ArrayList`?
+Дополнительно учитывайте: нужен ли порядок (`LinkedHashSet` vs `HashSet`), нужна ли сортировка (`TreeSet`/`TreeMap`), нужна ли потокобезопасность (`ConcurrentHashMap`, `CopyOnWriteArrayList`).
 
-`ArrayList` основан на массиве: элементы в последовательном порядке в памяти, отличная локальность данных, быстрый доступ по индексу `O(1)`. `LinkedList` основан на двусвязном списке: узлы со ссылками на предыдущий и следующий элементы, узлы могут быть разбросаны по памяти, доступ по индексу `O(n)`.
+## Q5. Что такое интерфейс `Iterable` и как он связан с `Collection`?
 
-`ArrayList` — доступ по индексу `O(1)`. `LinkedList` — вставка в начало/конец `O(1)`, но доступ по индексу `O(n)` требует перебора элементов.
-
-`ArrayList` требует меньше памяти (массив хранит только данные), но может быть неэффективен при избыточном выделении памяти. `LinkedList` требует больше памяти из-за ссылок (по 8 байт на ссылку в 64-битной системе).
-
-`ArrayList` лучше для быстрого доступа по индексу, `LinkedList` — для частых вставок/удалений в начале/конце списка. Сравнительная таблица производительности:
-
-| Операция                             | `ArrayList`             | `LinkedList` |
-|--------------------------------------|-----------------------|------------|
-| Доступ по индексу (get)              | `O(1)`                  | `O(n)`       |
-| Поиск элемента (`indexOf`)             | `O(n)`                  | `O(n)`       |
-| Вставка в конец (add)                | `O(1)` амортизированное | `O(1)`       |
-| Вставка в начало (`addFirst`)          | `O(n)`                  | `O(1)`       |
-| Вставка в середину (add(index))      | `O(n)`                  | `O(n)`       |
-| Удаление из конца (`removeLast`)       | `O(1)`                  | `O(1)`       |
-| Удаление из начала (`removeFirst`)     | `O(n)`                  | `O(1)`       |
-| Удаление из середины (remove(index)) | `O(n)`                  | `O(n)`       |
-
-Пример использования `ArrayList`:
+`Iterable<T>` — корневой интерфейс иерархии коллекций. Единственный абстрактный метод `iterator()` возвращает `Iterator<T>`. Любой объект, реализующий `Iterable`, может использоваться в enhanced `for-loop`:
 
 ```java
-List<String> arrayList = new ArrayList<>();
-arrayList.add("First");
-arrayList.add("Second");
-String first = arrayList.get(0); // O(1) - быстрый доступ
-arrayList.add(1, "Inserted"); // O(n) - медленно, требуется сдвиг
-```
+public interface Iterable<T> {
+    Iterator<T> iterator();
 
-Пример использования `LinkedList`:
-
-```java
-LinkedList<String> linkedList = new LinkedList<>();
-linkedList.add("First");
-linkedList.addFirst("Zero"); // O(1) - быстро
-linkedList.removeFirst(); // O(1) - быстро
-String element = linkedList.get(1); // O(n) - медленно, требуется перебор
-```
-
-## Q6. Что такое `CopyOnWriteArrayList`?
-
-`CopyOnWriteArrayList` — потокобезопасная реализация `List`, использующая стратегию "`copy-on-write`": при любой модификации (add, set, remove) создаётся полная копия внутреннего массива. Итератор работает со снимком массива на момент создания, поэтому не выбрасывает `ConcurrentModificationException` даже при изменении коллекции во время итерации. Операции чтения очень быстрые (`O(1)`), операции записи дорогие (`O(n)`) из-за копирования всего массива.
-
-Подходит для сценариев с редкими записями и частым чтением: списки слушателей событий, конфигурации, кэши, которые редко изменяются. Не подходит для частых изменений или больших коллекций из-за накладных расходов на копирование. Все операции чтения потокобезопасны без дополнительной синхронизации.
-
-Пример использования:
-
-```java
-List<String> listeners = new CopyOnWriteArrayList<>();
-listeners.add("Listener1");
-// Итерация безопасна даже если другие потоки добавляют слушателей
-for (String listener : listeners) {
-    process(listener);
+    // default-методы (Java 8+)
+    default void forEach(Consumer<? super T> action) { ... }
+    default Spliterator<T> spliterator() { ... }
 }
 ```
 
-## Q7. В чём разница между `List.of()` и `Arrays.asList()`?
+`Collection` расширяет `Iterable` и добавляет методы работы с группами элементов: `size()`, `add()`, `remove()`, `contains()`, `stream()` и др. Подробнее о стримах — в [вопросах по Java Stream API](java-stream-interview.md).
 
-`List.of()` (`Java 9`) создаёт полностью неизменяемый список фиксированного размера: не допускает `null` элементы, компактное представление в памяти, все методы изменения выбрасывают `UnsupportedOperationException`. `Arrays.asList`(array) создаёт список, backed исходным массивом: изменение размера невозможно (add() и remove() выбрасывают исключение), но set() допустим и изменяет исходный массив, может содержать `null`.
+## Q6. (!) В чем разница между `LinkedList` и `ArrayList`?
 
-Оба не поддерживают add() и remove(), но `List.of()` полностью immutable (даже set() не работает), а `Arrays.asList()` позволяет изменять элементы через set(). `List.of()` оптимизирован для небольших списков и может использовать специальные представления для 0-2 элементов. `Arrays.asList()` полезен когда нужно работать со списком, который отражает изменения в массиве.
+| Операция | `ArrayList` | `LinkedList` |
+|----------|-----------|------------|
+| Доступ по индексу (`get`) | `O(1)` | `O(n)` |
+| Вставка в конец (`add`) | `O(1)` амортизированно | `O(1)` |
+| Вставка в начало (`addFirst`) | `O(n)` | `O(1)` |
+| Вставка в середину | `O(n)` | `O(n)` |
+| Удаление из начала | `O(n)` | `O(1)` |
+| Удаление из середины | `O(n)` | `O(n)` |
+| Память на элемент | ~4 байта (ссылка) | ~24 байта (узел + 2 ссылки) |
 
-Пример различий:
+`ArrayList` основан на **динамическом массиве** — элементы лежат последовательно в памяти, что обеспечивает отличную локальность данных и эффективное использование CPU-кэша. `LinkedList` — **двусвязный список**, узлы могут быть разбросаны по памяти.
 
 ```java
-List<String> list1 = List.of("a", "b");
-list1.set(0, "c"); // UnsupportedOperationException
+// ArrayList — быстрый произвольный доступ
+List<String> arrayList = new ArrayList<>();
+arrayList.add("First");
+arrayList.add("Second");
+String first = arrayList.get(0); // O(1)
 
-String[] arr = {"a", "b"};
-List<String> list2 = Arrays.asList(arr);
-list2.set(0, "c"); // Работает, arr[0] тоже изменится
+// LinkedList — быстрые операции в начале/конце
+LinkedList<String> linkedList = new LinkedList<>();
+linkedList.addFirst("Zero"); // O(1)
+linkedList.removeLast();     // O(1)
 ```
 
-## Q8. Какие операции эффективны в `ArrayList` и `LinkedList`?
+> **Практический совет:** `ArrayList` предпочтительнее в 95% случаев. `LinkedList` оправдан только при интенсивных вставках/удалениях в начале списка и использовании как `Deque`.
 
-`ArrayList` эффективен для операций с произвольным доступом: `get(i)` и `set(i)` — `O(1)` благодаря прямому доступу по индексу в массиве, add() в конец — `O(1)` амортизированно; вставка в середину — `O(n)` из-за сдвига всех последующих элементов.
+## Q7. Как работает автоматическое расширение `ArrayList`?
 
-`LinkedList` эффективен для операций в начале и конце: `addFirst()`, `addLast()`, `removeFirst()`, `removeLast()` — `O(1)` благодаря изменению только ссылок. Неэффективен для произвольного доступа — `get(i)` и `set(i)` — `O(n)` из-за поиска позиции.
-
-Для произвольного доступа и частых операций в середине `ArrayList` обычно лучше благодаря локальности данных и кэшированию процессора. `LinkedList` лучше для частых операций в начале/конце или когда размер коллекции неизвестен заранее.
-
-Пример сравнения:
+`ArrayList` хранит элементы в массиве `Object[] elementData`. Начальная ёмкость по умолчанию — **10** (при первом `add`). Когда массив заполнен, происходит расширение:
 
 ```java
-// ArrayList - быстрый доступ по индексу
-ArrayList<String> list = new ArrayList<>();
-String item = list.get(1000); // O(1)
-
-// LinkedList - быстрые операции в начале/конце
-LinkedList<String> list2 = new LinkedList<>();
-list2.addFirst("first"); // O(1)
-list2.removeLast(); // O(1)
+// Упрощённый алгоритм расширения (из исходников OpenJDK)
+int oldCapacity = elementData.length;
+int newCapacity = oldCapacity + (oldCapacity >> 1); // Рост на 50%
+elementData = Arrays.copyOf(elementData, newCapacity);
 ```
 
-## Q9. (!) В чем разница между `HashSet` и `TreeSet`?
+Ёмкость растёт в **1.5 раза** (не в 2, как часто говорят на собеседовании!). `Arrays.copyOf` создаёт новый массив и копирует элементы — это `O(n)` операция. Поэтому `add()` — `O(1)` **амортизированно**.
 
-`HashSet` не гарантирует порядок элементов (зависит от `hashCode()`), операции `O(1)` в среднем, `O(n)` в худшем случае. `TreeSet` — сортированное множество в естественном порядке, операции `O(log n)` благодаря сбалансированному дереву.
-
-Оба не допускают дубликаты: метод `add()` возвращает `false`, если элемент уже присутствует. `TreeSet` предоставляет методы навигации: `first()`, `last()`, `lower()`, `higher()`, `floor()`, `ceiling()`. `HashSet` таких методов не предоставляет.
-
-`HashSet` использовать, когда не нужен порядок и важна быстрая производительность. `TreeSet` — когда нужна сортировка и навигация по элементам. Сравнительная таблица производительности:
-
-| Операция          | `HashSet`         | `TreeSet`                         |
-|-------------------|-----------------|---------------------------------|
-| Добавление (add)  | `O(1)` в среднем  | `O(log n)`                        |
-| Удаление (remove) | `O(1)` в среднем  | `O(log n)`                        |
-| Поиск (contains)  | `O(1)` в среднем  | `O(log n)`                        |
-| Итерация          | `O(n)`            | `O(n)`                            |
-| Порядок элементов | Не гарантирован | Отсортированный                 |
-| Навигация         | Нет             | Да (first, last, lower, higher) |
-
-Пример использования `HashSet`:
+Если количество элементов известно заранее, используйте конструктор с начальной ёмкостью:
 
 ```java
+List<User> users = new ArrayList<>(1000); // Избегаем лишних расширений
+```
+
+Метод `trimToSize()` уменьшает массив до фактического размера коллекции, освобождая лишнюю память.
+
+## Q8. Что такое `CopyOnWriteArrayList`?
+
+`CopyOnWriteArrayList` — потокобезопасная реализация `List` из пакета `java.util.concurrent`. При любой модификации (`add`, `set`, `remove`) создаётся **полная копия** внутреннего массива. Итератор работает со снимком на момент создания и **не выбрасывает** `ConcurrentModificationException`.
+
+```java
+List<EventListener> listeners = new CopyOnWriteArrayList<>();
+listeners.add(new EventListener());
+
+// Итерация безопасна даже при модификации из другого потока
+for (EventListener listener : listeners) {
+    listener.onEvent(event); // Другой поток может вызвать listeners.add(...)
+}
+```
+
+**Когда использовать:** редкие записи и частое чтение — списки слушателей, конфигурации, белые списки. **Не использовать:** при частых модификациях или больших коллекциях (каждая запись — `O(n)` копирование). Подробнее о потокобезопасных коллекциях — в [вопросах по Java Concurrency](java-concurrency-interview.md).
+
+## Q9. В чём разница между `List.of()` и `Arrays.asList()`?
+
+| Характеристика | `List.of()` (Java 9+) | `Arrays.asList()` |
+|---------------|----------------------|-------------------|
+| Изменяемость | Полностью immutable | `set()` работает, `add()`/`remove()` — нет |
+| `null` элементы | Запрещены (`NPE`) | Разрешены |
+| Связь с массивом | Нет (независимая копия) | Да (`backed` массивом) |
+| Память | Оптимизирован (0–2 элемента — спец. классы) | Обёртка над массивом |
+
+```java
+// List.of — полностью неизменяемый
+List<String> immutable = List.of("a", "b", "c");
+immutable.set(0, "x");  // UnsupportedOperationException
+immutable.add("d");     // UnsupportedOperationException
+
+// Arrays.asList — частично изменяемый, backed массивом
+String[] arr = {"a", "b", "c"};
+List<String> backed = Arrays.asList(arr);
+backed.set(0, "x");  // OK, arr[0] тоже станет "x"
+backed.add("d");     // UnsupportedOperationException
+```
+
+## Q10. (!) В чем разница между `HashSet` и `TreeSet`?
+
+| Операция | `HashSet` | `TreeSet` |
+|----------|---------|---------|
+| `add` / `remove` / `contains` | `O(1)` в среднем | `O(log n)` |
+| Порядок итерации | Не гарантирован | Отсортированный |
+| `null` элементы | Один `null` допустим | Нет (`NPE` при `Comparable`) |
+| Навигация | Нет | `first()`, `last()`, `lower()`, `higher()`, `subSet()` |
+| Внутренняя реализация | `HashMap` | `TreeMap` (красно-чёрное дерево) |
+
+```java
+// HashSet — быстрые операции, нет порядка
 Set<String> hashSet = new HashSet<>();
+hashSet.add("Charlie");
 hashSet.add("Alice");
-hashSet.add("Bob");
-hashSet.add("Alice"); // Дубликат проигнорирован
-boolean contains = hashSet.contains("Bob"); // true, O(1)
-```
+// Порядок итерации непредсказуем
 
-Пример использования `TreeSet`:
-
-```java
-Set<String> treeSet = new TreeSet<>();
+// TreeSet — всегда отсортированный
+TreeSet<String> treeSet = new TreeSet<>();
 treeSet.add("Charlie");
 treeSet.add("Alice");
 treeSet.add("Bob");
-// Итерация в отсортированном порядке: Alice, Bob, Charlie
-String first = ((TreeSet<String>) treeSet).first(); // "Alice"
-String lower = ((TreeSet<String>) treeSet).lower("Bob"); // "Alice"
+treeSet.first();              // "Alice"
+treeSet.last();               // "Charlie"
+treeSet.subSet("Alice", "C"); // ["Alice", "Bob"]
 ```
 
-## Q10. (!) Что такое `HashMap`?
+`HashSet` внутри — это `HashMap`, где значение — фиктивный объект `PRESENT`. Поэтому требования к `hashCode()`/`equals()` ключей применимы и к элементам `HashSet` — подробнее в [вопросах по Java Core](java-core-interview.md).
 
-`HashMap` основан на хэш-таблице: массив bucket'ов, каждый может хранить несколько элементов в списке или дереве при коллизиях. Индекс вычисляется через `hashCode()` ключа. Внутренняя структура: массив bucket'ов, узлы (`Node`) в связанных списках, красно-черное дерево (`Java 8+`) при большом количестве коллизий (обычно ≥8 элементов в bucket).
+## Q11. Что такое `LinkedHashSet` и когда его использовать?
 
-Методы `hashCode()` и `equals()` критически важны: `hashCode()` определяет индекс bucket'а (нужно равномерное распределение), `equals()` сравнивает ключи. Контракт: если `equals()` равны, то `hashCode()` должны быть равны; если `hashCode()` равны, это не означает равенство по `equals()`; если `hashCode()` различны, объекты точно не равны по `equals()`.
-
-Временная сложность: размещение и получение элемента `O(1)` в среднем случае. При коллизиях: до `Java` 8 — до `O(n)`, с `Java` 8 — до `O(log n)` при большом количестве коллизий (список преобразуется в дерево).
-
-Процесс работы: вычисление `hashCode()` ключа, определение bucket'а по индексу, обработка коллизий через equals(), хранение в узле (`Node`) в списке или дереве. Производительность зависит от хорошего распределения хеш-кодов для минимизации коллизий.
-
-Пример использования `HashMap`:
+`LinkedHashSet` — гибрид `HashSet` с сохранением порядка вставки. Внутри — `LinkedHashMap`, где каждая запись содержит ссылки на предыдущий и следующий элемент.
 
 ```java
-Map<String, Integer> ageMap = new HashMap<>();
-ageMap.put("Alice", 25);
-ageMap.put("Bob", 30);
-Integer age = ageMap.get("Alice"); // 25, O(1)
+Set<String> linked = new LinkedHashSet<>();
+linked.add("Charlie");
+linked.add("Alice");
+linked.add("Bob");
+// Итерация в порядке вставки: Charlie, Alice, Bob
+
+Set<String> hash = new HashSet<>(linked);
+// Порядок итерации: непредсказуемый
 ```
 
-Пример правильной реализации `hashCode()` и equals():
+**Когда использовать:** когда нужна уникальность **и** сохранение порядка вставки — например, результат обработки с удалением дубликатов, но сохранением исходного порядка.
+
+## Q12. (!) Что такое `HashMap` и как он устроен внутри?
+
+`HashMap` — основная реализация `Map`, базируется на массиве bucket'ов (ячеек). Каждый bucket может содержать связанный список или красно-чёрное дерево узлов.
+
+```mermaid
+graph TD
+    subgraph "HashMap (capacity=8, size=5)"
+        B0["Bucket 0: null"]
+        B1["Bucket 1: Entry(K1,V1)"]
+        B2["Bucket 2: null"]
+        B3["Bucket 3: Entry(K2,V2) → Entry(K5,V5)"]
+        B4["Bucket 4: null"]
+        B5["Bucket 5: Entry(K3,V3)"]
+        B6["Bucket 6: null"]
+        B7["Bucket 7: Entry(K4,V4)"]
+    end
+
+    style B3 fill:#f9e79f
+```
+
+**Алгоритм `put(key, value)`:**
+
+1. Вычислить `hash = key.hashCode()` и применить дополнительное перемешивание: `hash ^ (hash >>> 16)`
+2. Определить индекс bucket'а: `index = hash & (capacity - 1)` (побитовое `AND` вместо деления по модулю)
+3. Если bucket пуст — создать `Node` и поместить
+4. Если не пуст — пройти по цепочке, сравнивая ключи через `equals()`
+5. Если ключ найден — заменить значение; если нет — добавить в конец цепочки
 
 ```java
-public class User {
-    private Long id;
-    private String name;
+Map<String, Integer> map = new HashMap<>(16, 0.75f);
+map.put("Alice", 25);   // hash("Alice") → bucket index → Node
+map.put("Bob", 30);
+Integer age = map.get("Alice"); // hash → bucket → equals → value
+```
+
+> Ёмкость `HashMap` **всегда** степень двойки (16, 32, 64...), что позволяет использовать быструю побитовую операцию `& (capacity - 1)` вместо `% capacity`.
+
+## Q13. (!) Что происходит при коллизиях в `HashMap` и как работает treeification?
+
+При коллизии (два ключа попали в один bucket) элементы хранятся в **цепочке** (`linked list`). В `Java 8+` введён механизм **treeification** — преобразование цепочки в красно-чёрное дерево:
+
+```mermaid
+graph LR
+    subgraph "Linked List (< 8 элементов)"
+        N1["Node1"] --> N2["Node2"] --> N3["Node3"]
+    end
+
+    subgraph "Red-Black Tree (≥ 8 элементов)"
+        T1["TreeNode"] --> T2["TreeNode"]
+        T1 --> T3["TreeNode"]
+        T2 --> T4["TreeNode"]
+        T2 --> T5["TreeNode"]
+    end
+```
+
+**Ключевые константы:**
+
+| Константа | Значение | Описание |
+|-----------|----------|----------|
+| `TREEIFY_THRESHOLD` | **8** | Длина цепочки, при которой список → дерево |
+| `UNTREEIFY_THRESHOLD` | **6** | Длина, при которой дерево → список |
+| `MIN_TREEIFY_CAPACITY` | **64** | Минимальная ёмкость таблицы для treeification |
+
+Если цепочка достигла 8 элементов, но ёмкость таблицы < 64, вместо treeification произойдёт **resize** (удвоение таблицы). Это важный нюанс, который часто спрашивают на собеседованиях.
+
+```java
+// Пример плохого hashCode — все ключи в одном bucket
+class BadKey {
+    private final int id;
+    BadKey(int id) { this.id = id; }
+
+    @Override
+    public int hashCode() { return 42; } // Все в один bucket!
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof BadKey bk && bk.id == this.id;
+    }
+}
+
+// Производительность деградирует: O(1) → O(n), а с Java 8 → O(log n)
+```
+
+> **Важно для собеседования:** до `Java 8` коллизии всегда обрабатывались через `linked list` (`O(n)` в худшем случае). С `Java 8` — через `red-black tree` (`O(log n)` в худшем случае), что было сделано для защиты от HashDoS-атак.
+
+## Q14. (!) Какова цель параметров `initialCapacity` и `loadFactor`?
+
+**`initialCapacity`** — начальный размер массива bucket'ов (по умолчанию **16**). Всегда округляется вверх до степени двойки.
+
+**`loadFactor`** — порог заполнения для автоматического расширения (по умолчанию **0.75**). Формула: `threshold = capacity × loadFactor`.
+
+**Процесс `rehashing`:**
+1. Когда `size > threshold`, ёмкость удваивается
+2. Все элементы пересчитываются и размещаются в новых bucket'ах — `O(n)`
+3. Новый `threshold = newCapacity × loadFactor`
+
+```java
+// Пример: capacity=16, loadFactor=0.75 → threshold=12
+// При добавлении 13-го элемента → resize до 32, threshold=24
+
+// Оптимизация: если знаем количество элементов заранее
+int expectedSize = 1000;
+// capacity = expectedSize / loadFactor + 1, округлённый до степени двойки
+Map<String, User> map = new HashMap<>(expectedSize * 4 / 3 + 1);
+
+// Или с Java 19+:
+Map<String, User> map2 = HashMap.newHashMap(expectedSize);
+```
+
+| `loadFactor` | Компромисс |
+|-------------|-----------|
+| **0.5** | Меньше коллизий, больше памяти, реже `rehashing` |
+| **0.75** (default) | Баланс производительности и памяти |
+| **1.0** | Больше коллизий, меньше памяти, чаще `rehashing` |
+
+## Q15. (!) Что такое `ConcurrentHashMap` и чем отличается от `HashMap`?
+
+`ConcurrentHashMap` — потокобезопасная реализация `Map` из `java.util.concurrent`, оптимизированная для многопоточного доступа. В отличие от `Collections.synchronizedMap`, не блокирует всю таблицу целиком.
+
+**Механизм в Java 8+:**
+- Операции чтения (`get`) — **без блокировок** (через `volatile` переменные)
+- Операции записи — **блокировка на уровне отдельного bucket'а** (через `synchronized` на первый узел bucket'а) или `CAS` (`Compare-And-Swap`) для пустых bucket'ов
+- Множество потоков могут одновременно читать и писать в **разные** bucket'ы
+
+```java
+ConcurrentHashMap<String, AtomicInteger> counters = new ConcurrentHashMap<>();
+
+// Атомарные операции — основное преимущество
+counters.computeIfAbsent("hits", k -> new AtomicInteger(0)).incrementAndGet();
+counters.merge("errors", new AtomicInteger(1), (old, v) -> {
+    old.addAndGet(v.get());
+    return old;
+});
+
+// Агрегирующие операции (parallelismThreshold)
+long sum = counters.reduceValuesToLong(1, AtomicInteger::get, 0, Long::sum);
+```
+
+**Ключевые отличия от `HashMap`:**
+
+| Характеристика | `HashMap` | `ConcurrentHashMap` |
+|---------------|----------|-------------------|
+| `null` ключи/значения | Допускает | **Запрещает** (`NPE`) |
+| Потокобезопасность | Нет | Да |
+| Итератор | `fail-fast` | `weakly consistent` |
+| Атомарные операции | Нет | `compute`, `merge`, `putIfAbsent` |
+| Блокировка | — | На уровне bucket'а |
+
+Подробнее о многопоточности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
+
+## Q16. (!) Контракт `equals` и `hashCode` для ключей `Map`
+
+Правильная реализация `equals()` и `hashCode()` критически важна для корректной работы `HashMap`, `HashSet` и других hash-based коллекций.
+
+**Контракт:**
+1. Если `a.equals(b) == true`, то `a.hashCode() == b.hashCode()` — **обязательно**
+2. Если `a.hashCode() == b.hashCode()`, это **не означает** `a.equals(b)` (коллизия допустима)
+3. Если `a.hashCode() != b.hashCode()`, то `a.equals(b) == false` — **гарантировано**
+
+```java
+public class Employee {
+    private final Long id;
+    private final String name;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(name, user.name);
+        Employee that = (Employee) o;
+        return Objects.equals(id, that.id) && Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name); // Те же поля, что в equals()
+        return Objects.hash(id, name); // Те же поля, что в equals!
     }
 }
 ```
 
-`HashMap` позволяет использовать `null` в качестве ключа и значения:
+**Что произойдёт при нарушении контракта:**
+- Если `equals` совпадает, но `hashCode` разный — один и тот же логический ключ попадёт в разные bucket'ы, `get()` не найдёт значение
+- Если `hashCode` совпадает, но `equals` не реализован — в одном bucket'е будут дубликаты логически одинаковых ключей
 
-```java
-Map<String, Integer> map = new HashMap<>();
-map.put(null, 0);
-map.put("key", null);
-Integer value = map.get(null); // 0
-```
+## Q17. Что такое `TreeMap` и какая сложность операций?
 
-## Q11. (!) Какова цель параметров `initialCapacity` и `loadFactor`?
-
-`initialCapacity` определяет начальный размер хэш-таблицы (количество bucket'ов). По умолчанию 16. `HashMap` всегда использует степень двойки, поэтому фактический размер округляется до ближайшей степени двойки. Большой начальный размер уменьшает коллизии, но может привести к неэффективному использованию памяти.
-
-`loadFactor` определяет порог заполнения для автоматического увеличения размера (rehashing). По умолчанию `0.75` (75%). Формула порога: `threshold = (int)(capacity * loadFactor)`. При достижении порога размер удваивается, все элементы пересчитываются (rehashing, `O(n)`).
-
-Высокий `loadFactor` (ближе к `1.0`) экономит память, но увеличивает коллизии. Низкий `loadFactor` (ближе к `0.5`) улучшает производительность, но требует больше памяти.
-
-Пример: `initialCapacity`=16, `loadFactor`=0.75 → threshold=12. При добавлении 13-го элемента происходит rehashing, размер увеличивается до 32, новый threshold=24.
-
-Рекомендации: если известно количество элементов, установить `initialCapacity` примерно равным ожидаемому размеру. Для производительности использовать меньший `loadFactor` (`0.5`), для экономии памяти — больший (`0.9`).
-
-Пример оптимизации для известного количества элементов:
-
-```java
-int expectedSize = 1000;
-int initialCapacity = (int) (expectedSize / 0.75f) + 1; // 1334 → 2048
-Map<String, User> map = new HashMap<>(initialCapacity, 0.75f);
-```
-
-Пример для производительности:
-
-```java
-Map<String, Object> map = new HashMap<>(16, 0.5f); // Меньше коллизий
-```
-
-Пример для экономии памяти:
-
-```java
-Map<String, Object> map = new HashMap<>(16, 0.9f); // Больше коллизий
-```
-
-## Q12. Что такое `ConcurrentHashMap`?
-
-`ConcurrentHashMap` — потокобезопасная реализация Map, оптимизированная для многопоточных приложений. В отличие от `HashMap`, которая не потокобезопасна и требует внешней синхронизации, `ConcurrentHashMap` использует сегментированную блокировку или операции `CAS` (`Compare-And-Swap`) по отдельным ячейкам, что позволяет выполнять операции чтения и записи параллельно без блокировки всей таблицы.
-
-Ключевые отличия: `ConcurrentHashMap` не допускает `null` ключей и значений (в отличие от `HashMap`), итератор является weakly consistent (может видеть часть изменений, но не гарантирует полную актуальность), операции get() и put() выполняются без полной блокировки таблицы. В `Java` 8+ используется оптимизация с `CAS` операциями для лучшей производительности. Подходит для высоконагруженных многопоточных сценариев, где требуется высокая производительность при одновременном доступе.
-
-Пример использования:
-
-```java
-ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
-map.put("key1", 1);
-map.putIfAbsent("key1", 2); // Не перезапишет, так как ключ существует
-Integer value = map.get("key1"); // 1
-
-// Потокобезопасные операции
-map.compute("key1", (k, v) -> v == null ? 1 : v + 1);
-map.merge("key2", 1, Integer::sum);
-```
-
-## Q13. Что такое `TreeMap` и какая сложность операций?
-
-`TreeMap` — реализация Map, основанная на красно-чёрном дереве (`self-balancing` binary search tree). Ключи автоматически отсортированы по естественному порядку (если ключи реализуют `Comparable`) или по заданному `Comparator`. Все основные операции put(), get(), remove() имеют временную сложность `O(log n)`, что медленнее чем у `HashMap`, но обеспечивает предсказуемый порядок элементов.
-
-`TreeMap` предоставляет методы навигации: `firstKey()` и `lastKey()` для получения минимального и максимального ключа, `subMap()`, `headMap()`, `tailMap()` для получения подмножеств в заданном диапазоне. Используется когда требуется отсортированный порядок ключей, диапазонные запросы или навигация по упорядоченным данным. Не подходит для случаев, где важна максимальная производительность и порядок не важен.
-
-Пример использования:
+`TreeMap` — реализация `NavigableMap` на основе красно-чёрного дерева. Ключи всегда отсортированы — по `Comparable` или заданному `Comparator`.
 
 ```java
 TreeMap<Integer, String> map = new TreeMap<>();
 map.put(3, "Three");
 map.put(1, "One");
+map.put(5, "Five");
 map.put(2, "Two");
-// Ключи автоматически отсортированы: 1, 2, 3
 
-Integer first = map.firstKey(); // 1
-Integer last = map.lastKey(); // 3
-Map<Integer, String> subMap = map.subMap(1, 3); // {1=One, 2=Two}
+// Навигационные методы
+map.firstKey();              // 1
+map.lastKey();               // 5
+map.lowerKey(3);             // 2 (строго меньше)
+map.floorKey(3);             // 3 (меньше или равно)
+map.subMap(2, 5);            // {2=Two, 3=Three} — [2, 5)
+map.headMap(3);              // {1=One, 2=Two}
+map.tailMap(3);              // {3=Three, 5=Five}
+map.descendingMap();         // {5=Five, 3=Three, 2=Two, 1=One}
 ```
 
-## Q14. В чём разница между `HashMap` и `LinkedHashMap`?
+Все основные операции — `O(log n)`. Используйте `TreeMap`, когда нужна сортировка ключей, диапазонные запросы или навигация. Для максимальной производительности без требований к порядку — `HashMap`.
 
-`HashMap` не гарантирует порядок итерации элементов — порядок может изменяться при изменении размера таблицы и зависит от хэш-кодов ключей. `LinkedHashMap` расширяет `HashMap` и добавляет двусвязный список записей поверх хэш-таблицы, что позволяет сохранять порядок вставки элементов или порядок доступа (при `accessOrder`=`true`).
+## Q18. В чём разница между `HashMap` и `LinkedHashMap`?
 
-Внутренняя структура `LinkedHashMap`: каждая запись содержит ссылки на предыдущий и следующий элемент в порядке вставки или доступа. Это добавляет небольшой `overhead` по памяти (две дополнительные ссылки на запись), но сохраняет порядок. Производительность операций `O(1)` в среднем, как у `HashMap`, но с небольшим дополнительным `overhead` на поддержание порядка.
-
-`LinkedHashMap` особенно полезен для реализации `LRU` (`Least Recently Used`) кэша: при `accessOrder`=`true` элементы переупорядочиваются при доступе, а переопределение метода `removeEldestEntry()` позволяет автоматически удалять старые элементы при превышении размера.
-
-Пример `LRU` кэша:
+`LinkedHashMap` расширяет `HashMap` и добавляет **двусвязный список** записей поверх хэш-таблицы, сохраняя порядок вставки (или порядок доступа при `accessOrder = true`).
 
 ```java
-Map<String, Object> cache = new LinkedHashMap<String, Object>(16, 0.75f, true) {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<String, Object> eldest) {
-        return size() > 100; // Удалять старые при превышении размера
-    }
-};
+// HashMap — порядок итерации не определён
+Map<String, Integer> hashMap = new HashMap<>();
+hashMap.put("C", 3);
+hashMap.put("A", 1);
+hashMap.put("B", 2);
+// Итерация: порядок непредсказуем
+
+// LinkedHashMap — порядок вставки сохраняется
+Map<String, Integer> linkedMap = new LinkedHashMap<>();
+linkedMap.put("C", 3);
+linkedMap.put("A", 1);
+linkedMap.put("B", 2);
+// Итерация: C=3, A=1, B=2 — всегда в порядке вставки
 ```
 
-## Q15. Что такое `WeakHashMap`?
+Дополнительная память: **две ссылки на запись** (before/after) для поддержания двусвязного списка. Производительность операций такая же — `O(1)` в среднем.
 
-`WeakHashMap` — реализация Map, использующая weak-ссылки (слабые ссылки) для ключей. Когда на ключ больше нет сильных ссылок, запись может быть автоматически удалена сборщиком мусора. Это позволяет использовать `WeakHashMap` для кэшей и метаданных, где жизнь записей должна быть привязана к жизни ключевых объектов, а не к самой Map.
+## Q19. Как реализовать `LRU`-кэш на `LinkedHashMap`?
 
-Важно: момент удаления не гарантируется — сборка мусора происходит асинхронно, и итерация может "видеть" уже собранные записи. `WeakHashMap` не потокобезопасна и требует синхронизации в многопоточных сценариях. Используется в редких случаях: кэширование метаданных объектов, отслеживание дополнительной информации по объектам, которые могут быть собраны `GC`, реализация паттернов типа `observer` с автоматической очисткой.
+`LinkedHashMap` с `accessOrder = true` переупорядочивает элементы при каждом доступе (`get`, `put`). В сочетании с переопределением `removeEldestEntry()` получается готовый `LRU`-кэш:
 
-Пример использования:
+```java
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+    private final int maxSize;
+
+    public LRUCache(int maxSize) {
+        super(maxSize * 4 / 3 + 1, 0.75f, true); // accessOrder = true
+        this.maxSize = maxSize;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > maxSize; // Автоматическое вытеснение старых
+    }
+}
+
+// Использование
+LRUCache<String, User> cache = new LRUCache<>(100);
+cache.put("user:1", user1);
+cache.get("user:1"); // Перемещает в конец (самый свежий)
+// При добавлении 101-го элемента самый давно использованный удалится
+```
+
+> Это классический вопрос на собеседовании уровня Senior. Альтернатива — `Caffeine` или `Guava Cache` для production-кода с TTL, статистикой и weak-ссылками.
+
+## Q20. Что такое `WeakHashMap`?
+
+`WeakHashMap` использует **weak-ссылки** для ключей. Когда на ключ больше нет сильных ссылок, запись автоматически удаляется сборщиком мусора.
 
 ```java
 WeakHashMap<Object, String> metadata = new WeakHashMap<>();
 Object key = new Object();
-metadata.put(key, "metadata");
-key = null; // Теперь запись может быть удалена GC
-System.gc(); // Принудительная сборка (не гарантирует удаление)
+metadata.put(key, "some metadata");
+System.out.println(metadata.size()); // 1
+
+key = null; // Убираем единственную сильную ссылку
+System.gc(); // Подсказка GC (не гарантирует сборку)
+// После GC: metadata может стать пустой
 ```
 
-## Q16. Что такое `IdentityHashMap`?
+**Применение:** кэширование метаданных, привязанных к жизненному циклу объектов-ключей. Не потокобезопасна. Подробнее о типах ссылок — в [вопросах по управлению памятью](../../performance/memory-management-interview.md).
 
-`IdentityHashMap` — реализация Map, где ключи сравниваются по ссылочному равенству (==), а не по значению (equals()). Это означает, что два объекта считаются разными ключами, даже если они равны по equals(), если это разные экземпляры в памяти. Внутренняя реализация использует линейную пробу (linear probing) по системному `identityHashCode()`, а не обычный `hashCode()`.
+## Q21. Что такое `IdentityHashMap`?
 
-Используется в редких случаях, когда нужна идентичность объектов (один и тот же экземпляр), а не равенство по значению: сериализация объектов, отслеживание топологии объектов, реализация паттернов где важна ссылочная идентичность, отладка и профилирование. Не подходит для обычных случаев использования Map, где важна семантика равенства по значению.
-
-Пример использования:
+`IdentityHashMap` сравнивает ключи по **ссылочному равенству** (`==`) вместо `equals()`, и использует `System.identityHashCode()` вместо `hashCode()`.
 
 ```java
 IdentityHashMap<String, Integer> map = new IdentityHashMap<>();
 String key1 = new String("key");
 String key2 = new String("key");
+
 map.put(key1, 1);
-map.put(key2, 2); // Разные ключи, так как разные объекты
-map.size(); // 2 (в HashMap было бы 1)
+map.put(key2, 2);
+map.size(); // 2! В HashMap было бы 1
+
+map.put(key1, 3);
+map.size(); // 2 — key1 найден по ==
 ```
 
-## Q17. Как работает `HashMap` при коллизиях?
+Внутри использует **линейное пробирование** (`linear probing`) вместо цепочек. Используется в сериализации, глубоком копировании, отслеживании топологии объектов — когда важна идентичность экземпляра, а не логическое равенство.
 
-При коллизии (когда разные ключи имеют одинаковый `hashCode()` по модулю размера таблицы) в `HashMap` (`Java 8+`) используется гибридный подход. Сначала элементы с одинаковым хэшем хранятся в цепочке узлов (linked list) в одном bucket'е. При достижении длины цепочки ≥ 8 элементов и размере таблицы ≥ 64 bucket'ов, список автоматически преобразуется в красно-чёрное дерево (treeify) для улучшения производительности поиска с `O(n)` до `O(log n)`.
+## Q22. В чём разница между `Collections.synchronizedMap` и `ConcurrentHashMap`?
 
-При уменьшении размера таблицы (rehashing) или уменьшении количества элементов в дереве до ≤ 6, дерево может быть преобразовано обратно в список (untreeify). Это оптимизация для баланса между производительностью и использованием памяти. До `Java` 8 использовался только chaining, что могло приводить к деградации производительности при большом количестве коллизий.
-
-Пример демонстрации коллизий:
+| Характеристика | `synchronizedMap` | `ConcurrentHashMap` |
+|---------------|-------------------|---------------------|
+| Механизм | Единый `mutex` на всю Map | Блокировка на уровне bucket'а / `CAS` |
+| Чтение | Блокирует | Без блокировок |
+| Запись | Блокирует всю Map | Блокирует только один bucket |
+| Производительность | Низкая при конкуренции | Высокая |
+| Итерация | `fail-fast`, нужна внешняя синхронизация | `weakly consistent`, безопасна |
+| `null` | Допускает | Запрещает |
+| Атомарные операции | Нет (только через внешний `synchronized`) | `compute`, `merge`, `putIfAbsent` |
 
 ```java
-// Плохой hashCode может вызвать много коллизий
-class BadKey {
-    @Override
-    public int hashCode() { return 1; } // Все ключи в одном bucket
+// synchronizedMap — обёртка, все методы синхронизированы
+Map<String, Integer> syncMap = Collections.synchronizedMap(new HashMap<>());
+synchronized (syncMap) {  // Обязательно для итерации!
+    for (Map.Entry<String, Integer> e : syncMap.entrySet()) { ... }
 }
-// Это приведёт к длинной цепочке или дереву
+
+// ConcurrentHashMap — итерация безопасна без внешней синхронизации
+ConcurrentHashMap<String, Integer> concMap = new ConcurrentHashMap<>();
+for (Map.Entry<String, Integer> e : concMap.entrySet()) { ... } // Безопасно
 ```
 
-## Q18. Что такое `Queue` и какие реализации?
+> **Рекомендация:** всегда используйте `ConcurrentHashMap` вместо `synchronizedMap` в многопоточных приложениях.
 
-`Queue` — интерфейс для работы с очередью по принципу `FIFO` (`First` In `First` Out). Основные методы: offer() для добавления элемента (возвращает `false` при переполнении), poll() для извлечения и удаления элемента (возвращает `null` при пустоте), peek() для просмотра без удаления. `ArrayDeque / LinkedList` для очереди. `PriorityQueue` — приоритетная очередь на основе двоичной кучи: элементы упорядочены по `Comparator` или `Comparable`, peek() и poll() возвращают элемент с наивысшим приоритетом, операции `O(log n)`. `LinkedList` также реализует `Queue`, но `ArrayDeque` быстрее и эффективнее по памяти.
+## Q23. Какие методы `Java 8+` добавлены в `Map`?
 
-Пример использования `PriorityQueue`:
+`Java 8` значительно расширила интерфейс `Map` default-методами:
 
 ```java
-PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.reverseOrder());
+Map<String, Integer> map = new HashMap<>();
+map.put("a", 1);
+
+// getOrDefault — значение по умолчанию
+int val = map.getOrDefault("b", 0); // 0
+
+// putIfAbsent — вставить, только если ключа нет
+map.putIfAbsent("a", 99); // Не изменит, "a" уже есть
+
+// computeIfAbsent — ленивое вычисление значения
+map.computeIfAbsent("b", k -> k.length()); // "b" → 1
+
+// computeIfPresent — обновить, только если ключ есть
+map.computeIfPresent("a", (k, v) -> v + 10); // "a" → 11
+
+// compute — вычислить значение (для любого ключа)
+map.compute("a", (k, v) -> v == null ? 1 : v + 1);
+
+// merge — объединить значения
+map.merge("a", 5, Integer::sum); // "a" → 16
+
+// replaceAll — изменить все значения
+map.replaceAll((k, v) -> v * 2);
+
+// forEach
+map.forEach((k, v) -> System.out.println(k + "=" + v));
+```
+
+Эти методы особенно полезны для подсчёта частот, группировок и атомарных обновлений. Подробнее о `Stream API` и `Collectors` — в [вопросах по Stream API](java-stream-interview.md).
+
+## Q24. Что такое `Queue` и какие реализации?
+
+`Queue` — интерфейс очереди `FIFO`. Предоставляет две группы методов:
+
+| Операция | Бросает исключение | Возвращает `null`/`false` |
+|----------|--------------------|--------------------------|
+| Вставка | `add(e)` | `offer(e)` |
+| Извлечение | `remove()` | `poll()` |
+| Просмотр | `element()` | `peek()` |
+
+```java
+// PriorityQueue — приоритетная очередь (min-heap по умолчанию)
+PriorityQueue<Integer> pq = new PriorityQueue<>();
+pq.offer(30);
 pq.offer(10);
-pq.offer(5);
 pq.offer(20);
-Integer max = pq.poll(); // 20 - максимальный элемент
+pq.poll(); // 10 — минимальный элемент
+
+// С Comparator — max-heap
+PriorityQueue<Integer> maxPq = new PriorityQueue<>(Comparator.reverseOrder());
+maxPq.offer(30);
+maxPq.offer(10);
+maxPq.poll(); // 30 — максимальный элемент
 ```
 
-## Q19. Что такое `Deque` и когда использовать?
+Основные реализации: `ArrayDeque` (двусторонняя очередь), `PriorityQueue` (приоритетная очередь на двоичной куче, `O(log n)` для `offer`/`poll`), `LinkedList` (также реализует `Queue` и `Deque`).
 
-`Deque` (`double-ended` queue) — двусторонняя очередь, расширяющая `Queue`. Позволяет добавлять и удалять элементы с обоих концов: `addFirst()`, `addLast()`, `pollFirst()`, `pollLast()`. `ArrayDeque` — рекомендуемая реализация для стека (`LIFO`) и очереди (`FIFO`), быстрее устаревшего `Stack` и `LinkedList`. Для стека используются методы push() и pop(), для очереди — offer() и poll(). Все операции `O(1)`, не потокобезопасна. Используется когда нужен доступ с обоих концов или реализация стека/очереди с высокой производительностью.
+## Q25. Что такое `Deque` и когда использовать?
 
-Пример использования как стека:
+`Deque` (`double-ended queue`) позволяет добавлять и удалять элементы с обоих концов. `ArrayDeque` — рекомендуемая реализация для стека и очереди (быстрее устаревшего `Stack` и `LinkedList`):
 
 ```java
+// Как стек (LIFO)
 Deque<String> stack = new ArrayDeque<>();
 stack.push("First");
 stack.push("Second");
-String top = stack.pop(); // "Second" - LIFO
+stack.pop(); // "Second"
+
+// Как очередь (FIFO)
+Deque<String> queue = new ArrayDeque<>();
+queue.offerLast("First");
+queue.offerLast("Second");
+queue.pollFirst(); // "First"
+
+// Двусторонний доступ
+Deque<String> deque = new ArrayDeque<>();
+deque.addFirst("A");
+deque.addLast("Z");
+deque.peekFirst(); // "A"
+deque.peekLast();  // "Z"
 ```
 
-## Q20. Что такое `BlockingQueue`?
+`ArrayDeque` основан на **циклическом массиве** — все операции `O(1)`, потребляет меньше памяти, чем `LinkedList`. Не потокобезопасна.
 
-`BlockingQueue` — интерфейс очереди с блокирующими операциями для многопоточных сценариев. Метод take() блокирует поток до появления элемента (если очередь пуста), put() блокирует поток до появления места (если очередь переполнена). Также предоставляет неблокирующие методы offer() и poll() с таймаутами.
+## Q26. (!) Что такое `BlockingQueue` и паттерн `producer-consumer`?
 
-Основные реализации: `LinkedBlockingQueue` — неограниченная или ограниченная ёмкость на основе связанного списка, `ArrayBlockingQueue` — фиксированная ёмкость на основе массива с циклическим буфером, `SynchronousQueue` — очередь без хранения (каждый put ждёт соответствующий take), `PriorityBlockingQueue` — приоритетная очередь с блокирующими операциями.
-
-Используется в паттерне `producer-consumer` для координации потоков, пулы потоков (`ThreadPoolExecutor`) используют `BlockingQueue` для очереди задач. Обеспечивает потокобезопасность и координацию между производителями и потребителями данных.
-
-Пример `producer-consumer`:
+`BlockingQueue` — интерфейс очереди с **блокирующими** операциями для координации потоков. `put()` блокирует при полной очереди, `take()` — при пустой.
 
 ```java
-BlockingQueue<String> queue = new LinkedBlockingQueue<>();
-// Producer
-queue.put("task");
-// Consumer
-String task = queue.take(); // Блокируется если очередь пуста
+// Producer-Consumer паттерн
+BlockingQueue<Task> queue = new ArrayBlockingQueue<>(100);
+
+// Producer поток
+Runnable producer = () -> {
+    while (true) {
+        Task task = generateTask();
+        queue.put(task); // Блокируется, если очередь полна
+    }
+};
+
+// Consumer поток
+Runnable consumer = () -> {
+    while (true) {
+        Task task = queue.take(); // Блокируется, если очередь пуста
+        process(task);
+    }
+};
 ```
 
-## Q21. Какие коллекции есть у `Enum`?
+| Реализация | Ёмкость | Особенности |
+|-----------|---------|-------------|
+| `ArrayBlockingQueue` | Фиксированная | Циклический массив, `fair`/`unfair` блокировка |
+| `LinkedBlockingQueue` | Настраиваемая (по умолчанию `Integer.MAX_VALUE`) | Два отдельных lock'а для `put`/`take` |
+| `SynchronousQueue` | **0** | Каждый `put` ждёт `take` |
+| `PriorityBlockingQueue` | Безграничная | Приоритетная очередь |
 
-`Java Collections Framework` предоставляет специализированные коллекции для enum: `EnumSet` и `EnumMap`. Они оптимизированы для enum и обеспечивают максимальную производительность и типобезопасность.
+`ThreadPoolExecutor` использует `BlockingQueue` для очереди задач — подробнее в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
-`EnumSet` использует битовую маску для хранения элементов, операции `O(1)`. `EnumMap` использует массив, где индекс соответствует ordinal() значения enum, операции `O(1)`. Обе коллекции типобезопасны (компилятор проверяет типы), эффективны (оптимизированы для ограниченного набора значений), улучшают читаемость кода и предоставляют удобный `API` для работы с перечислениями.
+## Q27. В чём разница между `ArrayDeque` и `LinkedList`?
 
-Пример использования `EnumSet`:
+Оба реализуют `Deque`, но `ArrayDeque` предпочтительнее в большинстве случаев:
+
+| Характеристика | `ArrayDeque` | `LinkedList` |
+|---------------|-------------|-------------|
+| Внутренняя структура | Циклический массив | Двусвязный список |
+| Память на элемент | ~8 байт (ссылка + амортизация) | ~40 байт (узел + 3 ссылки) |
+| CPU-кэш | Отличная локальность | Плохая (узлы разбросаны) |
+| `null` элементы | Запрещены | Допускаются |
+| Реализует `List` | Нет | Да |
+| Производительность | Быстрее (массив) | Медленнее (аллокации узлов) |
 
 ```java
-enum UserStatus { PENDING, ACTIVE, SUSPENDED, DELETED }
+// Предпочтительно — ArrayDeque
+Deque<String> stack = new ArrayDeque<>();
 
-EnumSet<UserStatus> allStatuses = EnumSet.allOf(UserStatus.class);
-EnumSet<UserStatus> activeStatuses = EnumSet.of(UserStatus.PENDING, UserStatus.ACTIVE);
-EnumSet<UserStatus> range = EnumSet.range(UserStatus.PENDING, UserStatus.SUSPENDED);
-activeStatuses.add(UserStatus.SUSPENDED); // O(1)
+// Только если нужен null или List-интерфейс
+Deque<String> deque = new LinkedList<>();
 ```
 
-Пример использования `EnumMap`:
+> Документация OpenJDK прямо рекомендует `ArrayDeque` как более эффективную альтернативу `LinkedList` для стеков и очередей.
+
+## Q28. Что такое `EnumSet` и `EnumMap`?
+
+Специализированные коллекции для `enum`, оптимизированные по памяти и производительности:
+
+- **`EnumSet`** — множество enum-констант на основе **битовой маски**. Для enum с ≤64 константами используется один `long` (`RegularEnumSet`), для больших — массив `long[]` (`JumboEnumSet`). Все операции — `O(1)`.
+
+- **`EnumMap`** — Map с enum-ключами на основе **массива**. Индекс = `ordinal()` значения enum. Все операции — `O(1)`, итерация в порядке объявления констант.
 
 ```java
-EnumMap<UserStatus, Integer> statusCount = new EnumMap<>(UserStatus.class);
-statusCount.put(UserStatus.PENDING, 10);
-statusCount.put(UserStatus.ACTIVE, 50);
-Integer count = statusCount.get(UserStatus.ACTIVE); // 50, O(1)
-// Итерация в порядке определения enum
+enum Permission { READ, WRITE, EXECUTE, DELETE }
+
+// EnumSet — компактнее и быстрее HashSet
+EnumSet<Permission> readOnly = EnumSet.of(Permission.READ);
+EnumSet<Permission> all = EnumSet.allOf(Permission.class);
+EnumSet<Permission> rwx = EnumSet.range(Permission.READ, Permission.EXECUTE);
+
+// EnumMap — компактнее и быстрее HashMap
+EnumMap<Permission, String> descriptions = new EnumMap<>(Permission.class);
+descriptions.put(Permission.READ, "Чтение файлов");
+descriptions.put(Permission.WRITE, "Запись файлов");
+
+// Сравнение по памяти (для 4-х констант):
+// EnumSet: 1 long = 8 байт
+// HashSet: ~128 байт (HashMap + Node + Entry)
 ```
 
-Сравнение `EnumSet / EnumMap` с обычными коллекциями:
+## Q29. (!) В чем разница между `fail-fast` и `fail-safe` итераторами?
 
-| Операция          | `EnumSet`                 | `HashSet`         | `EnumMap`          | `HashMap`         |
-|-------------------|-------------------------|-----------------|------------------|-----------------|
-| Добавление        | `O(1)`                    | `O(1)`            | `O(1)`             | `O(1)`            |
-| Поиск             | `O(1)`                    | `O(1)`            | `O(1)`             | `O(1)`            |
-| Память            | Минимум (битовая маска) | Больше          | Минимум (массив) | Больше          |
-| Типобезопасность  | Да                      | Нет             | Да               | Нет             |
-| Порядок элементов | Порядок enum            | Не гарантирован | Порядок enum     | Не гарантирован |
-
-## Q22. Что такое `EnumSet` и `EnumMap`?
-
-`EnumSet` — специализированная реализация Set для enum типов: все значения должны быть из одного enum, внутренне использует битовую маску или массив (в зависимости от размера enum), очень компактное представление в памяти, все операции `O(1)`. `EnumMap` — специализированная реализация Map с ключами типа enum: порядок итерации соответствует порядку объявления констант в enum, внутренне использует массив где индекс соответствует ordinal() значения enum, операции `O(1)`.
-
-Оба не принимают `null` ключи или значения, обеспечивают типобезопасность на уровне компилятора, более эффективны по памяти и производительности чем общие `HashSet / HashMap` для enum. Используются когда ключи или элементы — значения enum, что является частым случаем в `Java` приложениях.
-
-Пример использования:
+| Характеристика | `fail-fast` | `fail-safe` (weakly consistent) |
+|---------------|-----------|-------------------------------|
+| Исключение | `ConcurrentModificationException` | Нет |
+| Механизм | Проверяет `modCount` | Работает со снимком / сегментами |
+| Многопоточность | Небезопасно | Безопасно |
+| Актуальность данных | Свежие | Может видеть устаревшие |
+| Примеры | `ArrayList`, `HashMap`, `TreeMap` | `CopyOnWriteArrayList`, `ConcurrentHashMap` |
 
 ```java
-enum Status { PENDING, ACTIVE, COMPLETED }
+// fail-fast — бросит ConcurrentModificationException
+List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+for (String s : list) {
+    list.remove(s); // CME!
+}
 
-EnumSet<Status> activeStatuses = EnumSet.of(Status.PENDING, Status.ACTIVE);
-EnumMap<Status, Integer> counts = new EnumMap<>(Status.class);
-counts.put(Status.PENDING, 10);
-// Итерация в порядке объявления: PENDING, ACTIVE, COMPLETED
-```
+// fail-safe — не бросит исключение
+List<String> cowList = new CopyOnWriteArrayList<>(List.of("a", "b", "c"));
+for (String s : cowList) {
+    cowList.remove(s); // OK, итератор на снимке
+}
 
-## Q23. (!) В чем разница между `fail-fast` и `fail-safe` итераторами?
-
-`Fail-fast` итераторы выбрасывают `ConcurrentModificationException` при структурной модификации коллекции во время итерации. Механизм: итератор хранит счетчик модификаций (`modCount`), при изменении коллекции `modCount` увеличивается, при операции итератора проверяется изменение `modCount`. Примеры: `ArrayList`, `HashSet`, `HashMap`, `LinkedList`, `TreeSet`, `TreeMap`, `LinkedHashSet`, `LinkedHashMap`. Преимущества: быстрое обнаружение ошибок, предотвращение некорректного поведения. Недостатки: не подходят для многопоточных приложений без синхронизации, требуют обработки исключений.
-
-`Fail-safe` итераторы не выбрасывают исключение и гарантируют безопасную итерацию даже при изменении коллекции. Механизм: `CopyOnWriteArrayList` создает снимок массива при создании итератора, `ConcurrentHashMap` работает со снимком данных на момент создания, изменения в коллекции не влияют на текущую итерацию. Примеры: `CopyOnWriteArrayList`, `ConcurrentHashMap`, `CopyOnWriteArraySet`. Преимущества: безопасность в многопоточных приложениях, нет необходимости в синхронизации. Недостатки: могут работать с устаревшими данными, дополнительные накладные расходы на создание копий.
-
-Выбор зависит от требований: `fail-fast` для надежной детекции некорректных модификаций, `fail-safe` для безопасной итерации в многопоточных приложениях. Сравнительная таблица:
-
-| Характеристика      | `Fail-fast`                       | `Fail-safe`                               |
-|---------------------|---------------------------------|-----------------------------------------|
-| Исключения          | `ConcurrentModificationException` | Нет                                     |
-| Многопоточность     | Небезопасно                     | Безопасно                               |
-| Производительность  | Высокая                         | Ниже (из-за копий)                      |
-| Актуальность данных | Всегда актуальные               | Снимок на момент создания               |
-| Примеры             | `ArrayList`, `HashMap`              | `CopyOnWriteArrayList`, `ConcurrentHashMap` |
-
-Пример `fail-fast` поведения:
-
-```java
-List<String> list = new ArrayList<>();
-Iterator<String> iterator = list.iterator();
-list.add("Four"); // ConcurrentModificationException!
-```
-
-Правильный способ модификации при `fail-fast`:
-
-```java
-Iterator<String> iterator = list.iterator();
-while (iterator.hasNext()) {
-    String element = iterator.next();
-    if (element.equals("Two")) {
-        iterator.remove(); // Безопасное удаление
+// Правильное удаление в fail-fast коллекции
+Iterator<String> it = list.iterator();
+while (it.hasNext()) {
+    if (it.next().equals("b")) {
+        it.remove(); // Безопасно — через Iterator.remove()
     }
 }
 ```
 
-Пример `fail-safe` поведения:
+> **Важно:** термин `fail-safe` не является официальным в `Java` — в документации `ConcurrentHashMap` используется `weakly consistent`. Итератор может видеть часть изменений, произведённых после его создания.
+
+## Q30. Как итерировать и удалять элементы?
+
+Три безопасных способа удаления элементов при итерации:
 
 ```java
-List<String> list = new CopyOnWriteArrayList<>();
-Iterator<String> iterator = list.iterator();
-list.add("Four"); // Не вызовет исключение
-// Итератор работает со снимком на момент создания
-```
+List<String> list = new ArrayList<>(List.of("a", "b", "c", "d"));
 
-## Q24. Как итерировать и удалять элементы?
-
-При использовании enhanced `for-loop` (for (`Item` x : list)) нельзя вызывать методы изменения коллекции (`list.remove()`, `list.add()`) — это вызовет `ConcurrentModificationException`. Правильный способ — использовать `Iterator` с методом remove(): `Iterator<Item> it = list.iterator(); while (it.hasNext()) { Item item = it.next(); if (condition) it.remove(); }`. Метод remove() итератора удаляет текущий элемент безопасно, так как синхронизирован с внутренним состоянием коллекции.
-
-Альтернатива в `Java` 8+ — метод `removeIf(Predicate)`, который выполняет удаление эффективно и безопасно. Также можно создать копию коллекции для итерации, если нужно удалять из оригинальной коллекции, или использовать `ConcurrentHashMap` с weakly consistent итератором для многопоточных сценариев.
-
-Пример правильного удаления:
-
-```java
+// 1. Iterator.remove() — классический способ
 Iterator<String> it = list.iterator();
 while (it.hasNext()) {
-    String item = it.next();
-    if (item.startsWith("remove")) {
-        it.remove(); // Безопасное удаление
+    if (it.next().startsWith("b")) {
+        it.remove();
     }
 }
 
-// Или с removeIf:
-list.removeIf(item -> item.startsWith("remove"));
+// 2. removeIf (Java 8+) — лаконичный и эффективный
+list.removeIf(s -> s.startsWith("c"));
+
+// 3. Stream + filter + collect — создаёт новую коллекцию
+List<String> filtered = list.stream()
+    .filter(s -> !s.startsWith("a"))
+    .collect(Collectors.toList());
 ```
 
-## Q25. Что такое `Spliterator`?
+Для `Map` — аналогично через `entrySet().iterator()` или `Map.entrySet().removeIf()`.
 
-`Spliterator` (splittable `iterator`) — итератор для разбиения источника данных на части, используется внутри `Stream API` для параллельной обработки. Основные методы: `trySplit()` разбивает часть данных для другого потока (возвращает `null` если разбиение невозможно), `tryAdvance()` обрабатывает один элемент, `forEachRemaining()` обрабатывает оставшиеся элементы, characteristics() возвращает характеристики (`SIZED`, `ORDERED`, `DISTINCT` и др.).
+## Q31. Что такое `Spliterator`?
 
-Позволяет реализовать параллельные стримы для собственных структур данных, обеспечивая эффективное разделение работы между потоками. Используется автоматически в стандартных коллекциях при вызове `parallelStream()`. Для кастомных коллекций можно реализовать собственный `Spliterator` для поддержки параллельной обработки.
-
-Пример использования:
+`Spliterator` (`splittable iterator`) — итератор для разбиения данных на части, используется внутри `Stream API` для параллельной обработки. Ключевой метод `trySplit()` делит данные на две части — одну для текущего потока, другую — для нового.
 
 ```java
-List<String> list = Arrays.asList("a", "b", "c", "d");
-Spliterator<String> spliterator = list.spliterator();
-Spliterator<String> half = spliterator.trySplit(); // Разделение на две части
-half.forEachRemaining(System.out::println); // Обработка первой части
-spliterator.forEachRemaining(System.out::println); // Обработка второй части
+List<Integer> numbers = List.of(1, 2, 3, 4, 5, 6, 7, 8);
+Spliterator<Integer> full = numbers.spliterator();
+Spliterator<Integer> half = full.trySplit(); // Разделение
+
+// Характеристики сплитератора
+full.characteristics(); // SIZED | ORDERED | SUBSIZED | IMMUTABLE
+full.estimateSize();    // Оценка количества оставшихся элементов
 ```
 
-## Q26. Что такое `ConcurrentModificationException`?
+**Характеристики** (`characteristics`): `SIZED`, `ORDERED`, `SORTED`, `DISTINCT`, `NONNULL`, `IMMUTABLE`, `CONCURRENT`, `SUBSIZED`. Они влияют на оптимизации в `Stream API` — подробнее в [вопросах по Stream API](java-stream-interview.md).
 
-`ConcurrentModificationException` возникает при структурной модификации коллекции (добавление, удаление элементов) во время итерации, за исключением использования `Iterator.remove()`. Причина: enhanced `for-loop` и итераторы проверяют счётчик модификаций (`modCount`) коллекции, и при его изменении выбрасывают исключение для предотвращения некорректного поведения.
+## Q32. Что такое `ConcurrentModificationException`?
 
-Решения: использовать `Iterator.remove()` для безопасного удаления во время итерации, метод `removeIf(Predicate)` (`Java 8+`) для удаления по условию, создавать копию коллекции для итерации если нужно изменять оригинал, использовать потокобезопасные коллекции (`ConcurrentHashMap` с weakly consistent итератором) для многопоточных сценариев. В однопоточном коде — избегать изменения коллекции в цикле по ней, собирать элементы для удаления в отдельную коллекцию и удалять после итерации.
-
-Примеры решения:
+`ConcurrentModificationException` возникает при структурной модификации коллекции во время итерации (кроме через `Iterator.remove()`). Причина: итератор сохраняет `expectedModCount` при создании, а коллекция увеличивает `modCount` при каждом изменении. При расхождении — исключение.
 
 ```java
-// Неправильно:
-for (String item : list) {
-    if (condition) list.remove(item); // ConcurrentModificationException
+// Типичная ошибка — модификация в enhanced for-loop
+List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+for (String s : list) {
+    if (s.equals("b")) {
+        list.remove(s); // ConcurrentModificationException!
+    }
 }
 
-// Правильно:
-Iterator<String> it = list.iterator();
-while (it.hasNext()) {
-    if (condition) it.remove(); // Безопасно
-}
-
-// Или с removeIf:
-list.removeIf(item -> condition);
+// Решения:
+// 1. Iterator.remove()
+// 2. list.removeIf(s -> s.equals("b"))
+// 3. Использовать CopyOnWriteArrayList / ConcurrentHashMap
 ```
 
-## Q27. (!) Как использовать `Comparable` и `Comparator`?
+> Несмотря на название, `ConcurrentModificationException` чаще возникает в **однопоточном** коде — при изменении коллекции внутри `for-each` цикла.
 
-`Comparable` позволяет объекту определить естественный порядок сортировки. Требует реализации метода `compareTo()`, который сравнивает текущий объект с переданным: отрицательное число — текущий меньше, 0 — равны, положительное — текущий больше. Особенности: реализуется в самом классе, определяет естественный порядок, используется для одного критерия, позволяет использовать `Collections.sort()` без параметров. Контракт: должен быть согласован с equals(), транзитивным, симметричным.
+## Q33. (!) Как использовать `Comparable` и `Comparator`?
 
-`Comparator` предоставляет объект для сравнения двух объектов. Требует реализации метода compare(), который принимает два объекта: отрицательное число — первый меньше, 0 — равны, положительное — первый больше. Особенности: более гибкий подход (несколько способов сортировки), не требует модификации класса, можно использовать лямбда-выражения и ссылки на методы, позволяет создавать цепочки компараторов.
-
-Сравнение:
-
-| Характеристика                 | `Comparable`             | `Comparator`                         |
-|--------------------------------|------------------------|------------------------------------|
-| Реализация                     | В самом классе         | Отдельный класс/лямбда             |
-| Метод                          | `compareTo`(T o)         | compare(T o1, T o2)                |
-| Количество способов сортировки | Один (естественный)    | Множество                          |
-| Модификация класса             | Требуется              | Не требуется                       |
-| Использование                  | `Collections.sort(list)` | `Collections.sort(list, comparator)` |
-
-Пример использования `Comparable`:
+| Характеристика | `Comparable<T>` | `Comparator<T>` |
+|---------------|----------------|-----------------|
+| Метод | `compareTo(T o)` | `compare(T o1, T o2)` |
+| Реализация | В самом классе | Отдельный объект / лямбда |
+| Количество критериев | Один (естественный порядок) | Множество |
+| Модификация класса | Нужна | Не нужна |
 
 ```java
-public class User implements Comparable<User> {
+// Comparable — естественный порядок
+public class Employee implements Comparable<Employee> {
     private String name;
+    private int salary;
 
     @Override
-    public int compareTo(User other) {
-        return this.name.compareTo(other.name);
+    public int compareTo(Employee other) {
+        return Integer.compare(this.salary, other.salary);
     }
 }
 
-List<User> users = new ArrayList<>();
-Collections.sort(users); // Естественный порядок
+List<Employee> employees = new ArrayList<>();
+Collections.sort(employees); // По salary (естественный порядок)
+
+// Comparator — гибкая сортировка (Java 8+)
+employees.sort(Comparator.comparing(Employee::getName));
+
+// Цепочка критериев
+employees.sort(Comparator
+    .comparing(Employee::getSalary).reversed()
+    .thenComparing(Employee::getName));
+
+// Обработка null
+employees.sort(Comparator.nullsLast(
+    Comparator.comparing(Employee::getName)));
 ```
 
-Пример использования `Comparator`:
+> **Совет для собеседования:** контракт `Comparable.compareTo()` должен быть согласован с `equals()` — иначе `TreeSet`/`TreeMap` будут работать некорректно (считают элементы с `compareTo() == 0` равными).
+
+## Q34. Какие алгоритмы сортировки используются в `Java`?
+
+- **`Arrays.sort(Object[])` и `Collections.sort()`** — **TimSort** (адаптивная стабильная сортировка слиянием, `O(n log n)`, `O(n)` для частично отсортированных данных)
+- **`Arrays.sort(int[])` и другие примитивы** — **Dual-Pivot Quicksort** (нестабильная, `O(n log n)` в среднем, `O(n²)` в худшем)
+- **`Arrays.parallelSort()`** (Java 8+) — параллельный merge sort с `ForkJoinPool`
 
 ```java
-Collections.sort(users, Comparator.comparing(User::getAge));
-// Или с лямбдой:
-Collections.sort(users, (u1, u2) -> Integer.compare(u1.getAge(), u2.getAge()));
+int[] primitives = {5, 3, 1, 4, 2};
+Arrays.sort(primitives); // Dual-Pivot Quicksort
+
+String[] objects = {"c", "a", "b"};
+Arrays.sort(objects); // TimSort (стабильная)
+
+int[] large = new int[1_000_000];
+Arrays.parallelSort(large); // Параллельная сортировка
 ```
 
-Пример цепочки компараторов:
+**Стабильность** означает, что равные элементы сохраняют свой относительный порядок после сортировки. `TimSort` — стабильный, `Dual-Pivot Quicksort` — нет (но для примитивов это не имеет значения).
+
+## Q35. Что такое `Collections.unmodifiableList`?
+
+`Collections.unmodifiableList(list)` создаёт **обёртку** (не копию!) над существующим списком. Методы изменения бросают `UnsupportedOperationException`, но изменения через **исходный** список будут видны:
 
 ```java
-Collections.sort(users, Comparator.comparing(User::getName)
-    .thenComparing(User::getAge)); // Сначала по имени, затем по возрасту
+List<String> original = new ArrayList<>(List.of("a", "b"));
+List<String> readOnly = Collections.unmodifiableList(original);
+
+readOnly.add("c");   // UnsupportedOperationException
+original.add("c");   // OK! readOnly тоже покажет "c"
+
+System.out.println(readOnly); // [a, b, c]
 ```
 
-Пример обратной сортировки:
+Для настоящей неизменяемой копии используйте `List.copyOf()` (Java 10+) или `Collections.unmodifiableList(new ArrayList<>(original))`.
+
+## Q36. (!) Что такое Immutable коллекции в `Java 9+`?
+
+Фабричные методы `List.of()`, `Set.of()`, `Map.of()` (Java 9) и `List.copyOf()`, `Map.copyOf()` (Java 10) создают **полностью неизменяемые** коллекции:
 
 ```java
-Collections.sort(users, Comparator.comparing(User::getAge).reversed());
+// Java 9 — фабричные методы
+List<String> list = List.of("a", "b", "c");
+Set<String> set = Set.of("x", "y", "z");
+Map<String, Integer> map = Map.of("a", 1, "b", 2);
+Map<String, Integer> bigMap = Map.ofEntries(
+    Map.entry("a", 1),
+    Map.entry("b", 2),
+    Map.entry("c", 3)
+);
+
+// Java 10 — копирование в immutable
+List<String> copy = List.copyOf(mutableList);
+Set<String> setCopy = Set.copyOf(mutableSet);
+
+// Все мутирующие методы → UnsupportedOperationException
+list.add("d");      // UnsupportedOperationException
+list.set(0, "x");   // UnsupportedOperationException
 ```
 
-Пример с `null` значениями:
+**Ключевые ограничения:**
+- `null` элементы **запрещены** — `NullPointerException`
+- `Set.of()` и `Map.of()` не допускают дубликатов — `IllegalArgumentException`
+- Порядок итерации `Set.of()` **не определён** и может меняться между запусками JVM
+
+Более детально о `Java 8+` возможностях — в [вопросах по Java 8+](java-8-interview.md).
+
+## Q37. Какие утилитные методы предоставляет класс `Collections`?
+
+Класс `Collections` содержит статические методы для работы с коллекциями:
 
 ```java
-Collections.sort(names, Comparator.nullsLast(Comparator.naturalOrder()));
+List<Integer> list = new ArrayList<>(List.of(3, 1, 4, 1, 5));
+
+// Сортировка
+Collections.sort(list);
+Collections.sort(list, Comparator.reverseOrder());
+
+// Поиск (только в отсортированном списке!)
+int index = Collections.binarySearch(list, 4);
+
+// Модификация
+Collections.reverse(list);
+Collections.shuffle(list);
+Collections.swap(list, 0, 1);
+Collections.rotate(list, 2); // Циклический сдвиг
+Collections.fill(list, 0);
+
+// Агрегация
+int min = Collections.min(list);
+int max = Collections.max(list);
+int freq = Collections.frequency(list, 1); // Количество вхождений
+
+// Обёртки
+List<Integer> synced = Collections.synchronizedList(list);
+List<Integer> unmod = Collections.unmodifiableList(list);
+List<Integer> checked = Collections.checkedList(list, Integer.class);
+
+// Фабричные
+List<String> empty = Collections.emptyList();
+Set<String> single = Collections.singleton("only");
+List<String> nCopies = Collections.nCopies(10, "default");
 ```
 
-## Q28. Что такое `Collections.unmodifiableList`?
+## Q38. Почему нельзя использовать мутабельные объекты как ключи `HashMap`?
 
-`Collections.unmodifiableList(list)` создаёт неизменяемую обёртку над существующим списком. Все методы изменения (add(), remove(), set(), clear()) выбрасывают `UnsupportedOperationException`. Важно: это не копия списка, а обёртка — изменения в исходном списке будут видны через обёртку, так как обе ссылки указывают на один объект.
-
-Используется для возврата из метода коллекции "только для чтения", чтобы предотвратить случайное изменение внутренней коллекции вызывающим кодом. Это защита от ошибок, а не безопасность — если у вызывающего кода есть доступ к исходному списку, он может его изменить. Для создания полностью независимой неизменяемой копии используется `List.copyOf(collection)` (`Java 10`), который создаёт новый список.
-
-Пример использования:
+Если объект-ключ изменяется после вставки в `HashMap`, его `hashCode()` может измениться. В результате `get()` будет искать в **другом bucket'е** и не найдёт значение:
 
 ```java
-List<String> internal = new ArrayList<>();
-List<String> readOnly = Collections.unmodifiableList(internal);
-readOnly.add("test"); // UnsupportedOperationException
-internal.add("test"); // Работает, и изменение видно через readOnly
+List<String> key = new ArrayList<>(List.of("a", "b"));
+Map<List<String>, String> map = new HashMap<>();
+map.put(key, "value");
+
+System.out.println(map.get(key)); // "value"
+
+key.add("c"); // Мутация ключа! hashCode изменился
+
+System.out.println(map.get(key)); // null! Значение "потеряно"
+System.out.println(map.size());   // 1 — элемент есть, но недоступен
 ```
 
-## Q29. Что такое Immutable коллекции?
+**Правило:** ключи `HashMap`/`HashSet` должны быть **immutable** или, как минимум, поля, участвующие в `hashCode()`/`equals()`, не должны изменяться после вставки. Идеальные ключи: `String`, `Integer`, `enum`, `record`. Подробнее — в [вопросах по Java Core](java-core-interview.md).
 
-`Immutable` коллекции — коллекции, которые нельзя изменить после создания. `List.of()`, `Set.of()`, `Map.of()` (`Java 9`) создают полностью неизменяемые коллекции фиксированного размера: не допускают `null` элементы, компактное представление в памяти, все методы изменения выбрасывают `UnsupportedOperationException`. `List.copyOf(collection)` (`Java 10`) создаёт неизменяемую копию существующей коллекции.
+## Q39. Как выбрать правильную коллекцию для конкретной задачи?
 
-Преимущества: безопасно передавать наружу без риска изменения, потокобезопасны без дополнительной синхронизации, подходят для констант и возврата из `API`, явно выражают намерение о неизменяемости. Используются для конфигураций, констант, возвращаемых значений из методов, когда нужно гарантировать, что коллекция не будет изменена.
+```mermaid
+graph TD
+    Start["Нужна коллекция"] --> KV{"Пары ключ-значение?"}
+    KV -->|Да| Order{"Нужна сортировка?"}
+    Order -->|Да| TM["TreeMap"]
+    Order -->|Нет| Thread{"Многопоточность?"}
+    Thread -->|Да| CHM["ConcurrentHashMap"]
+    Thread -->|Нет| InsOrd{"Порядок вставки?"}
+    InsOrd -->|Да| LHM["LinkedHashMap"]
+    InsOrd -->|Нет| HM["HashMap"]
 
-Пример использования:
+    KV -->|Нет| Unique{"Уникальные?"}
+    Unique -->|Да| SortU{"Нужна сортировка?"}
+    SortU -->|Да| TS["TreeSet"]
+    SortU -->|Нет| InsOrdS{"Порядок вставки?"}
+    InsOrdS -->|Да| LHS["LinkedHashSet"]
+    InsOrdS -->|Нет| HS["HashSet"]
+
+    Unique -->|Нет| FIFO{"FIFO / стек?"}
+    FIFO -->|Да| Blocking{"Блокирующая?"}
+    Blocking -->|Да| BQ["BlockingQueue"]
+    Blocking -->|Нет| AD["ArrayDeque"]
+
+    FIFO -->|Нет| RandAcc{"Произвольный доступ?"}
+    RandAcc -->|Да| AL["ArrayList"]
+    RandAcc -->|Нет| LL["LinkedList"]
+```
+
+## Q40. Какие коллекции из сторонних библиотек стоит знать?
+
+Стандартная библиотека не покрывает все потребности. Популярные расширения:
+
+**Guava (Google):**
+- `ImmutableList`, `ImmutableSet`, `ImmutableMap` — настоящие immutable коллекции (до Java 9)
+- `Multimap` — Map с несколькими значениями на ключ
+- `BiMap` — двунаправленная Map (ключ↔значение)
+- `Table<R, C, V>` — двумерная Map (строка, столбец → значение)
+- `RangeSet`, `RangeMap` — работа с диапазонами
+
+**Eclipse Collections:**
+- Примитивные коллекции (`IntList`, `LongSet`) — без autoboxing
+- `Bag` — коллекция с подсчётом элементов
+- `MutableList`, `ImmutableList` с богатым fluent API
+
+**Apache Commons Collections:**
+- `MultiValuedMap` — аналог `Multimap`
+- `BidiMap` — двунаправленная Map
 
 ```java
-List<String> immutable = List.of("a", "b", "c");
-immutable.add("d"); // UnsupportedOperationException
+// Guava Multimap — несколько значений на ключ
+Multimap<String, String> multimap = ArrayListMultimap.create();
+multimap.put("fruits", "apple");
+multimap.put("fruits", "banana");
+Collection<String> fruits = multimap.get("fruits"); // [apple, banana]
 
-List<String> mutable = new ArrayList<>();
-mutable.add("a");
-List<String> copy = List.copyOf(mutable); // Неизменяемая копия
-copy.add("b"); // UnsupportedOperationException
+// Eclipse Collections — примитивные коллекции (без boxing)
+IntList ints = IntLists.mutable.of(1, 2, 3);
+long sum = ints.sum(); // Без autoboxing
 ```
 
-## Q30. Какие методы сортировки коллекций доступны?
+> На собеседовании достаточно **знать о существовании** этих библиотек и уметь объяснить, когда стандартных коллекций недостаточно.
 
-`Collections.sort(list)` сортирует `List` по естественному порядку (если элементы реализуют `Comparable`) или по заданному `Comparator`. `Collections.sort(list, comparator)` сортирует с использованием компаратора. `List.sort(comparator)` (`Java 8`) — метод экземпляра, выполняет сортировку на месте, для `List` из `Comparable` можно использовать `list.sort(null)` или `Collections.sort(list)`.
+## Q41. (!) Что такое `SequencedCollection`, `SequencedSet`, `SequencedMap` (Java 21)?
 
-Все методы используют стабильную сортировку `TimSort` (адаптивная сортировка слиянием) со сложностью `O(n log n)` в среднем и лучшем случае, `O(n)` в лучшем случае для уже отсортированных данных. `TimSort` оптимизирован для реальных данных и часто работает быстрее чем стандартный merge sort. Сортировка стабильная — равные элементы сохраняют свой относительный порядок.
+`Java 21` ввёл три новых интерфейса в иерархию `Collections Framework` (см. [Java 17-21](java-17-21-interview.md)):
 
-Для других коллекций: Set и Map обычно используют реализации с автоматической сортировкой (`TreeSet`, `TreeMap`) или можно преобразовать в список, отсортировать и создать новую коллекцию.
+```
+java.util.SequencedCollection  → List, Deque, LinkedHashSet
+java.util.SequencedSet         → SortedSet, LinkedHashSet
+java.util.SequencedMap         → SortedMap, LinkedHashMap
+```
 
-Примеры сортировки:
+**Проблема до Java 21:** не было единого API для доступа к первому/последнему элементу:
+```java
+// Разные способы для разных коллекций — до Java 21
+list.get(0);                   // ArrayList
+list.get(list.size() - 1);     // ArrayList
+deque.peekFirst();             // ArrayDeque
+sortedSet.first();             // TreeSet
+linkedHashSet.iterator().next(); // LinkedHashSet — неудобно!
+```
+
+**Единый API после Java 21:**
+```java
+// SequencedCollection — единый интерфейс
+List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+LinkedHashSet<String> set = new LinkedHashSet<>(List.of("x", "y", "z"));
+LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
+map.put("one", 1); map.put("two", 2);
+
+// Первый/последний элемент (унифицировано)
+list.getFirst();   // "a"
+list.getLast();    // "c"
+set.getFirst();    // "x"
+set.getLast();     // "z"
+
+// Добавление к началу/концу
+list.addFirst("z");
+list.addLast("d");
+
+// Удаление
+list.removeFirst();
+list.removeLast();
+
+// Обратный порядок — возвращает view, не копию!
+SequencedCollection<String> reversed = list.reversed();
+
+// SequencedMap — дополнительные методы
+Map.Entry<String, Integer> first = map.firstEntry();
+Map.Entry<String, Integer> last = map.lastEntry();
+Map.Entry<String, Integer> poll = map.pollFirstEntry(); // удаляет и возвращает
+LinkedHashMap<String, Integer> rev = (LinkedHashMap<String, Integer>) map.reversed();
+```
+
+**Ключевые особенности:**
+- `reversed()` возвращает **view** — изменения отражаются в оригинале
+- `getFirst()`/`getLast()` бросают `NoSuchElementException` для пустых коллекций
+- `SequencedSet.reversed()` тоже возвращает `SequencedSet`
+- `LinkedHashSet` наконец получил удобный API без хаков через итератор
+
+## Q42. (!) Как устроен `ConcurrentHashMap` изнутри и почему он быстрее `Hashtable`?
+
+`ConcurrentHashMap` (Java 8+) использует **сегментированную блокировку** на уровне отдельных бакетов вместо блокировки всей таблицы, как в `Hashtable`.
+
+**Внутренняя структура (Java 8+):**
+- Массив нод (`Node<K,V>[]`) — аналогично `HashMap`
+- Запись/обновление блокирует только первую ноду бакета (`synchronized(bin)`)
+- Чтение — **вообще без блокировки** (поля `val` и `next` объявлены `volatile`)
+- При заполнении бакет переходит от `LinkedList` к `TreeBin` (красно-чёрное дерево) при 8+ элементах
 
 ```java
-List<String> list = Arrays.asList("c", "a", "b");
-Collections.sort(list); // По естественному порядку
-list.sort(Comparator.reverseOrder()); // Обратный порядок
-list.sort(Comparator.comparing(String::length)); // По длине
+ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+
+// Потокобезопасные атомарные операции
+map.putIfAbsent("key", 1);                     // атомарно
+map.computeIfAbsent("key", k -> expensive(k)); // атомарно
+map.merge("counter", 1, Integer::sum);         // инкремент счётчика
+map.compute("key", (k, v) -> v == null ? 1 : v + 1); // обновление
+
+// Параллельная обработка
+map.forEach(4, (k, v) -> process(k, v));       // parallelismThreshold = 4
+long sum = map.reduceValues(4, Integer::sum);
 ```
+
+**Ключевые отличия от конкурентов:**
+
+| Характеристика | `Hashtable` | `synchronizedMap` | `ConcurrentHashMap` |
+|---|---|---|---|
+| Блокировка | Вся таблица | Вся таблица | Один бакет |
+| Чтение | Блокирует | Блокирует | **Без блокировки** |
+| `null` ключи/значения | Нет | Нет | **Нет** |
+| `size()` точность | Точно | Точно | Приблизительно |
+| Итератор | Fail-fast | Fail-fast | **Weakly consistent** |
+
+**Почему нет `null`:** при `get()` невозможно различить "ключ отсутствует" и "значение равно `null`" в конкурентном контексте без дополнительной синхронизации.
+
+## Q43. (!) Как реализовать LRU-кэш на `LinkedHashMap`?
+
+`LinkedHashMap` поддерживает режим **access-order** — при обращении к элементу он перемещается в конец. Переопределив `removeEldestEntry()`, получаем готовый LRU-кэш.
+
+```java
+public class LruCache<K, V> extends LinkedHashMap<K, V> {
+    private final int maxSize;
+
+    public LruCache(int maxSize) {
+        // true = access-order (false = insertion-order по умолчанию)
+        super(maxSize, 0.75f, true);
+        this.maxSize = maxSize;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > maxSize; // удаляем самый давно используемый
+    }
+}
+
+// Использование
+LruCache<String, String> cache = new LruCache<>(3);
+cache.put("a", "1");
+cache.put("b", "2");
+cache.put("c", "3");
+cache.get("a"); // "a" перемещается в конец, "b" теперь самый старый
+cache.put("d", "4"); // "b" вытесняется
+System.out.println(cache.keySet()); // [c, a, d]
+```
+
+**Потокобезопасный вариант:**
+```java
+// Для многопоточного доступа — использовать Collections.synchronizedMap
+Map<K, V> syncCache = Collections.synchronizedMap(new LruCache<>(100));
+
+// Или Caffeine/Guava Cache для production
+Cache<String, String> cache = Caffeine.newBuilder()
+    .maximumSize(100)
+    .expireAfterAccess(10, TimeUnit.MINUTES)
+    .build();
+```
+
+## Q44. Что такое `NavigableMap` и как использовать методы навигации `TreeMap`?
+
+`NavigableMap<K,V>` расширяет `SortedMap` методами навигации — поиском ближайших ключей по критерию "больше/меньше/включительно".
+
+```java
+TreeMap<Integer, String> map = new TreeMap<>();
+map.put(1, "one"); map.put(3, "three"); map.put(5, "five");
+map.put(7, "seven"); map.put(9, "nine");
+
+// Навигация
+map.floorKey(4);    // 3 — наибольший ключ <= 4
+map.ceilingKey(4);  // 5 — наименьший ключ >= 4
+map.lowerKey(5);    // 3 — строго меньше 5
+map.higherKey(5);   // 7 — строго больше 5
+
+// Поддиапазоны (views — изменения отражаются в оригинале!)
+SortedMap<Integer, String> sub = map.subMap(3, true, 7, true); // [3..7]
+SortedMap<Integer, String> head = map.headMap(5, false);        // [1..4]
+SortedMap<Integer, String> tail = map.tailMap(5, true);         // [5..9]
+
+// Обратный порядок
+NavigableMap<Integer, String> desc = map.descendingMap();
+map.descendingKeySet().forEach(k -> System.out.print(k + " ")); // 9 7 5 3 1
+
+// Практический пример: задачи планировщика
+TreeMap<Instant, Runnable> scheduler = new TreeMap<>();
+scheduler.put(Instant.now().plusSeconds(10), () -> task1());
+scheduler.put(Instant.now().plusSeconds(5), () -> task2());
+
+// Забрать все задачи, время которых пришло
+Map<Instant, Runnable> due = scheduler.headMap(Instant.now(), true);
+due.values().forEach(Runnable::run);
+due.clear();
+```
+
+## Q45. Что такое `PriorityQueue` и как реализовать кастомный порядок?
+
+`PriorityQueue<E>` — очередь с приоритетом, реализованная на основе **двоичной min-кучи**. Элементы извлекаются в порядке, определённом `Comparable` или `Comparator`.
+
+```java
+// Min-heap по умолчанию
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+minHeap.addAll(List.of(5, 1, 3, 2, 4));
+while (!minHeap.isEmpty()) {
+    System.out.print(minHeap.poll() + " "); // 1 2 3 4 5
+}
+
+// Max-heap через reverseOrder
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Comparator.reverseOrder());
+
+// Кастомный порядок для объектов
+record Task(String name, int priority) {}
+
+PriorityQueue<Task> taskQueue = new PriorityQueue<>(
+    Comparator.comparingInt(Task::priority).reversed() // высший приоритет первым
+);
+taskQueue.add(new Task("low", 1));
+taskQueue.add(new Task("high", 10));
+taskQueue.add(new Task("medium", 5));
+
+// Алгоритм: K наименьших элементов из большого массива
+static List<Integer> kSmallest(int[] nums, int k) {
+    // Max-heap размером k
+    PriorityQueue<Integer> heap = new PriorityQueue<>(k, Comparator.reverseOrder());
+    for (int n : nums) {
+        heap.offer(n);
+        if (heap.size() > k) heap.poll(); // убираем максимум
+    }
+    return new ArrayList<>(heap); // k наименьших
+}
+```
+
+**Сложность операций:**
+- `offer()`/`add()`: O(log n)
+- `poll()`/`remove()`: O(log n)
+- `peek()`: O(1)
+- Итерация: **не гарантирует порядок** (только при poll)
+- `contains()`/`remove(Object)`: O(n) — линейный поиск
+
+`PriorityQueue` **не потокобезопасна**. Для конкурентного использования — `PriorityBlockingQueue`.
+
+## Q46. Что такое `WeakHashMap` и когда его использовать?
+
+`WeakHashMap<K,V>` — `Map`, хранящая ключи через **слабые ссылки** (`WeakReference`). Когда ключ становится недостижимым (нет других сильных ссылок), GC может удалить запись из карты.
+
+```java
+WeakHashMap<Object, String> cache = new WeakHashMap<>();
+
+Object key1 = new Object();
+Object key2 = new Object();
+cache.put(key1, "value1");
+cache.put(key2, "value2");
+
+System.out.println(cache.size()); // 2
+
+key1 = null; // удаляем сильную ссылку на ключ
+System.gc();  // подсказываем GC (не гарантируется)
+
+// После GC запись с key1 может быть удалена
+System.out.println(cache.size()); // вероятно 1
+```
+
+**Практические применения:**
+
+```java
+// 1. Кэш метаданных объектов — данные живут столько же, сколько объект
+WeakHashMap<Object, Map<String, Object>> metadataCache = new WeakHashMap<>();
+
+// 2. Listener registry — автоматическая очистка "мёртвых" слушателей
+WeakHashMap<EventListener, Boolean> listeners = new WeakHashMap<>();
+listeners.put(myListener, Boolean.TRUE);
+// После GC мёртвых слушателей — они сами исчезают из listeners
+
+// 3. Мемоизация без утечки памяти
+WeakHashMap<ExpensiveKey, Result> memoTable = new WeakHashMap<>();
+```
+
+**Предостережения:**
+- Не подходит для кэша значений (ключ `String` из пула не собирается — будет жить вечно)
+- `size()` может изменяться между вызовами из-за GC
+- Не потокобезопасен — для конкурентного кэша использовать `java.lang.ref.WeakReference` с `ConcurrentHashMap` или Caffeine с `weakKeys()`
+
+Более подробно о новых возможностях Java 21 — в [вопросах по Java 17-21](java-17-21-interview.md), а о Stream API — в [вопросах по Stream API](java-stream-interview.md).
+
+---
+
+## See also
+
+- [Java Stream API](java-stream-interview.md) — вопросы по `Stream API`, тесно связаны с коллекциями
+- [Java Concurrency](java-concurrency-interview.md) — потокобезопасные коллекции и синхронизация
+- [Java Core](java-core-interview.md) — основы языка, контракт `equals`/`hashCode`, иммутабельность
+- [Java Generics](java-generics-interview.md) — параметризация коллекций, `PECS`, wildcards
+- [Java 8+](java-8-interview.md) — новые методы коллекций, `Stream API`, фабричные методы `List.of()`
+- [OOP & Java](java-oop-interview.md) — `Comparable`, `Comparator`, отношение is-a / has-a
+- [Система типов Java](java-types-interview.md) — `autoboxing` в коллекциях, производительность
+- [Java 17-21](java-17-21-interview.md) — `SequencedCollection`, улучшения в `Collections API`
+- [Алгоритмы и структуры данных](../../algorithms/algorithms-interview.md) — сложность операций, выбор структуры данных
+- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Iterator, Composite, Decorator в контексте коллекций

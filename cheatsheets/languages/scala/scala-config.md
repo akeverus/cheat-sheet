@@ -1,7 +1,11 @@
 ---
 title: "Scala Configuration"
 description: "Полное руководство по конфигурации в Scala: Typesafe Config, Play Configuration, переменные окружения"
-tags: ["scala", "configuration", "typesafe-config", "play-config"]
+tags:
+  - scala
+  - configuration
+  - typesafe-config
+  - play-config
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-basics.md", "scala/scala-play.md"]
 # **Scala Configuration**
 
 Кратко: полное руководство по конфигурации в **Scala**: **Typesafe Config**, **Play Configuration**, переменные окружения.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

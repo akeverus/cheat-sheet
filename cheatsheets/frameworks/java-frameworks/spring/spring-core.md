@@ -1,7 +1,15 @@
 ---
 title: "Spring Core: Inversion of Control и Dependency Injection"
 description: "Полное руководство по Spring Core: IoC контейнер, DI, ApplicationContext, Bean lifecycle, AOP, конфигурации и лучшие практики"
-tags: ["spring", "core", "ioc", "dependency-injection", "application-context", "aop", "java", "framework"]
+tags:
+  - spring
+  - core
+  - ioc
+  - dependency-injection
+  - application-context
+  - aop
+  - java
+  - framework
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md"]
 next: ["spring/spring-data-jpa.md", "spring/spring-boot.md", "spring/spring-aop.md"]
@@ -38,8 +46,6 @@ related: ["java/java-basics.md", "spring/spring-boot.md", "spring/spring-aop.md"
 │  Dependency Injection │ Bean Scopes │ Bean Lifecycle       │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

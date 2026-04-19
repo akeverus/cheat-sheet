@@ -1,15 +1,19 @@
 ---
 title: "Go: тестирование"
 description: "Полное руководство по тестированию в Go: unit тесты, table-driven tests, benchmarks, примеры, моки, интеграционные тесты"
-tags: ["go", "golang", "testing", "unit-tests", "benchmarks", "mocks"]
+tags:
+  - go
+  - golang
+  - testing
+  - unit-tests
+  - benchmarks
+  - mocks
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: тестирование
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

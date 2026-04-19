@@ -1,7 +1,10 @@
 ---
 title: "Spring WebFlux для Java"
 description: "Комплексное руководство по Spring WebFlux: реактивному веб-фреймворку для создания неблокирующих, асинхронных веб-приложений с использованием Project Reactor. Подробно рассматриваются reactive streams, Mono/Flux, WebClient, functional endpoints, backpressure, concurrency и produc"
-tags: ["frameworks", "java-frameworks", "spring-webflux"]
+tags:
+  - frameworks
+  - java-frameworks
+  - spring-webflux
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring WebFlux для Java
 
 Комплексное руководство по **Spring WebFlux**: реактивному веб-фреймворку для создания неблокирующих, асинхронных веб-приложений с использованием **Project Reactor**. Подробно рассматриваются **reactive streams**, **Mono**/**Flux**, **WebClient**, **functional endpoints**, **backpressure**, **concurrency** и **production deployment**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

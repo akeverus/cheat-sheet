@@ -1,7 +1,10 @@
 ---
 title: "TimescaleDB: PostgreSQL для временных рядов"
 description: "Комплексное руководство по использованию TimescaleDB — расширения PostgreSQL для работы с временными рядами."
-tags: ["databases", "time-series", "timescaledb-basics"]
+tags:
+  - databases
+  - time-series
+  - timescaledb-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **TimescaleDB**: **PostgreSQL** для временных рядов
 
 **Комплексное руководство по использованию `TimescaleDB` — расширения `PostgreSQL` для работы с временными рядами.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,15 +1,16 @@
 ---
 title: "Округление до ближайшей сотни (Round to Nearest Hundred)"
 description: "Описывается округление числа до ближайшей сотни: реализация «вверх» через Math.ceil() и целочисленное деление, округление вниз и до ближайшего через Math.round() и Math.floor(). Приводятся примеры на Java и Kotlin."
-tags: ["algorithms", "math", "round-to-nearest-hundred"]
+tags:
+  - algorithms
+  - math
+  - round-to-nearest-hundred
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Округление до ближайшей сотни (`Round to Nearest Hundred`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Описывается округление числа до ближайшей сотни: реализация «вверх» через `Math.ceil()` и целочисленное деление, округление вниз и до ближайшего через `Math.round()` и `Math.floor()`. Приводятся примеры на `Java` и `Kotlin`.
 

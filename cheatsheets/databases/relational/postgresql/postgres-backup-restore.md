@@ -1,7 +1,14 @@
 ---
 title: "PostgreSQL: Резервное копирование и восстановление"
 description: "Руководство по резервному копированию и восстановлению PostgreSQL: pg_dump, pg_restore, pg_basebackup, Continuous Archiving, Point-in-Time Recovery (PITR), именованные точки восстановления"
-tags: ["postgresql", "backup", "restore", "pg_dump", "pg_basebackup", "pitr", "continuous-archiving"]
+tags:
+  - postgresql
+  - backup
+  - restore
+  - pg_dump
+  - pg_basebackup
+  - pitr
+  - continuous-archiving
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
 next: ["databases/postgres-replication.md", "databases/postgres-high-availability.md"]

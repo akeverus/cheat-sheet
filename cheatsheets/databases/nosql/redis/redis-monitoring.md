@@ -1,7 +1,14 @@
 ---
 title: "Redis: Мониторинг"
 description: "Полное руководство по мониторингу Redis: метрики, алерты, дашборды, Prometheus, Grafana, health checks"
-tags: ["redis", "monitoring", "metrics", "alerting", "prometheus", "grafana", "health-checks"]
+tags:
+  - redis
+  - monitoring
+  - metrics
+  - alerting
+  - prometheus
+  - grafana
+  - health-checks
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md", "databases/redis-performance.md"]
 next: ["databases/redis-troubleshooting.md"]
@@ -781,7 +788,5 @@ public class RedisAlerting {
 - [Redis Exporter for Prometheus](https://github.com/oliver006/redis_exporter)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

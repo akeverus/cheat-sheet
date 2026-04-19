@@ -1,7 +1,10 @@
 ---
 title: "Slack Alerting"
 description: "Настройка доставки алертов и уведомлений в Slack: каналы, Incoming Webhooks, Slack API, форматирование (Block Kit, mrkdwn), интеграция с Prometheus/Alertmanager и другими системами мониторинга."
-tags: ["monitoring", "alerting", "slack-alerting"]
+tags:
+  - monitoring
+  - alerting
+  - slack-alerting
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Slack Alerting
 
 Настройка доставки алертов и уведомлений в Slack: каналы, Incoming Webhooks, Slack API, форматирование (Block Kit, mrkdwn), интеграция с Prometheus/Alertmanager и другими системами мониторинга.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

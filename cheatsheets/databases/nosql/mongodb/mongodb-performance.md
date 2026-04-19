@@ -1,7 +1,10 @@
 ---
 title: "MongoDB: Производительность и оптимизация - Полное руководство по тюнингу и мониторингу"
 description: "Комплексное руководство по оптимизации производительности MongoDB: индексы, запросы, память, мониторинг и best practices."
-tags: ["databases", "nosql", "mongodb-performance"]
+tags:
+  - databases
+  - nosql
+  - mongodb-performance
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Комплексное руководство по оптимизации производительности **MongoDB**: индексы, запросы, память, мониторинг и **best practices**.
 
 Это каноничный документ раздела по performance-тюнингу MongoDB.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

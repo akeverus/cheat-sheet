@@ -1,7 +1,10 @@
 ---
 title: "TestNG"
 description: "TestNG — фреймворк для тестирования на JVM (Java и др.): группы тестов, зависимости между методами, параметризация (@DataProvider, @Parameters), конфигурация через XML или аннотации, параллельный запуск, встроенные HTML/XML-отчёты. Часто используется с Selenium для UI-автоматизац"
-tags: ["testing", "unit-testing", "testng"]
+tags:
+  - testing
+  - unit-testing
+  - testng
 difficulty: "intermediate"
 prerequisites: []
 next: []

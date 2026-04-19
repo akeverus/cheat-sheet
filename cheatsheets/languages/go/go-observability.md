@@ -1,15 +1,19 @@
 ---
 title: "Go: наблюдаемость"
 description: "Полное руководство по наблюдаемости в Go: метрики, трейсинг, логирование, мониторинг"
-tags: ["go", "golang", "observability", "metrics", "tracing", "monitoring"]
+tags:
+  - go
+  - golang
+  - observability
+  - metrics
+  - tracing
+  - monitoring
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md", "go/go-logging.md"]
 updated: "2026-02-06"
 ---
 
 # Go: наблюдаемость
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

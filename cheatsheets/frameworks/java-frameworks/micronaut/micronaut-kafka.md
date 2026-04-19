@@ -1,7 +1,15 @@
 ---
 title: "Micronaut: Kafka Integration - Producers, Consumers и Streams"
 description: "Полное руководство по интеграции с Apache Kafka в Micronaut: producers, consumers, streams, transactions и best practices"
-tags: ["micronaut", "kafka", "messaging", "streams", "producers", "consumers", "java", "kotlin"]
+tags:
+  - micronaut
+  - kafka
+  - messaging
+  - streams
+  - producers
+  - consumers
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-reactive.md"]
 next: ["micronaut-reactive.md", "micronaut-cloud.md"]

@@ -1,4234 +1,2196 @@
 ---
 title: "Вопросы на собеседовании: Test Automation"
-description: "Краткие ответы по test automation: выбор фреймворков, архитектура автотестов, flaky-тесты, CI/CD и эксплуатация тестового контура."
-tags: ["interview", "testing", "test-automation-interview"]
+description: "Комплексные ответы по автоматизации тестирования: пирамида тестов, Selenium, REST Assured, CI/CD интеграция, flaky-тесты, Testcontainers, Page Object, BDD и best practices."
+tags:
+  - interview
+  - testing
+  - test-automation-interview
+aliases:
+  - "Test Automation"
+  - "Test Automation interview"
+  - "Автоматизация тестирования собеседование"
+  - "Selenium interview"
+  - "REST Assured interview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Test Automation`
 
-Краткие ответы по `Test Automation`: как строить устойчивый набор автотестов, интегрировать его в `CI/CD` и контролировать стоимость поддержки.
+Комплексные ответы по автоматизации тестирования: как строить устойчивый набор автотестов, выбирать инструменты, интегрировать тесты в `CI/CD` и контролировать стоимость поддержки.
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: фокус этого документа — процессы, инструменты и масштабирование автоматизации тестирования в команде.
+**Автоматизация тестирования** -- ключевая дисциплина современной разработки. Этот документ покрывает инструменты (`Selenium`, `REST Assured`, `Testcontainers`, `Playwright`), паттерны (`Page Object`, `BDD`, `Data-Driven`), интеграцию с `CI/CD` и стратегию управления тестовым набором.
 
 ## Роль документа в связке testing
 
 - Этот файл отвечает за **automation-уровень**: инструменты, framework, flaky management, CI/CD orchestration.
-- За принципы unit-тестов и качество локальных проверок отвечает [`unit-testing-interview.md`](unit-testing-interview.md).
-- За проверку реальных интеграций и окружений отвечает [`integration-testing-interview.md`](integration-testing-interview.md).
-- За стратегию «что и почему автоматизируем» отвечает [`test-strategies-interview.md`](test-strategies-interview.md).
+- За принципы unit-тестов и качество локальных проверок отвечает [Unit Testing](unit-testing-interview.md).
+- За проверку реальных интеграций и окружений отвечает [Integration Testing](integration-testing-interview.md).
+- За стратегию "что и почему автоматизируем" отвечает [Стратегии тестирования](test-strategies-interview.md).
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/)
-- [REST Assured](https://rest-assured.io/)
-- [Cucumber](https://cucumber.io/docs/)
-- [Test Automation University](https://testautomationu.applitools.com/)
-- [Automation Panda](https://automationpanda.com/)
-
-### См. также
-
-- [`unit-testing-interview.md`](unit-testing-interview.md) — unit-тестирование
-- [`integration-testing-interview.md`](integration-testing-interview.md) — интеграционное тестирование
-- [`test-strategies-interview.md`](test-strategies-interview.md) — стратегии тестирования
+- [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/) -- официальная документация Selenium
+- [REST Assured](https://rest-assured.io/) -- фреймворк для API-тестирования
+- [Testcontainers](https://testcontainers.com/) -- интеграционные тесты с Docker-контейнерами
+- [Cucumber](https://cucumber.io/docs/) -- BDD-фреймворк
+- [Playwright for Java](https://playwright.dev/java/) -- современный фреймворк для UI-тестирования
+- [A Guide to REST-assured (Baeldung)](https://www.baeldung.com/rest-assured-tutorial) -- подробный гайд по REST Assured
+- [Selenium with JUnit/TestNG (Baeldung)](https://www.baeldung.com/java-selenium-with-junit-and-testng) -- интеграция Selenium с тестовыми фреймворками
+- [Page Object Pattern (Baeldung)](https://www.baeldung.com/selenium-webdriver-page-object) -- паттерн Page Object
+- [Testcontainers + Spring Boot (Baeldung)](https://www.baeldung.com/spring-boot-testcontainers-integration-test) -- Testcontainers в Spring Boot
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
-**Основы Test Automation**
-- [Q1. Что такое test automation и зачем она нужна?](#q1-что-такое-test-automation-и-зачем-она-нужна)
-- [Q2. Какие инструменты используются для test automation?](#q2-какие-инструменты-используются-для-test-automation)
-- [Q9. Какие паттерны используются в test automation?](#q9-какие-паттерны-используются-в-test-automation)
-- [Q10. Как измерить ROI от test automation?](#q10-как-измерить-roi-от-test-automation)
-- [Q11. Как выбрать тесты для автоматизации?](#q11-как-выбрать-тесты-для-автоматизации)
+**Основы и стратегия автоматизации**
+- [Q1. (!) Что такое автоматизация тестирования и зачем она нужна?](#q1--что-такое-автоматизация-тестирования-и-зачем-она-нужна)
+- [Q2. (!) Что такое пирамида тестирования?](#q2--что-такое-пирамида-тестирования)
+- [Q3. Какие инструменты используются для автоматизации тестирования в Java?](#q3-какие-инструменты-используются-для-автоматизации-тестирования-в-java)
+- [Q4. Как выбрать тесты для автоматизации?](#q4-как-выбрать-тесты-для-автоматизации)
+- [Q5. Как измерить ROI автоматизации тестирования?](#q5-как-измерить-roi-автоматизации-тестирования)
+- [Q6. (!) Какие паттерны используются в автоматизации тестирования?](#q6--какие-паттерны-используются-в-автоматизации-тестирования)
 
-**UI и API автоматизация**
-- [Q3. Как автоматизировать UI тестирование с Selenium?](#q3-как-автоматизировать-ui-тестирование-с-selenium)
-- [Q4. Как автоматизировать API тестирование?](#q4-как-автоматизировать-api-тестирование)
-- [Q5. Что такое Page Object Model?](#q5-что-такое-page-object-model)
-- [Q17. Как автоматизировать тестирование мобильных приложений?](#q17-как-автоматизировать-тестирование-мобильных-приложений)
-- [Q18. Что такое Visual Regression Testing?](#q18-что-такое-visual-regression-testing)
+**Selenium и UI-автоматизация**
+- [Q7. (!) Как работает Selenium WebDriver?](#q7--как-работает-selenium-webdriver)
+- [Q8. Какие стратегии поиска элементов есть в Selenium?](#q8-какие-стратегии-поиска-элементов-есть-в-selenium)
+- [Q9. (!) Что такое Page Object Model?](#q9--что-такое-page-object-model)
+- [Q10. Чем отличаются implicit, explicit и fluent waits в Selenium?](#q10-чем-отличаются-implicit-explicit-и-fluent-waits-в-selenium)
+- [Q11. Что такое Selenium Grid и как он работает?](#q11-что-такое-selenium-grid-и-как-он-работает)
+- [Q12. Чем Playwright отличается от Selenium?](#q12-чем-playwright-отличается-от-selenium)
+- [Q13. Как работать с JavaScript-алертами и iframe в Selenium?](#q13-как-работать-с-javascript-алертами-и-iframe-в-selenium)
 
-**Data-Driven, BDD и тестовые данные**
-- [Q6. Как организовать тестовые данные в автоматизации?](#q6-как-организовать-тестовые-данные-в-автоматизации)
-- [Q12. Что такое Data-Driven Testing?](#q12-что-такое-data-driven-testing)
-- [Q14. Что такое Keyword-Driven Testing?](#q14-что-такое-keyword-driven-testing)
-- [Q15. Как организовать test data management?](#q15-как-организовать-test-data-management)
-- [Q16. Что такое Behavior-Driven Development (BDD)?](#q16-что-такое-behavior-driven-development-bdd)
+**API-тестирование**
+- [Q14. (!) Как автоматизировать API-тестирование с REST Assured?](#q14--как-автоматизировать-api-тестирование-с-rest-assured)
+- [Q15. Как валидировать JSON Schema в API-тестах?](#q15-как-валидировать-json-schema-в-api-тестах)
+- [Q16. Что такое Contract Testing и зачем он нужен?](#q16-что-такое-contract-testing-и-зачем-он-нужен)
+- [Q17. Как тестировать аутентификацию и авторизацию в API?](#q17-как-тестировать-аутентификацию-и-авторизацию-в-api)
 
-**CI/CD, интеграция и Continuous Testing**
-- [Q7. Как интегрировать автоматизацию в CI/CD?](#q7-как-интегрировать-автоматизацию-в-cicd)
-- [Q22. Что такое Continuous Testing?](#q22-что-такое-continuous-testing)
-- [Q24. Что такое Test Environment Management?](#q24-что-такое-test-environment-management)
-- [Q28. Что такое Test Orchestration?](#q28-что-такое-test-orchestration)
+**Testcontainers и тестовая инфраструктура**
+- [Q18. (!) Что такое Testcontainers и как их использовать?](#q18--что-такое-testcontainers-и-как-их-использовать)
+- [Q19. Как организовать тестовые данные?](#q19-как-организовать-тестовые-данные)
+- [Q20. Что такое WireMock и когда его использовать?](#q20-что-такое-wiremock-и-когда-его-использовать)
+
+**Data-Driven, BDD и параметризация**
+- [Q21. Что такое Data-Driven Testing?](#q21-что-такое-data-driven-testing)
+- [Q22. (!) Что такое BDD и как работает Cucumber?](#q22--что-такое-bdd-и-как-работает-cucumber)
+- [Q23. Что такое Keyword-Driven Testing?](#q23-что-такое-keyword-driven-testing)
+
+**CI/CD и Continuous Testing**
+- [Q24. (!) Как интегрировать автотесты в CI/CD?](#q24--как-интегрировать-автотесты-в-cicd)
+- [Q25. (!) Что такое Continuous Testing?](#q25--что-такое-continuous-testing)
+- [Q26. Как организовать параллельное выполнение тестов?](#q26-как-организовать-параллельное-выполнение-тестов)
+- [Q27. Что такое Test Orchestration?](#q27-что-такое-test-orchestration)
+
+**Flaky-тесты и стабильность**
+- [Q28. (!) Что такое flaky-тесты и как с ними бороться?](#q28--что-такое-flaky-тесты-и-как-с-ними-бороться)
+- [Q29. Как диагностировать причины нестабильности тестов?](#q29-как-диагностировать-причины-нестабильности-тестов)
 
 **Специализированное тестирование**
-- [Q19. Как автоматизировать Performance Testing?](#q19-как-автоматизировать-performance-testing)
-- [Q21. Как автоматизировать Accessibility Testing?](#q21-как-автоматизировать-accessibility-testing)
-- [Q23. Как автоматизировать Security Testing?](#q23-как-автоматизировать-security-testing)
-- [Q29. Как автоматизировать Compatibility Testing?](#q29-как-автоматизировать-compatibility-testing)
+- [Q30. Как автоматизировать Performance Testing?](#q30-как-автоматизировать-performance-testing)
+- [Q31. Что такое Visual Regression Testing?](#q31-что-такое-visual-regression-testing)
+- [Q32. Как автоматизировать Accessibility Testing?](#q32-как-автоматизировать-accessibility-testing)
+- [Q33. Как автоматизировать Security Testing?](#q33-как-автоматизировать-security-testing)
+- [Q34. Как автоматизировать тестирование мобильных приложений?](#q34-как-автоматизировать-тестирование-мобильных-приложений)
 
-**Maintenance, flaky tests и best practices**
-- [Q8. Как поддерживать автоматизированные тесты?](#q8-как-поддерживать-автоматизированные-тесты)
-- [Q13. Как обрабатывать flaky tests?](#q13-как-обрабатывать-flaky-tests)
-- [Q20. Что такое Test Reporting и Dashboards?](#q20-что-такое-test-reporting-и-dashboards)
-- [Q25. Как автоматизировать Smoke Testing?](#q25-как-автоматизировать-smoke-testing)
-- [Q26. Что такое Test Maintenance Strategy?](#q26-что-такое-test-maintenance-strategy)
-- [Q27. Как автоматизировать Regression Testing?](#q27-как-автоматизировать-regression-testing)
-- [Q30. Best practices для test automation?](#q30-best-practices-для-test-automation)
+**Reporting, метрики и управление**
+- [Q35. (!) Что такое Test Reporting и какие метрики отслеживать?](#q35--что-такое-test-reporting-и-какие-метрики-отслеживать)
+- [Q36. Что такое Test Environment Management?](#q36-что-такое-test-environment-management)
+- [Q37. Как автоматизировать Smoke Testing?](#q37-как-автоматизировать-smoke-testing)
+- [Q38. Как автоматизировать Regression Testing?](#q38-как-автоматизировать-regression-testing)
 
-## Q1. Что такое test automation и зачем она нужна?
+**Mutation Testing и качество тестов**
+- [Q39. (!) Что такое Mutation Testing?](#q39--что-такое-mutation-testing)
+- [Q40. Как оценить качество тестового покрытия?](#q40-как-оценить-качество-тестового-покрытия)
 
-`Test` automation — это использование программного обеспечения для автоматического выполнения тестовых сценариев с целью проверки корректности работы программного обеспечения.
+**Архитектура тестового фреймворка**
+- [Q41. Как спроектировать архитектуру тестового фреймворка?](#q41-как-спроектировать-архитектуру-тестового-фреймворка)
+- [Q42. (!) Что такое Test Maintenance Strategy?](#q42--что-такое-test-maintenance-strategy)
+- [Q43. Как организовать тестирование микросервисов?](#q43-как-организовать-тестирование-микросервисов)
+- [Q44. Что такое Test Doubles и какие виды бывают?](#q44-что-такое-test-doubles-и-какие-виды-бывают)
+- [Q45. Best practices для автоматизации тестирования?](#q45-best-practices-для-автоматизации-тестирования)
 
-### Преимущества test automation
+**Дополнительные темы**
+- [Q46. (!) Как реализовать Page Object Model с Playwright для Java?](#q46--как-реализовать-page-object-model-с-playwright-для-java)
+- [Q47. Как писать Gherkin-сценарии и шаговые определения в Cucumber?](#q47-как-писать-gherkin-сценарии-и-шаговые-определения-в-cucumber)
+- [Q48. Как организовать TestNG Suite для параллельного запуска?](#q48-как-организовать-testng-suite-для-параллельного-запуска)
+- [Q49. (!) Как применять паттерн Screenplay в автоматизации?](#q49--как-применять-паттерн-screenplay-в-автоматизации)
+- [Q50. Как тестировать GraphQL API?](#q50-как-тестировать-graphql-api)
 
-#### 1. Скорость и эффективность
+---
+
+## Q1. (!) Что такое автоматизация тестирования и зачем она нужна?
+
+**Автоматизация тестирования** -- использование специализированного ПО для автоматического выполнения тестовых сценариев, сравнения результатов с ожидаемыми и генерации отчётов.
+
+**Основные преимущества:**
+
+| Аспект | Ручное тестирование | Автоматизированное |
+|--------|--------------------|--------------------|
+| Скорость | 5-10 мин/тест | 5-30 сек/тест |
+| Повторяемость | Субъективна | 100% детерминирована |
+| Масштабируемость | Линейная (+ люди) | Экспоненциальная (+ железо) |
+| Стоимость в долгосрочной перспективе | Растёт | Снижается |
+| Обратная связь | Часы/дни | Минуты |
+
+**Когда автоматизировать:**
+- Тест выполняется регулярно (регрессия)
+- Тест стабилен и редко меняется
+- Тест критичен для бизнеса
+- Тест требует большого объёма данных (`Data-Driven`)
+- Тест нужен на нескольких окружениях / браузерах
+
+**Когда НЕ автоматизировать:**
+- Exploratory testing (исследовательское)
+- Одноразовые проверки
+- UX/юзабилити тестирование
+- Тесты, которые меняются каждый спринт
+
+## Q2. (!) Что такое пирамида тестирования?
+
+**Пирамида тестирования** (Test Pyramid, введена Майком Коном) -- модель, описывающая оптимальное распределение тестов по уровням. Чем выше уровень -- тем меньше тестов, но тем они дороже и медленнее.
+
+```mermaid
+graph TB
+    subgraph Пирамида тестирования
+        E2E["🔺 E2E / UI тесты<br/>5-10% | медленные, хрупкие"]
+        INT["🔶 Интеграционные тесты<br/>20-30% | средняя скорость"]
+        UNIT["🟩 Unit-тесты<br/>60-70% | быстрые, дешёвые"]
+    end
+
+    UNIT --> INT --> E2E
+
+    style E2E fill:#ff6b6b,color:#fff
+    style INT fill:#ffa726,color:#fff
+    style UNIT fill:#66bb6a,color:#fff
+```
+
+| Уровень | Количество | Скорость | Стоимость поддержки | Примеры |
+|---------|-----------|----------|--------------------| --------|
+| `Unit` | 60-70% | мс | Низкая | `JUnit 5`, `Mockito` |
+| `Integration` | 20-30% | секунды | Средняя | `Testcontainers`, `@SpringBootTest` |
+| `E2E / UI` | 5-10% | минуты | Высокая | `Selenium`, `Playwright` |
+
+**Антипаттерн -- "Перевёрнутая пирамида"** (Ice Cream Cone): много E2E-тестов, мало unit. Результат -- медленный CI, flaky-тесты, высокая стоимость поддержки.
+
+Подробнее о каждом уровне -- в [вопросах по Unit Testing](unit-testing-interview.md) и [вопросах по Integration Testing](integration-testing-interview.md).
+
+## Q3. Какие инструменты используются для автоматизации тестирования в Java?
+
+| Категория | Инструмент | Назначение |
+|-----------|-----------|------------|
+| Unit-тесты | `JUnit 5`, `TestNG` | Фреймворк для запуска тестов |
+| Моки | `Mockito`, `WireMock` | Подмена зависимостей |
+| API-тесты | `REST Assured`, `WebClient` | Тестирование REST API |
+| UI-тесты | `Selenium`, `Playwright` | Браузерная автоматизация |
+| BDD | `Cucumber`, `JBehave` | Behaviour-Driven Development |
+| Контейнеры | `Testcontainers` | Docker-контейнеры для тестов |
+| Нагрузка | `JMeter`, `Gatling` | Performance testing |
+| Contract | `Pact`, `Spring Cloud Contract` | Контрактное тестирование |
+| Mutation | `PIT (pitest)` | Мутационное тестирование |
+| Покрытие | `JaCoCo` | Code coverage |
 
 ```java
-// Ручной тест: занимает 5 минут на выполнение
-// Автоматизированный тест: занимает 30 секунд
+// build.gradle -- типичные зависимости для автоматизации
+dependencies {
+    // Unit и интеграционные тесты
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
 
-public class PerformanceComparison {
+    // API-тестирование
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'io.rest-assured:json-schema-validator'
 
- public void manualVsAutomated() {
- // Manual testing scenario
- ManualTest manual = new ManualTest();
- long manualTime = manual.executeLoginTest(); // 5 minutes
+    // UI-тестирование
+    testImplementation 'org.seleniumhq.selenium:selenium-java'
+    testImplementation 'io.github.bonigarcia:webdrivermanager'
 
- // Automated testing scenario
- AutomatedTest automated = new AutomatedTest();
- long automatedTime = automated.executeLoginTest(); // 30 seconds
+    // BDD
+    testImplementation 'io.cucumber:cucumber-java'
+    testImplementation 'io.cucumber:cucumber-spring'
 
- double speedImprovement = (double) manualTime / automatedTime; // 10x faster
-
- // Automated tests can run 24/7
- int nightlyRuns = 8; // Every 3 hours during 24 hours
- int totalAutomatedTests = nightlyRuns * 30; // Month of testing
- int equivalentManualDays = totalAutomatedTests * 5 / (60 * 8); // Manual days needed
-
- System.out.println("Speed improvement: " + speedImprovement + "x");
- System.out.println("Automated test capacity: " + equivalentManualDays + " manual testing days per month");
- }
+    // Мутационное тестирование
+    pitest 'org.pitest:pitest-junit5-plugin'
 }
 ```
 
-#### 2. Надежность и повторяемость
+## Q4. Как выбрать тесты для автоматизации?
+
+Решение о том, что автоматизировать, принимается по матрице:
+
+| Критерий | Вес | Высокий приоритет | Низкий приоритет |
+|----------|-----|-------------------|------------------|
+| Частота выполнения | 30% | Каждый коммит | Раз в квартал |
+| Бизнес-критичность | 25% | Оплата, авторизация | Настройки UI |
+| Стабильность требований | 20% | Ядро системы | Экспериментальные фичи |
+| Техническая сложность | 15% | Автоматизируемо | Нужен человек (UX) |
+| Время ручного теста | 10% | > 10 мин | < 1 мин |
+
+**Правило**: начинать автоматизацию с `happy path` критичных сценариев, затем расширять на граничные случаи. Подробнее о стратегии выбора -- в [Стратегии тестирования](test-strategies-interview.md).
+
+## Q5. Как измерить ROI автоматизации тестирования?
+
+**Формула ROI:**
+
+```
+ROI = (Экономия - Затраты) / Затраты × 100%
+
+Экономия = (Время_ручного_теста × Кол-во_запусков × Стоимость_часа) - Стоимость_поддержки_автотеста
+Затраты = Время_разработки_теста × Стоимость_часа + Инструменты
+```
+
+**Точка окупаемости** (breakeven) обычно наступает после 5-15 запусков автотеста. Ключевые метрики:
+
+- **Test Automation Rate** -- % автоматизированных тестов от общего набора
+- **Defect Detection Rate** -- % дефектов, найденных автотестами
+- **Execution Time Savings** -- сокращение времени регрессии
+- **Cost per Defect** -- стоимость нахождения одного бага
+
+## Q6. (!) Какие паттерны используются в автоматизации тестирования?
+
+| Паттерн | Описание | Когда использовать |
+|---------|---------|-------------------|
+| `Page Object Model` | Инкапсуляция UI-страницы в объект | UI-тесты |
+| `Page Factory` | Инициализация элементов через аннотации | `Selenium` с `@FindBy` |
+| `Screenplay` | Actor-centric модель | Сложные user journey |
+| `Builder` | Создание тестовых данных | Любые тесты |
+| `Data-Driven` | Параметризация тестов данными | Много входных комбинаций |
+| `Keyword-Driven` | Действия как ключевые слова | BDD, нетехнические стейкхолдеры |
+| `Component Object` | Переиспользуемые UI-компоненты | Header, footer, навигация |
+
+```mermaid
+graph LR
+    subgraph Архитектура тестового фреймворка
+        TEST[Тестовый класс] --> PO[Page Objects]
+        TEST --> API[API Client]
+        TEST --> DATA[Test Data Builder]
+        PO --> DRIVER[WebDriver]
+        API --> REST[REST Assured]
+        DATA --> DB[(БД / Fixtures)]
+        DRIVER --> BROWSER[Браузер]
+    end
+```
+
+---
+
+## Q7. (!) Как работает `Selenium WebDriver`?
+
+`Selenium WebDriver` -- инструмент для автоматизации браузера. Взаимодействует с браузером через нативный драйвер (ChromeDriver, GeckoDriver), используя протокол `W3C WebDriver`.
+
+```mermaid
+sequenceDiagram
+    participant Test as Тест (Java)
+    participant Driver as WebDriver API
+    participant Browser as ChromeDriver
+    participant Page as Браузер
+
+    Test->>Driver: findElement(By.id("login"))
+    Driver->>Browser: HTTP POST /session/{id}/element
+    Browser->>Page: Найти элемент в DOM
+    Page-->>Browser: Element ID
+    Browser-->>Driver: JSON Response
+    Driver-->>Test: WebElement
+    Test->>Driver: element.click()
+    Driver->>Browser: HTTP POST /element/{id}/click
+    Browser->>Page: Клик по элементу
+```
 
 ```java
-public class ReliabilityComparison {
+// Базовый пример Selenium-теста с JUnit 5
+class LoginSeleniumTest {
 
- public void humanVsMachine() {
- // Human testing error rate:2-5%
- double humanErrorRate = 0.03;
+    private WebDriver driver;
 
- // Machine testing error rate:0.1%
- double machineErrorRate = 0.001;
+    @BeforeEach
+    void setUp() {
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless", "--no-sandbox", "--disable-dev-shm-usage");
+        driver = new ChromeDriver(options);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+    }
 
- // Test suite with 1000 tests
- int testSuiteSize = 1000;
+    @AfterEach
+    void tearDown() {
+        if (driver != null) driver.quit();
+    }
 
- // Human errors per test run
- int humanErrors = (int) (testSuiteSize * humanErrorRate);
+    @Test
+    void shouldLoginSuccessfully() {
+        driver.get("http://localhost:8080/login");
 
- // Machine errors per test run
- int machineErrors = (int) (testSuiteSize * machineErrorRate);
+        driver.findElement(By.id("email")).sendKeys("user@example.com");
+        driver.findElement(By.id("password")).sendKeys("secret");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
 
- // Over 100 test runs (e.g., regression testing)
- int totalRuns = 100;
- int totalHumanErrors = humanErrors * totalRuns;
- int totalMachineErrors = machineErrors * totalRuns;
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        wait.until(ExpectedConditions.urlContains("/dashboard"));
 
- System.out.println("Human errors over 100 runs: " + totalHumanErrors);
- System.out.println("Machine errors over 100 runs: " + totalMachineErrors);
- System.out.println("Reliability improvement: " +
- (double) totalHumanErrors / totalMachineErrors + "x");
- }
+        String welcome = driver.findElement(By.className("welcome")).getText();
+        assertEquals("Welcome, User!", welcome);
+    }
 }
 ```
 
-#### 3. Раннее обнаружение регрессий
+## Q8. Какие стратегии поиска элементов есть в `Selenium`?
+
+| Локатор | Пример | Надёжность | Скорость |
+|---------|--------|-----------|----------|
+| `By.id()` | `By.id("login-btn")` | Высокая | Быстрая |
+| `By.name()` | `By.name("email")` | Высокая | Быстрая |
+| `By.cssSelector()` | `By.cssSelector(".btn-primary")` | Высокая | Быстрая |
+| `By.xpath()` | `By.xpath("//div[@class='msg']")` | Средняя | Средняя |
+| `By.linkText()` | `By.linkText("Sign Up")` | Низкая | Быстрая |
+| `By.className()` | `By.className("error")` | Средняя | Быстрая |
+
+**Best practices для локаторов:**
+1. Предпочитать `id` и `data-testid` атрибуты
+2. Избегать XPath с абсолютными путями (`/html/body/div[2]/...`)
+3. Использовать CSS-селекторы вместо XPath где возможно
+4. Добавлять `data-testid` атрибуты в HTML специально для тестов
 
 ```java
-// Regression test that runs on every commit
-@Test
-public void shouldMaintainLoginFunctionality() {
- // This test runs automatically on every code change
- // If login breaks due to refactoring, test fails immediately
-
- LoginPage loginPage = new LoginPage(driver);
- DashboardPage dashboard = loginPage.login("user@example.com", "password");
-
- assertTrue(dashboard.isUserLoggedIn());
- assertEquals("Welcome, User!", dashboard.getWelcomeMessage());
-}
-
-// CI/CD integration ensures immediate feedback
-/*.github/workflows/regression.yml
-on: [push]
-jobs:
- regression:
- runs-on: ubuntu-latest
- steps:
- - uses: actions/checkout@v3
- - name: Run regression tests
- run: mvn test -Dtest=RegressionTestSuite
- - name: Notify on failure
- if: failure()
- run: curl -X POST -H 'Content-type: application/json'
- --data '{"text":"Regression tests failed!"}'
- $SLACK_WEBHOOK
-*/
+// Приоритет локаторов (от лучшего к худшему)
+WebElement byId       = driver.findElement(By.id("submit-btn"));           // 1. id
+WebElement byTestId   = driver.findElement(By.cssSelector("[data-testid='submit']")); // 2. data-testid
+WebElement byCss      = driver.findElement(By.cssSelector("form .btn-primary"));      // 3. CSS
+WebElement byXpath    = driver.findElement(By.xpath("//button[text()='Submit']"));     // 4. XPath (крайний случай)
 ```
 
-#### 4. Масштабируемость
+## Q9. (!) Что такое `Page Object Model`?
+
+`Page Object Model` (`POM`) -- паттерн, при котором каждая страница (или её логическая часть) представлена отдельным классом. Локаторы и действия инкапсулированы, тест работает с высокоуровневым API.
+
+**Преимущества:** уменьшение дублирования, упрощение поддержки (при изменении UI правим один класс, а не все тесты), читаемость.
 
 ```java
-public class ScalabilityDemo {
-
- public void demonstrateScalability() {
- // Manual testing scalability
- int manualTesters = 5;
- int testsPerDayPerTester = 20;
- int manualCapacity = manualTesters * testsPerDayPerTester; // 100 tests/day
-
- // Automated testing scalability
- int automatedTestRuns = 24; // Every hour
- int testsPerRun = 500;
- int automatedCapacity = automatedTestRuns * testsPerRun; // 12,000 tests/day
-
- double scalabilityFactor = (double) automatedCapacity / manualCapacity;
-
- System.out.println("Manual capacity: " + manualCapacity + " tests/day");
- System.out.println("Automated capacity: " + automatedCapacity + " tests/day");
- System.out.println("Scalability improvement: " + scalabilityFactor + "x");
-
- // Automated tests can run across multiple environments simultaneously
- int environments = 4; // dev, staging, pre-prod, prod
- int totalAutomatedCapacity = automatedCapacity * environments;
-
- System.out.println("Multi-environment capacity: " + totalAutomatedCapacity + " tests/day");
- }
-}
-```
-
-### Когда автоматизировать тесты?
-
-```java
-public class AutomationCandidateEvaluator {
-
- public AutomationDecision evaluateTestForAutomation(TestCase testCase) {
- AutomationDecision decision = new AutomationDecision();
-
- // High-value automation candidates
- boolean isHighValue =
- testCase.isFrequentlyExecuted() && // Runs often
- testCase.isBusinessCritical() && // Important functionality
- testCase.isStable() && // Doesn't change frequently
- testCase.isTimeConsuming() && // Takes long time manually
- testCase.isTechnicallyFeasible(); // Can be automated
-
- if (isHighValue) {
- decision.setShouldAutomate(true);
- decision.setPriority(Priority.HIGH);
- decision.setReason("High business value, stable, frequently executed");
- }
-
- // Medium-value candidates
- boolean isMediumValue =
- testCase.isRegressionTest() || // Regression protection needed
- testCase.isDataDriven() || // Multiple data sets
- testCase.isComplexWorkflow(); // Complex business logic
-
- if (isMediumValue &&!isHighValue) {
- decision.setShouldAutomate(true);
- decision.setPriority(Priority.MEDIUM);
- decision.setReason("Suitable for automation with medium priority");
- }
-
- // Low-value or not suitable
- if (!isHighValue &&!isMediumValue) {
- decision.setShouldAutomate(false);
- decision.setReason("Better left manual or not worth automating");
- }
-
- return decision;
- }
-
- public static class AutomationDecision {
- private boolean shouldAutomate;
- private Priority priority;
- private String reason;
-
- // getters and setters... }
-
- public enum Priority {
- HIGH, MEDIUM, LOW
- }
-}
-```
-
-## Q2. Какие инструменты используются для test automation?
-
-### 1. `Unit Testing Frameworks`
-
-```java
-// JUnit 5 - Modern testing framework
-@SpringBootTest
-@ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
-
- @Mock
- private UserRepository userRepository;
-
- @Autowired
- private UserService userService;
-
- @Test
- @DisplayName("Should create user successfully")
- void shouldCreateUserSuccessfully() {
- // Given
- User user = new User("john@example.com", "password");
- when(userRepository.save(any(User.class))).thenReturn(user);
-
- // When
- User created = userService.createUser(user);
-
- // Then
- assertNotNull(created);
- verify(userRepository).save(user);
- }
-
- @ParameterizedTest
- @ValueSource(strings = {"", "invalid-email", "@example.com"})
- void shouldRejectInvalidEmails(String email) {
- assertThrows(IllegalArgumentException.class, () -> {
- userService.createUser(new User(email, "password"));
- });
- }
-}
-```
-
-### 2. `API Testing Tools`
-
-```java
-// Rest Assured - Fluent API testing
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class UserApiTest {
-
- @Autowired
- private TestRestTemplate restTemplate;
-
- @Test
- void shouldCreateUserViaApi() {
- // Using Rest Assured with Spring Boot
- given().contentType(ContentType.JSON).body("""
- {
- "email": "john@example.com",
- "password": "password123"
- }
- """).when().post("/api/users").then().statusCode(201).body("email", equalTo("john@example.com")).body("id", notNullValue());
- }
-
- @Test
- void shouldHandleValidationErrors() {
- given().contentType(ContentType.JSON).body("""
- {
- "email": "invalid-email",
- "password": "short"
- }
- """).when().post("/api/users").then().statusCode(400).body("errors.email", hasItem("Invalid email format")).body("errors.password", hasItem("Password too short"));
- }
-}
-```
-
-### 3. `UI Testing Frameworks`
-
-```java
-// Selenium WebDriver with JUnit 5
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class LoginUITest {
-
- private WebDriver driver;
-
- @BeforeEach
- void setUp() {
- // Setup WebDriver
- ChromeOptions options = new ChromeOptions();
- options.addArguments("--headless"); // Run in headless mode for CI
- options.addArguments("--no-sandbox");
- options.addArguments("--disable-dev-shm-usage");
-
- driver = new ChromeDriver(options);
-
- // Navigate to application
- driver.get("http://localhost:" + port);
- }
-
- @AfterEach
- void tearDown() {
- if (driver!= null) {
- driver.quit();
- }
- }
-
- @Test
- void shouldLoginSuccessfully() {
- // Find elements
- WebElement emailField = driver.findElement(By.id("email"));
- WebElement passwordField = driver.findElement(By.id("password"));
- WebElement loginButton = driver.findElement(By.id("login-button"));
-
- // Perform login
- emailField.sendKeys("user@example.com");
- passwordField.sendKeys("password");
- loginButton.click();
-
- // Wait for redirect and verify
- WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
- wait.until(ExpectedConditions.urlContains("/dashboard"));
-
- WebElement welcomeMessage = driver.findElement(By.className("welcome-message"));
- assertEquals("Welcome, User!", welcomeMessage.getText());
- }
-
- @Test
- void shouldShowErrorForInvalidCredentials() {
- WebElement emailField = driver.findElement(By.id("email"));
- WebElement passwordField = driver.findElement(By.id("password"));
- WebElement loginButton = driver.findElement(By.id("login-button"));
-
- emailField.sendKeys("invalid@example.com");
- passwordField.sendKeys("wrongpassword");
- loginButton.click();
-
- WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
- WebElement errorMessage = wait.until(
- ExpectedConditions.visibilityOfElementLocated(By.className("error-message")));
-
- assertEquals("Invalid credentials", errorMessage.getText());
- }
-}
-```
-
-### 4. `BDD Frameworks`
-
-```java
-// Cucumber with JUnit 5
-@SpringBootTest
-public class UserRegistrationBDDTest {
-
- @Autowired
- private UserService userService;
-
- private UserRegistrationResult result;
-
- @Given("a user wants to register with email {string}")
- public void aUserWantsToRegister(String email) {
- // Setup test context
- this.email = email;
- }
-
- @When("they submit valid registration details")
- public void theySubmitValidRegistrationDetails() {
- UserRegistrationRequest request = new UserRegistrationRequest(email, "password123");
- result = userService.registerUser(request);
- }
-
- @Then("the registration should be successful")
- public void theRegistrationShouldBeSuccessful() {
- assertNotNull(result.getUserId());
- assertEquals(RegistrationStatus.SUCCESS, result.getStatus());
- }
-
- @Then("a welcome email should be sent")
- public void aWelcomeEmailShouldBeSent() {
- // Verify email was sent
- verify(emailService).sendWelcomeEmail(email);
- }
-
- @When("they submit invalid email format")
- public void theySubmitInvalidEmailFormat() {
- UserRegistrationRequest request = new UserRegistrationRequest("invalid-email", "password123");
- try {
- userService.registerUser(request);
- } catch (ValidationException e) {
- this.exception = e;
- }
- }
-
- @Then("the registration should fail with validation error")
- public void theRegistrationShouldFailWithValidationError() {
- assertNotNull(exception);
- assertTrue(exception.getErrors().contains("Invalid email format"));
- }
-}
-```
-
-### 5. `Mobile Testing Frameworks`
-
-```java
-// Appium for mobile testing
-public class MobileLoginTest {
-
- private AndroidDriver<AndroidElement> driver;
-
- @BeforeEach
- void setUp() throws MalformedURLException {
- DesiredCapabilities caps = new DesiredCapabilities();
- caps.setCapability("platformName", "Android");
- caps.setCapability("platformVersion", "11.0");
- caps.setCapability("deviceName", "emulator-5554");
- caps.setCapability("app", "/path/to/app.apk");
- caps.setCapability("automationName", "UiAutomator2");
-
- driver = new AndroidDriver<>(new URL("http://127.0.0.1:4723/wd/hub"), caps);
- }
-
- @AfterEach
- void tearDown() {
- if (driver!= null) {
- driver.quit();
- }
- }
-
- @Test
- void shouldLoginOnMobileApp() {
- // Wait for app to load
- WebDriverWait wait = new WebDriverWait(driver, 30);
-
- // Enter credentials
- AndroidElement emailField = (AndroidElement) wait.until(
- ExpectedConditions.elementToBeClickable(By.id("email_input")));
- emailField.sendKeys("user@example.com");
-
- AndroidElement passwordField = driver.findElement(By.id("password_input"));
- passwordField.sendKeys("password");
-
- // Tap login button
- AndroidElement loginButton = driver.findElement(By.id("login_button"));
- loginButton.click();
-
- // Verify successful login
- AndroidElement welcomeMessage = wait.until(
- ExpectedConditions.presenceOfElementLocated(By.id("welcome_message")));
-
- assertEquals("Welcome to the app!", welcomeMessage.getText());
- }
-}
-```
-
-### 6. `Performance Testing Tools`
-
-```java
-// JMeter test script simulation
-public class PerformanceTestSimulation {
-
- @Test
- void simulateJMeterLoadTest() {
- // Simulate JMeter thread group
- int numberOfThreads = 100;
- int rampUpPeriod = 30; // seconds
- int loopCount = 5;
-
- ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
- CountDownLatch latch = new CountDownLatch(numberOfThreads * loopCount);
-
- List<Future<PerformanceResult>> results = new ArrayList<>();
-
- // Start threads gradually (ramp-up)
- for (int i = 0; i < numberOfThreads; i++) {
- executor.submit(() -> {
- try {
- Thread.sleep((long) (Math.random() * rampUpPeriod * 1000));
-
- for (int loop = 0; loop < loopCount; loop++) {
- long startTime = System.currentTimeMillis();
-
- // Simulate API call
- PerformanceResult result = simulateApiCall();
-
- long endTime = System.currentTimeMillis();
- result.setResponseTime(endTime - startTime);
-
- results.add(CompletableFuture.completedFuture(result));
- latch.countDown();
-
- // Think time between requests
- Thread.sleep(1000);
- }
- } catch (Exception e) {
- // Handle exceptions
- }
- });
- }
-
- // Wait for all requests to complete
- try {
- assertTrue(latch.await(300, TimeUnit.SECONDS));
- } catch (InterruptedException e) {
- fail("Load test timed out");
- }
-
- // Analyze results
- analyzePerformanceResults(results);
-
- executor.shutdown();
- }
-
- private PerformanceResult simulateApiCall() {
- // Simulate HTTP call with RestTemplate or WebClient
- try {
- ResponseEntity<String> response = restTemplate.getForEntity("/api/users", String.class);
- return new PerformanceResult(response.getStatusCode().is2xxSuccessful(), null);
- } catch (Exception e) {
- return new PerformanceResult(false, e.getMessage());
- }
- }
-
- private void analyzePerformanceResults(List<Future<PerformanceResult>> futures) {
- List<Long> responseTimes = new ArrayList<>();
- int successCount = 0;
- int totalCount = 0;
-
- for (Future<PerformanceResult> future: futures) {
- try {
- PerformanceResult result = future.get();
- totalCount++;
-
- if (result.isSuccess()) {
- successCount++;
- responseTimes.add(result.getResponseTime());
- }
- } catch (Exception e) {
- // Handle future exceptions
- }
- }
-
- // Calculate metrics
- double successRate = (double) successCount / totalCount * 100;
- double avgResponseTime = responseTimes.stream().mapToLong(Long::longValue).average().orElse(0);
- double percentile95 = calculatePercentile(responseTimes, 95);
-
- // Assert performance criteria
- assertTrue(successRate >= 99.0, "Success rate should be >= 99%");
- assertTrue(avgResponseTime <= 2000, "Average response time should be <= 2s");
- assertTrue(percentile95 <= 5000, "95th percentile should be <= 5s");
- }
-
- private double calculatePercentile(List<Long> values, double percentile) {
- Collections.sort(values);
- int index = (int) Math.ceil(percentile / 100.0 * values.size()) - 1;
- return values.get(Math.max(0, index));
- }
-}
-```
-
-## Q3. Как автоматизировать `UI` тестирование с `Selenium`?
-
-### 1. Основы `Selenium WebDriver`
-
-```java
-public class BasicSeleniumTest {
-
- private WebDriver driver;
-
- @BeforeEach
- void setUp() {
- // Setup Chrome driver
- WebDriverManager.chromedriver().setup();
-
- ChromeOptions options = new ChromeOptions();
- options.addArguments("--headless"); // For CI/CD
- options.addArguments("--no-sandbox");
- options.addArguments("--disable-dev-shm-usage");
- options.addArguments("--window-size=1920,1080");
-
- driver = new ChromeDriver(options);
- driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
- }
-
- @AfterEach
- void tearDown() {
- if (driver!= null) {
- driver.quit();
- }
- }
-
- @Test
- void shouldLoadHomePage() {
- driver.get("https://example.com");
-
- String title = driver.getTitle();
- assertEquals("Example Domain", title);
-
- WebElement heading = driver.findElement(By.tagName("h1"));
- assertEquals("Example Domain", heading.getText());
- }
-}
-```
-
-### 2. `Locators` и поиск элементов
-
-```java
-public class ElementLocationTest {
-
- private WebDriver driver;
-
- @Test
- void demonstrateLocators() {
- driver.get("https://example.com/login");
-
- // By ID (most reliable)
- WebElement emailField = driver.findElement(By.id("email"));
- emailField.sendKeys("user@example.com");
-
- // By Name
- WebElement passwordField = driver.findElement(By.name("password"));
- passwordField.sendKeys("password123");
-
- // By CSS Selector (powerful)
- WebElement loginButton = driver.findElement(By.cssSelector("button[type='submit']"));
- loginButton.click();
-
- // By XPath (when CSS is not enough)
- WebElement successMessage = driver.findElement(
- By.xpath("//div[@class='alert alert-success']"));
- assertTrue(successMessage.isDisplayed());
-
- // By Link Text
- WebElement logoutLink = driver.findElement(By.linkText("Logout"));
- assertTrue(logoutLink.isDisplayed());
-
- // By Partial Link Text
- WebElement profileLink = driver.findElement(By.partialLinkText("Profile"));
- profileLink.click();
- }
-
- @Test
- void handleDynamicElements() {
- // Wait for element to be present
- WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-
- WebElement dynamicElement = wait.until(
- ExpectedConditions.presenceOfElementLocated(By.id("dynamic-content")));
-
- // Wait for element to be clickable
- WebElement clickableButton = wait.until(
- ExpectedConditions.elementToBeClickable(By.id("submit-button")));
-
- // Wait for element to be visible
- WebElement visibleElement = wait.until(
- ExpectedConditions.visibilityOfElementLocated(By.className("result")));
-
- // Wait for specific text
- wait.until(ExpectedConditions.textToBePresentInElement(
- By.id("status"), "Operation completed"));
- }
-}
-```
-
-### 3. `Actions` и взаимодействие с элементами
-
-```java
-public class UserInteractionsTest {
-
- private WebDriver driver;
- private Actions actions;
-
- @BeforeEach
- void setUp() {
- driver = new ChromeDriver();
- actions = new Actions(driver);
- }
-
- @Test
- void demonstrateUserInteractions() {
- driver.get("https://example.com/form");
-
- // Text input
- WebElement textField = driver.findElement(By.id("name"));
- textField.clear();
- textField.sendKeys("John Doe");
-
- // Dropdown selection
- Select countrySelect = new Select(driver.findElement(By.id("country")));
- countrySelect.selectByVisibleText("United States");
- // or countrySelect.selectByValue("US");
- // or countrySelect.selectByIndex(1);
-
- // Checkbox
- WebElement newsletterCheckbox = driver.findElement(By.id("newsletter"));
- if (!newsletterCheckbox.isSelected()) {
- newsletterCheckbox.click();
- }
-
- // Radio buttons
- WebElement maleRadio = driver.findElement(By.cssSelector("input[name='gender'][value='male']"));
- maleRadio.click();
-
- // File upload
- WebElement fileInput = driver.findElement(By.id("file-upload"));
- fileInput.sendKeys("/path/to/file.pdf");
-
- // Keyboard actions
- WebElement searchField = driver.findElement(By.id("search"));
- searchField.sendKeys("selenium");
- searchField.sendKeys(Keys.ENTER); // Press Enter
-
- // Mouse actions
- WebElement menuItem = driver.findElement(By.id("menu-item"));
- actions.moveToElement(menuItem).perform(); // Hover
-
- WebElement submenuItem = driver.findElement(By.id("submenu-item"));
- actions.moveToElement(submenuItem).click().perform();
-
- // Drag and drop
- WebElement source = driver.findElement(By.id("draggable"));
- WebElement target = driver.findElement(By.id("droppable"));
- actions.dragAndDrop(source, target).perform();
- }
-
- @Test
- void handleJavaScriptAlerts() {
- driver.get("https://example.com/alerts");
-
- // Trigger alert
- driver.findElement(By.id("alert-button")).click();
-
- // Handle alert
- Alert alert = driver.switchTo().alert();
- String alertText = alert.getText();
- assertEquals("This is an alert!", alertText);
- alert.accept(); // Click OK
-
- // Handle confirmation dialog
- driver.findElement(By.id("confirm-button")).click();
- Alert confirmation = driver.switchTo().alert();
- confirmation.dismiss(); // Click Cancel
-
- // Handle prompt
- driver.findElement(By.id("prompt-button")).click();
- Alert prompt = driver.switchTo().alert();
- prompt.sendKeys("Test input");
- prompt.accept();
- }
-}
-```
-
-### 4. `Page Object Model` (`POM`)
-
-```java
-// Base page class
+// BasePage -- общие методы для всех страниц
 public abstract class BasePage {
+    protected final WebDriver driver;
+    protected final WebDriverWait wait;
 
- protected WebDriver driver;
- protected WebDriverWait wait;
+    protected BasePage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
 
- public BasePage(WebDriver driver) {
- this.driver = driver;
- this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
- }
+    protected void click(By locator) {
+        wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+    }
 
- protected WebElement findElement(By locator) {
- return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
- }
+    protected void type(By locator, String text) {
+        WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+        el.clear();
+        el.sendKeys(text);
+    }
 
- protected void clickElement(By locator) {
- WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
- element.click();
- }
-
- protected void typeText(By locator, String text) {
- WebElement element = findElement(locator);
- element.clear();
- element.sendKeys(text);
- }
-
- protected String getText(By locator) {
- return findElement(locator).getText();
- }
-
- public boolean isDisplayed(By locator) {
- try {
- return driver.findElement(locator).isDisplayed();
- } catch (NoSuchElementException e) {
- return false;
- }
- }
+    protected String getText(By locator) {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator)).getText();
+    }
 }
 
-// Login page
+// LoginPage -- Page Object для страницы логина
 public class LoginPage extends BasePage {
+    private static final By EMAIL    = By.id("email");
+    private static final By PASSWORD = By.id("password");
+    private static final By SUBMIT   = By.id("login-button");
+    private static final By ERROR    = By.className("error-message");
 
- private static final By EMAIL_FIELD = By.id("email");
- private static final By PASSWORD_FIELD = By.id("password");
- private static final By LOGIN_BUTTON = By.id("login-button");
- private static final By ERROR_MESSAGE = By.className("error-message");
+    public LoginPage(WebDriver driver) {
+        super(driver);
+    }
 
- public LoginPage(WebDriver driver) {
- super(driver);
- }
+    public DashboardPage loginAs(String email, String password) {
+        type(EMAIL, email);
+        type(PASSWORD, password);
+        click(SUBMIT);
+        return new DashboardPage(driver);
+    }
 
- public void enterEmail(String email) {
- typeText(EMAIL_FIELD, email);
- }
-
- public void enterPassword(String password) {
- typeText(PASSWORD_FIELD, password);
- }
-
- public DashboardPage clickLoginButton() {
- clickElement(LOGIN_BUTTON);
- return new DashboardPage(driver);
- }
-
- public LoginPage clickLoginButtonExpectingFailure() {
- clickElement(LOGIN_BUTTON);
- return this;
- }
-
- public DashboardPage login(String email, String password) {
- enterEmail(email);
- enterPassword(password);
- return clickLoginButton();
- }
-
- public String getErrorMessage() {
- return getText(ERROR_MESSAGE);
- }
-
- public boolean isErrorMessageDisplayed() {
- return isDisplayed(ERROR_MESSAGE);
- }
+    public String getError() {
+        return getText(ERROR);
+    }
 }
 
-// Dashboard page
-public class DashboardPage extends BasePage {
-
- private static final By WELCOME_MESSAGE = By.className("welcome-message");
- private static final By LOGOUT_BUTTON = By.id("logout-button");
-
- public DashboardPage(WebDriver driver) {
- super(driver);
- // Verify we're on the correct page
- wait.until(ExpectedConditions.urlContains("/dashboard"));
- }
-
- public String getWelcomeMessage() {
- return getText(WELCOME_MESSAGE);
- }
-
- public LoginPage clickLogout() {
- clickElement(LOGOUT_BUTTON);
- return new LoginPage(driver);
- }
-
- public boolean isUserLoggedIn() {
- return isDisplayed(WELCOME_MESSAGE);
- }
-}
-
-// Test using page objects
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class LoginUITest {
-
- @Autowired
- private int port;
-
- private WebDriver driver;
-
- @BeforeEach
- void setUp() {
- driver = new ChromeDriver();
- driver.get("http://localhost:" + port + "/login");
- }
-
- @AfterEach
- void tearDown() {
- if (driver!= null) {
- driver.quit();
- }
- }
-
- @Test
- void shouldLoginSuccessfully() {
- LoginPage loginPage = new LoginPage(driver);
-
- DashboardPage dashboard = loginPage.login("user@example.com", "password");
-
- assertTrue(dashboard.isUserLoggedIn());
- assertEquals("Welcome, User!", dashboard.getWelcomeMessage());
- }
-
- @Test
- void shouldShowErrorForInvalidCredentials() {
- LoginPage loginPage = new LoginPage(driver);
-
- loginPage.login("invalid@example.com", "wrongpassword");
-
- assertTrue(loginPage.isErrorMessageDisplayed());
- assertEquals("Invalid credentials", loginPage.getErrorMessage());
- }
+// Тест -- чистый и читаемый
+@Test
+void shouldLoginSuccessfully() {
+    LoginPage loginPage = new LoginPage(driver);
+    DashboardPage dashboard = loginPage.loginAs("user@example.com", "secret");
+    assertTrue(dashboard.isWelcomeDisplayed());
 }
 ```
 
-### 5. `Selenium Grid` и параллельное выполнение
+Также можно использовать `PageFactory` с аннотацией `@FindBy` -- но этот подход считается устаревшим, так как не поддерживает `WebDriverWait` из коробки.
+
+## Q10. Чем отличаются `implicit`, `explicit` и `fluent` waits в `Selenium`?
+
+Правильная работа с ожиданиями -- ключ к стабильным UI-тестам.
+
+| Тип | Scope | Поведение | Когда использовать |
+|-----|-------|----------|-------------------|
+| `Implicit Wait` | Глобальный | Ждёт появления элемента в DOM | Простые случаи |
+| `Explicit Wait` | Точечный | Ждёт конкретного условия | Динамический контент |
+| `Fluent Wait` | Точечный | Как explicit + настраиваемый polling | Сложные кейсы |
 
 ```java
-@Configuration
-public class SeleniumGridConfig {
+// Implicit wait -- устанавливается один раз
+driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 
- @Bean
- @Scope("prototype")
- public WebDriver remoteWebDriver() throws MalformedURLException {
- ChromeOptions options = new ChromeOptions();
- options.addArguments("--headless");
+// Explicit wait -- для конкретного условия
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement button = wait.until(ExpectedConditions.elementToBeClickable(By.id("submit")));
 
- return new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), options);
- }
-}
+// Fluent wait -- полная настройка
+Wait<WebDriver> fluentWait = new FluentWait<>(driver)
+    .withTimeout(Duration.ofSeconds(30))
+    .pollingEvery(Duration.ofMillis(500))
+    .ignoring(NoSuchElementException.class)
+    .ignoring(StaleElementReferenceException.class);
 
-// Parallel test execution
-@SpringBootTest
-public class ParallelUITest {
+WebElement element = fluentWait.until(d -> d.findElement(By.id("dynamic-content")));
+```
 
- @Autowired
- private WebDriver driver;
+**Важно:** не смешивайте `implicit` и `explicit` waits -- это приводит к непредсказуемым таймаутам.
 
- @Test
- void testOnChrome() {
- // Test runs on Chrome
- driver.get("https://example.com");
- assertEquals("Example Domain", driver.getTitle());
- }
+## Q11. Что такое `Selenium Grid` и как он работает?
 
- @Test
- void testOnFirefox() {
- // Test runs on Firefox (different thread)
- driver.get("https://example.com");
- assertEquals("Example Domain", driver.getTitle());
- }
-}
+`Selenium Grid` позволяет запускать тесты параллельно на нескольких машинах и браузерах. Архитектура: Hub (центральный узел) и Nodes (исполнители).
 
-// JUnit 5 parallel execution
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ParallelTestSuite {
+```mermaid
+graph LR
+    subgraph Selenium Grid 4
+        HUB[Router / Hub]
+        N1[Node: Chrome]
+        N2[Node: Firefox]
+        N3[Node: Edge]
+    end
 
- private WebDriver driver;
+    TEST1[Тест 1] --> HUB
+    TEST2[Тест 2] --> HUB
+    TEST3[Тест 3] --> HUB
+    HUB --> N1
+    HUB --> N2
+    HUB --> N3
+```
 
- @BeforeAll
- void setUp() {
- driver = new ChromeDriver();
- }
+```java
+// Подключение к Selenium Grid
+ChromeOptions options = new ChromeOptions();
+options.addArguments("--headless");
 
- @AfterAll
- void tearDown() {
- if (driver!= null) {
- driver.quit();
- }
- }
+WebDriver driver = new RemoteWebDriver(
+    new URL("http://selenium-hub:4444/wd/hub"), options);
+```
 
- @Test
- @Execution(ExecutionMode.CONCURRENT)
- void test1() {
- driver.get("https://example.com/page1");
- // Test page 1
- }
+```yaml
+# docker-compose.yml для Selenium Grid
+services:
+  selenium-hub:
+    image: selenium/hub:4.18
+    ports: ["4444:4444"]
 
- @Test
- @Execution(ExecutionMode.CONCURRENT)
- void test2() {
- driver.get("https://example.com/page2");
- // Test page 2
- }
+  chrome-node:
+    image: selenium/node-chrome:4.18
+    depends_on: [selenium-hub]
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=4
+```
 
- @Test
- @Execution(ExecutionMode.CONCURRENT)
- void test3() {
- driver.get("https://example.com/page3");
- // Test page 3
- }
+## Q12. Чем `Playwright` отличается от `Selenium`?
+
+| Аспект | `Selenium` | `Playwright` |
+|--------|-----------|-------------|
+| Протокол | `W3C WebDriver` (HTTP) | `CDP` / нативный (WebSocket) |
+| Auto-wait | Нет (нужны explicit waits) | Встроенный |
+| Параллелизм | Через Grid | Встроенный (browser contexts) |
+| Скриншоты/видео | Ручная настройка | Из коробки |
+| Network Interception | Ограничено | Полная поддержка |
+| Браузеры | Chrome, Firefox, Edge, Safari | Chromium, Firefox, WebKit |
+
+```java
+// Playwright -- лаконичнее и стабильнее
+try (Playwright pw = Playwright.create()) {
+    Browser browser = pw.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+    Page page = browser.newPage();
+
+    page.navigate("http://localhost:8080/login");
+    page.fill("#email", "user@example.com");
+    page.fill("#password", "secret");
+    page.click("button[type='submit']");
+
+    // Auto-wait: Playwright ждёт сам
+    assertThat(page.locator(".welcome")).hasText("Welcome, User!");
 }
 ```
 
-## Q4. Как автоматизировать `API` тестирование?
-
-### 1. `Rest Assured Framework`
+## Q13. Как работать с `JavaScript`-алертами и `iframe` в `Selenium`?
 
 ```java
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class RestAssuredApiTest {
+// Работа с алертами
+driver.findElement(By.id("alert-trigger")).click();
+Alert alert = driver.switchTo().alert();
+String text = alert.getText();    // Прочитать текст
+alert.accept();                    // Нажать OK
+// alert.dismiss();                // Нажать Cancel
+// alert.sendKeys("input");       // Ввести текст (prompt)
 
- @Autowired
- private TestRestTemplate restTemplate;
+// Работа с iframe
+driver.switchTo().frame("frame-name");           // По имени
+driver.switchTo().frame(0);                       // По индексу
+driver.switchTo().frame(driver.findElement(By.id("my-iframe"))); // По элементу
+// Действия внутри iframe...
+driver.switchTo().defaultContent();               // Вернуться в основной документ
 
- private int port;
-
- @BeforeEach
- void setUp() {
- // Configure Rest Assured
- RestAssured.port = port;
- RestAssured.baseURI = "http://localhost";
- }
-
- @Test
- void shouldCreateUserViaApi() {
- String requestBody = """
- {
- "email": "john@example.com",
- "password": "password123",
- "firstName": "John",
- "lastName": "Doe"
- }
- """;
-
- given().contentType(ContentType.JSON).body(requestBody).when().post("/api/users").then().statusCode(201).body("id", notNullValue()).body("email", equalTo("john@example.com")).body("firstName", equalTo("John")).body("lastName", equalTo("Doe")).body("createdAt", notNullValue());
- }
-
- @Test
- void shouldHandleValidationErrors() {
- String invalidRequest = """
- {
- "email": "invalid-email",
- "password": "short"
- }
- """;
-
- given().contentType(ContentType.JSON).body(invalidRequest).when().post("/api/users").then().statusCode(400).body("errors.email", hasItem("Invalid email format")).body("errors.password", hasItem("Password must be at least 8 characters")).body("errors.firstName", hasItem("First name is required"));
- }
-
- @Test
- void shouldAuthenticateAndAccessProtectedResource() {
- // First, authenticate
- String authResponse = given().contentType(ContentType.JSON).body("""
- {
- "username": "admin",
- "password": "admin123"
- }
- """).when().post("/api/auth/login").then().statusCode(200).extract().path("token");
-
- // Use token to access protected resource
- given().header("Authorization", "Bearer " + authResponse).when().get("/api/admin/users").then().statusCode(200).body("size()", greaterThan(0));
- }
-
- @Test
- void shouldTestFileUpload() {
- byte[] fileContent = "Test file content".getBytes();
-
- given().multiPart("file", "test.txt", fileContent, "text/plain").multiPart("description", "Test file upload").when().post("/api/files/upload").then().statusCode(200).body("fileId", notNullValue()).body("filename", equalTo("test.txt"));
- }
+// Работа с несколькими окнами/вкладками
+String mainWindow = driver.getWindowHandle();
+driver.findElement(By.linkText("Open new tab")).click();
+for (String handle : driver.getWindowHandles()) {
+    if (!handle.equals(mainWindow)) {
+        driver.switchTo().window(handle);
+        break;
+    }
 }
 ```
 
-### 2. `API Test Automation Framework`
+---
+
+## Q14. (!) Как автоматизировать `API`-тестирование с `REST Assured`?
+
+`REST Assured` -- Java-библиотека для тестирования REST API с fluent-синтаксисом в стиле `Given-When-Then`.
 
 ```java
-// Base API test class
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class BaseApiTest {
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+class UserApiTest {
 
- @Autowired
- protected TestRestTemplate restTemplate;
+    @LocalServerPort
+    int port;
 
- protected int port;
+    @BeforeEach
+    void setUp() {
+        RestAssured.port = port;
+        RestAssured.basePath = "/api";
+    }
 
- @BeforeAll
- void setUpRestAssured() {
- RestAssured.port = port;
- RestAssured.baseURI = "http://localhost";
- RestAssured.config = RestAssured.config().httpClient(HttpClientConfig.httpClientConfig().setParam("http.connection.timeout", 5000).setParam("http.socket.timeout", 5000));
- }
+    @Test
+    void shouldCreateUser() {
+        given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"email": "john@example.com", "name": "John Doe"}
+            """)
+        .when()
+            .post("/users")
+        .then()
+            .statusCode(201)
+            .body("id", notNullValue())
+            .body("email", equalTo("john@example.com"));
+    }
 
- protected ValidatableResponse authenticate(String username, String password) {
- return given().contentType(ContentType.JSON).body(String.format("""
- {
- "username": "%s",
- "password": "%s"
- }
- """, username, password)).when().post("/api/auth/login").then();
- }
+    @Test
+    void shouldReturnValidationError() {
+        given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"email": "invalid", "name": ""}
+            """)
+        .when()
+            .post("/users")
+        .then()
+            .statusCode(400)
+            .body("errors.size()", greaterThan(0));
+    }
 
- protected String getAuthToken(String username, String password) {
- return authenticate(username, password).statusCode(200).extract().path("token");
- }
+    @Test
+    void shouldAuthenticateAndAccessProtected() {
+        // Получаем токен
+        String token = given()
+            .contentType(ContentType.JSON)
+            .body("""
+                {"username": "admin", "password": "admin123"}
+            """)
+        .when()
+            .post("/auth/login")
+        .then()
+            .statusCode(200)
+            .extract().path("token");
 
- protected RequestSpecification authenticatedRequest(String token) {
- return given().header("Authorization", "Bearer " + token).contentType(ContentType.JSON);
- }
-}
-
-// User API tests
-public class UserApiTest extends BaseApiTest {
-
- @Test
- void shouldGetUserProfile() {
- String token = getAuthToken("user@example.com", "password");
-
- authenticatedRequest(token).when().get("/api/users/profile").then().statusCode(200).body("email", equalTo("user@example.com")).body("firstName", notNullValue()).body("lastName", notNullValue());
- }
-
- @Test
- void shouldUpdateUserProfile() {
- String token = getAuthToken("user@example.com", "password");
-
- String updateRequest = """
- {
- "firstName": "Updated",
- "lastName": "Name"
- }
- """;
-
- authenticatedRequest(token).body(updateRequest).when().put("/api/users/profile").then().statusCode(200).body("firstName", equalTo("Updated")).body("lastName", equalTo("Name"));
- }
-
- @Test
- void shouldNotAccessOtherUserProfile() {
- String token = getAuthToken("user@example.com", "password");
-
- authenticatedRequest(token).when().get("/api/users/999/profile").then().statusCode(403);
- }
-}
-
-// Order API tests
-public class OrderApiTest extends BaseApiTest {
-
- private Long createdOrderId;
-
- @Test
- void shouldCreateOrder() {
- String token = getAuthToken("user@example.com", "password");
-
- String orderRequest = """
- {
- "items": [
- {
- "productId": 1,
- "quantity": 2
- }
- ],
- "shippingAddress": {
- "street": "123 Main St",
- "city": "Anytown",
- "zipCode": "12345"
- }
- }
- """;
-
- ValidatableResponse response = authenticatedRequest(token).body(orderRequest).when().post("/api/orders").then().statusCode(201).body("id", notNullValue()).body("status", equalTo("PENDING")).body("total", notNullValue());
-
- createdOrderId = response.extract().path("id");
- }
-
- @Test
- void shouldGetOrderById() {
- assumeTrue(createdOrderId!= null, "Order must be created first");
-
- String token = getAuthToken("user@example.com", "password");
-
- authenticatedRequest(token).when().get("/api/orders/{id}", createdOrderId).then().statusCode(200).body("id", equalTo(createdOrderId.intValue())).body("items.size()", equalTo(1)).body("status", equalTo("PENDING"));
- }
-
- @Test
- void shouldCancelOrder() {
- assumeTrue(createdOrderId!= null, "Order must be created first");
-
- String token = getAuthToken("user@example.com", "password");
-
- authenticatedRequest(token).when().post("/api/orders/{id}/cancel", createdOrderId).then().statusCode(200);
-
- // Verify order is cancelled
- authenticatedRequest(token).when().get("/api/orders/{id}", createdOrderId).then().statusCode(200).body("status", equalTo("CANCELLED"));
- }
+        // Используем токен
+        given()
+            .header("Authorization", "Bearer " + token)
+        .when()
+            .get("/users")
+        .then()
+            .statusCode(200)
+            .body("size()", greaterThan(0));
+    }
 }
 ```
 
-### 3. `Contract Testing` с `Pact`
+Также можно использовать `RestAssuredMockMvc` для тестирования контроллеров без запуска сервера -- подробнее на [Baeldung](https://www.baeldung.com/spring-mock-mvc-rest-assured).
+
+## Q15. Как валидировать `JSON Schema` в API-тестах?
+
+`JSON Schema Validation` гарантирует, что структура ответа соответствует контракту.
 
 ```java
-// Consumer test (Order Service)
+// Файл: src/test/resources/schemas/user-schema.json
+/*
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["id", "email", "name"],
+  "properties": {
+    "id":    { "type": "integer" },
+    "email": { "type": "string", "format": "email" },
+    "name":  { "type": "string", "minLength": 1 }
+  }
+}
+*/
+
+@Test
+void shouldMatchUserSchema() {
+    given()
+        .header("Authorization", "Bearer " + token)
+    .when()
+        .get("/api/users/1")
+    .then()
+        .statusCode(200)
+        .body(matchesJsonSchemaInClasspath("schemas/user-schema.json"));
+}
+```
+
+Это особенно важно в [микросервисной архитектуре](../architecture/microservices-interview.md), где API-контракты являются границами между сервисами.
+
+## Q16. Что такое `Contract Testing` и зачем он нужен?
+
+`Contract Testing` -- проверка того, что consumer и provider API соблюдают согласованный контракт. Основной инструмент -- `Pact` или `Spring Cloud Contract`.
+
+```mermaid
+graph LR
+    subgraph Contract Testing Flow
+        CONSUMER[Consumer<br/>Order Service] -->|Генерирует pact-файл| PACT[(Pact Broker)]
+        PACT -->|Верифицирует контракт| PROVIDER[Provider<br/>User Service]
+    end
+```
+
+```java
+// Consumer-тест (Order Service) -- определяет ожидания
 @ExtendWith(PactConsumerTestExt.class)
 @PactTestFor(providerName = "UserService", port = "8081")
-public class OrderServiceContractTest {
+class OrderServiceContractTest {
 
- @Pact(consumer = "OrderService")
- public RequestResponsePact getUserDetails(PactDslWithProvider builder) {
- return builder.given("User with id 123 exists").uponReceiving("A request for user details").path("/api/users/123").method("GET").headers("Authorization", "Bearer token123").willRespondWith().status(200).headers("Content-Type", "application/json").body(new PactDslJsonBody().numberType("id", 123).stringType("name", "John Doe").stringType("email", "john@example.com").booleanType("active", true)).toPact();
- }
+    @Pact(consumer = "OrderService")
+    RequestResponsePact getUserPact(PactDslWithProvider builder) {
+        return builder
+            .given("User 123 exists")
+            .uponReceiving("get user by id")
+                .path("/api/users/123").method("GET")
+            .willRespondWith()
+                .status(200)
+                .body(new PactDslJsonBody()
+                    .integerType("id", 123)
+                    .stringType("name", "John"))
+            .toPact();
+    }
 
- @Test
- @PactTestFor(pactMethod = "getUserDetails")
- void shouldGetUserDetailsForOrder(MockServer mockServer) {
- UserServiceClient client = new UserServiceClient(mockServer.getUrl());
- OrderService orderService = new OrderService(client, null);
-
- // Test that order service can get user details
- User user = orderService.getUserForOrder(123L);
-
- assertEquals(123L, user.getId());
- assertEquals("John Doe", user.getName());
- assertEquals("john@example.com", user.getEmail());
- assertTrue(user.isActive());
- }
-
- @Pact(consumer = "OrderService")
- public RequestResponsePact updateUserLoyaltyPoints(PactDslWithProvider builder) {
- return builder.given("User has sufficient loyalty points").uponReceiving("A request to deduct loyalty points").path("/api/users/123/loyalty").method("POST").headers("Authorization", "Bearer token123").body(new PactDslJsonBody().numberType("points", 50)).willRespondWith().status(200).body(new PactDslJsonBody().numberType("remainingPoints", 150)).toPact();
- }
-
- @Test
- @PactTestFor(pactMethod = "updateUserLoyaltyPoints")
- void shouldDeductLoyaltyPointsForOrder(MockServer mockServer) {
- UserServiceClient client = new UserServiceClient(mockServer.getUrl());
- OrderService orderService = new OrderService(client, null);
-
- // Test loyalty points deduction
- int remainingPoints = orderService.deductLoyaltyPoints(123L, 50);
-
- assertEquals(150, remainingPoints);
- }
-}
-
-// Provider test (User Service)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Provider("UserService")
-@PactFolder("pacts")
-public class UserServiceProviderTest {
-
- @Autowired
- private TestRestTemplate restTemplate;
-
- @State("User with id 123 exists")
- public void userExists() {
- // Setup test data
- User user = new User(123L, "John Doe", "john@example.com", true);
- user.setLoyaltyPoints(200);
- userRepository.save(user);
- }
-
- @State("User has sufficient loyalty points")
- public void userHasLoyaltyPoints() {
- // Same as above - user already has 200 points
- }
-
- @Test
- void shouldHonorUserServiceContract() {
- // Pact framework automatically verifies contracts
- // Tests are generated from consumer pacts
- }
+    @Test
+    @PactTestFor(pactMethod = "getUserPact")
+    void shouldGetUser(MockServer mockServer) {
+        UserClient client = new UserClient(mockServer.getUrl());
+        User user = client.getUser(123L);
+        assertEquals("John", user.getName());
+    }
 }
 ```
 
-### 4. `Performance Testing` APIs
+## Q17. Как тестировать аутентификацию и авторизацию в API?
 
 ```java
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ApiPerformanceTest {
+class SecurityApiTest extends BaseApiTest {
 
- @Autowired
- private TestRestTemplate restTemplate;
+    @Test
+    void shouldReturn401WithoutToken() {
+        given()
+        .when()
+            .get("/api/users")
+        .then()
+            .statusCode(401);
+    }
 
- @Test
- void shouldHandleConcurrentApiRequests() {
- int numberOfThreads = 50;
- int requestsPerThread = 20;
- ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
- CountDownLatch latch = new CountDownLatch(numberOfThreads * requestsPerThread);
+    @Test
+    void shouldReturn403ForForbiddenResource() {
+        String userToken = getToken("user", "pass");
 
- List<Long> responseTimes = Collections.synchronizedList(new ArrayList<>());
- AtomicInteger successCount = new AtomicInteger(0);
- AtomicInteger errorCount = new AtomicInteger(0);
+        given()
+            .header("Authorization", "Bearer " + userToken)
+        .when()
+            .delete("/api/admin/users/1")
+        .then()
+            .statusCode(403);
+    }
 
- for (int i = 0; i < numberOfThreads; i++) {
- executor.submit(() -> {
- for (int j = 0; j < requestsPerThread; j++) {
- long startTime = System.nanoTime();
+    @Test
+    void shouldReturn401WithExpiredToken() {
+        String expiredToken = generateExpiredJwt("user@example.com");
 
- try {
- ResponseEntity<String> response = restTemplate.getForEntity(
- "/api/users", String.class);
-
- if (response.getStatusCode().is2xxSuccessful()) {
- successCount.incrementAndGet();
- } else {
- errorCount.incrementAndGet();
- }
- } catch (Exception e) {
- errorCount.incrementAndGet();
- }
-
- long endTime = System.nanoTime();
- responseTimes.add((endTime - startTime) / 1_000_000); // to milliseconds
-
- latch.countDown();
-
- // Small delay between requests
- try {
- Thread.sleep(50);
- } catch (InterruptedException e) {
- Thread.currentThread().interrupt();
- }
- }
- });
- }
-
- // Wait for all requests to complete
- try {
- assertTrue(latch.await(300, TimeUnit.SECONDS), "Performance test timed out");
- } catch (InterruptedException e) {
- fail("Test interrupted");
- }
-
- executor.shutdown();
-
- // Analyze results
- double successRate = (double) successCount.get() / (successCount.get() + errorCount.get()) * 100;
- double avgResponseTime = responseTimes.stream().mapToLong(Long::longValue).average().orElse(0.0);
- long maxResponseTime = responseTimes.stream().mapToLong(Long::longValue).max().orElse(0L);
- long minResponseTime = responseTimes.stream().mapToLong(Long::longValue).min().orElse(0L);
-
- // Calculate percentiles
- Collections.sort(responseTimes);
- double percentile95 = getPercentile(responseTimes, 95);
- double percentile99 = getPercentile(responseTimes, 99);
-
- // Performance assertions
- assertTrue(successRate >= 99.5, String.format("Success rate too low: %.2f%%", successRate));
- assertTrue(avgResponseTime <= 500, String.format("Average response time too high: %.2f ms", avgResponseTime));
- assertTrue(percentile95 <= 1000, String.format("95th percentile too high: %.2f ms", percentile95));
- assertTrue(percentile99 <= 2000, String.format("99th percentile too high: %.2f ms", percentile99));
-
- System.out.println("=== Performance Test Results ===");
- System.out.println("Total requests: " + responseTimes.size());
- System.out.println("Success rate: " + String.format("%.2f%%", successRate));
- System.out.println("Average response time: " + String.format("%.2f ms", avgResponseTime));
- System.out.println("Min response time: " + minResponseTime + " ms");
- System.out.println("Max response time: " + maxResponseTime + " ms");
- System.out.println("95th percentile: " + String.format("%.2f ms", percentile95));
- System.out.println("99th percentile: " + String.format("%.2f ms", percentile99));
- }
-
- private double getPercentile(List<Long> sortedValues, double percentile) {
- int index = (int) Math.ceil(percentile / 100.0 * sortedValues.size()) - 1;
- return sortedValues.get(Math.max(0, Math.min(index, sortedValues.size() - 1)));
- }
-
- @Test
- void shouldTestApiUnderIncreasingLoad() {
- int[] loadLevels = {10, 25, 50, 100, 200};
-
- for (int concurrentUsers: loadLevels) {
- System.out.println("Testing with " + concurrentUsers + " concurrent users...");
-
- long startTime = System.nanoTime();
-
- // Run load test
- LoadTestResult result = runLoadTest(concurrentUsers, 10); // 10 requests per user
-
- long testDuration = (System.nanoTime() - startTime) / 1_000_000_000; // to seconds
-
- // Log results
- System.out.println("Load level: " + concurrentUsers + " users");
- System.out.println("Duration: " + testDuration + " seconds");
- System.out.println("Requests/sec: " + (double) (concurrentUsers * 10) / testDuration);
- System.out.println("Avg response time: " + result.getAverageResponseTime() + " ms");
- System.out.println("Error rate: " + result.getErrorRate() + "%");
- System.out.println("---");
-
- // Performance degrades gracefully
- assertTrue(result.getErrorRate() < 5.0,
- "Error rate too high at load level " + concurrentUsers);
- assertTrue(result.getAverageResponseTime() < 2000,
- "Response time too high at load level " + concurrentUsers);
- }
- }
-
- private LoadTestResult runLoadTest(int concurrentUsers, int requestsPerUser) {
- // Implementation similar to the concurrent test above
- // Return aggregated results
- return new LoadTestResult(450.0, 1.2); // example values
- }
-
- static class LoadTestResult {
- private final double averageResponseTime;
- private final double errorRate;
-
- public LoadTestResult(double averageResponseTime, double errorRate) {
- this.averageResponseTime = averageResponseTime;
- this.errorRate = errorRate;
- }
-
- public double getAverageResponseTime() { return averageResponseTime; }
- public double getErrorRate() { return errorRate; }
- }
+        given()
+            .header("Authorization", "Bearer " + expiredToken)
+        .when()
+            .get("/api/users")
+        .then()
+            .statusCode(401);
+    }
 }
 ```
 
-## Q5. Что такое `Page Object Model`?
+Подробнее об OAuth2/JWT -- в [Паттерны аутентификации и авторизации](../security/authentication-authorization-patterns-interview.md).
 
-`Page Object Model` (`POM`) — это паттерн проектирования для автоматизации `UI` тестирования, который создает объектно-ориентированную модель веб-страниц. ### 1. Базовая структура `POM`
+---
 
-```java
-// Base page class with common functionality
-public abstract class BasePage {
+## Q18. (!) Что такое `Testcontainers` и как их использовать?
 
- protected WebDriver driver;
- protected WebDriverWait wait;
- protected Actions actions;
-
- public BasePage(WebDriver driver) {
- this.driver = driver;
- this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
- this.actions = new Actions(driver);
- }
-
- // Common element interactions
- protected WebElement findElement(By locator) {
- return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
- }
-
- protected void clickElement(By locator) {
- WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
- element.click();
- }
-
- protected void typeText(By locator, String text) {
- WebElement element = findElement(locator);
- element.clear();
- element.sendKeys(text);
- }
-
- protected String getText(By locator) {
- return findElement(locator).getText();
- }
-
- protected boolean isDisplayed(By locator) {
- try {
- return driver.findElement(locator).isDisplayed();
- } catch (NoSuchElementException e) {
- return false;
- }
- }
-
- protected void waitForPageLoad() {
- wait.until(webDriver ->
- ((JavascriptExecutor) webDriver).executeScript("return document.readyState").equals("complete"));
- }
-
- // Navigation methods
- public String getCurrentUrl() {
- return driver.getCurrentUrl();
- }
-
- public String getTitle() {
- return driver.getTitle();
- }
-}
-```
-
-### 2. `Page Objects` для конкретных страниц
+`Testcontainers` -- Java-библиотека, которая позволяет запускать Docker-контейнеры прямо из тестов. Решает проблему "works on my machine" для интеграционных тестов.
 
 ```java
-// Login page object
-public class LoginPage extends BasePage {
-
- // Page elements
- private static final By EMAIL_FIELD = By.id("email");
- private static final By PASSWORD_FIELD = By.id("password");
- private static final By LOGIN_BUTTON = By.id("login-button");
- private static final By ERROR_MESSAGE = By.className("error-message");
- private static final By FORGOT_PASSWORD_LINK = By.linkText("Forgot Password?");
- private static final By REGISTER_LINK = By.linkText("Create Account");
-
- public LoginPage(WebDriver driver) {
- super(driver);
- // Verify we're on the login page
- wait.until(ExpectedConditions.urlContains("/login"));
- waitForPageLoad();
- }
-
- // Page actions
- public void enterEmail(String email) {
- typeText(EMAIL_FIELD, email);
- }
-
- public void enterPassword(String password) {
- typeText(PASSWORD_FIELD, password);
- }
-
- public DashboardPage clickLoginButton() {
- clickElement(LOGIN_BUTTON);
- return new DashboardPage(driver);
- }
-
- public LoginPage clickLoginButtonExpectingFailure() {
- clickElement(LOGIN_BUTTON);
- return this;
- }
-
- // Fluent interface for chaining
- public LoginPage typeEmail(String email) {
- enterEmail(email);
- return this;
- }
-
- public LoginPage typePassword(String password) {
- enterPassword(password);
- return this;
- }
-
- // Combined actions
- public DashboardPage login(String email, String password) {
- return typeEmail(email).typePassword(password).clickLoginButton();
- }
-
- public LoginPage loginExpectingFailure(String email, String password) {
- return typeEmail(email).typePassword(password).clickLoginButtonExpectingFailure();
- }
-
- // Page verifications
- public boolean isErrorMessageDisplayed() {
- return isDisplayed(ERROR_MESSAGE);
- }
-
- public String getErrorMessage() {
- return getText(ERROR_MESSAGE);
- }
-
- public boolean isEmailFieldDisplayed() {
- return isDisplayed(EMAIL_FIELD);
- }
-
- public boolean isPasswordFieldDisplayed() {
- return isDisplayed(PASSWORD_FIELD);
- }
-
- // Navigation to other pages
- public ForgotPasswordPage clickForgotPassword() {
- clickElement(FORGOT_PASSWORD_LINK);
- return new ForgotPasswordPage(driver);
- }
-
- public RegisterPage clickRegisterLink() {
- clickElement(REGISTER_LINK);
- return new RegisterPage(driver);
- }
-}
-```
-
-```java
-// Dashboard page object
-public class DashboardPage extends BasePage {
-
- private static final By WELCOME_MESSAGE = By.className("welcome-message");
- private static final By USER_MENU = By.id("user-menu");
- private static final By LOGOUT_BUTTON = By.id("logout-button");
- private static final By DASHBOARD_CARDS = By.className("dashboard-card");
- private static final By NOTIFICATIONS_BELL = By.id("notifications-bell");
- private static final By NOTIFICATION_COUNT = By.className("notification-count");
-
- public DashboardPage(WebDriver driver) {
- super(driver);
- // Verify we're on the dashboard
- wait.until(ExpectedConditions.urlContains("/dashboard"));
- waitForPageLoad();
- }
-
- // Page information
- public String getWelcomeMessage() {
- return getText(WELCOME_MESSAGE);
- }
-
- public int getNotificationCount() {
- if (isDisplayed(NOTIFICATION_COUNT)) {
- String countText = getText(NOTIFICATION_COUNT);
- return Integer.parseInt(countText);
- }
- return 0;
- }
-
- public List<String> getDashboardCardTitles() {
- return driver.findElements(DASHBOARD_CARDS).stream().map(card -> card.findElement(By.className("card-title")).getText()).collect(Collectors.toList());
- }
-
- // Page actions
- public LoginPage clickLogout() {
- // Hover over user menu first
- actions.moveToElement(findElement(USER_MENU)).perform();
-
- clickElement(LOGOUT_BUTTON);
- return new LoginPage(driver);
- }
-
- public DashboardPage clickNotificationBell() {
- clickElement(NOTIFICATIONS_BELL);
- return this;
- }
-
- public boolean isNotificationPanelDisplayed() {
- return isDisplayed(By.id("notification-panel"));
- }
-
- // Page verifications
- public boolean isUserLoggedIn() {
- return isDisplayed(WELCOME_MESSAGE) &&
- getCurrentUrl().contains("/dashboard");
- }
-
- public boolean isDashboardLoaded() {
- return isDisplayed(WELCOME_MESSAGE) &&
- driver.findElements(DASHBOARD_CARDS).size() > 0;
- }
-
- public boolean hasNotifications() {
- return getNotificationCount() > 0;
- }
-}
-```
-
-### 3. `Page Factory` паттерн
-
-```java
-// Using Selenium PageFactory
-public class LoginPageWithFactory {
-
- private WebDriver driver;
-
- // Page elements with @FindBy annotation
- @FindBy(id = "email")
- private WebElement emailField;
-
- @FindBy(id = "password")
- private WebElement passwordField;
-
- @FindBy(id = "login-button")
- private WebElement loginButton;
-
- @FindBy(className = "error-message")
- private WebElement errorMessage;
-
- @FindBy(linkText = "Forgot Password?")
- private WebElement forgotPasswordLink;
-
- // List of elements
- @FindBy(className = "form-field")
- private List<WebElement> formFields;
-
- public LoginPageWithFactory(WebDriver driver) {
- this.driver = driver;
- PageFactory.initElements(driver, this);
-
- // Verify we're on the correct page
- new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.urlContains("/login"));
- }
-
- public void enterEmail(String email) {
- emailField.clear();
- emailField.sendKeys(email);
- }
-
- public void enterPassword(String password) {
- passwordField.clear();
- passwordField.sendKeys(password);
- }
-
- public DashboardPage clickLoginButton() {
- loginButton.click();
- return new DashboardPage(driver);
- }
-
- public String getErrorMessage() {
- return errorMessage.getText();
- }
-
- public boolean isErrorMessageDisplayed() {
- try {
- return errorMessage.isDisplayed();
- } catch (NoSuchElementException e) {
- return false;
- }
- }
-
- public ForgotPasswordPage clickForgotPassword() {
- forgotPasswordLink.click();
- return new ForgotPasswordPage(driver);
- }
-
- public int getFormFieldCount() {
- return formFields.size();
- }
-}
-```
-
-### 4. `Component Objects` для переиспользуемых элементов
-
-```java
-// Reusable header component
-public class HeaderComponent {
-
- private WebDriver driver;
- private WebDriverWait wait;
-
- private static final By USER_MENU = By.id("user-menu");
- private static final By LOGOUT_BUTTON = By.id("logout-button");
- private static final By NOTIFICATIONS_BELL = By.id("notifications-bell");
- private static final By SEARCH_FIELD = By.id("search-field");
- private static final By SEARCH_BUTTON = By.id("search-button");
-
- public HeaderComponent(WebDriver driver) {
- this.driver = driver;
- this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
- }
-
- public LoginPage logout() {
- // Click user menu dropdown
- clickElement(USER_MENU);
-
- // Click logout
- clickElement(LOGOUT_BUTTON);
-
- return new LoginPage(driver);
- }
-
- public HeaderComponent search(String query) {
- typeText(SEARCH_FIELD, query);
- clickElement(SEARCH_BUTTON);
- return this;
- }
-
- public boolean hasNotifications() {
- return isDisplayed(NOTIFICATIONS_BELL) &&
- isDisplayed(By.className("notification-indicator"));
- }
-
- public int getNotificationCount() {
- if (hasNotifications()) {
- WebElement countElement = driver.findElement(By.className("notification-count"));
- return Integer.parseInt(countElement.getText());
- }
- return 0;
- }
-
- private WebElement findElement(By locator) {
- return wait.until(ExpectedConditions.presenceOfElementLocated(locator));
- }
-
- private void clickElement(By locator) {
- WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
- element.click();
- }
-
- private void typeText(By locator, String text) {
- WebElement element = findElement(locator);
- element.clear();
- element.sendKeys(text);
- }
-
- private boolean isDisplayed(By locator) {
- try {
- return driver.findElement(locator).isDisplayed();
- } catch (NoSuchElementException e) {
- return false;
- }
- }
-}
-
-// Using component in page objects
-public class DashboardPage extends BasePage {
-
- private HeaderComponent header;
-
- public DashboardPage(WebDriver driver) {
- super(driver);
- this.header = new HeaderComponent(driver);
- }
-
- public LoginPage logoutViaHeader() {
- return header.logout();
- }
-
- public DashboardPage search(String query) {
- header.search(query);
- return this;
- }
-
- public boolean hasNotificationsInHeader() {
- return header.hasNotifications();
- }
-
- public int getHeaderNotificationCount() {
- return header.getNotificationCount();
- }
-}
-```
-
-### 5. `Loadable Component` паттерн
-
-```java
-// Loadable component pattern
-public abstract class LoadableComponent<T extends LoadableComponent<T>> {
-
- protected WebDriver driver;
- protected WebDriverWait wait;
-
- public LoadableComponent(WebDriver driver) {
- this.driver = driver;
- this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
- }
-
- // Template method pattern
- @SuppressWarnings("unchecked")
- public T load() {
- performLoad();
- return (T) this;
- }
-
- @SuppressWarnings("unchecked")
- public T get() {
- performLoad();
- isLoaded();
- return (T) this;
- }
-
- protected abstract void performLoad();
- protected abstract void isLoaded() throws Error;
-}
-
-// Login page as loadable component
-public class LoginPageLoadable extends LoadableComponent<LoginPageLoadable> {
-
- private static final By EMAIL_FIELD = By.id("email");
- private static final By PASSWORD_FIELD = By.id("password");
- private static final By LOGIN_BUTTON = By.id("login-button");
-
- public LoginPageLoadable(WebDriver driver) {
- super(driver);
- }
-
- @Override
- protected void performLoad() {
- driver.get("http://localhost:8080/login");
- }
-
- @Override
- protected void isLoaded() throws Error {
- try {
- if (!driver.getCurrentUrl().contains("/login")) {
- throw new Error("Not on login page. Current URL: " + driver.getCurrentUrl());
- }
-
- if (!driver.findElement(EMAIL_FIELD).isDisplayed()) {
- throw new Error("Email field not found");
- }
-
- if (!driver.findElement(PASSWORD_FIELD).isDisplayed()) {
- throw new Error("Password field not found");
- }
-
- if (!driver.findElement(LOGIN_BUTTON).isDisplayed()) {
- throw new Error("Login button not found");
- }
-
- } catch (NoSuchElementException e) {
- throw new Error("Login page not loaded properly: " + e.getMessage());
- }
- }
-
- public void enterEmail(String email) {
- driver.findElement(EMAIL_FIELD).sendKeys(email);
- }
-
- public void enterPassword(String password) {
- driver.findElement(PASSWORD_FIELD).sendKeys(password);
- }
-
- public DashboardPageLoadable clickLoginButton() {
- driver.findElement(LOGIN_BUTTON).click();
- return new DashboardPageLoadable(driver).get();
- }
-
- public LoginPageLoadable login(String email, String password) {
- enterEmail(email);
- enterPassword(password);
- return clickLoginButton();
- }
-}
-
-// Dashboard page as loadable component
-public class DashboardPageLoadable extends LoadableComponent<DashboardPageLoadable> {
-
- private static final By WELCOME_MESSAGE = By.className("welcome-message");
-
- public DashboardPageLoadable(WebDriver driver) {
- super(driver);
- }
-
- @Override
- protected void performLoad() {
- // Dashboard should be loaded by navigation, not direct URL
- throw new UnsupportedOperationException("Dashboard must be accessed via login");
- }
-
- @Override
- protected void isLoaded() throws Error {
- try {
- if (!driver.getCurrentUrl().contains("/dashboard")) {
- throw new Error("Not on dashboard page. Current URL: " + driver.getCurrentUrl());
- }
-
- WebElement welcomeElement = driver.findElement(WELCOME_MESSAGE);
- if (!welcomeElement.isDisplayed()) {
- throw new Error("Welcome message not displayed");
- }
-
- } catch (NoSuchElementException e) {
- throw new Error("Dashboard page not loaded properly");
- }
- }
-
- public String getWelcomeMessage() {
- return driver.findElement(WELCOME_MESSAGE).getText();
- }
-
- public boolean isUserLoggedIn() {
- return driver.findElement(WELCOME_MESSAGE).isDisplayed();
- }
-}
-
-// Test using loadable components
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class LoadableComponentTest {
-
- @Autowired
- private int port;
-
- private WebDriver driver;
-
- @BeforeEach
- void setUp() {
- driver = new ChromeDriver();
- driver.get("http://localhost:" + port);
- }
-
- @AfterEach
- void tearDown() {
- if (driver!= null) {
- driver.quit();
- }
- }
-
- @Test
- void shouldLoginUsingLoadableComponents() {
- // Load login page
- LoginPageLoadable loginPage = new LoginPageLoadable(driver).get();
-
- // Perform login
- DashboardPageLoadable dashboard = loginPage.login("user@example.com", "password");
-
- // Verify dashboard
- assertTrue(dashboard.isUserLoggedIn());
- assertEquals("Welcome, User!", dashboard.getWelcomeMessage());
- }
-}
-```
-
-## Q6. Как организовать тестовые данные в автоматизации?
-
-### 1. `Test Data Management` стратегии
-
-```java
-public enum TestDataStrategy {
- STATIC, // Fixed test data
- DYNAMIC, // Generated at runtime
- SHARED, // Shared between tests
- ISOLATED // Separate data per test
-}
-```
-
-### 2. `Static Test Data`
-
-```java
-// Static test data class
-public class TestData {
-
- public static final User JOHN_DOE = User.builder().email("john.doe@example.com").password("password123").firstName("John").lastName("Doe").build();
-
- public static final User JANE_SMITH = User.builder().email("jane.smith@example.com").password("password456").firstName("Jane").lastName("Smith").build();
-
- public static final Product LAPTOP = Product.builder().name("Gaming Laptop").price(BigDecimal.valueOf(1299.99)).category("Electronics").build();
-
- public static final Product BOOK = Product.builder().name("Java Programming Book").price(BigDecimal.valueOf(49.99)).category("Books").build();
-
- // Test scenarios
- public static final TestScenario VALID_LOGIN = new TestScenario(
- "Valid Login",
- JOHN_DOE,
- true,
- null
- );
-
- public static final TestScenario INVALID_LOGIN = new TestScenario(
- "Invalid Login",
- User.builder().email("invalid@example.com").password("wrong").build(),
- false,
- "Invalid credentials"
- );
-}
-
-public class TestScenario {
- private final String name;
- private final User user;
- private final boolean shouldSucceed;
- private final String expectedError;
-
- // constructor, getters...
-}
-```
-
-### 3. `Dynamic Test Data Generation`
-
-```java
-// Dynamic test data generation
-@Component
-public class TestDataGenerator {
-
- private final Faker faker = new Faker();
- private final AtomicLong userIdCounter = new AtomicLong(1000);
- private final AtomicLong productIdCounter = new AtomicLong(2000);
-
- public User generateRandomUser() {
- String firstName = faker.name().firstName();
- String lastName = faker.name().lastName();
- String email = firstName.toLowerCase() + "." + lastName.toLowerCase() +
- "@example.com";
-
- return User.builder().id(userIdCounter.incrementAndGet()).email(email).password(faker.internet().password(8, 12)).firstName(firstName).lastName(lastName).phone(faker.phoneNumber().phoneNumber()).address(generateRandomAddress()).build();
- }
-
- public Product generateRandomProduct() {
- return Product.builder().id(productIdCounter.incrementAndGet()).name(faker.commerce().productName()).price(BigDecimal.valueOf(faker.number().randomDouble(2, 10, 1000))).category(faker.commerce().department()).description(faker.lorem().sentence()).build();
- }
-
- public Order generateRandomOrder(User user, List<Product> products) {
- List<OrderItem> items = products.stream().map(product -> OrderItem.builder().product(product).quantity(faker.number().numberBetween(1, 5)).price(product.getPrice()).build()).collect(Collectors.toList());
-
- BigDecimal total = items.stream().map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
-
- return Order.builder().user(user).items(items).total(total).shippingAddress(generateRandomAddress()).build();
- }
-
- public Address generateRandomAddress() {
- return Address.builder().street(faker.address().streetAddress()).city(faker.address().city()).state(faker.address().stateAbbr()).zipCode(faker.address().zipCode()).country("US").build();
- }
-
- // Generate test data based on specific criteria
- public List<User> generateUsers(int count, UserCriteria criteria) {
- return Stream.generate(this::generateRandomUser).filter(user -> matchesCriteria(user, criteria)).limit(count).collect(Collectors.toList());
- }
-
- public List<Product> generateProducts(int count, ProductCriteria criteria) {
- return Stream.generate(this::generateRandomProduct).filter(product -> matchesCriteria(product, criteria)).limit(count).collect(Collectors.toList());
- }
-
- private boolean matchesCriteria(User user, UserCriteria criteria) {
- if (criteria.getMinAge()!= null && user.getAge() < criteria.getMinAge()) {
- return false;
- }
- if (criteria.getState()!= null &&!user.getAddress().getState().equals(criteria.getState())) {
- return false;
- }
- return true;
- }
-
- private boolean matchesCriteria(Product product, ProductCriteria criteria) {
- if (criteria.getCategory()!= null &&!product.getCategory().equals(criteria.getCategory())) {
- return false;
- }
- if (criteria.getMinPrice()!= null && product.getPrice().compareTo(criteria.getMinPrice()) < 0) {
- return false;
- }
- return true;
- }
-}
-
-// Criteria classes
-public class UserCriteria {
- private Integer minAge;
- private String state;
- // getters, setters, builder...
-}
-
-public class ProductCriteria {
- private String category;
- private BigDecimal minPrice;
- // getters, setters, builder...
-}
-```
-
-### 4. `Test Data Builders`
-
-```java
-// Builder pattern for test data
-public class UserBuilder {
-
- private Long id;
- private String email = "user@example.com";
- private String password = "password";
- private String firstName = "John";
- private String lastName = "Doe";
- private Integer age = 30;
- private Address address;
- private List<String> roles = Arrays.asList("USER");
- private boolean active = true;
-
- public static UserBuilder aUser() {
- return new UserBuilder();
- }
-
- public UserBuilder withId(Long id) {
- this.id = id;
- return this;
- }
-
- public UserBuilder withEmail(String email) {
- this.email = email;
- return this;
- }
-
- public UserBuilder withPassword(String password) {
- this.password = password;
- return this;
- }
-
- public UserBuilder withName(String firstName, String lastName) {
- this.firstName = firstName;
- this.lastName = lastName;
- return this;
- }
-
- public UserBuilder withAge(int age) {
- this.age = age;
- return this;
- }
-
- public UserBuilder withAddress(Address address) {
- this.address = address;
- return this;
- }
-
- public UserBuilder withRoles(String... roles) {
- this.roles = Arrays.asList(roles);
- return this;
- }
-
- public UserBuilder inactive() {
- this.active = false;
- return this;
- }
-
- public UserBuilder admin() {
- this.roles = Arrays.asList("ADMIN", "USER");
- return this;
- }
-
- public User build() {
- User user = new User();
- user.setId(id);
- user.setEmail(email);
- user.setPassword(password);
- user.setFirstName(firstName);
- user.setLastName(lastName);
- user.setAge(age);
- user.setAddress(address!= null? address: new AddressBuilder().build());
- user.setRoles(roles);
- user.setActive(active);
- return user;
- }
-}
-
-public class AddressBuilder {
-
- private String street = "123 Main St";
- private String city = "Anytown";
- private String state = "CA";
- private String zipCode = "12345";
-
- public AddressBuilder withStreet(String street) {
- this.street = street;
- return this;
- }
-
- public AddressBuilder withCity(String city) {
- this.city = city;
- return this;
- }
-
- public AddressBuilder withState(String state) {
- this.state = state;
- return this;
- }
-
- public AddressBuilder withZipCode(String zipCode) {
- this.zipCode = zipCode;
- return this;
- }
-
- public Address build() {
- Address address = new Address();
- address.setStreet(street);
- address.setCity(city);
- address.setState(state);
- address.setZipCode(zipCode);
- return address;
- }
-}
-
-// Using builders in tests
-public class UserServiceTest {
-
- @Autowired
- private UserService userService;
-
- @Test
- void shouldCreateActiveUser() {
- User user = UserBuilder.aUser().withEmail("john@example.com").withName("John", "Doe").withAge(25).build();
-
- User created = userService.createUser(user);
-
- assertNotNull(created.getId());
- assertTrue(created.isActive());
- assertEquals("john@example.com", created.getEmail());
- }
-
- @Test
- void shouldCreateAdminUser() {
- User admin = UserBuilder.aUser().withEmail("admin@example.com").withName("Admin", "User").admin().build();
-
- User created = userService.createUser(admin);
-
- assertTrue(created.getRoles().contains("ADMIN"));
- assertTrue(created.getRoles().contains("USER"));
- }
-
- @Test
- void shouldNotCreateInactiveUser() {
- User inactiveUser = UserBuilder.aUser().withEmail("inactive@example.com").inactive().build();
-
- assertThrows(ValidationException.class, () -> {
- userService.createUser(inactiveUser);
- });
- }
-}
-```
-
-### 5. `Test Data Management` в базах данных
-
-```java
-// Database test data setup
 @SpringBootTest
-@ActiveProfiles("test")
-public class DatabaseTestDataSetup {
+@Testcontainers
+class UserRepositoryIntegrationTest {
 
- @Autowired
- private JdbcTemplate jdbcTemplate;
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
+        .withDatabaseName("testdb")
+        .withUsername("test")
+        .withPassword("test");
 
- @Autowired
- private UserRepository userRepository;
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
 
- @BeforeEach
- void setUpTestData() {
- // Clean up
- jdbcTemplate.execute("DELETE FROM orders");
- jdbcTemplate.execute("DELETE FROM users");
+    @Autowired
+    private UserRepository userRepository;
 
- // Insert test users
- jdbcTemplate.update("""
- INSERT INTO users (id, email, password, first_name, last_name, active)
- VALUES (?,?,?,?,?,?)
- """,
- 1L, "john@example.com", "password", "John", "Doe", true);
+    @Test
+    void shouldSaveAndFindUser() {
+        User user = new User("john@example.com", "John Doe");
+        userRepository.save(user);
 
- jdbcTemplate.update("""
- INSERT INTO users (id, email, password, first_name, last_name, active)
- VALUES (?,?,?,?,?,?)
- """,
- 2L, "jane@example.com", "password", "Jane", "Smith", true);
- }
-
- @Test
- void shouldFindUserByEmail() {
- Optional<User> user = userRepository.findByEmail("john@example.com");
-
- assertTrue(user.isPresent());
- assertEquals("John", user.get().getFirstName());
- assertEquals("Doe", user.get().getLastName());
- }
+        Optional<User> found = userRepository.findByEmail("john@example.com");
+        assertTrue(found.isPresent());
+        assertEquals("John Doe", found.get().getName());
+    }
 }
-
-// Using @Sql for data setup
-@SpringBootTest
-@ActiveProfiles("test")
-@Sql(scripts = "/test-data/users.sql")
-@Sql(scripts = "/test-data/products.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public class SqlBasedTest {
-
- @Autowired
- private UserRepository userRepository;
-
- @Autowired
- private ProductRepository productRepository;
-
- @Test
- void shouldLoadDataFromSqlFiles() {
- List<User> users = userRepository.findAll();
- List<Product> products = productRepository.findAll();
-
- assertEquals(3, users.size());
- assertEquals(5, products.size());
- }
-}
-
-// users.sql
-/*
-INSERT INTO users (id, email, password, first_name, last_name, active) VALUES
-(1, 'john@example.com', 'password', 'John', 'Doe', true),
-(2, 'jane@example.com', 'password', 'Jane', 'Smith', true),
-(3, 'bob@example.com', 'password', 'Bob', 'Wilson', false);
-*/
-
-// products.sql
-/*
-INSERT INTO products (id, name, price, category) VALUES
-(1, 'Laptop', 1299.99, 'Electronics'),
-(2, 'Book', 29.99, 'Books'),
-(3, 'Phone', 799.99, 'Electronics'),
-(4, 'Tablet', 499.99, 'Electronics'),
-(5, 'Headphones', 99.99, 'Electronics');
-*/
 ```
 
-### 6. `Data-Driven Testing`
+**Spring Boot 3.1+** -- встроенная поддержка через `@ServiceConnection`:
 
 ```java
-// CSV-based test data
+@Container
+@ServiceConnection
+static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+// @DynamicPropertySource больше не нужен!
+```
+
+Подробнее об интеграционном тестировании -- в [Integration Testing](integration-testing-interview.md).
+
+## Q19. Как организовать тестовые данные?
+
+| Стратегия | Описание | Когда использовать |
+|-----------|---------|-------------------|
+| `Builder` | Программное создание объектов | Unit-тесты, фикстуры |
+| `@Sql` | SQL-скрипты перед тестом | Интеграционные тесты с БД |
+| `Faker` | Генерация случайных данных | Нагрузочные тесты, fuzzing |
+| `Fixtures` (JSON/YAML) | Фиксированные наборы | Стабильные сценарии |
+
+```java
+// Test Data Builder -- чистый и гибкий
+public class TestUserBuilder {
+    private String email = "user@example.com";
+    private String name = "John Doe";
+    private Role role = Role.USER;
+
+    public static TestUserBuilder aUser() { return new TestUserBuilder(); }
+
+    public TestUserBuilder withEmail(String email) { this.email = email; return this; }
+    public TestUserBuilder admin() { this.role = Role.ADMIN; return this; }
+
+    public User build() { return new User(email, name, role); }
+}
+
+// Использование в тесте
+@Test
+void shouldAllowAdminAccess() {
+    User admin = TestUserBuilder.aUser().admin().withEmail("admin@example.com").build();
+    userRepository.save(admin);
+    // ...
+}
+```
+
+```java
+// @Sql -- загрузка данных из файла
+@SpringBootTest
+@Sql(scripts = "/test-data/users.sql", executionPhase = BEFORE_TEST_METHOD)
+@Sql(scripts = "/test-data/cleanup.sql", executionPhase = AFTER_TEST_METHOD)
+class UserServiceIntegrationTest {
+    // тестовые данные загружены из SQL-файлов
+}
+```
+
+## Q20. Что такое `WireMock` и когда его использовать?
+
+`WireMock` -- сервер-заглушка для HTTP-зависимостей. Незаменим, когда тесты зависят от внешних API (платёжный шлюз, SMS-сервис, сторонний REST).
+
+```java
+@SpringBootTest
+@WireMockTest(httpPort = 8089)
+class PaymentServiceTest {
+
+    @Autowired
+    private PaymentService paymentService;
+
+    @Test
+    void shouldProcessPaymentSuccessfully() {
+        // Настраиваем заглушку внешнего API
+        stubFor(post(urlPathEqualTo("/api/payments"))
+            .withRequestBody(matchingJsonPath("$.amount"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")
+                .withBody("""
+                    {"transactionId": "TX-123", "status": "SUCCESS"}
+                """)));
+
+        PaymentResult result = paymentService.processPayment(new BigDecimal("99.99"), "USD");
+
+        assertEquals("TX-123", result.getTransactionId());
+        assertEquals("SUCCESS", result.getStatus());
+    }
+
+    @Test
+    void shouldHandlePaymentGatewayTimeout() {
+        stubFor(post(urlPathEqualTo("/api/payments"))
+            .willReturn(aResponse()
+                .withFixedDelay(5000)  // имитация таймаута
+                .withStatus(200)));
+
+        assertThrows(PaymentTimeoutException.class,
+            () -> paymentService.processPayment(new BigDecimal("99.99"), "USD"));
+    }
+}
+```
+
+---
+
+## Q21. Что такое `Data-Driven Testing`?
+
+`Data-Driven Testing` -- подход, при котором один тест выполняется с множеством наборов данных. В `JUnit 5` реализуется через параметризованные тесты.
+
+```java
+@ParameterizedTest(name = "email={0}, valid={1}")
+@CsvSource({
+    "john@example.com,   true",
+    "jane@test.org,      true",
+    "invalid-email,      false",
+    "'',                 false",
+    "@no-local-part.com, false"
+})
+void shouldValidateEmail(String email, boolean expected) {
+    assertEquals(expected, emailValidator.isValid(email));
+}
+
+// Данные из CSV-файла
 @ParameterizedTest
 @CsvFileSource(resources = "/test-data/login-scenarios.csv", numLinesToSkip = 1)
-void shouldHandleVariousLoginScenarios(String email, String password,
- boolean shouldSucceed, String expectedMessage) {
-
- LoginPage loginPage = new LoginPage(driver);
-
- loginPage.enterEmail(email);
- loginPage.enterPassword(password);
-
- if (shouldSucceed) {
- DashboardPage dashboard = loginPage.clickLoginButton();
- assertTrue(dashboard.isUserLoggedIn());
- } else {
- loginPage.clickLoginButtonExpectingFailure();
- assertTrue(loginPage.isErrorMessageDisplayed());
- assertEquals(expectedMessage, loginPage.getErrorMessage());
- }
+void shouldHandleLoginScenarios(String email, String password, int expectedStatus) {
+    given()
+        .contentType(ContentType.JSON)
+        .body("""
+            {"email": "%s", "password": "%s"}
+        """.formatted(email, password))
+    .when()
+        .post("/api/auth/login")
+    .then()
+        .statusCode(expectedStatus);
 }
 
-// login-scenarios.csv
-/*
-email,password,shouldSucceed,expectedMessage
-john@example.com,password,true,
-invalid@example.com,password,false,Invalid credentials
-john@example.com,wrongpassword,false,Invalid credentials,,false,Email and password are required
-john@example.com,,false,Password is required
-@example.com,password,false,Invalid email format
-*/
-
-// JSON-based test data
-public class JsonTestDataLoader {
-
- private final ObjectMapper objectMapper = new ObjectMapper();
-
- public List<LoginTestCase> loadLoginTestCases() throws IOException {
- InputStream inputStream = getClass().getResourceAsStream("/test-data/login-cases.json");
- return objectMapper.readValue(inputStream,
- objectMapper.getTypeFactory().constructCollectionType(List.class, LoginTestCase.class));
- }
-}
-
-public class LoginTestCase {
- private String email;
- private String password;
- private boolean shouldSucceed;
- private String expectedMessage;
-
- // getters and setters...
-}
-
-// login-cases.json
-/*
-[
- {
- "email": "john@example.com",
- "password": "password",
- "shouldSucceed": true
- },
- {
- "email": "invalid@example.com",
- "password": "password",
- "shouldSucceed": false,
- "expectedMessage": "Invalid credentials"
- }
-]
-*/
-
+// Данные через @MethodSource
 @ParameterizedTest
-@MethodSource("loginTestCases")
-void shouldHandleLoginFromJson(LoginTestCase testCase) {
- LoginPage loginPage = new LoginPage(driver);
-
- loginPage.enterEmail(testCase.getEmail());
- loginPage.enterPassword(testCase.getPassword());
-
- if (testCase.isShouldSucceed()) {
- DashboardPage dashboard = loginPage.clickLoginButton();
- assertTrue(dashboard.isUserLoggedIn());
- } else {
- loginPage.clickLoginButtonExpectingFailure();
- assertEquals(testCase.getExpectedMessage(), loginPage.getErrorMessage());
- }
+@MethodSource("orderTestCases")
+void shouldCalculateOrderTotal(List<Item> items, BigDecimal expectedTotal) {
+    Order order = new Order(items);
+    assertEquals(expectedTotal, order.calculateTotal());
 }
 
-static Stream<LoginTestCase> loginTestCases() throws IOException {
- JsonTestDataLoader loader = new JsonTestDataLoader();
- return loader.loadLoginTestCases().stream();
+static Stream<Arguments> orderTestCases() {
+    return Stream.of(
+        Arguments.of(List.of(new Item("A", 10.0)), new BigDecimal("10.00")),
+        Arguments.of(List.of(new Item("A", 10.0), new Item("B", 20.0)), new BigDecimal("30.00")),
+        Arguments.of(List.of(), BigDecimal.ZERO)
+    );
 }
 ```
 
-## Q7. Как интегрировать автоматизацию в `CI`/`CD`?
+## Q22. (!) Что такое `BDD` и как работает `Cucumber`?
 
-### 1. `GitHub Actions Pipeline`
+`BDD` (Behaviour-Driven Development) -- подход, при котором тесты описываются на естественном языке (формат `Gherkin`), что позволяет бизнесу и QA говорить на одном языке.
+
+```gherkin
+# src/test/resources/features/login.feature
+Feature: Авторизация пользователя
+
+  Scenario: Успешный вход
+    Given пользователь находится на странице логина
+    When он вводит email "user@example.com" и пароль "secret"
+    And нажимает кнопку "Войти"
+    Then он видит приветствие "Welcome, User!"
+
+  Scenario: Неверный пароль
+    Given пользователь находится на странице логина
+    When он вводит email "user@example.com" и пароль "wrong"
+    And нажимает кнопку "Войти"
+    Then он видит сообщение об ошибке "Invalid credentials"
+```
+
+```java
+// Step definitions
+public class LoginSteps {
+
+    private LoginPage loginPage;
+    private DashboardPage dashboardPage;
+
+    @Given("пользователь находится на странице логина")
+    public void userOnLoginPage() {
+        loginPage = new LoginPage(driver);
+    }
+
+    @When("он вводит email {string} и пароль {string}")
+    public void enterCredentials(String email, String password) {
+        loginPage.enterEmail(email);
+        loginPage.enterPassword(password);
+    }
+
+    @When("нажимает кнопку {string}")
+    public void clickButton(String buttonText) {
+        dashboardPage = loginPage.clickLogin();
+    }
+
+    @Then("он видит приветствие {string}")
+    public void verifyWelcome(String expected) {
+        assertEquals(expected, dashboardPage.getWelcome());
+    }
+}
+```
+
+## Q23. Что такое `Keyword-Driven Testing`?
+
+`Keyword-Driven Testing` -- подход, при котором тестовые шаги описываются через ключевые слова (действия), а данные и ожидаемые результаты вынесены в таблицы. Похож на BDD, но более формализован.
+
+| Keyword | Target | Data | Expected |
+|---------|--------|------|----------|
+| OPEN | /login | | |
+| TYPE | #email | user@example.com | |
+| TYPE | #password | secret | |
+| CLICK | #submit | | |
+| VERIFY_TEXT | .welcome | | Welcome! |
+
+Реализуется через фреймворки типа `Robot Framework` или кастомный парсер. В Java-мире `Cucumber` часто заменяет keyword-driven подход, обеспечивая более читаемый формат.
+
+---
+
+## Q24. (!) Как интегрировать автотесты в `CI/CD`?
+
+```mermaid
+graph LR
+    subgraph CI/CD Pipeline с тестами
+        COMMIT[Git Push] --> BUILD[Build]
+        BUILD --> UNIT[Unit-тесты]
+        UNIT --> INT[Интеграционные]
+        INT --> API[API-тесты]
+        API --> E2E[E2E / UI]
+        E2E --> PERF[Performance]
+        PERF --> DEPLOY[Deploy]
+    end
+
+    UNIT -->|fail| NOTIFY[Уведомление]
+    INT -->|fail| NOTIFY
+    API -->|fail| NOTIFY
+    E2E -->|fail| NOTIFY
+```
+
+### `GitHub Actions` Pipeline
 
 ```yaml
-#.github/workflows/automated-tests.yml
-name: Automated Testing Pipeline
+# .github/workflows/tests.yml
+name: Test Pipeline
 
 on:
- push:
- branches: [ main, develop ]
- pull_request:
- branches: [ main ]
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
 
 jobs:
- test:
- runs-on: ubuntu-latest
- strategy:
- matrix:
- test-type: [unit, integration, api]
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { java-version: '21', distribution: 'temurin', cache: 'gradle' }
+      - run: ./gradlew test
+      - uses: dorny/test-reporter@v1
+        if: always()
+        with: { name: 'Unit Tests', path: '**/build/test-results/test/*.xml', reporter: java-junit }
 
- services:
- postgres:
- image: postgres:13
- env:
- POSTGRES_DB: testdb
- POSTGRES_USER: test
- POSTGRES_PASSWORD: test
- ports:
- - 5432:5432
- options: >-
- --health-cmd pg_isready
- --health-interval 10s
- --health-timeout 5s
- --health-retries 5
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_DB: testdb, POSTGRES_USER: test, POSTGRES_PASSWORD: test }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { java-version: '21', distribution: 'temurin', cache: 'gradle' }
+      - run: ./gradlew integrationTest
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
 
- rabbitmq:
- image: rabbitmq:3-management
- ports:
- - 5672:5672
- - 15672:15672
-
- steps:
- - name: Checkout code
- uses: actions/checkout@v3
-
- - name: Set up JDK 17
- uses: actions/setup-java@v3
- with:
- java-version: '17'
- distribution: 'temurin'
- cache: maven
-
- - name: Cache Maven dependencies
- uses: actions/cache@v3
- with:
- path:/.m2/repository
- key: ${{ runner.os }}-maven-${{ hashFiles('/pom.xml') }}
- restore-keys: |
- ${{ runner.os }}-maven-
-
- - name: Run ${{ matrix.test-type }} tests
- run: mvn test -Dtest="*${{ matrix.test-type }}*Test" -Dspring.profiles.active=test
- env:
- DATABASE_URL: jdbc:postgresql://localhost:5432/testdb
- RABBITMQ_HOST: localhost
-
- - name: Publish test results
- uses: actions/upload-artifact@v3
- if: always()
- with:
- name: ${{ matrix.test-type }}-test-results
- path: |
- target/surefire-reports/
- target/failsafe-reports/
-
- - name: Generate test report
- uses: dorny/test-reporter@v1
- if: always()
- with:
- name: ${{ matrix.test-type }} Tests
- path: 'target/surefire-reports/*.xml'
- reporter: java-junit
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { java-version: '21', distribution: 'temurin', cache: 'gradle' }
+      - run: ./gradlew bootRun &
+      - run: timeout 60 bash -c 'until curl -sf http://localhost:8080/actuator/health; do sleep 2; done'
+      - run: ./gradlew e2eTest
 ```
 
-### 2. `Jenkins Pipeline`
+### `Jenkinsfile`
 
 ```groovy
-// Jenkinsfile
 pipeline {
- agent any
-
- stages {
- stage('Checkout') {
- steps {
- git branch: 'main', url: 'https://github.com/company/project.git'
- }
- }
-
- stage('Unit Tests') {
- steps {
- sh 'mvn test -Dtest="*UnitTest"'
- }
- post {
- always {
- junit 'target/surefire-reports/*.xml'
- publishCoverage adapters: [jacocoAdapter('target/site/jacoco/jacoco.xml')]
- }
- }
- }
-
- stage('Integration Tests') {
- steps {
- script {
- docker.image('postgres:13').withRun('-e POSTGRES_DB=testdb -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test') { c ->
- docker.image('rabbitmq:3-management').withRun { r ->
- sh 'mvn verify -Dtest="*IT" -Dspring.profiles.active=test'
- }
- }
- }
- }
- post {
- always {
- junit 'target/failsafe-reports/*.xml'
- }
- }
- }
-
- stage('API Tests') {
- steps {
- sh 'mvn test -Dtest="*ApiTest"'
- }
- }
-
- stage('UI Tests') {
- steps {
- sh '''
- # Start application
- mvn spring-boot:run &
- APP_PID=$!
-
- # Wait for app to start
- timeout 60 bash -c 'until curl -f http://localhost:8080/actuator/health; do sleep 5; done'
-
- # Run UI tests
- mvn test -Dtest="*UITest"
-
- # Stop application
- kill $APP_PID
- '''
- }
- }
-
- stage('Performance Tests') {
- steps {
- sh 'mvn test -Dtest="*PerformanceTest"'
- }
- post {
- always {
- publishPerformanceReport()
- }
- }
- }
-
- stage('Security Tests') {
- steps {
- sh 'mvn test -Dtest="*SecurityTest"'
- sh 'mvn org.owasp:dependency-check-maven:check'
- }
- }
- }
-
- post {
- always {
- // Archive test artifacts
- archiveArtifacts artifacts: 'target//*.log', allowEmptyArchive: true
-
- // Send notifications
- script {
- def results = currentBuild.result?: 'SUCCESS'
- if (results == 'FAILURE') {
- slackSend channel: '#testing',
- color: 'danger',
- message: "Tests failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
- }
- }
- }
- }
+    agent any
+    stages {
+        stage('Unit Tests')       { steps { sh './gradlew test' } }
+        stage('Integration Tests') { steps { sh './gradlew integrationTest' } }
+        stage('API Tests')         { steps { sh './gradlew apiTest' } }
+        stage('E2E Tests')         { steps { sh './gradlew e2eTest' } }
+    }
+    post {
+        always { junit '**/build/test-results/**/*.xml' }
+        failure {
+            slackSend channel: '#ci', color: 'danger',
+                message: "Tests failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+    }
 }
 ```
 
-### 3. `Parallel Test Execution`
+Подробнее о проектировании пайплайнов -- в [Проектирование пайплайнов](../cicd/pipeline-design-interview.md).
+
+## Q25. (!) Что такое `Continuous Testing`?
+
+`Continuous Testing` -- практика выполнения автоматизированных тестов на каждом этапе delivery pipeline, обеспечивая непрерывную обратную связь о качестве.
+
+```mermaid
+graph LR
+    DEV[Разработка] -->|pre-commit hooks<br/>unit-тесты| COMMIT[Commit]
+    COMMIT -->|CI<br/>unit + integration| BUILD[Build]
+    BUILD -->|CD<br/>API + E2E| STAGING[Staging]
+    STAGING -->|smoke + canary| PROD[Production]
+    PROD -->|мониторинг<br/>synthetic tests| FEEDBACK[Feedback]
+    FEEDBACK --> DEV
+```
+
+**Уровни Continuous Testing:**
+
+| Этап | Что запускается | Время | Gate (критерий прохода) |
+|------|----------------|-------|------------------------|
+| Pre-commit | Линтеры, быстрые unit-тесты | < 30 сек | 100% pass |
+| CI (commit) | Все unit-тесты | < 5 мин | 100% pass, coverage > 80% |
+| CI (merge) | Интеграционные, API-тесты | < 15 мин | 100% pass |
+| CD (staging) | E2E, smoke | < 30 мин | 95%+ pass |
+| Production | Synthetic monitoring | Постоянно | SLA метрики |
+
+## Q26. Как организовать параллельное выполнение тестов?
+
+Параллельность ускоряет feedback loop, но требует изоляции тестов.
+
+```java
+// JUnit 5 -- параллельное выполнение (junit-platform.properties)
+// junit.jupiter.execution.parallel.enabled = true
+// junit.jupiter.execution.parallel.mode.default = concurrent
+// junit.jupiter.execution.parallel.config.fixed.parallelism = 4
+
+// Gradle -- параллельный запуск
+// test {
+//     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+//     forkEvery = 100  // новый JVM-процесс каждые 100 тестов
+// }
+```
+
+**Требования для параллельных тестов:**
+- Тесты не зависят друг от друга (нет общего state)
+- Каждый тест использует свои тестовые данные
+- Нет race condition при записи в общие ресурсы
+- `@Isolated` для тестов, которые нельзя запускать параллельно
+
+## Q27. Что такое `Test Orchestration`?
+
+`Test Orchestration` -- управление порядком, приоритетом и распределением тестов по окружениям.
+
+**Ключевые аспекты:**
+- **Приоритизация**: критичные тесты запускаются первыми
+- **Sharding**: разбиение тест-сьюта на группы для параллельного запуска
+- **Retry Policy**: автоматический перезапуск упавших тестов
+- **Environment Routing**: определённые тесты на определённых окружениях
 
 ```yaml
-# Parallel test execution in GitHub Actions
+# Пример: sharding тестов в GitHub Actions
 jobs:
- test-parallel:
- runs-on: ubuntu-latest
- strategy:
- matrix:
- test-group: [1, 2, 3, 4, 5]
-
- steps:
- - uses: actions/checkout@v3
-
- - name: Set up JDK
- uses: actions/setup-java@v3
- with:
- java-version: '17'
- distribution: 'temurin'
-
- - name: Run parallel tests
- run: |
- # Calculate test groups
- TOTAL_GROUPS=5
- TESTS_PER_GROUP=$(( $(find. -name "*Test.java" | wc -l) / TOTAL_GROUPS + 1 ))
-
- # Find tests for this group
- TEST_FILES=$(find. -name "*Test.java" | \
- awk "NR % $TOTAL_GROUPS == ${{ matrix.test-group }} - 1 {print}")
-
- # Run tests
- if [! -z "$TEST_FILES" ]; then
- mvn test -Dtest=$(echo $TEST_FILES | tr '\n' ',')
- fi
+  test:
+    strategy:
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - run: ./gradlew test --tests "*" -Dshard.index=${{ matrix.shard }} -Dshard.total=4
 ```
 
-### 4. `Test Environments Management`
+---
+
+## Q28. (!) Что такое `flaky`-тесты и как с ними бороться?
+
+`Flaky test` -- тест, который проходит и падает на одном и том же коде без изменений. Это одна из главных проблем автоматизации.
+
+**Основные причины flaky-тестов:**
+
+| Причина | Пример | Решение |
+|---------|--------|---------|
+| Timing / Race conditions | Не дождались загрузки элемента | `Explicit waits`, не `Thread.sleep()` |
+| Зависимость от порядка | Тест B зависит от данных теста A | Изоляция тестовых данных |
+| Shared state | Общий синглтон/кэш | `@DirtiesContext`, отдельные контексты |
+| Внешние зависимости | Нестабильный внешний API | `WireMock`, `Testcontainers` |
+| Время / даты | `LocalDate.now()` в тесте | Инжекция `Clock` |
+| Случайные порты | Порт уже занят | `@SpringBootTest(webEnvironment = RANDOM_PORT)` |
+
+**Стратегия борьбы с flaky-тестами:**
+
+```java
+// 1. ПЛОХО: Thread.sleep() -- самый частый источник flaky
+Thread.sleep(3000); // Магическое число, нет гарантий
+
+// 2. ХОРОШО: Explicit wait с условием
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("result")));
+
+// 3. ХОРОШО: Awaitility для асинхронных операций
+await()
+    .atMost(Duration.ofSeconds(10))
+    .pollInterval(Duration.ofMillis(500))
+    .until(() -> orderRepository.findById(orderId).get().getStatus() == COMPLETED);
+
+// 4. Retry аннотация (JUnit 5 Pioneer)
+@RetryingTest(3) // Перезапуск до 3 раз -- ТОЛЬКО как временная мера!
+void flakyCandidateTest() {
+    // ...
+}
+```
+
+**Quarantine-подход**: переместить flaky-тесты в отдельный suite, который не блокирует пайплайн, но отслеживается.
+
+## Q29. Как диагностировать причины нестабильности тестов?
+
+**Чек-лист диагностики:**
+
+1. **Проверить логи** -- найти `timeout`, `connection refused`, `stale element`
+2. **Запустить тест изолированно** -- если проходит, проблема в зависимости от других тестов
+3. **Запустить 10 раз подряд** -- определить частоту падений
+4. **Проверить shared state** -- статические поля, общие БД-записи
+5. **Проверить timing** -- заменить `sleep()` на explicit waits
+6. **Проверить окружение** -- CI vs. локально (ресурсы, DNS, сеть)
+
+```bash
+# Запуск теста N раз для выявления flakiness
+for i in $(seq 1 20); do
+    ./gradlew test --tests "com.example.SuspiciousTest" 2>&1 | tail -1
+done | sort | uniq -c
+```
+
+---
+
+## Q30. Как автоматизировать `Performance Testing`?
+
+Основные инструменты: `JMeter`, `Gatling`, `k6`. В Java-проектах `Gatling` хорошо интегрируется через Gradle/Maven.
+
+```java
+// Gatling-сценарий (Scala DSL, используется в Java-проектах)
+public class LoadSimulation extends Simulation {
+
+    HttpProtocolBuilder httpProtocol = http
+        .baseUrl("http://localhost:8080")
+        .acceptHeader("application/json");
+
+    ScenarioBuilder scenario = scenario("Load Test")
+        .exec(http("Get Users").get("/api/users"))
+        .pause(1)
+        .exec(http("Create User").post("/api/users")
+            .header("Content-Type", "application/json")
+            .body(StringBody("""
+                {"email": "test@example.com", "name": "Test"}
+            """)));
+
+    { setUp(
+        scenario.injectOpen(
+            rampUsersPerSec(1).to(50).during(Duration.ofMinutes(2)),
+            constantUsersPerSec(50).during(Duration.ofMinutes(5))
+        )
+    ).protocols(httpProtocol)
+     .assertions(
+         global().responseTime().percentile3().lt(1000),  // P95 < 1s
+         global().successfulRequests().percent().gt(99.0)  // > 99% success
+     ); }
+}
+```
+
+## Q31. Что такое `Visual Regression Testing`?
+
+`Visual Regression Testing` -- сравнение скриншотов текущей и эталонной версии UI для обнаружения визуальных регрессий.
+
+**Инструменты:** `Percy`, `Applitools Eyes`, `BackstopJS`, `Playwright` (встроенный).
+
+```java
+// Playwright -- встроенное визуальное сравнение
+@Test
+void shouldMatchLoginPageSnapshot() {
+    page.navigate("http://localhost:8080/login");
+
+    // Сравнивает скриншот с эталоном (при первом запуске создаёт эталон)
+    assertThat(page).hasScreenshot("login-page.png", new PageAssertions.HasScreenshotOptions()
+        .setMaxDiffPixelRatio(0.01));  // допустимое отклонение 1%
+}
+```
+
+## Q32. Как автоматизировать `Accessibility Testing`?
+
+Проверка доступности (`a11y`) гарантирует, что приложение соответствует стандартам `WCAG`.
+
+```java
+// axe-core через Selenium
+@Test
+void shouldHaveNoAccessibilityViolations() {
+    driver.get("http://localhost:8080/login");
+
+    AxeBuilder axeBuilder = new AxeBuilder()
+        .withTags(List.of("wcag2a", "wcag2aa"));  // Уровни WCAG
+
+    Results results = axeBuilder.analyze(driver);
+
+    assertTrue(results.getViolations().isEmpty(),
+        "Accessibility violations found: " +
+        results.getViolations().stream()
+            .map(v -> v.getId() + ": " + v.getDescription())
+            .collect(Collectors.joining("\n")));
+}
+```
+
+## Q33. Как автоматизировать `Security Testing`?
+
+| Тип | Инструмент | Что проверяет |
+|-----|-----------|--------------|
+| `SAST` | `SonarQube`, `SpotBugs` | Уязвимости в коде |
+| `DAST` | `OWASP ZAP`, `Burp Suite` | Уязвимости в работающем приложении |
+| `SCA` | `OWASP Dependency-Check` | Уязвимости в зависимостях |
+| `Secret Scanning` | `Gitleaks`, `TruffleHog` | Секреты в коде |
+
+```groovy
+// build.gradle -- OWASP Dependency Check
+plugins {
+    id 'org.owasp.dependencycheck' version '9.0.0'
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7  // Fail build на критических уязвимостях
+    suppressionFile = 'owasp-suppressions.xml'
+}
+```
+
+Подробнее о безопасности -- в [Application Security](../security/application-security-interview.md) и [OWASP Top 10](../security/owasp-top10-interview.md).
+
+## Q34. Как автоматизировать тестирование мобильных приложений?
+
+Основные инструменты: `Appium` (кроссплатформенный), `Espresso` (Android native), `XCUITest` (iOS native).
+
+```java
+// Appium -- кроссплатформенный тест
+public class MobileLoginTest {
+
+    private AndroidDriver driver;
+
+    @BeforeEach
+    void setUp() throws MalformedURLException {
+        UiAutomator2Options options = new UiAutomator2Options()
+            .setDeviceName("emulator-5554")
+            .setApp("/path/to/app.apk");
+
+        driver = new AndroidDriver(new URL("http://127.0.0.1:4723"), options);
+    }
+
+    @Test
+    void shouldLoginOnMobile() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        driver.findElement(AppiumBy.id("email_input")).sendKeys("user@example.com");
+        driver.findElement(AppiumBy.id("password_input")).sendKeys("secret");
+        driver.findElement(AppiumBy.id("login_button")).click();
+
+        WebElement welcome = wait.until(
+            ExpectedConditions.presenceOfElementLocated(AppiumBy.id("welcome")));
+        assertEquals("Welcome!", welcome.getText());
+    }
+}
+```
+
+---
+
+## Q35. (!) Что такое `Test Reporting` и какие метрики отслеживать?
+
+**Ключевые метрики автоматизации:**
+
+| Метрика | Формула | Целевое значение |
+|---------|--------|-----------------|
+| Pass Rate | passed / total × 100% | > 98% |
+| Flaky Rate | flaky / total × 100% | < 2% |
+| Execution Time | Общее время прогона | Снижение или стабильность |
+| Defect Detection | Баги найденные автотестами / всего | > 50% |
+| Test Coverage | Покрытые строки / всего | > 80% (unit) |
+| MTTR (Mean Time to Repair) | Среднее время починки теста | < 1 день |
+
+**Инструменты отчётности:**
+- `Allure Report` -- детальные отчёты с шагами, скриншотами, вложениями
+- `JUnit XML` + `dorny/test-reporter` -- интеграция с GitHub Actions
+- `Grafana` + `Prometheus` -- дашборды для метрик CI/CD
+
+```java
+// Allure-аннотации для отчётов
+@Test
+@Epic("Авторизация")
+@Feature("Логин")
+@Story("Успешный вход")
+@Severity(SeverityLevel.CRITICAL)
+void shouldLoginSuccessfully() {
+    Allure.step("Открыть страницу логина", () -> loginPage.open());
+    Allure.step("Ввести credentials", () -> loginPage.loginAs("user@example.com", "secret"));
+    Allure.step("Проверить dashboard", () -> assertTrue(dashboardPage.isDisplayed()));
+}
+```
+
+## Q36. Что такое `Test Environment Management`?
+
+Управление тестовыми окружениями -- обеспечение стабильных, воспроизводимых окружений для каждого типа тестов.
+
+| Окружение | Назначение | Данные | Управление |
+|-----------|-----------|--------|-----------|
+| Local | Разработка | In-memory / H2 | Docker Compose |
+| CI | Автотесты | `Testcontainers` | Ephemeral |
+| Staging | Pre-production | Копия prod (обезличенная) | `Kubernetes` / `ArgoCD` |
+| Production | Synthetic tests | Реальные | Мониторинг |
 
 ```yaml
-# Multi-environment testing
-jobs:
- test-environments:
- runs-on: ubuntu-latest
- strategy:
- matrix:
- environment: [dev, staging, prod]
+# docker-compose.test.yml -- тестовое окружение
+services:
+  app:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: test
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/testdb
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ['8080:8080']
 
- environment:
- name: ${{ matrix.environment }}
-
- steps:
- - uses: actions/checkout@v3
-
- - name: Set up JDK
- uses: actions/setup-java@v3
- with:
- java-version: '17'
-
- - name: Run tests against ${{ matrix.environment }}
- run: |
- case ${{ matrix.environment }} in
- dev)
- BASE_URL="https://dev-api.company.com";;
- staging)
- BASE_URL="https://staging-api.company.com";;
- prod)
- BASE_URL="https://api.company.com";;
- esac
-
- mvn test -Dtest="*ApiTest" -Dbase.url=$BASE_URL
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: testdb, POSTGRES_USER: test, POSTGRES_PASSWORD: test }
+    healthcheck:
+      test: pg_isready -U test
+      interval: 5s
+      retries: 5
 ```
 
-### 5. `Test Results Analysis` и `Reporting`
+Подробнее о контейнеризации -- в [Docker](../devops/docker-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
+
+## Q37. Как автоматизировать `Smoke Testing`?
+
+`Smoke Test` -- быстрая проверка основных функций после деплоя. Должен выполняться за 1-3 минуты.
 
 ```java
-@Configuration
-public class TestReportingConfig {
+@Tag("smoke")
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+class SmokeTest {
 
- @Bean
- public TestExecutionListener testExecutionListener() {
- return new TestExecutionListener() {
+    @LocalServerPort
+    int port;
 
- @Override
- public void executionStarted(TestIdentifier testIdentifier) {
- // Log test start
- logger.info("Starting test: {}", testIdentifier.getDisplayName());
- metrics.counter("test.started").increment();
- }
+    @Test
+    void healthCheckShouldReturnUp() {
+        given().port(port)
+        .when().get("/actuator/health")
+        .then().statusCode(200).body("status", equalTo("UP"));
+    }
 
- @Override
- public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult result) {
- // Log test result
- if (result.getStatus() == TestExecutionResult.Status.SUCCESSFUL) {
- logger.info("Test passed: {}", testIdentifier.getDisplayName());
- metrics.counter("test.passed").increment();
- } else {
- logger.error("Test failed: {} - {}", testIdentifier.getDisplayName(),
- result.getThrowable().get().getMessage());
- metrics.counter("test.failed").increment();
- }
+    @Test
+    void mainPageShouldLoad() {
+        given().port(port)
+        .when().get("/")
+        .then().statusCode(200);
+    }
 
- // Record execution time
- long duration = getTestDuration(testIdentifier);
- metrics.timer("test.duration").record(duration, TimeUnit.MILLISECONDS);
- }
- };
- }
-
- @Bean
- public TestReporter testReporter() {
- return testResult -> {
- // Send results to external systems
- if (testResult.getStatus() == Status.FAILED) {
- slackService.sendMessage("Test failed: " + testResult.getDisplayName());
- jiraService.createBug(testResult);
- }
- };
- }
-}
-
-// Custom test watcher
-public class TestWatcherExtension implements BeforeTestExecutionCallback, AfterTestExecutionCallback {
-
- private final Map<String, Long> testStartTimes = new ConcurrentHashMap<>();
-
- @Override
- public void beforeTestExecution(ExtensionContext context) {
- testStartTimes.put(context.getDisplayName(), System.currentTimeMillis());
-
- // Log test start with thread info
- logger.info("Starting test: {} on thread: {}",
- context.getDisplayName(),
- Thread.currentThread().getName());
- }
-
- @Override
- public void afterTestExecution(ExtensionContext context) {
- long startTime = testStartTimes.remove(context.getDisplayName());
- long duration = System.currentTimeMillis() - startTime;
-
- TestExecutionResult result = context.getExecutionException().map(e -> TestExecutionResult.failed(e)).orElse(TestExecutionResult.successful());
-
- // Store test result
- testResultRepository.save(new TestResult(
- context.getDisplayName(),
- result.getStatus().name(),
- duration,
- result.getThrowable().orElse(null)
- ));
-
- // Send to monitoring
- metricsService.recordTestResult(context.getDisplayName(), result, duration);
- }
+    @Test
+    void apiShouldRespond() {
+        given().port(port)
+        .when().get("/api/version")
+        .then().statusCode(200).body("version", notNullValue());
+    }
 }
 ```
 
-## Q8. Как поддерживать автоматизированные тесты?
+```bash
+# Запуск только smoke-тестов
+./gradlew test -PincludeTags=smoke
+```
 
-### 1. `Test Maintenance Strategies`
+## Q38. Как автоматизировать `Regression Testing`?
+
+`Regression Testing` -- повторное выполнение существующих тестов для проверки, что новые изменения не сломали существующую функциональность.
+
+**Стратегии оптимизации:**
+- **Risk-based**: приоритизировать тесты по зоне изменений
+- **Impact Analysis**: запускать только тесты, затронутые изменёнными файлами
+- **Tiered Execution**: быстрые -- на каждый коммит, медленные -- nightly
+
+```groovy
+// Gradle task для regression-тестов
+tasks.register('regressionTest', Test) {
+    useJUnitPlatform { includeTags 'regression' }
+    maxParallelForks = 4
+    failFast = false  // прогнать все, даже при падении
+    reports.html.required = true
+}
+```
+
+---
+
+## Q39. (!) Что такое `Mutation Testing`?
+
+`Mutation Testing` -- метод оценки качества тестов. Инструмент вносит небольшие изменения (мутации) в код и проверяет, ловят ли тесты эти изменения.
+
+**Типы мутаций:**
+- Замена `>` на `>=`
+- Замена `true` на `false`
+- Удаление вызова метода
+- Замена `+` на `-`
+- Замена возвращаемого значения на `null`
+
+**Если тест не падает после мутации -- тест недостаточно качественный** (мутант "выжил").
+
+```groovy
+// build.gradle -- PIT (pitest)
+plugins {
+    id 'info.solidsoft.pitest' version '1.15.0'
+}
+
+pitest {
+    targetClasses = ['com.example.service.*']
+    targetTests = ['com.example.service.*Test']
+    mutators = ['DEFAULTS']       // Стандартный набор мутаций
+    timestampedReports = false
+    outputFormats = ['HTML', 'XML']
+    mutationThreshold = 80        // Минимум 80% мутантов убиты
+}
+```
+
+```bash
+./gradlew pitest
+# Отчёт: build/reports/pitest/index.html
+```
+
+**Mutation Score** = убитые мутанты / всего мутантов. Хороший показатель: > 80%.
+
+## Q40. Как оценить качество тестового покрытия?
+
+`Code Coverage` -- необходимая, но недостаточная метрика. Высокое покрытие не гарантирует качество тестов.
+
+| Тип покрытия | Что измеряет | Инструмент |
+|-------------|-------------|-----------|
+| Line Coverage | % выполненных строк | `JaCoCo` |
+| Branch Coverage | % покрытых ветвлений (if/else) | `JaCoCo` |
+| Mutation Coverage | % обнаруженных мутаций | `PIT` |
+| Path Coverage | % пройденных путей | Теоретическая метрика |
+
+```groovy
+// build.gradle -- JaCoCo с порогами
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80  // 80% line coverage
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.70  // 70% branch coverage
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+```
+
+**Правило**: стремиться к 80%+ покрытию для бизнес-логики, но не гнаться за 100% -- это приводит к бесполезным тестам ради метрики.
+
+---
+
+## Q41. Как спроектировать архитектуру тестового фреймворка?
+
+```mermaid
+graph TB
+    subgraph Слои тестового фреймворка
+        TESTS[Тесты<br/>LoginTest, OrderApiTest]
+        STEPS[Step Library<br/>LoginSteps, OrderSteps]
+        PAGES[Page Objects / API Clients<br/>LoginPage, OrderApi]
+        UTILS[Утилиты<br/>TestDataBuilder, WaitHelper]
+        CONFIG[Конфигурация<br/>BaseTest, TestConfig]
+        INFRA[Инфраструктура<br/>WebDriver, RestAssured, Testcontainers]
+    end
+
+    TESTS --> STEPS --> PAGES --> INFRA
+    TESTS --> UTILS
+    TESTS --> CONFIG
+    PAGES --> UTILS
+    CONFIG --> INFRA
+```
+
+**Принципы хорошего фреймворка:**
+1. **DRY** -- общие действия в базовых классах и утилитах
+2. **Separation of Concerns** -- тесты не знают о деталях реализации
+3. **Configuration over Code** -- окружение, таймауты, URL в конфигах
+4. **Self-documenting** -- тест читается как спецификация
+5. **Fast Feedback** -- быстрые тесты запускаются первыми
+
+## Q42. (!) Что такое `Test Maintenance Strategy`?
+
+Стоимость поддержки тестов часто превышает стоимость их написания. Стратегия maintenance определяет, как управлять тестовым набором в долгосрочной перспективе.
+
+**Признаки проблем с maintenance:**
+- Тесты часто ломаются при рефакторинге (хрупкие тесты)
+- Время прогона растёт из-за дублирования
+- Никто не понимает, что тест проверяет
+- Flaky rate > 5%
+
+**Практики:**
+- **Регулярный review тестов** при код-ревью (не только production-код)
+- **Удаление устаревших тестов** -- мёртвый тест хуже, чем отсутствие теста
+- **Мониторинг test health** -- дашборд с pass rate, execution time, flaky rate
+- **Ownership** -- каждый тест должен иметь владельца (команду)
+
+## Q43. Как организовать тестирование [микросервисов](../architecture/microservices-interview.md)?
+
+```mermaid
+graph TB
+    subgraph Стратегия тестирования микросервисов
+        UNIT[Unit-тесты<br/>Внутри каждого сервиса]
+        COMPONENT[Component-тесты<br/>Один сервис + Testcontainers]
+        CONTRACT[Contract-тесты<br/>Pact / Spring Cloud Contract]
+        E2E[E2E-тесты<br/>Все сервисы + staging]
+    end
+
+    UNIT --> COMPONENT --> CONTRACT --> E2E
+```
+
+| Уровень | Что тестирует | Инструменты | Кто владеет |
+|---------|-------------|------------|-------------|
+| Unit | Бизнес-логика изолированно | `JUnit`, `Mockito` | Команда сервиса |
+| Component | Один сервис целиком | `Testcontainers`, `WireMock` | Команда сервиса |
+| Contract | API-совместимость | `Pact`, `Spring Cloud Contract` | Обе команды |
+| E2E | End-to-end сценарии | `REST Assured`, `Selenium` | QA-команда |
+
+## Q44. Что такое `Test Doubles` и какие виды бывают?
+
+`Test Double` -- обобщённый термин для объектов, заменяющих реальные зависимости в тестах (по Джерарду Месарошу).
+
+| Вид | Описание | Пример |
+|-----|---------|--------|
+| `Dummy` | Передаётся, но не используется | `new DummyLogger()` |
+| `Stub` | Возвращает заранее заданные значения | `when(repo.findById(1)).thenReturn(user)` |
+| `Spy` | Обёртка над реальным объектом + запись вызовов | `@Spy UserService service` |
+| `Mock` | Программируемый объект с проверкой вызовов | `verify(repo).save(any())` |
+| `Fake` | Рабочая, но упрощённая реализация | In-memory repository |
 
 ```java
-public class TestMaintenanceStrategy {
+// Stub -- возвращает заданное значение
+when(userRepository.findByEmail("john@example.com"))
+    .thenReturn(Optional.of(new User("john@example.com", "John")));
 
- public enum MaintenanceAction {
- FIX_IMMEDIATELY, // Critical failures
- SCHEDULE_FIX, // Important but not blocking
- DEPRECATE, // Test no longer relevant
- QUARANTINE, // Temporarily disable
- REFACTOR // Test needs improvement
- }
+// Mock -- проверяем, что метод был вызван
+userService.deleteUser(1L);
+verify(userRepository).deleteById(1L);
 
- public MaintenanceAction determineAction(TestFailure failure) {
- if (failure.isCritical() && failure.blocksDeployment()) {
- return MaintenanceAction.FIX_IMMEDIATELY;
- }
+// Spy -- частичный мок
+@Spy
+UserService userService;
+// Реальные методы работают, но можно переопределить отдельные
+doReturn(cachedUser).when(userService).loadFromCache(1L);
 
- if (failure.isDueToCodeChange() && failure.hasSimpleFix()) {
- return MaintenanceAction.SCHEDULE_FIX;
- }
+// Fake -- упрощённая реализация
+class InMemoryUserRepository implements UserRepository {
+    private final Map<Long, User> store = new ConcurrentHashMap<>();
 
- if (failure.isFlaky() && failure.canBeQuarantined()) {
- return MaintenanceAction.QUARANTINE;
- }
+    @Override
+    public Optional<User> findById(Long id) { return Optional.ofNullable(store.get(id)); }
 
- if (failure.isOutdated() && failure.noLongerProvidesValue()) {
- return MaintenanceAction.DEPRECATE;
- }
-
- return MaintenanceAction.REFACTOR;
- }
-
- public void applyMaintenanceAction(TestFailure failure, MaintenanceAction action) {
- switch (action) {
- case FIX_IMMEDIATELY:
- fixTestImmediately(failure);
- break;
- case SCHEDULE_FIX:
- scheduleTestFix(failure);
- break;
- case DEPRECATE:
- deprecateTest(failure);
- break;
- case QUARANTINE:
- quarantineTest(failure);
- break;
- case REFACTOR:
- refactorTest(failure);
- break;
- }
- }
+    @Override
+    public User save(User user) { store.put(user.getId(), user); return user; }
 }
 ```
 
-### 2. `Flaky Test Management`
+Подробнее о моках и стабах -- в [Unit Testing](unit-testing-interview.md).
+
+## Q45. Best practices для автоматизации тестирования?
+
+1. **Следуйте пирамиде тестирования** -- больше unit, меньше E2E
+2. **Тесты должны быть изолированы** -- каждый тест независим
+3. **Тесты должны быть быстрыми** -- медленные тесты не запускают
+4. **Имена тестов -- это документация** -- `shouldReturn404WhenUserNotFound()`, не `test1()`
+5. **AAA / Given-When-Then** -- чёткая структура каждого теста
+6. **Не тестируйте фреймворк** -- не проверяйте, что `Spring` работает
+7. **Один assert на тест** (в идеале) -- один тест проверяет одно поведение
+8. **CI/CD gate** -- тесты блокируют деплой при падении
+9. **Flaky tolerance = 0** -- flaky-тест чинится или удаляется
+10. **Test data as code** -- тестовые данные версионируются вместе с кодом
+11. **Мониторьте тестовый health** -- pass rate, execution time, coverage тренды
+
+## Q46. (!) Как реализовать Page Object Model с `Playwright` для Java?
+
+`Playwright` предоставляет синхронный API в Java. Page Object Model с Playwright даёт более надёжные тесты благодаря встроенным авто-ожиданиям.
 
 ```java
-// Flaky test detection and quarantine
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface FlakyTest {
- int maxRetries() default 3;
- String reason() default "";
+// Страница: LoginPage.java
+public class LoginPage {
+
+    private final Page page;
+
+    // Локаторы — рекомендуется использовать роли и текст вместо CSS
+    private final Locator emailInput;
+    private final Locator passwordInput;
+    private final Locator submitButton;
+    private final Locator errorMessage;
+
+    public LoginPage(Page page) {
+        this.page = page;
+        this.emailInput = page.getByLabel("Email");
+        this.passwordInput = page.getByLabel("Password");
+        this.submitButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in"));
+        this.errorMessage = page.getByRole(AriaRole.ALERT);
+    }
+
+    public LoginPage navigate() {
+        page.navigate("https://app.example.com/login");
+        return this;
+    }
+
+    public DashboardPage loginAs(String email, String password) {
+        emailInput.fill(email);
+        passwordInput.fill(password);
+        submitButton.click();
+        return new DashboardPage(page);
+    }
+
+    public LoginPage loginWithInvalidCredentials(String email, String password) {
+        emailInput.fill(email);
+        passwordInput.fill(password);
+        submitButton.click();
+        return this;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage.textContent();
+    }
 }
 
-public class FlakyTestExtension implements TestExecutionExceptionHandler {
+// Страница: DashboardPage.java
+public class DashboardPage {
+    private final Page page;
+    private final Locator welcomeMessage;
 
- @Override
- public void handleTestExecutionException(ExtensionContext context, Throwable throwable)
- throws Throwable {
+    public DashboardPage(Page page) {
+        this.page = page;
+        this.welcomeMessage = page.getByTestId("welcome-message");
+    }
 
- FlakyTest flakyAnnotation = context.getRequiredTestMethod().getAnnotation(FlakyTest.class);
- if (flakyAnnotation!= null) {
- handleFlakyTest(context, throwable, flakyAnnotation);
- } else {
- throw throwable;
- }
- }
-
- private void handleFlakyTest(ExtensionContext context, Throwable originalException,
- FlakyTest flakyAnnotation) throws Throwable {
-
- int maxRetries = flakyAnnotation.maxRetries();
- String reason = flakyAnnotation.reason();
-
- logger.warn("Detected flaky test: {} - Reason: {}",
- context.getDisplayName(), reason);
-
- for (int attempt = 1; attempt <= maxRetries; attempt++) {
- try {
- logger.info("Retrying flaky test {} (attempt {}/{})",
- context.getDisplayName(), attempt, maxRetries);
-
- // Retry the test
- context.getRequiredTestMethod().invoke(context.getRequiredTestInstance());
-
- logger.info("Flaky test passed on retry {}: {}",
- attempt, context.getDisplayName());
- return;
-
- } catch (Throwable retryException) {
- logger.warn("Flaky test retry {} failed: {}",
- attempt, context.getDisplayName());
-
- if (attempt == maxRetries) {
- // All retries failed
- logger.error("Flaky test failed all {} retries: {}",
- maxRetries, context.getDisplayName());
-
- // Report to monitoring system
- flakyTestReporter.reportFlakyTest(context, originalException, reason);
-
- throw originalException;
- }
-
- // Wait before retry
- Thread.sleep(1000 * attempt);
- }
- }
- }
+    public String getWelcomeText() {
+        welcomeMessage.waitFor();  // авто-ожидание
+        return welcomeMessage.textContent();
+    }
 }
 
-// Usage
-public class FlakyUITest {
+// Тест с Playwright + JUnit 5
+@ExtendWith(PlaywrightExtension.class)  // кастомный extension
+class LoginFlowTest {
 
- @Test
- @FlakyTest(maxRetries = 2, reason = "Intermittent network issues")
- void shouldLoadDashboard() {
- // Test that sometimes fails due to network issues
- driver.get("https://example.com/dashboard");
- assertTrue(driver.findElement(By.className("dashboard")).isDisplayed());
- }
+    @Test
+    void shouldLoginSuccessfully(Page page) {
+        DashboardPage dashboard = new LoginPage(page)
+            .navigate()
+            .loginAs("alice@example.com", "secret123");
+
+        assertThat(dashboard.getWelcomeText()).contains("Welcome, Alice");
+    }
+
+    @Test
+    void shouldShowErrorOnInvalidCredentials(Page page) {
+        String error = new LoginPage(page)
+            .navigate()
+            .loginWithInvalidCredentials("wrong@example.com", "bad-password")
+            .getErrorMessage();
+
+        assertThat(error).isEqualTo("Invalid email or password");
+    }
+}
+
+// PlaywrightExtension.java
+public class PlaywrightExtension implements BeforeAllCallback, AfterAllCallback,
+                                            BeforeEachCallback, AfterEachCallback,
+                                            ParameterResolver {
+    private static Playwright playwright;
+    private static Browser browser;
+    private Page page;
+
+    @Override
+    public void beforeAll(ExtensionContext ctx) {
+        playwright = Playwright.create();
+        browser = playwright.chromium().launch(
+            new BrowserType.LaunchOptions().setHeadless(true));
+    }
+
+    @Override
+    public void beforeEach(ExtensionContext ctx) {
+        page = browser.newPage();
+    }
+
+    @Override
+    public void afterEach(ExtensionContext ctx) {
+        page.close();
+    }
+
+    @Override
+    public void afterAll(ExtensionContext ctx) {
+        browser.close();
+        playwright.close();
+    }
+
+    @Override
+    public boolean supportsParameter(ParameterContext param, ExtensionContext ctx) {
+        return param.getParameter().getType().equals(Page.class);
+    }
+
+    @Override
+    public Object resolveParameter(ParameterContext param, ExtensionContext ctx) {
+        return page;
+    }
 }
 ```
 
-### 3. `Test Code Quality`
+### Playwright vs Selenium
+
+| Критерий | Playwright | Selenium |
+|----------|-----------|---------|
+| Авто-ожидание | Встроено | `WebDriverWait` вручную |
+| Браузерные контексты | Изолированные (инкогнито) | Один сеанс |
+| Скорость | Быстрее | Медленнее |
+| API | Синхронный (Java) | Синхронный |
+| Скриншоты/видео | Встроено | Через AShot |
+| Сетевые перехваты | `page.route()` | Дополнительные библиотеки |
+
+## Q47. Как писать `Gherkin`-сценарии и шаговые определения в `Cucumber`?
+
+```gherkin
+# src/test/resources/features/order.feature
+Feature: Управление заказами
+  Как зарегистрированный пользователь
+  Я хочу создавать и отслеживать заказы
+  Чтобы получать товары
+
+  Background:
+    Given пользователь "alice@example.com" авторизован
+
+  Scenario: Успешное создание заказа
+    Given товар "Spring Boot in Action" стоит 29.99 и есть в наличии
+    When пользователь добавляет товар в корзину и оформляет заказ
+    Then заказ создан со статусом "PENDING"
+    And пользователь получает email-подтверждение
+
+  Scenario Outline: Отклонение заказа с некорректной суммой
+    Given пользователь пытается заказать товар на <amount> USD
+    When заказ отправляется на обработку
+    Then заказ отклонён с ошибкой "<error>"
+
+    Examples:
+      | amount  | error                        |
+      | -10     | Сумма должна быть положительной |
+      | 0       | Сумма не может быть нулём    |
+      | 1000000 | Превышен лимит заказа        |
+```
 
 ```java
-// Test code quality rules
-public class TestCodeQualityChecker {
+// Шаговые определения
+@CucumberContextConfiguration
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class OrderStepDefinitions {
 
- public List<QualityViolation> checkTestQuality(Class<?> testClass) {
- List<QualityViolation> violations = new ArrayList<>();
+    @Autowired
+    private TestRestTemplate restTemplate;
 
- violations.addAll(checkTestNaming(testClass));
- violations.addAll(checkTestStructure(testClass));
- violations.addAll(checkTestIsolation(testClass));
- violations.addAll(checkTestDataManagement(testClass));
+    @Autowired
+    private UserRepository userRepository;
 
- return violations;
- }
+    private ResponseEntity<OrderDto> lastResponse;
+    private String authToken;
 
- private List<QualityViolation> checkTestNaming(Class<?> testClass) {
- List<QualityViolation> violations = new ArrayList<>();
+    @Given("пользователь {string} авторизован")
+    public void userIsAuthenticated(String email) {
+        // Получаем JWT-токен для тестового пользователя
+        this.authToken = getAuthToken(email);
+    }
 
- for (Method method: testClass.getMethods()) {
- if (method.isAnnotationPresent(Test.class)) {
- String methodName = method.getName();
+    @Given("товар {string} стоит {double} и есть в наличии")
+    public void productIsAvailable(String name, double price) {
+        // Данные уже в тестовой БД через @Sql или Flyway seed
+    }
 
- // Check naming convention
- if (!methodName.startsWith("should") &&!methodName.startsWith("test")) {
- violations.add(new QualityViolation(
- Severity.WARNING,
- "Test method '" + methodName + "' should start with 'should' or follow naming convention"
- ));
- }
+    @When("пользователь добавляет товар в корзину и оформляет заказ")
+    public void userPlacesOrder() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(authToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
- // Check for underscores
- if (methodName.contains("_")) {
- violations.add(new QualityViolation(
- Severity.INFO,
- "Consider using camelCase instead of underscores in test name: " + methodName
- ));
- }
- }
- }
+        CreateOrderRequest request = new CreateOrderRequest("Spring Boot in Action", 1);
+        lastResponse = restTemplate.exchange(
+            "/api/v1/orders",
+            HttpMethod.POST,
+            new HttpEntity<>(request, headers),
+            OrderDto.class
+        );
+    }
 
- return violations;
- }
+    @Then("заказ создан со статусом {string}")
+    public void orderHasStatus(String expectedStatus) {
+        assertThat(lastResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(lastResponse.getBody().getStatus()).isEqualTo(expectedStatus);
+    }
 
- private List<QualityViolation> checkTestStructure(Class<?> testClass) {
- List<QualityViolation> violations = new ArrayList<>();
-
- boolean hasSetup = Arrays.stream(testClass.getMethods()).anyMatch(m -> m.isAnnotationPresent(BeforeEach.class) ||
- m.isAnnotationPresent(BeforeAll.class));
-
- boolean hasTeardown = Arrays.stream(testClass.getMethods()).anyMatch(m -> m.isAnnotationPresent(AfterEach.class) ||
- m.isAnnotationPresent(AfterAll.class));
-
- if (!hasSetup) {
- violations.add(new QualityViolation(
- Severity.WARNING,
- "Test class should have setup method (@BeforeEach or @BeforeAll)"
- ));
- }
-
- if (!hasTeardown) {
- violations.add(new QualityViolation(
- Severity.WARNING,
- "Test class should have teardown method (@AfterEach or @AfterAll)"
- ));
- }
-
- return violations;
- }
-
- private List<QualityViolation> checkTestIsolation(Class<?> testClass) {
- List<QualityViolation> violations = new ArrayList<>();
-
- // Check for shared state
- if (hasSharedState(testClass)) {
- violations.add(new QualityViolation(
- Severity.ERROR,
- "Test class has shared state that may cause test interference"
- ));
- }
-
- // Check for proper cleanup
- if (!hasProperCleanup(testClass)) {
- violations.add(new QualityViolation(
- Severity.WARNING,
- "Test class may not properly clean up after tests"
- ));
- }
-
- return violations;
- }
-
- private List<QualityViolation> checkTestDataManagement(Class<?> testClass) {
- List<QualityViolation> violations = new ArrayList<>();
-
- // Check for hard-coded test data
- if (hasHardCodedData(testClass)) {
- violations.add(new QualityViolation(
- Severity.INFO,
- "Consider using test data builders or factories instead of hard-coded data"
- ));
- }
-
- // Check for data isolation
- if (!hasDataIsolation(testClass)) {
- violations.add(new QualityViolation(
- Severity.WARNING,
- "Test may not properly isolate test data"
- ));
- }
-
- return violations;
- }
+    @Then("пользователь получает email-подтверждение")
+    public void userReceivesConfirmationEmail() {
+        // Проверяем через WireMock или захват письма через GreenMail
+    }
 }
 
-// Quality violation model
-public class QualityViolation {
- public enum Severity { INFO, WARNING, ERROR }
-
- private final Severity severity;
- private final String message;
-
- public QualityViolation(Severity severity, String message) {
- this.severity = severity;
- this.message = message;
- }
-
- // getters...
-}
+// Запуск Cucumber с JUnit 5
+@Suite
+@IncludeEngines("cucumber")
+@SelectClasspathResource("features")
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.example.steps")
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, html:target/cucumber-report.html")
+class CucumberTestSuite { }
 ```
 
-### 4. `Test Refactoring`
+## Q48. Как организовать `TestNG` Suite для параллельного запуска?
+
+```xml
+<!-- testng.xml — конфигурация параллельного запуска -->
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="OrderTests" parallel="classes" thread-count="4" verbose="2">
+
+    <listeners>
+        <listener class-name="com.example.TestReportListener"/>
+        <listener class-name="com.example.RetryAnalyzer"/>
+    </listeners>
+
+    <groups>
+        <define name="smoke">
+            <include name="smoke"/>
+        </define>
+        <define name="regression">
+            <include name="smoke"/>
+            <include name="functional"/>
+        </define>
+    </groups>
+
+    <test name="API Tests" parallel="methods" thread-count="8">
+        <groups>
+            <run><include name="smoke"/></run>
+        </groups>
+        <classes>
+            <class name="com.example.tests.OrderApiTest"/>
+            <class name="com.example.tests.PaymentApiTest"/>
+        </classes>
+    </test>
+
+    <test name="UI Tests" parallel="classes" thread-count="2">
+        <classes>
+            <class name="com.example.tests.LoginPageTest"/>
+            <class name="com.example.tests.CheckoutPageTest"/>
+        </classes>
+    </test>
+</suite>
+```
 
 ```java
-// Before refactoring
-public class UserServiceTest {
+// Тест с TestNG группами и DataProvider
+public class OrderApiTest extends BaseApiTest {
 
- @Test
- void testCreateUser() {
- User user = new User();
- user.setEmail("test@example.com");
- user.setPassword("password");
- user.setFirstName("Test");
- user.setLastName("User");
+    @DataProvider(name = "orderStatuses", parallel = true)
+    public Object[][] orderStatuses() {
+        return new Object[][] {
+            {"PENDING", 200},
+            {"PROCESSING", 200},
+            {"CANCELLED", 200},
+            {"UNKNOWN", 404}
+        };
+    }
 
- User created = userService.createUser(user);
+    @Test(groups = {"smoke"}, priority = 1)
+    public void shouldCreateOrderSuccessfully() {
+        // ...
+    }
 
- assertNotNull(created.getId());
- assertEquals("test@example.com", created.getEmail());
- assertEquals("Test", created.getFirstName());
- assertEquals("User", created.getLastName());
- assertNotNull(created.getCreatedAt());
- }
-
- @Test
- void testCreateUserWithInvalidEmail() {
- User user = new User();
- user.setEmail("invalid-email");
- user.setPassword("password");
-
- try {
- userService.createUser(user);
- fail("Should have thrown exception");
- } catch (ValidationException e) {
- assertEquals("Invalid email format", e.getMessage());
- }
- }
+    @Test(groups = {"functional"}, dataProvider = "orderStatuses",
+          retryAnalyzer = RetryAnalyzer.class)
+    public void shouldReturnOrderByStatus(String status, int expectedCode) {
+        given()
+            .queryParam("status", status)
+        .when()
+            .get("/api/v1/orders")
+        .then()
+            .statusCode(expectedCode);
+    }
 }
 
-// After refactoring
-public class UserServiceTest {
+// RetryAnalyzer для нестабильных тестов
+public class RetryAnalyzer implements IRetryAnalyzer {
+    private int retryCount = 0;
+    private static final int MAX_RETRIES = 2;
 
- @Autowired
- private UserService userService;
-
- @Test
- void shouldCreateUserWithValidData() {
- // Given
- User user = UserBuilder.aUser().withEmail("john@example.com").withName("John", "Doe").build();
-
- // When
- User created = userService.createUser(user);
-
- // Then
- assertThat(created).isNotNull().extracting(User::getId, User::getEmail, User::getFirstName, User::getLastName).containsExactly(created.getId(), "john@example.com", "John", "Doe");
-
- assertThat(created.getCreatedAt()).isNotNull();
- }
-
- @Test
- void shouldRejectUserWithInvalidEmail() {
- // Given
- User user = UserBuilder.aUser().withEmail("invalid-email").build();
-
- // When & Then
- assertThatThrownBy(() -> userService.createUser(user)).isInstanceOf(ValidationException.class).hasMessage("Invalid email format");
- }
-
- @Test
- void shouldRejectUserWithDuplicateEmail() {
- // Given
- User existingUser = UserBuilder.aUser().withEmail("existing@example.com").build();
- userService.createUser(existingUser);
-
- User duplicateUser = UserBuilder.aUser().withEmail("existing@example.com").build();
-
- // When & Then
- assertThatThrownBy(() -> userService.createUser(duplicateUser)).isInstanceOf(ValidationException.class).hasMessage("Email already exists");
- }
+    @Override
+    public boolean retry(ITestResult result) {
+        if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            return true;
+        }
+        return false;
+    }
 }
 ```
 
-### 5. `Test Documentation`
+## Q49. (!) Как применять паттерн `Screenplay` в автоматизации?
+
+**Screenplay Pattern** (паттерн Сценарий) — объектно-ориентированная альтернатива Page Object Model. Вместо страниц оперирует **Акторами** (Actors), **Способностями** (Abilities), **Задачами** (Tasks) и **Вопросами** (Questions).
+
+```
+Actor "Alice"
+  ├── Abilities: BrowseTheWeb, CallAnApi, InteractWithDatabase
+  ├── Tasks (что сделать): PlaceOrder, Login, AddItemToCart
+  └── Questions (что проверить): TheOrderStatus, TheCartTotal
+```
 
 ```java
-/
- * Test suite for UserService functionality. *
- * This test class covers the main user management operations:
- * - User creation and validation
- * - User authentication
- * - Password management
- * - User profile updates
- *
- * Test Data Strategy:
- * - Uses UserBuilder for test data creation
- * - Each test is isolated with its own data
- * - Database is cleaned between tests
- *
- * Dependencies:
- * - UserService (SUT)
- * - UserRepository (mocked for unit tests)
- * - EmailService (mocked for unit tests)
- * - TestContainers PostgreSQL (for integration tests)
- *
- * @author Test Team
- * @version 1.0
- * @since 2024-01-01
- */
-@SpringBootTest
-@DisplayName("UserService Test Suite")
-public class UserServiceTest {
+// Abilities
+public class CallAnApi implements Ability {
+    private final RequestSpecification spec;
 
- // Test constants
- private static final String VALID_EMAIL = "john@example.com";
- private static final String VALID_PASSWORD = "password123";
- private static final String INVALID_EMAIL = "invalid-email";
+    public static CallAnApi at(String baseUrl) {
+        RequestSpecification spec = RestAssured.given().baseUri(baseUrl);
+        return new CallAnApi(spec);
+    }
 
- @Autowired
- private UserService userService;
+    public static CallAnApi as(Actor actor) {
+        return actor.abilityTo(CallAnApi.class);
+    }
 
- @MockBean
- private UserRepository userRepository;
+    public <T> T get(String path, Class<T> responseType) {
+        return spec.get(path).as(responseType);
+    }
+}
 
- @MockBean
- private EmailService emailService;
+// Tasks
+public class PlaceOrder implements Task {
+    private final CreateOrderRequest request;
 
- private User testUser;
+    public static PlaceOrder with(CreateOrderRequest request) {
+        return new PlaceOrder(request);
+    }
 
- @BeforeEach
- void setUp() {
- // Initialize test data
- testUser = UserBuilder.aUser().withEmail(VALID_EMAIL).withPassword(VALID_PASSWORD).build();
+    @Override
+    public <T extends Actor> void performAs(T actor) {
+        CallAnApi api = CallAnApi.as(actor);
+        OrderDto order = api.post("/orders", request, OrderDto.class);
+        actor.remember("lastOrder", order);
+    }
+}
 
- // Setup common mocks
- when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
- User user = invocation.getArgument(0);
- user.setId(1L);
- user.setCreatedAt(LocalDateTime.now());
- return user;
- });
- }
+// Questions
+public class TheOrderStatus implements Question<String> {
+    public static TheOrderStatus forLastOrder() {
+        return new TheOrderStatus();
+    }
 
- @Nested
- @DisplayName("User Creation")
- class UserCreationTests {
+    @Override
+    public String answeredBy(Actor actor) {
+        OrderDto order = actor.recall("lastOrder");
+        return order.getStatus();
+    }
+}
 
- @Test
- @DisplayName("Should create user with valid data")
- void shouldCreateUserWithValidData() {
- // Given: Valid user data
- User user = UserBuilder.aUser().withEmail("newuser@example.com").withName("New", "User").build();
+// Тест с паттерном Screenplay
+@Test
+void aliceShouldPlaceOrderSuccessfully() {
+    Actor alice = Actor.named("Alice")
+        .whoCan(CallAnApi.at("http://localhost:8080"))
+        .whoCan(BrowseTheWeb.with(page));
 
- // When: Creating the user
- User created = userService.createUser(user);
+    alice.attemptsTo(
+        Login.withCredentials("alice@example.com", "secret"),
+        PlaceOrder.with(new CreateOrderRequest("Book", 1))
+    );
 
- // Then: User should be created successfully
- assertAll("User creation validation",
- () -> assertThat(created.getId()).isNotNull(),
- () -> assertThat(created.getEmail()).isEqualTo("newuser@example.com"),
- () -> assertThat(created.getCreatedAt()).isNotNull(),
- () -> assertThat(created.isActive()).isTrue()
- );
-
- // And: Welcome email should be sent
- verify(emailService).sendWelcomeEmail("newuser@example.com");
- }
-
- @Test
- @DisplayName("Should reject user with invalid email")
- void shouldRejectUserWithInvalidEmail() {
- // Given: User with invalid email
- User user = UserBuilder.aUser().withEmail(INVALID_EMAIL).build();
-
- // When & Then: Creating the user should fail
- assertThatThrownBy(() -> userService.createUser(user)).isInstanceOf(ValidationException.class).hasMessage("Invalid email format");
-
- // And: User should not be saved
- verify(userRepository, never()).save(any(User.class));
-
- // And: No email should be sent
- verify(emailService, never()).sendWelcomeEmail(anyString());
- }
- }
-
- @Nested
- @DisplayName("User Authentication")
- class UserAuthenticationTests {
-
- @BeforeEach
- void setUpAuthentication() {
- // Setup authentication mocks
- when(userRepository.findByEmail(VALID_EMAIL)).thenReturn(Optional.of(testUser));
- when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
- }
-
- @Test
- @DisplayName("Should authenticate user with valid credentials")
- void shouldAuthenticateUserWithValidCredentials() {
- // When: Authenticating with valid credentials
- AuthenticationResult result = userService.authenticate(VALID_EMAIL, VALID_PASSWORD);
-
- // Then: Authentication should succeed
- assertThat(result.isSuccessful()).isTrue();
- assertThat(result.getUser()).isEqualTo(testUser);
- }
-
- @Test
- @DisplayName("Should reject authentication with invalid password")
- void shouldRejectAuthenticationWithInvalidPassword() {
- // When: Authenticating with invalid password
- AuthenticationResult result = userService.authenticate(VALID_EMAIL, "wrongpassword");
-
- // Then: Authentication should fail
- assertThat(result.isSuccessful()).isFalse();
- assertThat(result.getErrorMessage()).isEqualTo("Invalid credentials");
- }
- }
+    assertThat(alice.asksAbout(TheOrderStatus.forLastOrder()))
+        .isEqualTo("PENDING");
 }
 ```
 
-## Q9. Какие паттерны используются в test automation?
+### Screenplay vs Page Object
 
-### 1. `Factory Pattern` для `Test Objects`
+| Критерий | Page Object | Screenplay |
+|----------|------------|----------|
+| Фокус | Страница/компонент | Действие актора |
+| Переиспользование | Через наследование Page | Через Задачи и Способности |
+| Читаемость | Хорошая | Отличная (близко к Gherkin) |
+| Сложность | Низкая | Выше (нужно освоить концепцию) |
+| Рекомендуется | Простые UI-проекты | Сложные, многоканальные тесты |
+
+## Q50. Как тестировать `GraphQL` API?
 
 ```java
-public interface TestObjectFactory<T> {
- T create();
- T create(Map<String, Object> properties);
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class GraphQLOrderApiTest {
+
+    @Autowired
+    private GraphQlTester graphQlTester;  // Spring GraphQL Test
+
+    @MockBean
+    private OrderService orderService;
+
+    @Test
+    void shouldQueryOrder() {
+        when(orderService.findById(1L))
+            .thenReturn(new Order(1L, "Alice", BigDecimal.valueOf(99.99), "PENDING"));
+
+        graphQlTester.documentName("getOrder")  // из src/test/resources/graphql/getOrder.graphql
+            .variable("id", 1)
+            .execute()
+            .path("order.id").entity(Long.class).isEqualTo(1L)
+            .path("order.customerName").entity(String.class).isEqualTo("Alice")
+            .path("order.status").entity(String.class).isEqualTo("PENDING");
+    }
+
+    @Test
+    void shouldCreateOrderMutation() {
+        Order created = new Order(42L, "Bob", BigDecimal.TEN, "PENDING");
+        when(orderService.create(any())).thenReturn(created);
+
+        graphQlTester.document("""
+            mutation {
+              createOrder(input: {customerId: 1, amount: 10.00}) {
+                id
+                status
+              }
+            }
+            """)
+            .execute()
+            .path("createOrder.id").entity(Long.class).isEqualTo(42L)
+            .path("createOrder.status").entity(String.class).isEqualTo("PENDING");
+    }
+
+    @Test
+    void shouldHandleValidationError() {
+        graphQlTester.document("""
+            mutation {
+              createOrder(input: {customerId: -1, amount: -100}) {
+                id
+              }
+            }
+            """)
+            .execute()
+            .errors()
+            .satisfy(errors -> {
+                assertThat(errors).hasSize(1);
+                assertThat(errors.get(0).getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+            });
+    }
 }
 
-public class UserFactory implements TestObjectFactory<User> {
+// Для REST Assured с GraphQL
+@Test
+void shouldQueryGraphQLWithRestAssured() {
+    String query = """
+        {
+          "query": "{ order(id: 1) { id status customerName } }"
+        }
+        """;
 
- private final Faker faker = new Faker();
-
- @Override
- public User create() {
- return create(Collections.emptyMap());
- }
-
- @Override
- public User create(Map<String, Object> properties) {
- User user = new User();
- user.setEmail(getProperty(properties, "email", faker.internet().emailAddress()));
- user.setPassword(getProperty(properties, "password", faker.internet().password()));
- user.setFirstName(getProperty(properties, "firstName", faker.name().firstName()));
- user.setLastName(getProperty(properties, "lastName", faker.name().lastName()));
- user.setActive(getProperty(properties, "active", true));
- return user;
- }
-
- @SuppressWarnings("unchecked")
- private <T> T getProperty(Map<String, Object> properties, String key, T defaultValue) {
- return (T) properties.getOrDefault(key, defaultValue);
- }
+    given()
+        .contentType(ContentType.JSON)
+        .body(query)
+    .when()
+        .post("/graphql")
+    .then()
+        .statusCode(200)
+        .body("data.order.id", equalTo(1))
+        .body("data.order.status", equalTo("PENDING"))
+        .body("errors", nullValue());  // GraphQL всегда возвращает 200, ошибки в поле errors
 }
-
-public class TestDataFactory {
-
- private static final UserFactory userFactory = new UserFactory();
-
- public static User createUser() {
- return userFactory.create();
- }
-
- public static User createUser(String email) {
- return userFactory.create(Map.of("email", email));
- }
-
- public static User createInactiveUser() {
- return userFactory.create(Map.of("active", false));
- }
-
- public static List<User> createUsers(int count) {
- return Stream.generate(userFactory::create).limit(count).collect(Collectors.toList());
- }
-}
-```
-
-### 2. `Strategy Pattern` для `Test Execution`
-
-```java
-public interface TestExecutionStrategy {
- TestResult execute(TestCase testCase);
- boolean canExecute(TestCase testCase);
-}
-
-public class UnitTestExecutionStrategy implements TestExecutionStrategy {
-
- @Override
- public TestResult execute(TestCase testCase) {
- // Execute unit test
- long startTime = System.currentTimeMillis();
- try {
- // Run JUnit test
- JUnitCore junit = new JUnitCore();
- Result result = junit.run(testCase.getTestClass());
-
- return TestResult.builder().testCase(testCase).passed(result.wasSuccessful()).executionTime(System.currentTimeMillis() - startTime).failureCount(result.getFailureCount()).errorMessages(result.getFailures().stream().map(failure -> failure.getMessage()).collect(Collectors.toList())).build();
-
- } catch (Exception e) {
- return TestResult.builder().testCase(testCase).passed(false).executionTime(System.currentTimeMillis() - startTime).errorMessages(List.of(e.getMessage())).build();
- }
- }
-
- @Override
- public boolean canExecute(TestCase testCase) {
- return testCase.getType() == TestType.UNIT;
- }
-}
-
-public class ApiTestExecutionStrategy implements TestExecutionStrategy {
-
- private final RestTemplate restTemplate;
-
- public ApiTestExecutionStrategy(RestTemplate restTemplate) {
- this.restTemplate = restTemplate;
- }
-
- @Override
- public TestResult execute(TestCase testCase) {
- long startTime = System.currentTimeMillis();
-
- try {
- // Execute API test scenario
- ApiTestScenario scenario = (ApiTestScenario) testCase;
-
- for (ApiCall call: scenario.getCalls()) {
- HttpMethod method = HttpMethod.valueOf(call.getMethod());
- ResponseEntity<String> response = restTemplate.exchange(
- call.getUrl(), method,
- new HttpEntity<>(call.getBody(), call.getHeaders()),
- String.class);
-
- // Validate response
- if (call.getExpectedStatus()!= response.getStatusCode().value()) {
- return TestResult.builder().testCase(testCase).passed(false).executionTime(System.currentTimeMillis() - startTime).errorMessages(List.of("Expected status " + call.getExpectedStatus() +
- " but got " + response.getStatusCode().value())).build();
- }
- }
-
- return TestResult.builder().testCase(testCase).passed(true).executionTime(System.currentTimeMillis() - startTime).build();
-
- } catch (Exception e) {
- return TestResult.builder().testCase(testCase).passed(false).executionTime(System.currentTimeMillis() - startTime).errorMessages(List.of(e.getMessage())).build();
- }
- }
-
- @Override
- public boolean canExecute(TestCase testCase) {
- return testCase.getType() == TestType.API;
- }
-}
-
-public class TestExecutionStrategyFactory {
-
- private final Map<TestType, TestExecutionStrategy> strategies = new HashMap<>();
-
- public TestExecutionStrategyFactory(List<TestExecutionStrategy> strategyList) {
- for (TestExecutionStrategy strategy: strategyList) {
- for (TestType type: TestType.values()) {
- if (strategy.canExecute(new TestCase("", type))) {
- strategies.put(type, strategy);
- }
- }
- }
- }
-
- public TestResult executeTest(TestCase testCase) {
- TestExecutionStrategy strategy = strategies.get(testCase.getType());
- if (strategy == null) {
- throw new IllegalArgumentException("No strategy found for test type: " + testCase.getType());
- }
- return strategy.execute(testCase);
- }
-}
-```
-
-### 3. `Template Method Pattern` для `Test Structure`
-
-```java
-public abstract class AbstractTestTemplate {
-
- protected final Logger logger = LoggerFactory.getLogger(getClass());
-
- // Template method
- public final TestResult execute() {
- TestResult result = new TestResult();
- long startTime = System.currentTimeMillis();
-
- try {
- // Setup phase
- setUp();
-
- // Pre-conditions verification
- verifyPreConditions();
-
- // Execute test
- executeTest();
-
- // Post-conditions verification
- verifyPostConditions();
-
- // Cleanup
- tearDown();
-
- result.setPassed(true);
-
- } catch (AssertionError e) {
- logger.error("Test assertion failed", e);
- result.setPassed(false);
- result.setErrorMessage(e.getMessage());
-
- } catch (Exception e) {
- logger.error("Test execution failed", e);
- result.setPassed(false);
- result.setErrorMessage("Unexpected error: " + e.getMessage());
-
- } finally {
- result.setExecutionTime(System.currentTimeMillis() - startTime);
-
- // Always cleanup
- try {
- emergencyCleanup();
- } catch (Exception e) {
- logger.warn("Emergency cleanup failed", e);
- }
- }
-
- return result;
- }
-
- // Abstract methods to be implemented by subclasses
- protected abstract void setUp() throws Exception;
- protected abstract void verifyPreConditions() throws Exception;
- protected abstract void executeTest() throws Exception;
- protected abstract void verifyPostConditions() throws Exception;
- protected abstract void tearDown() throws Exception;
-
- // Hook method for emergency cleanup
- protected void emergencyCleanup() throws Exception {
- // Default implementation does nothing
- }
-}
-
-public class UserCreationTest extends AbstractTestTemplate {
-
- private User testUser;
- private User createdUser;
-
- @Override
- protected void setUp() throws Exception {
- // Initialize test data
- testUser = UserBuilder.aUser().withEmail("test@example.com").withName("Test", "User").build();
-
- // Setup database state if needed
- databaseSetup.ensureCleanState();
- }
-
- @Override
- protected void verifyPreConditions() throws Exception {
- // Verify that user doesn't exist
- assertFalse(userRepository.existsByEmail(testUser.getEmail()));
-
- // Verify system is ready
- assertTrue(healthCheck.isDatabaseAvailable());
- }
-
- @Override
- protected void executeTest() throws Exception {
- // Execute the main test action
- createdUser = userService.createUser(testUser);
- }
-
- @Override
- protected void verifyPostConditions() throws Exception {
- // Verify user was created correctly
- assertNotNull(createdUser.getId());
- assertEquals(testUser.getEmail(), createdUser.getEmail());
- assertNotNull(createdUser.getCreatedAt());
-
- // Verify user exists in database
- Optional<User> savedUser = userRepository.findById(createdUser.getId());
- assertTrue(savedUser.isPresent());
- assertEquals(createdUser, savedUser.get());
-
- // Verify welcome email was sent
- verify(emailService).sendWelcomeEmail(testUser.getEmail());
- }
-
- @Override
- protected void tearDown() throws Exception {
- // Clean up test data
- if (createdUser!= null && createdUser.getId()!= null) {
- userRepository.deleteById(createdUser.getId());
- }
- }
-
- @Override
- protected void emergencyCleanup() throws Exception {
- // Emergency cleanup in case of test failure
- try {
- userRepository.deleteByEmail(testUser.getEmail());
- } catch (Exception e) {
- logger.warn("Emergency cleanup failed for user: " + testUser.getEmail());
- }
- }
-}
-```
-
-### 4. `Observer Pattern` для `Test Monitoring`
-
-```java
-public interface TestExecutionListener {
- void testStarted(TestCase testCase);
- void testFinished(TestCase testCase, TestResult result);
- void testFailed(TestCase testCase, Throwable error);
-}
-
-public class TestExecutionMonitor {
-
- private final List<TestExecutionListener> listeners = new ArrayList<>();
-
- public void addListener(TestExecutionListener listener) {
- listeners.add(listener);
- }
-
- public void removeListener(TestExecutionListener listener) {
- listeners.remove(listener);
- }
-
- public TestResult executeTest(TestCase testCase) {
- // Notify listeners that test started
- listeners.forEach(listener -> listener.testStarted(testCase));
-
- TestResult result = null;
- try {
- // Execute the test
- result = testExecutionStrategy.execute(testCase);
-
- // Notify listeners of completion
- listeners.forEach(listener -> listener.testFinished(testCase, result));
-
- } catch (Throwable error) {
- result = TestResult.builder().testCase(testCase).passed(false).errorMessage(error.getMessage()).build();
-
- // Notify listeners of failure
- listeners.forEach(listener -> listener.testFailed(testCase, error));
- }
-
- return result;
- }
-}
-
-@Component
-public class TestMetricsListener implements TestExecutionListener {
-
- private final MeterRegistry meterRegistry;
-
- @Override
- public void testStarted(TestCase testCase) {
- meterRegistry.counter("test.started",
- "type", testCase.getType().name(),
- "category", testCase.getCategory()).increment();
- }
-
- @Override
- public void testFinished(TestCase testCase, TestResult result) {
- meterRegistry.timer("test.execution.time",
- "type", testCase.getType().name(),
- "result", result.isPassed()? "success": "failure").record(result.getExecutionTime(), TimeUnit.MILLISECONDS);
-
- if (result.isPassed()) {
- meterRegistry.counter("test.passed",
- "type", testCase.getType().name()).increment();
- } else {
- meterRegistry.counter("test.failed",
- "type", testCase.getType().name()).increment();
- }
- }
-
- @Override
- public void testFailed(TestCase testCase, Throwable error) {
- meterRegistry.counter("test.error",
- "type", testCase.getType().name(),
- "error_type", error.getClass().getSimpleName()).increment();
- }
-}
-
-@Component
-public class TestNotificationListener implements TestExecutionListener {
-
- private final SlackService slackService;
-
- @Override
- public void testStarted(TestCase testCase) {
- // Log test start for important tests
- if (testCase.isCritical()) {
- slackService.sendMessage("🚀 Started critical test: " + testCase.getName());
- }
- }
-
- @Override
- public void testFinished(TestCase testCase, TestResult result) {
- if (!result.isPassed() && testCase.isCritical()) {
- slackService.sendMessage("❌ Critical test failed: " + testCase.getName() +
- "\nError: " + result.getErrorMessage());
- }
- }
-
- @Override
- public void testFailed(TestCase testCase, Throwable error) {
- if (testCase.isCritical()) {
- slackService.sendMessage("💥 Critical test crashed: " + testCase.getName() +
- "\nException: " + error.getMessage());
- }
- }
-}
-```
-
-## Q10. Как измерить `ROI` от test automation?
-
-### 1. `ROI Calculation Framework`
-
-```java
-public class TestAutomationROI {
-
- public ROICalculation calculateROI(TestAutomationMetrics metrics,
- TimePeriod period) {
-
- // Calculate benefits
- double timeSavings = calculateTimeSavings(metrics, period);
- double qualityImprovements = calculateQualityImprovements(metrics, period);
- double riskReduction = calculateRiskReduction(metrics, period);
-
- double totalBenefits = timeSavings + qualityImprovements + riskReduction;
-
- // Calculate costs
- double initialInvestment = calculateInitialInvestment(metrics);
- double maintenanceCosts = calculateMaintenanceCosts(metrics, period);
- double toolCosts = calculateToolCosts(metrics, period);
-
- double totalCosts = initialInvestment + maintenanceCosts + toolCosts;
-
- // Calculate ROI
- double netBenefits = totalBenefits - totalCosts;
- double roi = totalCosts > 0? (netBenefits / totalCosts) * 100: 0;
-
- return ROICalculation.builder().timeSavings(timeSavings).qualityImprovements(qualityImprovements).riskReduction(riskReduction).totalBenefits(totalBenefits).initialInvestment(initialInvestment).maintenanceCosts(maintenanceCosts).toolCosts(toolCosts).totalCosts(totalCosts).netBenefits(netBenefits).roi(roi).breakEvenPeriod(calculateBreakEvenPeriod(totalCosts, netBenefits)).build();
- }
-
- private double calculateTimeSavings(TestAutomationMetrics metrics, TimePeriod period) {
- // Time saved per test execution
- double manualExecutionTime = metrics.getAverageManualTestTimeMinutes();
- double automatedExecutionTime = metrics.getAverageAutomatedTestTimeMinutes();
- double timeSavedPerExecution = manualExecutionTime - automatedExecutionTime;
-
- // Number of executions in period
- int executionsInPeriod = calculateExecutionsInPeriod(metrics, period);
-
- // Apply learning curve (automation gets faster over time)
- double learningFactor = calculateLearningFactor(period);
-
- return timeSavedPerExecution * executionsInPeriod * learningFactor;
- }
-
- private double calculateQualityImprovements(TestAutomationMetrics metrics, TimePeriod period) {
- // Reduced defect leakage
- double defectLeakageReduction = metrics.getDefectLeakageReductionPercent() / 100.0;
- double averageDefectCost = metrics.getAverageDefectCost();
- int defectsPrevented = (int) (metrics.getTotalDefectsFound() * defectLeakageReduction);
-
- // Improved test coverage
- double coverageIncrease = metrics.getTestCoverageIncreasePercent() / 100.0;
- double coverageBenefit = metrics.getCoverageBenefitValue();
-
- return (defectsPrevented * averageDefectCost) +
- (coverageIncrease * coverageBenefit * period.getMonths());
- }
-
- private double calculateRiskReduction(TestAutomationMetrics metrics, TimePeriod period) {
- // Reduced production incidents
- double incidentReduction = metrics.getProductionIncidentReductionPercent() / 100.0;
- double averageIncidentCost = metrics.getAverageIncidentCost();
- int incidentsPrevented = (int) (metrics.getAverageMonthlyIncidents() * incidentReduction * period.getMonths());
-
- // Improved confidence in releases
- double confidenceImprovement = metrics.getReleaseConfidenceImprovementPercent() / 100.0;
-
- return (incidentsPrevented * averageIncidentCost) +
- (confidenceImprovement * metrics.getConfidenceBenefitValue());
- }
-
- private double calculateInitialInvestment(TestAutomationMetrics metrics) {
- return metrics.getInitialSetupCost() +
- metrics.getTrainingCost() +
- metrics.getFrameworkDevelopmentCost();
- }
-
- private double calculateMaintenanceCosts(TestAutomationMetrics metrics, TimePeriod period) {
- double monthlyMaintenance = metrics.getMonthlyMaintenanceCost();
- double maintenanceGrowthRate = metrics.getMaintenanceGrowthRatePercent() / 100.0;
-
- double totalMaintenance = 0;
- for (int month = 1; month <= period.getMonths(); month++) {
- totalMaintenance += monthlyMaintenance * Math.pow(1 + maintenanceGrowthRate, month - 1);
- }
-
- return totalMaintenance;
- }
-
- private double calculateToolCosts(TestAutomationMetrics metrics, TimePeriod period) {
- return metrics.getMonthlyToolCost() * period.getMonths();
- }
-
- private int calculateExecutionsInPeriod(TestAutomationMetrics metrics, TimePeriod period) {
- return metrics.getTestsExecutedPerMonth() * period.getMonths();
- }
-
- private double calculateLearningFactor(TimePeriod period) {
- // Learning curve: efficiency increases over time
- double initialEfficiency = 0.8; // 80% efficiency initially
- double finalEfficiency = 0.95; // 95% efficiency after learning
- double monthsToLearn = 6; // 6 months to reach full efficiency
-
- if (period.getMonths() <= monthsToLearn) {
- return initialEfficiency +
- (finalEfficiency - initialEfficiency) * (period.getMonths() / monthsToLearn);
- } else {
- return finalEfficiency;
- }
- }
-
- private double calculateBreakEvenPeriod(double totalCosts, double monthlyNetBenefits) {
- if (monthlyNetBenefits <= 0) {
- return Double.POSITIVE_INFINITY; // Never breaks even
- }
- return totalCosts / (monthlyNetBenefits * 12); // Convert to years
- }
-}
-```
-
-### 2. `Metrics Collection`
-
-```java
-@Component
-public class TestAutomationMetricsCollector {
-
- private final TestExecutionRepository testExecutionRepository;
- private final DefectRepository defectRepository;
- private final IncidentRepository incidentRepository;
- private final MeterRegistry meterRegistry;
-
- @Scheduled(fixedRate = 86400000) // Daily
- public void collectDailyMetrics() {
- LocalDate today = LocalDate.now();
- LocalDate yesterday = today.minusDays(1);
-
- // Collect test execution metrics
- int testsExecuted = testExecutionRepository.countByDate(yesterday);
- int testsPassed = testExecutionRepository.countPassedByDate(yesterday);
- long averageExecutionTime = testExecutionRepository.getAverageExecutionTimeByDate(yesterday);
-
- // Collect defect metrics
- int defectsFound = defectRepository.countByDate(yesterday);
- int defectsFromAutomation = defectRepository.countFoundByAutomationByDate(yesterday);
-
- // Collect incident metrics
- int productionIncidents = incidentRepository.countByDate(yesterday);
-
- // Record metrics
- meterRegistry.gauge("automation.tests.executed", testsExecuted);
- meterRegistry.gauge("automation.tests.pass.rate", (double) testsPassed / testsExecuted);
- meterRegistry.timer("automation.test.execution.time").record(averageExecutionTime, TimeUnit.MILLISECONDS);
- meterRegistry.counter("automation.defects.found").increment(defectsFound);
- meterRegistry.gauge("automation.defect.leakage.rate",
- (double) defectsFromAutomation / defectsFound);
- meterRegistry.counter("automation.incidents.prevented").increment(productionIncidents);
- }
-
- public TestAutomationMetrics getMetricsForPeriod(LocalDate startDate, LocalDate endDate) {
- return TestAutomationMetrics.builder().totalTestsExecuted(testExecutionRepository.countByDateBetween(startDate, endDate)).averageTestExecutionTime(testExecutionRepository.getAverageExecutionTimeBetween(startDate, endDate)).defectsFound(defectRepository.countByDateBetween(startDate, endDate)).productionIncidents(incidentRepository.countByDateBetween(startDate, endDate)).testCoverage(getCurrentTestCoverage()).automationPercentage(getAutomationPercentage()).build();
- }
-
- private double getCurrentTestCoverage() {
- // Implementation to get current test coverage from JaCoCo or similar
- return jacocoService.getCurrentCoverage();
- }
-
- private double getAutomationPercentage() {
- int totalTests = testRepository.countAll();
- int automatedTests = testRepository.countAutomated();
-
- return totalTests > 0? (double) automatedTests / totalTests * 100: 0;
- }
-}
-```
-
-### 3. `ROI Dashboard`
-
-```java
-@RestController
-@RequestMapping("/api/roi")
-public class ROIDashboardController {
-
- private final TestAutomationROI roiCalculator;
- private final TestAutomationMetricsCollector metricsCollector;
-
- @GetMapping("/current")
- public ROIDashboard getCurrentROI() {
- TestAutomationMetrics metrics = metricsCollector.getMetricsForPeriod(
- LocalDate.now().minusMonths(12), LocalDate.now());
-
- ROICalculation roi = roiCalculator.calculateROI(metrics, TimePeriod.ofMonths(12));
-
- return ROIDashboard.builder().currentROI(roi).metrics(metrics).trends(calculateTrends(metrics)).recommendations(generateRecommendations(roi)).build();
- }
-
- @GetMapping("/projection/{months}")
- public ROIProjection getROIProjection(@PathVariable int months) {
- TestAutomationMetrics currentMetrics = metricsCollector.getMetricsForPeriod(
- LocalDate.now().minusMonths(6), LocalDate.now());
-
- // Project future metrics based on trends
- TestAutomationMetrics projectedMetrics = projectMetrics(currentMetrics, months);
-
- ROICalculation projectedROI = roiCalculator.calculateROI(
- projectedMetrics, TimePeriod.ofMonths(months));
-
- return ROIProjection.builder().projectedROI(projectedROI).projectedMetrics(projectedMetrics).confidenceLevel(calculateConfidenceLevel(months)).build();
- }
-
- private List<ROITrend> calculateTrends(TestAutomationMetrics metrics) {
- // Calculate month-over-month trends
- List<ROITrend> trends = new ArrayList<>();
-
- for (int i = 1; i <= 12; i++) {
- LocalDate startDate = LocalDate.now().minusMonths(i + 1);
- LocalDate endDate = LocalDate.now().minusMonths(i);
-
- TestAutomationMetrics monthlyMetrics = metricsCollector.getMetricsForPeriod(startDate, endDate);
- ROICalculation monthlyROI = roiCalculator.calculateROI(monthlyMetrics, TimePeriod.ofMonths(1));
-
- trends.add(ROITrend.builder().month(startDate.getMonth()).roi(monthlyROI.getRoi()).metrics(monthlyMetrics).build());
- }
-
- return trends;
- }
-
- private List<String> generateRecommendations(ROICalculation roi) {
- List<String> recommendations = new ArrayList<>();
-
- if (roi.getRoi() < 50) {
- recommendations.add("ROI is below target. Consider improving test execution speed or reducing maintenance costs.");
- }
-
- if (roi.getMaintenanceCosts() > roi.getTotalBenefits() * 0.3) {
- recommendations.add("Maintenance costs are too high. Review test stability and reduce flaky tests.");
- }
-
- if (roi.getBreakEvenPeriod() > 2) {
- recommendations.add("Break-even period is too long. Focus on high-value test automation.");
- }
-
- return recommendations;
- }
-
- private TestAutomationMetrics projectMetrics(TestAutomationMetrics current, int months) {
- // Simple projection based on current trends
- return TestAutomationMetrics.builder().totalTestsExecuted((int) (current.getTotalTestsExecuted() * Math.pow(1.1, months))).averageTestExecutionTime(current.getAverageTestExecutionTime() * 0.95) // 5% improvement.defectsFound((int) (current.getDefectsFound() * Math.pow(0.9, months))) // 10% reduction.testCoverage(Math.min(85, current.getTestCoverage() + months)) // Up to 85%.build();
- }
-
- private double calculateConfidenceLevel(int months) {
- // Confidence decreases with projection length
- return Math.max(0.5, 1.0 - (months * 0.05));
- }
-}
-```
-
-### 4. `ROI Reporting`
-
-```java
-@Service
-public class ROIReportGenerator {
-
- private final TestAutomationROI roiCalculator;
- private final TestAutomationMetricsCollector metricsCollector;
- private final ReportService reportService;
-
- @Scheduled(cron = "0 0 1 *") // First day of each month
- public void generateMonthlyROIReport() {
- LocalDate reportDate = LocalDate.now().minusMonths(1);
- TimePeriod reportPeriod = TimePeriod.ofMonths(1);
-
- TestAutomationMetrics metrics = metricsCollector.getMetricsForPeriod(
- reportDate.withDayOfMonth(1),
- reportDate.withDayOfMonth(reportDate.lengthOfMonth()));
-
- ROICalculation roi = roiCalculator.calculateROI(metrics, reportPeriod);
-
- // Generate report
- ROIReport report = ROIReport.builder().reportDate(reportDate).period(reportPeriod).metrics(metrics).roi(roi).summary(generateSummary(roi)).charts(generateCharts(metrics, roi)).recommendations(generateRecommendations(roi)).build();
-
- // Save and distribute report
- reportService.saveReport(report);
- reportService.emailReport(report, getStakeholders());
- reportService.publishToDashboard(report);
- }
-
- private String generateSummary(ROICalculation roi) {
- StringBuilder summary = new StringBuilder();
- summary.append("Test Automation ROI Report\n");
- summary.append("========================\n\n");
- summary.append(String.format("ROI: %.1f%%\n", roi.getRoi()));
- summary.append(String.format("Total Benefits: $%.2f\n", roi.getTotalBenefits()));
- summary.append(String.format("Total Costs: $%.2f\n", roi.getTotalCosts()));
- summary.append(String.format("Net Benefits: $%.2f\n", roi.getNetBenefits()));
- summary.append(String.format("Break-even Period: %.1f years\n\n", roi.getBreakEvenPeriod()));
-
- if (roi.getRoi() > 100) {
- summary.append("🎉 Excellent ROI! Test automation is highly profitable.\n");
- } else if (roi.getRoi() > 50) {
- summary.append("✅ Good ROI. Test automation provides solid returns.\n");
- } else if (roi.getRoi() > 0) {
- summary.append("⚠️ Positive ROI, but consider optimization opportunities.\n");
- } else {
- summary.append("❌ Negative ROI. Review automation strategy.\n");
- }
-
- return summary.toString();
- }
-
- private List<ChartData> generateCharts(TestAutomationMetrics metrics, ROICalculation roi) {
- List<ChartData> charts = new ArrayList<>();
-
- // ROI over time chart
- charts.add(ChartData.builder().title("ROI Trend").type(ChartType.LINE).data(generateROITrendData()).build());
-
- // Cost vs Benefits chart
- charts.add(ChartData.builder().title("Costs vs Benefits").type(ChartType.BAR).data(Map.of(
- "Costs", roi.getTotalCosts(),
- "Benefits", roi.getTotalBenefits())).build());
-
- // Test execution metrics
- charts.add(ChartData.builder().title("Test Execution Metrics").type(ChartType.PIE).data(Map.of(
- "Passed", metrics.getTestsPassed(),
- "Failed", metrics.getTestsFailed(),
- "Skipped", metrics.getTestsSkipped())).build());
-
- return charts;
- }
-
- private List<String> generateRecommendations(ROICalculation roi) {
- List<String> recommendations = new ArrayList<>();
-
- if (roi.getMaintenanceCosts() > roi.getTotalBenefits() * 0.4) {
- recommendations.add("High maintenance costs detected. Focus on improving test stability and reducing flaky tests.");
- }
-
- if (roi.getBreakEvenPeriod() > 1.5) {
- recommendations.add("Consider prioritizing high-impact, low-effort automation opportunities to reduce break-even time.");
- }
-
- if (roi.getRoi() < 75) {
- recommendations.add("ROI could be improved by increasing test execution frequency or expanding automation coverage.");
- }
-
- recommendations.add("Continue monitoring automation metrics and adjust strategy based on ROI trends.");
-
- return recommendations;
- }
-
- private List<String> getStakeholders() {
- return Arrays.asList(
- "test-automation-team@company.com",
- "engineering-managers@company.com",
- "product-owners@company.com",
- "qa-directors@company.com"
- );
- }
-
- private Map<String, Double> generateROITrendData() {
- // Implementation to get historical ROI data
- return roiHistoryService.getLast12MonthsROI();
- }
-}
-```
-
-## Q11. Как выбрать тесты для автоматизации?
-
-Критерии: (1) Частота выполнения (регрессия); (2) Стабильность (не меняется часто); (3) Критичность; (4) Трудоёмкость ручного выполнения; (5) Детерминированность (одинаковый результат). Не автоматизировать: нестабильные `UI`, одноразовые тесты, exploratory testing. Приоритет: smoke, критичные сценарии, регрессия.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q12. Что такое `Data-Driven Testing`?
-
-Один тест с множеством наборов данных (параметры, ожидаемые результаты). В `JUnit 5`: `@ParameterizedTest` с `@CsvSource`, `@MethodSource`. В `Selenium`: данные из `Excel`, `CSV`, БД. Уменьшает дублирование; легко добавлять случаи. Отчёты показывают, какой набор данных упал.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q13. Как обрабатывать flaky tests?
-
-`Flaky` test — нестабильный тест (иногда падает без изменений). Причины: race conditions, зависимость от времени, внешние сервисы, порядок выполнения. Решение: изолировать тест, добавить явные ожидания (`Awaitility`), мокировать внешние зависимости, фиксировать время (`Clock`). Не игнорировать (`@Disabled`) без исправления; quarantine flaky tests.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q14. Что такое `Keyword-Driven Testing`?
-
-Тесты описываются ключевыми словами (действия): login, navigate, click, verify. Реализация: таблица (`Excel`, `CSV`) с шагами; фреймворк выполняет действия по ключевым словам. Разделение тест-дизайна и реализации; нетехнические люди могут писать тесты. Инструменты: `Robot Framework`, кастомные фреймворки.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q15. Как организовать test data management?
-
-Подходы: (1) Тестовая БД с фикстурами (seed data); (2) Генерация данных в тестах (builders, фабрики); (3) Копирование production-подобных данных (анонимизация); (4) `TestContainers` с инициализацией. Изоляция: каждый тест создаёт и очищает свои данные; или транзакция с rollback. Не зависеть от порядка тестов.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q16. Что такое `Behavior-Driven Development` (`BDD`)?
-
-`BDD` — описание поведения в формате `Given-When-Then` (`Gherkin`); тесты читаемы для нетехнических стейкхолдеров. Инструменты: `Cucumber`, JBehave. Шаги (step definitions) реализуются на `Java`; сценарии в .feature файлах. Связь требований и тестов; живая документация. Накладные расходы на поддержку; использовать для acceptance tests.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q17. Как автоматизировать тестирование мобильных приложений?
-
-`Appium` — кросс-платформенный фреймворк (`iOS`, `Android`); `WebDriver API`. Тесты на `Java` с `Appium`/`Cloud`-провайдеры (`BrowserStack`, `Sauce Labs`) для множества устройств. `Page Object Model` для структуры.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q18. Что такое `Visual Regression Testing`?
-
-Сравнение скриншотов `UI` до и после изменений; детектирование визуальных регрессий. Инструменты: `Percy`, `Applitools`, `BackstopJS`. Базовые скриншоты (`baseline`); при изменениях — сравнение и review отличий. Для критичных `UI`; дополняет функциональные тесты. Ложные срабатывания при динамическом контенте (игнорировать области).
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q19. Как автоматизировать `Performance Testing`?
-
-Инструменты: JMeter, `Gatling`, `K6`. Сценарии: нагрузка (load), стресс, spike, soak. В `CI`: запуск после деплоя в staging; проверка метрик (latency, throughput, error rate) против `baseline`. Не блокировать `pipeline` при малых отклонениях; алерт при значительной деградации. Регулярные нагрузочные тесты для трендов.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q20. Что такое `Test Reporting` и `Dashboards`?
-
-Отчёты: результаты тестов (passed/failed), покрытие, тренды. Инструменты: `Allure`, `ExtentReports`, `TestNG` reports. Дашборды: `Jenkins`/`GitLab CI` показывают статус тестов; интеграция с `Grafana` для трендов. Метрики: flakiness rate, время выполнения, покрытие. Видимость для команды и стейкхолдеров.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q21. Как автоматизировать `Accessibility Testing`?
-
-Инструменты: `axe-core` (`JavaScript`), `Pa11y`, `Lighthouse`. Интеграция в автоматизацию: запуск axe на страницах; проверка `WCAG`-правил (контраст, alt-текст, семантика). В `Selenium`: `axe-selenium-java`. Не заменяет ручное тестирование с assistive tech; автоматизация — первый уровень проверки.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q22. Что такое `Continuous Testing`?
-
-Автоматизация тестов в `CI`/`CD`; тесты запускаются на каждый коммит или `PR`. Быстрая обратная связь; блокировка merge при падении тестов. Уровни: `unit` (каждый коммит), integration (`PR`), e2e (staging). Мониторинг качества билдов; метрики (время, flakiness). Культура: тесты — часть **Definition of Done**.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q23. Как автоматизировать `Security Testing`?
-
-`SAST` в `CI` (`SonarQube`, `Checkmarx`); `DAST` на staging (`OWASP ZAP`, `Burp Suite` в headless режиме). `Dependency` scan (`OWASP Dependency Check`, `Snyk`). Автоматизация не заменяет penetration testing; дополняет. Блокировка при критичных находках; регулярные ручные аудиты.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q24. Что такое `Test Environment Management`?
-
-Управление окружениями для тестов (dev, test, staging). Автоматизация поднятия окружений (`IaC`, `Docker Compose`, `Kubernetes`). Изоляция: каждый тест или набор тестов — своё окружение (`TestContainers`). `Seed` data; конфигурация по окружению. Мониторинг доступности окружений; очистка после тестов.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q25. Как автоматизировать `Smoke Testing`?
-
-`Smoke` test — минимальный набор проверок после деплоя (приложение запустилось, ключевые эндпоинты доступны). Автоматизация: скрипт или тесты (например, `GET`/pipeline после деплоя. При падении — rollback или алерт. Быстрые (секунды); не заменяют полные регрессионные тесты.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q26. Что такое `Test Maintenance Strategy`?
-
-Поддержка тестов: рефакторинг при изменении кода; удаление устаревших; исправление flaky. Стратегия: регулярный review тестов; метрики (flakiness, время выполнения); выделение времени на поддержку (не только новые тесты). Избегать дублирования; переиспользование (`Page Objects`, helpers). Документировать сложные тесты.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q27. Как автоматизировать `Regression Testing`?
-
-Регрессионные тесты — проверка, что новые изменения не сломали существующую функциональность. Автоматизация: набор тестов (`unit` + integration + e2e); запуск на каждый `PR` или перед релизом. Приоритизация: критичные сценарии; часто используемые функции. Не запускать все тесты на каждый коммит (долго); выборочно или по изменённым областям.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q28. Что такое `Test Orchestration`?
-
-Управление выполнением множества тестов: параллельность, распределение по узлам, приоритизация. Инструменты: `Selenium Grid`, `Selenoid`, cloud-провайдеры. Оркестрация в `CI`: матрица тестов (браузеры, окружения); параллельные джобы. Балансировка нагрузки; мониторинг узлов. Сокращение времени выполнения за счёт параллелизма.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q29. Как автоматизировать `Compatibility Testing`?
-
-Тестирование на множестве платформ/браузеров/версий. Автоматизация: матрица (`Chrome`, `Firefox`, `Safari`; `Windows`, Mac, `Linux`); `Selenium Grid` или cloud (`BrowserStack`, `Sauce Labs`). Приоритизация: популярные браузеры и версии (аналитика). Не тестировать все комбинации; выборочно критичные сценарии.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q30. Best practices для test automation?
-
-(1) Стабильные локаторы (id, `data-testid`, не xpath по индексу). (2) Явные ожидания (`WebDriverWait`, `Awaitility`). (3) `Page Object Model`. (4) Независимость тестов. (5) Изоляция данных. (6) Быстрые тесты (параллельность, оптимизация). (7) Понятные отчёты и логи. (8) Версионирование тестов с кодом. (9) Код-ревью тестов. (10) Мониторинг flakiness и поддержка.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+12. **Автоматизируйте правильные тесты** -- не всё нужно автоматизировать
+
+---
+
+## See also
+
+- [Unit Testing](unit-testing-interview.md) — модульное тестирование, моки и стабы
+- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование Spring Boot
+- [Стратегии тестирования](test-strategies-interview.md) — стратегии тестирования, пирамида, TDD/BDD
+- [Testcontainers](testcontainers-interview.md) — Docker-контейнеры для интеграционных тестов
+- [Kubernetes](../devops/kubernetes-interview.md) — запуск автотестов в Kubernetes pods и CI/CD
+- [Проектирование пайплайнов](../cicd/pipeline-design-interview.md) — CI/CD пайплайны
+- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — деплой и тестирование в CI/CD
+- [Docker](../devops/docker-interview.md) — контейнеризация для тестовых окружений
+- [Code Review](../code-quality/code-review-interview.md) — код-ревью и качество кода

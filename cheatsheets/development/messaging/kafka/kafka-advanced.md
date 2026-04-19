@@ -1,7 +1,10 @@
 ---
 title: "Kafka Advanced"
 description: "Apache Kafka - это распределенная платформа для потоковой обработки данных в реальном времени. Этот документ охватывает продвинутые концепции, архитектурные паттерны, производительность и enterprise-grade практики работы с Kafka."
-tags: ["development", "messaging", "kafka-advanced"]
+tags:
+  - development
+  - messaging
+  - kafka-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kafka Advanced
 
 **Apache Kafka** - это распределенная платформа для потоковой обработки данных в реальном времени. Этот документ охватывает продвинутые концепции, архитектурные паттерны, производительность и **enterprise-grade** практики работы с **Kafka**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 - [Kafka Documentation](https://kafka.apache.org/documentation/)

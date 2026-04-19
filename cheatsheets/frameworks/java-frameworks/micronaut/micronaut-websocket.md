@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: WebSocket - Real-time Communication и STOMP"
 description: "Полное руководство по WebSocket в Micronaut: real-time коммуникации, STOMP, SockJS, чаты, уведомления и best practices"
-tags: ["micronaut", "websocket", "stomp", "sockjs", "real-time", "java", "kotlin"]
+tags:
+  - micronaut
+  - websocket
+  - stomp
+  - sockjs
+  - real-time
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-reactive.md"]

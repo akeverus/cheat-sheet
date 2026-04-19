@@ -1,15 +1,16 @@
 ---
 title: "Повтор с экспоненциальной задержкой и джиттером (Retry with Exponential Backoff and Jitter)"
 description: "Повторы с растущими паузами (exponential backoff) и джиттером снижают нагрузку на сервис и предотвращают «стадный» эффект синхронных повторов в распределённых системах."
-tags: ["algorithms", "problems", "retry-with-exponential-backoff-jitter"]
+tags:
+  - algorithms
+  - problems
+  - retry-with-exponential-backoff-jitter
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Повтор с экспоненциальной задержкой и джиттером (`Retry with Exponential Backoff and Jitter`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Повторы с растущими паузами (exponential backoff) и джиттером снижают нагрузку на сервис и предотвращают «стадный» эффект синхронных повторов в распределённых системах.
 

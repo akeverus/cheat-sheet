@@ -1,15 +1,16 @@
 ---
 title: "Безопасность приложений (Application Security)"
 description: "AppSec — практики защиты приложений на уровне кода и бизнес-логики:"
-tags: ["security", "application", "application-security"]
+tags:
+  - security
+  - application
+  - application-security
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Безопасность приложений (`Application Security`)
-
-**Дата последнего обновления:** 2026-02-06
 
 `AppSec` — практики защиты приложений на уровне кода и бизнес-логики:
 аутентификация, авторизация, работа с токенами, валидация ввода, защита от инъекций и подделки запросов.

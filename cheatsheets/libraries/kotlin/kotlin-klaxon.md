@@ -1,15 +1,16 @@
 ---
 title: "Klaxon"
 description: "Klaxon - это легковесная JSON библиотека для Kotlin, предоставляющая простое и идиоматичное API для работы с JSON. В отличие от kotlinx.serialization, Klaxon использует reflection и предоставляет более гибкий подход к парсингу."
-tags: ["libraries", "kotlin", "kotlin-klaxon"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-klaxon
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Klaxon
-
-**Дата последнего обновления:** 2026-02-06
 
 **Klaxon** - это легковесная **JSON** библиотека для **Kotlin**, предоставляющая простое и идиоматичное **API** для работы с **JSON**. В отличие от **kotlinx.serialization**, **Klaxon** использует **reflection** и предоставляет более гибкий подход к парсингу.
 

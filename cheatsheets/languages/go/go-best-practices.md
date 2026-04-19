@@ -1,15 +1,18 @@
 ---
 title: "Go: лучшие практики"
 description: "Полное руководство по лучшим практикам в Go: идиоматический код, стиль, производительность, безопасность"
-tags: ["go", "golang", "best-practices", "idiomatic", "style"]
+tags:
+  - go
+  - golang
+  - best-practices
+  - idiomatic
+  - style
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: лучшие практики
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

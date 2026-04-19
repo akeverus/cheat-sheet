@@ -1,7 +1,10 @@
 ---
 title: "JUnit 5"
 description: "JUnit 5 - это новая генерация фреймворка для модульного тестирования Java. Полностью переработан по сравнению с JUnit 4, с новым API, расширяемостью и поддержкой современных Java фич."
-tags: ["libraries", "testing-libraries", "java-junit5"]
+tags:
+  - libraries
+  - testing-libraries
+  - java-junit5
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # JUnit 5
 
 **JUnit** 5 - это новая генерация фреймворка для модульного тестирования **Java**. Полностью переработан по сравнению с **JUnit** 4, с новым **API**, расширяемостью и поддержкой современных **Java** фич.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: gRPC Integration - RPC Communication"
 description: "Полное руководство по интеграции с gRPC в Micronaut: RPC communication, streaming, interceptors и best practices"
-tags: ["micronaut", "grpc", "rpc", "streaming", "protobuf", "java", "kotlin"]
+tags:
+  - micronaut
+  - grpc
+  - rpc
+  - streaming
+  - protobuf
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-reactive.md"]

@@ -1,7 +1,10 @@
 ---
 title: "OkHttp"
 description: "OkHttp - это HTTP клиент для Java и Kotlin, разработанный Square. Это один из самых популярных HTTP клиентов для Android и серверных Java приложений."
-tags: ["libraries", "java", "java-okhttp"]
+tags:
+  - libraries
+  - java
+  - java-okhttp
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # OkHttp
 
 **OkHttp** - это **HTTP** клиент для **Java** и **Kotlin**, разработанный **Square**. Это один из самых популярных **HTTP** клиентов для **Android** и серверных **Java** приложений.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

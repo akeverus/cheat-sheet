@@ -1,15 +1,16 @@
 ---
 title: "Задача о рюкзаке (Knapsack Problem)"
 description: "Задача 0-1 рюкзака: выбор подмножества предметов с весами и стоимостями при ограничении по весу, максимизация суммы стоимостей. Рекурсия, динамическое программирование (2D и 1D), восстановление набора предметов. Java и Kotlin."
-tags: ["algorithms", "problems", "knapsack-problem"]
+tags:
+  - algorithms
+  - problems
+  - knapsack-problem
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Задача о рюкзаке (`Knapsack Problem`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Задача 0-1 рюкзака: выбор подмножества предметов с весами и стоимостями при ограничении по весу, максимизация суммы стоимостей. Рекурсия, динамическое программирование (2D и 1D), восстановление набора предметов. Java и Kotlin.
 
@@ -20,7 +21,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [Задача коммивояжера](traveling-salesman-problem.md) — TSP
-- [Жадные алгоритмы](../algorithmic-paradigms/greedy-algorithms.md) — жадные алгоритмы
+- [Жадные алгоритмы](greedy-algorithms.md) — жадные алгоритмы
 - [Наибольший общий делитель](../math/greatest-common-divisor.md) — НОД
 
 ## Содержание

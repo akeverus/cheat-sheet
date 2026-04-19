@@ -1,7 +1,14 @@
 ---
 title: "Redis: Транзакции"
 description: "Полное руководство по транзакциям в Redis: MULTI/EXEC, WATCH, оптимистическая блокировка, атомарность, best practices"
-tags: ["redis", "transactions", "multi", "exec", "watch", "atomic", "locking"]
+tags:
+  - redis
+  - transactions
+  - multi
+  - exec
+  - watch
+  - atomic
+  - locking
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-lua-scripting.md"]
@@ -770,7 +777,5 @@ public class TransactionWithRollback {
 - [Redis Transactions](https://redis.io/docs/manual/transactions/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

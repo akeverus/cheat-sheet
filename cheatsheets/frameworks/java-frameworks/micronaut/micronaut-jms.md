@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: JMS Integration - Message Queues и Topics"
 description: "Полное руководство по интеграции с JMS в Micronaut: message queues, topics, producers, consumers и best practices"
-tags: ["micronaut", "jms", "messaging", "queues", "topics", "java", "kotlin"]
+tags:
+  - micronaut
+  - jms
+  - messaging
+  - queues
+  - topics
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-reactive.md"]
 next: ["micronaut-reactive.md", "micronaut-kafka.md"]

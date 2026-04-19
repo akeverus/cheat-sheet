@@ -1,7 +1,10 @@
 ---
 title: "Java Collections: модификация"
 description: "Материал по теме Java Collections: модификация в разделе cheatsheets."
-tags: ["languages", "java", "java-collections-modification"]
+tags:
+  - languages
+  - java
+  - java-collections-modification
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Collections: модификация
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -117,9 +118,7 @@ list.forEach(e -> {
 
 ### **Collection.stream**().**forEach**()
 
-**Collection.`stream()`.`forEach()`** также обрабатывает элементы по порядку, но мы можем обрабатывать поток параллельно, если мы явно создадим параллельный поток.
-
-Важно отметить, что порядок выполнения не гарантируется, даже если мы используем поток последовательно.
+**Collection.`stream()`.`forEach()`** также обрабатывает элементы по порядку, но мы можем обрабатывать поток параллельно, если мы явно создадим параллельный поток. Порядок выполнения не гарантируется, даже если мы используем поток последовательно.
 
 ```java
 List<String> list = Arrays.asList("A", "B", "C", "D");
@@ -189,7 +188,7 @@ Stream<String> stream = CollectionUtils.emptyIfNull(collection).stream();
 
 ## Сортировка **Array**, **List**, **Set** и **Map**
 
-В этом разделе мы рассмотрим различные способы сортировки коллекций в **Java.**
+**
 
 ### Сортировка **Array**
 

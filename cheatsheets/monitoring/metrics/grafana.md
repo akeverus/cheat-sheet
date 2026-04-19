@@ -1,7 +1,10 @@
 ---
 title: "Grafana"
 description: "Grafana — платформа для аналитики и интерактивной визуализации данных с открытым исходным кодом. Позволяет создавать дашборды и графики на основе данных из различных источников: Prometheus, Elasticsearch, InfluxDB и др."
-tags: ["monitoring", "metrics", "grafana"]
+tags:
+  - monitoring
+  - metrics
+  - grafana
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Grafana
 
 Grafana — платформа для аналитики и интерактивной визуализации данных с открытым исходным кодом. Позволяет создавать дашборды и графики на основе данных из различных источников: Prometheus, Elasticsearch, InfluxDB и др.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

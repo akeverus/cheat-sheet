@@ -1,7 +1,10 @@
 ---
 title: "Kubernetes: основы"
 description: "Кратко: сравнение с Mesos, Java-клиент, paging/async/watches, namespaces/selectors, CRUD ресурсов, Deployment vs StatefulSet/ReplicaSet, kind/k3s/minikube/Knative, jobs/cron, ingress vs LB, PV/PVC, сервисы, дамп heap из pod."
-tags: ["platform", "containers", "kubernetes-basics"]
+tags:
+  - platform
+  - containers
+  - kubernetes-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -14,8 +17,6 @@ updated: "2026-02-11"
 > **Примечание:** материал по `Kubernetes` поддерживается напрямую в этом документе; дополнительные примеры и пояснения переносятся в рабочем порядке при следующем тематическом обновлении.
 
 
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

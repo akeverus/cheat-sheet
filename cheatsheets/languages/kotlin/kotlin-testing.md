@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Testing"
 description: "Кратко: полное руководство по тестированию Kotlin кода. Рассматриваются JUnit 5, MockK, Kotlin Test Framework, тестирование корутин, property-based testing и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-testing"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-testing
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Testing
 
 Кратко: полное руководство по тестированию **Kotlin** кода. Рассматриваются **JUnit** 5, **MockK**, **Kotlin Test Framework**, тестирование корутин, **property-based testing** и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

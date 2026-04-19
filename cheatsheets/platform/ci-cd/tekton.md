@@ -1,7 +1,10 @@
 ---
 title: "Tekton"
 description: "Tekton - это мощный, Kubernetes-native фреймворк для создания CI/CD pipelines. Разработанный Google и IBM, Tekton предоставляет декларативный подход к определению и запуску pipelines, интегрируясь глубоко с Kubernetes экосистемой. Этот документ охватывает архитектуру, конфигураци"
-tags: ["platform", "ci-cd", "tekton"]
+tags:
+  - platform
+  - ci-cd
+  - tekton
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Tekton**
 
 **Tekton** - это мощный, **Kubernetes-native** фреймворк для создания CI/CD **pipelines**. Разработанный **Google** и **IBM**, **Tekton** предоставляет декларативный подход к определению и запуску **pipelines**, интегрируясь глубоко с **Kubernetes** экосистемой. Этот документ охватывает архитектуру, конфигурацию, продвинутые паттерны и **best practices** для использования **Tekton** в **production** средах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Tekton Documentation](https://tekton.dev/docs/)

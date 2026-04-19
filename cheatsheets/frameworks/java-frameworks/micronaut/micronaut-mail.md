@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Mail - Email Sending и Templates"
 description: "Полное руководство по отправке email в Micronaut: email sending, templates, attachments, HTML email и best practices"
-tags: ["micronaut", "mail", "email", "smtp", "templates", "java", "kotlin"]
+tags:
+  - micronaut
+  - mail
+  - email
+  - smtp
+  - templates
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-reactive.md"]

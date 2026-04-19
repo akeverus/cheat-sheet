@@ -1,7 +1,10 @@
 ---
 title: "pytest"
 description: "Кратко: pytest — фреймворк для тестирования приложений на Python. Минимальный синтаксис (assert без обёрток), фикстуры (@pytest.fixture), параметризация (@pytest.mark.parametrize), маркеры, богатая экосистема плагинов (pytest-cov, pytest-mock, pytest-asyncio, pytest-django). Подд"
-tags: ["testing", "unit-testing", "pytest"]
+tags:
+  - testing
+  - unit-testing
+  - pytest
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **pytest**
 
 Кратко: **pytest** — фреймворк для тестирования приложений на **Python**. Минимальный синтаксис (`assert` без обёрток), фикстуры (`@pytest.fixture`), параметризация (`@pytest.mark.parametrize`), маркеры, богатая экосистема плагинов (**pytest-cov**, **pytest-mock**, **pytest-asyncio**, **pytest-django**). Поддерживает **unittest**-совместимость и **doctest**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -578,4 +579,3 @@ jobs:
 
 ---
 
-*Дата последнего обновления: 2026-02-06.*

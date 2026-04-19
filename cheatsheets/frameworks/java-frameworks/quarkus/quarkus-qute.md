@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Qute - Templating Engine"
 description: "Полное руководство по Qute в Quarkus: шаблонизация, теги, инклюды, fragments, type-safe templates и best practices"
-tags: ["quarkus", "qute", "templating", "templates", "html", "java"]
+tags:
+  - quarkus
+  - qute
+  - templating
+  - templates
+  - html
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-rest.md"]

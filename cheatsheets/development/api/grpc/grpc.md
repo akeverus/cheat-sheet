@@ -1,7 +1,10 @@
 ---
 title: "gRPC"
 description: "Кратко: gRPC - высокопроизводительный фреймворк для удаленного вызова процедур. Protocol Buffers, HTTP/2, streaming, Spring Boot интеграция."
-tags: ["development", "api", "grpc"]
+tags:
+  - development
+  - api
+  - grpc
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # gRPC
 
 Кратко: **gRPC** - высокопроизводительный фреймворк для удаленного вызова процедур. **Protocol Buffers**, **HTTP**/2, **streaming**, **Spring Boot** интеграция.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 
@@ -25,7 +26,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [GraphQL](../graphql/graphql.md) — **GraphQL**
-- [Spring Boot](../../../frameworks/java-frameworks/spring/spring-boot.md) — **Spring Boot**
+- [Spring Boot](../../../frameworks/spring/spring-boot.md) — **Spring Boot**
 - [Jackson](../../../libraries/serialization/jackson.md) — **JSON** обработка
 
 ## Содержание

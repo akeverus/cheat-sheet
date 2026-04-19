@@ -1,7 +1,10 @@
 ---
 title: "Jackson: JSON сериализация в Java"
 description: "Комплексное руководство по использованию Jackson для работы с JSON в Java приложениях - от основ до продвинутых техник."
-tags: ["libraries", "serialization", "jackson"]
+tags:
+  - libraries
+  - serialization
+  - jackson
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Jackson: **JSON** сериализация в **Java**
 
 **Комплексное руководство по использованию `Jackson` для работы с `JSON` в `Java` приложениях - от основ до продвинутых техник.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

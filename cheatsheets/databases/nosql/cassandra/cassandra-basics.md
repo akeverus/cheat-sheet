@@ -1,7 +1,10 @@
 ---
 title: "Cassandra: Основы - Полное руководство по распределенной NoSQL базе данных"
 description: "Комплексное руководство по Apache Cassandra: архитектура, установка, модель данных, CQL и интеграция с Java Spring приложениями."
-tags: ["databases", "nosql", "cassandra-basics"]
+tags:
+  - databases
+  - nosql
+  - cassandra-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Cassandra**: Основы - Полное руководство по распределенной **NoSQL** базе данных
 
 Комплексное руководство по **Apache Cassandra**: архитектура, установка, модель данных, **CQL** и интеграция с **Java Spring** приложениями.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

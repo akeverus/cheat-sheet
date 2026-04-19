@@ -1,7 +1,10 @@
 ---
 title: "Docker и Spring Boot"
 description: "Полный перенос раздела Docker and Spring Boot: контейнеризация приложения, сборка образов (Dockerfile, buildpacks, многослойные JAR), доступ к логам, запуск с PostgreSQL через Compose, повторное использование слоёв Docker и кастомизация слоёв. Без сокращений."
-tags: ["platform", "containers", "docker-spring-boot"]
+tags:
+  - platform
+  - containers
+  - docker-spring-boot
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Полный перенос раздела **Docker and Spring Boot**: контейнеризация приложения, сборка образов (**Dockerfile, buildpacks, многослойные JAR**), доступ к логам, запуск с **PostgreSQL** через **Compose**, повторное использование слоёв **Docker** и кастомизация слоёв. Без сокращений.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Elastic APM"
 description: "APM на базе стека Elastic: метрики приложений, трейсы и интеграция с Elasticsearch/Kibana."
-tags: ["monitoring", "apm", "elastic-apm"]
+tags:
+  - monitoring
+  - apm
+  - elastic-apm
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Elastic APM
 
 APM на базе стека Elastic: метрики приложений, трейсы и интеграция с Elasticsearch/Kibana.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

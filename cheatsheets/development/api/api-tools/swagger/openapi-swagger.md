@@ -1,7 +1,10 @@
 ---
 title: "OpenAPI/Swagger"
 description: "OpenAPI Specification (OAS) - это стандарт для описания REST API. Ранее известная как Swagger, эта спецификация позволяет описывать API endpoints, параметры, запросы и ответы в машиночитаемом формате. Этот документ охватывает создание, валидацию и использование OpenAPI спецификац"
-tags: ["development", "api", "openapi-swagger"]
+tags:
+  - development
+  - api
+  - openapi-swagger
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **OpenAPI**/**Swagger**
 
 **OpenAPI Specification** (**OAS**) - это стандарт для описания **REST API**. Ранее известная как **Swagger**, эта спецификация позволяет описывать **API endpoints**, параметры, запросы и ответы в машиночитаемом формате. Этот документ охватывает создание, валидацию и использование **OpenAPI** спецификаций для документирования и тестирования **API**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)

@@ -1,7 +1,10 @@
 ---
 title: "WireMock"
 description: "WireMock - это библиотека для создания mock-серверов HTTP API в тестах."
-tags: ["libraries", "java", "java-wiremock"]
+tags:
+  - libraries
+  - java
+  - java-wiremock
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # WireMock
 
 **WireMock** - это библиотека для создания **mock**-серверов **HTTP API** в тестах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

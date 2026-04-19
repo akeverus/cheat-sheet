@@ -1,7 +1,10 @@
 ---
 title: "Методы ветвей и границ (Branch and Bound)"
 description: "Кратко: Комплексное руководство по алгоритмам ветвей и границ - от базовых концепций до практических применений с примерами на Java."
-tags: ["algorithms", "algorithmic-paradigms", "branch-and-bound"]
+tags:
+  - algorithms
+  - algorithmic-paradigms
+  - branch-and-bound
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Методы ветвей и границ (Branch and Bound)
 
 Кратко: Комплексное руководство по алгоритмам ветвей и границ - от базовых концепций до практических применений с примерами на **Java**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

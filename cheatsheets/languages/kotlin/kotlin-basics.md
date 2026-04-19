@@ -1,7 +1,15 @@
 ---
 title: "Основы Kotlin - Полное руководство"
 description: "Комплексное руководство по языку Kotlin: от основ до продвинутых концепций, включая Kotlin 1.9+, DSL, корутины, инлайновые функции"
-tags: ["kotlin", "jvm", "android", "backend", "functional", "coroutines", "dsl", "null-safety"]
+tags:
+  - kotlin
+  - jvm
+  - android
+  - backend
+  - functional
+  - coroutines
+  - dsl
+  - null-safety
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md"]
 next: ["kotlin/kotlin-concurrency-basics.md", "kotlin/kotlin-reactive.md", "kotlin/kotlin-another.md"]
@@ -12,8 +20,6 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 # Kotlin: основы
 
 Краткое руководство по языку Kotlin: синтаксис, null-safety, классы, корутины, функциональное программирование.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

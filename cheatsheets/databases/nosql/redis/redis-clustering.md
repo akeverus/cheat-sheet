@@ -1,7 +1,13 @@
 ---
 title: "Redis: Кластеризация"
 description: "Полное руководство по Redis Cluster: настройка, шардинг, репликация, масштабирование, мониторинг, оптимизация"
-tags: ["redis", "cluster", "sharding", "scaling", "high-availability", "distributed"]
+tags:
+  - redis
+  - cluster
+  - sharding
+  - scaling
+  - high-availability
+  - distributed
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-replication.md"]
 next: ["databases/redis-performance.md", "databases/redis-security.md"]
@@ -987,7 +993,5 @@ cluster-node-timeout 3000
 - [Redis Cluster Specification](https://redis.io/docs/reference/cluster-spec/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

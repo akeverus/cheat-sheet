@@ -1,7 +1,10 @@
 ---
 title: "Spring Cloud Sleuth: Distributed Tracing для Spring"
 description: "Комплексное руководство по использованию Spring Cloud Sleuth для distributed tracing в Spring Boot приложениях с интеграцией OpenTelemetry."
-tags: ["libraries", "java", "java-spring-cloud-sleuth"]
+tags:
+  - libraries
+  - java
+  - java-spring-cloud-sleuth
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring Cloud Sleuth: **Distributed Tracing** для **Spring**
 
 **Комплексное руководство по использованию `Spring `Cloud` Sleuth` для distributed tracing в `Spring Boot` приложениях с интеграцией `OpenTelemetry`.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -2318,7 +2319,7 @@ public class BadPerformanceTracing {
 
 ## Заключение
 
-**Spring Cloud Sleuth** — это мощная библиотека для **distributed tracing** в **Spring Boot** приложениях, которая значительно упрощает **observability** микросервисных систем.
+**Spring Cloud Sleuth** — это библиотека для **distributed tracing** в **Spring Boot** приложениях, которая значительно упрощает **observability** микросервисных систем.
 
 ### Преимущества **Spring Cloud Sleuth**
 

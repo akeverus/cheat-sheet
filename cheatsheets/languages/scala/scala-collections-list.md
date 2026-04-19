@@ -1,7 +1,12 @@
 ---
 title: "Scala Collections - List"
 description: "Полное руководство по работе со списками в Scala: List, ListBuffer, операции, производительность и лучшие практики"
-tags: ["scala", "collections", "list", "functional-programming", "immutable"]
+tags:
+  - scala
+  - collections
+  - list
+  - functional-programming
+  - immutable
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-collections-set.md", "scala/scala-collections-map.md"]
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 # **Scala Collections** - **List**
 
 Кратко: руководство по работе со списками в **Scala**: **List**, **ListBuffer**, операции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -440,7 +443,7 @@ list.lastIndexOf("c")  // 2
 
 ## **Pattern Matching** со списками
 
-**Pattern matching** - мощный инструмент для работы со списками:**
+**Pattern matching** - инструмент для работы со списками:**
 
 ```scala
 def describeList(list: List[Int]): String = list match {

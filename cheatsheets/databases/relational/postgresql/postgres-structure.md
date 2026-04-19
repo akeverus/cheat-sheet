@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: структура БД и таблиц"
 description: "Кратко: создание/удаление БД, базовый синтаксис CREATE TABLE, типы данных и ключевые ограничения. Полезно как справочник при моделировании."
-tags: ["databases", "relational", "postgres-structure"]
+tags:
+  - databases
+  - relational
+  - postgres-structure
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Кратко: создание/удаление БД, базовый синтаксис **CREATE TABLE**, типы данных и ключевые ограничения. Полезно как справочник при моделировании.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

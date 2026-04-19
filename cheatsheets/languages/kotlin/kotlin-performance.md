@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Performance"
 description: "Кратко: руководство по оптимизации производительности Kotlin кода. Рассматриваются inline функции, reified generics, управление памятью, оптимизация коллекций, производительность корутин и профилирование."
-tags: ["languages", "kotlin", "kotlin-performance"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-performance
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Performance
 
 Кратко: руководство по оптимизации производительности **Kotlin** кода. Рассматриваются **inline** функции, **reified generics**, управление памятью, оптимизация коллекций, производительность корутин и профилирование.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

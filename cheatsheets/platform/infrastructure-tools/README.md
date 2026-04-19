@@ -1,7 +1,11 @@
 ---
 title: "Platform Infrastructure Tools"
 description: "Индекс инструментов платформы: Nginx, Consul, Vagrant и обзор раздела."
-tags: ["meta", "index", "platform", "infrastructure-tools"]
+tags:
+  - meta
+  - index
+  - platform
+  - infrastructure-tools
 type: "index"
 updated: "2026-02-11"
 ---

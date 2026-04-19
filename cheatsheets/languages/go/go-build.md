@@ -1,15 +1,19 @@
 ---
 title: "Go: сборка и развертывание"
 description: "Полное руководство по сборке и развертыванию Go приложений: go build, cross-compilation, Docker, CI/CD"
-tags: ["go", "golang", "build", "deployment", "docker", "ci-cd"]
+tags:
+  - go
+  - golang
+  - build
+  - deployment
+  - docker
+  - ci-cd
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-modules.md"]
 updated: "2026-02-06"
 ---
 
 # Go: сборка и развертывание
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

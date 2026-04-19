@@ -1,7 +1,13 @@
 ---
 title: "SQL: транзакции и уровни изоляции"
 description: "Шпаргалка по транзакциям, ACID, уровням изоляции, аномалиям конкурентного доступа. Примеры dirty read, non-repeatable read, phantom read, lost update. Сравнение поведения PostgreSQL, MySQL, Oracle."
-tags: ["databases", "sql", "transactions", "acid", "isolation", "concurrency"]
+tags:
+  - databases
+  - sql
+  - transactions
+  - acid
+  - isolation
+  - concurrency
 difficulty: "intermediate"
 prerequisites: ["sql-basics.md"]
 next: ["../relational/postgresql/postgres-transactions.md"]

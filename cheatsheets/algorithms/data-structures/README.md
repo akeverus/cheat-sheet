@@ -1,7 +1,9 @@
 ---
 title: "Структуры данных"
 description: "Коллекции, сложность операций, lock-free структуры, связные списки."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

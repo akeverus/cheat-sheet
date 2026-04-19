@@ -1,7 +1,9 @@
 ---
 title: "NoSQL"
 description: "Индекс материалов по NoSQL-системам: Redis, MongoDB, Cassandra, Elasticsearch, ClickHouse, Couchbase."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

@@ -1,7 +1,10 @@
 ---
 title: "Java Collections: Set"
 description: "Материал по теме Java Collections: Set в разделе cheatsheets."
-tags: ["languages", "java", "java-collections-set"]
+tags:
+  - languages
+  - java
+  - java-collections-set
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Collections: Set
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -453,8 +454,6 @@ public HashSet() {
     map = new HashMap<>();
 }
 ```
-
-В этом разделе мы рассмотрим наиболее часто используемые методы и рассмотрим несколько простых примеров.
 
 ### Метод **add**()
 

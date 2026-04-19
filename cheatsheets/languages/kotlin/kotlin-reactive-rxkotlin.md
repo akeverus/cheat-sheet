@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Reactive: RxKotlin"
 description: "Кратко: полное руководство по RxKotlin - реактивным расширениям для Kotlin. Рассматриваются Observable, Flowable, операторы, преобразования, обработка ошибок и интеграция с корутинами."
-tags: ["languages", "kotlin", "kotlin-reactive-rxkotlin"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-reactive-rxkotlin
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Reactive: RxKotlin
 
 Кратко: полное руководство по **RxKotlin** - реактивным расширениям для **Kotlin**. Рассматриваются **Observable**, **Flowable**, операторы, преобразования, обработка ошибок и интеграция с корутинами.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

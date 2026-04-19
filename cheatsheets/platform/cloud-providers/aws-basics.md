@@ -1,7 +1,10 @@
 ---
 title: "AWS Basics"
 description: "Amazon Web Services (AWS) — облачная платформа от Amazon, предоставляющая вычислительные ресурсы, хранение данных и множество сервисов. Краткий обзор; детали — в [AWS Services](aws-services.md)."
-tags: ["platform", "cloud-providers", "aws-basics"]
+tags:
+  - platform
+  - cloud-providers
+  - aws-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **AWS Basics**
 
 **Amazon Web Services** (**AWS**) — облачная платформа от **Amazon**, предоставляющая вычислительные ресурсы, хранение данных и множество сервисов. Краткий обзор; детали — в [AWS Services](aws-services.md).
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,9 @@
 ---
 title: "Cucumber для Java"
 description: "BDD-фреймворк для написания автотестов на естественном языке (Gherkin). Связывает бизнес-описания сценариев с исполняемым кодом."
-tags: ["testing", "cucumber"]
+tags:
+  - testing
+  - cucumber
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # Cucumber для Java
 
 BDD-фреймворк для написания автотестов на естественном языке (Gherkin). Связывает бизнес-описания сценариев с исполняемым кодом.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -700,4 +700,3 @@ public void takeScreenshotOnFailure(Scenario scenario) {
 
 ---
 
-*Дата последнего обновления: 2026-02-06.*

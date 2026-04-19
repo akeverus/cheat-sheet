@@ -1,15 +1,16 @@
 ---
 title: "Реверс связанного списка (Linked List)"
 description: "Руководство по реализации алгоритмов обращения связанных списков в Java: итеративный и рекурсивный подходы."
-tags: ["algorithms", "data-structures", "linked-list-reverse"]
+tags:
+  - algorithms
+  - data-structures
+  - linked-list-reverse
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Реверс связанного списка (`Linked List`)
-
-**Дата последнего обновления:** 2026-02-11
 
 Руководство по реализации алгоритмов обращения связанных списков в `Java`: итеративный и рекурсивный подходы.
 

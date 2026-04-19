@@ -1,7 +1,10 @@
 ---
 title: "xUnit.net"
 description: "Кратко: фреймворк для тестирования приложений на .NET (C#, F#, VB.NET). Модель «один экземпляр класса на тест», атрибуты [Fact] и [Theory], параметризация через [InlineData] и др., фикстуры через IClassFixture<T>, встроенные ассерты, параллельный запуск по умолчанию. Поддержка .N"
-tags: ["testing", "unit-testing", "xunit"]
+tags:
+  - testing
+  - unit-testing
+  - xunit
 difficulty: "intermediate"
 prerequisites: []
 next: []

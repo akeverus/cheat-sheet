@@ -1,7 +1,11 @@
 ---
 title: "Platform IaC"
 description: "Индекс раздела Infrastructure as Code: Terraform, Ansible, Packer, Pulumi."
-tags: ["meta", "index", "platform", "iac"]
+tags:
+  - meta
+  - index
+  - platform
+  - iac
 type: "index"
 updated: "2026-02-11"
 ---

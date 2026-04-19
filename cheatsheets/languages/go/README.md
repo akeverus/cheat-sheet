@@ -1,7 +1,11 @@
 ---
 title: "Go"
 description: "Индекс раздела Go: основы, конкурентность, коллекции, testing, модули."
-tags: ["meta", "index", "languages", "go"]
+tags:
+  - meta
+  - index
+  - languages
+  - go
 type: "index"
 updated: "2026-02-11"
 ---

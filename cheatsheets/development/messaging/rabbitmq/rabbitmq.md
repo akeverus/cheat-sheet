@@ -1,7 +1,10 @@
 ---
 title: "RabbitMQ для Java"
 description: "Комплексное руководство по работе с RabbitMQ в Java-приложениях: AMQP протокол, exchanges и queues, Spring AMQP интеграция, кластерная архитектура, мониторинг и best practices."
-tags: ["development", "messaging", "rabbitmq"]
+tags:
+  - development
+  - messaging
+  - rabbitmq
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # RabbitMQ для Java
 
 Комплексное руководство по работе с **RabbitMQ** в **Java**-приложениях: **AMQP** протокол, **exchanges** и **queues**, **Spring AMQP** интеграция, кластерная архитектура, мониторинг и **best practices**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

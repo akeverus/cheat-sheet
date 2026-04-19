@@ -1,7 +1,11 @@
 ---
 title: "Scala Collections - Operations"
 description: "Полное руководство по операциям над коллекциями в Scala: трансформации, фильтрация, агрегация, группировка"
-tags: ["scala", "collections", "operations", "functional-programming"]
+tags:
+  - scala
+  - collections
+  - operations
+  - functional-programming
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections.md"]
 next: ["scala/scala-collections-grouping.md"]
@@ -12,8 +16,6 @@ related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 # **Scala Collections** - **Operations**
 
 Кратко: полное руководство по операциям над коллекциями в **Scala**: трансформации, фильтрация, агрегация, группировка и другие операции.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

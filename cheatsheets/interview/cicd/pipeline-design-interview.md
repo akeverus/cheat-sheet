@@ -1,114 +1,504 @@
 ---
 title: "Вопросы на собеседовании: Дизайн пайплайнов"
-description: "Дата последнего обновления: 2026-02-04"
-tags: ["interview", "cicd", "pipeline-design-interview"]
+description: "CI/CD pipeline: этапы, Jenkins, GitHub Actions, GitLab CI, Gradle, Docker, тесты, безопасность, оптимизация"
+tags:
+  - interview
+  - cicd
+  - pipeline-design-interview
+aliases:
+  - "Дизайн пайплайнов"
+  - "CI/CD pipeline interview"
+  - "CI/CD собеседование"
+  - "Pipeline design interview"
+  - "Jenkins pipeline interview"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: Дизайн пайплайнов
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
-Комплексное руководство по вопросам собеседования на тему дизайна CI/CD пайплайнов для Senior Java Developer.
+Комплексное руководство по вопросам собеседования на тему дизайна `CI/CD` пайплайнов для Senior Java Developer. Охватывает `Jenkins`, `GitHub Actions`, `GitLab CI`, `Gradle`, `Docker`, стратегии тестирования, безопасность и оптимизацию.
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Jenkins Pipeline](https://www.jenkins.io/doc/book/pipeline/)
-- [GitLab CI/CD](https://docs.gitlab.com/ee/ci/)
-- [GitHub Actions](https://docs.github.com/en/actions)
-
-### См. также
-
-- [`../../platform/ci-cd/README.md`](../../platform/ci-cd/README.md) — шпаргалки по `CI`/`CD`
-- [`deployment-strategies-interview.md`](deployment-strategies-interview.md) — стратегии развёртывания
-- [`../../platform/ci-cd/jenkins.md`](../../platform/ci-cd/jenkins.md) — шпаргалки по `Jenkins`
+- [Jenkins Pipeline](https://www.jenkins.io/doc/book/pipeline/) — документация по `Jenkins Pipeline`
+- [GitLab CI/CD](https://docs.gitlab.com/ee/ci/) — документация `GitLab CI/CD`
+- [GitHub Actions](https://docs.github.com/en/actions) — документация `GitHub Actions`
+- [Gradle Build Tool](https://docs.gradle.org/current/userguide/userguide.html) — руководство `Gradle`
+- [Intro to Jenkins Pipelines (Baeldung)](https://www.baeldung.com/ops/jenkins-pipelines) — обзор `Jenkins Pipeline`
+- [CI/CD with Spring Boot (Baeldung)](https://www.baeldung.com/spring-boot-ci-cd) — `CI/CD` для `Spring Boot`
+- [Dockerizing Spring Boot (Baeldung)](https://www.baeldung.com/spring-boot-docker-images) — `Docker`-образы `Spring Boot`
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы CI/CD pipeline**
-- [Q1. (!) Что такое CI/CD pipeline и из каких этапов он состоит?](#q1-важно-что-такое-cicd-pipeline-и-из-каких-этапов-он-состоит)
-- [Q2. (!) Чем отличается CI от CD и что такое CD (continuous delivery vs deployment)?](#q2-важно-чем-отличается-ci-от-cd-и-что-такое-cd-continuous-delivery-vs-deployment)
+- [Q1. (!) Что такое CI/CD pipeline и из каких этапов он состоит?](#q1--что-такое-cicd-pipeline-и-из-каких-этапов-он-состоит)
+- [Q2. (!) Чем отличается CI от CD (continuous delivery vs continuous deployment)?](#q2--чем-отличается-ci-от-cd-continuous-delivery-vs-continuous-deployment)
 - [Q3. Как организовать этапы pipeline: последовательно vs параллельно?](#q3-как-организовать-этапы-pipeline-последовательно-vs-параллельно)
-- [Q4. (!) Что такое pipeline as code и зачем он нужен?](#q4-важно-что-такое-pipeline-as-code-и-зачем-он-нужен)
-- [Q5. (!) Как обеспечить быструю обратную связь в pipeline (fail fast)?](#q5-важно-как-обеспечить-быструю-обратную-связь-в-pipeline-fail-fast)
+- [Q4. (!) Что такое pipeline as code и зачем он нужен?](#q4--что-такое-pipeline-as-code-и-зачем-он-нужен)
+- [Q5. (!) Как обеспечить быструю обратную связь в pipeline (fail fast)?](#q5--как-обеспечить-быструю-обратную-связь-в-pipeline-fail-fast)
+- [Q6. Что такое quality gates и как их реализовать в pipeline?](#q6-что-такое-quality-gates-и-как-их-реализовать-в-pipeline)
+
+**Jenkins Pipeline**
+- [Q7. (!) Чем отличается Declarative Pipeline от Scripted Pipeline в Jenkins?](#q7--чем-отличается-declarative-pipeline-от-scripted-pipeline-в-jenkins)
+- [Q8. Что такое Jenkins Shared Libraries и когда их использовать?](#q8-что-такое-jenkins-shared-libraries-и-когда-их-использовать)
+- [Q9. Как организовать параллельные стадии в Jenkins Pipeline?](#q9-как-организовать-параллельные-стадии-в-jenkins-pipeline)
+
+**GitHub Actions и GitLab CI**
+- [Q10. (!) Как устроен workflow в GitHub Actions?](#q10--как-устроен-workflow-в-github-actions)
+- [Q11. Что такое matrix build и когда его применять?](#q11-что-такое-matrix-build-и-когда-его-применять)
+- [Q12. Как настроить CI/CD pipeline в GitLab CI?](#q12-как-настроить-cicd-pipeline-в-gitlab-ci)
 
 **Артефакты, версионирование и кэширование**
-- [Q6. Что такое артефакты pipeline и как их версионировать?](#q6-что-такое-артефакты-pipeline-и-как-их-версионировать)
-- [Q11. Как кэшировать зависимости в pipeline (Maven, Gradle, npm)?](#q11-как-кэшировать-зависимости-в-pipeline-maven-gradle-npm)
-- [Q19. Как pipeline интегрируется с артефактным репозиторием (Nexus, Artifactory)?](#q19-как-pipeline-интегрируется-с-артефактным-репозиторием-nexus-artifactory)
-- [Q21. Как обеспечить воспроизводимость сборки в pipeline?](#q21-как-обеспечить-воспроизводимость-сборки-в-pipeline)
-- [Q28. Что такое dependency caching и зачем кэшировать в pipeline?](#q28-что-такое-dependency-caching-и-зачем-кэшировать-в-pipeline)
+- [Q13. (!) Что такое артефакты pipeline и как их версионировать?](#q13--что-такое-артефакты-pipeline-и-как-их-версионировать)
+- [Q14. Как кэшировать зависимости в pipeline (Gradle, Maven, npm)?](#q14-как-кэшировать-зависимости-в-pipeline-gradle-maven-npm)
+- [Q15. Как pipeline интегрируется с артефактным репозиторием (Nexus, Artifactory)?](#q15-как-pipeline-интегрируется-с-артефактным-репозиторием-nexus-artifactory)
+- [Q16. Как обеспечить воспроизводимость сборки в pipeline?](#q16-как-обеспечить-воспроизводимость-сборки-в-pipeline)
+
+**Сборка Java-проектов в pipeline**
+- [Q17. (!) Как настроить Gradle для CI/CD pipeline?](#q17--как-настроить-gradle-для-cicd-pipeline)
+- [Q18. Как использовать Gradle Build Cache в CI?](#q18-как-использовать-gradle-build-cache-в-ci)
 
 **Окружения, approval и ветки**
-- [Q7. Как организовать pipeline для нескольких окружений (dev, staging, prod)?](#q7-как-организовать-pipeline-для-нескольких-окружений-dev-staging-prod)
-- [Q8. Что такое manual approval и когда его использовать?](#q8-что-такое-manual-approval-и-когда-его-использовать)
-- [Q9. Как pipeline связан с ветками Git (trunk-based, GitFlow)?](#q9-как-pipeline-связан-с-ветками-git-trunk-based-gitflow)
-- [Q20. Что такое pipeline для pull request (PR pipeline)?](#q20-что-такое-pipeline-для-pull-request-pr-pipeline)
-- [Q27. Как организовать pipeline для нескольких веток (release, hotfix)?](#q27-как-организовать-pipeline-для-нескольких-веток-release-hotfix)
+- [Q19. Как организовать pipeline для нескольких окружений (dev, staging, prod)?](#q19-как-организовать-pipeline-для-нескольких-окружений-dev-staging-prod)
+- [Q20. Что такое manual approval и когда его использовать?](#q20-что-такое-manual-approval-и-когда-его-использовать)
+- [Q21. (!) Как pipeline связан с ветками Git (trunk-based, GitFlow)?](#q21--как-pipeline-связан-с-ветками-git-trunk-based-gitflow)
+- [Q22. Что такое pipeline для pull request (PR pipeline)?](#q22-что-такое-pipeline-для-pull-request-pr-pipeline)
 
-**Тесты и безопасность в pipeline**
-- [Q12. Что такое секреты в pipeline и как их хранить?](#q12-что-такое-секреты-в-pipeline-и-как-их-хранить)
-- [Q13. Как организовать тесты в pipeline (unit, integration, e2e)?](#q13-как-организовать-тесты-в-pipeline-unit-integration-e2e)
-- [Q14. Что такое smoke test после деплоя и когда его запускать?](#q14-что-такое-smoke-test-после-деплоя-и-когда-его-запускать)
-- [Q29. Как обеспечить безопасность pipeline (секреты, сканирование образов)?](#q29-как-обеспечить-безопасность-pipeline-секреты-сканирование-образов)
+**Тесты в pipeline**
+- [Q23. (!) Как организовать тесты в pipeline (unit, integration, e2e)?](#q23--как-организовать-тесты-в-pipeline-unit-integration-e2e)
+- [Q24. Что такое smoke test после деплоя и когда его запускать?](#q24-что-такое-smoke-test-после-деплоя-и-когда-его-запускать)
+- [Q25. Как запускать интеграционные тесты с Testcontainers в CI?](#q25-как-запускать-интеграционные-тесты-с-testcontainers-в-ci)
+
+**Безопасность pipeline**
+- [Q26. (!) Что такое секреты в pipeline и как их хранить?](#q26--что-такое-секреты-в-pipeline-и-как-их-хранить)
+- [Q27. Как обеспечить безопасность pipeline (SAST, DAST, сканирование образов)?](#q27-как-обеспечить-безопасность-pipeline-sast-dast-сканирование-образов)
+
+**Docker и контейнеры в pipeline**
+- [Q28. (!) Как организовать сборку Docker-образа в pipeline?](#q28--как-организовать-сборку-docker-образа-в-pipeline)
+- [Q29. Что такое multi-stage build и как он ускоряет pipeline?](#q29-что-такое-multi-stage-build-и-как-он-ускоряет-pipeline)
 
 **Стратегии деплоя в pipeline**
-- [Q15. Как обеспечить идемпотентность этапов pipeline?](#q15-как-обеспечить-идемпотентность-этапов-pipeline)
-- [Q22. Что такое blue-green и canary в контексте pipeline?](#q22-что-такое-blue-green-и-canary-в-контексте-pipeline)
-- [Q23. Как организовать откат (rollback) в pipeline?](#q23-как-организовать-откат-rollback-в-pipeline)
+- [Q30. Как реализовать blue-green и canary деплой в pipeline?](#q30-как-реализовать-blue-green-и-canary-деплой-в-pipeline)
+- [Q31. (!) Как организовать откат (rollback) в pipeline?](#q31--как-организовать-откат-rollback-в-pipeline)
+- [Q32. Как обеспечить идемпотентность этапов pipeline?](#q32-как-обеспечить-идемпотентность-этапов-pipeline)
 
-**Специализированные pipeline (монолит, микросервисы, IaC)**
-- [Q10. Что такое matrix build и когда его применять?](#q10-что-такое-matrix-build-и-когда-его-применять)
-- [Q16. Что такое pipeline для монолита vs микросервисов?](#q16-что-такое-pipeline-для-монолита-vs-микросервисов)
-- [Q17. Как организовать pipeline для библиотек и shared-модулей?](#q17-как-организовать-pipeline-для-библиотек-и-shared-модулей)
-- [Q18. Что такое conditional stages и когда их использовать?](#q18-что-такое-conditional-stages-и-когда-их-использовать)
-- [Q24. Что такое pipeline для инфраструктуры (IaC, Terraform)?](#q24-что-такое-pipeline-для-инфраструктуры-iac-terraform)
-- [Q26. Что такое pipeline для контейнеров (Docker build, push в registry)?](#q26-что-такое-pipeline-для-контейнеров-docker-build-push-в-registry)
-- [Q30. Как организовать pipeline для монорепозитория?](#q30-как-организовать-pipeline-для-монорепозитория)
+**Специализированные pipeline**
+- [Q33. Что такое pipeline для монолита vs микросервисов?](#q33-что-такое-pipeline-для-монолита-vs-микросервисов)
+- [Q34. Как организовать pipeline для монорепозитория?](#q34-как-организовать-pipeline-для-монорепозитория)
+- [Q35. Что такое pipeline для инфраструктуры (IaC, Terraform)?](#q35-что-такое-pipeline-для-инфраструктуры-iac-terraform)
 
 **Мониторинг и оптимизация**
-- [Q25. Как мониторить и оптимизировать время выполнения pipeline?](#q25-как-мониторить-и-оптимизировать-время-выполнения-pipeline)
+- [Q36. Как мониторить и оптимизировать время выполнения pipeline?](#q36-как-мониторить-и-оптимизировать-время-выполнения-pipeline)
 
-## Введение
+**GitOps pipeline и DORA**
+- [Q37. (!) Как выглядит GitOps-pipeline с разделением app и config репозиториев?](#q37--как-выглядит-gitops-pipeline-с-разделением-app-и-config-репозиториев)
+- [Q38. Что такое DORA-метрики и как их улучшить через pipeline?](#q38-что-такое-dora-метрики-и-как-их-улучшить-через-pipeline)
 
-`CI/CD pipeline` — цепочка этапов от коммита до деплоя: сборка, тесты, образ, артефакт, деплой. На собеседовании ожидают понимание: этапы `pipeline`; `CI` vs `CD`; `pipeline as code`; `fail fast`; артефакты и версионирование; окружения и approval; связь с `Git`, тестами, секретами.
+---
 
-## Основы `pipeline`
+## Основы `CI/CD` pipeline
 
-### Q1. (!) Что такое `CI`/`CD` pipeline и из каких этапов он состоит?
+## Q1. (!) Что такое `CI/CD` pipeline и из каких этапов он состоит?
 
-`CI / CD pipeline` — автоматизированная цепочка шагов от изменения кода до развёртывания. Типичные этапы: (1) `Checkout` — получение кода из репозитория. (2) `Build` — сборка (`Maven`, `Gradle`). (3) `Unit` tests — быстрые тесты. (4) `Integration` tests — тесты с БД, внешними сервисами. (5) `Build` image — сборка `Docker`-образа. (6) `Push` to registry — публикация образа. (7) `Deploy` — развёртывание в окружение (dev → staging → prod). Дополнительно: линтеры, анализ кода, security scan, smoke test после деплоя.
+`CI/CD pipeline` — автоматизированная цепочка шагов от изменения кода до развёртывания в продакшен. Каждый этап выполняет конкретную задачу и передаёт результат следующему.
 
-## Q2. (!) Чем отличается CI от CD и что такое CD (continuous delivery vs deployment)?
+**Типичные этапы:**
 
-`CI` (`Continuous Integration`) — автоматическая сборка и тесты при каждом коммите; цель — быстрая обратная связь и выявление поломок. `CD` (`Continuous Delivery`) — код всегда в состоянии, готовом к деплою в prod; деплой в prod — по решению (ручной или по правилам). `CD` (`Continuous Deployment`) — деплой в prod полностью автоматический после прохождения `pipeline`. Отличие delivery vs deployment: в delivery деплой в prod — ручной/approval; в deployment — автоматический.
+```mermaid
+graph LR
+    A[Checkout] --> B[Build]
+    B --> C[Unit Tests]
+    C --> D[Integration Tests]
+    D --> E[Code Analysis]
+    E --> F[Build Image]
+    F --> G[Push to Registry]
+    G --> H[Deploy Dev]
+    H --> I[Deploy Staging]
+    I --> J[Deploy Prod]
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+1. **`Checkout`** — получение кода из репозитория
+2. **`Build`** — компиляция (`Gradle`, `Maven`)
+3. **`Unit Tests`** — быстрые юнит-тесты
+4. **`Integration Tests`** — тесты с БД, внешними сервисами (см. [интеграционное тестирование](../testing/integration-testing-interview.md))
+5. **`Static Analysis`** — линтеры, `SonarQube`, `Checkstyle`
+6. **`Build Image`** — сборка `Docker`-образа (см. [Docker](../devops/docker-interview.md))
+7. **`Push to Registry`** — публикация образа в `Harbor`, `ECR`, `Nexus`
+8. **`Deploy`** — развёртывание в окружения (dev -> staging -> prod)
+9. **`Smoke/Health Check`** — проверка работоспособности после деплоя
+
+Дополнительно: security scan (`Trivy`, `OWASP`), performance tests, approval gates.
+
+## Q2. (!) Чем отличается `CI` от `CD` (`continuous delivery` vs `continuous deployment`)?
+
+| Аспект | `CI` | `CD` (Delivery) | `CD` (Deployment) |
+|--------|------|-----------------|-------------------|
+| Цель | Быстрая обратная связь | Код всегда готов к релизу | Автоматический деплой |
+| Деплой в prod | Нет | Ручной / по approval | Автоматический |
+| Частота релизов | — | По решению команды | При каждом merge |
+| Требования | Тесты, сборка | + staging, quality gates | + полная автоматизация |
+
+**`CI` (`Continuous Integration`)** — при каждом коммите автоматически запускаются сборка и тесты. Цель — быстро выявить поломки и конфликты интеграции.
+
+**`CD` (`Continuous Delivery`)** — код всегда в состоянии, готовом к деплою в prod. Деплой в prod требует ручного подтверждения или запуска.
+
+**`CD` (`Continuous Deployment`)** — деплой в prod полностью автоматический после прохождения всех этапов `pipeline`.
+
+На собеседовании важно объяснить, что `Continuous Delivery` и `Continuous Deployment` — разные практики: в delivery деплой в prod управляемый (approval), в deployment — автоматический. Большинство enterprise-команд используют `Continuous Delivery` с `manual approval` перед prod.
 
 ## Q3. Как организовать этапы pipeline: последовательно vs параллельно?
 
-Последовательно — этапы идут друг за другом; следующий стартует после успеха предыдущего. Подходит для зависимых шагов (сборка → тесты → образ). Параллельно — независимые этапы выполняются одновременно (например, `unit`-тесты и линтер; сборка для разных платформ). Параллельность ускоряет `pipeline`; последовательность — когда этап зависит от артефакта предыдущего. В `Jenkins` — `parallel`; в `GitLab CI` — отдельные jobs без зависимостей; в `GitHub Actions` — матрица и зависимости между jobs.
+**Последовательное** выполнение — каждый этап стартует после успеха предыдущего. Подходит для зависимых шагов: сборка -> тесты -> образ.
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+**Параллельное** — независимые этапы выполняются одновременно. Ускоряет `pipeline` в 2-3 раза.
 
-## Q4. (!) Что такое pipeline as code и зачем он нужен?
+```mermaid
+graph TD
+    A[Build] --> B[Unit Tests]
+    A --> C[Lint / Checkstyle]
+    A --> D[SpotBugs]
+    B --> E[Integration Tests]
+    C --> E
+    D --> E
+    E --> F[Build Docker Image]
+```
 
-**Pipeline as code** — описание `pipeline` в репозитории (файл в коде), а не в `UI` (`Jenkinsfile`, `.gitlab-ci.yml`, `.github/workflows/*.yml`).
-Плюсы: версионирование вместе с кодом; код-ревью изменений `pipeline`; воспроизводимость; единый источник правды. Минусы: нужны права на репозиторий для изменения `pipeline`. Зачем: прозрачность, аудит, возможность откатить изменение `pipeline` вместе с кодом.
+**Пример параллельных этапов в `GitHub Actions`:**
 
-Изменение `pipeline` проходит тот же процесс, что и код: ветка → `PR` → ревью → merge. При откате кода откатывается и `pipeline` — нет рассинхронизации «код старый, `pipeline` новый». В Jenkins — `Jenkinsfile` в корне репозитория; в GitLab — `.gitlab-ci.yml`; в GitHub — workflows в `.github/workflows/`; составные actions описаны в коде.
-
-**Пример (`GitHub Actions`):**
 ```yaml
-# .github/workflows/ci.yml
-name: CI
-on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: ./gradlew assemble
+
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./gradlew test
+
+  lint:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./gradlew checkstyleMain
+
+  integration-tests:
+    needs: [unit-tests, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./gradlew integrationTest
+```
+
+Правило: параллелить всё, что не зависит друг от друга; последовательно — только когда этап требует артефакт предыдущего.
+
+## Q4. (!) Что такое `pipeline as code` и зачем он нужен?
+
+**`Pipeline as code`** — описание `pipeline` в файле внутри репозитория, а не через `UI` `CI`-системы.
+
+| CI-система | Файл |
+|------------|------|
+| `Jenkins` | `Jenkinsfile` |
+| `GitLab CI` | `.gitlab-ci.yml` |
+| `GitHub Actions` | `.github/workflows/*.yml` |
+
+**Преимущества:**
+- **Версионирование** — изменения `pipeline` проходят `code review` через `PR`
+- **Воспроизводимость** — при откате кода откатывается и `pipeline`
+- **Аудит** — история изменений в `Git`
+- **Единый источник правды** — нет рассинхронизации «код старый, `pipeline` новый»
+
+**Пример `Jenkinsfile` (Declarative):**
+
+```groovy
+pipeline {
+    agent { docker { image 'eclipse-temurin:21-jdk' } }
+    stages {
+        stage('Build') {
+            steps { sh './gradlew assemble' }
+        }
+        stage('Test') {
+            steps { sh './gradlew test' }
+        }
+        stage('Docker') {
+            steps {
+                sh 'docker build -t myapp:${GIT_COMMIT} .'
+                sh 'docker push registry.example.com/myapp:${GIT_COMMIT}'
+            }
+        }
+    }
+    post {
+        always { junit '**/build/test-results/**/*.xml' }
+        failure { slackSend channel: '#builds', message: "Build failed: ${env.JOB_NAME}" }
+    }
+}
+```
+
+## Q5. (!) Как обеспечить быструю обратную связь в pipeline (`fail fast`)?
+
+Принципы `fail fast`:
+
+1. **Быстрые этапы первыми** — `lint`, `compile`, `unit tests` (секунды) перед `integration` и `e2e` (минуты)
+2. **Остановка при падении** — не тратить ресурсы на следующие этапы при сломанном коде
+3. **Параллельность** — независимые проверки одновременно
+4. **Кэширование** — зависимости не скачиваются каждый раз
+5. **Инкрементальная сборка** — собирать только изменённое
+
+```mermaid
+graph LR
+    A[Lint<br/>10s] --> B[Compile<br/>30s]
+    B --> C[Unit Tests<br/>1m]
+    C --> D[Integration Tests<br/>5m]
+    D --> E[E2E Tests<br/>15m]
+    style A fill:#90EE90
+    style B fill:#90EE90
+    style C fill:#FFFF99
+    style D fill:#FFD700
+    style E fill:#FFA500
+```
+
+**В `GitHub Actions`:** `fail-fast: true` в матрице отменяет остальные jobs при падении одного. Зависимости между jobs (`needs`) гарантируют, что тяжёлые этапы не запускаются при сломанной сборке.
+
+**Целевые метрики:** `lint` + `compile` < 1 мин; `unit tests` < 3 мин; полный `pipeline` < 15 мин. Если `pipeline` > 30 мин — нужна оптимизация.
+
+## Q6. Что такое `quality gates` и как их реализовать в pipeline?
+
+**`Quality gate`** — набор критериев, которые код должен пройти перед продвижением на следующий этап. Если хотя бы один критерий не выполнен — `pipeline` падает.
+
+**Типичные quality gates:**
+- Покрытие тестами >= 80% (`JaCoCo`)
+- 0 критических/блокирующих issues в `SonarQube`
+- Все `unit`/`integration` тесты зелёные
+- Нет критических уязвимостей в зависимостях (`OWASP`)
+- `Docker`-образ прошёл сканирование (`Trivy`)
+
+**Пример `Gradle` с `JaCoCo` quality gate:**
+
+```groovy
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+        rule {
+            element = 'CLASS'
+            excludes = ['*.config.*', '*.dto.*']
+            limit {
+                counter = 'LINE'
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+```
+
+В `SonarQube` quality gate настраивается через UI или `API`; результат проверяется в `pipeline` через `waitForQualityGate()` (в `Jenkins`) или через `sonar-quality-gate-check` action (в `GitHub Actions`).
+
+---
+
+## `Jenkins Pipeline`
+
+## Q7. (!) Чем отличается `Declarative Pipeline` от `Scripted Pipeline` в `Jenkins`?
+
+| Аспект | `Declarative` | `Scripted` |
+|--------|--------------|-----------|
+| Синтаксис | Структурированный (`pipeline {}`) | Произвольный `Groovy` (`node {}`) |
+| Валидация | На этапе парсинга | Только при исполнении |
+| Гибкость | Ограниченная, покрывает 90% случаев | Полная — любой `Groovy`-код |
+| Обработка ошибок | Блок `post {}` | `try/catch/finally` |
+| Blue Ocean UI | Полная поддержка | Частичная |
+| Рекомендация | Для большинства проектов | Для сложной логики |
+
+**`Declarative Pipeline`** (рекомендуется `Jenkins`):
+
+```groovy
+pipeline {
+    agent any
+    environment {
+        REGISTRY = 'registry.example.com'
+    }
+    stages {
+        stage('Build & Test') {
+            steps {
+                sh './gradlew clean build'
+            }
+            post {
+                always {
+                    junit '**/build/test-results/test/*.xml'
+                    jacoco execPattern: '**/build/jacoco/*.exec'
+                }
+            }
+        }
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh './gradlew sonar'
+                }
+                waitForQualityGate abortPipeline: true
+            }
+        }
+        stage('Docker Build & Push') {
+            when { branch 'main' }
+            steps {
+                sh "docker build -t ${REGISTRY}/myapp:${GIT_COMMIT[0..7]} ."
+                sh "docker push ${REGISTRY}/myapp:${GIT_COMMIT[0..7]}"
+            }
+        }
+    }
+    post {
+        failure {
+            slackSend channel: '#ci-alerts', message: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+    }
+}
+```
+
+**`Scripted Pipeline`** — для сложных сценариев с условной логикой:
+
+```groovy
+node {
+    try {
+        stage('Build') { sh './gradlew assemble' }
+        stage('Test')  { sh './gradlew test' }
+
+        if (env.BRANCH_NAME == 'main') {
+            stage('Deploy') {
+                withCredentials([usernamePassword(credentialsId: 'registry', ...)]) {
+                    sh 'docker push ...'
+                }
+            }
+        }
+    } catch (e) {
+        slackSend message: "Build failed: ${e.message}"
+        throw e
+    } finally {
+        junit '**/build/test-results/**/*.xml'
+    }
+}
+```
+
+На собеседовании рекомендуется отвечать, что `Declarative` — предпочтительный выбор для 90% случаев; `Scripted` — когда нужна нетривиальная логика, которую нельзя выразить декларативно.
+
+## Q8. Что такое `Jenkins Shared Libraries` и когда их использовать?
+
+**`Shared Libraries`** — переиспользуемые `Groovy`-библиотеки, подключаемые к `Jenkinsfile` из отдельного `Git`-репозитория. Позволяют вынести общую логику `pipeline` (сборка, деплой, нотификации) и использовать её в десятках проектов.
+
+**Структура:**
+
+```
+jenkins-shared-library/
+├── vars/
+│   ├── buildJavaApp.groovy      # глобальные функции
+│   └── deployToK8s.groovy
+├── src/
+│   └── com/example/pipeline/    # классы Groovy
+└── resources/                    # шаблоны, конфиги
+```
+
+**Определение (`vars/buildJavaApp.groovy`):**
+
+```groovy
+def call(Map config = [:]) {
+    pipeline {
+        agent { docker { image config.jdkImage ?: 'eclipse-temurin:21-jdk' } }
+        stages {
+            stage('Build') { steps { sh './gradlew assemble' } }
+            stage('Test')  { steps { sh './gradlew test' } }
+            stage('Publish') {
+                when { branch 'main' }
+                steps { sh './gradlew publish' }
+            }
+        }
+    }
+}
+```
+
+**Использование в `Jenkinsfile`:**
+
+```groovy
+@Library('my-shared-lib') _
+buildJavaApp(jdkImage: 'eclipse-temurin:21-jdk')
+```
+
+**Когда использовать:** более 3-5 проектов с одинаковой структурой `pipeline`; стандартизация процесса CI/CD в организации; вынос секретов и credentials management.
+
+## Q9. Как организовать параллельные стадии в `Jenkins Pipeline`?
+
+Директива `parallel` позволяет выполнять несколько веток одновременно:
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps { sh './gradlew assemble' }
+        }
+        stage('Parallel Checks') {
+            parallel {
+                stage('Unit Tests') {
+                    steps { sh './gradlew test' }
+                }
+                stage('Checkstyle') {
+                    steps { sh './gradlew checkstyleMain' }
+                }
+                stage('SpotBugs') {
+                    steps { sh './gradlew spotbugsMain' }
+                }
+            }
+            failFast true  // при падении одного — остановить остальные
+        }
+        stage('Integration Tests') {
+            steps { sh './gradlew integrationTest' }
+        }
+    }
+}
+```
+
+`failFast true` останавливает все параллельные ветки при падении любой из них — экономит ресурсы и время. При поддержке нескольких нод `Jenkins` распределяет параллельные стадии по разным агентам.
+
+---
+
+## `GitHub Actions` и `GitLab CI`
+
+## Q10. (!) Как устроен `workflow` в `GitHub Actions`?
+
+`GitHub Actions` `workflow` — это `YAML`-файл в `.github/workflows/`, описывающий автоматизированный процесс.
+
+**Ключевые концепции:**
+- **`Workflow`** — весь процесс, запускаемый по триггеру
+- **`Job`** — набор шагов, выполняемых на одном runner
+- **`Step`** — атомарная единица (команда или action)
+- **`Action`** — переиспользуемый компонент (аналог `Jenkins Shared Library`)
+
+**Полный пример для `Java`/`Gradle` проекта:**
+
+```yaml
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [main, release/*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -117,184 +507,1290 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-      - run: ./mvnw -B verify
+          java-version: 21
+          cache: gradle
+      - run: ./gradlew assemble
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+      - run: ./gradlew test integrationTest
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: build/reports/tests/
+
+  docker:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  deploy-staging:
+    needs: docker
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - run: kubectl set image deployment/myapp myapp=ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+  deploy-prod:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://myapp.example.com
+    steps:
+      - run: kubectl set image deployment/myapp myapp=ghcr.io/${{ github.repository }}:${{ github.sha }}
 ```
-Ветка, `PR` и merge управляют тем, какой `pipeline` запускается; история изменений — в Git.
 
-## Q5. (!) Как обеспечить быструю обратную связь в pipeline (fail fast)?
-
-Принципы: (1) Быстрые этапы в начале — линтер, `unit`-тесты; тяжёлые (integration, e2e) — позже. (2) При падении этапа останавливать `pipeline` (не тратить время на следующие при уже сломанном коде). (3) Параллелить независимые этапы. (4) Кэшировать зависимости, чтобы сборка не тянула их каждый раз. (5) Сокращать время тестов (изоляция, моки, выборочный запуск при `PR`).
-Цель — минимизировать время от коммита до «зелёного» или «красного» результата. В `GitHub Actions`: этапы с `if: failure()` не выполняются при падении предыдущего; при падении job остальные jobs в матрице можно отменить через `fail-fast: true`.
-
-В `GitHub Actions`: этапы с `if: failure()` не выполняются при падении предыдущего; при падении job остальные jobs в матрице можно отменить через `fail-fast: true`. Линтер и `unit`-тесты — в первые минуты; интеграционные и e2e — после, чтобы при поломке разработчик узнал быстро. **Практика:** порядок jobs — `lint` → `unit-tests` (параллельно при возможности) → `build` → `integration-tests` → `e2e`; при падении lint или `unit` остальные не запускать (зависимости между jobs).
-
-## Q6. Что такое артефакты pipeline и как их версионировать?
-
-**Артефакты** — результат сборки (jar, war, `Docker`-образ), передаваемый между этапами или в registry.
-Версионирование: семантическое (`MAJOR.MINOR.PATCH`) или по коммиту (git `SHA`; в `Maven`/`Gradle` версия задаётся в build); в `Docker` — тег образа. Артефакты публикуют в `Nexus / Artifactory` (jar) и в container registry (образы). Один артефакт — одна версия: не перезаписывать уже опубликованный тег в prod.
-
-В `Maven`: `mvn deploy` с версией из pom или `versions:set`; в `Docker`: тег по коммиту (`git rev-parse --short HEAD`) или semver. Потребители подтягивают по версии; при откате разворачивают предыдущую версию артефакта. **Пример тегов:** образ `myapp:1.2.3` для релиза; `myapp:main-abc1234` для dev (коммит); в prod не использовать `latest` — только явная версия для воспроизводимости и отката.
-
-**Практика:** в `CI` после сборки — `docker build` и `docker push`; для релиза — тег `myapp:1.2.3` из версии в pom или из тега Git. Артефакт jar публиковать в `Nexus` с версией из pom; образ — в registry с тем же семантическим тегом. При откате деплоя использовать тот же тег образа, что был в предыдущей ревизии — не пересобирать.
-
-## Q7. Как организовать pipeline для нескольких окружений (dev, staging, prod)?
-
-Подходы: (1) **Один pipeline** с этапами по окружениям: dev — автоматически после merge; staging — после тестов; prod — после approval или автоматически при релизе. (2) **Один образ** промотируется по окружениям (тег не меняется; меняется только конфигурация окружения). (3) **GitOps** — отдельные ветки/каталоги под окружения; деплой по коммиту в соответствующую ветку.
-Секреты и конфигурация — отдельно по окружению (не в образе). Этапы: `deploy-dev` → `deploy-staging` (после интеграционных тестов) → `deploy-prod` (manual approval или по тегу). Образ собирается один раз (например, `myapp:${GIT_SHA}`) и промотируется; в каждом окружении подставляются свои переменные через `ConfigMap / Secrets` или environment в `CI`.
-
-Практика: этапы `deploy-dev` → `deploy-staging` (после интеграционных тестов) → `deploy-prod` (manual approval или по тегу). Образ собирается один раз (например, `myapp:${GIT_SHA}`) и промотируется; в каждом окружении подставляются свои переменные (`DB URL`, feature flags) через `ConfigMap / Secrets` или environment в `CI`. В `GitOps` — каталоги `base/`, `overlays/dev/`, `overlays/prod/`; Argo CD или Flux синхронизирует кластер с выбранным overlay.
-
-## Q8. Что такое manual approval и когда его использовать?
-
-**Manual approval** — ручное подтверждение перехода к следующему этапу (часто деплой в prod).
-Используют когда политика компании или регуляторика требует проверки перед продакшеном. В `Jenkins` — input step; в `GitLab CI` — manual job; в `GitHub Actions` — environment protection rules. Баланс: не блокировать частые деплои излишними согласованиями; использовать автоматический rollback и мониторинг для снижения рисков.
-
-В `GitHub Actions`: environment `production` с `required reviewers` — перед деплоем в prod job ждёт approve от указанных людей. В `GitLab CI`: job с `when: manual` — `pipeline` останавливается на этом job до ручного запуска. Для высокочастотных деплоев approval оставляют только для критичных изменений (схема БД, инфраструктура) или убирают при наличии автоматического отката по метрикам (`Flagger`, `Argo Rollouts`).
-
-## Q9. Как pipeline связан с ветками Git (trunk-based, GitFlow)?
-
-`Trunk-based` — одна основная ветка (main); короткоживущие feature-ветки; `pipeline` на main — полный (сборка, тесты, деплой); на `PR` — сокращённый (сборка, `unit`-тесты). `GitFlow` — develop, release, main; `pipeline` может отличаться по ветке: develop — деплой в dev; release — в staging; main — в prod. Связь: условия в `pipeline` (запуск этапов по ветке); теги на main для релизов. `Trunk-based` упрощает `CI` и частые деплои; `GitFlow` — при строгом релизном цикле.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q10. Что такое matrix build и когда его применять?
-
-**Matrix build** — запуск одного и того же `pipeline` с разными параметрами (версия `Java`, ОС, вариант сборки).
-Например: сборка и тесты для `Java` 11 и 17; для `Linux` и `Windows`. Применять при поддержке нескольких платформ или версий. В `GitHub Actions` — `strategy.matrix`; в `GitLab CI` — переменные и параллельные jobs; в `Jenkins` — параметризованные сборки. Результат — несколько артефактов или один общий этап после успеха всех вариантов.
-
-**Практика:** в `GitHub Actions` задают матрицу по версии `Java` и ОС; каждый вариант — отдельный job. После успеха всех — один общий этап (например, загрузка артефакта). Не раздувать матрицу без нужды: каждая комбинация — время и ресурсы. Пример: `strategy: matrix: java: [11, 17]` — два job; при падении одного падает весь workflow, если не отключить `fail-fast`.
-
-## Q11. Как кэшировать зависимости в pipeline (Maven, Gradle, npm)?
-
-`Maven`: кэшировать `~/.m2` между запусками (`GitLab` cache, `GitHub Actions` cache). `Gradle`: кэшировать `~/.gradle` и при возможности использовать `Gradle` build cache. npm: кэшировать `node_modules`.
-Ключ кэша — хэш lock-файла (`pom.xml`, `build.gradle`, `package-lock.json`), чтобы инвалидировать при изменении зависимостей. Кэш ускоряет сборку и снижает нагрузку на репозитории. В `GitHub Actions`: `actions/cache` с `key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}`.
-
-В `GitHub Actions`: `actions/cache` с ключом `${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}` и путём `~/.m2`. В `GitLab CI`: `cache: key: ${CI_COMMIT_REF_SLUG}-m2`, `paths: [.m2]`. При изменении `pom.xml` хэш меняется, кэш пересоздаётся. `Fallback`: при промахе кэша зависимости скачиваются из репозитория; следующий запуск использует обновлённый кэш. `TTL` кэша в `CI` обычно 1–7 дней.
-
-**Практика (`GitHub Actions`):** `actions/cache@v4` с `path: ~/.m2`, `key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}`, `restore-keys: ${{ runner.os }}-m2-`. При первом промахе кэша сборка дольше; при следующем push с тем же pom — кэш попадает и сборка быстрее. Для `Gradle` — путь `~/.gradle` и ключ по `gradle-wrapper.properties` или lockfile.
-
-## Q12. Что такое секреты в pipeline и как их хранить?
-
-Секреты — пароли, токены, ключи для доступа к registry, БД, облаку. Хранить не в коде и не в открытом виде в конфиге `pipeline`. Варианты: (1) Секреты в `CI`-системе (`Jenkins` credentials, `GitLab CI` variables masked, `GitHub Secrets`). (2) Внешнее хранилище (`HashiCorp Vault`, облачные `Secrets Manager`); `pipeline` получает секреты при запуске. (3) Ограничение доступа к секретам по окружению и ролям. Не логировать секреты; использовать маскирование в логах.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q13. Как организовать тесты в pipeline (unit, integration, e2e)?
-
-Порядок: (1) `Unit` — быстрые, в начале; при падении — fail fast. (2) `Integration` — с БД, моками внешних сервисов; после `unit`. (3) `E2E` — полный сценарий на развёрнутом окружении; после деплоя в staging или отдельный этап.
-Параллелить `unit` и линтер; integration — последовательно после сборки; e2e — после деплоя, возможно с smoke test. Сокращать время: кэш зависимостей, тестовые контейнеры (`Testcontainers`), выборочный запуск при `PR`. В `GitHub Actions`: job `unit` и `integration` зависят от `build`; e2e зависит от `deploy-staging`. Для `pull_request` — только `lint` + `unit` (+ по желанию `integration`); полный e2e — на `push` в main.
-
-**Практика:** в `GitHub Actions` job `unit` и `integration` зависят от `build`; e2e зависит от `deploy-staging`. Для `pull_request` в триггерах указывают только `lint` + `unit` (+ по желанию `integration`); полный e2e — на `push` в main или по тегу. `Testcontainers` в integration — один раз поднять контейнеры в job, не в каждом тесте отдельно; кэш образов ускоряет повторные запуски.
-
-## Q14. Что такое smoke test после деплоя и когда его запускать?
-
-**Smoke test** — минимальный набор проверок после деплоя (приложение поднялось, ключевые эндпоинты отвечают).
-Запускают сразу после деплоя в окружение; при падении — автоматический rollback или алерт. В `pipeline` — этап после деплоя перед объявлением успеха. Пример: `GET /health`, `GET /ready`. Отличие от полных e2e: быстрые, малый набор сценариев; цель — убедиться, что деплой не сломал базовую работоспособность.
-
-**Практика:** отдельный job `smoke-test` после `deploy-staging / deploy-prod`; при падении не помечать `pipeline` успешным и при возможности вызвать откат (скрипт или ручной шаг). Проверки: health, readiness, один-два критичных `API` (например, логин или главная страница). Не включать в smoke длинные сценарии — только «жив ли сервис и отвечает ли по контракту».
-
-## Q15. Как обеспечить идемпотентность этапов pipeline?
-
-**Идемпотентность** — повторный запуск этапа даёт тот же результат и не ломает состояние.
-Меры: (1) Чистая среда для каждого запуска (контейнер, виртуальная машина) или очистка артефактов перед сборкой. (2) Деплой — перезапись/обновление без зависимости от «грязного» состояния. (3) Не полагаться на глобальное состояние между запусками. (4) Использовать версионированные артефакты и не перезаписывать уже опубликованные. Идемпотентность упрощает перезапуск и отладку `pipeline`. В `Kubernetes` деплой с тем же манифестом и тегом образа идемпотентен; в `Maven / Gradle clean` в начале job или отдельный clean workspace гарантирует повторяемость сборки.
-
-**Практика:** перезапуск упавшего этапа не должен ломать окружение: сборка в чистом workspace или с очисткой; деплой перезаписывает артефакт указанной версии. Не использовать `latest` для prod-образа в `pipeline` — только конкретный тег, чтобы повторный прогон развернул ту же версию. В `Kubernetes` деплой с тем же манифестом и тегом образа идемпотентен; в `Maven / Gradle clean` в начале job или отдельный clean workspace гарантирует повторяемость сборки.
-
-## Q16. Что такое pipeline для монолита vs микросервисов?
-
-Монолит: один репозиторий, один `pipeline` — сборка, тесты, образ, деплой одного приложения. Микросервисы: варианты — (1) Один репозиторий (monorepo), один `pipeline` с сборкой только изменённых сервисов. (2) Репозиторий на сервис — отдельный `pipeline` на сервис; при изменении зависимости — триггер `pipeline` зависимого сервиса или общий `pipeline` по изменённым путям. (3) Общий образ базового образа, сервисы — слои поверх. Сложность микросервисов — координация версий и зависимостей между сервисами.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q17. Как организовать pipeline для библиотек и shared-модулей?
-
-Библиотеки не деплоятся в runtime; публикуются в артефактный репозиторий (`Nexus`, `Artifactory`).
-`Pipeline`: сборка → тесты → публикация в репозиторий (версия по semver или по коммиту). При изменении библиотеки — триггер `pipeline` потребителей (downstream) или ручное обновление версии в потребителях. Для shared-модулей в monorepo — сборка только при изменении модуля; публикация во внутренний registry или использование как source dependency.
-
-**Практика:** при изменении библиотеки `Dependabot / Renovate` создаёт `PR` в потребителях; или `pipeline` библиотеки по завершении вызывает `API CI` потребителей для пересборки. Версию библиотеки в потребителях обновляют вручную или через `BOM`. В `Gradle multi-project` или `Maven BOM` одна точка правки версий; при релизе библиотеки поднимают версию в `BOM` и перезапускают `pipeline` приложений, зависящих от этого `BOM`.
-
-## Q18. Что такое conditional stages и когда их использовать?
-
-`Conditional` stages — этапы выполняются только при выполнении условия (ветка, тег, изменение путей, переменная). Примеры: деплой в prod только с ветки main; этап «публикация в `Nexus`» только при теге; этап «e2e» только при изменении в указанных путях (например `e2e/`). Использовать для экономии времени и ресурсов (не запускать тяжёлые этапы при `PR` в feature-ветку) и для безопасности (деплой в prod только при определённых условиях). В `GitLab CI` — `rules`; в `GitHub Actions` — `if`; в `Jenkins` — `when`.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q19. Как pipeline интегрируется с артефактным репозиторием (Nexus, Artifactory)?
-
-Интеграция: (1) Сборка публикует артефакт (jar, war) в репозиторий через `Maven` deploy или `Gradle` publish; credentials из секретов `pipeline`. (2) Версия артефакта — из build (semver или git `SHA`). (3) Потребители (другие `pipeline` или разработчики) подтягивают артефакт по версии. (4) При необходимости — promotion артефакта между репозиториями (dev → release) в `Artifactory`.
-Репозиторий даёт единое место хранения и версионирования артефактов. **Практика:** `Maven`: `mvn deploy -DskipTests` с настройкой `distributionManagement` в pom; credentials из `CI` secrets. `Gradle`: `publishing { repositories { maven { url = ... } } }`, task `publish`.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q20. Что такое pipeline для pull request (PR pipeline)?
-
-**PR pipeline** — pipeline для pull request. Цель — проверить, что изменение не ломает сборку и тесты до merge. Обычно короче полного: сборка, `unit`-тесты, линтер; без деплоя и без тяжёлых e2e. В `GitHub Actions` — trigger `pull_request`; в `GitLab CI` — `pipeline` для merge `request`. Результат отображается в `PR` (статус check); merge возможен при зелёном статусе. Ускоряет обратную связь и снижает поломки в основной ветке.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q21. Как обеспечить воспроизводимость сборки в pipeline?
-
-Меры: (1) Фиксированные версии зависимостей (lock-файлы: `Maven` — версии в `pom.xml`; `Gradle` — dependency lock; npm — `package-lock.json`). (2) `Docker`-образ с фиксированной версией `JDK`, `Gradle` или `Maven`. (3) Не полагаться на «последнюю» версию из репозитория при сборке. (4) Тегировать образы и артефакты по коммиту для трассируемости.
-Воспроизводимость позволяет повторить сборку позже и упрощает отладку. `Dependency` lock: в `Gradle dependencyLocking`, в npm `package-lock.json` коммитить в репозиторий. В `CI` использовать образ сборки с фиксированным тегом (например, `eclipse-temurin:17-jdk`) вместо `latest`.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q22. Что такое blue-green и canary в контексте pipeline?
-
-`Blue-Green` и `Canary` — стратегии деплоя; в `pipeline` реализуются этапом деплоя. `Blue-Green`: `pipeline` собирает образ и разворачивает в «зелёное» окружение; после проверки переключение трафика на зелёное (отдельный этап или ручной). `Canary`: `pipeline` разворачивает новую версию с малой долей трафика; следующие этапы или отдельный процесс постепенно увеличивают долю. В `pipeline` — вызов `Kubernetes / API` или `Argo Rollouts / Flagger` для управления деплоем.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q23. Как организовать откат (rollback) в pipeline?
-
-Варианты: (1) В `Kubernetes`: `kubectl rollout undo` или отдельный шаг в `pipeline`. (2) Автоматический rollback при падении smoke test после деплоя (этап в том же `pipeline`). (3) Ручной откат одной командой или кнопкой в `UI` с указанием версии.
-После деплоя — `kubectl rollout status` с таймаутом (например 5 min); при падении smoke или алерте — вызвать скрипт отката или manual job с параметром ревизии.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q24. Что такое pipeline для инфраструктуры (IaC, Terraform)?
-
-`Pipeline` для `IaC` — применение изменений инфраструктуры ( `Terraform`, `Ansible`) через `CI / CD`. Этапы: (1) `Checkout` кода инфраструктуры. (2) `Terraform` plan — план изменений (вывод сохраняется). (3) `Manual` approval при необходимости для prod. (4) `Terraform` apply — применение. Безопасность: состояние (state) в удалённом хранилище; блокировка state при параллельном запуске; секреты для облака — из хранилища секретов. `Pipeline` для `IaC` даёт аудит и воспроизводимость изменений инфраструктуры.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q25. Как мониторить и оптимизировать время выполнения pipeline?
-
-Мониторинг: метрики времени этапов и всего `pipeline` (`Jenkins` plugin, `GitLab CI` analytics, `GitHub Actions`); алерты при аномальном росте времени. Оптимизация: (1) Кэш зависимостей. (2) Параллельные этапы где возможно. (3) Сокращение тестов (моки, выборочный запуск). (4) Быстрый fail fast. (5) Использование более мощных раннеров или распределённых сборок. (6) Удаление дублирующихся или избыточных этапов. Цель — минимальное время от коммита до деплоя при сохранении качества.
-
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
-
-## Q26. Что такое pipeline для контейнеров (Docker build, push в registry)?
-
-Этапы: сборка образа (docker build или buildah), тегирование по версии/коммиту, push в registry (`Docker` Hub, `Harbor`, `ECR`, `GCR`).
-В `pipeline`: сборка после успешных тестов; тег образа = версия артефакта или git `SHA`; секреты для registry в переменных окружения или в секретах `CI`. Многоэтапная сборка (`multi-stage` build) уменьшает размер образа. Сканирование образа на уязвимости (`Trivy`, `Clair`) — отдельный этап перед push.
-
-**Практика:** в `GitHub Actions` job `build` → job `build-image` (needs: build), `docker build -t $REGISTRY/$TAG .`, `docker push`. Тег берётся из git ref (`GITHUB_SHA`) или из версии артефакта. `Multi-stage`: `FROM maven AS build ... FROM eclipse-temurin:17-jre` — итоговый образ без `Maven`. Секреты registry: `DOCKER_USERNAME`, `DOCKER_PASSWORD` в Secrets; `docker login` перед push. После push — шаг Trivy: `trivy image --exit-code 1 $IMAGE` при критических уязвимостях fail pipeline.
-
-## Q27. Как организовать pipeline для нескольких веток (release, hotfix)?
-
-`Release`: ветка `release/` от main; `pipeline` деплоит в staging, затем после approval — в prod; тег версии создаётся после деплоя.
-`Hotfix`: ветка `hotfix/` от prod-тега или release; минимальный набор тестов и деплой в prod; затем merge в main и release для синхронизации. Правила защиты веток: main — только через `PR / pipeline` с ручным approval.
-
-**Практика:** в `GitHub` workflow по ветке `if: github.ref == 'refs/heads/main'` для полного `pipeline`; для release-веток — условие по имени (`startsWith('refs/heads/release/')`). Тег создаётся после успешного деплоя в prod (`git tag v1.2.3 && push`). `Hotfix pipeline` короче: сборка, smoke test, деплой в prod; полные e2e — по возможности. После hotfix merge в main и в release для синхронизации; документация по процессу в `README` или runbook.
-
-## Q28. Что такое dependency caching и зачем кэшировать в pipeline?
-
-`Dependency caching` — сохранение артефактов зависимостей (`Maven` — `~/.m2`, `Gradle` cache, `node_modules`) между запусками `pipeline` для ускорения сборки.
-В `GitHub Actions` и `GitLab CI` — директива `cache` (например в `.gitlab-ci.yml`); в Jenkins — кэш по `pom.xml`, `package-lock.json`. Экономия времени — от минут до десятков минут на сборку.
-
-**Практика:** ключ кэша должен включать хэш lockfile — при смене зависимостей кэш пересоздаётся. `Fallback` key (например, предыдущий хэш) позволяет использовать частичный кэш. В `Jenkins` или `GitHub Actions`: `actions/cache` с `key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}`, `restore-keys` для fallback.
-
-## Q29. Как обеспечить безопасность pipeline (секреты, сканирование образов)?
-
-Секреты: не в коде; использовать секреты `CI` (`GitHub Secrets`, `Vault`, переменные с маскированием). Ограничить доступ к `pipeline` по ролям.
-Сканирование: `SAST` (статический анализ кода) в этапе сборки; сканирование образов (`Trivy`, `Snyk`) на уязвимости; зависимостей (`OWASP Dependency Check`). Подписанные артефакты и pipeline не должны выводить секреты.
-
-**Практика:** секреты инжектить в env при запуске job, не в файлы в репозитории. `Trivy`: `trivy image --exit-code 1 $IMAGE` в этапе после сборки образа; при критических уязвимостях — fail `pipeline`. `OWASP Dependency Check` в `Maven / Gradle` — этап до публикации артефакта. Маскирование: `CI` системы подменяют значение секрета в логах на ***. Не логировать `echo $SECRET`; использовать только в командах, которые не выводят значение в stdout.
-
-## Q30. Как организовать pipeline для монорепозитория?
-
-В монорепо несколько проектов/сервисов в одном репозитории. Подходы: (1) Запускать `pipeline` только для изменённых путей (path filters в `GitHub Actions`, rules: changes в `GitLab`). (2) Матрица сборки по подпроектам. (3) Общие этапы (линтеры, общие тесты) один раз; сборка и тесты каждого сервиса — параллельно по изменённым директориям. Зависимости между сервисами: собирать в порядке зависимостей (граф) или собирать все, деплоить по графу. Инструменты: Nx, `Turborepo`, `Lerna` для определения затронутых проектов.
+## Q11. Что такое `matrix build` и когда его применять?
+
+**`Matrix build`** — запуск одного `workflow` с разными комбинациями параметров (версия `Java`, ОС, БД).
+
+```yaml
+jobs:
+  test:
+    strategy:
+      fail-fast: true
+      matrix:
+        java: [17, 21]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: gradle
+      - run: ./gradlew test
+```
+
+**Когда применять:**
+- Библиотеки с поддержкой нескольких версий `Java` (17, 21)
+- Кроссплатформенные проекты
+- Тестирование с разными СУБД (`PostgreSQL`, `MySQL`)
+
+**Ограничения:** каждая комбинация — отдельный job; матрица `2 x 2` = 4 job. Не раздувать без необходимости. `fail-fast: true` останавливает все jobs при падении одного.
+
+## Q12. Как настроить `CI/CD` pipeline в `GitLab CI`?
+
+`GitLab CI` использует файл `.gitlab-ci.yml` в корне репозитория:
+
+```yaml
+stages:
+  - build
+  - test
+  - analyze
+  - docker
+  - deploy
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .gradle/
+
+build:
+  stage: build
+  image: eclipse-temurin:21-jdk
+  script:
+    - ./gradlew assemble
+  artifacts:
+    paths:
+      - build/libs/*.jar
+    expire_in: 1 hour
+
+unit-tests:
+  stage: test
+  image: eclipse-temurin:21-jdk
+  script:
+    - ./gradlew test
+  artifacts:
+    reports:
+      junit: build/test-results/test/*.xml
+
+integration-tests:
+  stage: test
+  image: eclipse-temurin:21-jdk
+  services:
+    - postgres:16
+  variables:
+    POSTGRES_DB: testdb
+    POSTGRES_PASSWORD: test
+  script:
+    - ./gradlew integrationTest
+
+sonar:
+  stage: analyze
+  script:
+    - ./gradlew sonar -Dsonar.host.url=$SONAR_URL -Dsonar.token=$SONAR_TOKEN
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+docker-build:
+  stage: docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+deploy-prod:
+  stage: deploy
+  script:
+    - kubectl set image deployment/myapp myapp=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+```
+
+Ключевые отличия `GitLab CI` от `GitHub Actions`: встроенный container registry; `services` для sidecar-контейнеров; `rules` вместо `if`; `when: manual` для ручных этапов; `artifacts:reports:junit` для автоматического отображения результатов тестов в MR.
 
 ---
+
+## Артефакты, версионирование и кэширование
+
+## Q13. (!) Что такое артефакты pipeline и как их версионировать?
+
+**Артефакты** — результат сборки (`jar`, `war`, `Docker`-образ), передаваемый между этапами или в registry.
+
+**Стратегии версионирования:**
+
+| Стратегия | Пример тега | Использование |
+|-----------|-------------|---------------|
+| `Semver` | `1.2.3` | Релизы, библиотеки |
+| Git `SHA` | `abc1234` | Dev/staging образы |
+| Semver + build | `1.2.3-rc.5` | Release candidate |
+| Branch + SHA | `main-abc1234` | Feature-ветки |
+
+**Правила:**
+- Один артефакт — одна версия: не перезаписывать уже опубликованный тег
+- В prod **никогда** не использовать `latest` — только явная версия
+- `jar` публикуется в `Nexus`/`Artifactory`; образ — в container registry
+- При откате — деплоить предыдущую версию артефакта, не пересобирать
+
+**Пример `Gradle` publishing:**
+
+```groovy
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.example'
+            artifactId = 'myapp'
+            version = project.version  // из gradle.properties или git tag
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url = uri("https://nexus.example.com/repository/maven-releases/")
+            credentials {
+                username = System.getenv("NEXUS_USER")
+                password = System.getenv("NEXUS_PASSWORD")
+            }
+        }
+    }
+}
+```
+
+## Q14. Как кэшировать зависимости в pipeline (`Gradle`, `Maven`, `npm`)?
+
+Кэширование зависимостей ускоряет `pipeline` на 2-5 минут за счёт исключения повторного скачивания.
+
+**`GitHub Actions` (встроенная поддержка `Gradle`):**
+
+```yaml
+- uses: actions/setup-java@v4
+  with:
+    distribution: temurin
+    java-version: 21
+    cache: gradle   # автоматически кэширует ~/.gradle
+```
+
+**`GitHub Actions` (ручной кэш для `Maven`):**
+
+```yaml
+- uses: actions/cache@v4
+  with:
+    path: ~/.m2/repository
+    key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+    restore-keys: |
+      ${{ runner.os }}-m2-
+```
+
+**`GitLab CI`:**
+
+```yaml
+cache:
+  key:
+    files:
+      - build.gradle.kts
+      - gradle/wrapper/gradle-wrapper.properties
+  paths:
+    - .gradle/caches/
+    - .gradle/wrapper/
+```
+
+**Ключевые правила:**
+- Ключ кэша = хэш lock-файла; при изменении зависимостей кэш пересоздаётся
+- `restore-keys` — fallback на частичный кэш
+- `TTL` кэша: `GitHub Actions` — 7 дней; `GitLab CI` — настраиваемый
+- Не кэшировать `build/` — только зависимости
+
+## Q15. Как pipeline интегрируется с артефактным репозиторием (`Nexus`, `Artifactory`)?
+
+Артефактный репозиторий — единое место хранения и версионирования артефактов. `Pipeline` публикует артефакты после успешной сборки и тестов.
+
+**Интеграция `Gradle` с `Nexus`:**
+
+```groovy
+// build.gradle.kts
+publishing {
+    repositories {
+        maven {
+            val releasesUrl = uri("https://nexus.example.com/repository/maven-releases/")
+            val snapshotsUrl = uri("https://nexus.example.com/repository/maven-snapshots/")
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsUrl else releasesUrl
+            credentials {
+                username = System.getenv("NEXUS_USER")
+                password = System.getenv("NEXUS_PASSWORD")
+            }
+        }
+    }
+}
+```
+
+**В `Jenkinsfile`:**
+
+```groovy
+stage('Publish') {
+    when { branch 'main' }
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'nexus-creds',
+                usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASSWORD')]) {
+            sh './gradlew publish'
+        }
+    }
+}
+```
+
+**Promotion:** в `Artifactory` артефакт перемещается из `dev` в `release` репозиторий без пересборки. `Nexus` не поддерживает promotion нативно — используют staging-репозитории.
+
+## Q16. Как обеспечить воспроизводимость сборки в pipeline?
+
+**Воспроизводимость** — повторная сборка из того же коммита даёт идентичный артефакт.
+
+**Меры:**
+1. **Фиксированные версии зависимостей** — `Gradle` dependency locking, `Maven` с explicit versions, npm `package-lock.json`
+2. **Фиксированный образ сборки** — `eclipse-temurin:21.0.2-jdk`, не `latest`
+3. **`Gradle Wrapper`** — фиксированная версия `Gradle` в `gradle-wrapper.properties`
+4. **Тегирование по коммиту** — трассируемость артефакта к коду
+
+**`Gradle` dependency locking:**
+
+```groovy
+// build.gradle.kts
+dependencyLocking {
+    lockAllConfigurations()
+}
+```
+
+```bash
+# Генерация lock-файла
+./gradlew dependencies --write-locks
+# Файлы gradle/dependency-locks/*.lockfile коммитить в Git
+```
+
+**В `CI`:** использовать `./gradlew build --no-daemon` для стабильности; `Gradle Wrapper` (`./gradlew`) вместо системного `Gradle`; образ сборки с конкретным тегом.
+
+---
+
+## Сборка `Java`-проектов в pipeline
+
+## Q17. (!) Как настроить `Gradle` для `CI/CD` pipeline?
+
+`Gradle` — основной инструмент сборки в современных `Java`-проектах. Правильная настройка для `CI` критична для скорости и надёжности.
+
+**`build.gradle.kts` для CI:**
+
+```kotlin
+plugins {
+    java
+    jacoco
+    id("org.sonarqube") version "5.0.0.4638"
+    id("com.github.ben-manes.versions") version "0.51.0"
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+    jvmArgs("-XX:+UseParallelGC")  // быстрый GC для тестов
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)  // для SonarQube
+        html.required.set(true)
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit { minimum = "0.80".toBigDecimal() }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
+}
+```
+
+**Ключевые флаги `Gradle` для CI:**
+
+```bash
+./gradlew build \
+  --no-daemon \           # не тратить RAM на daemon
+  --parallel \            # параллельная сборка модулей
+  --build-cache \         # локальный/удалённый build cache
+  -Dorg.gradle.workers.max=4
+```
+
+`--no-daemon` рекомендуется в `CI`, потому что daemon не переиспользуется между запусками. `--parallel` ускоряет multi-module проекты. `--build-cache` позволяет переиспользовать результаты задач между сборками.
+
+## Q18. Как использовать `Gradle Build Cache` в `CI`?
+
+`Gradle Build Cache` сохраняет результаты задач (`compile`, `test`) и переиспользует их при повторных сборках, если входные данные не изменились.
+
+**Локальный кэш** (по умолчанию): `~/.gradle/caches/build-cache-*`
+
+**Удалённый кэш** (для `CI`): все агенты сборки используют общее хранилище.
+
+```kotlin
+// settings.gradle.kts
+buildCache {
+    local {
+        isEnabled = true
+    }
+    remote<HttpBuildCache> {
+        url = uri("https://gradle-cache.example.com/cache/")
+        isPush = System.getenv("CI") != null  // push только из CI
+        credentials {
+            username = System.getenv("CACHE_USER")
+            password = System.getenv("CACHE_PASSWORD")
+        }
+    }
+}
+```
+
+**В `GitHub Actions`:**
+
+```yaml
+- uses: gradle/actions/setup-gradle@v3
+  with:
+    cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+    # PR-ы только читают кэш; main — читает и пишет
+```
+
+Экономия: при изменении одного файла `Gradle` пересобирает только затронутые задачи; остальные берёт из кэша. На крупных проектах экономия — 50-70% времени сборки.
+
+---
+
+## Окружения, approval и ветки
+
+## Q19. Как организовать pipeline для нескольких окружений (dev, staging, prod)?
+
+**Принцип:** один образ собирается один раз и промотируется по окружениям. Меняется только конфигурация.
+
+```mermaid
+graph LR
+    A[Build & Test] --> B[Build Docker Image<br/>myapp:abc1234]
+    B --> C[Deploy Dev<br/>auto]
+    C --> D[Integration Tests]
+    D --> E[Deploy Staging<br/>auto]
+    E --> F[Smoke Tests]
+    F --> G[Deploy Prod<br/>manual approval]
+```
+
+**Подходы:**
+1. **Один pipeline с этапами** — dev автоматически, staging после тестов, prod после approval
+2. **`GitOps`** — `ArgoCD`/`Flux` синхронизирует кластер с `Git`-репозиторием; деплой = коммит в `Git` (подробнее в [Kubernetes](../devops/kubernetes-interview.md))
+
+**Конфигурация по окружению:**
+- `Kubernetes`: `ConfigMap`/`Secret` per namespace
+- `Spring Boot`: `application-{profile}.yml`
+- `CI`: environment-specific variables
+
+**В `GitHub Actions`:**
+
+```yaml
+deploy-prod:
+  needs: deploy-staging
+  runs-on: ubuntu-latest
+  environment:
+    name: production
+    url: https://myapp.example.com
+  steps:
+    - run: |
+        helm upgrade myapp ./chart \
+          --set image.tag=${{ github.sha }} \
+          --values values-prod.yaml
+```
+
+`environment: production` с `required_reviewers` автоматически создаёт approval gate.
+
+## Q20. Что такое `manual approval` и когда его использовать?
+
+**`Manual approval`** — ручное подтверждение перехода к следующему этапу (обычно деплой в prod).
+
+| CI-система | Механизм |
+|-----------|----------|
+| `Jenkins` | `input` step |
+| `GitLab CI` | `when: manual` |
+| `GitHub Actions` | Environment protection rules |
+
+**Когда использовать:**
+- Деплой в prod при `Continuous Delivery`
+- Изменения схемы БД
+- Инфраструктурные изменения (`Terraform apply` на prod)
+- Регуляторные требования (SOX, PCI DSS)
+
+**Когда НЕ использовать:**
+- Высокочастотные деплои (10+ в день) — тормозит поток
+- При наличии автоматического отката по метрикам (`Argo Rollouts`, `Flagger`)
+
+**В `Jenkins`:**
+
+```groovy
+stage('Approve Prod Deploy') {
+    steps {
+        input message: 'Deploy to production?', submitter: 'tech-lead,devops'
+    }
+}
+```
+
+## Q21. (!) Как pipeline связан с ветками `Git` (`trunk-based`, `GitFlow`)?
+
+```mermaid
+graph TD
+    subgraph "Trunk-based Development"
+        A[main] --> B[short-lived feature branch]
+        B -->|PR + CI| A
+        A -->|full pipeline| C[Deploy]
+    end
+
+    subgraph "GitFlow"
+        D[develop] --> E[feature/*]
+        E -->|PR| D
+        D --> F[release/*]
+        F -->|deploy staging| G[Staging]
+        F -->|merge| H[main]
+        H -->|deploy prod| I[Prod]
+    end
+```
+
+| Аспект | `Trunk-based` | `GitFlow` |
+|--------|--------------|----------|
+| Основная ветка | `main` | `develop` + `main` |
+| Feature-ветки | Короткоживущие (1-2 дня) | Долгоживущие |
+| Pipeline на PR | Сборка + unit тесты | Сборка + unit тесты |
+| Pipeline на main | Полный + деплой | На develop — деплой в dev |
+| Релизы | По каждому merge в main | Через release-ветку |
+| Feature flags | Да, обязательно | Не обязательно |
+
+**`Trunk-based`** упрощает `CI` и частые деплои; подходит для команд с `feature flags` (см. [стратегии деплоя](deployment-strategies-interview.md)). **`GitFlow`** — для проектов со строгим релизным циклом и длинными стабилизационными фазами.
+
+В pipeline условия по ветке определяют набор этапов: `if: github.ref == 'refs/heads/main'` или `rules: if: $CI_COMMIT_BRANCH == "main"` в `GitLab`.
+
+## Q22. Что такое pipeline для `pull request` (`PR pipeline`)?
+
+**`PR pipeline`** — сокращённый `pipeline`, запускаемый при создании/обновлении `pull request`. Цель — проверить, что изменение не ломает сборку до merge.
+
+**Типичный состав:** сборка, `unit` тесты, линтер, `SonarQube` analysis. **Без:** деплоя, тяжёлых e2e, публикации артефактов.
+
+```yaml
+# GitHub Actions — PR pipeline
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+      - run: ./gradlew build
+      - name: SonarQube
+        run: ./gradlew sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+```
+
+Результат отображается в `PR` как status check; merge возможен только при зелёном статусе (branch protection rules). `PR pipeline` должен быть быстрым (< 5 мин) для быстрой обратной связи автору.
+
+---
+
+## Тесты в pipeline
+
+## Q23. (!) Как организовать тесты в pipeline (`unit`, `integration`, `e2e`)?
+
+Тесты организуются по пирамиде тестирования (подробнее в [стратегиях тестирования](../testing/test-strategies-interview.md)):
+
+```mermaid
+graph TD
+    A[E2E Tests<br/>немного, медленные<br/>5-15 мин] --> B[Integration Tests<br/>средне, умеренные<br/>2-5 мин]
+    B --> C[Unit Tests<br/>много, быстрые<br/>< 1 мин]
+    style C fill:#90EE90
+    style B fill:#FFFF99
+    style A fill:#FFA500
+```
+
+**Порядок в pipeline:**
+
+1. **`Unit`** — быстрые, в начале; при падении — fail fast
+2. **`Integration`** — с БД (`Testcontainers`), после `unit`
+3. **`E2E`** — на развёрнутом окружении, после деплоя в staging
+
+**`Gradle` — разделение тестов по source sets:**
+
+```kotlin
+// build.gradle.kts
+sourceSets {
+    create("integrationTest") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
+tasks.register<Test>("integrationTest") {
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter(tasks.test)
+}
+
+tasks.check {
+    dependsOn(tasks.named("integrationTest"))
+}
+```
+
+**В `GitHub Actions`:**
+
+```yaml
+jobs:
+  unit-tests:
+    needs: build
+    steps:
+      - run: ./gradlew test
+  integration-tests:
+    needs: build
+    steps:
+      - run: ./gradlew integrationTest
+  e2e:
+    needs: [deploy-staging]
+    steps:
+      - run: ./gradlew e2eTest
+```
+
+Для `PR` — только `unit` + lint; полные integration + e2e — на push в main.
+
+## Q24. Что такое `smoke test` после деплоя и когда его запускать?
+
+**`Smoke test`** — минимальный набор проверок сразу после деплоя: приложение поднялось и ключевые эндпоинты отвечают.
+
+**Что проверять:**
+- `GET /actuator/health` — 200 и `status: UP`
+- `GET /actuator/readiness` — готовность принимать трафик
+- Один-два критичных `API` (например, главная страница, авторизация)
+
+**Пример скрипта `smoke test`:**
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+BASE_URL="${1:?Usage: smoke-test.sh <base-url>}"
+MAX_RETRIES=10
+RETRY_DELAY=5
+
+for i in $(seq 1 $MAX_RETRIES); do
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" || true)
+  if [ "$STATUS" = "200" ]; then
+    echo "Health check passed"
+    break
+  fi
+  echo "Attempt $i/$MAX_RETRIES: status=$STATUS, retrying in ${RETRY_DELAY}s..."
+  sleep $RETRY_DELAY
+done
+
+[ "$STATUS" != "200" ] && echo "FAILED: health check" && exit 1
+
+# Проверка критичного API
+curl -sf "$BASE_URL/api/v1/version" > /dev/null || { echo "FAILED: version endpoint"; exit 1; }
+echo "All smoke tests passed"
+```
+
+При падении `smoke test` — автоматический rollback (если настроен) или алерт команде. Отличие от полных e2e: `smoke` — 30 секунд; e2e — 15 минут.
+
+## Q25. Как запускать интеграционные тесты с `Testcontainers` в `CI`?
+
+`Testcontainers` поднимает реальные зависимости (`PostgreSQL`, `Kafka`, `Redis`) в `Docker`-контейнерах для тестов. В `CI` требуется доступ к `Docker daemon`.
+
+**Пример теста:**
+
+```java
+@SpringBootTest
+@Testcontainers
+class OrderRepositoryTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
+        .withDatabaseName("testdb")
+        .withUsername("test")
+        .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Test
+    void shouldSaveAndFindOrder() {
+        var order = new Order("item-1", BigDecimal.TEN);
+        orderRepository.save(order);
+        assertThat(orderRepository.findById(order.getId())).isPresent();
+    }
+}
+```
+
+**В `GitHub Actions`** `Docker` доступен из коробки на `ubuntu-latest`. Для ускорения можно использовать `services` вместо `Testcontainers` (без зависимости от `Docker-in-Docker`).
+
+**В `Jenkins`** нужен agent с `Docker` или `DinD` (Docker-in-Docker). Альтернатива — запуск agent в `Docker` с примонтированным `/var/run/docker.sock`.
+
+Подробнее о `Testcontainers` — в [интеграционном тестировании](../testing/integration-testing-interview.md).
+
+---
+
+## Безопасность pipeline
+
+## Q26. (!) Что такое секреты в pipeline и как их хранить?
+
+Секреты — пароли, токены, ключи для доступа к registry, БД, облаку. **Никогда** не хранить в коде или открытом виде в конфиге `pipeline`.
+
+**Варианты хранения:**
+
+| Подход | Примеры | Плюсы | Минусы |
+|--------|---------|-------|--------|
+| Встроенные в CI | `GitHub Secrets`, `GitLab CI Variables`, `Jenkins Credentials` | Простота | Ограниченная ротация |
+| Внешнее хранилище | `HashiCorp Vault`, AWS `Secrets Manager` | Ротация, аудит, централизация | Сложность настройки |
+| `OIDC` federation | `GitHub OIDC` → AWS/GCP | Без долгоживущих секретов | Требует настройки provider |
+
+**Правила:**
+- Маскировать секреты в логах (`CI`-системы делают это автоматически при правильной настройке)
+- Ограничивать доступ к секретам по окружению и ролям
+- Не использовать `echo $SECRET` — значение попадёт в лог
+- Ротация: менять секреты регулярно; `Vault` — автоматическая ротация
+
+**В `Jenkins`:**
+
+```groovy
+withCredentials([
+    usernamePassword(credentialsId: 'nexus', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS'),
+    string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')
+]) {
+    sh './gradlew publish sonar'
+}
+```
+
+## Q27. Как обеспечить безопасность pipeline (`SAST`, `DAST`, сканирование образов)?
+
+**Security gates в pipeline:**
+
+```mermaid
+graph LR
+    A[Build] --> B[SAST<br/>SonarQube, SpotBugs]
+    B --> C[Dependency Check<br/>OWASP, Snyk]
+    C --> D[Build Image]
+    D --> E[Image Scan<br/>Trivy, Grype]
+    E --> F[DAST<br/>OWASP ZAP]
+    F --> G[Deploy]
+```
+
+| Тип проверки | Инструмент | Когда |
+|-------------|-----------|-------|
+| `SAST` | `SonarQube`, `SpotBugs`, `Semgrep` | При сборке |
+| Dependency scan | `OWASP Dependency Check`, `Snyk` | При сборке |
+| Image scan | `Trivy`, `Grype`, `Clair` | После docker build |
+| `DAST` | `OWASP ZAP` | После деплоя в staging |
+| Secret scan | `gitleaks`, `trufflehog` | При каждом коммите |
+
+**`Trivy` в `GitHub Actions`:**
+
+```yaml
+- name: Scan Docker image
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: myapp:${{ github.sha }}
+    format: table
+    exit-code: 1
+    severity: CRITICAL,HIGH
+```
+
+**`OWASP Dependency Check` в `Gradle`:**
+
+```kotlin
+plugins {
+    id("org.owasp.dependencycheck") version "9.0.9"
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7.0f  // fail при CVSS >= 7 (High)
+    formats = listOf("HTML", "JSON")
+}
+```
+
+При критических уязвимостях `pipeline` падает — артефакт не публикуется и не деплоится.
+
+---
+
+## `Docker` и контейнеры в pipeline
+
+## Q28. (!) Как организовать сборку `Docker`-образа в pipeline?
+
+Сборка `Docker`-образа — типичный этап `pipeline` после успешных тестов. Подробнее о `Docker` — в [Docker](../devops/docker-interview.md).
+
+**`Dockerfile` для `Spring Boot` (multi-stage):**
+
+```dockerfile
+# Stage 1: Build
+FROM eclipse-temurin:21-jdk AS builder
+WORKDIR /app
+COPY gradle/ gradle/
+COPY gradlew build.gradle.kts settings.gradle.kts ./
+RUN ./gradlew dependencies --no-daemon
+COPY src/ src/
+RUN ./gradlew bootJar --no-daemon
+
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
+RUN addgroup --system appuser && adduser --system --ingroup appuser appuser
+USER appuser
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**В `GitHub Actions`:**
+
+```yaml
+- uses: docker/setup-buildx-action@v3
+- uses: docker/login-action@v3
+  with:
+    registry: ghcr.io
+    username: ${{ github.actor }}
+    password: ${{ secrets.GITHUB_TOKEN }}
+- uses: docker/build-push-action@v5
+  with:
+    context: .
+    push: true
+    tags: |
+      ghcr.io/${{ github.repository }}:${{ github.sha }}
+      ghcr.io/${{ github.repository }}:latest
+    cache-from: type=gha
+    cache-to: type=gha,mode=max
+```
+
+**Правила тегирования:**
+- Dev/staging: `myapp:main-abc1234` (ветка + SHA)
+- Release: `myapp:1.2.3` (semver из git tag)
+- Prod: **никогда** `latest` — только конкретная версия
+
+## Q29. Что такое `multi-stage build` и как он ускоряет pipeline?
+
+**`Multi-stage build`** — `Dockerfile` с несколькими `FROM`-инструкциями: одна стадия для сборки, другая для runtime. Итоговый образ содержит только артефакт и `JRE`, без `JDK`, `Gradle`, исходников.
+
+**Преимущества:**
+- Размер образа: ~800 MB (`JDK` + `Gradle`) → ~300 MB (только `JRE` + `jar`)
+- Безопасность: меньше attack surface
+- Кэширование слоёв `Docker`: зависимости меняются редко → слой `COPY gradle/` кэшируется
+
+**Spring Boot layered jar** — дополнительная оптимизация:
+
+```dockerfile
+FROM eclipse-temurin:21-jdk AS builder
+WORKDIR /app
+COPY . .
+RUN ./gradlew bootJar --no-daemon
+
+# Извлечение слоёв из layered jar
+RUN java -Djarmode=layertools -jar build/libs/*.jar extract
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=builder /app/dependencies/ ./
+COPY --from=builder /app/spring-boot-loader/ ./
+COPY --from=builder /app/snapshot-dependencies/ ./
+COPY --from=builder /app/application/ ./
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+```
+
+Слои `dependencies` и `spring-boot-loader` меняются редко и кэшируются `Docker`; при изменении только кода пересобирается только слой `application` — экономия 2-3 минуты на push. Подробнее — в [Reusing Docker Layers with Spring Boot (Baeldung)](https://www.baeldung.com/docker-layers-spring-boot).
+
+---
+
+## Стратегии деплоя в pipeline
+
+## Q30. Как реализовать `blue-green` и `canary` деплой в pipeline?
+
+Подробно стратегии деплоя описаны в [стратегиях деплоя](deployment-strategies-interview.md). Здесь — как они реализуются в pipeline.
+
+**`Blue-Green`:**
+
+```mermaid
+graph LR
+    A[Build & Test] --> B[Deploy to Green]
+    B --> C[Smoke Test Green]
+    C --> D{Passed?}
+    D -->|Yes| E[Switch Traffic<br/>Blue → Green]
+    D -->|No| F[Rollback]
+```
+
+В `Kubernetes` — два `Deployment` (`blue` и `green`); `Service` переключает selector. В pipeline — этап переключения `Service` после smoke test.
+
+**`Canary`:**
+
+```yaml
+# Argo Rollouts — canary strategy
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+spec:
+  strategy:
+    canary:
+      steps:
+        - setWeight: 5       # 5% трафика на новую версию
+        - pause: { duration: 5m }
+        - setWeight: 25
+        - pause: { duration: 10m }
+        - setWeight: 75
+        - pause: { duration: 10m }
+      canaryMetadata:
+        labels:
+          version: canary
+```
+
+Pipeline вызывает `kubectl apply` для `Rollout`; `Argo Rollouts` управляет постепенным переключением трафика и автоматическим откатом при деградации метрик.
+
+## Q31. (!) Как организовать откат (`rollback`) в pipeline?
+
+**Стратегии отката:**
+
+| Подход | Скорость | Надёжность |
+|--------|----------|------------|
+| `kubectl rollout undo` | Секунды | Высокая |
+| Деплой предыдущего образа | 1-2 мин | Высокая |
+| Revert commit + pipeline | 5-15 мин | Средняя |
+| `Argo Rollouts` auto-rollback | Автоматически | Высокая |
+
+**Автоматический откат в pipeline:**
+
+```groovy
+// Jenkinsfile
+stage('Deploy & Verify') {
+    steps {
+        sh 'kubectl apply -f k8s/deployment.yaml'
+        sh 'kubectl rollout status deployment/myapp --timeout=300s'
+    }
+    post {
+        failure {
+            sh 'kubectl rollout undo deployment/myapp'
+            slackSend message: "Deploy failed, rolled back: ${env.BUILD_URL}"
+        }
+    }
+}
+```
+
+**В `GitHub Actions`:**
+
+```yaml
+- name: Deploy
+  run: kubectl set image deployment/myapp myapp=${{ env.IMAGE }}
+- name: Wait for rollout
+  run: kubectl rollout status deployment/myapp --timeout=5m
+- name: Smoke test
+  run: ./scripts/smoke-test.sh https://myapp.example.com
+- name: Rollback on failure
+  if: failure()
+  run: kubectl rollout undo deployment/myapp
+```
+
+Ключевой принцип: откат должен быть одной командой / одним нажатием кнопки, а не «пересобрать предыдущую версию».
+
+## Q32. Как обеспечить идемпотентность этапов pipeline?
+
+**Идемпотентность** — повторный запуск этапа даёт тот же результат и не ломает состояние.
+
+**Меры:**
+1. **Чистая среда** — каждый запуск в новом контейнере / VM (эфемерные runner)
+2. **`./gradlew clean build`** — очистка перед сборкой
+3. **Версионированные артефакты** — не перезаписывать опубликованный тег
+4. **`Kubernetes` деплой** — `kubectl apply` идемпотентен по дизайну
+5. **Миграции БД** (`Flyway`) — каждая миграция применяется один раз
+
+**Антипаттерны:**
+- Зависимость от глобального состояния между запусками
+- `docker tag latest` → перезаписывается при каждом push
+- `DROP TABLE IF EXISTS` в миграциях — теряет данные при повторном применении
+
+Перезапуск упавшего `pipeline` не должен ломать окружение. Если этап не идемпотентен (например, отправка email) — защитить guard-условием или вынести в отдельный процесс.
+
+---
+
+## Специализированные pipeline
+
+## Q33. Что такое pipeline для монолита vs микросервисов?
+
+| Аспект | Монолит | Микросервисы |
+|--------|---------|-------------|
+| Репозиторий | Один | Один per service или monorepo |
+| Pipeline | Один | Один per service |
+| Сборка | Всего приложения | Только изменённого сервиса |
+| Тесты | Все тесты | Тесты сервиса + контрактные |
+| Деплой | Весь артефакт | Только изменённый сервис |
+| Время | Длиннее (всё вместе) | Короче (один сервис) |
+| Координация | Простая | Сложная (версии, зависимости) |
+
+**Монолит:** один `Jenkinsfile` / workflow — сборка, тесты, образ, деплой.
+
+**Микросервисы (repo per service):** каждый сервис — свой `pipeline`. При изменении общей библиотеки — триггер downstream `pipeline` или `Dependabot`/`Renovate` создаёт `PR` в потребителях.
+
+**Микросервисы (monorepo):** path filters определяют, какие сервисы пересобирать (см. Q34). Контрактные тесты (`Spring Cloud Contract`, `Pact`) проверяют совместимость между сервисами в `pipeline`.
+
+## Q34. Как организовать pipeline для монорепозитория?
+
+В монорепо несколько проектов/сервисов в одном репозитории. `Pipeline` должен собирать только изменённое.
+
+**`GitHub Actions` — path filters:**
+
+```yaml
+on:
+  push:
+    paths:
+      - 'services/order-service/**'
+      - 'libs/common/**'
+
+jobs:
+  build-order-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./gradlew :order-service:build
+```
+
+**`GitLab CI` — `rules:changes`:**
+
+```yaml
+build-order-service:
+  rules:
+    - changes:
+        - services/order-service/**
+        - libs/common/**
+  script:
+    - ./gradlew :order-service:build
+```
+
+**Инструменты для монорепо:**
+- `Nx` / `Turborepo` — определение затронутых проектов по графу зависимостей
+- `Gradle` multi-project — `./gradlew :affected-module:build`
+- `Bazel` — инкрементальная сборка с кэшированием
+
+**Правило:** при изменении shared-библиотеки пересобирать все зависимые сервисы. Граф зависимостей `Gradle` (`./gradlew dependencies`) помогает определить затронутые модули.
+
+## Q35. Что такое pipeline для инфраструктуры (`IaC`, `Terraform`)?
+
+`Pipeline` для `IaC` — применение изменений инфраструктуры через `CI/CD` (подробнее о `Kubernetes` — в [Kubernetes](../devops/kubernetes-interview.md)).
+
+**Этапы:**
+
+```mermaid
+graph LR
+    A[Checkout] --> B[terraform init]
+    B --> C[terraform validate]
+    C --> D[terraform plan]
+    D --> E[Manual Approval]
+    E --> F[terraform apply]
+    F --> G[Verify]
+```
+
+**В `GitHub Actions`:**
+
+```yaml
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init
+      - run: terraform validate
+      - run: terraform plan -out=plan.tfplan
+      - uses: actions/upload-artifact@v4
+        with: { name: plan, path: plan.tfplan }
+
+  apply:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: production  # requires approval
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: plan }
+      - run: terraform apply plan.tfplan
+```
+
+**Безопасность:** state в удалённом хранилище (`S3` + `DynamoDB` lock); блокировка state при параллельном запуске; секреты облака из `OIDC` federation (без долгоживущих ключей).
+
+---
+
+## Мониторинг и оптимизация
+
+## Q36. Как мониторить и оптимизировать время выполнения pipeline?
+
+**Метрики для мониторинга:**
+- Среднее время `pipeline` (lead time)
+- Время каждого этапа (bottleneck analysis)
+- Процент успешных/неуспешных запусков
+- Время ожидания runner (queue time)
+- Частота flaky тестов
+
+**Инструменты:**
+- `Jenkins` — Pipeline Stage View, Blue Ocean, Prometheus plugin
+- `GitHub Actions` — Actions tab, `gh run list --json`
+- `GitLab CI` — CI/CD Analytics, Pipeline Charts
+- Внешние — `Datadog CI Visibility`, `Grafana` + `Prometheus`
+
+**Оптимизация (по приоритету):**
+
+| Приём | Эффект |
+|-------|--------|
+| Кэширование зависимостей | -2-5 мин |
+| Параллельные этапы | -30-50% времени |
+| `Gradle Build Cache` | -50-70% при инкрементальных изменениях |
+| `Docker layer caching` | -2-3 мин на сборку образа |
+| Более мощные runner | -20-40% (CPU-bound задачи) |
+| Выборочный запуск тестов на PR | -5-10 мин |
+| Удаление дублирующихся этапов | Зависит от pipeline |
+
+**Целевые показатели:**
+- `PR pipeline`: < 5 мин
+- Полный `pipeline` (до staging): < 15 мин
+- Полный `pipeline` (до prod): < 30 мин
+
+Если `pipeline` систематически превышает эти пороги — анализировать bottleneck (обычно это тесты или сборка `Docker`-образа) и применять соответствующие оптимизации.
+
+---
+
+## GitOps pipeline и DORA
+
+## Q37. (!) Как выглядит GitOps-pipeline с разделением `app` и `config` репозиториев?
+
+**GitOps-pipeline** разделяет CI (сборка и тесты) и CD (деплой через Git). Принцип: `CI` обновляет образ и фиксирует новый тег в отдельном `config`-репозитории; `Argo CD` или `Flux` синхронизирует `config`-репо с кластером.
+
+**Схема взаимодействия:**
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant AppRepo as App Repo
+    participant CI as CI Pipeline
+    participant Registry as Container Registry
+    participant CfgRepo as Config Repo
+    participant ArgoCD as Argo CD
+    participant K8s as Kubernetes
+
+    Dev->>AppRepo: git push (feature branch)
+    AppRepo->>CI: webhook trigger
+    CI->>CI: build + test + analysis
+    CI->>Registry: docker push myapp:abc123
+    CI->>CfgRepo: PR: update image.tag=abc123
+    CfgRepo->>CfgRepo: Review + Merge
+    ArgoCD->>CfgRepo: poll / webhook
+    ArgoCD->>K8s: sync (apply manifests)
+    K8s-->>ArgoCD: resource status
+```
+
+**Почему два репозитория?**
+
+| Аргумент | Объяснение |
+|----------|-----------|
+| Разные права | CI-бот пишет в `config`-репо, не имеет доступа к `app`-репо production ветке |
+| Аудит деплоев | История `config`-репо = история деплоев с review |
+| Rollback | `git revert` в `config`-репо откатывает деплой |
+| Drift detection | `Argo CD` видит расхождение кластера с `config`-репо |
+
+**CI-шаг обновления `config`-репо (GitHub Actions):**
+
+```yaml
+- name: Update image tag in config repo
+  env:
+    GH_TOKEN: ${{ secrets.CONFIG_REPO_TOKEN }}
+  run: |
+    git clone https://github.com/org/gitops-config.git
+    cd gitops-config
+
+    # Обновить тег через yq
+    yq e ".image.tag = \"${GITHUB_SHA::8}\"" -i \
+      apps/myapp/overlays/staging/values.yaml
+
+    git config user.email "ci-bot@example.com"
+    git config user.name "CI Bot"
+    git add .
+    git commit -m "ci: update myapp staging to ${GITHUB_SHA::8}"
+    git push
+```
+
+**Структура `config`-репо с Kustomize:**
+
+```
+gitops-config/
+├── apps/
+│   └── myapp/
+│       ├── base/
+│       │   ├── deployment.yaml    # image: myapp (без тега)
+│       │   ├── service.yaml
+│       │   └── kustomization.yaml
+│       └── overlays/
+│           ├── dev/
+│           │   └── kustomization.yaml  # image.newTag: dev-latest
+│           ├── staging/
+│           │   └── kustomization.yaml  # image.newTag: abc123
+│           └── prod/
+│               └── kustomization.yaml  # image.newTag: 1.5.0
+└── argocd/
+    ├── myapp-dev.yaml     # Application CRD
+    ├── myapp-staging.yaml
+    └── myapp-prod.yaml
+```
+
+**Практика:** `Argo CD` в prod настраивать без `automated.prune` — удаление ресурсов только вручную; `selfHeal: true` — восстанавливать drift (ручные `kubectl` правки). `Flux` как альтернатива — `image automation` умеет сам обновлять тег в `config`-репо без CI-шага.
+
+## Q38. Что такое DORA-метрики и как их улучшить через pipeline?
+
+**DORA metrics** — четыре показателя зрелости DevOps (Google/DORA research):
+
+| Метрика | Что измеряет | Как улучшить через pipeline |
+|---------|-------------|----------------------------|
+| **Deployment Frequency** | Как часто деплоим в prod | Trunk-based dev, feature flags, маленькие PR |
+| **Lead Time for Changes** | Время от коммита до prod | Параллельные этапы, кэш, выборочные тесты |
+| **Change Failure Rate** | % деплоев с инцидентом | Canary/blue-green, quality gates, smoke тесты |
+| **Time to Restore** | Время восстановления | Автоматический rollback, on-call, Feature flags |
+
+**Уровни зрелости:**
+
+```mermaid
+graph LR
+    Low["Low\nDeploy freq: 1/месяц\nLead time: > 6 мес\nCFR: > 30%"] -->
+    Medium["Medium\n1/неделю\n1 мес – неделя\n< 30%"] -->
+    High["High\n1/день\n1 нед – 1 день\n< 15%"] -->
+    Elite["Elite 🏆\nМного раз в день\n< 1 часа\n< 5%"]
+```
+
+**Конкретные изменения в pipeline для улучшения метрик:**
+
+```yaml
+# Lead Time: параллельные этапы (GitHub Actions)
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps: [...]         # ← параллельно с unit-tests
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps: [...]         # ← параллельно с lint
+
+  integration-tests:
+    needs: [lint, unit-tests]   # ← ждёт оба
+    steps: [...]
+
+# Change Failure Rate: canary-деплой с автоматическим анализом
+  deploy-canary:
+    needs: integration-tests
+    steps:
+      - run: |
+          kubectl argo rollouts set image myapp myapp=image:$TAG
+          # Argo Rollouts сам проверит метрики и откатит если нужно
+```
+
+**Инструменты измерения:**
+
+```bash
+# Four Keys (Google) — open source проект для сбора DORA метрик
+# Интегрируется с GitHub, GitLab, Cloud Build
+
+# Через GitHub CLI: собрать deployment frequency
+gh run list \
+  --workflow=deploy-prod.yml \
+  --json createdAt,conclusion \
+  --jq '[.[] | select(.conclusion=="success")] | length'
+```
+
+**Практика:** начинать с Lead Time — это самая управляемая метрика. Bottleneck обычно: медленные тесты (параллелизм + Gradle Build Cache), долгий ревью (процесс, не pipeline), ручные деплои в staging (автоматизировать). Deployment Frequency растёт при trunk-based development и feature flags — без них малые команды застревают на feature branches неделями.
+
+---
+
+## See also
+
+- [Стратегии деплоя](deployment-strategies-interview.md) — `blue-green`, `canary`, `rolling update`
+- [Docker](../devops/docker-interview.md) — контейнеризация, `Dockerfile`, `multi-stage build`
+- [Kubernetes](../devops/kubernetes-interview.md) — оркестрация, `Helm`, `ArgoCD`
+- [Git](../devops/git-interview.md) — ветвление, `trunk-based`, `GitFlow`
+- [Стратегии тестирования](../testing/test-strategies-interview.md) — пирамида тестов, `TDD`
+- [Test Automation](../testing/test-automation-interview.md) — автоматизация тестирования в CI/CD
+- [Практики code review](../leadership/code-review-practices-interview.md) — quality gates и автоматизация проверок

@@ -1,7 +1,9 @@
 ---
 title: "Инструменты разработки"
 description: "Справочные материалы и руководства по использованию различных инструментов для разработки и collaboration."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

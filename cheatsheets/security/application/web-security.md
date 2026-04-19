@@ -1,15 +1,16 @@
 ---
 title: "Веб‑безопасность (Web Security)"
 description: "Типовые веб‑угрозы (OWASP Top 10) и как от них защищаться в прикладном коде и конфигурации: XSS, CSRF, SQL Injection, уязвимости аутентификации и авторизации, ошибки конфигурации."
-tags: ["security", "application", "web-security"]
+tags:
+  - security
+  - application
+  - web-security
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Веб‑безопасность (`Web Security`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Типовые веб‑угрозы (`OWASP Top 10`) и как от них защищаться в прикладном коде и конфигурации: `XSS`, `CSRF`, `SQL Injection`, уязвимости аутентификации и авторизации, ошибки конфигурации.
 

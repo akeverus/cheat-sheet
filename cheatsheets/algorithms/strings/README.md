@@ -1,7 +1,9 @@
 ---
 title: "Строки"
 description: "Алгоритмы и задачи по строкам: поиск, преобразования, палиндромы, расстояние Левенштейна и regex."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

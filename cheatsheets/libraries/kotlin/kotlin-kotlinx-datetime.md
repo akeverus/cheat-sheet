@@ -1,7 +1,10 @@
 ---
 title: "kotlinx.datetime"
 description: "kotlinx.datetime - это библиотека для работы с датами и временем в Kotlin. Предоставляет современный, type-safe API для манипуляции датами, временем и временными интервалами. Полностью совместима с Java Time API, но предоставляет более идиоматичный Kotlin интерфейс."
-tags: ["libraries", "kotlin", "kotlin-kotlinx-datetime"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-kotlinx-datetime
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # kotlinx.datetime
 
 **kotlinx.datetime** - это библиотека для работы с датами и временем в **Kotlin**. Предоставляет современный, **type-safe API** для манипуляции датами, временем и временными интервалами. Полностью совместима с **Java Time API**, но предоставляет более идиоматичный **Kotlin** интерфейс.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -1242,5 +1243,5 @@ val nextBusinessDay = businessCalendar.nextBusinessDay(date)
 ## См. также
 - [Kotlin Basics](../../languages/kotlin/kotlin-basics.md) — Основы **Kotlin**
 - [Java Date/Time API](../../languages/java/java-basics.md) — **Java Date**/**Time API**
-- [Spring Boot](../../frameworks/java-frameworks/spring/spring-boot.md) — **Spring Boot** и время
+- [Spring Boot](../../frameworks/spring/spring-boot.md) — **Spring Boot** и время
 

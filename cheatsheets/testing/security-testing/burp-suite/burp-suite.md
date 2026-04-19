@@ -1,7 +1,10 @@
 ---
 title: "Burp Suite"
 description: "Кратко: Burp Suite — платформа для тестирования безопасности веб-приложений. Proxy (перехват и модификация трафика), Scanner (автоматическое сканирование уязвимостей), Repeater (ручная отправка запросов), Intruder (фаззинг и перебор), Decoder, Comparer, расширения (BApp, Store), "
-tags: ["testing", "security-testing", "burp-suite"]
+tags:
+  - testing
+  - security-testing
+  - burp-suite
 difficulty: "intermediate"
 prerequisites: []
 next: []

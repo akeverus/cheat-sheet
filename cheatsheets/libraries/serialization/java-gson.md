@@ -1,7 +1,10 @@
 ---
 title: "Gson"
 description: "Gson - это Java библиотека от Google для сериализации и десериализации Java объектов в JSON и обратно. Простая, быстрая и широко используемая альтернатива Jackson."
-tags: ["libraries", "serialization", "java-gson"]
+tags:
+  - libraries
+  - serialization
+  - java-gson
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Gson
 
 **Gson** - это **Java** библиотека от **Google** для сериализации и десериализации **Java** объектов в **JSON** и обратно. Простая, быстрая и широко используемая альтернатива **Jackson**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "ClickHouse"
 description: "Кратко: ClickHouse - колоночная СУБД для аналитики и обработки больших данных."
-tags: ["databases", "nosql", "clickhouse"]
+tags:
+  - databases
+  - nosql
+  - clickhouse
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **ClickHouse**
 
 Кратко: **ClickHouse** - колоночная СУБД для аналитики и обработки больших данных.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

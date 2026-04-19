@@ -1,7 +1,13 @@
 ---
 title: "ClickHouse: Индексы и оптимизация - Полное руководство по индексации и партиционированию"
 description: "Комплексное руководство по индексам ClickHouse: первичные ключи, вторичные индексы, партиционирование и оптимизация запросов"
-tags: ["clickhouse", "indexes", "optimization", "partitioning", "primary-key", "secondary-indexes"]
+tags:
+  - clickhouse
+  - indexes
+  - optimization
+  - partitioning
+  - primary-key
+  - secondary-indexes
 difficulty: "advanced"
 prerequisites: ["databases/clickhouse-queries.md"]
 updated: "2026-02-06"
@@ -11,8 +17,6 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 # **ClickHouse**: Индексы и оптимизация - Полное руководство по индексации и партиционированию
 
 Комплексное руководство по индексам **ClickHouse**: первичные ключи, вторичные индексы, партиционирование и оптимизация запросов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

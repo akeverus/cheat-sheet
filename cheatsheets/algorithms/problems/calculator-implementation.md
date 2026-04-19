@@ -1,7 +1,10 @@
 ---
 title: "Calculator Implementation"
 description: "A guide to implementing a basic calculator in Java that supports addition, subtraction, multiplication, and division operations."
-tags: ["algorithms", "problems", "calculator-implementation"]
+tags:
+  - algorithms
+  - problems
+  - calculator-implementation
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Calculator Implementation
 
 A **guide** to **implementing** a **basic calculator** in **Java that supports addition**, **subtraction**, **multiplication**, **and division operations**.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

@@ -1,7 +1,13 @@
 ---
 title: "Redis: Pub/Sub"
 description: "Полное руководство по Pub/Sub в Redis: публикация, подписка, паттерны, использование, best practices"
-tags: ["redis", "pubsub", "messaging", "publish", "subscribe", "patterns"]
+tags:
+  - redis
+  - pubsub
+  - messaging
+  - publish
+  - subscribe
+  - patterns
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-streams.md"]
@@ -759,6 +765,4 @@ public class BatchedPublisher {
 - [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 

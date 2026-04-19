@@ -1,7 +1,10 @@
 ---
 title: "Python Frameworks — обзор"
 description: "Кратко: обзор веб- и прикладных фреймворков Python: Django, FastAPI, Flask, Starlette, ASGI/ WSGI, ORM, асинхронность и практики."
-tags: ["frameworks", "python-frameworks", "python-frameworks-overview"]
+tags:
+  - frameworks
+  - python-frameworks
+  - python-frameworks-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Python Frameworks — обзор
 
 Кратко: обзор веб- и прикладных фреймворков **Python**: **Django**, **FastAPI**, **Flask**, **Starlette**, **ASGI**/ **WSGI**, **ORM**, асинхронность и практики.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

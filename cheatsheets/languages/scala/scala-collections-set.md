@@ -1,7 +1,12 @@
 ---
 title: "Scala Collections - Set"
 description: "Полное руководство по работе с множествами в Scala: Set, HashSet, SortedSet, операции и лучшие практики"
-tags: ["scala", "collections", "set", "functional-programming", "immutable"]
+tags:
+  - scala
+  - collections
+  - set
+  - functional-programming
+  - immutable
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-collections-list.md", "scala/scala-collections-map.md"]
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 # **Scala Collections** - **Set**
 
 Кратко: руководство по работе с множествами в **Scala**: **Set**, **HashSet**, **SortedSet**, операции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,13 @@
 ---
 title: "Redis: Решение проблем"
 description: "Полное руководство по решению проблем в Redis: диагностика, common issues, debugging, performance problems, recovery"
-tags: ["redis", "troubleshooting", "debugging", "diagnostics", "performance", "recovery"]
+tags:
+  - redis
+  - troubleshooting
+  - debugging
+  - diagnostics
+  - performance
+  - recovery
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-performance.md"]
 next: []

@@ -1,15 +1,16 @@
 ---
 title: "Вычисление логарифма (Logarithm Calculation)"
 description: "В документе описано вычисление логарифмов в Java: десятичный (Math.log10), натуральный (Math.log) и логарифм по произвольному основанию по формуле смены основания."
-tags: ["algorithms", "math", "logarithm-calculation"]
+tags:
+  - algorithms
+  - math
+  - logarithm-calculation
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Вычисление логарифма (`Logarithm Calculation`)
-
-**Дата последнего обновления:** 2026-02-06
 
 В документе описано вычисление логарифмов в `Java`: десятичный (`Math.log10`), натуральный (`Math.log`) и логарифм по произвольному основанию по формуле смены основания.
 

@@ -1,15 +1,18 @@
 ---
 title: "Go: unsafe операции"
 description: "Полное руководство по unsafe операциям в Go: unsafe.Pointer, преобразование типов, низкоуровневые операции"
-tags: ["go", "golang", "unsafe", "pointer", "low-level"]
+tags:
+  - go
+  - golang
+  - unsafe
+  - pointer
+  - low-level
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md", "go/go-interfaces.md"]
 updated: "2026-02-06"
 ---
 
 # Go: **unsafe** операции
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

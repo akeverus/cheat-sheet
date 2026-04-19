@@ -1,7 +1,10 @@
 ---
 title: "Infrastructure as Code (IaC) — обзор"
 description: "Кратко: обзор Infrastructure as Code — Terraform, Ansible, Pulumi, Packer, декларативное и императивное описание инфраструктуры, практики."
-tags: ["platform", "iac", "iac-overview"]
+tags:
+  - platform
+  - iac
+  - iac-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Infrastructure as Code** (**IaC**) — обзор
 
 Кратко: обзор **Infrastructure as Code** — **Terraform**, **Ansible**, **Pulumi**, **Packer**, декларативное и императивное описание инфраструктуры, практики.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

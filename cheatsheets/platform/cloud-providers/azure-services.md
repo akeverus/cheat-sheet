@@ -1,7 +1,10 @@
 ---
 title: "Azure Services"
 description: "Azure предоставляет более 200 сервисов для различных задач - от вычислений и хранения данных до машинного обучения и IoT. Этот документ охватывает основные сервисы Azure, их назначение, use cases и лучшие практики использования в production средах. Документ дополняет [Azure Basic"
-tags: ["platform", "cloud-providers", "azure-services"]
+tags:
+  - platform
+  - cloud-providers
+  - azure-services
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Azure Services**
 
 **Azure** предоставляет более `200` сервисов для различных задач - от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **Azure**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [Azure Basics](azure-basics.md) более глубоким погружением в конкретные сервисы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Azure Services Documentation](https://docs.microsoft.com/azure/)

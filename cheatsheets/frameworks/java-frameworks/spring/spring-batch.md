@@ -1,7 +1,10 @@
 ---
 title: "Spring Batch для Java"
 description: "Комплексное руководство по Spring Batch: фреймворку для обработки больших объемов данных в пакетном режиме. Подробно рассматриваются job конфигурация, step lifecycle, readers/writers, chunk processing, parallel execution, error handling, scaling и production deployment."
-tags: ["frameworks", "java-frameworks", "spring-batch"]
+tags:
+  - frameworks
+  - java-frameworks
+  - spring-batch
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring Batch для Java
 
 Комплексное руководство по **Spring Batch**: фреймворку для обработки больших объемов данных в пакетном режиме. Подробно рассматриваются **job** конфигурация, **step lifecycle**, **readers**/**writers**, **chunk processing**, **parallel execution**, **error handling**, **scaling** и **production deployment**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Печать треугольников с помощью циклов for (Triangle with For Loops)"
 description: "Руководство по печати различных типов треугольников в Java с использованием циклов for, включая прямоугольные и равнобедренные треугольники."
-tags: ["algorithms", "problems", "triangle-with-for-loops"]
+tags:
+  - algorithms
+  - problems
+  - triangle-with-for-loops
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Печать треугольников с помощью циклов for (`Triangle with For Loops`)
 
 Руководство по печати различных типов треугольников в **Java** с использованием циклов **for**, включая прямоугольные и равнобедренные треугольники.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

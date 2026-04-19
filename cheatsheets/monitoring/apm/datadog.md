@@ -1,7 +1,10 @@
 ---
 title: "Datadog APM"
 description: "Единая платформа мониторинга: метрики, логи, трейсы и мониторинг пользователей."
-tags: ["monitoring", "apm", "datadog"]
+tags:
+  - monitoring
+  - apm
+  - datadog
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Datadog APM
 
 Единая платформа мониторинга: метрики, логи, трейсы и мониторинг пользователей.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

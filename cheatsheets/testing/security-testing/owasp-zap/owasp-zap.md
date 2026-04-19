@@ -1,7 +1,10 @@
 ---
 title: "OWASP ZAP"
 description: "Кратко: OWASP ZAP (Zed Attack Proxy) — открытый инструмент тестирования безопасности веб-приложений: proxy (перехват трафика), Scanner (пассивное и активное сканирование), Fuzzer, REST API для автоматизации, скрипты (Zest, Python), отчёты, интеграция с CI/CD."
-tags: ["testing", "security-testing", "owasp-zap"]
+tags:
+  - testing
+  - security-testing
+  - owasp-zap
 difficulty: "intermediate"
 prerequisites: []
 next: []

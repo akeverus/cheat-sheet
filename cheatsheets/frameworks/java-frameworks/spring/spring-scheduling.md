@@ -1,7 +1,14 @@
 ---
 title: "Spring Scheduling: Полное руководство по планированию задач"
 description: "Комплексное руководство по Spring Scheduling: @Scheduled, Task Scheduling, Async Execution, TaskExecutor, Quartz интеграция и best practices"
-tags: ["spring", "scheduling", "async", "tasks", "cron", "quartz", "java"]
+tags:
+  - spring
+  - scheduling
+  - async
+  - tasks
+  - cron
+  - quartz
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-batch.md", "spring/spring-integration.md"]

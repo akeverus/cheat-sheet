@@ -1,7 +1,10 @@
 ---
 title: "MySQL: Запросы и оптимизация SQL - Полное руководство по SQL в MySQL"
 description: "Комплексное руководство по SQL запросам в MySQL: базовые и продвинутые конструкции, оптимизация, аналитические функции и best practices."
-tags: ["databases", "relational", "mysql-queries"]
+tags:
+  - databases
+  - relational
+  - mysql-queries
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **MySQL**: Запросы и оптимизация **SQL** - Полное руководство по **SQL** в **MySQL**
 
 Комплексное руководство по **SQL** запросам в **MySQL**: базовые и продвинутые конструкции, оптимизация, аналитические функции и **best practices**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

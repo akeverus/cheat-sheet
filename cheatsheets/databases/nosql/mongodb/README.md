@@ -1,7 +1,9 @@
 ---
 title: "MongoDB"
 description: "Индекс материалов по MongoDB: основы, CRUD, агрегации, индексы, производительность, репликация и шардинг."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

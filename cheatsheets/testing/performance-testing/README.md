@@ -1,7 +1,9 @@
 ---
 title: "Performance Testing"
 description: "Индекс материалов по нагрузочному тестированию: JMeter, k6, Gatling и Artillery."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

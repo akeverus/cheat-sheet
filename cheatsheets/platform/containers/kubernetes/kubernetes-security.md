@@ -1,7 +1,10 @@
 ---
 title: "Kubernetes Security"
 description: "Безопасность в Kubernetes - это многоуровневая дисциплина, охватывающая все аспекты платформы: от сетевой изоляции до управления доступом и защиты workloads. Kubernetes предоставляет встроенные механизмы безопасности, но их правильная конфигурация критически важна для production "
-tags: ["platform", "containers", "kubernetes-security"]
+tags:
+  - platform
+  - containers
+  - kubernetes-security
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Kubernetes Security**
 
 Безопасность в **Kubernetes** - это многоуровневая дисциплина, охватывающая все аспекты платформы: от сетевой изоляции до управления доступом и защиты **workloads**. **Kubernetes** предоставляет встроенные механизмы безопасности, но их правильная конфигурация критически важна для **production** сред.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Kubernetes Security](https://kubernetes.io/docs/concepts/security/)

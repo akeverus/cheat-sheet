@@ -1,7 +1,10 @@
 ---
 title: "Terraform Advanced"
 description: "Terraform — это инструмент Infrastructure as Code для создания, изменения и управления инфраструктурой безопасным и эффективным способом. Этот документ охватывает продвинутые концепции, паттерны и best practices для enterprise-grade инфраструктуры."
-tags: ["platform", "iac", "terraform-advanced"]
+tags:
+  - platform
+  - iac
+  - terraform-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Terraform Advanced**
 
 **Terraform** — это инструмент **Infrastructure as Code** для создания, изменения и управления инфраструктурой безопасным и эффективным способом. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** инфраструктуры.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Terraform Documentation](https://developer.hashicorp.com/terraform/docs)
@@ -1367,8 +1368,8 @@ resource "aws_iam_role_policy" "application" {
 }
 ```
 ## См. также
-- [Terraform: основы](../terraform/terraform.md) — общий справочник Terraform
-- [Terraform Basics](../terraform/terraform-basics.md) — краткое введение
+- [Terraform: основы](terraform.md) — общий справочник Terraform
+- [Terraform Basics](terraform-basics.md) — краткое введение
 - [AWS](../../cloud-providers/aws-basics.md) — Amazon Web Services
 - [Ansible](../ansible/ansible-basics.md) — конфигурационное управление
 - [Docker](../../containers/docker/docker-basics.md) — контейнеризация

@@ -1,7 +1,14 @@
 ---
 title: "Kotlin Concurrency Basics"
 description: "Полное руководство по конкурентности в Kotlin: корутины, Flow, каналы, диспетчеры, паттерны асинхронного программирования"
-tags: ["kotlin", "concurrency", "coroutines", "flow", "channels", "async", "reactive"]
+tags:
+  - kotlin
+  - concurrency
+  - coroutines
+  - flow
+  - channels
+  - async
+  - reactive
 difficulty: "intermediate"
 prerequisites: ["kotlin-basics.md"]
 next: ["kotlin-advanced.md"]
@@ -11,8 +18,6 @@ updated: "2026-02-06"
 # Kotlin Concurrency: основы
 
 **Конкурентность в Kotlin** - это мощная система для написания асинхронного и параллельного кода. Основанная на корутинах (**coroutines**), она позволяет писать асинхронный код в синхронном стиле, обеспечивая высокую производительность и безопасность.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

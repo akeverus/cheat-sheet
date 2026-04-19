@@ -1,211 +1,265 @@
 ---
 title: "Вопросы на собеседовании: Design Patterns"
-description: "Краткие ответы по паттернам проектирования (GoF): Creational, Structural, Behavioral; примеры и применимость."
-tags: ["interview", "design-patterns", "design-patterns-interview"]
+description: "Полный разбор паттернов проектирования (GoF): Creational, Structural, Behavioral — с Java-примерами, диаграммами и практическими рекомендациями."
+tags:
+  - interview
+  - design-patterns
+  - design-patterns-interview
+aliases:
+  - "Design Patterns interview"
+  - "Design Patterns собеседование"
+  - "Паттерны проектирования"
+  - "GoF patterns"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Design Patterns`
 
-Краткие ответы по паттернам проектирования (`GoF`): `Creational`, `Structural`, `Behavioral`; примеры и применимость.
+Полный разбор паттернов проектирования (`GoF`): `Creational`, `Structural`, `Behavioral` — с Java-примерами, диаграммами и практическими рекомендациями.
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: **Design Patterns** (паттерны проектирования, `GoF` и др.) показывают умение проектировать расширяемый код. На собеседовании часто просят привести примеры и объяснить применимость.
-
-**Практический фокус:** сильный ответ по паттернам включает не только «где применять», но и «когда не применять» (избыточная абстракция, overengineering, рост стоимости сопровождения).
+**Design Patterns** (паттерны проектирования) — фундаментальная тема на собеседованиях по Java. Интервьюер ожидает не только знание названий, но и умение объяснить когда и зачем применять паттерн, привести пример из JDK или `Spring`, а также честно назвать ситуации, когда паттерн применять **не** стоит (overengineering). Тема тесно связана с [ООП](../programming-languages/java/java-oop-interview.md) и [Spring Framework](../frameworks/spring/spring-framework-interview.md), где паттерны используются повсеместно.
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Design Patterns (GoF)](https://refactoring.guru/design-patterns/book)
-- [Java Design Patterns](https://www.baeldung.com/design-patterns-series)
-- [Martin Fowler — Patterns](https://martinfowler.com/articles/enterprisePatterns.html)
-
-### См. также
-
-- [`../README.md`](../README.md) — обзор interview-раздела
-- [`../programming-languages/java/java-oop-interview.md`](../programming-languages/java/java-oop-interview.md) — вопросы по OOP и Java
-- [`../frameworks/spring/spring-framework-interview.md`](../frameworks/spring/spring-framework-interview.md) — вопросы по Spring Framework
-- [`../architecture/consistency-patterns-interview.md`](../architecture/consistency-patterns-interview.md) — архитектурные паттерны согласованности
+- [Design Patterns (GoF) — Refactoring Guru](https://refactoring.guru/design-patterns) — интерактивный каталог всех 23 паттернов
+- [Java Design Patterns — Baeldung](https://www.baeldung.com/design-patterns-series) — серия статей с Java-примерами
+- [Design Patterns in the Spring Framework — Baeldung](https://www.baeldung.com/spring-framework-design-patterns) — паттерны в Spring
+- [Martin Fowler — Patterns of Enterprise Application Architecture](https://martinfowler.com/eaaCatalog/) — каталог enterprise-паттернов
+- [Introduction to Creational Design Patterns](https://www.baeldung.com/creational-design-patterns) — Creational паттерны: Singleton, Factory, Builder, Prototype
+- [The Observer Pattern in Java](https://www.baeldung.com/java-observer-pattern) — Observer паттерн с Java-примерами
+- [The Factory Design Pattern in Java](https://www.baeldung.com/java-factory-pattern) — Factory Method паттерн
+- [Implement the Builder Pattern in Java](https://www.baeldung.com/java-builder-pattern) — Builder паттерн
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы паттернов**
-- [Q1. (!) Что такое Design Patterns?](#q1-важно-что-такое-design-patterns)
-- [Q2. (!) Что такое Design Antipatterns?](#q2-важно-что-такое-design-antipatterns)
-- [Q3. (!) В чём преимущества Design Patterns?](#q3-важно-в-чём-преимущества-design-patterns)
+- [Q1. (!) Что такое Design Patterns и зачем они нужны?](#q1--что-такое-design-patterns-и-зачем-они-нужны)
+- [Q2. (!) Какие категории GoF-паттернов существуют?](#q2--какие-категории-gof-паттернов-существуют)
+- [Q3. (!) Что такое антипаттерны? Приведите примеры](#q3--что-такое-антипаттерны-приведите-примеры)
+- [Q4. Каковы преимущества и риски использования Design Patterns?](#q4-каковы-преимущества-и-риски-использования-design-patterns)
+- [Q5. Как связаны принципы SOLID и Design Patterns?](#q5-как-связаны-принципы-solid-и-design-patterns)
 
 **Creational Patterns (Порождающие)**
-- [Q4. (!) Что такое Creational Patterns (Порождающие паттерны)?](#q4-важно-что-такое-creational-patterns-порождающие-паттерны)
-- [Q5. Что такое Singleton Pattern (Одиночка)?](#q5-что-такое-singleton-pattern-одиночка)
-- [Q6. Как реализовать потокобезопасные Singleton Pattern?](#q6-как-реализовать-потокобезопасные-singleton-pattern)
-- [Q7. Что произойдет, если не будет synchronized метода для возврата экземпляра Singleton Pattern в многопоточной среде?](#q7-что-произойдет-если-не-будет-synchronized-метода-для-возврата-экземпляра-singleton-pattern-в-многопоточной-среде)
-- [Q8. Что такое Prototype Pattern (Прототип)?](#q8-что-такое-prototype-pattern-прототип)
-- [Q9. Что такое Builder Pattern (Строитель)?](#q9-что-такое-builder-pattern-строитель)
-- [Q10. Что такое Factory Pattern (Фабрика)?](#q10-что-такое-factory-pattern-фабрика)
-- [Q11. Что такое Abstract Factory Pattern (Абстрактная фабрика)?](#q11-что-такое-abstract-factory-pattern-абстрактная-фабрика)
+- [Q6. (!) Что такое Singleton и как его правильно реализовать в Java?](#q6--что-такое-singleton-и-как-его-правильно-реализовать-в-java)
+- [Q7. (!) Почему enum — рекомендуемый способ создания Singleton?](#q7--почему-enum--рекомендуемый-способ-создания-singleton)
+- [Q8. Какие проблемы возникают с Singleton в многопоточной среде?](#q8-какие-проблемы-возникают-с-singleton-в-многопоточной-среде)
+- [Q9. В чём недостатки паттерна Singleton?](#q9-в-чём-недостатки-паттерна-singleton)
+- [Q10. (!) Что такое Factory Method и чем он отличается от Simple Factory?](#q10--что-такое-factory-method-и-чем-он-отличается-от-simple-factory)
+- [Q11. (!) Что такое Abstract Factory? Когда применять вместо Factory Method?](#q11--что-такое-abstract-factory-когда-применять-вместо-factory-method)
+- [Q12. (!) Что такое Builder Pattern?](#q12--что-такое-builder-pattern)
+- [Q13. Что такое Prototype Pattern?](#q13-что-такое-prototype-pattern)
 
 **Structural Patterns (Структурные)**
-- [Q12. (!) Что такое Structural Patterns (Структурные паттерны)?](#q12-важно-что-такое-structural-patterns-структурные-паттерны)
-- [Q13. Что такое Adapter pattern (Адаптер)?](#q13-что-такое-adapter-pattern-адаптер)
-- [Q14. Что такое Bridge Pattern (Мост)?](#q14-что-такое-bridge-pattern-мост)
-- [Q15. Разница между Bridge Pattern и Adapter Pattern?](#q15-разница-между-bridge-pattern-и-adapter-pattern)
-- [Q16. Что такое Decorator Pattern (Декоратор)?](#q16-что-такое-decorator-pattern-декоратор)
-- [Q17. Что такое Proxy Pattern (Прокси)?](#q17-что-такое-proxy-pattern-прокси)
-- [Q18. Что такое Facade Pattern (Фасад)?](#q18-что-такое-facade-pattern-фасад)
-- [Q19. Что такое Composite Pattern (Компоновщик)?](#q19-что-такое-composite-pattern-компоновщик)
-- [Q20. Что такое Flyweight Pattern (Приспособленец)?](#q20-что-такое-flyweight-pattern-приспособленец)
+- [Q14. (!) Обзор структурных паттернов](#q14--обзор-структурных-паттернов)
+- [Q15. (!) Что такое Adapter и когда его применять?](#q15--что-такое-adapter-и-когда-его-применять)
+- [Q16. Что такое Bridge Pattern?](#q16-что-такое-bridge-pattern)
+- [Q17. В чём разница между Bridge и Adapter?](#q17-в-чём-разница-между-bridge-и-adapter)
+- [Q18. (!) Что такое Decorator Pattern?](#q18--что-такое-decorator-pattern)
+- [Q19. В чём разница между Decorator и наследованием?](#q19-в-чём-разница-между-decorator-и-наследованием)
+- [Q20. (!) Что такое Proxy Pattern?](#q20--что-такое-proxy-pattern)
+- [Q21. Что такое Facade Pattern?](#q21-что-такое-facade-pattern)
+- [Q22. Что такое Composite Pattern?](#q22-что-такое-composite-pattern)
+- [Q23. Что такое Flyweight Pattern?](#q23-что-такое-flyweight-pattern)
 
 **Behavioral Patterns (Поведенческие)**
-- [Q21. (!) Что такое Behaviour Patterns (Поведенческие паттерны)?](#q21-важно-что-такое-behaviour-patterns-поведенческие-паттерны)
-- [Q22. Что такое Strategy Pattern (Стратегия)?](#q22-что-такое-strategy-pattern-стратегия)
-- [Q23. Что такое State Pattern (Состояние)?](#q23-что-такое-state-pattern-состояние)
-- [Q24. Разница между Strategy Pattern (Стратегия) и State Pattern (Состояние)?](#q24-разница-между-strategy-pattern-стратегия-и-state-pattern-состояние)
-- [Q25. Что такое Observer Pattern (Наблюдатель)?](#q25-что-такое-observer-pattern-наблюдатель)
-- [Q26. Что такое Chain of Responsibility Pattern (Цепочка обязанностей)?](#q26-что-такое-chain-of-responsibility-pattern-цепочка-обязанностей)
-- [Q27. Что такое Command Pattern (Команда)?](#q27-что-такое-command-pattern-команда)
-- [Q28. Что такое Interpreter Pattern (Интерпретатор)?](#q28-что-такое-interpreter-pattern-интерпретатор)
-- [Q29. Что такое Iterator Pattern (Итератор)?](#q29-что-такое-iterator-pattern-итератор)
-- [Q30. Что такое Mediator Pattern (Посредник)?](#q30-что-такое-mediator-pattern-посредник)
+- [Q24. (!) Обзор поведенческих паттернов](#q24--обзор-поведенческих-паттернов)
+- [Q25. (!) Что такое Strategy Pattern?](#q25--что-такое-strategy-pattern)
+- [Q26. Что такое State Pattern и чем он отличается от Strategy?](#q26-что-такое-state-pattern-и-чем-он-отличается-от-strategy)
+- [Q27. (!) Что такое Observer Pattern?](#q27--что-такое-observer-pattern)
+- [Q28. Что такое Chain of Responsibility?](#q28-что-такое-chain-of-responsibility)
+- [Q29. Что такое Command Pattern?](#q29-что-такое-command-pattern)
+- [Q30. (!) Что такое Template Method Pattern?](#q30--что-такое-template-method-pattern)
+- [Q31. Что такое Visitor Pattern?](#q31-что-такое-visitor-pattern)
+- [Q32. Что такое Iterator Pattern?](#q32-что-такое-iterator-pattern)
+- [Q33. Что такое Mediator Pattern?](#q33-что-такое-mediator-pattern)
+- [Q34. Что такое Memento Pattern?](#q34-что-такое-memento-pattern)
 
-**Паттерны в JDK и DI**
-- [Q31. (!) Какие Design Patterns используются в библиотеке JDK?](#q31-важно-какие-design-patterns-используются-в-библиотеке-jdk)
-- [Q32. (!) Разница между Dependency Injection Pattern и Service Locator Pattern?](#q32-важно-разница-между-dependency-injection-pattern-и-service-locator-pattern)
+**Паттерны в JDK и Spring**
+- [Q35. (!) Какие Design Patterns используются в JDK?](#q35--какие-design-patterns-используются-в-jdk)
+- [Q36. (!) Какие Design Patterns используются в Spring Framework?](#q36--какие-design-patterns-используются-в-spring-framework)
+- [Q37. (!) Разница между Dependency Injection и Service Locator?](#q37--разница-между-dependency-injection-и-service-locator)
+- [Q38. Чем отличается Singleton-паттерн от Spring singleton scope?](#q38-чем-отличается-singleton-паттерн-от-spring-singleton-scope)
 
-## Q1. (!) Что такое `Design Patterns`?
+**Практические вопросы**
+- [Q39. Как выбрать правильный паттерн для задачи?](#q39-как-выбрать-правильный-паттерн-для-задачи)
+- [Q40. Как паттерны связаны друг с другом?](#q40-как-паттерны-связаны-друг-с-другом)
+- [Q41. (!) Как паттерны изменились с появлением Java 8+?](#q41--как-паттерны-изменились-с-появлением-java-8)
+- [Q42. Что такое Null Object Pattern?](#q42-что-такое-null-object-pattern)
+- [Q43. Какие паттерны используются вместе чаще всего?](#q43-какие-паттерны-используются-вместе-чаще-всего)
+- [Q44. Interpreter Pattern — когда и зачем?](#q44-interpreter-pattern--когда-и-зачем)
+- [Q45. Назовите паттерны, которые вы использовали в реальных проектах](#q45-назовите-паттерны-которые-вы-использовали-в-реальных-проектах)
+- [Q46. Что такое Object Pool Pattern?](#q46-что-такое-object-pool-pattern)
+- [Q47. (!) Когда НЕ нужно применять паттерны проектирования?](#q47--когда-не-нужно-применять-паттерны-проектирования)
+- [Q48. Что такое паттерн Specification?](#q48-что-такое-паттерн-specification)
 
-`Design Patterns` (паттерны проектирования) — это повторяемые решения для типичных проблем, возникающих в процессе проектирования программных систем. Они представляют собой архитектурные модели или шаблоны, которые помогают разработчикам создавать гибкие, масштабируемые и поддерживаемые системы.
+---
 
-Паттерны проектирования описывают основные принципы и подходы к проектированию, а также определяют взаимодействие между различными компонентами системы. Они предоставляют унифицированный язык и набор рекомендаций, которые помогают разработчикам работать совместно и эффективно решать проблемы проектирования.
+## Q1. (!) Что такое `Design Patterns` и зачем они нужны?
 
-Существуют различные категории шаблонов проектирования, такие как:
+`Design Patterns` (паттерны проектирования) — это проверенные, повторно используемые решения для типичных задач проектирования ПО. Термин популяризирован «Бандой четырёх» (`GoF` — Gamma, Helm, Johnson, Vlissides) в книге *Design Patterns: Elements of Reusable Object-Oriented Software* (1994).
 
-1. `Creational Patterns` (Порождающие шаблоны) — позволяют создавать объекты определенным образом, обеспечивая гибкость и возможность расширения системы. Примеры: `Singleton`, `Factory Method`, `Builder`.
-2. `Structural Patterns` (Структурные шаблоны) — определяют отношения между различными объектами, обеспечивая простоту и эффективность системы. Примеры: `Adapter`, `Decorator`, `Composite`.
-3. `Behavioral Patterns` (Поведенческие шаблоны) — определяют взаимодействие между объектами и обеспечивают гибкость при изменении поведения системы. Примеры: `Observer`, `Strategy`, `Command`.
+**Ключевые свойства паттернов:**
+- Это **не готовый код**, а шаблон решения, который нужно адаптировать под контекст
+- Описывают **взаимодействие классов и объектов**, а не конкретную реализацию
+- Предоставляют **общий словарь** для общения между разработчиками (вместо «у нас класс, который оборачивает другой» — сказать «это `Decorator`»)
 
-Каждый шаблон проектирования имеет свою сферу применения и решает определенные проблемы. Они обеспечивают стандартизацию и повышение качества разработки, позволяя повторно использовать успешные решения и избегать распространенных ошибок. Паттерны проектирования не являются жесткими правилами, но рекомендуется использовать их в соответствии с контекстом и требованиями проекта для достижения наилучшей структуры и функциональности системы.
+**Три категории GoF:**
 
-## Q2. (!) Что такое `Design Antipatterns`?
+| Категория | Назначение | Примеры |
+|-----------|-----------|---------|
+| `Creational` | Создание объектов | `Singleton`, `Factory Method`, `Builder` |
+| `Structural` | Композиция классов/объектов | `Adapter`, `Decorator`, `Proxy` |
+| `Behavioral` | Взаимодействие объектов | `Strategy`, `Observer`, `Command` |
 
-`Design Antipatterns` (антипаттерны проектирования) — это типичные ошибки и нежелательные практики, которые могут возникать в процессе проектирования программных систем. Они представляют собой противоположность шаблонам проектирования и могут приводить к неэффективности, сложности и низкой поддерживаемости системы. Антипаттерны проектирования могут возникать из-за неправильного или некорректного применения шаблонов, непонимания требований, недостатка опыта или нежелания вкладывать достаточное время и усилия в проектирование. Некоторые примеры антипаттернов проектирования включают:
+> **На собеседовании:** интервьюер ожидает, что вы не просто перечислите паттерны, а объясните, какую проблему каждый решает и приведёте пример из реального кода (JDK, `Spring`).
 
-1. God `Object` (Божественный объект): класс, который выполняет слишком много задач и содержит слишком много ответственности, что делает его сложным для понимания и поддержки.
-2. `Magic Number` (Магическое число): использование безымянных чисел в коде, которые трудно понять без комментариев. Лучше использовать константы или перечисления для улучшения читаемости и поддерживаемости кода.
-3. `Duplicate Code` (Дублирующийся код): копирование и вставка кода, вместо повторного использования существующих методов или классов. Дублирование кода приводит к увеличению объема кода, затрудняет его поддержку и повышает вероятность ошибок.
-4. `Lazy Initialization` (Ленивая инициализация): откладывание инициализации объектов до момента их первого использования, что может привести к проблемам с многопоточностью и непредсказуемому поведению программы.
-5. `Global Variables` (Глобальные переменные): использование переменных, доступных из любой части программы без контроля их изменения. Это приводит к сложному взаимодействию между различными частями программы и усложняет отладку и тестирование.
-6. Big `Class` (Большой класс): класс, который содержит слишком много методов и полей, что делает его сложным для понимания и модификации. Лучше разделить его на несколько более мелких классов с четко определенными обязанностями.
-7. `Unnecessary Complexity` (Ненужная сложность): добавление сложности в код без реальной необходимости, что делает его трудным для понимания и поддержки. Лучше оставить код простым и понятным.
+## Q2. (!) Какие категории `GoF`-паттернов существуют?
 
-Цель изучения антипаттернов состоит в том, чтобы избегать их использования и учиться проектировать системы более эффективно. Понимание антипаттернов помогает разработчикам распознавать проблемные моменты в коде и предлагать оптимальные решения для создания гибких, поддерживаемых и расширяемых систем.
+Всего 23 паттерна в трёх категориях:
 
-## Q3. (!) В чём преимущества `Design Patterns`?
+```mermaid
+graph TD
+    GoF[GoF Design Patterns — 23 паттерна]
+    GoF --> C[Creational — 5]
+    GoF --> S[Structural — 7]
+    GoF --> B[Behavioral — 11]
 
-`Design Patterns` предлагают ряд преимуществ, вот некоторые из них:
+    C --> C1[Singleton]
+    C --> C2[Factory Method]
+    C --> C3[Abstract Factory]
+    C --> C4[Builder]
+    C --> C5[Prototype]
 
-1. Повышение переиспользуемости кода: Паттерны помогают создавать гибкий и расширяемый код, который может быть повторно использован в различных проектах и ситуациях.
-2. Улучшение понимания кода: Использование паттернов делает код более структурированным и понятным. Это помогает разработчикам более легко понимать, как работает код и вносить изменения без нежелательных побочных эффектов.
-3. Сокращение времени разработки: Паттерны предлагают готовые решения для часто встречающихся проблем проектирования. Это позволяет разработчикам экономить время, так как они могут использовать уже проверенные и эффективные подходы вместо того, чтобы придумывать все с нуля.
-4. Улучшение расширяемости и поддерживаемости: Паттерны помогают создавать гибкий код, который легко адаптировать и расширять. Это позволяет легко добавлять новые функции и изменять существующий код без необходимости полной переработки.
-5. Повышение качества кода: Паттерны обладают множеством программистских лучших практик. Их использование способствует созданию кода, который лучше организован, понятен и легко тестируется.
+    S --> S1[Adapter]
+    S --> S2[Bridge]
+    S --> S3[Composite]
+    S --> S4[Decorator]
+    S --> S5[Facade]
+    S --> S6[Flyweight]
+    S --> S7[Proxy]
 
-В целом, использование `Design Patterns` может существенно улучшить качество разработки ПО и сделать код более эффективным, переиспользуемым и легко поддерживаемым.
+    B --> B1[Chain of Responsibility]
+    B --> B2[Command]
+    B --> B3[Interpreter]
+    B --> B4[Iterator]
+    B --> B5[Mediator]
+    B --> B6[Memento]
+    B --> B7[Observer]
+    B --> B8[State]
+    B --> B9[Strategy]
+    B --> B10[Template Method]
+    B --> B11[Visitor]
+```
 
-## Q4. (!) Что такое `Creational Patterns` (Порождающие паттерны)?
+**Порождающие (Creational)** — абстрагируют процесс создания объектов, делают систему независимой от способа создания, композиции и представления объектов.
 
-`Creational Patterns` (Порождающие паттерны) — это категория паттернов проектирования, которые отвечают за создание объектов. Они предоставляют гибкие и эффективные способы создания объектов, управления их жизненным циклом и обеспечения необходимой конфигурации. В данной категории наиболее распространенные паттерны включают:
+**Структурные (Structural)** — описывают, как классы и объекты компонуются в более крупные структуры, при этом сохраняя гибкость и эффективность.
 
-1. `Singleton` (Одиночка): Обеспечивает, что у класса есть только один экземпляр, и предоставляет глобальную точку доступа к этому экземпляру.
-2. `Factory Method` (Фабричный метод): Определяет интерфейс для создания объектов, но позволяет подклассам выбирать класс создаваемого объекта.
-3. `Abstract Factory` (Абстрактная фабрика): Предоставляет интерфейс для создания семейств взаимосвязанных объектов без указания их конкретных классов.
-4. `Builder` (Строитель): Позволяет создавать сложные объекты частями, а затем объединять их вместе для создания завершенного объекта.
-5. `Prototype` (Прототип): Позволяет создавать новые объекты путем клонирования существующего объекта-прототипа. Паттерны порождающего типа помогают создавать объекты только в нужный момент, сокращают связывание между классами и способствуют созданию гибкого и расширяемого кода. Они играют важную роль в проектировании ПО, позволяя разработчикам управлять процессом создания объектов эффективным и структурированным образом.
+**Поведенческие (Behavioral)** — определяют алгоритмы и распределение обязанностей между объектами, описывают паттерны взаимодействия.
 
-## Q5. Что такое `Singleton Pattern` (Одиночка)?
+## Q3. (!) Что такое антипаттерны? Приведите примеры
 
-`Singleton Pattern` (Одиночка) — это паттерн проектирования, который гарантирует существование только одного экземпляра класса во всей программе и предоставляет глобальную точку доступа для получения этого экземпляра.
+**Антипаттерны** — это типичные ошибки проектирования, которые кажутся разумными решениями, но приводят к проблемам. Знание антипаттернов не менее важно, чем знание паттернов.
 
-`Singleton Pattern` часто используется, когда требуется общий ресурс, например, база данных, логгер или конфигурационные данные. Он обеспечивает контролируемый доступ к этому ресурсу, чтобы предотвратить возникновение проблем с его параллельной работой или неудачного использования.
+| Антипаттерн | Описание | Как исправить |
+|-------------|----------|---------------|
+| **God Object** | Один класс делает всё | Разбить на классы с единственной ответственностью (SRP) |
+| **Spaghetti Code** | Запутанная, неструктурированная логика | Рефакторинг с применением паттернов |
+| **Golden Hammer** | Применение одного паттерна везде | Выбирать паттерн под задачу |
+| **Lava Flow** | Мёртвый код, который боятся удалить | Тесты + безопасное удаление |
+| **Copy-Paste Programming** | Дублирование кода | Extract Method, Template Method |
+| **Magic Numbers/Strings** | Литералы без имён в коде | Константы и `enum` |
+| **Premature Optimization** | Оптимизация до профилирования | «Make it work, make it right, make it fast» |
 
-Преимущества использования `Singleton`:
+Подробнее о рефакторинге и устранении code smells — в [паттернах рефакторинга](../code-quality/refactoring-patterns-interview.md).
 
-1. Гарантированное существование только одного экземпляра класса.
-2. Глобальный доступ к этому экземпляру.
-3. Уменьшение использования ресурсов системы, так как создается только один экземпляр класса.
+## Q4. Каковы преимущества и риски использования `Design Patterns`?
 
-`Singleton` может быть реализован разными способами, в том числе через использование статических членов класса, использование ленивой инициализации или использование синхронизации для обеспечения потокобезопасности.
+**Преимущества:**
+1. **Общий словарь** — команда говорит на одном языке («это `Strategy`», «тут нужен `Adapter`»)
+2. **Проверенные решения** — не нужно изобретать велосипед
+3. **Улучшение расширяемости** — Open/Closed Principle реализуется через паттерны
+4. **Упрощение code review** — паттерн легко распознать и проверить
 
-Существует несколько способов создания `Singleton Pattern` (Одиночка) в программировании. Опишу некоторые из них:
+**Риски и ограничения:**
+1. **Overengineering** — применение паттерна там, где достаточно простого `if`
+2. **Рост числа классов** — `Strategy` с 20 стратегиями по 3 строки кода — это перебор
+3. **Ложное ощущение архитектуры** — паттерны не заменяют продуманный дизайн
+4. **Устаревание** — часть паттернов упростилась с появлением лямбд в [Java 8+](../programming-languages/java/java-8-interview.md)
 
-1. Простой `Singleton` с ленивой инициализацией:
-   - Приватный конструктор.
-   - Статическое приватное поле для хранения экземпляра класса.
-   - Статический публичный метод для получения экземпляра, в котором проверяется, создан ли экземпляр класса. Если нет, то создается новый экземпляр.
+> **На собеседовании:** покажите, что вы умеете **не** применять паттерн, когда он не нужен. Это ценится выше, чем знание всех 23 паттернов.
+
+## Q5. Как связаны принципы `SOLID` и `Design Patterns`?
+
+Каждый паттерн реализует один или несколько принципов SOLID:
+
+| Принцип | Паттерны, которые его реализуют |
+|---------|-------------------------------|
+| **SRP** (Single Responsibility) | `Strategy`, `Command`, `Chain of Responsibility` |
+| **OCP** (Open/Closed) | `Decorator`, `Strategy`, `Observer` |
+| **LSP** (Liskov Substitution) | `Factory Method`, `Template Method` |
+| **ISP** (Interface Segregation) | `Adapter`, `Facade` |
+| **DIP** (Dependency Inversion) | `Abstract Factory`, `DI`, `Strategy` |
+
+Подробнее о принципах ООП — в [вопросах по ООП](../programming-languages/java/java-oop-interview.md).
+
+---
+
+## Q6. (!) Что такое `Singleton` и как его правильно реализовать в Java?
+
+`Singleton` гарантирует, что у класса **ровно один экземпляр**, и предоставляет глобальную точку доступа к нему.
+
+```mermaid
+classDiagram
+    class Singleton {
+        -static instance: Singleton
+        -Singleton()
+        +static getInstance(): Singleton
+    }
+```
+
+**5 способов реализации в Java (от простого к рекомендуемому):**
+
+**1. Eager initialization** — создание при загрузке класса:
 
 ```java
 public class Singleton {
-    private static Singleton instance;
-
+    private static final Singleton INSTANCE = new Singleton();
     private Singleton() {}
-
-    public static Singleton getInstance() {
-        if (instance == null) {
-            instance = new Singleton();
-        }
-        return instance;
-    }
-}
-```
-
-2. `Singleton` с использованием статического поля:
-   - Приватный конструктор.
-   - Статическое приватное поле для хранения экземпляра класса, например, instance.
-   - Статический публичный метод для получения экземпляра, в котором проверяется, создан ли экземпляр. Если нет, то создается новый экземпляр и присваивается статическому полю instance.
-
-```java
-public class Singleton {
-    private static Singleton instance = new Singleton();
-
-    private Singleton() {}
-
-    public static Singleton getInstance() {
-        return instance;
-    }
-}
-```
-
-3. `Singleton` с использованием `Enum`:
-   - Создание `Enum` класса, где каждый элемент является экземпляром `Singleton`.
-   - Публичный метод для получения экземпляра.
-
-```java
-public enum Singleton {
-    INSTANCE;
-
     public static Singleton getInstance() {
         return INSTANCE;
     }
 }
 ```
 
-4. `Singleton` с двойной проверкой:
-   - Приватный конструктор.
-   - Статическое приватное поле для хранения экземпляра класса.
-   - Двойная проверка в статическом публичном методе `getInstance()`, чтобы убедиться, что экземпляр не создается дважды.
+**2. Lazy initialization** (не потокобезопасный!):
 
 ```java
 public class Singleton {
-    private static volatile Singleton instance;
-
+    private static Singleton instance;
     private Singleton() {}
+    public static Singleton getInstance() {
+        if (instance == null) {
+            instance = new Singleton();  // Race condition!
+        }
+        return instance;
+    }
+}
+```
 
+**3. Double-Checked Locking** (DCL):
+
+```java
+public class Singleton {
+    private static volatile Singleton instance; // volatile обязателен!
+    private Singleton() {}
     public static Singleton getInstance() {
         if (instance == null) {
             synchronized (Singleton.class) {
@@ -219,2383 +273,1637 @@ public class Singleton {
 }
 ```
 
-5. `Singleton` с использованием вложенного класса:
-   - Приватный конструктор.
-   - Вложенный приватный статический класс, в котором объявлено статическое поле для хранения экземпляра класса.
-   - Статический публичный метод родительского класса для получения экземпляра через вложенный класс.
+**4. Bill Pugh — Initialization-on-demand holder:**
 
 ```java
 public class Singleton {
     private Singleton() {}
 
-    private static class SingletonHolder {
+    private static class Holder {
         private static final Singleton INSTANCE = new Singleton();
     }
 
     public static Singleton getInstance() {
-        return SingletonHolder.INSTANCE;
+        return Holder.INSTANCE;
     }
 }
 ```
 
-Какой способ выбрать, зависит от требований конкретного проекта и языка программирования. Важно помнить, что при реализации `Singleton Pattern` нужно учитывать потокобезопасность и возможные проблемы с многопоточностью, чтобы гарантировать, что только один экземпляр класса будет создан и использован.
-
-## Q6. Как реализовать потокобезопасные `Singleton Pattern`?
-
-Создается потокобезопасный одноэлементный класс, который помогает инициализировать объект при наличии нескольких потоков. Это можно сделать несколькими способами:
-
-1. Использование `Enum` — это простейший способ создания потокобезопасного `Singleton` в `Java`, поскольку поддержка синхронизации по своей сути осуществляется самой `Java`. Перечисления по умолчанию являются final, и это также помогает предотвратить множественные инициализации во время сериализации.
+**5. Enum (рекомендуемый способ — Joshua Bloch, Effective Java):**
 
 ```java
-public enum ThreadSafeSingleton {
+public enum Singleton {
+    INSTANCE;
 
-SINGLETON_INSTANCE;
-
-public void display(){
-
-System.out.println("Thread-safe singleton Display");
-
-}
-
+    public void doSomething() {
+        // бизнес-логика
+    }
 }
 ```
 
-```java
-ThreadSafeSingleton.SINGLETON_INSTANCE.display();
+> **На собеседовании:** называйте `enum` как лучший вариант и объясняйте почему (см. Q7).
+
+## Q7. (!) Почему `enum` — рекомендуемый способ создания `Singleton`?
+
+Преимущества `enum`-подхода по сравнению с другими способами:
+
+| Свойство | `enum` | DCL / Holder | Eager |
+|----------|--------|-------------|-------|
+| Потокобезопасность | JVM гарантирует | Нужен `volatile` / holder | Да |
+| Защита от reflection | Да, `Constructor.newInstance()` бросит исключение | Нет | Нет |
+| Защита от сериализации | Автоматически | Нужен `readResolve()` | Нужен `readResolve()` |
+| Защита от клонирования | `Enum` не поддерживает `clone()` | Нужно переопределять | Нужно переопределять |
+| Ленивая инициализация | Нет (загрузка при первом обращении к `enum`) | DCL: да, Holder: да | Нет |
+
+**Ограничение:** `enum Singleton` не поддерживает наследование (не может `extends` другой класс). Если нужно наследование — используйте Bill Pugh Holder.
+
+## Q8. Какие проблемы возникают с `Singleton` в многопоточной среде?
+
+Без правильной синхронизации:
+1. **Race condition** — два потока одновременно проверяют `instance == null` и создают два экземпляра
+2. **Видимость изменений** — без `volatile` поток может увидеть частично сконструированный объект (instruction reordering)
+3. **Несогласованное состояние** — разные потоки работают с разными экземплярами
+
+Подробнее о проблемах многопоточности — в [вопросах по Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
+
+## Q9. В чём недостатки паттерна `Singleton`?
+
+1. **Глобальное состояние** — `Singleton` фактически является замаскированной глобальной переменной
+2. **Затрудняет тестирование** — невозможно подменить зависимость моком без DI-фреймворка
+3. **Нарушает SRP** — класс отвечает и за свою логику, и за контроль своего жизненного цикла
+4. **Скрытые зависимости** — вызов `Singleton.getInstance()` в коде скрывает зависимость от IDE и читателя
+5. **Проблемы с classloader'ами** — в среде с несколькими `ClassLoader` (например, application server) может быть создано несколько экземпляров
+
+> **Вместо `Singleton`** в современной Java используйте DI-контейнер ([Spring IoC](../frameworks/spring/spring-framework-interview.md)) с `@Scope("singleton")` — это даёт все преимущества без недостатков.
+
+## Q10. (!) Что такое `Factory Method` и чем он отличается от `Simple Factory`?
+
+**`Factory Method`** — определяет интерфейс создания объекта, но позволяет подклассам решить, какой класс инстанциировать.
+
+```mermaid
+classDiagram
+    class Creator {
+        <<abstract>>
+        +factoryMethod(): Product
+        +someOperation()
+    }
+    class ConcreteCreatorA {
+        +factoryMethod(): Product
+    }
+    class ConcreteCreatorB {
+        +factoryMethod(): Product
+    }
+    class Product {
+        <<interface>>
+    }
+    class ConcreteProductA
+    class ConcreteProductB
+
+    Creator <|-- ConcreteCreatorA
+    Creator <|-- ConcreteCreatorB
+    Product <|.. ConcreteProductA
+    Product <|.. ConcreteProductB
+    ConcreteCreatorA ..> ConcreteProductA : creates
+    ConcreteCreatorB ..> ConcreteProductB : creates
 ```
 
-2. Использование инициализации статического поля: Потокобезопасные `Singleton` также можно создать, создав экземпляр во время загрузки класса. Это достигается за счет использования статических полей, поскольку загрузчик классов гарантирует, что экземпляры инициализируются во время загрузки класса, и экземпляр не отображается до тех пор, пока он не будет полностью создан.
-
 ```java
-public class ThreadSafeSingleton {
-
-private static final ThreadSafeSingleton INSTANCE = new ThreadSafeSingleton();
-
-private ThreadSafeSingleton(){}
-
-public static ThreadSafeSingleton getInstance(){
-
-return INSTANCE;
-
+// Продукт
+interface Notification {
+    void send(String message);
 }
 
-public void display(){
-
-System.out.println("Thread-safe Singleton");
-
+class EmailNotification implements Notification {
+    public void send(String message) {
+        System.out.println("Email: " + message);
+    }
 }
 
+class SmsNotification implements Notification {
+    public void send(String message) {
+        System.out.println("SMS: " + message);
+    }
 }
 
-ThreadSafeSingleton.getInstance().display();
+// Factory Method
+abstract class NotificationFactory {
+    abstract Notification createNotification();
+
+    public void notify(String message) {
+        Notification notification = createNotification();
+        notification.send(message);
+    }
+}
+
+class EmailNotificationFactory extends NotificationFactory {
+    Notification createNotification() {
+        return new EmailNotification();
+    }
+}
+
+class SmsNotificationFactory extends NotificationFactory {
+    Notification createNotification() {
+        return new SmsNotification();
+    }
+}
 ```
 
-Но недостатком этого способа является то, что инициализацию нельзя выполнить лениво, а метод getInstance() вызывается еще до того, как любой клиент сможет его вызвать.
+**Отличие от Simple Factory:**
 
-3. Использование ключевого слова synchronized: мы можем использовать ключевое слово synchronized в методе getInstance(), как показано ниже. В этом методе мы можем добиться ленивой инициализации, а также, поскольку мы используем синхронизированные ключевые слова, инициализация объекта является потокобезопасной. Единственная проблема заключается в том, что, поскольку весь метод синхронизирован, производительность снижается при наличии нескольких потоков.
+| | `Simple Factory` | `Factory Method` |
+|---|---|---|
+| Тип | Не GoF-паттерн, просто идиома | GoF-паттерн |
+| Расширение | Через `if/switch` в одном классе | Через новый подкласс фабрики |
+| OCP | Нарушает (надо менять фабрику) | Соблюдает |
 
-```java
-public class `ThreadSafeSingleton` {
+**В JDK:** `Calendar.getInstance()`, `NumberFormat.getInstance()`.
 
-private static `ThreadSafeSingleton` instance;
+## Q11. (!) Что такое `Abstract Factory`? Когда применять вместо `Factory Method`?
 
-private `ThreadSafeSingleton`()
-
-{
-
-}
-
-synchronized public static `ThreadSafeSingleton getInstance`(){
-
-if (`this.instance` == `null`)
-
-{
-
-`this.instance` = new `ThreadSafeSingleton`();
-
-}
-
-return `this.instance`;
-
-}
-
-}
-
-```
-
-1. Двойная проверка блокировки: здесь мы будем использовать синхронизированный блок кода в методе `getInstance` вместо того, чтобы синхронизировать весь метод. Это гарантирует, что только несколько потоков будут ждать только в первый раз, что не повлияет на производительность.
+`Abstract Factory` создаёт **семейства связанных объектов** без указания их конкретных классов.
 
 ```java
-public class ThreadSafeSingleton {
+// Семейства продуктов
+interface Button { void render(); }
+interface Checkbox { void render(); }
 
-private static ThreadSafeSingleton instance;
-
-private ThreadSafeSingleton(){
-
+// Конкретные продукты — Material Design
+class MaterialButton implements Button {
+    public void render() { System.out.println("Material Button"); }
+}
+class MaterialCheckbox implements Checkbox {
+    public void render() { System.out.println("Material Checkbox"); }
 }
 
-public static ThreadSafeSingleton getInstance(){
-
-if (instance == null){
-
-synchronized (ThreadSafeSingleton.class){
-
-if(instance==null)
-
-{
-
-instance = new ThreadSafeSingleton();
-
+// Конкретные продукты — iOS
+class IosButton implements Button {
+    public void render() { System.out.println("iOS Button"); }
+}
+class IosCheckbox implements Checkbox {
+    public void render() { System.out.println("iOS Checkbox"); }
 }
 
+// Абстрактная фабрика
+interface UIFactory {
+    Button createButton();
+    Checkbox createCheckbox();
 }
 
+class MaterialUIFactory implements UIFactory {
+    public Button createButton() { return new MaterialButton(); }
+    public Checkbox createCheckbox() { return new MaterialCheckbox(); }
 }
 
-return instance;
-
+class IosUIFactory implements UIFactory {
+    public Button createButton() { return new IosButton(); }
+    public Checkbox createCheckbox() { return new IosCheckbox(); }
 }
-
-}
-
 ```
 
-## Q7. Что произойдет, если не будет synchronized метода для возврата экземпляра Singleton Pattern в многопоточной среде?
+**Когда `Abstract Factory` вместо `Factory Method`:**
+- Нужно создавать **семейство** взаимосвязанных объектов (кнопка + чекбокс + текстовое поле одного стиля)
+- Объекты внутри семейства должны быть **совместимы** друг с другом
+- `Factory Method` достаточно, если создаётся **один тип** объекта
+
+## Q12. (!) Что такое `Builder` Pattern?
+
+`Builder` позволяет пошагово создавать сложные объекты. Особенно полезен, когда у объекта **много опциональных параметров**.
+
+```java
+public class HttpRequest {
+    private final String url;
+    private final String method;
+    private final Map<String, String> headers;
+    private final String body;
+    private final int timeout;
+
+    private HttpRequest(Builder builder) {
+        this.url = builder.url;
+        this.method = builder.method;
+        this.headers = builder.headers;
+        this.body = builder.body;
+        this.timeout = builder.timeout;
+    }
+
+    public static class Builder {
+        private final String url;       // обязательный
+        private String method = "GET";  // значение по умолчанию
+        private Map<String, String> headers = new HashMap<>();
+        private String body;
+        private int timeout = 30_000;
+
+        public Builder(String url) {
+            this.url = Objects.requireNonNull(url);
+        }
+
+        public Builder method(String method) {
+            this.method = method;
+            return this;
+        }
+
+        public Builder header(String key, String value) {
+            this.headers.put(key, value);
+            return this;
+        }
+
+        public Builder body(String body) {
+            this.body = body;
+            return this;
+        }
+
+        public Builder timeout(int timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public HttpRequest build() {
+            return new HttpRequest(this);
+        }
+    }
+}
+
+// Использование
+HttpRequest request = new HttpRequest.Builder("https://api.example.com")
+    .method("POST")
+    .header("Content-Type", "application/json")
+    .body("{\"name\": \"test\"}")
+    .timeout(5000)
+    .build();
+```
+
+**В JDK:** `StringBuilder`, `Stream.Builder`, `Locale.Builder`.
+**В библиотеках:** Lombok `@Builder`, Immutables, AutoValue.
+
+## Q13. Что такое `Prototype` Pattern?
+
+`Prototype` создаёт новые объекты путём **клонирования** существующего объекта-прототипа. Полезен, когда создание объекта через `new` дорого (например, чтение из БД или сложная инициализация).
+
+```java
+public class GameUnit implements Cloneable {
+    private String type;
+    private int health;
+    private List<String> abilities;
+
+    public GameUnit(String type, int health, List<String> abilities) {
+        this.type = type;
+        this.health = health;
+        this.abilities = new ArrayList<>(abilities);
+    }
+
+    @Override
+    public GameUnit clone() {
+        try {
+            GameUnit copy = (GameUnit) super.clone();
+            copy.abilities = new ArrayList<>(this.abilities); // deep copy
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+}
+```
 
-Если в многопоточной среде нет синхронизированного метода для возврата экземпляра Singleton, это может привести к следующим проблемам:
+> **Внимание:** `Object.clone()` делает **shallow copy**. Для коллекций и мутабельных полей нужно явно делать deep copy. Подробнее — в [вопросах по Java Core](../programming-languages/java/java-core-interview.md).
 
-1. Создание нескольких экземпляров:
- 1. При одновременном вызове метода получения экземпляра (например, getInstance()) из разных потоков может возникнуть ситуация, когда создаются несколько экземпляров Singleton. 2. В результате каждый поток получит свой собственный экземпляр класса, что нарушает принцип Singleton о том, что должен быть только один экземпляр. 1. Несогласованное состояние:
- 1. Если экземпляр Singleton содержит внутреннее состояние или данные, то при параллельном доступе несинхронизированный метод может привести к несогласованному состоянию объекта. 2. Разные потоки могут одновременно изменять состояние объекта, что может привести к ошибкам или неправильным результатам выполнения программы. 1. Непредсказуемое поведение:
- 1. Без синхронизации в многопоточной среде порядок выполнения операций может быть непредсказуемым. 2. Это может привести к неправильному порядку создания и использования экземпляра Singleton, а также к потенциальным Race Condition между потоками. Чтобы избежать указанных проблем, важно обеспечить потокобезопасность при реализации Singleton. Это можно сделать путем синхронизации метода получения экземпляра или использования других подходов, таких как двойная проверка, блокировки или классы-обертки для ленивой инициализации.
+---
 
-## Q8. Что такое Prototype Pattern (Прототип)?
+## Q14. (!) Обзор структурных паттернов
 
-Prototype Pattern (Прототип) — это паттерн проектирования, который позволяет создавать копии объектов, не раскрывая их внутреннюю структуру. Он позволяет создавать новые объекты путем клонирования уже существующих, что упрощает создание объектов с большим количеством внутренних свойств или сложной структурой. Пример реализации Prototype Pattern на Java:
+Структурные паттерны описывают, как собирать объекты и классы в более крупные структуры:
 
-import java.util.HashMap;
+```mermaid
+graph LR
+    SP[Structural Patterns]
+    SP --> Adapter[Adapter — совмещение интерфейсов]
+    SP --> Bridge[Bridge — разделение абстракции и реализации]
+    SP --> Composite[Composite — дерево объектов]
+    SP --> Decorator[Decorator — динамическое расширение]
+    SP --> Facade[Facade — упрощение интерфейса подсистемы]
+    SP --> Flyweight[Flyweight — разделение общего состояния]
+    SP --> Proxy[Proxy — подмена/контроль доступа]
+```
 
-import java.util.Map;
+**Мнемоника для запоминания:** «ABCDFFP» — Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy.
 
-// Абстрактный класс прототипа
+## Q15. (!) Что такое `Adapter` и когда его применять?
 
-abstract class Shape implements Cloneable {
+`Adapter` преобразует интерфейс класса в другой интерфейс, который ожидает клиент.
 
-private String id;
+```mermaid
+classDiagram
+    class Target {
+        <<interface>>
+        +request()
+    }
+    class Adaptee {
+        +specificRequest()
+    }
+    class Adapter {
+        -adaptee: Adaptee
+        +request()
+    }
+    Target <|.. Adapter
+    Adapter --> Adaptee
+```
 
-protected String type;
-
-abstract void draw();
-
-// Метод клонирования
-
-public Object clone() {
-
-Object clone = null;
-
-try {
-
-clone = super.clone();
-
-} catch (CloneNotSupportedException e) {
-
-e.printStackTrace();
-
-}
-
-return clone;
-
-}
-
-// Геттер для id
-
-public String getId() {
-
-return id;
-
-}
-
-// Сеттер для id
-
-public void setId(String id) {
-
-this.id = id;
-
-}
-
-// Геттер для type
-
-public String getType() {
-
-return type;
-
-}
-
-}
-
-// Конкретные классы прототипов
-
-class Circle extends Shape {
-
-public Circle() {
-
-type = "Circle";
-
-}
-
-@Override
-
-public void draw() {
-
-System.out.println("Drawing a circle");
-
-}
-
-}
-
-class Square extends Shape {
-
-public Square() {
-
-type = "Square";
-
-}
-
-@Override
-
-public void draw() {
-
-System.out.println("Drawing a square");
-
-}
-
-}
-
-class Rectangle extends Shape {
-
-public Rectangle() {
-
-type = "Rectangle";
-
-}
-
-@Override
-
-public void draw() {
-
-System.out.println("Drawing a rectangle");
-
-}
-
-}
-
-// Класс, использующий прототипы
-
-class ShapeCache {
-
-private static Map<String, Shape> shapeMap = new HashMap<>();
-
-// Метод для получения прототипа по идентификатору
-
-public static Shape getShape(String shapeId) {
-
-Shape cachedShape = shapeMap.get(shapeId);
-
-return (Shape) cachedShape.clone();
-
-}
-
-// Метод для инициализации прототипов
-
-public static void loadCache() {
-
-Circle circle = new Circle();
-
-circle.setId("1");
-
-shapeMap.put(circle.getId(), circle);
-
-Square square = new Square();
-
-square.setId("2");
-
-shapeMap.put(square.getId(), square);
-
-Rectangle rectangle = new Rectangle();
-
-rectangle.setId("3");
-
-shapeMap.put(rectangle.getId(), rectangle);
-
-}
-
-}
-
-public class PrototypePatternExample {
-
-public static void main(String[] args) {
-
-ShapeCache.loadCache();
-
-Shape clonedCircle = ShapeCache.getShape("1");
-
-System.out.println("Shape: " + clonedCircle.getType());
-
-Shape clonedSquare = ShapeCache.getShape("2");
-
-System.out.println("Shape: " + clonedSquare.getType());
-
-Shape clonedRectangle = ShapeCache.getShape("3");
-
-System.out.println("Shape: " + clonedRectangle.getType());
-
-}
-
-}
-
-В данном примере класс Shape является абстрактным классом-прототипом, который имеет метод клонирования и определенные свойства для идентификации и типа объекта. Конкретные классы Circle, Square и Rectangle представляют различные прототипы, которые создаются путем клонирования абстрактного класса Shape. Класс ShapeCache содержит методы для получения и инициализации прототипов. В методе `main` мы используем ShapeCache для получения и отображения копий различных фигур. Prototype Pattern используется для создания дубликатов объектов на основе уже существующего объекта с помощью клонирования. Это положительно влияет на производительность создания объектов. Создание объектов с использованием new требует много ресурсов и является тяжелым процессом, влияющим на производительность. Следовательно,Prototype Pattern более выгоден, чем объект, созданный с использованием ключевого слова `new`.
-
-## Q9. Что такое Builder Pattern (Строитель)?
-
-Builder Pattern (Строитель) — это паттерн проектирования, используемый для создания сложных объектов пошагово. Он позволяет конструировать объекты, при этом скрывая сложность и детали их создания. С помощью Builder Pattern можно создавать объекты с большим количеством параметров без необходимости передавать их все в конструктор. Пример реализации Builder Pattern на Java:
-
-// Класс, объекты которого будут создаваться с помощью Builder Pattern
-
-class House {
-
-private int bedrooms;
-
-private int bathrooms;
-
-private boolean hasGarage;
-
-private boolean hasGarden;
-
-// Приватный конструктор, доступный только внутри класса
-
-private House(Builder builder) {
-
-this.bedrooms = builder.bedrooms;
-
-this.bathrooms = builder.bathrooms;
-
-this.hasGarage = builder.hasGarage;
-
-this.hasGarden = builder.hasGarden;
-
-}
-
-// Геттеры для свойств
-
-public int getBedrooms() {
-
-return bedrooms;
-
-}
-
-public int getBathrooms() {
-
-return bathrooms;
-
-}
-
-public boolean hasGarage() {
-
-return hasGarage;
-
-}
-
-public boolean hasGarden() {
-
-return hasGarden;
-
-}
-
-// Вложенный статический класс Builder
-
-static class Builder {
-
-private int bedrooms;
-
-private int bathrooms;
-
-private boolean hasGarage;
-
-private boolean hasGarden;
-
-// Методы для установки значений свойств
-
-public Builder setBedrooms(int bedrooms) {
-
-this.bedrooms = bedrooms;
-
-return this;
-
-}
-
-public Builder setBathrooms(int bathrooms) {
-
-this.bathrooms = bathrooms;
-
-return this;
-
-}
-
-public Builder setHasGarage(boolean hasGarage) {
-
-this.hasGarage = hasGarage;
-
-return this;
-
-}
-
-public Builder setHasGarden(boolean hasGarden) {
-
-this.hasGarden = hasGarden;
-
-return this;
-
-}
-
-// Метод для создания объекта House
-
-public House build() {
-
-return new House(this);
-
-}
-
-}
-
-}
-
-public class BuilderPatternExample {
-
-public static void main(String[] args) {
-
-// Создание объекта House с помощью Builder Pattern
-
-House house = new House.Builder().setBedrooms(3).setBathrooms(2).setHasGarage(true).setHasGarden(true).build();
-
-// Вывод свойств объекта House
-
-System.out.println("Number of bedrooms: " + house.getBedrooms());
-
-System.out.println("Number of bathrooms: " + house.getBathrooms());
-
-System.out.println("Has garage: " + house.hasGarage());
-
-System.out.println("Has garden: " + house.hasGarden());
-
+```java
+// Старый интерфейс (нельзя менять)
+class LegacyXmlParser {
+    public String parseXml(String xml) {
+        return "parsed: " + xml;
+    }
 }
 
+// Новый интерфейс, который ожидает клиент
+interface DataParser {
+    String parse(String data);
 }
 
-В данном примере класс House представляет объект, для которого будет использоваться Builder Pattern. Внутри класса есть приватный конструктор и вложенный статический класс Builder, который используется для пошагового создания объекта House. В классе Builder есть методы установки значений свойств объекта и метод `build()`, который создает и возвращает объект House. В методе `main` мы создаем объект House с помощью Builder Pattern, задавая нужные значения свойств, и выводим эти свойства в консоль.
+// Adapter
+class XmlParserAdapter implements DataParser {
+    private final LegacyXmlParser legacyParser;
 
-## Q10. Что такое Factory Pattern (Фабрика)?
+    public XmlParserAdapter(LegacyXmlParser legacyParser) {
+        this.legacyParser = legacyParser;
+    }
 
-Factory Pattern (Фабричный паттерн) является одним из паттернов порождающего типа, который обеспечивает создание объектов без необходимости явного указания их конкретного класса. В рамках Factory Pattern создается отдельный класс, называемый фабрикой, который содержит методы для создания объектов. Фабрика абстрагирует процесс создания объекта от клиента, что позволяет легко подставлять различные реализации объектов без необходимости изменения клиентского кода. Основной принцип Factory Pattern "разделение ответственности". Клиентский код вызывает метод фабрики для создания нужного объекта, а фабрика уже решает, какой класс объекта создать и возвращает его клиенту. Таким образом, фабрика отвечает за создание объектов, а клиентский код - за их использование. Преимущества использования Factory Pattern включают:
-
-1. Сокрытие деталей создания объектов от клиента.
-2. Упрощение расширения функциональности кода.
-3. Обеспечение гибкой архитектуры, позволяющей легко добавлять новые типы объектов.
-4. Улучшение тестируемости и поддерживаемости кода.Factory Pattern широко применяется в различных областях программирования, особенно когда требуется создание объектов с различными свойствами или при работе с интерфейсами и абстракциями. Пример реализации фабричного паттерна на Java:
-
-// Создание интерфейса продукта
-
-interface Product {
-
-void use();
-
-}
-
-// Реализация продукта A
-
-class ConcreteProductA implements Product {
-
-public void use() {
-
-System.out.println("Использование продукта A");
-
-}
-
-}
-
-// Реализация продукта B
-
-class ConcreteProductB implements Product {
-
-public void use() {
-
-System.out.println("Использование продукта B");
-
-}
-
-}
-
-// Создание фабрики, которая создает продукты
-
-class ProductFactory {
-
-// Метод фабрики, который создает продукты
-
-public Product createProduct(String type) {
-
-if (type.equals("A")) {
-
-return new ConcreteProductA();
-
-} else if (type.equals("B")) {
-
-return new ConcreteProductB();
-
-} else {
-
-throw new IllegalArgumentException("Неподдерживаемый тип продукта");
-
-}
-
-}
-
-}
-
-// Пример использования фабричного паттерна
-
-public class Main {
-
-public static void main(String[] args) {
-
-ProductFactory factory = new ProductFactory();
-
-// Создание продукта A
-
-Product productA = factory.createProduct("A");
-
-productA.use(); // Использование продукта A
-
-// Создание продукта B
-
-Product productB = factory.createProduct("B");
-
-productB.use(); // Использование продукта B
-
-}
-
-}
-
-В данном примере ProductFactory является фабрикой, которая создает продукты (ConcreteProductA и ConcreteProductB) в зависимости от переданного типа. Клиентский код использует фабрику для создания и использования конкретных продуктов. Это позволяет клиентскому коду работать с абстрактным интерфейсом Product, не зная о конкретных классах продуктов.
-
-## Q11. Что такое Abstract Factory Pattern (Абстрактная фабрика)?
-
-Abstract Factory Pattern (Абстрактная фабрика) является одним из паттернов порождающего типа, который предоставляет интерфейс для создания семейств взаимосвязанных объектов без указания их конкретных классов. Абстрактная фабрика определяет абстрактные классы или интерфейсы для каждой группы связанных объектов. Затем для каждой группы объектов создается соответствующая конкретная фабрика, которая реализует абстрактную фабрику и создает конкретные объекты. Таким образом, Abstract Factory Pattern позволяет создавать семейства объектов, связанных между собой, без привязки к конкретным классам объектов. Это обеспечивает высокую гибкость и переносимость кода, так как можно легко заменить одно семейство объектов другим, просто изменив конкретную фабрику. Преимущества использования Abstract Factory Pattern:
-
-1. Изолирует клиентский код от конкретных классов объектов.
-2. Обеспечивает гарантированную совместимость создаваемых объектов в рамках одной фабрики.
-3. Обеспечивает гарантированную совместимость между объектами разных фабрик.
-4. Упрощает добавление новых семейств объектов.Abstract Factory Pattern часто применяется в проектах, где необходимо создавать различные объекты совместно работающих классов или когда требуется поддержка нескольких вариантов семейств объектов. Пример реализации абстрактной фабрики на Java:
-
-// Создание интерфейсов продуктов
-
-interface Button {
-
-void paint();
-
-}
-
-interface Checkbox {
-
-void paint();
-
-}
-
-// Реализация продукта Button для Windows
-
-class WindowsButton implements Button {
-
-public void paint() {
-
-System.out.println("Отрисовка кнопки для Windows");
-
-}
-
-}
-
-// Реализация продукта Checkbox для Windows
-
-class WindowsCheckbox implements Checkbox {
-
-public void paint() {
-
-System.out.println("Отрисовка чекбокса для Windows");
-
-}
-
-}
-
-// Реализация продукта Button для macOS
-
-class MacOSButton implements Button {
-
-public void paint() {
-
-System.out.println("Отрисовка кнопки для macOS");
-
-}
-
-}
-
-// Реализация продукта Checkbox для macOS
-
-class MacOSCheckbox implements Checkbox {
-
-public void paint() {
-
-System.out.println("Отрисовка чекбокса для macOS");
-
-}
-
-}
-
-// Создание абстрактной фабрики, которая создает продукты для определенной операционной системы
-
-interface GUIFactory {
-
-Button createButton();
-
-Checkbox createCheckbox();
-
-}
-
-// Реализация конкретной фабрики для Windows
-
-class WindowsFactory implements GUIFactory {
-
-public Button createButton() {
-
-return new WindowsButton();
-
-}
-
-public Checkbox createCheckbox() {
-
-return new WindowsCheckbox();
-
-}
-
-}
-
-// Реализация конкретной фабрики для macOS
-
-class MacOSFactory implements GUIFactory {
-
-public Button createButton() {
-
-return new MacOSButton();
-
-}
-
-public Checkbox createCheckbox() {
-
-return new MacOSCheckbox();
-
-}
-
-}
-
-// Клиентский код, который использует абстрактную фабрику для создания и использования связанных продуктов
-
-public class Main {
-
-private static void configureApplication(GUIFactory factory) {
-
-Button button = factory.createButton();
-
-Checkbox checkbox = factory.createCheckbox();
-
-button.paint();
-
-checkbox.paint();
-
-}
-
-public static void main(String[] args) {
-
-// Создание приложения для Windows
-
-configureApplication(new WindowsFactory());
-
-// Вывод:
-
-// Отрисовка кнопки для Windows
-
-// Отрисовка чекбокса для Windows
-
-// Создание приложения для macOS
-
-configureApplication(new MacOSFactory());
-
-// Вывод:
-
-// Отрисовка кнопки для macOS
-
-// Отрисовка чекбокса для macOS
-
-}
-
-}
-
-В данном примере есть абстрактная фабрика GUIFactory, которая определяет методы для создания связанных продуктов, в данном случае кнопок и чекбоксов. Существуют две конкретные фабрики WindowsFactory и MacOSFactory, которые реализуют этот интерфейс и создают соответствующие продукты для каждой операционной системы. Клиентский код, в данном случае configureApplication, может использовать абстрактную фабрику для создания и использования связанных продуктов, не зная о конкретных классах продуктов и операционной системе.
-
-## Q12. (!) Что такое Structural Patterns (Структурные паттерны)?
-
-Structural Patterns (Структурные паттерны) — это одна из категорий паттернов проектирования, которые помогают организовать объекты и классы таким образом, чтобы упростить их взаимодействие и композицию. Структурные паттерны решают задачи, связанные с композицией объектов и определением отношений между ними. Они позволяют создавать более гибкую архитектуру и модифицировать систему без изменения ее основных компонентов. Некоторые популярные структурные паттерны включают:
-
-1. Adapter (Адаптер) — позволяет объектам с несовместимыми интерфейсами работать вместе.
-2. Decorator (Декоратор) — динамически добавляет новые функциональности к объектам.
-3. Composite (Компоновщик) — позволяет обрабатывать группу объектов одним и тем же способом.
-4. Proxy (Заместитель) — представляет объект и контролирует доступ к нему.
-5. Facade (Фасад) — предоставляет унифицированный интерфейс для группы интерфейсов внутри подсистемы.
-6. Bridge (Мост) — разделяет абстракцию и реализацию, позволяя им меняться независимо.
-7. Flyweight (Легковес) — разделяет объекты на разделяемые и неразделяемые части для экономии памяти. Структурные паттерны помогают упростить дизайн системы, сделать ее гибкой для изменений и улучшить повторное использование кода. Они широко используются в различных областях программирования для создания эффективных и модульных архитектур.
-
-## Q13. Что такое Adapter pattern (Адаптер)?
-
-Adapter pattern (Адаптер) — это структурный шаблон проектирования, который позволяет объектам с несовместимыми интерфейсами работать вместе. В основе шаблона лежит создание адаптера, который преобразует интерфейс одного класса в интерфейс, ожидаемый другим классом. Таким образом, адаптер позволяет совместно использовать классы с несовместимыми интерфейсами без внесения изменений в исходный код. Основные компоненты, которые используются в Адаптер паттерне:
-
-1. Целевой объект (Target): определяет интерфейс, с которым работает клиентский код.
-2. Адаптируемый объект (Adaptee): объект, чей интерфейс несовместим с интерфейсом целевого объекта.
-3. Адаптер (Adapter): класс, который связывает целевой объект и адаптируемый объект. Он реализует интерфейс целевого объекта и использует объект адаптируемого класса для выполнения требуемых операций.Пример использования Adapter pattern:
-
-Предположим, что у нас есть класс, который предоставляет методы для отправки сообщений по электронной почте. В другом классе нам требуется использовать отправку сообщений через SMS с помощью класса, который имеет совершенно другой интерфейс. В этом случае мы можем использовать Adapter pattern, чтобы преобразовать интерфейс SMS класса в интерфейс, совместимый с классом для отправки почты. Адаптер будет принимать вызовы от второго класса и вызывать соответствующие методы SMS класса, реализуя требуемый интерфейс целевого объекта.Преимущества использования Adapter pattern:
-
-1. Позволяет совместно использовать существующий код без изменения его исходного кода.
-2. Обеспечивает возможность работы с несовместимыми интерфейсами.
-3. Улучшает повторное использование кода и принцип открытости/закрытости.Недостатки использования Adapter pattern:
-
-1. Может привести к увеличению сложности кода и добавлению дополнительных слоев абстракции.
-2. В определенных случаях может быть нецелесообразно использовать адаптер из-за накладных расходов. Пример, у нас есть класс LegacyPrinter с методом print(String text), который мы хотим использовать вместе с новым классом ModernPrinter, у которого есть метод printText(String text). Для решения этой проблемы создадим адаптер класс PrinterAdapter, который реализует интерфейс ModernPrinter и содержит объект LegacyPrinter. Внутри метода printText адаптер просто вызывает метод print у LegacyPrinter, передавая ему текст для печати.Пример кода на Java:
-
-public interface ModernPrinter {
-
-void printText(String text);
-
-}
-
-public class LegacyPrinter {
-
-public void print(String text) {
-
-System.out.println("Печать: " + text);
-
-}
-
-}
-
-public class PrinterAdapter implements ModernPrinter {
-
-private LegacyPrinter legacyPrinter;
-
-public PrinterAdapter(LegacyPrinter legacyPrinter) {
-
-this.legacyPrinter = legacyPrinter;
-
+    @Override
+    public String parse(String data) {
+        return legacyParser.parseXml(data);
+    }
 }
+```
 
-@Override
+**В JDK:** `Arrays.asList()` — адаптирует массив к интерфейсу `List`, `InputStreamReader` — адаптирует `InputStream` к `Reader`.
 
-public void printText(String text) {
+**Когда применять:** интеграция с legacy-кодом, сторонними библиотеками, несовместимыми API.
 
-legacyPrinter.print(text);
+## Q16. Что такое `Bridge` Pattern?
 
-}
+`Bridge` разделяет абстракцию и реализацию, позволяя им изменяться независимо. Используйте, когда есть **два ортогональных измерения** изменчивости.
 
+```java
+// Реализация (Implementation)
+interface MessageSender {
+    void send(String message);
 }
-
-public class Main {
 
-public static void main(String[] args) {
-
-ModernPrinter modernPrinter = new PrinterAdapter(new LegacyPrinter());
-
-modernPrinter.printText("Пример текста");
-
+class EmailSender implements MessageSender {
+    public void send(String message) {
+        System.out.println("Email: " + message);
+    }
 }
 
+class SmsSender implements MessageSender {
+    public void send(String message) {
+        System.out.println("SMS: " + message);
+    }
 }
-
-В данном примере PrinterAdapter позволяет использовать LegacyPrinter совместно с интерфейсом ModernPrinter.
-
-## Q14. Что такое Bridge Pattern (Мост)?
-
-Bridge Pattern (Мост) — это структурный паттерн, который позволяет отделить абстракцию от ее реализации. Он используется, когда есть несколько уровней абстракции и для каждого уровня есть своя реализация. Основная идея паттерна состоит в том, чтобы отделить абстракцию (например, классы с общим функционалом) от конкретной реализации (например, различные способы взаимодействия с базой данных). Вместо того, чтобы использовать наследование для реализации всех возможных комбинаций абстракции и реализации, мы используем композицию и взаимодействие через мост. Применение Bridge Pattern позволяет управлять эволюцией абстракции и реализации независимо друг от друга, что делает систему более гибкой и масштабируемой. Паттерн также увеличивает модульность кода и упрощает его сопровождение. Вот пример кода, демонстрирующий применение Bridge Pattern в Java:
 
 // Абстракция
+abstract class Notification {
+    protected MessageSender sender;
 
-abstract class Shape {
+    public Notification(MessageSender sender) {
+        this.sender = sender;
+    }
 
-protected Color color;
-
-public Shape(Color color) {
-
-this.color = color;
-
-}
-
-public abstract void draw();
-
-}
-
-// Реализация
-
-interface Color {
-
-void applyColor();
-
-}
-
-// Конкретная реализация
-
-class RedColor implements Color {
-
-@Override
-
-public void applyColor() {
-
-System.out.println("Применение красного цвета");
-
-}
-
-}
-
-// Конкретная реализация
-
-class BlueColor implements Color {
-
-@Override
-
-public void applyColor() {
-
-System.out.println("Применение синего цвета");
-
-}
-
-}
-
-// Конкретная абстракция
-
-class Rectangle extends Shape {
-
-public Rectangle(Color color) {
-
-super(color);
-
-}
-
-@Override
-
-public void draw() {
-
-System.out.print("Рисование прямоугольника. ");
-
-color.applyColor();
-
-}
-
-}
-
-// Конкретная абстракция
-
-class Circle extends Shape {
-
-public Circle(Color color) {
-
-super(color);
-
-}
-
-@Override
-
-public void draw() {
-
-System.out.print("Рисование круга. ");
-
-color.applyColor();
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-Shape redCircle = new Circle(new RedColor());
-
-redCircle.draw();
-
-Shape blueRectangle = new Rectangle(new BlueColor());
-
-blueRectangle.draw();
-
-}
-
-}
-
-В этом примере мы создаем абстракцию "Shape" (фигура), которая имеет метод `draw()`. У абстракции есть ссылка на объект "Color" (цвет), который представляет собой реализацию. Мы создаем две конкретные абстракции — "Rectangle" (прямоугольник) и "Circle" (круг) и две конкретные реализации — "RedColor" (красный цвет) и "BlueColor" (синий цвет). В методе `main()` мы создаем объекты "Shape" и передаем им соответствующие реализации. При вызове метода `draw()`, абстракция делегирует вызов реализации, которая применяет соответствующий цвет. Этот пример показывает, как Bridge Pattern позволяет изменять взаимодействие между абстракцией и реализацией без изменения самих классов.
-
-## Q15. Разница между Bridge Pattern и Adapter Pattern?
-
-Bridge Pattern (Мост) и Adapter Pattern (Адаптер) являются двумя разными шаблонами проектирования, хотя и иногда могут использоваться для решения похожих проблем. Вот основные различия между ними:
-
-1. Цель использования: Bridge Pattern используется для разделения абстракции и реализации, чтобы они могли изменяться независимо друг от друга.Adapter Pattern используется для предоставления совместимого интерфейса между несовместимыми классами.
-2. Структура: В Bridge Pattern присутствуют две иерархии классов одна для абстракции и другая для реализации, и они связаны между собой. В Adapter Pattern есть один адаптер, который связывает несовместимые интерфейсы.
-3. Отношение абстракций и реализации: В Bridge Pattern, абстракция и реализация имеют независимые иерархии классов и могут меняться независимо друг от друга. В Adapter Pattern, адаптер обязан связать несовместимые интерфейсы и работать с обоими классами.
-4. Гибкость: Bridge Pattern обеспечивает большую гибкость, позволяя изменять абстракцию и реализацию независимо. Adapter Pattern менее гибок, так как он привязывает адаптер только к определенным классам.
-5. Комплексность: Bridge Pattern сложнее с точки зрения структуры, и требует создания двух иерархий классов. Adapter Pattern проще и имеет более прямолинейную структуру. В итоге, Bridge Pattern используется для разделения абстракции и реализации, чтобы они могли изменяться независимо.Adapter Pattern используется для связи несовместимых интерфейсов и предоставления совместимого интерфейса между ними.
-
-## Q16. Что такое Decorator Pattern (Декоратор)?
-
-Decorator Pattern (Декоратор) это структурный шаблон проектирования, который позволяет динамически добавлять новую функциональность объектам, оборачивая их в специальные декораторы. Этот шаблон позволяет расширять функциональность классов без необходимости изменять их основной код. Основная идея состоит в том, что декоратор оборачивает оригинальный объект в один или несколько декораторов, которые могут изменять его поведение или добавлять новые функции. Каждый декоратор реализует тот же интерфейс, что и оригинальный объект, поэтому они прозрачны для клиенского кода. Клиент может работать с объектом через его интерфейс, ничего не зная о декораторах. Основные преимущества использования Decorator Pattern:
-
-1. Гибкость: Decorator Pattern позволяет добавлять функциональность объектам динамически, без необходимости изменения основного кода.
-2. Расширяемость: Классы декораторов можно комбинировать в разных комбинациях для получения различной функциональности.
-3. Принцип открытости/закрытости: Декораторы позволяют добавлять новую функциональность, не изменяя существующий код объекта или клиента.
-4. Удобство поддержки: Каждый декоратор реализует только необходимую функциональность, что упрощает поддержку и тестирование. Однако, Decorator Pattern может приводить к созданию большого количества классов, особенно при использовании множественных декораторов. Также, это может затруднить отслеживание порядка применения декораторов при дебаггинге. Вот пример реализации Decorator Pattern в Java:
-
-// Интерфейс, представляющий компонент
-
-interface Pizza {
-
-String makePizza();
-
-}
-
-// Конкретная реализация компонента
-
-class BasePizza implements Pizza {
-
-@Override
-
-public String makePizza() {
-
-return "Готовим обычную пиццу";
-
-}
-
-}
-
-// Абстрактный декоратор
-
-abstract class PizzaDecorator implements Pizza {
-
-protected Pizza pizza;
-
-public PizzaDecorator(Pizza pizza) {
-
-this.pizza = pizza;
-
-}
-
-@Override
-
-public String makePizza() {
-
-return pizza.makePizza();
-
-}
-
-}
-
-// Конкретный декоратор
-
-class CheeseDecorator extends PizzaDecorator {
-
-public CheeseDecorator(Pizza pizza) {
-
-super(pizza);
-
-}
-
-@Override
-
-public String makePizza() {
-
-return super.makePizza() + ", добавляем сыр";
-
-}
-
-}
-
-// Конкретный декоратор
-
-class MeatDecorator extends PizzaDecorator {
-
-public MeatDecorator(Pizza pizza) {
-
-super(pizza);
-
-}
-
-@Override
-
-public String makePizza() {
-
-return super.makePizza() + ", добавляем мясо";
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-Pizza pizza = new BasePizza();
-
-System.out.println(pizza.makePizza());
-
-Pizza pizzaWithCheese = new CheeseDecorator(new BasePizza());
-
-System.out.println(pizzaWithCheese.makePizza());
-
-Pizza pizzaWithCheeseAndMeat = new MeatDecorator(new CheeseDecorator(new BasePizza()));
-
-System.out.println(pizzaWithCheeseAndMeat.makePizza());
-
-}
-
-}
-
-В этом примере мы имеем интерфейс Pizza, представляющий компонент — базовую пиццу. Затем у нас есть конкретная реализация компонента — BasePizza. Для добавления дополнительных функциональностей мы используем абстрактный декоратор PizzaDecorator, который имеет ссылку на компонент и делегирует вызовы методов компоненту. Затем мы создаем конкретные декораторы, такие как CheeseDecorator и MeatDecorator, которые расширяют абстрактный декоратор и добавляют свою специфическую функциональность. В методе `main()` мы создаем объекты Pizza и оборачиваем их в различные декораторы, чтобы добавить различные ингредиенты. При вызове метода `makePizza()`, вызывается соответствующий метод у компонента и всех декораторов в цепочке, что позволяет нам добавлять функциональность на лету. Таким образом, Decorator Pattern позволяет динамически добавлять новую функциональность объекту, оборачивая его в различные декораторы, вместо создания большого числа подклассов с различными возможностями.
-
-## Q17. Что такое Proxy Pattern (Прокси)?
-
-Proxy Pattern (Прокси) в Java представляет собой структурный паттерн проектирования, который позволяет создать объект-заместитель (proxy) для контроля доступа к другому объекту. Он предоставляет прозрачное средство управления доступом к функциональности объекта. Proxy Pattern состоит из трех основных компонентов:
-
-1. Subject Interface (Замещаемый интерфейс): Определяет общие операции, которые должны быть доступны как для открывающегося объекта (Real Subject), так и для замещающего объекта (Proxy).
-2. Real Subject (Реальный объект): Это объект, на который у прокси есть ссылка. Реальный объект выполняет основную логику или реализацию операций, определенных в замещаемом интерфейсе.
-3. Proxy (Прокси): Объект, который действует как промежуточный слой между клиентом и реальным объектом. Прокси выполняет дополнительные функции до или после вызова реального объекта, контролирует доступ к нему, кэширует результаты или выполняет другие действия. Proxy Pattern может выполнять различные задачи в зависимости от требований:
-
-1. Remote Proxy (Удаленный прокси): Предоставляет доступ к объектам на удаленном сервере.
-2. Virtual Proxy (Виртуальный прокси): Создает объекты по требованию для оптимизации производительности.
-3. Protection Proxy (Защитный прокси): Контролирует доступ к реальному объекту, включая проверку прав доступа.
-4. Smart Reference (Умная ссылка): Выполняет дополнительные действия при доступе к реальному объекту, например, подсчет ссылок или ленивую загрузку. Преимущества использования Proxy Pattern включают управление доступом к объекту, уменьшение нагрузки на ресурсы при создании объекта по требованию, а также дополнительные возможности для контроля и обработки функциональности объекта. Вот пример реализации Proxy Pattern на Java:
-
-// Интерфейс, представляющий сервис
-
-interface Service {
-
-void request();
-
-}
-
-// Конкретная реализация сервиса
-
-class ConcreteService implements Service {
-
-@Override
-
-public void request() {
-
-System.out.println("Вызван метод request() у ConcreteService.");
-
-}
-
-}
-
-// Заместитель
-
-class ProxyService implements Service {
-
-private ConcreteService concreteService;
-
-@Override
-
-public void request() {
-
-if (concreteService == null) {
-
-concreteService = new ConcreteService();
-
-}
-
-preRequest();
-
-concreteService.request();
-
-postRequest();
-
-}
-
-private void preRequest() {
-
-System.out.println("Выполняется предварительная логика.");
-
-}
-
-private void postRequest() {
-
-System.out.println("Выполняется последующая логика.");
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-Service service = new ProxyService();
-
-service.request();
-
-}
-
-}
-
-В этом примере у нас есть интерфейс Service, представляющий сервис. У него есть метод `request()`, который представляет основную функциональность. У нас также есть конкретная реализация сервиса — ConcreteService. Она реализует интерфейс Service и предоставляет реализацию метода `request()`. Заместитель — ProxyService также реализует интерфейс Service. Он содержит экземпляр `concreteService`, который будет замещать. При первом вызове метода `request()` заместитель создает экземпляр ConcreteService и выполняет предварительную логику перед вызовом реального сервиса. Затем он вызывает метод `request()` у реального сервиса и выполняет последующую логику после вызова. В методе `main()` мы создаем объект ProxyService, используя интерфейс Service. Затем мы вызываем метод `request()` у заместителя. При этом будет выполнена предварительная логика, затем будет вызван реальный сервис и, наконец, будет выполнена последующая логика. Этот пример демонстрирует, как Proxy Pattern позволяет добавить дополнительную функциональность или контролировать доступ к основному объекту, не изменяя его реализацию.
-
-## Q18. Что такое Facade Pattern (Фасад)?
-
-Facade Pattern (Фасад) — это структурный паттерн проектирования, который предоставляет унифицированный интерфейс к группе интерфейсов в подсистеме. Фасад скрывает сложность подсистемы, предоставляя более простой интерфейс для работы с ней. Вот пример реализации паттерна Facade на Java:
-
-// Внешний фасад
-
-class CarFacade {
-
-private Engine engine;
-
-private LightSystem lightSystem;
-
-private Radio radio;
-
-public CarFacade() {
-
-engine = new Engine();
-
-lightSystem = new LightSystem();
-
-radio = new Radio();
-
-}
-
-// Методы для работы с автомобилем
-
-public void startCar() {
-
-engine.start();
-
-lightSystem.turnOn();
-
-radio.turnOn();
-
-}
-
-public void stopCar() {
-
-engine.stop();
-
-lightSystem.turnOff();
-
-radio.turnOff();
-
-}
-
-}
-
-// Подсистемы
-
-class Engine {
-
-public void start() {
-
-System.out.println("Двигатель запущен");
-
-}
-
-public void stop() {
-
-System.out.println("Двигатель остановлен");
-
-}
-
-}
-
-class LightSystem {
-
-public void turnOn() {
-
-System.out.println("Фары включены");
-
-}
-
-public void turnOff() {
-
-System.out.println("Фары выключены");
-
-}
-
-}
-
-class Radio {
-
-public void turnOn() {
-
-System.out.println("Радио включено");
-
-}
-
-public void turnOff() {
-
-System.out.println("Радио выключено");
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-CarFacade carFacade = new CarFacade();
-
-// Запуск и остановка автомобиля через фасад
-
-carFacade.startCar(); // Двигатель запущен, Фары включены, Радио включено
-
-carFacade.stopCar(); // Двигатель остановлен, Фары выключены, Радио выключено
-
-}
-
-}
-
-В этом примере у нас есть класс CarFacade, который представляет внешний фасад. Внутри фасада хранятся экземпляры классов Engine,LightSystem и Radio, которые представляют подсистемы (двигатель, система освещения и радио соответственно). Фасад предоставляет методы startCar() и stopCar(), которые взаимодействуют с подсистемами через их методы. Например, метод startCar() вызывает методы start() у двигателя,turnOn() у системы освещения и turnOn() у радио. Клиентский код создает экземпляр CarFacade и вызывает его методы для взаимодействия с автомобилем. В этом случае клиенту не нужно знать о деталях работы с двигателем, системой освещения и радио. Фасад скрывает сложность подсистемы и предоставляет более простой интерфейс для работы с ней. Паттерн Facade используется, когда нужно предоставить простой интерфейс к сложной подсистеме или упростить работу с ней. Это позволяет скрыть детали реализации и упростить взаимодействие с подсистемой для клиентов.
-
-## Q19. Что такое Composite Pattern (Компоновщик)?
-
-Composite Pattern (Компоновщик) является структурным паттерном проектирования, который позволяет обрабатывать группу объектов как один отдельный объект. Этот паттерн позволяет создавать древовидную структуру объектов, где каждый объект может представлять как отдельный элемент, так и группу элементов. Вот пример реализации Composite Pattern на Java:
-
-import java.util.ArrayList;
-
-import java.util.List;
-
-// Общий интерфейс для всех компонентов
-
-interface Component {
-
-void operation();
-
-}
-
-// Конкретная реализация компонента
-
-class Leaf implements Component {
-
-public void operation() {
-
-// Реализация операции для листового компонента
-
-System.out.println("Выполняется операция в листовом компоненте.");
-
-}
-
-}
-
-// Компонент, который может содержать другие компоненты
-
-class Composite implements Component {
-
-private List<Component> components = new ArrayList<>();
-
-public void add(Component component) {
-
-components.add(component);
-
-}
-
-public void remove(Component component) {
-
-components.remove(component);
-
-}
-
-public void operation() {
-
-// Реализация операции для композитного компонента
-
-System.out.println("Выполняется операция в композитном компоненте.");
-
-// Вызываем операцию для каждого компонента внутри композитного компонента
-
-for (Component component: components) {
-
-component.operation();
-
-}
-
-}
-
-}
-
-// Пример использования
-
-public class Main {
-
-public static void main(String[] args) {
-
-// Создаем листовые объекты
-
-Leaf leaf1 = new Leaf();
-
-Leaf leaf2 = new Leaf();
-
-Leaf leaf3 = new Leaf();
-
-// Создаем композитный объект и добавляем в него листовые объекты
-
-Composite composite = new Composite();
-
-composite.add(leaf1);
-
-composite.add(leaf2);
-
-composite.add(leaf3);
-
-// Вызываем операцию на композитном объекте
-
-composite.operation();
-
-}
-
-}
-
-В данном примере, классы Leaf и Composite реализуют интерфейс Component. Класс Leaf представляет листовой компонент, тогда как класс Composite представляет композитный компонент. Вы можете добавлять и удалять листовые и композитные компоненты в композитный объект. Когда вызывается операция на композитном объекте, он выполняет операцию для себя, а затем передает выполнение операции каждому вложенному компоненту. В приведенном примере, вызов операции на композитном объекте composite приведет к выполнению операции в самом композитном объекте, а также ко всем листовым объектам, добавленным внутрь композитного объекта.
-
-## Q20. Что такое Flyweight Pattern (Приспособленец)?
-
-Flyweight (Приспособленец) — это структурный паттерн проектирования, который позволяет эффективно поддерживать множество мелких объектов, используя общие части данных между ними. Вот пример реализации паттерна Flyweight на Java:
-
-import java.util.HashMap;
-
-import java.util.Map;
-
-// Интерфейс шаблона объекта
-
-interface Shape {
-
-void draw();
-
-}
-
-// Конкретная реализация шаблона объекта
-
-class Circle implements Shape {
-
-private String color;
-
-public Circle(String color) {
-
-this.color = color;
-
-}
-
-@Override
-
-public void draw() {
-
-System.out.println("Рисуется круг цвета: " + color);
-
-}
-
-}
-
-// Фабрика объектов
-
-class ShapeFactory {
-
-private static final Map<String, Shape> shapes = new HashMap<>();
-
-// Получение объекта из пула или создание нового, если его нет
-
-public static Shape getShape(String color) {
-
-Circle circle = (Circle) shapes.get(color);
-
-if (circle == null) {
-
-circle = new Circle(color);
-
-shapes.put(color, circle);
-
-System.out.println("Создан новый круг цвета: " + color);
-
-}
-
-return circle;
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-private static final String[] colors = { "Red", "Green", "Blue", "Red", "Green", "Blue" };
-
-public static void main(String[] args) {
-
-for (String color: colors) {
-
-Shape shape = ShapeFactory.getShape(color);
-
-shape.draw();
-
-}
-
-}
-
-}
-
-В этом примере у нас есть интерфейс Shape, который представляет шаблон объекта. Класс Circle реализует этот интерфейс и представляет конкретную реализацию шаблона объекта (круг). Каждый круг имеет свой цвет. Для создания и управления объектами используется фабрика ShapeFactory. Внутри фабрики используется пул объектов (shapes), реализованный в виде Map. Каждый раз, когда вызывается метод getShape(), фабрика проверяет, есть ли уже объект с указанным цветом в пуле. Если объект уже есть, он возвращается. Если объекта с указанным цветом нет, создается новый объект и добавляется в пул. В методе main() создаются несколько объектов Circle разных цветов с помощью фабрики ShapeFactory. При этом, как видно из вывода, объекты с одинаковыми цветами повторно используются из пула. Это позволяет значительно экономить память и уменьшить количество создаваемых объектов. Паттерн Flyweight используется, когда нужно эффективно поддерживать множество объектов с общими частями данных. Это особенно полезно, когда количество объектов большое и требуется экономить память или улучшить производительность.
-
-## Q21. (!) Что такое Behaviour Patterns (Поведенческие паттерны)?
-
-Behaviour Patterns (Поведенческие паттерны) — это концепции проектирования, которые используются для организации взаимодействия между различными объектами в программе. В Java существует несколько различных типов Behaviour Patterns, включая:
-
-1. Strategy (Стратегия): позволяет определить семейство алгоритмов, инкапсулировать их и сделать их взаимозаменяемыми.
-2. Observer (Наблюдатель): позволяет объектам автоматически оповещать друг друга об изменениях состояния.
-3. Chain of Responsibility (Цепочка ответственности): позволяет передавать запросы последовательно по цепочке обработчиков, пока не будет найден подходящий обработчик.
-4. State (Состояние): позволяет объекту изменять свое поведение в зависимости от своего состояния, а также делает это изменение прозрачным для клиентов.
-5. Command (Команда): позволяет инкапсулировать запрос в отдельный объект, делая его последовательным и независимым от отправителя и получателя.
-6. Interpreter (Интерпретатор): позволяет разрешать грамматические структуры языка их представлением в виде дерева интерпретации.
-7. Iterator (Итератор): предоставляет способ последовательного доступа и обхода элементов коллекции, не раскрывая ее внутренней структуры.
-8. Mediator (Посредник): определяет объект, который инкапсулирует взаимодействие между другими объектами.
-
-## Q22. Что такое Strategy Pattern (Стратегия)?
-
-Strategy Pattern (Стратегия) — это поведенческий паттерн проектирования, который позволяет определить семейство алгоритмов, инкапсулировать каждый из них и обеспечить их взаимозаменяемость. Это позволяет выбирать алгоритм в зависимости от конкретной ситуации. Вот пример реализации Strategy Pattern на Java:
-
-// Интерфейс, представляющий стратегии
-
-interface SortingStrategy {
-
-void sort(int[] array);
-
-}
-
-// Конкретная стратегия 1
-
-class BubbleSortStrategy implements SortingStrategy {
-
-@Override
-
-public void sort(int[] array) {
-
-System.out.println("Сортируем массив с помощью пузырьковой сортировки.");
-
-// Реализация пузырьковой сортировки
-
-}
-
-}
-
-// Конкретная стратегия 2
-
-class QuickSortStrategy implements SortingStrategy {
-
-@Override
-
-public void sort(int[] array) {
-
-System.out.println("Сортируем массив с помощью быстрой сортировки.");
-
-// Реализация быстрой сортировки
-
-}
-
-}
-
-// Класс, использующий стратегии
-
-class Sorter {
-
-private SortingStrategy sortingStrategy;
-
-public Sorter(SortingStrategy sortingStrategy) {
-
-this.sortingStrategy = sortingStrategy;
-
-}
-
-public void setSortingStrategy(SortingStrategy sortingStrategy) {
-
-this.sortingStrategy = sortingStrategy;
-
-}
-
-public void sortArray(int[] array) {
-
-sortingStrategy.sort(array);
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-int[] array = {5, 2, 8, 9, 1, 3};
-
-Sorter sorter = new Sorter(new BubbleSortStrategy());
-
-sorter.sortArray(array);
-
-sorter.setSortingStrategy(new QuickSortStrategy());
-
-sorter.sortArray(array);
-
-}
-
-}
-
-В этом примере у нас есть интерфейс SortingStrategy, представляющий стратегии сортировки, с методом `sort()`. Затем у нас есть две конкретные стратегии — BubbleSortStrategy (пузырьковая сортировка) и QuickSortStrategy (быстрая сортировка), которые реализуют этот интерфейс. Класс Sorter использует стратегии. Он имеет поле типа SortingStrategy, которое хранит текущую стратегию сортировки. У него есть метод `setSortingStrategy()`, который позволяет изменить стратегию во время выполнения, и метод `sortArray()`, который вызывает метод `sort()` текущей стратегии для сортировки массива. В методе `main()` мы создаем объект Sorter с начальной стратегией BubbleSortStrategy и вызываем метод `sortArray()`, чтобы отсортировать массив. Затем мы устанавливаем новую стратегию QuickSortStrategy и вызываем метод `sortArray()` снова. Этот пример демонстрирует, как Strategy Pattern позволяет изменять стратегию выполнения на лету, а также обеспечивает легкую добавляемость новых стратегий, что делает его очень гибким для обработки различных алгоритмов.
-
-## Q23. Что такое State Pattern (Состояние)?
-
-State Pattern (Состояние) — это поведенческий паттерн проектирования, который позволяет объекту изменять свое поведение в зависимости от своего внутреннего состояния. Он предлагает вынести логику изменения состояния в отдельные классы, называемые состояниями, что позволяет объекту динамически изменять свое состояние без изменения своего класса. Вот пример реализации State Pattern на Java:
-
-// Интерфейс, представляющий состояния
-
-interface State {
-
-void pressButton(Context context);
-
-}
-
-// Конкретное состояние 1
-
-class OffState implements State {
-
-@Override
-
-public void pressButton(Context context) {
-
-System.out.println("Включаем устройство.");
-
-context.setState(new OnState());
-
-}
-
-}
-
-// Конкретное состояние 2
-
-class OnState implements State {
-
-@Override
-
-public void pressButton(Context context) {
-
-System.out.println("Выключаем устройство.");
-
-context.setState(new OffState());
-
-}
-
-}
-
-// Класс контекста
-
-class Context {
-
-private State state;
-
-public Context() {
-
-this.state = new OffState(); // Начальное состояние
-
-}
-
-public void setState(State state) {
-
-this.state = state;
-
-}
-
-public void pressButton() {
-
-state.pressButton(this);
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-Context context = new Context();
-
-context.pressButton();
-
-context.pressButton();
-
-}
-
-}
-
-В этом примере у нас есть интерфейс State, представляющий состояния объекта. У него есть метод pressButton(), который определяет действие при нажатии на кнопку. У нас есть два конкретных состояния — OffState (выключенное состояние) и OnState (включенное состояние), которые реализуют интерфейс State. Каждое состояние определяет свою реакцию на нажатие на кнопку — включает или выключает устройство, и затем изменяет состояние контекста на соответствующее. Класс Context представляет объект, состояние которого может изменяться. У него есть поле типа State, которое хранит текущее состояние. У него есть метод `setState()`, который позволяет изменить состояние во время выполнения, и метод `pressButton()`, который вызывает метод `pressButton()` текущего состояния. В методе `main()` мы создаем объект Context и вызываем метод `pressButton()` дважды. При первом вызове устройство включается, а при втором — выключается. Этот пример демонстрирует, как State Pattern позволяет объекту изменять свое поведение в зависимости от внутреннего состояния, а также обеспечивает легкую добавляемость новых состояний, что делает его очень гибким для обработки различных сценариев.
-
-## Q24. Разница между Strategy Pattern (Стратегия) и State Pattern (Состояние)?
-
-Strategy Pattern (Стратегия) и State Pattern (Состояние) это два различных шаблона проектирования, используемых для решения разных проблем. Вот основные различия между ними:
-
-1. Цель использования: Strategy Pattern используется для определения набора алгоритмов и позволяет клиентам выбирать нужный алгоритм динамически. State Pattern используется для моделирования состояний объекта и позволяет объектам изменять свое поведение в зависимости от текущего состояния.
-2. Концепция: В Strategy Pattern, алгоритмы представлены в виде отдельных стратегий, которые могут быть подменены другими стратегиями без изменения клиентского кода. В State Pattern, объект имеет внутреннее состояние и может изменять свое поведение в зависимости от текущего состояния.
-3. Интерфейсы: В Strategy Pattern, все стратегии реализуют общий интерфейс, чтобы их можно было использовать взаимозаменяемо. В State Pattern, состояния реализуют общий интерфейс, чтобы объект мог взаимодействовать с ними одинаковым образом.
-4. Смена: В Strategy Pattern, стратегия может быть заменена в любой момент времени по желанию клиента. В State Pattern, объект может изменять свое состояние и соответственно изменять свое поведение.
-5. Управление состоянием: В Strategy Pattern, управление состоянием отсутствует. В State Pattern, имеется управление состоянием, чтобы объект мог изменять свое состояние в соответствии с определенными условиями. В итоге, Strategy Pattern используется для выбора алгоритма динамически, позволяя клиентам менять стратегии. State Pattern используется для моделирования состояний и изменения поведения объекта в зависимости от текущего состояния.
-
-## Q25. Что такое Observer Pattern (Наблюдатель)?
-
-Observer Pattern (Наблюдатель) — это паттерн проектирования, который используется для реализации взаимодействия между объектами, где один объект, называемый наблюдаемым (subject), автоматически уведомляет другие объекты, называемые наблюдателями (observers), об изменениях своего состояния. Пример реализации Observer Pattern на Java:
-
-import java.util.ArrayList;
-
-import java.util.List;
-
-// Интерфейс наблюдателя
-
-interface Observer {
-
-void update(String message);
-
-}
-
-// Конкретный класс наблюдателя
-
-class ConcreteObserver implements Observer {
-
-private String name;
-
-public ConcreteObserver(String name) {
-
-this.name = name;
-
-}
-
-@Override
-
-public void update(String message) {
-
-System.out.println(name + " получил сообщение: " + message);
-
-}
-
-}
-
-// Интерфейс наблюдаемого
-
-interface Subject {
-
-void addObserver(Observer observer);
-
-void removeObserver(Observer observer);
-
-void notifyObservers(String message);
-
-}
-
-// Конкретный класс наблюдаемого
-
-class ConcreteSubject implements Subject {
-
-private List<Observer> observers = new ArrayList<>();
-
-@Override
-
-public void addObserver(Observer observer) {
-
-observers.add(observer);
-
-}
-
-@Override
-
-public void removeObserver(Observer observer) {
-
-observers.remove(observer);
-
-}
-
-@Override
-
-public void notifyObservers(String message) {
-
-for (Observer observer: observers) {
-
-observer.update(message);
-
-}
-
-}
-
-}
-
-public class ObserverPatternExample {
-
-public static void main(String[] args) {
-
-Subject subject = new ConcreteSubject();
-
-Observer observer1 = new ConcreteObserver("Наблюдатель 1");
-
-Observer observer2 = new ConcreteObserver("Наблюдатель 2");
-
-subject.addObserver(observer1);
-
-subject.addObserver(observer2);
-
-subject.notifyObservers("Привет!"); // Уведомление всех наблюдателей
-
-subject.removeObserver(observer2);
-
-subject.notifyObservers("Пока!"); // Уведомление только одного наблюдателя
-
-}
-
-}
-
-В данном примере есть наблюдаемый (ConcreteSubject) и два наблюдателя (ConcreteObserver). Когда наблюдаемый изменяет свое состояние, он автоматически уведомляет всех своих наблюдателей.
-
-## Q26. Что такое Chain of Responsibility Pattern (Цепочка обязанностей)?
-
-Chain of Responsibility (Цепочка обязанностей) — это паттерн проектирования, который позволяет создать цепочку объектов-обработчиков, где каждый объект может обработать запрос самостоятельно или передать его по цепочке дальше. У паттерна Chain of Responsibility есть следующие ключевые участники:
-
-1. Handler (Обработчик) — определяет общий интерфейс для всех обработчиков и имеет метод обработки запроса. В некоторых случаях может содержать ссылку на следующий обработчик в цепочке.
-2. ConcreteHandler (Конкретный обработчик) — конкретная реализация обработчика, которая может обработать запрос или передать его следующему обработчику в цепочке. Примером использования паттерна Chain of Responsibility может быть система обработки заявок в банке. В цепочке обработчиков могут быть различные звенья, такие как кассир, операционист, менеджер и т. д. Каждый обработчик имеет свои правила обработки заявок. Если обработчик не может обработать запрос, он передает его следующему обработчику по цепочке. Преимущества использования паттерна Chain of Responsibility:
-
-1. Разделение обязанностей между объектами именно в соответствии с их функциональностью.
-2. Гибкость и расширяемость системы.
-3. Возможность добавлять и изменять обработчики во время выполнения программы. В то время как недостатком паттерна может быть возможное неполное покрытие всех возможных запросов в цепочке или возможность зацикливания, если не правильно настроена передача запроса по цепочке. Вот пример реализации Chain of Responsibility на Java:
-
-// Обработчик
-
-interface Handler {
-
-void setNext(Handler nextHandler);
-
-void handleRequest(Request request);
-
-}
-
-// Конкретные обработчики
-
-class ConcreteHandler1 implements Handler {
-
-private Handler nextHandler;
-
-@Override
-
-public void setNext(Handler nextHandler) {
-
-this.nextHandler = nextHandler;
-
-}
-
-@Override
-
-public void handleRequest(Request request) {
-
-if (request.getLevel() <= 1) {
-
-System.out.println("Request handled by ConcreteHandler1.");
-
-} else if (nextHandler!= null) {
-
-nextHandler.handleRequest(request);
-
-} else {
-
-System.out.println("No handler found for the request.");
-
-}
-
-}
-
-}
-
-class ConcreteHandler2 implements Handler {
-
-private Handler nextHandler;
-
-@Override
-
-public void setNext(Handler nextHandler) {
-
-this.nextHandler = nextHandler;
-
-}
-
-@Override
-
-public void handleRequest(Request request) {
-
-if (request.getLevel() <= 2) {
-
-System.out.println("Request handled by ConcreteHandler2.");
-
-} else if (nextHandler!= null) {
-
-nextHandler.handleRequest(request);
-
-} else {
-
-System.out.println("No handler found for the request.");
-
-}
-
-}
-
-}
-
-// Запрос
-
-class Request {
-
-private int level;
-
-public Request(int level) {
-
-this.level = level;
-
-}
-
-public int getLevel() {
-
-return level;
-
-}
-
-}
-
-// Использование
-
-public class Main {
-
-public static void main(String[] args) {
-
-Handler handler1 = new ConcreteHandler1();
-
-Handler handler2 = new ConcreteHandler2();
-
-handler1. setNext(handler2);
-
-Request request1 = new Request(1);
-
-handler1. handleRequest(request1); // Request handled by ConcreteHandler1. Request request2 = new Request(2);
-
-handler1. handleRequest(request2); // Request handled by ConcreteHandler2. Request request3 = new Request(3);
-
-handler1. handleRequest(request3); // No handler found for the request. }
-
-}
-
-В этом примере у нас есть интерфейс Handler, который представляет обработчик. Он определяет методы setNext(), чтобы устанавливать следующий обработчик в цепочке, и handleRequest(), чтобы обрабатывать запросы. У нас также есть два конкретных обработчика — ConcreteHandler1 и ConcreteHandler2. Они реализуют интерфейс Handler. Каждый обработчик может обработать запрос, если его уровень соответствует или ниже уровня, указанного в запросе. Если уровень запроса выше, обработчик передает запрос следующему обработчику в цепочке. Если следующего обработчика нет, выводится сообщение о том, что обработчик для запроса не найден. У нашего клиента (Main) есть экземпляры ConcreteHandler1 и ConcreteHandler2. Мы устанавливаем ConcreteHandler2 как следующий обработчик для ConcreteHandler1 с помощью `setNext()`. Затем мы создаем несколько запросов разных уровней и вызываем метод `handleRequest()` у ConcreteHandler1, чтобы начать обработку запросов. Каждый обработчик в цепочке будет пытаться обработать запрос в соответствии со своим уровнем или передавать его следующему обработчику, пока запрос не будет обработан или не достигнет конца цепи. Этот пример показывает, как Chain of Responsibility позволяет динамически передавать запросы по цепочке объектов-обработчиков, чтобы каждый объект решал, может ли он обработать запрос или передать его дальше в цепочке.
-
-## Q27. Что такое Command Pattern (Команда)?
-
-Command Pattern (Команда) — это паттерн проектирования, который представляет действие в виде объекта, позволяя инкапсулировать запросы как объекты и тем самым параметризовать клиентские объекты с различными запросами, обрабатывать или откладывать их выполнение и поддерживать отмену операций. Пример реализации Command Pattern на Java:
-
-// Интерфейс команды
-
-interface Command {
-
-void execute();
-
-}
-
-// Конкретная команда 1
-
-class ConcreteCommand1 implements Command {
-
-private Receiver receiver;
-
-public ConcreteCommand1(Receiver receiver) {
-
-this.receiver = receiver;
-
-}
-
-public void execute() {
-
-receiver.action1();
-
-}
-
-}
-
-// Конкретная команда 2
-
-class ConcreteCommand2 implements Command {
-
-private Receiver receiver;
-
-public ConcreteCommand2(Receiver receiver) {
-
-this.receiver = receiver;
-
-}
-
-public void execute() {
-
-receiver.action2();
-
-}
-
-}
-
-// Получатель команды
-
-class Receiver {
-
-public void action1() {
-
-System.out.println("Выполнение действия 1");
-
-}
-
-public void action2() {
-
-System.out.println("Выполнение действия 2");
-
-}
-
-}
-
-// Инициатор - отправитель команд
-
-class Invoker {
-
-private Command command;
-
-public void setCommand(Command command) {
-
-this.command = command;
-
-}
-
-public void executeCommand() {
-
-command.execute();
-
-}
-
-}
-
-public class CommandPatternExample {
-
-public static void main(String[] args) {
-
-Receiver receiver = new Receiver();
-
-Command command1 = new ConcreteCommand1(receiver);
-
-Command command2 = new ConcreteCommand2(receiver);
-
-Invoker invoker = new Invoker();
-
-invoker.setCommand(command1);
-
-invoker.executeCommand();
-
-invoker.setCommand(command2);
-
-invoker.executeCommand();
-
-}
-
-}
-
-В данном примере есть несколько команд (ConcreteCommand1 и ConcreteCommand2), каждая из которых инкапсулирует определенное действие и имеет ссылку на получателя команды (Receiver). Инициатор (Invoker) запускает выполнение команды, вызывая метод execute(). При вызове команда передает запрос получателю, который выполняет конкретное действие.
-
-## Q28. Что такое Interpreter Pattern (Интерпретатор)?
-
-Interpreter Pattern (Интерпретатор) — это паттерн проектирования, который используется для решения задач, связанных с интерпретацией языка или созданием своего собственного языка. Он позволяет использовать грамматику для интерпретации предложений на этом языке. Пример реализации Interpreter Pattern на Java:
-
-// Контекст - содержит информацию, необходимую для интерпретации выражений
-
-class Context {
-
-private int inputNumber;
-
-public Context(int inputNumber) {
-
-this.inputNumber = inputNumber;
-
-}
-
-public int getInputNumber() {
-
-return inputNumber;
-
-}
-
-public void setInputNumber(int inputNumber) {
-
-this.inputNumber = inputNumber;
-
-}
-
-}
-
-// Абстрактное выражение
-
-interface Expression {
-
-int interpret(Context context);
-
+    abstract void notify(String message);
 }
-
-// Конкретное выражение - терминальное
-
-class NumberExpression implements Expression {
-
-private int number;
-
-public NumberExpression(int number) {
 
-this.number = number;
+class UrgentNotification extends Notification {
+    public UrgentNotification(MessageSender sender) { super(sender); }
 
+    void notify(String message) {
+        sender.send("[URGENT] " + message);
+    }
 }
 
-public int interpret(Context context) {
+class RegularNotification extends Notification {
+    public RegularNotification(MessageSender sender) { super(sender); }
 
-return number;
-
-}
-
+    void notify(String message) {
+        sender.send(message);
+    }
 }
+```
 
-// Конкретное выражение - непрерывное
+Без `Bridge` для 2 типа уведомлений x 2 способа отправки нужно 4 класса. С `Bridge` — всего 4, но при добавлении нового измерения прирост **линейный**, а не квадратичный.
 
-class AddExpression implements Expression {
+## Q17. В чём разница между `Bridge` и `Adapter`?
 
-private Expression left;
+| Критерий | `Adapter` | `Bridge` |
+|----------|-----------|----------|
+| **Когда проектируется** | Постфактум — связать существующие несовместимые интерфейсы | На этапе проектирования — заранее разделить абстракцию и реализацию |
+| **Цель** | Совместимость | Гибкость и расширяемость |
+| **Иерархии** | Одна (адаптер) | Две параллельные |
+| **Пример** | Интеграция со старым API | JDBC: `Driver` (реализация) + `Connection` (абстракция) |
 
-private Expression right;
+## Q18. (!) Что такое `Decorator` Pattern?
 
-public AddExpression(Expression left, Expression right) {
+`Decorator` динамически добавляет объекту новое поведение, оборачивая его. Альтернатива наследованию для расширения функциональности.
 
-this.left = left;
+```mermaid
+classDiagram
+    class Component {
+        <<interface>>
+        +operation(): String
+    }
+    class ConcreteComponent {
+        +operation(): String
+    }
+    class Decorator {
+        <<abstract>>
+        -wrapped: Component
+        +operation(): String
+    }
+    class ConcreteDecoratorA {
+        +operation(): String
+    }
+    class ConcreteDecoratorB {
+        +operation(): String
+    }
 
-this.right = right;
+    Component <|.. ConcreteComponent
+    Component <|.. Decorator
+    Decorator <|-- ConcreteDecoratorA
+    Decorator <|-- ConcreteDecoratorB
+    Decorator --> Component : wraps
+```
 
+```java
+interface DataSource {
+    void writeData(String data);
+    String readData();
 }
-
-public int interpret(Context context) {
 
-return left.interpret(context) + right.interpret(context);
-
+class FileDataSource implements DataSource {
+    private String filename;
+    public FileDataSource(String filename) { this.filename = filename; }
+    public void writeData(String data) { /* запись в файл */ }
+    public String readData() { return "raw data"; }
 }
 
+// Базовый декоратор
+abstract class DataSourceDecorator implements DataSource {
+    protected DataSource wrapped;
+    public DataSourceDecorator(DataSource source) { this.wrapped = source; }
+    public void writeData(String data) { wrapped.writeData(data); }
+    public String readData() { return wrapped.readData(); }
 }
-
-// Конкретное выражение - непрерывное
-
-class SubtractExpression implements Expression {
-
-private Expression left;
 
-private Expression right;
+class EncryptionDecorator extends DataSourceDecorator {
+    public EncryptionDecorator(DataSource source) { super(source); }
 
-public SubtractExpression(Expression left, Expression right) {
+    public void writeData(String data) {
+        super.writeData(encrypt(data));
+    }
 
-this.left = left;
+    public String readData() {
+        return decrypt(super.readData());
+    }
 
-this.right = right;
-
+    private String encrypt(String data) { return "encrypted(" + data + ")"; }
+    private String decrypt(String data) { return data.replace("encrypted(", "").replace(")", ""); }
 }
-
-public int interpret(Context context) {
 
-return left.interpret(context) - right.interpret(context);
+class CompressionDecorator extends DataSourceDecorator {
+    public CompressionDecorator(DataSource source) { super(source); }
 
-}
+    public void writeData(String data) {
+        super.writeData(compress(data));
+    }
 
+    private String compress(String data) { return "compressed(" + data + ")"; }
 }
-
-public class InterpreterPatternExample {
-
-public static void main(String[] args) {
-
-Context context = new Context(5);
-
-Expression expression = new SubtractExpression(
-
-new AddExpression(new NumberExpression(10), new NumberExpression(2)),
-
-new NumberExpression(4)
 
+// Использование — декораторы компонуются:
+DataSource source = new CompressionDecorator(
+    new EncryptionDecorator(
+        new FileDataSource("data.txt")
+    )
 );
+```
 
-int result = expression.interpret(context);
+**В JDK:** вся иерархия `java.io` — `BufferedInputStream`, `DataInputStream`, `GZIPOutputStream` — это классический `Decorator` над `InputStream`/`OutputStream`.
 
-System.out.println(result); // Выводит "8"
+## Q19. В чём разница между `Decorator` и наследованием?
 
+| Критерий | Наследование | `Decorator` |
+|----------|-------------|-------------|
+| Когда расширяется | На этапе компиляции | В runtime |
+| Комбинируемость | Каждая комбинация — отдельный подкласс | Любая комбинация декораторов |
+| Принцип OCP | Нарушает | Соблюдает |
+| Количество классов | Экспоненциальный рост | Линейный рост |
+| Доступ к `protected`-полям | Да | Нет (только через интерфейс) |
+
+**Правило:** если вы пишете `class EncryptedCompressedBufferedFileDataSource extends ...` — это знак, что нужен `Decorator`.
+
+## Q20. (!) Что такое `Proxy` Pattern?
+
+`Proxy` предоставляет заместителя для контроля доступа к объекту. В отличие от `Decorator`, `Proxy` **контролирует доступ**, а не расширяет поведение.
+
+```java
+interface UserService {
+    User findById(Long id);
 }
 
+class UserServiceImpl implements UserService {
+    public User findById(Long id) {
+        // дорогой запрос к БД
+        return database.query("SELECT * FROM users WHERE id = ?", id);
+    }
 }
 
-В данном примере реализован простой язык, который поддерживает операции сложения и вычитания. Контекст содержит информацию, необходимую для интерпретации выражений. Каждое выражение (NumberExpression, AddExpression, SubtractExpression) реализует метод interpret(), который выполняет определенное действие в соответствии с грамматикой языка и возвращает результат интерпретации выражения. В данном случае результат выводится на экран, но в реальной ситуации он может использоваться в дальнейшем вычислении.
+// Кэширующий прокси
+class CachingUserServiceProxy implements UserService {
+    private final UserService delegate;
+    private final Map<Long, User> cache = new ConcurrentHashMap<>();
 
-## Q29. Что такое Iterator Pattern (Итератор)?
+    public CachingUserServiceProxy(UserService delegate) {
+        this.delegate = delegate;
+    }
 
-Iterator Pattern (Итератор) — это паттерн проектирования, который предоставляет способ последовательного доступа к элементам коллекции без раскрытия внутренней структуры коллекции. Он позволяет обходить элементы коллекции без знания о том, как они устроены. Пример реализации Iterator Pattern на Java:
+    public User findById(Long id) {
+        return cache.computeIfAbsent(id, delegate::findById);
+    }
+}
+```
 
-// Интерфейс итератора
+**Виды прокси:**
+- **Virtual Proxy** — ленивая загрузка (`Hibernate` lazy loading)
+- **Protection Proxy** — контроль прав доступа
+- **Caching Proxy** — кэширование результатов
+- **Remote Proxy** — доступ к удалённому объекту (RMI)
+- **Logging Proxy** — логирование вызовов
 
-interface Iterator {
+**В Spring:** `@Transactional`, `@Cacheable`, `@Async` — всё работает через `CGLIB`/`JDK Dynamic Proxy`. Подробнее в [вопросах по Spring](../frameworks/spring/spring-framework-interview.md).
 
-boolean hasNext();
+## Q21. Что такое `Facade` Pattern?
 
-Object next();
+`Facade` предоставляет **упрощённый интерфейс** к сложной подсистеме. Не добавляет функциональности — только скрывает сложность.
 
+```java
+// Сложная подсистема
+class VideoCodec { public byte[] decode(byte[] raw) { /*...*/ return raw; } }
+class AudioMixer { public byte[] mix(byte[] audio) { /*...*/ return audio; } }
+class SubtitleParser { public String parse(String file) { /*...*/ return "subs"; } }
+class VideoRenderer { public void render(byte[] video, byte[] audio, String subs) { /*...*/ } }
+
+// Фасад
+class VideoPlayerFacade {
+    private final VideoCodec codec = new VideoCodec();
+    private final AudioMixer mixer = new AudioMixer();
+    private final SubtitleParser subtitles = new SubtitleParser();
+    private final VideoRenderer renderer = new VideoRenderer();
+
+    public void play(String videoFile) {
+        byte[] video = codec.decode(readFile(videoFile));
+        byte[] audio = mixer.mix(extractAudio(videoFile));
+        String subs = subtitles.parse(videoFile + ".srt");
+        renderer.render(video, audio, subs);
+    }
+}
+```
+
+**В JDK:** `javax.faces.context.FacesContext`, JDBC `DriverManager`.
+
+## Q22. Что такое `Composite` Pattern?
+
+`Composite` позволяет обращаться к отдельным объектам и группам объектов **одинаковым образом**. Создаёт древовидные структуры.
+
+```java
+interface FileSystemComponent {
+    long getSize();
+    String getName();
 }
 
-// Интерфейс коллекции
+class File implements FileSystemComponent {
+    private String name;
+    private long size;
 
-interface Collection {
-
-Iterator createIterator();
-
+    public File(String name, long size) { this.name = name; this.size = size; }
+    public long getSize() { return size; }
+    public String getName() { return name; }
 }
 
-// Конкретный итератор
+class Directory implements FileSystemComponent {
+    private String name;
+    private List<FileSystemComponent> children = new ArrayList<>();
 
-class ConcreteIterator implements Iterator {
+    public Directory(String name) { this.name = name; }
 
-private String[] items;
+    public void add(FileSystemComponent component) { children.add(component); }
 
-private int position = 0;
+    public long getSize() {
+        return children.stream().mapToLong(FileSystemComponent::getSize).sum();
+    }
 
-public ConcreteIterator(String[] items) {
+    public String getName() { return name; }
+}
+```
 
-this.items = items;
+**В JDK:** `java.awt.Container` (содержит `Component`), `javax.swing.JPanel`.
 
+## Q23. Что такое `Flyweight` Pattern?
+
+`Flyweight` экономит память, разделяя общее состояние (`intrinsic`) между множеством объектов.
+
+```java
+// Flyweight — неизменяемое разделяемое состояние
+class TreeType {
+    private final String name;
+    private final String color;
+    private final String texture;
+
+    TreeType(String name, String color, String texture) {
+        this.name = name; this.color = color; this.texture = texture;
+    }
+
+    void draw(int x, int y) {
+        System.out.printf("Drawing %s tree at (%d, %d)%n", name, x, y);
+    }
 }
 
-public boolean hasNext() {
+// Flyweight Factory
+class TreeTypeFactory {
+    private static final Map<String, TreeType> cache = new HashMap<>();
 
-return position < items.length;
+    static TreeType getTreeType(String name, String color, String texture) {
+        String key = name + "-" + color + "-" + texture;
+        return cache.computeIfAbsent(key, k -> new TreeType(name, color, texture));
+    }
+}
+```
 
+**В JDK:** `Integer.valueOf()` (кэш -128..127), `String` pool, `Boolean.valueOf()`.
+
+---
+
+## Q24. (!) Обзор поведенческих паттернов
+
+Поведенческие паттерны — самая большая группа (11 штук). Они описывают алгоритмы и распределение ответственности:
+
+| Паттерн | Одной фразой | JDK-пример |
+|---------|-------------|------------|
+| `Strategy` | Сменный алгоритм | `Comparator` |
+| `Observer` | Подписка на события | `PropertyChangeListener` |
+| `Command` | Действие как объект | `Runnable` |
+| `Template Method` | Скелет алгоритма + переопределяемые шаги | `AbstractList.add()` |
+| `Iterator` | Обход коллекции | `java.util.Iterator` |
+| `State` | Поведение зависит от состояния | `Thread.State` (концептуально) |
+| `Chain of Responsibility` | Цепочка обработчиков | Servlet Filters |
+| `Mediator` | Централизованное взаимодействие | `java.util.Timer` |
+| `Visitor` | Операция над структурой без изменения классов | `FileVisitor` |
+| `Memento` | Сохранение/восстановление состояния | `java.io.Serializable` |
+| `Interpreter` | Грамматика как классы | `java.util.regex.Pattern` |
+
+## Q25. (!) Что такое `Strategy` Pattern?
+
+`Strategy` определяет семейство алгоритмов, инкапсулирует каждый и делает их взаимозаменяемыми.
+
+```mermaid
+classDiagram
+    class Context {
+        -strategy: Strategy
+        +setStrategy(Strategy)
+        +executeStrategy()
+    }
+    class Strategy {
+        <<interface>>
+        +execute()
+    }
+    class ConcreteStrategyA {
+        +execute()
+    }
+    class ConcreteStrategyB {
+        +execute()
+    }
+    Context --> Strategy
+    Strategy <|.. ConcreteStrategyA
+    Strategy <|.. ConcreteStrategyB
+```
+
+```java
+// Классический подход
+interface PaymentStrategy {
+    void pay(BigDecimal amount);
 }
 
-public Object next() {
-
-String item = items[position];
-
-position++;
-
-return item;
-
+class CreditCardPayment implements PaymentStrategy {
+    public void pay(BigDecimal amount) {
+        System.out.println("Paid " + amount + " via Credit Card");
+    }
 }
 
+class PayPalPayment implements PaymentStrategy {
+    public void pay(BigDecimal amount) {
+        System.out.println("Paid " + amount + " via PayPal");
+    }
 }
 
-// Конкретная коллекция
+class PaymentService {
+    private PaymentStrategy strategy;
 
-class ConcreteCollection implements Collection {
+    public void setStrategy(PaymentStrategy strategy) {
+        this.strategy = strategy;
+    }
 
-private String[] items;
+    public void checkout(BigDecimal amount) {
+        strategy.pay(amount);
+    }
+}
+```
 
-public ConcreteCollection(String[] items) {
+**С Java 8+ лямбдами** (упрощение — не нужны отдельные классы):
 
-this.items = items;
+```java
+// Strategy как функциональный интерфейс
+PaymentService service = new PaymentService();
+service.setStrategy(amount -> System.out.println("Crypto: " + amount));
+service.checkout(new BigDecimal("99.99"));
+```
 
+**В JDK:** `Comparator` — самый известный пример `Strategy`. `Collections.sort(list, comparator)`. Подробнее о лямбдах — в [вопросах по Java 8](../programming-languages/java/java-8-interview.md).
+
+## Q26. Что такое `State` Pattern и чем он отличается от `Strategy`?
+
+`State` позволяет объекту менять своё поведение при изменении внутреннего состояния. Объект выглядит так, как будто меняет свой класс.
+
+```java
+interface OrderState {
+    void next(Order order);
+    void cancel(Order order);
+    String getStatus();
 }
 
-public Iterator createIterator() {
-
-return new ConcreteIterator(items);
-
+class NewOrder implements OrderState {
+    public void next(Order order) { order.setState(new PaidOrder()); }
+    public void cancel(Order order) { order.setState(new CancelledOrder()); }
+    public String getStatus() { return "NEW"; }
 }
 
+class PaidOrder implements OrderState {
+    public void next(Order order) { order.setState(new ShippedOrder()); }
+    public void cancel(Order order) { order.setState(new CancelledOrder()); }
+    public String getStatus() { return "PAID"; }
 }
 
-public class IteratorPatternExample {
-
-public static void main(String[] args) {
-
-String[] items = { "Item 1", "Item 2", "Item 3" };
-
-Collection collection = new ConcreteCollection(items);
-
-Iterator iterator = collection.createIterator();
-
-while (iterator.hasNext()) {
-
-Object item = iterator.next();
-
-System.out.println(item); // Выводит каждый элемент коллекции
-
+class ShippedOrder implements OrderState {
+    public void next(Order order) { System.out.println("Already delivered"); }
+    public void cancel(Order order) { System.out.println("Cannot cancel shipped order"); }
+    public String getStatus() { return "SHIPPED"; }
 }
 
+class CancelledOrder implements OrderState {
+    public void next(Order order) { System.out.println("Order is cancelled"); }
+    public void cancel(Order order) { System.out.println("Already cancelled"); }
+    public String getStatus() { return "CANCELLED"; }
 }
 
+class Order {
+    private OrderState state = new NewOrder();
+    void setState(OrderState state) { this.state = state; }
+    void next() { state.next(this); }
+    void cancel() { state.cancel(this); }
+    String getStatus() { return state.getStatus(); }
+}
+```
+
+**Ключевые отличия от `Strategy`:**
+
+| | `Strategy` | `State` |
+|---|---|---|
+| Кто меняет | **Клиент** выбирает алгоритм | **Объект сам** переключает состояние |
+| Осведомлённость | Стратегии не знают друг о друге | Состояния знают о других состояниях |
+| Цель | Выбор алгоритма | Машина состояний |
+
+## Q27. (!) Что такое `Observer` Pattern?
+
+`Observer` определяет зависимость «один ко многим»: когда объект-издатель меняет состояние, все подписчики уведомляются.
+
+```java
+import java.util.*;
+
+// Издатель
+class EventBus<T> {
+    private final Map<String, List<Consumer<T>>> listeners = new HashMap<>();
+
+    public void subscribe(String event, Consumer<T> listener) {
+        listeners.computeIfAbsent(event, k -> new ArrayList<>()).add(listener);
+    }
+
+    public void publish(String event, T data) {
+        listeners.getOrDefault(event, List.of())
+                 .forEach(listener -> listener.accept(data));
+    }
 }
 
-В данном примере создается итератор (ConcreteIterator), который реализует интерфейс Iterator. Конкретная коллекция (ConcreteCollection) реализует интерфейс Collection и возвращает созданный итератор при вызове метода createIterator(). Затем, с помощью итератора, можно последовательно обходить элементы коллекции, не зная о ее внутренней структуре. В данном случае каждый элемент коллекции выводится на экран, но в реальной ситуации их можно использовать для дополнительной обработки или отображения пользователю.
+// Использование
+EventBus<String> bus = new EventBus<>();
+bus.subscribe("order.created", msg -> System.out.println("Email: " + msg));
+bus.subscribe("order.created", msg -> System.out.println("Log: " + msg));
+bus.publish("order.created", "Order #123");
+```
 
-## Q30. Что такое Mediator Pattern (Посредник)?
+> **Примечание:** `java.util.Observable` / `java.util.Observer` — **deprecated** с Java 9. Используйте `PropertyChangeListener`, `Flow API` (reactive streams) или event bus из Spring (`ApplicationEvent`). Подробнее о событиях в Spring — в [вопросах по Spring](../frameworks/spring/spring-framework-interview.md).
 
-Mediator Pattern (Посредник) — это паттерн проектирования, который предоставляет централизованный объект-посредник, который управляет коммуникацией между объектами различных классов, таким образом минимизируя их взаимодействие и зависимость. Пример реализации Mediator Pattern на Java:
+## Q28. Что такое `Chain of Responsibility`?
 
-import java.util.ArrayList;
+Позволяет передавать запрос по цепочке обработчиков. Каждый обработчик решает: обработать запрос или передать следующему.
 
-import java.util.List;
+```java
+abstract class LogHandler {
+    private LogHandler next;
 
-// Интерфейс посредника
+    public LogHandler setNext(LogHandler next) {
+        this.next = next;
+        return next;
+    }
 
-interface Mediator {
+    public void handle(String message, LogLevel level) {
+        if (canHandle(level)) {
+            write(message);
+        }
+        if (next != null) {
+            next.handle(message, level);
+        }
+    }
 
-void sendMessage(String message, User user);
-
+    abstract boolean canHandle(LogLevel level);
+    abstract void write(String message);
 }
 
-// Конкретный посредник
-
-class ChatMediator implements Mediator {
-
-private List<User> users;
-
-public ChatMediator() {
-
-this.users = new ArrayList<>();
-
+class ConsoleLogger extends LogHandler {
+    boolean canHandle(LogLevel level) { return level == LogLevel.DEBUG; }
+    void write(String message) { System.out.println("Console: " + message); }
 }
 
-public void addUser(User user) {
-
-users.add(user);
-
+class FileLogger extends LogHandler {
+    boolean canHandle(LogLevel level) { return level == LogLevel.INFO; }
+    void write(String message) { System.out.println("File: " + message); }
 }
 
-public void sendMessage(String message, User sender) {
-
-for (User user: users) {
-
-if (user!= sender) {
-
-user.receiveMessage(message);
-
+class AlertLogger extends LogHandler {
+    boolean canHandle(LogLevel level) { return level == LogLevel.ERROR; }
+    void write(String message) { System.out.println("ALERT: " + message); }
 }
 
+// Сборка цепочки
+LogHandler chain = new ConsoleLogger();
+chain.setNext(new FileLogger()).setNext(new AlertLogger());
+chain.handle("System failure", LogLevel.ERROR);
+```
+
+**В Java/Spring:** `javax.servlet.Filter`, `Spring Security FilterChain`, `java.util.logging.Handler`.
+
+## Q29. Что такое `Command` Pattern?
+
+`Command` инкапсулирует запрос в объект, позволяя параметризовать клиентов, ставить запросы в очередь, логировать их и поддерживать отмену.
+
+```java
+interface Command {
+    void execute();
+    void undo();
 }
 
+class LightOnCommand implements Command {
+    private final Light light;
+    public LightOnCommand(Light light) { this.light = light; }
+    public void execute() { light.on(); }
+    public void undo() { light.off(); }
 }
 
+class MacroCommand implements Command {
+    private final List<Command> commands;
+    public MacroCommand(List<Command> commands) { this.commands = commands; }
+
+    public void execute() { commands.forEach(Command::execute); }
+    public void undo() {
+        // Отмена в обратном порядке
+        var reversed = new ArrayList<>(commands);
+        Collections.reverse(reversed);
+        reversed.forEach(Command::undo);
+    }
 }
 
-// Абстрактный пользователь
+// История для поддержки undo
+class CommandHistory {
+    private final Deque<Command> history = new ArrayDeque<>();
+
+    public void execute(Command cmd) {
+        cmd.execute();
+        history.push(cmd);
+    }
+
+    public void undo() {
+        if (!history.isEmpty()) {
+            history.pop().undo();
+        }
+    }
+}
+```
+
+**В JDK:** `Runnable`, `Callable` — по сути объекты-команды.
+
+## Q30. (!) Что такое `Template Method` Pattern?
+
+`Template Method` определяет **скелет алгоритма** в базовом классе, позволяя подклассам переопределять отдельные шаги.
+
+```mermaid
+classDiagram
+    class AbstractClass {
+        +templateMethod()
+        #step1()
+        #step2()*
+        #step3()*
+        +hook()
+    }
+    class ConcreteClassA {
+        #step2()
+        #step3()
+    }
+    class ConcreteClassB {
+        #step2()
+        #step3()
+    }
+    AbstractClass <|-- ConcreteClassA
+    AbstractClass <|-- ConcreteClassB
+```
+
+```java
+abstract class DataImporter {
+    // Template method — final, чтобы подклассы не меняли порядок шагов
+    public final void importData() {
+        String raw = readSource();
+        List<Record> parsed = parse(raw);
+        validate(parsed);
+        save(parsed);
+    }
+
+    abstract String readSource();
+    abstract List<Record> parse(String raw);
+
+    // Шаг с реализацией по умолчанию (hook)
+    void validate(List<Record> records) {
+        System.out.println("Default validation: " + records.size() + " records");
+    }
+
+    abstract void save(List<Record> records);
+}
+
+class CsvImporter extends DataImporter {
+    String readSource() { return "csv data..."; }
+    List<Record> parse(String raw) { return parseCsv(raw); }
+    void save(List<Record> records) { database.batchInsert(records); }
+}
+
+class JsonImporter extends DataImporter {
+    String readSource() { return "{...}"; }
+    List<Record> parse(String raw) { return parseJson(raw); }
+    void save(List<Record> records) { database.batchInsert(records); }
+}
+```
+
+**В JDK:** `AbstractList.add()`, `InputStream.read(byte[])`, `HttpServlet.doGet()/doPost()`.
+**В Spring:** `JdbcTemplate`, `RestTemplate`, `JmsTemplate`.
+
+> **`Template Method` vs `Strategy`:** Template Method использует **наследование** (static binding), Strategy — **композицию** (runtime binding). Strategy предпочтительнее, когда нужна гибкость.
+
+## Q31. Что такое `Visitor` Pattern?
+
+`Visitor` позволяет добавлять новые операции к структуре объектов **без изменения** самих классов. Реализует double dispatch.
+
+```java
+interface DocumentElement {
+    void accept(DocumentVisitor visitor);
+}
+
+class Paragraph implements DocumentElement {
+    String text;
+    public Paragraph(String text) { this.text = text; }
+    public void accept(DocumentVisitor visitor) { visitor.visit(this); }
+}
+
+class Image implements DocumentElement {
+    String url;
+    public Image(String url) { this.url = url; }
+    public void accept(DocumentVisitor visitor) { visitor.visit(this); }
+}
+
+interface DocumentVisitor {
+    void visit(Paragraph p);
+    void visit(Image img);
+}
+
+class HtmlExportVisitor implements DocumentVisitor {
+    public void visit(Paragraph p) { System.out.println("<p>" + p.text + "</p>"); }
+    public void visit(Image img) { System.out.println("<img src=\"" + img.url + "\"/>"); }
+}
+
+class WordCountVisitor implements DocumentVisitor {
+    int count = 0;
+    public void visit(Paragraph p) { count += p.text.split("\\s+").length; }
+    public void visit(Image img) { /* images don't have words */ }
+}
+```
+
+**В JDK:** `java.nio.file.FileVisitor`, `javax.lang.model.element.ElementVisitor` (annotation processing).
+
+## Q32. Что такое `Iterator` Pattern?
+
+`Iterator` предоставляет способ последовательного доступа к элементам коллекции без раскрытия её внутренней структуры.
+
+```java
+// В Java Iterator встроен в язык через java.util.Iterator и for-each
+class NumberRange implements Iterable<Integer> {
+    private final int start;
+    private final int end;
+
+    public NumberRange(int start, int end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    @Override
+    public Iterator<Integer> iterator() {
+        return new Iterator<>() {
+            private int current = start;
+            public boolean hasNext() { return current <= end; }
+            public Integer next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                return current++;
+            }
+        };
+    }
+}
+
+// Использование — for-each
+for (int n : new NumberRange(1, 5)) {
+    System.out.println(n);
+}
+```
+
+Подробнее о коллекциях и итераторах — в [вопросах по Java Collections](../programming-languages/java/java-collections-interview.md).
+
+## Q33. Что такое `Mediator` Pattern?
+
+`Mediator` инкапсулирует взаимодействие множества объектов, уменьшая связанность между ними. Объекты общаются не напрямую, а через посредника.
+
+```java
+interface ChatMediator {
+    void sendMessage(String message, User sender);
+    void addUser(User user);
+}
+
+class GroupChat implements ChatMediator {
+    private List<User> users = new ArrayList<>();
+
+    public void addUser(User user) { users.add(user); }
+
+    public void sendMessage(String message, User sender) {
+        users.stream()
+             .filter(u -> u != sender)
+             .forEach(u -> u.receive(message));
+    }
+}
 
 abstract class User {
+    protected ChatMediator mediator;
+    protected String name;
 
-protected Mediator mediator;
+    public User(ChatMediator mediator, String name) {
+        this.mediator = mediator;
+        this.name = name;
+    }
 
-public User(Mediator mediator) {
-
-this.mediator = mediator;
-
+    abstract void send(String message);
+    abstract void receive(String message);
 }
 
-public abstract void sendMessage(String message);
+class ChatUser extends User {
+    public ChatUser(ChatMediator mediator, String name) { super(mediator, name); }
+    public void send(String message) { mediator.sendMessage(message, this); }
+    public void receive(String message) { System.out.println(name + " received: " + message); }
+}
+```
 
-public abstract void receiveMessage(String message);
+**В Spring:** `DispatcherServlet` — медиатор между контроллерами, view resolvers и handler mappings.
 
+## Q34. Что такое `Memento` Pattern?
+
+`Memento` позволяет сохранять и восстанавливать предыдущее состояние объекта, не раскрывая деталей реализации.
+
+```java
+// Memento — хранит состояние
+record EditorMemento(String content, int cursorPosition) {}
+
+// Originator — объект, состояние которого сохраняем
+class TextEditor {
+    private String content = "";
+    private int cursorPosition = 0;
+
+    public void type(String text) {
+        content += text;
+        cursorPosition = content.length();
+    }
+
+    public EditorMemento save() {
+        return new EditorMemento(content, cursorPosition);
+    }
+
+    public void restore(EditorMemento memento) {
+        content = memento.content();
+        cursorPosition = memento.cursorPosition();
+    }
 }
 
-// Конкретный пользователь
+// Caretaker — управляет историей
+class EditorHistory {
+    private final Deque<EditorMemento> history = new ArrayDeque<>();
 
-class BasicUser extends User {
+    public void save(TextEditor editor) { history.push(editor.save()); }
+    public void undo(TextEditor editor) {
+        if (!history.isEmpty()) editor.restore(history.pop());
+    }
+}
+```
 
-public BasicUser(Mediator mediator) {
+---
 
-super(mediator);
+## Q35. (!) Какие `Design Patterns` используются в JDK?
 
+| Паттерн | Примеры в JDK |
+|---------|--------------|
+| **Singleton** | `Runtime.getRuntime()`, `Desktop.getDesktop()` |
+| **Factory Method** | `Calendar.getInstance()`, `NumberFormat.getInstance()` |
+| **Abstract Factory** | `DocumentBuilderFactory`, `TransformerFactory` |
+| **Builder** | `StringBuilder`, `Stream.Builder`, `Locale.Builder` |
+| **Prototype** | `Object.clone()`, `Cloneable` |
+| **Adapter** | `Arrays.asList()`, `InputStreamReader`, `OutputStreamWriter` |
+| **Decorator** | `BufferedInputStream`, `DataOutputStream`, `Collections.unmodifiableList()` |
+| **Proxy** | `java.lang.reflect.Proxy`, `RMI` |
+| **Composite** | `java.awt.Container`, `javax.swing.JComponent` |
+| **Flyweight** | `Integer.valueOf()` (-128..127), `String` pool |
+| **Facade** | `javax.faces.context.FacesContext` |
+| **Observer** | `PropertyChangeListener`, `java.util.concurrent.Flow` |
+| **Iterator** | `java.util.Iterator`, `Enumeration` |
+| **Strategy** | `Comparator`, `java.util.function.*` |
+| **Template Method** | `AbstractList`, `InputStream.read(byte[])`, `HttpServlet` |
+| **Command** | `Runnable`, `Callable` |
+| **Chain of Responsibility** | `java.util.logging.Handler` |
+
+## Q36. (!) Какие `Design Patterns` используются в `Spring Framework`?
+
+```mermaid
+graph TD
+    Spring[Spring Framework]
+    Spring --> S1[Singleton — по умолчанию для всех бинов]
+    Spring --> S2["Factory — BeanFactory, ApplicationContext"]
+    Spring --> S3["Proxy — @Transactional, @Cacheable, AOP"]
+    Spring --> S4["Template Method — JdbcTemplate, RestTemplate"]
+    Spring --> S5["Observer — ApplicationEvent / @EventListener"]
+    Spring --> S6["Strategy — HandlerMapping, ViewResolver"]
+    Spring --> S7["Decorator — BeanPostProcessor"]
+    Spring --> S8["Adapter — HandlerAdapter"]
+    Spring --> S9["Composite — CompositeHealthIndicator"]
+    Spring --> S10["Chain of Responsibility — Security Filters"]
+```
+
+| Паттерн | Где в Spring | Пример |
+|---------|-------------|--------|
+| **Singleton** | Scope по умолчанию | `@Component`, `@Service` |
+| **Factory** | Контейнер IoC | `BeanFactory`, `FactoryBean<T>` |
+| **Proxy** | AOP, транзакции | `@Transactional` создаёт CGLIB-прокси |
+| **Template Method** | Работа с ресурсами | `JdbcTemplate`, `TransactionTemplate` |
+| **Observer** | События | `ApplicationEventPublisher`, `@EventListener` |
+| **Strategy** | Смена реализации | `HandlerMapping`, `ViewResolver` |
+| **DI** | Весь контейнер | `@Autowired`, constructor injection |
+
+Подробнее — в [вопросах по Spring Framework](../frameworks/spring/spring-framework-interview.md) и [Spring Boot](../frameworks/spring/spring-boot-interview.md).
+
+## Q37. (!) Разница между `Dependency Injection` и `Service Locator`?
+
+| Критерий | `DI` (Dependency Injection) | `Service Locator` |
+|----------|---------------------------|-------------------|
+| **Направление** | Зависимости **внедряются** извне | Класс **запрашивает** зависимость сам |
+| **Видимость зависимостей** | Явные (в конструкторе) | Скрытые (внутри метода) |
+| **Тестируемость** | Легко подменить моком | Нужно мокать локатор |
+| **Связанность** | Слабая | Класс привязан к реестру |
+| **Пример** | Spring DI, Guice | JNDI, `ServiceLoader` |
+
+```java
+// DI — зависимость явная
+class OrderService {
+    private final PaymentGateway gateway;
+
+    // Зависимость видна сразу
+    public OrderService(PaymentGateway gateway) {
+        this.gateway = gateway;
+    }
 }
 
-public void sendMessage(String message) {
+// Service Locator — зависимость скрыта
+class OrderService {
+    public void processOrder(Order order) {
+        // Зависимость не видна из сигнатуры
+        PaymentGateway gateway = ServiceLocator.getService(PaymentGateway.class);
+        gateway.charge(order.getTotal());
+    }
+}
+```
 
-System.out.println("User sending message: " + message);
+> **Правило:** в новом коде всегда предпочитайте DI. `Service Locator` допустим только в legacy-коде или фреймворках, где DI недоступен.
 
-mediator.sendMessage(message, this);
+## Q38. Чем отличается `Singleton`-паттерн от Spring singleton scope?
 
+| Аспект | GoF `Singleton` | Spring `singleton` scope |
+|--------|----------------|------------------------|
+| **Гарантия** | Один экземпляр на JVM / ClassLoader | Один экземпляр на `ApplicationContext` |
+| **Управление** | Класс сам контролирует | Контейнер Spring управляет |
+| **Тестируемость** | Затруднена | Легко подменить через DI |
+| **Наследование** | Усложнено | Без ограничений |
+| **Несколько контекстов** | Нет проблем | В каждом контексте свой экземпляр |
+
+Spring `@Scope("singleton")` — это **не** GoF Singleton. Spring не запрещает создать `new MyService()` напрямую — он лишь гарантирует, что `ApplicationContext` вернёт один и тот же бин.
+
+---
+
+## Q39. Как выбрать правильный паттерн для задачи?
+
+Алгоритм выбора:
+
+1. **Определите проблему:** создание объекта? расширение поведения? организация взаимодействия?
+2. **Категория:** Creational → Structural → Behavioral
+3. **Сузьте выбор:**
+
+| Задача | Кандидаты |
+|--------|-----------|
+| Создать один экземпляр | `Singleton` |
+| Создать объект без привязки к конкретному классу | `Factory Method`, `Abstract Factory` |
+| Объект с множеством опциональных параметров | `Builder` |
+| Добавить поведение без наследования | `Decorator` |
+| Совместить несовместимые интерфейсы | `Adapter` |
+| Упростить сложный API | `Facade` |
+| Менять алгоритм в runtime | `Strategy` |
+| Машина состояний | `State` |
+| Подписка на события | `Observer` |
+| Undo/Redo | `Command` + `Memento` |
+
+4. **Задайте себе вопрос:** «Что если просто не использовать паттерн? Будет ли код хуже?»
+
+## Q40. Как паттерны связаны друг с другом?
+
+```mermaid
+graph LR
+    AF[Abstract Factory] --> FM[Factory Method]
+    FM --> Prototype
+    Builder --> Composite
+
+    Adapter --> Bridge
+    Decorator --> Composite
+    Proxy --> Decorator
+
+    Strategy --> State
+    Observer --> Mediator
+    Command --> Memento
+    Iterator --> Composite
+    Visitor --> Composite
+    TemplateMethod[Template Method] --> Strategy
+
+    style AF fill:#e1f5fe
+    style FM fill:#e1f5fe
+    style Prototype fill:#e1f5fe
+    style Builder fill:#e1f5fe
+    style Adapter fill:#fff3e0
+    style Bridge fill:#fff3e0
+    style Decorator fill:#fff3e0
+    style Composite fill:#fff3e0
+    style Proxy fill:#fff3e0
+    style Strategy fill:#e8f5e9
+    style State fill:#e8f5e9
+    style Observer fill:#e8f5e9
+    style Mediator fill:#e8f5e9
+    style Command fill:#e8f5e9
+    style Memento fill:#e8f5e9
+    style Iterator fill:#e8f5e9
+    style Visitor fill:#e8f5e9
+    style TemplateMethod fill:#e8f5e9
+```
+
+**Частые связи:**
+- `Abstract Factory` часто реализуется через `Factory Method`
+- `Decorator` и `Composite` имеют похожую структуру (рекурсивная композиция)
+- `Strategy` и `State` — одинаковая структура, разная семантика
+- `Command` + `Memento` = Undo/Redo
+- `Iterator` + `Composite` = обход дерева
+
+## Q41. (!) Как паттерны изменились с появлением `Java 8+`?
+
+С появлением лямбд и функциональных интерфейсов многие паттерны **упростились**:
+
+| Паттерн | До Java 8 | Java 8+ |
+|---------|-----------|---------|
+| **Strategy** | Отдельный класс для каждой стратегии | Лямбда: `list.sort((a, b) -> a.compareTo(b))` |
+| **Command** | Класс-команда с `execute()` | `Runnable`, `Supplier<T>` |
+| **Observer** | Интерфейс `Observer` + `update()` | `Consumer<T>`, `Flow.Subscriber` |
+| **Template Method** | Абстрактный класс + наследование | Функциональная композиция через `Function<T,R>` |
+| **Factory** | Отдельная фабрика | `Supplier<T>`: `Supplier<Connection> factory = () -> new PostgresConnection();` |
+| **Builder** | Вложенный класс Builder | Records + `with` методы (Java 16+) |
+| **Iterator** | Класс-итератор | `Stream`, `Spliterator` |
+
+```java
+// Strategy через лямбду
+List<String> names = List.of("Alice", "Bob", "Charlie");
+names.stream()
+     .sorted(Comparator.comparing(String::length)) // Strategy = Comparator
+     .forEach(System.out::println);                 // Observer = Consumer
+
+// Factory через Supplier
+Map<String, Supplier<Shape>> factories = Map.of(
+    "circle", Circle::new,
+    "square", Square::new
+);
+Shape shape = factories.get("circle").get();
+```
+
+Подробнее — в [вопросах по Java 8](../programming-languages/java/java-8-interview.md) и [Java Stream API](../programming-languages/java/java-stream-interview.md).
+
+## Q42. Что такое `Null Object` Pattern?
+
+`Null Object` — альтернатива `null`-проверкам. Вместо `null` возвращается объект с «пустым» поведением.
+
+```java
+interface Logger {
+    void log(String message);
 }
 
-public void receiveMessage(String message) {
-
-System.out.println("User receiving message: " + message);
-
+class ConsoleLogger implements Logger {
+    public void log(String message) { System.out.println(message); }
 }
 
+// Null Object — ничего не делает, но не null
+class NullLogger implements Logger {
+    public void log(String message) { /* intentionally empty */ }
 }
 
-public class MediatorPatternExample {
+class Service {
+    private final Logger logger;
 
-public static void main(String[] args) {
+    // Никогда не получим NPE
+    public Service(Logger logger) {
+        this.logger = logger != null ? logger : new NullLogger();
+    }
+}
+```
 
-ChatMediator mediator = new ChatMediator();
+**В Java:** `Collections.emptyList()`, `Optional.empty()` — концептуально близки к `Null Object`.
 
-User user1 = new BasicUser(mediator);
+## Q43. Какие паттерны используются вместе чаще всего?
 
-User user2 = new BasicUser(mediator);
+| Комбинация | Зачем |
+|-----------|-------|
+| `Factory` + `Strategy` | Фабрика создаёт стратегии по ключу |
+| `Command` + `Memento` | Undo/Redo |
+| `Composite` + `Iterator` + `Visitor` | Обход и обработка дерева |
+| `Proxy` + `Decorator` | Прокси для кэширования + декораторы для логирования |
+| `Abstract Factory` + `Singleton` | Единственная фабрика для семейства объектов |
+| `Observer` + `Mediator` | Event bus — медиатор пересылает события подписчикам |
+| `Template Method` + `Strategy` | Скелет алгоритма с подменяемыми шагами |
 
-mediator.addUser(user1);
+## Q44. `Interpreter` Pattern — когда и зачем?
 
-mediator.addUser(user2);
+`Interpreter` используется для разбора и интерпретации **грамматик** или **DSL** (Domain-Specific Languages). На практике применяется редко из-за сложности.
 
-user1. sendMessage("Hello, user2!"); // Отправить сообщение пользователю 2
+**Когда использовать:**
+- Парсинг простых выражений (математические, логические)
+- Реализация правил (бизнес-правила, фильтры)
+- DSL для конфигурации
 
-user2. sendMessage("Hi, user1!"); // Отправить сообщение пользователю 1
+**В JDK:** `java.util.regex.Pattern` — регулярные выражения интерпретируются по этому паттерну (концептуально).
 
+> **На практике:** вместо `Interpreter` чаще используют готовые парсеры (ANTLR, JavaCC) или expression languages (SpEL в Spring).
+
+## Q45. Назовите паттерны, которые вы использовали в реальных проектах
+
+Это открытый вопрос. Хороший ответ включает **конкретный контекст, проблему и решение:**
+
+**Пример ответа:**
+
+> «В проекте e-commerce мы использовали `Strategy` для расчёта скидок — каждый тип скидки (промокод, лояльность, объёмная) реализован как отдельная стратегия. `Chain of Responsibility` — для валидации заказа: проверка наличия на складе, проверка лимитов, проверка платежа. `Builder` — для конструирования сложных отчётов с множеством опциональных секций. В Spring у нас повсюду `Proxy` через `@Transactional` и `Template Method` через `JdbcTemplate`. Также использовали `Observer` через `@EventListener` для асинхронной отправки уведомлений после создания заказа.»
+
+**Важно:**
+- Не перечисляйте все 23 паттерна — назовите 3-5, которые реально использовали
+- Объясните **проблему**, которую паттерн решил
+- Упомяните **альтернативы**, которые рассматривали
+- Будьте готовы к follow-up: «А почему не `X`?», «Какие проблемы были?»
+
+## Q46. Что такое `Object Pool` Pattern?
+
+`Object Pool` — порождающий паттерн, который управляет **пулом заранее созданных объектов**, предотвращая дорогостоящее создание/уничтожение.
+
+```java
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+public class ConnectionPool {
+    private final BlockingQueue<DatabaseConnection> pool;
+
+    public ConnectionPool(int size) {
+        pool = new LinkedBlockingQueue<>(size);
+        for (int i = 0; i < size; i++) {
+            pool.offer(new DatabaseConnection());  // создаём заранее
+        }
+    }
+
+    // Взять объект из пула (блокируется, если пул пуст)
+    public DatabaseConnection acquire() throws InterruptedException {
+        return pool.take();
+    }
+
+    // Вернуть объект в пул
+    public void release(DatabaseConnection conn) {
+        conn.reset();     // сбросить состояние перед возвратом
+        pool.offer(conn);
+    }
 }
 
+// Использование
+ConnectionPool pool = new ConnectionPool(10);
+DatabaseConnection conn = pool.acquire();
+try {
+    conn.execute("SELECT ...");
+} finally {
+    pool.release(conn);  // ВСЕГДА возвращать в пул
+}
+```
+
+**Применение в JDK и фреймворках:**
+- `HikariCP`, `c3p0`, `DBCP` — пулы соединений с БД
+- `Executors.newFixedThreadPool()` — пул потоков
+- `ByteBuffer` пул в `Netty` (для сетевых буферов)
+- `Tomcat` / `Jetty` — пул HTTP-соединений
+
+**Когда применять:**
+- Создание объекта дорогое (TCP-соединение, поток ОС)
+- Объекты создаются/уничтожаются часто
+- Количество одновременно используемых объектов ограничено
+
+**Риски:**
+- **Утечка объектов** — объект взят из пула, но не возвращён (try-finally обязателен)
+- **Dirty state** — забыли сбросить состояние объекта перед возвратом
+- **Deadlock** — пул пуст, все потоки ждут освобождения, но освобождения нет
+
+```mermaid
+sequenceDiagram
+    participant C1 as Client 1
+    participant P as Pool
+    participant O1 as Object 1
+
+    C1->>P: acquire()
+    P->>O1: выдать из пула
+    P-->>C1: conn
+    C1->>O1: use()
+    C1->>P: release(conn)
+    P->>O1: reset() + вернуть в пул
+```
+
+## Q47. (!) Когда НЕ нужно применять паттерны проектирования?
+
+Это один из самых важных практических вопросов. Знание когда **не** применять паттерн ценится выше, чем знание всех 23.
+
+**Признаки overengineering (избыточного применения паттернов):**
+
+| Ситуация | Неправильно | Правильно |
+|----------|-------------|-----------|
+| Два варианта поведения | Strategy с 2 классами | `if/else` или лямбда |
+| Один способ создания | Abstract Factory | Просто `new MyClass()` |
+| Один обработчик | Chain of Responsibility с 1 звеном | Прямой вызов метода |
+| Простое действие | Command pattern | Прямой вызов или лямбда |
+| Один подписчик | Observer/EventBus | Прямой вызов метода |
+
+**Когда `Singleton` не нужен:**
+```java
+// Overengineering — класс без состояния
+@Singleton
+class MathHelper {
+    public int add(int a, int b) { return a + b; }
 }
 
-В данном примере создается посредник (ChatMediator), который реализует интерфейс Mediator. Конкретные пользователи (BasicUser) реализуют интерфейс User. При создании объекта пользователя, ему передается ссылка на посредника. Когда пользователь отправляет сообщение с помощью метода sendMessage, оно передается посреднику, который далее распространяет его всем остальным пользователям (кроме отправителя). Используя посредника, пользователи могут обмениваться сообщениями, при этом не завися от конкретных друг от друга, что позволяет легко добавлять новых пользователей и изменять поведение сообщений.
+// Правильно — просто статический метод
+class MathUtils {
+    public static int add(int a, int b) { return a + b; }
+}
+```
 
-## Q31. (!) Какие Design Patterns используются в библиотеке JDK?
+**Когда `Builder` не нужен:**
+```java
+// Overkill для 2 параметров
+Person person = new PersonBuilder()
+    .name("Alice")
+    .age(30)
+    .build();
 
-В библиотеке JDK (Java Development Kit) используется множество различных шаблонов проектирования для обеспечения эффективности и гибкости разработки. Некоторые из наиболее распространенных шаблонов, которые можно найти в JDK, включают:
+// Достаточно простого конструктора или record
+record Person(String name, int age) {}
+var person = new Person("Alice", 30);
+```
 
-1. Singleton (Singleton): Используется для создания класса, гарантирующего, что существует только один экземпляр этого класса во всей программе. Примеры классов из JDK, реализующих Singleton, включают java.lang.Runtime и java.awt.Desktop.
-2. Factory Method (Фабрика): Используется для создания объектов, скрывая фактическую логику создания от клиента. Примеры классов из JDK, использующих этот шаблон, включают java.util.Calendar и java.nio.charset.Charset.
-3. Iterator (Итератор): Используется для последовательного доступа к элементам коллекции без раскрытия внутренней структуры коллекции. Примеры интерфейсов и классов из JDK, реализующих Iterator, включают java.util.Iterator и java.util.ListIterator.
-4. Observer (Наблюдатель): Используется для реализации механизма оповещения о изменениях в объекте другим объектам, которые на него подписаны. Примеры интерфейсов и классов из JDK, использующих этот шаблон, включают java.util.Observable и java.util.Observer.
-5. Decorator (Декоратор): Используется для добавления нового поведения или функциональности к существующему объекту без изменения его основной структуры. Примеры классов из JDK, реализующих Decorator, включают `java.io.BufferedInputStream` и `java.io.BufferedWriter`. Это лишь некоторые примеры шаблонов проектирования, используемых в JDK. Библиотека JDK обладает множеством классов и интерфейсов, и в ней могут быть использованы и другие паттерны проектирования в зависимости от потребностей и целей разработчиков.
+**Правило YAGNI** (You Aren't Gonna Need It):
+> Не вводите абстракцию, пока у вас нет второго конкретного случая, требующего её.
 
-## Q32. (!) Разница между Dependency Injection Pattern и Service Locator Pattern?
+**«Три удара» (Three Strikes and Refactor):**
+- Первый раз — просто пишешь
+- Второй раз — замечаешь похожий код, дублируешь
+- Третий раз — рефакторишь, вводишь паттерн
 
-Dependency Injection (DI, инъекция зависимостей) и Service Locator (поиск служб) являются двумя популярными паттернами, используемыми в разработке программного обеспечения. Вот основные отличия между ними:
+**Красные флаги применения паттерна:**
+1. Паттерн добавил больше классов, чем упростил логику
+2. Единственная причина — «так правильно» или «по книге»
+3. Другие разработчики не понимают, зачем он здесь
+4. Паттерн мешает чтению кода, а не помогает
 
-1. Как работают:
- 1. При использовании DI, зависимости внедряются в класс извне, обычно через конструктор, методы или свойства. Зависимости передаются в класс, потому что класс сам не создает экземпляры зависимых объектов. 2. В Service Locator класс запрашивает службы, вызывая глобальный реестр или контейнер служб. Класс сам не знает, как создавать или получать экземпляры зависимых объектов, а просто запрашивает их из реестра. 1. Гибкость:
- 1. DI обеспечивает большую гибкость, потому что класс знает только о своих зависимостях, а не о том, как они создаются. Это упрощает изменение или замену зависимых объектов без изменения класса. 2. Service Locator может создавать зависимости динамически, но требует, чтобы класс имел доступ к контейнеру служб. Это делает класс более связанным с этим реестром или контейнером, затрудняя замену службы или использование разных контейнеров. 1. Тестирование:
- 1. DI обычно облегчает unit-тестирование, потому что зависимости могут быть заменены на фейковые или моки, что позволяет легко создавать изолированные тесты. 2. Service Locator может затруднить unit-тестирование, потому что класс должен иметь доступ к глобальному реестру или контейнеру служб, что делает тестирование более сложным и увеличивает связность с другими компонентами. 1. Прозрачность:
- 1. DI делает зависимости класса явными. Класс ясно обозначает, какие зависимости он требует, и их можно легко увидеть по его конструктору или свойствам. 2. Service Locator скрывает зависимости класса, потому что класс запрашивает службы только в нужный момент, и их источник может быть неявным или распределенным по всему коду. Общее правило заключается в том, что DI предпочтительнее использовать перед Service Locator, так как он обеспечивает более явное и легко управляемое внедрение зависимостей, уменьшает связность компонентов и облегчает тестирование. Однако выбор зависит от специфики проекта и требований.
+> **На собеседовании:** если интервьюер спрашивает «какой паттерн бы вы использовали?» — часто правильный ответ: «никакой, простого решения достаточно». Это показывает зрелость.
+
+## Q48. Что такое паттерн `Specification`?
+
+`Specification` — поведенческий паттерн (не входит в GoF 23, но широко используется в DDD), позволяющий инкапсулировать **бизнес-правило** в отдельный объект и комбинировать правила булевой логикой.
+
+```java
+@FunctionalInterface
+interface Specification<T> {
+    boolean isSatisfiedBy(T candidate);
+
+    default Specification<T> and(Specification<T> other) {
+        return candidate -> this.isSatisfiedBy(candidate) && other.isSatisfiedBy(candidate);
+    }
+
+    default Specification<T> or(Specification<T> other) {
+        return candidate -> this.isSatisfiedBy(candidate) || other.isSatisfiedBy(candidate);
+    }
+
+    default Specification<T> not() {
+        return candidate -> !this.isSatisfiedBy(candidate);
+    }
+}
+
+// Конкретные спецификации
+class ActiveCustomerSpec implements Specification<Customer> {
+    public boolean isSatisfiedBy(Customer c) { return c.isActive(); }
+}
+
+class PremiumCustomerSpec implements Specification<Customer> {
+    public boolean isSatisfiedBy(Customer c) {
+        return c.getTotalPurchases().compareTo(new BigDecimal("10000")) > 0;
+    }
+}
+
+class MinAgeSpec implements Specification<Customer> {
+    private final int minAge;
+    MinAgeSpec(int minAge) { this.minAge = minAge; }
+    public boolean isSatisfiedBy(Customer c) { return c.getAge() >= minAge; }
+}
+
+// Комбинирование через булеву логику
+Specification<Customer> eligibleForLoan =
+    new ActiveCustomerSpec()
+        .and(new PremiumCustomerSpec())
+        .and(new MinAgeSpec(18));
+
+List<Customer> eligibleCustomers = customers.stream()
+    .filter(eligibleForLoan::isSatisfiedBy)
+    .collect(toList());
+```
+
+**С Spring Data — перевод в JPA Predicate:**
+
+```java
+// Spring Data Specification (для динамических запросов)
+Specification<Customer> spec = (root, query, cb) ->
+    cb.and(
+        cb.isTrue(root.get("active")),
+        cb.greaterThanOrEqualTo(root.get("age"), 18)
+    );
+
+customerRepository.findAll(spec);
+```
+
+**Когда применять:**
+- Сложная бизнес-логика фильтрации с множеством условий
+- Динамические запросы к БД (`Spring Data Specification`)
+- Правила валидации, которые можно комбинировать
+- Правила ценообразования или скидок в e-commerce
+
+**Связь с DDD:** паттерн из книги Эрика Эванса «Domain-Driven Design». В DDD `Specification` используют для инкапсуляции бизнес-инвариантов и запросов к репозиторию.
+
+---
+
+## See also
+
+- [ООП и Java](../programming-languages/java/java-oop-interview.md) — принципы SOLID, наследование, полиморфизм
+- [Spring Framework](../frameworks/spring/spring-framework-interview.md) — DI, AOP, IoC и паттерны в Spring
+- [Паттерны рефакторинга](../code-quality/refactoring-patterns-interview.md) — рефакторинг и устранение code smells
+- [Java Collections](../programming-languages/java/java-collections-interview.md) — паттерны Iterator, Composite в коллекциях
+- [Микросервисы](../architecture/microservices-interview.md) — архитектурные паттерны
+- [Технический долг](../code-quality/technical-debt-interview.md) — антипаттерны и код-смеллы
+- [System Design](../system-design/system-design-interview.md) — паттерны в контексте проектирования систем

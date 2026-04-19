@@ -1,7 +1,10 @@
 ---
 title: "Containerization — обзор"
 description: "Кратко: обзор контейнеризации — Docker, Kubernetes, оркестрация, образы, runtime, практики и связь с devops."
-tags: ["platform", "containers", "containerization-overview"]
+tags:
+  - platform
+  - containers
+  - containerization-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Containerization** — обзор
 
 Кратко: обзор контейнеризации — **Docker**, **Kubernetes**, оркестрация, образы, **runtime**, практики и связь с **devops**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

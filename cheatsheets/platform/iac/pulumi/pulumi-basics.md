@@ -1,7 +1,10 @@
 ---
 title: "Основы Pulumi (редирект)"
 description: "Основной документ по теме: [Pulumi](pulumi.md)."
-tags: ["platform", "iac", "pulumi-basics"]
+tags:
+  - platform
+  - iac
+  - pulumi-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []

@@ -1,7 +1,12 @@
 ---
 title: "Scala Reflection"
 description: "Полное руководство по рефлексии в Scala: runtime reflection, type tags, class tags, интроспекция типов"
-tags: ["scala", "reflection", "runtime", "type-tags", "introspection"]
+tags:
+  - scala
+  - reflection
+  - runtime
+  - type-tags
+  - introspection
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 # **Scala Reflection**
 
 Кратко: полное руководство по рефлексии в **Scala**: **runtime reflection**, **type tags**, **class tags**, интроспекция типов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

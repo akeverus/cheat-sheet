@@ -1,7 +1,10 @@
 ---
 title: "Tagless Final в Scala"
 description: "Краткое руководство по Tagless Final паттерну в Scala - подход к функциональному программированию с эффектами."
-tags: ["languages", "scala", "scala-tagless-final"]
+tags:
+  - languages
+  - scala
+  - scala-tagless-final
 difficulty: "intermediate"
 prerequisites: []
 next: []

@@ -1,7 +1,10 @@
 ---
 title: "Java Reactive: RxJava"
 description: "Материал по теме Java Reactive: RxJava в разделе cheatsheets."
-tags: ["languages", "java", "java-reactive-rxjava"]
+tags:
+  - languages
+  - java
+  - java-reactive-rxjava
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Reactive: RxJava
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

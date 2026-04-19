@@ -1,7 +1,10 @@
 ---
 title: "Protocol Buffers (Protobuf)"
 description: "Protocol Buffers - это язык-агностичный бинарный формат сериализации структурированных данных от Google. Предоставляет эффективную и быструю альтернативу JSON/XML для сериализации данных."
-tags: ["libraries", "java", "java-protobuf"]
+tags:
+  - libraries
+  - java
+  - java-protobuf
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Protocol Buffers (**Protobuf**)
 
 **Protocol Buffers** - это язык-агностичный бинарный формат сериализации структурированных данных от **Google**. Предоставляет эффективную и быструю альтернативу **JSON**/**XML** для сериализации данных.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,18 @@
 ---
 title: "PostgreSQL: типы данных (массивы, enum, JSONB, домены)"
 description: "Комплексное руководство по расширенным типам данных в PostgreSQL: массивы, перечисления, JSONB, домены, диапазоны, полнотекстовый поиск, UUID и пользовательские типы"
-tags: ["postgresql", "database", "types", "arrays", "json", "enum", "domains", "ranges", "full-text-search", "uuid", "custom-types"]
+tags:
+  - postgresql
+  - database
+  - types
+  - arrays
+  - json
+  - enum
+  - domains
+  - ranges
+  - full-text-search
+  - uuid
+  - custom-types
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md"]
 next: ["databases/postgres-design.md"]
@@ -12,8 +23,6 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 # **PostgreSQL**: типы данных (**массивы, enum, `JSONB`, домены**)
 
 Это подробное руководство по расширенным типам данных в **PostgreSQL**. Вы узнаете о массивах, перечислениях (**enum**), **JSONB**, доменах, диапазонах, полнотекстовом поиске, **UUID** и создании пользовательских типов данных.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

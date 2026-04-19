@@ -1,7 +1,10 @@
 ---
 title: "Jest"
 description: "Jest — фреймворк для юнит- и интеграционных тестов в экосистеме JavaScript/TypeScript: встроенные моки (jest.fn(), jest.mock()), снапшот-тестирование, покрытие (Istanbul), поддержка ES modules и TypeScript. Часто используется с React (React Testing Library), Vue, Node.js."
-tags: ["testing", "unit-testing", "jest"]
+tags:
+  - testing
+  - unit-testing
+  - jest
 difficulty: "intermediate"
 prerequisites: []
 next: []

@@ -1,7 +1,9 @@
 ---
 title: "CQRS (Command Query Responsibility Segregation)"
 description: "CQRS (Command Query Responsibility Segregation) — это архитектурный паттерн, который разделяет операции чтения (queries) и записи (commands) данных на отдельные модели. Это позволяет оптимизировать каждую сторону независимо и создавать более масштабируемые системы."
-tags: ["architecture", "cqrs"]
+tags:
+  - architecture
+  - cqrs
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # CQRS (Command Query Responsibility Segregation)
 
 **CQRS** (**Command Query Responsibility Segregation**) — это архитектурный паттерн, который разделяет операции чтения (**queries**) и записи (**commands**) данных на отдельные модели. Это позволяет оптимизировать каждую сторону независимо и создавать более масштабируемые системы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

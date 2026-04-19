@@ -1,7 +1,9 @@
 ---
 title: "Графы"
 description: "Алгоритмы и инструменты для графов: BFS, Dijkstra и библиотека JGraphT."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

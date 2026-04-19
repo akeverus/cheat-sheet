@@ -1,7 +1,11 @@
 ---
 title: "Java Frameworks"
 description: "Индекс Java-фреймворков: Spring, Quarkus, Micronaut, Vert.x, Javalin, Dropwizard."
-tags: ["meta", "index", "frameworks", "java-frameworks"]
+tags:
+  - meta
+  - index
+  - frameworks
+  - java-frameworks
 type: "index"
 updated: "2026-02-11"
 ---

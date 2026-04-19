@@ -1,7 +1,10 @@
 ---
 title: "AssertJ для Java"
 description: "Краткое руководство по AssertJ: читаемые и мощные проверки (assertions) в Java-тестах — fluent API, пользовательские проверки, мягкие проверки (soft assertions), условное тестирование и интеграция с JUnit и Spring Boot."
-tags: ["testing", "unit-testing", "assertj"]
+tags:
+  - testing
+  - unit-testing
+  - assertj
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # AssertJ для Java
 
 Краткое руководство по **AssertJ**: читаемые и мощные проверки (assertions) в Java-тестах — fluent API, пользовательские проверки, мягкие проверки (soft assertions), условное тестирование и интеграция с JUnit и Spring Boot.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

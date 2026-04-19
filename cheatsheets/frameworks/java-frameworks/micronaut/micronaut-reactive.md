@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Reactive Programming - RxJava, Reactor и Reactive Streams"
 description: "Полное руководство по реактивному программированию в Micronaut: RxJava, Project Reactor, Reactive Streams и async operations"
-tags: ["micronaut", "reactive", "rxjava", "reactor", "reactive-streams", "java", "kotlin"]
+tags:
+  - micronaut
+  - reactive
+  - rxjava
+  - reactor
+  - reactive-streams
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-testing.md", "micronaut-cloud.md"]

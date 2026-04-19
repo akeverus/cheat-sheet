@@ -1,15 +1,16 @@
 ---
 title: "Валидация ввода конечным автоматом (Finite Automata Input Validation)"
 description: "Проверка строк по правилам грамматики с помощью конечного автомата: состояния, переходы по символам, финальные состояния. Пример — упрощённый валидатор JSON на Java и Kotlin. Варианты: email, числа."
-tags: ["algorithms", "problems", "finite-automata-input-validation"]
+tags:
+  - algorithms
+  - problems
+  - finite-automata-input-validation
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Валидация ввода конечным автоматом (`Finite Automata Input Validation`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Проверка строк по правилам грамматики с помощью конечного автомата: состояния, переходы по символам, финальные состояния. Пример — упрощённый валидатор JSON на Java и Kotlin. Варианты: email, числа.
 

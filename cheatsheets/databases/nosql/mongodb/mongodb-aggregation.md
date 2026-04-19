@@ -1,7 +1,10 @@
 ---
 title: "MongoDB: Aggregation Framework - Полное руководство по агрегации данных"
 description: "Комплексное руководство по Aggregation Framework в MongoDB: стадии, операторы, оптимизация и практические примеры."
-tags: ["databases", "nosql", "mongodb-aggregation"]
+tags:
+  - databases
+  - nosql
+  - mongodb-aggregation
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **MongoDB**: **Aggregation Framework** - Полное руководство по агрегации данных
 
 Комплексное руководство по **Aggregation Framework** в **MongoDB**: стадии, операторы, оптимизация и практические примеры.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -55,7 +56,7 @@ updated: "2026-02-11"
 
 ## Введение в **Aggregation Framework**
 
-**Aggregation Framework** — это мощный инструмент **MongoDB** для обработки, анализа и трансформации данных. Он позволяет выполнять сложные аналитические запросы, подобные **SQL GROUP** `BY`, **JOIN** и другим операциям реляционных баз данных.
+**Aggregation Framework** — это инструмент **MongoDB** для обработки, анализа и трансформации данных. Он позволяет выполнять сложные аналитические запросы, подобные **SQL GROUP** `BY`, **JOIN** и другим операциям реляционных баз данных.
 
 Схема пайплайна **Aggregation Framework**: входная коллекция → стадии → результат.
 

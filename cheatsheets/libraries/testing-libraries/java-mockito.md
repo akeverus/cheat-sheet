@@ -1,7 +1,10 @@
 ---
 title: "Mockito"
 description: "Mockito - это популярная mocking библиотека для Java, которая позволяет создавать mock объекты для тестирования. Обеспечивает чистый и простой API для создания заглушек и mock объектов."
-tags: ["libraries", "testing-libraries", "java-mockito"]
+tags:
+  - libraries
+  - testing-libraries
+  - java-mockito
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Mockito
 
 **Mockito** - это популярная **mocking** библиотека для **Java**, которая позволяет создавать **mock** объекты для тестирования. Обеспечивает чистый и простой **API** для создания заглушек и **mock** объектов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

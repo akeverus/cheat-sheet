@@ -1,7 +1,10 @@
 ---
 title: "Futures в Scala"
 description: "Краткое руководство по Futures в Scala - асинхронное программирование и конкурентность."
-tags: ["languages", "scala", "scala-futures"]
+tags:
+  - languages
+  - scala
+  - scala-futures
 difficulty: "intermediate"
 prerequisites: []
 next: []

@@ -1,7 +1,10 @@
 ---
 title: "Mattermost: основы"
 description: "Самохостируемый корпоративный мессенджер: каналы, потоки, интеграции, боты и API."
-tags: ["tools", "collaboration", "mattermost-basics"]
+tags:
+  - tools
+  - collaboration
+  - mattermost-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Mattermost: основы
 
 Самохостируемый корпоративный мессенджер: каналы, потоки, интеграции, боты и API.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

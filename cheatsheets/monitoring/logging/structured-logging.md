@@ -1,7 +1,10 @@
 ---
 title: "Структурированное логирование для Java"
 description: "Комплексное руководство по структурированному логированию в Java: JSON logging, correlation IDs, distributed tracing, log aggregation и лучшие практики для микросервисных архитектур."
-tags: ["monitoring", "logging", "structured-logging"]
+tags:
+  - monitoring
+  - logging
+  - structured-logging
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Структурированное логирование для Java
 
 Комплексное руководство по структурированному логированию в Java: JSON logging, correlation IDs, distributed tracing, log aggregation и лучшие практики для микросервисных архитектур.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

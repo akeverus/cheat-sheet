@@ -1,15 +1,16 @@
 ---
 title: "Задача об обедающих философах (Dining Philosophers Problem)"
 description: "Классическая задача синхронизации: пять философов, пять вилок, каждый нуждается в двух вилках. Взаимоблокировка при циклическом ожидании и способы её устранения — изменение порядка захвата вилок, семафоры, ReentrantLock. Java и Kotlin."
-tags: ["algorithms", "problems", "dining-philosophers-problem"]
+tags:
+  - algorithms
+  - problems
+  - dining-philosophers-problem
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Задача об обедающих философах (`Dining Philosophers Problem`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Классическая задача синхронизации: пять философов, пять вилок, каждый нуждается в двух вилках. Взаимоблокировка при циклическом ожидании и способы её устранения — изменение порядка захвата вилок, семафоры, ReentrantLock. Java и Kotlin.
 

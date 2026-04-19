@@ -1,7 +1,11 @@
 ---
 title: "Scala SBT"
 description: "Полное руководство по SBT (Scala Build Tool): настройка проектов, зависимости, плагины, задачи"
-tags: ["scala", "sbt", "build-tool", "dependency-management"]
+tags:
+  - scala
+  - sbt
+  - build-tool
+  - dependency-management
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-basics.md"]
 # **Scala SBT**
 
 Кратко: полное руководство по **SBT** (**Scala `Build` Tool**): настройка проектов, зависимости, плагины, задачи.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

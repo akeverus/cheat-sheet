@@ -1,15 +1,16 @@
 ---
 title: "Расчёт високосного года (Leap Year Calculation)"
 description: "В документе описано определение високосных лет в Java с использованием разных подходов: GregorianCalendar, Java 8 Date-Time API и Joda-Time. Приводятся правила григорианского календаря и примеры на Java и Kotlin."
-tags: ["algorithms", "problems", "leap-year-calculation"]
+tags:
+  - algorithms
+  - problems
+  - leap-year-calculation
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Расчёт високосного года (`Leap Year Calculation`)
-
-**Дата последнего обновления:** 2026-02-06
 
 В документе описано определение високосных лет в `Java` с использованием разных подходов: `GregorianCalendar`, `Java` 8 Date-Time API и `Joda-Time`. Приводятся правила григорианского календаря и примеры на `Java` и `Kotlin`.
 

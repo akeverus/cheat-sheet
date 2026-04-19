@@ -1,7 +1,10 @@
 ---
 title: "Контрактное тестирование (Contract Testing)"
 description: "Проверка совместимости между потребителем (consumer) и провайдером (provider) API по формальному контракту — без поднятия всех сервисов вместе. Основные инструменты: Pact, Spring Cloud Contract."
-tags: ["testing", "integration-testing", "contract-testing"]
+tags:
+  - testing
+  - integration-testing
+  - contract-testing
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Контрактное тестирование (`Contract Testing`)
 
 Проверка совместимости между потребителем (consumer) и провайдером (provider) API по формальному контракту — без поднятия всех сервисов вместе. Основные инструменты: `Pact`, `Spring Cloud Contract`.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -356,4 +357,3 @@ Pact и SCC поддерживают message contracts — контракт дл
 
 ---
 
-*Дата последнего обновления: 2026-02-06.*

@@ -1,7 +1,10 @@
 ---
 title: "Alertmanager (Prometheus)"
 description: "Alertmanager — компонент экосистемы Prometheus: маршрутизация, группировка, подавление (inhibition, silence) алертов и доставка уведомлений в Slack, email, PagerDuty, webhook и др. Работает в связке с Prometheus по протоколу Alertmanager API."
-tags: ["monitoring", "alerting", "alertmanager"]
+tags:
+  - monitoring
+  - alerting
+  - alertmanager
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Alertmanager (Prometheus)
 
 Alertmanager — компонент экосистемы Prometheus: маршрутизация, группировка, подавление (inhibition, silence) алертов и доставка уведомлений в Slack, email, PagerDuty, webhook и др. Работает в связке с Prometheus по протоколу Alertmanager API.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,15 +1,16 @@
 ---
 title: "Массив пикселей изображения (Image Pixel Array)"
 description: "Получение двумерного массива значений пикселей (RGB/ARGB) из BufferedImage в Java: поточечный getRGB() и быстрый доступ через DataBuffer/Raster. Работа с альфа-каналом, извлечение компонент, сравнение производительности. Java и Kotlin."
-tags: ["algorithms", "problems", "image-pixel-array"]
+tags:
+  - algorithms
+  - problems
+  - image-pixel-array
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Массив пикселей изображения (`Image Pixel Array`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Получение двумерного массива значений пикселей (RGB/ARGB) из `BufferedImage` в Java: поточечный `getRGB()` и быстрый доступ через `DataBuffer`/`Raster`. Работа с альфа-каналом, извлечение компонент, сравнение производительности. Java и Kotlin.
 

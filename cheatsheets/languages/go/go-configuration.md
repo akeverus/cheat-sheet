@@ -1,15 +1,19 @@
 ---
 title: "Go: конфигурация"
 description: "Полное руководство по управлению конфигурацией в Go: переменные окружения, файлы конфигурации, viper"
-tags: ["go", "golang", "configuration", "env", "viper", "config"]
+tags:
+  - go
+  - golang
+  - configuration
+  - env
+  - viper
+  - config
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: конфигурация
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "New Relic APM"
 description: "Мониторинг производительности приложений: транзакции, зависимости, исключения и метрики."
-tags: ["monitoring", "apm", "new-relic"]
+tags:
+  - monitoring
+  - apm
+  - new-relic
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # New Relic APM
 
 Мониторинг производительности приложений: транзакции, зависимости, исключения и метрики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

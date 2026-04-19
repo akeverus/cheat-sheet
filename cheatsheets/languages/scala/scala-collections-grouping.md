@@ -1,7 +1,12 @@
 ---
 title: "Scala Collections - Grouping and Aggregation"
 description: "Полное руководство по группировке и агрегации коллекций в Scala: groupBy, агрегатные функции, продвинутые операции"
-tags: ["scala", "collections", "grouping", "aggregation", "functional-programming"]
+tags:
+  - scala
+  - collections
+  - grouping
+  - aggregation
+  - functional-programming
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 # **Scala Collections** - **Grouping and Aggregation**
 
 Кратко: руководство по группировке и агрегации коллекций в **Scala**: **groupBy**, агрегатные функции и продвинутые операции.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

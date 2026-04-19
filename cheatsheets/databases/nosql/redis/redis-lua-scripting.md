@@ -1,7 +1,14 @@
 ---
 title: "Redis: Lua Scripting"
 description: "Полное руководство по Lua скриптингу в Redis: EVAL, EVALSHA, атомарные операции, оптимизация, best practices"
-tags: ["redis", "lua", "scripting", "eval", "evalsha", "atomic", "transactions"]
+tags:
+  - redis
+  - lua
+  - scripting
+  - eval
+  - evalsha
+  - atomic
+  - transactions
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 next: ["databases/redis-pubsub.md", "databases/redis-transactions.md"]
@@ -708,7 +715,5 @@ public class LuaScriptTest {
 - [Lua 5.1 Reference](https://www.lua.org/manual/5.1/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

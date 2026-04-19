@@ -1,15 +1,19 @@
 ---
 title: "Go: отладка"
 description: "Полное руководство по отладке в Go: GDB, Delve, логирование, трассировка, профилирование"
-tags: ["go", "golang", "debugging", "delve", "gdb", "tracing"]
+tags:
+  - go
+  - golang
+  - debugging
+  - delve
+  - gdb
+  - tracing
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: отладка
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

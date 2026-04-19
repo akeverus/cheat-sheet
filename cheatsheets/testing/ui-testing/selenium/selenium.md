@@ -1,7 +1,10 @@
 ---
 title: "Selenium для Java"
 description: "Краткое руководство по Selenium WebDriver для автоматизации веб-тестирования в Java: настройка, взаимодействия, Page Object, ожидания, data-driven тесты, параллельный запуск и интеграция со Spring Boot."
-tags: ["testing", "ui-testing", "selenium"]
+tags:
+  - testing
+  - ui-testing
+  - selenium
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Selenium для Java
 
 Краткое руководство по **Selenium WebDriver** для автоматизации веб-тестирования в Java: настройка, взаимодействия, Page Object, ожидания, data-driven тесты, параллельный запуск и интеграция со Spring Boot.
-
-**Дата последнего обновления:** 2026-02-06
 
 ---
 

@@ -1,15 +1,18 @@
 ---
 title: "Go: стандартная библиотека - JSON"
 description: "Полное руководство по работе с JSON в Go: marshaling, unmarshaling, custom marshaling, JSON tags, streaming"
-tags: ["go", "golang", "json", "serialization", "encoding"]
+tags:
+  - go
+  - golang
+  - json
+  - serialization
+  - encoding
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: стандартная библиотека - **JSON**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

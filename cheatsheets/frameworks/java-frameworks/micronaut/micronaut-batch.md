@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Batch Processing - Job Processing и Scheduling"
 description: "Полное руководство по batch processing в Micronaut: job processing, scheduling, chunk processing и best practices"
-tags: ["micronaut", "batch", "job", "scheduling", "chunk", "java", "kotlin"]
+tags:
+  - micronaut
+  - batch
+  - job
+  - scheduling
+  - chunk
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-scheduling.md"]
 next: ["micronaut-scheduling.md", "micronaut-data.md"]

@@ -1,7 +1,10 @@
 ---
 title: "sqlmap"
 description: "Кратко: sqlmap — инструмент автоматического тестирования на SQL-инъекции. Обнаружение уязвимостей, извлечение данных, обход WAF, tamper-скрипты, поддержка GET/POST/Cookie/Header, интеграция с Burp и ZAP, CI-сценарии."
-tags: ["testing", "security-testing", "sqlmap"]
+tags:
+  - testing
+  - security-testing
+  - sqlmap
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **sqlmap**
 
 Кратко: **sqlmap** — инструмент автоматического тестирования на **SQL-инъекции**. Обнаружение уязвимостей, извлечение данных, обход **WAF**, **tamper**-скрипты, поддержка **GET/POST/Cookie/Header**, интеграция с **Burp** и **ZAP**, **CI**-сценарии.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -389,8 +390,5 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 ---
 
-*Дата последнего обновления: 2026-02-06.*
-
 ---
 
-*Дата последнего обновления: 2026-02-06.*

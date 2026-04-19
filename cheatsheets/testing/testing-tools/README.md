@@ -1,7 +1,9 @@
 ---
 title: "Testing Tools"
 description: "Индекс материалов по инструментам тестирования: раннеры, моки, утверждения, отчётность и покрытие."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

@@ -1,7 +1,10 @@
 ---
 title: "Шаблонный метод (Template Method)"
 description: "Template Method определяет скелет алгоритма в суперклассе, позволяя подклассам переопределять определенные шаги алгоритма без изменения его структуры."
-tags: ["patterns", "behavioral", "template-method"]
+tags:
+  - patterns
+  - behavioral
+  - template-method
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Шаблонный метод (`Template Method`)
 
 **Template Method** определяет скелет алгоритма в суперклассе, позволяя подклассам переопределять определенные шаги алгоритма без изменения его структуры.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

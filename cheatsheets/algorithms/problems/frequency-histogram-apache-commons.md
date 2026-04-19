@@ -1,15 +1,16 @@
 ---
 title: "Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)"
 description: "Подсчёт частот значений и построение гистограммы с классом Frequency (Apache Commons Math): добавление значений, группировка в интервалы, визуализация через XChart. Java и Kotlin."
-tags: ["algorithms", "problems", "frequency-histogram-apache-commons"]
+tags:
+  - algorithms
+  - problems
+  - frequency-histogram-apache-commons
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Гистограмма частот с Apache Commons (`Frequency Histogram Apache Commons`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Подсчёт частот значений и построение гистограммы с классом `Frequency` (Apache Commons Math): добавление значений, группировка в интервалы, визуализация через XChart. Java и Kotlin.
 

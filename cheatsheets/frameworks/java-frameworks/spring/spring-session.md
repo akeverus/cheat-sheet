@@ -1,7 +1,14 @@
 ---
 title: "Spring Session: Полное руководство по управлению сессиями"
 description: "Комплексное руководство по Spring Session: Redis Session, JDBC Session, MongoDB Session, кластеризация, security и best practices"
-tags: ["spring", "session", "redis", "jdbc", "mongodb", "clustering", "java"]
+tags:
+  - spring
+  - session
+  - redis
+  - jdbc
+  - mongodb
+  - clustering
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
 next: ["spring/spring-redis.md", "spring/spring-security.md"]

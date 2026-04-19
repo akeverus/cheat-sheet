@@ -1,7 +1,14 @@
 ---
 title: "Spring Testing: Полное руководство по тестированию"
 description: "Комплексное руководство по Spring Testing: @SpringBootTest, @WebMvcTest, @DataJpaTest, MockMvc, Testcontainers, mocking и best practices"
-tags: ["spring", "testing", "junit", "mockito", "testcontainers", "integration-tests", "java"]
+tags:
+  - spring
+  - testing
+  - junit
+  - mockito
+  - testcontainers
+  - integration-tests
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-security.md", "spring/spring-data-jpa.md"]

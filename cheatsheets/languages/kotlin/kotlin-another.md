@@ -1,7 +1,15 @@
 ---
 title: "Kotlin Another"
 description: "Дополнительные возможности Kotlin: Ktor (асинхронные серверы и клиенты), Exposed (работа с БД), DSL, метапрограммирование, сериализация и продвинутые паттерны"
-tags: ["kotlin", "ktor", "exposed", "database", "web-server", "dsl", "serialization", "metaprogramming"]
+tags:
+  - kotlin
+  - ktor
+  - exposed
+  - database
+  - web-server
+  - dsl
+  - serialization
+  - metaprogramming
 difficulty: "intermediate"
 prerequisites: ["kotlin-basics.md", "kotlin-concurrency-basics.md"]
 next: ["kotlin-advanced.md"]
@@ -11,8 +19,6 @@ updated: "2026-02-06"
 # **Kotlin Another**
 
 **Дополнительные возможности Kotlin** - это набор продвинутых инструментов и фреймворков для создания масштабируемых и эффективных приложений. В этом руководстве рассматриваются ключевые технологии: **Ktor** для веб-разработки, **Exposed** для работы с базами данных, **DSL**, сериализация и метапрограммирование.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

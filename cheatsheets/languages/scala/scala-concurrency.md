@@ -1,7 +1,13 @@
 ---
 title: "Scala Concurrency"
 description: "Полное руководство по конкурентности в Scala: Futures, Promises, Actors (Akka), параллельные коллекции, синхронизация"
-tags: ["scala", "concurrency", "futures", "akka", "actors", "parallel-collections"]
+tags:
+  - scala
+  - concurrency
+  - futures
+  - akka
+  - actors
+  - parallel-collections
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-akka.md"]
@@ -12,8 +18,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 # **Scala Concurrency**
 
 Кратко: полное руководство по конкурентности в **Scala**: **Futures**, **Promises**, **Actors** (**Akka**), параллельные коллекции, синхронизация.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

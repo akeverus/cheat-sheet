@@ -1,7 +1,10 @@
 ---
 title: "Основы Computer Science"
 description: "Кратко: Базовые концепции computer science - от вычислительной сложности до архитектуры компьютеров и сетей с практическими примерами на Java."
-tags: ["basics", "computer-science", "computer-science-basics"]
+tags:
+  - basics
+  - computer-science
+  - computer-science-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Основы Computer Science
 
 Кратко: Базовые концепции **computer science** - от вычислительной сложности до архитектуры компьютеров и сетей с практическими примерами на **Java**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

@@ -1,7 +1,15 @@
 ---
 title: "Redis: Безопасность"
 description: "Полное руководство по безопасности Redis: аутентификация, авторизация, ACL, SSL/TLS, шифрование, best practices"
-tags: ["redis", "security", "authentication", "authorization", "acl", "ssl", "tls", "encryption"]
+tags:
+  - redis
+  - security
+  - authentication
+  - authorization
+  - acl
+  - ssl
+  - tls
+  - encryption
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-monitoring.md", "databases/redis-troubleshooting.md"]
@@ -793,7 +801,5 @@ public class EncryptedRedisStorage {
 - [Redis ACL](https://redis.io/docs/management/security/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

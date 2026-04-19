@@ -1,7 +1,14 @@
 ---
 title: "Spring Actuator: Полное руководство по мониторингу и управлению"
 description: "Комплексное руководство по Spring Actuator: endpoints, health checks, metrics, custom endpoints, security и best practices"
-tags: ["spring", "actuator", "monitoring", "health", "metrics", "observability", "java"]
+tags:
+  - spring
+  - actuator
+  - monitoring
+  - health
+  - metrics
+  - observability
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
 next: ["spring/spring-cloud.md", "monitoring/prometheus.md"]

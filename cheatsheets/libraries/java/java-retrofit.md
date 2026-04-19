@@ -1,7 +1,10 @@
 ---
 title: "Retrofit"
 description: "Retrofit - это type-safe HTTP клиент для Android и Java. Преобразует HTTP API в Java интерфейсы, упрощая работу с REST API."
-tags: ["libraries", "java", "java-retrofit"]
+tags:
+  - libraries
+  - java
+  - java-retrofit
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Retrofit
 
 **Retrofit** - это **type-safe HTTP** клиент для **Android** и **Java**. Преобразует **HTTP API** в **Java** интерфейсы, упрощая работу с **REST API**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

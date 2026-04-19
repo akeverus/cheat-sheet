@@ -1,7 +1,10 @@
 ---
 title: "REST API Best Practices"
 description: "Этот документ содержит лучшие практики проектирования, реализации и поддержки REST API. Он охватывает HTTP методы, статус коды, версионирование, безопасность, документацию, тестирование и мониторинг. Документ дополняет [REST API Design](rest-api-design.md) практическими рекоменда"
-tags: ["development", "api", "rest-api-best-practices"]
+tags:
+  - development
+  - api
+  - rest-api-best-practices
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **REST API Best Practices**
 
 Этот документ содержит лучшие практики проектирования, реализации и поддержки **REST API**. Он охватывает **HTTP** методы, статус коды, версионирование, безопасность, документацию, тестирование и мониторинг. Документ дополняет [REST API Design](rest-api-design.md) практическими рекомендациями.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [REST API Design Guidelines](https://www.baeldung.com/rest-api-design-maturity-model)

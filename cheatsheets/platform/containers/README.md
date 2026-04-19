@@ -1,7 +1,11 @@
 ---
 title: "Platform Containers"
 description: "Индекс раздела контейнеров: Docker, Kubernetes и практические маршруты изучения."
-tags: ["meta", "index", "platform", "containers"]
+tags:
+  - meta
+  - index
+  - platform
+  - containers
 type: "index"
 updated: "2026-02-11"
 ---

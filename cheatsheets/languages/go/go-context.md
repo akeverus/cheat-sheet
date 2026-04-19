@@ -1,15 +1,18 @@
 ---
 title: "Go: Context"
 description: "Полное руководство по Context в Go: отмена операций, таймауты, передача значений, best practices"
-tags: ["go", "golang", "context", "cancellation", "timeout"]
+tags:
+  - go
+  - golang
+  - context
+  - cancellation
+  - timeout
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
 updated: "2026-02-06"
 ---
 
 # Go: **Context**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

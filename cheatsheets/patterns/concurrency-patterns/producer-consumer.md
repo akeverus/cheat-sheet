@@ -1,7 +1,10 @@
 ---
 title: "Производитель-потребитель (Producer-Consumer)"
 description: "Паттерн Producer-Consumer разделяет задачи между потоками-производителями и потоками-потребителями, используя общую очередь для обмена данными."
-tags: ["patterns", "concurrency-patterns", "producer-consumer"]
+tags:
+  - patterns
+  - concurrency-patterns
+  - producer-consumer
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Производитель-потребитель (`Producer-Consumer`)
 
 Паттерн **Producer-Consumer** разделяет задачи между потоками-производителями и потоками-потребителями, используя общую очередь для обмена данными.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Collections: Set"
 description: "Кратко: руководство по работе с множествами в Kotlin: Set, MutableSet, HashSet, TreeSet, LinkedHashSet, операции и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-collections-set"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-collections-set
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Collections: Set
 
 Кратко: руководство по работе с множествами в **Kotlin**: **Set**, **MutableSet**, **HashSet**, **TreeSet**, **LinkedHashSet**, операции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

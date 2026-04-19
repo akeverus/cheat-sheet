@@ -1,7 +1,10 @@
 ---
 title: "Apache POI"
 description: "Apache POI - это Java библиотека для чтения и записи файлов Microsoft Office (Excel, Word, PowerPoint). Предоставляет программный доступ к форматам Office документов."
-tags: ["libraries", "java", "java-apache-poi"]
+tags:
+  - libraries
+  - java
+  - java-apache-poi
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Apache POI
 
 **Apache POI** - это **Java** библиотека для чтения и записи файлов **Microsoft Office** (**Excel, `Word`, PowerPoint**). Предоставляет программный доступ к форматам **Office** документов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Jaeger для Java"
 description: "Комплексное руководство по использованию Jaeger для distributed tracing в Java-приложениях: настройка, интеграция с Spring Boot, анализ производительности и отладка распределенных систем."
-tags: ["monitoring", "tracing", "jaeger"]
+tags:
+  - monitoring
+  - tracing
+  - jaeger
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Jaeger для Java
 
 Комплексное руководство по использованию **Jaeger** для **distributed tracing** в **Java**-приложениях: настройка, интеграция с **Spring Boot**, анализ производительности и отладка распределенных систем.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

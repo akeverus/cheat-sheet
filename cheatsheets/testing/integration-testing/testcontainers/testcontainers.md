@@ -1,7 +1,10 @@
 ---
 title: "Testcontainers (Testcontainers)"
 description: "Библиотека для запуска реальных Docker-контейнеров в интеграционных тестах (Java, JUnit). БД, очереди, веб-серверы, произвольные образы; изоляция, повторяемость, совместимость с CI/CD."
-tags: ["testing", "integration-testing", "testcontainers"]
+tags:
+  - testing
+  - integration-testing
+  - testcontainers
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Testcontainers (`Testcontainers`)
 
 Библиотека для запуска реальных Docker-контейнеров в интеграционных тестах (Java, JUnit). БД, очереди, веб-серверы, произвольные образы; изоляция, повторяемость, совместимость с CI/CD.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

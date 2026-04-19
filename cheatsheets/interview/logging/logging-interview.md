@@ -1,265 +1,2135 @@
 ---
 title: "Вопросы на собеседовании: Logging"
-description: "Краткие ответы по логированию: SLF4J, Logback, MDC, структурированные логи, трассировка."
-tags: ["interview", "logging", "logging-interview"]
+description: "Подробные ответы по логированию: SLF4J, Logback, MDC, структурированные логи, ELK, трассировка, безопасность."
+tags:
+  - interview
+  - logging
+  - logging-interview
+aliases:
+  - "Logging"
+  - "Logging interview"
+  - "Логирование собеседование"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Logging`
 
-Краткие ответы по логированию: `SLF4J`, `Logback`, `MDC`, структурированные логи, трассировка.
+Подробные ответы по логированию: `SLF4J`, `Logback`, `MDC`, структурированные логи, `ELK`, трассировка, безопасность.
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
 ## Полезные ссылки
 
 ### Официальная документация
 
 - [Java Logging (java.util.logging)](https://docs.oracle.com/en/java/javase/17/docs/api/java.logging/java/util/logging/package-summary.html)
-- [SLF4J](https://www.slf4j.org/)
-- [Logback](https://logback.qos.ch/)
-
-### См. также
-
-- [`../monitoring/logging-strategies-interview.md`](../monitoring/logging-strategies-interview.md) — стратегия логирования и архитектурные trade-offs
-- [`../../monitoring/logging/elk-stack.md`](../../monitoring/logging/elk-stack.md) — стек ELK
-- [`../../monitoring/logging/logging-best-practices.md`](../../monitoring/logging/logging-best-practices.md) — практики логирования в продакшене
-- [`../../monitoring/logging/structured-logging.md`](../../monitoring/logging/structured-logging.md) — структурированные логи
-- [`../../monitoring/metrics/prometheus.md`](../../monitoring/metrics/prometheus.md) — метрики и алертинг
-- [`../monitoring/metrics-tracing-interview.md`](../monitoring/metrics-tracing-interview.md) — метрики и трассировка
-- [`../monitoring/observability-interview.md`](../monitoring/observability-interview.md) — наблюдаемость
+- [SLF4J Manual](https://www.slf4j.org/manual.html)
+- [Logback Documentation](https://logback.qos.ch/manual/)
+- [Log4j2 Documentation](https://logging.apache.org/log4j/2.x/)
+- [Logstash Logback Encoder](https://github.com/logfellow/logstash-logback-encoder)
+- [Spring Boot Logging](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.logging)
+- [A Guide To Logback](https://www.baeldung.com/logback) — полное руководство по Logback
+- [Introduction to SLF4J](https://www.baeldung.com/slf4j-with-log4j2-logback) — SLF4J с Log4j2 и Logback
+- [Java Logging with Mapped Diagnostic Context (MDC)](https://www.baeldung.com/mdc-in-log4j-2-logback) — MDC для обогащения логов
+- [Structured Logging in Spring Boot](https://www.baeldung.com/spring-boot-structured-logging) — структурированные логи в Spring Boot
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
-- [Роль документа в связке interview](#роль-документа-в-связке-interview)
+- [See also](#see-also)
 
 **Основы и типы логов**
-- [Q1. Какие существуют типы логов в `Java`?](#q1-какие-существуют-типы-логов-в-java)
-- [Q2. Из каких частей состоит система журналирования `Log4j` в `Java`?](#q2-из-каких-частей-состоит-система-журналирования-log4j-в-java)
-- [Q3. Что такое `Logger` в `Log4j` в `Java`?](#q3-что-такое-logger-в-log4j-в-java)
-- [Q4. Что такое `Appender` в `Log4j` в `Java`?](#q4-что-такое-appender-в-log4j-в-java)
-- [Q5. Что такое `Layout` в `Log4j` в `Java`?](#q5-что-такое-layout-в-log4j-в-java)
-- [Q6. Перечислите уровни журналирования в `Log4j` в `Java`?](#q6-перечислите-уровни-журналирования-в-log4j-в-java)
-- [Q7. Какие существуют способы конфигурирования `Log4j` в `Java`?](#q7-какие-существуют-способы-конфигурирования-log4j-в-java)
+- [Q1. (!) Какие существуют фреймворки логирования в `Java`?](#q1--какие-существуют-фреймворки-логирования-в-java)
+- [Q2. Из каких частей состоит система журналирования `Log4j`?](#q2-из-каких-частей-состоит-система-журналирования-log4j)
+- [Q3. Что такое `Logger` и как его создать?](#q3-что-такое-logger-и-как-его-создать)
+- [Q4. Что такое `Appender` и какие типы существуют?](#q4-что-такое-appender-и-какие-типы-существуют)
+- [Q5. Что такое `Layout` / `Encoder` и как настроить формат?](#q5-что-такое-layout--encoder-и-как-настроить-формат)
+- [Q6. (!) Перечислите уровни журналирования и когда какой использовать?](#q6--перечислите-уровни-журналирования-и-когда-какой-использовать)
+- [Q7. Какие существуют способы конфигурирования логирования?](#q7-какие-существуют-способы-конфигурирования-логирования)
 
 **SLF4J, MDC, структурирование**
-- [Q8. Зачем использовать `SLF4J` вместо прямого вызова `Log4j` или `Logback`?](#q8-зачем-использовать-slf4j-вместо-прямого-вызова-log4j-или-logback)
-- [Q9. Что такое `MDC` (`Mapped Diagnostic Context`) и зачем он нужен?](#q9-что-такое-mdc-mapped-diagnostic-context-и-зачем-он-нужен)
-- [Q10. Что такое структурированное логирование (`JSON`) и когда его использовать?](#q10-что-такое-структурированное-логирование-json-и-когда-его-использовать)
+- [Q8. (!) Зачем использовать `SLF4J` вместо прямого вызова `Log4j` или `Logback`?](#q8--зачем-использовать-slf4j-вместо-прямого-вызова-log4j-или-logback)
+- [Q9. (!) Что такое `MDC` и как его использовать?](#q9--что-такое-mdc-и-как-его-использовать)
+- [Q10. (!) Что такое структурированное логирование (`JSON`)?](#q10--что-такое-структурированное-логирование-json)
 - [Q11. Как настроить ротацию лог-файлов (`RollingFileAppender`)?](#q11-как-настроить-ротацию-лог-файлов-rollingfileappender)
-- [Q12. Почему параметризованные вызовы логгера предпочтительнее конкатенации?](#q12-почему-параметризованные-вызовы-логгера-предпочтительнее-конкатенации)
+- [Q12. (!) Почему параметризованные вызовы логгера предпочтительнее конкатенации?](#q12--почему-параметризованные-вызовы-логгера-предпочтительнее-конкатенации)
 - [Q13. Что такое асинхронный аппендер и когда его использовать?](#q13-что-такое-асинхронный-аппендер-и-когда-его-использовать)
 
 **Трассировка, безопасность, интеграция**
-- [Q14. Как связать логи с распределённой трассировкой (`traceId`, `spanId`)?](#q14-как-связать-логи-с-распределённой-трассировкой-traceid-spanid)
-- [Q15. Как не логировать чувствительные данные (пароли, токены)?](#q15-как-не-логировать-чувствительные-данные-пароли-токены)
+- [Q14. (!) Как связать логи с распределённой трассировкой?](#q14--как-связать-логи-с-распределённой-трассировкой)
+- [Q15. Как не логировать чувствительные данные?](#q15-как-не-логировать-чувствительные-данные)
 - [Q16. Чем `Logback` отличается от `Log4j2`?](#q16-чем-logback-отличается-от-log4j2)
 - [Q17. Как уменьшить объём логов от сторонних библиотек?](#q17-как-уменьшить-объём-логов-от-сторонних-библиотек)
-- [Q18. Что такое `correlation id` и как его использовать в микросервисах?](#q18-что-такое-correlation-id-и-как-его-использовать-в-микросервисах)
+- [Q18. (!) Что такое `correlation id` и как его использовать в микросервисах?](#q18--что-такое-correlation-id-и-как-его-использовать-в-микросервисах)
 - [Q19. Как логировать исключения правильно?](#q19-как-логировать-исключения-правильно)
-- [Q20. Как интегрировать логи с `ELK` (`Elasticsearch`, `Logstash`, `Kibana`)?](#q20-как-интегрировать-логи-с-elk-elasticsearch-logstash-kibana)
+- [Q20. (!) Как интегрировать логи с `ELK`?](#q20--как-интегрировать-логи-с-elk)
 - [Q21. Что такое `Markers` в `SLF4J`/`Logback` и когда их использовать?](#q21-что-такое-markers-в-slf4jlogback-и-когда-их-использовать)
 - [Q22. Как настроить уровни логирования по окружению (`dev`/`prod`)?](#q22-как-настроить-уровни-логирования-по-окружению-devprod)
 - [Q23. Что такое `log sampling` и когда его применять?](#q23-что-такое-log-sampling-и-когда-его-применять)
 - [Q24. Как логировать в многопоточном и асинхронном коде?](#q24-как-логировать-в-многопоточном-и-асинхронном-коде)
-- [Q25. Что такое `Fluent API` в `Log4j2` и зачем он нужен?](#q25-что-такое-fluent-api-в-log4j2-и-зачем-он-нужен)
+- [Q25. Что такое `Fluent API` в `Log4j2`?](#q25-что-такое-fluent-api-в-log4j2)
 - [Q26. Как не раздувать логи при высокой нагрузке?](#q26-как-не-раздувать-логи-при-высокой-нагрузке)
 - [Q27. Как интегрировать логи с метриками (`Micrometer`, `Prometheus`)?](#q27-как-интегрировать-логи-с-метриками-micrometer-prometheus)
 - [Q28. Что такое `log aggregation` и зачем он нужен?](#q28-что-такое-log-aggregation-и-зачем-он-нужен)
 - [Q29. Как обеспечить консистентность формата логов в микросервисах?](#q29-как-обеспечить-консистентность-формата-логов-в-микросервисах)
 - [Q30. Как логировать в реактивных стеках (`WebFlux`, `Project Reactor`)?](#q30-как-логировать-в-реактивных-стеках-webflux-project-reactor)
 
-## Роль документа в связке interview
+**EFK, MDC в thread pools, уровни логирования**
+- [Q31. (!) Как настроить EFK-стек (Elasticsearch, Fluent Bit, Kibana)?](#q31-как-настроить-efk-стек-elasticsearch-fluent-bit-kibana)
+- [Q32. Как правильно использовать MDC в многопоточном коде с thread pools?](#q32-как-правильно-использовать-mdc-в-многопоточном-коде-с-thread-pools)
+- [Q33. Какие best practices по уровням логирования в production?](#q33-какие-best-practices-по-уровням-логирования-в-production)
 
-Этот файл — про прикладные ответы по инструментам (`SLF4J`, `Logback`, `MDC`, `ELK`) и частые operational-сценарии.
-Если вопрос уходит в архитектурный выбор стратегии (уровни по окружениям, схема полей, retention, стоимость), используйте связанный файл: `logging-strategies-interview.md`.
+**Log4j2 async, Spring Boot auto-config, тестирование**
+- [Q34. (!) Чем Log4j2 async loggers отличаются от Logback AsyncAppender?](#q34--чем-log4j2-async-loggers-отличаются-от-logback-asyncappender)
+- [Q35. Как работает Spring Boot Logging Auto-configuration?](#q35-как-работает-spring-boot-logging-auto-configuration)
+- [Q36. Что такое ECS Layout и зачем он нужен?](#q36-что-такое-ecs-layout-и-зачем-он-нужен)
+- [Q37. Как тестировать логирование с MemoryAppender в unit-тестах?](#q37-как-тестировать-логирование-с-memoryappender-в-unit-тестах)
+- [Q38. Как использовать StructuredArguments для обогащения JSON-логов?](#q38-как-использовать-structuredarguments-для-обогащения-json-логов)
+- [Q39. Как работает Log4j2 garbage-free logging?](#q39-как-работает-log4j2-garbage-free-logging)
+- [Q40. Как настроить Graylog / GELF для приёма логов из Java?](#q40-как-настроить-graylog--gelf-для-приёма-логов-из-java)
+- [Q41. Что такое Log Appender для Kafka и когда его применять?](#q41-что-такое-log-appender-для-kafka-и-когда-его-применять)
 
-## Как отвечать сильно (шаблон 40-60 секунд)
+## Q1. (!) Какие существуют фреймворки логирования в `Java`?
 
-Для большинства вопросов по логированию достаточно держать один и тот же каркас ответа:
+В `Java` существует несколько фреймворков логирования, каждый со своей нишей:
 
-1. **Когда применять:** где это нужно в реальной системе.
-2. **Компромисс:** что выигрываем и чем платим (latency, объём логов, риск потерь).
-3. **Валидация:** какие метрики/проверки подтверждают, что решение работает.
+| Фреймворк | Роль | Особенности |
+|-----------|------|-------------|
+| `java.util.logging` (JUL) | Стандартный в JDK | Базовый, без внешних зависимостей, слабая гибкость |
+| `Log4j 1.x` | Историческая библиотека | Устарела, EOL с 2015 года |
+| `Log4j2` | Современная замена `Log4j` | Async loggers, plugin-архитектура, поддержка `YAML`/`JSON` конфигов |
+| `Logback` | Преемник `Log4j 1.x` | Нативная реализация `SLF4J`, дефолт в `Spring Boot` |
+| `SLF4J` | Фасад (API) | Абстракция над реализациями, позволяет переключать бэкенд без смены кода |
 
-## Q1. Какие существуют типы логов в `Java`?
+```mermaid
+graph TD
+    APP["Код приложения"] --> SLF4J["SLF4J API"]
+    SLF4J --> |slf4j-api| BIND{Binding}
+    BIND --> |logback-classic| LB["Logback"]
+    BIND --> |log4j-slf4j2-impl| L4J2["Log4j2"]
+    BIND --> |slf4j-jdk14| JUL["java.util.logging"]
+    
+    style SLF4J fill:#4CAF50,color:#fff
+    style APP fill:#2196F3,color:#fff
+```
 
-В `Java` существует несколько типов логов:
+Пример подключения `SLF4J` + `Logback` в `Spring Boot` (зависимости уже включены в `spring-boot-starter`):
 
-1. `java.util.logging`: Это стандартный механизм регистрации событий, доступный в `JDK`. Он предоставляет базовую функциональность для регистрации и управления логами.
-2. `Log4j`: Это широко используемая библиотека для регистрации событий в `Java`. Она предлагает более продвинутые функции, такие как гибкая конфигурация, фильтрация и поддержка разных уровней логирования.
-3. `Logback`: Она является преемником `Log4j` и предоставляет аналогичные функции, но с более высокой производительностью.
-4. `SLF4J`: Это простой `API`, предоставляющий абстракцию над различными реализациями логирования, такими как `Log4j` и `Logback`. `SLF4J` упрощает переключение между различными библиотеками регистрации событий. Это лишь некоторые из типов логов в `Java`. В зависимости от вашего проекта и требований, вы можете выбрать наиболее подходящую библиотеку для регистрации и управления логами.
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-## Q2. Из каких частей состоит система журналирования `Log4j` в `Java`?
+public class OrderService {
+    // Каноничный способ создания логгера
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
-Система журналирования `Log4j` в `Java` состоит из нескольких основных компонентов:
+    public void processOrder(Long orderId) {
+        log.info("Processing order id={}", orderId);
+    }
+}
+```
 
-1. `Loggers` (Логгеры): Отвечают за создание и отправку логов. Каждый логгер связан с определенным именем и уровнем логирования. Логгеры позволяют организовать иерархию логирования, где каждый логгер может иметь родительский логгер. Логгеры используются для идентификации, фильтрации и направления сообщений логирования.
-2. `Appenders` (Приложения): Отвечают за фактическую доставку логов в конкретный целевой ресурс, такой как консоль, файл, база данных и т.д. `Log4j` предоставляет различные типы аппендеров, которые могут быть настроены в конфигурационном файле.
-3. `Layouts` (Макеты): Определяют формат, в котором логи будут выводиться. Макеты определяют, какие данные лога должны быть записаны и как они должны быть оформлены. `Log4j` предоставляет различные макеты, такие как простой текстовый макет, `HTML`-макет, `JSON`-макет и другие.
-4. `Configuration` (Конфигурация): Определяет настройки системы журналирования, такие как уровни логирования, аппендеры, макеты и другие параметры. Конфигурация может быть выполнена с использованием конфигурационного файла (например, `log4j.properties` или `log4j.xml`) или программно. Это основные компоненты системы журналирования `Log4j`, которые позволяют разработчикам управлять и настраивать регистрацию событий в `Java` приложениях.
+На собеседовании важно подчеркнуть: всегда используем `SLF4J` API в коде, никогда не импортируем классы конкретной реализации (`ch.qos.logback`, `org.apache.logging.log4j`).
 
-## Q3. Что такое `Logger` в `Log4j` в `Java`?
+## Q2. Из каких частей состоит система журналирования `Log4j`?
 
-В `Log4j` в `Java`, `Logger` (логгер) — это компонент, который отвечает за создание и отправку логов. Логгеры используются для идентификации, фильтрации и направления сообщений логирования в целевые ресурсы, такие как консоль, файл, база данных и другие. Каждый логгер связывается с определенным именем и уровнем логирования. Имя логгера позволяет идентифицировать содержимое лога, а также создавать иерархию логирования. Логгеры могут иметь родительские логгеры, что позволяет управлять наследованием уровней логирования и направлением сообщений. Уровень логирования (`log level`) задаёт важность сообщений, которые будут отправлены логгером. `Log4j` предоставляет несколько уровней логирования, таких как `DEBUG`, `INFO`, `WARN`, `ERROR` и другие. При настройке логгеров можно указать, какие уровни логирования должны быть использованы, чтобы фильтровать и отправлять сообщения определенной важности. Логгеры являются важным компонентом в системе журналирования `Log4j`, так как они позволяют программистам контролировать и управлять регистрацией событий и помогают обеспечить прозрачность и отслеживаемость работы приложений.
+Система журналирования состоит из трёх основных компонентов (общих для `Log4j`, `Log4j2` и `Logback`):
 
-Практический акцент в таких вопросах — показать не только синтаксис, но и эксплуатационные последствия: читаемость, совместимость и профиль производительности. На интервью это обычно усиливают примером типичной ошибки и способом её предотвращения в код-ревью или тестах.
+```mermaid
+graph LR
+    CODE["Код приложения"] --> LOGGER["Logger"]
+    LOGGER --> FILTER["Filter"]
+    FILTER --> APPENDER["Appender"]
+    APPENDER --> LAYOUT["Layout / Encoder"]
+    LAYOUT --> OUT1["Console"]
+    LAYOUT --> OUT2["File"]
+    LAYOUT --> OUT3["Network"]
+    
+    style LOGGER fill:#FF9800,color:#fff
+    style APPENDER fill:#2196F3,color:#fff
+    style LAYOUT fill:#4CAF50,color:#fff
+```
 
-## Q4. Что такое `Appender` в `Log4j` в `Java`?
+1. **`Logger`** -- создаёт лог-записи, связан с именем (обычно FQCN класса) и уровнем. Образует иерархию: `com.example.service` наследует настройки от `com.example`, затем от `ROOT`.
 
-В `Log4j` в `Java`, `Appender` (приложение) — это компонент, отвечающий за фактическую доставку логов в конкретный целевой ресурс. `Appender` определяет, куда будут отправляться логи, например, на консоль, в файл, в базу данных или другие места. `Log4j` предоставляет различные типы `Appender`, которые могут быть настроены в конфигурационном файле, например, `log4j.properties` или `log4j.xml`. Некоторые типы `Appender` включают:
+2. **`Appender`** -- доставляет лог-записи в назначение: консоль, файл, сеть, БД. К одному логгеру можно привязать несколько аппендеров.
 
-1. `ConsoleAppender`: Отправляет логи на консоль вывода.
-2. `FileAppender`: Записывает логи в файл на файловой системе.
-3. `RollingFileAppender`: Аналогичен `FileAppender`, но поддерживает ротацию (смену) файлов, что позволяет контролировать размер и количество лог-файлов.
-4. `JDBCAppender`: Записывает логи в базу данных через `JDBC` (`Java Database Connectivity`).
-5. `SMTPAppender`: Отправляет логи на указанный адрес электронной почты. Это только некоторые из типов `Appender`, предоставляемых `Log4j`. Выбор конкретного типа `Appender` зависит от того, какая цель назначена для логирования и какие требования есть к хранению и доставке логов. `Appender` играет важную роль в системе журналирования `Log4j`, так как они определяют, куда и как будут отправляться логи, что помогает в сборе, анализе и отслеживании событий для обеспечения надёжности и устойчивости приложений.
+3. **`Layout` / `Encoder`** -- форматирует запись перед выводом: `PatternLayout`, `JsonLayout`, `LogstashEncoder`.
 
-## Q5. Что такое `Layout` в `Log4j` в `Java`?
+4. **`Filter`** -- дополнительная фильтрация записей по маркерам, уровням, содержимому.
 
-В `Log4j` в `Java`, `Layout` (макет) — это компонент, отвечающий за форматирование содержимого логов перед их отправкой в целевой ресурс, такой как файл или консоль. `Layout` определяет, как должны быть представлены логи: какой должна быть структура, какие поля и форматы следует использовать. `Layout` принимает сообщение логирования и преобразует его в определенный формат, чтобы оно стало более удобочитаемым и понятным для разработчиков или администраторов. Некоторые примеры популярных типов макетов в `Log4j` включают:
+## Q3. Что такое `Logger` и как его создать?
 
-1. `PatternLayout`: Форматирует лог в соответствии с определенным шаблоном, который можно настроить. В шаблоне можно использовать специальные символы и ключевые слова для включения различных свойств логирования, таких как дата, уровень логирования, имя класса и др.
-2. `SimpleLayout`: Очень простой макет, который выводит только текст сообщения логирования, без дополнительных метаданных или форматирования.
-3. `HTMLLayout`: форматирует лог в `HTML`-файле, добавляя теги и стили для удобного отображения в веб-браузере.
-4. `XMLLayout`: форматирует лог в `XML`-формате, что облегчает его обработку и анализ с использованием инструментов для работы с `XML`. `Layout` является важным компонентом в системе журналирования `Log4j`, так как он определяет, как логи будут отображаться и структурироваться. Это помогает разработчикам анализировать и понимать логи, а также облегчает автоматическую обработку и мониторинг логов.
+`Logger` -- компонент, отвечающий за создание лог-записей. Каждый логгер привязан к имени (обычно полное имя класса) и уровню логирования.
 
-## Q6. Перечислите уровни журналирования в `Log4j` в `Java`?
+```java
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-В `Log4j` в `Java` используются следующие уровни журналирования в порядке приоритетности (от наиболее низкого уровня до наиболее высокого):
+public class UserService {
+    // Вариант 1: явное указание класса (рекомендуется)
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
-1. `TRACE`: Самый низкий уровень журналирования, предназначен для крайне детальной информации, которая может быть полезна для отладки и анализа.
-2. `DEBUG`: Уровень журналирования для информации, относящейся к отладке приложения. Включает дополнительные детали о ходе выполнения программы.
-3. `INFO`: Уровень журналирования для информации, которая не относится к отладке, но может быть полезна для отображения процесса работы программы. Например, вывод важных событий или состояний.
-4. `WARN`: Уровень журналирования, указывающий на потенциально проблемные ситуации, которые не являются фатальными ошибками. Например, предупреждение о низком уровне батареи или устаревшей конфигурации.
-5. `ERROR`: Уровень журналирования для фатальных ошибок, которые приводят к некорректной работе программы. Например, исключения или ошибки соединения с базой данных.
-6. `FATAL`: Самый высокий уровень журналирования, предназначенный для критических ошибок, которые приводят к аварийному завершению приложения. Например, недоступность важного сервиса или серьезная системная ошибка. Каждый уровень имеет свой собственный набор аппендеров и макетов, которые могут быть настроены для определенных действий при достижении определенного уровня журналирования. При настройке `Log4j`, можно указать минимальный уровень журналирования, чтобы отображать только логи с этим и более критичными уровнями. Это помогает контролировать объем логов и сосредоточиться на важных событиях.
+    // Вариант 2: через Lombok
+    // @Slf4j  -- генерирует поле log автоматически
 
-## Q7. Какие существуют способы конфигурирования `Log4j` в `Java`?
+    public User findById(Long id) {
+        log.debug("Looking up user id={}", id);
+        User user = repository.findById(id).orElse(null);
+        if (user == null) {
+            log.warn("User not found: id={}", id);
+        }
+        return user;
+    }
+}
+```
 
-Способы конфигурирования `Log4j`: (1) **Конфигурационный файл** — `log4j.properties` или `log4j.xml` с уровнями, аппендерами и форматом. (2) **Программно** — создание `Logger` и настройка в коде (`Logger.getLogger(Log4jExample.class)` и вызовы `logger.debug("...")` и т.д.). (3) **Системные свойства** — например `-Dlog4j.configuration=file:path/to/log4j.xml` при запуске. Выбор способа зависит от необходимости менять конфиг без пересборки.
+**Иерархия логгеров:** `com.example.service.UserService` наследует уровень от `com.example.service`, затем от `com.example`, затем от `ROOT`. Это позволяет задать `DEBUG` для одного пакета, а для всего приложения -- `INFO`.
 
-Практический акцент в таких вопросах — показать не только синтаксис, но и эксплуатационные последствия: читаемость, совместимость и профиль производительности. На интервью это обычно усиливают примером типичной ошибки и способом её предотвращения в код-ревью или тестах.
+## Q4. Что такое `Appender` и какие типы существуют?
 
-## Q8. Зачем использовать `SLF4J` вместо прямого вызова `Log4j` или `Logback`?
+`Appender` -- компонент, отвечающий за доставку лог-записей в назначение. Основные типы:
 
-`SLF4J` — фасад (`API`) над разными реализациями логирования. Плюсы: приложение не привязано к конкретной библиотеке; можно переключить `Logback` на `Log4j2` без смены кода; единый `API` для всех зависимостей; параметризованные вызовы (`logger.info("id={}", id)`) — строка не форматируется при отключённом уровне, что экономит `CPU`.
+| Appender | Назначение | Когда использовать |
+|----------|-----------|-------------------|
+| `ConsoleAppender` | stdout/stderr | Dev, контейнеры (Docker) |
+| `FileAppender` | Один файл | Простые приложения |
+| `RollingFileAppender` | Файлы с ротацией | Prod (по размеру или дате) |
+| `AsyncAppender` | Обёртка, пишет асинхронно | Высокая нагрузка |
+| `SocketAppender` | TCP/UDP | Прямая отправка в `Logstash` |
 
-**Практика:** в коде использовать только `org.slf4j.Logger` и `LoggerFactory.getLogger(...)`; не импортировать `org.apache.log4j` или `ch.qos.logback` в бизнес-коде. В зависимостях — `slf4j-api` + одна реализация (`logback-classic` или `log4j-slf4j-impl`). При смене реализации меняют только зависимости и конфиг; код вызовов логгера не трогают. Параметризованные вызовы: всегда `log.debug("user={}", user)`, не `log.debug("user=" + user)`.
+Пример конфигурации нескольких аппендеров в `logback-spring.xml`:
 
-## Q9. Что такое `MDC` (`Mapped Diagnostic Context`) и зачем он нужен?
+```xml
+<configuration>
+    <!-- Console для dev -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
-`MDC` — потоковое хранилище ключ-значение, привязанное к потоку выполнения. Значения, положенные в `MDC` (например, `traceId`, `userId`), автоматически добавляются в каждую запись лога в рамках этого потока. Используют для распределённой трассировки: при входе в запрос кладут `traceId` и `spanId` в `MDC`, при выходе очищают. В `JSON`-логах поля из `MDC` попадают в структурированный вывод для `ELK`. В коде: `MDC.put("traceId", traceId);` в начале запроса; в `finally` или после цепочки: `MDC.clear()`. В пуле потоков контекст не передаётся — копировать в `Runnable` или использовать обёртки (например, `TaskDecorator` в `Spring`) для передачи `MDC` в дочерний поток.
+    <!-- Файл с ротацией для prod -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/app.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
-**Практика (`Spring`):** в фильтре или `WebMvcConfigurer`: извлечь `traceId` из заголовка `X-Trace-Id` (или сгенерировать `UUID`), положить в `MDC`; в `finally` или в `afterCompletion` вызвать `MDC.clear()`. В `Logback` pattern или `JSON`-encoder добавить `%X{traceId}`. Для `@Async` и пулов потоков — `TaskDecorator`, копирующий `MDC` в дочерний поток: `Runnable wrap(Runnable r) { Map<String, String> mdc = MDC.getCopyOfContextMap(); return () -> { if (mdc != null) MDC.setContextMap(mdc); try { r.run(); } finally { MDC.clear(); } }; }`.
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
+```
 
-## Q10. Что такое структурированное логирование (`JSON`) и когда его использовать?
+## Q5. Что такое `Layout` / `Encoder` и как настроить формат?
 
-Структурированное логирование — вывод логов в формате `JSON` с полями (timestamp, level, logger, message, `traceId`, custom fields). Удобно для парсинга в `ELK`, `Splunk`, облачных лог-сервисах; поиск и агрегация по полям. Используют при централизованном сборе логов и когда нужна машинная обработка. В `Logback` — `LogstashEncoder` или кастомный `Layout`. Поля задают в encoder: timestamp, level, logger, message, `MDC` (mdc). В `Kibana / Elasticsearch` поиск по полям: `traceId:abc123`, `level:ERROR`. Для dev можно оставить обычный pattern; для prod и централизованного сбора — `JSON`.
+`Layout` (в `Log4j`) или `Encoder` (в `Logback`) определяет формат вывода лог-записей. В `Logback` используются `Encoder`, а не `Layout` напрямую.
 
-**Практика (`Logback`):** зависимость `logstash-logback-encoder`; в appender использовать `Encoder` с `JsonLayout` или `LogstashEncoder`. В encoder включить `MDC`: `includeMdcKeyName: [traceId, spanId, userId]`. В `application.yml` по профилю: dev — pattern layout для читаемости в консоли; prod — `JSON` в файл или stdout для `Filebeat / Fluentd`. Не логировать в `JSON` чувствительные поля без маскировки.
+Основные спецификаторы `PatternLayout`:
+
+| Спецификатор | Значение | Пример вывода |
+|-------------|----------|---------------|
+| `%d{ISO8601}` | Дата и время | `2026-04-11T14:30:00.123` |
+| `%level` / `%-5level` | Уровень (с паддингом) | `INFO ` |
+| `%thread` | Имя потока | `http-nio-8080-exec-1` |
+| `%logger{36}` | Имя логгера (сокращённое) | `c.e.s.UserService` |
+| `%msg` | Сообщение | `Processing order id=42` |
+| `%X{traceId}` | Поле из MDC | `abc-123-def` |
+| `%n` | Перенос строки | |
+| `%ex` | Stack trace | |
+
+```xml
+<!-- Формат для dev: читаемый -->
+<pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
+
+<!-- Формат для prod: с MDC полями -->
+<pattern>%d{ISO8601} %-5level [%thread] [traceId=%X{traceId}] %logger{36} - %msg%n</pattern>
+```
+
+## Q6. (!) Перечислите уровни журналирования и когда какой использовать?
+
+Уровни от наименее до наиболее критичного:
+
+| Уровень | Когда использовать | Пример |
+|---------|-------------------|--------|
+| `TRACE` | Максимальная детализация, пошаговая отладка | Вход/выход из метода, значения переменных |
+| `DEBUG` | Отладочная информация для разработки | SQL-запросы, HTTP-ответы, промежуточные данные |
+| `INFO` | Значимые бизнес-события | Старт приложения, обработка заказа, логин пользователя |
+| `WARN` | Потенциальные проблемы, не ошибки | Fallback на дефолт, устаревший API, retry |
+| `ERROR` | Ошибки, требующие внимания | Недоступность внешнего сервиса, невалидные данные |
+| `FATAL` | Критическое, приложение не может работать | Только в `Log4j2`; в `SLF4J` нет `FATAL` |
+
+```java
+public class PaymentService {
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+
+    public PaymentResult process(Payment payment) {
+        log.debug("Processing payment: amount={}, currency={}", 
+                  payment.getAmount(), payment.getCurrency());
+
+        try {
+            PaymentResult result = gateway.charge(payment);
+            log.info("Payment processed: orderId={}, status={}", 
+                     payment.getOrderId(), result.getStatus());
+            return result;
+        } catch (PaymentGatewayException e) {
+            log.error("Payment failed: orderId={}, reason={}", 
+                      payment.getOrderId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+}
+```
+
+**Best practices по уровням:**
+- **`DEBUG` отключён в prod** -- иначе объём логов взрывается
+- **`INFO`** -- основной рабочий уровень в prod; логировать бизнес-события, не технические детали
+- **`WARN`** -- ситуации, которые можно переждать, но надо мониторить
+- **`ERROR`** -- всегда с полным стек-трейсом; должен триггерить алерт
+
+## Q7. Какие существуют способы конфигурирования логирования?
+
+| Способ | Файл | Когда использовать |
+|--------|------|--------------------|
+| `logback.xml` | Classpath | Базовая конфигурация `Logback` |
+| `logback-spring.xml` | Classpath | `Spring Boot` -- поддержка `<springProfile>` |
+| `application.yml` | Classpath | Быстрая настройка уровней через `logging.level.*` |
+| Программно | Java-код | Динамическое изменение уровней в runtime |
+| Системные свойства | JVM args | `-Dlogging.level.root=DEBUG` |
+
+```yaml
+# application.yml -- быстрая настройка уровней
+logging:
+  level:
+    root: INFO
+    com.example.myapp: DEBUG
+    org.hibernate.SQL: WARN
+    org.springframework: WARN
+  file:
+    name: logs/app.log
+  pattern:
+    console: "%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+```
+
+Для продвинутой конфигурации (несколько аппендеров, фильтры, профили) используют `logback-spring.xml`. Подробнее о конфигурации по окружениям -- см. Q22.
+
+## Q8. (!) Зачем использовать `SLF4J` вместо прямого вызова `Log4j` или `Logback`?
+
+`SLF4J` -- фасад (API) над реализациями логирования. Код зависит только от абстракции, а реализацию подключают через classpath.
+
+**Преимущества:**
+1. **Независимость от реализации** -- можно переключить `Logback` на `Log4j2` без изменения кода
+2. **Единый API для всех зависимостей** -- все библиотеки используют один фасад
+3. **Параметризованные вызовы** -- экономия CPU при отключённом уровне
+
+```java
+// ПРАВИЛЬНО: SLF4J API
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+private static final Logger log = LoggerFactory.getLogger(MyService.class);
+log.info("User {} logged in from {}", username, ipAddress);
+
+// НЕПРАВИЛЬНО: прямая зависимость на реализацию
+import org.apache.logging.log4j.LogManager;  // привязка к Log4j2
+import ch.qos.logback.classic.Logger;        // привязка к Logback
+```
+
+Переключение реализации -- только изменение зависимостей в `build.gradle`:
+
+```groovy
+// Logback (дефолт в Spring Boot)
+implementation 'ch.qos.logback:logback-classic'
+
+// Переключение на Log4j2
+implementation 'org.apache.logging.log4j:log4j-slf4j2-impl'
+```
+
+## Q9. (!) Что такое `MDC` и как его использовать?
+
+`MDC` (`Mapped Diagnostic Context`) -- потоковое хранилище ключ-значение (`ThreadLocal`), привязанное к текущему потоку. Значения из `MDC` автоматически добавляются в каждую запись лога.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Filter
+    participant Service
+    participant Logger
+    participant Output
+
+    Client->>Filter: HTTP Request (X-Trace-Id: abc-123)
+    Filter->>Filter: MDC.put("traceId", "abc-123")
+    Filter->>Service: processRequest()
+    Service->>Logger: log.info("Processing order")
+    Logger->>Output: 2026-04-11 [traceId=abc-123] Processing order
+    Service->>Logger: log.info("Order saved")
+    Logger->>Output: 2026-04-11 [traceId=abc-123] Order saved
+    Service-->>Filter: response
+    Filter->>Filter: MDC.clear()
+```
+
+**Пример: фильтр для `traceId` в `Spring Boot`:**
+
+```java
+import org.slf4j.MDC;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.UUID;
+
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class TraceIdFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws IOException, ServletException {
+        HttpServletRequest httpReq = (HttpServletRequest) req;
+        
+        String traceId = httpReq.getHeader("X-Trace-Id");
+        if (traceId == null || traceId.isBlank()) {
+            traceId = UUID.randomUUID().toString();
+        }
+
+        MDC.put("traceId", traceId);
+        try {
+            chain.doFilter(req, res);
+        } finally {
+            MDC.clear();  // обязательно очищать!
+        }
+    }
+}
+```
+
+**Конфигурация `Logback` для вывода MDC:**
+
+```xml
+<pattern>%d{ISO8601} %-5level [%thread] [traceId=%X{traceId}] %logger{36} - %msg%n</pattern>
+```
+
+**Передача MDC в пуле потоков (TaskDecorator для `@Async`):**
+
+```java
+@Configuration
+@EnableAsync
+public class AsyncConfig implements AsyncConfigurer {
+
+    @Override
+    public Executor getAsyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setTaskDecorator(runnable -> {
+            Map<String, String> mdc = MDC.getCopyOfContextMap();
+            return () -> {
+                if (mdc != null) {
+                    MDC.setContextMap(mdc);
+                }
+                try {
+                    runnable.run();
+                } finally {
+                    MDC.clear();
+                }
+            };
+        });
+        executor.initialize();
+        return executor;
+    }
+}
+```
+
+Подробнее о трассировке в [вопросах по метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
+
+## Q10. (!) Что такое структурированное логирование (`JSON`)?
+
+Структурированное логирование -- вывод логов в формате `JSON` с фиксированным набором полей. Позволяет машинную обработку, поиск и агрегацию в `ELK`, `Splunk`, `Loki`.
+
+**Обычный лог (текстовый):**
+```
+2026-04-11 14:30:00.123 INFO [http-nio-8080-exec-1] c.e.OrderService - Order processed: orderId=42
+```
+
+**Структурированный лог (JSON):**
+```json
+{
+  "@timestamp": "2026-04-11T14:30:00.123Z",
+  "level": "INFO",
+  "thread": "http-nio-8080-exec-1",
+  "logger": "com.example.OrderService",
+  "message": "Order processed",
+  "orderId": 42,
+  "traceId": "abc-123-def",
+  "spanId": "span-456",
+  "service": "order-service",
+  "env": "prod"
+}
+```
+
+**Настройка `Logback` с `LogstashEncoder`:**
+
+Зависимость:
+```groovy
+implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+```
+
+Конфигурация `logback-spring.xml`:
+```xml
+<configuration>
+    <!-- Dev: читаемый формат в консоль -->
+    <springProfile name="dev">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
+            </encoder>
+        </appender>
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- Prod: JSON для ELK -->
+    <springProfile name="prod">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>spanId</includeMdcKeyName>
+                <includeMdcKeyName>userId</includeMdcKeyName>
+                <customFields>{"service":"order-service","env":"prod"}</customFields>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+</configuration>
+```
+
+**Добавление кастомных полей в лог-запись:**
+
+```java
+import net.logstash.logback.argument.StructuredArguments;
+import static net.logstash.logback.argument.StructuredArguments.*;
+
+log.info("Order processed: {}, {}", 
+         keyValue("orderId", 42), 
+         keyValue("amount", 99.99));
+// JSON: {"message":"Order processed: orderId=42, amount=99.99","orderId":42,"amount":99.99}
+```
 
 ## Q11. Как настроить ротацию лог-файлов (`RollingFileAppender`)?
 
-`RollingFileAppender` в `Logback`: политика по размеру (`SizeBasedTriggeringPolicy` — новый файл при достижении `maxSize`) и по времени (`TimeBasedRollingPolicy` или `DefaultRollingPolicy` с `maxHistory`). Пример: один файл в день, хранение 30 дней, максимальный размер файла `100 MB`. Настройка в `logback-spring.xml`. В `Logback`: `TimeBasedRollingPolicy` с `fileNamePattern` (например, `app.%d{yyyy-MM-dd}.log`), `maxHistory` — число дней. Размер можно ограничить `totalSizeCap`. При достижении лимита старые файлы удаляются.
+`RollingFileAppender` автоматически создаёт новые файлы по времени или размеру и удаляет старые.
 
-## Q12. Почему параметризованные вызовы логгера предпочтительнее конкатенации?
+```xml
+<appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/app.log</file>
+    
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+        <!-- Новый файл каждый день -->
+        <fileNamePattern>logs/app.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+        <!-- Максимум 100MB на файл -->
+        <maxFileSize>100MB</maxFileSize>
+        <!-- Хранить 30 дней -->
+        <maxHistory>30</maxHistory>
+        <!-- Общий лимит 5GB -->
+        <totalSizeCap>5GB</totalSizeCap>
+    </rollingPolicy>
+    
+    <encoder>
+        <pattern>%d{ISO8601} %-5level [%thread] %logger{36} - %msg%n</pattern>
+    </encoder>
+</appender>
+```
 
-При `logger.debug("id=" + id)` строка конкатенируется всегда, даже если уровень `DEBUG` отключён — лишние выделения памяти и `CPU`. При `logger.debug("id={}", id)` аргументы подставляются только при фактической записи лога. Для тяжёлых операций (`toString` большого объекта) используют `logger.debug("obj={}", () -> heavyToString())` — лямбда выполняется только при включённом уровне.
+**Ключевые параметры:**
+- `maxFileSize` -- при достижении создаётся новый файл (индекс `%i`)
+- `maxHistory` -- число ротированных файлов/дней для хранения
+- `totalSizeCap` -- общий лимит на все файлы; при превышении удаляются самые старые
+- `.gz` в `fileNamePattern` -- автоматическое сжатие архивных файлов
+
+## Q12. (!) Почему параметризованные вызовы логгера предпочтительнее конкатенации?
+
+```java
+// ПЛОХО: конкатенация выполняется ВСЕГДА, даже если уровень DEBUG отключён
+log.debug("User " + user.getName() + " performed action " + action);
+
+// ХОРОШО: подстановка происходит ТОЛЬКО если DEBUG включён
+log.debug("User {} performed action {}", user.getName(), action);
+
+// ДЛЯ ТЯЖЁЛЫХ ОПЕРАЦИЙ: лямбда (Log4j2 или SLF4J 2.0+)
+log.atDebug().log("Expensive data: {}", () -> expensiveToString(data));
+
+// АЛЬТЕРНАТИВА: проверка уровня (SLF4J 1.x)
+if (log.isDebugEnabled()) {
+    log.debug("Expensive: {}", expensiveToString(data));
+}
+```
+
+**Почему это важно:**
+- Конкатенация вызывает `toString()` и выделяет память **каждый раз**
+- При параметризации `SLF4J` проверяет уровень **до** форматирования
+- В hot path экономия может быть существенной (тысячи вызовов/сек)
 
 ## Q13. Что такое асинхронный аппендер и когда его использовать?
 
-Асинхронный аппендер — логи пишутся в очередь в отдельном потоке; поток приложения не блокируется на I/O записи. Уменьшает задержку приложения при записи в файл или по сети. Минусы: при падении приложения часть логов в очереди может потеряться; нужен ограниченный размер очереди. Используют при высокой нагрузке и когда допустима небольшая потеря логов при краше. Очередь ограничивают по размеру (discarding queue в `Logback`); при переполнении отбрасывают старые записи или блокируют (по конфигу). Для критичных логов можно дублировать в синхронный аппендер.
+Асинхронный аппендер помещает лог-записи во внутреннюю очередь и записывает в назначение в отдельном потоке. Поток приложения не блокируется на I/O.
 
-## Q14. Как связать логи с распределённой трассировкой (`traceId`, `spanId`)?
+```xml
+<appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+    <!-- Размер очереди (по умолчанию 256) -->
+    <queueSize>1024</queueSize>
+    <!-- При заполнении >80% очереди отбрасывать TRACE/DEBUG -->
+    <discardingThreshold>20</discardingThreshold>
+    <!-- Не включать caller info (дорого) -->
+    <includeCallerData>false</includeCallerData>
+    <!-- Обёрнутый аппендер -->
+    <appender-ref ref="FILE"/>
+</appender>
 
-При входе в запрос (фильтр, interceptor) извлекают `traceId` и `spanId` из заголовков (`X-Trace-Id`, `B3`) или создают новые и кладут в `MDC`. Все логи в рамках запроса содержат эти поля (через pattern или `JSON`-encoder). При вызове другого сервиса передают `traceId` и `spanId` в заголовках. В конце запроса `MDC` очищают. Так все логи одного запроса можно отфильтровать по `traceId` в `Kibana` или `Grafana`. Заголовки: `W3C traceparent`, `B3 X-B3-TraceId`, `X-B3-SpanId`. При асинхронных вызовах передавать контекст в заголовках и восстанавливать `MDC` в консьюмере/воркере.
+<root level="INFO">
+    <appender-ref ref="ASYNC"/>
+</root>
+```
 
-## Q15. Как не логировать чувствительные данные (пароли, токены)?
+**Trade-offs:**
 
-Рекомендации: не передавать пароли и токены в аргументах логгера; маскировать в конфигурации (кастомный `Layout` или фильтр, заменяющий по регулярному выражению); использовать allowlist полей при логировании `JSON` (исключать поля password, token); в тестах проверять, что чувствительные данные не попадают в логи.
+| Плюс | Минус |
+|------|-------|
+| Не блокирует бизнес-поток | При краше теряются записи из очереди |
+| Сглаживает пики I/O | Дополнительная память под очередь |
+| Повышает throughput | При переполнении отбрасывает записи |
+
+**Когда использовать:** высокая нагрузка, допустима потеря нескольких записей при краше. Для критичных логов (аудит, финансы) -- синхронный аппендер.
+
+## Q14. (!) Как связать логи с распределённой трассировкой?
+
+В [микросервисной архитектуре](../architecture/microservices-interview.md) каждый запрос проходит через несколько сервисов. Для корреляции логов используют `traceId` и `spanId`.
+
+```mermaid
+graph LR
+    CLIENT["Client"] -->|"X-Trace-Id: abc-123"| GW["API Gateway"]
+    GW -->|"X-Trace-Id: abc-123"| SVC_A["Order Service"]
+    SVC_A -->|"X-Trace-Id: abc-123"| SVC_B["Payment Service"]
+    SVC_A -->|"X-Trace-Id: abc-123"| SVC_C["Inventory Service"]
+    
+    SVC_A --> LOGS["ELK / Loki"]
+    SVC_B --> LOGS
+    SVC_C --> LOGS
+    
+    style LOGS fill:#FF5722,color:#fff
+    style GW fill:#4CAF50,color:#fff
+```
+
+**Реализация с `Spring Boot` + `Micrometer Tracing`:**
+
+```yaml
+# application.yml
+management:
+  tracing:
+    sampling:
+      probability: 1.0  # 100% трассировки (для dev)
+```
+
+```java
+// traceId и spanId автоматически попадают в MDC
+// через Micrometer Tracing (бывший Spring Cloud Sleuth)
+log.info("Payment processed for order={}", orderId);
+// Вывод: 2026-04-11 INFO [traceId=abc-123, spanId=def-456] Payment processed for order=42
+```
+
+**Ручная передача в `RestTemplate` / `WebClient`:**
+
+```java
+@Bean
+public RestTemplate restTemplate(RestTemplateBuilder builder) {
+    return builder
+        .additionalInterceptors((request, body, execution) -> {
+            String traceId = MDC.get("traceId");
+            if (traceId != null) {
+                request.getHeaders().set("X-Trace-Id", traceId);
+            }
+            return execution.execute(request, body);
+        })
+        .build();
+}
+```
+
+Стандарты заголовков: W3C `traceparent`, B3 (`X-B3-TraceId`, `X-B3-SpanId`). Подробнее в [вопросах по наблюдаемости](../monitoring/observability-interview.md).
+
+## Q15. Как не логировать чувствительные данные?
+
+Чувствительные данные (пароли, токены, номера карт, персональные данные) не должны попадать в логи.
+
+```java
+// ПЛОХО: пароль в логах
+log.info("User login: username={}, password={}", username, password);
+
+// ХОРОШО: не логировать чувствительные данные
+log.info("User login: username={}", username);
+
+// ХОРОШО: маскировка
+log.info("Card processed: last4={}", card.getLast4Digits());
+```
+
+**Кастомный маскирующий Layout в `Logback`:**
+
+```java
+public class MaskingPatternLayout extends PatternLayout {
+    private Pattern multilinePattern;
+    private List<String> maskPatterns = new ArrayList<>();
+
+    public void addMaskPattern(String pattern) {
+        maskPatterns.add(pattern);
+        multilinePattern = Pattern.compile(
+            String.join("|", maskPatterns), Pattern.MULTILINE);
+    }
+
+    @Override
+    public String doLayout(ILoggingEvent event) {
+        return maskMessage(super.doLayout(event));
+    }
+
+    private String maskMessage(String message) {
+        if (multilinePattern == null) return message;
+        StringBuilder sb = new StringBuilder(message);
+        Matcher matcher = multilinePattern.matcher(sb);
+        while (matcher.find()) {
+            if (matcher.group().length() > 4) {
+                sb.replace(matcher.start(), matcher.end(),
+                    "****" + matcher.group().substring(matcher.group().length() - 4));
+            }
+        }
+        return sb.toString();
+    }
+}
+```
+
+**Рекомендации:**
+- Allowlist полей для `JSON`-логирования (не blacklist)
+- В тестах проверять, что чувствительные данные не попадают в логи
+- Переопределять `toString()` у DTO с чувствительными полями
+- Использовать аннотации маскировки (`@Masked`, `@Sensitive`) в собственных фреймворках
 
 ## Q16. Чем `Logback` отличается от `Log4j2`?
 
-`Logback` — преемник `Log4j 1.x`, нативный реализатор `SLF4J`; быстрее и меньше зависимостей; конфигурация через `XML` или `Groovy`. `Log4j2` — переработанный `Log4j` с асинхронными логгерами, плагинной архитектурой, поддержкой `JSON` и `YAML` конфигурации. Оба поддерживают `SLF4J`; в `Spring Boot` по умолчанию `Logback`; при необходимости можно переключиться на `Log4j2`.
+| Критерий | `Logback` | `Log4j2` |
+|----------|-----------|----------|
+| Связь с `SLF4J` | Нативная реализация | Адаптер `log4j-slf4j2-impl` |
+| Дефолт в `Spring Boot` | Да | Нет (можно переключить) |
+| Async loggers | `AsyncAppender` (обёртка) | Нативные async loggers (LMAX Disruptor) |
+| Конфигурация | XML, Groovy | XML, JSON, YAML, Properties |
+| Производительность | Хорошая | Лучше (async loggers, garbage-free) |
+| Плагины | Ограничено | Плагинная архитектура |
+| Перезагрузка конфига | Автоматическая | Автоматическая |
+| Vulnerability | Нет (не было Log4Shell) | Log4Shell (CVE-2021-44228) -- исправлена в 2.17+ |
+
+**Переключение на `Log4j2` в `Spring Boot`:**
+
+```groovy
+// build.gradle
+configurations.all {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
+implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+```
 
 ## Q17. Как уменьшить объём логов от сторонних библиотек?
 
-В конфигурации задают уровень логгера по пакету: например, для `Hibernate com.zaxxer.hikari` — `WARN`, `org.hibernate.SQL` — `DEBUG` только в dev. В `Logback`: `<logger name="org.springframework" level="WARN"/>`. Так отключают шумные библиотеки без потери важных сообщений. Для `Hibernate SQL` в dev: `org.hibernate.SQL=DEBUG`; в prod — `WARN`. Пакет задают по имени логгера библиотеки (документация или вывод в логах).
+Задать уровень логирования по пакету библиотеки:
 
-## Q18. Что такое correlation id и как его использовать в микросервисах?
+```xml
+<!-- logback-spring.xml -->
+<logger name="org.springframework" level="WARN"/>
+<logger name="org.hibernate" level="WARN"/>
+<logger name="com.zaxxer.hikari" level="WARN"/>
+<logger name="org.apache.kafka" level="WARN"/>
 
-**Correlation id** (или `traceId`) — идентификатор, проходящий через все сервисы в рамках одного запроса. При входе в систему (`API Gateway`, первый сервис) генерируется или извлекается из заголовка; передаётся в заголовках при вызовах между сервисами; кладётся в `MDC` в каждом сервисе. Позволяет в централизованных логах отфильтровать все записи одного запроса по одному id. Имя заголовка единое (`X-Correlation-Id` или `X-Trace-Id`); первый сервис генерирует `UUID` при отсутствии заголовка. В `WebClient` или `RestTemplate` прокидывать заголовок в исходящие вызовы; в `Spring` можно использовать `Interceptor` или `WebClient` filter.
+<!-- SQL-запросы только в dev -->
+<springProfile name="dev">
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.hibernate.type.descriptor.sql" level="TRACE"/>
+</springProfile>
+```
 
+Эквивалент в `application.yml`:
+
+```yaml
+logging:
+  level:
+    org.springframework: WARN
+    org.hibernate: WARN
+    com.zaxxer.hikari: WARN
+    org.apache.kafka: WARN
+```
+
+## Q18. (!) Что такое `correlation id` и как его использовать в микросервисах?
+
+`Correlation id` (или `traceId`) -- уникальный идентификатор, проходящий через все сервисы в рамках одного пользовательского запроса. Позволяет отфильтровать все логи одного запроса в [Elasticsearch](../databases/elasticsearch-interview.md) / `Kibana`.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway as API Gateway
+    participant OrderSvc as Order Service
+    participant PaySvc as Payment Service
+    participant Kibana
+
+    Client->>Gateway: POST /orders
+    Gateway->>Gateway: Generate traceId=abc-123
+    Gateway->>OrderSvc: X-Trace-Id: abc-123
+    OrderSvc->>OrderSvc: MDC.put("traceId", "abc-123")
+    OrderSvc->>PaySvc: X-Trace-Id: abc-123
+    PaySvc->>PaySvc: MDC.put("traceId", "abc-123")
+    PaySvc-->>OrderSvc: 200 OK
+    OrderSvc-->>Gateway: 201 Created
+    
+    Note over Kibana: Поиск: traceId=abc-123<br/>показывает логи из ВСЕХ сервисов
+```
+
+**Реализация `WebClient` filter для проброса `traceId`:**
+
+```java
+@Bean
+public WebClient webClient() {
+    return WebClient.builder()
+        .filter((request, next) -> {
+            String traceId = MDC.get("traceId");
+            if (traceId != null) {
+                request = ClientRequest.from(request)
+                    .header("X-Trace-Id", traceId)
+                    .build();
+            }
+            return next.exchange(request);
+        })
+        .build();
+}
+```
 
 ## Q19. Как логировать исключения правильно?
 
-Рекомендации: передавать исключение последним аргументом — `log.error("Failed to process id={}", id, e)`; не логировать только сообщение без stack trace — `log.error(e.getMessage())` теряет контекст; не глотать исключения без логирования; в верхнем уровне (controller advice) логировать один раз с полным контекстом, во вложенных вызовах — при необходимости с другим уровнем или кратко. В `SLF4J`: `log.error("Failed to process", e)` — последний аргумент `Throwable` выводится со stack trace. Не делать `log.error(e.getMessage())` — теряется stack trace.
+```java
+// ПРАВИЛЬНО: исключение как последний аргумент -- полный stack trace
+log.error("Failed to process order id={}", orderId, exception);
 
+// НЕПРАВИЛЬНО: теряется stack trace
+log.error("Error: " + exception.getMessage());
 
-## Q20. Как интегрировать логи с `ELK` (`Elasticsearch`, `Logstash`, `Kibana`)?
+// НЕПРАВИЛЬНО: дублирование -- лог + rethrow на каждом уровне
+try {
+    service.process(data);
+} catch (Exception e) {
+    log.error("Failed", e);  // логируем здесь...
+    throw e;                  // ...и выше снова логируем -- дубль
+}
 
-Приложение пишет логи в `JSON` (`LogstashEncoder` в `Logback`) в файл или stdout; `Filebeat` или `Fluentd` собирают файлы и отправляют в `Elasticsearch` (напрямую или через `Logstash`); `Kibana` — визуализация и поиск. Альтернатива: отправка логов напрямую в `Elasticsearch`. Поля `traceId`, `spanId` и передача **correlation id** между сервисами через заголовки и `MDC`.
+// ПРАВИЛЬНО: логировать один раз на верхнем уровне
+// Или: логировать на нижнем уровне и оборачивать в unchecked
+```
 
+**Паттерн для `@ControllerAdvice` -- единая точка логирования ошибок:**
 
-## Q21. Что такое `Markers` в `Logback` и когда их использовать?
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
 
-`Markers` — именованные метки, привязываемые к лог-записи; позволяют фильтровать и маршрутизировать логи по признаку (например, `SECURITY`, `AUDIT`, `SQL`). В `Logback` можно настроить аппендер только для записей с определённым маркером; удобно для вывода аудита в отдельный файл или для отключения шумных категорий. Использование: `log.info(MarkerFactory.getMarker("AUDIT"), "User {} performed action", userId)`.
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception e, HttpServletRequest req) {
+        String traceId = MDC.get("traceId");
+        log.error("Unhandled exception: uri={}, traceId={}", req.getRequestURI(), traceId, e);
+        
+        return ResponseEntity.status(500)
+            .body(new ErrorResponse("Internal error", traceId));
+    }
+}
+```
 
-## Q22. Как настроить уровни логирования по окружению (dev/prod)?
+## Q20. (!) Как интегрировать логи с `ELK`?
 
-Через конфигурацию: в `logback-spring.xml` использовать `springProfile` (например, `<springProfile name="dev">` с уровнем `DEBUG` для пакетов приложения); в `application.yml` задать `logging.level.root` и `logging.level.*` по профилю. Альтернатива: переменные окружения или системные свойства, подставляемые в конфиг; `Spring Boot` подхватывает `logging.level.*` из application-{profile}.yml.
+`ELK` стек (`Elasticsearch`, `Logstash`, `Kibana`) -- стандартное решение для централизованного сбора и поиска логов.
 
+```mermaid
+graph LR
+    APP1["Service A<br/>JSON logs"] --> FB["Filebeat"]
+    APP2["Service B<br/>JSON logs"] --> FB
+    APP3["Service C<br/>JSON logs"] --> FB
+    FB --> LS["Logstash<br/>(обогащение, фильтрация)"]
+    LS --> ES["Elasticsearch<br/>(хранение, индексация)"]
+    ES --> KB["Kibana<br/>(поиск, дашборды)"]
+    
+    style ES fill:#FFC107,color:#000
+    style KB fill:#E91E63,color:#fff
+    style LS fill:#9C27B0,color:#fff
+    style FB fill:#4CAF50,color:#fff
+```
 
-## Q23. Что такое log sampling и когда его применять?
+**Полный pipeline:**
 
-`Log sampling` — выборочная запись логов (например, каждый N-й запрос или 1% записей) при высокой нагрузке, чтобы не перегружать диск и систему сбора. Применяют когда полное логирование создаёт слишком большой объём; часть записей теряется, но сохраняется репрезентативная выборка. Реализация: кастомный фильтр в `Logback` или условный вызов `log.info(...)`.
+1. **Приложение** пишет `JSON`-логи (`LogstashEncoder`) в stdout или файл
+2. **Filebeat** (агент) собирает логи и отправляет в `Logstash` или напрямую в `Elasticsearch`
+3. **Logstash** (опционально) -- обогащение, фильтрация, трансформация
+4. **Elasticsearch** -- индексирует и хранит
+5. **Kibana** -- поиск по `traceId:abc-123`, `level:ERROR`, дашборды
 
-Практический критерий: сравните долю потерь полезных событий до/после sampling и оставляйте `ERROR`/`AUDIT` без выборки.
+**Конфигурация Filebeat:**
+
+```yaml
+# filebeat.yml
+filebeat.inputs:
+  - type: container
+    paths:
+      - /var/log/containers/*.log
+    json.keys_under_root: true
+    json.add_error_key: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "app-logs-%{+yyyy.MM.dd}"
+```
+
+**Альтернативы ELK:**
+- `Grafana Loki` + `Promtail` -- легковесный, label-based (не full-text индексация)
+- `Splunk` -- enterprise решение
+- Cloud-native: AWS CloudWatch, GCP Cloud Logging, Azure Monitor
+
+Подробнее о `Elasticsearch` -- в [вопросах по Elasticsearch](../databases/elasticsearch-interview.md).
+
+## Q21. Что такое `Markers` в `SLF4J`/`Logback` и когда их использовать?
+
+`Markers` -- именованные метки, привязываемые к лог-записи. Позволяют фильтровать и маршрутизировать логи по категории.
+
+```java
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
+public class AuditService {
+    private static final Logger log = LoggerFactory.getLogger(AuditService.class);
+    private static final Marker AUDIT = MarkerFactory.getMarker("AUDIT");
+    private static final Marker SECURITY = MarkerFactory.getMarker("SECURITY");
+
+    public void logUserAction(String userId, String action) {
+        log.info(AUDIT, "User {} performed action: {}", userId, action);
+    }
+
+    public void logLoginAttempt(String userId, boolean success) {
+        log.info(SECURITY, "Login attempt: userId={}, success={}", userId, success);
+    }
+}
+```
+
+**Фильтрация по маркеру -- аудит в отдельный файл:**
+
+```xml
+<appender name="AUDIT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/audit.log</file>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+        <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+            <marker>AUDIT</marker>
+        </evaluator>
+        <onMatch>ACCEPT</onMatch>
+        <onMismatch>DENY</onMismatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>logs/audit.%d{yyyy-MM-dd}.log</fileNamePattern>
+        <maxHistory>365</maxHistory>
+    </rollingPolicy>
+    <encoder>
+        <pattern>%d{ISO8601} %msg%n</pattern>
+    </encoder>
+</appender>
+```
+
+## Q22. Как настроить уровни логирования по окружению (`dev`/`prod`)?
+
+`Spring Boot` поддерживает профили в `logback-spring.xml` через `<springProfile>`:
+
+```xml
+<configuration>
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="com.example.myapp" level="DEBUG"/>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.hibernate" level="WARN"/>
+    </springProfile>
+</configuration>
+```
+
+Альтернатива через `application-{profile}.yml`:
+
+```yaml
+# application-dev.yml
+logging:
+  level:
+    root: DEBUG
+    com.example: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# application-prod.yml
+logging:
+  level:
+    root: INFO
+    org.springframework: WARN
+```
+
+**Динамическое изменение уровня в runtime** через `Spring Boot Actuator`:
+
+```bash
+# Посмотреть текущий уровень
+curl http://localhost:8080/actuator/loggers/com.example.myapp
+
+# Изменить уровень без рестарта
+curl -X POST http://localhost:8080/actuator/loggers/com.example.myapp \
+  -H 'Content-Type: application/json' \
+  -d '{"configuredLevel": "DEBUG"}'
+```
+
+## Q23. Что такое `log sampling` и когда его применять?
+
+`Log sampling` -- выборочная запись логов (например, каждый N-й запрос или 1% записей) при высокой нагрузке.
+
+```java
+// Простой sampling: каждый 100-й запрос
+private final AtomicLong counter = new AtomicLong();
+
+public void processRequest(Request req) {
+    long count = counter.incrementAndGet();
+    if (count % 100 == 0) {
+        log.info("Processing request (sampled 1/100): type={}", req.getType());
+    }
+    // ... обработка
+}
+```
+
+**Кастомный `TurboFilter` в `Logback` для sampling:**
+
+```java
+public class SamplingFilter extends TurboFilter {
+    private int rate = 100;
+    private final AtomicLong counter = new AtomicLong();
+
+    @Override
+    public FilterReply decide(Marker marker, ch.qos.logback.classic.Logger logger,
+                              Level level, String format, Object[] params, Throwable t) {
+        // ERROR и WARN всегда пропускать
+        if (level.isGreaterOrEqual(Level.WARN)) {
+            return FilterReply.NEUTRAL;
+        }
+        return counter.incrementAndGet() % rate == 0 
+            ? FilterReply.NEUTRAL 
+            : FilterReply.DENY;
+    }
+
+    public void setRate(int rate) { this.rate = rate; }
+}
+```
+
+**Правило:** `ERROR` и `AUDIT` -- без выборки, всегда 100%. Sampling только для `INFO`/`DEBUG`.
 
 ## Q24. Как логировать в многопоточном и асинхронном коде?
 
-`MDC` в многопоточном коде не передаётся автоматически в дочерние потоки; при создании `Thread` или при использовании пула потоков нужно вручную копировать контекст `MDC` в рабочий поток (например, в `Runnable` перед запуском) и очищать после выполнения. В `CompletableFuture` и реактивных стеках контекст (в т.ч. `traceId`) передают через `ThreadLocal`-совместимые механизмы или через контекст подписки (`Reactor Context`). Иначе логи из разных потоков потеряют `traceId` и корреляцию.
+`MDC` основан на `ThreadLocal` -- при переключении потока контекст теряется.
 
-Trade-off: перенос `MDC` повышает наблюдаемость, но дает overhead; проверяйте это отдельным нагрузочным тестом на пуле потоков.
+```java
+// ПРОБЛЕМА: MDC теряется в CompletableFuture
+MDC.put("traceId", "abc-123");
+CompletableFuture.supplyAsync(() -> {
+    // MDC.get("traceId") == null!  <-- потерян
+    log.info("Processing async");  // лог без traceId
+    return result;
+});
 
-## Q25. Что такое `Fluent API` в `Log4j2` и зачем он нужен?
+// РЕШЕНИЕ: передать MDC вручную
+Map<String, String> mdc = MDC.getCopyOfContextMap();
+CompletableFuture.supplyAsync(() -> {
+    if (mdc != null) MDC.setContextMap(mdc);
+    try {
+        log.info("Processing async");  // теперь с traceId
+        return result;
+    } finally {
+        MDC.clear();
+    }
+});
+```
 
-`Fluent API` в `Log4j2` — цепочечный вызов `Log4j2.getContext().getLogger(name).atLevel(Level.INFO).log("message")` или `log.atDebug().withThrowable(e).log("msg")`. Удобно для условного логирования с лямбдами: `log.atDebug().withLocation().log(() -> expensiveMessage())` — сообщение вычисляется только при включённом `DEBUG`. В Logback — проверка `if (log.isDebugEnabled())` или лямбда-аргументы в `log.debug("msg", () -> expensive())`.
+**Утилита-обёртка для `Runnable`/`Callable`:**
 
-Антипаттерн: применять `Fluent API` в hot-path без профилирования, где достаточно простого параметризованного `SLF4J`-вызова.
+```java
+public class MdcRunnable implements Runnable {
+    private final Runnable delegate;
+    private final Map<String, String> mdc;
+
+    public MdcRunnable(Runnable delegate) {
+        this.delegate = delegate;
+        this.mdc = MDC.getCopyOfContextMap();
+    }
+
+    @Override
+    public void run() {
+        if (mdc != null) MDC.setContextMap(mdc);
+        try {
+            delegate.run();
+        } finally {
+            MDC.clear();
+        }
+    }
+}
+
+// Использование
+executor.submit(new MdcRunnable(() -> processOrder(orderId)));
+```
+
+Для реактивных стеков см. Q30 и [вопросы по WebFlux](../frameworks/spring/spring-webflux-interview.md).
+
+## Q25. Что такое `Fluent API` в `Log4j2`?
+
+`Fluent API` -- цепочечный стиль вызова логгера, позволяющий условное вычисление сообщений через лямбды:
+
+```java
+// Log4j2 Fluent API
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+Logger log = LogManager.getLogger(MyService.class);
+
+// Лямбда вычисляется ТОЛЬКО при включённом DEBUG
+log.atDebug()
+   .withLocation()
+   .log("Expensive computation: {}", () -> expensiveToString(data));
+
+// С исключением
+log.atError()
+   .withThrowable(exception)
+   .log("Failed to process order={}", orderId);
+```
+
+```java
+// SLF4J 2.0+ Fluent API
+log.atDebug()
+   .setMessage("Processing data: {}")
+   .addArgument(() -> expensiveToString(data))
+   .log();
+
+// С маркером
+log.atInfo()
+   .addMarker(MarkerFactory.getMarker("AUDIT"))
+   .setMessage("User {} performed action {}")
+   .addArgument(userId)
+   .addArgument(action)
+   .log();
+```
 
 ## Q26. Как не раздувать логи при высокой нагрузке?
 
-Поднять уровень (`INFO` → `WARN`); отключить или ограничить логи шумных библиотек по пакетам; использовать параметризованные вызовы и не конкатенировать строки; не логировать в горячих циклах без условия (или с `isDebugEnabled`); асинхронные аппендеры для снятия пиков; log sampling при необходимости; не логировать большие объекты целиком; ротация и ограничение размера файлов.
+**Чеклист для контроля объёма логов:**
 
-Операционный сигнал: держите под контролем `ingestion lag` и стоимость хранения; сначала режут шумные `INFO`, а не `ERROR`.
+```java
+// 1. Поднять уровень шумных пакетов
+// logging.level.org.hibernate=WARN
+
+// 2. Не логировать в горячих циклах
+for (Item item : items) {
+    // ПЛОХО: тысячи записей
+    // log.debug("Processing item={}", item.getId());
+    process(item);
+}
+// ХОРОШО: одна запись с итогом
+log.info("Processed {} items", items.size());
+
+// 3. Параметризованные вызовы (не конкатенация)
+log.debug("Data: {}", data);  // а не "Data: " + data
+
+// 4. Rate limiting для повторяющихся ошибок
+private final RateLimiter logRateLimiter = RateLimiter.create(1.0); // 1 msg/sec
+if (logRateLimiter.tryAcquire()) {
+    log.error("Connection failed: host={}", host, e);
+}
+
+// 5. Не логировать большие объекты
+log.debug("Response: size={}, status={}", response.length(), response.getStatus());
+// а не log.debug("Response: {}", response.getBody());
+```
+
+**Операционные метрики:** мониторить `ingestion lag` в системе сбора и стоимость хранения. Первыми под нож идут шумные `INFO`, а не `ERROR`.
 
 ## Q27. Как интегрировать логи с метриками (`Micrometer`, `Prometheus`)?
 
-Логи и метрики — разные каналы: логи для событий и отладки, метрики — для числовых показателей (счётчики, гистограммы). Интеграция: при определённых лог-событиях инкрементировать счётчик (например, `errorCounter` при `log.error`); использовать `MeterBinder` или `ApplicationListener` для подсчёта логов по уровню из аппендера. Альтернатива: экспорт метрик «число логов по уровню» из системы сбора логов (`Kibana`, `Grafana Loki`) или из агента (`Filebeat` с агрегацией).
+Логи и [метрики](../monitoring/metrics-tracing-interview.md) -- два разных канала наблюдаемости. Но их можно связать:
 
-Критерий выбора: метрики из логов подходят для трендов, но для `SLO` источником истины остаются прямые бизнес-метрики.
+```java
+@Component
+public class ErrorLogMetrics {
+    private final Counter errorCounter;
 
-## Q28. Что такое log aggregation и зачем он нужен?
+    public ErrorLogMetrics(MeterRegistry registry) {
+        this.errorCounter = Counter.builder("log.errors.total")
+            .description("Total number of ERROR log events")
+            .register(registry);
+    }
 
-Логи агрегируют (например, `Elasticsearch`, `Loki`, `Splunk`) для централизованного поиска, анализа и алертинга. Зачем: в распределённой системе логи размазаны по узлам; без агрегации сложно отследить запрос по цепочке сервисов. Компоненты: агенты сбора (`Filebeat`, `Fluentd`, `Promtail`), транспорт, хранилище, `UI` (`Kibana`, `Grafana`). Корреляция по `traceId`/correlation id позволяет собрать все записи одного запроса из разных сервисов.
+    // Кастомный Logback Appender для подсчёта ошибок
+    // Альтернатива: использовать LogbackMetrics из Micrometer
+}
+```
 
-Антипаттерн: считать log aggregation заменой трассировке; без `traceId` расследование остается медленным.
+**Автоматические метрики логов через `Micrometer`:**
+
+```java
+// Spring Boot Actuator + Micrometer автоматически экспортирует
+// logback_events_total{level="error"} -- счётчик лог-записей по уровням
+// Доступно из коробки через LogbackMetrics
+```
+
+```yaml
+# application.yml
+management:
+  metrics:
+    tags:
+      application: order-service
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+```
+
+## Q28. Что такое `log aggregation` и зачем он нужен?
+
+В [распределённых системах](../architecture/distributed-systems-interview.md) логи размазаны по десяткам узлов. `Log aggregation` -- централизованный сбор всех логов в одно хранилище для поиска и анализа.
+
+```mermaid
+graph TB
+    subgraph Kubernetes Cluster
+        POD1["Pod: order-svc<br/>stdout JSON"] --> AGENT1["DaemonSet:<br/>Filebeat/Promtail"]
+        POD2["Pod: payment-svc<br/>stdout JSON"] --> AGENT1
+        POD3["Pod: inventory-svc<br/>stdout JSON"] --> AGENT1
+    end
+    
+    AGENT1 --> |"push"| STORAGE{{"Хранилище"}}
+    
+    STORAGE --> ES["Elasticsearch<br/>+ Kibana"]
+    STORAGE --> LOKI["Grafana Loki<br/>+ Grafana"]
+    
+    style STORAGE fill:#FF9800,color:#fff
+    style ES fill:#FFC107,color:#000
+    style LOKI fill:#4CAF50,color:#fff
+```
+
+**Компоненты:**
+- **Агенты сбора:** `Filebeat`, `Fluentd`, `Promtail`, `Vector`
+- **Транспорт/обогащение:** `Logstash`, `Fluentd`
+- **Хранилище:** `Elasticsearch`, `Loki`, `Splunk`
+- **UI:** `Kibana`, `Grafana`
+- **Корреляция:** `traceId` / `correlation id` для связи записей одного запроса
+
+Без `traceId` расследование инцидента в распределённой системе остаётся крайне медленным -- это антипаттерн.
 
 ## Q29. Как обеспечить консистентность формата логов в микросервисах?
 
-Единый формат: `JSON` с фиксированным набором полей (timestamp, level, logger, message, `traceId`, `spanId`, `userId` и т.д.); единая конфигурация Logback (например, `logback-spring.xml`). Ключи `MDC` (`traceId`, `spanId`) устанавливать в фильтре/интерцепторе на входе запроса. Документировать контракт полей и версию формата; при изменении формата — обратная совместимость или миграция в системе сбора.
+**Подход: shared-конфигурация через библиотеку:**
 
-Проверка в CI: валидировать JSON-схему логов и обязательные поля (`service`, `env`, `traceId`, `level`).
+```java
+// Общая библиотека logging-starter
+@Configuration
+public class LoggingAutoConfiguration {
+
+    @Bean
+    public Filter traceIdFilter() {
+        return new TraceIdFilter();  // единый MDC фильтр
+    }
+}
+```
+
+```xml
+<!-- shared logback-base.xml (include в каждом сервисе) -->
+<included>
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <customFields>{"env":"${ENV:-dev}"}</customFields>
+            <!-- Единый набор обязательных полей -->
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <version>[ignore]</version>
+            </fieldNames>
+        </encoder>
+    </appender>
+</included>
+```
+
+```xml
+<!-- logback-spring.xml в каждом сервисе -->
+<configuration>
+    <include resource="logback-base.xml"/>
+    <root level="INFO">
+        <appender-ref ref="JSON"/>
+    </root>
+</configuration>
+```
+
+**Обязательные поля контракта:** `@timestamp`, `level`, `logger`, `message`, `service`, `env`, `traceId`. Документировать контракт и версию формата; при изменении -- обратная совместимость.
+
+**Проверка в CI:** валидировать JSON-схему логов и наличие обязательных полей.
 
 ## Q30. Как логировать в реактивных стеках (`WebFlux`, `Project Reactor`)?
 
-В реактивных цепочках выполнение переключается между потоками; `MDC` (`ThreadLocal`) не передаётся автоматически. Решения: использовать `Hooks.onEachOperator` с `contextWrite` для копирования `traceId` из `Reactor Context` в `MDC` на каждом операторе; или логировать `traceId` явно в сообщении из `Context`. Альтернатива: `ReactorContextAccessor` и кастомный `Subscriber` для восстановления `MDC` в цепочке. Без этого логи из реактивной цепочки теряют контекст запроса. В `WebFlux`: `WebFilter` кладёт `traceId` в `Reactor Context`; в цепочке `deferContextual(ctx -> ...)` читать `traceId` и вызывать `MDC.put("traceId", ctx.get("traceId"))` перед логированием, затем `MDC.clear()`. Или использовать `log.info("msg traceId={}", ctx.get("traceId"))` без `MDC`.
+В реактивных цепочках выполнение переключается между потоками; `MDC` (`ThreadLocal`) не передаётся автоматически. Подробнее о реактивном программировании -- в [вопросах по WebFlux](../frameworks/spring/spring-webflux-interview.md).
 
-Практика: зафиксируйте единый адаптер `Reactor Context -> MDC` и проверьте его интеграционным тестом с переключением scheduler.
+```java
+// ПРОБЛЕМА: MDC теряется при переключении потока
+Mono.just(order)
+    .flatMap(this::processPayment)    // может выполниться в другом потоке
+    .doOnNext(r -> log.info("Done"))  // MDC пуст -- нет traceId
+    .subscribe();
+```
+
+**Решение 1: `contextWrite` + `Hooks` (рекомендуется для `Spring Boot 3+`):**
+
+```java
+// WebFilter кладёт traceId в Reactor Context
+@Component
+public class TraceWebFilter implements WebFilter {
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String traceId = exchange.getRequest().getHeaders()
+            .getFirst("X-Trace-Id");
+        if (traceId == null) traceId = UUID.randomUUID().toString();
+
+        String finalTraceId = traceId;
+        return chain.filter(exchange)
+            .contextWrite(ctx -> ctx.put("traceId", finalTraceId));
+    }
+}
+```
+
+```java
+// Хук для копирования Reactor Context в MDC
+Hooks.onEachOperator("mdc", 
+    Operators.lift((scannable, subscriber) -> new CoreSubscriber<Object>() {
+        @Override
+        public void onSubscribe(Subscription s) {
+            copyToMdc(subscriber.currentContext());
+            subscriber.onSubscribe(s);
+        }
+
+        @Override
+        public void onNext(Object o) {
+            copyToMdc(subscriber.currentContext());
+            subscriber.onNext(o);
+        }
+        // ... onError, onComplete аналогично
+
+        @Override
+        public Context currentContext() {
+            return subscriber.currentContext();
+        }
+
+        private void copyToMdc(Context ctx) {
+            if (ctx.hasKey("traceId")) {
+                MDC.put("traceId", ctx.get("traceId"));
+            }
+        }
+    })
+);
+```
+
+**Решение 2: явная передача traceId в сообщении (проще, но менее гибко):**
+
+```java
+Mono.deferContextual(ctx -> {
+    String traceId = ctx.getOrDefault("traceId", "N/A");
+    log.info("Processing order, traceId={}", traceId);
+    return processOrder(order);
+});
+```
+
+## Q31. (!) Как настроить EFK-стек (Elasticsearch, Fluent Bit, Kibana)?
+
+**EFK** — замена ELK: вместо `Logstash` используется **`Fluent Bit`** (легче, написан на C, потребляет ~1 MB RAM против ~500 MB у Logstash). Популярен в Kubernetes-средах.
+
+**Архитектура EFK:**
+```
+[Java App] → stdout/stderr → [Fluent Bit DaemonSet] → [Elasticsearch] → [Kibana]
+```
+
+**Шаг 1: настройка приложения для JSON в stdout**
+
+```xml
+<!-- logback-spring.xml -->
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <customFields>{"app":"order-service","env":"prod"}</customFields>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
+```
+
+**Шаг 2: Fluent Bit ConfigMap (Kubernetes)**
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        5
+        Daemon       Off
+        Log_Level    warn
+        Parsers_File parsers.conf
+
+    [INPUT]
+        Name             tail
+        Path             /var/log/containers/*.log
+        Parser           docker
+        Tag              kube.*
+        Refresh_Interval 5
+        Mem_Buf_Limit    50MB
+        Skip_Long_Lines  On
+
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        Kube_URL            https://kubernetes.default.svc:443
+        Merge_Log           On
+        Keep_Log            Off
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude On
+
+    [OUTPUT]
+        Name            es
+        Match           *
+        Host            elasticsearch
+        Port            9200
+        Logstash_Format On
+        Logstash_Prefix app-logs
+        Retry_Limit     False
+        tls             Off
+```
+
+**Шаг 3: индексный шаблон в Kibana**
+
+После запуска EFK в Kibana создают Index Pattern `app-logs-*`, затем ищут по полям:
+```
+traceId: "4bf92f3577b34da6a3ce929d0e0e4736" AND level: "ERROR"
+```
+
+**Преимущества EFK vs ELK:**
+| Критерий | ELK (Logstash) | EFK (Fluent Bit) |
+|----------|---------------|-----------------|
+| RAM | ~500 MB | ~1-10 MB |
+| CPU | высокий | низкий |
+| Конфигурация | Grok patterns | Lua/SQL filters |
+| K8s интеграция | требует агент | нативный DaemonSet |
+| Throughput | до 10K/s | до 200K/s |
+
+## Q32. Как правильно использовать MDC в многопоточном коде с thread pools?
+
+`MDC` (`Mapped Diagnostic Context`) хранит данные в `ThreadLocal`, что создаёт проблемы при асинхронном выполнении — в новом потоке `MDC` пустой.
+
+**Проблема:**
+```java
+ExecutorService executor = Executors.newFixedThreadPool(4);
+
+MDC.put("traceId", "abc-123");
+executor.submit(() -> {
+    // MDC.get("traceId") == null! ThreadLocal не передаётся в другой поток
+    log.info("Processing in thread pool");
+});
+```
+
+**Решение 1: явная копия MDC**
+```java
+Map<String, String> mdcContext = MDC.getCopyOfContextMap();
+
+executor.submit(() -> {
+    if (mdcContext != null) {
+        MDC.setContextMap(mdcContext);  // восстанавливаем MDC
+    }
+    try {
+        log.info("Processing with traceId={}", MDC.get("traceId"));
+    } finally {
+        MDC.clear();  // обязательно! иначе утечка в пул
+    }
+});
+```
+
+**Решение 2: `MDCTaskDecorator` для Spring Boot (рекомендуется)**
+```java
+@Configuration
+public class AsyncConfig implements AsyncConfigurer {
+
+    @Override
+    public Executor getAsyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(8);
+        executor.setTaskDecorator(new MdcTaskDecorator());  // ключевой момент
+        executor.initialize();
+        return executor;
+    }
+}
+
+public class MdcTaskDecorator implements TaskDecorator {
+    @Override
+    public Runnable decorate(Runnable runnable) {
+        Map<String, String> contextMap = MDC.getCopyOfContextMap();
+        return () -> {
+            try {
+                if (contextMap != null) MDC.setContextMap(contextMap);
+                runnable.run();
+            } finally {
+                MDC.clear();
+            }
+        };
+    }
+}
+```
+
+**Решение 3: MDC в Project Reactor (WebFlux)**
+```java
+// Использовать Reactor Context вместо MDC
+Mono.just(order)
+    .contextWrite(Context.of("traceId", traceId))
+    .flatMap(o -> Mono.deferContextual(ctx -> {
+        MDC.put("traceId", ctx.getOrDefault("traceId", "unknown"));
+        return processOrderReactive(o);
+    }))
+    .doFinally(signal -> MDC.clear());
+```
+
+**Что обязательно помнить:**
+- Всегда вызывать `MDC.clear()` после задачи (иначе ThreadLocal утечёт через пул)
+- В Kubernetes логи агрегируются по pod, поэтому `traceId` в MDC + JSON-логи = возможность сквозного поиска
+
+## Q33. Какие best practices по уровням логирования в production?
+
+Правильный выбор уровня логирования критичен: слишком много — перегрузка диска и Kibana, слишком мало — невозможно расследовать инциденты.
+
+**Эталонная таблица:**
+
+| Уровень | Когда использовать | Пример |
+|---------|-------------------|--------|
+| `ERROR` | Необработанная ошибка, требует вмешательства | Exception в бизнес-логике, недоступен DB |
+| `WARN` | Ожидаемая проблема, система деградирует | Retry #3, circuit breaker open, SLA на грани |
+| `INFO` | Ключевые бизнес-события | Заказ создан, платёж подтверждён, сервис запущен |
+| `DEBUG` | Техническая отладка (off в prod) | SQL-запросы, HTTP headers, входящие payload |
+| `TRACE` | Детальный flow (off всегда в prod) | Каждая итерация цикла, байты сетевого пакета |
+
+**Конфигурация по окружениям:**
+```yaml
+# application-prod.yml
+logging:
+  level:
+    root: WARN
+    com.company.app: INFO
+    com.company.app.security: WARN
+    org.springframework: WARN
+    org.hibernate.SQL: ERROR        # не логировать SQL в prod
+    org.hibernate.type: OFF
+
+# application-dev.yml
+logging:
+  level:
+    root: INFO
+    com.company.app: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+```
+
+**Типичные ошибки:**
+```java
+// ПЛОХО: ERROR на ожидаемую ситуацию
+catch (EntityNotFoundException e) {
+    log.error("Entity not found", e);   // это WARN или INFO
+}
+
+// ХОРОШО:
+catch (EntityNotFoundException e) {
+    log.warn("Entity not found: id={}", id);   // бизнес-ошибка → WARN
+}
+
+// ПЛОХО: DEBUG с дорогой строковой конкатенацией
+log.debug("Request body: " + requestBody.toString());  // toString() вызывается всегда
+
+// ХОРОШО: параметризованный вызов (toString() только если уровень активен)
+log.debug("Request body: {}", requestBody);
+```
+
+**Динамическое изменение уровня в runtime (Spring Boot Actuator):**
+```bash
+# Изменить уровень без рестарта
+curl -X POST http://localhost:8080/actuator/loggers/com.company.app \
+  -H "Content-Type: application/json" \
+  -d '{"configuredLevel": "DEBUG"}'
+
+# Проверить текущий уровень
+curl http://localhost:8080/actuator/loggers/com.company.app
+```
+
+Это мощный инструмент для расследования инцидентов в production без редеплоя.
+
+## Q34. (!) Чем Log4j2 async loggers отличаются от Logback AsyncAppender?
+
+`Log4j2` предоставляет нативные **async loggers** на основе `LMAX Disruptor` — lock-free ring buffer. `Logback` имеет только `AsyncAppender` (обёртку), который менее эффективен.
+
+```mermaid
+graph LR
+    subgraph Logback
+        APP[Application Thread] -->|synchronized| QUEUE[BlockingQueue<br/>256 default]
+        QUEUE -->|single thread| FILE1[FileAppender]
+    end
+
+    subgraph Log4j2
+        APP2[Application Thread] -->|CAS, no lock| RING[LMAX Disruptor<br/>Ring Buffer]
+        RING -->|multiple consumers| FILE2[FileAppender]
+    end
+```
+
+Конфигурация `Log4j2` async loggers (`log4j2.xml`):
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <RollingFile name="RollingFile"
+                     fileName="logs/app.log"
+                     filePattern="logs/app.%d{yyyy-MM-dd}.%i.log.gz">
+            <JsonLayout compact="true" eventEol="true"
+                        includeStacktrace="true" stacktraceAsString="true">
+                <KeyValuePair key="service" value="${env:APP_NAME:-unknown}"/>
+            </JsonLayout>
+            <SizeBasedTriggeringPolicy size="100 MB"/>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Все логгеры асинхронны -->
+        <AsyncRoot level="INFO" includeLocation="false">
+            <AppenderRef ref="RollingFile"/>
+        </AsyncRoot>
+
+        <!-- Конкретный пакет — тоже асинхронный -->
+        <AsyncLogger name="com.myapp" level="DEBUG" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </AsyncLogger>
+    </Loggers>
+</Configuration>
+```
+
+Режим **All Async** (самый быстрый) — через системное свойство:
+
+```bash
+-Dlog4j2.contextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
+```
+
+Производительность сравнение:
+
+| Реализация | Throughput (ops/s) | Latency p99 |
+|------------|-------------------|-------------|
+| `Logback` синхронный | ~260K | ~1-10 мс |
+| `Logback AsyncAppender` | ~1M | ~0.1 мс |
+| `Log4j2 AsyncLogger` | ~18M | ~< 1 мкс |
+
+Переключение в `Spring Boot`:
+
+```groovy
+// build.gradle
+configurations.all {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
+implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+```
+
+## Q35. Как работает Spring Boot Logging Auto-configuration?
+
+`Spring Boot` автоматически конфигурирует логирование через `LoggingSystem` абстракцию при старте.
+
+```mermaid
+graph TD
+    START[SpringApplication.run] --> DETECT[LoggingSystem.detect]
+    DETECT --> |logback-classic в classpath| LB[LogbackLoggingSystem]
+    DETECT --> |log4j-core в classpath| L4J[Log4j2LoggingSystem]
+    LB --> INIT[Инициализация logback-spring.xml<br/>или logback.xml]
+    INIT --> PROPS[Применение application.yml<br/>logging.level.*, logging.file.*, logging.pattern.*]
+    PROPS --> PROF[Активация springProfile секций]
+```
+
+Порядок поиска конфиг-файлов (`Logback`):
+1. `logback-spring.xml` — **рекомендуется**: поддерживает `<springProfile>`, `<springProperty>`
+2. `logback.xml` — стандартный, без Spring-расширений
+
+Ключевые свойства `application.yml`:
+
+```yaml
+logging:
+  # Уровни по пакетам
+  level:
+    root: INFO
+    com.myapp: DEBUG
+    org.hibernate.SQL: WARN
+
+  # Файл лога
+  file:
+    name: /var/log/myapp/app.log
+    # или path: /var/log/myapp/  → spring.log
+
+  # Паттерны (override defaults)
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+    file: "%d{ISO8601} %-5level [%thread] [%X{traceId}] %logger{36} - %msg%n"
+
+  # Цвета в консоли (dev)
+  charset:
+    console: UTF-8
+
+  # Structured logging (Spring Boot 3.4+)
+  structured:
+    format:
+      console: ecs   # logstash, ecs, gelf
+```
+
+Structured logging из коробки (`Spring Boot 3.4+`):
+
+```yaml
+# Без доп. зависимостей — встроенный JSON
+logging:
+  structured:
+    format:
+      console: logstash
+```
+
+При старте `Spring Boot` выводит `[main]` логи до инициализации вашего конфига — это нормально; после загрузки `ApplicationContext` используется ваш конфиг.
+
+## Q36. Что такое ECS Layout и зачем он нужен?
+
+`ECS` (Elastic Common Schema) — стандартизированный формат полей для всей экосистемы `Elastic` (Elasticsearch, APM, Security). `ECS Layout` гарантирует совместимость логов с `Kibana Discover`, `Elastic APM` и готовыми дашбордами.
+
+```json
+{
+  "@timestamp": "2026-04-13T12:00:00.123Z",
+  "log.level": "ERROR",
+  "log.logger": "com.myapp.service.OrderService",
+  "message": "Order processing failed",
+  "service.name": "order-service",
+  "service.version": "1.2.3",
+  "service.environment": "prod",
+  "trace.id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span.id": "00f067aa0ba902b7",
+  "error.type": "com.myapp.exception.PaymentException",
+  "error.message": "Payment gateway timeout",
+  "error.stack_trace": "..."
+}
+```
+
+Настройка с `ecs-logging-java`:
+
+```groovy
+// build.gradle
+implementation 'co.elastic.logging:logback-ecs-encoder:1.6.0'
+```
+
+```xml
+<!-- logback-spring.xml -->
+<appender name="ECS_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="co.elastic.logging.logback.EcsEncoder">
+        <serviceName>${APP_NAME:-unknown}</serviceName>
+        <serviceVersion>${APP_VERSION:-0.0.0}</serviceVersion>
+        <serviceEnvironment>${SPRING_PROFILES_ACTIVE:-dev}</serviceEnvironment>
+        <includeOrigin>false</includeOrigin>
+    </encoder>
+</appender>
+```
+
+Преимущества `ECS` перед кастомным `LogstashEncoder`:
+- Автоматически совместим с готовыми `Kibana` дашбордами
+- `Elastic APM` автоматически коррелирует логи с трейсами через `trace.id`
+- Стандарт полей — меньше сюрпризов при смене сервисов
+
+## Q37. Как тестировать логирование с MemoryAppender в unit-тестах?
+
+Тестирование логирования позволяет убедиться, что критичные события логируются на нужном уровне и чувствительные данные не попадают в логи.
+
+**Реализация `MemoryAppender`:**
+
+```java
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
+
+public class MemoryAppender extends ListAppender<ILoggingEvent> {
+
+    public void reset() {
+        this.list.clear();
+    }
+
+    public boolean contains(String substring, Level level) {
+        return this.list.stream()
+            .anyMatch(e -> e.getFormattedMessage().contains(substring)
+                && e.getLevel().equals(level));
+    }
+
+    public boolean containsExactMessage(String message, Level level) {
+        return this.list.stream()
+            .anyMatch(e -> e.getFormattedMessage().equals(message)
+                && e.getLevel().equals(level));
+    }
+
+    public long countByLevel(Level level) {
+        return this.list.stream()
+            .filter(e -> e.getLevel().equals(level))
+            .count();
+    }
+}
+```
+
+**Использование в тестах:**
+
+```java
+@ExtendWith(MockitoExtension.class)
+class PaymentServiceLoggingTest {
+
+    private MemoryAppender memoryAppender;
+
+    @BeforeEach
+    void setUp() {
+        memoryAppender = new MemoryAppender();
+        memoryAppender.start();
+
+        Logger logger = (Logger) LoggerFactory.getLogger(PaymentService.class);
+        logger.addAppender(memoryAppender);
+        logger.setLevel(Level.DEBUG);
+    }
+
+    @AfterEach
+    void tearDown() {
+        Logger logger = (Logger) LoggerFactory.getLogger(PaymentService.class);
+        logger.detachAppender(memoryAppender);
+    }
+
+    @Test
+    void shouldLogPaymentSuccessAtInfoLevel() {
+        paymentService.processPayment(validRequest());
+
+        assertThat(memoryAppender.contains("Payment processed", Level.INFO)).isTrue();
+    }
+
+    @Test
+    void shouldNotLogCreditCardNumber() {
+        paymentService.processPayment(requestWithCard("4111111111111111"));
+
+        boolean cardInLogs = memoryAppender.list.stream()
+            .anyMatch(e -> e.getFormattedMessage().contains("4111111111111111"));
+        assertThat(cardInLogs)
+            .as("Credit card number should not appear in logs")
+            .isFalse();
+    }
+
+    @Test
+    void shouldLogErrorOnGatewayFailure() {
+        doThrow(new GatewayException("timeout")).when(gateway).charge(any());
+
+        assertThatThrownBy(() -> paymentService.processPayment(validRequest()))
+            .isInstanceOf(GatewayException.class);
+
+        assertThat(memoryAppender.contains("Payment failed", Level.ERROR)).isTrue();
+    }
+}
+```
+
+**Альтернатива: `@SpringBootTest` + `OutputCaptureExtension`:**
+
+```java
+@SpringBootTest
+@ExtendWith(OutputCaptureExtension.class)
+class OrderServiceIntegrationLoggingTest {
+
+    @Test
+    void shouldIncludeTraceIdInJsonLogs(CapturedOutput output) {
+        orderService.createOrder(new OrderRequest("user-1", 99.99));
+
+        // Для JSON-логов проверяем структуру
+        assertThat(output.getOut())
+            .contains("\"level\":\"INFO\"")
+            .contains("\"message\":\"Order created\"");
+    }
+}
+```
+
+`MemoryAppender` — для unit-тестов отдельного класса; `OutputCaptureExtension` — для интеграционных тестов с проверкой реального формата вывода.
+
+## Q38. Как использовать StructuredArguments для обогащения JSON-логов?
+
+`StructuredArguments` из `logstash-logback-encoder` позволяет добавлять произвольные поля в `JSON`-лог помимо строки сообщения.
+
+```java
+import net.logstash.logback.argument.StructuredArguments;
+import static net.logstash.logback.argument.StructuredArguments.*;
+import static net.logstash.logback.marker.Markers.*;
+
+@Slf4j
+@Service
+public class OrderService {
+
+    // keyValue — поле в JSON И в текстовом сообщении
+    public void createOrder(OrderRequest req) {
+        log.info("Order created {}", keyValue("orderId", req.getId()));
+        // JSON: {"message":"Order created orderId=12345","orderId":"12345"}
+    }
+
+    // value — только в строке сообщения (без отдельного JSON-поля)
+    public void logOrderStatus(String orderId, String status) {
+        log.info("Order {} status changed to {}", value("orderId", orderId), value("status", status));
+        // JSON: {"message":"Order 12345 status changed to CONFIRMED"}
+        // Отдельных полей orderId/status в JSON нет — используйте keyValue вместо этого
+    }
+
+    // entries — добавить Map как набор полей
+    public void logWithContext(Map<String, Object> context) {
+        log.info("Processing {}", entries(context));
+        // JSON: {"message":"Processing ...","key1":"val1","key2":"val2"}
+    }
+
+    // Markers — для маршрутизации и фильтрации
+    public void logAuditEvent(String userId, String action) {
+        log.info(append("userId", userId).and(append("action", action)),
+            "Audit event");
+        // JSON: {"message":"Audit event","userId":"u-123","action":"DELETE_ORDER"}
+    }
+}
+```
+
+**Разница `keyValue` vs `append`:**
+
+| Метод | Влияние на строку сообщения | JSON поле |
+|-------|-----------------------------|-----------|
+| `keyValue("k", v)` | `k=v` добавляется в строку | Да |
+| `value("k", v)` | `v` добавляется в строку | Нет |
+| `append("k", v)` (Marker) | Не влияет | Да |
+| `entries(map)` | Нет | Все ключи map |
+
+**Best practice:** использовать `keyValue` для полей, которые нужны и в читаемом тексте и в `JSON`; `append` через `Markers` — для полей только в машинном формате (userId, sessionId в каждой записи через MDC удобнее).
+
+## Q39. Как работает Log4j2 garbage-free logging?
+
+`Garbage-free logging` в `Log4j2` минимизирует создание объектов в `heap`, снижая давление на `GC`. Особенно важно для `latency-sensitive` приложений.
+
+Обычный цикл логирования создаёт объекты:
+
+```
+log.info("User {} placed order {}", userId, orderId)
+  → new Object[]{userId, orderId}   // varargs array
+  → StringBuilder для форматирования
+  → String результата
+  → LogEvent объект
+```
+
+В `Log4j2 garbage-free` режиме используются:
+- **Thread-local object pool** для `LogEvent` и `StringBuilder`
+- **Direct encoding** — пишет напрямую в буфер без промежуточных строк
+- **Reusable buffer** — `ByteBuffer` переиспользуется между записями
+
+Включение в `log4j2.xml`:
+
+```xml
+<Configuration status="WARN">
+    <Properties>
+        <!-- Включить garbage-free режим -->
+        <Property name="log4j2.garbagefreeThreadContextMap">true</Property>
+        <Property name="log4j2.enableDirectEncoders">true</Property>
+    </Properties>
+    <Appenders>
+        <RollingFile name="RollingFile" fileName="logs/app.log"
+                     filePattern="logs/app.%d{yyyy-MM-dd}.%i.log.gz"
+                     immediateFlush="false"><!-- false для max throughput -->
+            <PatternLayout pattern="%d{ISO8601} %-5level [%t] %logger{36} - %msg%n"/>
+            <SizeBasedTriggeringPolicy size="100 MB"/>
+        </RollingFile>
+    </Appenders>
+</Configuration>
+```
+
+Системные свойства для полного garbage-free:
+
+```bash
+-Dlog4j2.garbagefreeThreadContextMap=true
+-Dlog4j2.enableDirectEncoders=true
+-Dlog4j2.initialReusableMsgSize=128
+-Dlog4j2.maxReusableMsgSize=518
+```
+
+Ограничения: не все `Appender` и `Layout` поддерживают garbage-free (например, `JsonLayout` не поддерживает; используйте `JsonTemplateLayout`).
+
+Когда критично: финансовые приложения, игровые серверы, high-frequency trading — где паузы GC недопустимы.
+
+## Q40. Как настроить Graylog / GELF для приёма логов из Java?
+
+`Graylog` — альтернативная платформа централизованного логирования, использует протокол `GELF` (Graylog Extended Log Format).
+
+```mermaid
+graph LR
+    APP[Java App] -->|GELF UDP/TCP| GL[Graylog Server]
+    GL --> ES2[Elasticsearch<br/>хранение]
+    GL --> UI[Graylog Web UI]
+```
+
+`GELF` — компактный `JSON`-формат с обязательными полями: `version`, `host`, `short_message`, `timestamp`.
+
+Настройка через `logback-gelf`:
+
+```groovy
+// build.gradle
+implementation 'de.siegmar:logback-gelf:6.0.1'
+```
+
+```xml
+<!-- logback-spring.xml -->
+<appender name="GELF" class="de.siegmar.logbackgelf.GelfUdpAppender">
+    <graylogHost>graylog.internal</graylogHost>
+    <graylogPort>12201</graylogPort>
+
+    <layout class="de.siegmar.logbackgelf.GelfLayout">
+        <includeRawMessage>false</includeRawMessage>
+        <includeLevelName>true</includeLevelName>
+        <includeMdcData>true</includeMdcData>
+
+        <!-- Статические поля -->
+        <staticField class="de.siegmar.logbackgelf.PatternGelfMessageAssembler$StaticField">
+            <name>service</name>
+            <value>${APP_NAME:-unknown}</value>
+        </staticField>
+    </layout>
+</appender>
+
+<!-- Async для надёжности -->
+<appender name="ASYNC_GELF" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>2048</queueSize>
+    <neverBlock>true</neverBlock>
+    <appender-ref ref="GELF"/>
+</appender>
+
+<springProfile name="prod">
+    <root level="INFO">
+        <appender-ref ref="ASYNC_GELF"/>
+    </root>
+</springProfile>
+```
+
+`GELF` vs `LogstashEncoder`:
+
+| Критерий | `GELF` (Graylog) | `LogstashEncoder` (ELK) |
+|----------|-----------------|------------------------|
+| Формат | `GELF JSON` + chunking | `JSON` (кастомный) |
+| Транспорт | UDP/TCP прямо на Graylog | Через Filebeat/Logstash |
+| Потеря данных | Возможна при UDP | Буферизация на агенте |
+| Настройка | Проще | Гибче |
+
+Рекомендация для production: TCP `GELF` + async appender; UDP — только если потеря допустима.
+
+## Q41. Что такое Log Appender для Kafka и когда его применять?
+
+`Kafka Appender` — отправка лог-записей напрямую в топик `Kafka`, минуя промежуточные файлы и агенты.
+
+```mermaid
+graph LR
+    APP[Java App] -->|LogstashEncoder JSON| KAFKA[Kafka Topic<br/>app-logs]
+    KAFKA -->|Logstash/Kafka Connect| ES[Elasticsearch]
+    KAFKA -->|другие потребители| ALERT[Alerting Service]
+    KAFKA -->|Stream Processing| ENRICH[Log Enrichment<br/>Kafka Streams]
+```
+
+Конфигурация с `logback-kafka-appender`:
+
+```groovy
+// build.gradle
+implementation 'com.github.danielwegener:logback-kafka-appender:0.2.0-RC2'
+implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+```
+
+```xml
+<!-- logback-spring.xml -->
+<appender name="KAFKA" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <customFields>{"service":"${APP_NAME}","env":"${APP_ENV}"}</customFields>
+    </encoder>
+
+    <!-- Топик -->
+    <topic>app-logs</topic>
+
+    <!-- Ключ партиционирования — по имени сервиса -->
+    <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.HostNameKeyingStrategy"/>
+
+    <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
+
+    <!-- Kafka producer properties -->
+    <producerConfig>bootstrap.servers=kafka:9092</producerConfig>
+    <producerConfig>acks=0</producerConfig><!-- fire-and-forget для логов -->
+    <producerConfig>linger.ms=100</producerConfig>
+    <producerConfig>batch.size=16384</producerConfig>
+    <producerConfig>compression.type=lz4</producerConfig>
+</appender>
+
+<!-- Fallback при недоступности Kafka -->
+<appender name="FAILOVER" class="ch.qos.logback.core.FileAppender">
+    <file>/var/log/myapp/fallback.log</file>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+</appender>
+
+<springProfile name="prod">
+    <root level="INFO">
+        <appender-ref ref="KAFKA"/>
+        <appender-ref ref="FAILOVER"/><!-- дублирование -->
+    </root>
+</springProfile>
+```
+
+Когда применять:
+
+| Сценарий | Kafka Appender | Filebeat → ELK |
+|----------|---------------|----------------|
+| Высокая нагрузка (>100K logs/s) | Хорошо | Ограничено |
+| Real-time обработка логов | Да (stream processing) | Нет |
+| Сложная маршрутизация | Kafka routing | Logstash filter |
+| Надёжность при потере агента | Kafka retention | Нет |
+| Простота настройки | Сложнее | Проще |
+
+Риски: `Kafka Appender` с `acks=0` — это fire-and-forget; потеря логов при перегрузке брокера возможна. Для критичных аудит-логов используйте `acks=1` или стандартный подход через агент.
+
+---
+
+## See also
+
+- [Стратегии логирования](../monitoring/logging-strategies-interview.md) — архитектурные решения: sampling, retention, централизованная агрегация, стоимость хранения логов
+- [Метрики и трейсинг](../monitoring/metrics-tracing-interview.md) — `Prometheus`, `Micrometer`, `OpenTelemetry`: как метрики и трейсы дополняют логи
+- [Observability](../monitoring/observability-interview.md) — три столпа наблюдаемости (логи, метрики, трейсы), `SLI`/`SLO`/`SLA`, `OpenTelemetry Collector`
+- [Микросервисы](../architecture/microservices-interview.md) — паттерны, где structured logging и correlation ID критически важны для диагностики
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — `logback-spring.xml`, `spring.profiles`, `Logstash Logback Encoder`, `Actuator`
+- [Elasticsearch](../databases/elasticsearch-interview.md) — хранение, индексирование и поиск по логам; mapping, ILM политики
+- [Kubernetes](../devops/kubernetes-interview.md) — `stdout`/`stderr` стратегия в pod, Fluentd/Fluent Bit, агрегация логов в кластере

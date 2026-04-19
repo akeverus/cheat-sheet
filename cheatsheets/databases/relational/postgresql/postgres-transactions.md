@@ -1,7 +1,17 @@
 ---
 title: "PostgreSQL: транзакции, MVCC и блокировки"
 description: "Полное руководство по транзакциям, MVCC, уровням изоляции и блокировкам в PostgreSQL. Включает ACID, команды транзакций, диагностику блокировок, дедлоки и практические советы по оптимизации"
-tags: ["postgresql", "database", "transactions", "mvcc", "acid", "locks", "isolation", "concurrency", "deadlocks", "performance"]
+tags:
+  - postgresql
+  - database
+  - transactions
+  - mvcc
+  - acid
+  - locks
+  - isolation
+  - concurrency
+  - deadlocks
+  - performance
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md"]
 next: ["databases/postgres-design.md"]
@@ -12,8 +22,6 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 # **PostgreSQL**: транзакции, **MVCC** и блокировки
 
 Это подробное руководство по транзакциям, **Multi-Version Concurrency Control** (**MVCC**), уровням изоляции и блокировкам в **PostgreSQL**. Вы узнаете о принципах **ACID**, различных типах блокировок, стратегиях предотвращения конфликтов и оптимизации производительности.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

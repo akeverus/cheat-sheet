@@ -1,7 +1,10 @@
 ---
 title: "Микросервисная архитектура"
 description: "Кратко: архитектура микросервисов, принципы проектирования, паттерны, коммуникация между сервисами, API Gateway, Service Discovery, Circuit Breaker и другие аспекты микросервисной архитектуры."
-tags: ["architecture", "software-architecture", "microservices"]
+tags:
+  - architecture
+  - software-architecture
+  - microservices
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Микросервисная архитектура
 
 Кратко: архитектура микросервисов, принципы проектирования, паттерны, коммуникация между сервисами, **API Gateway**, **Service Discovery**, **Circuit Breaker** и другие аспекты микросервисной архитектуры.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,9 @@
 ---
 title: "Принципы проектирования программного обеспечения"
 description: "Основные принципы проектирования: SOLID, DRY, KISS, YAGNI и другие."
-tags: ["architecture", "design-principles"]
+tags:
+  - architecture
+  - design-principles
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # Принципы проектирования программного обеспечения
 
 Основные принципы проектирования: `SOLID`, `DRY`, `KISS`, `YAGNI` и другие.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

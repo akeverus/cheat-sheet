@@ -1,7 +1,10 @@
 ---
 title: "Logback для Java"
 description: "Руководство по Logback: реализация SLF4J с конфигурацией (XML, Spring), appenders, фильтрами, MDC, Markers и настройкой под production."
-tags: ["monitoring", "logging", "logback"]
+tags:
+  - monitoring
+  - logging
+  - logback
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Logback для Java
 
 Руководство по Logback: реализация SLF4J с конфигурацией (XML, Spring), appenders, фильтрами, MDC, Markers и настройкой под production.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

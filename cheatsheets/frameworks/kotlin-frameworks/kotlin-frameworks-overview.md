@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Frameworks — обзор"
 description: "Кратко: обзор фреймворков и библиотек для Kotlin: Ktor, Spring (Kotlin), Exposed, kotlinx.serialization, kotlinx.coroutines, Koin, веб-API и практики."
-tags: ["frameworks", "kotlin-frameworks", "kotlin-frameworks-overview"]
+tags:
+  - frameworks
+  - kotlin-frameworks
+  - kotlin-frameworks-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Frameworks — обзор
 
 Кратко: обзор фреймворков и библиотек для **Kotlin**: **Ktor**, **Spring** (Kotlin), **Exposed**, **kotlinx.serialization**, **kotlinx.coroutines**, **Koin**, веб-**API** и практики.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

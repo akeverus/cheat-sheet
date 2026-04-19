@@ -1,7 +1,13 @@
 ---
 title: "PostgreSQL: Полнотекстовый поиск"
 description: "Полное руководство по полнотекстовому поиску в PostgreSQL: tsvector, tsquery, GIN индексы, конфигурации языков, ранжирование результатов, поиск по нескольким полям"
-tags: ["postgresql", "fulltext-search", "tsvector", "tsquery", "gin-index", "search"]
+tags:
+  - postgresql
+  - fulltext-search
+  - tsvector
+  - tsquery
+  - gin-index
+  - search
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-indexes.md"]
 next: ["databases/postgres-extensions.md", "databases/postgres-performance-tuning.md"]
@@ -10,8 +16,6 @@ related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 ---
 
 # **PostgreSQL**: Полнотекстовый поиск
-
-**Дата последнего обновления:** 2026-02-03
 
 ## Полезные ссылки
 

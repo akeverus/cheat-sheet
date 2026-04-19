@@ -1,7 +1,9 @@
 ---
 title: "Библиотеки"
 description: "Обзор шпаргалок по библиотекам для Java, Kotlin и Scala."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

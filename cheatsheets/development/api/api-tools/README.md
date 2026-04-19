@@ -1,7 +1,11 @@
 ---
 title: "Development API Tools"
 description: "Индекс инструментов API: тестирование, документирование и ручное исследование API."
-tags: ["meta", "index", "development", "api-tools"]
+tags:
+  - meta
+  - index
+  - development
+  - api-tools
 type: "index"
 updated: "2026-02-11"
 ---

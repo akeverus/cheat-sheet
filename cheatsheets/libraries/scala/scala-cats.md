@@ -1,7 +1,10 @@
 ---
 title: "Cats"
 description: "Cats - это библиотека для функционального программирования в Scala. Предоставляет type classes, data types и функции для функционального программирования в Scala. Является частью Typelevel экосистемы."
-tags: ["libraries", "scala", "scala-cats"]
+tags:
+  - libraries
+  - scala
+  - scala-cats
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Cats
 
 **Cats** - это библиотека для функционального программирования в **Scala**. Предоставляет **type classes**, **data types** и функции для функционального программирования в **Scala**. Является частью **Typelevel** экосистемы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Официальная документация Cats](https://typelevel.org/cats/)

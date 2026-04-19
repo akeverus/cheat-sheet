@@ -1,7 +1,10 @@
 ---
 title: ".NET Frameworks — обзор"
 description: "Кратко: обзор экосистемы .NET: ASP.NET Core, Entity Framework Core, Blazor, MAUI, веб-API, CLI, инструменты и практики. Для разработчиков на C# и F#."
-tags: ["frameworks", "dotnet-frameworks", "dotnet-frameworks-overview"]
+tags:
+  - frameworks
+  - dotnet-frameworks
+  - dotnet-frameworks-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # .NET Frameworks — обзор
 
 Кратко: обзор экосистемы **.NET**: **ASP.NET Core**, **Entity Framework Core**, **Blazor**, **MAUI**, веб-**API**, **CLI**, инструменты и практики. Для разработчиков на **C#** и **F#**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

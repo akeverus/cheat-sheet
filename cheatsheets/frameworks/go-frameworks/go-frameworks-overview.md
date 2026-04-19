@@ -1,7 +1,10 @@
 ---
 title: "Go Frameworks — обзор (редирект)"
 description: "Подробный документ по веб-фреймворкам Go: [Go Web Frameworks](../../languages/go/go-web-frameworks.md)."
-tags: ["frameworks", "go-frameworks", "go-frameworks-overview"]
+tags:
+  - frameworks
+  - go-frameworks
+  - go-frameworks-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []

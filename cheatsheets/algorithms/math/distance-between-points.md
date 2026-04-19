@@ -1,15 +1,16 @@
 ---
 title: "Расстояние между точками (Distance Between Points)"
 description: "Вычисление расстояния между двумя точками на плоскости по теореме Пифагора: формула √((x2−x1)²+(y2−y1)²), реализация через прямую формулу, Math.hypot() и Point2D.distance(). Рассмотрены 3D, метрики Манхэттена и Чебышёва."
-tags: ["algorithms", "math", "distance-between-points"]
+tags:
+  - algorithms
+  - math
+  - distance-between-points
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Расстояние между точками (`Distance Between Points`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Вычисление расстояния между двумя точками на плоскости по теореме Пифагора: формула √((x2−x1)²+(y2−y1)²), реализация через прямую формулу, `Math.hypot()` и `Point2D.distance()`. Рассмотрены 3D, метрики Манхэттена и Чебышёва.
 

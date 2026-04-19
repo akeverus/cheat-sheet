@@ -1,7 +1,10 @@
 ---
 title: "kotlinx.serialization"
 description: "kotlinx.serialization - это официальная Kotlin библиотека для сериализации и десериализации объектов. Предоставляет type-safe и эффективную сериализацию для различных форматов, включая JSON, Protobuf, CBOR и другие."
-tags: ["libraries", "kotlin", "kotlin-kotlinx-serialization"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-kotlinx-serialization
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # kotlinx.serialization
 
 **kotlinx.serialization** - это официальная **Kotlin** библиотека для сериализации и десериализации объектов. Предоставляет **type-safe** и эффективную сериализацию для различных форматов, включая **JSON**, **Protobuf**, **CBOR** и другие.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

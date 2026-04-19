@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Flyway - Database Migrations"
 description: "Полное руководство по Flyway в Micronaut: database migrations, versioning, rollback и best practices"
-tags: ["micronaut", "flyway", "migrations", "database", "versioning", "java", "kotlin"]
+tags:
+  - micronaut
+  - flyway
+  - migrations
+  - database
+  - versioning
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
 next: ["micronaut-data.md", "micronaut-testing.md"]

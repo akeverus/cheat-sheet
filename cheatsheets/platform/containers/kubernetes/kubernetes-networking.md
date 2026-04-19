@@ -1,7 +1,10 @@
 ---
 title: "Kubernetes Networking"
 description: "Kubernetes networking - это сложная и важная часть платформы, обеспечивающая коммуникацию между подами, сервисами и внешними системами. Сеть в Kubernetes построена на принципах плоскости управления (control plane) и плоскости данных (data plane), обеспечивая масштабируемость, без"
-tags: ["platform", "containers", "kubernetes-networking"]
+tags:
+  - platform
+  - containers
+  - kubernetes-networking
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Kubernetes Networking**
 
 **Kubernetes networking** - это сложная и важная часть платформы, обеспечивающая коммуникацию между подами, сервисами и внешними системами. Сеть в **Kubernetes** построена на принципах плоскости управления (**control plane**) и плоскости данных (**data plane**), обеспечивая масштабируемость, безопасность и гибкость.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Kubernetes Networking](https://kubernetes.io/docs/concepts/cluster-administration/networking/)

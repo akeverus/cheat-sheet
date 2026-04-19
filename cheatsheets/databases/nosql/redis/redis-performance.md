@@ -1,7 +1,13 @@
 ---
 title: "Redis: Производительность"
 description: "Полное руководство по оптимизации производительности Redis: бенчмаркинг, профилирование, мониторинг, тюнинг, best practices"
-tags: ["redis", "performance", "optimization", "benchmarking", "profiling", "monitoring"]
+tags:
+  - redis
+  - performance
+  - optimization
+  - benchmarking
+  - profiling
+  - monitoring
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 next: ["databases/redis-security.md", "databases/redis-monitoring.md"]
@@ -1001,7 +1007,5 @@ redis-benchmark -t zadd,zrange -c 50 -n 5000
 - [Redis Benchmarking](https://redis.io/docs/management/optimization/benchmarks/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

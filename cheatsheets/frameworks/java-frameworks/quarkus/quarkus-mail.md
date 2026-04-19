@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Mail - Отправка email"
 description: "Полное руководство по отправке email в Quarkus: SMTP, HTML emails, attachments, templates и best practices"
-tags: ["quarkus", "mail", "smtp", "email", "messaging", "java"]
+tags:
+  - quarkus
+  - mail
+  - smtp
+  - email
+  - messaging
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]

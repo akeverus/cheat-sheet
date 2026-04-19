@@ -1,15 +1,18 @@
 ---
 title: "Go: Generics"
 description: "Полное руководство по Generics в Go: type parameters, constraints, type inference, практические примеры"
-tags: ["go", "golang", "generics", "type-parameters", "constraints"]
+tags:
+  - go
+  - golang
+  - generics
+  - type-parameters
+  - constraints
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: **Generics**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

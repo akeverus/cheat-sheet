@@ -1,96 +1,142 @@
 ---
 title: "Вопросы на собеседовании: Java Conditional Statements"
-description: "Комплексное руководство по вопросам собеседования на тему Java Conditional Statements для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java + Spring, best practices и troubleshooting."
-tags: ["interview", "programming-languages", "java-conditional-statements-interview"]
+description: "Условные конструкции Java: if/else, switch, switch expression, pattern matching, sealed classes, циклы, try-catch-finally и best practices"
+tags:
+  - interview
+  - programming-languages
+  - java-conditional-statements-interview
+aliases:
+  - "Java Conditional Statements"
+  - "Java Conditional Statements interview"
+  - "Java условные операторы"
+  - "Java switch expression"
+  - "Java pattern matching"
+  - "Java управляющие конструкции"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Java Conditional Statements`
 
-Комплексное руководство по вопросам собеседования на тему `Java Conditional Statements` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.
+Условные конструкции и управление потоком выполнения -- одна из базовых тем на собеседовании по `Java`. Вопросы охватывают классические `if/else` и `switch`, современные `switch expression` (`Java 14+`), `pattern matching` (`Java 16-21`), `sealed classes`, циклы, обработку исключений и best practices. Тема тесно связана с [Java Core](java-core-interview.md), [ООП в Java](java-oop-interview.md) и [системой типов Java](java-types-interview.md).
 
-Дата последнего обновления: 2026-01-29
+Дата последнего обновления: 2026-04-13
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Java Tutorial — Control Flow](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html)
-- [Java Language Specification — Statements](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html)
+- [Java Tutorial -- Control Flow](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/flow.html) -- базовые управляющие конструкции
+- [Java Language Specification -- Statements](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html) -- спецификация операторов в JLS 21
+- [JEP 441: Pattern Matching for switch](https://openjdk.org/jeps/441) -- финальная версия pattern matching в `Java 21`
+- [JEP 394: Pattern Matching for instanceof](https://openjdk.org/jeps/394) -- финальная версия в `Java 16`
+- [JEP 409: Sealed Classes](https://openjdk.org/jeps/409) -- sealed classes в `Java 17`
 
-### См. также
+### Статьи
 
-- [`java-oop-interview.md`](java-oop-interview.md) — вопросы по OOP
-- [`java-core-interview.md`](java-core-interview.md) — вопросы по Java Core
+- [Pattern Matching for Switch -- Baeldung](https://www.baeldung.com/java-switch-pattern-matching) -- подробный разбор pattern matching в switch
+- [Java Switch Statement -- Baeldung](https://www.baeldung.com/java-switch) -- switch statement и switch expression
+- [Pattern Matching for instanceof -- Baeldung](https://www.baeldung.com/java-pattern-matching-instanceof) -- pattern matching для instanceof
+- [Sealed Classes and Interfaces -- Baeldung](https://www.baeldung.com/java-sealed-classes-interfaces) -- sealed классы
+- [Guide to the yield Keyword -- Baeldung](https://www.baeldung.com/java-yield-switch) -- ключевое слово yield
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
-**Условия if и switch**
-- [Q1. Опишите операторы `if-then` и `if-then-else`. Какие типы выражений можно использовать в качестве условий?](#q1-опишите-операторы-if-then-и-if-then-else-какие-типы-выражений-можно-использовать-в-качестве-условий)
-- [Q2. Опишите оператор `switch`. Какие типы объектов можно использовать в пункте switch?](#q2-опишите-оператор-switch-какие-типы-объектов-можно-использовать-в-пункте-switch)
-- [Q3. Что происходит, когда мы забываем поставить оператор `break` в пункте `case` of switch?](#q3-что-происходит-когда-мы-забываем-поставить-оператор-break-в-пункте-case-of-switch)
-- [Q4. Когда предпочтительнее использовать `switch` вместо оператора `if-then-else` и наоборот?](#q4-когда-предпочтительнее-использовать-switch-вместо-оператора-if-then-else-и-наоборот)
-- [Q5. Что такое `ternary operator` и когда его использовать?](#q5-что-такое-ternary-operator-и-когда-его-использовать)
-- [Q6. Когда использовать вложенные if vs switch?](#q6-когда-использовать-вложенные-if-vs-switch)
+**Условия `if` и `switch` (классика)**
+- [Q1. (!) Опишите операторы `if-then` и `if-then-else`. Какие типы выражений допустимы в условии?](#q1--опишите-операторы-if-then-и-if-then-else-какие-типы-выражений-допустимы-в-условии)
+- [Q2. (!) Опишите оператор `switch`. Какие типы можно использовать в выражении `switch`?](#q2--опишите-оператор-switch-какие-типы-можно-использовать-в-выражении-switch)
+- [Q3. Что такое `fall-through` в `switch` и когда он полезен?](#q3-что-такое-fall-through-в-switch-и-когда-он-полезен)
+- [Q4. Когда предпочтительнее `switch` вместо `if-else` и наоборот?](#q4-когда-предпочтительнее-switch-вместо-if-else-и-наоборот)
+- [Q5. Что такое тернарный оператор и когда его использовать?](#q5-что-такое-тернарный-оператор-и-когда-его-использовать)
 
-**Switch expression и pattern matching (`Java` 14+)**
-- [Q7. Что такое `switch expression` (`Java` 14+) и чем он отличается от `switch statement`?](#q7-что-такое-switch-expression-java-14-и-чем-он-отличается-от-switch-statement)
-- [Q8. Что такое pattern matching for switch (`Java` 21)?](#q8-что-такое-pattern-matching-for-switch-java-21)
-- [Q9. Что такое `yield` в `switch expression` (`Java` 14+)?](#q9-что-такое-yield-в-switch-expression-java-14)
-- [Q10. Что такое `exhaustive switch` и зачем он нужен?](#q10-что-такое-exhaustive-switch-и-зачем-он-нужен)
+**`Switch expression` (`Java 14+`)**
+- [Q6. (!) Что такое `switch expression` и чем он отличается от `switch statement`?](#q6--что-такое-switch-expression-и-чем-он-отличается-от-switch-statement)
+- [Q7. (!) Что такое `yield` в `switch expression`?](#q7--что-такое-yield-в-switch-expression)
+- [Q8. (!) Что такое `exhaustive switch` и зачем он нужен?](#q8--что-такое-exhaustive-switch-и-зачем-он-нужен)
+- [Q9. Можно ли комбинировать стрелочный и двоеточный синтаксис в одном `switch`?](#q9-можно-ли-комбинировать-стрелочный-и-двоеточный-синтаксис-в-одном-switch)
+
+**`Pattern matching` (`Java 16-21`)**
+- [Q10. (!) Что такое `pattern matching for instanceof` (`Java 16`)?](#q10--что-такое-pattern-matching-for-instanceof-java-16)
+- [Q11. (!) Что такое `pattern matching for switch` (`Java 21`)?](#q11--что-такое-pattern-matching-for-switch-java-21)
+- [Q12. (!) Что такое `guarded patterns` (клауза `when`)?](#q12--что-такое-guarded-patterns-клауза-when)
+- [Q13. Как обрабатывается `null` в `pattern matching for switch`?](#q13-как-обрабатывается-null-в-pattern-matching-for-switch)
+- [Q14. Что такое `dominance` (доминирование) паттернов и порядок `case`?](#q14-что-такое-dominance-доминирование-паттернов-и-порядок-case)
+- [Q15. (!) Как `sealed classes` работают с `pattern matching for switch`?](#q15--как-sealed-classes-работают-с-pattern-matching-for-switch)
+- [Q16. Что такое `record patterns` (`Java 21`) и деконструкция записей?](#q16-что-такое-record-patterns-java-21-и-деконструкция-записей)
+- [Q17. Что такое `unnamed patterns` (`Java 22`)?](#q17-что-такое-unnamed-patterns-java-22)
 
 **Циклы**
-- [Q11. Какие типы циклов поддерживает `Java`?](#q11-какие-типы-циклов-поддерживает-java)
-- [Q12. Что такое расширенный цикл `for`?](#q12-что-такое-расширенный-цикл-for)
-- [Q13. Как вы можете заранее выйти из цикла?](#q13-как-вы-можете-заранее-выйти-из-цикла)
-- [Q14. (!) В чем разница между немаркированным и маркированным оператором `break`?](#q14-важно-в-чем-разница-между-немаркированным-и-маркированным-оператором-break)
-- [Q15. (!) В чем разница между немаркированным и маркированным оператором `continue`?](#q15-важно-в-чем-разница-между-немаркированным-и-маркированным-оператором-continue)
-- [Q16. В чём разница между `break` и `return` в контексте циклов?](#q16-в-чём-разница-между-break-и-return-в-контексте-циклов)
-- [Q17. Когда использовать `for` vs `while` vs `do-while`?](#q17-когда-использовать-for-vs-while-vs-do-while)
-- [Q18. Как обработать бесконечный цикл и прервать его?](#q18-как-обработать-бесконечный-цикл-и-прервать-его)
+- [Q18. Какие типы циклов поддерживает `Java`?](#q18-какие-типы-циклов-поддерживает-java)
+- [Q19. Что такое расширенный цикл `for-each`?](#q19-что-такое-расширенный-цикл-for-each)
+- [Q20. (!) В чём разница между немаркированным и маркированным `break`?](#q20--в-чём-разница-между-немаркированным-и-маркированным-break)
+- [Q21. В чём разница между немаркированным и маркированным `continue`?](#q21-в-чём-разница-между-немаркированным-и-маркированным-continue)
+- [Q22. В чём разница между `break` и `return` в контексте циклов?](#q22-в-чём-разница-между-break-и-return-в-контексте-циклов)
+- [Q23. Как обработать бесконечный цикл и когда он уместен?](#q23-как-обработать-бесконечный-цикл-и-когда-он-уместен)
 
-**try-catch-finally и try-with-resources**
-- [Q19. Опишите поток выполнения внутри конструкции `try-catch-finally`.](#q19-опишите-поток-выполнения-внутри-конструкции-try-catch-finally)
-- [Q20. В каких ситуациях блок `finally` может не выполняться?](#q20-в-каких-ситуациях-блок-finally-может-не-выполняться)
-- [Q21. Каков результат выполнения следующего кода?](#q21-каков-результат-выполнения-следующего-кода)
-- [Q22. В каких ситуациях можно использовать блокировку `try-finally`, даже если исключения не могут быть выброшены?](#q22-в-каких-ситуациях-можно-использовать-блокировку-try-finally-даже-если-исключения-не-могут-быть-выброшены)
-- [Q23. Как работает `try-with-resources`?](#q23-как-работает-try-with-resources)
-- [Q24. Как `try-with-resources` обрабатывает исключения при закрытии ресурсов?](#q24-как-try-with-resources-обрабатывает-исключения-при-закрытии-ресурсов)
-- [Q25. Как обработать несколько исключений в одном `catch` (`Java` 7+)?](#q25-как-обработать-несколько-исключений-в-одном-catch-java-7)
+**`try-catch-finally` и `try-with-resources`**
+- [Q24. (!) Опишите поток выполнения `try-catch-finally`.](#q24--опишите-поток-выполнения-try-catch-finally)
+- [Q25. В каких ситуациях блок `finally` может не выполниться?](#q25-в-каких-ситуациях-блок-finally-может-не-выполниться)
+- [Q26. Каков результат выполнения кода с `return` в `catch` и присваиванием в `finally`?](#q26-каков-результат-выполнения-кода-с-return-в-catch-и-присваиванием-в-finally)
+- [Q27. (!) Как работает `try-with-resources` и что такое `suppressed exceptions`?](#q27--как-работает-try-with-resources-и-что-такое-suppressed-exceptions)
+- [Q28. Как обработать несколько исключений в одном `catch` (`Java 7+`)?](#q28-как-обработать-несколько-исключений-в-одном-catch-java-7)
 
-**Best practices и прочее**
-- [Q26. Как избежать глубокой вложенности if-else (`guard clauses`)?](#q26-как-избежать-глубокой-вложенности-if-else-guard-clauses)
-- [Q27. Что такое `assert` и когда его применять?](#q27-что-такое-assert-и-когда-его-применять)
-- [Q28. Как условия влияют на производительность (if vs switch)?](#q28-как-условия-влияют-на-производительность-if-vs-switch)
-- [Q29. Как использовать условия в `Stream API` (`filter`, `takeWhile`, `dropWhile`)?](#q29-как-использовать-условия-в-stream-api-filter-takewhile-dropwhile)
-- [Q30. Как условия и ветвление связаны с тестируемостью кода?](#q30-как-условия-и-ветвление-связаны-с-тестируемостью-кода)
+**Best practices и продвинутые темы**
+- [Q29. (!) Как избежать глубокой вложенности `if-else` (`guard clauses`)?](#q29--как-избежать-глубокой-вложенности-if-else-guard-clauses)
+- [Q30. Как заменить цепочку `if-else` паттерном `Strategy`?](#q30-как-заменить-цепочку-if-else-паттерном-strategy)
+- [Q31. Что такое `assert` и когда его применять?](#q31-что-такое-assert-и-когда-его-применять)
+- [Q32. Как условия влияют на производительность (`tableswitch` vs `lookupswitch`)?](#q32-как-условия-влияют-на-производительность-tableswitch-vs-lookupswitch)
+- [Q33. Как использовать условия в `Stream API` (`filter`, `takeWhile`, `dropWhile`)?](#q33-как-использовать-условия-в-stream-api-filter-takewhile-dropwhile)
+- [Q34. Как условия и ветвление связаны с тестируемостью и цикломатической сложностью?](#q34-как-условия-и-ветвление-связаны-с-тестируемостью-и-цикломатической-сложностью)
+- [Q35. Как эволюционировал `switch` от `Java 1` до `Java 21+`?](#q35-как-эволюционировал-switch-от-java-1-до-java-21)
 
-## Q1. Опишите операторы `if-then` и `if-then-else`. Какие типы выражений можно использовать в качестве условий?
+**Short-circuit evaluation и оптимизация условий**
+- [Q36. Что такое short-circuit evaluation и как использовать его для оптимизации?](#q36-что-такое-short-circuit-evaluation-и-как-использовать-его-для-оптимизации)
+- [Q37. Каков правильный порядок проверок в условиях для максимальной производительности?](#q37-каков-правильный-порядок-проверок-в-условиях-для-максимальной-производительности)
 
-Оба утверждения говорят нашей программе выполнять код внутри них только в том случае, если определенное условие оценивается как истинное. Однако оператор `if-then-else` предоставляет вторичный путь выполнения на случай, если условие if оценивается как `false`:
+**Антипаттерны и читаемость**
+- [Q38. Каковы антипаттерны использования тернарного оператора?](#q38-каковы-антипаттерны-использования-тернарного-оператора)
+- [Q39. `if-else` vs `switch` vs `Map dispatch` — производительность и читаемость?](#q39-if-else-vs-switch-vs-map-dispatch--производительность-и-читаемость)
+
+**Null checks и defensive programming**
+- [Q40. Как правильно делать null-checks: `Objects.requireNonNull`, `Optional`, fail-fast?](#q40-как-правильно-делать-null-checks-objectsrequirenonnull-optional-fail-fast)
+
+**Stream API и условия**
+- [Q41. Как использовать условия в `Stream API` с `map` и `flatMap`?](#q41-как-использовать-условия-в-stream-api-с-map-и-flatmap)
+
+**Pattern matching: продвинутые темы**
+- [Q42. Как использовать `sealed classes` с `guards` в реальном коде?](#q42-как-использовать-sealed-classes-с-guards-в-реальном-коде)
+
+---
+
+## Q1. (!) Опишите операторы `if-then` и `if-then-else`. Какие типы выражений допустимы в условии?
+
+Оператор `if-then` выполняет блок кода, если условие истинно. Оператор `if-then-else` добавляет альтернативный путь при `false`:
 
 ```java
 if (age >= 21) {
-    // код для возраста >= 21
+    System.out.println("Допущен");
+} else if (age >= 18) {
+    System.out.println("Ограниченный доступ");
 } else {
-    // код для возраста < 21
+    System.out.println("Не допущен");
 }
 ```
 
-В отличие от других языков программирования, `Java` поддерживает только логические выражения в качестве условий. Если мы попытаемся использовать другой тип выражения, мы получим ошибку компиляции.
-
-## Q2. Опишите оператор `switch`. Какие типы объектов можно использовать в пункте switch?
-
-Переключатель позволяет выбрать несколько путей выполнения на основе значения переменных.
-
-Каждый путь помечен case или default; оператор switch оценивает каждое выражение case на соответствие и выполняет все операторы, следующие за соответствующей меткой, пока не будет найден оператор break. Если он не может найти совпадение, вместо него будет выполнен блок по умолчанию:
+**Ключевой момент**: в `Java` в условии `if` допускается **только** `boolean` или `Boolean`. В отличие от `C/C++`, нельзя подставить `int`, `String` или `null` -- будет ошибка компиляции. При использовании `Boolean` возможен `NullPointerException` при автоанбоксинге:
 
 ```java
-switch (yearsOfJavaExperience) {
+Boolean flag = null;
+if (flag) { ... } // NullPointerException при unboxing!
+```
+
+## Q2. (!) Опишите оператор `switch`. Какие типы можно использовать в выражении `switch`?
+
+`Switch` выбирает путь выполнения на основе значения переменной. Каждый путь помечен `case` или `default`:
+
+```java
+switch (yearsOfExperience) {
     case 0:
         System.out.println("Student");
         break;
@@ -98,20 +144,30 @@ switch (yearsOfJavaExperience) {
         System.out.println("Junior");
         break;
     case 2:
+    case 3:
         System.out.println("Middle");
         break;
-        default:
-            System.out.println("Senior");
+    default:
+        System.out.println("Senior");
 }
 ```
 
-Мы можем использовать byte, short, char, int, их обёрнутые версии, `Enum` и `String` в качестве типа выражения переключателя.
+Допустимые типы (эволюция по версиям):
 
-## Q3. Что происходит, когда мы забываем поставить оператор `break` в пункте `case` of switch?
+| Версия `Java` | Допустимые типы |
+|---|---|
+| 1.0 | `byte`, `short`, `char`, `int` и их обёртки |
+| 5.0 | + `enum` |
+| 7 | + `String` |
+| 14+ (expression) | + те же, но с exhaustiveness |
+| 21+ (pattern matching) | + любой ссылочный тип через type patterns |
 
-Оператор switch терпит неудачу (`fall-through`). Это означает, что он продолжит выполнение всех меток case до тех пор, пока не найдет оператор break, даже если эти метки не соответствуют значению выражения.
+Значения в `case` должны быть **compile-time constants** (литералы, `final` переменные, `enum` константы). Переменные и вычисляемые выражения в `case` недопустимы.
 
-Вот пример, чтобы продемонстрировать это:
+## Q3. Что такое `fall-through` в `switch` и когда он полезен?
+
+`Fall-through` -- продолжение выполнения следующих `case` веток при отсутствии `break`. Это поведение по умолчанию для классического `switch` с двоеточием:
+
 ```java
 int operation = 2;
 int number = 10;
@@ -121,29 +177,19 @@ switch (operation) {
         number = number + 10;
         break;
     case 2:
-        number = number * 4;
+        number = number - 6;   // number = 4
     case 3:
-        number = number / 3;
-    case 4:
-        number = number * 10;
+        number = number * 5;   // number = 20 (fall-through!)
         break;
 }
+// number == 20, а не 4
 ```
 
-После запуска кода число содержит значение 20 вместо 6. Это может быть полезно в ситуациях, когда мы хотим связать одно и то же действие с несколькими случаями.
+`Fall-through` бывает полезен, когда несколько значений обрабатываются одинаково:
 
-## Q4. Когда предпочтительнее использовать `switch` вместо оператора `if-then-else` и наоборот?
-
-Оператор switch лучше подходит для проверки одной переменной на множество одиночных значений или когда несколько значений будут выполнять один и тот же код:
 ```java
 switch (month) {
-    case 1:
-    case 3:
-    case 5:
-    case 7:
-    case 8:
-    case 10:
-    case 12:
+    case 1: case 3: case 5: case 7: case 8: case 10: case 12:
         days = 31;
         break;
     case 2:
@@ -154,37 +200,55 @@ switch (month) {
 }
 ```
 
-Оператор `if-then-else` предпочтительнее, когда нам нужно проверить диапазоны значений или несколько условий:
+В `switch expression` со стрелочным синтаксисом (`->`) `fall-through` **невозможен**, что устраняет целый класс ошибок.
+
+## Q4. Когда предпочтительнее `switch` вместо `if-else` и наоборот?
+
+| Критерий | `switch` | `if-else` |
+|---|---|---|
+| Тип условия | Одна переменная, набор констант | Диапазоны, комбинации условий |
+| Читаемость | Лучше при 4+ вариантах | Лучше при 2-3 условиях |
+| Расширяемость | enum + exhaustive -- компилятор проверит | Требует ручной проверки |
+| Производительность | `tableswitch` для плотных значений -- `O(1)` | Последовательные сравнения |
+
 ```java
-if (aPassword == null || aPassword.isEmpty()) {
-    // обработка пустого пароля
-} else if (aPassword.length() < 8 || aPassword.equals("12345678")) {
-    // обработка слабого пароля
-} else {
-    // обработка валидного пароля
+// switch -- набор конкретных значений
+String description = switch (httpStatus) {
+    case 200 -> "OK";
+    case 404 -> "Not Found";
+    case 500 -> "Server Error";
+    default -> "Unknown";
+};
+
+// if-else -- сложные условия с диапазонами
+if (password == null || password.isEmpty()) {
+    throw new ValidationException("Password required");
+} else if (password.length() < 8) {
+    throw new ValidationException("Too short");
 }
 ```
 
-## Q5. Что такое `ternary operator` и когда его использовать?
+## Q5. Что такое тернарный оператор и когда его использовать?
 
-Тернарный оператор — выражение вида condition ? `valueIfTrue` : `valueIfFalse`; возвращает одно из двух значений в зависимости от условия. Использовать для простых присваиваний и возвратов (одна строка); избегать вложенных тернарных операторов и сложных выражений — снижают читаемость. Предпочтительнее `if-else` или switch expression при множестве веток.
+Тернарный оператор -- единственный трёхместный оператор в `Java`: `condition ? valueIfTrue : valueIfFalse`. Это **выражение**, возвращающее значение:
 
 ```java
 String status = score >= 60 ? "Pass" : "Fail";
+int abs = x >= 0 ? x : -x;
 ```
 
-## Q6. Когда использовать вложенные if vs switch?
-
-Вложенные if — когда условия сложные (диапазоны, несколько переменных, логические комбинации). `Switch` — когда одно значение сопоставляется с набором констант (enum, строки, числа). Для множества констант switch часто читабельнее; для сложной логики — `if-else` или вынос в отдельные методы/стратегии.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q7. Что такое `switch expression` (`Java` 14+) и чем он отличается от `switch statement`?
-
-`Switch` expression — выражение, возвращающее значение; использует case L -> (стрелочный синтаксис) без `fall-through`; не требует break. `Switch` statement — оператор с case L: и `fall-through`. `Switch` expression удобен для присваивания и возврата значения; компилятор проверяет полноту (exhaustiveness) для enum.
+**Правила применения:**
+- Использовать для простых присваиваний в одну строку
+- **Не вкладывать** тернарные операторы друг в друга -- это сильно ухудшает читаемость
+- Для множества веток использовать `switch expression` (`Java 14+`)
+- Тип результата определяется правилами бинарной числовой промоции (binary numeric promotion)
 
 ```java
-String level = switch (years) {
+// Плохо -- вложенный тернарный
+String level = exp > 5 ? "Senior" : exp > 2 ? "Middle" : exp > 0 ? "Junior" : "Student";
+
+// Хорошо -- switch expression
+String level = switch (exp) {
     case 0 -> "Student";
     case 1 -> "Junior";
     case 2, 3 -> "Middle";
@@ -192,304 +256,1267 @@ String level = switch (years) {
 };
 ```
 
-## Q8. Что такое pattern matching for switch (`Java` 21)?
+## Q6. (!) Что такое `switch expression` и чем он отличается от `switch statement`?
 
-`Pattern` matching for switch — использование паттернов в case: case `String` s, case `Integer` i, case `null`, case default. Позволяет сопоставлять по типу и извлекать переменную; заменяет цепочки instanceof и приведений. case `null` и case default обрабатывают `null` и остальные случаи.
+`Switch expression` (финальный в `Java 14`, JEP 361) -- это **выражение**, возвращающее значение. Основные отличия от `switch statement`:
+
+```mermaid
+graph TD
+    A[switch] --> B[switch statement]
+    A --> C[switch expression]
+    B --> D["case L: с fall-through"]
+    B --> E["Не возвращает значение"]
+    B --> F["break для выхода"]
+    C --> G["case L -> без fall-through"]
+    C --> H["Возвращает значение"]
+    C --> I["yield для блоков"]
+    C --> J["Exhaustive — проверка полноты"]
+```
+
+| Свойство | `switch statement` | `switch expression` |
+|---|---|---|
+| Синтаксис | `case L:` (двоеточие) | `case L ->` (стрелка) |
+| `Fall-through` | Да, без `break` | Нет |
+| Возвращает значение | Нет | Да |
+| Exhaustiveness | Не обязательна | Обязательна |
+| Множественные метки | `case 1: case 2:` | `case 1, 2 ->` |
 
 ```java
-String result = switch (obj) {
-    case String s -> "String: " + s;
-    case Integer i -> "Integer: " + i;
-    case null -> "null";
-    default -> "Other";
+// switch statement (до Java 14)
+String text;
+switch (day) {
+    case MONDAY:
+    case FRIDAY:
+        text = "Рабочий день";
+        break;
+    case SATURDAY:
+    case SUNDAY:
+        text = "Выходной";
+        break;
+    default:
+        text = "Середина недели";
+}
+
+// switch expression (Java 14+)
+String text = switch (day) {
+    case MONDAY, FRIDAY -> "Рабочий день";
+    case SATURDAY, SUNDAY -> "Выходной";
+    default -> "Середина недели";
+};  // обратите внимание на точку с запятой!
+```
+
+## Q7. (!) Что такое `yield` в `switch expression`?
+
+`yield` -- ключевое слово, которое возвращает значение из блока кода в `switch expression`. Если ветка `case` содержит одно выражение со стрелочным синтаксисом, значение возвращается неявно. Для блоков кода нужен `yield`:
+
+```java
+String result = switch (statusCode) {
+    case 200 -> "OK";  // неявный return значения
+
+    case 404 -> {
+        logger.warn("Resource not found");
+        yield "Not Found";  // явный yield из блока
+    }
+
+    case 500 -> {
+        logger.error("Internal server error");
+        notifyOps();
+        yield "Server Error";  // yield обязателен для блока
+    }
+
+    default -> "Unknown: " + statusCode;
 };
 ```
 
-## Q9. Что такое `yield` в `switch expression` (`Java` 14+)?
-
-`yield` — в switch expression возвращает значение для ветки case при использовании блока кода: `case 1`: { ... yield "one"; }. В стрелочном синтаксисе `case 1` -> "one" значение после стрелки неявно возвращается; при блоке `case 1`: { ... } нужен `yield`. `yield` завершает выполнение switch expression для данной ветки.
+**Важно:** `yield` можно использовать и с двоеточным синтаксисом (`case L:`) внутри `switch expression`:
 
 ```java
 String result = switch (x) {
-    case 1 -> "one";  // неявный return
-    case 2: {
-        System.out.println("Two");
-        yield "two";  // явный yield в блоке
-    }
-    default -> "other";
+    case 1:
+        yield "one";   // yield вместо break в switch expression
+    case 2:
+        yield "two";
+    default:
+        yield "other";
 };
 ```
 
-## Q10. Что такое `exhaustive switch` и зачем он нужен?
+`yield` -- **не** `return`. Он завершает только текущую ветку `switch expression`, а не метод.
 
-**Exhaustive switch** — switch, покрывающий все возможные значения типа (например, все константы enum). В switch expression (`Java 14+`) компилятор проверяет полноту для enum; при пропуске константы — ошибка компиляции. Удобно при добавлении новой константы в enum — компилятор укажет все switch, которые нужно обновить. Для default в exhaustive switch по enum можно использовать assert `false` или не указывать default.
+## Q8. (!) Что такое `exhaustive switch` и зачем он нужен?
+
+**Exhaustive switch** -- switch, покрывающий все возможные значения входного типа. В `switch expression` компилятор **требует** exhaustiveness:
+
 ```java
-enum Status { ACTIVE, INACTIVE, PENDING }
+enum Season { SPRING, SUMMER, AUTUMN, WINTER }
 
-String message = switch (status) {
+String clothes = switch (season) {
+    case SPRING -> "Куртка";
+    case SUMMER -> "Футболка";
+    case AUTUMN -> "Плащ";
+    case WINTER -> "Пуховик";
+    // default не нужен -- все enum-константы покрыты
+};
+```
+
+**Преимущества:**
+- При добавлении новой константы в `enum` компилятор покажет ошибку во **всех** switch, которые нужно обновить
+- Снижает риск пропуска ветки
+- Для `sealed` классов компилятор проверяет все `permits`
+
+**Когда нужен `default`:**
+- Для `int`, `String` и других типов с бесконечным диапазоном значений
+- Как «страховочная сетка» при неизвестных значениях
+
+```java
+// Рекомендация: бросать исключение в default для enum
+String msg = switch (status) {
     case ACTIVE -> "Active";
     case INACTIVE -> "Inactive";
-    case PENDING -> "Pending";
-    // Компилятор проверит полноту
+    // Если кто-то добавит PENDING, а default есть -- ошибка молча проглотится
+    default -> throw new IllegalStateException("Unexpected: " + status);
 };
 ```
 
-## Q11. Какие типы циклов поддерживает `Java`?
+## Q9. Можно ли комбинировать стрелочный и двоеточный синтаксис в одном `switch`?
 
-`Java` предлагает три разных типа циклов: for, while и `do-while`.
+Нет. В одном `switch` (statement или expression) **нельзя** смешивать `case L ->` и `case L:`. Компилятор выдаст ошибку. Нужно выбрать один стиль для всего блока:
 
-Цикл `for` обеспечивает способ перебора диапазона значений. Наиболее полезно, когда мы заранее знаем, сколько раз задача будет повторяться:
+```java
+// Ошибка компиляции!
+switch (x) {
+    case 1 -> System.out.println("one");
+    case 2:
+        System.out.println("two");
+        break;
+}
+```
 
+Стрелочный синтаксис (`->`) рекомендуется как основной с `Java 14+`, так как он исключает `fall-through` и более читаем.
+
+## Q10. (!) Что такое `pattern matching for instanceof` (`Java 16`)?
+
+`Pattern matching for instanceof` (финальный в `Java 16`, JEP 394) позволяет одновременно проверить тип и присвоить переменную без явного приведения:
+
+```java
+// До Java 16 — явное приведение
+if (obj instanceof String) {
+    String s = (String) obj;
+    System.out.println(s.length());
+}
+
+// Java 16+ — pattern variable
+if (obj instanceof String s) {
+    System.out.println(s.length());  // s уже типизирована
+}
+```
+
+**Область видимости (flow scoping):** переменная `s` доступна только там, где компилятор может **гарантировать** совпадение паттерна:
+
+```java
+if (obj instanceof String s && s.length() > 5) {
+    // s доступна -- && гарантирует, что instanceof == true
+}
+
+if (!(obj instanceof String s)) {
+    return;  // early return
+}
+// s доступна здесь — компилятор знает, что obj — String
+s.toUpperCase();
+```
+
+Это первый шаг к полноценному pattern matching, продолженный в [sealed classes](java-oop-interview.md) и `switch` (`Java 21`).
+
+## Q11. (!) Что такое `pattern matching for switch` (`Java 21`)?
+
+`Pattern matching for switch` (финальный в `Java 21`, JEP 441) позволяет использовать **type patterns**, **guarded patterns** и **null** в `case` ветках. Заменяет цепочки `instanceof` и приведений:
+
+```java
+// До Java 21 — цепочка instanceof
+static String format(Object obj) {
+    if (obj instanceof Integer i) {
+        return "int: %d".formatted(i);
+    } else if (obj instanceof Double d) {
+        return "double: %.2f".formatted(d);
+    } else if (obj instanceof String s) {
+        return "string: %s".formatted(s);
+    }
+    return "unknown";
+}
+
+// Java 21 — pattern matching for switch
+static String format(Object obj) {
+    return switch (obj) {
+        case Integer i -> "int: %d".formatted(i);
+        case Double d  -> "double: %.2f".formatted(d);
+        case String s  -> "string: %s".formatted(s);
+        case null      -> "null";
+        default        -> "unknown: " + obj;
+    };
+}
+```
+
+Ключевые возможности:
+- **Type patterns**: `case Integer i` -- проверка типа + binding variable
+- **Null handling**: `case null` -- явная обработка (до `Java 21` switch по `null` бросал `NullPointerException`)
+- **Guarded patterns**: `case String s when s.length() > 5` -- дополнительное условие
+- **Exhaustiveness**: компилятор проверяет полноту для `sealed` типов
+
+## Q12. (!) Что такое `guarded patterns` (клауза `when`)?
+
+`Guarded pattern` -- комбинация паттерна с условием `when`. Позволяет уточнить, когда `case` должен сработать:
+
+```java
+static String categorize(Object obj) {
+    return switch (obj) {
+        case String s when s.isEmpty()      -> "пустая строка";
+        case String s when s.length() > 100 -> "длинная строка";
+        case String s                        -> "строка: " + s;
+        case Integer i when i < 0           -> "отрицательное число";
+        case Integer i when i == 0          -> "ноль";
+        case Integer i                       -> "положительное число: " + i;
+        case null                            -> "null";
+        default                              -> "неизвестный тип";
+    };
+}
+```
+
+**Важно:** `when` -- это **не** отдельное ключевое слово в общем смысле, а контекстно-зависимое (context-sensitive) слово, работающее только в `case` ветках. Оно пришло на замену предыдущему синтаксису `&&` из preview-версий.
+
+## Q13. Как обрабатывается `null` в `pattern matching for switch`?
+
+До `Java 21` передача `null` в `switch` всегда бросала `NullPointerException`. Начиная с `Java 21`, `null` можно обработать явно:
+
+```java
+String result = switch (input) {
+    case null             -> "null value";
+    case String s         -> "string: " + s;
+    case Integer i        -> "int: " + i;
+    default               -> "other";
+};
+```
+
+Можно комбинировать `null` с `default`:
+
+```java
+String result = switch (input) {
+    case String s  -> "string";
+    case Integer i -> "int";
+    case null, default -> "null или неизвестный тип";
+};
+```
+
+Если `case null` не указан, то `null` по-прежнему вызывает `NullPointerException` -- для обратной совместимости.
+
+## Q14. Что такое `dominance` (доминирование) паттернов и порядок `case`?
+
+Компилятор проверяет, что ни один `case` не **доминируется** (перекрывается) предыдущим. Более общий паттерн не может стоять перед более конкретным:
+
+```java
+// Ошибка компиляции — case Object доминирует над case String
+switch (obj) {
+    case Object o  -> "object";   // покрывает всё
+    case String s  -> "string";   // никогда не достижим!
+}
+```
+
+Правильный порядок -- от конкретного к общему:
+
+```java
+switch (obj) {
+    case String s  -> "string";   // конкретный
+    case Number n  -> "number";   // менее конкретный
+    default        -> "other";    // самый общий
+}
+```
+
+```mermaid
+graph TD
+    A["case String s"] -->|"если не совпало"| B["case Number n"]
+    B -->|"если не совпало"| C["default"]
+    style A fill:#4CAF50,color:#fff
+    style B fill:#FF9800,color:#fff
+    style C fill:#9E9E9E,color:#fff
+```
+
+Это правило также относится к `guarded patterns`: `case String s when s.isEmpty()` должен стоять **перед** `case String s`.
+
+## Q15. (!) Как `sealed classes` работают с `pattern matching for switch`?
+
+`Sealed classes` (`Java 17`, JEP 409) ограничивают иерархию наследования через `permits`. В сочетании с `pattern matching for switch` (`Java 21`) компилятор проверяет **exhaustiveness** по всем разрешённым подтипам:
+
+```java
+sealed interface Shape permits Circle, Rectangle, Triangle {}
+record Circle(double radius) implements Shape {}
+record Rectangle(double width, double height) implements Shape {}
+record Triangle(double base, double height) implements Shape {}
+
+double area(Shape shape) {
+    return switch (shape) {
+        case Circle c    -> Math.PI * c.radius() * c.radius();
+        case Rectangle r -> r.width() * r.height();
+        case Triangle t  -> 0.5 * t.base() * t.height();
+        // default не нужен — компилятор знает все подтипы!
+    };
+}
+```
+
+```mermaid
+classDiagram
+    class Shape {
+        <<sealed>>
+    }
+    class Circle {
+        <<record>>
+        +double radius
+    }
+    class Rectangle {
+        <<record>>
+        +double width
+        +double height
+    }
+    class Triangle {
+        <<record>>
+        +double base
+        +double height
+    }
+    Shape <|-- Circle
+    Shape <|-- Rectangle
+    Shape <|-- Triangle
+```
+
+**Преимущества связки `sealed` + `switch`:**
+- При добавлении нового подтипа (`Pentagon`) -- ошибка компиляции во всех switch
+- Заменяет паттерн `Visitor` для простых случаев
+- Более безопасная альтернатива `default` ветке -- подробнее в [вопросах по ООП](java-oop-interview.md)
+
+## Q16. Что такое `record patterns` (`Java 21`) и деконструкция записей?
+
+`Record patterns` (финальные в `Java 21`, JEP 440) позволяют деконструировать `record` прямо в `case` -- извлечь компоненты без явных вызовов аксессоров:
+
+```java
+record Point(int x, int y) {}
+
+String describe(Object obj) {
+    return switch (obj) {
+        case Point(int x, int y) when x == 0 && y == 0 -> "начало координат";
+        case Point(int x, int y) when x == 0           -> "на оси Y";
+        case Point(int x, int y) when y == 0           -> "на оси X";
+        case Point(int x, int y)                        -> "точка (%d, %d)".formatted(x, y);
+        default                                         -> "не точка";
+    };
+}
+```
+
+Деконструкция может быть **вложенной**:
+
+```java
+record Pair<T>(T first, T second) {}
+
+switch (obj) {
+    case Pair(Point(var x1, var y1), Point(var x2, var y2)) ->
+        "отрезок от (%d,%d) до (%d,%d)".formatted(x1, y1, x2, y2);
+    default -> "не пара точек";
+}
+```
+
+## Q17. Что такое `unnamed patterns` (`Java 22`)?
+
+`Unnamed patterns` (JEP 456, `Java 22`) позволяют использовать `_` для компонентов, которые не нужны в текущей ветке:
+
+```java
+sealed interface Animal permits Dog, Cat, Fish {}
+record Dog(String name, int age) implements Animal {}
+record Cat(String name, int age) implements Animal {}
+record Fish(String species) implements Animal {}
+
+String sound(Animal animal) {
+    return switch (animal) {
+        case Dog(var name, _)  -> name + " лает";   // age не нужен
+        case Cat(_, _)         -> "мяу";             // ни name, ни age
+        case Fish _            -> "...";             // весь record не нужен
+    };
+}
+```
+
+Это снижает визуальный шум и делает явным, какие компоненты используются. Подробнее о `record` и `var` -- в [Java Core](java-core-interview.md).
+
+## Q18. Какие типы циклов поддерживает `Java`?
+
+`Java` поддерживает три типа циклов:
+
+**`for`** -- когда известно число итераций:
 ```java
 for (int i = 0; i < 10; i++) {
-    // тело цикла
+    process(i);
 }
 ```
 
-Цикл `while` может выполнять блок операторов, пока выполняется определенное условие:
-
+**`while`** -- условие проверяется **перед** итерацией:
 ```java
 while (iterator.hasNext()) {
-    // обработка элемента
+    process(iterator.next());
 }
 ```
 
-`Do-while` — вариант оператора `while`, в котором вычисление логического выражения находится в конце цикла. Это гарантирует, что код выполнится хотя бы один раз:
-
+**`do-while`** -- тело выполняется **минимум один раз**, условие проверяется после:
 ```java
+int attempt = 0;
 do {
-    // тело цикла
-} while (choice != -1);
+    result = tryConnect();
+    attempt++;
+} while (!result.isSuccess() && attempt < 3);
 ```
 
-## Q12. Что такое расширенный цикл `for`?
+Начиная с `Java 5`, также доступен **enhanced for** (`for-each`) для коллекций и массивов. С `Java 8` многие циклы заменяются на [Stream API](java-stream-interview.md).
 
-Другой синтаксис оператора `for`, предназначенный для перебора всех элементов коллекции, массива, перечисления или любого объекта, реализующего интерфейс `Iterable`:
+## Q19. Что такое расширенный цикл `for-each`?
+
+Enhanced for (`for-each`) перебирает все элементы массива или любого объекта, реализующего `Iterable`:
 
 ```java
-for (String aString : arrayOfStrings) {
-    // обработка элемента
+for (String name : names) {
+    System.out.println(name);
 }
 ```
 
-## Q13. Как вы можете заранее выйти из цикла?
+**Ограничения:**
+- Нет доступа к индексу (для индекса -- классический `for` или `IntStream.range`)
+- Нельзя модифицировать коллекцию во время итерации (будет `ConcurrentModificationException`)
+- Нельзя пропускать элементы или итерировать назад
+- Под капотом использует `Iterator`, поэтому производительность для `ArrayList` такая же, как у `Iterator`
 
-Используя оператор `break`, мы можем немедленно прекратить выполнение цикла:
+## Q20. (!) В чём разница между немаркированным и маркированным `break`?
+
+Немаркированный `break` завершает **самый внутренний** цикл или `switch`. Маркированный `break` завершает **помеченный** внешний цикл:
 
 ```java
-for (int i = 0; ; i++) {
-    if (i > 10) {
-        break;
-    }
-}
-```
-
-## Q14. (!) В чем разница между немаркированным и маркированным оператором `break`?
-
-Непомеченный оператор break завершает самый внутренний оператор switch, for, while или `do-while`, тогда как помеченный break завершает выполнение внешнего оператора.
-
-Давайте создадим пример, чтобы продемонстрировать это:
-```java
-int[][] table = {{1, 2, 3}, {25, 37, 49}, {55, 68, 93}};
+int[][] matrix = {{1, 2, 3}, {25, 37, 49}, {55, 68, 93}};
 boolean found = false;
-int loopCycles = 0;
+int checks = 0;
 
-outer: for (int[] rows : table) {
-    for (int row : rows) {
-        loopCycles++;
-        if (row == 37) {
+outer:
+for (int[] row : matrix) {
+    for (int cell : row) {
+        checks++;
+        if (cell == 37) {
             found = true;
-            break outer;
+            break outer;  // выход из обоих циклов
         }
     }
 }
+// checks == 5 (с маркированным break)
+// checks == 8 (без метки — только внутренний цикл завершится)
 ```
 
-Когда число 37 найдено, помеченный оператор `break` завершает самый внешний цикл `for`, и больше циклы не выполняются. Таким образом, `loopCycles` заканчивается со значением 5. Однако немаркированный разрыв завершает только самый внутренний оператор, возвращая поток управления самому внешнему оператору, который продолжает цикл до следующей строки в табличной переменной, в результате чего `loopCycles` завершается со значением 8.
+Маркированный `break` полезен для поиска в многомерных структурах, но часто лучше заменить его отдельным методом с `return`.
 
-## Q15. (!) В чем разница между немаркированным и маркированным оператором `continue`?
+## Q21. В чём разница между немаркированным и маркированным `continue`?
 
-Оператор `continue` без метки переходит к концу текущей итерации в самом внутреннем цикле `for`, `while` или `do-while`, тогда как оператор `continue` с меткой переходит к внешнему циклу, отмеченному данной меткой. Вот пример, демонстрирующий это:
+Немаркированный `continue` переходит к **следующей итерации** самого внутреннего цикла. Маркированный `continue` переходит к следующей итерации **помеченного** внешнего цикла:
 
 ```java
 int[][] table = {{1, 15, 3}, {25, 15, 49}, {15, 68, 93}};
-int loopCycles = 0;
+int processed = 0;
 
-outer: for (int[] rows : table) {
-    for (int row : rows) {
-        loopCycles++;
-        if (row == 15) {
-            continue outer;
+outer:
+for (int[] row : table) {
+    for (int cell : row) {
+        processed++;
+        if (cell == 15) {
+            continue outer;  // пропуск оставшихся ячеек в строке
         }
+    }
+}
+// processed == 5 (маркированный) vs 9 (немаркированный)
+```
+
+## Q22. В чём разница между `break` и `return` в контексте циклов?
+
+| | `break` | `return` |
+|---|---|---|
+| Область действия | Текущий цикл / `switch` | Весь метод |
+| Код после цикла | Выполняется | Не выполняется |
+| Применение | Досрочное завершение итераций | Когда результат найден и метод может завершиться |
+
+```java
+// break — код после цикла выполнится
+for (Item item : items) {
+    if (item.isTarget()) {
+        result = item;
+        break;  // выход из цикла, продолжаем метод
+    }
+}
+log.info("Search complete");  // выполнится
+
+// return — метод завершается
+for (Item item : items) {
+    if (item.isTarget()) {
+        return item;  // выход из метода
+    }
+}
+log.info("Not found");  // выполнится, только если ничего не найдено
+```
+
+## Q23. Как обработать бесконечный цикл и когда он уместен?
+
+Бесконечный цикл создаётся конструкциями `while (true)` или `for (;;)`. Уместен в:
+- Серверных циклах (приём запросов до shutdown)
+- Event loop / game loop
+- Чтении из очереди сообщений
+
+Обязательно обеспечить условие выхода:
+
+```java
+// Серверный цикл с graceful shutdown
+while (true) {
+    Task task = queue.poll(1, TimeUnit.SECONDS);
+    if (shutdownRequested.get()) {
+        break;
+    }
+    if (task != null) {
+        process(task);
     }
 }
 ```
 
-Аргументация та же, что и в предыдущем вопросе. Помеченный оператор `continue` завершает самый внешний цикл `for`. Таким образом, `loopCycles` завершается со значением 5, тогда как немаркированная версия завершает только самый внутренний оператор, в результате чего `loopCycles` заканчивается со значением 9.
+Для работы с очередями сообщений в `Spring` часто используют `@KafkaListener` или `@RabbitListener`, которые скрывают цикл за абстракцией.
 
-## Q16. В чём разница между `break` и `return` в контексте циклов?
+## Q24. (!) Опишите поток выполнения `try-catch-finally`.
 
-break — выход только из текущего цикла (или из помеченного блока); выполнение продолжается после цикла. return — выход из метода; весь код после цикла не выполняется. break используют для досрочного завершения итераций; return — когда дальнейшая работа метода не нужна.
+```mermaid
+graph TD
+    A[Начало try] --> B{Исключение?}
+    B -->|Нет| C[try завершается нормально]
+    B -->|Да| D{Есть подходящий catch?}
+    D -->|Да| E[Выполняется catch]
+    D -->|Нет| F[Исключение передаётся выше]
+    C --> G[finally выполняется]
+    E --> G
+    F --> G
+    G --> H[Продолжение программы]
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+1. Выполняется блок `try`
+2. Если исключение не брошено -- `catch` блоки пропускаются
+3. Если брошено -- ищется первый подходящий `catch` (по типу исключения)
+4. Блок `finally` выполняется **всегда** (за редкими исключениями -- см. Q25)
 
-## Q17. Когда использовать `for` vs `while` vs `do-while`?
+Подробнее об иерархии исключений -- в [вопросах по исключениям](java-exceptions-interview.md).
 
-for — когда известно число итераций или есть счётчик (индекс, диапазон); `for-each / do-while` — когда тело цикла должно выполниться минимум один раз; условие проверяется после итерации. Для чтения из потока до конца часто `while ((line = reader.readLine()) != null)`.
+## Q25. В каких ситуациях блок `finally` может не выполниться?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+Блок `finally` **не выполняется** в следующих случаях:
+- Вызов `System.exit()` в блоке `try` или `catch`
+- Аварийное завершение `JVM` (crash, `OutOfMemoryError` в критическом месте)
+- Бесконечный цикл или deadlock в `try`/`catch`
+- Принудительное уничтожение потока (`Thread.stop()` -- deprecated)
+- Убийство процесса ОС (`kill -9`)
 
-## Q18. Как обработать бесконечный цикл и прервать его?
-
-Бесконечный цикл: for (;;) или while (`true`). Выход — break при выполнении условия или return из метода. Используют для серверных циклов (принимать запросы до shutdown), чтения до сигнала, игровых циклов. Важно обеспечить условие выхода; при необходимости break с меткой для выхода из вложенных циклов.
 ```java
-while (true) {
-    Task task = queue.poll();
-    if (task == null || shutdown) break;
-    process(task);
+try {
+    System.out.println("try");
+    System.exit(0);  // JVM завершается
+} finally {
+    System.out.println("finally");  // НЕ выполнится
 }
 ```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q19. Опишите поток выполнения внутри конструкции `try-catch-finally`.
-
-Когда программа вошла в блок try и внутри него генерируется исключение, выполнение блока try прерывается, и поток управления продолжается блоком catch, который может обработать выбрасываемое исключение.
-
-Если такого блока не существует, выполнение текущего метода останавливается, и исключение выдается предыдущему методу в стеке вызовов. В качестве альтернативы, если исключения не возникает, все блоки catch игнорируются, и выполнение программы продолжается в обычном режиме.
-
-Блок finally всегда выполняется независимо от того, было ли выброшено исключение внутри тела блока try или нет.
-
-## Q20. В каких ситуациях блок `finally` может не выполняться?
-
-Когда `JVM` завершается во время выполнения блоков try или catch, например, путем вызова `System.exit()`, или когда исполняемый поток прерывается или уничтожается, тогда блок finally не выполняется.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q21. Каков результат выполнения следующего кода?
+## Q26. Каков результат выполнения кода с `return` в `catch` и присваиванием в `finally`?
 
 ```java
 public static int assignment() {
     int number = 1;
     try {
         number = 3;
-        if (true) {
-            throw new Exception("Test Exception");
-        }
+        if (true) throw new Exception("Test");
         number = 2;
     } catch (Exception ex) {
-        return number;
+        return number;  // return 3 — значение фиксируется
     } finally {
-        number = 4;
+        number = 4;     // присваивание НЕ влияет на возвращаемое значение
     }
     return number;
 }
-
-System.out.println(assignment());
+// Результат: 3
 ```
 
-Код выводит число 3. Несмотря на то, что блок finally выполняется всегда, это происходит только после выхода из блока try.
+**Объяснение:** оператор `return number` в `catch` фиксирует значение `3` **до** выполнения `finally`. Блок `finally` выполняется, присваивает `number = 4`, но возвращаемое значение уже зафиксировано. Однако если в `finally` стоит свой `return` -- он **перекроет** предыдущий (и это антипаттерн).
 
-В примере оператор return выполняется до завершения блока `try-catch`. Таким образом, присваивание числа в блоке finally не имеет никакого эффекта, так как переменная уже возвращена в вызывающий код метода присваивания.
+**Для ссылочных типов** поведение другое: `finally` может изменить состояние возвращаемого объекта, потому что `return` фиксирует **ссылку**, а не копию.
 
-## Q22. В каких ситуациях можно использовать блокировку `try-finally`, даже если исключения не могут быть выброшены?
+## Q27. (!) Как работает `try-with-resources` и что такое `suppressed exceptions`?
 
-Этот блок полезен, когда мы хотим убедиться, что мы случайно не обходим очистку ресурсов, используемых в коде, сталкиваясь с оператором break, continue или return:
+`Try-with-resources` (`Java 7+`) автоматически закрывает ресурсы, реализующие `AutoCloseable`. Ресурсы закрываются в **обратном** порядке объявления:
+
 ```java
-HeavyProcess heavyProcess = new HeavyProcess();
+try (var conn = dataSource.getConnection();
+     var stmt = conn.prepareStatement(sql);
+     var rs = stmt.executeQuery()) {
+    while (rs.next()) {
+        process(rs);
+    }
+}
+// rs, stmt, conn закрываются автоматически в обратном порядке
+```
+
+**Suppressed exceptions:** если исключение брошено в `try` **и** при `close()`, то исключение из `close()` добавляется как suppressed:
+
+```java
 try {
-    return heavyProcess.heavyTask();
-} finally {
-    heavyProcess.doCleanUp();
+    // основное исключение: IOException
+} // close() бросает IllegalStateException — оно suppressed
+
+// В обработчике:
+catch (IOException e) {
+    Throwable[] suppressed = e.getSuppressed();
+    // suppressed[0] — IllegalStateException из close()
 }
 ```
 
-Кроме того, мы можем столкнуться с ситуациями, в которых мы не можем локально обработать выбрасываемое исключение, или мы хотим, чтобы текущий метод все еще выдавал исключение, позволяя нам высвободить ресурсы:
+С `Java 9` можно использовать effectively-final переменные:
+
 ```java
-public void doDangerousTask(Task task) throws ComplicatedException {
-    try {
-        task.gatherResources();
-        if (task.isComplicated()) {
-            throw new ComplicatedException("Too difficult");
+Connection conn = dataSource.getConnection();
+try (conn) {  // Java 9+ — не нужно объявлять в ()
+    // используем conn
+}
+```
+
+## Q28. Как обработать несколько исключений в одном `catch` (`Java 7+`)?
+
+Multi-catch позволяет перечислить типы через `|`:
+
+```java
+try {
+    parseAndSave(input);
+} catch (IOException | SQLException | ParseException e) {
+    log.error("Ошибка обработки: {}", e.getMessage(), e);
+    throw new ApplicationException("Processing failed", e);
+}
+```
+
+**Ограничения:**
+- Типы не должны быть в отношении наследования (`IOException | Exception` -- ошибка компиляции)
+- Переменная `e` является effectively `final` -- нельзя переприсвоить
+- Тип переменной -- общий супертип перечисленных исключений
+
+## Q29. (!) Как избежать глубокой вложенности `if-else` (`guard clauses`)?
+
+**Guard clauses** -- ранний выход при невыполнении предусловий. Основной код остаётся на верхнем уровне вложенности:
+
+```java
+// Плохо — глубокая вложенность
+public void processOrder(Order order) {
+    if (order != null) {
+        if (order.isValid()) {
+            if (order.hasItems()) {
+                if (paymentService.charge(order)) {
+                    shipOrder(order);
+                }
+            }
         }
-    } finally {
-        task.freeResources();
+    }
+}
+
+// Хорошо — guard clauses
+public void processOrder(Order order) {
+    if (order == null) return;
+    if (!order.isValid()) throw new IllegalArgumentException("Invalid order");
+    if (!order.hasItems()) return;
+    if (!paymentService.charge(order)) throw new PaymentException("Charge failed");
+
+    shipOrder(order);  // основная логика без вложенности
+}
+```
+
+**Альтернативы для сложных ветвлений:**
+- Паттерн [Strategy](../../design-patterns/design-patterns-interview.md) -- вынос каждой ветки в отдельный класс
+- `Map<Key, Handler>` -- таблица стратегий
+- `Optional` для цепочек проверок на `null`
+- `switch expression` с pattern matching для проверки по типу
+
+## Q30. Как заменить цепочку `if-else` паттерном `Strategy`?
+
+Когда `if-else` выбирает поведение по типу или ключу, это признак необходимости паттерна [Strategy](../../design-patterns/design-patterns-interview.md):
+
+```java
+// Плохо — if-else, нарушает Open-Closed Principle
+double calculate(String type, double amount) {
+    if ("standard".equals(type)) return amount * 0.1;
+    else if ("premium".equals(type)) return amount * 0.05;
+    else if ("vip".equals(type)) return 0;
+    else throw new IllegalArgumentException("Unknown: " + type);
+}
+
+// Хорошо — Strategy через Map
+Map<String, DoubleUnaryOperator> strategies = Map.of(
+    "standard", amount -> amount * 0.1,
+    "premium",  amount -> amount * 0.05,
+    "vip",      amount -> 0.0
+);
+
+double calculate(String type, double amount) {
+    var strategy = strategies.get(type);
+    if (strategy == null) throw new IllegalArgumentException("Unknown: " + type);
+    return strategy.applyAsDouble(amount);
+}
+
+// Ещё лучше — enum + switch expression
+enum CustomerType {
+    STANDARD, PREMIUM, VIP;
+
+    double calculateFee(double amount) {
+        return switch (this) {
+            case STANDARD -> amount * 0.1;
+            case PREMIUM  -> amount * 0.05;
+            case VIP      -> 0.0;
+        };
     }
 }
 ```
 
-## Q23. Как работает `try-with-resources`?
+## Q31. Что такое `assert` и когда его применять?
 
-Оператор `try-with-resources` объявляет и инициализирует один или несколько ресурсов перед выполнением блока try и автоматически закрывает их в конце оператора независимо от того, завершился ли блок нормально или внезапно. В качестве ресурса может использоваться любой объект, реализующий интерфейсы `AutoCloseable` или `Closeable`:
+`assert` -- проверка инвариантов в режиме отладки. По умолчанию **отключён** (включение: `java -ea`):
+
 ```java
-try (StringWriter writer = new StringWriter()) {
-    writer.write("Hello world!");
+assert age >= 0 : "Возраст не может быть отрицательным: " + age;
+```
+
+| Когда использовать | Когда **не** использовать |
+|---|---|
+| Внутренние инварианты | Валидация входных данных пользователя |
+| Постусловия private-методов | Проверки в public API |
+| Проверка «невозможных» состояний | Логика, влияющая на бизнес-процесс |
+
+При `false` бросается `AssertionError`. В продакшене обычно отключён, поэтому **не заменяет** валидацию. Для проверки аргументов в public API используйте `Objects.requireNonNull()`, `Preconditions.checkArgument()` (Guava) или `Validate.notNull()` (Apache Commons).
+
+## Q32. Как условия влияют на производительность (`tableswitch` vs `lookupswitch`)?
+
+`JVM` компилирует `switch` в одну из двух инструкций байткода:
+
+| Инструкция | Когда | Сложность |
+|---|---|---|
+| `tableswitch` | Плотные значения (0, 1, 2, 3...) | `O(1)` -- прямой переход по индексу |
+| `lookupswitch` | Разреженные значения (1, 100, 500) | `O(log n)` -- бинарный поиск |
+
+```java
+// tableswitch — O(1)
+switch (dayOfWeek) {  // 1-7, плотные
+    case 1 -> "Пн";
+    case 2 -> "Вт";
+    // ...
+}
+
+// lookupswitch — O(log n)
+switch (errorCode) {  // 200, 404, 500 — разреженные
+    case 200 -> "OK";
+    case 404 -> "Not Found";
+    case 500 -> "Error";
 }
 ```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+**На практике:** разница ничтожна в большинстве приложений. `JIT`-компилятор дополнительно оптимизирует горячие пути. Выбор между `if` и `switch` должен определяться **читаемостью**, а не микрооптимизацией. `Switch expression` с exhaustive-проверкой для `enum` -- оптимальный выбор по всем критериям.
 
-## Q24. Как `try-with-resources` обрабатывает исключения при закрытии ресурсов?
+## Q33. Как использовать условия в `Stream API` (`filter`, `takeWhile`, `dropWhile`)?
 
-Ресурсы закрываются в порядке, обратном объявлению. Если при закрытии выбрасывается исключение, оно подавляется (suppressed) и добавляется к исключению из блока try (если было); вызывающий код видит первое исключение, подавленные доступны через `getSuppressed()`. Если оба try и close() выбрасывают — исключение из try передаётся, исключение из close подавляется.
+Подробнее о Stream API -- в [отдельном разделе](java-stream-interview.md).
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+| Метод | Версия | Описание |
+|---|---|---|
+| `filter(Predicate)` | `Java 8` | Оставляет элементы, удовлетворяющие условию |
+| `takeWhile(Predicate)` | `Java 9` | Берёт элементы, пока условие `true` |
+| `dropWhile(Predicate)` | `Java 9` | Пропускает элементы, пока условие `true` |
 
-## Q25. Как обработать несколько исключений в одном catch (`Java 7+`)?
-
-В одном catch можно перечислить несколько типов через |: catch (IOException | SQLException e). Обработка одинакова для всех типов; переменная e имеет общий супертип (например, `Exception`). Удобно, когда одна и та же логика обработки подходит для разных исключений; при разной логике — отдельные catch блоки.
 ```java
-try {
-    parseAndSave(input);
-} catch (IOException | SQLException e) {
-    log.error("Failed", e);
-    throw new ApplicationException(e);
-}
+List<Integer> numbers = List.of(2, 4, 6, 3, 8, 10);
+
+numbers.stream()
+    .filter(n -> n % 2 == 0)        // [2, 4, 6, 8, 10]
+    .toList();
+
+numbers.stream()
+    .takeWhile(n -> n % 2 == 0)     // [2, 4, 6] — остановится на 3
+    .toList();
+
+numbers.stream()
+    .dropWhile(n -> n < 5)          // [6, 3, 8, 10] — пропустит 2, 4
+    .toList();
 ```
 
-Практический акцент в таких вопросах — показать не только синтаксис, но и эксплуатационные последствия: читаемость, совместимость и профиль производительности. На интервью это обычно усиливают примером типичной ошибки и способом её предотвращения в код-ревью или тестах.
+**Комбинирование предикатов:**
 
-## Q26. Как избежать глубокой вложенности `if-else` (guard clauses)?
-
-`Guard` clauses — ранний выход при невыполнении условия: в начале метода проверять предусловия и возвращаться (return) или выбрасывать исключение; основной код остаётся на верхнем уровне вложенности. Альтернативы: вынос веток в отдельные методы; замена на switch или таблицу стратегий; `Optional` для «может отсутствовать».
 ```java
-public void process(Order order) {
-    if (order == null) return;
-    if (!order.isValid()) throw new IllegalArgumentException("Invalid");
-    // основной код без глубокой вложенности
-    doProcess(order);
-}
-```
+Predicate<String> notEmpty = s -> !s.isEmpty();
+Predicate<String> notTooLong = s -> s.length() <= 100;
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q27. Что такое `assert` и когда его применять?
-
-assert condition : message — проверка инвариантов в режиме отладки; при condition == `false` выбрасывается `AssertionError`. По умолчанию отключены (-ea для включения). Применять для внутренних инвариантов в разработке; не для проверки входных данных пользователя (использовать if и исключения). В продакшене часто отключены; не заменяют валидацию и обработку ошибок.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q28. Как условия влияют на производительность (if vs switch)?
-
-Для небольшого числа веток (2–3) `if-else` и switch сопоставимы; компилятор и `JIT` оптимизируют оба. `Switch` по плотным целым (enum, малые int) может компилироваться в tableswitch (`O(1)`); по разреженным или строкам — lookupswitch или цепочка сравнений. На практике читаемость важнее микрооптимизации; выбирать по семантике (одно значение — switch, сложные условия — if). `Switch` expression (`Java 14+`) без `fall-through` и с exhaustive проверкой для enum снижает риск ошибок и часто читается лучше, чем длинная цепочка `if-else`.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q29. Как использовать условия в `Stream API` (`filter`, `takeWhile`, `dropWhile`)?
-
-filter(`Predicate`) — оставляет элементы, удовлетворяющие условию. `takeWhile(Predicate)` (`Java 9`) — берёт элементы до первого несоответствия (в упорядоченном потоке — «пока условие `true`»). `dropWhile(Predicate)` — пропускает элементы до первого несоответствия, затем отдаёт остальные. Условия задаются предикатами; для сложной логики — вынести в отдельный метод или комбинировать предикаты (`Predicate.and`, `or`, `negate`).
-```java
 list.stream()
-    .filter(x -> x > 0)
-    .takeWhile(x -> x < 100)
-    .dropWhile(x -> x < 10)
-    .forEach(System.out::println);
+    .filter(notEmpty.and(notTooLong))
+    .toList();
 ```
 
-Практический акцент в таких вопросах — показать не только синтаксис, но и эксплуатационные последствия: читаемость, совместимость и профиль производительности. На интервью это обычно усиливают примером типичной ошибки и способом её предотвращения в код-ревью или тестах.
+## Q34. Как условия и ветвление связаны с тестируемостью и цикломатической сложностью?
 
-## Q30. Как условия и ветвление связаны с тестируемостью кода?
+**Цикломатическая сложность** (McCabe) -- число линейно независимых путей через код. Каждый `if`, `case`, `&&`, `||`, `?:` увеличивает её на 1:
 
-Простой ветвящийся код (guard clauses, мало уровней вложенности, небольшие методы) легче тестировать: меньше путей выполнения, проще покрыть единичными тестами. Сложные цепочки `if-else` и глубокие вложенности увеличивают цикломатическую сложность и число сценариев. Вынос условий в методы с понятными именами и использование стратегий упрощают моки и тесты; каждый путь можно проверить отдельно. `Switch` expression и exhaustive switch снижают риск пропуска ветки при рефакторинге.
+```java
+// Сложность = 4 (1 + три условия)
+void process(Order order) {
+    if (order == null) return;                    // +1
+    if (order.getTotal() > 1000) applyDiscount(); // +1
+    if (order.isPriority()) expedite();           // +1
+}
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+| Сложность | Оценка | Тестируемость |
+|---|---|---|
+| 1-5 | Простой код | Легко тестировать |
+| 6-10 | Умеренно сложный | Требует внимания |
+| 11-20 | Сложный | Нужен рефакторинг |
+| 20+ | Очень сложный | Трудно поддерживать |
+
+**Стратегии снижения сложности:**
+- Guard clauses вместо вложенных `if`
+- Вынос веток в отдельные методы
+- `Switch expression` с exhaustive проверкой
+- Паттерн Strategy / Map-based dispatch
+- `SonarQube` / `Checkstyle` могут автоматически отслеживать метрику
+
+## Q35. Как эволюционировал `switch` от `Java 1` до `Java 21+`?
+
+```mermaid
+timeline
+    title Эволюция switch в Java
+    Java 1.0 (1996) : switch по int/byte/short/char
+    Java 5 (2004) : + enum
+    Java 7 (2011) : + String
+    Java 14 (2020) : switch expression (JEP 361) — стрелочный синтаксис, yield, exhaustive
+    Java 16 (2021) : pattern matching for instanceof (JEP 394)
+    Java 17 (2021) : sealed classes (JEP 409)
+    Java 21 (2023) : pattern matching for switch (JEP 441) — type patterns, guarded patterns, null handling
+    Java 22 (2024) : unnamed patterns (JEP 456) — underscore wildcard
+```
+
+| Версия | Что добавлено | JEP |
+|---|---|---|
+| `Java 1` | `switch` по `int`, `byte`, `short`, `char` | -- |
+| `Java 5` | + `enum` | -- |
+| `Java 7` | + `String` | -- |
+| `Java 14` | `switch expression`: `->`, `yield`, exhaustive | JEP 361 |
+| `Java 16` | `instanceof` pattern matching | JEP 394 |
+| `Java 17` | `sealed classes` | JEP 409 |
+| `Java 21` | Pattern matching for switch: type patterns, `when`, `null` | JEP 441 |
+| `Java 21` | Record patterns (деконструкция) | JEP 440 |
+| `Java 22` | Unnamed patterns (`_`) | JEP 456 |
+
+Каждая следующая версия сделала `switch` мощнее и безопаснее. Современный `Java 21+` `switch` с pattern matching приближается по выразительности к `when` в `Kotlin` и `match` в `Scala`/`Rust`, оставаясь полностью обратно совместимым.
+
+## Q36. Что такое short-circuit evaluation и как использовать его для оптимизации?
+
+**Short-circuit evaluation** (ленивые вычисления) — поведение логических операторов `&&` и `||`, при котором правый операнд не вычисляется, если результат уже определён левым операндом.
+
+**Правила:**
+- `A && B` — если `A == false`, то `B` не вычисляется (результат уже `false`)
+- `A || B` — если `A == true`, то `B` не вычисляется (результат уже `true`)
+- `&` и `|` (без short-circuit) — всегда вычисляют оба операнда
+
+```java
+// Short-circuit: database.query() не вызывается если isEnabled == false
+if (isEnabled && database.query(id) != null) {
+    process();
+}
+
+// Short-circuit: expensive вызов не выполняется если null check не прошёл
+if (user != null && user.isActive() && user.getRole() == Role.ADMIN) {
+    grantAccess();
+}
+
+// НЕПРАВИЛЬНО — & вычисляет оба операнда, что может вызвать NPE
+if (user != null & user.isActive()) { /* NPE если user == null */ }
+```
+
+**Практические применения:**
+
+| Применение | Пример |
+|---|---|
+| Null guard + метод | `obj != null && obj.isValid()` |
+| Дорогой вызов на второй позиции | `isSimpleCheck() || heavyValidation()` |
+| Логирование без NPE | `log.isDebugEnabled() && log.debug(buildMessage())` |
+
+**Отличие от non-short-circuit (`&`, `|`):**
+```java
+// & используется только при работе с битами или когда нужны оба side effects
+int flags = FLAG_A & FLAG_B;  // побитовое AND
+
+// В условиях — только && (с исключениями в тестах для проверки обоих вызовов)
+boolean result = methodA() & methodB();  // methodB всегда вызывается
+```
+
+> Компилятор и JIT не переставляют операнды в `&&`/`||` — порядок гарантирован спецификацией JLS §15.23-15.24.
+
+## Q37. Каков правильный порядок проверок в условиях для максимальной производительности?
+
+Правильный порядок условий в `&&` и `||` улучшает производительность за счёт short-circuit и снижает cognitive load.
+
+**Принципы упорядочивания для `&&`:**
+
+1. **Сначала самая дешёвая и наиболее вероятно-false проверка** — чтобы как можно скорее завершить с `false`
+2. **Null checks — первыми** — защита от NPE
+3. **Дорогие вызовы (IO, DB, сеть) — последними** — минимизация вызовов
+
+```java
+// Плохо: дорогой вызов может выполниться зря
+if (database.loadUser(id).isAdmin() && id != null) { ... }
+
+// Хорошо: дешёвые проверки — сначала, дорогие — в конце
+if (id != null && isEnabled && database.loadUser(id).isAdmin()) { ... }
+```
+
+**Принципы для `||`:**
+
+1. **Сначала самая дешёвая и наиболее вероятно-true проверка** — ранний выход через `true`
+2. **Редкие дорогие пути — в конце**
+
+```java
+// Если cachedResult чаще всего != null — ставим его первым
+if (cachedResult != null || computeExpensiveResult() != null) { ... }
+```
+
+**Мнемоника:**
+
+| Оператор | Что ставить первым | Цель |
+|---|---|---|
+| `&&` | Самое likely-false / дешёвое | Ранний выход через false |
+| `\|\|` | Самое likely-true / дешёвое | Ранний выход через true |
+
+```java
+// Реальный пример из кода Spring Security:
+if (authentication != null
+        && authentication.isAuthenticated()
+        && hasRequiredAuthority(authentication, resource)) {
+    // null check → дешёвый флаг → дорогая проверка полномочий
+}
+```
+
+> В большинстве бизнес-приложений разница ничтожна. Важнее **читаемость** — но принцип "дешёвые раньше" помогает и там и там.
+
+## Q38. Каковы антипаттерны использования тернарного оператора?
+
+Тернарный оператор `condition ? valueIfTrue : valueIfFalse` — мощный инструмент, но его злоупотребление ухудшает читаемость.
+
+**Антипаттерн 1: Вложенные тернарные операторы**
+
+```java
+// Нечитаемо — вложенный тернарный
+String label = a > b ? a > c ? "a max" : "c max" : b > c ? "b max" : "c max";
+
+// Лучше — switch expression или if-else с именованными переменными
+String label = switch (Math.max(a, Math.max(b, c))) {
+    case int x when x == a -> "a max";
+    case int x when x == b -> "b max";
+    default -> "c max";
+};
+```
+
+**Антипаттерн 2: Тернарный с side effects**
+
+```java
+// Плохо — side effects в тернарном создают сюрпризы
+String result = isActive ? saveUser(user) : deleteUser(user);
+
+// Хорошо — side effects в явных ветках
+if (isActive) {
+    saveUser(user);
+} else {
+    deleteUser(user);
+}
+String result = isActive ? "saved" : "deleted";
+```
+
+**Антипаттерн 3: Тернарный возвращает boolean**
+
+```java
+// Бессмысленно — condition уже boolean
+boolean isValid = (x > 0) ? true : false;
+
+// Правильно
+boolean isValid = x > 0;
+```
+
+**Антипаттерн 4: Слишком длинный тернарный**
+
+```java
+// Трудно читать — слишком много логики
+String msg = user.getAge() >= 18 && user.hasAccepted() && !user.isBanned()
+    ? "Welcome, " + user.getName() + "!"
+    : "Access denied: " + user.getBlockReason().orElse("unknown");
+
+// Лучше вынести в метод
+String msg = buildWelcomeMessage(user);
+```
+
+**Когда тернарный уместен:**
+
+```java
+// Короткое присвоение с простым условием — хорошо
+int max = a > b ? a : b;
+String display = name != null ? name : "Anonymous";
+List<String> list = input != null ? input : Collections.emptyList();
+```
+
+> Правило: тернарный уместен, если всё выражение помещается в одну строку и не требует объяснения. Если нужен комментарий — лучше `if-else`.
+
+## Q39. `if-else` vs `switch` vs `Map dispatch` — производительность и читаемость?
+
+Три способа реализовать ветвление по значению имеют разные характеристики.
+
+**`if-else chain`** — линейное время O(n), но гибкое:
+
+```java
+// Подходит: сложные предикаты, диапазоны, несравнимые типы
+if (status.equals("PENDING") && retryCount < 3) handlePending();
+else if (status.equals("FAILED")) handleFailed();
+else handleUnknown();
+```
+
+**`switch expression` (Java 14+)** — O(1) через `tableswitch`/`lookupswitch`, компилятор проверяет exhaustiveness:
+
+```java
+// Подходит: конкретные значения enum/String/примитивов
+String message = switch (status) {
+    case PENDING  -> "Ожидает обработки";
+    case ACTIVE   -> "Активен";
+    case EXPIRED  -> "Истёк";
+    case CANCELED -> "Отменён";
+};
+```
+
+**`Map dispatch`** — O(1) lookup, динамически расширяемый:
+
+```java
+// Подходит: команды/обработчики, регистрация на лету, плагины
+Map<String, Runnable> handlers = Map.of(
+    "start",  this::handleStart,
+    "stop",   this::handleStop,
+    "status", this::handleStatus
+);
+
+handlers.getOrDefault(command, this::handleUnknown).run();
+```
+
+**Сравнение:**
+
+| Критерий | `if-else` | `switch` | `Map dispatch` |
+|---|---|---|---|
+| Производительность | O(n) | O(1) | O(1) |
+| Exhaustiveness | Нет | Да (Java 14+) | Нет |
+| Расширяемость | Плохая | Плохая | Хорошая |
+| Читаемость | Средняя | Высокая | Высокая |
+| Сложные условия | Да | Нет | Нет |
+| Тип ключа | Любой | String/enum/int/... | Любой |
+
+**Когда что выбирать:**
+- `if-else` — разные типы условий, диапазоны, сложная логика
+- `switch expression` — enum или конечный набор строк/значений, нужна exhaustiveness
+- `Map dispatch` — Strategy Pattern, регистрация обработчиков, Command Pattern
+
+## Q40. Как правильно делать null-checks: `Objects.requireNonNull`, `Optional`, fail-fast?
+
+Null-checks — источник ошибок и боilerplate. Java предоставляет несколько инструментов.
+
+**`Objects.requireNonNull` — fail-fast на входе:**
+
+```java
+// Лучше, чем ручной if-null
+public UserService(UserRepository repo) {
+    this.repo = Objects.requireNonNull(repo, "UserRepository must not be null");
+}
+
+// Java 9+: requireNonNullElse и requireNonNullElseGet
+String name = Objects.requireNonNullElse(user.getName(), "Anonymous");
+String name = Objects.requireNonNullElseGet(user.getName(), () -> defaultName());
+```
+
+**`Optional` — для возвращаемых значений (не параметров!):**
+
+```java
+// Хорошо: Optional как возвращаемый тип
+public Optional<User> findById(Long id) {
+    return Optional.ofNullable(repository.findById(id));
+}
+
+// Использование
+findById(42L)
+    .filter(User::isActive)
+    .map(User::getName)
+    .orElse("Anonymous");
+
+// Плохо: Optional как параметр метода
+public void process(Optional<User> user) { ... }  // анти-паттерн!
+// Лучше: перегрузить метод или принимать @Nullable
+```
+
+**Null checks в Collections:**
+
+```java
+// Java 8+: вместо if (list == null) list = new ArrayList<>();
+List<String> safe = Objects.requireNonNullElseGet(list, ArrayList::new);
+
+// Collections.emptyList() вместо null
+public List<Order> getOrders() {
+    return orders != null ? orders : Collections.emptyList();
+}
+```
+
+**Аннотации `@NonNull` / `@Nullable`:**
+
+```java
+// Используйте аннотации для документирования контракта (Jakarta, Lombok, JetBrains)
+public void process(@NonNull String input) { ... }
+public @Nullable String findName(Long id) { ... }
+```
+
+**Когда использовать что:**
+
+| Инструмент | Когда |
+|---|---|
+| `Objects.requireNonNull` | Валидация параметров в конструкторах и методах |
+| `Optional` | Возвращаемый тип когда значение может отсутствовать |
+| `@NonNull` / `@Nullable` | Документирование контракта для статического анализа |
+| Null Object Pattern | Когда нужно устранить null вообще через дефолтный объект |
+
+> Правило fail-fast: лучше бросить `NullPointerException` с понятным сообщением при получении некорректного аргумента, чем получить NPE в глубине стека позже.
+
+## Q41. Как использовать условия в `Stream API` с `map` и `flatMap`?
+
+Помимо `filter`, условная логика часто нужна внутри `map` и `flatMap`.
+
+**Условное преобразование через `map`:**
+
+```java
+// Условие внутри map — допустимо для простых случаев
+List<String> labels = users.stream()
+    .map(u -> u.isAdmin() ? "[ADMIN] " + u.getName() : u.getName())
+    .toList();
+
+// Лучше для сложной логики — вынести в метод
+List<String> labels = users.stream()
+    .map(this::formatUserLabel)
+    .toList();
+
+private String formatUserLabel(User user) {
+    return switch (user.getRole()) {
+        case ADMIN   -> "[ADMIN] " + user.getName();
+        case MANAGER -> "[MGR] " + user.getName();
+        default      -> user.getName();
+    };
+}
+```
+
+**`flatMap` с условием — раскрытие Optional:**
+
+```java
+// Java 9+: Optional::stream позволяет фильтровать пустые Optional
+List<String> emails = userIds.stream()
+    .map(userService::findById)     // Stream<Optional<User>>
+    .flatMap(Optional::stream)      // Stream<User> — убирает пустые
+    .map(User::getEmail)
+    .toList();
+```
+
+**Условная коллекция через `mapMulti` (Java 16+):**
+
+```java
+// mapMulti — замена flatMap для условной генерации
+List<String> result = items.stream()
+    .<String>mapMulti((item, consumer) -> {
+        if (item.isActive()) consumer.accept(item.getName());
+        if (item.hasAlias()) consumer.accept(item.getAlias());
+    })
+    .toList();
+```
+
+**Разделение стрима на части (`partitioningBy`, `groupingBy`):**
+
+```java
+// Разделить на два списка по условию
+Map<Boolean, List<User>> partition = users.stream()
+    .collect(Collectors.partitioningBy(User::isActive));
+
+List<User> active   = partition.get(true);
+List<User> inactive = partition.get(false);
+
+// Группировка по значению enum
+Map<Role, List<User>> byRole = users.stream()
+    .collect(Collectors.groupingBy(User::getRole));
+```
+
+> Главное правило: стримы должны быть **декларативными**. Если логика внутри `map` / `flatMap` сложная — выносите в отдельный метод или используйте `switch expression`.
+
+## Q42. Как использовать `sealed classes` с `guards` в реальном коде?
+
+Комбинация `sealed classes` + `pattern matching for switch` + `when`-guards позволяет строить безопасный exhaustive dispatch.
+
+**Реальный пример: обработка платёжных событий:**
+
+```java
+sealed interface PaymentEvent permits
+    PaymentCreated, PaymentCompleted, PaymentFailed, PaymentRefunded {}
+
+record PaymentCreated(String id, BigDecimal amount, String currency) implements PaymentEvent {}
+record PaymentCompleted(String id, String transactionRef) implements PaymentEvent {}
+record PaymentFailed(String id, String reason, boolean retriable) implements PaymentEvent {}
+record PaymentRefunded(String id, BigDecimal refundAmount) implements PaymentEvent {}
+
+// Exhaustive switch — компилятор требует все варианты
+String handleEvent(PaymentEvent event) {
+    return switch (event) {
+        case PaymentCreated e when e.amount().compareTo(BigDecimal.ZERO) <= 0
+                              -> throw new IllegalArgumentException("Amount must be positive");
+        case PaymentCreated e -> "Создан платёж " + e.id() + " на " + e.amount() + " " + e.currency();
+
+        case PaymentCompleted e -> "Платёж " + e.id() + " завершён, ref: " + e.transactionRef();
+
+        case PaymentFailed e when e.retriable()
+                              -> "Платёж " + e.id() + " не прошёл, будет retry: " + e.reason();
+        case PaymentFailed e  -> "Платёж " + e.id() + " отклонён: " + e.reason();
+
+        case PaymentRefunded e -> "Возврат по платежу " + e.id() + " на " + e.refundAmount();
+        // default не нужен — компилятор знает все подтипы sealed interface
+    };
+}
+```
+
+**Преимущества подхода:**
+
+| Характеристика | Традиционный if-else | sealed + pattern matching |
+|---|---|---|
+| Exhaustiveness | Нет гарантий | Проверяется компилятором |
+| Добавление нового типа | Тихий баг | Ошибка компиляции |
+| Деконструкция полей | Ручной cast | Автоматически через record |
+| Гибкость условий | Да | Да (через `when`) |
+
+**Типичные кейсы применения:**
+
+```java
+// Domain events (DDD)
+// Result/Either types
+// AST-узлы в компиляторах и парсерах
+// Конечные автоматы (FSM)
+sealed interface State permits Idle, Running, Paused, Stopped {}
+```
+
+> `Sealed classes` с `pattern matching` — это Java-ответ на `algebraic data types` из функциональных языков. Начиная с Java 21, этот паттерн производственно стабилен и рекомендован для доменного моделирования.
+
+---
+
+## See also
+
+- [Java Core](java-core-interview.md) — базовые концепции языка
+- [ООП в Java](java-oop-interview.md) — наследование, полиморфизм, sealed classes
+- [Система типов Java](java-types-interview.md) — примитивы, обёртки, автобоксинг
+- [Исключения в Java](java-exceptions-interview.md) — try-catch, checked/unchecked
+- [Stream API](java-stream-interview.md) — функциональные условия, предикаты
+- [Java 8+](java-8-interview.md) — лямбды, Optional, функциональные интерфейсы
+- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — Strategy, State вместо ветвлений

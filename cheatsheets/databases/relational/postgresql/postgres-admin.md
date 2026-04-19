@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: администрирование и обслуживание"
 description: "Кратко: роли и права, резервное копирование, VACUUM/ANALYZE, автovacuum, базовые настройки и psql-команды."
-tags: ["databases", "relational", "postgres-admin"]
+tags:
+  - databases
+  - relational
+  - postgres-admin
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Кратко: роли и права, резервное копирование, **VACUUM**/**ANALYZE**, автovacuum, базовые настройки и **psql**-команды.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

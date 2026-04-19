@@ -1,7 +1,10 @@
 ---
 title: "SQL: Основы"
 description: "Практическое руководство по SQL: DDL/DML/DQL, joins, агрегаты, транзакции, индексы, производительность и troubleshooting в production."
-tags: ["databases", "sql", "sql-basics"]
+tags:
+  - databases
+  - sql
+  - sql-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # SQL: Основы
 
 Практическое руководство по `SQL`: базовый синтаксис, рабочие паттерны запросов и эксплуатационные правила для production-систем.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

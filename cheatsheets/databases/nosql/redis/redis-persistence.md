@@ -1,7 +1,13 @@
 ---
 title: "Redis: Персистентность"
 description: "Полное руководство по персистентности в Redis: RDB snapshots, AOF (Append Only File), конфигурация, оптимизация, восстановление данных"
-tags: ["redis", "persistence", "rdb", "aof", "backup", "recovery"]
+tags:
+  - redis
+  - persistence
+  - rdb
+  - aof
+  - backup
+  - recovery
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-replication.md", "databases/redis-backup-restore.md"]
@@ -1172,7 +1178,5 @@ cp "$RDB_BACKUP" "$REDIS_DATA_DIR/dump.rdb"
 - [Redis AOF](https://redis.io/docs/management/persistence/#append-only-file)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

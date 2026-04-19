@@ -1,7 +1,13 @@
 ---
 title: "Micronaut: Core - Dependency Injection и Bean Management"
 description: "Детальное руководство по compile-time dependency injection, bean scopes, lifecycle и конфигурации в Micronaut"
-tags: ["micronaut", "dependency-injection", "beans", "configuration", "java", "kotlin"]
+tags:
+  - micronaut
+  - dependency-injection
+  - beans
+  - configuration
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md"]
 next: ["micronaut-http.md", "micronaut-data.md"]

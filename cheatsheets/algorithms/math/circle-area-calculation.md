@@ -1,15 +1,16 @@
 ---
 title: "Вычисление площади круга (Circle Area Calculation)"
 description: "Вычисление площади круга по формуле πr² в Java: простая функция, класс Circle, валидация входа и округление. Рассмотрены варианты: кольцо, сектор, сегмент, радиус по площади."
-tags: ["algorithms", "math", "circle-area-calculation"]
+tags:
+  - algorithms
+  - math
+  - circle-area-calculation
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Вычисление площади круга (`Circle Area Calculation`)
-
-**Дата последнего обновления:** 2026-02-11
 
 Вычисление площади круга по формуле πr² в `Java`: простая функция, класс `Circle`, валидация входа и округление. Рассмотрены варианты: кольцо, сектор, сегмент, радиус по площади.
 

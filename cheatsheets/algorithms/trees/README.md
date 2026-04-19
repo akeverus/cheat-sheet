@@ -1,7 +1,9 @@
 ---
 title: "Деревья"
 description: "Бинарные деревья, обходы, сбалансированные деревья, алгоритмы на графах (Крускал, Прим, Борувка), Monte Carlo."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

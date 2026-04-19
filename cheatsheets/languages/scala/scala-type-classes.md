@@ -1,7 +1,10 @@
 ---
 title: "Type Classes в Scala"
 description: "Краткое руководство по Type Classes в Scala - полиморфизм на основе паттерна Ad-hoc."
-tags: ["languages", "scala", "scala-type-classes"]
+tags:
+  - languages
+  - scala
+  - scala-type-classes
 difficulty: "intermediate"
 prerequisites: []
 next: []

@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Metaprogramming"
 description: "Кратко: руководство по метапрограммированию в Kotlin: Annotations Processing, KAPT, KSP, Code Generation и другие техники метапрограммирования."
-tags: ["languages", "kotlin", "kotlin-metaprogramming"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-metaprogramming
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Metaprogramming
 
 Кратко: руководство по метапрограммированию в **Kotlin**: **Annotations Processing**, **KAPT**, **KSP**, **Code Generation** и другие техники метапрограммирования.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

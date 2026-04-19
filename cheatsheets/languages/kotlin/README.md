@@ -1,7 +1,11 @@
 ---
 title: "Kotlin"
 description: "Индекс раздела Kotlin: основы, коллекции, корутины, FP, testing."
-tags: ["meta", "index", "languages", "kotlin"]
+tags:
+  - meta
+  - index
+  - languages
+  - kotlin
 type: "index"
 updated: "2026-02-11"
 ---

@@ -1,15 +1,18 @@
 ---
 title: "Go: строки"
 description: "Полное руководство по работе со строками в Go: strings package, манипуляции, поиск, замена, форматирование"
-tags: ["go", "golang", "strings", "text-processing", "formatting"]
+tags:
+  - go
+  - golang
+  - strings
+  - text-processing
+  - formatting
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: строки
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

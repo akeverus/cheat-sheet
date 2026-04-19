@@ -1,7 +1,10 @@
 ---
 title: "Фабричный метод (Factory Method)"
 description: "Factory Method определяет интерфейс для создания объектов, но позволяет подклассам решать, какой класс инстанцировать."
-tags: ["patterns", "creational", "factory-method"]
+tags:
+  - patterns
+  - creational
+  - factory-method
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Фабричный метод (`Factory Method`)
 
 **Factory Method** определяет интерфейс для создания объектов, но позволяет подклассам решать, какой класс инстанцировать.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

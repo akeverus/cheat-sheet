@@ -1,7 +1,9 @@
 ---
 title: "Разработка"
 description: "Шпаргалки и руководства по инструментам разработки, API, системам сборки и мессенджингу."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

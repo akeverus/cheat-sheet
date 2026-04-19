@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: запросы и агрегаты"
 description: "Кратко: выборка, сортировка, пагинация, агрегаты, группировка и подзапросы."
-tags: ["databases", "relational", "postgres-queries"]
+tags:
+  - databases
+  - relational
+  - postgres-queries
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Кратко: выборка, сортировка, пагинация, агрегаты, группировка и подзапросы.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

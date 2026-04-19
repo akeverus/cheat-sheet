@@ -1,7 +1,15 @@
 ---
 title: "Spring Data JDBC: Полное руководство по работе с базами данных"
 description: "Комплексное руководство по Spring Data JDBC: репозитории, кастомные запросы, транзакции, аудит, интеграция с Spring Boot, тестирование и best practices"
-tags: ["spring", "jdbc", "database", "orm", "repositories", "transactions", "spring-data", "sql"]
+tags:
+  - spring
+  - jdbc
+  - database
+  - orm
+  - repositories
+  - transactions
+  - spring-data
+  - sql
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "databases/postgres-basics.md"]
 next: ["spring/spring-data-jpa.md"]
@@ -12,8 +20,6 @@ related: ["spring/spring-boot.md", "databases/postgres-basics.md", "java/java-ba
 # Spring Data JDBC: Полное руководство по работе с базами данных
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

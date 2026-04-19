@@ -1,15 +1,16 @@
 ---
 title: "Поиск по области (Range Search)"
 description: "Поиск точек в заданной двумерной области с помощью структуры данных QuadTree (дерево квадрантов). Описаны классы Point, Region, QuadTree в Java и Kotlin, поиск по диапазону и варианты: k ближайших соседей, удаление точки, подсчёт в области."
-tags: ["algorithms", "math", "range-search"]
+tags:
+  - algorithms
+  - math
+  - range-search
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Поиск по области (`Range Search`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Поиск точек в заданной двумерной области с помощью структуры данных QuadTree (дерево квадрантов). Описаны классы `Point`, `Region`, `QuadTree` в Java и Kotlin, поиск по диапазону и варианты: k ближайших соседей, удаление точки, подсчёт в области.
 

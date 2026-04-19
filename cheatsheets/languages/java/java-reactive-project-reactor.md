@@ -1,7 +1,10 @@
 ---
 title: "Java Reactive: Project Reactor"
 description: "Материал по теме Java Reactive: Project Reactor в разделе cheatsheets."
-tags: ["languages", "java", "java-reactive-project-reactor"]
+tags:
+  - languages
+  - java
+  - java-reactive-project-reactor
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -9,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Java Reactive: Project Reactor
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

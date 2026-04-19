@@ -1,21 +1,26 @@
 ---
 title: "Вопросы на собеседовании: Authentication and Authorization Patterns"
-description: "Комплексное руководство по вопросам собеседования на тему Authentication and Authorization Patterns для Senior Java"
-tags: ["interview", "security", "authentication-authorization-patterns-interview"]
+description: "Комплексное руководство по паттернам аутентификации и авторизации: OAuth 2.0, JWT, RBAC, ABAC, OIDC, PKCE, mTLS, Zero Trust"
+tags:
+  - interview
+  - security
+  - authentication-authorization-patterns-interview
+aliases:
+  - "Authentication and Authorization Patterns"
+  - "Auth patterns interview"
+  - "Аутентификация и авторизация собеседование"
+  - "JWT RBAC ABAC interview"
+  - "OAuth2 OIDC паттерны"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Authentication` and `Authorization Patterns`
 
-Комплексное руководство по вопросам собеседования на тему `Authentication` and `Authorization Patterns` для `Senior Java`
-`Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и
-troubleshooting.
+Комплексное руководство по вопросам собеседования на тему паттернов аутентификации и авторизации
+для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring Security`,
+`mermaid`-диаграммы, best practices и типичные ошибки.
 
-Дата последнего обновления: 2026-02-04
-
-Краткое введение: Authentication and Authorization Patterns для Senior Java Developer.
+Дата последнего обновления: 2026-04-13
 
 ## Полезные ссылки
 
@@ -23,104 +28,129 @@ troubleshooting.
 
 - [OAuth 2.0 Authorization Framework](https://oauth.net/2/)
 - [JWT (RFC 7519)](https://datatracker.ietf.org/doc/html/rfc7519)
+- [PKCE (RFC 7636)](https://datatracker.ietf.org/doc/html/rfc7636)
 - [Spring Security Documentation](https://docs.spring.io/spring-security/reference/)
-- [Auth0 Patterns](https://auth0.com/docs)
-- [Okta Developer Guides](https://developer.okta.com/docs/)
 - [Keycloak Documentation](https://www.keycloak.org/documentation)
-
-### См. также
-
-- [`application-security-interview.md`](application-security-interview.md) — общая безопасность приложений
-- [`../frameworks/spring/spring-security-interview.md`](../frameworks/spring/spring-security-interview.md) — Spring Security
+- [Spring Security — Roles and Privileges (Baeldung)](https://www.baeldung.com/role-and-privilege-for-spring-security-registration)
+- [Spring Security Method Security (Baeldung)](https://www.baeldung.com/spring-security-method-security)
+- [OAuth 2.0 Resource Server (Baeldung)](https://www.baeldung.com/spring-security-oauth-resource-server)
+- [Access Control Models (Baeldung)](https://www.baeldung.com/java-access-control-models)
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы аутентификации**
-- [Q1. Какие основные паттерны аутентификации существуют?](#q1-какие-основные-паттерны-аутентификации-существуют)
-- [Q2. Что такое OAuth 2.0 и как он работает?](#q2-что-такое-oauth-20-и-как-он-работает)
-- [Q3. Как работает JWT аутентификация?](#q3-как-работает-jwt-аутентификация)
-- [Q4. Что такое RBAC и ABAC?](#q4-что-такое-rbac-и-abac)
+- [Q1. (!) Какие основные паттерны аутентификации существуют?](#q1--какие-основные-паттерны-аутентификации-существуют)
+- [Q2. (!) Что такое OAuth 2.0 и как он работает?](#q2--что-такое-oauth-20-и-как-он-работает)
+- [Q3. (!) Как работает JWT аутентификация?](#q3--как-работает-jwt-аутентификация)
+- [Q4. (!) Что такое RBAC и ABAC?](#q4--что-такое-rbac-и-abac)
+- [Q5. В чём разница между аутентификацией и авторизацией?](#q5-в-чём-разница-между-аутентификацией-и-авторизацией)
 
 **Безопасность в распределённых системах**
-- [Q5. Как реализовать безопасность в микросервисах?](#q5-как-реализовать-безопасность-в-микросервисах)
-- [Q6. Что такое SAML и когда его использовать?](#q6-что-такое-saml-и-когда-его-использовать)
-- [Q7. Как реализовать Multi-Factor Authentication?](#q7-как-реализовать-multi-factor-authentication)
-- [Q8. Какие паттерны сессионного управления существуют?](#q8-какие-паттерны-сессионного-управления-существуют)
-- [Q9. Как защититься от распространенных атак?](#q9-как-защититься-от-распространенных-атак)
-- [Q10. Как реализовать API Gateway Security?](#q10-как-реализовать-api-gateway-security)
+- [Q6. (!) Как реализовать безопасность в микросервисах?](#q6--как-реализовать-безопасность-в-микросервисах)
+- [Q7. Что такое SAML и когда его использовать?](#q7-что-такое-saml-и-когда-его-использовать)
+- [Q8. (!) Как реализовать Multi-Factor Authentication?](#q8--как-реализовать-multi-factor-authentication)
+- [Q9. Какие паттерны сессионного управления существуют?](#q9-какие-паттерны-сессионного-управления-существуют)
+- [Q10. Как защититься от распространённых атак на аутентификацию?](#q10-как-защититься-от-распространённых-атак-на-аутентификацию)
+- [Q11. Как реализовать API Gateway Security?](#q11-как-реализовать-api-gateway-security)
 
 **SSO и Identity Federation**
-- [Q11. Что такое OpenID Connect и как он расширяет OAuth 2.0?](#q11-что-такое-openid-connect-и-как-он-расширяет-oauth-20)
-- [Q12. Как реализовать Single Sign-On (SSO)?](#q12-как-реализовать-single-sign-on-sso)
-- [Q13. Что такое Claims-based аутентификация?](#q13-что-такое-claims-based-аутентификация)
-- [Q14. Как обеспечить безопасность токенов (JWT refresh, rotation)?](#q14-как-обеспечить-безопасность-токенов-jwt-refresh-rotation)
-- [Q15. Что такое Zero Trust Security Model?](#q15-что-такое-zero-trust-security-model)
+- [Q12. (!) Что такое OpenID Connect и как он расширяет OAuth 2.0?](#q12--что-такое-openid-connect-и-как-он-расширяет-oauth-20)
+- [Q13. Как реализовать Single Sign-On (SSO)?](#q13-как-реализовать-single-sign-on-sso)
+- [Q14. Что такое Claims-based аутентификация?](#q14-что-такое-claims-based-аутентификация)
+- [Q15. (!) Как обеспечить безопасность токенов (JWT refresh, rotation)?](#q15--как-обеспечить-безопасность-токенов-jwt-refresh-rotation)
+- [Q16. Что такое Zero Trust Security Model?](#q16-что-такое-zero-trust-security-model)
 
 **Защита API и Rate Limiting**
-- [Q16. Как реализовать Rate Limiting для защиты API?](#q16-как-реализовать-rate-limiting-для-защиты-api)
-- [Q17. Что такое mTLS и когда его использовать?](#q17-что-такое-mtls-и-когда-его-использовать)
-- [Q18. Как реализовать аудит и логирование событий безопасности?](#q18-как-реализовать-аудит-и-логирование-событий-безопасности)
-- [Q19. Что такое Context-based Access Control?](#q19-что-такое-context-based-access-control)
-- [Q20. Как обеспечить безопасность в Service Mesh?](#q20-как-обеспечить-безопасность-в-service-mesh)
+- [Q17. Как реализовать Rate Limiting для защиты API?](#q17-как-реализовать-rate-limiting-для-защиты-api)
+- [Q18. (!) Что такое mTLS и когда его использовать?](#q18--что-такое-mtls-и-когда-его-использовать)
+- [Q19. Как реализовать аудит и логирование событий безопасности?](#q19-как-реализовать-аудит-и-логирование-событий-безопасности)
+- [Q20. Что такое Context-based Access Control?](#q20-что-такое-context-based-access-control)
+- [Q21. Как обеспечить безопасность в Service Mesh?](#q21-как-обеспечить-безопасность-в-service-mesh)
 
 **Продвинутые паттерны авторизации**
-- [Q21. Что такое Identity Federation?](#q21-что-такое-identity-federation)
-- [Q22. Как реализовать Step-Up Authentication?](#q22-как-реализовать-step-up-authentication)
-- [Q23. Что такое Passwordless Authentication?](#q23-что-такое-passwordless-authentication)
-- [Q24. Как защитить GraphQL API?](#q24-как-защитить-graphql-api)
-- [Q25. Что такое Delegated Authorization?](#q25-что-такое-delegated-authorization)
-- [Q26. Как реализовать Fine-Grained Authorization?](#q26-как-реализовать-fine-grained-authorization)
-- [Q27. Что такое Token Binding и зачем он нужен?](#q27-что-такое-token-binding-и-зачем-он-нужен)
-- [Q28. Как обеспечить безопасность WebSocket соединений?](#q28-как-обеспечить-безопасность-websocket-соединений)
-- [Q29. Что такое Proof Key for Code Exchange (PKCE)?](#q29-что-такое-proof-key-for-code-exchange-pkce)
-- [Q30. Как реализовать Dynamic Authorization?](#q30-как-реализовать-dynamic-authorization)
+- [Q22. Что такое Identity Federation?](#q22-что-такое-identity-federation)
+- [Q23. Как реализовать Step-Up Authentication?](#q23-как-реализовать-step-up-authentication)
+- [Q24. Что такое Passwordless Authentication?](#q24-что-такое-passwordless-authentication)
+- [Q25. Как защитить GraphQL API?](#q25-как-защитить-graphql-api)
+- [Q26. Что такое Delegated Authorization?](#q26-что-такое-delegated-authorization)
+- [Q27. (!) Как реализовать Fine-Grained Authorization?](#q27--как-реализовать-fine-grained-authorization)
+- [Q28. Что такое Token Binding и зачем он нужен?](#q28-что-такое-token-binding-и-зачем-он-нужен)
+- [Q29. Как обеспечить безопасность WebSocket соединений?](#q29-как-обеспечить-безопасность-websocket-соединений)
+- [Q30. (!) Что такое Proof Key for Code Exchange (PKCE)?](#q30--что-такое-proof-key-for-code-exchange-pkce)
+- [Q31. Как реализовать Dynamic Authorization?](#q31-как-реализовать-dynamic-authorization)
 
-## Q1. Какие основные паттерны аутентификации существуют?
+**Spring Security и практические паттерны**
+- [Q32. (!) Как настроить Spring Security как OAuth2 Resource Server?](#q32--как-настроить-spring-security-как-oauth2-resource-server)
+- [Q33. Как реализовать кастомный PermissionEvaluator в Spring Security?](#q33-как-реализовать-кастомный-permissionevaluator-в-spring-security)
+- [Q34. Как работает SecurityFilterChain в Spring Security 6?](#q34-как-работает-securityfilterchain-в-spring-security-6)
+- [Q35. Как реализовать иерархию ролей в Spring Security?](#q35-как-реализовать-иерархию-ролей-в-spring-security)
+- [Q36. Как хранить пароли безопасно в Java?](#q36-как-хранить-пароли-безопасно-в-java)
+- [Q37. (!) Какие типичные ошибки при реализации JWT?](#q37--какие-типичные-ошибки-при-реализации-jwt)
+- [Q38. Как реализовать OAuth2 Backend for Frontend (BFF) паттерн?](#q38-как-реализовать-oauth2-backend-for-frontend-bff-паттерн)
+- [Q39. Как интегрировать Keycloak со Spring Boot?](#q39-как-интегрировать-keycloak-со-spring-boot)
+- [Q40. Как тестировать безопасность в Spring-приложении?](#q40-как-тестировать-безопасность-в-spring-приложении)
+
+**Продвинутые паттерны**
+- [Q41. (!) Чем JWT отличается от Session-based аутентификации: когда что выбирать?](#q41--чем-jwt-отличается-от-session-based-аутентификации-когда-что-выбирать)
+- [Q42. Как реализовать API Key аутентификацию в Spring Security?](#q42-как-реализовать-api-key-аутентификацию-в-spring-security)
+- [Q43. (!) Что такое Zero Trust и как реализовать его принципы в Java-приложении?](#q43--что-такое-zero-trust-и-как-реализовать-его-принципы-в-java-приложении)
+- [Q44. Как реализовать RBAC и ABAC совместно в Spring Security?](#q44-как-реализовать-rbac-и-abac-совместно-в-spring-security)
+- [Q45. (!) Как реализовать mTLS аутентификацию между микросервисами?](#q45--как-реализовать-mtls-аутентификацию-между-микросервисами)
+
+## Q1. (!) Какие основные паттерны аутентификации существуют?
+
+Существует четыре основных паттерна аутентификации, каждый из которых подходит для разных сценариев.
+
+```mermaid
+graph TB
+    A[Паттерны аутентификации] --> B[Basic Auth]
+    A --> C[Session-Based]
+    A --> D[Token-Based]
+    A --> E[Certificate-Based]
+    B --> B1[HTTP заголовок<br/>username:password]
+    C --> C1[Серверная сессия<br/>+ Cookie]
+    D --> D1[JWT / OAuth<br/>Stateless]
+    E --> E1[X.509 сертификаты<br/>mTLS]
+```
 
 ### 1. `Basic Authentication`
 
-Описание: Простейший метод, использующий username:password в `HTTP` заголовке. Как работает:
+Простейший метод, использующий `username:password` в `HTTP`-заголовке `Authorization` (Base64-кодирование).
 
 ```java
-// Spring Security конфигурация
 @Configuration
 public class BasicAuthConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().authenticated().and().httpBasic(); // Включение Basic Authentication
-
+        http
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
-        UserDetails user = User.withDefaultPasswordEncoder().username("user").password("password").roles("USER").build();
-
+        UserDetails user = User.withDefaultPasswordEncoder()
+            .username("user")
+            .password("password")
+            .roles("USER")
+            .build();
         return new InMemoryUserDetailsManager(user);
     }
 }
 ```
 
-Плюсы:
-
-- Простота реализации
-- Встроенная поддержка в `HTTP`
-
-Минусы:
-
-- Небезопасно без `HTTPS`
-- Нет возможности logout
-- Пароль передается при каждом запросе
+**Плюсы:** простота, встроенная поддержка `HTTP`. **Минусы:** небезопасно без `HTTPS`, нет logout, пароль в каждом запросе.
 
 ### 2. `Session-Based Authentication`
 
-Описание: Использование серверных сессий для отслеживания аутентифицированных пользователей. Как работает:
+Серверные сессии для отслеживания аутентифицированных пользователей. После успешного логина сервер создаёт сессию и отправляет `JSESSIONID` в cookie.
 
 ```java
-
 @Controller
 public class LoginController {
 
@@ -128,18 +158,14 @@ public class LoginController {
     public String login(@ModelAttribute LoginForm form,
                         HttpSession session,
                         RedirectAttributes redirectAttrs) {
-
         User user = userService.authenticate(form.getUsername(), form.getPassword());
         if (user != null) {
-            // Сохранение пользователя в сессии
             session.setAttribute("user", user);
             session.setMaxInactiveInterval(30 * 60); // 30 минут
-
             return "redirect:/dashboard";
-        } else {
-            redirectAttrs.addFlashAttribute("error", "Invalid credentials");
-            return "redirect:/login";
         }
+        redirectAttrs.addFlashAttribute("error", "Invalid credentials");
+        return "redirect:/login";
     }
 
     @PostMapping("/logout")
@@ -150,166 +176,103 @@ public class LoginController {
 }
 ```
 
-Плюсы:
-
-- Безопасность (сессия на сервере)
-- Возможность logout
-- Поддержка сложных сценариев
-
-Минусы:
-
-- `State` на сервере
-- Проблемы масштабирования
-- `CSRF` уязвимости
+**Плюсы:** безопасность (сессия на сервере), поддержка logout, сложные сценарии.
+**Минусы:** state на сервере, проблемы масштабирования (нужен `Redis` / sticky sessions), уязвимость к `CSRF`.
 
 ### 3. `Token-Based Authentication`
 
-Описание: Использование токенов (`JWT`, OAuth) для аутентификации.Как работает:
+Использование токенов (`JWT`, `OAuth`) — `stateless`-подход, идеальный для [микросервисов](../architecture/microservices-interview.md) и `SPA`.
 
 ```java
-
 @Service
 public class TokenAuthenticationService {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public String authenticateAndGenerateToken(String username, String password) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new BadCredentialsException("User not found"));
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new BadCredentialsException("User not found"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new BadCredentialsException("Invalid password");
         }
-
-        // Генерация токена
         return jwtService.generateToken(user);
-    }
-
-    public User validateTokenAndGetUser(String token) {
-        String username = jwtService.extractUsername(token);
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        if (!jwtService.isTokenValid(token, user)) {
-            throw new InvalidTokenException("Invalid token");
-        }
-
-        return user;
     }
 }
 ```
 
-Плюсы:
-
-- `Stateless` (нет состояния на сервере)
-- Масштабируемость
-- Подходит для микросервисов
-
-Минусы:
-
-- Неотзываемость токенов (до истечения срока)
-- Больший размер запросов
-- Сложность реализации
+**Плюсы:** `stateless`, масштабируемость, подходит для микросервисов.
+**Минусы:** неотзываемость до истечения срока, больший размер запросов.
 
 ### 4. `Certificate-Based Authentication`
 
-Описание: Аутентификация с использованием цифровых сертификатов.Как работает:
+Аутентификация через цифровые `X.509`-сертификаты — используется для `mTLS` между сервисами (подробнее в [Spring Security](../frameworks/spring/spring-security-interview.md)).
 
 ```java
-
 @Configuration
 public class CertificateAuthConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().authenticated().and().x509().subjectPrincipalRegex("CN=(.*?)(?:,|$)").userDetailsService(userDetailsService());
-
+        http
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .x509(x509 -> x509
+                .subjectPrincipalRegex("CN=(.*?)(?:,|$)")
+                .userDetailsService(x509UserDetailsService()));
         return http.build();
     }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new X509UserDetailsService();
-    }
-}
-
-@Service
-public class X509UserDetailsService implements UserDetailsService {
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Поиск пользователя по CN из сертификата
-        User user = userRepository.findByCertificateCommonName(username);
-
-        return User.builder().username(user.getUsername()).password("") // Пароль не нужен для сертификатов.authorities(user.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role)).collect(Collectors.toList())).build();
-    }
 }
 ```
 
-Плюсы:
+**Плюсы:** высокая безопасность, двусторонняя аутентификация, не требует паролей.
+**Минусы:** сложность `PKI`-инфраструктуры, проблемы с мобильными устройствами.
 
-- Высокая безопасность
-- Двусторонняя аутентификация
-- Не требует хранения паролей
+## Q2. (!) Что такое `OAuth 2.0` и как он работает?
 
-Минусы:
+`OAuth 2.0` — протокол авторизации, позволяющий приложениям получать ограниченный доступ к ресурсам пользователя
+без передачи учётных данных. Детальный разбор — в [вопросах по OAuth 2.0](oauth2-interview.md).
 
-- Сложность развертывания
-- Требует `PKI` инфраструктуры
-- Проблемы с мобильными устройствами
+### Роли в `OAuth 2.0`
 
-## Q2. Что такое `OAuth 2.0` и как он работает?
+| Роль | Описание |
+|------|----------|
+| `Resource Owner` | Пользователь, владелец данных |
+| `Client` | Приложение, запрашивающее доступ |
+| `Authorization Server` | Сервер, выдающий токены |
+| `Resource Server` | Сервер, хранящий защищённые ресурсы |
 
-`OAuth 2.0` — это протокол авторизации, который позволяет приложениям получать ограниченный доступ к ресурсам пользователя
-без передачи учетных данных. ### Роли в `OAuth 2.0`
+### `Authorization Code Grant` — основной поток
 
-#### 1. `Resource Owner` (Владелец ресурса)
+```mermaid
+sequenceDiagram
+    participant U as User (Browser)
+    participant C as Client App
+    participant AS as Authorization Server
+    participant RS as Resource Server
 
-Пользователь, который авторизует доступ к своим данным. #### 2. `Client` (Клиент)
-Приложение, запрашивающее доступ к ресурсам. #### 3. `Authorization Server` (Сервер авторизации)
-Сервер, который аутентифицирует пользователя и выдает токены. #### 4. `Resource Server` (Сервер ресурсов)
-Сервер, который хранит защищенные ресурсы. ### `Grant Types` (Типы грантов)
-
-#### 1. `Authorization Code Grant`
-
-Описание: Наиболее безопасный тип гранта для веб-приложений.Поток:
-
-```text
-1. Client -> Authorization Server: Запрос авторизации
- GET /authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=SCOPE
-
-2. Authorization Server -> Resource Owner: Запрос согласия
-
-3. Resource Owner -> Authorization Server: Согласие
-
-4. Authorization Server -> Client: Authorization Code
- REDIRECT_URI?code=AUTHORIZATION_CODE
-
-5. Client -> Authorization Server: Обмен кода на токен
- POST /token
- grant_type=authorization_code&code=AUTH_CODE&redirect_uri=REDIRECT_URI&client_id=CLIENT_ID&client_secret=CLIENT_SECRET
-
-6. Authorization Server -> Client: Access Token + Refresh Token
+    U->>C: 1. Запрос защищённого ресурса
+    C->>AS: 2. Redirect на /authorize
+    AS->>U: 3. Страница входа + consent
+    U->>AS: 4. Логин + согласие
+    AS->>C: 5. Authorization Code (redirect)
+    C->>AS: 6. POST /token (code + client_secret)
+    AS->>C: 7. Access Token + Refresh Token
+    C->>RS: 8. GET /resource (Bearer token)
+    RS->>C: 9. Данные
 ```
 
-Реализация:
+### Реализация в `Spring Boot`
 
 ```java
-
 @RestController
 @RequestMapping("/oauth")
 public class OAuthController {
 
-    private final OAuth2AuthorizedClientService authorizedClientService;
-
     @GetMapping("/login")
     public String login() {
         return "redirect:/oauth2/authorization/google";
-    }
-
-    @GetMapping("/callback")
-    public String callback(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient client) {
-        // Токен доступен через client.getAccessToken()
-        return "redirect:/dashboard";
     }
 
     @GetMapping("/user")
@@ -319,181 +282,119 @@ public class OAuthController {
 }
 ```
 
-#### 2. `Implicit Grant` (`Legacy`)
+### `Grant Types`
 
-Описание: Упрощенный поток для `SPA` приложений (устарел, используйте `Authorization Code` with `PKCE`).
+| Тип | Сценарий | Статус |
+|-----|----------|--------|
+| `Authorization Code` | Веб-приложения с backend | Рекомендуется |
+| `Authorization Code + PKCE` | `SPA`, мобильные | Рекомендуется |
+| `Client Credentials` | Сервис-сервис | Рекомендуется |
+| `Implicit` | `SPA` (устарел) | Deprecated |
+| `Resource Owner Password` | Доверенные клиенты | Не рекомендуется |
 
-#### 3. `Resource Owner Password Credentials Grant`
-
-Описание: Прямой обмен учетных данных на токен.Использование:
-
-```java
-
-@Service
-public class OAuthService {
-
-    private final RestTemplate restTemplate;
-
-    public OAuthToken getToken(String username, String password) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth("client_id", "client_secret");
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "password");
-        params.add("username", username);
-        params.add("password", password);
-        params.add("scope", "read write");
-
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
-        ResponseEntity<OAuthToken> response = restTemplate.postForEntity(
-                "http://auth-server/oauth/token", request, OAuthToken.class);
-
-        return response.getBody();
-    }
-}
-```
-
-#### 4. `Client Credentials Grant`
-
-Описание: Аутентификация между сервисами без участия пользователя.Использование:
+### `Client Credentials Grant` — для межсервисного взаимодействия
 
 ```java
-
 @Service
 public class ServiceAuthenticationService {
 
-    public String getServiceToken() {
-        // Получение токена для service-to-service коммуникации
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth("service-client", "service-secret");
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    private final RestClient restClient;
 
+    public String getServiceToken() {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "client_credentials");
         params.add("scope", "service");
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+        Map<String, Object> response = restClient.post()
+            .uri("http://auth-server/oauth2/token")
+            .headers(h -> h.setBasicAuth("service-client", "service-secret"))
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .body(params)
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() {});
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                "http://auth-server/oauth/token", request, Map.class);
-
-        return (String) response.getBody().get("access_token");
+        return (String) response.get("access_token");
     }
 }
 ```
 
-### `Refresh Tokens`
+## Q3. (!) Как работает `JWT` аутентификация?
 
-```java
+`JWT` (`JSON Web Token`) — компактный, URL-safe способ представления claims между сторонами (`RFC 7519`).
 
-@Service
-public class TokenRefreshService {
+### Структура `JWT`
 
-    private final RestTemplate restTemplate;
-
-    public OAuthToken refreshToken(String refreshToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth("client_id", "client_secret");
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", "refresh_token");
-        params.add("refresh_token", refreshToken);
-
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
-        ResponseEntity<OAuthToken> response = restTemplate.postForEntity(
-                "http://auth-server/oauth/token", request, OAuthToken.class);
-
-        return response.getBody();
-    }
-}
+```mermaid
+graph LR
+    A["Header<br/>(alg, typ)"] -->|Base64| D[eyJhbGci...]
+    B["Payload<br/>(sub, exp, roles)"] -->|Base64| E[eyJzdWIi...]
+    C["Signature<br/>HMAC(header.payload, secret)"] --> F[SflKxwRJ...]
+    D --- G["."]
+    G --- E
+    E --- H["."]
+    H --- F
 ```
 
-## Q3. Как работает `JWT` аутентификация?
-
-`JWT` (JSON Web Token) — это компактный, URL-safe способ представления claims между двумя сторонами. ### Структура `JWT`
-
-`JWT` состоит из трех частей: `Header`, `Payload`, `Signature`. #### 1. `Header` (Заголовок)
-
+**Header:**
 ```json
-{
-  "alg": "HS256",
-  "typ": "JWT"
-}
+{ "alg": "RS256", "typ": "JWT" }
 ```
 
-#### 2. `Payload` (Полезная нагрузка)
-
+**Payload:**
 ```json
 {
-  "sub": "1234567890",
+  "sub": "user123",
   "name": "John Doe",
+  "roles": ["USER", "ADMIN"],
   "iat": 1516239022,
-  "exp": 1516242622,
-  "roles": [
-    "USER",
-    "ADMIN"
-  ]
+  "exp": 1516242622
 }
-```
-
-#### 3. `Signature` (Подпись)
-
-```text
-HMACSHA256(
- base64UrlEncode(header) + "." +
- base64UrlEncode(payload),
- secret
-)
 ```
 
 ### Реализация `JWT` в `Java`
 
 ```java
-
 @Component
 public class JwtUtil {
 
-    private final String SECRET_KEY = "mySecretKey";
+    private final SecretKey secretKey;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", user.getRoles());
-
-        return createToken(claims, user.getUsername());
+        return Jwts.builder()
+            .subject(user.getUsername())
+            .claim("roles", user.getRoles())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + 10 * 60 * 60 * 1000))
+            .signWith(secretKey)
+            .compact();
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 часов.signWith(SignatureAlgorithm.HS256, SECRET_KEY).compact();
-    }
-
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public boolean validateToken(String token, UserDetails userDetails) {
+        String username = extractUsername(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return Jwts.parser()
+            .verifyWith(secretKey)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getSubject();
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
-    }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
-    }
-
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    private boolean isTokenExpired(String token) {
+        Date expiration = Jwts.parser()
+            .verifyWith(secretKey)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getExpiration();
+        return expiration.before(new Date());
     }
 }
 ```
@@ -501,51 +402,43 @@ public class JwtUtil {
 ### `JWT Filter` для `Spring Security`
 
 ```java
-
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
+        String authHeader = request.getHeader("Authorization");
 
-        final String authorizationHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+            String username = jwtUtil.extractUsername(jwt);
 
-        String username = null;
-        String jwt = null;
+            if (username != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            username = jwtUtil.extractUsername(jwt);
-        }
-
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                if (jwtUtil.validateToken(jwt, userDetails)) {
+                    var authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         }
-
         chain.doFilter(request, response);
     }
 }
 ```
 
-### `Refresh Tokens` с `JWT`
+### `Refresh Token` с ротацией
 
 ```java
-
 @Service
 public class TokenService {
 
@@ -554,62 +447,55 @@ public class TokenService {
 
     public TokenPair generateTokens(User user) {
         String accessToken = jwtUtil.generateToken(user);
-        String refreshToken = generateRefreshToken(user);
+        String refreshToken = UUID.randomUUID().toString();
 
-        // Сохранение refresh token
-        RefreshToken refreshTokenEntity = new RefreshToken();
-        refreshTokenEntity.setToken(refreshToken);
-        refreshTokenEntity.setUsername(user.getUsername());
-        refreshTokenEntity.setExpiryDate(calculateExpiryDate());
-        refreshTokenRepository.save(refreshTokenEntity);
+        refreshTokenRepository.save(new RefreshToken(
+            refreshToken, user.getUsername(),
+            Date.from(Instant.now().plus(30, ChronoUnit.DAYS))));
 
         return new TokenPair(accessToken, refreshToken);
     }
 
     public TokenPair refreshTokens(String refreshToken) {
-        RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshToken).orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
+        RefreshToken entity = refreshTokenRepository.findByToken(refreshToken)
+            .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
-        if (tokenEntity.getExpiryDate().before(new Date())) {
-            refreshTokenRepository.delete(tokenEntity);
+        if (entity.getExpiryDate().before(new Date())) {
+            refreshTokenRepository.delete(entity);
             throw new TokenExpiredException("Refresh token expired");
         }
 
-        User user = userService.findByUsername(tokenEntity.getUsername());
-        refreshTokenRepository.delete(tokenEntity); // One-time use
-
+        User user = userService.findByUsername(entity.getUsername());
+        refreshTokenRepository.delete(entity); // одноразовое использование
         return generateTokens(user);
-    }
-
-    private String generateRefreshToken(User user) {
-        return UUID.randomUUID().toString();
-    }
-
-    private Date calculateExpiryDate() {
-        return new Date(System.currentTimeMillis() + 30 * 24 * 60 * 60 * 1000L); // 30 дней
     }
 }
 ```
 
-## Q4. Что такое `RBAC` и `ABAC`?
+## Q4. (!) Что такое `RBAC` и `ABAC`?
 
 ### `Role-Based Access Control` (`RBAC`)
 
-`RBAC` — это модель управления доступом, основанная на ролях пользователей. #### Основные компоненты
+`RBAC` — модель управления доступом на основе ролей. Пользователи получают роли, роли содержат разрешения.
 
-1. `Users` (Пользователи)
-2. `Roles` (Роли) — наборы разрешений
-3. `Permissions` (Разрешения) — действия над ресурсами
-4. `Sessions` (Сессии) — активные роли пользователя
+```mermaid
+graph LR
+    U[User] -->|назначена| R[Role]
+    R -->|содержит| P[Permission]
+    U2[User] -->|назначена| R
+    R2[Admin Role] -->|содержит| P1[READ]
+    R2 -->|содержит| P2[WRITE]
+    R2 -->|содержит| P3[DELETE]
+    R3[User Role] -->|содержит| P1
+```
 
-#### Реализация `RBAC`
+#### Реализация `RBAC` — доменная модель
 
 ```java
-
 @Entity
 public class User {
     @Id
     private Long id;
-
     private String username;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -621,7 +507,6 @@ public class User {
 public class Role {
     @Id
     private Long id;
-
     private String name; // "ADMIN", "USER", "MODERATOR"
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -633,49 +518,16 @@ public class Role {
 public class Permission {
     @Id
     private Long id;
-
     private String name; // "READ_POST", "CREATE_POST", "DELETE_POST"
-}
-
-@Service
-public class RbacService {
-
-    public boolean hasPermission(User user, String permission) {
-        return user.getRoles().stream().flatMap(role -> role.getPermissions().stream()).anyMatch(p -> p.getName().equals(permission));
-    }
-
-    public boolean hasRole(User user, String roleName) {
-        return user.getRoles().stream().anyMatch(role -> role.getName().equals(roleName));
-    }
 }
 ```
 
-#### `RBAC` в `Spring Security`
+#### `RBAC` в `Spring Security` с `@PreAuthorize`
 
 ```java
-
 @Configuration
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class RbacConfig {
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new CustomUserDetailsService();
-    }
-}
-
-@Service
-public class CustomUserDetailsService implements UserDetailsService {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        return User.builder().username(user.getUsername()).password(user.getPassword()).authorities(user.getRoles().stream().flatMap(role -> role.getPermissions().stream()).map(permission -> new SimpleGrantedAuthority(permission.getName())).collect(Collectors.toList())).build();
-    }
+@EnableMethodSecurity // Spring Security 6+
+public class SecurityConfig {
 }
 
 @RestController
@@ -694,7 +546,7 @@ public class PostController {
         return postService.create(post);
     }
 
-    @PreAuthorize("hasAuthority('DELETE_POST')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deletePost(@PathVariable Long id) {
         postService.delete(id);
@@ -704,100 +556,59 @@ public class PostController {
 
 ### `Attribute-Based Access Control` (`ABAC`)
 
-`ABAC` — это модель управления доступом, основанная на атрибутах субъекта, объекта, действия и окружения. #### Основные
-компоненты
+`ABAC` — модель доступа на основе атрибутов субъекта, объекта, действия и окружения. Гибче `RBAC`, но сложнее в реализации.
 
-1. `Subject Attributes` — атрибуты пользователя (роль, отдел, уровень доступа)
-2. `Object Attributes` — атрибуты ресурса (владелец, чувствительность, категория)
-3. `Action Attributes` — атрибуты действия (чтение, запись, удаление)
-4. `Environment Attributes` — атрибуты окружения (время, локация, `IP`)
+```mermaid
+graph TB
+    R[Access Request] --> PE[Policy Engine]
+    SA[Subject Attributes<br/>роль, отдел, уровень] --> PE
+    OA[Object Attributes<br/>владелец, категория] --> PE
+    EA[Environment Attributes<br/>время, IP, локация] --> PE
+    PE -->|Evaluate| D{Решение}
+    D -->|Allow| A[Доступ разрешён]
+    D -->|Deny| DN[Доступ отклонён]
+```
 
 #### Реализация `ABAC`
 
 ```java
-public class AccessRequest {
-    private User subject;
-    private Object object;
-    private String action;
-    private EnvironmentContext environment;
-}
-
-public class EnvironmentContext {
-    private LocalDateTime timestamp;
-    private String ipAddress;
-    private String userAgent;
-    private String location;
-}
-
 @Service
 public class AbacService {
 
+    private final List<AccessPolicy> policies;
+
     public boolean isAllowed(AccessRequest request) {
-        // Проверка атрибутов субъекта
-        if (!checkSubjectAttributes(request.getSubject())) {
-            return false;
-        }
+        return policies.stream()
+            .allMatch(policy -> policy.evaluate(request));
+    }
+}
 
-        // Проверка атрибутов объекта
-        if (!checkObjectAttributes(request.getObject(), request.getSubject())) {
-            return false;
-        }
+public interface AccessPolicy {
+    boolean evaluate(AccessRequest request);
+}
 
-        // Проверка действия
-        if (!checkActionAttributes(request.getAction())) {
-            return false;
-        }
+@Component
+public class WorkingHoursPolicy implements AccessPolicy {
 
-        // Проверка окружения
-        if (!checkEnvironmentAttributes(request.getEnvironment())) {
-            return false;
+    @Override
+    public boolean evaluate(AccessRequest request) {
+        if ("DELETE".equals(request.getAction())) {
+            int hour = LocalDateTime.now().getHour();
+            return hour >= 9 && hour <= 17; // удаление только в рабочее время
         }
-
         return true;
     }
+}
 
-    private boolean checkSubjectAttributes(User subject) {
-        // Проверка статуса аккаунта
-        return subject.isActive() && !subject.isLocked();
-    }
+@Component
+public class OwnershipPolicy implements AccessPolicy {
 
-    private boolean checkObjectAttributes(Object object, User subject) {
-        if (object instanceof Document) {
-            Document doc = (Document) object;
-
-            // Пользователь может видеть документ если:
-            // - он владелец
-            // - документ публичный
-            // - у него есть роль с доступом к этому типу документов
-            return doc.getOwnerId().equals(subject.getId()) ||
-                    doc.isPublic() ||
-                    hasAccessToDocumentType(subject, doc.getType());
+    @Override
+    public boolean evaluate(AccessRequest request) {
+        if (request.getResource() instanceof OwnedResource owned) {
+            return owned.getOwnerId().equals(request.getSubject().getId())
+                || request.getSubject().hasRole("ADMIN");
         }
-
-        return true;
-    }
-
-    private boolean checkActionAttributes(String action) {
-        // Некоторые действия могут быть запрещены в определенное время
-        LocalDateTime now = LocalDateTime.now();
-        if (action.equals("DELETE") && (now.getHour() < 9 || now.getHour() > 17)) {
-            return false; // Удаление разрешено только в рабочее время
-        }
-
-        return true;
-    }
-
-    private boolean checkEnvironmentAttributes(EnvironmentContext env) {
-        // Проверка IP адреса
-        if (isBlacklistedIp(env.getIpAddress())) {
-            return false;
-        }
-
-        // Проверка локации
-        if (!isAllowedLocation(env.getLocation())) {
-            return false;
-        }
-
         return true;
     }
 }
@@ -805,31 +616,58 @@ public class AbacService {
 
 ### Сравнение `RBAC` и `ABAC`
 
-| Аспект             | `RBAC`             | `ABAC`             |
-|--------------------|------------------|------------------|
-| Гибкость           | Средняя          | Высокая          |
-| Сложность          | Низкая           | Высокая          |
-| Масштабируемость   | Хорошая          | Отличная         |
-| Производительность | Высокая          | Средняя          |
-| Использование      | Простые сценарии | Сложные политики |
+| Аспект | `RBAC` | `ABAC` |
+|--------|--------|--------|
+| Гибкость | Средняя | Высокая |
+| Сложность внедрения | Низкая | Высокая |
+| Масштабируемость политик | Хорошая | Отличная |
+| Производительность | Высокая (lookup по роли) | Средняя (вычисление политик) |
+| Аудит | Простой | Сложный |
+| Когда использовать | Фиксированные роли, простые правила | Контекстные правила, сложные политики |
 
-## Q5. Как реализовать безопасность в микросервисах?
+## Q5. В чём разница между аутентификацией и авторизацией?
 
-### 1. `API Gateway Security`
+Это фундаментальные понятия безопасности, которые часто путают на собеседованиях.
+
+| Аспект | Аутентификация (AuthN) | Авторизация (AuthZ) |
+|--------|------------------------|---------------------|
+| Вопрос | **Кто ты?** | **Что тебе можно?** |
+| Цель | Подтверждение личности | Проверка прав доступа |
+| Порядок | Первая | Вторая (после AuthN) |
+| Протоколы | `OIDC`, `SAML`, `LDAP` | `OAuth 2.0`, `RBAC`, `ABAC` |
+| Данные | Credentials (пароль, сертификат) | Permissions, roles, scopes |
+| HTTP-коды | `401 Unauthorized` | `403 Forbidden` |
+
+```mermaid
+graph LR
+    A[Запрос] --> B{Аутентификация<br/>Кто ты?}
+    B -->|Не пройдена| C[401 Unauthorized]
+    B -->|Пройдена| D{Авторизация<br/>Что можно?}
+    D -->|Нет прав| E[403 Forbidden]
+    D -->|Есть права| F[200 OK / Ресурс]
+```
+
+В `Spring Security` аутентификация обрабатывается `AuthenticationManager`, а авторизация — `AccessDecisionManager` / `AuthorizationManager` (Spring Security 6+). Подробнее — в [Spring Security](../frameworks/spring/spring-security-interview.md).
+
+## Q6. (!) Как реализовать безопасность в микросервисах?
+
+Безопасность в [микросервисах](../architecture/microservices-interview.md) строится на нескольких уровнях: edge-уровень (`API Gateway`), межсервисная аутентификация и централизованная авторизация.
+
+```mermaid
+graph TB
+    Client[Client] --> GW[API Gateway<br/>JWT валидация]
+    GW --> S1[Service A]
+    GW --> S2[Service B]
+    S1 <-->|mTLS + JWT| S2
+    S1 --> AuthZ[Authorization Service]
+    S2 --> AuthZ
+    GW --> IDP[Identity Provider<br/>Keycloak / Auth0]
+```
+
+### 1. `API Gateway` — единая точка безопасности
 
 ```java
-
-@Configuration
-@EnableWebFluxSecurity
-public class GatewaySecurityConfig {
-
-    @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-        return http.authorizeExchange().pathMatchers("/auth/").permitAll().pathMatchers("/api/public/").permitAll().anyExchange().authenticated().and().oauth2ResourceServer().jwt().and().build();
-    }
-}
-
-@Service
+@Component
 public class GatewayAuthFilter implements GlobalFilter, Ordered {
 
     private final JwtUtil jwtUtil;
@@ -838,530 +676,250 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().toString();
 
-        // Пропуск публичных эндпоинтов
         if (path.startsWith("/auth/") || path.startsWith("/api/public/")) {
             return chain.filter(exchange);
         }
 
-        // Валидация JWT токена
         String token = extractToken(exchange.getRequest());
         if (token == null || !jwtUtil.validateToken(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        // Добавление информации о пользователе в заголовки
+        // Пробрасываем данные пользователя downstream-сервисам
         String username = jwtUtil.extractUsername(token);
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate().header("X-User-Id", username).build();
+        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+            .header("X-User-Id", username)
+            .header("X-User-Roles", String.join(",", jwtUtil.extractRoles(token)))
+            .build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
     }
 
-    private String extractToken(ServerHttpRequest request) {
-        String authHeader = request.getHeaders().getFirst("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return null;
-    }
-
     @Override
-    public int getOrder() {
-        return -100; // Выполняется перед другими фильтрами
-    }
+    public int getOrder() { return -100; }
 }
 ```
 
-### 2. `Service-to-Service Authentication`
-
-#### `JWT` между сервисами
+### 2. `Service-to-Service` аутентификация через `JWT`
 
 ```java
-
-@Service
-public class ServiceTokenProvider {
-
-    private final String serviceName;
-    private final String sharedSecret;
-    private final JwtUtil jwtUtil;
-
-    public String generateServiceToken() {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("service", serviceName);
-        claims.put("type", "service");
-
-        return jwtUtil.createToken(claims, serviceName, 5 * 60 * 1000); // 5 минут
-    }
-}
-
 @Component
 public class ServiceAuthInterceptor implements ClientHttpRequestInterceptor {
 
-    @Autowired
-    private ServiceTokenProvider tokenProvider;
+    private final ServiceTokenProvider tokenProvider;
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body,
-                                        ClientHttpRequestExecution execution) throws IOException {
-
+                                        ClientHttpRequestExecution execution)
+                                        throws IOException {
         String serviceToken = tokenProvider.generateServiceToken();
-        request.getHeaders().set("Authorization", "Bearer " + serviceToken);
+        request.getHeaders().setBearerAuth(serviceToken);
         request.getHeaders().set("X-Service-Name", "order-service");
-
         return execution.execute(request, body);
     }
 }
-
-@Configuration
-public class RestTemplateConfig {
-
-    @Bean
-    public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getInterceptors().add(new ServiceAuthInterceptor());
-        return restTemplate;
-    }
-}
 ```
 
-#### `mTLS` (`Mutual TLS`)
-
-```yaml
-# application.yml
-server:
-  ssl:
-  enabled: true
-  client-auth: need # Требуется клиентский сертификат
-  trust-store: classpath:truststore.jks
-  trust-store-password: changeit
-  key-store: classpath:keystore.jks
-  key-store-password: changeit
-
-# WebClient конфигурация для mTLS
-  @Configuration
-  public class WebClientConfig {
-
-  @Bean
-  public WebClient webClient() {
-  SslContext sslContext = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).keyManager(getKeyManagerFactory()).build();
-
-  HttpClient httpClient = HttpClient.create().secure(sslContextSpec -> sslContextSpec.sslContext(sslContext));
-
-  return WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build();
-}
-
-  private KeyManagerFactory getKeyManagerFactory() {
-  // Загрузка клиентского сертификата
-  try {
-  KeyStore keyStore = KeyStore.getInstance("PKCS12");
-  keyStore.load(new FileInputStream("client.p12"), "password".toCharArray());
-
-  KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-  keyManagerFactory.init(keyStore, "password".toCharArray());
-
-  return keyManagerFactory;
-} catch (Exception e) {
-  throw new RuntimeException("Failed to load client certificate", e);
-}
-}
-}
-```
-
-### 3. `Centralized Authorization`
+### 3. Централизованная авторизация
 
 ```java
-// Authorization Service
 @RestController
 @RequestMapping("/authz")
 public class AuthorizationController {
 
+    private final AuthorizationService authorizationService;
+
     @PostMapping("/check")
     public AuthorizationDecision checkPermission(@RequestBody AuthzRequest request) {
-        // Проверка прав в централизованном сервисе
         boolean allowed = authorizationService.hasPermission(
-                request.getUserId(),
-                request.getResource(),
-                request.getAction(),
-                request.getContext()
-        );
-
+            request.getUserId(), request.getResource(),
+            request.getAction(), request.getContext());
         return new AuthorizationDecision(allowed);
-    }
-}
-
-public class AuthzRequest {
-    private String userId;
-    private String resource;
-    private String action;
-    private Map<String, Object> context;
-}
-
-// Client-side проверка
-@Service
-public class RemoteAuthorizationService {
-
-    private final WebClient webClient;
-
-    public boolean hasPermission(String userId, String resource, String action, Map<String, Object> context) {
-        AuthzRequest request = new AuthzRequest(userId, resource, action, context);
-
-        try {
-            AuthorizationDecision decision = webClient.post().uri("/authz/check").bodyValue(request).retrieve().bodyToMono(AuthorizationDecision.class).block();
-
-            return decision.isAllowed();
-        } catch (Exception e) {
-            // Fail-safe: отказ в доступе при ошибке
-            return false;
-        }
     }
 }
 ```
 
-### 4. `Distributed Session Management`
+### 4. Распределённые сессии через `Redis`
 
 ```java
-
 @Configuration
-@EnableRedisHttpSession
+@EnableRedisHttpSession(redisNamespace = "myapp:session")
 public class SessionConfig {
 
     @Bean
     public LettuceConnectionFactory connectionFactory() {
-        return new LettuceConnectionFactory();
+        return new LettuceConnectionFactory("redis-server", 6379);
     }
 }
-
-// Использование Redis для хранения сессий
-#application.yml
-spring:
-session:
-store-type:redis
-timeout:30m
-redis:
-host:localhost
-port:6379
 ```
 
-## Q6. Что такое `SAML` и когда его использовать?
+## Q7. Что такое `SAML` и когда его использовать?
 
-`SAML` (`Security Assertion Markup Language`) — это открытый стандарт для обмена аутентификационной и авторизационной
-информацией между системами. ### Компоненты `SAML`
+`SAML` (`Security Assertion Markup Language`) — `XML`-стандарт обмена аутентификационной и авторизационной информацией. Используется преимущественно в enterprise-сценариях.
 
-#### 1. `Identity Provider` (`IdP`)
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant SP as Service Provider
+    participant IdP as Identity Provider
 
-Система, которая аутентифицирует пользователей и выдает `SAML` assertions. #### 2. `Service Provider` (`SP`)
-Приложение, которое полагается на `IdP` для аутентификации. #### 3. `SAML Assertion`
-`XML` документ, содержащий информацию о пользователе и его правах. ### Типы `SAML Assertions`
-
-#### 1. `Authentication Assertion`
-
-Подтверждает аутентификацию пользователя. #### 2. `Attribute Assertion`
-Содержит атрибуты пользователя (роли, email, etc.). #### 3. `Authorization Decision Assertion`
-Определяет права доступа пользователя. ### `SAML Flow`
-
-```text
-1. User -> SP: Запрос доступа к ресурсу
-2. SP -> IdP: SAML AuthnRequest
-3. IdP -> User: Страница входа
-4. User -> IdP: Учетные данные
-5. IdP -> SP: SAML Response с assertion
-6. SP -> User: Доступ к ресурсу
+    U->>SP: 1. Запрос доступа
+    SP->>IdP: 2. SAML AuthnRequest (redirect)
+    IdP->>U: 3. Страница входа
+    U->>IdP: 4. Логин/пароль
+    IdP->>SP: 5. SAML Response (assertion)
+    SP->>U: 6. Доступ к ресурсу
 ```
 
-### Реализация `SAML` в `Spring`
-
-```xml
-<!-- pom.xml -->
-<dependency>
-    <groupId>org.springframework.security.extensions</groupId>
-    <artifactId>spring-security-saml2-service-provider</artifactId>
-</dependency>
-```
+### Конфигурация `SAML` в `Spring Security`
 
 ```java
-
 @Configuration
 @EnableWebSecurity
 public class SamlSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().authenticated().and().saml2Login().successHandler(samlAuthenticationSuccessHandler());
-
+        http
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .saml2Login(Customizer.withDefaults());
         return http.build();
     }
 
     @Bean
-    public Saml2AuthenticationSuccessHandler samlAuthenticationSuccessHandler() {
-        return new Saml2AuthenticationSuccessHandler();
-    }
-
-    @Bean
     public RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
-        // Конфигурация SAML IdP
-        Saml2RelyingPartyRegistration registration =
-                Saml2RelyingPartyRegistration.withRegistrationId("okta").entityId("my-app").assertionConsumerServiceUrl("http://localhost:8080/login/saml2/sso/okta").signingX509Credentials(credentials ->
-                        credentials.add(getSigningCredential())).singleLogoutServiceUrl("http://localhost:8080/logout/saml2/sso/okta").assertingPartyDetails(party -> party.entityId("okta-entity-id").singleSignOnServiceUrl("https://okta-sso-url").wantAuthnRequestsSigned(true)).build();
-
+        RelyingPartyRegistration registration = RelyingPartyRegistrations
+            .fromMetadataLocation("https://idp.example.com/metadata")
+            .registrationId("okta")
+            .build();
         return new InMemoryRelyingPartyRegistrationRepository(registration);
     }
 }
 ```
 
-### Когда использовать `SAML`
+**Когда `SAML`:** корпоративные приложения, интеграция с `Active Directory / ADFS`, enterprise SSO.
+**Когда `OIDC` вместо `SAML`:** новые приложения, мобильные, `SPA`, `REST API`.
 
-#### Преимущества `SAML`:
+## Q8. (!) Как реализовать `Multi-Factor Authentication`?
 
-- `Enterprise Integration`: Отличная поддержка корпоративных систем
-- `Federation`: `SSO` между множеством приложений
-- `Standards-Based`: Широкая поддержка
-- `Secure`: Цифровые подписи и шифрование
+`MFA` добавляет дополнительные факторы проверки помимо пароля: **something you know** (пароль), **something you have** (телефон, ключ), **something you are** (биометрия).
 
-#### Недостатки `SAML`:
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as Server
+    participant A as Authenticator App
 
-- `Complexity`: Сложная настройка
-- `XML Overhead`: Большие сообщения
-- `Browser Dependency`: Требует браузера для `SSO`
-
-#### Когда использовать `SAML`:
-
-- Корпоративные приложения
-- `SSO` между множеством систем
-- Интеграция с `Active Directory / ADFS`
-- Когда нужен высокий уровень безопасности
-
-## Q7. Как реализовать `Multi-Factor Authentication`?
-
-`MFA` добавляет дополнительные уровни проверки подлинности пользователя. ### Типы факторов
-
-#### 1. `Something` you know (Пароль)
-
-#### 2. `Something` you have (Телефон, токен, приложение)
-
-#### 3. `Something` you are (Биометрия)
+    U->>S: 1. username + password
+    S->>S: 2. Проверка credentials
+    S->>U: 3. Запрос 2FA кода
+    U->>A: 4. Открывает приложение
+    A->>U: 5. TOTP-код (6 цифр)
+    U->>S: 6. Ввод TOTP-кода
+    S->>S: 7. Верификация TOTP
+    S->>U: 8. JWT-токен (аутентификация завершена)
+```
 
 ### Реализация `TOTP` (`Time-based One-Time Password`)
 
 ```java
-
 @Service
 public class TotpService {
 
-    private final TOTP totp = new TOTP();
-
     public String generateSecret() {
-        // Генерация 32-символьного base32 секрета
-        return new Base32().encodeAsString(
-                new SecureRandom().generateSeed(20));
-    }
-
-    public String generateTotp(String secret) {
-        return totp.generateTOTP(secret);
+        return new Base32().encodeAsString(new SecureRandom().generateSeed(20));
     }
 
     public boolean verifyTotp(String secret, String code) {
-        // Проверка с учетом clock skew (±30 секунд)
-        return totp.verifyTOTP(secret, code);
+        // Проверка с учётом clock skew (±30 секунд)
+        byte[] decodedKey = new Base32().decode(secret);
+        long timeStep = System.currentTimeMillis() / 30_000;
+
+        for (int i = -1; i <= 1; i++) {
+            String computed = computeTotp(decodedKey, timeStep + i);
+            if (computed.equals(code)) return true;
+        }
+        return false;
     }
 
     public String generateQrCodeUrl(String secret, String username, String issuer) {
-        return String.format(
-                "otpauth://totp/%s:%s?secret=%s&issuer=%s",
-                issuer, username, secret, issuer);
+        return String.format("otpauth://totp/%s:%s?secret=%s&issuer=%s",
+            issuer, username, secret, issuer);
     }
 }
 ```
 
-### `MFA Flow`
+### `MFA Flow` — контроллер
 
 ```java
-
 @RestController
 @RequestMapping("/auth")
 public class MfaController {
 
-    @Autowired
-    private TotpService totpService;
-    @Autowired
-    private UserService userService;
+    private final TotpService totpService;
+    private final JwtService jwtService;
+    private final UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         User user = userService.authenticate(request.getUsername(), request.getPassword());
 
-        if (user == null) {
-            return ResponseEntity.badRequest().body("Invalid credentials");
-        }
-
         if (user.isMfaEnabled()) {
-            // Первый фактор пройден, требуется второй фактор
             String sessionId = createMfaSession(user.getId());
             return ResponseEntity.ok(new MfaRequiredResponse(sessionId));
-        } else {
-            // MFA не требуется, вход успешен
-            String token = jwtService.generateToken(user);
-            return ResponseEntity.ok(new LoginResponse(token));
         }
+        return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(user)));
     }
 
     @PostMapping("/mfa/verify")
     public ResponseEntity<?> verifyMfa(@RequestBody MfaVerificationRequest request) {
         MfaSession session = getMfaSession(request.getSessionId());
-
         User user = userService.findById(session.getUserId());
-        boolean validCode = totpService.verifyTotp(user.getMfaSecret(), request.getCode());
 
-        if (validCode) {
-            String token = jwtService.generateToken(user);
+        if (totpService.verifyTotp(user.getMfaSecret(), request.getCode())) {
             deleteMfaSession(request.getSessionId());
-            return ResponseEntity.ok(new LoginResponse(token));
-        } else {
-            return ResponseEntity.badRequest().body("Invalid MFA code");
+            return ResponseEntity.ok(new LoginResponse(jwtService.generateToken(user)));
         }
-    }
-
-    @PostMapping("/mfa/setup")
-    public ResponseEntity<?> setupMfa(@AuthenticationPrincipal User user) {
-        if (user.getMfaSecret() != null) {
-            return ResponseEntity.badRequest().body("MFA already enabled");
-        }
-
-        String secret = totpService.generateSecret();
-        String qrCodeUrl = totpService.generateQrCodeUrl(secret, user.getUsername(), "MyApp");
-
-        // Сохраняем секрет временно (до верификации)
-        user.setTempMfaSecret(secret);
-        userService.save(user);
-
-        return ResponseEntity.ok(new MfaSetupResponse(qrCodeUrl));
-    }
-
-    @PostMapping("/mfa/enable")
-    public ResponseEntity<?> enableMfa(@AuthenticationPrincipal User user,
-                                       @RequestBody MfaEnableRequest request) {
-
-        boolean validCode = totpService.verifyTotp(user.getTempMfaSecret(), request.getCode());
-
-        if (validCode) {
-            user.setMfaSecret(user.getTempMfaSecret());
-            user.setMfaEnabled(true);
-            user.setTempMfaSecret(null);
-            userService.save(user);
-
-            return ResponseEntity.ok("MFA enabled successfully");
-        } else {
-            return ResponseEntity.badRequest().body("Invalid verification code");
-        }
+        return ResponseEntity.badRequest().body("Invalid MFA code");
     }
 }
 ```
 
-### `SMS-Based MFA`
+## Q9. Какие паттерны сессионного управления существуют?
+
+### Сравнение подходов
+
+| Подход | State | Масштабирование | Logout | Использование |
+|--------|-------|-----------------|--------|---------------|
+| Server-Side Sessions | Stateful | Sticky sessions / Redis | Простой | Монолиты |
+| Distributed Sessions (Redis) | Stateful (shared) | Горизонтальное | Простой | Кластеры |
+| JWT-based (stateless) | Stateless | Отличное | Сложный* | Микросервисы |
+| Hybrid (JWT + Redis blacklist) | Mixed | Хорошее | Средний | Компромисс |
+
+*Для logout `JWT` нужен blacklist или короткий срок + refresh token.
+
+### `Server-Side Sessions` — конфигурация
 
 ```java
-
-@Service
-public class SmsMfaService {
-
-    private final TwilioService twilioService;
-    private final Cache<String, String> mfaCodes;
-
-    public void sendMfaCode(String phoneNumber) {
-        String code = generateCode();
-        String message = "Your verification code is: " + code;
-
-        twilioService.sendSms(phoneNumber, message);
-
-        // Сохраняем код в кэше на 5 минут
-        mfaCodes.put(phoneNumber, code);
-    }
-
-    public boolean verifyMfaCode(String phoneNumber, String code) {
-        String storedCode = mfaCodes.getIfPresent(phoneNumber);
-        if (storedCode != null && storedCode.equals(code)) {
-            mfaCodes.invalidate(phoneNumber);
-            return true;
-        }
-        return false;
-    }
-
-    private String generateCode() {
-        return String.format("%06d", new SecureRandom().nextInt(999999));
-    }
-}
-```
-
-## Q8. Какие паттерны сессионного управления существуют?
-
-### 1. `Server-Side Sessions`
-
-Описание: Хранение состояния сессии на сервере.Реализация:
-
-```java
-
 @Configuration
 public class SessionConfig {
 
     @Bean
-    public HttpSessionIdResolver httpSessionIdResolver() {
-        return HeaderHttpSessionIdResolver.xAuthToken();
-    }
-
-    @Bean
     public ServletContextInitializer servletContextInitializer() {
-        return servletContext -> {
-            // Настройка сессий
-            servletContext.getSessionCookieConfig().setHttpOnly(true);
-            servletContext.getSessionCookieConfig().setSecure(true);
-            servletContext.getSessionCookieConfig().setMaxAge(1800); // 30 минут
+        return ctx -> {
+            ctx.getSessionCookieConfig().setHttpOnly(true);
+            ctx.getSessionCookieConfig().setSecure(true);
+            ctx.getSessionCookieConfig().setMaxAge(1800); // 30 минут
+            ctx.getSessionCookieConfig().setAttribute("SameSite", "Strict");
         };
-    }
-}
-
-@Controller
-@RequestMapping("/session")
-public class SessionController {
-
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpSession session) {
-        User user = authenticateUser(request.getUsername(), request.getPassword());
-
-        if (user != null) {
-            // Сохранение пользователя в сессии
-            session.setAttribute("user", user);
-            session.setMaxInactiveInterval(30 * 60); // 30 минут
-
-            return ResponseEntity.ok("Login successful");
-        }
-
-        return ResponseEntity.badRequest().body("Invalid credentials");
-    }
-
-    @GetMapping("/user")
-    public ResponseEntity<?> getCurrentUser(HttpSession session) {
-        User user = (User) session.getAttribute("user");
-
-        if (user != null) {
-            return ResponseEntity.ok(user);
-        }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpSession session) {
-        session.invalidate();
-        return ResponseEntity.ok("Logout successful");
     }
 }
 ```
 
-### 2. `Distributed Sessions`
-
-Описание: Хранение сессий в распределенном хранилище. **Redis-based Sessions:**
+### Распределённые сессии через `Redis`
 
 ```java
-
 @Configuration
 @EnableRedisHttpSession(redisNamespace = "myapp:session")
 public class RedisSessionConfig {
@@ -1371,8 +929,6 @@ public class RedisSessionConfig {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName("redis-server");
         config.setPort(6379);
-        config.setPassword("password");
-
         return new LettuceConnectionFactory(config);
     }
 
@@ -1383,12 +939,9 @@ public class RedisSessionConfig {
 }
 ```
 
-### 3. `JWT-based Sessions`
-
-Описание: `Stateless` сессии с использованием `JWT`.Реализация:
+### `JWT-based Sessions` с ротацией refresh-токенов
 
 ```java
-
 @Service
 public class JwtSessionService {
 
@@ -1396,129 +949,37 @@ public class JwtSessionService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     public SessionTokens createSession(User user) {
-        // Создание access token (короткоживущий)
-        String accessToken = jwtUtil.generateToken(user);
+        String accessToken = jwtUtil.generateToken(user);    // 15 минут
+        String refreshToken = UUID.randomUUID().toString();   // 30 дней
 
-        // Создание refresh token (долгоживущий)
-        String refreshToken = UUID.randomUUID().toString();
-
-        // Сохранение refresh token
-        RefreshToken tokenEntity = new RefreshToken();
-        tokenEntity.setToken(refreshToken);
-        tokenEntity.setUsername(user.getUsername());
-        tokenEntity.setExpiryDate(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)));
-        refreshTokenRepository.save(tokenEntity);
+        refreshTokenRepository.save(new RefreshToken(
+            refreshToken, user.getUsername(),
+            Date.from(Instant.now().plus(30, ChronoUnit.DAYS))));
 
         return new SessionTokens(accessToken, refreshToken);
     }
 
     public SessionTokens refreshSession(String refreshToken) {
-        RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshToken).orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
+        RefreshToken entity = refreshTokenRepository.findByToken(refreshToken)
+            .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
-        if (tokenEntity.getExpiryDate().before(new Date())) {
-            refreshTokenRepository.delete(tokenEntity);
+        if (entity.getExpiryDate().before(new Date())) {
+            refreshTokenRepository.delete(entity);
             throw new TokenExpiredException("Refresh token expired");
         }
 
-        User user = userService.findByUsername(tokenEntity.getUsername());
-
-        // Удаление использованного refresh token
-        refreshTokenRepository.delete(tokenEntity);
-
+        User user = userService.findByUsername(entity.getUsername());
+        refreshTokenRepository.delete(entity); // ротация: старый удаляется
         return createSession(user);
     }
-
-    public void invalidateSession(String refreshToken) {
-        refreshTokenRepository.findByToken(refreshToken).ifPresent(refreshTokenRepository::delete);
-    }
 }
 ```
 
-### 4. Session Security Best practices
-
-```java
-
-@Configuration
-public class SessionSecurityConfig {
-
-    @Bean
-    public HttpSessionListener sessionListener() {
-        return new HttpSessionListener() {
-
-            @Override
-            public void sessionCreated(HttpSessionEvent se) {
-                HttpSession session = se.getSession();
-
-                // Установка безопасных параметров сессии
-                session.setMaxInactiveInterval(30 * 60); // 30 минут
-                session.setAttribute("created", System.currentTimeMillis());
-                session.setAttribute("ip", getClientIp()); // Отслеживание IP
-
-                logger.info("Session created: {}", session.getId());
-            }
-
-            @Override
-            public void sessionDestroyed(HttpSessionEvent se) {
-                HttpSession session = se.getSession();
-
-                // Логирование завершения сессии
-                Long created = (Long) session.getAttribute("created");
-                Long duration = System.currentTimeMillis() - created;
-
-                logger.info("Session destroyed: {}, duration: {}ms",
-                        session.getId(), duration);
-            }
-        };
-    }
-
-    @Bean
-    public Filter sessionSecurityFilter() {
-        return new OncePerRequestFilter() {
-
-            @Override
-            protected void doFilterInternal(HttpServletRequest request,
-                                            HttpServletResponse response,
-                                            FilterChain filterChain) throws ServletException, IOException {
-
-                HttpSession session = request.getSession(false);
-                if (session != null) {
-                    // Проверка IP адреса (защита от session hijacking)
-                    String sessionIp = (String) session.getAttribute("ip");
-                    String currentIp = getClientIp(request);
-
-                    if (!Objects.equals(sessionIp, currentIp)) {
-                        logger.warn("IP address changed for session: {}", session.getId());
-                        session.invalidate();
-                        response.sendRedirect("/login?error=session_hijacking");
-                        return;
-                    }
-
-                    // Проверка времени жизни сессии
-                    Long created = (Long) session.getAttribute("created");
-                    if (created != null) {
-                        long age = System.currentTimeMillis() - created;
-                        if (age > 8 * 60 * 60 * 1000) { // 8 часов
-                            logger.info("Session expired due to age: {}", session.getId());
-                            session.invalidate();
-                            response.sendRedirect("/login?expired=true");
-                            return;
-                        }
-                    }
-                }
-
-                filterChain.doFilter(request, response);
-            }
-        };
-    }
-}
-```
-
-## Q9. Как защититься от распространенных атак?
+## Q10. Как защититься от распространённых атак на аутентификацию?
 
 ### 1. Защита от `Brute Force`
 
 ```java
-
 @Service
 public class LoginProtectionService {
 
@@ -1529,14 +990,8 @@ public class LoginProtectionService {
         LoginAttempts attempts = attemptsCache.get(key, LoginAttempts::new);
 
         if (attempts.getCount() >= 5) {
-            if (attempts.getBlockedUntil().isAfter(Instant.now())) {
-                return false; // Блокировка активна
-            } else {
-                // Сброс счетчика после истечения блокировки
-                attempts.reset();
-            }
+            return attempts.getBlockedUntil().isBefore(Instant.now());
         }
-
         return true;
     }
 
@@ -1546,31 +1001,9 @@ public class LoginProtectionService {
         attempts.increment();
 
         if (attempts.getCount() >= 5) {
-            // Блокировка на 15 минут
             attempts.setBlockedUntil(Instant.now().plus(15, ChronoUnit.MINUTES));
         }
-
         attemptsCache.put(key, attempts);
-    }
-
-    public void recordSuccessfulLogin(String username, String ip) {
-        String key = username + ":" + ip;
-        attemptsCache.invalidate(key);
-    }
-
-    public static class LoginAttempts {
-        private int count = 0;
-        private Instant blockedUntil = Instant.MIN;
-
-        public void increment() {
-            count++;
-        }
-
-        public void reset() {
-            count = 0;
-            blockedUntil = Instant.MIN;
-        }
-        // getters/setters
     }
 }
 ```
@@ -1578,167 +1011,45 @@ public class LoginProtectionService {
 ### 2. Защита от `CSRF`
 
 ```java
-
-@Configuration
-@EnableWebSecurity
-public class CsrfConfig {
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and().authorizeRequests().anyRequest().authenticated();
-
-        return http.build();
-    }
-}
-
-// В шаблоне Thymeleaf
-<form th:action="@{/transfer}"method="post">
- <input type="hidden"th:name="${_csrf.parameterName}"th:value="${_csrf.token}"/>
- <!--
-остальные поля
-формы -->
-</form>
-```
-
-### 3. `Rate Limiting`
-
-```java
-
-@Configuration
-public class RateLimitConfig {
-
-    @Bean
-    public RateLimiterRegistry rateLimiterRegistry() {
-        return RateLimiterRegistry.ofDefaults();
-    }
-}
-
-@RestController
-@RequestMapping("/api")
-public class ApiController {
-
-    @Autowired
-    private RateLimiterRegistry rateLimiterRegistry;
-
-    @PostMapping("/login")
-    @RateLimited
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        RateLimiter limiter = rateLimiterRegistry.rateLimiter("login");
-
-        if (!limiter.acquirePermission()) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Too many requests. Please try again later.");
-        }
-
-        // Логика входа
-        return ResponseEntity.ok("Login successful");
-    }
-}
-
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface RateLimited {
-    String value() default "default";
-}
-
-@Aspect
-@Component
-public class RateLimitAspect {
-
-    @Autowired
-    private RateLimiterRegistry rateLimiterRegistry;
-
-    @Around("@annotation(rateLimited)")
-    public Object enforceRateLimit(ProceedingJoinPoint joinPoint, RateLimited rateLimited) throws Throwable {
-        RateLimiter limiter = rateLimiterRegistry.rateLimiter(rateLimited.value());
-
-        if (!limiter.acquirePermission()) {
-            throw new RateLimitExceededException("Rate limit exceeded");
-        }
-
-        return joinPoint.proceed();
-    }
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.csrf(csrf -> csrf
+        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()));
+    return http.build();
 }
 ```
 
-### 4. `Input Validation` и `Sanitization`
+Для `REST API` с `JWT` (stateless) `CSRF`-защита не нужна — токен передаётся в `Authorization` header, а не в cookie.
+
+### 3. Защита от `Session Fixation`
 
 ```java
-public class InputValidator {
-
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-
-    private static final Pattern SAFE_TEXT_PATTERN =
-            Pattern.compile("^[a-zA-Z0-9\\s.,!?-]*$");
-
-    public static ValidationResult validateEmail(String email) {
-        if (email == null || email.trim().isEmpty()) {
-            return ValidationResult.invalid("Email is required");
-        }
-
-        if (email.length() > 254) {
-            return ValidationResult.invalid("Email is too long");
-        }
-
-        if (!EMAIL_PATTERN.matcher(email).matches()) {
-            return ValidationResult.invalid("Invalid email format");
-        }
-
-        return ValidationResult.valid();
-    }
-
-    public static ValidationResult validateText(String text, int maxLength) {
-        if (text == null) {
-            return ValidationResult.valid();
-        }
-
-        if (text.length() > maxLength) {
-            return ValidationResult.invalid("Text is too long");
-        }
-
-        // Проверка на потенциально опасные символы
-        if (!SAFE_TEXT_PATTERN.matcher(text).matches()) {
-            return ValidationResult.invalid("Text contains invalid characters");
-        }
-
-        return ValidationResult.valid();
-    }
-
-    public static String sanitizeHtml(String html) {
-        if (html == null) return null;
-
-        // Удаление script тегов и других опасных элементов
-        return html.replaceAll("<script[^>]*>.*?</script>", "").replaceAll("<[^>]+>", "").trim();
-    }
-
-    public static class ValidationResult {
-        private final boolean valid;
-        private final String errorMessage;
-
-        private ValidationResult(boolean valid, String errorMessage) {
-            this.valid = valid;
-            this.errorMessage = errorMessage;
-        }
-
-        public static ValidationResult valid() {
-            return new ValidationResult(true, null);
-        }
-
-        public static ValidationResult invalid(String message) {
-            return new ValidationResult(false, message);
-        }
-
-        // getters
-    }
-}
+http.sessionManagement(session -> session
+    .sessionFixation().changeSessionId() // новый session ID после логина
+    .maximumSessions(1)                  // одна активная сессия
+    .maxSessionsPreventsLogin(true));     // блокировка нового входа
 ```
 
-## Q10. Как реализовать `API Gateway Security`?
-
-### 1. `Authentication Gateway`
+### 4. Защита от `Timing Attacks`
 
 ```java
+// Плохо — время ответа зависит от существования пользователя
+if (userRepository.findByUsername(username).isEmpty()) {
+    throw new BadCredentialsException("User not found");
+}
 
+// Хорошо — одинаковое время ответа (Spring Security делает это из коробки)
+// UserDetailsService всегда вызывает passwordEncoder.matches()
+```
+
+Подробнее о защите от уязвимостей — в [OWASP Top 10](owasp-top10-interview.md) и [Application Security](application-security-interview.md).
+
+## Q11. Как реализовать `API Gateway Security`?
+
+`API Gateway` — единая точка входа для всех клиентских запросов. В `Spring Cloud Gateway` безопасность реализуется через цепочку фильтров.
+
+```java
 @Component
 public class AuthenticationGatewayFilter implements GlobalFilter, Ordered {
 
@@ -1747,321 +1058,1877 @@ public class AuthenticationGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-
-        // Пропуск публичных маршрутов
-        if (routeValidator.isPublicRoute(request.getPath().toString())) {
+        if (routeValidator.isPublicRoute(exchange.getRequest().getPath().toString())) {
             return chain.filter(exchange);
         }
 
-        // Валидация JWT токена
-        String token = extractToken(request);
+        String token = extractToken(exchange.getRequest());
         if (token == null || !jwtUtil.validateToken(token)) {
-            return unauthorizedResponse(exchange);
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
-        // Добавление информации о пользователе в заголовки
         String username = jwtUtil.extractUsername(token);
-        ServerHttpRequest mutatedRequest = request.mutate().header("X-User-Id", username).header("X-User-Roles", String.join(",", jwtUtil.extractRoles(token))).build();
+        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+            .header("X-User-Id", username)
+            .header("X-User-Roles",
+                String.join(",", jwtUtil.extractRoles(token)))
+            .build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
     }
 
-    private String extractToken(ServerHttpRequest request) {
-        String authHeader = request.getHeaders().getFirst("Authorization");
-        return authHeader != null && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : null;
-    }
-
-    private Mono<Void> unauthorizedResponse(ServerWebExchange exchange) {
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-        return exchange.getResponse().setComplete();
-    }
-
     @Override
-    public int getOrder() {
-        return -100;
-    }
+    public int getOrder() { return -100; }
 }
 ```
 
-### 2. `Rate Limiting Gateway`
+Для `Rate Limiting` в gateway используется `Redis`:
 
 ```java
+@Bean
+public RouteLocator routeLocator(RouteLocatorBuilder builder) {
+    return builder.routes()
+        .route("api_route", r -> r
+            .path("/api/**")
+            .filters(f -> f
+                .requestRateLimiter(rl -> rl
+                    .setRateLimiter(redisRateLimiter())
+                    .setKeyResolver(userKeyResolver())))
+            .uri("lb://api-service"))
+        .build();
+}
+```
 
+## Q12. (!) Что такое `OpenID Connect` и как он расширяет `OAuth 2.0`?
+
+`OpenID Connect` (`OIDC`) — протокол аутентификации поверх `OAuth 2.0`. `OAuth 2.0` решает **авторизацию** (доступ к ресурсам), а `OIDC` добавляет **аутентификацию** (идентификация пользователя).
+
+```mermaid
+graph TB
+    subgraph "OAuth 2.0"
+        AT[Access Token<br/>Доступ к ресурсам]
+    end
+    subgraph "OIDC = OAuth 2.0 + Identity"
+        AT2[Access Token]
+        IT[ID Token — JWT<br/>sub, name, email, aud]
+        UI[UserInfo Endpoint<br/>/userinfo]
+    end
+    style IT fill:#f9f,stroke:#333
+```
+
+### Ключевые дополнения `OIDC` к `OAuth 2.0`
+
+| Компонент | `OAuth 2.0` | `OIDC` |
+|-----------|-------------|--------|
+| Назначение | Авторизация | Аутентификация + Авторизация |
+| Токен идентификации | Нет | `ID Token` (`JWT`) |
+| Информация о пользователе | Нет стандарта | `/userinfo` endpoint |
+| Discovery | Нет | `/.well-known/openid-configuration` |
+| Scopes | Произвольные | `openid`, `profile`, `email` |
+
+### Реализация в `Spring Security`
+
+```java
 @Configuration
-public class RateLimitGatewayConfig {
+@EnableWebSecurity
+public class OidcConfig {
 
     @Bean
-    public RouteLocator routeLocator(RouteLocatorBuilder builder,
-                                     RateLimitGatewayFilter rateLimitFilter) {
-        return builder.routes().route("api_route", r -> r.path("/api/").filters(f -> f.filter(rateLimitFilter)).uri("lb://api-service")).build();
-    }
-}
-
-@Component
-public class RateLimitGatewayFilter implements GatewayFilter {
-
-    private final RedisRateLimiter rateLimiter;
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String clientId = getClientId(exchange.getRequest());
-
-        return rateLimiter.isAllowed(clientId).flatMap(allowed -> {
-            if (allowed) {
-                return chain.filter(exchange);
-            } else {
-                exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
-                return exchange.getResponse().setComplete();
-            }
-        });
-    }
-
-    private String getClientId(ServerHttpRequest request) {
-        // Получение client ID из заголовка или IP
-        String clientId = request.getHeaders().getFirst("X-Client-Id");
-        if (clientId == null) {
-            clientId = request.getRemoteAddress().getAddress().getHostAddress();
-        }
-        return clientId;
-    }
-}
-```
-
-### 3. `Authorization Gateway`
-
-```java
-
-@Component
-public class AuthorizationGatewayFilter implements GlobalFilter, Ordered {
-
-    private final AuthorizationService authorizationService;
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        String path = request.getPath().toString();
-        String method = request.getMethod().toString();
-
-        // Получение информации о пользователе из заголовков
-        String userId = request.getHeaders().getFirst("X-User-Id");
-        String roles = request.getHeaders().getFirst("X-User-Roles");
-
-        if (userId == null) {
-            return chain.filter(exchange); // Публичный маршрут
-        }
-
-        // Проверка авторизации
-        return authorizationService.isAuthorized(userId, path, method, Arrays.asList(roles.split(","))).flatMap(authorized -> {
-            if (authorized) {
-                return chain.filter(exchange);
-            } else {
-                exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-                return exchange.getResponse().setComplete();
-            }
-        });
-    }
-
-    @Override
-    public int getOrder() {
-        return -90; // После AuthenticationFilter
-    }
-}
-
-@Service
-public class AuthorizationService {
-
-    private final RoutePermissionRepository permissionRepository;
-
-    public Mono<Boolean> isAuthorized(String userId, String path, String method, List<String> roles) {
-        return permissionRepository.findByPathAndMethod(path, method).map(permission -> hasRequiredRole(roles, permission.getRequiredRoles())).defaultIfEmpty(true); // Если нет специальных требований, разрешить
-    }
-
-    private boolean hasRequiredRole(List<String> userRoles, List<String> requiredRoles) {
-        return requiredRoles.stream().anyMatch(userRoles::contains);
-    }
-}
-```
-
-### 4. `Logging` и `Monitoring Gateway`
-
-```java
-
-@Component
-public class LoggingGatewayFilter implements GlobalFilter, Ordered {
-
-    private final Logger logger = LoggerFactory.getLogger("GATEWAY");
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        long startTime = System.currentTimeMillis();
-
-        return chain.filter(exchange).doOnSuccess(aVoid -> {
-            long duration = System.currentTimeMillis() - startTime;
-            ServerHttpResponse response = exchange.getResponse();
-
-            logger.info("Request: {} {} -> {} ({}ms)",
-                    request.getMethod(),
-                    request.getPath(),
-                    response.getStatusCode(),
-                    duration);
-        }).doOnError(throwable -> {
-            long duration = System.currentTimeMillis() - startTime;
-
-            logger.error("Request failed: {} {} -> {} ({}ms)",
-                    request.getMethod(),
-                    request.getPath(),
-                    throwable.getMessage(),
-                    duration,
-                    throwable);
-        });
-    }
-
-    @Override
-    public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE; // Выполняется последним
-    }
-}
-```
-
-## Q11. Что такое `OpenID Connect` и как он расширяет `OAuth 2.0`?
-
-`OpenID Connect` (`OIDC`) — протокол аутентификации поверх `OAuth 2.0`; добавляет `ID Token` (`JWT` с информацией о пользователе: sub, name, email). `OAuth 2.0` — авторизация (доступ к ресурсам); `OIDC / SSO`; провайдеры: `Google`, `Azure AD`, `Keycloak`.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q12. Как реализовать `Single Sign-On` (`SSO`)?
-
-`SSO` — один вход для нескольких приложений. Подходы: (1) `SAML` (`XML`, enterprise); (2) `OAuth 2.0` + `OIDC` (`JWT`, современные `API`); (3) `CAS` (`Central Authentication Service`). Архитектура: `Identity Provider` (`IdP`) хранит сессию; приложения перенаправляют на `IdP` для аутентификации; после успеха `IdP` выдаёт токен или assertion. В `Spring` — `spring-security-saml2` или `spring-security-oauth2-client`.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q13. Что такое `Claims-based` аутентификация?
-
-`Claims` — утверждения о пользователе (роль, email, группа); передаются в токене (`JWT`, `SAML` assertion). Приложение принимает решения по авторизации на основе claims без обращения к БД. Провайдер (`IdP`) включает claims в токен при аутентификации. Приложение доверяет подписи токена и использует claims для `RBAC / ABAC`.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q14. Как обеспечить безопасность токенов (`JWT` refresh, rotation)?
-
-`Access / Rotation`: при обмене refresh выдаётся новый refresh (старый инвалидируется). Защита: refresh token — `httpOnly` cookie; хранить хэш refresh в БД; детектировать повторное использование (атака).
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q15. Что такое `Zero Trust Security Model`?
-
-`Zero Trust` — «не доверять никому по умолчанию»; проверять каждый запрос (даже внутри сети). Микросервисы: `mTLS` между сервисами; токены с коротким сроком; проверка авторизации на каждом сервисе. Нет «доверенной зоны»; сеть считается враждебной. Реализация: `Service Mesh` (`Istio`), `API Gateway` с проверкой токенов, мониторинг аномалий.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q16. Как реализовать `Rate Limiting` для защиты `API`?
-
-`Rate` limiting — ограничение числа запросов по ключу (`IP`, `userId`, `API` key) за период. Подходы: (1) `Token Bucket` (`Bucket4j`, `Redis`); (2) `Sliding Window` (`Redis ZADD` по времени); (3) `Fixed Window` (счётчик с `TTL`). В `Spring`: фильтр или `HandlerInterceptor`; проверка лимита до обработки запроса; возврат `429` Too `Many Requests` при превышении. Защита от DDoS и злоупотреблений.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q17. Что такое `mTLS` и когда его использовать?
-
-`mTLS` (mutual `TLS`) — двусторонняя аутентификация по сертификатам: клиент проверяет сертификат сервера и сервер проверяет сертификат клиента. Используется между микросервисами (`Service Mesh`), для `B2B API`, `IoT`. Обеспечивает сильную аутентификацию без паролей. Управление сертификатами (выпуск, ротация, отзыв) — сложность; автоматизация через `cert-manager` (`Kubernetes`).
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q18. Как реализовать аудит и логирование событий безопасности?
-
-Логировать: успешные и неудачные аутентификации, изменения прав, доступ к чувствительным ресурсам. Поля: `userId`, `IP`, timestamp, действие, результат. Централизованное хранение (`Elasticsearch`, `SIEM`). Алерты по аномалиям (множественные неудачи, доступ из необычной локации). В `Spring`: `ApplicationListener` на `AuthenticationSuccessEvent / AuthenticationFailureEvent`; кастомный фильтр для аудита запросов.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q19. Что такое `Context-based Access Control`?
-
-Авторизация на основе контекста запроса: время, локация, устройство, уровень риска. Пример: доступ к админке только из офисной сети; повышенная аутентификация при доступе из нового устройства. Реализация: политики в авторизационном сервисе (`OPA`, `AWS IAM`); проверка контекста при каждом запросе. Динамическая авторизация вместо статических ролей.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q20. Как обеспечить безопасность в `Service Mesh`?
-
-`Service Mesh` (`Istio`, `Linkerd`) обеспечивает: `mTLS` между sidecar автоматически; политики авторизации (какой сервис может вызывать какой); rate limiting; трейсинг и аудит. Конфигурация через манифесты (`AuthorizationPolicy` в `Istio`). Централизованное управление безопасностью без изменения кода приложений. Сертификаты ротируются автоматически.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q21. Что такое `Identity Federation`?
-
-`Identity Federation` — доверие между несколькими `IdP`; пользователь аутентифицируется в одном `IdP`, получает доступ к ресурсам других. Протоколы: `SAML`, `WS-Federation`, `OIDC`. Используется в корпоративных сценариях (доступ партнёров) и в облаках (федерация с `Azure AD`, `Google Workspace`). Маппинг атрибутов и claims между `IdP`.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q22. Как реализовать `Step-Up Authentication`?
-
-`Step-Up` — повышение уровня аутентификации для чувствительных операций (например, перевод денег требует повторного ввода пароля или 2FA). Проверка: при запросе к защищённому ресурсу проверить уровень аутентификации в токене; при недостаточном — запросить дополнительную аутентификацию. `Claim` в токене (например, acr — `Authentication Context Class Reference`) указывает уровень.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q23. Что такое `Passwordless Authentication`?
-
-Аутентификация без пароля: `WebAuthn` (биометрия, аппаратные ключи), `Magic Link` (ссылка на email), `OTP` (одноразовый код). Преимущества: нет фишинга паролей, удобство. Реализация: библиотеки `WebAuthn` (`Yubico`, Duo); при логине генерируется challenge, устройство подписывает, сервер проверяет подпись. `Fallback` на пароль при необходимости.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q24. Как защитить `GraphQL API`?
-
-Авторизация на уровне полей (`field-level`): проверка прав при резолве каждого поля. Ограничение глубины и сложности запросов (защита от `DoS`). Аутентификация: `JWT` в заголовке; контекст запроса с `userId`. `DataLoader` для батчинга запросов к БД; избегать N+1. Валидация входных данных; rate limiting по пользователю.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q25. Что такое `Delegated Authorization`?
-
-Пользователь делегирует права приложению (например, «приложение X может читать мои фото»). `OAuth 2.0` — стандартный протокол: пользователь авторизует приложение через consent screen; приложение получает access token с ограниченными правами (scope). Отзыв токена — в любой момент. Используется для интеграций (`Google API`, `GitHub API`).
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q26. Как реализовать `Fine-Grained Authorization`?
-
-Авторизация на уровне объектов или атрибутов: «пользователь может редактировать только свои заказы». Подходы: (1) проверка в коде (if `userId` == order.`userId`); (2) `ABAC` (`Attribute-Based Access Control`) с политиками; (3) внешний авторизационный сервис (`OPA`, `AWS Verified Permissions`). Для сложных правил — вынести в политики; для простых — в код с аннотациями (`@PreAuthorize`).
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q27. Что такое `Token Binding` и зачем он нужен?
-
-`Token Binding` — привязка токена к `TLS`-соединению через криптографический proof; предотвращает кражу и повторное использование токена. Клиент и сервер обмениваются proof при установке `TLS`; токен включает `binding ID`. При повторном использовании токена с другого соединения — отказ. Стандарт `RFC 8471`; поддержка ограничена; альтернатива — короткий срок токена и refresh.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q28. Как обеспечить безопасность `WebSocket` соединений?
-
-Аутентификация при handshake: токен в `query`-параметре или заголовке (при upgrade). После установки соединения проверять авторизацию для каждого сообщения (`userId` из контекста). `TLS / Spring WebSocket`: `HandshakeInterceptor` для токена; `ChannelInterceptor` для проверки сообщений.
-
-Для production-систем дополнительно стоит описать модель угроз, контроль доступа по принципу least privilege и процесс реагирования на инциденты. На собеседовании обычно ожидают, что вы свяжете техническую меру с риском для бизнеса и с проверяемыми контрольными точками в CI/CD.
-
-## Q29. Что такое `Proof Key for Code Exchange` (`PKCE`)?
-
-`PKCE` — расширение `OAuth 2.0` для защиты authorization code flow в публичных клиентах (`SPA`, мобильные). Клиент генерирует `code_verifier` (случайная строка) и `code_challenge` (хэш); передаёт challenge при запросе code; при обмене code на token передаёт verifier. Сервер проверяет соответствие. Защита от перехвата authorization code. Обязателен для `SPA` и мобильных (`RFC 7636`).
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q30. Как реализовать `Dynamic Authorization`?
-
-Авторизация на основе runtime-данных (состояние объекта, время, внешние факторы). Политики хранятся в БД или в авторизационном сервисе (`OPA`, `Casbin`); при запросе вычисляется решение. Пример: «менеджер может одобрить заказ до $1000; выше — требуется директор». Реализация: вызов авторизационного сервиса с контекстом (`userId`, action, resource, attributes); кэширование решений при необходимости.
-
-### 5. `Circuit Breaker Gateway`
-
-```java
-
-@Configuration
-public class CircuitBreakerGatewayConfig {
-
-    @Bean
-    public RouteLocator routeLocator(RouteLocatorBuilder builder) {
-        return builder.routes().route("api_route", r -> r.path("/api/").filters(f -> f.circuitBreaker(c -> c.setName("apiCircuitBreaker").setFallbackUri("forward:/fallback/api")).retry(retry -> retry.setRetries(3).setStatuses(HttpStatus.INTERNAL_SERVER_ERROR))).uri("lb://api-service")).build();
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .oauth2Login(Customizer.withDefaults()); // OIDC через oauth2Login
+        return http.build();
     }
 }
 
 @RestController
-public class FallbackController {
+public class UserController {
 
-    @GetMapping("/fallback/api")
-    public ResponseEntity<?> apiFallback() {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Service is temporarily unavailable. Please try again later.");
+    @GetMapping("/user")
+    public Map<String, Object> user(@AuthenticationPrincipal OidcUser oidcUser) {
+        return Map.of(
+            "name", oidcUser.getFullName(),
+            "email", oidcUser.getEmail(),
+            "claims", oidcUser.getClaims()
+        );
     }
 }
 ```
+
+`application.yml`:
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+```
+
+## Q13. Как реализовать `Single Sign-On` (`SSO`)?
+
+`SSO` — один вход для нескольких приложений. Пользователь аутентифицируется в `Identity Provider` (`IdP`) один раз и получает доступ ко всем связанным приложениям.
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A1 as App 1
+    participant A2 as App 2
+    participant IdP as Identity Provider
+
+    U->>A1: 1. Запрос
+    A1->>IdP: 2. Redirect для аутентификации
+    IdP->>U: 3. Логин
+    U->>IdP: 4. Credentials
+    IdP->>A1: 5. Токен / Assertion
+    Note over IdP: Сессия IdP создана
+    U->>A2: 6. Запрос
+    A2->>IdP: 7. Redirect
+    IdP->>A2: 8. Токен (без повторного логина!)
+```
+
+**Подходы к реализации:**
+
+| Протокол | Формат | Когда использовать |
+|----------|--------|--------------------|
+| `SAML 2.0` | `XML` | Enterprise, `Active Directory` |
+| `OIDC` | `JSON` / `JWT` | Современные API, мобильные, `SPA` |
+| `CAS` | Ticket-based | Академические учреждения |
+
+В `Spring` — используется `spring-security-oauth2-client` для `OIDC` или `spring-security-saml2-service-provider` для `SAML`.
+
+## Q14. Что такое `Claims-based` аутентификация?
+
+`Claims` — утверждения о пользователе, включённые в токен (`JWT` или `SAML assertion`). Приложение принимает решения по авторизации на основе claims без обращения к БД.
+
+```java
+// Извлечение claims из JWT в Spring Security
+@RestController
+public class ClaimsController {
+
+    @GetMapping("/profile")
+    public Map<String, Object> profile(@AuthenticationPrincipal Jwt jwt) {
+        return Map.of(
+            "userId", jwt.getSubject(),
+            "email", jwt.getClaimAsString("email"),
+            "roles", jwt.getClaimAsStringList("roles"),
+            "department", jwt.getClaimAsString("department")
+        );
+    }
+
+    @PreAuthorize("@jwt.getClaim('department') == 'engineering'")
+    @GetMapping("/internal")
+    public String internalResource() {
+        return "Engineering-only resource";
+    }
+}
+```
+
+Провайдер (`IdP`) включает claims в токен при аутентификации. Приложение доверяет подписи токена и использует claims для `RBAC` / `ABAC`. Это устраняет необходимость в запросах к БД при каждой авторизации.
+
+## Q15. (!) Как обеспечить безопасность токенов (`JWT` refresh, rotation)?
+
+### Жизненный цикл токенов
+
+```mermaid
+stateDiagram-v2
+    [*] --> AccessToken: Аутентификация
+    AccessToken --> Expired: TTL 15 мин
+    Expired --> AccessToken: Refresh Token
+    AccessToken --> Revoked: Logout / компрометация
+    Revoked --> [*]
+
+    state "Refresh Token" as RT {
+        [*] --> Active
+        Active --> Rotated: Использован
+        Rotated --> NewRefreshToken: Выпуск нового
+        Active --> Compromised: Повторное использование
+        Compromised --> AllRevoked: Отзыв всей цепочки
+    }
+```
+
+### Ключевые практики
+
+| Практика | Описание |
+|----------|----------|
+| Короткий TTL access token | 5-15 минут |
+| Длинный TTL refresh token | 7-30 дней |
+| Ротация refresh token | Новый refresh при каждом обмене, старый инвалидируется |
+| Детекция повторного использования | Если старый refresh используется повторно — отзыв всей цепочки |
+| Хранение refresh token | `httpOnly` cookie или серверная БД (хэш), **никогда** в `localStorage` |
+| Blacklist для access token | `Redis` с TTL равным оставшемуся сроку токена |
+
+### Детекция компрометации refresh token
+
+```java
+@Service
+public class SecureTokenService {
+
+    private final RefreshTokenRepository repository;
+
+    public TokenPair refresh(String refreshToken) {
+        RefreshToken entity = repository.findByToken(refreshToken)
+            .orElseThrow(() -> new InvalidTokenException("Unknown token"));
+
+        if (entity.isUsed()) {
+            // Повторное использование — компрометация!
+            // Отзываем ВСЮ цепочку токенов пользователя
+            repository.revokeAllByUserId(entity.getUserId());
+            throw new SecurityException("Refresh token reuse detected");
+        }
+
+        entity.setUsed(true);
+        repository.save(entity);
+
+        return generateTokens(entity.getUserId());
+    }
+}
+```
+
+## Q16. Что такое `Zero Trust Security Model`?
+
+`Zero Trust` — модель безопасности «не доверять никому по умолчанию»; каждый запрос проверяется, даже внутри сети.
+
+```mermaid
+graph TB
+    subgraph "Традиционная модель"
+        FW[Firewall] --> TZ[Доверенная зона]
+        TZ --> S1[Service A]
+        TZ --> S2[Service B]
+        S1 ---|без проверки| S2
+    end
+
+    subgraph "Zero Trust"
+        GW2[API Gateway] --> S3[Service A]
+        GW2 --> S4[Service B]
+        S3 ---|mTLS + JWT + проверка| S4
+        S3 --> PDP[Policy Decision Point]
+        S4 --> PDP
+    end
+```
+
+**Принципы:**
+1. **Verify explicitly** — проверять каждый запрос (identity, device, location)
+2. **Least privilege** — минимальные необходимые права
+3. **Assume breach** — проектировать как если бы сеть уже скомпрометирована
+
+**Реализация в микросервисах:**
+- `mTLS` между всеми сервисами (`Istio`, `Linkerd`)
+- Короткоживущие токены (5-15 минут)
+- Авторизация на каждом сервисе
+- Continuous verification (не только при входе)
+- Network segmentation + monitoring
+
+## Q17. Как реализовать `Rate Limiting` для защиты `API`?
+
+`Rate Limiting` — ограничение числа запросов по ключу (`IP`, `userId`, `API key`) за период.
+
+| Алгоритм | Описание | Плюсы | Минусы |
+|----------|----------|-------|--------|
+| `Token Bucket` | Токены добавляются с фиксированной скоростью | Допускает burst | Сложнее реализовать |
+| `Fixed Window` | Счётчик с `TTL` на окно | Простой | Граничный всплеск (2x) |
+| `Sliding Window` | Скользящее окно (`Redis ZADD`) | Точный | Больше памяти |
+
+```java
+@Component
+public class RateLimitFilter extends OncePerRequestFilter {
+
+    private final RedisTemplate<String, String> redis;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
+                                    throws ServletException, IOException {
+        String clientIp = request.getRemoteAddr();
+        String key = "rate_limit:" + clientIp;
+
+        Long count = redis.opsForValue().increment(key);
+        if (count == 1) {
+            redis.expire(key, Duration.ofMinutes(1));
+        }
+
+        if (count > 100) { // 100 запросов/минуту
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.getWriter().write("Rate limit exceeded");
+            return;
+        }
+
+        response.setHeader("X-RateLimit-Remaining", String.valueOf(100 - count));
+        chain.doFilter(request, response);
+    }
+}
+```
+
+## Q18. (!) Что такое `mTLS` и когда его использовать?
+
+`mTLS` (`mutual TLS`) — двусторонняя аутентификация по сертификатам. В отличие от обычного `TLS`, где только клиент проверяет сертификат сервера, при `mTLS` **обе стороны** предъявляют сертификаты.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+
+    C->>S: 1. ClientHello
+    S->>C: 2. ServerHello + Server Certificate
+    S->>C: 3. Certificate Request (отличие от TLS!)
+    C->>S: 4. Client Certificate
+    C->>S: 5. CertificateVerify (подпись)
+    Note over C,S: Обе стороны аутентифицированы
+    C->>S: 6. Encrypted communication
+```
+
+### Конфигурация `mTLS` в `Spring Boot`
+
+```yaml
+server:
+  ssl:
+    enabled: true
+    client-auth: need   # require client certificate
+    key-store: classpath:keystore.p12
+    key-store-password: ${KEYSTORE_PASSWORD}
+    trust-store: classpath:truststore.p12
+    trust-store-password: ${TRUSTSTORE_PASSWORD}
+```
+
+### Когда использовать
+
+- **Микросервисы** — взаимная аутентификация без паролей (автоматизация через `cert-manager` в Kubernetes)
+- **B2B API** — партнёрские интеграции
+- **Zero Trust** — сетевой уровень аутентификации
+- **IoT** — устройства с сертификатами
+
+**Управление сертификатами** — основная сложность: выпуск, ротация (обычно 90 дней), отзыв (`CRL` / `OCSP`). В `Service Mesh` (`Istio`) — автоматически.
+
+## Q19. Как реализовать аудит и логирование событий безопасности?
+
+Логирование событий безопасности критически важно для compliance (`SOC 2`, `PCI DSS`) и расследования инцидентов.
+
+### Что логировать
+
+| Событие | Данные | Уровень |
+|---------|--------|---------|
+| Успешная аутентификация | userId, IP, timestamp | INFO |
+| Неудачная аутентификация | username, IP, причина | WARN |
+| Изменение прав | userId, oldRole, newRole | INFO |
+| Доступ к чувствительным данным | userId, resource, action | INFO |
+| Подозрительная активность | IP, pattern, count | WARN |
+
+### Реализация через Spring Events
+
+```java
+@Component
+public class SecurityAuditListener {
+
+    private static final Logger auditLog = LoggerFactory.getLogger("SECURITY_AUDIT");
+
+    @EventListener
+    public void onAuthSuccess(AuthenticationSuccessEvent event) {
+        Authentication auth = event.getAuthentication();
+        auditLog.info("AUTH_SUCCESS user={} authorities={}",
+            auth.getName(), auth.getAuthorities());
+    }
+
+    @EventListener
+    public void onAuthFailure(AbstractAuthenticationFailureEvent event) {
+        auditLog.warn("AUTH_FAILURE user={} reason={}",
+            event.getAuthentication().getName(),
+            event.getException().getMessage());
+    }
+}
+```
+
+Централизованное хранение в `Elasticsearch` / `SIEM`; алерты по аномалиям (множественные неудачи, необычная геолокация). Подробнее — в [Observability](../monitoring/observability-interview.md).
+
+## Q20. Что такое `Context-based Access Control`?
+
+Авторизация на основе контекста запроса: время, геолокация, устройство, уровень риска. Расширяет `ABAC`, фокусируясь на динамических условиях среды.
+
+**Примеры правил:**
+- Доступ к админке только из корпоративной сети
+- Повышенная аутентификация при входе с нового устройства
+- Блокировка транзакций из blacklisted-стран
+- Ограничение действий в нерабочее время
+
+```java
+@Service
+public class ContextBasedAuthService {
+
+    public boolean isAllowed(User user, String action, RequestContext ctx) {
+        // Правило 1: VPN-only для admin-действий
+        if (action.startsWith("ADMIN_") && !ctx.isVpnConnection()) {
+            return false;
+        }
+
+        // Правило 2: Проверка геолокации
+        if (ctx.getCountry() != null
+                && bannedCountries.contains(ctx.getCountry())) {
+            return false;
+        }
+
+        // Правило 3: Новое устройство → step-up auth
+        if (!deviceRegistry.isKnownDevice(user.getId(), ctx.getDeviceFingerprint())) {
+            throw new StepUpAuthRequired("Unknown device");
+        }
+
+        return true;
+    }
+}
+```
+
+Реализация: policy engine (`OPA` — Open Policy Agent, `AWS Verified Permissions`); проверка контекста при каждом запросе; кэширование решений для производительности.
+
+## Q21. Как обеспечить безопасность в `Service Mesh`?
+
+`Service Mesh` (`Istio`, `Linkerd`) обеспечивает безопасность на инфраструктурном уровне **без изменения кода приложений**.
+
+**Что обеспечивает Service Mesh:**
+- `mTLS` между sidecar-прокси автоматически
+- `AuthorizationPolicy` — правила доступа между сервисами
+- Rate limiting на уровне mesh
+- Трейсинг и аудит трафика
+- Автоматическая ротация сертификатов
+
+```yaml
+# Istio AuthorizationPolicy — разрешить только определённым сервисам
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: order-service-policy
+spec:
+  selector:
+    matchLabels:
+      app: order-service
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/payment-service"]
+      to:
+        - operation:
+            methods: ["POST"]
+            paths: ["/api/orders/*/pay"]
+```
+
+Подробнее о `Kubernetes` и инфраструктуре — в [Kubernetes](../devops/kubernetes-interview.md).
+
+## Q22. Что такое `Identity Federation`?
+
+`Identity Federation` — доверительные отношения между несколькими `Identity Provider` (`IdP`); пользователь аутентифицируется в одном `IdP` и получает доступ к ресурсам другого.
+
+**Протоколы:** `SAML`, `WS-Federation`, `OIDC`.
+**Сценарии:** доступ партнёров к корпоративным ресурсам, мультиоблачная среда (`Azure AD` + `Google Workspace`), B2B-интеграции.
+
+```mermaid
+graph LR
+    U1[Employee] --> IdP1[Corporate IdP]
+    U2[Partner] --> IdP2[Partner IdP]
+    IdP1 -->|Trust| Hub[Federation Hub]
+    IdP2 -->|Trust| Hub
+    Hub --> SP1[App 1]
+    Hub --> SP2[App 2]
+    Hub --> SP3[App 3]
+```
+
+Ключевая задача — **маппинг атрибутов**: роли и groups из одного `IdP` могут не совпадать с другим. Нужна таблица маппинга claims.
+
+## Q23. Как реализовать `Step-Up Authentication`?
+
+`Step-Up Authentication` — повышение уровня аутентификации для чувствительных операций. Например, просмотр профиля — обычный вход, но перевод денег требует повторного `2FA`.
+
+```java
+@RestController
+@RequestMapping("/api/transfers")
+public class TransferController {
+
+    @PreAuthorize("hasAuthority('TRANSFER')")
+    @PostMapping
+    public ResponseEntity<?> transfer(@RequestBody TransferRequest request,
+                                      @AuthenticationPrincipal Jwt jwt) {
+        // Проверяем уровень аутентификации (ACR claim)
+        String acr = jwt.getClaimAsString("acr");
+
+        if (request.getAmount().compareTo(new BigDecimal("1000")) > 0
+                && !"urn:mfa".equals(acr)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new StepUpRequired("MFA required for transfers > $1000"));
+        }
+
+        return ResponseEntity.ok(transferService.execute(request));
+    }
+}
+```
+
+Claim `acr` (`Authentication Context Class Reference`) в `JWT` указывает уровень аутентификации: `password-only`, `mfa`, `hardware-key`. `IdP` (`Keycloak`, `Auth0`) устанавливает этот claim при аутентификации.
+
+## Q24. Что такое `Passwordless Authentication`?
+
+Аутентификация без пароля:
+- **`WebAuthn` / `FIDO2`** — биометрия, аппаратные ключи (YubiKey)
+- **`Magic Link`** — одноразовая ссылка на email
+- **`OTP`** — одноразовый код через SMS / push
+
+```java
+@RestController
+@RequestMapping("/auth/magic-link")
+public class MagicLinkController {
+
+    private final MagicLinkService magicLinkService;
+
+    @PostMapping("/request")
+    public ResponseEntity<?> requestLink(@RequestBody EmailRequest request) {
+        String token = UUID.randomUUID().toString();
+        magicLinkService.saveToken(token, request.getEmail(), Duration.ofMinutes(10));
+        emailService.send(request.getEmail(),
+            "Login link: https://app.example.com/auth/verify?token=" + token);
+        return ResponseEntity.ok("Check your email");
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<?> verify(@RequestParam String token) {
+        String email = magicLinkService.validateAndConsume(token);
+        User user = userService.findByEmail(email);
+        String jwt = jwtService.generateToken(user);
+        return ResponseEntity.ok(new LoginResponse(jwt));
+    }
+}
+```
+
+**Преимущества:** нет фишинга паролей, удобство UX.
+**Недостатки:** зависимость от email/телефона, `Magic Link` уязвим к перехвату email.
+
+## Q25. Как защитить `GraphQL API`?
+
+`GraphQL` требует специфических мер безопасности из-за гибкости запросов.
+
+**Ключевые аспекты:**
+
+| Угроза | Защита |
+|--------|--------|
+| Слишком глубокие запросы | Ограничение глубины (`maxDepth`) |
+| Сложные запросы (DoS) | Ограничение complexity score |
+| Неавторизованный доступ к полям | Field-level авторизация |
+| Introspection в production | Отключение `__schema` |
+| N+1 проблема | `DataLoader` |
+
+```java
+@Component
+public class GraphQLSecurityInstrumentation extends SimplePerformantInstrumentation {
+
+    @Override
+    public DataFetcher<?> instrumentDataFetcher(DataFetcher<?> dataFetcher,
+                                                 InstrumentationFieldFetchParameters params) {
+        String fieldName = params.getEnvironment().getField().getName();
+
+        return environment -> {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+            // Field-level авторизация
+            if ("salary".equals(fieldName) && !hasRole(auth, "HR")) {
+                throw new AccessDeniedException("No access to salary field");
+            }
+
+            return dataFetcher.get(environment);
+        };
+    }
+}
+```
+
+## Q26. Что такое `Delegated Authorization`?
+
+Пользователь делегирует ограниченные права приложению: «приложение X может читать мои фото, но не удалять».
+
+Это основная идея `OAuth 2.0` — пользователь авторизует приложение через `consent screen`; приложение получает `access token` с ограниченными `scopes` (`read`, `write`, `delete`). Пользователь может отозвать доступ в любой момент.
+
+```java
+// Resource Server проверяет scopes
+@RestController
+@RequestMapping("/api/photos")
+public class PhotoController {
+
+    @PreAuthorize("hasAuthority('SCOPE_photos:read')")
+    @GetMapping
+    public List<Photo> getPhotos() {
+        return photoService.getAll();
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_photos:write')")
+    @PostMapping
+    public Photo upload(@RequestBody Photo photo) {
+        return photoService.save(photo);
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_photos:delete')")
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        photoService.delete(id);
+    }
+}
+```
+
+## Q27. (!) Как реализовать `Fine-Grained Authorization`?
+
+Авторизация на уровне отдельных объектов: «пользователь может редактировать **только свои** заказы».
+
+### Подходы
+
+| Подход | Сложность | Когда использовать |
+|--------|-----------|--------------------|
+| Проверка в коде | Низкая | Простые правила (owner check) |
+| `@PreAuthorize` + SpEL | Средняя | Декларативные правила |
+| Custom `PermissionEvaluator` | Средняя | Проверка прав на объект |
+| Внешний policy engine (`OPA`) | Высокая | Сложные бизнес-правила |
+
+### Проверка через `@PostAuthorize`
+
+```java
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    @PostAuthorize("returnObject.userId == authentication.name or hasRole('ADMIN')")
+    @GetMapping("/{id}")
+    public Order getOrder(@PathVariable Long id) {
+        return orderService.findById(id);
+    }
+
+    @PreAuthorize("@orderSecurity.isOwner(#id, authentication)")
+    @PutMapping("/{id}")
+    public Order updateOrder(@PathVariable Long id, @RequestBody Order order) {
+        return orderService.update(id, order);
+    }
+}
+
+@Component("orderSecurity")
+public class OrderSecurityService {
+
+    private final OrderRepository orderRepository;
+
+    public boolean isOwner(Long orderId, Authentication auth) {
+        return orderRepository.findById(orderId)
+            .map(order -> order.getUserId().equals(auth.getName()))
+            .orElse(false);
+    }
+}
+```
+
+## Q28. Что такое `Token Binding` и зачем он нужен?
+
+`Token Binding` (`RFC 8471`) — привязка токена к конкретному `TLS`-соединению через криптографический proof. Предотвращает кражу и повторное использование токена на другом соединении.
+
+**Как работает:**
+1. Клиент и сервер обмениваются ключами при `TLS handshake`
+2. Токен включает `binding ID`, привязанный к соединению
+3. При предъявлении токена с другого соединения — отказ
+
+**Практический статус:** поддержка ограничена (отменено в браузерах). Альтернативы:
+- **DPoP** (`Demonstrating Proof-of-Possession`, `RFC 9449`) — proof привязки токена к клиенту
+- Короткий TTL access token + refresh token rotation
+- `Sender-Constrained Tokens` (`mTLS` certificate-bound tokens)
+
+## Q29. Как обеспечить безопасность `WebSocket` соединений?
+
+`WebSocket` требует аутентификации при handshake и авторизации для каждого сообщения.
+
+```java
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer {
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String token = accessor.getFirstNativeHeader("Authorization");
+                    if (token != null && token.startsWith("Bearer ")) {
+                        Authentication auth = jwtUtil.getAuthentication(
+                            token.substring(7));
+                        accessor.setUser(auth);
+                    }
+                }
+                return message;
+            }
+        });
+    }
+}
+```
+
+**Ключевые практики:** аутентификация при `CONNECT` (токен в заголовке), `TLS` (`wss://`), проверка прав на подписку к topic, rate limiting сообщений.
+
+## Q30. (!) Что такое `Proof Key for Code Exchange` (`PKCE`)?
+
+`PKCE` (`RFC 7636`) — расширение `OAuth 2.0` для защиты `Authorization Code Flow` в публичных клиентах (`SPA`, мобильные приложения), которые не могут безопасно хранить `client_secret`.
+
+```mermaid
+sequenceDiagram
+    participant C as Client (SPA)
+    participant AS as Authorization Server
+
+    C->>C: 1. Генерация code_verifier (random)
+    C->>C: 2. code_challenge = SHA256(code_verifier)
+    C->>AS: 3. /authorize + code_challenge + method=S256
+    AS->>C: 4. Authorization Code
+    C->>AS: 5. /token + code + code_verifier
+    AS->>AS: 6. SHA256(code_verifier) == code_challenge?
+    AS->>C: 7. Access Token
+```
+
+### Реализация клиентской части
+
+```java
+public class PkceUtil {
+
+    public static String generateCodeVerifier() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    public static String generateCodeChallenge(String codeVerifier) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                .digest(codeVerifier.getBytes(StandardCharsets.US_ASCII));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+```
+
+### Конфигурация Spring Authorization Server
+
+С `Spring Security 6.3+` `PKCE` поддерживается для `confidential clients` (не только для public).
+
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          my-client:
+            client-id: my-spa
+            client-authentication-method: none  # public client
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:3000/callback
+            scope: openid, profile
+```
+
+**Зачем нужен:** без `PKCE` перехваченный `authorization code` можно обменять на токен. С `PKCE` — нужен ещё `code_verifier`, который никогда не покидает клиент.
+
+## Q31. Как реализовать `Dynamic Authorization`?
+
+Авторизация на основе runtime-данных: состояние объекта, бизнес-правила, внешние факторы.
+
+```java
+@Service
+public class DynamicAuthorizationService {
+
+    private final PolicyEngine policyEngine;
+
+    public AuthorizationDecision evaluate(String userId, String action,
+                                          String resource, Map<String, Object> context) {
+        // Загрузка политик из БД или policy engine (OPA, Casbin)
+        PolicyResult result = policyEngine.evaluate(
+            new PolicyRequest(userId, action, resource, context));
+
+        return new AuthorizationDecision(
+            result.isAllowed(), result.getReason());
+    }
+}
+
+// Пример: менеджер одобряет заказы до $1000, выше — директор
+@Component
+public class OrderApprovalPolicy implements Policy {
+
+    @Override
+    public boolean evaluate(PolicyRequest request) {
+        if (!"APPROVE".equals(request.getAction())) return true;
+
+        BigDecimal amount = (BigDecimal) request.getContext().get("amount");
+        String role = (String) request.getContext().get("role");
+
+        if (amount.compareTo(new BigDecimal("1000")) > 0) {
+            return "DIRECTOR".equals(role);
+        }
+        return "MANAGER".equals(role) || "DIRECTOR".equals(role);
+    }
+}
+```
+
+Для сложных правил используют **`OPA` (Open Policy Agent)** — policy engine с языком `Rego`, или **`AWS Verified Permissions`** — managed-сервис для fine-grained авторизации.
+
+## Q32. (!) Как настроить `Spring Security` как `OAuth2 Resource Server`?
+
+`Resource Server` — сервис, защищающий API и валидирующий `access token` при каждом запросе. Подробнее о `Spring Security` — в [Spring Security](../frameworks/spring/spring-security-interview.md).
+
+### Конфигурация с `JWT`
+
+```java
+@Configuration
+@EnableWebSecurity
+public class ResourceServerConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated())
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter())));
+        return http.build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthorities =
+            new JwtGrantedAuthoritiesConverter();
+        grantedAuthorities.setAuthorityPrefix("ROLE_");
+        grantedAuthorities.setAuthoritiesClaimName("roles");
+
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(grantedAuthorities);
+        return converter;
+    }
+}
+```
+
+`application.yml`:
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.example.com/realms/my-realm
+          # или jwk-set-uri: https://auth.example.com/.well-known/jwks.json
+```
+
+### Маппинг authorities из `JWT`
+
+По умолчанию `Spring Security` берёт authorities из claim `scope`. Для кастомных claims (например, `roles` из `Keycloak`) нужен `JwtGrantedAuthoritiesConverter`.
+
+## Q33. Как реализовать кастомный `PermissionEvaluator` в `Spring Security`?
+
+`PermissionEvaluator` позволяет использовать `hasPermission()` в `@PreAuthorize` для проверки прав на конкретный объект.
+
+```java
+@Component
+public class CustomPermissionEvaluator implements PermissionEvaluator {
+
+    private final OrderRepository orderRepository;
+    private final DocumentRepository documentRepository;
+
+    @Override
+    public boolean hasPermission(Authentication auth, Object targetDomainObject,
+                                  Object permission) {
+        if (targetDomainObject instanceof Order order) {
+            return evaluateOrderPermission(auth, order, (String) permission);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasPermission(Authentication auth, Serializable targetId,
+                                  String targetType, Object permission) {
+        if ("Order".equals(targetType)) {
+            Order order = orderRepository.findById((Long) targetId).orElse(null);
+            return order != null
+                && evaluateOrderPermission(auth, order, (String) permission);
+        }
+        return false;
+    }
+
+    private boolean evaluateOrderPermission(Authentication auth, Order order,
+                                             String permission) {
+        String userId = auth.getName();
+        return switch (permission) {
+            case "READ" -> order.getUserId().equals(userId)
+                || hasRole(auth, "ADMIN");
+            case "WRITE" -> order.getUserId().equals(userId)
+                && "DRAFT".equals(order.getStatus());
+            case "DELETE" -> hasRole(auth, "ADMIN");
+            default -> false;
+        };
+    }
+}
+
+// Использование
+@PreAuthorize("hasPermission(#id, 'Order', 'WRITE')")
+@PutMapping("/orders/{id}")
+public Order update(@PathVariable Long id, @RequestBody Order order) {
+    return orderService.update(id, order);
+}
+```
+
+Регистрация:
+```java
+@Configuration
+@EnableMethodSecurity
+public class MethodSecurityConfig {
+
+    @Bean
+    static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
+            CustomPermissionEvaluator evaluator) {
+        DefaultMethodSecurityExpressionHandler handler =
+            new DefaultMethodSecurityExpressionHandler();
+        handler.setPermissionEvaluator(evaluator);
+        return handler;
+    }
+}
+```
+
+## Q34. Как работает `SecurityFilterChain` в `Spring Security 6`?
+
+В `Spring Security 6` конфигурация безопасности строится через `SecurityFilterChain` bean (вместо наследования `WebSecurityConfigurerAdapter`, который удалён).
+
+```mermaid
+graph LR
+    R[HTTP Request] --> DF[DelegatingFilterProxy]
+    DF --> FCSB[FilterChainProxy]
+    FCSB --> SF1[SecurityContextPersistenceFilter]
+    SF1 --> SF2[CsrfFilter]
+    SF2 --> SF3[UsernamePasswordAuthenticationFilter]
+    SF3 --> SF4[BearerTokenAuthenticationFilter]
+    SF4 --> SF5[AuthorizationFilter]
+    SF5 --> C[Controller]
+```
+
+```java
+@Configuration
+@EnableWebSecurity
+public class MultiSecurityConfig {
+
+    // Цепочка для API — JWT, stateless
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/**")
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+            .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
+            .csrf(AbstractHttpConfigurer::disable);
+        return http.build();
+    }
+
+    // Цепочка для UI — form login, sessions
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/login", "/css/**").permitAll()
+                .anyRequest().authenticated())
+            .formLogin(form -> form.loginPage("/login"))
+            .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
+        return http.build();
+    }
+}
+```
+
+Ключевое отличие `Spring Security 6`: `@EnableMethodSecurity` вместо `@EnableGlobalMethodSecurity`, lambda-DSL обязателен, `authorizeHttpRequests` вместо `authorizeRequests`.
+
+## Q35. Как реализовать иерархию ролей в `Spring Security`?
+
+Иерархия ролей позволяет наследовать привилегии: `ADMIN` автоматически имеет все права `MODERATOR` и `USER`.
+
+```java
+@Configuration
+@EnableMethodSecurity
+public class RoleHierarchyConfig {
+
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy("""
+            ROLE_ADMIN > ROLE_MODERATOR
+            ROLE_MODERATOR > ROLE_USER
+            ROLE_USER > ROLE_GUEST
+            """);
+    }
+
+    @Bean
+    static MethodSecurityExpressionHandler methodSecurityExpressionHandler(
+            RoleHierarchy roleHierarchy) {
+        DefaultMethodSecurityExpressionHandler handler =
+            new DefaultMethodSecurityExpressionHandler();
+        handler.setRoleHierarchy(roleHierarchy);
+        return handler;
+    }
+}
+```
+
+С этой конфигурацией `@PreAuthorize("hasRole('USER')")` будет пропускать и `ADMIN`, и `MODERATOR`.
+
+## Q36. Как хранить пароли безопасно в `Java`?
+
+Пароли **никогда** не хранятся в открытом виде — только хэш с солью.
+
+| Алгоритм | Рекомендация | Описание |
+|----------|--------------|----------|
+| `bcrypt` | Рекомендуется (по умолчанию в Spring) | Адаптивный, настраиваемая сложность |
+| `Argon2` | Рекомендуется | Победитель Password Hashing Competition |
+| `scrypt` | Допустимо | Memory-hard |
+| `PBKDF2` | Допустимо (NIST) | HMAC-based |
+| `SHA-256` / `MD5` | **Нет!** | Слишком быстрые, уязвимы к brute force |
+
+```java
+@Configuration
+public class PasswordConfig {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        // bcrypt — default, strength 10 (2^10 итераций)
+        return new BCryptPasswordEncoder(12); // увеличиваем до 12
+    }
+
+    // Или DelegatingPasswordEncoder для миграции
+    @Bean
+    public PasswordEncoder delegatingPasswordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        // Хранит формат: {bcrypt}$2a$12$...
+        // Позволяет мигрировать с одного алгоритма на другой
+    }
+}
+```
+
+**Важно:** использовать `char[]` вместо `String` для паролей в памяти (можно обнулить после использования); `String` остаётся в пуле строк JVM.
+
+## Q37. (!) Какие типичные ошибки при реализации `JWT`?
+
+| Ошибка | Последствие | Как правильно |
+|--------|-------------|---------------|
+| Хранение секрета в коде | Компрометация всех токенов | Vault / env variables |
+| `alg: none` без валидации | Подделка токенов | Всегда проверять алгоритм |
+| Слишком длинный TTL | Неотзываемость скомпрометированных | 5-15 минут + refresh |
+| Хранение в `localStorage` | XSS → кража токена | `httpOnly` cookie или memory |
+| Чувствительные данные в payload | Утечка при decode (Base64, не шифрование) | Только несекретные claims |
+| Отсутствие проверки `aud` / `iss` | Подмена токена из другого сервиса | Всегда проверять audience и issuer |
+| Симметричный ключ для нескольких сервисов | Любой сервис может выпускать токены | `RS256` / `ES256` (asymmetric) |
+
+```java
+// Правильная валидация JWT с проверкой issuer и audience
+@Bean
+public JwtDecoder jwtDecoder() {
+    NimbusJwtDecoder decoder = NimbusJwtDecoder
+        .withJwkSetUri("https://auth.example.com/.well-known/jwks.json")
+        .build();
+
+    decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+        JwtValidators.createDefaultWithIssuer("https://auth.example.com"),
+        new JwtClaimValidator<>("aud",
+            aud -> aud != null && ((List<?>) aud).contains("my-api")),
+        new JwtTimestampValidator(Duration.ofSeconds(30)) // clock skew
+    ));
+
+    return decoder;
+}
+```
+
+## Q38. Как реализовать `OAuth2 Backend for Frontend` (`BFF`) паттерн?
+
+`BFF`-паттерн решает проблему хранения токенов в `SPA`: frontend **не** работает с токенами напрямую. Вместо этого `Spring Cloud Gateway` или backend выступает `OAuth2 Client`, а `SPA` общается с ним через `httpOnly` cookies.
+
+```mermaid
+graph LR
+    SPA[SPA / Browser] -->|httpOnly cookie| BFF[BFF / Gateway]
+    BFF -->|Access Token| RS[Resource Server]
+    BFF -->|Code + PKCE| AS[Authorization Server]
+```
+
+```java
+// Spring Cloud Gateway как BFF
+@Configuration
+public class BffGatewayConfig {
+
+    @Bean
+    public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+        http
+            .authorizeExchange(auth -> auth
+                .pathMatchers("/", "/login/**").permitAll()
+                .anyExchange().authenticated())
+            .oauth2Login(Customizer.withDefaults()) // Gateway = OAuth2 client
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()));
+        return http.build();
+    }
+}
+```
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: api
+          uri: http://resource-server:8081
+          predicates:
+            - Path=/api/**
+          filters:
+            - TokenRelay  # пробрасывает access token downstream
+```
+
+**Преимущества:** токены не доступны JavaScript (защита от `XSS`), `CSRF`-защита через cookies, централизованное управление токенами.
+
+## Q39. Как интегрировать `Keycloak` со `Spring Boot`?
+
+`Keycloak` — open-source `Identity Provider` с поддержкой `OIDC`, `SAML`, `RBAC`, `MFA`.
+
+```yaml
+# application.yml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/my-realm
+      client:
+        registration:
+          keycloak:
+            client-id: my-app
+            client-secret: ${KEYCLOAK_SECRET}
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak:8080/realms/my-realm
+```
+
+### Маппинг ролей из `Keycloak`
+
+`Keycloak` хранит роли в `realm_access.roles` — нестандартный claim, нужен кастомный converter:
+
+```java
+@Bean
+public JwtAuthenticationConverter keycloakJwtConverter() {
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+        if (realmAccess == null) return Set.of();
+
+        @SuppressWarnings("unchecked")
+        List<String> roles = (List<String>) realmAccess.get("roles");
+
+        return roles.stream()
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+            .collect(Collectors.toSet());
+    });
+    return converter;
+}
+```
+
+## Q40. Как тестировать безопасность в `Spring`-приложении?
+
+### Unit-тесты с `@WithMockUser`
+
+```java
+@WebMvcTest(PostController.class)
+class PostControllerSecurityTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminCanDeletePost() throws Exception {
+        mockMvc.perform(delete("/api/posts/1"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userCannotDeletePost() throws Exception {
+        mockMvc.perform(delete("/api/posts/1"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedGetsForbidden() throws Exception {
+        mockMvc.perform(get("/api/posts"))
+            .andExpect(status().isUnauthorized());
+    }
+}
+```
+
+### Тестирование `JWT Resource Server`
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class ResourceServerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void validJwtAllowsAccess() throws Exception {
+        mockMvc.perform(get("/api/data")
+            .with(jwt()
+                .jwt(j -> j
+                    .subject("user1")
+                    .claim("roles", List.of("USER")))
+                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    void invalidScopeReturnsForbidden() throws Exception {
+        mockMvc.perform(get("/api/admin")
+            .with(jwt().jwt(j -> j.claim("scope", "read"))))
+            .andExpect(status().isForbidden());
+    }
+}
+```
+
+### Тестирование `OAuth2` логина
+
+```java
+@Test
+void oauth2LoginRedirects() throws Exception {
+    mockMvc.perform(get("/api/profile")
+        .with(oidcLogin()
+            .idToken(token -> token
+                .claim("name", "Test User")
+                .claim("email", "test@example.com"))))
+        .andExpect(status().isOk());
+}
+```
+
+## Q41. (!) Чем `JWT` отличается от `Session`-based аутентификации: когда что выбирать?
+
+Это один из самых частых вопросов на собеседованиях. Нет универсально «лучшего» варианта — выбор зависит от архитектурных требований.
+
+### Сравнение подходов
+
+| Критерий | Session-based | JWT (Stateless) |
+|---------|--------------|-----------------|
+| Хранение состояния | На сервере (in-memory, Redis) | В токене (у клиента) |
+| Масштабирование | Требует sticky sessions или shared store | Горизонтальное без shared state |
+| Отзыв | Мгновенный (удалить из store) | Сложный (до истечения `exp`) |
+| Размер | Cookie ~50 байт | JWT ~500-2000 байт |
+| Производительность | Чтение из store на каждый запрос | Верификация подписи (CPU) |
+| Поддержка микросервисов | Сложно (нужен shared session store) | Нативно (stateless) |
+| Invalidation при logout | Немедленный | Только через blacklist |
+| Подходит для | Monolith, SPA с BFF | Микросервисы, API, mobile |
+
+### Session-based: реализация в Spring Security
+
+```java
+@Bean
+SecurityFilterChain sessionBasedChain(HttpSecurity http,
+                                       SessionRegistry sessionRegistry) throws Exception {
+    http
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            .maximumSessions(1)                    // один активный сеанс на пользователя
+            .maxSessionsPreventsLogin(false)        // при новом логине инвалидировать старый
+            .sessionRegistry(sessionRegistry())
+            .and()
+            .sessionFixation().newSession()         // новая сессия после логина (защита от fixation)
+            .invalidSessionUrl("/login?expired"))
+        .rememberMe(me -> me
+            .tokenValiditySeconds(86400 * 7)        // 7 дней
+            .key("${app.remember-me-key}"));
+    return http.build();
+}
+
+// Принудительный logout из всех сессий пользователя (при компрометации)
+public void invalidateAllSessions(String username) {
+    List<SessionInformation> sessions =
+        sessionRegistry.getAllSessions(username, false);
+    sessions.forEach(SessionInformation::expireNow);
+}
+```
+
+### JWT: реализация с blacklist для logout
+
+```java
+@Service
+public class JwtBlacklistService {
+
+    // Redis для быстрого lookup; TTL = remaining token lifetime
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
+    public void revokeToken(String jti, Instant expiry) {
+        long ttl = Duration.between(Instant.now(), expiry).getSeconds();
+        if (ttl > 0) {
+            redisTemplate.opsForValue().set(
+                "jwt:blacklist:" + jti, "revoked",
+                ttl, TimeUnit.SECONDS);
+        }
+    }
+
+    public boolean isRevoked(String jti) {
+        return Boolean.TRUE.equals(
+            redisTemplate.hasKey("jwt:blacklist:" + jti));
+    }
+}
+
+// JWT валидатор с проверкой blacklist
+@Component
+public class BlacklistJwtDecoder implements JwtDecoder {
+
+    private final NimbusJwtDecoder delegate;
+    private final JwtBlacklistService blacklistService;
+
+    @Override
+    public Jwt decode(String token) throws JwtException {
+        Jwt jwt = delegate.decode(token);
+        String jti = jwt.getId();
+        if (jti != null && blacklistService.isRevoked(jti)) {
+            throw new JwtException("Token has been revoked");
+        }
+        return jwt;
+    }
+}
+```
+
+### Когда что выбирать
+
+```
+Выбирайте Session-based, если:
+✓ Monolithic приложение
+✓ Нужен немедленный отзыв (банки, медицина)
+✓ Веб-браузер — основной клиент
+✓ Нет требований горизонтального масштабирования без shared state
+
+Выбирайте JWT, если:
+✓ Микросервисная архитектура
+✓ Mobile/SPA клиенты
+✓ API, используемые третьими сторонами
+✓ Горизонтальное масштабирование без sticky sessions
+✓ Cross-domain/cross-origin сценарии
+```
+
+## Q42. Как реализовать `API Key` аутентификацию в `Spring Security`?
+
+`API Key` — простой механизм для machine-to-machine аутентификации. Применяется для публичных API, внутренних интеграций, webhooks.
+
+### Кастомный фильтр API Key
+
+```java
+@Component
+public class ApiKeyAuthFilter extends OncePerRequestFilter {
+
+    private static final String API_KEY_HEADER = "X-API-Key";
+    private final ApiKeyService apiKeyService;
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                     HttpServletResponse response,
+                                     FilterChain chain)
+            throws ServletException, IOException {
+
+        String apiKey = request.getHeader(API_KEY_HEADER);
+
+        if (apiKey == null || apiKey.isBlank()) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        // Валидация ключа (безопасное сравнение)
+        Optional<ApiKeyPrincipal> principal = apiKeyService.validate(apiKey);
+
+        if (principal.isPresent()) {
+            ApiKeyAuthenticationToken auth = new ApiKeyAuthenticationToken(
+                principal.get(),
+                principal.get().getAuthorities());
+            auth.setDetails(new WebAuthenticationDetailsSource()
+                .buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        }
+
+        chain.doFilter(request, response);
+    }
+}
+
+// Кастомный Authentication Token
+public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
+    private final ApiKeyPrincipal principal;
+
+    public ApiKeyAuthenticationToken(ApiKeyPrincipal principal,
+                                      Collection<? extends GrantedAuthority> authorities) {
+        super(authorities);
+        this.principal = principal;
+        setAuthenticated(true);
+    }
+
+    @Override public Object getPrincipal() { return principal; }
+    @Override public Object getCredentials() { return null; }
+}
+```
+
+### Хранение и валидация API ключей
+
+```java
+@Entity
+@Table(name = "api_keys")
+public class ApiKeyEntity {
+    @Id private Long id;
+    @Column(unique = true)
+    private String keyHash;          // SHA-256 хэш ключа (не сам ключ!)
+    private String clientName;
+    private boolean active;
+    private Instant expiresAt;
+    @ElementCollection
+    private Set<String> scopes;      // read, write, admin
+    private Instant lastUsedAt;
+    private long requestCount;
+}
+
+@Service
+public class ApiKeyService {
+
+    @Cacheable(value = "apiKeys", key = "#apiKey.substring(0, 8)")
+    public Optional<ApiKeyPrincipal> validate(String apiKey) {
+        // Никогда не храним ключ в открытом виде
+        String keyHash = DigestUtils.sha256Hex(apiKey);
+
+        return apiKeyRepo.findByKeyHash(keyHash)
+            .filter(ApiKeyEntity::isActive)
+            .filter(key -> key.getExpiresAt() == null ||
+                           key.getExpiresAt().isAfter(Instant.now()))
+            .map(key -> {
+                // Обновляем статистику использования
+                key.setLastUsedAt(Instant.now());
+                key.setRequestCount(key.getRequestCount() + 1);
+                apiKeyRepo.save(key);
+                return new ApiKeyPrincipal(key.getClientName(), key.getScopes());
+            });
+    }
+
+    public String generateApiKey() {
+        // Генерация: prefix для идентификации + random bytes
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        String key = "sk_" + Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(bytes);
+        // Сохраняем только хэш
+        String hash = DigestUtils.sha256Hex(key);
+        apiKeyRepo.save(new ApiKeyEntity(hash, ...));
+        return key; // возвращаем только при создании
+    }
+}
+```
+
+### Интеграция в SecurityFilterChain
+
+```java
+@Bean
+SecurityFilterChain apiSecurityChain(HttpSecurity http,
+                                      ApiKeyAuthFilter apiKeyFilter) throws Exception {
+    http
+        .securityMatcher("/api/**")
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
+        .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+        .authorizeHttpRequests(authz -> authz
+            .requestMatchers("/api/public/**").permitAll()
+            .requestMatchers("/api/admin/**").hasRole("API_ADMIN")
+            .anyRequest().authenticated());
+    return http.build();
+}
+```
+
+## Q43. (!) Что такое `Zero Trust` и как реализовать его принципы в Java-приложении?
+
+**Zero Trust** — модель безопасности «никогда не доверяй, всегда проверяй». Противоположность периметровой безопасности (castle-and-moat).
+
+### Три кита Zero Trust
+
+```
+1. Verify Explicitly
+   - Аутентификация каждого запроса (нет "внутренней" сети)
+   - Контекстная аутентификация: IP, device, время, поведение
+   - MFA для критичных операций
+
+2. Least Privilege Access
+   - Минимальные права для каждого субъекта
+   - JIT (Just-in-Time) доступ: права выдаются на время задачи
+   - Регулярный review и отзыв неиспользуемых прав
+
+3. Assume Breach
+   - Проектирование с учётом того, что нарушение произойдёт
+   - Микросегментация: каждый сервис изолирован
+   - Непрерывный мониторинг и обнаружение аномалий
+```
+
+### Реализация в микросервисах на Spring
+
+```java
+// 1. Каждый сервис проверяет токен самостоятельно (нет доверенной внутренней сети)
+@Configuration
+public class ZeroTrustResourceServerConfig {
+
+    @Bean
+    SecurityFilterChain chain(HttpSecurity http) throws Exception {
+        http
+            // Нет white-list по IP — проверяем каждый запрос
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt
+                    .decoder(jwtDecoder())
+                    .jwtAuthenticationConverter(jwtConverter())))
+            // Запрет всего, что явно не разрешено
+            .authorizeHttpRequests(authz -> authz
+                .anyRequest().authenticated());
+        return http.build();
+    }
+}
+
+// 2. Propagation токена между сервисами
+@Bean
+WebClient serviceToServiceClient(OAuth2AuthorizedClientManager manager) {
+    // Автоматически добавляет Bearer token в исходящие запросы
+    var oauth2 = new ServletOAuth2AuthorizedClientExchangeFilterFunction(manager);
+    oauth2.setDefaultClientRegistrationId("internal-service");
+    return WebClient.builder()
+        .apply(oauth2.oauth2Configuration())
+        .build();
+}
+
+// 3. Контекстная авторизация (учитываем дополнительные факторы)
+@Component
+public class ZeroTrustAuthorizationManager
+        implements AuthorizationManager<RequestAuthorizationContext> {
+
+    @Override
+    public AuthorizationDecision check(
+            Supplier<Authentication> authentication,
+            RequestAuthorizationContext context) {
+
+        Authentication auth = authentication.get();
+        HttpServletRequest request = context.getRequest();
+
+        // Проверяем не только роль, но и контекст запроса
+        boolean isAuthenticated = auth != null && auth.isAuthenticated();
+        boolean hasRequiredScope = hasScope(auth, "api:read");
+        boolean isKnownDevice = deviceTrustService.isTrusted(
+            request.getHeader("X-Device-ID"), auth.getName());
+        boolean withinRateLimit = rateLimitService.isAllowed(auth.getName());
+
+        return new AuthorizationDecision(
+            isAuthenticated && hasRequiredScope &&
+            isKnownDevice && withinRateLimit);
+    }
+}
+```
+
+### Zero Trust checklist для Java-разработчика
+
+| Принцип | Мера | Инструмент |
+|---------|------|-----------|
+| Verify explicitly | JWT на каждом сервисе | Spring Security Resource Server |
+| Service identity | mTLS между сервисами | Istio, Spring + X.509 |
+| Least privilege | RBAC/ABAC с минимальными правами | Spring `@PreAuthorize` |
+| Network segmentation | Network Policies | Kubernetes Calico/Cilium |
+| Continuous monitoring | Audit log каждого доступа | Micrometer + SIEM |
+| Assume breach | Шифрование данных в покое | Vault, k8s etcd encryption |
+
+## Q44. Как реализовать `RBAC` и `ABAC` совместно в `Spring Security`?
+
+На практике RBAC (Role-Based) и ABAC (Attribute-Based) часто используются вместе: RBAC для грубой фильтрации, ABAC для тонкой.
+
+### Архитектура комбинированной авторизации
+
+```
+Запрос → [RBAC: есть ли роль USER?] → Да → [ABAC: принадлежит ли ресурс пользователю?]
+                                    → Нет → 403
+                                                       → Да → 200
+                                                       → Нет → 403
+```
+
+### Реализация
+
+```java
+// Доменная модель — ресурс с владельцем и тегами
+@Entity
+public class Document {
+    @Id private Long id;
+    private String ownerId;
+    private String department;       // ABAC-атрибут: отдел
+    private Classification classification;  // PUBLIC, INTERNAL, SECRET
+}
+
+// ABAC политики как Spring beans
+@Component
+public class DocumentAuthorizationPolicy {
+
+    // Правило: пользователь читает документ если:
+    // - он владелец, ИЛИ
+    // - документ PUBLIC, ИЛИ
+    // - документ INTERNAL и пользователь в том же отделе
+    public boolean canRead(UserDetails user, Document document) {
+        String userId = user.getUsername();
+        UserProfile profile = userProfileService.getProfile(userId);
+
+        return document.getOwnerId().equals(userId)
+            || document.getClassification() == Classification.PUBLIC
+            || (document.getClassification() == Classification.INTERNAL
+                && document.getDepartment().equals(profile.getDepartment()));
+    }
+
+    public boolean canWrite(UserDetails user, Document document) {
+        return document.getOwnerId().equals(user.getUsername())
+            || user.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+}
+
+// PermissionEvaluator — интегрируем ABAC в Spring Security
+@Component
+public class DocumentPermissionEvaluator implements PermissionEvaluator {
+
+    private final DocumentAuthorizationPolicy policy;
+    private final DocumentRepository documentRepo;
+
+    @Override
+    public boolean hasPermission(Authentication auth, Object targetDomainObject,
+                                  Object permission) {
+        if (!(targetDomainObject instanceof Document doc)) return false;
+        UserDetails user = (UserDetails) auth.getPrincipal();
+        return switch (permission.toString()) {
+            case "READ"  -> policy.canRead(user, doc);
+            case "WRITE" -> policy.canWrite(user, doc);
+            default -> false;
+        };
+    }
+
+    @Override
+    public boolean hasPermission(Authentication auth, Serializable targetId,
+                                  String targetType, Object permission) {
+        if ("Document".equals(targetType)) {
+            Document doc = documentRepo.findById((Long) targetId).orElse(null);
+            return doc != null && hasPermission(auth, doc, permission);
+        }
+        return false;
+    }
+}
+
+// Использование: RBAC (hasRole) + ABAC (hasPermission) вместе
+@RestController
+@RequestMapping("/api/documents")
+public class DocumentController {
+
+    // RBAC: только USER или ADMIN, ABAC: только если есть право READ
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN') and hasPermission(#id, 'Document', 'READ')")
+    public Document getDocument(@PathVariable Long id) {
+        return documentService.findById(id);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN') and hasPermission(#id, 'Document', 'WRITE')")
+    public Document updateDocument(@PathVariable Long id,
+                                    @RequestBody DocumentRequest request) {
+        return documentService.update(id, request);
+    }
+
+    // Только ADMIN может создавать SECRET документы
+    @PostMapping
+    @PreAuthorize("hasRole('USER') and " +
+        "(#request.classification != 'SECRET' or hasRole('ADMIN'))")
+    public Document createDocument(@RequestBody DocumentRequest request) {
+        return documentService.create(request);
+    }
+}
+```
+
+### Конфигурация MethodSecurity
+
+```java
+@Configuration
+@EnableMethodSecurity(prePostEnabled = true)
+public class MethodSecurityConfig {
+
+    @Bean
+    MethodSecurityExpressionHandler methodSecurityExpressionHandler(
+            DocumentPermissionEvaluator permissionEvaluator) {
+        DefaultMethodSecurityExpressionHandler handler =
+            new DefaultMethodSecurityExpressionHandler();
+        handler.setPermissionEvaluator(permissionEvaluator);
+        return handler;
+    }
+}
+```
+
+## Q45. (!) Как реализовать `mTLS` аутентификацию между микросервисами?
+
+`mTLS` (mutual TLS) — стандартный механизм service-to-service аутентификации в `Zero Trust` архитектурах. Каждый сервис имеет собственный X.509 сертификат, который проверяется при каждом соединении.
+
+### Как работает mTLS
+
+```mermaid
+sequenceDiagram
+    participant A as Service A
+    participant B as Service B
+
+    A->>B: TLS ClientHello
+    B->>A: Server Certificate (CN=service-b)
+    A->>A: Верифицирует сертификат B (truststore)
+    A->>B: Client Certificate (CN=service-a)
+    B->>B: Верифицирует сертификат A (truststore)
+    A->>B: Encrypted Request
+    B->>A: Encrypted Response
+```
+
+### Без Service Mesh: Spring Boot + X.509
+
+```yaml
+# service-b/application.yml — сервер требует клиентский сертификат
+server:
+  ssl:
+    enabled: true
+    key-store: classpath:service-b-keystore.p12
+    key-store-password: ${KS_PASSWORD}
+    key-store-type: PKCS12
+    trust-store: classpath:internal-ca-truststore.p12
+    trust-store-password: ${TS_PASSWORD}
+    client-auth: REQUIRE
+```
+
+```java
+// Service B: аутентификация по CN сертификата Service A
+@Configuration
+public class ServiceBSecurityConfig {
+
+    @Bean
+    SecurityFilterChain chain(HttpSecurity http) throws Exception {
+        http
+            .x509(x509 -> x509
+                // CN=service-a → принципал "service-a"
+                .subjectPrincipalRegex("CN=(.*?)(?:,|$)")
+                .userDetailsService(serviceUserDetailsService()))
+            .authorizeHttpRequests(authz -> authz
+                // Только service-a может вызывать internal endpoints
+                .requestMatchers("/internal/**")
+                    .hasAuthority("SERVICE_SERVICE_A")
+                .anyRequest().denyAll());
+        return http.build();
+    }
+
+    @Bean
+    UserDetailsService serviceUserDetailsService() {
+        // Маппинг CN сертификата → роли/полномочия
+        Map<String, UserDetails> services = Map.of(
+            "service-a", User.withUsername("service-a")
+                .password("")
+                .authorities("SERVICE_SERVICE_A")
+                .build(),
+            "service-b", User.withUsername("service-b")
+                .password("")
+                .authorities("SERVICE_SERVICE_B")
+                .build()
+        );
+        return username -> Optional.ofNullable(services.get(username))
+            .orElseThrow(() -> new UsernameNotFoundException(
+                "Unknown service: " + username));
+    }
+}
+```
+
+```java
+// Service A: клиент с сертификатом
+@Configuration
+public class ServiceAClientConfig {
+
+    @Bean
+    WebClient serviceBClient() throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        try (var is = new ClassPathResource("service-a-keystore.p12").getInputStream()) {
+            keyStore.load(is, System.getenv("KS_PASSWORD").toCharArray());
+        }
+
+        KeyStore trustStore = KeyStore.getInstance("PKCS12");
+        try (var is = new ClassPathResource("internal-ca-truststore.p12").getInputStream()) {
+            trustStore.load(is, System.getenv("TS_PASSWORD").toCharArray());
+        }
+
+        SslContext sslContext = SslContextBuilder.forClient()
+            .keyManager(
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+                    .also(f -> f.init(keyStore, System.getenv("KEY_PASSWORD").toCharArray())))
+            .trustManager(
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+                    .also(f -> f.init(trustStore)))
+            .protocols("TLSv1.3", "TLSv1.2")
+            .build();
+
+        return WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(
+                HttpClient.create().secure(spec -> spec.sslContext(sslContext))))
+            .baseUrl("https://service-b:8443")
+            .build();
+    }
+}
+```
+
+### С Istio Service Mesh (декларативный подход)
+
+```yaml
+# PeerAuthentication: STRICT mTLS в production namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: production
+spec:
+  mtls:
+    mode: STRICT
+---
+# AuthorizationPolicy: service-a может вызывать только /internal/** service-b
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: service-b-policy
+  namespace: production
+spec:
+  selector:
+    matchLabels:
+      app: service-b
+  rules:
+    - from:
+        - source:
+            principals:
+              - "cluster.local/ns/production/sa/service-a"
+      to:
+        - operation:
+            paths: ["/internal/*"]
+            methods: ["GET", "POST"]
+```
+
+### Управление сертификатами
+
+| Подход | Когда | Инструмент |
+|--------|-------|-----------|
+| Ручной keystore | Dev/test | `keytool`, `openssl` |
+| cert-manager (k8s) | Staging/prod без mesh | `cert-manager` + Let's Encrypt / internal CA |
+| Istio SPIFFE/SPIRE | Production с service mesh | Автоматически, ротация каждые 24ч |
+| Vault PKI Engine | Enterprise | HashiCorp Vault, TTL-based rotation |
+
+Подробнее о стратегиях тестирования — в [Integration Testing](../testing/integration-testing-interview.md) и [Unit Testing](../testing/unit-testing-interview.md).
+
+---
+
+## See also
+
+- [Application Security](application-security-interview.md) — общая безопасность приложений, Defense in Depth
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — конфигурация и фильтры Spring Security
+- [OAuth 2.0](oauth2-interview.md) — детальный разбор протокола OAuth 2.0, flows, токены
+- [OWASP Top 10](owasp-top10-interview.md) — A07 Auth Failures, Broken Access Control
+- [Микросервисы](../architecture/microservices-interview.md) — безопасность в микросервисной архитектуре, service mesh
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность на уровне инфраструктуры
+- [Kubernetes](../devops/kubernetes-interview.md) — ServiceAccount, RBAC, Workload Identity
+- [Архитектура баз данных](../databases/database-architecture-interview.md) — Row-Level Security, шифрование данных
+- [HTTP и REST](../api/http-rest-interview.md) — TLS, HTTPS, заголовки безопасности

@@ -1,15 +1,20 @@
 ---
 title: "Go: коллекции"
 description: "Полное руководство по коллекциям в Go: slices, maps, arrays, работа с данными, операции, производительность"
-tags: ["go", "golang", "collections", "slices", "maps", "arrays", "data-structures"]
+tags:
+  - go
+  - golang
+  - collections
+  - slices
+  - maps
+  - arrays
+  - data-structures
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: коллекции
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

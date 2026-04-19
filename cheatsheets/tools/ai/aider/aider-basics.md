@@ -1,7 +1,11 @@
 ---
 title: "Aider: основы"
 description: "CLI-помощник для редактирования кода через AI и git-патчи: установка, рабочий процесс, ограничения и лучшие практики."
-tags: ["tools", "ai", "aider", "cli"]
+tags:
+  - tools
+  - ai
+  - aider
+  - cli
 difficulty: "intermediate"
 prerequisites: []
 next: []

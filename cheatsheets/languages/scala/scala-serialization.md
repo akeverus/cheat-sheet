@@ -1,7 +1,12 @@
 ---
 title: "Scala Serialization"
 description: "Полное руководство по сериализации в Scala: Java Serialization, JSON, Protocol Buffers, Avro, Pickling"
-tags: ["scala", "serialization", "json", "protobuf", "avro"]
+tags:
+  - scala
+  - serialization
+  - json
+  - protobuf
+  - avro
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-json.md"]
 # **Scala Serialization**
 
 Кратко: полное руководство по сериализации в **Scala**: **Java Serialization**, **JSON**, **Protocol Buffers**, **Avro**, **Pickling**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

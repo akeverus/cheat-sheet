@@ -1,7 +1,13 @@
 ---
 title: "Micronaut: Validation - Bean Validation и Custom Validators"
 description: "Полное руководство по валидации в Micronaut: Bean Validation, custom validators, группировка валидации и best practices"
-tags: ["micronaut", "validation", "bean-validation", "jakarta-validation", "java", "kotlin"]
+tags:
+  - micronaut
+  - validation
+  - bean-validation
+  - jakarta-validation
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-http.md", "micronaut-data.md"]

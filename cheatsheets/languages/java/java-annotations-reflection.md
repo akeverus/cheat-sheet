@@ -1,7 +1,10 @@
 ---
 title: "Java Annotations и Reflection"
 description: "Java предоставляет мощные механизмы метапрограммирования через аннотации и рефлексию. Этот документ охватывает создание и использование аннотаций, работу с рефлексией, байткод манипуляцию и практические применения этих технологий."
-tags: ["languages", "java", "java-annotations-reflection"]
+tags:
+  - languages
+  - java
+  - java-annotations-reflection
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Annotations и Reflection
 
 **Java** предоставляет мощные механизмы метапрограммирования через аннотации и рефлексию. Этот документ охватывает создание и использование аннотаций, работу с рефлексией, байткод манипуляцию и практические применения этих технологий.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Java Annotations](https://docs.oracle.com/javase/tutorial/java/annotations/)

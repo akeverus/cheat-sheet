@@ -1,15 +1,19 @@
 ---
 title: "Go: конкурентность"
 description: "Полное руководство по конкурентности в Go: горутины, каналы, синхронизация, context, паттерны"
-tags: ["go", "golang", "concurrency", "goroutines", "channels", "sync"]
+tags:
+  - go
+  - golang
+  - concurrency
+  - goroutines
+  - channels
+  - sync
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: конкурентность
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

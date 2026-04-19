@@ -1,7 +1,10 @@
 ---
 title: "Promises в Scala"
 description: "Краткое руководство по Promises в Scala - создание и управление Futures."
-tags: ["languages", "scala", "scala-promises"]
+tags:
+  - languages
+  - scala
+  - scala-promises
 difficulty: "intermediate"
 prerequisites: []
 next: []

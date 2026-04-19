@@ -1,7 +1,10 @@
 ---
 title: "Рекомендательная система на основе Collaborative Filtering"
 description: "Руководство по реализации алгоритма Slope One для рекомендательных систем на основе совместной фильтрации в Java."
-tags: ["algorithms", "ai-ml", "recommender-systems"]
+tags:
+  - algorithms
+  - ai-ml
+  - recommender-systems
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Рекомендательная система на основе Collaborative Filtering
 
 Руководство по реализации алгоритма **Slope One** для рекомендательных систем на основе совместной фильтрации в **Java**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

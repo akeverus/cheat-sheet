@@ -1,7 +1,14 @@
 ---
 title: "Quarkus: Security - Authentication, Authorization и OAuth2"
 description: "Полное руководство по безопасности в Quarkus: authentication, authorization, OAuth2, JWT, Keycloak и best practices"
-tags: ["quarkus", "security", "oauth2", "jwt", "keycloak", "authentication", "java"]
+tags:
+  - quarkus
+  - security
+  - oauth2
+  - jwt
+  - keycloak
+  - authentication
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-reactive.md"]

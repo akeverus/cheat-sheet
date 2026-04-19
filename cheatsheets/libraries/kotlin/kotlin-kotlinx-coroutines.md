@@ -1,7 +1,10 @@
 ---
 title: "kotlinx.coroutines"
 description: "kotlinx.coroutines - это библиотека для асинхронного и конкурентного программирования в Kotlin. Предоставляет мощные примитивы для работы с корутинами, каналами, потоками и асинхронными операциями."
-tags: ["libraries", "kotlin", "kotlin-kotlinx-coroutines"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-kotlinx-coroutines
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # kotlinx.coroutines
 
 **kotlinx.coroutines** - это библиотека для асинхронного и конкурентного программирования в **Kotlin**. Предоставляет мощные примитивы для работы с корутинами, каналами, потоками и асинхронными операциями.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

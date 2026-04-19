@@ -1,7 +1,12 @@
 ---
 title: "REST API Design"
 description: "Лучшие практики проектирования REST API: методы, статусы, версионирование"
-tags: ["rest", "api", "http", "design", "best-practices"]
+tags:
+  - rest
+  - api
+  - http
+  - design
+  - best-practices
 difficulty: "intermediate"
 prerequisites: ["java-basics.md"]
 next: ["spring/spring-rest.md"]
@@ -11,8 +16,6 @@ updated: "2026-02-06"
 # **REST API Design** (**лучшие практики**)
 
 Кратко: Лучшие практики проектирования **REST API**. **HTTP** методы, статус коды, версионирование, пагинация, **HATEOAS**, документация, безопасность.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

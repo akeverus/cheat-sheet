@@ -1,7 +1,12 @@
 ---
 title: "Scala Performance"
 description: "Полное руководство по оптимизации производительности в Scala: профилирование, оптимизация коллекций, JVM настройки"
-tags: ["scala", "performance", "optimization", "jvm", "profiling"]
+tags:
+  - scala
+  - performance
+  - optimization
+  - jvm
+  - profiling
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 # **Scala Performance**
 
 Кратко: полное руководство по оптимизации производительности в **Scala**: профилирование, оптимизация коллекций, **JVM** настройки.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

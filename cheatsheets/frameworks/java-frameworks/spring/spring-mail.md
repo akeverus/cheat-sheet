@@ -1,7 +1,13 @@
 ---
 title: "Spring Mail: Полное руководство по отправке email"
 description: "Комплексное руководство по Spring Mail: отправка email, шаблоны, вложения, HTML email, асинхронная отправка и best practices"
-tags: ["spring", "mail", "email", "smtp", "thymeleaf", "java"]
+tags:
+  - spring
+  - mail
+  - email
+  - smtp
+  - thymeleaf
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-mvc.md"]
 next: ["spring/spring-messaging.md"]

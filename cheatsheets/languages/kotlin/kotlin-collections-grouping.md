@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Collections: Grouping and Aggregation"
 description: "Кратко: руководство по группировке и агрегации коллекций в Kotlin: groupBy, groupingBy, агрегатные функции и продвинутые операции."
-tags: ["languages", "kotlin", "kotlin-collections-grouping"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-collections-grouping
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Collections: Grouping and Aggregation
 
 Кратко: руководство по группировке и агрегации коллекций в **Kotlin**: **groupBy**, **groupingBy**, агрегатные функции и продвинутые операции.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,15 +1,19 @@
 ---
 title: "Go: командная строка"
 description: "Полное руководство по созданию CLI приложений в Go: flag package, cobra, urfave/cli"
-tags: ["go", "golang", "cli", "command-line", "flags", "cobra"]
+tags:
+  - go
+  - golang
+  - cli
+  - command-line
+  - flags
+  - cobra
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: командная строка
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

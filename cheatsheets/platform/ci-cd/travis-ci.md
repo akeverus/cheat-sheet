@@ -1,7 +1,10 @@
 ---
 title: "Travis CI"
 description: "Travis CI - hosted CI платформа с legacy-контекстом в 2026; документ охватывает поддержку существующих pipeline, troubleshooting и мягкую миграцию на современные CI/CD-системы."
-tags: ["platform", "ci-cd", "travis-ci"]
+tags:
+  - platform
+  - ci-cd
+  - travis-ci
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Travis CI
 
 **Travis** `CI` - это **hosted continuous integration** платформа, которая особенно популярна среди **open source** проектов. **Travis** `CI` предоставляет бесплатный сервис для публичных репозиториев и платные планы для приватных репозиториев. Этот документ охватывает конфигурацию, продвинутые паттерны и **best practices** для использования **Travis** `CI` в различных сценариях.
-
-**Дата последнего обновления:** 2026-02-11
 
 > `Travis CI` рассматривается как legacy-опция: документ ориентирован на поддержку существующих пайплайнов и безопасную миграцию.
 

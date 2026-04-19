@@ -1,7 +1,9 @@
 ---
 title: "Cloud providers"
 description: "AWS: [basics](aws-basics.md) · [IAM](aws-iam.md) · [networking](aws-networking.md) · [services](aws-services.md)"
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

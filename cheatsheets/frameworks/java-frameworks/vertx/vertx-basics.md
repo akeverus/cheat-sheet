@@ -1,7 +1,14 @@
 ---
 title: "Vert.x: Основы"
 description: "Реактивный toolkit для JVM для создания асинхронных, event-driven приложений"
-tags: ["vertx", "java", "kotlin", "reactive", "async", "non-blocking", "event-driven"]
+tags:
+  - vertx
+  - java
+  - kotlin
+  - reactive
+  - async
+  - non-blocking
+  - event-driven
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "java/java-concurrency-basics.md"]
 next: ["vertx-core.md", "vertx-web.md", "vertx-reactive.md"]

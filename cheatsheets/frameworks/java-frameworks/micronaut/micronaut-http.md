@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: HTTP - Controllers, Routing и Request Handling"
 description: "Полное руководство по созданию HTTP контроллеров, роутинга, обработки запросов и ответов в Micronaut"
-tags: ["micronaut", "http", "controllers", "routing", "rest", "java", "kotlin"]
+tags:
+  - micronaut
+  - http
+  - controllers
+  - routing
+  - rest
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-data.md", "micronaut-security.md"]

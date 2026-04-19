@@ -1,7 +1,9 @@
 ---
 title: "Мониторинг и Observability"
 description: "Раздел охватывает инструменты и практики мониторинга, логирования, трейсинга, алертинга и APM."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

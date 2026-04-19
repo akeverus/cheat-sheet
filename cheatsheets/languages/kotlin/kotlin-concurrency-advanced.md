@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Concurrency: Advanced"
 description: "Кратко: продвинутое руководство по конкурентности в Kotlin: Flow, Channel, Mutex, Structured Concurrency, Coroutine Context, Job, Deferred и другие продвинутые темы."
-tags: ["languages", "kotlin", "kotlin-concurrency-advanced"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-concurrency-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Concurrency: Advanced
 
 Кратко: продвинутое руководство по конкурентности в **Kotlin**: **Flow**, **Channel**, **Mutex**, **Structured Concurrency**, **Coroutine Context**, **Job**, **Deferred** и другие продвинутые темы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

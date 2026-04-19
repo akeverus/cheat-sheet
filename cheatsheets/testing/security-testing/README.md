@@ -1,7 +1,9 @@
 ---
 title: "Security Testing"
 description: "Индекс материалов по security testing: Burp Suite, OWASP ZAP и sqlmap."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

@@ -1,15 +1,16 @@
 ---
 title: "Безопасность инфраструктуры (Infrastructure Security)"
 description: "Сетевая безопасность, хосты и ОС, контейнеры, Kubernetes, облако и принципы минимально необходимого доступа."
-tags: ["security", "infrastructure", "infrastructure-security"]
+tags:
+  - security
+  - infrastructure
+  - infrastructure-security
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Безопасность инфраструктуры (`Infrastructure Security`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Сетевая безопасность, хосты и ОС, контейнеры, `Kubernetes`, облако и принципы минимально необходимого доступа.
 

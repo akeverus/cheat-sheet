@@ -1,7 +1,10 @@
 ---
 title: "API Testing: Основы"
 description: "Комплексное руководство по тестированию REST API и других типов API."
-tags: ["development", "api", "api-testing-basics"]
+tags:
+  - development
+  - api
+  - api-testing-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # API Testing: Основы
 
 **Комплексное руководство по тестированию `REST API` и других типов `API`.**
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

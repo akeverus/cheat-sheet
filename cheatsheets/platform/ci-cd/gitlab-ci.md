@@ -1,7 +1,10 @@
 ---
 title: "GitLab CI/CD"
 description: "GitLab CI/CD — встроенная система continuous integration и continuous delivery в GitLab. Она позволяет автоматизировать процесс сборки, тестирования и развертывания приложений с помощью YAML конфигурации. Этот документ охватывает enterprise-grade паттерны, продвинутые pipeline ко"
-tags: ["platform", "ci-cd", "gitlab-ci"]
+tags:
+  - platform
+  - ci-cd
+  - gitlab-ci
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **GitLab** CI/CD
 
 **GitLab** CI/CD — встроенная система **continuous integration** и **continuous delivery** в **GitLab**. Она позволяет автоматизировать процесс сборки, тестирования и развертывания приложений с помощью **YAML** конфигурации. Этот документ охватывает **enterprise-grade** паттерны, продвинутые **pipeline** конфигурации и **best practices** для использования **GitLab** CI/CD в **production** средах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [GitLab CI/CD Documentation](https://docs.gitlab.com/ee/ci/)

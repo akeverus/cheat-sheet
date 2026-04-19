@@ -1,7 +1,15 @@
 ---
 title: "Micronaut: Views - Template Engines и View Rendering"
 description: "Полное руководство по Views в Micronaut: template engines, view rendering, Thymeleaf, Freemarker, Velocity и best practices"
-tags: ["micronaut", "views", "templates", "thymeleaf", "freemarker", "velocity", "java", "kotlin"]
+tags:
+  - micronaut
+  - views
+  - templates
+  - thymeleaf
+  - freemarker
+  - velocity
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-mail.md"]

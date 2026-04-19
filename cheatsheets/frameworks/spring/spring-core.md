@@ -1,7 +1,13 @@
 ---
 title: "Spring Framework: Core"
 description: "Практическое руководство по Spring Core: IoC-контейнер, DI, Bean lifecycle, scope, AOP, events, profiles, SpEL, конфигурация и типичные ошибки."
-tags: ["spring", "spring-core", "di", "ioc", "aop", "java"]
+tags:
+  - spring
+  - spring-core
+  - di
+  - ioc
+  - aop
+  - java
 difficulty: "intermediate"
 prerequisites: []
 next: ["spring-boot.md", "spring-data.md"]
@@ -11,8 +17,6 @@ updated: "2026-04-12"
 # Spring Framework: Core
 
 Практическое руководство по Spring Core: IoC-контейнер, внедрение зависимостей, жизненный цикл бинов, AOP, события и конфигурация.
-
-**Дата последнего обновления:** 2026-04-12
 
 ## Полезные ссылки
 

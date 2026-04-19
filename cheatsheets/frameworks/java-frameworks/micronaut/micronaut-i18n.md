@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Internationalization - i18n и Localization"
 description: "Полное руководство по интернационализации в Micronaut: i18n, localization, message bundles, locale resolution и best practices"
-tags: ["micronaut", "i18n", "internationalization", "localization", "locale", "java", "kotlin"]
+tags:
+  - micronaut
+  - i18n
+  - internationalization
+  - localization
+  - locale
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-http.md", "micronaut-views.md"]

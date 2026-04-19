@@ -1,7 +1,9 @@
 ---
 title: "CI/CD"
 description: "Индекс CI/CD материалов: инструменты, маршрут запуска pipeline с нуля и миграция с legacy-решений."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

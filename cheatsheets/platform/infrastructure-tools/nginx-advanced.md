@@ -1,7 +1,10 @@
 ---
 title: "Nginx Advanced"
 description: "Nginx - это высокопроизводительный веб-сервер, reverse proxy, load balancer и HTTP cache с открытым исходным кодом. Этот документ охватывает продвинутые конфигурации, оптимизацию производительности и enterprise-grade паттерны использования Nginx."
-tags: ["platform", "infrastructure-tools", "nginx-advanced"]
+tags:
+  - platform
+  - infrastructure-tools
+  - nginx-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Nginx Advanced
 
 **Nginx** - это высокопроизводительный веб-сервер, **reverse proxy**, **load balancer** и **HTTP cache** с открытым исходным кодом. Этот документ охватывает продвинутые конфигурации, оптимизацию производительности и **enterprise-grade** паттерны использования **Nginx**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 - [Nginx Documentation](https://nginx.org/en/docs/)

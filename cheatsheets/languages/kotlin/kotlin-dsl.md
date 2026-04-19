@@ -1,7 +1,10 @@
 ---
 title: "Kotlin DSL"
 description: "Кратко: руководство по созданию Domain-Specific Languages (DSL) в Kotlin: Type-Safe Builders, DSL для HTML, SQL, конфигураций и кастомные DSL."
-tags: ["languages", "kotlin", "kotlin-dsl"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-dsl
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin DSL
 
 Кратко: руководство по созданию **Domain-Specific Languages** (**DSL**) в **Kotlin**: **Type-Safe Builders**, **DSL** для **HTML**, **SQL**, конфигураций и кастомные **DSL**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

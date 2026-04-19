@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Redis Integration - RedisTemplate, Pub/Sub и Cache"
 description: "Полное руководство по интеграции с Redis в Micronaut: RedisTemplate, pub/sub, cache, transactions и best practices"
-tags: ["micronaut", "redis", "cache", "pub-sub", "messaging", "java", "kotlin"]
+tags:
+  - micronaut
+  - redis
+  - cache
+  - pub-sub
+  - messaging
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-cache.md"]
 next: ["micronaut-cache.md", "micronaut-data.md"]

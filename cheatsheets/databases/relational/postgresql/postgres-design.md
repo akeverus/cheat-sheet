@@ -1,7 +1,17 @@
 ---
 title: "PostgreSQL: проектирование и нормализация"
 description: "Комплексное руководство по проектированию баз данных в PostgreSQL: сущности, атрибуты, ключи, связи, нормализация, целостность, домены, ограничения и лучшие практики моделирования данных"
-tags: ["postgresql", "database", "design", "normalization", "erd", "keys", "relationships", "constraints", "modeling", "data-modeling"]
+tags:
+  - postgresql
+  - database
+  - design
+  - normalization
+  - erd
+  - keys
+  - relationships
+  - constraints
+  - modeling
+  - data-modeling
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md"]
 next: ["databases/postgres-joins.md"]
@@ -12,8 +22,6 @@ related: ["databases/postgres-basics.md", "databases/postgres-joins.md", "databa
 # **PostgreSQL**: проектирование и нормализация
 
 Это подробное руководство по проектированию баз данных в **PostgreSQL**. Вы узнаете о принципах выделения сущностей, назначения ключей, построения связей, обеспечения ссылочной целостности и применения нормальных форм для создания эффективных и надежных схем данных.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

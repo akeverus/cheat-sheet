@@ -1,7 +1,13 @@
 ---
 title: "Scala Error Handling"
 description: "Полное руководство по обработке ошибок в Scala: Option, Either, Try, обработка исключений, функциональный подход"
-tags: ["scala", "error-handling", "option", "either", "try", "exceptions"]
+tags:
+  - scala
+  - error-handling
+  - option
+  - either
+  - try
+  - exceptions
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +18,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 # **Scala Error Handling**
 
 Кратко: полное руководство по обработке ошибок в **Scala**: **Option**, **Either**, **Try**, обработка исключений, функциональный подход.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

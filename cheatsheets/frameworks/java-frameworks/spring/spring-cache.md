@@ -1,7 +1,14 @@
 ---
 title: "Spring Cache: Полное руководство по кешированию"
 description: "Комплексное руководство по Spring Cache: @Cacheable, cache managers, Redis cache, EhCache, Caffeine, cache eviction и best practices"
-tags: ["spring", "cache", "redis", "ehcache", "caffeine", "performance", "java"]
+tags:
+  - spring
+  - cache
+  - redis
+  - ehcache
+  - caffeine
+  - performance
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-redis.md", "spring/spring-mongodb.md"]

@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Reactive: Flow"
 description: "Кратко: полное руководство по Kotlin Flow - нативной библиотеке для асинхронных потоков данных в Kotlin. Рассматриваются cold и hot flows, операторы, StateFlow, SharedFlow, интеграция с корутинами и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-reactive-flow"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-reactive-flow
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Reactive: Flow
 
 Кратко: полное руководство по **Kotlin Flow** - нативной библиотеке для асинхронных потоков данных в **Kotlin**. Рассматриваются **cold** и **hot flows**, операторы, **StateFlow**, **SharedFlow**, интеграция с корутинами и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

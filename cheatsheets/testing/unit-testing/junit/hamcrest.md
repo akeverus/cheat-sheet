@@ -1,7 +1,10 @@
 ---
 title: "Hamcrest для Java"
 description: "Библиотека матчеров для написания выразительных и читаемых assertions в тестах. Используется с JUnit, Mockito и другими фреймворками."
-tags: ["testing", "unit-testing", "hamcrest"]
+tags:
+  - testing
+  - unit-testing
+  - hamcrest
 difficulty: "intermediate"
 prerequisites: []
 next: []

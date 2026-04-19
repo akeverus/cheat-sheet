@@ -1,15 +1,16 @@
 ---
 title: "Поиск по дереву Монте-Карло (Monte Carlo Tree Search, MCTS)"
 description: "Поиск по дереву Монте-Карло (MCTS) — это алгоритм вероятностного поиска для принятия решений в играх и других задачах с большим пространством состояний. Состоит из четырёх фаз: Selection (выбор), Expansion (расширение), Simulation (симуляция), Backpropagation (обратное распростра"
-tags: ["algorithms", "trees", "monte-carlo-tree-search-tic-tac-toe"]
+tags:
+  - algorithms
+  - trees
+  - monte-carlo-tree-search-tic-tac-toe
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Поиск по дереву Монте-Карло (`Monte Carlo Tree Search`, `MCTS`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Поиск по дереву Монте-Карло (`MCTS`) — это алгоритм вероятностного поиска для принятия решений в играх и других задачах с большим пространством состояний. Состоит из четырёх фаз: `Selection` (выбор), `Expansion` (расширение), `Simulation` (симуляция), `Backpropagation` (обратное распространение).
 

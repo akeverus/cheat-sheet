@@ -1,15 +1,18 @@
 ---
 title: "Go: бенчмаркинг"
 description: "Полное руководство по бенчмаркингу в Go: написание benchmarks, анализ результатов, оптимизация"
-tags: ["go", "golang", "benchmarking", "performance", "testing"]
+tags:
+  - go
+  - golang
+  - benchmarking
+  - performance
+  - testing
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-testing.md"]
 updated: "2026-02-06"
 ---
 
 # Go: бенчмаркинг
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

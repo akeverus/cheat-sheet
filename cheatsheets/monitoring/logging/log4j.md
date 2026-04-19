@@ -1,7 +1,10 @@
 ---
 title: "Log4j для Java"
 description: "Руководство по Apache Log4j 2: конфигурация (XML, JSON, YAML), appenders, фильтры, ThreadContext, асинхронное логирование и безопасность."
-tags: ["monitoring", "logging", "log4j"]
+tags:
+  - monitoring
+  - logging
+  - log4j
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Log4j для Java
 
 Руководство по Apache Log4j 2: конфигурация (XML, JSON, YAML), appenders, фильтры, ThreadContext, асинхронное логирование и безопасность.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

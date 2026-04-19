@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Interop with Java"
 description: "Кратко: полное руководство по взаимодействию Kotlin и Java. Рассматриваются вызовы Java из Kotlin, вызовы Kotlin из Java, nullability аннотации, default параметры, companion objects и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-interop-java"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-interop-java
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Interop with Java
 
 Кратко: полное руководство по взаимодействию **Kotlin** и **Java**. Рассматриваются вызовы **Java** из **Kotlin**, вызовы **Kotlin** из **Java**, **nullability** аннотации, **default** параметры, **companion objects** и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

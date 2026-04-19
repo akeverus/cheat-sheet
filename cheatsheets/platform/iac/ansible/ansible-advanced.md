@@ -1,7 +1,10 @@
 ---
 title: "Ansible Advanced"
 description: "Ansible - это инструмент автоматизации ИТ-инфраструктуры с открытым исходным кодом, который позволяет автоматизировать конфигурацию, развертывание и управление серверами. Этот документ охватывает продвинутые концепции, паттерны и best practices для enterprise-grade автоматизации."
-tags: ["platform", "iac", "ansible-advanced"]
+tags:
+  - platform
+  - iac
+  - ansible-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Ansible Advanced**
 
 **Ansible** - это инструмент автоматизации ИТ-инфраструктуры с открытым исходным кодом, который позволяет автоматизировать конфигурацию, развертывание и управление серверами. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** автоматизации.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Ansible Documentation](https://docs.ansible.com/)
@@ -1460,8 +1461,8 @@ accelerate_connect_timeout = 5.0
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
 ## См. также
-- [Ansible: основы](../ansible/ansible.md) — общий справочник Ansible
-- [Ansible Basics](../ansible/ansible-basics.md) — краткое введение
+- [Ansible: основы](ansible.md) — общий справочник Ansible
+- [Ansible Basics](ansible-basics.md) — краткое введение
 - [Terraform](../terraform/terraform-basics.md) — Infrastructure as Code
 - [Docker](../../containers/docker/docker-basics.md) — контейнеризация
 - [Kubernetes](../../containers/kubernetes/kubernetes-advanced.md) — оркестрация контейнеров

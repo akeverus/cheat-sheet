@@ -1,7 +1,10 @@
 ---
 title: "Consul"
 description: "Consul - это распределенная система для service discovery, configuration management и service mesh от HashiCorp. Он обеспечивает надежное обнаружение сервисов, распределенную конфигурацию, health checking и service-to-service communication с автоматическим шифрованием. Этот докум"
-tags: ["platform", "infrastructure-tools", "consul"]
+tags:
+  - platform
+  - infrastructure-tools
+  - consul
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Consul**
 
 **Consul** - это распределенная система для **service discovery**, **configuration management** и **service mesh** от **HashiCorp**. Он обеспечивает надежное обнаружение сервисов, распределенную конфигурацию, **health checking** и **service-to-service communication** с автоматическим шифрованием. Этот документ охватывает **enterprise-grade** паттерны использования **Consul** в **production** средах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Consul Documentation](https://developer.hashicorp.com/consul/docs)

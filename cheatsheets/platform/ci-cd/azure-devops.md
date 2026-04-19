@@ -1,7 +1,10 @@
 ---
 title: "Azure DevOps"
 description: "Azure DevOps - это комплексная платформа от Microsoft для DevOps, которая включает в себя Azure Pipelines для CI/CD, Azure Boards для управления проектами, Azure Repos для Git репозиториев, Azure Artifacts для управления пакетами и Azure Test Plans для тестирования. Этот документ"
-tags: ["platform", "ci-cd", "azure-devops"]
+tags:
+  - platform
+  - ci-cd
+  - azure-devops
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Azure DevOps**
 
 **Azure DevOps** - это комплексная платформа от **Microsoft** для **DevOps**, которая включает в себя **Azure Pipelines** для CI/CD, **Azure Boards** для управления проектами, **Azure Repos** для **Git** репозиториев, **Azure Artifacts** для управления пакетами и **Azure Test Plans** для тестирования. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **Azure DevOps** в **production** средах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Azure DevOps Documentation](https://docs.microsoft.com/azure/devops/)

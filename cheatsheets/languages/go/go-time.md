@@ -1,15 +1,19 @@
 ---
 title: "Go: работа со временем"
 description: "Полное руководство по работе со временем в Go: time package, парсинг, форматирование, таймеры, таймауты"
-tags: ["go", "golang", "time", "timers", "timeouts", "dates"]
+tags:
+  - go
+  - golang
+  - time
+  - timers
+  - timeouts
+  - dates
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: работа со временем
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

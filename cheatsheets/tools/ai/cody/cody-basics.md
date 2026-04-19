@@ -1,7 +1,11 @@
 ---
 title: "Cody: основы"
 description: "Ассистент Sourcegraph Cody: чат, команды, контекст по коду репозитория, Prompt Library и лучшие практики."
-tags: ["tools", "ai", "cody", "sourcegraph"]
+tags:
+  - tools
+  - ai
+  - cody
+  - sourcegraph
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -17,8 +21,6 @@ Sourcegraph Cody — AI-ассистент, тесно интегрирован�
 - работать с **Prompt Library и командами**, которые можно переиспользовать в команде.
 
 **Цель документа** — показать, как практически использовать Cody в IDE и через веб-интерфейс Sourcegraph.
-
-**Дата последнего обновления:** 2026-03-16
 
 ## Полезные ссылки
 

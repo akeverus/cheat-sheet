@@ -1,7 +1,10 @@
 ---
 title: "Micrometer"
 description: "Micrometer — фасад (vendor-neutral API) для сбора метрик в приложениях на JVM. Поддерживает счётчики (Counter), таймеры (Timer), Gauge, распределения (DistributionSummary); экспорт в Prometheus, Graphite, InfluxDB, Datadog, StatsD и др. Интеграция с Spring Boot Actuator."
-tags: ["monitoring", "metrics", "micrometer"]
+tags:
+  - monitoring
+  - metrics
+  - micrometer
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Micrometer
 
 Micrometer — фасад (vendor-neutral API) для сбора метрик в приложениях на JVM. Поддерживает счётчики (Counter), таймеры (Timer), Gauge, распределения (DistributionSummary); экспорт в Prometheus, Graphite, InfluxDB, Datadog, StatsD и др. Интеграция с Spring Boot Actuator.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

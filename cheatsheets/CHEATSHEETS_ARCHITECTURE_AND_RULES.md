@@ -1,7 +1,10 @@
 ---
 title: "Cheat Sheets: архитектура и правила"
 description: "Единый источник правды по архитектуре каталога cheatsheets, стандартам оформления документов, качеству контента и правилам сопровождения."
-tags: ["meta", "rules", "architecture"]
+tags:
+  - meta
+  - rules
+  - architecture
 type: "rules"
 updated: "2026-02-11"
 ---
@@ -138,10 +141,14 @@ cheatsheets/
 ---
 title: "Название документа"
 description: "Краткое описание назначения документа."
-tags: ["section", "topic"]
+tags:
+  - section
+  - topic
 updated: "YYYY-MM-DD"
 ---
 ```
+
+Поле `tags` должно быть YAML-списком, а не JSON-массивом (`tags: [a, b]`) — это требование Obsidian Properties и единый стандарт репозитория.
 
 Допустимы дополнительные поля (`difficulty`, `prerequisites`, `next`, `type`), если они реально используются.
 

@@ -1,7 +1,14 @@
 ---
 title: "Spring Data JPA/Hibernate"
 description: "Полное руководство по Spring Data JPA и Hibernate: репозитории, запросы, транзакции, кэширование, оптимизация производительности и best practices"
-tags: ["spring-data-jpa", "hibernate", "orm", "database", "jpa", "sql", "transactions"]
+tags:
+  - spring-data-jpa
+  - hibernate
+  - orm
+  - database
+  - jpa
+  - sql
+  - transactions
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "databases/postgres-basics.md"]
 next: ["spring/spring-boot.md", "interview/spring-data-jpa.md"]

@@ -1,7 +1,10 @@
 ---
 title: "Java Collections: Queue"
 description: "Материал по теме Java Collections: Queue в разделе cheatsheets."
-tags: ["languages", "java", "java-collections-queue"]
+tags:
+  - languages
+  - java
+  - java-collections-queue
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Collections: Queue
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -403,7 +404,7 @@ public class NumbersConsumer implements Runnable {
 }
 ```
 
-Важно отметить использование очереди. Как и в конструкторе производителя, в качестве аргумента передается очередь. Мы можем это сделать, потому что **BlockingQueue** может быть разделена между потоками без какой-либо явной синхронизации.
+Очередь передаётся в конструктор — как и у производителя. Мы можем это сделать, потому что **BlockingQueue** может быть разделена между потоками без какой-либо явной синхронизации.
 
 ## Руководство по **ArrayDeque**
 

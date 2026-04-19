@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: соединения и операции над множествами"
 description: "Кратко: примеры INNER/LEFT/RIGHT/FULL JOIN, а также UNION/EXCEPT/INTERSECT. Без лишнего Java-кода — только SQL."
-tags: ["databases", "relational", "postgres-joins"]
+tags:
+  - databases
+  - relational
+  - postgres-joins
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Кратко: примеры **INNER**/**LEFT**/**RIGHT**/**FULL JOIN**, а также **UNION**/**EXCEPT**/**INTERSECT**. Без лишнего **Java**-кода — только **SQL**.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,1929 +1,2352 @@
 ---
 title: "Вопросы на собеседовании: Integration Testing"
-description: "Краткие ответы по integration-тестированию: связки модулей, БД/очереди/внешние API, Testcontainers, контракты и стабильность окружения."
-tags: ["interview", "testing", "integration-testing-interview"]
+description: "Интеграционное тестирование в Spring Boot: @SpringBootTest, Testcontainers, MockMvc, WebTestClient, WireMock, contract testing, test slices и best practices."
+tags:
+  - interview
+  - testing
+  - integration-testing-interview
+aliases:
+  - "Integration Testing"
+  - "Integration Testing interview"
+  - "Integration Testing собеседование"
+  - "Интеграционное тестирование"
+  - "Testcontainers"
+  - "SpringBootTest"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Integration Testing`
 
-Краткие ответы по `Integration Testing`: проверка взаимодействия компонентов и инфраструктуры (`DB`, очереди, внешние API) в условиях, близких к production.
+Интеграционное тестирование проверяет взаимодействие компонентов приложения с реальной инфраструктурой (`DB`, очереди, внешние `API`). Этот файл покрывает `Spring Boot Testing`, `Testcontainers`, `MockMvc`, `WebTestClient`, `WireMock`, контрактное тестирование и организацию тестов в `CI/CD`.
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: фокус этого документа — корректность интеграций между модулями и внешними зависимостями.
-
-## Роль документа в связке testing
-
-- Этот файл отвечает за **integration-уровень**: проверка связок приложения с инфраструктурой и другими сервисами.
-- За быстрые изолированные проверки без реальных зависимостей отвечает [`unit-testing-interview.md`](unit-testing-interview.md).
-- За рамку «сколько и каких тестов нужно» отвечает [`test-strategies-interview.md`](test-strategies-interview.md).
-- За инструментирование, orchestration и запуск автотестов в pipeline отвечает [`test-automation-interview.md`](test-automation-interview.md).
+**Интеграционное тестирование** занимает среднюю часть тестовой пирамиды: проверяет реальные связки между модулями и инфраструктурой, но при этом не требует полного развёртывания всей системы.
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
-- [Testcontainers](https://www.testcontainers.org/)
-- [WireMock](https://wiremock.org/docs/)
-- [Testing Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
-- [Contract Testing](https://docs.pact.io/)
-
-### См. также
-
-- [`unit-testing-interview.md`](unit-testing-interview.md) — вопросы по unit-тестам
-- [`test-strategies-interview.md`](test-strategies-interview.md) — стратегии тестирования
-- [`test-automation-interview.md`](test-automation-interview.md) — автоматизация тестов
+- [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing) — официальная документация по тестированию
+- [Testcontainers](https://www.testcontainers.org/) — документация Testcontainers
+- [WireMock](https://wiremock.org/docs/) — мокирование HTTP-сервисов
+- [Testing Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html) — практическая тестовая пирамида
+- [Contract Testing — Pact](https://docs.pact.io/) — контрактное тестирование
+- [Baeldung: Integration Testing in Spring](https://www.baeldung.com/integration-testing-in-spring) — подробный гайд
+- [Baeldung: Spring Boot Testcontainers](https://www.baeldung.com/spring-boot-testcontainers-integration-test) — Testcontainers + Spring Boot
+- [Baeldung: Built-in Testcontainers Support](https://www.baeldung.com/spring-boot-built-in-testcontainers) — Spring Boot 3.1+ поддержка
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы интеграционного тестирования**
-- [Q1. Что такое integration testing и чем он отличается от unit testing?](#q1-что-такое-integration-testing-и-чем-он-отличается-от-unit-testing)
-- [Q2. Какие типы integration testing существуют?](#q2-какие-типы-integration-testing-существуют)
-- [Q3. Как тестировать с базами данных?](#q3-как-тестировать-с-базами-данных)
-- [Q4. Что такое TestContainers и как его использовать?](#q4-что-такое-testcontainers-и-как-его-использовать)
-- [Q5. Как тестировать внешние API?](#q5-как-тестировать-внешние-api)
+- [Q1. (!) Что такое интеграционное тестирование и чем оно отличается от unit-тестирования?](#q1--что-такое-интеграционное-тестирование-и-чем-оно-отличается-от-unit-тестирования)
+- [Q2. Какие типы интеграционного тестирования существуют?](#q2-какие-типы-интеграционного-тестирования-существуют)
+- [Q3. (!) Как работает `@SpringBootTest` и когда его использовать?](#q3--как-работает-springboottest-и-когда-его-использовать)
+- [Q4. (!) Что такое Test Slices и какие бывают?](#q4--что-такое-test-slices-и-какие-бывают)
+
+**`MockMvc` и `WebTestClient`**
+- [Q5. (!) Как тестировать REST-контроллеры через `MockMvc`?](#q5--как-тестировать-rest-контроллеры-через-mockmvc)
+- [Q6. В чём разница между `MockMvc` с `@WebMvcTest` и `@SpringBootTest`?](#q6-в-чём-разница-между-mockmvc-с-webmvctest-и-springboottest)
+- [Q7. Как использовать `WebTestClient` для реактивных и блокирующих приложений?](#q7-как-использовать-webtestclient-для-реактивных-и-блокирующих-приложений)
+- [Q8. Как тестировать REST API через `TestRestTemplate`?](#q8-как-тестировать-rest-api-через-testresttemplate)
+
+**`Testcontainers`**
+- [Q9. (!) Что такое `Testcontainers` и зачем он нужен?](#q9--что-такое-testcontainers-и-зачем-он-нужен)
+- [Q10. Как подключить `Testcontainers` через `@DynamicPropertySource`?](#q10-как-подключить-testcontainers-через-dynamicpropertysource)
+- [Q11. (!) Что такое `@ServiceConnection` в Spring Boot 3.1+?](#q11--что-такое-serviceconnection-в-spring-boot-31)
+- [Q12. Как переиспользовать контейнеры между тестовыми классами?](#q12-как-переиспользовать-контейнеры-между-тестовыми-классами)
+- [Q13. Как тестировать с несколькими контейнерами одновременно?](#q13-как-тестировать-с-несколькими-контейнерами-одновременно)
+
+**Тестирование с базами данных**
+- [Q14. (!) Как тестировать с реальной базой данных?](#q14--как-тестировать-с-реальной-базой-данных)
+- [Q15. Как тестировать транзакции в интеграционных тестах?](#q15-как-тестировать-транзакции-в-интеграционных-тестах)
+- [Q16. Как управлять тестовыми данными через `@Sql` и Flyway?](#q16-как-управлять-тестовыми-данными-через-sql-и-flyway)
+- [Q17. В чём опасность `@Transactional` на интеграционных тестах?](#q17-в-чём-опасность-transactional-на-интеграционных-тестах)
+
+**Мокирование внешних сервисов**
+- [Q18. (!) Как использовать `WireMock` для мокирования HTTP-сервисов?](#q18--как-использовать-wiremock-для-мокирования-http-сервисов)
+- [Q19. В чём разница между `@MockBean` и `@SpyBean`?](#q19-в-чём-разница-между-mockbean-и-spybean)
+- [Q20. Как тестировать с `WireMock`: сценарии ошибок и задержки?](#q20-как-тестировать-с-wiremock-сценарии-ошибок-и-задержки)
 
 **Contract Testing и микросервисы**
-- [Q6. Что такое contract testing?](#q6-что-такое-contract-testing)
-- [Q7. Как тестировать микросервисы?](#q7-как-тестировать-микросервисы)
-- [Q8. Как использовать WireMock для тестирования?](#q8-как-использовать-wiremock-для-тестирования)
-- [Q9. Как организовать интеграционные тесты в CI/CD?](#q9-как-организовать-интеграционные-тесты-в-cicd)
-- [Q10. Какие best practices для integration testing?](#q10-какие-best-practices-для-integration-testing)
+- [Q21. (!) Что такое контрактное тестирование?](#q21--что-такое-контрактное-тестирование)
+- [Q22. Как работает Consumer-Driven Contract Testing с Pact?](#q22-как-работает-consumer-driven-contract-testing-с-pact)
+- [Q23. Как использовать Spring Cloud Contract?](#q23-как-использовать-spring-cloud-contract)
+- [Q24. Как тестировать микросервисы в изоляции?](#q24-как-тестировать-микросервисы-в-изоляции)
 
-**Транзакции, Kafka и асинхронность**
-- [Q11. Как тестировать транзакции в integration tests?](#q11-как-тестировать-транзакции-в-integration-tests)
-- [Q12. Что такое Consumer-Driven Contract Testing?](#q12-что-такое-consumer-driven-contract-testing)
-- [Q13. Как тестировать с Kafka (TestContainers)?](#q13-как-тестировать-с-kafka-testcontainers)
-- [Q14. Как тестировать асинхронные операции?](#q14-как-тестировать-асинхронные-операции)
-- [Q15. Что такое Test Fixtures в интеграционных тестах?](#q15-что-такое-test-fixtures-в-интеграционных-тестах)
+**Kafka, асинхронность и messaging**
+- [Q25. (!) Как тестировать Kafka с Testcontainers?](#q25--как-тестировать-kafka-с-testcontainers)
+- [Q26. Как тестировать асинхронные операции?](#q26-как-тестировать-асинхронные-операции)
+- [Q27. Как тестировать message-driven архитектуру?](#q27-как-тестировать-message-driven-архитектуру)
 
-**Тестирование API и внешних сервисов**
-- [Q16. Как тестировать REST API (Rest Assured)?](#q16-как-тестировать-rest-api-rest-assured)
-- [Q17. Что такое Smoke Testing в интеграции?](#q17-что-такое-smoke-testing-в-интеграции)
-- [Q18. Как тестировать с внешними сервисами (моки vs реальные)?](#q18-как-тестировать-с-внешними-сервисами-моки-vs-реальные)
-- [Q19. Что такое Database Testing Strategy?](#q19-что-такое-database-testing-strategy)
-- [Q20. Как организовать Parallel Test Execution?](#q20-как-организовать-parallel-test-execution)
+**Организация и CI/CD**
+- [Q28. Как организовать интеграционные тесты в CI/CD?](#q28-как-организовать-интеграционные-тесты-в-cicd)
+- [Q29. Как ускорить интеграционные тесты?](#q29-как-ускорить-интеграционные-тесты)
+- [Q30. Как организовать параллельное выполнение тестов?](#q30-как-организовать-параллельное-выполнение-тестов)
 
-**Стратегии и Best Practices**
-- [Q21. Что такое Integration Test Slicing?](#q21-что-такое-integration-test-slicing)
-- [Q22. Как тестировать Caching Logic?](#q22-как-тестировать-caching-logic)
-- [Q23. Что такое End-to-End Testing Strategy?](#q23-что-такое-end-to-end-testing-strategy)
-- [Q24. Как организовать Test Reporting для интеграционных тестов?](#q24-как-организовать-test-reporting-для-интеграционных-тестов)
-- [Q25. Что такое Service Virtualization?](#q25-что-такое-service-virtualization)
-- [Q26. Как тестировать Message-Driven Architecture?](#q26-как-тестировать-message-driven-architecture)
-- [Q27. Что такое Test Data Generation Strategy?](#q27-что-такое-test-data-generation-strategy)
-- [Q28. Как организовать Test Execution Order?](#q28-как-организовать-test-execution-order)
-- [Q29. Что такое Test Coverage Strategy?](#q29-что-такое-test-coverage-strategy)
-- [Q30. Best practices для Integration Testing?](#q30-best-practices-для-integration-testing)
+**Стабильность и Best Practices**
+- [Q31. (!) Как бороться с flaky-тестами?](#q31--как-бороться-с-flaky-тестами)
+- [Q32. Что такое Test Fixtures и как их организовать?](#q32-что-такое-test-fixtures-и-как-их-организовать)
+- [Q33. Как тестировать кеширование?](#q33-как-тестировать-кеширование)
+- [Q34. Что такое Smoke Testing после деплоя?](#q34-что-такое-smoke-testing-после-деплоя)
+- [Q35. (!) Какие best practices для интеграционного тестирования?](#q35--какие-best-practices-для-интеграционного-тестирования)
 
-## Q1. Что такое `integration testing` и чем он отличается от `unit testing`?
+**Продвинутые техники**
+- [Q36. (!) Как использовать `@DataJpaTest` для тестирования репозиториев?](#q36--как-использовать-datajpatest-для-тестирования-репозиториев)
+- [Q37. Как тестировать JSON-сериализацию с `@JsonTest`?](#q37-как-тестировать-json-сериализацию-с-jsontest)
+- [Q38. (!) Как использовать `RestAssured` для интеграционных API-тестов?](#q38--как-использовать-restassured-для-интеграционных-api-тестов)
+- [Q39. Как тестировать Spring Security в интеграционных тестах?](#q39-как-тестировать-spring-security-в-интеграционных-тестах)
+- [Q40. Как использовать `@RestClientTest` для тестирования HTTP-клиентов?](#q40-как-использовать-restclienttest-для-тестирования-http-клиентов)
 
-`Integration testing` — это уровень тестирования программного обеспечения, при котором отдельные модули объединяются и тестируются как группа.
+---
 
-### Отличия от `Unit Testing`
+## Q1. (!) Что такое интеграционное тестирование и чем оно отличается от `unit`-тестирования?
+
+**Интеграционное тестирование** (`integration testing`) -- это уровень тестирования, при котором несколько компонентов объединяются и проверяется корректность их взаимодействия с реальными зависимостями (БД, очереди, HTTP-сервисы).
+
+### Отличия от `unit testing`
 
 | Аспект | `Unit Testing` | `Integration Testing` |
-|--------|-------------|-------------------|
-| `Scope` | Отдельный класс/метод | Группа компонентов |
-| `Dependencies` | `Mock`/`stub` | Реальные зависимости |
-| `Speed` | Быстрый (миллисекунды) | Медленный (секунды/минуты) |
-| `Isolation` | Полная изоляция | Частичная изоляция |
-| `Setup` | Минимальный | Сложный |
-| `Flakiness` | Стабильные | Могут быть нестабильными |
-| `Purpose` | Логика, алгоритмы | Взаимодействие, контракты |
+|--------|---------------|----------------------|
+| Scope | Один класс/метод | Группа компонентов + инфраструктура |
+| Зависимости | `Mock`/`stub` | Реальные (`DB`, `Kafka`, `Redis`) |
+| Скорость | Миллисекунды | Секунды-минуты |
+| Изоляция | Полная | Частичная |
+| Настройка | Минимальная | `Docker`, конфигурация, данные |
+| Стабильность | Высокая | Может быть flaky |
+| Цель | Логика, алгоритмы | Интеграция, контракты, SQL |
 
-### Пример: `Unit` vs `Integration Testing`
+```mermaid
+graph TB
+    subgraph "Тестовая пирамида"
+        E2E["E2E Tests<br/>мало, медленные"]
+        INT["Integration Tests<br/>средне, секунды"]
+        UNIT["Unit Tests<br/>много, быстрые"]
+    end
+
+    E2E --- INT --- UNIT
+
+    subgraph "Integration Testing покрывает"
+        DB["База данных"]
+        MQ["Очереди сообщений"]
+        HTTP["HTTP-сервисы"]
+        CACHE["Кеш"]
+    end
+
+    INT --> DB
+    INT --> MQ
+    INT --> HTTP
+    INT --> CACHE
+```
+
+### Пример: `unit` vs `integration`
 
 ```java
-// Unit тест - тестируем только бизнес-логику
+// Unit-тест — тестируем только бизнес-логику
 @Test
 void shouldCalculateDiscount() {
- DiscountService service = new DiscountService();
+    DiscountService service = new DiscountService();
 
- BigDecimal discount = service.calculateDiscount(BigDecimal.valueOf(100), UserType.PREMIUM);
+    BigDecimal discount = service.calculateDiscount(
+        BigDecimal.valueOf(100), UserType.PREMIUM);
 
- assertEquals(BigDecimal.valueOf(15.00), discount);
+    assertEquals(BigDecimal.valueOf(15.00), discount);
 }
 
-// Integration тест - тестируем взаимодействие с БД
+// Integration-тест — тестируем взаимодействие с БД
+@SpringBootTest
+@Testcontainers
+class OrderIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", postgres::getJdbcUrl);
+    }
+
+    @Autowired
+    private OrderService orderService;
+
+    @Test
+    void shouldSaveOrderWithDiscount() {
+        Order order = orderService.createOrder(userId, productId, 1);
+
+        assertNotNull(order.getId());
+        assertEquals(BigDecimal.valueOf(850), order.getTotalPrice());
+        assertEquals(OrderStatus.CONFIRMED, order.getStatus());
+    }
+}
+```
+
+Интеграционные тесты нужны когда: (1) проверяется взаимодействие с БД (SQL-запросы, маппинг); (2) тестируется HTTP-клиент к внешнему сервису; (3) проверяется корректность конфигурации `Spring`; (4) тестируется транзакционная логика.
+
+## Q2. Какие типы интеграционного тестирования существуют?
+
+### 1. Big Bang
+
+Все компоненты интегрируются одновременно. Просто в реализации, но трудно локализовать ошибки.
+
+### 2. Top-Down
+
+Начинаем с верхних слоёв (`API`/`UI`) и спускаемся вниз, используя `stub` для нижних уровней. Раннее тестирование пользовательских сценариев.
+
+### 3. Bottom-Up
+
+Начинаем с нижних слоёв (`Repository`, `Service`) и поднимаемся. Нижние уровни проверены первыми, не нужны stub.
+
+### 4. Sandwich / Hybrid
+
+Комбинация `top-down` и `bottom-up`. Параллельное тестирование разных уровней.
+
+### 5. Component Integration (рекомендуемый для Spring)
+
+Тестирование группы связанных компонентов как единого блока. В `Spring Boot` это реализуется через `@SpringBootTest` или test slices (`@WebMvcTest`, `@DataJpaTest`).
+
+```mermaid
+graph LR
+    subgraph "Component Integration Test"
+        C[Controller] --> S[Service]
+        S --> R[Repository]
+        R --> DB[(PostgreSQL<br/>Testcontainers)]
+    end
+
+    subgraph "Mocked"
+        EXT[Внешний API<br/>WireMock]
+    end
+
+    S --> EXT
+```
+
+На собеседовании обычно спрашивают не о классификации, а о практическом подходе: какие слои тестируете вместе, какие мокируете, и почему.
+
+## Q3. (!) Как работает `@SpringBootTest` и когда его использовать?
+
+`@SpringBootTest` поднимает **полный** `ApplicationContext` приложения (или его подмножество). Это самый тяжёлый, но и самый полный вариант интеграционного теста.
+
+### Режимы `webEnvironment`
+
+| Режим | Что делает | Когда использовать |
+|-------|-----------|-------------------|
+| `MOCK` (default) | `MockServletContext`, нет HTTP-сервера | Тесты через `MockMvc` |
+| `RANDOM_PORT` | Запуск реального HTTP-сервера | Тесты через `TestRestTemplate`/`WebTestClient` |
+| `DEFINED_PORT` | HTTP на порту из `application.yml` | Редко, конфликт портов |
+| `NONE` | Без web-окружения | Тесты сервисного слоя |
+
+```java
+// Полный контекст с реальным сервером
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+class FullIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void shouldCreateUser() {
+        var request = new UserRequest("john@example.com", "secret");
+
+        ResponseEntity<UserResponse> response = restTemplate
+            .postForEntity("/api/users", request, UserResponse.class);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody().getId());
+    }
+}
+```
+
+### Когда НЕ использовать `@SpringBootTest`
+
+- Для тестирования **только** контроллера -- используйте `@WebMvcTest`
+- Для тестирования **только** репозитория -- используйте `@DataJpaTest`
+- Для тестирования бизнес-логики без Spring -- обычный `unit`-тест
+
+`@SpringBootTest` поднимает все бины, что медленно. Подробнее о test slices -- в [вопросах по unit-тестированию](unit-testing-interview.md).
+
+## Q4. (!) Что такое `Test Slices` и какие бывают?
+
+**Test Slices** -- аннотации Spring Boot, которые поднимают **только нужный срез** `ApplicationContext`, а не всё приложение. Это значительно ускоряет тесты.
+
+### Основные test slices
+
+| Аннотация | Что поднимает | Для чего |
+|-----------|--------------|---------|
+| `@WebMvcTest` | Контроллеры, `MockMvc`, фильтры | REST-контроллеры |
+| `@DataJpaTest` | `JPA`, `EntityManager`, `Repositories` | Репозитории, SQL |
+| `@DataJdbcTest` | `JDBC`, `JdbcTemplate` | JDBC-репозитории |
+| `@JdbcTest` | `DataSource`, `JdbcTemplate` | Чистый JDBC |
+| `@DataMongoTest` | MongoDB repositories | MongoDB |
+| `@DataRedisTest` | Redis repositories | Redis |
+| `@JsonTest` | `ObjectMapper`, `JacksonTester` | JSON сериализация |
+| `@RestClientTest` | `RestTemplateBuilder`, `MockRestServiceServer` | REST-клиенты |
+| `@WebFluxTest` | `WebFlux` контроллеры, `WebTestClient` | Reactive endpoints |
+
+```java
+// @DataJpaTest — только JPA-слой, embedded H2 по умолчанию
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Testcontainers
+class UserRepositoryTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", postgres::getJdbcUrl);
+        r.add("spring.datasource.username", postgres::getUsername);
+        r.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TestEntityManager entityManager;
+
+    @Test
+    void shouldFindByEmail() {
+        entityManager.persistAndFlush(
+            new User("john@example.com", "password"));
+
+        Optional<User> found = userRepository.findByEmail("john@example.com");
+
+        assertTrue(found.isPresent());
+        assertEquals("john@example.com", found.get().getEmail());
+    }
+}
+```
+
+Ключевое: `@DataJpaTest` по умолчанию заменяет `DataSource` на `H2`. Чтобы использовать реальную БД через `Testcontainers`, нужно `@AutoConfigureTestDatabase(replace = NONE)`.
+
+## Q5. (!) Как тестировать REST-контроллеры через `MockMvc`?
+
+`MockMvc` выполняет HTTP-запросы **без реального сервера** -- запросы идут через `DispatcherServlet` в памяти. Это быстрее, чем поднимать HTTP.
+
+```java
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private UserService userService;
+
+    @Test
+    void shouldReturnUser() throws Exception {
+        when(userService.findById(1L))
+            .thenReturn(new UserDto(1L, "John", "john@example.com"));
+
+        mockMvc.perform(get("/api/users/1")
+                .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("John"))
+            .andExpect(jsonPath("$.email").value("john@example.com"));
+    }
+
+    @Test
+    void shouldReturn404WhenUserNotFound() throws Exception {
+        when(userService.findById(99L))
+            .thenThrow(new UserNotFoundException(99L));
+
+        mockMvc.perform(get("/api/users/99"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("User not found: 99"));
+    }
+
+    @Test
+    void shouldValidateInput() throws Exception {
+        String invalidJson = """
+            {"name": "", "email": "not-an-email"}
+            """;
+
+        mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors").isArray());
+    }
+}
+```
+
+`@WebMvcTest` поднимает только web-слой: контроллеры, `@ControllerAdvice`, фильтры, конвертеры. Все зависимости контроллера нужно мокировать через `@MockBean`.
+
+## Q6. В чём разница между `MockMvc` с `@WebMvcTest` и `@SpringBootTest`?
+
+| Аспект | `@WebMvcTest` + `MockMvc` | `@SpringBootTest` + `MockMvc` |
+|--------|--------------------------|-------------------------------|
+| Контекст | Только web-слой | Полный `ApplicationContext` |
+| Сервисы | `@MockBean` (моки) | Реальные бины |
+| БД | Нет | Реальная (Testcontainers) |
+| Скорость | Быстро (< 1 сек) | Медленно (5-15 сек) |
+| Цель | Тест контроллера в изоляции | Полный сквозной тест через HTTP |
+
+```java
+// @SpringBootTest + MockMvc — полный сквозной тест
+@SpringBootTest
+@AutoConfigureMockMvc
+@Testcontainers
+class UserApiIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", postgres::getJdbcUrl);
+        r.add("spring.datasource.username", postgres::getUsername);
+        r.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void shouldCreateAndRetrieveUser() throws Exception {
+        // Create
+        String json = """
+            {"name": "John", "email": "john@example.com"}
+            """;
+
+        String location = mockMvc.perform(post("/api/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getHeader("Location");
+
+        // Retrieve — реальный сервис + реальная БД
+        mockMvc.perform(get(location))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("John"));
+    }
+}
+```
+
+На собеседовании важно: `@WebMvcTest` -- для юнит-тестов контроллера (моки сервисов). `@SpringBootTest` + `@AutoConfigureMockMvc` -- для интеграционных тестов, где нужна реальная БД и реальные сервисы.
+
+## Q7. Как использовать `WebTestClient` для реактивных и блокирующих приложений?
+
+`WebTestClient` -- клиент из `Spring WebFlux` для тестирования HTTP-эндпоинтов. Работает с реактивными и с обычными `Spring MVC` приложениями (начиная с Spring Boot 2.4+).
+
+```java
+// С реальным сервером (RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+class UserApiWebTestClientTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", postgres::getJdbcUrl);
+    }
+
+    @Autowired
+    private WebTestClient webTestClient;
+
+    @Test
+    void shouldCreateUser() {
+        webTestClient.post().uri("/api/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(new UserRequest("John", "john@example.com"))
+            .exchange()
+            .expectStatus().isCreated()
+            .expectBody()
+            .jsonPath("$.id").isNotEmpty()
+            .jsonPath("$.name").isEqualTo("John");
+    }
+
+    @Test
+    void shouldReturnUserList() {
+        webTestClient.get().uri("/api/users")
+            .exchange()
+            .expectStatus().isOk()
+            .expectBodyList(UserResponse.class)
+            .hasSize(3)
+            .value(users -> {
+                assertTrue(users.stream()
+                    .anyMatch(u -> u.getEmail().equals("john@example.com")));
+            });
+    }
+}
+```
+
+Преимущество `WebTestClient` перед `TestRestTemplate`: fluent API, поддержка реактивных типов (`Mono`, `Flux`), лучшая поддержка streaming. Подробнее о реактивном тестировании -- в [вопросах по Spring WebFlux](../frameworks/spring/spring-webflux-interview.md).
+
+## Q8. Как тестировать REST API через `TestRestTemplate`?
+
+`TestRestTemplate` -- обёртка над `RestTemplate` для тестов с реальным HTTP-сервером (требует `RANDOM_PORT` или `DEFINED_PORT`).
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class UserApiTemplateTest {
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void shouldCreateUser() {
+        UserRequest request = new UserRequest("john@example.com", "secret");
+
+        ResponseEntity<UserResponse> response = restTemplate
+            .postForEntity("/api/users", request, UserResponse.class);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody().getId());
+    }
+
+    @Test
+    void shouldHandleAuthentication() {
+        // TestRestTemplate с Basic Auth
+        ResponseEntity<UserResponse> response = restTemplate
+            .withBasicAuth("admin", "password")
+            .getForEntity("/api/admin/users/1", UserResponse.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void shouldHandleErrors() {
+        ResponseEntity<ErrorResponse> response = restTemplate
+            .getForEntity("/api/users/999", ErrorResponse.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+}
+```
+
+`TestRestTemplate` не бросает исключения при 4xx/5xx (в отличие от обычного `RestTemplate`), что удобно для проверки ошибочных сценариев.
+
+## Q9. (!) Что такое `Testcontainers` и зачем он нужен?
+
+`Testcontainers` -- Java-библиотека для запуска `Docker`-контейнеров в `JUnit`-тестах. Позволяет тестировать с реальными базами данных, очередями и другими сервисами вместо in-memory заменителей.
+
+```mermaid
+graph TB
+    subgraph "JUnit Test"
+        TEST[Тестовый класс]
+    end
+
+    subgraph "Testcontainers управляет"
+        TC[Testcontainers Library]
+        TC --> PG[(PostgreSQL)]
+        TC --> RD[(Redis)]
+        TC --> KF[(Kafka)]
+    end
+
+    subgraph "Docker"
+        PG
+        RD
+        KF
+    end
+
+    TEST --> TC
+    TEST -- "@DynamicPropertySource" --> PG
+    TEST -- "@DynamicPropertySource" --> RD
+
+    style TC fill:#4a9,stroke:#333
+```
+
+### Преимущества перед `H2` / embedded
+
+| Аспект | `H2` (embedded) | `Testcontainers` |
+|--------|-----------------|-------------------|
+| SQL-совместимость | Отличается от production | Идентична production |
+| Специфичные фичи | Не поддерживает (`JSONB`, `ARRAY`) | Полная поддержка |
+| Настройка | Зависимость в `pom.xml` | Нужен `Docker` |
+| Скорость | Быстро | Старт контейнера 2-5 сек |
+| Надёжность результата | Может пропустить баг | Ловит реальные проблемы |
+
+```java
+@SpringBootTest
+@Testcontainers
+class ProductRepositoryTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("testdb")
+            .withUsername("test")
+            .withPassword("test");
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Test
+    void shouldUsePostgresJsonb() {
+        // Тестируем PostgreSQL-специфичный JSONB
+        Product product = new Product("Laptop", Map.of(
+            "cpu", "Intel i7",
+            "ram", "16GB"
+        ));
+        productRepository.save(product);
+
+        List<Product> found = productRepository
+            .findByAttributesContaining("cpu", "Intel");
+        assertEquals(1, found.size());
+    }
+}
+```
+
+## Q10. Как подключить `Testcontainers` через `@DynamicPropertySource`?
+
+`@DynamicPropertySource` позволяет динамически задать `Spring`-свойства **после** старта контейнера (порт и хост неизвестны заранее).
+
+```java
+@SpringBootTest
+@Testcontainers
+class MultiContainerTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Container
+    static GenericContainer<?> redis =
+        new GenericContainer<>("redis:7-alpine")
+            .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        // PostgreSQL
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+
+        // Redis
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", redis::getFirstMappedPort);
+    }
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Test
+    void shouldWorkWithBothServices() {
+        // PostgreSQL
+        User user = userRepository.save(new User("john@example.com"));
+        assertNotNull(user.getId());
+
+        // Redis
+        redisTemplate.opsForValue().set("user:" + user.getId(), "cached");
+        assertEquals("cached",
+            redisTemplate.opsForValue().get("user:" + user.getId()));
+    }
+}
+```
+
+Правила: метод с `@DynamicPropertySource` должен быть `static`; контейнер должен быть запущен **до** вызова метода (аннотация `@Container` + `static` поле гарантирует это).
+
+## Q11. (!) Что такое `@ServiceConnection` в Spring Boot 3.1+?
+
+Начиная с Spring Boot 3.1, появилась аннотация `@ServiceConnection`, которая **автоматически** конфигурирует свойства подключения к контейнеру без ручного `@DynamicPropertySource`.
+
+```java
+// До Spring Boot 3.1 — ручная конфигурация
+@Container
+static PostgreSQLContainer<?> postgres =
+    new PostgreSQLContainer<>("postgres:16");
+
+@DynamicPropertySource
+static void props(DynamicPropertyRegistry r) {
+    r.add("spring.datasource.url", postgres::getJdbcUrl);
+    r.add("spring.datasource.username", postgres::getUsername);
+    r.add("spring.datasource.password", postgres::getPassword);
+}
+
+// Spring Boot 3.1+ — автоматическая конфигурация
+@Container
+@ServiceConnection
+static PostgreSQLContainer<?> postgres =
+    new PostgreSQLContainer<>("postgres:16");
+// Всё! Spring Boot сам настроит DataSource
+```
+
+### Поддерживаемые контейнеры
+
+`@ServiceConnection` работает через `ConnectionDetails` SPI и поддерживает: `PostgreSQL`, `MySQL`, `MariaDB`, `MongoDB`, `Redis`, `Kafka`, `RabbitMQ`, `Elasticsearch`, `Cassandra` и другие.
+
+```java
+@SpringBootTest
+@Testcontainers
+class ModernTestcontainersTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Container
+    @ServiceConnection
+    static GenericContainer<?> redis =
+        new GenericContainer<>("redis:7-alpine")
+            .withExposedPorts(6379);
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void shouldAutoConfigureConnections() {
+        // Никакого @DynamicPropertySource!
+        User user = userRepository.save(new User("john@example.com"));
+        assertNotNull(user.getId());
+    }
+}
+```
+
+### Testcontainers для DevServices (Spring Boot 3.1+)
+
+`@TestConfiguration` с `@ServiceConnection` позволяет определить контейнеры в отдельном классе и использовать их при локальном запуске приложения:
+
+```java
+@TestConfiguration(proxyBeanMethods = false)
+public class TestcontainersConfig {
+
+    @Bean
+    @ServiceConnection
+    PostgreSQLContainer<?> postgresContainer() {
+        return new PostgreSQLContainer<>("postgres:16");
+    }
+
+    @Bean
+    @ServiceConnection
+    GenericContainer<?> redisContainer() {
+        return new GenericContainer<>("redis:7-alpine")
+            .withExposedPorts(6379);
+    }
+}
+
+// Использование: ./gradlew bootTestRun
+// или в тестах:
+@SpringBootTest
+@Import(TestcontainersConfig.class)
+class MyTest { ... }
+```
+
+## Q12. Как переиспользовать контейнеры между тестовыми классами?
+
+По умолчанию каждый тестовый класс с `@Container` запускает **новый** контейнер. Это медленно. Решения:
+
+### 1. Singleton-паттерн (абстрактный базовый класс)
+
+```java
+// Базовый класс — контейнер запускается один раз на все тесты
+public abstract class AbstractIntegrationTest {
+
+    static final PostgreSQLContainer<?> POSTGRES;
+
+    static {
+        POSTGRES = new PostgreSQLContainer<>("postgres:16")
+            .withDatabaseName("testdb");
+        POSTGRES.start(); // Запуск один раз
+    }
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        r.add("spring.datasource.username", POSTGRES::getUsername);
+        r.add("spring.datasource.password", POSTGRES::getPassword);
+    }
+}
+
+// Тесты наследуют базовый класс
+@SpringBootTest
+class UserServiceTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private UserService userService;
+
+    @Test
+    void shouldCreateUser() {
+        User user = userService.create("john@example.com");
+        assertNotNull(user.getId());
+    }
+}
+```
+
+### 2. Reusable Containers (Testcontainers 1.19+)
+
+```java
+// В ~/.testcontainers.properties:
+// testcontainers.reuse.enable=true
+
+@Container
+static PostgreSQLContainer<?> postgres =
+    new PostgreSQLContainer<>("postgres:16")
+        .withReuse(true); // Контейнер НЕ удаляется после тестов
+```
+
+`withReuse(true)` -- контейнер остаётся после завершения тестов и переиспользуется при следующем запуске. Полезно для локальной разработки, но **не рекомендуется** для CI (риск грязного состояния).
+
+## Q13. Как тестировать с несколькими контейнерами одновременно?
+
+```java
+@SpringBootTest
+@Testcontainers
+class MultiServiceIntegrationTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Container
+    @ServiceConnection
+    static KafkaContainer kafka =
+        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.5.0"));
+
+    @Container
+    static GenericContainer<?> redis =
+        new GenericContainer<>("redis:7-alpine")
+            .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void redisProps(DynamicPropertyRegistry r) {
+        r.add("spring.data.redis.host", redis::getHost);
+        r.add("spring.data.redis.port", redis::getFirstMappedPort);
+    }
+
+    @Autowired
+    private OrderService orderService;
+
+    @Test
+    void shouldProcessOrderWithAllServices() {
+        // Использует PostgreSQL для хранения,
+        // Kafka для событий, Redis для кеша
+        Order order = orderService.createOrder(userId, productId, 1);
+
+        assertNotNull(order.getId());
+        assertEquals(OrderStatus.PROCESSING, order.getStatus());
+    }
+}
+```
+
+При нескольких контейнерах используйте `@ServiceConnection` где возможно, а `@DynamicPropertySource` -- для контейнеров без автоматической поддержки.
+
+## Q14. (!) Как тестировать с реальной базой данных?
+
+### Стратегия выбора
+
+| Подход | Когда использовать |
+|--------|-------------------|
+| `H2` in-memory | Быстрые тесты, простой SQL без DB-специфики |
+| `Testcontainers` | Интеграционные тесты, DB-специфичные фичи |
+| `@DataJpaTest` + `H2` | Unit-тесты репозитория |
+| `@DataJpaTest` + `Testcontainers` | Интеграционные тесты репозитория |
+| `@SpringBootTest` + `Testcontainers` | Полный сквозной тест |
+
+### Пример с `@DataJpaTest` и `Testcontainers`
+
+```java
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Testcontainers
+class OrderRepositoryTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Autowired
+    private TestEntityManager entityManager;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Test
+    void shouldFindOrdersByStatus() {
+        // Arrange
+        Order order1 = new Order(userId, BigDecimal.valueOf(100), OrderStatus.PAID);
+        Order order2 = new Order(userId, BigDecimal.valueOf(200), OrderStatus.PENDING);
+        entityManager.persistAndFlush(order1);
+        entityManager.persistAndFlush(order2);
+
+        // Act
+        List<Order> paidOrders = orderRepository
+            .findByStatus(OrderStatus.PAID);
+
+        // Assert
+        assertEquals(1, paidOrders.size());
+        assertEquals(BigDecimal.valueOf(100), paidOrders.get(0).getTotal());
+    }
+
+    @Test
+    void shouldUseNativeQuery() {
+        // PostgreSQL-специфичный запрос
+        entityManager.persistAndFlush(new Order(userId,
+            BigDecimal.valueOf(100), OrderStatus.PAID));
+
+        BigDecimal total = orderRepository.calculateTotalRevenue();
+
+        assertEquals(BigDecimal.valueOf(100), total);
+    }
+}
+```
+
+Подробнее о работе с `JPA` и `Hibernate` -- в [вопросах по Hibernate](../databases/hibernate-interview.md) и [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md).
+
+## Q15. Как тестировать транзакции в интеграционных тестах?
+
+```java
+@SpringBootTest
+@Testcontainers
+class TransactionIntegrationTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void shouldRollbackOnFailure() {
+        // Arrange
+        User user = userRepository.save(new User("john@example.com"));
+
+        // Act — orderService.createWithPayment() помечен @Transactional
+        assertThrows(PaymentException.class, () -> {
+            orderService.createWithPayment(user.getId(),
+                productId, invalidCard);
+        });
+
+        // Assert — заказ НЕ должен быть сохранён (rollback)
+        assertEquals(0, orderRepository.countByUserId(user.getId()));
+    }
+
+    @Test
+    void shouldCommitOnSuccess() {
+        User user = userRepository.save(new User("jane@example.com"));
+
+        Order order = orderService.createWithPayment(
+            user.getId(), productId, validCard);
+
+        // Данные сохранены (commit)
+        assertTrue(orderRepository.findById(order.getId()).isPresent());
+    }
+}
+```
+
+Ключевое: если тестовый метод **сам** помечен `@Transactional`, Spring делает rollback после теста -- это удобно для изоляции, но скрывает баги (см. Q17).
+
+## Q16. Как управлять тестовыми данными через `@Sql` и `Flyway`?
+
+### `@Sql` -- декларативная загрузка данных
+
+```java
+@SpringBootTest
+@Testcontainers
+class DataDrivenTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Test
+    @Sql(scripts = "/test-data/users.sql",
+         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "/test-data/cleanup.sql",
+         executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void shouldFindPremiumUsers() {
+        List<User> premium = userRepository
+            .findByType(UserType.PREMIUM);
+        assertEquals(3, premium.size());
+    }
+}
+```
+
+### `Flyway` в тестах
+
+```java
+@SpringBootTest
+@Testcontainers
+@TestPropertySource(properties = {
+    "spring.flyway.locations=classpath:db/migration,classpath:db/testdata"
+})
+class FlywayIntegrationTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
+
+    @Test
+    void shouldApplyMigrations() {
+        // Flyway применяет миграции автоматически при старте
+        Integer count = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM users", Integer.class);
+        assertNotNull(count);
+    }
+}
+```
+
+Рекомендация: `Flyway` для схемы, `@Sql` для тестовых данных. Не мешайте тестовые данные в production-миграции.
+
+## Q17. В чём опасность `@Transactional` на интеграционных тестах?
+
+`@Transactional` на тесте делает rollback после каждого теста, что обеспечивает изоляцию. Но это **скрывает реальное поведение**:
+
+1. **Lazy loading** -- в тесте всё работает (одна транзакция), а в production -- `LazyInitializationException`
+2. **Flush** -- данные могут не достигнуть БД (нет `flush` до rollback), и SQL-ошибки не проявятся
+3. **Транзакционные границы** -- `@Transactional(propagation = REQUIRES_NEW)` внутри сервиса не тестируется корректно
+
+```java
+// ПЛОХО — тест скрывает LazyInitializationException
 @Test
-void shouldSaveOrderWithDiscount() {
- // Arrange
- User user = userRepository.save(new User("john@example.com", UserType.PREMIUM));
- Product product = productRepository.save(new Product("Laptop", BigDecimal.valueOf(1000)));
+@Transactional // rollback после теста
+void shouldGetUserOrders() {
+    User user = userRepository.findById(1L).get();
+    // Работает в тесте (одна транзакция), падает в production
+    List<Order> orders = user.getOrders();
+    assertFalse(orders.isEmpty());
+}
 
- // Act
- Order order = orderService.createOrder(user.getId(), product.getId(), 1);
+// ХОРОШО — тест без @Transactional, ручная очистка
+@Test
+void shouldGetUserOrders() {
+    User user = userService.getUserWithOrders(1L);
+    assertFalse(user.getOrders().isEmpty());
+}
 
- // Assert
- assertNotNull(order.getId());
- assertEquals(BigDecimal.valueOf(850), order.getTotalPrice()); // 1000 - 15% discount
- assertEquals(OrderStatus.CONFIRMED, order.getStatus());
+@AfterEach
+void cleanup() {
+    orderRepository.deleteAll();
+    userRepository.deleteAll();
 }
 ```
 
-### Когда использовать `Integration Testing`
+На собеседовании этот вопрос показывает глубокое понимание. Рекомендация: для интеграционных тестов **не** ставить `@Transactional` на тестовый метод; вместо этого -- очистка данных в `@AfterEach` или использование `Testcontainers` с чистым контейнером.
 
-1. Взаимодействие компонентов: Проверка корректности обмена данными
-2. Внешние зависимости: Базы данных, внешние `API`, файловые системы
-3. `End-to-End` сценарии: Полный пользовательский workflow
-4. Контракты: Проверка соблюдения интерфейсов между модулями
-5. Производительность: Тестирование под реальной нагрузкой
+## Q18. (!) Как использовать `WireMock` для мокирования HTTP-сервисов?
 
-## Q2. Какие типы `integration testing` существуют?
-
-### 1. Big `Bang Integration Testing`
-
-Все компоненты интегрируются одновременно и тестируются как единое целое. Преимущества:
-- Простота реализации
-- Тестирование реального взаимодействия
-
-Недостатки:
-- Трудно локализовать ошибки
-- Долго настраивать
-- Высокая сложность отладки
-
-Применение:
-```java
-@SpringBootTest
-@ActiveProfiles("test")
-public class BigBangIntegrationTest {
-
- @Autowired
- private UserService userService;
-
- @Autowired
- private OrderService orderService;
-
- @Autowired
- private PaymentService paymentService;
-
- @Test
- void shouldCompleteFullOrderFlow() {
- // Тестируем полный цикл: пользователь -> заказ -> оплата
- User user = userService.createUser("john@example.com", "password");
- Order order = orderService.createOrder(user.getId(), productId, 1);
- PaymentResult payment = paymentService.processPayment(order.getId(), paymentDetails);
-
- assertEquals(PaymentStatus.SUCCESS, payment.getStatus());
- assertEquals(OrderStatus.PAID, orderService.getOrder(order.getId()).getStatus());
- }
-}
-```
-
-### 2. `Top-Down Integration Testing`
-
-Начинаем с верхних уровней (`UI`/`API`) и постепенно спускаемся вниз, используя stubs для нижних уровней. Преимущества:
-- Раннее тестирование основных функций
-- Легче обнаруживать ошибки интерфейса
-
-Недостатки:
-- Требует создания stubs
-- Нижние уровни тестируются позже
-
-### 3. `Bottom-Up Integration Testing`
-
-Начинаем с нижних уровней (`DAO`, services) и постепенно поднимаемся вверх. Преимущества:
-- Нижние уровни протестированы первыми
-- Не нужны stubs для нижних уровней
-
-Недостатки:
-- Позднее тестирование высокоуровневой логики
-- Трудно тестировать пользовательские сценарии
-
-### 4. `Sandwich`/`Hybrid Integration Testing`
-
-Комбинация `top-down` и `bottom-up` подходов. Преимущества:
-- Баланс между подходами
-- Параллельное тестирование разных уровней
-
-### 5. `Component Integration Testing`
-
-Тестирование групп связанных компонентов как единого блока. ```java
-// Тестируем слой сервисов без `UI`
-`@SpringBootTest`
-`@AutoConfigureMockMvc`
-public class `ServiceLayerIntegrationTest` {
-
- `@Autowired`
- private `MockMvc mockMvc`;
-
- `@Autowired`
- private `UserRepository userRepository`;
-
- `@Test`
- void `shouldCreateUserThroughAPI()` throws `Exception` {
- String userJson = "{\"email\":\"john@example.com\",\"password\":\"secret\"}";
-
- mockMvc.perform(post("/api/users").contentType(MediaType.APPLICATION_JSON).content(userJson))
-     .andExpect(status().isCreated()).andExpect(jsonPath("$.email").value("john@example.com"));
-
- // Проверяем, что пользователь сохранен в БД
- User savedUser = userRepository.findByEmail("john@example.com");
- assertNotNull(savedUser);
- assertNotNull(savedUser.getId());
- }
-}
-```java
-
-## Q3. Как тестировать с базами данных?
-
-### 1. Embedded Databases
-
-Использование in-memory баз данных для тестирования. ```java
-@Configuration
-@Profile("test")
-public class TestDatabaseConfig {
-
- @Bean
- @Primary
- public DataSource dataSource() {
- return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).addScript("classpath:schema.sql").addScript("classpath:test-data.sql").build();
- }
-}
-
-// Тест с embedded БД
-@SpringBootTest
-@ActiveProfiles("test")
-public class UserRepositoryIntegrationTest {
-
- @Autowired
- private UserRepository userRepository;
-
- @Autowired
- private JdbcTemplate jdbcTemplate;
-
- @Test
- void shouldSaveAndRetrieveUser() {
- // Arrange
- User user = new User("john@example.com", "password");
-
- // Act
- User saved = userRepository.save(user);
-
- // Assert
- assertNotNull(saved.getId());
-
- User retrieved = userRepository.findById(saved.getId()).orElse(null);
- assertNotNull(retrieved);
- assertEquals("john@example.com", retrieved.getEmail());
- }
-
- @Test
- void shouldHandleTransactions() {
- // Тестируем транзакционность
- assertThrows(DataIntegrityViolationException.class, () -> {
- userRepository.save(new User(null, "password")); // email is required
- });
- }
-}
-```
-
-### 2. `TestContainers`
-
-Использование реальных `Docker` контейнеров для тестирования. ```java
-`@SpringBootTest`
-`@Testcontainers`
-public class `UserRepositoryContainerTest` {
-
- `@Container`
- private static `PostgreSQLContainer`<?> postgres = new `PostgreSQLContainer`<>("postgres:13").`withDatabaseName`("testdb").`withUsername`("test").`withPassword`("test");
-
- `@DynamicPropertySource`
- static void `configureProperties`(`DynamicPropertyRegistry` registry) {
- `registry.add`("`spring.datasource.url`", postgres::`getJdbcUrl`);
- `registry.add`("`spring.datasource.username`", postgres::`getUsername`);
- `registry.add`("`spring.datasource.password`", postgres::`getPassword`);
- }
-
- `@Autowired`
- private `UserRepository userRepository`;
-
- `@Test`
- void `shouldWorkWithRealPostgres()` {
- User user = new User("john@example.com", "password");
- User saved = userRepository.save(user);
-
- assertNotNull(saved.getId());
-
- // Тестируем специфичные для PostgreSQL фичи
- List<User> users = userRepository.findByEmailContaining("john");
- assertEquals(1, users.size());
- }
-}
-
-// Тест с `MongoDB`
-`@SpringBootTest`
-`@Testcontainers`
-public class `ProductRepositoryMongoTest` {
-
- `@Container`
- private static `MongoDBContainer mongoDBContainer` = new `MongoDBContainer`("mongo:4.4");
-
- `@DynamicPropertySource`
- static void `configureProperties`(`DynamicPropertyRegistry` registry) {
- registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
- }
-
- `@Autowired`
- private `ProductRepository productRepository`;
-
- `@Test`
- void `shouldWorkWithRealMongoDB()` {
- Product product = new Product("Laptop", BigDecimal.valueOf(1000));
- Product saved = productRepository.save(product);
-
- assertNotNull(saved.getId());
-
- // Тестируем MongoDB-специфичные запросы
- List<Product> expensiveProducts = productRepository.findByPriceGreaterThan(BigDecimal.valueOf(500));
- assertEquals(1, expensiveProducts.size());
- }
-}
-```java
-
-### 3. Database Migration Testing
-
-```
-`@SpringBootTest`
-`@ActiveProfiles`("test")
-`@Sql`(scripts = "/db/migration/V1__create_tables.sql")
-public class `DatabaseMigrationTest` {
-
- `@Autowired`
- private `JdbcTemplate jdbcTemplate`;
-
- `@Test`
- void `shouldApplyMigrationsCorrectly()` {
- // Проверяем, что таблицы созданы
- Integer tableCount = jdbcTemplate.queryForObject(
- "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'",
- Integer.class);
-
- assertTrue(tableCount > 0);
-
- // Проверяем структуру таблиц
- List<String> columns = jdbcTemplate.queryForList(
- "SELECT column_name FROM information_schema.columns WHERE table_name = 'users'",
- String.class);
-
- assertTrue(columns.contains("id"));
- assertTrue(columns.contains("email"));
- `assertTrue`(`columns.contains`("password"));
- }
-}
-```text
-
-### 4. Transactional Tests
-
-```
-`@SpringBootTest`
-`@ActiveProfiles`("test")
-public class `TransactionIntegrationTest` {
-
- `@Autowired`
- private `UserService userService`;
-
- `@Autowired`
- private `UserRepository userRepository`;
-
- `@Test`
- `@Transactional`
- void `shouldRollbackTransactionOnFailure()` {
- // `Arrange`
- User user = new User("john@example.com", "password");
-
- // Act & `Assert`
- assertThrows(RuntimeException.class, () -> {
-     userService.createUserWithProfile(user, null); // ошибка
- });
-
- // Проверяем, что пользователь не сохранен (rollback)
- Optional<User> savedUser = userRepository.findByEmail("john@example.com");
- assertFalse(savedUser.isPresent());
- }
-
- `@Test`
- void `shouldCommitTransactionOnSuccess()` {
- // `Arrange`
- User user = new User("jane@example.com", "password");
- UserProfile profile = new UserProfile("Jane", "Doe");
-
- // Act
- userService.createUserWithProfile(user, profile);
-
- // Assert
- Optional<User> savedUser = userRepository.findByEmail("jane@example.com");
- assertTrue(savedUser.isPresent());
- assertNotNull(savedUser.get().getProfile());
- }
-}
-```java
-
-## Q4. Что такое `TestContainers` и как его использовать?
-
-TestContainers — это Java библиотека для запуска Docker контейнеров в JUnit тестах.
-
-### Преимущества TestContainers
-
-1. Реальные зависимости: Тестирование с реальными базами данных, брокерами сообщений
-2. Изоляция: Каждый тест получает чистую среду
-3. Совместимость: Работает с любыми Docker образами
-4. Автоматизация: Автоматический запуск и остановка контейнеров
-
-### Основные компоненты
-
-#### 1. Generic Containers
-
-```
-`@SpringBootTest`
-`@Testcontainers`
-public class `GenericContainerTest` {
-
- `@Container`
- private static `GenericContainer`<?> redis = new `GenericContainer`<>("redis:6-alpine").`withExposedPorts`(`6379`);
-
- `@DynamicPropertySource`
- static void `configureProperties`(`DynamicPropertyRegistry` registry) {
- `registry.add`("`spring.redis.host`", redis::`getHost`);
- `registry.add`("`spring.redis.port`", redis::`getFirstMappedPort`);
- }
-
- `@Autowired`
- private `RedisService redisService`;
-
- `@Test`
- void `shouldWorkWithRealRedis()` {
- `redisService.save`("key", "value");
- `String` retrieved = `redisService.get`("key");
-
- `assertEquals`("value", retrieved);
- }
-}
-```text
-
-#### 2. Specialized Containers
-
-```
-`@SpringBootTest`
-`@Testcontainers`
-public class `SpecializedContainerTest` {
-
- `@Container`
- private static `PostgreSQLContainer`<?> postgres = new `PostgreSQLContainer`<>("postgres:13").`withDatabaseName`("testdb").`withUsername`("test").`withPassword`("test").`withInitScript`("`init.sql`"); // Запуск скрипта инициализации
-
- `@Container`
- private static `RabbitMQContainer rabbitMQ` = new `RabbitMQContainer`("rabbitmq:3-management").`withAdminPassword`("admin");
-
- `@DynamicPropertySource`
- static void `configureProperties`(`DynamicPropertyRegistry` registry) {
- // `PostgreSQL`
- `registry.add`("`spring.datasource.url`", postgres::`getJdbcUrl`);
- `registry.add`("`spring.datasource.username`", postgres::`getUsername`);
- `registry.add`("`spring.datasource.password`", postgres::`getPassword`);
-
- // `RabbitMQ`
- `registry.add`("`spring.rabbitmq.host`", `rabbitMQ::getHost`);
- `registry.add`("`spring.rabbitmq.port`", `rabbitMQ::getAmqpPort`);
- `registry.add`("`spring.rabbitmq.username`", () -> "guest");
- `registry.add`("`spring.rabbitmq.password`", () -> "guest");
- }
-
- `@Autowired`
- private `OrderService orderService`;
-
- `@Autowired`
- private `RabbitTemplate rabbitTemplate`;
-
- `@Test`
- void `shouldProcessOrderWithRealServices()` {
- // Создаем заказ в `PostgreSQL`
- Order order = orderService.createOrder(customerId, productId, 1);
-
- // Проверяем отправку сообщения в RabbitMQ
- Object message = rabbitTemplate.receiveAndConvert("order.queue", 5000);
- assertNotNull(message);
-
- // Проверяем статус заказа
- Order updatedOrder = orderService.getOrder(order.getId());
- assertEquals(OrderStatus.PROCESSING, updatedOrder.getStatus());
- }
-}
-```java
-
-#### 3. Compose Containers
-
-```
-`@SpringBootTest`
-`@Testcontainers`
-public class `ComposeContainerTest` {
-
- `@Container`
- private static `DockerComposeContainer`<?> environment =
- new DockerComposeContainer<>(new File("docker-compose-test.yml")).withExposedService("postgres_1", 5432).withExposedService("redis_1", 6379).waitingFor("postgres_1", Wait.forHealthcheck());
-
- `@DynamicPropertySource`
- static void `configureProperties`(`DynamicPropertyRegistry` registry) {
- // Получаем `URL` из `docker-compose`
- `String postgresUrl` = environment.`getServiceHost`("`postgres_1`", `5432`) + ":" +
- environment.`getServicePort`("`postgres_1`", `5432`);
- `registry.add`("`spring.datasource.url`/`postgresUrl` + "/testdb");
-
- `String redisHost` = environment.`getServiceHost`("`redis_1`", `6379`);
- `Integer redisPort` = environment.`getServicePort`("`redis_1`", `6379`);
- `registry.add`("`spring.redis.host`", () -> `redisHost`);
- `registry.add`("`spring.redis.port`", () -> `redisPort`);
- }
-
- // docker-compose-test.yml
- /*
- version: '3.8'
- services:
- postgres:
- image: postgres:13
- environment:
- POSTGRES_DB: testdb
- POSTGRES_USER: test
- POSTGRES_PASSWORD: test
- ports:
- - "5432:5432"
- healthcheck:
- test: ["`CMD-SHELL`", "`pg_isready` -U test -d testdb"]
- interval: 10s
- timeout: 5s
- retries: 5
-
- redis:
- image: redis:6-alpine
- ports:
- - "6379:6379"
- */
-}
-```text
-
-#### 4. Container Lifecycle
-
-```
-`@SpringBootTest`
-`@Testcontainers`
-public class `ContainerLifecycleTest` {
-
- `@Container`
- private static `PostgreSQLContainer`<?> postgres = new `PostgreSQLContainer`<>("postgres:13").`withDatabaseName`("testdb").`withUsername`("test").`withPassword`("test");
-
- `@Autowired`
- private `UserRepository userRepository`;
-
- `@BeforeAll`
- static void `setUpAll()` {
- // Контейнер уже запущен `JUnit 5`
- `assertTrue`(postgres.`isRunning()`);
- }
-
- `@Test`
- void `shouldReuseContainerAcrossTests()` {
- // Контейнер переиспользуется между тестами
- User user = new User("test@example.com", "password");
- User saved = userRepository.save(user);
-
- assertNotNull(saved.getId());
- }
-
- `@Test`
- void `shouldHaveCleanDatabaseForEachTest()` {
- // Каждый тест получает чистую БД
- List<User> users = userRepository.findAll();
- assertTrue(users.isEmpty());
- }
-
- `@AfterAll`
- static void `tearDownAll()` {
- // Контейнер будет остановлен автоматически
- }
-}
-```java
-
-## Q5. Как тестировать внешние API?
-
-### 1. Mock External APIs
-
-```
-`@SpringBootTest`
-`@ActiveProfiles`("test")
-public class `ExternalApiMockTest` {
-
- `@MockBean`
- private `RestTemplate restTemplate`;
-
- `@Autowired`
- private `PaymentService paymentService`;
-
- `@Test`
- void `shouldProcessPaymentWithMockedApi()` {
- // `Arrange`
- PaymentRequest request = new PaymentRequest("4111111111111111", BigDecimal.valueOf(100));
-
- PaymentResponse mockResponse = new PaymentResponse("txn_123", PaymentStatus.SUCCESS);
- when(restTemplate.postForObject(anyString(), any(), eq(PaymentResponse.class))).thenReturn(mockResponse);
-
- // Act
- PaymentResult result = paymentService.processPayment(request);
-
- // Assert
- assertEquals(PaymentStatus.SUCCESS, result.getStatus());
- assertEquals("txn_123", result.getTransactionId());
-
- // Verify external API call
- verify(restTemplate).postForObject(
- eq("https://api.payment-gateway.com/charge"),
- any(PaymentRequest.class),
- eq(PaymentResponse.class));
- }
-}
-```text
-
-### 2. WireMock for HTTP APIs
-
-```
-`@SpringBootTest`
-`@ActiveProfiles`("test")
-`@AutoConfigureWireMock`/`Random` port
-public class `WireMockIntegrationTest` {
-
- `@Autowired`
- private `PaymentService paymentService`;
-
- `@Test`
- void `shouldHandleSuccessfulPayment()` {
- // `Arrange` - настройка `mock` ответа
- `stubFor`(post(`urlEqualTo`("/payment")).`withRequestBody`(`matchingJsonPath`("$.amount", `equalTo`("100.00"))).`willReturn`(`aResponse()`.`withStatus`(`200`).`withHeader`("Content-Type", "application/json").`withBody`("""
- {
- "`transactionId`": "`txn_123`",
- "status": "`SUCCESS`"
- }
- """)));
-
- // Act
- PaymentResult result = paymentService.processPayment(cardDetails, BigDecimal.valueOf(100));
-
- // Assert
- assertEquals(PaymentStatus.SUCCESS, result.getStatus());
- assertEquals("txn_123", result.getTransactionId());
- }
-
- @Test
- void shouldHandlePaymentFailure() {
- // `Arrange`
- `stubFor`(post(`urlEqualTo`("/payment")).`willReturn`(`aResponse()`.`withStatus`(`400`).`withHeader`("Content-Type", "application/json").`withBody`("""
- {
- "error": "INSUFFICIENT_FUNDS",
- "message": "`Not enough funds`"
- }
- """)));
-
- // Act & `Assert`
- assertThrows(InsufficientFundsException.class, () -> {
- paymentService.processPayment(cardDetails, BigDecimal.valueOf(100));
- });
- }
-
- @Test
- void shouldHandleTimeout() {
- // `Arrange`
- `stubFor`(post(`urlEqualTo`("/payment")).`willReturn`(`aResponse()`.`withFixedDelay`(2000).`withStatus`(`200`)));
-
- // Act & `Assert`
- assertThrows(PaymentTimeoutException.class, () -> {
- paymentService.processPayment(cardDetails, BigDecimal.valueOf(100));
- });
- }
-}
-```java
-
-### 3. Contract Testing with Pact
-
-```
-// `Consumer` side - `PaymentService`
-`@ExtendWith(PactConsumerTestExt.class)`
-`@PactTestFor`(`providerName` = "`PaymentProvider`", port = "8081")
-public class `PaymentServiceContractTest` {
-
- `@Pact`(consumer = "`OrderService`")
- public `RequestResponsePact successfulPayment`(`PactDslWithProvider builder`) {
- return `builder.given`("`Payment` provider is available").`uponReceiving`("A valid payment request (POST)").`body`(new `PactDslJsonBody()`.`stringType`("`cardNumber`", "4111111111111111").`decimalType`("amount", `100.00`)).`willRespondWith()`.status(`200`).`body`(new `PactDslJsonBody()`.`stringType`("`transactionId`").`stringType`("status", "`SUCCESS`")).`toPact()`;
- }
-
- `@Test`
- `@PactTestFor`(`pactMethod` = "`successfulPayment`")
- void `shouldProcessSuccessfulPayment`(`MockServer mockServer`) {
- // `Configure` service to use `mock` server
- PaymentService paymentService = new PaymentService(mockServer.getUrl());
-
- // Act
- PaymentResult result = paymentService.processPayment("4111111111111111", 100.00);
-
- // Assert
- assertEquals(PaymentStatus.SUCCESS, result.getStatus());
- assertNotNull(result.getTransactionId());
- }
-}
-
-// `Provider` side - `Payment API`
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-`@Provider`("`PaymentProvider`")
-`@PactFolder`("pacts")
-public class `PaymentProviderContractTest` {
-
- `@Autowired`
- private `TestRestTemplate restTemplate`;
-
- `@State`("`Payment` provider is available")
- public void `paymentProviderIsAvailable()` {
- // `Setup` provider state if needed
- }
-
- `@Test`
- void `shouldHonorPaymentContract()` {
- // `Pact` verification will run automatically
- }
-}
-```java
-
-## Q6. Что такое contract testing?
-
-Contract testing — это подход к тестированию, при котором проверяется соблюдение контрактов между сервисами.
-
-### Типы Contract Testing
-
-#### 1. Consumer-Driven Contract Testing
-
-Потребитель определяет ожидаемое поведение провайдера. ```java
-// Consumer test (Pact)
-@ExtendWith(PactConsumerTestExt.class)
-@PactTestFor(providerName = "UserService", port = "8082")
-public class UserServiceConsumerTest {
-
- @Pact(consumer = "OrderService")
- public RequestResponsePact getUserDetails(PactDslWithProvider builder) {
- return builder.given("User exists").uponReceiving("A request for user details").path("/api/users/123").method("GET").willRespondWith().status(200).body(new PactDslJsonBody().numberType("id", 123).stringType("name", "John Doe").stringType("email", "john@example.com")).toPact();
- }
-
- @Test
- @PactTestFor(pactMethod = "getUserDetails")
- void shouldGetUserDetails(MockServer mockServer) {
- UserClient client = new UserClient(mockServer.getUrl());
- User user = client.getUser(123L);
-
- assertEquals(123L, user.getId());
- assertEquals("John Doe", user.getName());
- assertEquals("john@example.com", user.getEmail());
- }
-}
-```
-
-#### 2. `Provider Contract Testing`
-
-Провайдер проверяет, что он корректно реализует контракты. ```java
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-`@Provider`("`UserService`")
-`@PactFolder`("pacts")
-public class `UserServiceProviderTest` {
-
- `@Autowired`
- private `TestRestTemplate restTemplate`;
-
- `@State`("`User` exists")
- public void `userExists()` {
- // `Setup` test data
- User user = new User(123L, "John Doe", "john@example.com");
- userRepository.save(user);
- }
-
- `@Test`
- void `shouldHonorUserContract()` {
- // `Pact framework` automatically verifies contracts
- }
-}
-```text
-
-### Spring Cloud Contract
-
-```
-// `Contract` definition (`Groovy DSL`)
-`org.springframework.cloud.contract.spec.Contract.make` {
- `request` {
- method '`GET`'
- url '/api/...'
- }
- `response` {
- `status 200`
- `body`(
- id: `123`,
- name: "`John` Doe",
- email: "john`@example`.com"
- )
- }
-}
-```java
-
-```
-// `Generated` test
-`@SpringBootTest`
-`@AutoConfigureStubRunner`(ids = "`com.example`:`user-service`:+:stubs:8082")
-public class `UserServiceContractTest` {
-
- `@Autowired`
- private `UserClient userClient`;
-
- `@Test`
- void `shouldGetUserDetails()` {
- User user = userClient.getUser(123L);
-
- assertEquals(123L, user.getId());
- assertEquals("John Doe", user.getName());
- assertEquals("john@example.com", user.getEmail());
- }
-}
-```java
-
-### Преимущества Contract Testing
-
-1. Раннее обнаружение изменений: Выявление breaking changes до релиза
-2. Изоляция команд: Команды могут работать независимо
-3. Автоматизация: Автоматическая проверка контрактов
-4. Документация: Контракты служат документацией API
-
-## Q7. Как тестировать микросервисы?
-
-### 1. Component Testing
-
-Тестирование отдельных микросервисов в изоляции. ```java
-@SpringBootTest(
- webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
- properties = {
- "eureka.client.enabled=false", // Отключаем service discovery
- "spring.cloud.config.enabled=false" // Отключаем config server
- }
-)
-@ActiveProfiles("component-test")
-public class UserServiceComponentTest {
-
- @Autowired
- private TestRestTemplate restTemplate;
-
- @MockBean
- private EmailService emailService; // Mock внешние зависимости
-
- @Test
- void shouldCreateUser() {
- UserRequest request = new UserRequest("john@example.com", "password");
-
- ResponseEntity<UserResponse> response = restTemplate.postForEntity(
- "/api/users", request, UserResponse.class);
-
- assertEquals(HttpStatus.CREATED, response.getStatusCode());
- assertNotNull(response.getBody().getId());
- assertEquals("john@example.com", response.getBody().getEmail());
-
- // Verify interactions with mocked services
- verify(emailService).sendWelcomeEmail("john@example.com");
- }
-}
-```
-
-### 2. `Integration Testing` with `Real Dependencies`
-
-```java
-@SpringBootTest(
- webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
- properties = {
- "spring.profiles.active=test",
- "eureka.client.enabled=false"
- }
-)
-@Testcontainers
-public class UserServiceIntegrationTest {
-
- @Container
- private static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13");
-
- @Container
- private static RabbitMQContainer rabbitMQ = new RabbitMQContainer("rabbitmq:3-management");
-
- @DynamicPropertySource
- static void configureProperties(DynamicPropertyRegistry registry) {
- registry.add("spring.datasource.url", postgres::getJdbcUrl);
- registry.add("spring.rabbitmq.host", rabbitMQ::getHost);
- registry.add("spring.rabbitmq.port", rabbitMQ::getAmqpPort);
- }
-
- @Autowired
- private TestRestTemplate restTemplate;
-
- @Autowired
- private RabbitTemplate rabbitTemplate;
-
- @Test
- void shouldCreateUserAndSendEvent() {
- UserRequest request = new UserRequest("john@example.com", "password");
-
- // Create user
- ResponseEntity<UserResponse> response = restTemplate.postForEntity(
- "/api/users", request, UserResponse.class);
-
- assertEquals(HttpStatus.CREATED, response.getStatusCode());
-
- // Verify message was sent to RabbitMQ
- Message message = rabbitTemplate.receive("user.created", 5000);
- assertNotNull(message);
-
- // Parse message
- UserCreatedEvent event = objectMapper.readValue(message.getBody(), UserCreatedEvent.class);
- assertEquals(response.getBody().getId(), event.getUserId());
- }
-}
-```
-
-### 3. `End-to-End Testing`
-
-```java
-@SpringBootTest(
- classes = {E2ETestConfiguration.class},
- webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
-)
-@Testcontainers
-public class E2ETest {
-
- @Container
- private static DockerComposeContainer<?> environment =
- new DockerComposeContainer<>(new File("docker-compose.e2e.yml")).withExposedService("user-service", 8080).withExposedService("order-service", 8081).withExposedService("payment-service", 8082);
-
- @Autowired
- private WebTestClient webTestClient;
-
- @Test
- void shouldCompleteFullOrderFlow() {
- // 1. Create user
- UserResponse user = createUser("john@example.com", "password");
-
- // 2. Create product via product service
- ProductResponse product = createProduct("Laptop", BigDecimal.valueOf(1000));
-
- // 3. Create order
- OrderResponse order = createOrder(user.getId(), product.getId(), 1);
-
- // 4. Process payment
- PaymentResponse payment = processPayment(order.getId(), "4111111111111111");
-
- // 5. Verify order status
- OrderResponse updatedOrder = getOrder(order.getId());
- assertEquals(OrderStatus.COMPLETED, updatedOrder.getStatus());
- assertEquals(BigDecimal.valueOf(1000), updatedOrder.getTotalPrice());
- }
-
- private UserResponse createUser(String email, String password) {
- return webTestClient.post().uri("http://user-service:8080/api/users").contentType(MediaType.APPLICATION_JSON).bodyValue(new UserRequest(email, password)).exchange().expectStatus().isCreated().expectBody(UserResponse.class).returnResult().getResponseBody();
- }
-
- // Similar methods for other services...
-}
-```
-
-### 4. `Consumer-Driven Contract Testing`
-
-```java
-// Order Service - Consumer of User Service
-@ExtendWith(PactConsumerTestExt.class)
-@PactTestFor(providerName = "UserService", port = "8080")
-public class OrderServiceContractTest {
-
- @Pact(consumer = "OrderService")
- public RequestResponsePact getUserDetails(PactDslWithProvider builder) {
- return builder.uponReceiving("A request for user details").path("/api/users/123").method("GET").willRespondWith().status(200).body(new PactDslJsonBody().numberType("id", 123).stringType("email", "john@example.com")).toPact();
- }
-
- @Test
- @PactTestFor(pactMethod = "getUserDetails")
- void shouldValidateOrderForExistingUser(MockServer mockServer) {
- OrderService orderService = new OrderService(mockServer.getUrl());
-
- // This will use the mocked UserService
- boolean isValid = orderService.validateUserForOrder(123L, orderDetails);
-
- assertTrue(isValid);
- }
-}
-```
-
-### 5. `Chaos Engineering Testing`
+`WireMock` -- инструмент для мокирования HTTP API. Spring Boot Cloud Contract включает `@AutoConfigureWireMock` для автоматической настройки.
 
 ```java
 @SpringBootTest
-@Testcontainers
-public class ChaosEngineeringTest {
+@AutoConfigureWireMock(port = 0) // Рандомный порт
+@TestPropertySource(properties = {
+    "payment.service.url=http://localhost:${wiremock.server.port}"
+})
+class PaymentClientTest {
 
- @Container
- private static DockerComposeContainer<?> environment =
- new DockerComposeContainer<>(new File("docker-compose.test.yml"));
+    @Autowired
+    private PaymentClient paymentClient;
 
- @Autowired
- private OrderService orderService;
+    @Test
+    void shouldProcessPayment() {
+        stubFor(post(urlEqualTo("/api/charge"))
+            .withRequestBody(matchingJsonPath("$.amount",
+                equalTo("100.00")))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")
+                .withBody("""
+                    {
+                        "transactionId": "txn_123",
+                        "status": "SUCCESS"
+                    }
+                    """)));
 
- @Test
- void shouldHandleServiceFailure() {
- // Simulate payment service failure
- simulateServiceFailure("payment-service");
+        PaymentResult result = paymentClient.charge(
+            BigDecimal.valueOf(100), "4111111111111111");
 
- // Try to create order
- assertThrows(ServiceUnavailableException.class, () -> {
- orderService.createOrder(userId, productId, 1);
- });
+        assertEquals("txn_123", result.getTransactionId());
+        assertEquals(PaymentStatus.SUCCESS, result.getStatus());
 
- // Verify order was not created (compensating transaction)
- assertEquals(0, orderRepository.count());
- }
-
- @Test
- void shouldHandleNetworkLatency() {
- // Introduce network latency
- simulateNetworkLatency("user-service", 5000); // 5 second delay
-
- // Measure response time
- long startTime = System.currentTimeMillis();
- User user = userService.getUser(userId);
- long responseTime = System.currentTimeMillis() - startTime;
-
- assertTrue(responseTime > 5000);
- assertNotNull(user);
- }
-
- @Test
- void shouldRecoverFromServiceRestart() {
- // Restart user service
- restartService("user-service");
-
- // Service should be available after restart
- await().atMost(30, SECONDS).until(() -> {
- try {
- return userService.getUser(userId)!= null;
- } catch (Exception e) {
- return false;
- }
- });
-
- User user = userService.getUser(userId);
- assertNotNull(user);
- }
+        // Проверяем, что запрос был отправлен
+        verify(postRequestedFor(urlEqualTo("/api/charge"))
+            .withHeader("Content-Type",
+                equalTo("application/json")));
+    }
 }
 ```
 
-## Q8. Как использовать `WireMock` для тестирования?
+```mermaid
+graph LR
+    TEST[Тест] --> SVC[PaymentClient]
+    SVC --> WM[WireMock<br/>localhost:random_port]
+    WM -- "stub response" --> SVC
 
-`WireMock` — это инструмент для мокирования `HTTP` сервисов в тестах.
+    style WM fill:#f96,stroke:#333
+```
 
-### 1. `Basic WireMock Setup`
+## Q19. В чём разница между `@MockBean` и `@SpyBean`?
+
+| Аспект | `@MockBean` | `@SpyBean` |
+|--------|------------|-----------|
+| Поведение | Полная замена бина | Оборачивает реальный бин |
+| По умолчанию | Возвращает `null`/`0`/`false` | Вызывает реальный метод |
+| Когда использовать | Нужна полная изоляция от зависимости | Нужно перехватить часть вызовов |
+
+```java
+@SpringBootTest
+class NotificationTest {
+
+    // Полная замена — emailService не отправляет реальные письма
+    @MockBean
+    private EmailService emailService;
+
+    // Частичный мок — реальная логика + перехват
+    @SpyBean
+    private AuditService auditService;
+
+    @Autowired
+    private UserService userService;
+
+    @Test
+    void shouldCreateUserAndNotify() {
+        when(emailService.send(any()))
+            .thenReturn(true);
+
+        userService.createUser("john@example.com");
+
+        verify(emailService).send(argThat(
+            email -> email.getTo().equals("john@example.com")));
+        // auditService вызван реально, но можно проверить
+        verify(auditService).log(eq("USER_CREATED"), any());
+    }
+}
+```
+
+Важно: `@MockBean` и `@SpyBean` **инвалидируют** `ApplicationContext` кеш Spring. Если разные тесты мокируют разные бины, Spring перезапускает контекст для каждого, что замедляет тесты. Решение: группировать тесты с одинаковым набором моков или использовать `@MockitoBean` (Spring Boot 3.4+).
+
+## Q20. Как тестировать с `WireMock`: сценарии ошибок и задержки?
 
 ```java
 @SpringBootTest
 @AutoConfigureWireMock(port = 0)
-public class WireMockBasicTest {
+class PaymentErrorScenariosTest {
 
- @Autowired
- private ExternalApiClient apiClient;
+    @Autowired
+    private PaymentClient paymentClient;
 
- @Test
- void shouldGetUserData() {
- // Arrange
- stubFor(get(urlEqualTo("/api/users/123")).willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("""
- {
- "id": 123,
- "name": "John Doe",
- "email": "john@example.com"
- }
- """)));
+    @Test
+    void shouldHandleTimeout() {
+        stubFor(post(urlEqualTo("/api/charge"))
+            .willReturn(aResponse()
+                .withFixedDelay(5000) // 5 секунд задержка
+                .withStatus(200)));
 
- // Act
- User user = apiClient.getUser(123L);
+        assertThrows(PaymentTimeoutException.class, () ->
+            paymentClient.charge(BigDecimal.TEN, card));
+    }
 
- // Assert
- assertEquals(123L, user.getId());
- assertEquals("John Doe", user.getName());
- assertEquals("john@example.com", user.getEmail());
+    @Test
+    void shouldHandleServerError() {
+        stubFor(post(urlEqualTo("/api/charge"))
+            .willReturn(aResponse()
+                .withStatus(500)
+                .withBody("Internal Server Error")));
 
- // Verify request
- verify(getRequestedFor(urlEqualTo("/api/users/123")));
- }
+        assertThrows(PaymentServiceException.class, () ->
+            paymentClient.charge(BigDecimal.TEN, card));
+    }
+
+    @Test
+    void shouldRetryOnTransientError() {
+        // Первый вызов — 503, второй — 200
+        stubFor(post(urlEqualTo("/api/charge"))
+            .inScenario("Retry")
+            .whenScenarioStateIs(STARTED)
+            .willReturn(aResponse().withStatus(503))
+            .willSetStateTo("RECOVERED"));
+
+        stubFor(post(urlEqualTo("/api/charge"))
+            .inScenario("Retry")
+            .whenScenarioStateIs("RECOVERED")
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withBody("""
+                    {"transactionId": "txn_456", "status": "SUCCESS"}
+                    """)));
+
+        PaymentResult result = paymentClient.charge(
+            BigDecimal.TEN, card);
+
+        assertEquals(PaymentStatus.SUCCESS, result.getStatus());
+        verify(2, postRequestedFor(urlEqualTo("/api/charge")));
+    }
 }
 ```
 
-### 2. `Advanced Request Matching`
+WireMock Scenarios позволяют моделировать stateful-поведение: первый запрос отвечает одним образом, второй -- другим. Полезно для тестирования retry-логики и circuit breaker.
+
+## Q21. (!) Что такое контрактное тестирование?
+
+**Контрактное тестирование** (`Contract Testing`) -- подход, при котором проверяется соблюдение контрактов (интерфейсов) между сервисами. Consumer определяет ожидания, Provider верифицирует соответствие.
+
+```mermaid
+graph LR
+    subgraph "Consumer (OrderService)"
+        CT[Consumer Test]
+        CT -- "генерирует" --> PACT[Pact-файл]
+    end
+
+    subgraph "Provider (UserService)"
+        PT[Provider Test]
+        PACT -- "верифицирует" --> PT
+    end
+
+    subgraph "Pact Broker"
+        PB[Pact Broker]
+    end
+
+    PACT --> PB
+    PB --> PT
+```
+
+### Зачем нужно
+
+- **Раннее обнаружение** breaking changes до деплоя
+- **Независимость** команд: не нужен общий staging для проверки интеграции
+- **Документация**: контракт -- актуальная спецификация API
+- **Скорость**: быстрее E2E-тестов
+
+### Два основных инструмента
+
+1. **Pact** -- language-agnostic, consumer-driven, JSON-based
+2. **Spring Cloud Contract** -- Spring-экосистема, Groovy/YAML DSL, генерация тестов
+
+Подробнее о микросервисной архитектуре -- в [вопросах по микросервисам](../architecture/microservices-interview.md).
+
+## Q22. Как работает Consumer-Driven Contract Testing с `Pact`?
+
+### Consumer side
 
 ```java
-@Test
-void shouldHandleComplexRequests() {
- // Match by URL path with parameters
- stubFor(get(urlPathEqualTo("/api/search")).withQueryParam("q", equalTo("laptop")).withQueryParam("category", equalTo("electronics")).withHeader("Authorization", equalTo("Bearer token123")).willReturn(aResponse().withStatus(200).withBody("search results...")));
+@ExtendWith(PactConsumerTestExt.class)
+@PactTestFor(providerName = "UserService", port = "8081")
+class OrderServiceConsumerTest {
 
- // Match by request body
- stubFor(post(urlEqualTo("/api/orders")).withRequestBody(matchingJsonPath("$.total", equalTo("100.00"))).withRequestBody(matchingJsonPath("$.items[0].name", equalTo("Laptop"))).willReturn(aResponse().withStatus(201).withBody("order created")));
+    @Pact(consumer = "OrderService")
+    public RequestResponsePact getUserPact(PactDslWithProvider builder) {
+        return builder
+            .given("User with ID 123 exists")
+            .uponReceiving("A request for user details")
+            .path("/api/users/123")
+            .method("GET")
+            .willRespondWith()
+            .status(200)
+            .body(new PactDslJsonBody()
+                .numberType("id", 123)
+                .stringType("name", "John Doe")
+                .stringType("email", "john@example.com"))
+            .toPact();
+    }
 
- // Match by custom matcher
- stubFor(put(urlMatching("/api/users/\\d+")).andMatching(request -> {
- String body = request.getBodyAsString();
- return body.contains("premium")? MatchResult.exactMatch(): MatchResult.noMatch();
- }).willReturn(aResponse().withStatus(200)));
+    @Test
+    @PactTestFor(pactMethod = "getUserPact")
+    void shouldGetUserDetails(MockServer mockServer) {
+        UserClient client = new UserClient(mockServer.getUrl());
+
+        User user = client.getUser(123L);
+
+        assertEquals(123L, user.getId());
+        assertEquals("John Doe", user.getName());
+    }
 }
 ```
 
-### 3. `Response Templating`
+### Provider side
 
 ```java
-@Test
-void shouldUseResponseTemplating() {
- stubFor(get(urlEqualTo("/api/users/123")).willReturn(aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("""
- {
- "id": 123,
- "name": "{{request.query.q}}",
- "timestamp": "{{now}}",
- "randomId": "{{randomValue length=8 type='ALPHANUMERIC'}}"
- }
- """)));
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Provider("UserService")
+@PactFolder("pacts")
+class UserServiceProviderTest {
 
- User user = apiClient.getUser(123L);
+    @Autowired
+    private UserRepository userRepository;
 
- assertEquals(123L, user.getId());
- assertNotNull(user.getTimestamp());
- assertNotNull(user.getRandomId());
+    @State("User with ID 123 exists")
+    public void userExists() {
+        userRepository.save(new User(123L, "John Doe", "john@example.com"));
+    }
+
+    @TestTemplate
+    @ExtendWith(PactVerificationInvocationContextProvider.class)
+    void pactVerificationTestTemplate(PactVerificationContext context) {
+        context.verifyInteraction();
+    }
 }
 ```
 
-### 4. `State Management`
+Consumer генерирует Pact-файл (JSON); Provider верифицирует, что его API соответствует контракту. Файлы хранятся в Pact Broker или в репозитории.
 
-```java
-@Test
-void shouldManageStateBetweenRequests() {
- // Initial state
- stubFor(get(urlEqualTo("/api/counter")).inScenario("Counter Scenario").whenScenarioStateIs(STARTED).willReturn(aResponse().withBody("0")).willSetStateTo("Incremented"));
+## Q23. Как использовать `Spring Cloud Contract`?
 
- // After increment
- stubFor(post(urlEqualTo("/api/counter/increment")).inScenario("Counter Scenario").whenScenarioStateIs("Incremented").willReturn(aResponse().withBody("1")).willSetStateTo("Incremented Again"));
+### 1. Определение контракта (Groovy DSL)
 
- // Verify initial state
- assertEquals("0", apiClient.getCounter());
-
- // Increment
- apiClient.incrementCounter();
-
- // Verify incremented state
- assertEquals("1", apiClient.getCounter());
+```groovy
+// src/test/resources/contracts/shouldReturnUser.groovy
+Contract.make {
+    request {
+        method 'GET'
+        url '/api/users/123'
+    }
+    response {
+        status 200
+        body(
+            id: 123,
+            name: "John Doe",
+            email: "john@example.com"
+        )
+        headers {
+            contentType(applicationJson())
+        }
+    }
 }
 ```
 
-### 5. `Fault Injection`
+### 2. Автоматически сгенерированный тест (Provider)
 
-```java
-@Test
-void shouldHandleTimeouts() {
- stubFor(get(urlEqualTo("/api/slow-service")).willReturn(aResponse().withFixedDelay(5000) // 5 second delay.withStatus(200).withBody("slow response")));
+Spring Cloud Contract автоматически генерирует тестовый класс из контракта.
 
- assertThrows(TimeoutException.class, () -> {
- apiClient.callSlowService();
- });
-}
-
-@Test
-void shouldHandleServerErrors() {
- stubFor(get(urlEqualTo("/api/unstable-service")).willReturn(aResponse().withStatus(500).withBody("Internal Server Error")));
-
- assertThrows(ApiException.class, () -> {
- apiClient.callUnstableService();
- });
-}
-
-@Test
-void shouldHandleNetworkFailures() {
- // Simulate connection refused
- removeStub(get(urlEqualTo("/api/failing-service")));
-
- assertThrows(ConnectionException.class, () -> {
- apiClient.callFailingService();
- });
-}
-```
-
-### 6. `WireMock Extensions`
-
-```java
-@Configuration
-public class WireMockConfig {
-
- @Bean
- @Primary
- public WireMockServer wireMockServer() {
- WireMockServer server = new WireMockServer(options().port(8089).extensions(new ResponseTemplateTransformer(true)));
-
- // Custom response transformer
- server.addMockServiceRequestListener(new CustomRequestListener());
-
- return server;
- }
-
- static class CustomRequestListener implements RequestListener {
- @Override
- public void requestReceived(Request request, Response response) {
- // Log all requests for debugging
- System.out.println("WireMock received: " + request.getMethod() + " " + request.getUrl());
-
- // Store requests for later analysis
- requestStore.add(request);
- }
- }
-}
-```
-
-### 7. `JUnit 5 Integration`
-
-```java
-@ExtendWith(WireMockExtension.class)
-public class WireMockJUnit5Test {
-
- @RegisterExtension
- static WireMockExtension wireMock = WireMockExtension.newInstance().options(options().port(8089)).configureStaticDsl(true).build();
-
- @Test
- void shouldUseWireMockExtension() {
- wireMock.stubFor(get("/api/test").willReturn(ok("test response")));
-
- // Test logic
- String response = restTemplate.getForObject("http://localhost:8089/api/test", String.class);
- assertEquals("test response", response);
- }
-
- @Test
- void shouldVerifyRequests() {
- wireMock.stubFor(post("/api/data").willReturn(created()));
-
- // Make request
- restTemplate.postForObject("http://localhost:8089/api/data", data, Void.class);
-
- // Verify
- wireMock.verify(postRequestedFor(urlEqualTo("/api/data")));
- }
-}
-```
-
-## Q9. Как организовать интеграционные тесты в `CI`/`CD`?
-
-### 1. `Test Pyramid` в `CI`/`CD`
-
-```text
-Unit Tests (Fast, 1-2 min)
- ↓
-Integration Tests (Medium, 5-10 min)
- ↓
-End-to-End Tests (Slow, 15-30 min)
-```
-
-### 2. `Parallel Execution`
-
-```yaml
-#.github/workflows/integration-tests.yml
-name: Integration Tests
-on:
- push:
- branches: [ main ]
- pull_request:
- branches: [ main ]
-
-jobs:
- integration-tests:
- runs-on: ubuntu-latest
- strategy:
- matrix:
- test-suite: [database, api, messaging, full-integration]
-
- services:
- postgres:
- image: postgres:13
- env:
- POSTGRES_DB: testdb
- POSTGRES_USER: test
- POSTGRES_PASSWORD: test
- ports:
- - 5432:5432
- options: >-
- --health-cmd pg_isready
- --health-interval 10s
- --health-timeout 5s
- --health-retries 5
-
- rabbitmq:
- image: rabbitmq:3-management
- ports:
- - 5672:5672
- - 15672:15672
-
- steps:
- - uses: actions/checkout@v3
-
- - name: Set up JDK
- uses: actions/setup-java@v3
- with:
- java-version: '17'
- distribution: 'temurin'
-
- - name: Cache Maven packages
- uses: actions/cache@v3
- with:
- path:/.m2
- key: ${{ runner.os }}-m2-${{ hashFiles('/pom.xml') }}
- restore-keys: ${{ runner.os }}-m2
-
- - name: Run ${{ matrix.test-suite }} tests
- run: mvn test -Dtest="*${{ matrix.test-suite }}*Test" -Dspring.profiles.active=test
- env:
- SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
- SPRING_DATASOURCE_USERNAME: test
- SPRING_DATASOURCE_PASSWORD: test
- SPRING_RABBITMQ_HOST: localhost
- SPRING_RABBITMQ_PORT: 5672
-```
-
-### 3. `Test Environments`
-
-```yaml
-# docker-compose.test.yml
-version: '3.8'
-services:
- postgres:
- image: postgres:13
- environment:
- POSTGRES_DB: testdb
- POSTGRES_USER: test
- POSTGRES_PASSWORD: test
- ports:
- - "5432:5432"
- volumes:
- - postgres_data:/var/lib/postgresql/data
- -./init-scripts:/docker-entrypoint-initdb.d
-
- rabbitmq:
- image: rabbitmq:3-management
- ports:
- - "5672:5672"
- - "15672:15672"
- volumes:
- - rabbitmq_data:/var/lib/rabbitmq
-
- redis:
- image: redis:6-alpine
- ports:
- - "6379:6379"
- command: redis-server --appendonly yes
- volumes:
- - redis_data:/data
-
-volumes:
- postgres_data:
- rabbitmq_data:
- redis_data:
-```
-
-### 4. `Test Reporting`
-
-```xml
-<!-- pom.xml -->
-<plugin>
- <groupId>org.apache.maven.plugins</groupId>
- <artifactId>maven-surefire-plugin</artifactId>
- <version>3.0.0</version>
- <configuration>
- <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
- <includes>
- <include>/*Test.java</include>
- <include>/*IT.java</include>
- </includes>
- <excludes>
- <exclude>/*E2ETest.java</exclude>
- </excludes>
- </configuration>
-</plugin>
-
-<plugin>
- <groupId>org.jacoco</groupId>
- <artifactId>jacoco-maven-plugin</artifactId>
- <version>0.8.8</version>
- <executions>
- <execution>
- <goals>
- <goal>prepare-agent</goal>
- </goals>
- </execution>
- <execution>
- <id>report</id>
- <phase>test</phase>
- <goals>
- <goal>report</goal>
- </goals>
- </execution>
- </executions>
-</plugin>
-```
-
-### 5. `Test Data Management`
+### 3. Stub на стороне Consumer
 
 ```java
 @SpringBootTest
-@ActiveProfiles("test")
-@Sql(scripts = "/test-data/init.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@Sql(scripts = "/test-data/cleanup.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class DataDrivenIntegrationTest {
+@AutoConfigureStubRunner(
+    ids = "com.example:user-service:+:stubs:8082",
+    stubsMode = StubRunnerProperties.StubsMode.LOCAL)
+class OrderServiceContractTest {
 
- @Autowired
- private UserRepository userRepository;
+    @Autowired
+    private UserClient userClient;
 
- @Test
- void shouldFindUsersByCriteria() {
- // Test data is loaded by @Sql
- List<User> premiumUsers = userRepository.findByStatus(UserStatus.PREMIUM);
- assertEquals(3, premiumUsers.size());
+    @Test
+    void shouldGetUserFromStub() {
+        User user = userClient.getUser(123L);
 
- List<User> activeUsers = userRepository.findByActive(true);
- assertEquals(5, activeUsers.size());
- }
+        assertEquals(123L, user.getId());
+        assertEquals("John Doe", user.getName());
+    }
 }
-
-// test-data/init.sql
-INSERT INTO users (id, email, status, active) VALUES
-(1, 'john@example.com', 'PREMIUM', true),
-(2, 'jane@example.com', 'REGULAR', true),
-(3, 'bob@example.com', 'PREMIUM', false);
-
-// test-data/cleanup.sql
-DELETE FROM users;
 ```
 
-### 6. `Performance Testing` in `CI`
+Spring Cloud Contract генерирует WireMock-стабы из контрактов и публикует их как Maven-артефакт. Consumer скачивает стабы и тестирует свой клиент. Подробнее о Spring Cloud -- в [вопросах по Spring Cloud](../frameworks/spring/spring-cloud-interview.md).
 
-```yaml
-#.github/workflows/performance-tests.yml
-name: Performance Tests
-on:
- push:
- branches: [ main ]
+## Q24. Как тестировать микросервисы в изоляции?
 
-jobs:
- performance:
- runs-on: ubuntu-latest
-
- steps:
- - uses: actions/checkout@v3
-
- - name: Run JMeter tests
- uses: rbhadti94/apache-jmeter-action@v0.5.0
- with:
- testFilePath: performance-tests/user-registration.jmx
- outputReportsFolder: reports/
- outputJtlFiles: true
-
- - name: Publish performance results
- uses: actions/upload-artifact@v3
- with:
- name: jmeter-results
- path: reports/
-
- - name: Check performance thresholds
- run: |
- # Parse JMeter results and check thresholds
- RESPONSE_TIME=$(grep -o 'meanResTime">[0-9]*' reports/*.jtl | grep -o '[0-9]*' | tail -1)
- if [ "$RESPONSE_TIME" -gt "1000" ]; then
- echo "Performance test failed: Response time ${RESPONSE_TIME}ms > 1000ms"
- exit 1
- fi
-```
-
-## Q10. Какие best practices для `integration testing`?
-
-### 1. `Test Isolation`
+### Component Testing -- тестирование одного сервиса
 
 ```java
-@SpringBootTest
-@ActiveProfiles("test")
-public class IsolatedIntegrationTest {
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {
+        "eureka.client.enabled=false",
+        "spring.cloud.config.enabled=false"
+    })
+@Testcontainers
+class UserServiceComponentTest {
 
- @Autowired
- private UserRepository userRepository;
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
 
- @Autowired
- private OrderRepository orderRepository;
+    @MockBean
+    private EmailService emailService; // Мок внешнего сервиса
 
- @BeforeEach
- void setUp() {
- // Очистка данных перед каждым тестом
- orderRepository.deleteAll();
- userRepository.deleteAll();
+    @Autowired
+    private TestRestTemplate restTemplate;
 
- // Создание изолированных тестовых данных
- User user = userRepository.save(new User("test@example.com", "password"));
- testUserId = user.getId();
- }
+    @Test
+    void shouldCreateUser() {
+        when(emailService.sendWelcomeEmail(anyString()))
+            .thenReturn(true);
 
- @Test
- void shouldCreateOrderIndependently() {
- // Каждый тест работает с изолированными данными
- Order order = orderService.createOrder(testUserId, productId, 1);
- assertNotNull(order.getId());
+        var request = new UserRequest("john@example.com", "secret");
+        ResponseEntity<UserResponse> response = restTemplate
+            .postForEntity("/api/users", request, UserResponse.class);
 
- // Проверка не влияет на другие тесты
- assertEquals(1, orderRepository.count());
- }
-
- @Test
- void shouldUpdateOrderIndependently() {
- // Создание данных для этого теста
- Order order = orderService.createOrder(testUserId, productId, 1);
-
- // Обновление
- orderService.updateOrderStatus(order.getId(), OrderStatus.SHIPPED);
-
- // Проверка
- Order updated = orderRepository.findById(order.getId()).orElseThrow();
- assertEquals(OrderStatus.SHIPPED, updated.getStatus());
- }
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        verify(emailService).sendWelcomeEmail("john@example.com");
+    }
 }
 ```
 
-### 2. `Test Data Management`
+Стратегия для микросервисов:
+1. **Unit-тесты** -- бизнес-логика без Spring
+2. **Component tests** -- один сервис + его БД, моки для других сервисов
+3. **Contract tests** -- проверка API-контрактов между сервисами
+4. **E2E** -- минимальное количество, критичные пути
+
+## Q25. (!) Как тестировать `Kafka` с `Testcontainers`?
 
 ```java
-public class TestDataFactory {
-
- private static final Faker faker = new Faker();
-
- public static User createRandomUser() {
- return User.builder().email(faker.internet().emailAddress()).password(faker.internet().password()).firstName(faker.name().firstName()).lastName(faker.name().lastName()).build();
- }
-
- public static Product createRandomProduct() {
- return Product.builder().name(faker.commerce().productName()).price(BigDecimal.valueOf(faker.number().randomDouble(2, 10, 1000))).category(faker.commerce().department()).build();
- }
-
- public static Order createRandomOrder(User user, List<Product> products) {
- Order order = new Order();
- order.setUser(user);
- order.setOrderItems(products.stream().map(product -> {
- OrderItem item = new OrderItem();
- item.setProduct(product);
- item.setQuantity(faker.number().numberBetween(1, 5));
- return item;
- }).collect(Collectors.toList()));
- return order;
- }
-}
-
-@SpringBootTest
-public class RandomizedIntegrationTest {
-
- @Autowired
- private UserService userService;
-
- @Test
- void shouldHandleRandomUserData() {
- // Создание случайных тестовых данных
- User randomUser = TestDataFactory.createRandomUser();
-
- // Сохранение и проверка
- User saved = userService.createUser(randomUser);
- assertNotNull(saved.getId());
- assertNotNull(saved.getCreatedAt());
- }
-}
-```
-
-### 3. `Test Categories` и `Tagging`
-
-```java
-// Категории тестов
-public interface FastTest {
-}
-
-public interface SlowTest {
-}
-
-public interface DatabaseTest {
-}
-
-public interface ExternalApiTest {
-}
-
-// Применение категорий
-@Tag("database")
 @SpringBootTest
 @Testcontainers
-public class DatabaseIntegrationTest implements DatabaseTest {
+class KafkaIntegrationTest {
 
- @Container
- private static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13");
+    @Container
+    @ServiceConnection
+    static KafkaContainer kafka =
+        new KafkaContainer(
+            DockerImageName.parse("confluentinc/cp-kafka:7.5.0"));
 
- @Test
- @Tag("slow")
- void shouldHandleComplexQueries() {
- // Медленный тест базы данных
- }
+    @Autowired
+    private KafkaTemplate<String, OrderEvent> kafkaTemplate;
 
- @Test
- @Tag("fast")
- void shouldValidateConstraints() {
- // Быстрый тест валидации
- }
-}
+    @Autowired
+    private OrderEventConsumer consumer;
 
-// Запуск тестов по категориям
-// mvn test -Dgroups="database,fast" -DexcludedGroups="slow"
-// или
-// mvn test -Dtest="/*Test" -Dgroups="!slow"
-```
+    @Test
+    void shouldProduceAndConsumeEvent() {
+        // Отправляем событие
+        OrderEvent event = new OrderEvent(1L, "CREATED",
+            BigDecimal.valueOf(100));
+        kafkaTemplate.send("order-events", event);
 
-### 4. `Test Execution Control`
+        // Ждём обработки консьюмером
+        await().atMost(Duration.ofSeconds(10))
+            .untilAsserted(() -> {
+                verify(consumer).handleOrderEvent(argThat(
+                    e -> e.getOrderId().equals(1L)));
+            });
+    }
 
-```java
-@Configuration
-@Profile("test")
-public class TestExecutionConfig {
+    @Test
+    void shouldHandleDeserializationError() {
+        // Отправляем невалидные данные
+        kafkaTemplate.send("order-events",
+            "invalid-key", null);
 
- @Bean
- public TestExecutionListener testExecutionListener() {
- return new TestExecutionListener() {
-
- @Override
- public void beforeTestExecution(TestExecutionSummary summary) {
- // Настройка перед выполнением тестов
- System.out.println("Starting integration tests...");
- }
-
- @Override
- public void afterTestExecution(TestExecutionSummary summary) {
- // Анализ результатов после выполнения
- long failedTests = summary.getTestsFailedCount();
- if (failedTests > 0) {
- System.err.println("Integration tests failed: " + failedTests);
- }
- }
- };
- }
-}
-
-@SpringBootTest
-@ActiveProfiles("test")
-public class ControlledIntegrationTest {
-
- @Autowired
- private ApplicationContext context;
-
- @Test
- void shouldVerifyApplicationContext() {
- // Проверка корректности конфигурации
- assertNotNull(context.getBean(UserService.class));
- assertNotNull(context.getBean(OrderService.class));
-
- // Проверка health checks
- HealthIndicator healthIndicator = context.getBean(HealthIndicator.class);
- Health health = healthIndicator.health();
- assertEquals(Status.UP, health.getStatus());
- }
+        // Проверяем, что ошибка обработана (DLQ)
+        await().atMost(Duration.ofSeconds(10))
+            .untilAsserted(() -> {
+                List<String> dlqMessages = consumeFromDlq();
+                assertFalse(dlqMessages.isEmpty());
+            });
+    }
 }
 ```
 
-### 5. `Monitoring` и `Debugging`
+Альтернатива без Docker -- `@EmbeddedKafka` из `spring-kafka-test`:
 
 ```java
 @SpringBootTest
-@ActiveProfiles("test")
-public class MonitoredIntegrationTest {
+@EmbeddedKafka(
+    partitions = 1,
+    topics = {"order-events"},
+    brokerProperties = {"listeners=PLAINTEXT://localhost:9092"})
+class EmbeddedKafkaTest {
 
- private static final Logger logger = LoggerFactory.getLogger(MonitoredIntegrationTest.class);
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
 
- @Autowired
- private UserService userService;
-
- @Test
- void shouldCreateUserWithMonitoring() {
- long startTime = System.currentTimeMillis();
-
- try {
- logger.info("Starting user creation test");
-
- User user = new User("test@example.com", "password");
- User created = userService.createUser(user);
-
- long duration = System.currentTimeMillis() - startTime;
- logger.info("User creation test completed in {} ms", duration);
-
- assertNotNull(created.getId());
-
- } catch (Exception e) {
- long duration = System.currentTimeMillis() - startTime;
- logger.error("User creation test failed after {} ms: {}", duration, e.getMessage(), e);
- throw e;
- }
- }
-
- @Test
- void shouldLogTestData() {
- // Логирование тестовых данных для отладки
- User user = userService.createUser(new User("debug@example.com", "password"));
-
- logger.debug("Created test user: id={}, email={}", user.getId(), user.getEmail());
-
- // Логирование состояния БД
- List<User> allUsers = userService.findAllUsers();
- logger.debug("Total users in database: {}", allUsers.size());
-
- assertTrue(allUsers.size() > 0);
- }
+    @Test
+    void shouldSendMessage() {
+        kafkaTemplate.send("order-events", "test-message");
+        // ...
+    }
 }
 ```
 
-### 6. `Test Stability`
+`EmbeddedKafka` быстрее (не нужен Docker), но менее realistic. `Testcontainers Kafka` ближе к production. Подробнее -- в [вопросах по Kafka](../messaging/kafka-interview.md).
+
+## Q26. Как тестировать асинхронные операции?
+
+### `Awaitility` -- стандарт для ожидания асинхронных результатов
 
 ```java
 @SpringBootTest
-@ActiveProfiles("test")
-public class StableIntegrationTest {
+@Testcontainers
+class AsyncIntegrationTest {
 
- @Autowired
- private UserService userService;
+    @Autowired
+    private OrderService orderService;
 
- @Test
- @Timeout(30) // Максимум 30 секунд
- void shouldCreateUserWithinTimeout() {
- User user = new User("timeout@example.com", "password");
- User created = userService.createUser(user);
+    @Autowired
+    private NotificationRepository notificationRepository;
 
- assertNotNull(created.getId());
- }
+    @Test
+    void shouldSendNotificationAsync() {
+        // Act — создание заказа запускает асинхронную отправку
+        Order order = orderService.createOrder(userId, productId, 1);
 
- @Test
- @RepeatedTest(3) // Повторить тест 3 раза
- void shouldBeStableAcrossRuns() {
- User user = TestDataFactory.createRandomUser();
- User created = userService.createUser(user);
+        // Assert — ждём, пока async-обработчик создаст уведомление
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .pollInterval(Duration.ofMillis(500))
+            .untilAsserted(() -> {
+                List<Notification> notifications =
+                    notificationRepository.findByOrderId(order.getId());
+                assertEquals(1, notifications.size());
+                assertEquals("ORDER_CREATED",
+                    notifications.get(0).getType());
+            });
+    }
 
- assertNotNull(created.getId());
- assertNotNull(created.getCreatedAt());
- }
+    @Test
+    void shouldCompleteCompletableFuture() {
+        CompletableFuture<PaymentResult> future =
+            paymentService.processAsync(orderId, card);
 
- @Test
- void shouldHandleConcurrentOperations() throws InterruptedException {
- int numberOfThreads = 10;
- ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
- CountDownLatch latch = new CountDownLatch(numberOfThreads);
- AtomicInteger successCount = new AtomicInteger(0);
+        PaymentResult result = assertTimeout(
+            Duration.ofSeconds(5),
+            () -> future.get());
 
- for (int i = 0; i < numberOfThreads; i++) {
- executor.submit(() -> {
- try {
- User user = TestDataFactory.createRandomUser();
- userService.createUser(user);
- successCount.incrementAndGet();
- } catch (Exception e) {
- logger.error("Concurrent user creation failed", e);
- } finally {
- latch.countDown();
- }
- });
- }
-
- assertTrue(latch.await(30, TimeUnit.SECONDS));
- assertEquals(numberOfThreads, successCount.get());
-
- executor.shutdown();
- }
+        assertEquals(PaymentStatus.SUCCESS, result.getStatus());
+    }
 }
 ```
 
-## Q11. Как тестировать транзакции в integration tests?
+Правило: **никогда** не используйте `Thread.sleep()` в тестах. Используйте `Awaitility`, `CompletableFuture.get(timeout)` или `CountDownLatch`.
 
-`@Transactional` на тестовом классе — rollback после каждого теста (изоляция). Для проверки commit: `@Commit` или `@Rollback`(`false`). Тестирование транзакционных границ: проверка, что данные сохраняются при успехе и откатываются при исключении. Моки не подходят; нужна реальная БД (`TestContainers`, `H2`).
+## Q27. Как тестировать `message-driven` архитектуру?
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### Стратегия тестирования
 
-## Q12. Что такое `Consumer-Driven Contract Testing`?
+```mermaid
+graph LR
+    subgraph "Producer Test"
+        P[Producer] -- "отправляет" --> T1[Topic]
+        T1 -- "проверяем" --> ASSERT1[Assert: сообщение<br/>отправлено]
+    end
 
-Консьюмер определяет контракт (ожидания от `API` провайдера); провайдер тестирует соответствие контракту. `Pact` — инструмент: консьюмер генерирует pact-файл; провайдер верифицирует. Выявляет несовместимости до интеграции. Для микросервисов: каждый сервис публикует контракты; зависимые сервисы тестируют против контрактов.
+    subgraph "Consumer Test"
+        T2[Topic] -- "подаём" --> C[Consumer]
+        C -- "обрабатывает" --> DB[(DB)]
+        DB -- "проверяем" --> ASSERT2[Assert: данные<br/>сохранены]
+    end
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    subgraph "E2E Test"
+        P2[Producer] --> T3[Topic] --> C2[Consumer] --> DB2[(DB)]
+    end
+```
 
-## Q13. Как тестировать с `Kafka` (`TestContainers`)?
+1. **Тест продюсера**: отправляем сообщение, проверяем, что оно попало в топик
+2. **Тест консьюмера**: кладём сообщение в топик, проверяем обработку (данные в БД, вызов сервиса)
+3. **E2E**: полная цепочка через реальный брокер
+4. **Тест идемпотентности**: отправляем одно сообщение дважды, проверяем, что обработано один раз
+5. **Тест DLQ**: отправляем невалидное сообщение, проверяем, что попало в dead letter queue
 
-`TestContainers` для `Kafka`: `@Container KafkaContainer` kafka = new `KafkaContainer()`. Конфигурация `Spring`: `spring.kafka.bootstrap-servers` = kafka.getBootstrapServers(). Тест: отправка сообщения продюсером; проверка получения консьюмером (с timeout). `EmbeddedKafka` (`Spring Kafka Test`) — альтернатива для быстрых тестов без `Docker`.
+## Q28. Как организовать интеграционные тесты в `CI/CD`?
 
-В рабочей системе важно отдельно проговорить гарантии доставки, идемпотентность обработчиков и стратегию retry/DLQ. Сильный ответ обычно включает наблюдаемость потока событий: lag, throughput и долю ошибок обработки.
+### Разделение тестов по стадиям
 
-## Q14. Как тестировать асинхронные операции?
+```mermaid
+graph LR
+    subgraph "CI Pipeline"
+        UNIT["Unit Tests<br/>1-2 мин"] --> INT["Integration Tests<br/>5-10 мин"]
+        INT --> CT["Contract Tests<br/>2-3 мин"]
+        CT --> E2E["E2E Tests<br/>10-20 мин"]
+    end
 
-`Awaitility` — ожидание условия: await().atMost(5, SECONDS).until(() -> condition). Для `CompletableFuture`: `future.get`(timeout). Для событий (`Kafka`, `JMS`): подписка на топик, ожидание сообщения. Не использовать `Thread.sleep` без timeout; явные ожидания предпочтительнее.
+    UNIT -- "fail fast" --> STOP1[Stop]
+    INT -- "fail" --> STOP2[Stop]
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### Gradle конфигурация
 
-## Q15. Что такое `Test Fixtures` в интеграционных тестах?
+```groovy
+// build.gradle
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests'
+    group = 'verification'
 
-Подготовка окружения и данных: поднятие БД (`TestContainers`), seed data (`@Sql`, скрипты), конфигурация. `@BeforeAll` для дорогой инициализации (один раз на класс); `@BeforeEach` для изоляции. Очистка: `@AfterEach` (удаление данных) или транзакция с rollback. Переиспользование фикстур через базовые классы или extension.
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
 
-## Q16. Как тестировать `REST API` (`Rest Assured`)?
+    shouldRunAfter test
+}
 
-`Rest Assured` — `DSL` для тестирования `REST` API: `statusCode(200).body`("name", `equalTo`("`John`")). Проверка статуса, тела (`JSON` path), заголовков. Интеграция с JUnit; запуск против реального сервера (`TestContainers`) или `MockMvc`. Для контрактов — `Pact` или `Spring Cloud Contract`.
+check.dependsOn integrationTest
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### GitHub Actions
 
-## Q17. Что такое `Smoke Testing` в интеграции?
+```yaml
+name: Integration Tests
+on: [push, pull_request]
 
-Минимальный набор интеграционных тестов после деплоя: приложение запустилось, БД доступна, ключевые эндпоинты отвечают. Быстрые (секунды); запуск в `pipeline` после деплоя в окружение. При падении — rollback или алерт. Не заменяют полные интеграционные тесты; первый уровень проверки.
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+      - name: Run integration tests
+        run: ./gradlew integrationTest
+        # Testcontainers использует Docker, который
+        # доступен в GitHub Actions из коробки
+```
 
-## Q18. Как тестировать с внешними сервисами (моки vs реальные)?
+`Testcontainers` делает CI-настройку проще: не нужно поднимать `services` в pipeline -- контейнеры запускаются автоматически из кода тестов.
 
-Моки (`WireMock`, `MockServer`) — для изоляции и скорости; контроль ответов и задержек. Реальные сервисы (staging) — для проверки интеграции; медленнее, зависимость от доступности. Стратегия: `unit` и integration с моками; contract tests для контрактов; e2e с реальными сервисами на staging. Не тестировать против production `API` без согласования.
+## Q29. Как ускорить интеграционные тесты?
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### 1. Переиспользование `ApplicationContext`
 
-## Q19. Что такое `Database Testing Strategy`?
+Spring кеширует `ApplicationContext` между тестами с одинаковой конфигурацией. `@MockBean` **ломает** кеш -- минимизируйте его использование.
 
-Подходы: (1) `In-memory` БД (`H2`) — быстро, но отличия от production; (2) `TestContainers` с реальной БД (`PostgreSQL`, `MySQL`) — медленнее, но точнее; (3) `Shared` test БД — риск конфликтов. Рекомендация: `TestContainers` для интеграционных; `H2` для быстрых `unit`-подобных тестов. Миграции: `Flyway`/`Liquibase` в тестах для актуальной схемы.
+### 2. Singleton-контейнеры
 
-На практике этот выбор почти всегда подтверждают измерениями: планом выполнения запросов, профилем нагрузки и latency по p95/p99. В интервью полезно коротко обозначить, как именно вы проверяете гипотезу и какие метрики будут критерием успешности.
+```java
+// Один контейнер на все тесты (см. Q12)
+public abstract class AbstractIntegrationTest {
+    static final PostgreSQLContainer<?> POSTGRES;
+    static {
+        POSTGRES = new PostgreSQLContainer<>("postgres:16");
+        POSTGRES.start();
+    }
+}
+```
 
-## Q20. Как организовать `Parallel Test Execution`?
+### 3. Parallel execution
 
-`JUnit 5`: `junit.jupiter.execution.parallel.enabled=true`; стратегии (`same_thread`, concurrent). `Maven Surefire`: `forkCount`; Flaky tests чаще проявляются при параллельности.
+```properties
+# junit-platform.properties
+junit.jupiter.execution.parallel.enabled=true
+junit.jupiter.execution.parallel.mode.default=concurrent
+junit.jupiter.execution.parallel.mode.classes.default=concurrent
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### 4. Test slices вместо `@SpringBootTest`
 
-## Q21. Что такое `Integration Test Slicing`?
+Используйте `@WebMvcTest`, `@DataJpaTest` где возможно -- они поднимают меньше бинов.
 
-Запуск подмножества интеграционных тестов по изменённым областям (не все тесты на каждый коммит). Анализ: какие модули изменены → запуск связанных тестов. Инструменты: кастомные скрипты, `Test Impact Analysis`. Полные регрессионные — перед релизом или по расписанию. Баланс: скорость обратной связи vs полнота покрытия.
+### 5. Lazy initialization в тестовом профиле
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+```yaml
+# application-test.yml
+spring:
+  main:
+    lazy-initialization: true
+```
 
-## Q22. Как тестировать `Caching Logic`?
+### Метрики
 
-Проверка: (1) При первом вызове — запрос к источнику (БД, `API`); (2) При повторном — возврат из кэша (без запроса). Моки: проверить, что метод источника вызван один раз. Для `Redis`: `TestContainers`; проверка записи и чтения. Тестировать `eviction`, `TTL`, `cache` invalidation. Не тестировать саму библиотеку кэша; тестировать логику приложения.
+| Техника | Экономия |
+|---------|---------|
+| Singleton-контейнеры | 30-50% времени |
+| Кеш `ApplicationContext` | 40-60% |
+| Test slices | 50-70% для отдельных тестов |
+| Parallel execution | 30-50% (зависит от CPU) |
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+## Q30. Как организовать параллельное выполнение тестов?
 
-## Q23. Что такое `End-to-End Testing Strategy`?
+### JUnit 5 параллельность
 
-`E2E` тесты — полный путь пользователя (`UI` → `API` → БД). Малое количество (дорогие, медленные, хрупкие); покрывают критичные сценарии (регистрация, оплата). Автоматизация: `Selenium`, `Cypress`/`Page Objects`, стабильные локаторы.
+```properties
+# src/test/resources/junit-platform.properties
+junit.jupiter.execution.parallel.enabled=true
+junit.jupiter.execution.parallel.mode.default=same_thread
+junit.jupiter.execution.parallel.mode.classes.default=concurrent
+junit.jupiter.execution.parallel.config.strategy=fixed
+junit.jupiter.execution.parallel.config.fixed.parallelism=4
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### Изоляция данных при параллельности
 
-## Q24. Как организовать `Test Reporting` для интеграционных тестов?
+```java
+@SpringBootTest
+@Testcontainers
+class ParallelSafeTest {
 
-Отчёты: результаты (passed/failed), время выполнения, логи при падении. Инструменты: `Allure`, `ExtentReports`, `CI`-отчёты. Дашборды: тренды (flakiness, время); группировка по модулям. При падении: скриншоты (`UI`), логи приложения, `heap` dump при `OOM`. Видимость для команды; быстрая диагностика.
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16");
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    @Test
+    void shouldIsolateData() {
+        // Уникальные данные для каждого теста
+        String uniqueEmail = "user-" + UUID.randomUUID() + "@test.com";
+        User user = userRepository.save(new User(uniqueEmail));
 
-## Q25. Что такое `Service Virtualization`?
+        User found = userRepository.findByEmail(uniqueEmail).orElseThrow();
+        assertEquals(uniqueEmail, found.getEmail());
+    }
+}
+```
 
-Имитация внешних сервисов (`API`, БД, mainframe) для тестирования без реальных зависимостей. Инструменты: `WireMock`, `Hoverfly`, `Mountebank`. Используется когда реальный сервис недоступен, дорог или нестабилен. Виртуализация воспроизводит поведение (ответы, задержки, ошибки); не заменяет тестирование с реальным сервисом перед релизом.
+Главное правило: тесты при параллельном выполнении не должны зависеть от общего состояния. Каждый тест создаёт свои данные с уникальными идентификаторами.
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+## Q31. (!) Как бороться с flaky-тестами?
 
-## Q26. Как тестировать `Message-Driven Architecture`?
+**Flaky test** -- тест, который то проходит, то падает без изменений в коде. Основные причины и решения:
 
-Тестирование продюсеров: проверка публикации сообщений (`TestContainers Kafka`, `RabbitMQ`). Тестирование консьюмеров: подача сообщений и проверка обработки. Проверка идемпотентности, обработки ошибок, dead letter queue. `Contract` testing для схем сообщений. `End-to-end`: полная цепочка с реальными брокерами.
+| Причина | Решение |
+|---------|---------|
+| Зависимость от порядка выполнения | Изоляция данных, очистка в `@AfterEach` |
+| Таймауты (сеть, Docker) | Увеличить timeout, использовать `Awaitility` |
+| Зависимость от времени | Инжектить `Clock`, мокировать время |
+| Порт уже занят | `RANDOM_PORT`, динамические порты |
+| Shared state | Уникальные данные (UUID), отдельные схемы |
+| Race conditions | `Awaitility` вместо `Thread.sleep`, `@ResourceLock` |
 
-В рабочей системе важно отдельно проговорить гарантии доставки, идемпотентность обработчиков и стратегию retry/DLQ. Сильный ответ обычно включает наблюдаемость потока событий: lag, throughput и долю ошибок обработки.
+```java
+@SpringBootTest
+class StableTest {
 
-## Q27. Что такое `Test Data Generation Strategy`?
+    // Инжектируем Clock для контроля времени
+    @Autowired
+    private Clock clock;
 
-Подходы: (1) Статические фикстуры (`JSON`, `SQL`); (2) `Builders` и фабрики (`TestDataFactory`); (3) Генераторы (`Faker`, `EasyRandom`, `Instancio`); (4) Копирование production (анонимизация). Выбор: для детерминированных тестов — статика; для разнообразия — генераторы. `Seed` data в БД через `@Sql` или `Flyway`.
+    @MockBean
+    private Clock testClock;
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    @BeforeEach
+    void setUp() {
+        // Фиксированное время — тест детерминирован
+        when(testClock.instant())
+            .thenReturn(Instant.parse("2026-01-15T10:00:00Z"));
+        when(testClock.getZone())
+            .thenReturn(ZoneId.of("UTC"));
+    }
 
-## Q28. Как организовать `Test Execution Order`?
+    @Test
+    void shouldNotDependOnCurrentTime() {
+        Subscription sub = subscriptionService.create(userId);
 
-По умолчанию порядок не гарантирован (и не должен быть важен). `@TestMethodOrder` (`JUnit 5`): `OrderAnnotation` (явный порядок через `@Order`), `MethodName`, `Random`. Использовать редко; тесты должны быть независимы. Исключение: интеграционные сценарии с зависимостью (setup → action → verify).
+        // Всегда одинаковый результат
+        assertEquals(LocalDate.of(2026, 2, 15),
+            sub.getExpiresAt());
+    }
+}
+```
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+Мониторинг flaky-тестов: отслеживайте % прохождения каждого теста в CI. Если тест проходит < 99% запусков, он flaky и требует исправления.
 
-## Q29. Что такое `Test Coverage Strategy`?
+## Q32. Что такое `Test Fixtures` и как их организовать?
 
-Определение целевого покрытия по модулям: критичная логика — высокое покрытие (80–90%); утилиты — среднее; `UI` — низкое (e2e вместо `unit`). Метрики: строки, ветки, мутации. Не гнаться за 100%; фокус на качестве тестов. Мониторинг покрытия в `CI`; тренды. Код-ревью: новые фичи с тестами.
+**Test Fixtures** -- подготовка окружения и данных для тестов. Правильная организация фикстур критична для поддержки тестов.
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+### Паттерны
 
-## Q30. Best practices для `Integration Testing`?
+```java
+// 1. Builder — гибкое создание тестовых объектов
+public class TestUserBuilder {
+    private String email = "default@test.com";
+    private String name = "Test User";
+    private UserType type = UserType.REGULAR;
 
-(1) Изоляция тестов (отдельные данные, транзакции). (2) Использовать `TestContainers` для реальных зависимостей. (3) Быстрые (секунды на тест; минуты на набор). (4) Стабильные (явные ожидания, детерминированные данные). (5) Читаемые (`Given-When-Then`). (6) Не дублировать `unit`-покрытие. (7) Фокус на интеграцию компонентов. (8) Запуск в `CI`. (9) Мониторинг flakiness. (10) Поддержка и рефакторинг.
+    public TestUserBuilder withEmail(String email) {
+        this.email = email;
+        return this;
+    }
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    public TestUserBuilder premium() {
+        this.type = UserType.PREMIUM;
+        return this;
+    }
+
+    public User build() {
+        return new User(email, name, type);
+    }
+}
+
+// 2. Object Mother — фабрика типовых объектов
+public class TestData {
+    public static User premiumUser() {
+        return new TestUserBuilder()
+            .withEmail("premium@test.com")
+            .premium()
+            .build();
+    }
+
+    public static Order paidOrder(User user) {
+        return new Order(user, BigDecimal.valueOf(100),
+            OrderStatus.PAID);
+    }
+}
+
+// Использование
+@Test
+void shouldApplyPremiumDiscount() {
+    User user = TestData.premiumUser();
+    Order order = orderService.create(user.getId(), productId);
+    assertEquals(BigDecimal.valueOf(85), order.getTotal());
+}
+```
+
+### Организация
+
+- `@BeforeAll` -- дорогая инициализация (один раз на класс): запуск контейнеров
+- `@BeforeEach` -- данные для изоляции: seed, очистка
+- Базовые классы (`AbstractIntegrationTest`) -- общие контейнеры и конфигурация
+- `@Sql` -- декларативная загрузка SQL-данных
+
+## Q33. Как тестировать кеширование?
+
+```java
+@SpringBootTest
+@Testcontainers
+class CacheIntegrationTest {
+
+    @Container
+    @ServiceConnection
+    static GenericContainer<?> redis =
+        new GenericContainer<>("redis:7-alpine")
+            .withExposedPorts(6379);
+
+    @Autowired
+    private ProductService productService;
+
+    @SpyBean
+    private ProductRepository productRepository;
+
+    @Test
+    void shouldCacheProductLookup() {
+        Long productId = 1L;
+
+        // Первый вызов — идёт в БД
+        Product first = productService.findById(productId);
+        verify(productRepository, times(1)).findById(productId);
+
+        // Второй вызов — из кеша, БД не вызывается
+        Product second = productService.findById(productId);
+        verify(productRepository, times(1)).findById(productId); // всё ещё 1
+
+        assertEquals(first.getName(), second.getName());
+    }
+
+    @Test
+    void shouldEvictCacheOnUpdate() {
+        Long productId = 1L;
+
+        // Загружаем в кеш
+        productService.findById(productId);
+
+        // Обновление инвалидирует кеш
+        productService.updatePrice(productId, BigDecimal.valueOf(200));
+
+        // Следующий вызов снова идёт в БД
+        productService.findById(productId);
+        verify(productRepository, times(2)).findById(productId);
+    }
+}
+```
+
+Тестируйте: (1) попадание в кеш; (2) промах; (3) `eviction` при обновлении; (4) `TTL` (через мок `Clock`). Не тестируйте саму библиотеку кеширования -- тестируйте логику приложения.
+
+## Q34. Что такое `Smoke Testing` после деплоя?
+
+**Smoke test** -- минимальный набор проверок после деплоя: приложение запустилось, БД доступна, ключевые эндпоинты отвечают.
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Tag("smoke")
+class SmokeTest {
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void applicationStarts() {
+        // Если контекст поднялся — приложение работает
+    }
+
+    @Test
+    void healthEndpointIsUp() {
+        ResponseEntity<String> response = restTemplate
+            .getForEntity("/actuator/health", String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().contains("\"status\":\"UP\""));
+    }
+
+    @Test
+    void mainPageResponds() {
+        ResponseEntity<String> response = restTemplate
+            .getForEntity("/", String.class);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+}
+```
+
+Smoke-тесты: быстрые (секунды), запускаются в pipeline после каждого деплоя. При падении -- rollback или алерт. Не заменяют полные интеграционные тесты. Подробнее о стратегиях деплоя -- в [вопросах по стратегиям деплоя](../cicd/deployment-strategies-interview.md).
+
+## Q35. (!) Какие best practices для интеграционного тестирования?
+
+### 1. Используйте `Testcontainers` вместо `H2`
+
+Реальная БД ловит реальные баги. `H2` отличается от `PostgreSQL` в поведении SQL, `JSONB`, оконных функций.
+
+### 2. Не ставьте `@Transactional` на интеграционные тесты
+
+Скрывает `LazyInitializationException` и не тестирует транзакционные границы (см. Q17).
+
+### 3. Изолируйте тесты
+
+Каждый тест должен работать независимо. Очищайте данные в `@AfterEach` или используйте уникальные данные.
+
+### 4. Минимизируйте `@MockBean`
+
+Каждый уникальный набор `@MockBean` создаёт новый `ApplicationContext` и замедляет тесты.
+
+### 5. Используйте test slices
+
+`@WebMvcTest`, `@DataJpaTest` быстрее `@SpringBootTest`. Используйте полный контекст только когда нужен.
+
+### 6. Организуйте тесты по уровням
+
+```
+src/test/java/          — unit-тесты
+src/integrationTest/    — интеграционные тесты
+```
+
+### 7. Не дублируйте unit-покрытие
+
+Интеграционные тесты проверяют **взаимодействие**, а не бизнес-логику. Логику тестируйте unit-тестами.
+
+### 8. Мониторьте flaky-тесты
+
+Нестабильные тесты подрывают доверие к CI. Чините или удаляйте.
+
+### 9. Быстрая обратная связь
+
+Разделяйте тесты по скорости: fast (unit) запускаются на каждый коммит, slow (integration) -- на PR.
+
+### 10. Читаемость: `Given-When-Then`
+
+```java
+@Test
+void shouldRejectOrderForBlockedUser() {
+    // Given
+    User blockedUser = userRepository.save(
+        TestData.blockedUser());
+
+    // When / Then
+    assertThrows(UserBlockedException.class, () ->
+        orderService.createOrder(blockedUser.getId(), productId));
+}
+```
+
+Подробнее о стратегиях тестирования -- в [вопросах по стратегиям тестирования](test-strategies-interview.md).
+
+## Q36. (!) Как использовать `@DataJpaTest` для тестирования репозиториев?
+
+`@DataJpaTest` — это test slice, который поднимает только слой JPA: `EntityManager`, репозитории и Flyway/Liquibase миграции. Остальные компоненты Spring Boot не загружаются.
+
+```java
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // отключаем H2, используем реальную БД
+@Testcontainers
+class UserRepositoryTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TestEntityManager entityManager;  // обёртка над EntityManager для тестов
+
+    @Test
+    void shouldFindUserByEmail() {
+        // Given
+        User user = new User("alice@example.com", "Alice");
+        entityManager.persistAndFlush(user);   // сохраняем и сбрасываем кеш
+        entityManager.clear();                 // очищаем first-level cache
+
+        // When
+        Optional<User> found = userRepository.findByEmail("alice@example.com");
+
+        // Then
+        assertThat(found).isPresent()
+            .get()
+            .extracting(User::getName)
+            .isEqualTo("Alice");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenUserNotFound() {
+        Optional<User> found = userRepository.findByEmail("nonexistent@example.com");
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void shouldFindAllActiveUsers() {
+        // Given
+        entityManager.persist(new User("alice@example.com", "Alice", true));
+        entityManager.persist(new User("bob@example.com", "Bob", false));
+        entityManager.flush();
+
+        // When
+        List<User> activeUsers = userRepository.findAllByActiveTrue();
+
+        // Then
+        assertThat(activeUsers).hasSize(1)
+            .extracting(User::getEmail)
+            .containsExactly("alice@example.com");
+    }
+}
+```
+
+### Отличие `@DataJpaTest` от других слайсов
+
+| Слайс | Загружает | Не загружает |
+|-------|-----------|-------------|
+| `@DataJpaTest` | JPA, репозитории, EntityManager, Flyway | Контроллеры, сервисы, `@Service` бины |
+| `@WebMvcTest` | MVC контроллеры, `@ControllerAdvice`, Security | Сервисы, репозитории, БД |
+| `@JsonTest` | Jackson ObjectMapper, `@JsonComponent` | Контроллеры, сервисы, репозитории |
+| `@SpringBootTest` | Весь контекст | — |
+
+По умолчанию `@DataJpaTest` использует H2 in-memory БД. Чтобы использовать реальную БД через Testcontainers, добавьте `@AutoConfigureTestDatabase(replace = NONE)`.
+
+## Q37. Как тестировать JSON-сериализацию с `@JsonTest`?
+
+`@JsonTest` загружает только конфигурацию Jackson (или Gson/JSONB) — без MVC-слоя и БД. Это быстрый способ проверить `@JsonComponent`, кастомные сериализаторы и формат DTO.
+
+```java
+@JsonTest
+class OrderDtoJsonTest {
+
+    @Autowired
+    private JacksonTester<OrderDto> json;
+
+    @Test
+    void shouldSerializeOrderDto() throws Exception {
+        OrderDto order = new OrderDto(
+            1L,
+            "Alice",
+            BigDecimal.valueOf(99.99),
+            OrderStatus.PENDING,
+            LocalDateTime.of(2026, 4, 13, 12, 0)
+        );
+
+        // Сериализация в JSON
+        JsonContent<OrderDto> result = json.write(order);
+
+        assertThat(result).hasJsonPathNumberValue("$.id", 1L);
+        assertThat(result).hasJsonPathStringValue("$.customerName", "Alice");
+        assertThat(result).hasJsonPathNumberValue("$.amount", 99.99);
+        assertThat(result).hasJsonPathStringValue("$.status", "PENDING");
+        // Проверяем формат даты
+        assertThat(result).hasJsonPathStringValue("$.createdAt", "2026-04-13T12:00:00");
+        // Убеждаемся, что поле отсутствует (игнорируется)
+        assertThat(result).doesNotHaveJsonPathValue("$.internalField");
+    }
+
+    @Test
+    void shouldDeserializeOrderDto() throws Exception {
+        String json = """
+            {
+              "id": 1,
+              "customerName": "Alice",
+              "amount": 99.99,
+              "status": "PENDING"
+            }
+            """;
+
+        // Десериализация из JSON
+        ObjectContent<OrderDto> result = this.json.parse(json);
+
+        assertThat(result).usingRecursiveComparison()
+            .ignoringFields("createdAt")
+            .isEqualTo(new OrderDto(1L, "Alice", BigDecimal.valueOf(99.99), OrderStatus.PENDING, null));
+    }
+
+    @Test
+    void shouldHandleNullFields() throws Exception {
+        OrderDto order = new OrderDto(1L, null, null, OrderStatus.PENDING, null);
+        JsonContent<OrderDto> result = json.write(order);
+
+        // По умолчанию null-поля включаются
+        assertThat(result).hasJsonPathValue("$.customerName");
+        // или исключаются при @JsonInclude(NON_NULL)
+    }
+}
+```
+
+## Q38. (!) Как использовать `RestAssured` для интеграционных API-тестов?
+
+`REST Assured` — библиотека для тестирования REST API с удобным DSL в стиле `given-when-then`. В отличие от `MockMvc`, тестирует реальный HTTP-стек.
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+class OrderApiRestAssuredTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @BeforeEach
+    void setUp() {
+        RestAssured.port = port;
+        RestAssured.basePath = "/api/v1";
+    }
+
+    @Test
+    void shouldCreateOrder() {
+        String requestBody = """
+            {
+              "customerId": 1,
+              "items": [{"productId": 42, "quantity": 2}]
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+        .when()
+            .post("/orders")
+        .then()
+            .statusCode(201)
+            .header("Location", containsString("/api/v1/orders/"))
+            .body("status", equalTo("PENDING"))
+            .body("customerId", equalTo(1))
+            .body("id", notNullValue());
+    }
+
+    @Test
+    void shouldReturn404ForUnknownOrder() {
+        given()
+            .pathParam("id", 99999)
+        .when()
+            .get("/orders/{id}")
+        .then()
+            .statusCode(404)
+            .body("error", equalTo("Order not found"))
+            .body("timestamp", notNullValue());
+    }
+
+    @Test
+    void shouldReturnOrdersList() {
+        given()
+            .queryParam("status", "PENDING")
+            .queryParam("page", 0)
+            .queryParam("size", 10)
+        .when()
+            .get("/orders")
+        .then()
+            .statusCode(200)
+            .body("content", hasSize(greaterThanOrEqualTo(0)))
+            .body("page.size", equalTo(10));
+    }
+}
+```
+
+### `RestAssured` vs `MockMvc`
+
+| Критерий | `RestAssured` | `MockMvc` |
+|----------|---------------|-----------|
+| Реальный HTTP | Да (`RANDOM_PORT`) | Нет (in-process) |
+| Скорость | Медленнее | Быстрее |
+| Настройка | Проще для API-тестов | Требует `MockMvcRequestBuilders` |
+| Middleware | Тестирует реальные фильтры/сервлеты | Мокирует HTTP-слой |
+| Подходит для | E2E API-тестов | Слайс-тестов контроллеров |
+
+## Q39. Как тестировать `Spring Security` в интеграционных тестах?
+
+```java
+@WebMvcTest(OrderController.class)
+class OrderControllerSecurityTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private OrderService orderService;
+
+    @Test
+    void shouldReturn401WhenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/api/v1/orders"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "alice", roles = {"USER"})
+    void shouldReturn200ForAuthenticatedUser() throws Exception {
+        when(orderService.findAll()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/orders"))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "alice", roles = {"USER"})
+    void shouldReturn403WhenUserLacksAdminRole() throws Exception {
+        mockMvc.perform(delete("/api/v1/orders/1"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void shouldAllowAdminToDeleteOrder() throws Exception {
+        mockMvc.perform(delete("/api/v1/orders/1"))
+            .andExpect(status().isNoContent());
+        verify(orderService).delete(1L);
+    }
+}
+
+// Кастомный SecurityContext для JWT-аутентификации
+@Retention(RetentionPolicy.RUNTIME)
+@WithSecurityContext(factory = WithMockJwtTokenFactory.class)
+public @interface WithMockJwtToken {
+    String subject() default "user";
+    String[] scopes() default {"read"};
+}
+
+class WithMockJwtTokenFactory implements WithSecurityContextFactory<WithMockJwtToken> {
+    @Override
+    public SecurityContext createSecurityContext(WithMockJwtToken annotation) {
+        Jwt jwt = Jwt.withTokenValue("mock-token")
+            .header("alg", "none")
+            .claim("sub", annotation.subject())
+            .claim("scope", String.join(" ", annotation.scopes()))
+            .build();
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt);
+        SecurityContext ctx = SecurityContextHolder.createEmptyContext();
+        ctx.setAuthentication(auth);
+        return ctx;
+    }
+}
+
+// Использование кастомной аннотации
+@Test
+@WithMockJwtToken(subject = "user-123", scopes = {"orders:read"})
+void shouldAllowJwtUserToReadOrders() throws Exception {
+    mockMvc.perform(get("/api/v1/orders"))
+        .andExpect(status().isOk());
+}
+```
+
+## Q40. Как использовать `@RestClientTest` для тестирования HTTP-клиентов?
+
+`@RestClientTest` — test slice для тестирования компонентов, использующих `RestTemplate` или `RestClient`. Загружает только конфигурацию HTTP-клиентов и `MockRestServiceServer`.
+
+```java
+// Тестируемый HTTP-клиент
+@Component
+public class PaymentGatewayClient {
+
+    private final RestTemplate restTemplate;
+    private final String baseUrl;
+
+    public PaymentGatewayClient(RestTemplateBuilder builder,
+                                 @Value("${payment.gateway.url}") String baseUrl) {
+        this.restTemplate = builder.build();
+        this.baseUrl = baseUrl;
+    }
+
+    public PaymentResult charge(ChargeRequest request) {
+        return restTemplate.postForObject(
+            baseUrl + "/charge", request, PaymentResult.class);
+    }
+}
+
+// Тест с @RestClientTest
+@RestClientTest(PaymentGatewayClient.class)
+class PaymentGatewayClientTest {
+
+    @Autowired
+    private PaymentGatewayClient client;
+
+    @Autowired
+    private MockRestServiceServer mockServer;  // автоматически создаётся
+
+    @Value("${payment.gateway.url}")
+    private String gatewayUrl;
+
+    @Test
+    void shouldChargeSuccessfully() throws Exception {
+        mockServer.expect(requestTo(gatewayUrl + "/charge"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andRespond(withSuccess("""
+                {"transactionId": "txn-123", "status": "SUCCESS"}
+                """, MediaType.APPLICATION_JSON));
+
+        PaymentResult result = client.charge(new ChargeRequest("card-456", 99.99));
+
+        assertThat(result.getTransactionId()).isEqualTo("txn-123");
+        assertThat(result.getStatus()).isEqualTo("SUCCESS");
+        mockServer.verify();  // убеждаемся, что все ожидания выполнены
+    }
+
+    @Test
+    void shouldHandlePaymentGatewayError() {
+        mockServer.expect(requestTo(gatewayUrl + "/charge"))
+            .andRespond(withServerError());
+
+        assertThatThrownBy(() -> client.charge(new ChargeRequest("card-456", 99.99)))
+            .isInstanceOf(RestClientException.class);
+    }
+}
+```
+
+`@RestClientTest` — аналог `@WebMvcTest` для исходящих HTTP-вызовов. Он изолирует клиент от реальных внешних сервисов и позволяет проверить маппинг запросов/ответов без поднятия полного контекста.
+
+---
+
+## See also
+
+- [Unit Testing](unit-testing-interview.md) — изолированные тесты без внешних зависимостей
+- [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов, выбор уровня
+- [Test Automation](test-automation-interview.md) — автоматизация и запуск в pipeline
+- [Testcontainers](testcontainers-interview.md) — подробная шпаргалка по Docker-контейнерам для тестов
+- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — тестирование слоя репозиториев с `@DataJpaTest`
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, профили, auto-configuration
+- [Docker](../devops/docker-interview.md) — контейнеризация, на которой построен Testcontainers
+- [Kafka](../messaging/kafka-interview.md) — тестирование event-driven архитектуры

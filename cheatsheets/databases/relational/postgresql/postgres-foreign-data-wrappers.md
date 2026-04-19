@@ -1,7 +1,13 @@
 ---
 title: "PostgreSQL: Foreign Data Wrappers"
 description: "Полное руководство по Foreign Data Wrappers в PostgreSQL: подключение внешних БД, postgres_fdw, file_fdw, создание собственных FDW"
-tags: ["postgresql", "fdw", "foreign-data-wrapper", "postgres_fdw", "file_fdw", "external-data"]
+tags:
+  - postgresql
+  - fdw
+  - foreign-data-wrapper
+  - postgres_fdw
+  - file_fdw
+  - external-data
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
 next: ["databases/postgres-extensions.md", "databases/postgres-replication.md"]
@@ -1183,7 +1189,5 @@ $$ `LANGUAGE` plpgsql;
 - [file_fdw Documentation](https://www.postgresql.org/docs/current/file-fdw.html)
 
 ---
-
-Дата последнего обновления: 2026-02-03
 
 

@@ -1,7 +1,13 @@
 ---
 title: "Scala Reactive Programming"
 description: "Полное руководство по реактивному программированию в Scala: RxScala, Akka Streams, реактивные потоки, backpressure, обработка событий"
-tags: ["scala", "reactive", "rxscala", "akka-streams", "reactive-streams", "backpressure"]
+tags:
+  - scala
+  - reactive
+  - rxscala
+  - akka-streams
+  - reactive-streams
+  - backpressure
 difficulty: "advanced"
 prerequisites: ["scala/scala-concurrency.md", "scala/scala-akka.md"]
 next: ["scala-akka-streams.md", "scala-reactive-rxscala.md"]
@@ -12,8 +18,6 @@ related: ["scala/scala-concurrency.md", "scala/scala-akka.md", "scala/scala-fp-a
 # **Scala Reactive Programming**
 
 Кратко: полное руководство по реактивному программированию в **Scala**: **RxScala**, **Akka Streams**, реактивные потоки, **backpressure**, обработка событий в реальном времени.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

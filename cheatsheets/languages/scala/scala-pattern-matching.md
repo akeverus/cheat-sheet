@@ -1,7 +1,11 @@
 ---
 title: "Scala Pattern Matching"
 description: "Полное руководство по Pattern Matching в Scala: базовые паттерны, продвинутые техники, извлечение данных"
-tags: ["scala", "pattern-matching", "functional-programming", "case-classes"]
+tags:
+  - scala
+  - pattern-matching
+  - functional-programming
+  - case-classes
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 # **Scala Pattern Matching**
 
 Кратко: полное руководство по **Pattern Matching** в **Scala**: базовые паттерны, продвинутые техники, извлечение данных.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

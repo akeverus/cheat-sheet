@@ -1,7 +1,15 @@
 ---
 title: "Micronaut: Data Access - JDBC, JPA и Repositories"
 description: "Полное руководство по работе с базами данных в Micronaut: JDBC, JPA, Micronaut Data, транзакции и миграции"
-tags: ["micronaut", "database", "jdbc", "jpa", "data", "repositories", "java", "kotlin"]
+tags:
+  - micronaut
+  - database
+  - jdbc
+  - jpa
+  - data
+  - repositories
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-security.md", "micronaut-reactive.md"]

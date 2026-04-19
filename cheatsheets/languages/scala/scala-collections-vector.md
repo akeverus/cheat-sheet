@@ -1,7 +1,12 @@
 ---
 title: "Scala Collections - Vector"
 description: "Полное руководство по Vector в Scala: эффективная структура данных для произвольного доступа, операции, производительность"
-tags: ["scala", "collections", "vector", "functional-programming", "performance"]
+tags:
+  - scala
+  - collections
+  - vector
+  - functional-programming
+  - performance
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 # **Scala Collections** - **Vector**
 
 Кратко: полное руководство по **Vector** в **Scala**: эффективная структура данных для произвольного доступа, операции, производительность.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

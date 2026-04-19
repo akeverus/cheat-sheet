@@ -1,7 +1,15 @@
 ---
 title: "Micronaut: Cloud Native - Service Discovery, Configuration и Distributed Tracing"
 description: "Полное руководство по cloud-native возможностям Micronaut: service discovery, distributed configuration, circuit breaker, tracing"
-tags: ["micronaut", "cloud", "kubernetes", "service-discovery", "circuit-breaker", "tracing", "java", "kotlin"]
+tags:
+  - micronaut
+  - cloud
+  - kubernetes
+  - service-discovery
+  - circuit-breaker
+  - tracing
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-graalvm.md"]

@@ -1,15 +1,16 @@
 ---
 title: "Решение лабиринта (Maze Solver)"
 description: "Поиск пути от входа до выхода в лабиринте (сетка с стенами): DFS — любой путь, экономия памяти; BFS — кратчайший путь при единичном шаге. Представление лабиринта, классы Maze и Coordinate, Java и Kotlin."
-tags: ["algorithms", "problems", "maze-solver"]
+tags:
+  - algorithms
+  - problems
+  - maze-solver
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Решение лабиринта (`Maze Solver`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Поиск пути от входа до выхода в лабиринте (сетка с стенами): DFS — любой путь, экономия памяти; BFS — кратчайший путь при единичном шаге. Представление лабиринта, классы Maze и Coordinate, Java и Kotlin.
 

@@ -1,7 +1,10 @@
 ---
 title: "Абстрактная фабрика (Abstract Factory)"
 description: "Abstract Factory предоставляет интерфейс для создания семейств связанных или зависимых объектов без указания их конкретных классов."
-tags: ["patterns", "creational", "abstract-factory"]
+tags:
+  - patterns
+  - creational
+  - abstract-factory
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Абстрактная фабрика (`Abstract Factory`)
 
 **Abstract Factory** предоставляет интерфейс для создания семейств связанных или зависимых объектов без указания их конкретных классов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

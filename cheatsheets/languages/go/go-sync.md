@@ -1,15 +1,19 @@
 ---
 title: "Go: синхронизация"
 description: "Полное руководство по синхронизации в Go: Mutex, RWMutex, WaitGroup, Once, Cond, Atomic операции"
-tags: ["go", "golang", "sync", "mutex", "synchronization", "concurrency"]
+tags:
+  - go
+  - golang
+  - sync
+  - mutex
+  - synchronization
+  - concurrency
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
 updated: "2026-02-06"
 ---
 
 # Go: синхронизация
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

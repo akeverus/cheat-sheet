@@ -1,15 +1,16 @@
 ---
 title: "OptaPlanner"
 description: "Фреймворк для задач планирования и удовлетворения ограничений: класс решения (@PlanningSolution), сущности планирования (@PlanningEntity), калькулятор оценки (HardSoftScore), решатель с таймаутом. Пример: расписание лекций по комнатам и периодам. Java и Kotlin."
-tags: ["algorithms", "problems", "optaplanner"]
+tags:
+  - algorithms
+  - problems
+  - optaplanner
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # OptaPlanner
-
-**Дата последнего обновления:** 2026-02-06
 
 Фреймворк для задач планирования и удовлетворения ограничений: класс решения (`@PlanningSolution`), сущности планирования (`@PlanningEntity`), калькулятор оценки (HardSoftScore), решатель с таймаутом. Пример: расписание лекций по комнатам и периодам. Java и Kotlin.
 

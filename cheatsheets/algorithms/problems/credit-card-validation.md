@@ -1,15 +1,16 @@
 ---
 title: "Валидация банковских карт (Credit Card Validation)"
 description: "Определение типа карты по префиксу (регулярные выражения) и проверка номера алгоритмом Луна (Luhn) в Java."
-tags: ["algorithms", "problems", "credit-card-validation"]
+tags:
+  - algorithms
+  - problems
+  - credit-card-validation
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Валидация банковских карт (`Credit Card Validation`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Определение типа карты по префиксу (регулярные выражения) и проверка номера алгоритмом Луна (Luhn) в Java.
 

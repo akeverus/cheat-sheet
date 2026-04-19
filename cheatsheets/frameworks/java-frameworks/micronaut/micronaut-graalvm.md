@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: GraalVM Native Images - Compilation и Optimization"
 description: "Полное руководство по созданию native images с GraalVM в Micronaut: настройка, компиляция, оптимизация и best practices"
-tags: ["micronaut", "graalvm", "native-image", "compilation", "optimization", "java", "kotlin"]
+tags:
+  - micronaut
+  - graalvm
+  - native-image
+  - compilation
+  - optimization
+  - java
+  - kotlin
 difficulty: "advanced"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: []

@@ -1,7 +1,10 @@
 ---
 title: "Google Guava: Утилиты для Java"
 description: "Комплексное руководство по использованию Google Guava — мощной библиотеки утилит для Java, которая расширяет стандартную библиотеку и упрощает разработку."
-tags: ["libraries", "utility-libraries", "java-guava"]
+tags:
+  - libraries
+  - utility-libraries
+  - java-guava
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Google Guava: Утилиты для **Java**
 
 **Комплексное руководство по использованию `Google Guava` — мощной библиотеки утилит для `Java`, которая расширяет стандартную библиотеку и упрощает разработку.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

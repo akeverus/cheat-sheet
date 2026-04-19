@@ -1,7 +1,13 @@
 ---
 title: "Docker: Полное руководство по контейнеризации"
 description: "Комплексное руководство по Docker: установка, образы, контейнеры, сети, volumes, Compose, оптимизация, безопасность и best practices"
-tags: ["docker", "containers", "containerization", "devops", "infrastructure", "virtualization"]
+tags:
+  - docker
+  - containers
+  - containerization
+  - devops
+  - infrastructure
+  - virtualization
 difficulty: "intermediate"
 prerequisites: ["devops/os.md"]
 next: ["devops/docker-containers.md", "devops/docker-spring-boot.md", "infrastructure/kubernetes-basics.md"]
@@ -10,8 +16,6 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 ---
 
 # **Docker**: Полное руководство по контейнеризации
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

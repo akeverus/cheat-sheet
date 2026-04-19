@@ -1,7 +1,12 @@
 ---
 title: "Scala Type System"
 description: "Полное руководство по системе типов Scala: типы, generics, variance, bounds, type inference, path-dependent types"
-tags: ["scala", "type-system", "generics", "variance", "type-inference"]
+tags:
+  - scala
+  - type-system
+  - generics
+  - variance
+  - type-inference
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 # **Scala Type System**
 
 Кратко: полное руководство по системе типов **Scala**: типы, **generics**, **variance**, **bounds**, **type inference**, **path-dependent types**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

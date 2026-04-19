@@ -1,7 +1,13 @@
 ---
 title: "Redis: Геопространственные данные"
 description: "Полное руководство по работе с геопространственными данными в Redis: GEOADD, GEODIST, GEORADIUS, GEOSEARCH, use cases"
-tags: ["redis", "geospatial", "geo", "coordinates", "location", "mapping"]
+tags:
+  - redis
+  - geospatial
+  - geo
+  - coordinates
+  - location
+  - mapping
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 next: []
@@ -634,7 +640,5 @@ public class DeliveryOptimizer {
 - [Redis Geospatial](https://redis.io/docs/data-types/geospatial/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

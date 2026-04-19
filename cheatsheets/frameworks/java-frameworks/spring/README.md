@@ -1,7 +1,11 @@
 ---
 title: "Spring Frameworks"
 description: "Индекс материалов по Spring: Core, Boot, MVC, Security, Data JPA, Cloud и смежные темы."
-tags: ["meta", "index", "frameworks", "spring"]
+tags:
+  - meta
+  - index
+  - frameworks
+  - spring
 type: "index"
 updated: "2026-02-11"
 ---

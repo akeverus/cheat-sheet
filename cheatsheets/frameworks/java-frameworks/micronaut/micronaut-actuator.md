@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Actuator - Health Checks, Metrics и Endpoints"
 description: "Полное руководство по Micronaut Actuator: health checks, metrics, endpoints, monitoring и best practices"
-tags: ["micronaut", "actuator", "health", "metrics", "monitoring", "java", "kotlin"]
+tags:
+  - micronaut
+  - actuator
+  - health
+  - metrics
+  - monitoring
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-cloud.md", "micronaut-testing.md"]

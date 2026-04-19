@@ -1,7 +1,13 @@
 ---
 title: "Spring Vault: Полное руководство по управлению секретами"
 description: "Комплексное руководство по Spring Vault: интеграция с HashiCorp Vault, secrets management, authentication, encryption и best practices"
-tags: ["spring", "vault", "secrets", "security", "hashiCorp", "java"]
+tags:
+  - spring
+  - vault
+  - secrets
+  - security
+  - hashiCorp
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-security.md"]
 next: ["spring/spring-security.md"]

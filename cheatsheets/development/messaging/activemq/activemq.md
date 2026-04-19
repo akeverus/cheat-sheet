@@ -1,7 +1,10 @@
 ---
 title: "Apache ActiveMQ"
 description: "Apache ActiveMQ — это популярный open-source message broker, реализующий JMS (Java Message Service) спецификацию и поддерживающий множество протоколов обмена сообщениями. ActiveMQ предоставляет надежную, масштабируемую и высокопроизводительную платформу для асинхронной коммуникац"
-tags: ["development", "messaging", "activemq"]
+tags:
+  - development
+  - messaging
+  - activemq
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Apache ActiveMQ**
 
 **Apache ActiveMQ** — это популярный **open-source message broker**, реализующий **JMS** (`Java Message Service`) спецификацию и поддерживающий множество протоколов обмена сообщениями. **ActiveMQ** предоставляет надежную, масштабируемую и высокопроизводительную платформу для асинхронной коммуникации между приложениями.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Apache ActiveMQ Documentation](https://activemq.apache.org/components/classic/documentation)

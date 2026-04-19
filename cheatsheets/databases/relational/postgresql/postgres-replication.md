@@ -1,7 +1,13 @@
 ---
 title: "PostgreSQL: Репликация"
 description: "Полное руководство по настройке и управлению репликацией в PostgreSQL: Streaming Replication, Logical Replication, Master-Slave, Master-Master, мониторинг и failover"
-tags: ["postgresql", "replication", "high-availability", "streaming-replication", "logical-replication", "failover"]
+tags:
+  - postgresql
+  - replication
+  - high-availability
+  - streaming-replication
+  - logical-replication
+  - failover
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
 next: ["postgres-high-availability.md", "postgres-backup-restore.md"]
@@ -1357,7 +1363,5 @@ SELECT * FROM logical_replication_status;
 - [`pg_auto_failover Documentation`](https://www.postgresql.org/docs/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

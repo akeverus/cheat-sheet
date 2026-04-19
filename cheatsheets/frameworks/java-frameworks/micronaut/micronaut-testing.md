@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Testing - Unit Tests, Integration Tests и Mocking"
 description: "Полное руководство по тестированию в Micronaut: unit tests, integration tests, mocking, test containers и best practices"
-tags: ["micronaut", "testing", "junit", "mockito", "integration-tests", "java", "kotlin"]
+tags:
+  - micronaut
+  - testing
+  - junit
+  - mockito
+  - integration-tests
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-cloud.md", "micronaut-graalvm.md"]

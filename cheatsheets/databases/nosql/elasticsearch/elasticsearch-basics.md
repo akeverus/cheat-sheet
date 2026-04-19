@@ -1,7 +1,10 @@
 ---
 title: "Elasticsearch: Основы - Полное руководство по распределенному поисковому движку"
 description: "Комплексное руководство по Elasticsearch: архитектура, установка, основные понятия, mapping, анализ текста и работа с данными в Java/Spring приложениях."
-tags: ["databases", "nosql", "elasticsearch-basics"]
+tags:
+  - databases
+  - nosql
+  - elasticsearch-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Elasticsearch**: Основы - Полное руководство по распределенному поисковому движку
 
 Комплексное руководство по **Elasticsearch**: архитектура, установка, основные понятия, **mapping**, анализ текста и работа с данными в **Java**/**Spring** приложениях.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

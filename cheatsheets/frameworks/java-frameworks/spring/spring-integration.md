@@ -1,7 +1,10 @@
 ---
 title: "Spring Integration"
 description: "Кратко: обзор Spring Integration — фреймворка для построения интеграционных решений на основе паттернов Enterprise Integration Patterns (EIP). Каналы, адаптеры, шлюзы, обработка сообщений."
-tags: ["frameworks", "java-frameworks", "spring-integration"]
+tags:
+  - frameworks
+  - java-frameworks
+  - spring-integration
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring Integration
 
 Кратко: обзор **Spring Integration** — фреймворка для построения интеграционных решений на основе паттернов **Enterprise Integration Patterns** (**EIP**). Каналы, адаптеры, шлюзы, обработка сообщений.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

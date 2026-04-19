@@ -1,7 +1,10 @@
 ---
 title: "Gatling"
 description: "Кратко: Gatling — инструмент нагрузочного тестирования на Scala (DSL) и Java. Simulation, Scenario, HTTP, inject (atOnceUsers, rampUsers и др.), HTML-отчёты, интеграция с Grafana/InfluxDB, CI/CD."
-tags: ["testing", "performance-testing", "gatling"]
+tags:
+  - testing
+  - performance-testing
+  - gatling
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -394,4 +397,4 @@ Gatling — сценарии в коде, меньше ресурсов на п�
 
 ## Заключение
 
-**Gatling** — мощный инструмент нагрузочного тестирования с описанием сценариев в коде (Scala/Java). Низкие накладные расходы и удобные HTML-отчёты делают его удобным выбором для HTTP/API и CI/CD. Используйте **baseUrl**, **check** и **feed** для параметризации; задавайте реалистичный **inject** (ramp-up, think time). Дальше: [Gatling Documentation](https://gatling.io/docs/gatling/), [JMeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
+**Gatling** — инструмент нагрузочного тестирования с описанием сценариев в коде (Scala/Java). Низкие накладные расходы и удобные HTML-отчёты делают его удобным выбором для HTTP/API и CI/CD. Используйте **baseUrl**, **check** и **feed** для параметризации; задавайте реалистичный **inject** (ramp-up, think time). Дальше: [Gatling Documentation](https://gatling.io/docs/gatling/), [JMeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).

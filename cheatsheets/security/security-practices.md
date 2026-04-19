@@ -1,15 +1,15 @@
 ---
 title: "Практики безопасности (Security Practices)"
 description: "Как встроить безопасность в процессы разработки: Secure SDLC, код-ревью, управление уязвимостями и реагирование на инциденты."
-tags: ["security", "security-practices"]
+tags:
+  - security
+  - security-practices
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Практики безопасности (`Security Practices`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Как встроить безопасность в процессы разработки: `Secure SDLC`, код-ревью, управление уязвимостями и реагирование на инциденты.
 

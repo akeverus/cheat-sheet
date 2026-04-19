@@ -1,15 +1,16 @@
 ---
 title: "Взаимно простые числа (Coprime Numbers)"
 description: "Два целых числа взаимно просты (coprime), если их НОД равен 1. В документе описаны проверка через итеративный и рекурсивный алгоритм Евклида и использование BigInteger.gcd() в Java и Kotlin."
-tags: ["algorithms", "math", "coprime-numbers"]
+tags:
+  - algorithms
+  - math
+  - coprime-numbers
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Взаимно простые числа (`Coprime Numbers`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Два целых числа взаимно просты (coprime), если их НОД равен 1. В документе описаны проверка через итеративный и рекурсивный алгоритм Евклида и использование `BigInteger.gcd()` в `Java` и `Kotlin`.
 

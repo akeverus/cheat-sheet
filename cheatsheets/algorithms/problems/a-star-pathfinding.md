@@ -1,15 +1,16 @@
 ---
 title: "Поиск пути A* (A* Pathfinding Algorithm)"
 description: "Поиск оптимального пути в графе с эвристикой: открытое множество (приоритетная очередь по f = g + h), обход соседей, восстановление маршрута. Универсальная реализация и пример для графа станций (Haversine). Java и Kotlin."
-tags: ["algorithms", "problems", "a-star-pathfinding"]
+tags:
+  - algorithms
+  - problems
+  - a-star-pathfinding
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Поиск пути A* (`A* Pathfinding Algorithm`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Поиск оптимального пути в графе с эвристикой: открытое множество (приоритетная очередь по f = g + h), обход соседей, восстановление маршрута. Универсальная реализация и пример для графа станций (Haversine). Java и Kotlin.
 

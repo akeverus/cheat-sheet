@@ -1,7 +1,10 @@
 ---
 title: "REST Assured"
 description: "REST Assured - это Java DSL для упрощения тестирования и валидации REST API."
-tags: ["libraries", "java", "java-rest-assured"]
+tags:
+  - libraries
+  - java
+  - java-rest-assured
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # REST Assured
 
 **REST Assured** - это **Java DSL** для упрощения тестирования и валидации **REST API**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

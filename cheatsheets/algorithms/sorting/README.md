@@ -1,7 +1,9 @@
 ---
 title: "Сортировки"
 description: "Классические и специализированные алгоритмы сортировки."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

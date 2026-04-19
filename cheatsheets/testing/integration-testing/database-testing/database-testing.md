@@ -1,7 +1,10 @@
 ---
 title: "Тестирование базы данных (Database Testing)"
 description: "Проверка работы приложения с БД: схема, миграции, репозитории, транзакции, изоляция данных. Основные инструменты: Testcontainers, H2, Flyway, Liquibase, @DataJpaTest, @SpringBootTest."
-tags: ["testing", "integration-testing", "database-testing"]
+tags:
+  - testing
+  - integration-testing
+  - database-testing
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Тестирование базы данных (`Database Testing`)
 
 Проверка работы приложения с БД: схема, миграции, репозитории, транзакции, изоляция данных. Основные инструменты: `Testcontainers`, `H2`, `Flyway`, `Liquibase`, `@DataJpaTest`, `@SpringBootTest`.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -380,4 +381,3 @@ test:
 
 ---
 
-*Дата последнего обновления: 2026-02-06.*

@@ -1,7 +1,13 @@
 ---
 title: "Spring Validation: Полное руководство по валидации данных"
 description: "Комплексное руководство по Spring Validation: Bean Validation, custom validators, группировка валидации, валидация на разных уровнях и best practices"
-tags: ["spring", "validation", "bean-validation", "javax-validation", "jakarta-validation", "java"]
+tags:
+  - spring
+  - validation
+  - bean-validation
+  - javax-validation
+  - jakarta-validation
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-mvc.md", "spring/spring-rest.md"]

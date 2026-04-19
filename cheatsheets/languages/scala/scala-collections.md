@@ -1,7 +1,10 @@
 ---
 title: "Scala Collections"
 description: "Кратко: коллекции Scala (List, Set, Map, Vector, Array), immutable и mutable коллекции, операции над коллекциями, for-comprehensions и другие аспекты работы с коллекциями в Scala."
-tags: ["languages", "scala", "scala-collections"]
+tags:
+  - languages
+  - scala
+  - scala-collections
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Scala Collections
 
 Кратко: коллекции **Scala** (**List, Set, Map, `Vector`, Array**), **immutable** и **mutable** коллекции, операции над коллекциями, **for-comprehensions** и другие аспекты работы с коллекциями в **Scala**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

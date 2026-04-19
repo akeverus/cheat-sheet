@@ -1,7 +1,11 @@
 ---
 title: "Scala DSL"
 description: "Полное руководство по созданию DSL в Scala: type-safe builders, implicit conversions, operator overloading, fluent interfaces"
-tags: ["scala", "dsl", "domain-specific-language", "type-safe-builders"]
+tags:
+  - scala
+  - dsl
+  - domain-specific-language
+  - type-safe-builders
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 # **Scala DSL**
 
 Кратко: полное руководство по созданию **DSL** в **Scala**: **type-safe builders**, **implicit conversions**, **operator overloading**, **fluent interfaces**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

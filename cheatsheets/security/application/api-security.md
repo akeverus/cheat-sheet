@@ -1,15 +1,16 @@
 ---
 title: "Безопасность API"
 description: "Аутентификация и авторизация для REST/GraphQL API, JWT и API Keys, Rate Limiting, защита от типовых атак (IDOR, инъекции, злоупотребление API)."
-tags: ["security", "application", "api-security"]
+tags:
+  - security
+  - application
+  - api-security
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Безопасность `API`
-
-**Дата последнего обновления:** 2026-02-06
 
 Аутентификация и авторизация для `REST`/`GraphQL API`, `JWT` и `API Keys`, `Rate Limiting`, защита от типовых атак (`IDOR`, инъекции, злоупотребление `API`).
 

@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Actuator - Health Checks и Metrics"
 description: "Полное руководство по Actuator в Quarkus: health checks, metrics, info endpoints, custom endpoints и best practices"
-tags: ["quarkus", "actuator", "health", "metrics", "monitoring", "java"]
+tags:
+  - quarkus
+  - actuator
+  - health
+  - metrics
+  - monitoring
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-cloud.md"]

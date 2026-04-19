@@ -1,7 +1,10 @@
 ---
 title: "MongoDB: Репликация - Replica Sets для высокой доступности и отказоустойчивости"
 description: "Полное руководство по репликации в MongoDB: Replica Sets, настройка, управление, Read Preferences и Write Concerns."
-tags: ["databases", "nosql", "mongodb-replication"]
+tags:
+  - databases
+  - nosql
+  - mongodb-replication
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **MongoDB**: Репликация - **Replica Sets** для высокой доступности и отказоустойчивости
 
 Полное руководство по репликации в **MongoDB**: **Replica Sets**, настройка, управление, **Read Preferences** и **Write Concerns**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

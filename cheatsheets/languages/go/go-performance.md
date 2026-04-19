@@ -1,15 +1,19 @@
 ---
 title: "Go: производительность"
 description: "Полное руководство по оптимизации производительности в Go: профилирование, оптимизация памяти, сборка мусора, best practices"
-tags: ["go", "golang", "performance", "profiling", "optimization", "memory"]
+tags:
+  - go
+  - golang
+  - performance
+  - profiling
+  - optimization
+  - memory
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: производительность
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

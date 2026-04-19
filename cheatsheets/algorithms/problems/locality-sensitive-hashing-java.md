@@ -1,15 +1,16 @@
 ---
 title: "Locality-Sensitive Hashing в Java (Locality-Sensitive Hashing Java)"
 description: "LSH — хеширование, при котором похожие объекты с высокой вероятностью попадают в одни корзины. Поиск похожих без полного попарного сравнения. Библиотека java-lsh (LSHMinHash), пример поиска похожих документов по булевым векторам. Java и Kotlin."
-tags: ["algorithms", "problems", "locality-sensitive-hashing-java"]
+tags:
+  - algorithms
+  - problems
+  - locality-sensitive-hashing-java
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Locality-Sensitive Hashing в Java (`Locality-Sensitive Hashing Java`)
-
-**Дата последнего обновления:** 2026-02-06
 
 LSH — хеширование, при котором похожие объекты с высокой вероятностью попадают в одни корзины. Поиск похожих без полного попарного сравнения. Библиотека java-lsh (LSHMinHash), пример поиска похожих документов по булевым векторам. Java и Kotlin.
 

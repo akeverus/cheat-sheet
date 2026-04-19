@@ -1,7 +1,11 @@
 ---
 title: "Development Messaging"
 description: "Индекс раздела мессенджинга: Kafka, RabbitMQ, ActiveMQ, NATS."
-tags: ["meta", "index", "development", "messaging"]
+tags:
+  - meta
+  - index
+  - development
+  - messaging
 type: "index"
 updated: "2026-02-11"
 ---

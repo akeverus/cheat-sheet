@@ -1,7 +1,14 @@
 ---
 title: "Redis: Streams"
 description: "Полное руководство по Redis Streams: создание потоков, чтение, consumer groups, обработка сообщений, мониторинг"
-tags: ["redis", "streams", "messaging", "consumer-groups", "xadd", "xread", "xgroup"]
+tags:
+  - redis
+  - streams
+  - messaging
+  - consumer-groups
+  - xadd
+  - xread
+  - xgroup
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 next: ["databases/redis-troubleshooting.md"]
@@ -701,7 +708,5 @@ public class StreamReplayer {
 - [Redis Streams Tutorial](https://redis.io/docs/data-types/streams-tutorial/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

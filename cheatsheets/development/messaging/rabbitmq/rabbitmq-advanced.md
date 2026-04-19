@@ -1,7 +1,10 @@
 ---
 title: "RabbitMQ Advanced"
 description: "RabbitMQ - это надежная система обмена сообщениями с открытым исходным кодом, реализующая протокол AMQP. Этот документ охватывает продвинутые концепции, высокую доступность, производительность и enterprise-grade практики работы с RabbitMQ."
-tags: ["development", "messaging", "rabbitmq-advanced"]
+tags:
+  - development
+  - messaging
+  - rabbitmq-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # RabbitMQ Advanced
 
 **RabbitMQ** - это надежная система обмена сообщениями с открытым исходным кодом, реализующая протокол **AMQP**. Этот документ охватывает продвинутые концепции, высокую доступность, производительность и **enterprise-grade** практики работы с **RabbitMQ**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 - [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)

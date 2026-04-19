@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Multitenancy - Multi-tenant Applications"
 description: "Полное руководство по multitenancy в Micronaut: tenant resolution, data isolation, routing и best practices"
-tags: ["micronaut", "multitenancy", "multi-tenant", "tenant", "isolation", "java", "kotlin"]
+tags:
+  - micronaut
+  - multitenancy
+  - multi-tenant
+  - tenant
+  - isolation
+  - java
+  - kotlin
 difficulty: "advanced"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
 next: ["micronaut-data.md", "micronaut-security.md"]

@@ -1,7 +1,10 @@
 ---
 title: "Одиночка (Singleton)"
 description: "Singleton гарантирует, что у класса есть только один экземпляр, и предоставляет глобальную точку доступа к этому экземпляру."
-tags: ["patterns", "creational", "singleton"]
+tags:
+  - patterns
+  - creational
+  - singleton
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Одиночка (`Singleton`)
 
 **Singleton** гарантирует, что у класса есть только один экземпляр, и предоставляет глобальную точку доступа к этому экземпляру.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

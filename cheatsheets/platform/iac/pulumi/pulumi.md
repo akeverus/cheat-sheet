@@ -1,7 +1,10 @@
 ---
 title: "Pulumi"
 description: "Pulumi — это современная платформа для Infrastructure as Code, которая позволяет описывать инфраструктуру с помощью знакомых языков программирования (TypeScript, Python, Go, .NET, Java). В отличие от декларативных инструментов вроде Terraform, Pulumi использует императивный подхо"
-tags: ["platform", "iac", "pulumi"]
+tags:
+  - platform
+  - iac
+  - pulumi
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Pulumi
 
 **Pulumi** — это современная платформа для **Infrastructure as Code**, которая позволяет описывать инфраструктуру с помощью знакомых языков программирования (**TypeScript**, **Python**, **Go**, **.NET**, **Java**). В отличие от декларативных инструментов вроде **Terraform**, **Pulumi** использует императивный подход, предоставляя все преимущества программирования для управления инфраструктурой.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 - [Pulumi Documentation](https://www.pulumi.com/docs/)

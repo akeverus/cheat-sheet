@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Exposed"
 description: "Кратко: полное руководство по Exposed - типобезопасному ORM для Kotlin. Рассматриваются DSL и DAO API, работа с таблицами, связи, транзакции, миграции и лучшие практики."
-tags: ["libraries", "kotlin", "kotlin-exposed"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-exposed
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Exposed
 
 Кратко: полное руководство по **Exposed** - типобезопасному **ORM** для **Kotlin**. Рассматриваются **DSL** и **DAO API**, работа с таблицами, связи, транзакции, миграции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

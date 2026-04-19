@@ -1,7 +1,9 @@
 ---
 title: "Руководство по Observability"
 description: "Метрики, логи и трейсы как основа наблюдаемости распределённых систем."
-tags: ["monitoring", "observability-guide"]
+tags:
+  - monitoring
+  - observability-guide
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # Руководство по Observability
 
 Метрики, логи и трейсы как основа наблюдаемости распределённых систем.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Введение
 

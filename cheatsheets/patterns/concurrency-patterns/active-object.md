@@ -1,7 +1,10 @@
 ---
 title: "Активный объект (Active Object)"
 description: "Паттерн Active Object инкапсулирует вызовы методов и их исполнение в отдельном потоке управления, предоставляя асинхронный интерфейс для клиента."
-tags: ["patterns", "concurrency-patterns", "active-object"]
+tags:
+  - patterns
+  - concurrency-patterns
+  - active-object
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Активный объект (`Active Object`)
 
 Паттерн **Active Object** инкапсулирует вызовы методов и их исполнение в отдельном потоке управления, предоставляя асинхронный интерфейс для клиента.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

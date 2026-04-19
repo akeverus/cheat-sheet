@@ -1,7 +1,10 @@
 ---
 title: "Основы Packer (редирект)"
 description: "Основной документ по теме: [Packer](packer.md)."
-tags: ["platform", "iac", "packer-basics"]
+tags:
+  - platform
+  - iac
+  - packer-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []

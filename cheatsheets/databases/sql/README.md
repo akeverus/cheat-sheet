@@ -1,7 +1,9 @@
 ---
 title: "SQL"
 description: "Индекс материалов по SQL: базовый синтаксис, выборки, соединения, агрегации и практики."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

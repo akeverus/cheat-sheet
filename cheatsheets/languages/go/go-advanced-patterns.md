@@ -1,15 +1,18 @@
 ---
 title: "Go: продвинутые паттерны"
 description: "Полное руководство по продвинутым паттернам в Go: worker pools, pipelines, fan-out/fan-in, rate limiting"
-tags: ["go", "golang", "patterns", "concurrency", "design-patterns"]
+tags:
+  - go
+  - golang
+  - patterns
+  - concurrency
+  - design-patterns
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
 updated: "2026-02-06"
 ---
 
 # Go: продвинутые паттерны
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,14 @@
 ---
 title: "Spring for Apache Kafka: Полное руководство"
 description: "Комплексное руководство по Spring for Apache Kafka: producers, consumers, streams, transactions, error handling и best practices"
-tags: ["spring", "kafka", "messaging", "streams", "producer", "consumer", "java"]
+tags:
+  - spring
+  - kafka
+  - messaging
+  - streams
+  - producer
+  - consumer
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-messaging.md"]
 next: ["messaging/kafka.md", "spring/spring-cloud.md"]

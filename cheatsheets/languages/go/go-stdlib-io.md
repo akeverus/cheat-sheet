@@ -1,15 +1,19 @@
 ---
 title: "Go: стандартная библиотека - I/O"
 description: "Полное руководство по работе с I/O в Go: io.Reader, io.Writer, bufio, os, path/filepath"
-tags: ["go", "golang", "io", "files", "streaming", "buffering"]
+tags:
+  - go
+  - golang
+  - io
+  - files
+  - streaming
+  - buffering
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: стандартная библиотека - I/O
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

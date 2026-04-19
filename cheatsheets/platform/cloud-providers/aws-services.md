@@ -1,7 +1,10 @@
 ---
 title: "AWS Services"
 description: "AWS (Amazon Web Services) предоставляет более 200 сервисов для различных задач - от вычислений и хранения данных до машинного обучения и IoT. Этот документ охватывает основные сервисы AWS, их назначение, use cases и лучшие практики использования в production средах. Документ допо"
-tags: ["platform", "cloud-providers", "aws-services"]
+tags:
+  - platform
+  - cloud-providers
+  - aws-services
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **AWS Services**
 
 **AWS** (**Amazon Web Services**) предоставляет более `200` сервисов для различных задач - от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **AWS**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [AWS Basics](aws-basics.md) более глубоким погружением в конкретные сервисы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [AWS Services Overview](https://aws.amazon.com/products/)

@@ -1,7 +1,15 @@
 ---
 title: "ClickHouse: Интеграции и экосистема - Подключение внешних систем и инструментов"
 description: "Комплексное руководство по интеграциям ClickHouse: Kafka, Spark, Airflow, BI инструменты, языки программирования и облачные сервисы"
-tags: ["clickhouse", "integration", "kafka", "spark", "airflow", "bi-tools", "programming-languages", "cloud"]
+tags:
+  - clickhouse
+  - integration
+  - kafka
+  - spark
+  - airflow
+  - bi-tools
+  - programming-languages
+  - cloud
 difficulty: "intermediate"
 prerequisites: ["databases/clickhouse-performance.md"]
 updated: "2026-02-06"

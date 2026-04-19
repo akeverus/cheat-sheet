@@ -1,7 +1,10 @@
 ---
 title: "State Machine with Enums"
 description: "A guide to implementing finite state machines in Java using Enums, providing a clean and type-safe approach to state management."
-tags: ["algorithms", "problems", "state-machine-with-enums"]
+tags:
+  - algorithms
+  - problems
+  - state-machine-with-enums
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # State Machine with Enums
 
 A **guide** to **implementing finite state machines** in **Java using Enums**, **providing** a **clean and type-safe approach** to **state management**.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

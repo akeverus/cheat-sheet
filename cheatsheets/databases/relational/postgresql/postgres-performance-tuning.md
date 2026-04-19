@@ -1,7 +1,13 @@
 ---
 title: "PostgreSQL: Тюнинг производительности"
 description: "Полное руководство по оптимизации производительности PostgreSQL: настройка postgresql.conf, shared_buffers, work_mem, checkpoint, autovacuum, connection pooling, оптимизация запросов, EXPLAIN, индексы"
-tags: ["postgresql", "performance", "tuning", "optimization", "query-optimization", "indexes"]
+tags:
+  - postgresql
+  - performance
+  - tuning
+  - optimization
+  - query-optimization
+  - indexes
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-indexes.md"]
 next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
@@ -1594,7 +1600,5 @@ ANALYZE;
 - [`pg_stat_statements`](https://www.postgresql.org/docs/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

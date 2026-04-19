@@ -1,7 +1,17 @@
 ---
 title: "Spring REST API: Полное руководство по разработке RESTful веб-сервисов"
 description: "Комплексное руководство по Spring REST: контроллеры, HTTP методы, DTO, валидация, обработка ошибок, безопасность, тестирование, документация и best practices"
-tags: ["spring", "rest", "api", "http", "controller", "dto", "validation", "testing", "documentation", "security"]
+tags:
+  - spring
+  - rest
+  - api
+  - http
+  - controller
+  - dto
+  - validation
+  - testing
+  - documentation
+  - security
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-security.md", "api/rest-api-design.md"]
@@ -11,8 +21,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
 
 # Spring REST API: Полное руководство по разработке RESTful веб-сервисов
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -113,8 +121,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
   - [8. Documentation best practices](#8-documentation-best-practices)
 ## Создание веб-приложения
 
-В этом разделе мы рассмотрим, как создать простое веб-приложение с использованием **Spring MVC** и **Spring Boot**.
-
 ### Настройка проекта
 
 Для начала нам нужно добавить зависимости в наш **pom.xml:**
@@ -145,8 +151,6 @@ public class SimpleRestController {
 ```
 
 ## Как читать заголовки **HTTP** в контроллерах?
-
-В этом разделе мы рассмотрим, как читать заголовки **HTTP** в контроллерах **Spring MVC**.
 
 ### Использование @**RequestHeader**
 
@@ -203,8 +207,6 @@ public HttpHeaders readAllHeadersHttp(@RequestHeader HttpHeaders headers) {
 ```
 
 ## Создание **REST API**
-
-В этом разделе мы рассмотрим, как создать полноценное **REST API** с использованием **Spring MVC**.
 
 ### Основные **HTTP** методы
 
@@ -320,8 +322,6 @@ public class ResourceNotFoundException extends RuntimeException {
 Также обратите внимание, что это не проверенные исключения, а исключения времени выполнения — в соответствии с практиками и идиомами **Spring**.
 
 ## Руководство @**Controller** и @**RestController**
-
-В этом разделе мы рассмотрим различия между **@Controller** и **@RestController** в **Spring MVC**.
 
 ### @**Controller**
 
@@ -470,8 +470,6 @@ logging.level.org.springframework.web.filter.CommonsRequestLoggingFilter=DEBUG
 
 ## Руководство по @**Async**
 
-В этом разделе мы рассмотрим, как использовать асинхронное выполнение методов в **Spring MVC** с помощью аннотации **@Async**.
-
 ### Включение поддержки @**Async**
 
 **Для использования **@Async** нам нужно включить поддержку асинхронного выполнения:**
@@ -555,8 +553,6 @@ public class AsyncConfig implements AsyncConfigurer {
 ```
 
 ## Руководство по @**ExceptionHandler** и @**ControllerAdvice**
-
-В этом разделе мы рассмотрим, как обрабатывать исключения в **Spring MVC** с помощью **@ExceptionHandler** и **@ControllerAdvice**.
 
 ### @**ExceptionHandler** на уровне контроллера
 
@@ -650,7 +646,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
 **Spring 3.2** обеспечивает поддержку глобального **@ExceptionHandler** с новой аннотацией **@ControllerAdvice**, которая обрабатывает такие сценарии.
 
-Хотя **ResponseEntity** очень мощный инструмент, нам не следует злоупотреблять им. В простых случаях есть другие варианты, которые удовлетворяют наши потребности, и они приводят к гораздо более чистому коду**.
+Хотя **ResponseEntity** очень инструмент, нам не следует злоупотреблять им. В простых случаях есть другие варианты, которые удовлетворяют наши потребности, и они приводят к гораздо более чистому коду**.
 
 ## Преобразование **Entity** в **DTO**
 

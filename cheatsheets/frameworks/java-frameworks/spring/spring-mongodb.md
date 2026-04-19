@@ -1,7 +1,13 @@
 ---
 title: "Spring Data MongoDB: Полное руководство"
 description: "Комплексное руководство по Spring Data MongoDB: repositories, queries, aggregation, transactions, GridFS и best practices"
-tags: ["spring", "mongodb", "nosql", "document-database", "repositories", "java"]
+tags:
+  - spring
+  - mongodb
+  - nosql
+  - document-database
+  - repositories
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-data-jpa.md"]
 next: ["databases/mongodb.md", "spring/spring-data-jpa.md"]

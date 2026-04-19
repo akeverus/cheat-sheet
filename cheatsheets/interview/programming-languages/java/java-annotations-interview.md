@@ -1,88 +1,128 @@
 ---
 title: "Вопросы на собеседовании: Java Annotations"
-description: "Комплексное руководство по вопросам собеседования на тему Java Annotations для Senior Java Developer. Включает"
-tags: ["interview", "programming-languages", "java-annotations-interview"]
+description: "Комплексное руководство по вопросам собеседования на тему Java Annotations: создание, мета-аннотации, Retention, Annotation Processing, рефлексия, Spring, Bean Validation"
+tags:
+  - interview
+  - programming-languages
+  - java-annotations-interview
+aliases:
+  - "Java Annotations"
+  - "Java Annotations interview"
+  - "Java Annotations собеседование"
+  - "Аннотации Java"
+  - "Java аннотации вопросы"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Java Annotations`
 
 Комплексное руководство по вопросам собеседования на тему `Java Annotations` для `Senior Java Developer`. Включает
 детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.
 
-Дата последнего обновления: 2026-01-29
+Дата последнего обновления: 2026-04-13
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Java Annotations Documentation](https://docs.oracle.com/javase/tutorial/java/annotations/)
-- [Annotation API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/package-summary.html)
-- [Reflection API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/package-summary.html)
+- [Java Annotations Documentation](https://docs.oracle.com/javase/tutorial/java/annotations/) — официальное руководство Oracle
+- [Annotation API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/package-summary.html) — API пакета java.lang.annotation
+- [Reflection API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/package-summary.html) — рефлексия для работы с аннотациями
 
-### См. также
+### Baeldung
 
-- [`../../../languages/java/java-annotations-reflection.md`](../../../languages/java/java-annotations-reflection.md) — аннотации и рефлексия
-- [`java-core-interview.md`](java-core-interview.md) — вопросы по Java Core
-- [`java-8-interview.md`](java-8-interview.md) — вопросы по Java 8
+- [Java Annotation Processing and Creating a Builder — Baeldung](https://www.baeldung.com/java-annotation-processing-builder) — annotation processing и генерация кода
+- [Creating a Custom Annotation in Java — Baeldung](https://www.baeldung.com/java-custom-annotation) — создание кастомных аннотаций
+- [Scanning Java Annotations at Runtime — Baeldung](https://www.baeldung.com/java-scan-annotations-runtime) — сканирование аннотаций через рефлексию
+- [Overview of Java Built-in Annotations — Baeldung](https://www.baeldung.com/java-default-annotations) — встроенные аннотации Java (@Override, @Deprecated, @SuppressWarnings)
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
-**Основы и создание аннотаций**
-- [Q1. (!) Что такое `Annotation`?](#q1-важно-что-такое-annotation)
-- [Q2. (!) Опишите некоторые полезные `Annotations` из стандартной библиотеки.](#q2-важно-опишите-некоторые-полезные-annotations-из-стандартной-библиотеки)
-- [Q3. (!) Как создать `Annotation`?](#q3-важно-как-создать-annotation)
-- [Q4. (!) Какие типы объектов могут быть возвращены из объявления метода `Annotation`?](#q4-важно-какие-типы-объектов-могут-быть-возвращены-из-объявления-метода-annotation)
-- [Q5. (!) Какие элементы программы могут быть аннотированы?](#q5-важно-какие-элементы-программы-могут-быть-аннотированы)
-- [Q6. Как создать аннотацию с несколькими атрибутами?](#q6-как-создать-аннотацию-с-несколькими-атрибутами)
-- [Q7. Что такое `value()` и `default` в аннотациях?](#q7-что-такое-value-и-default-в-аннотациях)
+**Основы аннотаций**
+- [Q1. (!) Что такое `Annotation` в Java?](#q1--что-такое-annotation-в-java)
+- [Q2. (!) Какие стандартные аннотации есть в Java?](#q2--какие-стандартные-аннотации-есть-в-java)
+- [Q3. (!) Как создать собственную аннотацию?](#q3--как-создать-собственную-аннотацию)
+- [Q4. (!) Какие типы допустимы для элементов аннотации?](#q4--какие-типы-допустимы-для-элементов-аннотации)
+- [Q5. Какие элементы программы могут быть аннотированы?](#q5-какие-элементы-программы-могут-быть-аннотированы)
+- [Q6. Что такое `value()` и `default` в аннотациях?](#q6-что-такое-value-и-default-в-аннотациях)
 
-**Мета-аннотации: `Target`, `Retention`, `ElementType`**
-- [Q8. Как ограничить элементы, к которым можно применить `Annotation`?](#q8-как-ограничить-элементы-к-которым-можно-применить-annotation)
-- [Q9. (!) Что такое `Meta-Annotations`?](#q9-важно-что-такое-meta-annotations)
-- [Q10. Что такое `ElementType` и `Target`?](#q10-что-такое-elementtype-и-target)
-- [Q11. Что такое `@Target`(ANNOTATION_TYPE)?](#q11-что-такое-targetannotation_type)
-- [Q12. (!) Что такое `RetentionPolicy`?](#q12-важно-что-такое-retentionpolicy)
-- [Q13. Что такое `@Documented` и `@Inherited`?](#q13-что-такое-documented-и-inherited)
-- [Q14. Как использовать `RetentionPolicy.CLASS` для инструментации?](#q14-как-использовать-retentionpolicyclass-для-инструментации)
+**Мета-аннотации и `RetentionPolicy`**
+- [Q7. (!) Что такое мета-аннотации?](#q7--что-такое-мета-аннотации)
+- [Q8. (!) Что такое `RetentionPolicy` и как выбрать нужную?](#q8--что-такое-retentionpolicy-и-как-выбрать-нужную)
+- [Q9. Что такое `@Target` и `ElementType`?](#q9-что-такое-target-и-elementtype)
+- [Q10. Что такое `@Documented` и `@Inherited`?](#q10-что-такое-documented-и-inherited)
+- [Q11. Как `@Inherited` работает с интерфейсами и методами?](#q11-как-inherited-работает-с-интерфейсами-и-методами)
+- [Q12. Что такое `TYPE_USE` и `TYPE_PARAMETER` (`Java 8`)?](#q12-что-такое-type_use-и-type_parameter-java-8)
 
 **Повторяемые и составные аннотации**
-- [Q15. Что такое повторяющиеся `Annotations`?](#q15-что-такое-повторяющиеся-annotations)
-- [Q16. Как получить повторяемые аннотации через `Reflection`?](#q16-как-получить-повторяемые-аннотации-через-reflection)
-- [Q17. Что такое составные аннотации (`Composed Annotations`)?](#q17-что-такое-составные-аннотации-composed-annotations)
+- [Q13. (!) Что такое повторяемые аннотации (`@Repeatable`)?](#q13--что-такое-повторяемые-аннотации-repeatable)
+- [Q14. Что такое составные (composed) аннотации?](#q14-что-такое-составные-composed-аннотации)
+- [Q15. Можно ли наследовать аннотации через `extends`?](#q15-можно-ли-наследовать-аннотации-через-extends)
 
-**Reflection и обработка аннотаций**
-- [Q18. Как получить аннотации через `Reflection`?](#q18-как-получить-аннотации-через-reflection)
-- [Q19. Как обработать аннотации в runtime?](#q19-как-обработать-аннотации-в-runtime)
-- [Q20. Аннотации на параметрах методов (`Java` 8)?](#q20-аннотации-на-параметрах-методов-java-8)
-- [Q21. Как получить аннотации с полей и параметров?](#q21-как-получить-аннотации-с-полей-и-параметров)
-- [Q22. Как валидировать параметры аннотации?](#q22-как-валидировать-параметры-аннотации)
-- [Q23. Как работают `Annotation Processors` с аннотациями `SOURCE`?](#q23-как-работают-annotation-processors-с-аннотациями-source)
+**Рефлексия и обработка аннотаций в `Runtime`**
+- [Q16. (!) Как получить аннотации через `Reflection`?](#q16--как-получить-аннотации-через-reflection)
+- [Q17. В чём разница между `getAnnotation()` и `getDeclaredAnnotation()`?](#q17-в-чём-разница-между-getannotation-и-getdeclaredannotation)
+- [Q18. Как сканировать аннотации по пакету в runtime?](#q18-как-сканировать-аннотации-по-пакету-в-runtime)
+- [Q19. Как получить аннотации параметров метода?](#q19-как-получить-аннотации-параметров-метода)
+- [Q20. Как работает `AnnotatedElement` API?](#q20-как-работает-annotatedelement-api)
 
-**Использование во фреймворках (`Spring`, `Bean Validation`)**
-- [Q24. Как аннотации используются в `Spring`?](#q24-как-аннотации-используются-в-spring)
-- [Q25. Аннотации и прокси (`Spring AOP`)?](#q25-аннотации-и-прокси-spring-aop)
-- [Q26. Как аннотации используются в `Bean Validation`?](#q26-как-аннотации-используются-в-bean-validation)
+**`Annotation Processing` (compile-time)**
+- [Q21. (!) Что такое `Annotation Processor` и как он работает?](#q21--что-такое-annotation-processor-и-как-он-работает)
+- [Q22. (!) Как написать собственный `Annotation Processor`?](#q22--как-написать-собственный-annotation-processor)
+- [Q23. Что такое раунды обработки (`processing rounds`)?](#q23-что-такое-раунды-обработки-processing-rounds)
+- [Q24. Как зарегистрировать `Annotation Processor`?](#q24-как-зарегистрировать-annotation-processor)
+- [Q25. Какие ограничения есть у `Annotation Processing API`?](#q25-какие-ограничения-есть-у-annotation-processing-api)
+- [Q26. Какие фреймворки используют `Annotation Processing`?](#q26-какие-фреймворки-используют-annotation-processing)
+
+**Аннотации в `Spring` и `Bean Validation`**
+- [Q27. (!) Как аннотации используются в `Spring`?](#q27--как-аннотации-используются-в-spring)
+- [Q28. Как `Spring AOP` использует аннотации и прокси?](#q28-как-spring-aop-использует-аннотации-и-прокси)
+- [Q29. (!) Как создать собственную аннотацию для `Spring AOP`?](#q29--как-создать-собственную-аннотацию-для-spring-aop)
+- [Q30. (!) Как аннотации используются в `Bean Validation`?](#q30--как-аннотации-используются-в-bean-validation)
+- [Q31. Как создать кастомный валидатор с `@Constraint`?](#q31-как-создать-кастомный-валидатор-с-constraint)
+
+**Аннотации в `Jackson`, `JPA` и других библиотеках**
+- [Q32. Как аннотации используются в `Jackson`?](#q32-как-аннотации-используются-в-jackson)
+- [Q33. Как аннотации используются в `JPA`/`Hibernate`?](#q33-как-аннотации-используются-в-jpahibernate)
 
 **Специальные случаи и best practices**
-- [Q27. Будет ли компилироваться следующий код?](#q27-будет-ли-компилироваться-следующий-код)
-- [Q28. Можно ли расширить `Annotations`?](#q28-можно-ли-расширить-annotations)
-- [Q29. Что такое `@SafeVarargs` и `@FunctionalInterface`?](#q29-что-такое-safevarargs-и-functionalinterface)
-- [Q30. Best practices при создании кастомных аннотаций?](#q30-best-practices-при-создании-кастомных-аннотаций)
+- [Q34. Что такое `@SafeVarargs` и `@FunctionalInterface`?](#q34-что-такое-safevarargs-и-functionalinterface)
+- [Q35. Будет ли компилироваться аннотация с дубликатами в `@Target`?](#q35-будет-ли-компилироваться-аннотация-с-дубликатами-в-target)
+- [Q36. (!) Best practices при создании кастомных аннотаций?](#q36--best-practices-при-создании-кастомных-аннотаций)
+- [Q37. Как аннотации влияют на производительность?](#q37-как-аннотации-влияют-на-производительность)
 
-## Q1. (!) Что такое `Annotation`?
+**APT, Lombok, MapStruct, KSP и новые темы**
+- [Q38. Как работает APT (Annotation Processing Tool) и каковы фазы javac?](#q38-как-работает-apt-annotation-processing-tool-и-каковы-фазы-javac)
+- [Q39. Как Lombok использует APT и какие подводные камни при работе с Kotlin?](#q39-как-lombok-использует-apt-и-какие-подводные-камни-при-работе-с-kotlin)
+- [Q40. Как MapStruct генерирует маппинги через APT?](#q40-как-mapstruct-генерирует-маппинги-через-apt)
+- [Q41. Что такое KSP (Kotlin Symbol Processing) и чем лучше KAPT?](#q41-что-такое-ksp-kotlin-symbol-processing-и-чем-лучше-kapt)
+- [Q42. Что такое Repeatable аннотации (@Repeatable) и container annotation?](#q42-что-такое-repeatable-аннотации-repeatable-и-container-annotation)
+- [Q43. Аннотации на TYPE_USE — @NonNull и Checker Framework](#q43-аннотации-на-type_use--nonnull-и-checker-framework)
 
-Аннотации (`Annotations`) — механизм метапрограммирования в `Java`, позволяющий добавлять метаданные к элементам кода (классам, методам, полям, параметрам) без изменения их семантики. Введены в `Java` 5, стали частью современной `Java`-разработки, особенно в фреймворках типа `Spring`.
+## Q1. (!) Что такое `Annotation` в Java?
 
-Аннотации — метаданные, привязанные к элементам исходного кода и не влияющие на работу кода. Предоставляют информацию, используемую компилятором, инструментами разработки, фреймворками и во время выполнения через рефлексию.
+Аннотации (`Annotations`) -- механизм метапрограммирования в `Java`, позволяющий добавлять метаданные к элементам кода (классам, методам, полям, параметрам) без изменения их семантики. Введены в `Java 5` (JSR 175), стали неотъемлемой частью современной разработки, особенно в [Java Core](java-core-interview.md) и фреймворках типа `Spring`.
 
-Типичные варианты использования: информация для компилятора (например, `@Override` гарантирует правильное переопределение метода), обработка во время компиляции и развертывания (`Lombok` генерирует геттеры, сеттеры), обработка во время выполнения (`Spring` использует аннотации для `dependency injection` и управления компонентами).
+Аннотации предоставляют информацию, которую используют:
+- **Компилятор** -- `@Override` гарантирует правильное переопределение метода
+- **Инструменты компиляции** -- `Lombok` генерирует геттеры/сеттеры, `MapStruct` -- мапперы
+- **Runtime-фреймворки** -- `Spring` использует аннотации для `dependency injection`
 
-Пример использования аннотаций:
+```mermaid
+graph TD
+    A["Аннотация в исходном коде"] --> B{"RetentionPolicy?"}
+    B -->|SOURCE| C["Только компиляция<br/>Lombok, MapStruct"]
+    B -->|CLASS| D["Сохранена в .class<br/>Bytecode-инструментация"]
+    B -->|RUNTIME| E["Доступна через Reflection<br/>Spring, JPA, Jackson"]
+    C --> F["Удалена после компиляции"]
+    D --> G["Не загружается JVM"]
+    E --> H["Читается в runtime"]
+```
+
+Пример использования аннотаций в реальном приложении:
 
 ```java
 @Entity
@@ -116,664 +156,1541 @@ public class UserService {
 }
 ```
 
-## Q2. (!) Опишите некоторые полезные `Annotations` из стандартной библиотеки.
+## Q2. (!) Какие стандартные аннотации есть в Java?
 
-В пакетах `java.lang` и `java.lang.annotation` есть несколько полезных аннотаций. `@Override` отмечает, что метод предназначен для переопределения элемента суперкласса; компилятор выдаст ошибку, если переопределение неправильное. `@Deprecated` указывает, что элемент устарел и не должен использоваться; компилятор выдаст предупреждение при использовании помеченного элемента.
+В пакетах `java.lang` и `java.lang.annotation` есть ключевые аннотации:
 
-`@SuppressWarnings` указывает компилятору подавлять определенные предупреждения; часто используется при работе с унаследованным кодом, написанным до появления дженериков. `@FunctionalInterface` (`Java 8`) указывает, что интерфейс является функциональным и может быть реализован с помощью лямбда-выражения; компилятор проверит наличие ровно одного абстрактного метода.
+| Аннотация | Назначение | `RetentionPolicy` |
+|-----------|-----------|-------------------|
+| `@Override` | Переопределение метода суперкласса | `SOURCE` |
+| `@Deprecated` | Пометка устаревшего элемента | `RUNTIME` |
+| `@SuppressWarnings` | Подавление предупреждений компилятора | `SOURCE` |
+| `@FunctionalInterface` | Функциональный интерфейс (`Java 8`) | `RUNTIME` |
+| `@SafeVarargs` | Безопасные varargs с дженериками | `RUNTIME` |
+| `@Repeatable` | Повторяемая аннотация (`Java 8`) | `RUNTIME` |
+| `@Native` | Поле доступно из нативного кода (`Java 8`) | `SOURCE` |
 
-Примеры использования:
+Начиная с `Java 9` у `@Deprecated` появились атрибуты `since` и `forRemoval`:
 
 ```java
-@Override
-public String toString() {
-    return "example";
-}
-
-@Deprecated
+@Deprecated(since = "11", forRemoval = true)
 public void oldMethod() {
-    // Устаревший метод
+    // Будет удалён в будущей версии
 }
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "deprecation"})
 List<String> list = (List<String>) getRawList();
 
 @FunctionalInterface
 public interface Calculator {
     int calculate(int a, int b);
+    // default и static методы не нарушают контракт
+    default int add(int a, int b) { return a + b; }
 }
 ```
 
-## Q3. (!) Как создать `Annotation`?
+## Q3. (!) Как создать собственную аннотацию?
 
-Аннотации — форма интерфейса, где ключевому слову interface предшествует @, а тело содержит объявления элементов (похожи на методы). Элементы могут иметь значения по умолчанию через ключевое слово default. При указании нескольких значений для массива их необходимо заключать в квадратные скобки.
-
-Пример создания аннотации:
+Аннотация объявляется ключевым словом `@interface`. Элементы аннотации выглядят как методы без параметров и могут иметь значения по умолчанию через `default`.
 
 ```java
-public @interface SimpleAnnotation {
-    String value();
-    int[] types();
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Documented
+public @interface Auditable {
+    String action();
+    String description() default "";
+    AuditLevel level() default AuditLevel.INFO;
+
+    enum AuditLevel { DEBUG, INFO, WARN, ERROR }
 }
 ```
 
-Использование аннотации:
+Применение:
 
 ```java
-@SimpleAnnotation(value = "element", types = 1)
-public class Element {
-    @SimpleAnnotation(value = "attribute", types = {1, 2})
-    public Element nextElement;
+@Auditable(action = "CREATE_USER", level = Auditable.AuditLevel.WARN)
+public User createUser(User user) {
+    return repository.save(user);
 }
 ```
 
-Аннотация с значениями по умолчанию:
+Ключевые правила:
+- Элементы не могут принимать параметры
+- Элементы не могут бросать исключения
+- Имя `value()` позволяет опускать имя при использовании: `@MyAnnotation("text")`
+- Если все элементы имеют `default`, аннотацию можно применять без скобок: `@MyAnnotation`
+
+## Q4. (!) Какие типы допустимы для элементов аннотации?
+
+Тип возвращаемого значения элемента аннотации строго ограничен. Допустимы:
+
+- Примитивные типы (`int`, `long`, `boolean` и т.д.)
+- `String`
+- `Class` (с wildcards: `Class<? extends Serializable>`)
+- `Enum`
+- Другая аннотация
+- Массив любого из перечисленных типов
 
 ```java
-public @interface SimpleAnnotation {
-    String value() default "default value";
-    int[] types() default {1, 2, 3};
-}
-
-@SimpleAnnotation // Можно использовать без параметров
-public class Element {
-}
-
-@SimpleAnnotation(value = "custom") // Или указать только нужные
-public class AnotherElement {
-}
-```
-
-## Q4. (!) Какие типы объектов могут быть возвращены из объявления метода `Annotation`?
-
-Тип возвращаемого значения метода аннотации должен быть примитивным типом, `String`, `Class`, `Enum`, аннотацией или массивом одного из перечисленных типов. Компилятор выдаст ошибку, если тип не соответствует этим требованиям.
-
-Пример правильной аннотации:
-
-```java
-enum Complexity {LOW, HIGH}
+enum Priority { LOW, MEDIUM, HIGH }
 
 public @interface ComplexAnnotation {
-    Class<? extends Object> value();
-    int[] types();
-    Complexity complexity();
-    String description() default "";
+    int count();                          // примитив
+    String value();                       // String
+    Class<? extends Runnable> runner();   // Class
+    Priority priority();                  // enum
+    Deprecated deprecation();             // аннотация
+    String[] tags() default {};           // массив
 }
 ```
 
-Неправильный пример (не скомпилируется):
+**НЕ допустимы**: `Object`, `Map`, `List`, обёртки (`Integer`, `Boolean`), пользовательские классы:
 
 ```java
-public @interface FailingAnnotation {
-    Object complexity(); // Ошибка: Object не допустим
+public @interface InvalidAnnotation {
+    Object value();     // ОШИБКА компиляции
+    List<String> items; // ОШИБКА компиляции
+    Integer count;      // ОШИБКА компиляции
 }
 ```
 
-## Q5. (!) Какие элементы программы могут быть аннотированы?
+## Q5. Какие элементы программы могут быть аннотированы?
 
-Аннотации можно применять к объявлениям классов, конструкторов, полей, методов и их параметров, локальных переменных (включая переменные цикла и ресурсов), другим аннотациям и пакетам через файл `package-info.java`.
+Аннотации применяются к классам, конструкторам, полям, методам, параметрам, локальным переменным, пакетам (через `package-info.java`) и другим аннотациям.
 
-Примеры применения:
-
-```java
-@SimpleAnnotation
-public class Apply {
-    @SimpleAnnotation
-    private String field;
-
-    @SimpleAnnotation
-    public Apply() {
-    }
-
-    @SimpleAnnotation
-    public void method(@SimpleAnnotation String param) {
-        @SimpleAnnotation
-        int localVar = 10;
-    }
-}
-```
-
-Начиная с `Java` 8, аннотации можно применять к использованию типов (TYPE_USE) при указании `@Target(ElementType.TYPE_USE)`:
+Начиная с [Java 8](java-8-interview.md), добавлены `TYPE_USE` и `TYPE_PARAMETER`:
 
 ```java
+// TYPE_USE -- аннотация на использовании типа
 @Target(ElementType.TYPE_USE)
-public @interface SimpleAnnotation {
-}
+@Retention(RetentionPolicy.RUNTIME)
+public @interface NonNull {}
 
-new @SimpleAnnotation Apply(); // Создание экземпляра
-String str = (@SimpleAnnotation String) something; // Приведение типов
-public class List<T> implements @SimpleAnnotation List<@SimpleAnnotation T> {}
-void method() throws @SimpleAnnotation Exception {}
+// Примеры TYPE_USE:
+@NonNull String name;                                    // поле
+List<@NonNull String> items;                             // параметр типа
+String text = (@NonNull String) obj;                     // приведение
+void process() throws @NonNull IOException {}            // исключение
+new @NonNull ArrayList<>();                              // создание объекта
+
+// TYPE_PARAMETER -- аннотация на объявлении параметра типа
+@Target(ElementType.TYPE_PARAMETER)
+public @interface Covariant {}
+
+public class Box<@Covariant T> {}                        // параметр типа
 ```
 
-## Q6. Как создать аннотацию с несколькими атрибутами?
+## Q6. Что такое `value()` и `default` в аннотациях?
 
-Методы аннотации (без параметров) задают атрибуты. При применении можно указать все атрибуты или использовать значения по умолчанию. Если есть атрибут value(), его можно указать без имени. Типы атрибутов: примитивы, `String`, `Class`, enum, аннотация, массивы перечисленного.
-
-Пример:
+Элемент `value()` имеет особый статус: если это единственный указанный элемент, его имя можно опустить.
 
 ```java
-public @interface MyAnnotation {
+public @interface Tag {
     String value();
-    int count() default 0;
+    int priority() default 0;
+}
+
+@Tag("important")               // value = "important", priority = 0
+@Tag(value = "low", priority = 5) // явное указание обоих
+```
+
+`default` позволяет не указывать элемент при применении. Если все элементы имеют `default`, аннотация может быть маркерной (без скобок):
+
+```java
+public @interface Cacheable {
+    String cacheName() default "default";
+    int ttlSeconds() default 300;
     boolean enabled() default true;
 }
 
-@MyAnnotation(value = "test", count = 5) // Все атрибуты
-@MyAnnotation("test") // Только value, остальные по умолчанию
-public class MyClass {
-}
+@Cacheable  // все по умолчанию
+@Cacheable(cacheName = "users", ttlSeconds = 600)
 ```
 
-## Q7. Что такое value() и default в аннотациях?
+## Q7. (!) Что такое мета-аннотации?
 
-Атрибут value() имеет особый статус: при применении аннотации его можно указать без имени, если это единственный указанный атрибут. default значение позволяет не указывать атрибут при применении аннотации. default обязателен для всех полей, кроме одного (часто value), если аннотация должна применяться без аргументов (как `@Override`).
+Мета-аннотации -- аннотации, которые применяются к другим аннотациям для определения их поведения. Стандартные мета-аннотации в `Java`:
 
-Пример:
-
-```java
-public @interface SimpleAnnotation {
-    String value() default "default";
-    int count() default 1;
-}
-
-@SimpleAnnotation // Все по умолчанию
-@SimpleAnnotation("custom") // value = "custom", count = 1
-@SimpleAnnotation(value = "custom", count = 5) // Оба указаны
-public class MyClass {
-}
-```
-
-## Q8. Как ограничить элементы, к которым можно применить `Annotation`?
-
-Для ограничения элементов используется аннотация `@Target`. Если использовать аннотацию в неприменимом контексте, компилятор выдаст ошибку. Можно указать несколько констант `ElementType` для применения в разных контекстах. Можно также создать аннотацию без целевых элементов (`@Target`({})), если она предназначена только для использования в качестве типа-члена в сложных аннотациях.
-
-Примеры:
+| Мета-аннотация | Назначение |
+|----------------|-----------|
+| `@Retention` | Когда аннотация доступна (SOURCE / CLASS / RUNTIME) |
+| `@Target` | К каким элементам применима |
+| `@Documented` | Включать ли в Javadoc |
+| `@Inherited` | Наследуется ли подклассами |
+| `@Repeatable` | Можно ли применять несколько раз (`Java 8`) |
 
 ```java
-@Target(ElementType.FIELD) // Только поля
-public @interface SimpleAnnotation {
-}
-
-@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PACKAGE}) // Несколько целей
-public @interface MultiTargetAnnotation {
-}
-
-@Target({}) // Нет целевых элементов
-public @interface NoTargetAnnotation {
-}
-```
-
-## Q9. (!) Что такое `Meta-Annotations`?
-
-Мета-аннотации — аннотации, которые применяются к другим аннотациям. Все аннотации, не отмеченные `@Target` или отмеченные с константой ANNOTATION_TYPE, являются мета-аннотациями. Стандартные мета-аннотации: `@Retention`, `@Target`, `@Inherited`, `@Documented`, `@Repeatable`.
-
-Пример мета-аннотации:
-
-```java
-@Target(ElementType.ANNOTATION_TYPE)
+// Определение аннотации с полным набором мета-аннотаций
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SimpleAnnotation {
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Documented
+@Inherited
+public @interface Trackable {
+    String value() default "";
 }
 ```
 
-## Q10. Что такое `ElementType` и `Target`?
+Все аннотации, не имеющие `@Target` или с `@Target(ANNOTATION_TYPE)`, могут использоваться как мета-аннотации.
 
-`ElementType` — перечисление целей аннотации, определяющее, к каким элементам кода можно применить аннотацию. Основные значения: `TYPE` (класс, интерфейс, enum), `FIELD`, `METHOD`, `PARAMETER`, `CONSTRUCTOR`, LOCAL_VARIABLE, ANNOTATION_TYPE, `PACKAGE`, TYPE_PARAMETER, TYPE_USE (`Java` 8). `@Target` используется для ограничения применения аннотации к конкретным элементам. Можно указать несколько целей через массив.
+## Q8. (!) Что такое `RetentionPolicy` и как выбрать нужную?
 
-Примеры:
+`RetentionPolicy` определяет жизненный цикл аннотации:
+
+```mermaid
+graph LR
+    subgraph "SOURCE"
+        S1["Исходный код"] -->|"javac"| S2["Удалена"]
+    end
+    subgraph "CLASS"
+        C1["Исходный код"] -->|"javac"| C2[".class файл"]
+        C2 -->|"JVM загрузка"| C3["Не загружена"]
+    end
+    subgraph "RUNTIME"
+        R1["Исходный код"] -->|"javac"| R2[".class файл"]
+        R2 -->|"JVM загрузка"| R3["Доступна через Reflection"]
+    end
+```
+
+| `RetentionPolicy` | Где доступна | Примеры использования |
+|-------------------|-------------|----------------------|
+| `SOURCE` | Только исходный код | `@Override`, `@SuppressWarnings`, `Lombok`, `MapStruct` |
+| `CLASS` | Исходный код + `.class` файл | `AspectJ` bytecode weaving, анализ байт-кода |
+| `RUNTIME` | Исходный код + `.class` + JVM | `Spring`, `JPA`, `Jackson`, `Bean Validation` |
+
+Как выбрать:
+- **`SOURCE`** -- когда аннотация нужна только компилятору или `Annotation Processor` для генерации кода
+- **`CLASS`** -- когда нужна инструментация байт-кода, но не runtime-рефлексия (уменьшает memory footprint)
+- **`RUNTIME`** -- когда фреймворк читает аннотации через рефлексию во время выполнения
 
 ```java
-@Target(ElementType.METHOD) // Только методы
-public @interface MethodAnnotation {
+@Retention(RetentionPolicy.SOURCE)
+public @interface Generated {
+    // Удаляется после компиляции, не нагружает runtime
 }
 
-@Target({ElementType.METHOD, ElementType.FIELD}) // Методы и поля
-public @interface MultiTargetAnnotation {
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Transactional {
+    // Spring читает через рефлексию при создании прокси
 }
 ```
 
-## Q11. Что такое `@Target`(ANNOTATION_TYPE)?
+## Q9. Что такое `@Target` и `ElementType`?
 
-`@Target(ElementType.ANNOTATION_TYPE)` указывает, что аннотация применима только к другим аннотациям, то есть является мета-аннотацией. Стандартные мета-аннотации: `@Retention`, `@Target`, `@Inherited`, `@Documented`, `@Repeatable`. Используется для создания семейств связанных аннотаций или составных аннотаций, которые объединяют несколько мета-аннотаций.
+`@Target` ограничивает, к каким элементам программы применима аннотация. Значения `ElementType`:
 
-Пример мета-аннотации:
+| `ElementType` | Применяется к |
+|---------------|---------------|
+| `TYPE` | Класс, интерфейс, enum, record |
+| `FIELD` | Поле (включая enum-константы) |
+| `METHOD` | Метод |
+| `PARAMETER` | Параметр метода |
+| `CONSTRUCTOR` | Конструктор |
+| `LOCAL_VARIABLE` | Локальная переменная |
+| `ANNOTATION_TYPE` | Другая аннотация (мета-аннотация) |
+| `PACKAGE` | Пакет (через `package-info.java`) |
+| `TYPE_PARAMETER` | Параметр типа (`Java 8`) |
+| `TYPE_USE` | Использование типа (`Java 8`) |
+| `MODULE` | Модуль (`Java 9`) |
+| `RECORD_COMPONENT` | Компонент record (`Java 16`) |
 
 ```java
-@Target(ElementType.ANNOTATION_TYPE)
+@Target({ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidationAnnotation {
-    String message() default "";
-}
+public @interface Inject {}
 
-@ValidationAnnotation(message = "Email validation")
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Email {
-}
+// @Target({}) -- аннотация ни к чему не применима,
+// используется как тип-член в составных аннотациях
 ```
 
-## Q12. (!) Что такое `RetentionPolicy`?
+Если `@Target` не указан, аннотация применима ко всем элементам кроме `TYPE_PARAMETER` и `TYPE_USE`.
 
-`@Retention` и `RetentionPolicy` определяют, как можно получить аннотации. `RetentionPolicy.SOURCE` — аннотации видимы только во время компиляции, удаляются после компиляции, используются для информации компилятору. `RetentionPolicy.CLASS` — аннотации сохраняются в байт-коде, но недоступны в runtime, используются для инструментации и анализа байт-кода. `RetentionPolicy.RUNTIME` — аннотации доступны во время выполнения через рефлексию, используются для обработки в runtime (`Spring`, валидация).
+## Q10. Что такое `@Documented` и `@Inherited`?
 
-Выбор зависит от требований: `SOURCE` или `CLASS` для уменьшения размера кода, `RUNTIME` для обработки во время выполнения.
+`@Documented` указывает, что аннотация должна отображаться в `Javadoc`. Без неё аннотация не попадает в документацию. Рекомендуется для аннотаций, являющихся частью публичного API.
 
-Пример:
-
-```java
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Description {
-    String value();
-}
-
-// Получение через рефлексию:
-Description desc = AnnotatedClass.class.getAnnotation(Description.class);
-System.out.println(desc.value());
-```
-
-## Q13. Что такое `@Documented` и `@Inherited`?
-
-`@Documented` указывает, что аннотация должна попадать в `Javadoc` аннотированного элемента. Без `@Documented` аннотация не отображается в сгенерированной документации. Используется для аннотаций, важных для контракта `API` (например, `@Deprecated`).
-
-`@Inherited` указывает, что аннотация класса наследуется подклассами. Без `@Inherited` подкласс не "видит" аннотацию родителя через `getAnnotation()`. Наследуются только аннотации классов; методы и поля не наследуют аннотации. `@Inherited` не распространяется на интерфейсы.
-
-Пример:
+`@Inherited` указывает, что аннотация класса наследуется подклассами:
 
 ```java
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface InheritedAnnotation {
-}
-
-@InheritedAnnotation
-public class Parent {
-}
-
-public class Child extends Parent {
-    // Child.class.getAnnotation(InheritedAnnotation.class) вернёт аннотацию
-}
-```
-
-## Q14. Как использовать `RetentionPolicy.CLASS` для инструментации?
-
-`RetentionPolicy.CLASS` сохраняет аннотации в байт-коде, но они недоступны в runtime через рефлексию. Используется для инструментации (bytecode weaving) фреймворками типа `AspectJ`, анализа байт-кода инструментами, оптимизации без runtime `overhead`. `JVM` не загружает такие аннотации в runtime, что уменьшает использование памяти. Инструменты могут читать аннотации из байт-кода для модификации классов (добавление логирования, транзакций). Отличие от `SOURCE`: аннотации `CLASS` сохраняются в .class файлах, но не загружаются `JVM`.
-
-Пример использования:
-
-```java
-@Retention(RetentionPolicy.CLASS)
-@Target(ElementType.METHOD)
-public @interface Instrumented {
-    // Сохраняется в байт-коде для инструментации
-}
-
-@Instrumented // Может быть использована AspectJ для добавления логирования
-public void method() {
-}
-```
-
-## Q15. Что такое повторяющиеся `Annotations`?
-
-Повторяющиеся аннотации можно применять более одного раза к одному объявлению элемента. В `Java` 8+ они хранятся в аннотации-контейнере, автоматически создаваемой компилятором. Объявление выполняется в два этапа: сначала объявляется повторяемая аннотация с `@Repeatable(Container.class)`, затем контейнерная аннотация с обязательным элементом value() типа массива повторяемой аннотации.
-
-Пример:
-
-```java
-@Repeatable(Schedules.class)
-public @interface Schedule {
-    String time() default "morning";
-}
-
-public @interface Schedules {
-    Schedule[] value();
-}
-
-@Schedule
-@Schedule(time = "afternoon")
-@Schedule(time = "night")
-void scheduledMethod() {
-}
-```
-
-## Q16. Как получить повторяемые аннотации через `Reflection`?
-
-Для получения повторяемых аннотаций (`Java` 8+) используется `getAnnotationsByType(Class)`, который возвращает массив всех аннотаций указанного типа, включая повторяемые. Обычный `getAnnotation(Class)` вернёт `null` для повторяемых аннотаций, если они применены несколько раз. `getAnnotationsByType()` автоматически извлекает аннотации из контейнера, созданного компилятором. Также можно получить контейнерную аннотацию через `getAnnotation(Container.class)` и извлечь массив из её value().
-
-Пример получения:
-
-```java
-@Repeatable(Schedules.class)
-public @interface Schedule {
-    String time();
-}
-
-@Schedule(time = "morning")
-@Schedule(time = "evening")
-public void scheduledMethod() {
-}
-
-// Получение всех повторяемых аннотаций:
-Method method = MyClass.class.getMethod("scheduledMethod");
-Schedule[] schedules = method.getAnnotationsByType(Schedule.class);
-// schedules содержит обе аннотации: morning и evening
-
-// Альтернативно через контейнер:
-Schedules container = method.getAnnotation(Schedules.class);
-if (container != null) {
-    Schedule[] schedules2 = container.value();
-}
-```
-
-## Q17. Что такое составные аннотации (`Composed Annotations`)?
-
-Составная аннотация — аннотация, помеченная другими аннотациями (например, `@Service` = `@Component` + специфика). `Spring` и другие фреймворки объединяют мета-аннотации: при сканировании `@Service` считается подтипом `@Component`. Создание своей составной аннотации: `@MyAnnotation` с `@Component` и другими мета-аннотациями; при обработке проверять `getAnnotation(Component.class)` или `isAnnotationPresent()`. `Spring` использует `AnnotatedElementUtils` для поиска аннотаций с учётом мета-аннотаций.
-
-Пример:
-
-```java
-@Component
-@Scope("prototype")
-@Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface PrototypeComponent {
-    // Составная аннотация, объединяющая @Component и @Scope
-}
+public @interface Audited {}
 
-@PrototypeComponent // Эквивалентно @Component @Scope("prototype")
-public class MyService {
+@Audited
+public class BaseService {}
+
+public class UserService extends BaseService {
+    // UserService.class.getAnnotation(Audited.class) != null
+    // Аннотация унаследована от BaseService
 }
 ```
 
-## Q18. Как получить аннотации через `Reflection`?
+## Q11. Как `@Inherited` работает с интерфейсами и методами?
 
-Для получения аннотаций через `Reflection` используются методы: `Class.getAnnotation(Class)`, `getDeclaredAnnotation()`, `getAnnotations()` для аннотаций класса; `Method.getAnnotation()`, `Field.getAnnotation()` для аннотаций метода и поля; `Parameter.getAnnotation()` (`Java` 8) для аннотаций параметра. Аннотация должна иметь `@Retention`(`RetentionPolicy.RUNTIME`), иначе в runtime недоступна. `isAnnotationPresent()` проверяет наличие аннотации.
-
-Пример:
+`@Inherited` работает **только** с аннотациями на классах. Ограничения:
+- Аннотации на **интерфейсах** не наследуются реализующими классами
+- Аннотации на **методах** не наследуются переопределяющими методами
+- Аннотации на **полях** не наследуются
 
 ```java
+@Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface MyAnnotation {
-    String value();
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface Tracked {}
+
+@Tracked
+public interface Processable {}
+
+public class Processor implements Processable {
+    // Processor.class.getAnnotation(Tracked.class) == null!
+    // @Inherited НЕ работает с интерфейсами
 }
 
-@MyAnnotation("test")
-public class MyClass {
+public class Base {
+    @Tracked
+    public void execute() {}
 }
 
-// Получение аннотации:
-MyAnnotation annotation = MyClass.class.getAnnotation(MyAnnotation.class);
-if (annotation != null) {
-    System.out.println(annotation.value()); // "test"
-}
-```
-
-## Q19. Как обработать аннотации в runtime?
-
-Обработка аннотаций в runtime выполняется через `Reflection API`. Необходимо сканировать классы (например, по пакету), для каждого класса использовать `Class.getDeclaredMethods()`, `getAnnotation(MyAnnotation.class)`. Если аннотация найдена, выполнить логику (регистрация, вызов). `Spring` делает это при `Component Scan`; кастомная обработка — цикл по классам и методам с `getAnnotation()`. Учитывать наследование: `getAnnotation()` на классе возвращает унаследованные при `@Inherited`.
-
-Пример:
-
-```java
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ProcessMe {
-}
-
-@ProcessMe
-public class MyService {
-    public void doWork() {
-        System.out.println("Working...");
-    }
-}
-
-// Обработка:
-Class<?> clazz = MyService.class;
-if (clazz.isAnnotationPresent(ProcessMe.class)) {
-    Object instance = clazz.getDeclaredConstructor().newInstance();
-    // Выполнить логику обработки
-}
-```
-
-## Q20. Аннотации на параметрах методов (`Java` 8)?
-
-`ElementType.PARAMETER` позволяет применять аннотации к параметрам методов. Чтение выполняется через `Method.getParameters()` (`Java` 8), затем `Parameter.getAnnotation()`. Флаг `-parameters` при компиляции сохраняет имена параметров; иначе `parameter.getName()` может вернуть arg0, arg1 и т.д. Используется для валидации (`@NotNull`, `@Valid`), документирования, `dependency injection` (`Spring @RequestParam`, `@PathVariable`).
-
-Пример:
-
-```java
-public void method(@NotNull @Valid @RequestBody User user, 
-                   @RequestParam String name) {
-}
-
-// Получение аннотаций:
-Method method = MyClass.class.getMethod("method", User.class, String.class);
-Parameter[] parameters = method.getParameters();
-NotNull notNull = parameters[0].getAnnotation(NotNull.class);
-```
-
-## Q21. Как получить аннотации с полей и параметров?
-
-`Field.getAnnotation()`, `Field.getDeclaredAnnotations()` возвращают аннотации поля. `Method.getParameterAnnotations()` возвращает массив массивов аннотаций по параметрам (каждый элемент соответствует параметру). `Parameter.getAnnotation()` (`Java` 8) возвращает аннотацию конкретного параметра. Для вложенных аннотаций (например, `@Valid` внутри `@RequestBody`) требуется рекурсивный обход через `getDeclaredAnnotations()`.
-
-Пример:
-
-```java
-public class User {
-    @NotNull
-    @Size(min = 3)
-    private String username;
-}
-
-// Получение аннотаций поля:
-Field field = User.class.getDeclaredField("username");
-NotNull notNull = field.getAnnotation(NotNull.class);
-Annotation[] annotations = field.getDeclaredAnnotations();
-```
-
-## Q22. Как валидировать параметры аннотации?
-
-Ограничения задаются типами возвращаемых значений методов аннотации (примитивы, `String`, `Class`, enum, аннотация, массивы). Компилятор проверяет соответствие типов при применении. Сложная валидация выполняется в `Annotation Processor` во время компиляции или при чтении через рефлексию в runtime. `Bean Validation` (`@Valid`) — отдельный механизм; аннотации валидации обрабатываются валидатором (`Hibernate Validator`), а не вручную.
-
-Пример валидации в runtime:
-
-```java
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ValidRange {
-    int min() default 0;
-    int max() default 100;
-}
-
-// При обработке проверять:
-ValidRange annotation = field.getAnnotation(ValidRange.class);
-if (annotation.min() > annotation.max()) {
-    throw new IllegalArgumentException("Invalid range");
-}
-```
-
-## Q23. Как работают `Annotation Processors` с аннотациями `SOURCE`?
-
-`Annotation Processors` обрабатывают аннотации с `@Retention(RetentionPolicy.SOURCE)` во время компиляции. Компилятор вызывает процессоры для аннотаций, которые они поддерживают; процессоры могут генерировать код, создавать файлы, сообщать об ошибках. Аннотации `SOURCE` удаляются после компиляции и недоступны в runtime. Используются в `Lombok` (генерация геттеров, сеттеров), `MapStruct` (генерация мапперов), `Dagger` (генерация `DI` кода). Процессор регистрируется в `META-INF/services/javax.annotation.processing.Processor` (имя класса процессора в файле).
-
-Пример процессора:
-
-```java
-@SupportedAnnotationTypes("com.example.GenerateBuilder")
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
-public class BuilderProcessor extends AbstractProcessor {
+public class Child extends Base {
     @Override
-    public boolean process(Set<? extends TypeElement> annotations, 
-                          RoundEnvironment roundEnv) {
-        // Генерация кода на основе аннотаций
-        return true;
-    }
+    public void execute() {}
+    // Child.execute().getAnnotation(Tracked.class) == null!
+    // @Inherited НЕ работает с методами
 }
 ```
 
-## Q24. Как аннотации используются в `Spring`?
+`Spring` решает это через `AnnotatedElementUtils.findMergedAnnotation()`, который обходит иерархию типов вручную.
 
-`Spring` сканирует классы на аннотации `@Component`, `@Service`, `@Controller`, `@Repository` и регистрирует их как `Bean`'ы. `@Autowired`, `@Value` используются для инъекции зависимостей. `@RequestMapping`, `@GetMapping`, `@PostMapping` — для маппинга `URL`. `@Transactional`, `@Cacheable` — для декларативного управления транзакциями и кэшированием. Обработка выполняется через рефлексию и прокси; аннотации с `RUNTIME` retention читаются при старте контекста и при обработке запросов.
+## Q12. Что такое `TYPE_USE` и `TYPE_PARAMETER` (`Java 8`)?
 
-Пример:
-
-```java
-@Service
-public class UserService {
-    @Autowired
-    private UserRepository repository;
-
-    @Transactional
-    public User save(User user) {
-        return repository.save(user);
-    }
-}
-```
-
-## Q25. Аннотации и прокси (`Spring AOP`)?
-
-`Spring AOP` создаёт прокси для `Bean` с аннотированными методами (например, `@Transactional`, `@Cacheable`). При вызове метода проверяется наличие аннотации на методе или классе; применяется соответствующий совет (транзакция, кэш, логирование). Аннотации должны иметь `@Retention`(`RetentionPolicy.RUNTIME`); читаются при создании прокси (при старте контекста) и при инвокации метода. `Spring` использует `JDK` динамические прокси или `CGLIB` прокси в зависимости от интерфейсов.
-
-Пример:
+`TYPE_USE` позволяет аннотировать любое **использование типа**, а не только объявление. Это полезно для статических анализаторов (`Checker Framework`, `NullAway`) и инструментов верификации типов:
 
 ```java
-@Service
-public class UserService {
-    @Transactional // Создаётся прокси с транзакционным советом
-    public User save(User user) {
-        return repository.save(user);
-    }
-}
-```
-
-## Q26. Как аннотации используются в `Bean Validation`?
-
-`Bean Validation` использует аннотации для валидации данных: `@NotNull`, `@Size`, `@Email`, `@Min`, `@Max`, `@Pattern` и др. `@Valid` запускает валидацию вложенных объектов. Кастомные аннотации валидации создаются через `@Constraint` и реализацию `ConstraintValidator`. Валидация выполняется валидатором (например, `Hibernate Validator`) при вызове `Validator.validate()`, а не вручную через рефлексию. Аннотации валидации должны иметь `@Retention`(`RetentionPolicy.RUNTIME`).
-
-Пример:
-
-```java
-@Constraint(validatedBy = AgeValidator.class)
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE_USE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ValidAge {
-    String message() default "Invalid age";
-    Class<?>[] groups() default {};
-    Class<? extends Payload>[] payload() default {};
-    int min() default 0;
-    int max() default 150;
-}
+public @interface NonNull {}
 
-public class User {
-    @ValidAge(min = 18, max = 100)
-    private Integer age;
+// Аннотация на типе в разных контекстах:
+@NonNull String name;                         // тип поля
+List<@NonNull String> items;                  // аргумент типа
+Map<@NonNull String, @NonNull Integer> map;   // ключ и значение
+@NonNull String @NonNull [] array;            // тип массива и элемента
+```
+
+`TYPE_PARAMETER` аннотирует **объявление** параметра типа, подробнее в [вопросах по дженерикам](java-generics-interview.md):
+
+```java
+@Target(ElementType.TYPE_PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Immutable {}
+
+public class Container<@Immutable T> {
+    // Инструменты статического анализа могут проверить,
+    // что T используется только для immutable-типов
 }
 ```
 
-## Q27. Будет ли компилироваться следующий код?
+## Q13. (!) Что такое повторяемые аннотации (`@Repeatable`)?
 
-Нет, это ошибка компиляции, если одна и та же константа перечисления появляется более одного раза в аннотации `@Target`.
-
-Неправильно:
+Повторяемые аннотации (`Java 8+`) можно применять несколько раз к одному элементу. Реализация требует двух объявлений: повторяемая аннотация с `@Repeatable` и аннотация-контейнер:
 
 ```java
-@Target({ElementType.FIELD, ElementType.TYPE, ElementType.FIELD}) // Дубликат FIELD
-public @interface TestAnnotation {
-    int[] value() default {};
+@Repeatable(Schedules.class)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Schedule {
+    String cron();
+    String zone() default "UTC";
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Schedules {
+    Schedule[] value(); // обязательно value() типа массива
 }
 ```
 
-Правильно:
+Применение и чтение:
 
 ```java
-@Target({ElementType.FIELD, ElementType.TYPE})
-public @interface TestAnnotation {
-    int[] value() default {};
-}
+@Schedule(cron = "0 0 8 * * MON-FRI")
+@Schedule(cron = "0 0 12 * * SAT", zone = "Europe/Moscow")
+public void sendReport() {}
+
+// Чтение через Reflection:
+Method method = MyClass.class.getMethod("sendReport");
+
+// Вариант 1: getAnnotationsByType (рекомендуется)
+Schedule[] schedules = method.getAnnotationsByType(Schedule.class);
+
+// Вариант 2: через контейнер
+Schedules container = method.getAnnotation(Schedules.class);
+Schedule[] all = container.value();
 ```
 
-## Q28. Можно ли расширить `Annotations`?
+## Q14. Что такое составные (composed) аннотации?
 
-Нет. Аннотации всегда расширяют `java.lang.annotation.Annotation`, как указано в Спецификации языка `Java`. Аннотации не могут наследоваться от других аннотаций через ключевое слово `extends` — попытка использовать `extends` приведёт к ошибке компиляции.
-
-Альтернативные подходы: композиция аннотаций (включение одной аннотации как элемента другой) и мета-аннотации (создание семейства связанных аннотаций через общую мета-аннотацию).
-
-Пример композиции:
+Составная аннотация -- аннотация, помеченная другими аннотациями, объединяющая их семантику. `Spring` активно использует этот паттерн:
 
 ```java
+// @RestController = @Controller + @ResponseBody
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface BaseAnnotation {
-    String value() default "";
-}
+@Controller
+@ResponseBody
+public @interface RestController {}
 
+// Собственная составная аннотация:
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ExtendedAnnotation {
-    String value() default "";
-    BaseAnnotation base() default @BaseAnnotation; // Композиция
-}
+@Service
+@Transactional(readOnly = true)
+public @interface ReadOnlyService {}
 
-@ExtendedAnnotation(value = "test", base = @BaseAnnotation("base"))
-public class MyClass {
+@ReadOnlyService  // эквивалент @Service + @Transactional(readOnly = true)
+public class ReportService {
+    public List<Report> findAll() { ... }
 }
 ```
 
-Пример мета-аннотации:
+`Spring` использует `AnnotatedElementUtils` для поиска аннотаций с учётом мета-аннотаций. При `Component Scan` составная аннотация с `@Component` (или его подтипом) регистрирует бин.
+
+## Q15. Можно ли наследовать аннотации через `extends`?
+
+Нет. Аннотации всегда неявно расширяют `java.lang.annotation.Annotation`. Ключевое слово `extends` в объявлении аннотации вызывает ошибку компиляции.
+
+Альтернативы:
+1. **Композиция** -- одна аннотация включает другую как элемент
+2. **Мета-аннотации** -- общая мета-аннотация объединяет семейство
+3. **Составные аннотации** (Spring-стиль) -- мета-аннотирование с обходом через `AnnotatedElementUtils`
 
 ```java
-@Target(ElementType.ANNOTATION_TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ValidationAnnotation {
+// Композиция аннотаций:
+public @interface Validation {
     String message() default "";
 }
 
-@ValidationAnnotation(message = "Email validation")
-@Target(ElementType.FIELD)
+public @interface FieldCheck {
+    Validation validation() default @Validation;  // включение
+    int maxLength() default 255;
+}
+
+@FieldCheck(validation = @Validation(message = "Invalid"), maxLength = 100)
+private String name;
+```
+
+## Q16. (!) Как получить аннотации через `Reflection`?
+
+Для чтения аннотаций в runtime они должны иметь `@Retention(RetentionPolicy.RUNTIME)`. Основные методы `Reflection API`:
+
+```java
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Email {
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+public @interface Info {
+    String value();
+}
+
+@Info("user entity")
+public class User {
+    @Info("user name")
+    private String name;
+
+    @Info("display")
+    public String toString() { return name; }
+}
+
+// Чтение аннотации класса:
+Info classInfo = User.class.getAnnotation(Info.class);
+System.out.println(classInfo.value()); // "user entity"
+
+// Чтение аннотации поля:
+Field field = User.class.getDeclaredField("name");
+Info fieldInfo = field.getAnnotation(Info.class);
+
+// Чтение аннотации метода:
+Method method = User.class.getMethod("toString");
+boolean hasInfo = method.isAnnotationPresent(Info.class);
+
+// Все аннотации элемента:
+Annotation[] all = User.class.getAnnotations();          // включая @Inherited
+Annotation[] declared = User.class.getDeclaredAnnotations(); // только свои
+```
+
+## Q17. В чём разница между `getAnnotation()` и `getDeclaredAnnotation()`?
+
+| Метод | Учитывает `@Inherited` | Повторяемые |
+|-------|----------------------|-------------|
+| `getAnnotation(Class)` | Да | Нет (вернёт контейнер) |
+| `getDeclaredAnnotation(Class)` | Нет | Нет |
+| `getAnnotations()` | Да | Все (включая контейнеры) |
+| `getDeclaredAnnotations()` | Нет | Все (только собственные) |
+| `getAnnotationsByType(Class)` | Да | Да (разворачивает контейнер) |
+| `getDeclaredAnnotationsByType(Class)` | Нет | Да |
+
+```java
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Label { String value(); }
+
+@Label("base")
+public class Base {}
+public class Child extends Base {}
+
+Child.class.getAnnotation(Label.class);         // @Label("base") -- от Base
+Child.class.getDeclaredAnnotation(Label.class);  // null -- нет собственной
+```
+
+## Q18. Как сканировать аннотации по пакету в runtime?
+
+Стандартная `Java` не предоставляет API для сканирования classpath. Используются библиотеки:
+
+**`Spring` -- `ClassPathScanningCandidateComponentProvider`:**
+
+```java
+ClassPathScanningCandidateComponentProvider scanner =
+    new ClassPathScanningCandidateComponentProvider(false);
+scanner.addIncludeFilter(new AnnotationTypeFilter(MyAnnotation.class));
+
+Set<BeanDefinition> beans = scanner.findCandidateComponents("com.example");
+for (BeanDefinition bd : beans) {
+    Class<?> clazz = Class.forName(bd.getBeanClassName());
+    MyAnnotation ann = clazz.getAnnotation(MyAnnotation.class);
 }
 ```
 
-## Q29. Что такое `@SafeVarargs` и `@FunctionalInterface`?
-
-`@SafeVarargs` подавляет предупреждения о небезопасных операциях с varargs при использовании дженериков. Можно применять только к final методам, конструкторам и private static методам. Указывает, что метод безопасно обрабатывает varargs параметры без `heap` pollution. `@FunctionalInterface` указывает, что интерфейс является функциональным (содержит ровно один абстрактный метод); компилятор проверит это и выдаст ошибку, если условие не выполнено. Позволяет использовать лямбда-выражения для реализации интерфейса.
-
-Пример:
+**`Reflections` (библиотека):**
 
 ```java
-@SafeVarargs
-public final <T> void process(T... items) {
-    // Обработка varargs без предупреждений
-}
+Reflections reflections = new Reflections("com.example");
+Set<Class<?>> annotated = reflections.getTypesAnnotatedWith(MyAnnotation.class);
+```
 
-@FunctionalInterface
-public interface Calculator {
-    int calculate(int a, int b);
-    // Компилятор проверит наличие ровно одного абстрактного метода
+**`ClassGraph` (более современная альтернатива):**
+
+```java
+try (ScanResult result = new ClassGraph()
+        .acceptPackages("com.example")
+        .enableAnnotationInfo()
+        .scan()) {
+    ClassInfoList classes = result.getClassesWithAnnotation(MyAnnotation.class);
 }
 ```
 
-## Q30. Best practices при создании кастомных аннотаций?
+## Q19. Как получить аннотации параметров метода?
 
-Именование: существительное или прилагательное (`@Transactional`, `@Cacheable`). Минимум полей; value для единственного атрибута. `@Documented` для `API`-аннотаций, важных для контракта. `@Retention`(`RUNTIME`) для обработки в runtime; `CLASS` или `SOURCE` для процессоров. Документировать семантику и контракт аннотации. Не дублировать стандартные или фреймворковые аннотации. Использовать осмысленные значения по умолчанию. Группировать связанные аннотации через мета-аннотации. Указывать `@Target` для ограничения применения. Проверять валидность значений атрибутов при обработке.
-
-Пример:
+Начиная с [Java 8](java-8-interview.md), API `Parameter` позволяет работать с аннотациями параметров. Флаг компиляции `-parameters` сохраняет имена параметров.
 
 ```java
-@Documented
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface LogExecution {
-    /**
-     * Уровень логирования
-     * @return уровень логирования
-     */
-    LogLevel level() default LogLevel.INFO;
+public void process(@NotNull @Valid User user,
+                    @RequestParam("q") String query) {}
 
-    boolean logParameters() default true;
+Method method = getClass().getMethod("process", User.class, String.class);
+Parameter[] params = method.getParameters();
 
-    enum LogLevel {
-        DEBUG, INFO, WARN, ERROR
+for (Parameter param : params) {
+    System.out.println(param.getName()); // "user", "query" (с -parameters)
+    Annotation[] annotations = param.getAnnotations();
+    NotNull nn = param.getAnnotation(NotNull.class);
+}
+
+// Альтернативный способ (до Java 8):
+Annotation[][] paramAnnotations = method.getParameterAnnotations();
+// paramAnnotations[0] -- аннотации первого параметра
+// paramAnnotations[1] -- аннотации второго параметра
+```
+
+## Q20. Как работает `AnnotatedElement` API?
+
+`AnnotatedElement` -- корневой интерфейс для всех элементов, поддерживающих аннотации. Его реализуют `Class`, `Method`, `Field`, `Constructor`, `Parameter`, `Package`.
+
+```mermaid
+graph TD
+    AE["AnnotatedElement<br/>(interface)"] --> CL["Class"]
+    AE --> ME["Method"]
+    AE --> FI["Field"]
+    AE --> CO["Constructor"]
+    AE --> PA["Parameter"]
+    AE --> PK["Package"]
+    AE --> AM["AccessibleObject"]
+```
+
+Ключевые методы:
+
+```java
+// Общий подход для любого AnnotatedElement:
+public <T extends Annotation> void inspect(AnnotatedElement element) {
+    // Проверка наличия
+    if (element.isAnnotationPresent(MyAnnotation.class)) {
+        // Получение одной аннотации
+        MyAnnotation ann = element.getAnnotation(MyAnnotation.class);
+
+        // Все аннотации
+        Annotation[] all = element.getAnnotations();
+
+        // Повторяемые аннотации
+        MyAnnotation[] repeated = element.getAnnotationsByType(MyAnnotation.class);
+    }
+}
+
+// Вызов для разных элементов:
+inspect(User.class);                              // класс
+inspect(User.class.getDeclaredField("name"));     // поле
+inspect(User.class.getMethod("toString"));        // метод
+```
+
+## Q21. (!) Что такое `Annotation Processor` и как он работает?
+
+`Annotation Processor` -- механизм обработки аннотаций на этапе компиляции. Компилятор `javac` вызывает зарегистрированные процессоры для аннотаций, которые они поддерживают. Процессоры могут **генерировать новый код**, **создавать файлы** и **сообщать об ошибках компиляции**.
+
+```mermaid
+graph LR
+    A["Исходный код<br/>с аннотациями"] --> B["javac"]
+    B --> C{"Annotation<br/>Processors"}
+    C -->|"Раунд 1"| D["Генерация<br/>новых файлов"]
+    D -->|"Новые файлы<br/>тоже компилируются"| C
+    C -->|"Раунд N<br/>(нет новых файлов)"| E["Финальный<br/>раунд"]
+    E --> F[".class файлы"]
+```
+
+Ключевые компоненты API (пакет `javax.annotation.processing`):
+
+| Компонент | Назначение |
+|-----------|-----------|
+| `AbstractProcessor` | Базовый класс для процессоров |
+| `RoundEnvironment` | Доступ к элементам текущего раунда |
+| `ProcessingEnvironment` | Утилиты: `Filer`, `Messager`, `Elements`, `Types` |
+| `Filer` | Создание новых файлов (исходный код, ресурсы) |
+| `Messager` | Сообщения компиляции (ошибки, предупреждения) |
+
+## Q22. (!) Как написать собственный `Annotation Processor`?
+
+Шаг 1 -- объявить аннотацию:
+
+```java
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.TYPE)
+public @interface GenerateBuilder {}
+```
+
+Шаг 2 -- реализовать процессор:
+
+```java
+@SupportedAnnotationTypes("com.example.GenerateBuilder")
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
+public class BuilderProcessor extends AbstractProcessor {
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations,
+                           RoundEnvironment roundEnv) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateBuilder.class)) {
+            if (element.getKind() != ElementKind.CLASS) {
+                processingEnv.getMessager().printMessage(
+                    Diagnostic.Kind.ERROR,
+                    "@GenerateBuilder applicable only to classes",
+                    element
+                );
+                continue;
+            }
+
+            TypeElement typeElement = (TypeElement) element;
+            String className = typeElement.getSimpleName() + "Builder";
+            String packageName = processingEnv.getElementUtils()
+                .getPackageOf(typeElement).getQualifiedName().toString();
+
+            try {
+                JavaFileObject file = processingEnv.getFiler()
+                    .createSourceFile(packageName + "." + className);
+                try (Writer writer = file.openWriter()) {
+                    writer.write(generateBuilderCode(typeElement, className, packageName));
+                }
+            } catch (IOException e) {
+                processingEnv.getMessager().printMessage(
+                    Diagnostic.Kind.ERROR, e.getMessage(), element);
+            }
+        }
+        return true; // true = аннотация обработана, другие процессоры не нужны
     }
 }
 ```
 
+## Q23. Что такое раунды обработки (`processing rounds`)?
+
+Компиляция с `Annotation Processing` происходит в **раундах**. Каждый раунд:
+1. Компилятор находит аннотации в исходных файлах
+2. Вызывает подходящие процессоры
+3. Если процессоры сгенерировали **новые** файлы -- начинается новый раунд
+4. Финальный раунд наступает, когда новых файлов не создано
+
+```java
+@Override
+public boolean process(Set<? extends TypeElement> annotations,
+                       RoundEnvironment roundEnv) {
+    if (roundEnv.processingOver()) {
+        // Финальный раунд -- очистка, финализация
+        return false;
+    }
+
+    if (roundEnv.errorRaised()) {
+        // В предыдущем раунде были ошибки
+        return false;
+    }
+
+    // Обработка элементов текущего раунда
+    Set<? extends Element> elements =
+        roundEnv.getElementsAnnotatedWith(MyAnnotation.class);
+
+    // Генерация файлов (запустит новый раунд)
+    for (Element element : elements) {
+        generateCode(element);
+    }
+
+    return true;
+}
+```
+
+## Q24. Как зарегистрировать `Annotation Processor`?
+
+Есть два способа регистрации:
+
+**Способ 1 -- файл `META-INF/services` (стандартный SPI):**
+
+Создать файл `META-INF/services/javax.annotation.processing.Processor` с полным именем класса процессора:
+
+```
+com.example.processor.BuilderProcessor
+com.example.processor.ValidatorProcessor
+```
+
+**Способ 2 -- `@AutoService` от Google (рекомендуется):**
+
+```java
+@AutoService(Processor.class)
+@SupportedAnnotationTypes("com.example.GenerateBuilder")
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
+public class BuilderProcessor extends AbstractProcessor {
+    // ...
+}
+```
+
+`@AutoService` сам генерирует файл `META-INF/services` через собственный `Annotation Processor`.
+
+**В Gradle:**
+
+```groovy
+dependencies {
+    annotationProcessor 'com.example:my-processor:1.0'
+    // или для Kotlin:
+    kapt 'com.example:my-processor:1.0'
+}
+```
+
+## Q25. Какие ограничения есть у `Annotation Processing API`?
+
+Ключевые ограничения:
+
+1. **Нельзя модифицировать существующие файлы** -- только генерировать новые. Это принципиальное ограничение API
+2. **Нельзя удалять файлы** -- только создавать
+3. `Lombok` обходит это ограничение, напрямую манипулируя AST через internal API (`com.sun.tools.javac`), что делает его "хаком"
+4. Процессор не может зависеть от кода, который он сам генерирует
+5. Порядок вызова процессоров не гарантирован
+
+```java
+// Процессор может:
+processingEnv.getFiler().createSourceFile("com.example.Generated");   // OK
+processingEnv.getFiler().createResource(                              // OK
+    StandardLocation.CLASS_OUTPUT, "", "META-INF/config.properties");
+processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "!");  // OK
+
+// Процессор НЕ может:
+// - Изменить User.java (исходный файл)
+// - Добавить метод в существующий класс
+// - Удалить сгенерированный файл
+```
+
+## Q26. Какие фреймворки используют `Annotation Processing`?
+
+| Фреймворк | Аннотация | Что генерирует |
+|-----------|-----------|----------------|
+| `Lombok` | `@Getter`, `@Setter`, `@Builder` | Геттеры, сеттеры, билдеры (через AST-хак) |
+| `MapStruct` | `@Mapper` | Реализации мапперов |
+| `Dagger 2` | `@Inject`, `@Component` | DI-контейнер |
+| `AutoValue` (Google) | `@AutoValue` | Immutable value-классы |
+| `Immutables` | `@Value.Immutable` | Immutable-объекты с билдерами |
+| `QueryDSL` | JPA-аннотации | Q-классы для типобезопасных запросов |
+| `Micronaut` | `@Controller`, `@Inject` | DI и маршрутизация без рефлексии |
+| `JPA Metamodel` | `@Entity` | Метамодель для `Criteria API` |
+
+`Micronaut` и `Quarkus` используют `Annotation Processing` вместо runtime-рефлексии, что обеспечивает быстрый старт и низкое потребление памяти (важно для cloud-native и GraalVM).
+
+## Q27. (!) Как аннотации используются в `Spring`?
+
+`Spring` построен на аннотациях с `RetentionPolicy.RUNTIME`. При старте контекста `Spring` сканирует classpath и читает аннотации через рефлексию.
+
+```mermaid
+graph TD
+    A["@ComponentScan"] --> B["Classpath scanning"]
+    B --> C{"Найден @Component<br/>@Service / @Repository<br/>@Controller?"}
+    C -->|Да| D["Создать BeanDefinition"]
+    D --> E["Instantiate bean"]
+    E --> F{"Есть @Autowired<br/>@Value?"}
+    F -->|Да| G["Inject dependencies"]
+    G --> H{"Есть @Transactional<br/>@Cacheable<br/>@Async?"}
+    H -->|Да| I["Создать Proxy<br/>(JDK / CGLIB)"]
+    I --> J["Bean готов"]
+    H -->|Нет| J
+```
+
+Основные категории аннотаций в `Spring`:
+
+```java
+// Стереотипы (регистрация бинов):
+@Component, @Service, @Repository, @Controller, @RestController, @Configuration
+
+// Инъекция зависимостей:
+@Autowired, @Value, @Qualifier, @Primary, @Lazy
+
+// Веб:
+@RequestMapping, @GetMapping, @PostMapping, @PathVariable, @RequestParam
+
+// AOP и декларативное поведение:
+@Transactional, @Cacheable, @Async, @Scheduled, @EventListener
+
+// Конфигурация:
+@Bean, @Scope, @Profile, @Conditional, @EnableAutoConfiguration
+```
+
+## Q28. Как `Spring AOP` использует аннотации и прокси?
+
+`Spring AOP` создаёт **прокси** для бинов с аннотациями вроде `@Transactional`, `@Cacheable`, `@Async`. При вызове метода прокси перехватывает вызов и применяет нужное поведение.
+
+```java
+@Service
+public class OrderService {
+    @Transactional  // Spring создаст прокси
+    public Order placeOrder(Order order) {
+        // Прокси: BEGIN TRANSACTION
+        Order saved = repository.save(order);
+        // Прокси: COMMIT (или ROLLBACK при исключении)
+        return saved;
+    }
+
+    public void internalCall() {
+        placeOrder(new Order()); // ВНИМАНИЕ: прокси НЕ сработает!
+        // Вызов через this обходит прокси
+    }
+}
+```
+
+Важные нюансы:
+- `Spring` использует **JDK Dynamic Proxy** (для интерфейсов) или **CGLIB** (для классов)
+- **Self-invocation** (вызов аннотированного метода через `this`) обходит прокси -- аннотация не сработает
+- Аннотации должны иметь `RUNTIME` retention
+- `@Transactional` на `private` методе игнорируется (CGLIB не может перехватить)
+
+## Q29. (!) Как создать собственную аннотацию для `Spring AOP`?
+
+Создание кастомной AOP-аннотации для логирования времени выполнения:
+
+```java
+// Шаг 1: Объявить аннотацию
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface LogExecutionTime {
+    String label() default "";
+}
+
+// Шаг 2: Реализовать аспект
+@Aspect
+@Component
+public class LogExecutionTimeAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(LogExecutionTimeAspect.class);
+
+    @Around("@annotation(logExecutionTime)")
+    public Object logTime(ProceedingJoinPoint joinPoint,
+                          LogExecutionTime logExecutionTime) throws Throwable {
+        String label = logExecutionTime.label().isEmpty()
+            ? joinPoint.getSignature().getName()
+            : logExecutionTime.label();
+
+        long start = System.currentTimeMillis();
+        try {
+            return joinPoint.proceed();
+        } finally {
+            long elapsed = System.currentTimeMillis() - start;
+            log.info("{} executed in {} ms", label, elapsed);
+        }
+    }
+}
+
+// Шаг 3: Использовать
+@Service
+public class ReportService {
+    @LogExecutionTime(label = "generate-report")
+    public Report generate(ReportRequest request) {
+        // бизнес-логика
+    }
+}
+```
+
+## Q30. (!) Как аннотации используются в `Bean Validation`?
+
+`Bean Validation` (JSR 380, `Hibernate Validator`) -- стандарт декларативной валидации через аннотации. Все аннотации валидации имеют `RUNTIME` retention.
+
+Стандартные аннотации:
+
+| Аннотация | Проверяет |
+|-----------|----------|
+| `@NotNull` | Не null |
+| `@NotEmpty` | Не null и не пустой |
+| `@NotBlank` | Не null, не пустой, не пробелы |
+| `@Size(min, max)` | Размер коллекции/строки |
+| `@Min`, `@Max` | Числовые границы |
+| `@Email` | Формат email |
+| `@Pattern(regexp)` | Соответствие регулярному выражению |
+| `@Past`, `@Future` | Дата в прошлом / будущем |
+| `@Valid` | Каскадная валидация вложенных объектов |
+
+```java
+public class CreateUserRequest {
+    @NotBlank(message = "Имя обязательно")
+    @Size(min = 2, max = 50, message = "Имя от 2 до 50 символов")
+    private String name;
+
+    @Email(message = "Некорректный email")
+    private String email;
+
+    @Min(value = 18, message = "Минимальный возраст 18")
+    private int age;
+
+    @Valid  // каскадная валидация
+    @NotNull
+    private Address address;
+}
+```
+
+## Q31. Как создать кастомный валидатор с `@Constraint`?
+
+Для создания кастомной валидационной аннотации нужно:
+1. Объявить аннотацию с `@Constraint(validatedBy = ...)`
+2. Реализовать `ConstraintValidator<A, T>`
+
+```java
+// Аннотация:
+@Constraint(validatedBy = PhoneNumberValidator.class)
+@Target({ElementType.FIELD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface ValidPhone {
+    String message() default "Некорректный номер телефона";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+    String region() default "RU";
+}
+
+// Валидатор:
+public class PhoneNumberValidator implements ConstraintValidator<ValidPhone, String> {
+
+    private String region;
+
+    @Override
+    public void initialize(ValidPhone annotation) {
+        this.region = annotation.region();
+    }
+
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext context) {
+        if (value == null) return true; // null проверяется через @NotNull
+        return switch (region) {
+            case "RU" -> value.matches("\\+7\\d{10}");
+            case "US" -> value.matches("\\+1\\d{10}");
+            default -> false;
+        };
+    }
+}
+
+// Использование:
+public class ContactForm {
+    @ValidPhone(region = "RU")
+    private String phone;
+}
+```
+
+Обязательные элементы аннотации для `Bean Validation`: `message()`, `groups()`, `payload()`.
+
+## Q32. Как аннотации используются в `Jackson`?
+
+`Jackson` использует аннотации для управления сериализацией/десериализацией JSON:
+
+```java
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+public class UserDto {
+
+    @JsonProperty("user_id")
+    private Long id;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String middleName;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate birthDate;
+
+    @JsonIgnore
+    private String internalCode;
+
+    @JsonCreator
+    public UserDto(@JsonProperty("user_id") Long id,
+                   @JsonProperty("name") String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+```
+
+Ключевые аннотации `Jackson`:
+
+| Аннотация | Назначение |
+|-----------|-----------|
+| `@JsonProperty` | Имя поля в JSON |
+| `@JsonIgnore` | Исключить поле |
+| `@JsonIgnoreProperties` | Игнорировать неизвестные поля |
+| `@JsonFormat` | Формат даты/числа |
+| `@JsonCreator` | Конструктор для десериализации |
+| `@JsonInclude` | Условие включения поля |
+| `@JsonNaming` | Стратегия именования |
+| `@JsonSerialize` / `@JsonDeserialize` | Кастомные сериализаторы |
+
+## Q33. Как аннотации используются в `JPA`/`Hibernate`?
+
+`JPA` аннотации маппят Java-классы на таблицы БД. `Hibernate` как реализация `JPA` дополнительно предоставляет свои аннотации:
+
+```java
+@Entity
+@Table(name = "orders", indexes = {
+    @Index(name = "idx_order_status", columnList = "status"),
+    @Index(name = "idx_order_date", columnList = "created_at")
+})
+@NamedQuery(name = "Order.findByStatus",
+            query = "SELECT o FROM Order o WHERE o.status = :status")
+public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Version  // Optimistic locking
+    private Long version;
+}
+```
+
+Все `JPA` аннотации имеют `RUNTIME` retention -- `Hibernate` читает их при старте `EntityManagerFactory` через рефлексию.
+
+## Q34. Что такое `@SafeVarargs` и `@FunctionalInterface`?
+
+`@SafeVarargs` подавляет предупреждения о **heap pollution** при использовании varargs с [дженериками](java-generics-interview.md). Применяется только к `final`, `static` или `private` методам и конструкторам:
+
+```java
+@SafeVarargs
+public static <T> List<T> listOf(T... elements) {
+    return Arrays.asList(elements);
+}
+
+// Без @SafeVarargs компилятор выдаст предупреждение:
+// "Possible heap pollution from parameterized vararg type"
+```
+
+`@FunctionalInterface` гарантирует, что интерфейс содержит ровно один абстрактный метод (подробнее в [вопросах по Java 8](java-8-interview.md)):
+
+```java
+@FunctionalInterface
+public interface Transformer<T, R> {
+    R transform(T input);
+
+    // default и static методы не нарушают контракт:
+    default <V> Transformer<T, V> andThen(Transformer<R, V> after) {
+        return input -> after.transform(this.transform(input));
+    }
+
+    static <T> Transformer<T, T> identity() {
+        return input -> input;
+    }
+
+    // Второй абстрактный метод = ОШИБКА КОМПИЛЯЦИИ
+}
+```
+
+## Q35. Будет ли компилироваться аннотация с дубликатами в `@Target`?
+
+Нет. Дублирование константы `ElementType` в `@Target` вызывает ошибку компиляции:
+
+```java
+// ОШИБКА: duplicate element ElementType.FIELD
+@Target({ElementType.FIELD, ElementType.TYPE, ElementType.FIELD})
+public @interface Broken {}
+
+// Правильно:
+@Target({ElementType.FIELD, ElementType.TYPE})
+public @interface Correct {}
+```
+
+## Q36. (!) Best practices при создании кастомных аннотаций?
+
+1. **Всегда указывайте `@Retention`** -- по умолчанию `CLASS`, что обычно не то, что нужно
+2. **Всегда указывайте `@Target`** -- ограничивает область применения и улучшает ошибки компиляции
+3. **Добавляйте `@Documented`** для публичных API-аннотаций
+4. **Используйте `value()`** для основного атрибута -- позволяет краткую запись
+5. **Задавайте `default`** для необязательных атрибутов
+6. **Именование**: существительное или прилагательное (`@Transactional`, `@Cacheable`, `@Audited`)
+7. **Не дублируйте** стандартные или фреймворковые аннотации
+8. **Группируйте** связанные аннотации через составные (composed) аннотации
+9. **Валидируйте** значения атрибутов в процессоре или при чтении через рефлексию
+10. **Документируйте** семантику и контракт в Javadoc
+
+```java
+/**
+ * Кэширует результат метода на указанное время.
+ * Применяется к public-методам бинов Spring.
+ * Self-invocation не поддерживается (вызов через this обходит прокси).
+ */
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface CacheResult {
+    /** Имя кэша */
+    String value();
+    /** Время жизни в секундах */
+    int ttl() default 300;
+    /** Кэшировать ли null-результаты */
+    boolean cacheNull() default false;
+}
+```
+
+## Q37. Как аннотации влияют на производительность?
+
+Аннотации с `RetentionPolicy.SOURCE` и `CLASS` не влияют на runtime-производительность -- они не загружаются JVM.
+
+Аннотации с `RUNTIME` retention:
+- **Хранение** -- незначительный overhead: метаданные загружаются в `PermGen`/`Metaspace` вместе с классом
+- **Чтение** -- рефлексия медленнее прямого вызова, но результат обычно кэшируется фреймворками
+- **`Spring`** -- читает аннотации **при старте** контекста, не при каждом запросе
+- **`JPA`** -- маппинг строится один раз при создании `EntityManagerFactory`
+- **`Jackson`** -- `AnnotationIntrospector` кэширует результаты для каждого типа
+
+```java
+// Spring кэширует метаданные аннотаций:
+// BeanDefinition создаётся один раз при component scan
+// TransactionInterceptor кэширует TransactionAttribute
+
+// Если нужна максимальная производительность:
+// 1. Используйте Annotation Processing вместо рефлексии (Micronaut, Quarkus)
+// 2. Кэшируйте результаты рефлексии, если обрабатываете аннотации вручную
+
+// Пример кэширования:
+private static final Map<Method, MyAnnotation> CACHE = new ConcurrentHashMap<>();
+
+public MyAnnotation getAnnotation(Method method) {
+    return CACHE.computeIfAbsent(method,
+        m -> m.getAnnotation(MyAnnotation.class));
+}
+```
+
+Для GraalVM native image рефлексия аннотаций требует явной конфигурации в `reflect-config.json`, поэтому фреймворки `Micronaut` и `Quarkus` предпочитают compile-time annotation processing.
+
+---
+
+## Q38. Как работает APT (Annotation Processing Tool) и каковы фазы javac?
+
+**APT** (Annotation Processing Tool) — механизм компилятора `javac`, позволяющий запускать пользовательский код во время компиляции. Процессоры читают аннотации в исходном коде и могут генерировать новые исходники, ресурсы или сообщения об ошибках.
+
+**Фазы компиляции javac с APT:**
+
+```
+1. Парсинг .java → AST (Abstract Syntax Tree)
+2. Annotation Processing Round 1:
+   - Процессоры получают RoundEnvironment
+   - Анализируют аннотированные элементы
+   - Генерируют новые .java или .class файлы
+3. Если сгенерированы новые файлы → Round 2 (повторить)
+4. ...последний round: процессоры вызываются с isLastRound() == true
+5. Финальная компиляция всех исходников (в т.ч. сгенерированных)
+```
+
+**Реализация AbstractProcessor:**
+```java
+@SupportedAnnotationTypes("com.example.MyAnnotation")
+@SupportedSourceVersion(SourceVersion.RELEASE_21)
+@AutoService(Processor.class)  // google/auto для авторегистрации
+public class MyAnnotationProcessor extends AbstractProcessor {
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations,
+                           RoundEnvironment roundEnv) {
+        for (Element element : roundEnv.getElementsAnnotatedWith(MyAnnotation.class)) {
+            // element — аннотированный класс/метод/поле
+            TypeElement typeElement = (TypeElement) element;
+            String className = typeElement.getSimpleName().toString();
+
+            // Генерация нового файла
+            try {
+                JavaFileObject file = processingEnv.getFiler()
+                    .createSourceFile("Generated" + className);
+                try (PrintWriter writer = new PrintWriter(file.openWriter())) {
+                    writer.println("public class Generated" + className + " {}");
+                }
+            } catch (IOException e) {
+                processingEnv.getMessager()
+                    .printMessage(Diagnostic.Kind.ERROR, e.getMessage(), element);
+            }
+        }
+        return true; // аннотации "claimed" — другие процессоры не получат
+    }
+}
+```
+
+**Ключевые API:**
+- `ProcessingEnvironment` — доступ к `Filer` (генерация файлов), `Messager` (диагностика), `Elements`/`Types` (модель типов)
+- `RoundEnvironment` — элементы, помеченные аннотациями в текущем раунде
+- `Element` — абстракция исходного кода (классы, методы, поля, пакеты)
+- `TypeMirror` — представление типа на этапе компиляции
+
+**Регистрация процессора:**
+```
+resources/META-INF/services/javax.annotation.processing.Processor
+→ com.example.MyAnnotationProcessor
+```
+
+---
+
+## Q39. Как Lombok использует APT и какие подводные камни при работе с Kotlin?
+
+**Lombok** — библиотека, использующая APT для модификации AST (дерева синтаксического разбора) во время компиляции. В отличие от большинства процессоров, Lombok **модифицирует существующий AST**, а не генерирует новые файлы.
+
+**Как Lombok обходит ограничения APT:**
+
+Стандартный APT не позволяет модифицировать существующий AST (только создавать новые файлы). Lombok использует **хак через `com.sun.tools.javac` internal API** — он напрямую изменяет AST javac:
+
+```java
+// Lombok делает примерно это внутри:
+// 1. Получает JCTree (AST) для класса
+// 2. Добавляет синтетические методы (getters, setters, toString, etc.)
+// 3. AST модифицирован → javac продолжает компиляцию с новым содержимым
+```
+
+**Проблемы с Kotlin:**
+
+1. **KAPT (Kotlin Annotation Processing)**: Kotlin компилирует код в заглушки Java перед APT. Lombok-аннотации на Kotlin-классах **не работают** — KAPT не может видеть сгенерированные Lombok-методы в заглушках.
+
+```kotlin
+// НЕ работает:
+@Data  // Lombok
+class User(val name: String)
+
+// Kotlin data class сам генерирует equals/hashCode/toString/copy — используйте их
+data class User(val name: String)
+```
+
+2. **Interop Java → Kotlin**: Java-класс с `@Data` → Kotlin видит lombok-геттеры, но `val` Kotlin-свойство не биндится автоматически к Lombok-геттеру без `-Xlint:` конфигурации.
+
+3. **KSP vs KAPT**: KSP работает напрямую с Kotlin AST и не имеет описанных проблем с Lombok. При переходе на KSP Lombok-интеграция ещё менее стабильна.
+
+**Рекомендация:** в Kotlin-проектах не использовать Lombok — data class, `@JvmField`, `@JvmStatic` решают те же задачи нативно.
+
+---
+
+## Q40. Как MapStruct генерирует маппинги через APT?
+
+**MapStruct** — библиотека маппинга объектов, которая через APT генерирует **чистый Java-код** (без рефлексии) для преобразования между типами.
+
+**Аннотации MapStruct:**
+
+```java
+// Интерфейс-маппер
+@Mapper(componentModel = "spring")  // Spring @Component
+public interface UserMapper {
+
+    @Mapping(source = "firstName", target = "name")
+    @Mapping(source = "address.city", target = "city")
+    @Mapping(target = "createdAt", expression = "java(LocalDateTime.now())")
+    @Mapping(target = "passwordHash", ignore = true)
+    UserDto toDto(User user);
+
+    @InheritInverseConfiguration  // Автоматически перевернуть маппинг
+    User toEntity(UserDto dto);
+
+    List<UserDto> toDtoList(List<User> users);
+}
+```
+
+**Что генерирует APT:**
+
+```java
+// Сгенерированный класс (в target/generated-sources):
+@Component
+public class UserMapperImpl implements UserMapper {
+
+    @Override
+    public UserDto toDto(User user) {
+        if (user == null) return null;
+
+        UserDto dto = new UserDto();
+        dto.setName(user.getFirstName());            // @Mapping source→target
+        dto.setCity(user.getAddress().getCity());    // nested access
+        dto.setCreatedAt(LocalDateTime.now());        // expression
+        // passwordHash — ignore
+        return dto;
+    }
+
+    @Override
+    public User toEntity(UserDto dto) { ... }       // @InheritInverseConfiguration
+}
+```
+
+**Полезные аннотации:**
+- `@Mapper(uses = {OtherMapper.class})` — композиция маппинов
+- `@BeanMapping(nullValuePropertyMappingStrategy = IGNORE)` — пропускать null при patch
+- `@MappingTarget` — обновить существующий объект (для PATCH)
+- `@AfterMapping` / `@BeforeMapping` — хуки для кастомной логики
+
+```java
+@AfterMapping
+default void setDefaults(@MappingTarget UserDto dto) {
+    if (dto.getRole() == null) dto.setRole("USER");
+}
+```
+
+**Преимущество перед ModelMapper/Dozer:** нет рефлексии в рантайме → нет overhead, ошибки обнаруживаются при компиляции.
+
+---
+
+## Q41. Что такое KSP (Kotlin Symbol Processing) и чем лучше KAPT?
+
+**KSP** (Kotlin Symbol Processing) — официальная альтернатива KAPT для обработки аннотаций в Kotlin. Разработана JetBrains, доступна с Kotlin 1.5+.
+
+**Проблемы KAPT:**
+
+```
+Kotlin → (KAPT stubs) → Java stubs → APT (Java annotation processors) → Generated Java
+```
+- Генерирует заглушки Java для всего Kotlin-кода — **медленно**
+- До 2x замедление компиляции на больших проектах
+- Не понимает Kotlin-специфичные конструкции (extension functions, inline classes)
+
+**KSP-подход:**
+
+```
+Kotlin → KSP (Kotlin IR) → Generated Kotlin/Java
+```
+- Работает напрямую с Kotlin AST — нет Java-заглушек
+- **В 2-4 раза быстрее** KAPT
+- Нативная поддержка Kotlin: suspend functions, value class, sealed class, etc.
+
+**API KSP:**
+```kotlin
+// KSP-процессор
+class MyProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
+
+    override fun process(resolver: Resolver): List<KSAnnotated> {
+        val symbols = resolver.getSymbolsWithAnnotation("com.example.MyAnnotation")
+            .filterIsInstance<KSClassDeclaration>()
+
+        symbols.forEach { classDecl ->
+            val className = classDecl.simpleName.asString()
+            logger.info("Processing: $className")
+
+            // Генерация файла
+            val file = codeGenerator.createNewFile(
+                Dependencies(false, classDecl.containingFile!!),
+                classDecl.packageName.asString(),
+                "Generated$className"
+            )
+            file.writer().use { writer ->
+                writer.write("class Generated$className")
+            }
+        }
+        return emptyList() // отложенные символы — те, что нельзя обработать сейчас
+    }
+}
+```
+
+**Поддержка библиотек:**
+- **Room** (Android) — мигрировал с KAPT на KSP
+- **Moshi** — поддерживает KSP
+- **Dagger/Hilt** — поддерживает KSP с Dagger 2.51+
+- **MapStruct** — пока работает через KAPT (активно ведётся KSP-поддержка)
+
+**Когда использовать:** новые Kotlin-проекты → KSP. Если библиотека не поддерживает KSP — KAPT неизбежен.
+
+---
+
+## Q42. Что такое Repeatable аннотации (@Repeatable) и container annotation?
+
+До **Java 8** одну аннотацию нельзя было применить к элементу дважды. `@Repeatable` снимает это ограничение, вводя понятие **container annotation**.
+
+**Определение повторяемой аннотации:**
+
+```java
+// Шаг 1: Container annotation (хранит массив повторений)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Roles {
+    Role[] value();  // массив повторяемых аннотаций
+}
+
+// Шаг 2: Повторяемая аннотация ссылается на container
+@Repeatable(Roles.class)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Role {
+    String value();
+}
+```
+
+**Использование:**
+```java
+@Role("USER")
+@Role("ADMIN")
+@Role("MODERATOR")
+public class AdminController { ... }
+
+// Компилятор преобразует это в:
+@Roles({
+    @Role("USER"),
+    @Role("ADMIN"),
+    @Role("MODERATOR")
+})
+public class AdminController { ... }
+```
+
+**Чтение через рефлексию:**
+```java
+// Получить все повторения
+Role[] roles = AdminController.class.getAnnotationsByType(Role.class);
+// → [@Role("USER"), @Role("ADMIN"), @Role("MODERATOR")]
+
+// Получить container (если аннотация была применена 2+ раз)
+Roles container = AdminController.class.getAnnotation(Roles.class);
+
+// Если аннотация применена один раз:
+Role singleRole = SingleRoleClass.class.getDeclaredAnnotation(Role.class);
+// → @Role("USER") (не null, даже без container)
+```
+
+**Реальные примеры из Spring:**
+```java
+// @ComponentScans содержит несколько @ComponentScan
+@ComponentScan("com.example.users")
+@ComponentScan("com.example.orders")
+public class AppConfig { ... }
+
+// @Schedules / @Scheduled
+@Scheduled(cron = "0 0 9 * * MON-FRI")
+@Scheduled(cron = "0 0 18 * * MON-FRI")
+public void sendReport() { ... }
+```
+
+**Важный нюанс:** `getAnnotation(Role.class)` вернёт `null` если аннотация применена дважды (там container), но `null` если применена один раз и класс возвращает её напрямую. Поэтому правильный метод для Repeatable — `getAnnotationsByType()`.
+
+---
+
+## Q43. Аннотации на TYPE_USE — @NonNull и Checker Framework
+
+`TYPE_USE` (`ElementType.TYPE_USE`, Java 8+) позволяет аннотировать **любое использование типа** — не только объявление переменной, но и дженерики, массивы, cast, throws.
+
+**Применение TYPE_USE:**
+
+```java
+// Аннотация с @Target(ElementType.TYPE_USE)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE_USE)
+public @interface NonNull {}
+
+// Примеры использования:
+@NonNull String name;                          // поле
+List<@NonNull String> names;                  // дженерик-параметр
+@NonNull String[] array;                       // массив
+String @NonNull [] array2;                     // не-null сам массив (элементы могут быть null)
+Map<@NonNull String, @NonNull Integer> map;    // оба параметра
+void process() throws @NonNull IOException {}  // тип в throws
+Object obj = (@NonNull String) value;          // cast
+```
+
+**Checker Framework:**
+
+Checker Framework использует `TYPE_USE` аннотации для **статического анализа** nullability прямо в javac:
+
+```java
+// Checker Framework аннотации
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+
+public class UserService {
+    private @Nullable User currentUser;  // может быть null
+
+    public @NonNull User getOrCreate(@NonNull String username) {
+        // Checker знает: username не null, метод обязан вернуть не-null
+        return userRepo.findByUsername(username)
+            .orElseGet(() -> createUser(username));
+    }
+
+    public void setUser(@NonNull User user) {
+        this.currentUser = user;  // OK: user @NonNull → поле @Nullable принимает
+    }
+}
+```
+
+**Jakarta EE Bean Validation vs Spring аннотации:**
+
+```java
+// Jakarta EE (javax.validation → jakarta.validation)
+@NotNull    // runtime validation через Validator
+@NonNull    // Jakarta @NonNull (TYPE_USE, для Lombok и IDE)
+
+// Spring Framework
+@NonNull    // org.springframework.lang.NonNull (TYPE_USE)
+@Nullable   // org.springframework.lang.Nullable
+
+// Lombok
+@NonNull    // lombok.NonNull — генерирует null-check в конструкторе/методе
+
+// Смешивание в Spring проекте:
+public @org.springframework.lang.NonNull User getUser(
+        @jakarta.validation.constraints.NotNull @RequestParam String id) {
+    // @NotNull — валидируется Bean Validation
+    // @NonNull — подсказка для IDE/анализатора
+}
+```
+
+**Важное различие:**
+- `@NotNull` (Bean Validation) — **runtime** проверка через `Validator.validate()`
+- `@NonNull` (TYPE_USE) — **compile-time** подсказка для IDE и статических анализаторов (NullAway, Checker Framework)
+- Они дополняют друг друга: `@NonNull` предупредит при компиляции, `@NotNull` — при вызове API с некорректными данными
+
+---
+
+## See also
+
+- [Java Core](java-core-interview.md) — базовые концепции: рефлексия, `Class<?>`, метаданные классов — основа работы с аннотациями
+- [Java 8](java-8-interview.md) — лямбды и функциональные интерфейсы, часто аннотируются `@FunctionalInterface`
+- [Java Generics](java-generics-interview.md) — дженерики в аннотациях (`@Qualifier`, `@Bean`), типобезопасность элементов
+- [Java OOP](java-oop-interview.md) — наследование аннотаций через `@Inherited`, применение в иерархиях классов
+- [JVM](../../jvm/jvm-interview.md) — `RetentionPolicy.RUNTIME` и Metaspace, overhead рефлексии аннотаций
+- [Java Modules](java-modules-interview.md) — Annotation Processors в модульном контексте, `opens` для доступа к аннотациям
+- [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — аннотации как основа Spring IoC: `@Component`, `@Autowired`, `@Transactional`

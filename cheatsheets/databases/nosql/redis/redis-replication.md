@@ -1,7 +1,13 @@
 ---
 title: "Redis: Репликация"
 description: "Полное руководство по репликации в Redis: master-slave, настройка, мониторинг, failover, Sentinel, оптимизация"
-tags: ["redis", "replication", "master-slave", "sentinel", "failover", "high-availability"]
+tags:
+  - redis
+  - replication
+  - master-slave
+  - sentinel
+  - failover
+  - high-availability
 difficulty: "advanced"
 prerequisites: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 next: ["databases/redis-clustering.md", "databases/redis-high-availability.md"]

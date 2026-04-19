@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Reactive - Mutiny и Reactive Messaging"
 description: "Полное руководство по reactive программированию в Quarkus: Mutiny, reactive messaging, reactive streams и best practices"
-tags: ["quarkus", "reactive", "mutiny", "reactive-messaging", "streams", "java"]
+tags:
+  - quarkus
+  - reactive
+  - mutiny
+  - reactive-messaging
+  - streams
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-testing.md"]

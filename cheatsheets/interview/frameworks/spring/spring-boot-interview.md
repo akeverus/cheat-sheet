@@ -1,466 +1,1622 @@
 ---
 title: "Вопросы на собеседовании: Spring Boot"
-description: "Краткие ответы по Spring Boot: стартеры, автоконфигурация, профили, Actuator, развёртывание."
-tags: ["interview", "frameworks", "spring-boot-interview"]
+description: "Глубокие ответы по Spring Boot: автоконфигурация, стартеры, Actuator, встроенные серверы, профили, externalized config, Docker, мониторинг."
+tags:
+  - interview
+  - frameworks
+  - spring-boot-interview
+aliases:
+  - "Spring Boot"
+  - "Spring Boot interview"
+  - "Spring Boot собеседование"
+  - "Spring Boot автоконфигурация"
+  - "Spring Boot стартеры"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Spring Boot`
 
-Краткие ответы по `Spring Boot`: стартеры, автоконфигурация, профили, `Actuator`, развёртывание.
+Глубокие ответы по `Spring Boot`: автоконфигурация, стартеры, `Actuator`, встроенные серверы, профили, externalized config, `Docker`, мониторинг.
 
-Дата последнего обновления: 2026-02-04
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: `Spring Boot` — стандарт для быстрого запуска `Java`-приложений. Вопросы по стартерам, автоконфигурации, профилям и развёртыванию часто задают на собеседованиях на позиции `Java / Senior Developer`.
+**`Spring Boot`** — стандарт де-факто для быстрого создания production-ready `Java`-приложений на базе `Spring`. Вопросы по автоконфигурации, стартерам, `Actuator`, профилям и развёртыванию — обязательная часть собеседований на позиции `Java / Senior Developer`. Файл охватывает как базовые, так и продвинутые темы, включая архитектуру встроенных серверов, иерархию конфигурации и интеграцию с [Docker](../../devops/docker-interview.md) и [Kubernetes](../../devops/kubernetes-interview.md).
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/)
-- [Spring Boot Reference](https://docs.spring.io/spring-boot/docs/current/reference/html/)
-- [Spring Boot Guides](https://spring.io/guides)
+- [Spring Boot Reference](https://docs.spring.io/spring-boot/reference/) — актуальная документация
+- [Spring Boot Guides](https://spring.io/guides) — пошаговые руководства
+- [Spring Boot Auto-configuration](https://docs.spring.io/spring-boot/reference/using/auto-configuration.html) — механизм автоконфигурации
+- [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/) — мониторинг и управление
 
-### См. также
+### Baeldung
 
-- [Spring Framework Interview](spring-framework-interview.md) — вопросы по Spring Framework
-- [Spring Cloud Interview](spring-cloud-interview.md) — вопросы по Spring Cloud
-- [Spring Boot](../../../frameworks/java-frameworks/spring/spring-boot.md) — руководство по Spring Boot
+- [Spring Boot Tutorial](https://www.baeldung.com/spring-boot) — обзорный туториал по Spring Boot
+- [A Custom Auto-Configuration with Spring Boot](https://www.baeldung.com/spring-boot-custom-auto-configuration) — создание собственной автоконфигурации
+- [Creating a Custom Starter with Spring Boot](https://www.baeldung.com/spring-boot-custom-starter) — разработка кастомного стартера
+- [Display Auto-Configuration Report in Spring Boot](https://www.baeldung.com/spring-boot-auto-configuration-report) — анализ отчёта автоконфигурации
+- [Difference Between @ComponentScan and @EnableAutoConfiguration](https://www.baeldung.com/spring-componentscan-vs-enableautoconfiguration) — сравнение аннотаций
+- [Spring Boot Security Auto-Configuration](https://www.baeldung.com/spring-boot-security-autoconfiguration) — автоконфигурация безопасности
+- [Order of Configuration in Spring Boot](https://www.baeldung.com/spring-boot-configuration-order) — порядок применения конфигурации
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы Spring Boot**
-- [Q1. (!) Что такое Spring Boot?](#q1-важно-что-такое-spring-boot)
-- [Q2. (!) В чем разница между Spring и Spring Boot?](#q2-важно-в-чем-разница-между-spring-и-spring-boot)
-- [Q3. Как настроить Spring Boot с помощью Maven?](#q3-как-настроить-spring-boot-с-помощью-maven)
-- [Q4. Что такое Spring Initializr?](#q4-что-такое-spring-initializr)
+- [Q1. (!) Что такое Spring Boot и какие проблемы он решает?](#q1-что-такое-spring-boot-и-какие-проблемы-он-решает)
+- [Q2. (!) В чём разница между Spring и Spring Boot?](#q2-в-чём-разница-между-spring-и-spring-boot)
+- [Q3. Что делает аннотация @SpringBootApplication?](#q3-что-делает-аннотация-springbootapplication)
+- [Q4. Как настроить Spring Boot с помощью Maven / Gradle?](#q4-как-настроить-spring-boot-с-помощью-maven--gradle)
+- [Q5. Что такое Spring Initializr?](#q5-что-такое-spring-initializr)
 
-**Starters и автоконфигурация**
-- [Q5. (!) Что такое Starters?](#q5-важно-что-такое-starters)
-- [Q6. (!) Какие наиболее популярные Starters?](#q6-важно-какие-наиболее-популярные-starters)
-- [Q7. (!) Как создать свой Starter в Spring Boot?](#q7-важно-как-создать-свой-starter-в-spring-boot)
-- [Q8. Как отключить конкретную автоматическую конфигурацию?](#q8-как-отключить-конкретную-автоматическую-конфигурацию)
-- [Q9. (!) Как зарегистрировать пользовательскую автоконфигурацию?](#q9-важно-как-зарегистрировать-пользовательскую-автоконфигурацию)
+**Starters и механизм стартеров**
+- [Q6. (!) Что такое Starters и как они устроены?](#q6-что-такое-starters-и-как-они-устроены)
+- [Q7. (!) Какие наиболее популярные Starters?](#q7-какие-наиболее-популярные-starters)
+- [Q8. (!) Как создать свой Starter?](#q8-как-создать-свой-starter)
 
-**Развёртывание и DevTools**
-- [Q10. Как развернуть Spring Boot в виде файлов JAR и WAR?](#q10-как-развернуть-spring-boot-в-виде-файлов-jar-и-war)
-- [Q11. (!) Как использовать Spring Boot как приложение командной строки?](#q11-важно-как-использовать-spring-boot-как-приложение-командной-строки)
-- [Q12. (!) Что такое Loose Coupling (Расслабленное связывание)?](#q12-важно-что-такое-loose-coupling-расслабленное-связывание)
-- [Q13. (!) Что такое Spring Boot DevTools?](#q13-важно-что-такое-spring-boot-devtools)
-- [Q14. (!) Что такое Spring Boot Actuator?](#q14-важно-что-такое-spring-boot-actuator)
+**Автоконфигурация**
+- [Q9. (!) Как работает auto-configuration — полный поток?](#q9-как-работает-auto-configuration--полный-поток)
+- [Q10. (!) Какие @Conditional-аннотации существуют?](#q10-какие-conditional-аннотации-существуют)
+- [Q11. Как отключить конкретную автоконфигурацию?](#q11-как-отключить-конкретную-автоконфигурацию)
+- [Q12. (!) Как зарегистрировать пользовательскую автоконфигурацию?](#q12-как-зарегистрировать-пользовательскую-автоконфигурацию)
+
+**Встроенные серверы**
+- [Q13. (!) Какие встроенные серверы поддерживает Spring Boot?](#q13-какие-встроенные-серверы-поддерживает-spring-boot)
+- [Q14. (!) Архитектура встроенного сервера — как Spring Boot запускает Tomcat?](#q14-архитектура-встроенного-сервера--как-spring-boot-запускает-tomcat)
 
 **Конфигурация и профили**
-- [Q15. Какие основные аннотации предлагает Spring Boot?](#q15-какие-основные-аннотации-предлагает-spring-boot)
-- [Q16. Как изменить порт по умолчанию в Spring Boot?](#q16-как-изменить-порт-по-умолчанию-в-spring-boot)
-- [Q17. Какие встроенные серверы поддерживает Spring Boot?](#q17-какие-встроенные-серверы-поддерживает-spring-boot)
-- [Q18. Что такое application.properties и application.yml?](#q18-что-такое-applicationproperties-и-applicationyml)
-- [Q19. Как использовать профили (profiles) в Spring Boot?](#q19-как-использовать-профили-profiles-в-spring-boot)
+- [Q15. (!) Иерархия внешней конфигурации (Externalized Configuration)](#q15-иерархия-внешней-конфигурации-externalized-configuration)
+- [Q16. Что такое application.properties и application.yml?](#q16-что-такое-applicationproperties-и-applicationyml)
+- [Q17. (!) Как использовать профили (profiles)?](#q17-как-использовать-профили-profiles)
+- [Q18. (!) Как использовать @ConfigurationProperties?](#q18-как-использовать-configurationproperties)
+- [Q19. Как изменить порт по умолчанию?](#q19-как-изменить-порт-по-умолчанию)
 
-**Actuator, мониторинг и Docker**
-- [Q20. Что такое Spring Boot Actuator endpoints?](#q20-что-такое-spring-boot-actuator-endpoints)
-- [Q21. Как настроить логирование в Spring Boot?](#q21-как-настроить-логирование-в-spring-boot)
-- [Q22. Как упаковать Spring Boot в Docker образ?](#q22-как-упаковать-spring-boot-в-docker-образ)
-- [Q23. Что такое внешняя конфигурация (Externalized Configuration)?](#q23-что-такое-внешняя-конфигурация-externalized-configuration)
+**Actuator и мониторинг**
+- [Q20. (!) Что такое Spring Boot Actuator?](#q20-что-такое-spring-boot-actuator)
+- [Q21. (!) Полный список Actuator endpoints и их категории](#q21-полный-список-actuator-endpoints-и-их-категории)
+- [Q22. Как создать custom Actuator endpoint?](#q22-как-создать-custom-actuator-endpoint)
+- [Q23. (!) Как настроить мониторинг и метрики (Micrometer)?](#q23-как-настроить-мониторинг-и-метрики-micrometer)
 - [Q24. Как настроить health check для Kubernetes?](#q24-как-настроить-health-check-для-kubernetes)
 
+**Развёртывание и DevTools**
+- [Q25. (!) Что такое executable JAR и как он устроен?](#q25-что-такое-executable-jar-и-как-он-устроен)
+- [Q26. Как развернуть Spring Boot в виде JAR и WAR?](#q26-как-развернуть-spring-boot-в-виде-jar-и-war)
+- [Q27. Как упаковать Spring Boot в Docker образ?](#q27-как-упаковать-spring-boot-в-docker-образ)
+- [Q28. Что такое Spring Boot DevTools?](#q28-что-такое-spring-boot-devtools)
+
+**Тестирование**
+- [Q29. (!) Как отключить автоконфигурацию для тестов?](#q29-как-отключить-автоконфигурацию-для-тестов)
+- [Q30. Какие основные аннотации Spring Boot предлагает?](#q30-какие-основные-аннотации-spring-boot-предлагает)
+- [Q36. (!) Что такое тестовые срезы (@WebMvcTest, @DataJpaTest)?](#q36-что-такое-тестовые-срезы-webmvctest-datajpatest)
+- [Q37. (!) Как работает @SpringBootTest и какие режимы запуска контекста существуют?](#q37-как-работает-springboottest-и-какие-режимы-запуска-контекста-существуют)
+
 **Продвинутые темы**
-- [Q25. Что такое Spring Boot auto-configuration и как она работает?](#q25-что-такое-spring-boot-auto-configuration-и-как-она-работает)
-- [Q26. Как отключить автоконфигурацию для тестов?](#q26-как-отключить-автоконфигурацию-для-тестов)
-- [Q27. Как использовать @ConfigurationProperties?](#q27-как-использовать-configurationproperties)
-- [Q28. Что такое Spring Boot executable JAR и как он устроен?](#q28-что-такое-spring-boot-executable-jar-и-как-он-устроен)
-- [Q29. Как настроить мониторинг и метрики (Micrometer)?](#q29-как-настроить-мониторинг-и-метрики-micrometer)
-- [Q30. Как мигрировать с Spring на Spring Boot?](#q30-как-мигрировать-с-spring-на-spring-boot)
+- [Q31. Как использовать Spring Boot как приложение командной строки?](#q31-как-использовать-spring-boot-как-приложение-командной-строки)
+- [Q32. Как настроить логирование?](#q32-как-настроить-логирование)
+- [Q33. Как мигрировать с Spring на Spring Boot?](#q33-как-мигрировать-с-spring-на-spring-boot)
+- [Q34. (!) Что такое GraalVM Native Image в Spring Boot?](#q34-что-такое-graalvm-native-image-в-spring-boot)
+- [Q35. (!) Жизненный цикл Spring Boot приложения](#q35-жизненный-цикл-spring-boot-приложения)
+- [Q38. (!) Как устроены @ConditionalOnProperty, @ConditionalOnMissingBean и другие условные аннотации?](#q38-как-устроены-conditionalonproperty-conditionalonmissingbean-и-другие-условные-аннотации)
+- [Q39. (!) Что такое AOT-обработка в Spring Boot 3.x?](#q39-что-такое-aot-обработка-в-spring-boot-3x)
+- [Q40. (!) Как настроить кастомный HealthIndicator для Actuator?](#q40-как-настроить-кастомный-healthindicator-для-actuator)
+- [Q41. (!) Как работает Spring Boot с несколькими профилями одновременно?](#q41-как-работает-spring-boot-с-несколькими-профилями-одновременно)
+- [Q42. Как ограничить экспозицию Actuator endpoints в production?](#q42-как-ограничить-экспозицию-actuator-endpoints-в-production)
 
-## Q1. (!) Что такое `Spring Boot`?
+---
 
-Фреймворк для быстрого создания самостоятельных приложений на `Spring`: встроенный сервер (`Tomcat` / `Jetty` / `Undertow`), автоконфигурация по зависимостям, стартеры (starter-*), минимум конфигурации. Цель — сократить настройку и упростить развёртывание. Точка входа — класс с `@SpringBootApplication` и `SpringApplication.run()`. Даёт умные настройки по умолчанию, встроенные серверы, автоконфигурацию по класспасу, удобное тестирование и `Actuator` для мониторинга.
+## Q1. (!) Что такое `Spring Boot` и какие проблемы он решает?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+`Spring Boot` — фреймворк поверх `Spring Framework`, который устраняет три ключевые проблемы классического `Spring`:
 
-## Q2. (!) В чем разница между `Spring` и `Spring Boot`?
+1. **Boilerplate-конфигурация** — вместо десятков XML-файлов или `@Configuration`-классов, `Spring Boot` автоматически конфигурирует бины на основе classpath (автоконфигурация).
+2. **Управление зависимостями** — стартеры (`spring-boot-starter-*`) подтягивают совместимые версии библиотек.
+3. **Развёртывание** — встроенный сервер (`Tomcat` / `Jetty` / `Undertow`) позволяет запускать приложение как обычный `JAR` без внешнего сервера приложений.
 
-`Spring` — ядро (`DI`, `AOP`, `MVC` и т.д.) с явной конфигурацией (`XML` или `Java`-конфиг). `Spring Boot` — надстройка: автоконфигурация по зависимостям и конвенциям, встроенный сервер (`Tomcat` / `Jetty` / `Undertow`), стартеры для типовых сценариев, минимум ручной настройки. В `Spring` нужно самому поднимать сервер и собирать зависимости; в `Spring Boot` достаточно добавить starter и запустить приложение. `Spring Boot` не заменяет `Spring`, а упрощает его использование.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q3. Как настроить `Spring Boot` с помощью `Maven`?
-
-Мы можем включить `Spring Boot` в проект `Maven`, как и любую другую библиотеку. Однако лучший способ — наследоваться от проекта `spring-boot-starter-parent` и объявить зависимости от `Spring Boot` starters. Это позволяет нашему проекту повторно использовать настройки `Spring Boot` по умолчанию.
-
-Наследовать проект `spring-boot-starter-parent` очень просто — нам нужно только указать родительский элемент в `pom.xml`:
-
-```xml
-<parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.4.0.RELEASE</version>
-</parent>
-```
-
-Использование начального родительского проекта удобно, но не всегда возможно. Например, если наша компания требует, чтобы все проекты наследуются от стандартного `POM`, мы все равно можем извлечь выгоду из управления зависимостями `Spring Boot` с помощью пользовательского parent.
-
-## Q4. Что такое `Spring Initializr`?
-
-`Spring Initializr` — это удобный способ создать проект `Spring Boot`.
-
-Мы можем перейти на сайт `Spring Initializr`, выбрать инструмент управления зависимостями (`Maven` или `Gradle`), язык (`Java`, `Kotlin` или `Groovy`), схему упаковки (Jar или War), версию и зависимости и загрузить проект.
-
-Это создает для нас каркас проекта и экономит время на настройку, поэтому мы можем сосредоточиться на добавлении бизнес-логики.
-
-Даже когда мы используем мастер создания нового проекта нашей `IDE` (например, `STS` или `Eclipse` с плагином `STS`) для создания проекта `Spring Boot`, под капотом он использует `Spring Initializr`.
-
-## Q5. (!) Что такое `Starters`?
-
-**Starters** — готовые наборы зависимостей под типовые задачи (веб, `JPA`, `Security`, тесты и т.д.). Один артефакт (например, `spring-boot-starter-web`) подтягивает совместимые библиотеки и часто включает автоконфигурацию. Не нужно вручную подбирать версии. Пример: `implementation 'org.springframework.boot:spring-boot-starter-data-jpa'` — подтягивает `JPA`, `Hibernate` и настройки по умолчанию.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q6. (!) Какие наиболее популярные `Starters`?
-
-Наиболее распространённые: `spring-boot-starter-web` (`Spring MVC`, встроенный `Tomcat`), `spring-boot-starter-data-jpa` (`JPA` и БД), `spring-boot-starter-security` (аутентификация и авторизация), `spring-boot-starter-test` (JUnit, `MockMvc` и др.), `spring-boot-starter-data-rest` (`REST`-репозитории), `spring-boot-starter-thymeleaf` (шаблоны `Thymeleaf`). Есть также `starter-jdbc`, `starter-actuator`, `starter-mail`, `starter-data-elasticsearch` и др.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q7. (!) Как создать свой `Starter` в `Spring Boot`?
-
-Отдельный `Maven / Gradle`-модуль с нужными зависимостями и классом `@Configuration` (автоконфигурация). Регистрация в `META-INF`: ключ `org.springframework.boot.autoconfigure.EnableAutoConfiguration`, значение — полное имя класса автоконфигурации. Собирают `JAR` и подключают как зависимость в другие проекты; при наличии starter на класспате бины создаются по условиям (`@ConditionalOnClass` и т.д.).
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q8. Как отключить конкретную автоматическую конфигурацию?
-
-Если мы хотим отключить определённую автоконфигурацию, мы можем указать это с помощью атрибута exclude аннотации `@EnableAutoConfiguration`.
-
-Например, этот фрагмент кода нейтрализует `DataSourceAutoConfiguration`:
-
-```java
-@EnableAutoConfiguration(exclude = DataSourceAutoConfiguration.class)
-public class MyConfiguration {}
-```
-
-Если бы мы включили автоматическую настройку с помощью аннотации `@SpringBootApplication`, которая имеет `@EnableAutoConfiguration` в качестве мета-аннотации, мы могли бы отключить автоматическую настройку с помощью атрибута с тем же именем:
-
-```java
-@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
-public class MyConfiguration {}
-```
-
-Мы также можем отключить автоматическую настройку с помощью свойства среды `spring.autoconfigure.exclude`. Этот параметр в файле `application.properties` делает то же самое, что и раньше:
-
-```properties
-spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-```
-
-## Q9. (!) Как зарегистрировать пользовательскую автоконфигурацию?
-
-Чтобы зарегистрировать класс автоконфигурации, его полное имя должно быть указано в ключе `EnableAutoConfiguration` в файле `META-INF/spring.factories`:
-
-`org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.baeldung.autoconfigure.CustomAutoConfiguration`
-
-При сборке проекта с помощью `Maven` каталог `META-INF` оказывается в нужном месте на этапе пакета.
-
-## Q10. Как развернуть `Spring Boot` в виде файлов `JAR` и `WAR`?
-
-Традиционно мы упаковываем веб-приложение в виде файла `WAR`, а затем развертываем его на внешнем сервере. Это позволяет нам размещать несколько приложений на одном сервере. Когда ЦП и памяти не хватало, это был отличный способ сэкономить ресурсы.
-
-Но все изменилось. Компьютерное оборудование сейчас довольно дешевое, и внимание было обращено на конфигурацию сервера. Небольшая ошибка в настройке сервера при развертывании может привести к катастрофическим последствиям. `Spring` решает эту проблему, предоставляя подключаемый модуль, а именно `spring-boot-maven-plugin`, для упаковки веб-приложения в виде исполняемого файла `JAR`.
-
-Чтобы включить этот плагин, просто добавьте элемент плагина в `pom.xml`:
-
-```xml
-<plugin>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-maven-plugin</artifactId>
-</plugin>
-```
-
-С этим плагином мы получим толстый `JAR`-файл после выполнения этапа пакета. Этот `JAR` содержит все необходимые зависимости, включая встроенный сервер. Таким образом, нам больше не нужно беспокоиться о настройке внешнего сервера.
-
-Затем мы можем запустить приложение так же, как обычный исполняемый файл `JAR`.
-
-Обратите внимание, что элемент упаковки в файле `pom.xml` должен иметь значение jar для создания файла `JAR`:
-
-```xml
-<packaging>jar</packaging>
-```
-
-Если мы не включим этот элемент, по умолчанию он также будет jar.
-
-Чтобы создать файл `WAR`, мы меняем элемент упаковки на war:
-
-```xml
-<packaging>war</packaging>
-```
-
-и оставьте зависимость контейнера от упакованного файла:
-
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-tomcat</artifactId>
-    <scope>provided</scope>
-</dependency>
-```
-
-После выполнения фазы пакета `Maven` у нас будет развертываемый файл `WAR`.
-
-## Q11. (!) Как использовать `Spring Boot` как приложение командной строки?
-
-Как и любая другая программа `Java`, приложение командной строки `Spring Boot` должно иметь метод main.
-
-Этот метод служит точкой входа, которая вызывает метод `SpringApplication.run()` для начальной загрузки приложения:
+Точка входа — класс с `@SpringBootApplication` и `SpringApplication.run()`:
 
 ```java
 @SpringBootApplication
 public class MyApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MyApplication.class);
+        SpringApplication.run(MyApplication.class, args);
     }
 }
 ```
 
-Затем класс `SpringApplication` запускает `Container Spring` и автоматически настраивает bean-компоненты.
+Ключевые возможности: умные значения по умолчанию (opinionated defaults), встроенные серверы, `Actuator` для мониторинга, удобное тестирование с `@SpringBootTest` и тестовыми срезами.
 
-Обратите внимание, что мы должны передать класс конфигурации в метод run(), чтобы он работал в качестве основного источника конфигурации. По соглашению этот аргумент является самим входным классом.
+> **На собеседовании:** важно подчеркнуть, что `Spring Boot` **не заменяет** `Spring`, а упрощает его использование. Под капотом — тот же `Spring Context`, `DI`, `AOP`.
 
-После вызова метода run мы можем выполнять другие операторы, как в обычной программе.
+## Q2. (!) В чём разница между `Spring` и `Spring Boot`?
 
-## Q12. (!) Что такое `Loose Coupling` (Расслабленное связывание)?
+| Аспект | `Spring Framework` | `Spring Boot` |
+|--------|-------------------|---------------|
+| Конфигурация | Явная (XML, `@Configuration`) | Автоконфигурация по classpath |
+| Зависимости | Ручной подбор версий | Стартеры с BOM |
+| Сервер | Внешний (`Tomcat`, `WildFly`) | Встроенный (`Tomcat` / `Jetty` / `Undertow`) |
+| Запуск | WAR на сервер | `java -jar app.jar` |
+| Мониторинг | Ручная настройка | `Actuator` из коробки |
+| Профили | `@Profile` + XML | `application-{profile}.yml` |
 
-`Loose Coupling` (Расслабленное связывание) в `Spring Boot` означает, что приложение может быть гибко настроено и конфигурировано без прямой зависимости от конкретной реализации или компонента.
+`Spring Boot` использует `Spring Framework` как основу и добавляет три слоя: **автоконфигурацию**, **стартеры** и **встроенный сервер**. Проект `Spring` остаётся ядром — `DI`, `AOP`, `@Transactional`, `Spring MVC` работают одинаково в обоих случаях.
 
-В контексте нейминга свойств среды (environment property naming) в `Spring Boot`, речь идет о правильном и согласованном именовании свойств, которые используются для настройки приложения в различных окружениях (например, разработка, тестирование, продакшн).
+## Q3. Что делает аннотация `@SpringBootApplication`?
 
-В `Spring Boot`, свойства среды могут быть определены и управляться через различные источники конфигурации, такие как файлы `application.properties` (или `application.yml`), переменные среды, системные свойства, а также специальные файлы, такие как `bootstrap.properties` (или `bootstrap.yml`).
-
-Важно соблюдать следующие рекомендации при именовании свойств среды:
-
-1. Для свойств, которые относятся к определенному модулю или компоненту, рекомендуется начинать имя свойства с префикса, чтобы указать на принадлежность к определенной области. Например, `myapp.database.url` для `URL` базы данных или `myapp.email.host` для хоста электронной почты.
-2. Принято использовать точку или дефис для разделения слов в именах свойств, чтобы сделать их более читабельными. Например, `myapp.database.url` или `myapp.email.username`.
-3. Свойства среды должны быть записаны строчными буквами.
-4. Для свойств, которые экспортируются как переменные среды, рекомендуется использовать большие буквы и подчеркивания вместо дефисов или точек. Например, MYAPP_DATABASE_URL или MYAPP_EMAIL_USERNAME.
-
-Соблюдение этих рекомендаций поможет создать четкую и согласованную структуру именования свойств среды, что облегчит управление настройками и конфигурацией приложения в разных окружениях.
-
-## Q13. (!) Что такое `Spring Boot DevTools`?
-
-`Spring Boot DevTools` — это модуль в `Spring Boot`, который предоставляет набор инструментов для разработки приложений. Он облегчает процесс разработки, ускоряет время повторной сборки и автоматически перезапускает приложение при обнаружении изменений.
-
-Некоторые из основных функций и возможностей, предоставляемых `Spring Boot DevTools`, включают:
-
-1. Автоматическая перезагрузка: `DevTools` отслеживает изменения в исходных файлах и ресурсах и автоматически перезапускает приложение. Это позволяет быстро видеть изменения в коде без необходимости ручной перезагрузки сервера.
-2. Горячая перезагрузка: Для некоторых изменений, таких как изменение шаблонов `HTML` или статических ресурсов, `DevTools` предоставляет возможность горячей перезагрузки. Это означает, что вместо полной перезагрузки приложения только измененные ресурсы будут обновлены.
-3. Глобальные настройки: `DevTools` позволяет настраивать поведение перезагрузки и горячей перезагрузки через файлы `application.properties` или `application.yml`. Можно включить или отключить перезагрузку, настроить, какие файлы будут отслеживаться, и многое другое.
-4. Отключение определенных `DevTools`: В некоторых сценариях разработки может потребоваться отключить `DevTools`. Это можно сделать, добавив `spring.`devtools.restart.enabled`=false` в файл `application.properties` или `application.yml`.
-
-`Spring Boot DevTools` является очень полезным модулем для увеличения производительности и эффективности разработки приложений на основе `Spring Boot`. Он упрощает процесс разработки, позволяя быстро видеть изменения и автоматически перезапускать приложение.
-
-## Q14. (!) Что такое `Spring Boot Actuator`?
-
-`Spring Boot Actuator` — это модуль в `Spring Boot`, предоставляющий различные функции мониторинга и управления производительностью приложений. Он позволяет получить информацию о работе приложения в режиме реального времени, а также выполнять операции управления, такие как перезагрузка приложения или сбор информации о потоках выполнения.
-
-Функции и возможности, предоставляемые `Spring Boot Actuator`, включают:
-
-1. **/actuator/health** — проверка состояния приложения и отображение статуса его здоровья.
-2. **/actuator/info** — отображение информации о версии и метаданных приложения.
-3. **/actuator/metrics** — отображение метрик производительности приложения, таких как количество `HTTP`-запросов, использование памяти и другие пользовательские метрики.
-4. **/actuator/env** — отображение информации о переменных среды, например, настройках конфигурации.
-5. **/actuator/loggers** — управление уровнями журналирования и настройкой логирования во время выполнения.
-6. **/actuator/shutdown** — отключение приложения, чтобы оно могло быть легко остановлено или перезапущено.
-7. **/actuator/httptrace** — отображение трассировки запросов `HTTP`, отслеживание времени выполнения и составление отчетов о работе `MVC` контроллеров.
-
-`Spring Boot Actuator` также позволяет расширять и настраивать функции мониторинга и управления путем добавления собственных метрик, конечных точек и интерфейсов управления.
-
-В целом, `Spring Boot Actuator` обеспечивает удобный способ мониторить и управлять приложениями, что помогает быстро обнаруживать и устранять проблемы производительности и повышать эффективность работы приложений на основе `Spring Boot`.
-
-## Q15. Какие основные аннотации предлагает `Spring Boot`?
-
-Основные аннотации, которые предлагает `Spring Boot`, находятся в пакете `org.springframework.boot.autoconfigure` и его подпакетах. Вот пара основных:
-
-1. `@EnableAutoConfiguration` — заставить `Spring Boot` искать bean-компоненты автоконфигурации в своем пути к классам и автоматически применять их.
-2. `@SpringBootApplication` — для обозначения основного класса загрузочного приложения. Эта аннотация объединяет аннотации `@Configuration`, `@EnableAutoConfiguration` и `@ComponentScan` с их атрибутами по умолчанию.
-
-## Q16. Как изменить порт по умолчанию в `Spring Boot`?
-
-Мы можем изменить порт по умолчанию сервера, встроенного в `Spring Boot`, одним из следующих способов:
-
-1. Использование файла свойств. Мы можем определить это в файле `application.properties` (или `application.yml`), используя свойство `server.port`.
-2. Программно в нашем основном классе `@SpringBootApplication` мы можем установить `server.port` для экземпляра `SpringApplication`.
-3. Использование командной строки. При запуске приложения в виде файла jar мы можем установить `server.port` в качестве аргумента команды java:
-
-`java -jar -Dserver.port=8081 myspringproject.jar`
-
-## Q17. Какие встроенные серверы поддерживает `Spring Boot`?
-
-**Краткий ответ:** `Spring Boot` поддерживает три встроенных сервера: **Tomcat** (по умолчанию в `starter-web`), **Jetty**, **Undertow**. Смена сервера — исключить `Tomcat` из `starter-web` и добавить `spring-boot-starter-jetty` или `spring-boot-starter-undertow`. `Undertow` часто выбирают для меньшего потребления памяти.
-
-`Spring Boot` поддерживает три встроенных сервера приложений:
-
-1. **Tomcat** (по умолчанию) — `spring-boot-starter-web` подтягивает `Tomcat`; настройка порта и контекста через `server.port`, `server.servlet.context-path`.
-2. **Jetty** — исключить `Tomcat` и добавить `spring-boot-starter-jetty`; подходит для легковесных и реактивных сценариев.
-3. **Undertow** — исключить `Tomcat` и добавить `spring-boot-starter-undertow`; низкое потребление памяти, хорошая производительность.
-
-Выбор сервера влияет на метрики и настройки (пулы потоков, размер буферов). Для смены на `Jetty / Undertow` в `pom.xml` исключают `spring-boot-starter-tomcat` из `spring-boot-starter-web` и подключают соответствующий starter.
-
-### Конфигурация встроенного сервера
+`@SpringBootApplication` — мета-аннотация, объединяющая три:
 
 ```java
-@Configuration
-public class ServerConfiguration {
+@SpringBootConfiguration   // == @Configuration — класс является источником бинов
+@EnableAutoConfiguration    // запускает механизм автоконфигурации
+@ComponentScan              // сканирует текущий пакет и вложенные
+public @interface SpringBootApplication { }
+```
+
+Поведение `@ComponentScan` — сканирование начинается с пакета, в котором находится класс. Поэтому главный класс приложения рекомендуют размещать в корневом пакете.
+
+Атрибуты:
+- `exclude` — исключить автоконфигурации: `@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)`
+- `scanBasePackages` — переопределить корень сканирования
+
+## Q4. Как настроить `Spring Boot` с помощью `Maven` / `Gradle`?
+
+**Maven** — наследование от `spring-boot-starter-parent`:
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.3.0</version>
+</parent>
+```
+
+Если наследование невозможно (корпоративный parent POM), используют BOM через `dependencyManagement`:
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>3.3.0</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+**Gradle**:
+
+```groovy
+plugins {
+    id 'org.springframework.boot' version '3.3.0'
+    id 'io.spring.dependency-management' version '1.1.5'
+    id 'java'
+}
+```
+
+## Q5. Что такое `Spring Initializr`?
+
+[Spring Initializr](https://start.spring.io) — веб-инструмент для генерации каркаса проекта `Spring Boot`. Выбор: система сборки (`Maven` / `Gradle`), язык (`Java` / `Kotlin` / `Groovy`), версия `Spring Boot`, зависимости (стартеры). Результат — готовый `ZIP`-архив.
+
+IDE (`IntelliJ IDEA`, `VS Code` с расширением Spring) используют `Initializr` API под капотом. Также доступен CLI: `spring init --dependencies=web,data-jpa my-project`.
+
+---
+
+## Q6. (!) Что такое `Starters` и как они устроены?
+
+**Starter** — это `Maven`/`Gradle`-артефакт без собственного кода, который служит агрегатором зависимостей. Каждый starter:
+
+1. **Подтягивает совместимые библиотеки** через транзитивные зависимости
+2. **Включает автоконфигурацию** — при появлении классов в classpath `Spring Boot` создаёт бины по условиям
+
+```mermaid
+graph LR
+    A["spring-boot-starter-web"] --> B["spring-web<br/>spring-webmvc"]
+    A --> C["spring-boot-starter-tomcat"]
+    A --> D["spring-boot-starter-json"]
+    C --> E["tomcat-embed-core"]
+    D --> F["jackson-databind"]
+    A -.->|"auto-config"| G["WebMvcAutoConfiguration<br/>ServletWebServerFactoryAutoConfiguration"]
+```
+
+Соглашение по именованию:
+- **Официальные:** `spring-boot-starter-{name}` (web, data-jpa, security)
+- **Сторонние:** `{name}-spring-boot-starter` (mybatis-spring-boot-starter)
+
+> **На собеседовании:** starter — это **не** библиотека с кодом, а POM-агрегатор зависимостей + автоконфигурация. Без автоконфигурации starter был бы обычным BOM.
+
+## Q7. (!) Какие наиболее популярные `Starters`?
+
+| Starter | Что включает |
+|---------|-------------|
+| `spring-boot-starter-web` | `Spring MVC`, встроенный `Tomcat`, `Jackson` |
+| `spring-boot-starter-data-jpa` | `Spring Data JPA`, `Hibernate`, пул соединений |
+| `spring-boot-starter-security` | `Spring Security`, фильтры аутентификации |
+| `spring-boot-starter-test` | `JUnit 5`, `Mockito`, `MockMvc`, `AssertJ` |
+| `spring-boot-starter-actuator` | Эндпоинты мониторинга, `Micrometer` |
+| `spring-boot-starter-validation` | `Hibernate Validator`, `Jakarta Validation` |
+| `spring-boot-starter-webflux` | Реактивный стек, `Netty` |
+| `spring-boot-starter-data-redis` | `Lettuce`, `Spring Data Redis` |
+| `spring-boot-starter-cache` | Абстракция кэширования |
+| `spring-boot-starter-amqp` | `RabbitMQ`, `Spring AMQP` |
+
+Подробнее о реактивном стеке — в [Spring WebFlux](spring-webflux-interview.md), о работе с данными — в [Spring Data JPA](spring-data-jpa-interview.md).
+
+## Q8. (!) Как создать свой `Starter`?
+
+Создание starter состоит из двух модулей:
+
+**1. Модуль автоконфигурации** (`my-spring-boot-autoconfigure`):
+
+```java
+@AutoConfiguration
+@ConditionalOnClass(MyService.class)
+@EnableConfigurationProperties(MyProperties.class)
+public class MyAutoConfiguration {
 
     @Bean
-    public TomcatServletWebServerFactory servletContainer() {
-        TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory();
-        factory.setPort(8080);
-        factory.setContextPath("/api");
-        return factory;
+    @ConditionalOnMissingBean
+    public MyService myService(MyProperties props) {
+        return new MyService(props.getUrl(), props.getTimeout());
     }
 }
 ```
 
-## Q18. Что такое `application.properties` и `application.yml`?
+```java
+@ConfigurationProperties(prefix = "my.service")
+public class MyProperties {
+    private String url = "http://localhost:8080";
+    private Duration timeout = Duration.ofSeconds(30);
+    // getters/setters
+}
+```
 
-**application.properties** и **application.yml** — файлы конфигурации `Spring Boot` по умолчанию в `src/main/resources`. Свойства подставляются в **@Value**, **@ConfigurationProperties** и встроенные компоненты. Порядок загрузки: встроенные default → application.* → профиль (`application-dev.yml`) → переменные окружения (высший приоритет).
+**2. Регистрация** — файл `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`:
 
-Иерархия в yml: `server: port: 8080` вместо `server.port=8080`. Списки: `spring.profiles.include: [a,b]` или многострочный yml. Переменные окружения имеют приоритет над файлом — в контейнерах часто задают DATABASE_URL, SPRING_PROFILES_ACTIVE через env. Специфичные для профиля файлы: `application-prod.yml` загружается при `spring.profiles.active=prod`.
+```
+com.example.MyAutoConfiguration
+```
 
-**Пример (`application.yml`):**
+> В `Spring Boot` 2.x использовался `META-INF/spring.factories` с ключом `EnableAutoConfiguration`. С `Spring Boot` 3.x — файл `.imports`.
+
+**3. Модуль starter** (`my-spring-boot-starter`) — пустой POM, подтягивающий модуль автоконфигурации и нужные библиотеки.
+
+```mermaid
+graph TD
+    A["my-spring-boot-starter<br/>(пустой POM)"] --> B["my-spring-boot-autoconfigure"]
+    A --> C["my-library"]
+    B --> D["spring-boot-autoconfigure"]
+    B -.->|"@ConditionalOnClass"| C
+```
+
+---
+
+## Q9. (!) Как работает auto-configuration — полный поток?
+
+Автоконфигурация — ключевой механизм `Spring Boot`. Полный поток:
+
+```mermaid
+graph TD
+    A["SpringApplication.run()"] --> B["Создание ApplicationContext"]
+    B --> C["@EnableAutoConfiguration<br/>через @SpringBootApplication"]
+    C --> D["AutoConfigurationImportSelector"]
+    D --> E["Загрузка кандидатов из<br/>META-INF/spring/...AutoConfiguration.imports<br/>и spring.factories"]
+    E --> F["Фильтрация по @Conditional"]
+    F --> G{"@ConditionalOnClass<br/>есть в classpath?"}
+    G -->|Да| H{"@ConditionalOnMissingBean<br/>бин не создан вручную?"}
+    G -->|Нет| I["Пропуск конфигурации"]
+    H -->|Да| J["Регистрация бинов"]
+    H -->|Нет| K["Пропуск — пользователь<br/>определил свой бин"]
+    J --> L["ApplicationContext готов"]
+    K --> L
+    I --> L
+```
+
+Ключевые этапы:
+
+1. **Сбор кандидатов** — `AutoConfigurationImportSelector` читает файлы `.imports` (Spring Boot 3.x) или `spring.factories` (2.x). В `Spring Boot 3.3` — около **150** автоконфигураций.
+2. **Быстрая фильтрация** — `AutoConfigurationImportFilter` отсекает кандидатов до создания бинов (проверка наличия классов).
+3. **Условная регистрация** — каждый оставшийся `@AutoConfiguration`-класс проверяется через `@Conditional`-аннотации.
+4. **Упорядочивание** — `@AutoConfigureOrder`, `@AutoConfigureBefore`, `@AutoConfigureAfter` задают порядок.
+
+**Отладка:** запуск с `--debug` или `debug=true` выводит отчёт `CONDITIONS EVALUATION REPORT` — какие автоконфигурации включены/пропущены и почему.
+
+## Q10. (!) Какие `@Conditional`-аннотации существуют?
+
+| Аннотация | Условие |
+|-----------|---------|
+| `@ConditionalOnClass` | Класс присутствует в classpath |
+| `@ConditionalOnMissingClass` | Класс отсутствует в classpath |
+| `@ConditionalOnBean` | Бин уже зарегистрирован в контексте |
+| `@ConditionalOnMissingBean` | Бин **не** зарегистрирован — самая частая |
+| `@ConditionalOnProperty` | Свойство имеет определённое значение |
+| `@ConditionalOnResource` | Ресурс доступен в classpath |
+| `@ConditionalOnWebApplication` | Приложение — веб (Servlet или Reactive) |
+| `@ConditionalOnNotWebApplication` | Приложение — не веб |
+| `@ConditionalOnExpression` | SpEL-выражение возвращает `true` |
+| `@ConditionalOnJava` | Определённая версия Java |
+| `@ConditionalOnCloudPlatform` | Определённая облачная платформа |
+
+Пример комбинации:
+
+```java
+@AutoConfiguration
+@ConditionalOnClass(DataSource.class)
+@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
+public class DataSourceAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    public DataSource dataSource(DataSourceProperties props) {
+        return props.initializeDataSourceBuilder().build();
+    }
+}
+```
+
+> **`@ConditionalOnMissingBean`** — принцип «user wins»: если разработчик определил свой бин, автоконфигурация не перезаписывает его.
+
+## Q11. Как отключить конкретную автоконфигурацию?
+
+Три способа:
+
+**1. Через аннотацию:**
+
+```java
+@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+public class MyApplication { }
+```
+
+**2. Через свойства:**
+
+```properties
+spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+```
+
+**3. Через `@EnableAutoConfiguration`:**
+
+```java
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, SecurityAutoConfiguration.class})
+public class MyConfiguration { }
+```
+
+> `exclude` принимает массив — можно отключить сразу несколько автоконфигураций.
+
+## Q12. (!) Как зарегистрировать пользовательскую автоконфигурацию?
+
+**Spring Boot 3.x:** создать файл `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` с полным именем класса (по одному на строку):
+
+```
+com.example.MyAutoConfiguration
+com.example.AnotherAutoConfiguration
+```
+
+**Spring Boot 2.x:** файл `META-INF/spring.factories`:
+
+```properties
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.example.MyAutoConfiguration,\
+  com.example.AnotherAutoConfiguration
+```
+
+Класс автоконфигурации рекомендуется аннотировать `@AutoConfiguration` (3.x) вместо `@Configuration`, чтобы Spring Boot корректно обрабатывал порядок и фильтрацию.
+
+---
+
+## Q13. (!) Какие встроенные серверы поддерживает `Spring Boot`?
+
+`Spring Boot` поддерживает три встроенных сервера (Servlet-стек) и один для реактивного стека:
+
+| Сервер | Starter | Особенности |
+|--------|---------|-------------|
+| **Tomcat** | `spring-boot-starter-tomcat` (по умолчанию в `starter-web`) | Самый зрелый, широкое комьюнити, NIO-коннектор |
+| **Jetty** | `spring-boot-starter-jetty` | HTTP/2 из коробки, хорош для WebSocket |
+| **Undertow** | `spring-boot-starter-undertow` | Низкое потребление памяти, высокая производительность |
+| **Netty** | Встроен в `spring-boot-starter-webflux` | Реактивный, неблокирующий I/O |
+
+Смена сервера — исключить `Tomcat` и добавить альтернативу:
+
+```groovy
+implementation('org.springframework.boot:spring-boot-starter-web') {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+}
+implementation 'org.springframework.boot:spring-boot-starter-undertow'
+```
+
+Программная настройка:
+
+```java
+@Bean
+public WebServerFactoryCustomizer<TomcatServletWebServerFactory> customizer() {
+    return factory -> {
+        factory.setPort(8080);
+        factory.addConnectorCustomizers(connector -> {
+            connector.setProperty("maxThreads", "200");
+            connector.setProperty("acceptCount", "100");
+        });
+    };
+}
+```
+
+## Q14. (!) Архитектура встроенного сервера — как `Spring Boot` запускает `Tomcat`?
+
+Процесс запуска встроенного сервера:
+
+```mermaid
+graph TD
+    A["SpringApplication.run()"] --> B["Определение типа приложения:<br/>SERVLET / REACTIVE / NONE"]
+    B --> C["Создание ApplicationContext<br/>(ServletWebServerApplicationContext)"]
+    C --> D["Refresh контекста"]
+    D --> E["ServletWebServerFactory bean<br/>(TomcatServletWebServerFactory)"]
+    E --> F["factory.getWebServer(initializers)"]
+    F --> G["Создание Tomcat instance"]
+    G --> H["Регистрация DispatcherServlet<br/>как Servlet"]
+    H --> I["Tomcat.start()"]
+    I --> J["Приложение слушает порт"]
+```
+
+Ключевые классы:
+
+1. **`ServletWebServerFactory`** — интерфейс фабрики сервера. Реализации: `TomcatServletWebServerFactory`, `JettyServletWebServerFactory`, `UndertowServletWebServerFactory`.
+2. **`ServletWebServerFactoryAutoConfiguration`** — автоконфигурация, которая определяет, какой сервер создать (по `@ConditionalOnClass`).
+3. **`WebServerFactoryCustomizer`** — интерфейс для настройки фабрики до создания сервера (порт, SSL, потоки).
+4. **`DispatcherServletAutoConfiguration`** — регистрирует `DispatcherServlet` в созданном сервере.
+
+> **На собеседовании:** `Spring Boot` не использует `Tomcat` как внешний контейнер — он **встраивает** `Tomcat` как обычную Java-библиотеку. `Tomcat` создаётся программно, `DispatcherServlet` регистрируется в его контексте, и сервер стартует в том же JVM-процессе.
+
+---
+
+## Q15. (!) Иерархия внешней конфигурации (`Externalized Configuration`)
+
+`Spring Boot` поддерживает **14+ источников конфигурации** с чётким порядком приоритета (от высшего к низшему):
+
+```mermaid
+graph TD
+    A["1. Аргументы командной строки<br/>--server.port=9090"] --> B
+    B["2. SPRING_APPLICATION_JSON"] --> C
+    C["3. Свойства ServletConfig /<br/>ServletContext"] --> D
+    D["4. JNDI-атрибуты<br/>java:comp/env"] --> E
+    E["5. System.getProperties()"] --> F
+    F["6. Переменные окружения ОС<br/>SPRING_DATASOURCE_URL"] --> G
+    G["7. RandomValuePropertySource<br/>random.*"] --> H
+    H["8. Profile-specific файлы<br/>вне JAR: application-prod.yml"] --> I
+    I["9. application.yml вне JAR"] --> J
+    J["10. Profile-specific файлы<br/>внутри JAR"] --> K
+    K["11. application.yml внутри JAR"] --> L
+    L["12. @PropertySource<br/>на @Configuration"] --> M
+    M["13. SpringApplication<br/>.setDefaultProperties()"]
+
+    style A fill:#ff6b6b,color:#fff
+    style F fill:#ffa07a,color:#fff
+    style H fill:#98fb98,color:#000
+```
+
+**Правило:** более поздний источник (с более высоким приоритетом) перезаписывает значения из более раннего.
+
+**Практические следствия:**
+- Переменные окружения **перезаписывают** `application.yml` — идеально для контейнеров
+- Аргументы командной строки имеют наивысший приоритет — удобно для отладки
+- Profile-specific файлы вне JAR имеют приоритет над файлами внутри JAR
+- Маппинг имён: `spring.datasource.url` → `SPRING_DATASOURCE_URL` (точки → подчёркивания, верхний регистр)
+
+Секреты не хранить в Git — использовать переменные окружения, [Spring Cloud Config](spring-cloud-interview.md), `Vault`. В `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей.
+
+## Q16. Что такое `application.properties` и `application.yml`?
+
+Основные файлы конфигурации `Spring Boot` в `src/main/resources`. Оба формата эквивалентны; `.properties` имеет приоритет над `.yml` при совместном использовании.
+
+**YAML** — иерархическая структура, удобнее для вложенных свойств:
+
 ```yaml
 server:
   port: 8080
+  servlet:
+    context-path: /api
 spring:
   datasource:
     url: jdbc:postgresql://localhost/app
+    username: ${DB_USER:admin}
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 ```
-Внешний конфиг: файл `application.properties`/`application.yml` рядом с jar или переменные окружения переопределяют значения из jar.
 
-## Q19. Как использовать профили (profiles) в `Spring Boot`?
+**Properties** — плоская структура:
 
-**Профили** позволяют включать разную конфигурацию по окружению. **`@Profile`("dev")** на конфигурации или `Bean` — активен только при профиле dev. Активация: `spring.profiles.active=dev` в конфиге, `--spring.profiles.active=prod` в командной строке, переменная **SPRING_PROFILES_ACTIVE**. Файлы `application-dev.yml` загружаются при active=dev. Группы: `spring.profiles.group.prod=db,live`. Для тестов: **`@ActiveProfiles`("test")**.
+```properties
+server.port=8080
+server.servlet.context-path=/api
+spring.datasource.url=jdbc:postgresql://localhost/app
+```
 
-**Пример:** `@Configuration @Profile("dev")` — `Bean` загружается только при dev. В `application-dev.yml` задают `logging.level.root: DEBUG`, локальный URL БД. Запуск с профилем: `java -jar app.jar --spring.profiles.active=prod` или `SPRING_PROFILES_ACTIVE=prod`. Группа: `spring.profiles.group.prod=db,live` — при active=prod подтягиваются и db, и live.
+Подстановка переменных: `${ENV_VAR:default}` — значение из переменной окружения или default.
 
-## Q20. Что такое `Spring Boot Actuator` endpoints?
+## Q17. (!) Как использовать профили (`profiles`)?
 
-**Actuator** — эндпоинты для мониторинга и управления приложением: **/actuator/health** (состояние, readiness/liveness), **/actuator/info**, **/actuator/metrics**, **/actuator/env** и др. Включение: зависимость `spring-boot-starter-actuator`; **management.endpoints.web.exposure.include**=health,info (в prod не открывать env, shutdown без защиты).
+**Профили** позволяют переключать конфигурацию по окружению без изменения кода.
 
-Кастомные индикаторы — класс, реализующий **HealthIndicator**, метод `health()` возвращает `Health.up()` или `Health.down()`. Регистрация как `Bean` — индикатор автоматически включается в /actuator/health.
+**Активация:**
+- `application.yml`: `spring.profiles.active: dev`
+- Командная строка: `--spring.profiles.active=prod`
+- Переменная окружения: `SPRING_PROFILES_ACTIVE=prod`
+- Тесты: `@ActiveProfiles("test")`
 
-**Настройка (`application.yml`):** `management.endpoints.web.exposure.include: health,info,metrics`. Кастомный индикатор: класс, реализующий `HealthIndicator`, метод `health()` возвращает `Health.up()` или `Health.down().withDetail(...)`. Регистрация как `Bean` — индикатор автоматически включается в `/actuator/health`. В prod не открывать env и shutdown без защиты.
+**Profile-specific файлы:** `application-dev.yml`, `application-prod.yml` — загружаются при активном профиле.
 
-## Q21. Как настроить логирование в `Spring Boot`?
+**Группы профилей** (Spring Boot 2.4+):
 
-По умолчанию **Logback**; конфигурация через **application.yml** (`logging.level.root`, `logging.`level.com.example`=DEBUG`) или **logback-spring.xml**. Вывод в файл: `logging.file.name` или `logging.file.path`. В контейнерах логи в stdout; уровень по профилю (dev — `DEBUG`, prod — `INFO`).
-
-Замена на `Log4j2`: исключить `spring-boot-starter-logging`, добавить `spring-boot-starter-log4j2`. В prod уровень root — `INFO`, пакет приложения — `WARN` или `INFO`; в dev — `DEBUG` для своего пакета.
-
-**Практика (`application.yml`):**
 ```yaml
-logging:
-  level:
-    root: INFO
-    com.example: DEBUG
-    org.springframework.web: INFO
-  file:
-    name: logs/app.log
-  pattern:
-    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+spring:
+  profiles:
+    group:
+      prod: db,monitoring,security
+      dev: db,devtools
 ```
-В prod уровень root — `INFO`, пакет приложения — `WARN` или `INFO`; в dev — `DEBUG` для своего пакета. В `Kubernetes` логи в stdout, сбор — `DaemonSet` (`Fluentd`, `Filebeat`) или sidecar.
 
-## Q22. Как упаковать `Spring Boot` в `Docker` образ?
+**Условные бины:**
 
-**Multi-stage сборка:** этап 1 — Maven или Gradle собирает приложение (например, `app.jar`); этап 2 — образ только с JRE и jar. Оптимизация: `spring-boot-maven-plugin` с **layers** — в образ копировать слои для кэширования зависимостей. Не запускать от root; создать непривилегированного пользователя (`RUN adduser -D appuser`, `USER appuser`).
-
-**Пример `Dockerfile` (`multi-stage`):**
-```dockerfile
-FROM eclipse-temurin:17-jdk-alpine AS build
-WORKDIR /app
-COPY mvnw ./
-COPY .mvn ./
-COPY pom.xml ./
-RUN ./mvnw dependency:go-offline -B
-COPY src ./src
-RUN ./mvnw package -DskipTests -B
-
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-RUN adduser -D appuser
-COPY --from=build /app/target/*.jar app.jar
-USER appuser
-ENTRYPOINT ["java", "-jar", "app.jar"]
+```java
+@Configuration
+@Profile("prod")
+public class ProdCacheConfig {
+    @Bean
+    public CacheManager cacheManager() {
+        return new RedisCacheManager(/* ... */);
+    }
+}
 ```
-Сборка с layers: в `pom.xml spring-`boot-maven`-plugin` с `layers`; при сборке создаётся `layers.idx` и каталоги слоёв; в `Docker` копируем слои — кэш слоёв переиспользуется при изменении только кода приложения.
 
-## Q23. Что такое внешняя конфигурация (`Externalized Configuration`)?
+**Лучшие практики:**
+- `application.yml` — общие настройки по умолчанию
+- `application-dev.yml` — `DEBUG`-логирование, in-memory БД
+- `application-prod.yml` — `INFO`-логирование, внешняя БД, security
+- Не хранить секреты в profile-файлах — использовать env-переменные
 
-**Externalized Configuration** — задание свойств вне кода: **application.properties** вне jar, **переменные окружения**, системные свойства, **config/application.properties** рядом с jar. Порядок приоритета (от высшего): командная строка → переменные окружения → config/* → classpath. Имена свойств из env: SPRING_DATASOURCE_URL (точка → подчёркивание, верхний регистр).
+## Q18. (!) Как использовать `@ConfigurationProperties`?
 
-Секреты — не в репозитории; использовать переменные окружения или внешнее хранилище (`Vault`, облако). В `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей.
+Типобезопасная привязка свойств из `application.yml` к POJO:
 
-**Практика:** в `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей и ключей; монтирование в под как файлы или переменные окружения. В `application.yml` задать значения по умолчанию; переопределение через `SPRING_DATASOURCE_URL`, `SPRING_PROFILES_ACTIVE` и т.д. Для секретов — не писать в Git; при локальном запуске — `application-local.yml` в `.gitignore` или переменные окружения.
+```java
+@ConfigurationProperties(prefix = "app.mail")
+@Validated
+public class MailProperties {
+    @NotBlank
+    private String host;
+    private int port = 587;
+    @DurationUnit(ChronoUnit.SECONDS)
+    private Duration timeout = Duration.ofSeconds(30);
+    private final Retry retry = new Retry();
+
+    public static class Retry {
+        private int maxAttempts = 3;
+        private Duration delay = Duration.ofMillis(500);
+        // getters/setters
+    }
+    // getters/setters
+}
+```
+
+```yaml
+app:
+  mail:
+    host: smtp.example.com
+    port: 465
+    timeout: 60s
+    retry:
+      max-attempts: 5
+      delay: 1s
+```
+
+Регистрация:
+- `@EnableConfigurationProperties(MailProperties.class)` на конфигурации
+- Или `@ConfigurationPropertiesScan` — сканирует пакеты автоматически
+
+**`spring-boot-configuration-processor`** — аннотационный процессор, генерирует `META-INF/spring-configuration-metadata.json` для автодополнения в IDE.
+
+## Q19. Как изменить порт по умолчанию?
+
+Три способа:
+
+1. **`application.yml`:** `server.port: 9090`
+2. **Программно:**
+```java
+@Bean
+public WebServerFactoryCustomizer<ConfigurableWebServerFactory> customizer() {
+    return factory -> factory.setPort(9090);
+}
+```
+3. **Командная строка:** `java -jar app.jar --server.port=9090` или `-Dserver.port=9090`
+
+`server.port=0` — случайный свободный порт (полезно для тестов и микросервисов с service discovery).
+
+---
+
+## Q20. (!) Что такое `Spring Boot Actuator`?
+
+`Spring Boot Actuator` — модуль для мониторинга и управления приложением в production. Предоставляет HTTP-эндпоинты и JMX-бины для наблюдения за состоянием приложения.
+
+Подключение:
+
+```groovy
+implementation 'org.springframework.boot:spring-boot-starter-actuator'
+```
+
+Основные возможности:
+- **Health checks** — состояние приложения и зависимостей (БД, Redis, Kafka)
+- **Метрики** — через `Micrometer` (JVM, HTTP, кастомные)
+- **Информация об окружении** — конфигурация, переменные, бины
+- **Управление** — изменение уровня логирования, thread dump, heap dump
+
+```mermaid
+graph LR
+    A["Spring Boot App"] --> B["Actuator"]
+    B --> C["/health"]
+    B --> D["/metrics"]
+    B --> E["/info"]
+    B --> F["/env"]
+    B --> G["/loggers"]
+    C --> H["Prometheus /<br/>Grafana"]
+    D --> H
+    C --> I["Kubernetes<br/>probes"]
+```
+
+**Безопасность:** по умолчанию по HTTP доступны только `/health` и `/info`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
+
+## Q21. (!) Полный список `Actuator` endpoints и их категории
+
+| Категория | Endpoint | Описание |
+|-----------|----------|----------|
+| **Health** | `/actuator/health` | Состояние приложения (UP/DOWN) |
+| | `/actuator/health/liveness` | Liveness probe для K8s |
+| | `/actuator/health/readiness` | Readiness probe для K8s |
+| **Метрики** | `/actuator/metrics` | Список всех метрик |
+| | `/actuator/metrics/{name}` | Значение конкретной метрики |
+| | `/actuator/prometheus` | Метрики в формате Prometheus |
+| **Информация** | `/actuator/info` | Информация о приложении |
+| | `/actuator/env` | Свойства окружения |
+| | `/actuator/configprops` | Все `@ConfigurationProperties` |
+| | `/actuator/beans` | Все бины в контексте |
+| | `/actuator/mappings` | Все HTTP-маппинги |
+| | `/actuator/conditions` | Отчёт автоконфигурации |
+| **Диагностика** | `/actuator/threaddump` | Дамп потоков |
+| | `/actuator/heapdump` | Дамп кучи (бинарный файл) |
+| | `/actuator/loggers` | Управление уровнями логирования |
+| | `/actuator/caches` | Кэши приложения |
+| **Управление** | `/actuator/shutdown` | Graceful shutdown (отключён по умолчанию) |
+| | `/actuator/refresh` | Обновление конфигурации (Spring Cloud) |
+
+**Настройка экспозиции:**
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+        exclude: env,beans
+  endpoint:
+    health:
+      show-details: when-authorized
+    shutdown:
+      enabled: false
+```
+
+## Q22. Как создать custom `Actuator` endpoint?
+
+**Custom Health Indicator:**
+
+```java
+@Component
+public class DatabaseHealthIndicator implements HealthIndicator {
+    private final DataSource dataSource;
+
+    @Override
+    public Health health() {
+        try (Connection conn = dataSource.getConnection()) {
+            return Health.up()
+                .withDetail("database", conn.getMetaData().getDatabaseProductName())
+                .withDetail("pool.active", getActiveConnections())
+                .build();
+        } catch (SQLException e) {
+            return Health.down(e).build();
+        }
+    }
+}
+```
+
+**Полностью кастомный endpoint:**
+
+```java
+@Component
+@Endpoint(id = "features")
+public class FeaturesEndpoint {
+
+    @ReadOperation
+    public Map<String, Boolean> features() {
+        return Map.of(
+            "newUI", true,
+            "darkMode", false
+        );
+    }
+
+    @WriteOperation
+    public void toggleFeature(@Selector String name, boolean enabled) {
+        // переключить feature flag
+    }
+}
+```
+
+Доступ: `GET /actuator/features`, `POST /actuator/features/{name}`.
+
+## Q23. (!) Как настроить мониторинг и метрики (`Micrometer`)?
+
+`Micrometer` — фасад для метрик (аналог SLF4J для логирования). `Spring Boot Actuator` интегрирует `Micrometer` автоматически.
+
+**Подключение Prometheus:**
+
+```groovy
+implementation 'io.micrometer:micrometer-registry-prometheus'
+```
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+```
+
+**Типы метрик:**
+
+| Тип | Использование | Пример |
+|-----|--------------|--------|
+| `Counter` | Монотонно растущий счётчик | Количество запросов |
+| `Gauge` | Текущее значение | Размер очереди |
+| `Timer` | Длительность + счётчик | Время обработки HTTP |
+| `DistributionSummary` | Распределение значений | Размер ответов |
+
+**Кастомные метрики:**
+
+```java
+@Service
+@RequiredArgsConstructor
+public class OrderService {
+    private final MeterRegistry registry;
+
+    public Order createOrder(OrderRequest request) {
+        return registry.timer("orders.create", "type", request.getType())
+            .record(() -> doCreateOrder(request));
+    }
+}
+```
+
+**JVM-метрики** (регистрируются автоматически): `jvm.memory.used`, `jvm.gc.pause`, `jvm.threads.live`, `system.cpu.usage`.
+
+> **Gotcha:** ограничивать кардинальность тегов. Тег `userId` при миллионах пользователей убьёт мониторинг-систему. Подробнее — в [Метрики и трейсинг](../../monitoring/metrics-tracing-interview.md) и [Observability](../../monitoring/observability-interview.md).
 
 ## Q24. Как настроить health check для `Kubernetes`?
 
-В **Deployment** задают **livenessProbe** и **readinessProbe** на **/actuator/health/liveness** и **/actuator/health/readiness** (`Spring Boot` 2.3+). В `application.yml`: `management.endpoint.health.probes.enabled=true`. **Readiness** — приложение готово принимать трафик (под исключается из `Service` при провале); **liveness** — приложение живо (`Kubernetes` перезапускает под при провале).
-
-Настроить **initialDelaySeconds** (ждать перед первой проверкой), **periodSeconds** (интервал). Пример: `livenessProbe`/`readinessProbe` в манифесте с `initialDelaySeconds: 30`, `periodSeconds: 10`.
+`Spring Boot` 2.3+ поддерживает **Kubernetes probes** из коробки:
 
 ```yaml
-# deployment fragment
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+```
+
+**Kubernetes Deployment:**
+
+```yaml
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
     port: 8080
   initialDelaySeconds: 30
   periodSeconds: 10
+  failureThreshold: 3
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
     port: 8080
   initialDelaySeconds: 60
   periodSeconds: 15
+  failureThreshold: 3
+startupProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 30
 ```
-Кастомные индикаторы: реализовать `HealthIndicator`, зарегистрировать `Bean / Readiness` может быть `DOWN` до подключения к БД; после успешного старта — `UP`, под получает трафик.
 
-## Q25. Что такое `Spring Boot auto-configuration` и как она работает?
+| Probe | Назначение | При провале |
+|-------|-----------|-------------|
+| **Readiness** | Готово ли принимать трафик? | Под исключается из `Service` |
+| **Liveness** | Живо ли приложение? | Под перезапускается |
+| **Startup** | Завершился ли старт? | Другие probes не запускаются |
 
-**Auto-configuration** — условная регистрация бинов на основе classpath и **@Conditional** (**ConditionalOnClass**, **ConditionalOnProperty**, **ConditionalOnMissingBean**). **@EnableAutoConfiguration** (включено через `@SpringBootApplication`) сканирует `META-INF/spring.factories` (или `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` в новых версиях) и условно регистрирует `Bean`. При наличии в classpath зависимостей (например, `DataSource`) подставляется конфигурация по умолчанию.
+> **`startupProbe`** — важно для приложений с долгим стартом (прогрев кэшей, миграции). Без него `livenessProbe` может убить под до завершения инициализации. Подробнее — в [Kubernetes](../../devops/kubernetes-interview.md).
 
-Отключение: **`@SpringBootApplication`(exclude = {DataSourceAutoConfiguration.class})** или **spring.autoconfigure.exclude** в properties. Для тестов часто отключают автоконфигурацию БД или безопасности.
+---
 
-## Q26. Как отключить автоконфигурацию для тестов?
+## Q25. (!) Что такое executable `JAR` и как он устроен?
 
-**@SpringBootTest** загружает полный контекст. Отключить конкретную автоконфигурацию: **`@SpringBootTest`(`excludeAutoConfiguration` = DataSourceAutoConfiguration.class)** или **`@EnableAutoConfiguration`(exclude = {...})** в тестовом конфиге. **@AutoConfigureTestDatabase** — замена БД на `H2`. **@MockBean** — подмена бинов.
+**Executable JAR** (fat JAR) — один файл со всеми зависимостями, который запускается через `java -jar`.
 
-Для срезов: **@WebMvcTest** (только `MVC`), **@DataJpaTest** (только `JPA`, встроенная БД) — загружается только нужный слой, остальная автоконфигурация не поднимается.
+Структура:
 
-## Q27. Как использовать `@ConfigurationProperties`?
+```
+my-app.jar
+├── META-INF/
+│   └── MANIFEST.MF        (Main-Class: JarLauncher)
+├── org/springframework/boot/loader/
+│   └── JarLauncher.class   (Spring Boot Launcher)
+├── BOOT-INF/
+│   ├── classes/             (код приложения)
+│   ├── lib/                 (зависимости как вложенные JAR)
+│   └── classpath.idx        (порядок classpath)
+└── BOOT-INF/layers.idx     (если включены layers)
+```
 
-Класс с полями и геттерами/сеттерами, аннотированный **`@ConfigurationProperties`(prefix = "app")**, биндится к префиксу **app.*** в `application.yml`; в конфиге — **`@EnableConfigurationProperties`(MyProps.class)** или **@ConfigurationPropertiesScan**. Валидация: **@Validated** и **@NotNull**, **@Size** на полях.
+```mermaid
+graph TD
+    A["java -jar app.jar"] --> B["JarLauncher<br/>(Main-Class из MANIFEST.MF)"]
+    B --> C["Настройка ClassLoader<br/>для вложенных JAR"]
+    C --> D["Загрузка BOOT-INF/lib/*.jar"]
+    D --> E["Запуск Start-Class<br/>(ваш @SpringBootApplication)"]
+    E --> F["SpringApplication.run()"]
+```
 
-Типобезопасный доступ к вложенным свойствам; **spring-boot-configuration-processor** генерирует метаданные для подсказок в `IDE`. Пример: `app.server.port`, `app.feature.enabled` в yml → поля `server.port`, `feature.enabled` в классе с prefix = "app".
+**Layers** (для оптимизации Docker-образов):
 
-## Q28. Что такое `Spring Boot` executable `JAR` и как он устроен?
+| Слой | Содержимое | Частота изменений |
+|------|-----------|-------------------|
+| `dependencies` | Внешние библиотеки | Редко |
+| `spring-boot-loader` | Loader-классы | Почти никогда |
+| `snapshot-dependencies` | SNAPSHOT-зависимости | Иногда |
+| `application` | Код приложения | Часто |
 
-**Executable JAR** (fat `JAR`) — один jar со всеми зависимостями в **BOOT-INF**; **Spring Boot** (**JarLauncher**) читает **BOOT-INF/Main-Class** из манифеста.
+Порядок слоёв от стабильных к изменчивым позволяет `Docker` кэшировать нижние слои.
 
-Вложенные jar распаковываются при старте во временный каталог. **spring-boot-maven-plugin** (repackage) создаёт такой jar. С **layers** образ разбит на слои (dependencies, `spring-boot-loader`, `snapshot-dependencies`, application) для кэширования в `Docker`.
+## Q26. Как развернуть `Spring Boot` в виде `JAR` и `WAR`?
 
-## Q29. Как настроить мониторинг и метрики (`Micrometer`)?
+**JAR (рекомендуется)** — встроенный сервер, запуск через `java -jar`:
 
-**Micrometer** — абстракция метрик; **spring-`boot-starter / Prometheus`, `Datadog` через зависимость **micrometer-registry-prometheus** и т.д. Свойства **management.`metrics.export`.*** для настройки реестра. Кастомные метрики: **MeterRegistry.counter()**, **timer()**, **gauge()**. Метки (tags) для разбиения по эндпоинтам, кодам ответа; кардинальность тегов ограничивать.
+```xml
+<packaging>jar</packaging>
+```
 
-Зависимость `micrometer-registry-prometheus` + `management.endpoints.web.exposure.include=prometheus`. JVM-метрики (память, потоки, `GC`) регистрируются автоматически. Кастом: `@Autowired MeterRegistry registry; registry.counter("orders.created", "status", "new").increment();` Метки ограничивать по кардинальности (не `user_id` в тег при миллионах пользователей).
+```groovy
+// Gradle — по умолчанию jar
+tasks.named('bootJar') {
+    archiveFileName = 'app.jar'
+}
+```
 
-## Q30. Как мигрировать с `Spring` на `Spring Boot`?
+**WAR** — для деплоя на внешний сервер (`Tomcat`, `WildFly`):
 
-Добавить **spring-boot-starter-parent** (или `BOM`), заменить конфигурацию XML на `application.yml`/`application.properties`, подключать `spring-boot-starter-*` вместо ручных зависимостей. Постепенно включать автоконфигурацию и удалять дублирующие `Bean`. Встроенный сервер (`Tomcat` / `Jetty` / `Undertow`) вместо внешнего.
+```java
+@SpringBootApplication
+public class MyApplication extends SpringBootServletInitializer {
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+        return builder.sources(MyApplication.class);
+    }
+}
+```
 
-Миграция по модулям; тесты и регрессии на каждом шаге. Документация `Spring Boot` по миграции. Типичные шаги: `BOM` → замена зависимостей → перенос конфига в `application.yml` → отключение лишней автоконфигурации при конфликтах.
+```groovy
+plugins {
+    id 'war'
+}
+dependencies {
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+}
+```
+
+> **На собеседовании:** JAR с встроенным сервером — стандарт для микросервисов и контейнеров. WAR нужен, когда корпоративная инфраструктура требует деплой на общий сервер приложений.
+
+## Q27. Как упаковать `Spring Boot` в `Docker` образ?
+
+**Multi-stage Dockerfile:**
+
+```dockerfile
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+COPY gradlew build.gradle settings.gradle ./
+COPY gradle ./gradle
+RUN ./gradlew dependencies --no-daemon
+COPY src ./src
+RUN ./gradlew bootJar --no-daemon
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN adduser -D appuser
+COPY --from=build /app/build/libs/*.jar app.jar
+USER appuser
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**Оптимизация с layers:**
+
+```dockerfile
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+RUN adduser -D appuser
+COPY --from=build /app/build/libs/*.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --layers --launcher
+USER appuser
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+```
+
+**Buildpacks** (без Dockerfile):
+
+```bash
+./gradlew bootBuildImage --imageName=myapp:latest
+```
+
+Лучшие практики:
+- Не запускать от root (`USER appuser`)
+- Использовать `-jre` вместо `-jdk` в production
+- JVM-флаги для контейнеров: `-XX:MaxRAMPercentage=75.0`
+- Передавать конфигурацию через env-переменные
+
+Подробнее — в [Docker](../../devops/docker-interview.md).
+
+## Q28. Что такое `Spring Boot DevTools`?
+
+`DevTools` — модуль для ускорения цикла разработки:
+
+```groovy
+developmentOnly 'org.springframework.boot:spring-boot-devtools'
+```
+
+Возможности:
+
+| Функция | Описание |
+|---------|----------|
+| **Automatic Restart** | Перезапуск при изменении классов (два ClassLoader: base + restart) |
+| **LiveReload** | Автоматическое обновление браузера при изменении ресурсов |
+| **Property Defaults** | Отключение кэширования шаблонов, `DEBUG`-логирование |
+| **Remote DevTools** | Удалённая отладка (не для production!) |
+
+Два ClassLoader: `base` загружает зависимости (не меняются), `restart` — код приложения. При изменении перезагружается только `restart` ClassLoader — быстрее полного рестарта.
+
+**Отключение:**
+```properties
+spring.devtools.restart.enabled=false
+```
+
+> `DevTools` автоматически отключается в production (при запуске через `java -jar` или из специального ClassLoader).
+
+---
+
+## Q29. (!) Как отключить автоконфигурацию для тестов?
+
+**Тестовые срезы** — загружают только нужный слой:
+
+| Аннотация | Что загружает |
+|-----------|--------------|
+| `@WebMvcTest` | Только MVC-контроллеры, без сервиса и БД |
+| `@DataJpaTest` | Только JPA-репозитории, встроенная БД |
+| `@WebFluxTest` | Только WebFlux-контроллеры |
+| `@JsonTest` | Только JSON-сериализация |
+| `@RestClientTest` | Только REST-клиенты |
+
+**Исключение автоконфигурации в `@SpringBootTest`:**
+
+```java
+@SpringBootTest
+@EnableAutoConfiguration(exclude = {
+    DataSourceAutoConfiguration.class,
+    SecurityAutoConfiguration.class
+})
+class MyIntegrationTest { }
+```
+
+**`@MockBean`** — заменяет бин моком в контексте. **`@TestPropertySource`** — переопределяет свойства для теста.
+
+Подробнее о тестировании — в [Интеграционное тестирование](../../testing/integration-testing-interview.md) и [Юнит-тестирование](../../testing/unit-testing-interview.md).
+
+## Q30. Какие основные аннотации `Spring Boot` предлагает?
+
+| Аннотация | Назначение |
+|-----------|-----------|
+| `@SpringBootApplication` | Точка входа = `@Configuration` + `@EnableAutoConfiguration` + `@ComponentScan` |
+| `@EnableAutoConfiguration` | Включить автоконфигурацию |
+| `@ConfigurationProperties` | Типобезопасная привязка свойств |
+| `@ConditionalOnClass` | Условная регистрация бина |
+| `@ConditionalOnMissingBean` | Бин только если не определён вручную |
+| `@ConditionalOnProperty` | Бин по значению свойства |
+| `@AutoConfiguration` | Класс автоконфигурации (Spring Boot 3.x) |
+| `@SpringBootTest` | Интеграционный тест с полным контекстом |
+| `@WebMvcTest` | Тестовый срез для MVC |
+| `@DataJpaTest` | Тестовый срез для JPA |
+
+Подробнее об аннотациях `Spring` — в [Spring Framework](spring-framework-interview.md).
+
+---
+
+## Q31. Как использовать `Spring Boot` как приложение командной строки?
+
+Реализовать `CommandLineRunner` или `ApplicationRunner`:
+
+```java
+@SpringBootApplication
+public class BatchApp implements CommandLineRunner {
+
+    @Override
+    public void run(String... args) throws Exception {
+        System.out.println("Аргументы: " + Arrays.toString(args));
+        // бизнес-логика
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(BatchApp.class, args);
+    }
+}
+```
+
+**`ApplicationRunner`** — получает `ApplicationArguments` вместо `String[]`, поддерживает `--key=value` парсинг.
+
+Для отключения встроенного сервера: `spring.main.web-application-type=none` или `WebApplicationType.NONE` в `SpringApplication`.
+
+## Q32. Как настроить логирование?
+
+По умолчанию — `Logback`. Конфигурация через `application.yml`:
+
+```yaml
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.springframework.web: WARN
+    org.hibernate.SQL: DEBUG
+  file:
+    name: logs/app.log
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 30
+```
+
+**Замена на Log4j2:**
+```groovy
+implementation('org.springframework.boot:spring-boot-starter-web') {
+    exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
+implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+```
+
+**Изменение уровня в рантайме** через `Actuator`:
+```bash
+curl -X POST http://localhost:8080/actuator/loggers/com.example \
+  -H 'Content-Type: application/json' \
+  -d '{"configuredLevel": "DEBUG"}'
+```
+
+В `Kubernetes` — логи в stdout, сбор через `DaemonSet` (`Fluentd`, `Filebeat`). Подробнее — в [Логирование](../../logging/logging-interview.md).
+
+## Q33. Как мигрировать с `Spring` на `Spring Boot`?
+
+Пошаговый план:
+
+1. **BOM/Parent** — подключить `spring-boot-dependencies` или `spring-boot-starter-parent`
+2. **Зависимости** — заменить ручные зависимости на `spring-boot-starter-*`
+3. **Конфигурация** — перенести XML/Java-config в `application.yml`
+4. **Главный класс** — создать `@SpringBootApplication` с `SpringApplication.run()`
+5. **Встроенный сервер** — убрать зависимость от внешнего сервера, использовать embedded `Tomcat`
+6. **Тесты** — мигрировать на `@SpringBootTest`
+7. **Конфликты** — отключить лишнюю автоконфигурацию через `exclude`
+
+Миграция по модулям; тесты и регрессии на каждом шаге. Типичные проблемы: конфликты версий библиотек, дублирование конфигурации бинов (авто + ручная).
+
+## Q34. (!) Что такое `GraalVM Native Image` в `Spring Boot`?
+
+`Spring Boot` 3.x поддерживает компиляцию в нативный образ через `GraalVM`:
+
+```bash
+./gradlew nativeCompile
+```
+
+**Преимущества:**
+- Старт за **50-100 мс** (вместо секунд)
+- Потребление памяти **в 3-5 раз меньше**
+- Идеально для serverless и short-lived контейнеров
+
+**Ограничения:**
+- Рефлексия требует явной конфигурации (GraalVM reachability metadata)
+- Длительная компиляция (минуты)
+- Не все библиотеки поддерживаются
+- Нет динамической загрузки классов
+
+**AOT-обработка** (`Ahead-of-Time`):
+
+```mermaid
+graph LR
+    A["Исходный код"] --> B["AOT Processing<br/>(compile time)"]
+    B --> C["Сгенерированный код<br/>+ metadata"]
+    C --> D["GraalVM Native<br/>Image Compiler"]
+    D --> E["Нативный бинарник<br/>(~50ms startup)"]
+```
+
+`Spring Boot` 3.x выполняет AOT-обработку: генерирует код для создания бинов без рефлексии, анализирует `@Conditional` на этапе компиляции. Результат — нативный бинарник, не требующий JVM.
+
+## Q35. (!) Жизненный цикл `Spring Boot` приложения
+
+Полный жизненный цикл от запуска до остановки:
+
+```mermaid
+graph TD
+    A["main() → SpringApplication.run()"] --> B["Подготовка Environment<br/>(загрузка property sources)"]
+    B --> C["Публикация<br/>ApplicationEnvironmentPreparedEvent"]
+    C --> D["Создание ApplicationContext"]
+    D --> E["Загрузка @Configuration,<br/>Auto-configuration"]
+    E --> F["Refresh контекста<br/>(создание бинов)"]
+    F --> G["Запуск встроенного сервера"]
+    G --> H["Вызов CommandLineRunner /<br/>ApplicationRunner"]
+    H --> I["Публикация<br/>ApplicationReadyEvent"]
+    I --> J["Приложение работает"]
+    J --> K["Получение SIGTERM"]
+    K --> L["Graceful Shutdown<br/>(завершение запросов)"]
+    L --> M["Закрытие ApplicationContext<br/>(вызов @PreDestroy)"]
+    M --> N["Остановка"]
+```
+
+**Ключевые события (listeners):**
+
+| Событие | Когда |
+|---------|-------|
+| `ApplicationStartingEvent` | До всего, сразу после `run()` |
+| `ApplicationEnvironmentPreparedEvent` | Environment готов, контекст не создан |
+| `ApplicationContextInitializedEvent` | Контекст создан, бины не загружены |
+| `ApplicationPreparedEvent` | Бины загружены, контекст не обновлён |
+| `ApplicationStartedEvent` | Контекст обновлён, runners не вызваны |
+| `ApplicationReadyEvent` | Всё готово, приложение принимает трафик |
+| `ApplicationFailedEvent` | Ошибка при запуске |
+
+**Graceful Shutdown** (Spring Boot 2.3+):
+
+```yaml
+server:
+  shutdown: graceful
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+```
+
+При `SIGTERM` сервер прекращает принимать новые соединения, дожидается завершения текущих запросов (до timeout), затем закрывает контекст.
+
+## Q36. (!) Что такое тестовые срезы (`@WebMvcTest`, `@DataJpaTest`)?
+
+Тестовые срезы — специализированные аннотации Spring Boot Test, которые загружают **только часть** контекста приложения, необходимую для тестирования конкретного слоя. Это ускоряет тесты и снижает связанность.
+
+| Аннотация | Что загружает | Что мокируется |
+|-----------|---------------|----------------|
+| `@WebMvcTest` | MVC-слой: контроллеры, фильтры, `DispatcherServlet` | Сервисы (`@MockBean`) |
+| `@DataJpaTest` | JPA: репозитории, `EntityManager`, H2 in-memory | Сервисный слой |
+| `@DataMongoTest` | MongoDB репозитории | — |
+| `@WebFluxTest` | WebFlux: контроллеры на реактивном стеке | Сервисы |
+| `@JsonTest` | JSON-сериализация (`@JsonComponent`, Jackson) | — |
+| `@RestClientTest` | `RestTemplate` / `RestClient` + mock server | — |
+
+**Пример `@WebMvcTest`:**
+
+```java
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private UserService userService;          // мокируем зависимость
+
+    @Test
+    void getUser_returnsOk() throws Exception {
+        given(userService.findById(1L))
+            .willReturn(new UserDto(1L, "Alice"));
+
+        mockMvc.perform(get("/users/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value("Alice"));
+    }
+}
+```
+
+**Пример `@DataJpaTest`:**
+
+```java
+@DataJpaTest
+// По умолчанию заменяет DataSource на H2 in-memory
+// и применяет @Transactional — каждый тест откатывается
+class UserRepositoryTest {
+
+    @Autowired
+    private TestEntityManager em;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void findByEmail_returnsUser() {
+        User user = em.persistFlushFind(new User("alice@example.com", "Alice"));
+
+        Optional<User> found = userRepository.findByEmail("alice@example.com");
+        assertThat(found).isPresent();
+        assertThat(found.get().getName()).isEqualTo("Alice");
+    }
+}
+```
+
+Для тестирования с реальной БД используется `@AutoConfigureTestDatabase(replace = NONE)` в сочетании с `Testcontainers`.
+
+## Q37. (!) Как работает `@SpringBootTest` и какие режимы запуска контекста существуют?
+
+`@SpringBootTest` загружает **полный** контекст приложения. Управляется параметром `webEnvironment`:
+
+| Режим | Описание |
+|-------|----------|
+| `MOCK` (по умолчанию) | Загружает `WebApplicationContext` с mock-сервлет-окружением |
+| `RANDOM_PORT` | Запускает реальный встроенный сервер на случайном порту |
+| `DEFINED_PORT` | Запускает на порту из `application.properties` |
+| `NONE` | Загружает `ApplicationContext` без веб-окружения |
+
+**Пример интеграционного теста с реальным портом:**
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class OrderApiIntegrationTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void createOrder_returns201() {
+        var response = restTemplate.postForEntity(
+            "http://localhost:" + port + "/orders",
+            new CreateOrderRequest("ITEM-1", 2),
+            OrderDto.class
+        );
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    }
+}
+```
+
+**Оптимизация скорости тестов** — кэширование контекста. Spring кэширует контекст между тестами, если совпадает набор конфигурации. `@MockBean` / `@SpyBean` инвалидируют кэш — используйте их минимально или выносите в общий базовый класс.
+
+```java
+// Базовый класс для переиспользования контекста
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@ActiveProfiles("test")
+abstract class BaseIntegrationTest {
+    // общие @MockBean здесь
+}
+```
+
+## Q38. (!) Как устроены `@ConditionalOnProperty`, `@ConditionalOnMissingBean` и другие условные аннотации?
+
+Условные аннотации — механизм тонкой настройки автоконфигурации. Каждая реализует `Condition` и вычисляется во время загрузки контекста.
+
+| Аннотация | Условие регистрации бина |
+|-----------|------------------------|
+| `@ConditionalOnProperty` | Свойство задано и/или имеет нужное значение |
+| `@ConditionalOnMissingBean` | Бин данного типа ещё не зарегистрирован |
+| `@ConditionalOnBean` | Бин данного типа уже зарегистрирован |
+| `@ConditionalOnClass` | Класс присутствует в classpath |
+| `@ConditionalOnMissingClass` | Класс отсутствует в classpath |
+| `@ConditionalOnWebApplication` | Контекст является веб-приложением |
+| `@ConditionalOnExpression` | SpEL-выражение возвращает `true` |
+| `@ConditionalOnResource` | Ресурс (файл) присутствует |
+| `@ConditionalOnJava` | Версия JVM соответствует условию |
+
+**Пример кастомной автоконфигурации:**
+
+```java
+@AutoConfiguration
+@ConditionalOnClass(DataSource.class)            // только если JDBC в classpath
+@ConditionalOnProperty(
+    prefix = "app.cache",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = false                        // по умолчанию НЕ активен
+)
+public class RedisCacheAutoConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean(CacheManager.class) // не перекрывает пользовательский бин
+    public CacheManager cacheManager(RedisConnectionFactory factory) {
+        return RedisCacheManager.builder(factory).build();
+    }
+}
+```
+
+**Порядок вычисления:** `@ConditionalOnClass` / `@ConditionalOnMissingClass` → `@ConditionalOnBean` / `@ConditionalOnMissingBean` → остальные. Ошибочный порядок в классах автоконфигурации ведёт к `NoSuchBeanDefinitionException` — поэтому Spring Boot вычисляет условия на classpath-уровне раньше, чем на bean-уровне.
+
+## Q39. (!) Что такое AOT-обработка в Spring Boot 3.x?
+
+**AOT (Ahead-Of-Time Processing)** — этап сборки, на котором Spring Boot 3.x анализирует приложение и генерирует исходный код для создания бинов без использования рефлексии и динамических прокси в runtime.
+
+**Зачем нужен AOT:**
+- Обязателен для компиляции в **GraalVM Native Image** (рефлексия ограничена)
+- Ускоряет старт даже на обычной JVM (меньше работы при инициализации контекста)
+- Позволяет выявлять ошибки конфигурации на этапе сборки
+
+**Что генерирует AOT:**
+
+```
+build/generated/aotSources/      # Java-код для создания бинов
+build/generated/aotResources/    # reflect-config.json, proxy-config.json
+build/generated/aotClasses/      # скомпилированные AOT-классы
+```
+
+**Типичный пример генерируемого кода:**
+
+```java
+// Вместо рефлексии Spring генерирует прямые вызовы:
+@Generated
+public class MyServiceBeanDefinitions implements BeanDefinitionRegistrar {
+    @Override
+    public void registerBeanDefinitions(BeanDefinitionRegistry registry) {
+        // прямое создание BeanDefinition без рефлексии
+        RootBeanDefinition def = new RootBeanDefinition(MyService.class);
+        def.setInstanceSupplier(MyService::new);
+        registry.registerBeanDefinition("myService", def);
+    }
+}
+```
+
+**Запуск AOT-обработки:**
+
+```bash
+# Gradle: генерирует AOT-источники
+./gradlew processAot
+
+# Сборка нативного образа
+./gradlew nativeCompile
+
+# Запуск нативного бинарника
+./build/native/nativeCompile/my-app
+```
+
+**Ограничения:** динамические `@Bean`-методы с рефлексией, `BeanDefinitionRegistryPostProcessor` с условной логикой требуют явных hints через `@RegisterReflectionForBinding` или `RuntimeHintsRegistrar`.
+
+## Q40. (!) Как настроить кастомный `HealthIndicator` для Actuator?
+
+`HealthIndicator` — интерфейс для добавления собственных проверок здоровья в `/actuator/health`. Spring Boot автоматически обнаруживает все бины, реализующие этот интерфейс.
+
+**Простой HealthIndicator:**
+
+```java
+@Component
+public class ExternalApiHealthIndicator implements HealthIndicator {
+
+    private final ExternalApiClient client;
+
+    public ExternalApiHealthIndicator(ExternalApiClient client) {
+        this.client = client;
+    }
+
+    @Override
+    public Health health() {
+        try {
+            boolean reachable = client.ping();
+            if (reachable) {
+                return Health.up()
+                    .withDetail("url", client.getBaseUrl())
+                    .withDetail("responseTime", client.getLastResponseTimeMs() + "ms")
+                    .build();
+            }
+            return Health.down()
+                .withDetail("reason", "API не отвечает")
+                .build();
+        } catch (Exception e) {
+            return Health.down(e)
+                .withDetail("error", e.getMessage())
+                .build();
+        }
+    }
+}
+```
+
+**Результат в `/actuator/health`:**
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "externalApi": {
+      "status": "UP",
+      "details": {
+        "url": "https://api.example.com",
+        "responseTime": "42ms"
+      }
+    }
+  }
+}
+```
+
+**Асинхронный / реактивный вариант (WebFlux):**
+
+```java
+@Component
+public class ReactiveDbHealthIndicator implements ReactiveHealthIndicator {
+
+    private final R2dbcConnectionFactory factory;
+
+    @Override
+    public Mono<Health> health() {
+        return Mono.fromCallable(() -> factory.create())
+            .map(conn -> Health.up().withDetail("r2dbc", "connected").build())
+            .onErrorReturn(Health.down().withDetail("r2dbc", "unavailable").build());
+    }
+}
+```
+
+Группировка индикаторов настраивается через `management.endpoint.health.group.*`.
+
+## Q41. (!) Как работает Spring Boot с несколькими профилями одновременно?
+
+Spring Boot поддерживает **активацию нескольких профилей** одновременно. Каждый профиль добавляет/переопределяет конфигурацию поверх базовой.
+
+**Активация нескольких профилей:**
+
+```yaml
+# application.yml (базовая конфигурация)
+spring:
+  profiles:
+    active: dev,metrics   # несколько через запятую
+```
+
+```bash
+# Через системное свойство
+java -Dspring.profiles.active=prod,metrics -jar app.jar
+
+# Через переменную окружения
+SPRING_PROFILES_ACTIVE=prod,metrics java -jar app.jar
+```
+
+**Profile Groups (Spring Boot 2.4+):**
+
+```yaml
+# application.yml
+spring:
+  profiles:
+    group:
+      production:          # псевдоним для набора профилей
+        - prod-db
+        - prod-metrics
+        - prod-security
+      development:
+        - dev-db
+        - dev-logging
+```
+
+При активации `production` автоматически включаются `prod-db`, `prod-metrics`, `prod-security`.
+
+**Порядок применения конфигурации:**
+
+```
+application.yml                      # базовая
+application-{profile1}.yml           # первый профиль
+application-{profile2}.yml           # второй (перекрывает первый)
+```
+
+**`@Profile` на бинах:**
+
+```java
+@Configuration
+@Profile("!prod")          // активен на всех профилях, кроме prod
+public class MockEmailConfig {
+    @Bean
+    public EmailService emailService() {
+        return new MockEmailService();
+    }
+}
+
+@Configuration
+@Profile("prod & metrics") // AND-условие (Spring 5.1+)
+public class ProdMetricsConfig { ... }
+```
+
+**`@ActiveProfiles` в тестах:**
+
+```java
+@SpringBootTest
+@ActiveProfiles({"test", "h2"})
+class ServiceTest { ... }
+```
+
+## Q42. Как ограничить экспозицию Actuator endpoints в production?
+
+По умолчанию Actuator открывает только `/health` и `/info` по HTTP. В production важно явно контролировать, какие endpoint-ы доступны и защищены.
+
+**Конфигурация экспозиции:**
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus  # белый список
+        # exclude: env,beans,heapdump           # или чёрный список
+  endpoint:
+    health:
+      show-details: when-authorized              # детали только авторизованным
+      show-components: when-authorized
+    # Защита отдельного endpoint
+    shutdown:
+      enabled: false                             # отключить полностью
+  server:
+    port: 9090                                   # отдельный порт для management
+```
+
+**Защита через Spring Security:**
+
+```java
+@Configuration
+@EnableWebSecurity
+public class ActuatorSecurityConfig {
+
+    @Bean
+    public SecurityFilterChain actuatorSecurity(HttpSecurity http) throws Exception {
+        return http
+            .securityMatcher(EndpointRequest.toAnyEndpoint())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(EndpointRequest.to(HealthEndpoint.class, InfoEndpoint.class))
+                    .permitAll()
+                .requestMatchers(EndpointRequest.toAnyEndpoint())
+                    .hasRole("ACTUATOR_ADMIN")
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults())
+            .build();
+    }
+}
+```
+
+**Вынесение на отдельный порт** (рекомендуется для production):
+
+```yaml
+management:
+  server:
+    port: 9090
+    # Этот порт закрыт в Ingress/LoadBalancer — доступен только внутри кластера
+```
+
+> **На собеседовании:** упомяните, что `/actuator/heapdump` и `/actuator/env` особенно чувствительны — первый даёт доступ к памяти процесса, второй раскрывает переменные окружения включая секреты.
+
+---
+
+## See also
+
+- [Spring Framework](spring-framework-interview.md) — IoC-контейнер и DI, лежащие в основе Boot
+- [Spring MVC](spring-mvc-interview.md) — веб-слой, автоконфигурируемый Boot-ом
+- [Spring WebFlux](spring-webflux-interview.md) — реактивный стек, поддерживаемый Boot-ом
+- [Spring Security](spring-security-interview.md) — автоконфигурация Security в Spring Boot
+- [Spring Data JPA](spring-data-jpa-interview.md) — автоконфигурация datasource и репозиториев
+- [Spring Cloud](spring-cloud-interview.md) — экосистема микросервисов поверх Spring Boot
+- [Spring Boot Actuator](spring-boot-actuator-interview.md) — production-ready мониторинг и management
+- [Spring Batch](spring-batch-interview.md) — пакетная обработка, интегрированная в Boot
+- [Микросервисы](../../architecture/microservices-interview.md) — Spring Boot как основа для микросервисов
+- [Docker](../../devops/docker-interview.md) — контейнеризация Spring Boot приложений

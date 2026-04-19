@@ -1,7 +1,10 @@
 ---
 title: "jOOQ: Type-Safe SQL в Java"
 description: "Комплексное руководство по использованию jOOQ (Java Object Oriented Querying) для создания type-safe SQL запросов в Java приложениях."
-tags: ["libraries", "java", "java-jooq"]
+tags:
+  - libraries
+  - java
+  - java-jooq
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # jOOQ: **Type-Safe SQL** в **Java**
 
 **Комплексное руководство по использованию `jOOQ` (**Java Object Oriented Querying**) для создания `type-safe SQL` запросов в `Java` приложениях.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -1839,7 +1840,7 @@ public class UserRepositoryTest {
 
 ## Заключение
 
-**jOOQ** — это мощная библиотека для создания **type-safe SQL** запросов в **Java**, которая значительно повышает безопасность и удобство работы с базами данных.
+**jOOQ** — это библиотека для создания **type-safe SQL** запросов в **Java**, которая значительно повышает безопасность и удобство работы с базами данных.
 
 ### Преимущества **jOOQ**
 

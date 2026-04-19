@@ -1,7 +1,10 @@
 ---
 title: "Maven (основы)"
 description: "Apache Maven — система управления проектами и сборки с открытым исходным кодом; использует декларативную модель (POM — Project Object Model) для зависимостей и плагинов. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [maven-advanced.md](maven-advanced.m"
-tags: ["development", "build-tools", "maven"]
+tags:
+  - development
+  - build-tools
+  - maven
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Maven (основы)
 
 **Apache Maven** — система управления проектами и сборки с открытым исходным кодом; использует декларативную модель (**POM** — **Project Object Model**) для зависимостей и плагинов. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [maven-advanced.md](maven-advanced.md).
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

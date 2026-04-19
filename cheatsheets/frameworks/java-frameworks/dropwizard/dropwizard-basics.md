@@ -1,7 +1,13 @@
 ---
 title: "Dropwizard: Основы"
 description: "Java фреймворк для создания RESTful веб-приложений с production-ready метриками, логированием и health checks"
-tags: ["dropwizard", "java", "rest", "microservices", "metrics", "logging"]
+tags:
+  - dropwizard
+  - java
+  - rest
+  - microservices
+  - metrics
+  - logging
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "spring/spring-boot.md"]
 next: ["dropwizard-core.md", "dropwizard-jersey.md"]

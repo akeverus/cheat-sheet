@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: REST - RESTEasy Reactive и JAX-RS"
 description: "Полное руководство по REST в Quarkus: RESTEasy Reactive, JAX-RS, controllers, filters, exception handling и best practices"
-tags: ["quarkus", "rest", "resteasy", "jax-rs", "controllers", "java"]
+tags:
+  - quarkus
+  - rest
+  - resteasy
+  - jax-rs
+  - controllers
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]

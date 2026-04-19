@@ -1,7 +1,10 @@
 ---
 title: "UI Testing — обзор"
 description: "Обзор автоматизации тестирования интерфейса: Selenium WebDriver, Playwright, Cypress, паттерны и рекомендации."
-tags: ["testing", "ui-testing", "ui-testing-overview"]
+tags:
+  - testing
+  - ui-testing
+  - ui-testing-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []

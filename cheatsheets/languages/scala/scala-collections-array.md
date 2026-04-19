@@ -1,7 +1,12 @@
 ---
 title: "Scala Collections - Array"
 description: "Полное руководство по Array в Scala: массивы, операции, производительность, взаимодействие с Java"
-tags: ["scala", "collections", "array", "performance", "java-interop"]
+tags:
+  - scala
+  - collections
+  - array
+  - performance
+  - java-interop
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 # **Scala Collections** - **Array**
 
 Кратко: полное руководство по **Array** в **Scala**: массивы, операции, производительность, взаимодействие с **Java**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

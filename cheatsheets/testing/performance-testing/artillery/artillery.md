@@ -1,7 +1,10 @@
 ---
 title: "Artillery"
 description: "Artillery — инструмент нагрузочного тестирования на Node.js. Сценарии в YAML (или JavaScript), фазы нагрузки (phases), сценарии (scenarios), HTTP/WebSocket, процессор (processor) для кастомной логики, отчёты и Artillery Cloud, интеграция с CI/CD."
-tags: ["testing", "performance-testing", "artillery"]
+tags:
+  - testing
+  - performance-testing
+  - artillery
 difficulty: "intermediate"
 prerequisites: []
 next: []

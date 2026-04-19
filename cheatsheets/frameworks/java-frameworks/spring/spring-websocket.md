@@ -1,7 +1,10 @@
 ---
 title: "Spring WebSocket"
 description: "Кратко: обзор поддержки WebSocket в Spring — двунаправленная связь между клиентом и сервером. STOMP, SockJS, конфигурация и типовые сценарии использования."
-tags: ["frameworks", "java-frameworks", "spring-websocket"]
+tags:
+  - frameworks
+  - java-frameworks
+  - spring-websocket
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring WebSocket
 
 Кратко: обзор поддержки **WebSocket** в **Spring** — двунаправленная связь между клиентом и сервером. **STOMP**, **SockJS**, конфигурация и типовые сценарии использования.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

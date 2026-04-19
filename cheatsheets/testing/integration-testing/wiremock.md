@@ -1,7 +1,10 @@
 ---
 title: "WireMock для Java"
 description: "Краткое руководство по использованию WireMock для мокирования HTTP-сервисов в Java-тестах: standalone-сервер, интеграция с JUnit, сопоставление запросов, шаблоны ответов, stateful-сценарии и интеграция со Spring Boot."
-tags: ["testing", "integration-testing", "wiremock"]
+tags:
+  - testing
+  - integration-testing
+  - wiremock
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # WireMock для Java
 
 Краткое руководство по использованию **WireMock** для мокирования HTTP-сервисов в Java-тестах: standalone-сервер, интеграция с JUnit, сопоставление запросов, шаблоны ответов, stateful-сценарии и интеграция со Spring Boot.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

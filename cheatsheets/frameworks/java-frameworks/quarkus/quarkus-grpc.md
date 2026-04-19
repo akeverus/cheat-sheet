@@ -1,7 +1,12 @@
 ---
 title: "Quarkus: gRPC - Remote Procedure Calls"
 description: "Полное руководство по gRPC в Quarkus: service definition, client/server, streaming, interceptors и best practices"
-tags: ["quarkus", "grpc", "rpc", "microservices", "java"]
+tags:
+  - quarkus
+  - grpc
+  - rpc
+  - microservices
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-reactive.md"]

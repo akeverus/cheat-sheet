@@ -1,15 +1,18 @@
 ---
 title: "Go: рефлексия"
 description: "Полное руководство по рефлексии в Go: reflect package, Type, Value, интроспекция, динамическое создание типов"
-tags: ["go", "golang", "reflection", "introspection", "dynamic"]
+tags:
+  - go
+  - golang
+  - reflection
+  - introspection
+  - dynamic
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md", "go/go-interfaces.md"]
 updated: "2026-02-06"
 ---
 
 # Go: рефлексия
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

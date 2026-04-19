@@ -1,7 +1,10 @@
 ---
 title: "OpenTelemetry: Observability в Java"
 description: "Комплексное руководство по использованию OpenTelemetry — открытого стандарта для сбора и экспорта телеметрии (метрики, трейсы, логи) в Java приложениях."
-tags: ["libraries", "java", "java-opentelemetry"]
+tags:
+  - libraries
+  - java
+  - java-opentelemetry
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # OpenTelemetry: **Observability** в **Java**
 
 **Комплексное руководство по использованию `OpenTelemetry` — открытого стандарта для сбора и экспорта телеметрии (**метрики, трейсы, логи**) в `Java` приложениях.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

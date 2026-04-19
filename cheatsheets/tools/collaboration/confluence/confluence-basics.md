@@ -1,7 +1,10 @@
 ---
 title: "Confluence: основы"
 description: "Страницы, пространства, шаблоны и совместное редактирование в Confluence."
-tags: ["tools", "collaboration", "confluence-basics"]
+tags:
+  - tools
+  - collaboration
+  - confluence-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Confluence: основы
 
 Страницы, пространства, шаблоны и совместное редактирование в Confluence.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

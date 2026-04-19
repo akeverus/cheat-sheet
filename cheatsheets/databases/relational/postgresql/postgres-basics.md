@@ -1,7 +1,15 @@
 ---
 title: "PostgreSQL: Полное руководство по основам и мониторингу"
 description: "Комплексное руководство по PostgreSQL: установка, настройка, базовые операции, индексы, мониторинг производительности, оптимизация запросов"
-tags: ["postgresql", "database", "sql", "rdbms", "performance", "monitoring", "indexes", "optimization"]
+tags:
+  - postgresql
+  - database
+  - sql
+  - rdbms
+  - performance
+  - monitoring
+  - indexes
+  - optimization
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-design.md", "databases/postgres-types.md"]
 next: ["databases/postgres-transactions.md", "databases/postgres-indexes.md", "databases/postgres-partitioning.md"]

@@ -1,7 +1,10 @@
 ---
 title: "Packer"
 description: "Packer - это инструмент с открытым исходным кодом от HashiCorp для создания идентичных образов машин для различных платформ (AWS AMI, Docker containers, VMware VMs, VirtualBox и другие) из единого конфигурационного файла. Этот документ охватывает продвинутые паттерны, автоматизац"
-tags: ["platform", "iac", "packer"]
+tags:
+  - platform
+  - iac
+  - packer
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Packer**
 
 **Packer** - это инструмент с открытым исходным кодом от **HashiCorp** для создания идентичных образов машин для различных платформ (**AWS `AMI`, `Docker containers`, VMware VMs, `VirtualBox` и другие**) из единого конфигурационного файла. Этот документ охватывает продвинутые паттерны, автоматизацию и **best practices** для **enterprise** использования **Packer**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Packer Documentation](https://developer.hashicorp.com/packer/docs)
@@ -1137,8 +1138,8 @@ security:
 }
 ```
 ## См. также
-- [Packer Basics](../../iac/packer/packer-basics.md) — краткое введение в Packer
-- [Terraform](../../iac/terraform/terraform-basics.md) — Infrastructure as Code
-- [Ansible](../../iac/ansible/ansible-basics.md) — Configuration Management
+- [Packer Basics](packer-basics.md) — краткое введение в Packer
+- [Terraform](../terraform/terraform-basics.md) — Infrastructure as Code
+- [Ansible](../ansible/ansible-basics.md) — Configuration Management
 - [Docker](../../containers/docker/docker-basics.md) — контейнеризация
 - [AWS](../../cloud-providers/aws-basics.md) — Amazon Web Services

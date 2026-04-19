@@ -1,7 +1,11 @@
 ---
 title: "Java"
 description: "Индекс раздела Java: основы, коллекции, исключения, concurrency, stream API."
-tags: ["meta", "index", "languages", "java"]
+tags:
+  - meta
+  - index
+  - languages
+  - java
 type: "index"
 updated: "2026-02-11"
 ---
@@ -23,3 +27,4 @@ updated: "2026-02-11"
 - [Exceptions](java-exceptions.md)
 - [Concurrency Basics](java-concurrency-basics.md)
 - [Streams and FP](java-streams-fp.md)
+- [JDBC](java-jdbc.md)

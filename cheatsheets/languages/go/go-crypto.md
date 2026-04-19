@@ -1,15 +1,19 @@
 ---
 title: "Go: криптография"
 description: "Полное руководство по криптографии в Go: хеширование, шифрование, подписи, случайные числа, TLS"
-tags: ["go", "golang", "crypto", "encryption", "hashing", "tls"]
+tags:
+  - go
+  - golang
+  - crypto
+  - encryption
+  - hashing
+  - tls
 difficulty: "advanced"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: криптография
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Kubernetes в облаке"
 description: "Kubernetes становится стандартом для оркестрации контейнеров в облачных средах. Этот документ охватывает managed Kubernetes сервисы (EKS, AKS, GKE), best practices для cloud-native deployments, multi-cloud стратегии и интеграцию с облачными сервисами. Документ дополняет [Kubernet"
-tags: ["platform", "cloud-providers", "kubernetes-cloud"]
+tags:
+  - platform
+  - cloud-providers
+  - kubernetes-cloud
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Kubernetes** в облаке
 
 **Kubernetes** становится стандартом для оркестрации контейнеров в облачных средах. Этот документ охватывает **managed Kubernetes** сервисы (**EKS, `AKS`, GKE**), **best practices** для **cloud-native deployments**, **multi-cloud** стратегии и интеграцию с облачными сервисами. Документ дополняет [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) фокусом на облачные аспекты.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [AWS EKS Documentation](https://docs.aws.amazon.com/eks/)

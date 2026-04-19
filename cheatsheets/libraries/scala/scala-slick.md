@@ -1,7 +1,10 @@
 ---
 title: "Slick"
 description: "Slick (Scala Language-Integrated Connection Kit) - это современная database query and access library для Scala, предоставляющая функциональный, type-safe подход к работе с реляционными базами данных. Slick генерирует SQL запросы из Scala кода и обеспечивает compile-time проверку "
-tags: ["libraries", "scala", "scala-slick"]
+tags:
+  - libraries
+  - scala
+  - scala-slick
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Slick
 
 **Slick** (**Scala `Language`-`Integrated Connection` Kit**) - это современная **database query and access library** для **Scala**, предоставляющая функциональный, **type-safe** подход к работе с реляционными базами данных. **Slick** генерирует **SQL** запросы из **Scala** кода и обеспечивает **compile-time** проверку типов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Официальная документация Slick](https://scala-slick.org/docs/)

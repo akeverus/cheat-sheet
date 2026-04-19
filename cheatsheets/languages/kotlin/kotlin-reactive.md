@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Reactive"
 description: "Материал по теме Kotlin Reactive в разделе cheatsheets."
-tags: ["languages", "kotlin", "kotlin-reactive"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-reactive
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Reactive
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

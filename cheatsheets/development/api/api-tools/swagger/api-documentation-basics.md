@@ -1,7 +1,10 @@
 ---
 title: "API Documentation: Основы"
 description: "Практическое руководство по API-документации: OpenAPI, lifecycle контракта, CI-валидация, versioning, troubleshooting и эксплуатационные правила."
-tags: ["development", "api", "api-documentation-basics"]
+tags:
+  - development
+  - api
+  - api-documentation-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # API Documentation: Основы
 
 Практическое руководство по API-документации: как поддерживать контракт в актуальном состоянии, снижать риски интеграций и встраивать документацию в процесс разработки.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

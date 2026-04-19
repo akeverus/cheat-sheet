@@ -1,7 +1,10 @@
 ---
 title: "Основы Terraform (редирект)"
 description: "Основной документ по теме: [Terraform](terraform.md)."
-tags: ["platform", "iac", "terraform-basics"]
+tags:
+  - platform
+  - iac
+  - terraform-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []

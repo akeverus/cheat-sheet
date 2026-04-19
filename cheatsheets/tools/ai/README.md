@@ -1,7 +1,10 @@
 ---
 title: "AI-инструменты для разработки"
 description: "Обзор и навигация по AI-инструментам для разработчиков: Cursor, GitHub Copilot, Claude, Windsurf, Cody, Aider, OpenClaw."
-tags: ["meta", "index", "ai-tools"]
+tags:
+  - meta
+  - index
+  - ai-tools
 type: "index"
 updated: "2026-03-16"
 ---

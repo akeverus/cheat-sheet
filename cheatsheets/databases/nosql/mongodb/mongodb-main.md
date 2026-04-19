@@ -1,7 +1,15 @@
 ---
 title: "MongoDB: Полное руководство по документо-ориентированной NoSQL базе данных"
 description: "Комплексное руководство по MongoDB: архитектура, CRUD операции, индексы, агрегация, репликация, шардирование, производительность и интеграция с Java/Spring"
-tags: ["mongodb", "nosql", "database", "document-database", "json", "aggregation", "replication", "sharding"]
+tags:
+  - mongodb
+  - nosql
+  - database
+  - document-database
+  - json
+  - aggregation
+  - replication
+  - sharding
 difficulty: "intermediate"
 prerequisites: ["databases/postgres-basics.md", "java/java-basics.md"]
 next: ["databases/redis.md", "spring/spring-data-jpa.md"]

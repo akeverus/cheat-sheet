@@ -1,7 +1,9 @@
 ---
 title: "MySQL"
 description: "Индекс материалов по MySQL: основы, администрирование, индексы, производительность, запросы и репликация."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

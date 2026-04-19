@@ -1,7 +1,11 @@
 ---
 title: "Scala Macros"
 description: "Полное руководство по макросам в Scala: code generation, compile-time вычисления, метапрограммирование"
-tags: ["scala", "macros", "metaprogramming", "code-generation"]
+tags:
+  - scala
+  - macros
+  - metaprogramming
+  - code-generation
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +16,6 @@ related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
 # **Scala Macros**
 
 Кратко: полное руководство по макросам в **Scala**: **code generation**, **compile-time** вычисления, метапрограммирование.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

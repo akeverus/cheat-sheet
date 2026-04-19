@@ -1,15 +1,18 @@
 ---
 title: "Go: обработка ошибок"
 description: "Полное руководство по обработке ошибок в Go: error interface, error wrapping, errors.Is, errors.As, best practices"
-tags: ["go", "golang", "errors", "error-handling", "wrapping"]
+tags:
+  - go
+  - golang
+  - errors
+  - error-handling
+  - wrapping
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: обработка ошибок
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

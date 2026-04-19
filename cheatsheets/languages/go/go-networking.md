@@ -1,15 +1,20 @@
 ---
 title: "Go: сетевые операции"
 description: "Полное руководство по сетевым операциям в Go: TCP, UDP, HTTP клиент, сокеты, WebSocket"
-tags: ["go", "golang", "networking", "tcp", "udp", "http", "websocket"]
+tags:
+  - go
+  - golang
+  - networking
+  - tcp
+  - udp
+  - http
+  - websocket
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-stdlib-http.md"]
 updated: "2026-02-06"
 ---
 
 # Go: сетевые операции
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

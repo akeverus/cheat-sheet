@@ -1,7 +1,12 @@
 ---
 title: "Scala Additional Topics"
 description: "Дополнительные темы Scala: расширения, полезные паттерны, best practices, продвинутые техники"
-tags: ["scala", "patterns", "best-practices", "advanced", "extensions"]
+tags:
+  - scala
+  - patterns
+  - best-practices
+  - advanced
+  - extensions
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
 # **Scala Additional Topics**
 
 Кратко: дополнительные темы **Scala**: расширения, полезные паттерны, **best practices**, продвинутые техники программирования.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

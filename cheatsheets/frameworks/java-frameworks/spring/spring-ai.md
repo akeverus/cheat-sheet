@@ -1,7 +1,10 @@
 ---
 title: "Spring AI"
 description: "Кратко: Spring AI - фреймворк для интеграции искусственного интеллекта в Spring приложения. Поддержка различных AI моделей, промпты, embedding, vector stores, RAG."
-tags: ["frameworks", "java-frameworks", "spring-ai"]
+tags:
+  - frameworks
+  - java-frameworks
+  - spring-ai
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Spring `AI`
 
 Кратко: **Spring** `AI` - фреймворк для интеграции искусственного интеллекта в **Spring** приложения. Поддержка различных `AI` моделей, промпты, **embedding**, **vector stores**, **RAG**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

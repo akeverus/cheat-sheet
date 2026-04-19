@@ -1,7 +1,10 @@
 ---
 title: "MongoDB: CRUD операции - Создание, чтение, обновление и удаление документов"
 description: "Полное руководство по CRUD операциям в MongoDB: insert, find, update, delete с примерами и best practices."
-tags: ["databases", "nosql", "mongodb-crud"]
+tags:
+  - databases
+  - nosql
+  - mongodb-crud
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **MongoDB**: **CRUD** операции - Создание, чтение, обновление и удаление документов
 
 Полное руководство по **CRUD** операциям в **MongoDB**: **insert**, **find**, **update**, **delete** с примерами и **best practices**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

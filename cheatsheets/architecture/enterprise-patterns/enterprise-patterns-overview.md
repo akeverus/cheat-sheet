@@ -1,7 +1,10 @@
 ---
 title: "Enterprise Patterns — обзор"
 description: "Паттерны проектирования для корпоративных приложений."
-tags: ["architecture", "enterprise-patterns", "enterprise-patterns-overview"]
+tags:
+  - architecture
+  - enterprise-patterns
+  - enterprise-patterns-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Enterprise Patterns — обзор
 
 Паттерны проектирования для корпоративных приложений.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

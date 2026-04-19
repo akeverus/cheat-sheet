@@ -1,7 +1,9 @@
 ---
 title: "Базы Данных"
 description: "Реляционные и NoSQL базы данных, ORM, SQL, графовые и временные ряды, инструменты для работы с базами данных."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

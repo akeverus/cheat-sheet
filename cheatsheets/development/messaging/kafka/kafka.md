@@ -1,7 +1,10 @@
 ---
 title: "Apache Kafka для Java"
 description: "Комплексное руководство по работе с Apache Kafka в Java-приложениях: producers, consumers, streams API, Spring Kafka интеграция, кластерная архитектура, мониторинг и best practices."
-tags: ["development", "messaging", "kafka"]
+tags:
+  - development
+  - messaging
+  - kafka
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Apache Kafka для Java
 
 Комплексное руководство по работе с **Apache Kafka** в **Java**-приложениях: **producers**, **consumers**, **streams API**, **Spring Kafka** интеграция, кластерная архитектура, мониторинг и **best practices**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

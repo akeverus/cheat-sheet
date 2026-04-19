@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Основы"
 description: "Kubernetes-native Java фреймворк для создания облачных микросервисов с минимальным потреблением ресурсов"
-tags: ["quarkus", "java", "kubernetes", "microservices", "cloud-native", "reactive"]
+tags:
+  - quarkus
+  - java
+  - kubernetes
+  - microservices
+  - cloud-native
+  - reactive
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "spring/spring-boot.md"]
 next: ["quarkus-advanced.md", "kubernetes-basics.md"]

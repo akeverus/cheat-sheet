@@ -1,7 +1,10 @@
 ---
 title: "GraphQL для Java"
 description: "Комплексное руководство по использованию GraphQL в Java-приложениях: Schema Definition Language (SDL), resolvers, data fetching, Spring Boot интеграция, Apollo Client, subscriptions, federation и best practices."
-tags: ["development", "api", "graphql"]
+tags:
+  - development
+  - api
+  - graphql
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # GraphQL для Java
 
 Комплексное руководство по использованию **GraphQL** в **Java**-приложениях: **Schema Definition Language** (**SDL**), **resolvers**, **data fetching**, **Spring Boot** интеграция, **Apollo Client**, **subscriptions**, **federation** и **best practices**.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

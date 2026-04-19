@@ -1,338 +1,227 @@
 ---
 title: "Вопросы на собеседовании: Unit Testing"
-description: "Краткие ответы по unit-тестированию: изолированные тесты, mocks/stubs, TDD, структура тестов и качество проверок."
-tags: ["interview", "testing", "unit-testing-interview"]
+description: "Полное покрытие unit-тестирования в Java: JUnit 5, Mockito, AssertJ, TDD, параметризованные тесты, test doubles, покрытие кода и best practices."
+tags:
+  - interview
+  - testing
+  - unit-testing-interview
+aliases:
+  - "Unit Testing"
+  - "Unit Testing interview"
+  - "Unit Testing собеседование"
+  - "JUnit 5"
+  - "Mockito"
+  - "Юнит-тестирование"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Unit Testing`
 
-Краткие ответы по `Unit Testing`: изолированные проверки бизнес-логики, работа с моками, `TDD` и поддерживаемая структура unit-тестов.
+Краткие ответы по `Unit Testing`: изолированные проверки бизнес-логики, работа с `JUnit 5`, `Mockito`, `AssertJ`, `TDD` и поддерживаемая структура unit-тестов.
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: фокус этого документа — быстрые и изолированные тесты без реальной инфраструктуры.
+**Unit-тестирование** — фундамент пирамиды тестирования. Этот документ охватывает все аспекты написания быстрых и изолированных тестов без реальной инфраструктуры: от базовых `assertions` до продвинутых техник мокирования и параметризации.
 
 ## Роль документа в связке testing
 
 - Этот файл отвечает за **unit-уровень**: отдельные классы/методы, моки и контракт поведения компонента.
-- За проверку интеграции с БД, брокерами и внешними API отвечают [`integration-testing-interview.md`](integration-testing-interview.md).
-- За общую стратегию покрытия и приоритизацию тестов отвечает [`test-strategies-interview.md`](test-strategies-interview.md).
-- За масштабирование автотестов в CI/CD и поддержку framework отвечает [`test-automation-interview.md`](test-automation-interview.md).
+- За проверку интеграции с БД, брокерами и внешними API отвечают [Integration Testing](integration-testing-interview.md).
+- За общую стратегию покрытия и приоритизацию тестов отвечает [Стратегии тестирования](test-strategies-interview.md).
+- За масштабирование автотестов в CI/CD и поддержку framework отвечает [Test Automation](test-automation-interview.md).
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [JUnit 5 Documentation](https://junit.org/junit5/docs/current/user-guide/)
-- [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
-- [AssertJ Documentation](https://assertj.github.io/doc/)
-- [Test-Driven Development](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
-- [Testing Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
-
-### См. также
-
-- [`integration-testing-interview.md`](integration-testing-interview.md) — интеграционное тестирование
-- [`test-strategies-interview.md`](test-strategies-interview.md) — стратегии тестирования
-- [`test-automation-interview.md`](test-automation-interview.md) — автоматизация тестирования
+- [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) — полная документация JUnit 5
+- [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html) — Javadoc Mockito
+- [AssertJ Documentation](https://assertj.github.io/doc/) — fluent assertions для Java
+- [Baeldung: Best Practices for Unit Testing in Java](https://www.baeldung.com/java-unit-testing-best-practices) — практические рекомендации
+- [Baeldung: Guide to JUnit 5 Parameterized Tests](https://www.baeldung.com/parameterized-tests-junit-5) — параметризованные тесты
+- [Baeldung: Mockito and JUnit 5](https://www.baeldung.com/mockito-junit-5-extension) — интеграция Mockito с JUnit 5
+- [Testing Pyramid (Martin Fowler)](https://martinfowler.com/articles/practical-test-pyramid.html) — пирамида тестирования
+- [TDD (Martin Fowler)](https://martinfowler.com/bliki/TestDrivenDevelopment.html) — Test-Driven Development
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы Unit Testing**
-- [Q1. Что такое unit testing и зачем он нужен?](#q1-что-такое-unit-testing-и-зачем-он-нужен)
-- [Q2. Какие основные принципы unit testing?](#q2-какие-основные-принципы-unit-testing)
-- [Q3. Как работает JUnit 5?](#q3-как-работает-junit-5)
+- [Q1. (!) Что такое unit testing и зачем он нужен?](#q1--что-такое-unit-testing-и-зачем-он-нужен)
+- [Q2. (!) Какие основные принципы unit testing (F.I.R.S.T)?](#q2--какие-основные-принципы-unit-testing-first)
+- [Q3. Что такое пирамида тестирования?](#q3-что-такое-пирамида-тестирования)
+- [Q4. (!) Как работает JUnit 5 и из чего он состоит?](#q4--как-работает-junit-5-и-из-чего-он-состоит)
+- [Q5. Каков жизненный цикл теста в JUnit 5?](#q5-каков-жизненный-цикл-теста-в-junit-5)
 
-**Mocking и TDD**
-- [Q4. Что такое mocking и зачем он нужен?](#q4-что-такое-mocking-и-зачем-он-нужен)
-- [Q5. Как использовать Mockito?](#q5-как-использовать-mockito)
-- [Q6. Что такое TDD (Test-Driven Development)?](#q6-что-такое-tdd-test-driven-development)
-- [Q7. Как тестировать исключения?](#q7-как-тестировать-исключения)
-- [Q8. Как тестировать приватные методы?](#q8-как-тестировать-приватные-методы)
+**Assertions и проверки**
+- [Q6. (!) Какие assertions доступны в JUnit 5?](#q6--какие-assertions-доступны-в-junit-5)
+- [Q7. (!) Что такое AssertJ и чем он лучше стандартных assertions?](#q7--что-такое-assertj-и-чем-он-лучше-стандартных-assertions)
+- [Q8. Что такое AssertJ soft assertions?](#q8-что-такое-assertj-soft-assertions)
+- [Q9. Как тестировать исключения?](#q9-как-тестировать-исключения)
 
-**Parameterized и структура тестов**
-- [Q9. Что такое parameterized tests?](#q9-что-такое-parameterized-tests)
-- [Q10. Как организовать структуру тестов?](#q10-как-организовать-структуру-тестов)
-- [Q11. Что такое AssertJ и чем он лучше стандартных assertions?](#q11-что-такое-assertj-и-чем-он-лучше-стандартных-assertions)
-- [Q12. Как тестировать статические методы?](#q12-как-тестировать-статические-методы)
-- [Q13. Что такое test doubles (mock, stub, spy, fake)?](#q13-что-такое-test-doubles-mock-stub-spy-fake)
+**Mocking и test doubles**
+- [Q10. (!) Что такое test doubles (mock, stub, spy, fake)?](#q10--что-такое-test-doubles-mock-stub-spy-fake)
+- [Q11. (!) Как использовать Mockito?](#q11--как-использовать-mockito)
+- [Q12. Как работает ArgumentCaptor в Mockito?](#q12-как-работает-argumentcaptor-в-mockito)
+- [Q13. Чем отличается Mock от Spy в Mockito?](#q13-чем-отличается-mock-от-spy-в-mockito)
+- [Q14. Как тестировать статические методы?](#q14-как-тестировать-статические-методы)
+- [Q15. Что такое BDD-стиль тестирования с Mockito?](#q15-что-такое-bdd-стиль-тестирования-с-mockito)
+- [Q16. (!) Как правильно использовать @InjectMocks?](#q16--как-правильно-использовать-injectmocks)
 
-**Асинхронность и специальные сценарии**
-- [Q14. Как тестировать асинхронный код (CompletableFuture)?](#q14-как-тестировать-асинхронный-код-completablefuture)
-- [Q15. Что такое @TempDir и зачем он нужен?](#q15-что-такое-tempdir-и-зачем-он-нужен)
-- [Q16. Как тестировать логирование?](#q16-как-тестировать-логирование)
-- [Q17. Что такое @RepeatedTest и @Timeout?](#q17-что-такое-repeatedtest-и-timeout)
-- [Q18. Как тестировать Stream API и Optional?](#q18-как-тестировать-stream-api-и-optional)
-- [Q19. Что такое test fixtures и test data builders?](#q19-что-такое-test-fixtures-и-test-data-builders)
+**TDD и методологии**
+- [Q17. (!) Что такое TDD (Test-Driven Development)?](#q17--что-такое-tdd-test-driven-development)
+- [Q18. Чем TDD отличается от BDD?](#q18-чем-tdd-отличается-от-bdd)
 
-**Покрытие и группировка**
-- [Q20. Как измерить покрытие кода (JaCoCo)?](#q20-как-измерить-покрытие-кода-jacoco)
-- [Q21. Как тестировать equals/hashCode/toString?](#q21-как-тестировать-equalshashcodetostring)
-- [Q22. Что такое @Nested и зачем группировать тесты?](#q22-что-такое-nested-и-зачем-группировать-тесты)
-- [Q23. Как тестировать конструкторы и билдеры?](#q23-как-тестировать-конструкторы-и-билдеры)
-- [Q24. Что такое @DynamicTest и когда использовать?](#q24-что-такое-dynamictest-и-когда-использовать)
+**Параметризованные тесты**
+- [Q19. (!) Что такое parameterized tests?](#q19--что-такое-parameterized-tests)
+- [Q20. Как использовать @MethodSource и @CsvSource?](#q20-как-использовать-methodsource-и-csvsource)
+- [Q21. Что такое @DynamicTest и когда использовать?](#q21-что-такое-dynamictest-и-когда-использовать)
+
+**Структура и организация тестов**
+- [Q22. (!) Как организовать структуру тестов?](#q22--как-организовать-структуру-тестов)
+- [Q23. Что такое @Nested и зачем группировать тесты?](#q23-что-такое-nested-и-зачем-группировать-тесты)
+- [Q24. Что такое test fixtures и test data builders?](#q24-что-такое-test-fixtures-и-test-data-builders)
+- [Q25. Какие существуют конвенции именования тестов?](#q25-какие-существуют-конвенции-именования-тестов)
+- [Q26. Как тестировать приватные методы?](#q26-как-тестировать-приватные-методы)
+
+**Специальные сценарии**
+- [Q27. Как тестировать асинхронный код (CompletableFuture)?](#q27-как-тестировать-асинхронный-код-completablefuture)
+- [Q28. Как тестировать код с зависимостью от времени (Clock)?](#q28-как-тестировать-код-с-зависимостью-от-времени-clock)
+- [Q29. Как тестировать Stream API и Optional?](#q29-как-тестировать-stream-api-и-optional)
+- [Q30. Как тестировать многопоточный код?](#q30-как-тестировать-многопоточный-код)
+- [Q31. Что такое @TempDir и зачем он нужен?](#q31-что-такое-tempdir-и-зачем-он-нужен)
+- [Q32. Как тестировать логирование?](#q32-как-тестировать-логирование)
+- [Q33. Как тестировать equals/hashCode/toString?](#q33-как-тестировать-equalshashcodetostring)
+
+**Покрытие и качество**
+- [Q34. (!) Как измерить покрытие кода (JaCoCo)?](#q34--как-измерить-покрытие-кода-jacoco)
+- [Q35. Что такое mutation testing?](#q35-что-такое-mutation-testing)
+- [Q36. Что такое @Tag и как фильтровать тесты?](#q36-что-такое-tag-и-как-фильтровать-тесты)
+- [Q37. Что такое @RepeatedTest и @Timeout?](#q37-что-такое-repeatedtest-и-timeout)
 
 **Продвинутые темы**
-- [Q25. Как тестировать код с зависимостью от времени (Clock)?](#q25-как-тестировать-код-с-зависимостью-от-времени-clock)
-- [Q26. Что такое @Tag и как фильтровать тесты?](#q26-что-такое-tag-и-как-фильтровать-тесты)
-- [Q27. Как тестировать рефлексию и аннотации?](#q27-как-тестировать-рефлексию-и-аннотации)
-- [Q28. Что такое AssertJ soft assertions?](#q28-что-такое-assertj-soft-assertions)
-- [Q29. Как тестировать многопоточный код?](#q29-как-тестировать-многопоточный-код)
-- [Q30. Best practices для unit-тестов?](#q30-best-practices-для-unit-тестов)
+- [Q38. Как писать JUnit 5 Extensions?](#q38-как-писать-junit-5-extensions)
+- [Q39. Как тестировать конструкторы и билдеры?](#q39-как-тестировать-конструкторы-и-билдеры)
+- [Q40. (!) Best practices для unit-тестов?](#q40--best-practices-для-unit-тестов)
 
-## Q1. Что такое `unit testing` и зачем он нужен?
+**Продвинутые возможности JUnit 5 и Mockito**
+- [Q41. (!) Как работает @ExtendWith и когда писать собственный Extension?](#q41--как-работает-extendwith-и-когда-писать-собственный-extension)
+- [Q42. (!) Что такое Mockito.STRICT_STUBS и зачем включать строгий режим?](#q42--что-такое-mockitostrict_stubs-и-зачем-включать-строгий-режим)
+- [Q43. Как использовать @EnumSource и @ArgumentsSource в параметризованных тестах?](#q43-как-использовать-enumsource-и-argumentssource-в-параметризованных-тестах)
+- [Q44. (!) Как выполнять рекурсивное сравнение объектов с AssertJ?](#q44--как-выполнять-рекурсивное-сравнение-объектов-с-assertj)
+- [Q45. Как тестировать Spring-компоненты без поднятия контекста?](#q45-как-тестировать-spring-компоненты-без-поднятия-контекста)
 
-`Unit testing` — это метод тестирования программного обеспечения, при котором отдельные модули (units) кода тестируются изолированно от остальной системы.
+## Q1. (!) Что такое `unit testing` и зачем он нужен?
 
-### Что такое "`Unit`"?
-
-`Unit` — это наименьший тестируемый компонент программы, обычно:
-- Отдельный метод
-- Класс с одним методом
-- Группа связанных функций
+`Unit testing` — это метод тестирования, при котором отдельные модули (`units`) кода тестируются **изолированно** от остальной системы. `Unit` — наименьший тестируемый компонент: отдельный метод, класс или группа тесно связанных функций.
 
 ### Зачем нужен `unit testing`?
 
-#### 1. Раннее обнаружение ошибок
+| Цель | Описание |
+|------|----------|
+| Раннее обнаружение ошибок | Баги находятся до этапа интеграции, когда исправление дешевле |
+| Упрощение рефакторинга | Тесты защищают от регрессий при изменении кода |
+| Документация поведения | Тест показывает, **как** использовать класс и **что** он делает |
+| Улучшение дизайна | Код, который сложно тестировать — сигнал плохого дизайна (tight coupling) |
 
 ```java
-// Класс для тестирования
-public class Calculator {
- public int divide(int a, int b) {
- return a / b; // Может бросить ArithmeticException
- }
-}
-
-// Unit тест
-@Test
-void shouldThrowExceptionWhenDividingByZero() {
- Calculator calculator = new Calculator();
-
- assertThrows(ArithmeticException.class, () -> {
- calculator.divide(10, 0);
- });
-}
-```
-
-#### 2. Упрощение рефакторинга
-
-```java
-// Исходный код
-public class StringUtils {
- public static String capitalize(String input) {
- if (input == null || input.isEmpty()) {
- return input;
- }
- return input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
- }
-}
-
-// Тест, который защищает от регрессии
-@Test
-void shouldCapitalizeString() {
- assertEquals("Hello", StringUtils.capitalize("hello"));
- assertEquals("Hello", StringUtils.capitalize("HELLO"));
- assertEquals("", StringUtils.capitalize(""));
- assertNull(StringUtils.capitalize(null));
-}
-
-// Безопасный рефакторинг
-public class StringUtils {
- public static String capitalize(String input) {
- if (input == null || input.isEmpty()) {
- return input;
- }
- // Более эффективная реализация
- char[] chars = input.toCharArray();
- chars[0] = Character.toUpperCase(chars[0]);
- for (int i = 1; i < chars.length; i++) {
- chars[i] = Character.toLowerCase(chars[i]);
- }
- return new String(chars);
- }
-}
-```
-
-#### 3. Документация поведения
-
-```java
+// Тест документирует поведение и защищает от регрессии
 @Test
 void shouldReturnEmptyListWhenNoItemsFound() {
- // Given
- ItemRepository repository = mock(ItemRepository.class);
- when(repository.findByCategory("books")).thenReturn(Collections.emptyList());
+    // Given
+    ItemRepository repository = mock(ItemRepository.class);
+    when(repository.findByCategory("books")).thenReturn(Collections.emptyList());
+    ItemService service = new ItemService(repository);
 
- ItemService service = new ItemService(repository);
+    // When
+    List<Item> items = service.findItemsByCategory("books");
 
- // When
- List<Item> items = service.findItemsByCategory("books");
-
- // Then
- assertTrue(items.isEmpty());
+    // Then
+    assertThat(items).isEmpty();
 }
 ```
 
-#### 4. Улучшение дизайна кода
+На собеседовании важно подчеркнуть, что unit-тесты — это **инвестиция**: они замедляют начальную разработку, но экономят время на отладке, рефакторинге и онбординге новых разработчиков.
 
-`Unit` тестирование способствует написанию более модульного и loosely coupled кода.
+## Q2. (!) Какие основные принципы `unit testing` (`F.I.R.S.T`)?
 
-## Q2. Какие основные принципы `unit testing`?
+Акроним **F.I.R.S.T** описывает ключевые свойства хорошего unit-теста:
 
-### 1. F.I.R.S.T `Principles`
+| Принцип | Описание |
+|---------|----------|
+| **F**ast | Тест выполняется за миллисекунды, без I/O и сети |
+| **I**ndependent | Тесты не зависят друг от друга и могут запускаться в любом порядке |
+| **R**epeatable | Один и тот же результат при каждом запуске, в любой среде |
+| **S**elf-validating | Тест сам проверяет результат (`assert`), без ручного анализа |
+| **T**horough | Покрывает основной путь, граничные случаи и ошибки |
 
-#### `Fast` (Быстрые)
+### Паттерн `AAA` (`Arrange-Act-Assert`)
+
+Каждый тест следует трёхступенчатой структуре:
 
 ```java
 @Test
-void shouldExecuteInMilliseconds() {
- // Тест должен выполняться быстро
- long startTime = System.nanoTime();
+void shouldApplyPremiumDiscount() {
+    // Arrange — подготовка
+    User premiumUser = new User("premium@example.com", UserType.PREMIUM);
+    Product product = new Product("Laptop", 1000.0);
+    DiscountService service = new DiscountService();
 
- Calculator calc = new Calculator();
- int result = calc.add(2, 3);
+    // Act — действие
+    double finalPrice = service.applyDiscount(product, premiumUser);
 
- long endTime = System.nanoTime();
- long duration = (endTime - startTime) / 1_000_000; // в миллисекундах
-
- assertTrue(duration < 10, "Test should execute in less than 10ms");
- assertEquals(5, result);
+    // Assert — проверка
+    assertThat(finalPrice).isCloseTo(850.0, within(0.01)); // 15% скидка
 }
 ```
 
-#### `Independent` (Независимые)
+Альтернатива — `Given-When-Then` (BDD-стиль), семантически идентичная AAA.
 
-```java
-public class UserServiceTest {
+## Q3. Что такое пирамида тестирования?
 
- private UserRepository userRepository;
- private UserService userService;
+**Пирамида тестирования** (Testing Pyramid, описана Mike Cohn) — модель, показывающая оптимальное соотношение типов тестов. Подробнее в [вопросах по стратегиям тестирования](test-strategies-interview.md).
 
- @BeforeEach
- void setUp() {
- // Каждый тест получает свежие экземпляры
- userRepository = mock(UserRepository.class);
- userService = new UserService(userRepository);
- }
+```mermaid
+graph TB
+    E2E["🔺 E2E / UI тесты<br/>Мало, медленные, хрупкие"]
+    INT["🔶 Интеграционные тесты<br/>Умеренно, проверяют связи"]
+    UNIT["🟩 Unit-тесты<br/>Много, быстрые, изолированные"]
 
- @Test
- void shouldCreateUser() {
- // Тест не зависит от состояния других тестов
- User user = new User("john@example.com");
- when(userRepository.save(any(User.class))).thenReturn(user);
+    E2E --- INT
+    INT --- UNIT
 
- User created = userService.createUser("john@example.com");
- assertNotNull(created);
- }
-
- @Test
- void shouldFindUserById() {
- // Этот тест тоже независим
- User user = new User("jane@example.com");
- when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
- Optional<User> found = userService.findById(1L);
- assertTrue(found.isPresent());
- assertEquals("jane@example.com", found.get().getEmail());
- }
-}
+    style UNIT fill:#4CAF50,color:#fff
+    style INT fill:#FF9800,color:#fff
+    style E2E fill:#f44336,color:#fff
 ```
 
-#### `Repeatable` (Повторяемые)
+| Уровень | Количество | Скорость | Стоимость поддержки |
+|---------|-----------|----------|---------------------|
+| `Unit` | 70-80% | Миллисекунды | Низкая |
+| `Integration` | 15-20% | Секунды | Средняя |
+| `E2E` | 5-10% | Минуты | Высокая |
 
-```java
-@Test
-void shouldAlwaysReturnSameResult() {
- Calculator calc = new Calculator();
+Unit-тесты составляют основу пирамиды: их должно быть больше всего, они самые быстрые и самые дешёвые в поддержке.
 
- // Тест всегда должен давать один и тот же результат
- assertEquals(8, calc.add(3, 5));
- assertEquals(8, calc.add(3, 5));
- assertEquals(8, calc.add(3, 5));
-}
+## Q4. (!) Как работает `JUnit 5` и из чего он состоит?
+
+`JUnit 5` — фреймворк для тестирования `Java`-приложений, состоящий из трёх модулей:
+
+```mermaid
+graph LR
+    JP["JUnit Platform<br/>Запуск тестов в IDE, Gradle, Maven"]
+    JJ["JUnit Jupiter<br/>API для написания тестов (JUnit 5)"]
+    JV["JUnit Vintage<br/>Совместимость с JUnit 3/4"]
+
+    JP --> JJ
+    JP --> JV
+
+    style JP fill:#2196F3,color:#fff
+    style JJ fill:#4CAF50,color:#fff
+    style JV fill:#9E9E9E,color:#fff
 ```
-
-#### `Self-Validating` (Самопроверяемые)
-
-```java
-@Test
-void shouldValidateUserEmail() {
- UserValidator validator = new UserValidator();
-
- // Тест сам проверяет результат - не нужно вручную проверять логи
- assertTrue(validator.isValidEmail("user@example.com"));
- assertFalse(validator.isValidEmail("invalid-email"));
- assertFalse(validator.isValidEmail(""));
- assertFalse(validator.isValidEmail(null));
-}
-```
-
-#### `Thorough` (Тщательные)
-
-```java
-@Test
-void shouldHandleAllEdgeCases() {
- StringProcessor processor = new StringProcessor();
-
- // Тестируем все граничные случаи
- assertEquals("", processor.reverse(""));
- assertEquals("a", processor.reverse("a"));
- assertEquals("ba", processor.reverse("ab"));
- assertNull(processor.reverse(null));
-
- // Тестируем специальные символы
- assertEquals("!dlroW olleH", processor.reverse("Hello World!"));
-
- // Тестируем unicode
- assertEquals("🌟⭐", processor.reverse("⭐🌟"));
-}
-```
-
-### 2. `AAA Pattern` (`Arrange`, Act, `Assert`)
-
-```java
-@Test
-void shouldCalculateDiscountForPremiumUser() {
- // Arrange (Подготовка)
- User premiumUser = new User("premium@example.com", UserType.PREMIUM);
- Product product = new Product("Laptop", 1000.0);
- DiscountService discountService = new DiscountService();
-
- // Act (Действие)
- double finalPrice = discountService.applyDiscount(product, premiumUser);
-
- // Assert (Проверка)
- assertEquals(850.0, finalPrice, 0.01); // 15% скидка для premium
-}
-```
-
-### 3. `Right BICEP`
-
-- `Right`: Результат правильный?
-- B: Граничные условия корректны?
-- I: Обратное отношение корректно?
-- C: Другой способ дает тот же результат?
-- E: Ошибки обрабатываются правильно?
-- P: Производительность приемлема?
-
-## Q3. Как работает `JUnit 5`?
-
-`JUnit 5` — это фреймворк для тестирования `Java` приложений с новой архитектурой и улучшенными возможностями.
-
-### Основные компоненты `JUnit 5`
-
-#### 1. JUnit `Platform`
-
-Запускает тесты на различных платформах (`IDE`, build tools, `CI`/`CD`).
-
-#### 2. JUnit `Jupiter`
-Содержит новые аннотации и assertions для написания тестов.
-
-#### 3. JUnit `Vintage`
-Обеспечивает совместимость с `JUnit 3` и 4.
 
 ### Основные аннотации
 
@@ -340,1542 +229,1882 @@ void shouldCalculateDiscountForPremiumUser() {
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CalculatorTest {
+class CalculatorTest {
 
- private Calculator calculator;
+    private Calculator calculator;
 
- @BeforeAll
- static void initAll() {
- // Выполняется один раз перед всеми тестами класса
- System.out.println("Starting Calculator tests");
- }
+    @BeforeAll
+    static void initAll() {
+        // Один раз перед всеми тестами класса (метод static)
+    }
 
- @BeforeEach
- void init() {
- // Выполняется перед каждым тестом
- calculator = new Calculator();
- }
+    @BeforeEach
+    void setUp() {
+        calculator = new Calculator(); // Перед каждым тестом
+    }
 
- @Test
- void shouldAddTwoNumbers() {
- // Простой тест
- assertEquals(5, calculator.add(2, 3));
- }
+    @Test
+    @DisplayName("Сложение двух положительных чисел")
+    void shouldAddTwoNumbers() {
+        assertEquals(5, calculator.add(2, 3));
+    }
 
- @Test
- @DisplayName("Should throw exception when dividing by zero")
- void shouldThrowWhenDividingByZero() {
- // Тест с понятным названием
- assertThrows(ArithmeticException.class, () -> {
- calculator.divide(10, 0);
- });
- }
+    @Test
+    @Disabled("Функциональность не реализована")
+    void shouldHandleLargeNumbers() {
+        fail("Not implemented");
+    }
 
- @Test
- @Disabled("Feature not implemented yet")
- void shouldHandleLargeNumbers() {
- // Отключенный тест
- fail("Not implemented");
- }
+    @AfterEach
+    void tearDown() {
+        calculator = null; // После каждого теста
+    }
 
- @AfterEach
- void tearDown() {
- // Выполняется после каждого теста
- calculator = null;
- }
-
- @AfterAll
- static void tearDownAll() {
- // Выполняется один раз после всех тестов класса
- System.out.println("Calculator tests completed");
- }
+    @AfterAll
+    static void tearDownAll() {
+        // Один раз после всех тестов класса
+    }
 }
 ```
 
-### `Assertions`
+### Ключевые отличия `JUnit 5` от `JUnit 4`
+
+| Аспект | `JUnit 4` | `JUnit 5` |
+|--------|-----------|-----------|
+| Аннотации | `@Before`, `@After` | `@BeforeEach`, `@AfterEach` |
+| Расширения | `@RunWith`, `@Rule` | `@ExtendWith` |
+| Assertions | `assertThat` (Hamcrest) | `assertAll`, `assertThrows` |
+| Параметризация | `@RunWith(Parameterized.class)` | `@ParameterizedTest` |
+| Видимость методов | `public` обязателен | Можно `package-private` |
+
+## Q5. Каков жизненный цикл теста в `JUnit 5`?
+
+По умолчанию `JUnit 5` создаёт **новый экземпляр** тестового класса для каждого тестового метода (`PER_METHOD`). Это гарантирует изоляцию между тестами.
+
+```mermaid
+graph TD
+    BA["@BeforeAll (static)"] --> NI["Новый экземпляр класса"]
+    NI --> BE["@BeforeEach"]
+    BE --> TEST["@Test метод"]
+    TEST --> AE["@AfterEach"]
+    AE --> NI2["Новый экземпляр для следующего теста"]
+    NI2 --> BE
+    AE --> AA["@AfterAll (static)"]
+
+    style TEST fill:#4CAF50,color:#fff
+    style BA fill:#2196F3,color:#fff
+    style AA fill:#2196F3,color:#fff
+```
+
+Режим `@TestInstance(Lifecycle.PER_CLASS)` создаёт один экземпляр на весь класс. Это позволяет использовать нестатические `@BeforeAll`/`@AfterAll` и разделять состояние между тестами (с осторожностью):
+
+```java
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class SharedStateTest {
+
+    private final List<String> log = new ArrayList<>();
+
+    @BeforeAll
+    void initAll() { // Нестатический!
+        log.add("init");
+    }
+
+    @Test
+    void firstTest() {
+        log.add("first");
+        assertThat(log).containsExactly("init", "first");
+    }
+}
+```
+
+## Q6. (!) Какие `assertions` доступны в `JUnit 5`?
+
+### Стандартные `JUnit 5 Assertions`
 
 ```java
 import static org.junit.jupiter.api.Assertions.*;
 
 @Test
-void shouldValidateAssertions() {
- Calculator calc = new Calculator();
+void demonstrateAssertions() {
+    // Базовые
+    assertEquals(5, calculator.add(2, 3));
+    assertNotEquals(6, calculator.add(2, 3));
+    assertTrue(calculator.isPositive(5));
+    assertFalse(calculator.isPositive(-1));
+    assertNull(result);
+    assertNotNull(result);
 
- // Базовые assertions
- assertEquals(5, calc.add(2, 3));
- assertNotEquals(6, calc.add(2, 3));
+    // С сообщением об ошибке
+    assertEquals(8, calculator.multiply(2, 4), "2 * 4 должно быть 8");
 
- assertTrue(calc.isPositive(5));
- assertFalse(calc.isPositive(-1));
+    // С дельтой для float/double
+    assertEquals(3.14, calculator.getPi(), 0.01);
 
- assertNull(calc.findUser(null));
- assertNotNull(calc.findUser("valid"));
+    // Группировка — выполняет ВСЕ проверки, даже если первая упала
+    assertAll("Проверка пользователя",
+        () -> assertEquals("John", user.getName()),
+        () -> assertEquals("john@mail.com", user.getEmail()),
+        () -> assertTrue(user.isActive())
+    );
 
- // Assertions с сообщениями
- assertEquals(8, calc.multiply(2, 4), "2 * 4 should equal 8");
+    // Проверка исключений
+    var ex = assertThrows(IllegalArgumentException.class,
+        () -> calculator.divide(10, 0));
+    assertEquals("Division by zero", ex.getMessage());
 
- // Assertions с дельтой для floating point
- assertEquals(3.14, calc.getPi(), 0.01);
-
- // Assertions для коллекций
- List<String> result = calc.getItems();
- assertAll("List assertions",
- () -> assertTrue(result.contains("item1")),
- () -> assertEquals(3, result.size()),
- () -> assertFalse(result.isEmpty())
- );
-
- // Assertions для исключений
- Exception exception = assertThrows(IllegalArgumentException.class, () -> {
- calc.process(null);
- });
- assertEquals("Input cannot be null", exception.getMessage());
+    // Таймаут
+    assertTimeout(Duration.ofMillis(100), () -> service.fastOperation());
 }
 ```
 
-### `Nested Tests`
+`assertAll` — ключевое отличие от `JUnit 4`: собирает **все** ошибки, а не останавливается на первой.
+
+## Q7. (!) Что такое `AssertJ` и чем он лучше стандартных `assertions`?
+
+`AssertJ` — fluent assertions библиотека, обеспечивающая читаемый код и информативные сообщения об ошибках. Это де-факто стандарт в Java-проектах.
 
 ```java
-@DisplayName("Calculator operations")
-public class CalculatorNestedTest {
+import static org.assertj.core.api.Assertions.*;
 
- private Calculator calculator;
-
- @BeforeEach
- void setUp() {
- calculator = new Calculator();
- }
-
- @Nested
- @DisplayName("Addition")
- class AdditionTests {
-
- @Test
- @DisplayName("Should add positive numbers")
- void shouldAddPositiveNumbers() {
- assertEquals(5, calculator.add(2, 3));
- }
-
- @Test
- @DisplayName("Should add negative numbers")
- void shouldAddNegativeNumbers() {
- assertEquals(-5, calculator.add(-2, -3));
- }
-
- @Nested
- @DisplayName("With zero")
- class WithZero {
-
- @Test
- void shouldReturnSameNumberWhenAddingZero() {
- assertEquals(5, calculator.add(5, 0));
- assertEquals(0, calculator.add(0, 0));
- }
- }
- }
-
- @Nested
- @DisplayName("Division")
- class DivisionTests {
-
- @Test
- void shouldDivideNumbers() {
- assertEquals(2.5, calculator.divide(5, 2));
- }
-
- @Test
- void shouldThrowWhenDividingByZero() {
- assertThrows(ArithmeticException.class, () -> {
- calculator.divide(5, 0);
- });
- }
- }
-}
-```
-
-### `Parameterized Tests`
-
-```java
-@ParameterizedTest
-@ValueSource(ints = {1, 2, 3, 4, 5})
-void shouldReturnTrueForPositiveNumbers(int number) {
- Calculator calc = new Calculator();
- assertTrue(calc.isPositive(number));
-}
-
-@ParameterizedTest
-@CsvSource({
- "2, 3, 5",
- "-1, 1, 0",
- "0, 0, 0"
-})
-void shouldAddNumbers(int a, int b, int expected) {
- Calculator calc = new Calculator();
- assertEquals(expected, calc.add(a, b));
-}
-
-@ParameterizedTest
-@MethodSource("provideTestData")
-void shouldProcessData(String input, String expected) {
- DataProcessor processor = new DataProcessor();
- assertEquals(expected, processor.process(input));
-}
-
-static Stream<Arguments> provideTestData() {
- return Stream.of(
- Arguments.of("hello", "HELLO"),
- Arguments.of("world", "WORLD"),
- Arguments.of("", "")
- );
-}
-```
-
-## Q4. Что такое mocking и зачем он нужен?
-
-`Mocking` — это техника создания объектов-заглушек, которые имитируют поведение реальных объектов для тестирования.
-
-### Зачем нужен mocking?
-
-#### 1. Изоляция тестируемого кода
-
-```java
-// Без mocking - тест зависит от внешних систем
 @Test
-void shouldSendEmail() {
- EmailService service = new EmailService();
- service.sendEmail("user@example.com", "Subject", "Body");
+void shouldDemonstrateAssertJ() {
+    // Строки
+    assertThat(name)
+        .isNotBlank()
+        .startsWith("Jo")
+        .hasSize(4);
 
- // Как проверить, что email отправлен?
- // Нужно проверить логи, базу данных, или использовать реальный SMTP сервер
-}
+    // Числа
+    assertThat(price)
+        .isPositive()
+        .isGreaterThan(10.0)
+        .isCloseTo(99.99, within(0.01));
 
-// С mocking - тест изолирован
-@Test
-void shouldSendEmail() {
- // Arrange
- EmailProvider emailProvider = mock(EmailProvider.class);
- EmailService service = new EmailService(emailProvider);
+    // Коллекции
+    assertThat(users)
+        .hasSize(3)
+        .extracting(User::getName)
+        .containsExactly("Alice", "Bob", "Charlie");
 
- // Act
- service.sendEmail("user@example.com", "Subject", "Body");
+    // Optional
+    assertThat(Optional.of("value"))
+        .isPresent()
+        .contains("value");
 
- // Assert
- verify(emailProvider).sendEmail("user@example.com", "Subject", "Body");
+    // Исключения
+    assertThatThrownBy(() -> service.process(null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("must not be null");
+
+    // Коллекция объектов — проверка по нескольким полям
+    assertThat(orders)
+        .filteredOn(Order::getStatus, OrderStatus.COMPLETED)
+        .extracting(Order::getTotal, Order::getCustomer)
+        .containsExactly(
+            tuple(100.0, "Alice"),
+            tuple(200.0, "Bob")
+        );
 }
 ```
 
-#### 2. Контроль зависимостей
+### Преимущества `AssertJ` над стандартными `assertions`
+
+| Аспект | `JUnit Assertions` | `AssertJ` |
+|--------|---------------------|-----------|
+| Синтаксис | `assertEquals(expected, actual)` | `assertThat(actual).isEqualTo(expected)` |
+| IDE autocomplete | Нет | Полный (через цепочку вызовов) |
+| Сообщения об ошибках | Базовые | Детальные (показывает diff) |
+| Коллекции | `assertTrue(list.contains(x))` | `assertThat(list).contains(x).hasSize(3)` |
+| Цепочки | Нет | Да — fluent API |
+
+## Q8. Что такое `AssertJ soft assertions`?
+
+`SoftAssertions` позволяют собрать **все** ошибки из нескольких проверок и вывести их разом, вместо остановки на первой:
 
 ```java
 @Test
-void shouldReturnCachedData() {
- // Arrange
- Cache cache = mock(Cache.class);
- DataService service = new DataService(cache);
+void shouldValidateUserFields() {
+    User user = userService.findById(1L);
 
- String key = "user:123";
- User expectedUser = new User("John");
+    // Вариант 1: явный объект
+    SoftAssertions softly = new SoftAssertions();
+    softly.assertThat(user.getName()).isEqualTo("John");
+    softly.assertThat(user.getEmail()).contains("@");
+    softly.assertThat(user.getAge()).isBetween(18, 65);
+    softly.assertAll(); // Бросит MultipleFailuresError со списком ВСЕХ ошибок
 
- when(cache.get(key)).thenReturn(expectedUser);
-
- // Act
- User user = service.getUser(123L);
-
- // Assert
- assertEquals(expectedUser, user);
- verify(cache).get(key);
- verify(cache, never()).put(anyString(), any());
+    // Вариант 2: статический метод (JUnit 5 + AssertJ)
+    SoftAssertions.assertSoftly(soft -> {
+        soft.assertThat(user.getName()).isEqualTo("John");
+        soft.assertThat(user.getEmail()).contains("@");
+        soft.assertThat(user.getAge()).isBetween(18, 65);
+    });
 }
 ```
 
-#### 3. Тестирование исключительных ситуаций
+Полезно при проверке нескольких полей DTO/entity — видно **все** несоответствия, а не только первое.
+
+## Q9. Как тестировать исключения?
+
+### `JUnit 5`: `assertThrows`
 
 ```java
 @Test
-void shouldHandleDatabaseConnectionFailure() {
- // Arrange
- UserRepository repository = mock(UserRepository.class);
- UserService service = new UserService(repository);
+void shouldThrowWithCorrectMessage() {
+    var ex = assertThrows(IllegalArgumentException.class,
+        () -> userService.createUser("", "password"));
 
- when(repository.findById(1L)).thenThrow(new DataAccessException("Connection failed"));
-
- // Act & Assert
- assertThrows(DataAccessException.class, () -> {
- service.getUserById(1L);
- });
+    assertEquals("Username cannot be empty", ex.getMessage());
 }
 ```
 
-## Q5. Как использовать `Mockito`?
-
-`Mockito` — это популярный фреймворк для создания `mock` объектов в `Java`.
-
-### Основные возможности `Mockito`
-
-#### 1. Создание `mock` объектов
+### `AssertJ`: `assertThatThrownBy`
 
 ```java
-// Создание mock через annotation
+@Test
+void shouldThrowCustomException() {
+    assertThatThrownBy(() -> validator.validateEmail("invalid"))
+        .isInstanceOf(ValidationException.class)
+        .hasFieldOrPropertyWithValue("errorCode", "INVALID_EMAIL")
+        .hasMessageContaining("Email format");
+}
+```
+
+### С `Mockito`: имитация исключений от зависимости
+
+```java
+@Test
+void shouldRetryOnTransientException() {
+    when(externalService.call())
+        .thenThrow(new TimeoutException("Temporary"))
+        .thenReturn("success");
+
+    String result = retryService.callWithRetry();
+
+    assertEquals("success", result);
+    verify(externalService, times(2)).call();
+}
+```
+
+### `assertDoesNotThrow` — проверка отсутствия исключений
+
+```java
+@Test
+void shouldHandleNullGracefully() {
+    assertDoesNotThrow(() -> service.processOptionalData(null));
+}
+```
+
+## Q10. (!) Что такое `test doubles` (`mock`, `stub`, `spy`, `fake`)?
+
+`Test doubles` — объекты, заменяющие реальные зависимости в тестах. Термин введён Gerard Meszaros (xUnit Test Patterns).
+
+```mermaid
+graph LR
+    TD["Test Double"] --> DUMMY["Dummy<br/>Заглушка, не используется"]
+    TD --> STUB["Stub<br/>Возвращает фиксированные данные"]
+    TD --> SPY["Spy<br/>Записывает вызовы"]
+    TD --> MOCK["Mock<br/>Программируемое поведение + верификация"]
+    TD --> FAKE["Fake<br/>Упрощённая реализация"]
+
+    style MOCK fill:#4CAF50,color:#fff
+    style STUB fill:#FF9800,color:#fff
+    style SPY fill:#2196F3,color:#fff
+```
+
+| Тип | Описание | Пример | Когда использовать |
+|-----|----------|--------|-------------------|
+| **Dummy** | Передаётся, но не используется | `new Object()` как параметр | Заполнение обязательных параметров |
+| **Stub** | Возвращает фиксированные данные | `when(repo.findAll()).thenReturn(list)` | Контроль входных данных |
+| **Mock** | Поведение + верификация вызовов | `verify(service).sendEmail(...)` | Проверка взаимодействий |
+| **Spy** | Обёртка реального объекта | `spy(new ArrayList<>())` | Частичное мокирование |
+| **Fake** | Рабочая упрощённая реализация | `InMemoryRepository` вместо JDBC | Сложная логика без инфраструктуры |
+
+На собеседовании часто спрашивают: «Когда `mock`, а когда `stub`?» Ответ: `mock` — когда важно **что вызвали** (поведение), `stub` — когда важно **что вернули** (состояние). Подробнее про мокирование в [интеграционных тестах](integration-testing-interview.md).
+
+## Q11. (!) Как использовать `Mockito`?
+
+`Mockito` — наиболее популярный фреймворк для создания `mock` и `stub` объектов в `Java`.
+
+### Подключение к `JUnit 5`
+
+```java
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+class UserServiceTest {
 
- @Mock
- private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
- @Mock
- private EmailService emailService;
+    @Mock
+    private EmailService emailService;
 
- @InjectMocks
- private UserService userService;
+    @InjectMocks
+    private UserService userService;
+```
 
- // Альтернативный способ создания mock
- @Test
- void alternativeMockCreation() {
- UserRepository repository = mock(UserRepository.class);
- EmailService emailService = mock(EmailService.class);
- UserService service = new UserService(repository, emailService);
- }
+### Stubbing — настройка возвращаемых значений
+
+```java
+    @Test
+    void shouldReturnUserWhenFound() {
+        User expected = new User("john@example.com");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(expected));
+
+        Optional<User> result = userService.findById(1L);
+
+        assertThat(result).isPresent().contains(expected);
+    }
+```
+
+### Verification — проверка вызовов
+
+```java
+    @Test
+    void shouldSaveAndSendWelcomeEmail() {
+        User user = new User("john@example.com");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        userService.registerUser("john@example.com", "password");
+
+        verify(userRepository).save(any(User.class));
+        verify(emailService).sendWelcomeEmail("john@example.com");
+        verify(emailService, never()).sendPasswordResetEmail(anyString());
+    }
+```
+
+### Void-методы
+
+```java
+    @Test
+    void shouldHandleVoidMethodException() {
+        doThrow(new RuntimeException("SMTP down"))
+            .when(emailService).sendWelcomeEmail("problem@mail.com");
+
+        doNothing().when(emailService).sendWelcomeEmail("ok@mail.com");
+    }
+```
+
+### `Argument Matchers`
+
+```java
+    @Test
+    void shouldUseMatchers() {
+        when(userRepository.findByEmail(anyString()))
+            .thenReturn(Optional.of(new User()));
+        when(userRepository.findById(eq(1L)))
+            .thenReturn(Optional.of(new User()));
+
+        // ВАЖНО: нельзя смешивать matchers и конкретные значения
+        // verify(repo).save(eq(user), anyString()); — OK
+        // verify(repo).save(user, anyString()); — ошибка!
+    }
 }
 ```
 
-#### 2. Настройка поведения (`Stubbing`)
+## Q12. Как работает `ArgumentCaptor` в `Mockito`?
+
+`ArgumentCaptor` позволяет **захватить** аргумент, переданный в метод мока, для последующей проверки. Полезно когда аргумент создаётся внутри тестируемого метода.
 
 ```java
 @Test
-void shouldReturnUserWhenFound() {
- // Arrange
- User expectedUser = new User("john@example.com");
- when(userRepository.findById(1L)).thenReturn(Optional.of(expectedUser));
+void shouldCaptureCreatedUser() {
+    ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
 
- // Act
- Optional<User> user = userService.findById(1L);
+    userService.createUser("john@example.com", "password");
 
- // Assert
- assertTrue(user.isPresent());
- assertEquals("john@example.com", user.get().getEmail());
-}
+    verify(userRepository).save(captor.capture());
 
-@Test
-void shouldReturnEmptyWhenUserNotFound() {
- // Arrange
- when(userRepository.findById(999L)).thenReturn(Optional.empty());
-
- // Act
- Optional<User> user = userService.findById(999L);
-
- // Assert
- assertFalse(user.isPresent());
+    User captured = captor.getValue();
+    assertThat(captured.getEmail()).isEqualTo("john@example.com");
+    assertThat(captured.getCreatedAt()).isNotNull();
+    assertThat(captured.getStatus()).isEqualTo(UserStatus.ACTIVE);
 }
 ```
 
-#### 3. Проверка вызовов (`Verification`)
+Начиная с `Mockito 4.6+`, можно использовать `@Captor` как параметр метода:
 
 ```java
 @Test
-void shouldSaveUserAndSendEmail() {
- // Arrange
- User user = new User("john@example.com");
- when(userRepository.save(any(User.class))).thenReturn(user);
-
- // Act
- userService.registerUser("john@example.com", "password");
-
- // Assert - проверка вызовов
- verify(userRepository).save(any(User.class));
- verify(emailService).sendWelcomeEmail("john@example.com");
-
- // Проверка количества вызовов
- verify(emailService, times(1)).sendWelcomeEmail(anyString());
- verify(emailService, atLeastOnce()).sendWelcomeEmail(anyString());
- verify(emailService, never()).sendPasswordResetEmail(anyString());
+void shouldCapture(@Captor ArgumentCaptor<User> captor) {
+    userService.createUser("john@example.com", "pass");
+    verify(userRepository).save(captor.capture());
+    assertThat(captor.getValue().getEmail()).isEqualTo("john@example.com");
 }
 ```
 
-#### 4. Работа с void методами
+**Важно**: `ArgumentCaptor` следует использовать с `verify()`, а не с `when()`. Для stubbing лучше `ArgumentMatcher`.
+
+## Q13. Чем отличается `Mock` от `Spy` в `Mockito`?
+
+| Аспект | `Mock` | `Spy` |
+|--------|--------|-------|
+| Создание | `mock(List.class)` | `spy(new ArrayList<>())` |
+| Поведение по умолчанию | Все методы возвращают default (null/0/false) | Все методы вызывают **реальный** код |
+| Когда мокировать | `when(mock.method()).thenReturn(...)` | `doReturn(...).when(spy).method()` |
+| Применение | Полная замена зависимости | Частичное мокирование |
 
 ```java
 @Test
-void shouldHandleVoidMethod() {
- // Настройка void метода
- doNothing().when(emailService).sendWelcomeEmail(anyString());
+void shouldDemonstrateSpy() {
+    List<String> spy = spy(new ArrayList<>());
 
- // Или настройка исключения
- doThrow(new RuntimeException("SMTP server down")).when(emailService).sendWelcomeEmail("problem@example.com");
+    spy.add("one");
+    spy.add("two");
+    assertEquals(2, spy.size()); // Реальный метод
 
- // Act
- userService.registerUser("john@example.com", "password");
+    doReturn(100).when(spy).size(); // Перехват одного метода
+    assertEquals(100, spy.size()); // Замоканный результат
 
- // Verify
- verify(emailService).sendWelcomeEmail("john@example.com");
+    verify(spy).add("one"); // Верификация работает
 }
 ```
 
-#### 5. `Argument Matchers`
+**Подводный камень со `Spy`**: при использовании `when(spy.method()).thenReturn(...)` реальный метод **вызывается** при настройке stubbing. Поэтому для `spy` предпочтительнее `doReturn(...).when(spy).method()`.
+
+## Q14. Как тестировать статические методы?
+
+Начиная с `Mockito 3.4.0+` (с `mockito-inline`), статические методы можно мокировать через `MockedStatic`:
 
 ```java
 @Test
-void shouldUseArgumentMatchers() {
- // Matchers для различных типов аргументов
- when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(new User()));
- when(userRepository.findById(eq(1L))).thenReturn(Optional.of(new User()));
- when(userRepository.findByStatus(isNotNull())).thenReturn(List.of(new User()));
+void shouldMockStaticMethod() {
+    try (MockedStatic<UUID> mockedUuid = mockStatic(UUID.class)) {
+        UUID fixedUuid = UUID.fromString("12345678-1234-1234-1234-123456789012");
+        mockedUuid.when(UUID::randomUUID).thenReturn(fixedUuid);
 
- // Act
- userService.findUserByEmail("test@example.com");
- userService.findById(1L);
- userService.findActiveUsers();
+        String id = entityService.generateId();
 
- // Verify with matchers
- verify(userRepository).findByEmail(anyString());
- verify(userRepository).findById(eq(1L));
- verify(userRepository).findByStatus(isNotNull());
+        assertEquals("12345678-1234-1234-1234-123456789012", id);
+    }
+    // Вне try-with-resources статический мок автоматически снят
 }
 ```
 
-#### 6. Spy (`Partial Mocking`)
+### Рекомендуемые альтернативы мокированию статики
+
+1. **Не мокировать** — если метод чистый и детерминированный (`Math.abs`, `Collections.unmodifiableList`)
+2. **Рефакторинг** — обернуть статический вызов в инстанс-метод и мокировать его:
 
 ```java
-@Test
-void shouldUseSpyForPartialMocking() {
- // Создание spy - реальный объект с возможностью mocking
- List<String> list = spy(new ArrayList<>());
-
- // Реальные методы работают нормально
- list.add("one");
- list.add("two");
-
- assertEquals(2, list.size());
-
- // Можно замокать конкретные методы
- when(list.size()).thenReturn(100);
-
- assertEquals(100, list.size()); // Замоканный результат
-
- // Проверка вызовов
- verify(list).add("one");
- verify(list).add("two");
- verify(list, times(2)).size();
+// Вместо прямого вызова UUID.randomUUID()
+public class UuidGenerator {
+    public UUID generate() {
+        return UUID.randomUUID();
+    }
 }
+// Теперь можно замокировать обычным mock(UuidGenerator.class)
 ```
 
-#### 7. `Capturing Arguments`
+## Q15. Что такое `BDD`-стиль тестирования с `Mockito`?
+
+`BDD` (Behavior-Driven Development) использует термины `Given-When-Then` вместо `Arrange-Act-Assert`. `Mockito` предоставляет `BDDMockito` для более читаемого синтаксиса:
 
 ```java
-@Test
-void shouldCaptureArguments() {
- // Arrange
- ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+import static org.mockito.BDDMockito.*;
 
- // Act
- userService.createUser("john@example.com", "password");
-
- // Assert - захват переданных аргументов
- verify(userRepository).save(userCaptor.capture());
-
- User capturedUser = userCaptor.getValue();
- assertEquals("john@example.com", capturedUser.getEmail());
- assertNotNull(capturedUser.getCreatedAt());
-}
-```
-
-#### 8. `BDD Style Testing`
-
-```java
 @Test
 void shouldCreateUserSuccessfully() {
- // Given
- User user = new User("john@example.com");
- given(userRepository.save(any(User.class))).willReturn(user);
- given(emailService.sendWelcomeEmail(anyString())).willReturn(true);
+    // Given
+    User user = new User("john@example.com");
+    given(userRepository.save(any(User.class))).willReturn(user);
+    given(emailService.sendWelcomeEmail(anyString())).willReturn(true);
 
- // When
- User created = userService.createUser("john@example.com", "password");
+    // When
+    User created = userService.createUser("john@example.com", "password");
 
- // Then
- assertThat(created).isNotNull();
- assertThat(created.getEmail()).isEqualTo("john@example.com");
-
- then(userRepository).should().save(any(User.class));
- then(emailService).should().sendWelcomeEmail("john@example.com");
+    // Then
+    assertThat(created.getEmail()).isEqualTo("john@example.com");
+    then(userRepository).should().save(any(User.class));
+    then(emailService).should().sendWelcomeEmail("john@example.com");
+    then(emailService).should(never()).sendPasswordResetEmail(anyString());
 }
 ```
 
-## Q6. Что такое `TDD` (Test-Driven Development)?
+| Стандартный стиль | BDD-стиль |
+|-------------------|-----------|
+| `when(...).thenReturn(...)` | `given(...).willReturn(...)` |
+| `verify(mock).method()` | `then(mock).should().method()` |
+| `doThrow(...).when(mock)` | `willThrow(...).given(mock)` |
 
-`TDD` (Test-Driven Development) — методология разработки, при которой тесты пишутся перед кодом. Цикл **Red–Green–Refactor**: написать падающий тест, сделать минимальную реализацию, рефакторить.
+## Q16. (!) Как правильно использовать `@InjectMocks`?
 
-#### 1. Red: Написать failing тест
+`@InjectMocks` создаёт экземпляр тестируемого класса и инъектирует в него моки (`@Mock`/`@Spy`):
 
 ```java
-// Тест для еще не реализованной функциональности
+@ExtendWith(MockitoExtension.class)
+class OrderServiceTest {
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private PaymentGateway paymentGateway;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @InjectMocks
+    private OrderService orderService; // Все @Mock инъектируются сюда
+
+    @Test
+    void shouldProcessOrder() {
+        when(paymentGateway.charge(any())).thenReturn(PaymentResult.SUCCESS);
+
+        orderService.processOrder(new Order(100.0));
+
+        verify(orderRepository).save(any(Order.class));
+        verify(notificationService).sendConfirmation(any());
+    }
+}
+```
+
+### Подводные камни `@InjectMocks`
+
+1. **Порядок инъекции** — `Mockito` инъектирует по типу; если два мока одного типа — поведение неопределённо
+2. **Не инъектирует примитивы** — строки, числа и т.д. нужно задать вручную
+3. **Конструктор или сеттеры** — `Mockito` пробует constructor injection, затем setter, затем field injection
+4. **Не создаёт Spring context** — это не `@MockBean`, работает без Spring
+
+## Q17. (!) Что такое `TDD` (Test-Driven Development)?
+
+`TDD` — методология разработки, при которой тесты пишутся **перед** кодом. Цикл **Red-Green-Refactor**:
+
+```mermaid
+graph LR
+    RED["🔴 RED<br/>Написать падающий тест"] --> GREEN["🟢 GREEN<br/>Минимальная реализация"]
+    GREEN --> REFACTOR["🔵 REFACTOR<br/>Улучшить код"]
+    REFACTOR --> RED
+
+    style RED fill:#f44336,color:#fff
+    style GREEN fill:#4CAF50,color:#fff
+    style REFACTOR fill:#2196F3,color:#fff
+```
+
+### Пример цикла `TDD`
+
+**1. RED** — написать тест для ещё не реализованной функциональности:
+
+```java
 @Test
 void shouldCalculateFactorial() {
- Calculator calc = new Calculator();
-
- assertEquals(1, calc.factorial(0));
- assertEquals(1, calc.factorial(1));
- assertEquals(2, calc.factorial(2));
- assertEquals(6, calc.factorial(3));
- assertEquals(24, calc.factorial(4));
+    Calculator calc = new Calculator();
+    assertEquals(1, calc.factorial(0));
+    assertEquals(1, calc.factorial(1));
+    assertEquals(6, calc.factorial(3));
+    assertEquals(24, calc.factorial(4));
 }
 ```
 
-#### 2. `Green`: Написать минимальный код для прохождения теста
+**2. GREEN** — минимальный код для прохождения теста:
 
 ```java
-public class Calculator {
- public int factorial(int n) {
- if (n == 0 || n == 1) {
- return 1;
- }
- return n * factorial(n - 1);
- }
+public int factorial(int n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
 }
 ```
 
-#### 3. `Refactor`: Улучшить код, сохраняя проходные тесты
+**3. REFACTOR** — улучшить код, сохраняя зелёные тесты:
 
 ```java
-public class Calculator {
- public int factorial(int n) {
- if (n < 0) {
- throw new IllegalArgumentException("Factorial is not defined for negative numbers");
- }
- if (n == 0 || n == 1) {
- return 1;
- }
- int result = 1;
- for (int i = 2; i <= n; i++) {
- result *= i;
- }
- return result;
- }
+public int factorial(int n) {
+    if (n < 0) throw new IllegalArgumentException("n must be >= 0");
+    int result = 1;
+    for (int i = 2; i <= n; i++) {
+        result *= i;
+    }
+    return result;
 }
 ```
 
 ### Преимущества `TDD`
 
-#### 1. Лучший дизайн кода
+- Код тестируем **by design** (дизайн через тестируемость)
+- 100% покрытие бизнес-логики — каждая строка кода написана ради теста
+- Тесты — живая документация
 
-`TDD` заставляет думать о интерфейсе и поведении до реализации.
+### Когда `TDD` не подходит
 
-#### 2. Высокое покрытие тестами
-Все функциональные требования покрыты тестами.
+- Прототипы и исследовательский код
+- UI-логика с частыми изменениями дизайна
+- Код с тяжёлыми внешними зависимостями (проще интеграционные тесты)
 
-#### 3. Уверенность в рефакторинге
-Тесты защищают от регрессий при изменении кода.
+## Q18. Чем `TDD` отличается от `BDD`?
 
-#### 4. Живая документация
-Тесты показывают, как использовать код.
-
-### Пример полного цикла `TDD`
+| Аспект | `TDD` | `BDD` |
+|--------|-------|-------|
+| Фокус | Корректность реализации | Поведение с точки зрения бизнеса |
+| Язык | Технический (assertEquals) | Доменный (Given-When-Then) |
+| Аудитория | Разработчики | Разработчики + бизнес-аналитики |
+| Инструменты | `JUnit`, `Mockito` | `Cucumber`, `Spock`, `JBehave` |
+| Гранулярность | Метод/класс | Сценарий/фича |
 
 ```java
-// 1. RED: Написать тест для StringStack
+// TDD-стиль
 @Test
-void shouldCreateEmptyStack() {
- StringStack stack = new StringStack();
- assertTrue(stack.isEmpty());
- assertEquals(0, stack.size());
+void calculateDiscount_premiumUser_returns15Percent() {
+    assertEquals(85.0, service.calculatePrice(100.0, UserType.PREMIUM), 0.01);
 }
 
+// BDD-стиль (с Mockito BDD)
 @Test
-void shouldPushAndPopElements() {
- StringStack stack = new StringStack();
-
- stack.push("first");
- assertFalse(stack.isEmpty());
- assertEquals(1, stack.size());
-
- stack.push("second");
- assertEquals(2, stack.size());
-
- assertEquals("second", stack.pop());
- assertEquals(1, stack.size());
- assertEquals("first", stack.pop());
- assertTrue(stack.isEmpty());
-}
-
-// 2. GREEN: Минимальная реализация
-public class StringStack {
- private List<String> elements = new ArrayList<>();
-
- public void push(String element) {
- elements.add(element);
- }
-
- public String pop() {
- if (elements.isEmpty()) {
- throw new EmptyStackException();
- }
- return elements.remove(elements.size() - 1);
- }
-
- public boolean isEmpty() {
- return elements.isEmpty();
- }
-
- public int size() {
- return elements.size();
- }
-}
-
-// 3. REFACTOR: Улучшения
-public class StringStack {
- private final List<String> elements;
- private final int maxSize;
-
- public StringStack() {
- this(Integer.MAX_VALUE);
- }
-
- public StringStack(int maxSize) {
- this.maxSize = maxSize;
- this.elements = new ArrayList<>();
- }
-
- public void push(String element) {
- if (element == null) {
- throw new IllegalArgumentException("Element cannot be null");
- }
- if (elements.size() >= maxSize) {
- throw new StackOverflowError("Stack is full");
- }
- elements.add(element);
- }
-
- public String pop() {
- if (elements.isEmpty()) {
- throw new EmptyStackException();
- }
- return elements.remove(elements.size() - 1);
- }
-
- public String peek() {
- if (elements.isEmpty()) {
- throw new EmptyStackException();
- }
- return elements.get(elements.size() - 1);
- }
-
- public boolean isEmpty() {
- return elements.isEmpty();
- }
-
- public int size() {
- return elements.size();
- }
-
- public void clear() {
- elements.clear();
- }
+void shouldApply15PercentDiscountForPremiumUsers() {
+    // Given
+    given(userService.getUserType(userId)).willReturn(UserType.PREMIUM);
+    // When
+    double price = pricingService.calculatePrice(100.0, userId);
+    // Then
+    assertThat(price).isEqualTo(85.0);
 }
 ```
 
-## Q7. Как тестировать исключения?
+## Q19. (!) Что такое `parameterized tests`?
 
-### 1. Использование `assertThrows`
+`Parameterized tests` позволяют запускать один и тот же тест с **разными наборами данных**, избегая дублирования кода. Требуют зависимость `junit-jupiter-params`.
 
-```java
-@Test
-void shouldThrowExceptionWhenDividingByZero() {
- Calculator calculator = new Calculator();
-
- // JUnit 5
- assertThrows(ArithmeticException.class, () -> {
- calculator.divide(10, 0);
- });
-}
-
-@Test
-void shouldThrowExceptionWithCorrectMessage() {
- UserService userService = new UserService();
-
- Exception exception = assertThrows(IllegalArgumentException.class, () -> {
- userService.createUser("", "password");
- });
-
- assertEquals("Username cannot be empty", exception.getMessage());
-}
-```
-
-### 2. Тестирование checked exceptions
-
-```java
-@Test
-void shouldHandleIOException() throws IOException {
- FileProcessor processor = new FileProcessor();
-
- // Использование @Test(expected =...) в JUnit 4
- // В JUnit 5:
- assertThrows(IOException.class, () -> {
- processor.readFile("/nonexistent/file.txt");
- });
-}
-
-@Test
-void shouldHandleCheckedExceptionInLambda() {
- FileProcessor processor = new FileProcessor();
-
- // Для checked exceptions в lambda можно использовать Executable
- Executable executable = () -> processor.readFile("/nonexistent/file.txt");
- assertThrows(IOException.class, executable);
-}
-```
-
-### 3. Тестирование исключений с `Mockito`
-
-```java
-@Test
-void shouldHandleRepositoryException() {
- // Arrange
- UserRepository repository = mock(UserRepository.class);
- UserService service = new UserService(repository);
-
- when(repository.findById(1L)).thenThrow(new DataAccessException("Database connection failed"));
-
- // Act & Assert
- assertThrows(ServiceException.class, () -> {
- service.getUserById(1L);
- });
-}
-
-@Test
-void shouldRetryOnTransientException() {
- // Arrange
- ExternalService externalService = mock(ExternalService.class);
- RetryService retryService = new RetryService(externalService);
-
- when(externalService.call()).thenThrow(new TimeoutException("Temporary failure")).thenReturn("success");
-
- // Act
- String result = retryService.callWithRetry();
-
- // Assert
- assertEquals("success", result);
- verify(externalService, times(2)).call(); // Первый вызов + повтор
-}
-```
-
-### 4. Тестирование кастомных исключений
-
-```java
-@Test
-void shouldThrowCustomValidationException() {
- UserValidator validator = new UserValidator();
-
- ValidationException exception = assertThrows(ValidationException.class, () -> {
- validator.validateEmail("invalid-email");
- });
-
- // Проверка полей кастомного исключения
- assertEquals("INVALID_EMAIL", exception.getErrorCode());
- assertTrue(exception.getErrors().contains("Email format is invalid"));
- assertEquals("email", exception.getField());
-}
-```
-
-### 5. Тестирование исключений в асинхронном коде
-
-```java
-@Test
-void shouldHandleAsyncException() {
- AsyncService asyncService = new AsyncService();
-
- // Для CompletableFuture
- CompletableFuture<String> future = asyncService.processAsync("invalid");
-
- ExecutionException exception = assertThrows(ExecutionException.class, () -> {
- future.get(1, TimeUnit.SECONDS);
- });
-
- assertTrue(exception.getCause() instanceof ValidationException);
-}
-```
-
-## Q8. Как тестировать приватные методы?
-
-### 1. Зачем тестировать приватные методы?
-
-Обычно приватные методы тестируются косвенно через публичные методы. Но иногда прямое тестирование необходимо:
-
-- Комплексная бизнес-логика в приватных методах
-- Приватные методы с побочными эффектами
-- Унаследованный код с плохо структурированными приватными методами
-
-### 2. Прямой доступ через `Reflection` (не рекомендуется)
-
-```java
-public class CalculatorTest {
-
- @Test
- void shouldTestPrivateMethod() throws Exception {
- Calculator calculator = new Calculator();
- Class<?> clazz = calculator.getClass();
-
- // Получение приватного метода
- Method method = clazz.getDeclaredMethod("calculateTax", BigDecimal.class);
- method.setAccessible(true);
-
- // Вызов метода
- BigDecimal result = (BigDecimal) method.invoke(calculator, new BigDecimal("100"));
-
- assertEquals(new BigDecimal("20.00"), result);
- }
-}
-```
-
-### 3. Изменение видимости метода (рекомендуется)
-
-```java
-// Изменить модификатор доступа для тестирования
-class Calculator {
-
- // Изменено с private на package-private для тестирования
- BigDecimal calculateTax(BigDecimal amount) {
- return amount.multiply(new BigDecimal("0.20"));
- }
-
- public BigDecimal calculateTotal(BigDecimal amount) {
- BigDecimal tax = calculateTax(amount);
- return amount.add(tax);
- }
-}
-
-@Test
-void shouldCalculateTaxCorrectly() {
- Calculator calculator = new Calculator();
-
- // Тестирование через reflection или в том же пакете
- BigDecimal tax = calculator.calculateTax(new BigDecimal("100"));
- assertEquals(new BigDecimal("20.00"), tax);
-}
-```
-
-### 4. Выделение приватной логики в отдельный класс
-
-```java
-// Лучший подход: выделить логику в отдельный класс
-public class TaxCalculator {
-
- public BigDecimal calculateTax(BigDecimal amount) {
- if (amount == null || amount.compareTo(BigDecimal.ZERO) < 0) {
- throw new IllegalArgumentException("Invalid amount");
- }
- return amount.multiply(new BigDecimal("0.20"));
- }
-}
-
-public class Calculator {
-
- private final TaxCalculator taxCalculator = new TaxCalculator();
-
- public BigDecimal calculateTotal(BigDecimal amount) {
- BigDecimal tax = taxCalculator.calculateTax(amount);
- return amount.add(tax);
- }
-}
-
-// Теперь TaxCalculator можно тестировать независимо
-public class TaxCalculatorTest {
-
- private TaxCalculator taxCalculator = new TaxCalculator();
-
- @Test
- void shouldCalculateTax() {
- BigDecimal tax = taxCalculator.calculateTax(new BigDecimal("100"));
- assertEquals(new BigDecimal("20.00"), tax);
- }
-
- @Test
- void shouldThrowExceptionForInvalidAmount() {
- assertThrows(IllegalArgumentException.class, () -> {
- taxCalculator.calculateTax(null);
- });
-
- assertThrows(IllegalArgumentException.class, () -> {
- taxCalculator.calculateTax(new BigDecimal("-10"));
- });
- }
-}
-```
-
-### 5. Тестирование через публичные методы
-
-```java
-@Test
-void shouldCalculateTotalIncludingTax() {
- Calculator calculator = new Calculator();
-
- // Тестируем приватный метод calculateTax косвенно через публичный calculateTotal
- BigDecimal total = calculator.calculateTotal(new BigDecimal("100"));
-
- // Ожидаем: 100 + 20% tax = 120
- assertEquals(new BigDecimal("120.00"), total);
-}
-
-@Test
-void shouldCalculateTaxThroughTotal() {
- Calculator calculator = new Calculator();
-
- // Тестируем разные сценарии через публичный API
- assertEquals(new BigDecimal("120.00"), calculator.calculateTotal(new BigDecimal("100")));
- assertEquals(new BigDecimal("240.00"), calculator.calculateTotal(new BigDecimal("200")));
- assertEquals(new BigDecimal("0.00"), calculator.calculateTotal(new BigDecimal("0")));
-}
-```
-
-### 6. Использование `PowerMock` для тестирования приватных методов (не рекомендуется)
-
-```java
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Calculator.class)
-public class CalculatorPowerMockTest {
-
- @Test
- public void shouldTestPrivateMethod() throws Exception {
- Calculator calculator = new Calculator();
-
- // Получение приватного метода
- Method method = PowerMockito.method(Calculator.class, "calculateTax", BigDecimal.class);
-
- // Вызов приватного метода
- BigDecimal result = (BigDecimal) method.invoke(calculator, new BigDecimal("100"));
-
- assertEquals(new BigDecimal("20.00"), result);
- }
-}
-```
-
-## Q9. Что такое `parameterized tests`?
-
-`Parameterized` tests позволяют запускать один и тот же тест с разными наборами данных.
-
-### 1. `@ValueSource`
+### `@ValueSource` — простые значения
 
 ```java
 @ParameterizedTest
 @ValueSource(ints = {1, 2, 3, 4, 5})
 void shouldReturnTrueForPositiveNumbers(int number) {
- Calculator calc = new Calculator();
- assertTrue(calc.isPositive(number));
+    assertTrue(calculator.isPositive(number));
 }
 
 @ParameterizedTest
 @ValueSource(strings = {"", " ", "\t", "\n"})
-void shouldReturnTrueForBlankStrings(String input) {
- assertTrue(StringUtils.isBlank(input));
+void shouldDetectBlankStrings(String input) {
+    assertTrue(StringUtils.isBlank(input));
+}
+
+@ParameterizedTest
+@NullAndEmptySource // null + пустая строка
+@ValueSource(strings = {" ", "\t"})
+void shouldRejectInvalidInput(String input) {
+    assertFalse(validator.isValid(input));
 }
 ```
 
-### 2. `@EnumSource`
+### `@EnumSource` — перебор enum-значений
 
 ```java
-enum UserStatus {
- ACTIVE, INACTIVE, SUSPENDED, DELETED
+@ParameterizedTest
+@EnumSource(value = OrderStatus.class, names = {"PENDING", "PROCESSING"})
+void shouldAllowCancellation(OrderStatus status) {
+    Order order = new Order(status);
+    assertTrue(order.canCancel());
 }
 
 @ParameterizedTest
-@EnumSource(UserStatus.class)
-void shouldHandleAllUserStatuses(UserStatus status) {
- User user = new User();
- user.setStatus(status);
-
- UserService service = new UserService();
- assertDoesNotThrow(() -> service.processUserStatus(user));
+@EnumSource(value = OrderStatus.class, mode = EnumSource.Mode.EXCLUDE,
+            names = {"DELIVERED", "CANCELLED"})
+void shouldAllowModification(OrderStatus status) {
+    Order order = new Order(status);
+    assertTrue(order.canModify());
 }
 ```
 
-### 3. `@MethodSource`
+## Q20. Как использовать `@MethodSource` и `@CsvSource`?
+
+### `@MethodSource` — данные из метода
 
 ```java
 @ParameterizedTest
-@MethodSource("provideCalculatorTestData")
-void shouldCalculateCorrectly(int a, int b, int expected) {
- Calculator calc = new Calculator();
- assertEquals(expected, calc.add(a, b));
+@MethodSource("provideValidEmails")
+void shouldAcceptValidEmails(String email, String domain) {
+    assertThat(validator.isValidEmail(email)).isTrue();
+    assertThat(validator.extractDomain(email)).isEqualTo(domain);
 }
 
-static Stream<Arguments> provideCalculatorTestData() {
- return Stream.of(
- Arguments.of(1, 2, 3),
- Arguments.of(-1, 1, 0),
- Arguments.of(0, 0, 0),
- Arguments.of(100, 200, 300),
- Arguments.of(Integer.MAX_VALUE, 1, Integer.MIN_VALUE) // overflow
- );
-}
-
-@ParameterizedTest
-@MethodSource("provideUserValidationData")
-void shouldValidateUserData(String email, String password, boolean expectedValid) {
- UserValidator validator = new UserValidator();
- assertEquals(expectedValid, validator.isValid(email, password));
-}
-
-static Stream<Arguments> provideUserValidationData() {
- return Stream.of(
- Arguments.of("user@example.com", "password123", true),
- Arguments.of("invalid-email", "password123", false),
- Arguments.of("user@example.com", "short", false),
- Arguments.of("", "password123", false),
- Arguments.of(null, "password123", false)
- );
+static Stream<Arguments> provideValidEmails() {
+    return Stream.of(
+        Arguments.of("user@example.com", "example.com"),
+        Arguments.of("admin@company.org", "company.org"),
+        Arguments.of("test+tag@gmail.com", "gmail.com")
+    );
 }
 ```
 
-### 4. `@CsvSource`
+### `@CsvSource` — табличные данные
 
 ```java
-@ParameterizedTest
-@CsvSource({
- "apple, 5, appleappleappleappleapple",
- "hello, 3, hellohellohello",
- "'', 5, ''",
- "a, 1, a"
-})
-void shouldRepeatString(String input, int times, String expected) {
- StringUtils utils = new StringUtils();
- assertEquals(expected, utils.repeat(input, times));
-}
-
 @ParameterizedTest
 @CsvSource(delimiter = '|', textBlock = """
- apple | 5 | appleappleappleappleapple
- hello | 3 | hellohellohello
- '' | 5 | ''
- a | 1 | a
- """)
-void shouldRepeatStringWithDelimiter(String input, int times, String expected) {
- StringUtils utils = new StringUtils();
- assertEquals(expected, utils.repeat(input, times));
+    hello  | 3 | hellohellohello
+    abc    | 2 | abcabc
+    ''     | 5 | ''
+    x      | 1 | x
+    """)
+void shouldRepeatString(String input, int times, String expected) {
+    assertEquals(expected, StringUtils.repeat(input, times));
 }
 ```
 
-### 5. `@CsvFileSource`
-
-```java
-// test-data.csv
-// email,password,expectedValid
-// user@example.com,password123,true
-// invalid-email,password123,false
-// user@example.com,short,false
-
-@ParameterizedTest
-@CsvFileSource(resources = "/test-data.csv", numLinesToSkip = 1)
-void shouldValidateUserFromCsv(String email, String password, boolean expectedValid) {
- UserValidator validator = new UserValidator();
- assertEquals(expectedValid, validator.isValid(email, password));
-}
-```
-
-### 6. `Custom Parameter Providers`
-
-```java
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-@ParameterizedTest
-@ArgumentsSource(RandomDateProvider.class)
-void shouldHandleRandomDates(@AggregateWith(PersonAggregator.class) Person person) {
- // Тест с рандомными данными
- assertNotNull(person.getName());
- assertNotNull(person.getBirthDate());
-}
-
-static class RandomDateProvider implements ArgumentsProvider {
-
- @Override
- public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
- Random random = new Random();
- return Stream.generate(() -> {
- String name = "Person" + random.nextInt(1000);
- LocalDate birthDate = LocalDate.of(
- 1950 + random.nextInt(50),
- 1 + random.nextInt(12),
- 1 + random.nextInt(28)
- );
- return Arguments.of(new Person(name, birthDate));
- }).limit(10);
- }
-}
-
-static class PersonAggregator implements ArgumentsAggregator {
-
- @Override
- public Object aggregateArguments(ArgumentsAccessor accessor, ParameterContext context) {
- return new Person(accessor.getString(0), accessor.get(1, LocalDate.class));
- }
-}
-```
-
-### 7. `Parameterized Tests` с `Lifecycle`
+### `@CsvFileSource` — данные из файла
 
 ```java
 @ParameterizedTest
-@MethodSource("provideDatabaseConfigurations")
-void shouldConnectToDatabase(String url, String username, String password) {
- DatabaseConnection connection = new DatabaseConnection(url, username, password);
-
- assertDoesNotThrow(() -> {
- connection.open();
- assertTrue(connection.isConnected());
- connection.close();
- });
-}
-
-static Stream<Arguments> provideDatabaseConfigurations() {
- return Stream.of(
- Arguments.of("jdbc:h2:mem:test1", "sa", ""),
- Arguments.of("jdbc:h2:mem:test2", "sa", ""),
- Arguments.of("jdbc:postgresql://localhost:5432/test", "postgres", "password")
- );
-}
-
-// Использование @BeforeEach с параметрами
-@BeforeEach
-void setUpDatabase(@ArgumentsAccessor ArgumentsAccessor accessor) {
- String url = accessor.getString(0);
- String username = accessor.getString(1);
- String password = accessor.getString(2);
-
- // Настройка базы данных для каждого параметризованного теста
- databaseManager.setupDatabase(url, username, password);
+@CsvFileSource(resources = "/test-data/users.csv", numLinesToSkip = 1)
+void shouldValidateUserFromFile(String email, String password, boolean valid) {
+    assertEquals(valid, validator.isValid(email, password));
 }
 ```
 
-## Q10. Как организовать структуру тестов?
+## Q21. Что такое `@DynamicTest` и когда использовать?
 
-### 1. Структура проекта
+`@TestFactory` генерирует тесты в **runtime** — полезно для data-driven сценариев с данными из внешнего источника:
+
+```java
+@TestFactory
+Stream<DynamicTest> shouldValidateAllCountryCodes() {
+    Map<String, String> countryCodes = Map.of(
+        "RU", "Russia", "US", "United States", "DE", "Germany"
+    );
+
+    return countryCodes.entrySet().stream()
+        .map(entry -> dynamicTest(
+            "Код " + entry.getKey() + " → " + entry.getValue(),
+            () -> {
+                Country country = countryService.findByCode(entry.getKey());
+                assertThat(country.getName()).isEqualTo(entry.getValue());
+            }
+        ));
+}
+```
+
+**Отличие от `@ParameterizedTest`**: динамические тесты не поддерживают lifecycle callbacks (`@BeforeEach`/`@AfterEach`), но позволяют генерировать произвольную структуру тестов.
+
+## Q22. (!) Как организовать структуру тестов?
+
+### Структура проекта
 
 ```text
 src/
-├── main/java/
-│ └── com/example/
-│ ├── domain/
-│ │ ├── User.java
-│ │ └── Order.java
-│ ├── service/
-│ │ ├── UserService.java
-│ │ └── OrderService.java
-│ └── repository/
-│ ├── UserRepository.java
-│ └── OrderRepository.java
-└── test/java/
- └── com/example/
- ├── domain/
- │ ├── UserTest.java
- │ └── OrderTest.java
- ├── service/
- │ ├── UserServiceTest.java
- │ └── OrderServiceTest.java
- └── repository/
- ├── UserRepositoryTest.java
- └── OrderRepositoryTest.java
+├── main/java/com/example/
+│   ├── domain/       User.java, Order.java
+│   ├── service/      UserService.java, OrderService.java
+│   └── repository/   UserRepository.java
+└── test/java/com/example/
+    ├── domain/        UserTest.java, OrderTest.java
+    ├── service/       UserServiceTest.java, OrderServiceTest.java
+    ├── repository/    UserRepositoryTest.java
+    └── testutil/      TestUserBuilder.java, TestOrderFactory.java
 ```
 
-### 2. `Test Fixtures` и `Setup`
+### Правила организации
+
+1. **Пакет теста = пакет продуктового кода** — доступ к `package-private` методам
+2. **Один тестовый класс на один продуктовый класс** (обычно)
+3. **Test utilities** — билдеры, фабрики, вспомогательные классы в отдельном пакете `testutil`
+4. **Никакого production-кода в тестовой директории**
 
 ```java
-// Test fixture для повторного использования
-public abstract class AbstractServiceTest {
+// Использование @Nested для группировки внутри класса
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
 
- @Autowired
- protected UserRepository userRepository;
+    @Mock UserRepository repository;
+    @InjectMocks UserService service;
 
- @Autowired
- protected OrderRepository orderRepository;
+    @Nested
+    class CreateUser {
+        @Test void shouldCreateWithValidData() { /* ... */ }
+        @Test void shouldRejectDuplicateEmail() { /* ... */ }
+    }
 
- protected User testUser;
- protected Order testOrder;
-
- @BeforeEach
- void setUp() {
- // Очистка данных
- orderRepository.deleteAll();
- userRepository.deleteAll();
-
- // Создание тестовых данных
- testUser = createTestUser();
- testOrder = createTestOrder(testUser);
- }
-
- protected User createTestUser() {
- User user = new User("test@example.com", "password");
- return userRepository.save(user);
- }
-
- protected Order createTestOrder(User user) {
- Order order = new Order(user, BigDecimal.valueOf(100));
- return orderRepository.save(order);
- }
-}
-
-// Использование fixture
-public class OrderServiceTest extends AbstractServiceTest {
-
- @Autowired
- private OrderService orderService;
-
- @Test
- void shouldCreateOrder() {
- // testUser и testOrder уже созданы в setUp()
- assertNotNull(testOrder);
- assertEquals(testUser, testOrder.getUser());
- }
+    @Nested
+    class FindUser {
+        @Test void shouldReturnUserById() { /* ... */ }
+        @Test void shouldReturnEmptyForNonExistentId() { /* ... */ }
+    }
 }
 ```
 
-### 3. `Test Data Builders`
+## Q23. Что такое `@Nested` и зачем группировать тесты?
+
+`@Nested` — вложенный тестовый класс в `JUnit 5`. Каждый `@Nested` класс может иметь свои `@BeforeEach`/`@AfterEach`, наследуя контекст внешнего класса:
 
 ```java
-// Builder pattern для тестовых данных
-public class UserBuilder {
+@DisplayName("Calculator")
+class CalculatorTest {
 
- private String email = "user@example.com";
- private String password = "password";
- private UserStatus status = UserStatus.ACTIVE;
- private LocalDateTime createdAt = LocalDateTime.now();
+    private Calculator calculator;
 
- public UserBuilder email(String email) {
- this.email = email;
- return this;
- }
+    @BeforeEach
+    void setUp() {
+        calculator = new Calculator();
+    }
 
- public UserBuilder password(String password) {
- this.password = password;
- return this;
- }
+    @Nested
+    @DisplayName("Сложение")
+    class Addition {
+        @Test void shouldAddPositives() {
+            assertEquals(5, calculator.add(2, 3));
+        }
 
- public UserBuilder status(UserStatus status) {
- this.status = status;
- return this;
- }
+        @Test void shouldAddNegatives() {
+            assertEquals(-5, calculator.add(-2, -3));
+        }
 
- public UserBuilder createdAt(LocalDateTime createdAt) {
- this.createdAt = createdAt;
- return this;
- }
+        @Nested
+        @DisplayName("С нулём")
+        class WithZero {
+            @Test void shouldReturnSameNumber() {
+                assertEquals(5, calculator.add(5, 0));
+            }
+        }
+    }
 
- public User build() {
- User user = new User(email, password);
- user.setStatus(status);
- user.setCreatedAt(createdAt);
- return user;
- }
-}
+    @Nested
+    @DisplayName("Деление")
+    class Division {
+        @Test void shouldDivide() {
+            assertEquals(2.5, calculator.divide(5, 2));
+        }
 
-// Использование builder'а
-public class UserServiceTest {
-
- @Test
- void shouldCreateActiveUser() {
- User user = new UserBuilder().email("john@example.com").status(UserStatus.ACTIVE).build();
-
- User saved = userService.createUser(user);
- assertEquals(UserStatus.ACTIVE, saved.getStatus());
- }
-
- @Test
- void shouldCreateInactiveUser() {
- User user = new UserBuilder().email("inactive@example.com").status(UserStatus.INACTIVE).build();
-
- User saved = userService.createUser(user);
- assertEquals(UserStatus.INACTIVE, saved.getStatus());
- }
+        @Test void shouldThrowOnDivisionByZero() {
+            assertThrows(ArithmeticException.class,
+                () -> calculator.divide(5, 0));
+        }
+    }
 }
 ```
 
-### 4. `Test Categories` и `Grouping`
+В IDE это даёт иерархическое отображение тестов — улучшает навигацию и читаемость.
+
+## Q24. Что такое `test fixtures` и `test data builders`?
+
+### `Test fixture` — подготовка состояния
+
+`@BeforeEach` настраивает общее состояние для всех тестов в классе:
 
 ```java
-// Тестовые категории
-public interface UnitTest {
+class OrderServiceTest {
+    private OrderService service;
+    private User testUser;
+
+    @BeforeEach
+    void setUp() {
+        service = new OrderService(mock(OrderRepository.class));
+        testUser = new User("test@mail.com", UserType.REGULAR);
+    }
+}
+```
+
+### `Test Data Builder` — паттерн для создания объектов
+
+```java
+public class TestUserBuilder {
+    private String email = "default@example.com";
+    private String name = "John Doe";
+    private UserStatus status = UserStatus.ACTIVE;
+
+    public TestUserBuilder email(String email) { this.email = email; return this; }
+    public TestUserBuilder name(String name) { this.name = name; return this; }
+    public TestUserBuilder inactive() { this.status = UserStatus.INACTIVE; return this; }
+
+    public User build() {
+        User user = new User(email, name);
+        user.setStatus(status);
+        return user;
+    }
+
+    public static TestUserBuilder aUser() { return new TestUserBuilder(); }
 }
 
-public interface IntegrationTest {
+// Использование
+@Test
+void shouldDeactivateUser() {
+    User user = aUser().email("john@mail.com").build();
+    service.deactivate(user);
+    assertThat(user.getStatus()).isEqualTo(UserStatus.INACTIVE);
+}
+```
+
+Альтернативы: библиотеки `Instancio`, `EasyRandom` для автоматической генерации тестовых данных.
+
+## Q25. Какие существуют конвенции именования тестов?
+
+| Стиль | Пример | Когда использовать |
+|-------|--------|-------------------|
+| `should...` | `shouldReturnEmptyList()` | Наиболее распространённый |
+| `Method_Condition_Result` | `findById_NonExistent_ReturnsEmpty()` | Чёткая привязка к методу |
+| `given_when_then` | `givenInactiveUser_whenLogin_thenThrows()` | BDD-стиль |
+| `@DisplayName` | `@DisplayName("Должен вернуть пустой список")` | Русскоязычные описания |
+
+```java
+class UserServiceTest {
+    // Стиль should
+    @Test void shouldCreateUserWithValidData() { }
+    @Test void shouldThrowWhenEmailIsDuplicate() { }
+
+    // Стиль Method_Condition_Result
+    @Test void createUser_DuplicateEmail_ThrowsException() { }
+    @Test void findById_ExistingId_ReturnsUser() { }
+
+    // Стиль с @DisplayName
+    @Test
+    @DisplayName("Должен отклонить пользователя с невалидным email")
+    void rejectInvalidEmail() { }
+}
+```
+
+Главное — **единообразие** в пределах проекта. Имя теста должно описывать **поведение**, а не реализацию.
+
+## Q26. Как тестировать приватные методы?
+
+**Ответ**: обычно не нужно. Приватные методы тестируются **косвенно** через публичный API. Если приватный метод сложен — это сигнал к рефакторингу.
+
+### Рекомендуемые подходы (по приоритету)
+
+**1. Тестирование через публичные методы** (предпочтительно):
+
+```java
+@Test
+void shouldCalculateTotalIncludingTax() {
+    // Приватный calculateTax() тестируется косвенно
+    BigDecimal total = calculator.calculateTotal(new BigDecimal("100"));
+    assertEquals(new BigDecimal("120.00"), total); // 100 + 20% tax
+}
+```
+
+**2. Выделение в отдельный класс** (если логика сложная):
+
+```java
+// Приватную логику вынести в TaxCalculator с публичным API
+public class TaxCalculator {
+    public BigDecimal calculate(BigDecimal amount) {
+        return amount.multiply(new BigDecimal("0.20"));
+    }
+}
+```
+
+**3. Package-private видимость** (компромисс):
+
+```java
+class Calculator {
+    // Изменено с private на package-private для тестирования
+    BigDecimal calculateTax(BigDecimal amount) { /* ... */ }
+}
+```
+
+**4. Reflection** — крайний случай для legacy-кода, **не рекомендуется**.
+
+## Q27. Как тестировать асинхронный код (`CompletableFuture`)?
+
+### `CompletableFuture.join()` / `get()`
+
+```java
+@Test
+void shouldProcessAsyncResult() {
+    CompletableFuture<String> future = service.processAsync("data");
+
+    String result = future.join(); // Блокирует до завершения
+    assertThat(result).isEqualTo("processed: data");
 }
 
-public interface SlowTest {
+@Test
+void shouldHandleAsyncTimeout() {
+    CompletableFuture<String> future = service.slowOperation();
+
+    assertThrows(TimeoutException.class,
+        () -> future.get(100, TimeUnit.MILLISECONDS));
+}
+```
+
+### `Awaitility` — ожидание условия
+
+```java
+@Test
+void shouldUpdateStatusEventually() {
+    service.startAsyncProcess(orderId);
+
+    await()
+        .atMost(5, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .until(() -> orderRepository.findById(orderId).getStatus(),
+               equalTo(OrderStatus.COMPLETED));
+}
+```
+
+**Важно**: никогда не использовать `Thread.sleep()` в тестах — это flaky и медленно. Подробнее о тестировании асинхронного кода — в [Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
+
+## Q28. Как тестировать код с зависимостью от времени (`Clock`)?
+
+Инъекция `java.time.Clock` — стандартный подход для тестируемого кода, зависящего от текущего времени:
+
+```java
+// Production код
+public class SubscriptionService {
+    private final Clock clock;
+
+    public SubscriptionService(Clock clock) {
+        this.clock = clock;
+    }
+
+    public boolean isExpired(Subscription sub) {
+        return sub.getExpiresAt().isBefore(LocalDateTime.now(clock));
+    }
 }
 
-// Применение категорий
-@Tag("unit")
-public class CalculatorTest {
+// Тест
+@Test
+void shouldDetectExpiredSubscription() {
+    Clock fixedClock = Clock.fixed(
+        Instant.parse("2026-04-12T10:00:00Z"),
+        ZoneId.of("UTC")
+    );
+    var service = new SubscriptionService(fixedClock);
 
- @Test
- void shouldAddNumbers() {
- // Быстрый unit тест
- }
+    Subscription sub = new Subscription(
+        LocalDateTime.of(2026, 4, 11, 10, 0)); // Вчера
+
+    assertThat(service.isExpired(sub)).isTrue();
+}
+```
+
+**Правило**: никогда не вызывать `LocalDateTime.now()` или `Instant.now()` напрямую — всегда через `Clock`. В `Spring` — `Clock` как `@Bean`.
+
+## Q29. Как тестировать `Stream API` и `Optional`?
+
+### `Stream` — собрать и проверить
+
+```java
+@Test
+void shouldFilterActiveUsers() {
+    List<User> users = List.of(
+        aUser().name("Alice").build(),
+        aUser().name("Bob").inactive().build(),
+        aUser().name("Charlie").build()
+    );
+
+    List<String> activeNames = users.stream()
+        .filter(User::isActive)
+        .map(User::getName)
+        .collect(toList());
+
+    assertThat(activeNames)
+        .hasSize(2)
+        .containsExactly("Alice", "Charlie");
+}
+```
+
+### `Optional` — `AssertJ` API
+
+```java
+@Test
+void shouldHandleOptional() {
+    Optional<User> found = service.findByEmail("john@mail.com");
+    assertThat(found)
+        .isPresent()
+        .get()
+        .extracting(User::getName)
+        .isEqualTo("John");
+
+    Optional<User> notFound = service.findByEmail("unknown@mail.com");
+    assertThat(notFound).isEmpty();
+}
+```
+
+## Q30. Как тестировать многопоточный код?
+
+Тестирование многопоточного кода сложно из-за недетерминизма. Рекомендуемые подходы:
+
+### 1. Выделить логику из многопоточного контекста
+
+```java
+// Вместо тестирования потоков — тестируем чистую логику
+@Test
+void shouldProcessItemCorrectly() {
+    // Тестируем processItem(), а не запуск в ExecutorService
+    Result result = processor.processItem(item);
+    assertThat(result.isSuccess()).isTrue();
+}
+```
+
+### 2. `CountDownLatch` для синхронизации
+
+```java
+@Test
+void shouldHandleConcurrentAccess() throws InterruptedException {
+    int threadCount = 10;
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch doneLatch = new CountDownLatch(threadCount);
+    AtomicInteger counter = new AtomicInteger(0);
+
+    for (int i = 0; i < threadCount; i++) {
+        new Thread(() -> {
+            try {
+                startLatch.await(); // Все стартуют одновременно
+                counter.incrementAndGet();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                doneLatch.countDown();
+            }
+        }).start();
+    }
+
+    startLatch.countDown(); // Старт
+    doneLatch.await(5, TimeUnit.SECONDS); // Ждём завершения
+    assertEquals(threadCount, counter.get());
+}
+```
+
+### 3. `Awaitility` для асинхронных проверок
+
+```java
+@Test
+void shouldEventuallyComplete() {
+    service.startBackgroundTask();
+
+    await().atMost(Duration.ofSeconds(5))
+           .until(service::isTaskComplete);
+}
+```
+
+Подробнее о многопоточности — в [Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
+
+## Q31. Что такое `@TempDir` и зачем он нужен?
+
+`@TempDir` (`JUnit 5`) — автоматическое создание временной директории, которая удаляется после теста:
+
+```java
+@Test
+void shouldWriteAndReadFile(@TempDir Path tempDir) throws IOException {
+    Path file = tempDir.resolve("test-output.txt");
+    Files.writeString(file, "Hello, World!");
+
+    String content = Files.readString(file);
+    assertThat(content).isEqualTo("Hello, World!");
+    // tempDir и все файлы в ней удалятся автоматически
 }
 
-@Tag("integration")
-public class UserRepositoryTest {
+// Как поле — общая директория для всех тестов класса
+@TempDir
+static Path sharedTempDir;
 
- @Test
- void shouldSaveUserToDatabase() {
- // Интеграционный тест с БД
- }
+@Test
+void shouldCreateLogFile() throws IOException {
+    Path logFile = sharedTempDir.resolve("app.log");
+    logger.writeToFile(logFile, "Entry 1");
+    assertThat(Files.exists(logFile)).isTrue();
+}
+```
+
+Используется для тестирования файловых операций (export, import, сериализация) без ручной очистки.
+
+## Q32. Как тестировать логирование?
+
+### Подход 1: `ListAppender` (Logback)
+
+```java
+@Test
+void shouldLogWarningOnRetry() {
+    Logger logger = (Logger) LoggerFactory.getLogger(RetryService.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+
+    retryService.callWithRetry();
+
+    assertThat(appender.list)
+        .extracting(ILoggingEvent::getMessage, ILoggingEvent::getLevel)
+        .contains(tuple("Retry attempt {}", Level.WARN));
+
+    logger.detachAppender(appender);
+}
+```
+
+### Подход 2: Не тестировать
+
+Логирование — побочный эффект, а не бизнес-логика. Тестировать стоит только **критичные** логи (аудит, security events). Для остального — достаточно ручной проверки при разработке.
+
+## Q33. Как тестировать `equals`/`hashCode`/`toString`?
+
+### `EqualsVerifier` — автоматическая проверка контракта
+
+```java
+@Test
+void shouldSatisfyEqualsContract() {
+    EqualsVerifier.forClass(Money.class)
+        .withOnlyTheseFields("amount", "currency") // Исключить id и т.д.
+        .verify();
+    // Проверяет: рефлексивность, симметричность, транзитивность,
+    // null-обработку, consistency, hashCode consistency
+}
+```
+
+### Ручная проверка `toString`
+
+```java
+@Test
+void shouldContainKeyFieldsInToString() {
+    User user = new User("john@mail.com", "John");
+    String str = user.toString();
+
+    assertThat(str)
+        .contains("john@mail.com")
+        .contains("John")
+        .doesNotContain("password"); // Чувствительные данные не должны попасть в toString
+}
+```
+
+## Q34. (!) Как измерить покрытие кода (`JaCoCo`)?
+
+`JaCoCo` (Java Code Coverage) — инструмент для измерения покрытия кода тестами. Интеграция с `Gradle`:
+
+```groovy
+plugins {
+    id 'jacoco'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        html.required = true
+        xml.required = true  // Для SonarQube
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                minimum = 0.80 // 80% покрытие строк
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.70 // 70% покрытие ветвей
+            }
+        }
+    }
+}
+```
+
+### Типы покрытия
+
+| Метрика | Описание |
+|---------|----------|
+| Line coverage | Процент выполненных строк |
+| Branch coverage | Процент пройденных ветвей (if/else/switch) |
+| Method coverage | Процент вызванных методов |
+| Class coverage | Процент классов с хотя бы одним тестом |
+
+### Правильное отношение к покрытию
+
+- **Не гнаться за 100%** — это приводит к бессмысленным тестам геттеров/сеттеров
+- **Фокус на критичной логике** — бизнес-правила, валидация, расчёты
+- **Покрытие ≠ качество** — 100% покрытия без осмысленных `assertions` бесполезно
+- Рекомендуемый минимум: 70-80% line, 60-70% branch
+
+Для анализа покрытия в CI/CD часто используют [SonarQube интеграцию](../code-quality/code-review-interview.md).
+
+## Q35. Что такое `mutation testing`?
+
+`Mutation testing` — метод оценки **качества** тестов: в production-код вносятся мелкие изменения (мутации), и проверяется, ловят ли их тесты.
+
+### Инструмент: `PIT` (Pitest)
+
+```groovy
+plugins {
+    id 'info.solidsoft.pitest' version '1.15.0'
+}
+
+pitest {
+    targetClasses = ['com.example.service.*']
+    targetTests = ['com.example.service.*Test']
+    mutators = ['DEFAULTS']
+    outputFormats = ['HTML']
+}
+```
+
+### Типы мутаций
+
+| Мутация | Пример | Описание |
+|---------|--------|----------|
+| Conditionals | `>` → `>=` | Изменение условий |
+| Math | `+` → `-` | Изменение операторов |
+| Return values | `return true` → `return false` | Изменение возвращаемых значений |
+| Void method calls | Удаление вызова | Удаление побочных эффектов |
+
+Если мутант **выживает** — тест не достаточно хорош. Mutation score 80%+ считается хорошим показателем.
+
+## Q36. Что такое `@Tag` и как фильтровать тесты?
+
+`@Tag` помечает тесты для фильтрации при запуске:
+
+```java
+@Tag("fast")
+class CalculatorTest {
+    @Test void shouldAdd() { /* ... */ }
 }
 
 @Tag("slow")
-public class PerformanceTest {
-
- @Test
- void shouldHandleHighLoad() {
- // Медленный тест производительности
- }
+@Tag("integration")
+class DatabaseTest {
+    @Test void shouldSaveToDb() { /* ... */ }
 }
 ```
 
-### 5. `Test Execution` и `Reporting`
+### Фильтрация в `Gradle`
 
-```xml
-<!-- pom.xml - настройка тестов -->
-<plugin>
- <groupId>org.apache.maven.plugins</groupId>
- <artifactId>maven-surefire-plugin</artifactId>
- <version>3.0.0</version>
- <configuration>
- <!-- Запуск только unit тестов -->
- <groups>unit</groups>
- <excludedGroups>slow</excludedGroups>
+```groovy
+test {
+    useJUnitPlatform {
+        includeTags 'fast'          // Только быстрые
+        excludeTags 'slow'          // Без медленных
+    }
+}
 
- <!-- Отчеты -->
- <reportFormat>html</reportFormat>
- <useFile>true</useFile>
-
- <!-- Параллельное выполнение -->
- <parallel>classes</parallel>
- <threadCount>4</threadCount>
-
- <!-- Таймауты -->
- <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
- </configuration>
-</plugin>
+// Отдельная задача для интеграционных
+task integrationTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+}
 ```
 
-### 6. `Test Naming Conventions`
+Стратегия для CI/CD: быстрые тесты на каждый коммит, медленные — по расписанию или на merge request. Подробнее — в [Test Automation](test-automation-interview.md).
+
+## Q37. Что такое `@RepeatedTest` и `@Timeout`?
+
+### `@RepeatedTest` — многократный запуск
 
 ```java
-public class UserServiceTest {
-
- // MethodName_Condition_ExpectedResult
- @Test
- void createUser_ValidData_ReturnsCreatedUser() {
- // Тест создания пользователя с валидными данными
- }
-
- @Test
- void createUser_DuplicateEmail_ThrowsException() {
- // Тест создания пользователя с дублирующим email
- }
-
- @Test
- void getUserById_ExistingId_ReturnsUser() {
- // Тест получения существующего пользователя
- }
-
- @Test
- void getUserById_NonExistingId_ReturnsNull() {
- // Тест получения несуществующего пользователя
- }
-
- // Given_When_Then (BDD style)
- @Test
- void givenValidUser_whenCreating_thenReturnsCreatedUser() {
- // BDD naming
- }
-
- @Test
- void whenUserIsInactive_thenCannotLogin() {
- // When_Then naming
- }
+@RepeatedTest(value = 10, name = "Итерация {currentRepetition} из {totalRepetitions}")
+void shouldBeStable(RepetitionInfo info) {
+    Result result = service.processWithRandomSeed();
+    assertThat(result).isNotNull();
+    // Помогает выявить flaky тесты и race conditions
 }
 ```
 
-### 7. `Test Configuration Management`
+### `@Timeout` — ограничение времени выполнения
 
 ```java
-// Конфигурация для разных сред тестирования
-@Configuration
-@Profile("test")
-public class TestConfiguration {
-
- @Bean
- @Primary
- public DataSource dataSource() {
- // In-memory H2 база для unit тестов
- return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).addScript("schema.sql").addScript("test-data.sql").build();
- }
-
- @Bean
- public EmailService emailService() {
- // Mock email service для тестов
- return mock(EmailService.class);
- }
+@Test
+@Timeout(value = 500, unit = TimeUnit.MILLISECONDS)
+void shouldRespondQuickly() {
+    String result = service.fastLookup("key");
+    assertThat(result).isNotNull();
 }
 
-@Configuration
-@Profile("integration-test")
-public class IntegrationTestConfiguration {
-
- @Bean
- @Primary
- public DataSource dataSource() {
- // Реальная тестовая база данных
- return DataSourceBuilder.create().url("jdbc:postgresql://localhost:5432/testdb").username("test").password("test").build();
- }
+@Timeout(5) // 5 секунд — на весь класс
+class PerformanceSensitiveTest {
+    @Test void operation1() { /* ... */ }
+    @Test void operation2() { /* ... */ }
 }
 ```
 
-### 8. `Test Lifecycle Hooks`
+## Q38. Как писать `JUnit 5 Extensions`?
+
+`Extensions` — механизм расширения JUnit 5, заменяющий `@Rule` и `@RunWith` из JUnit 4. Используют lifecycle callbacks:
 
 ```java
-@ExtendWith(TestExecutionListener.class)
-public class LifecycleTest {
+// Extension для измерения времени тестов
+public class TimingExtension implements BeforeTestExecutionCallback,
+                                        AfterTestExecutionCallback {
 
- @BeforeAll
- static void beforeAllTests() {
- // Настройка перед всеми тестами класса
- System.setProperty("test.mode", "true");
- }
+    private static final Logger log = LoggerFactory.getLogger(TimingExtension.class);
 
- @BeforeEach
- void beforeEachTest(TestInfo testInfo) {
- // Настройка перед каждым тестом
- System.out.println("Running test: " + testInfo.getDisplayName());
- }
+    @Override
+    public void beforeTestExecution(ExtensionContext context) {
+        getStore(context).put("start", System.currentTimeMillis());
+    }
 
- @AfterEach
- void afterEachTest(TestInfo testInfo, TestReporter testReporter) {
- // Очистка после каждого теста
- testReporter.publishEntry("test.completed", testInfo.getDisplayName());
- }
+    @Override
+    public void afterTestExecution(ExtensionContext context) {
+        long start = getStore(context).get("start", long.class);
+        long duration = System.currentTimeMillis() - start;
+        log.info("{} took {} ms", context.getDisplayName(), duration);
+    }
 
- @AfterAll
- static void afterAllTests() {
- // Очистка после всех тестов класса
- System.clearProperty("test.mode");
- }
+    private ExtensionContext.Store getStore(ExtensionContext context) {
+        return context.getStore(ExtensionContext.Namespace.create(
+            getClass(), context.getRequiredTestMethod()));
+    }
+}
+
+// Использование
+@ExtendWith(TimingExtension.class)
+class MyServiceTest {
+    @Test void shouldBefast() { /* ... */ }
 }
 ```
 
-## Q11. Что такое `AssertJ` и чем он лучше стандартных assertions?
+### Типы Extension callbacks
 
-`AssertJ` — fluent assertions библиотека с читаемым синтаксисом: `assertThat`(list).`hasSize`(3).contains("a", "b"). Лучше стандартных `assertEquals`: цепочка проверок, лучшие сообщения об ошибках, поддержка коллекций и `Optional`. Для `Java` 8+ — `assertThat`(optional).`isPresent()`.contains(value). Интеграция с `JUnit 5`.
+| Callback | Когда вызывается |
+|----------|-----------------|
+| `BeforeAllCallback` | Перед всеми тестами |
+| `BeforeEachCallback` | Перед каждым тестом |
+| `BeforeTestExecutionCallback` | Непосредственно перед `@Test` |
+| `AfterTestExecutionCallback` | Сразу после `@Test` |
+| `AfterEachCallback` | После каждого теста |
+| `AfterAllCallback` | После всех тестов |
+| `ParameterResolver` | Инъекция параметров в тест |
+| `TestWatcher` | Наблюдение за результатами |
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+## Q39. Как тестировать конструкторы и билдеры?
 
-## Q12. Как тестировать статические методы?
+### Конструктор — проверка полей и валидации
 
-Статические методы сложно мокировать; варианты: (1) Не мокировать (если метод простой и детерминированный); (2) `Mockito.mockStatic()` (`JUnit 5`, с `try-with-resources`); (3) Рефакторинг: вынести статический метод в инстанс-класс и мокировать его. Предпочтительнее избегать статических методов с зависимостями.
+```java
+@Test
+void shouldCreateUserWithAllFields() {
+    User user = new User("john@mail.com", "John", 25);
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    assertThat(user.getEmail()).isEqualTo("john@mail.com");
+    assertThat(user.getName()).isEqualTo("John");
+    assertThat(user.getAge()).isEqualTo(25);
+}
 
-## Q13. Что такое `test doubles` (`mock`, `stub`, `spy`, `fake`)?
+@Test
+void shouldRejectNullEmail() {
+    assertThatThrownBy(() -> new User(null, "John", 25))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("email");
+}
+```
 
-`Mock` — объект с запрограммированным поведением и проверкой вызовов (`Mockito`). `Stub` — объект с фиксированными ответами без проверки. Spy — обёртка реального объекта с частичным мокированием. `Fake` — упрощённая реализация (например, `in-memory` БД вместо реальной). Выбор: `mock` для проверки взаимодействий; `stub` для возврата данных; `fake` для сложной логики.
+### Builder — проверка дефолтов и цепочки
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+```java
+@Test
+void shouldApplyDefaultValues() {
+    User user = User.builder().email("john@mail.com").build();
 
-## Q14. Как тестировать асинхронный код (`CompletableFuture`)?
+    assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE); // default
+    assertThat(user.getCreatedAt()).isNotNull();
+}
 
-`CompletableFuture.get()` — блокирующее ожидание результата в тесте. join() — то же без checked exception. `Awaitility` — библиотека для ожидания условий: await().atMost(5, SECONDS).until(() -> condition). Для реактивных потоков (`Mono`/`Flux`) — `StepVerifier`. Не использовать `Thread.sleep` без timeout.
+@Test
+void shouldOverrideDefaults() {
+    User user = User.builder()
+        .email("john@mail.com")
+        .status(UserStatus.INACTIVE)
+        .build();
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    assertThat(user.getStatus()).isEqualTo(UserStatus.INACTIVE);
+}
+```
 
-## Q15. Что такое `@TempDir` и зачем он нужен?
+Не стоит тестировать тривиальные геттеры/сеттеры — фокус на **логике** в конструкторе и валидации.
 
-`@TempDir` (`JUnit 5`) — автоматическое создание временной директории для теста; удаляется после теста. `@TempDir Path tempDir` — параметр метода или поле. Используется для тестов с файловыми операциями без ручной очистки.
+## Q40. (!) `Best practices` для unit-тестов?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+### Золотые правила
 
-## Q16. Как тестировать логирование?
+1. **Один тест — одно поведение**. Не проверять несколько сценариев в одном тесте
+2. **Тесты независимы**. Порядок выполнения не важен
+3. **Быстрые**. Unit-тест выполняется за миллисекунды
+4. **Читаемые**. `Given-When-Then` или `AAA`; ясные имена
+5. **Не тестировать чужой код**. Фреймворки и библиотеки уже протестированы
+6. **Мокировать зависимости**. Не поднимать Spring context для unit-теста
+7. **Не дублировать production-логику в тестах**. Тест проверяет результат, а не переписывает алгоритм
+8. **Рефакторить тесты** как production-код — убирать дублирование, выделять хелперы
 
-Варианты: (1) Не тестировать (логирование — не бизнес-логика); (2) Мокировать `Logger` (`Mockito`) и проверять вызовы; (3) `Logback` test appender (`ListAppender`) для захвата сообщений. Проверять только критичное логирование (ошибки, аудит); не проверять каждый `log.debug`.
+### Антипаттерны
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+| Антипаттерн | Описание | Решение |
+|-------------|----------|---------|
+| **Flaky test** | Тест иногда падает случайно | Убрать зависимость от времени, порядка, внешних систем |
+| **Slow test** | Тест выполняется секунды | Мокировать I/O, убрать `Thread.sleep` |
+| **Brittle test** | Тест ломается при рефакторинге | Тестировать поведение, не реализацию |
+| **Giant test** | 100+ строк в одном тесте | Разбить по сценариям |
+| **Logic in test** | `if`/`for` в тесте | Тест должен быть линейным |
+| **Testing implementation** | `verify` каждого внутреннего вызова | Проверять результат, не как он получен |
 
-## Q17. Что такое `@RepeatedTest` и `@Timeout`?
+```java
+// ❌ Антипаттерн: тест привязан к реализации
+@Test
+void shouldProcessOrder() {
+    service.processOrder(order);
+    verify(repo).save(any());
+    verify(validator).validate(any());  // Ломается при рефакторинге
+    verify(logger).log(any());
+}
 
-`@RepeatedTest`(10) — запуск теста 10 раз; для проверки стабильности или случайных данных. `@Timeout`(5) — тест должен завершиться за 5 секунд; иначе падает. `@Timeout` на классе — для всех методов. Используется для предотвращения зависаний.
+// ✅ Хорошо: тест проверяет поведение
+@Test
+void shouldReturnProcessedOrderWithCorrectStatus() {
+    Order result = service.processOrder(order);
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    assertThat(result.getStatus()).isEqualTo(OrderStatus.PROCESSED);
+    assertThat(result.getProcessedAt()).isNotNull();
+}
+```
 
-## Q18. Как тестировать `Stream API` и `Optional`?
+## Q41. (!) Как работает `@ExtendWith` и когда писать собственный `Extension`?
 
-`Stream`: собрать в коллекцию и проверить: `assertThat`(`stream.collect`(`toList()`)).`containsExactly`(...). `Optional`: `assertThat`(optional).`isPresent()`.contains(value) (`AssertJ`) или `assertTrue`(optional.`isPresent()`); `assertEquals`(value, `optional.get`()). Не вызывать get() без проверки `isPresent()` в тестах.
+`@ExtendWith` — механизм расширения JUnit 5, который позволяет подключать реализации `Extension` API для изменения поведения тестов: управления жизненным циклом, инъекции параметров, условного выполнения и т.д.
 
-Практический акцент в таких вопросах — показать не только синтаксис, но и эксплуатационные последствия: читаемость, совместимость и профиль производительности. На интервью это обычно усиливают примером типичной ошибки и способом её предотвращения в код-ревью или тестах.
+### Встроенные расширения
 
-## Q19. Что такое test fixtures и test data builders?
+```java
+// Подключение Mockito через @ExtendWith
+@ExtendWith(MockitoExtension.class)
+class OrderServiceTest {
+    @Mock
+    OrderRepository repository;
 
-`Test fixture` — подготовка данных и состояния для теста (`@BeforeEach`). `Test data builder` — паттерн для создания тестовых объектов: `UserBuilder().withName("John").withEmail("j@example.com").build()`. Упрощает создание сложных объектов; читаемость; переиспользование. Альтернатива — фабричные методы или библиотеки (`Instancio`, `EasyRandom`).
+    @InjectMocks
+    OrderService service;
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    @Test
+    void shouldSaveOrder() { ... }
+}
 
-## Q20. Как измерить покрытие кода (`JaCoCo`)?
+// Подключение Spring через @ExtendWith
+@ExtendWith(SpringExtension.class)
+// или короче:
+@SpringBootTest
+class IntegrationTest { ... }
 
-`JaCoCo` — плагин для `Maven`/`Gradle`; генерирует отчёт покрытия (строки, ветки, методы). Интеграция: `jacoco-maven-plugin`; после mvn test отчёт в target/site/jacoco. Не гнаться за 100%; фокус на критичной логике. Покрытие — не гарантия качества тестов; проверять осмысленность assertions.
+// Несколько расширений одновременно
+@ExtendWith({MockitoExtension.class, TimingExtension.class})
+class MultiExtensionTest { ... }
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+### Создание собственного Extension
 
-## Q21. Как тестировать `equals`/`hashCode`/`toString`?
+`Extension` — это интерфейс-маркер; нужно реализовать один из callback-интерфейсов:
 
-`EqualsVerifier`/`hashCode`: `EqualsVerifier.forClass(MyClass.class)`.verify(). Проверяет рефлексивность, симметричность, транзитивность, консистентность, `null`. Для `toString` — проверить, что не бросает исключение и содержит ключевые поля. Не обязательно тестировать для простых `POJO`; для сложных — да.
+```java
+// Расширение для логирования времени выполнения теста
+public class TimingExtension implements BeforeTestExecutionCallback,
+                                        AfterTestExecutionCallback {
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    private static final String START_TIME_KEY = "start_time";
 
-## Q22. Что такое `@Nested` и зачем группировать тесты?
+    @Override
+    public void beforeTestExecution(ExtensionContext context) {
+        context.getStore(GLOBAL).put(START_TIME_KEY, System.currentTimeMillis());
+    }
 
-`@Nested` — вложенный тестовый класс в `JUnit 5`; группировка связанных тестов. Каждый `@Nested` класс может иметь свои `@BeforeEach`/`@AfterEach`. Удобно для группировки по сценариям (например, «валидные входные данные», «невалидные данные»). Улучшает читаемость и организацию.
+    @Override
+    public void afterTestExecution(ExtensionContext context) {
+        long startTime = context.getStore(GLOBAL).remove(START_TIME_KEY, long.class);
+        long duration = System.currentTimeMillis() - startTime;
+        String testMethod = context.getRequiredTestMethod().getName();
+        System.out.printf("[TIMING] %s took %d ms%n", testMethod, duration);
+    }
+}
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+// Расширение с инъекцией параметров
+public class DatabaseExtension implements ParameterResolver {
+    @Override
+    public boolean supportsParameter(ParameterContext param, ExtensionContext ctx) {
+        return param.getParameter().getType().equals(DataSource.class);
+    }
 
-## Q23. Как тестировать конструкторы и билдеры?
+    @Override
+    public Object resolveParameter(ParameterContext param, ExtensionContext ctx) {
+        return createTestDataSource(); // создаём тестовую БД
+    }
+}
 
-Конструктор: создать объект и проверить поля; для валидации — проверить исключение при невалидных данных. Билдер: проверить, что build() создаёт корректный объект; что default значения применяются; что валидация работает. Не тестировать тривиальные геттеры/сеттеры; фокус на логике.
+// Программная регистрация через @RegisterExtension
+class MyTest {
+    @RegisterExtension
+    static TimingExtension timing = new TimingExtension();
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+    @Test
+    void shouldRunFast() { ... }
+}
+```
 
-## Q24. Что такое `@DynamicTest` и когда использовать?
+### Ключевые callback-интерфейсы
 
-`@TestFactory` метод возвращает `Stream`&lt;`DynamicTest`&gt; или коллекцию; каждый `DynamicTest` — тест, сгенерированный в runtime. Используется для `data-driven` тестов с динамическими данными (например, из файла или БД). `DynamicTest.dynamicTest("name", () -> { assertions })`.
+| Интерфейс | Назначение |
+|-----------|-----------|
+| `BeforeAllCallback` / `AfterAllCallback` | До/после всех тестов класса |
+| `BeforeEachCallback` / `AfterEachCallback` | До/после каждого теста |
+| `BeforeTestExecutionCallback` | Сразу перед вызовом метода теста |
+| `ParameterResolver` | Инъекция параметров в методы теста |
+| `TestInstancePostProcessor` | Постобработка экземпляра тестового класса |
+| `ExecutionCondition` | Условное выполнение (`@DisabledOnOs`) |
+| `TestWatcher` | Реакция на результат теста (pass/fail/abort) |
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+Использовать собственный `Extension` стоит, когда одна логика (подготовка данных, очистка ресурсов, логирование) нужна в нескольких тестовых классах.
 
-## Q25. Как тестировать код с зависимостью от времени (`Clock`)?
+## Q42. (!) Что такое `Mockito.STRICT_STUBS` и зачем включать строгий режим?
 
-Инъекция `Clock` в код: `Clock.systemUTC()` в production, `Clock.fixed()` в тестах. В `Spring`: `Clock Bean`; в тестах подменить через `@MockBean` или `@TestConfiguration`. Избегать `LocalDateTime.now()` напрямую; использовать `LocalDateTime.now(clock)`. Альтернатива — библиотеки (например, `time-machine` для подмены времени).
+`STRICT_STUBS` — режим Mockito, который делает несколько полезных вещей:
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+1. Выбрасывает `UnnecessaryStubbingException` для стабов, которые не были вызваны в тесте
+2. Выбрасывает `StubbingArgumentMismatchException`, если стаб настроен с одними аргументами, а реально вызван с другими
+3. Автоматически верифицирует все стабы (implicit verification)
 
-## Q26. Что такое `@Tag` и как фильтровать тесты?
+```java
+// ✅ Включение через @ExtendWith (рекомендуется)
+@ExtendWith(MockitoExtension.class)                    // STRICT_STUBS по умолчанию
+class OrderServiceTest {
+    @Mock OrderRepository repository;
+    @InjectMocks OrderService service;
 
-`@Tag`("slow") — метка теста или класса; запуск по тегу: mvn test -`Dgroups`=slow или в `IDE`. Используется для разделения быстрых и медленных тестов, интеграционных и `unit`. В `CI`: быстрые тесты на каждый коммит; медленные — по расписанию. Несколько тегов: `@Tag`("integration") `@Tag`("database").
+    @Test
+    void shouldFindOrder() {
+        when(repository.findById(1L)).thenReturn(Optional.of(new Order()));
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+        service.getOrder(1L);  // ✅ стаб используется
 
-## Q27. Как тестировать рефлексию и аннотации?
+        // STRICT_STUBS автоматически проверит, что стаб был вызван
+    }
 
-Создать объект с аннотацией; прочитать через `getAnnotation()`; проверить значения полей аннотации. Для рефлексии: вызвать метод через `Method.invoke()`; проверить результат. Тестировать логику, использующую рефлексию (например, маппинг); не тестировать саму рефлексию `JVM`.
+    @Test
+    void shouldFailWithUnnecessaryStubbing() {
+        // ❌ Этот стаб никогда не вызывается — STRICT_STUBS выбросит исключение
+        when(repository.findById(99L)).thenReturn(Optional.empty());
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+        service.getOrder(1L);  // вызывает findById(1L), а не (99L)!
+    }
+}
 
-## Q28. Что такое `AssertJ soft assertions`?
+// Явное включение строгого режима
+Mockito.mockitoSession()
+    .initMocks(this)
+    .strictness(Strictness.STRICT_STUBS)
+    .startMocking();
 
-`SoftAssertions` — накопление ошибок; все проверки выполняются, затем все ошибки выводятся разом. `SoftAssertions` softly = new `SoftAssertions()`; softly.`assertThat`(x).`isEqualTo`(1); softly.`assertThat`(y).`isEqualTo`(2); softly.`assertAll()`;. Полезно для проверки нескольких полей объекта; видно все несоответствия, а не только первое.
+// Уровни строгости
+// LENIENT         — без проверок (legacy поведение)
+// WARN            — предупреждения в консоль
+// STRICT_STUBS    — исключения (рекомендуется)
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+`STRICT_STUBS` помогает находить:
+- Избыточные стабы (copy-paste из других тестов)
+- Неправильные аргументы в стабах (тест проходит, но по неверной причине)
+- «Мёртвый» код настройки моков
 
-## Q29. Как тестировать многопоточный код?
+## Q43. Как использовать `@EnumSource` и `@ArgumentsSource` в параметризованных тестах?
 
-Сложно; предпочтительнее тестировать логику без многопоточности (выделить в методы). Для проверки race conditions: `ConcurrentUnit`, `Awaitility`, `CountDownLatch` для синхронизации потоков. Запускать тест многократно (flaky test detection). Для `ExecutorService` — использовать тестовый executor с контролируемым выполнением.
+### `@EnumSource` — параметры из enum
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+```java
+enum OrderStatus { PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED }
 
-## Q30. Best practices для unit-тестов?
+@ParameterizedTest
+@EnumSource(OrderStatus.class)                        // все значения enum
+void shouldHandleAllStatuses(OrderStatus status) {
+    assertThatNoException().isThrownBy(() ->
+        orderService.processStatusChange(status));
+}
 
-(1) Один тест — одна проверка (или связанная группа). (2) Тесты независимы (порядок не важен). (3) Быстрые (миллисекунды). (4) Читаемые (`Given-When-Then`, ясные имена). (5) Не тестировать чужой код (фреймворки, библиотеки). (6) Мокировать зависимости. (7) Не дублировать production-код в тестах. (8) Рефакторить тесты как и код.
+@ParameterizedTest
+@EnumSource(value = OrderStatus.class, names = {"PENDING", "PROCESSING"})
+void shouldAllowCancellation(OrderStatus status) {
+    assertThat(orderService.canCancel(status)).isTrue();
+}
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+@ParameterizedTest
+@EnumSource(
+    value = OrderStatus.class,
+    names = {"DELIVERED", "CANCELLED"},
+    mode = EnumSource.Mode.EXCLUDE          // исключаем указанные
+)
+void shouldAllowModification(OrderStatus status) {
+    assertThat(orderService.canModify(status)).isTrue();
+}
+```
+
+### `@ArgumentsSource` — кастомный провайдер аргументов
+
+```java
+// Реализация провайдера
+class ValidOrderArgumentsProvider implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(ExtensionContext ctx) {
+        return Stream.of(
+            Arguments.of(new Order(1L, "USD", BigDecimal.TEN), true),
+            Arguments.of(new Order(2L, "EUR", BigDecimal.ZERO), false),
+            Arguments.of(new Order(3L, "USD", BigDecimal.valueOf(-1)), false)
+        );
+    }
+}
+
+// Использование
+@ParameterizedTest
+@ArgumentsSource(ValidOrderArgumentsProvider.class)
+void shouldValidateOrder(Order order, boolean expectedValid) {
+    assertThat(orderValidator.isValid(order)).isEqualTo(expectedValid);
+}
+```
+
+### Сравнение источников параметров
+
+| Аннотация | Когда использовать |
+|-----------|-------------------|
+| `@ValueSource` | Примитивы: int, String, Class |
+| `@CsvSource` / `@CsvFileSource` | Табличные данные, несколько параметров |
+| `@MethodSource` | Сложные объекты из статического метода |
+| `@EnumSource` | Перебор значений enum |
+| `@ArgumentsSource` | Сложная логика генерации, переиспользование |
+| `@NullAndEmptySource` | Граничные случаи: null и пустая строка |
+
+## Q44. (!) Как выполнять рекурсивное сравнение объектов с `AssertJ`?
+
+Рекурсивное сравнение позволяет сравнивать объекты по значениям полей, без реализации `equals()`. Это особенно полезно для сложных графов объектов.
+
+```java
+// Базовое рекурсивное сравнение
+Order expected = new Order(1L, "Alice", List.of(
+    new OrderItem("Book", 2, BigDecimal.TEN)
+));
+Order actual = orderService.createOrder(createOrderRequest());
+
+assertThat(actual)
+    .usingRecursiveComparison()
+    .isEqualTo(expected);
+
+// Игнорирование отдельных полей (UUID, createdAt)
+assertThat(actual)
+    .usingRecursiveComparison()
+    .ignoringFields("id", "createdAt", "updatedAt")
+    .isEqualTo(expected);
+
+// Игнорирование по типу
+assertThat(actual)
+    .usingRecursiveComparison()
+    .ignoringFieldsOfTypes(UUID.class, LocalDateTime.class)
+    .isEqualTo(expected);
+
+// Сравнение коллекций с рекурсией (игнорируя порядок)
+List<Order> actualOrders = orderService.findAll();
+assertThat(actualOrders)
+    .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "createdAt")
+    .containsExactlyInAnyOrderElementsOf(expectedOrders);
+
+// Настройка сравнения чисел с допуском
+assertThat(actual)
+    .usingRecursiveComparison()
+    .withEqualsForType(
+        (a, b) -> a.subtract(b).abs().compareTo(BigDecimal.valueOf(0.01)) <= 0,
+        BigDecimal.class
+    )
+    .isEqualTo(expected);
+
+// Проверка только определённых полей
+assertThat(actual)
+    .usingRecursiveComparison()
+    .comparingOnlyFields("status", "totalAmount")
+    .isEqualTo(expected);
+```
+
+### Рекурсивное сравнение vs `equals()`
+
+| Ситуация | Рекомендация |
+|----------|-------------|
+| Простые value-объекты с `equals()` | Используйте `isEqualTo()` напрямую |
+| JPA-сущности (без `equals()`) | `usingRecursiveComparison().ignoringFields("id")` |
+| DTO с генерируемыми полями | `ignoringFields("createdAt", "uuid")` |
+| Глубокие графы объектов | `usingRecursiveComparison()` |
+
+## Q45. Как тестировать `Spring`-компоненты без поднятия контекста?
+
+Тестирование Spring-компонентов без контекста — ключевой навык для написания быстрых unit-тестов. Spring-компоненты — это обычные Java-классы; контекст нужен только для автовайринга и AOP.
+
+```java
+// ✅ Unit-тест Spring @Service — без контекста
+class UserServiceTest {
+
+    // Mockito создаёт мок без Spring
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private EmailService emailService;
+
+    @InjectMocks
+    private UserService userService;  // реальный экземпляр, не мок
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        // или использовать @ExtendWith(MockitoExtension.class)
+    }
+
+    @Test
+    void shouldSendWelcomeEmailOnRegistration() {
+        // Given
+        User user = new User("alice@example.com", "Alice");
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        // When
+        userService.register(user);
+
+        // Then
+        verify(emailService).sendWelcome(user.getEmail());
+    }
+}
+
+// ✅ Тестирование @Component с конфигурационными свойствами
+class OrderValidatorTest {
+
+    private OrderValidator validator;
+
+    @BeforeEach
+    void setUp() {
+        // Создаём вручную с нужной конфигурацией
+        OrderProperties props = new OrderProperties();
+        props.setMaxAmount(BigDecimal.valueOf(10_000));
+        props.setAllowedCurrencies(Set.of("USD", "EUR"));
+        validator = new OrderValidator(props);
+    }
+
+    @Test
+    void shouldRejectOrderExceedingLimit() {
+        Order order = new Order(BigDecimal.valueOf(15_000), "USD");
+        assertThat(validator.validate(order)).isFalse();
+    }
+}
+
+// ✅ Тестирование @EventListener без контекста
+class OrderEventHandlerTest {
+
+    @Mock
+    private NotificationService notificationService;
+
+    @InjectMocks
+    private OrderEventHandler handler;
+
+    @Test
+    void shouldNotifyOnOrderCreated() {
+        OrderCreatedEvent event = new OrderCreatedEvent(new Order(1L));
+        handler.onOrderCreated(event);  // вызываем напрямую
+        verify(notificationService).notify(anyString());
+    }
+}
+```
+
+### Когда нужен Spring-контекст в unit-тесте?
+
+Практически никогда. Spring-контекст (`@SpringBootTest`) — для **интеграционных** тестов. Если вы не можете написать unit-тест без `@SpringBootTest`, это сигнал нарушения принципов SOLID (тесная связность, нарушение DI).
+
+| Ситуация | Решение |
+|----------|---------|
+| Зависимость от Spring `@Autowired` | Передавать через конструктор (constructor injection) |
+| Зависимость от `@Value`-полей | Передавать через конструктор или сеттер |
+| Зависимость от AOP (транзакции, кеш) | Тест проверяет логику, а не AOP — убрать `@Transactional` из unit-теста |
+| Зависимость от Spring Events | Вызывать `@EventListener`-метод напрямую |
+
+На собеседовании часто спрашивают: «Как вы решаете, что тестировать?» Ответ: **бизнес-логику и edge cases**. Не тестировать конфигурацию, маппинг без логики и тривиальные делегирования.
+
+---
+
+## See also
+
+- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование с Testcontainers и Spring
+- [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов, приоритизация покрытия
+- [Test Automation](test-automation-interview.md) — автоматизация тестирования в CI/CD
+- [Testcontainers](testcontainers-interview.md) — Docker-контейнеры в интеграционных тестах вместо H2
+- [Design Patterns](../design-patterns/design-patterns-interview.md) — паттерны Builder, Factory в тестовых фикстурах
+- [Java Core](../programming-languages/java/java-core-interview.md) — основы Java, необходимые для написания качественных тестов
+- [Code Review](../code-quality/code-review-interview.md) — связь качества тестов и ревью
+- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — тестирование Spring-приложений (`@SpringBootTest`, `@MockBean`)
+- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — тестирование многопоточного кода

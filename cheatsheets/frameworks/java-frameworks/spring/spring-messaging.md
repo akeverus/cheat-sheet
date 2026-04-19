@@ -1,7 +1,14 @@
 ---
 title: "Spring Messaging: Полное руководство по messaging системам"
 description: "Комплексное руководство по Spring Messaging: JMS, RabbitMQ, ActiveMQ, messaging patterns, message converters и best practices"
-tags: ["spring", "messaging", "jms", "rabbitmq", "activemq", "amqp", "java"]
+tags:
+  - spring
+  - messaging
+  - jms
+  - rabbitmq
+  - activemq
+  - amqp
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-core.md"]
 next: ["spring/spring-kafka.md", "messaging/kafka.md"]

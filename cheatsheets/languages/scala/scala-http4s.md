@@ -1,7 +1,13 @@
 ---
 title: "Scala http4s"
 description: "Полное руководство по http4s в Scala: функциональный HTTP клиент и сервер, маршрутизация, middleware, интеграция с Cats Effect"
-tags: ["scala", "http4s", "http", "web-framework", "functional-programming", "cats-effect"]
+tags:
+  - scala
+  - http4s
+  - http
+  - web-framework
+  - functional-programming
+  - cats-effect
 difficulty: "advanced"
 prerequisites: ["scala/scala-fp-advanced.md", "scala/scala-cats.md"]
 next: []
@@ -12,8 +18,6 @@ related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play
 # **Scala http4s**
 
 Кратко: полное руководство по **http4s** в **Scala**: функциональный **HTTP** клиент и сервер, маршрутизация, **middleware**, интеграция с **Cats Effect**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

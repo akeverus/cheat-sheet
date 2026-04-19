@@ -1,7 +1,10 @@
 ---
 title: "Couchbase: Основы"
 description: "Комплексное руководство по использованию Couchbase — распределенной NoSQL базы данных."
-tags: ["databases", "nosql", "couchbase-basics"]
+tags:
+  - databases
+  - nosql
+  - couchbase-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Couchbase**: Основы
 
 **Комплексное руководство по использованию `Couchbase` — распределенной `NoSQL` базы данных.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

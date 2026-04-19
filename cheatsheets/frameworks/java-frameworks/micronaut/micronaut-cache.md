@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Caching - Cache Abstraction и Redis Cache"
 description: "Полное руководство по кэшированию в Micronaut: cache abstraction, Redis cache, EhCache, Caffeine и best practices"
-tags: ["micronaut", "cache", "redis", "ehcache", "caffeine", "java", "kotlin"]
+tags:
+  - micronaut
+  - cache
+  - redis
+  - ehcache
+  - caffeine
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-redis.md", "micronaut-data.md"]

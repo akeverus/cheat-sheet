@@ -1,7 +1,10 @@
 ---
 title: "JUnit Advanced для Java"
 description: "Продвинутые техники тестирования с JUnit 5: расширения (extensions), динамические и параметризованные тесты, жизненный цикл, параллельный запуск, интеграция с Spring Boot и Testcontainers."
-tags: ["testing", "unit-testing", "junit-advanced"]
+tags:
+  - testing
+  - unit-testing
+  - junit-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []

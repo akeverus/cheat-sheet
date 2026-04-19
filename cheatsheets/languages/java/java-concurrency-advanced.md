@@ -1,7 +1,10 @@
 ---
 title: "Java Concurrency: Advanced"
 description: "Материал по теме Java Concurrency: Advanced в разделе cheatsheets."
-tags: ["languages", "java", "java-concurrency-advanced"]
+tags:
+  - languages
+  - java
+  - java-concurrency-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Concurrency: Advanced
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

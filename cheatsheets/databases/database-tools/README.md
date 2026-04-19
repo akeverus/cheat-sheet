@@ -1,7 +1,9 @@
 ---
 title: "Инструменты БД"
 description: "Индекс материалов по инструментам для работы с базами данных: клиенты, миграции, мониторинг, backup/restore."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

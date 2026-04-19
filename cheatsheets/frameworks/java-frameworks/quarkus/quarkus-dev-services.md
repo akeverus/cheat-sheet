@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Dev Services - Автоматические сервисы для разработки"
 description: "Полное руководство по Dev Services в Quarkus: автоматический запуск баз данных, брокеров сообщений, Redis и других сервисов для разработки"
-tags: ["quarkus", "dev-services", "development", "docker", "containers", "java"]
+tags:
+  - quarkus
+  - dev-services
+  - development
+  - docker
+  - containers
+  - java
 difficulty: "beginner"
 prerequisites: ["quarkus/quarkus-basics.md"]
 next: ["quarkus-basics.md", "quarkus-testing.md"]

@@ -1,7 +1,10 @@
 ---
 title: "Resilience4j: Fault Tolerance для Java"
 description: "Комплексное руководство по использованию Resilience4j — легковесной библиотеки fault tolerance для Java приложений с паттернами Circuit Breaker, Rate Limiter, Retry и другими."
-tags: ["libraries", "java", "java-resilience4j"]
+tags:
+  - libraries
+  - java
+  - java-resilience4j
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Resilience4j: **Fault Tolerance** для **Java**
 
 **Комплексное руководство по использованию `Resilience4j` — легковесной библиотеки fault tolerance для `Java` приложений с паттернами `Circuit Breaker`, `Rate Limiter`, `Retry` и другими.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

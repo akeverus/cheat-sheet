@@ -1,7 +1,10 @@
 ---
 title: "Apache JMeter"
 description: "Кратко: Apache JMeter — инструмент нагрузочного и функционального тестирования. Thread Group, Samplers (HTTP Request, JDBC и др.), Listeners, Assertions; GUI для построения планов, CLI для запуска; отчёты, CI/CD."
-tags: ["testing", "performance-testing", "jmeter"]
+tags:
+  - testing
+  - performance-testing
+  - jmeter
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Apache JMeter
 
 **Кратко:** Apache JMeter — инструмент нагрузочного и функционального тестирования. Thread Group, Samplers (HTTP Request, JDBC и др.), Listeners, Assertions; GUI для построения планов, CLI для запуска; отчёты, CI/CD.
-
-**Дата последнего обновления:** 2026-02-06
 
 ---
 
@@ -296,4 +297,4 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 ## Заключение
 
-Apache JMeter — мощный инструмент нагрузочного и функционального тестирования с поддержкой многих протоколов. Построение плана в GUI и запуск в CLI дают удобство отладки и минимальные накладные расходы при нагрузке. Используйте переменные и свойства для параметризации и CI; отключайте тяжёлые Listeners в прогонах и выделяйте достаточный heap. Дальше: [JMeter User's Manual](https://jmeter.apache.org/usermanual/index.html), [Gatling](../gatling/gatling.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).
+Apache JMeter — инструмент нагрузочного и функционального тестирования с поддержкой многих протоколов. Построение плана в GUI и запуск в CLI дают удобство отладки и минимальные накладные расходы при нагрузке. Используйте переменные и свойства для параметризации и CI; отключайте тяжёлые Listeners в прогонах и выделяйте достаточный heap. Дальше: [JMeter User's Manual](https://jmeter.apache.org/usermanual/index.html), [Gatling](../gatling/gatling.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).

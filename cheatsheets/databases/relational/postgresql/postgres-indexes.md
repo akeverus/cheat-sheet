@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: типы индексов"
 description: "Кратко: когда выбирать B-Tree, Hash, GIN, BRIN, GiST и как проверять план выполнения через EXPLAIN."
-tags: ["databases", "relational", "postgres-indexes"]
+tags:
+  - databases
+  - relational
+  - postgres-indexes
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Кратко: когда выбирать **B-Tree**, **Hash**, **GIN**, **BRIN**, **GiST** и как проверять план выполнения через **EXPLAIN**.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

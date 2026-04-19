@@ -1,7 +1,15 @@
 ---
 title: "Micronaut: Security - Authentication и Authorization"
 description: "Полное руководство по безопасности в Micronaut: JWT, OAuth2, authentication, authorization и security best practices"
-tags: ["micronaut", "security", "jwt", "oauth2", "authentication", "authorization", "java", "kotlin"]
+tags:
+  - micronaut
+  - security
+  - jwt
+  - oauth2
+  - authentication
+  - authorization
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-http.md"]
 next: ["micronaut-reactive.md", "micronaut-testing.md"]

@@ -1,7 +1,12 @@
 ---
 title: "Spring State Machine: Полное руководство по state machines"
 description: "Комплексное руководство по Spring State Machine: состояния, переходы, события, guards, actions, persistence и best practices"
-tags: ["spring", "state-machine", "fsm", "state-management", "java"]
+tags:
+  - spring
+  - state-machine
+  - fsm
+  - state-management
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-core.md"]
 next: ["spring/spring-integration.md"]

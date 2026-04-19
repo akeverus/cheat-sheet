@@ -1,15 +1,18 @@
 ---
 title: "Go: интерфейсы"
 description: "Полное руководство по интерфейсам в Go: определение интерфейсов, реализация, type assertions, type switches, empty interface"
-tags: ["go", "golang", "interfaces", "polymorphism", "type-assertions"]
+tags:
+  - go
+  - golang
+  - interfaces
+  - polymorphism
+  - type-assertions
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: интерфейсы
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

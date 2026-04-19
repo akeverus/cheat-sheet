@@ -1,7 +1,10 @@
 ---
 title: "Jira: основы"
 description: "Задачи, доски, спринты и базовый workflow в Jira."
-tags: ["tools", "collaboration", "jira-basics"]
+tags:
+  - tools
+  - collaboration
+  - jira-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Jira: основы
 
 Задачи, доски, спринты и базовый workflow в Jira.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

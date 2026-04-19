@@ -1,15 +1,16 @@
 ---
 title: "PostgreSQL: Мониторинг"
 description: "Материал по теме PostgreSQL: Мониторинг в разделе cheatsheets."
-tags: ["databases", "relational", "postgres-monitoring"]
+tags:
+  - databases
+  - relational
+  - postgres-monitoring
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # **PostgreSQL**: Мониторинг
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

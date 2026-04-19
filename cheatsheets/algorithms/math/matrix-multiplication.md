@@ -1,15 +1,16 @@
 ---
 title: "Умножение матриц (Matrix Multiplication)"
 description: "Умножение двух матриц в Java: собственная реализация и библиотеки EJML, ND4J, Apache Commons Math3, LA4J, Colt. Сравнение производительности для малых и больших матриц."
-tags: ["algorithms", "math", "matrix-multiplication"]
+tags:
+  - algorithms
+  - math
+  - matrix-multiplication
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Умножение матриц (`Matrix Multiplication`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Умножение двух матриц в Java: собственная реализация и библиотеки EJML, ND4J, Apache Commons Math3, LA4J, Colt. Сравнение производительности для малых и больших матриц.
 

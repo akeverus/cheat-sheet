@@ -1,7 +1,10 @@
 ---
 title: "ORM: Object-Relational Mapping"
 description: "Комплексное руководство по технологиям ORM (Object-Relational Mapping) для Java - от основ до продвинутых техник."
-tags: ["databases", "orm", "orm-basics"]
+tags:
+  - databases
+  - orm
+  - orm-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **ORM**: **Object-Relational Mapping**
 
 **Комплексное руководство по технологиям `ORM` (**Object-Relational Mapping**) для `Java` - от основ до продвинутых техник.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

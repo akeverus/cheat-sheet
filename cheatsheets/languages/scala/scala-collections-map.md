@@ -1,7 +1,12 @@
 ---
 title: "Scala Collections - Map"
 description: "Полное руководство по работе со словарями в Scala: Map, HashMap, SortedMap, операции и лучшие практики"
-tags: ["scala", "collections", "map", "functional-programming", "immutable"]
+tags:
+  - scala
+  - collections
+  - map
+  - functional-programming
+  - immutable
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-collections-list.md", "scala/scala-collections-set.md"]
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 # **Scala Collections** - **Map**
 
 Кратко: руководство по работе со словарями в **Scala**: **Map**, **HashMap**, **SortedMap**, операции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "Telegram: основы"
 description: "Каналы, группы, боты и API для командной коммуникации, алертов и автоматизации."
-tags: ["tools", "collaboration", "telegram-basics"]
+tags:
+  - tools
+  - collaboration
+  - telegram-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Telegram: основы
 
 Каналы, группы, боты и API для командной коммуникации, алертов и автоматизации.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

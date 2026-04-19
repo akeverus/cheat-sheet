@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: MongoDB Integration - Repositories и Queries"
 description: "Полное руководство по интеграции с MongoDB в Micronaut: repositories, queries, aggregation, GridFS и best practices"
-tags: ["micronaut", "mongodb", "nosql", "repositories", "aggregation", "java", "kotlin"]
+tags:
+  - micronaut
+  - mongodb
+  - nosql
+  - repositories
+  - aggregation
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-data.md"]
 next: ["micronaut-data.md", "micronaut-reactive.md"]

@@ -1,7 +1,15 @@
 ---
 title: "Redis: Структуры данных"
 description: "Полное руководство по структурам данных Redis: Strings, Lists, Sets, Hashes, Sorted Sets, Streams, Bitmaps, HyperLogLog, Geospatial"
-tags: ["redis", "data-structures", "strings", "lists", "sets", "hashes", "sorted-sets", "streams"]
+tags:
+  - redis
+  - data-structures
+  - strings
+  - lists
+  - sets
+  - hashes
+  - sorted-sets
+  - streams
 difficulty: "intermediate"
 prerequisites: ["databases/redis-basics.md"]
 next: ["databases/redis-persistence.md", "databases/redis-replication.md"]
@@ -18,8 +26,6 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Patterns](https://redis.io/docs/manual/patterns/)
 
 ---
-
-Дата последнего обновления: 2026-02-03
 
 ## Содержание
 

@@ -1,7 +1,10 @@
 ---
 title: "Kotlin + Spring"
 description: "Кратко: полное руководство по использованию Kotlin с Spring Framework. Рассматриваются Spring Boot с Kotlin, корутины в Spring, null safety, Kotlin DSL для конфигурации и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-spring"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-spring
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin + Spring
 
 Кратко: полное руководство по использованию **Kotlin** с **Spring Framework**. Рассматриваются **Spring Boot** с **Kotlin**, корутины в **Spring**, **null safety**, **Kotlin DSL** для конфигурации и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 
@@ -25,8 +26,8 @@ updated: "2026-02-11"
 ### См. также
 - [Основы Kotlin](kotlin-basics.md)
 - [Корутины](kotlin-concurrency-basics.md)
-- [Spring Boot](../../frameworks/java-frameworks/spring/spring-boot.md)
-- [Spring Core](../../frameworks/java-frameworks/spring/spring-core.md)
+- [Spring Boot](../../frameworks/spring/spring-boot.md)
+- [Spring Core](../../frameworks/spring/spring-core.md)
 
 ## Содержание
 

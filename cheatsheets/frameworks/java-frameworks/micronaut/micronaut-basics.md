@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Основы"
 description: "Легковесный JVM фреймворк для создания микросервисов с compile-time dependency injection и минимальным потреблением ресурсов"
-tags: ["micronaut", "java", "kotlin", "groovy", "microservices", "reactive", "cloud-native"]
+tags:
+  - micronaut
+  - java
+  - kotlin
+  - groovy
+  - microservices
+  - reactive
+  - cloud-native
 difficulty: "intermediate"
 prerequisites: ["java/java-basics.md", "kotlin/kotlin-basics.md"]
 next: ["micronaut-reactive.md", "micronaut-testing.md", "micronaut-security.md"]

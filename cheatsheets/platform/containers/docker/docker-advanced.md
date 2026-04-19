@@ -1,7 +1,10 @@
 ---
 title: "Docker Advanced"
 description: "Docker - это платформа для разработки, доставки и запуска приложений в контейнерах. Этот документ охватывает продвинутые концепции, best practices и enterprise-grade паттерны работы с Docker."
-tags: ["platform", "containers", "docker-advanced"]
+tags:
+  - platform
+  - containers
+  - docker-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Docker Advanced**
 
 **Docker** - это платформа для разработки, доставки и запуска приложений в контейнерах. Этот документ охватывает продвинутые концепции, **best practices** и **enterprise-grade** паттерны работы с **Docker**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Docker Documentation](https://docs.docker.com/)

@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: Redis - Caching и Data Structures"
 description: "Полное руководство по работе с Redis в Quarkus: caching, data structures, pub/sub, transactions, reactive Redis и best practices"
-tags: ["quarkus", "redis", "cache", "pubsub", "data-structures", "java"]
+tags:
+  - quarkus
+  - redis
+  - cache
+  - pubsub
+  - data-structures
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-cache.md"]
 next: ["quarkus-cache.md", "quarkus-reactive.md"]

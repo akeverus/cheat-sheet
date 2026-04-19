@@ -1,7 +1,13 @@
 ---
 title: "Spring Data Redis: Полное руководство"
 description: "Комплексное руководство по Spring Data Redis: RedisTemplate, операции, cache abstraction, pub/sub, transactions и best practices"
-tags: ["spring", "redis", "cache", "nosql", "pub-sub", "java"]
+tags:
+  - spring
+  - redis
+  - cache
+  - nosql
+  - pub-sub
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-cache.md"]
 next: ["spring/spring-mongodb.md", "databases/redis.md"]

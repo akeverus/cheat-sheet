@@ -1,7 +1,13 @@
 ---
 title: "PostgreSQL: Высокая доступность"
 description: "Полное руководство по обеспечению высокой доступности PostgreSQL: Patroni, pg_auto_failover, Streaming Replication для HA, Load Balancing, мониторинг HA"
-tags: ["postgresql", "high-availability", "ha", "patroni", "failover", "load-balancing"]
+tags:
+  - postgresql
+  - high-availability
+  - ha
+  - patroni
+  - failover
+  - load-balancing
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-replication.md"]
 next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]

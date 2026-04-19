@@ -1,7 +1,10 @@
 ---
 title: "Azure Networking"
 description: "Azure Networking предоставляет полный набор сервисов для создания масштабируемой, безопасной и высокопроизводительной сетевой инфраструктуры. Этот документ охватывает Virtual Networks, Load Balancers, Application Gateway, Front Door, VPN, ExpressRoute и другие сетевые сервисы Azu"
-tags: ["platform", "cloud-providers", "azure-networking"]
+tags:
+  - platform
+  - cloud-providers
+  - azure-networking
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Azure Networking**
 
 **Azure Networking** предоставляет полный набор сервисов для создания масштабируемой, безопасной и высокопроизводительной сетевой инфраструктуры. Этот документ охватывает **Virtual Networks**, **Load Balancers**, **Application Gateway**, **Front Door**, **VPN**, **ExpressRoute** и другие сетевые сервисы **Azure** с **best practices** для **production** сред.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Azure Networking Documentation](https://docs.microsoft.com/azure/networking/)

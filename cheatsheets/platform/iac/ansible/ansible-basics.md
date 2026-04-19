@@ -1,7 +1,10 @@
 ---
 title: "Основы Ansible (редирект)"
 description: "Основной документ по теме: [Ansible](ansible.md)."
-tags: ["platform", "iac", "ansible-basics"]
+tags:
+  - platform
+  - iac
+  - ansible-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []

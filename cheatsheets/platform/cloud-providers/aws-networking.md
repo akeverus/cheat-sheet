@@ -1,7 +1,10 @@
 ---
 title: "AWS Networking"
 description: "AWS Networking предоставляет полный набор сетевых сервисов для создания масштабируемой, безопасной и высокопроизводительной сетевой инфраструктуры. Этот документ охватывает VPC (Virtual Private Cloud), подсети, security groups, load balancers, DNS, CDN и другие сетевые компоненты"
-tags: ["platform", "cloud-providers", "aws-networking"]
+tags:
+  - platform
+  - cloud-providers
+  - aws-networking
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **AWS Networking**
 
 **AWS Networking** предоставляет полный набор сетевых сервисов для создания масштабируемой, безопасной и высокопроизводительной сетевой инфраструктуры. Этот документ охватывает **VPC** (`Virtual Private Cloud`), подсети, **security groups**, **load balancers**, **DNS**, **CDN** и другие сетевые компоненты **AWS** с **best practices** для **enterprise** сред.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [VPC Documentation](https://docs.aws.amazon.com/vpc/)

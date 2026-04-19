@@ -1,7 +1,10 @@
 ---
 title: "Java Collections: List"
 description: "Руководство по интерфейсу List и его реализациям: LinkedList, ArrayList, CopyOnWriteArrayList."
-tags: ["languages", "java", "java-collections-list"]
+tags:
+  - languages
+  - java
+  - java-collections-list
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Java Collections: List
 
 Руководство по интерфейсу List и его реализациям: LinkedList, ArrayList, CopyOnWriteArrayList.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

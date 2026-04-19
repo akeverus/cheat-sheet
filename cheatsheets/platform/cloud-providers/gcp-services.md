@@ -1,7 +1,10 @@
 ---
 title: "GCP Services"
 description: "Google Cloud Platform предоставляет более 150 сервисов для различных задач - от вычислений и хранения данных до машинного обучения и IoT. Этот документ охватывает основные сервисы GCP, их назначение, use cases и лучшие практики использования в production средах. Документ дополняе"
-tags: ["platform", "cloud-providers", "gcp-services"]
+tags:
+  - platform
+  - cloud-providers
+  - gcp-services
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **GCP Services**
 
 **Google Cloud Platform** предоставляет более `150` сервисов для различных задач - от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **GCP**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [GCP Basics](gcp-basics.md) более глубоким погружением в конкретные сервисы.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Google Cloud Documentation](https://cloud.google.com/docs)

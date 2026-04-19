@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: Решение проблем"
 description: "Руководство по диагностике и решению типичных проблем в PostgreSQL, включая блокировки, медленные запросы, проблемы с памятью и диском."
-tags: ["databases", "relational", "postgres-troubleshooting"]
+tags:
+  - databases
+  - relational
+  - postgres-troubleshooting
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -20,8 +23,6 @@ updated: "2026-02-11"
 ### См. также
 - [postgres-basics.md](postgres-basics.md) — основы PostgreSQL
 - [postgres-monitoring.md](postgres-monitoring.md) — мониторинг
-
-**Дата последнего обновления:** 2026-02-06
 
 ---
 
@@ -1825,7 +1826,5 @@ ALTER DATABASE mydb SET default_transaction_read_only = off;
 - [`PostgreSQL Wiki`](https://www.postgresql.org/docs/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

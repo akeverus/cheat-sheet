@@ -1,7 +1,10 @@
 ---
 title: "Scala Frameworks — обзор"
 description: "Кратко: обзор фреймворков и экосистемы Scala: Play, Akka, ZIO, http4s, Cats Effect, Tapir, веб-API, реактивные и функциональные практики."
-tags: ["frameworks", "scala-frameworks", "scala-frameworks-overview"]
+tags:
+  - frameworks
+  - scala-frameworks
+  - scala-frameworks-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Scala Frameworks — обзор
 
 Кратко: обзор фреймворков и экосистемы **Scala**: **Play**, **Akka**, **ZIO**, **http4s**, **Cats Effect**, **Tapir**, веб-**API**, реактивные и функциональные практики.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

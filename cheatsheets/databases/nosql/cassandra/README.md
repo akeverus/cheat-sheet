@@ -1,7 +1,11 @@
 ---
 title: "Cassandra: индекс раздела"
 description: "Навигационный индекс по документации Apache Cassandra: основы, кластеризация, моделирование, запросы, администрирование и производительность."
-tags: ["databases", "nosql", "cassandra", "index"]
+tags:
+  - databases
+  - nosql
+  - cassandra
+  - index
 type: "index"
 updated: "2026-02-11"
 ---
@@ -14,7 +18,7 @@ updated: "2026-02-11"
 ### См. также
 - [`../README.md`](../README.md) — индекс NoSQL-раздела
 - [`../../README.md`](../../README.md) — индекс databases-раздела
-- [`../../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md`](../../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md) — архитектурные и форматные правила
+- [`../../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md`](../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md) — архитектурные и форматные правила
 
 ## Содержание
 

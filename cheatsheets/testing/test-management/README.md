@@ -1,7 +1,9 @@
 ---
 title: "Test Management"
 description: "Индекс материалов по управлению тестированием: планы, кейсы, прогоны и процесс качества."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

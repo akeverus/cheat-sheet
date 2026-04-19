@@ -1,7 +1,10 @@
 ---
 title: "Apache Commons: Обширная коллекция Java утилит"
 description: "Комплексное руководство по использованию Apache Commons — набора высококачественных Java утилит, которые дополняют стандартную библиотеку Java."
-tags: ["libraries", "utility-libraries", "java-apache-commons"]
+tags:
+  - libraries
+  - utility-libraries
+  - java-apache-commons
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Apache Commons: Обширная коллекция **Java** утилит
 
 **Комплексное руководство по использованию `Apache Commons` — набора высококачественных `Java` утилит, которые дополняют стандартную библиотеку `Java`.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

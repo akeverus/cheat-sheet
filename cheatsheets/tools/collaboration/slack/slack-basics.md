@@ -1,7 +1,10 @@
 ---
 title: "Slack: основы"
 description: "Каналы, сообщения, интеграции и эффективная коммуникация в Slack."
-tags: ["tools", "collaboration", "slack-basics"]
+tags:
+  - tools
+  - collaboration
+  - slack-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Slack: основы
 
 Каналы, сообщения, интеграции и эффективная коммуникация в Slack.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Введение
 

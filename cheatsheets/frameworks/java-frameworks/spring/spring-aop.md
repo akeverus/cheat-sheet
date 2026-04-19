@@ -1,7 +1,16 @@
 ---
 title: "Spring AOP: Полное руководство по аспектно-ориентированному программированию"
 description: "Комплексное руководство по Spring AOP: аспекты, pointcut выражения, advice типы, интеграция с Spring Security, кэширование, транзакции, метрики и мониторинг"
-tags: ["spring", "aop", "aspect-oriented-programming", "cross-cutting-concerns", "proxy-pattern", "interceptors", "advice", "pointcut", "joinpoint"]
+tags:
+  - spring
+  - aop
+  - aspect-oriented-programming
+  - cross-cutting-concerns
+  - proxy-pattern
+  - interceptors
+  - advice
+  - pointcut
+  - joinpoint
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "java/java-basics.md"]
 next: ["spring/spring-security.md", "spring/spring-boot.md"]
@@ -11,8 +20,6 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
 
 # Spring AOP: Полное руководство по аспектно-ориентированному программированию
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

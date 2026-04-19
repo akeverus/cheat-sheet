@@ -1,7 +1,10 @@
 ---
 title: "Postman: Основы"
 description: "Комплексное руководство по использованию Postman для тестирования и разработки API."
-tags: ["development", "api", "postman-basics"]
+tags:
+  - development
+  - api
+  - postman-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Postman**: Основы
 
 **Комплексное руководство по использованию `Postman` для тестирования и разработки `API`.**
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,7 +1,13 @@
 ---
 title: "Redis: Высокая доступность"
 description: "Полное руководство по обеспечению высокой доступности Redis: Sentinel, Cluster, failover, disaster recovery, best practices"
-tags: ["redis", "high-availability", "sentinel", "cluster", "failover", "disaster-recovery"]
+tags:
+  - redis
+  - high-availability
+  - sentinel
+  - cluster
+  - failover
+  - disaster-recovery
 difficulty: "advanced"
 prerequisites: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 next: []

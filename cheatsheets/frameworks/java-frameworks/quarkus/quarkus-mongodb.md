@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: MongoDB - NoSQL Database"
 description: "Полное руководство по работе с MongoDB в Quarkus: Panache MongoDB, reactive MongoDB, queries, aggregation и best practices"
-tags: ["quarkus", "mongodb", "nosql", "panache", "reactive", "java"]
+tags:
+  - quarkus
+  - mongodb
+  - nosql
+  - panache
+  - reactive
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-data.md"]
 next: ["quarkus-data.md", "quarkus-reactive.md"]

@@ -1,7 +1,14 @@
 ---
 title: "Micronaut: Logging - Logback, SLF4J и Structured Logging"
 description: "Полное руководство по логированию в Micronaut: Logback, SLF4J, structured logging, MDC и best practices"
-tags: ["micronaut", "logging", "logback", "slf4j", "structured-logging", "java", "kotlin"]
+tags:
+  - micronaut
+  - logging
+  - logback
+  - slf4j
+  - structured-logging
+  - java
+  - kotlin
 difficulty: "intermediate"
 prerequisites: ["micronaut/micronaut-basics.md", "micronaut/micronaut-core.md"]
 next: ["micronaut-core.md", "micronaut-actuator.md"]

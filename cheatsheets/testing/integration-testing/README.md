@@ -1,7 +1,9 @@
 ---
 title: "Integration Testing"
 description: "Индекс материалов по интеграционному тестированию: REST Assured, WireMock, Testcontainers, контрактные тесты и тестирование БД."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

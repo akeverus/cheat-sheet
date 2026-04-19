@@ -1,7 +1,9 @@
 ---
 title: "Системы алертинга для Java"
 description: "Комплексное руководство по настройке и использованию систем алертинга в Java-приложениях: Alertmanager, PagerDuty, Slack, email-уведомления и лучшие практики."
-tags: ["monitoring", "alerting"]
+tags:
+  - monitoring
+  - alerting
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +12,6 @@ updated: "2026-02-11"
 # Системы алертинга для Java
 
 Комплексное руководство по настройке и использованию систем алертинга в Java-приложениях: Alertmanager, PagerDuty, Slack, email-уведомления и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

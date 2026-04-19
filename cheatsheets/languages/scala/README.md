@@ -1,7 +1,11 @@
 ---
 title: "Scala"
 description: "Индекс раздела Scala: основы, коллекции, FP, concurrency."
-tags: ["meta", "index", "languages", "scala"]
+tags:
+  - meta
+  - index
+  - languages
+  - scala
 type: "index"
 updated: "2026-02-11"
 ---

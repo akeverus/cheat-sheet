@@ -1,7 +1,10 @@
 ---
 title: "Kubernetes Storage"
 description: "Хранение данных в Kubernetes - это критически важная часть платформы, обеспечивающая persistence для stateful приложений. Kubernetes предоставляет абстракции для различных типов storage, от локальных дисков до облачных решений, с возможностью динамического provisioning и управлен"
-tags: ["platform", "containers", "kubernetes-storage"]
+tags:
+  - platform
+  - containers
+  - kubernetes-storage
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Kubernetes Storage**
 
 Хранение данных в **Kubernetes** - это критически важная часть платформы, обеспечивающая **persistence** для **stateful** приложений. **Kubernetes** предоставляет абстракции для различных типов **storage**, от локальных дисков до облачных решений, с возможностью динамического **provisioning** и управления жизненным циклом.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Kubernetes Storage](https://kubernetes.io/docs/concepts/storage/)

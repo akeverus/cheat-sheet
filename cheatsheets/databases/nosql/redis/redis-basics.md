@@ -1,7 +1,13 @@
 ---
 title: "Redis: Основы"
 description: "Полное руководство по основам Redis: установка, конфигурация, базовые команды, подключение, работа с ключами"
-tags: ["redis", "in-memory", "cache", "database", "key-value", "basics"]
+tags:
+  - redis
+  - in-memory
+  - cache
+  - database
+  - key-value
+  - basics
 difficulty: "beginner"
 prerequisites: []
 next: ["databases/nosql/redis/redis-data-structures.md", "databases/nosql/redis/redis-persistence.md"]
@@ -10,8 +16,6 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 ---
 
 # Redis: Основы
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

@@ -1,7 +1,10 @@
 ---
 title: "StatsD"
 description: "StatsD — лёгкий демон для приёма метрик по UDP (счётчики, таймеры, gauges, sets). Агрегирует данные и пересылает в бэкенды (Graphite, InfluxDB, Prometheus через statsd_exporter и др.). Широко используется для инструментирования приложений без блокирующих вызовов."
-tags: ["monitoring", "metrics", "statsd"]
+tags:
+  - monitoring
+  - metrics
+  - statsd
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # StatsD
 
 StatsD — лёгкий демон для приёма метрик по UDP (счётчики, таймеры, gauges, sets). Агрегирует данные и пересылает в бэкенды (Graphite, InfluxDB, Prometheus через statsd_exporter и др.). Широко используется для инструментирования приложений без блокирующих вызовов.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

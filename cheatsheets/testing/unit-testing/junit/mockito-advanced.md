@@ -1,7 +1,10 @@
 ---
 title: "Mockito Advanced для Java"
 description: "Продвинутые приёмы с Mockito: матчеры, верификация, spies, custom answers, BDDMockito, интеграция со Spring Boot."
-tags: ["testing", "unit-testing", "mockito-advanced"]
+tags:
+  - testing
+  - unit-testing
+  - mockito-advanced
 difficulty: "intermediate"
 prerequisites: []
 next: []

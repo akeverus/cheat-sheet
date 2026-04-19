@@ -1,15 +1,19 @@
 ---
 title: "Go: базы данных"
 description: "Полное руководство по работе с базами данных в Go: database/sql, sqlx, GORM, транзакции, миграции"
-tags: ["go", "golang", "database", "sql", "sqlx", "gorm"]
+tags:
+  - go
+  - golang
+  - database
+  - sql
+  - sqlx
+  - gorm
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: базы данных
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

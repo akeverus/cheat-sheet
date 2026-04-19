@@ -1,7 +1,13 @@
 ---
 title: "Quarkus: OpenAPI - API Documentation"
 description: "Полное руководство по OpenAPI в Quarkus: API documentation, Swagger UI, code generation, security schemes и best practices"
-tags: ["quarkus", "openapi", "swagger", "api-documentation", "rest", "java"]
+tags:
+  - quarkus
+  - openapi
+  - swagger
+  - api-documentation
+  - rest
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-rest.md"]
 next: ["quarkus-rest.md", "quarkus-security.md"]

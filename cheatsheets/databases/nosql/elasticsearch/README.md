@@ -1,7 +1,11 @@
 ---
 title: "Elasticsearch"
 description: "Индекс раздела Elasticsearch: основы, индексация, запросы, агрегации, производительность."
-tags: ["meta", "index", "databases", "elasticsearch"]
+tags:
+  - meta
+  - index
+  - databases
+  - elasticsearch
 type: "index"
 updated: "2026-02-11"
 ---

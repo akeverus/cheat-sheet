@@ -1,7 +1,10 @@
 ---
 title: "Временная сложность коллекций Java"
 description: "Руководство по производительности различных коллекций из Java Collection API с анализом временной сложности операций и результатами бенчмарков."
-tags: ["algorithms", "data-structures", "collections-complexity"]
+tags:
+  - algorithms
+  - data-structures
+  - collections-complexity
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Временная сложность коллекций Java
 
 Руководство по производительности различных коллекций из **Java Collection API** с анализом временной сложности операций и результатами бенчмарков.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

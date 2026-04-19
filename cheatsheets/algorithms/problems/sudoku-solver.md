@@ -1,7 +1,10 @@
 ---
 title: "Решатель судоку (Sudoku Solver)"
 description: "Кратко: как решить судоку через backtracking и Dancing Links (Algorithm X), когда выбирать каждый подход, как валидировать доску и профилировать производительность. Даем готовые Java/Kotlin примеры с русскими комментариями, тестами и рекомендациями для продакшена."
-tags: ["algorithms", "problems", "sudoku-solver"]
+tags:
+  - algorithms
+  - problems
+  - sudoku-solver
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Решатель судоку (`Sudoku Solver`)
 
 Кратко: как решить судоку через `backtracking` и `Dancing Links` (`Algorithm X`), когда выбирать каждый подход, как валидировать доску и профилировать производительность. Даем готовые Java/Kotlin примеры с русскими комментариями, тестами и рекомендациями для продакшена.
-
-**Дата последнего обновления:** 2026-02-11
 
 ## Полезные ссылки
 

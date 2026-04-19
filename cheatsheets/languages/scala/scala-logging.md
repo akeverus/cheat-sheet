@@ -1,7 +1,12 @@
 ---
 title: "Scala Logging"
 description: "Полное руководство по логированию в Scala: SLF4J, Logback, структурированное логирование, MDC"
-tags: ["scala", "logging", "slf4j", "logback", "mdc"]
+tags:
+  - scala
+  - logging
+  - slf4j
+  - logback
+  - mdc
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: []
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md"]
 # **Scala Logging**
 
 Кратко: полное руководство по логированию в **Scala**: **SLF4J**, **Logback**, структурированное логирование, **MDC**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

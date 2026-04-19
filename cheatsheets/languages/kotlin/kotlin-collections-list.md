@@ -1,7 +1,10 @@
 ---
 title: "Kotlin Collections: List"
 description: "Кратко: руководство по работе со списками в Kotlin: List, MutableList, ArrayList, LinkedList, операции и лучшие практики."
-tags: ["languages", "kotlin", "kotlin-collections-list"]
+tags:
+  - languages
+  - kotlin
+  - kotlin-collections-list
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Kotlin Collections: List
 
 Кратко: руководство по работе со списками в Kotlin: List, MutableList, ArrayList, LinkedList, операции и лучшие практики.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

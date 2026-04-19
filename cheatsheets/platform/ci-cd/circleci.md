@@ -1,7 +1,10 @@
 ---
 title: "CircleCI"
 description: "CircleCI - это облачная платформа для continuous integration и continuous delivery, которая предоставляет высокопроизводительные билды с использованием Docker контейнеров. Этот документ охватывает enterprise-grade конфигурации, продвинутые pipeline паттерны и best practices для и"
-tags: ["platform", "ci-cd", "circleci"]
+tags:
+  - platform
+  - ci-cd
+  - circleci
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **CircleCI**
 
 **CircleCI** - это облачная платформа для **continuous integration** и **continuous delivery**, которая предоставляет высокопроизводительные билды с использованием **Docker** контейнеров. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **CircleCI** в **production** средах.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [CircleCI Documentation](https://circleci.com/docs/)

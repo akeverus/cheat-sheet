@@ -1,15 +1,16 @@
 ---
 title: "Тестирование безопасности"
 description: "SAST, DAST, SCA и пентесты — как встроить тестирование безопасности в SDLC и CI/CD."
-tags: ["security", "testing", "security-testing"]
+tags:
+  - security
+  - testing
+  - security-testing
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Тестирование безопасности
-
-**Дата последнего обновления:** 2026-02-06
 
 `SAST`, `DAST`, `SCA` и пентесты — как встроить тестирование безопасности в `SDLC` и `CI/CD`.
 

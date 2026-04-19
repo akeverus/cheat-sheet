@@ -1,7 +1,10 @@
 ---
 title: "MockK"
 description: "MockK - это мощная mocking библиотека для Kotlin, предоставляющая продвинутые возможности для создания mock объектов в тестах. Поддерживает Kotlin-специфичные фичи, такие как inline функции, операторы и null safety."
-tags: ["libraries", "kotlin", "kotlin-mockk"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-mockk
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # MockK
 
 **MockK** - это мощная **mocking** библиотека для **Kotlin**, предоставляющая продвинутые возможности для создания **mock** объектов в тестах. Поддерживает **Kotlin**-специфичные фичи, такие как **inline** функции, операторы и **null safety**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

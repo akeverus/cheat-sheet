@@ -1,288 +1,572 @@
 ---
 title: "Вопросы на собеседовании: Java Exceptions"
-description: "Комплексное руководство по вопросам собеседования на тему Java Exceptions для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java + Spring, best practices и troubleshooting."
-tags: ["interview", "programming-languages", "java-exceptions-interview"]
+description: "Комплексное руководство по вопросам собеседования на тему Java Exceptions: иерархия исключений, checked vs unchecked, try-with-resources, кастомные исключения, обработка в многопоточном коде и best practices."
+tags:
+  - interview
+  - programming-languages
+  - java-exceptions-interview
+aliases:
+  - "Java Exceptions"
+  - "Java Exceptions interview"
+  - "Java Exceptions собеседование"
+  - "Исключения Java"
+  - "Java обработка ошибок"
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Java Exceptions`
 
-Комплексное руководство по вопросам собеседования на тему `Java Exceptions` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.
+Комплексное руководство по вопросам собеседования на тему `Java Exceptions` для `Senior Java Developer`. Включает иерархию исключений, механизмы обработки, `try-with-resources`, кастомные исключения, обработку в многопоточном коде, лямбдах и best practices.
 
-Дата последнего обновления: 2026-02-04
+Дата последнего обновления: 2026-04-13
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [Java Exceptions Tutorial](https://docs.oracle.com/javase/tutorial/essential/exceptions/)
-- [Exception Hierarchy](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html)
-- [Best Practices for Exceptions](https://www.oracle.com/java/technologies/javase/codeconventions-exceptions.html)
-
-### См. также
-
-- [`../../../languages/java/java-exceptions.md`](../../../languages/java/java-exceptions.md) — руководство по исключениям
-- [`java-core-interview.md`](java-core-interview.md) — вопросы по Java Core
-- [`java-8-interview.md`](java-8-interview.md) — вопросы по Java 8
+- [Java Exceptions Tutorial](https://docs.oracle.com/javase/tutorial/essential/exceptions/) — официальный туториал Oracle
+- [Throwable Hierarchy](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Throwable.html) — Javadoc иерархии `Throwable`
+- [Java Exceptions Interview Questions (Baeldung)](https://www.baeldung.com/java-exceptions-interview-questions) — вопросы с ответами
+- [Exception Handling in Java (Baeldung)](https://www.baeldung.com/java-exceptions) — обзор обработки исключений
+- [Java Try with Resources (Baeldung)](https://www.baeldung.com/java-try-with-resources) — `try-with-resources` в деталях
+- [Create a Custom Exception in Java (Baeldung)](https://www.baeldung.com/java-new-custom-exception) — создание кастомных исключений
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 **Основы и классификация исключений**
-- [Q1. Что такое `Exception`?](#q1-что-такое-exception)
+- [Q1. (!) Что такое `Exception` и какова иерархия исключений в Java?](#q1--что-такое-exception-и-какова-иерархия-исключений-в-java)
 - [Q2. Какова цель ключевых слов `throw` и `throws`?](#q2-какова-цель-ключевых-слов-throw-и-throws)
-- [Q3. Как вы можете обработать `Exception`?](#q3-как-вы-можете-обработать-exception)
-- [Q4. Как вы можете поймать несколько `Exceptions`?](#q4-как-вы-можете-поймать-несколько-exceptions)
-- [Q5. (!) В чем разница между `Checked` и `Unchecked Exception`?](#q5-важно-в-чем-разница-между-checked-и-unchecked-exception)
-- [Q6. (!) В чем разница между `Exception` и `Error`?](#q6-важно-в-чем-разница-между-exception-и-error)
-- [Q7. Какой `Exception` будет выдан при выполнении следующего блока кода?](#q7-какой-exception-будет-выдан-при-выполнении-следующего-блока-кода)
+- [Q3. Как обработать `Exception` с помощью `try-catch-finally`?](#q3-как-обработать-exception-с-помощью-try-catch-finally)
+- [Q4. Как поймать несколько `Exceptions`?](#q4-как-поймать-несколько-exceptions)
+- [Q5. (!) В чём разница между `Checked` и `Unchecked Exception`?](#q5--в-чём-разница-между-checked-и-unchecked-exception)
+- [Q6. (!) В чём разница между `Exception` и `Error`?](#q6--в-чём-разница-между-exception-и-error)
+- [Q7. Какой `Exception` будет выброшен при выполнении следующего кода?](#q7-какой-exception-будет-выброшен-при-выполнении-следующего-кода)
 
 **Цепочка, стек и иерархия**
 - [Q8. Что такое `Exception Chaining`?](#q8-что-такое-exception-chaining)
-- [Q9. Что такое `Stacktrace` и как она связана с `Exception`?](#q9-что-такое-stacktrace-и-как-она-связана-с-exception)
-- [Q10. Зачем вам `Subclass Exception`?](#q10-зачем-вам-subclass-exception)
-- [Q11. Каковы некоторые преимущества `Exceptions`?](#q11-каковы-некоторые-преимущества-exceptions)
+- [Q9. (!) Что такое `Stacktrace` и как она связана с `Exception`?](#q9--что-такое-stacktrace-и-как-она-связана-с-exception)
+- [Q10. Зачем создавать подклассы `Exception`?](#q10-зачем-создавать-подклассы-exception)
+- [Q11. Каковы преимущества механизма `Exceptions`?](#q11-каковы-преимущества-механизма-exceptions)
 
-**Создание и обработка в коде**
-- [Q12. (!) Как создать какой-либо `Exception` внутри тела лямбда-выражения?](#q12-важно-как-создать-какой-либо-exception-внутри-тела-лямбда-выражения)
-- [Q13. Как переопределить метод, выдающий `Exception`?](#q13-как-переопределить-метод-выдающий-exception)
-- [Q14. Будет ли компилироваться следующий код?](#q14-будет-ли-компилироваться-следующий-код)
-- [Q15. (!) Есть ли способ генерировать checked `Exception` из метода, который не имеет пункта `throws`?](#q15-важно-есть-ли-способ-генерировать-checked-exception-из-метода-который-не-имеет-пункта-throws)
-- [Q16. Что такое `try-with-resources` и зачем он нужен?](#q16-что-такое-try-with-resources-и-зачем-он-нужен)
-- [Q17. Как правильно логировать исключения?](#q17-как-правильно-логировать-исключения)
-- [Q18. Что такое `Suppressed Exceptions` в `try-with-resources`?](#q18-что-такое-suppressed-exceptions-в-try-with-resources)
+**`try-with-resources` и управление ресурсами**
+- [Q12. (!) Что такое `try-with-resources` и как он работает?](#q12--что-такое-try-with-resources-и-как-он-работает)
+- [Q13. (!) Что такое `Suppressed Exceptions` в `try-with-resources`?](#q13--что-такое-suppressed-exceptions-в-try-with-resources)
+- [Q14. Что такое `addSuppressed()` и `getSuppressed()`?](#q14-что-такое-addsuppressed-и-getsuppressed)
 
-**Проектирование и best practices**
-- [Q19. Когда создавать кастомное исключение?](#q19-когда-создавать-кастомное-исключение)
-- [Q20. Что такое `fail-fast` и `fail-safe` в контексте исключений?](#q20-что-такое-fail-fast-и-fail-safe-в-контексте-исключений)
-- [Q21. Как обработать исключения в многопоточном коде?](#q21-как-обработать-исключения-в-многопоточном-коде)
-- [Q22. Что такое `getCause()` и `initCause()`?](#q22-что-такое-getcause-и-initcause)
-- [Q23. Когда использовать `RuntimeException` vs checked `Exception`?](#q23-когда-использовать-runtimeexception-vs-checked-exception)
-- [Q24. Что такое `try-catch-finally` и порядок выполнения?](#q24-что-такое-try-catch-finally-и-порядок-выполнения)
-- [Q25. Как перехватить все исключения (`catch Throwable`)?](#q25-как-перехватить-все-исключения-catch-throwable)
-- [Q26. Что такое `addSuppressed()` и когда использовать?](#q26-что-такое-addsuppressed-и-когда-использовать)
-- [Q27. Как тестировать код, выбрасывающий исключения?](#q27-как-тестировать-код-выбрасывающий-исключения)
-- [Q28. Что такое `AssertionError` и когда использовать?](#q28-что-такое-assertionerror-и-когда-использовать)
-- [Q29. Как обработать `OutOfMemoryError` и `StackOverflowError`?](#q29-как-обработать-outofmemoryerror-и-stackoverflowerror)
-- [Q30. Best practices при проектировании иерархии исключений?](#q30-best-practices-при-проектировании-иерархии-исключений)
+**Исключения в лямбдах и переопределении методов**
+- [Q15. (!) Как выбросить `Exception` внутри лямбда-выражения?](#q15--как-выбросить-exception-внутри-лямбда-выражения)
+- [Q16. Как переопределить метод, выбрасывающий `Exception`?](#q16-как-переопределить-метод-выбрасывающий-exception)
+- [Q17. Будет ли компилироваться следующий код?](#q17-будет-ли-компилироваться-следующий-код)
+- [Q18. Есть ли способ выбросить checked `Exception` из метода без `throws`?](#q18-есть-ли-способ-выбросить-checked-exception-из-метода-без-throws)
 
-## Q1. Что такое `Exception`?
+**Проектирование и кастомные исключения**
+- [Q19. (!) Когда создавать кастомное исключение и как его правильно оформить?](#q19--когда-создавать-кастомное-исключение-и-как-его-правильно-оформить)
+- [Q20. Когда использовать `RuntimeException` vs checked `Exception`?](#q20-когда-использовать-runtimeexception-vs-checked-exception)
+- [Q21. (!) Best practices при проектировании иерархии исключений](#q21--best-practices-при-проектировании-иерархии-исключений)
 
-Исключение — это ненормальное событие, возникающее во время выполнения программы и нарушающее нормальный поток инструкций программы.
+**Порядок выполнения и подводные камни**
+- [Q22. Что такое `try-catch-finally` и каков порядок выполнения?](#q22-что-такое-try-catch-finally-и-каков-порядок-выполнения)
+- [Q23. Что произойдёт, если в `finally` есть `return`?](#q23-что-произойдёт-если-в-finally-есть-return)
+- [Q24. Как перехватить все исключения (`catch Throwable`)?](#q24-как-перехватить-все-исключения-catch-throwable)
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+**Многопоточность и исключения**
+- [Q25. (!) Как обработать исключения в многопоточном коде?](#q25--как-обработать-исключения-в-многопоточном-коде)
+- [Q26. Что такое `UncaughtExceptionHandler`?](#q26-что-такое-uncaughtexceptionhandler)
+
+**Логирование, тестирование и диагностика**
+- [Q27. (!) Как правильно логировать исключения?](#q27--как-правильно-логировать-исключения)
+- [Q28. Как тестировать код, выбрасывающий исключения?](#q28-как-тестировать-код-выбрасывающий-исключения)
+- [Q29. Что такое `getCause()` и `initCause()`?](#q29-что-такое-getcause-и-initcause)
+
+**Специальные типы и продвинутые темы**
+- [Q30. Что такое `AssertionError` и когда использовать `assert`?](#q30-что-такое-assertionerror-и-когда-использовать-assert)
+- [Q31. Как обработать `OutOfMemoryError` и `StackOverflowError`?](#q31-как-обработать-outofmemoryerror-и-stackoverflowerror)
+- [Q32. Что такое `fail-fast` и `fail-safe` в контексте исключений?](#q32-что-такое-fail-fast-и-fail-safe-в-контексте-исключений)
+- [Q33. Как обрабатывать исключения в `Spring` (`@ExceptionHandler`, `@ControllerAdvice`)?](#q33-как-обрабатывать-исключения-в-spring-exceptionhandler-controlleradvice)
+- [Q34. Антипаттерны обработки исключений](#q34-антипаттерны-обработки-исключений)
+
+**Продвинутые темы**
+- [Q35. Exception Chaining — initCause(), getCause(), addSuppressed()](#q35-exception-chaining--initcause-getcause-addsuppressed)
+- [Q36. Multi-catch (Java 7) — синтаксис, ограничения](#q36-multi-catch-java-7--синтаксис-ограничения)
+- [Q37. Try-with-resources с AutoCloseable — как работает, порядок закрытия](#q37-try-with-resources-с-autocloseable--как-работает-порядок-закрытия)
+- [Q38. Custom Exceptions — best practices, serialVersionUID](#q38-custom-exceptions--best-practices-serializationuid)
+- [Q39. Exception в lambda — как обрабатывать checked exceptions](#q39-exception-в-lambda--как-обрабатывать-checked-exceptions)
+- [Q40. Логирование исключений — правила, что включать в message](#q40-логирование-исключений--правила-что-включать-в-message)
+- [Q41. Performance исключений — стоимость fillInStackTrace, дорогие stack traces](#q41-performance-исключений--стоимость-fillinstacktrace-дорогие-stack-traces)
+- [Q42. Global Exception Handling в Spring — @ControllerAdvice, ProblemDetail](#q42-global-exception-handling-в-spring--controlleradvice-problemdetail)
+
+---
+
+## Q1. (!) Что такое `Exception` и какова иерархия исключений в Java?
+
+Исключение (`Exception`) — это ненормальное событие, возникающее во время выполнения программы и нарушающее нормальный поток инструкций. В Java все исключения являются объектами и наследуются от класса `Throwable`.
+
+Иерархия исключений в Java:
+
+```mermaid
+graph TD
+    Throwable["java.lang.Throwable"]
+    Throwable --> Error["java.lang.Error"]
+    Throwable --> Exception["java.lang.Exception"]
+
+    Error --> OOM["OutOfMemoryError"]
+    Error --> SOE["StackOverflowError"]
+    Error --> NCDFE["NoClassDefFoundError"]
+
+    Exception --> RE["RuntimeException<br/>(unchecked)"]
+    Exception --> IOE["IOException<br/>(checked)"]
+    Exception --> SQLE["SQLException<br/>(checked)"]
+
+    RE --> NPE["NullPointerException"]
+    RE --> IAE["IllegalArgumentException"]
+    RE --> ISE["IllegalStateException"]
+    RE --> AIOOBE["ArrayIndexOutOfBoundsException"]
+    RE --> CCE["ClassCastException"]
+
+    IOE --> FNFE["FileNotFoundException"]
+
+    style Error fill:#f66,stroke:#333
+    style RE fill:#fc9,stroke:#333
+    style IOE fill:#9cf,stroke:#333
+    style SQLE fill:#9cf,stroke:#333
+```
+
+Ключевые моменты:
+- `Throwable` — корень иерархии; имеет два прямых наследника: `Error` и `Exception`
+- `Error` — серьёзные проблемы JVM, от которых обычно невозможно восстановиться
+- `Exception` → **checked** (проверяемые): компилятор требует обработки
+- `RuntimeException` → **unchecked** (непроверяемые): обработка не обязательна
 
 ## Q2. Какова цель ключевых слов `throw` и `throws`?
 
-Ключевое слово `throws` используется для указания того, что метод может вызвать исключение во время его выполнения. Он обеспечивает явную обработку исключений при вызове метода:
+**`throws`** — объявляет в сигнатуре метода, что он может выбросить исключение. Обязывает вызывающий код обрабатывать checked-исключения:
 
 ```java
-public void simpleMethod() throws Exception {
+public void readFile(String path) throws IOException {
+    Files.readAllBytes(Path.of(path));
 }
 ```
 
-Ключевое слово `throw` позволяет нам генерировать объект исключения, чтобы прервать нормальный ход программы. Это чаще всего используется, когда программа не удовлетворяет заданному условию:
+**`throw`** — выбрасывает конкретный объект исключения, прерывая нормальный поток выполнения:
 
 ```java
-if (task.isTooComplicated()) {
-    throw new TooComplicatedException("The task is too complicated");
+public void setAge(int age) {
+    if (age < 0) {
+        throw new IllegalArgumentException("Возраст не может быть отрицательным: " + age);
+    }
+    this.age = age;
 }
 ```
 
-## Q3. Как вы можете обработать `Exception`?
+| Аспект | `throw` | `throws` |
+|--------|---------|----------|
+| Где используется | В теле метода | В сигнатуре метода |
+| Что принимает | Объект исключения | Класс(ы) исключений |
+| Количество | Одно исключение | Несколько через запятую |
+| Обязательность | Программист решает | Компилятор требует для checked |
 
-Используя оператор `try-catch-finally`:
+## Q3. Как обработать `Exception` с помощью `try-catch-finally`?
+
+Используя конструкцию `try-catch-finally`:
 
 ```java
 try {
-    // Код, который может вызвать исключение
-} catch (ExceptionType1 ex) {
-    // Обработка ExceptionType1
-} catch (ExceptionType2 ex) {
-    // Обработка ExceptionType2
+    // «Защищённый» код, который может выбросить исключение
+    String content = Files.readString(Path.of("config.yml"));
+} catch (NoSuchFileException ex) {
+    // Обработка конкретного типа
+    log.warn("Файл конфигурации не найден, используем значения по умолчанию", ex);
+} catch (IOException ex) {
+    // Обработка более общего типа
+    log.error("Ошибка чтения конфигурации", ex);
 } finally {
-    // Код, который всегда выполняется
+    // Выполняется ВСЕГДА — и при нормальном выходе, и при исключении
+    log.info("Попытка чтения конфигурации завершена");
 }
 ```
 
-Блок кода, в котором может возникнуть исключение, заключен в блок try. Этот блок также называют «защищенным» или «защищенным» кодом. Если возникает исключение, выполняется блок catch, соответствующий выбрасываемому исключению, в противном случае все блоки catch игнорируются. Блок finally всегда выполняется после выхода из блока try, вне зависимости от того, было ли внутри него сгенерировано исключение.
+Правила:
+- Блок `try` обязателен; `catch` и `finally` — хотя бы один из двух
+- Блоки `catch` проверяются последовательно — **дочерний тип должен стоять раньше родительского**, иначе ошибка компиляции
+- `finally` выполняется даже при `return` внутри `try` или `catch`
 
-## Q4. Как вы можете поймать несколько `Exceptions`?
+## Q4. Как поймать несколько `Exceptions`?
 
-Существует три способа обработки нескольких исключений в блоке кода. Первый заключается в использовании блока catch, который может обрабатывать все типы выбрасываемых исключений:
+Три способа:
+
+**1. Несколько блоков `catch`** (порядок от более специфичного к общему):
 
 ```java
 try {
-    // Код
+    parseAndSave(data);
+} catch (JsonParseException ex) {
+    log.error("Невалидный JSON", ex);
+} catch (IOException ex) {
+    log.error("Ошибка ввода-вывода", ex);
+}
+```
+
+**2. `Multi-catch` блок** (`Java 7+`) — один блок для нескольких несвязанных типов:
+
+```java
+try {
+    parseAndSave(data);
+} catch (JsonParseException | SQLException ex) {
+    // ex неявно final; нельзя переприсвоить
+    log.error("Ошибка обработки данных", ex);
+}
+```
+
+**3. Общий `catch`** (антипаттерн — использовать осторожно):
+
+```java
+try {
+    riskyOperation();
 } catch (Exception ex) {
-    // Обработка всех исключений
+    // Перехватывает ВСЁ, включая непредвиденные RuntimeException
+    log.error("Неожиданная ошибка", ex);
 }
 ```
 
-Следует иметь в виду, что рекомендуемая практика заключается в использовании максимально точных обработчиков исключений. Слишком широкие обработчики исключений могут сделать ваш код более подверженным ошибкам, перехватывать непредвиденные исключения и вызывать непредвиденное поведение вашей программы.
+В `multi-catch` типы не могут быть связаны наследованием — `catch (IOException | FileNotFoundException ex)` не скомпилируется, т.к. `FileNotFoundException` — подкласс `IOException`.
 
-Второй способ — реализовать несколько блоков catch:
+## Q5. (!) В чём разница между `Checked` и `Unchecked Exception`?
+
+| Критерий | `Checked Exception` | `Unchecked Exception` |
+|----------|--------------------|-----------------------|
+| Наследование | `Exception` (кроме `RuntimeException`) | `RuntimeException` и его подклассы |
+| Проверка компилятором | Да — обязательно `try-catch` или `throws` | Нет — обработка опциональна |
+| Типичная причина | Внешние условия (I/O, сеть, БД) | Ошибки программирования (логика, валидация) |
+| Примеры | `IOException`, `SQLException`, `ClassNotFoundException` | `NullPointerException`, `IllegalArgumentException`, `ArrayIndexOutOfBoundsException` |
+| Восстановимость | Предполагается, что можно восстановиться | Обычно указывает на баг в коде |
 
 ```java
-try {
-    // Код
-} catch (FileNotFoundException ex) {
-    // Обработка FileNotFoundException
-} catch (EOFException ex) {
-    // Обработка EOFException
+// Checked — компилятор заставляет обрабатывать
+public void readConfig() throws IOException {  // ОБЯЗАТЕЛЬНО
+    Files.readString(Path.of("app.conf"));
+}
+
+// Unchecked — компилятор не требует обработки
+public void process(String value) {
+    Objects.requireNonNull(value); // бросает NullPointerException
 }
 ```
 
-Обратите внимание, что если исключения имеют отношения наследования, дочерний тип должен стоять первым, а родительский тип позже. Если мы этого не сделаем, это приведет к ошибке компиляции.
+На собеседовании важно упомянуть дискуссию о checked exceptions: многие фреймворки (включая `Spring`) предпочитают unchecked-исключения для снижения boilerplate-кода. В `Kotlin`, например, checked exceptions вообще отсутствуют (подробнее в [вопросах по Kotlin Exceptions](../kotlin/kotlin-exceptions-interview.md)).
 
-Третий — использовать блок `multi-catch`:
+## Q6. (!) В чём разница между `Exception` и `Error`?
+
+| Критерий | `Exception` | `Error` |
+|----------|------------|---------|
+| Наследование | `Throwable` → `Exception` | `Throwable` → `Error` |
+| Восстановимость | Можно и нужно обрабатывать | Обычно невосстановимые |
+| Источник | Логика приложения, внешние системы | JVM, системные ресурсы |
+| Обработка | Рекомендуется | Не рекомендуется (кроме логирования) |
+
+Основные `Error`:
+- **`OutOfMemoryError`** — JVM не может выделить память, `GC` не помогает
+- **`StackOverflowError`** — переполнение стека (глубокая рекурсия)
+- **`NoClassDefFoundError`** — класс был доступен при компиляции, но не найден в runtime
+- **`ExceptionInInitializerError`** — исключение в статическом инициализаторе
+- **`UnsupportedClassVersionError`** — `.class` файл скомпилирован более новой версией Java
 
 ```java
-try {
-    // Код
-} catch (FileNotFoundException | EOFException ex) {
-    // Обработка обоих типов исключений
+// Пример StackOverflowError — бесконечная рекурсия
+public int factorial(int n) {
+    return n * factorial(n - 1); // нет базового условия!
 }
 ```
 
-Эта функция, впервые представленная в `Java` 7, уменьшает дублирование кода и упрощает его обслуживание.
-
-## Q5. (!) В чем разница между `Checked` и `Unchecked Exception`?
-
-Различие между checked и unchecked исключениями (`Exceptions`) связано с тем, как обязательно обрабатывать эти исключения в коде.
-
-`Checked` исключения (проверяемые исключения) — это исключения, которые должны быть обработаны или объявлены в сигнатуре метода. Они обычно являются результатом внешних условий или ошибок, которые могут быть предсказаны и на которые можно разумно реагировать. Например, `FileNotFoundException` — это checked `Exception`, который может возникнуть при попытке открыть файл, который не существует. Для обработки checked исключений обязательно требуется использование конструкций `try-catch` или объявление исключений в сигнатуре метода.
-
-`Unchecked` исключения (непроверяемые исключения), также известные как `RuntimeExceptions`, не требуют обязательной обработки или объявления. Эти исключения обычно вызываются программными ошибками, такими как деление на ноль (`ArithmeticException`) или вызов метода на нулевой ссылке (`NullPointerException`). Непроверяемые исключения сигнализируют об ошибках, которые обычно не могут быть предсказаны во время выполнения кода. Все непроверяемые исключения наследуются от `IllegalStateException` или `RuntimeException`. Непроверяемые исключения могут быть обработаны с помощью конструкций `try-catch`, но это не является обязательным.
-
-Различие между checked и unchecked исключениями влияет на способ их обработки в коде. `Checked` исключения обязательно должны быть обработаны или объявлены в сигнатуре метода, тогда как unchecked исключения не требуют этого. Это помогает разработчикам понимать важность обработки разных типов исключений и выбирать подходящую стратегию обработки ошибок в своих программных решениях.
-
-## Q6. (!) В чем разница между `Exception` и `Error`?
-
-Исключение — это событие, представляющее состояние, из которого можно выйти, тогда как ошибка представляет внешнюю ситуацию, из которой обычно невозможно выйти. Все ошибки, выдаваемые `JVM`, являются экземплярами `Error` или одного из его подклассов, наиболее распространённые из которых включают, но не ограничиваются:
-
-1. `OutOfMemoryError`: выдается, когда `JVM` не может выделить больше объектов из-за нехватки памяти, а `Garbage Collector` не смог сделать больше доступным.
-2. `StackOverflowError`: возникает, когда пространство стека для потока исчерпано, как правило, из-за слишком глубокой рекурсии приложения.
-3. `ExceptionInInitializerError`: сигнализирует о том, что во время оценки статического инициализатора произошло непредвиденное исключение.
-4. `NoClassDefFoundError`: выдается, когда загрузчик классов пытается загрузить определение класса и не может его найти, обычно потому, что необходимые файлы классов не были найдены в пути к классам.
-5. `UnsupportedClassVersionError`: возникает, когда `JVM` пытается прочитать файл класса и определяет, что версия в файле не поддерживается, обычно потому, что файл был создан с более новой версией `Java`. Хотя ошибку можно обработать с помощью оператора `try`, это не рекомендуется, поскольку нет гарантии, что программа сможет что-либо надежно сделать после возникновения ошибки.
-
-## Q7. Какой `Exception` будет выдан при выполнении следующего блока кода?
+## Q7. Какой `Exception` будет выброшен при выполнении следующего кода?
 
 ```java
 Integer[][] ints = {{1, 2, 3}, {null}, {7, 8, 9}};
 System.out.println("value = " + ints[1][1].intValue());
 ```
 
-Он генерирует исключение `ArrayIndexOutOfBoundsException`, поскольку мы пытаемся получить доступ к позиции, превышающей длину массива.
+Будет выброшен `ArrayIndexOutOfBoundsException`. Второй вложенный массив `{null}` содержит только один элемент (с индексом 0), а мы обращаемся к индексу 1 (`ints[1][1]`), который выходит за границы массива.
+
+Обратите внимание: если бы обращение было к `ints[1][0].intValue()`, то был бы `NullPointerException`, т.к. `ints[1][0]` равно `null`.
 
 ## Q8. Что такое `Exception Chaining`?
 
-Происходит, когда исключение вызывается в ответ на другое исключение. Это позволяет нам открыть полную историю нашей поднятой проблемы:
+Цепочка исключений (`Exception Chaining`) — это механизм оборачивания одного исключения в другое для сохранения полной истории ошибки. Оригинальное исключение передаётся как `cause`:
+
+```java
+public Order processOrder(OrderRequest request) {
+    try {
+        return repository.save(mapToOrder(request));
+    } catch (DataAccessException ex) {
+        throw new OrderProcessingException(
+            "Не удалось сохранить заказ: " + request.getId(), ex  // ex — cause
+        );
+    }
+}
+```
+
+Преимущества:
+- Сохраняется полный стек вызовов от первоначальной ошибки
+- Верхний уровень видит доменное исключение, а не инфраструктурное
+- Логгер выводит всю цепочку: основное → cause → cause of cause
+
+Доступ к причине: `exception.getCause()` возвращает вложенное исключение.
+
+## Q9. (!) Что такое `Stacktrace` и как она связана с `Exception`?
+
+`Stack trace` — это снимок стека вызовов в момент создания исключения. Показывает цепочку вызовов методов от точки возникновения до корня потока:
+
+```
+com.app.OrderService.processOrder(OrderService.java:45)
+com.app.OrderController.createOrder(OrderController.java:23)
+...
+java.lang.Thread.run(Thread.java:829)
+```
+
+Ключевые методы:
+- `exception.getStackTrace()` — возвращает `StackTraceElement[]`
+- `exception.printStackTrace()` — выводит в `System.err` (не использовать в production!)
+- `exception.setStackTrace(StackTraceElement[])` — позволяет изменять стек (редко используется)
+
+Полезные советы:
+- Стек формируется при **создании** исключения (`new`), а не при `throw`
+- Создание стека — **дорогая операция**; для исключений, которые бросаются часто, можно переопределить `fillInStackTrace()` и вернуть `this` для оптимизации
+- Используйте `log.error("message", ex)` вместо `ex.printStackTrace()` — подробнее в [вопросах по логированию](../../logging/logging-interview.md)
+
+## Q10. Зачем создавать подклассы `Exception`?
+
+Создание подклассов (subclassing) нужно, когда:
+1. Ни одно стандартное исключение не описывает ситуацию семантически точно
+2. Нужно добавить дополнительный контекст (поля с кодами ошибок, ID ресурса и т.д.)
+3. Нужна доменная иерархия для группировки ошибок
+
+```java
+public class PaymentException extends RuntimeException {
+    private final String paymentId;
+    private final ErrorCode errorCode;
+
+    public PaymentException(String message, String paymentId, ErrorCode errorCode) {
+        super(message);
+        this.paymentId = paymentId;
+        this.errorCode = errorCode;
+    }
+
+    public PaymentException(String message, String paymentId, ErrorCode errorCode, Throwable cause) {
+        super(message, cause);
+        this.paymentId = paymentId;
+        this.errorCode = errorCode;
+    }
+    // getters
+}
+```
+
+Правило выбора базового класса: если вызывающий код **может и должен** восстановиться — наследовать от `Exception` (checked). Если это ошибка программиста или невосстановимая ситуация — от `RuntimeException` (unchecked).
+
+## Q11. Каковы преимущества механизма `Exceptions`?
+
+1. **Разделение логики и обработки ошибок** — основной код не засорён проверками возвращаемых кодов
+2. **Распространение по стеку вызовов** — исключение автоматически поднимается до обработчика, не нужно передавать вручную
+3. **Группировка по типам** — можно ловить `IOException` для всех I/O-ошибок, а не каждую по отдельности
+4. **Обязательность обработки** — для checked-исключений компилятор гарантирует, что ошибка не проигнорирована
+5. **Информативность** — объект исключения несёт message, cause, stack trace
+
+В отличие от подхода с кодами ошибок (как в C), механизм исключений Java предотвращает ситуацию, когда ошибка «тихо проглатывается».
+
+## Q12. (!) Что такое `try-with-resources` и как он работает?
+
+`try-with-resources` (`Java 7+`) — конструкция, которая автоматически закрывает ресурсы, реализующие интерфейс `AutoCloseable`, после выхода из блока `try`:
+
+```java
+// Java 7+ — ресурс объявляется в try(...)
+try (var reader = new BufferedReader(new FileReader("data.csv"));
+     var writer = new BufferedWriter(new FileWriter("output.csv"))) {
+
+    String line;
+    while ((line = reader.readLine()) != null) {
+        writer.write(transform(line));
+        writer.newLine();
+    }
+} // reader и writer закрываются автоматически, в обратном порядке
+```
+
+```java
+// Java 9+ — можно использовать effectively final переменные
+BufferedReader reader = new BufferedReader(new FileReader("data.csv"));
+try (reader) {  // reader — effectively final
+    return reader.readLine();
+}
+```
+
+Порядок работы:
+
+```mermaid
+graph TD
+    A["Создание ресурсов<br/>(в порядке объявления)"] --> B["Выполнение блока try"]
+    B -->|"Нормальное завершение"| C["Закрытие ресурсов<br/>(в обратном порядке)"]
+    B -->|"Исключение в try"| D["Закрытие ресурсов<br/>(в обратном порядке)"]
+    D -->|"close() успешен"| E["Выброс основного исключения"]
+    D -->|"close() тоже бросает"| F["Исключение close() добавляется<br/>как suppressed к основному"]
+    F --> E
+    C --> G["Продолжение выполнения"]
+```
+
+Преимущества перед ручным `finally`:
+- Нет boilerplate-кода проверки на `null` и вызова `close()`
+- Гарантия закрытия даже при исключении
+- Suppressed exceptions не теряются (в отличие от ручного `finally`, где исключение в `close()` затирает основное)
+
+## Q13. (!) Что такое `Suppressed Exceptions` в `try-with-resources`?
+
+Когда в блоке `try` возникает исключение И при закрытии ресурса (`close()`) тоже возникает исключение — исключение из `close()` не теряется, а добавляется к основному как **suppressed**:
+
+```java
+public class FaultyResource implements AutoCloseable {
+    public void doWork() {
+        throw new RuntimeException("Ошибка в doWork");
+    }
+
+    @Override
+    public void close() {
+        throw new RuntimeException("Ошибка в close");
+    }
+}
+
+try (var resource = new FaultyResource()) {
+    resource.doWork();
+}
+// Результат:
+// Exception: "Ошибка в doWork"
+//   Suppressed: "Ошибка в close"
+```
+
+Доступ к suppressed:
 
 ```java
 try {
-    task.readConfigFile();
-} catch (FileNotFoundException ex) {
-    throw new TaskException("Could not perform task", ex);
-}
-```
-
-## Q9. Что такое `Stacktrace` и как она связана с `Exception`?
-
-Трассировка стека предоставляет имена классов и методов, которые были вызваны, от запуска приложения до момента возникновения исключения. Это очень полезный инструмент отладки, так как он позволяет нам точно определить, где в приложении возникло исключение, и первоначальные причины, которые привели к нему.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q10. Зачем вам `Subclass Exception`?
-
-Если тип исключения не представлен теми, которые уже существуют на платформе `Java`, или если вам нужно предоставить дополнительную информацию клиентскому коду для более точной обработки, вам следует создать пользовательское исключение. Решение о том, следует ли проверять или не проверять пользовательское исключение, полностью зависит от бизнес-кейса. Однако, как правило, если можно ожидать, что код, использующий ваше исключение, восстановится после него, создайте проверенное исключение, в противном случае сделайте его непроверенным. Кроме того, вы должны наследовать от наиболее конкретного подкласса `Exception`, который тесно связан с тем, который вы хотите сгенерировать. Если такого класса нет, то выберите `Exception` в качестве родителя.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q11. Каковы некоторые преимущества `Exceptions`?
-
-Традиционные методы обнаружения и обработки ошибок часто приводят к тому, что спагетти-код трудно поддерживать и трудно читать. Однако исключения позволяют нам отделить основную логику нашего приложения от деталей того, что делать, когда происходит что-то неожиданное. Кроме того, поскольку `JVM` просматривает стек вызовов в обратном направлении, чтобы найти любые методы, заинтересованные в обработке конкретного исключения, мы получаем возможность распространять ошибку вверх по стеку вызовов без написания дополнительного кода. Кроме того, поскольку все исключения, создаваемые в программе, являются объектами, их можно группировать или классифицировать на основе иерархии классов. Это позволяет нам перехватывать группу исключений в одном обработчике исключений, указывая суперкласс исключения в блоке перехвата.
-
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
-
-## Q12. (!) Как создать какой-либо `Exception` внутри тела лямбда-выражения?
-
-При использовании стандартного функционального интерфейса, уже предоставленного `Java`, вы можете генерировать только непроверенные исключения, потому что стандартные функциональные интерфейсы не имеют предложения «throws» в сигнатурах методов:
-
-```java
-List<Integer> integers = Arrays.asList(3, 9, 7, 0, 10, 20);
-integers.forEach(i -> {
-    if (i == 0) {
-        throw new IllegalArgumentException("Zero not allowed");
+    // ...
+} catch (RuntimeException ex) {
+    log.error("Основная ошибка: {}", ex.getMessage());
+    for (Throwable suppressed : ex.getSuppressed()) {
+        log.error("  Suppressed: {}", suppressed.getMessage());
     }
-    System.out.println(Math.PI / i);
-});
+}
 ```
 
-Однако, если вы используете пользовательский функциональный интерфейс, возможно создание проверенных исключений:
+Без `try-with-resources` (ручной `finally`) исключение в `close()` **затирает** исключение из `try` — suppressed-механизм решает эту проблему.
+
+## Q14. Что такое `addSuppressed()` и `getSuppressed()`?
+
+Методы класса `Throwable` для работы с подавленными исключениями:
+
+- `addSuppressed(Throwable)` — добавляет подавленное исключение
+- `getSuppressed()` — возвращает массив `Throwable[]` подавленных исключений
+
+JVM использует их автоматически в `try-with-resources`. В пользовательском коде полезны при освобождении нескольких ресурсов вручную:
 
 ```java
-@FunctionalInterface
-public static interface CheckedFunction<T> {
-    void apply(T t) throws Exception;
-}
-
-public void processTasks(List<Task> tasks, CheckedFunction<Task> checkedFunction) {
-    for (Task task : tasks) {
+public void closeAll(List<AutoCloseable> resources) {
+    Throwable primary = null;
+    for (AutoCloseable resource : resources) {
         try {
-            checkedFunction.apply(task);
-        } catch (Exception e) {
-            // Обработка исключения
+            resource.close();
+        } catch (Exception ex) {
+            if (primary == null) {
+                primary = ex;
+            } else {
+                primary.addSuppressed(ex); // не теряем ошибки при close
+            }
         }
     }
+    if (primary != null) {
+        throw new RuntimeException("Ошибка при закрытии ресурсов", primary);
+    }
 }
+```
 
-processTasks(taskList, t -> {
-    throw new Exception("Something happened");
+## Q15. (!) Как выбросить `Exception` внутри лямбда-выражения?
+
+Стандартные функциональные интерфейсы (`Function`, `Consumer`, `Supplier`) **не объявляют checked exceptions** в сигнатуре. Поэтому:
+
+**Unchecked — работают напрямую:**
+
+```java
+List<Integer> numbers = List.of(3, 9, 7, 0, 10);
+numbers.forEach(i -> {
+    if (i == 0) {
+        throw new IllegalArgumentException("Ноль недопустим");
+    }
+    System.out.println(100 / i);
 });
 ```
 
-## Q13. Как переопределить метод, выдающий `Exception`?
+**Checked — нужен обходной путь.** Три подхода:
 
-Правила при переопределении: (1) если родительский метод не объявляет исключений — дочерний не может объявлять checked, но может unchecked. (2) Если родитель объявляет checked — дочерний может объявлять те же, подмножество или более узкие; нельзя объявлять более широкие checked или checked, которых нет у родителя. (3) `Unchecked` в родителе — дочерний может объявлять любые unchecked или не объявлять.
+1. **Обернуть в unchecked внутри лямбды:**
+```java
+files.forEach(path -> {
+    try {
+        Files.readString(path);
+    } catch (IOException e) {
+        throw new UncheckedIOException(e); // стандартный враппер
+    }
+});
+```
+
+2. **Создать свой функциональный интерфейс с `throws`:**
+```java
+@FunctionalInterface
+public interface CheckedConsumer<T> {
+    void accept(T t) throws Exception;
+}
+
+public static <T> Consumer<T> unchecked(CheckedConsumer<T> consumer) {
+    return t -> {
+        try {
+            consumer.accept(t);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    };
+}
+
+// Использование
+files.forEach(unchecked(path -> Files.readString(path)));
+```
+
+3. **Sneaky throws** (трюк со стиранием типов — см. Q18)
+
+Подробнее о лямбдах — в [вопросах по Java 8](java-8-interview.md).
+
+## Q16. Как переопределить метод, выбрасывающий `Exception`?
+
+Правила контракта `throws` при переопределении (контравариантность по исключениям):
+
+| Родительский метод | Дочерний метод может |
+|---|---|
+| Нет `throws` | Только unchecked (любые) |
+| `throws IOException` | `throws FileNotFoundException` (уже или равно), не `throws Exception` (шире) |
+| `throws RuntimeException` | Любые unchecked |
 
 ```java
 class Parent {
-    void doSomething() { }
-}
-class Child extends Parent {
-    void doSomething() throws IllegalArgumentException { } // OK: unchecked
-    // void doSomething() throws IOException { } // Ошибка: checked в родителе не объявлен
-}
-
-class Parent2 {
-    void doSomething() throws IOException { }
-}
-class Child2 extends Parent2 {
-    void doSomething() throws FileNotFoundException { } // OK: более узкое
-    // void doSomething() throws Exception { } // Ошибка: более широкое
-}
-```
-
-Когда метод родительского класса имеет throws с непроверяемым исключением, дочерний может объявлять любые unchecked:
-
-```java
-class Parent {
-    void doSomething() throws IllegalArgumentException {
-    }
+    void process() throws IOException { }
 }
 
 class Child extends Parent {
-    void doSomething() throws ArithmeticException, BufferOverflowException {
-    }
+    @Override
+    void process() throws FileNotFoundException { }  // OK: подтип IOException
+    // void process() throws Exception { }           // ОШИБКА: шире чем IOException
+    // void process() throws SQLException { }        // ОШИБКА: другой checked
 }
 ```
 
-## Q14. Будет ли компилироваться следующий код?
+Причина: вызывающий код работает с типом `Parent` и обрабатывает только `IOException`. Если бы `Child` мог бросать `SQLException`, обработчик бы его не поймал.
+
+Это связано с принципом подстановки Лисков (LSP) — подробнее в [вопросах по Java OOP](java-oop-interview.md).
+
+## Q17. Будет ли компилироваться следующий код?
 
 ```java
 void doSomething() {
@@ -290,108 +574,1013 @@ void doSomething() {
 }
 ```
 
-Да. При цепочке исключений компилятор заботится только о первом в цепочке, и, поскольку он обнаруживает непроверенное исключение, нам не нужно добавлять предложение throws.
+**Да**, код компилируется. `RuntimeException` — unchecked, поэтому не требует `throws` в сигнатуре. Внутренний `Exception` передаётся как `cause` через конструктор `RuntimeException(Throwable cause)` — это обычная цепочка исключений. Компилятор проверяет только тип **выбрасываемого** исключения, а не его причины.
 
-## Q15. (!) Есть ли способ генерировать checked `Exception` из метода, который не имеет пункта `throws`?
+## Q18. Есть ли способ выбросить checked `Exception` из метода без `throws`?
 
-Да. Можно использовать стирание типов: метод объявляет throws T, компилятор считает, что бросается непроверяемое исключение, а фактически бросается проверенное:
+Да, через трюк с дженериками и стиранием типов (**sneaky throw**):
 
 ```java
-public <T extends Throwable> T sneakyThrow(Throwable ex) throws T {
-    throw (T) ex;
+@SuppressWarnings("unchecked")
+public static <T extends Throwable> void sneakyThrow(Throwable ex) throws T {
+    throw (T) ex;  // компилятор выводит T = RuntimeException
 }
 
 public void methodWithoutThrows() {
-    this.<RuntimeException>sneakyThrow(new IOException("Checked"));
+    sneakyThrow(new IOException("Checked, но без throws!"));
+    // Компилятор считает, что бросается RuntimeException
+    // В runtime реально летит IOException
 }
 ```
 
-## Q16. Что такое `try-with-resources` и зачем он нужен?
+Этот подход используется в библиотеках (`Lombok @SneakyThrows`, `Vavr`). Однако это **антипаттерн** в бизнес-коде — вызывающий код не ожидает checked exception и не обрабатывает его.
 
-`try-with-resources` (`Java 7+`) — try (`Resource` r = ...) автоматически закрывает ресурсы, реализующие `AutoCloseable`, после выхода из блока (включая исключение). Замена ручного finally с close(); гарантирует закрытие даже при исключении. Ресурсы закрываются в обратном порядке объявления. Исключение при close() добавляется как suppressed к основному.
+## Q19. (!) Когда создавать кастомное исключение и как его правильно оформить?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+**Когда создавать:**
+- Нужна доменная семантика (например, `OrderNotFoundException`, `InsufficientFundsException`)
+- Нужно передать дополнительный контекст (коды ошибок, ID ресурсов)
+- Стандартные исключения недостаточно точно описывают ситуацию
 
-## Q17. Как правильно логировать исключения?
+**Правила оформления:**
 
-Передавать исключение в логгер: `log.error("message", exception)` — полный stack trace в логе. Не логировать только `exception.getMessage()` — теряется stack trace. Уровень: `ERROR` для неожиданных, `WARN` для ожидаемых (например, повторная попытка). Не глотать исключение без логирования; при повторном throw — оборачивать с cause.
+```java
+public class OrderNotFoundException extends RuntimeException {
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+    private final String orderId;
 
-## Q18. Что такое `Suppressed Exceptions` в `try-with-resources`?
+    // Минимум 2 конструктора: с message и с message + cause
+    public OrderNotFoundException(String orderId) {
+        super("Заказ не найден: " + orderId);
+        this.orderId = orderId;
+    }
 
-При `try-with-resources` если и в блоке try, и при close() возникли исключения — исключение при close() добавляется к основному через `addSuppressed()`. Основное исключение бросается; suppressed доступны через `getSuppressed()`. Логгеры выводят и основное, и suppressed. Гарантирует видимость всех ошибок при освобождении ресурсов.
+    public OrderNotFoundException(String orderId, Throwable cause) {
+        super("Заказ не найден: " + orderId, cause);
+        this.orderId = orderId;
+    }
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+    public String getOrderId() {
+        return orderId;
+    }
+}
+```
 
-## Q19. Когда создавать кастомное исключение?
+**Best practices:**
+- Суффикс `Exception` в имени класса
+- Наследовать от наиболее подходящего типа, а не просто от `Exception`
+- Обязательно конструктор с `Throwable cause` для цепочки
+- Сделать поля `final` и класс `Serializable` (если может сериализоваться)
+- Не создавать слишком глубокую иерархию — обычно достаточно 1-2 уровней
+- Переиспользовать стандартные исключения (`IllegalArgumentException`, `IllegalStateException`) где уместно
 
-Когда нужна семантика домена (например, `OrderNotFoundException`); когда нужно добавить контекст (поля, коды ошибок); когда стандартных исключений недостаточно. Наследовать от `RuntimeException` (unchecked) или `Exception` (checked) в зависимости от политики. Избегать глубокой иерархии; переиспользовать стандартные исключения где уместно.
+## Q20. Когда использовать `RuntimeException` vs checked `Exception`?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+| Критерий | Checked `Exception` | `RuntimeException` |
+|----------|---------------------|--------------------|
+| Когда | Вызывающий может и должен восстановиться | Ошибка программиста или невосстановимая ситуация |
+| Примеры | `IOException`, `SQLException` | `NullPointerException`, `IllegalArgumentException` |
+| Тренд индустрии | Реже в новых API | Чаще — `Spring`, `Hibernate`, `Kotlin` |
+| `throws` в сигнатуре | Обязательно | Нет |
 
-## Q20. Что такое `fail-fast` и `fail-safe` в контексте исключений?
+Современная практика (особенно в `Spring`-экосистеме): почти все доменные исключения — **unchecked**. Checked используются только для ситуаций, где вызывающий код **обязан** принять решение (повторить, использовать fallback и т.д.).
 
-`Fail-fast` — при обнаружении ошибки сразу бросать исключение (например, `ConcurrentModificationException` при изменении коллекции во время итерации). `Fail-safe` — не бросать; продолжать с копией или слабой консистентностью (например, `CopyOnWriteArrayList`). Выбор по требованию: строгая корректность vs доступность.
+## Q21. (!) Best practices при проектировании иерархии исключений
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+1. **Наследовать от подходящего базового типа** — не от `Exception` напрямую, если есть более подходящий
+2. **Включать контекст** — сообщение, cause, дополнительные поля
+3. **Документировать `@throws`** в Javadoc
+4. **Переиспользовать стандартные** где уместно:
+   - `IllegalArgumentException` — невалидный аргумент
+   - `IllegalStateException` — объект в неправильном состоянии
+   - `UnsupportedOperationException` — операция не поддерживается
+   - `NullPointerException` — аргумент `null` (с Java 14 — информативное сообщение)
+5. **Не создавать исключение на каждую ошибку** — группировать по смыслу
+6. **Именование**: `<Причина>Exception` — `OrderNotFoundException`, `PaymentDeclinedException`
 
-## Q21. Как обработать исключения в многопоточном коде?
+```java
+// Хорошая иерархия для платёжной системы
+public abstract class PaymentException extends RuntimeException { ... }
+public class PaymentDeclinedException extends PaymentException { ... }
+public class PaymentTimeoutException extends PaymentException { ... }
+public class InsufficientFundsException extends PaymentException { ... }
 
-Исключение в потоке не пробрасывается в вызывающий; поток может завершиться тихо. `Thread.setUncaughtExceptionHandler()` — обработчик для непойманных исключений потока. `ExecutorService` — исключения из задач теряются; результат через `Future.get()` бросает `ExecutionException` с cause. В `CompletableFuture` — exceptionally, handle для обработки.
+// Вызывающий код может ловить как конкретные, так и общий PaymentException
+try {
+    paymentService.charge(order);
+} catch (InsufficientFundsException ex) {
+    notifyUser("Недостаточно средств");
+} catch (PaymentException ex) {
+    retryLater(order);
+}
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+## Q22. Что такое `try-catch-finally` и каков порядок выполнения?
 
-## Q22. Что такое `getCause()` и `initCause()`?
+Порядок выполнения:
 
-`getCause()` — возвращает причину исключения (вложенное исключение). `initCause(Throwable)` — устанавливает причину (один раз); используется в конструкторе при обёртке. `Exception(Throwable cause)` — конструктор с причиной. Цепочка причин помогает при отладке; логировать полную цепочку (cause of cause).
+```mermaid
+graph TD
+    A["try блок"] -->|"Нет исключения"| B["finally блок"]
+    A -->|"Исключение"| C{"catch соответствует?"}
+    C -->|"Да"| D["catch блок"]
+    C -->|"Нет"| E["finally блок"]
+    D --> F["finally блок"]
+    B --> G["Продолжение программы"]
+    F --> G
+    E --> H["Исключение пробрасывается выше"]
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+```java
+public String readFirstLine(String path) {
+    BufferedReader reader = null;
+    try {
+        reader = new BufferedReader(new FileReader(path));
+        return reader.readLine(); // (1) return здесь
+    } catch (IOException ex) {
+        log.error("Ошибка чтения", ex);
+        return "default";          // (2) или return здесь
+    } finally {
+        // (3) Выполнится ВСЕГДА — даже после return!
+        if (reader != null) {
+            try { reader.close(); } catch (IOException ignored) {}
+        }
+    }
+}
+```
 
-## Q23. Когда использовать `RuntimeException` vs checked `Exception`?
+Начиная с `Java 7`, предпочтительнее использовать `try-with-resources` (см. Q12).
 
-`Checked` — когда вызывающий обязан обработать или объявить throws; для ожидаемых восстановимых ситуаций (`IO`, парсинг). `RuntimeException` — для ошибок программирования, невосстановимых ситуаций; не обязывать вызывающего обрабатывать. В `API` часто предпочитают unchecked для гибкости; checked — где восстановление возможно и ожидаемо.
+## Q23. Что произойдёт, если в `finally` есть `return`?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+`return` в блоке `finally` **перезаписывает** `return` из `try` или `catch` — это известный антипаттерн:
 
-## Q24. Что такое `try-catch-finally` и порядок выполнения?
+```java
+public int getValue() {
+    try {
+        return 1;
+    } finally {
+        return 2; // ВСЕГДА вернёт 2!
+    }
+}
+```
 
-try — основной код; catch — обработка исключений; finally — выполняется всегда (нормальный выход или исключение). Порядок: try → при исключении catch → finally; при отсутствии исключения try → finally. return в finally перезаписывает return в try/ catch; не рекомендуется. С `Java` 7 предпочтительнее `try-with-resources`.
+Ещё хуже — `return` в `finally` **подавляет исключения**:
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+```java
+public int getValue() {
+    try {
+        throw new RuntimeException("Ошибка!");
+    } finally {
+        return 0; // Исключение ПОТЕРЯНО! Метод тихо вернёт 0
+    }
+}
+```
 
-## Q25. Как перехватить все исключения (catch `Throwable`)?
+Это одна из причин, почему **никогда не следует использовать `return` в `finally`**. IDE и статические анализаторы предупреждают об этом.
 
-catch (`Throwable` t) перехватывает и `Error`, и `Exception`. Обычно не перехватывать `Error` (`OutOfMemoryError`, `StackOverflowError`) — восстановление редко возможно. Использовать `Throwable` только в верхнеуровневых обработчиках (например, логирование падения потока). В типичном коде ловить `Exception` или конкретные типы.
+## Q24. Как перехватить все исключения (`catch Throwable`)?
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+`catch (Throwable t)` перехватывает и `Exception`, и `Error`:
 
-## Q26. Что такое `addSuppressed()` и когда использовать?
+```java
+try {
+    riskyOperation();
+} catch (Throwable t) {
+    log.error("Критическая ошибка", t);
+    // Попытка graceful shutdown
+}
+```
 
-`addSuppressed(Throwable)` — добавить подавленное исключение (например, при close() в `try-with-resources`). `getSuppressed()` — массив подавленных исключений. Используется `JVM` в `try-with-resources`; в кастомном коде — при освобождении ресурсов в finally, когда основное исключение уже брошено. Сохраняет полную картину ошибок.
+**Когда допустимо ловить `Throwable`:**
+- В верхнеуровневом обработчике потока (логирование перед завершением)
+- В фреймворках (контейнер сервлетов, `Spring`)
+- В `UncaughtExceptionHandler`
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+**Когда НЕ надо:**
+- В обычном бизнес-коде — ловить конкретные типы
+- Нельзя «восстановиться» после `OutOfMemoryError` или `StackOverflowError`
 
-## Q27. Как тестировать код, выбрасывающий исключения?
+Правило: в бизнес-логике ловите `Exception` или конкретные подтипы; `Throwable` — только на границах системы.
 
-`assertThrows(Exception.class, () -> method())` (`JUnit 5`) — проверить тип и выполнить код. `assertThrows` возвращает исключение для проверки сообщения или cause. В `JUnit 4`: `@Test(expected = Exception.class)` или `try-fail-catch`. Проверять и сообщение при необходимости: `assertEquals("expected message", ex.getMessage())`.
+## Q25. (!) Как обработать исключения в многопоточном коде?
 
-В production-процессе это обычно закрепляют автоматизированными проверками и чёткими quality gates, чтобы правило не зависело от ручного контроля. На собеседовании полезно назвать минимальный набор тестов/чеков и как вы избегаете ложных срабатываний.
+Исключение в потоке **не пробрасывается** в создавший его поток — каждый поток имеет свой стек. Способы обработки:
 
-## Q28. Что такое `AssertionError` и когда использовать?
+**1. `Thread.setUncaughtExceptionHandler`** — для «сырых» потоков:
 
-`AssertionError` — непроверяемое исключение при падении assert (при включённых assertion: -ea). Использовать assert для инвариантов и допущений в коде (разработка, тесты); в production часто отключены. Не заменять проверки входных данных; не полагаться на выполнение assert в production без -ea.
+```java
+Thread thread = new Thread(() -> {
+    throw new RuntimeException("Ошибка в потоке");
+});
+thread.setUncaughtExceptionHandler((t, ex) ->
+    log.error("Необработанное исключение в потоке {}: {}", t.getName(), ex.getMessage(), ex)
+);
+thread.start();
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+**2. `Future.get()`** — через `ExecutorService`:
 
-## Q29. Как обработать `OutOfMemoryError` и `StackOverflowError`?
+```java
+ExecutorService executor = Executors.newSingleThreadExecutor();
+Future<String> future = executor.submit(() -> {
+    throw new IOException("Ошибка I/O");
+});
 
-`OutOfMemoryError` — нехватка `heap`; обработка редко помогает (освободить память сложно). Увеличить `heap`, найти утечки, оптимизировать. `StackOverflowError` — переполнение стека (бесконечная рекурсия); исправить логику. Ловить `Error` только для логирования и graceful shutdown; не пытаться «восстановиться» без понимания причины.
+try {
+    String result = future.get(); // блокирующий вызов
+} catch (ExecutionException ex) {
+    Throwable cause = ex.getCause(); // IOException — оригинальное исключение
+    log.error("Задача завершилась с ошибкой", cause);
+}
+```
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+**3. `CompletableFuture`** — реактивная обработка:
 
-## Q30. Best practices при проектировании иерархии исключений?
+```java
+CompletableFuture.supplyAsync(() -> riskyOperation())
+    .exceptionally(ex -> {
+        log.error("Ошибка: {}", ex.getMessage());
+        return fallbackValue;
+    })
+    .thenAccept(result -> process(result));
+```
 
-Наследовать от подходящего базового типа (`Exception / RuntimeException`); не создавать лишних уровней. Включать контекст (сообщение, cause); переопределять конструкторы. Документировать в `Javadoc` (`@throws`). Избегать дублирования; переиспользовать стандартные исключения (`IllegalArgumentException`, `IllegalStateException`). Именование: суффикс `Exception` или `Error`.
+Подробнее — в [вопросах по Java Concurrency](java-concurrency-interview.md).
 
-Практическая ценность ответа обычно повышается, если дополнить определение операционным контекстом: как решение ведёт себя под нагрузкой, при сбоях и в процессе сопровождения. На интервью ожидают, что вы назовёте критерии выбора и способ валидации решения через метрики и проверяемый сценарий.
+## Q26. Что такое `UncaughtExceptionHandler`?
+
+Интерфейс `Thread.UncaughtExceptionHandler` вызывается, когда поток завершается из-за необработанного исключения:
+
+```java
+// Глобальный обработчик для всех потоков
+Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
+    log.error("FATAL: Необработанное исключение в потоке '{}': {}",
+        thread.getName(), ex.getMessage(), ex);
+    // Можно отправить алерт, записать метрику и т.д.
+});
+```
+
+Порядок поиска обработчика JVM:
+1. Обработчик конкретного потока (`thread.setUncaughtExceptionHandler`)
+2. Обработчик `ThreadGroup`
+3. Дефолтный обработчик (`Thread.setDefaultUncaughtExceptionHandler`)
+4. Если не найден — стек-трейс в `System.err`
+
+## Q27. (!) Как правильно логировать исключения?
+
+```java
+// ПРАВИЛЬНО — передаём исключение как последний аргумент
+log.error("Ошибка обработки заказа orderId={}", orderId, exception);
+
+// НЕПРАВИЛЬНО — теряется stack trace!
+log.error("Ошибка: " + exception.getMessage());
+
+// НЕПРАВИЛЬНО — конкатенация строк (performance)
+log.error("Ошибка: " + exception);
+
+// НЕПРАВИЛЬНО — printStackTrace() вместо логгера
+exception.printStackTrace(); // идёт в System.err, не в лог-файл
+```
+
+| Уровень | Когда использовать |
+|---------|-------------------|
+| `ERROR` | Неожиданные ошибки, требующие внимания |
+| `WARN` | Ожидаемые ошибки: retry, fallback |
+| `DEBUG` | Бизнес-валидация, информационные |
+
+**Антипаттерны:**
+- «Проглотить» исключение: пустой `catch` без логирования
+- Логировать И пробрасывать — двойное логирование одной ошибки
+- Логировать только `getMessage()` без стек-трейса
+
+Подробнее — в [вопросах по логированию](../../logging/logging-interview.md).
+
+## Q28. Как тестировать код, выбрасывающий исключения?
+
+**JUnit 5 — `assertThrows`:**
+
+```java
+@Test
+void shouldThrowWhenOrderNotFound() {
+    var exception = assertThrows(OrderNotFoundException.class,
+        () -> orderService.findById("non-existent-id")
+    );
+
+    assertEquals("non-existent-id", exception.getOrderId());
+    assertThat(exception.getMessage()).contains("не найден");
+}
+```
+
+**AssertJ — более выразительный синтаксис:**
+
+```java
+@Test
+void shouldThrowWhenInvalidInput() {
+    assertThatThrownBy(() -> service.process(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("не может быть null")
+        .hasNoCause();
+}
+
+// Или через catchThrowable
+Throwable thrown = catchThrowable(() -> service.process(null));
+assertThat(thrown).isInstanceOf(IllegalArgumentException.class);
+```
+
+**Проверка, что исключение НЕ выбрасывается:**
+
+```java
+@Test
+void shouldNotThrow() {
+    assertDoesNotThrow(() -> service.process(validInput));
+}
+```
+
+Подробнее о тестировании — в [вопросах по модульному тестированию](../../testing/unit-testing-interview.md).
+
+## Q29. Что такое `getCause()` и `initCause()`?
+
+Методы `Throwable` для работы с цепочкой исключений:
+
+```java
+// getCause() — получить причину
+try {
+    processOrder();
+} catch (OrderProcessingException ex) {
+    Throwable root = ex.getCause();          // DataAccessException
+    Throwable deeper = root.getCause();      // SQLException
+    log.error("Корневая причина: {}", deeper.getMessage());
+}
+
+// initCause() — установить причину (один раз!)
+IOException ioEx = new IOException("Ошибка чтения");
+ioEx.initCause(new DiskFailureException("Диск повреждён"));
+// Повторный вызов initCause() бросит IllegalStateException
+```
+
+Предпочтительнее использовать конструктор с `Throwable cause` вместо `initCause()` — это более идиоматично. Метод `initCause()` существует для обратной совместимости с исключениями, у которых нет конструктора с `cause`.
+
+## Q30. Что такое `AssertionError` и когда использовать `assert`?
+
+`AssertionError` — наследник `Error`, выбрасывается при нарушении assert-условия:
+
+```java
+public void processAge(int age) {
+    assert age >= 0 : "Возраст не может быть отрицательным: " + age;
+    // ...
+}
+```
+
+Ключевые моменты:
+- По умолчанию assertions **отключены** в JVM; включаются флагом `-ea` (`-enableassertions`)
+- Используются для **инвариантов** и **внутренних допущений** (не для проверки входных данных!)
+- В тестах используется `assert` из JUnit/AssertJ, а не `assert` из языка
+- **Не заменяют** валидацию аргументов — для этого `Objects.requireNonNull()`, `IllegalArgumentException`
+
+```java
+// НЕ использовать assert для проверки аргументов публичного API!
+public void setName(String name) {
+    // НЕПРАВИЛЬНО: assert name != null;
+    // ПРАВИЛЬНО:
+    Objects.requireNonNull(name, "name must not be null");
+}
+```
+
+## Q31. Как обработать `OutOfMemoryError` и `StackOverflowError`?
+
+Оба наследуют `Error` и обычно сигнализируют о серьёзных проблемах, не решаемых в runtime.
+
+**`OutOfMemoryError`:**
+- Не ловить в бизнес-коде — после OOM состояние JVM непредсказуемо
+- Диагностика: `-XX:+HeapDumpOnOutOfMemoryError` для автоматического heap dump
+- Профилактика: мониторинг памяти, поиск утечек (Eclipse MAT, VisualVM), увеличение `-Xmx`
+- Подробнее — в [вопросах по управлению памятью](../../performance/memory-management-interview.md)
+
+**`StackOverflowError`:**
+- Причина: слишком глубокая рекурсия (обычно бесконечная)
+- Исправление: добавить базовый случай рекурсии, заменить на итеративный алгоритм
+- Увеличить стек потока: `-Xss` (временная мера)
+
+```java
+// Безопасная рекурсия с базовым случаем
+public int factorial(int n) {
+    if (n < 0) throw new IllegalArgumentException("n < 0");
+    if (n <= 1) return 1;        // базовый случай!
+    return n * factorial(n - 1);
+}
+```
+
+Ловить `Error` допустимо только для логирования и graceful shutdown.
+
+## Q32. Что такое `fail-fast` и `fail-safe` в контексте исключений?
+
+| Критерий | `Fail-fast` | `Fail-safe` |
+|----------|------------|-------------|
+| Поведение | При ошибке немедленно бросить исключение | Продолжить работу, избежав сбоя |
+| Пример в коллекциях | `ArrayList` iterator → `ConcurrentModificationException` | `CopyOnWriteArrayList` — работает с копией |
+| Пример в API | `Objects.requireNonNull()` в начале метода | Возврат default-значения или `Optional.empty()` |
+| Когда использовать | Баги должны обнаруживаться рано | Доступность важнее строгой корректности |
+
+```java
+// Fail-fast: валидация аргументов в начале метода
+public void createUser(String email, String name) {
+    Objects.requireNonNull(email, "email");
+    Objects.requireNonNull(name, "name");
+    if (!email.contains("@")) {
+        throw new IllegalArgumentException("Невалидный email: " + email);
+    }
+    // ... основная логика только после проверок
+}
+
+// Fail-fast в коллекциях
+List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+for (String s : list) {
+    list.remove(s); // ConcurrentModificationException!
+}
+```
+
+Рекомендация: в бизнес-логике — **fail-fast** (обнаруживать баги рано); на границах системы — **fail-safe** с логированием (не ронять весь сервис из-за одного запроса).
+
+## Q33. Как обрабатывать исключения в `Spring` (`@ExceptionHandler`, `@ControllerAdvice`)?
+
+`Spring MVC` предоставляет централизованный механизм обработки исключений для REST API:
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFound(OrderNotFoundException ex) {
+        return new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadRequest(IllegalArgumentException ex) {
+        return new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneral(Exception ex) {
+        log.error("Необработанная ошибка", ex);
+        return new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "Внутренняя ошибка сервера",  // Не раскрывать детали клиенту!
+            LocalDateTime.now()
+        );
+    }
+}
+
+public record ErrorResponse(int status, String message, LocalDateTime timestamp) {}
+```
+
+Приоритет поиска обработчика:
+1. `@ExceptionHandler` в самом контроллере
+2. `@ExceptionHandler` в `@ControllerAdvice` / `@RestControllerAdvice`
+3. Дефолтный обработчик Spring
+
+Подробнее — в [вопросах по Spring Boot](../../frameworks/spring/spring-boot-interview.md) и [Spring MVC](../../frameworks/spring/spring-mvc-interview.md).
+
+## Q34. Антипаттерны обработки исключений
+
+Наиболее частые ошибки при работе с исключениями:
+
+**1. Пустой `catch` (swallowing exceptions):**
+```java
+// ПЛОХО — ошибка полностью потеряна
+try {
+    riskyOperation();
+} catch (Exception e) {
+    // ничего
+}
+```
+
+**2. `catch (Exception e)` везде:**
+```java
+// ПЛОХО — ловит всё подряд, включая NullPointerException
+try {
+    process();
+} catch (Exception e) {
+    return defaultValue;
+}
+```
+
+**3. Логирование + пробрасывание (double logging):**
+```java
+// ПЛОХО — одна ошибка залогируется дважды
+try {
+    process();
+} catch (IOException e) {
+    log.error("Ошибка", e);
+    throw e;  // Обработчик выше тоже залогирует
+}
+```
+
+**4. Использование исключений для flow control:**
+```java
+// ПЛОХО — исключения дорогие, не использовать для обычной логики
+try {
+    int value = Integer.parseInt(input);
+    return value;
+} catch (NumberFormatException e) {
+    return 0; // "нормальный" сценарий через исключение
+}
+```
+
+**5. `throw new Exception()` (потеря типизации):**
+```java
+// ПЛОХО — вызывающий код не знает, что именно произошло
+throw new Exception("Что-то пошло не так");
+// ХОРОШО — конкретный тип
+throw new OrderNotFoundException(orderId);
+```
+
+Следование этим правилам — признак зрелого разработчика, что ценится на собеседовании.
+
+---
+
+## Q35. Exception Chaining — initCause(), getCause(), addSuppressed()
+
+**Exception Chaining** — механизм сохранения первопричины исключения при оборачивании в другое.
+
+**initCause() и getCause():**
+```java
+// При оборачивании всегда передавать original exception как cause
+public User loadUser(long id) {
+    try {
+        return userRepository.findById(id);
+    } catch (SQLException e) {
+        // ХОРОШО — cause сохранён
+        throw new UserLoadException("Failed to load user " + id, e);
+        // Эквивалентно:
+        // UserLoadException ex = new UserLoadException("...");
+        // ex.initCause(e); throw ex;
+    }
+}
+
+// Доступ к причине
+try {
+    loadUser(42L);
+} catch (UserLoadException e) {
+    Throwable cause = e.getCause();          // SQLException
+    Throwable rootCause = ExceptionUtils.getRootCause(e);  // Apache Commons — идёт по цепочке
+    log.error("Root cause: {}", rootCause.getMessage());
+}
+```
+
+**addSuppressed() / getSuppressed():**
+```java
+// Исключение в блоке finally не должно подавлять основное
+Exception primaryException = null;
+try {
+    connection.execute(sql);
+} catch (Exception e) {
+    primaryException = e;
+    throw e;
+} finally {
+    try {
+        connection.close();
+    } catch (Exception closeException) {
+        if (primaryException != null) {
+            primaryException.addSuppressed(closeException);  // не теряем info
+        }
+        // Иначе просто пробрасываем closeException
+    }
+}
+// try-with-resources делает это автоматически!
+
+// Получить suppressed
+for (Throwable suppressed : exception.getSuppressed()) {
+    log.warn("Suppressed: {}", suppressed.getMessage());
+}
+```
+
+**Правило:** никогда не создавать исключение без передачи cause — `throw new ServiceException("error")` без `e` теряет стектрейс первопричины.
+
+---
+
+## Q36. Multi-catch (Java 7) — синтаксис, ограничения
+
+**Multi-catch** — перехват нескольких типов исключений в одном `catch`:
+
+```java
+// До Java 7 — дублирование
+try {
+    processRequest(request);
+} catch (IOException e) {
+    log.error("IO error", e);
+    throw new ServiceException(e);
+} catch (ParseException e) {
+    log.error("Parse error", e);
+    throw new ServiceException(e);
+}
+
+// Java 7+ — multi-catch (pipe separator)
+try {
+    processRequest(request);
+} catch (IOException | ParseException e) {
+    // e имеет тип: наиболее специфичный общий предок (Throwable, если нет общего)
+    log.error("Processing error", e);
+    throw new ServiceException(e);
+}
+```
+
+**Ограничения multi-catch:**
+```java
+// 1. Нельзя поймать связанные иерархически типы
+try { ... }
+catch (Exception | IOException e) { }  // ОШИБКА КОМПИЛЯЦИИ: IOException extends Exception
+
+// 2. Переменная e в multi-catch — effectively final (нельзя переприсвоить)
+catch (IOException | ParseException e) {
+    e = new IOException("other");  // ОШИБКА КОМПИЛЯЦИИ
+}
+
+// 3. Если нужна разная обработка — отдельные блоки catch
+catch (IOException e) { handleIo(e); }
+catch (ParseException e) { handleParse(e); }
+```
+
+**Практическое применение:**
+```java
+// Упрощение catch аналогичных «технических» исключений
+catch (JdbcException | DataAccessException e) {
+    throw new RepositoryException("DB error", e);
+}
+```
+
+---
+
+## Q37. Try-with-resources с AutoCloseable — как работает, порядок закрытия
+
+**try-with-resources** компилируется в код с finally и addSuppressed. Ресурсы закрываются в **обратном порядке** объявления.
+
+```java
+// Несколько ресурсов — закрытие в обратном порядке (LIFO)
+try (
+    Connection conn = dataSource.getConnection();      // открыт первым
+    PreparedStatement stmt = conn.prepareStatement(sql);  // открыт вторым
+    ResultSet rs = stmt.executeQuery()                 // открыт третьим
+) {
+    while (rs.next()) {
+        process(rs.getString("name"));
+    }
+}
+// Закрытие: rs.close() → stmt.close() → conn.close()
+// Каждый close() вызывается даже если предыдущий бросил исключение
+```
+
+**Кастомный AutoCloseable:**
+```java
+public class MeasuredTimer implements AutoCloseable {
+    private final String name;
+    private final long start = System.nanoTime();
+
+    public MeasuredTimer(String name) { this.name = name; }
+
+    @Override
+    public void close() {
+        long elapsed = System.nanoTime() - start;
+        log.info("{} took {}ms", name, elapsed / 1_000_000);
+    }
+}
+
+// Использование
+try (MeasuredTimer t = new MeasuredTimer("processOrder")) {
+    orderService.process(order);
+}
+// После выполнения блока — автоматически логирует время
+
+// Lock в try-with-resources:
+public class AutoLock implements AutoCloseable {
+    private final Lock lock;
+    public AutoLock(Lock lock) { this.lock = lock; lock.lock(); }
+    @Override public void close() { lock.unlock(); }
+}
+
+try (AutoLock lock = new AutoLock(reentrantLock)) {
+    // критическая секция — lock всегда освободится
+}
+```
+
+**Что происходит при исключении в close():**
+- Если тело блока бросило исключение И close() тоже — основное исключение пробрасывается, исключение из close() добавляется через `addSuppressed`.
+- Если тело не бросало исключений — исключение из close() пробрасывается как основное.
+
+---
+
+## Q38. Custom Exceptions — best practices, serialVersionUID
+
+**Правила создания кастомных исключений:**
+
+```java
+// 1. Расширяй подходящий базовый тип
+// RuntimeException — unchecked (не требует объявления throws)
+// Exception        — checked (требует объявления или обработки)
+
+public class OrderNotFoundException extends RuntimeException {
+    // 2. serialVersionUID обязателен (Serializable → Exception → Throwable)
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    // 3. Включать бизнес-контекст в конструктор
+    private final Long orderId;
+
+    // 4. Конструкторы: message, message+cause, cause
+    public OrderNotFoundException(Long orderId) {
+        super("Order not found: " + orderId);
+        this.orderId = orderId;
+    }
+
+    public OrderNotFoundException(Long orderId, Throwable cause) {
+        super("Order not found: " + orderId, cause);
+        this.orderId = orderId;
+    }
+
+    // 5. Геттер для контекстных данных (для логирования/обработки)
+    public Long getOrderId() { return orderId; }
+}
+
+// 6. Иерархия: базовое исключение домена + конкретные подтипы
+public abstract class DomainException extends RuntimeException {
+    protected DomainException(String message) { super(message); }
+    protected DomainException(String message, Throwable cause) { super(message, cause); }
+}
+
+public class InsufficientStockException extends DomainException {
+    @Serial private static final long serialVersionUID = 1L;
+    private final int requested;
+    private final int available;
+
+    public InsufficientStockException(int requested, int available) {
+        super(String.format("Insufficient stock: requested=%d, available=%d", requested, available));
+        this.requested = requested;
+        this.available = available;
+    }
+}
+```
+
+**Зачем serialVersionUID:** `Exception` реализует `Serializable`. Если поле отсутствует, Java генерирует его автоматически на основе сигнатуры класса — при изменении класса ID меняется и возможна `InvalidClassException` при десериализации. Явный `1L` даёт контроль.
+
+---
+
+## Q39. Exception в lambda — как обрабатывать checked exceptions
+
+**Проблема:** функциональные интерфейсы (`Function`, `Consumer`, `Supplier`) не объявляют checked exceptions → компилятор запрещает их бросать.
+
+```java
+// ПРОБЛЕМА: Files.readString бросает IOException (checked)
+List<String> contents = paths.stream()
+    .map(path -> Files.readString(path))  // ОШИБКА КОМПИЛЯЦИИ
+    .collect(toList());
+```
+
+**Решения:**
+
+**1. Обернуть в try-catch внутри лямбды:**
+```java
+List<String> contents = paths.stream()
+    .map(path -> {
+        try {
+            return Files.readString(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);  // оборачиваем в unchecked
+        }
+    })
+    .collect(toList());
+```
+
+**2. Вспомогательный wrapper-метод:**
+```java
+@FunctionalInterface
+public interface ThrowingFunction<T, R> {
+    R apply(T t) throws Exception;
+
+    static <T, R> Function<T, R> wrap(ThrowingFunction<T, R> f) {
+        return t -> {
+            try { return f.apply(t); }
+            catch (RuntimeException e) { throw e; }
+            catch (Exception e) { throw new RuntimeException(e); }
+        };
+    }
+}
+
+// Использование
+List<String> contents = paths.stream()
+    .map(ThrowingFunction.wrap(Files::readString))
+    .collect(toList());
+```
+
+**3. Sneaky throw (Lombok @SneakyThrows):**
+```java
+@SneakyThrows  // Lombok — "пробрасывает" checked без объявления
+public String readFile(Path path) {
+    return Files.readString(path);
+}
+// Компилятор доволен, но exception всё равно летит — осторожно с обработкой!
+```
+
+**4. Unchecked-обёртки стандартной библиотеки:**
+```java
+// java.io предоставляет UncheckedIOException
+throw new UncheckedIOException(ioException);
+```
+
+**Рекомендация:** предпочитать вариант 1 (явный try-catch) или вариант 2 (ThrowingFunction). Sneaky throw скрывает информацию от вызывающего кода.
+
+---
+
+## Q40. Логирование исключений — правила, что включать в message
+
+**Правила логирования:**
+
+```java
+// ПРАВИЛО 1: передавать exception как второй аргумент (не в строку!)
+// ПЛОХО — теряем стектрейс в некоторых logback appenders
+log.error("Error processing order: " + e.getMessage());
+
+// ХОРОШО — логгер сам форматирует стектрейс
+log.error("Error processing order {}", orderId, e);  // {} + exception как 3й аргумент
+
+// ПРАВИЛО 2: включать контекст (что, где, с какими данными)
+log.error("Failed to process order [orderId={}, userId={}, amount={}]",
+          orderId, userId, amount, e);
+
+// ПРАВИЛО 3: не логировать и не пробрасывать одновременно (double logging)
+// ПЛОХО:
+catch (Exception e) {
+    log.error("Error", e);
+    throw new ServiceException(e);  // обработчик выше залогирует снова!
+}
+// ХОРОШО — либо логировать, либо пробрасывать:
+catch (Exception e) {
+    throw new ServiceException("Failed to process order " + orderId, e);
+}
+// Логировать на верхнем уровне (GlobalExceptionHandler)
+
+// ПРАВИЛО 4: уровни логирования
+// ERROR — непредвиденные ошибки (баги, недоступность внешних систем)
+// WARN  — предвиденные, но нежелательные ситуации (retry, fallback)
+// INFO  — бизнес-события (заказ создан, платёж принят)
+// DEBUG — технические детали (SQL, запросы, параметры)
+
+// ПРАВИЛО 5: структурированное логирование (MDC)
+MDC.put("orderId", String.valueOf(orderId));
+MDC.put("userId", String.valueOf(userId));
+try {
+    processOrder();
+} catch (Exception e) {
+    log.error("Order processing failed", e);  // MDC-поля автоматически включены
+} finally {
+    MDC.clear();
+}
+```
+
+**Что включать в message:** ключевые ID (orderId, userId, requestId), состояние входных данных (кратко), что пытались сделать. Не включать: пароли, токены, PII (персональные данные).
+
+---
+
+## Q41. Performance исключений — стоимость fillInStackTrace, дорогие stack traces
+
+**Создание исключения — дорогая операция**, потому что конструктор `Throwable` вызывает `fillInStackTrace()` — нативный метод, который обходит стек вызовов и создаёт массив `StackTraceElement`.
+
+**Измерения (примерные):**
+```
+Создание Exception (с стектрейсом) ~ 1-10 мкс (зависит от глубины стека)
+Создание Exception без стектрейса  ~ 10-100 нс
+Обычный if-check                   ~ 1 нс
+→ Exception в 1000-100000x дороже condition-check
+```
+
+**Не использовать исключения для flow control:**
+```java
+// ПЛОХО — исключение для "нормального" сценария
+public int parseOrDefault(String s, int defaultVal) {
+    try {
+        return Integer.parseInt(s);
+    } catch (NumberFormatException e) {
+        return defaultVal;  // это "нормальный" путь — не нужно исключение
+    }
+}
+// ХОРОШО:
+public int parseOrDefault(String s, int defaultVal) {
+    if (s == null || s.isBlank()) return defaultVal;
+    try { return Integer.parseInt(s); }
+    catch (NumberFormatException e) { return defaultVal; }
+}
+// Или: Optional.ofNullable(s).map(Integer::parseInt).orElse(defaultVal)
+```
+
+**Оптимизация — кастомное исключение без стектрейса:**
+```java
+// Для sentinel-исключений (например, сигнал "нет элемента" в потоке)
+public class NoMoreElementsException extends RuntimeException {
+    public static final NoMoreElementsException INSTANCE = new NoMoreElementsException();
+
+    private NoMoreElementsException() {
+        super(null, null, true, false);  // 4й параметр: writableStackTrace=false
+    }
+}
+
+// Базовый класс с отключённым стектрейсом
+public class LightweightException extends RuntimeException {
+    public LightweightException(String message) {
+        super(message, null, true, false);  // writableStackTrace = false
+    }
+}
+```
+
+**JIT и исключения:** JVM может оптимизировать повторяющиеся исключения. В HotSpot: если исключение бросается очень часто из одного места, JIT может убрать fillInStackTrace (стектрейс будет пустым). Это неожиданное поведение в production — логи теряют стектрейс.
+
+---
+
+## Q42. Global Exception Handling в Spring — @ControllerAdvice, ProblemDetail
+
+**@ControllerAdvice + @ExceptionHandler** — централизованная обработка исключений для всех контроллеров:
+
+```java
+@RestControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+
+    // Бизнес-исключения → 404
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(OrderNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND,
+            ex.getMessage()
+        );
+        problem.setTitle("Order Not Found");
+        problem.setProperty("orderId", ex.getOrderId());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+    }
+
+    // Ошибки валидации → 422
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException ex) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        problem.setTitle("Validation Failed");
+        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+            .toList();
+        problem.setProperty("errors", errors);
+        return ResponseEntity.unprocessableEntity().body(problem);
+    }
+
+    // Неожиданные ошибки → 500
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleUnexpected(Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error on {}", request.getRequestURI(), ex);
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "An unexpected error occurred"
+        );
+        return ResponseEntity.internalServerError().body(problem);
+    }
+}
+```
+
+**ProblemDetail (RFC 7807 / Spring 6+):**
+```java
+// Spring Boot 3+ включает ProblemDetail из коробки
+// application.yml:
+// spring.mvc.problemdetails.enabled: true
+
+// Стандартный формат ответа:
+// {
+//   "type": "https://example.com/errors/order-not-found",
+//   "title": "Order Not Found",
+//   "status": 404,
+//   "detail": "Order not found: 12345",
+//   "instance": "/api/orders/12345",
+//   "orderId": 12345    ← кастомное расширение
+// }
+
+problem.setType(URI.create("https://api.example.com/errors/order-not-found"));
+problem.setInstance(URI.create(request.getRequestURI()));
+```
+
+**Порядок приоритетов обработчиков:** более специфичный тип исключения имеет приоритет над более общим. Если несколько `@ControllerAdvice` — использовать `@Order` для управления порядком.
+
+---
+
+## See also
+
+- [Java Core](java-core-interview.md) — базовые вопросы по Java
+- [Java 8](java-8-interview.md) — лямбды, `Stream API`, `Optional`
+- [Java I/O и NIO](java-io-nio-interview.md) — ввод-вывод и работа с ресурсами
+- [Java Concurrency](java-concurrency-interview.md) — многопоточность и обработка ошибок в потоках
+- [Java OOP](java-oop-interview.md) — наследование и полиморфизм (контракт `throws`)
+- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — `@ExceptionHandler`, `@ControllerAdvice`
+- [Логирование](../../logging/logging-interview.md) — логирование исключений

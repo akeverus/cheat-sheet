@@ -1,7 +1,14 @@
 ---
 title: "ClickHouse: Производительность - Полное руководство по оптимизации и тюнингу"
 description: "Комплексное руководство по оптимизации производительности ClickHouse: конфигурация, запросы, оборудование, мониторинг и best practices"
-tags: ["clickhouse", "performance", "optimization", "tuning", "monitoring", "hardware", "configuration"]
+tags:
+  - clickhouse
+  - performance
+  - optimization
+  - tuning
+  - monitoring
+  - hardware
+  - configuration
 difficulty: "advanced"
 prerequisites: ["databases/clickhouse-replication.md"]
 updated: "2026-02-06"
@@ -11,8 +18,6 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 # **ClickHouse**: Производительность - Полное руководство по оптимизации и тюнингу
 
 Комплексное руководство по оптимизации производительности **ClickHouse**: конфигурация, запросы, оборудование, мониторинг и **best practices**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

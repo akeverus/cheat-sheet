@@ -1,7 +1,10 @@
 ---
 title: "Обзор инструментов тестирования"
 description: "Краткий обзор стека для тестирования на Java: тест-раннеры (JUnit, TestNG), моки (Mockito), утверждения (AssertJ, Hamcrest), отчёты и покрытие (Allure, JaCoCo), интеграция с CI/CD."
-tags: ["testing", "testing-tools", "testing-tools-overview"]
+tags:
+  - testing
+  - testing-tools
+  - testing-tools-overview
 difficulty: "intermediate"
 prerequisites: []
 next: []

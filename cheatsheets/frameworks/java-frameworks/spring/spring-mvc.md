@@ -1,7 +1,15 @@
 ---
 title: "Spring MVC: Полное руководство по веб-фреймворку"
 description: "Комплексное руководство по Spring MVC: DispatcherServlet, контроллеры, view resolution, interceptors, exception handling, form handling, file upload и best practices"
-tags: ["spring", "mvc", "web", "dispatcherservlet", "controller", "view", "interceptor", "java"]
+tags:
+  - spring
+  - mvc
+  - web
+  - dispatcherservlet
+  - controller
+  - view
+  - interceptor
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-core.md", "spring/spring-boot.md"]
 next: ["spring/spring-rest.md", "spring/spring-security.md"]

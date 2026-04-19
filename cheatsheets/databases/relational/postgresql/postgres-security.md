@@ -1,7 +1,14 @@
 ---
 title: "PostgreSQL: Безопасность"
 description: "Полное руководство по безопасности PostgreSQL: роли и привилегии, Row Level Security (RLS), SSL/TLS соединения, аудит и логирование, шифрование данных, best practices"
-tags: ["postgresql", "security", "rls", "ssl", "encryption", "roles", "privileges"]
+tags:
+  - postgresql
+  - security
+  - rls
+  - ssl
+  - encryption
+  - roles
+  - privileges
 difficulty: "advanced"
 prerequisites: ["databases/postgres-basics.md", "databases/postgres-admin.md"]
 next: ["databases/postgres-monitoring.md", "databases/postgres-troubleshooting.md"]
@@ -1730,7 +1737,5 @@ FOR EACH ROW EXECUTE FUNCTION hipaa_access_log();
 - [`pgAudit`](https://www.postgresql.org/docs/)
 
 ---
-
-**Дата последнего обновления:** 2026-02-06
 
 

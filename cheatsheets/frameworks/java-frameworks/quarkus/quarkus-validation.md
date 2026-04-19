@@ -1,7 +1,12 @@
 ---
 title: "Quarkus: Validation - Bean Validation"
 description: "Полное руководство по валидации в Quarkus: Bean Validation, custom validators, groups, method validation и best practices"
-tags: ["quarkus", "validation", "bean-validation", "jakarta-validation", "java"]
+tags:
+  - quarkus
+  - validation
+  - bean-validation
+  - jakarta-validation
+  - java
 difficulty: "intermediate"
 prerequisites: ["quarkus/quarkus-basics.md", "quarkus/quarkus-core.md"]
 next: ["quarkus-core.md", "quarkus-rest.md"]

@@ -1,7 +1,10 @@
 ---
 title: "Elasticsearch: Агрегации - Аналитика и статистика данных"
 description: "Комплексное руководство по агрегациям Elasticsearch: от базовых метрик до сложных вложенных агрегаций, pipeline aggregations и аналитики в реальном времени."
-tags: ["databases", "nosql", "elasticsearch-aggregations"]
+tags:
+  - databases
+  - nosql
+  - elasticsearch-aggregations
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Elasticsearch**: Агрегации - Аналитика и статистика данных
 
 Комплексное руководство по агрегациям **Elasticsearch**: от базовых метрик до сложных вложенных агрегаций, **pipeline aggregations** и аналитики в реальном времени.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

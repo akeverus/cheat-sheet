@@ -1,7 +1,10 @@
 ---
 title: "PostgreSQL: операции с данными (CRUD)"
 description: "Кратко: базовые примеры INSERT/SELECT/WHERE/UPDATE/DELETE для быстрого старта."
-tags: ["databases", "relational", "postgres-data-ops"]
+tags:
+  - databases
+  - relational
+  - postgres-data-ops
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -12,8 +15,6 @@ updated: "2026-02-11"
 Кратко: базовые примеры **INSERT**/**SELECT**/**WHERE**/**UPDATE**/**DELETE** для быстрого старта.
 
 
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

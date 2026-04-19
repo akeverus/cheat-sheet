@@ -1,15 +1,16 @@
 ---
 title: "Синус в градусах (Math.sin with Degrees)"
 description: "В Java тригонометрические функции Math работают в радианах. В документе описаны преобразование градусов в радианы (Math.toRadians), обратное (Math.toDegrees) и вычисление синуса (и других функций) от угла в градусах."
-tags: ["algorithms", "math", "math-sin-with-degrees"]
+tags:
+  - algorithms
+  - math
+  - math-sin-with-degrees
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Синус в градусах (`Math.sin` with Degrees)
-
-**Дата последнего обновления:** 2026-02-06
 
 В `Java` тригонометрические функции `Math` работают в радианах. В документе описаны преобразование градусов в радианы (`Math.toRadians`), обратное (`Math.toDegrees`) и вычисление синуса (и других функций) от угла в градусах.
 

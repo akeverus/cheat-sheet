@@ -1,15 +1,16 @@
 ---
 title: "Реализация LRU-кэша (LRU Cache)"
 description: "Кэш с вытеснением наименее недавно использованных элементов (Least Recently Used): HashMap + двусвязный список для get/put за O(1), потокобезопасный вариант с ReentrantReadWriteLock, вариант на LinkedHashMap и с TTL."
-tags: ["algorithms", "problems", "lru-cache"]
+tags:
+  - algorithms
+  - problems
+  - lru-cache
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Реализация LRU-кэша (`LRU Cache`)
-
-**Дата последнего обновления:** 2026-02-06
 
 Кэш с вытеснением наименее недавно использованных элементов (Least Recently Used): HashMap + двусвязный список для get/put за O(1), потокобезопасный вариант с ReentrantReadWriteLock, вариант на LinkedHashMap и с TTL.
 

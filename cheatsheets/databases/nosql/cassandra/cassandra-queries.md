@@ -1,7 +1,10 @@
 ---
 title: "Cassandra: CQL запросы и оптимизация - Полное руководство по языку запросов"
 description: "Комплексное руководство по Cassandra Query Language (CQL): синтаксис, оптимизация запросов, индексы и best practices для эффективной работы с данными."
-tags: ["databases", "nosql", "cassandra-queries"]
+tags:
+  - databases
+  - nosql
+  - cassandra-queries
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # **Cassandra**: **CQL** запросы и оптимизация - Полное руководство по языку запросов
 
 Комплексное руководство по **Cassandra Query Language** (**CQL**): синтаксис, оптимизация запросов, индексы и **best practices** для эффективной работы с данными.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

@@ -1,15 +1,16 @@
 ---
 title: "Konfig"
 description: "Konfig - это type-safe конфигурационная библиотека для Kotlin, предоставляющая DSL для определения и валидации конфигурационных параметров. Поддерживает различные источники конфигурации с compile-time safety."
-tags: ["libraries", "kotlin", "kotlin-konfig"]
+tags:
+  - libraries
+  - kotlin
+  - kotlin-konfig
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Konfig
-
-**Дата последнего обновления:** 2026-02-06
 
 **Konfig** - это **type-safe** конфигурационная библиотека для **Kotlin**, предоставляющая **DSL** для определения и валидации конфигурационных параметров. Поддерживает различные источники конфигурации с **compile-time safety**.
 
@@ -1148,7 +1149,7 @@ object StructuredConfig : Configuration {
 }
 ```
 ## См. также
-- [Spring Boot](../../frameworks/java-frameworks/spring/spring-boot.md) — **Spring** конфигурация
+- [Spring Boot](../../frameworks/spring/spring-boot.md) — **Spring** конфигурация
 - [Библиотеки](../) — **HOCON** (**Human-Optimized Config Object Notation**)
 - [Platform](../../platform/) — Инфраструктура и переменные окружения
 

@@ -1,7 +1,12 @@
 ---
 title: "Scala Functional Programming - Basics"
 description: "Основы функционального программирования в Scala: Higher-Order Functions, Lambda, Currying, Partial Functions, Immutability, Pure Functions"
-tags: ["scala", "functional-programming", "fp", "higher-order-functions", "immutability"]
+tags:
+  - scala
+  - functional-programming
+  - fp
+  - higher-order-functions
+  - immutability
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
 next: ["scala/scala-fp-advanced.md"]
@@ -12,8 +17,6 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 # **Scala Functional Programming** - **Basics**
 
 Кратко: основы функционального программирования в **Scala**: **Higher-Order Functions**, **Lambda Expressions**, **Currying**, **Partial Functions**, **Immutability**, **Pure Functions**.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

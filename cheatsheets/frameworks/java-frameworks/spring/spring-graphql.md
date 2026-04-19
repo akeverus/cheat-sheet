@@ -1,7 +1,14 @@
 ---
 title: "Spring GraphQL: Полное руководство"
 description: "Комплексное руководство по Spring GraphQL: schema, resolvers, data fetchers, subscriptions, error handling и best practices"
-tags: ["spring", "graphql", "api", "schema", "resolver", "data-fetcher", "java"]
+tags:
+  - spring
+  - graphql
+  - api
+  - schema
+  - resolver
+  - data-fetcher
+  - java
 difficulty: "intermediate"
 prerequisites: ["spring/spring-boot.md", "spring/spring-rest.md"]
 next: ["api/graphql.md", "spring/spring-webflux.md"]

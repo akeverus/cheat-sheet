@@ -1,15 +1,16 @@
 ---
 title: "Поиск k-го по величине элемента (Find Kth Largest Element)"
 description: "Материал по теме Поиск k-го по величине элемента (Find Kth Largest Element) в разделе cheatsheets."
-tags: ["algorithms", "searching", "find-max-element"]
+tags:
+  - algorithms
+  - searching
+  - find-max-element
 difficulty: "intermediate"
 prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
 # Поиск k-го по величине элемента (`Find Kth Largest Element`)
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

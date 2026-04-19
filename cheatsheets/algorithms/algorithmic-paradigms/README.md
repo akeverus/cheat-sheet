@@ -1,7 +1,9 @@
 ---
 title: "Алгоритмические парадигмы"
 description: "Разделяй и властвуй, динамическое программирование, жадные алгоритмы, backtracking, branch and bound."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---

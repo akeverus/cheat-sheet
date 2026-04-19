@@ -1,7 +1,10 @@
 ---
 title: "Circular Buffer"
 description: "A guide to implementing a circular buffer (ring buffer) in Java for efficient data buffering between threads."
-tags: ["algorithms", "problems", "circular-buffer"]
+tags:
+  - algorithms
+  - problems
+  - circular-buffer
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Circular Buffer
 
 A **guide** to **implementing** a **circular buffer** (**ring buffer**) in **Java for efficient data buffering between threads**.
-
-**Дата последнего обновления:** 2026-02-06
 
 
 

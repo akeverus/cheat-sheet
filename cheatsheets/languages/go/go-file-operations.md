@@ -1,15 +1,18 @@
 ---
 title: "Go: операции с файлами"
 description: "Полное руководство по работе с файлами в Go: чтение, запись, копирование, удаление, информация о файлах"
-tags: ["go", "golang", "files", "io", "file-operations"]
+tags:
+  - go
+  - golang
+  - files
+  - io
+  - file-operations
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md", "go/go-stdlib-io.md"]
 updated: "2026-02-06"
 ---
 
 # Go: операции с файлами
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

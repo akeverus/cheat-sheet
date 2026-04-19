@@ -1,7 +1,10 @@
 ---
 title: "Doobie"
 description: "Doobie - это функциональная библиотека для работы с JDBC в Scala, предоставляющая чистый, type-safe подход к взаимодействию с реляционными базами данных. Doobie интегрируется с Cats Effect и предоставляет composable, streaming API для работы с базами данных."
-tags: ["libraries", "scala", "scala-doobie"]
+tags:
+  - libraries
+  - scala
+  - scala-doobie
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Doobie
 
 **Doobie** - это функциональная библиотека для работы с **JDBC** в **Scala**, предоставляющая чистый, **type-safe** подход к взаимодействию с реляционными базами данных. **Doobie** интегрируется с **Cats Effect** и предоставляет **composable**, **streaming API** для работы с базами данных.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 - [Официальная документация Doobie](https://tpolecat.github.io/doobie/)

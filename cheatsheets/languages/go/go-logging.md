@@ -1,15 +1,18 @@
 ---
 title: "Go: логирование"
 description: "Полное руководство по логированию в Go: log package, structured logging, уровни логирования, best practices"
-tags: ["go", "golang", "logging", "log", "structured-logging"]
+tags:
+  - go
+  - golang
+  - logging
+  - log
+  - structured-logging
 difficulty: "intermediate"
 prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
 # Go: логирование
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

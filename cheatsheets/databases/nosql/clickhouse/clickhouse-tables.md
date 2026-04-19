@@ -1,7 +1,13 @@
 ---
 title: "ClickHouse: Таблицы и движки - Полное руководство по созданию и управлению таблицами"
 description: "Комплексное руководство по таблицам ClickHouse: движки таблиц, типы данных, создание и оптимизация таблиц"
-tags: ["clickhouse", "tables", "engines", "data-types", "mergetree", "schema"]
+tags:
+  - clickhouse
+  - tables
+  - engines
+  - data-types
+  - mergetree
+  - schema
 difficulty: "intermediate"
 prerequisites: ["databases/clickhouse-basics.md"]
 updated: "2026-02-06"
@@ -11,8 +17,6 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 # **ClickHouse**: Таблицы и движки - Полное руководство по созданию и управлению таблицами
 
 Комплексное руководство по таблицам **ClickHouse**: движки таблиц, типы данных, создание и оптимизация таблиц.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

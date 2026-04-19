@@ -1,7 +1,10 @@
 ---
 title: "k наибольших элементов (K Largest Elements)"
 description: "Кратко: поиск k самых больших элементов в массиве. Рассматриваются три подхода: грубая сила O(nk), TreeSet O(nlog(n)), и PriorityQueue O(nlog(k))."
-tags: ["algorithms", "searching", "k-largest-elements"]
+tags:
+  - algorithms
+  - searching
+  - k-largest-elements
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # k наибольших элементов (`K Largest Elements`)
 
 Кратко: поиск k самых больших элементов в массиве. Рассматриваются три подхода: грубая сила `O(nk)`, `TreeSet` `O(nlog(n)`), и `PriorityQueue` `O(nlog(k)`).
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

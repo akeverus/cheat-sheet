@@ -1,7 +1,10 @@
 ---
 title: "Основы логирования в Java"
 description: "Краткое руководство по основам логирования в Java: уровни, фреймворки (JUL, SLF4J, Logback), конфигурация и базовые паттерны."
-tags: ["monitoring", "logging", "logging-basics"]
+tags:
+  - monitoring
+  - logging
+  - logging-basics
 difficulty: "intermediate"
 prerequisites: []
 next: []
@@ -10,8 +13,6 @@ updated: "2026-02-11"
 # Основы логирования в Java
 
 Краткое руководство по основам логирования в Java: уровни, фреймворки (JUL, SLF4J, Logback), конфигурация и базовые паттерны.
-
-**Дата последнего обновления:** 2026-02-06
 
 ## Полезные ссылки
 

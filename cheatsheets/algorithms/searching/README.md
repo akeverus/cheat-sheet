@@ -1,7 +1,9 @@
 ---
 title: "Поиск"
 description: "Бинарный поиск, поиск в массивах, k-й элемент, подмассивы, частые элементы."
-tags: ["meta", "index"]
+tags:
+  - meta
+  - index
 type: "index"
 updated: "2026-02-11"
 ---
