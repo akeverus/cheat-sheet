@@ -501,6 +501,8 @@
         }
       });
     }
+    initCollapsibleSidebar();
+    initDangerousFormGuard();
   });
 
   function apiPost(url, formData) {
@@ -1490,5 +1492,17 @@
     }
   };
 
-  initCollapsibleSidebar();
 })();
+
+function initDangerousFormGuard() {
+  document.querySelectorAll('[data-confirm]').forEach((el) => {
+    const form = el.closest('form');
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+      const msg = el.getAttribute('data-confirm');
+      if (msg && !window.confirm(msg)) {
+        e.preventDefault();
+      }
+    });
+  });
+}
