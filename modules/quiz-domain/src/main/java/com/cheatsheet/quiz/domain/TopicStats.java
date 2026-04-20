@@ -13,6 +13,7 @@ import lombok.Builder;
  * @param correct  суммарное количество правильных ответов
  * @param wrong    суммарное количество неправильных ответов
  * @param regenSum суммарное количество перезагрузок вариантов по теме
+ * @param maturityScore оценка зрелости темы (от 0.0 до 1.0)
  */
 @Builder(toBuilder = true)
 public record TopicStats(
@@ -22,7 +23,8 @@ public record TopicStats(
         long learned,
         long correct,
         long wrong,
-        long regenSum
+        long regenSum,
+        double maturityScore
 ) {
     /**
      * Compact-конструктор с валидацией обязательных полей.
@@ -32,5 +34,11 @@ public record TopicStats(
         if (total < 0) {
             throw new IllegalArgumentException("total не может быть отрицательным: " + total);
         }
+    }
+
+    /** Backwards-compatible constructor for existing callers without maturityScore. */
+    public TopicStats(String topic, long total, long due, long learned,
+                      long correct, long wrong, long regenSum) {
+        this(topic, total, due, learned, correct, wrong, regenSum, 0.0);
     }
 }
