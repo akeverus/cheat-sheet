@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: WebSocket - Real-time Communication и STOMP
-
-
+# Micronaut: WebSocket — Real-time Communication и STOMP
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: WebSocket - Real-time Communication и STOMP](#micronaut-websocket-real-time-communication-и-stomp)
+- [Micronaut: WebSocket — Real-time Communication и STOMP](#micronaut-websocket-real-time-communication-и-stomp)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка WebSocket](#настройка-websocket)
@@ -116,19 +114,19 @@ import io.micronaut.websocket.annotation.ServerWebSocket;
 
 @ServerWebSocket("/ws/chat")
 public class ChatWebSocket {
-    
+
     @OnOpen
     public void onOpen(WebSocketSession session) {
         System.out.println("Client connected: " + session.getId());
         session.send("Welcome to chat!");
     }
-    
+
     @OnMessage
     public void onMessage(String message, WebSocketSession session) {
         System.out.println("Received message: " + message);
         session.send("Echo: " + message);
     }
-    
+
     @OnClose
     public void onClose(WebSocketSession session) {
         System.out.println("Client disconnected: " + session.getId());
@@ -145,9 +143,9 @@ import io.micronaut.websocket.annotation.OnMessage;
 
 @ClientWebSocket("/ws/chat")
 public interface ChatClient {
-    
+
     void send(String message);
-    
+
     @OnMessage
     void onMessage(String message);
 }
@@ -165,17 +163,17 @@ import io.micronaut.websocket.annotation.OnClose;
 
 @ServerWebSocket("/ws/stomp")
 public class StompWebSocket {
-    
+
     @OnOpen
     public void onOpen(WebSocketSession session) {
         // Инициализация STOMP соединения
     }
-    
+
     @OnMessage
     public void onMessage(String message, WebSocketSession session) {
         // Обработка STOMP сообщений
     }
-    
+
     @OnClose
     public void onClose(WebSocketSession session) {
         // Закрытие STOMP соединения
@@ -199,12 +197,12 @@ import java.util.concurrent.ConcurrentMap;
 @ServerWebSocket("/ws/broadcast")
 public class BroadcastWebSocket {
     private static final ConcurrentMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    
+
     @OnOpen
     public void onOpen(WebSocketSession session) {
         sessions.put(session.getId(), session);
     }
-    
+
     @OnMessage
     public void onMessage(String message, WebSocketSession session) {
         // Отправка сообщения всем подключенным клиентам
@@ -264,14 +262,14 @@ import io.micronaut.websocket.annotation.OnOpen;
 @Secured("ROLE_USER")
 @ServerWebSocket("/ws/secure-chat")
 public class SecuredChatWebSocket {
-    
+
     @OnOpen
     public void onOpen(WebSocketSession session) {
         // Проверка аутентификации
         String username = session.getUriVariables().get("username", String.class);
         System.out.println("Authenticated user connected: " + username);
     }
-    
+
     @OnMessage
     public void onMessage(String message, WebSocketSession session) {
         // Обработка сообщений от аутентифицированных пользователей
@@ -292,7 +290,7 @@ import reactor.core.publisher.Mono;
 
 @ServerWebSocket("/ws/reactive-chat")
 public class ReactiveChatWebSocket {
-    
+
     @OnMessage
     public Mono<String> onMessage(String message, WebSocketSession session) {
         return Mono.fromCallable(() -> {
@@ -316,12 +314,12 @@ import io.micronaut.websocket.WebSocketSession;
 
 @ServerWebSocket("/ws/binary")
 public class BinaryWebSocket {
-    
+
     @OnOpen
     public void onOpen(WebSocketSession session) {
         // Инициализация соединения для бинарных сообщений
     }
-    
+
     @OnMessage
     public void onMessage(byte[] data, WebSocketSession session) {
         // Обработка бинарных данных
@@ -341,11 +339,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ServerWebSocket("/ws/json")
 public class JsonWebSocket {
     private final ObjectMapper objectMapper;
-    
+
     public JsonWebSocket(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
-    
+
     @OnMessage
     public void onMessage(String json, WebSocketSession session) {
         try {
@@ -376,18 +374,18 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @ServerWebSocket("/ws/room/{roomId}")
 public class RoomWebSocket {
     private static final ConcurrentHashMap<String, Set<WebSocketSession>> rooms = new ConcurrentHashMap<>();
-    
+
     @OnOpen
     public void onOpen(String roomId, WebSocketSession session) {
         rooms.computeIfAbsent(roomId, k -> new CopyOnWriteArraySet<>()).add(session);
         broadcastToRoom(roomId, "User joined room: " + session.getId(), session);
     }
-    
+
     @OnMessage
     public void onMessage(String roomId, String message, WebSocketSession session) {
         broadcastToRoom(roomId, message, session);
     }
-    
+
     private void broadcastToRoom(String roomId, String message, WebSocketSession sender) {
         Set<WebSocketSession> roomSessions = rooms.get(roomId);
         if (roomSessions != null) {
@@ -412,7 +410,7 @@ import io.micronaut.websocket.WebSocketSession;
 
 @ServerWebSocket("/ws/error-handling")
 public class ErrorHandlingWebSocket {
-    
+
     @OnError
     public void onError(Throwable error, WebSocketSession session) {
         log.error("WebSocket error for session: " + session.getId(), error);
@@ -449,7 +447,7 @@ import io.micronaut.websocket.annotation.OnOpen;
 
 @ServerWebSocket(value = "/ws/custom", subprotocols = "custom-protocol")
 public class CustomProtocolWebSocket {
-    
+
     @OnOpen
     public void onOpen(WebSocketSession session) {
         // Обработка соединения с custom subprotocol
@@ -469,15 +467,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class SessionManager {
     private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    
+
     public void registerSession(String userId, WebSocketSession session) {
         sessions.put(userId, session);
     }
-    
+
     public void unregisterSession(String userId) {
         sessions.remove(userId);
     }
-    
+
     public Optional<WebSocketSession> getSession(String userId) {
         return Optional.ofNullable(sessions.get(userId));
     }
@@ -495,7 +493,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class WebSocketHeartbeatService {
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
-    
+
     @Scheduled(fixedRate = "30s")
     public void sendHeartbeat() {
         sessions.forEach(session -> {
@@ -509,9 +507,6 @@ public class WebSocketHeartbeatService {
 }
 ```
 
-
-
-
 ## Заключение
 
 **Micronaut WebSocket** предоставляет мощные инструменты для создания **real-time** приложений. Поддержка **WebSocket**, **STOMP**, **SockJS**, **broadcasting**, **authentication**, **reactive streams**, **binary messages**, **JSON messages**, **rooms**, **error handling**, **compression**, **subprotocols**, **session management**, **heartbeat** и других продвинутых возможностей позволяет создавать интерактивные приложения с двусторонней коммуникацией.
@@ -523,3 +518,11 @@ public class WebSocketHeartbeatService {
 - [**STOMP** Protocol](https://stomp.github.io/)
 - [SockJS Documentation](https://github.com/sockjs/sockjs-client)
 - [**WebSocket Best Practices**](https://www.html5rocks.com/en/tutorials/websockets/basics/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

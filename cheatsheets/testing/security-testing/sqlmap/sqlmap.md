@@ -49,7 +49,6 @@ updated: "2026-02-11"
 - [Итоговые таблицы](#итоговые-таблицы)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -70,7 +69,6 @@ updated: "2026-02-11"
 - **Tamper** — скрипт, преобразующий payload перед отправкой (например, замена пробелов на комментарии, кодирование кавычек).
 - **Level** и **risk** — глубина тестирования (1–5) и риск (1–3); повышение увеличивает число payload и вероятность обнаружения, но может увеличить нагрузку и ложные срабатывания.
 
----
 
 ## Установка и настройка
 
@@ -103,7 +101,6 @@ pip install -r requirements.txt  # если есть
 python sqlmap.py -u "http://example.com/page?id=1"
 ```
 
----
 
 ## Базовое использование
 
@@ -149,7 +146,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --cookie="session=abc123; tok
 
 **--cookie** — строка cookie для запросов; необходимо для доступа к защищённым страницам (например, после логина в Burp скопировать cookie и передать в sqlmap).
 
----
 
 ## Параметры и опции
 
@@ -199,7 +195,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --cookie="session=abc123; tok
 | **--save=FILE** | Сохранить опции в конфиг-файл |
 | **--load=FILE** | Загрузить опции из конфиг-файла |
 
----
 
 ## Техники инъекций
 
@@ -212,7 +207,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --cookie="session=abc123; tok
 
 По умолчанию sqlmap пробует все техники; **--technique=BE** — только boolean-based и error-based (быстрее, меньше запросов).
 
----
 
 ## Tamper-скрипты
 
@@ -234,7 +228,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --tamper=space2comment,random
 
 Несколько tamper через запятую применяются по порядку. Полный список: каталог **tamper/** в репозитории sqlmap.
 
----
 
 ## Извлечение данных
 
@@ -256,7 +249,6 @@ python sqlmap.py -u "http://example.com/page?id=1" -D mydb -T users -C username,
 
 **--dump** сохраняет данные в каталог **output** (или **--output-dir**). При большом объёме использовать **--start** и **--stop** для постраничного извлечения.
 
----
 
 ## Интеграция с Burp и ZAP
 
@@ -284,7 +276,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 В Burp/ZAP включить перехват и настроить браузер/инструмент на прокси; sqlmap отправит запросы через прокси — они появятся в History.
 
----
 
 ## Лучшие практики
 
@@ -296,7 +287,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 6. **--batch** — в CI использовать **--batch** для неинтерактивного режима (все вопросы по умолчанию).
 7. **--output-dir** — сохранять логи и дампы в отдельный каталог для отчётности и воспроизведения.
 
----
 
 ## FAQ и решение проблем
 
@@ -318,7 +308,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 **Заголовки?** `--headers="Authorization: Bearer token\nX-Custom: value"` или `-r` с файлом запроса.
 
----
 
 ## Глоссарий
 
@@ -335,7 +324,6 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 | **Stacked queries** | Выполнение нескольких запросов подряд (;) |
 | **WAF** | Web Application Firewall — фильтр запросов, может блокировать payload |
 
----
 
 ## Итоговые таблицы
 
@@ -382,13 +370,8 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 | **charencode** | Кодирование символов (CHAR) |
 | **equaltolike** | = → LIKE |
 
----
 
 ## Заключение
 
 **sqlmap** — стандартный инструмент автоматизации тестирования на SQL-инъекции. Используйте **-u** или **-r** (запрос из Burp/ZAP), **--cookie** и **--tamper** для аутентификации и обхода WAF; **--dbs**, **--tables**, **--dump** для извлечения данных. Применяйте только на разрешённых целях. Для углублённого изучения см. [sqlmap Wiki](https://github.com/sqlmapproject/sqlmap/wiki), [Burp Suite](../burp-suite/burp-suite.md), [OWASP ZAP](../owasp-zap/owasp-zap.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).
-
----
-
----
 

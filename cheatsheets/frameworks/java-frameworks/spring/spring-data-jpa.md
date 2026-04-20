@@ -24,7 +24,7 @@ updated: "2026-02-06"
 - [**Spring** Documentation](https://spring.io/projects/spring-framework)
 - [**Spring Framework** Reference](https://docs.spring.io/spring-framework/reference/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [**Spring** Tutorial](https://www.baeldung.com/spring-tutorial)
 
@@ -81,10 +81,10 @@ updated: "2026-02-06"
   - [Использование @Column(unique = true)](#использование-columnunique-true)
   - [Использование @UniqueConstraint](#использование-uniqueconstraint)
 - [Интерфейс Serializable и сущности](#интерфейс-serializable-и-сущности)
-- [Отношения "один-к-одному"](#отношения-один-к-одному)
+- [Отношения «один-к-одному»](#отношения-один-к-одному)
   - [Одностороннее отношение](#одностороннее-отношение)
   - [Двустороннее отношение](#двустороннее-отношение)
-- [Отношения "многие-ко-многим"](#отношения-многие-ко-многим)
+- [Отношения «многие-ко-многим»](#отношения-многие-ко-многим)
 - [Разница между @JoinColumn и mappedBy](#разница-между-joincolumn-и-mappedby)
   - [@JoinColumn](#joincolumn)
   - [mappedBy](#mappedby)
@@ -168,7 +168,7 @@ updated: "2026-02-06"
 </dependency>
 ```
 
-**Иногда требуется более высокий уровень реализации - определить фабричный метод **DataSource** и поместить его в класс, помеченный аннотацией **@Configuration**:**
+**Иногда требуется более высокий уровень реализации — определить фабричный метод **DataSource** и поместить его в класс, помеченный аннотацией **@Configuration**:**
 
 ```java
 // Конфигурация DataSource программным способом
@@ -246,7 +246,7 @@ public interface UserRepository extends CrudRepository<User, Long> {}
 public class UserRepositoryIntegrationTest {
     @Autowired
     private UserRepository userRepository;
-    
+
     // Тест сохранения пользователя
     @Test
     public void whenCalledSave_thenCorrectNumberOfUsers() {
@@ -259,7 +259,7 @@ public class UserRepositoryIntegrationTest {
 
 ## Руководство по **JPA**
 
-**Java `Persistence API` (**JPA**)** - это спецификация **Java**, которую можно использовать для устранения разрыва между объектно-ориентированными моделями предметной области и системами реляционных баз данных. Итак, существует несколько реализаций **JPA** от третьих сторон, таких как **Hibernate**, **EclipseLink** и **iBatis**.
+**Java `Persistence API` (**JPA**)** — это спецификация **Java**, которую можно использовать для устранения разрыва между объектно-ориентированными моделями предметной области и системами реляционных баз данных. Итак, существует несколько реализаций **JPA** от третьих сторон, таких как **Hibernate**, **EclipseLink** и **iBatis**.
 
 ### Настройка источника данных
 
@@ -498,7 +498,7 @@ public interface UserRepositoryCustom {
 public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     @PersistenceContext
     private EntityManager entityManager;
-    
+
     @Override
     public List<User> findUserByEmails(Set<String> emails) {
         // Создание динамического запроса через Criteria API
@@ -506,14 +506,14 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
         CriteriaQuery<User> query = cb.createQuery(User.class);
         Root<User> user = query.from(User.class);
         Path<String> emailPath = user.get("email");
-        
+
         // Формирование списка условий LIKE для каждого email
         List<Predicate> predicates = new ArrayList<>();
         for (String email : emails) {
             predicates.add(cb.like(emailPath, email));
         }
         query.select(user).where(cb.or(predicates.toArray(new Predicate[predicates.size()])));
-        
+
         return entityManager.createQuery(query).getResultList();
     }
 }
@@ -567,7 +567,7 @@ try {
 public class UserService {
     @Autowired
     private UserRepository userRepository;
-    
+
     public User createUser(User user) {
         return userRepository.save(user);
     }
@@ -599,7 +599,7 @@ public class UserService {
     public User createUser(User user) {
         return userRepository.save(user);
     }
-    
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logUserActivity(User user) {
         // логирование активности пользователя
@@ -626,7 +626,7 @@ public class UserService {
     public User findUser(Long id) {
         return userRepository.findById(id).orElse(null);
     }
-    
+
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void transferMoney(Long fromId, Long toId, BigDecimal amount) {
         // перевод денег
@@ -662,57 +662,57 @@ public class UserService {
 
 **DAO (**Data Access Object**)** — это паттерн проектирования, который абстрагирует доступ к данным и инкапсулирует логику взаимодействия с базой данных.
 
-**Создадим класс базового **DAO** - абстрактного параметризованного **DAO,** который поддерживает общие универсальные операции и который мы можем расширить для каждой сущности:**
+**Создадим класс базового **DAO** — абстрактного параметризованного **DAO,** который поддерживает общие универсальные операции и который мы можем расширить для каждой сущности:**
 
 ```java
 // Базовый DAO на Hibernate SessionFactory с CRUD по типу сущности
 public abstract class AbstractHibernateDao<T extends Serializable> {
     private Class<T> clazz;
-    
+
     @Autowired
     protected SessionFactory sessionFactory;
-    
+
     public final void setClazz(final Class<T> clazzToSet) {
         clazz = Preconditions.checkNotNull(clazzToSet);
     }
-    
+
     public T findOne(final long id) {
         return (T) getCurrentSession().get(clazz, id);
     }
-    
+
     public List<T> findAll() {
         return getCurrentSession().createQuery("from " + clazz.getName()).list();
     }
-    
+
     public T create(final T entity) {
         Preconditions.checkNotNull(entity);
         getCurrentSession().saveOrUpdate(entity);
         return entity;
     }
-    
+
     public T update(final T entity) {
         Preconditions.checkNotNull(entity);
         return (T) getCurrentSession().merge(entity);
     }
-    
+
     public void delete(final T entity) {
         Preconditions.checkNotNull(entity);
         getCurrentSession().delete(entity);
     }
-    
+
     public void deleteById(final long entityId) {
         final T entity = findOne(entityId);
         Preconditions.checkState(entity != null);
         delete(entity);
     }
-    
+
     protected Session getCurrentSession() {
         return sessionFactory.getCurrentSession();
     }
 }
 ```
 
-**Здесь интересны несколько аспектов - как уже говорилось, абстрактный **DAO** не расширяет какой-либо шаблон **Spring** (**например, HibernateTemplate**). Вместо этого **Hibernate SessionFactory** вводится непосредственно в **DAO** и будет играть роль основного **Hibernate API** через контекстный сеанс, который он предоставляет:**
+**Здесь интересны несколько аспектов — как уже говорилось, абстрактный **DAO** не расширяет какой-либо шаблон **Spring** (**например, HibernateTemplate**). Вместо этого **Hibernate SessionFactory** вводится непосредственно в **DAO** и будет играть роль основного **Hibernate API** через контекстный сеанс, который он предоставляет:**
 
 **this.`sessionFactory`.`getCurrentSession()`;**
 
@@ -740,7 +740,7 @@ public class FooDAO extends AbstractHibernateDAO<Foo> implements IFooDAO {
 // Универсальный DAO с prototype scope для разных сущностей
 @Repository
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
-public class GenericHibernateDao<T extends Serializable> 
+public class GenericHibernateDao<T extends Serializable>
     extends AbstractHibernateDao<T> implements IGenericDao<T> {
 }
 
@@ -761,36 +761,36 @@ public interface IGenericDao<T extends Serializable> {
 // Базовый DAO на JPA EntityManager с CRUD по типу сущности
 public abstract class AbstractJpaDAO<T extends Serializable> {
     private Class<T> clazz;
-    
+
     @PersistenceContext(unitName = "entityManagerFactory")
     private EntityManager entityManager;
-    
+
     public final void setClazz(final Class<T> clazzToSet) {
         this.clazz = clazzToSet;
     }
-    
+
     public T findOne(final long id) {
         return entityManager.find(clazz, id);
     }
-    
+
     @SuppressWarnings("unchecked")
     public List<T> findAll() {
         return entityManager.createQuery("from " + clazz.getName()).getResultList();
     }
-    
+
     public T create(final T entity) {
         entityManager.persist(entity);
         return entity;
     }
-    
+
     public T update(final T entity) {
         return entityManager.merge(entity);
     }
-    
+
     public void delete(final T entity) {
         entityManager.remove(entity);
     }
-    
+
     public void deleteById(final long entityId) {
         final T entity = findOne(entityId);
         delete(entity);
@@ -815,7 +815,7 @@ public class GenericJpaDao<T extends Serializable>
 @Service
 class FooService implements IFooService {
     IGenericDao<Foo> dao;
-    
+
     @Autowired
     public void setDao(IGenericDao<Foo> daoToSet) {
         dao = daoToSet;
@@ -899,7 +899,7 @@ public class Student {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    
+
     @Column(name="STUDENT_NAME", length=50, nullable=false, unique=false)
     private String name;
 }
@@ -922,10 +922,10 @@ public class Student {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    
+
     @Column(name="STUDENT_NAME", length=50, nullable=false)
     private String name;
-    
+
     @Transient
     private Integer age;
 }
@@ -946,13 +946,13 @@ public class Student {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    
+
     @Column(name="STUDENT_NAME", length=50, nullable=false, unique=false)
     private String name;
-    
+
     @Transient
     private Integer age;
-    
+
     @Temporal(TemporalType.DATE)
     private Date birthDate;
 }
@@ -978,16 +978,16 @@ public class Student {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    
+
     @Column(name="STUDENT_NAME", length=50, nullable=false, unique=false)
     private String name;
-    
+
     @Transient
     private Integer age;
-    
+
     @Temporal(TemporalType.DATE)
     private Date birthDate;
-    
+
     @Enumerated(EnumType.STRING)
     private Gender gender;
 }
@@ -1002,13 +1002,13 @@ public class Student {
 public class User {
     @Id
     Long id;
-    
+
     @Column(columnDefinition = "varchar(255) default 'John Snow'")
     private String name;
-    
+
     @Column(columnDefinition = "integer default 25")
     private Integer age;
-    
+
     @Column(columnDefinition = "boolean default false")
     private Boolean locked;
 }
@@ -1040,7 +1040,7 @@ public class Course {
     @Basic
     @Id
     private int id;
-    
+
     @Basic
     private String name;
 }
@@ -1074,7 +1074,7 @@ public class Course {
 public class Course {
     @Id
     private int id;
-    
+
     @Basic(optional = false, fetch = FetchType.LAZY)
     private String name;
 }
@@ -1179,7 +1179,7 @@ public class Company {
     private String name;
     private String address;
     private String phone;
-    
+
     @Embedded
     private ContactPerson contactPerson;
 }
@@ -1246,7 +1246,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(unique = true)
     private String username;
 }
@@ -1260,7 +1260,7 @@ public class User {
 
 ```java
 @Entity
-@Table(name = "users", 
+@Table(name = "users",
     uniqueConstraints = {
         @UniqueConstraint(columnNames = {"username", "email"})
     })
@@ -1268,7 +1268,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     private String username;
     private String email;
 }
@@ -1289,16 +1289,16 @@ public class User {
 @Table(name = "users")
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     private String username;
 }
 ```
 
-## Отношения "один-к-одному"
+## Отношения «один-к-одному»
 
 В **JPA** мы можем определить отношения один-к-одному между двумя сущностями.
 
@@ -1310,7 +1310,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;
@@ -1334,7 +1334,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Address address;
 }
@@ -1344,17 +1344,17 @@ public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
-    
+
     private String street;
     private String city;
 }
 ```
 
-## Отношения "многие-ко-многим"
+## Отношения «многие-ко-многим»
 
 Отношения многие-ко-многим требуют промежуточной таблицы связи.
 
@@ -1364,7 +1364,7 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
         name = "student_course",
@@ -1379,7 +1379,7 @@ public class Course {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @ManyToMany(mappedBy = "courses")
     private Set<Student> students = new HashSet<>();
 }
@@ -1399,7 +1399,7 @@ public class User {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     @OneToOne
     @JoinColumn(name = "address_id")  // Владеет связью
     private Address address;
@@ -1414,7 +1414,7 @@ public class Address {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     @OneToOne(mappedBy = "address")  // Не владеет связью
     private User user;
 }
@@ -1432,13 +1432,13 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(table = "users")
     private String username;
-    
+
     @Column(table = "user_details")
     private String phone;
-    
+
     @Column(table = "user_details")
     private String address;
 }
@@ -1463,7 +1463,7 @@ public class User {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Order> orders;
 }
@@ -1549,7 +1549,7 @@ public class Car extends Vehicle {
 
 **FetchMode** определяет, как **Hibernate** будет извлекать данные (**путём выбора, присоединения или частичного выбора**). **FetchType**, с другой стороны, определяет, будет ли **Hibernate** загружать данные быстро или лениво.
 
-**В качестве примера мы будем использовать следующую сущность **Customer** всего с двумя свойствами - идентификатором и набором заказов:**
+**В качестве примера мы будем использовать следующую сущность **Customer** всего с двумя свойствами — идентификатором и набором заказов:**
 
 ```java
 @Entity
@@ -1557,7 +1557,7 @@ public class Customer {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     @OneToMany(mappedBy = "customer")
     @Fetch(value = FetchMode.SELECT)
     private Set<Order> orders = new HashSet<>();
@@ -1569,7 +1569,7 @@ public class Order {
     @GeneratedValue
     private Long id;
     private String name;
-    
+
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -1642,7 +1642,7 @@ public class School {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     private String name;
-    
+
     @OneToMany(mappedBy = "school")
     private List<Student> students;
 }
@@ -1653,7 +1653,7 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
     private String name;
-    
+
     @ManyToOne
     @JoinColumn(name = "school_id")
     private School school;
@@ -1677,7 +1677,7 @@ spring.jpa.properties.hibernate.order_updates=true
 public class BatchService {
     @Autowired
     private StudentRepository studentRepository;
-    
+
     @Transactional
     public void batchInsert(List<Student> students) {
         for (Student student : students) {
@@ -1698,7 +1698,7 @@ public class BatchService {
 public void saveExample() {
     User user = new User("John");
     userRepository.save(user);  // Изменения могут быть отложены
-    
+
     user.setName("Jane");
     userRepository.saveAndFlush(user);  // Немедленная синхронизация с БД
 }
@@ -1715,7 +1715,7 @@ public class Bar {
     @Column(name = "created_date", nullable = false, updatable = false)
     @CreatedDate
     private long createdDate;
-    
+
     @Column(name = "modified_date")
     @LastModifiedDate
     private long modifiedDate;
@@ -1731,7 +1731,7 @@ public class Bar {
     @Column(name = "created_by")
     @CreatedBy
     private String createdBy;
-    
+
     @Column(name = "modified_by")
     @LastModifiedBy
     private String modifiedBy;
@@ -1891,12 +1891,12 @@ public interface ProductRepository extends JpaRepository<Product, String>, JpaSp
 
 ```java
 public static Specification<Product> hasName(String name) {
-    return (root, query, criteriaBuilder) -> 
+    return (root, query, criteriaBuilder) ->
         criteriaBuilder.equal(root.get("name"), name);
 }
 
 public static Specification<Product> priceGreaterThan(double price) {
-    return (root, query, criteriaBuilder) -> 
+    return (root, query, criteriaBuilder) ->
         criteriaBuilder.greaterThan(root.get("price"), price);
 }
 ```
@@ -1913,7 +1913,7 @@ List<Product> products = productRepository.findAll(spec);
 
 ## Сравнение между **JPA** и **JDBC**
 
-**JPA** и **JDBC** - это два разных подхода к работе с базами данных в **Java**:**
+**JPA** и **JDBC** — это два разных подхода к работе с базами данных в **Java**:**
 
 ### **JDBC**
 

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Kodein
 
-**Kodein** - это **dependency injection** фреймворк для **Kotlin**, предоставляющий **type-safe** и компилируемый `DI`. Использует **Kotlin**-специфичные возможности для создания чистого и выразительного **API**.
+**Kodein** — это **dependency injection** фреймворк для **Kotlin**, предоставляющий **type-safe** и компилируемый `DI`. Использует **Kotlin**-специфичные возможности для создания чистого и выразительного **API**.
 
 ## Полезные ссылки
 - [Официальная документация Kodein](https://kodein.org/Kodein-DI/)
@@ -78,13 +78,13 @@ import org.kodein.di.*
 // DI { } - DSL блок для конфигурации dependency injection
 val kodein = DI {
     // Регистрация зависимостей внутри блока DI
-    
+
     // bind<T>() - привязка типа T к реализации
     // with singleton { } - создание singleton (один экземпляр на весь lifecycle)
     // RepositoryImpl() - реализация интерфейса Repository
     bind<Repository>() with singleton { RepositoryImpl() }
     // При каждом запросе Repository будет возвращаться один и тот же экземпляр
-    
+
     // bind<Service>() - привязка типа Service
     // with provider { } - создание нового экземпляра при каждом запросе
     // get() - получение зависимости из контейнера (в данном случае Repository)

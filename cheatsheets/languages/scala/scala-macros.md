@@ -137,7 +137,7 @@ def validateImpl[T: c.WeakTypeTag](c: Context)(value: c.Expr[T]): c.Expr[List[St
     case m: MethodSymbol if m.isCaseAccessor =>
       q"if (${value}.${m.name} == null) List(${m.name.toString} + \" cannot be null\") else Nil"
   }.toList
-  
+
   c.Expr[List[String]](q"List(..$errors).flatten")
 }
 ```
@@ -332,7 +332,7 @@ def slowMethod: Int = {
 /
  * Макрос для генерации валидаторов.
  * Генерирует код, проверяющий все поля типа на null.
- * 
+ *
  * @param value значение для валидации
  * @return список ошибок валидации
  */
@@ -479,12 +479,12 @@ def toStringMacroImpl[A: c.WeakTypeTag](c: blackbox.Context)(a: c.Expr[A]): c.Ex
   val fields = tpe.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   val fieldStrings = fields.map { field =>
     val fieldName = field.name.toString
     q"$fieldName + \"=\" + $a.$field"
   }
-  
+
   val className = tpe.typeSymbol.name.toString
   val result = q"$className + \"(\" + ${fieldStrings.mkString(" + \", \" + ")} + \")\""
   c.Expr[String](result)
@@ -512,11 +512,11 @@ def equalsMacroImpl[A: c.WeakTypeTag](
   val fields = tpe.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   val comparisons = fields.map { field =>
     q"$a.$field == $b.$field"
   }
-  
+
   val result = comparisons.foldLeft(q"true": c.Tree) { (acc, comp) =>
     q"$acc && $comp"
   }
@@ -533,21 +533,21 @@ import scala.reflect.macros.blackbox.Context
 // Макрос для генерации copy методов с обновлениями
 def copyWith[A: c.WeakTypeTag](c: Context)(updates: c.Expr[Map[String, Any]]): c.Expr[A] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val companion = A.typeSymbol.companion
-  
+
   // Получение полей case class
   val fields = A.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   // Генерация аргументов для конструктора
   val args = fields.map { field =>
     val fieldName = field.name.toString
     q"""$updates.getOrElse($fieldName, ${TermName(fieldName)})"""
   }
-  
+
   c.Expr[A](q"$companion(..$args)")
 }
 ```
@@ -561,12 +561,12 @@ import scala.reflect.macros.blackbox.Context
 // Макрос для генерации Builder классов
 def builder[A: c.WeakTypeTag](c: Context): c.Expr[Builder[A]] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val fields = A.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   // Генерация методов set для каждого поля
   val setters = fields.map { field =>
     val fieldName = field.name
@@ -577,17 +577,17 @@ def builder[A: c.WeakTypeTag](c: Context): c.Expr[Builder[A]] = {
       }
     """
   }
-  
+
   // Генерация метода build
   val buildArgs = fields.map { field =>
     val fieldName = field.name
     q"${TermName(s"${fieldName}Option")}.get"
   }
-  
+
   q"""
     new Builder[A] {
       ..$setters
-      
+
       def build: A = {
         $companion(..$buildArgs)
       }
@@ -605,12 +605,12 @@ import scala.reflect.macros.blackbox.Context
 // Макрос для генерации JSON сериализаторов
 def jsonEncoder[A: c.WeakTypeTag](c: Context): c.Expr[JsonEncoder[A]] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val fields = A.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   // Генерация кода для сериализации полей
   val fieldEncodings = fields.map { field =>
     val fieldName = field.name.toString
@@ -619,11 +619,11 @@ def jsonEncoder[A: c.WeakTypeTag](c: Context): c.Expr[JsonEncoder[A]] = {
       "\"$fieldName\": " + encode($fieldAccess)
     """
   }
-  
+
   val jsonBody = fieldEncodings.reduceLeft { (acc, field) =>
     q"$acc + \", \" + $field"
   }
-  
+
   q"""
     new JsonEncoder[$A] {
       def encode(obj: $A): String = {
@@ -643,20 +643,20 @@ import scala.reflect.macros.blackbox.Context
 // Макрос для генерации валидаторов на основе аннотаций
 def validator[A: c.WeakTypeTag](c: Context): c.Expr[Validator[A]] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val fields = A.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   // Генерация правил валидации для каждого поля
   val validations = fields.map { field =>
     val fieldName = field.name.toString
     val fieldAccess = q"obj.${field.name}"
-    
+
     // Получение аннотаций поля
     val annotations = field.annotations
-    
+
     // Генерация проверок на основе аннотаций
     q"""
       val fieldErrors = List.empty[String]
@@ -666,7 +666,7 @@ def validator[A: c.WeakTypeTag](c: Context): c.Expr[Validator[A]] = {
       fieldErrors
     """
   }
-  
+
   q"""
     new Validator[$A] {
       def validate(obj: $A): List[String] = {
@@ -686,12 +686,12 @@ import scala.reflect.macros.blackbox.Context
 // Макрос для генерации тестовых кейсов
 def generateTests[A: c.WeakTypeTag](c: Context): c.Expr[Unit] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val methods = A.decls.collect {
     case m: MethodSymbol if m.isPublic && !m.isConstructor => m
   }
-  
+
   // Генерация тестов для каждого метода
   val tests = methods.map { method =>
     val methodName = method.name.toString
@@ -703,7 +703,7 @@ def generateTests[A: c.WeakTypeTag](c: Context): c.Expr[Unit] = {
       }
     """
   }
-  
+
   q"""
     ..$tests
   """
@@ -719,12 +719,12 @@ import scala.reflect.macros.blackbox.Context
 // Макрос для генерации mock объектов
 def mock[A: c.WeakTypeTag](c: Context): c.Expr[Mock[A]] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val methods = A.decls.collect {
     case m: MethodSymbol if m.isAbstract => m
   }
-  
+
   // Генерация реализаций методов
   val methodImpls = methods.map { method =>
     val methodName = method.name
@@ -735,13 +735,13 @@ def mock[A: c.WeakTypeTag](c: Context): c.Expr[Mock[A]] = {
       }
     """
   }
-  
+
   q"""
     new Mock[$A] {
       private val mockCalls = scala.collection.mutable.Map[String, () => Any]()
-      
+
       ..$methodImpls
-      
+
       def when(methodName: String)(fn: () => Any): Unit = {
         mockCalls(methodName) = fn
       }
@@ -774,19 +774,19 @@ import scala.reflect.macros.blackbox.Context
 // Генерация case class из обычного класса
 def generateCaseClass[A: c.WeakTypeTag](c: Context): c.Expr[Any] = {
   import c.universe._
-  
+
   val A = weakTypeOf[A]
   val fields = A.decls.collect {
     case m: MethodSymbol if m.isCaseAccessor => m
   }
-  
+
   // Генерация case class
   val caseClassFields = fields.map { field =>
     val fieldName = field.name
     val fieldType = field.returnType
     q"$fieldName: $fieldType"
   }
-  
+
   q"""
     case class GeneratedCaseClass(..$caseClassFields)
   """
@@ -803,7 +803,7 @@ def optimizedMapImpl[A: c.WeakTypeTag, B: c.WeakTypeTag](
   c: Context
 )(list: c.Expr[List[A]], f: c.Expr[A => B]): c.Expr[List[B]] = {
   import c.universe._
-  
+
   // Оптимизация на этапе компиляции
   q"""
     $list.map($f)

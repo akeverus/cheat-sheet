@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Spring Cloud
 
-Кратко: **Spring Cloud** - набор инструментов для создания облачных приложений. **Service Discovery**, **Config Server**, **Gateway**, **Circuit Breaker**, **Load Balancing**, микросервисы.
+Кратко: **Spring Cloud** — набор инструментов для создания облачных приложений. **Service Discovery**, **Config Server**, **Gateway**, **Circuit Breaker**, **Load Balancing**, микросервисы.
 
 ## Полезные ссылки
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [**Spring Cloud** Netflix](https://github.com/Netflix/eureka/wiki)
 - [**Spring Cloud** Config](https://spring.io/projects/spring-cloud-config)
 
-### **Baeldung**
+### Обучающие материалы
 - [**Spring Cloud** Series](https://www.baeldung.com/spring-cloud-series)
 
 ### См. также
@@ -78,7 +78,7 @@ updated: "2026-02-11"
 
 ## Введение в **Spring Cloud**
 
-**Spring Cloud** - это набор инструментов и фреймворков, которые помогают разработчикам создавать облачные приложения, особенно в архитектуре микросервисов. **Spring Cloud** предоставляет решения для распространенных паттернов распределенных систем.
+**Spring Cloud** — это набор инструментов и фреймворков, которые помогают разработчикам создавать облачные приложения, особенно в архитектуре микросервисов. **Spring Cloud** предоставляет решения для распространенных паттернов распределенных систем.
 
 ### Основные компоненты
 
@@ -109,7 +109,7 @@ updated: "2026-02-11"
 
 ## Service Discovery (Eureka)
 
-**Eureka** - это **REST-based** сервис для **service discovery**. **Eureka** сервер выступает в роли **registry**, где микросервисы регистрируют себя и находят другие сервисы.
+**Eureka** — это **REST-based** сервис для **service discovery**. **Eureka** сервер выступает в роли **registry**, где микросервисы регистрируют себя и находят другие сервисы.
 
 ### **Eureka Server**
 
@@ -201,12 +201,12 @@ public class UserService {
 
     @Autowired
     private DiscoveryClient discoveryClient;
-    
+
     public String getUserData() {
         // Через RestTemplate с load balancing
         return restTemplate.getForObject("http://user-service/users/1", String.class);
     }
-    
+
     public List<ServiceInstance> getServiceInstances() {
         // Получение всех инстансов сервиса
         return discoveryClient.getInstances("user-service");
@@ -321,10 +321,10 @@ spring:
 @Service
 @RefreshScope
 public class DatabaseConfig {
-    
+
     @Value("${spring.datasource.url}")
     private String databaseUrl;
-    
+
     // Геттеры
 }
 ```
@@ -336,7 +336,7 @@ curl -X POST http://localhost:8081/actuator/refresh
 
 ## API Gateway (Zuul/Gateway)
 
-**API Gateway** - это единая точка входа для всех клиентских запросов к микросервисам.
+**API Gateway** — это единая точка входа для всех клиентских запросов к микросервисам.
 
 ### **Spring Cloud Gateway**
 
@@ -374,14 +374,14 @@ spring:
             - Path=/api/users/
           filters:
             - RewritePath=/api/users/(?<path>.*), /${path}
-            
+
         - id: order-service
           uri: lb://order-service
           predicates:
             - Path=/api/orders/
           filters:
             - RewritePath=/api/orders/(?<path>.*), /${path}
-            
+
         - id: auth-service
           uri: lb://auth-service
           predicates:
@@ -394,18 +394,18 @@ spring:
 // Глобальный фильтр Gateway для логирования запросов
 @Component
 public class LoggingFilter implements GlobalFilter, Ordered {
-    
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         long startTime = System.currentTimeMillis();
-        
+
         return chain.filter(exchange)
             .then(Mono.fromRunnable(() -> {
                 long duration = System.currentTimeMillis() - startTime;
                 System.out.println("Request took: " + duration + "ms");
             }));
     }
-    
+
     @Override
     public int getOrder() {
         return -1;
@@ -418,24 +418,24 @@ public class LoggingFilter implements GlobalFilter, Ordered {
 ```java
 @Component
 public class AuthenticationFilter implements GlobalFilter, Ordered {
-    
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String token = exchange.getRequest().getHeaders().getFirst("Authorization");
-        
+
         if (token == null || !isValidToken(token)) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-        
+
         return chain.filter(exchange);
     }
-    
+
     @Override
     public int getOrder() {
         return 0;
     }
-    
+
     private boolean isValidToken(String token) {
         // Валидация JWT токена
         return true;
@@ -471,7 +471,7 @@ public class Application {
 ```java
 @Service
 public class UserService {
-    
+
     @HystrixCommand(fallbackMethod = "fallbackGetUser",
                     commandProperties = {
                         @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "1000")
@@ -480,7 +480,7 @@ public class UserService {
         // Вызов внешнего сервиса
         return restTemplate.getForObject("http://user-service/users/" + userId, User.class);
     }
-    
+
     public User fallbackGetUser(String userId) {
         // Возврат дефолтного значения
         return new User(userId, "Unknown", "unknown@example.com");
@@ -522,13 +522,13 @@ resilience4j:
 ```java
 @Service
 public class UserService {
-    
+
     @CircuitBreaker(name = "userService", fallbackMethod = "fallbackGetUser")
     @Retry(name = "userService")
     public User getUser(String userId) {
         return restTemplate.getForObject("http://user-service/users/" + userId, User.class);
     }
-    
+
     public User fallbackGetUser(String userId, Throwable t) {
         System.err.println("Circuit breaker activated: " + t.getMessage());
         return new User(userId, "Unknown", "unknown@example.com");
@@ -555,7 +555,7 @@ public class UserService {
 ```java
 @Configuration
 public class RibbonConfig {
-    
+
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate() {
@@ -567,10 +567,10 @@ public class RibbonConfig {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private RestTemplate restTemplate;
-    
+
     public User getUser(String userId) {
         // Автоматический load balancing
         return restTemplate.getForObject("http://user-service/users/" + userId, User.class);
@@ -583,7 +583,7 @@ public class UserService {
 ```java
 @Configuration
 public class WebClientConfig {
-    
+
     @Bean
     @LoadBalanced
     public WebClient.Builder webClientBuilder() {
@@ -595,13 +595,13 @@ public class WebClientConfig {
 ```java
 @Service
 public class UserService {
-    
+
     private final WebClient webClient;
-    
+
     public UserService(@LoadBalanced WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
     }
-    
+
     public Mono<User> getUser(String userId) {
         return webClient.get()
             .uri("http://user-service/users/{id}", userId)
@@ -642,13 +642,13 @@ spring:
 ```java
 @RestController
 public class UserController {
-    
+
     private final Logger logger = LoggerFactory.getLogger(UserController.class);
-    
+
     @GetMapping("/users/{id}")
     public User getUser(@PathVariable String id) {
         logger.info("Getting user with id: {}", id);
-        
+
         // Trace ID автоматически добавляется в логи
         return userService.getUser(id);
     }
@@ -693,7 +693,7 @@ spring:
 ```java
 @EnableBinding(UserProcessor.class)
 public class UserEventHandler {
-    
+
     @StreamListener(UserProcessor.INPUT)
     public void handleUserCreated(User user) {
         System.out.println("Processing user: " + user.getName());
@@ -704,10 +704,10 @@ public class UserEventHandler {
 interface UserProcessor {
     String INPUT = "processUser";
     String OUTPUT = "userCreated";
-    
+
     @Input(INPUT)
     SubscribableChannel input();
-    
+
     @Output(OUTPUT)
     MessageChannel output();
 }
@@ -776,7 +776,7 @@ security:
 
 ## Миграция на **Spring Cloud** `2023`
 
-**Spring Cloud** `2023`.x - это новая версия с обновленными зависимостями.
+**Spring Cloud** `2023`.x — это новая версия с обновленными зависимостями.
 
 ### Основные изменения
 
@@ -854,19 +854,19 @@ services:
     image: springcloud/eureka
     ports:
       - "8761:8761"
-      
+
   config-server:
     build: ./config-server
     ports:
       - "8888:8888"
-      
+
   api-gateway:
     build: ./api-gateway
     ports:
       - "8080:8080"
     depends_on:
       - eureka
-      
+
   user-service:
     build: ./user-service
     ports:
@@ -874,7 +874,7 @@ services:
     depends_on:
       - eureka
       - config-server
-      
+
   order-service:
     build: ./order-service
     ports:
@@ -897,7 +897,7 @@ eureka:
   client:
     registerWithEureka: false
     fetchRegistry: false
-    
+
 spring:
   security:
     user:
@@ -908,7 +908,7 @@ spring:
 ```java
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
@@ -943,16 +943,16 @@ spring:
 ```java
 @Configuration
 public class MetricsConfig {
-    
+
     @Bean
     public MeterRegistry meterRegistry() {
         return new SimpleMeterRegistry();
     }
-    
+
     @Bean
     public CircuitBreakerRegistry circuitBreakerRegistry() {
         CircuitBreakerRegistry registry = CircuitBreakerRegistry.ofDefaults();
-        
+
         registry.getAllCircuitBreakers().forEach(circuitBreaker -> {
             circuitBreaker.getEventPublisher()
                 .onStateTransition(event -> {
@@ -964,7 +964,7 @@ public class MetricsConfig {
                         .increment();
                 });
         });
-        
+
         return registry;
     }
 }

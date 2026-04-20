@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **AWS IAM** (`Identity and Access Management`)
 
-**AWS IAM** - это сервис для управления доступом к **AWS** ресурсам. **IAM** позволяет создавать и управлять пользователями, группами, ролями и политиками для безопасного контроля доступа к **AWS** сервисам и ресурсам. Этот документ охватывает **best practices**, **advanced** паттерны и **enterprise** сценарии использования **IAM**.
+**AWS IAM** — это сервис для управления доступом к **AWS** ресурсам. **IAM** позволяет создавать и управлять пользователями, группами, ролями и политиками для безопасного контроля доступа к **AWS** сервисам и ресурсам. Этот документ охватывает **best practices**, **advanced** паттерны и **enterprise** сценарии использования **IAM**.
 
 ## Полезные ссылки
 - [IAM Documentation](https://docs.aws.amazon.com/iam/)
@@ -100,7 +100,7 @@ service-limits:
 ```
 
 ### ARN (`Amazon Resource Name`)
-```
+```text
 ARN Format: arn:partition:service:region:account-id:resource
 
 Examples:

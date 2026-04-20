@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 Этот тип строк является частью того, что известно как язык Дайка.
 
-Скобкой считается любой из следующих символов - «(**», «**)», «[», «]», «{», «}».
+Скобкой считается любой из следующих символов — «(**», «**)», «[», «]», «{», «}».
 
 Набор скобок считается совпадающей парой, если открывающая скобка «(**», «[» и «{» стоит слева от соответствующей закрывающей скобки «)», «]» и «}», соответственно.
 
@@ -151,13 +151,13 @@ public boolean isBalanced(String str) {
             }
         }
     }
-    
+
     while (str.contains("()") || str.contains("[]") || str.contains("{}")) {
         str = str.replaceAll("\\(\\)", "")
             .replaceAll("\\[\\]", "")
             .replaceAll("\\{\\}", "");
     }
-    
+
     return (str.length() == 0);
 }
 ```
@@ -200,9 +200,9 @@ public boolean isBalanced(String str) {
             }
         }
     }
-    
+
     Deque<Character> deque = new LinkedList<>();
-    
+
     for (char ch : str.toCharArray()) {
         if (ch == '{' || ch == '[' || ch == '(') {
             deque.addFirst(ch);
@@ -217,7 +217,7 @@ public boolean isBalanced(String str) {
             }
         }
     }
-    
+
     return deque.isEmpty();
 }
 ```
@@ -231,9 +231,9 @@ public boolean isBalancedWithStack(String str) {
     if (str == null || str.length() % 2 != 0) {
         return false;
     }
-    
+
     Stack<Character> stack = new Stack<>();
-    
+
     for (char ch : str.toCharArray()) {
         if (ch == '{' || ch == '[' || ch == '(') {
             stack.push(ch);
@@ -241,7 +241,7 @@ public boolean isBalancedWithStack(String str) {
             if (stack.isEmpty()) {
                 return false;
             }
-            
+
             char top = stack.pop();
             if ((ch == '}' && top != '{')
                 || (ch == ']' && top != '[')
@@ -252,7 +252,7 @@ public boolean isBalancedWithStack(String str) {
             return false; // Не-скобки
         }
     }
-    
+
     return stack.isEmpty();
 }
 ```
@@ -266,14 +266,14 @@ public boolean isBalancedWithMap(String str) {
     if (str == null || str.length() % 2 != 0) {
         return false;
     }
-    
+
     Map<Character, Character> brackets = new HashMap<>();
     brackets.put(')', '(');
     brackets.put(']', '[');
     brackets.put('}', '{');
-    
+
     Stack<Character> stack = new Stack<>();
-    
+
     for (char ch : str.toCharArray()) {
         if (brackets.containsValue(ch)) {
             stack.push(ch);
@@ -285,7 +285,7 @@ public boolean isBalancedWithMap(String str) {
             return false;
         }
     }
-    
+
     return stack.isEmpty();
 }
 ```
@@ -299,14 +299,14 @@ fun isBalancedStringK(str: String?): Boolean {
     if (str == null || str.length % 2 != 0) {
         return false
     }
-    
+
     var modified = str
     while (modified.contains("()") || modified.contains("[]") || modified.contains("{}")) {
         modified = modified.replace("()", "")
             .replace("[]", "")
             .replace("{}", "")
     }
-    
+
     return modified.isEmpty()
 }
 ```
@@ -318,14 +318,14 @@ fun isBalancedStackK(str: String?): Boolean {
     if (str == null || str.length % 2 != 0) {
         return false
     }
-    
+
     val stack = ArrayDeque<Char>()
-    
+
     for (ch in str) {
         if (ch == '{' || ch == '[' || ch == '(') {
             stack.addFirst(ch)
         } else {
-            if (stack.isNotEmpty() && 
+            if (stack.isNotEmpty() &&
                 ((stack.first() == '{' && ch == '}') ||
                  (stack.first() == '[' && ch == ']') ||
                  (stack.first() == '(' && ch == ')'))) {
@@ -335,7 +335,7 @@ fun isBalancedStackK(str: String?): Boolean {
             }
         }
     }
-    
+
     return stack.isEmpty()
 }
 ```
@@ -347,10 +347,10 @@ fun isBalancedMapK(str: String?): Boolean {
     if (str == null || str.length % 2 != 0) {
         return false
     }
-    
+
     val brackets = mapOf(')' to '(', ']' to '[', '}' to '{')
     val stack = ArrayDeque<Char>()
-    
+
     for (ch in str) {
         when {
             brackets.values.contains(ch) -> stack.addFirst(ch)
@@ -362,7 +362,7 @@ fun isBalancedMapK(str: String?): Boolean {
             else -> return false
         }
     }
-    
+
     return stack.isEmpty()
 }
 ```
@@ -390,9 +390,9 @@ fun isBalancedParenthesesK(str: String): Boolean {
 ```kotlin
 fun isBalancedFunctionalK(str: String?): Boolean {
     if (str == null || str.length % 2 != 0) return false
-    
+
     val brackets = mapOf(')' to '(', ']' to '[', '}' to '{')
-    
+
     return str.fold(ArrayDeque<Char>()) { stack, ch ->
         when {
             brackets.values.contains(ch) -> stack.apply { addFirst(ch) }
@@ -416,12 +416,12 @@ fun main() {
     println(isBalancedStackK("()")) // true
     println(isBalancedStackK("[()]")) // true
     println(isBalancedStackK("{[()]}")) // true
-    
+
     // Несбалансированные
     println(isBalancedStackK("abc[](){}")) // false
     println(isBalancedStackK("{{[]()}}}")) // false
     println(isBalancedStackK("{[(])}")) // false
-    
+
     // Только круглые скобки
     println(isBalancedParenthesesK("((()))")) // true
     println(isBalancedParenthesesK("(()")) // false
@@ -476,7 +476,7 @@ public boolean isBalancedParentheses(String str) {
 ```java
 public boolean isBalancedWithOtherChars(String str) {
     Stack<Character> stack = new Stack<>();
-    
+
     for (char ch : str.toCharArray()) {
         if (ch == '{' || ch == '[' || ch == '(') {
             stack.push(ch);
@@ -493,7 +493,7 @@ public boolean isBalancedWithOtherChars(String str) {
         }
         // Игнорируем другие символы
     }
-    
+
     return stack.isEmpty();
 }
 ```
@@ -583,13 +583,13 @@ public int findFirstUnbalancedPosition(String str) {
     if (str == null) {
         return -1;
     }
-    
+
     Deque<Character> stack = new LinkedList<>();
     Map<Character, Character> brackets = new HashMap<>();
     brackets.put(')', '(');
     brackets.put(']', '[');
     brackets.put('}', '{');
-    
+
     for (int i = 0; i < str.length(); i++) {
         char ch = str.charAt(i);
         if (brackets.containsValue(ch)) {
@@ -600,7 +600,7 @@ public int findFirstUnbalancedPosition(String str) {
             }
         }
     }
-    
+
     return stack.isEmpty() ? -1 : str.length(); // -1 если сбалансировано
 }
 ```
@@ -614,11 +614,11 @@ public boolean isBalancedWithQuotes(String str) {
     if (str == null) {
         return false;
     }
-    
+
     Deque<Character> stack = new LinkedList<>();
     boolean inSingleQuote = false;
     boolean inDoubleQuote = false;
-    
+
     for (char ch : str.toCharArray()) {
         if (ch == '\'') {
             inSingleQuote = !inSingleQuote;
@@ -640,7 +640,7 @@ public boolean isBalancedWithQuotes(String str) {
             }
         }
     }
-    
+
     return stack.isEmpty() && !inSingleQuote && !inDoubleQuote;
 }
 ```
@@ -654,12 +654,12 @@ public boolean isValidJsonStructure(String json) {
     if (json == null || json.trim().isEmpty()) {
         return false;
     }
-    
+
     Deque<Character> stack = new LinkedList<>();
     Map<Character, Character> brackets = new HashMap<>();
     brackets.put('}', '{');
     brackets.put(']', '[');
-    
+
     for (char ch : json.toCharArray()) {
         if (brackets.containsValue(ch)) {
             stack.push(ch);
@@ -669,7 +669,7 @@ public boolean isValidJsonStructure(String json) {
             }
         }
     }
-    
+
     return stack.isEmpty();
 }
 ```
@@ -683,10 +683,10 @@ public int maxNestingDepth(String str) {
     if (str == null || !isBalanced(str)) {
         return -1;
     }
-    
+
     Deque<Character> stack = new LinkedList<>();
     int maxDepth = 0;
-    
+
     for (char ch : str.toCharArray()) {
         if (ch == '{' || ch == '[' || ch == '(') {
             stack.push(ch);
@@ -695,7 +695,7 @@ public int maxNestingDepth(String str) {
             stack.pop();
         }
     }
-    
+
     return maxDepth;
 }
 ```

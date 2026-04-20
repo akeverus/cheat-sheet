@@ -98,26 +98,26 @@ public int interpolationSearch(int[] data, int item) {
     // Интерполяционный поиск: оцениваем индекс probe по значению и сужаем диапазон [lowEnd, highEnd]
     int highEnd = data.length - 1;
     int lowEnd = 0;
-    
+
     while (item >= data[lowEnd] && item <= data[highEnd] && lowEnd <= highEnd) {
         if (data[highEnd] == data[lowEnd]) {
             return data[lowEnd] == item ? lowEnd : -1;
         }
-        
+
         int probe = lowEnd + (highEnd - lowEnd) * (item - data[lowEnd])
                 / (data[highEnd] - data[lowEnd]);
-        
+
         if (data[probe] == item) {
             return probe;
         }
-        
+
         if (data[probe] < item) {
             lowEnd = probe + 1;
         } else {
             highEnd = probe - 1;
         }
     }
-    
+
     return -1;
 }
 ```
@@ -142,22 +142,22 @@ fun interpolationSearchK(data: IntArray, item: Int): Int {
     // Итеративный интерполяционный поиск: считаем probe и двигаем границы lowEnd/highEnd
     var highEnd = data.size - 1
     var lowEnd = 0
-    
+
     while (item >= data[lowEnd] && item <= data[highEnd] && lowEnd <= highEnd) {
         if (data[highEnd] == data[lowEnd]) {
             return if (data[lowEnd] == item) lowEnd else -1
         }
-        
-        val probe = lowEnd + (highEnd - lowEnd) * (item - data[lowEnd]) 
+
+        val probe = lowEnd + (highEnd - lowEnd) * (item - data[lowEnd])
             / (data[highEnd] - data[lowEnd])
-        
+
         when {
             data[probe] == item -> return probe
             data[probe] < item -> lowEnd = probe + 1
             else -> highEnd = probe - 1
         }
     }
-    
+
     return -1
 }
 ```
@@ -166,23 +166,23 @@ fun interpolationSearchK(data: IntArray, item: Int): Int {
 
 ```kotlin
 fun interpolationSearchRecursiveK(
-    data: IntArray, 
-    item: Int, 
-    lowEnd: Int = 0, 
+    data: IntArray,
+    item: Int,
+    lowEnd: Int = 0,
     highEnd: Int = data.size - 1
 ): Int {
     // Рекурсивный интерполяционный поиск: на каждом шаге пересчитываем probe и рекурсивно сужаем диапазон
     if (lowEnd > highEnd || item < data[lowEnd] || item > data[highEnd]) {
         return -1
     }
-    
+
     if (data[highEnd] == data[lowEnd]) {
         return if (data[lowEnd] == item) lowEnd else -1
     }
-    
-    val probe = lowEnd + (highEnd - lowEnd) * (item - data[lowEnd]) 
+
+    val probe = lowEnd + (highEnd - lowEnd) * (item - data[lowEnd])
         / (data[highEnd] - data[lowEnd])
-    
+
     return when {
         data[probe] == item -> probe
         data[probe] < item -> interpolationSearchRecursiveK(data, item, probe + 1, highEnd)
@@ -196,10 +196,10 @@ fun interpolationSearchRecursiveK(
 ```kotlin
 fun main() {
     val data = intArrayOf(10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
-    
+
     val index = interpolationSearchK(data, 70)
     println("Found at index: $index") // Found at index: 6
-    
+
     val index2 = interpolationSearchRecursiveK(data, 50)
     println("Found at index: $index2") // Found at index: 4
 }

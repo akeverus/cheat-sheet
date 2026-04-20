@@ -65,10 +65,10 @@ Go предоставляет мощные инструменты для кри�
 
 ### Основные концепции
 
-1. **Хеширование** - преобразование данных в фиксированный размер
-2. **Шифрование** - преобразование данных для защиты конфиденциальности
-3. **Цифровые подписи** - проверка подлинности и целостности данных
-4. **Случайные числа** - генерация криптографически стойких случайных чисел
+1. **Хеширование** — преобразование данных в фиксированный размер
+2. **Шифрование** — преобразование данных для защиты конфиденциальности
+3. **Цифровые подписи** — проверка подлинности и целостности данных
+4. **Случайные числа** — генерация криптографически стойких случайных чисел
 
 ## Хеширование
 
@@ -147,16 +147,16 @@ func encryptAES(key, plaintext []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     ciphertext := make([]byte, aes.BlockSize+len(plaintext))
     iv := ciphertext[:aes.BlockSize]
     if _, err := io.ReadFull(rand.Reader, iv); err != nil {
         return nil, err
     }
-    
+
     stream := cipher.NewCFBEncrypter(block, iv)
     stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
-    
+
     return ciphertext, nil
 }
 
@@ -165,17 +165,17 @@ func decryptAES(key, ciphertext []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     if len(ciphertext) < aes.BlockSize {
         return nil, fmt.Errorf("ciphertext too short")
     }
-    
+
     iv := ciphertext[:aes.BlockSize]
     ciphertext = ciphertext[aes.BlockSize:]
-    
+
     stream := cipher.NewCFBDecrypter(block, iv)
     stream.XORKeyStream(ciphertext, ciphertext)
-    
+
     return ciphertext, nil
 }
 ```
@@ -195,17 +195,17 @@ func encryptGCM(key, plaintext []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     gcm, err := cipher.NewGCM(block)
     if err != nil {
         return nil, err
     }
-    
+
     nonce := make([]byte, gcm.NonceSize())
     if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
         return nil, err
     }
-    
+
     ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
     return ciphertext, nil
 }
@@ -215,17 +215,17 @@ func decryptGCM(key, ciphertext []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     gcm, err := cipher.NewGCM(block)
     if err != nil {
         return nil, err
     }
-    
+
     nonceSize := gcm.NonceSize()
     if len(ciphertext) < nonceSize {
         return nil, fmt.Errorf("ciphertext too short")
     }
-    
+
     nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
     return gcm.Open(nil, nonce, ciphertext, nil)
 }
@@ -314,12 +314,12 @@ func createTLSConnection(addr string) (*tls.Conn, error) {
     config := &tls.Config{
         InsecureSkipVerify: false,
     }
-    
+
     conn, err := tls.Dial("tcp", addr, config)
     if err != nil {
         return nil, err
     }
-    
+
     return conn, nil
 }
 ```
@@ -337,16 +337,16 @@ func createTLSServer(certFile, keyFile string) (*http.Server, error) {
     if err != nil {
         return nil, err
     }
-    
+
     config := &tls.Config{
         Certificates: []tls.Certificate{cert},
     }
-    
+
     server := &http.Server{
         Addr:      ":443",
         TLSConfig: config,
     }
-    
+
     return server, nil
 }
 ```
@@ -400,9 +400,9 @@ func hashPassword(password string) (*PasswordHash, error) {
     if _, err := rand.Read(salt); err != nil {
         return nil, err
     }
-    
+
     hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
-    
+
     return &PasswordHash{
         Hash:    hash,
         Salt:    salt,
@@ -440,26 +440,26 @@ func encryptWithPassword(password string, plaintext []byte) ([]byte, error) {
     if _, err := rand.Read(salt); err != nil {
         return nil, err
     }
-    
+
     key := deriveKey(password, salt)
-    
+
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, err
     }
-    
+
     gcm, err := cipher.NewGCM(block)
     if err != nil {
         return nil, err
     }
-    
+
     nonce := make([]byte, gcm.NonceSize())
     if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
         return nil, err
     }
-    
+
     ciphertext := gcm.Seal(nonce, nonce, plaintext, nil)
-    
+
     // Добавляем salt в начало
     result := append(salt, ciphertext...)
     return result, nil
@@ -469,27 +469,27 @@ func decryptWithPassword(password string, ciphertext []byte) ([]byte, error) {
     if len(ciphertext) < 16 {
         return nil, fmt.Errorf("ciphertext too short")
     }
-    
+
     salt := ciphertext[:16]
     ciphertext = ciphertext[16:]
-    
+
     key := deriveKey(password, salt)
-    
+
     block, err := aes.NewCipher(key)
     if err != nil {
         return nil, err
     }
-    
+
     gcm, err := cipher.NewGCM(block)
     if err != nil {
         return nil, err
     }
-    
+
     nonceSize := gcm.NonceSize()
     if len(ciphertext) < nonceSize {
         return nil, fmt.Errorf("ciphertext too short")
     }
-    
+
     nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
     return gcm.Open(nil, nonce, ciphertext, nil)
 }
@@ -545,7 +545,7 @@ func signData(key, data []byte) ([]byte, error) {
     mac := hmac.New(sha256.New, key)
     mac.Write(data)
     signature := mac.Sum(nil)
-    
+
     // Добавляем подпись к данным
     return append(signature, data...), nil
 }
@@ -554,18 +554,18 @@ func verifySignedData(key, signedData []byte) ([]byte, bool) {
     if len(signedData) < 32 {
         return nil, false
     }
-    
+
     signature := signedData[:32]
     data := signedData[32:]
-    
+
     mac := hmac.New(sha256.New, key)
     mac.Write(data)
     expectedSignature := mac.Sum(nil)
-    
+
     if !hmac.Equal(signature, expectedSignature) {
         return nil, false
     }
-    
+
     return data, true
 }
 ```
@@ -578,12 +578,12 @@ func encryptFile(key []byte, inputFile, outputFile string) error {
     if err != nil {
         return err
     }
-    
+
     ciphertext, err := encryptGCM(key, plaintext)
     if err != nil {
         return err
     }
-    
+
     return os.WriteFile(outputFile, ciphertext, 0644)
 }
 
@@ -592,12 +592,12 @@ func decryptFile(key []byte, inputFile, outputFile string) error {
     if err != nil {
         return err
     }
-    
+
     plaintext, err := decryptGCM(key, ciphertext)
     if err != nil {
         return err
     }
-    
+
     return os.WriteFile(outputFile, plaintext, 0644)
 }
 ```
@@ -616,22 +616,22 @@ func createTLSConfig(certFile, keyFile, caFile string) (*tls.Config, error) {
     if err != nil {
         return nil, err
     }
-    
+
     caCert, err := os.ReadFile(caFile)
     if err != nil {
         return nil, err
     }
-    
+
     caCertPool := x509.NewCertPool()
     caCertPool.AppendCertsFromPEM(caCert)
-    
+
     config := &tls.Config{
         Certificates: []tls.Certificate{cert},
         RootCAs:      caCertPool,
         ClientCAs:    caCertPool,
         ClientAuth:   tls.RequireAndVerifyClientCert,
     }
-    
+
     return config, nil
 }
 ```
@@ -679,15 +679,15 @@ func VerifyJWT(tokenString string, secret []byte) (jwt.MapClaims, error) {
         }
         return secret, nil
     })
-    
+
     if err != nil {
         return nil, err
     }
-    
+
     if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
         return claims, nil
     }
-    
+
     return nil, fmt.Errorf("invalid token")
 }
 ```
@@ -713,17 +713,17 @@ func (sm *SecretManager) EncryptSecret(secret []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     gcm, err := cipher.NewGCM(block)
     if err != nil {
         return nil, err
     }
-    
+
     nonce := make([]byte, gcm.NonceSize())
     if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
         return nil, err
     }
-    
+
     ciphertext := gcm.Seal(nonce, nonce, secret, nil)
     return ciphertext, nil
 }
@@ -733,17 +733,17 @@ func (sm *SecretManager) DecryptSecret(ciphertext []byte) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     gcm, err := cipher.NewGCM(block)
     if err != nil {
         return nil, err
     }
-    
+
     nonceSize := gcm.NonceSize()
     if len(ciphertext) < nonceSize {
         return nil, fmt.Errorf("ciphertext too short")
     }
-    
+
     nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
     return gcm.Open(nil, nonce, ciphertext, nil)
 }
@@ -773,21 +773,21 @@ func ValidateToken(token, expected []byte) bool {
 
 ## Лучшие практики
 
-1. **Используйте современные алгоритмы** - **SHA-256**, **AES-256**, **RSA-2048**+
-2. **Избегайте устаревших алгоритмов** - **MD5**, **SHA-1**, **DES**
-3. **Используйте криптографически стойкие случайные числа** - **crypto**/**rand**
-4. **Храните ключи безопасно** - не храните ключи в коде
-5. **Используйте правильные режимы шифрования** - **GCM** для аутентифицированного шифрования
-6. **Валидируйте подписи** - всегда проверяйте цифровые подписи
-7. **Используйте salt для паролей** - всегда используйте уникальный **salt**
-8. **Используйте постоянное время сравнения** - для предотвращения **timing attacks**
-9. **Проверяйте сертификаты** - не пропускайте проверку сертификатов в **production**
-10. **Храните ключи отдельно** - используйте **key management systems**
-11. **Используйте bcrypt или Argon2** - для хеширования паролей
-12. **Используйте `JWT` правильно** - подписывайте и проверяйте токены
-13. **Шифруйте секреты** - используйте шифрование для хранения секретов
-14. **Используйте constant time сравнение** - для предотвращения **timing attacks**
-15. **Ротация ключей** - регулярно меняйте криптографические ключи
+1. **Используйте современные алгоритмы** — **SHA-256**, **AES-256**, **RSA-2048**+
+2. **Избегайте устаревших алгоритмов** — **MD5**, **SHA-1**, **DES**
+3. **Используйте криптографически стойкие случайные числа** — **crypto**/**rand**
+4. **Храните ключи безопасно** — не храните ключи в коде
+5. **Используйте правильные режимы шифрования** — **GCM** для аутентифицированного шифрования
+6. **Валидируйте подписи** — всегда проверяйте цифровые подписи
+7. **Используйте salt для паролей** — всегда используйте уникальный **salt**
+8. **Используйте постоянное время сравнения** — для предотвращения **timing attacks**
+9. **Проверяйте сертификаты** — не пропускайте проверку сертификатов в **production**
+10. **Храните ключи отдельно** — используйте **key management systems**
+11. **Используйте bcrypt или Argon2** — для хеширования паролей
+12. **Используйте `JWT` правильно** — подписывайте и проверяйте токены
+13. **Шифруйте секреты** — используйте шифрование для хранения секретов
+14. **Используйте constant time сравнение** — для предотвращения **timing attacks**
+15. **Ротация ключей** — регулярно меняйте криптографические ключи
 
 
 ## Решение проблем
@@ -807,3 +807,11 @@ func ValidateToken(token, expected []byte) bool {
 - [Go crypto Package](https://pkg.go.dev/crypto)
 - [Go crypto/hash](https://pkg.go.dev/crypto/hash)
 - [Go crypto/cipher](https://pkg.go.dev/crypto/cipher)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

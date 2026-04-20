@@ -14,9 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: WebSocket - Real-time Communication
-
-
+# Quarkus: WebSocket — Real-time Communication
 
 ## Полезные ссылки
 
@@ -25,7 +23,7 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: WebSocket - Real-time Communication](#quarkus-websocket-real-time-communication)
+- [Quarkus: WebSocket — Real-time Communication](#quarkus-websocket-real-time-communication)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Server Endpoints](#server-endpoints)
@@ -90,19 +88,19 @@ import jakarta.websocket.server.ServerEndpoint;
 
 @ServerEndpoint("/chat")
 public class ChatEndpoint {
-    
+
     @OnOpen
     public void onOpen(Session session) {
         System.out.println("Client connected: " + session.getId());
     }
-    
+
     @OnMessage
     public void onMessage(String message, Session session) {
         System.out.println("Received: " + message);
         // Отправка ответа
         session.getAsyncRemote().sendText("Echo: " + message);
     }
-    
+
     @OnClose
     public void onClose(Session session) {
         System.out.println("Client disconnected: " + session.getId());
@@ -120,24 +118,24 @@ import jakarta.websocket.server.PathParam;
 
 @ServerEndpoint("/chat/{room}")
 public class RoomChatEndpoint {
-    
+
     @OnOpen
     public void onOpen(@PathParam("room") String room, Session session) {
         session.getUserProperties().put("room", room);
         System.out.println("Client joined room: " + room);
     }
-    
+
     @OnMessage
     public void onMessage(String message, Session session) {
         String room = (String) session.getUserProperties().get("room");
         broadcastToRoom(room, message, session);
     }
-    
+
     @OnError
     public void onError(Session session, Throwable error) {
         System.err.println("Error: " + error.getMessage());
     }
-    
+
     private void broadcastToRoom(String room, String message, Session sender) {
         // Логика broadcast
     }
@@ -158,17 +156,17 @@ import jakarta.websocket.OnClose;
 
 @ClientEndpoint
 public class WebSocketClient {
-    
+
     @OnOpen
     public void onOpen(Session session) {
         System.out.println("Connected to server");
     }
-    
+
     @OnMessage
     public void onMessage(String message) {
         System.out.println("Received: " + message);
     }
-    
+
     @OnClose
     public void onClose() {
         System.out.println("Disconnected from server");
@@ -185,7 +183,7 @@ public class WebSocketClient {
 ```java
 @ServerEndpoint("/text")
 public class TextEndpoint {
-    
+
     @OnMessage
     public void onTextMessage(String message, Session session) {
         session.getAsyncRemote().sendText("Response: " + message);
@@ -200,7 +198,7 @@ public class TextEndpoint {
 ```java
 @ServerEndpoint("/binary")
 public class BinaryEndpoint {
-    
+
     @OnMessage
     public void onBinaryMessage(ByteBuffer data, Session session) {
         // Обработка бинарных данных
@@ -223,14 +221,14 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @ServerEndpoint("/broadcast")
 @ApplicationScoped
 public class BroadcastEndpoint {
-    
+
     private static Set<Session> sessions = new CopyOnWriteArraySet<>();
-    
+
     @OnOpen
     public void onOpen(Session session) {
         sessions.add(session);
     }
-    
+
     @OnMessage
     public void onMessage(String message, Session sender) {
         sessions.forEach(session -> {
@@ -239,7 +237,7 @@ public class BroadcastEndpoint {
             }
         });
     }
-    
+
     @OnClose
     public void onClose(Session session) {
         sessions.remove(session);
@@ -259,7 +257,7 @@ import jakarta.websocket.server.ServerEndpoint;
 
 @ServerEndpoint("/reactive")
 public class ReactiveEndpoint {
-    
+
     @OnMessage
     public Multi<String> onReactiveMessage(String message) {
         return Multi.createFrom().items(
@@ -313,7 +311,7 @@ import jakarta.websocket.server.ServerEndpoint;
 @ServerEndpoint("/secure-chat")
 @RolesAllowed("user")
 public class SecuredChatEndpoint {
-    
+
     @OnMessage
     public void onMessage(String message, Session session) {
         // Только авторизованные пользователи могут отправлять сообщения
@@ -334,9 +332,9 @@ import jakarta.websocket.Decoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class MessageEncoder implements Encoder.Text<ChatMessage> {
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public String encode(ChatMessage message) throws EncodeException {
         try {
@@ -348,9 +346,9 @@ public class MessageEncoder implements Encoder.Text<ChatMessage> {
 }
 
 public class MessageDecoder implements Decoder.Text<ChatMessage> {
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public ChatMessage decode(String s) throws DecodeException {
         try {
@@ -359,7 +357,7 @@ public class MessageDecoder implements Decoder.Text<ChatMessage> {
             throw new DecodeException(s, "Decoding error", e);
         }
     }
-    
+
     @Override
     public boolean willDecode(String s) {
         return s != null;
@@ -372,7 +370,7 @@ public class MessageDecoder implements Decoder.Text<ChatMessage> {
 ```java
 @ServerEndpoint(value = "/chat", encoders = MessageEncoder.class, decoders = MessageDecoder.class)
 public class EncodedChatEndpoint {
-    
+
     @OnMessage
     public void onMessage(ChatMessage message, Session session) {
         // Обработка декодированного сообщения
@@ -394,23 +392,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @ServerEndpoint("/managed-chat")
 @ApplicationScoped
 public class ManagedChatEndpoint {
-    
+
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
-    
+
     @OnOpen
     public void onOpen(Session session) {
         String userId = getUserId(session);
         sessions.put(userId, session);
         broadcastUserJoined(userId);
     }
-    
+
     @OnClose
     public void onClose(Session session) {
         String userId = getUserId(session);
         sessions.remove(userId);
         broadcastUserLeft(userId);
     }
-    
+
     private String getUserId(Session session) {
         return (String) session.getUserProperties().get("userId");
     }
@@ -426,10 +424,10 @@ public class ManagedChatEndpoint {
 ```java
 @ApplicationScoped
 public class ConnectionPoolManager {
-    
+
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
     private final int MAX_CONNECTIONS = 1000;
-    
+
     public void addSession(String userId, Session session) {
         if (sessions.size() < MAX_CONNECTIONS) {
             sessions.put(userId, session);
@@ -447,9 +445,9 @@ public class ConnectionPoolManager {
 ```java
 @ServerEndpoint("/chat")
 public class BatchedChatEndpoint {
-    
+
     private final Queue<String> messageQueue = new ConcurrentLinkedQueue<>();
-    
+
     @Scheduled(every = "100ms")
     void flushMessages() {
         if (!messageQueue.isEmpty()) {
@@ -472,14 +470,14 @@ public class BatchedChatEndpoint {
 ```java
 @ApplicationScoped
 public class WebSocketMessageQueue {
-    
+
     private final Map<String, Queue<Message>> userQueues = new ConcurrentHashMap<>();
-    
+
     public void enqueueMessage(String userId, Message message) {
         userQueues.computeIfAbsent(userId, k -> new ConcurrentLinkedQueue<>())
             .offer(message);
     }
-    
+
     public void processQueue(String userId, Session session) {
         Queue<Message> queue = userQueues.get(userId);
         if (queue != null) {
@@ -499,14 +497,14 @@ public class WebSocketMessageQueue {
 ```java
 @ServerEndpoint("/chat")
 public class HeartbeatChatEndpoint {
-    
+
     @OnMessage
     public void onMessage(String message, Session session) {
         if ("ping".equals(message)) {
             session.getAsyncRemote().sendText("pong");
         }
     }
-    
+
     @Scheduled(every = "30s")
     void sendHeartbeat() {
         // Отправка heartbeat всем подключенным клиентам
@@ -524,10 +522,10 @@ public class HeartbeatChatEndpoint {
 ```java
 @ApplicationScoped
 public class ConnectionPoolManager {
-    
+
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
     private static final int MAX_CONNECTIONS = 1000;
-    
+
     public void addSession(String userId, Session session) {
         if (sessions.size() < MAX_CONNECTIONS) {
             sessions.put(userId, session);
@@ -535,11 +533,11 @@ public class ConnectionPoolManager {
             throw new TooManyConnectionsException();
         }
     }
-    
+
     public void removeSession(String userId) {
         sessions.remove(userId);
     }
-    
+
     public Session getSession(String userId) {
         return sessions.get(userId);
     }
@@ -553,14 +551,14 @@ public class ConnectionPoolManager {
 ```java
 @ApplicationScoped
 public class WebSocketMessageQueue {
-    
+
     private final Map<String, Queue<Message>> userQueues = new ConcurrentHashMap<>();
-    
+
     public void enqueueMessage(String userId, Message message) {
         userQueues.computeIfAbsent(userId, k -> new ConcurrentLinkedQueue<>())
             .offer(message);
     }
-    
+
     public void processQueue(String userId, Session session) {
         Queue<Message> queue = userQueues.get(userId);
         if (queue != null) {
@@ -583,3 +581,11 @@ public class WebSocketMessageQueue {
 - [**Quarkus WebSocket** Guide](https://quarkus.io/guides/websockets)
 - [**Jakarta WebSocket** Specification](https://jakarta.ee/specifications/websocket/)
 - [**WebSocket** Protocol (RFC 6455)](https://datatracker.ietf.org/doc/html/rfc6455)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

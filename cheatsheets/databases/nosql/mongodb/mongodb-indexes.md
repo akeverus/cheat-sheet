@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: Индексы - Полное руководство по индексации и оптимизации запросов
+# **MongoDB**: Индексы — Полное руководство по индексации и оптимизации запросов
 
 Комплексное руководство по индексам в **MongoDB**: типы индексов, стратегии индексации, управление и оптимизация производительности.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Index Strategies](https://www.mongodb.com/docs/manual/applications/indexes/)
 - [Index Types](https://www.mongodb.com/docs/manual/indexes/#index-types)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Indexes](https://www.baeldung.com/spring-data-mongodb-index-annotation)
 
 ### См. также
@@ -142,7 +142,7 @@ updated: "2026-02-11"
 public class User {
     @Id
     private String id; // Автоматически индексируется
-    
+
     private String name;
     private String email;
 }
@@ -182,12 +182,12 @@ MongoCollection<Document> collection = database.getCollection("users");
 collection.createIndex(Indexes.ascending("name"));
 
 // Unique index
-collection.createIndex(Indexes.ascending("email"), 
+collection.createIndex(Indexes.ascending("email"),
     new IndexOptions().unique(true));
 
 // Compound index (see below)
 collection.createIndex(Indexes.compoundIndex(
-    Indexes.ascending("lastName"), 
+    Indexes.ascending("lastName"),
     Indexes.ascending("firstName")));
 ```
 
@@ -197,16 +197,16 @@ collection.createIndex(Indexes.compoundIndex(
 public class User {
     @Id
     private String id;
-    
+
     @Indexed
     private String name;
-    
+
     @Indexed(unique = true)
     private String email;
-    
+
     @Indexed(direction = IndexDirection.DESCENDING)
     private LocalDateTime createdAt;
-    
+
     // Compound index
     @CompoundIndex(def = "{'lastName': 1, 'firstName': 1}")
     private String lastName;
@@ -249,17 +249,17 @@ collection.createIndex(Indexes.ascending("metadata.$"));
 public class Employee {
     @Id
     private String id;
-    
+
     @Indexed
     private String department;
-    
+
     private int salary;
     private String name;
-    
+
     // Compound index для department + salary
     @CompoundIndex(def = "{'department': 1, 'salary': -1}")
     public String getDepartment() { return department; }
-    
+
     // Compound index для поиска и сортировки
     @CompoundIndex(def = "{'department': 1, 'name': 1}")
     public String getName() { return name; }
@@ -272,7 +272,7 @@ public class Employee {
 // Запрос использует индекс {name: 1, age: -1}
 db.users.find({ name: "John", age: { $gt: 25 } }).sort({ age: -1 })
 
-// Запрос использует индекс {city: 1, name: 1}  
+// Запрос использует индекс {city: 1, name: 1}
 db.users.find({ "address.city": "Moscow", name: /^A/ })
 
 // Запрос НЕ использует индекс (непрефиксная часть)
@@ -325,8 +325,8 @@ collection.createIndex(Indexes.compoundIndex(
 db.articles.createIndex({ content: "text" })
 
 // Text index на нескольких полях
-db.articles.createIndex({ 
-    title: "text", 
+db.articles.createIndex({
+    title: "text",
     content: "text",
     tags: "text"
 })
@@ -368,21 +368,21 @@ collection.createIndex(Indexes.text(Arrays.asList("title", "content")), options)
 public class Article {
     @Id
     private String id;
-    
+
     @TextIndexed(weight = 10)
     private String title;
-    
+
     @TextIndexed
     private String content;
-    
+
     @TextIndexed
     private List<String> tags;
-    
+
     private String language = "english";
 }
 
 // Text index на уровне класса
-@TextIndex(definition = "{'title': 'text', 'content': 'text'}", 
+@TextIndex(definition = "{'title': 'text', 'content': 'text'}",
            weights = "{'title': 10, 'content': 1}")
 public class Article {
     // ...
@@ -395,17 +395,17 @@ public class Article {
 db.articles.find({ $text: { $search: "database optimization" } })
 
 // Поиск с языком
-db.articles.find({ 
+db.articles.find({
     $text: { $search: "database", $language: "english" }
 })
 
 // Поиск фразы
-db.articles.find({ 
+db.articles.find({
     $text: { $search: "\"database optimization\"" }
 })
 
 // Поиск с исключением
-db.articles.find({ 
+db.articles.find({
     $text: { $search: "database -mysql" }
 })
 ```
@@ -467,7 +467,7 @@ collection.createIndex(Indexes.geo2d("location"));
 collection.createIndex(Indexes.geo2dsphere("location"));
 
 // Geospatial queries
-collection.find(Filters.near("location", 
+collection.find(Filters.near("location",
     new Point(new Position(37.617, 55.755)), 1000.0, 0.0));
 
 collection.find(Filters.geoWithinCenter("location", 37.617, 55.755, 5.0));
@@ -479,12 +479,12 @@ collection.find(Filters.geoWithinCenter("location", 37.617, 55.755, 5.0));
 public class Place {
     @Id
     private String id;
-    
+
     private String name;
-    
+
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     private Point location;
-    
+
     // Для legacy координат
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2D)
     private double[] coordinates;
@@ -500,7 +500,7 @@ public class Place {
 // Индекс только на активных пользователях
 db.users.createIndex(
     { email: 1 },
-    { 
+    {
         partialFilterExpression: { status: "active" },
         unique: true
     }
@@ -520,7 +520,7 @@ PartialIndexOptions options = new PartialIndexOptions()
     .partialFilterExpression(Filters.eq("status", "active"));
 
 collection.createIndex(
-    Indexes.ascending("email"), 
+    Indexes.ascending("email"),
     new IndexOptions().partialFilterExpression(Filters.eq("status", "active"))
 );
 ```
@@ -644,7 +644,7 @@ database.runCommand(new Document("compact", "users"));
 
 ```javascript
 // Хороший индекс для ESR
-db.orders.createIndex({ 
+db.orders.createIndex({
     customerId: 1,  // Equality
     orderDate: -1,  // Sort
     total: 1        // Range
@@ -662,10 +662,10 @@ db.orders.find({ customerId: "123" })
 
 ```javascript
 // Covering index
-db.users.createIndex({ 
-    name: 1, 
-    email: 1, 
-    age: 1 
+db.users.createIndex({
+    name: 1,
+    email: 1,
+    age: 1
 })
 
 // Запрос полностью покрыт индексом
@@ -685,9 +685,9 @@ db.users.createIndex({ name: 1 })
 db.users.createIndex({ age: 1 })
 
 // Запрос использует оба индекса
-db.users.find({ 
-    name: "John", 
-    age: { $gte: 25 } 
+db.users.find({
+    name: "John",
+    age: { $gte: 25 }
 })
 ```
 
@@ -761,10 +761,10 @@ db.users.find({ email: "unique@example.com" })  // INDEX SCAN
 
 ```javascript
 // Индекс для фильтрации и сортировки
-db.products.createIndex({ 
-    category: 1, 
-    price: -1, 
-    rating: -1 
+db.products.createIndex({
+    category: 1,
+    price: -1,
+    rating: -1
 })
 
 // Эффективный запрос
@@ -830,9 +830,9 @@ db.users.aggregate([
 // Найти неиспользуемые индексы
 db.users.getIndexes().forEach(function(index) {
     var key = Object.keys(index.key)[0];
-    var usage = db.runCommand({ 
-        "collStats": "users", 
-        "indexDetails": true 
+    var usage = db.runCommand({
+        "collStats": "users",
+        "indexDetails": true
     });
     // Анализировать usage
 });
@@ -988,7 +988,7 @@ mongorestore --db users --collection users --indexes
 db.getCollectionNames().forEach(function(collection) {
     var indexes = db[collection].getIndexes();
     var stats = db[collection].stats();
-    
+
     print("Collection: " + collection);
     print("Index count: " + indexes.length);
     print("Total index size: " + (stats.indexSizes || 0));
@@ -1000,16 +1000,16 @@ db.getCollectionNames().forEach(function(collection) {
 ```java
 @Service
 public class IndexMonitorService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     @Scheduled(fixedRate = 3600000) // Каждый час
     public void monitorIndexes() {
         for (String collection : mongoTemplate.getCollectionNames()) {
             Document stats = mongoTemplate.getDb().runCommand(
                 new Document("collStats", collection));
-            
+
             // Логировать размеры индексов
             Document indexSizes = (Document) stats.get("indexSizes");
             if (indexSizes != null) {
@@ -1067,14 +1067,14 @@ public class IndexMonitorService {
 - [Index Strategies](https://www.mongodb.com/docs/manual/applications/indexes/)
 - [Index Types](https://www.mongodb.com/docs/manual/indexes/#index-types)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Indexes](https://www.baeldung.com/spring-data-mongodb-index-annotation)
 
 ### См. также
 - [[mongodb-queries|Запросы]] — оптимизация запросов
 - [[mongodb-performance|Производительность]] — производительность и мониторинг
 
-```
+```text
 
 ### Преимущества индексов
 
@@ -1161,6 +1161,6 @@ public class IndexMonitorService {
 // `Java` + `Spring implementation available`
 ``````java
 // Java + Spring implementation available
-```
+```text
 
 ```

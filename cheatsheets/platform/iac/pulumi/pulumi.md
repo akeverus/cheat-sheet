@@ -96,7 +96,7 @@ pulumi config set --local database:password mySecretPassword
 ### Структура проекта
 
 #### Базовый проект
-```
+```text
 my-pulumi-project/
 ├── Pulumi.yaml          # Конфигурация проекта
 ├── Pulumi.dev.yaml      # Конфигурация для dev среды

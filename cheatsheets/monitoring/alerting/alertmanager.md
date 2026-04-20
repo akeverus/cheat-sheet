@@ -217,22 +217,22 @@ alerting:
 
 ## Частые вопросы
 
-**Чем Alertmanager отличается от алертинга в Grafana?**  
+**Чем Alertmanager отличается от алертинга в Grafana?**
 Alertmanager — отдельный компонент для приёма алертов от Prometheus, группировки и доставки. Grafana имеет встроенный алертинг по своим правилам и может отправлять алерты в Alertmanager как в канал или показывать алерты Alertmanager в дашбордах.
 
-**Нужен ли Alertmanager, если используется только Grafana?**  
+**Нужен ли Alertmanager, если используется только Grafana?**
 Если алерты только в Grafana и уведомления идут через Grafana — не обязателен. Нужен, когда алерты генерирует Prometheus и нужна централизованная маршрутизация и группировка.
 
-**Как отправить тестовый алерт?**  
+**Как отправить тестовый алерт?**
 `POST http://localhost:9093/api/v2/alerts` с телом JSON (массив алертов с labels, annotations, startsAt). Либо amtool alert add.
 
-**Как включить тишину по расписанию?**  
+**Как включить тишину по расписанию?**
 Alertmanager не поддерживает расписание для silence из коробки. Используют CronJob или скрипт, создающий/удаляющий silence через API в нужное время.
 
-**Поддерживает ли Alertmanager Telegram?**  
+**Поддерживает ли Alertmanager Telegram?**
 Официально нет. Используют webhook: сервис принимает POST от Alertmanager и шлёт в Telegram Bot API.
 
-**Inhibition vs Silence?**  
+**Inhibition vs Silence?**
 Inhibition задаётся в конфиге статически (если A активен, B не показывать). Silence — динамический, создаётся через UI/API на период; срабатывает по matchers.
 
 ## Глоссарий и таблицы

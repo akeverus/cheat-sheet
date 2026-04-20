@@ -138,17 +138,17 @@ public static String replaceTokens(String original, Pattern tokenPattern, Functi
     int lastIndex = 0;
     StringBuilder output = new StringBuilder();
     Matcher matcher = tokenPattern.matcher(original);
-    
+
     while (matcher.find()) {
         output.append(original, lastIndex, matcher.start())
             .append(converter.apply(matcher));
         lastIndex = matcher.end();
     }
-    
+
     if (lastIndex < original.length()) {
         output.append(original, lastIndex, original.length());
     }
-    
+
     return output.toString();
 }
 ```
@@ -182,17 +182,17 @@ fun replaceTokensK(
     var lastIndex = 0
     val output = StringBuilder()
     val matches = tokenPattern.findAll(original)
-    
+
     for (match in matches) {
         output.append(original.substring(lastIndex, match.range.first))
         output.append(converter(match))
         lastIndex = match.range.last + 1
     }
-    
+
     if (lastIndex < original.length) {
         output.append(original.substring(lastIndex))
     }
-    
+
     return output.toString()
 }
 ```
@@ -202,7 +202,7 @@ fun replaceTokensK(
 ```kotlin
 fun replaceTitleCaseToLowerCaseK(input: String): String {
     val titleCasePattern = "(?<=^|[^A-Za-z])([A-Z][a-z]*)(?=[^A-Za-z]|$)".toRegex()
-    
+
     return replaceTokensK(input, titleCasePattern) { match ->
         match.groupValues[1].lowercase()
     }
@@ -214,7 +214,7 @@ fun replaceTitleCaseToLowerCaseK(input: String): String {
 ```kotlin
 fun escapeRegexCharactersK(input: String): String {
     val regexCharacters = "[<(\\[{\\\\\\^\\-=\\$!|\\]})?*+.>]".toRegex()
-    
+
     return replaceTokensK(input, regexCharacters) { match ->
         "\\${match.value}"
     }
@@ -229,7 +229,7 @@ fun replacePlaceholdersK(
     placeholderValues: Map<String, String>
 ): String {
     val placeholderPattern = "\\$\\{(?<placeholder>[A-Za-z0-9-_]+)}".toRegex()
-    
+
     return replaceTokensK(input, placeholderPattern) { match ->
         val placeholderName = match.groups["placeholder"]?.value ?: ""
         placeholderValues[placeholderName] ?: match.value
@@ -248,14 +248,14 @@ fun replaceTokensFunctionalK(
     val matches = tokenPattern.findAll(original)
     val parts = mutableListOf<String>()
     var lastIndex = 0
-    
+
     matches.forEach { match ->
         parts.add(original.substring(lastIndex, match.range.first))
         parts.add(converter(match))
         lastIndex = match.range.last + 1
     }
     parts.add(original.substring(lastIndex))
-    
+
     return parts.joinToString("")
 }
 ```
@@ -265,15 +265,15 @@ fun replaceTokensFunctionalK(
 ```kotlin
 fun main() {
     val input = "First 3 Capital Words! then 10 TLAs, I Found"
-    
+
     // Замена заглавных слов на строчные
     val result1 = replaceTitleCaseToLowerCaseK(input)
     println(result1) // "first 3 capital words! then 10 TLAs, i found"
-    
+
     // Экранирование символов
     val result2 = escapeRegexCharactersK("A regex character like [")
     println(result2) // "A regex character like \\["
-    
+
     // Замена заполнителей
     val placeholders = mapOf("name" to "Bill", "company" to "Baeldung")
     val result3 = replacePlaceholdersK("Hi \${name} at \${company}", placeholders)

@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Testing: Полное руководство по тестированию
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -135,25 +133,25 @@ src/test/java/
 // Интеграционный тест с полной загрузкой контекста
 @SpringBootTest
 class UserServiceIntegrationTest {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     void testCreateUser() {
         // Given
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User created = userService.create(user);
-        
+
         // Then
         assertThat(created.getId()).isNotNull();
         assertThat(created.getName()).isEqualTo("John");
-        
+
         Optional<User> found = userRepository.findById(created.getId());
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo("John");
@@ -172,10 +170,10 @@ class UserServiceTest {
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class UserControllerIntegrationTest {
     // Тесты с веб-сервером на случайном порту
-    
+
     @Autowired
     private TestRestTemplate restTemplate;
-    
+
     @Test
     void testGetUser() {
         ResponseEntity<User> response = restTemplate.getForEntity(
@@ -205,19 +203,19 @@ class UserServiceTest {
 // Срез-тест только контроллера (без полного контекста)
 @WebMvcTest(UserController.class)
 class UserControllerTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @MockBean
     private UserService userService;
-    
+
     @Test
     void testGetUser() throws Exception {
         // Given
         User user = new User(1L, "John", "john@example.com", 30);
         when(userService.findById(1L)).thenReturn(user);
-        
+
         // When & Then
         mockMvc.perform(get("/api/users/1"))
             .andExpect(status().isOk())
@@ -225,14 +223,14 @@ class UserControllerTest {
             .andExpect(jsonPath("$.name").value("John"))
             .andExpect(jsonPath("$.email").value("john@example.com"));
     }
-    
+
     @Test
     void testCreateUser() throws Exception {
         // Given
         User user = new User("John", "john@example.com", 30);
         User created = new User(1L, "John", "john@example.com", 30);
         when(userService.create(any(User.class))).thenReturn(created);
-        
+
         // When & Then
         mockMvc.perform(post("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -249,10 +247,10 @@ class UserControllerTest {
 ```java
 @WebMvcTest(UserController.class)
 class UserControllerValidationTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @Test
     void testCreateUserWithInvalidData() throws Exception {
         mockMvc.perform(post("/api/users")
@@ -274,39 +272,39 @@ class UserControllerValidationTest {
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class UserRepositoryTest {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private TestEntityManager entityManager;
-    
+
     @Test
     void testSaveUser() {
         // Given
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User saved = userRepository.save(user);
-        
+
         // Then
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getName()).isEqualTo("John");
-        
+
         User found = entityManager.find(User.class, saved.getId());
         assertThat(found).isNotNull();
         assertThat(found.getName()).isEqualTo("John");
     }
-    
+
     @Test
     void testFindByEmail() {
         // Given
         User user = new User("John", "john@example.com", 30);
         entityManager.persistAndFlush(user);
-        
+
         // When
         Optional<User> found = userRepository.findByEmail("john@example.com");
-        
+
         // Then
         assertThat(found).isPresent();
         assertThat(found.get().getEmail()).isEqualTo("john@example.com");
@@ -340,54 +338,54 @@ class UserRepositoryWithCleanupTest {
 ```java
 @WebMvcTest(UserController.class)
 class UserControllerMockMvcTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @MockBean
     private UserService userService;
-    
+
     @Test
     void testGetUser() throws Exception {
         User user = new User(1L, "John", "john@example.com", 30);
         when(userService.findById(1L)).thenReturn(user);
-        
+
         mockMvc.perform(get("/api/users/1"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.name").value("John"));
     }
-    
+
     @Test
     void testCreateUser() throws Exception {
         User user = new User("John", "john@example.com", 30);
         User created = new User(1L, "John", "john@example.com", 30);
         when(userService.create(any(User.class))).thenReturn(created);
-        
+
         mockMvc.perform(post("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(user)))
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", "/api/users/1"));
     }
-    
+
     @Test
     void testUpdateUser() throws Exception {
         User user = new User(1L, "Jane", "jane@example.com", 25);
         when(userService.update(eq(1L), any(User.class))).thenReturn(user);
-        
+
         mockMvc.perform(put("/api/users/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(user)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.name").value("Jane"));
     }
-    
+
     @Test
     void testDeleteUser() throws Exception {
         doNothing().when(userService).delete(1L);
-        
+
         mockMvc.perform(delete("/api/users/1"))
             .andExpect(status().isNoContent());
     }
@@ -438,28 +436,28 @@ void testGetUserWithCustomHeader() throws Exception {
 @SpringBootTest
 @Testcontainers
 class UserRepositoryIntegrationTest {
-    
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13")
         .withDatabaseName("testdb")
         .withUsername("test")
         .withPassword("test");
-    
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
     }
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     void testSaveAndFind() {
         User user = new User("John", "john@example.com", 30);
         User saved = userRepository.save(user);
-        
+
         Optional<User> found = userRepository.findById(saved.getId());
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo("John");
@@ -473,20 +471,20 @@ class UserRepositoryIntegrationTest {
 @SpringBootTest
 @Testcontainers
 class CacheServiceTest {
-    
+
     @Container
     static GenericContainer<?> redis = new GenericContainer<>("redis:6-alpine")
         .withExposedPorts(6379);
-    
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.redis.host", redis::getHost);
         registry.add("spring.redis.port", redis::getFirstMappedPort);
     }
-    
+
     @Autowired
     private CacheService cacheService;
-    
+
     @Test
     void testCache() {
         cacheService.put("key", "value");
@@ -503,22 +501,22 @@ class CacheServiceTest {
 ```java
 @SpringBootTest
 class UserServiceTest {
-    
+
     @MockBean
     private UserRepository userRepository;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Test
     void testFindById() {
         // Given
         User user = new User(1L, "John", "john@example.com", 30);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        
+
         // When
         User found = userService.findById(1L);
-        
+
         // Then
         assertThat(found).isNotNull();
         assertThat(found.getName()).isEqualTo("John");
@@ -532,18 +530,18 @@ class UserServiceTest {
 ```java
 @SpringBootTest
 class UserServiceSpyTest {
-    
+
     @SpyBean
     private EmailService emailService;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Test
     void testCreateUser() {
         User user = new User("John", "john@example.com", 30);
         User created = userService.create(user);
-        
+
         verify(emailService).sendWelcomeEmail(created);
     }
 }
@@ -617,20 +615,20 @@ assertTrue(user.getEmail().contains("@"));
 ```java
 @SpringBootTest
 class MockBeanTest {
-    
+
     @MockBean
     private UserRepository userRepository;
-    
+
     @SpyBean
     private UserService userService;
-    
+
     @Test
     void testWithMockBean() {
         when(userRepository.findById(1L))
             .thenReturn(Optional.of(new User("John", "john@example.com")));
-        
+
         User user = userService.findUserById(1L);
-        
+
         assertThat(user).isNotNull();
         assertThat(user.getName()).isEqualTo("John");
         verify(userRepository, times(1)).findById(1L);
@@ -643,7 +641,7 @@ class MockBeanTest {
 ```java
 @SpringBootTest
 class TestConfigurationTest {
-    
+
     @TestConfiguration
     static class TestConfig {
         @Bean
@@ -652,10 +650,10 @@ class TestConfigurationTest {
             return new InMemoryUserRepository();
         }
     }
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Test
     void testWithTestConfiguration() {
         User user = userService.findUserById(1L);
@@ -670,17 +668,17 @@ class TestConfigurationTest {
 @SpringBootTest
 @Testcontainers
 class DynamicPropertySourceTest {
-    
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13");
-    
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
     }
-    
+
     @Test
     void testWithDynamicProperties() {
         // Тест использует динамически настроенные свойства
@@ -694,10 +692,10 @@ class DynamicPropertySourceTest {
 @SpringBootTest
 @AutoConfigureWebTestClient
 class WebFluxTest {
-    
+
     @Autowired
     private WebTestClient webTestClient;
-    
+
     @Test
     void testWebFluxEndpoint() {
         webTestClient.get()
@@ -707,11 +705,11 @@ class WebFluxTest {
             .expectBodyList(User.class)
             .hasSize(2);
     }
-    
+
     @Test
     void testWebFluxPost() {
         User user = new User("John", "john@example.com");
-        
+
         webTestClient.post()
             .uri("/api/users")
             .bodyValue(user)
@@ -730,10 +728,10 @@ class WebFluxTest {
 @Sql(scripts = "/test-data.sql")
 @Sql(scripts = "/cleanup.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class SqlTest {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     void testWithSqlScripts() {
         List<User> users = userRepository.findAll();
@@ -748,26 +746,26 @@ class SqlTest {
 @SpringBootTest
 @Transactional
 class TransactionalTest {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     @Rollback
     void testWithRollback() {
         User user = new User("Test", "test@example.com");
         userRepository.save(user);
-        
+
         assertThat(userRepository.count()).isEqualTo(1);
         // После теста изменения откатятся
     }
-    
+
     @Test
     @Commit
     void testWithCommit() {
         User user = new User("Test", "test@example.com");
         userRepository.save(user);
-        
+
         // Изменения будут закоммичены
     }
 }
@@ -779,12 +777,12 @@ class TransactionalTest {
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DirtiesContextTest {
-    
+
     @Test
     void test1() {
         // Контекст будет пересоздан после этого теста
     }
-    
+
     @Test
     void test2() {
         // Контекст будет пересоздан после этого теста
@@ -801,10 +799,10 @@ class DirtiesContextTest {
     "app.timeout=5000"
 })
 class PropertySourceTest {
-    
+
     @Value("${app.feature.enabled}")
     private boolean featureEnabled;
-    
+
     @Test
     void testWithProperties() {
         assertThat(featureEnabled).isTrue();
@@ -818,7 +816,7 @@ class PropertySourceTest {
 @SpringBootTest
 @ActiveProfiles("test")
 class ProfileTest {
-    
+
     @Test
     void testWithTestProfile() {
         // Тест использует test профиль
@@ -832,10 +830,10 @@ class ProfileTest {
 @SpringBootTest
 @MockitoSettings(strictness = Strictness.LENIENT)
 class MockitoSettingsTest {
-    
+
     @MockBean
     private UserRepository userRepository;
-    
+
     @Test
     void testWithLenientMocks() {
         // Неиспользуемые моки не вызовут ошибок
@@ -848,21 +846,21 @@ class MockitoSettingsTest {
 ```java
 @SpringBootTest
 class PerformanceTest {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Test
     void testPerformance() {
         long startTime = System.currentTimeMillis();
-        
+
         for (int i = 0; i < 1000; i++) {
             userService.findUserById(1L);
         }
-        
+
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
-        
+
         assertThat(duration).isLessThan(1000); // Меньше 1 секунды
     }
 }
@@ -874,7 +872,7 @@ class PerformanceTest {
 @SpringBootTest
 @AutoConfigureWireMock(port = 0)
 class WireMockTest {
-    
+
     @Test
     void testWithWireMock() {
         stubFor(get(urlEqualTo("/api/external"))
@@ -882,7 +880,7 @@ class WireMockTest {
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
                 .withBody("{\"data\": \"test\"}")));
-        
+
         // Тест с мокированным внешним API
     }
 }
@@ -901,3 +899,11 @@ class WireMockTest {
 - [Mockito Documentation](https://site.mockito.org/)
 - [AssertJ Documentation](https://assertj.github.io/doc/)
 - [WireMock Documentation](https://wiremock.org/docs/)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

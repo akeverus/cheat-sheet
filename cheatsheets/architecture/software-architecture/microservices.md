@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Microservices.io](https://microservices.io/) — паттерны микросервисов
 - [Microservices Patterns (Chris Richardson)](https://microservices.io/patterns/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Microservices Tutorial](https://www.baeldung.com/microservices-guide)
 
 ## Содержание
@@ -775,7 +775,7 @@ public ResponseEntity<Health> health() {
 class UserServiceTest {
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13");
-    
+
     // tests
 }
 ```

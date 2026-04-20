@@ -12,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Java Collections: Queue
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -21,7 +19,7 @@ updated: "2026-02-11"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Java Tutorials](https://docs.oracle.com/javase/tutorial/)
 
@@ -33,7 +31,7 @@ updated: "2026-02-11"
     - [**BlockingQueue**](#blockingqueue)
     - [**TransferQueue**](#transferqueue)
     - [**Deque**](#deque)
-  - [**PriorityQueue** - исключение из **FIFO**](#priorityqueue-исключение-из-fifo)
+  - [**PriorityQueue** — исключение из **FIFO**](#priorityqueue-исключение-из-fifo)
 - [Руководство по потокобезопасным **Queue**](#руководство-по-потокобезопасным-queue)
   - [**ArrayBlockingQueue**](#arrayblockingqueue)
   - [**LinkedBlockingQueue**](#linkedblockingqueue)
@@ -57,7 +55,7 @@ updated: "2026-02-11"
 
 Давайте начнем с быстрой аналогии.
 
-Представьте, что мы только что открыли наш первый бизнес - киоск с хот-догами. Мы хотим обслуживать наших новых потенциальных клиентов максимально эффективным для нашего малого бизнеса способом; один за раз. Во-первых, мы просим их выстроиться в стройную очередь перед нашим стендом, а новые клиенты присоединяются сзади. Благодаря нашим организаторским способностям теперь мы можем справедливо распространять наши вкусные хот-доги.
+Представьте, что мы только что открыли наш первый бизнес — киоск с хот-догами. Мы хотим обслуживать наших новых потенциальных клиентов максимально эффективным для нашего малого бизнеса способом; один за раз. Во-первых, мы просим их выстроиться в стройную очередь перед нашим стендом, а новые клиенты присоединяются сзади. Благодаря нашим организаторским способностям теперь мы можем справедливо распространять наши вкусные хот-доги.
 
 Очереди в **Java** работают аналогичным образом. После того, как мы объявим нашу очередь, мы можем добавить новые элементы сзади и удалить их спереди.
 
@@ -67,9 +65,9 @@ updated: "2026-02-11"
 
 **Очередь объявляет ряд методов, которые должны быть закодированы всеми реализующими классами. Давайте наметим некоторые из наиболее важных из них сейчас:**
 
-1.  **offer()** - вставляет новый элемент в очередь
-2.  **poll()** - удаляет элемент из начала очереди.
-3.  **peek()** - проверяет элемент в начале очереди, не удаляя его
+1.  **offer()** — вставляет новый элемент в очередь
+2.  **poll()** — удаляет элемент из начала очереди.
+3.  **peek()** — проверяет элемент в начале очереди, не удаляя его
 
 **AbstractQueue** — это простейшая возможная реализация **Queue**, которую предоставляет **Java**. Он включает скелетную реализацию некоторых методов интерфейса **Queue**, за исключением **offer**.
 
@@ -170,7 +168,7 @@ assertEquals(5, second);
 
 Для подробного руководства о том, как работает **Deque,** ознакомьтесь с нашей статьей **ArrayDeque.**
 
-### **PriorityQueue** - исключение из **FIFO**
+### **PriorityQueue** — исключение из **FIFO**
 
 Ранее мы видели, что большинство очередей, с которыми мы сталкиваемся в **Java,** следуют принципу **FIFO.**
 
@@ -290,8 +288,8 @@ assertEquals("cherry", third);
 
 Мы можем выделить два типа **BlockingQueue:**
 
-1.  неограниченная очередь - может расти практически бесконечно
-2.  ограниченная очередь - с заданной максимальной емкостью
+1.  неограниченная очередь — может расти практически бесконечно
+2.  ограниченная очередь — с заданной максимальной емкостью
 
 **Создать неограниченные очереди просто:**
 
@@ -333,7 +331,7 @@ BlockingQueue<String> blockingQueue = new LinkedBlockingDeque<>(10);
 
 ### Пример **Producer-Consumer**
 
-Создадим программу, состоящую из двух частей - производителя и потребителя.
+Создадим программу, состоящую из двух частей — производителя и потребителя.
 
 Производитель создаст случайное число от **0** до **100** и поместит это число в **BlockingQueue**. У нас будет **4** потока-производителя, и мы будем использовать метод **put()** для блокировки до тех пор, пока в очереди не будет свободного места.
 
@@ -348,13 +346,13 @@ public class NumbersProducer implements Runnable {
     private BlockingQueue<Integer> numbersQueue;
     private final int poisonPill;
     private final int poisonPillPerProducer;
-    
+
     public NumbersProducer(BlockingQueue<Integer> numbersQueue, int poisonPill, int poisonPillPerProducer) {
         this.numbersQueue = numbersQueue;
         this.poisonPill = poisonPill;
         this.poisonPillPerProducer = poisonPillPerProducer;
     }
-    
+
     public void run() {
         try {
             generateNumbers();
@@ -362,7 +360,7 @@ public class NumbersProducer implements Runnable {
             Thread.currentThread().interrupt();
         }
     }
-    
+
     private void generateNumbers() throws InterruptedException {
         for (int i = 0; i < 100; i++) {
             numbersQueue.put(ThreadLocalRandom.current().nextInt(100));
@@ -382,12 +380,12 @@ public class NumbersProducer implements Runnable {
 public class NumbersConsumer implements Runnable {
     private BlockingQueue<Integer> queue;
     private final int poisonPill;
-    
+
     public NumbersConsumer(BlockingQueue<Integer> queue, int poisonPill) {
         this.queue = queue;
         this.poisonPill = poisonPill;
     }
-    
+
     public void run() {
         try {
             while (true) {
@@ -433,7 +431,7 @@ public class NumbersConsumer implements Runnable {
 
 Давайте рассмотрим несколько простых примеров того, как мы можем использовать **ArrayDeque.**
 
-**Мы начнем с примера того, как мы можем обращаться с классом как со стеком - и помещать элемент:**
+**Мы начнем с примера того, как мы можем обращаться с классом как со стеком — и помещать элемент:**
 
 ```java
 @Test
@@ -519,3 +517,11 @@ public void whenPoll_removesFirst() {
 - **Обработка пустой очереди:** проверять `**poll**() == **null**` или использовать `**peek**()` перед `**poll**()`; для **BlockingQueue** — учитывать прерывание при `**take**()`.
 - **Не использовать устаревший `Vector`/`Stack`:** для стека — `**ArrayDeque**`; для очереди — `**ArrayDeque**` или блокирующие очереди.
 - **Инициализация:** задавать начальную ёмкость для `ArrayBlockingQueue`/`LinkedBlockingQueue` при известной нагрузке; не занижать размер очереди в **producer-consumer**.
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

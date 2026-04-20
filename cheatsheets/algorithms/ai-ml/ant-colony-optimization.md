@@ -14,14 +14,12 @@ updated: "2026-02-11"
 
 Алгоритм оптимизации муравьиной колонии (ACO) — это метаэвристический алгоритм, вдохновленный поведением муравьев в природе. В этом руководстве мы опишем концепцию ACO и приведем пример реализации для задачи коммивояжера.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
-- [Ant Colony Optimization - Wikipedia](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms)
+- [Ant Colony Optimization — Wikipedia](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms)
 
-### Baeldung
+### Обучающие материалы
 - [Introduction to Ant Colony Optimization](https://www.baeldung.com/java-ant-colony-optimization)
 
 ### См. также
@@ -195,13 +193,13 @@ if (random.nextDouble() < randomFactor) {
 public void calculateProbabilities(Ant ant) {
     int i = ant.trail[currentIndex];
     double pheromone = 0.0;
-    
+
     for (int l = 0; l < numberOfCities; l++) {
         if (!ant.visited(l)) {
             pheromone += Math.pow(trails[i][l], alpha) * Math.pow(1.0 / graph[i][l], beta);
         }
     }
-    
+
     for (int j = 0; j < numberOfCities; j++) {
         if (ant.visited(j)) {
             probabilities[j] = 0.0;
@@ -237,7 +235,7 @@ public void updateTrails() {
             trails[i][j] *= evaporation;
         }
     }
-    
+
     for (Ant a : ants) {
         double contribution = Q / a.trailLength(graph);
         for (int i = 0; i < numberOfCities - 1; i++) {
@@ -258,7 +256,7 @@ private void updateBest() {
         bestTourOrder = ants[0].trail;
         bestTourLength = ants[0].trailLength(graph);
     }
-    
+
     for (Ant a : ants) {
         if (a.trailLength(graph) < bestTourLength) {
             bestTourLength = a.trailLength(graph);
@@ -302,14 +300,14 @@ private void updateBest() {
 class AntK(private val trailSize: Int) {
     val trail = IntArray(trailSize)
     private val visited = BooleanArray(trailSize)
-    
+
     fun visitCity(currentIndex: Int, city: Int) {
         trail[currentIndex + 1] = city
         visited[city] = true
     }
-    
+
     fun visited(i: Int): Boolean = visited[i]
-    
+
     fun trailLength(graph: Array<DoubleArray>): Double {
         var length = graph[trail[trailSize - 1]][trail[0]]
         for (i in 0 until trailSize - 1) {
@@ -317,7 +315,7 @@ class AntK(private val trailSize: Int) {
         }
         return length
     }
-    
+
     fun clear() {
         visited.fill(false)
     }
@@ -340,34 +338,34 @@ class AntColonyOptimizationK(
     private var Q = 500.0
     private var antFactor = 0.8
     private var randomFactor = 0.01
-    
+
     private lateinit var graph: Array<DoubleArray>
     private var numberOfAnts: Int = 0
     private lateinit var trails: Array<DoubleArray>
     private lateinit var probabilities: DoubleArray
     private lateinit var ants: Array<AntK>
     private var currentIndex: Int = 0
-    
+
     private var bestTourOrder: IntArray? = null
     private var bestTourLength: Double = Double.MAX_VALUE
-    
+
     fun solve(): IntArray? {
         graph = generateRandomMatrix(noOfCities)
         numberOfAnts = (noOfCities * antFactor).toInt()
         trails = Array(noOfCities) { DoubleArray(noOfCities) { c } }
         probabilities = DoubleArray(noOfCities)
         ants = Array(numberOfAnts) { AntK(noOfCities) }
-        
+
         repeat(maxIterations) {
             setupAnts()
             moveAnts()
             updateTrails()
             updateBest()
         }
-        
+
         return bestTourOrder
     }
-    
+
     private fun setupAnts() {
         ants.forEach { ant ->
             ant.clear()
@@ -375,7 +373,7 @@ class AntColonyOptimizationK(
         }
         currentIndex = 0
     }
-    
+
     private fun moveAnts() {
         while (currentIndex < noOfCities - 1) {
             ants.forEach { ant ->
@@ -384,7 +382,7 @@ class AntColonyOptimizationK(
             currentIndex++
         }
     }
-    
+
     private fun selectNextCity(ant: AntK): Int {
         val t = Random.nextInt(noOfCities - currentIndex)
         if (Random.nextDouble() < randomFactor) {
@@ -395,50 +393,50 @@ class AntColonyOptimizationK(
                 return cityIndex
             }
         }
-        
+
         calculateProbabilities(ant)
         val r = Random.nextDouble()
         var total = 0.0
-        
+
         for (i in 0 until noOfCities) {
             total += probabilities[i]
             if (total >= r) {
                 return i
             }
         }
-        
+
         return 0
     }
-    
+
     private fun calculateProbabilities(ant: AntK) {
         val i = ant.trail[currentIndex]
         var pheromone = 0.0
-        
+
         for (l in 0 until noOfCities) {
             if (!ant.visited(l)) {
-                pheromone += Math.pow(trails[i][l], alpha) * 
+                pheromone += Math.pow(trails[i][l], alpha) *
                     Math.pow(1.0 / graph[i][l], beta)
             }
         }
-        
+
         for (j in 0 until noOfCities) {
             if (ant.visited(j)) {
                 probabilities[j] = 0.0
             } else {
-                val numerator = Math.pow(trails[i][j], alpha) * 
+                val numerator = Math.pow(trails[i][j], alpha) *
                     Math.pow(1.0 / graph[i][j], beta)
                 probabilities[j] = numerator / pheromone
             }
         }
     }
-    
+
     private fun updateTrails() {
         for (i in 0 until noOfCities) {
             for (j in 0 until noOfCities) {
                 trails[i][j] *= evaporation
             }
         }
-        
+
         ants.forEach { ant ->
             val contribution = Q / ant.trailLength(graph)
             for (i in 0 until noOfCities - 1) {
@@ -447,7 +445,7 @@ class AntColonyOptimizationK(
             trails[ant.trail[noOfCities - 1]][ant.trail[0]] += contribution
         }
     }
-    
+
     private fun updateBest() {
         ants.forEach { ant ->
             val trailLength = ant.trailLength(graph)
@@ -457,7 +455,7 @@ class AntColonyOptimizationK(
             }
         }
     }
-    
+
     private fun generateRandomMatrix(n: Int): Array<DoubleArray> {
         val matrix = Array(n) { DoubleArray(n) }
         for (i in 0 until n) {

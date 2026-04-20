@@ -72,24 +72,24 @@ updated: "2026-02-11"
 public List<Integer> findTopK(List<Integer> input, int k) {
     List<Integer> array = new ArrayList<>(input);
     List<Integer> topKList = new ArrayList<>();
-    
+
     for (int i = 0; i < k; i++) {
         int maxIndex = 0;
-        
+
         for (int j = 1; j < array.size(); j++) {
             if (array.get(j) > array.get(maxIndex)) {
                 maxIndex = j;
             }
         }
-        
+
         topKList.add(array.remove(maxIndex));
     }
-    
+
     return topKList;
 }
 ```
 
-Если мы предположим, что n - это размер данного массива, временная сложность этого решения равна `O(n * k)`. Кроме того, это самое неэффективное решение.
+Если мы предположим, что n — это размер данного массива, временная сложность этого решения равна `O(n * k)`. Кроме того, это самое неэффективное решение.
 
 ### Подход 2: TreeSet (Java)
 
@@ -128,14 +128,14 @@ List<Integer> top3 = findTopK(input, 3);
 ```java
 public List<Integer> findTopK(List<Integer> input, int k) {
     PriorityQueue<Integer> minHeap = new PriorityQueue<>();
-    
+
     input.forEach(number -> {
         minHeap.add(number);
         if (minHeap.size() > k) {
             minHeap.poll();
         }
     });
-    
+
     List<Integer> topKList = new ArrayList<>(minHeap);
     Collections.reverse(topKList);
     return topKList;
@@ -154,12 +154,12 @@ public List<Integer> findTopK(List<Integer> input, int k) {
 public List<Integer> findTopKWithMaxHeap(List<Integer> input, int k) {
     PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
     maxHeap.addAll(input);
-    
+
     List<Integer> topKList = new ArrayList<>();
     for (int i = 0; i < k && !maxHeap.isEmpty(); i++) {
         topKList.add(maxHeap.poll());
     }
-    
+
     return topKList;
 }
 ```
@@ -477,11 +477,11 @@ public class TopKBench {
 
 ## Глоссарий
 
-`k-th order statistics` — k-я порядковая статистика, элемент, стоящий на k-й позиции в отсортированной последовательности.  
-`Min Heap` — двоичная куча, в которой минимальный элемент находится в корне; удобно для удержания верхних значений с отсечением минимума.  
-`Max Heap` — куча с максимумом в корне; для top-k обычно менее эффективна, чем min-heap фиксированного размера.  
-`Comparator` — функция сравнения, определяющая порядок элементов в структурах данных.  
-`Deduplication` — удаление дубликатов; для `TreeSet` происходит автоматически.  
+`k-th order statistics` — k-я порядковая статистика, элемент, стоящий на k-й позиции в отсортированной последовательности.
+`Min Heap` — двоичная куча, в которой минимальный элемент находится в корне; удобно для удержания верхних значений с отсечением минимума.
+`Max Heap` — куча с максимумом в корне; для top-k обычно менее эффективна, чем min-heap фиксированного размера.
+`Comparator` — функция сравнения, определяющая порядок элементов в структурах данных.
+`Deduplication` — удаление дубликатов; для `TreeSet` происходит автоматически.
 `Streaming top-k` — поддержание k наибольших элементов в потоке данных без полной сортировки.
 
 ## Дополнительные примеры использования

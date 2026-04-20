@@ -331,11 +331,11 @@ curl -X PUT "localhost:9200/_watcher/watch/error_rate_alert" -H 'Content-Type: a
 - Доступ: Kibana Spaces и роли для разграничения по командам/проектам.
 
 ### Санитизация в коде
-    
+
 ```java
     private static final Set<String> SENSITIVE_KEYS = Set.of(
     "password", "secret", "token", "key", "credential", "authorization", "cookie", "sessionid");
-    
+
     public static String sanitize(String message) {
     if (message == null) return null;
     for (String key : SENSITIVE_KEYS)

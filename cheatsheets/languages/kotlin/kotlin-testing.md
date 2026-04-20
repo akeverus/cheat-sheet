@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Testing](https://kotlinlang.org/docs/jvm-test-using-junit.html)
 - [MockK Documentation](https://mockk.io/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Testing Tutorial](https://www.baeldung.com/kotlin/junit-5-kotlin)
 
 ### См. также
@@ -138,7 +138,7 @@ class CalculatorTest {
         val result = calculator.add(2, 3)
         assertEquals(5, result)
     }
-    
+
     @Test
     fun `should multiply two numbers`() {
         val calculator = Calculator()
@@ -184,17 +184,17 @@ class LifecycleTest {
     fun setUp() {
         // Выполняется перед каждым тестом
     }
-    
+
     @AfterEach
     fun tearDown() {
         // Выполняется после каждого теста
     }
-    
+
     @BeforeAll
     fun setUpAll() {
         // Выполняется один раз перед всеми тестами
     }
-    
+
     @AfterAll
     fun tearDownAll() {
         // Выполняется один раз после всех тестов
@@ -206,7 +206,7 @@ class LifecycleTest {
 
 ## **MockK**
 
-**MockK** - это библиотека для мокирования в **Kotlin**, разработанная специально для этого языка.
+**MockK** — это библиотека для мокирования в **Kotlin**, разработанная специально для этого языка.
 
 ### Базовое мокирование
 
@@ -218,12 +218,12 @@ class UserServiceTest {
     fun `should find user by id`() {
         val userRepository = mockk<UserRepository>()
         val user = User(id = 1, name = "Alice")
-        
+
         every { userRepository.findById(1) } returns user
-        
+
         val userService = UserService(userRepository)
         val result = userService.findById(1)
-        
+
         assertEquals(user, result)
         verify { userRepository.findById(1) }
     }
@@ -292,7 +292,7 @@ class UserTest {
     @Test
     fun `should have correct properties`() {
         val user = User(id = 1, name = "Alice")
-        
+
         user.id shouldBe 1
         user.name shouldBe "Alice"
     }
@@ -363,10 +363,10 @@ fun `should emit values correctly`() = runTest {
 fun `should fetch data asynchronously`() = runTest {
     val repository = mockk<DataRepository>()
     coEvery { repository.fetch() } returns "Data"
-    
+
     val service = DataService(repository)
     val result = service.getData()
-    
+
     assertEquals("Data", result)
 }
 ```
@@ -408,7 +408,7 @@ class MathTest {
 class UserControllerTest {
     @Autowired
     lateinit var mockMvc: MockMvc
-    
+
     @Test
     fun `should return user by id`() {
         mockMvc.get("/api/users/1")
@@ -436,7 +436,7 @@ class UserRepositoryTest {
                 withPassword("test")
             }
     }
-    
+
     @Test
     fun `should save and retrieve user`() {
         // Тест с реальной базой данных
@@ -511,7 +511,7 @@ class UserBuilder {
     var id: Int = 1
     var name: String = "Test User"
     var email: String = "test@example.com"
-    
+
     fun build() = User(id, name, email)
 }
 
@@ -564,7 +564,7 @@ import kotlinx.coroutines.test.runTest
 @Test
 fun `should emit values correctly`() = runTest {
     val flow = flowOf(1, 2, 3)
-    
+
     flow.test {
         assertEquals(1, awaitItem())
         assertEquals(2, awaitItem())
@@ -586,10 +586,10 @@ class ApiServiceTest {
     fun `should fetch user data`() = runTest {
         val mockApi = mockk<ApiService>()
         every { mockApi.fetchUser(1) } returns User(id = 1, name = "Alice")
-        
+
         val result = mockApi.fetchUser(1)
         assertEquals("Alice", result.name)
-        
+
         verify { mockApi.fetchUser(1) }
     }
 }
@@ -599,7 +599,7 @@ class ApiServiceTest {
 
 ## Тестирование исключений
 
-Проверка выброса исключений - важная часть тестирования.
+Проверка выброса исключений — важная часть тестирования.
 
 ### Использование **assertThrows**
 
@@ -611,7 +611,7 @@ fun `should throw exception for invalid input`() {
     val exception = assertThrows<IllegalArgumentException> {
         validateInput(-1)
     }
-    
+
     assertEquals("Input must be positive", exception.message)
 }
 ```
@@ -741,13 +741,13 @@ class UserService(
 fun `should create user and send email`() {
     val mockRepository = mockk<UserRepository>()
     val mockEmailService = mockk<EmailService>()
-    
+
     every { mockRepository.save(any()) } returns User(id = 1, name = "Alice")
     every { mockEmailService.sendWelcomeEmail(any()) } just Runs
-    
+
     val service = UserService(mockRepository, mockEmailService)
     val user = service.createUser("Alice")
-    
+
     assertEquals("Alice", user.name)
     verify { mockEmailService.sendWelcomeEmail(user) }
 }
@@ -782,9 +782,9 @@ fun `should complete quickly`() {
 fun `should process large dataset efficiently`() {
     val data = generateLargeDataset()
     val startTime = System.nanoTime()
-    
+
     val result = processData(data)
-    
+
     val duration = System.nanoTime() - startTime
     assertTrue(duration < 1_000_000_000) // менее 1 секунды
 }
@@ -807,16 +807,16 @@ class UserServiceTest {
     inner class `when creating user` {
         @Test
         fun `should create user with valid data`() { }
-        
+
         @Test
         fun `should throw exception for invalid data`() { }
     }
-    
+
     @Nested
     inner class `when updating user` {
         @Test
         fun `should update existing user`() { }
-        
+
         @Test
         fun `should throw exception for non-existent user`() { }
     }
@@ -832,17 +832,17 @@ class UserServiceTest {
 ```kotlin
 class DatabaseTest {
     private lateinit var database: Database
-    
+
     @BeforeEach
     fun setUp() {
         database = Database.createInMemory()
     }
-    
+
     @AfterEach
     fun tearDown() {
         database.close()
     }
-    
+
     @Test
     fun `should save data`() {
         database.save(Data("test"))
@@ -859,7 +859,7 @@ class DatabaseTest {
 
 ### Настройка **JaCoCo**
 
-**JaCoCo** - популярный инструмент для измерения покрытия кода:**
+**JaCoCo** — популярный инструмент для измерения покрытия кода:**
 
 ```kotlin
 // build.gradle.kts
@@ -884,7 +884,7 @@ tasks.jacocoTestReport {
 ```kotlin
 tasks.jacocoTestReport {
     executionData.setFrom(fileTree(layout.buildDirectory.dir("jacoco")).include("/*.exec"))
-    
+
     classDirectories.setFrom(
         files(classDirectories.files.map {
             fileTree(it) {
@@ -910,44 +910,44 @@ class AdvancedMocking {
     @Test
     fun testRelaxedMock() {
         val mock = mockk<Service>(relaxed = true)
-        
+
         // Relaxed mock возвращает значения по умолчанию для всех методов
         val result = mock.process("test")
         assertNotNull(result)
     }
-    
+
     @Test
     fun testSpy() {
         val realService = RealService()
         val spy = spyk(realService)
-        
+
         // Spy позволяет переопределить некоторые методы
         every { spy.expensiveOperation() } returns "mocked"
-        
+
         val result = spy.process()
         assertEquals("mocked", result)
     }
-    
+
     @Test
     fun testObjectMock() {
         mockkObject(MyObject)
-        
+
         every { MyObject.staticMethod() } returns "mocked"
-        
+
         assertEquals("mocked", MyObject.staticMethod())
-        
+
         unmockkObject(MyObject)
     }
-    
+
     @Test
     fun testConstructorMock() {
         mockkConstructor(MyClass::class)
-        
+
         every { anyConstructed<MyClass>().method() } returns "mocked"
-        
+
         val instance = MyClass()
         assertEquals("mocked", instance.method())
-        
+
         unmockkConstructor(MyClass::class)
     }
 }
@@ -963,26 +963,26 @@ class AdvancedMocking {
 class ComplexServiceTest {
     @Mock
     lateinit var repository: UserRepository
-    
+
     @Mock
     lateinit var emailService: EmailService
-    
+
     @Mock
     lateinit var logger: Logger
-    
+
     @InjectMocks
     lateinit var service: UserService
-    
+
     @Test
     fun testWithMultipleDependencies() {
         // Настройка всех моков
         every { repository.save(any()) } returns User(id = 1, name = "Alice")
         every { emailService.send(any()) } just Runs
         every { logger.info(any<String>()) } just Runs
-        
+
         // Выполнение теста
         val user = service.createUser(User(name = "Alice"))
-        
+
         // Проверка взаимодействий
         verify { repository.save(any()) }
         verify { emailService.send(any()) }
@@ -1004,13 +1004,13 @@ class ComplexServiceTest {
 @Timeout(value = 1, unit = TimeUnit.SECONDS)
 fun testPerformance() {
     val startTime = System.nanoTime()
-    
+
     // Выполнение операции
     val result = performOperation()
-    
+
     val duration = System.nanoTime() - startTime
     assertTrue(duration < 100_000_000) // Менее 100ms
-    
+
     assertNotNull(result)
 }
 
@@ -1034,16 +1034,16 @@ fun testWithTimeout() = runTest {
 fun testLoadPerformance() {
     val service = UserService(repository)
     val users = generateUsers(1000)
-    
+
     val startTime = System.nanoTime()
-    
+
     users.forEach { user ->
         service.createUser(user)
     }
-    
+
     val duration = System.nanoTime() - startTime
     val averageTime = duration / users.size
-    
+
     assertTrue(averageTime < 1_000_000) // Среднее время менее 1ms
 }
 ```
@@ -1067,13 +1067,13 @@ class PropertyBasedTests : FunSpec({
             (a + b) shouldBe (b + a)
         }
     }
-    
+
     test("list reversal is idempotent") {
         checkAll<List<Int>> { list ->
             list.reversed().reversed() shouldBe list
         }
     }
-    
+
     test("list concatenation is associative") {
         checkAll<List<Int>, List<Int>, List<Int>> { a, b, c ->
             ((a + b) + c) shouldBe (a + (b + c))
@@ -1135,10 +1135,10 @@ fun add(a: Int, b: Int): Int {
 fun `add should return sum with better coverage`() {
     // Проверка коммутативности
     assertEquals(add(2, 3), add(3, 2))
-    
+
     // Проверка ассоциативности
     assertEquals(add(add(1, 2), 3), add(1, add(2, 3)))
-    
+
     // Проверка нейтрального элемента
     assertEquals(5, add(5, 0))
     assertEquals(5, add(0, 5))
@@ -1160,15 +1160,15 @@ class DatabaseIntegrationTest : FunSpec({
         .withDatabaseName("test")
         .withUsername("test")
         .withPassword("test")
-    
+
     beforeSpec {
         postgres.start()
     }
-    
+
     afterSpec {
         postgres.stop()
     }
-    
+
     test("should save and retrieve user") {
         val database = Database.connect(
             postgres.jdbcUrl,
@@ -1176,15 +1176,15 @@ class DatabaseIntegrationTest : FunSpec({
             user = postgres.username,
             password = postgres.password
         )
-        
+
         transaction(database) {
             SchemaUtils.create(Users)
-            
+
             Users.insert {
                 it[name] = "Alice"
                 it[email] = "alice@example.com"
             }
-            
+
             val user = Users.selectAll().single()
             user[Users.name] shouldBe "Alice"
             user[Users.email] shouldBe "alice@example.com"
@@ -1198,26 +1198,26 @@ class InMemoryDatabaseTest : FunSpec({
         "jdbc:h2:mem:test",
         driver = "org.h2.Driver"
     )
-    
+
     beforeTest {
         transaction(database) {
             SchemaUtils.create(Users)
         }
     }
-    
+
     afterTest {
         transaction(database) {
             SchemaUtils.drop(Users)
         }
     }
-    
+
     test("should work with in-memory database") {
         transaction(database) {
             Users.insert {
                 it[name] = "Bob"
                 it[email] = "bob@example.com"
             }
-            
+
             val count = Users.selectAll().count()
             count shouldBe 1
         }
@@ -1245,39 +1245,39 @@ class ApiTest : FunSpec({
             application {
                 configureApplication()
             }
-            
+
             val client = createClient {
                 install(ContentNegotiation) {
                     json()
                 }
             }
-            
+
             val response: HttpResponse = client.get("/api/users")
             response.status shouldBe HttpStatusCode.OK
-            
+
             val users: List<User> = response.body()
             users shouldNotBe empty()
         }
     }
-    
+
     test("should create user") {
         testApplication {
             application {
                 configureApplication()
             }
-            
+
             val client = createClient {
                 install(ContentNegotiation) {
                     json()
                 }
             }
-            
+
             val newUser = User(name = "Alice", email = "alice@example.com")
             val response: HttpResponse = client.post("/api/users") {
                 contentType(ContentType.Application.Json)
                 setBody(newUser)
             }
-            
+
             response.status shouldBe HttpStatusCode.Created
             val created: User = response.body()
             created.name shouldBe "Alice"
@@ -1311,13 +1311,13 @@ class UserServiceContractTest {
             .status(201)
             .body("""{"id": 1, "name": "Alice", "email": "alice@example.com"}""")
             .toPact()
-        
+
         pact.verify { mockServer ->
             val response = HttpClient().post("${mockServer.url}/api/users") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"name": "Alice", "email": "alice@example.com"}""")
             }
-            
+
             assertEquals(201, response.status.value)
         }
     }
@@ -1337,10 +1337,10 @@ class SnapshotTest {
     fun `should match snapshot`() {
         val data = generateReport()
         val snapshot = data.toString()
-        
+
         val expectedSnapshot = File("src/test/resources/snapshots/report.snapshot")
             .readText()
-        
+
         if (snapshot != expectedSnapshot) {
             // Сохранить новый snapshot для проверки
             File("src/test/resources/snapshots/report.snapshot.new")
@@ -1368,12 +1368,12 @@ class GoldenFileTest {
     fun `should match golden file`() {
         val output = generateReport()
         val goldenFile = File("src/test/resources/golden/report.txt")
-        
+
         if (!goldenFile.exists()) {
             goldenFile.writeText(output)
             return
         }
-        
+
         val expected = goldenFile.readText()
         assertEquals(expected, output, "Output doesn't match golden file")
     }
@@ -1393,12 +1393,12 @@ class VisualRegressionTest {
     fun `should match visual snapshot`() {
         val screenshot = captureScreenshot()
         val expected = File("src/test/resources/snapshots/ui.png")
-        
+
         if (!expected.exists()) {
             screenshot.save(expected)
             return
         }
-        
+
         val diff = compareImages(screenshot, expected)
         assertTrue(diff < 0.01, "Visual difference too large")
     }
@@ -1442,24 +1442,24 @@ class VisualRegressionTest {
 class UserServiceTest {
     @Mock
     lateinit var userRepository: UserRepository
-    
+
     @InjectMocks
     lateinit var userService: UserService
-    
+
     @BeforeEach
     fun setup() {
         MockitoAnnotations.openMocks(this)
     }
-    
+
     @Test
     fun `should return user when found`() {
         val userId = 1L
         val user = User(userId, "John", "john@example.com")
-        
+
         every { userRepository.findById(userId) } returns user
-        
+
         val result = userService.getUser(userId)
-        
+
         assertEquals(user, result)
         verify { userRepository.findById(userId) }
     }
@@ -1477,24 +1477,24 @@ class UserServiceTest {
 class UserApiIntegrationTest {
     @Autowired
     lateinit var restTemplate: TestRestTemplate
-    
+
     @Test
     fun `should create and retrieve user`() {
         val user = User(null, "John", "john@example.com")
-        
+
         val created = restTemplate.postForEntity(
             "/api/users",
             user,
             User::class.java
         )
-        
+
         assertEquals(HttpStatus.CREATED, created.statusCode)
-        
+
         val retrieved = restTemplate.getForEntity(
             "/api/users/${created.body?.id}",
             User::class.java
         )
-        
+
         assertEquals(HttpStatus.OK, retrieved.statusCode)
         assertEquals("John", retrieved.body?.name)
     }
@@ -1515,18 +1515,18 @@ class CoroutineTest {
     fun `should process data asynchronously`() = runTest {
         val repository = TestUserRepository()
         val service = UserService(repository)
-        
+
         val user = service.createUser(User(0, "John", "john@example.com"))
-        
+
         assertEquals("John", user.name)
         assertEquals(1, repository.users.size)
     }
-    
+
     @Test
     fun `should handle errors in coroutines`() = runTest {
         val repository = FailingUserRepository()
         val service = UserService(repository)
-        
+
         assertThrows<Exception> {
             service.createUser(User(0, "John", "john@example.com"))
         }
@@ -1550,15 +1550,15 @@ class FlowTest {
     fun `should emit values in flow`() = runTest {
         val flow = flowOf(1, 2, 3, 4, 5)
         val result = flow.toList()
-        
+
         assertEquals(listOf(1, 2, 3, 4, 5), result)
     }
-    
+
     @Test
     fun `should transform flow values`() = runTest {
         val flow = flowOf(1, 2, 3)
             .map { it * 2 }
-        
+
         val result = flow.toList()
         assertEquals(listOf(2, 4, 6), result)
     }
@@ -1581,7 +1581,7 @@ class DatabaseIntegrationTest {
         .withDatabaseName("testdb")
         .withUsername("test")
         .withPassword("test")
-    
+
     @Test
     fun `should connect to test database`() {
         val url = postgres.jdbcUrl
@@ -1599,17 +1599,17 @@ import com.github.tomakehurst.wiremock.client.WireMock.*
 
 class ApiClientTest {
     private val wireMockServer = WireMockServer(8089)
-    
+
     @BeforeEach
     fun setup() {
         wireMockServer.start()
     }
-    
+
     @AfterEach
     fun tearDown() {
         wireMockServer.stop()
     }
-    
+
     @Test
     fun `should fetch user from API`() {
         wireMockServer.stubFor(
@@ -1621,10 +1621,10 @@ class ApiClientTest {
                         .withBody("""{"id":1,"name":"Alice"}""")
                 )
         )
-        
+
         val client = ApiClient("http://localhost:8089")
         val user = client.getUser(1)
-        
+
         assertEquals("Alice", user.name)
     }
 }
@@ -1645,12 +1645,12 @@ class MathPropertiesTest {
     ) { a, b ->
         assertEquals(a + b, b + a)
     }
-    
+
     @Test
     fun `reverse twice returns original`() = checkAll(Arb.list(Arb.int())) { list ->
         assertEquals(list, list.reversed().reversed())
     }
-    
+
     @Test
     fun `list size is preserved after map`() = checkAll(
         Arb.list(Arb.int())

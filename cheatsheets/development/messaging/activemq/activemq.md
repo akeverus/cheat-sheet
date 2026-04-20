@@ -105,7 +105,7 @@ updated: "2026-02-11"
 - [Решение: Увеличить heap size в bin/activemq](#решение-увеличить-heap-size-в-binactivemq)
 - [3. Slow performance](#3-slow-performance)
 - [Решение: Проверить persistence settings, увеличить memory limits](#решение-проверить-persistence-settings-увеличить-memory-limits)
-- [activemq.xml - увеличить systemUsage limits](#activemqxml-увеличить-systemusage-limits)
+- [activemq.xml — увеличить systemUsage limits](#activemqxml-увеличить-systemusage-limits)
 - [4. Messages not being consumed](#4-messages-not-being-consumed)
 - [Решение: Проверить consumer acknowledgment mode](#решение-проверить-consumer-acknowledgment-mode)
 - [Проверить что consumer не завис](#проверить-что-consumer-не-завис)
@@ -137,13 +137,13 @@ updated: "2026-02-11"
 ```
 
 ### Ключевые возможности
-- **JMS `1.1` совместимость** - Полная поддержка **Java Message Service**
-- **Множество протоколов** - **AMQP**, **MQTT**, **STOMP**, **OpenWire**
-- **Persistence** - Поддержка **KahaDB**, **JDBC**, **LevelDB**
-- **Security** - Аутентификация, авторизация, шифрование
-- **Clustering** - **Network** of **Brokers**, **Master**/**Slave**
-- **Web Console** - Управление через веб-интерфейс
-- **REST API** - **HTTP** интерфейс для управления
+- **JMS `1.1` совместимость** — Полная поддержка **Java Message Service**
+- **Множество протоколов** — **AMQP**, **MQTT**, **STOMP**, **OpenWire**
+- **Persistence** — Поддержка **KahaDB**, **JDBC**, **LevelDB**
+- **Security** — Аутентификация, авторизация, шифрование
+- **Clustering** — **Network** of **Brokers**, **Master**/**Slave**
+- **Web Console** — Управление через веб-интерфейс
+- **REST API** — **HTTP** интерфейс для управления
 
 ### **Use Cases**
 ```yaml

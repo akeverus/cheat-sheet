@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Полный перенос раздела **Docker Containers**: список контейнеров, изучение файловой системы, передача переменных окружения, вход в оболочку, копирование файлов, получение контейнера через **API**, **attach**/**detach**, разница между **expose** и **publish**. Без сокращений.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -23,7 +21,7 @@ updated: "2026-02-11"
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Hub](https://hub.docker.com/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
@@ -58,7 +56,7 @@ docker container ls
 
 **Пример вывода:**
 
-```
+```text
 CONTAINER ID   IMAGE                 COMMAND        CREATED          STATUS          PORTS                              NAMES
 1addfea727b3   mysql:5.6             "docker-en.."  2 seconds ago    Up 1 second     0.0.0.0:32801->3306/tcp           dazzling_hellman
 09c4105cb356   nats:2.1.0-scratch    "/nats-…"      17 minutes ago   Up 17 minutes   4222/tcp, 6222/tcp, 8222/tcp      nats-1
@@ -77,7 +75,7 @@ docker container ls -a
 
 **Пример:**
 
-```
+```text
 CONTAINER ID   IMAGE       STATUS
 1addfea727b3   mysql:5.6   Up 4 hours
 32928d81a65f   mysql:5.6   Exited (1) 4 hours ago
@@ -213,7 +211,7 @@ docker run --env-file my-env.txt alpine:3 env
 
 **Вывод:**
 
-```
+```text
 VARIABLE1=foobar1
 VARIABLE2=foobar2
 VARIABLE3=foobar3
@@ -238,7 +236,7 @@ docker ps -a
 
 **Пример вывода:**
 
-```
+```text
 CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS                    PORTS                    NAMES
 a0f1b12edc3c   mysql                 "docker-entrypoint.s…"   5 minutes ago    Up 5 minutes              3306/tcp, 33060/tcp      mysql
 bb5e34287020   nginxdemos/hello      "nginx -g 'daemon of…"   39 minutes ago   Up 5 minutes              0.0.0.0:8088->80/tcp     nginx
@@ -379,5 +377,4 @@ services:
 - **Как безопасно передавать секреты?** — Не через `-e` в командной строке (видно в `ps`, истории). Использовать **Docker Secrets** (Swarm), файлы с ограниченными правами, или секреты оркестратора (**Kubernetes**, **AWS Secrets Manager**).
 - **Как удалить все остановленные контейнеры?** — `docker container prune`; осторожно: `docker container rm -f $(docker container ls -aq)` удалит все контейнеры, в т.ч. запущенные с `-f`.
 
----
 

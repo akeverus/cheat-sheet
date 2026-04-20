@@ -12,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Java Collections: конвертирование
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -21,7 +19,7 @@ updated: "2026-02-11"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Java Tutorials](https://docs.oracle.com/javase/tutorial/)
 
@@ -168,7 +166,7 @@ public void givenUsingCommonsCollections_whenArrayConvertedToSet_thenCorrect() {
 
 ### Преобразование **Set** в **Array**
 
-**Теперь давайте посмотрим на обратное - преобразование существующего **Set** в массив:**
+**Теперь давайте посмотрим на обратное — преобразование существующего **Set** в массив:**
 
 ```java
 @Test
@@ -247,7 +245,7 @@ public void givenUsingCoreJava_whenMapValuesConvertedToSet_thenCorrect() {
 
 ## Преобразование **List** в **Map**
 
-Преобразование списка в карту - обычная задача. В этом уроке мы рассмотрим несколько способов сделать это.
+Преобразование списка в карту — обычная задача. В этом уроке мы рассмотрим несколько способов сделать это.
 
 Предположим, что каждый элемент списка имеет идентификатор, который будет использоваться в качестве ключа в результирующей карте.
 
@@ -436,3 +434,11 @@ array[0] = "z";
 - **List/Set → Map:** использовать `**Collectors.toMap**()` с обработкой дубликатов ключей (**merge function**); для **null**-значений — явная проверка или `**map(**key, `Optional`.`ofNullable`(value**))`.
 - **Конвертирование примитивов:** для **int**[] → **List**<**Integer**> — **Stream API** или **Guava**; избегать ручных циклов там, где есть идиоматический способ.
 - **Не мутировать через представление:** после `**Arrays.`asList`(**array**)` не добавлять/удалять элементы; при необходимости копии — создавать новую коллекцию.
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]
+- [[java-collections-modification|Java Collections: модификация]]

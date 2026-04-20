@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Core - Dependency Injection и Bean Management
-
-
+# Micronaut: Core — Dependency Injection и Bean Management
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Содержание
 
-- [Micronaut: Core - Dependency Injection и Bean Management](#micronaut-core-dependency-injection-и-bean-management)
+- [Micronaut: Core — Dependency Injection и Bean Management](#micronaut-core-dependency-injection-и-bean-management)
 - [Введение](#введение)
   - [Преимущества Compile-time DI](#преимущества-compile-time-di)
   - [Архитектура DI в Micronaut](#архитектура-di-в-micronaut)
@@ -135,12 +133,12 @@ import jakarta.inject.Singleton;
 public class UserService {
     private final UserRepository userRepository;
     private final EmailService emailService;
-    
+
     public UserService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.emailService = emailService;
     }
-    
+
     public User createUser(String email) {
         User user = userRepository.save(new User(email));
         emailService.sendWelcomeEmail(user);
@@ -168,10 +166,10 @@ import jakarta.inject.Singleton;
 public class UserService {
     @Inject
     private UserRepository userRepository;
-    
+
     @Inject
     private EmailService emailService;
-    
+
     public User createUser(String email) {
         User user = userRepository.save(new User(email));
         emailService.sendWelcomeEmail(user);
@@ -198,12 +196,12 @@ import jakarta.inject.Singleton;
 public class UserService {
     private UserRepository userRepository;
     private EmailService emailService;
-    
+
     @Inject
     public void setUserRepository(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     @Inject
     public void setEmailService(EmailService emailService) {
         this.emailService = emailService;
@@ -222,11 +220,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class OrderService {
     private final Provider<PaymentService> paymentServiceProvider;
-    
+
     public OrderService(Provider<PaymentService> paymentServiceProvider) {
         this.paymentServiceProvider = paymentServiceProvider;
     }
-    
+
     public void processOrder(Order order) {
         // Получаем экземпляр только когда нужно
         PaymentService paymentService = paymentServiceProvider.get();
@@ -248,14 +246,14 @@ public class NotificationService {
     private final EmailService emailService;
     @Nullable
     private final SmsService smsService; // Опциональная зависимость
-    
+
     public NotificationService(
             EmailService emailService,
             @Nullable SmsService smsService) {
         this.emailService = emailService;
         this.smsService = smsService;
     }
-    
+
     public void sendNotification(String message) {
         emailService.send(message);
         if (smsService != null) {
@@ -275,14 +273,14 @@ import java.util.Optional;
 public class NotificationService {
     private final EmailService emailService;
     private final Optional<SmsService> smsService;
-    
+
     public NotificationService(
             EmailService emailService,
             Optional<SmsService> smsService) {
         this.emailService = emailService;
         this.smsService = smsService;
     }
-    
+
     public void sendNotification(String message) {
         emailService.send(message);
         smsService.ifPresent(service -> service.send(message));
@@ -304,12 +302,12 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private int instanceCount = 0;
-    
+
     public UserService() {
         instanceCount++;
         System.out.println("UserService created. Instance count: " + instanceCount);
     }
-    
+
     public int getInstanceCount() {
         return instanceCount;
     }
@@ -338,12 +336,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Prototype
 public class RequestProcessor {
     private final String id;
-    
+
     public RequestProcessor() {
         this.id = UUID.randomUUID().toString();
         System.out.println("RequestProcessor created with ID: " + id);
     }
-    
+
     public String getId() {
         return id;
     }
@@ -367,16 +365,16 @@ import io.micronaut.http.annotation.RequestScope;
 public class RequestContext {
     private final String requestId;
     private final long timestamp;
-    
+
     public RequestContext() {
         this.requestId = UUID.randomUUID().toString();
         this.timestamp = System.currentTimeMillis();
     }
-    
+
     public String getRequestId() {
         return requestId;
     }
-    
+
     public long getTimestamp() {
         return timestamp;
     }
@@ -399,11 +397,11 @@ import io.micronaut.context.annotation.Context;
 @Context
 public class TransactionContext {
     private final String transactionId;
-    
+
     public TransactionContext() {
         this.transactionId = UUID.randomUUID().toString();
     }
-    
+
     public String getTransactionId() {
         return transactionId;
     }
@@ -429,16 +427,16 @@ public @interface SessionScope {}
 public class UserSession {
     private final String sessionId;
     private final String userId;
-    
+
     public UserSession() {
         this.sessionId = UUID.randomUUID().toString();
         this.userId = "user123";
     }
-    
+
     public String getSessionId() {
         return sessionId;
     }
-    
+
     public String getUserId() {
         return userId;
     }
@@ -461,7 +459,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DatabaseConnection {
     private Connection connection;
-    
+
     @PostConstruct
     public void init() {
         System.out.println("Initializing database connection...");
@@ -469,7 +467,7 @@ public class DatabaseConnection {
         connection = createConnection();
         System.out.println("Database connection initialized");
     }
-    
+
     @PreDestroy
     public void cleanup() {
         System.out.println("Closing database connection...");
@@ -482,7 +480,7 @@ public class DatabaseConnection {
         }
         System.out.println("Database connection closed");
     }
-    
+
     private Connection createConnection() {
         // Создание соединения
         return null; // Placeholder
@@ -501,7 +499,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class CacheManager implements LifeCycle<CacheManager> {
     private boolean running = false;
-    
+
     @Override
     public CacheManager start() {
         System.out.println("Starting cache manager...");
@@ -510,7 +508,7 @@ public class CacheManager implements LifeCycle<CacheManager> {
         System.out.println("Cache manager started");
         return this;
     }
-    
+
     @Override
     public CacheManager stop() {
         System.out.println("Stopping cache manager...");
@@ -519,7 +517,7 @@ public class CacheManager implements LifeCycle<CacheManager> {
         System.out.println("Cache manager stopped");
         return this;
     }
-    
+
     @Override
     public boolean isRunning() {
         return running;
@@ -538,27 +536,27 @@ import io.micronaut.context.event.ShutdownEvent;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class ApplicationLifecycleListener 
+public class ApplicationLifecycleListener
         implements ApplicationEventListener<StartupEvent> {
-    
+
     @Override
     public void onApplicationEvent(StartupEvent event) {
         System.out.println("Application started at: " + new Date());
         // Выполнение инициализации при старте
         initializeApplication();
     }
-    
+
     @EventListener
     public void onShutdown(ShutdownEvent event) {
         System.out.println("Application shutting down at: " + new Date());
         // Выполнение cleanup при остановке
         cleanupApplication();
     }
-    
+
     private void initializeApplication() {
         // Инициализация
     }
-    
+
     private void cleanupApplication() {
         // Очистка
     }
@@ -582,65 +580,65 @@ import jakarta.validation.constraints.NotBlank;
 public class DatabaseConfiguration {
     @NotBlank
     private String host = "localhost";
-    
+
     @Min(1)
     private int port = 5432;
-    
+
     @NotBlank
     private String name;
-    
+
     @NotBlank
     private String username;
-    
+
     private String password;
-    
+
     private int maxPoolSize = 10;
-    
+
     // Getters and setters
     public String getHost() {
         return host;
     }
-    
+
     public void setHost(String host) {
         this.host = host;
     }
-    
+
     public int getPort() {
         return port;
     }
-    
+
     public void setPort(int port) {
         this.port = port;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public String getUsername() {
         return username;
     }
-    
+
     public void setUsername(String username) {
         this.username = username;
     }
-    
+
     public String getPassword() {
         return password;
     }
-    
+
     public void setPassword(String password) {
         this.password = password;
     }
-    
+
     public int getMaxPoolSize() {
         return maxPoolSize;
     }
-    
+
     public void setMaxPoolSize(int maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
     }
@@ -674,35 +672,35 @@ public class DataSourceConfiguration {
     private String url;
     private String username;
     private String password;
-    
+
     public DataSourceConfiguration(@Parameter String name) {
         this.name = name;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public String getUrl() {
         return url;
     }
-    
+
     public void setUrl(String url) {
         this.url = url;
     }
-    
+
     public String getUsername() {
         return username;
     }
-    
+
     public void setUsername(String username) {
         this.username = username;
     }
-    
+
     public String getPassword() {
         return password;
     }
-    
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -766,7 +764,7 @@ public class ApiService {
     private final String apiKey;
     private final int timeout;
     private final boolean enabled;
-    
+
     public ApiService(
             @Value("${app.api.key}") String apiKey,
             @Value("${app.api.timeout:30}") int timeout,
@@ -791,17 +789,17 @@ public class MailConfiguration {
     @NotBlank
     @Email
     private String from;
-    
+
     @NotBlank
     private String host;
-    
+
     @Min(1)
     @Max(65535)
     private int port = 25;
-    
+
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
     private String adminEmail;
-    
+
     // Getters and setters...
 }
 ```
@@ -819,7 +817,7 @@ import jakarta.inject.Singleton;
 
 @Factory
 public class BeanFactory {
-    
+
     @Bean
     @Singleton
     public ObjectMapper objectMapper() {
@@ -828,7 +826,7 @@ public class BeanFactory {
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         return mapper;
     }
-    
+
     @Bean
     @Singleton
     public RestTemplate restTemplate() {
@@ -850,21 +848,21 @@ import jakarta.inject.Singleton;
 
 @Factory
 public class ConditionalBeanFactory {
-    
+
     @Bean
     @Singleton
     @Requires(property = "app.cache.enabled", value = "true")
     public CacheManager cacheManager() {
         return new CacheManager();
     }
-    
+
     @Bean
     @Singleton
     @Requires(env = "prod")
     public ProductionService productionService() {
         return new ProductionService();
     }
-    
+
     @Bean
     @Singleton
     @Requires(missingProperty = "app.feature.disabled")
@@ -884,14 +882,14 @@ import io.micronaut.core.beans.BeanProperty;
 
 public class BeanIntrospectionExample {
     public void example() {
-        BeanIntrospection<User> introspection = 
+        BeanIntrospection<User> introspection =
             BeanIntrospection.getIntrospection(User.class);
-        
+
         User user = introspection.instantiate("John", "john@example.com");
-        
-        BeanProperty<User, String> nameProperty = 
+
+        BeanProperty<User, String> nameProperty =
             introspection.getProperty("name", String.class).orElseThrow();
-        
+
         nameProperty.set(user, "Jane");
         String name = nameProperty.get(user);
     }
@@ -907,7 +905,7 @@ public class BeanIntrospectionExample {
 @Singleton
 public class UserService {
     private final UserRepository repository;
-    
+
     public UserService(UserRepository repository) {
         this.repository = repository;
     }
@@ -947,7 +945,7 @@ public class RequestProcessor {
 public class AppConfiguration {
     @NotBlank
     private String apiKey;
-    
+
     @Min(1)
     private int maxRetries;
     // ...
@@ -999,7 +997,7 @@ public class SecondaryDataSource implements DataSource {
 public class DataService {
     private final DataSource primaryDataSource;
     private final DataSource secondaryDataSource;
-    
+
     public DataService(
             @Named("primary") DataSource primaryDataSource,
             @Named("secondary") DataSource secondaryDataSource) {
@@ -1156,17 +1154,17 @@ public class MailConfiguration {
     @NotBlank
     @Email
     private String from;
-    
+
     @NotBlank
     private String host;
-    
+
     @Min(1)
     @Max(65535)
     private int port = 25;
-    
+
     @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
     private String adminEmail;
-    
+
     // Validation происходит при создании bean'а
     // Если validation fails, приложение не запустится
 }
@@ -1190,21 +1188,21 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DebugService {
     private final ApplicationContext applicationContext;
-    
+
     public DebugService(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
-    
+
     public void debugBeans() {
         // Получить все bean'ы определенного типа
-        Collection<UserService> userServices = 
+        Collection<UserService> userServices =
             applicationContext.getBeansOfType(UserService.class);
-        
+
         // Проверить наличие bean'а
         boolean hasBean = applicationContext.containsBean(UserService.class);
-        
+
         // Получить bean
-        Optional<UserService> userService = 
+        Optional<UserService> userService =
             applicationContext.findBean(UserService.class);
     }
 }
@@ -1221,11 +1219,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private final ApplicationEventPublisher<UserCreatedEvent> eventPublisher;
-    
+
     public UserService(ApplicationEventPublisher<UserCreatedEvent> eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
-    
+
     public User createUser(User user) {
         User created = userRepository.save(user);
         eventPublisher.publishEvent(new UserCreatedEvent(created));
@@ -1235,11 +1233,11 @@ public class UserService {
 
 public class UserCreatedEvent {
     private final User user;
-    
+
     public UserCreatedEvent(User user) {
         this.user = user;
     }
-    
+
     public User getUser() {
         return user;
     }
@@ -1247,7 +1245,7 @@ public class UserCreatedEvent {
 
 @Singleton
 public class UserEventListener {
-    
+
     @EventListener
     public void onUserCreated(UserCreatedEvent event) {
         // Обработка события
@@ -1267,14 +1265,14 @@ import io.micronaut.validation.validator.Validated;
 @Validated
 @Singleton
 public class UserService {
-    
+
     public User createUser(
             @NotBlank String name,
             @Email String email,
             @Min(18) @Max(100) Integer age) {
         return new User(name, email, age);
     }
-    
+
     public void updateUser(
             @NotNull Long id,
             @Valid User user) {
@@ -1296,7 +1294,7 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = ValidEmail.Validator.class)
 public @interface ValidEmail {
     String message() default "Invalid email format";
-    
+
     class Validator implements ConstraintValidator<ValidEmail, String> {
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -1317,7 +1315,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class LoggingInterceptor implements MethodInterceptor<Object, Object> {
-    
+
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         long startTime = System.currentTimeMillis();
@@ -1358,7 +1356,7 @@ import jakarta.inject.Singleton;
 
 @Factory
 public class BeanFactory {
-    
+
     @Bean
     @Singleton
     public DataSource dataSource() {
@@ -1405,3 +1403,11 @@ public class DefaultFeatureService {
 - [**Micronaut** Events](https://docs.micronaut.io/latest/guide/index.html#contextEvents)
 - [**Bean Validation**](https://beanvalidation.org/2.0/)
 - [**Micronaut** AOP](https://docs.micronaut.io/latest/guide/index.html#aop)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

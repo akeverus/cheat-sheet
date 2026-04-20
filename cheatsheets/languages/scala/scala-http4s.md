@@ -118,7 +118,7 @@ related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play
 
 ## Введение в **http4s**
 
-**http4s** - это функциональная библиотека для создания **HTTP** клиентов и серверов в **Scala**, построенная на основе **Cats Effect** и функционального программирования. **http4s** предоставляет типобезопасный и композируемый **API** для работы с **HTTP**, который следует принципам функционального программирования и позволяет создавать чистый, тестируемый и поддерживаемый код.
+**http4s** — это функциональная библиотека для создания **HTTP** клиентов и серверов в **Scala**, построенная на основе **Cats Effect** и функционального программирования. **http4s** предоставляет типобезопасный и композируемый **API** для работы с **HTTP**, который следует принципам функционального программирования и позволяет создавать чистый, тестируемый и поддерживаемый код.
 
 **http4s** основан на концепции функциональных эффектов, где все операции представлены как эффекты, которые можно комбинировать и трансформировать. Это делает код более предсказуемым и позволяет компилятору проверять корректность использования эффектов. **http4s** интегрируется с **Cats Effect**, что обеспечивает асинхронное выполнение, конкурентность, и управление ресурсами.
 
@@ -168,10 +168,10 @@ import cats.effect.IO
 val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "hello" =>
     Ok("Hello, World!")
-  
+
   case GET -> Root / "users" / IntVar(id) =>
     Ok(s"User $id")
-  
+
   case POST -> Root / "users" =>
     Ok("User created")
 }
@@ -307,15 +307,15 @@ val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   // Простой GET запрос
   case GET -> Root / "hello" =>
     Ok("Hello, World!")
-  
+
   // Параметры пути
   case GET -> Root / "users" / IntVar(userId) =>
     Ok(s"User $userId")
-  
+
   // Несколько параметров
   case GET -> Root / "users" / IntVar(userId) / "posts" / IntVar(postId) =>
     Ok(s"Post $postId of user $userId")
-  
+
   // Query параметры
   case GET -> Root / "search" :? QueryParamDecoderMatcher(query) =>
     Ok(s"Searching for: $query")
@@ -362,10 +362,10 @@ import org.http4s.dsl.io._
 val userRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root =>
     Ok("Users list")
-  
+
   case GET -> Root / IntVar(id) =>
     Ok(s"User $id")
-  
+
   case POST -> Root =>
     Ok("User created")
 }
@@ -373,7 +373,7 @@ val userRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
 val postRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root =>
     Ok("Posts list")
-  
+
   case GET -> Root / IntVar(id) =>
     Ok(s"Post $id")
 }
@@ -432,7 +432,7 @@ val corsRoutes = corsPolicy(routes)
 import org.http4s.server.middleware.authentication.BasicAuth
 import org.http4s._
 
-val authMiddleware = BasicAuth("realm", (credentials: BasicCredentials) => 
+val authMiddleware = BasicAuth("realm", (credentials: BasicCredentials) =>
   if (credentials.username == "admin" && credentials.password == "password")
     Some(User(credentials.username))
   else
@@ -463,7 +463,7 @@ implicit val userEncoder: EntityEncoder[IO, User] = jsonEncoderOf[IO, User]
 val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "users" / IntVar(id) =>
     Ok(User(id, "Alice", "alice@example.com"))
-  
+
   case req @ POST -> Root / "users" =>
     req.as[User].flatMap { user =>
       Ok(User(user.id, user.name, user.email))
@@ -531,7 +531,7 @@ def validateToken(token: String): Option[Long] = {
 val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case POST -> Root / "login" =>
     Ok(generateToken(1L))
-  
+
   case req @ GET -> Root / "profile" =>
     req.headers.get[org.http4s.headers.Authorization].flatMap { authHeader =>
       val token = authHeader.value.replace("Bearer ", "")
@@ -565,7 +565,7 @@ class RoutesSpec extends AnyFunSpec {
     it("should return hello") {
       val request = Request[IO](Method.GET, uri"/hello")
       val response = routes.orNotFound.run(request).unsafeRunSync()
-      
+
       assert(response.status == Status.Ok)
       assert(response.as[String].unsafeRunSync() == "Hello, World!")
     }
@@ -631,7 +631,7 @@ val streamRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     val dataStream = Stream.range(1, 1000)
       .map(i => s"Data point $i\n")
       .through(fs2.text.utf8.encode)
-    
+
     Ok(dataStream)
 }
 
@@ -712,11 +712,11 @@ val websocketRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "ws" =>
     val send: Stream[IO, WebSocketFrame] = Stream.awakeEvery[IO](1.second)
       .map(_ => WebSocketFrame.Text("Hello"))
-    
+
     val receive: Pipe[IO, WebSocketFrame, Unit] = _.evalMap { frame =>
       IO(println(s"Received: $frame"))
     }
-    
+
     WebSocketBuilder[IO].build(send, receive)
 }
 ```
@@ -743,7 +743,7 @@ val dbRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     val query = sql"SELECT * FROM users WHERE id = $id"
       .query[User]
       .option
-    
+
     query.transact(xa).flatMap {
       case Some(user) => Ok(user)
       case None => NotFound()
@@ -812,20 +812,20 @@ val userRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
       User(1, "Alice", "alice@example.com"),
       User(2, "Bob", "bob@example.com")
     ))
-  
+
   // GET /users/:id - получить пользователя
   case GET -> Root / "users" / LongVar(id) =>
     findUser(id).flatMap {
       case Some(user) => Ok(user)
       case None => NotFound()
     }
-  
+
   // POST /users - создать пользователя
   case req @ POST -> Root / "users" =>
     req.as[User].flatMap { user =>
       createUser(user).flatMap(created => Created(created))
     }
-  
+
   // PUT /users/:id - обновить пользователя
   case req @ PUT -> Root / "users" / LongVar(id) =>
     req.as[User].flatMap { user =>
@@ -834,7 +834,7 @@ val userRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
         case None => NotFound()
       }
     }
-  
+
   // DELETE /users/:id - удалить пользователя
   case DELETE -> Root / "users" / LongVar(id) =>
     deleteUser(id).flatMap {
@@ -869,7 +869,7 @@ val orderService: HttpRoutes[IO] = HttpRoutes.of[IO] {
 val gateway: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case req @ GET -> Root / "api" / "users" / rest =>
     userService.orNotFound.run(req.withUri(uri"/users" / rest))
-  
+
   case req @ GET -> Root / "api" / "orders" / rest =>
     orderService.orNotFound.run(req.withUri(uri"/orders" / rest))
 }
@@ -1037,7 +1037,7 @@ val parallelRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     val data1 = fetchData1()
     val data2 = fetchData2()
     val data3 = fetchData3()
-    
+
     (data1, data2, data3).parMapN { (d1, d2, d3) =>
       s"Data1: $d1, Data2: $d2, Data3: $d3"
     }.flatMap(Ok(_))
@@ -1059,7 +1059,7 @@ val headerRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     val userAgent = req.headers.get[`User-Agent`].map(_.value)
     val accept = req.headers.get[Accept].map(_.mediaRanges)
     val contentType = req.headers.get[`Content-Type`].map(_.mediaType)
-    
+
     Ok(s"User-Agent: $userAgent, Accept: $accept, Content-Type: $contentType")
 }
 
@@ -1099,7 +1099,7 @@ val cookieRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
         sameSite = Some(SameSite.Strict)
       )
     ))
-  
+
   // Чтение cookies
   case req @ GET -> Root / "get-cookie" =>
     req.headers.get[Cookie].flatMap { cookie =>
@@ -1107,7 +1107,7 @@ val cookieRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
         Ok(s"Session: ${sessionCookie.content}")
       }
     }.getOrElse(Ok("No session cookie"))
-  
+
   // Удаление cookies
   case GET -> Root / "delete-cookie" =>
     Ok("Cookie deleted").map(_.removeCookie("session"))
@@ -1148,7 +1148,7 @@ def validateForm(form: UrlForm): Either[String, User] = {
   val name = form.getFirst("name").getOrElse("")
   val email = form.getFirst("email").getOrElse("")
   val age = form.getFirst("age").flatMap(_.toIntOption)
-  
+
   if (name.isEmpty) Left("Name is required")
   else if (email.isEmpty || !email.contains("@")) Left("Invalid email")
   else if (age.isEmpty || age.get < 0) Left("Invalid age")
@@ -1224,7 +1224,7 @@ def userRoutes(xa: Transactor[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
         case Some(user) => Ok(user)
         case None => NotFound()
       }
-  
+
   case req @ POST -> Root / "users" =>
     req.as[User].flatMap { user =>
       sql"INSERT INTO users (name, email) VALUES (${user.name}, ${user.email})"
@@ -1233,7 +1233,7 @@ def userRoutes(xa: Transactor[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
         .transact(xa)
         .flatMap(id => Created(user.copy(id = id)))
     }
-  
+
   case req @ PUT -> Root / "users" / LongVar(id) =>
     req.as[User].flatMap { user =>
       sql"UPDATE users SET name = ${user.name}, email = ${user.email} WHERE id = $id"
@@ -1245,7 +1245,7 @@ def userRoutes(xa: Transactor[IO]): HttpRoutes[IO] = HttpRoutes.of[IO] {
           else NotFound()
         }
     }
-  
+
   case DELETE -> Root / "users" / LongVar(id) =>
     sql"DELETE FROM users WHERE id = $id"
       .update
@@ -1282,7 +1282,7 @@ def conditionalCache(service: HttpRoutes[IO]): HttpRoutes[IO] = {
   Kleisli { req =>
     val cacheKey = req.uri.toString
     val cached = getFromCache(cacheKey)
-    
+
     cached match {
       case Some(response) if !isStale(response) =>
         OptionT.pure(response)
@@ -1310,7 +1310,7 @@ import cats.effect.Ref
 class TokenBucket(maxTokens: Int, refillRate: Int) {
   private val tokens = Ref.of[IO, Int](maxTokens).unsafeRunSync()
   private val lastRefill = Ref.of[IO, Long](System.currentTimeMillis()).unsafeRunSync()
-  
+
   def acquire(): IO[Boolean] = {
     for {
       now <- IO(System.currentTimeMillis())
@@ -1353,7 +1353,7 @@ class MetricsCollector {
   private val requestCount = Ref.of[IO, Long](0).unsafeRunSync()
   private val errorCount = Ref.of[IO, Long](0).unsafeRunSync()
   private val responseTime = Ref.of[IO, List[Long]](Nil).unsafeRunSync()
-  
+
   def recordRequest(duration: Long, status: Status): IO[Unit] = {
     for {
       _ <- requestCount.update(_ + 1)
@@ -1361,7 +1361,7 @@ class MetricsCollector {
       _ <- responseTime.update(duration :: _)
     } yield ()
   }
-  
+
   def getMetrics(): IO[Metrics] = {
     for {
       requests <- requestCount.get
@@ -1472,7 +1472,7 @@ import org.http4s.headers.Cookie
 val cookieRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "set-cookie" =>
     Ok("Cookie set").map(_.addCookie(ResponseCookie("session", "abc123")))
-  
+
   case req @ GET -> Root / "get-cookie" =>
     req.headers.get[Cookie].flatMap { cookie =>
       cookie.values.find(_.name == "session").map { sessionCookie =>
@@ -1494,7 +1494,7 @@ import org.http4s.server.middleware.Session
 val sessionRoutes: HttpRoutes[IO] = HttpRoutes.of[IO] {
   case GET -> Root / "session" / "set" / value =>
     Ok("Session set").map(_.withSession("key" -> value))
-  
+
   case req @ GET -> Root / "session" / "get" =>
     req.session.get("key") match {
       case Some(value) => Ok(s"Session value: $value")
@@ -1569,7 +1569,7 @@ class ExtendedRoutesSpec extends AnyFunSpec {
   val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "users" / LongVar(id) =>
       Ok(User(id, "Alice", "alice@example.com"))
-    
+
     case req @ POST -> Root / "users" =>
       req.as[User].flatMap { user =>
         Created(user)
@@ -1580,19 +1580,19 @@ class ExtendedRoutesSpec extends AnyFunSpec {
     it("should return user by id") {
       val request = Request[IO](Method.GET, uri"/users/1")
       val response = routes.orNotFound.run(request).unsafeRunSync()
-      
+
       assert(response.status == Status.Ok)
       val user = response.as[User].unsafeRunSync()
       assert(user.id == 1L)
       assert(user.name == "Alice")
     }
-    
+
     it("should create user") {
       val user = User(0, "Bob", "bob@example.com")
       val request = Request[IO](Method.POST, uri"/users")
         .withEntity(user)
       val response = routes.orNotFound.run(request).unsafeRunSync()
-      
+
       assert(response.status == Status.Created)
       val created = response.as[User].unsafeRunSync()
       assert(created.name == "Bob")
@@ -1623,7 +1623,7 @@ val routes = HttpRoutes.of[IO] {
       case Some(user) => Ok(user.asJson)
       case None => NotFound()
     }
-  
+
   case POST -> Root / "users" =>
     req => req.as[User].flatMap { user =>
       createUser(user).flatMap(created => Created(created.asJson))
@@ -1659,17 +1659,17 @@ val routes = HttpRoutes.of[IO] {
       case Some(user) => Ok(user.asJson)
       case None => NotFound()
     }
-  
+
   case POST -> Root / "users" :? request =>
     request.as[User].flatMap { user =>
       createUser(user).flatMap(Ok(_))
     }
-  
+
   case PUT -> Root / "users" / LongVar(id) :? request =>
     request.as[User].flatMap { user =>
       updateUser(id, user).flatMap(Ok(_))
     }
-  
+
   case DELETE -> Root / "users" / LongVar(id) =>
     deleteUser(id).flatMap(NoContent())
 }
@@ -1689,7 +1689,7 @@ val fileRoutes = HttpRoutes.of[IO] {
     req.body.compile.to(Array).flatMap { data =>
       saveFile(data).flatMap(Ok(_))
     }
-  
+
   case GET -> Root / "download" / fileName =>
     readFile(fileName).flatMap { data =>
       Ok(Stream.emits(data))
@@ -1783,7 +1783,7 @@ val userRoutes = HttpRoutes.of[IO] {
       case Some(user) => Ok(user.asJson)
       case None => NotFound()
     }
-  
+
   case req @ POST -> Root / "users" =>
     req.as[User].flatMap { user =>
       createUser(user).flatMap(Ok(_))
@@ -1805,7 +1805,7 @@ val fileRoutes = HttpRoutes.of[IO] {
     req.body.compile.to(Array).flatMap { data =>
       saveFile(data).flatMap(Ok(_))
     }
-  
+
   case GET -> Root / "download" / fileName =>
     readFile(fileName).flatMap { data =>
       Ok(Stream.emits(data))

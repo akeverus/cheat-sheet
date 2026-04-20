@@ -70,7 +70,6 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 4. **Репликация**: **Lag**, **status**, **sync**
 5. **Кластер**: **Slot coverage**, **node status**, **failover**
 
----
 
 ## Базовые команды мониторинга
 
@@ -113,7 +112,6 @@ INFO replication | grep role
 INFO replication | grep master_repl_offset
 ```
 
----
 
 ## **Prometheus Monitoring**
 
@@ -169,7 +167,6 @@ redis_replication_master_repl_offset - redis_replication_slave_repl_offset
 rate(redis_keyspace_hits_total[1m]) / (rate(redis_keyspace_hits_total[1m]) + rate(redis_keyspace_misses_total[1m]))
 ```
 
----
 
 ## **Grafana Dashboards**
 
@@ -201,7 +198,6 @@ rate(redis_keyspace_hits_total[1m]) / (rate(redis_keyspace_hits_total[1m]) + rat
 }
 ```
 
----
 
 ## **Health Checks**
 
@@ -242,13 +238,13 @@ import java.util.Map;
 
 public class RedisHealthCheck {
     private JedisPool jedisPool;
-    
+
     public RedisHealthCheck(String host, int port, String password) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(1);
         this.jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
     }
-    
+
     public int healthCheck() {
         try (Jedis jedis = jedisPool.getResource()) {
             // Проверка доступности
@@ -256,28 +252,28 @@ public class RedisHealthCheck {
                 System.out.println("CRITICAL: Redis is not responding");
                 return 2;
             }
-            
+
             // Проверка памяти
             Map<String, String> memoryInfo = jedis.info("memory");
             long usedMemory = Long.parseLong(memoryInfo.getOrDefault("used_memory", "0"));
             long maxMemory = Long.parseLong(memoryInfo.getOrDefault("maxmemory", "0"));
-            
+
             if (maxMemory > 0 && usedMemory > maxMemory * 0.9) {
                 double usagePercent = (usedMemory * 100.0) / maxMemory;
                 System.out.println(String.format("WARNING: Memory usage is high: %.1f%%", usagePercent));
                 return 1;
             }
-            
+
             // Проверка клиентов
             Map<String, String> clientsInfo = jedis.info("clients");
             int connectedClients = Integer.parseInt(clientsInfo.getOrDefault("connected_clients", "0"));
             int maxClients = Integer.parseInt(clientsInfo.getOrDefault("maxclients", "0"));
-            
+
             if (maxClients > 0 && connectedClients > maxClients * 0.9) {
                 System.out.println(String.format("WARNING: Too many clients: %d/%d", connectedClients, maxClients));
                 return 1;
             }
-            
+
             // Проверка репликации (если slave)
             Map<String, String> replicationInfo = jedis.info("replication");
             if ("slave".equals(replicationInfo.get("role"))) {
@@ -287,22 +283,22 @@ public class RedisHealthCheck {
                     return 1;
                 }
             }
-            
+
             System.out.println("OK: Redis is healthy");
             return 0;
-            
+
         } catch (Exception e) {
             System.out.println("CRITICAL: " + e.getMessage());
             return 2;
         }
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
         }
     }
-    
+
     public static void main(String[] args) {
         RedisHealthCheck check = new RedisHealthCheck("localhost", 6379, null);
         System.exit(check.healthCheck());
@@ -310,7 +306,6 @@ public class RedisHealthCheck {
 }
 ```
 
----
 
 ## **Alerting**
 
@@ -328,7 +323,7 @@ groups:
           severity: critical
         annotations:
           summary: "Redis instance is down"
-      
+
       - alert: RedisHighMemoryUsage
         expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
         for: 5m
@@ -336,7 +331,7 @@ groups:
           severity: warning
         annotations:
           summary: "Redis memory usage is above 90%"
-      
+
       - alert: RedisHighConnections
         expr: redis_connected_clients / redis_maxclients > 0.9
         for: 5m
@@ -344,7 +339,7 @@ groups:
           severity: warning
         annotations:
           summary: "Redis connections are above 90%"
-      
+
       - alert: RedisReplicationLag
         expr: (redis_replication_master_repl_offset - redis_replication_slave_repl_offset) > 10485760
         for: 5m
@@ -354,7 +349,6 @@ groups:
           summary: "Redis replication lag is high"
 ```
 
----
 
 ## **Custom Monitoring Scripts**
 
@@ -373,14 +367,14 @@ import java.util.Map;
 public class RedisMonitor {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public RedisMonitor(String host, int port, String password) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(1);
         this.jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
         this.gson = new Gson();
     }
-    
+
     public Map<String, Object> collectAllMetrics() {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, Object> metrics = new HashMap<>();
@@ -397,7 +391,7 @@ public class RedisMonitor {
             return metrics;
         }
     }
-    
+
     public void monitorContinuously(long intervalMs) throws InterruptedException {
         while (true) {
             Map<String, Object> metrics = collectAllMetrics();
@@ -405,13 +399,13 @@ public class RedisMonitor {
             Thread.sleep(intervalMs);
         }
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
         }
     }
-    
+
     public static void main(String[] args) throws InterruptedException {
         RedisMonitor monitor = new RedisMonitor("localhost", 6379, null);
         monitor.monitorContinuously(60000);
@@ -431,16 +425,16 @@ import java.util.*;
 public class RealTimeMonitor {
     private JedisPool jedisPool;
     private Deque<Map<String, Object>> metricsHistory;
-    
+
     public RealTimeMonitor(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.metricsHistory = new ArrayDeque<>(100);
     }
-    
+
     public Map<String, Object> collectRealtimeMetrics() {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, String> info = jedis.info();
-            
+
             Map<String, Object> metrics = new HashMap<>();
             metrics.put("ops_per_sec", Long.parseLong(info.getOrDefault("instantaneous_ops_per_sec", "0")));
             metrics.put("connected_clients", Long.parseLong(info.getOrDefault("connected_clients", "0")));
@@ -448,24 +442,24 @@ public class RealTimeMonitor {
             metrics.put("keyspace_hits", Long.parseLong(info.getOrDefault("keyspace_hits", "0")));
             metrics.put("keyspace_misses", Long.parseLong(info.getOrDefault("keyspace_misses", "0")));
             metrics.put("total_commands_processed", Long.parseLong(info.getOrDefault("total_commands_processed", "0")));
-            
+
             if (metricsHistory.size() >= 100) {
                 metricsHistory.removeFirst();
             }
             metricsHistory.addLast(metrics);
-            
+
             return metrics;
         }
     }
-    
+
     public Map<String, Double> calculateTrends() {
         if (metricsHistory.size() < 2) {
             return null;
         }
-        
+
         List<Map<String, Object>> recent = new ArrayList<>();
         List<Map<String, Object>> older = new ArrayList<>();
-        
+
         Iterator<Map<String, Object>> iterator = metricsHistory.descendingIterator();
         int count = 0;
         while (iterator.hasNext() && count < 20) {
@@ -477,11 +471,11 @@ public class RealTimeMonitor {
             }
             count++;
         }
-        
+
         if (older.isEmpty()) {
             return null;
         }
-        
+
         Map<String, Double> trends = new HashMap<>();
         for (String key : recent.get(0).keySet()) {
             double recentAvg = recent.stream()
@@ -494,7 +488,7 @@ public class RealTimeMonitor {
                 .orElse(0.0);
             trends.put(key, olderAvg > 0 ? ((recentAvg - olderAvg) / olderAvg * 100) : 0.0);
         }
-        
+
         return trends;
     }
 }
@@ -510,15 +504,15 @@ import java.util.Map;
 
 public class CustomMetricsCollector {
     private JedisPool jedisPool;
-    
+
     public CustomMetricsCollector(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public Map<String, Object> collectCustomMetrics() {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, Object> metrics = new HashMap<>();
-            
+
             // Метрики производительности
             Map<String, String> stats = jedis.info("stats");
             metrics.put("ops_per_sec", Long.parseLong(stats.getOrDefault("instantaneous_ops_per_sec", "0")));
@@ -527,22 +521,22 @@ public class CustomMetricsCollector {
             long misses = Long.parseLong(stats.getOrDefault("keyspace_misses", "0"));
             metrics.put("keyspace_hits", hits);
             metrics.put("keyspace_misses", misses);
-            
+
             // Cache hit ratio
             long total = hits + misses;
             metrics.put("cache_hit_ratio", total > 0 ? (hits * 100.0 / total) : 0.0);
-            
+
             // Метрики памяти
             Map<String, String> memory = jedis.info("memory");
             metrics.put("used_memory", Long.parseLong(memory.getOrDefault("used_memory", "0")));
             metrics.put("used_memory_peak", Long.parseLong(memory.getOrDefault("used_memory_peak", "0")));
             metrics.put("mem_fragmentation_ratio", Double.parseDouble(memory.getOrDefault("mem_fragmentation_ratio", "0")));
-            
+
             // Метрики клиентов
             Map<String, String> clients = jedis.info("clients");
             metrics.put("connected_clients", Long.parseLong(clients.getOrDefault("connected_clients", "0")));
             metrics.put("blocked_clients", Long.parseLong(clients.getOrDefault("blocked_clients", "0")));
-            
+
             return metrics;
         }
     }
@@ -782,11 +776,7 @@ public class RedisAlerting {
 
 Используйте единый стек (например, **Prometheus** + **Grafana** или **Redis Insight**) и храните дашборды в коде для воспроизводимости. Регулярно проверяйте актуальность алертов и снижайте шум: отключайте срабатывания, не ведущие к действиям. Документируйте процедуры реагирования на типичные срабатывания.
 
----
 
 - [Redis Monitoring](https://redis.io/docs/management/monitoring/)
 - [Redis Exporter for Prometheus](https://github.com/oliver006/redis_exporter)
-
----
-
 

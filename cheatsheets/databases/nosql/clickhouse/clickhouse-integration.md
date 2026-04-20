@@ -467,7 +467,7 @@ for (`Event event` : events) {
 }
 
 pstmt.`executeBatch`();
-```
+```text
 
 ### Go
 
@@ -583,7 +583,7 @@ public class `ClickHouseGoStyleService` {
         }
     }
 }
-```
+```text
 
 ### Node.js
 
@@ -658,7 +658,7 @@ public class `ClickHouseService` {
         // getters and setters
     }
 }
-```
+```text
 
 ## Облачные сервисы
 
@@ -685,7 +685,7 @@ public class `ClickHouseService` {
 
 -- Использование `AWS Glue Catalog`
 `SELECT` * `FROM` awsglue('`my-database`.`my-table`', '`us-east-1`');
-```
+```text
 
 ### Google Cloud Platform
 
@@ -714,7 +714,7 @@ public class `ClickHouseService` {
     'projects/my-project/my-log',
     'credentials_path/service-account.json'
 );
-```
+```text
 
 ### Azure
 
@@ -740,7 +740,7 @@ public class `ClickHouseService` {
     '`my-event-hub`',
     '`connection_string`=`Endpoint`=sb://...'
 );
-```
+```text
 
 ## ETL и потоковая обработка
 
@@ -762,7 +762,7 @@ public class `ClickHouseService` {
         <relationship name="failure">failure</relationship>
     </relationships>
 </processor>
-```
+```text
 
 ### Apache Flink
 
@@ -779,7 +779,7 @@ events.`addSink`(new `ClickHouseSink`<>(
         ps.`setString`(3, event.`getType`());
     }
 ));
-```
+```text
 
 ### dbt (Data Build Tool)
 
@@ -796,7 +796,7 @@ clickhouse:
       password: ""
       database: default
       schema: default
-```
+```text
 
 ```sql
 -- dbt модель
@@ -814,7 +814,7 @@ clickhouse:
 `FROM` {{ ref('events') }}
 `WHERE` timestamp >= '2024-01-01'
 `GROUP BY user_id`
-```
+```text
 
 ## Мониторинг и observability
 
@@ -837,7 +837,7 @@ rate(`clickhouse_query_total`[5m])
 
 # `Disk usage`
 `clickhouse_disk_free_bytes` / `clickhouse_disk_total_bytes` * 100
-```
+```text
 
 ### ELK Stack
 
@@ -859,7 +859,7 @@ output {
     index => "`clickhouse-logs`-%{+`YYYY`.`MM`.dd}"
   }
 }
-```
+```text
 
 ### Jaeger/OpenTelemetry
 
@@ -880,7 +880,7 @@ output {
             .build()
     )
     .`buildAndRegisterGlobal`();
-```
+```text
 
 ## Лучшие практики
 
@@ -894,7 +894,7 @@ output {
 
 2. Оптимизируйте конвейеры данных
    ```sql
-   -- Используйте буферные таблицы
+   — Используйте буферные таблицы
    `CREATE TABLE events_queue` (
        timestamp `DateTime`,
        data `String`
@@ -913,7 +913,7 @@ output {
        JSONExtractUInt(data, '`user_id`') as `user_id`,
        JSONExtractString(data, '`event_type`') as `event_type`
    `FROM events_queue`;
-   ```
+   ```text
 
 3. Обеспечьте отказоустойчивость
    - Используйте репликацию ClickHouse
@@ -924,13 +924,13 @@ output {
 
 1. Аутентификация и авторизация
    ```sql
-   -- Создание пользователей для интеграций
+   — Создание пользователей для интеграций
    `CREATE USER etl_user IDENTIFIED BY` '`secure_password`';
    `GRANT SELECT`, `INSERT ON` events `TO etl_user`;
 
    `CREATE USER bi_user IDENTIFIED BY` '`bi_password`';
    `GRANT SELECT ON` events, `user_metrics TO bi_user`;
-   ```
+   ```text
 
 2. Шифрование данных
    ```xml
@@ -938,23 +938,23 @@ output {
    <https_port>8123</https_port>
    <certificateFile>server.crt</certificateFile>
    <privateKeyFile>server.key</privateKeyFile>
-   ```
+   ```text
 
 3. Ограничения ресурсов
    ```sql
-   -- Ограничения для пользователей
+   — Ограничения для пользователей
    `CREATE USER api_user IDENTIFIED BY` 'password'
    `SETTINGS`
-       `max_memory_usage` = `100000000`,  -- 100MB
-       `max_execution_time` = 30,        -- 30 секунд
-       `max_threads` = 2;               -- 2 потока
-   ```
+       `max_memory_usage` = `100000000`,  — 100MB
+       `max_execution_time` = 30,        — 30 секунд
+       `max_threads` = 2;               — 2 потока
+   ```text
 
 ### Производительность интеграций
 
 1. Batch операции
    ```java
 // `ClickHouse Python example replaced with Java Spring`
-```
+```text
 
 ```

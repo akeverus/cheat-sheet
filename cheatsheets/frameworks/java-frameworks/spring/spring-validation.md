@@ -17,8 +17,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Validation: Полное руководство по валидации данных
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -121,12 +119,12 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 // Конфигурация валидатора и сообщений об ошибках
 @Configuration
 public class ValidationConfig {
-    
+
     @Bean
     public Validator validator() {
         return Validation.buildDefaultValidatorFactory().getValidator();
     }
-    
+
     @Bean
     public MethodValidationPostProcessor methodValidationPostProcessor() {
         return new MethodValidationPostProcessor();
@@ -143,47 +141,47 @@ public class ValidationConfig {
 import jakarta.validation.constraints.*;
 
 public class User {
-    
+
     @NotNull(message = "ID cannot be null")
     private Long id;
-    
+
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
-    
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
-    
+
     @Min(value = 18, message = "Age must be at least 18")
     @Max(value = 120, message = "Age must be at most 120")
     private Integer age;
-    
+
     @Pattern(regexp = "^[0-9]{10}$", message = "Phone number must be 10 digits")
     private String phoneNumber;
-    
+
     @DecimalMin(value = "0.0", inclusive = false, message = "Salary must be positive")
     @DecimalMax(value = "1000000.0", message = "Salary must be less than 1,000,000")
     private BigDecimal salary;
-    
+
     @Past(message = "Birth date must be in the past")
     private LocalDate birthDate;
-    
+
     @Future(message = "Expiry date must be in the future")
     private LocalDate expiryDate;
-    
+
     @AssertTrue(message = "Terms must be accepted")
     private Boolean termsAccepted;
-    
+
     @AssertFalse(message = "Account must not be locked")
     private Boolean accountLocked;
-    
+
     @NotEmpty(message = "Tags cannot be empty")
     private List<String> tags;
-    
+
     @Size(min = 1, max = 5, message = "Must have between 1 and 5 addresses")
     private List<Address> addresses;
-    
+
     // Getters and setters...
 }
 ```
@@ -192,11 +190,11 @@ public class User {
 
 ```java
 public class User {
-    
+
     @NotNull
     @Valid
     private Address address;
-    
+
     @NotEmpty
     @Valid
     private List<Order> orders;
@@ -205,10 +203,10 @@ public class User {
 public class Address {
     @NotBlank
     private String street;
-    
+
     @NotBlank
     private String city;
-    
+
     @Pattern(regexp = "^[0-9]{5}$")
     private String zipCode;
 }
@@ -222,13 +220,13 @@ public class Address {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @PostMapping
     public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
         User created = userService.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(
             @PathVariable Long id,
@@ -245,7 +243,7 @@ public class UserController {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @PostMapping
     public ResponseEntity<?> createUser(
             @Valid @RequestBody User user,
@@ -268,7 +266,7 @@ public class UserController {
 ```java
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
@@ -276,7 +274,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> {
             errors.put(error.getField(), error.getDefaultMessage());
         });
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
             "VALIDATION_ERROR",
             "Validation failed",
@@ -284,7 +282,7 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.badRequest().body(errorResponse);
     }
-    
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(
             ConstraintViolationException ex) {
@@ -294,7 +292,7 @@ public class GlobalExceptionHandler {
             String errorMessage = violation.getMessage();
             errors.put(fieldName, errorMessage);
         });
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
             "VALIDATION_ERROR",
             "Validation failed",
@@ -313,18 +311,18 @@ public class GlobalExceptionHandler {
 @Service
 @Validated
 public class UserService {
-    
+
     public User findById(@NotNull @Min(1) Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     public List<User> findByAge(
             @Min(18) @Max(120) Integer minAge,
             @Min(18) @Max(120) Integer maxAge) {
         return userRepository.findByAgeBetween(minAge, maxAge);
     }
-    
+
     public User create(@Valid User user) {
         return userRepository.save(user);
     }
@@ -337,7 +335,7 @@ public class UserService {
 @Service
 @Validated
 public class UserService {
-    
+
     @NotNull
     public User findById(@NotNull Long id) {
         return userRepository.findById(id)
@@ -370,18 +368,18 @@ public @interface PhoneNumber {
 
 public class PhoneNumberValidator implements ConstraintValidator<PhoneNumber, String> {
     private String countryCode;
-    
+
     @Override
     public void initialize(PhoneNumber constraintAnnotation) {
         this.countryCode = constraintAnnotation.countryCode();
     }
-    
+
     @Override
     public boolean isValid(String phoneNumber, ConstraintValidatorContext context) {
         if (phoneNumber == null) {
             return true; // @NotNull должен обрабатывать null
         }
-        
+
         // Валидация в зависимости от кода страны
         switch (countryCode) {
             case "US":
@@ -399,7 +397,7 @@ public class PhoneNumberValidator implements ConstraintValidator<PhoneNumber, St
 
 ```java
 public class User {
-    
+
     @PhoneNumber(countryCode = "US", message = "Invalid US phone number")
     private String phoneNumber;
 }
@@ -419,22 +417,22 @@ public @interface PasswordMatch {
 }
 
 public class PasswordMatchValidator implements ConstraintValidator<PasswordMatch, UserRegistration> {
-    
+
     @Override
     public boolean isValid(UserRegistration registration, ConstraintValidatorContext context) {
         if (registration.getPassword() == null || registration.getConfirmPassword() == null) {
             return true;
         }
-        
+
         boolean isValid = registration.getPassword().equals(registration.getConfirmPassword());
-        
+
         if (!isValid) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate())
                 .addPropertyNode("confirmPassword")
                 .addConstraintViolation();
         }
-        
+
         return isValid;
     }
 }
@@ -456,18 +454,18 @@ public interface CreateGroup {}
 public interface UpdateGroup {}
 
 public class User {
-    
+
     @NotNull(groups = {CreateGroup.class, UpdateGroup.class})
     private Long id;
-    
+
     @NotBlank(groups = CreateGroup.class)
     @Size(min = 2, max = 50, groups = {CreateGroup.class, UpdateGroup.class})
     private String name;
-    
+
     @NotBlank(groups = CreateGroup.class)
     @Email(groups = {CreateGroup.class, UpdateGroup.class})
     private String email;
-    
+
     @NotNull(groups = UpdateGroup.class)
     private Integer version; // Для optimistic locking
 }
@@ -479,14 +477,14 @@ public class User {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @PostMapping
     public ResponseEntity<User> createUser(
             @Validated(CreateGroup.class) @RequestBody User user) {
         User created = userService.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(
             @PathVariable Long id,
@@ -503,18 +501,18 @@ public class UserController {
 @Service
 @Validated
 public class UserService {
-    
+
     public User create(@Valid User user) {
         return userRepository.save(user);
     }
-    
+
     public User update(@NotNull Long id, @Valid User user) {
         User existing = userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
         // Обновление полей
         return userRepository.save(existing);
     }
-    
+
     public void delete(@NotNull @Min(1) Long id) {
         userRepository.deleteById(id);
     }
@@ -527,10 +525,10 @@ public class UserService {
 @Repository
 @Validated
 public interface UserRepository extends JpaRepository<User, Long> {
-    
+
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmail(@NotBlank @Email String email);
-    
+
     @Query("SELECT u FROM User u WHERE u.age BETWEEN :minAge AND :maxAge")
     List<User> findByAgeBetween(
             @Min(0) @Max(150) Integer minAge,
@@ -543,10 +541,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private Validator validator;
-    
+
     public User create(User user) {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
@@ -554,7 +552,7 @@ public class UserService {
         }
         return userRepository.save(user);
     }
-    
+
     public User createWithGroup(User user, Class<?>... groups) {
         Set<ConstraintViolation<User>> violations = validator.validate(user, groups);
         if (!violations.isEmpty()) {
@@ -647,3 +645,11 @@ public class GlobalExceptionHandler {
 - [**Bean Validation** Specification (JSR 380)](https://beanvalidation.org/2.0/)
 - [**Spring Validation** Documentation](https://docs.spring.io/spring-framework/reference/core/validation.html)
 - [Baeldung **Spring Validation**](https://www.baeldung.com/spring-validation)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

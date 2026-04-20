@@ -75,24 +75,24 @@ updated: "2026-02-11"
 public static List<Integer> findByHashMapAndPriorityQueue(Integer[] array, int n) {
     // Шаг 1: Подсчитываем частоту появления каждого элемента
     Map<Integer, Integer> countMap = new HashMap<>();
-    
+
     // Проходим по массиву и увеличиваем счётчик для каждого элемента
     for (Integer i : array) {
         countMap.put(i, countMap.getOrDefault(i, 0) + 1);
     }
-    
+
     // Шаг 2: Создаём приоритетную очередь (максимальная куча) по частоте
     // Компаратор сравнивает элементы по их частоте в убывающем порядке
     PriorityQueue<Integer> heap = new PriorityQueue<>((a, b) -> countMap.get(b) - countMap.get(a));
     // Добавляем все уникальные элементы в кучу
     heap.addAll(countMap.keySet());
-    
+
     // Шаг 3: Извлекаем n элементов с наибольшей частотой
     List<Integer> result = new ArrayList<>();
     for (int i = 0; i < n && !heap.isEmpty(); i++) {
         result.add(heap.poll()); // poll() извлекает элемент с максимальной частотой
     }
-    
+
     return result;
 }
 ```
@@ -167,23 +167,23 @@ public static List<Integer> findByTreeMap(Integer[] arr, int n) {
     // Создаём TreeMap с обратным порядком сортировки по ключам
     // Внимание: это сортирует по ключам, а не по частоте!
     Map<Integer, Integer> countMap = new TreeMap<>(Collections.reverseOrder());
-    
+
     // Подсчитываем частоту каждого элемента
     for (int i : arr) {
         countMap.put(i, countMap.getOrDefault(i, 0) + 1);
     }
-    
+
     // Преобразуем записи в список для сортировки по значениям (частоте)
     List<Map.Entry<Integer, Integer>> sortedEntries = new ArrayList<>(countMap.entrySet());
     // Сортируем по частоте в убывающем порядке
     sortedEntries.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue()));
-    
+
     // Извлекаем первые n элементов
     List<Integer> result = new ArrayList<>();
     for (int i = 0; i < n && i < sortedEntries.size(); i++) {
         result.add(sortedEntries.get(i).getKey());
     }
-    
+
     return result;
 }
 ```
@@ -211,8 +211,8 @@ public static List<Integer> findByTreeMap(Integer[] arr, int n) {
 | Применение | Общий случай | Функциональный стиль | Когда нужна сортировка |
 
 **где:**
-- n - количество уникальных элементов
-- m - размер входного массива
+- n — количество уникальных элементов
+- m — размер входного массива
 
 ## Реализация на Kotlin
 
@@ -225,14 +225,14 @@ public static List<Integer> findByTreeMap(Integer[] arr, int n) {
 fun findByHashMapAndPriorityQueueK(array: Array<Int>, n: Int): List<Int> {
     // Используем встроенную функцию groupingBy для подсчёта частот
     val countMap = array.groupingBy { it }.eachCount()
-    
+
     // Создаём приоритетную очередь с компаратором по частоте (убывание)
-    val heap = PriorityQueue<Int> { a, b -> 
+    val heap = PriorityQueue<Int> { a, b ->
         (countMap[b] ?: 0).compareTo(countMap[a] ?: 0)
     }
     // Добавляем все уникальные элементы в кучу
     heap.addAll(countMap.keys)
-    
+
     // Используем generateSequence для извлечения n элементов
     return generateSequence { if (heap.isNotEmpty()) heap.poll() else null }
         .take(n)
@@ -260,10 +260,10 @@ fun findByStreamK(arr: Array<Int>, n: Int): List<Int> {
 fun findByTreeMapK(arr: Array<Int>, n: Int): List<Int> {
     // Подсчитываем частоты с помощью groupingBy
     val countMap = arr.groupingBy { it }.eachCount().toMutableMap()
-    
+
     // Сортируем записи по частоте в убывающем порядке
     val sortedEntries = countMap.entries.sortedByDescending { it.value }
-    
+
     // Извлекаем первые n элементов
     return sortedEntries.take(n).map { it.key }
 }
@@ -277,15 +277,15 @@ fun findByTreeMapK(arr: Array<Int>, n: Int): List<Int> {
 // Демонстрация работы всех трёх подходов
 fun main() {
     val inputArray = arrayOf(1, 2, 3, 2, 2, 1, 4, 5, 6, 1, 2, 3)
-    
+
     // Подход 1: HashMap + PriorityQueue
     val top3a = findByHashMapAndPriorityQueueK(inputArray, 3)
     println("Top 3 (PriorityQueue): $top3a") // [2, 1, 3]
-    
+
     // Подход 2: Stream API
     val top3b = findByStreamK(inputArray, 3)
     println("Top 3 (Stream): $top3b") // [2, 1, 3]
-    
+
     // Подход 3: TreeMap
     val top3c = findByTreeMapK(inputArray, 3)
     println("Top 3 (TreeMap): $top3c") // [2, 1, 3]
@@ -339,12 +339,12 @@ public static List<Integer> findByMinHeap(Integer[] arr, int n) {
     for (int i : arr) {
         countMap.put(i, countMap.getOrDefault(i, 0) + 1);
     }
-    
+
     // Шаг 2: Создаём минимальную кучу размером n (храним только топ-n элементов)
     // Компаратор сравнивает элементы по частоте в возрастающем порядке
-    PriorityQueue<Map.Entry<Integer, Integer>> minHeap = 
+    PriorityQueue<Map.Entry<Integer, Integer>> minHeap =
         new PriorityQueue<>((a, b) -> a.getValue() - b.getValue());
-    
+
     // Шаг 3: Проходим по всем записям и поддерживаем кучу размером n
     for (Map.Entry<Integer, Integer> entry : countMap.entrySet()) {
         minHeap.offer(entry); // Добавляем элемент в кучу
@@ -354,7 +354,7 @@ public static List<Integer> findByMinHeap(Integer[] arr, int n) {
             minHeap.poll(); // Удаляем элемент с наименьшей частотой
         }
     }
-    
+
     // Шаг 4: Извлекаем элементы из кучи и преобразуем в список
     return minHeap.stream()
         .map(Map.Entry::getKey) // Извлекаем ключи (сами элементы)
@@ -453,17 +453,17 @@ public static List<String> findTopWords(String text, int n) {
     // Шаг 1: Разбиваем текст на слова и приводим к нижнему регистру
     // Регулярное выражение \\W+ разделяет по не-словесным символам
     String[] words = text.toLowerCase().split("\\W+");
-    
+
     // Шаг 2: Подсчитываем частоту каждого слова
     Map<String, Integer> wordCount = new HashMap<>();
-    
+
     for (String word : words) {
         // Пропускаем пустые строки, которые могут появиться после split
         if (!word.isEmpty()) {
             wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
         }
     }
-    
+
     // Шаг 3: Создаём приоритетную очередь по частоте (максимальная куча)
     // Компаратор сравнивает слова по их частоте в убывающем порядке
     PriorityQueue<String> heap = new PriorityQueue<>(
@@ -471,13 +471,13 @@ public static List<String> findTopWords(String text, int n) {
     );
     // Добавляем все уникальные слова в кучу
     heap.addAll(wordCount.keySet());
-    
+
     // Шаг 4: Извлекаем топ-n слов с наибольшей частотой
     List<String> result = new ArrayList<>();
     for (int i = 0; i < n && !heap.isEmpty(); i++) {
         result.add(heap.poll()); // poll() извлекает слово с максимальной частотой
     }
-    
+
     return result;
 }
 ```
@@ -491,7 +491,7 @@ public static List<String> findTopErrors(List<LogEntry> logs, int n) {
     // Шаг 1: Подсчитываем частоту каждой ошибки
     // Фильтруем только записи уровня ERROR
     Map<String, Integer> errorCount = new HashMap<>();
-    
+
     for (LogEntry log : logs) {
         // Проверяем уровень логирования
         if (log.getLevel().equals("ERROR")) {
@@ -500,7 +500,7 @@ public static List<String> findTopErrors(List<LogEntry> logs, int n) {
             errorCount.put(errorMessage, errorCount.getOrDefault(errorMessage, 0) + 1);
         }
     }
-    
+
     // Шаг 2: Используем Stream API для извлечения топ-n ошибок
     // Функциональный стиль делает код более читаемым
     return errorCount.entrySet().stream()
@@ -523,18 +523,18 @@ public static List<String> findTopErrors(List<LogEntry> logs, int n) {
 public static List<Product> findTopProducts(List<Purchase> purchases, int n) {
     // Шаг 1: Подсчитываем количество покупок каждого продукта
     Map<Product, Integer> productCount = new HashMap<>();
-    
+
     for (Purchase purchase : purchases) {
         Product product = purchase.getProduct();
         // Увеличиваем счётчик покупок для каждого продукта
         productCount.put(product, productCount.getOrDefault(product, 0) + 1);
     }
-    
+
     // Шаг 2: Используем минимальную кучу размером n для оптимизации
     // Компаратор сравнивает продукты по количеству покупок в возрастающем порядке
-    PriorityQueue<Map.Entry<Product, Integer>> minHeap = 
+    PriorityQueue<Map.Entry<Product, Integer>> minHeap =
         new PriorityQueue<>((a, b) -> a.getValue() - b.getValue());
-    
+
     // Шаг 3: Поддерживаем кучу размером n
     for (Map.Entry<Product, Integer> entry : productCount.entrySet()) {
         minHeap.offer(entry); // Добавляем продукт в кучу
@@ -543,7 +543,7 @@ public static List<Product> findTopProducts(List<Purchase> purchases, int n) {
             minHeap.poll(); // Удаляем продукт с наименьшим количеством покупок
         }
     }
-    
+
     // Шаг 4: Извлекаем продукты из кучи
     return minHeap.stream()
         .map(Map.Entry::getKey) // Извлекаем ключи (сами продукты)
@@ -559,14 +559,14 @@ public static List<Product> findTopProducts(List<Purchase> purchases, int n) {
 public static List<String> findTopTags(List<BlogPost> posts, int n) {
     // Подсчитываем частоту каждого тега во всех постах
     Map<String, Integer> tagCount = new HashMap<>();
-    
+
     for (BlogPost post : posts) {
         // Каждый пост может иметь несколько тегов
         for (String tag : post.getTags()) {
             tagCount.put(tag, tagCount.getOrDefault(tag, 0) + 1);
         }
     }
-    
+
     // Используем Stream API для функционального стиля
     return tagCount.entrySet().stream()
         .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
@@ -584,23 +584,23 @@ public static List<String> findTopTags(List<BlogPost> posts, int n) {
 public static List<User> findTopActiveUsers(List<Action> actions, int n) {
     // Подсчитываем количество действий для каждого пользователя
     Map<User, Integer> userActionCount = new HashMap<>();
-    
+
     for (Action action : actions) {
         User user = action.getUser();
         userActionCount.put(user, userActionCount.getOrDefault(user, 0) + 1);
     }
-    
+
     // Используем минимальную кучу для оптимизации
-    PriorityQueue<Map.Entry<User, Integer>> minHeap = 
+    PriorityQueue<Map.Entry<User, Integer>> minHeap =
         new PriorityQueue<>((a, b) -> a.getValue() - b.getValue());
-    
+
     for (Map.Entry<User, Integer> entry : userActionCount.entrySet()) {
         minHeap.offer(entry);
         if (minHeap.size() > n) {
             minHeap.poll();
         }
     }
-    
+
     return minHeap.stream()
         .map(Map.Entry::getKey)
         .collect(Collectors.toList());
@@ -616,34 +616,34 @@ public static List<Integer> findTopNFrequentSafe(Integer[] arr, int n) {
     if (arr == null || arr.length == 0) {
         return new ArrayList<>();
     }
-    
+
     // Проверка на невалидное n
     if (n <= 0) {
         return new ArrayList<>();
     }
-    
+
     // Подсчитываем частоты
     Map<Integer, Integer> countMap = new HashMap<>();
     for (Integer i : arr) {
         countMap.put(i, countMap.getOrDefault(i, 0) + 1);
     }
-    
+
     // Если n больше количества уникальных элементов, возвращаем все
     if (n >= countMap.size()) {
         return new ArrayList<>(countMap.keySet());
     }
-    
+
     // Используем PriorityQueue для извлечения топ-n
     PriorityQueue<Integer> heap = new PriorityQueue<>(
         (a, b) -> countMap.get(b) - countMap.get(a)
     );
     heap.addAll(countMap.keySet());
-    
+
     List<Integer> result = new ArrayList<>();
     for (int i = 0; i < n && !heap.isEmpty(); i++) {
         result.add(heap.poll());
     }
-    
+
     return result;
 }
 ```

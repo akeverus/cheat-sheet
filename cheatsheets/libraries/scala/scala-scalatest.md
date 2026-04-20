@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # ScalaTest
 
-**ScalaTest** - это гибкий и мощный фреймворк для тестирования **Scala** приложений. Предоставляет множество стилей тестирования, богатый набор матчеров и отличную интеграцию с популярными инструментами сборки и **CI/CD** системами.
+**ScalaTest** — это гибкий и мощный фреймворк для тестирования **Scala** приложений. Предоставляет множество стилей тестирования, богатый набор матчеров и отличную интеграцию с популярными инструментами сборки и **CI/CD** системами.
 
 ## Полезные ссылки
 - [Официальная документация ScalaTest](https://www.scalatest.org/)
@@ -27,10 +27,10 @@ updated: "2026-02-11"
 - [Основы ScalaTest](#основы-scalatest)
   - [Подключение и базовая структура](#подключение-и-базовая-структура)
   - [Стили тестирования](#стили-тестирования)
-    - [FunSuite - функциональный стиль](#funsuite-функциональный-стиль)
-    - [FlatSpec - спецификационный стиль](#flatspec-спецификационный-стиль)
-    - [WordSpec - **BDD** стиль](#wordspec-bdd-стиль)
-    - [FunSpec - еще один **BDD** стиль](#funspec-еще-один-bdd-стиль)
+    - [FunSuite — функциональный стиль](#funsuite-функциональный-стиль)
+    - [FlatSpec — спецификационный стиль](#flatspec-спецификационный-стиль)
+    - [WordSpec — **BDD** стиль](#wordspec-bdd-стиль)
+    - [FunSpec — еще один **BDD** стиль](#funspec-еще-один-bdd-стиль)
 - [Матчеры (Matchers)](#матчеры-matchers)
   - [Should матчеры](#should-матчеры)
   - [Must матчеры](#must-матчеры)
@@ -85,7 +85,7 @@ libraryDependencies ++= Seq(
 
 ### Стили тестирования
 
-#### **FunSuite** - функциональный стиль
+#### **FunSuite** — функциональный стиль
 ```scala
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -134,7 +134,7 @@ class CalculatorFunSuite extends AnyFunSuite {
 }
 ```
 
-#### **FlatSpec** - спецификационный стиль
+#### **FlatSpec** — спецификационный стиль
 ```scala
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -166,7 +166,7 @@ class CalculatorFlatSpec extends AnyFlatSpec {
 }
 ```
 
-#### **WordSpec** - **BDD** стиль
+#### **WordSpec** — **BDD** стиль
 ```scala
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -210,7 +210,7 @@ class CalculatorWordSpec extends AnyWordSpec {
 }
 ```
 
-#### **FunSpec** - еще один **BDD** стиль
+#### **FunSpec** — еще один **BDD** стиль
 ```scala
 import org.scalatest.funspec.AnyFunSpec
 

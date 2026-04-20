@@ -282,20 +282,20 @@ class CircleK(private var radius: Double) {
             throw IllegalArgumentException("Radius cannot be negative")
         }
     }
-    
+
     fun getArea(): Double {
         return radius * radius * Math.PI
     }
-    
+
     fun getRadius(): Double = radius
-    
+
     fun setRadius(newRadius: Double) {
         if (newRadius < 0) {
             throw IllegalArgumentException("Radius cannot be negative")
         }
         radius = newRadius
     }
-    
+
     override fun toString(): String {
         return "The area of the circle [radius = $radius]: ${getArea()}"
     }
@@ -340,10 +340,10 @@ fun main() {
     val radius = 7.0
     val area = calculateAreaK(radius)
     println("Area: $area")
-    
+
     val circle = CircleK(radius)
     println(circle)
-    
+
     val ringArea = calculateRingAreaK(10.0, 5.0)
     println("Ring area: $ringArea")
 }

@@ -97,7 +97,7 @@ updated: "2026-02-11"
  * Основные компоненты Oracle Database
  */
 public class OracleComponents {
-    
+
     /*
      * SGA компоненты
      */
@@ -107,16 +107,16 @@ public class OracleComponents {
         REDO_LOG_BUFFER("Redo Log Buffer", "Буфер для redo логов"),
         LARGE_POOL("Large Pool", "Память для больших операций"),
         JAVA_POOL("Java Pool", "Память для Java объектов");
-        
+
         private final String name;
         private final String description;
-        
+
         SGAComponent(String name, String description) {
             this.name = name;
             this.description = description;
         }
     }
-    
+
     /*
      * Фоновые процессы Oracle
      */
@@ -127,10 +127,10 @@ public class OracleComponents {
         SMON("System Monitor", "Восстановление после сбоев"),
         PMON("Process Monitor", "Мониторинг процессов"),
         ARCn("Archiver", "Архивирование redo логов");
-        
+
         private final String name;
         private final String description;
-        
+
         BackgroundProcess(String name, String description) {
             this.name = name;
             this.description = description;
@@ -235,7 +235,7 @@ CREATE TABLE numeric_types (
     price NUMBER(10, 2),              -- Десятичное число (10 цифр, 2 после запятой)
     -- NUMBER без параметров - максимальная точность
     big_number NUMBER,                -- Произвольная точность
-    
+
     -- INTEGER, SMALLINT, BIGINT - синонимы NUMBER
     small_int INTEGER,                -- Эквивалент NUMBER(38)
     big_int BIGINT                    -- Эквивалент NUMBER(38)
@@ -284,7 +284,7 @@ CREATE TABLE binary_types (
  */
 
 -- INSERT - вставка данных
-INSERT INTO users (id, username, email, balance) 
+INSERT INTO users (id, username, email, balance)
 VALUES (1, 'john_doe', 'john@example.com', 1000.50);
 
 -- INSERT с подзапросом
@@ -297,16 +297,16 @@ INSERT INTO users (id, username, email) VALUES
     (3, 'bob_jones', 'bob@example.com');
 
 -- UPDATE - обновление данных
-UPDATE users 
-SET balance = balance + 100, 
+UPDATE users
+SET balance = balance + 100,
     last_login = SYSDATE
 WHERE id = 1;
 
 -- UPDATE с подзапросом
 UPDATE users u
 SET balance = (
-    SELECT SUM(total_amount) 
-    FROM orders 
+    SELECT SUM(total_amount)
+    FROM orders
     WHERE user_id = u.id
 )
 WHERE EXISTS (
@@ -317,7 +317,7 @@ WHERE EXISTS (
 DELETE FROM users WHERE id = 1;
 
 -- DELETE с условием
-DELETE FROM orders 
+DELETE FROM orders
 WHERE order_date < ADD_MONTHS(SYSDATE, -12);  -- Удалить заказы старше года
 
 -- SELECT - выборка данных
@@ -357,11 +357,11 @@ BEGIN
     SELECT username, balance INTO v_username, v_balance
     FROM users
     WHERE id = v_user_id;
-    
+
     -- Вывод информации
     DBMS_OUTPUT.PUT_LINE('Пользователь: ' || v_username);
     DBMS_OUTPUT.PUT_LINE('Баланс: ' || v_balance);
-    
+
     -- Условная логика
     IF v_balance > 1000 THEN
         DBMS_OUTPUT.PUT_LINE('Премиум пользователь');
@@ -370,12 +370,12 @@ BEGIN
     ELSE
         DBMS_OUTPUT.PUT_LINE('Базовый пользователь');
     END IF;
-    
+
     -- Цикл
     FOR i IN 1..10 LOOP
         DBMS_OUTPUT.PUT_LINE('Итерация: ' || i);
     END LOOP;
-    
+
     -- Обработка исключений
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
@@ -406,20 +406,20 @@ BEGIN
     SELECT COUNT(*) INTO v_count
     FROM users
     WHERE username = p_username OR email = p_email;
-    
+
     IF v_count > 0 THEN
         RAISE_APPLICATION_ERROR(-20001, 'Пользователь уже существует');
     END IF;
-    
+
     -- Генерация ID
     SELECT NVL(MAX(id), 0) + 1 INTO p_user_id FROM users;
-    
+
     -- Вставка нового пользователя
     INSERT INTO users (id, username, email, balance, created_at)
     VALUES (p_user_id, p_username, p_email, p_balance, SYSDATE);
-    
+
     COMMIT;
-    
+
     DBMS_OUTPUT.PUT_LINE('Пользователь создан с ID: ' || p_user_id);
 EXCEPTION
     WHEN OTHERS THEN
@@ -448,12 +448,12 @@ BEGIN
     SELECT balance INTO v_balance
     FROM users
     WHERE id = p_user_id;
-    
+
     -- Расчет суммы заказов
     SELECT NVL(SUM(total_amount), 0) INTO v_order_total
     FROM orders
     WHERE user_id = p_user_id;
-    
+
     -- Возврат итогового баланса
     RETURN v_balance - v_order_total;
 EXCEPTION
@@ -486,12 +486,12 @@ BEGIN
     IF :NEW.id IS NULL THEN
         SELECT NVL(MAX(id), 0) + 1 INTO :NEW.id FROM users;
     END IF;
-    
+
     -- Установка даты создания если не указана
     IF :NEW.created_at IS NULL THEN
         :NEW.created_at := SYSDATE;
     END IF;
-    
+
     -- Валидация email
     IF :NEW.email IS NOT NULL AND INSTR(:NEW.email, '@') = 0 THEN
         RAISE_APPLICATION_ERROR(-20002, 'Неверный формат email');
@@ -546,7 +546,7 @@ BEGIN
     -- Начало транзакции
     INSERT INTO users (id, username, email) VALUES (10, 'user1', 'user1@example.com');
     INSERT INTO orders (order_id, user_id, total_amount) VALUES (1, 10, 100.50);
-    
+
     -- Если произойдет ошибка, все изменения откатятся
     -- COMMIT - подтверждение всех изменений
     COMMIT;
@@ -562,7 +562,7 @@ END;
 ALTER TABLE users ADD CONSTRAINT chk_balance CHECK (balance >= 0);
 
 -- Попытка установить отрицательный баланс вызовет ошибку
-INSERT INTO users (id, username, email, balance) 
+INSERT INTO users (id, username, email, balance)
 VALUES (11, 'user2', 'user2@example.com', -100);  -- Ошибка: нарушение ограничения
 
 -- ISOLATION (Изоляция) - уровни изоляции
@@ -660,7 +660,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ALTER SESSION SET STATISTICS_LEVEL = ALL;
 
 -- Выполнение запроса с сбором статистики
-SELECT /*+ GATHER_PLAN_STATISTICS */ 
+SELECT /*+ GATHER_PLAN_STATISTICS */
     u.username, o.order_id, o.total_amount
 FROM users u
 INNER JOIN orders o ON u.id = o.user_id
@@ -670,7 +670,7 @@ WHERE u.balance > 1000;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST'));
 
 -- Использование подсказок оптимизатора
-SELECT /*+ INDEX(users idx_users_email) */ 
+SELECT /*+ INDEX(users idx_users_email) */
     username, email
 FROM users
 WHERE email LIKE 'john%';
@@ -695,7 +695,7 @@ import java.sql.*;
 import oracle.jdbc.pool.OracleDataSource;
 
 public class OracleJDBCConnection {
-    
+
     /
      * Подключение через OracleDataSource (рекомендуемый способ)
      * OracleDataSource предоставляет connection pooling и оптимизации
@@ -703,23 +703,23 @@ public class OracleJDBCConnection {
     public static Connection getConnection() throws SQLException {
         // Создание OracleDataSource для управления соединениями
         OracleDataSource ds = new OracleDataSource();
-        
+
         // Настройка параметров подключения
         ds.setURL("jdbc:oracle:thin:@localhost:1521:XE");  // thin driver для клиент-сервер
         // Формат URL: jdbc:oracle:thin:@host:port:service_name
         // XE - это service name для Oracle Express Edition
-        
+
         ds.setUser("myuser");      // Имя пользователя для подключения
         ds.setPassword("mypassword");  // Пароль для подключения
-        
+
         // Дополнительные настройки connection pool
         ds.setConnectionCachingEnabled(true);  // Включение кэширования соединений
         ds.setConnectionCacheProperties(new Properties());  // Свойства кэша
-        
+
         // Получение соединения из пула
         return ds.getConnection();
     }
-    
+
     /
      * Подключение через DriverManager (простой способ)
      * Используется для простых приложений без connection pooling
@@ -728,15 +728,15 @@ public class OracleJDBCConnection {
         // Регистрация Oracle JDBC драйвера
         // В новых версиях Java драйвер регистрируется автоматически
         Class.forName("oracle.jdbc.driver.OracleDriver");
-        
+
         // Создание соединения через DriverManager
         String url = "jdbc:oracle:thin:@localhost:1521:XE";
         String username = "myuser";
         String password = "mypassword";
-        
+
         return DriverManager.getConnection(url, username, password);
     }
-    
+
     /
      * Выполнение простого запроса
      */
@@ -745,11 +745,11 @@ public class OracleJDBCConnection {
             // Создание PreparedStatement для параметризованного запроса
             // PreparedStatement защищает от SQL injection и улучшает производительность
             String sql = "SELECT id, username, email, balance FROM users WHERE id = ?";
-            
+
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 // Установка параметра (индекс начинается с 1)
                 stmt.setInt(1, 1);  // Устанавливаем значение для первого параметра (?)
-                
+
                 // Выполнение запроса
                 try (ResultSet rs = stmt.executeQuery()) {
                     // Обработка результатов
@@ -758,7 +758,7 @@ public class OracleJDBCConnection {
                         String username = rs.getString("username");   // Получение строки
                         String email = rs.getString("email");
                         double balance = rs.getDouble("balance");     // Получение числа с плавающей точкой
-                        
+
                         System.out.printf("ID: %d, Username: %s, Email: %s, Balance: %.2f%n",
                                         id, username, email, balance);
                     }
@@ -766,7 +766,7 @@ public class OracleJDBCConnection {
             }
         }
     }
-    
+
     /
      * Выполнение INSERT с использованием RETURNING (Oracle специфичная фича)
      * RETURNING позволяет получить значения после вставки без дополнительного запроса
@@ -779,29 +779,29 @@ public class OracleJDBCConnection {
                 VALUES (?, ?, ?, SYSDATE)
                 RETURNING id INTO ?
                 """;
-            
+
             // Oracle требует CallableStatement для RETURNING
             try (CallableStatement stmt = conn.prepareCall(sql)) {
                 // Установка входных параметров
                 stmt.setString(1, username);   // Первый параметр - username
                 stmt.setString(2, email);      // Второй параметр - email
                 stmt.setDouble(3, balance);   // Третий параметр - balance
-                
+
                 // Регистрация выходного параметра для RETURNING
                 stmt.registerOutParameter(4, Types.INTEGER);  // Четвертый параметр - возвращаемый id
-                
+
                 // Выполнение вставки
                 stmt.execute();
-                
+
                 // Получение сгенерированного ID
                 int newId = stmt.getInt(4);
                 System.out.println("Создан пользователь с ID: " + newId);
-                
+
                 return newId;
             }
         }
     }
-    
+
     /
      * Работа с PL/SQL процедурами
      */
@@ -810,26 +810,26 @@ public class OracleJDBCConnection {
             // Вызов хранимой процедуры
             String sql = "{ CALL create_user(?, ?, ?, ?) }";
             // Формат: { CALL procedure_name(param1, param2, ...) }
-            
+
             try (CallableStatement stmt = conn.prepareCall(sql)) {
                 // Установка входных параметров
                 stmt.setString(1, "newuser");      // p_username
                 stmt.setString(2, "newuser@example.com");  // p_email
                 stmt.setDouble(3, 500.0);         // p_balance
-                
+
                 // Регистрация выходного параметра
                 stmt.registerOutParameter(4, Types.INTEGER);  // p_user_id (OUT)
-                
+
                 // Выполнение процедуры
                 stmt.execute();
-                
+
                 // Получение выходного параметра
                 int newUserId = stmt.getInt(4);
                 System.out.println("Процедура вернула ID: " + newUserId);
             }
         }
     }
-    
+
     /
      * Работа с транзакциями
      */
@@ -839,7 +839,7 @@ public class OracleJDBCConnection {
             conn = getConnection();
             // Отключение auto-commit для ручного управления транзакциями
             conn.setAutoCommit(false);
-            
+
             // Выполнение нескольких операций в одной транзакции
             try (PreparedStatement stmt1 = conn.prepareStatement(
                     "UPDATE users SET balance = balance - ? WHERE id = ?")) {
@@ -847,7 +847,7 @@ public class OracleJDBCConnection {
                 stmt1.setInt(2, 1);
                 stmt1.executeUpdate();
             }
-            
+
             try (PreparedStatement stmt2 = conn.prepareStatement(
                     "INSERT INTO orders (order_id, user_id, total_amount) VALUES (?, ?, ?)")) {
                 stmt2.setInt(1, 100);
@@ -855,11 +855,11 @@ public class OracleJDBCConnection {
                 stmt2.setDouble(3, 100.0);
                 stmt2.executeUpdate();
             }
-            
+
             // Подтверждение транзакции
             conn.commit();
             System.out.println("Транзакция успешно завершена");
-            
+
         } catch (SQLException e) {
             // Откат транзакции при ошибке
             if (conn != null) {
@@ -886,7 +886,7 @@ public class OracleJDBCConnection {
  */
 @Configuration
 public class OracleConfiguration {
-    
+
     /
      * Настройка DataSource для Oracle
      */
@@ -895,25 +895,25 @@ public class OracleConfiguration {
     public DataSource dataSource() {
         // Использование HikariCP connection pool (рекомендуется)
         HikariConfig config = new HikariConfig();
-        
+
         // Oracle JDBC URL
         config.setJdbcUrl("jdbc:oracle:thin:@localhost:1521:XE");
         config.setUsername("myuser");
         config.setPassword("mypassword");
         config.setDriverClassName("oracle.jdbc.OracleDriver");
-        
+
         // Настройки пула для Oracle
         config.setMaximumPoolSize(10);  // Oracle не любит большие пулы
         config.setMinimumIdle(2);
         config.setConnectionTimeout(30000);
-        
+
         // Oracle-специфичные настройки
         config.addDataSourceProperty("oracle.net.CONNECT_TIMEOUT", "10000");
         config.addDataSourceProperty("oracle.jdbc.ReadTimeout", "30000");
-        
+
         return new HikariDataSource(config);
     }
-    
+
     /
      * Настройка JdbcTemplate
      */
@@ -928,19 +928,19 @@ public class OracleConfiguration {
  */
 @Repository
 public class UserRepository {
-    
+
     private final JdbcTemplate jdbcTemplate;
-    
+
     public UserRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
-    
+
     /
      * Поиск пользователя по ID
      */
     public Optional<User> findById(int id) {
         String sql = "SELECT id, username, email, balance, created_at FROM users WHERE id = ?";
-        
+
         try {
             User user = jdbcTemplate.queryForObject(sql, new Object[]{id}, (rs, rowNum) -> {
                 User u = new User();
@@ -956,13 +956,13 @@ public class UserRepository {
             return Optional.empty();
         }
     }
-    
+
     /
      * Вызов PL/SQL функции
      */
     public double calculateBalance(int userId) {
         String sql = "{ ? = CALL calculate_user_balance(?) }";
-        
+
         return jdbcTemplate.execute((ConnectionCallback<Double>) conn -> {
             try (CallableStatement stmt = conn.prepareCall(sql)) {
                 stmt.registerOutParameter(1, Types.DOUBLE);
@@ -1083,7 +1083,4 @@ ALTER TABLE users MODIFY (email ENCRYPT USING 'AES256');
 **Медленные запросы:** используйте AWR/ASH для анализа, проверьте планы выполнения и индексы. Оптимизируйте SQL, настройте статистику (`DBMS_STATS`), при необходимости добавьте подсказки (hints). Проверьте блокировки и ожидания.
 
 **Нехватка места (ORA-01653, ORA-01654):** увеличьте размер табличного пространства или добавьте файлы данных. Настройте авторасширение. Очистите архивные логи и временные объекты. Мониторьте использование табличных пространств.
-
----
-
 

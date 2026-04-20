@@ -70,33 +70,33 @@ public static double gradientDescent(Function<Double, Double> f, double initialX
     double precision = 0.000001;
     double stepCoefficient = 0.1;
     int iter = 100;
-    
+
     double previousX = initialX;
     double previousY = f.apply(previousX);
     double currentX = initialX + stepCoefficient * previousY;
     double previousStep = 1.0;
-    
+
     while (previousStep > precision && iter > 0) {
         iter--;
         double currentY = f.apply(currentX);
-        
+
         if (currentY > previousY) {
             stepCoefficient = -stepCoefficient / 2;
         }
-        
+
         previousX = currentX;
         currentX += stepCoefficient * previousY;
         previousY = currentY;
         previousStep = StrictMath.abs(currentX - previousX);
     }
-    
+
     return currentX;
 }
 ```
 
 ### Версия с вычислением градиента (Java)
 
-Классический шаг: x_new = x - learningRate * gradient. Остановка по малости изменения x или по числу итераций.
+Классический шаг: x_new = x — learningRate * gradient. Остановка по малости изменения x или по числу итераций.
 
 ```java
 // x -= learningRate * derivative(x); остановка по precision или maxIterations
@@ -105,22 +105,22 @@ public static double gradientDescentWithDerivative(
     Function<Double, Double> derivative,
     double initialX,
     double learningRate) {
-    
+
     double precision = 0.000001;
     int maxIterations = 1000;
     double currentX = initialX;
-    
+
     for (int i = 0; i < maxIterations; i++) {
         double gradient = derivative.apply(currentX);
         double newX = currentX - learningRate * gradient;
-        
+
         if (Math.abs(newX - currentX) < precision) {
             break;
         }
-        
+
         currentX = newX;
     }
-    
+
     return currentX;
 }
 ```
@@ -149,14 +149,14 @@ public static double gradientDescentAdaptive(Function<Double, Double> f, double 
     double stepSize = 0.1;
     int maxIterations = 1000;
     double currentX = initialX;
-    
+
     for (int i = 0; i < maxIterations; i++) {
         double currentY = f.apply(currentX);
         double nextX1 = currentX + stepSize;
         double nextX2 = currentX - stepSize;
         double y1 = f.apply(nextX1);
         double y2 = f.apply(nextX2);
-        
+
         if (y1 < currentY) {
             currentX = nextX1;
         } else if (y2 < currentY) {
@@ -164,12 +164,12 @@ public static double gradientDescentAdaptive(Function<Double, Double> f, double 
         } else {
             stepSize /= 2;
         }
-        
+
         if (stepSize < precision) {
             break;
         }
     }
-    
+
     return currentX;
 }
 ```
@@ -184,10 +184,10 @@ public static double stochasticGradientDescent(
     Function<Double, Double> lossFunction,
     double initialX,
     double learningRate) {
-    
+
     double currentX = initialX;
     Random random = new Random();
-    
+
     for (int epoch = 0; epoch < 100; epoch++) {
         Collections.shuffle(dataPoints);
         for (Double point : dataPoints) {
@@ -195,7 +195,7 @@ public static double stochasticGradientDescent(
             currentX -= learningRate * gradient;
         }
     }
-    
+
     return currentX;
 }
 ```
@@ -208,26 +208,26 @@ fun gradientDescentK(f: (Double) -> Double, initialX: Double): Double {
     val precision = 0.000001
     var stepCoefficient = 0.1
     var iter = 100
-    
+
     var previousX = initialX
     var previousY = f(previousX)
     var currentX = initialX + stepCoefficient * previousY
     var previousStep = 1.0
-    
+
     while (previousStep > precision && iter > 0) {
         iter--
         val currentY = f(currentX)
-        
+
         if (currentY > previousY) {
             stepCoefficient = -stepCoefficient / 2
         }
-        
+
         previousX = currentX
         currentX += stepCoefficient * previousY
         previousY = currentY
         previousStep = Math.abs(currentX - previousX)
     }
-    
+
     return currentX
 }
 ```
@@ -244,16 +244,16 @@ fun gradientDescentWithDerivativeK(
     val precision = 0.000001
     val maxIterations = 1000
     var currentX = initialX
-    
+
     for (i in 0 until maxIterations) {
         val gradient = derivative(currentX)
         currentX -= learningRate * gradient
-        
+
         if (Math.abs(gradient) < precision) {
             break
         }
     }
-    
+
     return currentX
 }
 ```
@@ -266,14 +266,14 @@ fun gradientDescentAdaptiveK(f: (Double) -> Double, initialX: Double): Double {
     var stepSize = 0.1
     val maxIterations = 1000
     var currentX = initialX
-    
+
     for (i in 0 until maxIterations) {
         val currentY = f(currentX)
         val nextX1 = currentX + stepSize
         val nextX2 = currentX - stepSize
         val y1 = f(nextX1)
         val y2 = f(nextX2)
-        
+
         currentX = when {
             y1 < currentY -> nextX1
             y2 < currentY -> nextX2
@@ -282,12 +282,12 @@ fun gradientDescentAdaptiveK(f: (Double) -> Double, initialX: Double): Double {
                 currentX
             }
         }
-        
+
         if (stepSize < precision) {
             break
         }
     }
-    
+
     return currentX
 }
 ```
@@ -302,7 +302,7 @@ fun stochasticGradientDescentK(
     learningRate: Double
 ): Double {
     var currentX = initialX
-    
+
     for (epoch in 0 until 100) {
         val shuffled = dataPoints.shuffled()
         for (point in shuffled) {
@@ -310,7 +310,7 @@ fun stochasticGradientDescentK(
             currentX -= learningRate * gradient
         }
     }
-    
+
     return currentX
 }
 ```
@@ -322,10 +322,10 @@ fun main() {
     // Минимизация функции f(x) = x^2
     val f: (Double) -> Double = { it * it }
     val derivative: (Double) -> Double = { 2 * it }
-    
+
     val minimum1 = gradientDescentK(f, 5.0)
     println("Minimum: $minimum1") // ≈ 0.0
-    
+
     val minimum2 = gradientDescentWithDerivativeK(f, derivative, 5.0, 0.1)
     println("Minimum with derivative: $minimum2") // ≈ 0.0
 }

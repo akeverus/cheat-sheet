@@ -54,7 +54,7 @@ related: ["java/java-basics.md", "spring/spring-boot.md", "spring/spring-aop.md"
 - [**Spring** Documentation](https://spring.io/projects/spring-framework)
 - [**Spring Framework** Reference](https://docs.spring.io/spring-framework/reference/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [**Spring** Tutorial](https://www.baeldung.com/spring-tutorial)
 
@@ -294,10 +294,10 @@ public class ReportService {
 
 #### Типы **Autowiring**
 
-1. **no** (**по умолчанию**) - нет автоматического связывания
-2. **byName** - по имени свойства
-3. **byType** - по типу
-4. **constructor** - по конструктору
+1. **no** (**по умолчанию**) — нет автоматического связывания
+2. **byName** — по имени свойства
+3. **byType** — по типу
+4. **constructor** — по конструктору
 
 #### **XML** конфигурация
 
@@ -420,7 +420,7 @@ ApplicationContext context = new FileSystemXmlApplicationContext("c:/app/applica
 
 Существует четыре режима автоматического подключения **bean-**компонента с использованием конфигурации **XML:**
 
-1.  **no:** значение по умолчанию - это означает, что для **bean-**компонента не используется автоматическое подключение, и мы должны явно указать зависимости**.
+1.  **no:** значение по умолчанию — это означает, что для **bean-**компонента не используется автоматическое подключение, и мы должны явно указать зависимости**.
 2.  **byName:** автоматическое подключение выполняется на основе имени свойства, поэтому **Spring** будет искать **bean-**компонент с тем же именем, что и свойство, которое необходимо установить**.
 3.  **byType:** аналогично автонастройке **byName,** только в зависимости от типа свойства**. Это означает, что **Spring** будет искать **bean**-**компонент с тем же типом свойства, которое нужно установить**. Если существует более одного **bean-**компонента этого типа, фреймворк выдает исключение**.
 4.  **constructor:** автоматическое подключение выполняется на основе аргументов конструктора, что означает, что **Spring** будет искать **bean-**компоненты с тем же типом, что и аргументы конструктора**.
@@ -1382,7 +1382,7 @@ public class Average implements Rating {
 // Получение бина из контекста для тестирования
 @Test
 public void whenGetBeans_returnsBean() {
-    ApplicationContext applicationContext = 
+    ApplicationContext applicationContext =
         new ClassPathXmlApplicationContext("...");
     IndexApp indexApp = applicationContext.getBean("indexApp", IndexApp.class);
     assertNotNull(indexApp);
@@ -1400,7 +1400,7 @@ public void whenGetBeans_returnsBean() {
 
 ### Внедрение зависимости через **Lombok**
 
-Если мы хотим, чтобы аннотировать **Lombok** - сгенерированный конструктор, мы должны пройти аннотацию с **onConstructor** параметром **`@AllArgsConstructor`:**
+Если мы хотим, чтобы аннотировать **Lombok** — сгенерированный конструктор, мы должны пройти аннотацию с **onConstructor** параметром **`@AllArgsConstructor`:**
 
 ```java
 // Lombok + Spring: @Autowired на сгенерированный конструктор
@@ -1423,9 +1423,9 @@ public interface FactoryBean<T> {
 }
 ```
 
-- **getObject()** - возвращает объект, созданный фабрикой, и это объект, который будет использоваться контейнером **Spring**
-- **getObjectType()** - возвращает тип объекта, который производит **FactoryBean.**
-- **isSingleton()** - указывает, является ли объект, созданный этим **FactoryBean,** одноэлементным
+- **getObject()** — возвращает объект, созданный фабрикой, и это объект, который будет использоваться контейнером **Spring**
+- **getObjectType()** — возвращает тип объекта, который производит **FactoryBean.**
+- **isSingleton()** — указывает, является ли объект, созданный этим **FactoryBean,** одноэлементным
 
 **Пример использования:**
 
@@ -1433,7 +1433,7 @@ public interface FactoryBean<T> {
 // Класс, который будет создаваться фабрикой
 public class Tool {
     private int id;
-    
+
     public Tool(int id) {
         this.id = id;
     }
@@ -1458,7 +1458,7 @@ public class ToolFactory implements FactoryBean<Tool> {
     public boolean isSingleton() {
         return false;  // Новый экземпляр при каждом запросе
     }
-    
+
     // геттеры и сеттеры
 }
 ```
@@ -1496,7 +1496,7 @@ private ToolFactory toolFactory;
 
 ## Руководство по **Application Context**
 
-**ApplicationContext** - это центральный интерфейс в приложении **Spring** для предоставления информации о конфигурации приложения**. Он доступен только для чтения во время выполнения, но может быть перезагружен при необходимости, если реализация поддерживает это**.
+**ApplicationContext** — это центральный интерфейс в приложении **Spring** для предоставления информации о конфигурации приложения**. Он доступен только для чтения во время выполнения, но может быть перезагружен при необходимости, если реализация поддерживает это**.
 
 **ApplicationContext** предоставляет:**
 
@@ -1508,25 +1508,25 @@ private ToolFactory toolFactory;
 
 ### Типы **ApplicationContext**
 
-1. **ClassPathXmlApplicationContext** - загружает конфигурацию из **XML** файлов, расположенных в **classpath**:**
+1. **ClassPathXmlApplicationContext** — загружает конфигурацию из **XML** файлов, расположенных в **classpath**:**
 
 ```java
 ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
 ```
 
-2. **FileSystemXmlApplicationContext** - загружает конфигурацию из **XML** файлов, расположенных в файловой системе:**
+2. **FileSystemXmlApplicationContext** — загружает конфигурацию из **XML** файлов, расположенных в файловой системе:**
 
 ```java
 ApplicationContext context = new FileSystemXmlApplicationContext("C:/config/applicationContext.xml");
 ```
 
-3. **AnnotationConfigApplicationContext** - загружает конфигурацию на основе аннотаций:**
+3. **AnnotationConfigApplicationContext** — загружает конфигурацию на основе аннотаций:**
 
 ```java
 ApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
 ```
 
-4. **WebApplicationContext** - используется в веб-приложениях, расширяет **ApplicationContext** с веб-функциональностью**.
+4. **WebApplicationContext** — используется в веб-приложениях, расширяет **ApplicationContext** с веб-функциональностью**.
 
 ### Получение бинов из **ApplicationContext**
 
@@ -1557,7 +1557,7 @@ Map<String, MyBean> beans = context.getBeansOfType(MyBean.class);
 
 ## Разница между **BeanFactory** и **ApplicationContext**
 
-**Spring Framework** поставляется с двумя контейнерами **IOC - BeanFactory** и **ApplicationContext. BeanFactory** - это самая базовая версия контейнеров **IOC,** а **ApplicationContext** расширяет возможности **BeanFactory**.
+**Spring Framework** поставляется с двумя контейнерами **IOC — BeanFactory** и **ApplicationContext. BeanFactory** — это самая базовая версия контейнеров **IOC,** а **ApplicationContext** расширяет возможности **BeanFactory**.
 
 ### Основные различия
 
@@ -1570,7 +1570,7 @@ Map<String, MyBean> beans = context.getBeansOfType(MyBean.class);
    Resource res = new ClassPathResource("ioc-container-difference-example.xml");
    BeanFactory factory = new XmlBeanFactory(res);
    // Bean не инициализирован
-   
+
    Student student = (Student) factory.getBean("student");
    // Теперь bean инициализирован
    ```
@@ -1650,7 +1650,7 @@ Map<String, MyBean> beans = context.getBeansOfType(MyBean.class);
 // АНТИПАТТЕРН: жёсткая связь с конкретной реализацией
 public class Store {
     private Item item;
-    
+
     public Store() {
         item = new ItemImpl1();  // жесткая привязка к реализации
     }
@@ -1667,7 +1667,7 @@ public class Store {
 // ХОРОШО: Dependency Injection через конструктор
 public class Store {
     private Item item;
-    
+
     public Store(Item item) {
         this.item = item;  // зависимость передается извне
     }
@@ -1704,7 +1704,7 @@ public class AppConfig {
     public Item item1() {
         return new ItemImpl1();
     }
-    
+
     @Bean
     public Store store() {
         return new Store(item1());  // Внедрение через конструктор
@@ -1773,7 +1773,7 @@ public class Store {
 
 Существует четыре режима автоподключения **bean-**компонента с использованием конфигурации **XML:**
 
-1.  **no:** значение по умолчанию - это означает, что для **bean-**компонента не используется автоматическое связывание, и мы должны явно указать зависимости**.
+1.  **no:** значение по умолчанию — это означает, что для **bean-**компонента не используется автоматическое связывание, и мы должны явно указать зависимости**.
 2.  **byName:** автосвязывание выполняется на основе имени свойства, поэтому **Spring** будет искать **bean-**компонент с тем же именем, что и свойство, которое необходимо установить**.
 3.  **byType:** аналогично автосвязыванию **byName,** только на основе типа свойства**. Это означает, что **Spring** будет искать **bean**-**компонент с тем же типом свойства, которое нужно установить**. Если есть более одного **bean-**компонента этого типа, фреймворк выдает исключение**.
 4.  **constructor:** автосвязывание выполняется на основе аргументов конструктора, что означает, что **Spring** будет искать **bean-**компоненты того же типа, что и аргументы конструктора**.
@@ -1787,7 +1787,7 @@ public class AppConfig {
     public Item item() {
         return new ItemImpl1();
     }
-    
+
     @Bean(autowire = Autowire.BY_TYPE)  // устарело с Spring 5.1
     public Store store() {
         return new Store();
@@ -1865,7 +1865,7 @@ public class MyService {
 **Создание приложения с помощью компиляции **AOT** имеет несколько преимуществ с точки зрения производительности и потребления ресурсов:**
 
 1. **Dead `Code Elimination`:** компилятор **AOT** может исключить код, который никогда не выполнялся во время выполнения**. Это может повысить производительность за счет уменьшения объема кода, который необходимо выполнить**.
-2. **Inlining:** Встраивание - это метод, при котором компилятор **AOT** заменяет вызов функции фактическим кодом функции**. Это может повысить производительность за счет уменьшения накладных расходов на вызовы функций**.
+2. **Inlining:** Встраивание — это метод, при котором компилятор **AOT** заменяет вызов функции фактическим кодом функции**. Это может повысить производительность за счет уменьшения накладных расходов на вызовы функций**.
 3. **Constant `Propagation`:** компилятор **AOT** оптимизирует производительность, заменяя переменные их постоянными значениями, которые он может определить во время компиляции**. Это устраняет необходимость вычислений во время выполнения и повышает производительность**.
 4. **Inter-procedural optimization:** компилятор **AOT** может оптимизировать код для нескольких функций, анализируя граф вызовов программы**. Это может повысить производительность за счет сокращения накладных расходов на вызовы функций и определения общих подвыражений**.
 5. **Bean `Definition`:** Компилятор **AOT** в **Spring 6** повышает эффективность приложений, вырезая ненужные экземпляры **BeanDefinition**.
@@ -1920,7 +1920,7 @@ MyBean bean = context.getBean(MyBean.class);
 public class MyService {
     @Autowired
     private ApplicationContext applicationContext;
-    
+
     public void doSomething() {
         MyBean bean = applicationContext.getBean(MyBean.class);
     }
@@ -1933,7 +1933,7 @@ public class MyService {
 @Component
 public class MyService {
     private final ApplicationContext applicationContext;
-    
+
     @Autowired
     public MyService(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -1959,13 +1959,13 @@ public class MyService {
 public class UserService {
     private final UserRepository userRepository;
     private final EmailService emailService;
-    
+
     // Внедрение через конструктор
     public UserService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.emailService = emailService;
     }
-    
+
     public void createUser(User user) {
         userRepository.save(user);
         emailService.sendWelcomeEmail(user);
@@ -1981,7 +1981,7 @@ public class UserService {
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    
+
     // @Autowired не требуется
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -1995,12 +1995,12 @@ public class UserService {
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    
+
     @Autowired
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public UserService() {
         // конструктор по умолчанию
     }
@@ -2028,10 +2028,10 @@ public class EmailService {
 public class EmailServiceTest {
     @Mock
     private EmailValidator emailValidator;
-    
+
     @InjectMocks
     private EmailService emailService;
-    
+
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
@@ -2045,7 +2045,7 @@ public class EmailServiceTest {
 public class EmailServiceTest {
     private EmailValidator emailValidator;
     private EmailService emailService;
-    
+
     @BeforeEach
     public void setup() {
         this.emailValidator = Mockito.mock(EmailValidator.class);
@@ -2077,7 +2077,7 @@ public class BadService {
 @Service
 public class BadService {
     // 5 параметров в конструкторе - очевидно, что что-то не так
-    public BadService(Dependency1 dep1, Dependency2 dep2, Dependency3 dep3, 
+    public BadService(Dependency1 dep1, Dependency2 dep2, Dependency3 dep3,
                       Dependency4 dep4, Dependency5 dep5) {
         // ...
     }
@@ -2094,7 +2094,7 @@ public class BadService {
 
 ### Определение **Bean**
 
-В документации **Spring `Framework`:** В **Spring** объекты, формирующие основу вашего приложения и управляемые контейнером **Spring `IoC`,** называются **bean-**компонентами**. Компонент - это объект, который создается, собирается и иным образом управляется контейнером **Spring IoC**.**
+В документации **Spring `Framework`:** В **Spring** объекты, формирующие основу вашего приложения и управляемые контейнером **Spring `IoC`,** называются **bean-**компонентами**. Компонент — это объект, который создается, собирается и иным образом управляется контейнером **Spring IoC**.**
 
 ### **IoC Container**
 
@@ -2107,7 +2107,7 @@ public class BadService {
 ```java
 public class Company {
     private Address address;
-    
+
     public Company(Address address) {
         this.address = address;
     }
@@ -2120,7 +2120,7 @@ public class Company {
 public class Address {
     private String street;
     private int number;
-    
+
     public Address(String street, int number) {
         this.street = street;
         this.number = number;
@@ -2147,7 +2147,7 @@ Company company = new Company(address);
 @Component
 public class Company {
     private Address address;
-    
+
     @Autowired
     public Company(Address address) {
         this.address = address;
@@ -2214,7 +2214,7 @@ assertEquals(1000, company.getAddress().getNumber());
 ```java
 public class Person {
     private String name;
-    
+
     // геттеры и сеттеры
 }
 ```
@@ -2240,15 +2240,15 @@ public Person personSingleton() {
 ```java
 @Test
 public void givenSingletonScope_whenSetName_thenEqualNames() {
-    ApplicationContext applicationContext = 
+    ApplicationContext applicationContext =
         new ClassPathXmlApplicationContext("scopes.xml");
-    
+
     Person personSingletonA = (Person) applicationContext.getBean("personSingleton");
     Person personSingletonB = (Person) applicationContext.getBean("personSingleton");
-    
+
     personSingletonA.setName("John");
     Assert.assertEquals("John", personSingletonB.getName());
-    
+
     ((AbstractApplicationContext) applicationContext).close();
 }
 ```
@@ -2282,18 +2282,18 @@ public Person personPrototype() {
 ```java
 @Test
 public void givenPrototypeScope_whenSetNames_thenDifferentNames() {
-    ApplicationContext applicationContext = 
+    ApplicationContext applicationContext =
         new ClassPathXmlApplicationContext("scopes.xml");
-    
+
     Person personPrototypeA = (Person) applicationContext.getBean("personPrototype");
     Person personPrototypeB = (Person) applicationContext.getBean("personPrototype");
-    
+
     personPrototypeA.setName("John");
     personPrototypeB.setName("Anna");
-    
+
     Assert.assertEquals("John", personPrototypeA.getName());
     Assert.assertEquals("Anna", personPrototypeB.getName());
-    
+
     ((AbstractApplicationContext) applicationContext).close();
 }
 ```
@@ -2346,7 +2346,7 @@ public HelloMessageGenerator requestScopedBean() {
 public class ScopesController {
     @Resource(name = "requestScopedBean")
     HelloMessageGenerator requestScopedBean;
-    
+
     @RequestMapping("/scopes/request")
     public String getRequestScopeMessage(final Model model) {
         model.addAttribute("previousMessage", requestScopedBean.getMessage());
@@ -2386,7 +2386,7 @@ public HelloMessageGenerator sessionScopedBean() {
 public class ScopesController {
     @Resource(name = "sessionScopedBean")
     HelloMessageGenerator sessionScopedBean;
-    
+
     @RequestMapping("/scopes/session")
     public String getSessionScopeMessage(final Model model) {
         model.addAttribute("previousMessage", sessionScopedBean.getMessage());
@@ -2425,7 +2425,7 @@ public HelloMessageGenerator websocketScopedBean() {
 
 ## Руководство по **BeanFactory.getBean**()
 
-**BeanFactory.`getBean()`** - это метод для получения бина из контейнера **Spring**.
+**BeanFactory.`getBean()`** — это метод для получения бина из контейнера **Spring**.
 
 ### Способы получения бинов
 
@@ -2474,3 +2474,11 @@ Map<String, MyBean> beans = context.getBeansOfType(MyBean.class);
 **ВАЖНО:** Хотя **getBean()** является публичным **API**, использование его напрямую в коде приложения считается антипаттерном**. Лучше использовать внедрение зависимостей через конструктор или сеттер, позволяя **Spring** управлять зависимостями автоматически**.
 
 Используйте **getBean()** только в исключительных случаях, например, при создании бинов программно или в специфических ситуациях, когда внедрение зависимостей невозможно**.
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

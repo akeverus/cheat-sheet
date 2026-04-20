@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Type Classes в Scala
 
-Краткое руководство по **Type Classes** в **Scala** - полиморфизм на основе паттерна **Ad-hoc**.
+Краткое руководство по **Type Classes** в **Scala** — полиморфизм на основе паттерна **Ad-hoc**.
 
 **Последнее обновление**: 2026-02-11
 
@@ -62,7 +62,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Type Class** - это паттерн в функциональном программировании, который позволяет добавлять поведение к типам без модификации самих типов. В **Scala Type Classes** реализуются через **implicit** параметры и **implicit conversions**.
+**Type Class** — это паттерн в функциональном программировании, который позволяет добавлять поведение к типам без модификации самих типов. В **Scala Type Classes** реализуются через **implicit** параметры и **implicit conversions**.
 
 **Type Classes** обеспечивают полиморфизм, который более гибкий чем наследование, так как поведение можно добавлять к типам из любой иерархии.
 
@@ -103,7 +103,7 @@ trait Show[A] {
 
 object Show {
   def apply[A](implicit instance: Show[A]): Show[A] = instance
-  
+
   implicit class ShowOps[A](a: A)(implicit show: Show[A]) {
     def show: String = show.show(a)
   }
@@ -132,11 +132,11 @@ object Semigroup {
   implicit val intSemigroup: Semigroup[Int] = new Semigroup[Int] {
     def combine(x: Int, y: Int): Int = x + y
   }
-  
+
   implicit val stringSemigroup: Semigroup[String] = new Semigroup[String] {
     def combine(x: String, y: String): String = x + y
   }
-  
+
   implicit def listSemigroup[A]: Semigroup[List[A]] = new Semigroup[List[A]] {
     def combine(x: List[A], y: List[A]): List[A] = x ++ y
   }
@@ -159,17 +159,17 @@ trait Monoid[A] extends Semigroup[A] {
 
 object Monoid {
   def apply[A](implicit m: Monoid[A]): Monoid[A] = m
-  
+
   implicit val intMonoid: Monoid[Int] = new Monoid[Int] {
     def empty: Int = 0
     def combine(x: Int, y: Int): Int = x + y
   }
-  
+
   implicit val stringMonoid: Monoid[String] = new Monoid[String] {
     def empty: String = ""
     def combine(x: String, y: String): String = x + y
   }
-  
+
   implicit def listMonoid[A]: Monoid[List[A]] = new Monoid[List[A]] {
     def empty: List[A] = Nil
     def combine(x: List[A], y: List[A]): List[A] = x ++ y
@@ -202,11 +202,11 @@ object Ord {
   implicit val intOrd: Ord[Int] = new Ord[Int] {
     def compare(x: Int, y: Int): Int = x.compareTo(y)
   }
-  
+
   implicit val stringOrd: Ord[String] = new Ord[String] {
     def compare(x: String, y: String): Int = x.compareTo(y)
   }
-  
+
   implicit def listOrd[A](implicit ord: Ord[A]): Ord[List[A]] = new Ord[List[A]] {
     def compare(x: List[A], y: List[A]): Int = {
       (x zip y).map { case (a, b) => ord.compare(a, b) }.find(_ != 0)
@@ -234,10 +234,10 @@ object Serializer {
   implicit val intSerializer: Serializer[Int] = _.toString
   implicit val stringSerializer: Serializer[String] = identity
   implicit val booleanSerializer: Serializer[Boolean] = _.toString
-  
-  implicit def listSerializer[A](implicit s: Serializer[A]): Serializer[List[A]] = 
+
+  implicit def listSerializer[A](implicit s: Serializer[A]): Serializer[List[A]] =
     list => list.map(s.serialize).mkString("[", ",", "]")
-  
+
   implicit def optionSerializer[A](implicit s: Serializer[A]): Serializer[Option[A]] = {
     case Some(a) => s.serialize(a)
     case None => "null"
@@ -332,10 +332,10 @@ object JsonEncoder {
   implicit val intEncoder: JsonEncoder[Int] = _.toString
   implicit val stringEncoder: JsonEncoder[String] = s => s""""$s""""
   implicit val booleanEncoder: JsonEncoder[Boolean] = _.toString
-  
-  implicit def listEncoder[A](implicit enc: JsonEncoder[A]): JsonEncoder[List[A]] = 
+
+  implicit def listEncoder[A](implicit enc: JsonEncoder[A]): JsonEncoder[List[A]] =
     list => list.map(enc.encode).mkString("[", ",", "]")
-  
+
   implicit def optionEncoder[A](implicit enc: JsonEncoder[A]): JsonEncoder[Option[A]] = {
     case Some(a) => enc.encode(a)
     case None => "null"
@@ -376,7 +376,7 @@ object NumericOps {
     def multiply(x: Int, y: Int): Int = x * y
     def negate(x: Int): Int = -x
   }
-  
+
   implicit val doubleNumeric: NumericOps[Double] = new NumericOps[Double] {
     def zero: Double = 0.0
     def one: Double = 1.0
@@ -384,7 +384,7 @@ object NumericOps {
     def multiply(x: Double, y: Double): Double = x * y
     def negate(x: Double): Double = -x
   }
-  
+
   implicit val bigIntNumeric: NumericOps[BigInt] = new NumericOps[BigInt] {
     def zero: BigInt = BigInt(0)
     def one: BigInt = BigInt(1)
@@ -416,12 +416,12 @@ trait Read[A] {
 
 object Read {
   implicit val intRead: Read[Int] = s => s.toIntOption
-  
+
   implicit val doubleRead: Read[Double] = s => s.toDoubleOption
-  
+
   implicit val stringRead: Read[String] = Some(_)
-  
-  implicit val booleanRead: Read[Boolean] = s => 
+
+  implicit val booleanRead: Read[Boolean] = s =>
     s.toLowerCase match {
       case "true" | "1" | "yes" => Some(true)
       case "false" | "0" | "no" => Some(false)
@@ -447,27 +447,27 @@ val name = readInput[String]("Enter your name")
 trait Monad[F[_]] {
   def pure[A](a: A): F[A]
   def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
-  
-  def map[A, B](fa: F[A])(f: A => B): F[B] = 
+
+  def map[A, B](fa: F[A])(f: A => B): F[B] =
     flatMap(fa)(a => pure(f(a)))
 }
 
 object Monad {
   implicit val optionMonad: Monad[Option] = new Monad[Option] {
     def pure[A](a: A): Option[A] = Some(a)
-    def flatMap[A, B](fa: Option[A])(f: A => Option[B]): Option[B] = 
+    def flatMap[A, B](fa: Option[A])(f: A => Option[B]): Option[B] =
       fa.flatMap(f)
   }
-  
+
   implicit val listMonad: Monad[List] = new Monad[List] {
     def pure[A](a: A): List[A] = List(a)
-    def flatMap[A, B](fa: List[A])(f: A => List[B]): List[B] = 
+    def flatMap[A, B](fa: List[A])(f: A => List[B]): List[B] =
       fa.flatMap(f)
   }
-  
+
   implicit def eitherMonad[E]: Monad[Either[E, *]] = new Monad[Either[E, *]] {
     def pure[A](a: A): Either[E, A] = Right(a)
-    def flatMap[A, B](fa: Either[E, A])(f: A => Either[E, B]): Either[E, B] = 
+    def flatMap[A, B](fa: Either[E, A])(f: A => Either[E, B]): Either[E, B] =
       fa.flatMap(f)
   }
 }
@@ -493,14 +493,14 @@ object Functor {
   implicit val optionFunctor: Functor[Option] = new Functor[Option] {
     def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa.map(f)
   }
-  
+
   implicit val listFunctor: Functor[List] = new Functor[List] {
     def map[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
   }
-  
-  implicit def eitherFunctor[E]: Functor[Either[E, *]] = 
+
+  implicit def eitherFunctor[E]: Functor[Either[E, *]] =
     new Functor[Either[E, *]] {
-      def map[A, B](fa: Either[E, A])(f: A => B): Either[E, B] = 
+      def map[A, B](fa: Either[E, A])(f: A => B): Either[E, B] =
         fa.map(f)
     }
 }
@@ -518,18 +518,18 @@ val result = fmap(Some(10))(_ * 2)  // Some(20)
 trait Applicative[F[_]] extends Functor[F] {
   def pure[A](a: A): F[A]
   def ap[A, B](fa: F[A])(ff: F[A => B]): F[B]
-  
+
   def map2[A, B, C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C] = {
     ap(fb)(map(fa)(a => (b: B) => f(a, b)))
   }
 }
 
 object Applicative {
-  implicit val optionApplicative: Applicative[Option] = 
+  implicit val optionApplicative: Applicative[Option] =
     new Applicative[Option] {
       def pure[A](a: A): Option[A] = Some(a)
       def map[A, B](fa: Option[A])(f: A => B): Option[B] = fa.map(f)
-      def ap[A, B](fa: Option[A])(ff: Option[A => B]): Option[B] = 
+      def ap[A, B](fa: Option[A])(ff: Option[A => B]): Option[B] =
         (fa, ff) match {
           case (Some(a), Some(f)) => Some(f(a))
           case _ => None
@@ -557,9 +557,9 @@ trait Foldable[F[_]] {
 
 object Foldable {
   implicit val listFoldable: Foldable[List] = new Foldable[List] {
-    def foldLeft[A, B](fa: List[A], z: B)(f: (B, A) => B): B = 
+    def foldLeft[A, B](fa: List[A], z: B)(f: (B, A) => B): B =
       fa.foldLeft(z)(f)
-    def foldRight[A, B](fa: List[A], z: B)(f: (A, B) => B): B = 
+    def foldRight[A, B](fa: List[A], z: B)(f: (A, B) => B): B =
       fa.foldRight(z)(f)
     def foldMap[A, B: Monoid](fa: List[A])(f: A => B): B = {
       val m = implicitly[Monoid[B]]
@@ -580,16 +580,16 @@ val result = sum(List(1, 2, 3))  // 6
 ```scala
 trait Traverse[F[_]] extends Functor[F] with Foldable[F] {
   def traverse[G[_]: Applicative, A, B](fa: F[A])(f: A => G[B]): G[F[B]]
-  def sequence[G[_]: Applicative, A](fga: F[G[A]]): G[F[A]] = 
+  def sequence[G[_]: Applicative, A](fga: F[G[A]]): G[F[A]] =
     traverse(fga)(identity)
 }
 
 object Traverse {
   implicit val listTraverse: Traverse[List] = new Traverse[List] {
     def map[A, B](fa: List[A])(f: A => B): List[B] = fa.map(f)
-    def foldLeft[A, B](fa: List[A], z: B)(f: (B, A) => B): B = 
+    def foldLeft[A, B](fa: List[A], z: B)(f: (B, A) => B): B =
       fa.foldLeft(z)(f)
-    def foldRight[A, B](fa: List[A], z: B)(f: (A, B) => B): B = 
+    def foldRight[A, B](fa: List[A], z: B)(f: (A, B) => B): B =
       fa.foldRight(z)(f)
     def foldMap[A, B: Monoid](fa: List[A])(f: A => B): B = {
       val m = implicitly[Monoid[B]]
@@ -618,9 +618,9 @@ trait Contravariant[F[_]] {
 case class Predicate[A](run: A => Boolean)
 
 object Contravariant {
-  implicit val predicateContravariant: Contravariant[Predicate] = 
+  implicit val predicateContravariant: Contravariant[Predicate] =
     new Contravariant[Predicate] {
-      def contramap[A, B](fa: Predicate[A])(f: B => A): Predicate[B] = 
+      def contramap[A, B](fa: Predicate[A])(f: B => A): Predicate[B] =
         Predicate(b => fa.run(f(b)))
     }
 }
@@ -638,16 +638,16 @@ val result2 = stringPredicate.run("hello world")  // true (length = 11)
 ```scala
 trait Bifunctor[F[_, _]] {
   def bimap[A, B, C, D](fab: F[A, B])(f: A => C, g: B => D): F[C, D]
-  def leftMap[A, B, C](fab: F[A, B])(f: A => C): F[C, B] = 
+  def leftMap[A, B, C](fab: F[A, B])(f: A => C): F[C, B] =
     bimap(fab)(f, identity)
-  def rightMap[A, B, D](fab: F[A, B])(g: B => D): F[A, D] = 
+  def rightMap[A, B, D](fab: F[A, B])(g: B => D): F[A, D] =
     bimap(fab)(identity, g)
 }
 
 object Bifunctor {
-  implicit val eitherBifunctor: Bifunctor[Either] = 
+  implicit val eitherBifunctor: Bifunctor[Either] =
     new Bifunctor[Either] {
-      def bimap[A, B, C, D](fab: Either[A, B])(f: A => C, g: B => D): Either[C, D] = 
+      def bimap[A, B, C, D](fab: Either[A, B])(f: A => C, g: B => D): Either[C, D] =
         fab match {
           case Left(a) => Left(f(a))
           case Right(b) => Right(g(b))
@@ -684,21 +684,21 @@ val result = implicitly[Bifunctor[Either]].bimap(either)(
 
 ## Частые вопросы
 
-**Type Class — это «лучше», чем наследование?**  
+**Type Class — это «лучше», чем наследование?**
 Не всегда. Это другой инструмент: лучше там, где нужен ad-hoc полиморфизм и независимость от иерархии типов.
 
-**Где хранить инстансы Type Class?**  
+**Где хранить инстансы Type Class?**
 Чаще всего в companion object типа или в отдельном модуле `instances`, который импортируется явно.
 
-**Можно ли использовать Type Class без Cats?**  
+**Можно ли использовать Type Class без Cats?**
 Да, это языковой паттерн Scala. Библиотеки (`Cats`, `ZIO Prelude`) лишь дают готовые абстракции и экосистему.
 
-**Когда extension methods достаточно без Type Class?**  
+**Когда extension methods достаточно без Type Class?**
 Когда нужен только синтаксический sugar и нет требований к переключению реализаций поведения по контексту.
 
 ## Заключение
 
-**Type Classes** - это мощный паттерн в **Scala**, который позволяет добавлять поведение к типам без модификации самих типов. Использование **Type Classes** обеспечивает полиморфизм, который более гибкий чем наследование.
+**Type Classes** — это мощный паттерн в **Scala**, который позволяет добавлять поведение к типам без модификации самих типов. Использование **Type Classes** обеспечивает полиморфизм, который более гибкий чем наследование.
 
 Понимание **Type Classes**, их реализации через **implicit** параметры, создания **Type Class** для **JSON** сериализации, числовых операций, ввода-вывода и практических применений критично для эффективного использования библиотек типа **Cats** и создания гибкого, композируемого, типобезопасного кода.
 
@@ -751,13 +751,13 @@ import cats.data.ValidatedNel
 import cats.syntax.all._
 
 // Валидация с Applicative
-def validateName(name: String): ValidatedNel[String, String] = 
+def validateName(name: String): ValidatedNel[String, String] =
   if (name.nonEmpty) name.validNel else "Name cannot be empty".invalidNel
 
-def validateAge(age: Int): ValidatedNel[String, Int] = 
+def validateAge(age: Int): ValidatedNel[String, Int] =
   if (age >= 0) age.validNel else "Age must be non-negative".invalidNel
 
-val validatedResult = (validateName("Alice"), validateAge(30)).mapN((name, age) => 
+val validatedResult = (validateName("Alice"), validateAge(30)).mapN((name, age) =>
   (name, age)
 )
 ```
@@ -823,3 +823,10 @@ val (logs, result) = loggedResult.run
 - [Scala Type Classes Tutorial](https://www.scala-lang.org/old/node/126.html)
 - [Functional Programming in Scala](https://www.manning.com/books/functional-programming-in-scala)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

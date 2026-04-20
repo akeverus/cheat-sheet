@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Doobie
 
-**Doobie** - это функциональная библиотека для работы с **JDBC** в **Scala**, предоставляющая чистый, **type-safe** подход к взаимодействию с реляционными базами данных. **Doobie** интегрируется с **Cats Effect** и предоставляет **composable**, **streaming API** для работы с базами данных.
+**Doobie** — это функциональная библиотека для работы с **JDBC** в **Scala**, предоставляющая чистый, **type-safe** подход к взаимодействию с реляционными базами данных. **Doobie** интегрируется с **Cats Effect** и предоставляет **composable**, **streaming API** для работы с базами данных.
 
 ## Полезные ссылки
 - [Официальная документация Doobie](https://tpolecat.github.io/doobie/)
@@ -119,7 +119,7 @@ val hikariTransactor: Resource[IO, Transactor[IO]] = for {
   // ExecutionContexts.fixedThreadPool - пул потоков для выполнения соединений
   // 32 - размер пула потоков
   ce <- ExecutionContexts.fixedThreadPool[IO](32)  // Connection execution context
-  
+
   // HikariTransactor.newHikariTransactor - создание transactor с HikariCP
   // Автоматически управляет пулом соединений
   xa <- HikariTransactor.newHikariTransactor[IO](

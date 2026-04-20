@@ -73,11 +73,11 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 
 ## Введение в **For-comprehensions**
 
-**For-comprehensions** - это синтаксический сахар для работы с **Monads** в **Scala**. **For-comprehensions** делают код более читаемым и выразительным при работе с вложенными **flatMap** и **map**. Вместо написания цепочек вложенных **flatMap** и **map**, **for-comprehensions** позволяют выразить ту же логику в более императивном стиле, который легче читать и понимать.
+**For-comprehensions** — это синтаксический сахар для работы с **Monads** в **Scala**. **For-comprehensions** делают код более читаемым и выразительным при работе с вложенными **flatMap** и **map**. Вместо написания цепочек вложенных **flatMap** и **map**, **for-comprehensions** позволяют выразить ту же логику в более императивном стиле, который легче читать и понимать.
 
 **For-comprehensions** компилируются в комбинацию **map**, **flatMap** и **filter**, что означает, что они работают с любыми типами, которые имеют эти методы. Это включает коллекции (**List, `Option`, `Future`, Try, Either**) и пользовательские типы, реализующие эти методы.
 
-**For-comprehensions** - это синтаксический сахар для работы с **Monads** в **Scala**. **For-comprehensions** делают код более читаемым и выразительным при работе с вложенными **flatMap** и **map**.
+**For-comprehensions** — это синтаксический сахар для работы с **Monads** в **Scala**. **For-comprehensions** делают код более читаемым и выразительным при работе с вложенными **flatMap** и **map**.
 
 ### Основные преимущества
 
@@ -162,7 +162,7 @@ val result = for {
 // Option[(User, List[Post])]
 
 // Эквивалентно
-val result2 = getUser(1L).flatMap(user => 
+val result2 = getUser(1L).flatMap(user =>
   getPosts(user.id).map(posts => (user, posts))
 )
 ```
@@ -700,10 +700,10 @@ val result = for {
 } yield result
 
 // Композиция с Either
-def parseIntEither(s: String): Either[String, Int] = 
+def parseIntEither(s: String): Either[String, Int] =
   Try(s.toInt).toOption.toRight(s"Invalid integer: $s")
 
-def divideEither(a: Int, b: Int): Either[String, Double] = 
+def divideEither(a: Int, b: Int): Either[String, Double] =
   if (b == 0) Left("Division by zero") else Right(a.toDouble / b)
 
 val eitherResult = for {
@@ -720,10 +720,10 @@ import cats.data.ValidatedNel
 import cats.syntax.all._
 
 // Композиция с ValidatedNel
-def validateName(name: String): ValidatedNel[String, String] = 
+def validateName(name: String): ValidatedNel[String, String] =
   if (name.nonEmpty) name.validNel else "Name cannot be empty".invalidNel
 
-def validateAge(age: Int): ValidatedNel[String, Int] = 
+def validateAge(age: Int): ValidatedNel[String, Int] =
   if (age >= 0) age.validNel else "Age must be non-negative".invalidNel
 
 val validatedResult = for {

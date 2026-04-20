@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: gRPC Integration - RPC Communication
-
-
+# Micronaut: gRPC Integration — RPC Communication
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: gRPC Integration - RPC Communication](#micronaut-grpc-integration-rpc-communication)
+- [Micronaut: gRPC Integration — RPC Communication](#micronaut-grpc-integration-rpc-communication)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка gRPC](#настройка-grpc)
@@ -135,23 +133,23 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
-    
+
     @Override
     public void getUser(GetUserRequest request, StreamObserver<User> responseObserver) {
         User user = userRepository.findById(request.getId())
             .orElseThrow(() -> new UserNotFoundException(request.getId()));
-        
+
         responseObserver.onNext(user);
         responseObserver.onCompleted();
     }
-    
+
     @Override
     public void createUser(CreateUserRequest request, StreamObserver<User> responseObserver) {
         User user = userRepository.save(request.getUser());
         responseObserver.onNext(user);
         responseObserver.onCompleted();
     }
-    
+
     @Override
     public void listUsers(ListUsersRequest request, StreamObserver<User> responseObserver) {
         userRepository.findAll().forEach(user -> {
@@ -174,11 +172,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserClientService {
     private final UserServiceGrpc.UserServiceBlockingStub userServiceStub;
-    
+
     public UserClientService(@GrpcChannel("user-service") ManagedChannel channel) {
         this.userServiceStub = UserServiceGrpc.newBlockingStub(channel);
     }
-    
+
     public User getUser(Long id) {
         GetUserRequest request = GetUserRequest.newBuilder()
             .setId(id)
@@ -213,12 +211,12 @@ public StreamObserver<CreateUserRequest> createUsers(StreamObserver<User> respon
             User user = userRepository.save(request.getUser());
             responseObserver.onNext(user);
         }
-        
+
         @Override
         public void onError(Throwable t) {
             responseObserver.onError(t);
         }
-        
+
         @Override
         public void onCompleted() {
             responseObserver.onCompleted();
@@ -237,7 +235,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class LoggingInterceptor implements ServerInterceptor {
-    
+
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
             ServerCall<ReqT, RespT> call,
@@ -319,7 +317,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class HealthServiceImpl extends HealthGrpc.HealthImplBase {
-    
+
     @Override
     public void check(HealthCheckRequest request, StreamObserver<HealthCheckResponse> responseObserver) {
         HealthCheckResponse response = HealthCheckResponse.newBuilder()
@@ -343,7 +341,7 @@ import io.grpc.stub.StreamObserver;
 public void getUser(GetUserRequest request, StreamObserver<User> responseObserver) {
     Metadata metadata = new Metadata();
     metadata.put(Metadata.Key.of("custom-header", Metadata.ASCII_STRING_MARSHALLER), "value");
-    
+
     responseObserver.onNext(user);
     responseObserver.onCompleted();
 }
@@ -391,9 +389,6 @@ grpc:
       load-balancer: round_robin
 ```
 
-
-
-
 ## Заключение
 
 **Micronaut gRPC** предоставляет мощные инструменты для создания высокопроизводительных **RPC** приложений. Поддержка **gRPC services**, **clients**, **streaming**, **interceptors**, **error handling**, **health checks**, **metadata**, **compression**, **reflection**, **load balancing** и других продвинутых возможностей позволяет создавать эффективные микросервисы с типобезопасной коммуникацией.
@@ -405,3 +400,11 @@ grpc:
 - [Protocol Buffers](https://protobuf.dev/)
 - [**gRPC Best Practices**](https://grpc.io/docs/guides/performance/)
 - [**gRPC Reflection**](https://github.com/grpc/grpc-java/blob/master/documentation/server-reflection-tutorial.md)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

@@ -38,8 +38,8 @@ related: ["scala/scala-basics.md", "scala/scala-json.md"]
 - [**Avro**](#avro)
   - [**JSON Serialization** с **Circe**](#json-serialization-с-circe)
   - [**JSON Serialization** с **Play JSON**](#json-serialization-с-play-json)
-  - [**Protocol Buffers** - расширенное использование](#protocol-buffers-расширенное-использование)
-  - [**Avro** - расширенное использование](#avro-расширенное-использование)
+  - [**Protocol Buffers** — расширенное использование](#protocol-buffers-расширенное-использование)
+  - [**Avro** — расширенное использование](#avro-расширенное-использование)
   - [**Scala Pickling**](#scala-pickling)
   - [Кастомная сериализация](#кастомная-сериализация)
   - [Сериализация коллекций](#сериализация-коллекций)
@@ -81,7 +81,7 @@ related: ["scala/scala-basics.md", "scala/scala-json.md"]
 
 ## **Java Serialization**
 
-**Java Serialization** - это встроенный механизм **JVM**:**
+**Java Serialization** — это встроенный механизм **JVM**:**
 
 ```scala
 import java.io._
@@ -128,7 +128,7 @@ val user2 = json.as[User]
 
 ## **Protocol Buffers**
 
-**Protocol Buffers** - это эффективный бинарный формат:**
+**Protocol Buffers** — это эффективный бинарный формат:**
 
 ```scala
 // Определение схемы в .proto файле
@@ -154,7 +154,7 @@ val user2 = User.parseFrom(bytes)
 
 ## **Avro**
 
-**Avro** - это схема-ориентированный формат сериализации:**
+**Avro** — это схема-ориентированный формат сериализации:**
 
 ```scala
 import org.apache.avro.Schema
@@ -226,7 +226,7 @@ val jsonString = """{"name":"Alice","age":30,"email":"alice@example.com"}"""
 val user2 = Json.parse(jsonString).as[User]
 ```
 
-### **Protocol Buffers** - расширенное использование
+### **Protocol Buffers** — расширенное использование
 
 **Protocol Buffers** обеспечивают эффективную сериализацию:**
 
@@ -264,7 +264,7 @@ if (user3.hasEmail) {
 }
 ```
 
-### **Avro** - расширенное использование
+### **Avro** — расширенное использование
 
 **Avro** поддерживает эволюцию схем:**
 
@@ -343,7 +343,7 @@ implicit val userFormat: Format[User] = new Format[User] {
       "isAdult" -> JsBoolean(user.age >= 18)
     ))
   }
-  
+
   def reads(json: JsValue): JsResult[User] = {
     (json \ "name").validate[String].flatMap { name =>
       (json \ "age").validate[Int].map { age =>
@@ -637,7 +637,7 @@ object UserProto {
       .setEmail(user.email)
       .build()
   }
-  
+
   def fromProto(proto: UserProtobuf): User = {
     User(
       id = proto.getId,
@@ -667,11 +667,11 @@ class CacheService {
   def serialize[A](value: A)(implicit writes: Writes[A]): String = {
     Json.stringify(writes.writes(value))
   }
-  
+
   def deserialize[A](json: String)(implicit reads: Reads[A]): Option[A] = {
     Try(Json.parse(json).as[A]).toOption
   }
-  
+
   def cache[A](key: String, value: A, ttl: Long = 3600)(
     implicit writes: Writes[A]
   ): Unit = {
@@ -679,15 +679,15 @@ class CacheService {
     // Сохранение в кэш с TTL
     saveToCache(key, json, ttl)
   }
-  
+
   def getFromCache[A](key: String)(implicit reads: Reads[A]): Option[A] = {
     getFromCache(key).flatMap(deserialize[A])
   }
-  
+
   private def saveToCache(key: String, value: String, ttl: Long): Unit = {
     // Реализация сохранения в кэш
   }
-  
+
   private def getFromCache(key: String): Option[String] = {
     // Реализация получения из кэша
     None
@@ -714,17 +714,17 @@ class MessageQueue {
     sendToQueue(json)
     json
   }
-  
+
   def consume(): Option[Message] = {
     receiveFromQueue().flatMap { json =>
       decode[Message](json).toOption
     }
   }
-  
+
   private def sendToQueue(json: String): Unit = {
     // Реализация отправки в очередь
   }
-  
+
   private def receiveFromQueue(): Option[String] = {
     // Реализация получения из очереди
     None
@@ -758,7 +758,7 @@ import java.io.{ByteArrayOutputStream, ObjectOutputStream, ObjectInputStream}
 // Кэширование сериализаторов для оптимизации
 object SerializerCache {
   private val cache = scala.collection.mutable.Map[Class[_], Array[Byte]]()
-  
+
   def serialize[A](obj: A): Array[Byte] = {
     val clazz = obj.getClass
     cache.getOrElseUpdate(clazz, {

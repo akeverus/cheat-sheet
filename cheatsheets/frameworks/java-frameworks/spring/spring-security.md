@@ -56,9 +56,9 @@ updated: "2026-02-11"
 - [Лучшие практики](#лучшие-практики)
 ## Введение
 
-**Аутентификация** - процедура проверки подлинности, например, проверка подлинности пользователя путем сравнения введенного им пароля с паролем, сохраненным в базе данных.
+**Аутентификация** — процедура проверки подлинности, например, проверка подлинности пользователя путем сравнения введенного им пароля с паролем, сохраненным в базе данных.
 
-**Авторизация** - предоставление определённому лицу или группе лиц прав на выполнение определённых действий.
+**Авторизация** — предоставление определённому лицу или группе лиц прав на выполнение определённых действий.
 
 ## Руководство по **Spring Security**
 
@@ -294,7 +294,7 @@ public String getUsername4() {
 }
 ```
 
-Мета-аннотации безопасности - отличная идея, потому что они добавляют больше семантики и отделяют нашу бизнес-логику от структуры безопасности.
+Мета-аннотации безопасности — отличная идея, потому что они добавляют больше семантики и отделяют нашу бизнес-логику от структуры безопасности.
 
 ### Аннотации на уровне класса
 
@@ -308,7 +308,7 @@ public class SystemService {
     public String getSystemYear() {
         // Получение текущего года
     }
-    
+
     public String getSystemDate() {
         // Получение текущей даты
     }
@@ -514,22 +514,22 @@ public class UserDto {
     @NotNull
     @NotEmpty
     private String firstName;  // Имя пользователя
-    
+
     @NotNull
     @NotEmpty
     private String lastName;   // Фамилия
-    
+
     @ValidEmail
     @NotNull
     @NotEmpty
     private String email;      // Email с кастомной валидацией
-    
+
     @NotNull
     @NotEmpty
     private String password;   // Пароль
-    
+
     private String matchingPassword;  // Подтверждение пароля
-    
+
     // getters and setters
 }
 ```
@@ -565,19 +565,19 @@ public class EmailValidator implements ConstraintValidator<ValidEmail, String> {
     private Pattern pattern;
     private Matcher matcher;
     // Паттерн для проверки формата email
-    private static final String EMAIL_PATTERN = 
-        "^[_A-Za-z0-9-+]+(.[_A-Za-z0-9-]+)*@" 
+    private static final String EMAIL_PATTERN =
+        "^[_A-Za-z0-9-+]+(.[_A-Za-z0-9-]+)*@"
         + "[A-Za-z0-9-]+(.[A-Za-z0-9]+)*(.[A-Z]{2,})$";
-    
+
     @Override
     public void initialize(ValidEmail constraintAnnotation) {
     }
-    
+
     @Override
     public boolean isValid(String email, ConstraintValidatorContext context) {
         return validateEmail(email);
     }
-    
+
     // Проверка соответствия email паттерну
     private boolean validateEmail(String email) {
         pattern = Pattern.compile(EMAIL_PATTERN);
@@ -614,7 +614,7 @@ public class PasswordMatchesValidator implements ConstraintValidator<PasswordMat
     @Override
     public void initialize(PasswordMatches constraintAnnotation) {
     }
-    
+
     @Override
     public boolean isValid(Object obj, ConstraintValidatorContext context) {
         UserDto user = (UserDto) obj;
@@ -703,7 +703,7 @@ public ModelAndView registerUserAccount(
 public class UserService implements IUserService {
     @Autowired
     private UserRepository repository;
-    
+
     // Регистрация нового пользователя с проверкой на дубликат email
     @Override
     public User registerNewUserAccount(UserDto userDto) throws UserAlreadyExistException {
@@ -720,7 +720,7 @@ public class UserService implements IUserService {
         user.setRoles(Arrays.asList("ROLE_USER"));
         return repository.save(user);
     }
-    
+
     // Проверка существования email в базе
     private boolean emailExist(String email) {
         return userRepository.findByEmail(email) != null;
@@ -741,7 +741,7 @@ public class UserService implements IUserService {
 public class MyUserDetailsService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
-    
+
     // Загрузка пользователя по email
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email);
@@ -758,7 +758,7 @@ public class MyUserDetailsService implements UserDetailsService {
             user.getEmail(), user.getPassword().toLowerCase(), enabled, accountNonExpired,
             credentialsNonExpired, accountNonLocked, getAuthorities(user.getRoles()));
     }
-    
+
     // Преобразование ролей в GrantedAuthority
     private static List<GrantedAuthority> getAuthorities(List<String> roles) {
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -806,20 +806,20 @@ protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 @Entity
 public class VerificationToken {
     private static final int EXPIRATION = 60 * 24;  // Время жизни токена в минутах (24 часа)
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    
+
     private String token;  // Уникальный токен верификации
-    
+
     // Связь один-к-одному с пользователем
     @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
-    
+
     private Date expiryDate;  // Дата истечения срока действия
-    
+
     // Расчёт даты истечения токена
     private Date calculateExpiryDate(int expiryTimeInMinutes) {
         Calendar cal = Calendar.getInstance();
@@ -841,7 +841,7 @@ public class VerificationToken {
 public class User {
     @Column(name = "enabled")
     private boolean enabled;  // Флаг активации аккаунта
-    
+
     public User() {
         super();
         this.enabled = false;  // По умолчанию аккаунт неактивен
@@ -856,7 +856,7 @@ public class User {
 **Давайте добавим два дополнительных элемента бизнес-логики к варианту использования регистрации пользователя:**
 
 1. Создайте **VerificationToken** для пользователя и сохраните его
-2. Отправка сообщения электронной почты для подтверждения счетов - который включает в себя ссылку для подтверждения с **VerificationToken** по стоимости
+2. Отправка сообщения электронной почты для подтверждения счетов — который включает в себя ссылку для подтверждения с **VerificationToken** по стоимости
 
 Эти два дополнительных элемента логики не должны выполняться контроллером напрямую, поскольку они являются **«дополнительными»** внутренними задачами.
 
@@ -900,7 +900,7 @@ public class OnRegistrationCompleteEvent extends ApplicationEvent {
     private String appUrl;    // URL приложения
     private Locale locale;    // Локаль для интернационализации
     private User user;        // Зарегистрированный пользователь
-    
+
     public OnRegistrationCompleteEvent(User user, Locale locale, String appUrl) {
         super(user);
         this.user = user;
@@ -918,18 +918,18 @@ public class OnRegistrationCompleteEvent extends ApplicationEvent {
 public class RegistrationListener implements ApplicationListener<OnRegistrationCompleteEvent> {
     @Autowired
     private IUserService service;
-    
+
     @Autowired
     private MessageSource messages;
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Override
     public void onApplicationEvent(OnRegistrationCompleteEvent event) {
         this.confirmRegistration(event);
     }
-    
+
     // Формирование и отправка email с токеном подтверждения
     private void confirmRegistration(OnRegistrationCompleteEvent event) {
         User user = event.getUser();
@@ -1058,7 +1058,7 @@ public GenericResponse registerUserAccount(@Valid UserDto accountDto, HttpServle
 
 Наряду с **RESTful API** логика обработки исключений, конечно же, станет более зрелой.
 
-Мы используем тот же механизм **@ControllerAdvice** для чистой обработки исключений, создаваемых приложением - и теперь нам нужен новый тип исключения.
+Мы используем тот же механизм **@ControllerAdvice** для чистой обработки исключений, создаваемых приложением — и теперь нам нужен новый тип исключения.
 
 **Это исключение **BindException**, которое возникает при проверке **UserDto** (**если он недействителен**). Мы переопределим метод **handleBindException()** из **ResponseEntityExceptionHandler** по умолчанию, чтобы добавить ошибки в тело ответа:**
 
@@ -1119,3 +1119,11 @@ public class GenericResponse {
 - **Обработка ошибок:** не раскрывать детали исключений (**стек, SQL**) клиенту; единообразные сообщения об ошибках аутентификации/авторизации.
 - **Аннотации безопасности:** предпочитать @**PreAuthorize** с **SpEL** для гибкой авторизации; дублировать проверки на уровне сервиса при критичных операциях.
 - **Тестирование:** покрывать защищённые эндпоинты тестами с @**WithMockUser** и @**WithUserDetails**; проверять отказ в доступе для неавторизованных и неверных ролей.
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

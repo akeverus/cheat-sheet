@@ -25,7 +25,7 @@ updated: "2026-02-11"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Java Tutorial](https://docs.oracle.com/javase/tutorial/)
 
 ### См. также
@@ -154,7 +154,7 @@ updated: "2026-02-11"
   - [Тестирование аннотаций](#тестирование-аннотаций)
 - [Функциональное программирование](#функциональное-программирование)
   - [Основные принципы функционального программирования](#основные-принципы-функционального-программирования)
-  - [Stream API - сердце функционального программирования в Java](#stream-api-сердце-функционального-программирования-в-java)
+  - [Stream API — сердце функционального программирования в Java](#stream-api-сердце-функционального-программирования-в-java)
   - [Функциональные интерфейсы](#функциональные-интерфейсы)
   - [Optionals и функциональное программирование](#optionals-и-функциональное-программирование)
   - [Монады и функциональные структуры](#монады-и-функциональные-структуры)
@@ -241,8 +241,8 @@ updated: "2026-02-11"
   - [Лучшие практики](#лучшие-практики)
 - [IO против NIO](#io-против-nio)
   - [Традиционный IO (java.io)](#традиционный-io-javaio)
-  - [NIO (java.nio) - New IO](#nio-javanio-new-io)
-  - [NIO.2 (java.nio.file) - File System API](#nio2-javaniofile-file-system-api)
+  - [NIO (java.nio) — New IO](#nio-javanio-new-io)
+  - [NIO.2 (java.nio.file) — File System API](#nio2-javaniofile-file-system-api)
   - [Сравнение подходов](#сравнение-подходов)
   - [Когда использовать каждый подход](#когда-использовать-каждый-подход)
   - [Интеграция с современными фреймворками](#интеграция-с-современными-фреймворками)
@@ -269,8 +269,8 @@ updated: "2026-02-11"
   - [Тестирование](#тестирование)
   - [Лучшие практики](#лучшие-практики)
 - [В чем разница между NIO и NIO.2?](#в-чем-разница-между-nio-и-nio2)
-  - [NIO (java.nio) - New IO](#nio-javanio-new-io)
-  - [NIO.2 (java.nio.file) - File System API](#nio2-javaniofile-file-system-api)
+  - [NIO (java.nio) — New IO](#nio-javanio-new-io)
+  - [NIO.2 (java.nio.file) — File System API](#nio2-javaniofile-file-system-api)
   - [Ключевые различия](#ключевые-различия)
   - [Когда использовать каждый API](#когда-использовать-каждый-api)
   - [Совместное использование](#совместное-использование)
@@ -662,7 +662,7 @@ System.out.println(text);
 
 **Вывод:**
 
-```
+```text
     Hello Baeldung!
     This is Java 12 article.
 
@@ -708,7 +708,7 @@ public void givenIdenticalFiles_thenShouldNotFindMismatch() {
     Path filePath2 = Files.createTempFile("file2", ".txt");
     Files.writeString(filePath1, "Java 12 Article");
     Files.writeString(filePath2, "Java 12 Article");
-    
+
     long mismatch = Files.mismatch(filePath1, filePath2);
     assertEquals(-1, mismatch);
 }
@@ -723,7 +723,7 @@ public void givenDifferentFiles_thenShouldFindMismatch() {
     Path filePath4 = Files.createTempFile("file4", ".txt");
     Files.writeString(filePath3, "Java 12 Article");
     Files.writeString(filePath4, "Java 12 Tutorial");
-    
+
     long mismatch = Files.mismatch(filePath3, filePath4);
     assertEquals(8, mismatch);
 }
@@ -817,7 +817,7 @@ public void givenNumber_thenCompactValues() {
         new Locale("en", "US"), NumberFormat.Style.SHORT);
     likesShort.setMaximumFractionDigits(2);
     assertEquals("2.59K", likesShort.format(2592));
-    
+
     NumberFormat likesLong = NumberFormat.getCompactNumberInstance(
         new Locale("en", "US"), NumberFormat.Style.LONG);
     likesLong.setMaximumFractionDigits(2);
@@ -907,7 +907,7 @@ public void whenSwitchingOnOperationSquareMe_thenWillReturnSquare() {
         }
         default -> me;
     };
-    
+
     assertEquals(16, result);
 }
 ```
@@ -952,9 +952,9 @@ public void whenTextBlocks_thenStringOperationsWorkSame() {
 
 **Кроме того, **java.lang.String** теперь имеет три новых метода для работы с текстовыми блоками:**
 
-- **stripIndent()** - имитирует компилятор для удаления случайных пробелов
-- **translateEscapes()** - переводит **escape**-последовательности, такие как «\\t», в «\t»
-- **formatted()** - работает так же, как **String**::**format**, но для текстовых блоков
+- **stripIndent()** — имитирует компилятор для удаления случайных пробелов
+- **translateEscapes()** — переводит **escape**-последовательности, такие как «\\t», в «\t»
+- **formatted()** — работает так же, как **String**::**format**, но для текстовых блоков
 
 **Пример использования **formatted**():**
 
@@ -1160,14 +1160,14 @@ arr[0] = 1;
 
 **Раньше при запуске этого кода в журнале было написано:**
 
-```
+```text
 Exception in thread "main" java.lang.NullPointerException
     at com.baeldung.MyClass.main(MyClass.java:27)
 ```
 
 **Но теперь, учитывая тот же сценарий, журнал может сказать:**
 
-```
+```text
 java.lang.NullPointerException: Cannot store to int array because "a" is null
 ```
 
@@ -1227,16 +1227,16 @@ Z **Garbage Collector**, масштабируемый сборщик мусор�
 public class Person {
     private final String name;
     private final int age;
-    
+
     public Person(String name, int age) {
         this.name = name;
         this.age = age;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public int getAge() {
         return age;
     }
@@ -1382,7 +1382,7 @@ interface HelloWorld {
     }
 }
 
-Object proxy = Proxy.newProxyInstance(getSystemClassLoader(), 
+Object proxy = Proxy.newProxyInstance(getSystemClassLoader(),
     new Class<?>[] {HelloWorld.class}, (prox, method, args) -> {
         if (method.isDefault()) {
             return InvocationHandler.invokeDefault(prox, method, args);
@@ -1607,9 +1607,9 @@ public String checkObject(Object obj) {
 
 public String checkShape(Shape shape) {
     return switch (shape) {
-        case Triangle t && (t.getNumberOfSides() != 3) -> 
+        case Triangle t && (t.getNumberOfSides() != 3) ->
             "This is a weird triangle";
-        case Circle c && (c.getNumberOfSides() != 0) -> 
+        case Circle c && (c.getNumberOfSides() != 0) ->
             "This is a weird circle";
         default -> "Just a normal shape";
     };
@@ -1879,7 +1879,7 @@ public class Person {
     private final String middleName;
     private final String lastName;
     private final int age;
-    
+
     // Геттеры, equals и hashCode
 }
 ```
@@ -1918,7 +1918,7 @@ public Person(String firstName, String lastName, int age) {
 ```java
 public class Customer extends Person {
     private final String loyaltyCardId;
-    
+
     // Геттеры, equals и hashCode
 }
 ```
@@ -1989,7 +1989,7 @@ public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof Money)) return false;
     Money other = (Money) o;
-    boolean currencyCodeEquals = (this.currencyCode == null && other.currencyCode == null) 
+    boolean currencyCodeEquals = (this.currencyCode == null && other.currencyCode == null)
         || (this.currencyCode != null && this.currencyCode.equals(other.currencyCode));
     return this.amount == other.amount && currencyCodeEquals;
 }
@@ -2012,7 +2012,7 @@ public boolean equals(Object o) {
 ```java
 class WrongVoucher extends Money {
     private String store;
-    
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -2029,15 +2029,15 @@ class WrongVoucher extends Money {
 class Voucher {
     private Money value;
     private String store;
-    
+
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof Voucher)) return false;
         Voucher other = (Voucher) o;
-        boolean valueEquals = (this.value == null && other.value == null) 
+        boolean valueEquals = (this.value == null && other.value == null)
             || (this.value != null && this.value.equals(other.value));
-        boolean storeEquals = (this.store == null && other.store == null) 
+        boolean storeEquals = (this.store == null && other.store == null)
             || (this.store != null && this.store.equals(other.store));
         return valueEquals && storeEquals;
     }
@@ -2243,7 +2243,7 @@ assertTrue(b.equals(10));
 public class Person {
     private String name;
     private int age;
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -2348,11 +2348,11 @@ public class StaticBlockExample {
     static {
         System.out.println("static block 1");
     }
-    
+
     static {
         System.out.println("static block 2");
     }
-    
+
     public static void main(String[] args) {
         System.out.println("Main Method");
     }
@@ -2361,7 +2361,7 @@ public class StaticBlockExample {
 
 **Вывод:**
 
-```
+```text
 static block 1
 static block 2
 Main Method
@@ -2394,15 +2394,15 @@ public class InstanceBlockExample {
     {
         System.out.println("Instance initializer block 1");
     }
-    
+
     {
         System.out.println("Instance initializer block 2");
     }
-    
+
     public InstanceBlockExample() {
         System.out.println("Class constructor");
     }
-    
+
     public static void main(String[] args) {
         InstanceBlockExample iib = new InstanceBlockExample();
         System.out.println("Main Method");
@@ -2412,7 +2412,7 @@ public class InstanceBlockExample {
 
 **Вывод:**
 
-```
+```text
 Instance initializer block 1
 Instance initializer block 2
 Class constructor
@@ -2548,7 +2548,7 @@ public final class CustomStringUtils {
     private CustomStringUtils() {
         // Предотвращает создание экземпляров
     }
-    
+
     public static boolean isEmpty(CharSequence cs) {
         return cs == null || cs.length() == 0;
     }
@@ -2968,7 +2968,7 @@ assertEquals(Optional.of("TEST"), s.map(String::toUpperCase));
 **Давайте посмотрим на другой пример, чтобы лучше понять эту ситуацию:**
 
 ```java
-assertEquals(Optional.of(Optional.of("STRING")), 
+assertEquals(Optional.of(Optional.of("STRING")),
     Optional.of("string").map(s -> Optional.of("STRING")));
 ```
 
@@ -2977,7 +2977,7 @@ assertEquals(Optional.of(Optional.of("STRING")),
 **Это именно то, что нам помогает сделать `**flatMap**()`:**
 
 ```java
-assertEquals(Optional.of("STRING"), 
+assertEquals(Optional.of("STRING"),
     Optional.of("string").flatMap(s -> Optional.of("STRING")));
 ```
 
@@ -3023,14 +3023,14 @@ System.out.println(flatList);
 
 Этот фрагмент выводит плоский список `[a, b]`.
 
-`**flatMap**()` преобразует `**Stream**<**Stream**<T>>` в `**Stream**<T>`. Это делается путем "сплющивания" каждого потока из потока потоков в один поток результатов.
+`**flatMap**()` преобразует `**Stream**<**Stream**<T>>` в `**Stream**<T>`. Это делается путем «сплющивания» каждого потока из потока потоков в один поток результатов.
 
 **Различия:**
 
 | Аспект | **map**() | **flatMap**() |
 |--------|-------|-----------|
 | Возвращаемый тип | `**Stream**<T>` | `**Stream**<T>` (**из `Stream<`Stream`<T>>`**) |
-| Преобразование | Применяет функцию к каждому элементу | Применяет функцию и "сплющивает" результат |
+| Преобразование | Применяет функцию к каждому элементу | Применяет функцию и «сплющивает» результат |
 | Вложенность | Может создавать вложенные структуры | Убирает вложенность, создавая плоскую структуру |
 | Использование | Когда функция возвращает простой тип | Когда функция возвращает **Stream**/**Optional** |
 
@@ -3371,7 +3371,7 @@ Class numberClass = number.getClass(); // Ошибка компиляции!
 
 **Если мы попытаемся скомпилировать приведенный выше код, мы получим ошибку компиляции:**
 
-```
+```text
 Error: java: int cannot be dereferenced
 ```
 
@@ -3419,14 +3419,14 @@ public void givenTypeCannotInstantiate_whenGetTypeStatically_thenGetTypesSuccess
     Class interfaceType = SomeInterface.class;
     Class abstractClassType = SomeAbstractClass.class;
     Class utilClassType = SomeUtils.class;
-    
+
     assertNotNull(interfaceType);
     assertTrue(interfaceType.isInterface());
     assertEquals("SomeInterface", interfaceType.getSimpleName());
-    
+
     assertNotNull(abstractClassType);
     assertEquals("SomeAbstractClass", abstractClassType.getSimpleName());
-    
+
     assertNotNull(utilClassType);
     assertEquals("SomeUtils", utilClassType.getSimpleName());
 }
@@ -3556,7 +3556,7 @@ public class BlackCat extends Cat { // Ошибка компиляции!
 ```
 
 **Ошибка компилятора:**
-```
+```text
 The type BlackCat cannot subclass the final class Cat
 ```
 
@@ -3592,7 +3592,7 @@ public class BlackDog extends Dog {
 ```
 
 **Ошибка компилятора:**
-```
+```text
 Cannot override the final method from Dog
 ```
 
@@ -3647,7 +3647,7 @@ public void methodWithFinalArguments(final int x) {
 ```
 
 **Ошибка компилятора:**
-```
+```text
 The final local variable x cannot be assigned
 ```
 
@@ -3704,7 +3704,7 @@ public static String concatFinalStrings() {
 
 **Результаты **JMH**:**
 
-```
+```text
 Benchmark                                Mode  Cnt  Score   Error  Units
 concatFinalStrings                      avgt  200  2.976 ± 0.035 ns/op
 concatNonFinalStrings                   avgt  200  7.375 ± 0.119 ns/op
@@ -3716,7 +3716,7 @@ concatNonFinalStrings                   avgt  200  7.375 ± 0.119 ns/op
 
 **Используя неконечные локальные переменные, компилятор сгенерировал следующий байт-код для объединения двух строк:**
 
-```
+```text
 NEW java/lang/StringBuilder
 DUP
 INVOKESPECIAL java/lang/StringBuilder.<init> ()V
@@ -3730,7 +3730,7 @@ ARETURN
 
 **Добавив ключевое слово `**final**`, мы помогли компилятору сделать вывод, что результат конкатенации строк никогда не изменится. Таким образом, компилятор смог вообще избежать конкатенации строк и статически оптимизировать сгенерированный байт-код:**
 
-```
+```text
 LDC "xy"
 ARETURN
 ```
@@ -3846,16 +3846,16 @@ assertEquals(1, strings.size()); // Теперь размер = 1
 class Money {
     private final double amount;
     private final Currency currency;
-    
+
     public Money(double amount, Currency currency) {
         this.amount = amount;
         this.currency = currency;
     }
-    
+
     public Currency getCurrency() {
         return currency;
     }
-    
+
     public double getAmount() {
         return amount;
     }
@@ -3875,22 +3875,22 @@ public final class ImmutablePerson {
     private final String name;
     private final int age;
     private final List<String> hobbies;
-    
+
     public ImmutablePerson(String name, int age, List<String> hobbies) {
         this.name = name;
         this.age = age;
         // Создаем защитную копию
         this.hobbies = Collections.unmodifiableList(new ArrayList<>(hobbies));
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public int getAge() {
         return age;
     }
-    
+
     public List<String> getHobbies() {
         // Возвращаем unmodifiable view
         return Collections.unmodifiableList(hobbies);
@@ -3915,25 +3915,25 @@ public final class ImmutablePerson {
 public final class ImmutablePoint {
     private final int x;
     private final int y;
-    
+
     public ImmutablePoint(int x, int y) {
         this.x = x;
         this.y = y;
     }
-    
+
     public int getX() {
         return x;
     }
-    
+
     public int getY() {
         return y;
     }
-    
+
     // Методы, возвращающие новые объекты вместо изменения существующих
     public ImmutablePoint move(int deltaX, int deltaY) {
         return new ImmutablePoint(this.x + deltaX, this.y + deltaY);
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -3941,7 +3941,7 @@ public final class ImmutablePoint {
         ImmutablePoint point = (ImmutablePoint) o;
         return x == point.x && y == point.y;
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(x, y);
@@ -4187,9 +4187,9 @@ public enum Element {
     H("Hydrogen"),
     HE("Helium"),
     NE("Neon");
-    
+
     public final String label;
-    
+
     private Element(String label) {
         this.label = label;
     }
@@ -4246,21 +4246,21 @@ public enum Element {
     H("Hydrogen"),
     HE("Helium"),
     NE("Neon");
-    
+
     private static final Map<String, Element> BY_LABEL = new HashMap<>();
-    
+
     static {
         for (Element e : values()) {
             BY_LABEL.put(e.label, e);
         }
     }
-    
+
     public final String label;
-    
+
     private Element(String label) {
         this.label = label;
     }
-    
+
     public static Element valueOfLabel(String label) {
         return BY_LABEL.get(label);
     }
@@ -4280,11 +4280,11 @@ public enum Element {
     H("Hydrogen", 1, 1.008f),
     HE("Helium", 2, 4.0026f),
     NE("Neon", 10, 20.180f);
-    
+
     private static final Map<String, Element> BY_LABEL = new HashMap<>();
     private static final Map<Integer, Element> BY_ATOMIC_NUMBER = new HashMap<>();
     private static final Map<Float, Element> BY_ATOMIC_WEIGHT = new HashMap<>();
-    
+
     static {
         for (Element e : values()) {
             BY_LABEL.put(e.label, e);
@@ -4292,25 +4292,25 @@ public enum Element {
             BY_ATOMIC_WEIGHT.put(e.atomicWeight, e);
         }
     }
-    
+
     public final String label;
     public final int atomicNumber;
     public final float atomicWeight;
-    
+
     private Element(String label, int atomicNumber, float atomicWeight) {
         this.label = label;
         this.atomicNumber = atomicNumber;
         this.atomicWeight = atomicWeight;
     }
-    
+
     public static Element valueOfLabel(String label) {
         return BY_LABEL.get(label);
     }
-    
+
     public static Element valueOfAtomicNumber(int number) {
         return BY_ATOMIC_NUMBER.get(number);
     }
-    
+
     public static Element valueOfAtomicWeight(float weight) {
         return BY_ATOMIC_WEIGHT.get(weight);
     }
@@ -4342,13 +4342,13 @@ public interface Labeled {
 public enum Element implements Labeled {
     H("Hydrogen"),
     HE("Helium");
-    
+
     public final String label;
-    
+
     private Element(String label) {
         this.label = label;
     }
-    
+
     @Override
     public String label() {
         return label;
@@ -4369,7 +4369,7 @@ public enum Element implements Labeled {
 
 ## Анонимные классы
 
-Анонимные классы в **Java** позволяют создавать классы "на лету" без явного объявления имени класса. Они часто используются для создания одноразовых реализаций интерфейсов или наследования классов.
+Анонимные классы в **Java** позволяют создавать классы «на лету» без явного объявления имени класса. Они часто используются для создания одноразовых реализаций интерфейсов или наследования классов.
 
 ### Синтаксис анонимных классов
 
@@ -4537,7 +4537,7 @@ names.forEach(System.out::println);
 
 ## Абстрактные классы
 
-Абстрактные классы в **Java** - это классы, которые не могут быть инстанцированы напрямую и предназначены для наследования. Они позволяют определить общую структуру и поведение для группы связанных классов.
+Абстрактные классы в **Java** — это классы, которые не могут быть инстанцированы напрямую и предназначены для наследования. Они позволяют определить общую структуру и поведение для группы связанных классов.
 
 ### Синтаксис абстрактных классов
 
@@ -4799,11 +4799,11 @@ public record Point(int x, int y) {
 
 ### Производительность и дизайн
 
-Абстрактные классы не добавляют накладных расходов на производительность - они разрешаются во время компиляции. Выбор между абстрактными классами и интерфейсами зависит от конкретной архитектуры приложения.
+Абстрактные классы не добавляют накладных расходов на производительность — они разрешаются во время компиляции. Выбор между абстрактными классами и интерфейсами зависит от конкретной архитектуры приложения.
 
 ## Интерфейсы
 
-Интерфейсы в **Java** - это контракты, которые определяют поведение, которое классы должны реализовывать. Они позволяют создавать гибкую архитектуру с множественным наследованием поведения.
+Интерфейсы в **Java** — это контракты, которые определяют поведение, которое классы должны реализовывать. Они позволяют создавать гибкую архитектуру с множественным наследованием поведения.
 
 ### Синтаксис интерфейсов
 
@@ -5183,11 +5183,11 @@ public class Calculator {
 
 ### Производительность и дизайн
 
-Интерфейсы не добавляют накладных расходов - вызовы методов интерфейсов разрешаются во время компиляции или рантайма через механизм виртуальных вызовов **JVM**. Правильное использование интерфейсов улучшает тестируемость и поддерживаемость кода.
+Интерфейсы не добавляют накладных расходов — вызовы методов интерфейсов разрешаются во время компиляции или рантайма через механизм виртуальных вызовов **JVM**. Правильное использование интерфейсов улучшает тестируемость и поддерживаемость кода.
 
 ## Интерфейс против абстрактного класса
 
-Выбор между интерфейсами и абстрактными классами - один из фундаментальных вопросов ООП в **Java**. Каждый подход имеет свои преимущества и ограничения, которые влияют на дизайн архитектуры.
+Выбор между интерфейсами и абстрактными классами — один из фундаментальных вопросов ООП в **Java**. Каждый подход имеет свои преимущества и ограничения, которые влияют на дизайн архитектуры.
 
 ### Основные различия
 
@@ -5500,14 +5500,14 @@ public interface List<E> {
 - Есть **protected** методы для подклассов
 
 #### Современный подход:
-1. **Начинайте с интерфейсов** - они более гибкие
+1. **Начинайте с интерфейсов** — они более гибкие
 2. **Добавляйте default методы** для обратной совместимости
 3. **Используйте абстрактные классы** только когда нужна общая реализация
 4. **Комбинируйте оба подхода** для максимальной гибкости
 
 ### Антипаттерны
 
-#### 1. "Интерфейс ради интерфейса"
+#### 1. «Интерфейс ради интерфейса»
 ```java
 // Плохо - ненужный интерфейс для единственного класса
 public interface SingleClassInterface {
@@ -5520,7 +5520,7 @@ public class SingleClass implements SingleClassInterface {
 }
 ```
 
-#### 2. "Абстрактный класс вместо интерфейса"
+#### 2. «Абстрактный класс вместо интерфейса»
 ```java
 // Плохо - ограничивает множественное наследование
 public abstract class Vehicle {
@@ -5532,7 +5532,7 @@ public class AmphibiousCar extends Vehicle implements Swimmable {
 }
 ```
 
-#### 3. "Глубокая иерархия абстрактных классов"
+#### 3. «Глубокая иерархия абстрактных классов»
 ```java
 // Плохо - слишком сложная иерархия
 public abstract class AbstractEntity {
@@ -5552,14 +5552,14 @@ public abstract class AbstractVersionedEntity extends AbstractAuditableEntity {
 
 **Выбор между интерфейсами и абстрактными классами зависит от конкретной задачи:**
 
-- **Интерфейсы** лучше для определения "что" делает объект
-- **Абстрактные классы** лучше для определения "как" объект это делает
+- **Интерфейсы** лучше для определения «что» делает объект
+- **Абстрактные классы** лучше для определения «как» объект это делает
 
 В современном **Java** (**8+**) интерфейсы стали гораздо мощнее благодаря **default** и **static** методам, что делает их предпочтительным выбором в большинстве случаев. Абстрактные классы следует использовать только когда действительно нужна общая реализация или состояние.
 
 ## Функциональные интерфейсы
 
-Функциональные интерфейсы - это интерфейсы с единственным абстрактным методом. Они являются основой функционального программирования в **Java** и используются с лямбда-выражениями.
+Функциональные интерфейсы — это интерфейсы с единственным абстрактным методом. Они являются основой функционального программирования в **Java** и используются с лямбда-выражениями.
 
 ### Определение функционального интерфейса
 
@@ -5914,7 +5914,7 @@ public void testCustomFunctionalInterface() {
 
 ## Лямбда-выражения и функциональные интерфейсы: советы и рекомендации
 
-Лямбда-выражения - это компактный способ реализации функциональных интерфейсов. Они позволяют писать более читаемый и лаконичный код.
+Лямбда-выражения — это компактный способ реализации функциональных интерфейсов. Они позволяют писать более читаемый и лаконичный код.
 
 ### Синтаксис лямбда-выражений
 
@@ -6277,7 +6277,7 @@ button.setOnAction(event -> System.out.println("Clicked!"));
 
 ## Ссылки на методы
 
-Ссылки на методы - это компактный синтаксис для создания лямбда-выражений, которые вызывают существующие методы. Они делают код более читаемым и лаконичным.
+Ссылки на методы — это компактный синтаксис для создания лямбда-выражений, которые вызывают существующие методы. Они делают код более читаемым и лаконичным.
 
 ### Типы ссылок на методы
 
@@ -6638,7 +6638,7 @@ private static final Comparator<Person> BY_NAME =
 
 ### Заключение
 
-**Ссылки на методы - это инструмент для создания лаконичного и читаемого кода. Они особенно полезны в:**
+**Ссылки на методы — это инструмент для создания лаконичного и читаемого кода. Они особенно полезны в:**
 
 - **Stream API** операциях
 - **Comparator** создания
@@ -6671,7 +6671,7 @@ public @interface LogExecutionTime {
 
 ### Мета-аннотации
 
-#### 1. @**Retention** - определяет время жизни аннотации
+#### 1. @**Retention** — определяет время жизни аннотации
 ```java
 @Retention(RetentionPolicy.SOURCE)    // Только во время компиляции
 public @interface Generated {}
@@ -6683,7 +6683,7 @@ public @interface Deprecated {}
 public @interface MyAnnotation {}
 ```
 
-#### 2. @**Target** - определяет где можно использовать аннотацию
+#### 2. @**Target** — определяет где можно использовать аннотацию
 ```java
 @Target(ElementType.TYPE)              // Классы, интерфейсы, enum
 public @interface Entity {}
@@ -6701,7 +6701,7 @@ public @interface Component {}
 public @interface MetaAnnotation {}
 ```
 
-#### 3. @**Documented** - включает аннотацию в **javadoc**
+#### 3. @**Documented** — включает аннотацию в **javadoc**
 ```java
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -6711,7 +6711,7 @@ public @interface Author {
 }
 ```
 
-#### 4. @**Inherited** - аннотация наследуется подклассами
+#### 4. @**Inherited** — аннотация наследуется подклассами
 ```java
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
@@ -7135,10 +7135,10 @@ public void testValidationAnnotation() {
 
 **Создание собственных аннотаций позволяет:**
 
-1. **Декларативное программирование** - описывать поведение вместо реализации
-2. **Метаданные** - добавлять информацию о коде для процессоров
-3. **Гибкость** - создавать **DSL** для специфических нужд
-4. **Переиспользование** - использовать аннотации в разных проектах
+1. **Декларативное программирование** — описывать поведение вместо реализации
+2. **Метаданные** — добавлять информацию о коде для процессоров
+3. **Гибкость** — создавать **DSL** для специфических нужд
+4. **Переиспользование** — использовать аннотации в разных проектах
 
 **При создании аннотаций важно:**
 - Правильно выбирать @**Retention** и @**Target**
@@ -7150,7 +7150,7 @@ public void testValidationAnnotation() {
 
 ## Функциональное программирование
 
-Функциональное программирование (**ФП**) - это парадигма программирования, основанная на математических функциях. В **Java** функциональное программирование стало доступно с версии 8 благодаря лямбда-выражениям и **Stream API**.
+Функциональное программирование (**ФП**) — это парадигма программирования, основанная на математических функциях. В **Java** функциональное программирование стало доступно с версии 8 благодаря лямбда-выражениям и **Stream API**.
 
 ### Основные принципы функционального программирования
 
@@ -7245,7 +7245,7 @@ private int factorialTail(int n, int accumulator) {
 }
 ```
 
-### **Stream API** - сердце функционального программирования в **Java**
+### **Stream API** — сердце функционального программирования в **Java**
 
 #### Основные операции
 ```java
@@ -7337,7 +7337,7 @@ List<String> flatList = nestedList.stream()
 
 ### Функциональные интерфейсы
 
-#### **Predicate** - проверка условий
+#### **Predicate** — проверка условий
 ```java
 Predicate<String> isEmpty = String::isEmpty;
 Predicate<String> startsWithA = s -> s.startsWith("A");
@@ -7352,7 +7352,7 @@ List<String> filtered = names.stream()
     .collect(Collectors.toList());
 ```
 
-#### **Function** - преобразования
+#### **Function** — преобразования
 ```java
 Function<String, Integer> toLength = String::length;
 Function<Integer, String> toString = Object::toString;
@@ -7367,7 +7367,7 @@ List<String> processed = names.stream()
     .collect(Collectors.toList());
 ```
 
-#### **Consumer** - действия без возврата
+#### **Consumer** — действия без возврата
 ```java
 Consumer<String> printer = System.out::println;
 Consumer<String> logger = s -> log.info("Processing: " + s);
@@ -7380,7 +7380,7 @@ Consumer<String> processAndLog = printer.andThen(logger).andThen(saver);
 names.forEach(processAndLog);
 ```
 
-#### **Supplier** - поставка значений
+#### **Supplier** — поставка значений
 ```java
 Supplier<String> randomString = () -> UUID.randomUUID().toString();
 Supplier<LocalDateTime> now = LocalDateTime::now;
@@ -7621,16 +7621,16 @@ Collections.sort(result);
 **Функциональное программирование в **Java** предоставляет мощные инструменты для написания выразительного и безопасного кода:**
 
 **Ключевые концепции:**
-- **Чистые функции** - предсказуемые и тестируемые
-- **Неизменяемость** - предотвращает ошибки конкурентности
-- **Функции высшего порядка** - гибкость и переиспользование
-- **Stream API** - декларативная обработка данных
+- **Чистые функции** — предсказуемые и тестируемые
+- **Неизменяемость** — предотвращает ошибки конкурентности
+- **Функции высшего порядка** — гибкость и переиспользование
+- **Stream API** — декларативная обработка данных
 
 **Преимущества:**
-- **Читаемость** - код описывает "что", а не "как"
-- **Безопасность** - меньше ошибок, связанных с состоянием
-- **Тестируемость** - чистые функции легко тестировать
-- **Параллелизм** - автоматическая параллелизация
+- **Читаемость** — код описывает «что», а не «как»
+- **Безопасность** — меньше ошибок, связанных с состоянием
+- **Тестируемость** — чистые функции легко тестировать
+- **Параллелизм** — автоматическая параллелизация
 
 **Когда использовать:**
 - Обработка коллекций и потоков данных
@@ -8010,28 +8010,28 @@ StringBuilder sb = new StringBuilder("hello");
 
 ### Заключение
 
-**Неизменяемость **String** - это фундаментальное решение в дизайне **Java**, которое обеспечивает:**
+**Неизменяемость **String** — это фундаментальное решение в дизайне **Java**, которое обеспечивает:**
 
 **Преимущества:**
-- **Безопасность** - предотвращает неожиданные изменения
-- **Производительность** - **String pool** и **hash code caching**
-- **Потокобезопасность** - автоматическая безопасность в многопоточной среде
-- **Простота** - отсутствие необходимости в **defensive copying**
+- **Безопасность** — предотвращает неожиданные изменения
+- **Производительность** — **String pool** и **hash code caching**
+- **Потокобезопасность** — автоматическая безопасность в многопоточной среде
+- **Простота** — отсутствие необходимости в **defensive copying**
 
 **Компромиссы:**
 - **Новая объект** при каждой модификации
 - **Необходимость StringBuilder** для множественных изменений
 
 **Альтернативы:**
-- **StringBuilder** - для построения строк
-- **StringBuffer** - для многопоточной среды
-- **Records** - для неизменяемых данных
+- **StringBuilder** — для построения строк
+- **StringBuffer** — для многопоточной среды
+- **Records** — для неизменяемых данных
 
-Неизменяемость **String** - один из ключевых факторов успеха **Java** как платформы, обеспечивающий надежность и предсказуемость приложений.
+Неизменяемость **String** — один из ключевых факторов успеха **Java** как платформы, обеспечивающий надежность и предсказуемость приложений.
 
 ## Руководство по **String Pool**
 
-**String Pool** (**или `String Constant` Pool**) - это специальная область памяти в **JVM**, предназначенная для хранения строковых литералов. Это одна из ключевых оптимизаций **Java** для экономии памяти.
+**String Pool** (**или `String Constant` Pool**) — это специальная область памяти в **JVM**, предназначенная для хранения строковых литералов. Это одна из ключевых оптимизаций **Java** для экономии памяти.
 
 ### Как работает **String Pool**
 
@@ -8069,7 +8069,7 @@ System.out.println(s1 == s2); // false
 ### Структура **String Pool**
 
 #### В **HotSpot JVM**
-```
+```text
 ┌─────────────────────────────────────┐
 │         String Pool                 │
 │  ┌─────────────────────────────────┐ │
@@ -8474,17 +8474,17 @@ public String buildMessage(String... parts) {
 
 ### Заключение
 
-**String Pool** - это мощная оптимизация **Java**, которая обеспечивает:**
+**String Pool** — это мощная оптимизация **Java**, которая обеспечивает:**
 
 **Преимущества:**
-- **Экономия памяти** - разделение строковых объектов
-- **Быстрое сравнение** - сравнение по ссылке вместо содержимого
-- **Оптимизация HashMap** - быстрый **lookup** ключей
+- **Экономия памяти** — разделение строковых объектов
+- **Быстрое сравнение** — сравнение по ссылке вместо содержимого
+- **Оптимизация HashMap** — быстрый **lookup** ключей
 
 **Важные аспекты:**
-- **Ограниченный размер** - может вызвать **OutOfMemoryError**
-- **Осторожное использование intern()** - избегать **memory leaks**
-- **Мониторинг** - отслеживать использование памяти
+- **Ограниченный размер** — может вызвать **OutOfMemoryError**
+- **Осторожное использование intern()** — избегать **memory leaks**
+- **Мониторинг** — отслеживать использование памяти
 
 **Рекомендации:**
 - Используйте строковые литералы для констант
@@ -8492,7 +8492,7 @@ public String buildMessage(String... parts) {
 - Мониторьте размер пула в продакшене
 - Рассматривайте локальные кэши для специфических случаев
 
-**String Pool** - один из ключевых факторов производительности **Java** приложений, требующий внимательного управления.
+**String Pool** — один из ключевых факторов производительности **Java** приложений, требующий внимательного управления.
 
 ## Руководство по **java.util.Formatter**
 
@@ -8541,7 +8541,7 @@ try (Formatter formatter = new Formatter()) {
 ### Спецификаторы формата
 
 #### Общий синтаксис
-```
+```text
 %[argument_index$][flags][width][.precision]conversion
 ```
 
@@ -9065,10 +9065,10 @@ public class FormatterTest {
 **java.util.Formatter** предоставляет мощные возможности для форматирования данных:**
 
 **Ключевые возможности:**
-- **Гибкое форматирование** - строки, числа, даты, время
-- **Локализация** - поддержка разных локалей
-- **Расширяемость** - кастомные форматтеры
-- **Производительность** - оптимизированные реализации
+- **Гибкое форматирование** — строки, числа, даты, время
+- **Локализация** — поддержка разных локалей
+- **Расширяемость** — кастомные форматтеры
+- **Производительность** — оптимизированные реализации
 
 **Основные спецификаторы:**
 - `%s` - строки
@@ -9083,11 +9083,11 @@ public class FormatterTest {
 - Валидируйте входные данные
 - Предпочитайте **String.format**() для создания строк
 
-**Formatter** - это фундаментальный инструмент для создания читаемого и локализованного вывода в **Java** приложениях.
+**Formatter** — это фундаментальный инструмент для создания читаемого и локализованного вывода в **Java** приложениях.
 
 ## Как преобразовать **InputStream** в строку **Base64**?
 
-**Base64** - это схема кодирования, которая преобразует бинарные данные в текстовый формат. В **Java** преобразование **InputStream** в **Base64** строку часто используется для передачи бинарных данных (**изображения, файлы**) через текстовые протоколы.
+**Base64** — это схема кодирования, которая преобразует бинарные данные в текстовый формат. В **Java** преобразование **InputStream** в **Base64** строку часто используется для передачи бинарных данных (**изображения, файлы**) через текстовые протоколы.
 
 ### Базовое преобразование
 
@@ -9561,17 +9561,17 @@ public class Base64EncoderTest {
 
 ### Заключение
 
-**Преобразование **InputStream** в **Base64** строку - распространенная задача в **Java** разработке:**
+**Преобразование **InputStream** в **Base64** строку — распространенная задача в **Java** разработке:**
 
 **Основные подходы:**
-- **Простое кодирование** - чтение всего потока в память
-- **Потоковое кодирование** - обработка большими блоками
-- **Эффективное кодирование** - для больших файлов
+- **Простое кодирование** — чтение всего потока в память
+- **Потоковое кодирование** — обработка большими блоками
+- **Эффективное кодирование** — для больших файлов
 
 **Типы `Base64`:**
-- **Basic** - однострочный вывод
-- **URL-safe** - для использования в **URL**
-- **MIME** - с переносами строк
+- **Basic** — однострочный вывод
+- **URL-safe** — для использования в **URL**
+- **MIME** — с переносами строк
 
 **Лучшие практики:**
 - Обрабатывайте **IOException**
@@ -9887,7 +9887,7 @@ System.out.println(BestPracticesFormatter.formatLocalized(fileSize, Locale.GERMA
 
 ## Удалить теги **HTML** из строки
 
-Удаление **HTML** тегов из строк - распространенная задача при обработке веб-контента, очистке пользовательского ввода или подготовке текста для отображения в не-**HTML** контексте.
+Удаление **HTML** тегов из строк — распространенная задача при обработке веб-контента, очистке пользовательского ввода или подготовке текста для отображения в не-**HTML** контексте.
 
 ### Простое удаление с регулярными выражениями
 
@@ -11000,7 +11000,7 @@ public class UuidGenerator {
 
 ### Структура **UUID**
 
-```
+```text
 UUID Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
              └────┬───┘ └─┬─┘ └─┬┘ └─┬┘ └─────┬─────┘
                  │       │    │    │         │
@@ -11671,16 +11671,16 @@ System.out.println("Parsed UUIDs: " + uuids);
 **UUID** предоставляет надежный способ генерации уникальных идентификаторов:**
 
 **Основные возможности:**
-- **Version 4 (**Random**)** - наиболее распространенный, случайный **UUID**
-- **Version 5 (**SHA-1**)** - детерминированный, рекомендуется для постоянных `ID`
-- **Version 3 (**MD5**)** - устаревший, не рекомендуется
-- **Version 1 (**Time-based**)** - с **timestamp**, для сортировки
+- **Version 4 (**Random**)** — наиболее распространенный, случайный **UUID**
+- **Version 5 (**SHA-1**)** — детерминированный, рекомендуется для постоянных `ID`
+- **Version 3 (**MD5**)** — устаревший, не рекомендуется
+- **Version 1 (**Time-based**)** — с **timestamp**, для сортировки
 
 **Представления:**
-- **Стандартное** - с дефисами: `550e8400-**e29b-41d4-a716-446655440000**`
-- **Компактное** - без дефисов: `550e8400e29b41d4a716446655440000`
-- **Base64** - компактное представление: `**VaPoQA6Ss0FUbhRGZFVEAA**==`
-- **URL-safe** - для веб: `**VaPoQA6Ss0FUbhRGZFVEAA**`
+- **Стандартное** — с дефисами: `550e8400-**e29b-41d4-a716-446655440000**`
+- **Компактное** — без дефисов: `550e8400e29b41d4a716446655440000`
+- **Base64** — компактное представление: `**VaPoQA6Ss0FUbhRGZFVEAA**==`
+- **URL-safe** — для веб: `**VaPoQA6Ss0FUbhRGZFVEAA**`
 
 **Лучшие практики:**
 - Используйте **UUID.randomUUID**() для новых сущностей
@@ -11689,7 +11689,7 @@ System.out.println("Parsed UUIDs: " + uuids);
 - Валидируйте **UUID** перед использованием
 - Кэшируйте **namespace UUID** для повторного использования
 
-**UUID** - это стандарт де-факто для уникальной идентификации в современных приложениях, обеспечивающий глобальную уникальность без централизованного управления.
+**UUID** — это стандарт де-факто для уникальной идентификации в современных приложениях, обеспечивающий глобальную уникальность без централизованного управления.
 
 ## `IO` против **NIO**
 
@@ -11729,13 +11729,13 @@ public class TraditionalIO {
 ```
 
 **Особенности `IO`:**
-- ✅ **Простота использования** - интуитивный **API**
-- ✅ **Автоматическое буферизирование** - **BufferedReader**/**Writer**
-- ✅ **Блокирующие операции** - поток ждет завершения
-- ❌ **Ограниченная масштабируемость** - один поток на соединение
-- ❌ **Синхронность** - нет асинхронной обработки
+- ✅ **Простота использования** — интуитивный **API**
+- ✅ **Автоматическое буферизирование** — **BufferedReader**/**Writer**
+- ✅ **Блокирующие операции** — поток ждет завершения
+- ❌ **Ограниченная масштабируемость** — один поток на соединение
+- ❌ **Синхронность** — нет асинхронной обработки
 
-### **NIO** (**java.nio**) - **New** `IO`
+### **NIO** (**java.nio**) — **New** `IO`
 
 #### Основные компоненты
 
@@ -11840,14 +11840,14 @@ public class NIOExamples {
 ```
 
 **Особенности `NIO`:**
-- ✅ **Неблокирующий IO** - один поток может обрабатывать множество соединений
-- ✅ **Буферы** - прямой доступ к памяти, **zero-copy** операции
-- ✅ **Каналы** - унифицированный **API** для разных типов `IO`
-- ✅ **Селекторы** - мультиплексирование соединений
-- ❌ **Сложность** - более низкоуровневый **API**
-- ❌ **Кривая обучения** - требуется понимание буферов и каналов
+- ✅ **Неблокирующий IO** — один поток может обрабатывать множество соединений
+- ✅ **Буферы** — прямой доступ к памяти, **zero-copy** операции
+- ✅ **Каналы** — унифицированный **API** для разных типов `IO`
+- ✅ **Селекторы** — мультиплексирование соединений
+- ❌ **Сложность** — более низкоуровневый **API**
+- ❌ **Кривая обучения** — требуется понимание буферов и каналов
 
-### **NIO.2** (**java.nio.file**) - **File System API**
+### **NIO.2** (**java.nio.file**) — **File System API**
 
 #### **Path** и **Files API**
 
@@ -13617,10 +13617,10 @@ public class FileBestPractices {
 - ✅ **Безопасность** (**валидация путей, санитизация**)
 
 **Ограничения:**
-- ❌ **Не потокобезопасный** - требует внешней синхронизации
-- ❌ **Блокирующие операции** - нет асинхронности
-- ❌ **Ограниченные метаданные** - используйте **NIO.2** для расширенных атрибутов
-- ❌ **Платформо-зависимый** - различное поведение на разных ОС
+- ❌ **Не потокобезопасный** — требует внешней синхронизации
+- ❌ **Блокирующие операции** — нет асинхронности
+- ❌ **Ограниченные метаданные** — используйте **NIO.2** для расширенных атрибутов
+- ❌ **Платформо-зависимый** — различное поведение на разных ОС
 
 **Рекомендации:**
 - Используйте `**File**` для простых операций в устаревшем коде
@@ -14891,13 +14891,13 @@ public class PathBestPractices {
 **`**java.`nio.file`.Path**` предоставляет современный, мощный и безопасный **API** для работы с файловой системой:**
 
 **Основные возможности:**
-- ✅ **Иммутабельность** - объекты **Path** неизменяемы
-- ✅ **Кросс-платформенность** - автоматическая обработка разделителей
-- ✅ **Безопасность** - встроенная защита от **path traversal**
-- ✅ **Мощные операции** - чтение, запись, копирование, перемещение
-- ✅ **Атрибуты файлов** - детальная информация о файлах
-- ✅ **Мониторинг** - отслеживание изменений в реальном времени
-- ✅ **Символические ссылки** - полная поддержка
+- ✅ **Иммутабельность** — объекты **Path** неизменяемы
+- ✅ **Кросс-платформенность** — автоматическая обработка разделителей
+- ✅ **Безопасность** — встроенная защита от **path traversal**
+- ✅ **Мощные операции** — чтение, запись, копирование, перемещение
+- ✅ **Атрибуты файлов** — детальная информация о файлах
+- ✅ **Мониторинг** — отслеживание изменений в реальном времени
+- ✅ **Символические ссылки** — полная поддержка
 
 **Преимущества перед `File`:**
 - Лучшая производительность для больших файлов
@@ -14932,15 +14932,15 @@ if (Files.exists(path)) {
 }
 ```
 
-**Path** - это будущее работы с файлами в **Java**, предоставляющее надежный, эффективный и безопасный способ взаимодействия с файловой системой.
+**Path** — это будущее работы с файлами в **Java**, предоставляющее надежный, эффективный и безопасный способ взаимодействия с файловой системой.
 
 ## В чем разница между **NIO** и **NIO.2**?
 
-**NIO** (**New IO**) и **NIO.2** - два разных **API** для работы с вводом-выводом в **Java**. **NIO** был введен в **Java** `1.4`, а **NIO.2** появился в **Java** 7. Несмотря на схожесть названий, это совершенно разные **API** с различными целями и возможностями.
+**NIO** (**New IO**) и **NIO.2** — два разных **API** для работы с вводом-выводом в **Java**. **NIO** был введен в **Java** `1.4`, а **NIO.2** появился в **Java** 7. Несмотря на схожесть названий, это совершенно разные **API** с различными целями и возможностями.
 
-### **NIO** (**java.nio**) - **New** `IO`
+### **NIO** (**java.nio**) — **New** `IO`
 
-**NIO** был разработан для решения проблем производительности традиционного `IO` (**java.io**). Основной фокус - неблокирующий ввод-вывод и работа с буферами.
+**NIO** был разработан для решения проблем производительности традиционного `IO` (**java.io**). Основной фокус — неблокирующий ввод-вывод и работа с буферами.
 
 #### Основные компоненты **NIO**:
 
@@ -14974,13 +14974,13 @@ serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 ```
 
 #### Характеристики **NIO**:
-- **Неблокирующий IO** - один поток может обрабатывать множество соединений
-- **Буферы** - прямая работа с памятью, **zero-copy** операции
-- **Каналы** - унифицированный **API** для разных типов `IO`
-- **Селекторы** - мультиплексирование соединений
-- **Основной фокус** - производительность сетевых приложений
+- **Неблокирующий IO** — один поток может обрабатывать множество соединений
+- **Буферы** — прямая работа с памятью, **zero-copy** операции
+- **Каналы** — унифицированный **API** для разных типов `IO`
+- **Селекторы** — мультиплексирование соединений
+- **Основной фокус** — производительность сетевых приложений
 
-### **NIO.2** (**java.nio.file**) - **File System API**
+### **NIO.2** (**java.nio.file**) — **File System API**
 
 **NIO.2** предоставляет современный **API** для работы с файловой системой. Это не просто расширение **NIO**, а совершенно новый **API**, ориентированный на работу с файлами и директориями.
 
@@ -15013,11 +15013,11 @@ try (Stream<Path> paths = Files.walk(path.getParent())) {
 ```
 
 #### Характеристики **NIO.2**:
-- **Path API** - замена **File** с улучшенной функциональностью
-- **Files утилиты** - высокоуровневые операции с файлами
-- **WatchService** - мониторинг изменений файловой системы
-- **FileVisitor** - обход директорий с кастомной логикой
-- **Основной фокус** - удобная работа с файловой системой
+- **Path API** — замена **File** с улучшенной функциональностью
+- **Files утилиты** — высокоуровневые операции с файлами
+- **WatchService** — мониторинг изменений файловой системы
+- **FileVisitor** — обход директорий с кастомной логикой
+- **Основной фокус** — удобная работа с файловой системой
 
 ### Ключевые различия
 
@@ -16186,7 +16186,7 @@ public void hybridUsage() {
 
 ## Запись **byte**[] в файл
 
-Запись массива байтов в файл - фундаментальная операция в **Java**. Существует несколько способов это сделать, каждый со своими преимуществами и сценариями использования.
+Запись массива байтов в файл — фундаментальная операция в **Java**. Существует несколько способов это сделать, каждый со своими преимуществами и сценариями использования.
 
 ### Использование **FileOutputStream**
 
@@ -16941,7 +16941,7 @@ public class BestPracticesExamples {
 
 ### Рекомендации:
 - **< 1KB**: `**FileOutputStream**` или `**Files.write**()`
-- **1KB - 1MB**: `**BufferedOutputStream**` или `**Files.write**()`
+- **1KB — 1MB**: `**BufferedOutputStream**` или `**Files.write**()`
 - **> 1MB**: `**FileChannel**` или `**Files.write**()` с **NIO.2**
 - **Критичные данные**: Атомарная запись с **backup**
 - **Сжатие**: `**GZIPOutputStream**` с любым методом
@@ -16950,7 +16950,7 @@ public class BestPracticesExamples {
 
 ## Поиск файлов, соответствующие строкам с подстановочными знаками
 
-Поиск файлов с использованием шаблонов (**wildcards**) - распространенная задача в **Java**. Существует несколько способов реализации такого поиска с различными возможностями и производительностью.
+Поиск файлов с использованием шаблонов (**wildcards**) — распространенная задача в **Java**. Существует несколько способов реализации такого поиска с различными возможностями и производительностью.
 
 ### Использование **FilenameFilter**
 
@@ -19275,7 +19275,7 @@ public class EncodingBestPractices {
 
 ## Заключение
 
-**Кодировка символов - фундаментальный аспект работы с текстом в **Java**:**
+**Кодировка символов — фундаментальный аспект работы с текстом в **Java**:**
 
 ### Основные правила:
 
@@ -22110,16 +22110,16 @@ public class ReflectionBestPractices {
 **Reflection API** предоставляет мощные возможности для динамического анализа и модификации кода:**
 
 **Основные возможности:**
-- ✅ **Интроспекция классов** - получение информации о структуре
-- ✅ **Динамическое создание** - экземпляры, вызов методов, доступ к полям
-- ✅ **Работа с аннотациями** - чтение и анализ метаданных
-- ✅ **Модификация поведения** - изменение **final** полей, **private** доступ
+- ✅ **Интроспекция классов** — получение информации о структуре
+- ✅ **Динамическое создание** — экземпляры, вызов методов, доступ к полям
+- ✅ **Работа с аннотациями** — чтение и анализ метаданных
+- ✅ **Модификация поведения** — изменение **final** полей, **private** доступ
 
 **Ограничения и риски:**
-- ❌ **Производительность** - медленнее прямого доступа
-- ❌ **Безопасность** - обход инкапсуляции, модульная система
-- ❌ **Поддержка** - внутренние **API** могут измениться
-- ❌ **Отладка** - сложнее отслеживать ошибки
+- ❌ **Производительность** — медленнее прямого доступа
+- ❌ **Безопасность** — обход инкапсуляции, модульная система
+- ❌ **Поддержка** — внутренние **API** могут измениться
+- ❌ **Отладка** — сложнее отслеживать ошибки
 
 **Лучшие практики:**
 - Используйте только при необходимости
@@ -22135,7 +22135,7 @@ public class ReflectionBestPractices {
 - **Компилируемые решения** (**Lombok, APT**)
 - **Конфигурационные файлы** вместо **reflection**
 
-**Reflection** - инструмент, но используйте его осторожно и только там, где прямой доступ невозможен.
+**Reflection** — инструмент, но используйте его осторожно и только там, где прямой доступ невозможен.
 
 ## Извлечение полей из класса, используя **Reflection API**
 
@@ -23144,14 +23144,14 @@ public class FieldExtractionBestPractices {
 
 ## Заключение
 
-**Извлечение полей через **Reflection API** - мощная техника для работы с метаданными объектов:**
+**Извлечение полей через **Reflection API** — мощная техника для работы с метаданными объектов:**
 
 **Основные возможности:**
-- ✅ **Анализ структуры** - получение информации о полях класса
-- ✅ **Извлечение значений** - чтение данных из объектов
-- ✅ **Копирование объектов** - создание копий через поля
-- ✅ **Сериализация** - кастомная сериализация/десериализация
-- ✅ **Работа с аннотациями** - анализ метаданных полей
+- ✅ **Анализ структуры** — получение информации о полях класса
+- ✅ **Извлечение значений** — чтение данных из объектов
+- ✅ **Копирование объектов** — создание копий через поля
+- ✅ **Сериализация** — кастомная сериализация/десериализация
+- ✅ **Работа с аннотациями** — анализ метаданных полей
 
 **Когда использовать:**
 - Фреймворки (**ORM, сериализация, DI**)
@@ -23173,11 +23173,11 @@ public class FieldExtractionBestPractices {
 - **Компилируемые решения** (**Lombok, APT**)
 - **Конфигурационные файлы** для метаданных
 
-**Reflection** для извлечения полей - это фундаментальная техника, но используйте ее разумно, так как она может снижать производительность и безопасность приложения.
+**Reflection** для извлечения полей — это фундаментальная техника, но используйте ее разумно, так как она может снижать производительность и безопасность приложения.
 
 ## Стратегии проектирования для разделения модулей
 
-Разделение модулей - ключевой аспект архитектуры программного обеспечения. Правильное разделение позволяет создавать поддерживаемые, тестируемые и масштабируемые системы.
+Разделение модулей — ключевой аспект архитектуры программного обеспечения. Правильное разделение позволяет создавать поддерживаемые, тестируемые и масштабируемые системы.
 
 ### Основные принципы разделения
 
@@ -24074,7 +24074,7 @@ public class DependencyManagement {
 
 ## Заключение
 
-**Разделение модулей - фундаментальный принцип создания поддерживаемых систем:**
+**Разделение модулей — фундаментальный принцип создания поддерживаемых систем:**
 
 ### Основные стратегии:
 
@@ -24104,7 +24104,7 @@ public class DependencyManagement {
 - Сложность координации
 
 ### Лучшие практики:
-- **SRP**: Один класс - одна ответственность
+- **SRP**: Один класс — одна ответственность
 - **OCP**: Открыт для расширения, закрыт для модификации
 - **Высокая связность** внутри модуля
 - **Низкая связность** между модулями
@@ -24118,14 +24118,14 @@ public class DependencyManagement {
 - **Архитектурные тесты** для проверки границ
 
 **Правильное разделение модулей обеспечивает:**
-- **Поддерживаемость** - легче изменять код
-- **Тестируемость** - проще писать и запускать тесты
-- **Масштабируемость** - можно развивать модули независимо
-- **Переиспользуемость** - модули можно использовать в разных проектах
+- **Поддерживаемость** — легче изменять код
+- **Тестируемость** — проще писать и запускать тесты
+- **Масштабируемость** — можно развивать модули независимо
+- **Переиспользуемость** — модули можно использовать в разных проектах
 
 ## Преимущества и недостатки использования импорта подстановочных знаков (**wildcards**)
 
-Импорт подстановочных знаков (**`**import java.**util**.*;`**) - распространенная практика в **Java**. Однако у нее есть как преимущества, так и серьезные недостатки.
+Импорт подстановочных знаков (**`**import java.**util**.*;`**) — распространенная практика в **Java**. Однако у нее есть как преимущества, так и серьезные недостатки.
 
 ### Что такое **wildcard import**?
 
@@ -24640,17 +24640,17 @@ public class GuavaUsage {
 **Wildcard импорты: плюсы и минусы**
 
 ### Преимущества:
-- ✅ **Сокращение кода** - меньше строк импортов
-- ✅ **Удобство рефакторинга** - легко менять пакеты
-- ✅ **Визуальная чистота** - меньше шума в начале файла
-- ✅ **Быстрая разработка** - **IDE** автодополнение
+- ✅ **Сокращение кода** — меньше строк импортов
+- ✅ **Удобство рефакторинга** — легко менять пакеты
+- ✅ **Визуальная чистота** — меньше шума в начале файла
+- ✅ **Быстрая разработка** — **IDE** автодополнение
 
 ### Недостатки:
-- ❌ **Конфликты имен** - проблемы с одинаковыми именами классов
-- ❌ **Снижение читаемости** - неясно, какие классы используются
-- ❌ **Проблемы производительности** - компилятор проверяет все классы пакета
-- ❌ **Скрытые зависимости** - сложно отследить реальные зависимости
-- ❌ **Проблемы с IDE** - затруднен поиск и анализ
+- ❌ **Конфликты имен** — проблемы с одинаковыми именами классов
+- ❌ **Снижение читаемости** — неясно, какие классы используются
+- ❌ **Проблемы производительности** — компилятор проверяет все классы пакета
+- ❌ **Скрытые зависимости** — сложно отследить реальные зависимости
+- ❌ **Проблемы с IDE** — затруднен поиск и анализ
 
 ### Рекомендации:
 
@@ -24667,14 +24667,14 @@ public class GuavaUsage {
 - В коде, требующем высокой поддерживаемости
 
 #### Альтернативы:
-- **Явные импорты** - максимально читабельно
-- **Статические импорты** - для **utility** методов
-- **Квалифицированные имена** - без импортов вообще
+- **Явные импорты** — максимально читабельно
+- **Статические импорты** — для **utility** методов
+- **Квалифицированные имена** — без импортов вообще
 
 #### Инструменты:
-- **IDE настройки** - автоматическая оптимизация импортов
-- **Checkstyle/PMD** - правила контроля импортов
-- **Соглашения команды** - единые правила для проекта
+- **IDE настройки** — автоматическая оптимизация импортов
+- **Checkstyle/PMD** — правила контроля импортов
+- **Соглашения команды** — единые правила для проекта
 
 **Итоговый совет:** Используйте **wildcard** импорты умеренно. В большинстве случаев явные импорты предпочтительнее для поддерживаемого и понятного кода. Делайте выбор осознанно, исходя из специфики проекта и команды.
 
@@ -25391,7 +25391,7 @@ class MemoryTest {
 
 ## Руководство по **Javadoc**
 
-**Javadoc** - это стандартный инструмент для генерации **API** документации в **Java**. Он позволяет создавать **HTML** документацию из комментариев в исходном коде.
+**Javadoc** — это стандартный инструмент для генерации **API** документации в **Java**. Он позволяет создавать **HTML** документацию из комментариев в исходном коде.
 
 ### Основы **Javadoc**
 
@@ -26163,7 +26163,7 @@ public class AdvancedJavadocExample {
 
 ## Заключение
 
-**Javadoc** - это инструмент для создания качественной документации:**
+**Javadoc** — это инструмент для создания качественной документации:**
 
 ### Основные правила:
 - ✅ Всегда документируйте публичные **API**
@@ -26201,7 +26201,7 @@ javadoc -d docs \
 
 ## Рекурсия
 
-Рекурсия - это техника программирования, при которой функция вызывает сама себя. Это инструмент для решения задач, которые могут быть разбиты на более простые подзадачи того же типа.
+Рекурсия — это техника программирования, при которой функция вызывает сама себя. Это инструмент для решения задач, которые могут быть разбиты на более простые подзадачи того же типа.
 
 ### Основы рекурсии
 
@@ -27028,7 +27028,7 @@ public class RecursionBestPractices {
 
 ### Заключение
 
-**Рекурсия - мощная техника программирования с широким спектром применений:**
+**Рекурсия — мощная техника программирования с широким спектром применений:**
 
 ### Основные типы рекурсии:
 
@@ -27053,18 +27053,18 @@ public class RecursionBestPractices {
 
 ### Когда использовать рекурсию:
 
-✅ **Древовидные структуры** - обход деревьев, графов
-✅ **Разделяй и властвуй** - сортировка слиянием, бинарный поиск
-✅ **Парсинг** - разбор выражений, синтаксический анализ
-✅ **Комбинаторика** - генерация перестановок, подмножеств
-✅ **Мемоизация** - динамическое программирование
+✅ **Древовидные структуры** — обход деревьев, графов
+✅ **Разделяй и властвуй** — сортировка слиянием, бинарный поиск
+✅ **Парсинг** — разбор выражений, синтаксический анализ
+✅ **Комбинаторика** — генерация перестановок, подмножеств
+✅ **Мемоизация** — динамическое программирование
 
 ### Когда НЕ использовать рекурсию:
 
-❌ **Большие итерации** - может вызвать **StackOverflowError**
-❌ **Простые циклы** - итерация эффективнее
-❌ **Ограниченная память** - каждый вызов занимает стек
-❌ **Производительность критична** - рекурсия медленнее итерации
+❌ **Большие итерации** — может вызвать **StackOverflowError**
+❌ **Простые циклы** — итерация эффективнее
+❌ **Ограниченная память** — каждый вызов занимает стек
+❌ **Производительность критична** — рекурсия медленнее итерации
 
 ### Лучшие практики:
 - **Всегда проверяйте базовые случаи**
@@ -27074,11 +27074,11 @@ public class RecursionBestPractices {
 - **Тестируйте с большими входными данными**
 - **Документируйте рекурсивные алгоритмы**
 
-Рекурсия - это инструмент для правильных задач. Используйте ее там, где она делает код более понятным и элегантным, но не забывайте про ограничения и производительность!
+Рекурсия — это инструмент для правильных задач. Используйте ее там, где она делает код более понятным и элегантным, но не забывайте про ограничения и производительность!
 
 ## Оператор **XOR**
 
-**XOR** (**исключающее ИЛИ**) - это побитовый оператор, который возвращает **true**, если ровно один из операндов равен **true**. В **Java** оператор **XOR** обозначается как `^`.
+**XOR** (**исключающее ИЛИ**) — это побитовый оператор, который возвращает **true**, если ровно один из операндов равен **true**. В **Java** оператор **XOR** обозначается как `^`.
 
 ### Основы **XOR**
 
@@ -27868,7 +27868,7 @@ public class XORBestPractices {
 
 ## Заключение
 
-**Оператор `XOR` (^) - инструмент в `Java`:**
+**Оператор `XOR` (^) — инструмент в `Java`:**
 
 ### Основные применения:
 
@@ -27907,8 +27907,8 @@ public class XORBestPractices {
 - ❌ **Избегайте** в критичных к безопасности системах
 
 ### Производительность:
-- **Очень быстрый** - один такт процессора
-- **Без ветвлений** - предсказуемое выполнение
-- **Векторные операции** - поддержка **SIMD**
+- **Очень быстрый** — один такт процессора
+- **Без ветвлений** — предсказуемое выполнение
+- **Векторные операции** — поддержка **SIMD**
 
-**XOR** - это фундаментальная операция, которая лежит в основе многих алгоритмов и оптимизаций в **Java**!
+**XOR** — это фундаментальная операция, которая лежит в основе многих алгоритмов и оптимизаций в **Java**!

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **Packer**
 
-**Packer** - это инструмент с открытым исходным кодом от **HashiCorp** для создания идентичных образов машин для различных платформ (**AWS `AMI`, `Docker containers`, VMware VMs, `VirtualBox` и другие**) из единого конфигурационного файла. Этот документ охватывает продвинутые паттерны, автоматизацию и **best practices** для **enterprise** использования **Packer**.
+**Packer** — это инструмент с открытым исходным кодом от **HashiCorp** для создания идентичных образов машин для различных платформ (**AWS `AMI`, `Docker containers`, VMware VMs, `VirtualBox` и другие**) из единого конфигурационного файла. Этот документ охватывает продвинутые паттерны, автоматизацию и **best practices** для **enterprise** использования **Packer**.
 
 ## Полезные ссылки
 - [Packer Documentation](https://developer.hashicorp.com/packer/docs)
@@ -1020,7 +1020,7 @@ aws sts get-caller-identity
 ## Лучшие практики
 
 ### Project structure
-```
+```text
 enterprise-packer/
 ├── packer.json                 # Main configuration
 ├── variables.json             # Variables for different environments

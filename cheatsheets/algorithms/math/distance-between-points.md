@@ -70,10 +70,10 @@ updated: "2026-02-11"
 Во-вторых, посчитаем `AC` и `CB`.
 
 **Очевидно:**
-- `AC` = **y2** - **y1**
+- `AC` = **y2** — **y1**
 
 **Сходным образом:**
-- `BC` = **x2** - **x1**
+- `BC` = **x2** — **x1**
 
 **Подставим части уравнения:**
 
@@ -117,7 +117,7 @@ public void givenTwoPoints_whenCalculateDistanceByFormula_thenCorrect() {
     double y1 = 4;
     double x2 = 7;
     double y2 = 1;
-    
+
     double distance = service.calculateDistanceBetweenPoints(x1, y1, x2, y2);
     assertEquals(distance, 5, 0.001);
 }
@@ -153,7 +153,7 @@ public void givenTwoPoints_whenCalculateDistanceWithHypot_thenCorrect() {
     double y1 = 4;
     double x2 = 7;
     double y2 = 1;
-    
+
     double distance = service.calculateDistanceBetweenPointsWithHypot(x1, y1, x2, y2);
     assertEquals(distance, 5, 0.001);
 }
@@ -184,7 +184,7 @@ public void givenTwoPoints_whenCalculateDistanceWithPoint2D_thenCorrect() {
     double y1 = 4;
     double x2 = 7;
     double y2 = 1;
-    
+
     double distance = service.calculateDistanceBetweenPointsWithPoint2D(x1, y1, x2, y2);
     assertEquals(distance, 5, 0.001);
 }
@@ -203,10 +203,10 @@ public double calculateDistanceWithPoint2DObjects(Point2D point1, Point2D point2
 **Для вычисления расстояния между двумя точками в трехмерном пространстве:**
 
 ```java
-public double calculateDistance3D(double x1, double y1, double z1, 
+public double calculateDistance3D(double x1, double y1, double z1,
                                    double x2, double y2, double z2) {
-    return Math.sqrt(Math.pow(x2 - x1, 2) + 
-                     Math.pow(y2 - y1, 2) + 
+    return Math.sqrt(Math.pow(x2 - x1, 2) +
+                     Math.pow(y2 - y1, 2) +
                      Math.pow(z2 - z1, 2));
 }
 ```
@@ -358,16 +358,16 @@ fun main() {
     val y1 = 4.0
     val x2 = 7.0
     val y2 = 1.0
-    
+
     val distance1 = calculateDistanceBetweenPointsK(x1, y1, x2, y2)
     println("Distance (formula): $distance1") // 5.0
-    
+
     val distance2 = calculateDistanceWithHypotK(x1, y1, x2, y2)
     println("Distance (hypot): $distance2") // 5.0
-    
+
     val distance3 = calculateDistanceWithPoint2DK(x1, y1, x2, y2)
     println("Distance (Point2D): $distance3") // 5.0
-    
+
     // 3D расстояние
     val distance3D = calculateDistance3DK(0.0, 0.0, 0.0, 3.0, 4.0, 5.0)
     println("3D Distance: $distance3D") // ~7.07

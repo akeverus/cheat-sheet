@@ -1468,7 +1468,13 @@ public class HikariConnectionPoolTest {
 
 **HikariCP** рекомендуется как основной **connection pool** для большинства **Java** проектов, особенно **enterprise** приложений с высокими требованиями к производительности и надежности.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-apache-httpclient|Apache HttpClient: Мощный HTTP клиент для Java]]
+- [[java-apache-poi|Apache POI]]
+- [[java-bean-validation|Bean Validation (JSR-380 / Jakarta Validation 3.0)]]
+- [[java-http-clients|HTTP-клиенты в Java]]
+- [[java-jackson|Jackson: JSON-сериализация в Java]]

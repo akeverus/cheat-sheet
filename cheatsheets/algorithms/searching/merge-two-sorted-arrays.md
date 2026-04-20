@@ -101,11 +101,11 @@ public static int[] merge(int[] foo, int[] bar) {
     int fooLength = foo.length;
     int barLength = bar.length;
     int[] merged = new int[fooLength + barLength];
-    
+
     int fooPosition = 0;
     int barPosition = 0;
     int mergedPosition = 0;
-    
+
     while (fooPosition < fooLength && barPosition < barLength) {
         if (foo[fooPosition] < bar[barPosition]) {
             merged[mergedPosition++] = foo[fooPosition++];
@@ -113,15 +113,15 @@ public static int[] merge(int[] foo, int[] bar) {
             merged[mergedPosition++] = bar[barPosition++];
         }
     }
-    
+
     while (fooPosition < fooLength) {
         merged[mergedPosition++] = foo[fooPosition++];
     }
-    
+
     while (barPosition < barLength) {
         merged[mergedPosition++] = bar[barPosition++];
     }
-    
+
     return merged;
 }
 ```

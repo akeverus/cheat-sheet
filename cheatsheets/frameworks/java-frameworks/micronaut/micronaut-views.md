@@ -17,9 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-mail.md"]
 ---
 
-# Micronaut: Views - Template Engines и View Rendering
-
-
+# Micronaut: Views — Template Engines и View Rendering
 
 ## Полезные ссылки
 
@@ -28,7 +26,7 @@ related: ["micronaut-http.md", "micronaut-mail.md"]
 
 ## Содержание
 
-- [Micronaut: Views - Template Engines и View Rendering](#micronaut-views-template-engines-и-view-rendering)
+- [Micronaut: Views — Template Engines и View Rendering](#micronaut-views-template-engines-и-view-rendering)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Views](#настройка-views)
@@ -137,7 +135,7 @@ import java.util.Map;
 
 @Controller("/users")
 public class UserController {
-    
+
     @Get("/list")
     @View("users/list")
     public Map<String, Object> listUsers() {
@@ -181,7 +179,7 @@ import io.micronaut.views.View;
 
 @Controller("/users")
 public class UserController {
-    
+
     @Get("/list")
     @View("users/list")
     public Map<String, Object> listUsers() {
@@ -228,7 +226,7 @@ import jakarta.inject.Singleton;
 
 @Controller("/users")
 public class UserController {
-    
+
     @Get("/{id}")
     @View("users/detail")
     public UserViewModel getUser(Long id) {
@@ -239,19 +237,19 @@ public class UserController {
 
 public class UserViewModel {
     private final User user;
-    
+
     public UserViewModel(User user) {
         this.user = user;
     }
-    
+
     public String getName() {
         return user.getName();
     }
-    
+
     public String getEmail() {
         return user.getEmail();
     }
-    
+
     public boolean isAdult() {
         return user.getAge() >= 18;
     }
@@ -318,7 +316,7 @@ public Map<String, Object> listUsers() {
 ```java
 @Controller("/users")
 public class UserController {
-    
+
     @Get("/list")
     @View("users/list")
     public Map<String, Object> listUsers() {
@@ -383,7 +381,7 @@ import java.util.Optional;
 
 @Singleton
 public class CustomViewResolver implements ViewResolver<Map<String, Object>> {
-    
+
     @Override
     public Optional<String> resolve(String viewName, Map<String, Object> model) {
         // Кастомная логика разрешения views
@@ -404,3 +402,11 @@ public class CustomViewResolver implements ViewResolver<Map<String, Object>> {
 - [Thymeleaf Documentation](https://www.thymeleaf.org/documentation.html)
 - [Freemarker Documentation](https://freemarker.apache.org/docs/)
 - [Velocity Documentation](https://velocity.apache.org/engine/releases/velocity-1.7/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

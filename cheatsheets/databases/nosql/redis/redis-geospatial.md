@@ -64,7 +64,6 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - **Поиск в радиусе**: Точки в определенном радиусе
 - **Геохэши**: Для интеграции с другими системами
 
----
 
 ## Базовые операции
 
@@ -112,7 +111,6 @@ GEODIST cities Palermo Catania mi
 GEODIST cities Palermo Catania ft
 ```
 
----
 
 ## Поиск в радиусе
 
@@ -165,7 +163,6 @@ GEOSEARCH cities FROMMEMBER Palermo BYRADIUS 200 km
 GEOSEARCH cities FROMMEMBER Palermo BYRADIUS 200 km ASC
 ```
 
----
 
 ## Геохэши
 
@@ -180,7 +177,6 @@ GEOHASH cities Palermo
 # или для кэширования координат
 ```
 
----
 
 ## Программное использование
 
@@ -194,31 +190,30 @@ import redis.clients.jedis.params.GeoRadiusParam;
 
 public class GeoRedisExample {
     private Jedis jedis;
-    
+
     public GeoRedisExample(Jedis jedis) {
         this.jedis = jedis;
     }
-    
+
     public void addLocation(String key, String name, double longitude, double latitude) {
         jedis.geoadd(key, longitude, latitude, name);
     }
-    
-    public List<GeoRadiusResponse> findNearby(String key, double longitude, 
-                                             double latitude, double radiusKm, 
+
+    public List<GeoRadiusResponse> findNearby(String key, double longitude,
+                                             double latitude, double radiusKm,
                                              int count) {
         GeoRadiusParam param = GeoRadiusParam.geoRadiusParam()
             .withDist()
             .withCoord()
             .count(count)
             .sortAscending();
-        
-        return jedis.georadius(key, longitude, latitude, radiusKm, 
+
+        return jedis.georadius(key, longitude, latitude, radiusKm,
                               GeoUnit.KM, param);
     }
 }
 ```
 
----
 
 ## **Use Cases**
 
@@ -236,17 +231,17 @@ import java.util.List;
 public class NearbySearch {
     private JedisPool jedisPool;
     private String key = "locations";
-    
+
     public NearbySearch(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void addPlace(String placeId, double longitude, double latitude, String name) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.geoadd(key, longitude, latitude, placeId + ":" + name);
         }
     }
-    
+
     public List<Place> findNearbyPlaces(double userLongitude, double userLatitude, double radiusKm) {
         try (Jedis jedis = jedisPool.getResource()) {
             GeoRadiusParam param = GeoRadiusParam.geoRadiusParam()
@@ -254,7 +249,7 @@ public class NearbySearch {
                 .withCoord()
                 .count(20)
                 .sortAscending();
-            
+
             List<GeoRadiusResponse> results = jedis.georadius(
                 key,
                 userLongitude,
@@ -263,7 +258,7 @@ public class NearbySearch {
                 GeoUnit.KM,
                 param
             );
-            
+
             List<Place> places = new ArrayList<>();
             for (GeoRadiusResponse result : results) {
                 String member = result.getMemberByString();
@@ -278,13 +273,13 @@ public class NearbySearch {
             return places;
         }
     }
-    
+
     public static class Place {
         private String id;
         private String name;
         private double distance;
         private redis.clients.jedis.GeoCoordinate coordinates;
-        
+
         public Place(String id, String name, double distance, redis.clients.jedis.GeoCoordinate coordinates) {
             this.id = id;
             this.name = name;
@@ -310,24 +305,24 @@ public class DeliveryOptimizer {
     private JedisPool jedisPool;
     private String deliveriesKey = "deliveries";
     private String depotKey = "depots";
-    
+
     public DeliveryOptimizer(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void addDelivery(String deliveryId, double longitude, double latitude) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.geoadd(deliveriesKey, longitude, latitude, deliveryId);
         }
     }
-    
+
     public DepotInfo findNearestDepot(double longitude, double latitude) {
         try (Jedis jedis = jedisPool.getResource()) {
             GeoRadiusParam param = GeoRadiusParam.geoRadiusParam()
                 .withDist()
                 .count(1)
                 .sortAscending();
-            
+
             List<GeoRadiusResponse> results = jedis.georadius(
                 depotKey,
                 longitude,
@@ -336,7 +331,7 @@ public class DeliveryOptimizer {
                 GeoUnit.KM,
                 param
             );
-            
+
             if (!results.isEmpty()) {
                 GeoRadiusResponse result = results.get(0);
                 return new DepotInfo(result.getMemberByString(), result.getDistance());
@@ -344,11 +339,11 @@ public class DeliveryOptimizer {
             return null;
         }
     }
-    
+
     public static class DepotInfo {
         private String depotId;
         private double distance;
-        
+
         public DepotInfo(String depotId, double distance) {
             this.depotId = depotId;
             this.distance = distance;
@@ -358,7 +353,6 @@ public class DeliveryOptimizer {
 }
 ```
 
----
 
 ## Лучшие практики
 
@@ -395,11 +389,11 @@ import java.util.Map;
 
 public class GeospatialIndex {
     private JedisPool jedisPool;
-    
+
     public GeospatialIndex(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void buildIndex(String key, List<Location> locations) {
         try (Jedis jedis = jedisPool.getResource()) {
             for (Location location : locations) {
@@ -407,22 +401,22 @@ public class GeospatialIndex {
             }
         }
     }
-    
+
     public List<String> searchByRegion(double minLon, double minLat, double maxLon, double maxLat) {
         try (Jedis jedis = jedisPool.getResource()) {
             GeoSearchParam param = GeoSearchParam.geoSearchParam()
                 .fromLonLat(minLon, minLat)
                 .byBox(maxLon - minLon, maxLat - minLat, redis.clients.jedis.args.GeoUnit.KM);
-            
+
             return jedis.geosearch("locations", param);
         }
     }
-    
+
     public static class Location {
         private String id;
         private double longitude;
         private double latitude;
-        
+
         // Constructors, getters...
     }
 }
@@ -442,29 +436,29 @@ import java.util.List;
 public class OptimizedGeoSearch {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public OptimizedGeoSearch(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.gson = new Gson();
     }
-    
-    public List<GeoRadiusResponse> cachedSearch(double longitude, double latitude, 
+
+    public List<GeoRadiusResponse> cachedSearch(double longitude, double latitude,
                                                double radiusKm, int cacheTtl) {
         try (Jedis jedis = jedisPool.getResource()) {
             String cacheKey = String.format("geo:%.6f:%.6f:%.2f", longitude, latitude, radiusKm);
-            
+
             // Проверить кэш
             String cached = jedis.get(cacheKey);
             if (cached != null) {
-                return gson.fromJson(cached, 
+                return gson.fromJson(cached,
                     new com.google.gson.reflect.TypeToken<List<GeoRadiusResponse>>(){}.getType());
             }
-            
+
             // Выполнить поиск
             GeoRadiusParam param = GeoRadiusParam.geoRadiusParam()
                 .withDist()
                 .withCoord();
-            
+
             List<GeoRadiusResponse> results = jedis.georadius(
                 "locations",
                 longitude,
@@ -473,10 +467,10 @@ public class OptimizedGeoSearch {
                 GeoUnit.KM,
                 param
             );
-            
+
             // Сохранить в кэш
             jedis.setex(cacheKey, cacheTtl, gson.toJson(results));
-            
+
             return results;
         }
     }
@@ -499,22 +493,22 @@ import java.util.Map;
 
 public class LocationService {
     private JedisPool jedisPool;
-    
+
     public LocationService(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
-    public List<Service> findNearbyServices(double userLon, double userLat, 
+
+    public List<Service> findNearbyServices(double userLon, double userLat,
                                            String serviceType, double radiusKm) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "services:" + serviceType;
-            
+
             GeoRadiusParam param = GeoRadiusParam.geoRadiusParam()
                 .withDist()
                 .withCoord()
                 .count(20)
                 .sortAscending();
-            
+
             List<GeoRadiusResponse> results = jedis.georadius(
                 key,
                 userLon,
@@ -523,16 +517,16 @@ public class LocationService {
                 GeoUnit.KM,
                 param
             );
-            
+
             List<Service> services = new ArrayList<>();
             for (GeoRadiusResponse result : results) {
                 String serviceId = result.getMemberByString();
                 double distance = result.getDistance();
                 redis.clients.jedis.GeoCoordinate coords = result.getCoordinate();
-                
+
                 // Получить дополнительную информацию
                 Map<String, String> info = jedis.hgetAll("service:" + serviceId);
-                
+
                 services.add(new Service(
                     serviceId,
                     info.get("name"),
@@ -541,18 +535,18 @@ public class LocationService {
                     info.get("rating")
                 ));
             }
-            
+
             return services;
         }
     }
-    
+
     public static class Service {
         private String id;
         private String name;
         private double distance;
         private redis.clients.jedis.GeoCoordinate coordinates;
         private String rating;
-        
+
         // Constructors, getters...
     }
 }
@@ -571,30 +565,30 @@ import java.util.List;
 
 public class DeliveryOptimizer {
     private JedisPool jedisPool;
-    
+
     public DeliveryOptimizer(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public List<String> optimizeRoute(List<DeliveryPoint> deliveryPoints) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Добавить точки доставки
             for (DeliveryPoint point : deliveryPoints) {
                 jedis.geoadd("deliveries", point.getLongitude(), point.getLatitude(), point.getId());
             }
-            
+
             // Найти оптимальный маршрут (упрощенный алгоритм)
             List<String> route = new ArrayList<>();
             DeliveryPoint currentPoint = deliveryPoints.get(0);
             List<DeliveryPoint> remainingPoints = new ArrayList<>(deliveryPoints.subList(1, deliveryPoints.size()));
-            
+
             while (!remainingPoints.isEmpty()) {
                 // Найти ближайшую точку
                 GeoRadiusParam param = GeoRadiusParam.geoRadiusParam()
                     .withDist()
                     .count(1)
                     .sortAscending();
-                
+
                 List<GeoRadiusResponse> nearest = jedis.georadius(
                     "deliveries",
                     currentPoint.getLongitude(),
@@ -603,11 +597,11 @@ public class DeliveryOptimizer {
                     GeoUnit.KM,
                     param
                 );
-                
+
                 if (!nearest.isEmpty()) {
                     String nextPointId = nearest.get(0).getMemberByString();
                     route.add(nextPointId);
-                    
+
                     // Обновить текущую точку
                     for (DeliveryPoint point : remainingPoints) {
                         if (point.getId().equals(nextPointId)) {
@@ -620,25 +614,21 @@ public class DeliveryOptimizer {
                     break;
                 }
             }
-            
+
             return route;
         }
     }
-    
+
     public static class DeliveryPoint {
         private String id;
         private double longitude;
         private double latitude;
-        
+
         // Constructors, getters...
     }
 }
 ```
 
----
 
 - [Redis Geospatial](https://redis.io/docs/data-types/geospatial/)
-
----
-
 

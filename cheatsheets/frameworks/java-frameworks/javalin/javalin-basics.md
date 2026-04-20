@@ -24,10 +24,6 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 - [Javalin on GitHub](https://github.com/javalin/javalin)
 - [Javalin Examples](https://javalin.io/tutorials)
 
-
-
----
-
 ## Содержание
 
 - [Введение в Javalin](#введение-в-javalin)
@@ -175,7 +171,6 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 - **WebSocket**: Встроенная поддержка **WebSocket**
 - **Валидация**: Встроенная валидация запросов
 
----
 
 ## Установка и настройка
 
@@ -199,7 +194,6 @@ dependencies {
 }
 ```
 
----
 
 ## Базовое использование
 
@@ -278,7 +272,6 @@ app.post("/users", ctx -> {
 });
 ```
 
----
 
 ## Контекст (Context)
 
@@ -317,7 +310,6 @@ app.get("/old", ctx -> {
 });
 ```
 
----
 
 ## JSON обработка
 
@@ -340,7 +332,6 @@ app.post("/user", ctx -> {
 });
 ```
 
----
 
 ## Валидация
 
@@ -362,7 +353,6 @@ app.post("/users", ctx -> {
 });
 ```
 
----
 
 ## Обработка ошибок
 
@@ -385,7 +375,6 @@ app.exception(Exception.class, (e, ctx) -> {
 });
 ```
 
----
 
 ## Конфигурация
 
@@ -415,7 +404,6 @@ Javalin app = Javalin.create(config -> {
 }).start(7000);
 ```
 
----
 
 ## Middleware
 
@@ -472,7 +460,6 @@ app.error(500, ctx -> {
 });
 ```
 
----
 
 ## Сессии
 
@@ -502,7 +489,6 @@ app.post("/logout", ctx -> {
 });
 ```
 
----
 
 ## WebSocket
 
@@ -513,17 +499,17 @@ app.ws("/ws", ws -> {
     ws.onConnect(ctx -> {
         System.out.println("Connected: " + ctx.sessionId());
     });
-    
+
     ws.onMessage(ctx -> {
         String message = ctx.message();
         System.out.println("Received: " + message);
         ctx.send("Echo: " + message);
     });
-    
+
     ws.onClose(ctx -> {
         System.out.println("Closed: " + ctx.sessionId());
     });
-    
+
     ws.onError(ctx -> {
         System.err.println("Error: " + ctx.error());
     });
@@ -537,7 +523,7 @@ app.ws("/ws", ws -> {
     ws.onMessage(ctx -> {
         JsonObject json = new JsonObject(ctx.message());
         String type = json.getString("type");
-        
+
         if ("chat".equals(type)) {
             JsonObject response = new JsonObject()
                 .put("type", "message")
@@ -548,7 +534,6 @@ app.ws("/ws", ws -> {
 });
 ```
 
----
 
 ## База данных
 
@@ -562,17 +547,17 @@ import java.sql.ResultSet;
 
 public class DatabaseExample {
     private static final String DB_URL = "jdbc:postgresql://localhost:5432/mydb";
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.get("/users", ctx -> {
             List<User> users = new ArrayList<>();
-            
+
             try (Connection conn = DriverManager.getConnection(DB_URL, "user", "password");
                  PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users");
                  ResultSet rs = stmt.executeQuery()) {
-                
+
                 while (rs.next()) {
                     User user = new User();
                     user.setId(rs.getLong("id"));
@@ -580,7 +565,7 @@ public class DatabaseExample {
                     users.add(user);
                 }
             }
-            
+
             ctx.json(users);
         });
     }
@@ -595,7 +580,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class ConnectionPoolExample {
     private static HikariDataSource dataSource;
-    
+
     static {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb");
@@ -603,19 +588,19 @@ public class ConnectionPoolExample {
         config.setPassword("password");
         dataSource = new HikariDataSource(config);
     }
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.get("/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
-            
+
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE id = ?")) {
-                
+
                 stmt.setLong(1, id);
                 ResultSet rs = stmt.executeQuery();
-                
+
                 if (rs.next()) {
                     User user = new User();
                     user.setId(rs.getLong("id"));
@@ -630,7 +615,6 @@ public class ConnectionPoolExample {
 }
 ```
 
----
 
 ## Аутентификация
 
@@ -665,14 +649,14 @@ import com.auth0.jwt.algorithms.Algorithm;
 
 public class JWTExample {
     private static final Algorithm algorithm = Algorithm.HMAC256("secret");
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.post("/login", ctx -> {
             String username = ctx.formParam("username");
             String password = ctx.formParam("password");
-            
+
             if (authenticate(username, password)) {
                 String token = JWT.create()
                     .withSubject(username)
@@ -683,7 +667,7 @@ public class JWTExample {
                 ctx.status(401).json("{\"error\":\"Invalid credentials\"}");
             }
         });
-        
+
         app.before("/api/*", ctx -> {
             String token = ctx.header("Authorization");
             if (token == null || !isValidToken(token)) {
@@ -694,7 +678,6 @@ public class JWTExample {
 }
 ```
 
----
 
 ## CORS
 
@@ -712,7 +695,6 @@ app.options("/*", ctx -> {
 });
 ```
 
----
 
 ## File Upload
 
@@ -722,7 +704,7 @@ app.options("/*", ctx -> {
 app.post("/upload", ctx -> {
     ctx.uploadedFiles("files").forEach(file -> {
         try {
-            Files.copy(file.content(), 
+            Files.copy(file.content(),
                 Paths.get("uploads/" + file.filename()),
                 StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -733,7 +715,6 @@ app.post("/upload", ctx -> {
 });
 ```
 
----
 
 ## Тестирование
 
@@ -765,7 +746,7 @@ public class IntegrationTest {
     void testEndpoint() {
         Javalin app = Javalin.create().start(0);
         app.get("/test", ctx -> ctx.json("OK"));
-        
+
         HttpClient client = HttpClient.create(app);
         String response = client.get("/test");
         assertEquals("{\"result\":\"OK\"}", response);
@@ -773,7 +754,6 @@ public class IntegrationTest {
 }
 ```
 
----
 
 ## Шаблоны
 
@@ -801,7 +781,6 @@ app.get("/", ctx -> {
 });
 ```
 
----
 
 ## Производительность
 
@@ -812,26 +791,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CachingExample {
     private static final Map<String, String> cache = new ConcurrentHashMap<>();
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.get("/data/:key", ctx -> {
             String key = ctx.pathParam("key");
             String value = cache.get(key);
-            
+
             if (value == null) {
                 value = fetchData(key);
                 cache.put(key, value);
             }
-            
+
             ctx.json(value);
         });
     }
 }
 ```
 
----
 
 ## Развертывание
 
@@ -861,7 +839,6 @@ EXPOSE 7000
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 ```
 
----
 
 ## Dependency Injection
 
@@ -874,11 +851,11 @@ import com.google.inject.Injector;
 public class GuiceExample {
     public static void main(String[] args) {
         Injector injector = Guice.createInjector(new MyModule());
-        
+
         Javalin app = Javalin.create(config -> {
             config.plugins.register(new GuicePlugin(injector));
         }).start(7000);
-        
+
         app.get("/users", ctx -> {
             UserService userService = ctx.appAttribute(Injector.class)
                 .getInstance(UserService.class);
@@ -888,7 +865,6 @@ public class GuiceExample {
 }
 ```
 
----
 
 ## Async Processing
 
@@ -908,7 +884,6 @@ app.get("/async", ctx -> {
 });
 ```
 
----
 
 ## Advanced Routing
 
@@ -939,7 +914,6 @@ app.get("/users/{userId}/posts/{postId}", ctx -> {
 });
 ```
 
----
 
 ## Request/Response Advanced
 
@@ -950,7 +924,7 @@ app.get("/api", ctx -> {
     String userAgent = ctx.header("User-Agent");
     String accept = ctx.header("Accept");
     String authorization = ctx.header("Authorization");
-    
+
     // Обработка заголовков
     ctx.json("OK");
 });
@@ -980,7 +954,6 @@ app.get("/get-cookie", ctx -> {
 });
 ```
 
----
 
 ## Database Integration
 
@@ -992,7 +965,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class DatabaseExample {
     private static HikariDataSource dataSource;
-    
+
     static {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb");
@@ -1001,20 +974,20 @@ public class DatabaseExample {
         config.setMaximumPoolSize(10);
         dataSource = new HikariDataSource(config);
     }
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.get("/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
-            
+
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(
                      "SELECT * FROM users WHERE id = ?")) {
-                
+
                 stmt.setLong(1, id);
                 ResultSet rs = stmt.executeQuery();
-                
+
                 if (rs.next()) {
                     User user = new User();
                     user.setId(rs.getLong("id"));
@@ -1029,7 +1002,6 @@ public class DatabaseExample {
 }
 ```
 
----
 
 ## Testing Advanced
 
@@ -1041,26 +1013,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class RouteTest {
-    
+
     @Mock
     private UserService userService;
-    
+
     @Test
     void testRoute() {
         when(userService.getUser(1L)).thenReturn(new User(1L, "John"));
-        
+
         Javalin app = Javalin.create().start(0);
         app.get("/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
             ctx.json(userService.getUser(id));
         });
-        
+
         // Тестирование
     }
 }
 ```
 
----
 
 ## Production Deployment
 
@@ -1080,7 +1051,6 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 }));
 ```
 
----
 
 ## Решение проблем
 
@@ -1090,7 +1060,6 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 2. **Memory Leaks**: Проверить **connection pools**
 3. **Slow Responses**: Профилировать код
 
----
 
 ## Advanced Features
 
@@ -1102,12 +1071,12 @@ import io.javalin.plugin.json.JsonMapper;
 
 public class CustomJsonMapper implements JsonMapper {
     private final Gson gson = new Gson();
-    
+
     @Override
     public String toJsonString(Object obj, Context ctx) {
         return gson.toJson(obj);
     }
-    
+
     @Override
     public <T> T fromJsonString(String json, Class<T> targetClass, Context ctx) {
         return gson.fromJson(json, targetClass);
@@ -1150,7 +1119,6 @@ app.get("/data", ctx -> {
 });
 ```
 
----
 
 ## Лучшие практики
 
@@ -1197,7 +1165,7 @@ import org.slf4j.LoggerFactory;
 
 public class LoggingExample {
     private static final Logger logger = LoggerFactory.getLogger(LoggingExample.class);
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create(config -> {
             config.requestLogger((ctx, ms) -> {
@@ -1208,7 +1176,6 @@ public class LoggingExample {
 }
 ```
 
----
 
 ## Performance Optimization
 
@@ -1220,7 +1187,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class PerformanceExample {
     private static HikariDataSource dataSource;
-    
+
     static {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:postgresql://localhost:5432/mydb");
@@ -1230,10 +1197,10 @@ public class PerformanceExample {
         config.setMinimumIdle(5);
         dataSource = new HikariDataSource(config);
     }
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.get("/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
             try (Connection conn = dataSource.getConnection();
@@ -1260,10 +1227,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CachingExample {
     private static final Map<String, String> cache = new ConcurrentHashMap<>();
-    
+
     public static void main(String[] args) {
         Javalin app = Javalin.create().start(7000);
-        
+
         app.get("/data/:key", ctx -> {
             String key = ctx.pathParam("key");
             String value = cache.get(key);
@@ -1277,7 +1244,6 @@ public class CachingExample {
 }
 ```
 
----
 
 ## Advanced Topics
 
@@ -1314,11 +1280,11 @@ app.events(event -> {
     event.serverStarted(() -> {
         System.out.println("Server started");
     });
-    
+
     event.serverStopping(() -> {
         System.out.println("Server stopping");
     });
-    
+
     event.serverStopped(() -> {
         System.out.println("Server stopped");
     });
@@ -1345,7 +1311,6 @@ Javalin app = Javalin.create(config -> {
 }).start(7000);
 ```
 
----
 
 ## Production Checklist
 
@@ -1373,7 +1338,6 @@ Javalin app = Javalin.create(config -> {
 - [ ] Настроен **backup**
 - [ ] Настроен **graceful shutdown**
 
----
 
 ## Real-World Examples
 
@@ -1382,17 +1346,17 @@ Javalin app = Javalin.create(config -> {
 ```java
 public class UserAPI {
     private static final UserService userService = new UserService();
-    
+
     public static void setup(Javalin app) {
         // GET all users
         app.get("/api/users", ctx -> {
-            int page = Integer.parseInt(ctx.queryParam("page") != null ? 
+            int page = Integer.parseInt(ctx.queryParam("page") != null ?
                 ctx.queryParam("page") : "0");
-            int size = Integer.parseInt(ctx.queryParam("size") != null ? 
+            int size = Integer.parseInt(ctx.queryParam("size") != null ?
                 ctx.queryParam("size") : "20");
             ctx.json(userService.getAllUsers(page, size));
         });
-        
+
         // GET user by id
         app.get("/api/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
@@ -1403,14 +1367,14 @@ public class UserAPI {
                 ctx.status(404).json("{\"error\":\"User not found\"}");
             }
         });
-        
+
         // POST create user
         app.post("/api/users", ctx -> {
             User user = ctx.bodyAsClass(User.class);
             User created = userService.createUser(user);
             ctx.status(201).json(created);
         });
-        
+
         // PUT update user
         app.put("/api/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
@@ -1422,7 +1386,7 @@ public class UserAPI {
                 ctx.status(404).json("{\"error\":\"User not found\"}");
             }
         });
-        
+
         // DELETE user
         app.delete("/api/users/:id", ctx -> {
             long id = Long.parseLong(ctx.pathParam("id"));
@@ -1436,7 +1400,6 @@ public class UserAPI {
 }
 ```
 
----
 
 ## Advanced Patterns
 
@@ -1445,36 +1408,36 @@ public class UserAPI {
 ```java
 public class UserService {
     private final UserRepository userRepository;
-    
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public List<User> getAllUsers(int page, int size) {
         return userRepository.findAll(page, size);
     }
-    
+
     public User getUser(long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     public User createUser(User user) {
         validateUser(user);
         return userRepository.save(user);
     }
-    
+
     public User updateUser(long id, User user) {
         User existing = getUser(id);
         existing.setName(user.getName());
         existing.setEmail(user.getEmail());
         return userRepository.save(existing);
     }
-    
+
     public boolean deleteUser(long id) {
         return userRepository.delete(id);
     }
-    
+
     private void validateUser(User user) {
         if (user.getName() == null || user.getName().isEmpty()) {
             throw new ValidationException("Name is required");
@@ -1495,22 +1458,21 @@ public interface UserRepository {
 
 public class UserRepositoryImpl implements UserRepository {
     private final DataSource dataSource;
-    
+
     public UserRepositoryImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-    
+
     @Override
     public List<User> findAll(int page, int size) {
         // Реализация
         return null;
     }
-    
+
     // Реализация остальных методов
 }
 ```
 
----
 
 ## Common Pitfalls and Solutions
 
@@ -1560,7 +1522,6 @@ app.exception(Exception.class, (e, ctx) -> {
 });
 ```
 
----
 
 ## Additional Resources
 
@@ -1584,7 +1545,6 @@ app.exception(Exception.class, (e, ctx) -> {
 6. **Performance**: **Connection pooling**, кеширование
 7. **Deployment**: **Docker**, CI/CD
 
----
 
 ## Summary
 
@@ -1604,7 +1564,6 @@ app.exception(Exception.class, (e, ctx) -> {
 - Микросервисы
 - Приложения на **Kotlin**
 
----
 
 ## Detailed Examples
 
@@ -1621,34 +1580,34 @@ public class Main {
                 logger.info("{} {} took {}ms", ctx.method(), ctx.path(), ms);
             });
         }).start(7000);
-        
+
         // Настройка routes
         UserRoutes.setup(app);
         PostRoutes.setup(app);
-        
+
         // Настройка middleware
         setupMiddleware(app);
-        
+
         // Настройка обработки ошибок
         setupErrorHandling(app);
     }
-    
+
     private static void setupMiddleware(Javalin app) {
         app.before(ctx -> {
             // Логирование
             logger.debug("Request: {} {}", ctx.method(), ctx.path());
         });
-        
+
         app.after(ctx -> {
             ctx.header("X-Response-Time", String.valueOf(ctx.responseTime()));
         });
     }
-    
+
     private static void setupErrorHandling(Javalin app) {
         app.exception(ValidationException.class, (e, ctx) -> {
             ctx.status(400).json("{\"error\":\"" + e.getMessage() + "\"}");
         });
-        
+
         app.exception(Exception.class, (e, ctx) -> {
             logger.error("Error", e);
             ctx.status(500).json("{\"error\":\"Internal Server Error\"}");
@@ -1663,15 +1622,15 @@ public class Main {
 public class UserService {
     private final UserRepository userRepository;
     private final Map<String, User> cache = new ConcurrentHashMap<>();
-    
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public List<User> getAllUsers(int page, int size) {
         return userRepository.findAll(page, size);
     }
-    
+
     public User getUser(long id) {
         String key = "user:" + id;
         User user = cache.get(key);
@@ -1682,14 +1641,14 @@ public class UserService {
         }
         return user;
     }
-    
+
     public User createUser(User user) {
         validateUser(user);
         User created = userRepository.save(user);
         cache.put("user:" + created.getId(), created);
         return created;
     }
-    
+
     public User updateUser(long id, User user) {
         User existing = getUser(id);
         existing.setName(user.getName());
@@ -1698,7 +1657,7 @@ public class UserService {
         cache.put("user:" + updated.getId(), updated);
         return updated;
     }
-    
+
     public boolean deleteUser(long id) {
         boolean deleted = userRepository.delete(id);
         if (deleted) {
@@ -1706,7 +1665,7 @@ public class UserService {
         }
         return deleted;
     }
-    
+
     private void validateUser(User user) {
         if (user.getName() == null || user.getName().isEmpty()) {
             throw new ValidationException("Name is required");
@@ -1715,7 +1674,7 @@ public class UserService {
             throw new ValidationException("Valid email is required");
         }
     }
-    
+
     private boolean isValidEmail(String email) {
         return email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
@@ -1732,7 +1691,7 @@ public class RequestInterceptor {
         app.before(ctx -> {
             // Timing
             ctx.attribute("startTime", System.currentTimeMillis());
-            
+
             // Rate limiting
             String ip = ctx.ip();
             if (isRateLimited(ip)) {
@@ -1740,7 +1699,7 @@ public class RequestInterceptor {
                 return;
             }
         });
-        
+
         app.after(ctx -> {
             // Calculate duration
             Long startTime = ctx.attribute("startTime");
@@ -1750,7 +1709,7 @@ public class RequestInterceptor {
             }
         });
     }
-    
+
     private static boolean isRateLimited(String ip) {
         // Implement rate limiting logic
         return false;
@@ -1763,7 +1722,7 @@ public class RequestInterceptor {
 ```java
 public class DatabaseManager {
     private static Connection connection;
-    
+
     public static void initialize() {
         try {
             Class.forName("org.postgresql.Driver");
@@ -1776,11 +1735,11 @@ public class DatabaseManager {
             throw new RuntimeException("Database initialization failed", e);
         }
     }
-    
+
     public static Connection getConnection() {
         return connection;
     }
-    
+
     public static void close() {
         try {
             if (connection != null) {
@@ -1807,12 +1766,12 @@ public class AuthMiddleware {
             ctx.attribute("user", getUserFromToken(token));
         });
     }
-    
+
     private static boolean isValidToken(String token) {
         // Implement token validation
         return token != null && token.startsWith("Bearer ");
     }
-    
+
     private static User getUserFromToken(String token) {
         // Extract and validate user from token
         return new User();
@@ -1825,7 +1784,7 @@ public class AuthMiddleware {
 ```java
 public class CacheManager {
     private static final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
-    
+
     public static <T> Optional<T> get(String key, Class<T> type) {
         CacheEntry entry = cache.get(key);
         if (entry != null && !entry.isExpired()) {
@@ -1834,32 +1793,32 @@ public class CacheManager {
         cache.remove(key);
         return Optional.empty();
     }
-    
+
     public static void put(String key, Object value, long ttlMillis) {
         cache.put(key, new CacheEntry(value, System.currentTimeMillis() + ttlMillis));
     }
-    
+
     public static void invalidate(String key) {
         cache.remove(key);
     }
-    
+
     public static void clear() {
         cache.clear();
     }
-    
+
     private static class CacheEntry {
         private final Object value;
         private final long expiry;
-        
+
         CacheEntry(Object value, long expiry) {
             this.value = value;
             this.expiry = expiry;
         }
-        
+
         Object getValue() {
             return value;
         }
-        
+
         boolean isExpired() {
             return System.currentTimeMillis() > expiry;
         }
@@ -1872,11 +1831,11 @@ public class CacheManager {
 ```java
 public class ServiceRegistry {
     private static final Map<Class<?>, Object> services = new ConcurrentHashMap<>();
-    
+
     public static <T> void register(Class<T> type, T instance) {
         services.put(type, instance);
     }
-    
+
     @SuppressWarnings("unchecked")
     public static <T> T get(Class<T> type) {
         return (T) services.get(type);
@@ -1887,7 +1846,7 @@ public class ServiceRegistry {
 public class UserRoutes {
     public static void setup(Javalin app) {
         UserService userService = ServiceRegistry.get(UserService.class);
-        
+
         app.get("/api/users", ctx -> {
             List<User> users = userService.getAllUsers(0, 20);
             ctx.json(users);
@@ -1896,7 +1855,6 @@ public class UserRoutes {
 }
 ```
 
----
 
 ## Production Deployment
 
@@ -1918,11 +1876,11 @@ public class Config {
         String port = System.getenv("PORT");
         return port != null ? Integer.parseInt(port) : 7000;
     }
-    
+
     public static String getDatabaseUrl() {
         return System.getenv("DATABASE_URL");
     }
-    
+
     public static String getJwtSecret() {
         return System.getenv("JWT_SECRET");
     }
@@ -1950,11 +1908,11 @@ public class MetricsPlugin implements Plugin {
             String path = ctx.path();
             String method = ctx.method();
             int status = ctx.status();
-            
+
             // Record metrics
-            metrics.counter("http.requests", 
-                "method", method, 
-                "path", path, 
+            metrics.counter("http.requests",
+                "method", method,
+                "path", path,
                 "status", String.valueOf(status)
             ).increment();
         });
@@ -1971,16 +1929,16 @@ app.ws("/ws", ws -> {
     ws.onConnect(ctx -> {
         System.out.println("Connected: " + ctx.sessionId());
     });
-    
+
     ws.onMessage(ctx -> {
         String message = ctx.message();
         ctx.send("Echo: " + message);
     });
-    
+
     ws.onClose(ctx -> {
         System.out.println("Closed: " + ctx.sessionId());
     });
-    
+
     ws.onError(ctx -> {
         System.out.println("Error: " + ctx.error());
     });
@@ -1993,11 +1951,11 @@ app.ws("/ws", ws -> {
 app.get("/events", ctx -> {
     ctx.header("Content-Type", "text/event-stream");
     ctx.header("Cache-Control", "no-cache");
-    
+
     ctx.sseClient().onConnect(client -> {
         client.send("Connected");
     });
-    
+
     ctx.sseClient().onClose(client -> {
         System.out.println("SSE client disconnected");
     });
@@ -2011,10 +1969,10 @@ app.post("/upload", ctx -> {
     ctx.uploadedFiles("files").forEach(file -> {
         String fileName = file.getFilename();
         InputStream content = file.getContent();
-        
+
         // Save file
         Files.copy(content, Paths.get("uploads/" + fileName));
-        
+
         ctx.result("File uploaded: " + fileName);
     });
 });
@@ -2067,11 +2025,11 @@ app.get("/users", ctx -> {
 ```java
 public class UserAPI {
     private final UserService userService;
-    
+
     public UserAPI(UserService userService) {
         this.userService = userService;
     }
-    
+
     public void setup(Javalin app) {
         // GET /users - Get all users
         app.get("/users", ctx -> {
@@ -2080,7 +2038,7 @@ public class UserAPI {
             List<User> users = userService.getAllUsers(page, size);
             ctx.json(users);
         });
-        
+
         // GET /users/:id - Get user by ID
         app.get("/users/:id", ctx -> {
             long id = ctx.pathParamAsClass("id", Long.class).get();
@@ -2088,14 +2046,14 @@ public class UserAPI {
                 .orElseThrow(() -> new NotFoundResponse("User not found"));
             ctx.json(user);
         });
-        
+
         // POST /users - Create new user
         app.post("/users", ctx -> {
             User user = ctx.bodyAsClass(User.class);
             User created = userService.createUser(user);
             ctx.status(201).json(created);
         });
-        
+
         // PUT /users/:id - Update user
         app.put("/users/:id", ctx -> {
             long id = ctx.pathParamAsClass("id", Long.class).get();
@@ -2103,7 +2061,7 @@ public class UserAPI {
             User updated = userService.updateUser(id, user);
             ctx.json(updated);
         });
-        
+
         // DELETE /users/:id - Delete user
         app.delete("/users/:id", ctx -> {
             long id = ctx.pathParamAsClass("id", Long.class).get();
@@ -2125,7 +2083,7 @@ app.routes(() -> {
             post(UserController::createUser);
         });
     });
-    
+
     path("/api/v2", () -> {
         path("/users", () -> {
             get(UserControllerV2::getAllUsers);
@@ -2147,11 +2105,11 @@ public void testUserCreation() {
     UserService userService = new UserService();
     UserAPI userAPI = new UserAPI(userService);
     userAPI.setup(app);
-    
+
     User user = new User();
     user.setName("John Doe");
     user.setEmail("john@example.com");
-    
+
     String response = HttpClient.newHttpClient()
         .send(HttpRequest.newBuilder()
             .uri(URI.create("http://localhost:" + app.port() + "/users"))
@@ -2159,7 +2117,7 @@ public void testUserCreation() {
             .build(),
             HttpResponse.BodyHandlers.ofString())
         .body();
-    
+
     assertNotNull(response);
     app.stop();
 }
@@ -2174,7 +2132,7 @@ public void testUserAPI() {
     UserService userService = new UserService();
     UserAPI userAPI = new UserAPI(userService);
     userAPI.setup(app);
-    
+
     // Test GET /users
     String users = HttpClient.newHttpClient()
         .send(HttpRequest.newBuilder()
@@ -2183,7 +2141,7 @@ public void testUserAPI() {
             .build(),
             HttpResponse.BodyHandlers.ofString())
         .body();
-    
+
     assertNotNull(users);
     app.stop();
 }
@@ -2199,4 +2157,3 @@ public void testUserAPI() {
 6. **Logging**: Логируйте все важные события
 7. **Testing**: Пишите **unit** и **integration** тесты
 
----

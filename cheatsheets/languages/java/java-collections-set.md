@@ -12,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Java Collections: Set
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -21,7 +19,7 @@ updated: "2026-02-11"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Java Tutorials](https://docs.oracle.com/javase/tutorial/)
 
@@ -399,7 +397,7 @@ public void whenAddingNullToNonEmptyTreeSet_shouldThrowException() {
 ```java
 class Element {
     private Integer id;
-    
+
     // getters and setters
 }
 
@@ -487,7 +485,7 @@ private transient HashMap<E, Object> map;
 
 **Резюмируя:**
 
-**HashMap** - это массив сегментов с емкостью по умолчанию 16 элементов - каждому сегменту соответствует свое значение хэш-кода.
+**HashMap** — это массив сегментов с емкостью по умолчанию 16 элементов — каждому сегменту соответствует свое значение хэш-кода.
 
 Если разные объекты имеют одинаковое значение хэш-кода, они сохраняются в одном сегменте.
 
@@ -642,7 +640,7 @@ public void whenRemovingElementUsingIterator_shouldRemoveElement() {
 
 ### Производительность
 
-На производительность **HashSet** влияют в основном два параметра - его начальная емкость и коэффициент загрузки.
+На производительность **HashSet** влияют в основном два параметра — его начальная емкость и коэффициент загрузки.
 
 Ожидаемая временная сложность добавления элемента в набор составляет **O(1)**, которая может упасть до **O(n)** в худшем случае (**присутствует только одна корзина**)** — поэтому важно поддерживать правильную ёмкость **HashSet**.
 
@@ -678,3 +676,11 @@ Set<String> hashset = new HashSet<>(20, 0.5f);
 - **Элементы Set:** использовать объекты с корректными `**equals**()` и `**hashCode**()`; для **TreeSet** — реализовывать **Comparable** или передавать **Comparator**; избегать мутабельных элементов, меняющих **hashCode** после добавления.
 - **null:** **HashSet** / **LinkedHashSet** допускают один **null**; `**TreeSet**` — нет; явно документировать политику **null** в **API**.
 - **Потоки:** для фильтрации/преобразования использовать **Stream API**; собирать в **Set** через `**Collectors.toSet**()` или `**toUnmodifiableSet**()`; для дедупликации — `**stream**().**distinct**().**collect(**Collectors.`toSet`(**))`.
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

@@ -38,14 +38,14 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [**Either**](#either)
 - [**Try**](#try)
 - [Обработка исключений](#обработка-исключений)
-  - [**Option** - расширенные операции](#option-расширенные-операции)
-  - [**Either** - расширенные операции](#either-расширенные-операции)
-  - [**Try** - расширенные операции](#try-расширенные-операции)
+  - [**Option** — расширенные операции](#option-расширенные-операции)
+  - [**Either** — расширенные операции](#either-расширенные-операции)
+  - [**Try** — расширенные операции](#try-расширенные-операции)
   - [Комбинирование **Option**, **Either** и **Try**](#комбинирование-option-either-и-try)
   - [Практический пример: Валидация данных](#практический-пример-валидация-данных)
   - [Практический пример: Обработка файлов](#практический-пример-обработка-файлов)
   - [Практический пример: Цепочка операций](#практический-пример-цепочка-операций)
-  - [Обработка исключений - расширенные возможности](#обработка-исключений-расширенные-возможности)
+  - [Обработка исключений — расширенные возможности](#обработка-исключений-расширенные-возможности)
 - [Лучшие практики](#лучшие-практики)
   - [Предпочтение **Option** вместо **null**](#предпочтение-option-вместо-null)
   - [Использование **Either** для явных ошибок](#использование-either-для-явных-ошибок)
@@ -74,10 +74,10 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 
 **Scala** предоставляет несколько подходов к обработке ошибок:**
 
-1. **Option** - для значений, которые могут отсутствовать
-2. **Either** - для значений, которые могут быть успешными или ошибочными
-3. **Try** - для операций, которые могут выбросить исключения
-4. **Исключения** - традиционный подход **Java**
+1. **Option** — для значений, которые могут отсутствовать
+2. **Either** — для значений, которые могут быть успешными или ошибочными
+3. **Try** — для операций, которые могут выбросить исключения
+4. **Исключения** — традиционный подход **Java**
 
 ## **Option**
 
@@ -171,7 +171,7 @@ try {
 
 Обработка исключений полезна для интеграции с **Java** кодом и критичных операций.
 
-### **Option** - расширенные операции
+### **Option** — расширенные операции
 
 **Option** предоставляет множество полезных методов:**
 
@@ -205,7 +205,7 @@ val result3 = for {
 } yield a + b  // Some(8)
 ```
 
-### **Either** - расширенные операции
+### **Either** — расширенные операции
 
 **Either** предоставляет методы для работы с обоими случаями:**
 
@@ -221,7 +221,7 @@ val unchanged = left.map(_ * 2)  // Left("Error")
 val upperError = left.left.map(_.toUpperCase)  // Left("ERROR")
 
 // FlatMap
-val flatMapped = right.flatMap(x => 
+val flatMapped = right.flatMap(x =>
   if (x > 0) Right(x * 2) else Left("Negative value")
 )  // Right(84)
 
@@ -243,7 +243,7 @@ val result3 = for {
 } yield a + b  // Left("Error")
 ```
 
-### **Try** - расширенные операции
+### **Try** — расширенные операции
 
 **Try** предоставляет методы для безопасной обработки исключений:**
 
@@ -380,18 +380,18 @@ val result2 = for {
 } yield (user, posts)
 ```
 
-### Обработка исключений - расширенные возможности
+### Обработка исключений — расширенные возможности
 
 ```scala
 // Try-catch с pattern matching
 try {
   riskyOperation()
 } catch {
-  case e: ArithmeticException => 
+  case e: ArithmeticException =>
     println(s"Arithmetic error: ${e.getMessage}")
-  case e: NullPointerException => 
+  case e: NullPointerException =>
     println(s"Null pointer: ${e.getMessage}")
-  case e: Exception => 
+  case e: Exception =>
     println(s"General error: ${e.getMessage}")
 } finally {
   cleanup()
@@ -581,7 +581,7 @@ import cats.implicits._
 def validateUser(name: String, age: Int): Validated[List[String], User] = {
   val nameValidation = if (name.length >= 3) name.valid else List("Name too short").invalid
   val ageValidation = if (age >= 0 && age <= 120) age.valid else List("Invalid age").invalid
-  
+
   (nameValidation, ageValidation).mapN(User.apply)
 }
 ```
@@ -665,8 +665,8 @@ def createUser(name: String, email: String, age: Int): Validated[List[String], U
 
 // Все ошибки накапливаются
 val result = createUser("", "invalid-email", -5)
-// Invalid(List("Name must be between 1 and 100 characters", 
-//              "Invalid email format", 
+// Invalid(List("Name must be between 1 and 100 characters",
+//              "Invalid email format",
 //              "Age must be between 0 and 150"))
 ```
 
@@ -784,7 +784,7 @@ import scala.util.{Try, Success, Failure}
 def processWithErrorTransform(input: String): Try[Int] = {
   Try(input.toInt)
     .recoverWith {
-      case _: NumberFormatException => 
+      case _: NumberFormatException =>
         Failure(new IllegalArgumentException("Invalid number format"))
     }
     .map(_ * 2)

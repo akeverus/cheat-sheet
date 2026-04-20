@@ -73,11 +73,11 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 
 ## Введение в **Pattern Matching**
 
-**Pattern Matching** - это мощный механизм **Scala** для декомпозиции данных и сопоставления с образцами. **Pattern Matching** позволяет элегантно обрабатывать различные случаи и извлекать данные из структур, заменяя множественные **if-else** конструкции более выразительным и безопасным синтаксисом. **Pattern Matching** является одной из ключевых особенностей функционального программирования в **Scala** и позволяет создавать декларативный код, который явно показывает все возможные случаи обработки.
+**Pattern Matching** — это мощный механизм **Scala** для декомпозиции данных и сопоставления с образцами. **Pattern Matching** позволяет элегантно обрабатывать различные случаи и извлекать данные из структур, заменяя множественные **if-else** конструкции более выразительным и безопасным синтаксисом. **Pattern Matching** является одной из ключевых особенностей функционального программирования в **Scala** и позволяет создавать декларативный код, который явно показывает все возможные случаи обработки.
 
 **Pattern Matching** в **Scala** более мощный, чем **switch**-конструкции в других языках, так как поддерживает декомпозицию сложных структур данных, **guards** (**условия**), извлечение значений и проверку типов. Компилятор **Scala** может проверить полноту **pattern matching**, что предотвращает ошибки, связанные с необработанными случаями.
 
-**Pattern Matching** - это мощный механизм **Scala** для декомпозиции данных и сопоставления с образцами. **Pattern Matching** позволяет элегантно обрабатывать различные случаи и извлекать данные из структур.
+**Pattern Matching** — это мощный механизм **Scala** для декомпозиции данных и сопоставления с образцами. **Pattern Matching** позволяет элегантно обрабатывать различные случаи и извлекать данные из структур.
 
 ### Основные преимущества
 
@@ -169,14 +169,14 @@ def describeVector(vec: Vector[Int]): String = vec match {
 def matchWithGuard(x: Int): String = x match {
   // Паттерн n сопоставляется с любым Int, затем проверяется условие n < 0
   case n if n < 0 => "negative"
-  
+
   // Проверка на равенство нулю
   case n if n == 0 => "zero"
-  
+
   // Проверка диапазона значений
   // Условие проверяет, что число положительное и меньше 10
   case n if n > 0 && n < 10 => "small positive"
-  
+
   // Обработка всех остальных случаев (большие положительные числа)
   case _ => "large positive"
 }
@@ -202,15 +202,15 @@ def matchType(x: Any): String = x match {
   // Проверка типа String
   // Если x является String, переменная s получает значение x
   case s: String => s"String: $s"
-  
+
   // Проверка типа Int
   // Если x является Int, переменная i получает значение x
   case i: Int => s"Int: $i"
-  
+
   // Проверка типа Double
   // Если x является Double, переменная d получает значение x
   case d: Double => s"Double: $d"
-  
+
   // Обработка всех остальных типов
   case _ => "unknown type"
 }
@@ -344,11 +344,11 @@ case class Address(street: String, city: String)
 case class Person(name: String, age: Int, address: Address)
 
 def processPerson(person: Person): String = person match {
-  case Person("Alice", age, Address("Main St", city)) => 
+  case Person("Alice", age, Address("Main St", city)) =>
     s"Alice, $age, lives on Main St in $city"
-  case Person(name, age, Address(street, "New York")) => 
+  case Person(name, age, Address(street, "New York")) =>
     s"$name, $age, lives on $street in New York"
-  case Person(name, age, address) => 
+  case Person(name, age, address) =>
     s"$name, $age, lives at ${address.street}, ${address.city}"
 }
 ```
@@ -412,9 +412,9 @@ def processValue(value: Any): String = value match {
 import play.api.libs.json._
 
 def parseJson(json: JsValue): String = json match {
-  case JsObject(fields) => 
+  case JsObject(fields) =>
     fields.map { case (key, value) => s"$key: ${parseJson(value)}" }.mkString(", ")
-  case JsArray(elements) => 
+  case JsArray(elements) =>
     elements.map(parseJson).mkString("[", ", ", "]")
   case JsString(value) => s""""$value""""
   case JsNumber(value) => value.toString
@@ -474,9 +474,9 @@ val extracted = list.collect {
 val list = List(1, 2, 3, 4, 5)
 
 list match {
-  case list @ List(1, 2, _*) => 
+  case list @ List(1, 2, _*) =>
     println(s"List starts with 1, 2: $list")
-  case _ => 
+  case _ =>
     println("Other list")
 }
 ```
@@ -615,9 +615,9 @@ def parseJson(json: JsValue): Option[String] = json match {
   case JsNumber(value) => Some(value.toString)
   case JsBoolean(value) => Some(value.toString)
   case JsNull => None
-  case JsArray(elements) => 
+  case JsArray(elements) =>
     Some(elements.map(parseJson).collect { case Some(v) => v }.mkString(", "))
-  case JsObject(fields) => 
+  case JsObject(fields) =>
     Some(fields.map { case (k, v) => s"$k: ${parseJson(v).getOrElse("null")}" }.mkString(", "))
   case _ => None
 }
@@ -639,7 +639,7 @@ class ExpressionEvaluator(variables: Map[String, Int]) {
     case Variable(name) => variables.getOrElse(name, 0)
     case Add(left, right) => evaluate(left) + evaluate(right)
     case Multiply(left, right) => evaluate(left) * evaluate(right)
-    case FunctionCall(name, args) => 
+    case FunctionCall(name, args) =>
       name match {
         case "max" => args.map(evaluate).max
         case "min" => args.map(evaluate).min
@@ -659,13 +659,13 @@ case class ImageMessage(sender: String, url: String, caption: Option[String]) ex
 case class SystemMessage(content: String) extends Message
 
 def processMessage(message: Message): String = message match {
-  case TextMessage(sender, content) => 
+  case TextMessage(sender, content) =>
     s"[$sender]: $content"
-  case ImageMessage(sender, url, Some(caption)) => 
+  case ImageMessage(sender, url, Some(caption)) =>
     s"[$sender] sent image ($url) with caption: $caption"
-  case ImageMessage(sender, url, None) => 
+  case ImageMessage(sender, url, None) =>
     s"[$sender] sent image ($url)"
-  case SystemMessage(content) => 
+  case SystemMessage(content) =>
     s"[System]: $content"
 }
 ```

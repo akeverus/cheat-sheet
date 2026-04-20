@@ -45,7 +45,7 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Учитывая неотрицательное целое число n, факториал - это произведение всех положительных целых чисел, меньших или равных n.
+Учитывая неотрицательное целое число n, факториал — это произведение всех положительных целых чисел, меньших или равных n.
 
 Ниже — способы вычисления в `Java` и Kotlin.
 
@@ -80,11 +80,11 @@ public long factorialUsingForLoopWithCheck(int n) {
     if (n < 0) {
         throw new IllegalArgumentException("Factorial is not defined for negative numbers");
     }
-    
+
     if (n > 20) {
         throw new IllegalArgumentException("Result will overflow long type");
     }
-    
+
     long fact = 1;
     for (int i = 2; i <= n; i++) {
         fact = fact * i;
@@ -114,7 +114,7 @@ public long factorialUsingStreamsSafe(int n) {
     if (n < 0 || n > 20) {
         throw new IllegalArgumentException("n must be between 0 and 20");
     }
-    
+
     return LongStream.rangeClosed(1, n)
         .reduce(1, Math::multiplyExact);
 }
@@ -141,11 +141,11 @@ public long factorialUsingRecursionImproved(int n) {
     if (n < 0) {
         throw new IllegalArgumentException("Factorial is not defined for negative numbers");
     }
-    
+
     if (n == 0 || n == 1) {
         return 1;
     }
-    
+
     return n * factorialUsingRecursionImproved(n - 1);
 }
 ```
@@ -286,8 +286,8 @@ fun factorialUsingBigIntegerFoldK(n: Int): BigInteger {
     if (n < 0) {
         throw IllegalArgumentException("Factorial is not defined for negative numbers")
     }
-    return (1..n).fold(BigInteger.ONE) { acc, i -> 
-        acc.multiply(BigInteger.valueOf(i.toLong())) 
+    return (1..n).fold(BigInteger.ONE) { acc, i ->
+        acc.multiply(BigInteger.valueOf(i.toLong()))
     }
 }
 ```
@@ -317,7 +317,7 @@ fun main() {
     // Для небольших чисел
     println(factorialUsingForLoopK(5)) // 120
     println(factorialK(5)) // 120
-    
+
     // Для больших чисел
     println(factorialUsingBigIntegerK(25)) // 15511210043330985984000000
     println(factorialMemoizedK(25)) // 15511210043330985984000000
@@ -348,11 +348,11 @@ public BigInteger factorialBigIntegerOptimized(int n) {
     if (n < 0) {
         throw new IllegalArgumentException("Factorial is not defined for negative numbers");
     }
-    
+
     if (n == 0 || n == 1) {
         return BigInteger.ONE;
     }
-    
+
     BigInteger result = BigInteger.ONE;
     for (int i = 2; i <= n; i++) {
         result = result.multiply(BigInteger.valueOf(i));
@@ -407,12 +407,12 @@ public BigInteger factorialMemoized(int n) {
     if (n < 0) {
         throw new IllegalArgumentException("Factorial is not defined for negative numbers");
     }
-    
+
     if (n == 0 || n == 1) {
         return BigInteger.ONE;
     }
-    
-    return FACTORIAL_CACHE.computeIfAbsent(n, k -> 
+
+    return FACTORIAL_CACHE.computeIfAbsent(n, k ->
         BigInteger.valueOf(k).multiply(factorialMemoized(k - 1))
     );
 }

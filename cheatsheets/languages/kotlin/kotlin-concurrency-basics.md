@@ -17,7 +17,7 @@ updated: "2026-02-06"
 
 # Kotlin Concurrency: основы
 
-**Конкурентность в Kotlin** - это мощная система для написания асинхронного и параллельного кода. Основанная на корутинах (**coroutines**), она позволяет писать асинхронный код в синхронном стиле, обеспечивая высокую производительность и безопасность.
+**Конкурентность в Kotlin** — это мощная система для написания асинхронного и параллельного кода. Основанная на корутинах (**coroutines**), она позволяет писать асинхронный код в синхронном стиле, обеспечивая высокую производительность и безопасность.
 
 ## Полезные ссылки
 
@@ -26,7 +26,7 @@ updated: "2026-02-06"
 - [Kotlin Documentation](https://kotlinlang.org/docs/home.html)
 - [Kotlin API Reference](https://kotlinlang.org/api/latest/jvm/stdlib/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Kotlin Tutorial](https://www.baeldung.com/kotlin)
 
@@ -407,11 +407,11 @@ fun givenTwoExpensiveAction_whenExecuteThemLazy_thenTheyShouldNotConcurrently() 
     runBlocking<Unit> {
         val delay = 1000L
         val time = measureTimeMillis {
-            val one = async(Dispatchers.Default, CoroutineStart.LAZY) { 
-                someExpensiveComputation(delay) 
+            val one = async(Dispatchers.Default, CoroutineStart.LAZY) {
+                someExpensiveComputation(delay)
             }
-            val two = async(Dispatchers.Default, CoroutineStart.LAZY) { 
-                someExpensiveComputation(delay) 
+            val two = async(Dispatchers.Default, CoroutineStart.LAZY) {
+                someExpensiveComputation(delay)
             }
             one.await()
             two.await()
@@ -643,7 +643,7 @@ thread.start()
 
 ### Функция **thread**()
 
-**Другой способ - рассмотреть функцию **thread**(), которую предоставляет **Kotlin**:**
+**Другой способ — рассмотреть функцию **thread**(), которую предоставляет **Kotlin**:**
 
 ```kotlin
 fun thread(
@@ -666,11 +666,11 @@ thread(start = true) {
 
 **Функция принимает пять параметров:**
 
-- **start** - немедленно запустить поток
-- **isDaemon** - для создания потока как потока демона.
-- **contextClassLoader** - загрузчик классов для загрузки классов и ресурсов.
-- **name** - установить имя потока
-- **priority** - установить приоритет потока
+- **start** — немедленно запустить поток
+- **isDaemon** — для создания потока как потока демона.
+- **contextClassLoader** — загрузчик классов для загрузки классов и ресурсов.
+- **name** — установить имя потока
+- **priority** — установить приоритет потока
 
 ### Проблемы с потоками
 
@@ -688,8 +688,8 @@ thread(start = true) {
 
 **Основные элементы:**
 
-- **Job** - моделирует отменяемый рабочий процесс с несколькими состояниями и жизненным циклом, кульминацией которого является его завершение.
-- **Dispatchers** - определяет, какой поток или потоки использует соответствующая корутина для своего выполнения.
+- **Job** — моделирует отменяемый рабочий процесс с несколькими состояниями и жизненным циклом, кульминацией которого является его завершение.
+- **Dispatchers** — определяет, какой поток или потоки использует соответствующая корутина для своего выполнения.
 
 С помощью диспетчера мы можем ограничить выполнение корутины конкретным потоком, отправить ее в пул потоков или позволить ей работать без ограничений.
 
@@ -903,10 +903,10 @@ launch {
 
 ### Типы каналов
 
-- **Channel<T>** - неограниченный канал
-- **Channel<T>(**capacity**)** - канал с фиксированной емкостью
-- **Channel<T>(**Channel.UNLIMITED**)** - неограниченный канал
-- **Channel<T>(**Channel.CONFLATED**)** - канал, который сохраняет только последнее значение
+- **Channel<T>** — неограниченный канал
+- **Channel<T>(**capacity**)** — канал с фиксированной емкостью
+- **Channel<T>(**Channel.UNLIMITED**)** — неограниченный канал
+- **Channel<T>(**Channel.CONFLATED**)** — канал, который сохраняет только последнее значение
 
 ### **Produce builder**
 
@@ -934,7 +934,7 @@ val receiver1 = launch {
 
 ### **Fan-out** и **Fan-in**
 
-**Fan-out** - это когда несколько корутин получают данные из одного канала:**
+**Fan-out** — это когда несколько корутин получают данные из одного канала:**
 
 ```kotlin
 val producer = produce {
@@ -950,7 +950,7 @@ repeat(3) { id ->
 }
 ```
 
-**Fan-in** - это когда несколько корутин отправляют данные в один канал:**
+**Fan-in** — это когда несколько корутин отправляют данные в один канал:**
 
 ```kotlin
 val channel = Channel<String>()
@@ -1195,7 +1195,7 @@ runBlocking(dispatcher) {
 ```kotlin
 @RestController
 class UserController {
-    
+
     @GetMapping("/users")
     suspend fun getUsers(): Flow<User> {
         return flow {
@@ -1217,7 +1217,7 @@ suspend fun findUsers(): Flow<User> = flow {
 
 ## **Flow API** и холодные потоки
 
-**Flow** - это холодный асинхронный поток данных в **Kotlin**, который последовательно выдает значения и завершается успешно или с исключением.
+**Flow** — это холодный асинхронный поток данных в **Kotlin**, который последовательно выдает значения и завершается успешно или с исключением.
 
 ### Создание **Flow**
 
@@ -1340,11 +1340,11 @@ fun main() = runBlocking {
 
 ## **StateFlow** и **SharedFlow**
 
-**StateFlow** и **SharedFlow** - это горячие потоки, которые могут иметь несколько коллекторов.
+**StateFlow** и **SharedFlow** — это горячие потоки, которые могут иметь несколько коллекторов.
 
 ### **StateFlow**
 
-**StateFlow** - это наблюдаемый контейнер состояния с одним значением, который всегда имеет значение и может быть коллектирован множеством коллекторов.
+**StateFlow** — это наблюдаемый контейнер состояния с одним значением, который всегда имеет значение и может быть коллектирован множеством коллекторов.
 
 ```kotlin
 class ViewModel {
@@ -1384,7 +1384,7 @@ fun main() = runBlocking {
 
 ### **SharedFlow**
 
-**SharedFlow** - это горячий поток, который выдает значения множеству коллекторов в режиме **broadcast**.
+**SharedFlow** — это горячий поток, который выдает значения множеству коллекторов в режиме **broadcast**.
 
 ```kotlin
 fun main() = runBlocking {
@@ -2834,17 +2834,17 @@ import androidx.lifecycle.viewModelScope
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // lifecycleScope автоматически отменяется при уничтожении Activity
         lifecycleScope.launch {
             loadData()
         }
-        
+
         // lifecycleScope в onCreate
         lifecycleScope.launchWhenCreated {
             initializeUI()
         }
-        
+
         // lifecycleScope в onResume
         lifecycleScope.launchWhenResumed {
             refreshData()
@@ -2872,17 +2872,17 @@ class MyViewModel : ViewModel() {
 class UserViewModel : ViewModel() {
     private val _users = MutableStateFlow<List<User>>(emptyList())
     val users: StateFlow<List<User>> = _users.asStateFlow()
-    
+
     init {
         viewModelScope.launch {
             loadUsers()
         }
     }
-    
+
     private suspend fun loadUsers() {
         _users.value = userRepository.getUsers()
     }
-    
+
     fun refreshUsers() {
         viewModelScope.launch {
             _users.value = userRepository.refreshUsers()
@@ -2913,14 +2913,14 @@ class UserController(private val userService: UserService) {
     suspend fun getUsers(): List<User> {
         return userService.getAllUsers()
     }
-    
+
     @GetMapping("/users/{id}")
     suspend fun getUser(@PathVariable id: Long): ResponseEntity<User> {
         return userService.findById(id)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
     }
-    
+
     @PostMapping("/users")
     suspend fun createUser(@RequestBody user: User): ResponseEntity<User> {
         val saved = userService.save(user)
@@ -2946,7 +2946,7 @@ class UserService(private val repository: ReactiveUserRepository) {
     suspend fun findUserByName(name: String): User? {
         return repository.findByName(name).awaitSingleOrNull()
     }
-    
+
     suspend fun findUsersByAge(age: Int): List<User> {
         return repository.findByAgeGreaterThan(age).toList().awaitSingle()
     }
@@ -2967,19 +2967,19 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 
 class UserServiceTest {
     private val testDispatcher = StandardTestDispatcher()
-    
+
     @Test
     fun testGetUser() = runTest(testDispatcher) {
         val service = UserService(mockRepository)
         val user = service.getUser(1)
-        
+
         assertEquals("Alice", user?.name)
     }
-    
+
     @Test
     fun testConcurrentOperations() = runTest {
         val service = UserService(mockRepository)
-        
+
         val results = coroutineScope {
             listOf(
                 async { service.getUser(1) },
@@ -2987,7 +2987,7 @@ class UserServiceTest {
                 async { service.getUser(3) }
             ).awaitAll()
         }
-        
+
         assertEquals(3, results.size)
     }
 }
@@ -3007,15 +3007,15 @@ import io.mockk.mockk
 class UserServiceTest {
     private val repository = mockk<UserRepository>()
     private val service = UserService(repository)
-    
+
     @Test
     fun testSaveUser() = runTest {
         val user = User(name = "Alice")
-        
+
         coEvery { repository.save(user) } returns user.copy(id = 1)
-        
+
         val saved = service.saveUser(user)
-        
+
         assertEquals(1, saved.id)
         coVerify { repository.save(user) }
     }
@@ -3048,12 +3048,12 @@ fun processStream(items: List<Item>): Flow<Result> = flow {
 // Используйте channel для коммуникации между корутинами
 suspend fun producerConsumer() = coroutineScope {
     val channel = Channel<Item>(Channel.UNLIMITED)
-    
+
     launch {
         items.forEach { channel.send(it) }
         channel.close()
     }
-    
+
     launch {
         for (item in channel) {
             processItem(item)
@@ -3124,7 +3124,7 @@ suspend fun processInParallelLimited(
     maxConcurrency: Int = 10
 ): List<ProcessedItem> = coroutineScope {
     val semaphore = Semaphore(maxConcurrency)
-    
+
     items.map { item ->
         async {
             semaphore.withPermit {
@@ -3160,7 +3160,7 @@ suspend fun waitForAll() = coroutineScope {
     val job1 = launch { task1() }
     val job2 = launch { task2() }
     val job3 = launch { task3() }
-    
+
     // Ожидание всех корутин
     joinAll(job1, job2, job3)
 }
@@ -3170,19 +3170,19 @@ suspend fun waitForFirst() = coroutineScope {
     val deferred1 = async { task1() }
     val deferred2 = async { task2() }
     val deferred3 = async { task3() }
-    
+
     // Выбор первой завершившейся
     val result = select {
         deferred1.onAwait { it }
         deferred2.onAwait { it }
         deferred3.onAwait { it }
     }
-    
+
     // Отмена остальных
     deferred1.cancel()
     deferred2.cancel()
     deferred3.cancel()
-    
+
     result
 }
 
@@ -3190,7 +3190,7 @@ suspend fun waitForFirst() = coroutineScope {
 suspend fun waitWithTimeout() = withTimeout(5000) {
     val result1 = async { task1() }
     val result2 = async { task2() }
-    
+
     result1.await() + result2.await()
 }
 ```
@@ -3220,13 +3220,13 @@ println("Execution time: ${duration / 1_000_000}ms")
 // Профилирование параллельных операций
 suspend fun profileParallelOperations() = coroutineScope {
     val startTime = System.nanoTime()
-    
+
     val results = listOf(
         async { task1() },
         async { task2() },
         async { task3() }
     ).awaitAll()
-    
+
     val duration = System.nanoTime() - startTime
     println("Total time: ${duration / 1_000_000}ms")
     println("Average time: ${duration / 3 / 1_000_000}ms per task")
@@ -3265,7 +3265,7 @@ suspend fun limitedParallelProcessing(
     maxConcurrency: Int = 10
 ) = coroutineScope {
     val semaphore = Semaphore(maxConcurrency)
-    
+
     items.map { item ->
         async {
             semaphore.withPermit {
@@ -3317,21 +3317,21 @@ class CoroutineResourceMonitor {
     private val activeCoroutines = AtomicInteger(0)
     private val completedCoroutines = AtomicLong(0)
     private val failedCoroutines = AtomicLong(0)
-    
+
     fun trackCoroutine() {
         activeCoroutines.incrementAndGet()
     }
-    
+
     fun trackCompletion() {
         activeCoroutines.decrementAndGet()
         completedCoroutines.incrementAndGet()
     }
-    
+
     fun trackFailure() {
         activeCoroutines.decrementAndGet()
         failedCoroutines.incrementAndGet()
     }
-    
+
     fun getMetrics(): Map<String, Any> {
         return mapOf(
             "active" to activeCoroutines.get(),
@@ -3353,22 +3353,22 @@ class CoroutineResourceMonitor {
 // Глобальная обработка ошибок корутин
 class GlobalCoroutineExceptionHandler : CoroutineExceptionHandler {
     override val key = CoroutineExceptionHandler.Key
-    
+
     override fun handleException(context: CoroutineContext, exception: Throwable) {
         logger.error("Uncaught exception in coroutine", exception)
-        
+
         // Отправка в систему мониторинга
         sendToMonitoring(exception)
-        
+
         // Уведомление разработчиков
         notifyDevelopers(exception)
     }
-    
+
     private fun sendToMonitoring(exception: Throwable) {
         // Интеграция с системой мониторинга
         monitoringService.recordException(exception)
     }
-    
+
     private fun notifyDevelopers(exception: Throwable) {
         // Уведомление через email/Slack
         notificationService.notify("Critical error: ${exception.message}", exception)
@@ -3417,14 +3417,14 @@ import kotlinx.coroutines.channels.*
 // Базовое использование каналов
 suspend fun channelExample() = coroutineScope {
     val channel = Channel<Int>()
-    
+
     launch {
         for (x in 1..5) {
             channel.send(x)
         }
         channel.close()
     }
-    
+
     for (value in channel) {
         println(value)
     }
@@ -3449,11 +3449,11 @@ fun CoroutineScope.square(numbers: ReceiveChannel<Int>) = produce<Int> {
 fun main() = runBlocking {
     val numbers = produceNumbers()
     val squares = square(numbers)
-    
+
     repeat(5) {
         println(squares.receive())
     }
-    
+
     coroutineContext.cancelChildren()
 }
 
@@ -3481,7 +3481,7 @@ class GetCounter(val response: CompletableDeferred<Int>) : CounterMsg()
 
 fun CoroutineScope.counterActor() = actor<CounterMsg> {
     var counter = 0
-    
+
     for (msg in channel) {
         when (msg) {
             is IncCounter -> counter++
@@ -3493,15 +3493,15 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
 // Использование
 fun main() = runBlocking {
     val counter = counterActor()
-    
+
     repeat(100) {
         counter.send(IncCounter)
     }
-    
+
     val response = CompletableDeferred<Int>()
     counter.send(GetCounter(response))
     println("Counter: ${response.await()}")
-    
+
     counter.close()
 }
 ```
@@ -3523,13 +3523,13 @@ import kotlinx.coroutines.sync.*
 class Counter {
     private var value = 0
     private val mutex = Mutex()
-    
+
     suspend fun increment() {
         mutex.withLock {
             value++
         }
     }
-    
+
     suspend fun getValue(): Int {
         return mutex.withLock {
             value
@@ -3540,7 +3540,7 @@ class Counter {
 // Semaphore для ограничения параллелизма
 class ResourcePool(private val maxConcurrency: Int) {
     private val semaphore = Semaphore(maxConcurrency)
-    
+
     suspend fun <T> useResource(block: suspend () -> T): T {
         return semaphore.withPermit {
             block()
@@ -3571,15 +3571,15 @@ import java.util.concurrent.atomic.*
 // Atomic операции
 class AtomicCounter {
     private val value = AtomicInteger(0)
-    
+
     fun increment() {
         value.incrementAndGet()
     }
-    
+
     fun getValue(): Int {
         return value.get()
     }
-    
+
     fun compareAndSet(expected: Int, update: Int): Boolean {
         return value.compareAndSet(expected, update)
     }
@@ -3588,15 +3588,15 @@ class AtomicCounter {
 // Atomic reference
 class AtomicReferenceExample {
     private val reference = AtomicReference<String>("initial")
-    
+
     fun update(newValue: String) {
         reference.set(newValue)
     }
-    
+
     fun getValue(): String {
         return reference.get()
     }
-    
+
     fun compareAndSet(expected: String, update: String): Boolean {
         return reference.compareAndSet(expected, update)
     }
@@ -3630,7 +3630,7 @@ suspend fun <T> CompletableFuture<T>.await(): T {
 }
 
 // Использование
-val future = CompletableFuture.supplyAsync { 
+val future = CompletableFuture.supplyAsync {
     performOperation()
 }
 val result = future.await()
@@ -3638,7 +3638,7 @@ val result = future.await()
 // Преобразование корутины в CompletableFuture
 fun <T> CoroutineScope.asyncToFuture(block: suspend () -> T): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    
+
     launch {
         try {
             val result = block()
@@ -3647,7 +3647,7 @@ fun <T> CoroutineScope.asyncToFuture(block: suspend () -> T): CompletableFuture<
             future.completeExceptionally(e)
         }
     }
-    
+
     return future
 }
 ```
@@ -3682,7 +3682,7 @@ fun <T> Flow<T>.asObservable(): Observable<T> = Observable.create { emitter ->
             emitter.onError(e)
         }
     }
-    
+
     emitter.setCancellable { job.cancel() }
 }
 ```
@@ -3716,7 +3716,7 @@ suspend fun <T> CompletableFuture<T>.await(): T {
 // Преобразование корутины в CompletableFuture
 fun <T> CoroutineScope.asyncToFuture(block: suspend () -> T): CompletableFuture<T> {
     val future = CompletableFuture<T>()
-    
+
     launch {
         try {
             val result = block()
@@ -3725,17 +3725,17 @@ fun <T> CoroutineScope.asyncToFuture(block: suspend () -> T): CompletableFuture<
             future.completeExceptionally(e)
         }
     }
-    
+
     return future
 }
 
 // Использование
 suspend fun main() {
-    val future = CompletableFuture.supplyAsync { 
+    val future = CompletableFuture.supplyAsync {
         performOperation()
     }
     val result = future.await()
-    
+
     val kotlinFuture = asyncToFuture {
         performKotlinOperation()
     }
@@ -3797,7 +3797,7 @@ suspend fun loadUserData(userId: Long): UserData = coroutineScope {
     val userDeferred = async { userRepository.getUser(userId) }
     val postsDeferred = async { postRepository.getPostsByUser(userId) }
     val commentsDeferred = async { commentRepository.getCommentsByUser(userId) }
-    
+
     UserData(
         user = userDeferred.await(),
         posts = postsDeferred.await(),
@@ -3815,7 +3815,7 @@ suspend fun loadUserData(userId: Long): UserData = coroutineScope {
 ```kotlin
 class EventProcessor {
     private val eventChannel = Channel<Event>(Channel.UNLIMITED)
-    
+
     suspend fun processEvents() {
         for (event in eventChannel) {
             when (event) {
@@ -3824,7 +3824,7 @@ class EventProcessor {
             }
         }
     }
-    
+
     fun sendEvent(event: Event) {
         eventChannel.trySend(event)
     }
@@ -3883,7 +3883,7 @@ suspend fun selectFromChannels(
 ```kotlin
 class ResourcePool(private val maxConcurrent: Int) {
     private val semaphore = Semaphore(maxConcurrent)
-    
+
     suspend fun <T> useResource(block: suspend () -> T): T {
         semaphore.acquire()
         return try {
@@ -3920,11 +3920,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 class AtomicCounter {
     private val count = AtomicInteger(0)
-    
+
     fun increment(): Int {
         return count.incrementAndGet()
     }
-    
+
     fun get(): Int {
         return count.get()
     }
@@ -3932,11 +3932,11 @@ class AtomicCounter {
 
 class AtomicState<T>(initialValue: T) {
     private val state = AtomicReference(initialValue)
-    
+
     fun update(transform: (T) -> T): T {
         return state.updateAndGet(transform)
     }
-    
+
     fun get(): T {
         return state.get()
     }
@@ -3956,3 +3956,11 @@ coroutineScope {
 Атомарные операции обеспечивают потокобезопасность без блокировок.
 
 Этот файл содержит полное руководство по конкурентности в **Kotlin**, покрывающее все основные аспекты от базовых концепций до интеграции с различными платформами, тестирования, оптимизации производительности, работы с параллельными корутинами, координации операций, измерения производительности, оптимизации использования корутин, мониторинга, обработки ошибок, работы с каналами, акторами, **Mutex**, **Semaphore**, атомарными операциями, интеграцией с **Java** потоками, **RxJava**, **CompletableFuture**, практические примеры использования, включая параллельную обработку, **select**, **Semaphore** и атомарные операции, заключение, дополнительные ресурсы и итоговые рекомендации.
+
+## См. также
+
+- [[kotlin-another|Kotlin Another]]
+- [[kotlin-basics|Основы Kotlin — Полное руководство]]
+- [[kotlin-collections-grouping|Kotlin Collections: Grouping and Aggregation]]
+- [[kotlin-collections-list|Kotlin Collections: List]]
+- [[kotlin-collections-map|Kotlin Collections: Map]]

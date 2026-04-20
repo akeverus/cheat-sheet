@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: **CRUD** операции - Создание, чтение, обновление и удаление документов
+# **MongoDB**: **CRUD** операции — Создание, чтение, обновление и удаление документов
 
 Полное руководство по **CRUD** операциям в **MongoDB**: **insert**, **find**, **update**, **delete** с примерами и **best practices**.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [MongoDB Insert Documents](https://www.mongodb.com/docs/manual/tutorial/insert-documents/)
 - [MongoDB Query Documents](https://www.mongodb.com/docs/manual/tutorial/query-documents/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB CRUD with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial) — **Spring Data MongoDB**
 
 ### См. также
@@ -97,16 +97,16 @@ updated: "2026-02-11"
 ### **Write Concern** и **Read Concern**
 
 #### **Write Concern** уровни:
-- **w: 0** - **Fire and forget** (**не ждет подтверждения**)
-- **w: 1** - Ждет подтверждения от **primary**
-- **w: "majority"** - Ждет подтверждения от большинства реплик
-- **j: true** - Ждет записи в **journal**
+- **w: 0** — **Fire and forget** (**не ждет подтверждения**)
+- **w: 1** — Ждет подтверждения от **primary**
+- **w: "majority"** — Ждет подтверждения от большинства реплик
+- **j: true** — Ждет записи в **journal**
 
 #### **Read Concern** уровни:
-- **local** - Читает с **primary** (**по умолчанию**)
-- **available** - Читает доступные данные (**максимальная производительность**)
-- **majority** - Читает **majority-committed** данные
-- **linearizable** - Линеаризуемое чтение (**строгая консистентность**)
+- **local** — Читает с **primary** (**по умолчанию**)
+- **available** — Читает доступные данные (**максимальная производительность**)
+- **majority** — Читает **majority-committed** данные
+- **linearizable** — Линеаризуемое чтение (**строгая консистентность**)
 
 ### Операции и их характеристики
 
@@ -146,7 +146,7 @@ updated: "2026-02-11"
 
 ## **Create** (**Создание документов**)
 
-### **insertOne**() - Вставка одного документа
+### **insertOne**() — Вставка одного документа
 
 Пример сущности и вставки одного документа через **Spring Data MongoDB** (**Java**).
 
@@ -200,7 +200,7 @@ public class BookService {
 }
 ```
 
-### **insertMany**() - Вставка нескольких документов
+### **insertMany**() — Вставка нескольких документов
 
 ```java
 @Service
@@ -258,7 +258,7 @@ public class BookService {
 
 ## **Read** (**Чтение документов**)
 
-### **find**() - Поиск документов
+### **find**() — Поиск документов
 
 ```java
 @Repository
@@ -343,7 +343,7 @@ public class BookService {
 }
 ```
 
-### **findOne**() - Поиск одного документа
+### **findOne**() — Поиск одного документа
 
 ```java
 @Repository
@@ -404,7 +404,7 @@ public class BookService {
 
 ## **Update** (**Обновление документов**)
 
-### **updateOne**() - Обновление одного документа
+### **updateOne**() — Обновление одного документа
 
 ```java
 @Service
@@ -436,7 +436,7 @@ public class BookService {
 }
 ```
 
-### **updateMany**() - Обновление нескольких документов
+### **updateMany**() — Обновление нескольких документов
 
 ```java
 @Service
@@ -474,7 +474,7 @@ public class BookService {
 }
 ```
 
-### **replaceOne**() - Замена документа
+### **replaceOne**() — Замена документа
 
 ```java
 @Service
@@ -691,7 +691,7 @@ public class BookService {
 
 ## **Delete** (**Удаление документов**)
 
-### **deleteOne**() - Удаление одного документа
+### **deleteOne**() — Удаление одного документа
 
 ```java
 @Repository
@@ -738,7 +738,7 @@ public class BookService {
 }
 ```
 
-### **deleteMany**() - Удаление нескольких документов
+### **deleteMany**() — Удаление нескольких документов
 
 ```java
 @Service
@@ -782,7 +782,7 @@ public class BookService {
 ```
 // Удалить книги определенного автора
 **db.books.`deleteMany`(**{ author: "`Unknown Author`" }**)
-```
+```text
 
 ### Удаление всех документов
 
@@ -809,7 +809,7 @@ public class `BookService` {
         `mongoTemplate`.`dropCollection`(`collectionName`);
     }
 }
-```
+```text
 
 ## Write Concern и настройки
 
@@ -865,7 +865,7 @@ public class `BookService` {
         return `insertWithWriteConcern`(book, `WriteConcern`.`UNACKNOWLEDGED`); // w: 0
     }
 }
-```
+```text
 
 db.books.insertOne(
   document,
@@ -1249,7 +1249,6 @@ CRUD операции в MongoDB предоставляют гибкий и мо
 
 **Транзакционные ошибки (transaction aborted):** убедитесь, что все операции в сессии поддерживают транзакции (replica set, не standalone). Проверьте таймауты и конфликты записи. При повторных попытках используйте idempotent-операции.
 
----
 
 Следующие темы:
 - [Запросы и фильтры](mongodb-queries.md)

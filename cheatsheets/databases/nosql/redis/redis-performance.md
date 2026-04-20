@@ -93,7 +93,6 @@ related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 4. **Диск**: I/O операции для персистентности
 5. **Конфигурация**: Настройки сервера и клиентов
 
----
 
 ## Бенчмаркинг
 
@@ -153,13 +152,13 @@ import java.util.List;
 
 public class RedisBenchmark {
     private JedisPool jedisPool;
-    
+
     public RedisBenchmark(String host, int port) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(10);
         this.jedisPool = new JedisPool(poolConfig, host, port);
     }
-    
+
     public void benchmarkOperations(int operations) {
         try (Jedis jedis = jedisPool.getResource()) {
             // Тест SET
@@ -170,7 +169,7 @@ public class RedisBenchmark {
                 long duration = (System.nanoTime() - start) / 1_000_000; // в миллисекундах
                 setTimes.add(duration);
             }
-            
+
             // Тест GET
             List<Long> getTimes = new ArrayList<>();
             for (int i = 0; i < operations; i++) {
@@ -179,30 +178,30 @@ public class RedisBenchmark {
                 long duration = (System.nanoTime() - start) / 1_000_000;
                 getTimes.add(duration);
             }
-            
+
             printStatistics("SET operations", setTimes);
             printStatistics("GET operations", getTimes);
         }
     }
-    
+
     private void printStatistics(String operation, List<Long> times) {
         Collections.sort(times);
         double mean = times.stream().mapToLong(Long::longValue).average().orElse(0.0);
         double median = times.get(times.size() / 2);
         double p95 = times.get((int)(times.size() * 0.95));
-        
+
         System.out.println(operation + ":");
         System.out.println(String.format("  Mean: %.2f ms", mean));
         System.out.println(String.format("  Median: %.2f ms", median));
         System.out.println(String.format("  P95: %.2f ms", p95));
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
         }
     }
-    
+
     public static void main(String[] args) {
         RedisBenchmark benchmark = new RedisBenchmark("localhost", 6379);
         benchmark.benchmarkOperations(10000);
@@ -211,7 +210,6 @@ public class RedisBenchmark {
 }
 ```
 
----
 
 ## Профилирование
 
@@ -261,7 +259,6 @@ MEMORY MALLOC-STATS
 MEMORY SAMPLES 5
 ```
 
----
 
 ## Оптимизация памяти
 
@@ -315,7 +312,6 @@ lazyfree-lazy-server-del yes
 replica-lazy-flush yes
 ```
 
----
 
 ## Оптимизация сети
 
@@ -351,11 +347,11 @@ import redis.clients.jedis.Pipeline;
 
 public class PipelineExample {
     private JedisPool jedisPool;
-    
+
     public PipelineExample(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void withoutPipeline() {
         try (Jedis jedis = jedisPool.getResource()) {
             // Без Pipeline (медленно)
@@ -364,7 +360,7 @@ public class PipelineExample {
             }
         }
     }
-    
+
     public void withPipeline() {
         try (Jedis jedis = jedisPool.getResource()) {
             // С Pipeline (быстро)
@@ -378,7 +374,6 @@ public class PipelineExample {
 }
 ```
 
----
 
 ## Оптимизация персистентности
 
@@ -407,7 +402,6 @@ aof-rewrite-incremental-fsync yes
 aof-use-rdb-preamble yes
 ```
 
----
 
 ## Мониторинг производительности
 
@@ -452,7 +446,6 @@ docker run -d \
   oliver006/redis_exporter
 ```
 
----
 
 ## Лучшие практики
 
@@ -557,19 +550,19 @@ import java.util.Map;
 public class RedisPerformanceMonitor {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public RedisPerformanceMonitor(String host, int port, String password) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(1);
         this.jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
         this.gson = new Gson();
     }
-    
+
     public Map<String, Object> collectMetrics() {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, Object> metrics = new HashMap<>();
             metrics.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-            
+
             // Общая информация
             Map<String, String> info = jedis.info();
             Map<String, Object> infoMap = new HashMap<>();
@@ -579,7 +572,7 @@ public class RedisPerformanceMonitor {
             infoMap.put("used_memory_human", info.get("used_memory_human"));
             infoMap.put("used_memory_peak_human", info.get("used_memory_peak_human"));
             metrics.put("info", infoMap);
-            
+
             // Статистика команд
             Map<String, String> commandstats = jedis.info("commandstats");
             Map<String, Map<String, Object>> cmdStatsMap = new HashMap<>();
@@ -589,7 +582,7 @@ public class RedisPerformanceMonitor {
                 cmdStatsMap.put(entry.getKey(), cmdStats);
             }
             metrics.put("commandstats", cmdStatsMap);
-            
+
             // Память
             Map<String, String> memory = jedis.info("memory");
             Map<String, Object> memoryMap = new HashMap<>();
@@ -598,7 +591,7 @@ public class RedisPerformanceMonitor {
             memoryMap.put("used_memory_peak", memory.get("used_memory_peak"));
             memoryMap.put("mem_fragmentation_ratio", memory.get("mem_fragmentation_ratio"));
             metrics.put("memory", memoryMap);
-            
+
             // Клиенты
             Map<String, String> clients = jedis.info("clients");
             Map<String, Object> clientsMap = new HashMap<>();
@@ -607,7 +600,7 @@ public class RedisPerformanceMonitor {
             clientsMap.put("client_recent_max_input_buffer", clients.get("client_recent_max_input_buffer"));
             clientsMap.put("client_recent_max_output_buffer", clients.get("client_recent_max_output_buffer"));
             metrics.put("clients", clientsMap);
-            
+
             // Статистика
             Map<String, String> stats = jedis.info("stats");
             Map<String, Object> statsMap = new HashMap<>();
@@ -617,11 +610,11 @@ public class RedisPerformanceMonitor {
             statsMap.put("keyspace_hits", stats.get("keyspace_hits"));
             statsMap.put("keyspace_misses", stats.get("keyspace_misses"));
             metrics.put("stats", statsMap);
-            
+
             return metrics;
         }
     }
-    
+
     public void monitorContinuously(long intervalMs) throws InterruptedException {
         while (true) {
             Map<String, Object> metrics = collectMetrics();
@@ -629,13 +622,13 @@ public class RedisPerformanceMonitor {
             Thread.sleep(intervalMs);
         }
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
         }
     }
-    
+
     public static void main(String[] args) throws InterruptedException {
         RedisPerformanceMonitor monitor = new RedisPerformanceMonitor("localhost", 6379, null);
         monitor.monitorContinuously(60000);
@@ -659,18 +652,18 @@ import java.util.concurrent.*;
 public class LoadTester {
     private JedisPool jedisPool;
     private List<Long> results;
-    
+
     public LoadTester(String host, int port, String password) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(100);
         this.jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
         this.results = Collections.synchronizedList(new ArrayList<>());
     }
-    
+
     private void worker(int workerId, int operations) {
         try (Jedis jedis = jedisPool.getResource()) {
             List<Long> times = new ArrayList<>();
-            
+
             for (int i = 0; i < operations; i++) {
                 long start = System.nanoTime();
                 jedis.set("key_" + workerId + "_" + i, "value_" + i);
@@ -678,32 +671,32 @@ public class LoadTester {
                 long duration = (System.nanoTime() - start) / 1_000_000; // в миллисекундах
                 times.add(duration);
             }
-            
+
             results.addAll(times);
         }
     }
-    
+
     public void runTest(int threads, int operationsPerThread) throws InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         long startTime = System.currentTimeMillis();
-        
+
         for (int i = 0; i < threads; i++) {
             final int workerId = i;
             executor.submit(() -> worker(workerId, operationsPerThread));
         }
-        
+
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.HOURS);
-        
+
         long totalTime = System.currentTimeMillis() - startTime;
         int totalOperations = threads * operationsPerThread * 2;  // SET + GET
-        
+
         Collections.sort(results);
         double mean = results.stream().mapToLong(Long::longValue).average().orElse(0.0);
         double median = results.get(results.size() / 2);
         double p95 = results.get((int)(results.size() * 0.95));
         double p99 = results.get((int)(results.size() * 0.99));
-        
+
         System.out.println(String.format("Total time: %.2f seconds", totalTime / 1000.0));
         System.out.println("Total operations: " + totalOperations);
         System.out.println(String.format("Operations per second: %.2f", totalOperations / (totalTime / 1000.0)));
@@ -712,13 +705,13 @@ public class LoadTester {
         System.out.println(String.format("P95 latency: %.2f ms", p95));
         System.out.println(String.format("P99 latency: %.2f ms", p99));
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
         }
     }
-    
+
     public static void main(String[] args) throws InterruptedException {
         LoadTester tester = new LoadTester("localhost", 6379, null);
         tester.runTest(50, 1000);
@@ -738,10 +731,10 @@ import redis.clients.jedis.JedisPoolConfig;
 
 public class OptimizedRedisPool {
     private JedisPool jedisPool;
-    
+
     public OptimizedRedisPool() {
         JedisPoolConfig config = new JedisPoolConfig();
-        
+
         // Оптимизация пула
         config.setMaxTotal(20);
         config.setMaxIdle(10);
@@ -753,7 +746,7 @@ public class OptimizedRedisPool {
         config.setTimeBetweenEvictionRunsMillis(30000);
         config.setNumTestsPerEvictionRun(3);
         config.setMaxWaitMillis(5000);
-        
+
         this.jedisPool = new JedisPool(config, "localhost", 6379);
     }
 }
@@ -772,11 +765,11 @@ import java.util.Map;
 
 public class BatchOperations {
     private JedisPool jedisPool;
-    
+
     public BatchOperations(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void batchWithPipeline() {
         try (Jedis jedis = jedisPool.getResource()) {
             // Использование Pipeline
@@ -787,7 +780,7 @@ public class BatchOperations {
             pipe.sync();
         }
     }
-    
+
     public void batchWithMSET() {
         try (Jedis jedis = jedisPool.getResource()) {
             // Использование MSET/MGET
@@ -796,7 +789,7 @@ public class BatchOperations {
                 keyValues.put("key" + i, "value" + i);
             }
             jedis.mset(keyValues);
-            
+
             String[] keys = new String[1000];
             for (int i = 0; i < 1000; i++) {
                 keys[i] = "key" + i;
@@ -913,18 +906,18 @@ import java.util.concurrent.*;
 public class PerformanceTester {
     private JedisPool jedisPool;
     private List<Long> results;
-    
+
     public PerformanceTester(String host, int port, String password) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(100);
         this.jedisPool = new JedisPool(poolConfig, host, port, 2000, password);
         this.results = Collections.synchronizedList(new ArrayList<>());
     }
-    
+
     private void worker(int workerId, int operations) {
         try (Jedis jedis = jedisPool.getResource()) {
             List<Long> times = new ArrayList<>();
-            
+
             for (int i = 0; i < operations; i++) {
                 long start = System.nanoTime();
                 jedis.set("key_" + workerId + "_" + i, "value_" + i);
@@ -932,32 +925,32 @@ public class PerformanceTester {
                 long duration = (System.nanoTime() - start) / 1_000_000;
                 times.add(duration);
             }
-            
+
             results.addAll(times);
         }
     }
-    
+
     public void runTest(int threads, int operationsPerThread) throws InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         long startTime = System.currentTimeMillis();
-        
+
         for (int i = 0; i < threads; i++) {
             final int workerId = i;
             executor.submit(() -> worker(workerId, operationsPerThread));
         }
-        
+
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.HOURS);
-        
+
         long totalTime = System.currentTimeMillis() - startTime;
         int totalOperations = threads * operationsPerThread * 2;
-        
+
         Collections.sort(results);
         double mean = results.stream().mapToLong(Long::longValue).average().orElse(0.0);
         double median = results.get(results.size() / 2);
         double p95 = results.get((int)(results.size() * 0.95));
         double p99 = results.get((int)(results.size() * 0.99));
-        
+
         System.out.println(String.format("Total time: %.2f seconds", totalTime / 1000.0));
         System.out.println("Total operations: " + totalOperations);
         System.out.println(String.format("Operations per second: %.2f", totalOperations / (totalTime / 1000.0)));
@@ -966,13 +959,13 @@ public class PerformanceTester {
         System.out.println(String.format("P95 latency: %.2f ms", p95));
         System.out.println(String.format("P99 latency: %.2f ms", p99));
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
         }
     }
-    
+
     public static void main(String[] args) throws InterruptedException {
         PerformanceTester tester = new PerformanceTester("localhost", 6379, null);
         tester.runTest(50, 1000);
@@ -1001,11 +994,7 @@ redis-benchmark -t sadd,spop -c 50 -n 5000
 redis-benchmark -t zadd,zrange -c 50 -n 5000
 ```
 
----
 
 - [Redis Performance](https://redis.io/docs/management/optimization/)
 - [Redis Benchmarking](https://redis.io/docs/management/optimization/benchmarks/)
-
----
-
 

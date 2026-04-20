@@ -65,28 +65,28 @@ a = 97
 // Реализация хеширования строки техникой складывания: преобразование символов в числа,
 // группировка и суммирование по модулю размера массива.
 public class FoldingHashFunction {
-    
+
     public static int hash(String input, int arraySize) {
         // Преобразуем строку в ASCII значения
         StringBuilder asciiValues = new StringBuilder();
         for (char c : input.toCharArray()) {
             asciiValues.append((int) c);
         }
-        
+
         String asciiString = asciiValues.toString();
         int groupSize = 2; // Размер группы
         int sum = 0;
-        
+
         // Разбиваем на группы и суммируем
         for (int i = 0; i < asciiString.length(); i += groupSize) {
             int end = Math.min(i + groupSize, asciiString.length());
             String group = asciiString.substring(i, end);
             sum += Integer.parseInt(group);
         }
-        
+
         return sum % arraySize;
     }
-    
+
     public static void main(String[] args) {
         String input = "Java";
         int arraySize = 100000;
@@ -100,15 +100,15 @@ public class FoldingHashFunction {
 
 ```java
 public class BinningHashFunction {
-    
+
     public static int hash(int value, int numberOfBins) {
         return value / numberOfBins;
     }
-    
+
     public static void main(String[] args) {
         int[] values = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
         int numberOfBins = 10;
-        
+
         for (int value : values) {
             int bin = hash(value, numberOfBins);
             System.out.println("Value " + value + " -> Bin " + bin);
@@ -120,23 +120,23 @@ public class BinningHashFunction {
 
 ```java
 public class MidSquareHashFunction {
-    
+
     public static int hash(int value, int digits) {
         long square = (long) value * value;
         String squareStr = String.valueOf(square);
-        
+
         // Дополняем нулями слева, если нужно
         while (squareStr.length() < digits * 2) {
             squareStr = "0" + squareStr;
         }
-        
+
         // Извлекаем средние цифры
         int start = (squareStr.length() - digits) / 2;
         String middle = squareStr.substring(start, start + digits);
-        
+
         return Integer.parseInt(middle);
     }
-    
+
     public static void main(String[] args) {
         int value = 1111;
         int digits = 4;
@@ -157,11 +157,11 @@ object FoldingHashFunctionK {
         for (c in input.toCharArray()) {
             asciiValues.append(c.code)
         }
-        
+
         val asciiString = asciiValues.toString()
         val groupSize = 2 // Размер группы
         var sum = 0
-        
+
         // Разбиваем на группы и суммируем
         var i = 0
         while (i < asciiString.length) {
@@ -170,7 +170,7 @@ object FoldingHashFunctionK {
             sum += group.toInt()
             i += groupSize
         }
-        
+
         return sum % arraySize
     }
 }
@@ -208,10 +208,10 @@ fun main() {
     val arraySize = 100000
     val hash = FoldingHashFunctionK.hash(input, arraySize)
     println("Hash value for '$input': $hash")
-    
+
     val midSquareHash = MidSquareHashFunctionK.hash(1111, 10000)
     println("Mid-square hash for 1111: $midSquareHash")
-    
+
     val binningHash = BinningHashFunctionK.hash(5000, 10)
     println("Binning hash for 5000: $binningHash")
 }
@@ -221,7 +221,7 @@ fun main() {
 
 ```java
 public class SimpleStringHash {
-    
+
     public static int hash(String key, int tableSize) {
         int hash = 0;
         for (int i = 0; i < key.length(); i++) {
@@ -236,9 +236,9 @@ public class SimpleStringHash {
 
 ```java
 public class MultiplicationHash {
-    
+
     private static final double A = (Math.sqrt(5) - 1) / 2; // Константа (√5 - 1) / 2
-    
+
     public static int hash(int key, int tableSize) {
         double fractionalPart = (key * A) % 1;
         return (int) (tableSize * fractionalPart);

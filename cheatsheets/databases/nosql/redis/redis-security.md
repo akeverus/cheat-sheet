@@ -94,7 +94,6 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 4. **Изоляция**: Ограничение доступа к серверу
 5. **Аудит**: Логирование и мониторинг доступа
 
----
 
 ## Аутентификация
 
@@ -125,7 +124,6 @@ openssl rand -base64 32
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
----
 
 ## **ACL** (**Access `Control` List**)
 
@@ -206,7 +204,6 @@ ACL SETUSER user1 on >pass ~* -@all +@read ~user:* -~admin:*
 ACL SETUSER user1 on >pass ~{user}:* ~{order}:*
 ```
 
----
 
 ## **SSL**/**TLS**
 
@@ -247,7 +244,6 @@ r = redis.Redis(
 )
 ```
 
----
 
 ## Ограничение доступа
 
@@ -274,7 +270,6 @@ firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="192
 firewall-cmd --reload
 ```
 
----
 
 ## Отключение опасных команд
 
@@ -297,7 +292,6 @@ rename-command CONFIG "CONFIG_9cb4d4c8b5a1be8a5b2f3c4d5e6f7a8b9"
 ACL SETUSER user1 on >pass ~* +@all -FLUSHDB -FLUSHALL -CONFIG
 ```
 
----
 
 ## Шифрование данных
 
@@ -317,7 +311,7 @@ public class EncryptedRedis {
     private SecretKey secretKey;
     private Cipher encryptCipher;
     private Cipher decryptCipher;
-    
+
     public EncryptedRedis(JedisPool jedisPool, byte[] keyBytes) throws Exception {
         this.jedisPool = jedisPool;
         this.secretKey = new SecretKeySpec(keyBytes, "AES");
@@ -326,7 +320,7 @@ public class EncryptedRedis {
         this.decryptCipher = Cipher.getInstance("AES");
         this.decryptCipher.init(Cipher.DECRYPT_MODE, secretKey);
     }
-    
+
     public void set(String key, String value) throws Exception {
         try (Jedis jedis = jedisPool.getResource()) {
             byte[] encrypted = encryptCipher.doFinal(value.getBytes("UTF-8"));
@@ -334,7 +328,7 @@ public class EncryptedRedis {
             jedis.set(key, encryptedBase64);
         }
     }
-    
+
     public String get(String key) throws Exception {
         try (Jedis jedis = jedisPool.getResource()) {
             String encryptedBase64 = jedis.get(key);
@@ -349,7 +343,6 @@ public class EncryptedRedis {
 }
 ```
 
----
 
 ## Аудит и мониторинг
 
@@ -376,18 +369,18 @@ public class SecurityMonitor {
     private JedisPool jedisPool;
     private Map<String, Integer> failedAuths;
     private Map<String, Integer> commandCounts;
-    
+
     public SecurityMonitor(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.failedAuths = new HashMap<>();
         this.commandCounts = new HashMap<>();
     }
-    
+
     public void monitorAuthFailures() {
         // В реальности это требует кастомной логики
         // или использования Redis модулей
     }
-    
+
     public void checkSuspiciousCommands() {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, String> commandstats = jedis.info("commandstats");
@@ -402,7 +395,6 @@ public class SecurityMonitor {
 }
 ```
 
----
 
 ## Лучшие практики
 
@@ -559,22 +551,22 @@ public class EncryptedRedisStorage {
     private SecretKeySpec secretKey;
     private Cipher encryptCipher;
     private Cipher decryptCipher;
-    
+
     public EncryptedRedisStorage(JedisPool jedisPool, String password) throws Exception {
         this.jedisPool = jedisPool;
-        
+
         // Генерация ключа из пароля
         MessageDigest sha = MessageDigest.getInstance("SHA-256");
         byte[] key = sha.digest(password.getBytes("UTF-8"));
         this.secretKey = new SecretKeySpec(key, "AES");
-        
+
         this.encryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         this.encryptCipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(new byte[16]));
-        
+
         this.decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         this.decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(new byte[16]));
     }
-    
+
     public void set(String key, String value) throws Exception {
         try (Jedis jedis = jedisPool.getResource()) {
             byte[] encrypted = encryptCipher.doFinal(value.getBytes("UTF-8"));
@@ -582,7 +574,7 @@ public class EncryptedRedisStorage {
             jedis.set(key, encryptedBase64);
         }
     }
-    
+
     public String get(String key) throws Exception {
         try (Jedis jedis = jedisPool.getResource()) {
             String encryptedBase64 = jedis.get(key);
@@ -757,22 +749,22 @@ public class EncryptedRedisStorage {
     private SecretKeySpec secretKey;
     private Cipher encryptCipher;
     private Cipher decryptCipher;
-    
+
     public EncryptedRedisStorage(JedisPool jedisPool, String password) throws Exception {
         this.jedisPool = jedisPool;
-        
+
         // Генерация ключа из пароля
         MessageDigest sha = MessageDigest.getInstance("SHA-256");
         byte[] key = sha.digest(password.getBytes("UTF-8"));
         this.secretKey = new SecretKeySpec(key, "AES");
-        
+
         this.encryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         this.encryptCipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(new byte[16]));
-        
+
         this.decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         this.decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(new byte[16]));
     }
-    
+
     public void set(String key, String value) throws Exception {
         try (Jedis jedis = jedisPool.getResource()) {
             byte[] encrypted = encryptCipher.doFinal(value.getBytes("UTF-8"));
@@ -780,7 +772,7 @@ public class EncryptedRedisStorage {
             jedis.set(key, encryptedBase64);
         }
     }
-    
+
     public String get(String key) throws Exception {
         try (Jedis jedis = jedisPool.getResource()) {
             String encryptedBase64 = jedis.get(key);
@@ -795,11 +787,7 @@ public class EncryptedRedisStorage {
 }
 ```
 
----
 
 - [Redis Security](https://redis.io/docs/management/security/)
 - [Redis ACL](https://redis.io/docs/management/security/)
-
----
-
 

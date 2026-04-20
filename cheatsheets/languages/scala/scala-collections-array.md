@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 ---
 
-# **Scala Collections** - **Array**
+# **Scala Collections** — **Array**
 
 Кратко: полное руководство по **Array** в **Scala**: массивы, операции, производительность, взаимодействие с **Java**.
 
@@ -29,7 +29,7 @@ related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 
 ## Содержание
 
-- [**Scala Collections** - **Array**](#scala-collections-array)
+- [**Scala Collections** — **Array**](#scala-collections-array)
 - [Введение в **Array**](#введение-в-array)
   - [Основные характеристики](#основные-характеристики)
 - [Создание массивов](#создание-массивов)
@@ -68,7 +68,7 @@ related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 
 ## Введение в **Array**
 
-**Array** в **Scala** - это изменяемая структура данных фиксированного размера, которая соответствует **Java** массивам. **Array** обеспечивает максимальную производительность для произвольного доступа.
+**Array** в **Scala** — это изменяемая структура данных фиксированного размера, которая соответствует **Java** массивам. **Array** обеспечивает максимальную производительность для произвольного доступа.
 
 ### Основные характеристики
 

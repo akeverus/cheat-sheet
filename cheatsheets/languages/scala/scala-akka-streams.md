@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **Akka Streams** в **Scala**
 
-Краткое руководство по **Akka Streams** - реактивные потоки данных для обработки данных в **Scala**.
+Краткое руководство по **Akka Streams** — реактивные потоки данных для обработки данных в **Scala**.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -27,9 +27,9 @@ updated: "2026-02-11"
 - [Основы **Akka Streams**](#основы-akka-streams)
   - [Базовый пример](#базовый-пример)
 - [**Source**, **Flow**, **Sink**](#source-flow-sink)
-  - [**Source** - источник данных](#source-источник-данных)
-  - [**Flow** - трансформация данных](#flow-трансформация-данных)
-  - [**Sink** - приемник данных](#sink-приемник-данных)
+  - [**Source** — источник данных](#source-источник-данных)
+  - [**Flow** — трансформация данных](#flow-трансформация-данных)
+  - [**Sink** — приемник данных](#sink-приемник-данных)
 - [Практические примеры](#практические-примеры)
   - [Обработка файлов](#обработка-файлов)
   - [Обработка с **backpressure**](#обработка-с-backpressure)
@@ -77,7 +77,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Akka Streams** - это библиотека для обработки потоков данных в **Scala** на основе **Reactive Streams**. Она предоставляет типобезопасный **DSL** для создания пайплайнов обработки данных с автоматическим управлением **backpressure**.
+**Akka Streams** — это библиотека для обработки потоков данных в **Scala** на основе **Reactive Streams**. Она предоставляет типобезопасный **DSL** для создания пайплайнов обработки данных с автоматическим управлением **backpressure**.
 
 **Akka Streams** особенно полезен для обработки больших объемов данных, создания реактивных приложений, обработки файлов, работы с сетью и создания микросервисов.
 
@@ -107,7 +107,7 @@ val result = graph.run()
 
 ## **Source**, **Flow**, **Sink**
 
-### **Source** - источник данных
+### **Source** — источник данных
 
 ```scala
 import akka.stream.scaladsl.Source
@@ -134,7 +134,7 @@ import java.nio.file.Paths
 val fileSource = FileIO.fromPath(Paths.get("file.txt"))
 ```
 
-### **Flow** - трансформация данных
+### **Flow** — трансформация данных
 
 ```scala
 import akka.stream.scaladsl.Flow
@@ -161,7 +161,7 @@ val groupFlow = Flow[Int].grouped(10)
 val slidingFlow = Flow[Int].sliding(5, 1)
 ```
 
-### **Sink** - приемник данных
+### **Sink** — приемник данных
 
 ```scala
 import akka.stream.scaladsl.Sink
@@ -291,14 +291,14 @@ val flow3 = Flow[Int].map(_ * 4)
 val graph = Source.fromGraph(
   GraphDSL.create() { implicit builder =>
     import GraphDSL.Implicits._
-    
+
     val broadcast = builder.add(Broadcast[Int](3))
-    
+
     source ~> broadcast.in
     broadcast.out(0) ~> flow1 ~> Sink.foreach(println)
     broadcast.out(1) ~> flow2 ~> Sink.foreach(println)
     broadcast.out(2) ~> flow3 ~> Sink.foreach(println)
-    
+
     ClosedShape
   }
 )
@@ -373,20 +373,20 @@ import akka.stream.{ClosedShape, UniformFanOutShape, UniformFanInShape}
 // Создание сложного графа обработки
 val complexGraph = GraphDSL.create() { implicit builder =>
   import GraphDSL.Implicits._
-  
+
   val source = builder.add(Source(1 to 100))
   val broadcast = builder.add(Broadcast[Int](2))
   val merge = builder.add(Merge[Int](2))
-  
+
   val flow1 = Flow[Int].map(_ * 2)
   val flow2 = Flow[Int].map(_ * 3)
   val sink = builder.add(Sink.foreach(println))
-  
+
   source ~> broadcast.in
   broadcast.out(0) ~> flow1 ~> merge.in(0)
   broadcast.out(1) ~> flow2 ~> merge.in(1)
   merge.out ~> sink.in
-  
+
   ClosedShape
 }
 
@@ -654,7 +654,7 @@ import scala.concurrent.duration._
 val timerFlow = Flow[Int]
   .statefulMapConcat { () =>
     var lastEmit = System.currentTimeMillis()
-    
+
     { value =>
       val now = System.currentTimeMillis()
       if (now - lastEmit > 1000) {
@@ -681,7 +681,7 @@ val result = source.via(timerFlow).runWith(Sink.seq)
 
 ## Заключение
 
-**Akka Streams** - это библиотека для обработки потоков данных в **Scala**. Понимание **Source**, **Flow**, **Sink**, обработки файлов, управления **backpressure**, обработки ошибок, параллельной обработки, **Fan-out**/**Fan-in** и практических применений позволяет создавать эффективные, масштабируемые реактивные приложения.
+**Akka Streams** — это библиотека для обработки потоков данных в **Scala**. Понимание **Source**, **Flow**, **Sink**, обработки файлов, управления **backpressure**, обработки ошибок, параллельной обработки, **Fan-out**/**Fan-in** и практических применений позволяет создавать эффективные, масштабируемые реактивные приложения.
 
 Использование **Akka Streams** для обработки больших файлов, управления **backpressure**, параллельной обработки, создания реактивных пайплайнов и практических применений критично для создания высокопроизводительных, отказоустойчивых приложений.
 
@@ -902,3 +902,10 @@ val result = source.via(expandFlow).take(100).runWith(Sink.seq)
 - [Reactive Streams](https://www.reactive-streams.org/)
 - [Akka Streams Cookbook](https://doc.akka.io/docs/akka/current/stream/stream-cookbook.html)
 
+## См. также
+
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]

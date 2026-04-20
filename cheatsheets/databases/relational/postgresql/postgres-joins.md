@@ -14,21 +14,19 @@ updated: "2026-02-11"
 
 Кратко: примеры **INNER**/**LEFT**/**RIGHT**/**FULL JOIN**, а также **UNION**/**EXCEPT**/**INTERSECT**. Без лишнего **Java**-кода — только **SQL**.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [`PostgreSQL Documentation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
-### **Baeldung**
+### Обучающие материалы
 
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [`postgres-queries`](postgres-queries.md) — [`postgres-design`](postgres-design.md).
+См. также: [[postgres-queries]] — [[postgres-design]].
 
 ## Содержание
 
@@ -697,7 +695,7 @@ FROM Customers;
 
 **Комбинирование различных типов `JOIN` в одном запросе:**
 ```sql
-SELECT 
+SELECT
     c.FirstName,
     o.CreatedAt,
     p.ProductName,
@@ -848,9 +846,9 @@ WITH RECURSIVE category_tree AS (
     SELECT id, name, parent_id, 1 AS level
     FROM categories
     WHERE parent_id IS NULL
-    
+
     UNION ALL
-    
+
     -- Рекурсивная часть
     SELECT c.id, c.name, c.parent_id, ct.level + 1
     FROM categories c
@@ -864,7 +862,7 @@ SELECT * FROM category_tree;
 **Соединение таблицы с самой собой:**
 ```sql
 -- Найти менеджеров и их подчиненных
-SELECT 
+SELECT
     e1.name AS manager,
     e2.name AS employee
 FROM employees e1
@@ -873,7 +871,7 @@ JOIN employees e2 ON e2.manager_id = e1.id;
 
 **Или найти пары сотрудников с одинаковой должностью:**
 ```sql
-SELECT 
+SELECT
     e1.name AS employee1,
     e2.name AS employee2,
     e1.position

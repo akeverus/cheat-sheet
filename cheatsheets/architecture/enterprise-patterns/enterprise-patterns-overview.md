@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Паттерны проектирования для корпоративных приложений.
 
-
-
 ## Полезные ссылки
 
 - [Enterprise Integration Patterns](https://www.enterpriseintegrationpatterns.com/)
@@ -66,11 +64,11 @@ interface UserRepository {
 class JpaUserRepository implements UserRepository {
     @PersistenceContext
     private EntityManager em;
-    
+
     public User findById(Long id) {
         return em.find(User.class, id);
     }
-    
+
     public void save(User user) {
         em.persist(user);
     }
@@ -85,11 +83,11 @@ class UnitOfWork {
     private List<Entity> newEntities = new ArrayList<>();
     private List<Entity> modifiedEntities = new ArrayList<>();
     private List<Entity> deletedEntities = new ArrayList<>();
-    
+
     void registerNew(Entity entity) {
         newEntities.add(entity);
     }
-    
+
     void commit() {
         // Сохранение всех изменений в одной транзакции
         entityManager.getTransaction().begin();
@@ -112,7 +110,7 @@ class OrderService {
     private OrderRepository orderRepository;
     private PaymentService paymentService;
     private InventoryService inventoryService;
-    
+
     @Transactional
     public Order createOrder(OrderRequest request) {
         // Бизнес-логика создания заказа
@@ -133,14 +131,14 @@ class OrderService {
 class Order {
     private List<OrderItem> items;
     private OrderStatus status;
-    
+
     void addItem(Product product, int quantity) {
         if (status != OrderStatus.DRAFT) {
             throw new IllegalStateException("Cannot modify confirmed order");
         }
         items.add(new OrderItem(product, quantity));
     }
-    
+
     Money calculateTotal() {
         return items.stream()
             .map(OrderItem::getSubtotal)
@@ -180,7 +178,7 @@ class PayPalPaymentGateway implements PaymentGateway {
 class OrderEventPublisher {
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     void publishOrderCreated(Order order) {
         OrderCreatedEvent event = new OrderCreatedEvent(order.getId());
         rabbitTemplate.convertAndSend("order.events", event);
@@ -199,7 +197,7 @@ class CircuitBreaker {
     private CircuitState state = CircuitState.CLOSED;
     private int failureCount = 0;
     private long lastFailureTime = 0;
-    
+
     <T> T execute(Supplier<T> operation) {
         if (state == CircuitState.OPEN) {
             if (System.currentTimeMillis() - lastFailureTime > 60000) {
@@ -208,7 +206,7 @@ class CircuitBreaker {
                 throw new CircuitBreakerOpenException();
             }
         }
-        
+
         try {
             T result = operation.get();
             onSuccess();
@@ -235,7 +233,7 @@ class OrderSaga {
             compensate(order);
         }
     }
-    
+
     void compensate(Order order) {
         releaseInventory(order);
         refundPayment(order);
@@ -275,4 +273,3 @@ class OrderSaga {
 - [[system-design-basics|System Design Basics]] — основы проектирования систем
 - [[microservices|Microservices]] — микросервисная архитектура
 
----

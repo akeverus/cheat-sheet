@@ -64,11 +64,11 @@ updated: "2026-02-06"
 
 ### Основные примитивы
 
-1. **Mutex** - взаимное исключение для защиты критических секций
-2. **RWMutex** - читатель-писатель мьютекс для оптимизации чтения
-3. **WaitGroup** - ожидание завершения группы горутин
-4. **Once** - выполнение функции один раз
-5. **Cond** - условные переменные для координации
+1. **Mutex** — взаимное исключение для защиты критических секций
+2. **RWMutex** — читатель-писатель мьютекс для оптимизации чтения
+3. **WaitGroup** — ожидание завершения группы горутин
+4. **Once** — выполнение функции один раз
+5. **Cond** — условные переменные для координации
 
 ## **Mutex**
 
@@ -101,7 +101,7 @@ func (c *Counter) Value() int {
 
 func main() {
     counter := &Counter{}
-    
+
     var wg sync.WaitGroup
     for i := 0; i < 1000; i++ {
         wg.Add(1)
@@ -110,7 +110,7 @@ func main() {
             counter.Increment()
         }()
     }
-    
+
     wg.Wait()
     fmt.Println(counter.Value())  // 1000
 }
@@ -177,7 +177,7 @@ import (
 
 func main() {
     var wg sync.WaitGroup
-    
+
     for i := 0; i < 5; i++ {
         wg.Add(1)
         go func(id int) {
@@ -185,7 +185,7 @@ func main() {
             fmt.Printf("Goroutine %d\n", id)
         }(i)
     }
-    
+
     wg.Wait()
     fmt.Println("All goroutines completed")
 }
@@ -197,7 +197,7 @@ func main() {
 func processItems(items []Item) []Result {
     var wg sync.WaitGroup
     results := make([]Result, len(items))
-    
+
     for i, item := range items {
         wg.Add(1)
         go func(index int, it Item) {
@@ -205,7 +205,7 @@ func processItems(items []Item) []Result {
             results[index] = processItem(it)
         }(i, item)
     }
-    
+
     wg.Wait()
     return results
 }
@@ -274,7 +274,7 @@ func main() {
     var mu sync.Mutex
     cond := sync.NewCond(&mu)
     ready := false
-    
+
     // Горутина-потребитель
     go func() {
         mu.Lock()
@@ -284,7 +284,7 @@ func main() {
         fmt.Println("Consumer: ready!")
         mu.Unlock()
     }()
-    
+
     // Горутина-производитель
     go func() {
         mu.Lock()
@@ -292,7 +292,7 @@ func main() {
         cond.Signal()
         mu.Unlock()
     }()
-    
+
     time.Sleep(100 * time.Millisecond)
 }
 ```
@@ -304,7 +304,7 @@ func main() {
     var mu sync.Mutex
     cond := sync.NewCond(&mu)
     ready := false
-    
+
     // Множественные потребители
     for i := 0; i < 3; i++ {
         go func(id int) {
@@ -316,7 +316,7 @@ func main() {
             mu.Unlock()
         }(i)
     }
-    
+
     // Производитель
     go func() {
         time.Sleep(100 * time.Millisecond)
@@ -325,7 +325,7 @@ func main() {
         cond.Broadcast()  // Уведомление всех
         mu.Unlock()
     }()
-    
+
     time.Sleep(200 * time.Millisecond)
 }
 ```
@@ -356,7 +356,7 @@ func (c *AtomicCounter) Value() int64 {
 
 func main() {
     counter := &AtomicCounter{}
-    
+
     var wg sync.WaitGroup
     for i := 0; i < 1000; i++ {
         wg.Add(1)
@@ -365,7 +365,7 @@ func main() {
             counter.Increment()
         }()
     }
-    
+
     wg.Wait()
     fmt.Println(counter.Value())  // 1000
 }
@@ -384,10 +384,10 @@ func (c *AtomicCounter) CompareAndSwap(old, new int64) bool {
 ```go
 func main() {
     var value int64
-    
+
     // Сохранение значения
     atomic.StoreInt64(&value, 42)
-    
+
     // Загрузка значения
     loaded := atomic.LoadInt64(&value)
     fmt.Println(loaded)  // 42
@@ -430,7 +430,7 @@ func (m *SafeMap) Delete(key string) {
 func (m *SafeMap) Keys() []string {
     m.mu.RLock()
     defer m.mu.RUnlock()
-    
+
     keys := make([]string, 0, len(m.data))
     for k := range m.data {
         keys = append(keys, k)
@@ -468,7 +468,7 @@ func (s *SafeSlice) Append(item interface{}) {
 func (s *SafeSlice) Get(index int) (interface{}, bool) {
     s.mu.RLock()
     defer s.mu.RUnlock()
-    
+
     if index < 0 || index >= len(s.items) {
         return nil, false
     }
@@ -486,7 +486,7 @@ func (s *SafeSlice) Range(fn func(interface{}) bool) {
     items := make([]interface{}, len(s.items))
     copy(items, s.items)
     s.mu.RUnlock()
-    
+
     for _, item := range items {
         if !fn(item) {
             break
@@ -518,7 +518,7 @@ func NewRateLimiter(maxTokens int, refillRate time.Duration) *RateLimiter {
 func (rl *RateLimiter) Allow() bool {
     rl.mu.Lock()
     defer rl.mu.Unlock()
-    
+
     // Пополнение токенов
     now := time.Now()
     elapsed := now.Sub(rl.lastRefill)
@@ -527,12 +527,12 @@ func (rl *RateLimiter) Allow() bool {
         rl.tokens = min(rl.tokens+refills, rl.maxTokens)
         rl.lastRefill = now
     }
-    
+
     if rl.tokens > 0 {
         rl.tokens--
         return true
     }
-    
+
     return false
 }
 ```
@@ -564,7 +564,7 @@ func (wp *WorkerPool) Start() {
 
 func (wp *WorkerPool) worker() {
     defer wp.wg.Done()
-    
+
     for job := range wp.jobs {
         result := processJob(job)
         wp.results <- result
@@ -619,7 +619,7 @@ func (b *Barrier) Wait() {
     b.mu.Lock()
     current := atomic.AddInt64(&b.current, 1)
     b.mu.Unlock()
-    
+
     if current == int64(b.count) {
         // Последний достиг барьера
         b.waiters.Done()
@@ -650,7 +650,7 @@ func NewSemaphore(count int) *Semaphore {
 func (s *Semaphore) Acquire() {
     s.mu.Lock()
     defer s.mu.Unlock()
-    
+
     for s.count == 0 {
         s.cond.Wait()
     }
@@ -660,7 +660,7 @@ func (s *Semaphore) Acquire() {
 func (s *Semaphore) Release() {
     s.mu.Lock()
     defer s.mu.Unlock()
-    
+
     s.count++
     s.cond.Signal()
 }
@@ -722,7 +722,7 @@ func NewSafeQueue() *SafeQueue {
 func (sq *SafeQueue) Enqueue(item interface{}) {
     sq.mu.Lock()
     defer sq.mu.Unlock()
-    
+
     sq.items = append(sq.items, item)
     sq.cond.Signal()
 }
@@ -730,11 +730,11 @@ func (sq *SafeQueue) Enqueue(item interface{}) {
 func (sq *SafeQueue) Dequeue() (interface{}, bool) {
     sq.mu.Lock()
     defer sq.mu.Unlock()
-    
+
     for len(sq.items) == 0 {
         sq.cond.Wait()
     }
-    
+
     item := sq.items[0]
     sq.items = sq.items[1:]
     return item, true
@@ -808,7 +808,7 @@ func (sc *SafeCounter) Add(n int64) {
     defer sc.mu.Unlock()
     sc.count += n
     sc.total += n
-    
+
     if n < sc.min || sc.min == 0 {
         sc.min = n
     }
@@ -851,7 +851,7 @@ func NewBarrier(count int) *Barrier {
 func (b *Barrier) Wait() {
     b.mu.Lock()
     current := atomic.AddInt64(&b.current, 1)
-    
+
     if current == int64(b.count) {
         b.current = 0
         b.cond.Broadcast()
@@ -904,21 +904,21 @@ func (c *Cache) Size() int {
 
 ## Лучшие практики
 
-1. **Всегда используйте defer для Unlock** - гарантирует освобождение блокировки
-2. **Минимизируйте время блокировки** - держите блокировки как можно меньше
-3. **Используйте RWMutex для чтения** - когда много читателей и мало писателей
-4. **Используйте atomic для простых операций** - для счетчиков и флагов
-5. **Избегайте вложенных блокировок** - может привести к **deadlock**
-6. **Используйте `WaitGroup` правильно** - **Add** перед запуском, **Done** в **defer**
-7. **Используйте `Once` для инициализации** - гарантирует однократное выполнение
-8. **Используйте `Cond` для координации** - для условной синхронизации
-9. **Избегайте гонок данных** - используйте правильные примитивы синхронизации
-10. **Тестируйте конкурентность** - используйте **race detector**
-11. **Используйте sync.Pool** - для переиспользования объектов
-12. **Используйте барьеры** - для синхронизации групп горутин
-13. **Используйте RWMutex для кэшей** - когда много читателей
-14. **Оптимизируйте блокировки** - минимизируйте критическую секцию
-15. **Документируйте блокировки** - объясняйте, почему используется синхронизация
+1. **Всегда используйте defer для Unlock** — гарантирует освобождение блокировки
+2. **Минимизируйте время блокировки** — держите блокировки как можно меньше
+3. **Используйте RWMutex для чтения** — когда много читателей и мало писателей
+4. **Используйте atomic для простых операций** — для счетчиков и флагов
+5. **Избегайте вложенных блокировок** — может привести к **deadlock**
+6. **Используйте `WaitGroup` правильно** — **Add** перед запуском, **Done** в **defer**
+7. **Используйте `Once` для инициализации** — гарантирует однократное выполнение
+8. **Используйте `Cond` для координации** — для условной синхронизации
+9. **Избегайте гонок данных** — используйте правильные примитивы синхронизации
+10. **Тестируйте конкурентность** — используйте **race detector**
+11. **Используйте sync.Pool** — для переиспользования объектов
+12. **Используйте барьеры** — для синхронизации групп горутин
+13. **Используйте RWMutex для кэшей** — когда много читателей
+14. **Оптимизируйте блокировки** — минимизируйте критическую секцию
+15. **Документируйте блокировки** — объясняйте, почему используется синхронизация
 
 
 ## Решение проблем
@@ -937,3 +937,11 @@ func (c *Cache) Size() int {
 
 - [Go sync Package](https://pkg.go.dev/sync)
 - [Go sync/atomic](https://pkg.go.dev/sync/atomic)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

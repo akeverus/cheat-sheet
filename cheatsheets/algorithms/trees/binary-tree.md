@@ -83,7 +83,7 @@ class Node {
     int value;
     Node left;
     Node right;
-    
+
     Node(int value) {
         this.value = value;
         right = null;
@@ -113,7 +113,7 @@ private Node addRecursive(Node current, int value) {
     if (current == null) {
         return new Node(value);
     }
-    
+
     if (value < current.value) {
         current.left = addRecursive(current.left, value);
     } else if (value > current.value) {
@@ -121,7 +121,7 @@ private Node addRecursive(Node current, int value) {
     } else {
         return current;
     }
-    
+
     return current;
 }
 ```
@@ -139,7 +139,7 @@ public void add(int value) {
 ```java
 private BinaryTree createBinaryTree() {
     BinaryTree bt = new BinaryTree();
-    
+
     bt.add(6);
     bt.add(4);
     bt.add(8);
@@ -147,7 +147,7 @@ private BinaryTree createBinaryTree() {
     bt.add(5);
     bt.add(7);
     bt.add(9);
-    
+
     return bt;
 }
 ```
@@ -163,11 +163,11 @@ private boolean containsNodeRecursive(Node current, int value) {
     if (current == null) {
         return false;
     }
-    
+
     if (value == current.value) {
         return true;
     }
-    
+
     return value < current.value
         ? containsNodeRecursive(current.left, value)
         : containsNodeRecursive(current.right, value);
@@ -190,7 +190,7 @@ public boolean containsNode(int value) {
 @Test
 public void givenABinaryTree_WhenAddingElements_ThenTreeContainsThoseElements() {
     BinaryTree bt = createBinaryTree();
-    
+
     assertTrue(bt.containsNode(6));
     assertTrue(bt.containsNode(4));
     assertFalse(bt.containsNode(1));
@@ -210,16 +210,16 @@ private Node deleteRecursive(Node current, int value) {
     if (current == null) {
         return null;
     }
-    
+
     if (value == current.value) {
         // Узел для удаления найден
     }
-    
+
     if (value < current.value) {
         current.left = deleteRecursive(current.left, value);
         return current;
     }
-    
+
     current.right = deleteRecursive(current.right, value);
     return current;
 }
@@ -227,9 +227,9 @@ private Node deleteRecursive(Node current, int value) {
 
 **Как только мы находим узел для удаления, есть 3 основных разных случая:**
 
-1. **узел не имеет потомков** - это самый простой случай; нам просто нужно заменить этот узел на **null** в его родительском узле
-2. **у узла есть ровно один дочерний элемент** - в родительском узле мы заменяем этот узел его единственным дочерним элементом
-3. **узел имеет двух детей** - это самый сложный случай, потому что он требует реорганизации дерева
+1. **узел не имеет потомков** — это самый простой случай; нам просто нужно заменить этот узел на **null** в его родительском узле
+2. **у узла есть ровно один дочерний элемент** — в родительском узле мы заменяем этот узел его единственным дочерним элементом
+3. **узел имеет двух детей** — это самый сложный случай, потому что он требует реорганизации дерева
 
 **Давайте посмотрим, как бы мы реализовали первый случай, когда узел является листовым узлом:**
 
@@ -286,7 +286,7 @@ public void delete(int value) {
 @Test
 public void givenABinaryTree_WhenDeletingElements_ThenTreeDoesNotContainThoseElements() {
     BinaryTree bt = createBinaryTree();
-    
+
     assertTrue(bt.containsNode(9));
     bt.delete(9);
     assertFalse(bt.containsNode(9));
@@ -482,18 +482,18 @@ public void traverseLevelOrder() {
     if (root == null) {
         return;
     }
-    
+
     Queue<Node> nodes = new LinkedList<>();
     nodes.add(root);
-    
+
     while (!nodes.isEmpty()) {
         Node node = nodes.remove();
         System.out.print(" " + node.value);
-        
+
         if (node.left != null) {
             nodes.add(node.left);
         }
-        
+
         if (node.right != null) {
             nodes.add(node.right);
         }

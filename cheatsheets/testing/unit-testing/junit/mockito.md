@@ -28,7 +28,6 @@ updated: "2026-02-11"
 - [Unit Testing](../) — юнит-тестирование
 - [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
 
----
 
 ## Содержание
 
@@ -52,7 +51,6 @@ updated: "2026-02-11"
 - [Шпаргалка](#шпаргалка)
 - [Заключение](#заключение)
 
----
 
 ## Введение в Mockito
 
@@ -67,7 +65,6 @@ Mockito — фреймворк для создания моков (mock objects)
 | **Verify** | Проверка, что метод мока был вызван с ожидаемыми аргументами и числом вызовов |
 | **Spy** | Частичный мок: реальная реализация + возможность переопределять отдельные методы |
 
----
 
 ## Установка и настройка
 
@@ -95,7 +92,6 @@ Mockito — фреймворк для создания моков (mock objects)
     testImplementation 'org.mockito:mockito-junit-jupiter:5.7.0'
 ```
 
----
 
 ## Создание моков
 
@@ -116,7 +112,6 @@ class UserServiceTest {
 }
 ```
 
----
 
 ## Стабы (Stubbing)
 
@@ -136,7 +131,6 @@ when(mockedList.get(anyInt())).thenAnswer(inv -> "element-" + inv.getArgument(0)
 doThrow(new RuntimeException()).when(mockedList).clear();
 ```
 
----
 
 ## Верификация (Verification)
 
@@ -153,7 +147,6 @@ verify(mockedList, times(3)).add("one");
 verify(mockedList, never()).add("two");
 ```
 
----
 
 ## Аргументы (Argument Matchers)
 
@@ -175,7 +168,6 @@ when(service.process(anyString(), eq(100))).thenReturn("result");
 verify(repo).save(argThat(user -> user.getName().equals("John")));
 ```
 
----
 
 ## Частичные моки (Partial Mocks)
 
@@ -192,7 +184,6 @@ assertEquals("one", spyList.get(0)); // реальный метод
 
 С JUnit 5: `@Spy` и при необходимости `doReturn().when(spy).method()`.
 
----
 
 ## Исключения и обработка ошибок
 
@@ -200,7 +191,6 @@ assertEquals("one", spyList.get(0)); // реальный метод
 - Для void: `doThrow(new RuntimeException()).when(mock).clear()`
 - Последовательно: `when(mock.get(0)).thenThrow(...).thenReturn("ok")`
 
----
 
 ## Аннотации Mockito
 
@@ -218,7 +208,7 @@ class UserServiceTest {
     @Mock private EmailService emailService;
     @InjectMocks private UserService userService;
     @Captor private ArgumentCaptor<User> userCaptor;
-    
+
     @Test
     void testCreateUser() {
         when(userRepository.save(any(User.class))).thenReturn(new User());
@@ -229,7 +219,6 @@ class UserServiceTest {
 }
 ```
 
----
 
 ## Интеграция с JUnit 5
 
@@ -240,7 +229,7 @@ class UserServiceTest {
 class UserServiceTest {
     @Mock private UserRepository userRepository;
     @InjectMocks private UserService userService;
-    
+
     @BeforeEach
     void setUp() {
         when(userRepository.count()).thenReturn(10L);
@@ -248,14 +237,12 @@ class UserServiceTest {
 }
 ```
 
----
 
 ## Spy vs Mock
 
 - **Mock** — полностью подменённый объект; зависимости изолированы; все методы по умолчанию возвращают null/0/false (или заданные ответы).
 - **Spy** — реальный объект с возможностью переопределять отдельные методы; подходит, когда нужна часть реального поведения.
 
----
 
 ## Ответы по умолчанию
 
@@ -266,7 +253,6 @@ class UserServiceTest {
 | `RETURNS_MOCKS` | Возвращает моки для сложных типов |
 | `RETURNS_DEEP_STUBS` | Цепочки моков: `when(service.getUser().getAddress().getCity()).thenReturn("Moscow")` |
 
----
 
 ## Лучшие практики
 
@@ -281,7 +267,6 @@ class UserServiceTest {
 9. Избегать глубоких стабов и лишних стабов; при необходимости — `lenient()` или `@MockitoSettings(strictness = LENIENT)`.
 10. Не злоупотреблять `reset(mock)`; лучше новый мок в `@BeforeEach`.
 
----
 
 ## Примеры использования
 
@@ -293,7 +278,7 @@ class UserServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private EmailService emailService;
     @InjectMocks private UserService userService;
-    
+
     @Test
     void testCreateUser() {
         when(userRepository.save(any(User.class))).thenReturn(new User());
@@ -302,7 +287,7 @@ class UserServiceTest {
         verify(userRepository).save(any(User.class));
         verify(emailService).sendWelcomeEmail("john@example.com");
     }
-    
+
     @Test
     void testDuplicateEmail() {
         when(userRepository.findByEmail("existing@example.com")).thenReturn(new User());
@@ -322,7 +307,6 @@ List<Order> all = captor.getAllValues();
 assertEquals(2, all.size());
 ```
 
----
 
 ## BDD, final/static, InOrder
 
@@ -332,7 +316,6 @@ assertEquals(2, all.size());
 
 **lenient-стабы:** если стаб не используется в тесте, в строгом режиме будет `UnnecessaryStubbingException`. Разрешить: `lenient().when(mock.method()).thenReturn(x)` или `@MockitoSettings(strictness = Strictness.LENIENT)` на классе.
 
----
 
 ## Решение проблем
 
@@ -349,13 +332,11 @@ assertEquals(2, all.size());
 
 Исключения верификации: **TooManyActualInvocations**, **TooFewActualInvocations**, **NoInteractionsWanted**, **NeverWantedButInvoked** — проверьте логику теста и при необходимости используйте `times(n)` / `atLeast(n)`.
 
----
 
 ## Частые вопросы
 
 *(См. раздел «Решение проблем» выше — типичные вопросы и ответы объединены.)*
 
----
 
 ## Шпаргалка
 
@@ -374,7 +355,6 @@ assertEquals(2, all.size());
 | Spy | `spy(realObject)` или `@Spy`; стаб: `doReturn(x).when(spy).method()` |
 | Spring-бин | `@MockBean` / `@SpyBean` в Spring Boot-тестах |
 
----
 
 ## Заключение
 

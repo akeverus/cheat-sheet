@@ -27,19 +27,19 @@ related: ["databases/postgres-basics.md", "databases/postgres-joins.md", "databa
 
 ### Официальная документация **PostgreSQL**
 
-- [`PostgreSQL Database Design`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Constraints`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Inheritance`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Partitioning`](https://www.postgresql.org/docs/)
+- [PostgreSQL Database Design](https://www.postgresql.org/docs/)
+- [PostgreSQL Constraints](https://www.postgresql.org/docs/)
+- [PostgreSQL Inheritance](https://www.postgresql.org/docs/)
+- [PostgreSQL Partitioning](https://www.postgresql.org/docs/)
 
 ### Дополнительные ресурсы
 
-- [`Database Design Fundamentals`](https://www.postgresql.org/docs/)
-- [`Normal Forms Tutorial`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Best Practices`](https://www.postgresql.org/docs/)
-- [`Data Modeling Techniques`](https://www.postgresql.org/docs/)
+- [Database Design Fundamentals](https://www.postgresql.org/docs/)
+- [Normal Forms Tutorial](https://www.postgresql.org/docs/)
+- [PostgreSQL Best Practices](https://www.postgresql.org/docs/)
+- [Data Modeling Techniques](https://www.postgresql.org/docs/)
 
-См. также: [`postgres-basics`](postgres-basics.md) — [`postgres-joins`](postgres-joins.md) — [`postgres-indexes`](postgres-indexes.md) — [`postgres-types`](postgres-types.md).
+См. также: [[postgres-basics]] — [[postgres-joins]] — [[postgres-indexes]] — [[postgres-types]].
 
 ## Содержание
 
@@ -236,7 +236,7 @@ USING (tenant_id = current_setting('app.tenant_id')::int);
 
 То есть в данном случае мы могли бы сразу определить, что нам надо хранить данные по студентам, курсам и преподавателям. Затем в рамках каждой сущности выявить атрибуты.
 
-Например, у сущности "Студент" мы могли бы выделить такие атрибуты, как имя студента, его адрес, телефон, рост, вес, год его рождения. В тоже время нам надо учитывать не вообще все свойства, которые в принципе могут быть у сущности "Студент", а только те, которые имеют значение в рамках описываемой системы. Вряд ли в данном случае играют роль такие свойства как рост или вес студента, поэтому мы можем их вычеркнуть из списка атрибутов при проектировании таблицы.
+Например, у сущности «Студент» мы могли бы выделить такие атрибуты, как имя студента, его адрес, телефон, рост, вес, год его рождения. В тоже время нам надо учитывать не вообще все свойства, которые в принципе могут быть у сущности «Студент», а только те, которые имеют значение в рамках описываемой системы. Вряд ли в данном случае играют роль такие свойства как рост или вес студента, поэтому мы можем их вычеркнуть из списка атрибутов при проектировании таблицы.
 
 **Иногда подходы комбинируются.** Для описания разных частей системы могут использоваться разные подходы. А затем их результаты объединяются.
 
@@ -249,7 +249,7 @@ USING (tenant_id = current_setting('app.tenant_id')::int);
 В то же время возможность разделения одного элемента на подэлементы не всегда может быть востребованной. В ряде задач это может быть просто не нужно. Выделять необходимо только те элементы, которые действительно нужны.
 
 **Пример атомизации:**
-В соответствии с этим аспектом мы можем выделить у сущности "Студент" следующие атрибуты: имя студента, фамилия студента, год рождения, город, улица, дом, телефон.
+В соответствии с этим аспектом мы можем выделить у сущности «Студент» следующие атрибуты: имя студента, фамилия студента, год рождения, город, улица, дом, телефон.
 
 ### Домены (**Domains**)
 
@@ -408,7 +408,7 @@ CREATE TABLE Emails (
    - **CourseId** (**PK, FK**)
    - **Date**
 
-Итогом стало образование связи многие ко многим (**много студентов - много курсов**) между таблицами **Students** и **Courses** через таблицу **StudentCourses**.
+Итогом стало образование связи многие ко многим (**много студентов — много курсов**) между таблицами **Students** и **Courses** через таблицу **StudentCourses**.
 
 Таким образом, база данных перешла во вторую нормальную форму.
 
@@ -536,7 +536,7 @@ CREATE TABLE Emails (
 - **Материализованные представления:**
 ```sql
 CREATE MATERIALIZED VIEW mv_order_stats AS
-SELECT 
+SELECT
     user_id,
     COUNT(*) AS order_count,
     SUM(total_amount) AS total_spent,
@@ -554,7 +554,7 @@ CREATE OR REPLACE FUNCTION update_user_stats()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE users
-    SET 
+    SET
         order_count = (SELECT COUNT(*) FROM orders WHERE user_id = NEW.user_id),
         total_spent = (SELECT SUM(total_amount) FROM orders WHERE user_id = NEW.user_id)
     WHERE id = NEW.user_id;
@@ -731,7 +731,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
 `CREATE TABLE` motorcycles (
     `engine_cc INTEGER`,
     `has_sidecar BOOLEAN DEFAULT FALSE`,
-    `bike_type VARCHAR`(20) -- sport, cruiser, touring, etc.
+    `bike_type VARCHAR`(20) — sport, cruiser, touring, etc.
 ) `INHERITS` (vehicles);
 
 -- Вставка данных
@@ -742,13 +742,13 @@ PostgreSQL поддерживает наследование таблиц, чт�
 `VALUES` ('`Harley-Davidson`', '`Sportster`', `2023`, '1HD1ZK315FK987654', `1200`, 'cruiser');
 
 -- Запросы с наследованием
-`SELECT` * `FROM` vehicles; -- Все транспортные средства
-`SELECT` * `FROM` cars;     -- Только автомобили
-`SELECT` * `FROM` motorcycles; -- Только мотоциклы
+`SELECT` * `FROM` vehicles; — Все транспортные средства
+`SELECT` * `FROM` cars;     — Только автомобили
+`SELECT` * `FROM` motorcycles; — Только мотоциклы
 
 -- Запрос с условием по типу
 `SELECT` * `FROM` vehicles `WHERE TABLEOID` = (`SELECT` oid `FROM pg_class WHERE` relname = 'cars');
-```
+```text
 
 #### Полиморфные связи
 
@@ -760,11 +760,11 @@ PostgreSQL поддерживает наследование таблиц, чт�
     id `SERIAL PRIMARY KEY`,
     content `TEXT NOT NULL`,
     `author_id INTEGER NOT NULL REFERENCES` users(id),
-    `entity_type VARCHAR`(50) `NOT NULL`, -- 'post', 'photo', 'video'
+    `entity_type VARCHAR`(50) `NOT NULL`, — 'post', 'photo', 'video'
     `entity_id INTEGER NOT NULL`,
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP,
 
-    -- Ограничение для проверки типов
+    — Ограничение для проверки типов
     `CONSTRAINT valid_entity_type CHECK` (`entity_type IN` ('post', 'photo', 'video'))
 );
 
@@ -784,7 +784,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
     id `SERIAL PRIMARY KEY`,
     `user_id INTEGER NOT NULL REFERENCES` users(id),
     `activity_type VARCHAR`(50) `NOT NULL`,
-    metadata `JSONB NOT NULL`, -- Гибкие данные
+    metadata `JSONB NOT NULL`, — Гибкие данные
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP
 );
 
@@ -798,7 +798,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
 `SELECT` * `FROM` activities
 `WHERE` metadata->>'`entity_type`' = 'post'
   `AND` (metadata->>'`entity_id`')::`INTEGER` = `123`;
-```
+```text
 
 #### Многоуровневая архитектура
 
@@ -838,7 +838,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
 
 `CREATE TABLE dim_customer` (
     `customer_key SERIAL PRIMARY KEY`,
-    `customer_id INTEGER NOT NULL`, -- ссылка на `OLTP`
+    `customer_id INTEGER NOT NULL`, — ссылка на `OLTP`
     name `VARCHAR`(`100`) `NOT NULL`,
     email `VARCHAR`(`100`),
     segment `VARCHAR`(50),
@@ -853,7 +853,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
     `current_date DATE` := CURRENT_DATE;
     `date_key INTEGER`;
 `BEGIN`
-    -- Получаем или создаем ключ даты
+    — Получаем или создаем ключ даты
     `INSERT INTO dim_date` (`date_actual`, year, quarter, month, day, `day_of_week`, `is_weekend`)
     `VALUES` (`current_date`,
             `EXTRACT`(`YEAR FROM current_date`),
@@ -866,7 +866,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
 
     `SELECT date_key INTO date_key FROM dim_date WHERE date_actual` = `current_date`;
 
-    -- Загружаем продажи
+    — Загружаем продажи
     `INSERT INTO fact_sales` (`date_key`, `customer_key`, `product_key`, `store_key`,
                            quantity, `unit_price`, `total_amount`)
     `SELECT`
@@ -885,7 +885,7 @@ PostgreSQL поддерживает наследование таблиц, чт�
     `WHERE DATE`(o.`order_date`) = `current_date`;
 `END`;
 $$ `LANGUAGE` plpgsql;
-```
+```text
 
 ### Проектирование для микросервисов
 
@@ -916,7 +916,7 @@ $$ `LANGUAGE` plpgsql;
 
 `CREATE TABLE` orders (
     id `UUID PRIMARY KEY DEFAULT gen_random_uuid`(),
-    `user_id UUID NOT NULL`, -- Внешний ключ на другой сервис
+    `user_id UUID NOT NULL`, — Внешний ключ на другой сервис
     `total_amount DECIMAL`(10,2) `NOT NULL`,
     status `VARCHAR`(50) `DEFAULT` 'pending',
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP
@@ -936,7 +936,7 @@ $$ `LANGUAGE` plpgsql;
     `inventory_count INTEGER DEFAULT 0`,
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP
 );
-```
+```text
 
 #### Saga Pattern в базе данных
 
@@ -959,7 +959,7 @@ $$ `LANGUAGE` plpgsql;
     id `UUID PRIMARY KEY DEFAULT gen_random_uuid`(),
     `saga_id UUID REFERENCES order_saga`(id),
     `step_name VARCHAR`(`100`) `NOT NULL`,
-    status `VARCHAR`(50) `DEFAULT` 'pending', -- pending, completed, failed, compensated
+    status `VARCHAR`(50) `DEFAULT` 'pending', — pending, completed, failed, compensated
     `executed_at TIMESTAMP`,
     `compensated_at TIMESTAMP`,
     `error_message TEXT`,
@@ -976,12 +976,12 @@ $$ `LANGUAGE` plpgsql;
     `step_record RECORD`;
     success `BOOLEAN` := `FALSE`;
 `BEGIN`
-    -- Находим или создаем шаг
+    — Находим или создаем шаг
     `INSERT INTO saga_steps` (`saga_id`, `step_name`)
     `VALUES` (`p_saga_id`, `p_step_name`)
     `ON CONFLICT` (`saga_id`, `step_name`) `DO NOTHING`;
 
-    -- Выполняем шаг
+    — Выполняем шаг
     `BEGIN`
         `EXECUTE p_step_function INTO` success;
 
@@ -994,7 +994,7 @@ $$ `LANGUAGE` plpgsql;
             `SET` status = 'failed', `executed_at` = CURRENT_TIMESTAMP
             `WHERE saga_id` = `p_saga_id AND step_name` = `p_step_name`;
 
-            -- Запускаем компенсацию
+            — Запускаем компенсацию
             `PERFORM compensate_saga`(`p_saga_id`);
             `RETURN FALSE`;
         `END IF`;
@@ -1019,21 +1019,21 @@ $$ `LANGUAGE` plpgsql;
 `DECLARE`
     `step_record RECORD`;
 `BEGIN`
-    -- Компенсируем выполненные шаги в обратном порядке
+    — Компенсируем выполненные шаги в обратном порядке
     `FOR step_record IN`
         `SELECT` * `FROM saga_steps`
         `WHERE saga_id` = `p_saga_id AND` status = 'completed'
         `ORDER BY executed_at DESC`
     `LOOP`
-        -- Выполняем компенсацию (здесь должна быть логика для каждого шага)
+        — Выполняем компенсацию (здесь должна быть логика для каждого шага)
         `CASE step_record`.`step_name`
             `WHEN` '`reserve_inventory`' `THEN`
-                -- Освободить зарезервированный инвентарь
+                — Освободить зарезервированный инвентарь
                 `PERFORM release_inventory`(`step_record`.`step_data`);
             `WHEN` '`charge_payment`' `THEN`
-                -- Отменить платеж
+                — Отменить платеж
                 `PERFORM refund_payment`(`step_record`.`step_data`);
-            -- Другие шаги...
+            — Другие шаги...
         `END CASE`;
 
         `UPDATE saga_steps`
@@ -1041,13 +1041,13 @@ $$ `LANGUAGE` plpgsql;
         `WHERE` id = `step_record`.id;
     `END LOOP`;
 
-    -- Обновляем статус саги
+    — Обновляем статус саги
     `UPDATE order_saga`
     `SET` status = 'compensated', `updated_at` = CURRENT_TIMESTAMP
     `WHERE` id = `p_saga_id`;
 `END`;
 $$ `LANGUAGE` plpgsql;
-```
+```text
 
 ### Временные данные и версионирование
 
@@ -1059,7 +1059,7 @@ $$ `LANGUAGE` plpgsql;
     `user_id INTEGER PRIMARY KEY`,
     `session_data JSONB`,
     `last_activity TIMESTAMP DEFAULT` CURRENT_TIMESTAMP
-) `ON COMMIT DROP`; -- Удалить при завершении транзакции
+) `ON COMMIT DROP`; — Удалить при завершении транзакции
 
 -- Или `ON COMMIT PRESERVE ROWS` для сохранения до конца сессии
 
@@ -1069,17 +1069,17 @@ $$ `LANGUAGE` plpgsql;
 `DECLARE`
     `processed_data JSONB`;
 `BEGIN`
-    -- Создаем временную таблицу для обработки
+    — Создаем временную таблицу для обработки
     `CREATE TEMP TABLE temp_processing` (
         id `SERIAL PRIMARY KEY`,
         `raw_data JSONB`,
         processed `JSONB`
     ) `ON COMMIT DROP`;
 
-    -- Вставляем данные для обработки
+    — Вставляем данные для обработки
     `INSERT INTO temp_processing` (`raw_data`) `VALUES` (`p_user_data`);
 
-    -- Обрабатываем данные
+    — Обрабатываем данные
     `UPDATE temp_processing`
     `SET` processed = `jsonb_build_object`(
         '`user_id`', `raw_data`->>'`user_id`',
@@ -1087,13 +1087,13 @@ $$ `LANGUAGE` plpgsql;
         'status', 'completed'
     );
 
-    -- Возвращаем результат
+    — Возвращаем результат
     `SELECT` processed `INTO processed_data FROM temp_processing LIMIT 1`;
 
     `RETURN processed_data`;
 `END`;
 $$ `LANGUAGE` plpgsql;
-```
+```text
 
 #### Система версионирования
 
@@ -1118,13 +1118,13 @@ $$ `LANGUAGE` plpgsql;
 `DECLARE`
     `next_version INTEGER`;
 `BEGIN`
-    -- Получаем следующий номер версии
+    — Получаем следующий номер версии
     `SELECT COALESCE`(`MAX`(`version_number`), 0) + 1
     `INTO next_version`
     `FROM product_versions`
     `WHERE product_id` = `COALESCE`(`NEW`.id, `OLD`.id);
 
-    -- Сохраняем старую версию
+    — Сохраняем старую версию
     `IF` TG_OP = '`UPDATE`' `THEN`
         `INSERT INTO product_versions` (
             `product_id`, `version_number`, name, description, price,
@@ -1205,7 +1205,7 @@ $$ `LANGUAGE` plpgsql;
       `AND v1.price IS DISTINCT FROM v2.price`;
 `END`;
 $$ `LANGUAGE` plpgsql;
-```
+```text
 
 ### Оптимизация производительности
 
@@ -1234,7 +1234,7 @@ $$ `LANGUAGE` plpgsql;
 
 -- `Hash` индекс для равенств
 `CREATE INDEX idx_user_email_hash ON` users `USING HASH` (email);
-```
+```text
 
 #### Партиционирование для больших таблиц
 
@@ -1284,7 +1284,7 @@ $$ `LANGUAGE` plpgsql;
 `CREATE TABLE logs_02 PARTITION OF` logs `FOR VALUES WITH` (`MODULUS 4`, `REMAINDER 1`);
 `CREATE TABLE logs_03 PARTITION OF` logs `FOR VALUES WITH` (`MODULUS 4`, `REMAINDER 2`);
 `CREATE TABLE logs_04 PARTITION OF` logs `FOR VALUES WITH` (`MODULUS 4`, `REMAINDER 3`);
-```
+```text
 
 #### Оптимизация запросов
 
@@ -1351,7 +1351,7 @@ $$ `LANGUAGE` plpgsql;
     `WHERE` o.`order_date` >= CURRENT_DATE - `INTERVAL` '90 days'
 ) `customer_orders`
 `ORDER BY customer_id`, `order_date DESC`;
-```
+```text
 
 ### Безопасность на уровне дизайна
 
@@ -1362,7 +1362,7 @@ $$ `LANGUAGE` plpgsql;
 `ALTER TABLE` orders `ENABLE ROW LEVEL SECURITY`;
 `ALTER TABLE` customers `ENABLE ROW LEVEL SECURITY`;
 
--- Политика для клиентов - видят только свои заказы
+-- Политика для клиентов — видят только свои заказы
 `CREATE POLICY customer_orders_policy ON` orders
     `FOR ALL`
     `USING` (`customer_id` = `current_user_id()`);
@@ -1404,7 +1404,7 @@ $$ `LANGUAGE` plpgsql `SECURITY DEFINER`;
 -- В приложении: connection.`setClientInfo`("`ApplicationName`", "`user_id`=" + `userId`);
 -- Или через переменную сессии
 `SELECT set_config`('app.`user_id`', '123', `false`);
-```
+```text
 
 #### Аудит и логирование
 
@@ -1429,7 +1429,7 @@ $$ `LANGUAGE` plpgsql `SECURITY DEFINER`;
     `old_row JSONB`;
     `new_row JSONB`;
 `BEGIN`
-    -- Преобразуем строки в `JSON`
+    — Преобразуем строки в `JSON`
     `IF` TG_OP != '`INSERT`' `THEN`
         `old_row` := `row_to_json`(`OLD`)::`JSONB`;
     `END IF`;
@@ -1438,7 +1438,7 @@ $$ `LANGUAGE` plpgsql `SECURITY DEFINER`;
         `new_row` := `row_to_json`(`NEW`)::`JSONB`;
     `END IF`;
 
-    -- Вставляем запись аудита
+    — Вставляем запись аудита
     `INSERT INTO audit_log` (
         `table_name`, operation, `old_values`, `new_values`,
         `user_id`, `session_id`, `client_ip`
@@ -1488,7 +1488,7 @@ $$ `LANGUAGE` plpgsql;
     `USING p_table_name`, `p_record_id::TEXT`, `p_limit`;
 `END`;
 $$ `LANGUAGE` plpgsql `SECURITY DEFINER`;
-```
+```text
 
 ### Тестирование схемы данных
 
@@ -1506,10 +1506,10 @@ $$ `LANGUAGE` plpgsql `SECURITY DEFINER`;
     `FOR` i `IN 1`..`p_count LOOP`
         `INSERT INTO` users (`first_name`, `last_name`, email, `created_at`)
         `VALUES` (
-            `first_names`[1 + (random() * (`array_length`(`first_names`, 1) - 1))::`INTEGER`],
-            `last_names`[1 + (random() * (`array_length`(`last_names`, 1) - 1))::`INTEGER`],
+            `first_names`[1 + (random() * (`array_length`(`first_names`, 1) — 1))::`INTEGER`],
+            `last_names`[1 + (random() * (`array_length`(`last_names`, 1) — 1))::`INTEGER`],
             'user' || i || '`@example`.com',
-            CURRENT_TIMESTAMP - (random() * `INTERVAL` '365 days')
+            CURRENT_TIMESTAMP — (random() * `INTERVAL` '365 days')
         );
     `END LOOP`;
 `END`;
@@ -1536,8 +1536,8 @@ $$ `LANGUAGE` plpgsql;
         `VALUES` (
             `random_user_id`,
             (random() * `1000` + 10)::`DECIMAL`(10,2),
-            statuses[1 + (random() * (`array_length`(statuses, 1) - 1))::`INTEGER`],
-            CURRENT_TIMESTAMP - (random() * `INTERVAL` '365 days')
+            statuses[1 + (random() * (`array_length`(statuses, 1) — 1))::`INTEGER`],
+            CURRENT_TIMESTAMP — (random() * `INTERVAL` '365 days')
         );
     `END LOOP`;
 `END`;
@@ -1552,7 +1552,7 @@ $$ `LANGUAGE` plpgsql;
     i `INTEGER`;
 `BEGIN`
     `FOR order_record IN SELECT` id `FROM` orders `LOOP`
-        `item_count` := 1 + (random() * 5)::`INTEGER`; -- 1-5 элементов
+        `item_count` := 1 + (random() * 5)::`INTEGER`; — 1-5 элементов
 
         `FOR` i `IN 1`..`item_count LOOP`
             `INSERT INTO order_items` (`order_id`, `product_name`, quantity, `unit_price`)
@@ -1571,7 +1571,7 @@ $$ `LANGUAGE` plpgsql;
 `SELECT generate_test_users`(`1000`);
 `SELECT generate_test_orders`(`5000`);
 `SELECT generate_test_order_items`();
-```
+```text
 
 #### Валидация схемы
 
@@ -1633,7 +1633,7 @@ $$ `LANGUAGE` plpgsql;
         `FROM information_schema`.columns
         `WHERE table_schema` = 'public'
           `AND is_nullable` = '`NO`'
-          `AND column_name` != 'id'  -- Обычно `ID` имеет `DEFAULT`
+          `AND column_name` != 'id'  — Обычно `ID` имеет `DEFAULT`
     `LOOP`
         query := format('`SELECT COUNT`() `FROM` %I `WHERE` %I `IS NULL`',
                        `col_record`.`table_name`, `col_record`.`column_name`);
@@ -1656,7 +1656,7 @@ $$ `LANGUAGE` plpgsql;
     `fk_result RECORD`;
     `nn_result RECORD`;
 `BEGIN`
-    -- Проверка внешних ключей
+    — Проверка внешних ключей
     `FOR fk_result IN SELECT` * `FROM validate_foreign_keys`() `LOOP`
         `IF fk_result`.`invalid_count` > 0 `THEN`
             `RETURN QUERY SELECT`
@@ -1668,7 +1668,7 @@ $$ `LANGUAGE` plpgsql;
         `END IF`;
     `END LOOP`;
 
-    -- Проверка `NOT NULL` ограничений
+    — Проверка `NOT NULL` ограничений
     `FOR nn_result IN SELECT` * `FROM check_not_null_constraints`() `LOOP`
         `IF nn_result`.`null_count` > 0 `THEN`
             `RETURN QUERY SELECT`
@@ -1680,7 +1680,7 @@ $$ `LANGUAGE` plpgsql;
         `END IF`;
     `END LOOP`;
 
-    -- Проверка индексов на внешних ключах
+    — Проверка индексов на внешних ключах
     `FOR fk_result IN`
         `SELECT DISTINCT`
             ccu.`table_name`,
@@ -1707,7 +1707,7 @@ $$ `LANGUAGE` plpgsql;
 
 -- Запуск валидации
 `SELECT` * `FROM validate_database_schema`();
-```
+```text
 
 ### Документирование схемы
 
@@ -1723,7 +1723,7 @@ $$ `LANGUAGE` plpgsql;
     `column_record RECORD`;
     `fk_record RECORD`;
 `BEGIN`
-    -- Генерируем классы для таблиц
+    — Генерируем классы для таблиц
     `FOR table_record IN`
         `SELECT table_name`
         `FROM information_schema`.tables
@@ -1732,7 +1732,7 @@ $$ `LANGUAGE` plpgsql;
     `LOOP`
         result := result || 'class ' || `table_record`.`table_name` || ' {\n';
 
-        -- Добавляем столбцы
+        — Добавляем столбцы
         `FOR column_record IN`
             `SELECT column_name`, `data_type`, `is_nullable`,
                    `CASE WHEN column_default IS NOT NULL THEN` '`DEFAULT`' `ELSE` '' `END` as `has_default`
@@ -1753,7 +1753,7 @@ $$ `LANGUAGE` plpgsql;
         result := result || '}\n\n';
     `END LOOP`;
 
-    -- Генерируем связи
+    — Генерируем связи
     `FOR fk_record IN`
         `SELECT`
             tc.`table_name` as `child_table`,
@@ -1805,7 +1805,7 @@ $$ `LANGUAGE` plpgsql;
             result := result || `table_record`.`table_comment` || '\n\n';
         `END IF`;
 
-        -- Столбцы
+        — Столбцы
         result := result || '### `Columns`\n\n';
         result := result || '| `Column` | `Type` | `Nullable` | `Default` | `Description` |\n';
         result := result || '|--------|------|----------|---------|-------------|\n';
@@ -1830,7 +1830,7 @@ $$ `LANGUAGE` plpgsql;
 
         result := result || '\n';
 
-        -- Ограничения
+        — Ограничения
         result := result || '### `Constraints`\n\n';
         `FOR constraint_record IN`
             `SELECT` conname, contype, condef
@@ -1855,7 +1855,7 @@ $$ `LANGUAGE` plpgsql;
             result := result || '\n';
         `END LOOP`;
 
-        -- Индексы
+        — Индексы
         result := result || '\n### `Indexes`\n\n';
         `FOR constraint_record IN`
             `SELECT` indexname, indexdef
@@ -1877,7 +1877,7 @@ $$ `LANGUAGE` plpgsql;
 
 -- Генерация документации
 `SELECT generate_schema_documentation`();
-```
+```text
 
 Проектирование баз данных в PostgreSQL — это комплексный процесс, требующий глубокого понимания предметной области, принципов нормализации и особенностей PostgreSQL. Ключевые аспекты эффективного проектирования:
 
@@ -1935,3 +1935,10 @@ $$ `LANGUAGE` plpgsql;
 Эффективное проектирование базы данных требует баланса между нормализацией, производительностью и удобством использования. PostgreSQL предоставляет богатый набор инструментов для создания надежных, эффективных и безопасных схем данных.
 ```
 
+## См. также
+
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-extensions|PostgreSQL: Расширения]]

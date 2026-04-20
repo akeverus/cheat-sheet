@@ -41,7 +41,7 @@ related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 - [Главная страница](#главная-страница)
 - [Список пользователей](#список-пользователей)
 - [Просмотр конкретного пользователя](#просмотр-конкретного-пользователя)
-- [:id - параметр маршрута, который передается в метод контроллера](#id-параметр-маршрута-который-передается-в-метод-контроллера)
+- [:id — параметр маршрута, который передается в метод контроллера](#id-параметр-маршрута-который-передается-в-метод-контроллера)
 - [Создание нового пользователя](#создание-нового-пользователя)
 - [Обновление пользователя](#обновление-пользователя)
 - [Удаление пользователя](#удаление-пользователя)
@@ -156,7 +156,7 @@ related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 
 ## Введение в **Play Framework**
 
-**Play Framework** - это современный веб-фреймворк для создания масштабируемых веб-приложений на **Scala** и **Java**. **Play** следует принципам **RESTful** архитектуры и предоставляет реактивную модель программирования, которая позволяет создавать высокопроизводительные приложения, способные обрабатывать множество одновременных запросов без блокировки потоков. **Play Framework** был разработан с учетом лучших практик веб-разработки и функционального программирования, что делает его идеальным выбором для создания современных веб-приложений.
+**Play Framework** — это современный веб-фреймворк для создания масштабируемых веб-приложений на **Scala** и **Java**. **Play** следует принципам **RESTful** архитектуры и предоставляет реактивную модель программирования, которая позволяет создавать высокопроизводительные приложения, способные обрабатывать множество одновременных запросов без блокировки потоков. **Play Framework** был разработан с учетом лучших практик веб-разработки и функционального программирования, что делает его идеальным выбором для создания современных веб-приложений.
 
 **Play Framework** основан на принципе "**stateless**" архитектуры, где каждый **HTTP** запрос обрабатывается независимо, без сохранения состояния на сервере. Это обеспечивает горизонтальную масштабируемость и упрощает развертывание приложений в облачных средах. **Play** также предоставляет мощные инструменты для разработки, включая **hot reload**, который позволяет видеть изменения в коде без перезапуска приложения.
 
@@ -258,7 +258,7 @@ import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 // BaseController предоставляет базовую функциональность для контроллеров
 // ControllerComponents инжектируется через dependency injection
 class UserController(cc: ControllerComponents) extends BaseController {
-  
+
   // Метод действия для получения списка пользователей
   // Action[AnyContent] означает, что действие принимает любой тип контента
   // implicit request позволяет использовать request в неявных параметрах
@@ -270,7 +270,7 @@ class UserController(cc: ControllerComponents) extends BaseController {
     // views.html.users.list - это типобезопасный шаблон
     Ok(views.html.users.list(users))
   }
-  
+
   // Метод действия для просмотра конкретного пользователя
   // id: Long - параметр из маршрута
   def show(id: Long): Action[AnyContent] = Action { implicit request =>
@@ -279,7 +279,7 @@ class UserController(cc: ControllerComponents) extends BaseController {
       case None => NotFound  // HTTP 404 - ресурс не найден
     }
   }
-  
+
   // Метод действия для создания нового пользователя
   def create: Action[AnyContent] = Action { implicit request =>
     // bindFromRequest() извлекает данные из HTTP запроса и привязывает их к форме
@@ -306,7 +306,7 @@ class UserController(cc: ControllerComponents) extends BaseController {
 
 **Play Framework** предоставляет мощную систему типобезопасных форм, которая позволяет валидировать и обрабатывать данные из **HTTP** запросов. Формы в **Play** основаны на функциональном подходе, где валидация и обработка данных выполняются декларативно. Это обеспечивает типобезопасность и предотвращает ошибки, связанные с неправильной обработкой данных.
 
-Система форм **Play** поддерживает различные типы полей, включая текстовые поля, числа, даты, файлы и вложенные объекты. Формы также поддерживают кастомную валидацию, что позволяет создавать сложные правила проверки данных. Результат валидации формы представлен в виде **Either**, где **Left** содержит ошибки валидации, а **Right** - валидные данные.
+Система форм **Play** поддерживает различные типы полей, включая текстовые поля, числа, даты, файлы и вложенные объекты. Формы также поддерживают кастомную валидацию, что позволяет создавать сложные правила проверки данных. Результат валидации формы представлен в виде **Either**, где **Left** содержит ошибки валидации, а **Right** — валидные данные.
 
 **Play** предоставляет типобезопасные формы:**
 
@@ -326,11 +326,11 @@ val userForm = Form(
     // "name" - имя поля в форме
     // nonEmptyText - валидатор, который проверяет, что поле не пустое
     "name" -> nonEmptyText,
-    
+
     // email - валидатор для email адресов
     // Проверяет формат email адреса
     "email" -> email,
-    
+
     // number - валидатор для чисел
     // min и max определяют диапазон допустимых значений
     "age" -> number(min = 0, max = 150)
@@ -346,7 +346,7 @@ def create: Action[AnyContent] = Action { implicit request =>
     // Обработка ошибок валидации
     // formWithErrors содержит форму с ошибками валидации
     formWithErrors => BadRequest(views.html.users.create(formWithErrors)),
-    
+
     // Обработка успешной валидации
     // userData содержит валидные данные из формы
     userData => {
@@ -375,25 +375,25 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class UserRepository {
   val users = TableQuery[Users]
-  
+
   def findAll: Future[Seq[User]] = {
     db.run(users.result)
   }
-  
+
   def findById(id: Long): Future[Option[User]] = {
     db.run(users.filter(_.id === id).result.headOption)
   }
-  
+
   def create(user: User): Future[User] = {
     db.run((users returning users.map(_.id)) += user).map { id =>
       user.copy(id = id)
     }
   }
-  
+
   def update(id: Long, user: User): Future[Int] = {
     db.run(users.filter(_.id === id).update(user))
   }
-  
+
   def delete(id: Long): Future[Int] = {
     db.run(users.filter(_.id === id).delete)
   }
@@ -410,9 +410,9 @@ class UserController @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider,
   cc: ControllerComponents
 ) extends AbstractController(cc) with HasDatabaseConfigProvider[JdbcProfile] {
-  
+
   import profile.api._
-  
+
   def list: Action[AnyContent] = Action.async { implicit request =>
     db.run(users.result).map { users =>
       Ok(views.html.users.list(users))
@@ -487,11 +487,11 @@ trait Secured {
   def username(request: RequestHeader): Option[String] = {
     request.session.get("username")
   }
-  
+
   def onUnauthorized(request: RequestHeader): Result = {
     Unauthorized("You must be logged in")
   }
-  
+
   def IsAuthenticated(f: => String => Request[AnyContent] => Result) = {
     Action { request =>
       username(request).map { user =>
@@ -571,7 +571,7 @@ class UserController @Inject()(
   cached: Cached,
   cc: ControllerComponents
 ) extends AbstractController(cc) {
-  
+
   def list = cached("users.list") {
     Action.async { implicit request =>
       UserService.getAllUsers().map { users =>
@@ -633,7 +633,7 @@ def list: Action[AnyContent] = Action.async { implicit request =>
 def getUserWithPosts(id: Long): Action[AnyContent] = Action.async { implicit request =>
   val userFuture = UserService.findById(id)
   val postsFuture = PostService.findByUserId(id)
-  
+
   for {
     user <- userFuture
     posts <- postsFuture
@@ -718,21 +718,21 @@ import play.api.test._
 import play.api.test.Helpers._
 
 class UserControllerSpec extends PlaySpec with OneAppPerTest {
-  
+
   "UserController" should {
     "return list of users" in {
       val request = FakeRequest(GET, "/users")
       val result = route(app, request).get
-      
+
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
     }
-    
+
     "create a new user" in {
       val request = FakeRequest(POST, "/users")
         .withFormUrlEncodedBody("name" -> "Alice", "email" -> "alice@example.com", "age" -> "30")
       val result = route(app, request).get
-      
+
       status(result) mustBe SEE_OTHER
       redirectLocation(result) mustBe Some("/users")
     }
@@ -766,22 +766,22 @@ class UserApiController @Inject()(
   userService: UserService,
   cc: ControllerComponents
 ) extends AbstractController(cc) {
-  
+
   implicit val userFormat: Format[User] = Json.format[User]
-  
+
   def list: Action[AnyContent] = Action.async {
     userService.getAllUsers().map { users =>
       Ok(Json.toJson(users))
     }
   }
-  
+
   def show(id: Long): Action[AnyContent] = Action.async {
     userService.findById(id).map {
       case Some(user) => Ok(Json.toJson(user))
       case None => NotFound(Json.obj("error" -> "User not found"))
     }
   }
-  
+
   def create: Action[JsValue] = Action.async(parse.json) { request =>
     request.body.validate[User].fold(
       errors => Future.successful(BadRequest(JsError.toJson(errors))),
@@ -790,7 +790,7 @@ class UserApiController @Inject()(
       }
     )
   }
-  
+
   def update(id: Long): Action[JsValue] = Action.async(parse.json) { request =>
     request.body.validate[User].fold(
       errors => Future.successful(BadRequest(JsError.toJson(errors))),
@@ -800,7 +800,7 @@ class UserApiController @Inject()(
       }
     )
   }
-  
+
   def delete(id: Long): Action[AnyContent] = Action.async {
     userService.delete(id).map {
       case true => NoContent
@@ -939,7 +939,7 @@ class UserController @Inject()(
   val messagesApi: MessagesApi,
   cc: ControllerComponents
 ) extends AbstractController(cc) with I18nSupport {
-  
+
   def index: Action[AnyContent] = Action { implicit request =>
     Ok(Messages("hello"))
   }
@@ -1015,7 +1015,7 @@ import play.api.Logger
 
 class UserController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   private val logger = Logger(this.getClass)
-  
+
   def index: Action[AnyContent] = Action { implicit request =>
     logger.info("User index page accessed")
     Ok(views.html.index())
@@ -1036,7 +1036,7 @@ class UserController @Inject()(
   cached: Cached,
   cc: ControllerComponents
 ) extends AbstractController(cc) {
-  
+
   def list = cached("users.list", duration = 5.minutes) {
     Action.async { implicit request =>
       UserService.getAllUsers().map { users =>
@@ -1109,12 +1109,12 @@ import play.api.test._
 import play.api.test.Helpers._
 
 class UserControllerSpec extends PlaySpec with OneAppPerTest {
-  
+
   "UserController" should {
     "return list of users" in {
       val request = FakeRequest(GET, "/users")
       val result = route(app, request).get
-      
+
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
       contentAsString(result) must include("Users")
@@ -1142,7 +1142,7 @@ class ExternalService @Inject()(ws: WSClient) {
       .get()
       .map(_.body)  // Извлекаем тело ответа
   }
-  
+
   // POST запрос с JSON
   def postData(data: JsValue): Future[WSResponse] = {
     ws.url("https://api.example.com/data")
@@ -1152,7 +1152,7 @@ class ExternalService @Inject()(ws: WSClient) {
         response
       }
   }
-  
+
   // Запрос с заголовками и таймаутом
   def fetchWithHeaders: Future[String] = {
     ws.url("https://api.example.com/data")
@@ -1268,7 +1268,7 @@ class ErrorHandler extends HttpErrorHandler {
       Status(statusCode)(views.html.errors.clientError(statusCode, message))
     )
   }
-  
+
   def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     Future.successful(
       InternalServerError(views.html.errors.serverError(exception))
@@ -1315,7 +1315,7 @@ val userForm = Form(
 
 ```scala
 // Загрузка множественных файлов
-def uploadMultiple: Action[MultipartFormData[TemporaryFile]] = 
+def uploadMultiple: Action[MultipartFormData[TemporaryFile]] =
   Action(parse.multipartFormData) { implicit request =>
     val files = request.body.files
     files.foreach { file =>
@@ -1327,7 +1327,7 @@ def uploadMultiple: Action[MultipartFormData[TemporaryFile]] =
   }
 
 // Валидация типа файла
-def uploadImage: Action[MultipartFormData[TemporaryFile]] = 
+def uploadImage: Action[MultipartFormData[TemporaryFile]] =
   Action(parse.multipartFormData) { implicit request =>
     request.body.file("image").map { file =>
       val allowedTypes = Seq("image/jpeg", "image/png", "image/gif")
@@ -1404,7 +1404,7 @@ class UserService @Inject()(
 def findUsersWithPosts: Future[Seq[(User, Seq[Post])]] = {
   val usersQuery = users.result
   val postsQuery = posts.result
-  
+
   db.run(
     for {
       users <- usersQuery
@@ -1468,34 +1468,34 @@ trait UserRepository {
 
 class SlickUserRepository @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider
-)(implicit ec: ExecutionContext) 
+)(implicit ec: ExecutionContext)
   extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository {
-  
+
   import profile.api._
-  
+
   val users = TableQuery[Users]
-  
+
   override def findById(id: Long): Future[Option[User]] = {
     db.run(users.filter(_.id === id).result.headOption)
   }
-  
+
   override def findAll: Future[Seq[User]] = {
     db.run(users.result)
   }
-  
+
   override def create(user: User): Future[User] = {
     db.run((users returning users.map(_.id)) += user).map { id =>
       user.copy(id = id)
     }
   }
-  
+
   override def update(id: Long, user: User): Future[Option[User]] = {
     db.run(users.filter(_.id === id).update(user)).flatMap { rowsAffected =>
       if (rowsAffected > 0) findById(id)
       else Future.successful(None)
     }
   }
-  
+
   override def delete(id: Long): Future[Boolean] = {
     db.run(users.filter(_.id === id).delete).map(_ > 0)
   }
@@ -1512,11 +1512,11 @@ class UserService @Inject()(
   userRepository: UserRepository,
   emailService: EmailService
 )(implicit ec: ExecutionContext) {
-  
+
   def findById(id: Long): Future[Option[User]] = {
     userRepository.findById(id)
   }
-  
+
   def create(userData: UserData): Future[User] = {
     val user = User(
       name = userData.name,
@@ -1528,7 +1528,7 @@ class UserService @Inject()(
       _ <- emailService.sendWelcomeEmail(created.email)
     } yield created
   }
-  
+
   def update(id: Long, userData: UserData): Future[Option[User]] = {
     userRepository.findById(id).flatMap {
       case Some(existing) =>
@@ -1556,7 +1556,7 @@ import play.api.Logger
 
 class GlobalErrorHandler extends HttpErrorHandler {
   private val logger = Logger(this.getClass)
-  
+
   def onClientError(
     request: RequestHeader,
     statusCode: Int,
@@ -1567,7 +1567,7 @@ class GlobalErrorHandler extends HttpErrorHandler {
       Status(statusCode)(views.html.errors.clientError(statusCode, message))
     )
   }
-  
+
   def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     logger.error(s"Server error for ${request.uri}", exception)
     Future.successful(
@@ -1588,7 +1588,7 @@ import scala.concurrent.ExecutionContext
 
 class LoggingMiddleware @Inject()(implicit ec: ExecutionContext) extends EssentialFilter {
   private val logger = Logger(this.getClass)
-  
+
   def apply(next: EssentialAction): EssentialAction = {
     EssentialAction { request =>
       val startTime = System.currentTimeMillis()
@@ -1687,7 +1687,7 @@ import play.api.mvc._
 def events: Action[AnyContent] = Action {
   val source = Source.tick(1.second, 1.second, ())
     .map(_ => s"data: ${System.currentTimeMillis()}\n\n")
-  
+
   Ok.chunked(source).as("text/event-stream")
 }
 ```
@@ -1703,7 +1703,7 @@ import javax.inject._
 @Singleton
 class ApplicationActor @Inject()(system: ActorSystem) {
   val actor: ActorRef = system.actorOf(Props[MyActor], "myActor")
-  
+
   def sendMessage(message: String): Unit = {
     actor ! message
   }
@@ -1720,16 +1720,16 @@ import play.api.Configuration
 class ConfigService @Inject()(config: Configuration) {
   // Получение простого значения
   val appName: String = config.get[String]("application.name")
-  
+
   // Получение опционального значения
   val optionalValue: Option[String] = config.getOptional[String]("optional.key")
-  
+
   // Получение значения с дефолтом
   val withDefault: String = config.get[String]("key", "default")
-  
+
   // Получение вложенных значений
   val nested: String = config.get[String]("database.default.url")
-  
+
   // Получение списка значений
   val list: Seq[String] = config.get[Seq[String]]("list.key")
 }
@@ -1748,7 +1748,7 @@ def getCombinedData: Action[AnyContent] = Action.async { implicit request =>
   val userFuture = UserService.findById(1L)
   val postsFuture = PostService.findByUserId(1L)
   val commentsFuture = CommentService.findByPostId(1L)
-  
+
   for {
     user <- userFuture
     posts <- postsFuture
@@ -1781,7 +1781,7 @@ def getDataWithTimeout(implicit system: ActorSystem): Action[AnyContent] = Actio
   val timeoutFuture = after(5.seconds, system.scheduler)(
     Future.failed(new TimeoutException("Operation timed out"))
   )
-  
+
   Future.firstCompletedOf(Seq(dataFuture, timeoutFuture))
     .map {
       case Some(user) => Ok(views.html.user(user))
@@ -1912,22 +1912,22 @@ import play.api.test.Helpers._
 
 // Тестирование контроллеров
 class UserControllerSpec extends PlaySpec with OneAppPerTest {
-  
+
   "UserController" should {
     "return list of users" in {
       val request = FakeRequest(GET, "/users")
       val result = route(app, request).get
-      
+
       status(result) mustBe OK
       contentType(result) mustBe Some("text/html")
       contentAsString(result) must include("Users")
     }
-    
+
     "create a new user" in {
       val request = FakeRequest(POST, "/users")
         .withFormUrlEncodedBody("name" -> "Alice", "email" -> "alice@example.com", "age" -> "30")
       val result = route(app, request).get
-      
+
       status(result) mustBe SEE_OTHER
       redirectLocation(result) mustBe Some("/users")
     }
@@ -1940,10 +1940,10 @@ class UserServiceSpec extends PlaySpec {
     "find user by id" in {
       val mockRepository = mock[UserRepository]
       when(mockRepository.findById(1L)).thenReturn(Future.successful(Some(User(1L, "Alice", "alice@example.com"))))
-      
+
       val service = new UserService(mockRepository)
       val result = await(service.findById(1L))
-      
+
       result mustBe Some(User(1L, "Alice", "alice@example.com"))
     }
   }
@@ -2003,7 +2003,7 @@ import play.api.mvc._
 import play.api.libs.json._
 
 class MetricsController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
-  
+
   def metrics: Action[AnyContent] = Action {
     val metrics = Map(
       "requests" -> getRequestCount(),
@@ -2024,7 +2024,7 @@ class HealthController @Inject()(
   db: Database,
   cc: ControllerComponents
 ) extends AbstractController(cc) {
-  
+
   def health: Action[AnyContent] = Action.async {
     // Проверка базы данных
     db.run(sql"SELECT 1".as[Int]).map { _ =>
@@ -2051,13 +2051,13 @@ case class UserDeleted() extends UserEvent
 
 class UserEventStore {
   private var events: List[UserEvent] = List.empty
-  
+
   def append(event: UserEvent): Unit = {
     events = events :+ event
   }
-  
+
   def getEvents: List[UserEvent] = events
-  
+
   def rebuildState(events: List[UserEvent]): User = {
     events.foldLeft(User.empty) { (user, event) =>
       event match {
@@ -2098,7 +2098,7 @@ class UserQueryService @Inject()(readModel: UserReadModel) {
   def findById(id: Long): Future[Option[User]] = {
     readModel.findById(id)
   }
-  
+
   def findAll: Future[Seq[User]] = {
     readModel.findAll
   }
@@ -2128,7 +2128,7 @@ class ResilientService @Inject()(ws: WSClient) {
     callTimeout = 10.seconds,
     resetTimeout = 1.minute
   )
-  
+
   def callExternalService: Future[String] = {
     breaker.withCircuitBreaker {
       ws.url("https://external-service.com/api")
@@ -2149,7 +2149,7 @@ import com.rabbitmq.client._
 class MessageQueueService @Inject()(config: Configuration) {
   val connectionFactory = new ConnectionFactory()
   connectionFactory.setHost(config.get[String]("rabbitmq.host"))
-  
+
   def publishMessage(queue: String, message: String): Unit = {
     val connection = connectionFactory.newConnection()
     val channel = connection.createChannel()
@@ -2158,12 +2158,12 @@ class MessageQueueService @Inject()(config: Configuration) {
     channel.close()
     connection.close()
   }
-  
+
   def consumeMessages(queue: String, handler: String => Unit): Unit = {
     val connection = connectionFactory.newConnection()
     val channel = connection.createChannel()
     channel.queueDeclare(queue, false, false, false, null)
-    
+
     val consumer = new DefaultConsumer(channel) {
       override def handleDelivery(
         tag: String,
@@ -2175,7 +2175,7 @@ class MessageQueueService @Inject()(config: Configuration) {
         handler(message)
       }
     }
-    
+
     channel.basicConsume(queue, true, consumer)
   }
 }
@@ -2199,7 +2199,7 @@ class CachedUserService @Inject()(
       userRepository.findById(id)
     }
   }
-  
+
   // Инвалидация кэша
   def update(id: Long, user: User): Future[Option[User]] = {
     userRepository.update(id, user).map { result =>
@@ -2207,7 +2207,7 @@ class CachedUserService @Inject()(
       result
     }
   }
-  
+
   // Кэширование с условием
   def findActiveUsers: Future[Seq[User]] = {
     cache.getOrElseUpdate("active.users", 10.minutes) {
@@ -2232,7 +2232,7 @@ def findUsersWithPostsOptimized: Future[Seq[(User, Seq[Post])]] = {
     val postsByUserId = posts.groupBy(_.userId)
     users.map(user => (user, postsByUserId.getOrElse(user.id, Seq.empty)))
   }
-  
+
   db.run(query)
 }
 
@@ -2263,7 +2263,7 @@ case class LoggingAction[A](action: Action[A]) extends Action[A] {
     println(s"Request: ${request.method} ${request.uri}")
     action(request)
   }
-  
+
   override def parser: BodyParser[A] = action.parser
   override def executionContext: ExecutionContext = action.executionContext
 }
@@ -2317,14 +2317,14 @@ trait UserService {
 // Контроллер для микросервиса
 class UserController(service: UserService) extends Controller {
   implicit val userFormat = Json.format[User]
-  
+
   def getUser(id: Long) = Action.async {
     service.findById(id).map {
       case Some(user) => Ok(Json.toJson(user))
       case None => NotFound
     }
   }
-  
+
   def createUser = Action.async(parse.json[User]) { request =>
     service.createUser(request.body).map { user =>
       Created(Json.toJson(user))
@@ -2364,9 +2364,9 @@ class UserController @Inject()(
   actorSystem: ActorSystem,
   cc: ControllerComponents
 ) extends AbstractController(cc) {
-  
+
   implicit val timeout: Timeout = Timeout(5.seconds)
-  
+
   def getUser(id: Long) = Action.async {
     val userActor = actorSystem.actorSelection(s"/user/user-$id")
     (userActor ? GetUser(id)).mapTo[User].map { user =>
@@ -2392,14 +2392,14 @@ trait UserService {
 // Контроллер для микросервиса
 class UserController(service: UserService) extends Controller {
   implicit val userFormat = Json.format[User]
-  
+
   def getUser(id: Long) = Action.async {
     service.findById(id).map {
       case Some(user) => Ok(Json.toJson(user))
       case None => NotFound
     }
   }
-  
+
   def createUser = Action.async(parse.json[User]) { request =>
     service.createUser(request.body).map { user =>
       Created(Json.toJson(user))

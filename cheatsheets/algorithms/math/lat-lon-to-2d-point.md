@@ -62,7 +62,7 @@ updated: "2026-02-11"
 abstract class Mercator {
     final static double RADIUS_MAJOR = 6378137.0;  // Большой радиус (экватор)
     final static double RADIUS_MINOR = 6356752.3142;  // Малый радиус (полюса)
-    
+
     abstract double yAxisProjection(double input);
     abstract double xAxisProjection(double input);
 }
@@ -81,7 +81,7 @@ public class SphericalMercator extends Mercator {
     double xAxisProjection(double input) {
         return Math.toRadians(input) * RADIUS_MAJOR;
     }
-    
+
     @Override
     double yAxisProjection(double input) {
         return Math.log(
@@ -103,25 +103,25 @@ class EllipticalMercator extends Mercator {
     @Override
     double yAxisProjection(double input) {
         input = Math.min(Math.max(input, -89.5), 89.5);
-        
-        double earthDimensionalRateNormalized = 1.0 - 
+
+        double earthDimensionalRateNormalized = 1.0 -
             Math.pow(RADIUS_MINOR / RADIUS_MAJOR, 2);
-        
+
         double inputOnEarthProj = Math.sqrt(earthDimensionalRateNormalized) *
             Math.sin(Math.toRadians(input));
-        
+
         inputOnEarthProj = Math.pow(
             ((1.0 - inputOnEarthProj) / (1.0 + inputOnEarthProj)),
             0.5 * Math.sqrt(earthDimensionalRateNormalized)
         );
-        
+
         double inputOnEarthProjNormalized =
-            Math.tan(0.5 * ((Math.PI * 0.5) - Math.toRadians(input))) / 
+            Math.tan(0.5 * ((Math.PI * 0.5) - Math.toRadians(input))) /
             inputOnEarthProj;
-        
+
         return (-1) * RADIUS_MAJOR * Math.log(inputOnEarthProjNormalized);
     }
-    
+
     @Override
     double xAxisProjection(double input) {
         return RADIUS_MAJOR * Math.toRadians(input);
@@ -158,11 +158,11 @@ class EllipticalMercator extends Mercator {
 ```java
 public class InverseMercator {
     private static final double RADIUS_MAJOR = 6378137.0;
-    
+
     public static double longitudeFromX(double x) {
         return Math.toDegrees(x / RADIUS_MAJOR);
     }
-    
+
     public static double latitudeFromY(double y) {
         double lat = Math.toDegrees(
             2 * Math.atan(Math.exp(y / RADIUS_MAJOR)) - Math.PI / 2
@@ -179,16 +179,16 @@ public class InverseMercator {
 ```java
 public class ScaledMercator extends SphericalMercator {
     private final double scale;
-    
+
     public ScaledMercator(double scale) {
         this.scale = scale;
     }
-    
+
     @Override
     double xAxisProjection(double input) {
         return super.xAxisProjection(input) * scale;
     }
-    
+
     @Override
     double yAxisProjection(double input) {
         return super.yAxisProjection(input) * scale;
@@ -204,12 +204,12 @@ public class ScaledMercator extends SphericalMercator {
 public class CenteredMercator extends SphericalMercator {
     private final double centerLat;
     private final double centerLon;
-    
+
     public CenteredMercator(double centerLat, double centerLon) {
         this.centerLat = centerLat;
         this.centerLon = centerLon;
     }
-    
+
     public Point2D project(double lat, double lon) {
         double x = xAxisProjection(lon - centerLon);
         double y = yAxisProjection(lat - centerLat);
@@ -227,7 +227,7 @@ abstract class MercatorK {
         const val RADIUS_MAJOR = 6378137.0  // Большой радиус (экватор)
         const val RADIUS_MINOR = 6356752.3142  // Малый радиус (полюса)
     }
-    
+
     abstract fun yAxisProjection(input: Double): Double
     abstract fun xAxisProjection(input: Double): Double
 }
@@ -240,7 +240,7 @@ class SphericalMercatorK : MercatorK() {
     override fun xAxisProjection(input: Double): Double {
         return Math.toRadians(input) * RADIUS_MAJOR
     }
-    
+
     override fun yAxisProjection(input: Double): Double {
         return Math.log(
             Math.tan(Math.PI / 4 + Math.toRadians(input) / 2)
@@ -255,25 +255,25 @@ class SphericalMercatorK : MercatorK() {
 class EllipticalMercatorK : MercatorK() {
     override fun yAxisProjection(input: Double): Double {
         val input = Math.min(Math.max(input, -89.5), 89.5)
-        
-        val earthDimensionalRateNormalized = 1.0 - 
+
+        val earthDimensionalRateNormalized = 1.0 -
             Math.pow(RADIUS_MINOR / RADIUS_MAJOR, 2.0)
-        
+
         var inputOnEarthProj = Math.sqrt(earthDimensionalRateNormalized) *
             Math.sin(Math.toRadians(input))
-        
+
         inputOnEarthProj = Math.pow(
             ((1.0 - inputOnEarthProj) / (1.0 + inputOnEarthProj)),
             0.5 * Math.sqrt(earthDimensionalRateNormalized)
         )
-        
+
         val inputOnEarthProjNormalized =
-            Math.tan(0.5 * ((Math.PI * 0.5) - Math.toRadians(input))) / 
+            Math.tan(0.5 * ((Math.PI * 0.5) - Math.toRadians(input))) /
             inputOnEarthProj
-        
+
         return (-1) * RADIUS_MAJOR * Math.log(inputOnEarthProjNormalized)
     }
-    
+
     override fun xAxisProjection(input: Double): Double {
         return RADIUS_MAJOR * Math.toRadians(input)
     }
@@ -287,11 +287,11 @@ class InverseMercatorK {
     companion object {
         private const val RADIUS_MAJOR = 6378137.0
     }
-    
+
     fun longitudeFromX(x: Double): Double {
         return Math.toDegrees(x / RADIUS_MAJOR)
     }
-    
+
     fun latitudeFromY(y: Double): Double {
         val latRad = 2 * Math.atan(Math.exp(y / RADIUS_MAJOR)) - Math.PI / 2
         return Math.toDegrees(latRad)
@@ -306,7 +306,7 @@ fun main() {
     val sphericalMercator = SphericalMercatorK()
     val x = sphericalMercator.xAxisProjection(22.0) // ≈ 2449028.797
     val y = sphericalMercator.yAxisProjection(44.0) // ≈ 5465442.183
-    
+
     val ellipticalMercator = EllipticalMercatorK()
     val x2 = ellipticalMercator.xAxisProjection(22.0) // ≈ 2449028.797
     val y2 = ellipticalMercator.yAxisProjection(44.0) // ≈ 5435749.888

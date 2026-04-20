@@ -27,10 +27,10 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 
 ### Официальная документация **PostgreSQL**
 
-- [`PostgreSQL Concurrency Control`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Transaction Isolation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Locking`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Monitoring`](https://www.postgresql.org/docs/)
+- [PostgreSQL Concurrency Control](https://www.postgresql.org/docs/)
+- [PostgreSQL Transaction Isolation](https://www.postgresql.org/docs/)
+- [PostgreSQL Locking](https://www.postgresql.org/docs/)
+- [PostgreSQL Monitoring](https://www.postgresql.org/docs/)
 
 ### Дополнительные ресурсы
 
@@ -38,7 +38,7 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 - [`Baeldung` - `PostgreSQL Transactions`](https://www.postgresql.org/docs/)
 - [PGCon — `Advanced PostgreSQL Internals`](https://www.postgresql.org/docs/)
 
-См. также: [`postgres-basics`](postgres-basics.md) — [`postgres-design`](postgres-design.md) — [`postgres-indexes`](postgres-indexes.md) — [`postgres-admin`](postgres-admin.md).
+См. также: [[postgres-basics]] — [[postgres-design]] — [[postgres-indexes]] — [[postgres-admin]].
 
 ## Содержание
 
@@ -369,11 +369,11 @@ FROM pg_locks blockedl
 JOIN pg_stat_activity blockeda ON blockedl.pid = blockeda.pid
 JOIN pg_locks blockingl
   ON (blockingl.transactionid = blockedl.transactionid
-      OR (blockingl.relation = blockedl.relation 
+      OR (blockingl.relation = blockedl.relation
           AND blockingl.locktype = blockedl.locktype))
  AND blockedl.pid <> blockingl.pid
-JOIN pg_stat_activity blockinga 
-  ON blockingl.pid = blockinga.pid 
+JOIN pg_stat_activity blockinga
+  ON blockingl.pid = blockinga.pid
  AND blockinga.datid = blockeda.datid
 WHERE NOT blockedl.granted
   AND blockinga.datname = current_database()
@@ -390,7 +390,7 @@ SELECT blocked.pid AS blocked_pid,
        age(clock_timestamp(), blocker.query_start) AS blocker_duration
 FROM pg_locks bl
 JOIN pg_stat_activity blocked ON blocked.pid = bl.pid
-JOIN pg_locks kl 
+JOIN pg_locks kl
   ON kl.locktype = bl.locktype
  AND kl.database IS NOT DISTINCT FROM bl.database
  AND kl.relation IS NOT DISTINCT FROM bl.relation
@@ -465,7 +465,7 @@ SELECT pg_terminate_backend(<PID>);
 
 Эта команда отправляет сигнал **SIGTERM** процессу, что завершает всю сессию и закрывает соединение. Используйте осторожно, так как это прервет все активные транзакции в этой сессии.
 
-**Массовое завершение "висящих" сессий:**
+**Массовое завершение «висящих» сессий:**
 ```sql
 -- Завершить все idle in transaction сессии старше 10 минут
 SELECT pg_terminate_backend(pid)
@@ -493,7 +493,7 @@ WHERE state = 'idle in transaction'
 **Использование `SELECT ... `FOR UPDATE SKIP` LOCKED`:**
 ```sql
 -- Пропустить заблокированные строки
-SELECT * FROM jobs 
+SELECT * FROM jobs
 WHERE status = 'pending'
 ORDER BY created_at
 FOR UPDATE SKIP LOCKED
@@ -511,7 +511,7 @@ LIMIT 10;
 **Статус в `PostgreSQL`:** Исключено. **PostgreSQL** не поддерживает уровень изоляции `**READ UNCOMMITTED**`.
 
 **Пример (**не возможен в **PostgreSQL**):**
-```
+```text
 T1: BEGIN; UPDATE accounts SET balance = 1000 WHERE id = 1; -- НЕ COMMIT
 T2: BEGIN; SELECT balance FROM accounts WHERE id = 1; -- Видит 1000 (грязное чтение)
 T1: ROLLBACK;
@@ -638,7 +638,7 @@ END LOOP;
 ### Мониторинг и диагностика
 
 1. **Регулярно проверяйте блокировки:**
-   - Используйте запросы из раздела "Диагностика блокировок" для мониторинга.
+   - Используйте запросы из раздела «Диагностика блокировок» для мониторинга.
    - Настройте алерты на долгие ожидания блокировок.
 
 2. **Логирование блокировок:**
@@ -657,7 +657,7 @@ END LOOP;
 
 2. **Контроль autovacuum:**
    - Не отключайте **autovacuum** надолго.
-   - Настройте `**autovacuum_vacuum_cost_limit**` для "горячих" таблиц.
+   - Настройте `**autovacuum_vacuum_cost_limit**` для «горячих» таблиц.
 
 3. **Использование `SKIP LOCKED`:**
    - Для очередей задач используйте `**SELECT** ... **FOR UPDATE SKIP LOCKED**`.
@@ -874,12 +874,12 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **MVCC** - глубокое погружение
+## **MVCC** — глубокое погружение
 
 ### Внутренняя структура версий строк
 
 **Структура строки в `PostgreSQL`:**
-```
+```text
 tuple header (23 bytes):
   - t_xmin: XID транзакции, создавшей эту версию
   - t_xmax: XID транзакции, удалившей эту версию (0 если не удалена)
@@ -1976,3 +1976,10 @@ SELECT * FROM diagnose_transaction_issues();
 
 Эффективное использование транзакций **PostgreSQL** требует глубокого понимания механизмов **MVCC**, стратегий блокировок и принципов оптимизации. Правильное применение этих техник обеспечивает высокую производительность и надежность приложений.
 
+## См. также
+
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]

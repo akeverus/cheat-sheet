@@ -60,7 +60,7 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Spring Boot + JSON (дефолт):** `jackson.md` целиком, начиная с "ObjectMapper" и "Аннотации".
+- **Spring Boot + JSON (дефолт):** `jackson.md` целиком, начиная с "ObjectMapper" и «Аннотации».
 - **Android-проект:** `java-gson.md` + секция "Type Adapters".
 - **Kotlin-multiplatform:** сравнить с [kotlinx.serialization](../kotlin/kotlin-kotlinx-serialization.md).
 - **Оптимизация hot-path:** секции "Streaming API" и "Performance" в `jackson.md`.

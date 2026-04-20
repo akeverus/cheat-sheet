@@ -19,8 +19,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring MVC: Полное руководство по веб-фреймворку
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -81,7 +79,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ## Введение в **Spring MVC**
 
-**Spring MVC** (**Model-`View`-Controller**) - это мощный веб-фреймворк, построенный на основе паттерна **MVC**. Он предоставляет гибкую архитектуру для создания веб-приложений с разделением логики представления, бизнес-логики и данных.
+**Spring MVC** (**Model-`View`-Controller**) — это мощный веб-фреймворк, построенный на основе паттерна **MVC**. Он предоставляет гибкую архитектуру для создания веб-приложений с разделением логики представления, бизнес-логики и данных.
 
 ### Основные компоненты **Spring MVC**
 
@@ -136,24 +134,24 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-public class WebAppInitializer 
+public class WebAppInitializer
         extends AbstractAnnotationConfigDispatcherServletInitializer {
-    
+
     @Override
     protected Class<?>[] getRootConfigClasses() {
         return new Class[] { AppConfig.class };
     }
-    
+
     @Override
     protected Class<?>[] getServletConfigClasses() {
         return new Class[] { WebConfig.class };
     }
-    
+
     @Override
     protected String[] getServletMappings() {
         return new String[] { "/" };
     }
-    
+
     @Override
     protected void customizeRegistration(
             ServletRegistration.Dynamic registration) {
@@ -178,7 +176,7 @@ public class WebAppInitializer
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
-    
+
     <servlet-mapping>
         <servlet-name>dispatcher</servlet-name>
         <url-pattern>/</url-pattern>
@@ -238,7 +236,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // Получение списка пользователей
     @GetMapping
     public String listUsers(Model model) {
@@ -246,7 +244,7 @@ public class UserController {
         model.addAttribute("users", users);  // Передача в шаблон
         return "users/list";  // Имя View (Thymeleaf, JSP и т.д.)
     }
-    
+
     @GetMapping("/{id}")
     public String getUser(@PathVariable Long id, Model model) {
         User user = userService.findById(id);
@@ -267,13 +265,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RestController
 @RequestMapping("/api/users")
 public class UserRestController {
-    
+
     // Возвращает JSON напрямую (без View)
     @GetMapping
     public List<User> listUsers() {
         return userService.findAll();
     }
-    
+
     @GetMapping("/{id}")
     public User getUser(@PathVariable Long id) {
         return userService.findById(id);
@@ -289,31 +287,31 @@ public class UserRestController {
 // Различные HTTP методы маппинга
 @Controller
 public class MappingController {
-    
+
     // @RequestMapping - универсальный (любой HTTP метод)
     @RequestMapping("/home")
     public String home() {
         return "home";
     }
-    
+
     @GetMapping("/users")  // GET запрос
     public String getUsers() {
         return "users";
     }
-    
+
     @PostMapping("/users")  // POST запрос (создание)
     public String createUser(@ModelAttribute User user) {
         userService.save(user);
         return "redirect:/users";  // Редирект после POST
     }
-    
+
     @PutMapping("/users/{id}")  // PUT запрос (обновление)
-    public String updateUser(@PathVariable Long id, 
+    public String updateUser(@PathVariable Long id,
                             @ModelAttribute User user) {
         userService.update(id, user);
         return "redirect:/users";
     }
-    
+
     @DeleteMapping("/users/{id}")  // DELETE запрос (удаление)
     public String deleteUser(@PathVariable Long id) {
         userService.delete(id);
@@ -329,7 +327,7 @@ public class MappingController {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // /users/123 -> id = 123
     @GetMapping("/{id}")
     public String getUser(@PathVariable Long id, Model model) {
@@ -337,7 +335,7 @@ public class UserController {
         model.addAttribute("user", user);
         return "user/detail";
     }
-    
+
     // Несколько path variables: /users/1/orders/42
     @GetMapping("/{userId}/orders/{orderId}")
     public String getUserOrder(
@@ -348,7 +346,7 @@ public class UserController {
         model.addAttribute("order", order);
         return "order/detail";
     }
-    
+
     // Вложенные ресурсы: /users/1/posts/2/comments/3
     @GetMapping("/{id}/posts/{postId}/comments/{commentId}")
     public String getComment(
@@ -370,7 +368,7 @@ public class UserController {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // /users/search?name=John&page=0&size=20
     @GetMapping("/search")
     public String searchUsers(
@@ -382,7 +380,7 @@ public class UserController {
         model.addAttribute("users", users);
         return "users/list";
     }
-    
+
     // Опциональные параметры (required = false)
     @GetMapping("/filter")
     public String filterUsers(
@@ -394,7 +392,7 @@ public class UserController {
         model.addAttribute("users", users);
         return "users/list";
     }
-    
+
     // Коллекция: /users/tags?tags=java&tags=spring
     @GetMapping("/tags")
     public String getUsersByTags(
@@ -413,14 +411,14 @@ public class UserController {
 // @RequestHeader - извлечение HTTP заголовков
 @Controller
 public class HeaderController {
-    
+
     // Заголовок по имени параметра
     @GetMapping("/data")
     public String getData(@RequestHeader String authorization, Model model) {
         model.addAttribute("auth", authorization);
         return "data";
     }
-    
+
     // Явное указание имени заголовка
     @GetMapping("/info")
     public String getInfo(
@@ -429,7 +427,7 @@ public class HeaderController {
         model.addAttribute("userAgent", userAgent);
         return "info";
     }
-    
+
     // Опциональный заголовок
     @GetMapping("/custom")
     public String getCustom(
@@ -448,21 +446,21 @@ public class HeaderController {
 @RestController
 @RequestMapping("/api/users")
 public class UserRestController {
-    
+
     // JSON -> объект User
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         User created = userService.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-    
+
     // Коллекция объектов из JSON массива
     @PostMapping("/batch")
     public ResponseEntity<List<User>> createUsers(@RequestBody List<User> users) {
         List<User> created = userService.saveAll(users);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
-    
+
     // Комбинация @PathVariable и @RequestBody
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(
@@ -483,14 +481,14 @@ public class UserRestController {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // Данные из формы (form-data) -> объект User
     @PostMapping
     public String createUser(@ModelAttribute User user) {
         userService.save(user);
         return "redirect:/users";  // Паттерн PRG (Post-Redirect-Get)
     }
-    
+
     @PutMapping("/{id}")
     public String updateUser(
             @PathVariable Long id,
@@ -508,13 +506,13 @@ public class UserController {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // Вызывается перед каждым обработчиком - добавляет "roles" в Model
     @ModelAttribute("roles")
     public List<Role> populateRoles() {
         return roleService.findAll();
     }
-    
+
     // Условная логика для получения или создания объекта
     @ModelAttribute("user")
     public User getUser(@PathVariable(required = false) Long id) {
@@ -523,7 +521,7 @@ public class UserController {
         }
         return new User();  // Создание
     }
-    
+
     @GetMapping("/form")
     public String showForm() {
         return "users/form";  // roles и user уже в Model
@@ -539,13 +537,13 @@ public class UserController {
 @RequestMapping("/cart")
 @SessionAttributes("cart")  // Сохраняет "cart" в HTTP сессии
 public class CartController {
-    
+
     // Создание корзины при первом обращении
     @ModelAttribute("cart")
     public Cart getCart() {
         return new Cart();
     }
-    
+
     // Модификация корзины сохраняется в сессии
     @PostMapping("/add")
     public String addToCart(
@@ -555,7 +553,7 @@ public class CartController {
         cart.addItem(product);
         return "redirect:/cart";
     }
-    
+
     @GetMapping
     public String viewCart(@ModelAttribute("cart") Cart cart, Model model) {
         model.addAttribute("cart", cart);
@@ -575,7 +573,7 @@ public class CartController {
 @Configuration
 @EnableWebMvc
 public class WebConfig implements WebMvcConfigurer {
-    
+
     // InternalResourceViewResolver - для JSP шаблонов
     @Bean
     public ViewResolver viewResolver() {
@@ -593,7 +591,7 @@ public class WebConfig implements WebMvcConfigurer {
 // Конфигурация Thymeleaf шаблонизатора
 @Configuration
 public class ThymeleafConfig {
-    
+
     // Resolver для поиска шаблонов
     @Bean
     public SpringResourceTemplateResolver templateResolver() {
@@ -604,7 +602,7 @@ public class ThymeleafConfig {
         resolver.setCharacterEncoding("UTF-8");
         return resolver;
     }
-    
+
     // Движок шаблонизатора
     @Bean
     public SpringTemplateEngine templateEngine() {
@@ -612,7 +610,7 @@ public class ThymeleafConfig {
         engine.setTemplateResolver(templateResolver());
         return engine;
     }
-    
+
     // View Resolver для интеграции с Spring MVC
     @Bean
     public ThymeleafViewResolver viewResolver() {
@@ -630,7 +628,7 @@ public class ThymeleafConfig {
 // Content Negotiation - выбор формата ответа (JSON/XML)
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
         configurer
@@ -652,7 +650,7 @@ import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 
 public class PdfViewResolver implements ViewResolver {
-    
+
     @Override
     public View resolveViewName(String viewName, Locale locale) throws Exception {
         // Обработка view имён вида "pdf:report"
@@ -667,20 +665,20 @@ public class PdfViewResolver implements ViewResolver {
 // Кастомный View для рендеринга PDF
 public class PdfView implements View {
     private final String templateName;
-    
+
     public PdfView(String templateName) {
         this.templateName = templateName;
     }
-    
+
     @Override
-    public void render(Map<String, ?> model, 
+    public void render(Map<String, ?> model,
                       HttpServletRequest request,
                       HttpServletResponse response) throws Exception {
         // Генерация PDF из шаблона
         response.setContentType("application/pdf");
         // ... логика генерации PDF с использованием iText/Flying Saucer
     }
-    
+
     @Override
     public String getContentType() {
         return "application/pdf";
@@ -700,9 +698,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 public class LoggingInterceptor implements HandlerInterceptor {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(LoggingInterceptor.class);
-    
+
     // preHandle - выполняется ДО обработчика (return false = прерывание)
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -714,7 +712,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
         logger.info("Request Method: {}", request.getMethod());
         return true;  // Продолжить выполнение
     }
-    
+
     // postHandle - выполняется ПОСЛЕ обработчика, но ДО рендеринга View
     @Override
     public void postHandle(HttpServletRequest request,
@@ -725,12 +723,12 @@ public class LoggingInterceptor implements HandlerInterceptor {
         long endTime = System.currentTimeMillis();
         long executeTime = endTime - startTime;
         logger.info("Request processing time: {}ms", executeTime);
-        
+
         if (modelAndView != null) {
             modelAndView.addObject("executeTime", executeTime);
         }
     }
-    
+
     // afterCompletion - выполняется ПОСЛЕ рендеринга View (всегда)
     @Override
     public void afterCompletion(HttpServletRequest request,
@@ -751,14 +749,14 @@ public class LoggingInterceptor implements HandlerInterceptor {
 // Регистрация Interceptor в конфигурации
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // Логирование для всех URL кроме статики
         registry.addInterceptor(new LoggingInterceptor())
             .addPathPatterns("/**")  // Все пути
             .excludePathPatterns("/static/**", "/css/**", "/js/**");  // Исключения
-        
+
         // Аутентификация только для admin и api
         registry.addInterceptor(new AuthenticationInterceptor())
             .addPathPatterns("/admin/**", "/api/**");
@@ -771,30 +769,30 @@ public class WebConfig implements WebMvcConfigurer {
 ```java
 // Interceptor для проверки JWT токена
 public class AuthenticationInterceptor implements HandlerInterceptor {
-    
+
     @Override
     public boolean preHandle(HttpServletRequest request,
                            HttpServletResponse response,
                            Object handler) throws Exception {
         String authHeader = request.getHeader("Authorization");
-        
+
         // Проверка наличия Bearer токена
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"error\": \"Unauthorized\"}");
             return false;  // Прерывание запроса
         }
-        
+
         String token = authHeader.substring(7);  // Извлечение токена
         if (!isValidToken(token)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("{\"error\": \"Invalid token\"}");
             return false;
         }
-        
+
         return true;
     }
-    
+
     private boolean isValidToken(String token) {
         // Валидация токена
         return true;
@@ -813,7 +811,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // Обработка UserNotFoundException только в этом контроллере
     @ExceptionHandler(UserNotFoundException.class)
     public ModelAndView handleUserNotFound(UserNotFoundException ex) {
@@ -822,7 +820,7 @@ public class UserController {
         mav.setStatus(HttpStatus.NOT_FOUND);
         return mav;
     }
-    
+
     // Возврат JSON ошибки через ResponseEntity
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ErrorResponse> handleValidation(ValidationException ex) {
@@ -842,7 +840,7 @@ public class UserController {
 // @ControllerAdvice - глобальная обработка исключений для всех контроллеров
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     // Fallback для всех необработанных исключений
     @ExceptionHandler(Exception.class)
     public ModelAndView handleException(Exception ex) {
@@ -851,7 +849,7 @@ public class GlobalExceptionHandler {
         mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         return mav;
     }
-    
+
     // Обработка конкретного типа исключения
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
@@ -861,7 +859,7 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
-    
+
     // Обработка ошибок валидации @Valid
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
@@ -871,7 +869,7 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> {
             errors.put(error.getField(), error.getDefaultMessage());
         });
-        
+
         ErrorResponse error = new ErrorResponse(
             "VALIDATION_ERROR",
             "Validation failed",
@@ -896,7 +894,7 @@ public class UserNotFoundException extends RuntimeException {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     @GetMapping("/{id}")
     public User getUser(@PathVariable Long id) {
         User user = userService.findById(id);
@@ -917,14 +915,14 @@ public class UserController {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     // Показать пустую форму
     @GetMapping("/form")
     public String showForm(Model model) {
         model.addAttribute("user", new User());  // Пустой объект для формы
         return "users/form";
     }
-    
+
     // Обработка отправленной формы
     @PostMapping
     public String submitForm(@ModelAttribute User user) {
@@ -943,19 +941,19 @@ public class UserController {
         <input type="text" th:field="*{name}" />
         <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
     </div>
-    
+
     <div>
         <label>Email:</label>
         <input type="email" th:field="*{email}" />
         <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
     </div>
-    
+
     <div>
         <label>Age:</label>
         <input type="number" th:field="*{age}" />
         <span th:if="${#fields.hasErrors('age')}" th:errors="*{age}"></span>
     </div>
-    
+
     <button type="submit">Submit</button>
 </form>
 ```
@@ -967,7 +965,7 @@ public class UserController {
 @Controller
 @RequestMapping("/users")
 public class UserController {
-    
+
     @PostMapping
     public String submitForm(
             @Valid @ModelAttribute User user,  // @Valid активирует JSR-380
@@ -989,7 +987,7 @@ public class UserController {
 // Конфигурация загрузки файлов
 @Configuration
 public class MultipartConfig {
-    
+
     @Bean
     public MultipartResolver multipartResolver() {
         CommonsMultipartResolver resolver = new CommonsMultipartResolver();
@@ -1007,7 +1005,7 @@ public class MultipartConfig {
 @Controller
 @RequestMapping("/files")
 public class FileController {
-    
+
     // Обработка multipart/form-data с файлом
     @PostMapping("/upload")
     public String handleFileUpload(
@@ -1017,12 +1015,12 @@ public class FileController {
             model.addAttribute("error", "File is empty");
             return "upload/error";
         }
-        
+
         try {
             byte[] bytes = file.getBytes();
             Path path = Paths.get("uploads/" + file.getOriginalFilename());
             Files.write(path, bytes);  // Сохранение на диск
-            
+
             model.addAttribute("message", "File uploaded successfully");
             return "upload/success";
         } catch (IOException e) {
@@ -1113,3 +1111,11 @@ public String createUser(@Valid @ModelAttribute User user, BindingResult result)
 - [**Spring MVC** Documentation](https://docs.spring.io/spring-framework/reference/web/webmvc.html)
 - [**Spring Boot** Web](https://docs.spring.io/spring-boot/docs/current/reference/html/web.html)
 - [Baeldung **Spring MVC**](https://www.baeldung.com/spring-mvc-tutorial)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

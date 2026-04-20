@@ -134,7 +134,7 @@ updated: "2026-02-11"
 ```java
 // AWS Lambda функция
 public class HelloFunction implements RequestHandler<String, String> {
-    
+
     @Override
     public String handleRequest(String input, Context context) {
         context.getLogger().log("Input: " + input);
@@ -145,12 +145,12 @@ public class HelloFunction implements RequestHandler<String, String> {
 // Spring Cloud Function
 @SpringBootApplication
 public class ServerlessApplication {
-    
+
     @Bean
     public Function<String, String> hello() {
         return input -> "Hello, " + input + "!";
     }
-    
+
     public static void main(String[] args) {
         SpringApplication.run(ServerlessApplication.class, args);
     }
@@ -190,19 +190,19 @@ public class ServerlessApplication {
 ```java
 // Lambda Handler
 public class OrderProcessor implements RequestHandler<OrderEvent, OrderResult> {
-    
+
     private final OrderService orderService;
-    
+
     public OrderProcessor() {
         // Инициализация зависимостей
         this.orderService = new OrderService();
     }
-    
+
     @Override
     public OrderResult handleRequest(OrderEvent event, Context context) {
         LambdaLogger logger = context.getLogger();
         logger.log("Processing order: " + event.getOrderId());
-        
+
         try {
             Order order = orderService.processOrder(event.getOrderId());
             return new OrderResult(order.getId(), "SUCCESS");
@@ -218,7 +218,7 @@ public class OrderEvent {
     private String orderId;
     private String customerId;
     private BigDecimal amount;
-    
+
     // Getters and setters
 }
 
@@ -226,7 +226,7 @@ public class OrderEvent {
 public class OrderResult {
     private String orderId;
     private String status;
-    
+
     // Constructors, getters, setters
 }
 ```
@@ -260,24 +260,24 @@ functions:
 ```java
 @SpringBootApplication
 public class LambdaApplication implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    
+
     private static SpringBootLambdaContainerHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> handler;
-    
+
     static {
         handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(LambdaApplication.class);
     }
-    
+
     @Override
     public APIGatewayProxyResponseEvent handleRequest(
             APIGatewayProxyRequestEvent input,
             Context context) {
         return handler.proxy(input, context);
     }
-    
+
     @RestController
     @RequestMapping("/api")
     public static class OrderController {
-        
+
         @PostMapping("/orders")
         public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
             Order order = orderService.createOrder(request);
@@ -296,21 +296,21 @@ public class LambdaApplication implements RequestHandler<APIGatewayProxyRequestE
 ```java
 @FunctionName("ProcessOrder")
 public class OrderProcessor {
-    
+
     @FunctionName("ProcessOrder")
     public HttpResponseMessage processOrder(
             @HttpTrigger(name = "req", methods = {HttpMethod.POST}, authLevel = AuthorizationLevel.FUNCTION)
             HttpRequestMessage<Optional<OrderEvent>> request,
             final ExecutionContext context) {
-        
+
         context.getLogger().info("Processing order");
-        
-        OrderEvent event = request.getBody().orElseThrow(() -> 
+
+        OrderEvent event = request.getBody().orElseThrow(() ->
             new IllegalArgumentException("Order event is required"));
-        
+
         OrderService orderService = new OrderService();
         Order order = orderService.processOrder(event.getOrderId());
-        
+
         return request.createResponseBuilder(HttpStatus.OK)
             .body(new OrderResult(order.getId(), "SUCCESS"))
             .build();
@@ -349,19 +349,19 @@ public class OrderProcessor {
 
 ```java
 public class OrderProcessor implements HttpFunction {
-    
+
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         Gson gson = new Gson();
-        
+
         OrderEvent event = gson.fromJson(
             request.getReader(),
             OrderEvent.class
         );
-        
+
         OrderService orderService = new OrderService();
         Order order = orderService.processOrder(event.getOrderId());
-        
+
         OrderResult result = new OrderResult(order.getId(), "SUCCESS");
         response.getWriter().write(gson.toJson(result));
     }
@@ -377,12 +377,12 @@ public class OrderProcessor implements HttpFunction {
 ```java
 @SpringBootApplication
 public class ServerlessApplication {
-    
+
     @Bean
     public Function<String, String> uppercase() {
         return input -> input.toUpperCase();
     }
-    
+
     @Bean
     public Function<OrderEvent, OrderResult> processOrder() {
         return event -> {
@@ -391,17 +391,17 @@ public class ServerlessApplication {
             return new OrderResult(order.getId(), "SUCCESS");
         };
     }
-    
+
     @Bean
     public Consumer<String> logMessage() {
         return message -> System.out.println("Received: " + message);
     }
-    
+
     @Bean
     public Supplier<String> generateMessage() {
         return () -> "Hello from serverless function!";
     }
-    
+
     public static void main(String[] args) {
         SpringApplication.run(ServerlessApplication.class, args);
     }
@@ -439,7 +439,7 @@ spring:
 ```java
 @SpringBootApplication
 public class HttpFunctionApplication {
-    
+
     @Bean
     public Function<HttpRequest, HttpResponse> httpFunction() {
         return request -> {
@@ -458,7 +458,7 @@ public class HttpFunctionApplication {
 ```java
 @SpringBootApplication
 public class QueueFunctionApplication {
-    
+
     @Bean
     public Function<Message<String>, Void> queueFunction() {
         return message -> {
@@ -468,7 +468,7 @@ public class QueueFunctionApplication {
             return null;
         };
     }
-    
+
     private void processMessage(String payload) {
         // Логика обработки
     }
@@ -480,7 +480,7 @@ public class QueueFunctionApplication {
 ```java
 @SpringBootApplication
 public class DatabaseFunctionApplication {
-    
+
     @Bean
     public Function<ChangeEvent, Void> databaseFunction() {
         return changeEvent -> {
@@ -499,7 +499,7 @@ public class DatabaseFunctionApplication {
 ```java
 @SpringBootApplication
 public class ScheduledFunctionApplication {
-    
+
     @Bean
     public Supplier<String> scheduledFunction() {
         return () -> {
@@ -551,15 +551,15 @@ functions:
 
 ```java
 public class OrderProcessor implements RequestHandler<OrderEvent, OrderResult> {
-    
+
     // Инициализация при загрузке класса
     private static final OrderService orderService = initializeService();
-    
+
     private static OrderService initializeService() {
         // Инициализация сервиса
         return new OrderService();
     }
-    
+
     @Override
     public OrderResult handleRequest(OrderEvent event, Context context) {
         // Использование предварительно инициализированного сервиса
@@ -598,7 +598,7 @@ public Function<OrderEvent, OrderResult> processOrder() {
                 .map(order -> new OrderResult(order.getId(), "ALREADY_PROCESSED"))
                 .orElseThrow();
         }
-        
+
         // Обработка заказа
         Order order = orderService.processOrder(event.getOrderId());
         return new OrderResult(order.getId(), "SUCCESS");
@@ -635,14 +635,14 @@ public Function<OrderEvent, OrderResult> processOrder() {
 
 ```java
 public class OrderProcessor implements RequestHandler<OrderEvent, OrderResult> {
-    
+
     private static final Logger log = LoggerFactory.getLogger(OrderProcessor.class);
-    
+
     @Override
     public OrderResult handleRequest(OrderEvent event, Context context) {
         MDC.put("orderId", event.getOrderId());
         MDC.put("requestId", context.getAwsRequestId());
-        
+
         try {
             log.info("Processing order");
             Order order = orderService.processOrder(event.getOrderId());
@@ -685,13 +685,13 @@ public Function<OrderEvent, OrderResult> processOrderAndSendEmailAndUpdateInvent
 ```java
 @Configuration
 public class FunctionConfig {
-    
+
     @Value("${database.url}")
     private String databaseUrl;
-    
+
     @Value("${api.key}")
     private String apiKey;
-    
+
     @Bean
     public DataSource dataSource() {
         return DataSourceBuilder.create()

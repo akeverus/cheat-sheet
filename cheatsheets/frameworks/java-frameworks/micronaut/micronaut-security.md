@@ -17,9 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
-# Micronaut: Security - Authentication и Authorization
-
-
+# Micronaut: Security — Authentication и Authorization
 
 ## Полезные ссылки
 
@@ -28,7 +26,7 @@ related: ["micronaut-core.md", "micronaut-http.md"]
 
 ## Содержание
 
-- [Micronaut: Security - Authentication и Authorization](#micronaut-security-authentication-и-authorization)
+- [Micronaut: Security — Authentication и Authorization](#micronaut-security-authentication-и-authorization)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Security](#настройка-security)
@@ -159,14 +157,14 @@ import jakarta.inject.Singleton;
 public class AuthenticationService {
     private final JwtTokenGenerator tokenGenerator;
     private final UserRepository userRepository;
-    
+
     public AuthenticationService(
             JwtTokenGenerator tokenGenerator,
             UserRepository userRepository) {
         this.tokenGenerator = tokenGenerator;
         this.userRepository = userRepository;
     }
-    
+
     public Optional<BearerAccessRefreshToken> authenticate(
             String username, String password) {
         return userRepository.findByUsername(username)
@@ -175,10 +173,10 @@ public class AuthenticationService {
                 Map<String, Object> claims = new HashMap<>();
                 claims.put("sub", user.getUsername());
                 claims.put("roles", user.getRoles());
-                
+
                 String accessToken = tokenGenerator.generateToken(claims)
                     .orElseThrow(() -> new RuntimeException("Token generation failed"));
-                
+
                 return new BearerAccessRefreshToken(
                     accessToken,
                     accessToken, // refresh token (same for simplicity)
@@ -202,11 +200,11 @@ import io.micronaut.security.token.jwt.render.BearerAccessRefreshToken;
 @Controller("/login")
 public class LoginController {
     private final AuthenticationService authenticationService;
-    
+
     public LoginController(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
-    
+
     @Post
     public HttpResponse<BearerAccessRefreshToken> login(
             @Body UsernamePasswordCredentials credentials) {
@@ -233,28 +231,28 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 @Singleton
-public class CustomAuthenticationProvider 
+public class CustomAuthenticationProvider
         implements AuthenticationProvider {
-    
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     public CustomAuthenticationProvider(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
-    
+
     @Override
     public Publisher<AuthenticationResponse> authenticate(
             HttpRequest<?> request,
             AuthenticationRequest<?, ?> authRequest) {
-        
+
         return Flux.create(emitter -> {
             String username = authRequest.getIdentity().toString();
             String password = authRequest.getSecret().toString();
-            
+
             userRepository.findByUsername(username)
                 .ifPresentOrElse(
                     user -> {
@@ -270,7 +268,7 @@ public class CustomAuthenticationProvider
                     },
                     () -> emitter.error(AuthenticationResponse.exception())
                 );
-            
+
             emitter.complete();
         }, FluxSink.OverflowStrategy.ERROR);
     }
@@ -287,25 +285,25 @@ import io.micronaut.security.rules.SecurityRule;
 
 @Controller("/api/users")
 public class UserController {
-    
+
     @Get("/public")
     @Secured(SecurityRule.IS_ANONYMOUS)
     public String publicEndpoint() {
         return "This is public";
     }
-    
+
     @Get("/authenticated")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public String authenticatedEndpoint() {
         return "This requires authentication";
     }
-    
+
     @Get("/admin")
     @Secured("ROLE_ADMIN")
     public String adminEndpoint() {
         return "This requires ADMIN role";
     }
-    
+
     @Get("/user")
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
     public String userEndpoint() {
@@ -351,7 +349,7 @@ import io.micronaut.security.oauth2.endpoint.token.response.OauthUserDetailsMapp
 
 @Controller("/oauth")
 public class OAuthController {
-    
+
     @Get("/login/google")
     @Secured(SecurityRule.IS_ANONYMOUS)
     public HttpResponse<?> loginGoogle() {
@@ -359,7 +357,7 @@ public class OAuthController {
             URI.create("/oauth/callback/google")
         );
     }
-    
+
     @Get("/callback/google")
     @Secured(SecurityRule.IS_ANONYMOUS)
     public HttpResponse<?> callbackGoogle(
@@ -381,22 +379,22 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserService {
-    
+
     @Secured("ROLE_ADMIN")
     public User createUser(User user) {
         return userRepository.save(user);
     }
-    
+
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
     public Optional<User> getUser(Long id) {
         return userRepository.findById(id);
     }
-    
+
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public User updateUser(Long id, User user) {
         return userRepository.update(id, user);
     }
-    
+
     @Secured("ROLE_ADMIN")
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
@@ -413,10 +411,10 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomSecurityRule implements SecurityRule {
-    
+
     @Override
-    public SecurityRuleResult check(HttpRequest<?> request, 
-                                   RouteMatch<?> routeMatch, 
+    public SecurityRuleResult check(HttpRequest<?> request,
+                                   RouteMatch<?> routeMatch,
                                    Map<String, Object> claims) {
         // Custom security logic
         if (request.getPath().startsWith("/api/internal")) {
@@ -441,16 +439,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Singleton
 public class BCryptPasswordEncoder implements PasswordEncoder {
     private final org.springframework.security.crypto.password.PasswordEncoder encoder;
-    
+
     public BCryptPasswordEncoder() {
         this.encoder = new BCryptPasswordEncoder();
     }
-    
+
     @Override
     public String encode(String rawPassword) {
         return encoder.encode(rawPassword);
     }
-    
+
     @Override
     public boolean matches(String rawPassword, String encodedPassword) {
         return encoder.matches(rawPassword, encodedPassword);
@@ -541,14 +539,14 @@ import io.micronaut.security.authentication.providers.LdapAuthenticationProvider
 import jakarta.inject.Singleton;
 
 @Singleton
-public class CustomLdapAuthenticationProvider 
+public class CustomLdapAuthenticationProvider
         extends LdapAuthenticationProvider {
-    
+
     public CustomLdapAuthenticationProvider(
             LdapContextFactory ldapContextFactory) {
         super(ldapContextFactory);
     }
-    
+
     @Override
     protected List<String> getRoles(String username) {
         // Получение ролей из LDAP
@@ -581,7 +579,7 @@ micronaut:
 ```java
 @Controller("/session")
 public class SessionController {
-    
+
     @Post("/login")
     @Secured(SecurityRule.IS_ANONYMOUS)
     public HttpResponse<?> login(
@@ -597,7 +595,7 @@ public class SessionController {
         })
         .orElse(HttpResponse.unauthorized());
     }
-    
+
     @Post("/logout")
     @Secured(SecurityRule.IS_AUTHENTICATED)
     public HttpResponse<?> logout(HttpSession session) {
@@ -614,9 +612,9 @@ public class SessionController {
 ```java
 @Controller("/token")
 public class TokenController {
-    
+
     private final JwtTokenGenerator tokenGenerator;
-    
+
     @Post("/refresh")
     @Secured(SecurityRule.IS_ANONYMOUS)
     public HttpResponse<BearerAccessRefreshToken> refresh(
@@ -650,16 +648,16 @@ micronaut:
 ```java
 @Singleton
 public class CustomRateLimiter implements RateLimiter {
-    
+
     private final Map<String, AtomicInteger> attempts = new ConcurrentHashMap<>();
-    
+
     @Override
     public boolean checkLimit(String identifier) {
         AtomicInteger count = attempts.computeIfAbsent(
             identifier, k -> new AtomicInteger(0));
         return count.incrementAndGet() <= 5;
     }
-    
+
     @Scheduled(fixedDelay = "15m")
     public void resetAttempts() {
         attempts.clear();
@@ -725,31 +723,31 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomTokenValidator implements JwtTokenValidator {
-    
+
     @Override
     public Optional<Claims> validateToken(String token, HttpRequest<?> request) {
         // Кастомная валидация токена
         if (isTokenExpired(token)) {
             return Optional.empty();
         }
-        
+
         if (isTokenRevoked(token)) {
             return Optional.empty();
         }
-        
+
         return Optional.of(extractClaims(token));
     }
-    
+
     private boolean isTokenExpired(String token) {
         // Проверка истечения токена
         return false;
     }
-    
+
     private boolean isTokenRevoked(String token) {
         // Проверка отзыва токена
         return false;
     }
-    
+
     private Claims extractClaims(String token) {
         // Извлечение claims из токена
         return null;
@@ -769,13 +767,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class SecurityEventListener {
-    
+
     @EventListener
     public void onLoginSuccess(LoginSuccessfulEvent event) {
         log.info("User {} logged in successfully", event.getSource());
         // Логирование успешного входа
     }
-    
+
     @EventListener
     public void onLoginFailure(LoginFailedEvent event) {
         log.warn("Login failed for user: {}", event.getSource());
@@ -800,7 +798,7 @@ public @interface StrongPassword {
     String message() default "Password must be strong";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     class Validator implements ConstraintValidator<StrongPassword, String> {
         @Override
         public boolean isValid(String password, ConstraintValidatorContext context) {
@@ -857,13 +855,13 @@ import io.micronaut.http.annotation.Get;
 @Controller("/admin")
 @Secured("ROLE_ADMIN")
 public class AdminController {
-    
+
     @Get("/users")
     @Secured({"ROLE_ADMIN", "ROLE_USER_MANAGER"})
     public List<User> listUsers() {
         return userService.findAll();
     }
-    
+
     @Get("/settings")
     @Secured("ROLE_ADMIN")
     public Settings getSettings() {
@@ -884,3 +882,11 @@ public class AdminController {
 - [**Micronaut Security OAuth2**](https://micronaut-projects.github.io/micronaut-security/latest/guide/#oauth2)
 - [**OWASP Security** Guidelines](https://owasp.org/www-project-web-security-testing-guide/)
 - [**NIST Password** Guidelines](https://pages.nist.gov/800-63-3/sp800-63b.html)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

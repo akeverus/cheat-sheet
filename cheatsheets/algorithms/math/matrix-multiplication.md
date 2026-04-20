@@ -75,24 +75,24 @@ double[][] expected = {
 // Результат: firstMatrix.length × secondMatrix[0].length
 double[][] multiplyMatrices(double[][] firstMatrix, double[][] secondMatrix) {
     double[][] result = new double[firstMatrix.length][secondMatrix[0].length];
-    
+
     for (int row = 0; row < result.length; row++) {
         for (int col = 0; col < result[row].length; col++) {
             result[row][col] = multiplyMatricesCell(firstMatrix, secondMatrix, row, col);
         }
     }
-    
+
     return result;
 }
 
 // Одна ячейка: скалярное произведение row-й строки A и col-го столбца B
 double multiplyMatricesCell(double[][] firstMatrix, double[][] secondMatrix, int row, int col) {
     double cell = 0;
-    
+
     for (int i = 0; i < secondMatrix.length; i++) {
         cell += firstMatrix[row][i] * secondMatrix[i][col];
     }
-    
+
     return cell;
 }
 
@@ -226,7 +226,7 @@ public static void main(String[] args) throws RunnerException {
         .measurementIterations(10)
         .timeUnit(TimeUnit.MICROSECONDS)
         .build();
-    
+
     new Runner(opt).run();
 }
 ```
@@ -237,24 +237,24 @@ public static void main(String[] args) throws RunnerException {
 public class MatrixProvider {
     private double[][] firstMatrix;
     private double[][] secondMatrix;
-    
+
     public MatrixProvider() {
         firstMatrix = new double[][] {
             new double[] {1d, 5d},
             new double[] {2d, 3d},
             new double[] {1d, 7d}
         };
-        
+
         secondMatrix = new double[][] {
             new double[] {1d, 2d, 3d, 7d},
             new double[] {5d, 2d, 8d, 1d}
         };
     }
-    
+
     public double[][] getFirstMatrix() {
         return firstMatrix;
     }
-    
+
     public double[][] getSecondMatrix() {
         return secondMatrix;
     }
@@ -281,32 +281,32 @@ public class MatrixProvider {
 public class BigMatrixProvider {
     private double[][] firstMatrix;
     private double[][] secondMatrix;
-    
+
     public BigMatrixProvider() {}
-    
+
     @Setup
     public void setup(BenchmarkParams parameters) {
         firstMatrix = createMatrix();
         secondMatrix = createMatrix();
     }
-    
+
     private double[][] createMatrix() {
         Random random = new Random();
         double[][] result = new double[3000][3000];
-        
+
         for (int row = 0; row < result.length; row++) {
             for (int col = 0; col < result[row].length; col++) {
                 result[row][col] = random.nextDouble();
             }
         }
-        
+
         return result;
     }
-    
+
     public double[][] getFirstMatrix() {
         return firstMatrix;
     }
-    
+
     public double[][] getSecondMatrix() {
         return secondMatrix;
     }
@@ -325,46 +325,46 @@ public class BigMatrixMultiplicationBenchmarking {
             .measurementIterations(10)
             .timeUnit(TimeUnit.SECONDS)
             .build();
-        
+
         new Runner(opt).run();
     }
-    
+
     @Benchmark
     public Object homemadeMatrixMultiplication(BigMatrixProvider matrixProvider) {
         return HomemadeMatrix.multiplyMatrices(
-            matrixProvider.getFirstMatrix(), 
+            matrixProvider.getFirstMatrix(),
             matrixProvider.getSecondMatrix()
         );
     }
-    
+
     @Benchmark
     public Object ejmlMatrixMultiplication(BigMatrixProvider matrixProvider) {
         SimpleMatrix firstMatrix = new SimpleMatrix(matrixProvider.getFirstMatrix());
         SimpleMatrix secondMatrix = new SimpleMatrix(matrixProvider.getSecondMatrix());
         return firstMatrix.mult(secondMatrix);
     }
-    
+
     @Benchmark
     public Object apacheCommonsMatrixMultiplication(BigMatrixProvider matrixProvider) {
         RealMatrix firstMatrix = new Array2DRowRealMatrix(matrixProvider.getFirstMatrix());
         RealMatrix secondMatrix = new Array2DRowRealMatrix(matrixProvider.getSecondMatrix());
         return firstMatrix.multiply(secondMatrix);
     }
-    
+
     @Benchmark
     public Object la4jMatrixMultiplication(BigMatrixProvider matrixProvider) {
         Matrix firstMatrix = new Basic2DMatrix(matrixProvider.getFirstMatrix());
         Matrix secondMatrix = new Basic2DMatrix(matrixProvider.getSecondMatrix());
         return firstMatrix.multiply(secondMatrix);
     }
-    
+
     @Benchmark
     public Object nd4jMatrixMultiplication(BigMatrixProvider matrixProvider) {
         INDArray firstMatrix = Nd4j.create(matrixProvider.getFirstMatrix());
         INDArray secondMatrix = Nd4j.create(matrixProvider.getSecondMatrix());
         return firstMatrix.mmul(secondMatrix);
     }
-    
+
     @Benchmark
     public Object coltMatrixMultiplication(BigMatrixProvider matrixProvider) {
         DoubleFactory2D doubleFactory2D = DoubleFactory2D.dense;

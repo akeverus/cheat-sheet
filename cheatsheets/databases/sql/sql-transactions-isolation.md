@@ -60,7 +60,7 @@ updated: "2026-04-10"
 
 Транзакция читает данные, которые другая транзакция **ещё не закоммитила**.
 
-```
+```text
 T1: UPDATE accounts SET balance = 0 WHERE id = 1;  -- не коммитит
 T2: SELECT balance FROM accounts WHERE id = 1;      -- видит 0 (dirty!)
 T1: ROLLBACK;                                        -- откат
@@ -73,7 +73,7 @@ T1: ROLLBACK;                                        -- откат
 
 Повторное чтение **той же строки** в рамках одной транзакции даёт разные значения.
 
-```
+```text
 T1: SELECT balance FROM accounts WHERE id = 1;  -- 1000
 T2: UPDATE accounts SET balance = 500 WHERE id = 1; COMMIT;
 T1: SELECT balance FROM accounts WHERE id = 1;  -- 500 (значение изменилось!)
@@ -85,7 +85,7 @@ T1: SELECT balance FROM accounts WHERE id = 1;  -- 500 (значение изм�
 
 Повторный запрос с условием WHERE возвращает **другой набор строк** (появились/исчезли строки).
 
-```
+```text
 T1: SELECT * FROM orders WHERE status = 'new';      -- 5 строк
 T2: INSERT INTO orders (status) VALUES ('new'); COMMIT;
 T1: SELECT * FROM orders WHERE status = 'new';      -- 6 строк (фантом!)
@@ -97,7 +97,7 @@ T1: SELECT * FROM orders WHERE status = 'new';      -- 6 строк (фанто�
 
 Две транзакции читают одно значение, обе модифицируют, вторая перезаписывает результат первой.
 
-```
+```text
 T1: SELECT balance FROM accounts WHERE id = 1;  -- 1000
 T2: SELECT balance FROM accounts WHERE id = 1;  -- 1000
 T1: UPDATE accounts SET balance = 1000 + 100;   -- 1100
@@ -110,7 +110,7 @@ T2: UPDATE accounts SET balance = 1000 - 200;   -- 800 (потеряно +100 о
 
 Две транзакции читают пересекающиеся данные и на основе чтения делают записи, которые вместе нарушают инвариант.
 
-```
+```text
 -- Инвариант: хотя бы один врач дежурит
 T1: SELECT count(*) FROM on_call WHERE hospital = 'A';  -- 2
 T2: SELECT count(*) FROM on_call WHERE hospital = 'A';  -- 2
@@ -215,7 +215,7 @@ UPDATE accounts SET balance = 900 WHERE id = 1;
 
 Deadlock — циклическая зависимость блокировок.
 
-```
+```text
 T1: UPDATE accounts SET balance = 0 WHERE id = 1;  -- lock row 1
 T2: UPDATE accounts SET balance = 0 WHERE id = 2;  -- lock row 2
 T1: UPDATE accounts SET balance = 0 WHERE id = 2;  -- ждёт T2
@@ -278,3 +278,7 @@ public void longOperation() { }
 8. **`SKIP LOCKED` для очередей** — вместо собственных механизмов блокировки
 9. **`@Version` для optimistic locking в JPA** — минимальные блокировки при редких конфликтах
 10. **Мониторить `pg_stat_activity` и `pg_locks`** — находить долгие транзакции и блокировки
+
+## См. также
+
+- [[sql-basics|SQL: Основы]]

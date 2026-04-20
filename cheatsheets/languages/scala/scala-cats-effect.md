@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **Cats Effect** в **Scala**
 
-Краткое руководство по **Cats Effect** - библиотека для работы с эффектами в функциональном программировании **Scala**.
+Краткое руководство по **Cats Effect** — библиотека для работы с эффектами в функциональном программировании **Scala**.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -75,7 +75,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Cats Effect** - это библиотека для работы с эффектами в функциональном программировании **Scala**. Она предоставляет `IO` **Monad** для описания побочных эффектов в функциональном стиле.
+**Cats Effect** — это библиотека для работы с эффектами в функциональном программировании **Scala**. Она предоставляет `IO` **Monad** для описания побочных эффектов в функциональном стиле.
 
 **Cats Effect** особенно полезен для создания чистых функциональных приложений, работы с асинхронными операциями, управления ресурсами и создания типобезопасного кода.
 
@@ -330,7 +330,7 @@ import org.http4s.client.Client
 import org.http4s.ember.client.EmberClientBuilder
 
 // Создание HTTP клиента
-val clientResource: Resource[IO, Client[IO]] = 
+val clientResource: Resource[IO, Client[IO]] =
   EmberClientBuilder.default[IO].build
 
 // Выполнение HTTP запроса
@@ -378,13 +378,13 @@ import cats.effect.std.Deferred
 // Использование Deferred для синхронизации
 val program = for {
   deferred <- Deferred[IO, Int]
-  
+
   // Первый поток устанавливает значение
   fiber1 <- (IO.sleep(1.second) *> deferred.complete(42)).start
-  
+
   // Второй поток ждет значения
   fiber2 <- deferred.get.start
-  
+
   // Ожидание завершения обоих потоков
   _ <- fiber1.join
   value <- fiber2.join
@@ -402,18 +402,18 @@ import cats.effect.std.Queue
 // Создание очереди
 val program = for {
   queue <- Queue.unbounded[IO, Int]
-  
+
   // Производитель
-  producer <- (1 to 10).toList.traverse(i => 
+  producer <- (1 to 10).toList.traverse(i =>
     queue.offer(i) *> IO.sleep(100.millis)
   ).start
-  
+
   // Потребитель
   consumer <- Stream.repeatEval(queue.take)
     .take(10)
     .evalMap(value => IO.println(s"Received: $value"))
     .compile.drain.start
-  
+
   // Ожидание завершения
   _ <- producer.join
   _ <- consumer.join
@@ -433,7 +433,7 @@ val program = for {
   fiber1 <- (IO.sleep(1.second) *> IO.println("Task 1")).start
   fiber2 <- (IO.sleep(2.second) *> IO.println("Task 2")).start
   fiber3 <- (IO.sleep(3.second) *> IO.println("Task 3")).start
-  
+
   // Ожидание всех потоков
   _ <- fiber1.join
   _ <- fiber2.join
@@ -456,7 +456,7 @@ val timedOperation = slowOperation.timeout(2.second)
 
 // Обработка таймаута
 val result = timedOperation.attempt.unsafeRunSync() match {
-  case Left(_: java.util.concurrent.TimeoutException) => 
+  case Left(_: java.util.concurrent.TimeoutException) =>
     println("Operation timed out")
     None
   case Right(value) => Some(value)
@@ -493,7 +493,7 @@ val program = Supervisor[IO].use { supervisor =>
       IO.sleep(i.second) *> IO.println(s"Task $i completed")
     )
   }
-  
+
   IO.sequence(tasks).flatMap(_.traverse(_.join))
 }
 
@@ -581,7 +581,7 @@ val program = for {
     "user",
     "password"
   )
-  
+
   result <- sql"SELECT 42".query[Int].unique.transact(xa)
 } yield result
 
@@ -621,7 +621,7 @@ server.use(_ => IO.never).unsafeRunSync()
 
 ## Заключение
 
-**Cats Effect** - это библиотека для работы с эффектами в функциональном программировании **Scala**. Понимание `IO` **Monad**, композиции эффектов, обработки ошибок, управления ресурсами, асинхронных операций и практических применений позволяет создавать чистые, типобезопасные функциональные приложения.
+**Cats Effect** — это библиотека для работы с эффектами в функциональном программировании **Scala**. Понимание `IO` **Monad**, композиции эффектов, обработки ошибок, управления ресурсами, асинхронных операций и практических применений позволяет создавать чистые, типобезопасные функциональные приложения.
 
 Использование **Cats Effect** для описания побочных эффектов, управления ресурсами, работы с асинхронными операциями, обработки ошибок и практических применений критично для создания надежных функциональных приложений.
 
@@ -651,10 +651,10 @@ import cats.effect.std.Ref
 // Создание Ref для разделяемого состояния
 val program = for {
   ref <- Ref.of[IO, Int](0)
-  
+
   // Множественные обновления
   _ <- (1 to 100).toList.traverse(i => ref.update(_ + i))
-  
+
   // Получение финального значения
   value <- ref.get
 } yield value
@@ -671,13 +671,13 @@ import cats.effect.std.Deferred
 // Использование Deferred для синхронизации между Fiber
 val program = for {
   deferred <- Deferred[IO, String]
-  
+
   // Первый Fiber устанавливает значение
   fiber1 <- (IO.sleep(1.second) *> deferred.complete("Hello")).start
-  
+
   // Второй Fiber ждет значения
   fiber2 <- deferred.get.start
-  
+
   // Ожидание обоих Fiber
   _ <- fiber1.join
   value <- fiber2.join
@@ -695,17 +695,17 @@ import cats.effect.std.Queue
 // Создание очереди для обмена данными между Fiber
 val program = for {
   queue <- Queue.unbounded[IO, Int]
-  
+
   // Производитель
-  producer <- (1 to 10).toList.traverse(i => 
+  producer <- (1 to 10).toList.traverse(i =>
     queue.offer(i) *> IO.sleep(100.millis)
   ).start
-  
+
   // Потребитель
-  consumer <- (1 to 10).toList.traverse(_ => 
+  consumer <- (1 to 10).toList.traverse(_ =>
     queue.take.flatMap(value => IO.println(s"Received: $value"))
   ).start
-  
+
   // Ожидание завершения
   _ <- producer.join
   _ <- consumer.join
@@ -723,13 +723,13 @@ import cats.effect.std.Semaphore
 // Ограничение параллелизма с Semaphore
 val program = for {
   semaphore <- Semaphore[IO](3)  // Максимум 3 одновременных операции
-  
+
   tasks = (1 to 10).map { i =>
     semaphore.permit.use(_ =>
       IO.sleep(1.second) *> IO.println(s"Task $i completed")
     )
   }
-  
+
   _ <- IO.parSequenceN(10)(tasks.toList)
 } yield ()
 
@@ -745,18 +745,18 @@ import cats.effect.std.CountDownLatch
 // Использование CountDownLatch для синхронизации
 val program = for {
   latch <- CountDownLatch[IO](3)
-  
+
   // Несколько Fiber ждут сигнала
   waiters <- (1 to 3).toList.traverse(i =>
     (latch.await *> IO.println(s"Waiter $i released")).start
   )
-  
+
   // Освобождение всех ожидающих
   _ <- IO.sleep(1.second)
   _ <- latch.release
   _ <- latch.release
   _ <- latch.release
-  
+
   // Ожидание завершения всех Fiber
   _ <- waiters.traverse(_.join)
 } yield ()
@@ -773,13 +773,13 @@ import cats.effect.std.MVar
 // Использование MVar для обмена данными
 val program = for {
   mvar <- MVar.empty[IO, String]
-  
+
   // Писатель
   writer <- (IO.sleep(1.second) *> mvar.put("Hello")).start
-  
+
   // Читатель
   reader <- mvar.take.flatMap(value => IO.println(s"Received: $value")).start
-  
+
   // Ожидание завершения
   _ <- writer.join
   _ <- reader.join
@@ -800,7 +800,7 @@ val program = Hotswap.create[IO, String].use { hotswap =>
     _ <- hotswap.put("Resource 1")
     value1 <- hotswap.get
     _ <- IO.println(s"Current resource: $value1")
-    
+
     _ <- hotswap.swap("Resource 2")
     value2 <- hotswap.get
     _ <- IO.println(s"Current resource: $value2")
@@ -819,11 +819,11 @@ import cats.effect.std.Random
 // Генерация случайных чисел
 val program = for {
   random <- Random.scalaUtilRandom[IO]
-  
+
   int <- random.nextInt
   double <- random.nextDouble
   boolean <- random.nextBoolean
-  
+
   _ <- IO.println(s"Random int: $int")
   _ <- IO.println(s"Random double: $double")
   _ <- IO.println(s"Random boolean: $boolean")
@@ -866,12 +866,12 @@ val program = Dispatcher[IO].use { dispatcher =>
         }
       }
     }
-    
+
     // Адаптация к IO
     result <- IO.async_[String] { callback =>
       callbackApi.process("data", result => callback(Right(result)))
     }
-    
+
     _ <- IO.println(s"Result: $result")
   } yield ()
 }
@@ -891,7 +891,7 @@ class ConnectionPool {
     println("Acquiring connection")
     new Connection()
   }
-  
+
   def release(conn: Connection): IO[Unit] = IO {
     println("Releasing connection")
     conn.close()
@@ -900,7 +900,7 @@ class ConnectionPool {
 
 val pool = new ConnectionPool()
 
-val connectionResource: Resource[IO, Connection] = 
+val connectionResource: Resource[IO, Connection] =
   Resource.make(pool.acquire())(pool.release)
 
 // Использование соединения
@@ -927,7 +927,7 @@ val program = Background[IO].use { bg =>
       IO.println("Background task running") *> IO.sleep(1.second),
       5.seconds
     )
-    
+
     // Основная работа
     _ <- IO.println("Main work")
     _ <- IO.sleep(10.seconds)
@@ -951,7 +951,7 @@ object MyApp extends IOApp {
       _ <- Console[IO].println(s"Result: $result")
     } yield ExitCode.Success
   }
-  
+
   def processData(): IO[String] = {
     IO("Processed data")
   }
@@ -995,3 +995,10 @@ val result = asyncIO.unsafeRunSync()
 - [FS2 Documentation](https://fs2.io/)
 - [HTTP4S Documentation](https://http4s.org/)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-collections-array|Scala Collections — Array]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]

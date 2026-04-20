@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Type-Safe Builders](https://kotlinlang.org/docs/type-safe-builders.html)
 - [Kotlin DSL](https://kotlinlang.org/docs/type-safe-builders.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin DSL Tutorial](https://www.baeldung.com/kotlin/dsl)
 
 ### См. также
@@ -94,7 +94,7 @@ updated: "2026-02-11"
 
 ## Введение в **DSL**
 
-**Domain-Specific Language** (**DSL**) - это специализированный язык для решения задач в определенной области.
+**Domain-Specific Language** (**DSL**) — это специализированный язык для решения задач в определенной области.
 
 ### Преимущества **DSL**
 
@@ -106,12 +106,12 @@ updated: "2026-02-11"
 ### Типы **DSL** в **Kotlin**
 
 1. **Type-Safe Builders** — построение структур данных
-2. **Fluent Interfaces** - цепочки вызовов методов
-3. **Operator Overloading** - перегрузка операторов
+2. **Fluent Interfaces** — цепочки вызовов методов
+3. **Operator Overloading** — перегрузка операторов
 
 ## **Type-Safe Builders**
 
-**Type-Safe Builders** (**типобезопасные построители**) - это мощная возможность **Kotlin**, которая позволяет создавать иерархические структуры данных в декларативном стиле, похожем на разметку. Компилятор проверяет корректность структуры на этапе компиляции, что предотвращает ошибки во время выполнения.
+**Type-Safe Builders** (**типобезопасные построители**) — это мощная возможность **Kotlin**, которая позволяет создавать иерархические структуры данных в декларативном стиле, похожем на разметку. Компилятор проверяет корректность структуры на этапе компиляции, что предотвращает ошибки во время выполнения.
 
 Идея **Type-Safe Builders** заключается в использовании **extension** функций и **lambda** с **receiver** для создания **DSL**-подобного синтаксиса. Это позволяет писать код, который читается как декларативная разметка, но при этом является полностью типобезопасным **Kotlin** кодом.
 
@@ -156,7 +156,7 @@ class HTML {
         }
     }
 }
-```
+```text
 
 ### Расширенный HTML Builder
 
@@ -165,13 +165,13 @@ class HTML {
 open class Tag(val name: `String`) {
     val children = `mutableListOf`<Tag>()
     val attributes = `mutableMapOf`<`String`, `String`>()
-    
+
     protected fun <T : Tag> `doInit`(child: T, init: T.() -> `Unit`): T {
         `children.add`(child)
         `child.init`()
         return child
     }
-    
+
     override fun `toString()`: `String` {
         return `buildString` {
             append("<$name")
@@ -258,7 +258,7 @@ val page = html {
 }
 
 println(page)
-```
+```text
 
 ### Улучшенный Builder с операторами
 
@@ -273,7 +273,7 @@ val div = Div().apply {
     text = "`Hello`"
     attributes["class"] = "container"
 }
-```
+```text
 
 ## DSL для HTML
 
@@ -284,27 +284,27 @@ val div = Div().apply {
 open class `Element`(val name: `String`) {
     val children = `mutableListOf`<Any>()
     val attributes = `mutableMapOf`<`String`, `String`>()
-    
+
     operator fun `String`.`unaryPlus()` {
         `children.add`(this)
     }
-    
+
     operator fun `Element`.`unaryPlus()` {
         `children.add`(this)
     }
-    
+
     fun text(content: `String`) {
         `children.add`(content)
     }
-    
+
     fun attr(name: `String`, value: `String`) {
         attributes[name] = value
     }
-    
+
     override fun `toString()`: `String` {
         val attrs = `attributes.entries`.`joinToString`(" ") { "${`it.key`}=\"${`it.value`}\"" }
         val `attrsStr` = if (attrs.`isNotEmpty()`) " $attrs" else ""
-        
+
         return if (children.`isEmpty()`) {
             "<$name$`attrsStr`/>"
         } else {
@@ -368,7 +368,7 @@ val page = html {
         }
     }
 }
-```
+```text
 
 ## DSL для SQL
 
@@ -383,35 +383,35 @@ class `Query` {
     private val `whereConditions` = `mutableListOf`<`String`>()
     private var `orderBy`: `String`? = `null`
     private var limit: Int? = `null`
-    
+
     fun select(columns: `String`) {
         `this.select` = columns
     }
-    
+
     fun from(table: `String`) {
         `this.from` = table
     }
-    
+
     fun join(table: `String`, condition: `String`) {
         `joins.add`("`JOIN` $table `ON` $condition")
     }
-    
+
     fun `leftJoin`(table: `String`, condition: `String`) {
         `joins.add`("`LEFT JOIN` $table `ON` $condition")
     }
-    
+
     fun where(condition: `String`) {
         `whereConditions`.add(condition)
     }
-    
+
     fun `orderBy`(column: `String`, direction: `String` = "`ASC`") {
         this.`orderBy` = "$column $direction"
     }
-    
+
     fun limit(count: Int) {
         `this.limit` = count
     }
-    
+
     override fun `toString()`: `String` {
         val parts = `mutableListOf`<`String`>()
         `parts.add`("`SELECT` $select")
@@ -451,9 +451,9 @@ val sql = query {
 }
 
 println(sql)
-// `SELECT` id, name, email `FROM` users `JOIN` orders `ON users.id` = orders.`user_id` 
+// `SELECT` id, name, email `FROM` users `JOIN` orders `ON users.id` = orders.`user_id`
 // `WHERE users.active` = 1 `AND orders.total` > `100 ORDER BY users.name ASC LIMIT 10`
-```
+```text
 
 ### Улучшенный SQL Builder
 
@@ -475,19 +475,19 @@ class `QueryBuilder` {
     private val tables = `mutableListOf`<`Table`>()
     private val columns = `mutableListOf`<`String`>()
     private val conditions = `mutableListOf`<`Condition`>()
-    
+
     fun from(table: `Table`) {
         `tables.add`(table)
     }
-    
+
     fun select(vararg columns: `Column`) {
         `this.columns`.`addAll`(`columns.map` { "${`it.table.name`}.${`it.name`}" })
     }
-    
+
     fun where(condition: `Condition`) {
         `conditions.add`(condition)
     }
-    
+
     fun build(): `Pair`<`String`, `List`<Any>> {
         val sql = `buildString` {
             append("`SELECT` ${columns.`joinToString`(", ")}")
@@ -517,7 +517,7 @@ val (sql, params) = query {
     where(`users.column`("active") `eq 1`)
     where(`users.column`("age") `gt 18`)
 }
-```
+```text
 
 ## DSL для конфигураций
 
@@ -529,15 +529,15 @@ class `Config` {
     val database = `DatabaseConfig()`
     val server = `ServerConfig()`
     val logging = `LoggingConfig()`
-    
+
     fun database(init: `DatabaseConfig`.() -> `Unit`) {
         `database.init`()
     }
-    
+
     fun server(init: `ServerConfig`.() -> `Unit`) {
         `server.init`()
     }
-    
+
     fun logging(init: `LoggingConfig`.() -> `Unit`) {
         `logging.init`()
     }
@@ -588,7 +588,7 @@ val `appConfig` = config {
         file = "`app.log`"
     }
 }
-```
+```text
 
 ### Gradle-like DSL
 
@@ -597,11 +597,11 @@ val `appConfig` = config {
 class `Project` {
     val dependencies = `Dependencies()`
     val repositories = `Repositories()`
-    
+
     fun dependencies(init: `Dependencies`.() -> `Unit`) {
         `dependencies.init`()
     }
-    
+
     fun repositories(init: `Repositories`.() -> `Unit`) {
         `repositories.init`()
     }
@@ -609,29 +609,29 @@ class `Project` {
 
 class `Dependencies` {
     private val deps = `mutableListOf`<`String`>()
-    
+
     fun implementation(dependency: `String`) {
         `deps.add`(dependency)
     }
-    
+
     fun `testImplementation`(dependency: `String`) {
         `deps.add`("test:$dependency")
     }
-    
+
     fun get(): `List`<`String`> = deps
 }
 
 class `Repositories` {
     private val repos = `mutableListOf`<`String`>()
-    
+
     fun maven(url: `String`) {
         `repos.add`("maven:$url")
     }
-    
+
     fun jcenter() {
         `repos.add`("jcenter")
     }
-    
+
     fun get(): `List`<`String`> = repos
 }
 
@@ -653,7 +653,7 @@ val build = project {
         `testImplementation`("junit:junit:4.13.2")
     }
 }
-```
+```text
 
 ## DSL для тестирования
 
@@ -663,11 +663,11 @@ val build = project {
 // `DSL` для написания тестов
 class `TestSuite`(val name: `String`) {
     private val tests = `mutableListOf`<`Test`>()
-    
+
     fun test(name: `String`, block: () -> `Unit`) {
         `tests.add`(`Test`(name, block))
     }
-    
+
     fun run() {
         println("`Running suite`: $name")
         tests.`forEach` { test ->
@@ -695,12 +695,12 @@ val `myTests` = suite("`My Tests`") {
         assert(2 + 2 == 4)
     }
     test("subtraction") {
-        assert(5 - 3 == 2)
+        assert(5 — 3 == 2)
     }
 }
 
 `myTests`.run()
-```
+```text
 
 ### BDD-style DSL
 
@@ -708,13 +708,13 @@ val `myTests` = suite("`My Tests`") {
 // `BDD` (`Behavior`-`Driven Development`) `DSL`
 class `Feature`(val name: `String`) {
     private val scenarios = `mutableListOf`<`Scenario`>()
-    
+
     fun scenario(name: `String`, init: `Scenario`.() -> `Unit`) {
         val scenario = `Scenario`(name)
         `scenario.init`()
         `scenarios.add`(scenario)
     }
-    
+
     fun run() {
         println("`Feature`: $name")
         scenarios.`forEach` { `it.run`() }
@@ -723,19 +723,19 @@ class `Feature`(val name: `String`) {
 
 class `Scenario`(val name: `String`) {
     private val steps = `mutableListOf`<`Step`>()
-    
+
     fun given(description: `String`, block: () -> `Unit`) {
         `steps.add`(`Step`("`Given`", description, block))
     }
-    
+
     fun `when`(description: `String`, block: () -> `Unit`) {
         `steps.add`(`Step`("When", description, block))
     }
-    
+
     fun then(description: `String`, block: () -> `Unit`) {
         `steps.add`(`Step`("`Then`", description, block))
     }
-    
+
     fun run() {
         println("  `Scenario`: $name")
         steps.`forEach` { `it.run`() }
@@ -771,7 +771,7 @@ val `calculatorFeature` = feature("`Calculator`") {
 }
 
 `calculatorFeature`.run()
-```
+```text
 
 ## Кастомные DSL
 
@@ -781,27 +781,27 @@ val `calculatorFeature` = feature("`Calculator`") {
 // `DSL` для описания `REST API`
 class Api {
     private val routes = `mutableListOf`<`Route`>()
-    
+
     fun route(path: `String`, method: `String` = "`GET`", handler: () -> `String`) {
         `routes.add`(`Route`(path, method, handler))
     }
-    
+
     fun get(path: `String`, handler: () -> `String`) {
         route(path, "`GET`", handler)
     }
-    
+
     fun post(path: `String`, handler: () -> `String`) {
         route(path, "`POST`", handler)
     }
-    
+
     fun put(path: `String`, handler: () -> `String`) {
         route(path, "`PUT`", handler)
     }
-    
+
     fun delete(path: `String`, handler: () -> `String`) {
         route(path, "`DELETE`", handler)
     }
-    
+
     fun `getRoutes()`: `List`<`Route`> = routes
 }
 
@@ -831,7 +831,7 @@ val `myApi` = api {
         "`Delete user`"
     }
 }
-```
+```text
 
 ### Routing DSL
 
@@ -839,13 +839,13 @@ val `myApi` = api {
 // Маршрутизация `DSL`
 class `Router` {
     private val routes = `mutableListOf`<`RouteDefinition`>()
-    
+
     fun route(path: `String`, init: `RouteDefinition`.() -> `Unit`) {
         val route = `RouteDefinition`(path)
         `route.init`()
         `routes.add`(route)
     }
-    
+
     fun `getRoutes()`: `List`<`RouteDefinition`> = routes
 }
 
@@ -853,15 +853,15 @@ class `RouteDefinition`(val path: `String`) {
     var method: `String` = "`GET`"
     var handler: `String` = ""
     val `middleware` = `mutableListOf`<`String`>()
-    
+
     fun method(m: `String`) {
         method = m
     }
-    
+
     fun handler(h: `String`) {
         handler = h
     }
-    
+
     fun `middleware`(m: `String`) {
         `middleware.add`(m)
     }
@@ -887,7 +887,7 @@ val `appRouter` = router {
         `middleware`("auth")
     }
 }
-```
+```text
 
 ## Лучшие практики
 
@@ -902,7 +902,7 @@ fun html(init: `HTML`.() -> `Unit`): `HTML` {
 }
 
 // Это позволяет использовать `DSL` внутри других контекстов
-```
+```text
 
 ### Поддерживайте Fluent Interface
 
@@ -913,7 +913,7 @@ class `Builder` {
         // ...
         return this
     }
-    
+
     fun `setB`(value: Int): `Builder` {
         // ...
         return this
@@ -924,7 +924,7 @@ class `Builder` {
 val `builder` = `Builder()`
     .`setA`("value")
     .`setB`(42)
-```
+```text
 
 ### Используйте Infix Functions
 
@@ -938,7 +938,7 @@ infix fun `String`.`should be`(expected: `String`) {
 
 // Использование
 "hello" should be "hello"
-```
+```text
 
 ### Валидация в DSL
 
@@ -957,7 +957,7 @@ val config = config {
     port = 8080  // OK
     // port = `70000`  // Ошибка!
 }
-```
+```text
 
 Этот файл содержит руководство по созданию DSL в Kotlin, включая примеры для HTML, SQL, конфигураций и кастомных DSL.
 
@@ -983,7 +983,7 @@ val config = dsl {
     variables["host"] = "localhost"
     variables["port"] = `5432`
 }
-```
+```text
 
 Контекст выполнения позволяет DSL накапливать состояние и использовать его для валидации и генерации кода.
 
@@ -998,13 +998,13 @@ class `ConfigDSL` {
             require(value `in 1`..65535) { "`Port must be between 1 and 65535`" }
             field = value
         }
-    
+
     var host: `String` = "localhost"
         set(value) {
             require(value.`isNotBlank()`) { "`Host cannot be blank`" }
             field = value
         }
-    
+
     fun validate(): `ConfigDSL` {
         require(port > 0) { "`Port must be positive`" }
         require(host.`isNotBlank()`) { "`Host must be specified`" }
@@ -1015,7 +1015,7 @@ class `ConfigDSL` {
 fun config(init: `ConfigDSL`.() -> `Unit`): `ConfigDSL` {
     return `ConfigDSL()`.apply(init).validate()
 }
-```
+```text
 
 Валидация в DSL помогает выявлять ошибки на этапе компиляции или раннего выполнения, что улучшает надежность кода.
 
@@ -1043,7 +1043,7 @@ base {
     `baseOperation()`
     `extendedOperation()`  // Доступно через extension
 }
-```
+```text
 
 Расширяемость позволяет добавлять новую функциональность к DSL без изменения базового кода, что делает DSL более гибким.
 
@@ -1057,7 +1057,7 @@ base {
 class `LazyDSL` {
     private val _elements = `mutableListOf`<`Element`>()
     val elements: `List`<`Element`> by lazy { _elements.`toList()` }
-    
+
     fun add(element: `Element`) {
         _elements.add(element)
     }
@@ -1066,7 +1066,7 @@ class `LazyDSL` {
 fun `lazyDSL`(init: `LazyDSL`.() -> `Unit`): `LazyDSL` {
     return `LazyDSL()`.apply(init)
 }
-```
+```text
 
 Ленивая инициализация откладывает создание дорогих объектов до момента, когда они действительно нужны.
 
@@ -1077,7 +1077,7 @@ fun `lazyDSL`(init: `LazyDSL`.() -> `Unit`): `LazyDSL` {
 ```kotlin
 class `CachedDSL` {
     private val `cache` = `mutableMapOf`<`String`, Any>()
-    
+
     fun <T> cached(key: `String`, compute: () -> T): T {
         ``@Suppress`("UNCHECKED_CAST")`
         return `cache`.`getOrPut`(key) { compute() } as T
@@ -1087,7 +1087,7 @@ class `CachedDSL` {
 fun `cachedDSL`(init: `CachedDSL`.() -> `Unit`): `CachedDSL` {
     return `CachedDSL()`.apply(init)
 }
-```
+```text
 
 Кэширование особенно полезно для DSL, которые выполняют дорогие вычисления или запросы к внешним системам.
 
@@ -1105,10 +1105,10 @@ fun `testDSL()` {
             div { +"`Hello`" }
         }
     }
-    
+
     assertEquals("<html><body><div>Hello</div></body></html>", result.toString())
 }
-```
+```text
 
 DSL можно тестировать как обычный код, что упрощает написание тестов и обеспечивает надежность.
 
@@ -1123,11 +1123,11 @@ fun `testDSLIntegration()` {
         port = `8080`
         host = "localhost"
     }
-    
+
     val server = `createServer`(config)
     `assertTrue`(server.`isRunning()`)
 }
-```
+```text
 
 Интеграционное тестирование проверяет, что DSL правильно работает в реальных сценариях использования.
 
@@ -1144,7 +1144,7 @@ class `DatabaseConfig` {
     var database: `String` = ""
     var username: `String` = ""
     var password: `String` = ""
-    
+
     fun `buildConnectionString()`: `String` {
         return "jdbc:postgresql://$host:$port/$database?user=$username&password=$password"
     }
@@ -1162,7 +1162,7 @@ val `dbConfig` = database {
     username = "user"
     password = "pass"
 }
-```
+```text
 
 DSL для конфигурации делает настройку систем более читаемой и типобезопасной.
 
@@ -1173,11 +1173,11 @@ DSL для определения API маршрутов:
 ```kotlin
 class `RouteBuilder` {
     private val routes = `mutableListOf`<`Route`>()
-    
+
     fun get(path: `String`, handler: (`Request`) -> `Response`) {
         `routes.add`(`Route`("`GET`", path, handler))
     }
-    
+
     fun post(path: `String`, handler: (`Request`) -> `Response`) {
         `routes.add`(`Route`("`POST`", path, handler))
     }
@@ -1196,7 +1196,7 @@ val `apiRoutes` = routes {
         `Response`(`201`, `createUser`(`request.body`))
     }
 }
-```
+```text
 
 DSL для маршрутизации делает определение API более декларативным и читаемым.
 
@@ -1213,15 +1213,15 @@ class `AppConfig` {
     var database: `DatabaseConfig`? = `null`
     var server: `ServerConfig`? = `null`
     var security: `SecurityConfig`? = `null`
-    
+
     fun database(init: `DatabaseConfig`.() -> `Unit`) {
         database = `DatabaseConfig()`.apply(init)
     }
-    
+
     fun server(init: `ServerConfig`.() -> `Unit`) {
         server = `ServerConfig()`.apply(init)
     }
-    
+
     fun security(init: `SecurityConfig`.() -> `Unit`) {
         security = `SecurityConfig()`.apply(init)
     }
@@ -1258,18 +1258,18 @@ val config = `appConfig` {
         username = "user"
         password = "pass"
     }
-    
+
     server {
         host = "0.0.0.0"
         port = `8080`
     }
-    
+
     security {
         `jwtSecret` = "secret"
         `jwtExpiration` = `3600000`
     }
 }
-```
+```text
 
 DSL для конфигурации делает настройку приложения более читаемой и типобезопасной.
 
@@ -1281,21 +1281,21 @@ DSL для конфигурации делает настройку прилож
 class `TestContext` {
     val `setupActions` = `mutableListOf`<() -> `Unit`>()
     val assertions = `mutableListOf`<() -> `Unit`>()
-    
+
     fun setup(init: `TestContext`.() -> `Unit`) {
         init()
         `setupActions`.`forEach` { it() }
     }
-    
+
     fun assert(init: `TestContext`.() -> `Unit`) {
         init()
         assertions.`forEach` { it() }
     }
-    
+
     fun given(description: `String`, action: () -> `Unit`) {
         `setupActions`.add(action)
     }
-    
+
     fun then(description: `String`, assertion: () -> `Unit`) {
         `assertions.add`(assertion)
     }
@@ -1311,17 +1311,17 @@ test("should create user") {
     given("user repository is initialized") {
         val repository = `UserRepository()`
     }
-    
+
     when("creating a user") {
         val user = repository.`createUser`(`User`(name = "`Alice`"))
     }
-    
+
     then("user should be created") {
         `assertNotNull`(user)
         `assertEquals`("`Alice`", `user.name`)
     }
 }
-```
+```text
 
 DSL для тестов делает тесты более читаемыми и выразительными, что улучшает понимание тестового сценария.
 
@@ -1334,13 +1334,13 @@ DSL для тестов делает тесты более читаемыми и
 ```kotlin
 class `ValidationContext`<T>(private val value: T) {
     val errors = `mutableListOf`<`String`>()
-    
+
     fun <R> check(description: `String`, predicate: (T) -> `Boolean`, error: `String`) {
         if (!predicate(value)) {
             `errors.add`("$description: $error")
         }
     }
-    
+
     fun validate(): `ValidationResult`<T> {
         return if (errors.`isEmpty()`) {
             `ValidationResult`.`Success`(value)
@@ -1370,7 +1370,7 @@ when (result) {
     is `ValidationResult`.`Success` -> println("`Valid`: ${`result.value`}")
     is `ValidationResult`.`Error` -> println("`Errors`: ${`result.errors`.`joinToString()`}")
 }
-```
+```text
 
 DSL для валидации делает проверку данных более декларативной и читаемой.
 
@@ -1385,19 +1385,19 @@ DSL для валидации делает проверку данных бол�
 class `TestContext` {
     private val `setupActions` = `mutableListOf`<() -> `Unit`>()
     private val assertions = `mutableListOf`<() -> `Unit`>()
-    
+
     fun given(description: `String`, action: () -> `Unit`) {
         `setupActions`.add(action)
     }
-    
+
     fun when_(description: `String`, action: () -> `Unit`) {
         `setupActions`.add(action)
     }
-    
+
     fun then(description: `String`, assertion: () -> `Unit`) {
         `assertions.add`(assertion)
     }
-    
+
     fun execute() {
         `setupActions`.`forEach` { it() }
         assertions.`forEach` { it() }
@@ -1418,22 +1418,22 @@ fun test(name: `String`, init: `TestContext`.() -> `Unit`) {
 // Использование
 test("should create user") {
     var user: `User`? = `null`
-    
+
     given("user repository is initialized") {
         val repository = `UserRepository()`
     }
-    
+
     when_("creating a user") {
         user = repository.`createUser`(`User`(name = "`Alice`", email = "alice`@example`.com"))
     }
-    
+
     then("user should be created") {
         `assertNotNull`(user)
         `assertEquals`("`Alice`", user?.name)
         `assertEquals`("alice`@example`.com", user?.email)
     }
 }
-```
+```text
 
 DSL для тестирования делает тесты более читаемыми и выразительными, улучшая понимание тестовых сценариев.
 
@@ -1445,14 +1445,14 @@ DSL для тестирования делает тесты более чита�
 // `DSL` для создания моков
 class `MockContext` {
     private val mocks = `mutableMapOf`<`Class`<*>, Any>()
-    
+
     inline fun <reified T : Any> `mock`(noinline setup: T.() -> `Unit` = {}): T {
         val `mock` = mockk<T>(relaxed = `true`)
         `mock.setup`()
         mocks[T::`class.java`] = `mock`
         return `mock`
     }
-    
+
     fun <T> `getMock`(clazz: `Class`<T>): T? {
         ``@Suppress`("UNCHECKED_CAST")`
         return mocks[clazz] as? T
@@ -1469,14 +1469,14 @@ val mocks = `mock` {
         every { `findById`(1) } returns `User`(id = 1, name = "`Alice`")
         every { save(any()) } `returnsArgument 0`
     }
-    
+
     val `emailService` = `mock`<`EmailService`> {
         every { send(any()) } just `Runs`
     }
 }
 
 val service = `UserService`(mocks.`getMock`(`UserRepository::class.java`)!!)
-```
+```text
 
 DSL для мокирования упрощает создание и настройку моков в тестах, делая тесты более читаемыми.
 
@@ -1496,7 +1496,7 @@ class `DatabaseConfigBuilder` {
     var host: `String`? = `null`
     var port: Int? = `null`
     var name: `String`? = `null`
-    
+
     fun build(): `DatabaseConfig` {
         `requireNotNull`(host) { "`Host is required`" }
         `requireNotNull`(port) { "`Port is required`" }
@@ -1509,7 +1509,7 @@ class `DatabaseConfigBuilder` {
 class `ServerConfigBuilder` {
     var host: `String`? = `null`
     var port: Int? = `null`
-    
+
     fun build(): `ServerConfig` {
         `requireNotNull`(host) { "`Host is required`" }
         `requireNotNull`(port) { "`Port is required`" }
@@ -1520,15 +1520,15 @@ class `ServerConfigBuilder` {
 class `AppConfigBuilder` {
     private var `databaseBuilder`: `DatabaseConfigBuilder`? = `null`
     private var `serverBuilder`: `ServerConfigBuilder`? = `null`
-    
+
     fun database(init: `DatabaseConfigBuilder`.() -> `Unit`) {
         `databaseBuilder` = `DatabaseConfigBuilder()`.apply(init)
     }
-    
+
     fun server(init: `ServerConfigBuilder`.() -> `Unit`) {
         `serverBuilder` = `ServerConfigBuilder()`.apply(init)
     }
-    
+
     fun build(): `AppConfig` {
         return `AppConfig`(
             database = `databaseBuilder`?.build() ?: throw `IllegalStateException`("`Database config is required`"),
@@ -1544,13 +1544,13 @@ val config = `appConfig` {
         port = `5432`
         name = "mydb"
     }
-    
+
     server {
         host = "0.0.0.0"
         port = `8080`
     }
 }.build()
-```
+```text
 
 Type-safe DSL с проверкой на этапе компиляции предотвращает ошибки конфигурации и делает код более безопасным.
 
@@ -1569,31 +1569,31 @@ class `QueryBuilder` {
     private val where = `mutableListOf`<`String`>()
     private val `orderBy` = `mutableListOf`<`String`>()
     private var limit: Int? = `null`
-    
+
     fun select(vararg columns: `String`) {
         select.`addAll`(columns)
     }
-    
+
     fun from(table: `String`) {
         `this.from` = table
     }
-    
+
     fun join(table: `String`, condition: `String`) {
         `joins.add`("`JOIN` $table `ON` $condition")
     }
-    
+
     fun where(condition: `String`) {
         `where.add`(condition)
     }
-    
+
     fun `orderBy`(column: `String`, direction: `String` = "`ASC`") {
         `orderBy`.add("$column $direction")
     }
-    
+
     fun limit(count: Int) {
         `this.limit` = count
     }
-    
+
     fun build(): `String` {
         val sql = `buildString` {
             append("`SELECT` ${select.`joinToString`(", ")}")
@@ -1627,7 +1627,7 @@ val sql = query {
     `orderBy`("name", "`ASC`")
     limit(10)
 }
-```
+```text
 
 DSL для баз данных делает SQL запросы более читаемыми и типобезопасными.
 
@@ -1638,13 +1638,13 @@ DSL для баз данных делает SQL запросы более чит
 ```kotlin
 class `FormValidator` {
     private val validators = `mutableListOf`<() -> `ValidationResult`>()
-    
+
     fun field(name: `String`, value: `String`?, init: `FieldValidator`.() -> `Unit`) {
         val validator = `FieldValidator`(name, value)
         `validator.init`()
         `validators.add` { `validator.validate`() }
     }
-    
+
     fun validate(): `FormValidationResult` {
         val errors = validators.`mapNotNull` { it().error }
         return if (errors.`isEmpty()`) {
@@ -1657,25 +1657,25 @@ class `FormValidator` {
 
 class `FieldValidator`(private val name: `String`, private val value: `String`?) {
     private val rules = `mutableListOf`<(`String`?) -> `String`?>()
-    
+
     fun required(message: `String` = "$name is required") {
         `rules.add` { v ->
             if (v.`isNullOrBlank()`) message else `null`
         }
     }
-    
+
     fun email(message: `String` = "$name must be a valid email") {
         `rules.add` { v ->
             if (v != `null` && !`v.contains`("@")) message else `null`
         }
     }
-    
+
     fun `minLength`(min: Int, message: `String` = "$name must be at least $min characters") {
         `rules.add` { v ->
             if (v != `null` && `v.length` < min) message else `null`
         }
     }
-    
+
     fun validate(): `ValidationResult` {
         val error = rules.`firstNotNullOfOrNull` { it(value) }
         return if (error != `null`) {
@@ -1701,7 +1701,7 @@ val result = `validateForm` {
         email()
     }
 }
-```
+```text
 
 DSL для валидации форм делает проверку данных более декларативной и читаемой.
 
@@ -1717,11 +1717,11 @@ DSL для валидации форм делает проверку данны�
 // `DSL` для асинхронных операций
 class `AsyncDSL` {
     private val operations = `mutableListOf`<suspend () -> `Unit`>()
-    
+
     fun async(block: suspend () -> `Unit`) {
         `operations.add`(block)
     }
-    
+
     suspend fun `awaitAll()` {
         `coroutineScope` {
             operations.`forEach` { operation ->
@@ -1750,7 +1750,7 @@ suspend fun main() {
         }
     }.`awaitAll()`
 }
-```
+```text
 
 DSL для асинхронных операций делает код более декларативным и читаемым.
 
@@ -1762,11 +1762,11 @@ DSL для асинхронных операций делает код боле�
 // `DSL` для работы с ресурсами
 class `ResourceDSL`<T : `AutoCloseable`> {
     private var resource: T? = `null`
-    
+
     fun use(block: (T) -> `Unit`) {
         resource?.use(block)
     }
-    
+
     fun acquire(acquire: () -> T) {
         resource = acquire()
     }
@@ -1788,7 +1788,7 @@ resource({ `FileInputStream`("`file.txt`") }) {
         // Работа с ресурсом
     }
 }
-```
+```text
 
 DSL для ресурсов упрощает управление жизненным циклом ресурсов.
 
@@ -1804,11 +1804,11 @@ DSL для ресурсов упрощает управление жизненн
 // `DSL` для параллельных операций
 class `ParallelDSL` {
     private val operations = `mutableListOf`<suspend () -> `Unit`>()
-    
+
     fun parallel(block: suspend () -> `Unit`) {
         `operations.add`(block)
     }
-    
+
     suspend fun execute() {
         `coroutineScope` {
             operations.`forEach` { operation ->
@@ -1837,7 +1837,7 @@ suspend fun main() {
         }
     }.execute()
 }
-```
+```text
 
 DSL для параллельных операций делает код более декларативным и читаемым.
 
@@ -1915,7 +1915,7 @@ val config = `appConfig` {
         host = "0.0.0.0"
     }
 }
-```
+```text
 
 DSL для конфигурации делает настройку приложения более читаемой и типобезопасной.
 
@@ -1926,7 +1926,7 @@ DSL для конфигурации делает настройку прилож
 ```kotlin
 class `TestContext` {
     val assertions = `mutableListOf`<() -> `Unit`>()
-    
+
     fun expect(condition: `Boolean`, message: `String` = "") {
         `assertions.add` {
             assert(condition) { message }
@@ -1945,7 +1945,7 @@ test("should calculate sum correctly") {
     val result = 2 + 2
     expect(result == 4, "`Sum should be 4`")
 }
-```
+```text
 
 DSL для тестов делает написание тестов более выразительным и читаемым.
 
@@ -1956,7 +1956,7 @@ DSL для тестов делает написание тестов более 
 ```kotlin
 class `HTML` {
     val children = `mutableListOf`<`Element`>()
-    
+
     fun body(init: `Body`.() -> `Unit`) {
         val body = `Body()`.apply(init)
         `children.add`(body)
@@ -1965,12 +1965,12 @@ class `HTML` {
 
 class `Body` {
     val children = `mutableListOf`<`Element`>()
-    
+
     fun div(init: Div.() -> `Unit`) {
         val div = Div().apply(init)
         `children.add`(div)
     }
-    
+
     fun p(text: `String`) {
         `children.add`(P(text))
     }
@@ -1979,7 +1979,7 @@ class `Body` {
 class Div {
     val children = `mutableListOf`<`Element`>()
     var `className`: `String`? = `null`
-    
+
     fun p(text: `String`) {
         `children.add`(P(text))
     }
@@ -1998,7 +1998,7 @@ val page = html {
         }
     }
 }
-```
+```text
 
 DSL для HTML делает генерацию разметки типобезопасной и читаемой.
 
@@ -2011,19 +2011,19 @@ class `QueryBuilder` {
     private var select: `String` = "*"
     private var from: `String`? = `null`
     private val `whereConditions` = `mutableListOf`<`String`>()
-    
+
     fun select(columns: `String`) {
         `this.select` = columns
     }
-    
+
     fun from(table: `String`) {
         `this.from` = table
     }
-    
+
     fun where(condition: `String`) {
         `whereConditions`.add(condition)
     }
-    
+
     fun build(): `String` {
         `requireNotNull`(from) { "`FROM` clause is required" }
         val `whereClause` = if (`whereConditions`.`isNotEmpty()`) {
@@ -2046,7 +2046,7 @@ val sql = query {
     where("age > 18")
     where("active = `true`")
 }
-```
+```text
 
 DSL для SQL делает построение запросов типобезопасным и читаемым.
 

@@ -142,21 +142,21 @@ public abstract class DomainEvent {
     private final String eventId;
     private final Instant occurredOn;
     private final String eventType;
-    
+
     protected DomainEvent(String eventType) {
         this.eventId = UUID.randomUUID().toString();
         this.occurredOn = Instant.now();
         this.eventType = eventType;
     }
-    
+
     public String getEventId() {
         return eventId;
     }
-    
+
     public Instant getOccurredOn() {
         return occurredOn;
     }
-    
+
     public String getEventType() {
         return eventType;
     }
@@ -166,22 +166,22 @@ public class UserCreatedEvent extends DomainEvent {
     private final String userId;
     private final String email;
     private final String name;
-    
+
     public UserCreatedEvent(String userId, String email, String name) {
         super("UserCreated");
         this.userId = userId;
         this.email = email;
         this.name = name;
     }
-    
+
     public String getUserId() {
         return userId;
     }
-    
+
     public String getEmail() {
         return email;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -195,20 +195,20 @@ public class UserCreatedEvent extends DomainEvent {
 ```java
 @Component
 public class UserEventProducer {
-    
+
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate;
-    
+
     public UserEventProducer(KafkaTemplate<String, UserCreatedEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
-    
+
     public void publishUserCreated(User user) {
         UserCreatedEvent event = new UserCreatedEvent(
             user.getId(),
             user.getEmail(),
             user.getName()
         );
-        
+
         kafkaTemplate.send("user-events", user.getId(), event);
     }
 }
@@ -221,21 +221,21 @@ public class UserEventProducer {
 ```java
 @Component
 public class UserEventConsumer {
-    
+
     private final EmailService emailService;
     private final NotificationService notificationService;
-    
-    public UserEventConsumer(EmailService emailService, 
+
+    public UserEventConsumer(EmailService emailService,
                             NotificationService notificationService) {
         this.emailService = emailService;
         this.notificationService = notificationService;
     }
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-handlers")
     public void handleUserCreated(UserCreatedEvent event) {
         // Отправка приветственного email
         emailService.sendWelcomeEmail(event.getEmail(), event.getName());
-        
+
         // Отправка уведомления администратору
         notificationService.notifyAdmin("New user created: " + event.getEmail());
     }
@@ -259,16 +259,16 @@ public class UserEventConsumer {
 ```java
 @Component
 public class OrderEventProducer {
-    
+
     private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
-    
+
     public void publishOrderCreated(Order order) {
         OrderCreatedEvent event = new OrderCreatedEvent(
             order.getId(),
             order.getCustomerId(),
             order.getTotalAmount()
         );
-        
+
         // Fire-and-forget отправка
         kafkaTemplate.send("order-events", order.getId(), event);
     }
@@ -281,23 +281,23 @@ public class OrderEventProducer {
 ```java
 @Component
 public class OrderEventProducer {
-    
+
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final Map<String, CompletableFuture<OrderResponse>> pendingRequests = new ConcurrentHashMap<>();
-    
+
     public CompletableFuture<OrderResponse> createOrderAndWait(OrderRequest request) {
         String correlationId = UUID.randomUUID().toString();
         CompletableFuture<OrderResponse> future = new CompletableFuture<>();
         pendingRequests.put(correlationId, future);
-        
+
         OrderCreatedEvent event = new OrderCreatedEvent(
             correlationId,
             request.getCustomerId(),
             request.getItems()
         );
-        
+
         kafkaTemplate.send("order-commands", correlationId, event);
-        
+
         // Таймаут для ответа
         CompletableFuture.runAsync(() -> {
             try {
@@ -310,10 +310,10 @@ public class OrderEventProducer {
                 Thread.currentThread().interrupt();
             }
         });
-        
+
         return future;
     }
-    
+
     @KafkaListener(topics = "order-responses")
     public void handleOrderResponse(OrderResponseEvent event) {
         CompletableFuture<OrderResponse> future = pendingRequests.remove(event.getCorrelationId());
@@ -332,7 +332,7 @@ public class OrderEventProducer {
 ```java
 @Component
 public class PaymentProcessor {
-    
+
     @KafkaListener(topics = "order-events", groupId = "payment-processor")
     public void processPayment(OrderCreatedEvent event) {
         // Обработка платежа
@@ -349,7 +349,7 @@ public class PaymentProcessor {
 // Consumer 1: Отправка email
 @Component
 public class EmailNotificationConsumer {
-    
+
     @KafkaListener(topics = "order-events", groupId = "email-notifications")
     public void sendOrderConfirmationEmail(OrderCreatedEvent event) {
         emailService.sendOrderConfirmation(event.getOrderId(), event.getCustomerId());
@@ -359,7 +359,7 @@ public class EmailNotificationConsumer {
 // Consumer 2: Обновление инвентаря
 @Component
 public class InventoryUpdateConsumer {
-    
+
     @KafkaListener(topics = "order-events", groupId = "inventory-updates")
     public void updateInventory(OrderCreatedEvent event) {
         inventoryService.reserveItems(event.getOrderId(), event.getItems());
@@ -369,7 +369,7 @@ public class InventoryUpdateConsumer {
 // Consumer 3: Аналитика
 @Component
 public class AnalyticsConsumer {
-    
+
     @KafkaListener(topics = "order-events", groupId = "analytics")
     public void trackOrder(OrderCreatedEvent event) {
         analyticsService.trackOrderCreated(event.getOrderId(), event.getAmount());
@@ -383,7 +383,7 @@ public class AnalyticsConsumer {
 ```java
 @Component
 public class OrderProcessor {
-    
+
     // Несколько экземпляров этого сервиса будут конкурировать за события
     @KafkaListener(topics = "order-events", groupId = "order-processors")
     public void processOrder(OrderCreatedEvent event) {
@@ -407,7 +407,7 @@ public class OrderProcessor {
 @Configuration
 @EnableKafka
 public class KafkaConfig {
-    
+
     @Bean
     public ProducerFactory<String, DomainEvent> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -418,12 +418,12 @@ public class KafkaConfig {
         configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
         return new DefaultKafkaProducerFactory<>(configProps);
     }
-    
+
     @Bean
     public KafkaTemplate<String, DomainEvent> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
-    
+
     @Bean
     public ConsumerFactory<String, DomainEvent> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -435,10 +435,10 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
-    
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, DomainEvent> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, DomainEvent> factory = 
+        ConcurrentKafkaListenerContainerFactory<String, DomainEvent> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(3);
@@ -457,17 +457,17 @@ public class KafkaConfig {
 @Configuration
 @EnableRabbit
 public class RabbitMQConfig {
-    
+
     @Bean
     public TopicExchange eventExchange() {
         return new TopicExchange("events", true, false);
     }
-    
+
     @Bean
     public Queue userEventsQueue() {
         return QueueBuilder.durable("user-events").build();
     }
-    
+
     @Bean
     public Binding userEventsBinding() {
         return BindingBuilder
@@ -475,14 +475,14 @@ public class RabbitMQConfig {
             .to(eventExchange())
             .with("user.*");
     }
-    
+
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(new Jackson2JsonMessageConverter());
         return template;
     }
-    
+
     @Bean
     public MessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
@@ -503,13 +503,13 @@ public class RabbitMQConfig {
 ```java
 @Component
 public class RedisEventPublisher {
-    
+
     private final StringRedisTemplate redisTemplate;
-    
+
     public RedisEventPublisher(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
-    
+
     public void publishEvent(String channel, DomainEvent event) {
         String message = objectMapper.writeValueAsString(event);
         redisTemplate.convertAndSend(channel, message);
@@ -518,12 +518,12 @@ public class RedisEventPublisher {
 
 @Component
 public class RedisEventSubscriber implements MessageListener {
-    
+
     @Override
     public void onMessage(Message message, byte[] pattern) {
         String channel = new String(message.getChannel());
         String body = new String(message.getBody());
-        
+
         // Обработка события
         handleEvent(channel, body);
     }
@@ -538,7 +538,7 @@ public class RedisEventSubscriber implements MessageListener {
 @SpringBootApplication
 @EnableBinding(UserProcessor.class)
 public class EventDrivenApplication {
-    
+
     public static void main(String[] args) {
         SpringApplication.run(EventDrivenApplication.class, args);
     }
@@ -547,26 +547,26 @@ public class EventDrivenApplication {
 interface UserProcessor {
     String INPUT = "userEvents";
     String OUTPUT = "userCommands";
-    
+
     @Input(INPUT)
     SubscribableChannel userEvents();
-    
+
     @Output(OUTPUT)
     MessageChannel userCommands();
 }
 
 @Component
 public class UserEventHandler {
-    
+
     @StreamListener(UserProcessor.INPUT)
     public void handleUserCreated(UserCreatedEvent event) {
         // Обработка события
         System.out.println("User created: " + event.getEmail());
     }
-    
+
     @Autowired
     private UserProcessor processor;
-    
+
     public void publishUserCommand(UserCommand command) {
         processor.userCommands().send(MessageBuilder.withPayload(command).build());
     }
@@ -610,22 +610,22 @@ public class UserAggregate {
     private String email;
     private String name;
     private boolean active;
-    
+
     private final List<DomainEvent> uncommittedEvents = new ArrayList<>();
-    
+
     public static UserAggregate create(String userId, String email, String name) {
         UserAggregate user = new UserAggregate();
         user.apply(new UserCreatedEvent(userId, email, name));
         return user;
     }
-    
+
     public void deactivate() {
         if (!active) {
             throw new IllegalStateException("User already deactivated");
         }
         apply(new UserDeactivatedEvent(userId));
     }
-    
+
     private void apply(DomainEvent event) {
         // Обновление состояния на основе события
         if (event instanceof UserCreatedEvent) {
@@ -637,18 +637,18 @@ public class UserAggregate {
         } else if (event instanceof UserDeactivatedEvent) {
             this.active = false;
         }
-        
+
         uncommittedEvents.add(event);
     }
-    
+
     public List<DomainEvent> getUncommittedEvents() {
         return new ArrayList<>(uncommittedEvents);
     }
-    
+
     public void markEventsAsCommitted() {
         uncommittedEvents.clear();
     }
-    
+
     // Восстановление состояния из событий
     public static UserAggregate fromHistory(List<DomainEvent> events) {
         UserAggregate user = new UserAggregate();
@@ -672,10 +672,10 @@ public class UserAggregate {
 ```java
 @Component
 public class OrderService {
-    
+
     private final OrderRepository orderRepository;
     private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
-    
+
     public Order createOrder(OrderRequest request) {
         // Создание заказа в базе данных
         Order order = new Order(
@@ -684,7 +684,7 @@ public class OrderService {
             request.getItems()
         );
         orderRepository.save(order);
-        
+
         // Публикация события для других сервисов
         OrderCreatedEvent event = new OrderCreatedEvent(
             order.getId(),
@@ -692,7 +692,7 @@ public class OrderService {
             order.getTotalAmount()
         );
         kafkaTemplate.send("order-events", order.getId(), event);
-        
+
         return order;
     }
 }
@@ -728,16 +728,16 @@ public class OrderService {
 // Order Service
 @Component
 public class OrderSaga {
-    
+
     @KafkaListener(topics = "order-commands", groupId = "order-service")
     public void handleCreateOrder(CreateOrderCommand command) {
         Order order = orderService.createOrder(command);
-        
+
         // Публикация события для следующего шага
         OrderCreatedEvent event = new OrderCreatedEvent(order.getId(), order.getAmount());
         kafkaTemplate.send("order-events", order.getId(), event);
     }
-    
+
     @KafkaListener(topics = "payment-failed", groupId = "order-service")
     public void handlePaymentFailed(PaymentFailedEvent event) {
         // Компенсирующее действие: отмена заказа
@@ -748,12 +748,12 @@ public class OrderSaga {
 // Payment Service
 @Component
 public class PaymentSaga {
-    
+
     @KafkaListener(topics = "order-events", groupId = "payment-service")
     public void handleOrderCreated(OrderCreatedEvent event) {
         try {
             paymentService.processPayment(event.getOrderId(), event.getAmount());
-            
+
             // Публикация успешного события
             PaymentSucceededEvent successEvent = new PaymentSucceededEvent(event.getOrderId());
             kafkaTemplate.send("payment-events", event.getOrderId(), successEvent);
@@ -768,12 +768,12 @@ public class PaymentSaga {
 // Inventory Service
 @Component
 public class InventorySaga {
-    
+
     @KafkaListener(topics = "payment-events", groupId = "inventory-service")
     public void handlePaymentSucceeded(PaymentSucceededEvent event) {
         try {
             inventoryService.reserveItems(event.getOrderId());
-            
+
             InventoryReservedEvent reservedEvent = new InventoryReservedEvent(event.getOrderId());
             kafkaTemplate.send("inventory-events", event.getOrderId(), reservedEvent);
         } catch (InsufficientInventoryException e) {
@@ -782,7 +782,7 @@ public class InventorySaga {
             kafkaTemplate.send("payment-commands", event.getOrderId(), refundCommand);
         }
     }
-    
+
     @KafkaListener(topics = "payment-failed", groupId = "inventory-service")
     public void handlePaymentFailed(PaymentFailedEvent event) {
         // Ничего не делаем, так как резервирование еще не произошло
@@ -797,16 +797,16 @@ public class InventorySaga {
 ```java
 @Component
 public class OrderOrchestrator {
-    
+
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final Map<String, SagaState> sagaStates = new ConcurrentHashMap<>();
-    
+
     @KafkaListener(topics = "order-commands", groupId = "order-orchestrator")
     public void handleCreateOrder(CreateOrderCommand command) {
         String sagaId = UUID.randomUUID().toString();
         SagaState state = new SagaState(sagaId, command);
         sagaStates.put(sagaId, state);
-        
+
         // Шаг 1: Создание заказа
         CreateOrderCommand orderCommand = new CreateOrderCommand(
             sagaId,
@@ -815,14 +815,14 @@ public class OrderOrchestrator {
         );
         kafkaTemplate.send("order-commands", sagaId, orderCommand);
     }
-    
+
     @KafkaListener(topics = "order-events", groupId = "order-orchestrator")
     public void handleOrderCreated(OrderCreatedEvent event) {
         SagaState state = sagaStates.get(event.getSagaId());
         if (state == null) return;
-        
+
         state.setOrderId(event.getOrderId());
-        
+
         // Шаг 2: Обработка платежа
         ProcessPaymentCommand paymentCommand = new ProcessPaymentCommand(
             event.getSagaId(),
@@ -831,12 +831,12 @@ public class OrderOrchestrator {
         );
         kafkaTemplate.send("payment-commands", event.getSagaId(), paymentCommand);
     }
-    
+
     @KafkaListener(topics = "payment-events", groupId = "order-orchestrator")
     public void handlePaymentSucceeded(PaymentSucceededEvent event) {
         SagaState state = sagaStates.get(event.getSagaId());
         if (state == null) return;
-        
+
         // Шаг 3: Резервирование инвентаря
         ReserveInventoryCommand inventoryCommand = new ReserveInventoryCommand(
             event.getSagaId(),
@@ -845,46 +845,46 @@ public class OrderOrchestrator {
         );
         kafkaTemplate.send("inventory-commands", event.getSagaId(), inventoryCommand);
     }
-    
+
     @KafkaListener(topics = "inventory-events", groupId = "order-orchestrator")
     public void handleInventoryReserved(InventoryReservedEvent event) {
         SagaState state = sagaStates.get(event.getSagaId());
         if (state == null) return;
-        
+
         // Saga завершена успешно
         state.setStatus(SagaStatus.COMPLETED);
         sagaStates.remove(event.getSagaId());
-        
+
         OrderCompletedEvent completedEvent = new OrderCompletedEvent(event.getOrderId());
         kafkaTemplate.send("order-events", event.getSagaId(), completedEvent);
     }
-    
+
     @KafkaListener(topics = {"payment-failed", "inventory-failed"}, groupId = "order-orchestrator")
     public void handleFailure(SagaFailureEvent event) {
         SagaState state = sagaStates.get(event.getSagaId());
         if (state == null) return;
-        
+
         // Выполнение компенсирующих действий
         compensateSaga(state, event);
     }
-    
+
     private void compensateSaga(SagaState state, SagaFailureEvent event) {
         // Откат выполненных шагов в обратном порядке
         if (state.getInventoryReserved()) {
             ReleaseInventoryCommand releaseCommand = new ReleaseInventoryCommand(state.getOrderId());
             kafkaTemplate.send("inventory-commands", state.getSagaId(), releaseCommand);
         }
-        
+
         if (state.getPaymentProcessed()) {
             RefundPaymentCommand refundCommand = new RefundPaymentCommand(state.getOrderId());
             kafkaTemplate.send("payment-commands", state.getSagaId(), refundCommand);
         }
-        
+
         if (state.getOrderId() != null) {
             CancelOrderCommand cancelCommand = new CancelOrderCommand(state.getOrderId());
             kafkaTemplate.send("order-commands", state.getSagaId(), cancelCommand);
         }
-        
+
         state.setStatus(SagaStatus.COMPENSATED);
         sagaStates.remove(state.getSagaId());
     }
@@ -897,7 +897,7 @@ class SagaState {
     private boolean paymentProcessed;
     private boolean inventoryReserved;
     private SagaStatus status = SagaStatus.IN_PROGRESS;
-    
+
     // Getters and setters
 }
 ```
@@ -974,13 +974,13 @@ public interface EventChannels {
     String USER_EVENTS = "userEvents";
     String ORDER_EVENTS = "orderEvents";
     String PAYMENT_EVENTS = "paymentEvents";
-    
+
     @Input(USER_EVENTS)
     SubscribableChannel userEvents();
-    
+
     @Output(ORDER_EVENTS)
     MessageChannel orderEvents();
-    
+
     @Output(PAYMENT_EVENTS)
     MessageChannel paymentEvents();
 }
@@ -992,20 +992,20 @@ public interface EventChannels {
 @Component
 @EnableBinding(EventChannels.class)
 public class OrderEventProducer {
-    
+
     private final EventChannels channels;
-    
+
     public OrderEventProducer(EventChannels channels) {
         this.channels = channels;
     }
-    
+
     public void publishOrderCreated(Order order) {
         OrderCreatedEvent event = new OrderCreatedEvent(
             order.getId(),
             order.getCustomerId(),
             order.getTotalAmount()
         );
-        
+
         channels.orderEvents().send(
             MessageBuilder
                 .withPayload(event)
@@ -1023,13 +1023,13 @@ public class OrderEventProducer {
 @Component
 @EnableBinding(EventChannels.class)
 public class OrderEventConsumer {
-    
+
     @StreamListener(target = EventChannels.USER_EVENTS, condition = "headers['eventType']=='UserCreated'")
     public void handleUserCreated(UserCreatedEvent event) {
         // Обработка события
         System.out.println("User created: " + event.getEmail());
     }
-    
+
     @StreamListener(EventChannels.ORDER_EVENTS)
     public void handleOrderEvent(OrderEvent event, @Header("eventType") String eventType) {
         switch (eventType) {
@@ -1041,11 +1041,11 @@ public class OrderEventConsumer {
                 break;
         }
     }
-    
+
     private void handleOrderCreated(OrderCreatedEvent event) {
         // Логика обработки
     }
-    
+
     private void handleOrderCancelled(OrderCancelledEvent event) {
         // Логика обработки
     }
@@ -1091,32 +1091,32 @@ spring:
 ```java
 @Configuration
 public class KafkaProducerConfig {
-    
+
     @Bean
     public ProducerFactory<String, DomainEvent> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        
+
         // Надежность доставки
         configProps.put(ProducerConfig.ACKS_CONFIG, "all");
         configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
         configProps.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1);
-        
+
         // Идемпотентность
         configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
-        
+
         // Сжатие
         configProps.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
-        
+
         // Батчинг
         configProps.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384);
         configProps.put(ProducerConfig.LINGER_MS_CONFIG, 10);
-        
+
         return new DefaultKafkaProducerFactory<>(configProps);
     }
-    
+
     @Bean
     public KafkaTemplate<String, DomainEvent> kafkaTemplate() {
         KafkaTemplate<String, DomainEvent> template = new KafkaTemplate<>(producerFactory());
@@ -1132,7 +1132,7 @@ public class KafkaProducerConfig {
 @Configuration
 @EnableKafka
 public class KafkaConsumerConfig {
-    
+
     @Bean
     public ConsumerFactory<String, DomainEvent> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
@@ -1141,22 +1141,22 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        
+
         // Настройки offset
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        
+
         // Настройки производительности
         configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);
         configProps.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1024);
         configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 500);
-        
+
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
-    
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, DomainEvent> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, DomainEvent> factory = 
+        ConcurrentKafkaListenerContainerFactory<String, DomainEvent> factory =
             new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(3);
@@ -1171,23 +1171,23 @@ public class KafkaConsumerConfig {
 ```java
 @Component
 public class OrderEventService {
-    
+
     private final KafkaTemplate<String, DomainEvent> kafkaTemplate;
-    
+
     public OrderEventService(KafkaTemplate<String, DomainEvent> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
-    
+
     public void publishOrderCreated(Order order) {
         OrderCreatedEvent event = new OrderCreatedEvent(
             order.getId(),
             order.getCustomerId(),
             order.getTotalAmount()
         );
-        
-        ListenableFuture<SendResult<String, DomainEvent>> future = 
+
+        ListenableFuture<SendResult<String, DomainEvent>> future =
             kafkaTemplate.send("order-events", order.getId(), event);
-        
+
         future.addCallback(
             result -> log.info("Event sent: {}", result.getProducerRecord().value()),
             failure -> log.error("Failed to send event", failure)
@@ -1197,7 +1197,7 @@ public class OrderEventService {
 
 @Component
 public class OrderEventHandler {
-    
+
     @KafkaListener(topics = "order-events", groupId = "order-handlers")
     public void handleOrderEvent(
             OrderEvent event,
@@ -1205,11 +1205,11 @@ public class OrderEventHandler {
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
             @Header(KafkaHeaders.OFFSET) long offset) {
-        
+
         try {
             // Обработка события
             processOrderEvent(event);
-            
+
             // Подтверждение обработки
             acknowledgment.acknowledge();
         } catch (Exception e) {
@@ -1217,7 +1217,7 @@ public class OrderEventHandler {
             // В случае ошибки событие не подтверждается и будет обработано повторно
         }
     }
-    
+
     private void processOrderEvent(OrderEvent event) {
         // Логика обработки
     }
@@ -1231,23 +1231,23 @@ public class OrderEventHandler {
 ```java
 @Configuration
 public class RetryConfig {
-    
+
     @Bean
     public RetryTemplate retryTemplate() {
         RetryTemplate retryTemplate = new RetryTemplate();
-        
+
         // Exponential backoff
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(1000);
         backOffPolicy.setMultiplier(2.0);
         backOffPolicy.setMaxInterval(10000);
         retryTemplate.setBackOffPolicy(backOffPolicy);
-        
+
         // Retry policy
         SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
         retryPolicy.setMaxAttempts(3);
         retryTemplate.setRetryPolicy(retryPolicy);
-        
+
         return retryTemplate;
     }
 }
@@ -1258,10 +1258,10 @@ public class RetryConfig {
 ```java
 @Component
 public class OrderEventConsumer {
-    
+
     private final KafkaTemplate<String, DomainEvent> kafkaTemplate;
     private final RetryTemplate retryTemplate;
-    
+
     @KafkaListener(topics = "order-events", groupId = "order-handlers")
     public void handleOrderEvent(OrderEvent event, Acknowledgment acknowledgment) {
         try {
@@ -1277,7 +1277,7 @@ public class OrderEventConsumer {
             acknowledgment.acknowledge(); // Подтверждаем, чтобы не обрабатывать повторно
         }
     }
-    
+
     private void sendToDeadLetterQueue(OrderEvent event, Exception error) {
         FailedEvent failedEvent = new FailedEvent(event, error.getMessage());
         kafkaTemplate.send("order-events-dlq", event.getId(), failedEvent);
@@ -1290,9 +1290,9 @@ public class OrderEventConsumer {
 ```java
 @Component
 public class OrderEventProcessor {
-    
+
     private final CircuitBreaker circuitBreaker;
-    
+
     @PostConstruct
     public void init() {
         circuitBreaker = CircuitBreaker.of("order-processor", CircuitBreakerConfig.custom()
@@ -1301,7 +1301,7 @@ public class OrderEventProcessor {
             .slidingWindowSize(10)
             .build());
     }
-    
+
     @KafkaListener(topics = "order-events", groupId = "order-handlers")
     public void handleOrderEvent(OrderEvent event, Acknowledgment acknowledgment) {
         Try.ofSupplier(CircuitBreaker.decorateSupplier(circuitBreaker, () -> {
@@ -1325,12 +1325,12 @@ public class OrderEventProcessor {
 ```java
 @Component
 public class EventMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter eventsPublished;
     private final Counter eventsConsumed;
     private final Timer eventProcessingTime;
-    
+
     public EventMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.eventsPublished = Counter.builder("events.published")
@@ -1342,15 +1342,15 @@ public class EventMetrics {
         this.eventProcessingTime = Timer.builder("events.processing.time")
             .register(meterRegistry);
     }
-    
+
     public void recordEventPublished(String eventType) {
         eventsPublished.increment(Tags.of("event.type", eventType));
     }
-    
+
     public void recordEventConsumed(String eventType) {
         eventsConsumed.increment(Tags.of("event.type", eventType));
     }
-    
+
     public Timer.Sample startProcessingTimer() {
         return Timer.start(meterRegistry);
     }
@@ -1362,17 +1362,17 @@ public class EventMetrics {
 ```java
 @Component
 public class TracedEventProducer {
-    
+
     private final KafkaTemplate<String, DomainEvent> kafkaTemplate;
     private final Tracer tracer;
-    
+
     public void publishEvent(String topic, String key, DomainEvent event) {
         Span span = tracer.nextSpan()
             .name("publish-event")
             .tag("event.type", event.getEventType())
             .tag("topic", topic)
             .start();
-        
+
         try (Tracer.SpanInScope ws = tracer.withSpanInScope(span)) {
             // Добавление trace context в headers
             Message<String, DomainEvent> message = MessageBuilder
@@ -1380,7 +1380,7 @@ public class TracedEventProducer {
                 .setHeader("traceId", span.context().traceId())
                 .setHeader("spanId", span.context().spanId())
                 .build();
-            
+
             kafkaTemplate.send(topic, key, message.getPayload());
             span.tag("event.id", event.getEventId());
         } catch (Exception e) {
@@ -1403,9 +1403,9 @@ public class TracedEventProducer {
 ```java
 @Component
 public class IdempotentOrderHandler {
-    
+
     private final Set<String> processedEventIds = new ConcurrentHashMap<>().newKeySet();
-    
+
     @KafkaListener(topics = "order-events", groupId = "order-handlers")
     public void handleOrderEvent(OrderEvent event, Acknowledgment acknowledgment) {
         // Проверка идемпотентности
@@ -1414,7 +1414,7 @@ public class IdempotentOrderHandler {
             acknowledgment.acknowledge();
             return;
         }
-        
+
         try {
             processOrderEvent(event);
             processedEventIds.add(event.getEventId());
@@ -1437,14 +1437,14 @@ public abstract class DomainEvent {
     private final Instant occurredOn;
     private final String eventType;
     private final int version;
-    
+
     protected DomainEvent(String eventType, int version) {
         this.eventId = UUID.randomUUID().toString();
         this.occurredOn = Instant.now();
         this.eventType = eventType;
         this.version = version;
     }
-    
+
     public int getVersion() {
         return version;
     }
@@ -1453,7 +1453,7 @@ public abstract class DomainEvent {
 public class UserCreatedEventV1 extends DomainEvent {
     private final String userId;
     private final String email;
-    
+
     public UserCreatedEventV1(String userId, String email) {
         super("UserCreated", 1);
         this.userId = userId;
@@ -1465,7 +1465,7 @@ public class UserCreatedEventV2 extends DomainEvent {
     private final String userId;
     private final String email;
     private final String name; // Новое поле
-    
+
     public UserCreatedEventV2(String userId, String email, String name) {
         super("UserCreated", 2);
         this.userId = userId;
@@ -1518,10 +1518,10 @@ public void handleOrderEvent(OrderEvent event) {
 public Order createOrder(OrderRequest request) {
     Order order = orderService.createOrder(request);
     publishOrderCreated(order);
-    
+
     // Плохо: ожидание ответного события
     waitForOrderProcessed(order.getId()); // Блокирующий вызов
-    
+
     return order;
 }
 
@@ -1590,8 +1590,8 @@ public void handleOrderEvent(
         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
         @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
         @Header(KafkaHeaders.OFFSET) long offset) {
-    
-    log.info("Received event from topic: {}, partition: {}, offset: {}", 
+
+    log.info("Received event from topic: {}, partition: {}, offset: {}",
         topic, partition, offset);
     // Обработка события
 }
@@ -1647,7 +1647,7 @@ public void handleOrderEvent(OrderEvent event, Acknowledgment acknowledgment) {
 // Увеличение параллельности
 @Bean
 public ConcurrentKafkaListenerContainerFactory<String, DomainEvent> kafkaListenerContainerFactory() {
-    ConcurrentKafkaListenerContainerFactory<String, DomainEvent> factory = 
+    ConcurrentKafkaListenerContainerFactory<String, DomainEvent> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory());
     factory.setConcurrency(10); // Увеличиваем количество потоков

@@ -14,9 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-actuator.md"]
 ---
 
-# Quarkus: Logging - Логирование
-
-
+# Quarkus: Logging — Логирование
 
 ## Полезные ссылки
 
@@ -46,13 +44,13 @@ related: ["quarkus-core.md", "quarkus-actuator.md"]
   - [Custom Formatters](#custom-formatters)
 - [Logging Performance](#logging-performance)
   - [Log Level Optimization](#log-level-optimization)
-- [Production - только важные логи](#production-только-важные-логи)
-- [Development - подробные логи](#development-подробные-логи)
+- [Production — только важные логи](#production-только-важные-логи)
+- [Development — подробные логи](#development-подробные-логи)
   - [Structured Logging Performance](#structured-logging-performance)
 - [Logging Best Practices](#logging-best-practices)
   - [4. Проверяйте уровень перед логированием](#4-проверяйте-уровень-перед-логированием)
   - [5. Используйте правильные appenders](#5-используйте-правильные-appenders)
-- [✅ Хорошо - для production](#хорошо-для-production)
+- [✅ Хорошо — для production](#хорошо-для-production)
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
@@ -81,9 +79,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class LoggingService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(LoggingService.class);
-    
+
     public void logMessage() {
         logger.info("Info message");
         logger.debug("Debug message");
@@ -123,9 +121,9 @@ quarkus.log.console.json.pretty-print=true
 ```java
 @ApplicationScoped
 public class StructuredLoggingService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(StructuredLoggingService.class);
-    
+
     public void logStructured(User user) {
         logger.info("User created: userId={}, email={}", user.getId(), user.getEmail());
     }
@@ -143,13 +141,13 @@ import org.slf4j.MDC;
 
 @ApplicationScoped
 public class MDCLoggingService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(MDCLoggingService.class);
-    
+
     public void processRequest(String requestId, String userId) {
         MDC.put("requestId", requestId);
         MDC.put("userId", userId);
-        
+
         try {
             logger.info("Processing request");
             // Обработка запроса
@@ -244,13 +242,13 @@ quarkus.log.console.format=%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %c{1}: %m%n
 ```java
 @ApplicationScoped
 public class PerformanceLoggingService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(PerformanceLoggingService.class);
-    
+
     public void logWithPerformance(User user) {
         // Используйте параметризованные сообщения для лучшей производительности
         if (logger.isDebugEnabled()) {
-            logger.debug("Processing user: userId={}, email={}", 
+            logger.debug("Processing user: userId={}, email={}",
                 user.getId(), user.getEmail());
         }
     }
@@ -315,3 +313,11 @@ quarkus.log.console.enable=false
 - [**Quarkus Logging** Guide](https://quarkus.io/guides/logging)
 - [**SLF4J** Documentation](https://www.slf4j.org/documentation.html)
 - [Logback Documentation](https://logback.qos.ch/documentation.html)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

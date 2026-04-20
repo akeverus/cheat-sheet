@@ -100,10 +100,10 @@ Go предоставляет встроенную поддержку тести
 
 ### Основные концепции
 
-1. **Unit тесты** - тестирование отдельных функций и методов
-2. **Table-`Driven` Tests** - тестирование с использованием таблиц данных
-3. **Benchmarks** - измерение производительности кода
-4. **Examples** - примеры использования с проверкой вывода
+1. **Unit тесты** — тестирование отдельных функций и методов
+2. **Table-`Driven` Tests** — тестирование с использованием таблиц данных
+3. **Benchmarks** — измерение производительности кода
+4. **Examples** — примеры использования с проверкой вывода
 
 ### Структура тестовых файлов
 
@@ -134,7 +134,7 @@ import "testing"
 func TestAdd(t *testing.T) {
     result := Add(2, 3)
     expected := 5
-    
+
     if result != expected {
         t.Errorf("Add(2, 3) = %d; expected %d", result, expected)
     }
@@ -162,7 +162,7 @@ go test ./...
 ```go
 func TestAdd(t *testing.T) {
     t.Helper()  // Помечает функцию как вспомогательную
-    
+
     result := Add(2, 3)
     if result != 5 {
         t.Errorf("Expected 5, got %d", result)
@@ -184,12 +184,12 @@ func TestAdd(t *testing.T) {
         {"negative numbers", -2, -3, -5},
         {"zero", 0, 0, 0},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             result := Add(tt.a, tt.b)
             if result != tt.expected {
-                t.Errorf("Add(%d, %d) = %d; expected %d", 
+                t.Errorf("Add(%d, %d) = %d; expected %d",
                     tt.a, tt.b, result, tt.expected)
             }
         })
@@ -199,7 +199,7 @@ func TestAdd(t *testing.T) {
 
 ## **Table-Driven Tests**
 
-**Table-Driven Tests** - это популярный паттерн в Go для тестирования множественных сценариев.
+**Table-Driven Tests** — это популярный паттерн в Go для тестирования множественных сценариев.
 
 ### Базовый пример
 
@@ -230,7 +230,7 @@ func TestMultiply(t *testing.T) {
             expected: 0,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             result := Multiply(tt.a, tt.b)
@@ -269,23 +269,23 @@ func TestDivide(t *testing.T) {
             expectErr: true,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             result, err := Divide(tt.a, tt.b)
-            
+
             if tt.expectErr {
                 if err == nil {
                     t.Error("Expected error, got nil")
                 }
                 return
             }
-            
+
             if err != nil {
                 t.Errorf("Unexpected error: %v", err)
                 return
             }
-            
+
             if result != tt.expected {
                 t.Errorf("Divide(%d, %d) = %d; expected %d",
                     tt.a, tt.b, result, tt.expected)
@@ -334,7 +334,7 @@ func BenchmarkAdd(b *testing.B) {
             Add(1, 2)
         }
     })
-    
+
     b.Run("large numbers", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             Add(1000000, 2000000)
@@ -351,9 +351,9 @@ func BenchmarkProcess(b *testing.B) {
     for i := range data {
         data[i] = i
     }
-    
+
     b.ResetTimer()  // Сброс таймера после подготовки
-    
+
     for i := 0; i < b.N; i++ {
         Process(data)
     }
@@ -362,7 +362,7 @@ func BenchmarkProcess(b *testing.B) {
 
 ## Примеры (**Examples**)
 
-**Examples** - это специальные функции, которые служат как документация и тесты одновременно.
+**Examples** — это специальные функции, которые служат как документация и тесты одновременно.
 
 ### Базовый пример
 
@@ -453,14 +453,14 @@ func TestGetUser(t *testing.T) {
             1: {ID: 1, Name: "Alice"},
         },
     }
-    
+
     service := NewUserService(mockRepo)
     user, err := service.GetUser(1)
-    
+
     if err != nil {
         t.Errorf("Unexpected error: %v", err)
     }
-    
+
     if user.Name != "Alice" {
         t.Errorf("Expected Alice, got %s", user.Name)
     }
@@ -485,10 +485,10 @@ func (m *MockRepository) GetUser(id int) (*User, error) {
 func TestGetUser(t *testing.T) {
     mockRepo := new(MockRepository)
     mockRepo.On("GetUser", 1).Return(&User{ID: 1, Name: "Alice"}, nil)
-    
+
     service := NewUserService(mockRepo)
     user, err := service.GetUser(1)
-    
+
     assert.NoError(t, err)
     assert.Equal(t, "Alice", user.Name)
     mockRepo.AssertExpectations(t)
@@ -506,18 +506,18 @@ func TestUserService_Integration(t *testing.T) {
     if testing.Short() {
         t.Skip("Skipping integration test")
     }
-    
+
     db := setupTestDB(t)
     defer db.Close()
-    
+
     repo := NewUserRepository(db)
     service := NewUserService(repo)
-    
+
     user, err := service.CreateUser("Alice")
     if err != nil {
         t.Fatalf("Failed to create user: %v", err)
     }
-    
+
     if user.Name != "Alice" {
         t.Errorf("Expected Alice, got %s", user.Name)
     }
@@ -529,19 +529,19 @@ func TestUserService_Integration(t *testing.T) {
 ```go
 func TestUserHandler(t *testing.T) {
     handler := setupTestHandler(t)
-    
+
     req := httptest.NewRequest("GET", "/users/1", nil)
     w := httptest.NewRecorder()
-    
+
     handler.ServeHTTP(w, req)
-    
+
     if w.Code != http.StatusOK {
         t.Errorf("Expected status 200, got %d", w.Code)
     }
-    
+
     var user User
     json.Unmarshal(w.Body.Bytes(), &user)
-    
+
     if user.ID != 1 {
         t.Errorf("Expected user ID 1, got %d", user.ID)
     }
@@ -557,7 +557,7 @@ import "github.com/leanovate/gopter"
 
 func TestAddCommutative(t *testing.T) {
     properties := gopter.NewProperties(nil)
-    
+
     properties.Property("addition is commutative", prop.ForAll(
         func(a, b int) bool {
             return Add(a, b) == Add(b, a)
@@ -565,7 +565,7 @@ func TestAddCommutative(t *testing.T) {
         gen.Int(),
         gen.Int(),
     ))
-    
+
     properties.TestingRun(t)
 }
 ```
@@ -582,10 +582,10 @@ import (
 
 func TestWithTestify(t *testing.T) {
     result := Add(2, 3)
-    
+
     assert.Equal(t, 5, result)
     assert.NotNil(t, result)
-    
+
     require.Equal(t, 5, result)  // Останавливает тест при ошибке
 }
 ```
@@ -605,13 +605,13 @@ type MockRepository struct {
 func TestWithGomock(t *testing.T) {
     ctrl := gomock.NewController(t)
     defer ctrl.Finish()
-    
+
     mockRepo := NewMockRepository(ctrl)
     mockRepo.EXPECT().GetUser(1).Return(&User{ID: 1, Name: "Alice"}, nil)
-    
+
     service := NewUserService(mockRepo)
     user, err := service.GetUser(1)
-    
+
     assert.NoError(t, err)
     assert.Equal(t, "Alice", user.Name)
 }
@@ -625,7 +625,7 @@ func TestConcurrentAccess(t *testing.T) {
     var wg sync.WaitGroup
     numGoroutines := 100
     iterations := 1000
-    
+
     for i := 0; i < numGoroutines; i++ {
         wg.Add(1)
         go func() {
@@ -635,7 +635,7 @@ func TestConcurrentAccess(t *testing.T) {
             }
         }()
     }
-    
+
     wg.Wait()
     expected := numGoroutines * iterations
     if counter.Value() != expected {
@@ -652,12 +652,12 @@ func TestHTTPHandler(t *testing.T) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte("OK"))
     })
-    
+
     req := httptest.NewRequest("GET", "/", nil)
     w := httptest.NewRecorder()
-    
+
     handler.ServeHTTP(w, req)
-    
+
     assert.Equal(t, http.StatusOK, w.Code)
     assert.Equal(t, "OK", w.Body.String())
 }
@@ -672,7 +672,7 @@ import "github.com/testcontainers/testcontainers-go"
 
 func TestWithPostgres(t *testing.T) {
     ctx := context.Background()
-    
+
     postgresContainer, err := postgres.RunContainer(ctx,
         testcontainers.WithImage("postgres:15-alpine"),
         postgres.WithDatabase("testdb"),
@@ -681,14 +681,14 @@ func TestWithPostgres(t *testing.T) {
     )
     require.NoError(t, err)
     defer postgresContainer.Terminate(ctx)
-    
+
     connStr, err := postgresContainer.ConnectionString(ctx)
     require.NoError(t, err)
-    
+
     db, err := sql.Open("postgres", connStr)
     require.NoError(t, err)
     defer db.Close()
-    
+
     // Тестирование с реальной БД
 }
 ```
@@ -700,15 +700,15 @@ func TestWithPostgres(t *testing.T) {
 ```go
 func TestWithGoldenFile(t *testing.T) {
     result := processData("input.txt")
-    
+
     golden := filepath.Join("testdata", "expected.golden")
     if *update {
         os.WriteFile(golden, []byte(result), 0644)
     }
-    
+
     expected, err := os.ReadFile(golden)
     require.NoError(t, err)
-    
+
     assert.Equal(t, string(expected), result)
 }
 ```
@@ -741,7 +741,7 @@ func TestErrorCases(t *testing.T) {
             wantErr: false,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             err := validate(tt.input)
@@ -761,7 +761,7 @@ func TestErrorCases(t *testing.T) {
 ```go
 func TestParallel(t *testing.T) {
     t.Parallel()  // Тест может выполняться параллельно
-    
+
     // Тест код
 }
 
@@ -777,12 +777,12 @@ func TestSequential(t *testing.T) {
 func TestWithCleanup(t *testing.T) {
     // Настройка
     tempFile := createTempFile(t)
-    
+
     // Cleanup выполнится после теста
     t.Cleanup(func() {
         os.Remove(tempFile)
     })
-    
+
     // Тест код
 }
 ```
@@ -794,7 +794,7 @@ func TestSkipOnCondition(t *testing.T) {
     if runtime.GOOS == "windows" {
         t.Skip("Skipping on Windows")
     }
-    
+
     // Тест код
 }
 ```
@@ -808,7 +808,7 @@ func TestWithFatal(t *testing.T) {
         t.Fatalf("Critical operation failed: %v", err)
         // Код после Fatal не выполнится
     }
-    
+
     // Продолжение теста
 }
 ```
@@ -823,11 +823,11 @@ type UserService struct {
 func TestUserService_CreateUser(t *testing.T) {
     mockRepo := &MockUserRepository{}
     service := NewUserService(mockRepo)
-    
+
     mockRepo.On("Create", mock.Anything).Return(&User{ID: 1, Name: "Alice"}, nil)
-    
+
     user, err := service.CreateUser("Alice")
-    
+
     assert.NoError(t, err)
     assert.Equal(t, "Alice", user.Name)
     mockRepo.AssertExpectations(t)
@@ -841,9 +841,9 @@ func TestAuthMiddleware(t *testing.T) {
     handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
     })
-    
+
     middleware := AuthMiddleware(handler)
-    
+
     tests := []struct {
         name           string
         authHeader     string
@@ -865,7 +865,7 @@ func TestAuthMiddleware(t *testing.T) {
             expectedStatus: http.StatusUnauthorized,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             req := httptest.NewRequest("GET", "/", nil)
@@ -873,9 +873,9 @@ func TestAuthMiddleware(t *testing.T) {
                 req.Header.Set("Authorization", tt.authHeader)
             }
             w := httptest.NewRecorder()
-            
+
             middleware.ServeHTTP(w, req)
-            
+
             assert.Equal(t, tt.expectedStatus, w.Code)
         })
     }
@@ -888,10 +888,10 @@ func TestAuthMiddleware(t *testing.T) {
 func TestWithTime(t *testing.T) {
     // Использование фиксированного времени для тестов
     fixedTime := time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)
-    
+
     // Тест с фиксированным временем
     result := processWithTime(fixedTime)
-    
+
     assert.Equal(t, expectedResult, result)
 }
 ```
@@ -904,16 +904,16 @@ func TestHTTPHandler(t *testing.T) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte("OK"))
     })
-    
+
     req := httptest.NewRequest("GET", "/test", nil)
     w := httptest.NewRecorder()
-    
+
     handler.ServeHTTP(w, req)
-    
+
     if w.Code != http.StatusOK {
         t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
     }
-    
+
     if w.Body.String() != "OK" {
         t.Errorf("expected body %q, got %q", "OK", w.Body.String())
     }
@@ -924,17 +924,17 @@ func TestHTTPHandlerWithJSON(t *testing.T) {
         w.Header().Set("Content-Type", "application/json")
         json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
     })
-    
+
     req := httptest.NewRequest("GET", "/test", nil)
     w := httptest.NewRecorder()
-    
+
     handler.ServeHTTP(w, req)
-    
+
     var result map[string]string
     if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
         t.Fatalf("failed to unmarshal response: %v", err)
     }
-    
+
     if result["status"] != "ok" {
         t.Errorf("expected status 'ok', got %q", result["status"])
     }
@@ -947,10 +947,10 @@ func TestHTTPHandlerWithJSON(t *testing.T) {
 func TestConcurrentAccess(t *testing.T) {
     var counter int64
     var wg sync.WaitGroup
-    
+
     numGoroutines := 100
     iterations := 1000
-    
+
     for i := 0; i < numGoroutines; i++ {
         wg.Add(1)
         go func() {
@@ -960,9 +960,9 @@ func TestConcurrentAccess(t *testing.T) {
             }
         }()
     }
-    
+
     wg.Wait()
-    
+
     expected := int64(numGoroutines * iterations)
     if counter != expected {
         t.Errorf("expected counter %d, got %d", expected, counter)
@@ -972,10 +972,10 @@ func TestConcurrentAccess(t *testing.T) {
 func TestRaceCondition(t *testing.T) {
     var counter int
     var mu sync.Mutex
-    
+
     numGoroutines := 10
     var wg sync.WaitGroup
-    
+
     for i := 0; i < numGoroutines; i++ {
         wg.Add(1)
         go func() {
@@ -987,9 +987,9 @@ func TestRaceCondition(t *testing.T) {
             }
         }()
     }
-    
+
     wg.Wait()
-    
+
     expected := numGoroutines * 100
     if counter != expected {
         t.Errorf("expected counter %d, got %d", expected, counter)
@@ -1007,13 +1007,13 @@ func TestWithCleanup(t *testing.T) {
     }
     defer os.Remove(tempFile.Name())
     defer tempFile.Close()
-    
+
     // Использование t.Cleanup (Go 1.14+)
     t.Cleanup(func() {
         os.Remove(tempFile.Name())
         tempFile.Close()
     })
-    
+
     // Тест с использованием tempFile
     _, err = tempFile.WriteString("test data")
     if err != nil {
@@ -1051,15 +1051,15 @@ func TestErrorHandling(t *testing.T) {
             expectedValue: "",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             result, err := processInput(tt.input)
-            
+
             if !errors.Is(err, tt.expectedErr) {
                 t.Errorf("expected error %v, got %v", tt.expectedErr, err)
             }
-            
+
             if result != tt.expectedValue {
                 t.Errorf("expected value %q, got %q", tt.expectedValue, result)
             }
@@ -1073,7 +1073,7 @@ func TestErrorHandling(t *testing.T) {
 ```go
 func TestWithDatabase(t *testing.T) {
     ctx := context.Background()
-    
+
     req := testcontainers.ContainerRequest{
         Image:        "postgres:13",
         ExposedPorts: []string{"5432/tcp"},
@@ -1084,7 +1084,7 @@ func TestWithDatabase(t *testing.T) {
         },
         WaitingFor: wait.ForLog("database system is ready to accept connections"),
     }
-    
+
     postgresC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
         ContainerRequest: req,
         Started:          true,
@@ -1093,25 +1093,25 @@ func TestWithDatabase(t *testing.T) {
         t.Fatalf("failed to start container: %v", err)
     }
     defer postgresC.Terminate(ctx)
-    
+
     host, _ := postgresC.Host(ctx)
     port, _ := postgresC.MappedPort(ctx, "5432")
-    
+
     dsn := fmt.Sprintf("postgres://postgres:postgres@%s:%s/testdb?sslmode=disable",
         host, port.Port())
-    
+
     db, err := sql.Open("postgres", dsn)
     if err != nil {
         t.Fatalf("failed to connect: %v", err)
     }
     defer db.Close()
-    
+
     // Тесты с использованием базы данных
     _, err = db.Exec("CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT)")
     if err != nil {
         t.Fatalf("failed to create table: %v", err)
     }
-    
+
     // Дальнейшие тесты...
 }
 ```
@@ -1130,7 +1130,7 @@ func TestReverse(t *testing.T) {
         doubleReversed := reverseString(reversed)
         return s == doubleReversed
     }
-    
+
     if err := quick.Check(f, nil); err != nil {
         t.Error(err)
     }
@@ -1140,7 +1140,7 @@ func TestAddCommutative(t *testing.T) {
     f := func(a, b int) bool {
         return add(a, b) == add(b, a)
     }
-    
+
     if err := quick.Check(f, nil); err != nil {
         t.Error(err)
     }
@@ -1180,12 +1180,12 @@ func TestWithMock(t *testing.T) {
             return &User{ID: id, Name: "Test"}, nil
         },
     }
-    
+
     user, err := mockService.GetUser(1)
     if err != nil {
         t.Fatalf("unexpected error: %v", err)
     }
-    
+
     if user.ID != 1 {
         t.Errorf("expected ID 1, got %d", user.ID)
     }
@@ -1194,21 +1194,21 @@ func TestWithMock(t *testing.T) {
 
 ## Лучшие практики
 
-1. **Используйте `table-driven` tests** - для тестирования множественных сценариев
-2. **Именуйте тесты описательно** - имена тестов должны описывать что тестируется
-3. **Используйте t.`Helper()`** - для вспомогательных функций
-4. **Тестируйте граничные случаи** - включая ошибки и крайние значения
-5. **Избегайте тестовых зависимостей** - тесты должны быть независимыми
-6. **Используйте подтесты** - для организации связанных тестов
-7. **Измеряйте покрытие** - следите за покрытием кода тестами
-8. **Используйте моки осторожно** - предпочитайте реальные зависимости когда возможно
-9. **Тестируйте поведение, а не реализацию** - тесты должны проверять что делает код, а не как
-10. **Держите тесты быстрыми** - медленные тесты замедляют разработку
-11. **Используйте cleanup** - правильно очищайте ресурсы после тестов
-12. **Тестируйте конкурентный код** - проверяйте **race conditions**
-13. **Используйте `property-based` тестирование** - для проверки свойств
-14. **Используйте интеграционные тесты** - для тестирования всего стека
-15. **Документируйте тесты** - объясняйте что тестируется
+1. **Используйте `table-driven` tests** — для тестирования множественных сценариев
+2. **Именуйте тесты описательно** — имена тестов должны описывать что тестируется
+3. **Используйте t.`Helper()`** — для вспомогательных функций
+4. **Тестируйте граничные случаи** — включая ошибки и крайние значения
+5. **Избегайте тестовых зависимостей** — тесты должны быть независимыми
+6. **Используйте подтесты** — для организации связанных тестов
+7. **Измеряйте покрытие** — следите за покрытием кода тестами
+8. **Используйте моки осторожно** — предпочитайте реальные зависимости когда возможно
+9. **Тестируйте поведение, а не реализацию** — тесты должны проверять что делает код, а не как
+10. **Держите тесты быстрыми** — медленные тесты замедляют разработку
+11. **Используйте cleanup** — правильно очищайте ресурсы после тестов
+12. **Тестируйте конкурентный код** — проверяйте **race conditions**
+13. **Используйте `property-based` тестирование** — для проверки свойств
+14. **Используйте интеграционные тесты** — для тестирования всего стека
+15. **Документируйте тесты** — объясняйте что тестируется
 
 ### Практические примеры: Тестирование с использованием **testify**
 
@@ -1252,16 +1252,16 @@ func TestUserSuite(t *testing.T) {
 ```go
 func TestWithGoldenFiles(t *testing.T) {
     result := processData(input)
-    
+
     goldenFile := filepath.Join("testdata", "expected_output.golden")
     if *update {
         os.WriteFile(goldenFile, result, 0644)
         return
     }
-    
+
     expected, err := os.ReadFile(goldenFile)
     require.NoError(t, err)
-    
+
     assert.Equal(t, string(expected), string(result))
 }
 ```
@@ -1284,3 +1284,11 @@ func TestWithGoldenFiles(t *testing.T) {
 - [Go Testing Documentation](https://pkg.go.dev/testing)
 - [Go Testing Best Practices](https://go.dev/doc/tutorial/add-a-test)
 - [Table-Driven Tests](https://go.dev/wiki/TableDrivenTests)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

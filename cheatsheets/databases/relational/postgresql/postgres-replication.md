@@ -115,11 +115,10 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 - **Резервное копирование**: Реплики могут использоваться для бэкапов без нагрузки на основной сервер
 - **Географическое распределение**: Реплики в разных регионах для снижения задержек
 
----
 
 ## **Streaming Replication** (**физическая репликация**)
 
-**Streaming Replication** - это метод физической репликации, при котором изменения передаются в реальном времени через **WAL** (**Write-`Ahead` Log**) файлы.
+**Streaming Replication** — это метод физической репликации, при котором изменения передаются в реальном времени через **WAL** (**Write-`Ahead` Log**) файлы.
 
 ### Архитектура **Streaming Replication**
 
@@ -250,7 +249,7 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 
 ```sql
 -- Проверить статус репликации
-SELECT 
+SELECT
     pid,
     usename,
     application_name,
@@ -265,7 +264,7 @@ SELECT
 FROM pg_stat_replication;
 
 -- Проверить replication slots
-SELECT 
+SELECT
     slot_name,
     slot_type,
     active,
@@ -277,14 +276,14 @@ FROM pg_replication_slots;
 
 ```sql
 -- Проверить статус репликации
-SELECT 
+SELECT
     pg_is_in_recovery() AS is_standby,
     pg_last_wal_receive_lsn() AS receive_lsn,
     pg_last_wal_replay_lsn() AS replay_lsn,
     pg_wal_lsn_diff(pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn()) AS lag_bytes;
 
 -- Проверить задержку репликации
-SELECT 
+SELECT
     EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS lag_seconds;
 ```
 
@@ -308,7 +307,7 @@ synchronous_standby_names = 'FIRST 1 (standby1, standby2)'
 
 ```sql
 -- На Primary
-SELECT 
+SELECT
     application_name,
     sync_state,
     sync_priority
@@ -316,7 +315,6 @@ FROM pg_stat_replication
 WHERE sync_state = 'sync';
 ```
 
----
 
 ## **Logical Replication**
 
@@ -350,8 +348,8 @@ CREATE PUBLICATION my_publication FOR ALL TABLES;
 CREATE PUBLICATION my_publication FOR TABLE users, orders, products;
 
 -- С публикацией изменений по умолчанию
-CREATE PUBLICATION my_publication 
-FOR TABLE users, orders 
+CREATE PUBLICATION my_publication
+FOR TABLE users, orders
 WITH (publish = 'insert,update,delete');
 ```
 
@@ -376,7 +374,7 @@ SELECT * FROM pg_subscription_rel;
 
 ```sql
 -- На Primary сервере
-SELECT 
+SELECT
     pubname,
     puballtables,
     pubinsert,
@@ -385,7 +383,7 @@ SELECT
 FROM pg_publication;
 
 -- На Standby сервере
-SELECT 
+SELECT
     subname,
     subenabled,
     subslotname,
@@ -393,7 +391,7 @@ SELECT
 FROM pg_subscription;
 
 -- Статистика репликации
-SELECT 
+SELECT
     subname,
     apply_lag,
     sync_state
@@ -410,20 +408,19 @@ ALTER SUBSCRIPTION my_subscription DISABLE;
 ALTER SUBSCRIPTION my_subscription ENABLE;
 
 -- Обновить подключение
-ALTER SUBSCRIPTION my_subscription 
+ALTER SUBSCRIPTION my_subscription
 CONNECTION 'host=new_primary port=5432 dbname=mydb user=replicator password=secure_password';
 
 -- Удалить подписку
 DROP SUBSCRIPTION my_subscription;
 ```
 
----
 
 ## Настройка **Master-Slave**
 
 ### Архитектура **Master-Slave**
 
-```
+```text
 ┌─────────────┐
 │   Master    │
 │  (Primary)  │
@@ -477,7 +474,7 @@ primary_slot_name = 'standby2_slot'
 
 ```sql
 -- На Primary сервере
-SELECT 
+SELECT
     application_name,
     client_addr,
     state,
@@ -487,7 +484,6 @@ FROM pg_stat_replication
 ORDER BY application_name;
 ```
 
----
 
 ## Настройка **Master-Master** (**Bidirectional Replication**)
 
@@ -495,7 +491,7 @@ ORDER BY application_name;
 
 ### Архитектура **Master-Master**
 
-```
+```text
 ┌─────────────┐         ┌─────────────┐
 │  Server A   │◀───────▶│  Server B   │
 │  (Primary)  │  Logical│  (Primary)   │
@@ -554,7 +550,6 @@ FOR EACH ROW
 EXECUTE FUNCTION resolve_replication_conflict();
 ```
 
----
 
 ## Мониторинг репликации
 
@@ -564,14 +559,14 @@ EXECUTE FUNCTION resolve_replication_conflict();
 
 ```sql
 -- Задержка в байтах
-SELECT 
+SELECT
     application_name,
     pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) AS lag_bytes,
     pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)) AS lag_pretty
 FROM pg_stat_replication;
 
 -- Задержка во времени
-SELECT 
+SELECT
     application_name,
     EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS lag_seconds
 FROM pg_stat_replication;
@@ -581,7 +576,7 @@ FROM pg_stat_replication;
 
 ```sql
 -- Детальная информация о репликации
-SELECT 
+SELECT
     pid,
     usename,
     application_name,
@@ -601,7 +596,7 @@ FROM pg_stat_replication;
 
 ```sql
 -- Информация о слотах
-SELECT 
+SELECT
     slot_name,
     slot_type,
     database,
@@ -651,7 +646,6 @@ echo "OK: Replication is healthy"
 exit 0
 ```
 
----
 
 ## **Failover** и автоматическое переключение
 
@@ -673,7 +667,7 @@ touch /tmp/postgresql.trigger
 
 ### Автоматический **failover** с **Patroni**
 
-**Patroni** - это решение для автоматического управления репликацией и **failover**.
+**Patroni** — это решение для автоматического управления репликацией и **failover**.
 
 #### Установка **Patroni**
 
@@ -746,7 +740,7 @@ patroni patroni.yml
 
 ### Автоматический **failover** с **pg_auto_failover**
 
-**pg_auto_failover** - это расширение **PostgreSQL** для автоматического **failover**.
+**pg_auto_failover** — это расширение **PostgreSQL** для автоматического **failover**.
 
 #### Установка
 
@@ -794,7 +788,6 @@ pg_auto_failover create postgres \
 pg_auto_failover status --monitor 'postgres://autoctl_node@monitor_host:5432/pg_auto_failover'
 ```
 
----
 
 ## Оптимизация репликации
 
@@ -837,7 +830,7 @@ max_worker_processes = 8
 
 ```sql
 -- Статистика репликации
-SELECT 
+SELECT
     application_name,
     state,
     sync_state,
@@ -848,12 +841,11 @@ SELECT
 FROM pg_stat_replication;
 
 -- Производительность WAL
-SELECT 
+SELECT
     pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), '0/0')) AS total_wal_size,
     pg_size_pretty(pg_current_wal_lsn() - '0/0') AS current_wal_position;
 ```
 
----
 
 ## Лучшие практики
 
@@ -875,7 +867,7 @@ SELECT
    ssl = on
    ssl_cert_file = 'server.crt'
    ssl_key_file = 'server.key'
-   
+
    # В primary_conninfo на Standby
    primary_conninfo = '... sslmode=require'
    ```
@@ -900,7 +892,6 @@ SELECT
 3. **Оптимизировать сетевые настройки**
 4. **Использовать синхронную репликацию только при необходимости**
 
----
 
 ## Решение проблем
 
@@ -997,12 +988,12 @@ recovery_min_apply_delay = '1h'  # Задержка 1 час
 
 ```sql
 -- Создать публикацию только для определенных таблиц
-CREATE PUBLICATION selective_pub 
-FOR TABLE users, orders 
+CREATE PUBLICATION selective_pub
+FOR TABLE users, orders
 WHERE (region = 'US');
 
 -- Или с фильтрацией по схеме
-CREATE PUBLICATION schema_pub 
+CREATE PUBLICATION schema_pub
 FOR ALL TABLES IN SCHEMA public;
 ```
 
@@ -1013,7 +1004,7 @@ FOR ALL TABLES IN SCHEMA public;
 ```sql
 -- Создать представление для комплексного мониторинга репликации
 CREATE VIEW replication_dashboard AS
-SELECT 
+SELECT
     r.application_name,
     r.client_addr,
     r.state,
@@ -1051,7 +1042,7 @@ DECLARE
     issues_list TEXT[];
 BEGIN
     FOR replica_rec IN
-        SELECT 
+        SELECT
             application_name,
             client_addr,
             state,
@@ -1060,26 +1051,26 @@ BEGIN
         FROM pg_stat_replication
     LOOP
         issues_list := ARRAY[]::TEXT[];
-        
+
         -- Проверить состояние
         IF replica_rec.state != 'streaming' THEN
             issues_list := array_append(issues_list, format('State is %s, expected streaming', replica_rec.state));
         END IF;
-        
+
         -- Проверить lag в байтах
         IF replica_rec.lag_bytes > 104857600 THEN  -- 100MB
             issues_list := array_append(issues_list, format('Lag is %s bytes (max: 100MB)', replica_rec.lag_bytes));
         END IF;
-        
+
         -- Проверить lag во времени
         IF replica_rec.lag_seconds > 30 THEN
             issues_list := array_append(issues_list, format('Lag is %.2f seconds (max: 30s)', replica_rec.lag_seconds));
         END IF;
-        
+
         RETURN QUERY
-        SELECT 
+        SELECT
             replica_rec.application_name,
-            CASE 
+            CASE
                 WHEN array_length(issues_list, 1) IS NULL THEN 'OK'
                 ELSE 'WARNING'
             END,
@@ -1110,21 +1101,21 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         s.slot_name,
         s.slot_type,
         s.active,
         pg_wal_lsn_diff(pg_current_wal_lsn(), s.restart_lsn) AS lag_bytes,
         pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), s.restart_lsn)) AS lag_pretty,
-        CASE 
+        CASE
             WHEN NOT s.active AND pg_wal_lsn_diff(pg_current_wal_lsn(), s.restart_lsn) > 1073741824 THEN 'CRITICAL'
             WHEN NOT s.active THEN 'WARNING'
             ELSE 'OK'
         END AS status,
-        CASE 
-            WHEN NOT s.active AND pg_wal_lsn_diff(pg_current_wal_lsn(), s.restart_lsn) > 1073741824 THEN 
+        CASE
+            WHEN NOT s.active AND pg_wal_lsn_diff(pg_current_wal_lsn(), s.restart_lsn) > 1073741824 THEN
                 format('Consider dropping slot %s - inactive and lag > 1GB', s.slot_name)
-            WHEN NOT s.active THEN 
+            WHEN NOT s.active THEN
                 format('Slot %s is inactive - verify if still needed', s.slot_name)
             ELSE 'OK'
         END AS recommendation
@@ -1213,17 +1204,17 @@ HEALTH_CHECK_TIMEOUT=10
 # Проверить доступность Primary
 if ! timeout $HEALTH_CHECK_TIMEOUT psql -h $PRIMARY_HOST -U postgres -c "SELECT 1;" > /dev/null 2>&1; then
     echo "Primary server is down. Initiating failover..."
-    
+
     # Промоутить Standby
     ssh $STANDBY_HOST "sudo -u postgres pg_ctl promote -D /var/lib/postgresql/data"
-    
+
     # Обновить DNS или load balancer
     # update_dns_or_lb $STANDBY_HOST
-    
+
     # Уведомить администраторов
     echo "Failover completed. New primary: $STANDBY_HOST" | \
         mail -s "PostgreSQL Failover Alert" admin@example.com
-    
+
     exit 0
 fi
 
@@ -1274,8 +1265,8 @@ sudo systemctl start postgresql
 ```sql
 -- Репликация с фильтрацией данных
 -- Создать публикацию с условием
-CREATE PUBLICATION filtered_pub 
-FOR TABLE orders 
+CREATE PUBLICATION filtered_pub
+FOR TABLE orders
 WHERE (status = 'active');
 
 -- Или использовать функции для фильтрации
@@ -1310,7 +1301,7 @@ PUBLICATION cross_version_pub;
 ```sql
 -- Детальный мониторинг Logical Replication
 CREATE VIEW logical_replication_status AS
-SELECT 
+SELECT
     s.subname AS subscription_name,
     s.subenabled AS enabled,
     s.subslotname AS slot_name,
@@ -1355,13 +1346,9 @@ SELECT * FROM logical_replication_status;
 3. **Использовать синхронную репликацию** только при необходимости
 4. **Мониторить производительность** сети между серверами
 
----
 
-- [`PostgreSQL Streaming Replication`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Logical Replication`](https://www.postgresql.org/docs/)
-- [`Patroni Documentation`](https://www.postgresql.org/docs/)
-- [`pg_auto_failover Documentation`](https://www.postgresql.org/docs/)
-
----
-
+- [PostgreSQL Streaming Replication](https://www.postgresql.org/docs/)
+- [PostgreSQL Logical Replication](https://www.postgresql.org/docs/)
+- [Patroni Documentation](https://www.postgresql.org/docs/)
+- [pg_auto_failover Documentation](https://www.postgresql.org/docs/)
 

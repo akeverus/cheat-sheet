@@ -1473,6 +1473,13 @@ public class ExceptionTesting {
 
 Правильная обработка исключений делает код более надежным, поддерживаемым и **user-friendly**. Исключения должны использоваться для сигнализации о проблемах, а не для контроля потока выполнения программы.
 
----
 
 [⬆️ Наверх](./#java-cheatsheets)
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

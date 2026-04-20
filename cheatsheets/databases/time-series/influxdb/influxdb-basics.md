@@ -97,7 +97,7 @@ import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 
 public class InfluxDBWriter {
-    
+
     /*
      * Создание InfluxDB клиента
      */
@@ -114,13 +114,13 @@ public class InfluxDBWriter {
             "mybucket"                         // Название bucket (база данных)
         );
     }
-    
+
     /*
      * Запись точки данных (measurement)
      */
     public static void writePoint() {
         InfluxDBClient client = createClient();
-        
+
         try (WriteApi writeApi = client.getWriteApi()) {
             // Создание точки данных
             // Point представляет одно измерение (measurement) с тегами, полями и временной меткой
@@ -129,21 +129,21 @@ public class InfluxDBWriter {
                 .addTag("sensor", "sensor1")              // Еще один тег
                 .addField("value", 23.5)                   // Поле со значением (не индексируется)
                 .time(System.currentTimeMillis(), WritePrecision.MS);  // Временная метка
-            
+
             // Запись точки в InfluxDB
             writeApi.writePoint(point);
             // InfluxDB автоматически создаст measurement если его нет
         }
-        
+
         client.close();
     }
-    
+
     /*
      * Запись нескольких точек
      */
     public static void writeMultiplePoints() {
         InfluxDBClient client = createClient();
-        
+
         try (WriteApi writeApi = client.getWriteApi()) {
             // Запись нескольких точек за раз (batch запись)
             for (int i = 0; i < 10; i++) {
@@ -152,12 +152,12 @@ public class InfluxDBWriter {
                     .addTag("cpu", "cpu0")
                     .addField("usage", 50.0 + Math.random() * 50)
                     .time(System.currentTimeMillis() + i * 1000, WritePrecision.MS);
-                
+
                 writeApi.writePoint(point);
             }
             // Все точки будут записаны в одном batch для производительности
         }
-        
+
         client.close();
     }
 }
@@ -174,14 +174,14 @@ import com.influxdb.query.FluxTable;
 import com.influxdb.query.FluxRecord;
 
 public class InfluxDBReader {
-    
+
     /*
      * Чтение данных через Flux запросы
      */
     public static void readData() {
         InfluxDBClient client = InfluxDBWriter.createClient();
         QueryApi queryApi = client.getQueryApi();
-        
+
         // Flux запрос (язык запросов InfluxDB 2.0+)
         String flux = """
             from(bucket: "mybucket")
@@ -189,10 +189,10 @@ public class InfluxDBReader {
               |> filter(fn: (r) => r._measurement == "temperature")
               |> filter(fn: (r) => r.location == "server-room")
         """;
-        
+
         // Выполнение запроса
         List<FluxTable> tables = queryApi.query(flux);
-        
+
         // Обработка результатов
         for (FluxTable table : tables) {
             for (FluxRecord record : table.getRecords()) {
@@ -201,15 +201,15 @@ public class InfluxDBReader {
                 String measurement = record.getMeasurement();  // Название measurement
                 Instant time = record.getTime();           // Временная метка
                 String field = record.getField();          // Название поля
-                
+
                 System.out.printf("Time: %s, Measurement: %s, Field: %s, Value: %s%n",
                                 time, measurement, field, value);
             }
         }
-        
+
         client.close();
     }
-    
+
     /*
      * Чтение данных через InfluxQL (InfluxDB 1.x)
      */
@@ -239,13 +239,13 @@ SELECT * FROM temperature;
 SELECT * FROM temperature WHERE time > now() - 1h;
 
 -- Группировка по тегам
-SELECT mean(value) FROM temperature 
-WHERE time > now() - 1h 
+SELECT mean(value) FROM temperature
+WHERE time > now() - 1h
 GROUP BY location;
 
 -- Агрегация по временным интервалам
-SELECT mean(value) FROM temperature 
-WHERE time > now() - 24h 
+SELECT mean(value) FROM temperature
+WHERE time > now() - 24h
 GROUP BY time(1h);
 ```
 
@@ -282,7 +282,7 @@ SELECT mean(value), stddev(value) FROM temperature;
  */
 @Configuration
 public class InfluxDBConfiguration {
-    
+
     @Bean
     public InfluxDBClient influxDBClient() {
         return InfluxDBClientFactory.create(
@@ -299,15 +299,15 @@ public class InfluxDBConfiguration {
  */
 @Service
 public class MetricsService {
-    
+
     private final InfluxDBClient influxDBClient;
     private final WriteApi writeApi;
-    
+
     public MetricsService(InfluxDBClient influxDBClient) {
         this.influxDBClient = influxDBClient;
         this.writeApi = influxDBClient.getWriteApi();
     }
-    
+
     /*
      * Запись метрики CPU
      */
@@ -317,10 +317,10 @@ public class MetricsService {
             .addTag("cpu", cpu)
             .addField("usage", usage)
             .time(Instant.now(), WritePrecision.NS);
-        
+
         writeApi.writePoint(point);
     }
-    
+
     /*
      * Запись метрики памяти
      */
@@ -331,10 +331,10 @@ public class MetricsService {
             .addField("total", total)
             .addField("usage_percent", (used / total) * 100)
             .time(Instant.now(), WritePrecision.NS);
-        
+
         writeApi.writePoint(point);
     }
-    
+
     /*
      * Получение метрик за период
      */
@@ -344,10 +344,10 @@ public class MetricsService {
               |> range(start: -%s)
               |> filter(fn: (r) => r._measurement == "%s")
         """, duration, measurement);
-        
+
         QueryApi queryApi = influxDBClient.getQueryApi();
         List<FluxTable> tables = queryApi.query(flux);
-        
+
         return tables.stream()
             .flatMap(table -> table.getRecords().stream())
             .collect(Collectors.toList());

@@ -24,7 +24,7 @@ updated: "2026-02-06"
 - [`RFC 3986` - `URI Generic Syntax`](https://tools.ietf.org/html/rfc3986)
 - [JSON:API Specification](https://jsonapi.org/)
 
-### **Baeldung**
+### Обучающие материалы
 - [REST API Design (Baeldung)](https://www.baeldung.com/rest-api-design-maturity-model)
 
 ### См. также
@@ -55,7 +55,7 @@ updated: "2026-02-06"
   - [Иерархия ресурсов](#иерархия-ресурсов)
 - [Плоские ресурсы](#плоские-ресурсы)
 - [Вложенные ресурсы](#вложенные-ресурсы)
-- [Не вложенные - отдельные ресурсы](#не-вложенные-отдельные-ресурсы)
+- [Не вложенные — отдельные ресурсы](#не-вложенные-отдельные-ресурсы)
   - [**Query** параметры](#query-параметры)
 - [Фильтрация](#фильтрация)
 - [Сортировка](#сортировка)
@@ -340,7 +340,7 @@ Content-Type: application/vnd.company.users+json; version=1.0
 
 ### Рекомендации
 
-1. **URI versioning** - наиболее распространенный
+1. **URI versioning** — наиболее распространенный
 2. **Не используйте query parameters** для версий
 3. **Поддерживайте** несколько версий одновременно
 4. **Документируйте** изменения между версиями
@@ -451,7 +451,7 @@ GET /products?sort=price,-rating,name
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @GetMapping
     public ResponseEntity<Page<UserDto>> getUsers(
             @RequestParam(required = false) String status,
@@ -459,23 +459,23 @@ public class UserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String[] sort) {
-        
+
         // Создание спецификации для фильтров
         Specification<User> spec = Specification.where(null);
-        
+
         if (status != null) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.equal(root.get("status"), UserStatus.valueOf(status.toUpperCase())));
         }
-        
+
         if (search != null) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.or(
                     cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"),
                     cb.like(cb.lower(root.get("email")), "%" + search.toLowerCase() + "%")
                 ));
         }
-        
+
         // Сортировка
         List<Order> orders = new ArrayList<>();
         for (String sortField : sort) {
@@ -485,12 +485,12 @@ public class UserController {
                 orders.add(Order.asc(sortField));
             }
         }
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(orders));
-        
+
         Page<User> userPage = userRepository.findAll(spec, pageable);
         Page<UserDto> userDtoPage = userPage.map(UserMapper::toDto);
-        
+
         return ResponseEntity.ok(userDtoPage);
     }
 }
@@ -498,7 +498,7 @@ public class UserController {
 
 ## **HATEOAS**
 
-**HATEOAS** (**Hypermedia as the `Engine of Application` State**) - принцип, где **API** предоставляет ссылки для навигации.
+**HATEOAS** (**Hypermedia as the `Engine of Application` State**) — принцип, где **API** предоставляет ссылки для навигации.
 
 ```json
 {
@@ -530,30 +530,30 @@ public class UserController {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @GetMapping("/{id}")
     public EntityModel<UserDto> getUser(@PathVariable Long id) {
         User user = userService.findById(id);
         UserDto userDto = UserMapper.toDto(user);
-        
+
         EntityModel<UserDto> model = EntityModel.of(userDto);
         model.add(linkTo(methodOn(UserController.class).getUser(id)).withSelfRel());
         model.add(linkTo(methodOn(UserController.class).getUserPosts(id)).withRel("posts"));
         model.add(linkTo(methodOn(UserController.class).updateUser(id, null)).withRel("update"));
-        
+
         return model;
     }
-    
+
     @GetMapping("/{id}/posts")
     public CollectionModel<PostDto> getUserPosts(@PathVariable Long id) {
         List<Post> posts = postService.findByUserId(id);
         List<PostDto> postDtos = posts.stream()
             .map(PostMapper::toDto)
             .collect(Collectors.toList());
-            
+
         CollectionModel<PostDto> model = CollectionModel.of(postDtos);
         model.add(linkTo(methodOn(UserController.class).getUserPosts(id)).withSelfRel());
-        
+
         return model;
     }
 }
@@ -605,7 +605,7 @@ public class UserController {
 ```java
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
         ErrorResponse error = ErrorResponse.builder()
@@ -613,14 +613,14 @@ public class GlobalExceptionHandler {
             .message(ex.getMessage())
             .status(404)
             .build();
-            
+
         return ResponseEntity.status(404).body(error);
     }
-    
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleValidation(
             MethodArgumentNotValidException ex) {
-        
+
         List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors()
             .stream()
             .map(fieldError -> FieldError.builder()
@@ -628,17 +628,17 @@ public class GlobalExceptionHandler {
                 .message(fieldError.getDefaultMessage())
                 .build())
             .collect(Collectors.toList());
-            
+
         ValidationErrorResponse error = ValidationErrorResponse.builder()
             .code("VALIDATION_ERROR")
             .message("Validation failed")
             .status(400)
             .fieldErrors(fieldErrors)
             .build();
-            
+
         return ResponseEntity.badRequest().body(error);
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         ErrorResponse error = ErrorResponse.builder()
@@ -646,7 +646,7 @@ public class GlobalExceptionHandler {
             .message("An unexpected error occurred")
             .status(500)
             .build();
-            
+
         return ResponseEntity.status(500).body(error);
     }
 }
@@ -689,7 +689,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserPage'
-              
+
   /users/{id}:
     get:
       summary: Get user by ID
@@ -720,7 +720,7 @@ components:
           type: string
         email:
           type: string
-          
+
     UserPage:
       type: object
       properties:
@@ -751,7 +751,7 @@ components:
 ```java
 @Configuration
 public class OpenApiConfig {
-    
+
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
@@ -775,7 +775,7 @@ public class OpenApiConfig {
 @RequestMapping("/api/users")
 @Tag(name = "User API", description = "Operations with users")
 public class UserController {
-    
+
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Retrieve a user by their ID")
     @ApiResponses(value = {
@@ -788,7 +788,7 @@ public class UserController {
             @PathVariable Long id) {
         // implementation
     }
-    
+
     @PostMapping
     @Operation(summary = "Create user", description = "Create a new user")
     public ResponseEntity<UserDto> createUser(
@@ -843,7 +843,7 @@ public class ApiController {
 ```java
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/")
@@ -860,20 +860,20 @@ public class WebConfig implements WebMvcConfigurer {
 
 ```java
 public class CreateUserRequest {
-    
+
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
-    
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
     private String email;
-    
+
     @NotNull(message = "Age is required")
     @Min(value = 18, message = "Age must be at least 18")
     @Max(value = 120, message = "Age must be at most 120")
     private Integer age;
-    
+
     // getters and setters
 }
 ```
@@ -883,7 +883,7 @@ public class CreateUserRequest {
 @RequestMapping("/api/users")
 @Validated
 public class UserController {
-    
+
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserRequest request) {
         // validation happens automatically
@@ -899,26 +899,26 @@ public class UserController {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @GetMapping("/{id}")
     @Cacheable(value = "users", key = "#id")
     public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
         // implementation
     }
-    
+
     @PostMapping
     @CacheEvict(value = "users", allEntries = true)
     public ResponseEntity<UserDto> createUser(@RequestBody CreateUserRequest request) {
         // implementation
     }
-    
+
     @PutMapping("/{id}")
     @CacheEvict(value = "users", key = "#id")
-    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, 
+    public ResponseEntity<UserDto> updateUser(@PathVariable Long id,
                                              @RequestBody UpdateUserRequest request) {
         // implementation
     }
-    
+
     @DeleteMapping("/{id}")
     @CacheEvict(value = "users", key = "#id")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
@@ -933,7 +933,7 @@ public class UserController {
 @GetMapping("/{id}")
 public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
     UserDto user = userService.findById(id);
-    
+
     return ResponseEntity.ok()
         .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
         .eTag(generateETag(user))
@@ -961,17 +961,17 @@ server:
 @SpringBootTest
 @AutoConfigureMockMvc
 public class UserControllerTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @Autowired
     private ObjectMapper objectMapper;
-    
+
     @Test
     public void createUser_ShouldReturnCreatedUser() throws Exception {
         CreateUserRequest request = new CreateUserRequest("John", "john@example.com");
-        
+
         mockMvc.perform(post("/api/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
@@ -979,7 +979,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.name").value("John"))
                 .andExpect(jsonPath("$.email").value("john@example.com"));
     }
-    
+
     @Test
     public void getUser_WhenNotFound_ShouldReturn404() throws Exception {
         mockMvc.perform(get("/api/users/999"))
@@ -993,24 +993,24 @@ public class UserControllerTest {
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserApiIntegrationTest {
-    
+
     @Autowired
     private TestRestTemplate restTemplate;
-    
+
     @Test
     public void fullUserLifecycle() {
         // Create user
         CreateUserRequest request = new CreateUserRequest("Jane", "jane@example.com");
         ResponseEntity<UserDto> createResponse = restTemplate.postForEntity(
             "/api/users", request, UserDto.class);
-        
+
         assertEquals(HttpStatus.OK, createResponse.getStatusCode());
         UserDto createdUser = createResponse.getBody();
-        
+
         // Get user
         ResponseEntity<UserDto> getResponse = restTemplate.getForEntity(
             "/api/users/" + createdUser.getId(), UserDto.class);
-        
+
         assertEquals(HttpStatus.OK, getResponse.getStatusCode());
         assertEquals("Jane", getResponse.getBody().getName());
     }
@@ -1021,7 +1021,7 @@ public class UserApiIntegrationTest {
 
 ```java
 public class UserApiTest {
-    
+
     @Test
     public void testUserApi() {
         // Create user
@@ -1034,7 +1034,7 @@ public class UserApiTest {
             .statusCode(200)
             .body("name", equalTo("Bob"))
             .body("email", equalTo("bob@example.com"));
-            
+
         // Get all users
         given()
         .when()
@@ -1048,21 +1048,21 @@ public class UserApiTest {
 
 ## Лучшие практики
 
-1. **Используйте правильные `HTTP` методы** - **GET** для чтения, **POST** для создания, **PUT**/**PATCH** для обновления, **DELETE** для удаления
+1. **Используйте правильные `HTTP` методы** — **GET** для чтения, **POST** для создания, **PUT**/**PATCH** для обновления, **DELETE** для удаления
 2. **Возвращайте правильные статус коды** - `200` для успеха, `404` для не найденных ресурсов, `400` для ошибок валидации
 3. **Дизайн URI иерархично** — `/resources/id` вместо плоских идентификаторов
-4. **Версионируйте API** - используйте **URI versioning** для **breaking changes**
-5. **Пагинируйте большие списки** - не возвращайте тысячи записей за раз
-6. **Фильтруйте и сортируйте** - предоставьте параметры для фильтрации и сортировки
-7. **Документируйте API** - используйте **OpenAPI**/**Swagger**
-8. **Обработайте ошибки правильно** - возвращайте структурированные ошибки
-9. **Валидируйте входные данные** - на уровне контроллеров и **DTO**
-10. **Кэшируйте ответы** - используйте **HTTP caching** и **application-level caching**
-11. **Защищайте API** - используйте **authentication** и **authorization**
-12. **Мониторьте производительность** - логируйте медленные запросы
-13. **Тестируйте API** - **unit**, **integration** и **API** тесты
-14. **Следуйте принципам REST** - ресурсы, **stateless**, **uniform interface**
-15. **Используйте HATEOAS** - для **discoverable API**
+4. **Версионируйте API** — используйте **URI versioning** для **breaking changes**
+5. **Пагинируйте большие списки** — не возвращайте тысячи записей за раз
+6. **Фильтруйте и сортируйте** — предоставьте параметры для фильтрации и сортировки
+7. **Документируйте API** — используйте **OpenAPI**/**Swagger**
+8. **Обработайте ошибки правильно** — возвращайте структурированные ошибки
+9. **Валидируйте входные данные** — на уровне контроллеров и **DTO**
+10. **Кэшируйте ответы** — используйте **HTTP caching** и **application-level caching**
+11. **Защищайте API** — используйте **authentication** и **authorization**
+12. **Мониторьте производительность** — логируйте медленные запросы
+13. **Тестируйте API** — **unit**, **integration** и **API** тесты
+14. **Следуйте принципам REST** — ресурсы, **stateless**, **uniform interface**
+15. **Используйте HATEOAS** — для **discoverable API**
 
 ## Решение проблем
 
@@ -1115,15 +1115,15 @@ public class UserApiTest {
 @RequestMapping("/api/v1/users")
 @Validated
 public class UserController {
-    
+
     private final UserService userService;
     private final UserMapper userMapper;
-    
+
     public UserController(UserService userService, UserMapper userMapper) {
         this.userService = userService;
         this.userMapper = userMapper;
     }
-    
+
     @GetMapping
     public ResponseEntity<Page<UserDto>> getUsers(
             @RequestParam(required = false) String status,
@@ -1131,69 +1131,69 @@ public class UserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String[] sort) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(parseSort(sort)));
         Page<User> userPage = userService.findUsers(status, search, pageable);
-        
-        PagedModel<EntityModel<UserDto>> pagedModel = 
+
+        PagedModel<EntityModel<UserDto>> pagedModel =
             pagedResourcesAssembler.toModel(userPage.map(userMapper::toDto));
-            
+
         return ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
             .body(userPage.map(userMapper::toDto));
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<UserDto>> getUser(@PathVariable Long id) {
         User user = userService.findById(id);
         UserDto userDto = userMapper.toDto(user);
-        
+
         EntityModel<UserDto> model = EntityModel.of(userDto);
         model.add(linkTo(methodOn(UserController.class).getUser(id)).withSelfRel());
         model.add(linkTo(methodOn(UserController.class).getUserPosts(id)).withRel("posts"));
-        
+
         return ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES))
             .eTag(generateETag(user))
             .lastModified(user.getUpdatedAt())
             .body(model);
     }
-    
+
     @PostMapping
     public ResponseEntity<EntityModel<UserDto>> createUser(
             @Valid @RequestBody CreateUserRequest request) {
-        
+
         User user = userService.createUser(request);
         UserDto userDto = userMapper.toDto(user);
-        
+
         EntityModel<UserDto> model = EntityModel.of(userDto);
         model.add(linkTo(methodOn(UserController.class).getUser(user.getId())).withSelfRel());
-        
+
         return ResponseEntity.created(
                 linkTo(methodOn(UserController.class).getUser(user.getId())).toUri())
             .body(model);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<UserDto>> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request) {
-        
+
         User user = userService.updateUser(id, request);
         UserDto userDto = userMapper.toDto(user);
-        
+
         EntityModel<UserDto> model = EntityModel.of(userDto);
         model.add(linkTo(methodOn(UserController.class).getUser(id)).withSelfRel());
-        
+
         return ResponseEntity.ok(model);
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     private Sort parseSort(String[] sortParams) {
         List<Order> orders = new ArrayList<>();
         for (String param : sortParams) {
@@ -1205,7 +1205,7 @@ public class UserController {
         }
         return Sort.by(orders);
     }
-    
+
     private String generateETag(User user) {
         return String.valueOf(user.hashCode());
     }
@@ -1222,31 +1222,31 @@ public class UserDto {
     private UserStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+
     // getters and setters
 }
 
 public class CreateUserRequest {
-    
+
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
-    
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     private String email;
-    
+
     // getters and setters
 }
 
 public class UpdateUserRequest {
-    
+
     @Size(min = 2, max = 50, message = "Name must be between 2 and 50 characters")
     private String name;
-    
+
     @Email(message = "Email must be valid")
     private String email;
-    
+
     // getters and setters
 }
 ```
@@ -1257,73 +1257,73 @@ public class UpdateUserRequest {
 @Service
 @Transactional(readOnly = true)
 public class UserService {
-    
+
     private final UserRepository userRepository;
-    
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public Page<User> findUsers(String status, String search, Pageable pageable) {
         Specification<User> spec = Specification.where(null);
-        
+
         if (status != null) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.equal(root.get("status"), UserStatus.valueOf(status.toUpperCase())));
         }
-        
+
         if (search != null) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.or(
                     cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"),
                     cb.like(cb.lower(root.get("email")), "%" + search.toLowerCase() + "%")
                 ));
         }
-        
+
         return userRepository.findAll(spec, pageable);
     }
-    
+
     public User findById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @Transactional
     public User createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateEmailException(request.getEmail());
         }
-        
+
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setStatus(UserStatus.ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
-        
+
         return userRepository.save(user);
     }
-    
+
     @Transactional
     public User updateUser(Long id, UpdateUserRequest request) {
         User user = findById(id);
-        
+
         if (request.getName() != null) {
             user.setName(request.getName());
         }
-        
+
         if (request.getEmail() != null) {
-            if (!request.getEmail().equals(user.getEmail()) && 
+            if (!request.getEmail().equals(user.getEmail()) &&
                 userRepository.existsByEmail(request.getEmail())) {
                 throw new DuplicateEmailException(request.getEmail());
             }
             user.setEmail(request.getEmail());
         }
-        
+
         user.setUpdatedAt(LocalDateTime.now());
-        
+
         return userRepository.save(user);
     }
-    
+
     @Transactional
     public void deleteUser(Long id) {
         User user = findById(id);
@@ -1353,7 +1353,7 @@ public class DuplicateEmailException extends RuntimeException {
 ```java
 @Configuration
 public class ApiConfig {
-    
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -1365,7 +1365,7 @@ public class ApiConfig {
 
 @Configuration
 public class CacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager() {
         return new ConcurrentMapCacheManager("users", "posts");

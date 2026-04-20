@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-data.md"]
 ---
 
-# Quarkus: Testing - Unit Tests, Integration Tests и @QuarkusTest
-
-
+# Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-data.md"]
 
 ## Содержание
 
-- [Quarkus: Testing - Unit Tests, Integration Tests и @QuarkusTest](#quarkus-testing-unit-tests-integration-tests-и-quarkustest)
+- [Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest](#quarkus-testing-unit-tests-integration-tests-и-quarkustest)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Unit Tests](#unit-tests)
@@ -98,7 +96,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTest {
-    
+
     @Test
     void testCreateUser() {
         UserService service = new UserService();
@@ -120,7 +118,7 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class UserResourceTest {
-    
+
     @Test
     void testGetUser() {
         given()
@@ -144,7 +142,7 @@ import org.mockito.Mockito;
 
 @QuarkusTest
 public class UserResourceTest {
-    
+
     @BeforeEach
     void setup() {
         UserService mockService = Mockito.mock(UserService.class);
@@ -199,14 +197,14 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class ReactiveServiceTest {
-    
+
     @Inject
     ReactiveUserService service;
-    
+
     @Test
     void testReactiveOperation() {
         Uni<User> result = service.getUser(1L);
-        
+
         result
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .assertCompleted()
@@ -231,7 +229,7 @@ import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
 public class UserResourceTest {
-    
+
     @Test
     void testGetUser() {
         given()
@@ -242,11 +240,11 @@ public class UserResourceTest {
             .body("name", is("John"))
             .body("email", is("john@example.com"));
     }
-    
+
     @Test
     void testCreateUser() {
         User user = new User("Jane", "jane@example.com");
-        
+
         given()
             .contentType("application/json")
             .body(user)
@@ -273,13 +271,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @QuarkusTestResource(PostgresTestResource.class)
 public class DatabaseTest {
-    
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
-    
+
     @Test
     void testDatabaseOperation() {
         // Тест с реальной БД в контейнере
@@ -296,7 +294,7 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 import java.util.Map;
 
 public class CustomTestResource implements QuarkusTestResourceLifecycleManager {
-    
+
     @Override
     public Map<String, String> start() {
         // Инициализация тестового ресурса
@@ -305,7 +303,7 @@ public class CustomTestResource implements QuarkusTestResourceLifecycleManager {
             "custom.property", "test-value"
         );
     }
-    
+
     @Override
     public void stop() {
         // Очистка ресурса
@@ -327,13 +325,13 @@ import org.mockito.Mockito;
 
 @QuarkusTest
 public class ServiceTest {
-    
+
     @BeforeEach
     void setup() {
         UserService mockService = Mockito.mock(UserService.class);
         Mockito.when(mockService.findById(1L))
             .thenReturn(new User("John", "john@example.com"));
-        
+
         QuarkusMock.installMockForType(mockService, UserService.class);
     }
 }
@@ -348,13 +346,13 @@ import org.mockito.Mockito;
 
 @QuarkusTest
 public class PartialMockTest {
-    
+
     @BeforeEach
     void setup() {
         UserService service = Mockito.spy(UserService.class);
         Mockito.doReturn(new User("Mocked", "mocked@example.com"))
             .when(service).findById(1L);
-        
+
         QuarkusMock.installMockForType(service, UserService.class);
     }
 }
@@ -373,7 +371,7 @@ void setupReactiveMock() {
     ReactiveService mockService = Mockito.mock(ReactiveService.class);
     Mockito.when(mockService.getUser(1L))
         .thenReturn(Uni.createFrom().item(new User("John", "john@example.com")));
-    
+
     QuarkusMock.installMockForType(mockService, ReactiveService.class);
 }
 ```
@@ -409,7 +407,7 @@ import java.util.Map;
 
 @TestProfile
 public class CustomTestProfile implements QuarkusTestProfile {
-    
+
     @Override
     public Map<String, String> getConfigOverrides() {
         return Map.of(
@@ -439,12 +437,12 @@ quarkus.hibernate.orm.database.generation=drop-and-create
 ```java
 @QuarkusTest
 public class PanacheTest {
-    
+
     @Test
     void testPanacheQuery() {
         User user = new User("John", "john@example.com");
         user.persist();
-        
+
         User found = User.findByName("John").await().indefinitely();
         assertNotNull(found);
         assertEquals("John", found.name);
@@ -461,13 +459,13 @@ import jakarta.transaction.Transactional;
 
 @QuarkusTest
 public class TransactionTest {
-    
+
     @Test
     @Transactional
     void testWithTransaction() {
         User user = new User("John", "john@example.com");
         user.persist();
-        
+
         // Транзакция будет откачена после теста
     }
 }
@@ -485,7 +483,7 @@ import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
 public class SecurityTest {
-    
+
     @Test
     @TestSecurity(user = "admin", roles = {"admin"})
     void testAdminEndpoint() {
@@ -494,7 +492,7 @@ public class SecurityTest {
             .then()
             .statusCode(200);
     }
-    
+
     @Test
     @TestSecurity(user = "user", roles = {"user"})
     void testUserEndpoint() {
@@ -521,12 +519,12 @@ import java.util.concurrent.Executors;
 
 @QuarkusTest
 public class LoadTest {
-    
+
     @Test
     void testConcurrentRequests() throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(10);
         CompletableFuture<?>[] futures = new CompletableFuture[100];
-        
+
         for (int i = 0; i < 100; i++) {
             futures[i] = CompletableFuture.runAsync(() -> {
                 given()
@@ -535,7 +533,7 @@ public class LoadTest {
                     .statusCode(200);
             }, executor);
         }
-        
+
         CompletableFuture.allOf(futures).join();
         executor.shutdown();
     }
@@ -557,10 +555,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public class PactContractTest {
-    
+
     @Rule
     public PactProviderRuleMk2 mockProvider = new PactProviderRuleMk2("user-service", "localhost", 8080, this);
-    
+
     @Pact(consumer = "my-consumer")
     public RequestResponsePact createPact(PactDslWithProvider builder) {
         return builder
@@ -575,7 +573,7 @@ public class PactContractTest {
                 .stringType("email", "john@example.com"))
             .toPact();
     }
-    
+
     @Test
     @PactVerification("user-service")
     public void testUserService() {
@@ -599,11 +597,11 @@ import java.util.concurrent.TimeUnit;
 
 @QuarkusTest
 public class PerformanceTest {
-    
+
     @Test
     void testConcurrentLoad() throws InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(50);
-        
+
         for (int i = 0; i < 1000; i++) {
             executor.submit(() -> {
                 given()
@@ -612,7 +610,7 @@ public class PerformanceTest {
                     .statusCode(200);
             });
         }
-        
+
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.MINUTES);
     }
@@ -630,17 +628,17 @@ public class UserTestDataBuilder {
     private String name = "Test User";
     private String email = "test@example.com";
     private Integer age = 25;
-    
+
     public UserTestDataBuilder withName(String name) {
         this.name = name;
         return this;
     }
-    
+
     public UserTestDataBuilder withEmail(String email) {
         this.email = email;
         return this;
     }
-    
+
     public User build() {
         User user = new User();
         user.setName(name);
@@ -658,19 +656,19 @@ public class UserTestDataBuilder {
 ```java
 @QuarkusTest
 public class ParameterizedTest {
-    
+
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3, 4, 5})
     void testWithParameters(int value) {
         assertTrue(value > 0);
     }
-    
+
     @ParameterizedTest
     @MethodSource("userProvider")
     void testWithMethodSource(User user) {
         assertNotNull(user.getName());
     }
-    
+
     static Stream<User> userProvider() {
         return Stream.of(
             new User("User1", "user1@example.com"),
@@ -687,14 +685,14 @@ public class ParameterizedTest {
 ```java
 @QuarkusTest
 public class TestWithFixtures {
-    
+
     @BeforeEach
     void setup() {
         // Создание тестовых данных
         User user = new User("Test User", "test@example.com");
         user.persist();
     }
-    
+
     @AfterEach
     void cleanup() {
         // Очистка после тестов
@@ -713,13 +711,13 @@ public class TestWithFixtures {
 @QuarkusTest
 @QuarkusTestResource(PostgresTestResource.class)
 public class IntegrationTest {
-    
+
     @Test
     void testDatabaseIntegration() {
         // Тест с реальной БД в контейнере
         User user = new User("Test", "test@example.com");
         user.persist();
-        
+
         assertNotNull(user.id);
     }
 }
@@ -733,13 +731,13 @@ public class IntegrationTest {
 @Provider("user-service")
 @PactFolder("pacts")
 public class UserServiceContractTest {
-    
+
     @TestTemplate
     @ExtendWith(PactVerificationInvocationContextProvider.class)
     void pactVerificationTestTemplate(PactVerificationContext context) {
         context.verifyInteraction();
     }
-    
+
     @BeforeEach
     void before(PactVerificationContext context) {
         context.setTarget(new HttpTestTarget("localhost", 8080));
@@ -754,16 +752,16 @@ public class UserServiceContractTest {
 ```java
 @QuarkusTest
 public class PerformanceTest {
-    
+
     @Test
     void testResponseTime() {
         long startTime = System.currentTimeMillis();
-        
+
         given()
             .when().get("/api/users")
             .then()
             .statusCode(200);
-        
+
         long duration = System.currentTimeMillis() - startTime;
         assertTrue(duration < 1000, "Response time should be less than 1 second");
     }
@@ -781,21 +779,21 @@ public class UserTestDataBuilder {
     private String name = "Default Name";
     private String email = "default@example.com";
     private Integer age = 25;
-    
+
     public static UserTestDataBuilder aUser() {
         return new UserTestDataBuilder();
     }
-    
+
     public UserTestDataBuilder withName(String name) {
         this.name = name;
         return this;
     }
-    
+
     public UserTestDataBuilder withEmail(String email) {
         this.email = email;
         return this;
     }
-    
+
     public User build() {
         User user = new User();
         user.name = name;
@@ -813,7 +811,7 @@ public class UserTestDataBuilder {
 ```java
 @QuarkusTest
 public class TestWithFixtures {
-    
+
     @BeforeEach
     void setup() {
         // Создание тестовых данных
@@ -823,7 +821,7 @@ public class TestWithFixtures {
             .build();
         user.persist();
     }
-    
+
     @AfterEach
     void cleanup() {
         // Очистка после тестов
@@ -845,3 +843,11 @@ public class TestWithFixtures {
 - [Testcontainers](https://testcontainers.com/)
 - [**REST Assured**](https://rest-assured.io/)
 - [Pact](https://pact.io/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

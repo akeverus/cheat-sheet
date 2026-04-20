@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-views.md"]
 ---
 
-# Micronaut: Internationalization - i18n и Localization
-
-
+# Micronaut: Internationalization — i18n и Localization
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-views.md"]
 
 ## Содержание
 
-- [Micronaut: Internationalization - i18n и Localization](#micronaut-internationalization-i18n-и-localization)
+- [Micronaut: Internationalization — i18n и Localization](#micronaut-internationalization-i18n-и-localization)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка i18n](#настройка-i18n)
@@ -127,11 +125,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class LocalizedService {
     private final MessageSource messageSource;
-    
+
     public LocalizedService(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
-    
+
     public String getMessage(HttpRequest<?> request, String key) {
         Locale locale = request.getLocale().orElse(Locale.getDefault());
         return messageSource.getMessage(key, locale);
@@ -148,7 +146,7 @@ import io.micronaut.http.annotation.QueryValue;
 
 @Controller("/api/users")
 public class LocalizedController {
-    
+
     @Get("/{id}")
     public User getUser(Long id, @QueryValue(defaultValue = "en") String lang) {
         Locale locale = Locale.forLanguageTag(lang);
@@ -178,7 +176,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ParameterizedMessageService {
     private final MessageSource messageSource;
-    
+
     public String getWelcomeMessage(String name, Locale locale) {
         return messageSource.getMessage("user.welcome", locale, name);
     }
@@ -223,17 +221,17 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class LocaleFormattingService {
-    
+
     public String formatNumber(Double number, Locale locale) {
         NumberFormat formatter = NumberFormat.getNumberInstance(locale);
         return formatter.format(number);
     }
-    
+
     public String formatCurrency(Double amount, Locale locale) {
         NumberFormat formatter = NumberFormat.getCurrencyInstance(locale);
         return formatter.format(amount);
     }
-    
+
     public String formatDate(LocalDate date, Locale locale) {
         DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
             .withLocale(locale);
@@ -269,7 +267,7 @@ import java.util.Locale;
 
 @Singleton
 public class CustomLocaleResolver implements LocaleResolver {
-    
+
     @Override
     public Locale resolve(HttpRequest<?> request) {
         // Определение локали из cookie
@@ -307,7 +305,7 @@ import java.util.ResourceBundle;
 
 @Singleton
 public class CustomMessageSource implements MessageSource {
-    
+
     @Override
     public Optional<String> getMessage(String code, Locale locale, Object... args) {
         ResourceBundle bundle = ResourceBundle.getBundle("messages", locale);
@@ -331,3 +329,11 @@ public class CustomMessageSource implements MessageSource {
 - [**Java** Internationalization](https://docs.oracle.com/javase/tutorial/i18n/)
 - [**Locale Best Practices**](https://www.baeldung.com/java-localization-messages)
 - [**ResourceBundle** Documentation](https://docs.oracle.com/javase/8/docs/api/java/util/ResourceBundle.html)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

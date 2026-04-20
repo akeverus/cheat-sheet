@@ -124,13 +124,13 @@ public class SudokuSolver {
     private static final int MIN_VALUE = 1;
     private static final int MAX_VALUE = 9;
     private static final int BOARD_START_INDEX = 0;
-    
+
     private final int[][] board;
-    
+
     public SudokuSolver(int[][] board) {
         this.board = board;
     }
-    
+
     // Рекурсивно пытаемся заполнить пустые клетки; откатываемся при нарушении
     public boolean solve() {
         for (int row = BOARD_START_INDEX; row < BOARD_SIZE; row++) {
@@ -195,7 +195,7 @@ private boolean subsectionConstraint(int[][] board, int row, int column) {
     int subsectionRowEnd = subsectionRowStart + SUBSECTION_SIZE;
     int subsectionColumnStart = (column / SUBSECTION_SIZE) * SUBSECTION_SIZE;
     int subsectionColumnEnd = subsectionColumnStart + SUBSECTION_SIZE;
-    
+
     for (int r = subsectionRowStart; r < subsectionRowEnd; r++) {
         for (int c = subsectionColumnStart; c < subsectionColumnEnd; c++) {
             if (!checkConstraint(board, r, constraint, c)) {
@@ -282,7 +282,7 @@ node.next = node
 class DancingNode {
     DancingNode L, R, U, D;
     ColumnNode C;
-    
+
     // Подвешиваем узел вниз в столбце
     DancingNode hookDown(DancingNode node) {
         assert (this.C == node.C);
@@ -292,7 +292,7 @@ class DancingNode {
         this.D = node;
         return node;
     }
-    
+
     // Подвешиваем узел вправо в строке
     DancingNode hookRight(DancingNode node) {
         node.R = this.R;
@@ -301,33 +301,33 @@ class DancingNode {
         this.R = node;
         return node;
     }
-    
+
     // Удаляем из горизонтального списка
     void unlinkLR() {
         this.L.R = this.R;
         this.R.L = this.L;
     }
-    
+
     // Восстанавливаем в горизонтальном списке
     void relinkLR() {
         this.L.R = this.R.L = this;
     }
-    
+
     // Удаляем из вертикального списка
     void unlinkUD() {
         this.U.D = this.D;
         this.D.U = this.U;
     }
-    
+
     // Восстанавливаем в вертикальном списке
     void relinkUD() {
         this.U.D = this.D.U = this;
     }
-    
+
     DancingNode() {
         L = R = U = D = this; // изначально зациклен на себе
     }
-    
+
     DancingNode(ColumnNode c) {
         this();
         C = c;
@@ -342,14 +342,14 @@ class DancingNode {
 class ColumnNode extends DancingNode {
     int size;      // количество единиц в столбце
     String name;   // метка столбца
-    
+
     ColumnNode(String n) {
         super();
         size = 0;
         name = n;
         C = this;   // ссылка на себя как на столбец
     }
-    
+
     // Удаляем столбец и связанные строки (cover в Algorithm X)
     void cover() {
         unlinkLR();
@@ -360,7 +360,7 @@ class ColumnNode extends DancingNode {
             }
         }
     }
-    
+
     // Восстанавливаем столбец и строки (uncover)
     void uncover() {
         for (DancingNode i = this.U; i != this; i = i.U) {
@@ -399,7 +399,7 @@ class SudokuSolverK(private var board: Array<IntArray>) {
         const val MIN_VALUE = 1
         const val MAX_VALUE = 9
     }
-    
+
     // Рекурсивно заполняем пустые клетки, откатываясь при нарушениях
     fun solve(): Boolean {
         for (row in 0 until BOARD_SIZE) {
@@ -418,14 +418,14 @@ class SudokuSolverK(private var board: Array<IntArray>) {
         }
         return true
     }
-    
+
     // Проверка строки, столбца и блока 3×3
     private fun isValid(board: Array<IntArray>, row: Int, column: Int): Boolean {
         return rowConstraint(board, row) &&
                columnConstraint(board, column) &&
                subsectionConstraint(board, row, column)
     }
-    
+
     // Проверяем отсутствие дубликатов в строке
     private fun rowConstraint(board: Array<IntArray>, row: Int): Boolean {
         val constraint = BooleanArray(BOARD_SIZE)
@@ -433,7 +433,7 @@ class SudokuSolverK(private var board: Array<IntArray>) {
             checkConstraint(board, row, constraint, column)
         }
     }
-    
+
     // Проверяем отсутствие дубликатов в столбце
     private fun columnConstraint(board: Array<IntArray>, column: Int): Boolean {
         val constraint = BooleanArray(BOARD_SIZE)
@@ -441,7 +441,7 @@ class SudokuSolverK(private var board: Array<IntArray>) {
             checkConstraint(board, row, constraint, column)
         }
     }
-    
+
     // Проверяем блок 3×3
     private fun subsectionConstraint(board: Array<IntArray>, row: Int, column: Int): Boolean {
         val constraint = BooleanArray(BOARD_SIZE)
@@ -449,7 +449,7 @@ class SudokuSolverK(private var board: Array<IntArray>) {
         val subsectionRowEnd = subsectionRowStart + SUBSECTION_SIZE
         val subsectionColumnStart = (column / SUBSECTION_SIZE) * SUBSECTION_SIZE
         val subsectionColumnEnd = subsectionColumnStart + SUBSECTION_SIZE
-        
+
         for (r in subsectionRowStart until subsectionRowEnd) {
             for (c in subsectionColumnStart until subsectionColumnEnd) {
                 if (!checkConstraint(board, r, constraint, c)) {
@@ -459,7 +459,7 @@ class SudokuSolverK(private var board: Array<IntArray>) {
         }
         return true
     }
-    
+
     // Помечаем значение; при повторе возвращаем false
     private fun checkConstraint(
         board: Array<IntArray>,
@@ -476,7 +476,7 @@ class SudokuSolverK(private var board: Array<IntArray>) {
         }
         return true
     }
-    
+
     fun getBoard(): Array<IntArray> = board // возвращаем итоговую доску
 }
 ```
@@ -496,7 +496,7 @@ fun main() {
         intArrayOf(0, 0, 8, 5, 0, 0, 0, 1, 0),
         intArrayOf(0, 9, 0, 0, 0, 0, 4, 0, 0)
     )
-    
+
     val solver = SudokuSolverK(board)
     if (solver.solve()) {
         println("Sudoku solved!")
@@ -557,11 +557,11 @@ public boolean isValidBoard(int[][] board) {
 public int[][] generateSudoku(int difficulty) {
     int[][] board = new int[BOARD_SIZE][BOARD_SIZE];
     solve(); // Заполняем полную доску (предполагается отдельный solve() для генерации)
-    
+
     // Удаляем числа в зависимости от сложности — чем больше, тем труднее пазл
     int cellsToRemove = difficulty * 10;
     Random random = new Random();
-    
+
     while (cellsToRemove > 0) {
         int row = random.nextInt(BOARD_SIZE);
         int col = random.nextInt(BOARD_SIZE);
@@ -640,18 +640,18 @@ fun `solution respects constraints`(@ForAll board: Array<IntArray>) {
 
 ## Частые вопросы
 
-**Нужен ли DLX для обычных пазлов?** Обычно нет; `backtracking` справляется, DLX выгоден на сложных или массовых задачах.  
-**Как выбирать порядок заполнения?** Берите клетку с минимальным числом допустимых значений — это уменьшает ветвление.  
-**Поддерживает ли код нестандартные размеры?** Принципы подходят, но константы `BOARD_SIZE` и `SUBSECTION_SIZE` нужно менять согласованно.  
-**Можно ли искать несколько решений?** Да, достаточно не выходить при первом решении и собирать варианты, но следите за временем.  
+**Нужен ли DLX для обычных пазлов?** Обычно нет; `backtracking` справляется, DLX выгоден на сложных или массовых задачах.
+**Как выбирать порядок заполнения?** Берите клетку с минимальным числом допустимых значений — это уменьшает ветвление.
+**Поддерживает ли код нестандартные размеры?** Принципы подходят, но константы `BOARD_SIZE` и `SUBSECTION_SIZE` нужно менять согласованно.
+**Можно ли искать несколько решений?** Да, достаточно не выходить при первом решении и собирать варианты, но следите за временем.
 **Как профилировать?** Используйте JMH для Java и measureTimeMillis для Kotlin, фиксируйте seed и входные доски.
 
 ## Глоссарий
 
-`Backtracking` — перебор с откатом, рекурсивный поиск по пустым клеткам.  
-`Dancing Links` — структура связей для эффективного скрытия/раскрытия столбцов в `Algorithm X`.  
-`Algorithm X` — нерекурсивная формулировка поиска по задаче точного покрытия.  
-`Exact Cover` — задача выбора строк матрицы, чтобы каждый столбец был покрыт ровно один раз.  
+`Backtracking` — перебор с откатом, рекурсивный поиск по пустым клеткам.
+`Dancing Links` — структура связей для эффективного скрытия/раскрытия столбцов в `Algorithm X`.
+`Algorithm X` — нерекурсивная формулировка поиска по задаче точного покрытия.
+`Exact Cover` — задача выбора строк матрицы, чтобы каждый столбец был покрыт ровно один раз.
 `Constraint propagation` — сокращение поиска путём удаления невозможных значений до перебора.
 
 ## Дополнительные примеры использования

@@ -119,21 +119,21 @@ updated: "2026-02-11"
 ```java
 @Service
 public class UserService {
-    
+
     private final UserRepository userRepository;
-    
+
     // Сервис контролирует свою логику и данные
     public User createUser(CreateUserRequest request) {
         // Валидация
         validateUserRequest(request);
-        
+
         // Бизнес-логика
         User user = new User(request.getEmail(), request.getName());
-        
+
         // Сохранение
         return userRepository.save(user);
     }
-    
+
     private void validateUserRequest(CreateUserRequest request) {
         // Валидация внутри сервиса
         if (request.getEmail() == null || request.getEmail().isBlank()) {
@@ -156,7 +156,7 @@ public interface PaymentService {
 // Реализация сервиса
 @Service
 public class PaymentServiceImpl implements PaymentService {
-    
+
     @Override
     public PaymentResult processPayment(PaymentRequest request) {
         // Реализация может быть изменена без влияния на клиентов
@@ -167,9 +167,9 @@ public class PaymentServiceImpl implements PaymentService {
 // Клиент использует интерфейс, а не реализацию
 @Service
 public class OrderService {
-    
+
     private final PaymentService paymentService; // Зависимость от интерфейса
-    
+
     public void processOrder(Order order) {
         PaymentRequest request = new PaymentRequest(order.getAmount());
         PaymentResult result = paymentService.processPayment(request);
@@ -186,11 +186,11 @@ public class OrderService {
 // Переиспользуемый сервис
 @Service
 public class NotificationService {
-    
+
     public void sendEmail(String to, String subject, String body) {
         // Общая логика отправки email
     }
-    
+
     public void sendSms(String phoneNumber, String message) {
         // Общая логика отправки SMS
     }
@@ -199,9 +199,9 @@ public class NotificationService {
 // Использование в разных контекстах
 @Service
 public class UserService {
-    
+
     private final NotificationService notificationService;
-    
+
     public void createUser(CreateUserRequest request) {
         User user = // создание пользователя
         notificationService.sendEmail(user.getEmail(), "Welcome", "Welcome message");
@@ -210,9 +210,9 @@ public class UserService {
 
 @Service
 public class OrderService {
-    
+
     private final NotificationService notificationService;
-    
+
     public void confirmOrder(Order order) {
         // подтверждение заказа
         notificationService.sendEmail(order.getCustomerEmail(), "Order Confirmed", "Order details");
@@ -228,7 +228,7 @@ public class OrderService {
 // Регистрация сервиса
 @Service
 public class UserService {
-    
+
     @PostConstruct
     public void registerService() {
         serviceRegistry.register("user-service", "http://user-service:8080");
@@ -238,9 +238,9 @@ public class UserService {
 // Обнаружение сервиса
 @Service
 public class OrderService {
-    
+
     private final ServiceRegistry serviceRegistry;
-    
+
     public void processOrder(Order order) {
         ServiceInfo userService = serviceRegistry.discover("user-service");
         // Использование обнаруженного сервиса
@@ -263,19 +263,19 @@ public class OrderService {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody CreateUserRequest request) {
         User user = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable String id) {
         User user = userService.getUser(id);
         return ResponseEntity.ok(user);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(
             @PathVariable String id,
@@ -283,7 +283,7 @@ public class UserController {
         User user = userService.updateUser(id, request);
         return ResponseEntity.ok(user);
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
@@ -295,10 +295,10 @@ public class UserController {
 public class CreateUserRequest {
     @NotBlank
     private String email;
-    
+
     @NotBlank
     private String name;
-    
+
     // Getters and setters
 }
 
@@ -307,7 +307,7 @@ public class User {
     private String email;
     private String name;
     private Instant createdAt;
-    
+
     // Getters and setters
 }
 ```
@@ -318,29 +318,29 @@ public class User {
 // SOAP Service Contract через WSDL
 @Endpoint
 public class UserServiceEndpoint {
-    
+
     private static final String NAMESPACE_URI = "http://example.com/users";
-    
+
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "CreateUserRequest")
     @ResponsePayload
     public CreateUserResponse createUser(@RequestPayload CreateUserRequest request) {
         User user = userService.createUser(request);
-        
+
         CreateUserResponse response = new CreateUserResponse();
         response.setUser(toUserDto(user));
         return response;
     }
-    
+
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "GetUserRequest")
     @ResponsePayload
     public GetUserResponse getUser(@RequestPayload GetUserRequest request) {
         User user = userService.getUser(request.getId());
-        
+
         GetUserResponse response = new GetUserResponse();
         response.setUser(toUserDto(user));
         return response;
     }
-    
+
     private UserDto toUserDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
@@ -356,10 +356,10 @@ public class UserServiceEndpoint {
 public class CreateUserRequest {
     @XmlElement(required = true)
     private String email;
-    
+
     @XmlElement(required = true)
     private String name;
-    
+
     // Getters and setters
 }
 ```
@@ -371,7 +371,7 @@ public class CreateUserRequest {
 @RequestMapping("/api/users")
 @Api(tags = "User Management")
 public class UserController {
-    
+
     @PostMapping
     @ApiOperation(value = "Create a new user", response = User.class)
     @ApiResponses(value = {
@@ -430,7 +430,7 @@ eureka:
 ```java
 @Configuration
 public class RestTemplateConfig {
-    
+
     @LoadBalanced
     @Bean
     public RestTemplate restTemplate() {
@@ -440,9 +440,9 @@ public class RestTemplateConfig {
 
 @Service
 public class OrderService {
-    
+
     private final RestTemplate restTemplate;
-    
+
     // Использование имени сервиса вместо URL
     public User getUser(String userId) {
         return restTemplate.getForObject(
@@ -459,19 +459,19 @@ public class OrderService {
 ```java
 @FeignClient(name = "user-service")
 public interface UserServiceClient {
-    
+
     @GetMapping("/api/users/{id}")
     User getUser(@PathVariable String id);
-    
+
     @PostMapping("/api/users")
     User createUser(@RequestBody CreateUserRequest request);
 }
 
 @Service
 public class OrderService {
-    
+
     private final UserServiceClient userServiceClient;
-    
+
     public void processOrder(Order order) {
         User user = userServiceClient.getUser(order.getCustomerId());
         // Обработка заказа
@@ -488,7 +488,7 @@ public class OrderService {
 ```java
 @Configuration
 public class CamelConfig {
-    
+
     @Bean
     public RouteBuilder routeBuilder() {
         return new RouteBuilder() {
@@ -499,12 +499,12 @@ public class CamelConfig {
                     .to("log:userCreated")
                     .to("kafka:user-events")
                     .to("direct:sendWelcomeEmail");
-                
+
                 // Трансформация сообщений
                 from("direct:orderCreated")
                     .transform().simple("${body.orderId}")
                     .to("jms:orderQueue");
-                
+
                 // Агрегация сообщений
                 from("direct:orderItems")
                     .aggregate(header("orderId"), new OrderAggregationStrategy())
@@ -517,10 +517,10 @@ public class CamelConfig {
 
 @Component
 public class OrderService {
-    
+
     @Autowired
     private ProducerTemplate producerTemplate;
-    
+
     public void createOrder(Order order) {
         // Отправка сообщения в ESB
         producerTemplate.sendBody("direct:orderCreated", order);
@@ -537,12 +537,12 @@ public class OrderService {
 ```java
 @Service
 public class OrderOrchestrationService {
-    
+
     private final UserServiceClient userServiceClient;
     private final PaymentServiceClient paymentServiceClient;
     private final InventoryServiceClient inventoryServiceClient;
     private final ShippingServiceClient shippingServiceClient;
-    
+
     @Transactional
     public OrderResult processOrder(OrderRequest request) {
         // Шаг 1: Валидация пользователя
@@ -550,14 +550,14 @@ public class OrderOrchestrationService {
         if (user == null) {
             throw new UserNotFoundException(request.getCustomerId());
         }
-        
+
         // Шаг 2: Проверка наличия товаров
         InventoryCheckResult inventoryCheck = inventoryServiceClient
             .checkAvailability(request.getItems());
         if (!inventoryCheck.isAvailable()) {
             throw new InsufficientInventoryException();
         }
-        
+
         // Шаг 3: Обработка платежа
         PaymentRequest paymentRequest = new PaymentRequest(
             request.getCustomerId(),
@@ -567,23 +567,23 @@ public class OrderOrchestrationService {
         if (!paymentResult.isSuccess()) {
             throw new PaymentFailedException();
         }
-        
+
         // Шаг 4: Резервирование товаров
         inventoryServiceClient.reserveItems(request.getItems());
-        
+
         // Шаг 5: Создание заказа
         Order order = createOrder(request);
-        
+
         // Шаг 6: Отправка заказа
         ShippingRequest shippingRequest = new ShippingRequest(
             order.getId(),
             user.getAddress()
         );
         shippingServiceClient.shipOrder(shippingRequest);
-        
+
         return new OrderResult(order.getId(), OrderStatus.CONFIRMED);
     }
-    
+
     private Order createOrder(OrderRequest request) {
         // Создание заказа
         return new Order(/* ... */);
@@ -597,7 +597,7 @@ public class OrderOrchestrationService {
 // Каждый сервис реагирует на события
 @Service
 public class OrderService {
-    
+
     @KafkaListener(topics = "order-commands", groupId = "order-service")
     public void handleCreateOrder(CreateOrderCommand command) {
         Order order = createOrder(command);
@@ -608,7 +608,7 @@ public class OrderService {
 
 @Service
 public class PaymentService {
-    
+
     @KafkaListener(topics = "order-events", groupId = "payment-service")
     public void handleOrderCreated(OrderCreatedEvent event) {
         PaymentResult result = processPayment(event.getOrder());
@@ -622,7 +622,7 @@ public class PaymentService {
 
 @Service
 public class InventoryService {
-    
+
     @KafkaListener(topics = "payment-events", groupId = "inventory-service")
     public void handlePaymentSucceeded(PaymentSucceededEvent event) {
         reserveItems(event.getOrderId());
@@ -652,7 +652,7 @@ public class InventoryService {
 // SOAP Service
 @Endpoint
 public class UserServiceEndpoint {
-    
+
     @PayloadRoot(namespace = "http://example.com/users", localPart = "GetUserRequest")
     @ResponsePayload
     public GetUserResponse getUser(@RequestPayload GetUserRequest request) {
@@ -684,7 +684,7 @@ public class UserServiceEndpoint {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<User> getUser(@PathVariable String id) {
         User user = userService.getUser(id);
@@ -716,7 +716,7 @@ public class UserController {
 @Configuration
 @EnableWs
 public class WebServiceConfig extends WsConfigurerAdapter {
-    
+
     @Bean
     public ServletRegistrationBean<MessageDispatcherServlet> messageDispatcherServlet(
             ApplicationContext applicationContext) {
@@ -725,7 +725,7 @@ public class WebServiceConfig extends WsConfigurerAdapter {
         servlet.setTransformWsdlLocations(true);
         return new ServletRegistrationBean<>(servlet, "/ws/*");
     }
-    
+
     @Bean(name = "users")
     public DefaultWsdl11Definition defaultWsdl11Definition(XsdSchema usersSchema) {
         DefaultWsdl11Definition wsdl11Definition = new DefaultWsdl11Definition();
@@ -735,7 +735,7 @@ public class WebServiceConfig extends WsConfigurerAdapter {
         wsdl11Definition.setSchema(usersSchema);
         return wsdl11Definition;
     }
-    
+
     @Bean
     public XsdSchema usersSchema() {
         return new SimpleXsdSchema(new ClassPathResource("users.xsd"));
@@ -748,21 +748,21 @@ public class WebServiceConfig extends WsConfigurerAdapter {
 ```java
 @Endpoint
 public class UserServiceEndpoint {
-    
+
     private static final String NAMESPACE_URI = "http://example.com/users";
-    
+
     private final UserService userService;
-    
+
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "GetUserRequest")
     @ResponsePayload
     public GetUserResponse getUser(@RequestPayload GetUserRequest request) {
         User user = userService.getUser(request.getId());
-        
+
         GetUserResponse response = new GetUserResponse();
         response.setUser(toUserDto(user));
         return response;
     }
-    
+
     private UserDto toUserDto(User user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
@@ -860,7 +860,7 @@ public class UserControllerV2 {
 ```java
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException e) {
         ErrorResponse error = new ErrorResponse("USER_NOT_FOUND", e.getMessage());
@@ -876,9 +876,9 @@ public class GlobalExceptionHandler {
 ```java
 @Component
 public class ServiceMonitoring {
-    
+
     private final MeterRegistry meterRegistry;
-    
+
     public void recordServiceCall(String serviceName, Duration duration) {
         Timer.Sample sample = Timer.start(meterRegistry);
         sample.stop(Timer.builder("service.call")
@@ -901,12 +901,12 @@ public class ServiceMonitoring {
 ```java
 @Configuration
 public class FeignConfig {
-    
+
     @Bean
     public Request.Options requestOptions() {
         return new Request.Options(5000, 10000); // Connect timeout, Read timeout
     }
-    
+
     @Bean
     public Retryer retryer() {
         return new Retryer.Default(1000, 2000, 3);

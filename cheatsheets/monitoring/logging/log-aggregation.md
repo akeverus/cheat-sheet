@@ -131,19 +131,19 @@ configProps.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 67108864);
 ```java
         StreamsBuilder builder = new StreamsBuilder();
 KStream<String, String> errorLogs = builder.stream("logs.application.error");
-        
+
         KTable<Windowed<String>, Long> errorCounts = errorLogs
             .mapValues(json -> parseServiceName(json))
             .groupBy((key, service) -> service)
             .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(5)))
             .count();
-        
+
 errorCounts.toStream()
     .map((windowedKey, count) -> KeyValue.pair(windowedKey.key(),
         String.format("{\"service\":\"%s\",\"windowStart\":%d,\"errorCount\":%d}",
             windowedKey.key(), windowedKey.window().start(), count)))
     .to("logs.aggregated.errors");
-        
+
         KafkaStreams streams = new KafkaStreams(builder.build(), props);
         streams.start();
 ```
@@ -201,7 +201,7 @@ Response time: накопление значений в окне, расчёт �
 
 ### Перцентили (идея)
 
-По операции хранить список responseTimes (с периодической очисткой или ограничением размера). getP95: sort, index = ceil(0.95 * size) - 1. isDegraded: при достаточном объёме данных (например ≥100) проверять p95 > max(p50 * 5, 10000 ms).
+По операции хранить список responseTimes (с периодической очисткой или ограничением размера). getP95: sort, index = ceil(0.95 * size) — 1. isDegraded: при достаточном объёме данных (например ≥100) проверять p95 > max(p50 * 5, 10000 ms).
 
 ## Data enrichment
 

@@ -17,8 +17,6 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
 
 # Spring Data MongoDB: Полное руководство
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -158,17 +156,17 @@ spring.data.mongodb.authentication-database=admin
 @Configuration
 @EnableMongoRepositories(basePackages = "com.example.repository")
 public class MongoConfig {
-    
+
     @Bean
     public MongoClient mongoClient() {
         return MongoClients.create("mongodb://localhost:27017");
     }
-    
+
     @Bean
     public MongoDatabaseFactory mongoDatabaseFactory() {
         return new SimpleMongoClientDatabaseFactory(mongoClient(), "mydb");
     }
-    
+
     @Bean
     public MongoTemplate mongoTemplate() {
         return new MongoTemplate(mongoDatabaseFactory());
@@ -187,30 +185,30 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document(collection = "users")
 public class User {
-    
+
     @Id
     private String id;
-    
+
     @Field("user_name")
     private String name;
-    
+
     private String email;
-    
+
     private Integer age;
-    
+
     @Indexed
     private String phoneNumber;
-    
+
     private Address address;
-    
+
     private List<Order> orders;
-    
+
     @CreatedDate
     private LocalDateTime createdAt;
-    
+
     @LastModifiedDate
     private LocalDateTime updatedAt;
-    
+
     // Getters and setters...
 }
 ```
@@ -244,28 +242,28 @@ public class User {
 ```java
 // Spring Data MongoDB репозиторий для User
 public interface UserRepository extends MongoRepository<User, String> {
-    
+
     // Автоматически генерируется: db.users.find({name: name})
     List<User> findByName(String name);
-    
+
     // Автоматически генерируется: db.users.find({email: email})
     Optional<User> findByEmail(String email);
-    
+
     // Автоматически генерируется: db.users.find({age: {$gt: age}})
     List<User> findByAgeGreaterThan(Integer age);
-    
+
     // Автоматически генерируется: db.users.find({age: {$gte: minAge, $lte: maxAge}})
     List<User> findByAgeBetween(Integer minAge, Integer maxAge);
-    
+
     // Автоматически генерируется: db.users.find({name: {$regex: name, $options: 'i'}})
     List<User> findByNameLike(String name);
-    
+
     // COUNT query
     long countByAgeGreaterThan(Integer age);
-    
+
     // EXISTS query
     boolean existsByEmail(String email);
-    
+
     // DELETE query
     void deleteByEmail(String email);
 }
@@ -276,16 +274,16 @@ public interface UserRepository extends MongoRepository<User, String> {
 ```java
 // Spring Data MongoDB репозиторий для User
 public interface UserRepository extends MongoRepository<User, String> {
-    
+
     @Query("{ 'name' : ?0 }")
     List<User> findByNameCustom(String name);
-    
+
     @Query("{ 'age' : { $gt: ?0, $lt: ?1 } }")
     List<User> findByAgeRange(Integer minAge, Integer maxAge);
-    
+
     @Query("{ 'email' : { $regex: ?0, $options: 'i' } }")
     List<User> findByEmailRegex(String emailPattern);
-    
+
     @Query(value = "{ 'age' : { $gt: ?0 } }", fields = "{ 'name' : 1, 'email' : 1 }")
     List<User> findAdultsProjection(Integer minAge);
 }
@@ -296,11 +294,11 @@ public interface UserRepository extends MongoRepository<User, String> {
 ```java
 // Spring Data MongoDB репозиторий для User
 public interface UserRepository extends MongoRepository<User, String> {
-    
+
     List<User> findByNameOrderByAgeDesc(String name);
-    
+
     Page<User> findByAgeGreaterThan(Integer age, Pageable pageable);
-    
+
     Slice<User> findByName(String name, Pageable pageable);
 }
 ```
@@ -312,22 +310,22 @@ public interface UserRepository extends MongoRepository<User, String> {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public User save(User user) {
         return mongoTemplate.save(user);
     }
-    
+
     public User findById(String id) {
         return mongoTemplate.findById(id, User.class);
     }
-    
+
     public List<User> findAll() {
         return mongoTemplate.findAll(User.class);
     }
-    
+
     public void delete(String id) {
         Query query = new Query(Criteria.where("id").is(id));
         mongoTemplate.remove(query, User.class);
@@ -340,22 +338,22 @@ public class UserService {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public List<User> findByName(String name) {
         Query query = new Query(Criteria.where("name").is(name));
         return mongoTemplate.find(query, User.class);
     }
-    
+
     public List<User> findByAgeRange(Integer minAge, Integer maxAge) {
         Query query = new Query(
             Criteria.where("age").gte(minAge).lte(maxAge)
         );
         return mongoTemplate.find(query, User.class);
     }
-    
+
     public List<User> findByNameAndAge(String name, Integer age) {
         Query query = new Query(
             Criteria.where("name").is(name)
@@ -363,13 +361,13 @@ public class UserService {
         );
         return mongoTemplate.find(query, User.class);
     }
-    
+
     public List<User> findWithPagination(int page, int size) {
         Query query = new Query();
         query.with(PageRequest.of(page, size));
         return mongoTemplate.find(query, User.class);
     }
-    
+
     public List<User> findWithSorting(String sortBy, Sort.Direction direction) {
         Query query = new Query();
         query.with(Sort.by(direction, sortBy));
@@ -383,10 +381,10 @@ public class UserService {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public List<User> findNamesOnly() {
         Query query = new Query();
         query.fields().include("name").exclude("id");
@@ -402,21 +400,21 @@ public class UserService {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public List<AgeGroup> groupByAge() {
         Aggregation aggregation = Aggregation.newAggregation(
             Aggregation.group("age").count().as("count"),
             Aggregation.sort(Sort.Direction.DESC, "count")
         );
-        
+
         AggregationResults<AgeGroup> results = mongoTemplate.aggregate(
             aggregation, "users", AgeGroup.class);
         return results.getMappedResults();
     }
-    
+
     public List<UserStats> getUserStats() {
         Aggregation aggregation = Aggregation.newAggregation(
             Aggregation.group()
@@ -425,7 +423,7 @@ public class UserService {
                 .min("age").as("minAge")
                 .sum("age").as("totalAge")
         );
-        
+
         AggregationResults<UserStats> results = mongoTemplate.aggregate(
             aggregation, "users", UserStats.class);
         return results.getMappedResults();
@@ -438,10 +436,10 @@ public class UserService {
 ```java
 @Service
 public class OrderService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public List<OrderSummary> getOrderSummary() {
         Aggregation aggregation = Aggregation.newAggregation(
             Aggregation.match(Criteria.where("status").is("COMPLETED")),
@@ -456,7 +454,7 @@ public class OrderService {
                 .and("orderCount").as("orderCount"),
             Aggregation.sort(Sort.Direction.DESC, "totalAmount")
         );
-        
+
         AggregationResults<OrderSummary> results = mongoTemplate.aggregate(
             aggregation, "orders", OrderSummary.class);
         return results.getMappedResults();
@@ -472,15 +470,15 @@ public class OrderService {
 @Service
 @Transactional
 public class TransactionalUserService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public void transferBalance(String fromUserId, String toUserId, BigDecimal amount) {
         Query fromQuery = new Query(Criteria.where("id").is(fromUserId));
         Update fromUpdate = new Update().inc("balance", amount.negate());
         mongoTemplate.updateFirst(fromQuery, fromUpdate, User.class);
-        
+
         Query toQuery = new Query(Criteria.where("id").is(toUserId));
         Update toUpdate = new Update().inc("balance", amount);
         mongoTemplate.updateFirst(toQuery, toUpdate, User.class);
@@ -495,21 +493,21 @@ public class TransactionalUserService {
 ```java
 @Service
 public class FileService {
-    
+
     @Autowired
     private GridFsTemplate gridFsTemplate;
-    
+
     public String uploadFile(String filename, InputStream inputStream) {
         ObjectId fileId = gridFsTemplate.store(inputStream, filename, "application/pdf");
         return fileId.toString();
     }
-    
+
     public GridFsResource getFile(String fileId) {
         GridFsResource[] resources = gridFsTemplate.getResources(
             new Query(Criteria.where("_id").is(new ObjectId(fileId))));
         return resources.length > 0 ? resources[0] : null;
     }
-    
+
     public void deleteFile(String fileId) {
         gridFsTemplate.delete(new Query(Criteria.where("_id").is(new ObjectId(fileId))));
     }
@@ -572,16 +570,16 @@ public void transferBalance(String from, String to, BigDecimal amount) {
 ```java
 @Service
 public class ChangeStreamService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public void watchCollection(String collectionName) {
         MongoCollection<Document> collection = mongoTemplate.getCollection(collectionName);
-        
+
         collection.watch().forEach(changeDocument -> {
             ChangeStreamDocument<Document> change = ChangeStreamDocument.create(changeDocument);
-            
+
             switch (change.getOperationType()) {
                 case INSERT:
                     handleInsert(change);
@@ -598,22 +596,22 @@ public class ChangeStreamService {
             }
         });
     }
-    
+
     private void handleInsert(ChangeStreamDocument<Document> change) {
         Document fullDocument = change.getFullDocument();
         log.info("Document inserted: {}", fullDocument);
     }
-    
+
     private void handleUpdate(ChangeStreamDocument<Document> change) {
         Document updateDescription = change.getUpdateDescription();
         log.info("Document updated: {}", updateDescription);
     }
-    
+
     private void handleDelete(ChangeStreamDocument<Document> change) {
         BsonDocument documentKey = change.getDocumentKey();
         log.info("Document deleted: {}", documentKey);
     }
-    
+
     private void handleReplace(ChangeStreamDocument<Document> change) {
         Document fullDocument = change.getFullDocument();
         log.info("Document replaced: {}", fullDocument);
@@ -626,13 +624,13 @@ public class ChangeStreamService {
 ```java
 @Service
 public class FilteredChangeStreamService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public void watchWithFilter(String collectionName) {
         MongoCollection<Document> collection = mongoTemplate.getCollection(collectionName);
-        
+
         List<Bson> pipeline = Arrays.asList(
             Aggregates.match(
                 Filters.in("operationType", Arrays.asList("insert", "update"))
@@ -641,13 +639,13 @@ public class FilteredChangeStreamService {
                 Filters.eq("fullDocument.status", "active")
             )
         );
-        
+
         collection.watch(pipeline).forEach(changeDocument -> {
             // Обработка отфильтрованных изменений
             processChange(changeDocument);
         });
     }
-    
+
     private void processChange(BsonDocument changeDocument) {
         // Логика обработки
     }
@@ -661,22 +659,22 @@ public class FilteredChangeStreamService {
 ```java
 @Service
 public class LookupAggregationService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public List<Document> joinCollections() {
         LookupOperation lookupOperation = LookupOperation.newLookup()
             .from("orders")
             .localField("_id")
             .foreignField("userId")
             .as("orders");
-        
+
         Aggregation aggregation = Aggregation.newAggregation(
             lookupOperation,
             Aggregation.match(Criteria.where("orders").not().size(0))
         );
-        
+
         return mongoTemplate.aggregate(aggregation, "users", Document.class)
             .getMappedResults();
     }
@@ -688,10 +686,10 @@ public class LookupAggregationService {
 ```java
 @Service
 public class FacetAggregationService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public Map<String, List<Document>> facetAggregation() {
         FacetOperation facetOperation = Aggregation.facet()
             .and(
@@ -702,13 +700,13 @@ public class FacetAggregationService {
                 Aggregation.match(Criteria.where("age").lt(18)),
                 Aggregation.group("status").count().as("count")
             ).as("minors");
-        
+
         Aggregation aggregation = Aggregation.newAggregation(facetOperation);
-        
+
         AggregationResults<Document> results = mongoTemplate.aggregate(
             aggregation, "users", Document.class
         );
-        
+
         return results.getUniqueMappedResult();
     }
 }
@@ -724,27 +722,27 @@ public class FacetAggregationService {
 public class Article {
     @Id
     private String id;
-    
+
     @TextIndexed(weight = 2)
     private String title;
-    
+
     @TextIndexed
     private String content;
 }
 
 @Service
 public class TextSearchService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public List<Article> searchArticles(String searchText) {
         TextCriteria criteria = TextCriteria.forDefaultLanguage()
             .matchingAny(searchText);
-        
+
         Query query = TextQuery.queryText(criteria)
             .sortByScore();
-        
+
         return mongoTemplate.find(query, Article.class);
     }
 }
@@ -757,11 +755,11 @@ public class TextSearchService {
 ```java
 @Component
 public class MongoMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter queriesExecuted;
     private final Timer queryExecutionTime;
-    
+
     public MongoMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.queriesExecuted = Counter.builder("mongodb.queries.executed")
@@ -771,7 +769,7 @@ public class MongoMetrics {
             .description("MongoDB query execution time")
             .register(meterRegistry);
     }
-    
+
     public <T> T measureQuery(String collection, Supplier<T> supplier) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
@@ -790,10 +788,10 @@ public class MongoMetrics {
 ```java
 @Component
 public class MongoHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     @Override
     public Health health() {
         try {
@@ -828,14 +826,14 @@ spring.data.mongodb.options.max-connection-idle-time=60000
 ```java
 @Configuration
 public class MongoReadPreferenceConfig {
-    
+
     @Bean
     public MongoClient mongoClient() {
         MongoClientSettings settings = MongoClientSettings.builder()
             .applyConnectionString(new ConnectionString("mongodb://localhost:27017/mydb"))
             .readPreference(ReadPreference.secondaryPreferred())
             .build();
-        
+
         return MongoClients.create(settings);
     }
 }
@@ -846,15 +844,15 @@ public class MongoReadPreferenceConfig {
 ```java
 @Service
 public class WriteConcernService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     public void saveWithWriteConcern(User user) {
         mongoTemplate.setWriteConcern(WriteConcern.MAJORITY);
         mongoTemplate.save(user);
     }
-    
+
     public void saveWithAcknowledgedWriteConcern(User user) {
         mongoTemplate.setWriteConcern(WriteConcern.ACKNOWLEDGED);
         mongoTemplate.save(user);
@@ -876,7 +874,7 @@ spring.data.mongodb.uri=mongodb://username:password@localhost:27017/mydb?authSou
 ```java
 @Configuration
 public class SecureMongoConfig {
-    
+
     @Bean
     public MongoClient mongoClient() {
         MongoClientSettings settings = MongoClientSettings.builder()
@@ -886,7 +884,7 @@ public class SecureMongoConfig {
                 .invalidHostNameAllowed(false)
             )
             .build();
-        
+
         return MongoClients.create(settings);
     }
 }
@@ -908,18 +906,18 @@ public class SecureMongoConfig {
 @SpringBootTest
 @AutoConfigureDataMongo
 class MongoIntegrationTest {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     void testSaveUser() {
         User user = new User();
         user.setName("Test User");
         user.setEmail("test@example.com");
-        
+
         User saved = userRepository.save(user);
-        
+
         assertThat(saved.getId()).isNotNull();
         assertThat(userRepository.findById(saved.getId())).isPresent();
     }
@@ -938,3 +936,11 @@ class MongoIntegrationTest {
 - [**Spring Boot** MongoDB](https://docs.spring.io/spring-boot/docs/current/reference/html/data.html#data.nosql.mongodb)
 - [**MongoDB Aggregation Pipeline**](https://www.mongodb.com/docs/manual/core/aggregation-pipeline/)
 - [**MongoDB Change Streams**](https://www.mongodb.com/docs/manual/changeStreams/)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

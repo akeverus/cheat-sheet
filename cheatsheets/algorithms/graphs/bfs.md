@@ -63,26 +63,26 @@ BFS обходит вершины по уровням: сначала все н�
 public class Tree<T> {
     private T value;
     private List<Tree<T>> children;
-    
+
     private Tree(T value) {
         this.value = value;
         this.children = new ArrayList<>();
     }
-    
+
     public static <T> Tree<T> of(T value) {
         return new Tree<>(value);
     }
-    
+
     public Tree<T> addChild(T value) {
         Tree<T> newChild = new Tree<>(value);
         children.add(newChild);
         return newChild;
     }
-    
+
     public T getValue() {
         return value;
     }
-    
+
     public List<Tree<T>> getChildren() {
         return children;
     }
@@ -94,17 +94,17 @@ public class Tree<T> {
 public static <T> Optional<Tree<T>> search(T value, Tree<T> root) {
     Queue<Tree<T>> queue = new ArrayDeque<>();
     queue.add(root);
-    
+
     while(!queue.isEmpty()) {
         Tree<T> currentNode = queue.remove();
-        
+
         if (currentNode.getValue().equals(value)) {
             return Optional.of(currentNode);
         } else {
             queue.addAll(currentNode.getChildren());
         }
     }
-    
+
     return Optional.empty();
 }
 ```
@@ -134,12 +134,12 @@ BreadthFirstSearchAlgorithm.search(4, root); // порядок обхода: 10,
 public class Node<T> {
     private T value;
     private Set<Node<T>> neighbors;
-    
+
     public Node(T value) {
         this.value = value;
         this.neighbors = new HashSet<>();
     }
-    
+
     public void connect(Node<T> node) {
         if (this == node) {
             throw new IllegalArgumentException("Can't connect node to itself");
@@ -147,11 +147,11 @@ public class Node<T> {
         this.neighbors.add(node);
         node.neighbors.add(this);
     }
-    
+
     public T getValue() {
         return value;
     }
-    
+
     public Set<Node<T>> getNeighbors() {
         return neighbors;
     }
@@ -161,15 +161,15 @@ public class Node<T> {
 public static <T> Optional<Node<T>> search(T value, Node<T> start) {
     Queue<Node<T>> queue = new ArrayDeque<>();
     Set<Node<T>> alreadyVisited = new HashSet<>();
-    
+
     queue.add(start);
     Node<T> currentNode;
-    
+
     while (!queue.isEmpty()) {
         currentNode = queue.remove();
-        
+
         LOGGER.debug("Visited node with value: {}", currentNode.getValue());
-        
+
         if (currentNode.getValue().equals(value)) {
             return Optional.of(currentNode);
         } else {
@@ -178,7 +178,7 @@ public static <T> Optional<Node<T>> search(T value, Node<T> start) {
             queue.removeAll(alreadyVisited);
         }
     }
-    
+
     return Optional.empty();
 }
 ```
@@ -212,13 +212,13 @@ BreadthFirstSearchAlgorithm.search(4, firstNeighborNeighbor); // старт из
 // Дерево: значение и список детей
 class TreeK<T>(val value: T) {
     private val children = mutableListOf<TreeK<T>>()
-    
+
     fun addChild(value: T): TreeK<T> {
         val newChild = TreeK(value)
         children.add(newChild)
         return newChild
     }
-    
+
     fun getChildren(): List<TreeK<T>> = children
 }
 ```
@@ -227,17 +227,17 @@ class TreeK<T>(val value: T) {
 fun <T> searchK(value: T, root: TreeK<T>): TreeK<T>? {
     val queue = ArrayDeque<TreeK<T>>()
     queue.add(root)
-    
+
     while (queue.isNotEmpty()) {
         val currentNode = queue.removeFirst()
-        
+
         if (currentNode.value == value) {
             return currentNode
         } else {
             queue.addAll(currentNode.getChildren())
         }
     }
-    
+
     return null
 }
 ```
@@ -246,7 +246,7 @@ fun <T> searchK(value: T, root: TreeK<T>): TreeK<T>? {
 // Узел графа: соседи в mutableSetOf, connect — двусторонняя связь
 class NodeK<T>(val value: T) {
     private val neighbors = mutableSetOf<NodeK<T>>()
-    
+
     fun connect(node: NodeK<T>) {
         if (this == node) {
             throw IllegalArgumentException("Can't connect node to itself")
@@ -254,7 +254,7 @@ class NodeK<T>(val value: T) {
         neighbors.add(node)
         node.neighbors.add(this)
     }
-    
+
     fun getNeighbors(): Set<NodeK<T>> = neighbors
 }
 ```
@@ -263,25 +263,25 @@ class NodeK<T>(val value: T) {
 fun <T> searchK(value: T, start: NodeK<T>): NodeK<T>? {
     val queue = ArrayDeque<NodeK<T>>()
     val alreadyVisited = mutableSetOf<NodeK<T>>()
-    
+
     queue.add(start)
-    
+
     while (queue.isNotEmpty()) {
         val currentNode = queue.removeFirst()
-        
+
         if (currentNode in alreadyVisited) {
             continue
         }
-        
+
         if (currentNode.value == value) {
             return currentNode
         }
-        
+
         alreadyVisited.add(currentNode)
         queue.addAll(currentNode.getNeighbors())
         queue.removeAll(alreadyVisited)
     }
-    
+
     return null
 }
 ```
@@ -295,22 +295,22 @@ fun main() {
     val rootFirstChild = root.addChild(2)
     rootFirstChild.addChild(3)
     val rootSecondChild = root.addChild(4)
-    
+
     val result1 = searchK(4, root)
     println("Found: ${result1?.value}") // Found: 4
-    
+
     // Для графов
     val start = NodeK(10)
     val firstNeighbor = NodeK(2)
     start.connect(firstNeighbor)
-    
+
     val firstNeighborNeighbor = NodeK(3)
     firstNeighbor.connect(firstNeighborNeighbor)
     firstNeighborNeighbor.connect(start)
-    
+
     val secondNeighbor = NodeK(4)
     start.connect(secondNeighbor)
-    
+
     val result2 = searchK(4, firstNeighborNeighbor)
     println("Found: ${result2?.value}") // Found: 4
 }

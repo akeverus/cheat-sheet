@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Collections Overview](https://kotlinlang.org/docs/collections-overview.html)
 - [Kotlin Map API](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
@@ -111,13 +111,13 @@ updated: "2026-02-11"
 
 ## Введение в **Map**
 
-**Map** в **Kotlin** - это коллекция пар ключ-значение, где каждый ключ уникален. Словари не наследуются от **Collection**, но являются частью **Collections Framework**.
+**Map** в **Kotlin** — это коллекция пар ключ-значение, где каждый ключ уникален. Словари не наследуются от **Collection**, но являются частью **Collections Framework**.
 
 ### Основные характеристики
 
 - **Уникальные ключи**: каждый ключ встречается только один раз
 - **Пары ключ-значение**: хранит ассоциации между ключами и значениями
-- **Порядок**: зависит от реализации (**HashMap - неупорядочен, `TreeMap` - отсортирован, `LinkedHashMap` - порядок вставки**)
+- **Порядок**: зависит от реализации (**HashMap — неупорядочен, `TreeMap` - отсортирован, `LinkedHashMap` - порядок вставки**)
 - **Null safety**: может содержать **null** ключи и значения (**в зависимости от типа**)
 
 ### Интерфейсы
@@ -249,13 +249,13 @@ copy["c"] = 3 // не влияет на mutable
 
 ## **HashMap**
 
-**HashMap** - это реализация **MutableMap** на основе хеш-таблицы. Это наиболее распространенная реализация словаря в **Kotlin**, так как она обеспечивает оптимальную производительность для большинства операций со словарями при отсутствии требований к порядку элементов.
+**HashMap** — это реализация **MutableMap** на основе хеш-таблицы. Это наиболее распространенная реализация словаря в **Kotlin**, так как она обеспечивает оптимальную производительность для большинства операций со словарями при отсутствии требований к порядку элементов.
 
 **HashMap** использует хеш-таблицу для хранения пар ключ-значение. Ключи хешируются, и хеш-код используется для быстрого поиска соответствующих значений. Это делает **HashMap** идеальным выбором для большинства случаев использования словарей.
 
 ### Характеристики
 
-- **Уникальные ключи**: каждый ключ встречается только один раз. При попытке добавить пару с ключом, который уже существует в словаре, старое значение перезаписывается новым. Это фундаментальное свойство словарей - каждому ключу соответствует ровно одно значение.
+- **Уникальные ключи**: каждый ключ встречается только один раз. При попытке добавить пару с ключом, который уже существует в словаре, старое значение перезаписывается новым. Это фундаментальное свойство словарей — каждому ключу соответствует ровно одно значение.
 
 - **Неупорядоченность**: порядок элементов не гарантируется. Элементы могут храниться в произвольном порядке, который может изменяться при добавлении или удалении элементов. Это связано с внутренней структурой хеш-таблицы и процессом рехеширования при расширении.
 
@@ -305,7 +305,7 @@ val withDefault = map.getOrDefault("x", 0) // значение по умолча
 
 ## **TreeMap**
 
-**TreeMap** - это реализация **MutableMap** на основе красно-черного дерева. Ключи автоматически сортируются.
+**TreeMap** — это реализация **MutableMap** на основе красно-черного дерева. Ключи автоматически сортируются.
 
 ### Характеристики
 
@@ -360,7 +360,7 @@ map.subMap(2, 8)                 // {2: "two", 5: "five"} (от 2 включит
 
 ## **LinkedHashMap**
 
-**LinkedHashMap** - это реализация **MutableMap**, которая сохраняет порядок вставки элементов.
+**LinkedHashMap** — это реализация **MutableMap**, которая сохраняет порядок вставки элементов.
 
 ### Характеристики
 
@@ -422,7 +422,7 @@ val value2 = map.get("b")        // 2
 
 // Проверка наличия значения
 **map.containsValue**(2)             // **true**
-```
+```text
 
 ### Итерация
 
@@ -455,7 +455,7 @@ while (`iterator`.`hasNext()`) {
     val entry = `iterator.next`()
     println("${`entry.key`}: ${`entry.value`}")
 }
-```
+```text
 
 ### Размер и пустота
 
@@ -469,7 +469,7 @@ val map = `mapOf`("a" `to 1`, "b" `to 2`, "c" `to 3`)
 // Проверка пустоты
 map.isEmpty()   // false
 map.isNotEmpty() // true
-```
+```text
 
 ## Работа с ключами и значениями
 
@@ -488,7 +488,7 @@ val valuesList = map.values.toList()   // List [1, 2, 3]
 
 // Пары
 val entries = map.entries   // Set<Map.Entry>
-```
+```text
 
 ### Изменяемые ключи и значения
 
@@ -501,7 +501,7 @@ val keys = mutableMap.keys   // MutableSet (изменения отражают�
 
 // Изменяемая коллекция значений
 val values = mutableMap.values   // MutableCollection (изменения отражаются в map)
-```
+```text
 
 ## Преобразование словарей
 
@@ -516,7 +516,7 @@ val map = `mapOf`("a" `to 1`, "b" `to 2`, "c" `to 3`)
 
 // Преобразование значений
 val doubled = map.`mapValues` { `it.value` * 2 }    // {"a": 2, "b": 4, "c": 6}
-```
+```text
 
 Метод `mapValues` применяет функцию преобразования к каждому значению словаря, создавая новый словарь с теми же ключами, но с преобразованными значениями. Это полезно, когда нужно изменить значения, сохранив структуру ключей. Функция получает доступ к паре через параметр `it`, где `it.key` - это ключ, а `it.value` - текущее значение.
 
@@ -871,11 +871,11 @@ val aliceAgeNested = nested.nestedGet("users", "alice", "age")
 // Простой кэш
 class SimpleCache<K, V> {
     private val cache = mutableMapOf<K, V>()
-    
+
     fun get(key: K, compute: () -> V): V {
         return cache.getOrPut(key, compute)
     }
-    
+
     fun clear() {
         cache.clear()
     }
@@ -885,11 +885,11 @@ class SimpleCache<K, V> {
 class TTLCache<K, V>(private val ttlMillis: Long) {
     data class CacheEntry<V>(val value: V, val timestamp: Long)
     private val cache = mutableMapOf<K, CacheEntry<V>>()
-    
+
     fun get(key: K, compute: () -> V): V {
         val now = System.currentTimeMillis()
         val entry = cache[key]
-        
+
         return if (entry != null && now - entry.timestamp < ttlMillis) {
             entry.value
         } else {
@@ -898,7 +898,7 @@ class TTLCache<K, V>(private val ttlMillis: Long) {
             value
         }
     }
-    
+
     fun cleanup() {
         val now = System.currentTimeMillis()
         cache.entries.removeIf { now - it.value.timestamp >= ttlMillis }
@@ -973,16 +973,16 @@ for (key in map.keys) {
 // Иерархическая конфигурация
 class Configuration {
     private val config = mutableMapOf<String, Any>()
-    
+
     fun set(key: String, value: Any) {
         config[key] = value
     }
-    
+
     @Suppress("UNCHECKED_CAST")
     fun <T> get(key: String, default: T): T {
         return config[key] as? T ?: default
     }
-    
+
     fun getNested(path: String, default: Any? = null): Any? {
         return path.split(".").fold(config as Any?) { current, segment ->
             when (current) {
@@ -1013,11 +1013,11 @@ val port = config.getNested("database.port")  // 5432
 // LRU (Least Recently Used) кэш
 class LRUCache<K, V>(private val capacity: Int) {
     private val cache = LinkedHashMap<K, V>(capacity, 0.75f, true)
-    
+
     fun get(key: K): V? {
         return cache[key]  // Доступ перемещает элемент в конец
     }
-    
+
     fun put(key: K, value: V) {
         if (cache.size >= capacity && key !in cache) {
             val firstKey = cache.keys.first()
@@ -1025,7 +1025,7 @@ class LRUCache<K, V>(private val capacity: Int) {
         }
         cache[key] = value
     }
-    
+
     fun size(): Int = cache.size
 }
 
@@ -1033,11 +1033,11 @@ class LRUCache<K, V>(private val capacity: Int) {
 class TTLCache<K, V>(private val ttlMillis: Long) {
     data class CacheEntry<V>(val value: V, val timestamp: Long)
     private val cache = mutableMapOf<K, CacheEntry<V>>()
-    
+
     fun get(key: K): V? {
         val entry = cache[key] ?: return null
         val now = System.currentTimeMillis()
-        
+
         return if (now - entry.timestamp < ttlMillis) {
             entry.value
         } else {
@@ -1045,11 +1045,11 @@ class TTLCache<K, V>(private val ttlMillis: Long) {
             null
         }
     }
-    
+
     fun put(key: K, value: V) {
         cache[key] = CacheEntry(value, System.currentTimeMillis())
     }
-    
+
     fun cleanup() {
         val now = System.currentTimeMillis()
         cache.entries.removeIf { now - it.value.timestamp >= ttlMillis }
@@ -1307,7 +1307,7 @@ map.computeIfPresent("key") { k, v -> v * 2 }  // Обновляет до 6
 class BiMap<K, V> {
     private val forward = mutableMapOf<K, V>()
     private val reverse = mutableMapOf<V, K>()
-    
+
     fun put(key: K, value: V) {
         forward[key]?.let { oldValue ->
             reverse.remove(oldValue)
@@ -1318,7 +1318,7 @@ class BiMap<K, V> {
         forward[key] = value
         reverse[value] = key
     }
-    
+
     fun get(key: K): V? = forward[key]
     fun getKey(value: V): K? = reverse[value]
     fun getValue(key: K): V? = forward[key]
@@ -1362,11 +1362,11 @@ val key = biMap.getKey(2)  // "two"
 ```kotlin
 class SimpleCache<K, V>(private val maxSize: Int = 100) {
     private val cache = LinkedHashMap<K, V>(maxSize, 0.75f, true)
-    
+
     fun get(key: K): V? {
         return cache[key]
     }
-    
+
     fun put(key: K, value: V) {
         if (cache.size >= maxSize && key !in cache) {
             val firstKey = cache.keys.first()
@@ -1374,7 +1374,7 @@ class SimpleCache<K, V>(private val maxSize: Int = 100) {
         }
         cache[key] = value
     }
-    
+
     fun clear() {
         cache.clear()
     }

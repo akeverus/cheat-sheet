@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Retrofit
 
-**Retrofit** - это **type-safe HTTP** клиент для **Android** и **Java**. Преобразует **HTTP API** в **Java** интерфейсы, упрощая работу с **REST API**.
+**Retrofit** — это **type-safe HTTP** клиент для **Android** и **Java**. Преобразует **HTTP API** в **Java** интерфейсы, упрощая работу с **REST API**.
 
 ## Полезные ссылки
 

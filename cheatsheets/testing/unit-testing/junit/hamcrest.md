@@ -42,7 +42,6 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 
----
 
 ## Подключение
 
@@ -72,7 +71,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 ```
 
----
 
 ## Зачем Hamcrest
 
@@ -88,7 +86,7 @@ assertThat(list, hasSize(3));
 
 При ошибке Hamcrest покажет:
 
-```
+```text
 Expected: a collection with size <3>
      but: collection size was <5>
 ```
@@ -99,7 +97,6 @@ Expected: a collection with size <3>
 - **Композиция** — матчеры комбинируются через `allOf`, `anyOf`, `not`
 - **Расширяемость** — легко писать свои матчеры
 
----
 
 ## Базовые матчеры
 
@@ -125,7 +122,6 @@ void базовыеПроверки() {
 }
 ```
 
----
 
 ## Числовые матчеры
 
@@ -151,7 +147,6 @@ void числовыеПроверки() {
 }
 ```
 
----
 
 ## Строковые матчеры
 
@@ -180,7 +175,6 @@ void строковыеПроверки() {
 }
 ```
 
----
 
 ## Матчеры коллекций
 
@@ -221,7 +215,6 @@ void карты() {
 }
 ```
 
----
 
 ## Матчеры объектов и типов
 
@@ -248,7 +241,6 @@ void объектыИТипы() {
 | `hasProperty(name, matcher)` | Свойство соответствует матчеру |
 | `hasToString(matcher)` | Проверка toString() |
 
----
 
 ## Логические комбинации
 
@@ -280,7 +272,6 @@ void комбинации() {
 | `either(m1).or(m2)` | ИЛИ (более читаемо) | `either(is("A")).or(is("B"))` |
 | `not(matcher)` | НЕ | `not(equalTo(0))` |
 
----
 
 ## Создание своего матчера
 
@@ -325,7 +316,7 @@ void свойМатчер() {
 
 При ошибке выведет:
 
-```
+```text
 Expected: чётное число
      but: было <7> (нечётное)
 ```
@@ -337,7 +328,6 @@ Expected: чётное число
 4. (опционально) `describeMismatchSafely()` — описание расхождения
 5. Добавить статический фабричный метод
 
----
 
 ## Hamcrest + Mockito
 
@@ -359,7 +349,6 @@ verify(repository).save(argThat(allOf(
 
 > **Важно:** используйте `org.mockito.hamcrest.MockitoHamcrest.argThat`, а не `Mockito.argThat` — они принимают разные типы.
 
----
 
 ## Hamcrest vs AssertJ
 
@@ -381,7 +370,6 @@ verify(repository).save(argThat(allOf(
 - Новый проект — AssertJ удобнее за счёт IDE-автодополнения
 - Важна fluent-цепочка: `assertThat(list).hasSize(3).contains("a")`
 
----
 
 ## Лучшие практики
 
@@ -392,7 +380,6 @@ verify(repository).save(argThat(allOf(
 - **Один assert — одна логическая проверка** — не смешивайте независимые проверки
 - **Используйте TypeSafeMatcher** — он обрабатывает null и неверные типы за вас
 
----
 
 ## Решение проблем
 
@@ -405,7 +392,6 @@ verify(repository).save(argThat(allOf(
 | `hasProperty` не работает | Убедитесь, что есть публичный геттер в стиле JavaBeans |
 | Нечитаемая ошибка | Переопределите `describeMismatchSafely()` в своём матчере |
 
----
 
 ## Частые вопросы
 
@@ -413,7 +399,6 @@ verify(repository).save(argThat(allOf(
 - **Можно с Kotlin?** — Да, но в Kotlin удобнее `kotest` или `assertk`
 - **Нужен ли Hamcrest, если есть AssertJ?** — Для Mockito `argThat` — да; для обычных assertions AssertJ удобнее
 
----
 
 ## Заключение
 
@@ -424,3 +409,11 @@ Hamcrest — зрелая библиотека матчеров для Java-те
 - **Интеграция с Mockito** через `argThat`
 
 Для новых проектов чаще выбирают AssertJ за fluent API, но Hamcrest остаётся стандартом в проектах с Mockito и в legacy-кодовых базах.
+
+## См. также
+
+- [[assertj|AssertJ для Java]]
+- [[junit-advanced|JUnit Advanced для Java]]
+- [[junit|JUnit 5]]
+- [[mockito-advanced|Mockito Advanced для Java]]
+- [[mockito|Mockito]]

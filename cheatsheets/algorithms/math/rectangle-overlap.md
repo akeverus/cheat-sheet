@@ -56,16 +56,16 @@ updated: "2026-02-11"
 public class Rectangle {
     private Point bottomLeft;
     private Point topRight;
-    
+
     public Rectangle(Point bottomLeft, Point topRight) {
         this.bottomLeft = bottomLeft;
         this.topRight = topRight;
     }
-    
+
     public Point getBottomLeft() {
         return bottomLeft;
     }
-    
+
     public Point getTopRight() {
         return topRight;
     }
@@ -79,16 +79,16 @@ public class Rectangle {
 public class Point {
     private int x;
     private int y;
-    
+
     public Point(int x, int y) {
         this.x = x;
         this.y = y;
     }
-    
+
     public int getX() {
         return x;
     }
-    
+
     public int getY() {
         return y;
     }
@@ -107,17 +107,17 @@ public class Point {
 // false, если один выше/ниже или левее/правее другого
 public boolean isOverlapping(Rectangle other) {
     // Проверка по оси Y: один прямоугольник выше другого
-    if (this.topRight.getY() < other.bottomLeft.getY() 
+    if (this.topRight.getY() < other.bottomLeft.getY()
         || this.bottomLeft.getY() > other.topRight.getY()) {
         return false;
     }
-    
+
     // Проверка по оси X: один прямоугольник левее другого
-    if (this.topRight.getX() < other.bottomLeft.getX() 
+    if (this.topRight.getX() < other.bottomLeft.getX()
         || this.bottomLeft.getX() > other.topRight.getX()) {
         return false;
     }
-    
+
     return true;
 }
 ```
@@ -129,31 +129,31 @@ public boolean isOverlapping(Rectangle other) {
 public class Rectangle {
     private Point bottomLeft;
     private Point topRight;
-    
+
     public Rectangle(Point bottomLeft, Point topRight) {
         this.bottomLeft = bottomLeft;
         this.topRight = topRight;
     }
-    
+
     public boolean isOverlapping(Rectangle other) {
-        if (this.topRight.getY() < other.bottomLeft.getY() 
+        if (this.topRight.getY() < other.bottomLeft.getY()
             || this.bottomLeft.getY() > other.topRight.getY()) {
             return false;
         }
-        
-        if (this.topRight.getX() < other.bottomLeft.getX() 
+
+        if (this.topRight.getX() < other.bottomLeft.getX()
             || this.bottomLeft.getX() > other.topRight.getX()) {
             return false;
         }
-        
+
         return true;
     }
-    
+
     // Геттеры
     public Point getBottomLeft() {
         return bottomLeft;
     }
-    
+
     public Point getTopRight() {
         return topRight;
     }
@@ -188,15 +188,15 @@ public int getOverlapArea(Rectangle other) {
     if (!isOverlapping(other)) {
         return 0;
     }
-    
+
     int overlapX1 = Math.max(this.bottomLeft.getX(), other.bottomLeft.getX());
     int overlapY1 = Math.max(this.bottomLeft.getY(), other.bottomLeft.getY());
     int overlapX2 = Math.min(this.topRight.getX(), other.topRight.getX());
     int overlapY2 = Math.min(this.topRight.getY(), other.topRight.getY());
-    
+
     int width = overlapX2 - overlapX1;
     int height = overlapY2 - overlapY1;
-    
+
     return width * height;
 }
 ```
@@ -210,17 +210,17 @@ public Optional<Rectangle> getOverlapRectangle(Rectangle other) {
     if (!isOverlapping(other)) {
         return Optional.empty();
     }
-    
+
     int overlapX1 = Math.max(this.bottomLeft.getX(), other.bottomLeft.getX());
     int overlapY1 = Math.max(this.bottomLeft.getY(), other.bottomLeft.getY());
     int overlapX2 = Math.min(this.topRight.getX(), other.topRight.getX());
     int overlapY2 = Math.min(this.topRight.getY(), other.topRight.getY());
-    
+
     Rectangle overlap = new Rectangle(
         new Point(overlapX1, overlapY1),
         new Point(overlapX2, overlapY2)
     );
-    
+
     return Optional.of(overlap);
 }
 ```
@@ -245,15 +245,15 @@ public boolean contains(Rectangle other) {
 ```java
 public boolean isTouching(Rectangle other) {
     // Проверка касания по вертикали
-    boolean touchingVertically = 
-        this.topRight.getY() == other.bottomLeft.getY() 
+    boolean touchingVertically =
+        this.topRight.getY() == other.bottomLeft.getY()
         || this.bottomLeft.getY() == other.topRight.getY();
-    
+
     // Проверка касания по горизонтали
-    boolean touchingHorizontally = 
-        this.topRight.getX() == other.bottomLeft.getX() 
+    boolean touchingHorizontally =
+        this.topRight.getX() == other.bottomLeft.getX()
         || this.bottomLeft.getX() == other.topRight.getX();
-    
+
     return touchingVertically || touchingHorizontally;
 }
 ```
@@ -267,53 +267,53 @@ data class PointK(val x: Int, val y: Int)
 data class RectangleK(val bottomLeft: PointK, val topRight: PointK) {
     fun isOverlappingK(other: RectangleK): Boolean {
         // Проверка по оси Y: один прямоугольник выше другого
-        if (this.topRight.y < other.bottomLeft.y 
+        if (this.topRight.y < other.bottomLeft.y
             || this.bottomLeft.y > other.topRight.y) {
             return false
         }
-        
+
         // Проверка по оси X: один прямоугольник левее другого
-        if (this.topRight.x < other.bottomLeft.x 
+        if (this.topRight.x < other.bottomLeft.x
             || this.bottomLeft.x > other.topRight.x) {
             return false
         }
-        
+
         return true
     }
-    
+
     fun getAreaK(): Int {
         val width = topRight.x - bottomLeft.x
         val height = topRight.y - bottomLeft.y
         return width * height
     }
-    
+
     fun getOverlapAreaK(other: RectangleK): Int {
         if (!isOverlappingK(other)) {
             return 0
         }
-        
-        val xOverlap = maxOf(0, 
-            minOf(this.topRight.x, other.topRight.x) - 
+
+        val xOverlap = maxOf(0,
+            minOf(this.topRight.x, other.topRight.x) -
             maxOf(this.bottomLeft.x, other.bottomLeft.x)
         )
-        
+
         val yOverlap = maxOf(0,
-            minOf(this.topRight.y, other.topRight.y) - 
+            minOf(this.topRight.y, other.topRight.y) -
             maxOf(this.bottomLeft.y, other.bottomLeft.y)
         )
-        
+
         return xOverlap * yOverlap
     }
-    
+
     fun isTouchingK(other: RectangleK): Boolean {
-        val touchingVertically = 
-            this.topRight.y == other.bottomLeft.y 
+        val touchingVertically =
+            this.topRight.y == other.bottomLeft.y
             || this.bottomLeft.y == other.topRight.y
-        
-        val touchingHorizontally = 
-            this.topRight.x == other.bottomLeft.x 
+
+        val touchingHorizontally =
+            this.topRight.x == other.bottomLeft.x
             || this.bottomLeft.x == other.topRight.x
-        
+
         return touchingVertically || touchingHorizontally
     }
 }
@@ -325,12 +325,12 @@ data class RectangleK(val bottomLeft: PointK, val topRight: PointK) {
 fun main() {
     val r1 = RectangleK(PointK(0, 0), PointK(5, 5))
     val r2 = RectangleK(PointK(3, 3), PointK(8, 8))
-    
+
     println(r1.isOverlappingK(r2)) // true
-    
+
     val r3 = RectangleK(PointK(10, 10), PointK(15, 15))
     println(r1.isOverlappingK(r3)) // false
-    
+
     val overlapArea = r1.getOverlapAreaK(r2)
     println("Overlap area: $overlapArea") // 4
 }
@@ -370,7 +370,7 @@ fun main() {
 
 **Какая система координат предполагается?** В примере: bottomLeft — левый нижний, topRight — правый верхний (Y растёт вверх). Если в вашей системе Y вниз, инвертируйте сравнения по Y.
 
-**Как вычислить площадь перекрытия?** Пересечение интервалов по X и по Y: overlapX = max(0, min(x2,x4) - max(x1,x3)); то же для Y; площадь = overlapX * overlapY.
+**Как вычислить площадь перекрытия?** Пересечение интервалов по X и по Y: overlapX = max(0, min(x2,x4) — max(x1,x3)); то же для Y; площадь = overlapX * overlapY.
 
 ## Заключение
 

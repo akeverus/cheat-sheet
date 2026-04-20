@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Collections Overview](https://kotlinlang.org/docs/collections-overview.html)
 - [Kotlin List API](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
@@ -109,7 +109,7 @@ updated: "2026-02-11"
 
 ## Введение в **List**
 
-**List** в **Kotlin** - это упорядоченная коллекция элементов с доступом по индексу. В отличие от **Java**, **Kotlin** различает изменяемые (**mutable**) и неизменяемые (**immutable**) коллекции на уровне системы типов, что обеспечивает дополнительную безопасность и ясность кода.
+**List** в **Kotlin** — это упорядоченная коллекция элементов с доступом по индексу. В отличие от **Java**, **Kotlin** различает изменяемые (**mutable**) и неизменяемые (**immutable**) коллекции на уровне системы типов, что обеспечивает дополнительную безопасность и ясность кода.
 
 ### Основные характеристики
 
@@ -248,13 +248,13 @@ copy.add(4) // не влияет на mutable
 
 ## **ArrayList**
 
-**ArrayList** - это реализация **MutableList** на основе массива. Это наиболее распространенная реализация списка в **Kotlin**, так как она обеспечивает оптимальный баланс между производительностью и простотой использования для большинства сценариев.
+**ArrayList** — это реализация **MutableList** на основе массива. Это наиболее распространенная реализация списка в **Kotlin**, так как она обеспечивает оптимальный баланс между производительностью и простотой использования для большинства сценариев.
 
 ### Характеристики
 
 - **Произвольный доступ**: `O(1)` - доступ к элементу по индексу выполняется за постоянное время, так как используется прямое обращение к элементу массива по индексу.
 
-- **Добавление в конец**: `O(1)` амортизированное - в большинстве случаев добавление элемента в конец списка выполняется за постоянное время. При заполнении внутреннего массива происходит его расширение (**обычно в 1.5-2 раза**), что требует `O(n)` времени, но это происходит редко, поэтому средняя сложность остается `O(1)`.
+- **Добавление в конец**: `O(1)` амортизированное — в большинстве случаев добавление элемента в конец списка выполняется за постоянное время. При заполнении внутреннего массива происходит его расширение (**обычно в 1.5-2 раза**), что требует `O(n)` времени, но это происходит редко, поэтому средняя сложность остается `O(1)`.
 
 - **Вставка/удаление**: `O(n)` - при вставке или удалении элемента в середине списка необходимо сдвинуть все последующие элементы, что требует линейного времени.
 
@@ -365,7 +365,7 @@ val second = list.get(1)         // "b"
 **val last** = **list.last**()           // "e"
 **val firstOrNull** = **list.firstOrNull**()
 **val lastOrNull** = **list.lastOrNull**()
-```
+```text
 
 ### Проверка содержимого
 
@@ -384,7 +384,7 @@ list.`isNotEmpty()`  // `true`
 // Размер
 `list.size`                        // 5
 `list.count`()                     // 5
-```
+```text
 
 ### Итерация
 
@@ -412,7 +412,7 @@ val `iterator` = `list.iterator`()
 while (`iterator`.`hasNext()`) {
     println(`iterator.next`())
 }
-```
+```text
 
 ## Поиск и фильтрация
 
@@ -429,7 +429,7 @@ val list = `listOf`(1, 2, 3, 4, 5, 6)
 `list.find` { it > 3 }             // 4
 `list.first` { it > 3 }            // 4
 list.`firstOrNull()`  // `null`
-```
+```text
 
 Метод `find` возвращает первый элемент, удовлетворяющий условию, или null, если такого элемента нет. Метод `first` работает аналогично, но выбрасывает `NoSuchElementException`, если элемент не найден. `firstOrNull` является безопасной версией `first`, которая возвращает null вместо исключения. Выбор метода зависит от того, является ли отсутствие элемента ожидаемой ситуацией или ошибкой.
 
@@ -503,10 +503,10 @@ val strings = list.map { it.toString() }       // ["1", "2", "3", "4", "5"]
 **val flat** = **nested.flatten**()                    // [1, 2, 3, 4]
 
 // **FlatMap**
-**val flatMapped** = **list.flatMap** { 
-    **listOf**(**it, it * 2**) 
+**val flatMapped** = **list.flatMap** {
+    **listOf**(**it, it * 2**)
 }                                               // [1, 2, 2, 4, 3, 6, 4, 8, 5, 10]
-```
+```text
 
 ### Zip (объединение)
 
@@ -525,7 +525,7 @@ val zipped = `list1.zip`(list2) { a, b ->
 // `Unzip`
 val pairs = `listOf`(1 to "a", 2 to "b", 3 to "c")
 val (numbers, letters) = `pairs.unzip`()
-```
+```text
 
 ### Windowed (скользящее окно)
 
@@ -538,7 +538,7 @@ val list = `listOf`(1, 2, 3, 4, 5)
 
 // `Chunked` (разбиение на части)
 `list.chunked`(2)                                 // [[1, 2], [3, 4], [5]]
-```
+```text
 
 ## Сортировка
 
@@ -552,7 +552,7 @@ val list = `listOf`(3, 1, 4, 1, 5, 9, 2, 6)
 // Сортировка (создает новый список)
 val sorted = `list.sorted`()                      // [1, 1, 2, 3, 4, 5, 6, 9]
 val `sortedDesc` = list.`sortedDescending()`       // [9, 6, 5, 4, 3, 2, 1, 1]
-```
+```text
 
 Метод `sorted()` создает новый отсортированный список, не изменяя исходный. Это соответствует принципам неизменяемости в функциональном программировании. Метод `sortedDescending()` работает аналогично, но сортирует в обратном порядке. Для изменяемых списков доступны методы `sort()` и `sortDescending()`, которые изменяют исходный список in-place, что может быть более эффективно по памяти.
 
@@ -974,9 +974,9 @@ for (i in list.indices) {
 fun parseCSV(csv: String): List<Map<String, String>> {
     val lines = csv.lines()
     if (lines.isEmpty()) return emptyList()
-    
+
     val headers = lines.first().split(",").map { it.trim() }
-    
+
     return lines.drop(1)
         .map { line ->
             line.split(",")
@@ -1012,23 +1012,23 @@ data.forEach { row ->
 // Реализация стека
 class Stack<T> {
     private val elements = mutableListOf<T>()
-    
+
     fun push(item: T) {
         elements.add(item)
     }
-    
+
     fun pop(): T? {
         return elements.removeLastOrNull()
     }
-    
+
     fun peek(): T? {
         return elements.lastOrNull()
     }
-    
+
     fun isEmpty(): Boolean {
         return elements.isEmpty()
     }
-    
+
     fun size(): Int {
         return elements.size
     }
@@ -1037,23 +1037,23 @@ class Stack<T> {
 // Реализация очереди
 class Queue<T> {
     private val elements = mutableListOf<T>()
-    
+
     fun enqueue(item: T) {
         elements.add(item)
     }
-    
+
     fun dequeue(): T? {
         return elements.removeFirstOrNull()
     }
-    
+
     fun peek(): T? {
         return elements.firstOrNull()
     }
-    
+
     fun isEmpty(): Boolean {
         return elements.isEmpty()
     }
-    
+
     fun size(): Int {
         return elements.size
     }
@@ -1267,7 +1267,7 @@ fun <T> List<T>.split(size: Int): List<List<T>> {
 fun <T> List<T>.splitBy(predicate: (T) -> Boolean): List<List<T>> {
     val result = mutableListOf<List<T>>()
     var current = mutableListOf<T>()
-    
+
     for (element in this) {
         if (predicate(element)) {
             if (current.isNotEmpty()) {
@@ -1278,11 +1278,11 @@ fun <T> List<T>.splitBy(predicate: (T) -> Boolean): List<List<T>> {
             current.add(element)
         }
     }
-    
+
     if (current.isNotEmpty()) {
         result.add(current)
     }
-    
+
     return result
 }
 
@@ -1295,7 +1295,7 @@ val split = list.splitBy { it == 0 }
 fun <T> List<T>.partitionBy(predicate: (T) -> Boolean): Pair<List<T>, List<T>> {
     val trueList = mutableListOf<T>()
     val falseList = mutableListOf<T>()
-    
+
     for (element in this) {
         if (predicate(element)) {
             trueList.add(element)
@@ -1303,7 +1303,7 @@ fun <T> List<T>.partitionBy(predicate: (T) -> Boolean): Pair<List<T>, List<T>> {
             falseList.add(element)
         }
     }
-    
+
     return trueList to falseList
 }
 ```
@@ -1318,7 +1318,7 @@ fun <T> List<T>.partitionBy(predicate: (T) -> Boolean): Pair<List<T>, List<T>> {
 // Генерация всех перестановок
 fun <T> List<T>.permutations(): List<List<T>> {
     if (size <= 1) return listOf(this)
-    
+
     val result = mutableListOf<List<T>>()
     for (i in indices) {
         val element = this[i]
@@ -1414,11 +1414,11 @@ val color2 = colors.getCyclic(-1)  // "blue" (последний элемент)
 // Стек на основе List
 class Stack<T> {
     private val items = mutableListOf<T>()
-    
+
     fun push(item: T) {
         items.add(item)
     }
-    
+
     fun pop(): T? {
         return if (items.isNotEmpty()) {
             items.removeAt(items.size - 1)
@@ -1426,7 +1426,7 @@ class Stack<T> {
             null
         }
     }
-    
+
     fun peek(): T? = items.lastOrNull()
     fun isEmpty(): Boolean = items.isEmpty()
 }
@@ -1434,11 +1434,11 @@ class Stack<T> {
 // Очередь на основе List
 class Queue<T> {
     private val items = mutableListOf<T>()
-    
+
     fun enqueue(item: T) {
         items.add(item)
     }
-    
+
     fun dequeue(): T? {
         return if (items.isNotEmpty()) {
             items.removeAt(0)
@@ -1446,7 +1446,7 @@ class Queue<T> {
             null
         }
     }
-    
+
     fun peek(): T? = items.firstOrNull()
     fun isEmpty(): Boolean = items.isEmpty()
 }

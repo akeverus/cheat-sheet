@@ -31,7 +31,6 @@ updated: "2026-02-11"
 - [Расширения и миграция с JUnit 4](#расширения-extensions)
 - [Частые вопросы](#частые-вопросы)
 
----
 
 ## Введение в JUnit 5
 
@@ -45,7 +44,6 @@ JUnit 5 состоит из трёх частей:
 
 Поддержка Java 8+, удобные проверки и параметризация.
 
----
 
 ## Установка и настройка
 
@@ -82,7 +80,6 @@ test {
 }
 ```
 
----
 
 ## Основные аннотации
 
@@ -146,7 +143,6 @@ static void closeDatabase() {
 }
 ```
 
----
 
 ## Assertions (проверки)
 
@@ -190,7 +186,6 @@ void multipleAssertions() {
 }
 ```
 
----
 
 ## Assumptions (допущения)
 
@@ -215,7 +210,6 @@ void testWithAssumption() {
 
 Условное выполнение по ОС/переменным: **@EnabledOnOs**, **@DisabledOnOs**, **@EnabledIfEnvironmentVariable**, **@DisabledIfEnvironmentVariable**.
 
----
 
 ## Параметризованные тесты
 
@@ -256,7 +250,6 @@ static Stream<Arguments> provideTestData() {
 }
 ```
 
----
 
 ## Тестирование исключений
 
@@ -272,7 +265,6 @@ void testNoException() {
 }
 ```
 
----
 
 ## Группировка и порядок
 
@@ -313,7 +305,6 @@ class OrderedTest {
 }
 ```
 
----
 
 ## Расширения (Extensions)
 
@@ -336,7 +327,6 @@ class UserServiceTest {
 }
 ```
 
----
 
 ## Динамические тесты (@TestFactory)
 
@@ -351,7 +341,6 @@ Stream<DynamicTest> dynamicTests() {
 }
 ```
 
----
 
 ## Дополнительные возможности
 
@@ -382,7 +371,6 @@ junit.jupiter.execution.parallel.config.strategy=fixed
 junit.jupiter.execution.parallel.config.fixed.parallelism=4
 ```
 
----
 
 ## Миграция с JUnit 4
 
@@ -398,7 +386,6 @@ junit.jupiter.execution.parallel.config.fixed.parallelism=4
 
 Для запуска старых тестов JUnit 4 подключите **junit-vintage-engine**.
 
----
 
 ## Лучшие практики
 
@@ -410,7 +397,6 @@ junit.jupiter.execution.parallel.config.fixed.parallelism=4
 - Тестировать поведение, а не реализацию.
 - Тесты независимы: изоляция через **@BeforeEach** и при необходимости **@Execution(SAME_THREAD)**.
 
----
 
 ## Шпаргалка команд
 
@@ -425,38 +411,36 @@ junit.jupiter.execution.parallel.config.fixed.parallelism=4
 | Временная директория | **@TempDir Path tempDir** |
 | Таймаут | **@Timeout(5)** или **@Timeout(value = 500, unit = TimeUnit.MILLISECONDS)** |
 
----
 
 ## Частые вопросы
 
-**Как запускать только быстрые тесты?**  
+**Как запускать только быстрые тесты?**
 Теги **@Tag("fast")** и настройка Gradle/Maven: `includeTags "unit"`, `excludeTags "slow"`.
 
-**Как тестировать асинхронный код?**  
+**Как тестировать асинхронный код?**
 AssertJ: `assertThat(future).succeedsWithin(Duration.ofSeconds(5))` или Awaitility.
 
-**Как организовать тестовые данные?**  
+**Как организовать тестовые данные?**
 **@ParameterizedTest** с **@CsvFileSource** или **@MethodSource**; общие данные — в **@BeforeEach** или фабриках.
 
-**Миграция с JUnit 4 на JUnit 5?**  
+**Миграция с JUnit 4 на JUnit 5?**
 См. таблицу «Миграция с JUnit 4»; при необходимости подключите **junit-vintage-engine**.
 
-**Тесты проходят локально, но падают в CI.**  
+**Тесты проходят локально, но падают в CI.**
 Проверить: таймзоны, локаль, пути к файлам, переменные окружения. В CI — стабильное окружение; **@EnabledIf** только для локальных сценариев.
 
-**Тесты нестабильны.**  
+**Тесты нестабильны.**
 Избегать общего состояния между тестами, таймеров без моков, зависимости от порядка. Изоляция: **@BeforeEach** с новыми экземплярами, при необходимости **@Execution(SAME_THREAD)**.
 
-**@BeforeAll падает с NullPointerException.**  
+**@BeforeAll падает с NullPointerException.**
 Метод **@BeforeAll** должен быть **static** (или класс с **@TestInstance(Lifecycle.PER_CLASS)**). В static-методе нельзя использовать нестатические поля.
 
-**Параметризованный тест не находит данные.**  
+**Параметризованный тест не находит данные.**
 CSV: путь вида `resources = "/data.csv"` — файл в `src/test/resources`. **@MethodSource**: метод **static**, возвращает **Stream**, **Iterable** или **Arguments**.
 
-**Запуск тестов одного класса:**  
+**Запуск тестов одного класса:**
 `./gradlew test --tests "com.example.OrderServiceTest"` или `mvn test -Dtest=OrderServiceTest`.
 
----
 
 ## Глоссарий
 
@@ -469,13 +453,11 @@ CSV: путь вида `resources = "/data.csv"` — файл в `src/test/resou
 - **Assertion** — проверка ожидаемого результата.
 - **Assumption** — условие, при невыполнении которого тест пропускается.
 
----
 
 ## См. также
 
 - [JUnit Advanced](junit-advanced.md) · [Mockito](mockito.md) · [AssertJ](assertj.md) · [Hamcrest](hamcrest.md) · [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md)
 
----
 
 ## Заключение
 

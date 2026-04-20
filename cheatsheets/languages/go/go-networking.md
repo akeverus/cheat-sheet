@@ -63,10 +63,10 @@ Go предоставляет мощные инструменты для сет�
 
 ### Основные протоколы
 
-1. **TCP** - надежная передача данных
-2. **UDP** - быстрая передача данных
-3. **HTTP** - веб-протокол
-4. **WebSocket** - двусторонняя связь
+1. **TCP** — надежная передача данных
+2. **UDP** — быстрая передача данных
+3. **HTTP** — веб-протокол
+4. **WebSocket** — двусторонняя связь
 
 ## **TCP** соединения
 
@@ -84,26 +84,26 @@ func tcpServer() error {
         return err
     }
     defer listener.Close()
-    
+
     for {
         conn, err := listener.Accept()
         if err != nil {
             continue
         }
-        
+
         go handleConnection(conn)
     }
 }
 
 func handleConnection(conn net.Conn) {
     defer conn.Close()
-    
+
     buf := make([]byte, 1024)
     n, err := conn.Read(buf)
     if err != nil {
         return
     }
-    
+
     response := fmt.Sprintf("Echo: %s", string(buf[:n]))
     conn.Write([]byte(response))
 }
@@ -120,18 +120,18 @@ func tcpClient(message string) error {
         return err
     }
     defer conn.Close()
-    
+
     _, err = conn.Write([]byte(message))
     if err != nil {
         return err
     }
-    
+
     buf := make([]byte, 1024)
     n, err := conn.Read(buf)
     if err != nil {
         return err
     }
-    
+
     fmt.Println(string(buf[:n]))
     return nil
 }
@@ -149,20 +149,20 @@ func udpServer() error {
     if err != nil {
         return err
     }
-    
+
     conn, err := net.ListenUDP("udp", addr)
     if err != nil {
         return err
     }
     defer conn.Close()
-    
+
     buf := make([]byte, 1024)
     for {
         n, clientAddr, err := conn.ReadFromUDP(buf)
         if err != nil {
             continue
         }
-        
+
         response := fmt.Sprintf("Echo: %s", string(buf[:n]))
         conn.WriteToUDP([]byte(response), clientAddr)
     }
@@ -179,24 +179,24 @@ func udpClient(message string) error {
     if err != nil {
         return err
     }
-    
+
     conn, err := net.DialUDP("udp", nil, serverAddr)
     if err != nil {
         return err
     }
     defer conn.Close()
-    
+
     _, err = conn.Write([]byte(message))
     if err != nil {
         return err
     }
-    
+
     buf := make([]byte, 1024)
     n, err := conn.Read(buf)
     if err != nil {
         return err
     }
-    
+
     fmt.Println(string(buf[:n]))
     return nil
 }
@@ -218,12 +218,12 @@ func httpGet(url string) error {
         return err
     }
     defer resp.Body.Close()
-    
+
     body, err := io.ReadAll(resp.Body)
     if err != nil {
         return err
     }
-    
+
     fmt.Println(string(body))
     return nil
 }
@@ -271,13 +271,13 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
     defer conn.Close()
-    
+
     for {
         messageType, message, err := conn.ReadMessage()
         if err != nil {
             break
         }
-        
+
         response := fmt.Sprintf("Echo: %s", string(message))
         conn.WriteMessage(messageType, []byte(response))
     }
@@ -295,19 +295,19 @@ func websocketClient(url string) error {
         return err
     }
     defer conn.Close()
-    
+
     // Отправка сообщения
     err = conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
     if err != nil {
         return err
     }
-    
+
     // Чтение сообщения
     _, message, err := conn.ReadMessage()
     if err != nil {
         return err
     }
-    
+
     fmt.Println(string(message))
     return nil
 }
@@ -356,24 +356,24 @@ func tcpServerWithTimeout() error {
         return err
     }
     defer listener.Close()
-    
+
     for {
         conn, err := listener.Accept()
         if err != nil {
             continue
         }
-        
+
         // Установка таймаутов
         conn.SetReadDeadline(time.Now().Add(30 * time.Second))
         conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
-        
+
         go handleConnectionWithTimeout(conn)
     }
 }
 
 func handleConnectionWithTimeout(conn net.Conn) {
     defer conn.Close()
-    
+
     buf := make([]byte, 1024)
     for {
         conn.SetReadDeadline(time.Now().Add(30 * time.Second))
@@ -384,7 +384,7 @@ func handleConnectionWithTimeout(conn net.Conn) {
             }
             return
         }
-        
+
         conn.SetWriteDeadline(time.Now().Add(30 * time.Second))
         _, err = conn.Write(buf[:n])
         if err != nil {
@@ -402,20 +402,20 @@ func udpMulticastServer(group string, port int) error {
     if err != nil {
         return err
     }
-    
+
     conn, err := net.ListenMulticastUDP("udp", nil, addr)
     if err != nil {
         return err
     }
     defer conn.Close()
-    
+
     buf := make([]byte, 1024)
     for {
         n, src, err := conn.ReadFromUDP(buf)
         if err != nil {
             continue
         }
-        
+
         fmt.Printf("Received from %s: %s\n", src, string(buf[:n]))
     }
 }
@@ -425,13 +425,13 @@ func udpMulticastClient(group string, port int, message string) error {
     if err != nil {
         return err
     }
-    
+
     conn, err := net.DialUDP("udp", nil, addr)
     if err != nil {
         return err
     }
     defer conn.Close()
-    
+
     _, err = conn.Write([]byte(message))
     return err
 }
@@ -456,17 +456,17 @@ func NewRetryClient(maxRetries int) *RetryClient {
 
 func (rc *RetryClient) Do(req *http.Request) (*http.Response, error) {
     var lastErr error
-    
+
     for i := 0; i < rc.maxRetries; i++ {
         resp, err := rc.client.Do(req)
         if err == nil {
             return resp, nil
         }
-        
+
         lastErr = err
         time.Sleep(time.Duration(i+1) * time.Second)
     }
-    
+
     return nil, lastErr
 }
 ```
@@ -488,10 +488,10 @@ func (t *loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) 
     start := time.Now()
     resp, err := t.next.RoundTrip(req)
     duration := time.Since(start)
-    
-    fmt.Printf("%s %s - %v - %v\n", 
+
+    fmt.Printf("%s %s - %v - %v\n",
         req.Method, req.URL, duration, err)
-    
+
     return resp, err
 }
 
@@ -524,20 +524,20 @@ func websocketHandlerWithHeartbeat(w http.ResponseWriter, r *http.Request) {
         return
     }
     defer conn.Close()
-    
+
     // Heartbeat
     conn.SetReadDeadline(time.Now().Add(60 * time.Second))
     conn.SetPongHandler(func(string) error {
         conn.SetReadDeadline(time.Now().Add(60 * time.Second))
         return nil
     })
-    
+
     // Отправка ping
     ticker := time.NewTicker(30 * time.Second)
     defer ticker.Stop()
-    
+
     done := make(chan struct{})
-    
+
     go func() {
         defer close(done)
         for {
@@ -548,7 +548,7 @@ func websocketHandlerWithHeartbeat(w http.ResponseWriter, r *http.Request) {
             time.Sleep(30 * time.Second)
         }
     }()
-    
+
     for {
         select {
         case <-done:
@@ -563,7 +563,7 @@ func websocketHandlerWithHeartbeat(w http.ResponseWriter, r *http.Request) {
             if err != nil {
                 return
             }
-            
+
             conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
             if err := conn.WriteMessage(messageType, message); err != nil {
                 return
@@ -583,7 +583,7 @@ func httpClientWithPool() *http.Client {
         IdleConnTimeout:      90 * time.Second,
         DisableKeepAlives:   false,
     }
-    
+
     return &http.Client{
         Transport: transport,
         Timeout:   30 * time.Second,
@@ -600,38 +600,38 @@ func tcpProxy(listenAddr, targetAddr string) error {
         return err
     }
     defer listener.Close()
-    
+
     for {
         clientConn, err := listener.Accept()
         if err != nil {
             continue
         }
-        
+
         go func() {
             defer clientConn.Close()
-            
+
             targetConn, err := net.Dial("tcp", targetAddr)
             if err != nil {
                 return
             }
             defer targetConn.Close()
-            
+
             // Копирование данных в обе стороны
             var wg sync.WaitGroup
             wg.Add(2)
-            
+
             go func() {
                 defer wg.Done()
                 io.Copy(targetConn, clientConn)
                 targetConn.Close()
             }()
-            
+
             go func() {
                 defer wg.Done()
                 io.Copy(clientConn, targetConn)
                 clientConn.Close()
             }()
-            
+
             wg.Wait()
         }()
     }
@@ -664,7 +664,7 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
     cbc.mu.RLock()
     state := cbc.state
     cbc.mu.RUnlock()
-    
+
     if state == "open" {
         cbc.mu.Lock()
         if time.Since(cbc.lastFailure) > cbc.timeout {
@@ -675,12 +675,12 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         }
         cbc.mu.Unlock()
     }
-    
+
     resp, err := cbc.client.Do(req)
-    
+
     cbc.mu.Lock()
     defer cbc.mu.Unlock()
-    
+
     if err != nil {
         cbc.failures++
         cbc.lastFailure = time.Now()
@@ -689,7 +689,7 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         }
         return nil, err
     }
-    
+
     if resp.StatusCode >= 500 {
         cbc.failures++
         cbc.lastFailure = time.Now()
@@ -702,7 +702,7 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         }
         cbc.failures = 0
     }
-    
+
     return resp, nil
 }
 ```
@@ -728,15 +728,15 @@ func resolveDNSWithTimeout(hostname string, timeout time.Duration) ([]string, er
             return d.DialContext(ctx, network, address)
         },
     }
-    
+
     ctx, cancel := context.WithTimeout(context.Background(), timeout)
     defer cancel()
-    
+
     addrs, err := resolver.LookupHost(ctx, hostname)
     if err != nil {
         return nil, err
     }
-    
+
     return addrs, nil
 }
 ```
@@ -784,23 +784,23 @@ func NewRetryClient(maxRetries int, backoff time.Duration) *RetryClient {
 
 func (rc *RetryClient) Do(req *http.Request) (*http.Response, error) {
     var lastErr error
-    
+
     for i := 0; i < rc.maxRetries; i++ {
         resp, err := rc.client.Do(req)
         if err == nil && resp.StatusCode < 500 {
             return resp, nil
         }
-        
+
         if resp != nil {
             resp.Body.Close()
         }
-        
+
         lastErr = err
         if i < rc.maxRetries-1 {
             time.Sleep(rc.backoff * time.Duration(i+1))
         }
     }
-    
+
     return nil, fmt.Errorf("max retries exceeded: %w", lastErr)
 }
 ```
@@ -859,13 +859,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
     defer conn.Close()
-    
+
     for {
         messageType, message, err := conn.ReadMessage()
         if err != nil {
             break
         }
-        
+
         // Эхо сообщения
         if err := conn.WriteMessage(messageType, message); err != nil {
             break
@@ -876,21 +876,21 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 ## Лучшие практики
 
-1. **Используйте таймауты** - устанавливайте таймауты для сетевых операций
-2. **Обрабатывайте ошибки** - всегда проверяйте ошибки сетевых операций
-3. **Закрывайте соединения** - используйте **defer** для закрытия соединений
-4. **Используйте пулы соединений** - для переиспользования соединений
-5. **Обрабатывайте разрывы соединений** - корректно обрабатывайте сетевые ошибки
-6. **Используйте context** - для отмены операций
-7. **Используйте circuit breaker** - для защиты от каскадных отказов
-8. **Используйте retry** - для обработки временных ошибок
-9. **Используйте rate limiting** - для ограничения частоты запросов
-10. **Мониторьте соединения** - отслеживайте состояние соединений
-11. **Используйте retry механизмы** - для устойчивости к временным сбоям
-12. **Используйте connection pooling** - для эффективного использования соединений
-13. **Используйте WebSocket** - для двунаправленной коммуникации
-14. **Оптимизируйте сетевые операции** - минимизируйте **latency**
-15. **Мониторьте производительность** - отслеживайте сетевые метрики
+1. **Используйте таймауты** — устанавливайте таймауты для сетевых операций
+2. **Обрабатывайте ошибки** — всегда проверяйте ошибки сетевых операций
+3. **Закрывайте соединения** — используйте **defer** для закрытия соединений
+4. **Используйте пулы соединений** — для переиспользования соединений
+5. **Обрабатывайте разрывы соединений** — корректно обрабатывайте сетевые ошибки
+6. **Используйте context** — для отмены операций
+7. **Используйте circuit breaker** — для защиты от каскадных отказов
+8. **Используйте retry** — для обработки временных ошибок
+9. **Используйте rate limiting** — для ограничения частоты запросов
+10. **Мониторьте соединения** — отслеживайте состояние соединений
+11. **Используйте retry механизмы** — для устойчивости к временным сбоям
+12. **Используйте connection pooling** — для эффективного использования соединений
+13. **Используйте WebSocket** — для двунаправленной коммуникации
+14. **Оптимизируйте сетевые операции** — минимизируйте **latency**
+15. **Мониторьте производительность** — отслеживайте сетевые метрики
 
 
 ## Решение проблем
@@ -909,3 +909,11 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 - [Go net Package](https://pkg.go.dev/net)
 - [Go net/http](https://pkg.go.dev/net/http)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

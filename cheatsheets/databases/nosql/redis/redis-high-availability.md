@@ -86,13 +86,12 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 3. **Cluster**: Распределенная архитектура без единой точки отказа
 4. **Мониторинг**: Отслеживание состояния и автоматические алерты
 
----
 
 ## Архитектура высокой доступности
 
 ### **Master-Slave** с **Sentinel**
 
-```
+```text
 ┌─────────────┐
 │   Sentinel  │
 │   Cluster   │
@@ -107,7 +106,7 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 
 ### **Redis Cluster**
 
-```
+```text
 ┌──────────┐  ┌──────────┐  ┌──────────┐
 │ Master 1 │  │ Master 2 │  │ Master 3 │
 │          │  │          │  │          │
@@ -115,7 +114,6 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 └──────────┘  └──────────┘  └──────────┘
 ```
 
----
 
 ## Настройка **Sentinel** для `HA`
 
@@ -155,7 +153,6 @@ sentinel notification-script mymaster /path/to/notify.sh
 sentinel client-reconfig-script mymaster /path/to/reconfig.sh
 ```
 
----
 
 ## **Disaster Recovery**
 

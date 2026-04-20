@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Сортировка кучей (`Heap Sort`)
 
-Сортировка кучей — это алгоритм сортировки, основанный на структуре данных "куча" (`heap`). Он использует бинарную кучу для сортировки элементов за время `O(n log(n))` с гарантированной производительностью. В отличие от быстрой сортировки, которая может деградировать до `O(n²)` в худшем случае, сортировка кучей всегда обеспечивает временную сложность `O(n log(n))` независимо от входных данных. Это делает её особенно полезной в системах реального времени, где важна предсказуемость производительности. Алгоритм может быть реализован как in-place сортировка с пространственной сложностью `O(1)`, что делает его эффективным по использованию памяти. В этом документе рассматриваются принципы работы сортировки кучей, её реализация на `Java` и `Kotlin`, анализ сложности и практические рекомендации по применению.
+Сортировка кучей — это алгоритм сортировки, основанный на структуре данных «куча» (`heap`). Он использует бинарную кучу для сортировки элементов за время `O(n log(n))` с гарантированной производительностью. В отличие от быстрой сортировки, которая может деградировать до `O(n²)` в худшем случае, сортировка кучей всегда обеспечивает временную сложность `O(n log(n))` независимо от входных данных. Это делает её особенно полезной в системах реального времени, где важна предсказуемость производительности. Алгоритм может быть реализован как in-place сортировка с пространственной сложностью `O(1)`, что делает его эффективным по использованию памяти. В этом документе рассматриваются принципы работы сортировки кучей, её реализация на `Java` и `Kotlin`, анализ сложности и практические рекомендации по применению.
 
 ## Полезные ссылки
 
@@ -29,7 +29,7 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)
-- [Структура данных "Куча"](#структура-данных-куча)
+- [Структура данных «Куча»](#структура-данных-куча)
   - [Типы куч](#типы-куч)
   - [Полное бинарное дерево](#полное-бинарное-дерево)
 - [Операции с кучей](#операции-с-кучей)
@@ -69,7 +69,7 @@ updated: "2026-02-11"
 
 Основная идея сортировки кучей заключается в том, чтобы построить кучу из элементов массива, а затем последовательно извлекать максимальный (или минимальный) элемент из кучи и помещать его в конец отсортированного массива. Этот процесс повторяется до тех пор, пока куча не станет пустой, и все элементы не будут отсортированы. Алгоритм использует свойство кучи, согласно которому корневой элемент всегда является максимальным (для max-heap) или минимальным (для min-heap) элементом, что позволяет эффективно извлекать элементы в отсортированном порядке.
 
-## Структура данных "Куча"
+## Структура данных «Куча»
 
 Отличительной чертой `Heap` являются две вещи. Во-первых, значение каждого узла должно быть меньше или равно всем значениям, хранящимся в его дочерних элементах (для `Min-Heap`), или больше или равно всем значениям в его дочерних элементах (для `Max-Heap`). Во-вторых, это полное дерево, что означает, что оно имеет наименьшую возможную высоту для заданного количества узлов.
 
@@ -99,7 +99,7 @@ updated: "2026-02-11"
 
 Мы можем вставить элемент со следующими шагами. Сначала создаём новый лист, который является самым правым доступным слотом на самом глубоком уровне, и сохраняем элемент в этом узле. Затем, если элемент меньше своего родителя (для `Min-Heap`) или больше своего родителя (для `Max-Heap`), мы меняем их местами. Продолжаем этот процесс, пока элемент не станет меньше (или больше) своего родителя или не станет новым корнем.
 
-Обратите внимание, что шаг обмена не нарушит правило кучи, потому что, если мы заменим значение узла на меньшее (для `Min-Heap`), оно всё равно будет меньше, чем его дочерние элементы. Аналогично, для `Max-Heap` замена на большее значение сохраняет свойство кучи. Этот процесс называется "просеиванием вверх" (`sift-up`) или "подъёмом" (`bubble-up`) элемента.
+Обратите внимание, что шаг обмена не нарушит правило кучи, потому что, если мы заменим значение узла на меньшее (для `Min-Heap`), оно всё равно будет меньше, чем его дочерние элементы. Аналогично, для `Max-Heap` замена на большее значение сохраняет свойство кучи. Этот процесс называется «просеиванием вверх» (`sift-up`) или «подъёмом» (`bubble-up`) элемента.
 
 ### Пример вставки
 
@@ -144,7 +144,7 @@ updated: "2026-02-11"
 
 Чтобы сохранить структуру, мы не можем удалить ни один элемент, кроме самого правого листа. Итак, идея состоит в том, чтобы удалить элемент из корневого узла и сохранить крайний правый лист в корневом узле. Но эта операция наверняка нарушит свойство кучи, так как перемещённый элемент может не соответствовать требованиям кучи в новой позиции.
 
-Поэтому, если новый корень больше, чем любой из его дочерних узлов (для `Max-Heap`), мы меняем его местами с его наибольшим дочерним узлом. Поскольку наибольший дочерний узел больше всех других дочерних узлов, он не нарушает свойство кучи. Аналогично, для `Min-Heap` мы меняем с наименьшим дочерним узлом. Мы продолжаем менять местами до тех пор, пока элемент не станет листом или не станет больше (или меньше) всех его дочерних элементов. Этот процесс называется "просеиванием вниз" (`sift-down`) или "опусканием" (`bubble-down`) элемента.
+Поэтому, если новый корень больше, чем любой из его дочерних узлов (для `Max-Heap`), мы меняем его местами с его наибольшим дочерним узлом. Поскольку наибольший дочерний узел больше всех других дочерних узлов, он не нарушает свойство кучи. Аналогично, для `Min-Heap` мы меняем с наименьшим дочерним узлом. Мы продолжаем менять местами до тех пор, пока элемент не станет листом или не станет больше (или меньше) всех его дочерних элементов. Этот процесс называется «просеиванием вниз» (`sift-down`) или «опусканием» (`bubble-down`) элемента.
 
 ## Реализация на Java
 
@@ -173,27 +173,27 @@ updated: "2026-02-11"
 // Куча как массив: родитель (i-1)/2, левый 2*i+1, правый 2*i+2
 class BinaryTree<E> {
     List<E> elements = new ArrayList<>();
-    
+
     void add(E e) {
         elements.add(e);
     }
-    
+
     boolean isEmpty() {
         return elements.isEmpty();
     }
-    
+
     E elementAt(int index) {
         return elements.get(index);
     }
-    
+
     int parentIndex(int index) {
         return (index - 1) / 2;
     }
-    
+
     int leftChildIndex(int index) {
         return 2 * index + 1;
     }
-    
+
     int rightChildIndex(int index) {
         return 2 * index + 2;
     }
@@ -207,37 +207,37 @@ class BinaryTree<E> {
 ```java
 class Heap<E extends Comparable<E>> {
     List<E> elements = new ArrayList<>();
-    
+
     void add(E e) {
         elements.add(e);
         int elementIndex = elements.size() - 1;
-        
+
         while (!isRoot(elementIndex) && !isCorrectChild(elementIndex)) {
             int parentIndex = parentIndex(elementIndex);
             swap(elementIndex, parentIndex);
             elementIndex = parentIndex;
         }
     }
-    
+
     boolean isRoot(int index) {
         return index == 0;
     }
-    
+
     boolean isCorrectChild(int index) {
         return isCorrect(parentIndex(index), index);
     }
-    
+
     boolean isCorrect(int parentIndex, int childIndex) {
         if (!isValidIndex(parentIndex) || !isValidIndex(childIndex)) {
             return true;
         }
         return elementAt(parentIndex).compareTo(elementAt(childIndex)) < 0;
     }
-    
+
     boolean isValidIndex(int index) {
         return index < elements.size();
     }
-    
+
     void swap(int index1, int index2) {
         E element1 = elementAt(index1);
         E element2 = elementAt(index2);
@@ -259,43 +259,43 @@ class Heap<E extends Comparable<E>> {
         if (isEmpty()) {
             throw new IllegalStateException("You cannot pop from an empty heap");
         }
-        
+
         E result = elementAt(0);
         int lastElementIndex = elements.size() - 1;
         swap(0, lastElementIndex);
         elements.remove(lastElementIndex);
-        
+
         int elementIndex = 0;
         while (!isLeaf(elementIndex) && !isCorrectParent(elementIndex)) {
             int smallerChildIndex = smallerChildIndex(elementIndex);
             swap(elementIndex, smallerChildIndex);
             elementIndex = smallerChildIndex;
         }
-        
+
         return result;
     }
-    
+
     boolean isLeaf(int index) {
         return !isValidIndex(leftChildIndex(index));
     }
-    
+
     boolean isCorrectParent(int index) {
-        return isCorrect(index, leftChildIndex(index)) && 
+        return isCorrect(index, leftChildIndex(index)) &&
                isCorrect(index, rightChildIndex(index));
     }
-    
+
     int smallerChildIndex(int index) {
         int leftChildIndex = leftChildIndex(index);
         int rightChildIndex = rightChildIndex(index);
-        
+
         if (!isValidIndex(rightChildIndex)) {
             return leftChildIndex;
         }
-        
+
         if (elementAt(leftChildIndex).compareTo(elementAt(rightChildIndex)) < 0) {
             return leftChildIndex;
         }
-        
+
         return rightChildIndex;
     }
 }
@@ -310,14 +310,14 @@ class Heap<E extends Comparable<E>> {
     static <E extends Comparable<E>> List<E> sort(Iterable<E> elements) {
         Heap<E> heap = of(elements);
         List<E> result = new ArrayList<>();
-        
+
         while (!heap.isEmpty()) {
             result.add(heap.pop());
         }
-        
+
         return result;
     }
-    
+
     static <E extends Comparable<E>> Heap<E> of(Iterable<E> elements) {
         Heap<E> result = new Heap<>();
         for (E element : elements) {
@@ -657,19 +657,19 @@ fun main() {
 ```java
 public static void heapSort(int[] arr) {
     int n = arr.length;
-    
+
     // Построение кучи (rearrange array)
     for (int i = n / 2 - 1; i >= 0; i--) {
         heapify(arr, n, i);
     }
-    
+
     // Извлечение элементов из кучи по одному
     for (int i = n - 1; i > 0; i--) {
         // Переместить текущий корень в конец
         int temp = arr[0];
         arr[0] = arr[i];
         arr[i] = temp;
-        
+
         // Вызвать heapify на уменьшенной куче
         heapify(arr, i, 0);
     }
@@ -679,23 +679,23 @@ private static void heapify(int[] arr, int n, int i) {
     int largest = i; // Инициализировать наибольший как корень
     int left = 2 * i + 1;
     int right = 2 * i + 2;
-    
+
     // Если левый дочерний элемент больше корня
     if (left < n && arr[left] > arr[largest]) {
         largest = left;
     }
-    
+
     // Если правый дочерний элемент больше, чем самый большой на данный момент
     if (right < n && arr[right] > arr[largest]) {
         largest = right;
     }
-    
+
     // Если самый большой не является корнем
     if (largest != i) {
         int swap = arr[i];
         arr[i] = arr[largest];
         arr[largest] = swap;
-        
+
         // Рекурсивно heapify затронутое поддерево
         heapify(arr, n, largest);
     }
@@ -709,18 +709,18 @@ private static void heapify(int[] arr, int n, int i) {
 ```java
 public static <T> void heapSort(T[] arr, Comparator<T> comparator) {
     int n = arr.length;
-    
+
     // Построение кучи
     for (int i = n / 2 - 1; i >= 0; i--) {
         heapify(arr, n, i, comparator);
     }
-    
+
     // Извлечение элементов из кучи
     for (int i = n - 1; i > 0; i--) {
         T temp = arr[0];
         arr[0] = arr[i];
         arr[i] = temp;
-        
+
         heapify(arr, i, 0, comparator);
     }
 }
@@ -729,20 +729,20 @@ private static <T> void heapify(T[] arr, int n, int i, Comparator<T> comparator)
     int largest = i;
     int left = 2 * i + 1;
     int right = 2 * i + 2;
-    
+
     if (left < n && comparator.compare(arr[left], arr[largest]) > 0) {
         largest = left;
     }
-    
+
     if (right < n && comparator.compare(arr[right], arr[largest]) > 0) {
         largest = right;
     }
-    
+
     if (largest != i) {
         T swap = arr[i];
         arr[i] = arr[largest];
         arr[largest] = swap;
-        
+
         heapify(arr, n, largest, comparator);
     }
 }
@@ -756,7 +756,7 @@ private static <T> void heapify(T[] arr, int n, int i, Comparator<T> comparator)
 public static int[] findKLargest(int[] arr, int k) {
     // Создаём min-heap размера k
     PriorityQueue<Integer> minHeap = new PriorityQueue<>();
-    
+
     for (int num : arr) {
         if (minHeap.size() < k) {
             minHeap.offer(num);
@@ -765,7 +765,7 @@ public static int[] findKLargest(int[] arr, int k) {
             minHeap.offer(num);
         }
     }
-    
+
     return minHeap.stream().mapToInt(i -> i).toArray();
 }
 ```

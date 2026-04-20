@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: Scheduling - Task Scheduling и Async Execution
-
-
+# Micronaut: Scheduling — Task Scheduling и Async Execution
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-core.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: Scheduling - Task Scheduling и Async Execution](#micronaut-scheduling-task-scheduling-и-async-execution)
+- [Micronaut: Scheduling — Task Scheduling и Async Execution](#micronaut-scheduling-task-scheduling-и-async-execution)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Scheduling](#настройка-scheduling)
@@ -114,13 +112,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ScheduledTasks {
-    
+
     @Scheduled(fixedRate = "5m")
     public void executeEvery5Minutes() {
         System.out.println("Executing every 5 minutes");
         // Выполнение задачи
     }
-    
+
     @Scheduled(fixedRate = "1h")
     public void executeEveryHour() {
         System.out.println("Executing every hour");
@@ -137,7 +135,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ScheduledTasks {
-    
+
     @Scheduled(fixedDelay = "10s")
     public void executeWithDelay() {
         System.out.println("Executing with 10 second delay");
@@ -154,19 +152,19 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ScheduledTasks {
-    
+
     @Scheduled(cron = "0 0 12 * * ?")
     public void executeAtNoon() {
         System.out.println("Executing at noon every day");
         // Выполнение задачи
     }
-    
+
     @Scheduled(cron = "0 0 0 * * MON")
     public void executeEveryMonday() {
         System.out.println("Executing every Monday at midnight");
         // Выполнение задачи
     }
-    
+
     @Scheduled(cron = "0 */15 * * * ?")
     public void executeEvery15Minutes() {
         System.out.println("Executing every 15 minutes");
@@ -187,7 +185,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Singleton
 public class AsyncScheduledTasks {
-    
+
     @Scheduled(fixedRate = "1m")
     @Async
     public CompletableFuture<Void> executeAsync() {
@@ -223,7 +221,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Requires(property = "scheduling.enabled", value = "true")
 public class ConditionalScheduledTasks {
-    
+
     @Scheduled(fixedRate = "5m")
     public void executeIfEnabled() {
         System.out.println("Executing if scheduling is enabled");
@@ -242,11 +240,11 @@ import jakarta.inject.Named;
 @Singleton
 public class ParameterizedScheduledTasks {
     private final String taskName;
-    
+
     public ParameterizedScheduledTasks(@Named("taskName") String taskName) {
         this.taskName = taskName;
     }
-    
+
     @Scheduled(fixedRate = "1m")
     public void executeWithParameter() {
         System.out.println("Executing task: " + taskName);
@@ -268,7 +266,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class ErrorHandlingScheduledTasks {
     private static final Logger log = LoggerFactory.getLogger(ErrorHandlingScheduledTasks.class);
-    
+
     @Scheduled(fixedRate = "5m")
     public void executeWithErrorHandling() {
         try {
@@ -279,7 +277,7 @@ public class ErrorHandlingScheduledTasks {
             // Обработка ошибки
         }
     }
-    
+
     private void processData() {
         // Логика обработки данных
     }
@@ -356,18 +354,18 @@ import java.util.concurrent.ScheduledFuture;
 @Singleton
 public class DynamicScheduler {
     private final TaskScheduler taskScheduler;
-    
+
     public DynamicScheduler(TaskScheduler taskScheduler) {
         this.taskScheduler = taskScheduler;
     }
-    
+
     public ScheduledFuture<?> scheduleTask(Runnable task, Duration delay) {
         return taskScheduler.schedule(delay, task);
     }
-    
+
     public ScheduledFuture<?> scheduleTaskAtFixedRate(
-            Runnable task, 
-            Duration initialDelay, 
+            Runnable task,
+            Duration initialDelay,
             Duration period) {
         return taskScheduler.scheduleAtFixedRate(initialDelay, period, task);
     }
@@ -384,7 +382,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Requires(property = "tasks.enabled", value = "true")
 public class ConditionalTasks {
-    
+
     @Scheduled(fixedRate = "5m")
     @Requires(property = "tasks.cleanup.enabled", value = "true")
     public void cleanupTask() {
@@ -408,7 +406,7 @@ import jakarta.inject.Singleton;
 public class MonitoredScheduledTasks {
     private final Counter taskExecutionCounter;
     private final Timer taskExecutionTimer;
-    
+
     public MonitoredScheduledTasks(MeterRegistry meterRegistry) {
         this.taskExecutionCounter = Counter.builder("scheduled.tasks.executed")
             .description("Number of scheduled tasks executed")
@@ -417,7 +415,7 @@ public class MonitoredScheduledTasks {
             .description("Scheduled task execution time")
             .register(meterRegistry);
     }
-    
+
     @Scheduled(fixedRate = "1m")
     public void monitoredTask() {
         Timer.Sample sample = Timer.start(taskExecutionTimer);
@@ -429,7 +427,7 @@ public class MonitoredScheduledTasks {
             sample.stop(taskExecutionTimer);
         }
     }
-    
+
     private void processData() {
         // Логика обработки данных
     }
@@ -448,7 +446,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Requires(property = "cluster.leader", value = "true")
 public class LeaderOnlyScheduledTasks {
-    
+
     @Scheduled(fixedRate = "5m")
     public void leaderOnlyTask() {
         // Задача выполняется только на лидере кластера
@@ -471,11 +469,11 @@ import java.util.concurrent.locks.Lock;
 @Singleton
 public class CoordinatedScheduledTasks {
     private final SyncCache<String, Boolean> lockCache;
-    
+
     public CoordinatedScheduledTasks(@Named("locks") SyncCache<String, Boolean> lockCache) {
         this.lockCache = lockCache;
     }
-    
+
     @Scheduled(fixedRate = "1m")
     public void coordinatedTask() {
         String lockKey = "task:coordinated";
@@ -483,7 +481,7 @@ public class CoordinatedScheduledTasks {
             // Попытка получить блокировку
             return true;
         });
-        
+
         if (lockAcquired) {
             try {
                 // Выполнение задачи
@@ -493,7 +491,7 @@ public class CoordinatedScheduledTasks {
             }
         }
     }
-    
+
     private void processData() {
         // Логика обработки данных
     }
@@ -511,14 +509,14 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ChainedScheduledTasks {
     private volatile boolean firstTaskCompleted = false;
-    
+
     @Scheduled(fixedRate = "5m")
     public void firstTask() {
         // Выполнение первой задачи
         processFirstTask();
         firstTaskCompleted = true;
     }
-    
+
     @Scheduled(fixedRate = "5m")
     public void secondTask() {
         if (firstTaskCompleted) {
@@ -541,7 +539,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class RetryableScheduledTasks {
-    
+
     @Scheduled(fixedRate = "1m")
     @Retryable(attempts = "3", delay = "1s")
     public void retryableTask() {
@@ -561,13 +559,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class QuartzScheduledJob {
-    
+
     @Scheduled(cron = "0 0 2 * * ?")
     public void runNightlyJob() {
         // Выполнение ночной задачи
         processNightlyData();
     }
-    
+
     @Scheduled(cron = "0 */30 * * * ?")
     public void runHalfHourlyJob() {
         // Выполнение задачи каждые 30 минут
@@ -587,14 +585,14 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ChainedScheduledTasks {
     private volatile boolean firstTaskCompleted = false;
-    
+
     @Scheduled(fixedRate = "5m")
     public void firstTask() {
         // Выполнение первой задачи
         processFirstTask();
         firstTaskCompleted = true;
     }
-    
+
     @Scheduled(fixedRate = "5m")
     public void secondTask() {
         if (firstTaskCompleted) {
@@ -617,3 +615,11 @@ public class ChainedScheduledTasks {
 - [**Cron Expression** Guide](https://crontab.guru/)
 - [**Task Scheduling Best Practices**](https://docs.spring.io/spring-framework/reference/integration/scheduling.html)
 - [Quartz Scheduler](https://www.quartz-scheduler.org/documentation/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

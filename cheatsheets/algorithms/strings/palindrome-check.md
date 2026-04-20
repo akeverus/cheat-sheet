@@ -174,13 +174,13 @@ public boolean isPalindromeCaseSensitive(String text) {
     int length = clean.length();
     int forward = 0;
     int backward = length - 1;
-    
+
     while (backward > forward) {
         if (clean.charAt(forward++) != clean.charAt(backward--)) {
             return false;
         }
     }
-    
+
     return true;
 }
 ```
@@ -191,29 +191,29 @@ public boolean isPalindromeCaseSensitive(String text) {
 public boolean isPalindromeWithSpaces(String text) {
     int forward = 0;
     int backward = text.length() - 1;
-    
+
     while (backward > forward) {
         char forwardChar = text.charAt(forward);
         char backwardChar = text.charAt(backward);
-        
+
         if (!Character.isLetterOrDigit(forwardChar)) {
             forward++;
             continue;
         }
-        
+
         if (!Character.isLetterOrDigit(backwardChar)) {
             backward--;
             continue;
         }
-        
+
         if (Character.toLowerCase(forwardChar) != Character.toLowerCase(backwardChar)) {
             return false;
         }
-        
+
         forward++;
         backward--;
     }
-    
+
     return true;
 }
 ```
@@ -224,12 +224,12 @@ public boolean isPalindromeWithSpaces(String text) {
 public boolean isNumericPalindrome(int number) {
     int original = number;
     int reversed = 0;
-    
+
     while (number > 0) {
         reversed = reversed * 10 + number % 10;
         number /= 10;
     }
-    
+
     return original == reversed;
 }
 ```

@@ -17,9 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 ---
 
-# Micronaut: Kafka Integration - Producers, Consumers и Streams
-
-
+# Micronaut: Kafka Integration — Producers, Consumers и Streams
 
 ## Полезные ссылки
 
@@ -28,7 +26,7 @@ related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 
 ## Содержание
 
-- [Micronaut: Kafka Integration - Producers, Consumers и Streams](#micronaut-kafka-integration-producers-consumers-и-streams)
+- [Micronaut: Kafka Integration — Producers, Consumers и Streams](#micronaut-kafka-integration-producers-consumers-и-streams)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Kafka](#настройка-kafka)
@@ -133,13 +131,13 @@ import io.micronaut.messaging.annotation.MessageHeader;
 
 @KafkaClient
 public interface UserProducer {
-    
+
     @Topic("users")
     void sendUser(@MessageBody User user);
-    
+
     @Topic("users")
     void sendUserWithKey(String key, @MessageBody User user);
-    
+
     @Topic("users")
     void sendUserWithHeaders(
         @MessageBody User user,
@@ -158,7 +156,7 @@ import org.apache.kafka.clients.producer.Callback;
 
 @KafkaClient
 public interface UserProducer {
-    
+
     @Topic("users")
     void sendUser(@MessageBody User user, Callback callback);
 }
@@ -172,11 +170,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private final UserProducer userProducer;
-    
+
     public UserService(UserProducer userProducer) {
         this.userProducer = userProducer;
     }
-    
+
     public void createUser(User user) {
         userRepository.save(user);
         userProducer.sendUser(user);
@@ -196,13 +194,13 @@ import io.micronaut.messaging.annotation.MessageHeader;
 
 @KafkaListener(groupId = "user-consumer-group")
 public class UserConsumer {
-    
+
     @Topic("users")
     public void receiveUser(@MessageBody User user) {
         System.out.println("Received user: " + user.getName());
         // Обработка пользователя
     }
-    
+
     @Topic("users")
     public void receiveUserWithKey(
         String key,
@@ -224,7 +222,7 @@ import io.micronaut.configuration.kafka.annotation.Batchable;
 
 @KafkaListener(groupId = "batch-consumer-group")
 public class BatchUserConsumer {
-    
+
     @Topic("users")
     @Batchable
     public void receiveUsers(List<User> users) {
@@ -247,11 +245,11 @@ import org.apache.kafka.streams.kstream.KStream;
 
 @Factory
 public class UserStreamFactory {
-    
+
     @Singleton
     public KStream<String, User> userStream(ConfiguredStreamBuilder streamBuilder) {
         KStream<String, User> stream = streamBuilder.stream("users");
-        
+
         stream
             .filter((key, user) -> user.getAge() >= 18)
             .mapValues(user -> {
@@ -259,7 +257,7 @@ public class UserStreamFactory {
                 return user;
             })
             .to("processed-users");
-        
+
         return stream;
     }
 }
@@ -291,7 +289,7 @@ import io.micronaut.configuration.kafka.annotation.Topic;
 
 @KafkaClient(transactionalId = "user-producer")
 public interface TransactionalUserProducer {
-    
+
     @Topic("users")
     void sendUser(@MessageBody User user);
 }
@@ -306,7 +304,7 @@ import io.micronaut.transaction.annotation.Transactional;
 
 @KafkaListener(groupId = "transactional-consumer-group")
 public class TransactionalUserConsumer {
-    
+
     @Topic("users")
     @Transactional
     public void receiveUser(@MessageBody User user) {
@@ -330,7 +328,7 @@ import io.micronaut.configuration.kafka.exceptions.DefaultKafkaListenerException
     exceptionHandler = DefaultKafkaListenerExceptionHandler.class
 )
 public class ErrorHandlingConsumer {
-    
+
     @Topic("users")
     public void receiveUser(@MessageBody User user) {
         try {
@@ -351,7 +349,7 @@ import io.micronaut.configuration.kafka.annotation.Topic;
 
 @KafkaListener(groupId = "dlq-consumer-group")
 public class DeadLetterQueueConsumer {
-    
+
     @Topic("users-dlq")
     public void handleDeadLetter(@MessageBody User user) {
         // Обработка сообщений из dead letter queue
@@ -370,7 +368,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class UserSerializer implements Serializer<User> {
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public byte[] serialize(String topic, User user) {
         try {
@@ -390,7 +388,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class UserDeserializer implements Deserializer<User> {
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public User deserialize(String topic, byte[] data) {
         try {
@@ -467,21 +465,21 @@ import org.apache.kafka.streams.kstream.Materialized;
 
 @Factory
 public class AdvancedStreamFactory {
-    
+
     @Singleton
     public KStream<String, User> userStreamWithState(ConfiguredStreamBuilder streamBuilder) {
         KStream<String, User> stream = streamBuilder.stream("users");
-        
+
         // Создание KTable для состояния
         KTable<String, User> userTable = streamBuilder.table("users",
             Materialized.as("user-store"));
-        
+
         // Объединение stream и table
         stream.join(userTable, (streamUser, tableUser) -> {
             // Логика объединения
             return streamUser;
         });
-        
+
         return stream;
     }
 }
@@ -495,12 +493,12 @@ import org.apache.kafka.streams.kstream.Windowed;
 
 @Factory
 public class WindowedStreamFactory {
-    
+
     @Singleton
     public KStream<Windowed<String>, Long> windowedAggregation(
             ConfiguredStreamBuilder streamBuilder) {
         KStream<String, User> stream = streamBuilder.stream("users");
-        
+
         return stream
             .groupByKey()
             .windowedBy(TimeWindows.of(Duration.ofMinutes(5)))
@@ -532,12 +530,12 @@ public class CustomSourceConnector extends SourceConnector {
     public void start(Map<String, String> props) {
         // Инициализация коннектора
     }
-    
+
     @Override
     public Class<? extends SourceTask> taskClass() {
         return CustomSourceTask.class;
     }
-    
+
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
         // Конфигурация задач
@@ -559,7 +557,7 @@ import jakarta.inject.Singleton;
 public class KafkaMetricsService {
     private final Counter messagesProduced;
     private final Counter messagesConsumed;
-    
+
     public KafkaMetricsService(MeterRegistry meterRegistry) {
         this.messagesProduced = Counter.builder("kafka.messages.produced")
             .description("Number of messages produced")
@@ -568,11 +566,11 @@ public class KafkaMetricsService {
             .description("Number of messages consumed")
             .register(meterRegistry);
     }
-    
+
     public void recordProduced() {
         messagesProduced.increment();
     }
-    
+
     public void recordConsumed() {
         messagesConsumed.increment();
     }
@@ -591,11 +589,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class KafkaLagMonitor {
     private final Consumer<String, String> consumer;
-    
+
     public KafkaLagMonitor(Consumer<String, String> consumer) {
         this.consumer = consumer;
     }
-    
+
     public Map<TopicPartition, Long> getConsumerLag() {
         Map<TopicPartition, Long> lag = new HashMap<>();
         // Вычисление lag для каждого partition
@@ -616,16 +614,16 @@ import jakarta.inject.Singleton;
 @Singleton
 public class KafkaAdminService {
     private final AdminClient adminClient;
-    
+
     public KafkaAdminService(AdminClient adminClient) {
         this.adminClient = adminClient;
     }
-    
+
     public void createTopic(String topicName, int partitions, short replicationFactor) {
         NewTopic newTopic = new NewTopic(topicName, partitions, replicationFactor);
         adminClient.createTopics(Collections.singletonList(newTopic));
     }
-    
+
     public void deleteTopic(String topicName) {
         adminClient.deleteTopics(Collections.singletonList(topicName));
     }
@@ -643,7 +641,7 @@ import org.apache.kafka.common.TopicPartition;
 
 @KafkaListener(groupId = "partitioned-consumer-group")
 public class PartitionedConsumer {
-    
+
     @Topic("users")
     public void receiveUser(@MessageBody User user, @Partition int partition) {
         System.out.println("Received user from partition: " + partition);
@@ -664,3 +662,11 @@ public class PartitionedConsumer {
 - [**Kafka Streams** Documentation](https://kafka.apache.org/documentation/streams/)
 - [**Kafka Connect** Documentation](https://kafka.apache.org/documentation/#connect)
 - [**Kafka** Monitoring](https://docs.confluent.io/platform/current/kafka/monitoring.html)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

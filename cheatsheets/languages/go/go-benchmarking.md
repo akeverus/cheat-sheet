@@ -87,10 +87,10 @@ updated: "2026-02-06"
 
 ### Основные концепции
 
-1. **Benchmark функции** - функции с префиксом **Benchmark**
-2. **b.N** - количество итераций, определяемое автоматически
-3. **Результаты** - время выполнения и аллокации памяти
-4. **Сравнение** - сравнение производительности различных реализаций
+1. **Benchmark функции** — функции с префиксом **Benchmark**
+2. **b.N** — количество итераций, определяемое автоматически
+3. **Результаты** — время выполнения и аллокации памяти
+4. **Сравнение** — сравнение производительности различных реализаций
 
 ## Написание **benchmarks**
 
@@ -117,10 +117,10 @@ func BenchmarkProcess(b *testing.B) {
     for i := range data {
         data[i] = i
     }
-    
+
     // Сброс таймера после подготовки
     b.ResetTimer()
-    
+
     for i := 0; i < b.N; i++ {
         Process(data)
     }
@@ -132,14 +132,14 @@ func BenchmarkProcess(b *testing.B) {
 ```go
 func BenchmarkProcess(b *testing.B) {
     sizes := []int{10, 100, 1000}
-    
+
     for _, size := range sizes {
         b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
             data := make([]int, size)
             for i := range data {
                 data[i] = i
             }
-            
+
             b.ResetTimer()
             for i := 0; i < b.N; i++ {
                 Process(data)
@@ -154,7 +154,7 @@ func BenchmarkProcess(b *testing.B) {
 ```go
 func BenchmarkAllocate(b *testing.B) {
     b.ReportAllocs()
-    
+
     for i := 0; i < b.N; i++ {
         data := make([]int, 1000)
         _ = data
@@ -210,7 +210,7 @@ benchcmp old.txt new.txt
 
 ### Понимание вывода
 
-```
+```text
 BenchmarkAdd-8         1000000000    0.234 ns/op    0 B/op    0 allocs/op
 ```
 
@@ -229,7 +229,7 @@ func BenchmarkCompare(b *testing.B) {
             Method1()
         }
     })
-    
+
     b.Run("method2", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             Method2()
@@ -262,7 +262,7 @@ func BenchmarkWithSetup(b *testing.B) {
         b.StopTimer()
         data := prepareData()
         b.StartTimer()
-        
+
         Process(data)
     }
 }
@@ -286,17 +286,17 @@ func BenchmarkParallel(b *testing.B) {
 // Benchmark с различными входными данными
 func BenchmarkProcessDifferentSizes(b *testing.B) {
     sizes := []int{10, 100, 1000, 10000}
-    
+
     for _, size := range sizes {
         b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
             data := make([]int, size)
             for i := range data {
                 data[i] = i
             }
-            
+
             b.ResetTimer()
             b.ReportAllocs()
-            
+
             for i := 0; i < b.N; i++ {
                 Process(data)
             }
@@ -313,7 +313,7 @@ func BenchmarkAlgorithms(b *testing.B) {
     for i := range data {
         data[i] = rand.Intn(1000)
     }
-    
+
     algorithms := []struct {
         name string
         fn   func([]int) []int
@@ -322,7 +322,7 @@ func BenchmarkAlgorithms(b *testing.B) {
         {"quickSort", quickSort},
         {"mergeSort", mergeSort},
     }
-    
+
     for _, alg := range algorithms {
         b.Run(alg.name, func(b *testing.B) {
             b.ResetTimer()
@@ -343,15 +343,15 @@ func BenchmarkWithSetupTeardown(b *testing.B) {
     // Подготовка один раз для всех итераций
     setup()
     defer teardown()
-    
+
     b.ResetTimer()
-    
+
     for i := 0; i < b.N; i++ {
         // Подготовка для каждой итерации
         b.StopTimer()
         data := prepareData()
         b.StartTimer()
-        
+
         Process(data)
     }
 }
@@ -373,7 +373,7 @@ func BenchmarkParallelWithData(b *testing.B) {
     for i := range data {
         data[i] = i
     }
-    
+
     b.ResetTimer()
     b.RunParallel(func(pb *testing.PB) {
         for pb.Next() {
@@ -388,12 +388,12 @@ func BenchmarkParallelWithData(b *testing.B) {
 ```go
 func BenchmarkWithCPUs(b *testing.B) {
     cpus := []int{1, 2, 4, 8}
-    
+
     for _, cpu := range cpus {
         b.Run(fmt.Sprintf("cpu-%d", cpu), func(b *testing.B) {
             runtime.GOMAXPROCS(cpu)
             b.ResetTimer()
-            
+
             for i := 0; i < b.N; i++ {
                 Process()
             }
@@ -407,7 +407,7 @@ func BenchmarkWithCPUs(b *testing.B) {
 ```go
 func BenchmarkStringConcatenation(b *testing.B) {
     strings := []string{"hello", "world", "test", "benchmark"}
-    
+
     b.Run("plus", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             result := ""
@@ -417,7 +417,7 @@ func BenchmarkStringConcatenation(b *testing.B) {
             _ = result
         }
     })
-    
+
     b.Run("strings.Builder", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             var builder strings.Builder
@@ -427,7 +427,7 @@ func BenchmarkStringConcatenation(b *testing.B) {
             _ = builder.String()
         }
     })
-    
+
     b.Run("bytes.Buffer", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             var buf bytes.Buffer
@@ -445,27 +445,27 @@ func BenchmarkStringConcatenation(b *testing.B) {
 ```go
 func BenchmarkMapOperations(b *testing.B) {
     sizes := []int{10, 100, 1000, 10000}
-    
+
     for _, size := range sizes {
         b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
             m := make(map[int]int, size)
             for i := 0; i < size; i++ {
                 m[i] = i
             }
-            
+
             b.ResetTimer()
             b.Run("read", func(b *testing.B) {
                 for i := 0; i < b.N; i++ {
                     _ = m[i%size]
                 }
             })
-            
+
             b.Run("write", func(b *testing.B) {
                 for i := 0; i < b.N; i++ {
                     m[i%size] = i
                 }
             })
-            
+
             b.Run("delete", func(b *testing.B) {
                 for i := 0; i < b.N; i++ {
                     delete(m, i%size)
@@ -482,7 +482,7 @@ func BenchmarkMapOperations(b *testing.B) {
 ```go
 func BenchmarkSliceOperations(b *testing.B) {
     sizes := []int{10, 100, 1000, 10000}
-    
+
     for _, size := range sizes {
         b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
             b.Run("append", func(b *testing.B) {
@@ -493,7 +493,7 @@ func BenchmarkSliceOperations(b *testing.B) {
                     }
                 }
             })
-            
+
             b.Run("preallocated", func(b *testing.B) {
                 for i := 0; i < b.N; i++ {
                     slice := make([]int, 0, size)
@@ -502,7 +502,7 @@ func BenchmarkSliceOperations(b *testing.B) {
                     }
                 }
             })
-            
+
             b.Run("fixed", func(b *testing.B) {
                 for i := 0; i < b.N; i++ {
                     slice := make([]int, size)
@@ -527,7 +527,7 @@ type User struct {
 
 func BenchmarkJSONOperations(b *testing.B) {
     user := User{ID: 1, Name: "Alice", Email: "alice@example.com"}
-    
+
     b.Run("marshal", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             _, err := json.Marshal(user)
@@ -536,9 +536,9 @@ func BenchmarkJSONOperations(b *testing.B) {
             }
         }
     })
-    
+
     jsonData, _ := json.Marshal(user)
-    
+
     b.Run("unmarshal", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             var u User
@@ -559,14 +559,14 @@ func BenchmarkHTTPOperations(b *testing.B) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte("OK"))
     })
-    
+
     server := httptest.NewServer(handler)
     defer server.Close()
-    
+
     client := &http.Client{
         Timeout: 5 * time.Second,
     }
-    
+
     b.Run("get", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             resp, err := client.Get(server.URL)
@@ -585,17 +585,17 @@ func BenchmarkHTTPOperations(b *testing.B) {
 func BenchmarkDatabaseOperations(b *testing.B) {
     db := setupTestDB()
     defer db.Close()
-    
+
     b.Run("insert", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
-            _, err := db.Exec("INSERT INTO users (name, email) VALUES ($1, $2)", 
+            _, err := db.Exec("INSERT INTO users (name, email) VALUES ($1, $2)",
                 fmt.Sprintf("user%d", i), fmt.Sprintf("user%d@example.com", i))
             if err != nil {
                 b.Fatal(err)
             }
         }
     })
-    
+
     b.Run("select", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             var name string
@@ -636,16 +636,16 @@ func BenchmarkWithProfiling(b *testing.B) {
     defer cpuFile.Close()
     pprof.StartCPUProfile(cpuFile)
     defer pprof.StopCPUProfile()
-    
+
     // Memory профилирование
     memFile, _ := os.Create("mem.prof")
     defer memFile.Close()
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         Process()
     }
-    
+
     pprof.WriteHeapProfile(memFile)
 }
 ```
@@ -659,7 +659,7 @@ func BenchmarkConcurrentOperations(b *testing.B) {
             Process()
         }
     })
-    
+
     b.Run("concurrent-2", func(b *testing.B) {
         b.SetParallelism(2)
         b.RunParallel(func(pb *testing.PB) {
@@ -668,7 +668,7 @@ func BenchmarkConcurrentOperations(b *testing.B) {
             }
         })
     })
-    
+
     b.Run("concurrent-4", func(b *testing.B) {
         b.SetParallelism(4)
         b.RunParallel(func(pb *testing.PB) {
@@ -693,7 +693,7 @@ func BenchmarkWithDifferentInputs(b *testing.B) {
         {"random", []int{3, 1, 4, 2, 5}},
         {"duplicates", []int{1, 1, 2, 2, 3}},
     }
-    
+
     for _, input := range inputs {
         b.Run(input.name, func(b *testing.B) {
             for i := 0; i < b.N; i++ {
@@ -711,18 +711,18 @@ func BenchmarkWithDifferentInputs(b *testing.B) {
 ```go
 func BenchmarkCacheOperations(b *testing.B) {
     cache := NewCache(1000)
-    
+
     // Заполнение кэша
     for i := 0; i < 1000; i++ {
         cache.Set(fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i))
     }
-    
+
     b.Run("hit", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             cache.Get(fmt.Sprintf("key%d", i%1000))
         }
     })
-    
+
     b.Run("miss", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             cache.Get(fmt.Sprintf("key%d", i+1000))
@@ -736,7 +736,7 @@ func BenchmarkCacheOperations(b *testing.B) {
 ```go
 func BenchmarkSorting(b *testing.B) {
     data := generateRandomData(1000)
-    
+
     b.Run("quickSort", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             arr := make([]int, len(data))
@@ -744,7 +744,7 @@ func BenchmarkSorting(b *testing.B) {
             quickSort(arr)
         }
     })
-    
+
     b.Run("mergeSort", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             arr := make([]int, len(data))
@@ -752,7 +752,7 @@ func BenchmarkSorting(b *testing.B) {
             mergeSort(arr)
         }
     })
-    
+
     b.Run("builtin", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             arr := make([]int, len(data))
@@ -768,12 +768,12 @@ func BenchmarkSorting(b *testing.B) {
 ```go
 func BenchmarkWithSizes(b *testing.B) {
     sizes := []int{10, 100, 1000, 10000}
-    
+
     for _, size := range sizes {
         b.Run(fmt.Sprintf("size-%d", size), func(b *testing.B) {
             data := generateData(size)
             b.ResetTimer()
-            
+
             for i := 0; i < b.N; i++ {
                 processData(data)
             }
@@ -788,14 +788,14 @@ func BenchmarkWithSizes(b *testing.B) {
 func BenchmarkWithMemory(b *testing.B) {
     b.ReportAllocs()
     b.ReportMetric(float64(runtime.NumGoroutine()), "goroutines")
-    
+
     b.Run("withAllocations", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             result := processWithAllocations()
             _ = result
         }
     })
-    
+
     b.Run("withoutAllocations", func(b *testing.B) {
         result := make([]byte, 1000)
         b.ResetTimer()
@@ -824,21 +824,21 @@ benchcmp old.txt new.txt
 
 ## Лучшие практики
 
-1. **Используйте b.`ResetTimer()`** - для исключения подготовки из результатов
-2. **Используйте b.`ReportAllocs()`** - для отслеживания аллокаций
-3. **Запускайте несколько раз** - для получения стабильных результатов
-4. **Используйте benchstat** - для сравнения результатов
-5. **Тестируйте различные размеры** - для понимания масштабируемости
-6. **Избегайте оптимизаций компилятора** - используйте результаты вычислений
-7. **Используйте b.`StopTimer()` и b.`StartTimer()`** - для исключения **setup**/**teardown**
-8. **Тестируйте параллельные операции** - используйте **b.RunParallel**()
-9. **Используйте профилирование** - для понимания узких мест
-10. **Документируйте результаты** - сохраняйте результаты для сравнения
-11. **Сравнивайте алгоритмы** - используйте бенчмарки для выбора алгоритма
-12. **Тестируйте с разными размерами** - проверяйте масштабируемость
-13. **Мониторьте память** - отслеживайте аллокации в бенчмарках
-14. **Используйте инструменты сравнения** - **benchstat** и **benchcmp** для анализа
-15. **Автоматизируйте бенчмарки** - включайте в `CI/CD` **pipeline**
+1. **Используйте b.`ResetTimer()`** — для исключения подготовки из результатов
+2. **Используйте b.`ReportAllocs()`** — для отслеживания аллокаций
+3. **Запускайте несколько раз** — для получения стабильных результатов
+4. **Используйте benchstat** — для сравнения результатов
+5. **Тестируйте различные размеры** — для понимания масштабируемости
+6. **Избегайте оптимизаций компилятора** — используйте результаты вычислений
+7. **Используйте b.`StopTimer()` и b.`StartTimer()`** — для исключения **setup**/**teardown**
+8. **Тестируйте параллельные операции** — используйте **b.RunParallel**()
+9. **Используйте профилирование** — для понимания узких мест
+10. **Документируйте результаты** — сохраняйте результаты для сравнения
+11. **Сравнивайте алгоритмы** — используйте бенчмарки для выбора алгоритма
+12. **Тестируйте с разными размерами** — проверяйте масштабируемость
+13. **Мониторьте память** — отслеживайте аллокации в бенчмарках
+14. **Используйте инструменты сравнения** — **benchstat** и **benchcmp** для анализа
+15. **Автоматизируйте бенчмарки** — включайте в `CI/CD` **pipeline**
 
 
 ## Решение проблем
@@ -857,3 +857,11 @@ benchcmp old.txt new.txt
 
 - [Go Benchmarking](https://go.dev/doc/effective_go#testing)
 - [Go testing Package](https://pkg.go.dev/testing)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]
+- [[go-collections|Go: коллекции]]

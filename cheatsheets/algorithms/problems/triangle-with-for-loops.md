@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Руководство по печати различных типов треугольников в **Java** с использованием циклов **for**, включая прямоугольные и равнобедренные треугольники.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -97,11 +95,11 @@ return result.toString();
 
 **What** do we **see** in **this case**? We **notice that besides stars**, we **also need** to **print spaces for each row**. So, we **need** to **figure out how many spaces and stars** we **should print for each row**. Of **course**, **the number** of **spaces and stars depends** on **the current row**.
 
-**First**, we **see that** we **need** to **print** 4 **spaces for the first row**, **and** as we go **down the triangle**, we **need** 3 **spaces**, 2 **spaces**, 1 **space**, **and** no **spaces** at **all for the last row**. **Generalizing**, we **need** to **output** N - r **spaces for each row**.
+**First**, we **see that** we **need** to **print** 4 **spaces for the first row**, **and** as we go **down the triangle**, we **need** 3 **spaces**, 2 **spaces**, 1 **space**, **and** no **spaces** at **all for the last row**. **Generalizing**, we **need** to **output** N — r **spaces for each row**.
 
 **Second**, **comparing with the first example**, we **understand that here** we **need** an **odd number** of **stars**: 1, 3, 5, 7...
 
-So, we **need** to **output** r × 2 - 1 **stars for each row**.
+So, we **need** to **output** r × 2 — 1 **stars for each row**.
 
 **Based** on **the above observations**, **let**'s **create our second example**:**
 
@@ -129,7 +127,7 @@ return result.toString();
 
 ### Using StringUtils.repeat()
 
-**Actually**, we **have another way**, **consisting** of **only one for loop** - it **uses the Apache Commons Lang** 3 **library**.
+**Actually**, we **have another way**, **consisting** of **only one for loop** — it **uses the Apache Commons Lang** 3 **library**.
 
 **We're **going** to **use** a **for loop** to **iterate through the rows** of **the triangle**, as we **did** in **the previous examples**. **Then** we'll **use the** `**StringUtils.repeat**()` **method** to **generate the necessary characters for each row**:**
 
@@ -155,7 +153,7 @@ return result.toString();
 
 We **can extract the described** `**StringUtils.repeat**()` **methods** to **create** a **helper string**, **and then apply the** `**String.substring**()` **method** to it. **The helper string** is a **concatenation** of **the maximum number** of **spaces and the maximum number** of **stars** we **need** to **print the rows** of **the triangle**.
 
-**Looking** at **the previous examples**, we **notice that** we **need** a **maximum** of N - 1 **spaces for the first row and** a **maximum** of N × 2 - 1 **stars for the last row**:**
+**Looking** at **the previous examples**, we **notice that** we **need** a **maximum** of N — 1 **spaces for the first row and** a **maximum** of N × 2 — 1 **stars for the last row**:**
 
 ```java
 String helperString = StringUtils.repeat(' ', N - 1) + StringUtils.repeat('*', N * 2 - 1);
@@ -187,7 +185,7 @@ return result.toString();
 
 `If we` **look** at **the first example again**, we **notice the outer and inner loops**, **each having** a **maximum** of N **steps**. **Consequently**, we **have** a **time complexity** of `O(**N²**)`, **where** N is **the number** of **rows** of **the triangle**.
 
-**The second example** is **similar** - **with the only difference that** we **have two inner loops**, **which are sequential and don**'t **increase the time complexity**.
+**The second example** is **similar** — **with the only difference that** we **have two inner loops**, **which are sequential and don**'t **increase the time complexity**.
 
 **However**, in **the third example**, we **use only** a **for loop with** N **steps**. **But** at **each step**, we **call either the** `**StringUtils.repeat**()` **method** or **the** `**substring**()` **method** of **the helper string**, **each** of **which has** `O(N)` **complexity**. **Thus**, **the overall time complexity remains the same**.
 
@@ -212,23 +210,23 @@ Of **course**, if we **were** to **print the characters directly**, we **would h
 import org.apache.commons.lang3.StringUtils;
 
 public class TrianglePrinter {
-    
+
     public static void main(String[] args) {
         int rows = 5;
-        
+
         System.out.println("Right-Angled Triangle:");
         System.out.println(printARightTriangle(rows));
-        
+
         System.out.println("Isosceles Triangle (Nested Loops):");
         System.out.println(printAnIsoscelesTriangle(rows));
-        
+
         System.out.println("Isosceles Triangle (StringUtils):");
         System.out.println(printAnIsoscelesTriangleUsingStringUtils(rows));
-        
+
         System.out.println("Isosceles Triangle (Substring):");
         System.out.println(printAnIsoscelesTriangleUsingSubstring(rows));
     }
-    
+
     // ... (all methods from above)
 }
 ```
@@ -240,14 +238,14 @@ public class TrianglePrinter {
 ```kotlin
 fun printARightTriangleK(n: Int): String {
     val result = StringBuilder()
-    
+
     for (r in 1..n) {
         for (j in 1..r) {
             result.append("*")
         }
         result.appendLine()
     }
-    
+
     return result.toString()
 }
 ```
@@ -257,21 +255,21 @@ fun printARightTriangleK(n: Int): String {
 ```kotlin
 fun printAnIsoscelesTriangleK(n: Int): String {
     val result = StringBuilder()
-    
+
     for (r in 1..n) {
         // Print spaces
         for (sp in 1..(n - r)) {
             result.append(" ")
         }
-        
+
         // Print stars
         for (c in 1..(r * 2 - 1)) {
             result.append("*")
         }
-        
+
         result.appendLine()
     }
-    
+
     return result.toString()
 }
 ```
@@ -281,13 +279,13 @@ fun printAnIsoscelesTriangleK(n: Int): String {
 ```kotlin
 fun printAnIsoscelesTriangleUsingRepeatK(n: Int): String {
     val result = StringBuilder()
-    
+
     for (r in 1..n) {
         result.append(" ".repeat(n - r))
         result.append("*".repeat(2 * r - 1))
         result.appendLine()
     }
-    
+
     return result.toString()
 }
 ```
@@ -298,12 +296,12 @@ fun printAnIsoscelesTriangleUsingRepeatK(n: Int): String {
 fun printAnIsoscelesTriangleUsingSubstringK(n: Int): String {
     val result = StringBuilder()
     val helperString = " ".repeat(n - 1) + "*".repeat(n * 2 - 1)
-    
+
     for (r in 0 until n) {
         result.append(helperString.substring(r, n + 2 * r))
         result.appendLine()
     }
-    
+
     return result.toString()
 }
 ```
@@ -313,16 +311,16 @@ fun printAnIsoscelesTriangleUsingSubstringK(n: Int): String {
 ```kotlin
 fun main() {
     val rows = 5
-    
+
     println("Right-Angled Triangle:")
     println(printARightTriangleK(rows))
-    
+
     println("Isosceles Triangle (Nested Loops):")
     println(printAnIsoscelesTriangleK(rows))
-    
+
     println("Isosceles Triangle (String.repeat()):")
     println(printAnIsoscelesTriangleUsingRepeatK(rows))
-    
+
     println("Isosceles Triangle (Substring):")
     println(printAnIsoscelesTriangleUsingSubstringK(rows))
 }
@@ -330,7 +328,7 @@ fun main() {
 
 ## Лучшие практики
 
-Прямоугольный треугольник: внешний цикл по строкам (1..N), внутренний по символам в строке (1..r); используйте `StringBuilder` для накопления вывода. Равнобедренный: сначала пробелы (N - r), затем звёзды (2*r - 1); можно заменить внутренние циклы на `String.repeat()` или `substring` для краткости. Проверяйте N > 0; при N = 0 возвращайте пустую строку; при больших N учитывайте размер результата. В тестах покройте N = 1, N = 5, граничные значения; проверяйте количество строк и символов в строке. Расширяемость: выносите символ заполнения (звезда/пробел) в параметр или константу.
+Прямоугольный треугольник: внешний цикл по строкам (1..N), внутренний по символам в строке (1..r); используйте `StringBuilder` для накопления вывода. Равнобедренный: сначала пробелы (N — r), затем звёзды (2*r — 1); можно заменить внутренние циклы на `String.repeat()` или `substring` для краткости. Проверяйте N > 0; при N = 0 возвращайте пустую строку; при больших N учитывайте размер результата. В тестах покройте N = 1, N = 5, граничные значения; проверяйте количество строк и символов в строке. Расширяемость: выносите символ заполнения (звезда/пробел) в параметр или константу.
 
 ## Решение проблем
 
@@ -344,7 +342,7 @@ fun main() {
 
 **Когда использовать String.repeat() вместо циклов?** Для краткости кода и читаемости; для учебных целей циклы показывают логику. В продакшене `repeat()` удобнее.
 
-**Как вывести равнобедренный треугольник?** Для каждой строки r: (N - r) пробелов, затем (2*r - 1) звёзд; можно реализовать вложенными циклами или через `" ".repeat(N-r)` и `"*".repeat(2*r-1)`.
+**Как вывести равнобедренный треугольник?** Для каждой строки r: (N — r) пробелов, затем (2*r — 1) звёзд; можно реализовать вложенными циклами или через `" ".repeat(N-r)` и `"*".repeat(2*r-1)`.
 
 **Нужно ли проверять максимальный N?** Для учебного примера часто не обязательно; для больших N учтите, что вывод растёт как N² по символам — при очень больших N возможны проблемы с памятью.
 

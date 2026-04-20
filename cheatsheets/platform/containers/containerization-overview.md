@@ -45,37 +45,31 @@ updated: "2026-02-11"
 
 **Ключевые понятия:** **image**, **container**, **Dockerfile**, **pod**, **deployment**, **service**, **namespace**, **Helm**, **OCI**, **CRI**.
 
----
 
 ## Контейнеры и образы
 
 **Образ** — неизменяемый шаблон: файловая система и метаданные. **Контейнер** — запущенный экземпляр образа с изолированным пространством имён и cgroups (на **Linux**). Контейнеры разделяют ядро хоста, в отличие от виртуальных машин. Основной контент по **Docker** и **Kubernetes** — в [контейнеры](containerization-overview.md).
 
----
 
 ## Docker
 
 **Docker** — платформа для сборки образов (**Dockerfile**, `docker build`), хранения в **registry** (**Docker Hub**), запуска контейнеров (`docker run`). **Docker Compose** — оркестрация многоконтейнерных приложений на одном хосте. См. [Docker](docker/docker-basics.md), [Docker Advanced](docker/docker-advanced.md), [Docker Compose](docker/docker-compose.md).
 
----
 
 ## Kubernetes и оркестрация
 
 **Kubernetes** — оркестратор: **Pods**, **Deployments**, **Services**, **ConfigMaps**, **Secrets**, **Ingress**. Масштабирование, самовосстановление, обновления без даунтайма. **Helm** — пакетный менеджер для **Kubernetes** (charts). См. [Kubernetes](kubernetes/kubernetes-basics.md), [Kubernetes Advanced](kubernetes/kubernetes-advanced.md).
 
----
 
 ## Runtime и стандарты
 
 **OCI** (**Open Container Initiative**) — спецификации образов и runtime. **containerd**, **CRI-O** — runtime, совместимые с **Kubernetes** (**CRI**). **runc** — низкоуровневый runtime по умолчанию для **Docker** и **containerd**.
 
----
 
 ## Безопасность
 
 Принцип наименьших привилегий: образы без root, read-only файловая система где возможно, сканирование образов на уязвимости (**Trivy**, **Snyk**). Секреты — через **Kubernetes Secrets** или внешние хранилища (**Vault**), не в образах.
 
----
 
 ## Лучшие практики
 
@@ -84,7 +78,6 @@ updated: "2026-02-11"
 - Версионирование образов по тегам; не использовать `latest` в production.
 - Ресурсные лимиты (**CPU**, память) в **Kubernetes**; **liveness** и **readiness** probes.
 
----
 
 ## Решение проблем
 
@@ -94,7 +87,6 @@ updated: "2026-02-11"
 | Out of memory | Задать лимиты памяти; проверить утечки в приложении |
 | Сеть между подами | Проверить **Services**, **NetworkPolicies**, **DNS** в кластере |
 
----
 
 ## Частые вопросы
 
@@ -102,7 +94,6 @@ updated: "2026-02-11"
 
 **Когда достаточно Docker Compose?** Для разработки и небольших деплоев на одном сервере. Для production с высокой доступностью и масштабированием — **Kubernetes** или managed-сервисы (**EKS**, **GKE**, **AKS**).
 
----
 
 ## Глоссарий
 
@@ -117,7 +108,6 @@ updated: "2026-02-11"
 | **OCI** | **Open Container Initiative** — стандарты образов и runtime |
 | **CRI** | **Container Runtime Interface** — интерфейс runtime в **Kubernetes** |
 
----
 
 ## Заключение
 
@@ -125,5 +115,4 @@ updated: "2026-02-11"
 
 **Дата:** 2026-02-03
 
----
 

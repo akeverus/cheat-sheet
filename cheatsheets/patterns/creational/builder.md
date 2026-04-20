@@ -18,7 +18,7 @@ updated: "2026-02-11"
 
 ### Официальная документация
 - [Java Builder Pattern](https://docs.oracle.com/javase/tutorial/)
-- [Effective Java - Item 2](https://www.oreilly.com/library/view/effective-java/9780134686097/)
+- [Effective Java — Item 2](https://www.oreilly.com/library/view/effective-java/9780134686097/)
 
 ### См. также
 - [[factory-method|Factory Method]] — **Factory Method Pattern**

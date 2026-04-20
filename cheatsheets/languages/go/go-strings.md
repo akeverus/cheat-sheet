@@ -60,14 +60,14 @@ updated: "2026-02-06"
 
 ## Введение в строки
 
-Строки в Go - это неизменяемые последовательности байт. Пакет `**strings**` предоставляет множество функций для работы со строками.
+Строки в Go — это неизменяемые последовательности байт. Пакет `**strings**` предоставляет множество функций для работы со строками.
 
 ### Основные концепции
 
-1. **Неизменяемость** - строки нельзя изменить после создания
-2. **UTF-8** - строки кодируются в **UTF-8**
-3. **Индексация** - доступ к байтам, а не к символам
-4. **Rune** - для работы с **Unicode** символами
+1. **Неизменяемость** — строки нельзя изменить после создания
+2. **UTF-8** — строки кодируются в **UTF-8**
+3. **Индексация** — доступ к байтам, а не к символам
+4. **Rune** — для работы с **Unicode** символами
 
 ## Базовые операции
 
@@ -78,10 +78,10 @@ import "strings"
 
 func main() {
     s := "Hello, World!"
-    
+
     // Длина в байтах
     fmt.Println(len(s))  // 13
-    
+
     // Длина в рунах (символах)
     fmt.Println(len([]rune(s)))  // 13
 }
@@ -95,13 +95,13 @@ import "strings"
 func main() {
     s1 := "hello"
     s2 := "HELLO"
-    
+
     // Сравнение
     fmt.Println(s1 == s2)  // false
-    
+
     // Сравнение без учета регистра
     fmt.Println(strings.EqualFold(s1, s2))  // true
-    
+
     // Сравнение (лексикографическое)
     fmt.Println(strings.Compare(s1, s2))  // -1 (s1 < s2)
 }
@@ -114,15 +114,15 @@ import "strings"
 
 func main() {
     s := "Hello, World!"
-    
+
     // Верхний регистр
     upper := strings.ToUpper(s)
     fmt.Println(upper)  // "HELLO, WORLD!"
-    
+
     // Нижний регистр
     lower := strings.ToLower(s)
     fmt.Println(lower)  // "hello, world!"
-    
+
     // Заглавная буква
     title := strings.Title(s)
     fmt.Println(title)  // "Hello, World!"
@@ -138,16 +138,16 @@ import "strings"
 
 func main() {
     s := "Hello, World!"
-    
+
     // Содержит ли подстроку
     fmt.Println(strings.Contains(s, "World"))  // true
-    
+
     // Индекс подстроки
     fmt.Println(strings.Index(s, "World"))  // 7
-    
+
     // Последний индекс
     fmt.Println(strings.LastIndex(s, "o"))  // 8
-    
+
     // Количество вхождений
     fmt.Println(strings.Count(s, "l"))  // 3
 }
@@ -160,11 +160,11 @@ import "strings"
 
 func main() {
     s := "Hello, World!"
-    
+
     // Замена всех вхождений
     replaced := strings.ReplaceAll(s, "World", "Go")
     fmt.Println(replaced)  // "Hello, Go!"
-    
+
     // Замена с ограничением
     replaced = strings.Replace(s, "l", "L", 2)
     fmt.Println(replaced)  // "HeLLo, World!"
@@ -178,10 +178,10 @@ import "strings"
 
 func main() {
     s := "Hello, World!"
-    
+
     // Проверка префикса
     fmt.Println(strings.HasPrefix(s, "Hello"))  // true
-    
+
     // Проверка суффикса
     fmt.Println(strings.HasSuffix(s, "!"))  // true
 }
@@ -196,15 +196,15 @@ import "strings"
 
 func main() {
     s := "a,b,c,d"
-    
+
     // Разделение по разделителю
     parts := strings.Split(s, ",")
     fmt.Println(parts)  // ["a", "b", "c", "d"]
-    
+
     // Разделение с ограничением
     parts = strings.SplitN(s, ",", 2)
     fmt.Println(parts)  // ["a", "b,c,d"]
-    
+
     // Разделение по пробелам
     parts = strings.Fields("a b c d")
     fmt.Println(parts)  // ["a", "b", "c", "d"]
@@ -218,11 +218,11 @@ import "strings"
 
 func main() {
     parts := []string{"a", "b", "c", "d"}
-    
+
     // Объединение
     joined := strings.Join(parts, ",")
     fmt.Println(joined)  // "a,b,c,d"
-    
+
     // Использование strings.Builder для эффективности
     var builder strings.Builder
     for i, part := range parts {
@@ -245,19 +245,19 @@ import "strings"
 
 func main() {
     s := "  Hello, World!  "
-    
+
     // Удаление пробелов с обеих сторон
     trimmed := strings.TrimSpace(s)
     fmt.Println(trimmed)  // "Hello, World!"
-    
+
     // Удаление символов
     trimmed = strings.Trim(s, " !")
     fmt.Println(trimmed)  // "Hello, World"
-    
+
     // Удаление префикса
     trimmed = strings.TrimPrefix(s, "  ")
     fmt.Println(trimmed)  // "Hello, World!  "
-    
+
     // Удаление суффикса
     trimmed = strings.TrimSuffix(s, "!  ")
     fmt.Println(trimmed)  // "  Hello, World"
@@ -271,11 +271,11 @@ import "fmt"
 
 func main() {
     s := "Hello"
-    
+
     // Padding справа
     padded := fmt.Sprintf("%-10s", s)
     fmt.Printf("'%s'\n", padded)  // 'Hello     '
-    
+
     // Padding слева
     padded = fmt.Sprintf("%10s", s)
     fmt.Printf("'%s'\n", padded)  // '     Hello'
@@ -299,14 +299,14 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println(i)  // 123
-    
+
     // String to int64
     i64, err := strconv.ParseInt("123", 10, 64)
     if err != nil {
         log.Fatal(err)
     }
     fmt.Println(i64)  // 123
-    
+
     // String to float64
     f, err := strconv.ParseFloat("3.14", 64)
     if err != nil {
@@ -328,11 +328,11 @@ func main() {
     // Int to string
     s := strconv.Itoa(123)
     fmt.Println(s)  // "123"
-    
+
     // Int64 to string
     s = strconv.FormatInt(123, 10)
     fmt.Println(s)  // "123"
-    
+
     // Float64 to string
     s = strconv.FormatFloat(3.14, 'f', 2, 64)
     fmt.Println(s)  // "3.14"
@@ -352,7 +352,7 @@ func processRunes(s string) {
     for i, r := range s {
         fmt.Printf("Rune %d: %c (U+%04X)\n", i, r, r)
     }
-    
+
     // Фильтрация рун
     filtered := strings.Map(func(r rune) rune {
         if unicode.IsLetter(r) || unicode.IsDigit(r) {
@@ -360,7 +360,7 @@ func processRunes(s string) {
         }
         return -1  // Удалить
     }, s)
-    
+
     fmt.Println("Filtered:", filtered)
 }
 
@@ -382,18 +382,18 @@ func reverseString(s string) string {
 ```go
 func concatenateStrings(parts []string) string {
     var builder strings.Builder
-    
+
     // Предварительное выделение памяти
     totalLen := 0
     for _, part := range parts {
         totalLen += len(part)
     }
     builder.Grow(totalLen)
-    
+
     for _, part := range parts {
         builder.WriteString(part)
     }
-    
+
     return builder.String()
 }
 
@@ -401,16 +401,16 @@ func concatenateWithSeparator(parts []string, sep string) string {
     if len(parts) == 0 {
         return ""
     }
-    
+
     var builder strings.Builder
     builder.Grow(len(parts) * (len(parts[0]) + len(sep)))
-    
+
     builder.WriteString(parts[0])
     for _, part := range parts[1:] {
         builder.WriteString(sep)
         builder.WriteString(part)
     }
-    
+
     return builder.String()
 }
 ```
@@ -423,16 +423,16 @@ func validateEmail(email string) bool {
     if len(parts) != 2 {
         return false
     }
-    
+
     local, domain := parts[0], parts[1]
     if len(local) == 0 || len(domain) == 0 {
         return false
     }
-    
+
     if !strings.Contains(domain, ".") {
         return false
     }
-    
+
     return true
 }
 
@@ -441,7 +441,7 @@ func parseKeyValue(s string) (key, value string, ok bool) {
     if idx == -1 {
         return "", "", false
     }
-    
+
     key = strings.TrimSpace(s[:idx])
     value = strings.TrimSpace(s[idx+1:])
     return key, value, true
@@ -451,7 +451,7 @@ func parseCSVLine(line string) []string {
     var fields []string
     var current strings.Builder
     inQuotes := false
-    
+
     for _, r := range line {
         switch r {
         case '"':
@@ -467,7 +467,7 @@ func parseCSVLine(line string) []string {
             current.WriteRune(r)
         }
     }
-    
+
     fields = append(fields, strings.TrimSpace(current.String()))
     return fields
 }
@@ -479,7 +479,7 @@ func parseCSVLine(line string) []string {
 func toSnakeCase(s string) string {
     var result strings.Builder
     result.Grow(len(s) + len(s)/3) // Предварительное выделение
-    
+
     for i, r := range s {
         if unicode.IsUpper(r) {
             if i > 0 {
@@ -490,7 +490,7 @@ func toSnakeCase(s string) string {
             result.WriteRune(r)
         }
     }
-    
+
     return result.String()
 }
 
@@ -498,14 +498,14 @@ func toCamelCase(s string) string {
     words := strings.FieldsFunc(s, func(r rune) bool {
         return !unicode.IsLetter(r) && !unicode.IsDigit(r)
     })
-    
+
     if len(words) == 0 {
         return ""
     }
-    
+
     var result strings.Builder
     result.WriteString(strings.ToLower(words[0]))
-    
+
     for _, word := range words[1:] {
         if len(word) > 0 {
             runes := []rune(word)
@@ -513,7 +513,7 @@ func toCamelCase(s string) string {
             result.WriteString(string(runes))
         }
     }
-    
+
     return result.String()
 }
 
@@ -521,11 +521,11 @@ func truncateString(s string, maxLen int) string {
     if len(s) <= maxLen {
         return s
     }
-    
+
     if maxLen <= 3 {
         return s[:maxLen]
     }
-    
+
     return s[:maxLen-3] + "..."
 }
 ```
@@ -537,33 +537,33 @@ func replaceWithContext(s, old, new string, maxReplacements int) string {
     if maxReplacements <= 0 {
         return strings.ReplaceAll(s, old, new)
     }
-    
+
     var result strings.Builder
     result.Grow(len(s) + (len(new)-len(old))*maxReplacements)
-    
+
     count := 0
     start := 0
-    
+
     for {
         idx := strings.Index(s[start:], old)
         if idx == -1 || count >= maxReplacements {
             result.WriteString(s[start:])
             break
         }
-        
+
         result.WriteString(s[start : start+idx])
         result.WriteString(new)
         start += idx + len(old)
         count++
     }
-    
+
     return result.String()
 }
 
 func findAllOccurrences(s, substr string) []int {
     var indices []int
     start := 0
-    
+
     for {
         idx := strings.Index(s[start:], substr)
         if idx == -1 {
@@ -572,7 +572,7 @@ func findAllOccurrences(s, substr string) []int {
         indices = append(indices, start+idx)
         start += idx + 1
     }
-    
+
     return indices
 }
 ```
@@ -587,21 +587,21 @@ import (
 
 func formatNumberWithCommas(n int64) string {
     s := strconv.FormatInt(n, 10)
-    
+
     if len(s) <= 3 {
         return s
     }
-    
+
     var result strings.Builder
     result.Grow(len(s) + len(s)/3)
-    
+
     for i, r := range s {
         if i > 0 && (len(s)-i)%3 == 0 {
             result.WriteByte(',')
         }
         result.WriteRune(r)
     }
-    
+
     return result.String()
 }
 
@@ -618,7 +618,7 @@ func indentLines(s string, indent string) string {
     lines := strings.Split(s, "\n")
     var result strings.Builder
     result.Grow(len(s) + len(indent)*len(lines))
-    
+
     for i, line := range lines {
         if i > 0 {
             result.WriteByte('\n')
@@ -626,7 +626,7 @@ func indentLines(s string, indent string) string {
         result.WriteString(indent)
         result.WriteString(line)
     }
-    
+
     return result.String()
 }
 
@@ -635,27 +635,27 @@ func wrapText(s string, width int) []string {
     if len(words) == 0 {
         return []string{}
     }
-    
+
     var lines []string
     var current strings.Builder
     current.Grow(width)
-    
+
     for _, word := range words {
         if current.Len() > 0 && current.Len()+len(word)+1 > width {
             lines = append(lines, current.String())
             current.Reset()
         }
-        
+
         if current.Len() > 0 {
             current.WriteByte(' ')
         }
         current.WriteString(word)
     }
-    
+
     if current.Len() > 0 {
         lines = append(lines, current.String())
     }
-    
+
     return lines
 }
 ```
@@ -668,14 +668,14 @@ func RemoveDuplicateWords(text string) string {
     words := strings.Fields(text)
     seen := make(map[string]bool)
     unique := make([]string, 0)
-    
+
     for _, word := range words {
         if !seen[word] {
             seen[word] = true
             unique = append(unique, word)
         }
     }
-    
+
     return strings.Join(unique, " ")
 }
 
@@ -683,13 +683,13 @@ func RemoveDuplicateWords(text string) string {
 func CountWords(text string) map[string]int {
     words := strings.Fields(strings.ToLower(text))
     counts := make(map[string]int)
-    
+
     for _, word := range words {
         // Удаление пунктуации
         word = strings.Trim(word, ".,!?;:")
         counts[word]++
     }
-    
+
     return counts
 }
 
@@ -716,13 +716,13 @@ func NormalizeWhitespace(s string) string {
 func RemoveNonPrintable(s string) string {
     var builder strings.Builder
     builder.Grow(len(s))
-    
+
     for _, r := range s {
         if unicode.IsPrint(r) {
             builder.WriteRune(r)
         }
     }
-    
+
     return builder.String()
 }
 
@@ -733,7 +733,7 @@ func Transliterate(s string) string {
         'д': "d", 'е': "e", 'ё': "yo", 'ж': "zh",
         // ... больше символов
     }
-    
+
     var builder strings.Builder
     for _, r := range s {
         if replacement, ok := translitMap[r]; ok {
@@ -742,7 +742,7 @@ func Transliterate(s string) string {
             builder.WriteRune(r)
         }
     }
-    
+
     return builder.String()
 }
 ```
@@ -757,12 +757,12 @@ func ProcessTemplate(tmpl string, data interface{}) (string, error) {
     if err != nil {
         return "", err
     }
-    
+
     var buf strings.Builder
     if err := t.Execute(&buf, data); err != nil {
         return "", err
     }
-    
+
     return buf.String(), nil
 }
 
@@ -782,14 +782,14 @@ result, _ := ProcessTemplate(tmpl, data)
 func BuildLargeString(items []string) string {
     var builder strings.Builder
     builder.Grow(len(items) * 10) // Примерная оценка размера
-    
+
     for i, item := range items {
         if i > 0 {
             builder.WriteString(", ")
         }
         builder.WriteString(item)
     }
-    
+
     return builder.String()
 }
 
@@ -815,21 +815,21 @@ func ProcessLines(s string, processor func(string)) {
 
 ## Лучшие практики
 
-1. **Используйте strings.Builder** - для эффективной конкатенации строк
-2. **Избегайте множественной конкатенации** - используйте **Join** или **Builder**
-3. **Работайте с рунами** - для **Unicode** символов
-4. **Используйте strings.Compare** - для лексикографического сравнения
-5. **Проверяйте ошибки** - при конвертации строк в числа
-6. **Предварительно выделяйте память** - используйте **Grow** для **Builder**
-7. **Используйте strings.Fields** - для разделения по пробелам
-8. **Избегайте создания лишних строк** - используйте эффективные методы
-9. **Работайте с байтами когда возможно** - для лучшей производительности
-10. **Валидируйте входные данные** - проверяйте строки перед обработкой
-11. **Используйте регулярные выражения** - для сложных паттернов
-12. **Нормализуйте строки** - перед обработкой и сравнением
-13. **Используйте шаблоны** - для динамической генерации строк
-14. **Обрабатывайте большие строки по частям** - для экономии памяти
-15. **Используйте правильную кодировку** - учитывайте **UTF-8** особенности
+1. **Используйте strings.Builder** — для эффективной конкатенации строк
+2. **Избегайте множественной конкатенации** — используйте **Join** или **Builder**
+3. **Работайте с рунами** — для **Unicode** символов
+4. **Используйте strings.Compare** — для лексикографического сравнения
+5. **Проверяйте ошибки** — при конвертации строк в числа
+6. **Предварительно выделяйте память** — используйте **Grow** для **Builder**
+7. **Используйте strings.Fields** — для разделения по пробелам
+8. **Избегайте создания лишних строк** — используйте эффективные методы
+9. **Работайте с байтами когда возможно** — для лучшей производительности
+10. **Валидируйте входные данные** — проверяйте строки перед обработкой
+11. **Используйте регулярные выражения** — для сложных паттернов
+12. **Нормализуйте строки** — перед обработкой и сравнением
+13. **Используйте шаблоны** — для динамической генерации строк
+14. **Обрабатывайте большие строки по частям** — для экономии памяти
+15. **Используйте правильную кодировку** — учитывайте **UTF-8** особенности
 
 
 ## Решение проблем
@@ -848,3 +848,11 @@ func ProcessLines(s string, processor func(string)) {
 
 - [Go strings Package](https://pkg.go.dev/strings)
 - [Go fmt Package](https://pkg.go.dev/fmt)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

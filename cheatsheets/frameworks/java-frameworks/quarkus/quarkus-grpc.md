@@ -14,9 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: gRPC - Remote Procedure Calls
-
-
+# Quarkus: gRPC — Remote Procedure Calls
 
 ## Полезные ссылки
 
@@ -25,7 +23,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: gRPC - Remote Procedure Calls](#quarkus-grpc-remote-procedure-calls)
+- [Quarkus: gRPC — Remote Procedure Calls](#quarkus-grpc-remote-procedure-calls)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Service Definition](#service-definition)
@@ -130,7 +128,7 @@ import io.smallrye.mutiny.Multi;
 
 @GrpcService
 public class UserServiceImpl implements UserService {
-    
+
     @Override
     public Uni<User> getUser(GetUserRequest request) {
         return Uni.createFrom().item(() -> {
@@ -142,7 +140,7 @@ public class UserServiceImpl implements UserService {
                 .build();
         });
     }
-    
+
     @Override
     public Uni<User> createUser(CreateUserRequest request) {
         return Uni.createFrom().item(() -> {
@@ -156,7 +154,7 @@ public class UserServiceImpl implements UserService {
                 .build();
         });
     }
-    
+
     @Override
     public Multi<User> listUsers(ListUsersRequest request) {
         return Multi.createFrom().items(
@@ -197,11 +195,11 @@ import io.smallrye.mutiny.Uni;
 
 @Path("/proxy")
 public class GrpcProxyResource {
-    
+
     @Inject
     @GrpcClient("userservice")
     UserService userService;
-    
+
     @GET
     @Path("/users/{id}")
     public Uni<User> getUser(@PathParam("id") Long id) {
@@ -222,7 +220,7 @@ public class GrpcProxyResource {
 ```java
 @GrpcService
 public class StreamingServiceImpl implements StreamingService {
-    
+
     @Override
     public Multi<Data> streamData(StreamRequest request) {
         return Multi.createFrom().ticks().every(Duration.ofSeconds(1))
@@ -239,7 +237,7 @@ public class StreamingServiceImpl implements StreamingService {
 ```java
 @GrpcService
 public class ClientStreamingServiceImpl implements ClientStreamingService {
-    
+
     @Override
     public Uni<Summary> processStream(Multi<Data> stream) {
         return stream
@@ -268,13 +266,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class LoggingServerInterceptor implements ServerInterceptor {
-    
+
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
             ServerCall<ReqT, RespT> call,
             Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
-        
+
         System.out.println("gRPC call: " + call.getMethodDescriptor().getFullMethodName());
         return next.startCall(call, headers);
     }
@@ -293,7 +291,7 @@ import io.grpc.StatusRuntimeException;
 
 @GrpcService
 public class ErrorHandlingServiceImpl implements UserService {
-    
+
     @Override
     public Uni<User> getUser(GetUserRequest request) {
         return Uni.createFrom().item(() -> {
@@ -350,7 +348,7 @@ public class LoggingInterceptor implements ServerInterceptor {
 ```java
 @GrpcService
 public class BidirectionalStreamingServiceImpl implements BidirectionalStreamingService {
-    
+
     @Override
     public Multi<Response> bidirectionalStream(Multi<Request> requests) {
         return requests
@@ -372,12 +370,12 @@ import io.grpc.Context;
 
 @GrpcService
 public class MetadataServiceImpl implements UserService {
-    
+
     @Override
     public Uni<User> getUser(GetUserRequest request) {
         Metadata metadata = Context.current().get(Metadata.KEY);
         String userId = metadata.get(Metadata.Key.of("user-id", Metadata.ASCII_STRING_MARSHALLER));
-        
+
         return Uni.createFrom().item(() -> {
             // Использование метаданных
             return convertToProto(userRepository.findById(request.getId()));
@@ -409,19 +407,19 @@ import io.grpc.Metadata;
 
 @ApplicationScoped
 public class AuthInterceptor implements ServerInterceptor {
-    
+
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
             ServerCall<ReqT, RespT> call,
             Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
-        
+
         String token = headers.get(Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER));
         if (!isValidToken(token)) {
             call.close(Status.UNAUTHENTICATED, new Metadata());
             return new ServerCall.Listener<ReqT>() {};
         }
-        
+
         return next.startCall(call, headers);
     }
 }
@@ -465,7 +463,7 @@ quarkus.grpc.clients.user-service.hosts=localhost:9000,localhost:9001,localhost:
 ```java
 @GrpcService
 public class CircuitBreakerUserService implements UserService {
-    
+
     @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5)
     @Override
     public Uni<User> getUser(GetUserRequest request) {
@@ -482,11 +480,11 @@ public class CircuitBreakerUserService implements UserService {
 ```java
 @ApplicationScoped
 public class RetryUserServiceClient {
-    
+
     @Inject
     @GrpcClient("user-service")
     UserServiceGrpc.UserServiceBlockingStub userService;
-    
+
     public User getUserWithRetry(Long id) {
         return Retry.withExponentialBackoff()
             .maxAttempts(3)
@@ -508,3 +506,11 @@ public class RetryUserServiceClient {
 - [**gRPC** Documentation](https://grpc.io/docs/)
 - [Protocol Buffers](https://protobuf.dev/)
 - [**gRPC Best Practices**](https://grpc.io/docs/guides/performance/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

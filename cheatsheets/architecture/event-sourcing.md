@@ -117,7 +117,7 @@ public abstract class DomainEvent {
     private final Instant occurredOn;
     private final String eventType;
     private final int version;
-    
+
     protected DomainEvent(String aggregateId, String eventType, int version) {
         this.eventId = UUID.randomUUID().toString();
         this.aggregateId = aggregateId;
@@ -125,23 +125,23 @@ public abstract class DomainEvent {
         this.eventType = eventType;
         this.version = version;
     }
-    
+
     public String getEventId() {
         return eventId;
     }
-    
+
     public String getAggregateId() {
         return aggregateId;
     }
-    
+
     public Instant getOccurredOn() {
         return occurredOn;
     }
-    
+
     public String getEventType() {
         return eventType;
     }
-    
+
     public int getVersion() {
         return version;
     }
@@ -150,17 +150,17 @@ public abstract class DomainEvent {
 public class UserCreatedEvent extends DomainEvent {
     private final String email;
     private final String name;
-    
+
     public UserCreatedEvent(String aggregateId, String email, String name) {
         super(aggregateId, "UserCreated", 1);
         this.email = email;
         this.name = name;
     }
-    
+
     public String getEmail() {
         return email;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -169,13 +169,13 @@ public class UserCreatedEvent extends DomainEvent {
 public class UserEmailChangedEvent extends DomainEvent {
     private final String oldEmail;
     private final String newEmail;
-    
+
     public UserEmailChangedEvent(String aggregateId, String oldEmail, String newEmail) {
         super(aggregateId, "UserEmailChanged", 1);
         this.oldEmail = oldEmail;
         this.newEmail = newEmail;
     }
-    
+
     // Getters
 }
 ```
@@ -192,11 +192,11 @@ public class UserAggregate {
     private boolean active;
     private final List<DomainEvent> uncommittedEvents = new ArrayList<>();
     private long version;
-    
+
     // Приватный конструктор для восстановления из событий
     private UserAggregate() {
     }
-    
+
     // Фабричный метод для создания нового агрегата
     public static UserAggregate create(String email, String name) {
         UserAggregate user = new UserAggregate();
@@ -204,7 +204,7 @@ public class UserAggregate {
         user.apply(new UserCreatedEvent(user.userId, email, name));
         return user;
     }
-    
+
     // Восстановление агрегата из истории событий
     public static UserAggregate fromHistory(List<DomainEvent> events) {
         UserAggregate user = new UserAggregate();
@@ -212,23 +212,23 @@ public class UserAggregate {
         user.uncommittedEvents.clear();
         return user;
     }
-    
+
     public void changeEmail(String newEmail) {
         if (!active) {
             throw new IllegalStateException("Cannot change email for inactive user");
         }
-        
+
         String oldEmail = this.email;
         apply(new UserEmailChangedEvent(userId, oldEmail, newEmail));
     }
-    
+
     public void deactivate() {
         if (!active) {
             throw new IllegalStateException("User already deactivated");
         }
         apply(new UserDeactivatedEvent(userId));
     }
-    
+
     // Применение события к агрегату
     private void apply(DomainEvent event) {
         // Обновление состояния на основе события
@@ -243,11 +243,11 @@ public class UserAggregate {
         } else if (event instanceof UserDeactivatedEvent) {
             this.active = false;
         }
-        
+
         this.version++;
         uncommittedEvents.add(event);
     }
-    
+
     // Применение события при восстановлении (без добавления в uncommittedEvents)
     public void applyHistorical(DomainEvent event) {
         if (event instanceof UserCreatedEvent) {
@@ -262,34 +262,34 @@ public class UserAggregate {
         } else if (event instanceof UserDeactivatedEvent) {
             this.active = false;
         }
-        
+
         this.version++;
     }
-    
+
     public List<DomainEvent> getUncommittedEvents() {
         return new ArrayList<>(uncommittedEvents);
     }
-    
+
     public void markEventsAsCommitted() {
         uncommittedEvents.clear();
     }
-    
+
     public String getUserId() {
         return userId;
     }
-    
+
     public String getEmail() {
         return email;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public boolean isActive() {
         return active;
     }
-    
+
     public long getVersion() {
         return version;
     }
@@ -317,10 +317,10 @@ public interface EventStore {
 
 @Component
 public class JpaEventStore implements EventStore {
-    
+
     private final EventRepository eventRepository;
     private final SnapshotRepository snapshotRepository;
-    
+
     @Override
     @Transactional
     public void saveEvents(String aggregateId, List<DomainEvent> events, long expectedVersion) {
@@ -331,7 +331,7 @@ public class JpaEventStore implements EventStore {
                 "Expected version " + expectedVersion + " but was " + currentVersion
             );
         }
-        
+
         // Сохранение событий
         List<EventEntity> entities = events.stream()
             .map(event -> new EventEntity(
@@ -343,10 +343,10 @@ public class JpaEventStore implements EventStore {
                 event.getOccurredOn()
             ))
             .collect(Collectors.toList());
-        
+
         eventRepository.saveAll(entities);
     }
-    
+
     @Override
     public List<DomainEvent> getEvents(String aggregateId) {
         List<EventEntity> entities = eventRepository.findByAggregateIdOrderByVersion(aggregateId);
@@ -354,7 +354,7 @@ public class JpaEventStore implements EventStore {
             .map(this::deserializeEvent)
             .collect(Collectors.toList());
     }
-    
+
     @Override
     public List<DomainEvent> getEvents(String aggregateId, long fromVersion) {
         List<EventEntity> entities = eventRepository
@@ -363,7 +363,7 @@ public class JpaEventStore implements EventStore {
             .map(this::deserializeEvent)
             .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional
     public void saveSnapshot(String aggregateId, Snapshot snapshot) {
@@ -375,20 +375,20 @@ public class JpaEventStore implements EventStore {
         );
         snapshotRepository.save(entity);
     }
-    
+
     @Override
     public Snapshot getSnapshot(String aggregateId) {
         SnapshotEntity entity = snapshotRepository
             .findTopByAggregateIdOrderByVersionDesc(aggregateId)
             .orElse(null);
-        
+
         if (entity == null) {
             return null;
         }
-        
+
         return deserializeSnapshot(entity.getData());
     }
-    
+
     private String serializeEvent(DomainEvent event) {
         // Сериализация события в JSON
         try {
@@ -398,7 +398,7 @@ public class JpaEventStore implements EventStore {
             throw new EventSerializationException("Failed to serialize event", e);
         }
     }
-    
+
     private DomainEvent deserializeEvent(EventEntity entity) {
         // Десериализация события из JSON
         try {
@@ -409,7 +409,7 @@ public class JpaEventStore implements EventStore {
             throw new EventDeserializationException("Failed to deserialize event", e);
         }
     }
-    
+
     private Class<? extends DomainEvent> getEventClass(String eventType) {
         // Маппинг типа события на класс
         Map<String, Class<? extends DomainEvent>> eventTypes = Map.of(
@@ -419,7 +419,7 @@ public class JpaEventStore implements EventStore {
         );
         return eventTypes.get(eventType);
     }
-    
+
     private String serializeSnapshot(Snapshot snapshot) {
         // Сериализация snapshot
         try {
@@ -429,7 +429,7 @@ public class JpaEventStore implements EventStore {
             throw new SnapshotSerializationException("Failed to serialize snapshot", e);
         }
     }
-    
+
     private Snapshot deserializeSnapshot(String data) {
         // Десериализация snapshot
         try {
@@ -455,7 +455,7 @@ public class EventEntity {
     private String data;
     private long version;
     private Instant occurredOn;
-    
+
     // Constructors, getters, setters
 }
 
@@ -470,7 +470,7 @@ public class SnapshotEntity {
     @Lob
     private String data;
     private Instant createdAt;
-    
+
     // Constructors, getters, setters
 }
 ```
@@ -480,10 +480,10 @@ public class SnapshotEntity {
 ```java
 @Component
 public class KafkaEventStore implements EventStore {
-    
+
     private final KafkaTemplate<String, DomainEvent> kafkaTemplate;
     private final KafkaConsumer<String, DomainEvent> kafkaConsumer;
-    
+
     @Override
     public void saveEvents(String aggregateId, List<DomainEvent> events, long expectedVersion) {
         // Сохранение событий в Kafka topic
@@ -491,7 +491,7 @@ public class KafkaEventStore implements EventStore {
             kafkaTemplate.send("events", aggregateId, event);
         }
     }
-    
+
     @Override
     public List<DomainEvent> getEvents(String aggregateId) {
         // Чтение событий из Kafka topic
@@ -517,35 +517,35 @@ public interface AggregateRepository<T extends Aggregate> {
 
 @Component
 public class UserRepository implements AggregateRepository<UserAggregate> {
-    
+
     private final EventStore eventStore;
     private final SnapshotStore snapshotStore;
-    
+
     @Override
     public UserAggregate findById(String aggregateId) {
         // Попытка загрузить из snapshot
         Snapshot snapshot = snapshotStore.getSnapshot(aggregateId);
-        
+
         if (snapshot != null) {
             // Восстановление из snapshot
             UserAggregate aggregate = UserAggregate.fromSnapshot(snapshot);
-            
+
             // Применение событий после snapshot
             List<DomainEvent> events = eventStore.getEvents(aggregateId, snapshot.getVersion());
             events.forEach(aggregate::applyHistorical);
-            
+
             return aggregate;
         }
-        
+
         // Загрузка всех событий
         List<DomainEvent> events = eventStore.getEvents(aggregateId);
         if (events.isEmpty()) {
             throw new AggregateNotFoundException("User not found: " + aggregateId);
         }
-        
+
         return UserAggregate.fromHistory(events);
     }
-    
+
     @Override
     @Transactional
     public void save(UserAggregate aggregate) {
@@ -553,12 +553,12 @@ public class UserRepository implements AggregateRepository<UserAggregate> {
         if (uncommittedEvents.isEmpty()) {
             return;
         }
-        
+
         long expectedVersion = aggregate.getVersion() - uncommittedEvents.size();
         eventStore.saveEvents(aggregate.getUserId(), uncommittedEvents, expectedVersion);
-        
+
         aggregate.markEventsAsCommitted();
-        
+
         // Создание snapshot периодически
         if (aggregate.getVersion() % 100 == 0) {
             Snapshot snapshot = aggregate.createSnapshot();
@@ -576,17 +576,17 @@ public class UserRepository implements AggregateRepository<UserAggregate> {
 
 ```java
 public class UserAggregate {
-    
+
     public static UserAggregate fromHistory(List<DomainEvent> events) {
         UserAggregate user = new UserAggregate();
-        
+
         for (DomainEvent event : events) {
             user.applyHistorical(event);
         }
-        
+
         return user;
     }
-    
+
     private void applyHistorical(DomainEvent event) {
         // Применение события без добавления в uncommittedEvents
         if (event instanceof UserCreatedEvent) {
@@ -601,7 +601,7 @@ public class UserAggregate {
         } else if (event instanceof UserDeactivatedEvent) {
             this.active = false;
         }
-        
+
         this.version++;
     }
 }
@@ -617,29 +617,29 @@ public class Snapshot {
     private final long version;
     private final Instant createdAt;
     private final Map<String, Object> state;
-    
+
     public Snapshot(String aggregateId, long version, Map<String, Object> state) {
         this.aggregateId = aggregateId;
         this.version = version;
         this.createdAt = Instant.now();
         this.state = new HashMap<>(state);
     }
-    
+
     // Getters
 }
 
 public class UserAggregate {
-    
+
     public Snapshot createSnapshot() {
         Map<String, Object> state = new HashMap<>();
         state.put("userId", userId);
         state.put("email", email);
         state.put("name", name);
         state.put("active", active);
-        
+
         return new Snapshot(userId, version, state);
     }
-    
+
     public static UserAggregate fromSnapshot(Snapshot snapshot) {
         UserAggregate user = new UserAggregate();
         user.userId = (String) snapshot.getState().get("userId");
@@ -653,12 +653,12 @@ public class UserAggregate {
 
 @Component
 public class SnapshotPolicy {
-    
+
     public boolean shouldCreateSnapshot(Aggregate aggregate) {
         // Создавать snapshot каждые N событий
         return aggregate.getVersion() % 100 == 0;
     }
-    
+
     public boolean shouldCreateSnapshot(Aggregate aggregate, Duration timeSinceLastSnapshot) {
         // Создавать snapshot если прошло много времени
         return timeSinceLastSnapshot.toDays() > 7;
@@ -675,12 +675,12 @@ public class SnapshotPolicy {
 ```java
 public abstract class DomainEvent {
     private final int version;
-    
+
     protected DomainEvent(String eventType, int version) {
         this.version = version;
         // ...
     }
-    
+
     public int getVersion() {
         return version;
     }
@@ -690,7 +690,7 @@ public abstract class DomainEvent {
 public class UserCreatedEventV1 extends DomainEvent {
     private final String email;
     private final String name;
-    
+
     public UserCreatedEventV1(String aggregateId, String email, String name) {
         super(aggregateId, "UserCreated", 1);
         this.email = email;
@@ -703,14 +703,14 @@ public class UserCreatedEventV2 extends DomainEvent {
     private final String email;
     private final String name;
     private final String phone; // Новое поле
-    
+
     public UserCreatedEventV2(String aggregateId, String email, String name, String phone) {
         super(aggregateId, "UserCreated", 2);
         this.email = email;
         this.name = name;
         this.phone = phone;
     }
-    
+
     // Миграция из версии 1
     public static UserCreatedEventV2 fromV1(UserCreatedEventV1 v1) {
         return new UserCreatedEventV2(
@@ -724,7 +724,7 @@ public class UserCreatedEventV2 extends DomainEvent {
 
 @Component
 public class EventMigrator {
-    
+
     public DomainEvent migrate(DomainEvent event) {
         if (event instanceof UserCreatedEventV1) {
             return UserCreatedEventV2.fromV1((UserCreatedEventV1) event);
@@ -748,12 +748,12 @@ public interface EventUpcaster {
 
 @Component
 public class UserCreatedEventUpcaster implements EventUpcaster {
-    
+
     @Override
     public boolean canUpcast(DomainEvent event) {
         return event instanceof UserCreatedEventV1;
     }
-    
+
     @Override
     public DomainEvent upcast(DomainEvent event) {
         if (event instanceof UserCreatedEventV1) {
@@ -771,9 +771,9 @@ public class UserCreatedEventUpcaster implements EventUpcaster {
 
 @Component
 public class EventStore {
-    
+
     private final List<EventUpcaster> upcasters;
-    
+
     public List<DomainEvent> getEvents(String aggregateId) {
         List<EventEntity> entities = eventRepository.findByAggregateIdOrderByVersion(aggregateId);
         return entities.stream()
@@ -781,7 +781,7 @@ public class EventStore {
             .map(this::upcastEvent)
             .collect(Collectors.toList());
     }
-    
+
     private DomainEvent upcastEvent(DomainEvent event) {
         for (EventUpcaster upcaster : upcasters) {
             if (upcaster.canUpcast(event)) {
@@ -800,31 +800,31 @@ public class EventStore {
 ```java
 @Component
 public class UserCommandHandler {
-    
+
     private final UserRepository userRepository;
     private final EventPublisher eventPublisher;
-    
+
     @Transactional
     public String handle(CreateUserCommand command) {
         UserAggregate user = UserAggregate.create(
             command.getEmail(),
             command.getName()
         );
-        
+
         userRepository.save(user);
-        
+
         // Публикация событий для обновления Read модели
         user.getUncommittedEvents().forEach(eventPublisher::publish);
-        
+
         return user.getUserId();
     }
 }
 
 @Component
 public class UserViewUpdater {
-    
+
     private final UserViewRepository userViewRepository;
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserCreated(UserCreatedEvent event) {
         UserView view = new UserView();
@@ -833,18 +833,18 @@ public class UserViewUpdater {
         view.setName(event.getName());
         view.setActive(true);
         view.setCreatedAt(event.getOccurredOn());
-        
+
         userViewRepository.save(view);
     }
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserEmailChanged(UserEmailChangedEvent event) {
         UserView view = userViewRepository.findById(event.getAggregateId())
             .orElseThrow(() -> new UserNotFoundException(event.getAggregateId()));
-        
+
         view.setEmail(event.getNewEmail());
         view.setUpdatedAt(event.getOccurredOn());
-        
+
         userViewRepository.save(view);
     }
 }
@@ -858,17 +858,17 @@ public class UserViewUpdater {
 @Configuration
 @EnableJpaRepositories(basePackages = "com.example.eventsourcing.repository")
 public class EventSourcingConfig {
-    
+
     @Bean
     public EventStore eventStore(EventRepository eventRepository) {
         return new JpaEventStore(eventRepository);
     }
-    
+
     @Bean
     public SnapshotStore snapshotStore(SnapshotRepository snapshotRepository) {
         return new JpaSnapshotStore(snapshotRepository);
     }
-    
+
     @Bean
     public UserRepository userRepository(EventStore eventStore, SnapshotStore snapshotStore) {
         return new UserRepository(eventStore, snapshotStore);
@@ -881,29 +881,29 @@ public class EventSourcingConfig {
 ```java
 @Component
 public class UserCommandHandler {
-    
+
     private final UserRepository userRepository;
     private final EventPublisher eventPublisher;
-    
+
     public String handle(CreateUserCommand command) {
         UserAggregate user = UserAggregate.create(
             command.getEmail(),
             command.getName()
         );
-        
+
         userRepository.save(user);
-        
+
         // Публикация событий
         user.getUncommittedEvents().forEach(eventPublisher::publish);
-        
+
         return user.getUserId();
     }
-    
+
     public void handle(ChangeUserEmailCommand command) {
         UserAggregate user = userRepository.findById(command.getUserId());
         user.changeEmail(command.getNewEmail());
         userRepository.save(user);
-        
+
         user.getUncommittedEvents().forEach(eventPublisher::publish);
     }
 }
@@ -933,22 +933,22 @@ public class UserCommandHandler {
 ```java
 @Aggregate
 public class UserAggregate {
-    
+
     @AggregateIdentifier
     private String userId;
     private String email;
     private String name;
     private boolean active;
-    
+
     protected UserAggregate() {
         // Требуется для Axon
     }
-    
+
     @CommandHandler
     public UserAggregate(CreateUserCommand command) {
         apply(new UserCreatedEvent(command.getUserId(), command.getEmail(), command.getName()));
     }
-    
+
     @CommandHandler
     public void handle(ChangeUserEmailCommand command) {
         if (!active) {
@@ -956,7 +956,7 @@ public class UserAggregate {
         }
         apply(new UserEmailChangedEvent(userId, email, command.getNewEmail()));
     }
-    
+
     @EventSourcingHandler
     public void on(UserCreatedEvent event) {
         this.userId = event.getAggregateId();
@@ -964,12 +964,12 @@ public class UserAggregate {
         this.name = event.getName();
         this.active = true;
     }
-    
+
     @EventSourcingHandler
     public void on(UserEmailChangedEvent event) {
         this.email = event.getNewEmail();
     }
-    
+
     @EventSourcingHandler
     public void on(UserDeactivatedEvent event) {
         this.active = false;
@@ -983,10 +983,10 @@ public class UserAggregate {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     private final CommandGateway commandGateway;
     private final QueryGateway queryGateway;
-    
+
     @PostMapping
     public CompletableFuture<String> createUser(@RequestBody CreateUserRequest request) {
         CreateUserCommand command = new CreateUserCommand(
@@ -996,7 +996,7 @@ public class UserController {
         );
         return commandGateway.send(command);
     }
-    
+
     @GetMapping("/{id}")
     public CompletableFuture<UserView> getUser(@PathVariable String id) {
         return queryGateway.query(new GetUserByIdQuery(id), UserView.class);
@@ -1005,7 +1005,7 @@ public class UserController {
 
 @Component
 public class UserQueryHandler {
-    
+
     @QueryHandler
     public UserView handle(GetUserByIdQuery query) {
         // Загрузка из Read модели
@@ -1021,10 +1021,10 @@ public class UserQueryHandler {
 ```java
 @Component
 public class CachedUserRepository implements AggregateRepository<UserAggregate> {
-    
+
     private final UserRepository delegate;
     private final Cache<String, UserAggregate> cache;
-    
+
     public CachedUserRepository(UserRepository delegate) {
         this.delegate = delegate;
         this.cache = Caffeine.newBuilder()
@@ -1032,12 +1032,12 @@ public class CachedUserRepository implements AggregateRepository<UserAggregate> 
             .expireAfterWrite(5, TimeUnit.MINUTES)
             .build();
     }
-    
+
     @Override
     public UserAggregate findById(String aggregateId) {
         return cache.get(aggregateId, delegate::findById);
     }
-    
+
     @Override
     public void save(UserAggregate aggregate) {
         delegate.save(aggregate);
@@ -1051,36 +1051,36 @@ public class CachedUserRepository implements AggregateRepository<UserAggregate> 
 ```java
 @Component
 public class BatchEventProcessor {
-    
+
     private final List<DomainEvent> eventBuffer = new ArrayList<>();
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    
+
     @PostConstruct
     public void init() {
         executor.scheduleAtFixedRate(this::processBatch, 1, 1, TimeUnit.SECONDS);
     }
-    
+
     public void addEvent(DomainEvent event) {
         synchronized (eventBuffer) {
             eventBuffer.add(event);
         }
     }
-    
+
     private void processBatch() {
         List<DomainEvent> events;
         synchronized (eventBuffer) {
             events = new ArrayList<>(eventBuffer);
             eventBuffer.clear();
         }
-        
+
         if (events.isEmpty()) {
             return;
         }
-        
+
         // Batch сохранение событий
         Map<String, List<DomainEvent>> eventsByAggregate = events.stream()
             .collect(Collectors.groupingBy(DomainEvent::getAggregateId));
-        
+
         eventsByAggregate.forEach((aggregateId, aggregateEvents) -> {
             eventStore.saveEvents(aggregateId, aggregateEvents, getExpectedVersion(aggregateId));
         });

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: Репликация - **Replica Sets** для высокой доступности и отказоустойчивости
+# **MongoDB**: Репликация — **Replica Sets** для высокой доступности и отказоустойчивости
 
 Полное руководство по репликации в **MongoDB**: **Replica Sets**, настройка, управление, **Read Preferences** и **Write Concerns**.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Replica Set Configuration](https://www.mongodb.com/docs/manual/reference/replica-configuration/)
 - [Read Preferences](https://www.mongodb.com/docs/manual/core/read-preference/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Replica Sets](https://www.baeldung.com/spring-data-mongodb-replica-set)
 
 ### См. также
@@ -145,7 +145,7 @@ updated: "2026-02-11"
 
 **Репликация** в **MongoDB** обеспечивает высокую доступность, отказоустойчивость и масштабируемость чтения данных. Основной механизм репликации — **Replica Set** — это группа **MongoDB** серверов, которые поддерживают одинаковый набор данных.
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Primary       │ -> │   Secondary     │ -> │   Secondary     │
 │   (Read/Write)  │    │   (Read Only)   │    │   (Read Only)   │
@@ -189,7 +189,7 @@ updated: "2026-02-11"
 
 ### Базовая архитектура
 
-```
+```text
 Production Environment:
 ┌─────────────────────────────────────────────────────────────┐
 │                        Replica Set                          │
@@ -205,14 +205,14 @@ Production Environment:
 ### Рекомендуемые конфигурации
 
 #### Для разработки
-```
+```text
 3 узла: Primary + 2 Secondary
 - Все в одном дата-центре
 - Быстрое восстановление
 ```
 
 #### Для **production**
-```
+```text
 Разные дата-центры:
 DC1: Primary + Secondary
 DC2: Secondary + Arbiter
@@ -224,7 +224,7 @@ DC3: Secondary
 ```
 
 #### Минимальная конфигурация
-```
+```text
 Primary + Secondary (не рекомендуется для production)
 - Недостаточная отказоустойчивость
 ```
@@ -298,18 +298,18 @@ rs.initiate({
 ```java
 @Configuration
 public class MongoConfig {
-    
+
     @Bean
     public MongoClient mongoClient() {
         // Connection string для replica set
         String connectionString = "mongodb://host1:27017,host2:27017,host3:27017/mydb?replicaSet=rs0";
-        
+
         MongoClientSettings settings = MongoClientSettings.builder()
             .applyConnectionString(new ConnectionString(connectionString))
             .readPreference(ReadPreference.secondaryPreferred())
             .writeConcern(WriteConcern.W2)  // Majority
             .build();
-            
+
         return MongoClients.create(settings);
     }
 }
@@ -513,18 +513,18 @@ collection.withReadPreference(ReadPreference.nearest());
 ```java
 @Repository
 public class UserRepositoryImpl implements UserRepository {
-    
+
     private final MongoTemplate mongoTemplate;
-    
+
     public UserRepositoryImpl(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
-    
+
     @Override
     public List<User> findAllUsers() {
         // Используем secondary для чтения
         ReadPreference readPref = ReadPreference.secondaryPreferred();
-        
+
         Query query = new Query();
         return mongoTemplate.find(query, User.class).withReadPreference(readPref);
     }
@@ -546,7 +546,7 @@ rs.initiate({
 })
 
 // Чтение с тегом
-db.collection.find().readPref("secondary", 
+db.collection.find().readPref("secondary",
   [{ "dc": "west" }, { "usage": "reporting" }])
 ```
 
@@ -583,22 +583,22 @@ db.collection.insertOne(doc, { writeConcern: { w: 3 } })
 #### **wtimeout**
 ```javascript
 // Таймаут ожидания подтверждения (мс)
-db.collection.insertOne(doc, { 
-  writeConcern: { 
-    w: "majority", 
-    wtimeout: 5000 
-  } 
+db.collection.insertOne(doc, {
+  writeConcern: {
+    w: "majority",
+    wtimeout: 5000
+  }
 })
 ```
 
 #### j: **true** (**Journal**)
 ```javascript
 // Ждать записи в journal
-db.collection.insertOne(doc, { 
-  writeConcern: { 
-    w: 1, 
-    j: true 
-  } 
+db.collection.insertOne(doc, {
+  writeConcern: {
+    w: 1,
+    j: true
+  }
 })
 ```
 
@@ -628,14 +628,14 @@ collection.withWriteConcern(majority).insertOne(document);
 ```java
 @Configuration
 public class MongoConfig {
-    
+
     @Bean
     public MongoTemplate mongoTemplate(MongoClient mongoClient) {
         MongoTemplate template = new MongoTemplate(mongoClient, "mydb");
-        
+
         // Настройка write concern
         template.setWriteConcern(WriteConcern.MAJORITY.withWTimeout(5000, TimeUnit.MILLISECONDS));
-        
+
         return template;
     }
 }
@@ -764,20 +764,20 @@ db.getReplicationInfo()
 ```java
 @Service
 public class ReplicaSetMonitor {
-    
+
     private final MongoClient mongoClient;
-    
+
     public void monitorReplicaSet() {
         MongoDatabase adminDb = mongoClient.getDatabase("admin");
         Document replSetStatus = adminDb.runCommand(new Document("replSetGetStatus", 1));
-        
+
         List<Document> members = (List<Document>) replSetStatus.get("members");
         for (Document member : members) {
             String name = member.getString("name");
             String stateStr = member.getString("stateStr");
             double health = member.getDouble("health");
-            
-            System.out.printf("Member: %s, State: %s, Health: %.0f%n", 
+
+            System.out.printf("Member: %s, State: %s, Health: %.0f%n",
                             name, stateStr, health);
         }
     }
@@ -874,7 +874,7 @@ db.createUser({
 // Пользователь для чтения с secondary
 db.createUser({
   user: "secondaryReader",
-  pwd: "password", 
+  pwd: "password",
   roles: [
     { role: "read", db: "mydb" },
     { role: "readAnyDatabase", db: "admin" }
@@ -1107,14 +1107,14 @@ db.createUser({
 - [Replica Set Configuration](https://www.mongodb.com/docs/manual/reference/replica-configuration/)
 - [Read Preferences](https://www.mongodb.com/docs/manual/core/read-preference/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Replica Sets](https://www.baeldung.com/spring-data-mongodb-replica-set)
 
 ### См. также
 - [[mongodb-basics|Основы]] — **MongoDB**
 - [[mongodb-sharding|Шардирование]] — масштабирование
 
-```
+```text
 
 ### Преимущества репликации
 
@@ -1156,7 +1156,7 @@ Production Environment:
 │  Data       Data        Data        No Data                 │
 │  Center 1   Center 2    Center 3    Center 1                │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 ### Рекомендуемые конфигурации
 
@@ -1165,7 +1165,7 @@ Production Environment:
 3 узла: Primary + 2 Secondary
 - Все в одном дата-центре
 - Быстрое восстановление
-```
+```text
 
 #### Для **production**
 ```
@@ -1177,13 +1177,13 @@ DC3: Secondary
 Или:
 5 узлов: Primary + 4 Secondary
 - Гибкая конфигурация для обслуживания
-```
+```text
 
 #### Минимальная конфигурация
 ```
 Primary + Secondary (не рекомендуется для production)
 - Недостаточная отказоустойчивость
-```
+```text
 
 ## Настройка **Replica Set**
 
@@ -1197,12 +1197,12 @@ mkdir -p /data/db/rs0-1 /data/db/rs0-2 /data/db/rs0-3
 mongod --replSet rs0 --port 27017 --dbpath /data/db/rs0-1 --logpath /data/db/rs0-1.log --fork
 mongod --replSet rs0 --port 27018 --dbpath /data/db/rs0-2 --logpath /data/db/rs0-2.log --fork
 mongod --replSet rs0 --port 27019 --dbpath /data/db/rs0-3 --logpath /data/db/rs0-3.log --fork
-```
+```text
 
 ### 2. Инициализация **Replica Set**
 
 ```java
 // Java + Spring implementation available
-```
+```text
 
 ```

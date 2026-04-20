@@ -14,21 +14,19 @@ updated: "2026-02-11"
 
 Кратко: роли и права, резервное копирование, **VACUUM**/**ANALYZE**, автovacuum, базовые настройки и **psql**-команды.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [`PostgreSQL Documentation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
-### **Baeldung**
+### Обучающие материалы
 
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [`postgres-basics`](postgres-basics.md) — [`postgres-indexes`](postgres-indexes.md) — [`postgres-transactions`](postgres-transactions.md).
+См. также: [[postgres-basics]] — [[postgres-indexes]] — [[postgres-transactions]].
 
 ## Содержание
 
@@ -144,8 +142,8 @@ LIMIT 20;
 **Проверка необходимости `VACUUM`:**
 ```sql
 -- Доля мёртвых строк по таблицам в процентах
-SELECT schemaname, 
-       tablename, 
+SELECT schemaname,
+       tablename,
        n_dead_tup,
        n_live_tup,
        round((n_dead_tup::numeric / nullif(n_live_tup + n_dead_tup, 0)) * 100, 2) AS dead_pct
@@ -333,7 +331,7 @@ autovacuum_vacuum_cost_delay = 20ms
    - Увеличьте `**autovacuum_max_workers**`.
 
 3. **Autovacuum не справляется с нагрузкой:**
-   - Снизьте `**autovacuum_vacuum_scale_factor**` для "горячих" таблиц.
+   - Снизьте `**autovacuum_vacuum_scale_factor**` для «горячих» таблиц.
    - Увеличьте `**autovacuum_max_workers**`.
    - Запускайте **VACUUM** вручную для критических таблиц.
 
@@ -362,7 +360,7 @@ LIMIT 20;
 
 **Важные рекомендации:**
 - Не отключайте **autovacuum** надолго! Это критически важно для производительности.
-- Для "горячих" таблиц снижайте `**autovacuum_vacuum_scale_factor**` до `0.05` или ниже.
+- Для «горячих» таблиц снижайте `**autovacuum_vacuum_scale_factor**` до `0.05` или ниже.
 - Мониторьте `**n_dead_tup**` и запускайте **VACUUM** вручную при необходимости.
 - Используйте `**VACUUM FULL**` только в окне обслуживания.
 
@@ -378,8 +376,8 @@ LIMIT 20;
 **Оценка раздувания таблиц:**
 ```sql
 -- Грубая оценка раздувания по статистике
-SELECT schemaname, 
-       tablename, 
+SELECT schemaname,
+       tablename,
        n_dead_tup,
        n_live_tup,
        round((n_dead_tup::numeric / nullif(n_live_tup + n_dead_tup, 0)) * 100, 2) AS dead_pct,
@@ -434,7 +432,7 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 
 1. **Регулярный `VACUUM`:**
    - Убедитесь, что **autovacuum** работает правильно.
-   - Для "горячих" таблиц снижайте `**autovacuum_vacuum_scale_factor**`.
+   - Для «горячих» таблиц снижайте `**autovacuum_vacuum_scale_factor**`.
 
 2. **VACUUM `FULL` для критических случаев:**
    - Используйте только в окне обслуживания.
@@ -493,4 +491,10 @@ auto_explain.log_min_duration = '500ms'
   - Следить за лагом: `**pg_stat_replication**`, поля `**write_lag**`, `**flush_lag**`, `**replay_lag**`.
 - Для потоковой реплики не забывайте о бэкапах: реплика — не бэкап.
 
+## См. также
 
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]
+- [[postgres-extensions|PostgreSQL: Расширения]]

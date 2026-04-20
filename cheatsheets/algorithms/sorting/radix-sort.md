@@ -116,7 +116,7 @@ void sort(int[] numbers) {
     int maximumNumber = findMaximumNumberIn(numbers);
     int numberOfDigits = calculateNumberOfDigitsIn(maximumNumber);
     int placeValue = 1;
-    
+
     while (numberOfDigits > 0) {
         applyCountingSortOn(numbers, placeValue);
         placeValue *= 10;
@@ -133,25 +133,25 @@ void applyCountingSortOn(int[] numbers, int placeValue) {
     int range = 10; // для десятичной системы
     int[] frequency = new int[range];
     int[] sortedValues = new int[length];
-    
+
     // Подсчет частоты каждой цифры
     for (int i = 0; i < length; i++) {
         int digit = (numbers[i] / placeValue) % range;
         frequency[digit]++;
     }
-    
+
     // Вычисление позиций
     for (int i = 1; i < range; i++) {
         frequency[i] += frequency[i - 1];
     }
-    
+
     // Размещение элементов в правильном порядке
     for (int i = length - 1; i >= 0; i--) {
         int digit = (numbers[i] / placeValue) % range;
         sortedValues[frequency[digit] - 1] = numbers[i];
         frequency[digit]--;
     }
-    
+
     System.arraycopy(sortedValues, 0, numbers, 0, length);
 }
 ```
@@ -209,7 +209,7 @@ fun radixSortK(numbers: IntArray) {
     val maximumNumber = findMaximumNumberInK(numbers)
     var numberOfDigits = calculateNumberOfDigitsInK(maximumNumber)
     var placeValue = 1
-    
+
     while (numberOfDigits > 0) {
         applyCountingSortOnK(numbers, placeValue)
         placeValue *= 10
@@ -226,25 +226,25 @@ private fun applyCountingSortOnK(numbers: IntArray, placeValue: Int) {
     val range = 10 // для десятичной системы
     val frequency = IntArray(range)
     val sortedValues = IntArray(length)
-    
+
     // Подсчет частоты каждой цифры
     for (i in 0 until length) {
         val digit = (numbers[i] / placeValue) % range
         frequency[digit]++
     }
-    
+
     // Вычисление позиций
     for (i in 1 until range) {
         frequency[i] += frequency[i - 1]
     }
-    
+
     // Размещение элементов в правильном порядке
     for (i in length - 1 downTo 0) {
         val digit = (numbers[i] / placeValue) % range
         sortedValues[frequency[digit] - 1] = numbers[i]
         frequency[digit]--
     }
-    
+
     // Копирование отсортированных значений обратно
     sortedValues.copyInto(numbers)
 }
@@ -282,10 +282,10 @@ private fun calculateNumberOfDigitsInK(number: Int): Int {
 ```kotlin
 fun radixSortFunctionalK(numbers: IntArray): IntArray {
     if (numbers.isEmpty()) return numbers
-    
+
     val max = numbers.maxOrNull() ?: return numbers
     val maxDigits = max.toString().length
-    
+
     return (0 until maxDigits).fold(numbers) { acc, digit ->
         countingSortByDigitK(acc, digit)
     }
@@ -296,25 +296,25 @@ private fun countingSortByDigitK(numbers: IntArray, digitPosition: Int): IntArra
     val placeValue = Math.pow(10.0, digitPosition.toDouble()).toInt()
     val frequency = IntArray(range)
     val sortedValues = IntArray(numbers.size)
-    
+
     // Подсчет частоты
     numbers.forEach { number ->
         val digit = (number / placeValue) % range
         frequency[digit]++
     }
-    
+
     // Вычисление позиций
     for (i in 1 until range) {
         frequency[i] += frequency[i - 1]
     }
-    
+
     // Размещение элементов
     for (i in numbers.size - 1 downTo 0) {
         val digit = (numbers[i] / placeValue) % range
         sortedValues[frequency[digit] - 1] = numbers[i]
         frequency[digit]--
     }
-    
+
     return sortedValues
 }
 ```
@@ -324,16 +324,16 @@ private fun countingSortByDigitK(numbers: IntArray, digitPosition: Int): IntArra
 ```kotlin
 fun main() {
     val numbers = intArrayOf(387, 468, 134, 123, 68, 221, 769, 37, 7)
-    
+
     // In-place сортировка
     radixSortK(numbers)
-    println(numbers.contentToString()) 
+    println(numbers.contentToString())
     // [7, 37, 68, 123, 134, 221, 387, 468, 769]
-    
+
     // Функциональный стиль
     val numbers2 = intArrayOf(387, 468, 134, 123, 68, 221, 769, 37, 7)
     val sorted = radixSortFunctionalK(numbers2)
-    println(sorted.contentToString()) 
+    println(sorted.contentToString())
     // [7, 37, 68, 123, 134, 221, 387, 468, 769]
 }
 ```
@@ -355,9 +355,9 @@ fun main() {
 - **Худший случай:** `O(**d * (n + b**)`)
 
 **где:**
-- d - количество цифр в максимальном числе
-- n - количество элементов
-- b - основание системы счисления (**10 для десятичной**)
+- d — количество цифр в максимальном числе
+- n — количество элементов
+- b — основание системы счисления (**10 для десятичной**)
 
 ### Пространственная сложность
 
@@ -508,7 +508,7 @@ public static void radixSortWithNegatives(int[] arr) {
     // Разделяем на положительные и отрицательные
     List<Integer> positives = new ArrayList<>();
     List<Integer> negatives = new ArrayList<>();
-    
+
     for (int num : arr) {
         if (num >= 0) {
             positives.add(num);
@@ -516,15 +516,15 @@ public static void radixSortWithNegatives(int[] arr) {
             negatives.add(-num); // Инвертируем для сортировки
         }
     }
-    
+
     // Сортируем положительные числа
     int[] posArray = positives.stream().mapToInt(i -> i).toArray();
     radixSort(posArray);
-    
+
     // Сортируем отрицательные числа (в обратном порядке)
     int[] negArray = negatives.stream().mapToInt(i -> i).toArray();
     radixSort(negArray);
-    
+
     // Объединяем результаты
     int index = 0;
     for (int i = negArray.length - 1; i >= 0; i--) {
@@ -545,7 +545,7 @@ public static void radixSortBase256(int[] arr) {
     int max = Arrays.stream(arr).max().orElse(0);
     int digits = (int) (Math.log(max) / Math.log(256)) + 1;
     int placeValue = 1;
-    
+
     for (int d = 0; d < digits; d++) {
         countingSortByDigitBase256(arr, placeValue);
         placeValue *= 256;
@@ -557,25 +557,25 @@ private static void countingSortByDigitBase256(int[] arr, int placeValue) {
     int range = 256;
     int[] frequency = new int[range];
     int[] sortedValues = new int[length];
-    
+
     // Подсчёт частоты
     for (int num : arr) {
         int digit = (num / placeValue) % range;
         frequency[digit]++;
     }
-    
+
     // Вычисление позиций
     for (int i = 1; i < range; i++) {
         frequency[i] += frequency[i - 1];
     }
-    
+
     // Размещение элементов
     for (int i = length - 1; i >= 0; i--) {
         int digit = (arr[i] / placeValue) % range;
         sortedValues[frequency[digit] - 1] = arr[i];
         frequency[digit]--;
     }
-    
+
     System.arraycopy(sortedValues, 0, arr, 0, length);
 }
 ```
@@ -587,9 +587,9 @@ private static void countingSortByDigitBase256(int[] arr, int placeValue) {
 ```java
 public static void radixSortStrings(String[] arr) {
     if (arr.length == 0) return;
-    
+
     int stringLength = arr[0].length();
-    
+
     // Сортируем по каждому символу справа налево
     for (int pos = stringLength - 1; pos >= 0; pos--) {
         countingSortByCharPosition(arr, pos);
@@ -601,25 +601,25 @@ private static void countingSortByCharPosition(String[] arr, int pos) {
     int range = 256; // ASCII диапазон
     int[] frequency = new int[range];
     String[] sortedValues = new String[length];
-    
+
     // Подсчёт частоты
     for (String str : arr) {
         char ch = str.charAt(pos);
         frequency[ch]++;
     }
-    
+
     // Вычисление позиций
     for (int i = 1; i < range; i++) {
         frequency[i] += frequency[i - 1];
     }
-    
+
     // Размещение элементов
     for (int i = length - 1; i >= 0; i--) {
         char ch = arr[i].charAt(pos);
         sortedValues[frequency[ch] - 1] = arr[i];
         frequency[ch]--;
     }
-    
+
     System.arraycopy(sortedValues, 0, arr, 0, length);
 }
 ```
@@ -638,17 +638,17 @@ public static class RadixSortResult {
 public static RadixSortResult radixSortWithMetrics(int[] arr) {
     RadixSortResult result = new RadixSortResult();
     long startTime = System.nanoTime();
-    
+
     int max = Arrays.stream(arr).max().orElse(0);
     int digits = (int) (Math.log10(max)) + 1;
     result.passes = digits;
-    
+
     int placeValue = 1;
     for (int d = 0; d < digits; d++) {
         countingSortWithMetrics(arr, placeValue, result);
         placeValue *= 10;
     }
-    
+
     result.executionTime = System.nanoTime() - startTime;
     return result;
 }
@@ -658,26 +658,26 @@ private static void countingSortWithMetrics(int[] arr, int placeValue, RadixSort
     int range = 10;
     int[] frequency = new int[range];
     int[] sortedValues = new int[length];
-    
+
     // Подсчёт частоты
     for (int num : arr) {
         int digit = (num / placeValue) % range;
         frequency[digit]++;
         result.comparisons++;
     }
-    
+
     // Вычисление позиций
     for (int i = 1; i < range; i++) {
         frequency[i] += frequency[i - 1];
     }
-    
+
     // Размещение элементов
     for (int i = length - 1; i >= 0; i--) {
         int digit = (arr[i] / placeValue) % range;
         sortedValues[frequency[digit] - 1] = arr[i];
         frequency[digit]--;
     }
-    
+
     System.arraycopy(sortedValues, 0, arr, 0, length);
 }
 ```

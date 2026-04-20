@@ -110,7 +110,7 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 
 ## Введение в оптимизацию **PostgreSQL**
 
-Оптимизация производительности **PostgreSQL** - это комплексный процесс, включающий настройку параметров сервера, оптимизацию запросов, правильное использование индексов и мониторинг производительности.
+Оптимизация производительности **PostgreSQL** — это комплексный процесс, включающий настройку параметров сервера, оптимизацию запросов, правильное использование индексов и мониторинг производительности.
 
 ### Основные области оптимизации
 
@@ -120,7 +120,6 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 4. **Connection Pooling**: Управление подключениями
 5. **Мониторинг**: Отслеживание производительности
 
----
 
 ## Настройка **postgresql.conf**
 
@@ -245,13 +244,12 @@ max_connections = 50
 
 **Рекомендация:** Используйте **connection pooling** (**PgBouncer**) вместо увеличения `**max_connections**`.
 
----
 
 ## **Connection Pooling**
 
 ### **PgBouncer**
 
-**PgBouncer** - легковесный **connection pooler** для **PostgreSQL**.
+**PgBouncer** — легковесный **connection pooler** для **PostgreSQL**.
 
 #### Установка **PgBouncer**
 
@@ -294,9 +292,8 @@ reserve_pool_size = 5
 
 ### **pgpool-II**
 
-**pgpool-II** - более функциональный **connection pooler** с дополнительными возможностями.
+**pgpool-II** — более функциональный **connection pooler** с дополнительными возможностями.
 
----
 
 ## Оптимизация запросов
 
@@ -379,7 +376,7 @@ EXPLAIN SELECT * FROM users WHERE age > 30 AND city = 'Moscow';
 #### 5. **Nested Loop**
 
 ```sql
-EXPLAIN 
+EXPLAIN
 SELECT u.name, o.total
 FROM users u
 JOIN orders o ON u.id = o.user_id;
@@ -480,7 +477,6 @@ CREATE INDEX idx_users_created_at ON users(created_at DESC);
 SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
 ```
 
----
 
 ## Индексы для производительности
 
@@ -556,7 +552,7 @@ CREATE INDEX idx_orders_user_date ON orders(user_id, created_at);
 CREATE INDEX idx_users_active_email ON users(email) WHERE active = true;
 
 -- Индекс только для недавних заказов
-CREATE INDEX idx_orders_recent ON orders(created_at) 
+CREATE INDEX idx_orders_recent ON orders(created_at)
 WHERE created_at > '2024-01-01';
 ```
 
@@ -574,12 +570,11 @@ SELECT * FROM users WHERE LOWER(email) = 'user@example.com';
 
 ```sql
 -- Индекс, включающий дополнительные столбцы
-CREATE INDEX idx_orders_user_date_total 
-ON orders(user_id, created_at) 
+CREATE INDEX idx_orders_user_date_total
+ON orders(user_id, created_at)
 INCLUDE (total);
 ```
 
----
 
 ## Мониторинг производительности
 
@@ -595,7 +590,7 @@ CREATE EXTENSION pg_stat_statements;
 
 ```sql
 -- Топ запросов по времени выполнения
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -607,7 +602,7 @@ ORDER BY total_exec_time DESC
 LIMIT 10;
 
 -- Топ запросов по количеству вызовов
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -624,7 +619,7 @@ SELECT pg_stat_statements_reset();
 
 ```sql
 -- Активные запросы
-SELECT 
+SELECT
     pid,
     usename,
     application_name,
@@ -638,7 +633,7 @@ FROM pg_stat_activity
 WHERE state = 'active';
 
 -- Долгие запросы
-SELECT 
+SELECT
     pid,
     now() - query_start AS duration,
     query
@@ -651,7 +646,7 @@ AND now() - query_start > interval '5 minutes';
 
 ```sql
 -- Статистика по базам данных
-SELECT 
+SELECT
     datname,
     numbackends,
     xact_commit,
@@ -667,7 +662,6 @@ FROM pg_stat_database
 WHERE datname = 'mydb';
 ```
 
----
 
 ## Лучшие практики
 
@@ -692,7 +686,6 @@ WHERE datname = 'mydb';
 3. **Отслеживайте метрики базы данных**
 4. **Настройте алерты**
 
----
 
 ## Решение проблем
 
@@ -717,7 +710,7 @@ LIMIT 10;
 **Диагностика:**
 ```sql
 -- Проверить использование памяти
-SELECT * FROM pg_stat_activity 
+SELECT * FROM pg_stat_activity
 WHERE state = 'active';
 ```
 
@@ -748,7 +741,7 @@ SELECT * FROM pg_locks WHERE NOT granted;
 ```sql
 -- Создать материализованное представление
 CREATE MATERIALIZED VIEW user_order_summary AS
-SELECT 
+SELECT
     u.id AS user_id,
     u.name,
     COUNT(o.id) AS order_count,
@@ -776,9 +769,9 @@ WITH RECURSIVE user_hierarchy AS (
     SELECT id, name, parent_id, 1 AS level
     FROM users
     WHERE parent_id IS NULL
-    
+
     UNION ALL
-    
+
     SELECT u.id, u.name, u.parent_id, uh.level + 1
     FROM users u
     JOIN user_hierarchy uh ON u.parent_id = uh.id
@@ -796,7 +789,7 @@ SELECT * FROM large_cte;
 
 ```sql
 -- Оптимизированные window functions
-SELECT 
+SELECT
     id,
     name,
     total,
@@ -828,7 +821,7 @@ min_parallel_index_scan_size = 512KB
 ```sql
 -- Запрос с параллельным выполнением
 EXPLAIN ANALYZE
-SELECT 
+SELECT
     user_id,
     SUM(total) AS total_amount
 FROM orders
@@ -846,11 +839,11 @@ SET parallel_setup_cost = 0;
 
 ```sql
 -- Индекс только для активных записей
-CREATE INDEX idx_users_active_email ON users(email) 
+CREATE INDEX idx_users_active_email ON users(email)
 WHERE active = true AND deleted_at IS NULL;
 
 -- Индекс для недавних данных
-CREATE INDEX idx_orders_recent_user ON orders(user_id, created_at) 
+CREATE INDEX idx_orders_recent_user ON orders(user_id, created_at)
 WHERE created_at > NOW() - INTERVAL '1 year';
 ```
 
@@ -1000,28 +993,28 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         'shared_buffers'::TEXT,
         format('%sGB', ROUND(total_ram_gb * 0.25, 2)),
         '25% of total RAM'::TEXT
-    
+
     UNION ALL
-    
-    SELECT 
+
+    SELECT
         'effective_cache_size'::TEXT,
         format('%sGB', ROUND(total_ram_gb * 0.75, 2)),
         '75% of total RAM'::TEXT
-    
+
     UNION ALL
-    
-    SELECT 
+
+    SELECT
         'work_mem'::TEXT,
         format('%sMB', ROUND((total_ram_gb * 1024 - total_ram_gb * 0.25 * 1024) / 200, 0)),
         'Based on max_connections = 100'::TEXT
-    
+
     UNION ALL
-    
-    SELECT 
+
+    SELECT
         'maintenance_work_mem'::TEXT,
         format('%sGB', LEAST(ROUND(total_ram_gb * 0.1, 2), 2)),
         '10% of RAM or 2GB max'::TEXT;
@@ -1038,14 +1031,14 @@ SELECT * FROM calculate_memory_settings(16);
 
 ```sql
 -- Плохо: коррелированный подзапрос
-SELECT 
+SELECT
     id,
     name,
     (SELECT COUNT(*) FROM orders WHERE user_id = users.id) AS order_count
 FROM users;
 
 -- Хорошо: JOIN с агрегацией
-SELECT 
+SELECT
     u.id,
     u.name,
     COALESCE(o.order_count, 0) AS order_count
@@ -1063,7 +1056,7 @@ LEFT JOIN (
 -- EXISTS обычно быстрее для больших наборов
 SELECT * FROM users u
 WHERE EXISTS (
-    SELECT 1 FROM orders o 
+    SELECT 1 FROM orders o
     WHERE o.user_id = u.id AND o.total > 1000
 );
 
@@ -1105,7 +1098,7 @@ REINDEX DATABASE CONCURRENTLY mydb;
 
 ```sql
 -- Проверить раздувание индексов
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1123,7 +1116,7 @@ REINDEX INDEX CONCURRENTLY idx_large_index;
 
 ```sql
 -- Найти неиспользуемые индексы
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1135,7 +1128,7 @@ AND idx_scan = 0
 ORDER BY pg_relation_size(indexrelid) DESC;
 
 -- Найти индексы с низким использованием
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1171,9 +1164,9 @@ BEGIN
         start_time := clock_timestamp();
         EXECUTE query_text;
         end_time := clock_timestamp();
-        
+
         RETURN QUERY
-        SELECT 
+        SELECT
             i,
             EXTRACT(EPOCH FROM (end_time - start_time)) * 1000;
     END LOOP;
@@ -1181,7 +1174,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Использовать функцию
-SELECT 
+SELECT
     AVG(execution_time_ms) AS avg_time,
     MIN(execution_time_ms) AS min_time,
     MAX(execution_time_ms) AS max_time,
@@ -1212,7 +1205,7 @@ pgbench -c 10 -j 2 -T 60 -f custom_script.sql pgbench_test
 
 ```sql
 -- Исходный медленный запрос
-SELECT 
+SELECT
     u.id,
     u.name,
     u.email,
@@ -1229,7 +1222,7 @@ LIMIT 100;
 -- Оптимизированная версия
 -- 1. Создать материализованное представление
 CREATE MATERIALIZED VIEW user_order_stats AS
-SELECT 
+SELECT
     user_id,
     COUNT(*) AS order_count,
     SUM(total) AS total_spent
@@ -1240,7 +1233,7 @@ CREATE INDEX idx_user_order_stats_user_id ON user_order_stats(user_id);
 CREATE INDEX idx_user_order_stats_total ON user_order_stats(total_spent DESC);
 
 -- 2. Оптимизированный запрос
-SELECT 
+SELECT
     u.id,
     u.name,
     u.email,
@@ -1258,7 +1251,7 @@ LIMIT 100;
 
 ```sql
 -- Исходный запрос для отчета
-SELECT 
+SELECT
     DATE(created_at) AS date,
     COUNT(*) AS order_count,
     SUM(total) AS total_revenue,
@@ -1288,7 +1281,7 @@ WHERE created_at >= NOW() - INTERVAL '1 year';
 ### **Query Optimization**
 
 1. **Всегда используйте `EXPLAIN` ANALYZE** перед оптимизацией
-2. **Создавайте индексы осознанно** - каждый индекс замедляет записи
+2. **Создавайте индексы осознанно** — каждый индекс замедляет записи
 3. **Обновляйте статистику регулярно** с помощью **ANALYZE**
 4. **Используйте материализованные представления** для сложных запросов
 
@@ -1364,12 +1357,12 @@ BEGIN
         SET processed = true
         FROM batch
         WHERE large_table.id = batch.id;
-        
+
         GET DIAGNOSTICS row_count = ROW_COUNT;
         EXIT WHEN row_count = 0;
-        
+
         offset_val := offset_val + batch_size;
-        
+
         -- Небольшая пауза для снижения нагрузки
         PERFORM pg_sleep(0.1);
     END LOOP;
@@ -1398,12 +1391,12 @@ ALTER TABLE large_table SET TABLESPACE fast_disk;
 
 ```sql
 -- Проверить использование TOAST
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_size,
     pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) AS table_size,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) - 
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) -
                    pg_relation_size(schemaname||'.'||tablename)) AS toast_size
 FROM pg_tables
 WHERE schemaname = 'public'
@@ -1420,10 +1413,10 @@ ALTER TABLE large_table ALTER COLUMN large_text SET STORAGE EXTENDED;
 ```sql
 -- Создать представление для ключевых метрик
 CREATE VIEW performance_metrics AS
-SELECT 
+SELECT
     'cache_hit_ratio' AS metric_name,
     ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2) AS metric_value,
-    CASE 
+    CASE
         WHEN 100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0) < 90 THEN 'WARNING'
         ELSE 'OK'
     END AS status
@@ -1432,10 +1425,10 @@ WHERE datname = current_database()
 
 UNION ALL
 
-SELECT 
+SELECT
     'avg_query_time' AS metric_name,
     AVG(mean_exec_time) AS metric_value,
-    CASE 
+    CASE
         WHEN AVG(mean_exec_time) > 1000 THEN 'WARNING'
         ELSE 'OK'
     END AS status
@@ -1443,10 +1436,10 @@ FROM pg_stat_statements
 
 UNION ALL
 
-SELECT 
+SELECT
     'connection_usage' AS metric_name,
     ROUND(100.0 * COUNT(*) / (SELECT setting::NUMERIC FROM pg_settings WHERE name = 'max_connections'), 2) AS metric_value,
-    CASE 
+    CASE
         WHEN 100.0 * COUNT(*) / (SELECT setting::NUMERIC FROM pg_settings WHERE name = 'max_connections') > 80 THEN 'WARNING'
         ELSE 'OK'
     END AS status
@@ -1470,14 +1463,14 @@ RETURNS VOID AS $$
 BEGIN
     -- Записать текущие метрики
     INSERT INTO performance_baseline (metric_name, metric_value)
-    SELECT 
+    SELECT
         'cache_hit_ratio',
         ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2)
     FROM pg_stat_database
     WHERE datname = current_database();
-    
+
     INSERT INTO performance_baseline (metric_name, metric_value)
-    SELECT 
+    SELECT
         'avg_query_time',
         AVG(mean_exec_time)
     FROM pg_stat_statements;
@@ -1485,7 +1478,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Запланировать через pg_cron
-SELECT cron.schedule('record-baseline', '0 * * * *', 
+SELECT cron.schedule('record-baseline', '0 * * * *',
     'SELECT record_performance_baseline();');
 ```
 
@@ -1495,7 +1488,7 @@ SELECT cron.schedule('record-baseline', '0 * * * *',
 
 ```sql
 -- Шаг 1: Найти медленный запрос
-SELECT 
+SELECT
     query,
     mean_exec_time,
     calls
@@ -1518,7 +1511,7 @@ EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 <slow_query>;
 
 -- Шаг 6: Сравнить метрики
-SELECT 
+SELECT
     query,
     mean_exec_time,
     calls
@@ -1531,7 +1524,7 @@ WHERE query = '<slow_query>';
 ```sql
 -- Шаг 1: Анализ всех медленных запросов
 CREATE VIEW slow_queries_summary AS
-SELECT 
+SELECT
     LEFT(query, 100) AS query_preview,
     COUNT(*) AS query_count,
     AVG(mean_exec_time) AS avg_time,
@@ -1543,7 +1536,7 @@ GROUP BY LEFT(query, 100)
 ORDER BY total_time DESC;
 
 -- Шаг 2: Анализ использования индексов
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1592,13 +1585,9 @@ ANALYZE;
 - [ ] Документировать результаты
 - [ ] Откатывать изменения, если нет улучшения
 
----
 
-- [`PostgreSQL Performance Tuning`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Configuration`](https://www.postgresql.org/docs/)
-- [`EXPLAIN Documentation`](https://www.postgresql.org/docs/)
-- [`pg_stat_statements`](https://www.postgresql.org/docs/)
-
----
-
+- [PostgreSQL Performance Tuning](https://www.postgresql.org/docs/)
+- [PostgreSQL Configuration](https://www.postgresql.org/docs/)
+- [EXPLAIN Documentation](https://www.postgresql.org/docs/)
+- [pg_stat_statements](https://www.postgresql.org/docs/)
 

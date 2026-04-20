@@ -70,7 +70,6 @@ updated: "2026-02-11"
 | **Consul** | **Service Discovery**, конфигурация, **health checks** | Микросервисы, динамическая конфигурация |
 | **Nginx** | Веб-сервер, **reverse proxy**, **load balancer** | Раздача статики, прокси к приложениям, **SSL**, балансировка |
 
----
 
 ## Terraform — **Infrastructure as Code**
 
@@ -152,7 +151,6 @@ resource "aws_instance" "app" {
 
 Подробнее: [Terraform Advanced](../iac/terraform/terraform-advanced.md), [Terraform](../iac/terraform/terraform.md).
 
----
 
 ## Ansible — конфигурационное управление
 
@@ -226,7 +224,6 @@ resource "aws_instance" "app" {
 
 Подробнее: [Ansible Advanced](../iac/ansible/ansible-advanced.md), [Ansible](../iac/ansible/ansible.md).
 
----
 
 ## Packer — создание образов
 
@@ -286,7 +283,6 @@ build {
 
 Подробнее: [Packer](../iac/packer/packer.md).
 
----
 
 ## Vagrant — окружения для разработки
 
@@ -313,7 +309,6 @@ end
 
 Подробнее: [Vagrant](vagrant.md).
 
----
 
 ## Consul — **Service Discovery** и конфигурация
 
@@ -330,7 +325,6 @@ end
 
 Подробнее: [Consul](consul.md).
 
----
 
 ## Nginx — веб-сервер и **reverse proxy**
 
@@ -379,7 +373,6 @@ server {
 
 Подробнее: [Nginx Advanced](nginx-advanced.md).
 
----
 
 ## Сравнение и комбинирование инструментов
 
@@ -394,7 +387,6 @@ server {
 
 Типичная связка: **Terraform** создаёт инфраструктуру и ВМ; образы для ВМ собирает **Packer** с **Ansible** внутри; конфигурацию уже запущенных хостов при необходимости донастраивает **Ansible**; перед приложением ставится **Nginx**; в микросервисах добавляется **Consul**.
 
----
 
 ## Интеграция с CI/CD
 
@@ -411,9 +403,6 @@ server {
 ## Частые вопросы
 
 Ответы на частые вопросы по теме см. в разделах «Введение» и «Лучшие практики» в документе.
-
-
----
 
 ## Лучшие практики
 

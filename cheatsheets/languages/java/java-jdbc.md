@@ -26,7 +26,7 @@ JDBC (`Java Database Connectivity`) — низкоуровневый API для 
 - [java.sql package (JDK 21)](https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/module-summary.html) — API reference
 - [JDBC 4.3 Specification (JSR 221)](https://www.oracle.com/java/technologies/javase/jdbc.html) — формальная спецификация
 
-### Baeldung
+### Обучающие материалы
 - [A Guide to JDBC](https://www.baeldung.com/java-jdbc) — базовый обзор
 - [PreparedStatement in JDBC](https://www.baeldung.com/jdbc-prepared-statement)
 - [JDBC Batch Operations](https://www.baeldung.com/jdbc-batch-processing)

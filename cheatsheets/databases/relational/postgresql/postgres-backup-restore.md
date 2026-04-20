@@ -96,7 +96,6 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
 - **Физический снимок**: для всего кластера, полное восстановление
 - **Continuous Archiving**: для любой точки во времени, минимальная потеря данных
 
----
 
 ## Логический дамп: **pg_dump**
 
@@ -242,7 +241,6 @@ pg_dumpall -h localhost -U postgres --schema-only > schemas.sql
 psql -h localhost -U postgres < all_databases.sql
 ```
 
----
 
 ## Физический снимок: **pg_basebackup**
 
@@ -302,7 +300,6 @@ echo "restore_command = 'cp /backup/wal_archive/%f %p'" >> /var/lib/postgresql/d
 sudo systemctl start postgresql
 ```
 
----
 
 ## **Continuous Archiving** и **Point-in-Time Recovery** (**PITR**)
 
@@ -453,7 +450,6 @@ SELECT pg_create_restore_point('before_migration_20260116');
 SELECT * FROM pg_restore_points;
 ```
 
----
 
 ## Примеры скриптов резервного копирования
 
@@ -494,7 +490,7 @@ DATE=$(date +%Y%m%d_%H%M%S)
 if [ $(date +%u) -eq 1 ]; then
     mkdir -p "$BASE_BACKUP_DIR/$DATE"
     pg_basebackup -h localhost -U postgres -D "$BASE_BACKUP_DIR/$DATE" -Ft -z -P -l "Weekly backup $DATE"
-    
+
     find "$BASE_BACKUP_DIR" -type d -mtime +28 -exec rm -rf {} \;
 fi
 
@@ -528,7 +524,6 @@ find "$PHYSICAL_BACKUP_DIR" -type d -mtime +90 -exec rm -rf {} \;
 find "$WAL_ARCHIVE_DIR" -type f -mtime +14 -delete
 ```
 
----
 
 ## Автоматизация резервного копирования
 
@@ -580,7 +575,6 @@ sudo systemctl enable postgresql-backup.timer
 sudo systemctl start postgresql-backup.timer
 ```
 
----
 
 ## Восстановление из бэкапов
 
@@ -623,7 +617,6 @@ scp mydb.dump target_host:/backup/
 pg_restore -h localhost -U postgres -d mydb -v /backup/mydb.dump
 ```
 
----
 
 ## Проверка восстановления
 
@@ -645,11 +638,11 @@ createdb -h localhost -U postgres "$TEST_DB"
 
 if pg_restore -h localhost -U postgres -d "$TEST_DB" -v "$BACKUP_FILE"; then
     echo "Restore test successful"
-    
+
     psql -h localhost -U postgres -d "$TEST_DB" -c "VACUUM ANALYZE;"
-    
+
     dropdb -h localhost -U postgres "$TEST_DB"
-    
+
     exit 0
 else
     echo "Restore test failed"
@@ -680,15 +673,14 @@ gunzip -c "$LATEST_BACKUP" > "$TEMP_DIR/mydb.dump"
 rm -rf "$TEMP_DIR"
 ```
 
----
 
 ## Мониторинг резервного копирования
 
 ### Проверка статуса бэкапов
 
 ```sql
-SELECT 
-    pg_stat_file('/backup/postgresql/daily/' || to_char(now(), 'YYYYMMDD') || '/mydb.dump.gz') 
+SELECT
+    pg_stat_file('/backup/postgresql/daily/' || to_char(now(), 'YYYYMMDD') || '/mydb.dump.gz')
     AS last_backup;
 
 SELECT pg_size_pretty(
@@ -726,7 +718,6 @@ echo "OK: Backup is $AGE_HOURS hours old"
 exit 0
 ```
 
----
 
 ## Лучшие практики
 
@@ -749,7 +740,6 @@ exit 0
 2. **PITR**: настраивайте восстановление на заданный момент времени.
 3. **Архивация WAL**: включайте непрерывную архивацию для минимизации потерь данных.
 
----
 
 ## Решение проблем
 
@@ -945,9 +935,9 @@ DECLARE
     test_db TEXT;
 BEGIN
     test_db := 'backup_test_' || extract(epoch from now())::TEXT;
-    
+
     EXECUTE format('CREATE DATABASE %I', test_db);
-    
+
     BEGIN
         PERFORM pg_restore(
             '-h', 'localhost',
@@ -956,27 +946,27 @@ BEGIN
             '-v',
             backup_file
         );
-        
+
         PERFORM dblink_exec(
             format('dbname=%s', test_db),
             'VACUUM ANALYZE;'
         );
-        
+
         RETURN QUERY
-        SELECT 
+        SELECT
             'backup_restore'::TEXT,
             'OK'::TEXT,
             format('Backup restored successfully to %s', test_db);
-        
+
     EXCEPTION
         WHEN OTHERS THEN
             RETURN QUERY
-            SELECT 
+            SELECT
                 'backup_restore'::TEXT,
                 'FAILED'::TEXT,
                 SQLERRM;
     END;
-    
+
     EXECUTE format('DROP DATABASE IF EXISTS %I', test_db);
 END;
 $$ LANGUAGE plpgsql;
@@ -1061,7 +1051,7 @@ BEGIN
         p_status,
         p_error
     ) RETURNING id INTO backup_id;
-    
+
     RETURN backup_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -1176,7 +1166,7 @@ DECLARE
     recovery_time INTEGER;
 BEGIN
     recovery_start := NOW();
-    
+
     PERFORM pg_restore(
         '-h', 'localhost',
         '-U', 'postgres',
@@ -1184,15 +1174,15 @@ BEGIN
         '-v',
         p_backup_file
     );
-    
+
     recovery_end := NOW();
     recovery_time := EXTRACT(EPOCH FROM (recovery_end - recovery_start))::INTEGER;
-    
+
     backup_time := NOW() - INTERVAL '24 hours';
     data_loss := EXTRACT(EPOCH FROM (recovery_start - backup_time))::INTEGER;
-    
+
     RETURN QUERY
-    SELECT 
+    SELECT
         recovery_time AS rto_seconds,
         data_loss AS rpo_seconds,
         'COMPLETED'::TEXT AS recovery_status;
@@ -1244,7 +1234,7 @@ if [ $(date +%u) -eq 1 ]; then
         -D "$BASE_BACKUP_DIR/$DATE" \
         -Ft -z -P \
         -l "Weekly base backup $DATE"
-    
+
     find "$BASE_BACKUP_DIR" -type d -mtime +28 -exec rm -rf {} \;
 fi
 
@@ -1281,13 +1271,12 @@ find "$WAL_ARCHIVE_DIR" -type f -mtime +14 -delete
 2. **Алерты**: уведомляйте ответственных о проблемах.
 3. **Метрики**: отслеживайте размер, время создания и длительность восстановления.
 
----
 
 ## Полезные ссылки
 
-- [`PostgreSQL Backup Documentation`](https://www.postgresql.org/docs/)
-- [`pg_dump Documentation`](https://www.postgresql.org/docs/)
-- [`pg_restore Documentation`](https://www.postgresql.org/docs/)
-- [`pg_basebackup Documentation`](https://www.postgresql.org/docs/)
-- [`Point-in-Time Recovery`](https://www.postgresql.org/docs/)
+- [PostgreSQL Backup Documentation](https://www.postgresql.org/docs/)
+- [pg_dump Documentation](https://www.postgresql.org/docs/)
+- [pg_restore Documentation](https://www.postgresql.org/docs/)
+- [pg_basebackup Documentation](https://www.postgresql.org/docs/)
+- [Point-in-Time Recovery](https://www.postgresql.org/docs/)
 

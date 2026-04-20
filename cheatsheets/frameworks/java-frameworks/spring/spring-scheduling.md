@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Scheduling: Полное руководство по планированию задач
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -156,12 +154,12 @@ public class Application {
 // Задача по расписанию (@Scheduled)
 @Component
 public class ScheduledTasks {
-    
+
     @Scheduled(fixedRate = 5000) // Каждые 5 секунд
     public void reportCurrentTime() {
         System.out.println("Current time: " + new Date());
     }
-    
+
     @Scheduled(fixedRate = 10000, initialDelay = 5000) // Начало через 5 секунд, затем каждые 10 секунд
     public void reportWithInitialDelay() {
         System.out.println("Task with initial delay: " + new Date());
@@ -175,7 +173,7 @@ public class ScheduledTasks {
 // Задача по расписанию (@Scheduled)
 @Component
 public class ScheduledTasks {
-    
+
     @Scheduled(fixedDelay = 5000) // Задержка 5 секунд после завершения предыдущей задачи
     public void processData() {
         // Обработка данных
@@ -190,32 +188,32 @@ public class ScheduledTasks {
 // Задача по расписанию (@Scheduled)
 @Component
 public class ScheduledTasks {
-    
+
     @Scheduled(cron = "0 0 * * * ?") // Каждый час
     public void hourlyTask() {
         System.out.println("Hourly task executed");
     }
-    
+
     @Scheduled(cron = "0 0 0 * * ?") // Каждый день в полночь
     public void dailyTask() {
         System.out.println("Daily task executed");
     }
-    
+
     @Scheduled(cron = "0 0 0 * * MON") // Каждый понедельник в полночь
     public void weeklyTask() {
         System.out.println("Weekly task executed");
     }
-    
+
     @Scheduled(cron = "0 0 0 1 * ?") // Первое число каждого месяца
     public void monthlyTask() {
         System.out.println("Monthly task executed");
     }
-    
+
     @Scheduled(cron = "0 */5 * * * ?") // Каждые 5 минут
     public void everyFiveMinutes() {
         System.out.println("Every 5 minutes task");
     }
-    
+
     @Scheduled(cron = "0 0 9-17 * * MON-FRI") // Каждый час с 9 до 17 в рабочие дни
     public void businessHoursTask() {
         System.out.println("Business hours task");
@@ -242,12 +240,12 @@ public class ScheduledTasks {
 // Задача по расписанию (@Scheduled)
 @Component
 public class ScheduledTasks {
-    
+
     @Scheduled(cron = "${scheduling.task.cron}")
     public void configurableTask() {
         System.out.println("Configurable task executed");
     }
-    
+
     @Scheduled(fixedRateString = "${scheduling.task.rate}")
     public void configurableRateTask() {
         System.out.println("Configurable rate task");
@@ -270,7 +268,7 @@ scheduling.task.rate=5000
 @Configuration
 @EnableScheduling
 public class SchedulingConfig {
-    
+
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -280,7 +278,7 @@ public class SchedulingConfig {
         scheduler.setAwaitTerminationSeconds(60);
         return scheduler;
     }
-    
+
     @Bean
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -299,14 +297,14 @@ public class SchedulingConfig {
 ```java
 @Service
 public class TaskService {
-    
+
     @Autowired
     private TaskExecutor taskExecutor;
-    
+
     public void executeTask(Runnable task) {
         taskExecutor.execute(task);
     }
-    
+
     public void executeMultipleTasks(List<Runnable> tasks) {
         tasks.forEach(taskExecutor::execute);
     }
@@ -321,7 +319,7 @@ public class TaskService {
 @Configuration
 @EnableAsync
 public class AsyncConfig {
-    
+
     @Bean
     public Executor asyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -336,18 +334,18 @@ public class AsyncConfig {
 
 @Service
 public class AsyncService {
-    
+
     @Async
     public CompletableFuture<String> asyncMethod() {
         // Долгая операция
         return CompletableFuture.completedFuture("Result");
     }
-    
+
     @Async
     public void asyncVoidMethod() {
         // Асинхронная операция без возвращаемого значения
     }
-    
+
     @Async("asyncExecutor")
     public CompletableFuture<String> asyncWithExecutor() {
         return CompletableFuture.completedFuture("Result");
@@ -360,7 +358,7 @@ public class AsyncService {
 ```java
 @Component
 public class ScheduledAsyncTasks {
-    
+
     @Scheduled(fixedRate = 5000)
     @Async
     public void scheduledAsyncTask() {
@@ -377,29 +375,29 @@ public class ScheduledAsyncTasks {
 ```java
 @Service
 public class TaskManagementService {
-    
+
     @Autowired
     private TaskScheduler taskScheduler;
-    
+
     public ScheduledFuture<?> scheduleTask(Runnable task, Date startTime) {
         return taskScheduler.schedule(task, startTime);
     }
-    
+
     public ScheduledFuture<?> scheduleTaskWithDelay(Runnable task, Duration delay) {
         return taskScheduler.schedule(task, Instant.now().plus(delay));
     }
-    
+
     public ScheduledFuture<?> scheduleAtFixedRate(
-            Runnable task, 
-            Duration initialDelay, 
+            Runnable task,
+            Duration initialDelay,
             Duration period) {
         return taskScheduler.scheduleAtFixedRate(
-            task, 
-            Instant.now().plus(initialDelay), 
+            task,
+            Instant.now().plus(initialDelay),
             period
         );
     }
-    
+
     public void cancelTask(ScheduledFuture<?> future) {
         future.cancel(false);
     }
@@ -411,27 +409,27 @@ public class TaskManagementService {
 ```java
 @Component
 public class DynamicScheduler {
-    
+
     @Autowired
     private TaskScheduler taskScheduler;
-    
+
     private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
-    
+
     public void scheduleTask(String taskId, Runnable task, String cronExpression) {
         cancelTask(taskId);
-        
+
         CronTrigger trigger = new CronTrigger(cronExpression);
         ScheduledFuture<?> future = taskScheduler.schedule(task, trigger);
         scheduledTasks.put(taskId, future);
     }
-    
+
     public void cancelTask(String taskId) {
         ScheduledFuture<?> future = scheduledTasks.remove(taskId);
         if (future != null) {
             future.cancel(false);
         }
     }
-    
+
     public void cancelAllTasks() {
         scheduledTasks.values().forEach(future -> future.cancel(false));
         scheduledTasks.clear();
@@ -453,7 +451,7 @@ public class DynamicScheduler {
 ```java
 @Configuration
 public class QuartzConfig {
-    
+
     @Bean
     public JobDetail jobDetail() {
         return JobBuilder.newJob(SampleJob.class)
@@ -461,7 +459,7 @@ public class QuartzConfig {
             .storeDurably()
             .build();
     }
-    
+
     @Bean
     public Trigger trigger() {
         return TriggerBuilder.newTrigger()
@@ -473,7 +471,7 @@ public class QuartzConfig {
 }
 
 public class SampleJob extends QuartzJobBean {
-    
+
     @Override
     protected void executeInternal(JobExecutionContext context) {
         // Логика задачи
@@ -550,7 +548,7 @@ public void scheduledTask() {
 @Configuration
 @EnableScheduling
 public class MultipleSchedulerConfig {
-    
+
     @Bean(name = "highPriorityScheduler")
     public TaskScheduler highPriorityScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -560,7 +558,7 @@ public class MultipleSchedulerConfig {
         scheduler.initialize();
         return scheduler;
     }
-    
+
     @Bean(name = "lowPriorityScheduler")
     public TaskScheduler lowPriorityScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -574,12 +572,12 @@ public class MultipleSchedulerConfig {
 
 @Component
 public class PriorityScheduledTasks {
-    
+
     @Scheduled(fixedRate = 1000, scheduler = "highPriorityScheduler")
     public void highPriorityTask() {
         // Высокоприоритетная задача
     }
-    
+
     @Scheduled(fixedRate = 5000, scheduler = "lowPriorityScheduler")
     public void lowPriorityTask() {
         // Низкоприоритетная задача
@@ -593,7 +591,7 @@ public class PriorityScheduledTasks {
 @Component
 @ConditionalOnProperty(name = "scheduling.enabled", havingValue = "true")
 public class ConditionalScheduledTasks {
-    
+
     @Scheduled(fixedRate = 5000)
     public void conditionalTask() {
         // Задача выполняется только если свойство включено
@@ -609,7 +607,7 @@ public class ConditionalScheduledTasks {
 @Configuration
 @EnableScheduling
 public class SchedulingErrorHandlingConfig {
-    
+
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -620,7 +618,7 @@ public class SchedulingErrorHandlingConfig {
                 // Дополнительная обработка ошибки
                 notifyAdministrators(t);
             }
-            
+
             private void notifyAdministrators(Throwable t) {
                 // Уведомление администраторов
             }
@@ -636,7 +634,7 @@ public class SchedulingErrorHandlingConfig {
 ```java
 @Component
 public class ErrorHandlingScheduledTasks {
-    
+
     @Scheduled(fixedRate = 5000)
     public void taskWithErrorHandling() {
         try {
@@ -648,7 +646,7 @@ public class ErrorHandlingScheduledTasks {
             retryTask();
         }
     }
-    
+
     private void retryTask() {
         // Логика повторной попытки
     }
@@ -662,12 +660,12 @@ public class ErrorHandlingScheduledTasks {
 ```java
 @Component
 public class ScheduledTaskMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter taskExecutionCounter;
     private final Timer taskExecutionTimer;
     private final Counter taskErrorCounter;
-    
+
     public ScheduledTaskMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.taskExecutionCounter = Counter.builder("scheduled.tasks.executed")
@@ -680,7 +678,7 @@ public class ScheduledTaskMetrics {
             .description("Number of scheduled task errors")
             .register(meterRegistry);
     }
-    
+
     public void recordTaskExecution(String taskName, Runnable task) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
@@ -705,45 +703,45 @@ public class ScheduledTaskMetrics {
 ```java
 @Component
 public class ScheduledTaskHealthIndicator implements HealthIndicator {
-    
+
     private final Map<String, TaskStatus> taskStatuses = new ConcurrentHashMap<>();
-    
+
     @Override
     public Health health() {
         long failedTasks = taskStatuses.values().stream()
             .filter(status -> status.getLastExecutionStatus() == ExecutionStatus.FAILED)
             .count();
-        
+
         if (failedTasks > 0) {
             return Health.down()
                 .withDetail("failedTasks", failedTasks)
                 .withDetail("totalTasks", taskStatuses.size())
                 .build();
         }
-        
+
         return Health.up()
             .withDetail("totalTasks", taskStatuses.size())
             .build();
     }
-    
+
     public void recordTaskExecution(String taskName, ExecutionStatus status) {
         taskStatuses.put(taskName, new TaskStatus(status, System.currentTimeMillis()));
     }
-    
+
     private static class TaskStatus {
         private final ExecutionStatus lastExecutionStatus;
         private final long lastExecutionTime;
-        
+
         public TaskStatus(ExecutionStatus lastExecutionStatus, long lastExecutionTime) {
             this.lastExecutionStatus = lastExecutionStatus;
             this.lastExecutionTime = lastExecutionTime;
         }
-        
+
         public ExecutionStatus getLastExecutionStatus() {
             return lastExecutionStatus;
         }
     }
-    
+
     private enum ExecutionStatus {
         SUCCESS, FAILED
     }
@@ -757,18 +755,18 @@ public class ScheduledTaskHealthIndicator implements HealthIndicator {
 ```java
 @Component
 public class DistributedScheduledTask {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     @Scheduled(fixedRate = 60000)
     public void distributedTask() {
         String lockKey = "scheduled:task:lock";
         String lockValue = UUID.randomUUID().toString();
-        
+
         Boolean acquired = redisTemplate.opsForValue()
             .setIfAbsent(lockKey, lockValue, Duration.ofMinutes(5));
-        
+
         if (Boolean.TRUE.equals(acquired)) {
             try {
                 // Выполнение задачи только на одном узле
@@ -785,7 +783,7 @@ public class DistributedScheduledTask {
             }
         }
     }
-    
+
     private void executeTask() {
         // Логика задачи
     }
@@ -811,7 +809,7 @@ public class DistributedScheduledTask {
 @Configuration
 @EnableSchedulerLock(defaultLockAtMostFor = "10m")
 public class ShedLockConfig {
-    
+
     @Bean
     public LockProvider lockProvider(DataSource dataSource) {
         return new JdbcTemplateLockProvider(JdbcTemplateLockProvider.Configuration.builder()
@@ -823,7 +821,7 @@ public class ShedLockConfig {
 
 @Component
 public class ShedLockScheduledTask {
-    
+
     @Scheduled(fixedRate = 60000)
     @SchedulerLock(name = "distributedTask", lockAtMostFor = "5m", lockAtLeastFor = "1m")
     public void distributedTask() {
@@ -839,29 +837,29 @@ public class ShedLockScheduledTask {
 ```java
 @Component
 public class ChainedScheduledTasks {
-    
+
     @Autowired
     private TaskScheduler taskScheduler;
-    
+
     @Scheduled(fixedRate = 60000)
     public void firstTask() {
         // Первая задача
         processFirstStep();
-        
+
         // Планирование следующей задачи
-        taskScheduler.schedule(this::secondTask, 
+        taskScheduler.schedule(this::secondTask,
             Instant.now().plusSeconds(30));
     }
-    
+
     private void secondTask() {
         // Вторая задача
         processSecondStep();
-        
+
         // Планирование третьей задачи
-        taskScheduler.schedule(this::thirdTask, 
+        taskScheduler.schedule(this::thirdTask,
             Instant.now().plusSeconds(30));
     }
-    
+
     private void thirdTask() {
         // Третья задача
         processThirdStep();
@@ -874,9 +872,9 @@ public class ChainedScheduledTasks {
 ```java
 @Component
 public class DependentScheduledTasks {
-    
+
     private final Map<String, CompletableFuture<?>> taskFutures = new ConcurrentHashMap<>();
-    
+
     @Scheduled(fixedRate = 60000)
     public void parentTask() {
         CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
@@ -885,7 +883,7 @@ public class DependentScheduledTasks {
         });
         taskFutures.put("parent", future);
     }
-    
+
     @Scheduled(fixedRate = 60000)
     public void childTask() {
         CompletableFuture<?> parentFuture = taskFutures.get("parent");
@@ -902,17 +900,17 @@ public class DependentScheduledTasks {
 ```java
 @Component
 public class ConditionalScheduledTasks {
-    
+
     @Autowired
     private ApplicationContext applicationContext;
-    
+
     @Scheduled(fixedRate = 60000)
     public void conditionalTask() {
         if (shouldExecute()) {
             executeTask();
         }
     }
-    
+
     private boolean shouldExecute() {
         // Условие выполнения задачи
         return applicationContext.getEnvironment()
@@ -928,7 +926,7 @@ public class ConditionalScheduledTasks {
 ```java
 @Configuration
 public class QuartzPersistenceConfig {
-    
+
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean(DataSource dataSource) {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
@@ -937,7 +935,7 @@ public class QuartzPersistenceConfig {
         factory.setConfigLocation(new ClassPathResource("quartz.properties"));
         return factory;
     }
-    
+
     @Bean
     public JobDetail persistentJobDetail() {
         return JobBuilder.newJob(PersistentJob.class)
@@ -945,7 +943,7 @@ public class QuartzPersistenceConfig {
             .storeDurably()
             .build();
     }
-    
+
     @Bean
     public Trigger persistentJobTrigger() {
         return TriggerBuilder.newTrigger()
@@ -961,12 +959,12 @@ public class QuartzPersistenceConfig {
 
 ```java
 public class ParameterizedJob extends QuartzJobBean {
-    
+
     @Override
     protected void executeInternal(JobExecutionContext context) {
         JobDataMap dataMap = context.getJobDetail().getJobDataMap();
         String parameter = dataMap.getString("parameter");
-        
+
         // Использование параметра
         processWithParameter(parameter);
     }
@@ -974,12 +972,12 @@ public class ParameterizedJob extends QuartzJobBean {
 
 @Configuration
 public class ParameterizedJobConfig {
-    
+
     @Bean
     public JobDetail parameterizedJobDetail() {
         JobDataMap dataMap = new JobDataMap();
         dataMap.put("parameter", "value");
-        
+
         return JobBuilder.newJob(ParameterizedJob.class)
             .withIdentity("parameterizedJob")
             .usingJobData(dataMap)
@@ -994,22 +992,22 @@ public class ParameterizedJobConfig {
 ```java
 @Component
 public class CustomJobListener implements JobListener {
-    
+
     @Override
     public String getName() {
         return "customJobListener";
     }
-    
+
     @Override
     public void jobToBeExecuted(JobExecutionContext context) {
         log.info("Job {} is about to be executed", context.getJobDetail().getKey());
     }
-    
+
     @Override
     public void jobExecutionVetoed(JobExecutionContext context) {
         log.warn("Job {} execution was vetoed", context.getJobDetail().getKey());
     }
-    
+
     @Override
     public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
         if (jobException != null) {
@@ -1022,7 +1020,7 @@ public class CustomJobListener implements JobListener {
 
 @Configuration
 public class JobListenerConfig {
-    
+
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean(CustomJobListener jobListener) {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
@@ -1039,13 +1037,13 @@ public class JobListenerConfig {
 ```java
 @SpringBootTest
 class ScheduledTaskTest {
-    
+
     @MockBean
     private TaskScheduler taskScheduler;
-    
+
     @Autowired
     private ScheduledTasks scheduledTasks;
-    
+
     @Test
     void testScheduledTask() {
         // Тестирование задачи
@@ -1061,10 +1059,10 @@ class ScheduledTaskTest {
 @SpringBootTest
 @EnableScheduling
 class ScheduledTaskIntegrationTest {
-    
+
     @Autowired
     private ScheduledTasks scheduledTasks;
-    
+
     @Test
     void testScheduledTaskExecution() throws InterruptedException {
         // Ожидание выполнения задачи
@@ -1081,7 +1079,7 @@ class ScheduledTaskIntegrationTest {
 ```java
 @Configuration
 public class OptimizedSchedulerConfig {
-    
+
     @Bean
     public TaskScheduler optimizedTaskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -1102,19 +1100,19 @@ public class OptimizedSchedulerConfig {
 ```java
 @Component
 public class PrioritizedScheduledTasks {
-    
+
     @Autowired
     @Qualifier("highPriorityScheduler")
     private TaskScheduler highPriorityScheduler;
-    
+
     @Autowired
     @Qualifier("lowPriorityScheduler")
     private TaskScheduler lowPriorityScheduler;
-    
+
     public void scheduleHighPriorityTask(Runnable task, Instant startTime) {
         highPriorityScheduler.schedule(task, startTime);
     }
-    
+
     public void scheduleLowPriorityTask(Runnable task, Instant startTime) {
         lowPriorityScheduler.schedule(task, startTime);
     }
@@ -1133,3 +1131,11 @@ public class PrioritizedScheduledTasks {
 - [Quartz Scheduler](https://www.quartz-scheduler.org/documentation/)
 - [ShedLock](https://github.com/lukas-krecan/ShedLock)
 - [**Cron Expression** Guide](https://docs.spring.io/spring-framework/reference/integration/scheduling.html#scheduling-cron-expression)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

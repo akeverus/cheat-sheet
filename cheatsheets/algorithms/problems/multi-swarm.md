@@ -65,50 +65,50 @@ public class Particle {
     private double fitness;
     private long[] bestPosition;
     private double bestFitness = Double.NEGATIVE_INFINITY;
-    
+
     public Particle(long[] position, long[] speed) {
         this.position = position.clone();
         this.speed = speed.clone();
         this.bestPosition = position.clone();
     }
-    
+
     // Геттеры и сеттеры
     public long[] getPosition() {
         return position.clone();
     }
-    
+
     public void setPosition(long[] position) {
         this.position = position.clone();
     }
-    
+
     public long[] getSpeed() {
         return speed.clone();
     }
-    
+
     public void setSpeed(long[] speed) {
         this.speed = speed.clone();
     }
-    
+
     public double getFitness() {
         return fitness;
     }
-    
+
     public void setFitness(double fitness) {
         this.fitness = fitness;
     }
-    
+
     public long[] getBestPosition() {
         return bestPosition.clone();
     }
-    
+
     public void setBestPosition(long[] bestPosition) {
         this.bestPosition = bestPosition.clone();
     }
-    
+
     public double getBestFitness() {
         return bestFitness;
     }
-    
+
     public void setBestFitness(double bestFitness) {
         this.bestFitness = bestFitness;
     }
@@ -125,41 +125,41 @@ public class Swarm {
     private double bestFitness = Double.NEGATIVE_INFINITY;
     private static final Random random = new Random();
     private static final int PARTICLE_UPPER_BOUND = 2000;
-    
+
     public Swarm(int numParticles) {
         particles = new Particle[numParticles];
-        
+
         for (int i = 0; i < numParticles; i++) {
             long[] initialParticlePosition = {
                 random.nextInt(PARTICLE_UPPER_BOUND),
                 random.nextInt(PARTICLE_UPPER_BOUND)
             };
-            
+
             long[] initialParticleSpeed = {
                 random.nextInt(PARTICLE_UPPER_BOUND),
                 random.nextInt(PARTICLE_UPPER_BOUND)
             };
-            
+
             particles[i] = new Particle(initialParticlePosition, initialParticleSpeed);
         }
     }
-    
+
     public Particle[] getParticles() {
         return particles;
     }
-    
+
     public long[] getBestPosition() {
         return bestPosition != null ? bestPosition.clone() : null;
     }
-    
+
     public void setBestPosition(long[] bestPosition) {
         this.bestPosition = bestPosition.clone();
     }
-    
+
     public double getBestFitness() {
         return bestFitness;
     }
-    
+
     public void setBestFitness(double bestFitness) {
         this.bestFitness = bestFitness;
     }
@@ -173,25 +173,25 @@ public class Multiswarm {
     private long[] bestPosition;
     private double bestFitness = Double.NEGATIVE_INFINITY;
     private FitnessFunction fitnessFunction;
-    
-    public Multiswarm(int numSwarms, int particlesPerSwarm, 
+
+    public Multiswarm(int numSwarms, int particlesPerSwarm,
                      FitnessFunction fitnessFunction) {
         this.fitnessFunction = fitnessFunction;
         this.swarms = new Swarm[numSwarms];
-        
+
         for (int i = 0; i < numSwarms; i++) {
             swarms[i] = new Swarm(particlesPerSwarm);
         }
     }
-    
+
     public Swarm[] getSwarms() {
         return swarms;
     }
-    
+
     public long[] getBestPosition() {
         return bestPosition != null ? bestPosition.clone() : null;
     }
-    
+
     public double getBestFitness() {
         return bestFitness;
     }
@@ -212,12 +212,12 @@ public class LolFitnessFunction implements FitnessFunction {
     private static final double HEALTH_COST = 2.5;
     private static final double ARMOR_COST = 18.0;
     private static final double TOTAL_GOLD = 3600.0;
-    
+
     @Override
     public double getFitness(long[] particlePosition) {
         long health = particlePosition[0];
         long armor = particlePosition[1];
-        
+
         // Проверка на отрицательные значения
         if (health < 0 && armor < 0) {
             return -(health * armor);
@@ -226,10 +226,10 @@ public class LolFitnessFunction implements FitnessFunction {
         } else if (armor < 0) {
             return armor;
         }
-        
+
         // Проверка стоимости
         double cost = (health * HEALTH_COST) + (armor * ARMOR_COST);
-        
+
         if (cost > TOTAL_GOLD) {
             return TOTAL_GOLD - cost; // Штраф за превышение бюджета
         } else {
@@ -250,30 +250,30 @@ public void mainLoop() {
     for (Swarm swarm : swarms) {
         for (Particle particle : swarm.getParticles()) {
             long[] particleOldPosition = particle.getPosition();
-            
+
             particle.setFitness(fitnessFunction.getFitness(particleOldPosition));
-            
+
             if (particle.getFitness() > particle.getBestFitness()) {
                 particle.setBestFitness(particle.getFitness());
                 particle.setBestPosition(particleOldPosition);
-                
+
                 if (particle.getFitness() > swarm.getBestFitness()) {
                     swarm.setBestFitness(particle.getFitness());
                     swarm.setBestPosition(particleOldPosition);
-                    
+
                     if (swarm.getBestFitness() > bestFitness) {
                         bestFitness = swarm.getBestFitness();
                         bestPosition = swarm.getBestPosition().clone();
                     }
                 }
             }
-            
+
             // Обновление позиции
             long[] position = particle.getPosition();
             long[] speed = particle.getSpeed();
             position[0] += speed[0];
             position[1] += speed[1];
-            
+
             // Обновление скорости
             speed[0] = getNewParticleSpeedForIndex(particle, swarm, 0);
             speed[1] = getNewParticleSpeedForIndex(particle, swarm, 1);
@@ -295,15 +295,15 @@ private long getNewParticleSpeedForIndex(Particle particle, Swarm swarm, int ind
     long[] particlePosition = particle.getPosition();
     long[] particleBestPosition = particle.getBestPosition();
     long[] swarmBestPosition = swarm.getBestPosition();
-    
+
     double inertia = INERTIA_FACTOR * particleSpeed[index];
-    double cognitive = random.nextDouble() * COGNITIVE_WEIGHT * 
+    double cognitive = random.nextDouble() * COGNITIVE_WEIGHT *
                       (particleBestPosition[index] - particlePosition[index]);
-    double social = random.nextDouble() * SOCIAL_WEIGHT * 
+    double social = random.nextDouble() * SOCIAL_WEIGHT *
                    (swarmBestPosition[index] - particlePosition[index]);
-    double global = random.nextDouble() * GLOBAL_WEIGHT * 
+    double global = random.nextDouble() * GLOBAL_WEIGHT *
                    (bestPosition[index] - particlePosition[index]);
-    
+
     return (long) (inertia + cognitive + social + global);
 }
 
@@ -319,22 +319,22 @@ public class MultiSwarmExample {
     public static void main(String[] args) {
         FitnessFunction fitnessFunction = new LolFitnessFunction();
         Multiswarm multiswarm = new Multiswarm(5, 20, fitnessFunction);
-        
+
         // Выполняем итерации
         for (int i = 0; i < 100; i++) {
             multiswarm.mainLoop();
-            
+
             if (i % 10 == 0) {
-                System.out.println("Итерация " + i + 
+                System.out.println("Итерация " + i +
                     ": Лучшая пригодность = " + multiswarm.getBestFitness());
                 long[] bestPos = multiswarm.getBestPosition();
                 if (bestPos != null) {
-                    System.out.println("  Здоровье: " + bestPos[0] + 
+                    System.out.println("  Здоровье: " + bestPos[0] +
                         ", Броня: " + bestPos[1]);
                 }
             }
         }
-        
+
         // Финальный результат
         System.out.println("\nФинальный результат:");
         System.out.println("Лучшая пригодность: " + multiswarm.getBestFitness());
@@ -397,11 +397,11 @@ class SwarmK(private val numParticles: Int) {
     val particles: Array<ParticleK>
     var bestPosition: LongArray? = null
     var bestFitness: Double = Double.NEGATIVE_INFINITY
-    
+
     companion object {
         private const val PARTICLE_UPPER_BOUND = 2000
     }
-    
+
     init {
         particles = Array(numParticles) {
             val initialPosition = longArrayOf(
@@ -427,7 +427,7 @@ class MultiSwarmOptimizerK(
     private val swarms = Array(numSwarms) { SwarmK(particlesPerSwarm) }
     private var globalBestPosition: LongArray? = null
     private var globalBestFitness: Double = Double.NEGATIVE_INFINITY
-    
+
     fun optimize(maxIterations: Int) {
         for (iteration in 0 until maxIterations) {
             for (swarm in swarms) {
@@ -436,7 +436,7 @@ class MultiSwarmOptimizerK(
             updateGlobalBest()
         }
     }
-    
+
     private fun updateSwarm(swarm: SwarmK) {
         // Обновление частиц в рое
         for (particle in swarm.particles) {
@@ -445,19 +445,19 @@ class MultiSwarmOptimizerK(
             evaluateFitness(particle)
         }
     }
-    
+
     private fun updateParticleSpeed(particle: ParticleK, swarm: SwarmK) {
         // Логика обновления скорости
     }
-    
+
     private fun updateParticlePosition(particle: ParticleK) {
         // Обновление позиции частицы
     }
-    
+
     private fun evaluateFitness(particle: ParticleK) {
         // Вычисление фитнес-функции
     }
-    
+
     private fun updateGlobalBest() {
         // Обновление глобального лучшего решения
     }

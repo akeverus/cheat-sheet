@@ -98,17 +98,17 @@ public class Tree {
     private int value;
     private Tree left;
     private Tree right;
-    
+
     public Tree(int value, Tree left, Tree right) {
         this.value = value;
         this.left = left;
         this.right = right;
     }
-    
+
     public Tree left() {
         return left;
     }
-    
+
     public Tree right() {
         return right;
     }
@@ -125,7 +125,7 @@ public class Tree {
 private class Result {
     private boolean isBalanced;
     private int height;
-    
+
     private Result(boolean isBalanced, int height) {
         this.isBalanced = isBalanced;
         this.height = height;
@@ -144,15 +144,15 @@ private Result isBalancedRecursive(Tree tree, int depth) {
     if (tree == null) {
         return new Result(true, -1);
     }
-    
+
     Result leftSubtreeResult = isBalancedRecursive(tree.left(), depth + 1);
     Result rightSubtreeResult = isBalancedRecursive(tree.right(), depth + 1);
-    
+
     boolean isBalanced = Math.abs(leftSubtreeResult.height - rightSubtreeResult.height) <= 1;
     boolean subtreesAreBalanced = leftSubtreeResult.isBalanced && rightSubtreeResult.isBalanced;
-    
+
     int height = Math.max(leftSubtreeResult.height, rightSubtreeResult.height) + 1;
-    
+
     return new Result(isBalanced && subtreesAreBalanced, height);
 }
 ```
@@ -174,21 +174,21 @@ public int checkBalance(Tree tree) {
     if (tree == null) {
         return 0;
     }
-    
+
     int leftHeight = checkBalance(tree.left());
     if (leftHeight == -1) {
         return -1;
     }
-    
+
     int rightHeight = checkBalance(tree.right());
     if (rightHeight == -1) {
         return -1;
     }
-    
+
     if (Math.abs(leftHeight - rightHeight) > 1) {
         return -1;
     }
-    
+
     return Math.max(leftHeight, rightHeight) + 1;
 }
 
@@ -247,15 +247,15 @@ private fun isBalancedRecursiveK(tree: TreeK?, depth: Int): ResultK {
     if (tree == null) {
         return ResultK(true, -1)
     }
-    
+
     val leftSubtreeResult = isBalancedRecursiveK(tree.left, depth + 1)
     val rightSubtreeResult = isBalancedRecursiveK(tree.right, depth + 1)
-    
+
     val isBalanced = Math.abs(leftSubtreeResult.height - rightSubtreeResult.height) <= 1
     val subtreesAreBalanced = leftSubtreeResult.isBalanced && rightSubtreeResult.isBalanced
-    
+
     val height = Math.max(leftSubtreeResult.height, rightSubtreeResult.height) + 1
-    
+
     return ResultK(isBalanced && subtreesAreBalanced, height)
 }
 
@@ -271,21 +271,21 @@ fun checkBalanceK(tree: TreeK?): Int {
     if (tree == null) {
         return 0
     }
-    
+
     val leftHeight = checkBalanceK(tree.left)
     if (leftHeight == -1) {
         return -1
     }
-    
+
     val rightHeight = checkBalanceK(tree.right)
     if (rightHeight == -1) {
         return -1
     }
-    
+
     if (Math.abs(leftHeight - rightHeight) > 1) {
         return -1
     }
-    
+
     return Math.max(leftHeight, rightHeight) + 1
 }
 
@@ -304,7 +304,7 @@ fun main() {
         TreeK(3, TreeK(6), TreeK(7))
     )
     println(isBalancedK(balanced)) // true
-    
+
     // Несбалансированное дерево
     val unbalanced = TreeK(1,
         TreeK(2, TreeK(3, TreeK(4), null), null),
@@ -476,47 +476,47 @@ public class BalancedTreeCheckerIterative {
     private static class NodeInfo {
         Tree node;
         int depth;
-        
+
         NodeInfo(Tree node, int depth) {
             this.node = node;
             this.depth = depth;
         }
     }
-    
+
     public static boolean isBalancedIterative(Tree root) {
         if (root == null) {
             return true;
         }
-        
+
         Stack<NodeInfo> stack = new Stack<>();
         stack.push(new NodeInfo(root, 0));
-        
+
         int minDepth = Integer.MAX_VALUE;
         int maxDepth = Integer.MIN_VALUE;
-        
+
         while (!stack.isEmpty()) {
             NodeInfo current = stack.pop();
             Tree node = current.node;
             int depth = current.depth;
-            
+
             if (node.left() == null && node.right() == null) {
                 minDepth = Math.min(minDepth, depth);
                 maxDepth = Math.max(maxDepth, depth);
-                
+
                 if (maxDepth - minDepth > 1) {
                     return false;
                 }
             }
-            
+
             if (node.right() != null) {
                 stack.push(new NodeInfo(node.right(), depth + 1));
             }
-            
+
             if (node.left() != null) {
                 stack.push(new NodeInfo(node.left(), depth + 1));
             }
         }
-        
+
         return maxDepth - minDepth <= 1;
     }
 }

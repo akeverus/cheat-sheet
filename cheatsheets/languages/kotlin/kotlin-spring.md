@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Spring Kotlin Support](https://docs.spring.io/spring-framework/reference/languages/kotlin.html)
 - [Spring Boot Kotlin](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#features.kotlin)
 
-### **Baeldung**
+### Обучающие материалы
 - [Spring Kotlin Tutorial](https://www.baeldung.com/kotlin/spring-boot-kotlin)
 
 ### См. также
@@ -209,14 +209,14 @@ class UserController(
     fun getAllUsers(): List<User> {
         return userService.findAll()
     }
-    
+
     @GetMapping("/{id}")
     fun getUserById(@PathVariable id: Long): ResponseEntity<User> {
         return userService.findById(id)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
     }
-    
+
     @PostMapping
     fun createUser(@RequestBody user: User): ResponseEntity<User> {
         val created = userService.save(user)
@@ -237,11 +237,11 @@ class UserService(
     private val userRepository: UserRepository
 ) {
     fun findAll(): List<User> = userRepository.findAll()
-    
+
     fun findById(id: Long): User? = userRepository.findById(id).orElse(null)
-    
+
     fun save(user: User): User = userRepository.save(user)
-    
+
     fun deleteById(id: Long) = userRepository.deleteById(id)
 }
 
@@ -279,7 +279,7 @@ class UserController(
     suspend fun getUser(@PathVariable id: Long): User {
         return userService.findById(id) ?: throw UserNotFoundException(id)
     }
-    
+
     @GetMapping("/users")
     suspend fun getAllUsers(): Flow<User> {
         return userService.findAllAsFlow()
@@ -318,7 +318,7 @@ class UserService(
     fun findById(id: Long): User? {
         return userRepository.findById(id).orElse(null)
     }
-    
+
     fun findByIdOrThrow(id: Long): User {
         return findById(id) ?: throw UserNotFoundException(id)
     }
@@ -336,10 +336,10 @@ class UserService(
 data class User(
     @Id @GeneratedValue
     val id: Long = 0,
-    
+
     @Column(nullable = false)
     val name: String,
-    
+
     @Column(nullable = true)
     val email: String?  // Nullable в базе данных
 )
@@ -364,7 +364,7 @@ class AppConfig {
             password = "password"
         }
     }
-    
+
     @Bean
     fun jdbcTemplate(dataSource: DataSource): JdbcTemplate {
         return JdbcTemplate(dataSource)
@@ -411,13 +411,13 @@ data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-    
+
     @Column(nullable = false)
     val name: String,
-    
+
     @Column(unique = true)
     val email: String,
-    
+
     @Column(nullable = true)
     val age: Int? = null
 )
@@ -443,7 +443,7 @@ data class User(
         if (other !is User) return false
         return id != 0L && id == other.id
     }
-    
+
     override fun hashCode(): Int {
         return if (id != 0L) id.hashCode() else super.hashCode()
     }
@@ -463,17 +463,17 @@ data class User(
 class UserServiceTest {
     @Mock
     lateinit var userRepository: UserRepository
-    
+
     @InjectMocks
     lateinit var userService: UserService
-    
+
     @Test
     fun `should find user by id`() {
         val user = User(id = 1, name = "Alice", email = "alice@example.com")
         whenever(userRepository.findById(1)).thenReturn(Optional.of(user))
-        
+
         val result = userService.findById(1)
-        
+
         assertEquals(user, result)
     }
 }
@@ -489,7 +489,7 @@ class UserServiceTest {
 class UserControllerTest {
     @Autowired
     lateinit var mockMvc: MockMvc
-    
+
     @Test
     fun `should return user by id`() {
         mockMvc.get("/api/users/1")
@@ -553,13 +553,13 @@ data class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    
+
     @Column(nullable = false)
     val name: String,
-    
+
     @Column(unique = true)
     val email: String? = null,
-    
+
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL])
     val posts: MutableList<Post> = mutableListOf()
 ) {
@@ -578,7 +578,7 @@ interface UserRepository : JpaRepository<User, Long> {
     fun findByName(name: String): User?
     fun findByEmailContaining(email: String): List<User>
     fun existsByEmail(email: String): Boolean
-    
+
     @Query("SELECT u FROM User u WHERE u.name LIKE %:name%")
     fun searchByName(@Param("name") name: String): List<User>
 }
@@ -656,7 +656,7 @@ class CustomAuthenticationProvider : AuthenticationProvider {
     override fun authenticate(authentication: Authentication): Authentication {
         val username = authentication.name
         val password = authentication.credentials.toString()
-        
+
         // Проверка учетных данных
         return if (isValid(username, password)) {
             UsernamePasswordAuthenticationToken(
@@ -668,7 +668,7 @@ class CustomAuthenticationProvider : AuthenticationProvider {
             throw BadCredentialsException("Invalid credentials")
         }
     }
-    
+
     override fun supports(authentication: Class<*>): Boolean {
         return UsernamePasswordAuthenticationToken::class.java.isAssignableFrom(authentication)
     }
@@ -726,17 +726,17 @@ class DatabaseHealthIndicator : HealthIndicator {
 class UserServiceTest {
     @Mock
     lateinit var userRepository: UserRepository
-    
+
     @InjectMocks
     lateinit var userService: UserService
-    
+
     @Test
     fun `should find user by name`() {
         val user = User(name = "Alice", email = "alice@example.com")
         whenever(userRepository.findByName("Alice")).thenReturn(user)
-        
+
         val result = userService.findUser("Alice")
-        
+
         assertEquals(user, result)
         verify(userRepository).findByName("Alice")
     }
@@ -754,10 +754,10 @@ class UserServiceTest {
 class UserControllerIntegrationTest {
     @Autowired
     lateinit var mockMvc: MockMvc
-    
+
     @Autowired
     lateinit var userRepository: UserRepository
-    
+
     @Test
     fun `should create user`() {
         val userJson = """
@@ -766,7 +766,7 @@ class UserControllerIntegrationTest {
             "email": "alice@example.com"
         }
         """.trimIndent()
-        
+
         mockMvc.post("/api/users") {
             contentType = MediaType.APPLICATION_JSON
             content = userJson
@@ -775,7 +775,7 @@ class UserControllerIntegrationTest {
             status { isCreated() }
             jsonPath("$.name") { value("Alice") }
         }
-        
+
         val savedUser = userRepository.findByEmail("alice@example.com")
         assertNotNull(savedUser)
     }
@@ -799,7 +799,7 @@ class UserServiceApplication
 class UserController {
     @Autowired
     lateinit var discoveryClient: DiscoveryClient
-    
+
     @GetMapping("/services")
     fun getServices(): List<String> {
         return discoveryClient.services
@@ -819,7 +819,7 @@ class ExternalServiceClient {
         // Вызов внешнего сервиса
         return restTemplate.getForObject("http://external-service/api", String::class.java)
     }
-    
+
     fun fallback(e: Exception): String {
         return "Fallback response"
     }
@@ -841,7 +841,7 @@ class UserService(
     fun findById(id: Long): User? {
         return userRepository.findById(id).orElse(null)
     }
-    
+
     @CacheEvict("users", key = "#id")
     fun updateUser(id: Long, user: User) {
         userRepository.save(user)
@@ -896,14 +896,14 @@ class ReactiveUserController(private val userService: ReactiveUserService) {
     suspend fun getUsers(): List<User> {
         return userService.getAllUsers()
     }
-    
+
     @GetMapping("/users/{id}")
     suspend fun getUser(@PathVariable id: Long): ResponseEntity<User> {
         return userService.findById(id)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
     }
-    
+
     @PostMapping("/users")
     suspend fun createUser(@RequestBody user: User): ResponseEntity<User> {
         val saved = userService.save(user)
@@ -932,12 +932,12 @@ data class AppProperties(
         val username: String,
         val password: String
     )
-    
+
     data class SecurityProperties(
         val jwtSecret: String,
         val jwtExpiration: Long
     )
-    
+
     data class FeaturesProperties(
         val enableFeatureA: Boolean = false,
         val enableFeatureB: Boolean = false
@@ -979,7 +979,7 @@ class CustomEndpoint {
             "version" to "1.0.0"
         )
     }
-    
+
     @WriteOperation
     fun triggerAction(@Selector name: String): Map<String, String> {
         // Выполнение действия
@@ -1006,11 +1006,11 @@ class MetricsService(
     private val requestCounter = Counter.builder("requests.total")
         .description("Total number of requests")
         .register(meterRegistry)
-    
+
     private val requestTimer = Timer.builder("requests.duration")
         .description("Request duration")
         .register(meterRegistry)
-    
+
     fun recordRequest(duration: Long) {
         requestCounter.increment()
         requestTimer.record(duration, TimeUnit.MILLISECONDS)
@@ -1035,9 +1035,9 @@ class LoggingAspect {
     fun logExecution(joinPoint: ProceedingJoinPoint): Any? {
         val startTime = System.currentTimeMillis()
         val methodName = joinPoint.signature.name
-        
+
         logger.info("Executing method: $methodName")
-        
+
         return try {
             val result = joinPoint.proceed()
             val duration = System.currentTimeMillis() - startTime
@@ -1096,7 +1096,7 @@ class UserEventListener {
         println("User created: ${event.user.name}")
         sendWelcomeEmail(event.user)
     }
-    
+
     @Async
     @EventListener
     fun handleUserCreatedAsync(event: UserCreatedEvent) {
@@ -1166,10 +1166,10 @@ class ProdUserService : UserService {
 interface UserRepository : JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.age BETWEEN :minAge AND :maxAge")
     fun findByAgeRange(@Param("minAge") minAge: Int, @Param("maxAge") maxAge: Int): List<User>
-    
+
     @Query("SELECT u FROM User u WHERE u.name LIKE %:name% AND u.active = true")
     fun findActiveUsersByName(@Param("name") name: String): List<User>
-    
+
     @Modifying
     @Query("UPDATE User u SET u.active = :active WHERE u.id = :id")
     fun updateUserStatus(@Param("id") id: Long, @Param("active") active: Boolean): Int
@@ -1254,10 +1254,10 @@ class UserServiceClient(
         if (instances.isEmpty()) {
             throw IllegalStateException("Service not found")
         }
-        
+
         val instance = instances[0]
         val url = "http://${instance.host}:${instance.port}/api/users/$userId"
-        
+
         return try {
             restTemplate.getForObject(url, User::class.java)
         } catch (e: Exception) {
@@ -1277,7 +1277,7 @@ class ResilientUserService(
         return userRepository.findById(id)
             ?: throw UserNotFoundException(id)
     }
-    
+
     fun getUserFallback(id: Long, exception: Exception): User {
         logger.warn("Fallback for user $id: ${exception.message}")
         return User(id = id, name = "Unknown", email = "unknown@example.com")
@@ -1303,7 +1303,7 @@ class SecurityConfig(
     fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
     }
-    
+
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -1319,10 +1319,10 @@ class SecurityConfig(
             }
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
-        
+
         return http.build()
     }
-    
+
     @Bean
     fun authenticationProvider(): DaoAuthenticationProvider {
         val provider = DaoAuthenticationProvider()
@@ -1330,7 +1330,7 @@ class SecurityConfig(
         provider.setPasswordEncoder(passwordEncoder())
         return provider
     }
-    
+
     @Bean
     fun jwtAuthenticationFilter(): JwtAuthenticationFilter {
         return JwtAuthenticationFilter(jwtTokenProvider)
@@ -1348,7 +1348,7 @@ class JwtTokenProvider(
         claims["roles"] = roles
         val now = Date()
         val validity = Date(now.time + validityInMilliseconds)
-        
+
         return Jwts.builder()
             .setClaims(claims)
             .setIssuedAt(now)
@@ -1356,7 +1356,7 @@ class JwtTokenProvider(
             .signWith(SignatureAlgorithm.HS256, secretKey)
             .compact()
     }
-    
+
     fun validateToken(token: String): Boolean {
         return try {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token)
@@ -1365,7 +1365,7 @@ class JwtTokenProvider(
             false
         }
     }
-    
+
     fun getUsernameFromToken(token: String): String {
         return Jwts.parser()
             .setSigningKey(secretKey)
@@ -1406,12 +1406,12 @@ class UserService(
     fun getUser(id: Long): User? {
         return userRepository.findById(id)
     }
-    
+
     @CacheEvict("users", key = "#id")
     fun updateUser(id: Long, user: User) {
         userRepository.save(user)
     }
-    
+
     @CacheEvict(value = ["users"], allEntries = true)
     fun clearCache() {
         // Кэш будет очищен
@@ -1435,12 +1435,12 @@ class UserService(
     fun getAllUsers(): List<User> {
         return userRepository.findAll()
     }
-    
+
     @Transactional(rollbackFor = [Exception::class])
     fun createUser(user: User): User {
         return userRepository.save(user)
     }
-    
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun createUserInNewTransaction(user: User): User {
         return userRepository.save(user)
@@ -1471,7 +1471,7 @@ class BatchConfig {
             .start(step)
             .build()
     }
-    
+
     @Bean
     fun step(
         jobRepository: JobRepository,
@@ -1512,17 +1512,17 @@ class IntegrationConfig {
     fun inputChannel(): MessageChannel {
         return DirectChannel()
     }
-    
+
     @Bean
     fun outputChannel(): MessageChannel {
         return DirectChannel()
     }
-    
+
     @Bean
     fun transformer(): Transformer<String, String> {
         return Transformer { it.uppercase() }
     }
-    
+
     @Bean
     fun integrationFlow(
         inputChannel: MessageChannel,
@@ -1554,12 +1554,12 @@ class ReactiveUserController(private val userService: ReactiveUserService) {
     fun getUsers(): Flux<User> {
         return userService.getAllUsers()
     }
-    
+
     @GetMapping("/users/{id}")
     fun getUser(@PathVariable id: Long): Mono<User> {
         return userService.findById(id)
     }
-    
+
     @PostMapping("/users")
     fun createUser(@RequestBody user: Mono<User>): Mono<User> {
         return userService.save(user)
@@ -1624,14 +1624,14 @@ class UserController(private val userService: UserService) {
     fun getAllUsers(): List<User> {
         return userService.findAll()
     }
-    
+
     @GetMapping("/{id}")
     fun getUser(@PathVariable id: Long): ResponseEntity<User> {
         return userService.findById(id)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
     }
-    
+
     @PostMapping
     fun createUser(@RequestBody user: User): ResponseEntity<User> {
         val created = userService.save(user)
@@ -1650,7 +1650,7 @@ class UserController(private val userService: UserService) {
 interface UserRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): User?
     fun findByNameContaining(name: String): List<User>
-    
+
     @Query("SELECT u FROM User u WHERE u.active = true")
     fun findActiveUsers(): List<User>
 }
@@ -1660,7 +1660,7 @@ class UserService(private val userRepository: UserRepository) {
     fun findUserByEmail(email: String): User? {
         return userRepository.findByEmail(email)
     }
-    
+
     fun searchUsers(name: String): List<User> {
         return userRepository.findByNameContaining(name)
     }
@@ -1711,7 +1711,7 @@ data class UserCreatedEvent(val userId: Long, val email: String)
 class UserService {
     @Autowired
     private lateinit var eventPublisher: ApplicationEventPublisher
-    
+
     fun createUser(user: User): User {
         val saved = userRepository.save(user)
         eventPublisher.publishEvent(UserCreatedEvent(saved.id, saved.email))

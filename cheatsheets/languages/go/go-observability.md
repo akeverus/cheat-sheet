@@ -58,13 +58,13 @@ updated: "2026-02-06"
 
 ## Введение в наблюдаемость
 
-Наблюдаемость - это способность понимать внутреннее состояние системы на основе внешних данных. Go предоставляет инструменты для метрик, трейсинга и логирования.
+Наблюдаемость — это способность понимать внутреннее состояние системы на основе внешних данных. Go предоставляет инструменты для метрик, трейсинга и логирования.
 
 ### Три столпа наблюдаемости
 
-1. **Метрики** - числовые данные о производительности
-2. **Логи** - события и сообщения
-3. **Трейсы** - запросы через систему
+1. **Метрики** — числовые данные о производительности
+2. **Логи** — события и сообщения
+3. **Трейсы** — запросы через систему
 
 ## Метрики
 
@@ -84,7 +84,7 @@ var (
         },
         []string{"method", "status"},
     )
-    
+
     requestDuration = prometheus.NewHistogramVec(
         prometheus.HistogramOpts{
             Name: "http_request_duration_seconds",
@@ -101,10 +101,10 @@ func init() {
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
     start := time.Now()
-    
+
     // Обработка запроса
     processRequest(w, r)
-    
+
     duration := time.Since(start).Seconds()
     requestsTotal.WithLabelValues(r.Method, "200").Inc()
     requestDuration.WithLabelValues(r.Method).Observe(duration)
@@ -148,13 +148,13 @@ import (
 func tracedHandler(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
     tracer := otel.Tracer("myapp")
-    
+
     ctx, span := tracer.Start(ctx, "handleRequest")
     defer span.End()
-    
+
     // Обработка запроса
     processRequest(ctx, w, r)
-    
+
     span.SetAttributes(
         attribute.String("method", r.Method),
         attribute.String("path", r.URL.Path),
@@ -180,7 +180,7 @@ import "log/slog"
 
 func structuredLogging() {
     logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-    
+
     logger.Info("Request processed",
         "method", "GET",
         "path", "/api/users",
@@ -198,7 +198,7 @@ func contextualLogging(ctx context.Context) {
         "request_id", getRequestID(ctx),
         "user_id", getUserID(ctx),
     )
-    
+
     logger.Info("Processing request")
 }
 ```
@@ -213,7 +213,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
         "database": checkDatabase(),
         "cache":    checkCache(),
     }
-    
+
     allHealthy := true
     for _, status := range checks {
         if status != "ok" {
@@ -221,13 +221,13 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
             break
         }
     }
-    
+
     if allHealthy {
         w.WriteHeader(http.StatusOK)
     } else {
         w.WriteHeader(http.StatusServiceUnavailable)
     }
-    
+
     json.NewEncoder(w).Encode(checks)
 }
 ```
@@ -268,7 +268,7 @@ var (
         },
         []string{"method", "endpoint", "status"},
     )
-    
+
     // Gauge - значение, которое может увеличиваться и уменьшаться
     activeConnections = promauto.NewGauge(
         prometheus.GaugeOpts{
@@ -276,7 +276,7 @@ var (
             Help: "Number of active connections",
         },
     )
-    
+
     // Histogram - распределение значений
     requestDuration = promauto.NewHistogramVec(
         prometheus.HistogramOpts{
@@ -286,7 +286,7 @@ var (
         },
         []string{"method", "endpoint"},
     )
-    
+
     // Summary - похож на Histogram, но с квантилями
     requestSize = promauto.NewSummaryVec(
         prometheus.SummaryOpts{
@@ -305,15 +305,15 @@ var (
 func metricsMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
-        
+
         // Обертка ResponseWriter для отслеживания статуса
         rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-        
+
         next.ServeHTTP(rw, r)
-        
+
         duration := time.Since(start).Seconds()
         status := strconv.Itoa(rw.statusCode)
-        
+
         // Обновление метрик
         httpRequestsTotal.WithLabelValues(r.Method, r.URL.Path, status).Inc()
         requestDuration.WithLabelValues(r.Method, r.URL.Path).Observe(duration)
@@ -368,7 +368,7 @@ func (m *BusinessMetrics) RecordOrder(amount float64, duration time.Duration) {
     m.ordersProcessed.Inc()
     m.revenue.Add(amount)
     m.processingTime.Observe(duration.Seconds())
-    
+
     // Обновление среднего значения
     total := m.revenue.Get()
     count := m.ordersProcessed.Get()
@@ -398,7 +398,7 @@ func initTracer(serviceName string) (*trace.TracerProvider, error) {
     if err != nil {
         return nil, err
     }
-    
+
     tp := trace.NewTracerProvider(
         trace.WithBatcher(exporter),
         trace.WithResource(resource.NewWithAttributes(
@@ -407,20 +407,20 @@ func initTracer(serviceName string) (*trace.TracerProvider, error) {
             attribute.String("environment", "production"),
         )),
     )
-    
+
     otel.SetTracerProvider(tp)
     otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
         propagation.TraceContext{},
         propagation.Baggage{},
     ))
-    
+
     return tp, nil
 }
 
 func tracedHandler(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
     tracer := otel.Tracer("myapp")
-    
+
     ctx, span := tracer.Start(ctx, "handleRequest",
         trace.WithAttributes(
             attribute.String("http.method", r.Method),
@@ -428,12 +428,12 @@ func tracedHandler(w http.ResponseWriter, r *http.Request) {
         ),
     )
     defer span.End()
-    
+
     // Вложенный span
     ctx, childSpan := tracer.Start(ctx, "processData")
     processData(ctx)
     childSpan.End()
-    
+
     span.SetStatus(codes.Ok, "Request processed successfully")
 }
 ```
@@ -455,10 +455,10 @@ func clientRequest(ctx context.Context, url string) error {
     tracer := otel.Tracer("myapp")
     ctx, span := tracer.Start(ctx, "clientRequest")
     defer span.End()
-    
+
     req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
     propagateTrace(ctx, req)
-    
+
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
@@ -466,11 +466,11 @@ func clientRequest(ctx context.Context, url string) error {
         return err
     }
     defer resp.Body.Close()
-    
+
     span.SetAttributes(
         attribute.Int("http.status_code", resp.StatusCode),
     )
-    
+
     return nil
 }
 ```
@@ -498,16 +498,16 @@ func NewContextLogger() *ContextLogger {
 
 func (l *ContextLogger) WithContext(ctx context.Context) *slog.Logger {
     logger := l.logger
-    
+
     // Извлечение значений из контекста
     if requestID := ctx.Value("request_id"); requestID != nil {
         logger = logger.With("request_id", requestID)
     }
-    
+
     if userID := ctx.Value("user_id"); userID != nil {
         logger = logger.With("user_id", userID)
     }
-    
+
     // Извлечение trace ID из OpenTelemetry
     span := trace.SpanFromContext(ctx)
     if span.SpanContext().IsValid() {
@@ -516,7 +516,7 @@ func (l *ContextLogger) WithContext(ctx context.Context) *slog.Logger {
             "span_id", span.SpanContext().SpanID().String(),
         )
     }
-    
+
     return logger
 }
 
@@ -550,7 +550,7 @@ func (c *DatabaseHealthChecker) Name() string {
 func (c *DatabaseHealthChecker) Check(ctx context.Context) error {
     ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
     defer cancel()
-    
+
     return c.db.PingContext(ctx)
 }
 
@@ -565,7 +565,7 @@ func (c *CacheHealthChecker) Name() string {
 func (c *CacheHealthChecker) Check(ctx context.Context) error {
     ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
     defer cancel()
-    
+
     return c.cache.Ping(ctx).Err()
 }
 
@@ -581,7 +581,7 @@ func (s *HealthService) HealthCheck(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
     results := make(map[string]string)
     allHealthy := true
-    
+
     for _, checker := range s.checkers {
         if err := checker.Check(ctx); err != nil {
             results[checker.Name()] = fmt.Sprintf("error: %v", err)
@@ -590,12 +590,12 @@ func (s *HealthService) HealthCheck(w http.ResponseWriter, r *http.Request) {
             results[checker.Name()] = "ok"
         }
     }
-    
+
     statusCode := http.StatusOK
     if !allHealthy {
         statusCode = http.StatusServiceUnavailable
     }
-    
+
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(statusCode)
     json.NewEncoder(w).Encode(map[string]interface{}{
@@ -790,13 +790,13 @@ func (hr *HealthRegistry) Check(ctx context.Context) HealthStatus {
         checkers[k] = v
     }
     hr.mu.RUnlock()
-    
+
     status := HealthStatus{
         Status:    "healthy",
         Checks:    make(map[string]string),
         Timestamp: time.Now(),
     }
-    
+
     for name, checker := range checkers {
         if err := checker.Check(ctx); err != nil {
             status.Status = "unhealthy"
@@ -805,7 +805,7 @@ func (hr *HealthRegistry) Check(ctx context.Context) HealthStatus {
             status.Checks[name] = "ok"
         }
     }
-    
+
     return status
 }
 
@@ -813,14 +813,14 @@ func HealthCheckHandler(registry *HealthRegistry) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
         defer cancel()
-        
+
         status := registry.Check(ctx)
-        
+
         w.Header().Set("Content-Type", "application/json")
         if status.Status == "unhealthy" {
             w.WriteHeader(http.StatusServiceUnavailable)
         }
-        
+
         json.NewEncoder(w).Encode(status)
     }
 }
@@ -839,12 +839,12 @@ func TraceMiddleware(tr trace.Tracer) func(http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             ctx, span := tr.Start(r.Context(), r.URL.Path)
             defer span.End()
-            
+
             span.SetAttributes(
                 attribute.String("http.method", r.Method),
                 attribute.String("http.url", r.URL.String()),
             )
-            
+
             r = r.WithContext(ctx)
             next.ServeHTTP(w, r)
         })
@@ -855,12 +855,12 @@ func TracedFunction(ctx context.Context, name string, fn func(context.Context) e
     tr := otel.Tracer("app")
     ctx, span := tr.Start(ctx, name)
     defer span.End()
-    
+
     err := fn(ctx)
     if err != nil {
         span.RecordError(err)
     }
-    
+
     return err
 }
 ```
@@ -915,21 +915,21 @@ func (cm *CustomMetrics) DecrementActive() {
 
 ## Лучшие практики
 
-1. **Используйте структурированное логирование** - для лучшего анализа
-2. **Добавляйте контекст** - включайте релевантную информацию
-3. **Инструментируйте критические пути** - добавляйте метрики и трейсы
-4. **Используйте sampling** - для снижения нагрузки от трейсинга
-5. **Мониторьте здоровье системы** - используйте **health checks**
-6. **Используйте правильные типы метрик** - **Counter**, **Gauge**, **Histogram**, **Summary**
-7. **Добавляйте labels** - для детализации метрик
-8. **Экспортируйте метрики** - используйте /**metrics endpoint**
-9. **Используйте distributed tracing** - для отслеживания запросов
-10. **Настройте алерты** - для критических метрик
-11. **Используйте health checks** - для проверки состояния системы
-12. **Используйте distributed tracing** - для отслеживания запросов через сервисы
-13. **Создавайте собственные метрики** - для специфичных бизнес-метрик
-14. **Используйте правильные типы** - выбирайте правильные типы метрик
-15. **Мониторьте производительность** - отслеживайте производительность операций
+1. **Используйте структурированное логирование** — для лучшего анализа
+2. **Добавляйте контекст** — включайте релевантную информацию
+3. **Инструментируйте критические пути** — добавляйте метрики и трейсы
+4. **Используйте sampling** — для снижения нагрузки от трейсинга
+5. **Мониторьте здоровье системы** — используйте **health checks**
+6. **Используйте правильные типы метрик** — **Counter**, **Gauge**, **Histogram**, **Summary**
+7. **Добавляйте labels** — для детализации метрик
+8. **Экспортируйте метрики** — используйте /**metrics endpoint**
+9. **Используйте distributed tracing** — для отслеживания запросов
+10. **Настройте алерты** — для критических метрик
+11. **Используйте health checks** — для проверки состояния системы
+12. **Используйте distributed tracing** — для отслеживания запросов через сервисы
+13. **Создавайте собственные метрики** — для специфичных бизнес-метрик
+14. **Используйте правильные типы** — выбирайте правильные типы метрик
+15. **Мониторьте производительность** — отслеживайте производительность операций
 
 
 ## Решение проблем
@@ -948,3 +948,11 @@ func (cm *CustomMetrics) DecrementActive() {
 
 - [Prometheus Go Client](https://github.com/prometheus/client_golang)
 - [OpenTelemetry Go](https://opentelemetry.io/docs/go/)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

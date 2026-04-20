@@ -25,7 +25,7 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 - [ClickHouse Getting Started](https://clickhouse.com/docs/en/getting-started)
 - [ClickHouse GitHub](https://github.com/ClickHouse/ClickHouse)
 
-### **Baeldung**
+### Обучающие материалы
 - [Introduction to ClickHouse](https://www.baeldung.com/clickhouse)
 
 ### См. также
@@ -916,7 +916,7 @@ INDEX idx_user_id user_id TYPE bloom_filter GRANULARITY 1
 
 **В традиционных СУБД данные хранятся построчно:**
 
-```
+```text
 Строка 1: id=1, name="John", age=25, city="NYC"
 Строка 2: id=2, name="Jane", age=30, city="LA"
 Строка 3: id=3, name="Bob", age=35, city="NYC"
@@ -924,7 +924,7 @@ INDEX idx_user_id user_id TYPE bloom_filter GRANULARITY 1
 
 **ClickHouse** хранит данные по столбцам:**
 
-```
+```text
 id: [1, 2, 3]
 name: ["John", "Jane", "Bob"]
 age: [25, 30, 35]
@@ -1077,7 +1077,6 @@ SHOW GRANTS FOR analyst;
 
 **Репликация отстаёт или не работает:** проверьте ZooKeeper/Keeper и сеть между репликами. Убедитесь, что `replication` включён в конфиге и метаданные реплик совпадают. Просмотр очередей репликации: системные таблицы `system.replicas`, `system.replication_queue`.
 
----
 
 **Следующие темы:**
 - [Таблицы и движки](clickhouse-tables.md)

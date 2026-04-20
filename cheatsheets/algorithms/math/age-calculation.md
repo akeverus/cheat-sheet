@@ -196,15 +196,15 @@ public int calculateAgeAccurate(Date birthDate, Date currentDate) {
     birth.setTime(birthDate);
     Calendar current = Calendar.getInstance();
     current.setTime(currentDate);
-    
+
     int age = current.get(Calendar.YEAR) - birth.get(Calendar.YEAR);
-    
+
     int monthDiff = current.get(Calendar.MONTH) - birth.get(Calendar.MONTH);
-    if (monthDiff < 0 || (monthDiff == 0 && 
+    if (monthDiff < 0 || (monthDiff == 0 &&
         current.get(Calendar.DAY_OF_MONTH) < birth.get(Calendar.DAY_OF_MONTH))) {
         age--;
     }
-    
+
     return age;
 }
 ```
@@ -241,7 +241,7 @@ fun main() {
     val currentDate = LocalDate.now()
     val age = calculateAgeK(birthDate, currentDate)
     println("Age: $age years")
-    
+
     val detailedAge = calculateDetailedAgeK(birthDate, currentDate)
     println("Detailed age: $detailedAge")
 }

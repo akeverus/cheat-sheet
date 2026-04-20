@@ -78,7 +78,7 @@ updated: "2026-04-17"
 ## Близкие паттерны: как выбрать
 
 - **Adapter vs Decorator:** Adapter меняет интерфейс; Decorator сохраняет его и добавляет поведение.
-- **Decorator vs Proxy:** Decorator расширяет функциональность для клиента; Proxy контролирует доступ, но для клиента работает "прозрачно".
+- **Decorator vs Proxy:** Decorator расширяет функциональность для клиента; Proxy контролирует доступ, но для клиента работает «прозрачно».
 - **Facade vs Adapter:** Facade упрощает работу с целой подсистемой; Adapter адаптирует один несовместимый интерфейс.
 - **Composite vs Decorator:** Composite строит дерево; Decorator — линейная цепочка обёрток.
 - **Flyweight vs Singleton:** Singleton — один объект в системе; Flyweight — множество одинаковых объектов с разделяемым immutable состоянием.

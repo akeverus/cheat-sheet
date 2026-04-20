@@ -80,7 +80,7 @@ int gcdByBruteForce(int n1, int n2) {
 int gcdByBruteForceOptimized(int n1, int n2) {
     int gcd = 1;
     int min = Math.min(Math.abs(n1), Math.abs(n2));
-    
+
     for (int i = min; i >= 1; i--) {
         if (n1 % i == 0 && n2 % i == 0) {
             return i;
@@ -129,7 +129,7 @@ int gcdByEuclidsAlgorithmIterative(int n1, int n2) {
 int gcdByEuclidsAlgorithmSafe(int n1, int n2) {
     n1 = Math.abs(n1);
     n2 = Math.abs(n2);
-    
+
     while (n2 != 0) {
         int temp = n2;
         n2 = n1 % n2;
@@ -149,35 +149,35 @@ int gcdBySteinsAlgorithm(int n1, int n2) {
     if (n1 == 0) {
         return n2;
     }
-    
+
     if (n2 == 0) {
         return n1;
     }
-    
+
     int n;
     for (n = 0; ((n1 | n2) & 1) == 0; n++) {
         n1 >>= 1;
         n2 >>= 1;
     }
-    
+
     while ((n1 & 1) == 0) {
         n1 >>= 1;
     }
-    
+
     do {
         while ((n2 & 1) == 0) {
             n2 >>= 1;
         }
-        
+
         if (n1 > n2) {
             int temp = n1;
             n1 = n2;
             n2 = temp;
         }
-        
+
         n2 = (n2 - n1);
     } while (n2 != 0);
-    
+
     return n1 << n;
 }
 ```
@@ -230,15 +230,15 @@ public class ExtendedEuclidean {
         if (b == 0) {
             return new int[]{a, 1, 0};
         }
-        
+
         int[] result = extendedGcd(b, a % b);
         int gcd = result[0];
         int x1 = result[1];
         int y1 = result[2];
-        
+
         int x = y1;
         int y = x1 - (a / b) * y1;
-        
+
         return new int[]{gcd, x, y};
     }
 }
@@ -302,35 +302,35 @@ fun gcdByEuclideanAlgorithmRecursiveK(n1: Int, n2: Int): Int {
 fun gcdBySteinAlgorithmK(n1: Int, n2: Int): Int {
     if (n1 == 0) return n2
     if (n2 == 0) return n1
-    
+
     var num1 = n1
     var num2 = n2
     var n = 0
-    
+
     while (((num1 or num2) and 1) == 0) {
         num1 = num1 shr 1
         num2 = num2 shr 1
         n++
     }
-    
+
     while ((num1 and 1) == 0) {
         num1 = num1 shr 1
     }
-    
+
     do {
         while ((num2 and 1) == 0) {
             num2 = num2 shr 1
         }
-        
+
         if (num1 > num2) {
             val temp = num1
             num1 = num2
             num2 = temp
         }
-        
+
         num2 -= num1
     } while (num2 != 0)
-    
+
     return num1 shl n
 }
 ```

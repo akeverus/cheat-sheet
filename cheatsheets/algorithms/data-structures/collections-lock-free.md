@@ -71,7 +71,7 @@ updated: "2026-02-11"
 
 ### 1. Свобода от препятствий (Obstruction-Free)
 
-Свобода от препятствий - самая слабая форма неблокирующей структуры данных. Здесь мы требуем только, чтобы поток гарантированно продолжался, если все остальные потоки приостановлены.
+Свобода от препятствий — самая слабая форма неблокирующей структуры данных. Здесь мы требуем только, чтобы поток гарантированно продолжался, если все остальные потоки приостановлены.
 
 Точнее, поток не будет продолжать голодать, если все остальные потоки будут приостановлены. Это отличается от использования блокировок в том смысле, что если поток ожидал блокировки, а поток, который удерживает блокировку, приостановлен, ожидающий поток будет ждать вечно.
 
@@ -95,7 +95,7 @@ updated: "2026-02-11"
 
 Одной из основных операций, используемых для предотвращения блокировки, является операция сравнения и замены (**CAS**).
 
-Идея сравнения и замены заключается в том, что переменная обновляется только в том случае, если она все еще имеет то же значение, что и в момент, когда мы извлекли значение переменной из основной памяти. **CAS** - это атомарная операция, что означает, что выборка и обновление вместе являются одной операцией.
+Идея сравнения и замены заключается в том, что переменная обновляется только в том случае, если она все еще имеет то же значение, что и в момент, когда мы извлекли значение переменной из основной памяти. **CAS** — это атомарная операция, что означает, что выборка и обновление вместе являются одной операцией.
 
 Здесь оба потока получают значение 3 из основной памяти. Поток2 завершается успешно (**зеленый**) и обновляет переменную до 8. Поскольку первый **CAS** потока1 ожидает, что значение будет равно 3, **CAS** терпит неудачу (**красный**). Таким образом, поток1 снова получает значение, и второй **CAS** завершается успешно.
 
@@ -155,23 +155,23 @@ void testCas() {
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class ABAExample {
-    private AtomicStampedReference<Integer> value = 
+    private AtomicStampedReference<Integer> value =
         new AtomicStampedReference<>(0, 0);
-    
+
     public void update(int expectedValue, int newValue) {
         int[] stampHolder = new int[1];
         int currentValue = value.get(stampHolder);
         int currentStamp = stampHolder[0];
-        
+
         if (currentValue == expectedValue) {
-            value.compareAndSet(expectedValue, newValue, 
+            value.compareAndSet(expectedValue, newValue,
                 currentStamp, currentStamp + 1);
         }
     }
 }
 ```
 
-Другая альтернатива - выборка и добавление. Эта операция увеличивает переменную в основной памяти на заданное значение. Опять же, важным моментом является то, что операция происходит атомарно, что означает, что никакие другие потоки не могут вмешиваться.
+Другая альтернатива — выборка и добавление. Эта операция увеличивает переменную в основной памяти на заданное значение. Опять же, важным моментом является то, что операция происходит атомарно, что означает, что никакие другие потоки не могут вмешиваться.
 
 **Java** предоставляет реализацию выборки и добавления в своих атомарных классах. Примеры: `**AtomicInteger.incrementAndGet**()`, который увеличивает значение и возвращает новое значение; и `**AtomicInteger.getAndIncrement**()`, который возвращает старое значение, а затем увеличивает значение.
 
@@ -188,7 +188,7 @@ public class ABAExample {
 
 Что может пойти не так, если два потока выполняют эти шаги одновременно? Если шаги выполняются в порядке **ABCD** или **ACBD**, L, а также **tail**, будут указывать на M. N останется отключенным от очереди.
 
-Если шаги выполняются в порядке **ACDB**, хвост будет указывать на N, а L - на M, что вызовет несогласованность в очереди.
+Если шаги выполняются в порядке **ACDB**, хвост будет указывать на N, а L — на M, что вызовет несогласованность в очереди.
 
 Конечно, одним из способов решения этой проблемы является блокировка очереди одним потоком. Решение, которое мы рассмотрим в следующей главе, решит проблему с помощью операции без блокировки с использованием операции **CAS**, которую мы видели ранее.
 
@@ -204,7 +204,7 @@ import java.util.NoSuchElementException;
 public class NonBlockingQueue<T> {
     private final AtomicReference<Node<T>> head, tail;
     private final AtomicInteger size;
-    
+
     public NonBlockingQueue() {
         head = new AtomicReference<>(null);
         tail = new AtomicReference<>(null);
@@ -224,24 +224,24 @@ private static class Node<T> {
     private volatile T value;
     private volatile Node<T> next;
     private volatile Node<T> previous;
-    
+
     public Node(T value) {
         this.value = value;
         this.next = null;
     }
-    
+
     public T getValue() {
         return value;
     }
-    
+
     public Node<T> getNext() {
         return next;
     }
-    
+
     public void setNext(Node<T> next) {
         this.next = next;
     }
-    
+
     public void setPrevious(Node<T> previous) {
         this.previous = previous;
     }
@@ -259,19 +259,19 @@ public void add(T element) {
     if (element == null) {
         throw new NullPointerException();
     }
-    
+
     Node<T> node = new Node<>(element);
     Node<T> currentTail;
-    
+
     do {
         currentTail = tail.get();
         node.setPrevious(currentTail);
     } while (!tail.compareAndSet(currentTail, node));
-    
+
     if (node.previous != null) {
         node.previous.next = node;
     }
-    
+
     size.incrementAndGet();
 }
 ```
@@ -287,15 +287,15 @@ public T get() {
     if (head.get() == null) {
         throw new NoSuchElementException();
     }
-    
+
     Node<T> currentHead;
     Node<T> nextNode;
-    
+
     do {
         currentHead = head.get();
         nextNode = currentHead.getNext();
     } while (!head.compareAndSet(currentHead, nextNode));
-    
+
     size.decrementAndGet();
     return currentHead.getValue();
 }
@@ -409,12 +409,12 @@ import java.util.concurrent.atomic.AtomicStampedReference
 
 class ABAExampleK {
     private val value = AtomicStampedReference<Int>(0, 0)
-    
+
     fun update(expectedValue: Int, newValue: Int) {
         val stampHolder = IntArray(1)
         val currentValue = value.get(stampHolder)
         val currentStamp = stampHolder[0]
-        
+
         if (currentValue == expectedValue) {
             value.compareAndSet(expectedValue, newValue, currentStamp, currentStamp + 1)
         }
@@ -430,20 +430,20 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class NonBlockingQueueK<T> {
     private data class NodeK<T>(val item: T, var next: AtomicReference<NodeK<T>?> = AtomicReference(null))
-    
+
     private val head = AtomicReference<NodeK<T>?>(null)
     private val tail = AtomicReference<NodeK<T>?>(null)
     private val size = AtomicInteger(0)
-    
+
     fun add(item: T) {
         val newNode = NodeK(item)
         var currentTail: NodeK<T>?
         var currentTailNext: NodeK<T>?
-        
+
         while (true) {
             currentTail = tail.get()
             currentTailNext = currentTail?.next?.get()
-            
+
             if (currentTail == tail.get()) {
                 if (currentTailNext != null) {
                     tail.compareAndSet(currentTail, currentTailNext)
@@ -457,15 +457,15 @@ class NonBlockingQueueK<T> {
             }
         }
     }
-    
+
     fun poll(): T? {
         var currentHead: NodeK<T>?
         var currentHeadNext: NodeK<T>?
-        
+
         while (true) {
             currentHead = head.get()
             currentHeadNext = currentHead?.next?.get()
-            
+
             if (currentHead == head.get()) {
                 if (currentHead == null) {
                     return null
@@ -483,7 +483,7 @@ class NonBlockingQueueK<T> {
             }
         }
     }
-    
+
     fun size(): Int = size.get()
 }
 ```

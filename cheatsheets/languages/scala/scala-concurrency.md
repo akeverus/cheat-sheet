@@ -76,10 +76,10 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 
 **Scala** предоставляет несколько подходов к конкурентному программированию:**
 
-1. **Futures и Promises** - для асинхронных вычислений
-2. **Actors (**Akka**)** - для акторной модели программирования
-3. **Параллельные коллекции** - для параллельной обработки данных
-4. **Синхронизация** - для координации потоков
+1. **Futures и Promises** — для асинхронных вычислений
+2. **Actors (**Akka**)** — для акторной модели программирования
+3. **Параллельные коллекции** — для параллельной обработки данных
+4. **Синхронизация** — для координации потоков
 
 ## **Futures**
 
@@ -153,7 +153,7 @@ future.onComplete {
 
 ## **Promises**
 
-**Promise** - это **writable Future**, который позволяет завершить **Future** извне. В то время как **Future** представляет результат вычисления, **Promise** позволяет контролировать, когда и как это вычисление завершится. Это полезно для интеграции асинхронного кода с **callback-based API** или для создания **Future** из кода, который не может быть обернут в **Future** напрямую.
+**Promise** — это **writable Future**, который позволяет завершить **Future** извне. В то время как **Future** представляет результат вычисления, **Promise** позволяет контролировать, когда и как это вычисление завершится. Это полезно для интеграции асинхронного кода с **callback-based API** или для создания **Future** из кода, который не может быть обернут в **Future** напрямую.
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -302,7 +302,7 @@ val results = Future.traverse(ids) { id =>
 ```scala
 class Counter {
   private var count = 0
-  
+
   def increment(): Int = synchronized {
     count += 1
     count
@@ -317,7 +317,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class AtomicCounter {
   private val count = new AtomicInteger(0)
-  
+
   def increment(): Int = count.incrementAndGet()
   def get(): Int = count.get()
 }
@@ -598,7 +598,7 @@ def fetchUserData(id: Int): Future[(User, List[Post], List[Comment])] = {
   val userFuture = fetchUser(id)
   val postsFuture = fetchUserPosts(id)
   val commentsFuture = fetchUserComments(id)
-  
+
   for {
     user <- userFuture
     posts <- postsFuture

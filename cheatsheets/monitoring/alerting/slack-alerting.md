@@ -150,19 +150,19 @@ Slack поддерживает **mrkdwn**: `*жирный*`, `_курсив_`, `
 
 ## Частые вопросы
 
-**Как создать Incoming Webhook в Slack?**  
+**Как создать Incoming Webhook в Slack?**
 Slack → Settings → Integrations → Apps → Build (или Browse). Создать приложение → Incoming Webhooks → On → Add New Webhook to Workspace → выбрать канал → скопировать URL.
 
-**Можно ли отправлять в личные сообщения (DM)?**  
+**Можно ли отправлять в личные сообщения (DM)?**
 Incoming Webhook по умолчанию привязан к каналу. Для DM нужен Slack API (chat.postMessage с channel: user_id) и Bot Token с правом chat:write.
 
-**Поддерживает ли Alertmanager Block Kit?**  
+**Поддерживает ли Alertmanager Block Kit?**
 Нет, только title, text и attachments. Для Block Kit нужен промежуточный сервис, который принимает webhook от Alertmanager и пересылает в Slack в формате blocks.
 
-**Как добавить кнопки в сообщение?**  
+**Как добавить кнопки в сообщение?**
 Кнопки задаются в Block Kit (блок actions с button). Alertmanager этого не поддерживает напрямую; реализуется через промежуточный сервис или через PagerDuty for Slack (Acknowledge/Resolve для инцидентов).
 
-**Как сделать, чтобы алерт выделялся цветом?**  
+**Как сделать, чтобы алерт выделялся цветом?**
 В slack_configs задать color: 'danger' (красный), 'warning' (жёлтый), 'good' (зелёный для resolved).
 
 ## Глоссарий и таблицы

@@ -17,8 +17,6 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 
 # Spring Mail: Полное руководство по отправке email
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -148,7 +146,7 @@ spring.mail.default-encoding=UTF-8
 // Конфигурация JavaMailSender (SMTP)
 @Configuration
 public class MailConfig {
-    
+
     @Bean
     public JavaMailSenderImpl mailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
@@ -156,13 +154,13 @@ public class MailConfig {
         mailSender.setPort(587);
         mailSender.setUsername("your-email@gmail.com");
         mailSender.setPassword("your-password");
-        
+
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.debug", "true");
-        
+
         return mailSender;
     }
 }
@@ -176,17 +174,17 @@ public class MailConfig {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     public void sendSimpleEmail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
         message.setFrom("noreply@example.com");
-        
+
         mailSender.send(message);
     }
 }
@@ -198,15 +196,15 @@ public class EmailService {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     public void sendToMultipleRecipients(
-            String[] to, 
-            String[] cc, 
+            String[] to,
+            String[] cc,
             String[] bcc,
-            String subject, 
+            String subject,
             String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
@@ -215,7 +213,7 @@ public class EmailService {
         message.setSubject(subject);
         message.setText(text);
         message.setFrom("noreply@example.com");
-        
+
         mailSender.send(message);
     }
 }
@@ -229,20 +227,20 @@ public class EmailService {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
         MimeMessage message = mailSender.createMimeMessage();
-        
+
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true); // true = HTML
             helper.setFrom("noreply@example.com");
-            
+
             mailSender.send(message);
         } catch (MessagingException e) {
             throw new EmailException("Failed to send email", e);
@@ -257,27 +255,27 @@ public class EmailService {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     public void sendEmailWithAttachment(
-            String to, 
-            String subject, 
+            String to,
+            String subject,
             String text,
             String attachmentPath) {
         MimeMessage message = mailSender.createMimeMessage();
-        
+
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(text);
             helper.setFrom("noreply@example.com");
-            
+
             FileSystemResource file = new FileSystemResource(new File(attachmentPath));
             helper.addAttachment(file.getFilename(), file);
-            
+
             mailSender.send(message);
         } catch (MessagingException e) {
             throw new EmailException("Failed to send email", e);
@@ -292,27 +290,27 @@ public class EmailService {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     public void sendEmailWithInlineImage(
-            String to, 
-            String subject, 
+            String to,
+            String subject,
             String htmlContent,
             String imagePath) {
         MimeMessage message = mailSender.createMimeMessage();
-        
+
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
             helper.setFrom("noreply@example.com");
-            
+
             FileSystemResource image = new FileSystemResource(new File(imagePath));
             helper.addInline("logo", image);
-            
+
             mailSender.send(message);
         } catch (MessagingException e) {
             throw new EmailException("Failed to send email", e);
@@ -357,29 +355,29 @@ public class EmailService {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Autowired
     private TemplateEngine templateEngine;
-    
+
     public void sendWelcomeEmail(String to, String name, String email) {
         MimeMessage message = mailSender.createMimeMessage();
-        
+
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
             helper.setSubject("Welcome!");
             helper.setFrom("noreply@example.com");
-            
+
             Context context = new Context();
             context.setVariable("name", name);
             context.setVariable("email", email);
-            
+
             String htmlContent = templateEngine.process("email/welcome", context);
             helper.setText(htmlContent, true);
-            
+
             mailSender.send(message);
         } catch (MessagingException e) {
             throw new EmailException("Failed to send email", e);
@@ -428,36 +426,36 @@ public class EmailService {
 // Сервис отправки простого текстового письма
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Autowired
     private FreeMarkerConfigurer freeMarkerConfigurer;
-    
+
     public void sendOrderConfirmation(
-            String to, 
-            String orderId, 
+            String to,
+            String orderId,
             BigDecimal total,
             List<OrderItem> items) {
         MimeMessage message = mailSender.createMimeMessage();
-        
+
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(to);
             helper.setSubject("Order Confirmation");
             helper.setFrom("noreply@example.com");
-            
+
             Map<String, Object> model = new HashMap<>();
             model.put("orderId", orderId);
             model.put("total", total);
             model.put("items", items);
-            
+
             Template template = freeMarkerConfigurer.getConfiguration()
                 .getTemplate("email/order-confirmation.ftl");
             String htmlContent = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
             helper.setText(htmlContent, true);
-            
+
             mailSender.send(message);
         } catch (Exception e) {
             throw new EmailException("Failed to send email", e);
@@ -479,14 +477,14 @@ public class AsyncConfig {
 
 @Service
 public class EmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Async
     public CompletableFuture<Void> sendEmailAsync(
-            String to, 
-            String subject, 
+            String to,
+            String subject,
             String text) {
         try {
             sendSimpleEmail(to, subject, text);
@@ -557,35 +555,35 @@ spring.mail.port=587
 @Configuration
 @EnableRetry
 public class MailRetryConfig {
-    
+
     @Bean
     public RetryTemplate mailRetryTemplate() {
         RetryTemplate retryTemplate = new RetryTemplate();
-        
+
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(1000);
         backOffPolicy.setMultiplier(2);
         backOffPolicy.setMaxInterval(10000);
-        
+
         SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
         retryPolicy.setMaxAttempts(3);
-        
+
         retryTemplate.setBackOffPolicy(backOffPolicy);
         retryTemplate.setRetryPolicy(retryPolicy);
-        
+
         return retryTemplate;
     }
 }
 
 @Service
 public class RetryableEmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Autowired
     private RetryTemplate mailRetryTemplate;
-    
+
     public void sendEmailWithRetry(String to, String subject, String text) {
         mailRetryTemplate.execute(context -> {
             try {
@@ -611,10 +609,10 @@ public class RetryableEmailService {
 ```java
 @Service
 public class QueuedEmailService {
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     public void queueEmail(EmailMessage emailMessage) {
         rabbitTemplate.convertAndSend("email.queue", emailMessage);
     }
@@ -622,10 +620,10 @@ public class QueuedEmailService {
 
 @Component
 public class EmailQueueConsumer {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @RabbitListener(queues = "email.queue")
     public void processEmail(EmailMessage emailMessage) {
         try {
@@ -650,12 +648,12 @@ public class EmailQueueConsumer {
 ```java
 @Component
 public class EmailMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter emailsSent;
     private final Counter emailsFailed;
     private final Timer emailSendingTimer;
-    
+
     public EmailMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.emailsSent = Counter.builder("emails.sent")
@@ -668,15 +666,15 @@ public class EmailMetrics {
             .description("Email sending duration")
             .register(meterRegistry);
     }
-    
+
     public void recordEmailSent(String type) {
         emailsSent.increment(Tags.of("type", type));
     }
-    
+
     public void recordEmailFailed(String type) {
         emailsFailed.increment(Tags.of("type", type));
     }
-    
+
     public <T> T measureSending(String type, Supplier<T> supplier) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
@@ -700,16 +698,16 @@ public class EmailMetrics {
 ```java
 @Service
 public class DynamicTemplateService {
-    
+
     @Autowired
     private TemplateEngine templateEngine;
-    
+
     public String generateEmailContent(String templateName, Map<String, Object> variables) {
         Context context = new Context();
         variables.forEach(context::setVariable);
         return templateEngine.process(templateName, context);
     }
-    
+
     public void sendDynamicEmail(String to, String templateName, Map<String, Object> variables) {
         String content = generateEmailContent(templateName, variables);
         sendHtmlEmail(to, "Subject", content);
@@ -722,25 +720,25 @@ public class DynamicTemplateService {
 ```java
 @Service
 public class MultilingualEmailService {
-    
+
     @Autowired
     private TemplateEngine templateEngine;
-    
+
     @Autowired
     private MessageSource messageSource;
-    
+
     public void sendMultilingualEmail(String to, String locale, String templateName) {
         Locale emailLocale = Locale.forLanguageTag(locale);
         Context context = new Context(emailLocale);
-        
+
         // Добавление локализованных сообщений
         context.setVariable("greeting", messageSource.getMessage("email.greeting", null, emailLocale));
         context.setVariable("footer", messageSource.getMessage("email.footer", null, emailLocale));
-        
+
         String content = templateEngine.process(templateName, context);
         sendHtmlEmail(to, getSubject(emailLocale), content);
     }
-    
+
     private String getSubject(Locale locale) {
         return messageSource.getMessage("email.subject", null, locale);
     }
@@ -754,21 +752,21 @@ public class MultilingualEmailService {
 ```java
 @Service
 public class EmailValidationService {
-    
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-        "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", 
+        "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$",
         Pattern.CASE_INSENSITIVE
     );
-    
+
     public boolean isValidEmail(String email) {
         return email != null && EMAIL_PATTERN.matcher(email).matches();
     }
-    
+
     public void validateEmails(List<String> emails) {
         List<String> invalidEmails = emails.stream()
             .filter(email -> !isValidEmail(email))
             .collect(Collectors.toList());
-        
+
         if (!invalidEmails.isEmpty()) {
             throw new InvalidEmailException("Invalid emails: " + invalidEmails);
         }
@@ -780,35 +778,35 @@ public class EmailValidationService {
 
 ```java
 public class EmailRequest {
-    
+
     @Email
     @NotBlank
     private String to;
-    
+
     @NotBlank
     private String subject;
-    
+
     @NotBlank
     private String text;
-    
+
     // Getters and setters
 }
 
 @Service
 public class ValidatedEmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Autowired
     private Validator validator;
-    
+
     public void sendValidatedEmail(EmailRequest request) {
         Set<ConstraintViolation<EmailRequest>> violations = validator.validate(request);
         if (!violations.isEmpty()) {
             throw new ValidationException("Email validation failed", violations);
         }
-        
+
         sendEmail(request.getTo(), request.getSubject(), request.getText());
     }
 }
@@ -821,7 +819,7 @@ public class ValidatedEmailService {
 ```java
 @Configuration
 public class SecureMailConfig {
-    
+
     @Bean
     public JavaMailSender secureMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
@@ -829,14 +827,14 @@ public class SecureMailConfig {
         mailSender.setPort(587);
         mailSender.setUsername("your-email@gmail.com");
         mailSender.setPassword("your-password");
-        
+
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.starttls.required", "true");
         props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-        
+
         return mailSender;
     }
 }
@@ -847,18 +845,18 @@ public class SecureMailConfig {
 ```java
 @Service
 public class SpamProtectionService {
-    
+
     private final Map<String, AtomicInteger> emailCounts = new ConcurrentHashMap<>();
     private static final int MAX_EMAILS_PER_HOUR = 10;
-    
+
     public boolean canSendEmail(String to) {
         String key = to + ":" + LocalDateTime.now().getHour();
         int count = emailCounts.computeIfAbsent(key, k -> new AtomicInteger(0))
             .incrementAndGet();
-        
+
         return count <= MAX_EMAILS_PER_HOUR;
     }
-    
+
     public void recordEmailSent(String to) {
         String key = to + ":" + LocalDateTime.now().getHour();
         emailCounts.computeIfAbsent(key, k -> new AtomicInteger(0))
@@ -874,19 +872,19 @@ public class SpamProtectionService {
 ```java
 @SpringBootTest
 class EmailServiceTest {
-    
+
     @MockBean
     private JavaMailSender mailSender;
-    
+
     @Autowired
     private EmailService emailService;
-    
+
     @Test
     void testSendEmail() {
         doNothing().when(mailSender).send(any(MimeMessage.class));
-        
+
         emailService.sendHtmlEmail("test@example.com", "Subject", "Content");
-        
+
         verify(mailSender, times(1)).send(any(MimeMessage.class));
     }
 }
@@ -897,10 +895,10 @@ class EmailServiceTest {
 ```java
 @SpringBootTest
 class EmailIntegrationTest {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     @Test
     void testEmailSending() {
         // Использование тестового SMTP сервера (например, GreenMail)
@@ -908,7 +906,7 @@ class EmailIntegrationTest {
         message.setTo("test@example.com");
         message.setSubject("Test");
         message.setText("Test content");
-        
+
         assertDoesNotThrow(() -> mailSender.send(message));
     }
 }
@@ -921,18 +919,18 @@ class EmailIntegrationTest {
 ```java
 @Configuration
 public class OptimizedMailConfig {
-    
+
     @Bean
     public JavaMailSender optimizedMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(587);
-        
+
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.smtp.connectiontimeout", "5000");
         props.put("mail.smtp.timeout", "5000");
         props.put("mail.smtp.writetimeout", "5000");
-        
+
         return mailSender;
     }
 }
@@ -943,18 +941,18 @@ public class OptimizedMailConfig {
 ```java
 @Service
 public class BatchEmailService {
-    
+
     @Autowired
     private JavaMailSender mailSender;
-    
+
     public void sendBatchEmails(List<EmailMessage> messages) {
         MimeMessage[] mimeMessages = messages.stream()
             .map(this::createMimeMessage)
             .toArray(MimeMessage[]::new);
-        
+
         mailSender.send(mimeMessages);
     }
-    
+
     private MimeMessage createMimeMessage(EmailMessage emailMessage) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -982,3 +980,11 @@ public class BatchEmailService {
 - [Thymeleaf **Email** Templates](https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html#email-templates)
 - [JavaMail API](https://javaee.github.io/javamail/)
 - [**Email Best Practices**](https://www.baeldung.com/spring-email)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

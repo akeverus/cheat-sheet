@@ -122,7 +122,7 @@ public static int countWordsUsingRegex(String arg) {
     if (arg == null) {
         return 0;
     }
-    
+
     final String[] words = arg.split("[\\pP\\s&&[^']]+");
     return words.length;
 }
@@ -205,12 +205,12 @@ public static int countWordsManually(String arg) {
     if (arg == null) {
         return 0;
     }
-    
+
     int flag = SEPARATOR;
     int count = 0;
     int stringLength = arg.length();
     int characterCounter = 0;
-    
+
     while (characterCounter < stringLength) {
         if (isAllowedInWord(arg.charAt(characterCounter)) && flag == SEPARATOR) {
             flag = WORD;
@@ -218,10 +218,10 @@ public static int countWordsManually(String arg) {
         } else if (!isAllowedInWord(arg.charAt(characterCounter))) {
             flag = SEPARATOR;
         }
-        
+
         characterCounter++;
     }
-    
+
     return count;
 }
 ```
@@ -235,10 +235,10 @@ public static int countWordsImproved(String arg) {
     if (arg == null || arg.trim().isEmpty()) {
         return 0;
     }
-    
+
     int wordCount = 0;
     boolean inWord = false;
-    
+
     for (char c : arg.toCharArray()) {
         if (Character.isLetter(c) || c == '\'') {
             if (!inWord) {
@@ -249,7 +249,7 @@ public static int countWordsImproved(String arg) {
             inWord = false;
         }
     }
-    
+
     return wordCount;
 }
 ```
@@ -291,7 +291,7 @@ public static int countUniqueWords(String arg) {
     if (arg == null) {
         return 0;
     }
-    
+
     String[] words = arg.toLowerCase().split("[\\pP\\s&&[^']]+");
     Set<String> uniqueWords = new HashSet<>(Arrays.asList(words));
     return uniqueWords.size();
@@ -305,16 +305,16 @@ public static Map<String, Integer> countWordsWithFrequency(String arg) {
     if (arg == null) {
         return Collections.emptyMap();
     }
-    
+
     String[] words = arg.toLowerCase().split("[\\pP\\s&&[^']]+");
     Map<String, Integer> frequency = new HashMap<>();
-    
+
     for (String word : words) {
         if (!word.isEmpty()) {
             frequency.put(word, frequency.getOrDefault(word, 0) + 1);
         }
     }
-    
+
     return frequency;
 }
 ```
@@ -326,17 +326,17 @@ public static Map<Integer, Integer> countWordsByLength(String arg) {
     if (arg == null) {
         return Collections.emptyMap();
     }
-    
+
     String[] words = arg.split("[\\pP\\s&&[^']]+");
     Map<Integer, Integer> lengthCount = new HashMap<>();
-    
+
     for (String word : words) {
         if (!word.isEmpty()) {
             int length = word.length();
             lengthCount.put(length, lengthCount.getOrDefault(length, 0) + 1);
         }
     }
-    
+
     return lengthCount;
 }
 ```
@@ -373,10 +373,10 @@ fun countWordsManualK(text: String?): Int {
     if (text.isNullOrBlank()) {
         return 0
     }
-    
+
     var wordCount = 0
     var inWord = false
-    
+
     for (char in text) {
         if (char.isLetter() || char == '\'') {
             if (!inWord) {
@@ -387,7 +387,7 @@ fun countWordsManualK(text: String?): Int {
             inWord = false
         }
     }
-    
+
     return wordCount
 }
 ```
@@ -434,7 +434,7 @@ fun countWordsWithFrequencyK(text: String?): Map<String, Int> {
 ```kotlin
 fun main() {
     val text = "The quick brown fox jumps over the lazy dog"
-    
+
     println(countWordsK(text)) // 9
     println(countWordsFunctionalK(text)) // 9
     println(countUniqueWordsK(text)) // 8 (the повторяется)

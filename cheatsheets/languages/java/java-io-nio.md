@@ -1483,6 +1483,13 @@ public class IoStrategySelector {
 
 Правильное использование **Java** `IO` **API** позволяет создавать эффективные, безопасные и масштабируемые приложения.
 
----
 
 [⬆️ Наверх](./#java-cheatsheets)
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

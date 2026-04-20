@@ -40,7 +40,6 @@ updated: "2026-02-11"
 - [Глоссарий](#глоссарий)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -48,7 +47,6 @@ updated: "2026-02-11"
 
 **Ключевые понятия:** **WSGI**, **ASGI**, **ORM**, **Pydantic**, **OpenAPI**, **middleware**.
 
----
 
 ## Django
 
@@ -75,7 +73,6 @@ def item_detail(request, id):
 
 **DRF (Django REST Framework):** для **REST API** с сериализаторами, **ViewSet**, аутентификацией. Стандарт для **API** поверх **Django**.
 
----
 
 ## FastAPI
 
@@ -108,7 +105,6 @@ def create_item(name: str):
 
 **Запуск:** `uvicorn main:app --reload`. Документация: `/docs` (Swagger), `/redoc`.
 
----
 
 ## Flask
 
@@ -131,13 +127,11 @@ def get_item(id):
 
 **WSGI**-сервер: **Gunicorn**, **uWSGI**. Для асинхронности — расширения или переход на **FastAPI**/ **Starlette**.
 
----
 
 ## Starlette и ASGI
 
 **ASGI** (Asynchronous Server Gateway Interface) — асинхронный стандарт. **Starlette** — легковесный **ASGI** toolkit; **FastAPI** построен на нём. **Django** с **Django Channels** поддерживает **ASGI**. Для высоконагруженных асинхронных **API** типичен **FastAPI** + **Uvicorn**.
 
----
 
 ## Сравнение фреймворков
 
@@ -149,13 +143,11 @@ def get_item(id):
 
 **Выбор:** **Django** — большие проекты, админка, **ORM**; **FastAPI** — современный **API**, типизация, **OpenAPI**; **Flask** — гибкость, маленькие приложения.
 
----
 
 ## ORM и базы данных
 
 **Django ORM** — встроенный, миграции, модели. **SQLAlchemy** — универсальная **ORM**, используется с **Flask** и **FastAPI**. **Tortoise-ORM** — асинхронная **ORM** для **FastAPI**. **Alembic** — миграции для **SQLAlchemy**.
 
----
 
 ## Лучшие практики
 
@@ -164,7 +156,6 @@ def get_item(id):
 - **Flask**: структура приложения (blueprints), конфигурация из окружения, **Gunicorn** в production.
 - Секреты не в коде; переменные окружения или менеджеры секретов.
 
----
 
 ## Решение проблем
 
@@ -174,7 +165,6 @@ def get_item(id):
 | **FastAPI** 422 | Проверить типы и **Pydantic** модели (query/body/path) |
 | **Flask** 404 | Проверить порядок правил и регистрацию blueprints |
 
----
 
 ## Частые вопросы
 
@@ -182,7 +172,6 @@ def get_item(id):
 
 **WSGI vs ASGI?** **WSGI** — синхронный стандарт (**Gunicorn**, **uWSGI**). **ASGI** — асинхронный (**Uvicorn**, **Daphne**). Новые проекты на **FastAPI** используют **ASGI**.
 
----
 
 ## Глоссарий
 
@@ -195,11 +184,9 @@ def get_item(id):
 | **Starlette** | Легковесный **ASGI** toolkit |
 | **Uvicorn** | **ASGI** сервер |
 
----
 
 ## Заключение
 
 **Python**-экосистема предлагает **Django** для полноценных приложений, **FastAPI** для современного **API**, **Flask** для гибкости. Выбор по требованиям к **ORM**, админке и асинхронности. См. [Frameworks README](../README.md).
 
----
 

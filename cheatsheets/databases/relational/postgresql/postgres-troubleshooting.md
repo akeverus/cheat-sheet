@@ -24,7 +24,6 @@ updated: "2026-02-11"
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
 
----
 
 ## Содержание
 
@@ -139,7 +138,6 @@ updated: "2026-02-11"
 - Проблемы с соединениями
 - Проблемы с репликацией
 
----
 
 ## Блокировки и **Deadlocks**
 
@@ -149,7 +147,7 @@ updated: "2026-02-11"
 
 ```sql
 -- Текущие блокировки
-SELECT 
+SELECT
     blocked_locks.pid AS blocked_pid,
     blocked_activity.usename AS blocked_user,
     blocking_locks.pid AS blocking_pid,
@@ -159,9 +157,9 @@ SELECT
     blocked_activity.application_name AS blocked_app,
     blocking_activity.application_name AS blocking_app
 FROM pg_catalog.pg_locks blocked_locks
-JOIN pg_catalog.pg_stat_activity blocked_activity 
+JOIN pg_catalog.pg_stat_activity blocked_activity
     ON blocked_activity.pid = blocked_locks.pid
-JOIN pg_catalog.pg_locks blocking_locks 
+JOIN pg_catalog.pg_locks blocking_locks
     ON blocking_locks.locktype = blocked_locks.locktype
     AND blocking_locks.database IS NOT DISTINCT FROM blocked_locks.database
     AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
@@ -173,7 +171,7 @@ JOIN pg_catalog.pg_locks blocking_locks
     AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
     AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
     AND blocking_locks.pid != blocked_locks.pid
-JOIN pg_catalog.pg_stat_activity blocking_activity 
+JOIN pg_catalog.pg_stat_activity blocking_activity
     ON blocking_activity.pid = blocking_locks.pid
 WHERE NOT blocked_locks.granted;
 ```
@@ -182,7 +180,7 @@ WHERE NOT blocked_locks.granted;
 
 ```sql
 -- Все текущие блокировки с типами
-SELECT 
+SELECT
     locktype,
     database,
     relation::regclass,
@@ -225,7 +223,7 @@ WHERE usename = 'problematic_user';
 -- deadlock_timeout = 1s
 
 -- Мониторинг deadlocks
-SELECT 
+SELECT
     datname,
     deadlocks
 FROM pg_stat_database
@@ -239,7 +237,6 @@ WHERE deadlocks > 0;
 3. **Используйте правильный порядок блокировок**
 4. **Используйте `SELECT FOR UPDATE NOWAIT` для проверки блокировок**
 
----
 
 ## Медленные запросы
 
@@ -252,7 +249,7 @@ WHERE deadlocks > 0;
 -- log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
 
 -- Топ медленных запросов из pg_stat_statements
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -283,7 +280,7 @@ SELECT * FROM users WHERE email = 'test@example.com';
 
 ```sql
 -- Проверка использования индексов
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -294,7 +291,7 @@ WHERE schemaname = 'public'
 ORDER BY idx_scan;
 
 -- Поиск таблиц без индексов на часто используемых колонках
-SELECT 
+SELECT
     schemaname,
     tablename,
     attname,
@@ -318,7 +315,6 @@ CREATE INDEX idx_table1_fk ON table1(foreign_key_id);
 CREATE INDEX idx_table2_pk ON table2(id);
 ```
 
----
 
 ## Проблемы с памятью
 
@@ -332,7 +328,7 @@ SHOW shared_buffers;
 SHOW work_mem;
 
 -- Текущее использование памяти
-SELECT 
+SELECT
     name,
     setting,
     unit,
@@ -361,7 +357,7 @@ ORDER BY name;
 
 ```sql
 -- Мониторинг использования памяти процессами
-SELECT 
+SELECT
     pid,
     usename,
     datname,
@@ -380,7 +376,6 @@ WHERE state != 'idle';
 3. **Избегайте больших сортировок в памяти**
 4. **Используйте индексы для уменьшения работы в памяти**
 
----
 
 ## Проблемы с диском
 
@@ -388,14 +383,14 @@ WHERE state != 'idle';
 
 ```sql
 -- Размер всех баз данных
-SELECT 
+SELECT
     datname,
     pg_size_pretty(pg_database_size(datname)) AS size
 FROM pg_database
 ORDER BY pg_database_size(datname) DESC;
 
 -- Размер таблиц
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_size,
@@ -410,7 +405,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 ```sql
 -- Размер WAL файлов
-SELECT 
+SELECT
     pg_size_pretty(sum(size)) AS total_wal_size
 FROM pg_ls_waldir();
 
@@ -431,7 +426,7 @@ VACUUM ANALYZE;
 VACUUM FULL table_name;
 
 -- Проверка мертвых кортежей
-SELECT 
+SELECT
     schemaname,
     relname,
     n_live_tup,
@@ -442,7 +437,6 @@ WHERE n_dead_tup > 0
 ORDER BY n_dead_tup DESC;
 ```
 
----
 
 ## Проблемы с соединениями
 
@@ -450,7 +444,7 @@ ORDER BY n_dead_tup DESC;
 
 ```sql
 -- Текущие соединения
-SELECT 
+SELECT
     count(*) AS total_connections,
     count(*) FILTER (WHERE state = 'active') AS active_connections,
     count(*) FILTER (WHERE state = 'idle') AS idle_connections,
@@ -459,7 +453,7 @@ FROM pg_stat_activity
 WHERE datname = current_database();
 
 -- Соединения по пользователям
-SELECT 
+SELECT
     usename,
     count(*) AS connection_count,
     count(*) FILTER (WHERE state = 'active') AS active
@@ -487,7 +481,7 @@ SHOW max_connections;
 
 ```sql
 -- Соединения в состоянии idle in transaction
-SELECT 
+SELECT
     pid,
     usename,
     datname,
@@ -502,7 +496,6 @@ WHERE state = 'idle in transaction'
 ORDER BY state_change;
 ```
 
----
 
 ## Проблемы с репликацией
 
@@ -510,7 +503,7 @@ ORDER BY state_change;
 
 ```sql
 -- Статус репликации
-SELECT 
+SELECT
     client_addr,
     state,
     sent_lsn,
@@ -522,7 +515,7 @@ SELECT
 FROM pg_stat_replication;
 
 -- Лаг репликации
-SELECT 
+SELECT
     client_addr,
     state,
     pg_wal_lsn_diff(pg_current_wal_lsn(), sent_lsn) AS sent_lag,
@@ -547,7 +540,6 @@ FROM pg_stat_replication;
 -- wal_keep_segments = 32
 ```
 
----
 
 ## Проблемы с автовакуумом
 
@@ -555,7 +547,7 @@ FROM pg_stat_replication;
 
 ```sql
 -- Текущие процессы автовакуума
-SELECT 
+SELECT
     pid,
     datname,
     usename,
@@ -568,7 +560,7 @@ FROM pg_stat_activity
 WHERE query LIKE '%autovacuum%';
 
 -- Статистика автовакуума
-SELECT 
+SELECT
     schemaname,
     relname,
     last_vacuum,
@@ -602,7 +594,6 @@ ALTER TABLE large_table SET (
 );
 ```
 
----
 
 ## Диагностика производительности
 
@@ -610,7 +601,7 @@ ALTER TABLE large_table SET (
 
 ```sql
 -- Проверка системных ограничений
-SELECT 
+SELECT
     name,
     setting,
     unit,
@@ -634,7 +625,7 @@ ORDER BY name;
 
 ```sql
 -- Общая статистика производительности
-SELECT 
+SELECT
     datname,
     numbackends,
     xact_commit,
@@ -658,13 +649,12 @@ WHERE datname = current_database();
 
 ### Инструменты диагностики
 
-1. **pg_stat_statements** - статистика по запросам
-2. **pg_stat_activity** - активные соединения
-3. **EXPLAIN ANALYZE** - анализ планов выполнения
-4. **pgBadger** - анализ логов
-5. **pgAdmin** - графический интерфейс
+1. **pg_stat_statements** — статистика по запросам
+2. **pg_stat_activity** — активные соединения
+3. **EXPLAIN ANALYZE** — анализ планов выполнения
+4. **pgBadger** — анализ логов
+5. **pgAdmin** — графический интерфейс
 
----
 
 ## Лучшие практики
 
@@ -712,57 +702,57 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     -- Соединения
-    SELECT 
+    SELECT
         'Connections'::TEXT,
         'Total connections'::TEXT,
         COUNT(*)::TEXT,
-        CASE 
+        CASE
             WHEN COUNT(*) > (SELECT setting::INTEGER * 0.8 FROM pg_settings WHERE name = 'max_connections')
             THEN 'WARNING'
             ELSE 'OK'
         END
     FROM pg_stat_activity
-    
+
     UNION ALL
-    
+
     -- Блокировки
-    SELECT 
+    SELECT
         'Locks'::TEXT,
         'Blocked queries'::TEXT,
         COUNT(*)::TEXT,
         CASE WHEN COUNT(*) > 0 THEN 'WARNING' ELSE 'OK' END
     FROM pg_locks
     WHERE NOT granted
-    
+
     UNION ALL
-    
+
     -- Кэш
-    SELECT 
+    SELECT
         'Cache'::TEXT,
         'Cache hit ratio'::TEXT,
         ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2)::TEXT || '%',
-        CASE 
+        CASE
             WHEN 100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0) < 90 THEN 'WARNING'
             ELSE 'OK'
         END
     FROM pg_stat_database
     WHERE datname = current_database()
-    
+
     UNION ALL
-    
+
     -- Deadlocks
-    SELECT 
+    SELECT
         'Deadlocks'::TEXT,
         'Total deadlocks'::TEXT,
         deadlocks::TEXT,
         CASE WHEN deadlocks > 0 THEN 'WARNING' ELSE 'OK' END
     FROM pg_stat_database
     WHERE datname = current_database()
-    
+
     UNION ALL
-    
+
     -- Размер БД
-    SELECT 
+    SELECT
         'Database Size'::TEXT,
         'Total size'::TEXT,
         pg_size_pretty(pg_database_size(current_database())),
@@ -781,7 +771,7 @@ SELECT * FROM comprehensive_diagnostics();
 ```sql
 -- Расширенный анализ блокировок
 CREATE VIEW lock_analysis AS
-SELECT 
+SELECT
     l.locktype,
     l.database,
     l.relation::regclass AS table_name,
@@ -817,7 +807,7 @@ SELECT * FROM lock_analysis WHERE NOT granted;
 ```sql
 -- Детальный анализ медленных запросов
 CREATE VIEW slow_queries_analysis AS
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -883,7 +873,7 @@ sudo iptables -L -n | grep 5432
 
 ```sql
 -- Найти большие таблицы
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size,
@@ -895,7 +885,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
 LIMIT 20;
 
 -- Найти большие индексы
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -913,7 +903,7 @@ VACUUM FULL old_table;
 
 ```sql
 -- Найти запросы, использующие CPU
-SELECT 
+SELECT
     pid,
     usename,
     datname,
@@ -928,7 +918,7 @@ AND query NOT LIKE '%pg_stat_activity%'
 ORDER BY query_start;
 
 -- Найти запросы с большим количеством вызовов
-SELECT 
+SELECT
     query,
     calls,
     mean_exec_time,
@@ -942,7 +932,7 @@ LIMIT 20;
 
 ```sql
 -- Мониторинг использования памяти
-SELECT 
+SELECT
     pid,
     usename,
     datname,
@@ -954,7 +944,7 @@ WHERE state != 'idle'
 ORDER BY pg_backend_memory_contexts() DESC;
 
 -- Проверить настройки памяти
-SELECT 
+SELECT
     name,
     setting,
     unit,
@@ -974,7 +964,7 @@ WHERE name IN (
 
 ```sql
 -- Запросы, использующие CPU
-SELECT 
+SELECT
     pid,
     usename,
     datname,
@@ -994,7 +984,7 @@ ORDER BY query_start;
 
 ```sql
 -- Запросы с большим I/O
-SELECT 
+SELECT
     query,
     calls,
     mean_exec_time,
@@ -1015,7 +1005,7 @@ LIMIT 20;
 
 ```sql
 -- Проверить репликацию (может указывать на сетевые проблемы)
-SELECT 
+SELECT
     client_addr,
     state,
     pg_wal_lsn_diff(pg_current_wal_lsn(), sent_lsn) AS sent_lag_bytes,
@@ -1040,72 +1030,72 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     -- Проверка соединений
-    SELECT 
+    SELECT
         'Connections'::TEXT,
-        CASE 
+        CASE
             WHEN COUNT(*) > (SELECT setting::INTEGER * 0.9 FROM pg_settings WHERE name = 'max_connections')
             THEN 'CRITICAL'
             WHEN COUNT(*) > (SELECT setting::INTEGER * 0.8 FROM pg_settings WHERE name = 'max_connections')
             THEN 'WARNING'
             ELSE 'OK'
         END,
-        format('Current: %s, Max: %s', 
+        format('Current: %s, Max: %s',
             COUNT(*),
             (SELECT setting FROM pg_settings WHERE name = 'max_connections')
         ),
         COUNT(*)::TEXT
     FROM pg_stat_activity
-    
+
     UNION ALL
-    
+
     -- Проверка блокировок
-    SELECT 
+    SELECT
         'Locks'::TEXT,
         CASE WHEN COUNT(*) > 10 THEN 'WARNING' ELSE 'OK' END,
         format('%s queries are blocked', COUNT(*)),
         COUNT(*)::TEXT
     FROM pg_locks
     WHERE NOT granted
-    
+
     UNION ALL
-    
+
     -- Проверка кэша
-    SELECT 
+    SELECT
         'Cache Hit Ratio'::TEXT,
-        CASE 
+        CASE
             WHEN 100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0) < 90 THEN 'WARNING'
             WHEN 100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0) < 95 THEN 'INFO'
             ELSE 'OK'
         END,
-        format('Cache hit ratio: %s%%', 
+        format('Cache hit ratio: %s%%',
             ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2)
         ),
         ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2)::TEXT || '%'
     FROM pg_stat_database
     WHERE datname = current_database()
-    
+
     UNION ALL
-    
+
     -- Проверка deadlocks
-    SELECT 
+    SELECT
         'Deadlocks'::TEXT,
         CASE WHEN deadlocks > 0 THEN 'WARNING' ELSE 'OK' END,
         format('%s deadlocks detected', deadlocks),
         deadlocks::TEXT
     FROM pg_stat_database
     WHERE datname = current_database()
-    
+
     UNION ALL
-    
+
     -- Проверка репликации
-    SELECT 
+    SELECT
         'Replication'::TEXT,
-        CASE 
+        CASE
             WHEN COUNT(*) = 0 THEN 'INFO'
             WHEN MAX(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)) > 104857600 THEN 'WARNING'
             ELSE 'OK'
         END,
-        format('%s replicas, max lag: %s bytes', 
+        format('%s replicas, max lag: %s bytes',
             COUNT(*),
             COALESCE(MAX(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)), 0)
         ),
@@ -1129,35 +1119,35 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     -- Проблема: Слишком много соединений
-    SELECT 
+    SELECT
         'High Connection Count'::TEXT,
         'WARNING'::TEXT,
-        format('Current connections: %s (Max: %s)', 
+        format('Current connections: %s (Max: %s)',
             (SELECT COUNT(*) FROM pg_stat_activity),
             (SELECT setting FROM pg_settings WHERE name = 'max_connections')
         ),
         'Consider using connection pooling (PgBouncer)'::TEXT
-    WHERE (SELECT COUNT(*) FROM pg_stat_activity) > 
+    WHERE (SELECT COUNT(*) FROM pg_stat_activity) >
           (SELECT setting::INTEGER * 0.8 FROM pg_settings WHERE name = 'max_connections')
-    
+
     UNION ALL
-    
+
     -- Проблема: Низкий cache hit ratio
-    SELECT 
+    SELECT
         'Low Cache Hit Ratio'::TEXT,
         'WARNING'::TEXT,
-        format('Cache hit ratio: %s%%', 
+        format('Cache hit ratio: %s%%',
             ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2)
         ),
         'Consider increasing shared_buffers'::TEXT
     FROM pg_stat_database
     WHERE datname = current_database()
     AND 100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0) < 90
-    
+
     UNION ALL
-    
+
     -- Проблема: Много блокировок
-    SELECT 
+    SELECT
         'High Lock Count'::TEXT,
         'WARNING'::TEXT,
         format('%s queries are blocked', COUNT(*)),
@@ -1166,14 +1156,14 @@ BEGIN
     WHERE NOT granted
     GROUP BY 1
     HAVING COUNT(*) > 10
-    
+
     UNION ALL
-    
+
     -- Проблема: Большой lag репликации
-    SELECT 
+    SELECT
         'High Replication Lag'::TEXT,
         'WARNING'::TEXT,
-        format('Replication lag: %s bytes', 
+        format('Replication lag: %s bytes',
             MAX(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn))
         ),
         'Check network and disk performance on replica'::TEXT
@@ -1208,7 +1198,7 @@ EXPLAIN ANALYZE <problematic_query>;
 
 ```sql
 -- Шаг 1: Проверить текущие соединения
-SELECT 
+SELECT
     count(*) AS total,
     count(*) FILTER (WHERE state = 'active') AS active,
     count(*) FILTER (WHERE state = 'idle') AS idle,
@@ -1220,7 +1210,7 @@ SHOW max_connections;
 SHOW superuser_reserved_connections;
 
 -- Шаг 3: Проверить долгие idle соединения
-SELECT 
+SELECT
     pid,
     usename,
     state,
@@ -1244,7 +1234,7 @@ AND now() - state_change > interval '1 hour';
 SELECT pg_size_pretty(pg_database_size(current_database()));
 
 -- Шаг 2: Найти большие таблицы
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
@@ -1254,7 +1244,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
 LIMIT 10;
 
 -- Шаг 3: Проверить мертвые кортежи
-SELECT 
+SELECT
     schemaname,
     relname,
     n_live_tup,
@@ -1279,7 +1269,7 @@ FROM pg_ls_waldir();
 ```sql
 -- Диагностика внезапного падения производительности
 -- 1. Проверить активные запросы
-SELECT 
+SELECT
     pid,
     usename,
     query,
@@ -1329,7 +1319,7 @@ SELECT * FROM pg_replication_slots;
 SELECT * FROM pg_ls_waldir() ORDER BY modification DESC LIMIT 10;
 
 -- 4. Проверить лаг
-SELECT 
+SELECT
     client_addr,
     pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) AS lag_bytes
 FROM pg_stat_replication;
@@ -1365,7 +1355,7 @@ FROM pg_stat_replication;
 ```sql
 -- Детальный анализ производительности запросов
 CREATE VIEW query_performance_detail AS
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -1391,7 +1381,7 @@ FROM pg_stat_statements
 ORDER BY mean_exec_time DESC;
 
 -- Анализ запросов по типам операций
-SELECT 
+SELECT
     CASE
         WHEN query ILIKE '%SELECT%' THEN 'SELECT'
         WHEN query ILIKE '%INSERT%' THEN 'INSERT'
@@ -1413,7 +1403,7 @@ ORDER BY total_time DESC;
 ```sql
 -- Анализ использования индексов
 CREATE VIEW index_usage_analysis AS
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1421,7 +1411,7 @@ SELECT
     idx_tup_read AS tuples_read,
     idx_tup_fetch AS tuples_fetched,
     pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
-    CASE 
+    CASE
         WHEN idx_scan = 0 THEN 'UNUSED'
         WHEN idx_scan < 100 THEN 'LOW_USAGE'
         WHEN idx_scan < 1000 THEN 'MEDIUM_USAGE'
@@ -1431,7 +1421,7 @@ FROM pg_stat_user_indexes
 ORDER BY idx_scan, pg_relation_size(indexrelid) DESC;
 
 -- Найти неиспользуемые индексы
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1447,7 +1437,7 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 ```sql
 -- Анализ раздувания таблиц
 CREATE VIEW table_bloat_analysis AS
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_size,
@@ -1457,7 +1447,7 @@ SELECT
     round(100.0 * n_dead_tup / NULLIF(n_live_tup + n_dead_tup, 0), 2) AS dead_tuple_percent,
     last_vacuum,
     last_autovacuum,
-    CASE 
+    CASE
         WHEN n_dead_tup > n_live_tup THEN 'HIGH_BLOAT'
         WHEN n_dead_tup > n_live_tup * 0.5 THEN 'MEDIUM_BLOAT'
         WHEN n_dead_tup > 0 THEN 'LOW_BLOAT'
@@ -1480,7 +1470,7 @@ ALTER SYSTEM SET deadlock_timeout = 1s;
 SELECT pg_reload_conf();
 
 -- Шаг 2: Анализ паттернов deadlocks
-SELECT 
+SELECT
     datname,
     deadlocks,
     (SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active') AS active_queries
@@ -1499,7 +1489,7 @@ COMMIT;
 
 ```sql
 -- Шаг 1: Найти проблемные запросы
-SELECT 
+SELECT
     query,
     calls,
     mean_exec_time,
@@ -1528,7 +1518,7 @@ EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 
 ```sql
 -- Шаг 1: Проверить использование соединений
-SELECT 
+SELECT
     count(*) AS total,
     count(*) FILTER (WHERE state = 'active') AS active,
     count(*) FILTER (WHERE state = 'idle') AS idle,
@@ -1553,7 +1543,7 @@ SELECT pg_reload_conf();
 
 ```sql
 -- Шаг 1: Проверить лаг
-SELECT 
+SELECT
     client_addr,
     state,
     pg_wal_lsn_diff(pg_current_wal_lsn(), sent_lsn) AS sent_lag_bytes,
@@ -1591,35 +1581,35 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     -- Соединения
-    SELECT 
+    SELECT
         'connections'::TEXT,
         COUNT(*)::NUMERIC,
         (SELECT setting::NUMERIC * 0.8 FROM pg_settings WHERE name = 'max_connections'),
-        CASE 
+        CASE
             WHEN COUNT(*) > (SELECT setting::NUMERIC * 0.8 FROM pg_settings WHERE name = 'max_connections')
             THEN 'WARNING'
             ELSE 'OK'
         END
     FROM pg_stat_activity
-    
+
     UNION ALL
-    
+
     -- Cache hit ratio
-    SELECT 
+    SELECT
         'cache_hit_ratio'::TEXT,
         ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2),
         90.0,
-        CASE 
+        CASE
             WHEN 100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0) < 90 THEN 'WARNING'
             ELSE 'OK'
         END
     FROM pg_stat_database
     WHERE datname = current_database()
-    
+
     UNION ALL
-    
+
     -- Deadlocks
-    SELECT 
+    SELECT
         'deadlocks'::TEXT,
         deadlocks::NUMERIC,
         0.0,
@@ -1657,11 +1647,11 @@ BEGIN
     INSERT INTO database_alerts (alert_type, severity, message)
     VALUES (p_type, p_severity, p_message)
     RETURNING id INTO alert_id;
-    
+
     -- Отправить уведомление
-    PERFORM pg_notify('database_alert', 
+    PERFORM pg_notify('database_alert',
         format('Alert: %s - %s', p_severity, p_message));
-    
+
     RETURN alert_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -1686,14 +1676,14 @@ RETURNS VOID AS $$
 BEGIN
     -- Записать текущие метрики
     INSERT INTO performance_baseline (metric_name, metric_value)
-    SELECT 
+    SELECT
         'cache_hit_ratio',
         ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2)
     FROM pg_stat_database
     WHERE datname = current_database();
-    
+
     INSERT INTO performance_baseline (metric_name, metric_value)
-    SELECT 
+    SELECT
         'avg_query_time',
         AVG(mean_exec_time)
     FROM pg_stat_statements;
@@ -1712,26 +1702,26 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     WITH current_metrics AS (
-        SELECT 
+        SELECT
             'cache_hit_ratio' AS metric_name,
             ROUND(100.0 * blks_hit / NULLIF(blks_hit + blks_read, 0), 2) AS metric_value
         FROM pg_stat_database
         WHERE datname = current_database()
     ),
     baseline_metrics AS (
-        SELECT 
+        SELECT
             metric_name,
             AVG(metric_value) AS avg_value
         FROM performance_baseline
         WHERE recorded_at > NOW() - INTERVAL '7 days'
         GROUP BY metric_name
     )
-    SELECT 
+    SELECT
         c.metric_name,
         c.metric_value,
         b.avg_value,
         ROUND((c.metric_value - b.avg_value) / b.avg_value * 100, 2),
-        CASE 
+        CASE
             WHEN ABS((c.metric_value - b.avg_value) / b.avg_value * 100) > 10 THEN 'WARNING'
             ELSE 'OK'
         END
@@ -1818,13 +1808,9 @@ ALTER DATABASE mydb SET default_transaction_read_only = off;
 - [ ] Обновление статистики
 - [ ] Проверка конфигурации
 
----
 
-- [`PostgreSQL Troubleshooting`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Performance Tuning`](https://www.postgresql.org/docs/)
-- [`pgBadger`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Wiki`](https://www.postgresql.org/docs/)
-
----
-
+- [PostgreSQL Troubleshooting](https://www.postgresql.org/docs/)
+- [PostgreSQL Performance Tuning](https://www.postgresql.org/docs/)
+- [pgBadger](https://www.postgresql.org/docs/)
+- [PostgreSQL Wiki](https://www.postgresql.org/docs/)
 

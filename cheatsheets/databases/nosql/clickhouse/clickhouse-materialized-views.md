@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 ---
 
-# **ClickHouse**: Материализованные представления - Предварительно вычисленные агрегаты и трансформации
+# **ClickHouse**: Материализованные представления — Предварительно вычисленные агрегаты и трансформации
 
 Комплексное руководство по материализованным представлениям **ClickHouse**: создание, управление, оптимизация и практические примеры.
 
@@ -25,7 +25,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 - [AggregatingMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/aggregatingmergetree)
 - [SummingMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/summingmergetree)
 
-### **Baeldung**
+### Обучающие материалы
 - [ClickHouse Materialized Views](https://www.baeldung.com/clickhouse-materialized-views)
 
 ### См. также
@@ -81,7 +81,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 
 ### Принцип работы
 
-```
+```text
 Исходная таблица (events)
 ┌─────────────────────────────────┐
 │ event_id | user_id | event_type │
@@ -861,9 +861,9 @@ SYSTEM RESTORE REPLICA mv_name;
 
 ### Следующие темы:
 
-- **Репликация и кластеры** - распределение `MV`
-- **Производительность** - глубокий тюнинг
-- **Интеграции** - подключение внешних систем
+- **Репликация и кластеры** — распределение `MV`
+- **Производительность** — глубокий тюнинг
+- **Интеграции** — подключение внешних систем
 
 Материализованные представления позволяют создавать высокопроизводительные аналитические системы с минимальными усилиями по поддержке.
 
@@ -882,7 +882,6 @@ SYSTEM RESTORE REPLICA mv_name;
 - [MV Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
 - [Common Patterns](https://clickhouse.com/docs/en/guides/best-practices)
 
----
 
 **Следующие темы:**
 - [Репликация и кластеры](clickhouse-replication.md)

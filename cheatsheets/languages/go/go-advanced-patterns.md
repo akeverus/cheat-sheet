@@ -67,10 +67,10 @@ updated: "2026-02-06"
 
 ### Основные паттерны
 
-1. **Worker Pools** - пул воркеров для обработки задач
-2. **Pipelines** - цепочки обработки данных
-3. **Fan-out/Fan-in** - распределение и сбор результатов
-4. **Rate Limiting** - ограничение скорости обработки
+1. **Worker Pools** — пул воркеров для обработки задач
+2. **Pipelines** — цепочки обработки данных
+3. **Fan-out/Fan-in** — распределение и сбор результатов
+4. **Rate Limiting** — ограничение скорости обработки
 
 ## **Worker Pools**
 
@@ -85,7 +85,7 @@ import (
 func workerPool(ctx context.Context, jobs <-chan Job, results chan<- Result) {
     var wg sync.WaitGroup
     numWorkers := 10
-    
+
     for i := 0; i < numWorkers; i++ {
         wg.Add(1)
         go func() {
@@ -104,7 +104,7 @@ func workerPool(ctx context.Context, jobs <-chan Job, results chan<- Result) {
             }
         }()
     }
-    
+
     wg.Wait()
     close(results)
 }
@@ -116,22 +116,22 @@ func workerPool(ctx context.Context, jobs <-chan Job, results chan<- Result) {
 func workerPoolWithLimit(jobs <-chan Job, results chan<- Result, limit int) {
     sem := make(chan struct{}, limit)
     var wg sync.WaitGroup
-    
+
     for job := range jobs {
         wg.Add(1)
         sem <- struct{}{}  // Acquire
-        
+
         go func(j Job) {
             defer func() {
                 <-sem  // Release
                 wg.Done()
             }()
-            
+
             result := processJob(j)
             results <- result
         }(job)
     }
-    
+
     wg.Wait()
     close(results)
 }
@@ -151,7 +151,7 @@ func pipeline(input <-chan int) <-chan int {
             stage1 <- n * 2
         }
     }()
-    
+
     // Stage 2: Add
     stage2 := make(chan int)
     go func() {
@@ -160,7 +160,7 @@ func pipeline(input <-chan int) <-chan int {
             stage2 <- n + 1
         }
     }()
-    
+
     return stage2
 }
 ```
@@ -175,7 +175,7 @@ type Result struct {
 
 func pipelineWithErrors(input <-chan int) <-chan Result {
     results := make(chan Result)
-    
+
     go func() {
         defer close(results)
         for n := range input {
@@ -183,7 +183,7 @@ func pipelineWithErrors(input <-chan int) <-chan Result {
             results <- Result{Value: value, Error: err}
         }
     }()
-    
+
     return results
 }
 ```
@@ -195,11 +195,11 @@ func pipelineWithErrors(input <-chan int) <-chan Result {
 ```go
 func fanOut(input <-chan int, numWorkers int) []<-chan int {
     outputs := make([]<-chan int, numWorkers)
-    
+
     for i := 0; i < numWorkers; i++ {
         output := make(chan int)
         outputs[i] = output
-        
+
         go func(out chan<- int) {
             defer close(out)
             for n := range input {
@@ -207,7 +207,7 @@ func fanOut(input <-chan int, numWorkers int) []<-chan int {
             }
         }(output)
     }
-    
+
     return outputs
 }
 ```
@@ -218,7 +218,7 @@ func fanOut(input <-chan int, numWorkers int) []<-chan int {
 func fanIn(inputs []<-chan int) <-chan int {
     output := make(chan int)
     var wg sync.WaitGroup
-    
+
     for _, input := range inputs {
         wg.Add(1)
         go func(in <-chan int) {
@@ -228,12 +228,12 @@ func fanIn(inputs []<-chan int) <-chan int {
             }
         }(input)
     }
-    
+
     go func() {
         wg.Wait()
         close(output)
     }()
-    
+
     return output
 }
 ```
@@ -251,7 +251,7 @@ func rateLimitedHandler(limiter *rate.Limiter) http.HandlerFunc {
             http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
             return
         }
-        
+
         // Обработка запроса
         processRequest(w, r)
     }
@@ -277,7 +277,7 @@ func NewSlidingWindow(limit int, window time.Duration) *SlidingWindow {
 
 func (sw *SlidingWindow) Allow() bool {
     now := time.Now()
-    
+
     // Удаление старых запросов
     for {
         select {
@@ -290,12 +290,12 @@ func (sw *SlidingWindow) Allow() bool {
             break
         }
     }
-    
+
     // Проверка лимита
     if len(sw.requests) >= sw.limit {
         return false
     }
-    
+
     sw.requests <- now
     return true
 }
@@ -333,7 +333,7 @@ func (wp *WorkerPool) Start() {
 
 func (wp *WorkerPool) worker(id int) {
     defer wp.wg.Done()
-    
+
     for {
         select {
         case <-wp.ctx.Done():
@@ -342,9 +342,9 @@ func (wp *WorkerPool) worker(id int) {
             if !ok {
                 return
             }
-            
+
             result := wp.processJob(job)
-            
+
             select {
             case wp.results <- result:
             case <-wp.ctx.Done():
@@ -385,11 +385,11 @@ func multiplyStage(factor int) PipelineStage {
     return func(input <-chan int) (<-chan int, <-chan error) {
         output := make(chan int)
         errors := make(chan error)
-        
+
         go func() {
             defer close(output)
             defer close(errors)
-            
+
             for n := range input {
                 if n < 0 {
                     errors <- fmt.Errorf("negative number: %d", n)
@@ -398,7 +398,7 @@ func multiplyStage(factor int) PipelineStage {
                 output <- n * factor
             }
         }()
-        
+
         return output, errors
     }
 }
@@ -407,11 +407,11 @@ func addStage(value int) PipelineStage {
     return func(input <-chan int) (<-chan int, <-chan error) {
         output := make(chan int)
         errors := make(chan error)
-        
+
         go func() {
             defer close(output)
             defer close(errors)
-            
+
             for n := range input {
                 result := n + value
                 if result > 1000 {
@@ -421,7 +421,7 @@ func addStage(value int) PipelineStage {
                 output <- result
             }
         }()
-        
+
         return output, errors
     }
 }
@@ -429,18 +429,18 @@ func addStage(value int) PipelineStage {
 func RunPipeline(input <-chan int, stages ...PipelineStage) (<-chan int, <-chan error) {
     current := input
     allErrors := make(chan error)
-    
+
     for _, stage := range stages {
         var stageErrors <-chan error
         current, stageErrors = stage(current)
-        
+
         go func(errCh <-chan error) {
             for err := range errCh {
                 allErrors <- err
             }
         }(stageErrors)
     }
-    
+
     return current, allErrors
 }
 ```
@@ -468,7 +468,7 @@ func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
 func (cb *CircuitBreaker) Call(fn func() error) error {
     cb.mu.Lock()
     defer cb.mu.Unlock()
-    
+
     // Проверка состояния
     if cb.state == "open" {
         if time.Since(cb.lastFailure) > cb.timeout {
@@ -477,27 +477,27 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
             return fmt.Errorf("circuit breaker is open")
         }
     }
-    
+
     // Выполнение функции
     err := fn()
-    
+
     if err != nil {
         cb.failures++
         cb.lastFailure = time.Now()
-        
+
         if cb.failures >= cb.maxFailures {
             cb.state = "open"
         }
-        
+
         return err
     }
-    
+
     // Успешное выполнение
     if cb.state == "half-open" {
         cb.state = "closed"
     }
     cb.failures = 0
-    
+
     return nil
 }
 ```
@@ -524,19 +524,19 @@ func DefaultRetryConfig() *RetryConfig {
 func Retry(ctx context.Context, config *RetryConfig, fn func() error) error {
     var lastErr error
     delay := config.InitialDelay
-    
+
     for attempt := 0; attempt < config.MaxAttempts; attempt++ {
         if err := ctx.Err(); err != nil {
             return err
         }
-        
+
         err := fn()
         if err == nil {
             return nil
         }
-        
+
         lastErr = err
-        
+
         if attempt < config.MaxAttempts-1 {
             select {
             case <-ctx.Done():
@@ -549,7 +549,7 @@ func Retry(ctx context.Context, config *RetryConfig, fn func() error) error {
             }
         }
     }
-    
+
     return fmt.Errorf("failed after %d attempts: %w", config.MaxAttempts, lastErr)
 }
 ```
@@ -697,7 +697,7 @@ func NewBarrier(count int) *Barrier {
 func (b *Barrier) Wait() {
     b.mu.Lock()
     b.current++
-    
+
     if b.current == b.count {
         // Все достигли барьера
         close(b.waiters)
@@ -727,7 +727,7 @@ func NewFuture(fn func() (interface{}, error)) *Future {
         err:    make(chan error, 1),
         done:   make(chan struct{}),
     }
-    
+
     go func() {
         defer close(f.done)
         result, err := fn()
@@ -737,7 +737,7 @@ func NewFuture(fn func() (interface{}, error)) *Future {
             f.result <- result
         }
     }()
-    
+
     return f
 }
 
@@ -789,7 +789,7 @@ func (s *Subject) Subscribe(observer Observer) {
 func (s *Subject) Unsubscribe(observer Observer) {
     s.mu.Lock()
     defer s.mu.Unlock()
-    
+
     for i, obs := range s.observers {
         if obs == observer {
             s.observers = append(s.observers[:i], s.observers[i+1:]...)
@@ -803,7 +803,7 @@ func (s *Subject) Notify(event string, data interface{}) {
     observers := make([]Observer, len(s.observers))
     copy(observers, s.observers)
     s.mu.RUnlock()
-    
+
     for _, observer := range observers {
         go observer.Update(event, data)
     }
@@ -829,7 +829,7 @@ func NewThrottler(interval time.Duration) *Throttler {
 func (t *Throttler) Throttle(fn func()) {
     t.mu.Lock()
     defer t.mu.Unlock()
-    
+
     now := time.Now()
     if now.Sub(t.lastCall) >= t.interval {
         fn()
@@ -857,11 +857,11 @@ func NewDebouncer(delay time.Duration) *Debouncer {
 func (d *Debouncer) Debounce(fn func()) {
     d.mu.Lock()
     defer d.mu.Unlock()
-    
+
     if d.timer != nil {
         d.timer.Stop()
     }
-    
+
     d.pending = fn
     d.timer = time.AfterFunc(d.delay, func() {
         d.mu.Lock()
@@ -906,7 +906,7 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
     cb.mu.RLock()
     state := cb.state
     cb.mu.RUnlock()
-    
+
     if state == StateOpen {
         if time.Since(cb.lastFailTime) > cb.timeout {
             cb.mu.Lock()
@@ -916,22 +916,22 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
             return fmt.Errorf("circuit breaker is open")
         }
     }
-    
+
     err := fn()
-    
+
     cb.mu.Lock()
     defer cb.mu.Unlock()
-    
+
     if err != nil {
         cb.failures++
         cb.lastFailTime = time.Now()
-        
+
         if cb.failures >= cb.maxFailures {
             cb.state = StateOpen
         }
         return err
     }
-    
+
     cb.failures = 0
     cb.state = StateClosed
     return nil
@@ -959,21 +959,21 @@ func NewRetrier(config RetryConfig) *Retrier {
 
 func (r *Retrier) Do(ctx context.Context, fn func() error) error {
     delay := r.config.InitialDelay
-    
+
     for attempt := 0; attempt < r.config.MaxAttempts; attempt++ {
         err := fn()
         if err == nil {
             return nil
         }
-        
+
         if !r.config.Retryable(err) {
             return err
         }
-        
+
         if attempt == r.config.MaxAttempts-1 {
             return fmt.Errorf("max attempts reached: %w", err)
         }
-        
+
         select {
         case <-ctx.Done():
             return ctx.Err()
@@ -984,7 +984,7 @@ func (r *Retrier) Do(ctx context.Context, fn func() error) error {
             }
         }
     }
-    
+
     return fmt.Errorf("retry failed")
 }
 ```
@@ -1009,7 +1009,7 @@ func NewBulkhead(maxConcurrency int, timeout time.Duration) *Bulkhead {
 func (b *Bulkhead) Execute(ctx context.Context, fn func() error) error {
     ctx, cancel := context.WithTimeout(ctx, b.timeout)
     defer cancel()
-    
+
     select {
     case b.semaphore <- struct{}{}:
         defer func() { <-b.semaphore }()
@@ -1026,12 +1026,12 @@ func (b *Bulkhead) Execute(ctx context.Context, fn func() error) error {
 func WithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context) error) error {
     ctx, cancel := context.WithTimeout(ctx, timeout)
     defer cancel()
-    
+
     done := make(chan error, 1)
     go func() {
         done <- fn(ctx)
     }()
-    
+
     select {
     case err := <-done:
         return err
@@ -1043,12 +1043,12 @@ func WithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Con
 func WithDeadline(ctx context.Context, deadline time.Time, fn func(context.Context) error) error {
     ctx, cancel := context.WithDeadline(ctx, deadline)
     defer cancel()
-    
+
     done := make(chan error, 1)
     go func() {
         done <- fn(ctx)
     }()
-    
+
     select {
     case err := <-done:
         return err
@@ -1073,19 +1073,19 @@ func ExecuteWithTimeoutAndRetry(
     fn func(context.Context) error,
 ) error {
     var lastErr error
-    
+
     for attempt := 0; attempt < config.MaxRetries; attempt++ {
         timeoutCtx, cancel := context.WithTimeout(ctx, config.Timeout)
-        
+
         err := fn(timeoutCtx)
         cancel()
-        
+
         if err == nil {
             return nil
         }
-        
+
         lastErr = err
-        
+
         if attempt < config.MaxRetries-1 {
             select {
             case <-ctx.Done():
@@ -1094,8 +1094,8 @@ func ExecuteWithTimeoutAndRetry(
             }
         }
     }
-    
-    return fmt.Errorf("operation failed after %d retries: %w", 
+
+    return fmt.Errorf("operation failed after %d retries: %w",
         config.MaxRetries, lastErr)
 }
 ```
@@ -1129,14 +1129,14 @@ func (sm *ShutdownManager) Register(service Shutdownable) {
 func (sm *ShutdownManager) Shutdown(ctx context.Context) error {
     ctx, cancel := context.WithTimeout(ctx, sm.timeout)
     defer cancel()
-    
+
     errCh := make(chan error, len(sm.services))
     var wg sync.WaitGroup
-    
+
     sm.mu.Lock()
     services := sm.services
     sm.mu.Unlock()
-    
+
     for _, service := range services {
         wg.Add(1)
         go func(svc Shutdownable) {
@@ -1146,42 +1146,42 @@ func (sm *ShutdownManager) Shutdown(ctx context.Context) error {
             }
         }(service)
     }
-    
+
     go func() {
         wg.Wait()
         close(errCh)
     }()
-    
+
     var errs []error
     for err := range errCh {
         errs = append(errs, err)
     }
-    
+
     if len(errs) > 0 {
         return fmt.Errorf("shutdown errors: %v", errs)
     }
-    
+
     return nil
 }
 ```
 
 ## Лучшие практики
 
-1. **Используйте context** - для отмены операций
-2. **Закрывайте каналы** - для предотвращения утечек
-3. **Используйте WaitGroup** - для синхронизации горутин
-4. **Ограничивайте ресурсы** - используйте **semaphores** для ограничения
-5. **Обрабатывайте ошибки** - правильно обрабатывайте ошибки в паттернах
-6. **Используйте circuit breaker** - для защиты от каскадных отказов
-7. **Используйте retry** - для обработки временных ошибок
-8. **Используйте backpressure** - для управления нагрузкой
-9. **Используйте throttling** - для ограничения частоты вызовов
-10. **Используйте debouncing** - для группировки событий
-11. **Используйте timeout** - для предотвращения зависаний
-12. **Используйте graceful shutdown** - для корректного завершения
-13. **Комбинируйте паттерны** - используйте несколько паттернов вместе
-14. **Тестируйте паттерны** - проверяйте поведение паттернов
-15. **Мониторьте паттерны** - отслеживайте использование паттернов
+1. **Используйте context** — для отмены операций
+2. **Закрывайте каналы** — для предотвращения утечек
+3. **Используйте WaitGroup** — для синхронизации горутин
+4. **Ограничивайте ресурсы** — используйте **semaphores** для ограничения
+5. **Обрабатывайте ошибки** — правильно обрабатывайте ошибки в паттернах
+6. **Используйте circuit breaker** — для защиты от каскадных отказов
+7. **Используйте retry** — для обработки временных ошибок
+8. **Используйте backpressure** — для управления нагрузкой
+9. **Используйте throttling** — для ограничения частоты вызовов
+10. **Используйте debouncing** — для группировки событий
+11. **Используйте timeout** — для предотвращения зависаний
+12. **Используйте graceful shutdown** — для корректного завершения
+13. **Комбинируйте паттерны** — используйте несколько паттернов вместе
+14. **Тестируйте паттерны** — проверяйте поведение паттернов
+15. **Мониторьте паттерны** — отслеживайте использование паттернов
 
 ### Практические примеры: **Event-driven** паттерн
 
@@ -1205,17 +1205,17 @@ func NewEventBus() *EventBus {
 func (eb *EventBus) Subscribe(eventType string) <-chan Event {
     eb.mu.Lock()
     defer eb.mu.Unlock()
-    
+
     ch := make(chan Event, 10)
     eb.subscribers[eventType] = append(eb.subscribers[eventType], ch)
-    
+
     return ch
 }
 
 func (eb *EventBus) Publish(event Event) {
     eb.mu.RLock()
     defer eb.mu.RUnlock()
-    
+
     for _, ch := range eb.subscribers[event.Type] {
         select {
         case ch <- event:
@@ -1243,3 +1243,11 @@ func (eb *EventBus) Publish(event Event) {
 
 - [Go Concurrency Patterns](https://go.dev/blog/pipelines)
 - [Advanced Go Concurrency Patterns](https://go.dev/blog/advanced-go-concurrency-patterns)
+
+## См. также
+
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]
+- [[go-collections|Go: коллекции]]

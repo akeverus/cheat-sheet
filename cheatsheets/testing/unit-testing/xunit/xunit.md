@@ -41,7 +41,6 @@ updated: "2026-02-11"
 - [Справочник](#справочник)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -60,7 +59,6 @@ updated: "2026-02-11"
 | **Fixture** | Общий ресурс для класса: `IClassFixture<T>`, внедрение через конструктор. |
 | **Assert** | Проверки: `Assert.Equal`, `Assert.True`, `Assert.Throws` и др. |
 
----
 
 ## Установка и настройка
 
@@ -97,7 +95,6 @@ dotnet add package Microsoft.NET.Test.Sdk
 </ItemGroup>
 ```
 
----
 
 ## Базовое использование
 
@@ -128,7 +125,6 @@ dotnet test --filter "FullyQualifiedName~CalculatorTests"
 dotnet test --logger "console;verbosity=detailed"
 ```
 
----
 
 ## Факты и теории
 
@@ -178,7 +174,6 @@ public void IntegrationTest() { }
 
 Запуск по категории: `dotnet test --filter "Category=Integration"`.
 
----
 
 ## Фикстуры
 
@@ -222,7 +217,6 @@ public class TestsA : IClassFixture<DatabaseFixture>
 
 Фикстура создаётся один раз на коллекцию. В тестовом классе можно реализовать `IDisposable` — `Dispose` вызывается после каждого теста (очистка ресурсов экземпляра).
 
----
 
 ## Ассерты
 
@@ -262,7 +256,6 @@ Assert.Matches(@"\d+", "123");
 
 Сообщение при падении: `Assert.True(condition, "Причина: {0}", reason);`
 
----
 
 ## Параллельность и изоляция
 
@@ -291,7 +284,6 @@ Assert.Matches(@"\d+", "123");
 
 Для последовательного запуска одного класса — поместить его в отдельную коллекцию (без фикстуры) и при необходимости ограничить параллелизм в конфиге.
 
----
 
 ## Расширенные сценарии
 
@@ -341,7 +333,6 @@ ex.Should().BeOfType<ArgumentException>().Which.Message.Should().Contain("invali
 
 Асинхронные тесты: метод с `async Task` и `await` — поддерживается без дополнительных атрибутов.
 
----
 
 ## Интеграция с CI/CD
 
@@ -351,7 +342,6 @@ dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --col
 
 Результаты TRX и отчёты покрытия публикуются в Azure DevOps, GitHub Actions, Jenkins. В GitHub Actions — задача `dotnet test` и шаг публикации TRX (например, `dorny/test-reporter` с `reporter: dotnet-trx`). В Azure DevOps — задача .NET Core `test` и «Publish Test Results» по TRX.
 
----
 
 ## Лучшие практики
 
@@ -364,28 +354,27 @@ dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --col
 - **Трейты** — `[Trait("Category", "Integration")]` для выборочного запуска в CI.
 - **FluentAssertions** — для сложных и читаемых проверок.
 
----
 
 ## FAQ и решение проблем
 
 ### Частые вопросы
 
-**Чем xUnit отличается от NUnit и MSTest?**  
+**Чем xUnit отличается от NUnit и MSTest?**
 Новый экземпляр класса на каждый тест (изоляция); нет [SetUp]/[TearDown] — подготовка в конструкторе, очистка через `IDisposable`; параллельный запуск по умолчанию.
 
-**IClassFixture vs ICollectionFixture?**  
+**IClassFixture vs ICollectionFixture?**
 `IClassFixture` — ресурс для одного тестового класса. `ICollectionFixture` — общий ресурс для нескольких классов с одной коллекцией `[Collection("Name")]` (например, одна БД на несколько классов).
 
-**Как параметры из файла?**  
+**Как параметры из файла?**
 `[MemberData]` или `[ClassData]`, где метод/класс читает CSV/JSON и возвращает `IEnumerable<object[]>`.
 
-**Поддержка .NET Framework?**  
+**Поддержка .NET Framework?**
 Да (например, `net48`); пакеты xunit и xunit.runner.visualstudio поддерживают .NET Framework.
 
-**Запуск одного теста:**  
+**Запуск одного теста:**
 `dotnet test --filter "FullyQualifiedName~TestMethodName"` или Run Test из IDE.
 
-**Отключить параллелизм для одного класса:**  
+**Отключить параллелизм для одного класса:**
 Поместить класс в отдельную коллекцию; в `xunit.runner.json` задать `parallelizeTestCollections: false` или ограничить `maxParallelThreads`.
 
 ### Таблица: симптомы и действия
@@ -400,7 +389,6 @@ dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --col
 | Нет отчёта покрытия | Нет коллектора | Добавить `coverlet.collector`, запуск с `--collect:"XPlat Code Coverage"` |
 | Тест пропускается без явного Skip | Условие или исключение до Assert | Проверить логи; для условного пропуска — `[Fact(Skip = "reason")]` |
 
----
 
 ## Справочник
 
@@ -448,7 +436,6 @@ dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --col
 | **Trait** | Метаданные для фильтрации |
 | **TRX** | Формат отчёта результатов (Visual Studio / dotnet test) |
 
----
 
 ## Заключение
 

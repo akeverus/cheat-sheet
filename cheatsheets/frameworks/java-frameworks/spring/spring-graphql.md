@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 
 # Spring GraphQL: Полное руководство
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -238,11 +236,11 @@ public class UserQueryResolver implements GraphQLQueryResolver {
         return userService.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     public List<User> users() {
         return userService.findAll();
     }
-    
+
     public List<User> usersByAge(Integer minAge, Integer maxAge) {
         return userService.findByAgeBetween(minAge, maxAge);
     }
@@ -255,14 +253,14 @@ public class UserQueryResolver implements GraphQLQueryResolver {
 // Резолвер поля для типа User (GraphQLResolver)
 @Component
 public class UserResolver implements GraphQLResolver<User> {
-    
+
     @Autowired
     private OrderService orderService;
-    
+
     public List<Order> orders(User user) {
         return orderService.findByUserId(user.getId());
     }
-    
+
     public Integer orderCount(User user) {
         return orderService.countByUserId(user.getId());
     }
@@ -274,10 +272,10 @@ public class UserResolver implements GraphQLResolver<User> {
 ```java
 @Component
 public class UserMutationResolver implements GraphQLMutationResolver {
-    
+
     @Autowired
     private UserService userService;
-    
+
     public User createUser(UserInput input) {
         User user = new User();
         user.setName(input.getName());
@@ -285,7 +283,7 @@ public class UserMutationResolver implements GraphQLMutationResolver {
         user.setAge(input.getAge());
         return userService.save(user);
     }
-    
+
     public User updateUser(Long id, UserInput input) {
         User user = userService.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
@@ -294,7 +292,7 @@ public class UserMutationResolver implements GraphQLMutationResolver {
         user.setAge(input.getAge());
         return userService.save(user);
     }
-    
+
     public Boolean deleteUser(Long id) {
         userService.deleteById(id);
         return true;
@@ -309,10 +307,10 @@ public class UserMutationResolver implements GraphQLMutationResolver {
 ```java
 @Component
 public class UserDataFetcher implements DataFetcher<User> {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Override
     public User get(DataFetchingEnvironment environment) throws Exception {
         Long id = environment.getArgument("id");
@@ -323,7 +321,7 @@ public class UserDataFetcher implements DataFetcher<User> {
 
 @Configuration
 public class GraphQLConfig {
-    
+
     @Bean
     public RuntimeWiringConfigurer runtimeWiringConfigurer(UserDataFetcher userDataFetcher) {
         return wiringBuilder -> wiringBuilder
@@ -339,10 +337,10 @@ public class GraphQLConfig {
 ```java
 @Component
 public class OrderDataFetcher implements DataFetcher<List<Order>> {
-    
+
     @Autowired
     private OrderService orderService;
-    
+
     @Override
     public List<Order> get(DataFetchingEnvironment environment) throws Exception {
         User user = environment.getSource();
@@ -359,12 +357,12 @@ public class OrderDataFetcher implements DataFetcher<List<Order>> {
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
-    
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(graphQLWebSocketHandler(), "/graphql-ws");
     }
-    
+
     @Bean
     public WebSocketHandler graphQLWebSocketHandler() {
         return new GraphQLWebSocketHandler();
@@ -377,14 +375,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
 ```java
 @Component
 public class UserSubscriptionResolver implements GraphQLSubscriptionResolver {
-    
+
     @Autowired
     private UserService userService;
-    
+
     public Publisher<User> userCreated() {
         return userService.getUserCreatedPublisher();
     }
-    
+
     public Publisher<User> userUpdated() {
         return userService.getUserUpdatedPublisher();
     }
@@ -398,7 +396,7 @@ public class UserSubscriptionResolver implements GraphQLSubscriptionResolver {
 ```java
 @Component
 public class GraphQLExceptionHandler {
-    
+
     @GraphQLExceptionHandler
     public GraphQLError handleUserNotFound(UserNotFoundException ex) {
         return GraphQLError.newError()
@@ -406,7 +404,7 @@ public class GraphQLExceptionHandler {
             .message(ex.getMessage())
             .build();
     }
-    
+
     @GraphQLExceptionHandler
     public GraphQLError handleValidation(ValidationException ex) {
         return GraphQLError.newError()
@@ -472,7 +470,7 @@ public GraphQLError handleException(Exception ex) {
 // ✅ Хорошо
 @Bean
 public DataLoader<Long, List<Order>> orderDataLoader() {
-    return DataLoader.newDataLoader(userIds -> 
+    return DataLoader.newDataLoader(userIds ->
         orderService.findByUserIds(userIds));
 }
 ```
@@ -488,7 +486,7 @@ public User createUser(@Valid UserInput input) {
 
 ## DataLoader для решения N+1 проблем
 
-**DataLoader** - это паттерн для батчинга и кэширования запросов, который решает проблему N+1 запросов в **GraphQL**.
+**DataLoader** — это паттерн для батчинга и кэширования запросов, который решает проблему N+1 запросов в **GraphQL**.
 
 ### Проблема N+1
 
@@ -498,7 +496,7 @@ public User createUser(@Valid UserInput input) {
 public class UserResolver implements GraphQLResolver<User> {
     @Autowired
     private OrderService orderService;
-    
+
     public List<Order> orders(User user) {
         // Для каждого пользователя выполняется отдельный запрос
         return orderService.findByUserId(user.getId());
@@ -511,10 +509,10 @@ public class UserResolver implements GraphQLResolver<User> {
 ```java
 @Component
 public class OrderDataLoader implements BatchLoader<Long, List<Order>> {
-    
+
     @Autowired
     private OrderService orderService;
-    
+
     @Override
     public CompletionStage<List<List<Order>>> load(List<Long> userIds) {
         // Один запрос для всех пользователей
@@ -522,7 +520,7 @@ public class OrderDataLoader implements BatchLoader<Long, List<Order>> {
             .findByUserIds(userIds)
             .stream()
             .collect(Collectors.groupingBy(Order::getUserId));
-        
+
         return CompletableFuture.completedFuture(
             userIds.stream()
                 .map(userId -> ordersByUserId.getOrDefault(userId, Collections.emptyList()))
@@ -533,13 +531,13 @@ public class OrderDataLoader implements BatchLoader<Long, List<Order>> {
 
 @Configuration
 public class GraphQLDataLoaderConfig {
-    
+
     @Bean
     public DataLoaderRegistryFactory dataLoaderRegistryFactory(
             OrderDataLoader orderDataLoader) {
         return () -> {
             DataLoaderRegistry registry = new DataLoaderRegistry();
-            registry.register("orders", 
+            registry.register("orders",
                 DataLoader.newDataLoader(orderDataLoader));
             return registry;
         };
@@ -548,10 +546,10 @@ public class GraphQLDataLoaderConfig {
 
 @Component
 public class UserResolver implements GraphQLResolver<User> {
-    
-    public CompletableFuture<List<Order>> orders(User user, 
+
+    public CompletableFuture<List<Order>> orders(User user,
             DataFetchingEnvironment environment) {
-        DataLoader<Long, List<Order>> orderDataLoader = 
+        DataLoader<Long, List<Order>> orderDataLoader =
             environment.getDataLoader("orders");
         return orderDataLoader.load(user.getId());
     }
@@ -563,10 +561,10 @@ public class UserResolver implements GraphQLResolver<User> {
 ```java
 @Component
 public class OrderDataLoader implements BatchLoader<Long, List<Order>> {
-    
+
     @Autowired
     private OrderService orderService;
-    
+
     @Override
     public CompletionStage<List<List<Order>>> load(List<Long> userIds) {
         // DataLoader автоматически кэширует результаты в рамках одного запроса
@@ -614,19 +612,19 @@ enum UserStatus {
 ```java
 @Component
 public class UserQueryResolver implements GraphQLQueryResolver {
-    
+
     @Autowired
     private UserService userService;
-    
+
     public UserPage users(UserFilter filter, Integer page, Integer size) {
         if (page == null) page = 0;
         if (size == null) size = 20;
-        
+
         Pageable pageable = PageRequest.of(page, size);
         Specification<User> spec = buildSpecification(filter);
-        
+
         Page<User> userPage = userService.findAll(spec, pageable);
-        
+
         return UserPage.builder()
             .content(userPage.getContent())
             .totalElements((int) userPage.getTotalElements())
@@ -635,34 +633,34 @@ public class UserQueryResolver implements GraphQLQueryResolver {
             .size(size)
             .build();
     }
-    
+
     private Specification<User> buildSpecification(UserFilter filter) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            
+
             if (filter.getName() != null) {
                 predicates.add(cb.like(
-                    cb.lower(root.get("name")), 
+                    cb.lower(root.get("name")),
                     "%" + filter.getName().toLowerCase() + "%"
                 ));
             }
-            
+
             if (filter.getEmail() != null) {
                 predicates.add(cb.equal(root.get("email"), filter.getEmail()));
             }
-            
+
             if (filter.getMinAge() != null) {
                 predicates.add(cb.ge(root.get("age"), filter.getMinAge()));
             }
-            
+
             if (filter.getMaxAge() != null) {
                 predicates.add(cb.le(root.get("age"), filter.getMaxAge()));
             }
-            
+
             if (filter.getStatus() != null) {
                 predicates.add(cb.equal(root.get("status"), filter.getStatus()));
             }
-            
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -701,32 +699,32 @@ enum SortDirection {
 ```java
 @Component
 public class UserQueryResolver implements GraphQLQueryResolver {
-    
+
     @Autowired
     private UserService userService;
-    
+
     public List<User> users(List<UserSort> sorts) {
         Sort sort = buildSort(sorts);
         return userService.findAll(sort);
     }
-    
+
     private Sort buildSort(List<UserSort> sorts) {
         if (sorts == null || sorts.isEmpty()) {
             return Sort.by("name").ascending();
         }
-        
+
         List<Sort.Order> orders = sorts.stream()
             .map(s -> new Sort.Order(
-                s.getDirection() == SortDirection.ASC 
-                    ? Sort.Direction.ASC 
+                s.getDirection() == SortDirection.ASC
+                    ? Sort.Direction.ASC
                     : Sort.Direction.DESC,
                 mapFieldName(s.getField())
             ))
             .collect(Collectors.toList());
-        
+
         return Sort.by(orders);
     }
-    
+
     private String mapFieldName(UserSortField field) {
         switch (field) {
             case NAME: return "name";
@@ -771,13 +769,13 @@ type Query {
 ```java
 @Component
 public class NodeQueryResolver implements GraphQLQueryResolver {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private ProductService productService;
-    
+
     public Node node(String id) {
         if (id.startsWith("USER_")) {
             Long userId = Long.parseLong(id.substring(5));
@@ -788,7 +786,7 @@ public class NodeQueryResolver implements GraphQLQueryResolver {
         }
         return null;
     }
-    
+
     public List<Node> nodes(List<String> ids) {
         return ids.stream()
             .map(this::node)
@@ -811,16 +809,16 @@ type Query {
 ```java
 @Component
 public class SearchQueryResolver implements GraphQLQueryResolver {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private ProductService productService;
-    
+
     @Autowired
     private OrderService orderService;
-    
+
     public List<Object> search(String query) {
         List<Object> results = new ArrayList<>();
         results.addAll(userService.search(query));
@@ -851,17 +849,17 @@ type Query {
 ```java
 @Component
 public class AuthDirective implements SchemaDirectiveWiring {
-    
+
     @Override
     public GraphQLFieldDefinition onField(
             SchemaDirectiveWiringEnvironment<GraphQLFieldDefinition> environment) {
-        
+
         GraphQLFieldDefinition field = environment.getFieldDefinition();
         List<String> roles = (List<String>) environment
             .getAppliedDirective("auth")
             .getArgument("roles")
             .getValue();
-        
+
         DataFetcher<?> originalDataFetcher = environment.getFieldDataFetcher();
         DataFetcher<?> authDataFetcher = environment -> {
             // Проверка авторизации
@@ -871,12 +869,12 @@ public class AuthDirective implements SchemaDirectiveWiring {
             }
             return originalDataFetcher.get(environment);
         };
-        
-        return field.transform(builder -> 
+
+        return field.transform(builder ->
             builder.dataFetcher(authDataFetcher)
         );
     }
-    
+
     private boolean hasRoles(Authentication auth, List<String> roles) {
         return auth.getAuthorities().stream()
             .anyMatch(a -> roles.contains(a.getAuthority()));
@@ -949,11 +947,11 @@ query {
 ```java
 @Component
 public class GraphQLQueryValidator implements QueryValidator {
-    
+
     @Override
     public ValidationResult validate(Query query) {
         List<ValidationError> errors = new ArrayList<>();
-        
+
         // Проверка глубины запроса
         int depth = calculateDepth(query);
         if (depth > 10) {
@@ -961,7 +959,7 @@ public class GraphQLQueryValidator implements QueryValidator {
                 "Query depth exceeds maximum of 10"
             ));
         }
-        
+
         // Проверка сложности
         int complexity = calculateComplexity(query);
         if (complexity > 1000) {
@@ -969,15 +967,15 @@ public class GraphQLQueryValidator implements QueryValidator {
                 "Query complexity exceeds maximum of 1000"
             ));
         }
-        
+
         return new ValidationResult(errors);
     }
-    
+
     private int calculateDepth(Query query) {
         // Реализация расчета глубины
         return 0;
     }
-    
+
     private int calculateComplexity(Query query) {
         // Реализация расчета сложности
         return 0;
@@ -992,20 +990,20 @@ public class GraphQLQueryValidator implements QueryValidator {
 ```java
 @Component
 public class GraphQLMetricsInstrumentation implements Instrumentation {
-    
+
     private final MeterRegistry meterRegistry;
-    
+
     public GraphQLMetricsInstrumentation(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
     }
-    
+
     @Override
     public InstrumentationContext<ExecutionResult> beginExecution(
             InstrumentationExecutionParameters parameters) {
-        
+
         Timer.Sample sample = Timer.start(meterRegistry);
         String operationName = parameters.getOperation();
-        
+
         return new SimpleInstrumentationContext<ExecutionResult>() {
             @Override
             public void onCompleted(ExecutionResult result, Throwable t) {
@@ -1024,19 +1022,19 @@ public class GraphQLMetricsInstrumentation implements Instrumentation {
 ```java
 @Component
 public class GraphQLLoggingInstrumentation implements Instrumentation {
-    
+
     private static final Logger logger = LoggerFactory
         .getLogger(GraphQLLoggingInstrumentation.class);
-    
+
     @Override
     public InstrumentationContext<ExecutionResult> beginExecution(
             InstrumentationExecutionParameters parameters) {
-        
+
         String query = parameters.getQuery();
         String operationName = parameters.getOperation();
-        
+
         logger.info("GraphQL query: {} (operation: {})", query, operationName);
-        
+
         return new SimpleInstrumentationContext<ExecutionResult>() {
             @Override
             public void onCompleted(ExecutionResult result, Throwable t) {
@@ -1059,10 +1057,10 @@ public class GraphQLLoggingInstrumentation implements Instrumentation {
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserGraphQLTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @Test
     void testUserQuery() throws Exception {
         String query = """
@@ -1074,7 +1072,7 @@ class UserGraphQLTest {
                 }
             }
             """;
-        
+
         mockMvc.perform(post("/graphql")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createGraphQLRequest(query)))
@@ -1082,7 +1080,7 @@ class UserGraphQLTest {
             .andExpect(jsonPath("$.data.user.id").value("1"))
             .andExpect(jsonPath("$.data.user.name").exists());
     }
-    
+
     private String createGraphQLRequest(String query) {
         return """
             {
@@ -1098,15 +1096,15 @@ class UserGraphQLTest {
 ```java
 @SpringBootTest
 class UserGraphQLTest {
-    
+
     @Autowired
     private GraphQLTestTemplate graphQLTestTemplate;
-    
+
     @Test
     void testUserQuery() throws IOException {
         GraphQLResponse response = graphQLTestTemplate
             .postForResource("graphql/user-query.graphql");
-        
+
         assertThat(response.isOk()).isTrue();
         assertThat(response.get("$.data.user.id")).isEqualTo("1");
     }
@@ -1120,7 +1118,7 @@ class UserGraphQLTest {
 ```java
 @Configuration
 public class GraphQLSecurityConfig {
-    
+
     @Bean
     public QueryComplexityInstrumentation queryComplexityInstrumentation() {
         return QueryComplexityInstrumentation.builder()
@@ -1128,7 +1126,7 @@ public class GraphQLSecurityConfig {
             .maximumDepth(10)
             .build();
     }
-    
+
     @Bean
     public QueryDepthInstrumentation queryDepthInstrumentation() {
         return QueryDepthInstrumentation.builder()
@@ -1143,15 +1141,15 @@ public class GraphQLSecurityConfig {
 ```java
 @Component
 public class GraphQLRateLimitInterceptor implements HandlerInterceptor {
-    
+
     private final RateLimiter rateLimiter;
-    
+
     public GraphQLRateLimitInterceptor() {
         this.rateLimiter = RateLimiter.create(100.0); // 100 запросов в секунду
     }
-    
+
     @Override
-    public boolean preHandle(HttpServletRequest request, 
+    public boolean preHandle(HttpServletRequest request,
             HttpServletResponse response, Object handler) {
         if (!rateLimiter.tryAcquire()) {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
@@ -1169,10 +1167,10 @@ public class GraphQLRateLimitInterceptor implements HandlerInterceptor {
 ```java
 @Component
 public class CachedUserResolver implements GraphQLResolver<User> {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Cacheable(value = "users", key = "#user.id")
     public List<Order> orders(User user) {
         return userService.findOrdersByUserId(user.getId());
@@ -1185,12 +1183,12 @@ public class CachedUserResolver implements GraphQLResolver<User> {
 ```java
 @Component
 public class AsyncUserResolver implements GraphQLResolver<User> {
-    
+
     @Autowired
     private OrderService orderService;
-    
+
     public CompletableFuture<List<Order>> orders(User user) {
-        return CompletableFuture.supplyAsync(() -> 
+        return CompletableFuture.supplyAsync(() ->
             orderService.findByUserId(user.getId())
         );
     }
@@ -1204,7 +1202,7 @@ public class AsyncUserResolver implements GraphQLResolver<User> {
 ```java
 @Component
 public class SecurityContextDataFetcher implements DataFetcher<Authentication> {
-    
+
     @Override
     public Authentication get(DataFetchingEnvironment environment) {
         return SecurityContextHolder.getContext().getAuthentication();
@@ -1217,12 +1215,12 @@ public class SecurityContextDataFetcher implements DataFetcher<Authentication> {
 ```java
 @Component
 public class SecureUserResolver implements GraphQLResolver<User> {
-    
+
     @PreAuthorize("hasRole('ADMIN')")
     public String email(User user) {
         return user.getEmail();
     }
-    
+
     @PreAuthorize("hasRole('USER')")
     public List<Order> orders(User user) {
         return user.getOrders();
@@ -1242,3 +1240,11 @@ public class SecureUserResolver implements GraphQLResolver<User> {
 - [**GraphQL Best Practices**](https://graphql.org/learn/best-practices/)
 - [**DataLoader** Pattern](https://github.com/graphql/dataloader)
 - [**GraphQL Security**](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

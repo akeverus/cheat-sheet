@@ -20,3 +20,6 @@ updated: "2026-02-11"
 
 [Packer](packer.md)
 
+## См. также
+
+- [[packer|Packer]]

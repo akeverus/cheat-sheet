@@ -17,8 +17,6 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 
 # Spring Data R2DBC: Полное руководство по реактивным базам данных
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -169,7 +167,7 @@ spring.r2dbc.pool.max-idle-time=30m
 @Configuration
 @EnableR2dbcRepositories
 public class R2dbcConfig {
-    
+
     @Bean
     public ConnectionFactory connectionFactory() {
         return ConnectionFactories.get(
@@ -183,7 +181,7 @@ public class R2dbcConfig {
                 .build()
         );
     }
-    
+
     @Bean
     public R2dbcEntityTemplate r2dbcEntityTemplate(ConnectionFactory connectionFactory) {
         return new R2dbcEntityTemplate(connectionFactory);
@@ -204,7 +202,7 @@ public class User {
     private String name;
     private String email;
     private Integer age;
-    
+
     // Getters and setters
 }
 ```
@@ -225,22 +223,22 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public Mono<User> createUser(User user) {
         return userRepository.save(user);
     }
-    
+
     public Mono<User> findUserById(Long id) {
         return userRepository.findById(id);
     }
-    
+
     public Flux<User> findAllUsers() {
         return userRepository.findAll();
     }
-    
+
     public Mono<User> updateUser(Long id, User user) {
         return userRepository.findById(id)
             .flatMap(existing -> {
@@ -249,7 +247,7 @@ public class UserService {
                 return userRepository.save(existing);
             });
     }
-    
+
     public Mono<Void> deleteUser(Long id) {
         return userRepository.deleteById(id);
     }
@@ -263,35 +261,35 @@ public class UserService {
 ```java
 @Service
 public class UserTemplateService {
-    
+
     @Autowired
     private R2dbcEntityTemplate template;
-    
+
     public Mono<User> saveUser(User user) {
         return template.insert(User.class)
             .using(user)
             .then()
             .thenReturn(user);
     }
-    
+
     public Mono<User> findUserById(Long id) {
         return template.select(User.class)
             .matching(Query.query(Criteria.where("id").is(id)))
             .one();
     }
-    
+
     public Flux<User> findAllUsers() {
         return template.select(User.class)
             .all();
     }
-    
+
     public Mono<Long> updateUser(Long id, User user) {
         return template.update(User.class)
             .matching(Query.query(Criteria.where("id").is(id)))
             .apply(Update.update("name", user.getName())
                 .set("email", user.getEmail()));
     }
-    
+
     public Mono<Long> deleteUser(Long id) {
         return template.delete(User.class)
             .matching(Query.query(Criteria.where("id").is(id)))
@@ -305,10 +303,10 @@ public class UserTemplateService {
 ```java
 @Service
 public class CustomQueryService {
-    
+
     @Autowired
     private R2dbcEntityTemplate template;
-    
+
     public Flux<User> findUsersByAge(Integer minAge, Integer maxAge) {
         return template.select(User.class)
             .matching(Query.query(
@@ -316,13 +314,13 @@ public class CustomQueryService {
             ))
             .all();
     }
-    
+
     public Mono<User> findUserByEmail(String email) {
         return template.select(User.class)
             .matching(Query.query(Criteria.where("email").is(email)))
             .one();
     }
-    
+
     public Flux<User> findUsersWithPagination(int page, int size) {
         return template.select(User.class)
             .matching(Query.empty()
@@ -340,21 +338,21 @@ public class CustomQueryService {
 ```java
 @Service
 public class TransactionalUserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private TransactionalOperator transactionalOperator;
-    
+
     public Mono<User> createUserWithTransaction(User user) {
-        return transactionalOperator.execute(status -> 
+        return transactionalOperator.execute(status ->
             userRepository.save(user)
         );
     }
-    
+
     public Mono<Void> transferBalance(Long fromId, Long toId, BigDecimal amount) {
-        return transactionalOperator.execute(status -> 
+        return transactionalOperator.execute(status ->
             userRepository.findById(fromId)
                 .flatMap(from -> {
                     from.setBalance(from.getBalance().subtract(amount));
@@ -376,7 +374,7 @@ public class TransactionalUserService {
 ```java
 @Configuration
 public class TransactionConfig {
-    
+
     @Bean
     public TransactionalOperator transactionalOperator(ConnectionFactory connectionFactory) {
         R2dbcTransactionManager transactionManager = new R2dbcTransactionManager(connectionFactory);
@@ -392,7 +390,7 @@ public class TransactionConfig {
 ```java
 @Configuration
 public class PoolConfig {
-    
+
     @Bean
     public ConnectionFactory connectionFactory() {
         ConnectionPoolConfiguration poolConfiguration = ConnectionPoolConfiguration.builder(connectionFactory())
@@ -403,10 +401,10 @@ public class PoolConfig {
             .maxCreateConnectionTime(Duration.ofSeconds(30))
             .validationQuery("SELECT 1")
             .build();
-        
+
         return new ConnectionPool(poolConfiguration);
     }
-    
+
     private ConnectionFactory connectionFactory() {
         return ConnectionFactories.get(
             ConnectionFactoryOptions.builder()
@@ -428,16 +426,16 @@ public class PoolConfig {
 
 ```java
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM users WHERE age > :age")
     Flux<User> findUsersOlderThan(@Param("age") Integer age);
-    
+
     @Query("SELECT * FROM users WHERE email = :email")
     Mono<User> findByEmail(@Param("email") String email);
-    
+
     @Query("UPDATE users SET name = :name WHERE id = :id")
     Mono<Integer> updateName(@Param("id") Long id, @Param("name") String name);
-    
+
     @Query("DELETE FROM users WHERE age < :age")
     Mono<Integer> deleteUsersYoungerThan(@Param("age") Integer age);
 }
@@ -448,10 +446,10 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 ```java
 @Service
 public class NativeQueryService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Flux<User> executeNativeQuery(String sql) {
         return databaseClient.sql(sql)
             .map((row, metadata) -> {
@@ -473,11 +471,11 @@ public class NativeQueryService {
 ```java
 @Component
 public class R2dbcMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter queriesExecuted;
     private final Timer queryExecutionTime;
-    
+
     public R2dbcMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.queriesExecuted = Counter.builder("r2dbc.queries.executed")
@@ -487,7 +485,7 @@ public class R2dbcMetrics {
             .description("R2DBC query execution time")
             .register(meterRegistry);
     }
-    
+
     public <T> Mono<T> measureQuery(String operation, Mono<T> query) {
         Timer.Sample sample = Timer.start(meterRegistry);
         return query
@@ -577,17 +575,17 @@ public Flux<User> findUser(Long id) {
 ```java
 @Service
 public class BatchOperationService {
-    
+
     @Autowired
     private R2dbcEntityTemplate template;
-    
+
     public Mono<Integer> batchInsert(List<User> users) {
         return template.insert(User.class)
             .all(users)
             .collectList()
             .map(List::size);
     }
-    
+
     public Mono<Integer> batchUpdate(List<User> users) {
         return Flux.fromIterable(users)
             .flatMap(user -> template.update(User.class)
@@ -604,10 +602,10 @@ public class BatchOperationService {
 ```java
 @Service
 public class CustomMappingService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Flux<UserDTO> findUsersWithCustomMapping() {
         return databaseClient.sql("SELECT id, name, email FROM users")
             .map((row, metadata) -> {
@@ -627,10 +625,10 @@ public class CustomMappingService {
 ```java
 @Service
 public class StoredProcedureService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Mono<String> callStoredProcedure(Long userId) {
         return databaseClient.sql("CALL get_user_name(:userId)")
             .bind("userId", userId)
@@ -648,37 +646,37 @@ public class StoredProcedureService {
 @RestController
 @RequestMapping("/api/users")
 public class ReactiveUserController {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @GetMapping
     public Flux<User> getAllUsers() {
         return userService.findAllUsers();
     }
-    
+
     @GetMapping("/{id}")
     public Mono<ResponseEntity<User>> getUserById(@PathVariable Long id) {
         return userService.findUserById(id)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
-    
+
     @PostMapping
     public Mono<ResponseEntity<User>> createUser(@RequestBody User user) {
         return userService.createUser(user)
             .map(ResponseEntity::ok);
     }
-    
+
     @PutMapping("/{id}")
     public Mono<ResponseEntity<User>> updateUser(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody User user) {
         return userService.updateUser(id, user)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
-    
+
     @DeleteMapping("/{id}")
     public Mono<ResponseEntity<Void>> deleteUser(@PathVariable Long id) {
         return userService.deleteUser(id)
@@ -694,19 +692,19 @@ public class ReactiveUserController {
 ```java
 @Service
 public class ErrorHandlingService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public Mono<User> findUserWithErrorHandling(Long id) {
         return userRepository.findById(id)
             .switchIfEmpty(Mono.error(new UserNotFoundException(id)))
-            .onErrorMap(DataAccessException.class, ex -> 
+            .onErrorMap(DataAccessException.class, ex ->
                 new ServiceException("Database error", ex))
             .retry(3)
             .doOnError(error -> log.error("Error finding user", error));
     }
-    
+
     public Mono<User> createUserWithValidation(User user) {
         return validateUser(user)
             .flatMap(validated -> userRepository.save(validated))
@@ -715,7 +713,7 @@ public class ErrorHandlingService {
                 return Mono.error(new UserAlreadyExistsException(user.getEmail()));
             });
     }
-    
+
     private Mono<User> validateUser(User user) {
         if (user.getEmail() == null || !user.getEmail().contains("@")) {
             return Mono.error(new ValidationException("Invalid email"));
@@ -733,27 +731,27 @@ public class ErrorHandlingService {
 @SpringBootTest
 @AutoConfigureR2dbc
 class R2dbcTest {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     void testSaveUser() {
         User user = new User();
         user.setName("Test User");
         user.setEmail("test@example.com");
-        
+
         StepVerifier.create(userRepository.save(user))
             .expectNextMatches(saved -> saved.getId() != null)
             .verifyComplete();
     }
-    
+
     @Test
     void testFindUser() {
         User user = new User();
         user.setName("Test User");
         user.setEmail("test@example.com");
-        
+
         StepVerifier.create(
             userRepository.save(user)
                 .flatMap(saved -> userRepository.findById(saved.getId()))
@@ -770,7 +768,7 @@ class R2dbcTest {
 @SpringBootTest
 @AutoConfigureR2dbc
 class EmbeddedR2dbcTest {
-    
+
     @TestConfiguration
     static class TestConfig {
         @Bean
@@ -782,10 +780,10 @@ class EmbeddedR2dbcTest {
             );
         }
     }
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Test
     void testWithEmbeddedDatabase() {
         // Тесты с встроенной БД
@@ -800,10 +798,10 @@ class EmbeddedR2dbcTest {
 ```java
 @Service
 public class OptimizedQueryService {
-    
+
     @Autowired
     private R2dbcEntityTemplate template;
-    
+
     public Flux<User> findUsersOptimized() {
         return template.select(User.class)
             .matching(Query.query(Criteria.where("active").is(true))
@@ -813,7 +811,7 @@ public class OptimizedQueryService {
             .all()
             .take(100); // Ограничение на уровне приложения
     }
-    
+
     public Mono<User> findUserWithProjection(Long id) {
         return template.select(User.class)
             .matching(Query.query(Criteria.where("id").is(id))
@@ -828,7 +826,7 @@ public class OptimizedQueryService {
 ```java
 @Configuration
 public class OptimizedPoolConfig {
-    
+
     @Bean
     public ConnectionFactory connectionFactory() {
         ConnectionPoolConfiguration poolConfiguration = ConnectionPoolConfiguration.builder(connectionFactory())
@@ -840,7 +838,7 @@ public class OptimizedPoolConfig {
             .validationQuery("SELECT 1")
             .backgroundEvictionInterval(Duration.ofMinutes(5))
             .build();
-        
+
         return new ConnectionPool(poolConfiguration);
     }
 }
@@ -853,10 +851,10 @@ public class OptimizedPoolConfig {
 ```java
 @Service
 public class JoinQueryService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Flux<UserOrderDTO> findUsersWithOrders() {
         return databaseClient.sql("""
             SELECT u.id, u.name, u.email, o.id as order_id, o.total
@@ -882,13 +880,13 @@ public class JoinQueryService {
 ```java
 @Service
 public class AggregationService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Mono<OrderStatistics> getOrderStatistics() {
         return databaseClient.sql("""
-            SELECT 
+            SELECT
                 COUNT(*) as total_orders,
                 SUM(total) as total_amount,
                 AVG(total) as average_amount,
@@ -915,10 +913,10 @@ public class AggregationService {
 ```java
 @Service
 public class SubqueryService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Flux<User> findUsersWithRecentOrders() {
         return databaseClient.sql("""
             SELECT * FROM users u
@@ -938,13 +936,13 @@ public class SubqueryService {
 ```java
 @Service
 public class WindowFunctionService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Flux<UserRanking> getUserRankings() {
         return databaseClient.sql("""
-            SELECT 
+            SELECT
                 id, name, email, balance,
                 ROW_NUMBER() OVER (ORDER BY balance DESC) as rank,
                 RANK() OVER (ORDER BY balance DESC) as rank_with_ties,
@@ -969,10 +967,10 @@ public class WindowFunctionService {
 ```java
 @Service
 public class CteService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Flux<User> findUsersWithCTE() {
         return databaseClient.sql("""
             WITH active_users AS (
@@ -997,18 +995,18 @@ public class CteService {
 ```java
 @Service
 public class NestedTransactionService {
-    
+
     @Autowired
     private TransactionalOperator transactionalOperator;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     public Mono<Void> processOrderWithNestedTransactions(Long userId, Order order) {
-        return transactionalOperator.execute(status -> 
+        return transactionalOperator.execute(status ->
             userRepository.findById(userId)
                 .flatMap(user -> {
                     // Вложенная транзакция
@@ -1028,17 +1026,17 @@ public class NestedTransactionService {
 ```java
 @Service
 public class TransactionPropagationService {
-    
+
     @Autowired
     private TransactionalOperator transactionalOperator;
-    
+
     public Mono<Void> methodWithRequired() {
-        return transactionalOperator.execute(status -> 
+        return transactionalOperator.execute(status ->
             // Транзакция будет использована, если существует, или создана новая
             performOperation()
         );
     }
-    
+
     public Mono<Void> methodWithNewTransaction() {
         // Всегда создается новая транзакция
         TransactionalOperator newOperator = TransactionalOperator.create(
@@ -1055,10 +1053,10 @@ public class TransactionPropagationService {
 ```java
 @Service
 public class ReactiveMigrationService {
-    
+
     @Autowired
     private DatabaseClient databaseClient;
-    
+
     public Mono<Void> migrateDatabase() {
         return databaseClient.sql("""
             CREATE TABLE IF NOT EXISTS users (
@@ -1086,25 +1084,25 @@ public class ReactiveMigrationService {
 
 ```java
 public interface CustomUserRepository extends ReactiveCrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM users WHERE age > :age")
     Flux<User> findUsersOlderThan(@Param("age") Integer age);
-    
+
     @Modifying
     @Query("UPDATE users SET active = :active WHERE id = :id")
     Mono<Integer> updateActiveStatus(@Param("id") Long id, @Param("active") Boolean active);
-    
+
     Mono<User> findByEmailAndAge(String email, Integer age);
-    
+
     Flux<User> findByNameContainingIgnoreCase(String name);
 }
 
 @Service
 public class CustomRepositoryService {
-    
+
     @Autowired
     private CustomUserRepository userRepository;
-    
+
     public Flux<User> findActiveUsersOlderThan(Integer age) {
         return userRepository.findUsersOlderThan(age)
             .filter(user -> user.getActive());
@@ -1117,17 +1115,17 @@ public class CustomRepositoryService {
 ```java
 @Service
 public class CachedUserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     private final Cache<Long, Mono<User>> userCache = Caffeine.newBuilder()
         .maximumSize(1000)
         .expireAfterWrite(Duration.ofMinutes(10))
         .build();
-    
+
     public Mono<User> findUserById(Long id) {
-        return userCache.get(id, key -> 
+        return userCache.get(id, key ->
             userRepository.findById(key)
                 .cache()
         );
@@ -1140,10 +1138,10 @@ public class CachedUserService {
 ```java
 @Service
 public class ResilientUserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public Mono<User> findUserWithRetry(Long id) {
         return userRepository.findById(id)
             .retry(3)
@@ -1155,7 +1153,7 @@ public class ResilientUserService {
             .timeout(Duration.ofSeconds(5))
             .onErrorReturn(TimeoutException.class, createDefaultUser());
     }
-    
+
     private User createDefaultUser() {
         User user = new User();
         user.setId(-1L);
@@ -1170,23 +1168,23 @@ public class ResilientUserService {
 ```java
 @Service
 public class BatchProcessingService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public Mono<Integer> processUsersInBatches(int batchSize) {
         return userRepository.findAll()
             .buffer(batchSize)
             .flatMap(batch -> processBatch(batch), 5) // Параллельная обработка 5 батчей
             .reduce(0, Integer::sum);
     }
-    
+
     private Mono<Integer> processBatch(List<User> batch) {
         return Flux.fromIterable(batch)
             .flatMap(this::processUser)
             .reduce(0, (count, processed) -> count + 1);
     }
-    
+
     private Mono<Boolean> processUser(User user) {
         return Mono.just(true);
     }
@@ -1198,16 +1196,16 @@ public class BatchProcessingService {
 ```java
 @Service
 public class TransactionalRetryService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private TransactionalOperator transactionalOperator;
-    
+
     public Mono<Void> transferWithRetry(Long fromId, Long toId, BigDecimal amount) {
-        return Mono.defer(() -> 
-            transactionalOperator.execute(status -> 
+        return Mono.defer(() ->
+            transactionalOperator.execute(status ->
                 userRepository.findById(fromId)
                     .flatMap(from -> {
                         from.setBalance(from.getBalance().subtract(amount));
@@ -1241,3 +1239,11 @@ public class TransactionalRetryService {
 - [Reactive Programming](https://www.reactive-streams.org/)
 - [**PostgreSQL R2DBC**](https://github.com/pgjdbc/r2dbc-postgresql)
 - [**MySQL R2DBC**](https://github.com/mirromutth/r2dbc-mysql)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

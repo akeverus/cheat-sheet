@@ -183,7 +183,7 @@ class Where implements Expression {
 // Контекст: хранит таблицу, столбец и фильтр; метод search() выполняет запрос по данным.
 class Context {
     private static Map<String, List<Row>> tables = new HashMap<>();
-    
+
     static {
         List<Row> list = new ArrayList<>();
         list.add(new Row("John", "Doe"));
@@ -350,13 +350,13 @@ data class Row(val firstName: String, val lastName: String) {
 ```kotlin
 fun main() {
     val ctx = Context()
-    
+
     val query1 = Select("name", From("people"))
     println(query1.interpret(ctx)) // [John, Jan, Dominic]
-    
+
     val query2 = Select("*", From("people"))
     println(query2.interpret(ctx)) // [John Doe, Jan Kowalski, Dominic Doom]
-    
+
     val query3 = Select("name", From("people", Where { name ->
         name.toLowerCase().startsWith("d")
     }))

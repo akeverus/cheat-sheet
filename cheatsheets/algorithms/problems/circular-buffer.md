@@ -14,13 +14,11 @@ updated: "2026-02-11"
 
 A **guide** to **implementing** a **circular buffer** (**ring buffer**) in **Java for efficient data buffering between threads**.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 - [`Java `Concurrency` Utilities`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html)
-- [`Disruptor Pattern`](https://lmax-exchange.github.io/disruptor/)
+- [Disruptor Pattern](https://lmax-exchange.github.io/disruptor/)
 
 ### См. также
 - [Задачи и алгоритмы](../README.md)
@@ -67,7 +65,7 @@ A **circular buffer** is an **efficient FIFO buffer**. It **uses** a **fixed-siz
 
 1. **The next available slot** in **the buffer for inserting** an **element**
 2. **The next unread element** in **the buffer**
-3. **The end** of **the array** - **the point** at **which the buffer wraps** to **the beginning** of **the array**
+3. **The end** of **the array** — **the point** at **which the buffer wraps** to **the beginning** of **the array**
 
 **The mechanics** of **how** a **circular buffer handles these requirements depends** on **the implementation**. **For example**, **the Wikipedia entry** on **this topic shows** a **method using four pointers**.
 
@@ -75,7 +73,7 @@ A **circular buffer** is an **efficient FIFO buffer**. It **uses** a **fixed-siz
 
 We'll **borrow the approach from the Disruptor**'s **circular buffer implementation using sequences**.
 
-**The first thing** we **need** to **know** is **the capacity** - **the fixed maximum size** of **the buffer**. **Next**, we'll **use two monotonically increasing sequences**:**
+**The first thing** we **need** to **know** is **the capacity** — **the fixed maximum size** of **the buffer**. **Next**, we'll **use two monotonically increasing sequences**:**
 
 1. **Write sequence: Starting** at -1, **increases** `by 1` **when inserting** an **element**
 2. **Read sequence: Starting** `at 0`, **increases** `by 1` as an **element** is **consumed**
@@ -108,7 +106,7 @@ We **pre-increment the sequence before inserting the element**.
 element = buffer[readSequence++ % capacity]
 ```
 
-In **this case**, we **perform** a **post-increment** of **the sequence**. **Consuming** an **element doesn**'t **remove** it **from the buffer** - it **just remains** in **the array until** it's **overwritten**.
+In **this case**, we **perform** a **post-increment** of **the sequence**. **Consuming** an **element doesn**'t **remove** it **from the buffer** — it **just remains** in **the array until** it's **overwritten**.
 
 ### Buffer State
 
@@ -147,7 +145,7 @@ public class CircularBuffer<E> {
     private int readSequence = 0;
     private int writeSequence = -1;
     private static final int DEFAULT_CAPACITY = 8;
-    
+
     @SuppressWarnings("unchecked")
     public CircularBuffer(int capacity) {
         this.capacity = (capacity < 1) ? DEFAULT_CAPACITY : capacity;
@@ -167,14 +165,14 @@ public class CircularBuffer<E> {
 ```java
 public boolean offer(E element) {
     boolean isFull = (writeSequence - readSequence) + 1 == capacity;
-    
+
     if (!isFull) {
         int nextWriteSeq = writeSequence + 1;
         data[nextWriteSeq % capacity] = element;
         writeSequence++;
         return true;
     }
-    
+
     return false;
 }
 ```
@@ -188,13 +186,13 @@ public boolean offer(E element) {
 ```java
 public E poll() {
     boolean isEmpty = writeSequence < readSequence;
-    
+
     if (!isEmpty) {
         E nextValue = data[readSequence % capacity];
         readSequence++;
         return nextValue;
     }
-    
+
     return null;
 }
 ```
@@ -241,45 +239,45 @@ class CircularBufferK<E>(capacity: Int) {
     private val data: Array<Any?> = arrayOfNulls(this.capacity)
     private var readSequence = 0
     private var writeSequence = -1
-    
+
     companion object {
         private const val DEFAULT_CAPACITY = 8
     }
-    
+
     fun offer(element: E): Boolean {
         val isFull = (writeSequence - readSequence) + 1 == capacity
-        
+
         if (!isFull) {
             val nextWriteSeq = writeSequence + 1
             data[nextWriteSeq % capacity] = element
             writeSequence++
             return true
         }
-        
+
         return false
     }
-    
+
     @Suppress("UNCHECKED_CAST")
     fun poll(): E? {
         if (isEmpty()) {
             return null
         }
-        
+
         val nextReadSeq = readSequence % capacity
         val nextValue = data[nextReadSeq] as E
         data[nextReadSeq] = null
         readSequence++
         return nextValue
     }
-    
+
     fun size(): Int {
         return (writeSequence - readSequence) + 1
     }
-    
+
     fun isEmpty(): Boolean {
         return writeSequence < readSequence
     }
-    
+
     fun capacity(): Int = capacity
 }
 ```
@@ -290,43 +288,43 @@ class CircularBufferK<E>(capacity: Int) {
 class ThreadSafeCircularBufferK<E>(capacity: Int) {
     private val capacity: Int = if (capacity < 1) DEFAULT_CAPACITY else capacity
     private val data: Array<Any?> = arrayOfNulls(this.capacity)
-    
+
     @Volatile
     private var readSequence = 0
-    
+
     @Volatile
     private var writeSequence = -1
-    
+
     companion object {
         private const val DEFAULT_CAPACITY = 8
     }
-    
+
     fun offer(element: E): Boolean {
         val isFull = (writeSequence - readSequence) + 1 == capacity
-        
+
         if (!isFull) {
             val nextWriteSeq = writeSequence + 1
             data[nextWriteSeq % capacity] = element
             writeSequence = nextWriteSeq
             return true
         }
-        
+
         return false
     }
-    
+
     @Suppress("UNCHECKED_CAST")
     fun poll(): E? {
         if (isEmpty()) {
             return null
         }
-        
+
         val nextReadSeq = readSequence % capacity
         val nextValue = data[nextReadSeq] as E
         data[nextReadSeq] = null
         readSequence = nextReadSeq + 1
         return nextValue
     }
-    
+
     fun isEmpty(): Boolean {
         return writeSequence < readSequence
     }
@@ -368,14 +366,14 @@ class ConsumerK<T>(private val buffer: CircularBufferK<T>, private val expectedC
 fun main() {
     val executorService = Executors.newFixedThreadPool(2)
     val buffer = CircularBufferK<String>(8)
-    
+
     val items = arrayOf("Circle", "Triangle", "Rectangle", "Square",
         "Rhombus", "Trapezoid", "Pentagon", "Pentagram",
         "Hexagon", "Hexagram")
-    
+
     executorService.submit(ProducerK(buffer, items))
     executorService.submit(ConsumerK(buffer, items.size))
-    
+
     executorService.shutdown()
 }
 ```
@@ -408,12 +406,12 @@ In **the offer method**, **writing** to **the volatile writeSequence field ensur
 public class Producer<T> implements Runnable {
     private final CircularBuffer<T> buffer;
     private final T[] items;
-    
+
     public Producer(CircularBuffer<T> buffer, T[] items) {
         this.buffer = buffer;
         this.items = items;
     }
-    
+
     @Override
     public void run() {
         for (int i = 0; i < items.length;) {
@@ -434,12 +432,12 @@ public class Producer<T> implements Runnable {
 public class Consumer<T> implements Callable<T[]> {
     private final CircularBuffer<T> buffer;
     private final int expectedCount;
-    
+
     public Consumer(CircularBuffer<T> buffer, int expectedCount) {
         this.buffer = buffer;
         this.expectedCount = expectedCount;
     }
-    
+
     @Override
     public T[] call() {
         @SuppressWarnings("unchecked")
@@ -464,8 +462,8 @@ public class Consumer<T> implements Callable<T[]> {
 ExecutorService executorService = Executors.newFixedThreadPool(2);
 CircularBuffer<String> buffer = new CircularBuffer<>(8);
 
-String[] items = {"Circle", "Triangle", "Rectangle", "Square", 
-                  "Rhombus", "Trapezoid", "Pentagon", "Pentagram", 
+String[] items = {"Circle", "Triangle", "Rectangle", "Square",
+                  "Rhombus", "Trapezoid", "Pentagon", "Pentagram",
                   "Hexagon", "Hexagram"};
 
 executorService.submit(new Thread(new Producer<>(buffer, items)));
@@ -506,7 +504,7 @@ Consumed: Hexagram
 
 ## Лучшие практики
 
-Выбирайте размер буфера под пиковую нагрузку; слишком маленький буфер приведёт к блокировкам записи или потере данных в режиме overwrite. При overwrite старые непрочитанные данные теряются (подходит для тикеров, сенсоров); при необходимости сохранять все элементы используйте блокирующие offer/poll или отказ при переполнении. Для многопоточности используйте атомарные последовательности (например, в стиле Disruptor) или блокировки; документируйте, потокобезопасен ли экземпляр. Отслеживайте размер очереди (writeSequence - readSequence) и долю переполнений — это поможет подобрать capacity и выявить медленных потребителей. В тестах покройте случаи: пустой/полный буфер, обход по кольцу (write/read после конца массива), один производитель — один потребитель.
+Выбирайте размер буфера под пиковую нагрузку; слишком маленький буфер приведёт к блокировкам записи или потере данных в режиме overwrite. При overwrite старые непрочитанные данные теряются (подходит для тикеров, сенсоров); при необходимости сохранять все элементы используйте блокирующие offer/poll или отказ при переполнении. Для многопоточности используйте атомарные последовательности (например, в стиле Disruptor) или блокировки; документируйте, потокобезопасен ли экземпляр. Отслеживайте размер очереди (writeSequence — readSequence) и долю переполнений — это поможет подобрать capacity и выявить медленных потребителей. В тестах покройте случаи: пустой/полный буфер, обход по кольцу (write/read после конца массива), один производитель — один потребитель.
 
 ## Решение проблем
 
@@ -520,7 +518,7 @@ Consumed: Hexagram
 
 **Overwrite или блокировка при переполнении?** Overwrite — когда важны только последние данные (тикеры, сенсоры). Блокировка или отказ — когда нужно сохранить каждое сообщение; тогда потребитель не должен отставать надолго.
 
-**Как выбрать размер буфера?** Ориентируйтесь на пиковую нагрузку и скорость потребителя; мониторинг (writeSequence - readSequence) и доля переполнений подскажут, нужно ли увеличить capacity.
+**Как выбрать размер буфера?** Ориентируйтесь на пиковую нагрузку и скорость потребителя; мониторинг (writeSequence — readSequence) и доля переполнений подскажут, нужно ли увеличить capacity.
 
 **Нужна ли потокобезопасность?** Если буфер используется из нескольких потоков — да; используйте атомарные счётчики или блокировки и явно документируйте это в API.
 

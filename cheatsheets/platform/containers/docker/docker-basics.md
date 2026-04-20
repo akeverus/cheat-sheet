@@ -24,7 +24,7 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Hub](https://hub.docker.com/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
@@ -2202,7 +2202,7 @@ docker stats
 
 **Пример вывода:**
 
-```
+```text
 CONTAINER ID   NAME                                      CPU %   MEM USAGE/LIMIT     MEM %   NET I/O   BLOCK I/O   PIDS
 8ad2f2c17078   bael_stack_service.1.jz2ks49finy61kiq1r12da73k   0.00%   2.578MiB/512MiB   0.50%   936B/0B   0B/0B   2
 ```
@@ -2255,7 +2255,7 @@ docker-compose up -d
 
 **Пример вывода:**
 
-```
+```text
 Starting bael_test2_1... done
 Starting bael_test3_1... done
 Starting bael_test1_1... done
@@ -2269,7 +2269,7 @@ docker network ls
 
 **Пример:**
 
-```
+```text
 NETWORK ID     NAME       DRIVER    SCOPE
 86e6a8138c0d   bridge     bridge    local
 73402de5766c   host       host      local
@@ -2471,7 +2471,7 @@ services:
 
 **При создании **Dockerfile** нужно переносить файлы из хоста в образ. Директивы **COPY** и **ADD** имеют одинаковый синтаксис:**
 
-```
+```text
 COPY <source> <destination>
 ADD <source> <destination>
 ```
@@ -2666,7 +2666,7 @@ docker system df --format 'table{{.Type}}\t{{.TotalCount}}\t{{.Size}}'
 
 **Пример вывода:**
 
-```
+```text
 TYPE            TOTAL   SIZE
 Images          71      7.813GB
 Containers      1       359.1MB
@@ -2691,7 +2691,7 @@ docker ps --format 'table{{.ID}}\t{{.Image}}\t{{.Status}}'
 
 **Пример:**
 
-```
+```text
 CONTAINER ID   IMAGE                    STATUS
 527bfd4cfb89   postgres:13-beta2-alpine Up Less than a second
 ```
@@ -2704,8 +2704,15 @@ docker image rm postgres:13-beta2-alpine
 
 **Ошибка, если контейнер использует образ:**
 
-```
+```text
 Error response from daemon: conflict: unable to remove repository reference "postgres:13-beta2-alpine" (must force) - container 527bfd4cfb89 is using its referenced image cac2ee40fa5a
 ```
 
 Останавливаем и удаляем контейнер, затем удаляем образ. Если нужно — `**docker image** rm -f`.
+
+## См. также
+
+- [[docker-advanced|Docker Advanced]]
+- [[docker-compose|Docker Compose]]
+- [[docker-containers|Docker: работа с контейнерами]]
+- [[docker-spring-boot|Docker и Spring Boot]]

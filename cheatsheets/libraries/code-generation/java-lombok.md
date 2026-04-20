@@ -43,31 +43,31 @@ updated: "2026-02-11"
   - [`@Getter` и `@Setter`](#getter-и-setter)
   - [Конфигурация доступа](#конфигурация-доступа)
 - [Конструкторы](#конструкторы)
-  - [`@NoArgsConstructor`](#noargsconstructor)
-  - [`@AllArgsConstructor`](#allargsconstructor)
-  - [`@RequiredArgsConstructor`](#requiredargsconstructor)
+  - [@NoArgsConstructor](#noargsconstructor)
+  - [@AllArgsConstructor](#allargsconstructor)
+  - [@RequiredArgsConstructor](#requiredargsconstructor)
 - [equals, hashCode** и **toString](#equals-hashcode-и-tostring)
-  - [`@EqualsAndHashCode`](#equalsandhashcode)
-  - [`@ToString`](#tostring)
+  - [@EqualsAndHashCode](#equalsandhashcode)
+  - [@ToString](#tostring)
 - [Builder паттерн](#builder-паттерн)
-  - [`@Builder`](#builder)
+  - [@Builder](#builder)
   - [`@Builder` с конфигурацией](#builder-с-конфигурацией)
-  - [`@SuperBuilder`](#superbuilder)
+  - [@SuperBuilder](#superbuilder)
 - [Data классы](#data-классы)
-  - [`@Data`](#data)
+  - [@Data](#data)
   - [`@Data` с исключениями](#data-с-исключениями)
 - [Value объекты](#value-объекты)
-  - [`@Value`](#value)
+  - [@Value](#value)
 - [Логирование](#логирование)
   - [`@Log`, `@Slf4j`, `@Log4j2` и др.](#log-slf4j-log4j2-и-др)
   - [Доступные аннотации логирования](#доступные-аннотации-логирования)
 - [Дополнительные возможности](#дополнительные-возможности)
-  - [`@NonNull`](#nonnull)
-  - [`@Cleanup`](#cleanup)
-  - [`@SneakyThrows`](#sneakythrows)
-  - [`@Synchronized`](#synchronized)
-  - [`@Getter(lazy = true)`](#getterlazy-true)
-  - [`@Delegate`](#delegate)
+  - [@NonNull](#nonnull)
+  - [@Cleanup](#cleanup)
+  - [@SneakyThrows](#sneakythrows)
+  - [@Synchronized](#synchronized)
+  - [@Getter(lazy = true)](#getterlazy-true)
+  - [@Delegate](#delegate)
 - [Интеграция с IDE](#интеграция-с-ide)
   - [Lombok Configuration](#lombok-configuration)
 - [Настройки Lombok для всего проекта](#настройки-lombok-для-всего-проекта)
@@ -118,7 +118,7 @@ updated: "2026-02-11"
 - Быстрая разработка
 
 **Недостатки:**
-- "Магическая" генерация кода
+- «Магическая» генерация кода
 - Сложность отладки
 - Зависимость от **IDE** плагина
 - Возможные проблемы с рефакторингом
@@ -962,7 +962,7 @@ public class User {
 
 | Подход | Преимущества | Недостатки |
 |--------|-------------|------------|
-| **Lombok** | Мало кода, быстрая разработка | "Магическая" генерация |
+| **Lombok** | Мало кода, быстрая разработка | «Магическая» генерация |
 | **Records (**Java** 14+**)** | Официальный **Java**, **immutable** | Только **data** классы |
 | **Кастомные аннотации** | Полный контроль | Сложная разработка |
 | **IDE генерация** | Нет зависимостей | Ручная генерация кода |
@@ -977,7 +977,9 @@ public class User {
 
 **Lombok** особенно полезен в **enterprise** проектах с большим количеством **boilerplate** кода, где он может значительно сократить объем кода и улучшить его читаемость.
 
----
 
 [⬆️ Наверх](../) | [Следующий: Guava](../utility-libraries/java-guava.md)
 
+## См. также
+
+- [[java-mapstruct|MapStruct: Маппинг объектов в Java]]

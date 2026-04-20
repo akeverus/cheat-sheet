@@ -133,23 +133,23 @@ public class EditDistanceRecursive {
         if (x.isEmpty()) {
             return y.length();
         }
-        
+
         if (y.isEmpty()) {
             return x.length();
         }
-        
+
         int substitution = calculate(x.substring(1), y.substring(1))
             + costOfSubstitution(x.charAt(0), y.charAt(0));
         int insertion = calculate(x, y.substring(1)) + 1;
         int deletion = calculate(x.substring(1), y) + 1;
-        
+
         return min(substitution, insertion, deletion);
     }
-    
+
     public static int costOfSubstitution(char a, char b) {
         return a == b ? 0 : 1;
     }
-    
+
     public static int min(int... numbers) {
         return Arrays.stream(numbers)
             .min()
@@ -179,7 +179,7 @@ public class EditDistanceRecursive {
 ```java
 static int calculate(String x, String y) {
     int[][] dp = new int[x.length() + 1][y.length() + 1];
-    
+
     for (int i = 0; i <= x.length(); i++) {
         for (int j = 0; j <= y.length(); j++) {
             if (i == 0) {
@@ -195,7 +195,7 @@ static int calculate(String x, String y) {
             }
         }
     }
-    
+
     return dp[x.length()][y.length()];
 }
 
@@ -239,11 +239,11 @@ public static int min(int... numbers) {
 static int calculateOptimized(String x, String y) {
     int[] prev = new int[y.length() + 1];
     int[] curr = new int[y.length() + 1];
-    
+
     for (int j = 0; j <= y.length(); j++) {
         prev[j] = j;
     }
-    
+
     for (int i = 1; i <= x.length(); i++) {
         curr[0] = i;
         for (int j = 1; j <= y.length(); j++) {
@@ -255,7 +255,7 @@ static int calculateOptimized(String x, String y) {
         }
         System.arraycopy(curr, 0, prev, 0, y.length() + 1);
     }
-    
+
     return prev[y.length()];
 }
 ```
@@ -287,7 +287,7 @@ fun levenshteinDistanceDPK(x: String, y: String): Int {
     val m = x.length
     val n = y.length
     val dp = Array(m + 1) { IntArray(n + 1) }
-    
+
     // Базовые случаи
     for (i in 0..m) {
         dp[i][0] = i
@@ -295,7 +295,7 @@ fun levenshteinDistanceDPK(x: String, y: String): Int {
     for (j in 0..n) {
         dp[0][j] = j
     }
-    
+
     // Заполнение таблицы
     for (i in 1..m) {
         for (j in 1..n) {
@@ -307,7 +307,7 @@ fun levenshteinDistanceDPK(x: String, y: String): Int {
             )
         }
     }
-    
+
     return dp[m][n]
 }
 ```
@@ -319,10 +319,10 @@ fun levenshteinDistanceOptimizedK(x: String, y: String): Int {
     if (x.length < y.length) {
         return levenshteinDistanceOptimizedK(y, x)
     }
-    
+
     var prev = IntArray(y.length + 1) { it }
     var curr = IntArray(y.length + 1)
-    
+
     for (i in 1..x.length) {
         curr[0] = i
         for (j in 1..y.length) {
@@ -335,7 +335,7 @@ fun levenshteinDistanceOptimizedK(x: String, y: String): Int {
         }
         prev = curr.also { curr = prev }
     }
-    
+
     return prev[y.length]
 }
 ```
@@ -346,7 +346,7 @@ fun levenshteinDistanceOptimizedK(x: String, y: String): Int {
 fun levenshteinDistanceFunctionalK(x: String, y: String): Int {
     val m = x.length
     val n = y.length
-    
+
     return (0..m).fold(IntArray(n + 1) { it }) { prev, i ->
         (0..n).fold(IntArray(n + 1)) { curr, j ->
             when {
@@ -373,16 +373,16 @@ fun levenshteinDistanceFunctionalK(x: String, y: String): Int {
 fun main() {
     val x = "kitten"
     val y = "sitting"
-    
+
     // Рекурсивный подход (медленный для больших строк)
     println(levenshteinDistanceRecursiveK(x, y)) // 3
-    
+
     // Динамическое программирование
     println(levenshteinDistanceDPK(x, y)) // 3
-    
+
     // Оптимизированная версия
     println(levenshteinDistanceOptimizedK(x, y)) // 3
-    
+
     // Функциональный стиль
     println(levenshteinDistanceFunctionalK(x, y)) // 3
 }
@@ -413,7 +413,7 @@ fun main() {
 ```java
 static int calculateWithCosts(String x, String y, int insertCost, int deleteCost, int replaceCost) {
     int[][] dp = new int[x.length() + 1][y.length() + 1];
-    
+
     for (int i = 0; i <= x.length(); i++) {
         for (int j = 0; j <= y.length(); j++) {
             if (i == 0) {
@@ -430,7 +430,7 @@ static int calculateWithCosts(String x, String y, int insertCost, int deleteCost
             }
         }
     }
-    
+
     return dp[x.length()][y.length()];
 }
 ```
@@ -441,13 +441,13 @@ static int calculateWithCosts(String x, String y, int insertCost, int deleteCost
 static List<String> getEditSequence(String x, String y) {
     int[][] dp = new int[x.length() + 1][y.length() + 1];
     String[][] operations = new String[x.length() + 1][y.length() + 1];
-    
+
     // ... заполнение таблицы с записью операций ...
-    
+
     // Восстановление последовательности
     List<String> sequence = new ArrayList<>();
     int i = x.length(), j = y.length();
-    
+
     while (i > 0 || j > 0) {
         if (operations[i][j].equals("substitute")) {
             sequence.add("Replace " + x.charAt(i-1) + " with " + y.charAt(j-1));
@@ -460,7 +460,7 @@ static List<String> getEditSequence(String x, String y) {
             i--;
         }
     }
-    
+
     Collections.reverse(sequence);
     return sequence;
 }
@@ -555,9 +555,9 @@ public List<String> findClosestWords(String misspelledWord, List<String> diction
 ```java
 public List<String> autocomplete(String prefix, List<String> options) {
     return options.stream()
-        .filter(option -> option.startsWith(prefix) || 
+        .filter(option -> option.startsWith(prefix) ||
                 calculate(prefix, option.substring(0, Math.min(prefix.length(), option.length()))) <= 2)
-        .sorted(Comparator.comparingInt(option -> 
+        .sorted(Comparator.comparingInt(option ->
                 calculate(prefix, option.substring(0, Math.min(prefix.length(), option.length())))))
         .limit(10)
         .collect(Collectors.toList());
@@ -585,13 +585,13 @@ public List<Record> findSimilarRecords(String query, List<Record> records, doubl
 ```java
 public Map<String, List<String>> groupSimilarStrings(List<String> strings, int maxDistance) {
     Map<String, List<String>> groups = new LinkedHashMap<>();
-    
+
     for (String str : strings) {
         String groupKey = groups.keySet().stream()
             .filter(key -> calculate(str, key) <= maxDistance)
             .findFirst()
             .orElse(null);
-        
+
         if (groupKey == null) {
             groups.put(str, new ArrayList<>());
             groups.get(str).add(str);
@@ -599,7 +599,7 @@ public Map<String, List<String>> groupSimilarStrings(List<String> strings, int m
             groups.get(groupKey).add(str);
         }
     }
-    
+
     return groups;
 }
 ```

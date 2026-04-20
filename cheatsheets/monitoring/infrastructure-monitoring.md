@@ -46,7 +46,6 @@ updated: "2026-02-11"
 - [Итоговые таблицы](#итоговые-таблицы)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -60,7 +59,6 @@ updated: "2026-02-11"
 - **Диагностика** — связь между метриками инфраструктуры и метриками приложений (латентность, ошибки).
 - **Алертинг** — уведомления при падении узла, нехватке диска, высокой загрузке.
 
----
 
 ## Основные метрики инфраструктуры
 
@@ -75,7 +73,6 @@ updated: "2026-02-11"
 
 Источники: **Node Exporter** (хост), **cAdvisor** (контейнеры), **snmp_exporter** (сетевое оборудование), агенты **Datadog**/**Zabbix**.
 
----
 
 ## Инструменты сбора
 
@@ -91,7 +88,6 @@ updated: "2026-02-11"
 
 В стеке **Prometheus** чаще всего используют **Node Exporter** + **cAdvisor** на узлах и **Prometheus Server** для scrape и хранения.
 
----
 
 ## Node Exporter
 
@@ -126,7 +122,6 @@ scrape_configs:
 
 По умолчанию **Node Exporter** собирает много коллекторов; при необходимости отключить лишние флагом `--collector.disable-defaults` и `--collectors.enable=...`.
 
----
 
 ## cAdvisor и контейнеры
 
@@ -153,7 +148,6 @@ docker run -d --name cadvisor \
 
 **Prometheus** добавляет scrape для **cAdvisor** (job **cadvisor** или **kubernetes-nodes-cadvisor** в **Kubernetes**).
 
----
 
 ## Сетевой мониторинг
 
@@ -161,19 +155,16 @@ docker run -d --name cadvisor \
 - **Доступность** — **blackbox_exporter** проверяет HTTP/TCP/ICMP до целевых хостов и сервисов; **Prometheus** собирает метрики успеха/таймаута и латентности.
 - **SNMP** — для свитчей и маршрутизаторов используют **snmp_exporter**: конфиг с OID, **Prometheus** scrape по списку устройств; метрики (трафик, ошибки, состояние портов) попадают в **Prometheus**.
 
----
 
 ## Хранение и визуализация
 
 **Prometheus** хранит метрики локально (или удалённо при **Thanos**/ **VictoriaMetrics**). Визуализация: **Grafana** (подключение к **Prometheus** как data source), дашборды по **Node Exporter** и **cAdvisor** (готовые дашборды в сообществе **Grafana**). Альтернативы: **Datadog**, **New Relic** — свои агенты и облачное хранение с готовыми дашбордами по инфраструктуре.
 
----
 
 ## Алертинг
 
 Правила алертинга задаются в **Prometheus** (или в системе мониторинга). Примеры: **InstanceDown** (up == 0), **HighMemoryUsage** (доля использованной памяти > 90%), **DiskSpaceLow** (свободно < 10%), **HighCPU** (load или использование CPU выше порога). Алерты направляются в **Alertmanager** и далее в **Slack**, **PagerDuty** и т.д. См. [Alertmanager](alerting/alertmanager.md).
 
----
 
 ## Лучшие практики
 
@@ -184,7 +175,6 @@ docker run -d --name cadvisor \
 5. **Алерты** — не алертить на всё подряд; ввести уровни (critical, warning), использовать **for** для снижения шума (условие должно держаться N минут).
 6. **Контейнеры** — в **Kubernetes** использовать метки **pod**, **namespace**, **container** для группировки и алертов по подам/контейнерам.
 
----
 
 ## Решение проблем
 
@@ -196,23 +186,21 @@ docker run -d --name cadvisor \
 | Алерты не срабатывают | Неверное выражение или порог в правиле **Prometheus** | Проверить правило в **Prometheus** (вкладка **Alerts**); проверить наличие метрик и выражение в **Graph** |
 | **Prometheus** не хватает места на диске | Рост объёма данных | Увеличить **retention** или уменьшить частоту/количество метрик; рассмотреть удалённое хранение |
 
----
 
 ## Частые вопросы
 
-**Нужен ли отдельный Prometheus для инфраструктуры?**  
+**Нужен ли отдельный Prometheus для инфраструктуры?**
 Не обязательно; один **Prometheus** может scrape и приложение, и **Node Exporter**/ **cAdvisor**. Разделение по окружениям (prod/staging) или по назначению (infra vs app) делают при больших объёмах или разных политик retention.
 
-**Как мониторить Windows-хосты?**  
+**Как мониторить Windows-хосты?**
 **Node Exporter** официально для Linux/Unix. Для **Windows** используют **windows_exporter** (аналог для Windows) или агенты **Datadog**/ **Zabbix**.
 
-**Чем cAdvisor отличается от метрик kubelet?**  
+**Чем cAdvisor отличается от метрик kubelet?**
 В **Kubernetes** **cAdvisor** встроен в **kubelet**; метрики контейнеров доступны на эндпоинте **kubelet** (**/metrics/cadvisor**). Отдельный **cAdvisor** в **DaemonSet** используют при необходимости другой конфигурации или версии.
 
-**Как мониторить сеть между сервисами?**  
+**Как мониторить сеть между сервисами?**
 Трафик между подами/сервисами можно оценивать по метрикам **cAdvisor**/kubelet по интерфейсам; для детального анализа сети в **Kubernetes** используют **Service Mesh** (метрики из **Istio**, **Linkerd**) или eBPF-инструменты.
 
----
 
 ## Глоссарий
 
@@ -225,7 +213,6 @@ docker run -d --name cadvisor \
 | **SNMP** | Протокол управления сетевыми устройствами; метрики через **snmp_exporter** |
 | **blackbox_exporter** | Проверка доступности целей (HTTP, TCP, ICMP, DNS) для **Prometheus** |
 
----
 
 ## Итоговые таблицы
 
@@ -246,11 +233,9 @@ docker run -d --name cadvisor \
 - [Alertmanager](alerting/alertmanager.md) — алертинг
 - [Monitoring](./) — раздел мониторинга
 
----
 
 ## Заключение
 
 **Infrastructure Monitoring** — основа наблюдаемости: метрики хостов и контейнеров через **Node Exporter** и **cAdvisor**, сбор в **Prometheus**, визуализация в **Grafana**, алертинг через **Alertmanager**. Настройте scrape для всех узлов и контейнеров, определите ключевые метрики и пороги алертов, следуйте лучшим практикам по меткам и интервалам. См. [Node Exporter](https://github.com/prometheus/node_exporter), [cAdvisor](https://github.com/google/cadvisor), [Prometheus](metrics/prometheus.md), [Alertmanager](alerting/alertmanager.md).
 
----
 

@@ -59,17 +59,17 @@ public enum Move {
     ROCK("rock"),
     PAPER("paper"),
     SCISSORS("scissors");
-    
+
     private String value;
-    
+
     Move(String value) {
         this.value = value;
     }
-    
+
     public String getValue() {
         return value;
     }
-    
+
     public static Move fromString(String value) {
         for (Move move : Move.values()) {
             if (move.value.equalsIgnoreCase(value)) {
@@ -87,7 +87,7 @@ import java.util.Random;
 
 public class RockPaperScissors {
     private static Random random = new Random();
-    
+
     private static String getComputerMove() {
         int randomNumber = random.nextInt(3);
         String computerMove = Move.values()[randomNumber].getValue();
@@ -100,11 +100,11 @@ public class RockPaperScissors {
 
 ```java
 private static boolean isPlayerWin(String playerMove, String computerMove) {
-    return (playerMove.equals(Move.ROCK.getValue()) && 
+    return (playerMove.equals(Move.ROCK.getValue()) &&
             computerMove.equals(Move.SCISSORS.getValue()))
-        || (playerMove.equals(Move.SCISSORS.getValue()) && 
+        || (playerMove.equals(Move.SCISSORS.getValue()) &&
             computerMove.equals(Move.PAPER.getValue()))
-        || (playerMove.equals(Move.PAPER.getValue()) && 
+        || (playerMove.equals(Move.PAPER.getValue()) &&
             computerMove.equals(Move.ROCK.getValue()));
 }
 ```
@@ -131,19 +131,19 @@ public enum Move {
             return other == PAPER;
         }
     };
-    
+
     private String value;
-    
+
     Move(String value) {
         this.value = value;
     }
-    
+
     public String getValue() {
         return value;
     }
-    
+
     public abstract boolean beats(Move other);
-    
+
     public GameResult playAgainst(Move other) {
         if (this == other) {
             return GameResult.TIE;
@@ -164,35 +164,35 @@ import java.util.Scanner;
 
 public class RockPaperScissors {
     private static Random random = new Random();
-    
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int wins = 0;
         int losses = 0;
-        
+
         System.out.println("Welcome to Rock-Paper-Scissors! " +
             "Please enter \"rock\", \"paper\", \"scissors\", or \"quit\" to exit.");
-        
+
         while (true) {
             System.out.println("-------------------------");
             System.out.print("Enter your move: ");
             String playerMove = scanner.nextLine();
-            
+
             if (playerMove.equals("quit")) {
-                System.out.println("You won " + wins + " times and lost " + 
+                System.out.println("You won " + wins + " times and lost " +
                     losses + " times.");
                 System.out.println("Thanks for playing! See you again.");
                 break;
             }
-            
+
             if (Arrays.stream(Move.values())
                 .noneMatch(x -> x.getValue().equals(playerMove))) {
                 System.out.println("Your move isn't valid!");
                 continue;
             }
-            
+
             String computerMove = getComputerMove();
-            
+
             if (playerMove.equals(computerMove)) {
                 System.out.println("It's a tie!");
             } else if (isPlayerWin(playerMove, computerMove)) {
@@ -203,23 +203,23 @@ public class RockPaperScissors {
                 losses++;
             }
         }
-        
+
         scanner.close();
     }
-    
+
     private static String getComputerMove() {
         int randomNumber = random.nextInt(3);
         String computerMove = Move.values()[randomNumber].getValue();
         System.out.println("Computer move: " + computerMove);
         return computerMove;
     }
-    
+
     private static boolean isPlayerWin(String playerMove, String computerMove) {
-        return (playerMove.equals(Move.ROCK.getValue()) && 
+        return (playerMove.equals(Move.ROCK.getValue()) &&
                 computerMove.equals(Move.SCISSORS.getValue()))
-            || (playerMove.equals(Move.SCISSORS.getValue()) && 
+            || (playerMove.equals(Move.SCISSORS.getValue()) &&
                 computerMove.equals(Move.PAPER.getValue()))
-            || (playerMove.equals(Move.PAPER.getValue()) && 
+            || (playerMove.equals(Move.PAPER.getValue()) &&
                 computerMove.equals(Move.ROCK.getValue()));
     }
 }
@@ -258,9 +258,9 @@ enum class MoveK(val value: String) {
     SCISSORS("scissors") {
         override fun beats(other: MoveK): Boolean = other == PAPER
     };
-    
+
     abstract fun beats(other: MoveK): Boolean
-    
+
     fun playAgainst(other: MoveK): GameResultK {
         return when {
             this == other -> GameResultK.TIE
@@ -268,7 +268,7 @@ enum class MoveK(val value: String) {
             else -> GameResultK.LOSE
         }
     }
-    
+
     companion object {
         fun fromString(value: String): MoveK {
             return values().firstOrNull { it.value.equals(value, ignoreCase = true) }
@@ -287,14 +287,14 @@ import kotlin.random.Random
 
 class RockPaperScissorsK {
     private val random = Random
-    
+
     private fun getComputerMove(): MoveK {
         val randomNumber = random.nextInt(3)
         val computerMove = MoveK.values()[randomNumber]
         println("Computer move: ${computerMove.value}")
         return computerMove
     }
-    
+
     fun play(playerMoveString: String): GameResultK {
         val playerMove = MoveK.fromString(playerMoveString)
         val computerMove = getComputerMove()
@@ -306,13 +306,13 @@ class RockPaperScissorsK {
 ```kotlin
 fun main() {
     val game = RockPaperScissorsK()
-    
+
     val result1 = game.play("rock")
     println("Result: $result1")
-    
+
     val result2 = game.play("paper")
     println("Result: $result2")
-    
+
     val result3 = game.play("scissors")
     println("Result: $result3")
 }
@@ -337,7 +337,7 @@ fun main() {
 ```java
 public enum ExtendedMove {
     ROCK, PAPER, SCISSORS, LIZARD, SPOCK;
-    
+
     private static final Map<ExtendedMove, Set<ExtendedMove>> BEATS = Map.of(
         ROCK, Set.of(SCISSORS, LIZARD),
         PAPER, Set.of(ROCK, SPOCK),
@@ -345,12 +345,12 @@ public enum ExtendedMove {
         LIZARD, Set.of(PAPER, SPOCK),
         SPOCK, Set.of(ROCK, SCISSORS)
     );
-    
+
     public GameResult playAgainst(ExtendedMove other) {
         if (this == other) {
             return GameResult.TIE;
         }
-        return BEATS.get(this).contains(other) ? 
+        return BEATS.get(this).contains(other) ?
             GameResult.WIN : GameResult.LOSE;
     }
 }
@@ -364,18 +364,18 @@ public class GameStatistics {
     private int losses = 0;
     private int ties = 0;
     private Map<Move, Integer> moveFrequency = new HashMap<>();
-    
+
     public void recordGame(Move playerMove, GameResult result) {
-        moveFrequency.put(playerMove, 
+        moveFrequency.put(playerMove,
             moveFrequency.getOrDefault(playerMove, 0) + 1);
-        
+
         switch (result) {
             case WIN: wins++; break;
             case LOSE: losses++; break;
             case TIE: ties++; break;
         }
     }
-    
+
     public void printStatistics() {
         System.out.println("Wins: " + wins);
         System.out.println("Losses: " + losses);
@@ -391,7 +391,7 @@ public class GameStatistics {
 public class StrategicPlayer {
     private Move lastPlayerMove;
     private Move lastComputerMove;
-    
+
     public Move getNextMove() {
         // Стратегия: выбирать ход, который побеждает последний ход игрока
         if (lastPlayerMove != null) {
@@ -399,7 +399,7 @@ public class StrategicPlayer {
         }
         return Move.values()[random.nextInt(3)];
     }
-    
+
     private Move getCounterMove(Move move) {
         // Возвращает ход, который побеждает данный ход
         switch (move) {

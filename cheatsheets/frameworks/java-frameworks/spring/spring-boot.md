@@ -182,7 +182,7 @@ public class SpringContextTest {
 // Интеграционный тест REST API с использованием REST Assured
 public class SpringBootBootstrapLiveTest {
     private static final String API_ROOT = "http://localhost:8081/api/books";
-    
+
     // Создание книги со случайными данными для тестов
     private Book createRandomBook() {
         Book book = new Book();
@@ -190,7 +190,7 @@ public class SpringBootBootstrapLiveTest {
         book.setAuthor(randomAlphabetic(15));
         return book;
     }
-    
+
     // Создание книги через API и возврат URI созданного ресурса
     private String createBookAsUri(Book book) {
         Response response = RestAssured.given()
@@ -309,7 +309,7 @@ public void whenDeleteCreatedBook_thenOk() {
 
 ## DispatcherServlet и web.xml
 
-**DispatcherServlet** - это контроллер в веб-приложениях **Spring.**
+**DispatcherServlet** — это контроллер в веб-приложениях **Spring.**
 
 Он используется для создания веб-приложений и служб **REST** в **Spring MVC**. В традиционном веб-приложении **Spring** этот сервлет определяется в файле **web.xml**.
 
@@ -367,14 +367,14 @@ spring.mvc.servlet.path=/baeldung
 @Component
 public class CustomFilter implements Filter {
     Logger logger = LoggerFactory.getLogger(CustomFilter.class);
-    
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         // Инициализация фильтра
     }
-    
+
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         // Логирование входящего запроса
         logger.info("CustomFilter is invoked");
@@ -393,18 +393,18 @@ public class CustomFilter implements Filter {
 // Кастомный сервлет для обработки HTTP-запросов
 public class CustomServlet extends HttpServlet {
     Logger logger = LoggerFactory.getLogger(CustomServlet.class);
-    
+
     // Обработка GET-запросов
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         logger.info("CustomServlet doGet() method is invoked");
         super.doGet(req, resp);
     }
-    
+
     // Обработка POST-запросов
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) 
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         logger.info("CustomServlet doPost() method is invoked");
         super.doPost(req, resp);
@@ -432,13 +432,13 @@ public ServletRegistrationBean customServletBean() {
 // Слушатель жизненного цикла контекста сервлета
 public class CustomListener implements ServletContextListener {
     Logger logger = LoggerFactory.getLogger(CustomListener.class);
-    
+
     // Вызывается при инициализации контекста
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         logger.info("CustomListener is initialized");
     }
-    
+
     // Вызывается при уничтожении контекста
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
@@ -469,10 +469,10 @@ public ServletListenerRegistrationBean<ServletContextListener> customListenerBea
 
 **Вот лишь некоторые из функций **Spring Boot**:**
 
-1. _Наличие "стартовых" зависимостей для упрощения сборки и настройки приложения._
+1. _Наличие «стартовых» зависимостей для упрощения сборки и настройки приложения._
 2. _Встроенный сервер, чтобы избежать сложностей при развертывании приложений_
 3. _Метрики, проверка работоспособности и внешняя конфигурация_
-4. _Автоматическая конфигурация для функциональности **Spring** - когда это возможно_
+4. _Автоматическая конфигурация для функциональности **Spring** — когда это возможно_
 
 ### Стартовые зависимости
 
@@ -552,7 +552,7 @@ _Некоторые из преимуществ **Spring Boot** над **Spring*
 
 ### Работа с **JPA**
 
-Большинство веб-приложений обладают некоторой устойчивостью - и это довольно часто **JPA.**
+Большинство веб-приложений обладают некоторой устойчивостью — и это довольно часто **JPA.**
 
 **Вместо того, чтобы определять все связанные зависимости вручную, давайте воспользуемся стартером:**
 
@@ -601,7 +601,7 @@ spring.mail.properties.mail.smtp.auth=false
 
 Основное преимущество этой библиотеки заключается в том, что мы можем получить инструменты производственного уровня без необходимости самостоятельно реализовывать эти функции.
 
-**Actuator** в основном используется для предоставления оперативной информации о запущенном приложении - о работоспособности, показателях, информации, дампе**, env** и т. Д. Он использует конечные точки **HTTP** или **JMX-**бины, чтобы мы могли взаимодействовать с ним.
+**Actuator** в основном используется для предоставления оперативной информации о запущенном приложении — о работоспособности, показателях, информации, дампе**, env** и т. Д. Он использует конечные точки **HTTP** или **JMX-**бины, чтобы мы могли взаимодействовать с ним.
 
 ### Настройка **Actuator**
 
@@ -671,7 +671,7 @@ public class PropertiesWithJavaConfig {
 }
 ```
 
-**Еще один очень полезный способ зарегистрировать новый файл свойств - использовать заполнитель, который позволяет нам динамически выбирать нужный файл во время выполнения:**
+**Еще один очень полезный способ зарегистрировать новый файл свойств — использовать заполнитель, который позволяет нам динамически выбирать нужный файл во время выполнения:**
 
 ```java
 // Динамический выбор файла через placeholder (по умолчанию mysql)
@@ -774,7 +774,7 @@ java -jar app.jar --spring.config.location=config/*
 public class FilePropertyInjectionUnitTest {
     @Value("${foo}")
     private String foo;  // Внедрённое значение из файла
-    
+
     @Test
     public void whenFilePropertyProvided_thenProperlyInjected() {
         assertThat(foo).isEqualTo("bar");
@@ -791,7 +791,7 @@ public class FilePropertyInjectionUnitTest {
 public class PropertyInjectionUnitTest {
     @Value("${foo}")
     private String foo;  // Значение определено в аннотации
-    
+
     @Test
     public void whenPropertyProvided_thenProperlyInjected() {
         assertThat(foo).isEqualTo("bar");
@@ -808,7 +808,7 @@ public class PropertyInjectionUnitTest {
 public class SpringBootPropertyInjectionIntegrationTest {
     @Value("${foo}")
     private String foo;
-    
+
     @Test
     public void whenSpringBootPropertyProvided_thenProperlyInjected() {
         assertThat(foo).isEqualTo("bar");
@@ -976,7 +976,7 @@ public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    
+
     @Size(min = 3, max = 20)  // Ограничение длины имени
     private String name;
 }
@@ -1004,7 +1004,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 public class EmployeeRepositoryIntegrationTest {
     @Autowired
     private TestEntityManager entityManager;  // Для управления тестовыми данными
-    
+
     @Autowired
     private EmployeeRepository employeeRepository;  // Тестируемый репозиторий
 }
@@ -1054,7 +1054,7 @@ public void whenFindByName_thenReturnEmployee() {
 public class EmployeeRestController {
     @Autowired
     private EmployeeService employeeService;
-    
+
     // Эндпоинт получения всех сотрудников
     @GetMapping("/employees")
     public List<Employee> getAllEmployees() {
@@ -1072,7 +1072,7 @@ public class EmployeeRestController {
 public class EmployeeRestControllerIntegrationTest {
     @Autowired
     private MockMvc mvc;  // Мок HTTP-клиента
-    
+
     @MockBean
     private EmployeeService service;  // Мок сервиса
 }
@@ -1092,7 +1092,7 @@ public void givenEmployees_whenGetEmployees_thenReturnJsonArray() throws Excepti
     List<Employee> allEmployees = Arrays.asList(alex);
     // Настройка мока сервиса
     given(service.getAllEmployees()).willReturn(allEmployees);
-    
+
     // Выполнение HTTP-запроса и проверка ответа
     mvc.perform(get("/api/employees")
         .contentType(MediaType.APPLICATION_JSON))
@@ -1157,7 +1157,7 @@ public class EmployeeRepositoryTest {
             .withDatabaseName("test")
             .withUsername("test")
             .withPassword("test");
-    
+
     // Динамическая конфигурация свойств datasource из контейнера
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -3007,4 +3007,12 @@ public class AdminController {
 - **Гибкость** для кастомизации под специфические нужды
 - **Обширную экосистему starter**'ов и интеграций
 
-Ключ к успешному использованию **Spring Boot** - понимание его возможностей и правильное применение **best practices** в конкретном контексте проекта.
+Ключ к успешному использованию **Spring Boot** — понимание его возможностей и правильное применение **best practices** в конкретном контексте проекта.
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-cache|Spring Cache: Полное руководство по кешированию]]

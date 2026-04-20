@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Введение в проектирование масштабируемых систем.
 
-
-
 ## Полезные ссылки
 
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
@@ -71,7 +69,7 @@ updated: "2026-02-11"
 class LoadBalancer {
     private List<Server> servers;
     private LoadBalancingStrategy strategy;
-    
+
     Server selectServer(Request request) {
         return strategy.select(servers, request);
     }
@@ -83,7 +81,7 @@ interface LoadBalancingStrategy {
 
 class RoundRobinStrategy implements LoadBalancingStrategy {
     private int currentIndex = 0;
-    
+
     public Server select(List<Server> servers, Request request) {
         Server server = servers.get(currentIndex);
         currentIndex = (currentIndex + 1) % servers.size();
@@ -108,13 +106,13 @@ class RoundRobinStrategy implements LoadBalancingStrategy {
 class DatabaseReplication {
     private Database primary;
     private List<Database> replicas;
-    
+
     void write(Data data) {
         primary.write(data);
         // Асинхронная репликация
         replicas.forEach(replica -> replica.writeAsync(data));
     }
-    
+
     Data read() {
         // Чтение из реплики для распределения нагрузки
         Database replica = selectReplica();
@@ -140,19 +138,19 @@ class CacheService {
     private Cache<String, Object> l1Cache; // In-memory (быстрый)
     private Cache<String, Object> l2Cache; // Redis (быстрый, распределённый)
     private Database database; // Медленный, но надёжный
-    
+
     Object get(String key) {
         // L1 Cache
         Object value = l1Cache.get(key);
         if (value != null) return value;
-        
+
         // L2 Cache
         value = l2Cache.get(key);
         if (value != null) {
             l1Cache.put(key, value);
             return value;
         }
-        
+
         // Database
         value = database.get(key);
         l2Cache.put(key, value);
@@ -232,33 +230,33 @@ Client → Load Balancer → API Servers → Database
 ```java
 class URLShortener {
     private static final String BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    
+
     String shorten(String longUrl) {
         // Генерация уникального ID
         long id = generateUniqueId();
-        
+
         // Конвертация в base62
         String shortCode = encodeBase62(id);
-        
+
         // Сохранение в БД
         database.save(shortCode, longUrl);
-        
+
         return "https://short.ly/" + shortCode;
     }
-    
+
     String redirect(String shortCode) {
         // Проверка кэша
         String longUrl = cache.get(shortCode);
         if (longUrl != null) {
             return longUrl;
         }
-        
+
         // Запрос к БД
         longUrl = database.get(shortCode);
-        
+
         // Сохранение в кэш
         cache.put(shortCode, longUrl);
-        
+
         return longUrl;
     }
 }
@@ -297,4 +295,3 @@ class URLShortener {
 - [[enterprise-patterns-overview|Enterprise Patterns]] — обзор enterprise-паттернов
 - [[microservices|Microservices]] — микросервисная архитектура
 
----

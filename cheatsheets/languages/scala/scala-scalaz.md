@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Scalaz в Scala
 
-Краткое руководство по **Scalaz** - библиотека функционального программирования для **Scala**.
+Краткое руководство по **Scalaz** — библиотека функционального программирования для **Scala**.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -87,7 +87,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Scalaz** - это библиотека функционального программирования для **Scala**, которая предоставляет множество абстракций и утилит для функционального программирования. **Scalaz** включает **Type Classes**, **Monads**, **Functors**, **Applicative**, **Validation**, **Lens** и множество других абстракций.
+**Scalaz** — это библиотека функционального программирования для **Scala**, которая предоставляет множество абстракций и утилит для функционального программирования. **Scalaz** включает **Type Classes**, **Monads**, **Functors**, **Applicative**, **Validation**, **Lens** и множество других абстракций.
 
 **Scalaz** особенно полезен для создания чистого функционального кода, обработки ошибок, работы с эффектами и создания композируемого кода.
 
@@ -212,7 +212,7 @@ val result = createUser("", "invalid-email", -5)
 
 ## **Lens**
 
-**Lens** в **Scalaz** - это функциональные ссылки на поля.
+**Lens** в **Scalaz** — это функциональные ссылки на поля.
 
 ### Использование **Lens**
 
@@ -377,11 +377,11 @@ type StringOption = String => Option[String]
 
 def parseNumber(s: String): Option[Int] = s.toIntOption
 
-def divide(a: Int, b: Int): Option[Double] = 
+def divide(a: Int, b: Int): Option[Double] =
   if (b == 0) None else Some(a.toDouble / b)
 
 // Композиция через Kleisli
-val parseAndDivide: String => String => Option[Double] = 
+val parseAndDivide: String => String => Option[Double] =
   Kleisli(parseNumber) >=> Kleisli(divide(_, 2))
 
 val result = parseAndDivide("10")("")  // Some(5.0)
@@ -444,7 +444,7 @@ import scalaz._
 import Scalaz._
 
 // Использование Tree для представления иерархических структур
-val tree: Tree[Int] = 
+val tree: Tree[Int] =
   1.node(
     2.leaf,
     3.node(
@@ -667,7 +667,7 @@ val result = flatMapped.run
 
 ## Заключение
 
-**Scalaz** - это библиотека функционального программирования для **Scala**, которая предоставляет множество абстракций для создания чистого функционального кода. Понимание **Type Classes**, **Monads**, **Functors**, **Applicative**, **Validation**, **Lens**, **Reader Monad** для **dependency injection**, **State Monad**, **Kleisli** для композиции функций и их практических применений позволяет создавать композируемый, типобезопасный и выразительный код.
+**Scalaz** — это библиотека функционального программирования для **Scala**, которая предоставляет множество абстракций для создания чистого функционального кода. Понимание **Type Classes**, **Monads**, **Functors**, **Applicative**, **Validation**, **Lens**, **Reader Monad** для **dependency injection**, **State Monad**, **Kleisli** для композиции функций и их практических применений позволяет создавать композируемый, типобезопасный и выразительный код.
 
 Использование **Scalaz** для обработки ошибок, работы с эффектами, валидации, создания **Lens**, **dependency injection**, управления состоянием, композиции функций и практических применений критично для создания надежных, гибких функциональных приложений.
 
@@ -754,7 +754,7 @@ val maybeList = list.traverse(x => if (x > 0) Some(x * 2) else None)
 // Some(List(2, 4, 6, 8, 10))
 
 // Трансформация с Validation
-val validatedList = list.traverse(x => 
+val validatedList = list.traverse(x =>
   if (x > 0) x.successNel[String] else "Invalid".failureNel[Int]
 )
 // Success(List(1, 2, 3, 4, 5))
@@ -906,9 +906,9 @@ trait Ordering[A] {
   def compare(a1: A, a2: A): Int
 }
 
-implicit val orderingContravariant: Contravariant[Ordering] = 
+implicit val orderingContravariant: Contravariant[Ordering] =
   new Contravariant[Ordering] {
-    def contramap[A, B](fa: Ordering[A])(f: B => A): Ordering[B] = 
+    def contramap[A, B](fa: Ordering[A])(f: B => A): Ordering[B] =
       new Ordering[B] {
         def compare(b1: B, b2: B): Int = fa.compare(f(b1), f(b2))
       }
@@ -927,9 +927,9 @@ trait Codec[A] {
   def decode(s: String): Option[A]
 }
 
-implicit val codecInvariant: InvariantFunctor[Codec] = 
+implicit val codecInvariant: InvariantFunctor[Codec] =
   new InvariantFunctor[Codec] {
-    def xmap[A, B](fa: Codec[A])(f: A => B, g: B => A): Codec[B] = 
+    def xmap[A, B](fa: Codec[A])(f: A => B, g: B => A): Codec[B] =
       new Codec[B] {
         def encode(b: B): String = fa.encode(g(b))
         def decode(s: String): Option[B] = fa.decode(s).map(f)
@@ -1141,9 +1141,9 @@ import scalaz._
 import Scalaz._
 
 // Costar для контравариантных функторов
-val functionCostar: Costar[Function1, Option] = 
+val functionCostar: Costar[Function1, Option] =
   new Costar[Function1, Option] {
-    def apply[A, B](f: Option[A] => B): A => B = 
+    def apply[A, B](f: Option[A] => B): A => B =
       a => f(Some(a))
   }
 ```
@@ -1155,9 +1155,9 @@ import scalaz._
 import Scalaz._
 
 // Star для ковариантных функторов
-val functionStar: Star[Function1, Option] = 
+val functionStar: Star[Function1, Option] =
   new Star[Function1, Option] {
-    def apply[A, B](f: A => Option[B]): Option[A] => Option[B] = 
+    def apply[A, B](f: A => Option[B]): Option[A] => Option[B] =
       _.flatMap(f)
   }
 ```
@@ -1168,3 +1168,10 @@ val functionStar: Star[Function1, Option] =
 - [Scalaz Guide](https://github.com/scalaz/scalaz)
 - [Learning Scalaz](http://eed3si9n.com/learning-scalaz/)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

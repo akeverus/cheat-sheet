@@ -344,7 +344,7 @@ public class MySQLIntegrationTest {
         // Тестирование JSON операций - использование JSON_EXTRACT для извлечения данных из JSON поля
         // specifications - JSON поле в таблице products
         String jsonQuery = "SELECT * FROM products WHERE JSON_EXTRACT(specifications, '$.category') = 'Electronics'";
-        
+
         // Выполняем запрос через JdbcTemplate и маппим результаты в объекты Product
         List<Product> electronics = jdbcTemplate.query(jsonQuery,
             (rs, rowNum) -> new Product(rs.getString("name"), rs.getDouble("price"), rs.getString("category")));
@@ -1707,7 +1707,13 @@ public class BadResourceManagementTest {
 
 **Testcontainers** рекомендуется как основной инструмент для интеграционного тестирования в современных **Java** приложениях, особенно в **enterprise** проектах с **complex** архитектурой.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-apache-httpclient|Apache HttpClient: Мощный HTTP клиент для Java]]
+- [[java-apache-poi|Apache POI]]
+- [[java-bean-validation|Bean Validation (JSR-380 / Jakarta Validation 3.0)]]
+- [[java-hikaricp|HikariCP: Высокопроизводительный Connection Pool]]
+- [[java-http-clients|HTTP-клиенты в Java]]

@@ -125,10 +125,10 @@ updated: "2026-02-06"
 
 ### Основные аспекты производительности
 
-1. **CPU производительность** - скорость выполнения кода
-2. **Память** - использование и управление памятью
-3. **Сборка мусора** - влияние `GC` на производительность
-4. **Конкурентность** - эффективное использование горутин
+1. **CPU производительность** — скорость выполнения кода
+2. **Память** — использование и управление памятью
+3. **Сборка мусора** — влияние `GC` на производительность
+4. **Конкурентность** — эффективное использование горутин
 
 ## Профилирование
 
@@ -148,12 +148,12 @@ func cpuProfile() {
         log.Fatal(err)
     }
     defer f.Close()
-    
+
     if err := pprof.StartCPUProfile(f); err != nil {
         log.Fatal(err)
     }
     defer pprof.StopCPUProfile()
-    
+
     // Ваш код здесь
 }
 ```
@@ -172,9 +172,9 @@ func memoryProfile() {
         log.Fatal(err)
     }
     defer f.Close()
-    
+
     // Ваш код здесь
-    
+
     runtime.GC()
     if err := pprof.WriteHeapProfile(f); err != nil {
         log.Fatal(err)
@@ -313,7 +313,7 @@ var pool = sync.Pool{
 func process() {
     buf := pool.Get().([]byte)
     defer pool.Put(buf)
-    
+
     // использование buf
 }
 ```
@@ -378,7 +378,7 @@ func main() {
     go func() {
         log.Println(http.ListenAndServe("localhost:6060", nil))
     }()
-    
+
     // Ваш код здесь
 }
 
@@ -434,10 +434,10 @@ func traceProfile() {
         log.Fatal(err)
     }
     defer f.Close()
-    
+
     trace.Start(f)
     defer trace.Stop()
-    
+
     // Ваш код здесь
 }
 
@@ -509,7 +509,7 @@ func concatenateStrings(strs []string) string {
 func concatenateStrings(strs []string) string {
     var builder strings.Builder
     builder.Grow(len(strs) * 10)  // Предварительное выделение
-    
+
     for _, s := range strs {
         builder.WriteString(s)
     }
@@ -649,11 +649,11 @@ var bufferPool = sync.Pool{
 func processWithPool(data []byte) {
     buf := bufferPool.Get().([]byte)
     defer bufferPool.Put(buf)
-    
+
     // Использование буфера
     buf = append(buf, data...)
     process(buf)
-    
+
     // Буфер возвращается в пул
 }
 ```
@@ -664,7 +664,7 @@ func processWithPool(data []byte) {
 func processItems(items []Item) {
     // Переиспользование слайса
     temp := make([]int, 0, 100)
-    
+
     for _, item := range items {
         temp = temp[:0]  // Очистка без перераспределения
         temp = processItem(item, temp)
@@ -693,7 +693,7 @@ func processBad(items []Item) []Result {
 func processGood(items []Item) []Result {
     results := make([]Result, 0, len(items))
     var result Result  // Переиспользование
-    
+
     for _, item := range items {
         result.ID = item.ID
         result.Data = processData(item.Data)
@@ -743,11 +743,11 @@ func processBad(items []Item) {
 func processGood(items []Item) {
     sem := make(chan struct{}, 10)  // Максимум 10 горутин
     var wg sync.WaitGroup
-    
+
     for _, item := range items {
         wg.Add(1)
         sem <- struct{}{}  // Acquire
-        
+
         go func(it Item) {
             defer func() {
                 <-sem  // Release
@@ -756,7 +756,7 @@ func processGood(items []Item) {
             processItem(it)
         }(item)
     }
-    
+
     wg.Wait()
 }
 ```
@@ -767,13 +767,13 @@ func processGood(items []Item) {
 func processWithWorkers(items []Item, numWorkers int) []Result {
     jobs := make(chan Item, len(items))
     results := make(chan Result, len(items))
-    
+
     // Заполнение jobs
     for _, item := range items {
         jobs <- item
     }
     close(jobs)
-    
+
     // Запуск воркеров
     var wg sync.WaitGroup
     for i := 0; i < numWorkers; i++ {
@@ -785,19 +785,19 @@ func processWithWorkers(items []Item, numWorkers int) []Result {
             }
         }()
     }
-    
+
     // Ожидание завершения
     go func() {
         wg.Wait()
         close(results)
     }()
-    
+
     // Сбор результатов
     var allResults []Result
     for result := range results {
         allResults = append(allResults, result)
     }
-    
+
     return allResults
 }
 ```
@@ -823,7 +823,7 @@ func readBad(file *os.File) error {
 func readGood(file *os.File) error {
     reader := bufio.NewReader(file)
     buffer := make([]byte, 4096)
-    
+
     for {
         n, err := reader.Read(buffer)
         if err != nil {
@@ -840,7 +840,7 @@ func readGood(file *os.File) error {
 func readParallel(files []string) error {
     var wg sync.WaitGroup
     errCh := make(chan error, len(files))
-    
+
     for _, filename := range files {
         wg.Add(1)
         go func(fn string) {
@@ -850,16 +850,16 @@ func readParallel(files []string) error {
             }
         }(filename)
     }
-    
+
     wg.Wait()
     close(errCh)
-    
+
     for err := range errCh {
         if err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -889,7 +889,7 @@ func optimizedHTTPClient() *http.Client {
         TLSHandshakeTimeout: 10 * time.Second,
         DisableCompression:  false,
     }
-    
+
     return &http.Client{
         Timeout:   10 * time.Second,
         Transport: transport,
@@ -917,7 +917,7 @@ func writeJSONStream(w io.Writer, items []Item) error {
 func readJSONStream(r io.Reader) ([]Item, error) {
     decoder := json.NewDecoder(r)
     var items []Item
-    
+
     for decoder.More() {
         var item Item
         if err := decoder.Decode(&item); err != nil {
@@ -925,7 +925,7 @@ func readJSONStream(r io.Reader) ([]Item, error) {
         }
         items = append(items, item)
     }
-    
+
     return items, nil
 }
 ```
@@ -948,7 +948,7 @@ func processBad(texts []string) {
 // Хорошо: предварительная компиляция
 func processGood(texts []string) {
     re := regexp.MustCompile(`\d+`)  // Компиляция один раз
-    
+
     for _, text := range texts {
         if re.MatchString(text) {
             process(text)
@@ -967,7 +967,7 @@ func optimizedQuery(db *sql.DB) error {
         return err
     }
     defer stmt.Close()
-    
+
     // Переиспользование prepared statement
     for i := 1; i <= 1000; i++ {
         var user User
@@ -976,7 +976,7 @@ func optimizedQuery(db *sql.DB) error {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -997,19 +997,19 @@ type CacheEntry struct {
 func (c *Cache) Get(key string) (interface{}, bool) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     entry, ok := c.data[key]
     if !ok || time.Now().After(entry.ExpiresAt) {
         return nil, false
     }
-    
+
     return entry.Value, true
 }
 
 func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.data[key] = CacheEntry{
         Value:     value,
         ExpiresAt: time.Now().Add(ttl),
@@ -1056,7 +1056,7 @@ func buildStringBad(items []string) string {
 func buildStringGood(items []string) string {
     var builder strings.Builder
     builder.Grow(len(items) * 10) // Предварительное выделение
-    
+
     for i, item := range items {
         if i > 0 {
             builder.WriteString(",")
@@ -1137,10 +1137,10 @@ var bufferPool = sync.Pool{
 func processWithPool(data []byte) []byte {
     buffer := bufferPool.Get().([]byte)
     defer bufferPool.Put(buffer[:0]) // Сброс для переиспользования
-    
+
     buffer = append(buffer, data...)
     // Обработка...
-    
+
     result := make([]byte, len(buffer))
     copy(result, buffer)
     return result
@@ -1161,7 +1161,7 @@ func handleRequest(data []byte) {
         req.Reset()
         requestPool.Put(req)
     }()
-    
+
     // Использование запроса
     req.Parse(data)
     process(req)
@@ -1204,19 +1204,19 @@ func sumOptimized(items []int) int {
     total := 0
     i := 0
     n := len(items)
-    
+
     // Unroll для первых n-4 элементов
     for i < n-4 {
         total += items[i] + items[i+1] + items[i+2] + items[i+3]
         i += 4
     }
-    
+
     // Обработка оставшихся
     for i < n {
         total += items[i]
         i++
     }
-    
+
     return total
 }
 ```
@@ -1228,7 +1228,7 @@ func sumOptimized(items []int) int {
 func processItems(items []Item) {
     // Кэширование результатов функций
     processor := getProcessor()
-    
+
     for _, item := range items {
         processor.Process(item) // Вместо getProcessor().Process(item)
     }
@@ -1327,12 +1327,12 @@ import "runtime"
 func monitorPerformance() {
     var m runtime.MemStats
     runtime.ReadMemStats(&m)
-    
+
     fmt.Printf("Alloc = %v MiB", bToMb(m.Alloc))
     fmt.Printf("\tTotalAlloc = %v MiB", bToMb(m.TotalAlloc))
     fmt.Printf("\tSys = %v MiB", bToMb(m.Sys))
     fmt.Printf("\tNumGC = %v\n", m.NumGC)
-    
+
     fmt.Printf("HeapAlloc = %v MiB", bToMb(m.HeapAlloc))
     fmt.Printf("\tHeapSys = %v MiB", bToMb(m.HeapSys))
     fmt.Printf("\tHeapInuse = %v MiB", bToMb(m.HeapInuse))
@@ -1356,22 +1356,22 @@ func forceGC() {
 func processWithLimiter(items []Item, maxConcurrency int) error {
     sem := make(chan struct{}, maxConcurrency)
     errCh := make(chan error, len(items))
-    
+
     for _, item := range items {
         sem <- struct{}{} // Acquire
-        
+
         go func(it Item) {
             defer func() { <-sem }() // Release
             errCh <- processItem(it)
         }(item)
     }
-    
+
     for i := 0; i < len(items); i++ {
         if err := <-errCh; err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 
@@ -1379,7 +1379,7 @@ func processWithLimiter(items []Item, maxConcurrency int) error {
 func processWithWorkerPool(items []Item, numWorkers int) error {
     jobs := make(chan Item, len(items))
     errCh := make(chan error, len(items))
-    
+
     // Запуск воркеров
     for i := 0; i < numWorkers; i++ {
         go func() {
@@ -1388,20 +1388,20 @@ func processWithWorkerPool(items []Item, numWorkers int) error {
             }
         }()
     }
-    
+
     // Отправка заданий
     for _, item := range items {
         jobs <- item
     }
     close(jobs)
-    
+
     // Сбор результатов
     for i := 0; i < len(items); i++ {
         if err := <-errCh; err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -1411,7 +1411,7 @@ func processWithWorkerPool(items []Item, numWorkers int) error {
 ```go
 func BenchmarkStringConcat(b *testing.B) {
     items := []string{"a", "b", "c", "d", "e"}
-    
+
     b.Run("concat", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             result := ""
@@ -1421,7 +1421,7 @@ func BenchmarkStringConcat(b *testing.B) {
             _ = result
         }
     })
-    
+
     b.Run("builder", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             var builder strings.Builder
@@ -1431,7 +1431,7 @@ func BenchmarkStringConcat(b *testing.B) {
             _ = builder.String()
         }
     })
-    
+
     b.Run("join", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             _ = strings.Join(items, "")
@@ -1441,7 +1441,7 @@ func BenchmarkStringConcat(b *testing.B) {
 
 func BenchmarkMemoryAllocation(b *testing.B) {
     b.ReportAllocs()
-    
+
     b.Run("no preallocate", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             var slice []int
@@ -1450,7 +1450,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
             }
         }
     })
-    
+
     b.Run("preallocate", func(b *testing.B) {
         for i := 0; i < b.N; i++ {
             slice := make([]int, 0, 1000)
@@ -1464,21 +1464,21 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 
 ## Лучшие практики
 
-1. **Измеряйте перед оптимизацией** - используйте профилирование для выявления узких мест
-2. **Предварительно выделяйте память** - используйте **make** с указанием емкости
-3. **Избегайте утечек памяти** - правильно управляйте жизненным циклом объектов
-4. **Оптимизируйте структуры** - учитывайте выравнивание полей
-5. **Используйте sync.Pool** - для переиспользования объектов
-6. **Минимизируйте аллокации** - переиспользуйте объекты где возможно
-7. **Оптимизируйте строки** - используйте **strings.Builder** для конкатенации
-8. **Избегайте defer в горячих путях** - используйте явное управление
-9. **Используйте конкретные типы** - избегайте лишних интерфейсов в горячих путях
-10. **Настраивайте GC** - используйте **GOGC** для баланса памяти и производительности
-11. **Используйте бенчмарки** - измеряйте производительность изменений
-12. **Мониторьте память** - отслеживайте использование памяти
-13. **Оптимизируйте циклы** - кэшируйте значения и используйте **range**
-14. **Избегайте лишних копий** - используйте указатели для больших структур
-15. **Используйте worker pools** - ограничивайте количество горутин
+1. **Измеряйте перед оптимизацией** — используйте профилирование для выявления узких мест
+2. **Предварительно выделяйте память** — используйте **make** с указанием емкости
+3. **Избегайте утечек памяти** — правильно управляйте жизненным циклом объектов
+4. **Оптимизируйте структуры** — учитывайте выравнивание полей
+5. **Используйте sync.Pool** — для переиспользования объектов
+6. **Минимизируйте аллокации** — переиспользуйте объекты где возможно
+7. **Оптимизируйте строки** — используйте **strings.Builder** для конкатенации
+8. **Избегайте defer в горячих путях** — используйте явное управление
+9. **Используйте конкретные типы** — избегайте лишних интерфейсов в горячих путях
+10. **Настраивайте GC** — используйте **GOGC** для баланса памяти и производительности
+11. **Используйте бенчмарки** — измеряйте производительность изменений
+12. **Мониторьте память** — отслеживайте использование памяти
+13. **Оптимизируйте циклы** — кэшируйте значения и используйте **range**
+14. **Избегайте лишних копий** — используйте указатели для больших структур
+15. **Используйте worker pools** — ограничивайте количество горутин
 
 ### Практические примеры: Оптимизация через **escape analysis**
 
@@ -1563,3 +1563,11 @@ go build -gcflags="-S" main.go
 - [Go Performance Tips](https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html)
 - [Go Profiling](https://go.dev/blog/pprof)
 - [Go Memory Model](https://go.dev/ref/mem)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

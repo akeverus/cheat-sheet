@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Testing - Unit Tests, Integration Tests и Mocking
-
-
+# Micronaut: Testing — Unit Tests, Integration Tests и Mocking
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 ## Содержание
 
-- [Micronaut: Testing - Unit Tests, Integration Tests и Mocking](#micronaut-testing-unit-tests-integration-tests-и-mocking)
+- [Micronaut: Testing — Unit Tests, Integration Tests и Mocking](#micronaut-testing-unit-tests-integration-tests-и-mocking)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Testing](#настройка-testing)
@@ -121,39 +119,39 @@ public class UserServiceTest {
     private UserRepository userRepository;
     private EmailService emailService;
     private UserService userService;
-    
+
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         emailService = mock(EmailService.class);
         userService = new UserService(userRepository, emailService);
     }
-    
+
     @Test
     void testCreateUser() {
         // Given
         User user = new User("John", "john@example.com", 30);
         User savedUser = new User(1L, "John", "john@example.com", 30);
-        
+
         when(userRepository.save(user)).thenReturn(savedUser);
         doNothing().when(emailService).sendWelcomeEmail(savedUser);
-        
+
         // When
         User result = userService.createUser(user);
-        
+
         // Then
         assertNotNull(result);
         assertEquals(1L, result.getId());
         verify(userRepository).save(user);
         verify(emailService).sendWelcomeEmail(savedUser);
     }
-    
+
     @Test
     void testGetUserNotFound() {
         // Given
         Long userId = 1L;
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
-        
+
         // When & Then
         assertThrows(UserNotFoundException.class, () -> {
             userService.getUser(userId);
@@ -174,22 +172,22 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest
 public class UserServiceIntegrationTest {
-    
+
     @Inject
     UserService userService;
-    
+
     @Inject
     UserRepository userRepository;
-    
+
     @Test
     void testCreateAndFindUser() {
         // Given
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User created = userService.createUser(user);
         User found = userService.getUser(created.getId());
-        
+
         // Then
         assertNotNull(found);
         assertEquals("John", found.getName());
@@ -212,32 +210,32 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest
 public class UserControllerTest {
-    
+
     @Inject
     @Client("/")
     HttpClient client;
-    
+
     @Test
     void testGetUser() {
         // When
         HttpRequest<?> request = HttpRequest.GET("/api/users/1");
         HttpResponse<User> response = client.toBlocking().exchange(request, User.class);
-        
+
         // Then
         assertEquals(200, response.code());
         assertNotNull(response.body());
         assertEquals(1L, response.body().getId());
     }
-    
+
     @Test
     void testCreateUser() {
         // Given
         User user = new User("John", "john@example.com", 30);
         HttpRequest<User> request = HttpRequest.POST("/api/users", user);
-        
+
         // When
         HttpResponse<User> response = client.toBlocking().exchange(request, User.class);
-        
+
         // Then
         assertEquals(201, response.code());
         assertNotNull(response.body());
@@ -258,41 +256,41 @@ import java.time.Duration;
 
 @MicronautTest
 public class ReactiveUserServiceTest {
-    
+
     @Inject
     UserService userService;
-    
+
     @Test
     void testGetUserReactive() {
         // When
         Mono<User> userMono = userService.getUser(1L);
-        
+
         // Then
         StepVerifier.create(userMono)
-            .expectNextMatches(user -> 
-                user.getId().equals(1L) && 
+            .expectNextMatches(user ->
+                user.getId().equals(1L) &&
                 user.getName().equals("John")
             )
             .verifyComplete();
     }
-    
+
     @Test
     void testGetUserNotFoundReactive() {
         // When
         Mono<User> userMono = userService.getUser(999L);
-        
+
         // Then
         StepVerifier.create(userMono)
             .expectError(UserNotFoundException.class)
             .verify();
     }
-    
+
     @Test
     void testGetUserWithTimeout() {
         // When
         Mono<User> userMono = userService.getUser(1L)
             .timeout(Duration.ofSeconds(1));
-        
+
         // Then
         StepVerifier.create(userMono)
             .expectNextCount(1)
@@ -313,20 +311,20 @@ import io.micronaut.transaction.annotation.Transactional;
 
 @MicronautTest(transactional = false)
 public class UserRepositoryTest {
-    
+
     @Inject
     UserRepository userRepository;
-    
+
     @Test
     @Transactional
     void testSaveAndFind() {
         // Given
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User saved = userRepository.save(user);
         Optional<User> found = userRepository.findById(saved.getId());
-        
+
         // Then
         assertTrue(found.isPresent());
         assertEquals("John", found.get().getName());
@@ -347,25 +345,25 @@ import jakarta.inject.Inject;
 @Testcontainers
 @MicronautTest
 public class UserRepositoryTestContainersTest {
-    
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13")
         .withDatabaseName("testdb")
         .withUsername("test")
         .withPassword("test");
-    
+
     @Inject
     UserRepository userRepository;
-    
+
     @Test
     void testWithRealDatabase() {
         // Given
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User saved = userRepository.save(user);
         Optional<User> found = userRepository.findById(saved.getId());
-        
+
         // Then
         assertTrue(found.isPresent());
         assertEquals("John", found.get().getName());
@@ -386,26 +384,26 @@ import static org.mockito.Mockito.*;
 
 @MicronautTest
 public class UserServiceMockTest {
-    
+
     @Inject
     UserService userService;
-    
+
     @Inject
     EmailService emailService;
-    
+
     @MockBean(EmailService.class)
     EmailService emailService() {
         return mock(EmailService.class);
     }
-    
+
     @Test
     void testCreateUserWithMock() {
         // Given
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User created = userService.createUser(user);
-        
+
         // Then
         verify(emailService).sendWelcomeEmail(created);
     }
@@ -422,22 +420,22 @@ import static org.mockito.Mockito.*;
 
 @MicronautTest
 public class UserServiceSpyTest {
-    
+
     @Inject
     UserService userService;
-    
+
     @Inject
     UserRepository userRepository;
-    
+
     @Test
     void testWithSpy() {
         // Given
         UserRepository spy = spy(userRepository);
         User user = new User("John", "john@example.com", 30);
-        
+
         // When
         User created = spy.save(user);
-        
+
         // Then
         verify(spy).save(user);
     }
@@ -459,37 +457,37 @@ import jakarta.inject.Inject;
 
 @MicronautTest
 public class SecuredControllerTest {
-    
+
     @Inject
     @Client("/")
     HttpClient client;
-    
+
     @Test
     void testSecuredEndpointWithoutAuth() {
         // When
         HttpRequest<?> request = HttpRequest.GET("/api/admin/users");
         HttpResponse<?> response = client.toBlocking().exchange(request);
-        
+
         // Then
         assertEquals(401, response.code());
     }
-    
+
     @Test
     void testSecuredEndpointWithAuth() {
         // Given
-        UsernamePasswordCredentials credentials = 
+        UsernamePasswordCredentials credentials =
             new UsernamePasswordCredentials("admin", "password");
         HttpRequest<?> loginRequest = HttpRequest.POST("/login", credentials);
-        HttpResponse<BearerAccessRefreshToken> loginResponse = 
+        HttpResponse<BearerAccessRefreshToken> loginResponse =
             client.toBlocking().exchange(loginRequest, BearerAccessRefreshToken.class);
-        
+
         String token = loginResponse.body().getAccessToken();
-        
+
         // When
         HttpRequest<?> request = HttpRequest.GET("/api/admin/users")
             .bearerAuth(token);
         HttpResponse<?> response = client.toBlocking().exchange(request);
-        
+
         // Then
         assertEquals(200, response.code());
     }
@@ -583,16 +581,16 @@ import jakarta.inject.Inject;
 @Testcontainers
 @MicronautTest
 public class DatabaseIntegrationTest {
-    
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13")
         .withDatabaseName("testdb")
         .withUsername("test")
         .withPassword("test");
-    
+
     @Inject
     UserRepository userRepository;
-    
+
     @Test
     void testDatabaseOperations() {
         // Тесты с реальной БД
@@ -617,15 +615,15 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class PerformanceTest {
-    
+
     @Inject
     UserService userService;
-    
+
     @Benchmark
     public void benchmarkGetUser() {
         userService.getUser(1L);
     }
-    
+
     @Test
     void runBenchmark() throws RunnerException {
         Options opt = new OptionsBuilder()
@@ -653,10 +651,10 @@ import org.junit.jupiter.api.Test;
 
 @MicronautTest
 public class ContractTest {
-    
+
     @Rule
     public PactProviderRuleMk2 mockProvider = new PactProviderRuleMk2("user-service", this);
-    
+
     @Pact(consumer = "my-consumer")
     public RequestResponsePact createPact(PactDslWithProvider builder) {
         return builder
@@ -669,7 +667,7 @@ public class ContractTest {
             .body("{\"id\":1,\"name\":\"John\"}")
             .toPact();
     }
-    
+
     @Test
     @PactVerification("user-service")
     void testUserServiceContract() {
@@ -712,14 +710,14 @@ public class EnvironmentTest {
 ```java
 @MicronautTest
 public class ParameterizedUserTest {
-    
+
     @ParameterizedTest
     @ValueSource(ints = {18, 25, 30, 40})
     void testUsersByAge(int age) {
         List<User> users = userService.findByAge(age);
         assertThat(users).isNotEmpty();
     }
-    
+
     @ParameterizedTest
     @CsvSource({
         "John, john@example.com",
@@ -741,19 +739,19 @@ public class ParameterizedUserTest {
 @MicronautTest
 @TestMethodOrder(OrderAnnotation.class)
 public class OrderedUserTest {
-    
+
     @Test
     @Order(1)
     void testCreateUser() {
         // Создание пользователя
     }
-    
+
     @Test
     @Order(2)
     void testGetUser() {
         // Получение пользователя
     }
-    
+
     @Test
     @Order(3)
     void testDeleteUser() {
@@ -769,22 +767,22 @@ public class OrderedUserTest {
 ```java
 @MicronautTest
 public class LifecycleTest {
-    
+
     @BeforeEach
     void setUp() {
         // Настройка перед каждым тестом
     }
-    
+
     @AfterEach
     void tearDown() {
         // Очистка после каждого теста
     }
-    
+
     @BeforeAll
     static void setUpAll() {
         // Настройка перед всеми тестами
     }
-    
+
     @AfterAll
     static void tearDownAll() {
         // Очистка после всех тестов
@@ -801,26 +799,26 @@ public class UserTestBuilder {
     private String name = "John Doe";
     private String email = "john@example.com";
     private Integer age = 30;
-    
+
     public static UserTestBuilder aUser() {
         return new UserTestBuilder();
     }
-    
+
     public UserTestBuilder withName(String name) {
         this.name = name;
         return this;
     }
-    
+
     public UserTestBuilder withEmail(String email) {
         this.email = email;
         return this;
     }
-    
+
     public UserTestBuilder withAge(Integer age) {
         this.age = age;
         return this;
     }
-    
+
     public User build() {
         return new User(name, email, age);
     }
@@ -843,7 +841,7 @@ public class TestHelpers {
     public static User createTestUser() {
         return new User("Test User", "test@example.com", 25);
     }
-    
+
     public static List<User> createTestUsers(int count) {
         return IntStream.range(0, count)
             .mapToObj(i -> new User("User " + i, "user" + i + "@example.com", 20 + i))
@@ -864,13 +862,13 @@ import org.junit.jupiter.api.TestMethodOrder;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @MicronautTest
 public class OrderedTest {
-    
+
     @Test
     @Order(1)
     void firstTest() {
         // Первый тест
     }
-    
+
     @Test
     @Order(2)
     void secondTest() {
@@ -891,9 +889,6 @@ junit.jupiter.execution.parallel.mode.default=concurrent
 junit.jupiter.execution.parallel.mode.classes.default=concurrent
 ```
 
-
-
-
 ## Заключение
 
 **Micronaut** предоставляет мощные инструменты для тестирования, которые упрощают написание **unit** и **integration** тестов. Благодаря **compile-time** `DI`, тесты выполняются быстро и не требуют полного контекста приложения. Поддержка **Test Containers**, **property-based testing**, **performance testing**, **contract testing**, **parameterized tests**, **test configuration**, **lifecycle hooks**, **test fixtures**, **test utilities**, **test ordering**, **parallelization** и других продвинутых возможностей позволяет создавать надежные тестовые сценарии.
@@ -906,3 +901,11 @@ junit.jupiter.execution.parallel.mode.classes.default=concurrent
 - [Testcontainers](https://testcontainers.com/)
 - [Pact](https://pact.io/)
 - [AssertJ](https://assertj.github.io/doc/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

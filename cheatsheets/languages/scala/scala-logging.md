@@ -39,8 +39,8 @@ related: ["scala/scala-basics.md"]
   - [**Scala Logging** библиотека](#scala-logging-библиотека)
   - [Конфигурация **Logback**](#конфигурация-logback)
   - [Уровни логирования](#уровни-логирования)
-  - [Структурированное логирование - расширенное использование](#структурированное-логирование-расширенное-использование)
-  - [**MDC** - расширенное использование](#mdc-расширенное-использование)
+  - [Структурированное логирование — расширенное использование](#структурированное-логирование-расширенное-использование)
+  - [**MDC** — расширенное использование](#mdc-расширенное-использование)
   - [Асинхронное логирование](#асинхронное-логирование)
   - [Логирование исключений](#логирование-исключений)
   - [Производительность логирования](#производительность-логирования)
@@ -86,7 +86,7 @@ import org.slf4j.LoggerFactory
 
 class MyService {
   private val logger = LoggerFactory.getLogger(getClass)
-  
+
   def processData(data: String): Unit = {
     logger.debug(s"Processing data: $data")
     logger.info(s"Data processed successfully")
@@ -100,7 +100,7 @@ class MyService {
 
 ## **Logback**
 
-**Logback** - это реализация **SLF4J** с мощными возможностями:**
+**Logback** — это реализация **SLF4J** с мощными возможностями:**
 
 ```scala
 import ch.qos.logback.classic.LoggerContext
@@ -170,7 +170,7 @@ class MyService extends LazyLogging {
 // Или создание Logger напрямую
 class MyService2 {
   private val logger = Logger[MyService2]
-  
+
   def processData(data: String): Unit = {
     logger.info(s"Processing: $data")
   }
@@ -231,7 +231,7 @@ if (logger.isDebugEnabled) {
 logger.debug("Expensive computation: {}", expensiveOperation())
 ```
 
-### Структурированное логирование - расширенное использование
+### Структурированное логирование — расширенное использование
 
 ```scala
 import net.logstash.logback.marker.Markers
@@ -258,7 +258,7 @@ logger.info(
 )
 ```
 
-### **MDC** - расширенное использование
+### **MDC** — расширенное использование
 
 **MDC** позволяет добавлять контекстную информацию, которая автоматически включается в логи:**
 
@@ -272,7 +272,7 @@ val logger = LoggerFactory.getLogger(getClass)
 def processRequest(requestId: String, userId: String): Unit = {
   MDC.put("requestId", requestId)
   MDC.put("userId", userId)
-  
+
   try {
     logger.info("Processing request")
     // обработка запроса
@@ -369,7 +369,7 @@ class CustomAppender extends AppenderBase[ILoggingEvent] {
     // отправка в кастомную систему
     sendToCustomSystem(level, message)
   }
-  
+
   def sendToCustomSystem(level: ch.qos.logback.classic.Level, message: String): Unit = {
     // реализация
   }
@@ -386,7 +386,7 @@ import akka.actor.{Actor, ActorSystem}
 
 class MyActor extends Actor {
   val log = Logging(context.system, this)
-  
+
   def receive = {
     case msg =>
       log.info(s"Received message: $msg")
@@ -404,7 +404,7 @@ import play.api.Logger
 
 class MyController {
   private val logger = Logger(this.getClass)
-  
+
   def action = Action { request =>
     logger.info(s"Processing request: ${request.path}")
     Ok("Response")
@@ -420,7 +420,7 @@ import org.slf4j.LoggerFactory
 
 class MonitoringService {
   private val logger = LoggerFactory.getLogger(getClass)
-  
+
   def logMetrics(operation: String, duration: Long, success: Boolean): Unit = {
     logger.info(
       Markers.append("operation", operation)
@@ -430,7 +430,7 @@ class MonitoringService {
       s"Operation $operation completed"
     )
   }
-  
+
   def logError(operation: String, error: Throwable, context: Map[String, String]): Unit = {
     val markers = context.foldLeft(Markers.append("operation", operation)) { (acc, (k, v)) =>
       acc.and(Markers.append(k, v))
@@ -640,7 +640,7 @@ val logger = Logger("Application")
 def processRequest(requestId: String, userId: String)(body: => Unit): Unit = {
   MDC.put("requestId", requestId)
   MDC.put("userId", userId)
-  
+
   try {
     logger.info("Processing request")
     body

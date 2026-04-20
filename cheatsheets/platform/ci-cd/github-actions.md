@@ -449,3 +449,11 @@ jobs:
 | Docker push ошибка `unauthorized` | `packages: write` отсутствует | перечислить в permissions |
 | `Resource not accessible` в API | GITHUB_TOKEN scope | PAT или GitHub App |
 | Workflow не запускается на fork PR | Требуется approve от maintainer | Settings → Actions → Fork PR approvals |
+
+## См. также
+
+- [[azure-devops|Azure DevOps]]
+- [[circleci|CircleCI]]
+- [[gitlab-ci|GitLab CI/CD]]
+- [[jenkins|Jenkins]]
+- [[tekton|Tekton]]

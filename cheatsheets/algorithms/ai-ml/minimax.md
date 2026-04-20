@@ -44,11 +44,11 @@ updated: "2026-02-11"
 
 Мы также обсудим преимущества использования алгоритма и посмотрим, как его можно улучшить.
 
-Минимакс - это алгоритм принятия решений, обычно используемый в пошаговых играх для двух игроков. Цель алгоритма - найти оптимальный следующий ход.
+Минимакс — это алгоритм принятия решений, обычно используемый в пошаговых играх для двух игроков. Цель алгоритма — найти оптимальный следующий ход.
 
 ## Что такое Minimax?
 
-В алгоритме один игрок называется максимизатором, а другой игрок - минимизатором. Если мы присвоим игровому полю оценочный балл, то один игрок попытается выбрать состояние игры с максимальным количеством очков, а другой - состояние с минимальным счетом.
+В алгоритме один игрок называется максимизатором, а другой игрок — минимизатором. Если мы присвоим игровому полю оценочный балл, то один игрок попытается выбрать состояние игры с максимальным количеством очков, а другой — состояние с минимальным счетом.
 
 Другими словами, максимизатор работает, чтобы получить наибольшее количество очков, в то время как минимизатор пытается получить наименьшее количество очков, пытаясь противодействовать ходам.
 
@@ -56,11 +56,11 @@ updated: "2026-02-11"
 
 Он основан на концепции игры с нулевой суммой. В игре с нулевой суммой общая оценка полезности делится между игроками. Увеличение счета одного игрока приводит к уменьшению счета другого игрока. Таким образом, общий балл всегда равен нулю. Чтобы один игрок выиграл, другой должен проиграть. Примерами таких игр являются шахматы, покер, шашки, крестики-нолики.
 
-Интересный факт - в `1997` году шахматный компьютер **Deep Blue** от **IBM** (**созданный на базе Minimax**) победил Гарри Каспарова (**чемпиона мира по шахматам**).
+Интересный факт — в `1997` году шахматный компьютер **Deep Blue** от **IBM** (**созданный на базе Minimax**) победил Гарри Каспарова (**чемпиона мира по шахматам**).
 
 ## Алгоритм Minimax
 
-Наша цель - найти лучший ход для игрока. Для этого мы можем просто выбрать узел с наилучшей оценочной оценкой. Чтобы сделать процесс более умным, мы также можем смотреть вперед и оценивать ходы потенциального противника.
+Наша цель — найти лучший ход для игрока. Для этого мы можем просто выбрать узел с наилучшей оценочной оценкой. Чтобы сделать процесс более умным, мы также можем смотреть вперед и оценивать ходы потенциального противника.
 
 Для каждого хода мы можем заглянуть вперед на столько ходов, сколько позволяют наши вычислительные мощности. Алгоритм предполагает, что противник играет оптимально.
 
@@ -117,33 +117,33 @@ public class Node {
     private boolean isMaxPlayer;
     private int score;
     private List<Node> children;
-    
+
     public Node(int noOfBones, boolean isMaxPlayer) {
         this.noOfBones = noOfBones;
         this.isMaxPlayer = isMaxPlayer;
         this.children = new ArrayList<>();
     }
-    
+
     public void addChild(Node child) {
         children.add(child);
     }
-    
+
     public List<Node> getChildren() {
         return children;
     }
-    
+
     public int getNoOfBones() {
         return noOfBones;
     }
-    
+
     public boolean isMaxPlayer() {
         return isMaxPlayer;
     }
-    
+
     public int getScore() {
         return score;
     }
-    
+
     public void setScore(int score) {
         this.score = score;
     }
@@ -151,11 +151,11 @@ public class Node {
 
 public class Tree {
     private Node root;
-    
+
     public void setRoot(Node root) {
         this.root = root;
     }
-    
+
     public Node getRoot() {
         return root;
     }
@@ -173,20 +173,20 @@ import java.util.NoSuchElementException;
 
 public class MiniMax {
     private Tree tree;
-    
+
     public void constructTree(int noOfBones) {
         tree = new Tree();
         Node root = new Node(noOfBones, true);
         tree.setRoot(root);
         constructTree(root);
     }
-    
+
     private void constructTree(Node parentNode) {
         List<Integer> listofPossibleHeaps = GameOfBones.getPossibleStates(
             parentNode.getNoOfBones()
         );
         boolean isChildMaxPlayer = !parentNode.isMaxPlayer();
-        
+
         listofPossibleHeaps.forEach(n -> {
             Node newNode = new Node(n, isChildMaxPlayer);
             parentNode.addChild(newNode);
@@ -195,17 +195,17 @@ public class MiniMax {
             }
         });
     }
-    
+
     public boolean checkWin() {
         Node root = tree.getRoot();
         checkWin(root);
         return root.getScore() == 1;
     }
-    
+
     private void checkWin(Node node) {
         List<Node> children = node.getChildren();
         boolean isMaxPlayer = node.isMaxPlayer();
-        
+
         children.forEach(child -> {
             if (child.getNoOfBones() == 0) {
                 child.setScore(isMaxPlayer ? 1 : -1);
@@ -213,11 +213,11 @@ public class MiniMax {
                 checkWin(child);
             }
         });
-        
+
         Node bestChild = findBestChild(isMaxPlayer, children);
         node.setScore(bestChild.getScore());
     }
-    
+
     private Node findBestChild(boolean isMaxPlayer, List<Node> children) {
         Comparator<Node> byScoreComparator = Comparator.comparing(Node::getScore);
         return children.stream()
@@ -232,7 +232,7 @@ public class MiniMax {
 1. +1, если выигрывает максимизатор
 2. -1, если минимизатор выигрывает
 
-**CheckWin** вернет **true**, если выиграет первый игрок (**в нашем случае - максимизатор**).
+**CheckWin** вернет **true**, если выиграет первый игрок (**в нашем случае — максимизатор**).
 
 ### Тестирование
 
@@ -243,15 +243,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MiniMaxTest {
-    
+
     @Test
     public void givenMiniMax_whenCheckWin_thenComputeOptimal() {
         MiniMax miniMax = new MiniMax();
-        
+
         miniMax.constructTree(6);
         boolean result = miniMax.checkWin();
         assertTrue(result);
-        
+
         miniMax.constructTree(8);
         result = miniMax.checkWin();
         assertFalse(result);
@@ -273,12 +273,12 @@ public class MiniMaxTest {
 
 ```java
 public class AlphaBetaMiniMax {
-    private int minimax(Node node, int depth, boolean isMaxPlayer, 
+    private int minimax(Node node, int depth, boolean isMaxPlayer,
                        int alpha, int beta) {
         if (depth == 0 || node.getChildren().isEmpty()) {
             return evaluate(node);
         }
-        
+
         if (isMaxPlayer) {
             int maxEval = Integer.MIN_VALUE;
             for (Node child : node.getChildren()) {
@@ -303,7 +303,7 @@ public class AlphaBetaMiniMax {
             return minEval;
         }
     }
-    
+
     private int evaluate(Node node) {
         // Функция оценки состояния игры
         return node.getScore();
@@ -313,7 +313,7 @@ public class AlphaBetaMiniMax {
 
 ## Временная сложность
 
-- **Без обрезки**: `O(**b^d**)`, где b - коэффициент ветвления, d - глубина дерева
+- **Без обрезки**: `O(**b^d**)`, где b — коэффициент ветвления, d — глубина дерева
 - **С `alpha-beta` обрезкой**: `O(b^(d/2))` в лучшем случае
 
 ## Пространственная сложность
@@ -361,7 +361,7 @@ public class AlphaBetaMiniMax {
 - Требует построения игрового дерева
 - Эффективен для игр с небольшим коэффициентом ветвления
 
-**Minimax** - это фундаментальный алгоритм в теории игр, который позволяет создавать сильных игровых ИИ.
+**Minimax** — это фундаментальный алгоритм в теории игр, который позволяет создавать сильных игровых ИИ.
 
 ## Реализация на Kotlin
 
@@ -386,7 +386,7 @@ class NodeK(
 ) {
     var score: Int = 0
     val children: MutableList<NodeK> = mutableListOf()
-    
+
     fun addChild(child: NodeK) {
         children.add(child)
     }
@@ -406,18 +406,18 @@ class TreeK {
 ```kotlin
 class MiniMaxK {
     private var tree: TreeK? = null
-    
+
     fun constructTree(noOfBones: Int) {
         tree = TreeK()
         val root = NodeK(noOfBones, true)
         tree?.root = root
         constructTree(root)
     }
-    
+
     private fun constructTree(parentNode: NodeK) {
         val listOfPossibleHeaps = GameOfBonesK.getPossibleStates(parentNode.noOfBones)
         val isChildMaxPlayer = !parentNode.isMaxPlayer
-        
+
         listOfPossibleHeaps.forEach { n ->
             val newNode = NodeK(n, isChildMaxPlayer)
             parentNode.addChild(newNode)
@@ -426,17 +426,17 @@ class MiniMaxK {
             }
         }
     }
-    
+
     fun checkWin(): Boolean {
         val root = tree?.root ?: return false
         checkWin(root)
         return root.score == 1
     }
-    
+
     private fun checkWin(node: NodeK) {
         val children = node.children
         val isMaxPlayer = node.isMaxPlayer
-        
+
         children.forEach { child ->
             if (child.noOfBones == 0) {
                 child.score = if (isMaxPlayer) 1 else -1
@@ -444,11 +444,11 @@ class MiniMaxK {
                 checkWin(child)
             }
         }
-        
+
         val bestChild = findBestChild(isMaxPlayer, children)
         node.score = bestChild?.score ?: 0
     }
-    
+
     private fun findBestChild(isMaxPlayer: Boolean, children: List<NodeK>): NodeK? {
         return if (isMaxPlayer) {
             children.maxByOrNull { it.score }

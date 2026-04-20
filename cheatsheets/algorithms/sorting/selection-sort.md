@@ -80,7 +80,7 @@ int[] arr = { 5, 4, 1, 6, 2 }
 
 ### Итерация 1
 
-Учитывая приведенную выше работу алгоритма, мы начинаем с элемента в 1-й позиции - 5 - и сканируем все последующие элементы, чтобы найти наименьший элемент - 1. Затем мы меняем наименьший элемент с элементом в 1-й позиции.
+Учитывая приведенную выше работу алгоритма, мы начинаем с элемента в 1-й позиции — 5 - и сканируем все последующие элементы, чтобы найти наименьший элемент — 1. Затем мы меняем наименьший элемент с элементом в 1-й позиции.
 
 **Измененный массив теперь выглядит так:**
 
@@ -92,7 +92,7 @@ int[] arr = { 5, 4, 1, 6, 2 }
 
 ### Итерация 2
 
-Во второй итерации мы переходим ко 2-му элементу - 4 - и сканируем последующие элементы, чтобы найти второй наименьший элемент - 2. Затем мы меняем местами второй наименьший элемент с элементом на 2-й позиции.
+Во второй итерации мы переходим ко 2-му элементу — 4 - и сканируем последующие элементы, чтобы найти второй наименьший элемент — 2. Затем мы меняем местами второй наименьший элемент с элементом на 2-й позиции.
 
 **Измененный массив теперь выглядит так:**
 
@@ -127,13 +127,13 @@ int[] arr = { 5, 4, 1, 6, 2 }
 public static void sortAscending(final int[] arr) {
     for (int i = 0; i < arr.length - 1; i++) {
         int minElementIndex = i;
-        
+
         for (int j = i + 1; j < arr.length; j++) {
             if (arr[minElementIndex] > arr[j]) {
                 minElementIndex = j;
             }
         }
-        
+
         if (minElementIndex != i) {
             int temp = arr[i];
             arr[i] = arr[minElementIndex];
@@ -149,13 +149,13 @@ public static void sortAscending(final int[] arr) {
 public static void sortDescending(final int[] arr) {
     for (int i = 0; i < arr.length - 1; i++) {
         int maxElementIndex = i;
-        
+
         for (int j = i + 1; j < arr.length; j++) {
             if (arr[maxElementIndex] < arr[j]) {
                 maxElementIndex = j;
             }
         }
-        
+
         if (maxElementIndex != i) {
             int temp = arr[i];
             arr[i] = arr[maxElementIndex];
@@ -171,13 +171,13 @@ public static void sortDescending(final int[] arr) {
 public static void sort(final int[] arr, final Comparator<Integer> comparator) {
     for (int i = 0; i < arr.length - 1; i++) {
         int elementIndex = i;
-        
+
         for (int j = i + 1; j < arr.length; j++) {
             if (comparator.compare(arr[elementIndex], arr[j]) > 0) {
                 elementIndex = j;
             }
         }
-        
+
         if (elementIndex != i) {
             int temp = arr[i];
             arr[i] = arr[elementIndex];
@@ -197,13 +197,13 @@ public static void sort(final int[] arr, final Comparator<Integer> comparator) {
 fun sortAscendingK(arr: IntArray) {
     for (i in 0 until arr.size - 1) {
         var minElementIndex = i
-        
+
         for (j in i + 1 until arr.size) {
             if (arr[minElementIndex] > arr[j]) {
                 minElementIndex = j
             }
         }
-        
+
         if (minElementIndex != i) {
             val temp = arr[i]
             arr[i] = arr[minElementIndex]
@@ -219,13 +219,13 @@ fun sortAscendingK(arr: IntArray) {
 fun sortDescendingK(arr: IntArray) {
     for (i in 0 until arr.size - 1) {
         var maxElementIndex = i
-        
+
         for (j in i + 1 until arr.size) {
             if (arr[maxElementIndex] < arr[j]) {
                 maxElementIndex = j
             }
         }
-        
+
         if (maxElementIndex != i) {
             val temp = arr[i]
             arr[i] = arr[maxElementIndex]
@@ -241,13 +241,13 @@ fun sortDescendingK(arr: IntArray) {
 fun sortK(arr: IntArray, comparator: Comparator<Int>) {
     for (i in 0 until arr.size - 1) {
         var elementIndex = i
-        
+
         for (j in i + 1 until arr.size) {
             if (comparator.compare(arr[elementIndex], arr[j]) > 0) {
                 elementIndex = j
             }
         }
-        
+
         if (elementIndex != i) {
             val temp = arr[i]
             arr[i] = arr[elementIndex]
@@ -278,11 +278,11 @@ fun selectionSortFunctionalK(arr: IntArray): IntArray {
 ```kotlin
 fun main() {
     val arr = intArrayOf(5, 4, 1, 6, 2)
-    
+
     // Сортировка по возрастанию
     sortAscendingK(arr)
     println(arr.contentToString()) // [1, 2, 4, 5, 6]
-    
+
     // Функциональный стиль
     val sorted = selectionSortFunctionalK(intArrayOf(5, 4, 1, 6, 2))
     println(sorted.contentToString()) // [1, 2, 4, 5, 6]
@@ -423,13 +423,13 @@ fun main() {
 public static <T> void sort(T[] array, Comparator<T> comparator) {
     for (int i = 0; i < array.length - 1; i++) {
         int minIndex = i;
-        
+
         for (int j = i + 1; j < array.length; j++) {
             if (comparator.compare(array[minIndex], array[j]) > 0) {
                 minIndex = j;
             }
         }
-        
+
         if (minIndex != i) {
             T temp = array[i];
             array[i] = array[minIndex];
@@ -447,11 +447,11 @@ public static <T> void sort(T[] array, Comparator<T> comparator) {
 public static void sortBidirectional(int[] arr) {
     int left = 0;
     int right = arr.length - 1;
-    
+
     while (left < right) {
         int minIndex = left;
         int maxIndex = right;
-        
+
         // Находим минимум и максимум в текущем диапазоне
         for (int i = left; i <= right; i++) {
             if (arr[i] < arr[minIndex]) {
@@ -461,26 +461,26 @@ public static void sortBidirectional(int[] arr) {
                 maxIndex = i;
             }
         }
-        
+
         // Обмениваем минимум с левым концом
         if (minIndex != left) {
             int temp = arr[left];
             arr[left] = arr[minIndex];
             arr[minIndex] = temp;
         }
-        
+
         // Если максимум был на позиции left, он переместился на minIndex
         if (maxIndex == left) {
             maxIndex = minIndex;
         }
-        
+
         // Обмениваем максимум с правым концом
         if (maxIndex != right) {
             int temp = arr[right];
             arr[right] = arr[maxIndex];
             arr[maxIndex] = temp;
         }
-        
+
         left++;
         right--;
     }
@@ -501,17 +501,17 @@ public static class SortResult {
 public static SortResult sortWithMetrics(int[] arr) {
     SortResult result = new SortResult();
     long startTime = System.nanoTime();
-    
+
     for (int i = 0; i < arr.length - 1; i++) {
         int minIndex = i;
-        
+
         for (int j = i + 1; j < arr.length; j++) {
             result.comparisons++;
             if (arr[minIndex] > arr[j]) {
                 minIndex = j;
             }
         }
-        
+
         if (minIndex != i) {
             result.swaps++;
             int temp = arr[i];
@@ -519,7 +519,7 @@ public static SortResult sortWithMetrics(int[] arr) {
             arr[minIndex] = temp;
         }
     }
-    
+
     result.executionTime = System.nanoTime() - startTime;
     return result;
 }
@@ -532,33 +532,33 @@ public static SortResult sortWithMetrics(int[] arr) {
 ```java
 public static void sortWithVisualization(int[] arr) {
     System.out.println("Исходный массив: " + Arrays.toString(arr));
-    
+
     for (int i = 0; i < arr.length - 1; i++) {
         int minIndex = i;
-        
+
         System.out.println("Итерация " + (i + 1) + ": ищем минимум начиная с индекса " + i);
-        
+
         for (int j = i + 1; j < arr.length; j++) {
             if (arr[minIndex] > arr[j]) {
                 minIndex = j;
             }
         }
-        
+
         if (minIndex != i) {
             System.out.println("Найден минимум: " + arr[minIndex] + " на позиции " + minIndex);
             System.out.println("Обмениваем с элементом на позиции " + i + ": " + arr[i]);
-            
+
             int temp = arr[i];
             arr[i] = arr[minIndex];
             arr[minIndex] = temp;
         } else {
             System.out.println("Элемент на позиции " + i + " уже минимальный");
         }
-        
+
         System.out.println("Массив после итерации " + (i + 1) + ": " + Arrays.toString(arr));
         System.out.println();
     }
-    
+
     System.out.println("Финальный результат: " + Arrays.toString(arr));
 }
 ```
@@ -582,23 +582,23 @@ public static void sortWithEarlyExit(int[] arr) {
         System.out.println("Массив уже отсортирован, пропускаем сортировку");
         return;
     }
-    
+
     for (int i = 0; i < arr.length - 1; i++) {
         int minIndex = i;
         boolean foundSmaller = false;
-        
+
         for (int j = i + 1; j < arr.length; j++) {
             if (arr[minIndex] > arr[j]) {
                 minIndex = j;
                 foundSmaller = true;
             }
         }
-        
+
         if (!foundSmaller && isSorted(arr)) {
             System.out.println("Массив отсортирован на итерации " + (i + 1));
             break;
         }
-        
+
         if (minIndex != i) {
             int temp = arr[i];
             arr[i] = arr[minIndex];

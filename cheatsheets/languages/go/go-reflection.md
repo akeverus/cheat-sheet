@@ -75,9 +75,9 @@ updated: "2026-02-06"
 
 ### Ограничения рефлексии
 
-1. **Производительность** - рефлексия медленнее обычного кода
-2. **Типобезопасность** - ошибки обнаруживаются только во время выполнения
-3. **Читаемость** - код с рефлексией сложнее понять
+1. **Производительность** — рефлексия медленнее обычного кода
+2. **Типобезопасность** — ошибки обнаруживаются только во время выполнения
+3. **Читаемость** — код с рефлексией сложнее понять
 
 ## **Type** и **Value**
 
@@ -95,11 +95,11 @@ type User struct {
 
 func main() {
     user := User{ID: 1, Name: "Alice"}
-    
+
     // Получение Type из значения
     t := reflect.TypeOf(user)
     fmt.Println(t)  // main.User
-    
+
     // Получение Type из типа
     t2 := reflect.TypeOf((*User)(nil)).Elem()
     fmt.Println(t2)  // main.User
@@ -113,11 +113,11 @@ import "reflect"
 
 func main() {
     user := User{ID: 1, Name: "Alice"}
-    
+
     // Получение Value
     v := reflect.ValueOf(user)
     fmt.Println(v)  // {1 Alice}
-    
+
     // Получение указателя на Value
     vPtr := reflect.ValueOf(&user)
     fmt.Println(vPtr)  // &{1 Alice}
@@ -135,13 +135,13 @@ func inspectType(t reflect.Type) {
     fmt.Printf("Type: %s\n", t.Name())
     fmt.Printf("Kind: %s\n", t.Kind())
     fmt.Printf("Package: %s\n", t.PkgPath())
-    
+
     // Для структур
     if t.Kind() == reflect.Struct {
         fmt.Printf("Fields: %d\n", t.NumField())
         for i := 0; i < t.NumField(); i++ {
             field := t.Field(i)
-            fmt.Printf("  Field %d: %s %s\n", 
+            fmt.Printf("  Field %d: %s %s\n",
                 i, field.Name, field.Type)
         }
     }
@@ -191,7 +191,7 @@ func modifyValue(v reflect.Value) {
         fmt.Println("Value cannot be set")
         return
     }
-    
+
     switch v.Kind() {
     case reflect.Int:
         v.SetInt(42)
@@ -262,18 +262,18 @@ func callMethod(v reflect.Value, methodName string, args []reflect.Value) []refl
 func copyStruct(src, dst interface{}) error {
     srcValue := reflect.ValueOf(src)
     dstValue := reflect.ValueOf(dst)
-    
+
     if srcValue.Kind() != reflect.Ptr || dstValue.Kind() != reflect.Ptr {
         return errors.New("both arguments must be pointers")
     }
-    
+
     srcElem := srcValue.Elem()
     dstElem := dstValue.Elem()
-    
+
     if srcElem.Type() != dstElem.Type() {
         return errors.New("types must match")
     }
-    
+
     dstElem.Set(srcElem)
     return nil
 }
@@ -285,38 +285,38 @@ func copyStruct(src, dst interface{}) error {
 func copyStructWithConversion(src, dst interface{}) error {
     srcValue := reflect.ValueOf(src)
     dstValue := reflect.ValueOf(dst)
-    
+
     if srcValue.Kind() == reflect.Ptr {
         srcValue = srcValue.Elem()
     }
     if dstValue.Kind() != reflect.Ptr {
         return errors.New("dst must be a pointer")
     }
-    
+
     dstElem := dstValue.Elem()
     srcType := srcValue.Type()
     dstType := dstElem.Type()
-    
+
     if srcType.Kind() != reflect.Struct || dstType.Kind() != reflect.Struct {
         return errors.New("both must be structs")
     }
-    
+
     for i := 0; i < srcType.NumField(); i++ {
         srcField := srcType.Field(i)
         srcValueField := srcValue.Field(i)
-        
+
         dstField, ok := dstType.FieldByName(srcField.Name)
         if !ok {
             continue
         }
-        
+
         if srcField.Type.AssignableTo(dstField.Type) {
             dstElem.FieldByName(srcField.Name).Set(srcValueField)
         } else if srcField.Type.ConvertibleTo(dstField.Type) {
             dstElem.FieldByName(srcField.Name).Set(srcValueField.Convert(dstField.Type))
         }
     }
-    
+
     return nil
 }
 ```
@@ -328,47 +328,47 @@ func validateStruct(v interface{}) []error {
     var errors []error
     value := reflect.ValueOf(v)
     typ := reflect.TypeOf(v)
-    
+
     if value.Kind() == reflect.Ptr {
         value = value.Elem()
         typ = typ.Elem()
     }
-    
+
     for i := 0; i < value.NumField(); i++ {
         field := value.Field(i)
         fieldType := typ.Field(i)
-        
+
         // Проверка на пустое значение
         if fieldType.Tag.Get("required") == "true" {
             if field.Interface() == reflect.Zero(field.Type()).Interface() {
-                errors = append(errors, 
+                errors = append(errors,
                     fmt.Errorf("field %s is required", fieldType.Name))
             }
         }
-        
+
         // Проверка минимальной длины строки
         if minLen := fieldType.Tag.Get("minlen"); minLen != "" {
             if field.Kind() == reflect.String {
                 if len, _ := strconv.Atoi(minLen); len(field.String()) < len {
-                    errors = append(errors, 
-                        fmt.Errorf("field %s must be at least %s characters", 
+                    errors = append(errors,
+                        fmt.Errorf("field %s must be at least %s characters",
                             fieldType.Name, minLen))
                 }
             }
         }
-        
+
         // Проверка максимального значения
         if maxVal := fieldType.Tag.Get("max"); maxVal != "" {
             if field.Kind() == reflect.Int {
                 if max, _ := strconv.Atoi(maxVal); int(field.Int()) > max {
-                    errors = append(errors, 
-                        fmt.Errorf("field %s must be at most %s", 
+                    errors = append(errors,
+                        fmt.Errorf("field %s must be at most %s",
                             fieldType.Name, maxVal))
                 }
             }
         }
     }
-    
+
     return errors
 }
 ```
@@ -380,31 +380,31 @@ func serializeStruct(v interface{}) map[string]interface{} {
     result := make(map[string]interface{})
     value := reflect.ValueOf(v)
     typ := reflect.TypeOf(v)
-    
+
     if value.Kind() == reflect.Ptr {
         value = value.Elem()
         typ = typ.Elem()
     }
-    
+
     for i := 0; i < value.NumField(); i++ {
         field := value.Field(i)
         fieldType := typ.Field(i)
-        
+
         // Пропуск приватных полей
         if !field.CanInterface() {
             continue
         }
-        
+
         // Использование JSON тега для имени поля
         jsonTag := fieldType.Tag.Get("json")
         fieldName := fieldType.Name
         if jsonTag != "" && jsonTag != "-" {
             fieldName = strings.Split(jsonTag, ",")[0]
         }
-        
+
         result[fieldName] = field.Interface()
     }
-    
+
     return result
 }
 ```
@@ -440,7 +440,7 @@ func createMapOfType(keyType, elemType reflect.Type) reflect.Value {
 func setMapValue(m reflect.Value, key, value interface{}) {
     keyValue := reflect.ValueOf(key)
     valueValue := reflect.ValueOf(value)
-    
+
     if keyValue.Type().AssignableTo(m.Type().Key()) &&
        valueValue.Type().AssignableTo(m.Type().Elem()) {
         m.SetMapIndex(keyValue, valueValue)
@@ -454,16 +454,16 @@ func setMapValue(m reflect.Value, key, value interface{}) {
 func callFunction(fn interface{}, args ...interface{}) ([]interface{}, error) {
     fnValue := reflect.ValueOf(fn)
     fnType := fnValue.Type()
-    
+
     if fnType.Kind() != reflect.Func {
         return nil, errors.New("not a function")
     }
-    
+
     if fnType.NumIn() != len(args) {
-        return nil, fmt.Errorf("expected %d arguments, got %d", 
+        return nil, fmt.Errorf("expected %d arguments, got %d",
             fnType.NumIn(), len(args))
     }
-    
+
     // Преобразование аргументов
     in := make([]reflect.Value, len(args))
     for i, arg := range args {
@@ -476,16 +476,16 @@ func callFunction(fn interface{}, args ...interface{}) ([]interface{}, error) {
         }
         in[i] = argValue
     }
-    
+
     // Вызов функции
     out := fnValue.Call(in)
-    
+
     // Преобразование результатов
     results := make([]interface{}, len(out))
     for i, val := range out {
         results[i] = val.Interface()
     }
-    
+
     return results, nil
 }
 ```
@@ -496,15 +496,15 @@ func callFunction(fn interface{}, args ...interface{}) ([]interface{}, error) {
 func getStructTags(v interface{}) map[string]map[string]string {
     result := make(map[string]map[string]string)
     typ := reflect.TypeOf(v)
-    
+
     if typ.Kind() == reflect.Ptr {
         typ = typ.Elem()
     }
-    
+
     for i := 0; i < typ.NumField(); i++ {
         field := typ.Field(i)
         tags := make(map[string]string)
-        
+
         // Парсинг всех тегов
         tag := field.Tag
         for _, tagName := range []string{"json", "xml", "db", "validate"} {
@@ -512,10 +512,10 @@ func getStructTags(v interface{}) map[string]map[string]string {
                 tags[tagName] = tagValue
             }
         }
-        
+
         result[field.Name] = tags
     }
-    
+
     return result
 }
 ```
@@ -526,27 +526,27 @@ func getStructTags(v interface{}) map[string]map[string]string {
 func compareStructs(a, b interface{}) bool {
     aValue := reflect.ValueOf(a)
     bValue := reflect.ValueOf(b)
-    
+
     if aValue.Kind() == reflect.Ptr {
         aValue = aValue.Elem()
     }
     if bValue.Kind() == reflect.Ptr {
         bValue = bValue.Elem()
     }
-    
+
     if aValue.Type() != bValue.Type() {
         return false
     }
-    
+
     for i := 0; i < aValue.NumField(); i++ {
         aField := aValue.Field(i)
         bField := bValue.Field(i)
-        
+
         if !reflect.DeepEqual(aField.Interface(), bField.Interface()) {
             return false
         }
     }
-    
+
     return true
 }
 ```
@@ -557,16 +557,16 @@ func compareStructs(a, b interface{}) bool {
 func getInterfaceMethods(iface interface{}) []string {
     var methods []string
     typ := reflect.TypeOf(iface)
-    
+
     if typ.Kind() != reflect.Ptr {
         typ = reflect.PtrTo(typ)
     }
-    
+
     for i := 0; i < typ.NumMethod(); i++ {
         method := typ.Method(i)
         methods = append(methods, method.Name)
     }
-    
+
     return methods
 }
 ```
@@ -576,15 +576,15 @@ func getInterfaceMethods(iface interface{}) []string {
 ```go
 func implementsInterface(v interface{}, ifaceType reflect.Type) bool {
     vType := reflect.TypeOf(v)
-    
+
     if vType.Kind() == reflect.Ptr {
         vType = vType.Elem()
     }
-    
+
     if ifaceType.Kind() != reflect.Interface {
         return false
     }
-    
+
     return vType.Implements(ifaceType)
 }
 ```
@@ -594,14 +594,14 @@ func implementsInterface(v interface{}, ifaceType reflect.Type) bool {
 ```go
 func cloneValue(v interface{}) interface{} {
     value := reflect.ValueOf(v)
-    
+
     if value.Kind() == reflect.Ptr {
         elem := value.Elem()
         newValue := reflect.New(elem.Type())
         newValue.Elem().Set(elem)
         return newValue.Interface()
     }
-    
+
     newValue := reflect.New(value.Type()).Elem()
     newValue.Set(value)
     return newValue.Interface()
@@ -615,27 +615,27 @@ func Serialize(v interface{}) map[string]interface{} {
     result := make(map[string]interface{})
     value := reflect.ValueOf(v)
     typ := reflect.TypeOf(v)
-    
+
     // Обработка указателей
     if value.Kind() == reflect.Ptr {
         value = value.Elem()
         typ = typ.Elem()
     }
-    
+
     // Обработка только структур
     if value.Kind() != reflect.Struct {
         return result
     }
-    
+
     for i := 0; i < value.NumField(); i++ {
         field := value.Field(i)
         fieldType := typ.Field(i)
-        
+
         // Пропуск неэкспортированных полей
         if !field.CanInterface() {
             continue
         }
-        
+
         // Получение имени поля из тега json
         jsonTag := fieldType.Tag.Get("json")
         fieldName := fieldType.Name
@@ -645,10 +645,10 @@ func Serialize(v interface{}) map[string]interface{} {
                 fieldName = parts[0]
             }
         }
-        
+
         result[fieldName] = field.Interface()
     }
-    
+
     return result
 }
 ```
@@ -670,24 +670,24 @@ func (v *Validator) Validate(obj interface{}) []string {
     v.errors = v.errors[:0]
     value := reflect.ValueOf(obj)
     typ := reflect.TypeOf(obj)
-    
+
     if value.Kind() == reflect.Ptr {
         value = value.Elem()
         typ = typ.Elem()
     }
-    
+
     if value.Kind() != reflect.Struct {
         v.errors = append(v.errors, "value must be a struct")
         return v.errors
     }
-    
+
     for i := 0; i < value.NumField(); i++ {
         field := value.Field(i)
         fieldType := typ.Field(i)
-        
+
         v.validateField(field, fieldType)
     }
-    
+
     return v.errors
 }
 
@@ -695,7 +695,7 @@ func (v *Validator) validateField(field reflect.Value, fieldType reflect.StructF
     required := fieldType.Tag.Get("required") == "true"
     minLen := fieldType.Tag.Get("minlen")
     maxLen := fieldType.Tag.Get("maxlen")
-    
+
     // Проверка required
     if required {
         if field.Kind() == reflect.String && field.String() == "" {
@@ -705,19 +705,19 @@ func (v *Validator) validateField(field reflect.Value, fieldType reflect.StructF
             v.errors = append(v.errors, fmt.Sprintf("%s is required", fieldType.Name))
         }
     }
-    
+
     // Проверка длины строки
     if field.Kind() == reflect.String {
         length := len(field.String())
         if minLen != "" {
             if min, err := strconv.Atoi(minLen); err == nil && length < min {
-                v.errors = append(v.errors, 
+                v.errors = append(v.errors,
                     fmt.Sprintf("%s must be at least %d characters", fieldType.Name, min))
             }
         }
         if maxLen != "" {
             if max, err := strconv.Atoi(maxLen); err == nil && length > max {
-                v.errors = append(v.errors, 
+                v.errors = append(v.errors,
                     fmt.Sprintf("%s must be at most %d characters", fieldType.Name, max))
             }
         }
@@ -731,12 +731,12 @@ func (v *Validator) validateField(field reflect.Value, fieldType reflect.StructF
 func DeepCopy(src interface{}) interface{} {
     srcValue := reflect.ValueOf(src)
     srcType := reflect.TypeOf(src)
-    
+
     // Создание нового значения того же типа
     dstValue := reflect.New(srcType).Elem()
-    
+
     copyValue(srcValue, dstValue)
-    
+
     return dstValue.Interface()
 }
 
@@ -748,7 +748,7 @@ func copyValue(src, dst reflect.Value) {
         }
         dst.Set(reflect.New(src.Elem().Type()))
         copyValue(src.Elem(), dst.Elem())
-        
+
     case reflect.Interface:
         if src.IsNil() {
             return
@@ -757,14 +757,14 @@ func copyValue(src, dst reflect.Value) {
         dstElem := reflect.New(srcElem.Type()).Elem()
         copyValue(srcElem, dstElem)
         dst.Set(dstElem)
-        
+
     case reflect.Struct:
         for i := 0; i < src.NumField(); i++ {
             if dst.Field(i).CanSet() {
                 copyValue(src.Field(i), dst.Field(i))
             }
         }
-        
+
     case reflect.Slice:
         if src.IsNil() {
             return
@@ -773,7 +773,7 @@ func copyValue(src, dst reflect.Value) {
         for i := 0; i < src.Len(); i++ {
             copyValue(src.Index(i), dst.Index(i))
         }
-        
+
     case reflect.Map:
         if src.IsNil() {
             return
@@ -785,7 +785,7 @@ func copyValue(src, dst reflect.Value) {
             copyValue(srcValue, dstValue)
             dst.SetMapIndex(key, dstValue)
         }
-        
+
     default:
         dst.Set(src)
     }
@@ -798,53 +798,53 @@ func copyValue(src, dst reflect.Value) {
 func CallMethod(obj interface{}, methodName string, args ...interface{}) ([]interface{}, error) {
     objValue := reflect.ValueOf(obj)
     method := objValue.MethodByName(methodName)
-    
+
     if !method.IsValid() {
         return nil, fmt.Errorf("method %s not found", methodName)
     }
-    
+
     methodType := method.Type()
     if methodType.NumIn() != len(args) {
-        return nil, fmt.Errorf("wrong number of arguments: expected %d, got %d", 
+        return nil, fmt.Errorf("wrong number of arguments: expected %d, got %d",
             methodType.NumIn(), len(args))
     }
-    
+
     // Преобразование аргументов
     in := make([]reflect.Value, len(args))
     for i, arg := range args {
         in[i] = reflect.ValueOf(arg)
     }
-    
+
     // Вызов метода
     results := method.Call(in)
-    
+
     // Преобразование результатов
     out := make([]interface{}, len(results))
     for i, result := range results {
         out[i] = result.Interface()
     }
-    
+
     return out, nil
 }
 ```
 
 ## Лучшие практики
 
-1. **Избегайте рефлексии когда возможно** - используйте обычный код для лучшей производительности
-2. **Кэшируйте `Type` и Value** - избегайте повторных вызовов **reflect.TypeOf**/**ValueOf**
-3. **Проверяйте Kind** - всегда проверяйте **Kind** перед операциями
-4. **Обрабатывайте ошибки** - рефлексия может паниковать, обрабатывайте ошибки
-5. **Документируйте использование** - объясняйте, почему используется рефлексия
-6. **Используйте CanSet** - проверяйте возможность изменения значений
-7. **Избегайте паники** - используйте **recover** для обработки паник
-8. **Оптимизируйте производительность** - кэшируйте результаты рефлексии
-9. **Используйте теги** - используйте **struct tags** для метаданных
-10. **Тестируйте тщательно** - рефлексия сложна, тестируйте все случаи
-11. **Используйте рефлексию для библиотек** - для создания универсальных библиотек
-12. **Кэшируйте результаты** - сохраняйте результаты интроспекции
-13. **Проверяйте типы** - валидируйте типы перед операциями
-14. **Обрабатывайте граничные случаи** - **nil**, **pointers**, **interfaces**
-15. **Используйте рефлексию осторожно** - понимайте влияние на производительность
+1. **Избегайте рефлексии когда возможно** — используйте обычный код для лучшей производительности
+2. **Кэшируйте `Type` и Value** — избегайте повторных вызовов **reflect.TypeOf**/**ValueOf**
+3. **Проверяйте Kind** — всегда проверяйте **Kind** перед операциями
+4. **Обрабатывайте ошибки** — рефлексия может паниковать, обрабатывайте ошибки
+5. **Документируйте использование** — объясняйте, почему используется рефлексия
+6. **Используйте CanSet** — проверяйте возможность изменения значений
+7. **Избегайте паники** — используйте **recover** для обработки паник
+8. **Оптимизируйте производительность** — кэшируйте результаты рефлексии
+9. **Используйте теги** — используйте **struct tags** для метаданных
+10. **Тестируйте тщательно** — рефлексия сложна, тестируйте все случаи
+11. **Используйте рефлексию для библиотек** — для создания универсальных библиотек
+12. **Кэшируйте результаты** — сохраняйте результаты интроспекции
+13. **Проверяйте типы** — валидируйте типы перед операциями
+14. **Обрабатывайте граничные случаи** — **nil**, **pointers**, **interfaces**
+15. **Используйте рефлексию осторожно** — понимайте влияние на производительность
 
 
 ## Решение проблем
@@ -863,3 +863,11 @@ func CallMethod(obj interface{}, methodName string, args ...interface{}) ([]inte
 
 - [Go reflect Package](https://pkg.go.dev/reflect)
 - [Go Reflection Laws](https://go.dev/blog/laws-of-reflection)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

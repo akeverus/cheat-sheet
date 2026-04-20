@@ -71,11 +71,11 @@ Go предоставляет мощные инструменты для раб�
 
 ### Основные операции
 
-1. **Чтение** - чтение данных из файлов
-2. **Запись** - запись данных в файлы
-3. **Копирование** - копирование файлов
-4. **Удаление** - удаление файлов и директорий
-5. **Информация** - получение информации о файлах
+1. **Чтение** — чтение данных из файлов
+2. **Запись** — запись данных в файлы
+3. **Копирование** — копирование файлов
+4. **Удаление** — удаление файлов и директорий
+5. **Информация** — получение информации о файлах
 
 ## Чтение файлов
 
@@ -110,7 +110,7 @@ func readFileChunks(filename string, chunkSize int) error {
         return err
     }
     defer file.Close()
-    
+
     buf := make([]byte, chunkSize)
     for {
         n, err := file.Read(buf)
@@ -141,17 +141,17 @@ func readFileLines(filename string) ([]string, error) {
         return nil, err
     }
     defer file.Close()
-    
+
     var lines []string
     scanner := bufio.NewScanner(file)
     for scanner.Scan() {
         lines = append(lines, scanner.Text())
     }
-    
+
     if err := scanner.Err(); err != nil {
         return nil, err
     }
-    
+
     return lines, nil
 }
 ```
@@ -182,7 +182,7 @@ func writeFileChunks(filename string, data []byte) error {
         return err
     }
     defer file.Close()
-    
+
     _, err = file.Write(data)
     return err
 }
@@ -202,17 +202,17 @@ func writeFileLines(filename string, lines []string) error {
         return err
     }
     defer file.Close()
-    
+
     writer := bufio.NewWriter(file)
     defer writer.Flush()
-    
+
     for _, line := range lines {
         _, err := writer.WriteString(line + "\n")
         if err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -233,13 +233,13 @@ func copyFile(src, dst string) error {
         return err
     }
     defer source.Close()
-    
+
     destination, err := os.Create(dst)
     if err != nil {
         return err
     }
     defer destination.Close()
-    
+
     _, err = io.Copy(destination, source)
     return err
 }
@@ -260,17 +260,17 @@ func copyFileBuffered(src, dst string) error {
         return err
     }
     defer source.Close()
-    
+
     destination, err := os.Create(dst)
     if err != nil {
         return err
     }
     defer destination.Close()
-    
+
     reader := bufio.NewReader(source)
     writer := bufio.NewWriter(destination)
     defer writer.Flush()
-    
+
     _, err = io.Copy(writer, reader)
     return err
 }
@@ -313,13 +313,13 @@ func fileInfo(filename string) error {
     if err != nil {
         return err
     }
-    
+
     fmt.Printf("Name: %s\n", info.Name())
     fmt.Printf("Size: %d bytes\n", info.Size())
     fmt.Printf("Mode: %s\n", info.Mode())
     fmt.Printf("ModTime: %s\n", info.ModTime())
     fmt.Printf("IsDir: %t\n", info.IsDir())
-    
+
     return nil
 }
 ```
@@ -373,14 +373,14 @@ func listDirectory(dirname string) error {
     if err != nil {
         return err
     }
-    
+
     for _, entry := range entries {
         fmt.Println(entry.Name())
         if entry.IsDir() {
             fmt.Println("  (directory)")
         }
     }
-    
+
     return nil
 }
 ```
@@ -409,7 +409,7 @@ func walkDirectory(root string) error {
 ```go
 func readFileAsync(filename string) <-chan []byte {
     result := make(chan []byte, 1)
-    
+
     go func() {
         defer close(result)
         data, err := os.ReadFile(filename)
@@ -418,7 +418,7 @@ func readFileAsync(filename string) <-chan []byte {
         }
         result <- data
     }()
-    
+
     return result
 }
 ```
@@ -431,14 +431,14 @@ func readFileWithTimeout(ctx context.Context, filename string) ([]byte, error) {
         data []byte
         err  error
     }
-    
+
     resultCh := make(chan result, 1)
-    
+
     go func() {
         data, err := os.ReadFile(filename)
         resultCh <- result{data: data, err: err}
     }()
-    
+
     select {
     case res := <-resultCh:
         return res.data, res.err
@@ -457,19 +457,19 @@ func processFileLines(filename string, processor func(string) error) error {
         return err
     }
     defer file.Close()
-    
+
     scanner := bufio.NewScanner(file)
     lineNum := 0
-    
+
     for scanner.Scan() {
         lineNum++
         line := scanner.Text()
-        
+
         if err := processor(line); err != nil {
             return fmt.Errorf("error processing line %d: %w", lineNum, err)
         }
     }
-    
+
     return scanner.Err()
 }
 ```
@@ -488,7 +488,7 @@ func NewBufferedFileWriter(filename string, bufferSize int) (*BufferedFileWriter
     if err != nil {
         return nil, err
     }
-    
+
     return &BufferedFileWriter{
         file:   file,
         writer: bufio.NewWriterSize(file, bufferSize),
@@ -498,7 +498,7 @@ func NewBufferedFileWriter(filename string, bufferSize int) (*BufferedFileWriter
 func (bfw *BufferedFileWriter) Write(data []byte) error {
     bfw.mu.Lock()
     defer bfw.mu.Unlock()
-    
+
     _, err := bfw.writer.Write(data)
     return err
 }
@@ -536,14 +536,14 @@ func NewProgressWriter(writer io.Writer, total int64) *ProgressWriter {
 
 func (pw *ProgressWriter) Write(p []byte) (int, error) {
     n, err := pw.writer.Write(p)
-    
+
     pw.mu.Lock()
     pw.written += int64(n)
     progress := float64(pw.written) / float64(pw.total) * 100
     pw.mu.Unlock()
-    
+
     fmt.Printf("\rProgress: %.2f%%", progress)
-    
+
     return n, err
 }
 
@@ -553,22 +553,22 @@ func copyFileWithProgress(src, dst string) error {
         return err
     }
     defer source.Close()
-    
+
     sourceInfo, err := source.Stat()
     if err != nil {
         return err
     }
-    
+
     destination, err := os.Create(dst)
     if err != nil {
         return err
     }
     defer destination.Close()
-    
+
     progressWriter := NewProgressWriter(destination, sourceInfo.Size())
     _, err = io.Copy(progressWriter, source)
     fmt.Println()
-    
+
     return err
 }
 ```
@@ -581,18 +581,18 @@ func copyDirectory(src, dst string) error {
         if err != nil {
             return err
         }
-        
+
         relPath, err := filepath.Rel(src, path)
         if err != nil {
             return err
         }
-        
+
         dstPath := filepath.Join(dst, relPath)
-        
+
         if info.IsDir() {
             return os.MkdirAll(dstPath, info.Mode())
         }
-        
+
         return copyFile(path, dstPath)
     })
 }
@@ -603,19 +603,19 @@ func copyDirectory(src, dst string) error {
 ```go
 func findFiles(root string, predicate func(os.FileInfo) bool) ([]string, error) {
     var files []string
-    
+
     err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
         if err != nil {
             return err
         }
-        
+
         if !info.IsDir() && predicate(info) {
             files = append(files, path)
         }
-        
+
         return nil
     })
-    
+
     return files, err
 }
 
@@ -657,10 +657,10 @@ func (fw *FileWatcher) Start() {
     if err == nil {
         fw.lastMod = info.ModTime()
     }
-    
+
     ticker := time.NewTicker(fw.interval)
     defer ticker.Stop()
-    
+
     for {
         select {
         case <-fw.stop:
@@ -670,7 +670,7 @@ func (fw *FileWatcher) Start() {
             if err != nil {
                 continue
             }
-            
+
             if info.ModTime().After(fw.lastMod) {
                 fw.lastMod = info.ModTime()
                 fw.callback()
@@ -692,18 +692,18 @@ func createTempFile(pattern string, data []byte) (string, error) {
     if err != nil {
         return "", err
     }
-    
+
     if _, err := tmpfile.Write(data); err != nil {
         tmpfile.Close()
         os.Remove(tmpfile.Name())
         return "", err
     }
-    
+
     if err := tmpfile.Close(); err != nil {
         os.Remove(tmpfile.Name())
         return "", err
     }
-    
+
     return tmpfile.Name(), nil
 }
 
@@ -713,7 +713,7 @@ func withTempFile(pattern string, data []byte, fn func(string) error) error {
         return err
     }
     defer os.Remove(tmpfile)
-    
+
     return fn(tmpfile)
 }
 ```
@@ -724,17 +724,17 @@ func withTempFile(pattern string, data []byte, fn func(string) error) error {
 func writeFileSafe(filename string, data []byte) error {
     // Запись во временный файл
     tmpfile := filename + ".tmp"
-    
+
     if err := os.WriteFile(tmpfile, data, 0644); err != nil {
         return err
     }
-    
+
     // Атомарная замена
     if err := os.Rename(tmpfile, filename); err != nil {
         os.Remove(tmpfile)
         return err
     }
-    
+
     return nil
 }
 ```
@@ -744,22 +744,22 @@ func writeFileSafe(filename string, data []byte) error {
 ```go
 func readConfigFile(filename string) (map[string]string, error) {
     config := make(map[string]string)
-    
+
     file, err := os.Open(filename)
     if err != nil {
         return nil, err
     }
     defer file.Close()
-    
+
     scanner := bufio.NewScanner(file)
     for scanner.Scan() {
         line := strings.TrimSpace(scanner.Text())
-        
+
         // Пропуск комментариев и пустых строк
         if len(line) == 0 || strings.HasPrefix(line, "#") {
             continue
         }
-        
+
         // Парсинг key=value
         parts := strings.SplitN(line, "=", 2)
         if len(parts) == 2 {
@@ -768,7 +768,7 @@ func readConfigFile(filename string) (map[string]string, error) {
             config[key] = value
         }
     }
-    
+
     return config, scanner.Err()
 }
 ```
@@ -784,11 +784,11 @@ func WatchFile(path string, callback func()) error {
         return err
     }
     defer watcher.Close()
-    
+
     if err := watcher.Add(path); err != nil {
         return err
     }
-    
+
     go func() {
         for {
             select {
@@ -807,7 +807,7 @@ func WatchFile(path string, callback func()) error {
             }
         }
     }()
-    
+
     return nil
 }
 ```
@@ -823,23 +823,23 @@ func AtomicWrite(filename string, data []byte) error {
         return err
     }
     defer os.Remove(tmpfile.Name())
-    
+
     // Запись данных
     if _, err := tmpfile.Write(data); err != nil {
         tmpfile.Close()
         return err
     }
-    
+
     // Синхронизация на диск
     if err := tmpfile.Sync(); err != nil {
         tmpfile.Close()
         return err
     }
-    
+
     if err := tmpfile.Close(); err != nil {
         return err
     }
-    
+
     // Атомарная замена
     return os.Rename(tmpfile.Name(), filename)
 }
@@ -853,20 +853,20 @@ func CopyDir(src, dst string) error {
     if err != nil {
         return err
     }
-    
+
     if err := os.MkdirAll(dst, info.Mode()); err != nil {
         return err
     }
-    
+
     entries, err := os.ReadDir(src)
     if err != nil {
         return err
     }
-    
+
     for _, entry := range entries {
         srcPath := filepath.Join(src, entry.Name())
         dstPath := filepath.Join(dst, entry.Name())
-        
+
         if entry.IsDir() {
             if err := CopyDir(srcPath, dstPath); err != nil {
                 return err
@@ -877,7 +877,7 @@ func CopyDir(src, dst string) error {
             }
         }
     }
-    
+
     return nil
 }
 
@@ -887,13 +887,13 @@ func CopyFile(src, dst string) error {
         return err
     }
     defer source.Close()
-    
+
     destination, err := os.Create(dst)
     if err != nil {
         return err
     }
     defer destination.Close()
-    
+
     _, err = io.Copy(destination, source)
     return err
 }
@@ -908,19 +908,19 @@ func FindFiles(root string, pattern string) ([]string, error) {
         if err != nil {
             return err
         }
-        
+
         matched, err := filepath.Match(pattern, info.Name())
         if err != nil {
             return err
         }
-        
+
         if matched {
             matches = append(matches, path)
         }
-        
+
         return nil
     })
-    
+
     return matches, err
 }
 
@@ -930,35 +930,35 @@ func FindFilesByExtension(root, ext string) ([]string, error) {
         if err != nil {
             return err
         }
-        
+
         if !info.IsDir() && filepath.Ext(path) == ext {
             matches = append(matches, path)
         }
-        
+
         return nil
     })
-    
+
     return matches, err
 }
 ```
 
 ## Лучшие практики
 
-1. **Всегда закрывайте файлы** - используйте **defer** для закрытия
-2. **Обрабатывайте ошибки** - всегда проверяйте ошибки при работе с файлами
-3. **Используйте буферизацию** - для больших файлов
-4. **Проверяйте существование** - перед операциями с файлами
-5. **Используйте правильные права доступа** - устанавливайте корректные **permissions**
-6. **Используйте временные файлы** - для безопасной записи
-7. **Мониторьте изменения** - для отслеживания изменений файлов
-8. **Используйте контекст** - для отмены операций с файлами
-9. **Обрабатывайте большие файлы** - читайте по частям
-10. **Используйте filepath** - для кроссплатформенных путей
-11. **Используйте атомарные операции** - для безопасной записи
-12. **Рекурсивно обрабатывайте директории** - для работы с деревом файлов
-13. **Ищите файлы эффективно** - используйте **filepath.Walk**
-14. **Используйте мониторинг** - отслеживайте изменения файлов
-15. **Оптимизируйте операции** - используйте буферизацию и **streaming**
+1. **Всегда закрывайте файлы** — используйте **defer** для закрытия
+2. **Обрабатывайте ошибки** — всегда проверяйте ошибки при работе с файлами
+3. **Используйте буферизацию** — для больших файлов
+4. **Проверяйте существование** — перед операциями с файлами
+5. **Используйте правильные права доступа** — устанавливайте корректные **permissions**
+6. **Используйте временные файлы** — для безопасной записи
+7. **Мониторьте изменения** — для отслеживания изменений файлов
+8. **Используйте контекст** — для отмены операций с файлами
+9. **Обрабатывайте большие файлы** — читайте по частям
+10. **Используйте filepath** — для кроссплатформенных путей
+11. **Используйте атомарные операции** — для безопасной записи
+12. **Рекурсивно обрабатывайте директории** — для работы с деревом файлов
+13. **Ищите файлы эффективно** — используйте **filepath.Walk**
+14. **Используйте мониторинг** — отслеживайте изменения файлов
+15. **Оптимизируйте операции** — используйте буферизацию и **streaming**
 
 
 ## Решение проблем
@@ -977,3 +977,11 @@ func FindFilesByExtension(root, ext string) ([]string, error) {
 
 - [Go os Package](https://pkg.go.dev/os)
 - [Go path/filepath](https://pkg.go.dev/path/filepath)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

@@ -65,7 +65,6 @@ updated: "2026-02-11"
 
 **Основные понятия:** тест = метод с `@Test`; suite = набор тестов в XML; группа = категория для выборочного запуска; DataProvider = метод, возвращающий данные для параметризованных тестов.
 
----
 
 ## Установка и настройка
 
@@ -114,7 +113,6 @@ test {
 
 **Проверка:** `mvn test` или `./gradlew test`.
 
----
 
 ## Основные аннотации
 
@@ -185,7 +183,6 @@ public class LifecycleTest {
 }
 ```
 
----
 
 ## Группы тестов
 
@@ -208,7 +205,6 @@ public void regressionUiTest() {
 - В **testng.xml**: в `<test>` задать `<groups><run><include name="smoke"/></run></groups>`.
 - Maven: `mvn test -Dgroups=smoke,regression`.
 
----
 
 ## Зависимости между тестами
 
@@ -233,7 +229,6 @@ public void checkout() {
 
 Если `login()` падает, зависимые тесты помечаются как skipped. Чтобы зависимый тест выполнялся всегда — `alwaysRun = true`. Зависимость от групп: `dependsOnGroups = "init"`.
 
----
 
 ## Параметры и DataProvider
 
@@ -271,7 +266,6 @@ public void loginTest(String user, String pass) {
 
 DataProvider может быть в другом классе: `dataProviderClass = DataProviders.class`. Параметры из XML приходят строками — при необходимости конвертировать в коде (например, `Integer.parseInt`).
 
----
 
 ## Конфигурация жизненного цикла
 
@@ -287,7 +281,6 @@ DataProvider может быть в другом классе: `dataProviderClas
 
 Внутри одного уровня порядок между классами/методами не гарантируется без зависимостей или `priority`.
 
----
 
 ## Проверки (Assertions)
 
@@ -328,7 +321,6 @@ public void expectException() {
 }
 ```
 
----
 
 ## Параллельное выполнение
 
@@ -346,7 +338,6 @@ public void expectException() {
 
 Значения `parallel`: `methods`, `tests`, `classes`, `instances`. Для одного класса в одном потоке: `@Test(singleThreaded = true)` на классе.
 
----
 
 ## XML-сьюты
 
@@ -379,7 +370,6 @@ public void expectException() {
 
 Атрибуты `<suite>`: `parallel`, `thread-count`, `configfailurepolicy` (skip/continue при падении конфигурации). Атрибут `<test>`: `preserve-order` — сохранять порядок классов.
 
----
 
 ## Отчёты и CI
 
@@ -388,7 +378,6 @@ public void expectException() {
 - **Allure:** зависимость allure-testng, слушатель в XML или через `@Listeners`; отчёт: `allure generate test-output/allure-results -o allure-report`.
 - **CI:** Maven Surefire — `suiteXmlFile`, при необходимости `-Dgroups=smoke`. Jenkins — плагин JUnit (парсит testng-results.xml) или Allure. Gradle — `useTestNG()`, при необходимости `systemProperty 'groups', 'smoke'` в блоке `test`.
 
----
 
 ## Лучшие практики
 
@@ -403,7 +392,6 @@ public void expectException() {
 9. **Пропуск по условию** — вместо `enabled = false` можно в начале метода вызвать `throw new SkipException("причина")`.
 10. **Параметры из Maven** — передавать `-DparamName=value`; в XML (TestNG 7+) можно использовать плейсхолдеры или читать в коде `System.getProperty("paramName")`.
 
----
 
 ## Частые вопросы и решение проблем
 
@@ -437,7 +425,6 @@ public void expectException() {
 - **Повтор упавших тестов?** Встроенного retry нет; можно реализовать через `IRetryAnalyzer` и `@Test(retryAnalyzer = MyRetryAnalyzer.class)`.
 - **Исключить группу из запуска?** В XML в `<groups><run>` использовать `<exclude name="slow"/>`. Maven: `-DexcludedGroups=slow` (если плагин поддерживает).
 
----
 
 ## Глоссарий и таблицы
 
@@ -472,7 +459,6 @@ public void expectException() {
 | `classes` | Классы параллельно |
 | `instances` | Экземпляры теста параллельно |
 
----
 
 ## Заключение
 

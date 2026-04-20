@@ -11,7 +11,7 @@ updated: "2026-04-17"
 ---
 # Dropwizard
 
-Dropwizard — "opinionated" Java-фреймворк для быстрой сборки RESTful-сервисов из проверенных компонентов: Jetty (HTTP), Jersey (JAX-RS), Jackson (JSON), Metrics, Logback, Hibernate Validator, JDBI. Философия — всё production-ready "из коробки" без магии автоконфигурации.
+Dropwizard — "opinionated" Java-фреймворк для быстрой сборки RESTful-сервисов из проверенных компонентов: Jetty (HTTP), Jersey (JAX-RS), Jackson (JSON), Metrics, Logback, Hibernate Validator, JDBI. Философия — всё production-ready «из коробки» без магии автоконфигурации.
 
 Для кого: команды, которым нужен узкий, предсказуемый стек без монструозной AutoConfiguration; инженеры, мигрирующие с legacy JAX-RS-приложений; те, кому важна прозрачность зависимостей.
 
@@ -51,9 +51,9 @@ Dropwizard — "opinionated" Java-фреймворк для быстрой сб�
 
 ## Когда выбирать Dropwizard
 
-- Нужен "скучный" и предсказуемый стек: никакой автомагии, только явные bundle и factory.
+- Нужен «скучный» и предсказуемый стек: никакой автомагии, только явные bundle и factory.
 - Команда уже знает JAX-RS (Jersey) и не хочет переучиваться на Spring MVC.
-- Важны метрики и health endpoints "из коробки" без Actuator.
+- Важны метрики и health endpoints «из коробки» без Actuator.
 - **Не подходит**, если нужен AOT/native (→ Quarkus, Micronaut) или реактивный стек (→ Vert.x, WebFlux).
 
 ## Сравнение с соседями
@@ -70,7 +70,7 @@ Dropwizard — "opinionated" Java-фреймворк для быстрой сб�
 
 - **Первое знакомство:** `dropwizard-basics.md` целиком.
 - **Мигрант со Spring Boot:** секции "Application / Configuration" + "REST Resource" + "Health checks".
-- **Оценка для production:** раздел Metrics + Logging + "Запуск приложения".
+- **Оценка для production:** раздел Metrics + Logging + «Запуск приложения».
 
 ## Куда идти дальше
 

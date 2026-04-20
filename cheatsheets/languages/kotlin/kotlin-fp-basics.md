@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Functions](https://kotlinlang.org/docs/functions.html)
 - [Kotlin Lambdas](https://kotlinlang.org/docs/lambdas.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Functional Programming](https://www.baeldung.com/kotlin/functional-programming)
 
 ### См. также
@@ -38,7 +38,7 @@ updated: "2026-02-11"
 - [Lambda Expressions](#lambda-expressions)
   - [Базовый синтаксис](#базовый-синтаксис)
   - [Сокращения](#сокращения)
-  - [it - неявное имя параметра](#it-неявное-имя-параметра)
+  - [it — неявное имя параметра](#it-неявное-имя-параметра)
   - [**Underscore** для неиспользуемых параметров](#underscore-для-неиспользуемых-параметров)
   - [**Lambda** с несколькими выражениями](#lambda-с-несколькими-выражениями)
 - [**Function Types**](#function-types)
@@ -113,17 +113,17 @@ updated: "2026-02-11"
 
 **Функциональное программирование в **Kotlin** основано на нескольких ключевых концепциях:**
 
-- **Функции как значения первого класса** - функции можно передавать, возвращать, хранить
-- **Immutability** - неизменяемые данные
-- **Pure Functions** - функции без побочных эффектов
+- **Функции как значения первого класса** — функции можно передавать, возвращать, хранить
+- **Immutability** — неизменяемые данные
+- **Pure Functions** — функции без побочных эффектов
 - **Higher-Order Functions** — функции, принимающие или возвращающие функции
-- **Composition** - комбинирование функций
+- **Composition** — комбинирование функций
 
 ## **Higher-Order Functions**
 
-**Higher-Order Functions** (**функции высшего порядка**) - это функции, которые принимают другие функции как параметры или возвращают функции. Это одна из фундаментальных концепций функционального программирования, которая позволяет создавать более абстрактный и переиспользуемый код.
+**Higher-Order Functions** (**функции высшего порядка**) — это функции, которые принимают другие функции как параметры или возвращают функции. Это одна из фундаментальных концепций функционального программирования, которая позволяет создавать более абстрактный и переиспользуемый код.
 
-Идея функций высшего порядка заключается в том, что функции в **Kotlin** являются значениями первого класса - их можно передавать, возвращать и хранить, как и любые другие значения. Это открывает возможности для создания более гибких и композируемых решений.
+Идея функций высшего порядка заключается в том, что функции в **Kotlin** являются значениями первого класса — их можно передавать, возвращать и хранить, как и любые другие значения. Это открывает возможности для создания более гибких и композируемых решений.
 
 ### Функции как параметры
 
@@ -147,7 +147,7 @@ fun <T> List<T>.filter(predicate: (T) -> Boolean): List<T> {
 // Использование
 **val numbers** = **listOf**(1, 2, 3, 4, 5)
 **val evens** = **numbers.filter** { it % 2 == 0 }  // [2, 4]
-```
+```text
 
 ### Функции как возвращаемые значения
 
@@ -163,7 +163,7 @@ val triple = `createMultiplier`(3)
 
 println(double(5))   // 10
 println(triple(5))   // 15
-```
+```text
 
 ### Комбинирование
 
@@ -180,7 +180,7 @@ fun <T, R> `List`<T>.map(transform: (T) -> R): `List`<R> {
 // Использование
 val numbers = `listOf`(1, 2, 3, 4, 5)
 val doubled = `numbers.map` { it * 2 }  // [2, 4, 6, 8, 10]
-```
+```text
 
 ## Lambda Expressions
 
@@ -195,7 +195,7 @@ Lambda expressions (лямбда-выражения) - это анонимные
 ```kotlin
 // Полная форма
 val add: (Int, Int) -> Int = { a: Int, b: Int -> a + b }
-```
+```text
 
 В полной форме явно указываются типы параметров и возвращаемого значения. Это полезно, когда типы не могут быть выведены автоматически компилятором или когда нужно сделать код более явным для читаемости.
 
@@ -224,7 +224,7 @@ process(listOf(1, 2, 3)) { item -> println(item) }
 listOf(1, 2, 3).forEach { item -> println(item) }
 ```
 
-### it - неявное имя параметра
+### it — неявное имя параметра
 
 ```kotlin
 // Если lambda имеет один параметр, можно использовать it
@@ -364,7 +364,7 @@ inline fun process(crossinline action: () -> Unit) {
 
 ## **Tail Recursion**
 
-**Tail Recursion** - это рекурсия, где рекурсивный вызов является последней операцией.
+**Tail Recursion** — это рекурсия, где рекурсивный вызов является последней операцией.
 
 ### Обычная рекурсия
 
@@ -418,7 +418,7 @@ tailrec fun isPrime(n: Int, i: Int = 2): Boolean {
 
 ### **Partial Application**
 
-**Partial Application** - это применение функции к части аргументов.
+**Partial Application** — это применение функции к части аргументов.
 
 ```kotlin
 // Функция с несколькими параметрами
@@ -434,7 +434,7 @@ println(add10And20(30))     // 60
 
 ### **Currying**
 
-**Currying** - это преобразование функции с несколькими аргументами в последовательность функций с одним аргументом.
+**Currying** — это преобразование функции с несколькими аргументами в последовательность функций с одним аргументом.
 
 ```kotlin
 // Обычная функция
@@ -482,7 +482,7 @@ println(uncurriedAdd(5, 3))  // 8
 
 ## **Function Composition**
 
-**Function Composition** - это комбинирование функций для создания новых функций.
+**Function Composition** — это комбинирование функций для создания новых функций.
 
 ### Базовое композирование
 
@@ -524,7 +524,7 @@ println(pipeline(3))  // ((3 + 1) * 2)^2 = 64
 
 ## **Immutability**
 
-**Immutability** - это использование неизменяемых данных.
+**Immutability** — это использование неизменяемых данных.
 
 ### **Immutable Collections**
 
@@ -561,7 +561,7 @@ val moved2 = point.copy(y = 4)  // Point(1, 4)
 
 ## **Pure Functions**
 
-**Pure Functions** - это функции без побочных эффектов.
+**Pure Functions** — это функции без побочных эффектов.
 
 ### Характеристики **Pure Functions**
 
@@ -786,12 +786,12 @@ val result2 = memoized(1000)   // Используется кэш
 sealed class FList<out T> {
     object Nil : FList<Nothing>()
     data class Cons<out T>(val head: T, val tail: FList<T>) : FList<T>()
-    
+
     fun <R> map(f: (T) -> R): FList<R> = when (this) {
         is Nil -> Nil
         is Cons -> Cons(f(head), tail.map(f))
     }
-    
+
     fun <R> fold(initial: R, f: (R, T) -> R): R = when (this) {
         is Nil -> initial
         is Cons -> tail.fold(f(initial, head), f)
@@ -818,13 +818,13 @@ class PersistentList<T> private constructor(
     fun add(element: T): PersistentList<T> {
         return PersistentList(elements + element)
     }
-    
+
     fun remove(element: T): PersistentList<T> {
         return PersistentList(elements - element)
     }
-    
+
     fun get(index: Int): T? = elements.getOrNull(index)
-    
+
     companion object {
         fun <T> empty(): PersistentList<T> = PersistentList(emptyList())
         fun <T> of(vararg elements: T): PersistentList<T> = PersistentList(elements.toList())
@@ -851,10 +851,10 @@ fun testCompositionAssociativity() {
     val f = { x: Int -> x + 1 }
     val g = { x: Int -> x * 2 }
     val h = { x: Int -> x - 1 }
-    
+
     val left = (f compose g) compose h
     val right = f compose (g compose h)
-    
+
     (1..100).forEach { x ->
         assertEquals(left(x), right(x))
     }
@@ -864,7 +864,7 @@ fun testCompositionAssociativity() {
 fun testMapPreservesStructure() {
     val list = listOf(1, 2, 3, 4, 5)
     val f = { x: Int -> x * 2 }
-    
+
     assertEquals(list.size, list.map(f).size)
     assertEquals(list.isEmpty(), list.map(f).isEmpty())
 }
@@ -1285,7 +1285,7 @@ interface Applicative<F> : Functor<F> {
 // Реализация для List
 class ListApplicative : Applicative<ForList> {
     override fun <A> pure(a: A): List<A> = listOf(a)
-    
+
     override fun <A, B> List<A>.ap(ff: List<(A) -> B>): List<B> {
         return ff.flatMap { f ->
             this.map(f)

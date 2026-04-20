@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Collections Overview](https://kotlinlang.org/docs/collections-overview.html)
 - [Kotlin Set API](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-set/index.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
@@ -112,13 +112,13 @@ updated: "2026-02-11"
 
 ## Введение в **Set**
 
-**Set** в **Kotlin** - это коллекция уникальных элементов без определенного порядка (**или с определенным порядком в зависимости от реализации**). Множества не содержат дубликатов.
+**Set** в **Kotlin** — это коллекция уникальных элементов без определенного порядка (**или с определенным порядком в зависимости от реализации**). Множества не содержат дубликатов.
 
 ### Основные характеристики
 
 - **Уникальность**: каждый элемент встречается только один раз
 - **Отсутствие индексов**: нет доступа по индексу (**кроме LinkedHashSet**)
-- **Порядок**: зависит от реализации (**HashSet - неупорядочен, `TreeSet` - отсортирован, `LinkedHashSet` - порядок вставки**)
+- **Порядок**: зависит от реализации (**HashSet — неупорядочен, `TreeSet` - отсортирован, `LinkedHashSet` - порядок вставки**)
 - **Null safety**: может содержать **null** элементы (**если тип nullable**)
 
 ### Интерфейсы
@@ -247,7 +247,7 @@ copy.add(4) // не влияет на mutable
 
 ## **HashSet**
 
-**HashSet** - это реализация **MutableSet** на основе хеш-таблицы. Это наиболее распространенная реализация множества в **Kotlin**, так как она обеспечивает оптимальную производительность для большинства операций с множествами.
+**HashSet** — это реализация **MutableSet** на основе хеш-таблицы. Это наиболее распространенная реализация множества в **Kotlin**, так как она обеспечивает оптимальную производительность для большинства операций с множествами.
 
 **HashSet** использует хеш-таблицу для хранения элементов, где каждый элемент имеет хеш-код, который используется для быстрого поиска. Это делает **HashSet** идеальным выбором, когда порядок элементов не важен, а важна скорость операций.
 
@@ -318,9 +318,9 @@ val denseSet = HashSet<Int>(16, 0.9f)
 
 ## **TreeSet**
 
-**TreeSet** - это реализация **MutableSet** на основе самобалансирующегося красно-черного дерева. В отличие от **HashSet**, **TreeSet** автоматически поддерживает элементы в отсортированном порядке, что делает его идеальным выбором, когда нужна сортировка или навигационные операции.
+**TreeSet** — это реализация **MutableSet** на основе самобалансирующегося красно-черного дерева. В отличие от **HashSet**, **TreeSet** автоматически поддерживает элементы в отсортированном порядке, что делает его идеальным выбором, когда нужна сортировка или навигационные операции.
 
-Красно-черное дерево - это тип бинарного дерева поиска, которое автоматически балансируется при вставке и удалении элементов. Это гарантирует, что дерево остается сбалансированным, и операции выполняются за логарифмическое время.
+Красно-черное дерево — это тип бинарного дерева поиска, которое автоматически балансируется при вставке и удалении элементов. Это гарантирует, что дерево остается сбалансированным, и операции выполняются за логарифмическое время.
 
 ### Характеристики
 
@@ -392,7 +392,7 @@ reversed.addAll(listOf(3, 1, 4, 1, 5))
 
 ## **LinkedHashSet**
 
-**LinkedHashSet** - это реализация **MutableSet**, которая сохраняет порядок вставки элементов.
+**LinkedHashSet** — это реализация **MutableSet**, которая сохраняет порядок вставки элементов.
 
 ### Характеристики
 
@@ -595,8 +595,8 @@ val nonNull = nullable.filterNotNull()        // {1, 2, 3}
 val set = setOf(1, 2, 3)
 
 // FlatMap
-val flatMapped = set.flatMap { 
-    setOf(it, it * 2) 
+val flatMapped = set.flatMap {
+    setOf(it, it * 2)
 }                                               // {1, 2, 2, 4, 3, 6}
 ```
 
@@ -888,7 +888,7 @@ fun <T> Collection<T>.toOptimizedSet(): Set<T> {
 // Кэширование результатов операций
 class CachedSetOperations<T>(private val set: Set<T>) {
     private var cachedIntersection: Map<Set<T>, Set<T>> = emptyMap()
-    
+
     fun intersectWith(other: Set<T>): Set<T> {
         return cachedIntersection.getOrPut(other) {
             set intersect other
@@ -915,19 +915,19 @@ enum class Permission {
 
 class UserPermissions {
     private val permissions = mutableSetOf<Permission>()
-    
+
     fun addPermission(permission: Permission) {
         permissions.add(permission)
     }
-    
+
     fun hasPermission(permission: Permission): Boolean {
         return permission in permissions
     }
-    
+
     fun hasAllPermissions(required: Set<Permission>): Boolean {
         return required.all { it in permissions }
     }
-    
+
     fun hasAnyPermission(required: Set<Permission>): Boolean {
         return required.any { it in permissions }
     }
@@ -958,7 +958,7 @@ if (userPermissions.hasAllPermissions(requiredPermissions)) {
 // Кэш с использованием Set для отслеживания элементов
 class SetBasedCache<T>(private val maxSize: Int = 1000) {
     private val cache = LinkedHashSet<T>()
-    
+
     fun add(item: T): Boolean {
         return if (cache.size >= maxSize && item !in cache) {
             val first = cache.first()
@@ -969,11 +969,11 @@ class SetBasedCache<T>(private val maxSize: Int = 1000) {
             cache.add(item)
         }
     }
-    
+
     fun contains(item: T): Boolean {
         return item in cache
     }
-    
+
     fun getAll(): List<T> {
         return cache.toList()
     }
@@ -1176,7 +1176,7 @@ fun <T> Set<T>.filterToSet(predicate: (T) -> Boolean): Set<T> {
 fun <T> Set<T>.partitionSet(predicate: (T) -> Boolean): Pair<Set<T>, Set<T>> {
     val trueSet = mutableSetOf<T>()
     val falseSet = mutableSetOf<T>()
-    
+
     for (element in this) {
         if (predicate(element)) {
             trueSet.add(element)
@@ -1184,7 +1184,7 @@ fun <T> Set<T>.partitionSet(predicate: (T) -> Boolean): Pair<Set<T>, Set<T>> {
             falseSet.add(element)
         }
     }
-    
+
     return trueSet to falseSet
 }
 
@@ -1212,23 +1212,23 @@ fun <T> Set<T>.combinations(size: Int): Set<Set<T>> {
     if (size == 0) return setOf(emptySet())
     if (size > this.size) return emptySet()
     if (size == this.size) return setOf(this)
-    
+
     val result = mutableSetOf<Set<T>>()
     val list = this.toList()
-    
+
     fun generateCombinations(start: Int, current: MutableList<T>) {
         if (current.size == size) {
             result.add(current.toSet())
             return
         }
-        
+
         for (i in start until list.size) {
             current.add(list[i])
             generateCombinations(i + 1, current)
             current.removeAt(current.size - 1)
         }
     }
-    
+
     generateCombinations(0, mutableListOf())
     return result
 }
@@ -1253,11 +1253,11 @@ val combos = set.combinations(2)
 // Мультимножество (bag)
 class MultiSet<T> {
     private val counts = mutableMapOf<T, Int>()
-    
+
     fun add(element: T) {
         counts[element] = (counts[element] ?: 0) + 1
     }
-    
+
     fun remove(element: T): Boolean {
         val count = counts[element] ?: return false
         if (count == 1) {
@@ -1267,11 +1267,11 @@ class MultiSet<T> {
         }
         return true
     }
-    
+
     fun count(element: T): Int {
         return counts[element] ?: 0
     }
-    
+
     fun toSet(): Set<T> = counts.keys
     fun size(): Int = counts.values.sum()
 }

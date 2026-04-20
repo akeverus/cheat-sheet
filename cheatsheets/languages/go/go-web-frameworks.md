@@ -98,15 +98,15 @@ updated: "2026-02-06"
 
 ### Популярные фреймворки
 
-1. **Gin** - быстрый и легковесный фреймворк
-2. **Echo** - высокопроизводительный фреймворк
-3. **Fiber** - **Express**-подобный фреймворк
-4. **Chi** - легковесный роутер
-5. **Gorilla Mux** - мощный **HTTP** роутер
+1. **Gin** — быстрый и легковесный фреймворк
+2. **Echo** — высокопроизводительный фреймворк
+3. **Fiber** — **Express**-подобный фреймворк
+4. **Chi** — легковесный роутер
+5. **Gorilla Mux** — мощный **HTTP** роутер
 
 ## **Gin**
 
-**Gin** - один из самых популярных веб-фреймворков в Go.
+**Gin** — один из самых популярных веб-фреймворков в Go.
 
 ### Установка
 
@@ -121,13 +121,13 @@ import "github.com/gin-gonic/gin"
 
 func main() {
     r := gin.Default()
-    
+
     r.GET("/", func(c *gin.Context) {
         c.JSON(200, gin.H{
             "message": "Hello, World!",
         })
     })
-    
+
     r.Run(":8080")
 }
 ```
@@ -175,7 +175,7 @@ func createUser(c *gin.Context) {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    
+
     c.JSON(201, user)
 }
 ```
@@ -206,7 +206,7 @@ v1.Use(authMiddleware())
 
 ## **Echo**
 
-**Echo** - высокопроизводительный веб-фреймворк.
+**Echo** — высокопроизводительный веб-фреймворк.
 
 ### Установка
 
@@ -221,13 +221,13 @@ import "github.com/labstack/echo/v4"
 
 func main() {
     e := echo.New()
-    
+
     e.GET("/", func(c echo.Context) error {
         return c.JSON(200, map[string]string{
             "message": "Hello, World!",
         })
     })
-    
+
     e.Start(":8080")
 }
 ```
@@ -285,7 +285,7 @@ e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 
 ## **Fiber**
 
-**Fiber** - **Express**-подобный фреймворк, построенный на **Fasthttp**.
+**Fiber** — **Express**-подобный фреймворк, построенный на **Fasthttp**.
 
 ### Установка
 
@@ -300,13 +300,13 @@ import "github.com/gofiber/fiber/v2"
 
 func main() {
     app := fiber.New()
-    
+
     app.Get("/", func(c *fiber.Ctx) error {
         return c.JSON(fiber.Map{
             "message": "Hello, World!",
         })
     })
-    
+
     app.Listen(":8080")
 }
 ```
@@ -341,7 +341,7 @@ func createUser(c *fiber.Ctx) error {
 
 ## **Chi**
 
-**Chi** - легковесный **HTTP** роутер.
+**Chi** — легковесный **HTTP** роутер.
 
 ### Установка
 
@@ -356,18 +356,18 @@ import "github.com/go-chi/chi/v5"
 
 func main() {
     r := chi.NewRouter()
-    
+
     r.Get("/", func(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte("Hello, World!"))
     })
-    
+
     http.ListenAndServe(":8080", r)
 }
 ```
 
 ## **Gorilla Mux**
 
-**Gorilla Mux** - мощный **HTTP** роутер.
+**Gorilla Mux** — мощный **HTTP** роутер.
 
 ### Установка
 
@@ -382,10 +382,10 @@ import "github.com/gorilla/mux"
 
 func main() {
     r := mux.NewRouter()
-    
+
     r.HandleFunc("/", homeHandler).Methods("GET")
     r.HandleFunc("/users/{id}", getUserHandler).Methods("GET")
-    
+
     http.ListenAndServe(":8080", r)
 }
 ```
@@ -407,7 +407,7 @@ func createUser(c *gin.Context) {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    
+
     // Валидация прошла успешно
     c.JSON(201, user)
 }
@@ -423,7 +423,7 @@ func setupRoutes(r *gin.Engine) {
         public.POST("/register", register)
         public.POST("/login", login)
     }
-    
+
     // Защищенные роуты
     protected := r.Group("/api")
     protected.Use(authMiddleware())
@@ -433,7 +433,7 @@ func setupRoutes(r *gin.Engine) {
         protected.PUT("/users/:id", updateUser)
         protected.DELETE("/users/:id", deleteUser)
     }
-    
+
     // Административные роуты
     admin := r.Group("/api/admin")
     admin.Use(authMiddleware(), adminMiddleware())
@@ -453,14 +453,14 @@ func uploadFile(c *gin.Context) {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    
+
     // Сохранение файла
     dst := "./uploads/" + file.Filename
     if err := c.SaveUploadedFile(file, dst); err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    
+
     c.JSON(200, gin.H{"message": "File uploaded successfully"})
 }
 
@@ -512,7 +512,7 @@ func customValidator(fl validator.FieldLevel) bool {
 func errorHandler() gin.HandlerFunc {
     return func(c *gin.Context) {
         c.Next()
-        
+
         if len(c.Errors) > 0 {
             err := c.Errors.Last()
             c.JSON(500, gin.H{
@@ -545,11 +545,11 @@ func createUser(c echo.Context) error {
     if err := c.Bind(&user); err != nil {
         return err
     }
-    
+
     if err := c.Validate(&user); err != nil {
         return err
     }
-    
+
     return c.JSON(201, user)
 }
 ```
@@ -562,13 +562,13 @@ func setupRoutes(e *echo.Echo) {
     public := e.Group("/api")
     public.POST("/register", register)
     public.POST("/login", login)
-    
+
     // Защищенные роуты
     protected := e.Group("/api")
     protected.Use(authMiddleware())
     protected.GET("/users", getUsers)
     protected.POST("/users", createUser)
-    
+
     // Административные роуты
     admin := e.Group("/api/admin")
     admin.Use(authMiddleware(), adminMiddleware())
@@ -597,12 +597,12 @@ e.Renderer = &TemplateRenderer{
 func customErrorHandler(err error, c echo.Context) {
     code := http.StatusInternalServerError
     message := "Internal Server Error"
-    
+
     if he, ok := err.(*echo.HTTPError); ok {
         code = he.Code
         message = he.Message.(string)
     }
-    
+
     c.JSON(code, map[string]string{
         "error": message,
     })
@@ -628,15 +628,15 @@ type User struct {
 
 func createUser(c *fiber.Ctx) error {
     user := new(User)
-    
+
     if err := c.BodyParser(user); err != nil {
         return c.Status(400).JSON(fiber.Map{"error": err.Error()})
     }
-    
+
     if err := validator.New().Struct(user); err != nil {
         return c.Status(400).JSON(fiber.Map{"error": err.Error()})
     }
-    
+
     return c.Status(201).JSON(user)
 }
 ```
@@ -649,13 +649,13 @@ func setupRoutes(app *fiber.App) {
     public := app.Group("/api")
     public.Post("/register", register)
     public.Post("/login", login)
-    
+
     // Защищенные роуты
     protected := app.Group("/api")
     protected.Use(authMiddleware())
     protected.Get("/users", getUsers)
     protected.Post("/users", createUser)
-    
+
     // Административные роуты
     admin := app.Group("/api/admin")
     admin.Use(authMiddleware(), adminMiddleware())
@@ -689,16 +689,16 @@ import "github.com/go-chi/chi/middleware"
 func setupMiddleware(r *chi.Mux) {
     // Логирование
     r.Use(middleware.Logger)
-    
+
     // Recovery
     r.Use(middleware.Recoverer)
-    
+
     // Request ID
     r.Use(middleware.RequestID)
-    
+
     // Timeout
     r.Use(middleware.Timeout(60 * time.Second))
-    
+
     // CORS
     r.Use(corsMiddleware)
 }
@@ -714,7 +714,7 @@ func setupRoutes(r *chi.Mux) {
             r.Post("/register", register)
             r.Post("/login", login)
         })
-        
+
         // Защищенные роуты
         r.Group(func(r chi.Router) {
             r.Use(authMiddleware)
@@ -731,14 +731,14 @@ func setupRoutes(r *chi.Mux) {
 func setupRoutes(r *mux.Router) {
     // Роуты с переменными
     r.HandleFunc("/users/{id:[0-9]+}", getUser).Methods("GET")
-    
+
     // Роуты с префиксами
     api := r.PathPrefix("/api/v1").Subrouter()
     api.HandleFunc("/users", getUsers).Methods("GET")
-    
+
     // Роуты с ограничениями хоста
     r.HandleFunc("/", homeHandler).Host("example.com")
-    
+
     // Роуты с схемой
     r.HandleFunc("/secure", secureHandler).Schemes("https")
 }
@@ -762,13 +762,13 @@ func (uc *UserController) GetUser(c *gin.Context) {
         c.JSON(400, gin.H{"error": "Invalid user ID"})
         return
     }
-    
+
     user, err := uc.service.GetUser(userID)
     if err != nil {
         c.JSON(404, gin.H{"error": "User not found"})
         return
     }
-    
+
     c.JSON(200, user)
 }
 
@@ -778,13 +778,13 @@ func (uc *UserController) CreateUser(c *gin.Context) {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    
+
     created, err := uc.service.CreateUser(user)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    
+
     c.JSON(201, created)
 }
 
@@ -795,19 +795,19 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
         c.JSON(400, gin.H{"error": "Invalid user ID"})
         return
     }
-    
+
     var user User
     if err := c.ShouldBindJSON(&user); err != nil {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    
+
     updated, err := uc.service.UpdateUser(userID, user)
     if err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    
+
     c.JSON(200, updated)
 }
 
@@ -818,12 +818,12 @@ func (uc *UserController) DeleteUser(c *gin.Context) {
         c.JSON(400, gin.H{"error": "Invalid user ID"})
         return
     }
-    
+
     if err := uc.service.DeleteUser(userID); err != nil {
         c.JSON(500, gin.H{"error": err.Error()})
         return
     }
-    
+
     c.JSON(204, nil)
 }
 
@@ -851,12 +851,12 @@ func (h *UserHandler) GetUser(c echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
     }
-    
+
     user, err := h.service.GetUser(id)
     if err != nil {
         return echo.NewHTTPError(http.StatusNotFound, "User not found")
     }
-    
+
     return c.JSON(http.StatusOK, user)
 }
 
@@ -865,16 +865,16 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
     if err := c.Bind(&user); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, err.Error())
     }
-    
+
     if err := c.Validate(&user); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, err.Error())
     }
-    
+
     created, err := h.service.CreateUser(user)
     if err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
     }
-    
+
     return c.JSON(http.StatusCreated, created)
 }
 
@@ -900,12 +900,12 @@ func (h *UserHandler) GetUser(c *fiber.Ctx) error {
     if err != nil {
         return c.Status(400).JSON(fiber.Map{"error": "Invalid user ID"})
     }
-    
+
     user, err := h.service.GetUser(id)
     if err != nil {
         return c.Status(404).JSON(fiber.Map{"error": "User not found"})
     }
-    
+
     return c.JSON(user)
 }
 
@@ -914,12 +914,12 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
     if err := c.BodyParser(user); err != nil {
         return c.Status(400).JSON(fiber.Map{"error": err.Error()})
     }
-    
+
     created, err := h.service.CreateUser(*user)
     if err != nil {
         return c.Status(500).JSON(fiber.Map{"error": err.Error()})
     }
-    
+
     return c.Status(201).JSON(created)
 }
 
@@ -943,7 +943,7 @@ func generateToken(userID int) (string, error) {
         "user_id": userID,
         "exp":     time.Now().Add(24 * time.Hour).Unix(),
     })
-    
+
     return token.SignedString([]byte("secret"))
 }
 
@@ -955,17 +955,17 @@ func authMiddleware() gin.HandlerFunc {
             c.Abort()
             return
         }
-        
+
         token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
             return []byte("secret"), nil
         })
-        
+
         if err != nil || !token.Valid {
             c.JSON(401, gin.H{"error": "Invalid token"})
             c.Abort()
             return
         }
-        
+
         claims := token.Claims.(jwt.MapClaims)
         c.Set("userID", claims["user_id"])
         c.Next()
@@ -1003,7 +1003,7 @@ func main() {
 func corsMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         origin := c.GetHeader("Origin")
-        
+
         // Разрешенные источники
         allowedOrigins := []string{"http://localhost:3000", "https://example.com"}
         allowed := false
@@ -1013,20 +1013,20 @@ func corsMiddleware() gin.HandlerFunc {
                 break
             }
         }
-        
+
         if allowed {
             c.Header("Access-Control-Allow-Origin", origin)
         }
-        
+
         c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         c.Header("Access-Control-Allow-Credentials", "true")
-        
+
         if c.Request.Method == "OPTIONS" {
             c.AbortWithStatus(204)
             return
         }
-        
+
         c.Next()
     }
 }
@@ -1059,17 +1059,17 @@ import "log/slog"
 
 func structuredLoggingMiddleware() gin.HandlerFunc {
     logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-    
+
     return func(c *gin.Context) {
         start := time.Now()
         path := c.Request.URL.Path
         method := c.Request.Method
-        
+
         c.Next()
-        
+
         duration := time.Since(start)
         status := c.Writer.Status()
-        
+
         logger.Info("HTTP Request",
             "method", method,
             "path", path,
@@ -1101,7 +1101,7 @@ func validateCreateUser(c *gin.Context) {
         c.Abort()
         return
     }
-    
+
     c.Set("validatedRequest", req)
     c.Next()
 }
@@ -1116,10 +1116,10 @@ func uploadMultipleFiles(c *gin.Context) {
         c.JSON(400, gin.H{"error": err.Error()})
         return
     }
-    
+
     files := form.File["files"]
     var uploadedFiles []string
-    
+
     for _, file := range files {
         dst := "./uploads/" + file.Filename
         if err := c.SaveUploadedFile(file, dst); err != nil {
@@ -1128,7 +1128,7 @@ func uploadMultipleFiles(c *gin.Context) {
         }
         uploadedFiles = append(uploadedFiles, dst)
     }
-    
+
     c.JSON(200, gin.H{"files": uploadedFiles})
 }
 ```
@@ -1150,13 +1150,13 @@ func websocketHandler(c *gin.Context) {
         return
     }
     defer conn.Close()
-    
+
     for {
         messageType, message, err := conn.ReadMessage()
         if err != nil {
             break
         }
-        
+
         // Эхо ответ
         if err := conn.WriteMessage(messageType, message); err != nil {
             break
@@ -1171,35 +1171,35 @@ func websocketHandler(c *gin.Context) {
 func gracefulShutdown(server *http.Server) {
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-    
+
     <-sigChan
     fmt.Println("Shutting down server...")
-    
+
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
-    
+
     if err := server.Shutdown(ctx); err != nil {
         fmt.Printf("Server forced to shutdown: %v\n", err)
     }
-    
+
     fmt.Println("Server stopped")
 }
 
 func main() {
     r := gin.Default()
     // Настройка роутов
-    
+
     server := &http.Server{
         Addr:    ":8080",
         Handler: r,
     }
-    
+
     go func() {
         if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
             log.Fatalf("Server failed: %v", err)
         }
     }()
-    
+
     gracefulShutdown(server)
 }
 ```
@@ -1213,7 +1213,7 @@ func healthCheck(c *gin.Context) {
         "database": checkDatabase(),
         "cache":    checkCache(),
     }
-    
+
     allHealthy := true
     for _, status := range checks {
         if status != "ok" {
@@ -1221,7 +1221,7 @@ func healthCheck(c *gin.Context) {
             break
         }
     }
-    
+
     if allHealthy {
         c.JSON(200, checks)
     } else {
@@ -1251,7 +1251,7 @@ func setupVersionedRoutes(r *gin.Engine) {
         v1.GET("/users", getUsersV1)
         v1.POST("/users", createUserV1)
     }
-    
+
     v2 := r.Group("/api/v2")
     {
         v2.GET("/users", getUsersV2)
@@ -1271,7 +1271,7 @@ func requestIDMiddleware() gin.HandlerFunc {
         if requestID == "" {
             requestID = uuid.New().String()
         }
-        
+
         c.Header("X-Request-ID", requestID)
         c.Set("requestID", requestID)
         c.Next()
@@ -1307,24 +1307,24 @@ type CacheEntry struct {
 func (cm *CacheMiddleware) Handler() gin.HandlerFunc {
     return func(c *gin.Context) {
         cacheKey := c.Request.URL.Path
-        
+
         cm.mu.RLock()
         entry, ok := cm.cache[cacheKey]
         cm.mu.RUnlock()
-        
+
         if ok && time.Now().Before(entry.ExpiresAt) {
             c.Header("X-Cache", "HIT")
             c.Data(200, "application/json", entry.Data)
             c.Abort()
             return
         }
-        
+
         // Сохранение ответа
         writer := &responseWriter{ResponseWriter: c.Writer, body: &bytes.Buffer{}}
         c.Writer = writer
-        
+
         c.Next()
-        
+
         if c.Writer.Status() == 200 {
             cm.mu.Lock()
             cm.cache[cacheKey] = CacheEntry{
@@ -1344,15 +1344,15 @@ func timeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
     return func(c *gin.Context) {
         ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)
         defer cancel()
-        
+
         c.Request = c.Request.WithContext(ctx)
-        
+
         done := make(chan struct{})
         go func() {
             c.Next()
             close(done)
         }()
-        
+
         select {
         case <-done:
             return
@@ -1377,7 +1377,7 @@ var (
         },
         []string{"method", "endpoint", "status"},
     )
-    
+
     httpRequestDuration = prometheus.NewHistogramVec(
         prometheus.HistogramOpts{
             Name: "http_request_duration_seconds",
@@ -1392,12 +1392,12 @@ func metricsMiddleware() gin.HandlerFunc {
         start := time.Now()
         method := c.Request.Method
         path := c.Request.URL.Path
-        
+
         c.Next()
-        
+
         duration := time.Since(start).Seconds()
         status := c.Writer.Status()
-        
+
         httpRequestsTotal.WithLabelValues(method, path, strconv.Itoa(status)).Inc()
         httpRequestDuration.WithLabelValues(method, path).Observe(duration)
     }
@@ -1408,35 +1408,35 @@ func metricsMiddleware() gin.HandlerFunc {
 
 ### Производительность
 
-- **Fiber** - самый быстрый (**на основе Fasthttp**)
-- **Echo** - очень быстрый
-- **Gin** - быстрый
-- **Chi** - быстрый
-- **Gorilla Mux** - средний
+- **Fiber** — самый быстрый (**на основе Fasthttp**)
+- **Echo** — очень быстрый
+- **Gin** — быстрый
+- **Chi** — быстрый
+- **Gorilla Mux** — средний
 
 ### Простота использования
 
-- **Gin** - очень простой
-- **Echo** - простой
-- **Fiber** - простой
-- **Chi** - простой
-- **Gorilla Mux** - средний
+- **Gin** — очень простой
+- **Echo** — простой
+- **Fiber** — простой
+- **Chi** — простой
+- **Gorilla Mux** — средний
 
 ### Функциональность
 
-- **Echo** - богатая функциональность
-- **Gin** - хорошая функциональность
-- **Fiber** - хорошая функциональность
-- **Chi** - базовая функциональность
-- **Gorilla Mux** - базовая функциональность
+- **Echo** — богатая функциональность
+- **Gin** — хорошая функциональность
+- **Fiber** — хорошая функциональность
+- **Chi** — базовая функциональность
+- **Gorilla Mux** — базовая функциональность
 
 ### Когда использовать
 
-- **Gin** - для большинства веб-приложений и **API**
-- **Echo** - когда нужна высокая производительность и богатая функциональность
-- **Fiber** - для максимальной производительности
-- **Chi** - для легковесных приложений
-- **Gorilla Mux** - для сложного роутинга
+- **Gin** — для большинства веб-приложений и **API**
+- **Echo** — когда нужна высокая производительность и богатая функциональность
+- **Fiber** — для максимальной производительности
+- **Chi** — для легковесных приложений
+- **Gorilla Mux** — для сложного роутинга
 
 ### Практические примеры: Полное приложение на **Gin**
 
@@ -1465,22 +1465,22 @@ func NewApplication(config *Config) *Application {
     app := &Application{
         config: config,
     }
-    
+
     if config.Environment == "production" {
         gin.SetMode(gin.ReleaseMode)
     }
-    
+
     app.router = gin.New()
     app.setupMiddleware()
     app.setupRoutes()
-    
+
     return app
 }
 
 func (app *Application) setupMiddleware() {
     // Request ID
     app.router.Use(requestid.New())
-    
+
     // CORS
     app.router.Use(cors.New(cors.Config{
         AllowOrigins:     []string{"https://example.com"},
@@ -1490,7 +1490,7 @@ func (app *Application) setupMiddleware() {
         AllowCredentials: true,
         MaxAge:           12 * time.Hour,
     }))
-    
+
     // Логирование
     app.router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
         return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
@@ -1505,7 +1505,7 @@ func (app *Application) setupMiddleware() {
             param.ErrorMessage,
         )
     }))
-    
+
     // Recovery
     app.router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
         c.JSON(500, gin.H{
@@ -1513,7 +1513,7 @@ func (app *Application) setupMiddleware() {
         })
         c.Abort()
     }))
-    
+
     // Rate limiting
     limiter := rate.NewLimiter(rate.Limit(100), 200)
     app.router.Use(func(c *gin.Context) {
@@ -1531,13 +1531,13 @@ func (app *Application) setupRoutes() {
     {
         api.POST("/auth/login", app.handleLogin)
         api.POST("/auth/register", app.handleRegister)
-        
+
         authenticated := api.Group("")
         authenticated.Use(app.authMiddleware())
         {
             authenticated.GET("/users/me", app.handleGetCurrentUser)
             authenticated.PUT("/users/me", app.handleUpdateCurrentUser)
-            
+
             users := authenticated.Group("/users")
             {
                 users.GET("", app.handleGetUsers)
@@ -1547,7 +1547,7 @@ func (app *Application) setupRoutes() {
             }
         }
     }
-    
+
     // Health check
     app.router.GET("/health", app.handleHealth)
     app.router.GET("/ready", app.handleReady)
@@ -1561,7 +1561,7 @@ func (app *Application) authMiddleware() gin.HandlerFunc {
             c.Abort()
             return
         }
-        
+
         // Валидация JWT токена
         claims, err := validateJWT(token, app.config.JWTSecret)
         if err != nil {
@@ -1569,7 +1569,7 @@ func (app *Application) authMiddleware() gin.HandlerFunc {
             c.Abort()
             return
         }
-        
+
         c.Set("userID", claims.UserID)
         c.Set("userRole", claims.Role)
         c.Next()
@@ -1604,7 +1604,7 @@ func (app *Application) handleCreateUser(c *gin.Context) {
         })
         return
     }
-    
+
     // Проверка существования пользователя
     exists, err := app.userExists(req.Email)
     if err != nil {
@@ -1615,14 +1615,14 @@ func (app *Application) handleCreateUser(c *gin.Context) {
         c.JSON(409, gin.H{"error": "User already exists"})
         return
     }
-    
+
     // Создание пользователя
     user, err := app.createUser(req)
     if err != nil {
         c.JSON(500, gin.H{"error": "Failed to create user"})
         return
     }
-    
+
     c.JSON(201, gin.H{
         "id":    user.ID,
         "email": user.Email,
@@ -1635,13 +1635,13 @@ func (app *Application) handleGetUsers(c *gin.Context) {
     pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
     sortBy := c.DefaultQuery("sort_by", "created_at")
     order := c.DefaultQuery("order", "desc")
-    
+
     users, total, err := app.getUsers(page, pageSize, sortBy, order)
     if err != nil {
         c.JSON(500, gin.H{"error": "Failed to get users"})
         return
     }
-    
+
     c.JSON(200, gin.H{
         "data": users,
         "pagination": gin.H{
@@ -1661,16 +1661,16 @@ func metricsMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         start := time.Now()
         path := c.Request.URL.Path
-        
+
         c.Next()
-        
+
         duration := time.Since(start)
         statusCode := c.Writer.Status()
-        
+
         // Запись метрик
         requestDuration.WithLabelValues(c.Request.Method, path).Observe(duration.Seconds())
         requestTotal.WithLabelValues(c.Request.Method, path, strconv.Itoa(statusCode)).Inc()
-        
+
         if statusCode >= 500 {
             errorTotal.WithLabelValues(c.Request.Method, path).Inc()
         }
@@ -1687,36 +1687,36 @@ func (app *Application) handleFileUpload(c *gin.Context) {
         c.JSON(400, gin.H{"error": "File is required"})
         return
     }
-    
+
     // Валидация размера файла (макс 10MB)
     if file.Size > 10*1024*1024 {
         c.JSON(400, gin.H{"error": "File too large"})
         return
     }
-    
+
     // Валидация типа файла
     allowedTypes := map[string]bool{
         "image/jpeg": true,
         "image/png":  true,
         "image/gif":  true,
     }
-    
+
     contentType := file.Header.Get("Content-Type")
     if !allowedTypes[contentType] {
         c.JSON(400, gin.H{"error": "Invalid file type"})
         return
     }
-    
+
     // Генерация уникального имени файла
     filename := generateFilename(file.Filename)
     filepath := filepath.Join("uploads", filename)
-    
+
     // Сохранение файла
     if err := c.SaveUploadedFile(file, filepath); err != nil {
         c.JSON(500, gin.H{"error": "Failed to save file"})
         return
     }
-    
+
     // Сохранение метаданных в БД
     fileRecord := &File{
         OriginalName: file.Filename,
@@ -1725,13 +1725,13 @@ func (app *Application) handleFileUpload(c *gin.Context) {
         ContentType:  contentType,
         Path:         filepath,
     }
-    
+
     if err := app.saveFile(fileRecord); err != nil {
         os.Remove(filepath)
         c.JSON(500, gin.H{"error": "Failed to save file metadata"})
         return
     }
-    
+
     c.JSON(200, gin.H{
         "id":   fileRecord.ID,
         "url":  "/uploads/" + filename,
@@ -1758,20 +1758,20 @@ func (app *Application) handleWebSocket(c *gin.Context) {
         return
     }
     defer conn.Close()
-    
+
     // Отправка приветственного сообщения
     conn.WriteJSON(gin.H{
         "type":    "welcome",
         "message": "Connected to WebSocket",
     })
-    
+
     // Обработка сообщений
     for {
         var msg map[string]interface{}
         if err := conn.ReadJSON(&msg); err != nil {
             break
         }
-        
+
         // Обработка различных типов сообщений
         switch msg["type"] {
         case "ping":
@@ -1798,13 +1798,13 @@ func (app *Application) setupVersionedRoutes() {
         v1.GET("/users", app.v1GetUsers)
         v1.POST("/users", app.v1CreateUser)
     }
-    
+
     v2 := app.router.Group("/api/v2")
     {
         v2.GET("/users", app.v2GetUsers)
         v2.POST("/users", app.v2CreateUser)
     }
-    
+
     // Поддержка устаревшего API с предупреждением
     deprecated := app.router.Group("/api/v1/deprecated")
     deprecated.Use(deprecationWarning())
@@ -1831,29 +1831,29 @@ func (app *Application) RunWithGracefulShutdown() error {
         Addr:    ":" + app.config.Port,
         Handler: app.router,
     }
-    
+
     // Запуск сервера в горутине
     go func() {
         if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
             log.Fatalf("Server failed to start: %v", err)
         }
     }()
-    
+
     // Ожидание сигнала завершения
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
     <-sigChan
-    
+
     log.Println("Shutting down server...")
-    
+
     // Graceful shutdown
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
-    
+
     if err := server.Shutdown(ctx); err != nil {
         return fmt.Errorf("server forced to shutdown: %w", err)
     }
-    
+
     log.Println("Server exited")
     return nil
 }
@@ -1898,21 +1898,21 @@ func (app *Application) setupSwagger() {
 
 ## Лучшие практики
 
-1. **Используйте middleware** - для общей логики (**логирование, аутентификация**)
-2. **Валидируйте входные данные** - всегда проверяйте данные от клиентов
-3. **Обрабатывайте ошибки** - правильно обрабатывайте ошибки
-4. **Используйте группы роутов** - для организации кода
-5. **Используйте graceful shutdown** - корректно завершайте работу сервера
-6. **Мониторьте производительность** - отслеживайте метрики
-7. **Используйте версионирование API** - для обратной совместимости
-8. **Используйте rate limiting** - для защиты от злоупотреблений
-9. **Используйте HTTPS** - для защиты данных
-10. **Документируйте API** - используйте **Swagger**/**OpenAPI**
-11. **Используйте структурированное логирование** - для лучшего анализа
-12. **Используйте контекст** - для отмены операций
-13. **Кэшируйте ответы** - для улучшения производительности
-14. **Используйте compression** - для уменьшения размера ответов
-15. **Тестируйте API** - пишите **unit** и **integration** тесты
+1. **Используйте middleware** — для общей логики (**логирование, аутентификация**)
+2. **Валидируйте входные данные** — всегда проверяйте данные от клиентов
+3. **Обрабатывайте ошибки** — правильно обрабатывайте ошибки
+4. **Используйте группы роутов** — для организации кода
+5. **Используйте graceful shutdown** — корректно завершайте работу сервера
+6. **Мониторьте производительность** — отслеживайте метрики
+7. **Используйте версионирование API** — для обратной совместимости
+8. **Используйте rate limiting** — для защиты от злоупотреблений
+9. **Используйте HTTPS** — для защиты данных
+10. **Документируйте API** — используйте **Swagger**/**OpenAPI**
+11. **Используйте структурированное логирование** — для лучшего анализа
+12. **Используйте контекст** — для отмены операций
+13. **Кэшируйте ответы** — для улучшения производительности
+14. **Используйте compression** — для уменьшения размера ответов
+15. **Тестируйте API** — пишите **unit** и **integration** тесты
 
 ### Практические примеры: **Middleware** для **rate limiting**
 
@@ -1921,7 +1921,7 @@ import "golang.org/x/time/rate"
 
 func RateLimitMiddleware(rps int) gin.HandlerFunc {
     limiter := rate.NewLimiter(rate.Limit(rps), rps)
-    
+
     return func(c *gin.Context) {
         if !limiter.Allow() {
             c.JSON(http.StatusTooManyRequests, gin.H{
@@ -1945,15 +1945,15 @@ r.Use(RateLimitMiddleware(100)) // 100 запросов в секунду
 func ErrorHandlerMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         c.Next()
-        
+
         if len(c.Errors) > 0 {
             err := c.Errors.Last()
             statusCode := http.StatusInternalServerError
-            
+
             if err.IsType(gin.ErrorTypeBind) {
                 statusCode = http.StatusBadRequest
             }
-            
+
             c.JSON(statusCode, gin.H{
                 "error": err.Error(),
             })
@@ -1980,3 +1980,11 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 - [Gin Documentation](https://gin-gonic.com/docs/)
 - [Echo Documentation](https://echo.labstack.com/docs)
 - [Fiber Documentation](https://docs.gofiber.io/)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

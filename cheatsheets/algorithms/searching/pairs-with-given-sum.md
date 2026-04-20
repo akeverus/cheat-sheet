@@ -92,7 +92,7 @@ int[] input = { 2, 4, 3, 3 };
 public List<int[]> findAllPairs(int[] input, int sum) {
     // Список для хранения найденных пар
     List<int[]> pairs = new ArrayList<>();
-    
+
     // Внешний цикл: перебираем все элементы массива
     for (int i = 0; i < input.length; i++) {
         // Внутренний цикл: перебираем все элементы для сравнения с текущим
@@ -104,7 +104,7 @@ public List<int[]> findAllPairs(int[] input, int sum) {
             }
         }
     }
-    
+
     return pairs;
 }
 ```
@@ -118,7 +118,7 @@ public List<int[]> findAllPairs(int[] input, int sum) {
 public List<int[]> findAllPairsStream(int[] input, int sum) {
     // Список для хранения найденных пар
     List<int[]> pairs = new ArrayList<>();
-    
+
     // Создаём поток индексов от 0 до длины массива
     IntStream.range(0, input.length)
         // Для каждого индекса i создаём вложенный поток индексов j
@@ -128,7 +128,7 @@ public List<int[]> findAllPairsStream(int[] input, int sum) {
             // Для каждого подходящего j добавляем пару в список
             .forEach(j -> pairs.add(new int[]{input[i], input[j]}))
         );
-    
+
     return pairs;
 }
 ```
@@ -157,7 +157,7 @@ public List<int[]> findUniquePairs(int[] input, int sum) {
     // HashMap для отслеживания уже найденных пар
     // Ключ: элемент массива, Значение: его дополнение до sum (или null, если пара уже найдена)
     Map<Integer, Integer> pairsMap = new HashMap<>();
-    
+
     // Проходим по массиву один раз
     for (int i : input) {
         // Если текущий элемент уже есть в карте как ключ
@@ -169,14 +169,14 @@ public List<int[]> findUniquePairs(int[] input, int sum) {
             }
             // Помечаем пару как обработанную (устанавливаем null)
             pairsMap.put(sum - i, null);
-        } 
+        }
         // Если элемента нет в карте и его дополнение тоже не встречалось
         else if (!pairsMap.containsValue(i)) {
             // Сохраняем дополнение элемента до sum
             pairsMap.put(sum - i, i);
         }
     }
-    
+
     return pairs;
 }
 ```
@@ -194,7 +194,7 @@ public List<int[]> findUniquePairsStream(int[] input, int sum) {
     List<int[]> pairs = new ArrayList<>();
     // HashMap для отслеживания уже найденных пар
     Map<Integer, Integer> pairsMap = new HashMap<>();
-    
+
     // Создаём поток индексов и обрабатываем каждый элемент
     IntStream.range(0, input.length).forEach(i -> {
         // Если текущий элемент уже есть в карте как ключ
@@ -206,14 +206,14 @@ public List<int[]> findUniquePairsStream(int[] input, int sum) {
             }
             // Помечаем пару как обработанную
             pairsMap.put(sum - input[i], null);
-        } 
+        }
         // Если элемента нет в карте и его дополнение тоже не встречалось
         else if (!pairsMap.containsValue(input[i])) {
             // Сохраняем дополнение элемента до sum
             pairsMap.put(sum - input[i], input[i]);
         }
     });
-    
+
     return pairs;
 }
 ```
@@ -229,10 +229,10 @@ void givenArray_whenFindUniquePairs_thenReturnUniquePairs() {
     // Исходный массив с дубликатами
     int[] input = { 2, 4, 3, 3 };
     int sum = 6;
-    
+
     // Выполняем поиск уникальных пар
     List<int[]> pairs = findUniquePairs(input, sum);
-    
+
     // Проверяем количество найденных пар (должно быть 2: {2,4} и {3,3})
     assertEquals(2, pairs.size());
     // Проверяем первую пару
@@ -252,7 +252,7 @@ void givenArray_whenFindUniquePairs_thenReturnUniquePairs() {
 // Базовая реализация поиска всех пар с использованием вложенных циклов
 fun findAllPairsK(input: IntArray, sum: Int): List<IntArray> {
     val pairs = mutableListOf<IntArray>()
-    
+
     // Внешний цикл: перебираем все элементы массива
     for (i in input.indices) {
         // Внутренний цикл: перебираем все элементы для сравнения
@@ -264,7 +264,7 @@ fun findAllPairsK(input: IntArray, sum: Int): List<IntArray> {
             }
         }
     }
-    
+
     return pairs
 }
 
@@ -289,7 +289,7 @@ fun findUniquePairsK(input: IntArray, sum: Int): List<IntArray> {
     val pairs = mutableListOf<IntArray>()
     // HashMap для отслеживания уже найденных пар
     val pairsMap = mutableMapOf<Int, Int?>()
-    
+
     // Проходим по массиву один раз
     for (i in input) {
         // Если текущий элемент уже есть в карте как ключ
@@ -301,14 +301,14 @@ fun findUniquePairsK(input: IntArray, sum: Int): List<IntArray> {
             }
             // Помечаем пару как обработанную
             pairsMap[sum - i] = null
-        } 
+        }
         // Если элемента нет в карте и его дополнение тоже не встречалось
         else if (!pairsMap.containsValue(i)) {
             // Сохраняем дополнение элемента до sum
             pairsMap[sum - i] = i
         }
     }
-    
+
     return pairs
 }
 
@@ -316,7 +316,7 @@ fun findUniquePairsK(input: IntArray, sum: Int): List<IntArray> {
 fun findUniquePairsFunctionalK(input: IntArray, sum: Int): List<IntArray> {
     val pairs = mutableListOf<IntArray>()
     val pairsMap = mutableMapOf<Int, Int?>()
-    
+
     // Используем forEach для обработки каждого элемента
     input.forEach { i ->
         when {
@@ -333,7 +333,7 @@ fun findUniquePairsFunctionalK(input: IntArray, sum: Int): List<IntArray> {
             }
         }
     }
-    
+
     return pairs
 }
 ```
@@ -346,7 +346,7 @@ fun findPairsOptimizedK(input: IntArray, sum: Int): List<Pair<Int, Int>> {
     val pairs = mutableListOf<Pair<Int, Int>>()
     // Set для хранения уже просмотренных элементов
     val seen = mutableSetOf<Int>()
-    
+
     // Проходим по массиву один раз
     for (num in input) {
         // Вычисляем дополнение текущего элемента до sum
@@ -359,7 +359,7 @@ fun findPairsOptimizedK(input: IntArray, sum: Int): List<Pair<Int, Int>> {
         // Добавляем текущий элемент в множество просмотренных
         seen.add(num)
     }
-    
+
     // Удаляем дубликаты (на случай, если одна и та же пара была найдена несколько раз)
     return pairs.distinct()
 }
@@ -374,15 +374,15 @@ fun findPairsOptimizedK(input: IntArray, sum: Int): List<Pair<Int, Int>> {
 fun main() {
     val input = intArrayOf(2, 4, 3, 3)
     val sum = 6
-    
+
     // Подход 1: Поиск всех пар
     val allPairs = findAllPairsK(input, sum)
     println("All pairs: ${allPairs.size}") // 4
-    
+
     // Подход 2: Поиск уникальных пар
     val uniquePairs = findUniquePairsK(input, sum)
     println("Unique pairs: ${uniquePairs.size}") // 2
-    
+
     // Оптимизированный подход
     val optimizedPairs = findPairsOptimizedK(input, sum)
     println("Optimized pairs: ${optimizedPairs.size}") // 2
@@ -450,7 +450,7 @@ public List<int[]> findPairsWithHashSet(int[] input, int sum) {
     List<int[]> pairs = new ArrayList<>();
     // Set для хранения уже просмотренных элементов
     Set<Integer> seen = new HashSet<>();
-    
+
     // Проходим по массиву один раз
     for (int num : input) {
         // Вычисляем дополнение текущего элемента до sum
@@ -463,7 +463,7 @@ public List<int[]> findPairsWithHashSet(int[] input, int sum) {
         // Добавляем текущий элемент в множество просмотренных
         seen.add(num);
     }
-    
+
     return pairs;
 }
 ```
@@ -483,12 +483,12 @@ public List<int[]> findPairsWithTwoPointers(int[] input, int sum) {
     List<int[]> pairs = new ArrayList<>();
     // Два указателя: один в начале, другой в конце массива
     int left = 0, right = input.length - 1;
-    
+
     // Продолжаем, пока указатели не встретятся
     while (left < right) {
         // Вычисляем сумму элементов на текущих позициях указателей
         int currentSum = input[left] + input[right];
-        
+
         if (currentSum == sum) {
             // Если сумма равна заданному числу, добавляем пару
             pairs.add(new int[]{input[left], input[right]});
@@ -505,7 +505,7 @@ public List<int[]> findPairsWithTwoPointers(int[] input, int sum) {
             right--;
         }
     }
-    
+
     return pairs;
 }
 ```
@@ -573,21 +573,21 @@ public List<int[]> findPairsWithTwoPointers(int[] input, int sum) {
 public static List<Pair<Product, Product>> findProductPairs(List<Product> products, int targetPrice) {
     List<Pair<Product, Product>> pairs = new ArrayList<>();
     Map<Integer, Product> priceMap = new HashMap<>();
-    
+
     // Проходим по списку товаров
     for (Product product : products) {
         int price = product.getPrice();
         int complement = targetPrice - price;
-        
+
         // Если найдено дополнение, значит есть пара товаров с нужной суммой
         if (priceMap.containsKey(complement)) {
             pairs.add(new Pair<>(product, priceMap.get(complement)));
         }
-        
+
         // Сохраняем товар в карте по его цене
         priceMap.put(price, product);
     }
-    
+
     return pairs;
 }
 ```
@@ -600,11 +600,11 @@ public static List<int[]> findPairsInSortedArray(int[] sortedArray, int sum) {
     List<int[]> pairs = new ArrayList<>();
     int left = 0;
     int right = sortedArray.length - 1;
-    
+
     // Используем два указателя для эффективного поиска
     while (left < right) {
         int currentSum = sortedArray[left] + sortedArray[right];
-        
+
         if (currentSum == sum) {
             // Найдена пара с заданной суммой
             pairs.add(new int[]{sortedArray[left], sortedArray[right]});
@@ -625,7 +625,7 @@ public static List<int[]> findPairsInSortedArray(int[] sortedArray, int sum) {
             right--;
         }
     }
-    
+
     return pairs;
 }
 ```
@@ -637,10 +637,10 @@ public static List<int[]> findPairsInSortedArray(int[] sortedArray, int sum) {
 public static Set<Pair<Integer, Integer>> findUniquePairsSet(int[] input, int sum) {
     Set<Pair<Integer, Integer>> uniquePairs = new HashSet<>();
     Set<Integer> seen = new HashSet<>();
-    
+
     for (int num : input) {
         int complement = sum - num;
-        
+
         // Если дополнение уже было просмотрено, добавляем пару
         if (seen.contains(complement)) {
             // Нормализуем пару (меньший элемент первым) для избежания дубликатов
@@ -648,10 +648,10 @@ public static Set<Pair<Integer, Integer>> findUniquePairsSet(int[] input, int su
             int max = Math.max(num, complement);
             uniquePairs.add(new Pair<>(min, max));
         }
-        
+
         seen.add(num);
     }
-    
+
     return uniquePairs;
 }
 ```

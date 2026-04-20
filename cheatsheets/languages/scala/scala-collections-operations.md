@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 ---
 
-# **Scala Collections** - **Operations**
+# **Scala Collections** — **Operations**
 
 Кратко: полное руководство по операциям над коллекциями в **Scala**: трансформации, фильтрация, агрегация, группировка и другие операции.
 
@@ -29,7 +29,7 @@ related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 
 ## Содержание
 
-- [**Scala Collections** - **Operations**](#scala-collections-operations)
+- [**Scala Collections** — **Operations**](#scala-collections-operations)
 - [Трансформации](#трансформации)
   - [**Map**](#map)
   - [**FlatMap**](#flatmap)
@@ -663,7 +663,7 @@ def processInParallel[A, B](
 )(implicit ec: scala.concurrent.ExecutionContext): scala.concurrent.Future[List[B]] = {
   import scala.concurrent.Future
   import scala.concurrent.ExecutionContext.Implicits.global
-  
+
   val chunks = items.grouped(chunkSize).toList
   val futures = chunks.map(chunk => Future(chunk.map(processor)))
   Future.sequence(futures).map(_.flatten)
@@ -698,7 +698,7 @@ class ProductFilter(products: List[Product]) {
       .filter(p => minRating.forall(p.rating >= _))
       .filter(p => !inStockOnly || p.inStock)
   }
-  
+
   // Сортировка с приоритетами
   def sortByMultipleCriteria: List[Product] = {
     products.sortBy(p => (
@@ -707,7 +707,7 @@ class ProductFilter(products: List[Product]) {
       p.price          // низкая цена первым
     ))
   }
-  
+
   // Поиск похожих продуктов
   def findSimilar(product: Product, limit: Int = 5): List[Product] = {
     products
@@ -737,7 +737,7 @@ val timeSeries = List(
 
 // Скользящее среднее
 def movingAverage(series: List[DataPoint], windowSize: Int): List[Double] = {
-  series.sliding(windowSize).map(window => 
+  series.sliding(windowSize).map(window =>
     window.map(_.value).sum / window.size
   ).toList
 }

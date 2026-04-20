@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-http.md"]
 ---
 
-# Micronaut: Validation - Bean Validation и Custom Validators
-
-
+# Micronaut: Validation — Bean Validation и Custom Validators
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["micronaut-core.md", "micronaut-http.md"]
 
 ## Содержание
 
-- [Micronaut: Validation - Bean Validation и Custom Validators](#micronaut-validation-bean-validation-и-custom-validators)
+- [Micronaut: Validation — Bean Validation и Custom Validators](#micronaut-validation-bean-validation-и-custom-validators)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Validation](#настройка-validation)
@@ -120,23 +118,23 @@ public class User {
     @NotNull
     @Min(1)
     private Long id;
-    
+
     @NotBlank
     @Size(min = 3, max = 50)
     private String name;
-    
+
     @NotBlank
     @Email
     private String email;
-    
+
     @Min(18)
     @Max(100)
     private Integer age;
-    
+
     @Valid
     @NotNull
     private Address address;
-    
+
     // Getters and setters
 }
 ```
@@ -151,14 +149,14 @@ import jakarta.inject.Singleton;
 @Validated
 @Singleton
 public class UserService {
-    
+
     public User createUser(
             @NotBlank String name,
             @Email String email,
             @Min(18) @Max(100) Integer age) {
         return new User(name, email, age);
     }
-    
+
     public void updateUser(
             @NotNull Long id,
             @Valid User user) {
@@ -185,7 +183,7 @@ public @interface ValidEmail {
     String message() default "Invalid email format";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     class Validator implements ConstraintValidator<ValidEmail, String> {
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -213,15 +211,15 @@ public @interface UniqueEmail {
     String message() default "Email already exists";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     @Singleton
     class Validator implements ConstraintValidator<UniqueEmail, String> {
         private final UserRepository userRepository;
-        
+
         public Validator(UserRepository userRepository) {
             this.userRepository = userRepository;
         }
-        
+
         @Override
         public boolean isValid(String email, ConstraintValidatorContext context) {
             if (email == null) {
@@ -244,10 +242,10 @@ public interface UpdateGroup {}
 public class User {
     @NotNull(groups = UpdateGroup.class)
     private Long id;
-    
+
     @NotBlank(groups = {CreateGroup.class, UpdateGroup.class})
     private String name;
-    
+
     @Email(groups = {CreateGroup.class, UpdateGroup.class})
     private String email;
 }
@@ -262,22 +260,22 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private final Validator validator;
-    
+
     public UserService(Validator validator) {
         this.validator = validator;
     }
-    
+
     public User createUser(User user) {
-        Set<ConstraintViolation<User>> violations = 
+        Set<ConstraintViolation<User>> violations =
             validator.validate(user, CreateGroup.class);
         if (!violations.isEmpty()) {
             throw new ValidationException(violations);
         }
         return userRepository.save(user);
     }
-    
+
     public User updateUser(User user) {
-        Set<ConstraintViolation<User>> violations = 
+        Set<ConstraintViolation<User>> violations =
             validator.validate(user, UpdateGroup.class);
         if (!violations.isEmpty()) {
             throw new ValidationException(violations);
@@ -301,7 +299,7 @@ import jakarta.validation.Valid;
 @Validated
 @Controller("/api/users")
 public class UserController {
-    
+
     @Post
     public User createUser(@Valid @Body User user) {
         return userService.createUser(user);
@@ -319,7 +317,7 @@ import jakarta.validation.constraints.*;
 
 @Controller("/api/users")
 public class UserController {
-    
+
     @Get("/search")
     public List<User> searchUsers(
             @QueryValue @NotBlank String name,
@@ -343,18 +341,18 @@ import jakarta.validation.ConstraintViolationException;
 
 @ControllerAdvice
 public class ValidationExceptionHandler {
-    
+
     @Error(exception = ConstraintViolationException.class)
     public HttpResponse<Map<String, Object>> handleValidationException(
             ConstraintViolationException exception) {
         Map<String, Object> errors = new HashMap<>();
-        
+
         for (ConstraintViolation<?> violation : exception.getConstraintViolations()) {
             String propertyPath = violation.getPropertyPath().toString();
             String message = violation.getMessage();
             errors.put(propertyPath, message);
         }
-        
+
         return HttpResponse.badRequest(Map.of("errors", errors));
     }
 }
@@ -425,7 +423,7 @@ public @interface ValidPassword {
     String message() default "Password and confirmation must match";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     class Validator implements ConstraintValidator<ValidPassword, User> {
         @Override
         public boolean isValid(User user, ConstraintValidatorContext context) {
@@ -441,7 +439,7 @@ public @interface ValidPassword {
 public class User {
     private String password;
     private String passwordConfirmation;
-    
+
     // Getters and setters
 }
 ```
@@ -456,10 +454,10 @@ import jakarta.validation.constraints.*;
 public class User {
     @NotBlank(message = "Name cannot be blank")
     private String name;
-    
+
     @Email(message = "Email must be a valid email address")
     private String email;
-    
+
     @Min(value = 18, message = "Age must be at least {value}")
     @Max(value = 100, message = "Age must be at most {value}")
     private Integer age;
@@ -488,11 +486,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ManualValidationService {
     private final Validator validator;
-    
+
     public ManualValidationService(Validator validator) {
         this.validator = validator;
     }
-    
+
     public void validateUser(User user) {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
         if (!violations.isEmpty()) {
@@ -522,7 +520,7 @@ import jakarta.inject.Singleton;
 @Validated
 @Singleton
 public class ReactiveUserService {
-    
+
     public Mono<User> createUser(
             @NotBlank String name,
             @Email String email,
@@ -544,22 +542,22 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 public class CustomValidator implements ConstraintValidator<CustomConstraint, String> {
-    
+
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value == null) {
             return true;
         }
-        
+
         boolean valid = value.length() >= 8;
-        
+
         if (!valid) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate(
                 "Value must be at least 8 characters long")
                 .addConstraintViolation();
         }
-        
+
         return valid;
     }
 }
@@ -579,10 +577,10 @@ public interface OrderedValidation {}
 public class User {
     @NotBlank(groups = Default.class)
     private String name;
-    
+
     @Email(groups = SecondGroup.class)
     private String email;
-    
+
     @Min(value = 18, groups = ThirdGroup.class)
     private Integer age;
 }
@@ -605,15 +603,15 @@ public @interface ValidUser {
     String message() default "Invalid user";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     @Singleton
     class Validator implements ConstraintValidator<ValidUser, User> {
         private final UserRepository userRepository;
-        
+
         public Validator(UserRepository userRepository) {
             this.userRepository = userRepository;
         }
-        
+
         @Override
         public boolean isValid(User user, ConstraintValidatorContext context) {
             if (user == null) {
@@ -639,12 +637,12 @@ import jakarta.validation.Valid;
 @Validated
 @Controller("/api/users")
 public class UserController {
-    
+
     @Post
     public User createUser(@Valid @Body User user) {
         return userService.create(user);
     }
-    
+
     @Post("/bulk")
     public List<User> createUsers(@Valid @Body List<@Valid User> users) {
         return userService.createAll(users);
@@ -663,3 +661,11 @@ public class UserController {
 - [**Jakarta Bean Validation**](https://beanvalidation.org/2.0/)
 - [**Hibernate Validator**](https://hibernate.org/validator/documentation/)
 - [**Validation Best Practices**](https://www.baeldung.com/javax-validation)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

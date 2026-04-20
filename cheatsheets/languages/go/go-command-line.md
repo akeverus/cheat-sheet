@@ -62,9 +62,9 @@ Go предоставляет несколько способов создани
 
 ### Основные подходы
 
-1. **flag package** - стандартный пакет для флагов
-2. **Cobra** - популярная библиотека для **CLI**
-3. **urfave/cli** - простая библиотека для **CLI**
+1. **flag package** — стандартный пакет для флагов
+2. **Cobra** — популярная библиотека для **CLI**
+3. **urfave/cli** — простая библиотека для **CLI**
 
 ## **flag package**
 
@@ -81,10 +81,10 @@ func main() {
     name := flag.String("name", "World", "Name to greet")
     age := flag.Int("age", 0, "Age")
     verbose := flag.Bool("verbose", false, "Verbose output")
-    
+
     // Парсинг флагов
     flag.Parse()
-    
+
     // Использование значений
     fmt.Printf("Hello, %s! Age: %d\n", *name, *age)
     if *verbose {
@@ -101,12 +101,12 @@ import "flag"
 func main() {
     var name string
     var age int
-    
+
     flag.StringVar(&name, "name", "World", "Name to greet")
     flag.IntVar(&age, "age", 0, "Age")
-    
+
     flag.Parse()
-    
+
     fmt.Printf("Hello, %s! Age: %d\n", name, age)
 }
 ```
@@ -140,7 +140,7 @@ func main() {
     var urlValue URLValue
     flag.Var(&urlValue, "url", "URL to process")
     flag.Parse()
-    
+
     fmt.Println("URL:", urlValue.URL)
 }
 ```
@@ -201,7 +201,7 @@ var serveCmd = &cobra.Command{
 func init() {
     rootCmd.AddCommand(versionCmd)
     rootCmd.AddCommand(serveCmd)
-    
+
     serveCmd.Flags().IntP("port", "p", 8080, "Server port")
 }
 ```
@@ -258,7 +258,7 @@ func main() {
             return nil
         },
     }
-    
+
     if err := app.Run(os.Args); err != nil {
         log.Fatal(err)
     }
@@ -290,7 +290,7 @@ func main() {
             },
         },
     }
-    
+
     if err := app.Run(os.Args); err != nil {
         log.Fatal(err)
     }
@@ -313,20 +313,20 @@ func main() {
         port       = flag.Int("port", 8080, "Server port")
         timeout    = flag.Duration("timeout", 30*time.Second, "Request timeout")
     )
-    
+
     flag.Usage = func() {
         fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", os.Args[0])
         fmt.Fprintf(os.Stderr, "Options:\n")
         flag.PrintDefaults()
     }
-    
+
     flag.Parse()
-    
+
     if *verbose {
         fmt.Println("Verbose mode enabled")
     }
-    
-    fmt.Printf("Config: %s, Port: %d, Timeout: %v\n", 
+
+    fmt.Printf("Config: %s, Port: %d, Timeout: %v\n",
         *configFile, *port, *timeout)
 }
 ```
@@ -337,11 +337,11 @@ func main() {
 func validateFlags() error {
     port := flag.Int("port", 8080, "Server port")
     flag.Parse()
-    
+
     if *port < 1 || *port > 65535 {
         return fmt.Errorf("port must be between 1 and 65535")
     }
-    
+
     return nil
 }
 
@@ -382,7 +382,7 @@ var serveCmd = &cobra.Command{
     RunE: func(cmd *cobra.Command, args []string) error {
         port, _ := cmd.Flags().GetInt("port")
         host, _ := cmd.Flags().GetString("host")
-        
+
         fmt.Printf("Starting server on %s:%d\n", host, port)
         // Запуск сервера
         return nil
@@ -396,7 +396,7 @@ var createCmd = &cobra.Command{
     RunE: func(cmd *cobra.Command, args []string) error {
         name := args[0]
         force, _ := cmd.Flags().GetBool("force")
-        
+
         fmt.Printf("Creating resource: %s (force: %v)\n", name, force)
         // Создание ресурса
         return nil
@@ -407,10 +407,10 @@ func init() {
     rootCmd.AddCommand(versionCmd)
     rootCmd.AddCommand(serveCmd)
     rootCmd.AddCommand(createCmd)
-    
+
     serveCmd.Flags().IntP("port", "p", 8080, "Server port")
     serveCmd.Flags().StringP("host", "H", "localhost", "Server host")
-    
+
     createCmd.Flags().BoolP("force", "f", false, "Force creation")
 }
 
@@ -445,7 +445,7 @@ func init() {
     // Глобальные флаги
     rootCmd.PersistentFlags().String("config", "", "Config file")
     rootCmd.PersistentFlags().Bool("verbose", false, "Verbose output")
-    
+
     // Привязка к viper
     viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
 }
@@ -514,7 +514,7 @@ func main() {
             },
         },
     }
-    
+
     if err := app.Run(os.Args); err != nil {
         log.Fatal(err)
     }
@@ -533,22 +533,22 @@ import (
 
 func interactiveCLI() {
     scanner := bufio.NewScanner(os.Stdin)
-    
+
     for {
         fmt.Print("> ")
         if !scanner.Scan() {
             break
         }
-        
+
         line := strings.TrimSpace(scanner.Text())
         if line == "" {
             continue
         }
-        
+
         parts := strings.Fields(line)
         command := parts[0]
         args := parts[1:]
-        
+
         switch command {
         case "exit", "quit":
             return
@@ -574,12 +574,12 @@ import "github.com/schollz/progressbar/v3"
 
 func processWithProgress(items []Item) {
     bar := progressbar.Default(int64(len(items)))
-    
+
     for _, item := range items {
         processItem(item)
         bar.Add(1)
     }
-    
+
     bar.Finish()
 }
 
@@ -591,12 +591,12 @@ func processWithCustomProgress(items []Item) {
         progressbar.OptionShowIts(),
         progressbar.OptionSetTheme(progressbar.Theme{Saucer: "█", SaucerPadding: "░", BarStart: "|", BarEnd: "|"}),
     )
-    
+
     for _, item := range items {
         processItem(item)
         bar.Add(1)
     }
-    
+
     bar.Finish()
 }
 ```
@@ -640,10 +640,10 @@ func coloredOutput() {
     color.Green("Success: operation completed")
     color.Yellow("Warning: check your input")
     color.Blue("Info: processing data")
-    
+
     // Форматированный вывод
     color.New(color.FgCyan, color.Bold).Println("Bold cyan text")
-    
+
     // Кастомные цвета
     customColor := color.New(color.FgMagenta, color.BgWhite)
     customColor.Println("Custom colored text")
@@ -659,11 +659,11 @@ func printTable(data [][]string) {
     t := table.NewWriter()
     t.SetOutputMirror(os.Stdout)
     t.AppendHeader(table.Row{"Name", "Age", "Email"})
-    
+
     for _, row := range data {
         t.AppendRow(table.Row{row[0], row[1], row[2]})
     }
-    
+
     t.Render()
 }
 ```
@@ -679,14 +679,14 @@ type Config struct {
 
 func loadConfigFromCLI() (*Config, error) {
     var config Config
-    
+
     flag.IntVar(&config.Port, "port", 8080, "Server port")
     flag.StringVar(&config.Host, "host", "localhost", "Server host")
     flag.StringVar(&config.Database, "db", "postgres", "Database name")
-    
+
     configFile := flag.String("config", "", "Config file path")
     flag.Parse()
-    
+
     // Загрузка из файла если указан
     if *configFile != "" {
         fileConfig, err := loadConfigFromFile(*configFile)
@@ -696,7 +696,7 @@ func loadConfigFromCLI() (*Config, error) {
         // Мердж конфигурации
         mergeConfig(&config, fileConfig)
     }
-    
+
     return &config, nil
 }
 ```
@@ -708,14 +708,14 @@ import "github.com/schollz/progressbar/v3"
 
 func ProcessWithProgress(items []string) error {
     bar := progressbar.Default(int64(len(items)))
-    
+
     for _, item := range items {
         if err := processItem(item); err != nil {
             return err
         }
         bar.Add(1)
     }
-    
+
     return nil
 }
 
@@ -726,14 +726,14 @@ func ProcessWithCustomProgress(total int64, processor func(int) error) error {
         progressbar.OptionShowCount(),
         progressbar.OptionShowIts(),
     )
-    
+
     for i := 0; i < int(total); i++ {
         if err := processor(i); err != nil {
             return err
         }
         bar.Add(1)
     }
-    
+
     return nil
 }
 ```
@@ -748,7 +748,7 @@ func ColorfulOutput() {
     color.Green("Success: %s", "Operation completed")
     color.Yellow("Warning: %s", "Please check configuration")
     color.Blue("Info: %s", "Processing data")
-    
+
     // Кастомные цвета
     customColor := color.New(color.FgCyan, color.Bold)
     customColor.Println("Custom message")
@@ -780,23 +780,23 @@ func InteractiveCommand() error {
         Options: []string{"create", "read", "update", "delete"},
     }
     survey.AskOne(prompt, &action)
-    
+
     var name string
     namePrompt := &survey.Input{
         Message: "Enter name:",
     }
     survey.AskOne(namePrompt, &name)
-    
+
     var confirm bool
     confirmPrompt := &survey.Confirm{
         Message: "Are you sure?",
     }
     survey.AskOne(confirmPrompt, &confirm)
-    
+
     if !confirm {
         return fmt.Errorf("operation cancelled")
     }
-    
+
     return executeAction(action, name)
 }
 ```
@@ -809,13 +809,13 @@ import "github.com/jedib0t/go-pretty/v6/table"
 func PrintTable(data [][]string, headers []string) {
     t := table.NewWriter()
     t.SetOutputMirror(os.Stdout)
-    
+
     headerRow := table.Row{}
     for _, h := range headers {
         headerRow = append(headerRow, h)
     }
     t.AppendHeader(headerRow)
-    
+
     for _, row := range data {
         tableRow := table.Row{}
         for _, cell := range row {
@@ -823,7 +823,7 @@ func PrintTable(data [][]string, headers []string) {
         }
         t.AppendRow(tableRow)
     }
-    
+
     t.Render()
 }
 
@@ -838,21 +838,21 @@ PrintTable(data, headers)
 
 ## Лучшие практики
 
-1. **Используйте описательные имена** - для команд и флагов
-2. **Предоставляйте help** - для всех команд и флагов
-3. **Валидируйте входные данные** - проверяйте значения флагов
-4. **Используйте конвенции** - короткие и длинные флаги
-5. **Обрабатывайте ошибки** - правильно обрабатывайте ошибки парсинга
-6. **Используйте структурированный вывод** - для машинной обработки
-7. **Добавляйте progress bars** - для длительных операций
-8. **Используйте цветной вывод** - для лучшей читаемости
-9. **Поддерживайте completion** - для удобства использования
-10. **Документируйте команды** - используйте **help** тексты
-11. **Используйте интерактивные команды** - для сложного ввода
-12. **Используйте табличный вывод** - для структурированных данных
-13. **Добавляйте валидацию** - проверяйте входные данные
-14. **Используйте конфигурационные файлы** - для сложных настроек
-15. **Тестируйте команды** - проверяйте работу команд
+1. **Используйте описательные имена** — для команд и флагов
+2. **Предоставляйте help** — для всех команд и флагов
+3. **Валидируйте входные данные** — проверяйте значения флагов
+4. **Используйте конвенции** — короткие и длинные флаги
+5. **Обрабатывайте ошибки** — правильно обрабатывайте ошибки парсинга
+6. **Используйте структурированный вывод** — для машинной обработки
+7. **Добавляйте progress bars** — для длительных операций
+8. **Используйте цветной вывод** — для лучшей читаемости
+9. **Поддерживайте completion** — для удобства использования
+10. **Документируйте команды** — используйте **help** тексты
+11. **Используйте интерактивные команды** — для сложного ввода
+12. **Используйте табличный вывод** — для структурированных данных
+13. **Добавляйте валидацию** — проверяйте входные данные
+14. **Используйте конфигурационные файлы** — для сложных настроек
+15. **Тестируйте команды** — проверяйте работу команд
 
 
 ## Решение проблем
@@ -872,3 +872,11 @@ PrintTable(data, headers)
 - [Go flag Package](https://pkg.go.dev/flag)
 - [Cobra Documentation](https://github.com/spf13/cobra)
 - [urfave/cli](https://github.com/urfave/cli)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-cloud.md"]
 ---
 
-# Quarkus: GraalVM - Native Image и Compilation
-
-
+# Quarkus: GraalVM — Native Image и Compilation
 
 ## Полезные ссылки
 
@@ -163,7 +161,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public class User {
     private String name;
     private String email;
-    
+
     // Reflection будет работать в native image
 }
 ```
@@ -234,7 +232,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public class User {
     private String name;
     private String email;
-    
+
     // Все поля и методы будут доступны через reflection
 }
 ```
@@ -359,7 +357,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public class JsonUser {
     @JsonProperty("name")
     private String name;
-    
+
     @JsonProperty("email")
     private String email;
 }
@@ -376,7 +374,7 @@ import io.quarkus.runtime.annotations.Recorder;
 
 @Recorder
 public class BuildTimeRecorder {
-    
+
     public void initializeAtBuildTime() {
         // Код выполняется на этапе сборки
         System.setProperty("build.time", String.valueOf(System.currentTimeMillis()));
@@ -394,7 +392,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RuntimeInitializer {
-    
+
     @PostConstruct
     void init() {
         // Код выполняется в runtime
@@ -446,7 +444,7 @@ import io.quarkus.test.junit.QuarkusIntegrationTest;
 
 @QuarkusIntegrationTest
 public class NativeUserResourceIT {
-    
+
     @Test
     void testNativeEndpoint() {
         given()
@@ -695,7 +693,7 @@ quarkus.native.additional-build-args=\
 ```java
 @Recorder
 public class BuildTimeRecorder {
-    
+
     @Record(ExecutionTime.STATIC_INIT)
     public void initializeAtBuildTime(RuntimeValue<String> config) {
         // Инициализация на этапе сборки
@@ -711,10 +709,10 @@ public class BuildTimeRecorder {
 ```java
 @ApplicationScoped
 public class ConditionalService {
-    
+
     @BuildTimeProperty(name = "feature.enabled")
     boolean featureEnabled;
-    
+
     public void process() {
         if (featureEnabled) {
             // Код только для native
@@ -815,3 +813,11 @@ quarkus.native.additional-build-args=-H:+ReportExceptionStackTraces
 - [**Native Image Best Practices**](https://www.graalvm.org/latest/reference-manual/native-image/optimization-and-performance/)
 - [**GraalVM Native Image** Configuration](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/)
 - [**GraalVM Native Image** Debugging](https://www.graalvm.org/latest/reference-manual/native-image/debugging/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

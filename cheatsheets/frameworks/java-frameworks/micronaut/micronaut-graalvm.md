@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-cloud.md", "micronaut-performance.md"]
 ---
 
-# Micronaut: GraalVM Native Images - Compilation и Optimization
-
-
+# Micronaut: GraalVM Native Images — Compilation и Optimization
 
 ## Полезные ссылки
 
@@ -68,10 +66,10 @@ related: ["micronaut-cloud.md", "micronaut-performance.md"]
   - [3. Используйте AOT оптимизации](#3-используйте-aot-оптимизации)
 - [✅ Хорошо](#хорошо)
   - [4. Тестируйте Native Images](#4-тестируйте-native-images)
-- [✅ Хорошо - тестируйте native image](#хорошо-тестируйте-native-image)
+- [✅ Хорошо — тестируйте native image](#хорошо-тестируйте-native-image)
   - [5. Мониторьте размер и производительность](#5-мониторьте-размер-и-производительность)
-- [✅ Хорошо - отслеживайте размер](#хорошо-отслеживайте-размер)
-- [✅ Хорошо - профилируйте производительность](#хорошо-профилируйте-производительность)
+- [✅ Хорошо — отслеживайте размер](#хорошо-отслеживайте-размер)
+- [✅ Хорошо — профилируйте производительность](#хорошо-профилируйте-производительность)
 - [AOT (Ahead-of-Time) Оптимизации](#aot-ahead-of-time-оптимизации)
   - [Micronaut AOT Plugin](#micronaut-aot-plugin)
   - [Оптимизация Service Loading](#оптимизация-service-loading)
@@ -333,7 +331,7 @@ import io.micronaut.context.annotation.Factory;
 
 @Factory
 public class JacksonFactory {
-    
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -458,7 +456,7 @@ native-image \
 @Singleton
 public class UserService {
     private final UserRepository repository;
-    
+
     public UserService(UserRepository repository) {
         this.repository = repository;
     }
@@ -865,7 +863,7 @@ import org.junit.jupiter.api.Test;
 
 @MicronautTest
 public class NativeImageTest {
-    
+
     @Test
     void testNativeImage() {
         // Тесты для native image
@@ -885,3 +883,11 @@ public class NativeImageTest {
 - [**GraalVM Native Image Build** Configuration](https://www.graalvm.org/latest/reference-manual/native-image/metadata/AutomaticMetadataCollection/)
 - [**Micronaut** AOT](https://micronaut-projects.github.io/micronaut-aot/latest/guide/)
 - [**GraalVM Performance**](https://www.graalvm.org/latest/reference-manual/native-image/optimization-and-performance/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

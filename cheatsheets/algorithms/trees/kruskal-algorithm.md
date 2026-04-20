@@ -109,25 +109,25 @@ return T
 public class DisjointSetInfo {
     private Integer parentNode;
     private int rank;
-    
+
     DisjointSetInfo(Integer parent) {
         setParentNode(parent);
         setRank(0);
     }
-    
+
     // Геттеры и сеттеры
     public Integer getParentNode() {
         return parentNode;
     }
-    
+
     public void setParentNode(Integer parentNode) {
         this.parentNode = parentNode;
     }
-    
+
     public int getRank() {
         return rank;
     }
-    
+
     public void setRank(int rank) {
         this.rank = rank;
     }
@@ -170,7 +170,7 @@ Integer find(Integer node) {
 Integer pathCompressionFind(Integer node) {
     DisjointSetInfo setInfo = nodes.get(node);
     Integer parent = setInfo.getParentNode();
-    
+
     if (parent.equals(node)) {
         return node;
     } else {
@@ -202,7 +202,7 @@ void unionByRank(int rootU, int rootV) {
     DisjointSetInfo setInfoV = nodes.get(rootV);
     int rankU = setInfoU.getRank();
     int rankV = setInfoV.getRank();
-    
+
     if (rankU < rankV) {
         setInfoU.setParentNode(rootV);
     } else {
@@ -222,11 +222,11 @@ void unionByRank(int rootU, int rootV) {
 boolean detectCycle(Integer u, Integer v) {
     Integer rootU = pathCompressionFind(u);
     Integer rootV = pathCompressionFind(v);
-    
+
     if (rootU.equals(rootV)) {
         return true;
     }
-    
+
     unionByRank(rootU, rootV);
     return false;
 }
@@ -252,31 +252,31 @@ boolean detectCycle(Integer u, Integer v) {
 ValueGraph<Integer, Double> spanningTree(ValueGraph<Integer, Double> graph, boolean minSpanningTree) {
     Set<EndpointPair> edges = graph.edges();
     List<EndpointPair> edgeList = new ArrayList<>(edges);
-    
+
     if (minSpanningTree) {
         edgeList.sort(Comparator.comparing(e -> graph.edgeValue(e).get()));
     } else {
         edgeList.sort(Collections.reverseOrder(Comparator.comparing(e -> graph.edgeValue(e).get())));
     }
-    
+
     int totalNodes = graph.nodes().size();
     CycleDetector cycleDetector = new CycleDetector(totalNodes);
     int edgeCount = 0;
     MutableValueGraph<Integer, Double> spanningTree = ValueGraphBuilder.undirected().build();
-    
+
     for (EndpointPair edge : edgeList) {
         if (cycleDetector.detectCycle(edge.nodeU(), edge.nodeV())) {
             continue;
         }
-        
+
         spanningTree.putEdgeValue(edge.nodeU(), edge.nodeV(), graph.edgeValue(edge).get());
         edgeCount++;
-        
+
         if (edgeCount == totalNodes - 1) {
             break;
         }
     }
-    
+
     return spanningTree;
 }
 ```
@@ -297,13 +297,13 @@ data class DisjointSetInfoK(
 ```kotlin
 class UnionFindK(private val totalNodes: Int) {
     private val nodes = mutableListOf<DisjointSetInfoK>()
-    
+
     init {
         for (i in 0 until totalNodes) {
             nodes.add(DisjointSetInfoK(i))
         }
     }
-    
+
     fun find(node: Int): Int {
         val parent = nodes[node].parentNode
         return if (parent == node) {
@@ -314,13 +314,13 @@ class UnionFindK(private val totalNodes: Int) {
             parentNode
         }
     }
-    
+
     fun unionByRank(rootU: Int, rootV: Int) {
         val setInfoU = nodes[rootU]
         val setInfoV = nodes[rootV]
         val rankU = setInfoU.rank
         val rankV = setInfoV.rank
-        
+
         when {
             rankU < rankV -> setInfoU.parentNode = rootV
             rankU > rankV -> setInfoV.parentNode = rootU
@@ -343,22 +343,22 @@ fun kruskalMSTK(edges: List<EdgeK>, totalNodes: Int): List<EdgeK> {
     val unionFind = UnionFindK(totalNodes)
     val spanningTree = mutableListOf<EdgeK>()
     var edgeCount = 0
-    
+
     for (edge in sortedEdges) {
         val rootU = unionFind.find(edge.u)
         val rootV = unionFind.find(edge.v)
-        
+
         if (rootU != rootV) {
             unionFind.unionByRank(rootU, rootV)
             spanningTree.add(edge)
             edgeCount++
-            
+
             if (edgeCount == totalNodes - 1) {
                 break
             }
         }
     }
-    
+
     return spanningTree
 }
 ```
@@ -378,7 +378,7 @@ fun main() {
         EdgeK(3, 5, 5),
         EdgeK(4, 5, 2)
     )
-    
+
     val mst = kruskalMSTK(edges, 6)
     println("MST edges: ${mst.size}") // 5
 }

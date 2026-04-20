@@ -22,7 +22,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [[linked-list-middle|`linked-list-middle.md`]] — поиск среднего элемента связанного списка (`Linked List`)
-- [`../problems/README.md`](../problems/README.md) — задачи и алгоритмы, обзор разделов
+- [[README]] — задачи и алгоритмы, обзор разделов
 
 ## Содержание
 
@@ -53,7 +53,7 @@ updated: "2026-02-11"
 
 В этом руководстве мы реализуем два алгоритма обращения связанных списков на **Java**.
 
-Связный список - это линейная структура данных, в которой указатель в каждом элементе определяет порядок. Каждый элемент связанного списка содержит поле данных для хранения данных списка и поле указателя для указания на следующий элемент в последовательности. Кроме того, мы можем использовать головной указатель, чтобы указать на начальный элемент связанного списка.
+Связный список — это линейная структура данных, в которой указатель в каждом элементе определяет порядок. Каждый элемент связанного списка содержит поле данных для хранения данных списка и поле указателя для указания на следующий элемент в последовательности. Кроме того, мы можем использовать головной указатель, чтобы указать на начальный элемент связанного списка.
 
 После того, как мы реверсируем связанный список, заголовок будет указывать на последний элемент исходного связанного списка, а указатель каждого элемента будет указывать на предыдущий элемент исходного связанного списка.
 
@@ -68,24 +68,24 @@ updated: "2026-02-11"
 public class ListNode {
     private int data;
     private ListNode next;
-    
+
     public ListNode(int data) {
         this.data = data;
         this.next = null;
     }
-    
+
     public int getData() {
         return data;
     }
-    
+
     public void setData(int data) {
         this.data = data;
     }
-    
+
     public ListNode getNext() {
         return next;
     }
-    
+
     public void setNext(ListNode next) {
         this.next = next;
     }
@@ -103,7 +103,7 @@ public class ListNode {
 public ListNode constructLinkedList() {
     ListNode head = null;
     ListNode tail = null;
-    
+
     for (int i = 1; i <= 5; i++) {
         ListNode node = new ListNode(i);
         if (head == null) {
@@ -113,7 +113,7 @@ public ListNode constructLinkedList() {
         }
         tail = node;
     }
-    
+
     return head;
 }
 ```
@@ -129,14 +129,14 @@ public ListNode reverseList(ListNode head) {
     // Итеративный разворот списка: двигаем указатели previous/current и перенаправляем ссылки next
     ListNode previous = null;
     ListNode current = head;
-    
+
     while (current != null) {
         ListNode nextElement = current.getNext();
         current.setNext(previous);
         previous = current;
         current = nextElement;
     }
-    
+
     return previous;
 }
 ```
@@ -152,17 +152,17 @@ public ListNode reverseList(ListNode head) {
 void givenLinkedList_whenIterativeReverse_thenOutputCorrectResult() {
     ListNode head = constructLinkedList();
     ListNode node = head;
-    
+
     // Проверяем исходный список
     for (int i = 1; i <= 5; i++) {
         assertNotNull(node);
         assertEquals(i, node.getData());
         node = node.getNext();
     }
-    
+
     LinkedListReversal reversal = new LinkedListReversal();
     node = reversal.reverseList(head);
-    
+
     // Проверяем перевернутый список
     for (int i = 5; i >= 1; i--) {
         assertNotNull(node);
@@ -184,15 +184,15 @@ public ListNode reverseListRecursive(ListNode head) {
     if (head == null) {
         return null;
     }
-    
+
     if (head.getNext() == null) {
         return head;
     }
-    
+
     ListNode node = reverseListRecursive(head.getNext());
     head.getNext().setNext(head);
     head.setNext(null);
-    
+
     return node;
 }
 ```
@@ -208,17 +208,17 @@ public ListNode reverseListRecursive(ListNode head) {
 void givenLinkedList_whenRecursiveReverse_thenOutputCorrectResult() {
     ListNode head = constructLinkedList();
     ListNode node = head;
-    
+
     // Проверяем исходный список
     for (int i = 1; i <= 5; i++) {
         assertNotNull(node);
         assertEquals(i, node.getData());
         node = node.getNext();
     }
-    
+
     LinkedListReversal reversal = new LinkedListReversal();
     node = reversal.reverseListRecursive(head);
-    
+
     // Проверяем перевернутый список
     for (int i = 5; i >= 1; i--) {
         assertNotNull(node);
@@ -250,41 +250,41 @@ void givenLinkedList_whenRecursiveReverse_thenOutputCorrectResult() {
 
 ```java
 public class LinkedListReversal {
-    
+
     public ListNode reverseList(ListNode head) {
         ListNode previous = null;
         ListNode current = head;
-        
+
         while (current != null) {
             ListNode nextElement = current.getNext();
             current.setNext(previous);
             previous = current;
             current = nextElement;
         }
-        
+
         return previous;
     }
-    
+
     public ListNode reverseListRecursive(ListNode head) {
         if (head == null) {
             return null;
         }
-        
+
         if (head.getNext() == null) {
             return head;
         }
-        
+
         ListNode node = reverseListRecursive(head.getNext());
         head.getNext().setNext(head);
         head.setNext(null);
-        
+
         return node;
     }
-    
+
     public ListNode constructLinkedList() {
         ListNode head = null;
         ListNode tail = null;
-        
+
         for (int i = 1; i <= 5; i++) {
             ListNode node = new ListNode(i);
             if (head == null) {
@@ -294,10 +294,10 @@ public class LinkedListReversal {
             }
             tail = node;
         }
-        
+
         return head;
     }
-    
+
     public void printList(ListNode head) {
         ListNode current = head;
         while (current != null) {
@@ -306,20 +306,20 @@ public class LinkedListReversal {
         }
         System.out.println("null");
     }
-    
+
     public static void main(String[] args) {
         LinkedListReversal reversal = new LinkedListReversal();
-        
+
         // Создаем список
         ListNode head = reversal.constructLinkedList();
         System.out.println("Исходный список:");
         reversal.printList(head);
-        
+
         // Итеративное обращение
         ListNode reversed = reversal.reverseList(head);
         System.out.println("Перевернутый список (итеративно):");
         reversal.printList(reversed);
-        
+
         // Создаем новый список для рекурсивного метода
         head = reversal.constructLinkedList();
         reversed = reversal.reverseListRecursive(head);
@@ -375,15 +375,15 @@ public ListNode reverseBetween(ListNode head, int left, int right) {
     if (head == null || left == right) {
         return head;
     }
-    
+
     ListNode dummy = new ListNode(0);
     dummy.setNext(head);
     ListNode prev = dummy;
-    
+
     for (int i = 0; i < left - 1; i++) {
         prev = prev.getNext();
     }
-    
+
     ListNode current = prev.getNext();
     for (int i = 0; i < right - left; i++) {
         ListNode next = current.getNext();
@@ -391,7 +391,7 @@ public ListNode reverseBetween(ListNode head, int left, int right) {
         next.setNext(prev.getNext());
         prev.setNext(next);
     }
-    
+
     return dummy.getNext();
 }
 ```
@@ -403,18 +403,18 @@ public ListNode reverseKGroup(ListNode head, int k) {
     if (head == null || k == 1) {
         return head;
     }
-    
+
     ListNode current = head;
     int count = 0;
-    
+
     while (current != null && count < k) {
         current = current.getNext();
         count++;
     }
-    
+
     if (count == k) {
         current = reverseKGroup(current, k);
-        
+
         while (count > 0) {
             ListNode next = head.getNext();
             head.setNext(current);
@@ -424,7 +424,7 @@ public ListNode reverseKGroup(ListNode head, int k) {
         }
         head = current;
     }
-    
+
     return head;
 }
 ```
@@ -459,14 +459,14 @@ class ListNodeK(var data: Int) {
 fun reverseListK(head: ListNodeK?): ListNodeK? {
     var previous: ListNodeK? = null
     var current: ListNodeK? = head
-    
+
     while (current != null) {
         val nextElement = current.next
         current.next = previous
         previous = current
         current = nextElement
     }
-    
+
     return previous
 }
 ```
@@ -478,15 +478,15 @@ fun reverseListRecursiveK(head: ListNodeK?): ListNodeK? {
     if (head == null) {
         return null
     }
-    
+
     if (head.next == null) {
         return head
     }
-    
+
     val node = reverseListRecursiveK(head.next)
     head.next?.next = head
     head.next = null
-    
+
     return node
 }
 ```
@@ -497,7 +497,7 @@ fun reverseListRecursiveK(head: ListNodeK?): ListNodeK? {
 fun constructLinkedListK(): ListNodeK? {
     var head: ListNodeK? = null
     var tail: ListNodeK? = null
-    
+
     for (i in 1..5) {
         val node = ListNodeK(i)
         if (head == null) {
@@ -507,7 +507,7 @@ fun constructLinkedListK(): ListNodeK? {
         }
         tail = node
     }
-    
+
     return head
 }
 
@@ -529,12 +529,12 @@ fun main() {
     var head = constructLinkedListK()
     println("Исходный список:")
     printListK(head)
-    
+
     // Итеративное обращение
     var reversed = reverseListK(head)
     println("Перевернутый список (итеративно):")
     printListK(reversed)
-    
+
     // Создаем новый список для рекурсивного метода
     head = constructLinkedListK()
     reversed = reverseListRecursiveK(head)

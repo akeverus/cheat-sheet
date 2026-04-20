@@ -24,7 +24,6 @@ updated: "2026-02-11"
 | Модули | [Modules](https://www.testcontainers.org/modules/) |
 | См. также | [JUnit](../../unit-testing/junit/junit.md), [Database Testing](../database-testing/database-testing.md), [WireMock](../wiremock.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) |
 
----
 
 ## Содержание
 
@@ -47,7 +46,6 @@ updated: "2026-02-11"
 - [Рекомендуемый порядок изучения](#рекомендуемый-порядок-изучения)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -68,7 +66,6 @@ updated: "2026-02-11"
 - **Специализированные модули** — преднастроенные контейнеры для PostgreSQL, MySQL, Kafka, Redis с удобными методами (`getJdbcUrl()`, `getHost()`, `getMappedPort()`).
 - **Жизненный цикл** — при **@Container** и **@Testcontainers** JUnit сам управляет стартом и остановкой.
 
----
 
 ## Установка и настройка
 
@@ -112,7 +109,6 @@ dependencies {
 - **Docker** установлен и доступен (`docker info`).
 - В CI — агент с Docker (Docker-in-Docker или внешний Docker socket).
 
----
 
 ## Базовое использование
 
@@ -152,7 +148,6 @@ container.stop();
 - **getMappedPort(внутреннийПорт)** — внешний порт на хосте.
 - Строка JDBC для PostgreSQL: `"jdbc:postgresql://" + container.getHost() + ":" + container.getMappedPort(5432) + "/test"`.
 
----
 
 ## Модули для БД
 
@@ -193,7 +188,6 @@ class PostgresIntegrationTest {
 
 Официального модуля для Redis может не быть — **GenericContainer** с образом **redis** достаточно.
 
----
 
 ## Модули для очередей и брокеров
 
@@ -215,7 +209,6 @@ static final KafkaContainer kafka = new KafkaContainer(
 // rabbit.getAmqpUrl()
 ```
 
----
 
 ## Docker Compose
 
@@ -233,7 +226,6 @@ static final KafkaContainer kafka = new KafkaContainer(
 
 **withExposedService** делает порт доступным; порт получают через **getServicePort**.
 
----
 
 ## Сеть, порты, тома и ожидание готовности
 
@@ -259,7 +251,6 @@ static final KafkaContainer kafka = new KafkaContainer(
 - Специализированные модули (PostgreSQL, Kafka и т.д.) часто уже содержат стратегию ожидания.
 - При необходимости: **withStartupTimeout(Duration.ofMinutes(5))**.
 
----
 
 ## Переиспользование контейнеров
 
@@ -267,7 +258,6 @@ static final KafkaContainer kafka = new KafkaContainer(
 - **Singleton** на несколько тест-классов — вынести контейнер в базовый класс с **static** полем и **start()** в **@BeforeAll**.
 - Переиспользование между запусками (reuse) — через переменные окружения и настройки Testcontainers; использовать осторожно, в CI чаще один контейнер на класс.
 
----
 
 ## Интеграция с JUnit 5
 
@@ -275,7 +265,6 @@ static final KafkaContainer kafka = new KafkaContainer(
 - **@Container** на поле типа **GenericContainer** (или специализированного) — контейнер стартует перед тестами и останавливается после.
 - Поле **static** — один контейнер на класс; не **static** — контейнер на каждый тест (медленнее).
 
----
 
 ## Spring Boot и Testcontainers
 
@@ -311,7 +300,6 @@ class MyApplicationIntegrationTest {
 
 Схему можно поднимать теми же миграциями (Flyway/Liquibase), что и в production — Spring подхватит URL из **@DynamicPropertySource**.
 
----
 
 ## CI/CD
 
@@ -319,7 +307,6 @@ class MyApplicationIntegrationTest {
 - При необходимости: **DOCKER_HOST**, **TESTCONTAINERS_*** для ryuk, reuse и т.д.
 - Тяжёлые образы (Kafka, Elasticsearch) могут требовать больше памяти — увеличьте лимиты для тестовых job’ов.
 
----
 
 ## Лучшие практики
 
@@ -330,7 +317,6 @@ class MyApplicationIntegrationTest {
 5. В тестах не хранить чувствительные данные продакшена.
 6. В CI при отсутствии явного reuse не полагаться на переиспользование контейнеров между job’ами.
 
----
 
 ## Решение проблем
 
@@ -362,7 +348,6 @@ class MyApplicationIntegrationTest {
 - **Podman?** — Экспериментальная поддержка через переменные окружения (проверить актуальную документацию).
 - **Дублирование конфигурации в нескольких классах?** — Базовый класс с `@Testcontainers` и `static @Container`.
 
----
 
 ## Глоссарий
 
@@ -376,7 +361,6 @@ class MyApplicationIntegrationTest {
 | **WaitStrategy** | Стратегия ожидания готовности (порт, HTTP, лог) |
 | **BindMode** | Режим монтирования тома (READ_ONLY, READ_WRITE) |
 
----
 
 ## Итоговые таблицы
 
@@ -420,7 +404,6 @@ class MyApplicationIntegrationTest {
 | Инициализация схемы | **withInitScript** или Flyway/Liquibase в приложении |
 | Ускорение в CI | Один контейнер на класс, образы с фиксированными тегами |
 
----
 
 ## Рекомендуемый порядок изучения
 
@@ -433,7 +416,6 @@ class MyApplicationIntegrationTest {
 7. Сеть (**withNetwork**, **withNetworkAliases**), **dependsOn** — связанные контейнеры.
 8. Переиспользование, CI/CD, отладка (таблица выше).
 
----
 
 ## Заключение
 

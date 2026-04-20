@@ -99,7 +99,7 @@ related: ["databases/postgres-queries.md", "databases/postgres-performance-tunin
 
 ## Введение в **Foreign Data Wrappers**
 
-**Foreign Data Wrappers** (**FDW**) - это механизм **PostgreSQL** для доступа к данным, хранящимся во внешних источниках, как если бы они были обычными таблицами **PostgreSQL**.
+**Foreign Data Wrappers** (**FDW**) — это механизм **PostgreSQL** для доступа к данным, хранящимся во внешних источниках, как если бы они были обычными таблицами **PostgreSQL**.
 
 ### Преимущества **FDW**
 
@@ -108,7 +108,6 @@ related: ["databases/postgres-queries.md", "databases/postgres-performance-tunin
 - **Гибкость**: Поддержка различных источников данных
 - **Расширяемость**: Возможность создания собственных **FDW**
 
----
 
 ## Установка и настройка **FDW**
 
@@ -128,7 +127,6 @@ CREATE EXTENSION file_fdw;
 2. **User Mapping**: Сопоставление пользователей
 3. **Foreign Table**: Таблица, представляющая внешние данные
 
----
 
 ## **postgres_fdw**
 
@@ -184,7 +182,7 @@ OPTIONS (
 SELECT * FROM foreign_users WHERE id = 1;
 
 -- JOIN с локальными таблицами
-SELECT 
+SELECT
     l.id AS local_id,
     f.name AS foreign_name
 FROM local_table l
@@ -218,7 +216,6 @@ ALTER FOREIGN TABLE foreign_users
 OPTIONS (ADD fetch_size '100');
 ```
 
----
 
 ## **file_fdw**
 
@@ -277,7 +274,6 @@ SERVER file_server
 OPTIONS (format 'text', delimiter E'\t');
 ```
 
----
 
 ## Другие популярные **FDW**
 
@@ -371,7 +367,6 @@ OPTIONS (
 );
 ```
 
----
 
 ## Создание собственного **FDW**
 
@@ -399,7 +394,7 @@ Datum my_fdw_validator(PG_FUNCTION_ARGS);
 Datum my_fdw_handler(PG_FUNCTION_ARGS)
 {
     FdwRoutine *fdwroutine = makeNode(FdwRoutine);
-    
+
     fdwroutine->GetForeignRelSize = my_get_foreign_rel_size;
     fdwroutine->GetForeignPaths = my_get_foreign_paths;
     fdwroutine->GetForeignPlan = my_get_foreign_plan;
@@ -407,7 +402,7 @@ Datum my_fdw_handler(PG_FUNCTION_ARGS)
     fdwroutine->IterateForeignScan = my_iterate_foreign_scan;
     fdwroutine->ReScanForeignScan = my_rescan_foreign_scan;
     fdwroutine->EndForeignScan = my_end_foreign_scan;
-    
+
     PG_RETURN_POINTER(fdwroutine);
 }
 
@@ -445,7 +440,6 @@ HANDLER my_fdw_handler
 VALIDATOR my_fdw_validator;
 ```
 
----
 
 ## Лучшие практики
 
@@ -463,7 +457,6 @@ VALIDATOR my_fdw_validator;
 3. **Шифруйте соединения** с внешними серверами
 4. **Валидируйте опции** в **custom FDW**
 
----
 
 ## Решение проблем
 
@@ -543,7 +536,7 @@ SELECT * FROM foreign_users WHERE id > 1000;
 ```sql
 -- JOIN с pushdown
 EXPLAIN (VERBOSE, BUFFERS)
-SELECT 
+SELECT
     l.id,
     l.name,
     f.email
@@ -559,7 +552,7 @@ CREATE INDEX idx_foreign_users_id ON foreign_users(id);
 
 ```sql
 -- Проверить статистику foreign tables
-SELECT 
+SELECT
     schemaname,
     tablename,
     n_tup_ins AS inserts,
@@ -572,7 +565,7 @@ WHERE schemaname = 'public'
 AND tablename LIKE 'foreign_%';
 
 -- Проверить размер foreign tables
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
@@ -597,7 +590,7 @@ OPTIONS (
 );
 
 -- Парсинг JSON
-SELECT 
+SELECT
     data->>'id' AS id,
     data->>'name' AS name,
     data->>'email' AS email
@@ -621,7 +614,7 @@ OPTIONS (
 );
 
 -- Использовать XML функции
-SELECT 
+SELECT
     id,
     name,
     email,
@@ -676,7 +669,7 @@ BEGIN
         )',
         table_name, file_path, format_type
     );
-    
+
     EXECUTE sql_text;
 END;
 $$ LANGUAGE plpgsql;
@@ -742,7 +735,7 @@ OPTIONS (
 );
 
 -- Использовать
-SELECT 
+SELECT
     date_trunc('hour', timestamp) AS hour,
     AVG(value) AS avg_value
 FROM clickhouse_data
@@ -752,7 +745,7 @@ GROUP BY hour;
 
 ### **multicorn_fdw**
 
-**Multicorn** - это **FDW framework** для создания **FDW** на **Python**.
+**Multicorn** — это **FDW framework** для создания **FDW** на **Python**.
 
 ```java
 // PostgreSQL Python example replaced with Java Spring — использование FDW из Java приложения
@@ -763,7 +756,7 @@ public class FDWExample {
         `String url` = "jdbc:postgresql://localhost/mydb";
         `String user` = "postgres";
         `String password` = "password";
-        
+
         try (`Connection conn` = `DriverManager`.`getConnection`(url, user, password)) {
             // Создать foreign server
             try (`Statement stmt` = conn.`createStatement`()) {
@@ -777,7 +770,7 @@ public class FDWExample {
                     )
                 """);
             }
-            
+
             // Использовать foreign table
             try (`PreparedStatement` pstmt = conn.`prepareStatement`(
                     "`SELECT` * `FROM java_data WHERE` id = ?")) {
@@ -802,14 +795,14 @@ public class FDWExample {
 ```sql
 -- Создать представление для отчетности из нескольких БД
 `CREATE VIEW cross_database_report AS`
-`SELECT` 
+`SELECT`
     'orders' `AS` source,
     `COUNT`(*) `AS record_count`,
     `SUM`(amount) `AS total_amount`
 `FROM foreign_orders`
 `WHERE created_at` > `NOW`() - `INTERVAL` '1 month'
 `UNION ALL`
-`SELECT` 
+`SELECT`
     'users' `AS` source,
     `COUNT`(*) `AS record_count`,
     `NULL AS total_amount`
@@ -834,15 +827,15 @@ public class FDWExample {
         `FROM old_schema`.users
         `ORDER BY` id
         `LIMIT batch_size OFFSET offset_val`;
-        
+
         `GET DIAGNOSTICS row_count` = ROW_COUNT;
         `EXIT WHEN row_count` = 0;
-        
+
         -- Логировать прогресс
         `RAISE NOTICE` '`Migrated` % rows', `offset_val` + `row_count`;
-        
+
         `offset_val` := `offset_val` + `batch_size`;
-        
+
         -- Небольшая пауза для снижения нагрузки
         `PERFORM pg_sleep`(`0.1`);
     `END LOOP`;
@@ -891,7 +884,7 @@ public class FDWExample {
 ```sql
 -- Тест производительности `JOIN`
 \timing on
-`SELECT` 
+`SELECT`
     `l.id`,
     `l.name`,
     `f.email`
@@ -906,7 +899,7 @@ public class FDWExample {
 ```sql
 -- Тест агрегации
 \timing on
-`SELECT` 
+`SELECT`
     `DATE`(`created_at`) `AS` date,
     `COUNT`(*) `AS` count,
     `AVG`(amount) `AS avg_amount`
@@ -946,7 +939,7 @@ public class FDWExample {
         )',
         `server_name`, `host_val`, `port_val`, `db_val`
     );
-    
+
     `EXECUTE sql_text`;
 `END`;
 $$ `LANGUAGE` plpgsql;
@@ -964,7 +957,7 @@ $$ `LANGUAGE` plpgsql;
     -- Читать конфигурацию из файла
     -- Парсить и возвращать настройки
     `RETURN QUERY`
-    `SELECT` 
+    `SELECT`
         'server1'::`TEXT`,
         'host1'::`TEXT`,
         `5432::INTEGER`,
@@ -994,7 +987,7 @@ $$ `LANGUAGE` plpgsql;
     `EXCEPTION`
         `WHEN OTHERS THEN`
             -- Логировать ошибку
-            `RAISE WARNING` '`Error querying foreign server` %: %', 
+            `RAISE WARNING` '`Error querying foreign server` %: %',
                 `server_name`, `SQLERRM`;
             `RETURN`;
     `END`;
@@ -1049,7 +1042,7 @@ $$ `LANGUAGE` plpgsql;
 ) `AS` $$
 `BEGIN`
     `RETURN QUERY`
-    `SELECT` 
+    `SELECT`
         `s.srvname::TEXT`,
         `fdw.fdwname::TEXT`,
         `COUNT`(`ft.ftrelid`)::`INTEGER`,
@@ -1073,7 +1066,7 @@ $$ `LANGUAGE` plpgsql;
     `table_rec RECORD`;
 `BEGIN`
     `FOR table_rec IN`
-        `SELECT` 
+        `SELECT`
             `n.nspname AS` schema,
             `c.relname AS` table
         `FROM pg_foreign_table` ft
@@ -1082,16 +1075,16 @@ $$ `LANGUAGE` plpgsql;
     `LOOP`
         -- Обновить статистику
         `EXECUTE` format('`ANALYZE` %I.%I', `table_rec`.schema, `table_rec`.table);
-        
+
         -- Логировать
-        `RAISE NOTICE` '`Maintained foreign table`: %.%', 
+        `RAISE NOTICE` '`Maintained foreign table`: %.%',
             `table_rec`.schema, `table_rec`.table;
     `END LOOP`;
 `END`;
 $$ `LANGUAGE` plpgsql;
 
 -- Запланировать через `pg_cron`
-`SELECT cron.schedule`('`maintain-fdw`', '0 2 * * *', 
+`SELECT cron.schedule`('`maintain-fdw`', '0 2 * * *',
     '`SELECT maintain_foreign_tables`();');
 ```
 
@@ -1124,11 +1117,11 @@ $$ `LANGUAGE` plpgsql;
         `WHERE` id > `last_id`
         `ORDER BY` id
         `LIMIT batch_size`;
-        
+
         `EXIT WHEN NOT FOUND`;
-        
+
         `SELECT MAX`(id) `INTO last_id FROM new_schema`.users;
-        
+
         `PERFORM pg_sleep`(1); -- Пауза между батчами
     `END LOOP`;
 `END` $$;
@@ -1148,7 +1141,7 @@ $$ `LANGUAGE` plpgsql;
     -- Записать в новую БД
     `INSERT INTO new_schema`.users (id, name, email)
     `VALUES` (`p_id`, `p_name`, `p_email`);
-    
+
     -- Записать в старую БД через `FDW`
     `INSERT INTO old_schema`.users (id, name, email)
     `VALUES` (`p_id`, `p_name`, `p_email`);
@@ -1182,12 +1175,8 @@ $$ `LANGUAGE` plpgsql;
 - [ ] Тестировать производительность
 - [ ] Документировать изменения
 
----
 
 - [PostgreSQL Foreign Data Wrappers](https://www.postgresql.org/docs/current/fdwhandler.html)
 - [postgres_fdw Documentation](https://www.postgresql.org/docs/current/postgres-fdw.html)
 - [file_fdw Documentation](https://www.postgresql.org/docs/current/file-fdw.html)
-
----
-
 

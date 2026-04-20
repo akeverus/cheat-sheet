@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Shapeless в Scala
 
-Краткое руководство по **Shapeless** - библиотека для **generic** программирования и метапрограммирования в **Scala**.
+Краткое руководство по **Shapeless** — библиотека для **generic** программирования и метапрограммирования в **Scala**.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -79,13 +79,13 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Shapeless** - это библиотека для **generic** программирования в **Scala**, которая позволяет работать с типами на уровне компиляции. Она предоставляет инструменты для автоматической деривации типов, преобразования между типами, работы с **HList** и создания **type-level** вычислений.
+**Shapeless** — это библиотека для **generic** программирования в **Scala**, которая позволяет работать с типами на уровне компиляции. Она предоставляет инструменты для автоматической деривации типов, преобразования между типами, работы с **HList** и создания **type-level** вычислений.
 
 **Shapeless** особенно полезен для автоматической генерации кода, преобразования между типами, создания **type-safe API** и работы с гетерогенными структурами данных.
 
 ## **HList** (**Heterogeneous List**)
 
-**HList** - это список с элементами разных типов, известными на этапе компиляции.
+**HList** — это список с элементами разных типов, известными на этапе компиляции.
 
 ### Базовое использование **HList**
 
@@ -110,7 +110,7 @@ val hlist1: String :: Int :: HNil = "hello" :: 42 :: HNil
 val hlist2: Boolean :: Double :: HNil = true :: 3.14 :: HNil
 
 // Объединение HList
-val combined: String :: Int :: Boolean :: Double :: HNil = 
+val combined: String :: Int :: Boolean :: Double :: HNil =
   hlist1 ++ hlist2
 
 // Преобразование HList в tuple
@@ -186,7 +186,7 @@ type FiveMinusTwo = Diff[_5, _2]  // _3
 
 ## **Lens**
 
-**Lens** - это функциональные ссылки на поля структуры данных.
+**Lens** — это функциональные ссылки на поля структуры данных.
 
 ### Использование **Lens**
 
@@ -283,8 +283,8 @@ import shapeless.Generic
 case class User(name: String, age: Int, email: String)
 case class Person(name: String, age: Int, email: String)
 
-def convert[A, B](a: A)(implicit 
-  genA: Generic[A], 
+def convert[A, B](a: A)(implicit
+  genA: Generic[A],
   genB: Generic[B]
 ): B = {
   genB.from(genA.to(a))
@@ -335,9 +335,9 @@ object JsonEncoder {
   implicit val stringEncoder: JsonEncoder[String] = (s: String) => s""""$s""""
   implicit val intEncoder: JsonEncoder[Int] = (i: Int) => i.toString
   implicit val booleanEncoder: JsonEncoder[Boolean] = (b: Boolean) => b.toString
-  
+
   implicit val hnilEncoder: JsonEncoder[HNil] = (_: HNil) => "{}"
-  
+
   implicit def hlistEncoder[K <: Symbol, H, T <: HList](
     implicit
     witness: Witness.Aux[K],
@@ -353,7 +353,7 @@ object JsonEncoder {
       s""""$fieldName": $headJson, $tailJson"""
     }
   }
-  
+
   implicit def genericEncoder[A, Repr <: HList](
     implicit
     gen: LabelledGeneric.Aux[A, Repr],
@@ -446,7 +446,7 @@ import shapeless.syntax.singleton._
 // Records для типобезопасной работы с Map
 type UserRecord = Record.`'name -> String, 'age -> Int, 'email -> String`.T
 
-val user: UserRecord = 
+val user: UserRecord =
   ("name" ->> "Alice") ::
   ("age" ->> 30) ::
   ("email" ->> "alice@example.com") ::
@@ -545,11 +545,11 @@ object Validator {
   implicit val stringValidator: Validator[String] = (s: String) => {
     if (s.isEmpty) List("String cannot be empty") else Nil
   }
-  
+
   implicit val intValidator: Validator[Int] = (i: Int) => {
     if (i < 0) List("Int must be non-negative") else Nil
   }
-  
+
   implicit def hlistValidator[H, T <: HList](
     implicit
     hValidator: Validator[H],
@@ -557,7 +557,7 @@ object Validator {
   ): Validator[H :: T] = { hlist =>
     hValidator.validate(hlist.head) ++ tValidator.validate(hlist.tail)
   }
-  
+
   implicit def genericValidator[A, Repr <: HList](
     implicit
     gen: Generic.Aux[A, Repr],
@@ -590,7 +590,7 @@ class Builder[A, Repr <: HList](
   ): Builder[A, FieldType[K, V] :: Repr] = {
     new Builder[A, FieldType[K, V] :: Repr](field[K](value) :: fields)
   }
-  
+
   def build(implicit gen: Generic.Aux[A, Repr]): A = {
     gen.from(fields.reverse)
   }
@@ -622,7 +622,7 @@ val user = builder[User]
 
 ## Заключение
 
-**Shapeless** - это библиотека для **generic** программирования в **Scala**, которая позволяет работать с типами на уровне компиляции. Понимание **HList**, **Generic**, **Lens**, **type-level** вычислений, автоматической деривации типов, преобразования между типами, копирования с изменениями и их практических применений позволяет создавать типобезопасный, автоматически генерируемый код.
+**Shapeless** — это библиотека для **generic** программирования в **Scala**, которая позволяет работать с типами на уровне компиляции. Понимание **HList**, **Generic**, **Lens**, **type-level** вычислений, автоматической деривации типов, преобразования между типами, копирования с изменениями и их практических применений позволяет создавать типобезопасный, автоматически генерируемый код.
 
 Использование **Shapeless** для автоматической сериализации, преобразования типов, создания **Lens**, **type-level** вычислений, автоматической деривации типов и практических применений критично для создания гибких, типобезопасных библиотек и фреймворков.
 
@@ -834,7 +834,7 @@ import shapeless.syntax.singleton._
 
 type UserRecord = Record.`'name -> String, 'age -> Int, 'email -> String`.T
 
-val user: UserRecord = 
+val user: UserRecord =
   ("name" ->> "Alice") ::
   ("age" ->> 30) ::
   ("email" ->> "alice@example.com") ::
@@ -1013,3 +1013,10 @@ val appended = Append(hlist, true :: HNil)
 - [Shapeless Guide](https://github.com/milessabin/shapeless/wiki/Feature-overview:-shapeless-2.0.0)
 - [Type Astronaut's Guide to Shapeless](https://github.com/underscoreio/shapeless-guide)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

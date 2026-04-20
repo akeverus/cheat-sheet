@@ -13,7 +13,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
-# Go: стандартная библиотека - I/O
+# Go: стандартная библиотека — I/O
 
 ## Полезные ссылки
 
@@ -23,7 +23,7 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [Go: стандартная библиотека - I/O](#go-стандартная-библиотека-io)
+- [Go: стандартная библиотека — I/O](#go-стандартная-библиотека-io)
 - [Введение в I/O](#введение-в-io)
   - [Основные интерфейсы](#основные-интерфейсы)
 - [**io.Reader** и **io.Writer**](#ioreader-и-iowriter)
@@ -85,10 +85,10 @@ updated: "2026-02-06"
 
 ### Основные интерфейсы
 
-1. **io.Reader** - чтение данных из источника
-2. **io.Writer** - запись данных в приемник
-3. **io.Closer** - закрытие ресурсов
-4. **io.ReadWriter** - комбинация **Reader** и **Writer**
+1. **io.Reader** — чтение данных из источника
+2. **io.Writer** — запись данных в приемник
+3. **io.Closer** — закрытие ресурсов
+4. **io.ReadWriter** — комбинация **Reader** и **Writer**
 
 ## **io.Reader** и **io.Writer**
 
@@ -143,7 +143,7 @@ func readAll(r io.Reader) ([]byte, error) {
 func readAllManual(r io.Reader) ([]byte, error) {
     var result []byte
     buf := make([]byte, 4096)
-    
+
     for {
         n, err := r.Read(buf)
         if n > 0 {
@@ -156,7 +156,7 @@ func readAllManual(r io.Reader) ([]byte, error) {
             return nil, err
         }
     }
-    
+
     return result, nil
 }
 ```
@@ -467,7 +467,7 @@ func main() {
     file2, _ := os.Create("file2.txt")
     defer file1.Close()
     defer file2.Close()
-    
+
     writer := io.MultiWriter(file1, file2, os.Stdout)
     writer.Write([]byte("Hello, World!"))
     // Запись в оба файла и stdout
@@ -486,7 +486,7 @@ func readFromMultiple(readers ...io.Reader) io.Reader {
 func main() {
     reader1 := strings.NewReader("Hello, ")
     reader2 := strings.NewReader("World!")
-    
+
     reader := io.MultiReader(reader1, reader2)
     data, _ := io.ReadAll(reader)
     fmt.Println(string(data))  // "Hello, World!"
@@ -501,9 +501,9 @@ import "io"
 func teeReaderExample() {
     reader := strings.NewReader("Hello, World!")
     var buf bytes.Buffer
-    
+
     tee := io.TeeReader(reader, &buf)
-    
+
     data, _ := io.ReadAll(tee)
     fmt.Println(string(data))  // "Hello, World!"
     fmt.Println(buf.String())  // "Hello, World!" (копия)
@@ -518,7 +518,7 @@ import "io"
 func limitReaderExample() {
     reader := strings.NewReader("Hello, World!")
     limited := io.LimitReader(reader, 5)  // Ограничение до 5 байт
-    
+
     data, _ := io.ReadAll(limited)
     fmt.Println(string(data))  // "Hello"
 }
@@ -532,7 +532,7 @@ import "io"
 func sectionReaderExample() {
     file, _ := os.Open("data.txt")
     defer file.Close()
-    
+
     // Чтение секции файла (с байта 10, длиной 20)
     section := io.NewSectionReader(file, 10, 20)
     data, _ := io.ReadAll(section)
@@ -547,13 +547,13 @@ import "io"
 
 func pipeExample() {
     reader, writer := io.Pipe()
-    
+
     // Запись в горутине
     go func() {
         defer writer.Close()
         writer.Write([]byte("Hello, World!"))
     }()
-    
+
     // Чтение
     data, _ := io.ReadAll(reader)
     fmt.Println(string(data))  // "Hello, World!"
@@ -569,13 +569,13 @@ func readConfigFile(filename string) (map[string]interface{}, error) {
         return nil, err
     }
     defer file.Close()
-    
+
     var config map[string]interface{}
     decoder := json.NewDecoder(file)
     if err := decoder.Decode(&config); err != nil {
         return nil, err
     }
-    
+
     return config, nil
 }
 ```
@@ -594,7 +594,7 @@ func NewFileLogger(filename string) (*FileLogger, error) {
     if err != nil {
         return nil, err
     }
-    
+
     return &FileLogger{
         file:   file,
         writer: bufio.NewWriter(file),
@@ -604,7 +604,7 @@ func NewFileLogger(filename string) (*FileLogger, error) {
 func (l *FileLogger) Log(message string) {
     l.mu.Lock()
     defer l.mu.Unlock()
-    
+
     l.writer.WriteString(time.Now().Format("2006-01-02 15:04:05") + " " + message + "\n")
     l.writer.Flush()
 }
@@ -631,16 +631,16 @@ func (l *RotatingLogger) rotate() error {
         l.writer.Flush()
         l.currentFile.Close()
     }
-    
+
     timestamp := time.Now().Format("20060102-150405")
     newFilename := fmt.Sprintf("%s.%s", l.filename, timestamp)
     os.Rename(l.filename, newFilename)
-    
+
     file, err := os.Create(l.filename)
     if err != nil {
         return err
     }
-    
+
     l.currentFile = file
     l.writer = bufio.NewWriter(file)
     return nil
@@ -649,14 +649,14 @@ func (l *RotatingLogger) rotate() error {
 func (l *RotatingLogger) Log(message string) {
     l.mu.Lock()
     defer l.mu.Unlock()
-    
+
     // Проверка размера файла
     if info, err := l.currentFile.Stat(); err == nil {
         if info.Size() > l.maxSize {
             l.rotate()
         }
     }
-    
+
     l.writer.WriteString(message + "\n")
     l.writer.Flush()
 }
@@ -670,33 +670,33 @@ func readFilesParallel(filenames []string) (map[string][]byte, error) {
     var mu sync.Mutex
     var wg sync.WaitGroup
     errCh := make(chan error, len(filenames))
-    
+
     for _, filename := range filenames {
         wg.Add(1)
         go func(fn string) {
             defer wg.Done()
-            
+
             data, err := os.ReadFile(fn)
             if err != nil {
                 errCh <- err
                 return
             }
-            
+
             mu.Lock()
             results[fn] = data
             mu.Unlock()
         }(filename)
     }
-    
+
     wg.Wait()
     close(errCh)
-    
+
     for err := range errCh {
         if err != nil {
             return nil, err
         }
     }
-    
+
     return results, nil
 }
 ```
@@ -707,7 +707,7 @@ func readFilesParallel(filenames []string) (map[string][]byte, error) {
 func writeToMultipleFiles(data []byte, filenames []string) error {
     files := make([]*os.File, len(filenames))
     writers := make([]io.Writer, len(filenames))
-    
+
     // Открытие всех файлов
     for i, filename := range filenames {
         file, err := os.Create(filename)
@@ -721,16 +721,16 @@ func writeToMultipleFiles(data []byte, filenames []string) error {
         files[i] = file
         writers[i] = file
     }
-    
+
     // Запись во все файлы одновременно
     writer := io.MultiWriter(writers...)
     _, err := writer.Write(data)
-    
+
     // Закрытие всех файлов
     for _, file := range files {
         file.Close()
     }
-    
+
     return err
 }
 ```
@@ -744,10 +744,10 @@ func readLargeFileInChunks(filename string, chunkSize int, processor func([]byte
         return err
     }
     defer file.Close()
-    
+
     reader := bufio.NewReader(file)
     buffer := make([]byte, chunkSize)
-    
+
     for {
         n, err := reader.Read(buffer)
         if n > 0 {
@@ -755,7 +755,7 @@ func readLargeFileInChunks(filename string, chunkSize int, processor func([]byte
                 return err
             }
         }
-        
+
         if err == io.EOF {
             break
         }
@@ -763,7 +763,7 @@ func readLargeFileInChunks(filename string, chunkSize int, processor func([]byte
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -777,11 +777,11 @@ func searchInFile(filename string, searchTerm string) ([]int, error) {
         return nil, err
     }
     defer file.Close()
-    
+
     scanner := bufio.NewScanner(file)
     var matches []int
     lineNum := 1
-    
+
     for scanner.Scan() {
         line := scanner.Text()
         if strings.Contains(line, searchTerm) {
@@ -789,7 +789,7 @@ func searchInFile(filename string, searchTerm string) ([]int, error) {
         }
         lineNum++
     }
-    
+
     return matches, scanner.Err()
 }
 ```
@@ -803,10 +803,10 @@ func replaceInFile(filename string, old, new string) error {
     if err != nil {
         return err
     }
-    
+
     // Замена
     content := strings.ReplaceAll(string(data), old, new)
-    
+
     // Запись обратно
     return os.WriteFile(filename, []byte(content), 0644)
 }
@@ -820,12 +820,12 @@ func compareFiles(file1, file2 string) (bool, error) {
     if err != nil {
         return false, err
     }
-    
+
     data2, err := os.ReadFile(file2)
     if err != nil {
         return false, err
     }
-    
+
     return bytes.Equal(data1, data2), nil
 }
 ```
@@ -843,11 +843,11 @@ type ProgressWriter struct {
 func (pw *ProgressWriter) Write(p []byte) (int, error) {
     n, err := pw.writer.Write(p)
     pw.written += int64(n)
-    
+
     if pw.callback != nil {
         pw.callback(pw.written, pw.total)
     }
-    
+
     return n, err
 }
 
@@ -857,24 +857,24 @@ func copyWithProgress(src, dst string, callback func(int64, int64)) error {
         return err
     }
     defer source.Close()
-    
+
     info, err := source.Stat()
     if err != nil {
         return err
     }
-    
+
     destination, err := os.Create(dst)
     if err != nil {
         return err
     }
     defer destination.Close()
-    
+
     pw := &ProgressWriter{
         writer:   destination,
         total:    info.Size(),
         callback: callback,
     }
-    
+
     _, err = io.Copy(pw, source)
     return err
 }
@@ -891,17 +891,17 @@ func workWithTempFile() error {
     }
     defer os.Remove(tmpfile.Name())  // Удаление при выходе
     defer tmpfile.Close()
-    
+
     // Запись данных
     tmpfile.WriteString("Temporary data")
     tmpfile.Sync()
-    
+
     // Чтение данных
     data, err := os.ReadFile(tmpfile.Name())
     if err != nil {
         return err
     }
-    
+
     fmt.Println(string(data))
     return nil
 }
@@ -917,17 +917,17 @@ func workWithTempDir() error {
         return err
     }
     defer os.RemoveAll(tmpdir)  // Удаление при выходе
-    
+
     // Создание файлов в временной директории
     file1 := filepath.Join(tmpdir, "file1.txt")
     file2 := filepath.Join(tmpdir, "file2.txt")
-    
+
     os.WriteFile(file1, []byte("Data 1"), 0644)
     os.WriteFile(file2, []byte("Data 2"), 0644)
-    
+
     // Работа с файлами
     // ...
-    
+
     return nil
 }
 ```
@@ -943,12 +943,12 @@ func watchFile(filename string, callback func()) error {
         return err
     }
     defer watcher.Close()
-    
+
     err = watcher.Add(filename)
     if err != nil {
         return err
     }
-    
+
     for {
         select {
         case event := <-watcher.Events:
@@ -977,7 +977,7 @@ func NewAsyncWriter(writer io.Writer) *AsyncWriter {
         queue:  make(chan []byte, 100),
         done:   make(chan struct{}),
     }
-    
+
     go aw.process()
     return aw
 }
@@ -985,7 +985,7 @@ func NewAsyncWriter(writer io.Writer) *AsyncWriter {
 func (aw *AsyncWriter) Write(data []byte) (int, error) {
     dataCopy := make([]byte, len(data))
     copy(dataCopy, data)
-    
+
     select {
     case aw.queue <- dataCopy:
         return len(data), nil
@@ -1020,9 +1020,9 @@ func StreamLargeFile(filename string, processor func([]byte) error) error {
         return err
     }
     defer file.Close()
-    
+
     buffer := make([]byte, 64*1024) // 64KB буфер
-    
+
     for {
         n, err := file.Read(buffer)
         if n > 0 {
@@ -1037,7 +1037,7 @@ func StreamLargeFile(filename string, processor func([]byte) error) error {
             return err
         }
     }
-    
+
     return nil
 }
 
@@ -1047,16 +1047,16 @@ func StreamLineByLine(filename string, processor func(string) error) error {
         return err
     }
     defer file.Close()
-    
+
     scanner := bufio.NewScanner(file)
     scanner.Buffer(make([]byte, 1024*1024), 10*1024*1024) // Увеличенный буфер
-    
+
     for scanner.Scan() {
         if err := processor(scanner.Text()); err != nil {
             return err
         }
     }
-    
+
     return scanner.Err()
 }
 ```
@@ -1070,10 +1070,10 @@ func ReadFilesParallel(filenames []string) (map[string][]byte, error) {
         data     []byte
         err      error
     }
-    
+
     resultCh := make(chan result, len(filenames))
     var wg sync.WaitGroup
-    
+
     for _, filename := range filenames {
         wg.Add(1)
         go func(name string) {
@@ -1086,12 +1086,12 @@ func ReadFilesParallel(filenames []string) (map[string][]byte, error) {
             }
         }(filename)
     }
-    
+
     go func() {
         wg.Wait()
         close(resultCh)
     }()
-    
+
     results := make(map[string][]byte)
     for res := range resultCh {
         if res.err != nil {
@@ -1099,7 +1099,7 @@ func ReadFilesParallel(filenames []string) (map[string][]byte, error) {
         }
         results[res.filename] = res.data
     }
-    
+
     return results, nil
 }
 ```
@@ -1116,7 +1116,7 @@ func LogToFileAndStdout(filename string) (io.Writer, error) {
     if err != nil {
         return nil, err
     }
-    
+
     return io.MultiWriter(os.Stdout, file), nil
 }
 
@@ -1146,16 +1146,16 @@ func NewProgressReader(reader io.Reader, total int64, callback func(int64, int64
 
 func (pr *ProgressReader) Read(p []byte) (int, error) {
     n, err := pr.reader.Read(p)
-    
+
     pr.mu.Lock()
     pr.read += int64(n)
     current := pr.read
     pr.mu.Unlock()
-    
+
     if pr.callback != nil {
         pr.callback(current, pr.total)
     }
-    
+
     return n, err
 }
 
@@ -1165,17 +1165,17 @@ func ReadFileWithProgress(filename string) error {
         return err
     }
     defer file.Close()
-    
+
     info, err := file.Stat()
     if err != nil {
         return err
     }
-    
+
     progressReader := NewProgressReader(file, info.Size(), func(current, total int64) {
         percent := float64(current) / float64(total) * 100
         fmt.Printf("\rProgress: %.2f%%", percent)
     })
-    
+
     _, err = io.Copy(io.Discard, progressReader)
     fmt.Println()
     return err
@@ -1263,7 +1263,7 @@ func (rlw *RateLimitedWriter) Write(p []byte) (int, error) {
 func ReadWithTimeout(reader io.Reader, timeout time.Duration) ([]byte, error) {
     resultCh := make(chan []byte, 1)
     errCh := make(chan error, 1)
-    
+
     go func() {
         data, err := io.ReadAll(reader)
         if err != nil {
@@ -1272,7 +1272,7 @@ func ReadWithTimeout(reader io.Reader, timeout time.Duration) ([]byte, error) {
         }
         resultCh <- data
     }()
-    
+
     select {
     case data := <-resultCh:
         return data, nil
@@ -1305,18 +1305,18 @@ func (cr *ContextReader) Read(p []byte) (int, error) {
         return 0, cr.ctx.Err()
     default:
     }
-    
+
     type result struct {
         n   int
         err error
     }
-    
+
     resultCh := make(chan result, 1)
     go func() {
         n, err := cr.reader.Read(p)
         resultCh <- result{n: n, err: err}
     }()
-    
+
     select {
     case <-cr.ctx.Done():
         return 0, cr.ctx.Err()
@@ -1346,19 +1346,19 @@ func (lr *LimitedReader) Read(p []byte) (int, error) {
     if lr.read >= lr.limit {
         return 0, io.EOF
     }
-    
+
     remaining := lr.limit - lr.read
     if int64(len(p)) > remaining {
         p = p[:remaining]
     }
-    
+
     n, err := lr.reader.Read(p)
     lr.read += int64(n)
-    
+
     if lr.read >= lr.limit {
         return n, io.EOF
     }
-    
+
     return n, err
 }
 
@@ -1368,7 +1368,7 @@ func ReadFileWithLimit(filename string, maxSize int64) ([]byte, error) {
         return nil, err
     }
     defer file.Close()
-    
+
     limitedReader := NewLimitedReader(file, maxSize)
     return io.ReadAll(limitedReader)
 }
@@ -1395,7 +1395,7 @@ func NewBufferedWriter(writer io.Writer, bufSize int) *BufferedWriter {
 func (bw *BufferedWriter) Write(p []byte) (int, error) {
     bw.mu.Lock()
     defer bw.mu.Unlock()
-    
+
     written := 0
     for len(p) > 0 {
         space := bw.bufSize - len(bw.buffer)
@@ -1405,17 +1405,17 @@ func (bw *BufferedWriter) Write(p []byte) (int, error) {
             }
             space = bw.bufSize
         }
-        
+
         n := space
         if n > len(p) {
             n = len(p)
         }
-        
+
         bw.buffer = append(bw.buffer, p[:n]...)
         p = p[n:]
         written += n
     }
-    
+
     return written, nil
 }
 
@@ -1429,7 +1429,7 @@ func (bw *BufferedWriter) flush() error {
     if len(bw.buffer) == 0 {
         return nil
     }
-    
+
     _, err := bw.writer.Write(bw.buffer)
     bw.buffer = bw.buffer[:0]
     return err
@@ -1442,21 +1442,21 @@ func (bw *BufferedWriter) Close() error {
 
 ## Лучшие практики
 
-1. **Всегда закрывайте файлы** - используйте **defer** для закрытия файлов
-2. **Обрабатывайте ошибки** - всегда проверяйте ошибки при работе с I/O
-3. **Используйте буферизацию** - используйте **bufio** для повышения производительности
-4. **Используйте io.Copy** - для копирования данных между потоками
-5. **Используйте filepath** - для кроссплатформенной работы с путями
-6. **Обрабатывайте EOF** - правильно обрабатывайте конец файла
-7. **Используйте временные файлы** - для промежуточных данных
-8. **Используйте streaming** - для больших файлов
-9. **Используйте параллельное чтение** - для множественных файлов
-10. **Мониторьте производительность** - отслеживайте операции I/O
-11. **Используйте контекст** - для отмены долгих операций
-12. **Используйте rate limiting** - для контроля скорости I/O
-13. **Используйте прогресс** - информируйте пользователя о ходе выполнения
-14. **Ограничивайте размер** - защищайтесь от больших файлов
-15. **Используйте таймауты** - для предотвращения зависаний
+1. **Всегда закрывайте файлы** — используйте **defer** для закрытия файлов
+2. **Обрабатывайте ошибки** — всегда проверяйте ошибки при работе с I/O
+3. **Используйте буферизацию** — используйте **bufio** для повышения производительности
+4. **Используйте io.Copy** — для копирования данных между потоками
+5. **Используйте filepath** — для кроссплатформенной работы с путями
+6. **Обрабатывайте EOF** — правильно обрабатывайте конец файла
+7. **Используйте временные файлы** — для промежуточных данных
+8. **Используйте streaming** — для больших файлов
+9. **Используйте параллельное чтение** — для множественных файлов
+10. **Мониторьте производительность** — отслеживайте операции I/O
+11. **Используйте контекст** — для отмены долгих операций
+12. **Используйте rate limiting** — для контроля скорости I/O
+13. **Используйте прогресс** — информируйте пользователя о ходе выполнения
+14. **Ограничивайте размер** — защищайтесь от больших файлов
+15. **Используйте таймауты** — для предотвращения зависаний
 
 ### Практические примеры: Асинхронное чтение и запись
 
@@ -1498,7 +1498,7 @@ func (aio *AsyncIO) Start(ctx context.Context) error {
             }
         }
     }()
-    
+
     go func() {
         for data := range aio.buffer {
             if _, err := aio.writer.Write(data); err != nil {
@@ -1508,7 +1508,7 @@ func (aio *AsyncIO) Start(ctx context.Context) error {
         }
         close(aio.errCh)
     }()
-    
+
     return <-aio.errCh
 }
 ```
@@ -1518,14 +1518,14 @@ func (aio *AsyncIO) Start(ctx context.Context) error {
 ```go
 func ProcessPipeline(input io.Reader, processors []func([]byte) []byte, output io.Writer) error {
     scanner := bufio.NewScanner(input)
-    
+
     for scanner.Scan() {
         data := scanner.Bytes()
-        
+
         for _, processor := range processors {
             data = processor(data)
         }
-        
+
         if _, err := output.Write(data); err != nil {
             return err
         }
@@ -1533,7 +1533,7 @@ func ProcessPipeline(input io.Reader, processors []func([]byte) []byte, output i
             return err
         }
     }
-    
+
     return scanner.Err()
 }
 ```
@@ -1556,3 +1556,11 @@ func ProcessPipeline(input io.Reader, processors []func([]byte) []byte, output i
 - [Go io Documentation](https://pkg.go.dev/io)
 - [Go os Documentation](https://pkg.go.dev/os)
 - [Go bufio Documentation](https://pkg.go.dev/bufio)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

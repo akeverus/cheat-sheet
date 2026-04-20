@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-data.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: Flyway - Database Migrations
-
-
+# Micronaut: Flyway — Database Migrations
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-data.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: Flyway - Database Migrations](#micronaut-flyway-database-migrations)
+- [Micronaut: Flyway — Database Migrations](#micronaut-flyway-database-migrations)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Flyway](#настройка-flyway)
@@ -131,7 +129,7 @@ import org.flywaydb.core.api.migration.Context;
 import java.sql.Statement;
 
 public class V3__add_columns extends BaseJavaMigration {
-    
+
     @Override
     public void migrate(Context context) throws Exception {
         try (Statement statement = context.getConnection().createStatement()) {
@@ -190,12 +188,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class FlywayCallback implements Callback {
-    
+
     @Override
     public boolean supports(Event event, Context context) {
         return event == Event.AFTER_MIGRATE;
     }
-    
+
     @Override
     public void handle(Event event, Context context) {
         if (event == Event.AFTER_MIGRATE) {
@@ -301,23 +299,20 @@ import jakarta.inject.Singleton;
 @Singleton
 public class FlywayInfoService {
     private final Flyway flyway;
-    
+
     public FlywayInfoService(Flyway flyway) {
         this.flyway = flyway;
     }
-    
+
     public MigrationInfo[] getMigrationInfo() {
         return flyway.info().all();
     }
-    
+
     public MigrationInfo[] getPendingMigrations() {
         return flyway.info().pending();
     }
 }
 ```
-
-
-
 
 ## Заключение
 
@@ -329,3 +324,11 @@ public class FlywayInfoService {
 - [Flyway Documentation](https://flywaydb.org/documentation/)
 - [Flyway **Best Practices**](https://flywaydb.org/documentation/concepts/migrations#best-practices)
 - [Flyway Commands](https://flywaydb.org/documentation/usage/commandline/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

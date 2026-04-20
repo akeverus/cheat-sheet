@@ -48,7 +48,7 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Полный квадрат - это число, которое можно представить как произведение двух равных целых чисел.
+Полный квадрат — это число, которое можно представить как произведение двух равных целых чисел.
 
 Ниже — несколько способов проверки в `Java`; для больших чисел используется тип `long`.
 
@@ -72,7 +72,7 @@ public static boolean isPerfectSquareByUsingSqrt(long n) {
     if (n <= 0) {
         return false;
     }
-    
+
     double squareRoot = Math.sqrt(n);
     long tst = (long)(squareRoot + 0.5);
     return tst * tst == n;
@@ -101,11 +101,11 @@ public static boolean isPerfectSquareSqrt(long n) {
 // Рекурсивный бинарный поиск: mid*mid == n
 public boolean isPerfectSquareByUsingBinarySearch(long low, long high, long number) {
     long check = (low + high) / 2L;
-    
+
     if (high < low) {
         return false;
     }
-    
+
     if (number == check * check) {
         return true;
     } else if (number < check * check) {
@@ -129,14 +129,14 @@ public boolean isPerfectSquareBinarySearchIterative(long number) {
     if (number == 0 || number == 1) {
         return true;
     }
-    
+
     long low = 1;
     long high = number;
-    
+
     while (low <= high) {
         long mid = (low + high) / 2;
         long square = mid * mid;
-        
+
         if (square == number) {
             return true;
         } else if (square < number) {
@@ -145,7 +145,7 @@ public boolean isPerfectSquareBinarySearchIterative(long number) {
             high = mid - 1;
         }
     }
-    
+
     return false;
 }
 ```
@@ -163,12 +163,12 @@ public boolean isPerfectSquareBinarySearchIterative(long number) {
 public class BinarySearchRange {
     private long low;
     private long high;
-    
+
     public BinarySearchRange(long low, long high) {
         this.low = low;
         this.high = high;
     }
-    
+
     // Getters
     public long getLow() { return low; }
     public long getHigh() { return high; }
@@ -180,7 +180,7 @@ private static void initiateOptimizedBinarySearchLookupTable() {
     lookupTable.add(new BinarySearchRange(0, 0));
     lookupTable.add(new BinarySearchRange(1L, 4L));
     lookupTable.add(new BinarySearchRange(3L, 10L));
-    
+
     for (int i = 3; i < 20; i++) {
         lookupTable.add(new BinarySearchRange(
             lookupTable.get(i - 2).getLow() * 10,
@@ -208,12 +208,12 @@ public boolean isPerfectSquareByUsingOptimizedBinarySearch(long number) {
 public static boolean isPerfectSquareByUsingNewtonMethod(long n) {
     long x1 = n;
     long x2 = 1L;
-    
+
     while (x1 > x2) {
         x1 = (x1 + x2) / 2L;
         x2 = n / x1;
     }
-    
+
     return x1 == x2 && n % x1 == 0L;
 }
 ```
@@ -228,12 +228,12 @@ public static boolean isPerfectSquareNewton(long n) {
     if (n == 0 || n == 1) {
         return true;
     }
-    
+
     long x = n;
     while (x * x > n) {
         x = (x + n / x) / 2;
     }
-    
+
     return x * x == n;
 }
 ```
@@ -252,7 +252,7 @@ public static boolean isPerfectSquareWithOptimization(long n) {
     if (n < 0) {
         return false;
     }
-    
+
     switch((int)(n & 0xF)) {
         case 0: case 1: case 4: case 9:
             long tst = (long)Math.sqrt(n);
@@ -270,19 +270,19 @@ public static boolean isPerfectSquareOptimized(long n) {
     if (n < 0) {
         return false;
     }
-    
+
     // Быстрая проверка последней цифры в десятичной системе
     int lastDigit = (int)(n % 10);
-    if (lastDigit != 0 && lastDigit != 1 && lastDigit != 4 && 
+    if (lastDigit != 0 && lastDigit != 1 && lastDigit != 4 &&
         lastDigit != 5 && lastDigit != 6 && lastDigit != 9) {
         return false;
     }
-    
+
     // Проверка в шестнадцатеричной системе
     if ((n & 0xF) > 9) {
         return false;
     }
-    
+
     long sqrt = (long) Math.sqrt(n);
     return sqrt * sqrt == n;
 }
@@ -320,21 +320,21 @@ fun isPerfectSquareBinarySearchIterativeK(number: Long): Boolean {
     if (number == 0L || number == 1L) {
         return true
     }
-    
+
     var low = 1L
     var high = number
-    
+
     while (low <= high) {
         val mid = (low + high) / 2
         val square = mid * mid
-        
+
         when {
             square == number -> return true
             square < number -> low = mid + 1
             else -> high = mid - 1
         }
     }
-    
+
     return false
 }
 ```
@@ -396,11 +396,11 @@ public long findNearestPerfectSquare(long n) {
     if (n < 0) {
         return 0;
     }
-    
+
     long sqrt = (long) Math.sqrt(n);
     long lower = sqrt * sqrt;
     long upper = (sqrt + 1) * (sqrt + 1);
-    
+
     return (n - lower < upper - n) ? lower : upper;
 }
 ```

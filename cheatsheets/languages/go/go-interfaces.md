@@ -17,7 +17,7 @@ updated: "2026-02-06"
 ## Полезные ссылки
 
 - [Go Interfaces](https://go.dev/doc/effective_go#interfaces)
-- [Effective Go - Interfaces](https://go.dev/doc/effective_go#interfaces)
+- [Effective Go — Interfaces](https://go.dev/doc/effective_go#interfaces)
 
 ## Содержание
 
@@ -68,9 +68,9 @@ updated: "2026-02-06"
 
 ### Основные концепции
 
-1. **Неявная реализация** - типы автоматически реализуют интерфейсы
-2. **Декларация методов** - интерфейсы определяют только сигнатуры методов
-3. **Полиморфизм** - один интерфейс может быть реализован разными типами
+1. **Неявная реализация** — типы автоматически реализуют интерфейсы
+2. **Декларация методов** — интерфейсы определяют только сигнатуры методов
+3. **Полиморфизм** — один интерфейс может быть реализован разными типами
 
 ## Определение интерфейсов
 
@@ -172,7 +172,7 @@ func main() {
         Rectangle{Width: 10, Height: 5},
         Circle{Radius: 3},
     }
-    
+
     for _, shape := range shapes {
         fmt.Printf("Area: %.2f\n", shape.Area())
     }
@@ -203,7 +203,7 @@ if ok {
 func processShape(s Shape) {
     // Проверка конкретного типа
     if rect, ok := s.(Rectangle); ok {
-        fmt.Printf("Rectangle: width=%.2f, height=%.2f\n", 
+        fmt.Printf("Rectangle: width=%.2f, height=%.2f\n",
             rect.Width, rect.Height)
     } else if circle, ok := s.(Circle); ok {
         fmt.Printf("Circle: radius=%.2f\n", circle.Radius)
@@ -238,7 +238,7 @@ func processValue(v interface{}) {
 func processShape(s Shape) {
     switch shape := s.(type) {
     case Rectangle:
-        fmt.Printf("Rectangle: width=%.2f, height=%.2f\n", 
+        fmt.Printf("Rectangle: width=%.2f, height=%.2f\n",
             shape.Width, shape.Height)
     case Circle:
         fmt.Printf("Circle: radius=%.2f\n", shape.Radius)
@@ -387,25 +387,25 @@ func NewMemoryCache() *MemoryCache {
 func (c *MemoryCache) Get(key string) (interface{}, bool) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     value, exists := c.data[key]
     if !exists {
         return nil, false
     }
-    
+
     if time.Since(c.times[key]) > 0 {
         delete(c.data, key)
         delete(c.times, key)
         return nil, false
     }
-    
+
     return value, true
 }
 
 func (c *MemoryCache) Set(key string, value interface{}, ttl time.Duration) error {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.data[key] = value
     c.times[key] = time.Now().Add(ttl)
     return nil
@@ -414,7 +414,7 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl time.Duration) erro
 func (c *MemoryCache) Delete(key string) error {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     delete(c.data, key)
     delete(c.times, key)
     return nil
@@ -423,7 +423,7 @@ func (c *MemoryCache) Delete(key string) error {
 func (c *MemoryCache) Clear() error {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.data = make(map[string]interface{})
     c.times = make(map[string]time.Time)
     return nil
@@ -495,15 +495,15 @@ func (v *StringValidator) Validate(value interface{}) error {
     if !ok {
         return fmt.Errorf("value is not a string")
     }
-    
+
     if len(str) < v.MinLength {
         return fmt.Errorf("string is too short (min: %d)", v.MinLength)
     }
-    
+
     if len(str) > v.MaxLength {
         return fmt.Errorf("string is too long (max: %d)", v.MaxLength)
     }
-    
+
     return nil
 }
 
@@ -517,15 +517,15 @@ func (v *NumberValidator) Validate(value interface{}) error {
     if !ok {
         return fmt.Errorf("value is not a number")
     }
-    
+
     if num < v.Min {
         return fmt.Errorf("number is too small (min: %f)", v.Min)
     }
-    
+
     if num > v.Max {
         return fmt.Errorf("number is too large (max: %f)", v.Max)
     }
-    
+
     return nil
 }
 ```
@@ -650,7 +650,7 @@ func NewInMemoryQueue() *InMemoryQueue {
 func (q *InMemoryQueue) Enqueue(item interface{}) error {
     q.mu.Lock()
     defer q.mu.Unlock()
-    
+
     q.items = append(q.items, item)
     return nil
 }
@@ -658,11 +658,11 @@ func (q *InMemoryQueue) Enqueue(item interface{}) error {
 func (q *InMemoryQueue) Dequeue() (interface{}, error) {
     q.mu.Lock()
     defer q.mu.Unlock()
-    
+
     if len(q.items) == 0 {
         return nil, fmt.Errorf("queue is empty")
     }
-    
+
     item := q.items[0]
     q.items = q.items[1:]
     return item, nil
@@ -671,7 +671,7 @@ func (q *InMemoryQueue) Dequeue() (interface{}, error) {
 func (q *InMemoryQueue) Size() int {
     q.mu.Lock()
     defer q.mu.Unlock()
-    
+
     return len(q.items)
 }
 
@@ -703,75 +703,75 @@ func NewMapConfig() *MapConfig {
 func (c *MapConfig) GetString(key string) (string, error) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     value, exists := c.data[key]
     if !exists {
         return "", fmt.Errorf("key %s not found", key)
     }
-    
+
     str, ok := value.(string)
     if !ok {
         return "", fmt.Errorf("value for key %s is not a string", key)
     }
-    
+
     return str, nil
 }
 
 func (c *MapConfig) GetInt(key string) (int, error) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     value, exists := c.data[key]
     if !exists {
         return 0, fmt.Errorf("key %s not found", key)
     }
-    
+
     num, ok := value.(int)
     if !ok {
         return 0, fmt.Errorf("value for key %s is not an int", key)
     }
-    
+
     return num, nil
 }
 
 func (c *MapConfig) GetBool(key string) (bool, error) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     value, exists := c.data[key]
     if !exists {
         return false, fmt.Errorf("key %s not found", key)
     }
-    
+
     b, ok := value.(bool)
     if !ok {
         return false, fmt.Errorf("value for key %s is not a bool", key)
     }
-    
+
     return b, nil
 }
 
 func (c *MapConfig) GetFloat(key string) (float64, error) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     value, exists := c.data[key]
     if !exists {
         return 0, fmt.Errorf("key %s not found", key)
     }
-    
+
     f, ok := value.(float64)
     if !ok {
         return 0, fmt.Errorf("value for key %s is not a float64", key)
     }
-    
+
     return f, nil
 }
 
 func (c *MapConfig) Set(key string, value interface{}) error {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.data[key] = value
     return nil
 }
@@ -833,16 +833,16 @@ func (n *CompositeNotifier) Notify(message string) error {
 
 ## Лучшие практики
 
-1. **Используйте маленькие интерфейсы** - предпочитайте интерфейсы с небольшим количеством методов
-2. **Принимайте интерфейсы, возвращайте структуры** - принимайте интерфейсы в функциях, возвращайте конкретные типы
-3. **Избегайте empty interface** - используйте типизированные интерфейсы когда возможно
-4. **Документируйте интерфейсы** - объясняйте назначение интерфейсов
-5. **Используйте встраивание** - комбинируйте интерфейсы через встраивание
-6. **Используйте интерфейсы для тестирования** - упрощайте мокирование зависимостей
-7. **Избегайте интерфейсов для внутренних типов** - используйте интерфейсы для публичного **API**
-8. **Используйте интерфейсы для абстракции** - скрывайте детали реализации
-9. **Тестируйте реализацию интерфейсов** - проверяйте соответствие интерфейсам
-10. **Используйте интерфейсы для расширяемости** - позволяйте добавлять новые реализации
+1. **Используйте маленькие интерфейсы** — предпочитайте интерфейсы с небольшим количеством методов
+2. **Принимайте интерфейсы, возвращайте структуры** — принимайте интерфейсы в функциях, возвращайте конкретные типы
+3. **Избегайте empty interface** — используйте типизированные интерфейсы когда возможно
+4. **Документируйте интерфейсы** — объясняйте назначение интерфейсов
+5. **Используйте встраивание** — комбинируйте интерфейсы через встраивание
+6. **Используйте интерфейсы для тестирования** — упрощайте мокирование зависимостей
+7. **Избегайте интерфейсов для внутренних типов** — используйте интерфейсы для публичного **API**
+8. **Используйте интерфейсы для абстракции** — скрывайте детали реализации
+9. **Тестируйте реализацию интерфейсов** — проверяйте соответствие интерфейсам
+10. **Используйте интерфейсы для расширяемости** — позволяйте добавлять новые реализации
 
 ### Практические примеры: Интерфейсы для плагинов
 
@@ -884,13 +884,13 @@ func (r *PluginRegistry) ExecuteAll(ctx context.Context, input interface{}) erro
         plugins = append(plugins, plugin)
     }
     r.mu.RUnlock()
-    
+
     for _, plugin := range plugins {
         if _, err := plugin.Execute(ctx, input); err != nil {
             return fmt.Errorf("plugin %s failed: %w", plugin.Name(), err)
         }
     }
-    
+
     return nil
 }
 ```
@@ -991,15 +991,15 @@ func (v *StringValidator) Validate(value interface{}) error {
     if !ok {
         return fmt.Errorf("expected string, got %T", value)
     }
-    
+
     if len(str) < v.MinLength {
         return fmt.Errorf("string too short: minimum %d characters", v.MinLength)
     }
-    
+
     if len(str) > v.MaxLength {
         return fmt.Errorf("string too long: maximum %d characters", v.MaxLength)
     }
-    
+
     return nil
 }
 
@@ -1013,15 +1013,15 @@ func (v *NumberValidator) Validate(value interface{}) error {
     if !ok {
         return fmt.Errorf("expected number, got %T", value)
     }
-    
+
     if num < v.Min {
         return fmt.Errorf("number too small: minimum %f", v.Min)
     }
-    
+
     if num > v.Max {
         return fmt.Errorf("number too large: maximum %f", v.Max)
     }
-    
+
     return nil
 }
 ```
@@ -1051,12 +1051,12 @@ func (a *RedisAdapter) Get(key string) (interface{}, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var value interface{}
     if err := json.Unmarshal(data, &value); err != nil {
         return nil, err
     }
-    
+
     return value, nil
 }
 
@@ -1099,4 +1099,12 @@ func (a *MemoryAdapter) Get(key string) (interface{}, error) {
 ## Дополнительные ресурсы
 
 - [Go Interfaces](https://go.dev/doc/effective_go#interfaces)
-- [Effective Go - Interfaces](https://go.dev/doc/effective_go#interfaces)
+- [Effective Go — Interfaces](https://go.dev/doc/effective_go#interfaces)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

@@ -60,12 +60,12 @@ updated: "2026-02-11"
 
 **Итак, давайте сначала сосредоточимся на временной сложности общих операций на высоком уровне:**
 
-1. **add()** - занимает `O(1)` времени; однако в худшем случае, когда необходимо создать новый массив и скопировать в него все элементы, это `O(n)`
-2. **add(**index**, **element**)** - в среднем выполняется за время `O(n)`
-3. **get()** - всегда является операцией `O(1)` с постоянным временем
-4. **remove()** - работает за линейное время `O(n)`. Мы должны перебрать весь массив, чтобы найти элемент, подходящий для удаления
-5. **indexOf()** - также работает в линейном времени. Он перебирает внутренний массив и проверяет каждый элемент один за другим, поэтому временная сложность этой операции всегда требует `O(n)` времени
-6. **contains()** - реализация основана на **indexOf**(), поэтому она также будет выполняться за время `O(n)`
+1. **add()** — занимает `O(1)` времени; однако в худшем случае, когда необходимо создать новый массив и скопировать в него все элементы, это `O(n)`
+2. **add(**index**, **element**)** — в среднем выполняется за время `O(n)`
+3. **get()** — всегда является операцией `O(1)` с постоянным временем
+4. **remove()** — работает за линейное время `O(n)`. Мы должны перебрать весь массив, чтобы найти элемент, подходящий для удаления
+5. **indexOf()** — также работает в линейном времени. Он перебирает внутренний массив и проверяет каждый элемент один за другим, поэтому временная сложность этой операции всегда требует `O(n)` времени
+6. **contains()** — реализация основана на **indexOf**(), поэтому она также будет выполняться за время `O(n)`
 
 ### Бенчмарк ArrayList
 
@@ -77,14 +77,14 @@ updated: "2026-02-11"
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 10)
 public class ArrayListBenchmark {
-    
+
     @State(Scope.Thread)
     public static class MyState {
         List<Employee> employeeList = new ArrayList<>();
         long iterations = 100000;
         Employee employee = new Employee(100L, "Harry");
         int employeeIndex = -1;
-        
+
         @Setup(Level.Trial)
         public void setUp() {
             for (long i = 0; i < iterations; i++) {
@@ -94,33 +94,33 @@ public class ArrayListBenchmark {
             employeeIndex = employeeList.indexOf(employee);
         }
     }
-    
+
     @Benchmark
     public void testAdd(MyState state) {
         state.employeeList.add(new Employee(state.iterations + 1, "John"));
     }
-    
+
     @Benchmark
     public void testAddAt(MyState state) {
-        state.employeeList.add((int) (state.iterations), 
+        state.employeeList.add((int) (state.iterations),
             new Employee(state.iterations, "John"));
     }
-    
+
     @Benchmark
     public boolean testContains(MyState state) {
         return state.employeeList.contains(state.employee);
     }
-    
+
     @Benchmark
     public int testIndexOf(MyState state) {
         return state.employeeList.indexOf(state.employee);
     }
-    
+
     @Benchmark
     public Employee testGet(MyState state) {
         return state.employeeList.get(state.employeeIndex);
     }
-    
+
     @Benchmark
     public boolean testRemove(MyState state) {
         return state.employeeList.remove(state.employee);
@@ -147,10 +147,10 @@ public class ArrayListBenchmark {
 
 **Вот обзор производительности нотации **Big-O** для **CopyOnWriteArrayList**:**
 
-1. **add()** - зависит от позиции, в которую мы добавляем значение, поэтому сложность составляет `O(n)`
-2. **get()** - это `O(1)` операция с постоянным временем
-3. **remove()** - занимает `O(n)` времени
-4. **contains()** - аналогично, сложность `O(n)`
+1. **add()** — зависит от позиции, в которую мы добавляем значение, поэтому сложность составляет `O(n)`
+2. **get()** — это `O(1)` операция с постоянным временем
+3. **remove()** — занимает `O(n)` времени
+4. **contains()** — аналогично, сложность `O(n)`
 
 Как мы видим, использование этой коллекции очень затратно из-за характеристик производительности метода **add**().
 
@@ -169,16 +169,16 @@ public class ArrayListBenchmark {
 
 ## LinkedList
 
-**LinkedList** - это линейная структура данных, состоящая из узлов, содержащих поле данных и ссылку на другой узел.
+**LinkedList** — это линейная структура данных, состоящая из узлов, содержащих поле данных и ссылку на другой узел.
 
 **Приведем среднюю оценку времени, необходимого для выполнения некоторых основных операций:**
 
-1. **add()** - добавляет элемент в конец списка. Он обновляет только хвост, и, следовательно, его сложность `O(1)` с постоянным временем
-2. **add(**index**, **element**)** - в среднем выполняется за время `O(n)`
-3. **get()** - поиск элемента занимает `O(n)` времени
-4. **remove(**element**)** - чтобы удалить элемент, нам сначала нужно его найти. Эта операция `O(n)`
-5. **remove(**index**)** - чтобы удалить элемент по индексу, нам сначала нужно перейти по ссылкам с самого начала; следовательно, общая сложность равна `O(n)`
-6. **contains()** - также имеет временную сложность `O(n)`
+1. **add()** — добавляет элемент в конец списка. Он обновляет только хвост, и, следовательно, его сложность `O(1)` с постоянным временем
+2. **add(**index**, **element**)** — в среднем выполняется за время `O(n)`
+3. **get()** — поиск элемента занимает `O(n)` времени
+4. **remove(**element**)** — чтобы удалить элемент, нам сначала нужно его найти. Эта операция `O(n)`
+5. **remove(**index**)** — чтобы удалить элемент по индексу, нам сначала нужно перейти по ссылкам с самого начала; следовательно, общая сложность равна `O(n)`
+6. **contains()** — также имеет временную сложность `O(n)`
 
 **Результаты бенчмарка `LinkedList`:**
 
@@ -368,20 +368,20 @@ public class ArrayListBenchmark {
 ```kotlin
 fun arrayListOperationsK() {
     val list = mutableListOf<Int>()
-    
+
     // O(1) - добавление в конец
     list.add(1)
     list.add(2)
-    
+
     // O(1) - получение по индексу
     val element = list[0]
-    
+
     // O(n) - вставка в середину
     list.add(1, 3)
-    
+
     // O(n) - поиск элемента
     val contains = list.contains(2)
-    
+
     // O(n) - удаление элемента
     list.remove(2)
 }
@@ -394,15 +394,15 @@ import java.util.LinkedList
 
 fun linkedListOperationsK() {
     val list = LinkedList<Int>()
-    
+
     // O(1) - добавление в начало/конец
     list.addFirst(1)
     list.addLast(2)
-    
+
     // O(1) - получение первого/последнего
     val first = list.first
     val last = list.last
-    
+
     // O(1) - удаление первого/последнего
     list.removeFirst()
     list.removeLast()
@@ -416,17 +416,17 @@ fun linkedListOperationsK() {
 ```kotlin
 fun hashMapOperationsK() {
     val map = hashMapOf<String, Int>()
-    
+
     // O(1) - вставка
     map["key1"] = 1
     map["key2"] = 2
-    
+
     // O(1) - получение
     val value = map["key1"]
-    
+
     // O(1) - удаление
     map.remove("key1")
-    
+
     // O(1) - проверка наличия ключа
     val contains = map.containsKey("key2")
 }
@@ -439,14 +439,14 @@ import java.util.TreeMap
 
 fun treeMapOperationsK() {
     val map = TreeMap<String, Int>()
-    
+
     // O(log n) - вставка
     map["key1"] = 1
     map["key2"] = 2
-    
+
     // O(log n) - получение
     val value = map["key1"]
-    
+
     // O(log n) - удаление
     map.remove("key1")
 }
@@ -459,14 +459,14 @@ fun treeMapOperationsK() {
 ```kotlin
 fun hashSetOperationsK() {
     val set = hashSetOf<Int>()
-    
+
     // O(1) - добавление
     set.add(1)
     set.add(2)
-    
+
     // O(1) - проверка наличия
     val contains = set.contains(1)
-    
+
     // O(1) - удаление
     set.remove(1)
 }
@@ -479,14 +479,14 @@ import java.util.TreeSet
 
 fun treeSetOperationsK() {
     val set = TreeSet<Int>()
-    
+
     // O(log n) - добавление
     set.add(1)
     set.add(2)
-    
+
     // O(log n) - проверка наличия
     val contains = set.contains(1)
-    
+
     // O(log n) - удаление
     set.remove(1)
 }

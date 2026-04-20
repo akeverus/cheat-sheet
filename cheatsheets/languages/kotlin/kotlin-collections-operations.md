@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Collections Overview](https://kotlinlang.org/docs/collections-overview.html)
 - [Kotlin Collection Operations](https://kotlinlang.org/docs/collection-operations.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
@@ -126,7 +126,7 @@ val strings = list.map { it.toString() }       // ["1", "2", "3", "4", "5"]
 // С фильтрацией **null**
 **val nullable** = **listOf(**1, `null`, 2, `null`, 3**)
 **val mapped** = **nullable.mapNotNull** { it?.**let** { it * 2 } }  // [2, 4, 6]
-```
+```text
 
 ### FlatMap
 
@@ -135,11 +135,11 @@ val strings = list.map { it.toString() }       // ["1", "2", "3", "4", "5"]
 ```kotlin
 val list = `listOf`(1, 2, 3)
 
-// `FlatMap` - преобразует и "разворачивает"
-val `flatMapped` = list.`flatMap` { 
-    `listOf`(it, it * 2) 
+// `FlatMap` - преобразует и «разворачивает»
+val `flatMapped` = list.`flatMap` {
+    `listOf`(it, it * 2)
 }                                               // [1, 2, 2, 4, 3, 6]
-```
+```text
 
 В отличие от `map`, который создает коллекцию коллекций, `flatMap` создает одну плоскую коллекцию. Это эквивалентно вызову `map`, а затем `flatten`. `flatMap` особенно полезен при работе с вложенными структурами данных или когда нужно преобразовать один элемент в несколько.
 
@@ -719,7 +719,7 @@ val result = list.asSequence()
 ```kotlin
 class CachedOperation<T, R>(private val operation: (T) -> R) {
     private val cache = mutableMapOf<T, R>()
-    
+
     fun execute(input: T): R {
         return cache.getOrPut(input) {
             operation(input)
@@ -859,7 +859,7 @@ val copyOnWriteList = CopyOnWriteArrayList<Int>()
 // Параллельная обработка с потокобезопасными коллекциями
 fun processInParallel(items: List<Item>) {
     val results = ConcurrentHashMap<Int, List<Item>>()
-    
+
     items.parallelStream().forEach { item ->
         val key = item.category
         results.compute(key) { _, value ->
@@ -872,19 +872,19 @@ fun processInParallel(items: List<Item>) {
 class ThreadSafeCollection<T> {
     private val items = mutableListOf<T>()
     private val lock = Any()
-    
+
     fun add(item: T) {
         synchronized(lock) {
             items.add(item)
         }
     }
-    
+
     fun remove(item: T) {
         synchronized(lock) {
             items.remove(item)
         }
     }
-    
+
     fun getAll(): List<T> {
         synchronized(lock) {
             return items.toList()
@@ -912,7 +912,7 @@ class CollectionProfiler {
         val startTime = System.nanoTime()
         val result = operation(collection)
         val duration = System.nanoTime() - startTime
-        
+
         println("$name: ${duration / 1_000_000}ms")
         return result to duration
     }
@@ -943,7 +943,7 @@ class CachedOperation<T, R>(
     private val operation: (Collection<T>) -> R
 ) {
     private var cache: Pair<Collection<T>, R>? = null
-    
+
     fun execute(collection: Collection<T>): R {
         return if (cache?.first === collection && cache != null) {
             cache!!.second
@@ -953,7 +953,7 @@ class CachedOperation<T, R>(
             result
         }
     }
-    
+
     fun clearCache() {
         cache = null
     }
@@ -1009,17 +1009,17 @@ println("Sum: ${stats.sum}, Average: ${stats.average}, Median: ${stats.median}")
 // Корреляция между двумя списками
 fun List<Double>.correlation(other: List<Double>): Double {
     require(this.size == other.size) { "Lists must have the same size" }
-    
+
     val thisMean = this.average()
     val otherMean = other.average()
-    
+
     val numerator = this.zip(other).sumOf { (x, y) ->
         (x - thisMean) * (y - otherMean)
     }
-    
+
     val thisVariance = this.sumOf { (it - thisMean).pow(2) }
     val otherVariance = other.sumOf { (it - otherMean).pow(2) }
-    
+
     return numerator / sqrt(thisVariance * otherVariance)
 }
 
@@ -1054,10 +1054,10 @@ fun List<String>.groupByLength(): Map<Int, List<String>> {
 // Поиск общих подстрок
 fun List<String>.commonPrefix(): String {
     if (isEmpty()) return ""
-    
+
     val first = this[0]
     var prefixLength = first.length
-    
+
     for (i in 1 until this.size) {
         var j = 0
         while (j < prefixLength && j < this[i].length && first[j] == this[i][j]) {
@@ -1065,7 +1065,7 @@ fun List<String>.commonPrefix(): String {
         }
         prefixLength = j
     }
-    
+
     return first.substring(0, prefixLength)
 }
 
@@ -1367,7 +1367,7 @@ class ProductFilter(private val products: List<Product>) {
             .filter { minRating == null || it.rating >= minRating }
             .filter { !inStockOnly || it.inStock }
     }
-    
+
     // Сортировка с приоритетами
     fun sortByMultipleCriteria(): List<Product> {
         return products.sortedWith(
@@ -1376,13 +1376,13 @@ class ProductFilter(private val products: List<Product>) {
                 .thenBy { it.price }
         )
     }
-    
+
     // Поиск похожих продуктов
     fun findSimilar(product: Product, limit: Int = 5): List<Product> {
         return products
             .filter { it.id != product.id && it.category == product.category }
-            .sortedBy { 
-                kotlin.math.abs(it.price - product.price) 
+            .sortedBy {
+                kotlin.math.abs(it.price - product.price)
             }
             .take(limit)
     }
@@ -1410,28 +1410,28 @@ class TransactionAnalyzer(private val transactions: List<Transaction>) {
                 (accumulator ?: 0.0) + element.amount
             }
     }
-    
+
     // Средняя сумма транзакций по месяцам
     fun averageByMonth(): Map<YearMonth, Double> {
         return transactions
             .groupBy { YearMonth.from(it.date) }
-            .mapValues { (_, transactions) -> 
-                transactions.map { it.amount }.average() 
+            .mapValues { (_, transactions) ->
+                transactions.map { it.amount }.average()
             }
     }
-    
+
     // Топ аккаунты по объему транзакций
     fun topAccounts(limit: Int = 10): List<Pair<String, Double>> {
         return transactions
             .groupBy { it.accountId }
-            .mapValues { (_, transactions) -> 
-                transactions.sumOf { it.amount } 
+            .mapValues { (_, transactions) ->
+                transactions.sumOf { it.amount }
             }
             .toList()
             .sortedByDescending { it.second }
             .take(limit)
     }
-    
+
     // Статистика по периодам
     fun statisticsByPeriod(period: Period): Map<String, TransactionStats> {
         return transactions

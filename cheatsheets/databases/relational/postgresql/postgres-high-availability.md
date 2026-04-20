@@ -165,7 +165,7 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
 
 ## Введение в высокую доступность
 
-Высокая доступность (**High `Availability`, HA**) - это способность системы оставаться доступной даже при сбоях отдельных компонентов.
+Высокая доступность (**High `Availability`, HA**) — это способность системы оставаться доступной даже при сбоях отдельных компонентов.
 
 ### Компоненты `HA` решения
 
@@ -174,11 +174,10 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
 3. **Load Balancing**: Распределение нагрузки между серверами
 4. **Мониторинг**: Отслеживание состояния системы
 
----
 
 ## **Patroni**
 
-**Patroni** - это решение для автоматического управления репликацией и **failover** в **PostgreSQL**.
+**Patroni** — это решение для автоматического управления репликацией и **failover** в **PostgreSQL**.
 
 ### Установка **Patroni**
 
@@ -280,11 +279,10 @@ curl -X POST http://localhost:8008/patroni -d '{"action": "promote"}'
 curl -X POST http://localhost:8008/patroni -d '{"action": "restart"}'
 ```
 
----
 
 ## **pg_auto_failover**
 
-**pg_auto_failover** - это расширение **PostgreSQL** для автоматического **failover**.
+**pg_auto_failover** — это расширение **PostgreSQL** для автоматического **failover**.
 
 ### Установка
 
@@ -341,7 +339,6 @@ pg_auto_failover show state \
   --monitor 'postgres://autoctl_node@monitor_host:5432/pg_auto_failover'
 ```
 
----
 
 ## **Streaming Replication** для `HA`
 
@@ -357,7 +354,7 @@ synchronous_commit = on
 
 ```sql
 -- Проверить статус репликации
-SELECT 
+SELECT
     application_name,
     sync_state,
     sync_priority,
@@ -365,7 +362,6 @@ SELECT
 FROM pg_stat_replication;
 ```
 
----
 
 ## **Load Balancing**
 
@@ -413,7 +409,6 @@ backend postgresql_backend
     server standby2 standby2_host:5432 check backup
 ```
 
----
 
 ## Мониторинг `HA`
 
@@ -421,7 +416,7 @@ backend postgresql_backend
 
 ```sql
 -- Проверить статус репликации
-SELECT 
+SELECT
     application_name,
     state,
     sync_state,
@@ -429,7 +424,7 @@ SELECT
 FROM pg_stat_replication;
 
 -- Проверить replication slots
-SELECT 
+SELECT
     slot_name,
     active,
     pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn) AS lag_bytes
@@ -469,7 +464,6 @@ echo "OK: HA is healthy"
 exit 0
 ```
 
----
 
 ## Лучшие практики
 
@@ -762,7 +756,7 @@ pg_auto_failover create postgres \
 
 ```sql
 -- Статус всех узлов
-SELECT 
+SELECT
     nodeid,
     groupid,
     nodename,
@@ -774,7 +768,7 @@ SELECT
 FROM pgautofailover.node;
 
 -- История событий
-SELECT 
+SELECT
     eventtime,
     nodename,
     reportedstate,
@@ -1154,7 +1148,7 @@ bootstrap:
 
 ### **Active-Passive** (**Hot Standby**)
 
-```
+```text
 ┌─────────────┐         ┌─────────────┐
 │   Primary   │────────▶│   Standby   │
 │  (Active)   │  WAL    │  (Passive)  │
@@ -1178,7 +1172,7 @@ bootstrap:
 
 ### **Active-Active** (**Multi-Master**)
 
-```
+```text
 ┌─────────────┐         ┌─────────────┐
 │   Master 1  │◀───────▶│   Master 2  │
 │  (Active)   │  Sync   │  (Active)   │
@@ -1202,7 +1196,7 @@ bootstrap:
 
 ### **Cascading Replication**
 
-```
+```text
 ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
 │   Primary   │────────▶│   Standby 1  │────────▶│   Standby 2 │
 │             │  WAL    │             │  WAL    │             │
@@ -1222,7 +1216,7 @@ bootstrap:
 
 ### **Read Replicas** с **Load Balancing**
 
-```
+```text
                     ┌─────────────┐
                     │   Primary   │
                     │   (Write)    │

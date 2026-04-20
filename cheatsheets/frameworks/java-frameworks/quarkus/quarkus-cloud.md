@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-graalvm.md"]
 ---
 
-# Quarkus: Cloud Native - Kubernetes, OpenShift и Service Mesh
-
-
+# Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
 
 ## Содержание
 
-- [Quarkus: Cloud Native - Kubernetes, OpenShift и Service Mesh](#quarkus-cloud-native-kubernetes-openshift-и-service-mesh)
+- [Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh](#quarkus-cloud-native-kubernetes-openshift-и-service-mesh)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Kubernetes](#kubernetes)
@@ -328,7 +326,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 @Liveness
 @ApplicationScoped
 public class LivenessCheck implements HealthCheck {
-    
+
     @Override
     public HealthCheckResponse call() {
         return HealthCheckResponse.named("Application")
@@ -341,10 +339,10 @@ public class LivenessCheck implements HealthCheck {
 @Readiness
 @ApplicationScoped
 public class ReadinessCheck implements HealthCheck {
-    
+
     @Inject
     DataSource dataSource;
-    
+
     @Override
     public HealthCheckResponse call() {
         boolean isReady = checkDatabase();
@@ -353,7 +351,7 @@ public class ReadinessCheck implements HealthCheck {
             .withData("database", isReady ? "connected" : "disconnected")
             .build();
     }
-    
+
     private boolean checkDatabase() {
         try {
             dataSource.getConnection().close();
@@ -390,25 +388,25 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MetricsService {
-    
+
     private final Counter requestCounter;
     private final Counter errorCounter;
-    
+
     @Inject
     public MetricsService(MeterRegistry registry) {
         this.requestCounter = Counter.builder("requests.total")
             .description("Total number of requests")
             .register(registry);
-        
+
         this.errorCounter = Counter.builder("errors.total")
             .description("Total number of errors")
             .register(registry);
     }
-    
+
     public void incrementRequest() {
         requestCounter.increment();
     }
-    
+
     public void incrementError() {
         errorCounter.increment();
     }
@@ -460,17 +458,17 @@ import jakarta.ws.rs.Path;
 
 @Path("/users")
 public class UserResource {
-    
+
     @Inject
     Tracer tracer;
-    
+
     @GET
     @Path("/{id}")
     public User getUser(Long id) {
         Span span = tracer.spanBuilder("getUser")
             .setAttribute("user.id", id)
             .startSpan();
-        
+
         try {
             return userService.findById(id);
         } finally {
@@ -698,10 +696,10 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ConsulServiceDiscovery {
-    
+
     @Inject
     ConsulConfig consulConfig;
-    
+
     public String discoverService(String serviceName) {
         return consulConfig.getServiceUrl(serviceName);
     }
@@ -912,3 +910,11 @@ spec:
 - [Istio Documentation](https://istio.io/latest/docs/)
 - [OpenTelemetry](https://opentelemetry.io/docs/)
 - [Consul Documentation](https://developer.hashicorp.com/consul/docs)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
+- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]

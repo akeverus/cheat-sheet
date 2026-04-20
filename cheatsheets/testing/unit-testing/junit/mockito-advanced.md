@@ -41,7 +41,6 @@ updated: "2026-02-11"
 - [Решение проблем и FAQ](#решение-проблем-и-faq)
 - [Заключение](#заключение)
 
----
 
 ## Advanced matchers
 
@@ -68,7 +67,6 @@ verify(auditService).logEvent(argThat(allOf(
 )));
 ```
 
----
 
 ## Verification modes
 
@@ -88,7 +86,6 @@ verify(auditService).logEvent(argThat(allOf(
         inOrder.verify(cacheService, never()).put(anyString(), any());
 ```
 
----
 
 ## Spies и partial mocking
 
@@ -110,7 +107,6 @@ verify(auditService).logEvent(argThat(allOf(
         String result = complexService.processRequest("test data");
 ```
 
----
 
 ## Custom answers
 
@@ -129,7 +125,6 @@ verify(auditService).logEvent(argThat(allOf(
 
 Для void-методов: **doAnswer(invocation -> { ... return null; }).when(mock).voidMethod(...)**.
 
----
 
 ## BDDMockito
 
@@ -147,7 +142,6 @@ verify(auditService).logEvent(argThat(allOf(
         assertThat(created.getName()).isEqualTo("Test Product");
 ```
 
----
 
 ## Argument captors
 
@@ -166,7 +160,6 @@ verify(auditService).logEvent(argThat(allOf(
         assertEquals("Welcome John Doe!", subjectCaptor.getValue());
 ```
 
----
 
 ## Mock injection
 
@@ -181,7 +174,6 @@ verify(auditService).logEvent(argThat(allOf(
 
 При нескольких конструкторах или сложной инициализации проще создавать тестируемый объект вручную в `@BeforeEach`, передавая моки.
 
----
 
 ## Spring Boot integration
 
@@ -212,7 +204,6 @@ class WebMvcMockTest {
 }
 ```
 
----
 
 ## Testing void methods
 
@@ -230,7 +221,6 @@ doThrow(new EmailException("SMTP error")).when(emailService).sendWelcomeEmail(an
         verify(emailService).sendWelcomeEmail("void@example.com");
 ```
 
----
 
 ## Exception testing
 
@@ -247,7 +237,6 @@ assertEquals("Email already exists", ex.getMessage());
         verify(userRepository, never()).save(any(User.class));
 ```
 
----
 
 ## Async mocking
 
@@ -266,7 +255,6 @@ when(asyncUserRepository.saveAsync(any(User.class)))
         verify(asyncUserRepository).saveAsync(any(User.class));
 ```
 
----
 
 ## Решение проблем и FAQ
 
@@ -290,7 +278,6 @@ when(asyncUserRepository.saveAsync(any(User.class)))
 
 **Где документация?** См. блок «Полезные ссылки» в начале документа.
 
----
 
 ## Заключение
 
@@ -306,3 +293,11 @@ Mockito Advanced даёт:
 - **Асинхронность** — моки для CompletableFuture и void-колбэков.
 
 Имеет смысл использовать для изоляции юнит-тестов и тестирования сложных взаимодействий; не злоупотреблять моками, чтобы тесты не усложнялись сильнее, чем сам код.
+
+## См. также
+
+- [[assertj|AssertJ для Java]]
+- [[hamcrest|Hamcrest для Java]]
+- [[junit-advanced|JUnit Advanced для Java]]
+- [[junit|JUnit 5]]
+- [[mockito|Mockito]]

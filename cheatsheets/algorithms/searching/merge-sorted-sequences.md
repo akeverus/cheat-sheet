@@ -109,7 +109,7 @@ public class HeapNode {
     int element;
     int arrayIndex;
     int nextElementIndex = 1;
-    
+
     public HeapNode(int element, int arrayIndex) {
         this.element = element;
         this.arrayIndex = arrayIndex;
@@ -123,24 +123,24 @@ public class HeapNode {
 // Min-heap из узлов HeapNode: индексация родителя/потомков, getRootNode возвращает минимум
 public class MinHeap {
     HeapNode[] heapNodes;
-    
+
     public MinHeap(HeapNode heapNodes[]) {
         this.heapNodes = heapNodes;
         heapifyFromLastLeafsParent();
     }
-    
+
     int getParentNodeIndex(int index) {
         return (index - 1) / 2;
     }
-    
+
     int getLeftNodeIndex(int index) {
         return (2 * index + 1);
     }
-    
+
     int getRightNodeIndex(int index) {
         return (2 * index + 2);
     }
-    
+
     HeapNode getRootNode() {
         return heapNodes[0];
     }
@@ -157,17 +157,17 @@ void heapify(int index) {
     int leftNodeIndex = getLeftNodeIndex(index);
     int rightNodeIndex = getRightNodeIndex(index);
     int smallestElementIndex = index;
-    
+
     if (leftNodeIndex < heapNodes.length
             && heapNodes[leftNodeIndex].element < heapNodes[index].element) {
         smallestElementIndex = leftNodeIndex;
     }
-    
+
     if (rightNodeIndex < heapNodes.length
             && heapNodes[rightNodeIndex].element < heapNodes[smallestElementIndex].element) {
         smallestElementIndex = rightNodeIndex;
     }
-    
+
     if (smallestElementIndex != index) {
         swap(index, smallestElementIndex);
         heapify(smallestElementIndex);
@@ -186,7 +186,7 @@ void swap(int i, int j) {
 ```java
 void heapifyFromLastLeafsParent() {
     int lastLeafsParentIndex = getParentNodeIndex(heapNodes.length);
-    
+
     while (lastLeafsParentIndex >= 0) {
         heapify(lastLeafsParentIndex);
         lastLeafsParentIndex--;
@@ -202,7 +202,7 @@ void heapifyFromLastLeafsParent() {
 int[] merge(int[][] array) {
     HeapNode[] heapNodes = new HeapNode[array.length];
     int resultingArraySize = 0;
-    
+
     for (int i = 0; i < array.length; i++) {
         HeapNode node = new HeapNode(array[i][0], i);
         heapNodes[i] = node;
@@ -215,20 +215,20 @@ int[] merge(int[][] array) {
 ```java
     MinHeap minHeap = new MinHeap(heapNodes);
     int[] resultingArray = new int[resultingArraySize];
-    
+
     for (int i = 0; i < resultingArraySize; i++) {
         HeapNode root = minHeap.getRootNode();
         resultingArray[i] = root.element;
-        
+
         if (root.nextElementIndex < array[root.arrayIndex].length) {
             root.element = array[root.arrayIndex][root.nextElementIndex++];
         } else {
             root.element = Integer.MAX_VALUE;
         }
-        
+
         minHeap.heapify(0);
     }
-    
+
     return resultingArray;
 }
 ```
@@ -238,22 +238,22 @@ int[] merge(int[][] array) {
 ```java
 public class MinHeap {
     HeapNode[] heapNodes;
-    
+
     public MinHeap(HeapNode heapNodes[]) {
         this.heapNodes = heapNodes;
         heapifyFromLastLeafsParent();
     }
-    
+
     // ... методы getParentNodeIndex, getLeftNodeIndex, getRightNodeIndex, getRootNode ...
-    
+
     void heapify(int index) {
         // ... реализация heapify ...
     }
-    
+
     void heapifyFromLastLeafsParent() {
         // ... реализация heapifyFromLastLeafsParent ...
     }
-    
+
     public static int[] merge(int[][] array) {
         // ... полная реализация merge ...
     }
@@ -295,68 +295,68 @@ class MinHeapK(private val heapNodes: Array<HeapNodeK>) {
     init {
         heapifyFromLastLeafsParent()
     }
-    
+
     private fun getParentNodeIndex(index: Int): Int = (index - 1) / 2
     private fun getLeftNodeIndex(index: Int): Int = 2 * index + 1
     private fun getRightNodeIndex(index: Int): Int = 2 * index + 2
-    
+
     fun getRootNode(): HeapNodeK = heapNodes[0]
-    
+
     private fun heapify(index: Int) {
         val leftNodeIndex = getLeftNodeIndex(index)
         val rightNodeIndex = getRightNodeIndex(index)
         var smallestElementIndex = index
-        
+
         if (leftNodeIndex < heapNodes.size &&
             heapNodes[leftNodeIndex].element < heapNodes[index].element) {
             smallestElementIndex = leftNodeIndex
         }
-        
+
         if (rightNodeIndex < heapNodes.size &&
             heapNodes[rightNodeIndex].element < heapNodes[smallestElementIndex].element) {
             smallestElementIndex = rightNodeIndex
         }
-        
+
         if (smallestElementIndex != index) {
             swap(index, smallestElementIndex)
             heapify(smallestElementIndex)
         }
     }
-    
+
     private fun swap(index1: Int, index2: Int) {
         val temp = heapNodes[index1]
         heapNodes[index1] = heapNodes[index2]
         heapNodes[index2] = temp
     }
-    
+
     private fun heapifyFromLastLeafsParent() {
         val lastLeafsParentIndex = (heapNodes.size - 2) / 2
         for (index in lastLeafsParentIndex downTo 0) {
             heapify(index)
         }
     }
-    
+
     fun replaceRoot(newRoot: HeapNodeK) {
         heapNodes[0] = newRoot
         heapify(0)
     }
-    
+
     companion object {
         fun merge(inputArray: Array<IntArray>): IntArray {
             val totalSize = inputArray.sumOf { it.size }
             val result = IntArray(totalSize)
-            
+
             val heapNodes = Array(inputArray.size) { i ->
                 HeapNodeK(inputArray[i][0], i, 1)
             }
-            
+
             val minHeap = MinHeapK(heapNodes)
             var resultIndex = 0
-            
+
             while (resultIndex < totalSize) {
                 val root = minHeap.getRootNode()
                 result[resultIndex++] = root.element
-                
+
                 if (root.nextElementIndex < inputArray[root.arrayIndex].size) {
                     root.element = inputArray[root.arrayIndex][root.nextElementIndex]
                     root.nextElementIndex++
@@ -366,7 +366,7 @@ class MinHeapK(private val heapNodes: Array<HeapNodeK>) {
                     minHeap.replaceRoot(root)
                 }
             }
-            
+
             return result
         }
     }
@@ -383,9 +383,9 @@ fun main() {
         intArrayOf(1, 5, 10, 100),
         intArrayOf(2, 4, 200, 650)
     )
-    
+
     val resultArray = MinHeapK.merge(inputArray)
-    println(resultArray.contentToString()) 
+    println(resultArray.contentToString())
     // [0, 1, 2, 4, 5, 6, 10, 100, 200, 650]
 }
 ```
@@ -420,7 +420,7 @@ public static int[] mergeWithPriorityQueue(int[][] arrays) {
     PriorityQueue<HeapNode> minHeap = new PriorityQueue<>(
         (a, b) -> Integer.compare(a.element, b.element)
     );
-    
+
     int totalSize = 0;
     for (int i = 0; i < arrays.length; i++) {
         if (arrays[i].length > 0) {
@@ -428,20 +428,20 @@ public static int[] mergeWithPriorityQueue(int[][] arrays) {
             totalSize += arrays[i].length;
         }
     }
-    
+
     int[] result = new int[totalSize];
     int index = 0;
-    
+
     while (!minHeap.isEmpty()) {
         HeapNode node = minHeap.poll();
         result[index++] = node.element;
-        
+
         if (node.nextElementIndex < arrays[node.arrayIndex].length) {
             node.element = arrays[node.arrayIndex][node.nextElementIndex++];
             minHeap.offer(node);
         }
     }
-    
+
     return result;
 }
 ```

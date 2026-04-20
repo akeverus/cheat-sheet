@@ -18,7 +18,7 @@ updated: "2026-02-06"
 
 # **Kotlin Another**
 
-**Дополнительные возможности Kotlin** - это набор продвинутых инструментов и фреймворков для создания масштабируемых и эффективных приложений. В этом руководстве рассматриваются ключевые технологии: **Ktor** для веб-разработки, **Exposed** для работы с базами данных, **DSL**, сериализация и метапрограммирование.
+**Дополнительные возможности Kotlin** — это набор продвинутых инструментов и фреймворков для создания масштабируемых и эффективных приложений. В этом руководстве рассматриваются ключевые технологии: **Ktor** для веб-разработки, **Exposed** для работы с базами данных, **DSL**, сериализация и метапрограммирование.
 
 ## Полезные ссылки
 
@@ -27,7 +27,7 @@ updated: "2026-02-06"
 - [Kotlin Documentation](https://kotlinlang.org/docs/home.html)
 - [Kotlin API Reference](https://kotlinlang.org/api/latest/jvm/stdlib/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Kotlin Tutorial](https://www.baeldung.com/kotlin)
 
@@ -616,7 +616,7 @@ transaction {
 
 Как только мы определили некоторые классы таблиц, как показано в предыдущих разделах, мы можем выполнять запросы к базе данных, используя функции расширения, предоставляемые платформой**.
 
-**Для извлечения данных из базы данных мы используем объекты **Query,** построенные из классов таблиц**. Самый простой запрос - это тот, который возвращает все строки данной таблицы:**
+**Для извлечения данных из базы данных мы используем объекты **Query,** построенные из классов таблиц**. Самый простой запрос — это тот, который возвращает все строки данной таблицы:**
 
 ```kotlin
 val query = StarWarsFilms.selectAll()
@@ -820,7 +820,7 @@ val allFilms = StarWarsFilm.all()
 
 ## Введение в **Ktor**
 
-**Ktor** - это асинхронный веб-фреймворк для **Kotlin**, созданный **JetBrains**. Он предназначен для создания высокопроизводительных веб-приложений, **API** и микросервисов. Основные преимущества **Ktor**:**
+**Ktor** — это асинхронный веб-фреймворк для **Kotlin**, созданный **JetBrains**. Он предназначен для создания высокопроизводительных веб-приложений, **API** и микросервисов. Основные преимущества **Ktor**:**
 
 ### Ключевые особенности **Ktor**:
 
@@ -1638,7 +1638,7 @@ fun Application.configureProdFeatures() {
 
 ## Введение в **Exposed**
 
-**Exposed** - это легковесная **SQL** библиотека для **Kotlin**, которая предоставляет типобезопасный **DSL** для работы с реляционными базами данных. Основные преимущества:**
+**Exposed** — это легковесная **SQL** библиотека для **Kotlin**, которая предоставляет типобезопасный **DSL** для работы с реляционными базами данных. Основные преимущества:**
 
 ### Преимущества **Exposed**:
 
@@ -3034,7 +3034,7 @@ fun Application.module() {
         val duration = System.currentTimeMillis() - startTime
         call.response.headers.append("X-Response-Time", duration.toString())
     }
-    
+
     // Interceptor для конкретного маршрута
     routing {
         route("/api") {
@@ -3047,7 +3047,7 @@ fun Application.module() {
                 }
                 proceed()
             }
-            
+
             get("/data") {
                 call.respond("Data")
             }
@@ -3067,7 +3067,7 @@ fun Application.module() {
     routing {
         post("/users") {
             val user = call.receive<User>()
-            
+
             // Валидация данных
             val errors = validateUser(user)
             if (errors.isNotEmpty()) {
@@ -3077,7 +3077,7 @@ fun Application.module() {
                 )
                 return@post
             }
-            
+
             // Обработка валидных данных
             val savedUser = userService.save(user)
             call.respond(HttpStatusCode.Created, savedUser)
@@ -3087,19 +3087,19 @@ fun Application.module() {
 
 fun validateUser(user: User): List<String> {
     val errors = mutableListOf<String>()
-    
+
     if (user.name.isBlank()) {
         errors.add("Name cannot be blank")
     }
-    
+
     if (user.email.isBlank() || !user.email.contains("@")) {
         errors.add("Invalid email")
     }
-    
+
     if (user.age < 0 || user.age > 150) {
         errors.add("Age must be between 0 and 150")
     }
-    
+
     return errors
 }
 ```
@@ -3119,7 +3119,7 @@ transaction {
         it.setInt(1, 18)
         it.executeQuery()
     }
-    
+
     // Обработка результата
     while (result.next()) {
         val id = result.getInt("id")
@@ -3144,7 +3144,7 @@ transaction {
         this[Users.email] = user.email
         this[Users.age] = user.age
     }
-    
+
     // Пакетное обновление
     val ids = listOf(1, 2, 3, 4, 5)
     Users.update({ Users.id inList ids }) {
@@ -3164,7 +3164,7 @@ transaction {
 ```kotlin
 class ConfigDSL {
     private val errors = mutableListOf<String>()
-    
+
     var port: Int = 8080
         set(value) {
             if (value !in 1..65535) {
@@ -3173,7 +3173,7 @@ class ConfigDSL {
                 field = value
             }
         }
-    
+
     var host: String = "localhost"
         set(value) {
             if (value.isBlank()) {
@@ -3182,7 +3182,7 @@ class ConfigDSL {
                 field = value
             }
         }
-    
+
     fun validate(): Result<Config> {
         return if (errors.isEmpty()) {
             Result.success(Config(host, port))
@@ -3231,7 +3231,7 @@ val config = dsl {
     currentScope = "database"
     variables["host"] = "localhost"
     variables["port"] = 5432
-    
+
     functions["connect"] = { args ->
         println("Connecting to ${args[0]}:${args[1]}")
         "Connected"
@@ -3253,14 +3253,14 @@ fun Application.module() {
         level = Level.INFO
         filter { call -> !call.request.path().startsWith("/health") }
     }
-    
+
     install(Compression) {
         gzip {
             priority = 1.0
             minimumSize(1024)
         }
     }
-    
+
     // Метрики производительности
     routing {
         get("/metrics") {
@@ -3328,14 +3328,14 @@ fun Application.module() {
                 ErrorResponse(listOf(cause.message ?: "Validation failed"))
             )
         }
-        
+
         exception<NotFoundException> { call, cause ->
             call.respond(
                 HttpStatusCode.NotFound,
                 ErrorResponse(listOf(cause.message ?: "Resource not found"))
             )
         }
-        
+
         exception<Exception> { call, cause ->
             call.respond(
                 HttpStatusCode.InternalServerError,
@@ -3367,7 +3367,7 @@ fun Application.module() {
             }
         }
     }
-    
+
     install(CORS) {
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
@@ -3375,7 +3375,7 @@ fun Application.module() {
         allowHeader(HttpHeaders.ContentType)
         anyHost()
     }
-    
+
     install(ContentSecurityPolicy) {
         default {
             script {
@@ -3410,11 +3410,11 @@ data class LocalDate(val year: Int, val month: Int, val day: Int)
 
 object LocalDateSerializer : KSerializer<LocalDate> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("LocalDate", PrimitiveKind.STRING)
-    
+
     override fun serialize(encoder: Encoder, value: LocalDate) {
         encoder.encodeString("${value.year}-${value.month}-${value.day}")
     }
-    
+
     override fun deserialize(decoder: Decoder): LocalDate {
         val string = decoder.decodeString()
         val parts = string.split("-")
@@ -3460,14 +3460,14 @@ data class User(
                 element<String>("name")
                 element<String>("email_address")
             }
-            
+
             override fun serialize(encoder: Encoder, value: User) {
                 encoder.encodeStructure(descriptor) {
                     encodeStringElement(descriptor, 0, value.name)
                     encodeStringElement(descriptor, 1, value.email.uppercase())
                 }
             }
-            
+
             override fun deserialize(decoder: Decoder): User {
                 return decoder.decodeStructure(descriptor) {
                     var name: String? = null
@@ -3504,7 +3504,7 @@ object Users : IntIdTable("users") {
     val name = varchar("name", 50).index()
     val email = varchar("email", 100).uniqueIndex()
     val age = integer("age").index()
-    
+
     // Составной индекс
     init {
         index(name, email)
@@ -3602,7 +3602,7 @@ class ApiClient(private val client: HttpClient) {
         val response: HttpResponse = client.get("https://api.example.com/users")
         return response.body<List<User>>()
     }
-    
+
     suspend fun createUser(user: User): User {
         val response: HttpResponse = client.post("https://api.example.com/users") {
             contentType(ContentType.Application.Json)
@@ -3610,7 +3610,7 @@ class ApiClient(private val client: HttpClient) {
         }
         return response.body<User>()
     }
-    
+
     suspend fun updateUser(id: Long, user: User): User {
         val response: HttpResponse = client.put("https://api.example.com/users/$id") {
             contentType(ContentType.Application.Json)
@@ -3618,7 +3618,7 @@ class ApiClient(private val client: HttpClient) {
         }
         return response.body<User>()
     }
-    
+
     suspend fun deleteUser(id: Long) {
         client.delete("https://api.example.com/users/$id")
     }
@@ -3635,17 +3635,17 @@ class ApiClient(private val client: HttpClient) {
 // Service Discovery интеграция
 class ServiceDiscovery {
     private val services = mutableMapOf<String, ServiceInfo>()
-    
+
     fun register(serviceName: String, url: String) {
         services[serviceName] = ServiceInfo(url, System.currentTimeMillis())
     }
-    
+
     fun getService(serviceName: String): ServiceInfo? {
         return services[serviceName]?.takeIf {
             System.currentTimeMillis() - it.timestamp < 60000  // 1 минута TTL
         }
     }
-    
+
     data class ServiceInfo(val url: String, val timestamp: Long)
 }
 
@@ -3657,7 +3657,7 @@ class CircuitBreakerClient(
     suspend fun callService(serviceName: String, path: String): HttpResponse {
         val service = serviceDiscovery.getService(serviceName)
             ?: throw ServiceNotFoundException(serviceName)
-        
+
         return try {
             client.get("${service.url}$path")
         } catch (e: Exception) {
@@ -3722,7 +3722,7 @@ import kotlinx.serialization.encoding.*
 @Serializable(with = StatusSerializer::class)
 enum class Status {
     PENDING, APPROVED, REJECTED;
-    
+
     companion object {
         fun fromString(value: String) = when (value.lowercase()) {
             "pending" -> PENDING
@@ -3735,11 +3735,11 @@ enum class Status {
 
 object StatusSerializer : KSerializer<Status> {
     override val descriptor = PrimitiveSerialDescriptor("Status", PrimitiveKind.STRING)
-    
+
     override fun serialize(encoder: Encoder, value: Status) {
         encoder.encodeString(value.name.lowercase())
     }
-    
+
     override fun deserialize(decoder: Decoder): Status {
         return Status.fromString(decoder.decodeString())
     }
@@ -3767,13 +3767,13 @@ class BuilderProcessor : SymbolProcessor {
     override fun process(resolver: Resolver): List<KSAnnotated> {
         val symbols = resolver.getSymbolsWithAnnotation("GenerateBuilder")
         val errors = mutableListOf<KSAnnotated>()
-        
+
         symbols.forEach { symbol ->
             if (symbol !is KSClassDeclaration) {
                 errors.add(symbol)
                 return@forEach
             }
-            
+
             try {
                 generateBuilder(symbol, resolver)
             } catch (e: Exception) {
@@ -3781,17 +3781,17 @@ class BuilderProcessor : SymbolProcessor {
                 errors.add(symbol)
             }
         }
-        
+
         return errors
     }
-    
+
     private fun generateBuilder(classDeclaration: KSClassDeclaration, resolver: Resolver) {
         val className = classDeclaration.simpleName.asString()
         val builderName = "${className}Builder"
         val packageName = classDeclaration.packageName.asString()
-        
+
         val properties = classDeclaration.getAllProperties()
-        
+
         val code = buildString {
             appendLine("package $packageName")
             appendLine()
@@ -3813,7 +3813,7 @@ class BuilderProcessor : SymbolProcessor {
             appendLine("    }")
             appendLine("}")
         }
-        
+
         // Запись сгенерированного кода
         writeGeneratedCode(builderName, code)
     }
@@ -3832,7 +3832,7 @@ fun generateTestClass(sourceClass: KClass<*>): String {
     val className = sourceClass.simpleName ?: "Unknown"
     val testClassName = "${className}Test"
     val packageName = sourceClass.java.`package`.name
-    
+
     return buildString {
         appendLine("package $packageName")
         appendLine()
@@ -3878,12 +3878,12 @@ class RestApiClient(private val baseUrl: String, private val client: HttpClient)
         val response: HttpResponse = client.get("$baseUrl/users")
         return response.body<List<User>>()
     }
-    
+
     suspend fun getUser(id: Long): User {
         val response: HttpResponse = client.get("$baseUrl/users/$id")
         return response.body<User>()
     }
-    
+
     suspend fun createUser(user: User): User {
         val response: HttpResponse = client.post("$baseUrl/users") {
             contentType(ContentType.Application.Json)
@@ -3891,7 +3891,7 @@ class RestApiClient(private val baseUrl: String, private val client: HttpClient)
         }
         return response.body<User>()
     }
-    
+
     suspend fun updateUser(id: Long, user: User): User {
         val response: HttpResponse = client.put("$baseUrl/users/$id") {
             contentType(ContentType.Application.Json)
@@ -3899,7 +3899,7 @@ class RestApiClient(private val baseUrl: String, private val client: HttpClient)
         }
         return response.body<User>()
     }
-    
+
     suspend fun deleteUser(id: Long) {
         client.delete("$baseUrl/users/$id")
     }
@@ -3930,7 +3930,7 @@ class GraphQLClient(private val url: String, private val client: HttpClient) {
         }
         return response.body<GraphQLResponse>()
     }
-    
+
     suspend fun mutation(mutation: String, variables: Map<String, Any> = emptyMap()): GraphQLResponse {
         return query(mutation, variables)
     }
@@ -3970,15 +3970,15 @@ val users = response.data?.get("users") as? List<Map<String, Any>>
 // Factory через sealed классы
 sealed class Shape {
     abstract fun area(): Double
-    
+
     data class Circle(val radius: Double) : Shape() {
         override fun area() = Math.PI * radius * radius
     }
-    
+
     data class Rectangle(val width: Double, val height: Double) : Shape() {
         override fun area() = width * height
     }
-    
+
     companion object {
         fun create(type: String, params: Map<String, Double>): Shape {
             return when (type) {
@@ -4011,7 +4011,7 @@ class UserBuilder {
     var email: String = ""
     var age: Int = 0
     var address: String = ""
-    
+
     fun build(): User {
         require(name.isNotBlank()) { "Name is required" }
         require(email.isNotBlank()) { "Email is required" }
@@ -4040,7 +4040,7 @@ class DatabaseConnectionBuilder {
     var password: String = ""
     var ssl: Boolean = false
     var connectionPoolSize: Int = 10
-    
+
     fun build(): DatabaseConnection {
         require(database.isNotBlank()) { "Database name is required" }
         return DatabaseConnection(
@@ -4070,14 +4070,14 @@ fun database(init: DatabaseConnectionBuilder.() -> Unit): DatabaseConnection {
 // Singleton через object
 object DatabaseManager {
     private var connection: Connection? = null
-    
+
     fun getConnection(): Connection {
         if (connection == null) {
             connection = createConnection()
         }
         return connection!!
     }
-    
+
     private fun createConnection(): Connection {
         // Создание подключения
         return connection
@@ -4092,7 +4092,7 @@ class ThreadSafeSingleton private constructor() {
     companion object {
         @Volatile
         private var instance: ThreadSafeSingleton? = null
-        
+
         fun getInstance(): ThreadSafeSingleton {
             return instance ?: synchronized(this) {
                 instance ?: ThreadSafeSingleton().also { instance = it }
@@ -4161,18 +4161,18 @@ class OrderFacade(
         if (!inventoryService.checkAvailability(order.items)) {
             return OrderResult.Failure("Items not available")
         }
-        
+
         // Обработка платежа
         if (!paymentService.processPayment(order.total)) {
             return OrderResult.Failure("Payment failed")
         }
-        
+
         // Резервирование товаров
         inventoryService.reserveItems(order.items)
-        
+
         // Отправка заказа
         val trackingNumber = shippingService.shipOrder(order)
-        
+
         return OrderResult.Success(trackingNumber)
     }
 }
@@ -4202,15 +4202,15 @@ interface Observer<T> {
 // Subject для управления наблюдателями
 class Subject<T> {
     private val observers = mutableListOf<Observer<T>>()
-    
+
     fun addObserver(observer: Observer<T>) {
         observers.add(observer)
     }
-    
+
     fun removeObserver(observer: Observer<T>) {
         observers.remove(observer)
     }
-    
+
     fun notifyObservers(data: T) {
         observers.forEach { it.update(data) }
     }
@@ -4219,7 +4219,7 @@ class Subject<T> {
 // Использование
 class DataSubject : Subject<String>() {
     private var data: String = ""
-    
+
     fun setData(newData: String) {
         data = newData
         notifyObservers(data)
@@ -4259,7 +4259,7 @@ class AddItemCommand(
     override fun execute() {
         list.add(item)
     }
-    
+
     override fun undo() {
         list.remove(item)
     }
@@ -4270,11 +4270,11 @@ class RemoveItemCommand(
     private val item: String
 ) : Command {
     private var wasPresent = false
-    
+
     override fun execute() {
         wasPresent = list.remove(item)
     }
-    
+
     override fun undo() {
         if (wasPresent) {
             list.add(item)
@@ -4285,12 +4285,12 @@ class RemoveItemCommand(
 // Invoker
 class CommandInvoker {
     private val history = mutableListOf<Command>()
-    
+
     fun execute(command: Command) {
         command.execute()
         history.add(command)
     }
-    
+
     fun undo() {
         if (history.isNotEmpty()) {
             val command = history.removeLast()
@@ -4327,14 +4327,14 @@ abstract class DataProcessor {
         val saved = save(transformed)
         return saved
     }
-    
+
     protected open fun validate(data: String): String {
         require(data.isNotBlank()) { "Data cannot be blank" }
         return data
     }
-    
+
     protected abstract fun transform(data: String): String
-    
+
     protected open fun save(data: String): String {
         println("Saving: $data")
         return data
@@ -4407,14 +4407,14 @@ class ConcreteVisitor : Visitor {
 // Chain of Responsibility
 abstract class Handler {
     protected var next: Handler? = null
-    
+
     fun setNext(handler: Handler): Handler {
         next = handler
         return handler
     }
-    
+
     abstract fun handle(request: Request): Response?
-    
+
     protected fun handleNext(request: Request): Response? {
         return next?.handle(request)
     }
@@ -4614,15 +4614,15 @@ interface Observer<T> {
 
 class Subject<T> {
     private val observers = mutableListOf<Observer<T>>()
-    
+
     fun attach(observer: Observer<T>) {
         observers.add(observer)
     }
-    
+
     fun detach(observer: Observer<T>) {
         observers.remove(observer)
     }
-    
+
     fun notify(data: T) {
         observers.forEach { it.update(data) }
     }
@@ -4654,11 +4654,11 @@ interface Command {
 
 class AddUserCommand(private val repository: UserRepository, private val user: User) : Command {
     private var savedUser: User? = null
-    
+
     override fun execute() {
         savedUser = repository.save(user)
     }
-    
+
     override fun undo() {
         savedUser?.let { repository.delete(it.id) }
     }
@@ -4666,12 +4666,12 @@ class AddUserCommand(private val repository: UserRepository, private val user: U
 
 class CommandInvoker {
     private val history = mutableListOf<Command>()
-    
+
     fun execute(command: Command) {
         command.execute()
         history.add(command)
     }
-    
+
     fun undo() {
         if (history.isNotEmpty()) {
             history.removeLast().undo()
@@ -4683,3 +4683,11 @@ class CommandInvoker {
 Паттерн **Command** инкапсулирует запросы как объекты, позволяя откладывать выполнение и поддерживать отмену операций.
 
 Этот файл содержит полное руководство по дополнительным возможностям **Kotlin**, покрывающее все основные аспекты от базовых техник до продвинутых подходов, включая сериализацию, метапрограммирование, интеграцию с внешними системами, паттерны проектирования (**Factory, `Builder`, `Singleton`, `Adapter`, `Facade`, `Observer`, `Command`, `Template Method`, `Visitor`, `Chain of Responsibility`, State**), работу с микросервисами, оптимизацию производительности, практические примеры использования, включая паттерны **Observer** и **Command**, заключение, дополнительные ресурсы и итоговые рекомендации.
+
+## См. также
+
+- [[kotlin-basics|Основы Kotlin — Полное руководство]]
+- [[kotlin-collections-grouping|Kotlin Collections: Grouping and Aggregation]]
+- [[kotlin-collections-list|Kotlin Collections: List]]
+- [[kotlin-collections-map|Kotlin Collections: Map]]
+- [[kotlin-collections-operations|Kotlin Collections: Operations]]

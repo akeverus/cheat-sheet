@@ -96,13 +96,13 @@ public static boolean isPangram(String str) {
             alphabetMarker[alphabetIndex] = true;
         }
     }
-    
+
     for (boolean index : alphabetMarker) {
         if (!index) {
             return false;
         }
     }
-    
+
     return true;
 }
 ```
@@ -120,16 +120,16 @@ public static boolean isPangramWithSet(String str) {
     if (str == null) {
         return false;
     }
-    
+
     Set<Character> alphabetSet = new HashSet<>();
     str = str.toUpperCase();
-    
+
     for (char c : str.toCharArray()) {
         if (c >= 'A' && c <= 'Z') {
             alphabetSet.add(c);
         }
     }
-    
+
     return alphabetSet.size() == ALPHABET_COUNT;
 }
 ```
@@ -147,13 +147,13 @@ public static boolean isPangramStreamImproved(String str) {
     if (str == null) {
         return false;
     }
-    
+
     long distinctLetters = str.toUpperCase()
         .chars()
         .filter(c -> c >= 'A' && c <= 'Z')
         .distinct()
         .count();
-    
+
     return distinctLetters == ALPHABET_COUNT;
 }
 ```
@@ -171,20 +171,20 @@ public static boolean isPerfectPangramImproved(String str) {
     if (str == null) {
         return false;
     }
-    
+
     Map<Character, Integer> frequency = new HashMap<>();
     str = str.toUpperCase();
-    
+
     for (char c : str.toCharArray()) {
         if (c >= 'A' && c <= 'Z') {
             frequency.put(c, frequency.getOrDefault(c, 0) + 1);
         }
     }
-    
+
     if (frequency.size() != ALPHABET_COUNT) {
         return false;
     }
-    
+
     return frequency.values().stream().allMatch(count -> count == 1);
 }
 ```
@@ -200,17 +200,17 @@ fun isPangramK(str: String?): Boolean {
     if (str == null) {
         return false
     }
-    
+
     val alphabetMarker = BooleanArray(ALPHABET_COUNT) { false }
     val upperStr = str.uppercase()
-    
+
     for (char in upperStr) {
         if (char in 'A'..'Z') {
             val alphabetIndex = char - 'A'
             alphabetMarker[alphabetIndex] = true
         }
     }
-    
+
     return alphabetMarker.all { it }
 }
 ```
@@ -222,16 +222,16 @@ fun isPangramWithSetK(str: String?): Boolean {
     if (str == null) {
         return false
     }
-    
+
     val alphabetSet = mutableSetOf<Char>()
     val upperStr = str.uppercase()
-    
+
     for (char in upperStr) {
         if (char in 'A'..'Z') {
             alphabetSet.add(char)
         }
     }
-    
+
     return alphabetSet.size == ALPHABET_COUNT
 }
 ```
@@ -243,7 +243,7 @@ fun isPangramFunctionalK(str: String?): Boolean {
     if (str == null) {
         return false
     }
-    
+
     return str.uppercase()
         .filter { it in 'A'..'Z' }
         .toSet()
@@ -258,20 +258,20 @@ fun isPerfectPangramK(str: String?): Boolean {
     if (str == null) {
         return false
     }
-    
+
     val frequency = mutableMapOf<Char, Int>()
     val upperStr = str.uppercase()
-    
+
     for (char in upperStr) {
         if (char in 'A'..'Z') {
             frequency[char] = frequency.getOrDefault(char, 0) + 1
         }
     }
-    
+
     if (frequency.size != ALPHABET_COUNT) {
         return false
     }
-    
+
     return frequency.values.all { it == 1 }
 }
 ```
@@ -283,11 +283,11 @@ fun findMissingLettersK(str: String?): List<Char> {
     if (str == null) {
         return emptyList()
     }
-    
+
     val foundLetters = str.uppercase()
         .filter { it in 'A'..'Z' }
         .toSet()
-    
+
     return ('A'..'Z').filter { it !in foundLetters }
 }
 ```
@@ -298,17 +298,17 @@ fun findMissingLettersK(str: String?): List<Char> {
 fun main() {
     val pangram = "The quick brown fox jumps over the lazy dog"
     val notPangram = "Hello world"
-    
+
     // Проверка панграммы
     println(isPangramK(pangram)) // true
     println(isPangramK(notPangram)) // false
-    
+
     // Функциональный стиль
     println(isPangramFunctionalK(pangram)) // true
-    
+
     // Идеальная панграмма
     println(isPerfectPangramK(pangram)) // false (есть дубликаты)
-    
+
     // Найти недостающие буквы
     val missing = findMissingLettersK(notPangram)
     println(missing) // [A, B, C, D, E, F, G, H, I, J, K, L, M, N, P, Q, R, S, T, U, V, X, Y, Z]
@@ -346,10 +346,10 @@ public static boolean isPangramCaseSensitive(String str) {
     if (str == null) {
         return false;
     }
-    
+
     Set<Character> upperCase = new HashSet<>();
     Set<Character> lowerCase = new HashSet<>();
-    
+
     for (char c : str.toCharArray()) {
         if (c >= 'A' && c <= 'Z') {
             upperCase.add(c);
@@ -357,8 +357,8 @@ public static boolean isPangramCaseSensitive(String str) {
             lowerCase.add((char) (c - 'a' + 'A'));
         }
     }
-    
-    return upperCase.size() == ALPHABET_COUNT || 
+
+    return upperCase.size() == ALPHABET_COUNT ||
            lowerCase.size() == ALPHABET_COUNT;
 }
 ```
@@ -370,21 +370,21 @@ public static boolean isPangramForAlphabet(String str, String alphabet) {
     if (str == null || alphabet == null) {
         return false;
     }
-    
+
     Set<Character> alphabetSet = new HashSet<>();
     for (char c : alphabet.toCharArray()) {
         alphabetSet.add(Character.toUpperCase(c));
     }
-    
+
     Set<Character> foundLetters = new HashSet<>();
     str = str.toUpperCase();
-    
+
     for (char c : str.toCharArray()) {
         if (alphabetSet.contains(c)) {
             foundLetters.add(c);
         }
     }
-    
+
     return foundLetters.size() == alphabetSet.size();
 }
 ```
@@ -396,23 +396,23 @@ public static List<Character> findMissingLetters(String str) {
     if (str == null) {
         return Collections.emptyList();
     }
-    
+
     Set<Character> foundLetters = new HashSet<>();
     str = str.toUpperCase();
-    
+
     for (char c : str.toCharArray()) {
         if (c >= 'A' && c <= 'Z') {
             foundLetters.add(c);
         }
     }
-    
+
     List<Character> missing = new ArrayList<>();
     for (char c = 'A'; c <= 'Z'; c++) {
         if (!foundLetters.contains(c)) {
             missing.add(c);
         }
     }
-    
+
     return missing;
 }
 ```

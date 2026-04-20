@@ -62,8 +62,8 @@ docker run -d --name couchbase \
 
 ```sql
 -- N1QL запросы (SQL для JSON)
-SELECT username, email 
-FROM `users` 
+SELECT username, email
+FROM `users`
 WHERE balance > 1000;
 ```
 

@@ -75,10 +75,10 @@ updated: "2026-02-06"
 
 ### Основные принципы
 
-1. **Простота** - предпочитайте простое решение сложному
-2. **Читаемость** - код должен быть понятным
-3. **Производительность** - но не в ущерб читаемости
-4. **Безопасность** - правильная обработка ошибок и граничных случаев
+1. **Простота** — предпочитайте простое решение сложному
+2. **Читаемость** — код должен быть понятным
+3. **Производительность** — но не в ущерб читаемости
+4. **Безопасность** — правильная обработка ошибок и граничных случаев
 
 ## Идиоматический Go
 
@@ -160,7 +160,7 @@ import (
     "fmt"
     "log"
     "os"
-    
+
     "github.com/example/package"
 )
 ```
@@ -364,7 +364,7 @@ func processFile(filename string) error {
         return err
     }
     defer file.Close()  // Всегда закрывается
-    
+
     // Обработка файла
     return process(file)
 }
@@ -373,7 +373,7 @@ func processFile(filename string) error {
 func (s *Service) Process() {
     s.mu.Lock()
     defer s.mu.Unlock()
-    
+
     // Критическая секция
 }
 
@@ -384,7 +384,7 @@ func safeOperation() {
             log.Printf("Recovered from panic: %v", r)
         }
     }()
-    
+
     // Операция, которая может вызвать панику
 }
 ```
@@ -401,7 +401,7 @@ func badPattern() {
         }
         close(ch)  // Отправитель закрывает
     }()
-    
+
     for val := range ch {
         fmt.Println(val)
     }
@@ -416,7 +416,7 @@ func goodPattern() {
             ch <- i
         }
     }()
-    
+
     for val := range ch {
         fmt.Println(val)
     }
@@ -432,11 +432,11 @@ func processWithContext(ctx context.Context, data []byte) error {
     if err := ctx.Err(); err != nil {
         return err
     }
-    
+
     // Использование context в операциях
     req, _ := http.NewRequestWithContext(ctx, "GET", "http://example.com", nil)
     client.Do(req)
-    
+
     return nil
 }
 
@@ -444,12 +444,12 @@ func processWithContext(ctx context.Context, data []byte) error {
 func processConcurrently(ctx context.Context, items []Item) error {
     var wg sync.WaitGroup
     errCh := make(chan error, len(items))
-    
+
     for _, item := range items {
         wg.Add(1)
         go func(it Item) {
             defer wg.Done()
-            
+
             if err := processItem(ctx, it); err != nil {
                 select {
                 case errCh <- err:
@@ -458,16 +458,16 @@ func processConcurrently(ctx context.Context, items []Item) error {
             }
         }(item)
     }
-    
+
     wg.Wait()
     close(errCh)
-    
+
     for err := range errCh {
         if err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -486,28 +486,28 @@ func (u *User) Validate() error {
     if u.ID <= 0 {
         return fmt.Errorf("invalid user ID: %d", u.ID)
     }
-    
+
     if u.Name == "" {
         return fmt.Errorf("name is required")
     }
-    
+
     if len(u.Name) < 2 || len(u.Name) > 50 {
         return fmt.Errorf("name must be between 2 and 50 characters")
     }
-    
+
     if u.Email == "" {
         return fmt.Errorf("email is required")
     }
-    
+
     emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
     if !emailRegex.MatchString(u.Email) {
         return fmt.Errorf("invalid email format: %s", u.Email)
     }
-    
+
     if u.Age < 0 || u.Age > 150 {
         return fmt.Errorf("age must be between 0 and 150")
     }
-    
+
     return nil
 }
 ```
@@ -538,12 +538,12 @@ func createUser(username, password string) (*User, error) {
     if err != nil {
         return nil, err
     }
-    
+
     user := &User{
         Username: username,
         PasswordHash: hashedPassword,
     }
-    
+
     return user, nil
 }
 ```
@@ -561,7 +561,7 @@ func badQuery(userID string) {
 func goodQuery(userID int) (*User, error) {
     query := "SELECT * FROM users WHERE id = $1"
     row := db.QueryRow(query, userID)
-    
+
     var user User
     err := row.Scan(&user.ID, &user.Name, &user.Email)
     return &user, err
@@ -574,7 +574,7 @@ func preparedQuery(userID int) (*User, error) {
         return nil, err
     }
     defer stmt.Close()
-    
+
     row := stmt.QueryRow(userID)
     var user User
     err = row.Scan(&user.ID, &user.Name, &user.Email)
@@ -598,7 +598,7 @@ func renderTemplate(w http.ResponseWriter, data map[string]interface{}) {
         <h1>{{.Title}}</h1>
         <p>{{.Content}}</p>
     `))
-    
+
     // Автоматическое экранирование
     tmpl.Execute(w, data)
 }
@@ -614,10 +614,10 @@ func setupCSRF() http.Handler {
         []byte("32-byte-long-auth-key"),
         csrf.Secure(false), // true для HTTPS
     )
-    
+
     mux := http.NewServeMux()
     mux.HandleFunc("/form", formHandler)
-    
+
     return CSRF(mux)
 }
 
@@ -651,10 +651,10 @@ func rateLimitMiddleware(limiter *rate.Limiter) func(http.Handler) http.Handler 
 // Использование
 func main() {
     limiter := rate.NewLimiter(10, 1) // 10 запросов в секунду
-    
+
     mux := http.NewServeMux()
     mux.HandleFunc("/api", apiHandler)
-    
+
     handler := rateLimitMiddleware(limiter)(mux)
     http.ListenAndServe(":8080", handler)
 }
@@ -673,13 +673,13 @@ func logSecurityEvent(event string, details map[string]interface{}) {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
     username := r.FormValue("username")
-    
+
     // Логирование попытки входа
     logSecurityEvent("login_attempt", map[string]interface{}{
         "username": username,
         "ip":       r.RemoteAddr,
     })
-    
+
     // Проверка учетных данных
     if !checkCredentials(username, password) {
         logSecurityEvent("login_failed", map[string]interface{}{
@@ -689,7 +689,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Invalid credentials", http.StatusUnauthorized)
         return
     }
-    
+
     logSecurityEvent("login_success", map[string]interface{}{
         "username": username,
         "ip":       r.RemoteAddr,
@@ -753,7 +753,7 @@ func TestUserValidation(t *testing.T) {
             wantErr: true,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             err := tt.user.Validate()
@@ -776,11 +776,11 @@ package user
 type User struct {
     // ID is the unique identifier for the user.
     ID int
-    
+
     // Name is the user's full name.
     // It must be between 2 and 50 characters.
     Name string
-    
+
     // Email is the user's email address.
     // It must be a valid email format.
     Email string
@@ -848,21 +848,21 @@ func (m *MockUserRepository) SaveUser(user *User) error {
 
 ## Лучшие практики
 
-1. **Используйте gofmt** - для форматирования кода
-2. **Следуйте конвенциям именования** - экспортируемые с большой буквы
-3. **Документируйте публичный API** - используйте комментарии
-4. **Обрабатывайте ошибки явно** - не игнорируйте ошибки
-5. **Используйте defer** - для очистки ресурсов
-6. **Тестируйте код** - пишите тесты для критичного функционала
-7. **Избегайте глобальных переменных** - используйте **dependency injection**
-8. **Используйте интерфейсы** - для абстракции и тестирования
-9. **Валидируйте входные данные** - всегда проверяйте данные от клиентов
-10. **Используйте context** - для отмены и таймаутов
-11. **Защищайте от атак** - **SQL** инъекции, **XSS**, **CSRF**
-12. **Используйте rate limiting** - для защиты от злоупотреблений
-13. **Логируйте безопасность** - отслеживайте подозрительную активность
-14. **Храните секреты безопасно** - используйте **secret managers**
-15. **Используйте идиоматический Go** - следуйте конвенциям языка
+1. **Используйте gofmt** — для форматирования кода
+2. **Следуйте конвенциям именования** — экспортируемые с большой буквы
+3. **Документируйте публичный API** — используйте комментарии
+4. **Обрабатывайте ошибки явно** — не игнорируйте ошибки
+5. **Используйте defer** — для очистки ресурсов
+6. **Тестируйте код** — пишите тесты для критичного функционала
+7. **Избегайте глобальных переменных** — используйте **dependency injection**
+8. **Используйте интерфейсы** — для абстракции и тестирования
+9. **Валидируйте входные данные** — всегда проверяйте данные от клиентов
+10. **Используйте context** — для отмены и таймаутов
+11. **Защищайте от атак** — **SQL** инъекции, **XSS**, **CSRF**
+12. **Используйте rate limiting** — для защиты от злоупотреблений
+13. **Логируйте безопасность** — отслеживайте подозрительную активность
+14. **Храните секреты безопасно** — используйте **secret managers**
+15. **Используйте идиоматический Go** — следуйте конвенциям языка
 
 ### Практические примеры: Организация кода и пакетов
 
@@ -976,23 +976,23 @@ func (u *UserInput) Validate() error {
     if u.Email == "" {
         return fmt.Errorf("email is required")
     }
-    
+
     if !strings.Contains(u.Email, "@") {
         return fmt.Errorf("invalid email format")
     }
-    
+
     if u.Name == "" {
         return fmt.Errorf("name is required")
     }
-    
+
     if len(u.Name) < 2 {
         return fmt.Errorf("name too short")
     }
-    
+
     if u.Age < 0 || u.Age > 120 {
         return fmt.Errorf("invalid age")
     }
-    
+
     return nil
 }
 ```
@@ -1012,11 +1012,11 @@ func processData(data []byte) error {
     if err != nil {
         return fmt.Errorf("parse data: %w", err)
     }
-    
+
     if err := save(result); err != nil {
         return fmt.Errorf("save: %w", err)
     }
-    
+
     return nil
 }
 
@@ -1076,3 +1076,11 @@ logger.Error("error message")
 
 - [Effective Go](https://go.dev/doc/effective_go)
 - [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-build|Go: сборка и развертывание]]
+- [[go-collections|Go: коллекции]]

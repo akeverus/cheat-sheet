@@ -17,7 +17,7 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [Apache Commons Math - Frequency](https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/stat/Frequency.html)
+- [Apache Commons Math — Frequency](https://commons.apache.org/proper/commons-math/javadocs/api-3.6.1/org/apache/commons/math3/stat/Frequency.html)
 - [XChart Library](https://github.com/knowm/XChart) — графики
 
 ### См. также
@@ -70,23 +70,23 @@ import org.apache.commons.math3.stat.Frequency;
 import java.util.*;
 
 public class FrequencyHistogramExample {
-    
+
     public static void main(String[] args) {
         List<Integer> datasetList = Arrays.asList(
-            36, 25, 38, 46, 55, 68, 72, 55, 36, 38, 
+            36, 25, 38, 46, 55, 68, 72, 55, 36, 38,
             67, 45, 22, 48, 91, 46, 52, 61, 58, 55
         );
-        
+
         Frequency frequency = new Frequency();
         datasetList.forEach(d -> frequency.addValue(Double.parseDouble(d.toString())));
-        
+
         // Получаем частоту каждого значения
         datasetList.stream()
             .map(d -> Double.parseDouble(d.toString()))
             .distinct()
             .forEach(observation -> {
                 long observationFrequency = frequency.getCount(observation);
-                System.out.println("Возраст " + observation + 
+                System.out.println("Возраст " + observation +
                     ": частота = " + observationFrequency);
             });
     }
@@ -102,7 +102,7 @@ public class AgeGroupHistogram {
     private static final int CLASS_WIDTH = 10;
     private Map<String, Long> distributionMap = new LinkedHashMap<>();
     private Set<Double> processedObservations = new HashSet<>();
-    
+
     public void createHistogram(List<Integer> datasetList, Frequency frequency) {
         datasetList.stream()
             .map(d -> Double.parseDouble(d.toString()))
@@ -111,34 +111,34 @@ public class AgeGroupHistogram {
                 if (processedObservations.contains(observation)) {
                     return;
                 }
-                
+
                 long observationFrequency = frequency.getCount(observation);
-                
+
                 int upperBoundary = (observation > CLASS_WIDTH)
                     ? Math.multiplyExact(
-                        (int) Math.ceil(observation / CLASS_WIDTH), 
+                        (int) Math.ceil(observation / CLASS_WIDTH),
                         CLASS_WIDTH)
                     : CLASS_WIDTH;
-                
+
                 int lowerBoundary = (upperBoundary > CLASS_WIDTH)
                     ? Math.subtractExact(upperBoundary, CLASS_WIDTH)
                     : 0;
-                
+
                 String bin = lowerBoundary + "-" + upperBoundary;
                 updateDistributionMap(lowerBoundary, bin, observationFrequency);
                 processedObservations.add(observation);
             });
     }
-    
+
     private void updateDistributionMap(int lowerBoundary, String bin, long observationFrequency) {
         if (distributionMap.containsKey(bin)) {
-            distributionMap.put(bin, 
+            distributionMap.put(bin,
                 distributionMap.get(bin) + observationFrequency);
         } else {
             distributionMap.put(bin, observationFrequency);
         }
     }
-    
+
     public Map<String, Long> getDistributionMap() {
         return distributionMap;
     }
@@ -154,7 +154,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class HistogramVisualization {
-    
+
     public void displayHistogram(Map<String, Long> distributionMap) {
         CategoryChart chart = new CategoryChartBuilder()
             .width(800)
@@ -163,16 +163,16 @@ public class HistogramVisualization {
             .xAxisTitle("Возрастная группа")
             .yAxisTitle("Частота")
             .build();
-        
+
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setAvailableSpaceFill(0.99);
         chart.getStyler().setOverlapped(true);
-        
+
         List<Long> yData = new ArrayList<>(distributionMap.values());
         List<String> xData = new ArrayList<>(distributionMap.keySet());
-        
+
         chart.addSeries("возрастная группа", xData, yData);
-        
+
         new SwingWrapper<>(chart).displayChart();
     }
 }
@@ -189,38 +189,38 @@ import java.util.*;
 
 public class CompleteHistogramExample {
     private static final int CLASS_WIDTH = 10;
-    
+
     public static void main(String[] args) {
         // Исходные данные
         List<Integer> datasetList = Arrays.asList(
-            36, 25, 38, 46, 55, 68, 72, 55, 36, 38, 
+            36, 25, 38, 46, 55, 68, 72, 55, 36, 38,
             67, 45, 22, 48, 91, 46, 52, 61, 58, 55
         );
-        
+
         // Создаем объект Frequency
         Frequency frequency = new Frequency();
         datasetList.forEach(d -> frequency.addValue(d.doubleValue()));
-        
+
         // Группируем данные
         Map<String, Long> distributionMap = groupData(datasetList, frequency);
-        
+
         // Отображаем гистограмму
         displayHistogram(distributionMap);
-        
+
         // Выводим статистику
         printStatistics(frequency, datasetList);
     }
-    
+
     private static Map<String, Long> groupData(List<Integer> datasetList, Frequency frequency) {
         Map<String, Long> distributionMap = new LinkedHashMap<>();
         Set<Double> processed = new HashSet<>();
-        
+
         for (Integer value : datasetList) {
             double observation = value.doubleValue();
             if (processed.contains(observation)) {
                 continue;
             }
-            
+
             long observationFrequency = frequency.getCount(observation);
             int upperBoundary = (observation > CLASS_WIDTH)
                 ? (int) (Math.ceil(observation / CLASS_WIDTH) * CLASS_WIDTH)
@@ -228,15 +228,15 @@ public class CompleteHistogramExample {
             int lowerBoundary = (upperBoundary > CLASS_WIDTH)
                 ? upperBoundary - CLASS_WIDTH
                 : 0;
-            
+
             String bin = lowerBoundary + "-" + upperBoundary;
             distributionMap.merge(bin, observationFrequency, Long::sum);
             processed.add(observation);
         }
-        
+
         return distributionMap;
     }
-    
+
     private static void displayHistogram(Map<String, Long> distributionMap) {
         CategoryChart chart = new CategoryChartBuilder()
             .width(800)
@@ -245,35 +245,35 @@ public class CompleteHistogramExample {
             .xAxisTitle("Возрастная группа")
             .yAxisTitle("Частота")
             .build();
-        
+
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setAvailableSpaceFill(0.99);
         chart.getStyler().setOverlapped(true);
-        
+
         List<Long> yData = new ArrayList<>(distributionMap.values());
         List<String> xData = new ArrayList<>(distributionMap.keySet());
-        
+
         chart.addSeries("возрастная группа", xData, yData);
-        
+
         new SwingWrapper<>(chart).displayChart();
     }
-    
+
     private static void printStatistics(Frequency frequency, List<Integer> datasetList) {
         System.out.println("\n=== Статистика ===");
         System.out.println("Общее количество наблюдений: " + datasetList.size());
-        System.out.println("Уникальных значений: " + 
+        System.out.println("Уникальных значений: " +
             datasetList.stream().distinct().count());
-        
+
         datasetList.stream()
             .mapToInt(Integer::intValue)
             .min()
             .ifPresent(min -> System.out.println("Минимальный возраст: " + min));
-        
+
         datasetList.stream()
             .mapToInt(Integer::intValue)
             .max()
             .ifPresent(max -> System.out.println("Максимальный возраст: " + max));
-        
+
         double mean = datasetList.stream()
             .mapToInt(Integer::intValue)
             .average()
@@ -297,10 +297,10 @@ fun main() {
         36, 25, 38, 46, 55, 68, 72, 55, 36, 38,
         67, 45, 22, 48, 91, 46, 52, 61, 58, 55
     )
-    
+
     val frequency = Frequency()
     datasetList.forEach { d -> frequency.addValue(d.toDouble()) }
-    
+
     // Получаем частоту каждого значения
     datasetList.distinct().forEach { observation ->
         val observationFrequency = frequency.getCount(observation.toDouble())
@@ -319,38 +319,38 @@ class AgeGroupHistogramK {
     private val CLASS_WIDTH = 10
     private val distributionMap = LinkedHashMap<String, Long>()
     private val processedObservations = mutableSetOf<Double>()
-    
+
     fun createHistogram(datasetList: List<Int>, frequency: Frequency) {
         datasetList.distinct().forEach { observation ->
             val obs = observation.toDouble()
             if (processedObservations.contains(obs)) {
                 return@forEach
             }
-            
+
             val observationFrequency = frequency.getCount(obs)
-            
+
             val upperBoundary = if (obs > CLASS_WIDTH) {
                 (Math.ceil(obs / CLASS_WIDTH) * CLASS_WIDTH).toInt()
             } else {
                 CLASS_WIDTH
             }
-            
+
             val lowerBoundary = if (upperBoundary > CLASS_WIDTH) {
                 upperBoundary - CLASS_WIDTH
             } else {
                 0
             }
-            
+
             val bin = "$lowerBoundary-$upperBoundary"
             updateDistributionMap(lowerBoundary, bin, observationFrequency)
             processedObservations.add(obs)
         }
     }
-    
+
     private fun updateDistributionMap(lowerBoundary: Int, bin: String, observationFrequency: Long) {
         distributionMap[bin] = distributionMap.getOrDefault(bin, 0L) + observationFrequency
     }
-    
+
     fun getDistributionMap(): Map<String, Long> = distributionMap
 }
 ```
@@ -372,16 +372,16 @@ class HistogramVisualizationK {
             .xAxisTitle("Возрастная группа")
             .yAxisTitle("Частота")
             .build()
-        
+
         chart.styler.legendPosition = Styler.LegendPosition.InsideNW
         chart.styler.isAvailableSpaceFill = 0.99
         chart.styler.isOverlapped = true
-        
+
         val yData = distributionMap.values.toList()
         val xData = distributionMap.keys.toList()
-        
+
         chart.addSeries("возрастная группа", xData, yData)
-        
+
         SwingUtilities.invokeLater {
             SwingWrapper(chart).displayChart()
         }

@@ -37,12 +37,12 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [**Scala** 3: **given** и **using**](#scala-3-given-и-using)
   - [**Implicit scope** и разрешение](#implicit-scope-и-разрешение)
   - [**Implicit classes** для **extension methods**](#implicit-classes-для-extension-methods)
-  - [**Type Classes** - расширенные примеры](#type-classes-расширенные-примеры)
+  - [**Type Classes** — расширенные примеры](#type-classes-расширенные-примеры)
   - [**Context Bounds**](#context-bounds)
-  - [**Implicit conversions** - когда использовать](#implicit-conversions-когда-использовать)
+  - [**Implicit conversions** — когда использовать](#implicit-conversions-когда-использовать)
   - [Практический пример: **Type class** для **JSON** сериализации](#практический-пример-type-class-для-json-сериализации)
   - [Практический пример: **Type class** для сравнения](#практический-пример-type-class-для-сравнения)
-  - [**Scala** 3: **given** и **using** - подробнее](#scala-3-given-и-using-подробнее)
+  - [**Scala** 3: **given** и **using** — подробнее](#scala-3-given-и-using-подробнее)
   - [**Scala** 3: **Extension Methods**](#scala-3-extension-methods)
   - [Избегание конфликтов **implicit**](#избегание-конфликтов-implicit)
   - [Практический пример: **Type class** для моноидов](#практический-пример-type-class-для-моноидов)
@@ -217,7 +217,7 @@ implicit class RichInt(val x: Int) extends AnyVal {
 3.times(println("Hello"))  // печатает "Hello" 3 раза
 ```
 
-### **Type Classes** - расширенные примеры
+### **Type Classes** — расширенные примеры
 
 **Type classes** обеспечивают полиморфизм без наследования:**
 
@@ -230,7 +230,7 @@ trait Serializer[A] {
 // Реализации для различных типов
 implicit val intSerializer: Serializer[Int] = (a: Int) => a.toString
 implicit val stringSerializer: Serializer[String] = (a: String) => s""""$a""""
-implicit def listSerializer[A: Serializer]: Serializer[List[A]] = 
+implicit def listSerializer[A: Serializer]: Serializer[List[A]] =
   (list: List[A]) => list.map(implicitly[Serializer[A]].serialize).mkString("[", ",", "]")
 
 // Функция, использующая type class
@@ -246,7 +246,7 @@ serialize(List(1, 2, 3))  // "[1,2,3]"
 
 ### **Context Bounds**
 
-**Context bounds** - синтаксический сахар для **implicit** параметров:**
+**Context bounds** — синтаксический сахар для **implicit** параметров:**
 
 ```scala
 // Обычный синтаксис
@@ -262,7 +262,7 @@ def serialize[A: Serializer](a: A): String = {
 // Оба эквивалентны, но context bound более лаконичен
 ```
 
-### **Implicit conversions** - когда использовать
+### **Implicit conversions** — когда использовать
 
 **Implicit conversions** следует использовать осторожно:**
 
@@ -324,7 +324,7 @@ max(5, 3)  // 5
 max("apple", "banana")  // "banana"
 ```
 
-### **Scala** 3: **given** и **using** - подробнее
+### **Scala** 3: **given** и **using** — подробнее
 
 **В **Scala** 3 **implicit** заменены на более явный синтаксис:**
 
@@ -616,7 +616,7 @@ extension (s: String) {
   def reverseWords: String = {
     s.split(" ").reverse.mkString(" ")
   }
-  
+
   def isEmail: Boolean = {
     s.contains("@") && s.contains(".")
   }
@@ -637,7 +637,7 @@ implicit class RichString(s: String) {
       case _: NumberFormatException => None
     }
   }
-  
+
   def toDoubleOption: Option[Double] = {
     try Some(s.toDouble) catch {
       case _: NumberFormatException => None
@@ -676,7 +676,7 @@ implicit class RichString(s: String) {
       case _: NumberFormatException => None
     }
   }
-  
+
   def isEmail: Boolean = s.contains("@")
 }
 
@@ -696,7 +696,7 @@ extension (s: String)
       case _: NumberFormatException => None
     }
   }
-  
+
   def isEmail: Boolean = s.contains("@")
 
 // Использование

@@ -52,7 +52,7 @@ import java.util.LinkedList;
 import java.util.Optional;
 
 public class MiddleElementFinder {
-    
+
     public static Optional<String> findMiddleElementLinkedList(
             LinkedList<String> linkedList) {
         if (linkedList == null || linkedList.isEmpty()) {
@@ -93,28 +93,28 @@ Node<E> node(int index) {
 public static class Node {
     private Node next;
     private String data;
-    
+
     public Node(String data) {
         this.data = data;
         this.next = null;
     }
-    
+
     public boolean hasNext() {
         return next != null;
     }
-    
+
     public Node next() {
         return next;
     }
-    
+
     public void setNext(Node next) {
         this.next = next;
     }
-    
+
     public String data() {
         return data;
     }
-    
+
     @Override
     public String toString() {
         return this.data;
@@ -127,13 +127,13 @@ public static class Node {
 private static Node createNodesList(int n) {
     Node head = new Node("1");
     Node current = head;
-    
+
     for (int i = 2; i <= n; i++) {
         Node newNode = new Node(String.valueOf(i));
         current.setNext(newNode);
         current = newNode;
     }
-    
+
     return head;
 }
 ```
@@ -146,20 +146,20 @@ public static Optional<String> findMiddleElementFromHead(Node head) {
     if (head == null) {
         return Optional.empty();
     }
-    
+
     Node current = head;
     int size = 1;
-    
+
     while (current.hasNext()) {
         current = current.next();
         size++;
     }
-    
+
     current = head;
     for (int i = 0; i < (size - 1) / 2; i++) {
         current = current.next();
     }
-    
+
     return Optional.of(current.data());
 }
 ```
@@ -170,15 +170,15 @@ public static Optional<String> findMiddleElementFromHead1PassIteratively(Node he
     if (head == null) {
         return Optional.empty();
     }
-    
+
     Node slowPointer = head;
     Node fastPointer = head;
-    
+
     while (fastPointer.hasNext() && fastPointer.next().hasNext()) {
         fastPointer = fastPointer.next().next();
         slowPointer = slowPointer.next();
     }
-    
+
     return Optional.ofNullable(slowPointer.data());
 }
 ```
@@ -188,7 +188,7 @@ public static Optional<String> findMiddleElementFromHead1PassIteratively(Node he
 void whenFindingMiddleFromHead1PassIteratively_thenMiddleFound() {
     assertEquals("3", MiddleElementLookup
         .findMiddleElementFromHead1PassIteratively(createNodesList(5)).get());
-    
+
     assertEquals("2", MiddleElementLookup
         .findMiddleElementFromHead1PassIteratively(createNodesList(4)).get());
 }
@@ -212,14 +212,14 @@ private static void findMiddleRecursively(Node node, MiddleAuxRecursion middleAu
         middleAux.length = middleAux.length / 2;
         return;
     }
-    
+
     middleAux.length++;
     findMiddleRecursively(node.next(), middleAux);
-    
+
     if (middleAux.length == 0) {
         middleAux.middle = node;
     }
-    
+
     middleAux.length--;
 }
 ```
@@ -229,10 +229,10 @@ public static Optional<String> findMiddleElementFromHead1PassRecursively(Node he
     if (head == null) {
         return Optional.empty();
     }
-    
+
     MiddleAuxRecursion middleAux = new MiddleAuxRecursion();
     findMiddleRecursively(head, middleAux);
-    
+
     return Optional.of(middleAux.middle.data());
 }
 ```
@@ -242,7 +242,7 @@ public static Optional<String> findMiddleElementFromHead1PassRecursively(Node he
 void whenFindingMiddleFromHead1PassRecursively_thenMiddleFound() {
     assertEquals("3", MiddleElementLookup
         .findMiddleElementFromHead1PassRecursively(createNodesList(5)).get());
-    
+
     assertEquals("2", MiddleElementLookup
         .findMiddleElementFromHead1PassRecursively(createNodesList(4)).get());
 }
@@ -254,115 +254,115 @@ void whenFindingMiddleFromHead1PassRecursively_thenMiddleFound() {
 import java.util.Optional;
 
 public class MiddleElementLookup {
-    
+
     public static class Node {
         private Node next;
         private String data;
-        
+
         public Node(String data) {
             this.data = data;
             this.next = null;
         }
-        
+
         public boolean hasNext() {
             return next != null;
         }
-        
+
         public Node next() {
             return next;
         }
-        
+
         public void setNext(Node next) {
             this.next = next;
         }
-        
+
         public String data() {
             return data;
         }
     }
-    
+
     // Метод с двумя проходами
     public static Optional<String> findMiddleElementFromHead(Node head) {
         if (head == null) {
             return Optional.empty();
         }
-        
+
         Node current = head;
         int size = 1;
-        
+
         while (current.hasNext()) {
             current = current.next();
             size++;
         }
-        
+
         current = head;
         for (int i = 0; i < (size - 1) / 2; i++) {
             current = current.next();
         }
-        
+
         return Optional.of(current.data());
     }
-    
+
     // Метод с одним проходом (итеративный)
     public static Optional<String> findMiddleElementFromHead1PassIteratively(Node head) {
         if (head == null) {
             return Optional.empty();
         }
-        
+
         Node slowPointer = head;
         Node fastPointer = head;
-        
+
         while (fastPointer.hasNext() && fastPointer.next().hasNext()) {
             fastPointer = fastPointer.next().next();
             slowPointer = slowPointer.next();
         }
-        
+
         return Optional.ofNullable(slowPointer.data());
     }
-    
+
     // Метод с одним проходом (рекурсивный)
     private static class MiddleAuxRecursion {
         Node middle;
         int length = 0;
     }
-    
+
     public static Optional<String> findMiddleElementFromHead1PassRecursively(Node head) {
         if (head == null) {
             return Optional.empty();
         }
-        
+
         MiddleAuxRecursion middleAux = new MiddleAuxRecursion();
         findMiddleRecursively(head, middleAux);
-        
+
         return Optional.of(middleAux.middle.data());
     }
-    
+
     private static void findMiddleRecursively(Node node, MiddleAuxRecursion middleAux) {
         if (node == null) {
             middleAux.length = middleAux.length / 2;
             return;
         }
-        
+
         middleAux.length++;
         findMiddleRecursively(node.next(), middleAux);
-        
+
         if (middleAux.length == 0) {
             middleAux.middle = node;
         }
-        
+
         middleAux.length--;
     }
-    
+
     private static Node createNodesList(int n) {
         Node head = new Node("1");
         Node current = head;
-        
+
         for (int i = 2; i <= n; i++) {
             Node newNode = new Node(String.valueOf(i));
             current.setNext(newNode);
             current = newNode;
         }
-        
+
         return head;
     }
 }
@@ -392,7 +392,7 @@ public class MiddleElementLookup {
 // Узел: data и next
 class NodeK(val data: String) {
     var next: NodeK? = null
-    
+
     fun hasNext(): Boolean = next != null
 }
 ```
@@ -415,15 +415,15 @@ fun findMiddleElementFromHead1PassIterativelyK(head: NodeK?): String? {
     if (head == null) {
         return null
     }
-    
+
     var slowPointer: NodeK? = head
     var fastPointer: NodeK? = head
-    
+
     while (fastPointer?.hasNext() == true && fastPointer.next?.hasNext() == true) {
         fastPointer = fastPointer.next?.next
         slowPointer = slowPointer?.next
     }
-    
+
     return slowPointer?.data
 }
 ```
@@ -440,10 +440,10 @@ fun findMiddleElementFromHead1PassRecursivelyK(head: NodeK?): String? {
     if (head == null) {
         return null
     }
-    
+
     val middleAux = MiddleAuxRecursionK()
     findMiddleRecursivelyK(head, middleAux)
-    
+
     return middleAux.middle?.data
 }
 
@@ -452,14 +452,14 @@ private fun findMiddleRecursivelyK(node: NodeK?, middleAux: MiddleAuxRecursionK)
         middleAux.length = middleAux.length / 2
         return
     }
-    
+
     middleAux.length++
     findMiddleRecursivelyK(node.next, middleAux)
-    
+
     if (middleAux.length == 0) {
         middleAux.middle = node
     }
-    
+
     middleAux.length--
 }
 ```
@@ -469,16 +469,16 @@ private fun findMiddleRecursivelyK(node: NodeK?, middleAux: MiddleAuxRecursionK)
 ```kotlin
 fun createNodesListK(n: Int): NodeK? {
     if (n < 1) return null
-    
+
     val head = NodeK("1")
     var current = head
-    
+
     for (i in 2..n) {
         val newNode = NodeK(i.toString())
         current.next = newNode
         current = newNode
     }
-    
+
     return head
 }
 ```

@@ -17,9 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-kafka.md"]
 ---
 
-# Micronaut: Serialization - JSON, XML и Custom Serializers
-
-
+# Micronaut: Serialization — JSON, XML и Custom Serializers
 
 ## Полезные ссылки
 
@@ -28,7 +26,7 @@ related: ["micronaut-http.md", "micronaut-kafka.md"]
 
 ## Содержание
 
-- [Micronaut: Serialization - JSON, XML и Custom Serializers](#micronaut-serialization-json-xml-и-custom-serializers)
+- [Micronaut: Serialization — JSON, XML и Custom Serializers](#micronaut-serialization-json-xml-и-custom-serializers)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Serialization](#настройка-serialization)
@@ -110,12 +108,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class User {
     @JsonProperty("user_id")
     private Long id;
-    
+
     private String name;
-    
+
     @JsonIgnore
     private String password;
-    
+
     // Getters and setters
 }
 ```
@@ -129,9 +127,9 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
 public class UserSerializer extends JsonSerializer<User> {
-    
+
     @Override
-    public void serialize(User user, JsonGenerator gen, SerializerProvider serializers) 
+    public void serialize(User user, JsonGenerator gen, SerializerProvider serializers)
             throws IOException {
         gen.writeStartObject();
         gen.writeNumberField("id", user.getId());
@@ -152,13 +150,13 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 @JacksonXmlRootElement(localName = "user")
 public class User {
-    
+
     @JacksonXmlProperty(isAttribute = true)
     private Long id;
-    
+
     @JacksonXmlProperty(localName = "user_name")
     private String name;
-    
+
     // Getters and setters
 }
 ```
@@ -174,7 +172,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomSerializerModule {
-    
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -223,19 +221,19 @@ import com.fasterxml.jackson.annotation.JsonView;
 public class User {
     public interface Public {}
     public interface Internal extends Public {}
-    
+
     @JsonView(Public.class)
     private Long id;
-    
+
     @JsonView(Public.class)
     private String name;
-    
+
     @JsonView(Internal.class)
     private String email;
-    
+
     @JsonView(Internal.class)
     private String password;
-    
+
     // Getters and setters
 }
 ```
@@ -249,7 +247,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 @Controller("/api/users")
 public class UserController {
     private final ObjectMapper objectMapper;
-    
+
     @Get("/{id}")
     public String getUser(Long id) {
         User user = userService.findById(id);
@@ -270,10 +268,10 @@ import java.time.LocalDateTime;
 public class User {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-    
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthDate;
-    
+
     // Getters and setters
 }
 ```
@@ -289,9 +287,9 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import java.io.IOException;
 
 public class UserDeserializer extends JsonDeserializer<User> {
-    
+
     @Override
-    public User deserialize(JsonParser p, DeserializationContext ctxt) 
+    public User deserialize(JsonParser p, DeserializationContext ctxt)
             throws IOException {
         JsonNode node = p.getCodec().readTree(p);
         User user = new User();
@@ -331,7 +329,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomSerializationModule extends SimpleModule {
-    
+
     public CustomSerializationModule() {
         addSerializer(User.class, new UserSerializer());
         addDeserializer(User.class, new UserDeserializer());
@@ -351,3 +349,11 @@ public class CustomSerializationModule extends SimpleModule {
 - [Gson Documentation](https://github.com/google/gson/blob/master/UserGuide.md)
 - [Jackson Annotations](https://github.com/FasterXML/jackson-annotations/wiki)
 - [Jackson Modules](https://github.com/FasterXML/jackson-modules-base)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

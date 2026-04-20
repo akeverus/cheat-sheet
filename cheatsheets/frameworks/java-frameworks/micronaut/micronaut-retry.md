@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-cloud.md"]
 ---
 
-# Micronaut: Retry - Retry Logic и Circuit Breaker
-
-
+# Micronaut: Retry — Retry Logic и Circuit Breaker
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 
 ## Содержание
 
-- [Micronaut: Retry - Retry Logic и Circuit Breaker](#micronaut-retry-retry-logic-и-circuit-breaker)
+- [Micronaut: Retry — Retry Logic и Circuit Breaker](#micronaut-retry-retry-logic-и-circuit-breaker)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Retry](#настройка-retry)
@@ -102,7 +100,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class RetryableService {
-    
+
     @Retryable(attempts = "3", delay = "1s")
     public User getUser(Long id) {
         return userRepository.findById(id)
@@ -116,7 +114,7 @@ public class RetryableService {
 ```java
 @Singleton
 public class ExponentialBackoffService {
-    
+
     @Retryable(
         attempts = "5",
         delay = "1s",
@@ -140,7 +138,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CircuitBreakerService {
-    
+
     @CircuitBreaker(
         attempts = "3",
         delay = "1s",
@@ -163,14 +161,14 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class FallbackService {
-    
+
     @Retryable(attempts = "3")
     @Fallback(fallbackMethod = "getUserFallback")
     public User getUser(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     public User getUserFallback(Long id) {
         // Fallback логика
         return new User("Default", "default@example.com");
@@ -189,13 +187,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomRetryPolicy implements RetryPolicy {
-    
+
     @Override
     public boolean canRetry(RetryState retryState) {
         return retryState.getAttemptCount() < 5 &&
                !(retryState.getLastError() instanceof IllegalArgumentException);
     }
-    
+
     @Override
     public Duration getDelay(RetryState retryState) {
         return Duration.ofSeconds((long) Math.pow(2, retryState.getAttemptCount()));
@@ -264,7 +262,7 @@ micronaut:
     maxDelay = "30s"
 )
 public class ConfiguredRetryService {
-    
+
     public void processData() {
         // Операция с настроенным retry
         externalService.call();
@@ -285,7 +283,7 @@ import jakarta.inject.Singleton;
 public class RetryMetricsService {
     private final Counter retryCounter;
     private final Counter failureCounter;
-    
+
     public RetryMetricsService(MeterRegistry meterRegistry) {
         this.retryCounter = Counter.builder("retry.attempts")
             .description("Number of retry attempts")
@@ -294,11 +292,11 @@ public class RetryMetricsService {
             .description("Number of retry failures")
             .register(meterRegistry);
     }
-    
+
     public void recordRetry() {
         retryCounter.increment();
     }
-    
+
     public void recordFailure() {
         failureCounter.increment();
     }
@@ -315,7 +313,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ConditionalRetryService {
-    
+
     @Retryable(
         attempts = "3",
         delay = "1s",
@@ -328,7 +326,7 @@ public class ConditionalRetryService {
 }
 
 public class RetryablePredicate implements Predicate<Throwable> {
-    
+
     @Override
     public boolean test(Throwable throwable) {
         // Retry только для определенных исключений
@@ -349,15 +347,15 @@ import jakarta.inject.Singleton;
 @Singleton
 public class CircuitBreakerStateService {
     private final CircuitBreaker circuitBreaker;
-    
+
     public CircuitBreakerStateService(CircuitBreaker circuitBreaker) {
         this.circuitBreaker = circuitBreaker;
     }
-    
+
     public CircuitBreaker.State getState() {
         return circuitBreaker.getState();
     }
-    
+
     public void reset() {
         circuitBreaker.reset();
     }
@@ -375,3 +373,11 @@ public class CircuitBreakerStateService {
 - [**Circuit Breaker** Pattern](https://martinfowler.com/bliki/CircuitBreaker.html)
 - [**Resilience4j** Documentation](https://resilience4j.readme.io/)
 - [Retry Patterns](https://docs.aws.amazon.com/general/latest/gr/api-retries.html)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 **Java Streams API** и функциональное программирование предоставляют мощные инструменты для работы с коллекциями данных. Этот документ охватывает **Stream API**, лямбда-выражения, функциональные интерфейсы, **Optional** и современные паттерны функционального программирования в **Java**.
 
-
-
 ## Полезные ссылки
 - [Java Stream API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html)
 - [Functional Programming in Java](https://www.baeldung.com/java-functional-programming)
@@ -1419,16 +1417,16 @@ public class StreamPerformanceDemo {
 
 ## Частые вопросы
 
-**Когда использовать Stream, а когда обычный цикл?**  
+**Когда использовать Stream, а когда обычный цикл?**
 `Stream` удобен для декларативных преобразований и композиции; цикл обычно лучше в критичном по производительности участке.
 
-**`map()` и `flatMap()` — в чём ключевая разница?**  
+**`map()` и `flatMap()` — в чём ключевая разница?**
 `map()` возвращает элемент того же уровня, `flatMap()` разворачивает вложенные структуры (например, `List<List<T>>` -> `List<T>`).
 
-**Стоит ли использовать `parallelStream()` по умолчанию?**  
+**Стоит ли использовать `parallelStream()` по умолчанию?**
 Нет. Его включают только после измерений на реальном workload и при отсутствии side effects в pipeline.
 
-**`reduce()` или `collect()`?**  
+**`reduce()` или `collect()`?**
 `reduce()` — для свёртки в одно значение, `collect()` — для построения структур (списки, мапы, группировки).
 ## См. также
 - [[java-exceptions|Java Exceptions]] — обработка исключений

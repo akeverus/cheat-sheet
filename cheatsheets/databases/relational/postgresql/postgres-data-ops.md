@@ -14,21 +14,19 @@ updated: "2026-02-11"
 
 Кратко: базовые примеры **INSERT**/**SELECT**/**WHERE**/**UPDATE**/**DELETE** для быстрого старта.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [`PostgreSQL Documentation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
-### **Baeldung**
+### Обучающие материалы
 
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [`postgres-queries`](postgres-queries.md) — [`postgres-structure`](postgres-structure.md).
+См. также: [[postgres-queries]] — [[postgres-structure]].
 
 ## Содержание
 
@@ -160,7 +158,7 @@ COPY authors(name, city)
 FROM '/path/authors.csv' WITH (FORMAT csv, HEADER true);
 ```
 - **Через **psql**:**
-```
+```text
 \copy authors(name, city) FROM 'authors.csv' CSV HEADER
 ```
 - Для **JSON**/бинарных форматов можно использовать `**PROGRAM**` или `**STDIN**`.
@@ -759,4 +757,10 @@ COMMIT;
 7. **Избегайте долгих транзакций** — делайте операции пакетами.
 8. **Используйте COPY** для массовых вставок вместо множественных **INSERT**.
 
+## См. также
 
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]
+- [[postgres-extensions|PostgreSQL: Расширения]]

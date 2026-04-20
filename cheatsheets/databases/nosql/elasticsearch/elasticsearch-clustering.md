@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Кластеризация - Управление кластером и масштабирование
+# **Elasticsearch**: Кластеризация — Управление кластером и масштабирование
 
 Комплексное руководство по развертыванию и управлению кластерами **Elasticsearch**: топологии, репликация, балансировка нагрузки, отказоустойчивость и масштабирование.
 
@@ -2313,6 +2313,6 @@ curl -X GET "localhost:9200/_nodes/stats/indices/search?pretty"
 - ✅ **elasticsearch-clustering.md** (**завершен**)
 - 🔄 **elasticsearch-performance.md**
 
-Последний файл - **elasticsearch-performance.md**! 🚀
+Последний файл — **elasticsearch-performance.md**! 🚀
 
 

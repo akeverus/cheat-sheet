@@ -140,7 +140,7 @@ public class Order {
     private OrderStatus status;
     private List<OrderLine> orderLines;
     private Money totalAmount;
-    
+
     // Методы используют термины домена
     public void confirm() {
         if (status != OrderStatus.DRAFT) {
@@ -149,7 +149,7 @@ public class Order {
         this.status = OrderStatus.CONFIRMED;
         DomainEventPublisher.publish(new OrderConfirmedEvent(orderId));
     }
-    
+
     public void cancel() {
         if (status == OrderStatus.SHIPPED) {
             throw new OrderCannotBeCancelledException("Shipped orders cannot be cancelled");
@@ -173,7 +173,7 @@ public class Order {
     private CustomerId customerId;
     private List<OrderItem> items;
     private OrderStatus status;
-    
+
     public void confirm() {
         // Логика подтверждения заказа
     }
@@ -185,7 +185,7 @@ public class Shipment {
     private OrderReference orderRef; // Ссылка на заказ из другого контекста
     private Address deliveryAddress;
     private ShippingStatus status;
-    
+
     public void ship() {
         // Логика отправки
     }
@@ -197,7 +197,7 @@ public class Invoice {
     private OrderReference orderRef;
     private Money amount;
     private InvoiceStatus status;
-    
+
     public void issue() {
         // Логика выставления счета
     }
@@ -218,7 +218,7 @@ public class Money {
 // Order Management зависит от Customer Management
 public class Order {
     private CustomerId customerId; // Из контекста Customer Management
-    
+
     public void create(CustomerId customerId) {
         // Валидация через Customer Management контекст
         if (!customerService.exists(customerId)) {
@@ -231,12 +231,12 @@ public class Order {
 // Anticorruption Layer - защита от изменений в другом контексте
 public class CustomerAdapter {
     private final CustomerManagementClient client;
-    
+
     public CustomerInfo getCustomerInfo(CustomerId id) {
         CustomerDTO dto = client.getCustomer(id.getValue());
         return toCustomerInfo(dto); // Преобразование в доменную модель
     }
-    
+
     private CustomerInfo toCustomerInfo(CustomerDTO dto) {
         // Адаптация внешней модели к внутренней
         return new CustomerInfo(
@@ -260,24 +260,24 @@ public class CustomerAdapter {
 public class Order {
     @Id
     private OrderId id; // Уникальный идентификатор
-    
+
     private CustomerId customerId;
     private OrderStatus status;
     private List<OrderLine> orderLines;
-    
+
     // Entity может изменяться
     public void addItem(ProductId productId, Quantity quantity) {
         OrderLine line = new OrderLine(productId, quantity);
         this.orderLines.add(line);
     }
-    
+
     public void confirm() {
         if (this.status != OrderStatus.DRAFT) {
             throw new IllegalStateException("Only draft orders can be confirmed");
         }
         this.status = OrderStatus.CONFIRMED;
     }
-    
+
     // Равенство определяется по идентификатору
     @Override
     public boolean equals(Object o) {
@@ -286,7 +286,7 @@ public class Order {
         Order order = (Order) o;
         return Objects.equals(id, order.id);
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(id);
@@ -296,22 +296,22 @@ public class Order {
 // Value Object для идентификатора
 public class OrderId {
     private final String value;
-    
+
     private OrderId(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Order ID cannot be null or blank");
         }
         this.value = value;
     }
-    
+
     public static OrderId of(String value) {
         return new OrderId(value);
     }
-    
+
     public String getValue() {
         return value;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -319,7 +319,7 @@ public class OrderId {
         OrderId orderId = (OrderId) o;
         return Objects.equals(value, orderId.value);
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(value);
@@ -336,7 +336,7 @@ public class OrderId {
 public class Money {
     private final BigDecimal amount;
     private final Currency currency;
-    
+
     public Money(BigDecimal amount, Currency currency) {
         if (amount == null) {
             throw new IllegalArgumentException("Amount cannot be null");
@@ -350,25 +350,25 @@ public class Money {
         this.amount = amount.setScale(2, RoundingMode.HALF_UP);
         this.currency = currency;
     }
-    
+
     public Money add(Money other) {
         if (!this.currency.equals(other.currency)) {
             throw new IllegalArgumentException("Cannot add money with different currencies");
         }
         return new Money(this.amount.add(other.amount), this.currency);
     }
-    
+
     public Money multiply(BigDecimal multiplier) {
         return new Money(this.amount.multiply(multiplier), this.currency);
     }
-    
+
     public boolean isGreaterThan(Money other) {
         if (!this.currency.equals(other.currency)) {
             throw new IllegalArgumentException("Cannot compare money with different currencies");
         }
         return this.amount.compareTo(other.amount) > 0;
     }
-    
+
     // Value Objects сравниваются по значениям
     @Override
     public boolean equals(Object o) {
@@ -377,7 +377,7 @@ public class Money {
         Money money = (Money) o;
         return Objects.equals(amount, money.amount) && currency == money.currency;
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(amount, currency);
@@ -390,31 +390,31 @@ public class Address {
     private final String city;
     private final String postalCode;
     private final String country;
-    
+
     public Address(String street, String city, String postalCode, String country) {
         this.street = validateStreet(street);
         this.city = validateCity(city);
         this.postalCode = validatePostalCode(postalCode);
         this.country = validateCountry(country);
     }
-    
+
     private String validateStreet(String street) {
         if (street == null || street.isBlank()) {
             throw new IllegalArgumentException("Street cannot be null or blank");
         }
         return street;
     }
-    
+
     // Address неизменяем, создается новый объект при изменении
     public Address withStreet(String newStreet) {
         return new Address(newStreet, this.city, this.postalCode, this.country);
     }
-    
+
     // Getters
     public String getStreet() {
         return street;
     }
-    
+
     // ...
 }
 ```
@@ -438,7 +438,7 @@ public class Order {
     private OrderStatus status;
     private List<OrderLine> orderLines; // Часть агрегата
     private Money totalAmount;
-    
+
     // Единственная точка доступа
     public static Order create(CustomerId customerId) {
         Order order = new Order();
@@ -449,27 +449,27 @@ public class Order {
         order.totalAmount = Money.zero(Currency.USD);
         return order;
     }
-    
+
     // Изменение агрегата только через методы Aggregate Root
     public void addItem(ProductId productId, Quantity quantity, Money unitPrice) {
         if (status != OrderStatus.DRAFT) {
             throw new IllegalStateException("Cannot add items to non-draft order");
         }
-        
+
         OrderLine line = new OrderLine(productId, quantity, unitPrice);
         orderLines.add(line);
         recalculateTotal();
     }
-    
+
     public void removeItem(OrderLineId lineId) {
         if (status != OrderStatus.DRAFT) {
             throw new IllegalStateException("Cannot remove items from non-draft order");
         }
-        
+
         orderLines.removeIf(line -> line.getId().equals(lineId));
         recalculateTotal();
     }
-    
+
     public void confirm() {
         if (status != OrderStatus.DRAFT) {
             throw new IllegalStateException("Only draft orders can be confirmed");
@@ -477,11 +477,11 @@ public class Order {
         if (orderLines.isEmpty()) {
             throw new IllegalStateException("Cannot confirm empty order");
         }
-        
+
         this.status = OrderStatus.CONFIRMED;
         DomainEventPublisher.publish(new OrderConfirmedEvent(id, customerId));
     }
-    
+
     private void recalculateTotal() {
         Money total = Money.zero(Currency.USD);
         for (OrderLine line : orderLines) {
@@ -489,25 +489,25 @@ public class Order {
         }
         this.totalAmount = total;
     }
-    
+
     // Доступ к внутренним объектам только через Aggregate Root
     public List<OrderLine> getOrderLines() {
         return Collections.unmodifiableList(orderLines);
     }
-    
+
     // Getters для чтения
     public OrderId getId() {
         return id;
     }
-    
+
     public CustomerId getCustomerId() {
         return customerId;
     }
-    
+
     public OrderStatus getStatus() {
         return status;
     }
-    
+
     public Money getTotalAmount() {
         return totalAmount;
     }
@@ -519,27 +519,27 @@ public class OrderLine {
     private ProductId productId; // Ссылка на другой агрегат через ID
     private Quantity quantity;
     private Money unitPrice;
-    
+
     public OrderLine(ProductId productId, Quantity quantity, Money unitPrice) {
         this.id = OrderLineId.generate();
         this.productId = productId;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
     }
-    
+
     public Money getSubtotal() {
         return unitPrice.multiply(quantity.getValue());
     }
-    
+
     // Getters
     public OrderLineId getId() {
         return id;
     }
-    
+
     public ProductId getProductId() {
         return productId;
     }
-    
+
     public Quantity getQuantity() {
         return quantity;
     }
@@ -553,29 +553,29 @@ public class OrderLine {
 ```java
 // Domain Service: Transfer Service
 public class MoneyTransferService {
-    
+
     private final AccountRepository accountRepository;
-    
+
     public void transfer(AccountId fromAccountId, AccountId toAccountId, Money amount) {
         Account fromAccount = accountRepository.findById(fromAccountId)
             .orElseThrow(() -> new AccountNotFoundException(fromAccountId));
-        
+
         Account toAccount = accountRepository.findById(toAccountId)
             .orElseThrow(() -> new AccountNotFoundException(toAccountId));
-        
+
         // Бизнес-правила перевода
         if (fromAccount.getBalance().isLessThan(amount)) {
             throw new InsufficientFundsException();
         }
-        
+
         if (fromAccount.getCurrency() != toAccount.getCurrency()) {
             throw new CurrencyMismatchException();
         }
-        
+
         // Выполнение перевода
         fromAccount.withdraw(amount);
         toAccount.deposit(amount);
-        
+
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
     }
@@ -583,32 +583,32 @@ public class MoneyTransferService {
 
 // Domain Service: Pricing Service
 public class PricingService {
-    
+
     private final ProductRepository productRepository;
     private final DiscountRepository discountRepository;
-    
+
     public Money calculatePrice(Order order) {
         Money total = Money.zero(Currency.USD);
-        
+
         for (OrderLine line : order.getOrderLines()) {
             Product product = productRepository.findById(line.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(line.getProductId()));
-            
+
             Money linePrice = product.getPrice().multiply(line.getQuantity().getValue());
-            
+
             // Применение скидок
             List<Discount> discounts = discountRepository.findApplicableDiscounts(
                 order.getCustomerId(),
                 line.getProductId()
             );
-            
+
             for (Discount discount : discounts) {
                 linePrice = discount.apply(linePrice);
             }
-            
+
             total = total.add(linePrice);
         }
-        
+
         return total;
     }
 }
@@ -631,17 +631,17 @@ public interface OrderRepository {
 // Реализация Repository в инфраструктурном слое
 @Repository
 public class JpaOrderRepository implements OrderRepository {
-    
+
     private final OrderJpaRepository jpaRepository;
     private final OrderMapper mapper;
-    
+
     @Override
     public Order findById(OrderId id) {
         OrderEntity entity = jpaRepository.findById(id.getValue())
             .orElseThrow(() -> new OrderNotFoundException(id));
         return mapper.toDomain(entity);
     }
-    
+
     @Override
     public List<Order> findByCustomerId(CustomerId customerId) {
         List<OrderEntity> entities = jpaRepository.findByCustomerId(customerId.getValue());
@@ -649,14 +649,14 @@ public class JpaOrderRepository implements OrderRepository {
             .map(mapper::toDomain)
             .collect(Collectors.toList());
     }
-    
+
     @Override
     @Transactional
     public void save(Order order) {
         OrderEntity entity = mapper.toEntity(order);
         jpaRepository.save(entity);
     }
-    
+
     @Override
     @Transactional
     public void delete(OrderId id) {
@@ -678,10 +678,10 @@ public class OrderEntity {
     private String id;
     private String customerId;
     private String status;
-    
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderLineEntity> orderLines;
-    
+
     // Getters and setters
 }
 ```
@@ -693,38 +693,38 @@ public class OrderEntity {
 ```java
 // Factory для создания Order
 public class OrderFactory {
-    
+
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
-    
+
     public Order createOrder(CreateOrderCommand command) {
         // Валидация
         Customer customer = customerRepository.findById(command.getCustomerId())
             .orElseThrow(() -> new CustomerNotFoundException(command.getCustomerId()));
-        
+
         if (!customer.isActive()) {
             throw new CustomerNotActiveException(customer.getId());
         }
-        
+
         // Создание агрегата
         Order order = Order.create(customer.getId());
-        
+
         // Добавление позиций
         for (CreateOrderLineCommand lineCommand : command.getLines()) {
             Product product = productRepository.findById(lineCommand.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(lineCommand.getProductId()));
-            
+
             if (!product.isAvailable()) {
                 throw new ProductNotAvailableException(product.getId());
             }
-            
+
             order.addItem(
                 product.getId(),
                 Quantity.of(lineCommand.getQuantity()),
                 product.getPrice()
             );
         }
-        
+
         return order;
     }
 }
@@ -732,10 +732,10 @@ public class OrderFactory {
 // Использование Factory
 @Service
 public class OrderApplicationService {
-    
+
     private final OrderFactory orderFactory;
     private final OrderRepository orderRepository;
-    
+
     @Transactional
     public OrderId createOrder(CreateOrderCommand command) {
         Order order = orderFactory.createOrder(command);
@@ -755,21 +755,21 @@ public abstract class DomainEvent {
     private final String eventId;
     private final Instant occurredOn;
     private final String eventType;
-    
+
     protected DomainEvent(String eventType) {
         this.eventId = UUID.randomUUID().toString();
         this.occurredOn = Instant.now();
         this.eventType = eventType;
     }
-    
+
     public String getEventId() {
         return eventId;
     }
-    
+
     public Instant getOccurredOn() {
         return occurredOn;
     }
-    
+
     public String getEventType() {
         return eventType;
     }
@@ -779,33 +779,33 @@ public class OrderConfirmedEvent extends DomainEvent {
     private final OrderId orderId;
     private final CustomerId customerId;
     private final Money totalAmount;
-    
+
     public OrderConfirmedEvent(OrderId orderId, CustomerId customerId, Money totalAmount) {
         super("OrderConfirmed");
         this.orderId = orderId;
         this.customerId = customerId;
         this.totalAmount = totalAmount;
     }
-    
+
     // Getters
 }
 
 // Публикация событий из Aggregate
 public class Order {
     private final List<DomainEvent> domainEvents = new ArrayList<>();
-    
+
     public void confirm() {
         // Изменение состояния
         this.status = OrderStatus.CONFIRMED;
-        
+
         // Публикация события
         domainEvents.add(new OrderConfirmedEvent(id, customerId, totalAmount));
     }
-    
+
     public List<DomainEvent> getDomainEvents() {
         return new ArrayList<>(domainEvents);
     }
-    
+
     public void clearDomainEvents() {
         domainEvents.clear();
     }
@@ -814,14 +814,14 @@ public class Order {
 // Domain Event Publisher
 public class DomainEventPublisher {
     private static final ThreadLocal<List<DomainEventHandler>> handlers = new ThreadLocal<>();
-    
+
     public static void publish(DomainEvent event) {
         List<DomainEventHandler> eventHandlers = handlers.get();
         if (eventHandlers != null) {
             eventHandlers.forEach(handler -> handler.handle(event));
         }
     }
-    
+
     public static void registerHandler(DomainEventHandler handler) {
         handlers.get().add(handler);
     }
@@ -836,43 +836,43 @@ public class DomainEventPublisher {
 @Service
 @Transactional
 public class OrderApplicationService {
-    
+
     private final OrderRepository orderRepository;
     private final OrderFactory orderFactory;
     private final DomainEventPublisher eventPublisher;
-    
+
     public OrderId createOrder(CreateOrderCommand command) {
         // Создание агрегата через Factory
         Order order = orderFactory.createOrder(command);
-        
+
         // Сохранение
         orderRepository.save(order);
-        
+
         // Публикация событий
         order.getDomainEvents().forEach(eventPublisher::publish);
         order.clearDomainEvents();
-        
+
         return order.getId();
     }
-    
+
     public void confirmOrder(OrderId orderId) {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new OrderNotFoundException(orderId));
-        
+
         // Делегирование доменной логике
         order.confirm();
-        
+
         orderRepository.save(order);
-        
+
         // Публикация событий
         order.getDomainEvents().forEach(eventPublisher::publish);
         order.clearDomainEvents();
     }
-    
+
     public OrderView getOrder(OrderId orderId) {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new OrderNotFoundException(orderId));
-        
+
         return OrderView.from(order);
     }
 }
@@ -892,23 +892,23 @@ public class JpaOrderRepository implements OrderRepository {
 // Infrastructure: External Service Adapter
 @Component
 public class PaymentGatewayAdapter implements PaymentGateway {
-    
+
     private final RestTemplate restTemplate;
     private final PaymentGatewayConfig config;
-    
+
     @Override
     public PaymentResult processPayment(PaymentRequest request) {
         PaymentGatewayRequest gatewayRequest = toGatewayRequest(request);
-        
+
         ResponseEntity<PaymentGatewayResponse> response = restTemplate.postForEntity(
             config.getUrl() + "/payments",
             gatewayRequest,
             PaymentGatewayResponse.class
         );
-        
+
         return toPaymentResult(response.getBody());
     }
-    
+
     private PaymentGatewayRequest toGatewayRequest(PaymentRequest request) {
         // Адаптация доменной модели к внешнему API
         return new PaymentGatewayRequest(
@@ -922,14 +922,14 @@ public class PaymentGatewayAdapter implements PaymentGateway {
 // Infrastructure: Email Service
 @Component
 public class SmtpEmailService implements EmailService {
-    
+
     private final JavaMailSender mailSender;
-    
+
     @Override
     public void sendEmail(Email email) {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message);
-        
+
         try {
             helper.setTo(email.getRecipient());
             helper.setSubject(email.getSubject());
@@ -979,9 +979,9 @@ public class Application {
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    
+
     private final OrderApplicationService orderService;
-    
+
     @PostMapping
     public ResponseEntity<OrderId> createOrder(@RequestBody CreateOrderRequest request) {
         CreateOrderCommand command = CreateOrderCommand.builder()
@@ -993,17 +993,17 @@ public class OrderController {
                     .build())
                 .collect(Collectors.toList()))
             .build();
-        
+
         OrderId orderId = orderService.createOrder(command);
         return ResponseEntity.ok(orderId);
     }
-    
+
     @PostMapping("/{id}/confirm")
     public ResponseEntity<Void> confirmOrder(@PathVariable String id) {
         orderService.confirmOrder(OrderId.of(id));
         return ResponseEntity.ok().build();
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<OrderView> getOrder(@PathVariable String id) {
         OrderView order = orderService.getOrder(OrderId.of(id));
@@ -1028,7 +1028,7 @@ public class Order {
 public class Order {
     private OrderId id;
     private OrderStatus status;
-    
+
     public void confirm() {
         // Логика в доменной модели
         if (status != OrderStatus.DRAFT) {
@@ -1067,7 +1067,7 @@ public class Order {
         if (quantity.getValue() <= 0) {
             throw new IllegalArgumentException("Quantity must be positive");
         }
-        
+
         // Добавление позиции
         orderLines.add(new OrderLine(productId, quantity));
     }

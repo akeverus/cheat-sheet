@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-security.md"]
 ---
 
-# Quarkus: Data Access - Hibernate ORM, Panache и Repositories
-
-
+# Quarkus: Data Access — Hibernate ORM, Panache и Repositories
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-security.md"]
 
 ## Содержание
 
-- [Quarkus: Data Access - Hibernate ORM, Panache и Repositories](#quarkus-data-access-hibernate-orm-panache-и-repositories)
+- [Quarkus: Data Access — Hibernate ORM, Panache и Repositories](#quarkus-data-access-hibernate-orm-panache-и-repositories)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Hibernate ORM](#hibernate-orm)
@@ -130,10 +128,10 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     private String name;
     private String email;
-    
+
     // Getters and setters
 }
 ```
@@ -149,11 +147,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class UserService {
     @Inject
     EntityManager entityManager;
-    
+
     public User findById(Long id) {
         return entityManager.find(User.class, id);
     }
-    
+
     public void save(User user) {
         entityManager.persist(user);
     }
@@ -172,7 +170,7 @@ import jakarta.persistence.Entity;
 public class User extends PanacheEntity {
     public String name;
     public String email;
-    
+
     // Автоматически наследует методы: findById, findAll, persist, delete и др.
 }
 ```
@@ -185,11 +183,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserRepository implements PanacheRepository<User> {
-    
+
     public List<User> findByName(String name) {
         return find("name", name).list();
     }
-    
+
     public Optional<User> findByEmail(String email) {
         return find("email", email).firstResultOptional();
     }
@@ -206,13 +204,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class TransactionalService {
-    
+
     @Transactional
     public User createUser(User user) {
         user.persist();
         return user;
     }
-    
+
     @Transactional(rollbackOn = Exception.class)
     public void updateUser(Long id, User user) {
         User existing = User.findById(id);
@@ -261,19 +259,19 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserRepository implements PanacheRepository<User> {
-    
+
     public List<User> findByName(String name) {
         return find("name", name).list();
     }
-    
+
     public Optional<User> findByEmail(String email) {
         return find("email", email).firstResultOptional();
     }
-    
+
     public List<User> findByAgeBetween(Integer minAge, Integer maxAge) {
         return find("age between ?1 and ?2", minAge, maxAge).list();
     }
-    
+
     public long countByStatus(String status) {
         return count("status", status);
     }
@@ -285,11 +283,11 @@ public class UserRepository implements PanacheRepository<User> {
 ```java
 @ApplicationScoped
 public class UserRepository implements PanacheRepository<User> {
-    
+
     public List<User> findActiveUsers() {
         return find("status = 'ACTIVE'").list();
     }
-    
+
     public List<User> findUsersWithOrders() {
         return find("SELECT u FROM User u JOIN u.orders o").list();
     }
@@ -310,7 +308,7 @@ import java.util.List;
 public class User extends PanacheEntity {
     public String name;
     public String email;
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     public List<Order> orders;
 }
@@ -325,7 +323,7 @@ import jakarta.persistence.ManyToOne;
 @Entity
 public class Order extends PanacheEntity {
     public String orderNumber;
-    
+
     @ManyToOne
     public User user;
 }
@@ -364,7 +362,7 @@ import jakarta.persistence.Entity;
 public class User extends PanacheEntity {
     public String name;
     public String email;
-    
+
     public static Uni<User> findByNameReactive(String name) {
         return find("name", name).firstResult();
     }
@@ -383,7 +381,7 @@ public class User extends PanacheEntity {
     public String name;
     public String email;
     public Integer age;
-    
+
     // Автоматически генерируются методы:
     // findByName, findByEmail, findByAge, etc.
 }
@@ -396,15 +394,15 @@ public class User extends PanacheEntity {
 ```java
 @ApplicationScoped
 public class UserRepository implements PanacheRepository<User> {
-    
+
     public List<User> findActiveUsers() {
         return find("status = 'ACTIVE'").list();
     }
-    
+
     public List<User> findUsersByAgeRange(Integer minAge, Integer maxAge) {
         return find("age between ?1 and ?2", minAge, maxAge).list();
     }
-    
+
     public Optional<User> findByEmailAndStatus(String email, String status) {
         return find("email = ?1 and status = ?2", email, status)
             .firstResultOptional();
@@ -419,7 +417,7 @@ public class UserRepository implements PanacheRepository<User> {
 ```java
 @ApplicationScoped
 public class UserRepository implements PanacheRepository<User> {
-    
+
     public List<User> findUsersWithNativeQuery() {
         return find("#User.findActive").list();
     }
@@ -442,7 +440,7 @@ public class UserRepository implements PanacheRepository<User> {
 @Entity
 public class User extends PanacheEntity {
     public String name;
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<Order> orders = new ArrayList<>();
 }
@@ -450,7 +448,7 @@ public class User extends PanacheEntity {
 @Entity
 public class Order extends PanacheEntity {
     public String orderNumber;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     public User user;
@@ -463,7 +461,7 @@ public class Order extends PanacheEntity {
 @Entity
 public class User extends PanacheEntity {
     public String name;
-    
+
     @ManyToMany
     @JoinTable(
         name = "user_role",
@@ -476,7 +474,7 @@ public class User extends PanacheEntity {
 @Entity
 public class Role extends PanacheEntity {
     public String name;
-    
+
     @ManyToMany(mappedBy = "roles")
     public List<User> users = new ArrayList<>();
 }
@@ -488,10 +486,10 @@ public class Role extends PanacheEntity {
 @Entity
 public class User extends PanacheEntity {
     public String name;
-    
+
     @OneToMany(fetch = FetchType.EAGER)  // Загружается сразу
     public List<Order> orders;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)  // Загружается по требованию
     public Organization organization;
 }
@@ -509,7 +507,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class TransactionalService {
-    
+
     @Transactional
     public void createUserWithOrders(User user, List<Order> orders) {
         user.persist();
@@ -518,7 +516,7 @@ public class TransactionalService {
             order.persist();
         });
     }
-    
+
     @Transactional(rollbackOn = Exception.class)
     public void updateUser(Long id, User user) {
         User existing = User.findById(id);
@@ -538,22 +536,22 @@ public class TransactionalService {
 ```java
 @ApplicationScoped
 public class TransactionalService {
-    
+
     @Transactional(Transactional.TxType.REQUIRED)  // По умолчанию
     public void method1() {
         // Использует существующую транзакцию или создает новую
     }
-    
+
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void method2() {
         // Всегда создает новую транзакцию
     }
-    
+
     @Transactional(Transactional.TxType.MANDATORY)
     public void method3() {
         // Требует существующую транзакцию
     }
-    
+
     @Transactional(Transactional.TxType.NEVER)
     public void method4() {
         // Не должен выполняться в транзакции
@@ -605,7 +603,7 @@ quarkus.flyway.baseline-on-migrate=true
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
-    
+
     <changeSet id="1" author="developer">
         <createTable tableName="users">
             <column name="id" type="BIGSERIAL">
@@ -638,13 +636,13 @@ quarkus.liquibase.change-log=db/changelog/db.changelog-master.xml
 ```java
 @ApplicationScoped
 public class OptimizedRepository implements PanacheRepository<User> {
-    
+
     // Использование JOIN FETCH для избежания N+1 проблемы
     public List<User> findUsersWithOrders() {
         return find("SELECT DISTINCT u FROM User u JOIN FETCH u.orders")
             .list();
     }
-    
+
     // Использование проекций для уменьшения объема данных
     public List<UserSummary> findUserSummaries() {
         return find("SELECT new UserSummary(u.id, u.name) FROM User u")
@@ -660,7 +658,7 @@ public class OptimizedRepository implements PanacheRepository<User> {
 ```java
 @ApplicationScoped
 public class BatchService {
-    
+
     @Transactional
     public void batchInsert(List<User> users) {
         int batchSize = 50;
@@ -710,16 +708,16 @@ import java.sql.ResultSet;
 
 @ApplicationScoped
 public class JdbcService {
-    
+
     @Inject
     DataSource dataSource;
-    
+
     public List<User> findAllUsers() throws SQLException {
         List<User> users = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users");
              ResultSet rs = stmt.executeQuery()) {
-            
+
             while (rs.next()) {
                 User user = new User();
                 user.id = rs.getLong("id");
@@ -747,10 +745,10 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ReactiveJdbcService {
-    
+
     @Inject
     PgPool client;
-    
+
     public Uni<List<User>> findAllUsersReactive() {
         return client.query("SELECT * FROM users")
             .execute()
@@ -822,11 +820,11 @@ import javax.sql.DataSource;
 
 @ApplicationScoped
 public class MultiDataSourceService {
-    
+
     @Inject
     @Named("default")
     DataSource primaryDataSource;
-    
+
     @Inject
     @Named("secondary")
     DataSource secondaryDataSource;
@@ -842,7 +840,7 @@ public class MultiDataSourceService {
 ```java
 @ApplicationScoped
 public class CommandService {
-    
+
     @Transactional
     public void createUser(CreateUserCommand command) {
         User user = new User();
@@ -854,7 +852,7 @@ public class CommandService {
 
 @ApplicationScoped
 public class QueryService {
-    
+
     public List<UserDTO> findUsers(UserQuery query) {
         return User.find("name like ?1", "%" + query.getName() + "%")
             .stream()
@@ -873,15 +871,15 @@ public class QueryService {
 public class User extends PanacheEntity {
     public String name;
     public String email;
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     public List<UserEvent> events = new ArrayList<>();
-    
+
     public void applyEvent(UserEvent event) {
         events.add(event);
         apply(event);
     }
-    
+
     private void apply(UserEvent event) {
         if (event instanceof UserCreatedEvent) {
             this.name = ((UserCreatedEvent) event).getName();
@@ -909,7 +907,7 @@ quarkus.hibernate-orm.cache.use-query-cache=true
 ```java
 @ApplicationScoped
 public class BatchProcessingService {
-    
+
     @Transactional
     public void batchInsert(List<User> users) {
         int batchSize = 50;
@@ -933,15 +931,15 @@ public class BatchProcessingService {
 ```java
 @ApplicationScoped
 public class UserSpecification {
-    
+
     public static Specification<User> hasName(String name) {
         return (root, query, cb) -> cb.equal(root.get("name"), name);
     }
-    
+
     public static Specification<User> hasEmail(String email) {
         return (root, query, cb) -> cb.equal(root.get("email"), email);
     }
-    
+
     public static Specification<User> isActive() {
         return (root, query, cb) -> cb.isTrue(root.get("active"));
     }
@@ -955,10 +953,10 @@ public class UserSpecification {
 ```java
 @ApplicationScoped
 public class UnitOfWorkService {
-    
+
     @Inject
     EntityManager entityManager;
-    
+
     @Transactional
     public void executeUnitOfWork(Runnable work) {
         try {
@@ -979,15 +977,15 @@ public class UnitOfWorkService {
 ```java
 @ApplicationScoped
 public class ShardingService {
-    
+
     @Inject
     @Named("shard1")
     EntityManager shard1;
-    
+
     @Inject
     @Named("shard2")
     EntityManager shard2;
-    
+
     public EntityManager getShard(Long userId) {
         return userId % 2 == 0 ? shard1 : shard2;
     }
@@ -1003,10 +1001,10 @@ public class ShardingService {
 ```java
 @ApplicationScoped
 public class ConnectionPoolMonitor {
-    
+
     @Inject
     DataSource dataSource;
-    
+
     public PoolStats getPoolStats() {
         if (dataSource instanceof HikariDataSource) {
             HikariDataSource hikari = (HikariDataSource) dataSource;
@@ -1039,10 +1037,10 @@ quarkus.datasource.jdbc.leak-detection-interval=60s
 ```java
 @ApplicationScoped
 public class QueryAnalyzer {
-    
+
     @Inject
     EntityManager entityManager;
-    
+
     public void analyzeQuery(String query) {
         Query jpaQuery = entityManager.createQuery(query);
         // Включение статистики
@@ -1050,9 +1048,9 @@ public class QueryAnalyzer {
             .unwrap(SessionFactory.class)
             .getStatistics();
         stats.setStatisticsEnabled(true);
-        
+
         jpaQuery.getResultList();
-        
+
         // Анализ статистики
         long queryCount = stats.getQueryExecutionCount();
         long queryTime = stats.getQueryExecutionMaxTime();
@@ -1067,7 +1065,7 @@ public class QueryAnalyzer {
 ```java
 @Entity
 public class User extends PanacheEntity {
-    
+
     @OneToMany(fetch = FetchType.LAZY)
     @BatchSize(size = 20)
     public List<Order> orders;
@@ -1083,13 +1081,13 @@ public class User extends PanacheEntity {
 ```java
 @ApplicationScoped
 public class NestedTransactionService {
-    
+
     @Transactional
     public void outerTransaction() {
         // Внешняя транзакция
         innerTransaction();
     }
-    
+
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void innerTransaction() {
         // Новая транзакция
@@ -1104,7 +1102,7 @@ public class NestedTransactionService {
 ```java
 @ApplicationScoped
 public class TimedTransactionService {
-    
+
     @Transactional(timeout = 30)
     public void longRunningOperation() {
         // Операция с таймаутом 30 секунд
@@ -1125,3 +1123,11 @@ public class TimedTransactionService {
 - [Flyway Documentation](https://flywaydb.org/documentation/)
 - [Liquibase Documentation](https://docs.liquibase.com/)
 - [**HikariCP** Documentation](https://github.com/brettwooldridge/HikariCP#documentation)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

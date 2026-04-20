@@ -65,29 +65,29 @@ import info.debatty.java.lsh.LSHMinHash;
 import java.util.Arrays;
 
 public class LSHExample {
-    
+
     public static void main(String[] args) {
         // Предположим, что векторы представляют документы
         // true означает наличие слова/признака, false - отсутствие
         boolean[] vector1 = new boolean[] {true, true, true, true, true};
         boolean[] vector2 = new boolean[] {false, false, false, true, false};
         boolean[] vector3 = new boolean[] {false, false, true, true, false};
-        
+
         // Обратите внимание: vector1 сильно отличается от vector2 и vector3
         // vector2 и vector3 очень похожи друг на друга
-        
+
         // Создаем экземпляр LSHMinHash
         int sizeOfVectors = 5;
         int numberOfBuckets = 10;
         int stages = 4;
-        
+
         LSHMinHash lsh = new LSHMinHash(stages, numberOfBuckets, sizeOfVectors);
-        
+
         // Вычисляем хеши
         int[] firstHash = lsh.hash(vector1);
         int[] secondHash = lsh.hash(vector2);
         int[] thirdHash = lsh.hash(vector3);
-        
+
         System.out.println("Hash для vector1: " + Arrays.toString(firstHash));
         System.out.println("Hash для vector2: " + Arrays.toString(secondHash));
         System.out.println("Hash для vector3: " + Arrays.toString(thirdHash));
@@ -112,46 +112,46 @@ import info.debatty.java.lsh.LSHMinHash;
 import java.util.*;
 
 public class DocumentSimilaritySearch {
-    
+
     private LSHMinHash lsh;
     private Map<String, boolean[]> documents;
     private Map<String, int[]> documentHashes;
-    
+
     public DocumentSimilaritySearch(int vectorSize, int buckets, int stages) {
         this.lsh = new LSHMinHash(stages, buckets, vectorSize);
         this.documents = new HashMap<>();
         this.documentHashes = new HashMap<>();
     }
-    
+
     public void addDocument(String docId, boolean[] vector) {
         documents.put(docId, vector);
         documentHashes.put(docId, lsh.hash(vector));
     }
-    
+
     public List<String> findSimilarDocuments(String queryDocId, int threshold) {
         if (!documentHashes.containsKey(queryDocId)) {
             return Collections.emptyList();
         }
-        
+
         int[] queryHash = documentHashes.get(queryDocId);
         List<String> similarDocs = new ArrayList<>();
-        
+
         for (Map.Entry<String, int[]> entry : documentHashes.entrySet()) {
             if (entry.getKey().equals(queryDocId)) {
                 continue;
             }
-            
+
             int[] docHash = entry.getValue();
             int matchingBuckets = countMatchingBuckets(queryHash, docHash);
-            
+
             if (matchingBuckets >= threshold) {
                 similarDocs.add(entry.getKey());
             }
         }
-        
+
         return similarDocs;
     }
-    
+
     private int countMatchingBuckets(int[] hash1, int[] hash2) {
         int matches = 0;
         for (int i = 0; i < hash1.length; i++) {
@@ -161,17 +161,17 @@ public class DocumentSimilaritySearch {
         }
         return matches;
     }
-    
+
     public static void main(String[] args) {
         // Создаем систему поиска похожих документов
         DocumentSimilaritySearch search = new DocumentSimilaritySearch(5, 10, 4);
-        
+
         // Добавляем документы
         search.addDocument("doc1", new boolean[] {true, true, true, true, true});
         search.addDocument("doc2", new boolean[] {false, false, false, true, false});
         search.addDocument("doc3", new boolean[] {false, false, true, true, false});
         search.addDocument("doc4", new boolean[] {true, true, false, false, false});
-        
+
         // Ищем похожие документы
         List<String> similar = search.findSimilarDocuments("doc2", 2);
         System.out.println("Документы, похожие на doc2: " + similar);
@@ -222,19 +222,19 @@ fun main() {
     val vector1 = booleanArrayOf(true, true, true, true, true)
     val vector2 = booleanArrayOf(false, false, false, true, false)
     val vector3 = booleanArrayOf(false, false, true, true, false)
-    
+
     // Создаем экземпляр LSHMinHash
     val sizeOfVectors = 5
     val numberOfBuckets = 10
     val stages = 4
-    
+
     val lsh = LSHMinHash(stages, numberOfBuckets, sizeOfVectors)
-    
+
     // Вычисляем хеши
     val firstHash = lsh.hash(vector1)
     val secondHash = lsh.hash(vector2)
     val thirdHash = lsh.hash(vector3)
-    
+
     println("Hash для vector1: ${firstHash.contentToString()}")
     println("Hash для vector2: ${secondHash.contentToString()}")
     println("Hash для vector3: ${thirdHash.contentToString()}")
@@ -253,28 +253,28 @@ class DocumentSimilaritySearchK(
     private val lsh: LSHMinHash = LSHMinHash(stages, buckets, vectorSize)
     private val documents = mutableMapOf<String, BooleanArray>()
     private val documentHashes = mutableMapOf<String, IntArray>()
-    
+
     fun addDocument(docId: String, vector: BooleanArray) {
         documents[docId] = vector
         documentHashes[docId] = lsh.hash(vector)
     }
-    
+
     fun findSimilarDocuments(queryDocId: String, threshold: Int): List<String> {
         val queryHash = documentHashes[queryDocId] ?: return emptyList()
         val similarDocs = mutableListOf<String>()
-        
+
         for ((docId, docHash) in documentHashes) {
             if (docId == queryDocId) continue
-            
+
             val matchingBuckets = countMatchingBuckets(queryHash, docHash)
             if (matchingBuckets >= threshold) {
                 similarDocs.add(docId)
             }
         }
-        
+
         return similarDocs
     }
-    
+
     private fun countMatchingBuckets(hash1: IntArray, hash2: IntArray): Int {
         var matches = 0
         for (i in hash1.indices) {
@@ -288,12 +288,12 @@ class DocumentSimilaritySearchK(
 
 fun main() {
     val search = DocumentSimilaritySearchK(5, 10, 4)
-    
+
     search.addDocument("doc1", booleanArrayOf(true, true, true, true, true))
     search.addDocument("doc2", booleanArrayOf(false, false, false, true, false))
     search.addDocument("doc3", booleanArrayOf(false, false, true, true, false))
     search.addDocument("doc4", booleanArrayOf(true, true, false, false, false))
-    
+
     val similar = search.findSimilarDocuments("doc2", 2)
     println("Документы, похожие на doc2: $similar")
 }

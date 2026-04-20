@@ -16,8 +16,6 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 
 # Spring State Machine: Полное руководство по state machines
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -136,7 +134,7 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 @Configuration
 @EnableStateMachine
 public class StateMachineConfig extends StateMachineConfigurerAdapter<String, String> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<String, String> states) throws Exception {
         states
@@ -144,7 +142,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<String, St
             .initial("SI")
             .states(EnumSet.allOf(States.class));
     }
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<String, String> transitions) throws Exception {
         transitions
@@ -173,7 +171,7 @@ public enum Events {
 @Configuration
 @EnableStateMachine
 public class EnumStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -192,7 +190,7 @@ public class EnumStateMachineConfig extends StateMachineConfigurerAdapter<States
 @Configuration
 @EnableStateMachine
 public class HierarchicalStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -217,7 +215,7 @@ public class HierarchicalStateMachineConfig extends StateMachineConfigurerAdapte
 @Configuration
 @EnableStateMachine
 public class TransitionConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -240,7 +238,7 @@ public class TransitionConfig extends StateMachineConfigurerAdapter<States, Even
 @Configuration
 @EnableStateMachine
 public class InternalTransitionConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -249,7 +247,7 @@ public class InternalTransitionConfig extends StateMachineConfigurerAdapter<Stat
             .event(Events.E1)
             .action(action());
     }
-    
+
     @Bean
     public Action<States, Events> action() {
         return context -> {
@@ -268,7 +266,7 @@ public class InternalTransitionConfig extends StateMachineConfigurerAdapter<Stat
 @Configuration
 @EnableStateMachine
 public class GuardConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -276,7 +274,7 @@ public class GuardConfig extends StateMachineConfigurerAdapter<States, Events> {
             .source(States.S1).target(States.S2).event(Events.E1)
             .guard(guard());
     }
-    
+
     @Bean
     public Guard<States, Events> guard() {
         return context -> {
@@ -296,7 +294,7 @@ public class GuardConfig extends StateMachineConfigurerAdapter<States, Events> {
 @Configuration
 @EnableStateMachine
 public class ActionConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -304,13 +302,13 @@ public class ActionConfig extends StateMachineConfigurerAdapter<States, Events> 
             .source(States.S1).target(States.S2).event(Events.E1)
             .action(action());
     }
-    
+
     @Bean
     public Action<States, Events> action() {
         return context -> {
             // Действие при переходе
-            log.info("Transition from {} to {}", 
-                context.getSource().getId(), 
+            log.info("Transition from {} to {}",
+                context.getSource().getId(),
                 context.getTarget().getId());
         };
     }
@@ -324,7 +322,7 @@ public class ActionConfig extends StateMachineConfigurerAdapter<States, Events> 
 @Configuration
 @EnableStateMachine
 public class EntryExitActionConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -333,14 +331,14 @@ public class EntryExitActionConfig extends StateMachineConfigurerAdapter<States,
             .state(States.S1, entryAction(), exitAction())
             .state(States.S2);
     }
-    
+
     @Bean
     public Action<States, Events> entryAction() {
         return context -> {
             log.info("Entering state: {}", context.getTarget().getId());
         };
     }
-    
+
     @Bean
     public Action<States, Events> exitAction() {
         return context -> {
@@ -357,22 +355,22 @@ public class EntryExitActionConfig extends StateMachineConfigurerAdapter<States,
 ```java
 @Service
 public class StateMachineService {
-    
+
     @Autowired
     private StateMachine<States, Events> stateMachine;
-    
+
     public void startMachine() {
         stateMachine.start();
     }
-    
+
     public void sendEvent(Events event) {
         stateMachine.sendEvent(event);
     }
-    
+
     public States getCurrentState() {
         return stateMachine.getState().getId();
     }
-    
+
     public void stopMachine() {
         stateMachine.stop();
     }
@@ -384,54 +382,54 @@ public class StateMachineService {
 ```java
 @Component
 public class StateMachineListener implements StateMachineListener<States, Events> {
-    
+
     @Override
     public void stateChanged(State<States, Events> from, State<States, Events> to) {
         log.info("State changed from {} to {}", from.getId(), to.getId());
     }
-    
+
     @Override
     public void stateEntered(State<States, Events> state) {
         log.info("Entered state: {}", state.getId());
     }
-    
+
     @Override
     public void stateExited(State<States, Events> state) {
         log.info("Exited state: {}", state.getId());
     }
-    
+
     @Override
     public void eventNotAccepted(Message<Events> event) {
         log.warn("Event not accepted: {}", event.getPayload());
     }
-    
+
     @Override
     public void transition(Transition<States, Events> transition) {
-        log.info("Transition: {} -> {}", 
-            transition.getSource().getId(), 
+        log.info("Transition: {} -> {}",
+            transition.getSource().getId(),
             transition.getTarget().getId());
     }
-    
+
     @Override
     public void transitionStarted(Transition<States, Events> transition) {
         log.info("Transition started");
     }
-    
+
     @Override
     public void transitionEnded(Transition<States, Events> transition) {
         log.info("Transition ended");
     }
-    
+
     @Override
     public void stateMachineStarted(StateMachine<States, Events> stateMachine) {
         log.info("State machine started");
     }
-    
+
     @Override
     public void stateMachineStopped(StateMachine<States, Events> stateMachine) {
         log.info("State machine stopped");
     }
-    
+
     @Override
     public void stateMachineError(StateMachine<States, Events> stateMachine, Exception exception) {
         log.error("State machine error", exception);
@@ -450,17 +448,17 @@ public class StateMachineEntity {
     private String machineId;
     private String state;
     private byte[] stateMachineContext;
-    
+
     // Getters and setters
 }
 
 @Configuration
 @EnableStateMachine
 public class PersistentStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Autowired
     private StateMachineRepository<States, Events> stateMachineRepository;
-    
+
     @Bean
     public StateMachinePersister<States, Events, String> stateMachinePersister() {
         return new DefaultStateMachinePersister<>(stateMachineRepository);
@@ -473,13 +471,13 @@ public class PersistentStateMachineConfig extends StateMachineConfigurerAdapter<
 ```java
 @Service
 public class PersistentStateMachineService {
-    
+
     @Autowired
     private StateMachine<States, Events> stateMachine;
-    
+
     @Autowired
     private StateMachinePersister<States, Events, String> persister;
-    
+
     public void saveStateMachine(String machineId) {
         try {
             persister.persist(stateMachine, machineId);
@@ -487,7 +485,7 @@ public class PersistentStateMachineService {
             log.error("Failed to persist state machine", e);
         }
     }
-    
+
     public void restoreStateMachine(String machineId) {
         try {
             persister.restore(stateMachine, machineId);
@@ -551,7 +549,7 @@ public void stateMachineError(StateMachine<States, Events> stateMachine, Excepti
 @Configuration
 @EnableStateMachine
 public class ChoiceStateConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -562,7 +560,7 @@ public class ChoiceStateConfig extends StateMachineConfigurerAdapter<States, Eve
             .state(States.S2)
             .state(States.S3);
     }
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -575,7 +573,7 @@ public class ChoiceStateConfig extends StateMachineConfigurerAdapter<States, Eve
             .then(States.S2, guard2())
             .last(States.S3);
     }
-    
+
     @Bean
     public Guard<States, Events> guard1() {
         return context -> {
@@ -583,7 +581,7 @@ public class ChoiceStateConfig extends StateMachineConfigurerAdapter<States, Eve
             return true;
         };
     }
-    
+
     @Bean
     public Guard<States, Events> guard2() {
         return context -> {
@@ -601,7 +599,7 @@ public class ChoiceStateConfig extends StateMachineConfigurerAdapter<States, Eve
 @Configuration
 @EnableStateMachine
 public class JunctionStateConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -612,7 +610,7 @@ public class JunctionStateConfig extends StateMachineConfigurerAdapter<States, E
             .state(States.S2)
             .state(States.S3);
     }
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -635,7 +633,7 @@ public class JunctionStateConfig extends StateMachineConfigurerAdapter<States, E
 @Configuration
 @EnableStateMachine
 public class ForkJoinConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -647,7 +645,7 @@ public class ForkJoinConfig extends StateMachineConfigurerAdapter<States, Events
             .state(States.S2)
             .state(States.S3);
     }
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -677,7 +675,7 @@ public class ForkJoinConfig extends StateMachineConfigurerAdapter<States, Events
 @Configuration
 @EnableStateMachine
 public class HistoryStateConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -691,7 +689,7 @@ public class HistoryStateConfig extends StateMachineConfigurerAdapter<States, Ev
             .state(States.S12)
             .history(States.S1HISTORY, HistoryStateType.DEEP);
     }
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -710,7 +708,7 @@ public class HistoryStateConfig extends StateMachineConfigurerAdapter<States, Ev
 @Configuration
 @EnableStateMachine
 public class ParallelRegionConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -738,30 +736,30 @@ public class ParallelRegionConfig extends StateMachineConfigurerAdapter<States, 
 ```java
 @Configuration
 public class StateMachineFactoryConfig {
-    
+
     @Bean
     public StateMachineFactory<States, Events> stateMachineFactory() {
         StateMachineBuilder.Builder<States, Events> builder = StateMachineBuilder.builder();
-        
+
         builder.configureStates()
             .withStates()
             .initial(States.SI)
             .states(EnumSet.allOf(States.class));
-        
+
         builder.configureTransitions()
             .withExternal()
             .source(States.SI).target(States.S1).event(Events.E1);
-        
+
         return new DefaultStateMachineFactory<>(builder.build());
     }
 }
 
 @Service
 public class StateMachineFactoryService {
-    
+
     @Autowired
     private StateMachineFactory<States, Events> stateMachineFactory;
-    
+
     public StateMachine<States, Events> createStateMachine() {
         return stateMachineFactory.getStateMachine();
     }
@@ -775,18 +773,18 @@ public class StateMachineFactoryService {
 ```java
 @SpringBootTest
 class StateMachineTest {
-    
+
     @Autowired
     private StateMachine<States, Events> stateMachine;
-    
+
     @Test
     void testStateMachine() {
         stateMachine.start();
         assertThat(stateMachine.getState().getId()).isEqualTo(States.SI);
-        
+
         stateMachine.sendEvent(Events.E1);
         assertThat(stateMachine.getState().getId()).isEqualTo(States.S1);
-        
+
         stateMachine.sendEvent(Events.E2);
         assertThat(stateMachine.getState().getId()).isEqualTo(States.S2);
     }
@@ -799,7 +797,7 @@ class StateMachineTest {
 
 ```java
 public enum OrderState {
-    CREATED, PAYMENT_PENDING, PAYMENT_RECEIVED, 
+    CREATED, PAYMENT_PENDING, PAYMENT_RECEIVED,
     PROCESSING, SHIPPED, DELIVERED, CANCELLED
 }
 
@@ -810,7 +808,7 @@ public enum OrderEvent {
 @Configuration
 @EnableStateMachine
 public class OrderStateMachineConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
         states
@@ -824,7 +822,7 @@ public class OrderStateMachineConfig extends StateMachineConfigurerAdapter<Order
             .end(OrderState.CANCELLED)
             .end(OrderState.DELIVERED);
     }
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
         transitions
@@ -866,7 +864,7 @@ public enum DocumentEvent {
 @Configuration
 @EnableStateMachine
 public class DocumentStateMachineConfig extends StateMachineConfigurerAdapter<DocumentState, DocumentEvent> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<DocumentState, DocumentEvent> states) throws Exception {
         states
@@ -878,7 +876,7 @@ public class DocumentStateMachineConfig extends StateMachineConfigurerAdapter<Do
             .state(DocumentState.PUBLISHED)
             .end(DocumentState.ARCHIVED);
     }
-    
+
     @Bean
     public Action<DocumentState, DocumentEvent> reviewAction() {
         return context -> {
@@ -896,7 +894,7 @@ public class DocumentStateMachineConfig extends StateMachineConfigurerAdapter<Do
 @Configuration
 @EnableStateMachine
 public class TimedStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -904,7 +902,7 @@ public class TimedStateMachineConfig extends StateMachineConfigurerAdapter<State
             .initial(States.SI)
             .state(States.S1, null, timeoutAction());
     }
-    
+
     @Bean
     public Action<States, Events> timeoutAction() {
         return context -> {
@@ -922,7 +920,7 @@ public class TimedStateMachineConfig extends StateMachineConfigurerAdapter<State
 @Configuration
 @EnableStateMachine
 public class ConditionalStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -948,7 +946,7 @@ public class ConditionalStateMachineConfig extends StateMachineConfigurerAdapter
 @Configuration
 @EnableStateMachine
 public class CompositeStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
@@ -979,7 +977,7 @@ public class CompositeStateMachineConfig extends StateMachineConfigurerAdapter<S
 @EnableStateMachine
 @EnableIntegration
 public class IntegrationStateMachineConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Bean
     public IntegrationFlow stateMachineFlow() {
         return IntegrationFlows.from("stateMachineChannel")
@@ -987,7 +985,7 @@ public class IntegrationStateMachineConfig extends StateMachineConfigurerAdapter
             .channel("outputChannel")
             .get();
     }
-    
+
     @Bean
     public StateMachineHandler stateMachineHandler() {
         return new StateMachineHandler();
@@ -1000,10 +998,10 @@ public class IntegrationStateMachineConfig extends StateMachineConfigurerAdapter
 ```java
 @Component
 public class BatchStateMachineProcessor implements ItemProcessor<Order, Order> {
-    
+
     @Autowired
     private StateMachine<OrderState, OrderEvent> stateMachine;
-    
+
     @Override
     public Order process(Order item) {
         stateMachine.start();
@@ -1021,21 +1019,21 @@ public class BatchStateMachineProcessor implements ItemProcessor<Order, Order> {
 ```java
 @Service
 public class StateMachineBuilderService {
-    
+
     public StateMachine<States, Events> buildStateMachine() {
         StateMachineBuilder.Builder<States, Events> builder = StateMachineBuilder.builder();
-        
+
         builder.configureConfiguration()
             .withConfiguration()
             .autoStartup(true)
             .listener(stateMachineListener());
-        
+
         builder.configureStates()
             .withStates()
             .initial(States.SI)
             .states(EnumSet.allOf(States.class))
             .end(States.SF);
-        
+
         builder.configureTransitions()
             .withExternal()
             .source(States.SI).target(States.S1).event(Events.E1)
@@ -1045,10 +1043,10 @@ public class StateMachineBuilderService {
             .source(States.S1).target(States.S2).event(Events.E2)
             .guard(guard1())
             .action(action2());
-        
+
         return builder.build();
     }
-    
+
     @Bean
     public StateMachineListener<States, Events> stateMachineListener() {
         return new StateMachineListenerAdapter<States, Events>() {
@@ -1066,24 +1064,24 @@ public class StateMachineBuilderService {
 ```java
 @Service
 public class ExtendedStateService {
-    
+
     @Autowired
     private StateMachine<States, Events> stateMachine;
-    
+
     public void setVariable(String key, Object value) {
         stateMachine.getExtendedState().getVariables().put(key, value);
     }
-    
+
     public <T> T getVariable(String key, Class<T> type) {
         return type.cast(stateMachine.getExtendedState().getVariables().get(key));
     }
-    
+
     public void processWithVariables() {
         setVariable("counter", 0);
         setVariable("data", new HashMap<>());
-        
+
         stateMachine.sendEvent(Events.E1);
-        
+
         Integer counter = getVariable("counter", Integer.class);
         Map<String, Object> data = getVariable("data", Map.class);
     }
@@ -1092,7 +1090,7 @@ public class ExtendedStateService {
 @Configuration
 @EnableStateMachine
 public class ExtendedStateConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineTransitionConfigurer<States, Events> transitions) throws Exception {
         transitions
@@ -1111,29 +1109,29 @@ public class ExtendedStateConfig extends StateMachineConfigurerAdapter<States, E
 ```java
 @Component
 public class StateMachineInterceptor implements StateMachineInterceptor<States, Events> {
-    
+
     @Override
     public Message<Events> preEvent(Message<Events> message, StateMachine<States, Events> stateMachine) {
         log.info("Pre-event: {}", message.getPayload());
         return message;
     }
-    
+
     @Override
     public StateContext<States, Events> preTransition(StateContext<States, Events> stateContext) {
-        log.info("Pre-transition: {} -> {}", 
-            stateContext.getSource().getId(), 
+        log.info("Pre-transition: {} -> {}",
+            stateContext.getSource().getId(),
             stateContext.getTarget().getId());
         return stateContext;
     }
-    
+
     @Override
     public StateContext<States, Events> postTransition(StateContext<States, Events> stateContext) {
-        log.info("Post-transition: {} -> {}", 
-            stateContext.getSource().getId(), 
+        log.info("Post-transition: {} -> {}",
+            stateContext.getSource().getId(),
             stateContext.getTarget().getId());
         return stateContext;
     }
-    
+
     @Override
     public Exception stateMachineError(StateMachine<States, Events> stateMachine, Exception exception) {
         log.error("State machine error", exception);
@@ -1149,16 +1147,16 @@ public class StateMachineInterceptor implements StateMachineInterceptor<States, 
 @Configuration
 @EnableStateMachine
 public class TimerConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Override
     public void configure(StateMachineStateConfigurer<States, Events> states) throws Exception {
         states
             .withStates()
             .initial(States.SI)
-            .state(States.S1, null, null, 
+            .state(States.S1, null, null,
                 Collections.singletonList(timerAction()));
     }
-    
+
     @Bean
     public Action<States, Events> timerAction() {
         return context -> {
@@ -1176,11 +1174,11 @@ public class TimerConfig extends StateMachineConfigurerAdapter<States, Events> {
 ```java
 @Component
 public class StateMachineMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter stateTransitions;
     private final Timer stateMachineExecutionTime;
-    
+
     public StateMachineMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.stateTransitions = Counter.builder("statemachine.transitions")
@@ -1190,7 +1188,7 @@ public class StateMachineMetrics {
             .description("State machine execution time")
             .register(meterRegistry);
     }
-    
+
     @EventListener
     public void handleTransition(StateMachineTransitionEvent<States, Events> event) {
         stateTransitions.increment(Tags.of(
@@ -1206,12 +1204,12 @@ public class StateMachineMetrics {
 ```java
 @Component
 public class StateMachineErrorHandler implements StateMachineListener<States, Events> {
-    
+
     @Override
     public void stateMachineError(StateMachine<States, Events> stateMachine, Exception exception) {
-        log.error("State machine error in state: {}", 
+        log.error("State machine error in state: {}",
             stateMachine.getState().getId(), exception);
-        
+
         try {
             stateMachine.sendEvent(Events.RESET);
         } catch (Exception e) {
@@ -1228,17 +1226,17 @@ public class StateMachineErrorHandler implements StateMachineListener<States, Ev
 @Configuration
 @EnableStateMachine
 public class RedisPersistenceConfig extends StateMachineConfigurerAdapter<States, Events> {
-    
+
     @Autowired
     private RedisConnectionFactory connectionFactory;
-    
+
     @Bean
     public StateMachinePersister<States, Events, String> stateMachinePersister() {
-        RedisStateMachinePersister<States, Events> persister = 
+        RedisStateMachinePersister<States, Events> persister =
             new RedisStateMachinePersister<>(redisStateMachineRepository());
         return persister;
     }
-    
+
     @Bean
     public RedisStateMachineRepository redisStateMachineRepository() {
         return new RedisStateMachineRepository(connectionFactory);
@@ -1258,3 +1256,11 @@ public class RedisPersistenceConfig extends StateMachineConfigurerAdapter<States
 - [**UML State Machines**](https://www.omg.org/spec/UML/)
 - [**State Pattern**](https://refactoring.guru/design-patterns/state) — Refactoring Guru
 - [**State Pattern**](https://sourcemaking.com/design_patterns/state) — SourceMaking
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

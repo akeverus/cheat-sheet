@@ -25,7 +25,7 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 
 ### Архитектура **MongoDB**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                          MongoDB Cluster                        │
 ├─────────────────────────────────────────────────────────────────┤
@@ -96,7 +96,7 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 - [MongoDB Getting Started](https://www.mongodb.com/docs/manual/getting-started/)
 - [MongoDB Installation](https://www.mongodb.com/docs/manual/installation/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Introduction to MongoDB](https://www.baeldung.com/java-mongodb)
 - [MongoDB with Spring Boot](https://www.baeldung.com/spring-data-mongodb-tutorial)
 
@@ -474,17 +474,17 @@ db.places.createIndex({ location: "2dsphere" })
 db.sales.aggregate([
   // Фильтрация
   { $match: { status: "completed" } },
-  
+
   // Группировка
   { $group: {
     _id: "$category",
     total: { $sum: "$amount" },
     count: { $sum: 1 }
   }},
-  
+
   // Сортировка
   { $sort: { total: -1 } },
-  
+
   // Ограничение
   { $limit: 10 }
 ])
@@ -521,7 +521,7 @@ $project: {
 
 ### **Replica Set** архитектура
 
-```
+```text
 Primary Node ──┐
                ├── Secondary Node 1
                ├── Secondary Node 2
@@ -575,7 +575,7 @@ sh.status()
 
 ### Архитектура **Sharded Cluster**
 
-```
+```text
 Config Servers ──┐
                  ├── Mongos Router
                  └── Shard Servers (Replica Sets)
@@ -660,13 +660,13 @@ public class User {
     private String name;
     private String email;
     private int age;
-    
+
     // getters and setters
 }
 
 public interface UserRepository extends MongoRepository<User, String> {
     List<User> findByAgeGreaterThan(int age);
-    
+
     @Query("{ 'name' : ?0 }")
     List<User> findByName(String name);
 }
@@ -677,14 +677,14 @@ public interface UserRepository extends MongoRepository<User, String> {
 ```java
 @Service
 public class UserService {
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public List<User> getUsersOlderThan(int age) {
         return userRepository.findByAgeGreaterThan(age);
     }
-    
+
     @Transactional
     public User createUser(User user) {
         return userRepository.save(user);
@@ -751,7 +751,7 @@ db.users.bulkWrite([
 // Правильное управление соединениями
 @Configuration
 public class MongoConfig {
-    
+
     @Bean
     public MongoClient mongoClient() {
         return MongoClients.create(

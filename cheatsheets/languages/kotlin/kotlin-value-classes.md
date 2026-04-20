@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Value классы (Inline классы) в Kotlin
 
-Краткое руководство по **value** классам (**inline классам**) в **Kotlin** - типобезопасные обертки без накладных расходов.
+Краткое руководство по **value** классам (**inline классам**) в **Kotlin** — типобезопасные обертки без накладных расходов.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -83,7 +83,7 @@ fun createUser(id: Int, email: String, password: String) {
         email = Email(email),
         password = Password(password)
     )
-    
+
     // Ошибка компиляции - нельзя перепутать параметры
     // val wrong = User(Email("test"), UserId(1), Password("pass"))
 }
@@ -136,10 +136,10 @@ fun transferMoney(fromAccount: AccountId, toAccount: AccountId, amount: Double) 
 fun main() {
     val accountId = AccountId(12345L)
     val transactionId = TransactionId(67890L)
-    
+
     // Ошибка компиляции
     // transferMoney(transactionId, accountId, 100.0)
-    
+
     // Правильно
     transferMoney(accountId, AccountId(54321L), 100.0)
 }
@@ -227,7 +227,7 @@ class ProductRepository {
         // Поиск продукта по ID
         return null
     }
-    
+
     fun findByCategory(categoryId: CategoryId): List<Product> {
         // Поиск продуктов по категории
         return emptyList()
@@ -252,7 +252,7 @@ data class Money(
         require(currency == other.currency) { "Cannot add different currencies" }
         return Money(Amount(amount.cents + other.amount.cents), currency)
     }
-    
+
     operator fun times(multiplier: Double): Money {
         return Money(Amount((amount.cents * multiplier).toLong()), currency)
     }
@@ -283,20 +283,20 @@ data class Location(
         require(latitude.value in -90.0..90.0) { "Invalid latitude" }
         require(longitude.value in -180.0..180.0) { "Invalid longitude" }
     }
-    
+
     fun distanceTo(other: Location): Double {
         // Расчет расстояния между координатами
         val lat1 = Math.toRadians(latitude.value)
         val lat2 = Math.toRadians(other.latitude.value)
         val lon1 = Math.toRadians(longitude.value)
         val lon2 = Math.toRadians(other.longitude.value)
-        
+
         val dLat = lat2 - lat1
         val dLon = lon2 - lon1
-        
+
         val a = sin(dLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(dLon / 2).pow(2)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        
+
         return 6371.0 * c // Расстояние в километрах
     }
 }
@@ -311,10 +311,10 @@ data class Location(
 value class Name(val value: String) {
     // ✅ Можно определять свойства
     val length: Int get() = value.length
-    
+
     // ✅ Можно определять функции
     fun uppercase(): Name = Name(value.uppercase())
-    
+
     // ✅ Можно реализовывать интерфейсы
     // init блоки не поддерживаются напрямую в value классах
 }
@@ -400,7 +400,7 @@ value class Duration(val millis: Long) {
     operator fun plus(other: Duration): Duration = Duration(millis + other.millis)
     operator fun minus(other: Duration): Duration = Duration(millis - other.millis)
     operator fun times(multiplier: Int): Duration = Duration(millis * multiplier)
-    
+
     fun toSeconds(): Long = millis / 1000
     fun toMinutes(): Long = millis / 60000
     fun toHours(): Long = millis / 3600000
@@ -414,13 +414,13 @@ value class Duration(val millis: Long) {
 value class FilePath(val value: String) {
     val extension: String
         get() = value.substringAfterLast('.', "")
-    
+
     val name: String
         get() = value.substringAfterLast('/')
-    
+
     val directory: FilePath
         get() = FilePath(value.substringBeforeLast('/'))
-    
+
     fun exists(): Boolean = File(value).exists()
 }
 
@@ -442,10 +442,10 @@ value class Url(val value: String) {
             "Invalid URL format"
         }
     }
-    
+
     val protocol: String
         get() = value.substringBefore("://")
-    
+
     val host: String
         get() = value.substringAfter("://").substringBefore("/")
 }
@@ -462,7 +462,7 @@ value class IpAddress(val value: String) {
     init {
         require(isValid(value)) { "Invalid IP address format" }
     }
-    
+
     companion object {
         private fun isValid(ip: String): Boolean {
             val parts = ip.split(".")
@@ -486,7 +486,7 @@ value class IpAddress(val value: String) {
 
 ## Заключение
 
-**Value** классы - это инструмент **Kotlin** для создания типобезопасных оберток без накладных расходов на производительность. Они помогают предотвращать ошибки на этапе компиляции, улучшают читаемость кода и обеспечивают семантическую правильность данных.
+**Value** классы — это инструмент **Kotlin** для создания типобезопасных оберток без накладных расходов на производительность. Они помогают предотвращать ошибки на этапе компиляции, улучшают читаемость кода и обеспечивают семантическую правильность данных.
 
 Использование **value** классов для `ID` типов, единиц измерения, денежных сумм, координат, времени, файлов, сетевых адресов и других семантических типов позволяет создавать более надежный, понятный и безопасный код, который легче поддерживать и развивать.
 
@@ -495,3 +495,10 @@ value class IpAddress(val value: String) {
 - [Kotlin Value Classes Documentation](https://kotlinlang.org/docs/inline-classes.html)
 - [Kotlin Inline Classes](https://kotlinlang.org/docs/inline-classes.html)
 
+## См. также
+
+- [[kotlin-another|Kotlin Another]]
+- [[kotlin-basics|Основы Kotlin — Полное руководство]]
+- [[kotlin-collections-grouping|Kotlin Collections: Grouping and Aggregation]]
+- [[kotlin-collections-list|Kotlin Collections: List]]
+- [[kotlin-collections-map|Kotlin Collections: Map]]

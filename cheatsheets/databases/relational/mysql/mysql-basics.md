@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MySQL**: Основы - Полное руководство по реляционной базе данных
+# **MySQL**: Основы — Полное руководство по реляционной базе данных
 
 Комплексное руководство по **MySQL**: архитектура, установка, настройка, основные понятия и работа с данными.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [MySQL Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/)
 - [MySQL Workbench](https://dev.mysql.com/doc/workbench/en/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Spring Boot with MySQL](https://www.baeldung.com/spring-boot-mysql) — **Spring Boot** и **MySQL**
 - [MySQL Connector/J](https://dev.mysql.com/doc/connector-j/en/) — **JDBC** драйвер
 

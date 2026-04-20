@@ -69,7 +69,7 @@ public class Application {
 
 Механизм автоконфигурации пошагово:
 
-```
+```text
 1. @EnableAutoConfiguration активирует AutoConfigurationImportSelector
 2. Селектор читает файл META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
    (до Boot 2.7 — META-INF/spring.factories)
@@ -157,7 +157,7 @@ java -jar app.jar --debug
 1. Нужные библиотеки (транзитивные зависимости)
 2. Модуль автоконфигурации
 
-```
+```text
 spring-boot-starter-web
 ├── spring-boot-starter (базовый: core, logging, autoconfigure)
 ├── spring-web
@@ -183,7 +183,7 @@ spring-boot-starter-web
 
 Конвенция: два модуля — автоконфигурация и стартер.
 
-```
+```text
 acme-spring-boot-starter/           # стартер (пустой, только зависимости)
   └── pom.xml → зависит на acme-spring-boot-autoconfigure
 
@@ -234,7 +234,7 @@ com.acme.autoconfigure.AcmeAutoConfiguration
 
 Spring Boot читает свойства из множества источников. Приоритет (от высшего к низшему):
 
-```
+```text
 1. Аргументы командной строки (--server.port=9090)
 2. SPRING_APPLICATION_JSON (JSON в env-переменной)
 3. Системные свойства JVM (-Dserver.port=9090)
@@ -661,7 +661,7 @@ class OrderResponseTest {
 
 Spring Boot упаковывает приложение в исполняемый JAR, содержащий все зависимости:
 
-```
+```text
 app.jar
 ├── BOOT-INF/
 │   ├── classes/          # код приложения
@@ -684,7 +684,7 @@ java -jar build/libs/app.jar --spring.profiles.active=prod
 
 Boot 2.3+ поддерживает слоистые JAR — зависимости и код приложения в разных слоях Docker-образа:
 
-```
+```text
 dependencies        # редко меняется → кешируется
 spring-boot-loader  # редко меняется → кешируется
 snapshot-dependencies
@@ -723,3 +723,8 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 | Fat JAR не запускается | Конфликт зависимостей | `./gradlew dependencies` для анализа, `exclude` для конфликтующих |
 | DevTools рестартует бесконечно | Генерируемые файлы в classpath | Настроить `spring.devtools.restart.exclude` |
 | `@MockBean` / `@MockitoBean` ломает кеш контекста | Каждая комбинация моков — отдельный контекст | Группировать тесты с одинаковыми моками или использовать `@TestConfiguration` |
+
+## См. также
+
+- [[spring-core|Spring Framework: Core]]
+- [[spring-data|Spring Data: JPA, JDBC и работа с данными]]

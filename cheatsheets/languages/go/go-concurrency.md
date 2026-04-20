@@ -18,7 +18,7 @@ updated: "2026-02-06"
 ## Полезные ссылки
 
 - [Go Concurrency Patterns](https://go.dev/blog/pipelines)
-- [Effective Go - Concurrency](https://go.dev/doc/effective_go#concurrency)
+- [Effective Go — Concurrency](https://go.dev/doc/effective_go#concurrency)
 - [Go Memory Model](https://go.dev/doc/mem)
 
 ## Содержание
@@ -87,18 +87,18 @@ Go предоставляет мощные инструменты для кон�
 
 ### Основные концепции
 
-1. **Goroutines** - легковесные потоки выполнения
-2. **Channels** - типизированные каналы для коммуникации
-3. **Select** - выбор из нескольких каналов
-4. **Sync Package** - примитивы синхронизации
+1. **Goroutines** — легковесные потоки выполнения
+2. **Channels** — типизированные каналы для коммуникации
+3. **Select** — выбор из нескольких каналов
+4. **Sync Package** — примитивы синхронизации
 
 ### Принципы конкурентности в Go
 
-Go следует принципу: "Не общайтесь через общую память; вместо этого делите память через общение" (**Don't communicate by sharing memory; share memory by communicating**).
+Go следует принципу: «Не общайтесь через общую память; вместо этого делите память через общение» (**Don't communicate by sharing memory; share memory by communicating**).
 
 ## **Goroutines** (**Горутины**)
 
-Горутины - это легковесные потоки выполнения, управляемые **runtime** Go. Они намного легче обычных потоков операционной системы.
+Горутины — это легковесные потоки выполнения, управляемые **runtime** Go. Они намного легче обычных потоков операционной системы.
 
 ### Создание горутин
 
@@ -169,7 +169,7 @@ wg.Wait()
 
 ## **Channels** (**Каналы**)
 
-Каналы - это типизированные каналы для коммуникации между горутинами. Они обеспечивают безопасную передачу данных.
+Каналы — это типизированные каналы для коммуникации между горутинами. Они обеспечивают безопасную передачу данных.
 
 ### Создание каналов
 
@@ -496,7 +496,7 @@ func fanOut(in <-chan int, workers int) []<-chan int {
 func fanIn(inputs ...<-chan int) <-chan int {
     out := make(chan int)
     var wg sync.WaitGroup
-    
+
     for _, in := range inputs {
         wg.Add(1)
         go func(ch <-chan int) {
@@ -506,12 +506,12 @@ func fanIn(inputs ...<-chan int) <-chan int {
             }
         }(in)
     }
-    
+
     go func() {
         wg.Wait()
         close(out)
     }()
-    
+
     return out
 }
 ```
@@ -521,7 +521,7 @@ func fanIn(inputs ...<-chan int) <-chan int {
 ```go
 func workerPool(jobs <-chan int, results chan<- int, workers int) {
     var wg sync.WaitGroup
-    
+
     for i := 0; i < workers; i++ {
         wg.Add(1)
         go func() {
@@ -531,7 +531,7 @@ func workerPool(jobs <-chan int, results chan<- int, workers int) {
             }
         }()
     }
-    
+
     go func() {
         wg.Wait()
         close(results)
@@ -588,7 +588,7 @@ for i := 0; i < 100; i++ {
     go func(id int) {
         sem.Acquire()
         defer sem.Release()
-        
+
         // Выполнение операции
         process(id)
     }(i)
@@ -603,12 +603,12 @@ for i := 0; i < 100; i++ {
 func withTimeout(fn func(), timeout time.Duration) error {
     done := make(chan struct{})
     errCh := make(chan error)
-    
+
     go func() {
         defer close(done)
         fn()
     }()
-    
+
     select {
     case <-done:
         return nil
@@ -628,17 +628,17 @@ func withTimeout(fn func(), timeout time.Duration) error {
 func gracefulShutdown(server *http.Server) {
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-    
+
     <-sigChan
     fmt.Println("Shutting down...")
-    
+
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
-    
+
     if err := server.Shutdown(ctx); err != nil {
         fmt.Printf("Server forced to shutdown: %v\n", err)
     }
-    
+
     fmt.Println("Server stopped")
 }
 ```
@@ -756,7 +756,7 @@ func NewPubSub() *PubSub {
 func (ps *PubSub) Subscribe(topic string) <-chan string {
     ps.mu.Lock()
     defer ps.mu.Unlock()
-    
+
     ch := make(chan string, 1)
     ps.subscribers[topic] = append(ps.subscribers[topic], ch)
     return ch
@@ -765,7 +765,7 @@ func (ps *PubSub) Subscribe(topic string) <-chan string {
 func (ps *PubSub) Publish(topic string, message string) {
     ps.mu.RLock()
     defer ps.mu.RUnlock()
-    
+
     for _, ch := range ps.subscribers[topic] {
         select {
         case ch <- message:
@@ -798,7 +798,7 @@ func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
 
 func (cb *CircuitBreaker) Call(fn func() error) error {
     cb.mu.Lock()
-    
+
     if cb.failures >= cb.maxFailures {
         if time.Since(cb.lastFailure) < cb.timeout {
             cb.mu.Unlock()
@@ -807,11 +807,11 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
         // Сброс счетчика после таймаута
         cb.failures = 0
     }
-    
+
     cb.mu.Unlock()
-    
+
     err := fn()
-    
+
     cb.mu.Lock()
     if err != nil {
         cb.failures++
@@ -820,7 +820,7 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
         cb.failures = 0
     }
     cb.mu.Unlock()
-    
+
     return err
 }
 ```
@@ -831,17 +831,17 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 func processFiles(files []string) error {
     jobs := make(chan string, len(files))
     results := make(chan error, len(files))
-    
+
     // Заполнение jobs
     for _, file := range files {
         jobs <- file
     }
     close(jobs)
-    
+
     // Запуск воркеров
     var wg sync.WaitGroup
     numWorkers := 10
-    
+
     for i := 0; i < numWorkers; i++ {
         wg.Add(1)
         go func() {
@@ -852,20 +852,20 @@ func processFiles(files []string) error {
             }
         }()
     }
-    
+
     // Ожидание завершения
     go func() {
         wg.Wait()
         close(results)
     }()
-    
+
     // Сбор результатов
     for err := range results {
         if err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -879,9 +879,9 @@ func fetchURLs(urls []string) ([]string, error) {
         body  string
         error error
     }
-    
+
     results := make(chan result, len(urls))
-    
+
     for _, url := range urls {
         go func(u string) {
             resp, err := http.Get(u)
@@ -890,17 +890,17 @@ func fetchURLs(urls []string) ([]string, error) {
                 return
             }
             defer resp.Body.Close()
-            
+
             body, err := io.ReadAll(resp.Body)
             if err != nil {
                 results <- result{url: u, error: err}
                 return
             }
-            
+
             results <- result{url: u, body: string(body)}
         }(url)
     }
-    
+
     var responses []string
     for i := 0; i < len(urls); i++ {
         res := <-results
@@ -909,7 +909,7 @@ func fetchURLs(urls []string) ([]string, error) {
         }
         responses = append(responses, res.body)
     }
-    
+
     return responses, nil
 }
 ```
@@ -922,10 +922,10 @@ func processDataParallel(data []int, numWorkers int) []int {
     if chunkSize == 0 {
         chunkSize = 1
     }
-    
+
     results := make([]int, len(data))
     var wg sync.WaitGroup
-    
+
     for i := 0; i < numWorkers; i++ {
         wg.Add(1)
         start := i * chunkSize
@@ -933,7 +933,7 @@ func processDataParallel(data []int, numWorkers int) []int {
         if i == numWorkers-1 {
             end = len(data)
         }
-        
+
         go func(start, end int) {
             defer wg.Done()
             for j := start; j < end; j++ {
@@ -941,7 +941,7 @@ func processDataParallel(data []int, numWorkers int) []int {
             }
         }(start, end)
     }
-    
+
     wg.Wait()
     return results
 }
@@ -972,7 +972,7 @@ go func(id int) {
 ```go
 func benchmarkConcurrency() {
     start := time.Now()
-    
+
     var wg sync.WaitGroup
     for i := 0; i < 1000; i++ {
         wg.Add(1)
@@ -981,7 +981,7 @@ func benchmarkConcurrency() {
             // Работа
         }()
     }
-    
+
     wg.Wait()
     duration := time.Since(start)
     fmt.Printf("Took %v\n", duration)
@@ -1028,10 +1028,10 @@ func (pwp *PriorityWorkerPool) Start() {
 
 func (pwp *PriorityWorkerPool) worker() {
     defer pwp.wg.Done()
-    
+
     // Сортировка по приоритету
     jobs := make([]PriorityJob, 0)
-    
+
     for {
         select {
         case <-pwp.done:
@@ -1045,12 +1045,12 @@ func (pwp *PriorityWorkerPool) worker() {
                 return
             }
             jobs = append(jobs, job)
-            
+
             // Сортировка по приоритету
             sort.Slice(jobs, func(i, j int) bool {
                 return jobs[i].Priority > jobs[j].Priority
             })
-            
+
             // Обработка задачи с наивысшим приоритетом
             if len(jobs) > 0 {
                 job := jobs[0]
@@ -1082,11 +1082,11 @@ func (pwp *PriorityWorkerPool) Stop() {
 ```go
 func RunWithTimeout(fn func() error, timeout time.Duration) error {
     done := make(chan error, 1)
-    
+
     go func() {
         done <- fn()
     }()
-    
+
     select {
     case err := <-done:
         return err
@@ -1097,11 +1097,11 @@ func RunWithTimeout(fn func() error, timeout time.Duration) error {
 
 func RunWithContext(ctx context.Context, fn func(context.Context) error) error {
     done := make(chan error, 1)
-    
+
     go func() {
         done <- fn(ctx)
     }()
-    
+
     select {
     case err := <-done:
         return err
@@ -1131,7 +1131,7 @@ func (b *Barrier) Wait() {
     b.mu.Lock()
     current := atomic.AddInt64(&b.current, 1)
     b.mu.Unlock()
-    
+
     if current == int64(b.count) {
         b.waiters.Done()
         b.waiters.Wait()
@@ -1241,21 +1241,21 @@ func (s *Semaphore) AcquireWithContext(ctx context.Context) error {
 
 ## Лучшие практики
 
-1. **Используйте каналы для коммуникации** - предпочитайте каналы мьютексам
-2. **Закрывайте каналы** - всегда закрывайте каналы, когда закончили отправку данных
-3. **Используйте `Context` для отмены** - используйте **context** для управления жизненным циклом горутин
-4. **Избегайте утечек горутин** - убедитесь, что все горутины могут завершиться
-5. **Используйте `WaitGroup` для ожидания** - используйте **WaitGroup** для координации множественных горутин
-6. **Ограничивайте количество горутин** - используйте **worker pools** и **semaphores**
-7. **Обрабатывайте ошибки** - правильно обрабатывайте ошибки в горутинах
-8. **Используйте буферизованные каналы осторожно** - они могут скрыть проблемы синхронизации
-9. **Избегайте гонок данных** - используйте **race detector** для проверки
-10. **Документируйте конкурентное поведение** - объясняйте, как функции работают в конкурентном контексте
-11. **Используйте шардирование** - для уменьшения **contention**
-12. **Мониторьте количество горутин** - отслеживайте использование горутин
-13. **Используйте приоритеты** - для обработки важных задач первыми
-14. **Тестируйте конкурентность** - используйте специальные тесты для проверки **race conditions**
-15. **Используйте таймауты** - для предотвращения зависаний
+1. **Используйте каналы для коммуникации** — предпочитайте каналы мьютексам
+2. **Закрывайте каналы** — всегда закрывайте каналы, когда закончили отправку данных
+3. **Используйте `Context` для отмены** — используйте **context** для управления жизненным циклом горутин
+4. **Избегайте утечек горутин** — убедитесь, что все горутины могут завершиться
+5. **Используйте `WaitGroup` для ожидания** — используйте **WaitGroup** для координации множественных горутин
+6. **Ограничивайте количество горутин** — используйте **worker pools** и **semaphores**
+7. **Обрабатывайте ошибки** — правильно обрабатывайте ошибки в горутинах
+8. **Используйте буферизованные каналы осторожно** — они могут скрыть проблемы синхронизации
+9. **Избегайте гонок данных** — используйте **race detector** для проверки
+10. **Документируйте конкурентное поведение** — объясняйте, как функции работают в конкурентном контексте
+11. **Используйте шардирование** — для уменьшения **contention**
+12. **Мониторьте количество горутин** — отслеживайте использование горутин
+13. **Используйте приоритеты** — для обработки важных задач первыми
+14. **Тестируйте конкурентность** — используйте специальные тесты для проверки **race conditions**
+15. **Используйте таймауты** — для предотвращения зависаний
 
 ### Практические примеры: Мониторинг горутин
 
@@ -1275,7 +1275,7 @@ func MonitorGoroutines() {
 func GetGoroutineStats() map[string]interface{} {
     var m runtime.MemStats
     runtime.ReadMemStats(&m)
-    
+
     return map[string]interface{}{
         "goroutines":     runtime.NumGoroutine(),
         "cpu_count":      runtime.NumCPU(),
@@ -1302,5 +1302,13 @@ func GetGoroutineStats() map[string]interface{} {
 ## Дополнительные ресурсы
 
 - [Go Concurrency Patterns](https://go.dev/blog/pipelines)
-- [Effective Go - Concurrency](https://go.dev/doc/effective_go#concurrency)
+- [Effective Go — Concurrency](https://go.dev/doc/effective_go#concurrency)
 - [Go Memory Model](https://go.dev/doc/mem)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

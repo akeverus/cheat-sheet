@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 
 # Spring Actuator: Полное руководство по мониторингу и управлению
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -226,12 +224,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CustomHealthIndicator implements HealthIndicator {
-    
+
     @Override
     public Health health() {
         // Проверка состояния
         boolean isHealthy = checkSystemHealth();
-        
+
         if (isHealthy) {
             return Health.up()
                 .withDetail("status", "System is healthy")
@@ -244,7 +242,7 @@ public class CustomHealthIndicator implements HealthIndicator {
                 .build();
         }
     }
-    
+
     private boolean checkSystemHealth() {
         // Логика проверки
         return true;
@@ -258,10 +256,10 @@ public class CustomHealthIndicator implements HealthIndicator {
 // Проверка доступности БД через DataSource
 @Component
 public class DatabaseHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private DataSource dataSource;
-    
+
     @Override
     public Health health() {
         try (Connection connection = dataSource.getConnection()) {
@@ -327,11 +325,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
-    
+
     private final Counter userCreatedCounter;
     private final Timer userCreationTimer;
     private final MeterRegistry meterRegistry;
-    
+
     public UserService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.userCreatedCounter = Counter.builder("users.created")
@@ -341,7 +339,7 @@ public class UserService {
             .description("Time taken to create a user")
             .register(meterRegistry);
     }
-    
+
     public User createUser(User user) {
         return userCreationTimer.recordCallable(() -> {
             User created = userRepository.save(user);
@@ -358,19 +356,19 @@ public class UserService {
 // Gauge для отображения числа активных пользователей
 @Component
 public class ActiveUsersGauge {
-    
+
     private final AtomicInteger activeUsers = new AtomicInteger(0);
-    
+
     public ActiveUsersGauge(MeterRegistry meterRegistry) {
         Gauge.builder("users.active", activeUsers, AtomicInteger::get)
             .description("Number of active users")
             .register(meterRegistry);
     }
-    
+
     public void increment() {
         activeUsers.incrementAndGet();
     }
-    
+
     public void decrement() {
         activeUsers.decrementAndGet();
     }
@@ -403,7 +401,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CustomInfoContributor implements InfoContributor {
-    
+
     @Override
     public void contribute(Info.Builder builder) {
         builder.withDetail("custom", Map.of(
@@ -412,7 +410,7 @@ public class CustomInfoContributor implements InfoContributor {
             "uptime", getUptime()
         ));
     }
-    
+
     private long getUptime() {
         return ManagementFactory.getRuntimeMXBean().getUptime();
     }
@@ -433,7 +431,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Endpoint(id = "custom")
 public class CustomEndpoint {
-    
+
     @ReadOperation
     public Map<String, Object> custom() {
         Map<String, Object> info = new HashMap<>();
@@ -442,7 +440,7 @@ public class CustomEndpoint {
         info.put("customData", "Some custom data");
         return info;
     }
-    
+
     @WriteOperation
     public void customOperation(String action) {
         // Выполнение операции
@@ -458,17 +456,17 @@ public class CustomEndpoint {
 @Component
 @WebEndpoint(id = "customweb")
 public class CustomWebEndpoint {
-    
+
     @ReadOperation
     public Map<String, Object> read() {
         return Map.of("message", "Hello from custom web endpoint");
     }
-    
+
     @WriteOperation
     public Map<String, Object> write(String data) {
         return Map.of("received", data, "status", "processed");
     }
-    
+
     @DeleteOperation
     public Map<String, Object> delete() {
         return Map.of("status", "deleted");
@@ -484,12 +482,12 @@ public class CustomWebEndpoint {
 // Ограничение доступа к actuator: health/info — всем, остальное — ACTUATOR
 @Configuration
 public class ActuatorSecurityConfig {
-    
+
     @Bean
     public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .requestMatcher(EndpointRequest.toAnyEndpoint())
-            .authorizeHttpRequests(requests -> 
+            .authorizeHttpRequests(requests ->
                 requests
                     .requestMatchers(EndpointRequest.to("health", "info")).permitAll()
                     .anyRequest().hasRole("ACTUATOR")
@@ -589,10 +587,10 @@ info.app.version=1.0.0
 // Реактивная проверка БД через R2DBC
 @Component
 public class ReactiveDatabaseHealthIndicator implements ReactiveHealthIndicator {
-    
+
     @Autowired
     private R2dbcEntityTemplate template;
-    
+
     @Override
     public Mono<Health> health() {
         return template.getDatabaseClient()
@@ -622,7 +620,7 @@ management.endpoint.health.group.custom.show-details=always
 // Регистрация групп health indicators
 @Configuration
 public class HealthGroupConfig {
-    
+
     @Bean
     public HealthContributorRegistry healthContributorRegistry() {
         return new HealthContributorRegistry() {
@@ -638,10 +636,10 @@ public class HealthGroupConfig {
 // Агрегация статусов нескольких HealthIndicator
 @Component
 public class AggregatedHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private List<HealthIndicator> healthIndicators;
-    
+
     @Override
     public Health health() {
         Map<String, Health> healths = healthIndicators.stream()
@@ -649,15 +647,15 @@ public class AggregatedHealthIndicator implements HealthIndicator {
                 indicator -> indicator.getClass().getSimpleName(),
                 HealthIndicator::health
             ));
-        
+
         boolean allUp = healths.values().stream()
             .allMatch(h -> h.getStatus().equals(Status.UP));
-        
+
         Health.Builder builder = allUp ? Health.up() : Health.down();
-        healths.forEach((name, health) -> 
+        healths.forEach((name, health) ->
             builder.withDetail(name, health.getDetails())
         );
-        
+
         return builder.build();
     }
 }
@@ -671,7 +669,7 @@ public class AggregatedHealthIndicator implements HealthIndicator {
 // Общие теги для всех метрик (application, environment)
 @Configuration
 public class CustomMeterRegistryConfig {
-    
+
     @Bean
     public MeterRegistryCustomizer<MeterRegistry> metricsCommonTags() {
         return registry -> registry.config()
@@ -687,12 +685,12 @@ public class CustomMeterRegistryConfig {
 // Измерение времени выполнения метода через @Timed
 @Service
 public class TimedService {
-    
+
     @Timed(value = "service.method", description = "Time taken to execute method")
     public void executeMethod() {
         // Метод с автоматическим измерением времени
     }
-    
+
     @Timed(value = "service.async", longTask = true)
     @Async
     public CompletableFuture<String> asyncMethod() {
@@ -707,7 +705,7 @@ public class TimedService {
 // Настройка перцентилей и гистограмм для метрик
 @Configuration
 public class MetricsConfig {
-    
+
     @Bean
     public MeterRegistryCustomizer<MeterRegistry> metricsCustomizer() {
         return registry -> registry.config()
@@ -736,7 +734,7 @@ public class SlidingWindowService {
     private final MeterRegistry meterRegistry;
     private final Counter requestCounter;
     private final Timer requestTimer;
-    
+
     public SlidingWindowService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.requestCounter = Counter.builder("requests.total")
@@ -747,7 +745,7 @@ public class SlidingWindowService {
             .publishPercentiles(0.5, 0.95, 0.99)
             .register(meterRegistry);
     }
-    
+
     public void processRequest() {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
@@ -833,12 +831,12 @@ management.metrics.export.datadog.step=10s
 @Component
 @JmxEndpoint(id = "customjmx")
 public class CustomJmxEndpoint {
-    
+
     @ReadOperation
     public String read() {
         return "JMX endpoint data";
     }
-    
+
     @WriteOperation
     public void write(String data) {
         // Запись данных
@@ -854,7 +852,7 @@ public class CustomJmxEndpoint {
 @ConditionalOnProperty(name = "management.endpoint.custom.enabled", havingValue = "true")
 @Endpoint(id = "custom")
 public class ConditionalCustomEndpoint {
-    
+
     @ReadOperation
     public Map<String, Object> read() {
         return Map.of("status", "enabled");
@@ -892,22 +890,22 @@ management.endpoints.web.exposure.include=loggers
 @Component
 @Endpoint(id = "customloggers")
 public class CustomLoggersEndpoint {
-    
+
     @ReadOperation
     public Map<String, Object> getLoggers() {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         Map<String, Object> loggers = new HashMap<>();
-        
+
         loggerContext.getLoggerList().forEach(logger -> {
             loggers.put(logger.getName(), Map.of(
                 "level", logger.getLevel() != null ? logger.getLevel().toString() : "null",
                 "effectiveLevel", logger.getEffectiveLevel().toString()
             ));
         });
-        
+
         return loggers;
     }
-    
+
     @WriteOperation
     public void setLoggerLevel(String name, String level) {
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -929,7 +927,7 @@ management.tracing.http.enabled=true
 // Конфигурация трейсинга HTTP-запросов
 @Configuration
 public class TracingConfig {
-    
+
     @Bean
     public HttpExchangeTracer httpExchangeTracer() {
         return new HttpExchangeTracer();
@@ -955,7 +953,7 @@ public class GracefulShutdownEndpoint {
 
     @Autowired
     private ConfigurableApplicationContext context;
-    
+
     @WriteOperation
     public Map<String, String> shutdown() {
         Map<String, String> result = new HashMap<>();
@@ -985,10 +983,10 @@ management.endpoints.web.exposure.include=env
 @Component
 @Endpoint(id = "customenv")
 public class CustomEnvironmentEndpoint {
-    
+
     @Autowired
     private Environment environment;
-    
+
     @ReadOperation
     public Map<String, Object> environment() {
         Map<String, Object> env = new HashMap<>();
@@ -1007,12 +1005,12 @@ public class CustomEnvironmentEndpoint {
 // Метрики кеша и времени запросов к БД
 @Component
 public class PerformanceMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter cacheHits;
     private final Counter cacheMisses;
     private final Timer queryTimer;
-    
+
     public PerformanceMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.cacheHits = Counter.builder("cache.hits")
@@ -1025,15 +1023,15 @@ public class PerformanceMetrics {
             .description("Database query time")
             .register(meterRegistry);
     }
-    
+
     public void recordCacheHit() {
         cacheHits.increment();
     }
-    
+
     public void recordCacheMiss() {
         cacheMisses.increment();
     }
-    
+
     public <T> T timeQuery(Supplier<T> query) {
         return queryTimer.record(query);
     }
@@ -1046,22 +1044,22 @@ public class PerformanceMetrics {
 // Gauge для heap memory (used/max)
 @Component
 public class MemoryMetrics {
-    
+
     private final MeterRegistry meterRegistry;
-    
+
     public MemoryMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         registerMemoryMetrics();
     }
-    
+
     private void registerMemoryMetrics() {
         MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-        
-        Gauge.builder("jvm.memory.heap.used", memoryBean, 
+
+        Gauge.builder("jvm.memory.heap.used", memoryBean,
             bean -> bean.getHeapMemoryUsage().getUsed())
             .description("Used heap memory")
             .register(meterRegistry);
-        
+
         Gauge.builder("jvm.memory.heap.max", memoryBean,
             bean -> bean.getHeapMemoryUsage().getMax())
             .description("Max heap memory")
@@ -1077,12 +1075,12 @@ public class MemoryMetrics {
 ```java
 @Configuration
 public class ActuatorSecurityConfig {
-    
+
     @Bean
     public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .requestMatcher(EndpointRequest.toAnyEndpoint())
-            .authorizeHttpRequests(requests -> 
+            .authorizeHttpRequests(requests ->
                 requests
                     .requestMatchers(EndpointRequest.to("health", "info")).permitAll()
                     .requestMatchers(EndpointRequest.to("metrics", "prometheus"))
@@ -1105,13 +1103,13 @@ public class ActuatorSecurityConfig {
 // Ограничение доступа к /actuator по списку разрешённых IP
 @Component
 public class ActuatorAccessControl implements HandlerInterceptor {
-    
+
     private static final List<String> ALLOWED_IPS = List.of(
         "127.0.0.1", "::1", "10.0.0.0/8"
     );
-    
+
     @Override
-    public boolean preHandle(HttpServletRequest request, 
+    public boolean preHandle(HttpServletRequest request,
             HttpServletResponse response, Object handler) {
         String clientIp = getClientIp(request);
         if (request.getRequestURI().startsWith("/actuator")) {
@@ -1122,7 +1120,7 @@ public class ActuatorAccessControl implements HandlerInterceptor {
         }
         return true;
     }
-    
+
     private String getClientIp(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
@@ -1130,17 +1128,17 @@ public class ActuatorAccessControl implements HandlerInterceptor {
         }
         return request.getRemoteAddr();
     }
-    
+
     private boolean isAllowed(String ip) {
         return ALLOWED_IPS.stream().anyMatch(allowed -> matches(ip, allowed));
     }
-    
+
     private boolean matches(String ip, String pattern) {
         // Простая проверка IP/CIDR
-        return ip.equals(pattern) || pattern.contains("/") && 
+        return ip.equals(pattern) || pattern.contains("/") &&
             matchesCidr(ip, pattern);
     }
-    
+
     private boolean matchesCidr(String ip, String cidr) {
         // Реализация проверки CIDR
         return true;
@@ -1165,7 +1163,7 @@ management.endpoints.web.path-mapping.metrics=stats
 @Component
 @Endpoint(id = "customresponse")
 public class CustomResponseEndpoint {
-    
+
     @ReadOperation(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> read() {
         Map<String, Object> response = Map.of(
@@ -1195,14 +1193,14 @@ management.endpoint.health.probes.enabled=true
 // Health indicator для liveness/readiness в Kubernetes
 @Component
 public class KubernetesHealthIndicator implements HealthIndicator {
-    
+
     @Override
     public Health health() {
         // Проверка готовности для Kubernetes
         boolean ready = checkReadiness();
         return ready ? Health.up() : Health.down();
     }
-    
+
     private boolean checkReadiness() {
         // Проверка зависимостей
         return true;
@@ -1222,3 +1220,11 @@ public class KubernetesHealthIndicator implements HealthIndicator {
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
 - [**Spring Cloud** Sleuth](https://github.com/spring-cloud/spring-cloud-sleuth)
+
+## См. также
+
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]
+- [[spring-cache|Spring Cache: Полное руководство по кешированию]]

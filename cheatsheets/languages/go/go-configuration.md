@@ -60,9 +60,9 @@ updated: "2026-02-06"
 
 ### Основные подходы
 
-1. **Переменные окружения** - простой способ конфигурации
-2. **Файлы конфигурации** - **JSON**, **YAML**, **TOML**
-3. **Viper** - универсальная библиотека для конфигурации
+1. **Переменные окружения** — простой способ конфигурации
+2. **Файлы конфигурации** — **JSON**, **YAML**, **TOML**
+3. **Viper** — универсальная библиотека для конфигурации
 
 ## Переменные окружения
 
@@ -76,7 +76,7 @@ func getConfig() {
     if port == "" {
         port = "8080"  // Значение по умолчанию
     }
-    
+
     dbHost := os.Getenv("DB_HOST")
     dbPort := os.Getenv("DB_PORT")
 }
@@ -112,7 +112,7 @@ type Config struct {
 
 func loadConfigFromEnv() (*Config, error) {
     config := &Config{}
-    
+
     portStr := os.Getenv("PORT")
     if portStr == "" {
         portStr = "8080"
@@ -122,12 +122,12 @@ func loadConfigFromEnv() (*Config, error) {
         return nil, err
     }
     config.Port = port
-    
+
     config.DBHost = os.Getenv("DB_HOST")
     if config.DBHost == "" {
         config.DBHost = "localhost"
     }
-    
+
     dbPortStr := os.Getenv("DB_PORT")
     if dbPortStr == "" {
         dbPortStr = "5432"
@@ -137,10 +137,10 @@ func loadConfigFromEnv() (*Config, error) {
         return nil, err
     }
     config.DBPort = dbPort
-    
+
     debugStr := os.Getenv("DEBUG")
     config.Debug = debugStr == "true"
-    
+
     return config, nil
 }
 ```
@@ -166,12 +166,12 @@ func loadConfigFromJSON(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config Config
     if err := json.Unmarshal(data, &config); err != nil {
         return nil, err
     }
-    
+
     return &config, nil
 }
 ```
@@ -186,12 +186,12 @@ func loadConfigFromYAML(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config Config
     if err := yaml.Unmarshal(data, &config); err != nil {
         return nil, err
     }
-    
+
     return &config, nil
 }
 ```
@@ -213,9 +213,9 @@ func init() {
     viper.SetConfigName("config")
     viper.SetConfigType("yaml")
     viper.AddConfigPath(".")
-    
+
     viper.AutomaticEnv()
-    
+
     if err := viper.ReadInConfig(); err != nil {
         // Конфигурационный файл не найден
     }
@@ -235,16 +235,16 @@ func init() {
     // 1. Переменные окружения
     viper.AutomaticEnv()
     viper.SetEnvPrefix("APP")
-    
+
     // 2. Файл конфигурации
     viper.SetConfigName("config")
     viper.SetConfigType("yaml")
     viper.AddConfigPath(".")
-    
+
     // 3. Значения по умолчанию
     viper.SetDefault("port", 8080)
     viper.SetDefault("db.host", "localhost")
-    
+
     viper.ReadInConfig()
 }
 ```
@@ -306,12 +306,12 @@ func LoadConfig(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config Config
     if err := yaml.Unmarshal(data, &config); err != nil {
         return nil, err
     }
-    
+
     // Переопределение из переменных окружения
     if host := os.Getenv("SERVER_HOST"); host != "" {
         config.Server.Host = host
@@ -321,7 +321,7 @@ func LoadConfig(filename string) (*Config, error) {
             config.Server.Port = p
         }
     }
-    
+
     return &config, nil
 }
 ```
@@ -333,26 +333,26 @@ func (c *Config) Validate() error {
     if c.Server.Port < 1 || c.Server.Port > 65535 {
         return fmt.Errorf("invalid server port: %d", c.Server.Port)
     }
-    
+
     if c.Database.Host == "" {
         return fmt.Errorf("database host is required")
     }
-    
+
     if c.Database.Port < 1 || c.Database.Port > 65535 {
         return fmt.Errorf("invalid database port: %d", c.Database.Port)
     }
-    
+
     if c.Cache.TTL <= 0 {
         return fmt.Errorf("cache TTL must be positive")
     }
-    
+
     validLogLevels := map[string]bool{
         "debug": true, "info": true, "warn": true, "error": true,
     }
     if !validLogLevels[c.Logging.Level] {
         return fmt.Errorf("invalid log level: %s", c.Logging.Level)
     }
-    
+
     return nil
 }
 ```
@@ -380,27 +380,27 @@ func (l *ConfigLoader) SetDefault(key string, value interface{}) {
 
 func (l *ConfigLoader) Load() (*Config, error) {
     config := &Config{}
-    
+
     // 1. Загрузка значений по умолчанию
     for key, value := range l.defaults {
         setConfigValue(config, key, value)
     }
-    
+
     // 2. Загрузка из файла
     if l.filePath != "" {
         if err := l.loadFromFile(config, l.filePath); err != nil {
             return nil, err
         }
     }
-    
+
     // 3. Переопределение из переменных окружения
     l.loadFromEnv(config)
-    
+
     // 4. Валидация
     if err := config.Validate(); err != nil {
         return nil, err
     }
-    
+
     return config, nil
 }
 
@@ -409,12 +409,12 @@ func (l *ConfigLoader) loadFromFile(config *Config, filename string) error {
     if err != nil {
         return err
     }
-    
+
     var fileConfig Config
     if err := yaml.Unmarshal(data, &fileConfig); err != nil {
         return err
     }
-    
+
     // Мердж конфигурации
     mergeConfig(config, &fileConfig)
     return nil
@@ -427,21 +427,21 @@ func (l *ConfigLoader) loadFromEnv(config *Config) {
         if len(parts) != 2 {
             continue
         }
-        
+
         key := parts[0]
         value := parts[1]
-        
+
         if l.envPrefix != "" && !strings.HasPrefix(key, l.envPrefix) {
             continue
         }
-        
+
         // Удаление префикса и преобразование в lowercase
         if l.envPrefix != "" {
             key = strings.TrimPrefix(key, l.envPrefix+"_")
         }
         key = strings.ToLower(key)
         key = strings.ReplaceAll(key, "_", ".")
-        
+
         setConfigValueFromString(config, key, value)
     }
 }
@@ -465,23 +465,23 @@ func NewConfigManager(configPath string) (*ConfigManager, error) {
     if err != nil {
         return nil, err
     }
-    
+
     cm := &ConfigManager{
         configPath: configPath,
         watcher:    watcher,
         callbacks:  make([]func(*Config), 0),
     }
-    
+
     if err := cm.loadConfig(); err != nil {
         return nil, err
     }
-    
+
     if err := watcher.Add(configPath); err != nil {
         return nil, err
     }
-    
+
     go cm.watch()
-    
+
     return cm, nil
 }
 
@@ -490,16 +490,16 @@ func (cm *ConfigManager) loadConfig() error {
     if err != nil {
         return err
     }
-    
+
     cm.mu.Lock()
     cm.config = config
     cm.mu.Unlock()
-    
+
     // Вызов callback'ов
     for _, callback := range cm.callbacks {
         callback(config)
     }
-    
+
     return nil
 }
 
@@ -546,7 +546,7 @@ const (
 
 func LoadConfigForEnvironment(env Environment) (*Config, error) {
     var configPath string
-    
+
     switch env {
     case Development:
         configPath = "config.dev.yaml"
@@ -557,12 +557,12 @@ func LoadConfigForEnvironment(env Environment) (*Config, error) {
     default:
         return nil, fmt.Errorf("unknown environment: %s", env)
     }
-    
+
     // Переопределение через переменную окружения
     if path := os.Getenv("CONFIG_PATH"); path != "" {
         configPath = path
     }
-    
+
     return LoadConfig(configPath)
 }
 
@@ -600,7 +600,7 @@ func LoadConfigWithSecrets(configPath string, secretManager SecretManager) (*Con
     if err != nil {
         return nil, err
     }
-    
+
     // Загрузка секретов
     if config.Database.Password == "" {
         password, err := secretManager.GetSecret("database/password")
@@ -609,7 +609,7 @@ func LoadConfigWithSecrets(configPath string, secretManager SecretManager) (*Con
         }
         config.Database.Password = password
     }
-    
+
     return &ConfigWithSecrets{
         PublicConfig: *config,
         secrets:      secretManager,
@@ -629,24 +629,24 @@ func setupViper() {
     viper.AddConfigPath(".")
     viper.AddConfigPath("$HOME/.myapp")
     viper.AddConfigPath("/etc/myapp")
-    
+
     // Переменные окружения
     viper.AutomaticEnv()
     viper.SetEnvPrefix("MYAPP")
     viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-    
+
     // Значения по умолчанию
     viper.SetDefault("server.port", 8080)
     viper.SetDefault("server.host", "localhost")
     viper.SetDefault("database.max_conns", 10)
-    
+
     // Чтение конфигурации
     if err := viper.ReadInConfig(); err != nil {
         if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
             log.Fatalf("Error reading config: %v", err)
         }
     }
-    
+
     // Watch для hot reload
     viper.WatchConfig()
     viper.OnConfigChange(func(e fsnotify.Event) {
@@ -684,12 +684,12 @@ func LoadConfigWithFlags() (*Config, error) {
         dbHost     = flag.String("db-host", "", "Database host (overrides config)")
     )
     flag.Parse()
-    
+
     config, err := LoadConfig(*configPath)
     if err != nil {
         return nil, err
     }
-    
+
     // Переопределение из флагов
     if *port > 0 {
         config.Server.Port = *port
@@ -697,7 +697,7 @@ func LoadConfigWithFlags() (*Config, error) {
     if *dbHost != "" {
         config.Database.Host = *dbHost
     }
-    
+
     return config, nil
 }
 ```
@@ -722,16 +722,16 @@ func LoadAndValidateConfig(filename string) (*ValidatedConfig, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config ValidatedConfig
     if err := yaml.Unmarshal(data, &config); err != nil {
         return nil, err
     }
-    
+
     if err := config.Validate(); err != nil {
         return nil, err
     }
-    
+
     return &config, nil
 }
 ```
@@ -764,29 +764,29 @@ func (c *TypedConfig) Set(key string, value interface{}, source string) {
 func (c *TypedConfig) GetString(key string) (string, error) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     cv, exists := c.values[key]
     if !exists {
         return "", fmt.Errorf("key %s not found", key)
     }
-    
+
     str, ok := cv.value.(string)
     if !ok {
         return "", fmt.Errorf("key %s is not a string", key)
     }
-    
+
     return str, nil
 }
 
 func (c *TypedConfig) GetInt(key string) (int, error) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     cv, exists := c.values[key]
     if !exists {
         return 0, fmt.Errorf("key %s not found", key)
     }
-    
+
     switch v := cv.value.(type) {
     case int:
         return v, nil
@@ -812,21 +812,21 @@ func NewConfigWatcher(configPath string) (*ConfigWatcher, error) {
     if err != nil {
         return nil, err
     }
-    
+
     if err := watcher.Add(configPath); err != nil {
         return nil, err
     }
-    
+
     cw := &ConfigWatcher{
         watcher: watcher,
     }
-    
+
     if err := cw.reload(); err != nil {
         return nil, err
     }
-    
+
     go cw.watch()
-    
+
     return cw, nil
 }
 
@@ -864,23 +864,23 @@ func (cw *ConfigWatcher) Get() *Config {
 ```go
 func LoadConfigWithPriority() (*Config, error) {
     config := &Config{}
-    
+
     // 1. Значения по умолчанию
     config.SetDefaults()
-    
+
     // 2. Загрузка из файла
     if err := config.LoadFromFile("config.yaml"); err != nil && !os.IsNotExist(err) {
         return nil, err
     }
-    
+
     // 3. Переменные окружения (высший приоритет)
     config.LoadFromEnv()
-    
+
     // 4. Валидация
     if err := config.Validate(); err != nil {
         return nil, err
     }
-    
+
     return config, nil
 }
 
@@ -908,19 +908,19 @@ func (c *Config) Validate() error {
     if c.DB.Host == "" {
         return fmt.Errorf("DB host is required")
     }
-    
+
     if c.DB.Port < 1 || c.DB.Port > 65535 {
         return fmt.Errorf("DB port must be between 1 and 65535")
     }
-    
+
     if c.Server.Port < 1 || c.Server.Port > 65535 {
         return fmt.Errorf("Server port must be between 1 and 65535")
     }
-    
+
     if c.Server.Timeout < time.Second {
         return fmt.Errorf("Server timeout must be at least 1 second")
     }
-    
+
     return nil
 }
 ```
@@ -938,7 +938,7 @@ const (
 
 func LoadConfigForEnvironment(env Environment) (*Config, error) {
     var configPath string
-    
+
     switch env {
     case EnvDevelopment:
         configPath = "config.dev.yaml"
@@ -949,33 +949,33 @@ func LoadConfigForEnvironment(env Environment) (*Config, error) {
     default:
         return nil, fmt.Errorf("unknown environment: %s", env)
     }
-    
+
     envVar := os.Getenv("ENV")
     if envVar != "" {
         configPath = fmt.Sprintf("config.%s.yaml", envVar)
     }
-    
+
     return LoadConfigFromFile(configPath)
 }
 ```
 
 ## Лучшие практики
 
-1. **Используйте переменные окружения** - для секретов и чувствительных данных
-2. **Предоставляйте значения по умолчанию** - для удобства использования
-3. **Валидируйте конфигурацию** - проверяйте корректность значений
-4. **Используйте структуры** - для типобезопасной конфигурации
-5. **Документируйте конфигурацию** - объясняйте назначение параметров
-6. **Используйте hot reload** - для обновления конфигурации без перезапуска
-7. **Разделяйте по окружениям** - используйте разные файлы для разных окружений
-8. **Используйте приоритеты** - переменные окружения > файл > значения по умолчанию
-9. **Храните секреты отдельно** - используйте **secret managers** для секретов
-10. **Используйте валидацию** - проверяйте конфигурацию при загрузке
-11. **Используйте hot reload** - для обновления конфигурации во время выполнения
-12. **Используйте приоритеты** - правильно определяйте порядок загрузки
-13. **Валидируйте конфигурацию** - проверяйте корректность перед использованием
-14. **Разделяйте по окружениям** - используйте разные конфигурации для разных сред
-15. **Мониторьте изменения** - отслеживайте изменения конфигурации
+1. **Используйте переменные окружения** — для секретов и чувствительных данных
+2. **Предоставляйте значения по умолчанию** — для удобства использования
+3. **Валидируйте конфигурацию** — проверяйте корректность значений
+4. **Используйте структуры** — для типобезопасной конфигурации
+5. **Документируйте конфигурацию** — объясняйте назначение параметров
+6. **Используйте hot reload** — для обновления конфигурации без перезапуска
+7. **Разделяйте по окружениям** — используйте разные файлы для разных окружений
+8. **Используйте приоритеты** — переменные окружения > файл > значения по умолчанию
+9. **Храните секреты отдельно** — используйте **secret managers** для секретов
+10. **Используйте валидацию** — проверяйте конфигурацию при загрузке
+11. **Используйте hot reload** — для обновления конфигурации во время выполнения
+12. **Используйте приоритеты** — правильно определяйте порядок загрузки
+13. **Валидируйте конфигурацию** — проверяйте корректность перед использованием
+14. **Разделяйте по окружениям** — используйте разные конфигурации для разных сред
+15. **Мониторьте изменения** — отслеживайте изменения конфигурации
 
 
 ## Решение проблем
@@ -994,3 +994,11 @@ func LoadConfigForEnvironment(env Environment) (*Config, error) {
 
 - [Viper Documentation](https://github.com/spf13/viper)
 - [Go os Package](https://pkg.go.dev/os)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

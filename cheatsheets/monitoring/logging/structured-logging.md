@@ -19,7 +19,7 @@ updated: "2026-02-11"
 ### Спецификации и стандарты
 - [Elastic Common Schema](https://www.elastic.co/guide/en/ecs/current/index.html)
 - [OpenTelemetry Logging](https://opentelemetry.io/docs/specs/otel/logs/)
-- [RFC 5424 - Syslog Protocol](https://tools.ietf.org/html/rfc5424)
+- [RFC 5424 — Syslog Protocol](https://tools.ietf.org/html/rfc5424)
 
 ### Библиотеки
 - [Logstash Logback Encoder](https://github.com/logfellow/logstash-logback-encoder)
@@ -103,7 +103,7 @@ updated: "2026-02-11"
                    KeyValuePair.of("userId", userId),
                    KeyValuePair.of("action", action),
                    KeyValuePair.of("timestamp", System.currentTimeMillis()));
-    
+
 // Бизнес-событие как карта
         Map<String, Object> event = Map.of(
     "eventType", eventType, "data", data,
@@ -122,7 +122,7 @@ updated: "2026-02-11"
 public class CorrelationIdInterceptor implements HandlerInterceptor {
     private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
     private static final String CORRELATION_ID_KEY = "correlationId";
-    
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String correlationId = request.getHeader(CORRELATION_ID_HEADER);
@@ -133,7 +133,7 @@ public class CorrelationIdInterceptor implements HandlerInterceptor {
         request.setAttribute(CORRELATION_ID_KEY, correlationId);
         return true;
     }
-    
+
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         MDC.remove(CORRELATION_ID_KEY);

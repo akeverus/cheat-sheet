@@ -101,7 +101,7 @@ private void printUseRecursion(int n) {
 
 ## Подход 2: Биномиальное разложение
 
-В начале строки 1; следующий элемент: k = k * (line - i) / i. Один проход, O(n²) по времени, O(1) по памяти.
+В начале строки 1; следующий элемент: k = k * (line — i) / i. Один проход, O(n²) по времени, O(1) по памяти.
 
 ```java
 // Каждый элемент строки из предыдущего: k = k*(line-i)/i
@@ -110,7 +110,7 @@ public void printUseBinomialExpansion(int n) {
         for (int j = 0; j <= n - line; j++) {
             System.out.print(" ");
         }
-        
+
         int k = 1;
         for (int i = 1; i <= line; i++) {
             System.out.print(k + " ");
@@ -129,23 +129,23 @@ public void printUseBinomialExpansion(int n) {
 // triangle[i][j] = triangle[i-1][j-1] + triangle[i-1][j]
 public int[][] generatePascalTriangle(int n) {
     int[][] triangle = new int[n][];
-    
+
     for (int i = 0; i < n; i++) {
         triangle[i] = new int[i + 1];
         triangle[i][0] = 1;
         triangle[i][i] = 1;
-        
+
         for (int j = 1; j < i; j++) {
             triangle[i][j] = triangle[i-1][j-1] + triangle[i-1][j];
         }
     }
-    
+
     return triangle;
 }
 
 public void printPascalTriangle(int n) {
     int[][] triangle = generatePascalTriangle(n);
-    
+
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n - i; j++) {
             System.out.print(" ");
@@ -182,13 +182,13 @@ public int getPascalValueMemoized(int row, int col) {
     if (col == 0 || col == row) {
         return 1;
     }
-    
+
     String key = row + "," + col;
     if (memo.containsKey(key)) {
         return memo.get(key);
     }
-    
-    int value = getPascalValueMemoized(row - 1, col - 1) + 
+
+    int value = getPascalValueMemoized(row - 1, col - 1) +
                 getPascalValueMemoized(row - 1, col);
     memo.put(key, value);
     return value;
@@ -225,11 +225,11 @@ n-я строка без полной матрицы: следующий эле�
 public List<Integer> getRow(int rowIndex) {
     List<Integer> row = new ArrayList<>();
     row.add(1);
-    
+
     for (int i = 1; i <= rowIndex; i++) {
         row.add((int)((long)row.get(i-1) * (rowIndex - i + 1) / i));
     }
-    
+
     return row;
 }
 ```
@@ -273,7 +273,7 @@ private int binomialCoefficient(int n, int k) {
 fun printUseBinomialExpansionK(n: Int) {
     for (line in 1..n) {
         repeat(n - line) { print(" ") }
-        
+
         var k = 1
         for (i in 1..line) {
             print("$k ")
@@ -289,16 +289,16 @@ fun printUseBinomialExpansionK(n: Int) {
 ```kotlin
 fun generatePascalTriangleK(n: Int): Array<IntArray> {
     val triangle = Array(n) { IntArray(it + 1) }
-    
+
     for (i in 0 until n) {
         triangle[i][0] = 1
         triangle[i][i] = 1
-        
+
         for (j in 1 until i) {
             triangle[i][j] = triangle[i - 1][j - 1] + triangle[i - 1][j]
         }
     }
-    
+
     return triangle
 }
 

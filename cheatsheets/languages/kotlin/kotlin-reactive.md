@@ -12,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Kotlin Reactive
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -21,7 +19,7 @@ updated: "2026-02-11"
 - [Kotlin Documentation](https://kotlinlang.org/docs/home.html)
 - [Kotlin API Reference](https://kotlinlang.org/api/latest/jvm/stdlib/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Kotlin Tutorial](https://www.baeldung.com/kotlin)
 
@@ -442,7 +440,7 @@ Observable.error<CustomException>(CustomException())
 
 ### Управление сообщениями
 
-Здесь мы снова приходим к тому, что корутины - понятие более низкого уровня, чем **Observables** и **Flowables** библиотек **Rx.** У нас наверняка есть инструменты для настройки обмена сообщениями внутри нашего приложения, такие как **Flow** и **Channel:**
+Здесь мы снова приходим к тому, что корутины — понятие более низкого уровня, чем **Observables** и **Flowables** библиотек **Rx.** У нас наверняка есть инструменты для настройки обмена сообщениями внутри нашего приложения, такие как **Flow** и **Channel:**
 
 ```kotlin
 val pipeline = Channel<String>()
@@ -683,10 +681,10 @@ promise.then { value ->
 class MongoConfig: AbstractReactiveMongoConfiguration() {
     override fun getDatabaseName() = "mongoDatabase"
     override fun reactiveMongoClient() = mongoClient()
-    
+
     @Bean
     fun mongoClient() = MongoClients.create()
-    
+
     @Bean
     override fun reactiveMongoTemplate() = ReactiveMongoTemplate(mongoClient(), databaseName)
 }
@@ -707,7 +705,7 @@ class MongoConfig: AbstractReactiveMongoConfiguration() {
 class Event(id: String, name: String)
 ```
 
-Цель абстракции данных **Spring** - уменьшить объем кода, необходимого для реализации уровней доступа к данным для хранилищ сохраняемости**.
+Цель абстракции данных **Spring** — уменьшить объем кода, необходимого для реализации уровней доступа к данным для хранилищ сохраняемости**.
 
 **Следовательно, реактивная версия работает так же, поэтому у нас будет следующая строка для реализации всего реактивного репозитория:**
 
@@ -776,7 +774,7 @@ fun saveAndSend(@RequestParam("eventName") eventName: String) =
 
 ## Реактивное программирование: основные концепции
 
-Реактивное программирование - это парадигма программирования, ориентированная на потоки данных и распространение изменений. Вместо традиционного императивного подхода, где мы явно управляем состоянием, реактивное программирование позволяет описывать, как данные должны обрабатываться при их появлении.
+Реактивное программирование — это парадигма программирования, ориентированная на потоки данных и распространение изменений. Вместо традиционного императивного подхода, где мы явно управляем состоянием, реактивное программирование позволяет описывать, как данные должны обрабатываться при их появлении.
 
 ### Основные принципы
 
@@ -800,7 +798,7 @@ fun saveAndSend(@RequestParam("eventName") eventName: String) =
 
 ### **RxKotlin** vs **Kotlin Flow**
 
-**RxKotlin** и **Kotlin Flow** - две основные библиотеки для реактивного программирования в **Kotlin**, каждая со своими преимуществами:**
+**RxKotlin** и **Kotlin Flow** — две основные библиотеки для реактивного программирования в **Kotlin**, каждая со своими преимуществами:**
 
 **RxKotlin:**
 - Зрелая экосистема с большим количеством операторов
@@ -827,14 +825,14 @@ fun saveAndSend(@RequestParam("eventName") eventName: String) =
 - **Используйте Kotlin Flow**, если:
   - Начинаете новый проект на **Kotlin**
   - Хотите максимальную интеграцию с корутинами
-  - Приоритет - простота и читаемость кода
+  - Приоритет — простота и читаемость кода
   - Работаете только с **JVM** или **Native** платформами
 
 ## Паттерны реактивного программирования
 
 ### **Observer Pattern**
 
-**Observer Pattern** - это основа реактивного программирования, где объекты подписываются на изменения:**
+**Observer Pattern** — это основа реактивного программирования, где объекты подписываются на изменения:**
 
 ```kotlin
 // Простая реализация Observer Pattern
@@ -929,7 +927,7 @@ class CircuitBreaker(
     private var state = CircuitState.CLOSED
     private var failureCount = 0
     private var lastFailureTime = 0L
-    
+
     fun <T> execute(operation: () -> T): T {
         return when (state) {
             CircuitState.CLOSED -> {
@@ -964,7 +962,7 @@ class CircuitBreaker(
             }
         }
     }
-    
+
     private fun recordFailure() {
         failureCount++
         lastFailureTime = System.currentTimeMillis()
@@ -972,7 +970,7 @@ class CircuitBreaker(
             state = CircuitState.OPEN
         }
     }
-    
+
     private fun reset() {
         failureCount = 0
         state = CircuitState.CLOSED
@@ -993,9 +991,9 @@ class CircuitBreaker(
 fun testObservable() {
     val observable = Observable.just(1, 2, 3)
     val testObserver = TestObserver<Int>()
-    
+
     observable.subscribe(testObserver)
-    
+
     testObserver.assertValues(1, 2, 3)
     testObserver.assertComplete()
     testObserver.assertNoErrors()
@@ -1012,12 +1010,12 @@ fun testTimeOperators() {
     val scheduler = TestScheduler()
     val observable = Observable.interval(1, TimeUnit.SECONDS, scheduler)
         .take(5)
-    
+
     val testObserver = TestObserver<Long>()
     observable.subscribe(testObserver)
-    
+
     scheduler.advanceTimeBy(5, TimeUnit.SECONDS)
-    
+
     testObserver.assertValueCount(5)
 }
 ```
@@ -1187,7 +1185,7 @@ fun <T> Flow<T>.asObservable(): Observable<T> = Observable.create { emitter ->
             emitter.onError(e)
         }
     }
-    
+
     emitter.setCancellable { job.cancel() }
 }
 
@@ -1218,7 +1216,7 @@ class UserViewModel(
 ) : ViewModel() {
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
-    
+
     fun loadUser(id: Long) {
         viewModelScope.launch {
             repository.getUser(id)
@@ -1261,7 +1259,7 @@ class UserRepositoryImpl(
     override fun getUser(id: Long): Flow<User> = flow {
         // Сначала из кэша
         cache.getUser(id)?.let { emit(it) }
-        
+
         // Затем из сети
         val user = apiService.getUser(id)
         cache.saveUser(user)
@@ -1398,7 +1396,7 @@ class CircuitBreakerObservable<T>(
     private var state = CircuitState.CLOSED
     private var failureCount = 0
     private var lastFailureTime = 0L
-    
+
     fun execute(): Observable<T> {
         return when (state) {
             CircuitState.CLOSED -> {
@@ -1419,7 +1417,7 @@ class CircuitBreakerObservable<T>(
             }
         }
     }
-    
+
     private fun recordFailure() {
         failureCount++
         lastFailureTime = System.currentTimeMillis()
@@ -1427,7 +1425,7 @@ class CircuitBreakerObservable<T>(
             state = CircuitState.OPEN
         }
     }
-    
+
     enum class CircuitState { CLOSED, OPEN, HALF_OPEN }
 }
 ```
@@ -1444,7 +1442,7 @@ class ReactiveMetrics {
     private val requestCount = AtomicLong(0)
     private val errorCount = AtomicLong(0)
     private val averageLatency = AtomicReference<Double>(0.0)
-    
+
     fun <T> Observable<T>.withMetrics(): Observable<T> {
         return this
             .doOnSubscribe { requestCount.incrementAndGet() }
@@ -1452,15 +1450,15 @@ class ReactiveMetrics {
             .doOnError { errorCount.incrementAndGet() }
             .doOnComplete { updateMetrics() }
     }
-    
+
     private fun recordSuccess() {
         // Запись успешного выполнения
     }
-    
+
     private fun updateMetrics() {
         // Обновление метрик
     }
-    
+
     fun getMetrics(): Map<String, Any> {
         return mapOf(
             "requests" to requestCount.get(),
@@ -1497,13 +1495,13 @@ data class UserDeleted(val userId: Long) : Event()
 
 class EventStore {
     private val events = MutableSharedFlow<Event>(replay = Int.MAX_VALUE)
-    
+
     fun emit(event: Event) {
         events.emit(event)
     }
-    
+
     fun getEvents(): Flow<Event> = events.asSharedFlow()
-    
+
     fun getEventsForUser(userId: Long): Flow<Event> {
         return events.asSharedFlow()
             .filter { event ->
@@ -1563,7 +1561,7 @@ class QueryHandler(private val projection: UserProjection) {
     suspend fun getUser(userId: Long): User? {
         return projection.getUser(userId).first()
     }
-    
+
     suspend fun getAllUsers(): Flow<User> {
         return projection.getAllUsers()
     }
@@ -1596,7 +1594,7 @@ class CreateOrderStep(private val orderService: OrderService) : SagaStep() {
             SagaResult.Failure(e)
         }
     }
-    
+
     override fun compensate(): SagaResult {
         return try {
             orderService.cancelOrder()
@@ -1610,7 +1608,7 @@ class CreateOrderStep(private val orderService: OrderService) : SagaStep() {
 class SagaOrchestrator(private val steps: List<SagaStep>) {
     suspend fun execute(): SagaResult {
         val executedSteps = mutableListOf<SagaStep>()
-        
+
         for (step in steps) {
             when (val result = step.execute()) {
                 is SagaResult.Success -> executedSteps.add(step)
@@ -1621,7 +1619,7 @@ class SagaOrchestrator(private val steps: List<SagaStep>) {
                 }
             }
         }
-        
+
         return SagaResult.Success(Unit)
     }
 }
@@ -1652,17 +1650,17 @@ class OutboxService {
             }
         }
     }
-    
+
     fun processEvents() {
         transaction {
             val unprocessed = Outbox.select { Outbox.processed eq false }
                 .limit(100)
-            
+
             unprocessed.forEach { row ->
                 try {
                     val event = Json.decodeFromString<DomainEvent>(row[Outbox.eventData])
                     eventBus.publish(event)
-                    
+
                     Outbox.update({ Outbox.id eq row[Outbox.id] }) {
                         it[processed] = true
                     }
@@ -1694,9 +1692,9 @@ class MaterializedView<T, K, V>(
     private val aggregator: (V, V) -> V
 ) {
     private val view = MutableStateFlow<Map<K, V>>(emptyMap())
-    
+
     val state: StateFlow<Map<K, V>> = view.asStateFlow()
-    
+
     init {
         source.collect { item ->
             val key = keySelector(item)
@@ -1742,9 +1740,9 @@ class ReactiveCache<K, V>(
     private val ttl: Long = 60000
 ) {
     data class CacheEntry<V>(val value: V, val timestamp: Long)
-    
+
     private val cache = MutableStateFlow<Map<K, CacheEntry<V>>>(emptyMap())
-    
+
     fun get(key: K): Flow<V?> {
         return cache.map { map ->
             val entry = map[key]
@@ -1755,15 +1753,15 @@ class ReactiveCache<K, V>(
             }
         }
     }
-    
+
     fun put(key: K, value: V) {
         cache.update { it + (key to CacheEntry(value, System.currentTimeMillis())) }
     }
-    
+
     fun invalidate(key: K) {
         cache.update { it - key }
     }
-    
+
     fun clear() {
         cache.value = emptyMap()
     }
@@ -1861,12 +1859,12 @@ class ReactiveApiClient {
         val user = apiService.getUser(userId)
         emit(user)
     }
-    
+
     fun getUsers(): Flow<List<User>> = flow {
         val users = apiService.getUsers()
         emit(users)
     }
-    
+
     fun searchUsers(query: String): Flow<List<User>> = flow {
         val users = apiService.searchUsers(query)
         emit(users)
@@ -1885,7 +1883,7 @@ class ReactiveApiClient {
 ```kotlin
 class EventProcessor {
     private val eventFlow = MutableSharedFlow<Event>()
-    
+
     fun processEvents(): Flow<ProcessedEvent> {
         return eventFlow
             .filter { it.isValid() }
@@ -1894,7 +1892,7 @@ class EventProcessor {
                 emit(ProcessedEvent.Error(error))
             }
     }
-    
+
     fun emitEvent(event: Event) {
         eventFlow.emit(event)
     }
@@ -1919,7 +1917,7 @@ class CircuitBreaker(
     private var state = CircuitState.CLOSED
     private var failureCount = 0
     private var lastFailureTime = 0L
-    
+
     suspend fun <T> execute(block: suspend () -> T): T {
         when (state) {
             CircuitState.OPEN -> {
@@ -1936,7 +1934,7 @@ class CircuitBreaker(
                 // Нормальная работа
             }
         }
-        
+
         return try {
             val result = block()
             onSuccess()
@@ -1946,12 +1944,12 @@ class CircuitBreaker(
             throw e
         }
     }
-    
+
     private fun onSuccess() {
         failureCount = 0
         state = CircuitState.CLOSED
     }
-    
+
     private fun onFailure() {
         failureCount++
         lastFailureTime = System.currentTimeMillis()
@@ -1977,7 +1975,7 @@ suspend fun <T> retryWithBackoff(
 ): T {
     var currentDelay = initialDelay
     var lastException: Exception? = null
-    
+
     repeat(maxRetries) { attempt ->
         try {
             return block()
@@ -1989,7 +1987,7 @@ suspend fun <T> retryWithBackoff(
             }
         }
     }
-    
+
     throw lastException ?: Exception("Retry failed")
 }
 ```
@@ -1998,3 +1996,10 @@ suspend fun <T> retryWithBackoff(
 
 Этот файл содержит полное руководство по реактивному программированию в **Kotlin**, покрывающее все основные аспекты от базовых концепций до продвинутых паттернов, тестирования, оптимизации производительности, интеграции реактивных библиотек, сравнения **RxKotlin** и **Flow**, миграции, реактивных паттернов в архитектуре, **backpressure** управления, **throttling** и **debouncing**, **resilience patterns**, мониторинга, **Event Sourcing**, **CQRS**, **Saga Pattern**, **Outbox Pattern**, **Materialized Views**, **Reactive Caching**, **Reactive Streams Specification**, практические примеры использования, включая **Circuit Breaker** и **Retry patterns**, заключение, дополнительные ресурсы и итоговые рекомендации.
 
+## См. также
+
+- [[kotlin-another|Kotlin Another]]
+- [[kotlin-basics|Основы Kotlin — Полное руководство]]
+- [[kotlin-collections-grouping|Kotlin Collections: Grouping and Aggregation]]
+- [[kotlin-collections-list|Kotlin Collections: List]]
+- [[kotlin-collections-map|Kotlin Collections: Map]]

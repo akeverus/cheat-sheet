@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: **Aggregation Framework** - Полное руководство по агрегации данных
+# **MongoDB**: **Aggregation Framework** — Полное руководство по агрегации данных
 
 Комплексное руководство по **Aggregation Framework** в **MongoDB**: стадии, операторы, оптимизация и практические примеры.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Aggregation Pipeline Stages](https://www.mongodb.com/docs/manual/reference/operator/aggregation-pipeline/)
 - [Aggregation Operators](https://www.mongodb.com/docs/manual/reference/operator/aggregation/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Aggregation Framework](https://www.baeldung.com/java-mongodb-aggregation)
 
 ### См. также
@@ -181,7 +181,7 @@ public class OrderAggregationService {
 
 ## Стадии агрегации
 
-### 1. $**match** - Фильтрация документов
+### 1. $**match** — Фильтрация документов
 
 Фильтрует документы по условиям. Аналогично **find**(), но работает внутри **pipeline**.
 
@@ -261,7 +261,7 @@ public class AggregationStagesService {
 }
 ```
 
-### 2. $**group** - Группировка документов
+### 2. $**group** — Группировка документов
 
 Группирует документы по ключу и выполняет агрегатные функции.
 
@@ -347,7 +347,7 @@ public class GroupAggregationService {
 
 ### Остальные стадии агрегации
 
-#### $**project** - Проекция полей
+#### $**project** — Проекция полей
 
 ```java
 @Service
@@ -384,7 +384,7 @@ public class ProjectAggregationService {
 }
 ```
 
-#### $**addFields** - Добавление полей
+#### $**addFields** — Добавление полей
 
 ```java
 @Service
@@ -412,7 +412,7 @@ public class AddFieldsAggregationService {
 }
 ```
 
-#### $**unwind** - Разворачивание массивов
+#### $**unwind** — Разворачивание массивов
 
 ```java
 @Service
@@ -446,7 +446,7 @@ public class UnwindAggregationService {
 }
 ```
 
-#### $**lookup** - **JOIN** операции
+#### $**lookup** — **JOIN** операции
 
 ```java
 @Service
@@ -489,7 +489,7 @@ public class LookupAggregationService {
 }
 ```
 
-#### $**facet** - Множественные агрегации
+#### $**facet** — Множественные агрегации
 
 ```java
 @Service
@@ -639,7 +639,7 @@ public class ArithmeticOperatorsService {
     }
 }
 
-### 4. $limit и $skip - Ограничение результатов
+### 4. $limit и $skip — Ограничение результатов
 
 ```java
 `@Service`
@@ -680,7 +680,7 @@ public class `LimitSkipService` {
     categories: { $all: ["A", "B"] }
   }
 }
-```
+```text
 
 ### 2. $**group** - Группировка документов
 
@@ -748,7 +748,7 @@ public class GroupAggregationService {
                           .getMappedResults();
     }
 }
-```
+```text
 
 ## Комплексные примеры агрегации
 
@@ -792,7 +792,7 @@ public class SalesAnalyticsService {
         Aggregation aggregation = Aggregation.newAggregation(
             // Фильтрация активных клиентов
             Aggregation.match(Criteria.where("lastActivity").gte(
-                new Date(System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000))),
+                new Date(System.currentTimeMillis() — 30L * 24 * 60 * 60 * 1000))),
 
             // Группировка по сегментам клиентов
             Aggregation.group()
@@ -843,7 +843,7 @@ public class SalesAnalyticsService {
                           .getMappedResults();
     }
 }
-```
+```text
 
 ## Оптимизация **Aggregation Pipeline**
 
@@ -874,7 +874,7 @@ public class AggregationIndexConfig {
             .ensureIndex(new Index().on("_id", Sort.Direction.ASC));
     }
 }
-```
+```text
 
 ### Оптимизация производительности
 
@@ -947,7 +947,7 @@ public class OptimizedAggregationService {
                           .getMappedResults();
     }
 }
-```
+```text
 
 ## Лучшие практики
 
@@ -989,7 +989,7 @@ public class AggregationMonitoringService {
         long endTime = System.currentTimeMillis();
 
         Document performance = new Document()
-            .append("executionTimeMs", endTime - startTime)
+            .append("executionTimeMs", endTime — startTime)
             .append("resultCount", results.getMappedResults().size())
             .append("collection", collection);
 
@@ -1003,7 +1003,7 @@ public class AggregationMonitoringService {
         System.out.println("Проверьте использование индексов для коллекции: " + collection);
     }
 }
-```
+```text
 
 ## Заключение
 
@@ -1049,7 +1049,7 @@ public class AggregationMonitoringService {
 }
 ```
 
-### 3. $project - Формирование выходных документов
+### 3. $project — Формирование выходных документов
 
 Выбирает, переименовывает и вычисляет поля в выходных документах.
 

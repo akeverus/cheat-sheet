@@ -97,17 +97,17 @@ updated: "2026-02-11"
 // Сортировка Шелла: уменьшающийся шаг (gap) и вставки по подпоследовательностям
 public void sort(int arrayToSort[]) {
     int n = arrayToSort.length;
-    
+
     for (int gap = n / 2; gap > 0; gap /= 2) {
         for (int i = gap; i < n; i++) {
             int key = arrayToSort[i];
             int j = i;
-            
+
             while (j >= gap && arrayToSort[j - gap] > key) {
                 arrayToSort[j] = arrayToSort[j - gap];
                 j -= gap;
             }
-            
+
             arrayToSort[j] = key;
         }
     }
@@ -139,18 +139,18 @@ void givenUnsortedArray_whenShellSort_thenSortedAsc() {
 ```kotlin
 fun shellSortK(arrayToSort: IntArray) {
     val n = arrayToSort.size
-    
+
     var gap = n / 2
     while (gap > 0) {
         for (i in gap until n) {
             val key = arrayToSort[i]
             var j = i
-            
+
             while (j >= gap && arrayToSort[j - gap] > key) {
                 arrayToSort[j] = arrayToSort[j - gap]
                 j -= gap
             }
-            
+
             arrayToSort[j] = key
         }
         gap /= 2
@@ -163,23 +163,23 @@ fun shellSortK(arrayToSort: IntArray) {
 ```kotlin
 fun shellSortKnuthK(arrayToSort: IntArray) {
     val n = arrayToSort.size
-    
+
     // Генерация последовательности Knuth: (3^k - 1) / 2
     val gaps = generateSequence(1) { it * 3 + 1 }
         .takeWhile { it < n }
         .toList()
         .reversed()
-    
+
     for (gap in gaps) {
         for (i in gap until n) {
             val key = arrayToSort[i]
             var j = i
-            
+
             while (j >= gap && arrayToSort[j - gap] > key) {
                 arrayToSort[j] = arrayToSort[j - gap]
                 j -= gap
             }
-            
+
             arrayToSort[j] = key
         }
     }
@@ -191,7 +191,7 @@ fun shellSortKnuthK(arrayToSort: IntArray) {
 ```kotlin
 fun shellSortSedgewickK(arrayToSort: IntArray) {
     val n = arrayToSort.size
-    
+
     // Последовательность Sedgewick: 1, 5, 19, 41, 109, ...
     val sedgewickGaps = generateSequence(1) { gap ->
         when {
@@ -205,17 +205,17 @@ fun shellSortSedgewickK(arrayToSort: IntArray) {
         .takeWhile { it < n }
         .toList()
         .reversed()
-    
+
     for (gap in sedgewickGaps) {
         for (i in gap until n) {
             val key = arrayToSort[i]
             var j = i
-            
+
             while (j >= gap && arrayToSort[j - gap] > key) {
                 arrayToSort[j] = arrayToSort[j - gap]
                 j -= gap
             }
-            
+
             arrayToSort[j] = key
         }
     }
@@ -228,23 +228,23 @@ fun shellSortSedgewickK(arrayToSort: IntArray) {
 fun shellSortFunctionalK(input: List<Int>): List<Int> {
     val arr = input.toMutableList()
     val n = arr.size
-    
+
     var gap = n / 2
     while (gap > 0) {
         for (i in gap until n) {
             val key = arr[i]
             var j = i
-            
+
             while (j >= gap && arr[j - gap] > key) {
                 arr[j] = arr[j - gap]
                 j -= gap
             }
-            
+
             arr[j] = key
         }
         gap /= 2
     }
-    
+
     return arr
 }
 ```
@@ -254,23 +254,23 @@ fun shellSortFunctionalK(input: List<Int>): List<Int> {
 ```kotlin
 fun main() {
     val input = intArrayOf(41, 15, 82, 5, 65, 19, 32, 43, 8)
-    
+
     // Базовая версия (последовательность Shell)
     val arr1 = input.copyOf()
     shellSortK(arr1)
-    println(arr1.contentToString()) 
+    println(arr1.contentToString())
     // [5, 8, 15, 19, 32, 41, 43, 65, 82]
-    
+
     // Последовательность Knuth
     val arr2 = input.copyOf()
     shellSortKnuthK(arr2)
     println(arr2.contentToString())
-    
+
     // Последовательность Sedgewick
     val arr3 = input.copyOf()
     shellSortSedgewickK(arr3)
     println(arr3.contentToString())
-    
+
     // Функциональный стиль
     val sorted = shellSortFunctionalK(input.toList())
     println(sorted) // [5, 8, 15, 19, 32, 41, 43, 65, 82]
@@ -412,17 +412,17 @@ fun main() {
 ```java
 public <T> void shellSort(T[] array, Comparator<T> comparator) {
     int n = array.length;
-    
+
     for (int gap = n / 2; gap > 0; gap /= 2) {
         for (int i = gap; i < n; i++) {
             T key = array[i];
             int j = i;
-            
+
             while (j >= gap && comparator.compare(array[j - gap], key) > 0) {
                 array[j] = array[j - gap];
                 j -= gap;
             }
-            
+
             array[j] = key;
         }
     }
@@ -436,22 +436,22 @@ public <T> void shellSort(T[] array, Comparator<T> comparator) {
 ```java
 public long shellSortWithTiming(int[] array) {
     long startTime = System.nanoTime();
-    
+
     int n = array.length;
     for (int gap = n / 2; gap > 0; gap /= 2) {
         for (int i = gap; i < n; i++) {
             int key = array[i];
             int j = i;
-            
+
             while (j >= gap && array[j - gap] > key) {
                 array[j] = array[j - gap];
                 j -= gap;
             }
-            
+
             array[j] = key;
         }
     }
-    
+
     long endTime = System.nanoTime();
     return endTime - startTime;
 }
@@ -465,25 +465,25 @@ public long shellSortWithTiming(int[] array) {
 public void shellSortWithVisualization(int[] array) {
     int n = array.length;
     System.out.println("Исходный массив: " + Arrays.toString(array));
-    
+
     for (int gap = n / 2; gap > 0; gap /= 2) {
         System.out.println("Интервал: " + gap);
-        
+
         for (int i = gap; i < n; i++) {
             int key = array[i];
             int j = i;
-            
+
             while (j >= gap && array[j - gap] > key) {
                 array[j] = array[j - gap];
                 j -= gap;
             }
-            
+
             array[j] = key;
         }
-        
+
         System.out.println("После интервала " + gap + ": " + Arrays.toString(array));
     }
-    
+
     System.out.println("Финальный результат: " + Arrays.toString(array));
 }
 ```
@@ -496,7 +496,7 @@ public void shellSortWithVisualization(int[] array) {
 public void shellSortAdaptive(int[] array) {
     int n = array.length;
     int[] gaps;
-    
+
     // Выбор последовательности в зависимости от размера
     if (n < 100) {
         // Для маленьких массивов используем последовательность Shell
@@ -508,17 +508,17 @@ public void shellSortAdaptive(int[] array) {
         // Для больших массивов используем последовательность Sedgewick
         gaps = generateSedgewickSequence(n);
     }
-    
+
     for (int gap : gaps) {
         for (int i = gap; i < n; i++) {
             int key = array[i];
             int j = i;
-            
+
             while (j >= gap && array[j - gap] > key) {
                 array[j] = array[j - gap];
                 j -= gap;
             }
-            
+
             array[j] = key;
         }
     }
@@ -567,18 +567,18 @@ private int[] generateSedgewickSequence(int n) {
 public void parallelShellSort(int[] array) {
     int n = array.length;
     int threads = Runtime.getRuntime().availableProcessors();
-    
+
     for (int gap = n / 2; gap > 0; gap /= 2) {
         // Параллельная обработка различных подмножеств
         IntStream.range(gap, n).parallel().forEach(i -> {
             int key = array[i];
             int j = i;
-            
+
             while (j >= gap && array[j - gap] > key) {
                 array[j] = array[j - gap];
                 j -= gap;
             }
-            
+
             array[j] = key;
         });
     }

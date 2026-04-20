@@ -109,19 +109,19 @@ public static void mergeSort(int[] a, int n) {
     if (n < 2) {
         return;
     }
-    
+
     int mid = n / 2;
     int[] l = new int[mid];
     int[] r = new int[n - mid];
-    
+
     for (int i = 0; i < mid; i++) {
         l[i] = a[i];
     }
-    
+
     for (int i = mid; i < n; i++) {
         r[i - mid] = a[i];
     }
-    
+
     mergeSort(l, mid);
     mergeSort(r, n - mid);
     merge(a, l, r, mid, n - mid);
@@ -135,7 +135,7 @@ public static void mergeSort(int[] a, int n) {
 ```java
 public static void merge(int[] a, int[] l, int[] r, int left, int right) {
     int i = 0, j = 0, k = 0;
-    
+
     while (i < left && j < right) {
         if (l[i] <= r[j]) {
             a[k++] = l[i++];
@@ -143,11 +143,11 @@ public static void merge(int[] a, int[] l, int[] r, int left, int right) {
             a[k++] = r[j++];
         }
     }
-    
+
     while (i < left) {
         a[k++] = l[i++];
     }
-    
+
     while (j < right) {
         a[k++] = r[j++];
     }
@@ -426,7 +426,7 @@ fun main() {
 public static void mergeSortIterative(int[] arr) {
     int n = arr.length;
     int[] temp = new int[n];
-    
+
     for (int size = 1; size < n; size *= 2) {
         for (int left = 0; left < n - size; left += 2 * size) {
             int mid = left + size - 1;
@@ -438,7 +438,7 @@ public static void mergeSortIterative(int[] arr) {
 
 private static void mergeIterative(int[] arr, int[] temp, int left, int mid, int right) {
     int i = left, j = mid + 1, k = left;
-    
+
     while (i <= mid && j <= right) {
         if (arr[i] <= arr[j]) {
             temp[k++] = arr[i++];
@@ -446,15 +446,15 @@ private static void mergeIterative(int[] arr, int[] temp, int left, int mid, int
             temp[k++] = arr[j++];
         }
     }
-    
+
     while (i <= mid) {
         temp[k++] = arr[i++];
     }
-    
+
     while (j <= right) {
         temp[k++] = arr[j++];
     }
-    
+
     System.arraycopy(temp, left, arr, left, right - left + 1);
 }
 ```
@@ -471,7 +471,7 @@ public static void mergeSortOptimized(int[] arr, int left, int right) {
         insertionSort(arr, left, right);
         return;
     }
-    
+
     int mid = left + (right - left) / 2;
     mergeSortOptimized(arr, left, mid);
     mergeSortOptimized(arr, mid + 1, right);
@@ -506,20 +506,20 @@ public ListNode mergeSortList(ListNode head) {
     if (head == null || head.next == null) {
         return head;
     }
-    
+
     ListNode mid = getMiddle(head);
     ListNode nextOfMid = mid.next;
     mid.next = null;
-    
+
     ListNode left = mergeSortList(head);
     ListNode right = mergeSortList(nextOfMid);
-    
+
     return mergeLists(left, right);
 }
 
 private ListNode getMiddle(ListNode head) {
     if (head == null) return head;
-    
+
     ListNode slow = head, fast = head.next;
     while (fast != null && fast.next != null) {
         slow = slow.next;
@@ -531,7 +531,7 @@ private ListNode getMiddle(ListNode head) {
 private ListNode mergeLists(ListNode left, ListNode right) {
     ListNode dummy = new ListNode(0);
     ListNode current = dummy;
-    
+
     while (left != null && right != null) {
         if (left.val <= right.val) {
             current.next = left;
@@ -542,7 +542,7 @@ private ListNode mergeLists(ListNode left, ListNode right) {
         }
         current = current.next;
     }
-    
+
     current.next = (left != null) ? left : right;
     return dummy.next;
 }
@@ -559,28 +559,28 @@ import java.util.concurrent.RecursiveAction;
 public class ParallelMergeSort extends RecursiveAction {
     private int[] arr;
     private int left, right;
-    
+
     public ParallelMergeSort(int[] arr, int left, int right) {
         this.arr = arr;
         this.left = left;
         this.right = right;
     }
-    
+
     @Override
     protected void compute() {
         if (right - left < 1000) {
             mergeSortSequential(arr, left, right);
             return;
         }
-        
+
         int mid = left + (right - left) / 2;
         ParallelMergeSort leftTask = new ParallelMergeSort(arr, left, mid);
         ParallelMergeSort rightTask = new ParallelMergeSort(arr, mid + 1, right);
-        
+
         invokeAll(leftTask, rightTask);
         merge(arr, left, mid, right);
     }
-    
+
     private void mergeSortSequential(int[] arr, int left, int right) {
         if (left < right) {
             int mid = left + (right - left) / 2;
@@ -589,7 +589,7 @@ public class ParallelMergeSort extends RecursiveAction {
             merge(arr, left, mid, right);
         }
     }
-    
+
     // Использование:
     // ForkJoinPool pool = new ForkJoinPool();
     // pool.invoke(new ParallelMergeSort(arr, 0, arr.length - 1));

@@ -1482,7 +1482,9 @@ public class DataProcessingService {
 
 **Apache Commons** является стандартом де-факто для большинства **enterprise Java** проектов и рекомендуется как обязательная зависимость для серьезных приложений.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-guava|Google Guava: Утилиты для Java]]

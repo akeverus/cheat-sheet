@@ -17,8 +17,6 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 # Spring Vault: Полное руководство по управлению секретами
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -161,21 +159,21 @@ spring.cloud.vault.kv.application-name=my-app
 // Конфигурация VaultTemplate и подключения к Vault
 @Configuration
 public class VaultConfig {
-    
+
     @Bean
     public VaultTemplate vaultTemplate() {
         VaultEndpoint endpoint = new VaultEndpoint();
         endpoint.setHost("localhost");
         endpoint.setPort(8200);
         endpoint.setScheme("http");
-        
+
         ClientAuthentication clientAuthentication = new TokenAuthentication("my-token");
         ClientFactory clientFactory = ClientHttpRequestFactoryFactory.create(
             new ClientOptions(), new SslConfiguration());
-        
+
         RestTemplate restTemplate = VaultClients.createRestTemplate(
             clientFactory, endpoint);
-        
+
         return new VaultTemplate(endpoint, clientAuthentication, restTemplate);
     }
 }
@@ -188,7 +186,7 @@ public class VaultConfig {
 ```java
 @Configuration
 public class TokenAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         return new TokenAuthentication("my-vault-token");
@@ -201,17 +199,17 @@ public class TokenAuthConfig {
 ```java
 @Configuration
 public class AppRoleAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         AppRoleAuthenticationOptions options = AppRoleAuthenticationOptions.builder()
             .roleId(AppRoleAuthenticationOptions.RoleId.provided("my-role-id"))
             .secretId(AppRoleAuthenticationOptions.SecretId.provided("my-secret-id"))
             .build();
-        
+
         return new AppRoleAuthentication(options, restOperations());
     }
-    
+
     @Bean
     public RestOperations restOperations() {
         return new RestTemplate();
@@ -224,13 +222,13 @@ public class AppRoleAuthConfig {
 ```java
 @Configuration
 public class AwsAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         AwsIamAuthenticationOptions options = AwsIamAuthenticationOptions.builder()
             .role("my-aws-role")
             .build();
-        
+
         return new AwsIamAuthentication(options, restOperations());
     }
 }
@@ -244,20 +242,20 @@ public class AwsAuthConfig {
 // Чтение и запись секретов через VaultTemplate
 @Service
 public class VaultSecretService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public void writeSecret(String path, Map<String, Object> data) {
         vaultTemplate.write("secret/data/" + path, data);
     }
-    
+
     public Map<String, Object> readSecret(String path) {
         VaultResponseSupport<Map> response = vaultTemplate.read(
             "secret/data/" + path, Map.class);
         return response != null ? response.getData() : null;
     }
-    
+
     public void deleteSecret(String path) {
         vaultTemplate.delete("secret/data/" + path);
     }
@@ -277,20 +275,20 @@ public class Secret {
     @Id
     private String key;
     private String value;
-    
+
     // Getters and setters
 }
 
 @Service
 public class SecretService {
-    
+
     @Autowired
     private SecretRepository secretRepository;
-    
+
     public Secret saveSecret(Secret secret) {
         return secretRepository.save(secret);
     }
-    
+
     public Optional<Secret> findSecret(String key) {
         return secretRepository.findByKey(key);
     }
@@ -304,10 +302,10 @@ public class SecretService {
 ```java
 @Service
 public class DynamicSecretService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public DatabaseCredentials getDatabaseCredentials(String role) {
         VaultResponseSupport<DatabaseCredentials> response = vaultTemplate.read(
             "database/creds/" + role, DatabaseCredentials.class);
@@ -321,14 +319,14 @@ public class DynamicSecretService {
 ```java
 @Service
 public class PkiService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public CertificateIssueRequest issueCertificate(String role, String commonName) {
         CertificateIssueRequest request = new CertificateIssueRequest();
         request.setCommonName(commonName);
-        
+
         VaultResponseSupport<CertificateBundle> response = vaultTemplate.write(
             "pki/issue/" + role, request, CertificateBundle.class);
         return response != null ? response.getData() : null;
@@ -343,17 +341,17 @@ public class PkiService {
 ```java
 @Service
 public class LeaseService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     @Autowired
     private LeaseRenewalScheduler leaseRenewalScheduler;
-    
+
     public void renewLease(String leaseId) {
         leaseRenewalScheduler.renewLease(leaseId);
     }
-    
+
     public void revokeLease(String leaseId) {
         vaultTemplate.write("sys/leases/revoke", Map.of("lease_id", leaseId));
     }
@@ -367,15 +365,15 @@ public class LeaseService {
 ```java
 @Service
 public class EncryptionService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public String encrypt(String keyName, String plaintext) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.encrypt(keyName, plaintext);
     }
-    
+
     public String decrypt(String keyName, String ciphertext) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.decrypt(keyName, ciphertext);
@@ -438,23 +436,23 @@ try {
 ```java
 @Service
 public class VaultOperationsService {
-    
+
     @Autowired
     private VaultOperations vaultOperations;
-    
+
     public void writeSecret(String path, Object data) {
         vaultOperations.write(path, data);
     }
-    
+
     public <T> T readSecret(String path, Class<T> type) {
         VaultResponseSupport<T> response = vaultOperations.read(path, type);
         return response != null ? response.getData() : null;
     }
-    
+
     public void deleteSecret(String path) {
         vaultOperations.delete(path);
     }
-    
+
     public List<String> listSecrets(String path) {
         return vaultOperations.list(path);
     }
@@ -466,15 +464,15 @@ public class VaultOperationsService {
 ```java
 @Configuration
 public class VaultEnvironmentConfig {
-    
+
     @Bean
     public VaultTemplate vaultTemplate() {
         VaultEndpoint endpoint = VaultEndpoint.from(
             URI.create(System.getenv("VAULT_ADDR")));
-        
+
         ClientAuthentication clientAuthentication = new TokenAuthentication(
             System.getenv("VAULT_TOKEN"));
-        
+
         return new VaultTemplate(endpoint, clientAuthentication);
     }
 }
@@ -485,10 +483,10 @@ public class VaultEnvironmentConfig {
 ```java
 @Component
 public class VaultHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     @Override
     public Health health() {
         try {
@@ -496,7 +494,7 @@ public class VaultHealthIndicator implements HealthIndicator {
                 vaultOperations.read("sys/health");
                 return null;
             });
-            
+
             return Health.up()
                 .withDetail("vault", "Available")
                 .build();
@@ -514,12 +512,12 @@ public class VaultHealthIndicator implements HealthIndicator {
 ```java
 @Component
 public class VaultMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter secretsRead;
     private final Counter secretsWritten;
     private final Timer vaultOperationTime;
-    
+
     public VaultMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.secretsRead = Counter.builder("vault.secrets.read")
@@ -532,7 +530,7 @@ public class VaultMetrics {
             .description("Vault operation time")
             .register(meterRegistry);
     }
-    
+
     public <T> T measureOperation(String operation, Supplier<T> supplier) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
@@ -555,7 +553,7 @@ public class VaultMetrics {
 ```java
 @Configuration
 public class KubernetesAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         KubernetesAuthenticationOptions options = KubernetesAuthenticationOptions.builder()
@@ -565,10 +563,10 @@ public class KubernetesAuthConfig {
                 return readServiceAccountToken();
             })
             .build();
-        
+
         return new KubernetesAuthentication(options, restOperations());
     }
-    
+
     private String readServiceAccountToken() {
         try {
             return new String(Files.readAllBytes(
@@ -585,13 +583,13 @@ public class KubernetesAuthConfig {
 ```java
 @Configuration
 public class AzureAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         AzureMsiAuthenticationOptions options = AzureMsiAuthenticationOptions.builder()
             .role("my-azure-role")
             .build();
-        
+
         return new AzureMsiAuthentication(options, restOperations());
     }
 }
@@ -602,13 +600,13 @@ public class AzureAuthConfig {
 ```java
 @Configuration
 public class GcpAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         GcpComputeAuthenticationOptions options = GcpComputeAuthenticationOptions.builder()
             .role("my-gcp-role")
             .build();
-        
+
         return new GcpComputeAuthentication(options, restOperations());
     }
 }
@@ -619,14 +617,14 @@ public class GcpAuthConfig {
 ```java
 @Configuration
 public class LdapAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         LdapAuthenticationOptions options = LdapAuthenticationOptions.builder()
             .username("my-username")
             .password("my-password")
             .build();
-        
+
         return new LdapAuthentication(options, restOperations());
     }
 }
@@ -637,22 +635,22 @@ public class LdapAuthConfig {
 ```java
 @Configuration
 public class CertificateAuthConfig {
-    
+
     @Bean
     public ClientAuthentication clientAuthentication() {
         ClientCertificateAuthenticationOptions options = ClientCertificateAuthenticationOptions.builder()
             .certificate(readCertificate())
             .privateKey(readPrivateKey())
             .build();
-        
+
         return new ClientCertificateAuthentication(options, restOperations());
     }
-    
+
     private X509Certificate readCertificate() {
         // Чтение сертификата
         return null;
     }
-    
+
     private PrivateKey readPrivateKey() {
         // Чтение приватного ключа
         return null;
@@ -665,23 +663,23 @@ public class CertificateAuthConfig {
 ```java
 @Service
 public class VersionedSecretService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public void writeVersionedSecret(String path, Map<String, Object> data) {
         // Запись с версионированием (KV v2)
         vaultTemplate.write("secret/data/" + path, data);
     }
-    
+
     public Map<String, Object> readVersionedSecret(String path, Integer version) {
         VaultResponseSupport<Map> response = vaultTemplate.read(
             "secret/data/" + path + "?version=" + version, Map.class);
         return response != null ? response.getData() : null;
     }
-    
+
     public void deleteVersionedSecret(String path, Integer version) {
-        vaultTemplate.write("secret/delete/" + path, 
+        vaultTemplate.write("secret/delete/" + path,
             Map.of("versions", Collections.singletonList(version)));
     }
 }
@@ -692,16 +690,16 @@ public class VersionedSecretService {
 ```java
 @Service
 public class SecretMetadataService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public Map<String, Object> getSecretMetadata(String path) {
         VaultResponseSupport<Map> response = vaultTemplate.read(
             "secret/metadata/" + path, Map.class);
         return response != null ? response.getData() : null;
     }
-    
+
     public void updateSecretMetadata(String path, Map<String, Object> metadata) {
         vaultTemplate.write("secret/metadata/" + path, metadata);
     }
@@ -713,25 +711,25 @@ public class SecretMetadataService {
 ```java
 @Service
 public class TransitKeyService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public void createTransitKey(String keyName) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         transitOperations.createKey(keyName);
     }
-    
+
     public void rotateTransitKey(String keyName) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         transitOperations.rotateKey(keyName);
     }
-    
+
     public void deleteTransitKey(String keyName) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         transitOperations.deleteKey(keyName);
     }
-    
+
     public Map<String, Object> getTransitKeyInfo(String keyName) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.getKey(keyName);
@@ -744,15 +742,15 @@ public class TransitKeyService {
 ```java
 @Service
 public class DataKeyService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public Plaintext generateDataKey(String keyName) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.createDataKey(keyName);
     }
-    
+
     public Plaintext generateWrappedDataKey(String keyName) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.createDataKey(keyName, VaultTransitOperations.CreateKeyRequest.builder()
@@ -767,10 +765,10 @@ public class DataKeyService {
 ```java
 @Service
 public class RewrapService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public String rewrap(String keyName, String ciphertext) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.rewrap(keyName, ciphertext);
@@ -783,28 +781,28 @@ public class RewrapService {
 ```java
 @Service
 public class BatchVaultService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public List<String> batchEncrypt(String keyName, List<String> plaintexts) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         List<Plaintext> plaintextList = plaintexts.stream()
             .map(Plaintext::of)
             .collect(Collectors.toList());
-        
+
         List<Ciphertext> ciphertexts = transitOperations.encrypt(keyName, plaintextList);
         return ciphertexts.stream()
             .map(Ciphertext::getCiphertext)
             .collect(Collectors.toList());
     }
-    
+
     public List<String> batchDecrypt(String keyName, List<String> ciphertexts) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         List<Ciphertext> ciphertextList = ciphertexts.stream()
             .map(Ciphertext::of)
             .collect(Collectors.toList());
-        
+
         List<Plaintext> plaintexts = transitOperations.decrypt(keyName, ciphertextList);
         return plaintexts.stream()
             .map(Plaintext::asString)
@@ -818,20 +816,20 @@ public class BatchVaultService {
 ```java
 @Service
 public class HashSignService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public String hash(String algorithm, String input) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.hash(algorithm, Plaintext.of(input));
     }
-    
+
     public String sign(String keyName, String input) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.sign(keyName, Plaintext.of(input));
     }
-    
+
     public boolean verify(String keyName, String signature, String input) {
         VaultTransitOperations transitOperations = vaultTemplate.opsForTransit();
         return transitOperations.verify(keyName, Signature.of(signature), Plaintext.of(input));
@@ -844,28 +842,28 @@ public class HashSignService {
 ```java
 @Configuration
 public class HsmConfig {
-    
+
     @Bean
     public VaultTemplate vaultTemplate() {
         VaultEndpoint endpoint = new VaultEndpoint();
         endpoint.setHost("localhost");
         endpoint.setPort(8200);
-        
+
         // Настройка для работы с HSM
         ClientOptions clientOptions = new ClientOptions();
         SslConfiguration sslConfiguration = SslConfiguration.builder()
             .trustStore(new File("truststore.jks"))
             .trustStorePassword("password")
             .build();
-        
+
         ClientFactory clientFactory = ClientHttpRequestFactoryFactory.create(
             clientOptions, sslConfiguration);
-        
+
         RestTemplate restTemplate = VaultClients.createRestTemplate(
             clientFactory, endpoint);
-        
+
         ClientAuthentication clientAuthentication = new TokenAuthentication("my-token");
-        
+
         return new VaultTemplate(endpoint, clientAuthentication, restTemplate);
     }
 }
@@ -876,14 +874,14 @@ public class HsmConfig {
 ```java
 @Service
 public class ErrorHandlingVaultService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public Map<String, Object> readSecretWithRetry(String path) {
         int maxRetries = 3;
         int retryCount = 0;
-        
+
         while (retryCount < maxRetries) {
             try {
                 VaultResponseSupport<Map> response = vaultTemplate.read(path, Map.class);
@@ -916,14 +914,14 @@ public class VaultProperties {
     private String token;
     private String authentication;
     private Kv kv = new Kv();
-    
+
     // Getters and setters
-    
+
     public static class Kv {
         private boolean enabled;
         private String backend;
         private String applicationName;
-        
+
         // Getters and setters
     }
 }
@@ -931,20 +929,20 @@ public class VaultProperties {
 @Configuration
 @EnableConfigurationProperties(VaultProperties.class)
 public class VaultPropertiesConfig {
-    
+
     @Autowired
     private VaultProperties vaultProperties;
-    
+
     @Bean
     public VaultTemplate vaultTemplate() {
         VaultEndpoint endpoint = VaultEndpoint.from(
             URI.create(vaultProperties.getUri()));
-        
+
         ClientAuthentication clientAuthentication = createAuthentication();
-        
+
         return new VaultTemplate(endpoint, clientAuthentication);
     }
-    
+
     private ClientAuthentication createAuthentication() {
         switch (vaultProperties.getAuthentication()) {
             case "TOKEN":
@@ -966,17 +964,17 @@ public class VaultPropertiesConfig {
 @Configuration
 @EnableConfigurationProperties(VaultProperties.class)
 public class SpringCloudVaultConfig {
-    
+
     @Bean
     public VaultTemplate vaultTemplate(VaultProperties properties) {
         VaultEndpoint endpoint = VaultEndpoint.from(
             URI.create(properties.getUri()));
-        
+
         ClientAuthentication clientAuthentication = createAuthentication(properties);
-        
+
         return new VaultTemplate(endpoint, clientAuthentication);
     }
-    
+
     private ClientAuthentication createAuthentication(VaultProperties properties) {
         // Создание аутентификации на основе свойств
         return new TokenAuthentication(properties.getToken());
@@ -995,22 +993,22 @@ public class VaultConfigProperties {
     private Kv kv = new Kv();
     private Database database = new Database();
     private Pki pki = new Pki();
-    
+
     // Getters and setters
-    
+
     public static class Kv {
         private boolean enabled;
         private String backend;
         private String applicationName;
         // Getters and setters
     }
-    
+
     public static class Database {
         private boolean enabled;
         private String role;
         // Getters and setters
     }
-    
+
     public static class Pki {
         private boolean enabled;
         private String role;
@@ -1024,13 +1022,13 @@ public class VaultConfigProperties {
 ```java
 @Service
 public class SecretsInjectionService {
-    
+
     @Value("${vault.secret.database.password}")
     private String databasePassword;
-    
+
     @Value("${vault.secret.api.key}")
     private String apiKey;
-    
+
     public void useSecrets() {
         // Использование секретов из Vault
         connectToDatabase(databasePassword);
@@ -1044,25 +1042,25 @@ public class SecretsInjectionService {
 ```java
 @Service
 public class ResponseWrappingService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public String wrapSecret(String secret) {
         VaultResponseSupport<Map> response = vaultTemplate.write(
-            "sys/wrapping/wrap", 
+            "sys/wrapping/wrap",
             Map.of("secret", secret),
             Map.class);
-        
+
         return (String) response.getData().get("token");
     }
-    
+
     public String unwrapSecret(String wrappingToken) {
         VaultResponseSupport<Map> response = vaultTemplate.read(
             "sys/wrapping/unwrap",
             Map.class,
             Map.of("token", wrappingToken));
-        
+
         return (String) response.getData().get("secret");
     }
 }
@@ -1073,15 +1071,15 @@ public class ResponseWrappingService {
 ```java
 @Service
 public class PolicyService {
-    
+
     @Autowired
     private VaultTemplate vaultTemplate;
-    
+
     public void createPolicy(String policyName, String policyContent) {
-        vaultTemplate.write("sys/policies/acl/" + policyName, 
+        vaultTemplate.write("sys/policies/acl/" + policyName,
             Map.of("policy", policyContent));
     }
-    
+
     public String getPolicy(String policyName) {
         VaultResponseSupport<Map> response = vaultTemplate.read(
             "sys/policies/acl/" + policyName, Map.class);
@@ -1095,20 +1093,20 @@ public class PolicyService {
 ```java
 @Configuration
 public class AuditLoggingConfig {
-    
+
     @Bean
     public VaultTemplate vaultTemplate() {
         VaultEndpoint endpoint = new VaultEndpoint();
         endpoint.setHost("localhost");
         endpoint.setPort(8200);
-        
+
         // Настройка audit logging
         ClientOptions clientOptions = new ClientOptions();
         clientOptions.setReadTimeout(Duration.ofSeconds(5));
         clientOptions.setConnectionTimeout(Duration.ofSeconds(5));
-        
+
         ClientAuthentication clientAuthentication = new TokenAuthentication("my-token");
-        
+
         return new VaultTemplate(endpoint, clientAuthentication);
     }
 }
@@ -1127,3 +1125,11 @@ public class AuditLoggingConfig {
 - [**Vault** API](https://developer.hashicorp.com/vault/api-docs)
 - [**Vault Best Practices**](https://developer.hashicorp.com/vault/docs/best-practices)
 - [**Vault Security**](https://developer.hashicorp.com/vault/docs/internals/security)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

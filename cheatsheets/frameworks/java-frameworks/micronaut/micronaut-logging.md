@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-actuator.md"]
 ---
 
-# Micronaut: Logging - Logback, SLF4J и Structured Logging
-
-
+# Micronaut: Logging — Logback, SLF4J и Structured Logging
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-core.md", "micronaut-actuator.md"]
 
 ## Содержание
 
-- [Micronaut: Logging - Logback, SLF4J и Structured Logging](#micronaut-logging-logback-slf4j-и-structured-logging)
+- [Micronaut: Logging — Logback, SLF4J и Structured Logging](#micronaut-logging-logback-slf4j-и-structured-logging)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Logging](#настройка-logging)
@@ -97,7 +95,7 @@ dependencies {
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    
+
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
@@ -116,7 +114,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-    
+
     public User createUser(User user) {
         log.info("Creating user: {}", user.getName());
         try {
@@ -144,7 +142,7 @@ public class UserService {
             <customFields>{"service":"my-app"}</customFields>
         </encoder>
     </appender>
-    
+
     <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
@@ -161,15 +159,15 @@ import org.slf4j.MDC;
 @Singleton
 public class StructuredLoggingService {
     private static final Logger log = LoggerFactory.getLogger(StructuredLoggingService.class);
-    
+
     public void processUser(User user) {
         MDC.put("userId", user.getId().toString());
         MDC.put("userName", user.getName());
-        
+
         log.info("Processing user");
-        
+
         // Логика обработки
-        
+
         MDC.clear();
     }
 }
@@ -185,11 +183,11 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class MDCService {
-    
+
     public void processRequest(String requestId, String userId) {
         MDC.put("requestId", requestId);
         MDC.put("userId", userId);
-        
+
         try {
             // Обработка запроса
             log.info("Processing request");
@@ -209,7 +207,7 @@ import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class CustomAppender extends AppenderBase<ILoggingEvent> {
-    
+
     @Override
     protected void append(ILoggingEvent event) {
         // Кастомная логика обработки логов
@@ -284,7 +282,7 @@ log.info("User: {}", user.getName());
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    
+
     <root level="INFO">
         <appender-ref ref="FILE" />
     </root>
@@ -304,7 +302,7 @@ log.info("User: {}", user.getName());
         <discardingThreshold>0</discardingThreshold>
         <appender-ref ref="STDOUT" />
     </appender>
-    
+
     <root level="INFO">
         <appender-ref ref="ASYNC" />
     </root>
@@ -321,7 +319,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.FilterReply;
 
 public class CustomLogFilter extends Filter<ILoggingEvent> {
-    
+
     @Override
     public FilterReply decide(ILoggingEvent event) {
         if (event.getMessage().contains("SENSITIVE")) {
@@ -359,7 +357,7 @@ public class CustomLogFilter extends Filter<ILoggingEvent> {
         <destination>localhost:5000</destination>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
-    
+
     <root level="INFO">
         <appender-ref ref="LOGSTASH" />
     </root>
@@ -377,3 +375,11 @@ public class CustomLogFilter extends Filter<ILoggingEvent> {
 - [Logback Documentation](https://logback.qos.ch/documentation.html)
 - [Logstash **Logback** Encoder](https://github.com/logfellow/logstash-logback-encoder)
 - [**ELK Stack**](https://www.elastic.co/elastic-stack)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

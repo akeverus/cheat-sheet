@@ -82,7 +82,7 @@ updated: "2026-02-11"
 
 ### Suffix Tree
 
-Суффиксное дерево - это просто сжатое суффиксное дерево. Это означает, что, соединяя ребра, мы можем хранить группу символов и тем самым значительно уменьшать объем памяти.
+Суффиксное дерево — это просто сжатое суффиксное дерево. Это означает, что, соединяя ребра, мы можем хранить группу символов и тем самым значительно уменьшать объем памяти.
 
 Каждый путь, начинающийся от корня к листу, представляет собой суффикс строки.
 
@@ -109,13 +109,13 @@ public class Node {
     private String text;
     private List<Node> children;
     private int position;
-    
+
     public Node(String word, int position) {
         this.text = word;
         this.position = position;
         this.children = new ArrayList<>();
     }
-    
+
     // Getters and setters
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
@@ -135,11 +135,11 @@ public class SuffixTree {
     private static final int POSITION_UNDEFINED = -1;
     private Node root;
     private String fullText;
-    
+
     public SuffixTree(String text) {
         root = new Node("", POSITION_UNDEFINED);
         fullText = text;
-        
+
         for (int i = 0; i < text.length(); i++) {
             addSuffix(text.substring(i) + WORD_TERMINATION, i);
         }
@@ -180,13 +180,13 @@ private String getLongestCommonPrefix(String str1, String str2) {
 ```java
 private void splitNodeToParentAndChild(Node parentNode, String parentNewText, String childNewText) {
     Node childNode = new Node(childNewText, parentNode.getPosition());
-    
+
     if (parentNode.getChildren().size() > 0) {
         while (parentNode.getChildren().size() > 0) {
             childNode.getChildren().add(parentNode.getChildren().remove(0));
         }
     }
-    
+
     parentNode.getChildren().add(childNode);
     parentNode.setText(parentNewText);
     parentNode.setPosition(POSITION_UNDEFINED);
@@ -200,19 +200,19 @@ private void splitNodeToParentAndChild(Node parentNode, String parentNewText, St
 ```java
 private List<Node> getAllNodesInTraversePath(String pattern, Node startNode, boolean isAllowPartialMatch) {
     List<Node> nodes = new ArrayList<>();
-    
+
     for (int i = 0; i < startNode.getChildren().size(); i++) {
         Node currentNode = startNode.getChildren().get(i);
         String nodeText = currentNode.getText();
-        
+
         if (pattern.charAt(0) == nodeText.charAt(0)) {
             if (isAllowPartialMatch && pattern.length() <= nodeText.length()) {
                 nodes.add(currentNode);
                 return nodes;
             }
-            
+
             int compareLength = Math.min(nodeText.length(), pattern.length());
-            
+
             for (int j = 1; j < compareLength; j++) {
                 if (pattern.charAt(j) != nodeText.charAt(j)) {
                     if (isAllowPartialMatch) {
@@ -221,27 +221,27 @@ private List<Node> getAllNodesInTraversePath(String pattern, Node startNode, boo
                     return nodes;
                 }
             }
-            
+
             nodes.add(currentNode);
-            
+
             if (pattern.length() > compareLength) {
                 List<Node> nodes2 = getAllNodesInTraversePath(
-                    pattern.substring(compareLength), 
-                    currentNode, 
+                    pattern.substring(compareLength),
+                    currentNode,
                     isAllowPartialMatch
                 );
-                
+
                 if (nodes2.size() > 0) {
                     nodes.addAll(nodes2);
                 } else if (!isAllowPartialMatch) {
                     nodes.add(null);
                 }
             }
-            
+
             return nodes;
         }
     }
-    
+
     return nodes;
 }
 ```
@@ -253,20 +253,20 @@ private List<Node> getAllNodesInTraversePath(String pattern, Node startNode, boo
 ```java
 private void addSuffix(String suffix, int position) {
     List<Node> nodes = getAllNodesInTraversePath(suffix, root, true);
-    
+
     if (nodes.size() == 0) {
         addChildNode(root, suffix, position);
     } else {
         Node lastNode = nodes.remove(nodes.size() - 1);
         String newText = suffix;
-        
+
         if (nodes.size() > 0) {
             String existingSuffixUptoLastNode = nodes.stream()
                 .map(a -> a.getText())
                 .reduce("", String::concat);
             newText = newText.substring(existingSuffixUptoLastNode.length());
         }
-        
+
         extendNode(lastNode, newText, position);
     }
 }
@@ -278,13 +278,13 @@ private void addSuffix(String suffix, int position) {
 private void extendNode(Node node, String newText, int position) {
     String currentText = node.getText();
     String commonPrefix = getLongestCommonPrefix(currentText, newText);
-    
+
     if (commonPrefix != currentText) {
         String parentText = currentText.substring(0, commonPrefix.length());
         String childText = currentText.substring(commonPrefix.length());
         splitNodeToParentAndChild(node, parentText, childText);
     }
-    
+
     String remainingText = newText.substring(commonPrefix.length());
     addChildNode(node, remainingText, position);
 }
@@ -299,15 +299,15 @@ private void extendNode(Node node, String newText, int position) {
 ```java
 private List<Integer> getPositions(Node node) {
     List<Integer> positions = new ArrayList<>();
-    
+
     if (node.getText().endsWith(WORD_TERMINATION)) {
         positions.add(node.getPosition());
     }
-    
+
     for (int i = 0; i < node.getChildren().size(); i++) {
         positions.addAll(getPositions(node.getChildren().get(i)));
     }
-    
+
     return positions;
 }
 ```
@@ -318,7 +318,7 @@ private List<Integer> getPositions(Node node) {
 public List<String> searchText(String pattern) {
     List<String> result = new ArrayList<>();
     List<Node> nodes = getAllNodesInTraversePath(pattern, root, false);
-    
+
     if (nodes.size() > 0) {
         Node lastNode = nodes.get(nodes.size() - 1);
         if (lastNode != null) {
@@ -326,11 +326,11 @@ public List<String> searchText(String pattern) {
             positions = positions.stream()
                 .sorted()
                 .collect(Collectors.toList());
-            
+
             positions.forEach(m -> result.add(markPatternInText(m, pattern)));
         }
     }
-    
+
     return result;
 }
 ```
@@ -386,32 +386,32 @@ class NodeK(
 ```kotlin
 class SuffixTreeK(private val fullText: String) {
     private val root = NodeK()
-    
+
     init {
         buildTree()
     }
-    
+
     private fun buildTree() {
         for (i in fullText.indices) {
             addSuffix(fullText.substring(i), i)
         }
     }
-    
+
     private fun addSuffix(suffix: String, position: Int) {
         var node = root
         var i = 0
-        
+
         while (i < suffix.length) {
             var child: NodeK? = null
             val ch = suffix[i]
-            
+
             for (c in node.children) {
                 if (c.text.startsWith(ch)) {
                     child = c
                     break
                 }
             }
-            
+
             if (child == null) {
                 child = NodeK(suffix.substring(i), mutableListOf(), position)
                 node.children.add(child)
@@ -436,7 +436,7 @@ class SuffixTreeK(private val fullText: String) {
             }
         }
     }
-    
+
     private fun getMatchingLength(str1: String, str2: String): Int {
         var count = 0
         val min = minOf(str1.length, str2.length)
@@ -449,7 +449,7 @@ class SuffixTreeK(private val fullText: String) {
         }
         return count
     }
-    
+
     private fun getAllNodesInTraversePath(
         pattern: String,
         startNode: NodeK,
@@ -459,7 +459,7 @@ class SuffixTreeK(private val fullText: String) {
         for (i in 0 until startNode.children.size) {
             val currentNode = startNode.children[i]
             val nodeText = currentNode.text
-            
+
             if (fullText.substring(fullText.length - nodeText.length) == nodeText &&
                 pattern.length > nodeText.length &&
                 pattern.substring(0, nodeText.length) == nodeText) {
@@ -477,24 +477,24 @@ class SuffixTreeK(private val fullText: String) {
         }
         return nodes
     }
-    
+
     private fun getPositions(node: NodeK): List<Int> {
         val positions = mutableListOf<Int>()
         if (node.position != -1) {
             positions.add(node.position)
         }
-        
+
         for (child in node.children) {
             positions.addAll(getPositions(child))
         }
-        
+
         return positions
     }
-    
+
     fun searchText(pattern: String): List<String> {
         val result = mutableListOf<String>()
         val nodes = getAllNodesInTraversePath(pattern, root, false)
-        
+
         if (nodes.isNotEmpty()) {
             val lastNode = nodes.lastOrNull()
             if (lastNode != null) {
@@ -504,10 +504,10 @@ class SuffixTreeK(private val fullText: String) {
                 }
             }
         }
-        
+
         return result
     }
-    
+
     private fun markPatternInText(startPosition: Int, pattern: String): String {
         val matchingTextLHS = fullText.substring(0, startPosition)
         val matchingText = fullText.substring(startPosition, startPosition + pattern.length)
@@ -522,7 +522,7 @@ class SuffixTreeK(private val fullText: String) {
 ```kotlin
 fun main() {
     val suffixTree = SuffixTreeK("havanabanana")
-    
+
     // Поиск паттерна "a"
     val matches1 = suffixTree.searchText("a")
     matches1.forEach { println(it) }
@@ -533,7 +533,7 @@ fun main() {
     // havanab[a]nana
     // havanaban[a]na
     // havanabanan[a]
-    
+
     // Поиск паттерна "nab"
     val matches2 = suffixTree.searchText("nab")
     matches2.forEach { println(it) }

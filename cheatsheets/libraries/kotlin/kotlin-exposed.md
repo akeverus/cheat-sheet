@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Kotlin Exposed
 
-Кратко: полное руководство по **Exposed** - типобезопасному **ORM** для **Kotlin**. Рассматриваются **DSL** и **DAO API**, работа с таблицами, связи, транзакции, миграции и лучшие практики.
+Кратко: полное руководство по **Exposed** — типобезопасному **ORM** для **Kotlin**. Рассматриваются **DSL** и **DAO API**, работа с таблицами, связи, транзакции, миграции и лучшие практики.
 
 ## Полезные ссылки
 
@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Exposed Documentation](https://github.com/JetBrains/Exposed)
 - [Exposed API Reference](https://github.com/JetBrains/Exposed/wiki)
 
-### **Baeldung**
+### Обучающие материалы
 - [Exposed Tutorial](https://github.com/JetBrains/Exposed/wiki/Getting-Started)
 
 ### См. также
@@ -114,7 +114,7 @@ updated: "2026-02-11"
 
 ## Введение в **Exposed**
 
-**Exposed** - это легковесный **SQL**-фреймворк для **Kotlin**, разработанный **JetBrains**. Он предоставляет два **API** для работы с базами данных: **DSL API** (**типобезопасный SQL**) и **DAO API** (**объектно-ориентированный подход**).
+**Exposed** — это легковесный **SQL**-фреймворк для **Kotlin**, разработанный **JetBrains**. Он предоставляет два **API** для работы с базами данных: **DSL API** (**типобезопасный SQL**) и **DAO API** (**объектно-ориентированный подход**).
 
 ### Основные преимущества **Exposed**
 
@@ -126,7 +126,7 @@ updated: "2026-02-11"
 
 ### Когда использовать **Exposed**
 
-**Exposed** подходит для проектов, где нужен контроль над **SQL** запросами, но при этом требуется типобезопасность. Он менее "магический", чем **Hibernate**, что делает его предсказуемым и понятным.
+**Exposed** подходит для проектов, где нужен контроль над **SQL** запросами, но при этом требуется типобезопасность. Он менее «магический», чем **Hibernate**, что делает его предсказуемым и понятным.
 
 ## Настройка проекта
 
@@ -140,10 +140,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:0.44.1")
     implementation("org.jetbrains.exposed:exposed-dao:0.44.1")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.44.1")
-    
+
     // Для PostgreSQL
     implementation("org.postgresql:postgresql:42.6.0")
-    
+
     // Connection pool (опционально)
     implementation("com.zaxxer:HikariCP:5.0.1")
 }
@@ -277,7 +277,7 @@ transaction {
 }
 ```
 
-Функция `**insert**` принимает **lambda**, где через `it[**column**]` устанавливаются значения. Это обеспечивает типобезопасность - нельзя установить строку в **integer** колонку.
+Функция `**insert**` принимает **lambda**, где через `it[**column**]` устанавливаются значения. Это обеспечивает типобезопасность — нельзя установить строку в **integer** колонку.
 
 ### Получение данных (**Read**)
 
@@ -311,7 +311,7 @@ transaction {
 }
 ```
 
-Первый параметр `**update**` - это условие **WHERE**, второй - **lambda** с новыми значениями. Условие определяет, какие строки будут обновлены.
+Первый параметр `**update**` - это условие **WHERE**, второй — **lambda** с новыми значениями. Условие определяет, какие строки будут обновлены.
 
 ### Удаление данных (**Delete**)
 
@@ -335,13 +335,13 @@ transaction {
 transaction {
     // Выборка всех пользователей
     val allUsers = Users.selectAll()
-    
+
     // Выборка с условием
     val adults = Users.select { Users.age greaterEq 18 }
-    
+
     // Выборка с сортировкой
     val sorted = Users.selectAll().orderBy(Users.name)
-    
+
     // Ограничение количества
     val limited = Users.selectAll().limit(10)
 }
@@ -357,20 +357,20 @@ transaction {
 transaction {
     // Равенство
     Users.select { Users.id eq 1 }
-    
+
     // Неравенство
     Users.select { Users.id neq 1 }
-    
+
     // Больше/меньше
     Users.select { Users.age greater 18 }
     Users.select { Users.age less 65 }
-    
+
     // Вхождение в список
     Users.select { Users.id inList listOf(1, 2, 3) }
-    
+
     // LIKE для строк
     Users.select { Users.name like "%John%" }
-    
+
     // NULL проверки
     Users.select { Users.age.isNull() }
     Users.select { Users.age.isNotNull() }
@@ -397,14 +397,14 @@ transaction {
         .map { row ->
             row[Users.name] to row[Orders.total]
         }
-    
+
     // LEFT JOIN
     val leftJoin = (Users leftJoin Orders)
         .selectAll()
 }
 ```
 
-**JOIN** операции типобезопасны - нельзя соединить таблицы, между которыми нет связи, определенной через `**references**()`.
+**JOIN** операции типобезопасны — нельзя соединить таблицы, между которыми нет связи, определенной через `**references**()`.
 
 ## Связи между таблицами
 
@@ -430,7 +430,7 @@ object Orders : Table("orders") {
 object UserRoles : Table("user_roles") {
     val userId = integer("user_id").references(Users.id)
     val roleId = integer("role_id").references(Roles.id)
-    
+
     override val primaryKey = PrimaryKey(userId, roleId)
 }
 ```
@@ -471,7 +471,7 @@ transaction(Connection.TRANSACTION_SERIALIZABLE) {
 ```kotlin
 transaction {
     Users.insert { it[name] = "Alice" }
-    
+
     nestedTransaction {
         Users.insert { it[name] = "Bob" }
         // Если здесь произойдет ошибка, откатится только эта часть
@@ -501,7 +501,7 @@ object Users : IntIdTable("users") {
 
 class User(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<User>(Users)
-    
+
     var name by Users.name
     var email by Users.email
 }
@@ -520,14 +520,14 @@ transaction {
         name = "Alice"
         email = "alice@example.com"
     }
-    
+
     // Чтение
     val found = User.findById(1)
     val all = User.all()
-    
+
     // Обновление
     user.name = "Alice Updated"
-    
+
     // Удаление
     user.delete()
 }
@@ -545,10 +545,10 @@ transaction {
 transaction {
     // Добавление колонки
     SchemaUtils.addColumn(Users, Users.age)
-    
+
     // Создание индекса
     SchemaUtils.createIndex(Users.email)
-    
+
     // Удаление таблицы
     SchemaUtils.drop(OldTable)
 }
@@ -569,12 +569,12 @@ object SchemaVersion : IntIdTable("schema_version") {
 fun migrate() {
     transaction {
         val currentVersion = SchemaVersion.all().maxOfOrNull { it.version } ?: 0
-        
+
         if (currentVersion < 1) {
             SchemaUtils.create(Users)
             SchemaVersion.new { version = 1; appliedAt = DateTime.now() }
         }
-        
+
         if (currentVersion < 2) {
             SchemaUtils.addColumn(Users, Users.age)
             SchemaVersion.new { version = 2; appliedAt = DateTime.now() }
@@ -614,7 +614,7 @@ object Users : IntIdTable("users") {
     val name = varchar("name", 50)
     val email = varchar("email", 100).uniqueIndex()
     val age = integer("age").index()
-    
+
     // Составной индекс
     init {
         index(name, email)
@@ -740,14 +740,14 @@ class UserRepositoryTest {
             SchemaUtils.create(Users)
         }
     }
-    
+
     @AfterEach
     fun tearDown() {
         transaction {
             SchemaUtils.drop(Users)
         }
     }
-    
+
     @Test
     fun `should save and retrieve user`() {
         transaction {
@@ -755,7 +755,7 @@ class UserRepositoryTest {
                 it[name] = "Alice"
                 it[email] = "alice@example.com"
             }
-            
+
             val retrieved = Users.select { Users.id eq user[Users.id] }.single()
             assertEquals("Alice", retrieved[Users.name])
         }
@@ -875,7 +875,7 @@ fun Application.module() {
         user = "user",
         password = "password"
     )
-    
+
     routing {
         get("/users") {
             val users = transaction {
@@ -883,7 +883,7 @@ fun Application.module() {
             }
             call.respond(users)
         }
-        
+
         post("/users") {
             val user = call.receive<User>()
             transaction {
@@ -929,11 +929,11 @@ fun <T> measureQuery(block: () -> T): T {
     val startTime = System.currentTimeMillis()
     val result = block()
     val duration = System.currentTimeMillis() - startTime
-    
+
     if (duration > 1000) {
         logger.warn("Slow query detected: ${duration}ms")
     }
-    
+
     return result
 }
 
@@ -993,7 +993,7 @@ fun updateUsersInBatches(updates: List<Pair<Int, User>>, batchSize: Int = 1000) 
 fun processLargeDataset() {
     transaction {
         val query = Users.selectAll()
-        
+
         // Streaming обработка
         query.forEach { row ->
             val user = row.toUser()
@@ -1071,11 +1071,11 @@ class ShardedDatabase(private val shards: List<Database>) {
     fun getShard(key: Int): Database {
         return shards[key % shards.size]
     }
-    
+
     fun executeOnShard(key: Int, block: Transaction.() -> Unit) {
         transaction(getShard(key), block)
     }
-    
+
     fun findUser(userId: Int): User? {
         return transaction(getShard(userId)) {
             Users.select { Users.id eq userId }.singleOrNull()?.toUser()
@@ -1175,7 +1175,7 @@ transaction(Connection.TRANSACTION_SERIALIZABLE) {
 transaction {
     // Внешняя транзакция
     val user = Users.select { Users.id eq 1 }.single()
-    
+
     transaction {
         // Внутренняя транзакция
         Posts.insert {
@@ -1193,11 +1193,11 @@ transaction {
             it[name] = "Test"
             it[email] = "test@example.com"
         }
-        
+
         if (someCondition) {
             connection.rollback(savepoint)
         }
-        
+
         Users.insert {
             it[name] = "Another"
             it[email] = "another@example.com"
@@ -1237,7 +1237,7 @@ transaction {
     val products = Products.select {
         Products.metadata.json("color") eq "red"
     }
-    
+
     // Запрос по массиву JSON
     val taggedProducts = Products.select {
         Products.tags.jsonArray("contains", "electronics")
@@ -1268,17 +1268,17 @@ object TempUsers : IntIdTable("temp_users") {
 // Использование временной таблицы
 transaction {
     SchemaUtils.create(TempUsers)
-    
+
     try {
         // Обработка данных во временной таблице
         TempUsers.insert {
             it[name] = "Temp User"
             it[email] = "temp@example.com"
         }
-        
+
         // Использование данных из временной таблицы
         val tempUsers = TempUsers.selectAll().toList()
-        
+
         // Копирование во основную таблицу
         Users.batchInsert(tempUsers) { user ->
             this[Users.name] = user[TempUsers.name]
@@ -1304,7 +1304,7 @@ object Migrations {
             SchemaUtils.create(Users, Posts, Comments)
         }
     }
-    
+
     fun addIndexes() {
         transaction {
             SchemaUtils.createIndex(
@@ -1315,7 +1315,7 @@ object Migrations {
             )
         }
     }
-    
+
     fun addForeignKeys() {
         transaction {
             SchemaUtils.createForeignKey(
@@ -1326,7 +1326,7 @@ object Migrations {
             )
         }
     }
-    
+
     fun addColumns() {
         transaction {
             addColumn(Users, Users.birthDate, DateTimeColumnType())
@@ -1338,41 +1338,41 @@ object Migrations {
 // Управление версиями миграций
 object MigrationManager {
     private val executedMigrations = mutableSetOf<String>()
-    
+
     fun executeMigrations() {
         transaction {
             createMigrationTable()
-            
+
             if (!isMigrationExecuted("001_initial_schema")) {
                 Migrations.createInitialSchema()
                 recordMigration("001_initial_schema")
             }
-            
+
             if (!isMigrationExecuted("002_add_indexes")) {
                 Migrations.addIndexes()
                 recordMigration("002_add_indexes")
             }
-            
+
             if (!isMigrationExecuted("003_add_foreign_keys")) {
                 Migrations.addForeignKeys()
                 recordMigration("003_add_foreign_keys")
             }
-            
+
             if (!isMigrationExecuted("004_add_columns")) {
                 Migrations.addColumns()
                 recordMigration("004_add_columns")
             }
         }
     }
-    
+
     private fun createMigrationTable() {
         SchemaUtils.create(Migrations)
     }
-    
+
     private fun isMigrationExecuted(name: String): Boolean {
         return Migrations.select { Migrations.name eq name }.count() > 0
     }
-    
+
     private fun recordMigration(name: String) {
         Migrations.insert {
             it[Migrations.name] = name
@@ -1413,12 +1413,12 @@ fun explainQuery(query: Query): String {
 object Users : IntIdTable("users") {
     val name = varchar("name", 50).index()
     val email = varchar("email", 100).uniqueIndex()
-    
+
     // Составной индекс
     init {
         index(name, email)
     }
-    
+
     // Частичный индекс (для PostgreSQL)
     init {
         index(isUnique = false) {
@@ -1451,7 +1451,7 @@ fun getUsersWithPostsOptimized(): List<UserWithPosts> {
 // Использование prepared statements для производительности
 class PreparedStatementCache {
     private val cache = mutableMapOf<String, PreparedStatement>()
-    
+
     fun getOrCreate(sql: String): PreparedStatement {
         return cache.getOrPut(sql) {
             connection.prepareStatement(sql)
@@ -1484,7 +1484,7 @@ fun executeRawSQL(sql: String): List<ResultRow> {
 fun getComplexReport(): List<ReportRow> {
     return transaction {
         val sql = """
-            SELECT 
+            SELECT
                 u.id,
                 u.name,
                 COUNT(p.id) as post_count,
@@ -1494,7 +1494,7 @@ fun getComplexReport(): List<ReportRow> {
             GROUP BY u.id, u.name
             HAVING COUNT(p.id) > 10
         """.trimIndent()
-        
+
         exec(sql) { rs ->
             buildList {
                 while (rs.next()) {
@@ -1592,7 +1592,7 @@ object Posts : IntIdTable("posts") {
     val userId = integer("user_id").index()
     val title = varchar("title", 200)
     val createdAt = datetime("created_at")
-    
+
     init {
         index(userId, createdAt)  // Составной индекс
     }
@@ -1602,7 +1602,7 @@ object Posts : IntIdTable("posts") {
 object ActiveUsers : IntIdTable("users") {
     val name = varchar("name", 50)
     val active = bool("active")
-    
+
     init {
         index(isUnique = false) {
             active
@@ -1614,7 +1614,7 @@ object ActiveUsers : IntIdTable("users") {
 object Articles : IntIdTable("articles") {
     val title = varchar("title", 200)
     val content = text("content")
-    
+
     init {
         // Создание GIN индекса для полнотекстового поиска
     }
@@ -1674,25 +1674,25 @@ class UserRepository {
                 .singleOrNull()
         }
     }
-    
+
     fun findAll(): List<User> {
         return transaction {
             Users.selectAll()
                 .map { it.toUser() }
         }
     }
-    
+
     fun create(user: User): User {
         return transaction {
             val id = Users.insert {
                 it[name] = user.name
                 it[email] = user.email
             } get Users.id
-            
+
             user.copy(id = id)
         }
     }
-    
+
     fun update(user: User) {
         transaction {
             Users.update({ Users.id eq user.id }) {
@@ -1701,7 +1701,7 @@ class UserRepository {
             }
         }
     }
-    
+
     fun delete(id: Long) {
         transaction {
             Users.deleteWhere { Users.id eq id }
@@ -1754,15 +1754,15 @@ fun transferMoney(fromId: Long, toId: Long, amount: Double) {
     transaction(Connection.TRANSACTION_SERIALIZABLE) {
         val fromAccount = Accounts.select { Accounts.id eq fromId }.single()
         val toAccount = Accounts.select { Accounts.id eq toId }.single()
-        
+
         if (fromAccount[Accounts.balance] < amount) {
             throw InsufficientFundsException()
         }
-        
+
         Accounts.update({ Accounts.id eq fromId }) {
             it[balance] = it[balance] - amount
         }
-        
+
         Accounts.update({ Accounts.id eq toId }) {
             it[balance] = it[balance] + amount
         }
@@ -1774,7 +1774,7 @@ fun complexOperation() {
     transaction {
         // Внешняя транзакция
         val user = createUser()
-        
+
         transaction {
             // Внутренняя транзакция
             createUserProfile(user.id)
@@ -1803,13 +1803,13 @@ object Migrations {
             """.trimIndent())
         }
     }
-    
+
     fun addIndex() {
         transaction {
             exec("CREATE INDEX idx_email ON users(email)")
         }
     }
-    
+
     fun addColumn() {
         transaction {
             exec("ALTER TABLE users ADD COLUMN phone VARCHAR(20)")

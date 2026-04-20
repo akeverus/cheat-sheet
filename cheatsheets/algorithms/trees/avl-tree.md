@@ -86,7 +86,7 @@ public class Node {
     int height;
     Node left;
     Node right;
-    
+
     Node(int key) {
         this.key = key;
         this.height = 0;
@@ -103,15 +103,15 @@ public class Node {
 ```java
 public class AVLTree {
     private Node root;
-    
+
     void updateHeight(Node n) {
         n.height = 1 + Math.max(height(n.left), height(n.right));
     }
-    
+
     int height(Node n) {
         return n == null ? -1 : n.height;
     }
-    
+
     int getBalance(Node n) {
         return (n == null) ? 0 : height(n.right) - height(n.left);
     }
@@ -134,13 +134,13 @@ public class AVLTree {
 Node rotateRight(Node y) {
     Node x = y.left;
     Node z = x.right;
-    
+
     x.right = y;
     y.left = z;
-    
+
     updateHeight(y);
     updateHeight(x);
-    
+
     return x;
 }
 ```
@@ -155,13 +155,13 @@ Node rotateRight(Node y) {
 Node rotateLeft(Node y) {
     Node x = y.right;
     Node z = x.left;
-    
+
     x.left = y;
     y.right = z;
-    
+
     updateHeight(y);
     updateHeight(x);
-    
+
     return x;
 }
 ```
@@ -186,7 +186,7 @@ Node rotateLeft(Node y) {
 Node rebalance(Node z) {
     updateHeight(z);
     int balance = getBalance(z);
-    
+
     if (balance > 1) {
         if (height(z.right.right) > height(z.right.left)) {
             z = rotateLeft(z);
@@ -202,7 +202,7 @@ Node rebalance(Node z) {
             z = rotateRight(z);
         }
     }
-    
+
     return z;
 }
 ```
@@ -224,7 +224,7 @@ Node insert(Node node, int key) {
     } else {
         throw new RuntimeException("duplicate Key!");
     }
-    
+
     return rebalance(node);
 }
 
@@ -264,11 +264,11 @@ Node delete(Node node, int key) {
             node.right = delete(node.right, node.key);
         }
     }
-    
+
     if (node != null) {
         node = rebalance(node);
     }
-    
+
     return node;
 }
 
@@ -286,14 +286,14 @@ public void delete(int key) {
 ```java
 Node find(int key) {
     Node current = root;
-    
+
     while (current != null) {
         if (current.key == key) {
             break;
         }
         current = current.key < key ? current.right : current.left;
     }
-    
+
     return current;
 }
 
@@ -319,49 +319,49 @@ class NodeK(var key: Int) {
 ```kotlin
 class AVLTreeK {
     private var root: NodeK? = null
-    
+
     private fun updateHeight(n: NodeK?) {
         if (n != null) {
             n.height = 1 + Math.max(height(n.left), height(n.right))
         }
     }
-    
+
     private fun height(n: NodeK?): Int = n?.height ?: -1
-    
+
     private fun getBalance(n: NodeK?): Int {
         return if (n == null) 0 else height(n.right) - height(n.left)
     }
-    
+
     private fun rotateRight(y: NodeK): NodeK {
         val x = y.left!!
         val z = x.right
-        
+
         x.right = y
         y.left = z
-        
+
         updateHeight(y)
         updateHeight(x)
-        
+
         return x
     }
-    
+
     private fun rotateLeft(y: NodeK): NodeK {
         val x = y.right!!
         val z = x.left
-        
+
         x.left = y
         y.right = z
-        
+
         updateHeight(y)
         updateHeight(x)
-        
+
         return x
     }
-    
+
     private fun rebalance(z: NodeK): NodeK {
         updateHeight(z)
         val balance = getBalance(z)
-        
+
         if (balance > 1) {
             if (height(z.right?.right) > height(z.right?.left)) {
                 return rotateLeft(z)
@@ -377,28 +377,28 @@ class AVLTreeK {
                 return rotateRight(z)
             }
         }
-        
+
         return z
     }
-    
+
     fun insert(key: Int) {
         root = insertRecursive(root, key)
     }
-    
+
     private fun insertRecursive(node: NodeK?, key: Int): NodeK {
         if (node == null) {
             return NodeK(key)
         }
-        
+
         when {
             key < node.key -> node.left = insertRecursive(node.left, key)
             key > node.key -> node.right = insertRecursive(node.right, key)
             else -> return node
         }
-        
+
         return rebalance(node)
     }
-    
+
     fun find(key: Int): NodeK? {
         var current = root
         while (current != null) {
@@ -410,7 +410,7 @@ class AVLTreeK {
         }
         return current
     }
-    
+
     fun contains(key: Int): Boolean = find(key) != null
 }
 ```
@@ -425,7 +425,7 @@ fun main() {
     tree.insert(30)
     tree.insert(40)
     tree.insert(50)
-    
+
     println(tree.contains(30)) // true
     println(tree.contains(60)) // false
 }

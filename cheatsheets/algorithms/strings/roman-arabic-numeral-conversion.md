@@ -80,17 +80,17 @@ enum RomanNumeral {
     I(1), IV(4), V(5), IX(9), X(10),
     XL(40), L(50), XC(90), C(100),
     CD(400), D(500), CM(900), M(1000);
-    
+
     private int value;
-    
+
     RomanNumeral(int value) {
         this.value = value;
     }
-    
+
     public int getValue() {
         return value;
     }
-    
+
     public static List<RomanNumeral> getReverseSortedValues() {
         return Arrays.stream(values())
             .sorted(Comparator.comparing((RomanNumeral e) -> e.value).reversed())
@@ -143,10 +143,10 @@ public static int romanToArabicAlternative(String s) {
     map.put('C', 100);
     map.put('D', 500);
     map.put('M', 1000);
-    
+
     int result = 0;
     int prevValue = 0;
-    
+
     for (int i = s.length() - 1; i >= 0; i--) {
         int currentValue = map.get(s.charAt(i));
         if (currentValue < prevValue) {
@@ -156,7 +156,7 @@ public static int romanToArabicAlternative(String s) {
         }
         prevValue = currentValue;
     }
-    
+
     return result;
 }
 ```
@@ -170,14 +170,14 @@ public static String arabicToRoman(int number) {
     if ((number <= 0) || (number > 4000)) {
         throw new IllegalArgumentException(number + " is not in range (0,4000]");
     }
-    
+
     List<RomanNumeral> romanNumerals = RomanNumeral.getReverseSortedValues();
     int i = 0;
     StringBuilder sb = new StringBuilder();
-    
+
     while ((number > 0) && (i < romanNumerals.size())) {
         RomanNumeral currentSymbol = romanNumerals.get(i);
-        
+
         if (currentSymbol.getValue() <= number) {
             sb.append(currentSymbol.name());
             number -= currentSymbol.getValue();
@@ -185,7 +185,7 @@ public static String arabicToRoman(int number) {
             i++;
         }
     }
-    
+
     return sb.toString();
 }
 ```
@@ -200,7 +200,7 @@ public static String arabicToRomanAlternative(int num) {
     String[] hundreds = {"", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM"};
     String[] tens = {"", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC"};
     String[] ones = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"};
-    
+
     return thousands[num / 1000] +
            hundreds[(num % 1000) / 100] +
            tens[(num % 100) / 10] +
@@ -235,7 +235,7 @@ public static boolean isValidRoman(String s) {
     if (s == null || s.isEmpty()) {
         return false;
     }
-    
+
     String pattern = "^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$";
     return s.matches(pattern);
 }
@@ -272,7 +272,7 @@ enum class RomanNumeralK(val value: Int) {
     I(1), IV(4), V(5), IX(9), X(10),
     XL(40), L(50), XC(90), C(100),
     CD(400), D(500), CM(900), M(1000);
-    
+
     companion object {
         fun getReverseSortedValues(): List<RomanNumeralK> {
             return values().sortedByDescending { it.value }
@@ -289,10 +289,10 @@ fun romanToArabicK(input: String): Int {
     var result = 0
     val romanNumerals = RomanNumeralK.getReverseSortedValues()
     var i = 0
-    
+
     while (romanNumeral.isNotEmpty() && i < romanNumerals.size) {
         val symbol = romanNumerals[i]
-        
+
         if (romanNumeral.startsWith(symbol.name)) {
             result += symbol.value
             romanNumeral = romanNumeral.substring(symbol.name.length)
@@ -300,11 +300,11 @@ fun romanToArabicK(input: String): Int {
             i++
         }
     }
-    
+
     if (romanNumeral.isNotEmpty()) {
         throw IllegalArgumentException("$input cannot be converted to a Roman Numeral")
     }
-    
+
     return result
 }
 ```
@@ -317,10 +317,10 @@ fun romanToArabicAlternativeK(s: String): Int {
         'I' to 1, 'V' to 5, 'X' to 10, 'L' to 50,
         'C' to 100, 'D' to 500, 'M' to 1000
     )
-    
+
     var result = 0
     var prevValue = 0
-    
+
     for (i in s.length - 1 downTo 0) {
         val currentValue = map[s[i]] ?: 0
         if (currentValue < prevValue) {
@@ -330,7 +330,7 @@ fun romanToArabicAlternativeK(s: String): Int {
         }
         prevValue = currentValue
     }
-    
+
     return result
 }
 ```
@@ -342,15 +342,15 @@ fun arabicToRomanK(number: Int): String {
     if (number <= 0 || number > 4000) {
         throw IllegalArgumentException("$number is not in range (0,4000]")
     }
-    
+
     val romanNumerals = RomanNumeralK.getReverseSortedValues()
     var num = number
     val result = StringBuilder()
     var i = 0
-    
+
     while (num > 0 && i < romanNumerals.size) {
         val currentSymbol = romanNumerals[i]
-        
+
         if (currentSymbol.value <= num) {
             result.append(currentSymbol.name)
             num -= currentSymbol.value
@@ -358,7 +358,7 @@ fun arabicToRomanK(number: Int): String {
             i++
         }
     }
-    
+
     return result.toString()
 }
 ```
@@ -371,7 +371,7 @@ fun arabicToRomanAlternativeK(num: Int): String {
     val hundreds = arrayOf("", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM")
     val tens = arrayOf("", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC")
     val ones = arrayOf("", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX")
-    
+
     return thousands[num / 1000] +
            hundreds[(num % 1000) / 100] +
            tens[(num % 100) / 10] +
@@ -386,7 +386,7 @@ fun isValidRomanK(s: String?): Boolean {
     if (s.isNullOrEmpty()) {
         return false
     }
-    
+
     val pattern = "^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$"
     return s.matches(pattern.toRegex())
 }
@@ -399,11 +399,11 @@ fun main() {
     // Римские → Арабские
     println(romanToArabicK("MMXVIII")) // 2018
     println(romanToArabicAlternativeK("MCMXCIX")) // 1999
-    
+
     // Арабские → Римские
     println(arabicToRomanK(1999)) // "MCMXCIX"
     println(arabicToRomanAlternativeK(2018)) // "MMXVIII"
-    
+
     // Валидация
     println(isValidRomanK("MMXVIII")) // true
     println(isValidRomanK("IIII")) // false

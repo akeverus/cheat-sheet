@@ -121,17 +121,17 @@ public class Node {
     State state;
     Node parent;
     List<Node> childArray;
-    
+
     public Node() {
         this.state = new State();
         this.childArray = new ArrayList<>();
     }
-    
+
     public Node(State state) {
         this.state = state;
         this.childArray = new ArrayList<>();
     }
-    
+
     public Node(Node node) {
         this.childArray = new ArrayList<>();
         this.state = new State(node.getState());
@@ -143,55 +143,55 @@ public class Node {
             this.childArray.add(new Node(child));
         }
     }
-    
+
     // Геттеры и сеттеры
     public State getState() {
         return state;
     }
-    
+
     public void setState(State state) {
         this.state = state;
     }
-    
+
     public Node getParent() {
         return parent;
     }
-    
+
     public void setParent(Node parent) {
         this.parent = parent;
     }
-    
+
     public List<Node> getChildArray() {
         return childArray;
     }
-    
+
     public void setChildArray(List<Node> childArray) {
         this.childArray = childArray;
     }
-    
+
     public Node getRandomChildNode() {
         int noOfPossibleMoves = this.childArray.size();
         int selectRandom = (int) (Math.random() * noOfPossibleMoves);
         return this.childArray.get(selectRandom);
     }
-    
+
     public Node getChildWithMaxScore() {
-        return Collections.max(this.childArray, 
+        return Collections.max(this.childArray,
             Comparator.comparing(c -> c.getState().getVisitCount()));
     }
 }
 
 public class Tree {
     Node root;
-    
+
     public Tree() {
         root = new Node();
     }
-    
+
     public Node getRoot() {
         return root;
     }
-    
+
     public void setRoot(Node root) {
         this.root = root;
     }
@@ -208,88 +208,88 @@ public class State {
     int playerNo;
     int visitCount;
     double winScore;
-    
+
     public State() {
         this.board = new Board();
     }
-    
+
     public State(State state) {
         this.board = new Board(state.getBoard());
         this.playerNo = state.getPlayerNo();
         this.visitCount = state.getVisitCount();
         this.winScore = state.getWinScore();
     }
-    
+
     public State(Board board) {
         this.board = new Board(board);
     }
-    
+
     public List<State> getAllPossibleStates() {
         List<State> possibleStates = new ArrayList<>();
         List<Position> availablePositions = this.board.getEmptyPositions();
-        
+
         availablePositions.forEach(p -> {
             State newState = new State(this.board);
             newState.setPlayerNo(3 - this.playerNo);
             newState.getBoard().performMove(newState.getPlayerNo(), p);
             possibleStates.add(newState);
         });
-        
+
         return possibleStates;
     }
-    
+
     public void randomPlay() {
         List<Position> availablePositions = this.board.getEmptyPositions();
         int totalAvailableMoves = availablePositions.size();
         int selectRandom = (int) (Math.random() * totalAvailableMoves);
         this.board.performMove(this.playerNo, availablePositions.get(selectRandom));
     }
-    
+
     public void togglePlayer() {
         this.playerNo = 3 - this.playerNo;
     }
-    
+
     public int getOpponent() {
         return 3 - this.playerNo;
     }
-    
+
     // Геттеры и сеттеры
     public Board getBoard() {
         return board;
     }
-    
+
     public void setBoard(Board board) {
         this.board = board;
     }
-    
+
     public int getPlayerNo() {
         return playerNo;
     }
-    
+
     public void setPlayerNo(int playerNo) {
         this.playerNo = playerNo;
     }
-    
+
     public int getVisitCount() {
         return visitCount;
     }
-    
+
     public void setVisitCount(int visitCount) {
         this.visitCount = visitCount;
     }
-    
+
     public double getWinScore() {
         return winScore;
     }
-    
+
     public void setWinScore(double winScore) {
         this.winScore = winScore;
     }
-    
+
     public void incrementVisit() {
         this.visitCount++;
     }
-    
+
     public void addScore(double score) {
         if (this.winScore != Integer.MIN_VALUE) {
             this.winScore += score;
@@ -307,36 +307,36 @@ public class MonteCarloTreeSearch {
     static final int WIN_SCORE = 10;
     int level;
     int opponent;
-    
+
     public Board findNextMove(Board board, int playerNo) {
         opponent = 3 - playerNo;
         Tree tree = new Tree();
         Node rootNode = tree.getRoot();
         rootNode.getState().setBoard(board);
         rootNode.getState().setPlayerNo(opponent);
-        
+
         long end = System.currentTimeMillis() + 5000; // 5 секунд
-        
+
         while (System.currentTimeMillis() < end) {
             // Selection
             Node promisingNode = selectPromisingNode(rootNode);
-            
+
             // Expansion
             if (promisingNode.getState().getBoard().checkStatus() == Board.IN_PROGRESS) {
                 expandNode(promisingNode);
             }
-            
+
             // Simulation
             Node nodeToExplore = promisingNode;
             if (promisingNode.getChildArray().size() > 0) {
                 nodeToExplore = promisingNode.getRandomChildNode();
             }
             int playoutResult = simulateRandomPlayout(nodeToExplore);
-            
+
             // Backpropagation
             backPropogation(nodeToExplore, playoutResult);
         }
-        
+
         Node winnerNode = rootNode.getChildWithMaxScore();
         tree.setRoot(winnerNode);
         return winnerNode.getState().getBoard();
@@ -357,11 +357,11 @@ public class MonteCarloTreeSearch {
 ```java
 private Node selectPromisingNode(Node rootNode) {
     Node node = rootNode;
-    
+
     while (node.getChildArray().size() != 0) {
         node = UCT.findBestNodeWithUCT(node);
     }
-    
+
     return node;
 }
 
@@ -370,11 +370,11 @@ public class UCT {
         if (nodeVisit == 0) {
             return Integer.MAX_VALUE;
         }
-        
+
         return ((double) nodeWinScore / (double) nodeVisit)
             + 1.41 * Math.sqrt(Math.log(totalVisit) / (double) nodeVisit);
     }
-    
+
     public static Node findBestNodeWithUCT(Node node) {
         int parentVisit = node.getState().getVisitCount();
         return Collections.max(
@@ -410,18 +410,18 @@ private int simulateRandomPlayout(Node node) {
     Node tempNode = new Node(node);
     State tempState = tempNode.getState();
     int boardStatus = tempState.getBoard().checkStatus();
-    
+
     if (boardStatus == opponent) {
         tempNode.getParent().getState().setWinScore(Integer.MIN_VALUE);
         return boardStatus;
     }
-    
+
     while (boardStatus == Board.IN_PROGRESS) {
         tempState.togglePlayer();
         tempState.randomPlay();
         boardStatus = tempState.getBoard().checkStatus();
     }
-    
+
     return boardStatus;
 }
 ```
@@ -433,7 +433,7 @@ private int simulateRandomPlayout(Node node) {
 ```java
 private void backPropogation(Node nodeToExplore, int playerNo) {
     Node tempNode = nodeToExplore;
-    
+
     while (tempNode != null) {
         tempNode.getState().incrementVisit();
         if (tempNode.getState().getPlayerNo() == playerNo) {
@@ -452,18 +452,18 @@ private void backPropogation(Node nodeToExplore, int playerNo) {
 public class Board {
     int[][] boardValues;
     int totalMoves;
-    
+
     public static final int DEFAULT_BOARD_SIZE = 3;
     public static final int IN_PROGRESS = -1;
     public static final int DRAW = 0;
     public static final int P1 = 1;
     public static final int P2 = 2;
-    
+
     public Board() {
         boardValues = new int[DEFAULT_BOARD_SIZE][DEFAULT_BOARD_SIZE];
         totalMoves = 0;
     }
-    
+
     public Board(Board board) {
         this.boardValues = new int[DEFAULT_BOARD_SIZE][DEFAULT_BOARD_SIZE];
         for (int i = 0; i < DEFAULT_BOARD_SIZE; i++) {
@@ -473,55 +473,55 @@ public class Board {
         }
         this.totalMoves = board.totalMoves;
     }
-    
+
     public void performMove(int player, Position p) {
         this.totalMoves++;
         boardValues[p.getX()][p.getY()] = player;
     }
-    
+
     public int checkStatus() {
         // Проверка строк
         for (int i = 0; i < DEFAULT_BOARD_SIZE; i++) {
-            if (boardValues[i][0] == boardValues[i][1] 
-                && boardValues[i][1] == boardValues[i][2] 
+            if (boardValues[i][0] == boardValues[i][1]
+                && boardValues[i][1] == boardValues[i][2]
                 && boardValues[i][0] != 0) {
                 return boardValues[i][0];
             }
         }
-        
+
         // Проверка столбцов
         for (int j = 0; j < DEFAULT_BOARD_SIZE; j++) {
-            if (boardValues[0][j] == boardValues[1][j] 
-                && boardValues[1][j] == boardValues[2][j] 
+            if (boardValues[0][j] == boardValues[1][j]
+                && boardValues[1][j] == boardValues[2][j]
                 && boardValues[0][j] != 0) {
                 return boardValues[0][j];
             }
         }
-        
+
         // Проверка диагоналей
-        if (boardValues[0][0] == boardValues[1][1] 
-            && boardValues[1][1] == boardValues[2][2] 
+        if (boardValues[0][0] == boardValues[1][1]
+            && boardValues[1][1] == boardValues[2][2]
             && boardValues[0][0] != 0) {
             return boardValues[0][0];
         }
-        
-        if (boardValues[0][2] == boardValues[1][1] 
-            && boardValues[1][1] == boardValues[2][0] 
+
+        if (boardValues[0][2] == boardValues[1][1]
+            && boardValues[1][1] == boardValues[2][0]
             && boardValues[0][2] != 0) {
             return boardValues[0][2];
         }
-        
+
         if (totalMoves == DEFAULT_BOARD_SIZE * DEFAULT_BOARD_SIZE) {
             return DRAW;
         }
-        
+
         return IN_PROGRESS;
     }
-    
+
     public List<Position> getEmptyPositions() {
         int size = this.boardValues.length;
         List<Position> emptyPositions = new ArrayList<>();
-        
+
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (boardValues[i][j] == 0) {
@@ -529,7 +529,7 @@ public class Board {
                 }
             }
         }
-        
+
         return emptyPositions;
     }
 }
@@ -545,7 +545,7 @@ void givenEmptyBoard_whenSimulateInterAIPlay_thenGameDraw() {
     Board board = new Board();
     int player = Board.P1;
     int totalMoves = Board.DEFAULT_BOARD_SIZE * Board.DEFAULT_BOARD_SIZE;
-    
+
     for (int i = 0; i < totalMoves; i++) {
         board = mcts.findNextMove(board, player);
         if (board.checkStatus() != -1) {
@@ -553,7 +553,7 @@ void givenEmptyBoard_whenSimulateInterAIPlay_thenGameDraw() {
         }
         player = 3 - player;
     }
-    
+
     int winStatus = board.checkStatus();
     assertEquals(winStatus, Board.DRAW);
 }
@@ -569,13 +569,13 @@ class NodeK(var state: StateK) {
     val childArray = mutableListOf<NodeK>()
     var visitCount = 0
     var winScore = 0.0
-    
+
     fun getRandomChildNode(): NodeK? {
         return if (childArray.isNotEmpty()) {
             childArray.random()
         } else null
     }
-    
+
     fun getChildWithMaxScore(): NodeK? {
         return childArray.maxByOrNull { it.winScore }
     }
@@ -590,10 +590,10 @@ class StateK {
     var playerNo: Int = 1
     var visitCount: Int = 0
     var winScore: Double = 0.0
-    
+
     fun getAllPossibleStates(): List<StateK> {
         val possibleStates = mutableListOf<StateK>()
-        
+
         for (i in 0 until 3) {
             for (j in 0 until 3) {
                 if (board[i][j] == 0) {
@@ -605,10 +605,10 @@ class StateK {
                 }
             }
         }
-        
+
         return possibleStates
     }
-    
+
     fun randomPlay() {
         val availablePositions = mutableListOf<Pair<Int, Int>>()
         for (i in 0 until 3) {
@@ -618,14 +618,14 @@ class StateK {
                 }
             }
         }
-        
+
         if (availablePositions.isNotEmpty()) {
             val (i, j) = availablePositions.random()
             board[i][j] = playerNo
             playerNo = 3 - playerNo
         }
     }
-    
+
     fun checkStatus(): Int {
         // Проверка строк
         for (i in 0 until 3) {
@@ -633,14 +633,14 @@ class StateK {
                 return board[i][0]
             }
         }
-        
+
         // Проверка столбцов
         for (j in 0 until 3) {
             if (board[0][j] != 0 && board[0][j] == board[1][j] && board[1][j] == board[2][j]) {
                 return board[0][j]
             }
         }
-        
+
         // Проверка диагоналей
         if (board[0][0] != 0 && board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
             return board[0][0]
@@ -648,7 +648,7 @@ class StateK {
         if (board[0][2] != 0 && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
             return board[0][2]
         }
-        
+
         // Проверка на ничью
         for (i in 0 until 3) {
             for (j in 0 until 3) {
@@ -657,7 +657,7 @@ class StateK {
                 }
             }
         }
-        
+
         return 0 // Ничья
     }
 }
@@ -668,32 +668,32 @@ class StateK {
 ```kotlin
 class MCTSK {
     private val explorationConstant = Math.sqrt(2.0)
-    
+
     fun findNextMove(board: StateK, playerNo: Int): StateK {
         val root = NodeK(StateK().apply {
             this.board = board.board.map { it.clone() }.toTypedArray()
             this.playerNo = playerNo
         })
-        
+
         for (i in 0 until 1000) {
             val promisingNode = selectPromisingNode(root)
             if (promisingNode.state.checkStatus() == -1) {
                 expandNode(promisingNode)
             }
-            
+
             val nodeToExplore = promisingNode
             if (promisingNode.childArray.isNotEmpty()) {
                 nodeToExplore = promisingNode.getRandomChildNode()!!
             }
-            
+
             val playoutResult = simulateRandomPlayout(nodeToExplore)
             backPropagation(nodeToExplore, playoutResult)
         }
-        
+
         val winnerNode = root.getChildWithMaxScore()
         return winnerNode?.state ?: root.state
     }
-    
+
     private fun selectPromisingNode(rootNode: NodeK): NodeK {
         var node = rootNode
         while (node.childArray.isNotEmpty()) {
@@ -701,17 +701,17 @@ class MCTSK {
         }
         return node
     }
-    
+
     private fun findBestNodeWithUCT(node: NodeK): NodeK? {
         val parentVisit = node.visitCount.toDouble()
-        
+
         return node.childArray.maxByOrNull { child ->
             val winScore = child.winScore
             val visitCount = child.visitCount.toDouble()
             (winScore / visitCount) + explorationConstant * Math.sqrt(Math.log(parentVisit) / visitCount)
         }
     }
-    
+
     private fun expandNode(node: NodeK) {
         val possibleStates = node.state.getAllPossibleStates()
         for (state in possibleStates) {
@@ -721,28 +721,28 @@ class MCTSK {
             node.childArray.add(newNode)
         }
     }
-    
+
     private fun simulateRandomPlayout(node: NodeK): Int {
         val tempState = StateK().apply {
             board = node.state.board.map { it.clone() }.toTypedArray()
             playerNo = node.state.playerNo
         }
-        
+
         var boardStatus = tempState.checkStatus()
-        
+
         if (boardStatus == node.state.playerNo) {
             node.parent?.let { it.winScore = Int.MIN_VALUE.toDouble() }
             return boardStatus
         }
-        
+
         while (boardStatus == -1) {
             tempState.randomPlay()
             boardStatus = tempState.checkStatus()
         }
-        
+
         return boardStatus
     }
-    
+
     private fun backPropagation(nodeToExplore: NodeK, playerNo: Int) {
         var tempNode = nodeToExplore
         while (tempNode != null) {
@@ -762,7 +762,7 @@ class MCTSK {
 fun main() {
     val board = StateK()
     val mcts = MCTSK()
-    
+
     var player = 1
     while (board.checkStatus() == -1) {
         val nextMove = mcts.findNextMove(board, player)
@@ -770,7 +770,7 @@ fun main() {
         board.playerNo = nextMove.playerNo
         player = 3 - player
     }
-    
+
     println("Game status: ${board.checkStatus()}")
 }
 ```

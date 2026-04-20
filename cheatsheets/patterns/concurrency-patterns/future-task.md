@@ -39,8 +39,8 @@ updated: "2026-02-11"
   - [Компоненты](#компоненты)
 - [Реализация на Java](#реализация-на-java)
   - [Базовый Future с ExecutorService](#базовый-future-с-executorservice)
-  - [FutureTask - низкоуровневая реализация](#futuretask-низкоуровневая-реализация)
-  - [CompletableFuture - высокоуровневая реализация](#completablefuture-высокоуровневая-реализация)
+  - [FutureTask — низкоуровневая реализация](#futuretask-низкоуровневая-реализация)
+  - [CompletableFuture — высокоуровневая реализация](#completablefuture-высокоуровневая-реализация)
 - [Продвинутые реализации](#продвинутые-реализации)
   - [1. Promise Pattern](#1-promise-pattern)
   - [2. Reactive Extensions с Future](#2-reactive-extensions-с-future)
@@ -329,7 +329,7 @@ public class BasicFutureExample {
 }
 ```
 
-### **FutureTask** - низкоуровневая реализация
+### **FutureTask** — низкоуровневая реализация
 
 ```java
 // FutureTask - низкоуровневая реализация
@@ -426,7 +426,7 @@ public class FutureTaskExample {
 }
 ```
 
-### **CompletableFuture** - высокоуровневая реализация
+### **CompletableFuture** — высокоуровневая реализация
 
 ```java
 // CompletableFuture - современный подход

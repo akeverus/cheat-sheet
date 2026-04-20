@@ -63,9 +63,9 @@ Go предоставляет несколько пакетов для коди�
 
 ### Основные форматы
 
-1. **Base64** - кодирование бинарных данных в текстовый формат
-2. **Hex** - кодирование в шестнадцатеричный формат
-3. **Binary** - бинарное кодирование для сериализации
+1. **Base64** — кодирование бинарных данных в текстовый формат
+2. **Hex** — кодирование в шестнадцатеричный формат
+3. **Binary** — бинарное кодирование для сериализации
 
 ## **Base64**
 
@@ -91,7 +91,7 @@ func main() {
     data := []byte("Hello, World!")
     encoded := encodeBase64(data)
     fmt.Println(encoded)  // SGVsbG8sIFdvcmxkIQ==
-    
+
     decoded, err := decodeBase64(encoded)
     if err != nil {
         log.Fatal(err)
@@ -161,7 +161,7 @@ func main() {
     data := []byte("Hello")
     encoded := encodeHex(data)
     fmt.Println(encoded)  // 48656c6c6f
-    
+
     decoded, err := decodeHex(encoded)
     if err != nil {
         log.Fatal(err)
@@ -269,7 +269,7 @@ import (
 func encodeBase64Stream(input io.Reader, output io.Writer) error {
     encoder := base64.NewEncoder(base64.StdEncoding, output)
     defer encoder.Close()
-    
+
     _, err := io.Copy(encoder, input)
     return err
 }
@@ -284,10 +284,10 @@ func decodeBase64Stream(input io.Reader, output io.Writer) error {
 func main() {
     file, _ := os.Open("input.bin")
     defer file.Close()
-    
+
     encoded, _ := os.Create("output.b64")
     defer encoded.Close()
-    
+
     encodeBase64Stream(file, encoded)
 }
 ```
@@ -324,17 +324,17 @@ func encodeImageToBase64(filename string) (string, error) {
         return "", err
     }
     defer file.Close()
-    
+
     img, err := png.Decode(file)
     if err != nil {
         return "", err
     }
-    
+
     var buf bytes.Buffer
     if err := png.Encode(&buf, img); err != nil {
         return "", err
     }
-    
+
     return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
 ```
@@ -372,11 +372,11 @@ import (
 
 func hexDump(data []byte) string {
     var result strings.Builder
-    
+
     for i := 0; i < len(data); i += 16 {
         // Offset
         result.WriteString(fmt.Sprintf("%08x  ", i))
-        
+
         // Hex bytes
         for j := 0; j < 16; j++ {
             if i+j < len(data) {
@@ -388,7 +388,7 @@ func hexDump(data []byte) string {
                 result.WriteString(" ")
             }
         }
-        
+
         // ASCII representation
         result.WriteString(" |")
         for j := 0; j < 16 && i+j < len(data); j++ {
@@ -401,7 +401,7 @@ func hexDump(data []byte) string {
         }
         result.WriteString("|\n")
     }
-    
+
     return result.String()
 }
 ```
@@ -422,19 +422,19 @@ type Message struct {
 
 func encodeMessage(msg Message) ([]byte, error) {
     buf := new(bytes.Buffer)
-    
+
     if err := binary.Write(buf, binary.BigEndian, msg.Type); err != nil {
         return nil, err
     }
-    
+
     if err := binary.Write(buf, binary.BigEndian, uint16(len(msg.Payload))); err != nil {
         return nil, err
     }
-    
+
     if _, err := buf.Write(msg.Payload); err != nil {
         return nil, err
     }
-    
+
     return buf.Bytes(), nil
 }
 
@@ -442,29 +442,29 @@ func decodeMessage(data []byte) (*Message, error) {
     if len(data) < 3 {
         return nil, fmt.Errorf("message too short")
     }
-    
+
     msg := &Message{}
     buf := bytes.NewReader(data)
-    
+
     if err := binary.Read(buf, binary.BigEndian, &msg.Type); err != nil {
         return nil, err
     }
-    
+
     var length uint16
     if err := binary.Read(buf, binary.BigEndian, &length); err != nil {
         return nil, err
     }
     msg.Length = length
-    
+
     if len(data) < 3+int(length) {
         return nil, fmt.Errorf("payload too short")
     }
-    
+
     msg.Payload = make([]byte, length)
     if _, err := buf.Read(msg.Payload); err != nil {
         return nil, err
     }
-    
+
     return msg, nil
 }
 ```
@@ -481,12 +481,12 @@ type Person struct {
 
 func encodePerson(p Person) []byte {
     buf := make([]byte, 41) // 4 + 32 + 1 + 4
-    
+
     binary.BigEndian.PutUint32(buf[0:4], p.ID)
     copy(buf[4:36], p.Name[:])
     buf[36] = p.Age
     binary.BigEndian.PutUint32(buf[37:41], math.Float32bits(p.Score))
-    
+
     return buf
 }
 
@@ -494,13 +494,13 @@ func decodePerson(data []byte) (Person, error) {
     if len(data) < 41 {
         return Person{}, fmt.Errorf("data too short")
     }
-    
+
     var p Person
     p.ID = binary.BigEndian.Uint32(data[0:4])
     copy(p.Name[:], data[4:36])
     p.Age = data[36]
     p.Score = math.Float32frombits(binary.BigEndian.Uint32(data[37:41]))
-    
+
     return p, nil
 }
 ```
@@ -513,14 +513,14 @@ func validateAndDecodeBase64(encoded string) ([]byte, error) {
     if len(encoded) == 0 {
         return nil, fmt.Errorf("empty string")
     }
-    
+
     // Проверка символов
     for _, r := range encoded {
         if !strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", r) {
             return nil, fmt.Errorf("invalid character: %c", r)
         }
     }
-    
+
     // Декодирование
     return base64.StdEncoding.DecodeString(encoded)
 }
@@ -535,16 +535,16 @@ func encodeLargeFile(inputPath, outputPath string) error {
         return err
     }
     defer input.Close()
-    
+
     output, err := os.Create(outputPath)
     if err != nil {
         return err
     }
     defer output.Close()
-    
+
     encoder := base64.NewEncoder(base64.StdEncoding, output)
     defer encoder.Close()
-    
+
     buffer := make([]byte, 32*1024) // 32KB buffer
     _, err = io.CopyBuffer(encoder, input, buffer)
     return err
@@ -562,7 +562,7 @@ import (
 
 func encodeWithCompression(data []byte) (string, error) {
     var buf bytes.Buffer
-    
+
     gz := gzip.NewWriter(&buf)
     if _, err := gz.Write(data); err != nil {
         return "", err
@@ -570,7 +570,7 @@ func encodeWithCompression(data []byte) (string, error) {
     if err := gz.Close(); err != nil {
         return "", err
     }
-    
+
     return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }
 
@@ -579,13 +579,13 @@ func decodeWithDecompression(encoded string) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     reader, err := gzip.NewReader(bytes.NewReader(data))
     if err != nil {
         return nil, err
     }
     defer reader.Close()
-    
+
     return io.ReadAll(reader)
 }
 ```
@@ -629,7 +629,7 @@ func HexDump(data []byte) string {
     var buf strings.Builder
     for i := 0; i < len(data); i += 16 {
         buf.WriteString(fmt.Sprintf("%04x  ", i))
-        
+
         // Hex bytes
         for j := 0; j < 16; j++ {
             if i+j < len(data) {
@@ -641,7 +641,7 @@ func HexDump(data []byte) string {
                 buf.WriteString(" ")
             }
         }
-        
+
         buf.WriteString(" |")
         // ASCII representation
         for j := 0; j < 16 && i+j < len(data); j++ {
@@ -670,7 +670,7 @@ type Message struct {
 
 func EncodeMessage(msg Message) ([]byte, error) {
     buf := new(bytes.Buffer)
-    
+
     // Little Endian encoding
     if err := binary.Write(buf, binary.LittleEndian, msg.ID); err != nil {
         return nil, err
@@ -684,14 +684,14 @@ func EncodeMessage(msg Message) ([]byte, error) {
     if err := binary.Write(buf, binary.LittleEndian, msg.Payload); err != nil {
         return nil, err
     }
-    
+
     return buf.Bytes(), nil
 }
 
 func DecodeMessage(data []byte) (*Message, error) {
     buf := bytes.NewReader(data)
     msg := &Message{}
-    
+
     if err := binary.Read(buf, binary.LittleEndian, &msg.ID); err != nil {
         return nil, err
     }
@@ -701,12 +701,12 @@ func DecodeMessage(data []byte) (*Message, error) {
     if err := binary.Read(buf, binary.LittleEndian, &msg.Length); err != nil {
         return nil, err
     }
-    
+
     msg.Payload = make([]byte, msg.Length)
     if err := binary.Read(buf, binary.LittleEndian, &msg.Payload); err != nil {
         return nil, err
     }
-    
+
     return msg, nil
 }
 ```
@@ -717,7 +717,7 @@ func DecodeMessage(data []byte) (*Message, error) {
 func EncodeStream(w io.Writer, data []byte) error {
     encoder := base64.NewEncoder(base64.StdEncoding, w)
     defer encoder.Close()
-    
+
     _, err := encoder.Write(data)
     return err
 }
@@ -734,16 +734,16 @@ func EncodeLargeFile(inputPath, outputPath string) error {
         return err
     }
     defer input.Close()
-    
+
     output, err := os.Create(outputPath)
     if err != nil {
         return err
     }
     defer output.Close()
-    
+
     encoder := base64.NewEncoder(base64.StdEncoding, output)
     defer encoder.Close()
-    
+
     _, err = io.Copy(encoder, input)
     return err
 }
@@ -767,32 +767,32 @@ func SanitizeBase64(s string) (string, error) {
     cleaned := strings.ReplaceAll(s, " ", "")
     cleaned = strings.ReplaceAll(cleaned, "\n", "")
     cleaned = strings.ReplaceAll(cleaned, "\r", "")
-    
+
     if !IsValidBase64(cleaned) {
         return "", fmt.Errorf("invalid base64 string")
     }
-    
+
     return cleaned, nil
 }
 ```
 
 ## Лучшие практики
 
-1. **Выбирайте правильный формат** - **Base64** для текста, **Hex** для отладки, **Binary** для производительности
-2. **Обрабатывайте ошибки** - всегда проверяйте ошибки при декодировании
-3. **Используйте правильный порядок байтов** - учитывайте **endianness** при бинарном кодировании
-4. **Валидируйте данные** - проверяйте данные перед декодированием
-5. **Используйте буферизацию** - для больших объемов данных
-6. **Используйте streaming** - для больших файлов
-7. **Валидируйте входные данные** - проверяйте формат перед декодированием
-8. **Используйте правильный encoding** - **URL-safe** для **URL**, стандартный для других случаев
-9. **Обрабатывайте padding** - учитывайте **padding** в **Base64**
-10. **Документируйте формат** - объясняйте используемый формат кодирования
-11. **Используйте hex для отладки** - для визуального анализа данных
-12. **Используйте бинарное кодирование** - для производительности
-13. **Используйте streaming** - для больших объемов данных
-14. **Валидируйте перед декодированием** - проверяйте корректность данных
-15. **Санитизируйте входные данные** - очищайте от лишних символов
+1. **Выбирайте правильный формат** — **Base64** для текста, **Hex** для отладки, **Binary** для производительности
+2. **Обрабатывайте ошибки** — всегда проверяйте ошибки при декодировании
+3. **Используйте правильный порядок байтов** — учитывайте **endianness** при бинарном кодировании
+4. **Валидируйте данные** — проверяйте данные перед декодированием
+5. **Используйте буферизацию** — для больших объемов данных
+6. **Используйте streaming** — для больших файлов
+7. **Валидируйте входные данные** — проверяйте формат перед декодированием
+8. **Используйте правильный encoding** — **URL-safe** для **URL**, стандартный для других случаев
+9. **Обрабатывайте padding** — учитывайте **padding** в **Base64**
+10. **Документируйте формат** — объясняйте используемый формат кодирования
+11. **Используйте hex для отладки** — для визуального анализа данных
+12. **Используйте бинарное кодирование** — для производительности
+13. **Используйте streaming** — для больших объемов данных
+14. **Валидируйте перед декодированием** — проверяйте корректность данных
+15. **Санитизируйте входные данные** — очищайте от лишних символов
 
 
 ## Решение проблем
@@ -812,3 +812,11 @@ func SanitizeBase64(s string) (string, error) {
 - [Go encoding/base64](https://pkg.go.dev/encoding/base64)
 - [Go encoding/hex](https://pkg.go.dev/encoding/hex)
 - [Go encoding/binary](https://pkg.go.dev/encoding/binary)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

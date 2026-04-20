@@ -17,8 +17,8 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### Официальная документация
-- [`OptaPlanner Documentation`](https://www.optaplanner.org/)
-- [`OptaPlanner GitHub`](https://www.optaplanner.org/)
+- [OptaPlanner Documentation](https://www.optaplanner.org/)
+- [OptaPlanner GitHub](https://www.optaplanner.org/)
 
 ### См. также
 - [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
@@ -72,44 +72,44 @@ import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 
 @PlanningSolution
 public class CourseSchedule {
-    
+
     @ValueRangeProvider(id = "availableRooms")
     @ProblemFactCollectionProperty
     private List<Integer> roomList;
-    
+
     @ValueRangeProvider(id = "availablePeriods")
     @ProblemFactCollectionProperty
     private List<Integer> periodList;
-    
+
     @ProblemFactCollectionProperty
     private List<Lecture> lectureList;
-    
+
     @PlanningScore
     private HardSoftScore score;
-    
+
     // Геттеры и сеттеры
     @PlanningEntityCollectionProperty
     public List<Lecture> getLectureList() {
         return lectureList;
     }
-    
+
     @ValueRangeProvider(id = "availableRooms")
     @ProblemFactCollectionProperty
     public List<Integer> getRoomList() {
         return roomList;
     }
-    
+
     @ValueRangeProvider(id = "availablePeriods")
     @ProblemFactCollectionProperty
     public List<Integer> getPeriodList() {
         return periodList;
     }
-    
+
     @PlanningScore
     public HardSoftScore getScore() {
         return score;
     }
-    
+
     public void setScore(HardSoftScore score) {
         this.score = score;
     }
@@ -124,45 +124,45 @@ import org.optaplanner.core.api.domain.lookup.PlanningId;
 
 @PlanningEntity
 public class Lecture {
-    
+
     @PlanningId
     private Long id;
-    
+
     private Integer roomNumber;
     private Integer period;
     private String teacher;
-    
+
     @PlanningVariable(valueRangeProviderRefs = {"availablePeriods"})
     public Integer getPeriod() {
         return period;
     }
-    
+
     public void setPeriod(Integer period) {
         this.period = period;
     }
-    
+
     @PlanningVariable(valueRangeProviderRefs = {"availableRooms"})
     public Integer getRoomNumber() {
         return roomNumber;
     }
-    
+
     public void setRoomNumber(Integer roomNumber) {
         this.roomNumber = roomNumber;
     }
-    
+
     // Геттеры и сеттеры для других полей
     public Long getId() {
         return id;
     }
-    
+
     public void setId(Long id) {
         this.id = id;
     }
-    
+
     public String getTeacher() {
         return teacher;
     }
-    
+
     public void setTeacher(String teacher) {
         this.teacher = teacher;
     }
@@ -175,24 +175,24 @@ import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import org.optaplanner.core.api.score.calculator.EasyScoreCalculator;
 
 public class ScoreCalculator implements EasyScoreCalculator<CourseSchedule, HardSoftScore> {
-    
+
     @Override
     public HardSoftScore calculateScore(CourseSchedule courseSchedule) {
         int hardScore = 0;
         int softScore = 0;
         Set<String> occupiedRooms = new HashSet<>();
-        
+
         for (Lecture lecture : courseSchedule.getLectureList()) {
-            String roomInUse = lecture.getPeriod().toString() + ":" + 
+            String roomInUse = lecture.getPeriod().toString() + ":" +
                               lecture.getRoomNumber().toString();
-            
+
             if (occupiedRooms.contains(roomInUse)) {
                 hardScore += -1;
             } else {
                 occupiedRooms.add(roomInUse);
             }
         }
-        
+
         return HardSoftScore.of(hardScore, softScore);
     }
 }
@@ -240,7 +240,7 @@ import java.time.Duration;
 import java.util.*;
 
 public class OptaPlannerExample {
-    
+
     public static void main(String[] args) {
         // Создаем решатель
         SolverFactory<CourseSchedule> solverFactory = SolverFactory.create(
@@ -250,28 +250,28 @@ public class OptaPlannerExample {
                 .withEasyScoreCalculatorClass(ScoreCalculator.class)
                 .withTerminationSpentLimit(Duration.ofSeconds(5))
         );
-        
+
         Solver<CourseSchedule> solver = solverFactory.buildSolver();
-        
+
         // Создаем проблему
         CourseSchedule unsolvedSchedule = createProblem();
-        
+
         // Решаем
         CourseSchedule solvedSchedule = solver.solve(unsolvedSchedule);
-        
+
         // Выводим результат
         printCourseSchedule(solvedSchedule);
     }
-    
+
     private static CourseSchedule createProblem() {
         CourseSchedule schedule = new CourseSchedule();
-        
+
         // Доступные комнаты
         schedule.setRoomList(Arrays.asList(1, 2));
-        
+
         // Доступные периоды
         schedule.setPeriodList(Arrays.asList(1, 2, 3));
-        
+
         // Лекции
         List<Lecture> lectures = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -281,14 +281,14 @@ public class OptaPlannerExample {
             lectures.add(lecture);
         }
         schedule.setLectureList(lectures);
-        
+
         return schedule;
     }
-    
+
     private static void printCourseSchedule(CourseSchedule schedule) {
         schedule.getLectureList().stream()
-            .map(lecture -> "Лекция в комнате " + 
-                 lecture.getRoomNumber() + 
+            .map(lecture -> "Лекция в комнате " +
+                 lecture.getRoomNumber() +
                  " в период " + lecture.getPeriod())
             .forEach(System.out::println);
     }
@@ -328,14 +328,14 @@ class CourseScheduleK(
     @ValueRangeProvider(id = "availableRooms")
     @ProblemFactCollectionProperty
     val roomList: List<Int>,
-    
+
     @ValueRangeProvider(id = "availablePeriods")
     @ProblemFactCollectionProperty
     val periodList: List<Int>,
-    
+
     @PlanningEntityCollectionProperty
     val lectureList: MutableList<LectureK>,
-    
+
     @PlanningScore
     var score: HardSoftScore? = null
 )
@@ -351,12 +351,12 @@ import org.optaplanner.core.api.domain.lookup.PlanningId
 data class LectureK(
     @PlanningId
     val id: Long,
-    
+
     val teacher: String,
-    
+
     @PlanningVariable(valueRangeProviderRefs = ["availablePeriods"])
     var period: Int? = null,
-    
+
     @PlanningVariable(valueRangeProviderRefs = ["availableRooms"])
     var roomNumber: Int? = null
 )
@@ -370,17 +370,17 @@ class ScoreCalculatorK : EasyScoreCalculator<CourseScheduleK, HardSoftScore> {
     override fun calculateScore(courseSchedule: CourseScheduleK): HardSoftScore {
         var hardScore = 0
         val occupiedRooms = mutableSetOf<String>()
-        
+
         for (lecture in courseSchedule.lectureList) {
             val roomInUse = "${lecture.period}:${lecture.roomNumber}"
-            
+
             if (occupiedRooms.contains(roomInUse)) {
                 hardScore -= 1
             } else {
                 occupiedRooms.add(roomInUse)
             }
         }
-        
+
         return HardSoftScore.of(hardScore, 0)
     }
 }

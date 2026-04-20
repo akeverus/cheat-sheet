@@ -41,7 +41,7 @@ related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 
 ## Введение в **Pub**/**Sub**
 
-**Pub**/**Sub** (**Publish-Subscribe**) - это паттерн **messaging**, где отправители (**publishers**) отправляют сообщения, не зная конкретных получателей. Получатели (**subscribers**) подписываются на интересующие их каналы и получают сообщения.
+**Pub**/**Sub** (**Publish-Subscribe**) — это паттерн **messaging**, где отправители (**publishers**) отправляют сообщения, не зная конкретных получателей. Получатели (**subscribers**) подписываются на интересующие их каналы и получают сообщения.
 
 ### Основные концепции
 
@@ -50,7 +50,6 @@ related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 - **Channel**: Тема, на которую подписываются
 - **Pattern**: Шаблон для подписки на несколько каналов
 
----
 
 ## Базовое использование
 
@@ -92,7 +91,6 @@ PUNSUBSCRIBE news.*
 PUNSUBSCRIBE
 ```
 
----
 
 ## Программное использование
 
@@ -105,13 +103,13 @@ import redis.clients.jedis.JedisPoolConfig;
 
 public class Publisher {
     private JedisPool jedisPool;
-    
+
     public Publisher(String host, int port) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(10);
         this.jedisPool = new JedisPool(poolConfig, host, port);
     }
-    
+
     public long publish(String channel, String message) {
         try (Jedis jedis = jedisPool.getResource()) {
             long subscribers = jedis.publish(channel, message);
@@ -119,7 +117,7 @@ public class Publisher {
             return subscribers;
         }
     }
-    
+
     public void publishContinuously(String channel, long intervalMs) throws InterruptedException {
         int counter = 0;
         while (true) {
@@ -129,7 +127,7 @@ public class Publisher {
             Thread.sleep(intervalMs);
         }
     }
-    
+
     public void close() {
         if (jedisPool != null) {
             jedisPool.close();
@@ -149,13 +147,13 @@ import redis.clients.jedis.JedisPoolConfig;
 public class Subscriber {
     private JedisPool jedisPool;
     private JedisPubSub jedisPubSub;
-    
+
     public Subscriber(String host, int port) {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(10);
         this.jedisPool = new JedisPool(poolConfig, host, port);
     }
-    
+
     public void subscribe(String... channels) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedisPubSub = new JedisPubSub() {
@@ -163,7 +161,7 @@ public class Subscriber {
                 public void onMessage(String channel, String message) {
                     System.out.println("Received: " + message + " on channel " + channel);
                 }
-                
+
                 @Override
                 public void onPMessage(String pattern, String channel, String message) {
                     System.out.println("Received: " + message + " on pattern " + pattern);
@@ -172,7 +170,7 @@ public class Subscriber {
             jedis.subscribe(jedisPubSub, channels);
         }
     }
-    
+
     public void psubscribe(String... patterns) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedisPubSub = new JedisPubSub() {
@@ -184,13 +182,13 @@ public class Subscriber {
             jedis.psubscribe(jedisPubSub, patterns);
         }
     }
-    
+
     public void unsubscribe(String... channels) {
         if (jedisPubSub != null) {
             jedisPubSub.unsubscribe(channels);
         }
     }
-    
+
     public void close() {
         if (jedisPubSub != null) {
             jedisPubSub.unsubscribe();
@@ -202,7 +200,6 @@ public class Subscriber {
 }
 ```
 
----
 
 ## Мониторинг **Pub**/**Sub**
 
@@ -222,7 +219,6 @@ PUBSUB NUMSUB news sports
 PUBSUB NUMPAT
 ```
 
----
 
 ## **Use Cases**
 
@@ -238,19 +234,19 @@ import java.util.Map;
 public class EventBroadcaster {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public EventBroadcaster(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.gson = new Gson();
     }
-    
+
     public void broadcastEvent(String eventType, Object eventData) {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, Object> message = new HashMap<>();
             message.put("type", eventType);
             message.put("data", eventData);
             message.put("timestamp", System.currentTimeMillis());
-            
+
             String jsonMessage = gson.toJson(message);
             jedis.publish("events:" + eventType, jsonMessage);
         }
@@ -268,12 +264,12 @@ import com.google.gson.Gson;
 public class NotificationService {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public NotificationService(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.gson = new Gson();
     }
-    
+
     public void sendNotification(String userId, Object notification) {
         try (Jedis jedis = jedisPool.getResource()) {
             String channel = "notifications:" + userId;
@@ -284,7 +280,6 @@ public class NotificationService {
 }
 ```
 
----
 
 ## Лучшие практики
 
@@ -309,12 +304,12 @@ import java.util.function.BiConsumer;
 public class MessageRouter {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public MessageRouter(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.gson = new Gson();
     }
-    
+
     public void routeMessage(String messageType, Object messageData) {
         try (Jedis jedis = jedisPool.getResource()) {
             String routingKey = "messages:" + messageType;
@@ -322,13 +317,13 @@ public class MessageRouter {
             jedis.publish(routingKey, jsonMessage);
         }
     }
-    
+
     public void subscribeToTypes(String[] messageTypes, BiConsumer<String, String> handler) {
         try (Jedis jedis = jedisPool.getResource()) {
             String[] patterns = Arrays.stream(messageTypes)
                 .map(type -> "messages:" + type)
                 .toArray(String[]::new);
-            
+
             JedisPubSub pubsub = new JedisPubSub() {
                 @Override
                 public void onPMessage(String pattern, String channel, String message) {
@@ -351,11 +346,11 @@ import java.util.Map;
 
 public class FanOutPublisher {
     private JedisPool jedisPool;
-    
+
     public FanOutPublisher(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public Map<String, Long> fanOut(String[] channels, String message) {
         Map<String, Long> results = new HashMap<>();
         try (Jedis jedis = jedisPool.getResource()) {
@@ -383,18 +378,18 @@ import java.util.concurrent.CompletableFuture;
 public class RequestResponse {
     private JedisPool jedisPool;
     private Gson gson;
-    
+
     public RequestResponse(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.gson = new Gson();
     }
-    
+
     public CompletableFuture<String> request(String requestId, String channel, Object requestData) {
         CompletableFuture<String> future = new CompletableFuture<>();
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
             String responseChannel = "response:" + requestId;
-            
+
             JedisPubSub pubsub = new JedisPubSub() {
                 @Override
                 public void onMessage(String channel, String message) {
@@ -404,24 +399,24 @@ public class RequestResponse {
                     }
                 }
             };
-            
+
             // Подписаться на канал ответов
             new Thread(() -> {
                 try (Jedis subscriberJedis = jedisPool.getResource()) {
                     subscriberJedis.subscribe(pubsub, responseChannel);
                 }
             }).start();
-            
+
             // Отправить запрос
             Map<String, Object> message = new HashMap<>();
             message.put("request_id", requestId);
             message.put("response_channel", responseChannel);
             message.put("data", requestData);
-            
+
             String jsonMessage = gson.toJson(message);
             jedis.publish(channel, jsonMessage);
         }
-        
+
         return future;
     }
 }
@@ -665,19 +660,19 @@ public class MessageQueue {
     private JedisPool jedisPool;
     private String queueName;
     private Gson gson;
-    
+
     public MessageQueue(JedisPool jedisPool, String queueName) {
         this.jedisPool = jedisPool;
         this.queueName = queueName;
         this.gson = new Gson();
     }
-    
+
     public long enqueue(Object message) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.publish(queueName, gson.toJson(message));
         }
     }
-    
+
     public String dequeue(long timeoutMs) {
         try (Jedis jedis = jedisPool.getResource()) {
             JedisPubSub pubsub = new JedisPubSub() {
@@ -686,7 +681,7 @@ public class MessageQueue {
                     // Обработка сообщения
                 }
             };
-            
+
             jedis.subscribe(pubsub, queueName);
             return null;
         }
@@ -709,7 +704,7 @@ public class BatchedPublisher {
     private long flushIntervalMs;
     private List<Message> messageQueue;
     private long lastFlush;
-    
+
     public BatchedPublisher(JedisPool jedisPool, int batchSize, long flushIntervalMs) {
         this.jedisPool = jedisPool;
         this.batchSize = batchSize;
@@ -717,11 +712,11 @@ public class BatchedPublisher {
         this.messageQueue = new ArrayList<>();
         this.lastFlush = System.currentTimeMillis();
     }
-    
+
     public void publish(String channel, String message) {
         synchronized (messageQueue) {
             messageQueue.add(new Message(channel, message));
-            
+
             if (messageQueue.size() >= batchSize) {
                 flush();
             } else if (System.currentTimeMillis() - lastFlush > flushIntervalMs) {
@@ -729,13 +724,13 @@ public class BatchedPublisher {
             }
         }
     }
-    
+
     public void flush() {
         synchronized (messageQueue) {
             if (messageQueue.isEmpty()) {
                 return;
             }
-            
+
             try (Jedis jedis = jedisPool.getResource()) {
                 Pipeline pipe = jedis.pipelined();
                 for (Message msg : messageQueue) {
@@ -747,11 +742,11 @@ public class BatchedPublisher {
             }
         }
     }
-    
+
     private static class Message {
         String channel;
         String message;
-        
+
         Message(String channel, String message) {
             this.channel = channel;
             this.message = message;
@@ -760,9 +755,7 @@ public class BatchedPublisher {
 }
 ```
 
----
 
 - [Redis Pub/Sub](https://redis.io/docs/manual/pubsub/)
 
----
 

@@ -59,7 +59,6 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md", "databa
 4. **Репликация**: **Lag**, разрывы соединения
 5. **Кластер**: Проблемы с слотами, **failover**
 
----
 
 ## Диагностика проблем
 

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: Шардирование - Горизонтальное масштабирование и распределение данных
+# **MongoDB**: Шардирование — Горизонтальное масштабирование и распределение данных
 
 Комплексное руководство по шардированию в **MongoDB**: архитектура, настройка, управление шардами и оптимизация производительности.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Shard Keys](https://www.mongodb.com/docs/manual/core/sharding-shard-key/)
 - [Sharded Cluster Administration](https://www.mongodb.com/docs/manual/administration/sharded-cluster/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Sharding](https://www.baeldung.com/java-mongodb-sharding)
 
 ### См. также
@@ -106,7 +106,7 @@ updated: "2026-02-11"
 
 ### Логическая архитектура
 
-```
+```text
 Application
     │
     ▼

@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 # Spring Session: Полное руководство по управлению сессиями
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -60,8 +58,8 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
   - [2. Настраивайте timeout](#2-настраивайте-timeout)
   - [3. Обрабатывайте session events](#3-обрабатывайте-session-events)
   - [4. Используйте правильный store type](#4-используйте-правильный-store-type)
-- [✅ Хорошо - для кластеризации](#хорошо-для-кластеризации)
-- [✅ Хорошо - для простых приложений](#хорошо-для-простых-приложений)
+- [✅ Хорошо — для кластеризации](#хорошо-для-кластеризации)
+- [✅ Хорошо — для простых приложений](#хорошо-для-простых-приложений)
   - [5. Настраивайте security](#5-настраивайте-security)
 - [WebSocket Session](#websocket-session)
   - [WebSocket Session Management](#websocket-session-management)
@@ -175,12 +173,12 @@ spring.redis.port=6379
 @Configuration
 @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800)
 public class RedisSessionConfig {
-    
+
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         return new LettuceConnectionFactory();
     }
-    
+
     @Bean
     public RedisSessionRepository sessionRepository(RedisConnectionFactory connectionFactory) {
         RedisSessionRepository sessionRepository = new RedisSessionRepository(connectionFactory);
@@ -196,7 +194,7 @@ public class RedisSessionConfig {
 // Контроллер работы с сессией (чтение/запись атрибутов)
 @RestController
 public class SessionController {
-    
+
     @GetMapping("/session")
     public Map<String, Object> getSession(HttpSession session) {
         Map<String, Object> sessionData = new HashMap<>();
@@ -206,24 +204,24 @@ public class SessionController {
         sessionData.put("maxInactiveInterval", session.getMaxInactiveInterval());
         return sessionData;
     }
-    
+
     @PostMapping("/session")
-    public void setSessionAttribute(HttpSession session, 
-            @RequestParam String key, 
+    public void setSessionAttribute(HttpSession session,
+            @RequestParam String key,
             @RequestParam String value) {
         session.setAttribute(key, value);
     }
-    
+
     @GetMapping("/session/{key}")
     public Object getSessionAttribute(HttpSession session, @PathVariable String key) {
         return session.getAttribute(key);
     }
-    
+
     @DeleteMapping("/session/{key}")
     public void removeSessionAttribute(HttpSession session, @PathVariable String key) {
         session.removeAttribute(key);
     }
-    
+
     @PostMapping("/session/invalidate")
     public void invalidateSession(HttpSession session) {
         session.invalidate();
@@ -283,7 +281,7 @@ CREATE TABLE SPRING_SESSION_ATTRIBUTES (
     ATTRIBUTE_NAME VARCHAR(200) NOT NULL,
     ATTRIBUTE_BYTES BYTEA NOT NULL,
     CONSTRAINT SPRING_SESSION_ATTRIBUTES_PK PRIMARY KEY (SESSION_PRIMARY_ID, ATTRIBUTE_NAME),
-    CONSTRAINT SPRING_SESSION_ATTRIBUTES_FK FOREIGN KEY (SESSION_PRIMARY_ID) 
+    CONSTRAINT SPRING_SESSION_ATTRIBUTES_FK FOREIGN KEY (SESSION_PRIMARY_ID)
         REFERENCES SPRING_SESSION(PRIMARY_ID) ON DELETE CASCADE
 );
 ```
@@ -294,7 +292,7 @@ CREATE TABLE SPRING_SESSION_ATTRIBUTES (
 @Configuration
 @EnableJdbcHttpSession(maxInactiveIntervalInSeconds = 1800)
 public class JdbcSessionConfig {
-    
+
     @Bean
     public JdbcSessionRepository sessionRepository(DataSource dataSource) {
         return new JdbcSessionRepository(dataSource);
@@ -335,7 +333,7 @@ spring.data.mongodb.uri=mongodb://localhost:27017/mydb
 @Configuration
 @EnableMongoHttpSession(maxInactiveIntervalInSeconds = 1800)
 public class MongoSessionConfig {
-    
+
     @Bean
     public MongoSessionRepository sessionRepository(MongoOperations mongoOperations) {
         return new MongoSessionRepository(mongoOperations);
@@ -352,7 +350,7 @@ public class MongoSessionConfig {
 @EnableWebSecurity
 @EnableRedisHttpSession
 public class SecuritySessionConfig {
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -368,7 +366,7 @@ public class SecuritySessionConfig {
             .formLogin();
         return http.build();
     }
-    
+
     @Bean
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
@@ -383,7 +381,7 @@ public class SecuritySessionConfig {
 @EnableWebSecurity
 @EnableRedisHttpSession
 public class ConcurrentSessionConfig {
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -394,12 +392,12 @@ public class ConcurrentSessionConfig {
             );
         return http.build();
     }
-    
+
     @Bean
     public SessionRegistry sessionRegistry() {
         return new SpringSessionBackedSessionRegistry<>(sessionRepository());
     }
-    
+
     @Bean
     public RedisSessionRepository sessionRepository(RedisConnectionFactory connectionFactory) {
         return new RedisSessionRepository(connectionFactory);
@@ -415,7 +413,7 @@ public class ConcurrentSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class ClusterSessionConfig {
-    
+
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         List<String> clusterNodes = Arrays.asList(
@@ -423,7 +421,7 @@ public class ClusterSessionConfig {
             "localhost:7001",
             "localhost:7002"
         );
-        
+
         RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration(clusterNodes);
         return new LettuceConnectionFactory(clusterConfiguration);
     }
@@ -436,14 +434,14 @@ public class ClusterSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class ReplicatedSessionConfig {
-    
+
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         RedisSentinelConfiguration sentinelConfiguration = new RedisSentinelConfiguration()
             .master("mymaster")
             .sentinel("localhost", 26379)
             .sentinel("localhost", 26380);
-        
+
         return new LettuceConnectionFactory(sentinelConfiguration);
     }
 }
@@ -457,7 +455,7 @@ public class ReplicatedSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class CustomSerializationConfig {
-    
+
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
         return new GenericJackson2JsonRedisSerializer();
@@ -470,17 +468,17 @@ public class CustomSerializationConfig {
 ```java
 @Component
 public class SessionEventListener {
-    
+
     @EventListener
     public void handleSessionCreated(SessionCreatedEvent event) {
         log.info("Session created: {}", event.getSessionId());
     }
-    
+
     @EventListener
     public void handleSessionDestroyed(SessionDestroyedEvent event) {
         log.info("Session destroyed: {}", event.getSessionId());
     }
-    
+
     @EventListener
     public void handleSessionExpired(SessionExpiredEvent event) {
         log.info("Session expired: {}", event.getSessionId());
@@ -494,7 +492,7 @@ public class SessionEventListener {
 @Configuration
 @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 3600)
 public class SessionTimeoutConfig {
-    
+
     @Bean
     public RedisSessionRepository sessionRepository(RedisConnectionFactory connectionFactory) {
         RedisSessionRepository repository = new RedisSessionRepository(connectionFactory);
@@ -511,12 +509,12 @@ public class SessionTimeoutConfig {
 ```java
 @Component
 public class SessionMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter sessionsCreated;
     private final Counter sessionsDestroyed;
     private final Gauge activeSessions;
-    
+
     public SessionMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.sessionsCreated = Counter.builder("sessions.created")
@@ -529,17 +527,17 @@ public class SessionMetrics {
             .description("Number of active sessions")
             .register(meterRegistry, this, SessionMetrics::getActiveSessionCount);
     }
-    
+
     @EventListener
     public void handleSessionCreated(SessionCreatedEvent event) {
         sessionsCreated.increment();
     }
-    
+
     @EventListener
     public void handleSessionDestroyed(SessionDestroyedEvent event) {
         sessionsDestroyed.increment();
     }
-    
+
     private double getActiveSessionCount() {
         // Логика подсчета активных сессий
         return 0.0;
@@ -605,13 +603,13 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) {
 @EnableWebSocketMessageBroker
 @EnableRedisWebSocketSession
 public class WebSocketSessionConfig implements WebSocketMessageBrokerConfigurer {
-    
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/topic", "/queue");
         config.setApplicationDestinationPrefixes("/app");
     }
-    
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").withSockJS();
@@ -620,7 +618,7 @@ public class WebSocketSessionConfig implements WebSocketMessageBrokerConfigurer 
 
 @Controller
 public class WebSocketSessionController {
-    
+
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
     public ChatMessage sendMessage(ChatMessage message, StompHeaderAccessor headerAccessor) {
@@ -637,41 +635,41 @@ public class WebSocketSessionController {
 
 ```java
 public class CustomSessionRepository implements SessionRepository<Session> {
-    
+
     private final RedisTemplate<String, Object> redisTemplate;
     private final String namespace;
-    
+
     public CustomSessionRepository(RedisTemplate<String, Object> redisTemplate, String namespace) {
         this.redisTemplate = redisTemplate;
         this.namespace = namespace;
     }
-    
+
     @Override
     public Session createSession() {
         Session session = new MapSession();
         session.setId(UUID.randomUUID().toString());
         return session;
     }
-    
+
     @Override
     public void save(Session session) {
         String key = getKey(session.getId());
-        redisTemplate.opsForValue().set(key, session, 
+        redisTemplate.opsForValue().set(key, session,
             Duration.ofSeconds(session.getMaxInactiveInterval().getSeconds()));
     }
-    
+
     @Override
     public Session findById(String id) {
         String key = getKey(id);
         return (Session) redisTemplate.opsForValue().get(key);
     }
-    
+
     @Override
     public void deleteById(String id) {
         String key = getKey(id);
         redisTemplate.delete(key);
     }
-    
+
     private String getKey(String sessionId) {
         return namespace + ":" + sessionId;
     }
@@ -684,7 +682,7 @@ public class CustomSessionRepository implements SessionRepository<Session> {
 @Configuration
 @EnableRedisHttpSession
 public class IndexedSessionConfig {
-    
+
     @Bean
     public RedisIndexedSessionRepository sessionRepository(
             RedisConnectionFactory connectionFactory) {
@@ -719,14 +717,14 @@ public class OnSaveFlushSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class CachedSessionConfig {
-    
+
     @Bean
     public RedisSessionRepository sessionRepository(RedisConnectionFactory connectionFactory) {
         RedisSessionRepository repository = new RedisSessionRepository(connectionFactory);
         repository.setDefaultMaxInactiveInterval(Duration.ofSeconds(1800));
         return repository;
     }
-    
+
     @Bean
     public CacheManager sessionCacheManager() {
         RedisCacheManager.Builder builder = RedisCacheManager
@@ -735,7 +733,7 @@ public class CachedSessionConfig {
             .cacheDefaults(cacheConfiguration());
         return builder.build();
     }
-    
+
     private RedisCacheConfiguration cacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofMinutes(30))
@@ -753,22 +751,22 @@ public class CachedSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class PooledSessionConfig {
-    
+
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         GenericObjectPoolConfig<Object> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMaxTotal(20);
         poolConfig.setMaxIdle(10);
         poolConfig.setMinIdle(5);
-        
+
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
             .poolConfig(poolConfig)
             .build();
-        
+
         RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration();
         serverConfig.setHostName("localhost");
         serverConfig.setPort(6379);
-        
+
         return new LettuceConnectionFactory(serverConfig, clientConfig);
     }
 }
@@ -783,7 +781,7 @@ public class PooledSessionConfig {
 @EnableWebSecurity
 @EnableRedisHttpSession
 public class SessionFixationConfig {
-    
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -805,7 +803,7 @@ public class SessionFixationConfig {
 @Configuration
 @EnableRedisHttpSession
 public class SecureCookieConfig {
-    
+
     @Bean
     public CookieSerializer cookieSerializer() {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
@@ -827,23 +825,23 @@ public class SecureCookieConfig {
 ```java
 @SpringBootTest
 class SessionTest {
-    
+
     @Autowired
     private SessionRepository sessionRepository;
-    
+
     @Test
     void testSessionCreation() {
         Session session = sessionRepository.createSession();
         assertThat(session).isNotNull();
         assertThat(session.getId()).isNotEmpty();
     }
-    
+
     @Test
     void testSessionPersistence() {
         Session session = sessionRepository.createSession();
         session.setAttribute("key", "value");
         sessionRepository.save(session);
-        
+
         Session retrieved = sessionRepository.findById(session.getId());
         assertThat(retrieved).isNotNull();
         assertThat(retrieved.getAttribute("key")).isEqualTo("value");
@@ -857,24 +855,24 @@ class SessionTest {
 @SpringBootTest
 @AutoConfigureMockMvc
 class SessionIntegrationTest {
-    
+
     @Autowired
     private MockMvc mockMvc;
-    
+
     @Test
     void testSessionManagement() throws Exception {
         MockHttpSession session = new MockHttpSession();
-        
+
         mockMvc.perform(get("/session")
                 .session(session))
             .andExpect(status().isOk());
-        
+
         mockMvc.perform(post("/session")
                 .param("key", "test")
                 .param("value", "value")
                 .session(session))
             .andExpect(status().isOk());
-        
+
         mockMvc.perform(get("/session/test")
                 .session(session))
             .andExpect(status().isOk())
@@ -890,17 +888,17 @@ class SessionIntegrationTest {
 ```java
 @Service
 public class SessionMigrationService {
-    
+
     @Autowired
     private RedisSessionRepository sourceRepository;
-    
+
     @Autowired
     private JdbcSessionRepository targetRepository;
-    
+
     public void migrateSessions() {
         // Получение всех сессий из Redis
         Set<String> sessionIds = getAllSessionIds();
-        
+
         sessionIds.forEach(sessionId -> {
             Session session = sourceRepository.findById(sessionId);
             if (session != null) {
@@ -909,7 +907,7 @@ public class SessionMigrationService {
             }
         });
     }
-    
+
     private Set<String> getAllSessionIds() {
         // Логика получения всех ID сессий
         return Collections.emptySet();
@@ -924,10 +922,10 @@ public class SessionMigrationService {
 ```java
 @Component
 public class SessionHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private SessionRepository sessionRepository;
-    
+
     @Override
     public Health health() {
         try {
@@ -935,7 +933,7 @@ public class SessionHealthIndicator implements HealthIndicator {
             sessionRepository.save(testSession);
             Session retrieved = sessionRepository.findById(testSession.getId());
             sessionRepository.deleteById(testSession.getId());
-            
+
             if (retrieved != null) {
                 return Health.up()
                     .withDetail("sessionStore", "Available")
@@ -962,7 +960,7 @@ public class SessionHealthIndicator implements HealthIndicator {
 @Configuration
 @EnableHazelcastHttpSession
 public class HazelcastSessionConfig {
-    
+
     @Bean
     public Config hazelcastConfig() {
         Config config = new Config();
@@ -979,14 +977,14 @@ public class HazelcastSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class ReplicatedSessionConfig {
-    
+
     @Bean
     public LettuceConnectionFactory connectionFactory() {
         RedisSentinelConfiguration sentinelConfiguration = new RedisSentinelConfiguration()
             .master("mymaster")
             .sentinel("localhost", 26379)
             .sentinel("localhost", 26380);
-        
+
         return new LettuceConnectionFactory(sentinelConfiguration);
     }
 }
@@ -998,12 +996,12 @@ public class ReplicatedSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class CustomSerializationConfig {
-    
+
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
         return new GenericJackson2JsonRedisSerializer(objectMapper());
     }
-    
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -1019,7 +1017,7 @@ public class CustomSerializationConfig {
 ```java
 @Component
 public class SessionAttributeFilter implements SessionAttributeFilter {
-    
+
     @Override
     public boolean shouldInclude(String attributeName, Object attributeValue) {
         // Фильтрация атрибутов сессии
@@ -1033,10 +1031,10 @@ public class SessionAttributeFilter implements SessionAttributeFilter {
 ```java
 @Service
 public class SessionTimeoutService {
-    
+
     @Autowired
     private SessionRepository sessionRepository;
-    
+
     public void extendSessionTimeout(String sessionId, Duration timeout) {
         Session session = sessionRepository.findById(sessionId);
         if (session != null) {
@@ -1044,7 +1042,7 @@ public class SessionTimeoutService {
             sessionRepository.save(session);
         }
     }
-    
+
     public void invalidateExpiredSessions() {
         // Логика инвалидации истекших сессий
     }
@@ -1056,28 +1054,28 @@ public class SessionTimeoutService {
 ```java
 @Component
 public class SessionStatistics {
-    
+
     private final AtomicLong activeSessions = new AtomicLong(0);
     private final AtomicLong totalSessions = new AtomicLong(0);
     private final AtomicLong expiredSessions = new AtomicLong(0);
-    
+
     @EventListener
     public void handleSessionCreated(SessionCreatedEvent event) {
         activeSessions.incrementAndGet();
         totalSessions.incrementAndGet();
     }
-    
+
     @EventListener
     public void handleSessionDestroyed(SessionDestroyedEvent event) {
         activeSessions.decrementAndGet();
     }
-    
+
     @EventListener
     public void handleSessionExpired(SessionExpiredEvent event) {
         activeSessions.decrementAndGet();
         expiredSessions.incrementAndGet();
     }
-    
+
     public SessionStats getStats() {
         return new SessionStats(
             activeSessions.get(),
@@ -1093,10 +1091,10 @@ public class SessionStatistics {
 ```java
 @Component
 public class SessionCleanupJob {
-    
+
     @Autowired
     private SessionRepository sessionRepository;
-    
+
     @Scheduled(fixedRate = 3600000) // Каждый час
     public void cleanupExpiredSessions() {
         // Логика очистки истекших сессий
@@ -1113,7 +1111,7 @@ public class SessionCleanupJob {
 @Configuration
 @EnableRedisHttpSession
 public class MultiRegionSessionConfig {
-    
+
     @Bean
     public LettuceConnectionFactory primaryConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -1121,7 +1119,7 @@ public class MultiRegionSessionConfig {
         config.setPort(6379);
         return new LettuceConnectionFactory(config);
     }
-    
+
     @Bean
     public LettuceConnectionFactory secondaryConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -1129,7 +1127,7 @@ public class MultiRegionSessionConfig {
         config.setPort(6379);
         return new LettuceConnectionFactory(config);
     }
-    
+
     @Bean
     public RedisSessionRepository sessionRepository() {
         // Использование primary для записи, secondary для чтения
@@ -1144,7 +1142,7 @@ public class MultiRegionSessionConfig {
 @Configuration
 @EnableRedisHttpSession
 public class CompressedSessionConfig {
-    
+
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
         // Использование сжатия для больших сессий
@@ -1154,18 +1152,18 @@ public class CompressedSessionConfig {
                 byte[] data = super.serialize(object);
                 return compress(data);
             }
-            
+
             @Override
             public Object deserialize(byte[] bytes) throws SerializationException {
                 byte[] decompressed = decompress(bytes);
                 return super.deserialize(decompressed);
             }
-            
+
             private byte[] compress(byte[] data) {
                 // Логика сжатия
                 return data;
             }
-            
+
             private byte[] decompress(byte[] data) {
                 // Логика распаковки
                 return data;
@@ -1180,15 +1178,15 @@ public class CompressedSessionConfig {
 ```java
 @Component
 public class SessionAnalytics {
-    
+
     private final Map<String, SessionStats> sessionStats = new ConcurrentHashMap<>();
-    
+
     @EventListener
     public void handleSessionCreated(SessionCreatedEvent event) {
         String sessionId = event.getSessionId();
         sessionStats.put(sessionId, new SessionStats(sessionId));
     }
-    
+
     @EventListener
     public void handleSessionDestroyed(SessionDestroyedEvent event) {
         String sessionId = event.getSessionId();
@@ -1197,11 +1195,11 @@ public class SessionAnalytics {
             logSessionStats(stats);
         }
     }
-    
+
     public Map<String, SessionStats> getAllStats() {
         return new HashMap<>(sessionStats);
     }
-    
+
     private void logSessionStats(SessionStats stats) {
         // Логирование статистики сессии
     }
@@ -1213,21 +1211,21 @@ public class SessionAnalytics {
 ```java
 @Component
 public class SessionRateLimiter {
-    
+
     private final Map<String, AtomicInteger> sessionRequestCounts = new ConcurrentHashMap<>();
     private static final int MAX_REQUESTS_PER_MINUTE = 100;
-    
+
     public boolean allowRequest(String sessionId) {
         String key = sessionId + ":" + LocalDateTime.now().getMinute();
         int count = sessionRequestCounts.computeIfAbsent(key, k -> new AtomicInteger(0))
             .incrementAndGet();
-        
+
         return count <= MAX_REQUESTS_PER_MINUTE;
     }
-    
+
     @Scheduled(fixedRate = 60000)
     public void cleanupOldCounters() {
-        sessionRequestCounts.entrySet().removeIf(entry -> 
+        sessionRequestCounts.entrySet().removeIf(entry ->
             entry.getKey().endsWith(":" + (LocalDateTime.now().getMinute() - 1))
         );
     }
@@ -1247,3 +1245,11 @@ public class SessionRateLimiter {
 - [**JDBC** Session](https://docs.spring.io/spring-session/reference/guides/boot-jdbc.html)
 - [**MongoDB** Session](https://docs.spring.io/spring-session/reference/guides/boot-mongodb.html)
 - [**Hazelcast** Session](https://docs.spring.io/spring-session/reference/guides/boot-hazelcast.html)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

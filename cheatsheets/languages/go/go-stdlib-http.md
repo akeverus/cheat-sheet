@@ -13,7 +13,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
-# Go: стандартная библиотека - **HTTP**
+# Go: стандартная библиотека — **HTTP**
 
 ## Полезные ссылки
 
@@ -23,7 +23,7 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [Go: стандартная библиотека - **HTTP**](#go-стандартная-библиотека-http)
+- [Go: стандартная библиотека — **HTTP**](#go-стандартная-библиотека-http)
 - [Введение в **HTTP**](#введение-в-http)
   - [Основные компоненты](#основные-компоненты)
 - [**HTTP Server**](#http-server)
@@ -95,10 +95,10 @@ updated: "2026-02-06"
 
 ### Основные компоненты
 
-1. **HTTP Server** - создание **HTTP** серверов
-2. **HTTP Handlers** - обработка **HTTP** запросов
-3. **HTTP Client** - выполнение **HTTP** запросов
-4. **Middleware** - промежуточная обработка запросов
+1. **HTTP Server** — создание **HTTP** серверов
+2. **HTTP Handlers** — обработка **HTTP** запросов
+3. **HTTP Client** — выполнение **HTTP** запросов
+4. **Middleware** — промежуточная обработка запросов
 
 ## **HTTP Server**
 
@@ -118,7 +118,7 @@ func main() {
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintf(w, "Hello, World!")
     })
-    
+
     http.ListenAndServe(":8080", nil)
 }
 ```
@@ -139,7 +139,7 @@ func main() {
         WriteTimeout: 15 * time.Second,
         IdleTimeout:  60 * time.Second,
     }
-    
+
     server.ListenAndServe()
 }
 ```
@@ -159,7 +159,7 @@ func main() {
             MinVersion: tls.VersionTLS12,
         },
     }
-    
+
     server.ListenAndServeTLS("cert.pem", "key.pem")
 }
 ```
@@ -232,14 +232,14 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 func searchHandler(w http.ResponseWriter, r *http.Request) {
     // Получение query параметров
     query := r.URL.Query().Get("q")
-    
+
     // Получение всех значений параметра
     tags := r.URL.Query()["tag"]
-    
+
     // Парсинг формы
     r.ParseForm()
     name := r.Form.Get("name")
-    
+
     fmt.Fprintf(w, "Query: %s, Tags: %v, Name: %s", query, tags, name)
 }
 ```
@@ -259,7 +259,7 @@ type User struct {
 
 func getUserHandler(w http.ResponseWriter, r *http.Request) {
     user := User{ID: 1, Name: "Alice"}
-    
+
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(user)
 }
@@ -270,7 +270,7 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
-    
+
     // Обработка пользователя
     w.WriteHeader(http.StatusCreated)
     json.NewEncoder(w).Encode(user)
@@ -295,12 +295,12 @@ func main() {
         log.Fatal(err)
     }
     defer resp.Body.Close()
-    
+
     body, err := io.ReadAll(resp.Body)
     if err != nil {
         log.Fatal(err)
     }
-    
+
     fmt.Println(string(body))
 }
 ```
@@ -318,9 +318,9 @@ func main() {
     data := map[string]string{
         "name": "Alice",
     }
-    
+
     jsonData, _ := json.Marshal(data)
-    
+
     resp, err := http.Post(
         "https://api.example.com/users",
         "application/json",
@@ -350,7 +350,7 @@ func main() {
             TLSHandshakeTimeout: 10 * time.Second,
         },
     }
-    
+
     resp, err := client.Get("https://api.example.com/users")
     if err != nil {
         log.Fatal(err)
@@ -369,11 +369,11 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     // Добавление заголовков
     req.Header.Set("Authorization", "Bearer token")
     req.Header.Set("Content-Type", "application/json")
-    
+
     client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
@@ -393,9 +393,9 @@ func main() {
 func loggingMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
-        
+
         next.ServeHTTP(w, r)
-        
+
         duration := time.Since(start)
         log.Printf("%s %s took %v", r.Method, r.URL.Path, duration)
     })
@@ -420,14 +420,14 @@ func chainMiddleware(handler http.Handler, middlewares ...func(http.Handler) htt
 
 func main() {
     handler := http.HandlerFunc(helloHandler)
-    
+
     finalHandler := chainMiddleware(
         handler,
         loggingMiddleware,
         authMiddleware,
         corsMiddleware,
     )
-    
+
     http.Handle("/", finalHandler)
     http.ListenAndServe(":8080", nil)
 }
@@ -445,7 +445,7 @@ func main() {
     http.HandleFunc("/users", usersHandler)
     http.HandleFunc("/users/", userHandler)
     http.HandleFunc("/posts", postsHandler)
-    
+
     http.ListenAndServe(":8080", nil)
 }
 ```
@@ -455,11 +455,11 @@ func main() {
 ```go
 func main() {
     mux := http.NewServeMux()
-    
+
     mux.HandleFunc("/api/v1/users", usersHandler)
     mux.HandleFunc("/api/v1/posts", postsHandler)
     mux.HandleFunc("/api/v2/users", usersV2Handler)
-    
+
     http.ListenAndServe(":8080", mux)
 }
 ```
@@ -478,7 +478,7 @@ import (
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
     tmpl := template.Must(template.ParseFiles("templates/home.html"))
-    
+
     data := struct {
         Title string
         Name  string
@@ -486,7 +486,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
         Title: "Home",
         Name:  "Alice",
     }
-    
+
     tmpl.Execute(w, data)
 }
 ```
@@ -499,13 +499,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
         "upper": strings.ToUpper,
         "lower": strings.ToLower,
     }
-    
+
     tmpl := template.Must(
         template.New("home.html").
             Funcs(funcMap).
             ParseFiles("templates/home.html"),
     )
-    
+
     tmpl.Execute(w, data)
 }
 ```
@@ -520,13 +520,13 @@ func authMiddleware(next http.Handler) http.Handler {
             http.Error(w, "Unauthorized", http.StatusUnauthorized)
             return
         }
-        
+
         // Проверка токена
         if !isValidToken(token) {
             http.Error(w, "Invalid token", http.StatusUnauthorized)
             return
         }
-        
+
         // Добавление информации о пользователе в контекст
         ctx := context.WithValue(r.Context(), "userID", getUserID(token))
         next.ServeHTTP(w, r.WithContext(ctx))
@@ -542,12 +542,12 @@ func corsMiddleware(next http.Handler) http.Handler {
         w.Header().Set("Access-Control-Allow-Origin", "*")
         w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        
+
         if r.Method == "OPTIONS" {
             w.WriteHeader(http.StatusOK)
             return
         }
-        
+
         next.ServeHTTP(w, r)
     })
 }
@@ -598,7 +598,7 @@ func requestIDMiddleware(next http.Handler) http.Handler {
         if requestID == "" {
             requestID = uuid.New().String()
         }
-        
+
         w.Header().Set("X-Request-ID", requestID)
         ctx := context.WithValue(r.Context(), "requestID", requestID)
         next.ServeHTTP(w, r.WithContext(ctx))
@@ -617,11 +617,11 @@ func gzipMiddleware(next http.Handler) http.Handler {
             next.ServeHTTP(w, r)
             return
         }
-        
+
         w.Header().Set("Content-Encoding", "gzip")
         gz := gzip.NewWriter(w)
         defer gz.Close()
-        
+
         gzw := &gzipResponseWriter{Writer: gz, ResponseWriter: w}
         next.ServeHTTP(gzw, r)
     })
@@ -651,13 +651,13 @@ func (api *UserAPI) GetUser(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Invalid user ID", http.StatusBadRequest)
         return
     }
-    
+
     user, err := api.service.GetUser(id)
     if err != nil {
         http.Error(w, err.Error(), http.StatusNotFound)
         return
     }
-    
+
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(user)
 }
@@ -668,13 +668,13 @@ func (api *UserAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
-    
+
     created, err := api.service.CreateUser(user)
     if err != nil {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-    
+
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusCreated)
     json.NewEncoder(w).Encode(created)
@@ -718,13 +718,13 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
     defer conn.Close()
-    
+
     for {
         messageType, message, err := conn.ReadMessage()
         if err != nil {
             break
         }
-        
+
         // Эхо ответ
         if err := conn.WriteMessage(messageType, message); err != nil {
             break
@@ -740,13 +740,13 @@ func sseHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "text/event-stream")
     w.Header().Set("Cache-Control", "no-cache")
     w.Header().Set("Connection", "keep-alive")
-    
+
     flusher, ok := w.(http.Flusher)
     if !ok {
         http.Error(w, "Streaming not supported", http.StatusInternalServerError)
         return
     }
-    
+
     for i := 0; i < 10; i++ {
         fmt.Fprintf(w, "data: Message %d\n\n", i)
         flusher.Flush()
@@ -763,20 +763,20 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
     }
-    
+
     err := r.ParseMultipartForm(10 << 20) // 10 MB
     if err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
-    
+
     file, handler, err := r.FormFile("file")
     if err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
     defer file.Close()
-    
+
     // Сохранение файла
     dst, err := os.Create(handler.Filename)
     if err != nil {
@@ -784,7 +784,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
     defer dst.Close()
-    
+
     io.Copy(dst, file)
     w.WriteHeader(http.StatusOK)
 }
@@ -862,7 +862,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
             log.Printf("Failed to push: %v", err)
         }
     }
-    
+
     // Обычный ответ
     w.Write([]byte("<html><head><link rel='stylesheet' href='/static/style.css'></head><body>Hello</body></html>"))
 }
@@ -875,7 +875,7 @@ func httpClientWithRetry(url string, maxRetries int) (*http.Response, error) {
     client := &http.Client{
         Timeout: 10 * time.Second,
     }
-    
+
     var lastErr error
     for i := 0; i < maxRetries; i++ {
         resp, err := client.Get(url)
@@ -885,7 +885,7 @@ func httpClientWithRetry(url string, maxRetries int) (*http.Response, error) {
         lastErr = err
         time.Sleep(time.Duration(i+1) * time.Second)
     }
-    
+
     return nil, lastErr
 }
 ```
@@ -912,9 +912,9 @@ func (c *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         c.failures = 0
     }
     c.mu.Unlock()
-    
+
     resp, err := c.client.Do(req)
-    
+
     c.mu.Lock()
     if err != nil {
         c.failures++
@@ -923,7 +923,7 @@ func (c *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         c.failures = 0
     }
     c.mu.Unlock()
-    
+
     return resp, err
 }
 ```
@@ -941,11 +941,11 @@ func NewClientPool(size int, factory func() *http.Client) *ClientPool {
         clients: make(chan *http.Client, size),
         factory: factory,
     }
-    
+
     for i := 0; i < size; i++ {
         pool.clients <- factory()
     }
-    
+
     return pool
 }
 
@@ -972,19 +972,19 @@ func proxyHandler(targetURL string) http.HandlerFunc {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
-        
+
         r.URL.Scheme = target.Scheme
         r.URL.Host = target.Host
         r.URL.Path = target.Path + r.URL.Path
         r.Host = target.Host
-        
+
         resp, err := http.DefaultTransport.RoundTrip(r)
         if err != nil {
             http.Error(w, err.Error(), http.StatusBadGateway)
             return
         }
         defer resp.Body.Close()
-        
+
         for k, v := range resp.Header {
             w.Header()[k] = v
         }
@@ -1000,17 +1000,17 @@ func proxyHandler(targetURL string) http.HandlerFunc {
 func gracefulShutdown(server *http.Server) {
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-    
+
     <-sigChan
     fmt.Println("Shutting down server...")
-    
+
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
-    
+
     if err := server.Shutdown(ctx); err != nil {
         fmt.Printf("Server forced to shutdown: %v\n", err)
     }
-    
+
     fmt.Println("Server stopped")
 }
 ```
@@ -1024,7 +1024,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
         "database": checkDatabase(),
         "cache":    checkCache(),
     }
-    
+
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(checks)
 }
@@ -1052,12 +1052,12 @@ func validateRequest(r *http.Request) error {
     if r.ContentLength > 10*1024*1024 { // 10 MB
         return fmt.Errorf("request too large")
     }
-    
+
     contentType := r.Header.Get("Content-Type")
     if !strings.HasPrefix(contentType, "application/json") {
         return fmt.Errorf("invalid content type")
     }
-    
+
     return nil
 }
 
@@ -1066,7 +1066,7 @@ func validatedHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
-    
+
     // Обработка запроса
 }
 ```
@@ -1087,19 +1087,19 @@ type ResponseCache struct {
 func (c *ResponseCache) Get(key string) ([]byte, bool) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     entry, ok := c.entries[key]
     if !ok || time.Now().After(entry.ExpiresAt) {
         return nil, false
     }
-    
+
     return entry.Data, true
 }
 
 func (c *ResponseCache) Set(key string, data []byte, ttl time.Duration) {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.entries[key] = &CacheEntry{
         Data:      data,
         ExpiresAt: time.Now().Add(ttl),
@@ -1109,17 +1109,17 @@ func (c *ResponseCache) Set(key string, data []byte, ttl time.Duration) {
 func cachedHandler(cache *ResponseCache) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         cacheKey := r.URL.Path
-        
+
         if data, ok := cache.Get(cacheKey); ok {
             w.Header().Set("X-Cache", "HIT")
             w.Write(data)
             return
         }
-        
+
         // Генерация ответа
         data := generateResponse(r)
         cache.Set(cacheKey, data, 5*time.Minute)
-        
+
         w.Header().Set("X-Cache", "MISS")
         w.Write(data)
     }
@@ -1153,25 +1153,25 @@ func NewRetryClient(maxRetries int, retryDelay time.Duration) *RetryClient {
 func (rc *RetryClient) Do(req *http.Request) (*http.Response, error) {
     var lastResp *http.Response
     var lastErr error
-    
+
     for attempt := 0; attempt < rc.maxRetries; attempt++ {
         resp, err := rc.client.Do(req)
         lastResp = resp
         lastErr = err
-        
+
         if !rc.retryFunc(resp, err) {
             return resp, err
         }
-        
+
         if resp != nil {
             resp.Body.Close()
         }
-        
+
         if attempt < rc.maxRetries-1 {
             time.Sleep(rc.retryDelay * time.Duration(attempt+1))
         }
     }
-    
+
     return lastResp, lastErr
 }
 ```
@@ -1202,7 +1202,7 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
     cbc.mu.RLock()
     state := cbc.state
     cbc.mu.RUnlock()
-    
+
     if state == "open" {
         cbc.mu.Lock()
         if time.Since(cbc.lastFailure) > cbc.timeout {
@@ -1213,12 +1213,12 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         }
         cbc.mu.Unlock()
     }
-    
+
     resp, err := cbc.client.Do(req)
-    
+
     cbc.mu.Lock()
     defer cbc.mu.Unlock()
-    
+
     if err != nil || (resp != nil && resp.StatusCode >= 500) {
         cbc.failures++
         cbc.lastFailure = time.Now()
@@ -1227,12 +1227,12 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
         }
         return resp, err
     }
-    
+
     if cbc.state == "half-open" {
         cbc.state = "closed"
     }
     cbc.failures = 0
-    
+
     return resp, nil
 }
 ```
@@ -1283,23 +1283,23 @@ func NewMetricsHandler() *MetricsHandler {
 func (mh *MetricsHandler) Middleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
-        
+
         // Запись размера запроса
         requestSize := r.ContentLength
         if requestSize < 0 {
             requestSize = 0
         }
-        
+
         // Оборачивание ResponseWriter для записи размера ответа
         rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-        
+
         next.ServeHTTP(rw, r)
-        
+
         duration := time.Since(start)
         endpoint := r.URL.Path
         method := r.Method
         status := strconv.Itoa(rw.statusCode)
-        
+
         mh.requestsTotal.WithLabelValues(method, endpoint, status).Inc()
         mh.requestDuration.WithLabelValues(method, endpoint).Observe(duration.Seconds())
         mh.requestSize.WithLabelValues(method, endpoint).Observe(float64(requestSize))
@@ -1358,17 +1358,17 @@ func (hcs *HealthCheckServer) HandleHealth(w http.ResponseWriter, r *http.Reques
 func (hcs *HealthCheckServer) HandleReady(w http.ResponseWriter, r *http.Request) {
     ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
     defer cancel()
-    
+
     results := make(map[string]string)
     allHealthy := true
-    
+
     hcs.mu.RLock()
     checkers := make(map[string]HealthChecker)
     for k, v := range hcs.checkers {
         checkers[k] = v
     }
     hcs.mu.RUnlock()
-    
+
     for name, checker := range checkers {
         if err := checker.Check(ctx); err != nil {
             results[name] = "unhealthy: " + err.Error()
@@ -1377,14 +1377,14 @@ func (hcs *HealthCheckServer) HandleReady(w http.ResponseWriter, r *http.Request
             results[name] = "healthy"
         }
     }
-    
+
     w.Header().Set("Content-Type", "application/json")
     if allHealthy {
         w.WriteHeader(http.StatusOK)
     } else {
         w.WriteHeader(http.StatusServiceUnavailable)
     }
-    
+
     json.NewEncoder(w).Encode(map[string]interface{}{
         "status": map[bool]string{true: "ready", false: "not ready"}[allHealthy],
         "checks": results,
@@ -1419,14 +1419,14 @@ func RequestIDMiddleware(generator RequestIDGenerator) func(http.Handler) http.H
     if generator == nil {
         generator = DefaultRequestIDGenerator
     }
-    
+
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             requestID := r.Header.Get("X-Request-ID")
             if requestID == "" {
                 requestID = generator()
             }
-            
+
             w.Header().Set("X-Request-ID", requestID)
             ctx := context.WithValue(r.Context(), "requestID", requestID)
             next.ServeHTTP(w, r.WithContext(ctx))
@@ -1473,11 +1473,11 @@ func CompressionMiddleware(next http.Handler) http.Handler {
             next.ServeHTTP(w, r)
             return
         }
-        
+
         w.Header().Set("Content-Encoding", "gzip")
         grw := newGzipResponseWriter(w)
         defer grw.Close()
-        
+
         next.ServeHTTP(grw, r)
     })
 }
@@ -1491,11 +1491,11 @@ func NewProxyClient(proxyURL string) (*http.Client, error) {
     if err != nil {
         return nil, err
     }
-    
+
     transport := &http.Transport{
         Proxy: http.ProxyURL(proxy),
     }
-    
+
     return &http.Client{
         Transport: transport,
         Timeout:   30 * time.Second,
@@ -1507,11 +1507,11 @@ func NewSOCKS5Client(proxyAddr string) (*http.Client, error) {
     if err != nil {
         return nil, err
     }
-    
+
     transport := &http.Transport{
         Dial: dialer.Dial,
     }
-    
+
     return &http.Client{
         Transport: transport,
         Timeout:   30 * time.Second,
@@ -1525,18 +1525,18 @@ func NewSOCKS5Client(proxyAddr string) (*http.Client, error) {
 func FileServerMiddleware(root string, stripPrefix string) http.Handler {
     fs := http.Dir(root)
     fileServer := http.FileServer(fs)
-    
+
     if stripPrefix != "" {
         fileServer = http.StripPrefix(stripPrefix, fileServer)
     }
-    
+
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         // Проверка на попытку выйти за пределы директории
         if strings.Contains(r.URL.Path, "..") {
             http.Error(w, "Forbidden", http.StatusForbidden)
             return
         }
-        
+
         fileServer.ServeHTTP(w, r)
     })
 }
@@ -1563,11 +1563,11 @@ func NewCookieJar() *CookieJar {
 func (cj *CookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
     cj.mu.Lock()
     defer cj.mu.Unlock()
-    
+
     if cj.cookies[u.Host] == nil {
         cj.cookies[u.Host] = make(map[string]*http.Cookie)
     }
-    
+
     for _, cookie := range cookies {
         cj.cookies[u.Host][cookie.Name] = cookie
     }
@@ -1576,14 +1576,14 @@ func (cj *CookieJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
 func (cj *CookieJar) Cookies(u *url.URL) []*http.Cookie {
     cj.mu.RLock()
     defer cj.mu.RUnlock()
-    
+
     cookies := make([]*http.Cookie, 0)
     if hostCookies, ok := cj.cookies[u.Host]; ok {
         for _, cookie := range hostCookies {
             cookies = append(cookies, cookie)
         }
     }
-    
+
     return cookies
 }
 
@@ -1597,21 +1597,21 @@ func NewClientWithCookies() *http.Client {
 
 ## Лучшие практики
 
-1. **Используйте context** - передавайте **context** в запросы для отмены
-2. **Обрабатывайте ошибки** - всегда проверяйте ошибки при работе с **HTTP**
-3. **Закрывайте тела ответов** - используйте **defer** для закрытия **resp.Body**
-4. **Используйте middleware** - для общей логики (**логирование, аутентификация**)
-5. **Настраивайте таймауты** - устанавливайте таймауты для клиентов и серверов
-6. **Используйте пулы соединений** - настраивайте **Transport** для переиспользования соединений
-7. **Используйте graceful shutdown** - корректно завершайте работу сервера
-8. **Валидируйте входные данные** - проверяйте все данные от клиентов
-9. **Используйте HTTPS** - для защиты данных в транзите
-10. **Мониторьте производительность** - отслеживайте метрики **HTTP** запросов
-11. **Используйте compression** - для уменьшения размера ответов
-12. **Используйте request ID** - для трейсинга запросов
-13. **Реализуйте health checks** - для мониторинга состояния приложения
-14. **Используйте circuit breaker** - для защиты от каскадных отказов
-15. **Реализуйте retry логику** - для обработки временных ошибок
+1. **Используйте context** — передавайте **context** в запросы для отмены
+2. **Обрабатывайте ошибки** — всегда проверяйте ошибки при работе с **HTTP**
+3. **Закрывайте тела ответов** — используйте **defer** для закрытия **resp.Body**
+4. **Используйте middleware** — для общей логики (**логирование, аутентификация**)
+5. **Настраивайте таймауты** — устанавливайте таймауты для клиентов и серверов
+6. **Используйте пулы соединений** — настраивайте **Transport** для переиспользования соединений
+7. **Используйте graceful shutdown** — корректно завершайте работу сервера
+8. **Валидируйте входные данные** — проверяйте все данные от клиентов
+9. **Используйте HTTPS** — для защиты данных в транзите
+10. **Мониторьте производительность** — отслеживайте метрики **HTTP** запросов
+11. **Используйте compression** — для уменьшения размера ответов
+12. **Используйте request ID** — для трейсинга запросов
+13. **Реализуйте health checks** — для мониторинга состояния приложения
+14. **Используйте circuit breaker** — для защиты от каскадных отказов
+15. **Реализуйте retry логику** — для обработки временных ошибок
 
 ### Практические примеры: **Graceful shutdown HTTP** сервера
 
@@ -1619,19 +1619,19 @@ func NewClientWithCookies() *http.Client {
 func GracefulShutdown(server *http.Server, timeout time.Duration) error {
     quit := make(chan os.Signal, 1)
     signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-    
+
     <-quit
-    
+
     log.Println("Shutting down server...")
-    
+
     ctx, cancel := context.WithTimeout(context.Background(), timeout)
     defer cancel()
-    
+
     if err := server.Shutdown(ctx); err != nil {
         log.Fatal("Server forced to shutdown:", err)
         return err
     }
-    
+
     log.Println("Server exited")
     return nil
 }
@@ -1642,13 +1642,13 @@ func main() {
         Addr:    ":8080",
         Handler: setupRouter(),
     }
-    
+
     go func() {
         if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
             log.Fatalf("Server failed: %v", err)
         }
     }()
-    
+
     if err := GracefulShutdown(server, 5*time.Second); err != nil {
         log.Fatal(err)
     }
@@ -1665,7 +1665,7 @@ func NewPooledClient(maxIdleConns, maxConnsPerHost int) *http.Client {
         IdleConnTimeout:     90 * time.Second,
         DisableCompression:  false,
     }
-    
+
     return &http.Client{
         Transport: transport,
         Timeout:   30 * time.Second,
@@ -1691,3 +1691,11 @@ func NewPooledClient(maxIdleConns, maxConnsPerHost int) *http.Client {
 - [Go net/http Documentation](https://pkg.go.dev/net/http)
 - [Go HTTP Server Tutorial](https://go.dev/doc/articles/wiki/)
 - [Go HTTP Client Tutorial](https://go.dev/doc/tutorial/web-service-gin)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Deeplearning4j Documentation](https://deeplearning4j.org/docs/latest/)
 - [CIFAR-10 Dataset](https://www.cs.toronto.edu/~kriz/cifar.html)
 
-### Baeldung
+### Обучающие материалы
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
@@ -213,12 +213,12 @@ class CifarDatasetServiceK(
 ) {
     private val trainIterator: CifarDataSetIterator
     private val testIterator: CifarDataSetIterator
-    
+
     init {
         trainIterator = CifarDataSetIterator(trainBatch, trainImagesNum, true)
         testIterator = CifarDataSetIterator(testBatch, testImagesNum, false)
     }
-    
+
     fun trainIterator(): CifarDataSetIterator = trainIterator
     fun testIterator(): CifarDataSetIterator = testIterator
 }
@@ -285,7 +285,7 @@ class CNNModelK {
             .pretrain(false)
             .backprop(true)
             .build()
-        
+
         return MultiLayerNetwork(configuration)
     }
 }
@@ -306,7 +306,7 @@ class CNNTrainerK(
             network.fit(dataSetService.trainIterator())
         }
     }
-    
+
     fun evaluate(): Evaluation {
         return network.evaluate(dataSetService.testIterator())
     }

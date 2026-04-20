@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-scheduling.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Batch Processing - Job Processing и Scheduling
-
-
+# Micronaut: Batch Processing — Job Processing и Scheduling
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-scheduling.md", "micronaut-data.md"]
 
 ## Содержание
 
-- [Micronaut: Batch Processing - Job Processing и Scheduling](#micronaut-batch-processing-job-processing-и-scheduling)
+- [Micronaut: Batch Processing — Job Processing и Scheduling](#micronaut-batch-processing-job-processing-и-scheduling)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Batch Processing](#настройка-batch-processing)
@@ -108,12 +106,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserProcessingJob implements Job {
-    
+
     @Override
     public String getName() {
         return "userProcessingJob";
     }
-    
+
     @Override
     public List<Step> getSteps() {
         return List.of(
@@ -122,15 +120,15 @@ public class UserProcessingJob implements Job {
             new Step("writeUsers", this::writeUsers)
         );
     }
-    
+
     private void readUsers() {
         // Чтение пользователей
     }
-    
+
     private void processUsers() {
         // Обработка пользователей
     }
-    
+
     private void writeUsers() {
         // Запись пользователей
     }
@@ -147,14 +145,14 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserChunkProcessor implements ChunkProcessor<User, User> {
-    
+
     @Override
     public List<User> process(List<User> items) {
         return items.stream()
             .map(this::processUser)
             .collect(Collectors.toList());
     }
-    
+
     private User processUser(User user) {
         // Обработка одного пользователя
         user.setProcessed(true);
@@ -174,11 +172,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ScheduledBatchJob {
     private final JobLauncher jobLauncher;
-    
+
     public ScheduledBatchJob(JobLauncher jobLauncher) {
         this.jobLauncher = jobLauncher;
     }
-    
+
     @Scheduled(fixedRate = "1h")
     public void runBatchJob() {
         JobParameters parameters = new JobParameters();
@@ -197,7 +195,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class JobErrorHandler implements JobExecutionListener {
-    
+
     @Override
     public void afterJob(JobExecution jobExecution) {
         if (jobExecution.getStatus() == BatchStatus.FAILED) {
@@ -250,13 +248,13 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ParameterizedJobService {
     private final JobLauncher jobLauncher;
-    
+
     public void runJobWithParameters() {
         JobParameters parameters = new JobParameters();
         parameters.put("inputFile", "users.csv");
         parameters.put("outputFile", "processed-users.csv");
         parameters.put("chunkSize", "100");
-        
+
         jobLauncher.run("userProcessingJob", parameters);
     }
 }
@@ -272,12 +270,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomStepListener implements StepExecutionListener {
-    
+
     @Override
     public void beforeStep(StepExecution stepExecution) {
         log.info("Starting step: {}", stepExecution.getStepName());
     }
-    
+
     @Override
     public void afterStep(StepExecution stepExecution) {
         log.info("Completed step: {}", stepExecution.getStepName());
@@ -295,13 +293,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ExecutionContextService {
-    
+
     public void saveExecutionContext(JobExecution jobExecution) {
         Map<String, Object> context = jobExecution.getExecutionContext();
         context.put("startTime", LocalDateTime.now());
         context.put("processedCount", 0);
     }
-    
+
     public void updateExecutionContext(JobExecution jobExecution, int count) {
         Map<String, Object> context = jobExecution.getExecutionContext();
         context.put("processedCount", count);
@@ -320,7 +318,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class JobRestartService {
     private final JobLauncher jobLauncher;
-    
+
     public void restartJob(Long jobExecutionId) {
         JobParameters parameters = new JobParameters();
         // Восстановление параметров из предыдущего выполнения
@@ -339,7 +337,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomSkipPolicy implements SkipPolicy {
-    
+
     @Override
     public boolean shouldSkip(Throwable t, int skipCount) {
         // Пропуск определенных ошибок
@@ -358,27 +356,24 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserPartitioner implements Partitioner {
-    
+
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
         Map<String, ExecutionContext> partitions = new HashMap<>();
         List<User> users = userRepository.findAll();
         int partitionSize = users.size() / gridSize;
-        
+
         for (int i = 0; i < gridSize; i++) {
             ExecutionContext context = new ExecutionContext();
             context.put("startIndex", i * partitionSize);
             context.put("endIndex", (i + 1) * partitionSize);
             partitions.put("partition" + i, context);
         }
-        
+
         return partitions;
     }
 }
 ```
-
-
-
 
 ## Заключение
 
@@ -389,3 +384,11 @@ public class UserPartitioner implements Partitioner {
 - [**Micronaut Batch** Documentation](https://micronaut-projects.github.io/micronaut-batch/latest/guide/)
 - [**Spring Batch** Documentation](https://docs.spring.io/spring-batch/reference/)
 - [**Batch Processing Patterns**](https://www.enterpriseintegrationpatterns.com/patterns/messaging/BatchProcessing.html)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]
+- [[micronaut-core|Micronaut: Core — Dependency Injection и Bean Management]]

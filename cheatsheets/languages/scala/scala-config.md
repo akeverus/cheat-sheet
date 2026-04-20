@@ -40,10 +40,10 @@ related: ["scala/scala-basics.md", "scala/scala-play.md"]
   - [Переменные подстановки](#переменные-подстановки)
   - [Загрузка конфигурации из разных источников](#загрузка-конфигурации-из-разных-источников)
   - [Валидация конфигурации](#валидация-конфигурации)
-  - [**Play Configuration** - расширенные возможности](#play-configuration-расширенные-возможности)
+  - [**Play Configuration** — расширенные возможности](#play-configuration-расширенные-возможности)
   - [**PureConfig** для типобезопасной конфигурации](#pureconfig-для-типобезопасной-конфигурации)
   - [Конфигурация для разных окружений](#конфигурация-для-разных-окружений)
-  - [Переменные окружения - расширенное использование](#переменные-окружения-расширенное-использование)
+  - [Переменные окружения — расширенное использование](#переменные-окружения-расширенное-использование)
   - [Конфигурация с секретами](#конфигурация-с-секретами)
 - [Лучшие практики](#лучшие-практики)
   - [Использование типизированных конфигураций](#использование-типизированных-конфигураций)
@@ -249,7 +249,7 @@ def validateConfig(config: Config): Either[String, AppConfig] = {
 }
 ```
 
-### **Play Configuration** - расширенные возможности
+### **Play Configuration** — расширенные возможности
 
 ```scala
 import play.api.Configuration
@@ -258,20 +258,20 @@ import play.api.inject.Injector
 class MyService @Inject()(config: Configuration) {
   // Чтение с типом
   val host: String = config.get[String]("app.host")
-  
+
   // Чтение с опциональным значением
   val port: Option[Int] = config.get[Option[Int]]("app.port")
-  
+
   // Чтение с значением по умолчанию
   val timeout: Long = config.get[Long]("app.timeout")
-  
+
   // Чтение вложенной конфигурации
   val dbConfig: Configuration = config.get[Configuration]("database")
   val dbHost: String = dbConfig.get[String]("host")
-  
+
   // Чтение списков
   val servers: Seq[String] = config.get[Seq[String]]("app.servers")
-  
+
   // Чтение с валидацией
   val maxRetries: Int = config.get[Int]("app.maxRetries") match {
     case n if n > 0 && n <= 10 => n
@@ -304,11 +304,11 @@ case class AppConfig(
 )
 
 // Автоматическое чтение конфигурации
-val appConfig: Either[ConfigReaderFailures, AppConfig] = 
+val appConfig: Either[ConfigReaderFailures, AppConfig] =
   ConfigSource.default.load[AppConfig]
 
 appConfig match {
-  case Right(config) => 
+  case Right(config) =>
     println(s"App: ${config.name}, DB: ${config.database.host}")
   case Left(failures) =>
     failures.toList.foreach(println)
@@ -324,7 +324,7 @@ object ConfigLoader {
   def load(environment: String = "development"): Config = {
     val baseConfig = ConfigFactory.load("application.conf")
     val envConfig = ConfigFactory.load(s"application-$environment.conf")
-    
+
     envConfig
       .withFallback(baseConfig)
       .resolve()
@@ -336,7 +336,7 @@ val devConfig = ConfigLoader.load("development")
 val prodConfig = ConfigLoader.load("production")
 ```
 
-### Переменные окружения - расширенное использование
+### Переменные окружения — расширенное использование
 
 ```scala
 import scala.util.Try
@@ -345,15 +345,15 @@ object EnvConfig {
   def getString(key: String, default: String): String = {
     sys.env.getOrElse(key, default)
   }
-  
+
   def getInt(key: String, default: Int): Int = {
     sys.env.get(key).flatMap(s => Try(s.toInt).toOption).getOrElse(default)
   }
-  
+
   def getBoolean(key: String, default: Boolean): Boolean = {
     sys.env.get(key).flatMap(s => Try(s.toBoolean).toOption).getOrElse(default)
   }
-  
+
   def require(key: String): String = {
     sys.env.getOrElse(key, throw new IllegalArgumentException(s"Environment variable $key is required"))
   }
@@ -381,7 +381,7 @@ object SecretConfig {
   def fromConfig(config: Config): SecretConfig = {
     // В production секреты должны загружаться из безопасного хранилища
     val env = sys.env.getOrElse("ENVIRONMENT", "development")
-    
+
     if (env == "production") {
       SecretConfig(
         apiKey = sys.env.getOrElse("API_KEY", throw new Exception("API_KEY not set")),
@@ -422,11 +422,11 @@ object AppConfig {
 ```scala
 def loadAndValidateConfig(): Either[String, AppConfig] = {
   val config = ConfigFactory.load()
-  
+
   // Проверка обязательных полей
   val requiredFields = List("app.host", "app.port", "database.host")
   val missing = requiredFields.filterNot(config.hasPath)
-  
+
   if (missing.nonEmpty) {
     Left(s"Missing required configuration fields: ${missing.mkString(", ")}")
   } else {
@@ -464,16 +464,16 @@ val config = ConfigFactory.load()
 // Создание наблюдателя за изменениями
 class ConfigWatcher(config: Config) {
   private var currentConfig = config
-  
+
   def watch(path: String)(callback: Config => Unit): Unit = {
     // Реализация наблюдения за изменениями
     // В реальном приложении можно использовать файловые watchers или другие механизмы
   }
-  
+
   def reload(): Unit = {
     currentConfig = ConfigFactory.load()
   }
-  
+
   def get(path: String): Option[String] = {
     if (currentConfig.hasPath(path)) Some(currentConfig.getString(path))
     else None
@@ -600,19 +600,19 @@ import java.io.File
 
 class ConfigWatcher(configPath: String) {
   private var config: Config = loadConfig()
-  
+
   def loadConfig(): Config = {
     ConfigFactory.parseFile(new File(configPath))
       .resolve()
   }
-  
+
   def reload(): Unit = {
     config = loadConfig()
     onConfigChanged(config)
   }
-  
+
   def getConfig: Config = config
-  
+
   def onConfigChanged(newConfig: Config): Unit = {
     // Уведомление об изменении конфигурации
     println("Configuration reloaded")
@@ -659,20 +659,20 @@ object AppConfig {
         enableMetrics = true
       }
     """)
-    
+
     // 2. Загрузка из файла
     val fileConfig = Try(ConfigFactory.parseFile(new File("application.conf")))
       .getOrElse(ConfigFactory.empty())
-    
+
     // 3. Переменные окружения (высший приоритет)
     val envConfig = ConfigFactory.systemEnvironment()
-    
+
     // Объединение с приоритетами
     val config = envConfig
       .withFallback(fileConfig)
       .withFallback(defaultConfig)
       .resolve()
-    
+
     AppConfig(
       database = DatabaseConfig(
         url = config.getString("database.url"),
@@ -705,7 +705,7 @@ case class Config(
 ) {
   def validate: Either[List[String], Config] = {
     val errors = scala.collection.mutable.ListBuffer[String]()
-    
+
     if (database.url.isEmpty) errors += "Database URL is required"
     if (server.port < 1 || server.port > 65535) {
       errors += "Server port must be between 1 and 65535"
@@ -713,7 +713,7 @@ case class Config(
     if (server.timeout < 1000) {
       errors += "Server timeout must be at least 1000ms"
     }
-    
+
     if (errors.isEmpty) Right(this) else Left(errors.toList)
   }
 }

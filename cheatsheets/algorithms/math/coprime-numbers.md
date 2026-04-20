@@ -212,7 +212,7 @@ boolean areCoprimeBigInteger(BigInteger a, BigInteger b) {
 fun iterativeGCDK(a: Int, b: Int): Int {
     var num1 = a
     var num2 = b
-    
+
     while (num2 != 0) {
         if (num1 < num2) {
             val temp = num1

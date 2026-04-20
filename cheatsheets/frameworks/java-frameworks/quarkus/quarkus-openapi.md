@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-security.md"]
 ---
 
-# Quarkus: OpenAPI - API Documentation
-
-
+# Quarkus: OpenAPI — API Documentation
 
 ## Полезные ссылки
 
@@ -104,7 +102,7 @@ import jakarta.ws.rs.Path;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     @Operation(
@@ -190,7 +188,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 )
 @Path("/api")
 public class SecureResource {
-    
+
     @GET
     @SecurityRequirement(name = "apiKey")
     public String getSecureData() {
@@ -268,10 +266,10 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 public class User {
     @Schema(description = "User ID", example = "1")
     private Long id;
-    
+
     @Schema(description = "User name", example = "John Doe", required = true)
     private String name;
-    
+
     @Schema(description = "User email", example = "john@example.com", format = "email")
     private String email;
 }
@@ -309,7 +307,7 @@ public User getUser(@PathParam("id") Long id) {
 ```java
 @ApplicationScoped
 public class OpenAPIFilter implements OASFilter {
-    
+
     @Override
     public void filterOpenAPI(OpenAPI openAPI) {
         // Кастомизация OpenAPI документации
@@ -406,3 +404,11 @@ quarkus.swagger-ui.oauth-client-secret=my-client-secret
 - [**Quarkus OpenAPI** Guide](https://quarkus.io/guides/openapi-swaggerui)
 - [**OpenAPI** Specification](https://spec.openapis.org/oas/latest.html)
 - [Swagger UI](https://swagger.io/tools/swagger-ui/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-basics.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Core - CDI, Bean Scopes и Configuration
-
-
+# Quarkus: Core — CDI, Bean Scopes и Configuration
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-basics.md", "quarkus-rest.md"]
 
 ## Содержание
 
-- [Quarkus: Core - CDI, Bean Scopes и Configuration](#quarkus-core-cdi-bean-scopes-и-configuration)
+- [Quarkus: Core — CDI, Bean Scopes и Configuration](#quarkus-core-cdi-bean-scopes-и-configuration)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [CDI Basics](#cdi-basics)
@@ -146,12 +144,12 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class UserService {
     private final UserRepository userRepository;
-    
+
     @Inject
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public User createUser(User user) {
         return userRepository.save(user);
     }
@@ -168,7 +166,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class OrderService {
     private final UserService userService;
     private final PaymentService paymentService;
-    
+
     // Constructor injection (рекомендуется)
     public OrderService(UserService userService, PaymentService paymentService) {
         this.userService = userService;
@@ -189,7 +187,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class ApplicationScopedService {
     // Один экземпляр на все приложение
     private int counter = 0;
-    
+
     public int increment() {
         return ++counter;
     }
@@ -205,11 +203,11 @@ import jakarta.enterprise.context.RequestScoped;
 public class RequestScopedService {
     // Новый экземпляр для каждого HTTP запроса
     private String requestId;
-    
+
     public void setRequestId(String requestId) {
         this.requestId = requestId;
     }
-    
+
     public String getRequestId() {
         return requestId;
     }
@@ -256,7 +254,7 @@ public class AppConfiguration {
     public String name;
     public Integer port;
     public DatabaseConfig database;
-    
+
     public static class DatabaseConfig {
         public String url;
         public String username;
@@ -275,7 +273,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class ConfigService {
     @Inject
     AppConfiguration appConfig;
-    
+
     public void printConfig() {
         System.out.println("App name: " + appConfig.name);
         System.out.println("Port: " + appConfig.port);
@@ -312,13 +310,13 @@ import io.quarkus.arc.DefaultBean;
 
 @ApplicationScoped
 public class BeanProducer {
-    
+
     @Produces
     @DefaultBean
     public DataSource defaultDataSource() {
         return new HikariDataSource();
     }
-    
+
     @Produces
     @IfBuildProfile("prod")
     public DataSource productionDataSource() {
@@ -336,7 +334,7 @@ public class BeanProducer {
 @ApplicationScoped
 public class Service {
     private final Dependency dependency;
-    
+
     public Service(Dependency dependency) {
         this.dependency = dependency;
     }
@@ -372,7 +370,7 @@ import jakarta.inject.Named;
 
 @ApplicationScoped
 public class DataSourceProducer {
-    
+
     @Produces
     @ApplicationScoped
     @Named("primary")
@@ -381,7 +379,7 @@ public class DataSourceProducer {
         config.setJdbcUrl("jdbc:postgresql://localhost:5432/primary");
         return new HikariDataSource(config);
     }
-    
+
     @Produces
     @ApplicationScoped
     @Named("secondary")
@@ -401,11 +399,11 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ConfigurationProducer {
-    
+
     @Produces
     @ApplicationScoped
     public String applicationName = "My Application";
-    
+
     @Produces
     @ApplicationScoped
     public Integer maxConnections = 100;
@@ -436,11 +434,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class DatabaseService {
-    
+
     @Inject
     @Database("primary")
     DataSource primaryDataSource;
-    
+
     @Inject
     @Database("secondary")
     DataSource secondaryDataSource;
@@ -459,7 +457,7 @@ import jakarta.interceptor.InvocationContext;
 @Interceptor
 @Loggable
 public class LoggingInterceptor {
-    
+
     @AroundInvoke
     public Object log(InvocationContext context) throws Exception {
         System.out.println("Entering method: " + context.getMethod().getName());
@@ -499,10 +497,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserService {
-    
+
     @Inject
     Event<UserCreated> userCreatedEvent;
-    
+
     public User createUser(User user) {
         User created = userRepository.save(user);
         userCreatedEvent.fire(new UserCreated(created));
@@ -519,7 +517,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserEventListener {
-    
+
     public void onUserCreated(@Observes UserCreated event) {
         System.out.println("User created: " + event.getUser().getName());
         // Отправка email, логирование и т.д.
@@ -539,18 +537,18 @@ public class AppConfiguration {
     public String name;
     public ServerConfig server;
     public DatabaseConfig database;
-    
+
     public static class ServerConfig {
         public Integer port;
         public String host;
     }
-    
+
     public static class DatabaseConfig {
         public String url;
         public String username;
         public String password;
         public PoolConfig pool;
-        
+
         public static class PoolConfig {
             public Integer minSize;
             public Integer maxSize;
@@ -585,19 +583,19 @@ import jakarta.enterprise.inject.Produces;
 
 @ApplicationScoped
 public class ConditionalProducer {
-    
+
     @Produces
     @DefaultBean
     public DataSource defaultDataSource() {
         return createDefaultDataSource();
     }
-    
+
     @Produces
     @IfBuildProfile("prod")
     public DataSource productionDataSource() {
         return createProductionDataSource();
     }
-    
+
     @Produces
     @IfBuildProfile("dev")
     public DataSource developmentDataSource() {
@@ -617,13 +615,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class LifecycleService {
-    
+
     @PostConstruct
     public void init() {
         System.out.println("Service initialized");
         // Инициализация ресурсов
     }
-    
+
     @PreDestroy
     public void cleanup() {
         System.out.println("Service destroyed");
@@ -643,7 +641,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ValidationService {
-    
+
     public void processUser(@Valid @NotNull User user) {
         // Валидация выполняется автоматически
         userRepository.save(user);
@@ -689,11 +687,11 @@ import jakarta.inject.Inject;
 
 @Decorator
 public abstract class CachingUserService implements UserService {
-    
+
     @Inject
     @Delegate
     UserService delegate;
-    
+
     @Override
     public User findById(Long id) {
         // Кеширование перед вызовом делегата
@@ -778,7 +776,7 @@ import io.quarkus.runtime.annotations.Recorder;
 
 @Recorder
 public class BuildTimeRecorder {
-    
+
     public void configureAtBuildTime(String config) {
         // Конфигурация выполняется на этапе сборки
         System.setProperty("build.time.config", config);
@@ -796,7 +794,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RuntimeConfig {
-    
+
     @PostConstruct
     void init() {
         // Конфигурация выполняется в runtime
@@ -816,7 +814,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class AsyncEventObserver {
-    
+
     public void onUserCreatedAsync(@ObservesAsync UserCreated event) {
         // Асинхронная обработка события
         sendEmail(event.getUser());
@@ -835,9 +833,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ConditionalObserver {
-    
+
     public void onUserCreated(
-            @Observes(during = TransactionPhase.AFTER_SUCCESS) 
+            @Observes(during = TransactionPhase.AFTER_SUCCESS)
             UserCreated event) {
         // Обработка только после успешной транзакции
     }
@@ -857,13 +855,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ResourceProducer {
-    
+
     @Produces
     @ApplicationScoped
     public Connection createConnection() {
         return new Connection();
     }
-    
+
     public void closeConnection(@Disposes Connection connection) {
         connection.close();
     }
@@ -910,7 +908,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ValidationService {
-    
+
     @Valid
     public User createUser(
             @NotNull @Valid User user,
@@ -934,13 +932,13 @@ import jakarta.validation.constraints.Min;
 
 @ConfigProperties(prefix = "app")
 public class ValidatedConfiguration {
-    
+
     @NotNull
     public String name;
-    
+
     @Min(1)
     public Integer port;
-    
+
     @NotNull
     public DatabaseConfig database;
 }
@@ -957,7 +955,7 @@ import io.quarkus.runtime.annotations.Recorder;
 import io.quarkus.runtime.annotations.BuildStep;
 
 public class BuildTimeProcessor {
-    
+
     @BuildStep
     public void processAtBuildTime() {
         // Код выполняется на этапе сборки
@@ -976,7 +974,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RuntimeProcessor {
-    
+
     @PostConstruct
     void processAtRuntime() {
         // Код выполняется в runtime
@@ -999,7 +997,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ValidatedService {
-    
+
     public User createUser(
             @NotNull @Valid User user,
             @Min(1) Long organizationId) {
@@ -1016,7 +1014,7 @@ public class ValidatedService {
 ```java
 @ApplicationScoped
 public class ReturnValueValidation {
-    
+
     @Valid
     public User getUser(@NotNull Long id) {
         // Возвращаемое значение также валидируется
@@ -1035,11 +1033,11 @@ public class ReturnValueValidation {
 @Decorator
 @Priority(1)
 public abstract class UserServiceDecorator implements UserService {
-    
+
     @Inject
     @Delegate
     UserService delegate;
-    
+
     @Override
     public User createUser(User user) {
         // Дополнительная логика перед вызовом
@@ -1059,13 +1057,13 @@ public abstract class UserServiceDecorator implements UserService {
 ```java
 @ApplicationScoped
 public class EventObserver {
-    
+
     @Observes
     void onUserCreated(@ObservesAsync UserCreatedEvent event) {
         // Асинхронная обработка события
         processUserCreation(event.getUser());
     }
-    
+
     @Observes
     @Priority(100)
     void onUserCreatedPriority(UserCreatedEvent event) {
@@ -1089,11 +1087,11 @@ public @interface PaymentStrategy {
 
 @ApplicationScoped
 public class PaymentService {
-    
+
     @Inject
     @Any
     Instance<PaymentProcessor> processors;
-    
+
     public void processPayment(Payment payment) {
         PaymentProcessor processor = processors.stream()
             .filter(p -> p.supports(payment.getType()))
@@ -1113,13 +1111,13 @@ public class PaymentService {
 ```java
 @ApplicationScoped
 public class DynamicConfigService {
-    
+
     @ConfigProperty(name = "app.feature.enabled")
     boolean featureEnabled;
-    
+
     @Inject
     Config config;
-    
+
     public boolean isFeatureEnabled() {
         return config.getOptionalValue("app.feature.enabled", Boolean.class)
             .orElse(false);
@@ -1134,11 +1132,11 @@ public class DynamicConfigService {
 ```java
 @ConfigMapping(prefix = "app")
 public interface AppConfig {
-    
+
     @NotNull
     @Size(min = 1, max = 100)
     String name();
-    
+
     @Min(1)
     @Max(100)
     int maxConnections();
@@ -1154,13 +1152,13 @@ public interface AppConfig {
 ```java
 @ApplicationScoped
 public class StartupListener {
-    
+
     @Observes
     void onStart(@Observes StartupEvent event) {
         // Инициализация при старте
         initializeApplication();
     }
-    
+
     @Observes
     void onShutdown(@Observes ShutdownEvent event) {
         // Очистка при остановке
@@ -1213,13 +1211,13 @@ app.debug=false
 ```java
 @ApplicationScoped
 public class ConfigReloadService {
-    
+
     @ConfigProperty(name = "app.setting")
     String setting;
-    
+
     @Inject
     Config config;
-    
+
     public String getSetting() {
         // Получение актуального значения
         return config.getOptionalValue("app.setting", String.class)
@@ -1237,7 +1235,7 @@ public class ConfigReloadService {
 ```java
 @ApplicationScoped
 public class ValidatedService {
-    
+
     @Valid
     public User createUser(@NotNull @Valid User user) {
         // Валидация выполняется автоматически
@@ -1253,7 +1251,7 @@ public class ValidatedService {
 ```java
 @ApplicationScoped
 public class ValidatedReturnService {
-    
+
     @Valid
     public @NotNull User getUser(@Min(1) Long id) {
         return userRepository.findById(id);
@@ -1298,3 +1296,11 @@ public void nativeImageConfig(BuildProducer<NativeImageResourceBuildItem> produc
 - [**CDI** Specification](https://jakarta.ee/specifications/cdi/)
 - [**Quarkus** Arc Documentation](https://quarkus.io/guides/cdi-reference#quarkus-arc)
 - [**Bean Validation** Specification](https://beanvalidation.org/2.0/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]

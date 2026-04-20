@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **ClickHouse**
 
-Кратко: **ClickHouse** - колоночная СУБД для аналитики и обработки больших данных.
+Кратко: **ClickHouse** — колоночная СУБД для аналитики и обработки больших данных.
 
 ## Полезные ссылки
 
@@ -454,8 +454,8 @@ SELECT DISTINCT name FROM mytable;
 SELECT * FROM mytable ORDER BY value DESC;
 
 -- GROUP BY
-SELECT category, SUM(amount) 
-FROM transactions 
+SELECT category, SUM(amount)
+FROM transactions
 GROUP BY category;
 ```
 
@@ -498,7 +498,7 @@ WHERE NOT (value < 50)
 
 ```sql
 -- Основные агрегаты
-SELECT 
+SELECT
     COUNT(*) as total,
     SUM(amount) as total_amount,
     AVG(amount) as avg_amount,
@@ -507,7 +507,7 @@ SELECT
 FROM transactions;
 
 -- Статистика
-SELECT 
+SELECT
     quantile(0.5)(value) as median,
     quantile(0.95)(value) as p95,
     stddevPop(value) as stddev
@@ -518,7 +518,7 @@ SELECT uniq(user_id) FROM events;
 SELECT uniqExact(user_id) FROM events;  -- точный подсчет
 
 -- Группировка
-SELECT 
+SELECT
     category,
     COUNT(*) as count,
     SUM(amount) as total
@@ -526,7 +526,7 @@ FROM transactions
 GROUP BY category;
 
 -- HAVING (фильтрация после GROUP BY)
-SELECT 
+SELECT
     category,
     SUM(amount) as total
 FROM transactions
@@ -538,7 +538,7 @@ HAVING total > 1000;
 
 ```sql
 -- Группировка по нескольким полям
-SELECT 
+SELECT
     date,
     category,
     SUM(amount) as total
@@ -546,7 +546,7 @@ FROM transactions
 GROUP BY date, category;
 
 -- WITH ROLLUP
-SELECT 
+SELECT
     category,
     SUM(amount) as total
 FROM transactions
@@ -554,7 +554,7 @@ GROUP BY category
 WITH ROLLUP;
 
 -- WITH CUBE
-SELECT 
+SELECT
     category,
     region,
     SUM(amount) as total
@@ -563,7 +563,7 @@ GROUP BY category, region
 WITH CUBE;
 
 -- WITH TOTALS
-SELECT 
+SELECT
     category,
     SUM(amount) as total
 FROM transactions
@@ -575,7 +575,7 @@ WITH TOTALS;
 
 ```sql
 -- ROW_NUMBER
-SELECT 
+SELECT
     id,
     name,
     value,
@@ -583,7 +583,7 @@ SELECT
 FROM mytable;
 
 -- RANK и DENSE_RANK
-SELECT 
+SELECT
     id,
     value,
     RANK() OVER (ORDER BY value DESC) as rank,
@@ -591,7 +591,7 @@ SELECT
 FROM mytable;
 
 -- LAG и LEAD
-SELECT 
+SELECT
     date,
     value,
     LAG(value) OVER (ORDER BY date) as prev_value,
@@ -599,7 +599,7 @@ SELECT
 FROM mytable;
 
 -- PARTITION BY
-SELECT 
+SELECT
     category,
     date,
     value,
@@ -666,7 +666,7 @@ PARTITION BY category
 ORDER BY id;
 
 -- Просмотр партиций
-SELECT * FROM system.parts 
+SELECT * FROM system.parts
 WHERE table = 'partitioned_table';
 ```
 
@@ -740,3 +740,10 @@ EXPLAIN PLAN SELECT * FROM mytable WHERE value > 100;
 
 > **Примечание**: Это базовая информация о **ClickHouse**. Для более детального изучения см. официальную документацию **ClickHouse**.
 
+## См. также
+
+- [[clickhouse-basics|ClickHouse: Основы колоночной аналитической базы данных]]
+- [[clickhouse-indexes|ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию]]
+- [[clickhouse-integration|ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов]]
+- [[clickhouse-materialized-views|ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации]]
+- [[clickhouse-performance|ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу]]

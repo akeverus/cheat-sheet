@@ -81,7 +81,7 @@ updated: "2026-02-11"
 private boolean isPalindrome(String input) {
     int left = 0;
     int right = input.length() - 1;
-    
+
     while (left < right) {
         if (input.charAt(left) != input.charAt(right)) {
             return false;
@@ -89,7 +89,7 @@ private boolean isPalindrome(String input) {
         left++;
         right--;
     }
-    
+
     return true;
 }
 ```
@@ -105,13 +105,13 @@ private boolean isPalindrome(String input) {
 ```java
 private Set<String> findPalindromes(String input, int low, int high) {
     Set<String> result = new HashSet<>();
-    
+
     while (low >= 0 && high < input.length() && input.charAt(low) == input.charAt(high)) {
         result.add(input.substring(low, high + 1));
         low--;
         high++;
     }
-    
+
     return result;
 }
 ```
@@ -153,24 +153,24 @@ for (int i = 1; i <= input.length(); i++) {
 ```java
 public int countPalindromicSubstrings(String s) {
     int count = 0;
-    
+
     for (int i = 0; i < s.length(); i++) {
         count += expandAroundCenter(s, i, i);     // Нечетная длина
         count += expandAroundCenter(s, i, i + 1); // Четная длина
     }
-    
+
     return count;
 }
 
 private int expandAroundCenter(String s, int left, int right) {
     int count = 0;
-    
+
     while (left >= 0 && right < s.length() && s.charAt(left) == s.charAt(right)) {
         count++;
         left--;
         right++;
     }
-    
+
     return count;
 }
 ```
@@ -182,7 +182,7 @@ private int expandAroundCenter(String s, int left, int right) {
 ```kotlin
 fun findAllPalindromesBruteForceK(input: String): Set<String> {
     val palindromes = mutableSetOf<String>()
-    
+
     for (i in input.indices) {
         for (j in i + 1..input.length) {
             val substring = input.substring(i, j)
@@ -191,14 +191,14 @@ fun findAllPalindromesBruteForceK(input: String): Set<String> {
             }
         }
     }
-    
+
     return palindromes
 }
 
 private fun isPalindromeK(input: String): Boolean {
     var left = 0
     var right = input.length - 1
-    
+
     while (left < right) {
         if (input[left] != input[right]) {
             return false
@@ -206,7 +206,7 @@ private fun isPalindromeK(input: String): Boolean {
         left++
         right--
     }
-    
+
     return true
 }
 ```
@@ -216,14 +216,14 @@ private fun isPalindromeK(input: String): Boolean {
 ```kotlin
 fun findAllPalindromesCenterK(input: String): Set<String> {
     val palindromes = mutableSetOf<String>()
-    
+
     for (i in input.indices) {
         // Нечетная длина
         expandAroundCenterK(input, i, i, palindromes)
         // Четная длина
         expandAroundCenterK(input, i, i + 1, palindromes)
     }
-    
+
     return palindromes
 }
 
@@ -235,7 +235,7 @@ private fun expandAroundCenterK(
 ) {
     var l = left
     var r = right
-    
+
     while (l >= 0 && r < input.length && input[l] == input[r]) {
         palindromes.add(input.substring(l, r + 1))
         l--
@@ -249,12 +249,12 @@ private fun expandAroundCenterK(
 ```kotlin
 fun countPalindromicSubstringsK(s: String): Int {
     var count = 0
-    
+
     for (i in s.indices) {
         count += expandAroundCenterCountK(s, i, i)      // Нечетная длина
         count += expandAroundCenterCountK(s, i, i + 1)  // Четная длина
     }
-    
+
     return count
 }
 
@@ -262,13 +262,13 @@ private fun expandAroundCenterCountK(s: String, left: Int, right: Int): Int {
     var count = 0
     var l = left
     var r = right
-    
+
     while (l >= 0 && r < s.length && s[l] == s[r]) {
         count++
         l--
         r++
     }
-    
+
     return count
 }
 ```
@@ -280,33 +280,33 @@ fun longestPalindromeK(s: String): String {
     if (s.isEmpty()) {
         return ""
     }
-    
+
     var start = 0
     var end = 0
-    
+
     for (i in s.indices) {
         val len1 = expandAroundCenterLengthK(s, i, i)
         val len2 = expandAroundCenterLengthK(s, i, i + 1)
         val len = maxOf(len1, len2)
-        
+
         if (len > end - start) {
             start = i - (len - 1) / 2
             end = i + len / 2
         }
     }
-    
+
     return s.substring(start, end + 1)
 }
 
 private fun expandAroundCenterLengthK(s: String, left: Int, right: Int): Int {
     var l = left
     var r = right
-    
+
     while (l >= 0 && r < s.length && s[l] == s[r]) {
         l--
         r++
     }
-    
+
     return r - l - 1
 }
 ```
@@ -335,19 +335,19 @@ fun countPalindromicSubstringsFunctionalK(s: String): Int {
 ```kotlin
 fun main() {
     val input = "racecar"
-    
+
     // Грубая сила
     val palindromes1 = findAllPalindromesBruteForceK(input)
     println(palindromes1) // {r, a, c, e, ace, cec, racecar, ...}
-    
+
     // Расширение от центра
     val palindromes2 = findAllPalindromesCenterK(input)
     println(palindromes2)
-    
+
     // Подсчет
     println(countPalindromicSubstringsK("abc")) // 3
     println(countPalindromicSubstringsK("aaa")) // 6
-    
+
     // Самая длинная
     println(longestPalindromeK("babad")) // "bab" или "aba"
     println(longestPalindromeK("racecar")) // "racecar"
@@ -385,20 +385,20 @@ public String longestPalindrome(String s) {
     if (s == null || s.length() < 1) {
         return "";
     }
-    
+
     int start = 0, end = 0;
-    
+
     for (int i = 0; i < s.length(); i++) {
         int len1 = expandAroundCenter(s, i, i);
         int len2 = expandAroundCenter(s, i, i + 1);
         int len = Math.max(len1, len2);
-        
+
         if (len > end - start) {
             start = i - (len - 1) / 2;
             end = i + len / 2;
         }
     }
-    
+
     return s.substring(start, end + 1);
 }
 
@@ -416,24 +416,24 @@ private int expandAroundCenter(String s, int left, int right) {
 ```java
 public int countSubstrings(String s) {
     int count = 0;
-    
+
     for (int i = 0; i < s.length(); i++) {
         count += countPalindromes(s, i, i);     // Нечетная длина
         count += countPalindromes(s, i, i + 1); // Четная длина
     }
-    
+
     return count;
 }
 
 private int countPalindromes(String s, int left, int right) {
     int count = 0;
-    
+
     while (left >= 0 && right < s.length() && s.charAt(left) == s.charAt(right)) {
         count++;
         left--;
         right++;
     }
-    
+
     return count;
 }
 ```

@@ -16,7 +16,6 @@ updated: "2026-02-11"
 
 **Дата:** 2026-02-06
 
----
 
 ## Полезные ссылки
 
@@ -30,7 +29,6 @@ updated: "2026-02-11"
 
 **См. также:** [JMeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
 
----
 
 ## Содержание
 
@@ -50,7 +48,6 @@ updated: "2026-02-11"
 - [Глоссарий и таблицы](#глоссарий-и-таблицы)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -74,7 +71,6 @@ updated: "2026-02-11"
 | **inject** | Профиль нагрузки: **atOnceUsers(n)**, **rampUsers(n).during(d)** и др. |
 | **httpProtocol** | Настройки HTTP по умолчанию: **baseUrl**, заголовки. |
 
----
 
 ## Установка и настройка
 
@@ -120,7 +116,6 @@ mvn gatling:test -Dgatling.simulationClass=com.example.BasicSimulation
 
 После запуска в **target/gatling** (или аналог) появляется каталог с HTML-отчётом. Открыть **index.html** в браузере.
 
----
 
 ## Структура Simulation
 
@@ -188,7 +183,6 @@ class BasicSimulation extends Simulation {
 
 Комбинирование: **rampUsers(10).during(10).andThen(atOnceUsers(5))** — сначала ramp, затем ещё 5 пользователей.
 
----
 
 ## Базовое использование
 
@@ -201,7 +195,6 @@ class BasicSimulation extends Simulation {
 
 После прогона в **target/gatling/<simulation-id>** создаётся каталог с **index.html** — графики времени отклика, пропускной способности, активных пользователей, ошибок.
 
----
 
 ## Отчёты и метрики
 
@@ -212,7 +205,6 @@ class BasicSimulation extends Simulation {
 
 HTML-отчёт генерируется по умолчанию. Для метрик в реальном времени настраивают **InfluxDB** и дашборд **Grafana** (через **gatling.conf** / logback).
 
----
 
 ## Параметризация и переменные
 
@@ -234,7 +226,6 @@ val scn = scenario("With CSV")
 
 **users.csv** с колонкой **userId**; **circular** — по кругу, **queue** — одна строка на пользователя.
 
----
 
 ## Контроллеры, циклы и условия
 
@@ -248,7 +239,6 @@ val scn = scenario("With CSV")
 
 Удобно для сценариев с разными ролями (админ/пользователь) или разными путями в зависимости от данных.
 
----
 
 ## Пример: авторизация и API
 
@@ -275,7 +265,6 @@ val scn = scenario("Auth and API")
 
 **group("Name") { ... }** группирует запросы в отчёте (метрики по группе).
 
----
 
 ## CI/CD
 
@@ -283,7 +272,6 @@ val scn = scenario("Auth and API")
 - **GitHub Actions:** `run: sbt "Gatling/testOnly ..."` и **upload-artifact** для **target/gatling/**.
 - Параметры (baseUrl, число пользователей) переопределять через **System.getProperty("baseUrl")** или **sys.env.get("BASE_URL")**; запуск: **sbt -DbaseUrl=https://staging.example.com "Gatling/testOnly ..."**.
 
----
 
 ## Конфигурация
 
@@ -295,7 +283,6 @@ val scn = scenario("Auth and API")
 
 Переопределение: **-Dgatling.core.outputDirectoryBase=/path/to/reports**.
 
----
 
 ## Лучшие практики
 
@@ -309,7 +296,6 @@ val scn = scenario("Auth and API")
 
 **Чек-лист перед прогоном:** baseUrl и заголовки заданы; check на критичных ответах; pause и inject с ramp-up; имена запросов; параметры переопределяются в CI.
 
----
 
 ## Сравнение с JMeter и k6
 
@@ -322,7 +308,6 @@ val scn = scenario("Auth and API")
 | Отчёты | HTML, InfluxDB, Grafana | Summary, HTML, Backend Listener | Встроенные, Grafana/InfluxDB |
 | CI/CD | sbt, Maven, Gradle, Docker | Запуск .jmx в CLI | Скрипт, Docker |
 
----
 
 ## FAQ и решение проблем
 
@@ -339,22 +324,21 @@ val scn = scenario("Auth and API")
 
 ### Вопросы и ответы
 
-**Gatling или JMeter?**  
+**Gatling или JMeter?**
 Gatling — сценарии в коде, меньше ресурсов на поток, удобные отчёты. JMeter — GUI, много протоколов из коробки. Выбор по команде (Scala/Java) и протоколам.
 
-**Нужно ли знать Scala?**  
+**Нужно ли знать Scala?**
 Базовые сценарии можно писать по примерам; для сложной логики пригодится Scala. Есть **Gatling Java DSL** для Java.
 
-**Как тестировать API с авторизацией?**  
+**Как тестировать API с авторизацией?**
 Логин → в **check** извлечь токен (**jsonPath("$.access_token").saveAs("token")**) → в **httpProtocol** или в запросах **header("Authorization", "Bearer ${token}")**.
 
-**Тело запроса из файла?**  
+**Тело запроса из файла?**
 **ElFileBody("path/to/body.json")** или **RawFileBody(...)** в **body(...)**; в файле с ElFileBody можно использовать **${variable}**.
 
-**gRPC?**  
+**gRPC?**
 Плагин **gatling-grpc**. Также часто используют k6 для gRPC.
 
----
 
 ## Глоссарий и таблицы
 
@@ -393,7 +377,6 @@ Gatling — сценарии в коде, меньше ресурсов на п�
 | **bodyString.exists** | Тело ответа не пустое |
 | **responseTimeInMillis.lt(500)** | Время отклика &lt; 500 мс |
 
----
 
 ## Заключение
 

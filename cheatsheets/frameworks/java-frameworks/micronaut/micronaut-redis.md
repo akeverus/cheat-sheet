@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-cache.md", "micronaut-messaging.md"]
 ---
 
-# Micronaut: Redis Integration - RedisTemplate, Pub/Sub и Cache
-
-
+# Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-cache.md", "micronaut-messaging.md"]
 
 ## Содержание
 
-- [Micronaut: Redis Integration - RedisTemplate, Pub/Sub и Cache](#micronaut-redis-integration-redistemplate-pubsub-и-cache)
+- [Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache](#micronaut-redis-integration-redistemplate-pubsub-и-cache)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Redis](#настройка-redis)
@@ -121,27 +119,27 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public RedisService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public void setValue(String key, String value) {
         redisOperations.set(key, value);
     }
-    
+
     public Optional<String> getValue(String key) {
         return redisOperations.get(key);
     }
-    
+
     public void deleteValue(String key) {
         redisOperations.del(key);
     }
-    
+
     public boolean exists(String key) {
         return redisOperations.exists(key);
     }
-    
+
     public void setExpiry(String key, Duration expiry) {
         redisOperations.expire(key, expiry);
     }
@@ -157,23 +155,23 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisHashService {
     private final RedisHashOperations<String, String, String> hashOperations;
-    
+
     public RedisHashService(RedisHashOperations<String, String, String> hashOperations) {
         this.hashOperations = hashOperations;
     }
-    
+
     public void setHashValue(String key, String field, String value) {
         hashOperations.put(key, field, value);
     }
-    
+
     public Optional<String> getHashValue(String key, String field) {
         return hashOperations.get(key, field);
     }
-    
+
     public Map<String, String> getAllHashValues(String key) {
         return hashOperations.entries(key);
     }
-    
+
     public void deleteHashField(String key, String field) {
         hashOperations.remove(key, field);
     }
@@ -189,27 +187,27 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisListService {
     private final RedisListOperations<String, String> listOperations;
-    
+
     public RedisListService(RedisListOperations<String, String> listOperations) {
         this.listOperations = listOperations;
     }
-    
+
     public void pushLeft(String key, String value) {
         listOperations.leftPush(key, value);
     }
-    
+
     public void pushRight(String key, String value) {
         listOperations.rightPush(key, value);
     }
-    
+
     public Optional<String> popLeft(String key) {
         return listOperations.leftPop(key);
     }
-    
+
     public Optional<String> popRight(String key) {
         return listOperations.rightPop(key);
     }
-    
+
     public List<String> getRange(String key, long start, long end) {
         return listOperations.range(key, start, end);
     }
@@ -227,11 +225,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisPublisher {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public RedisPublisher(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public void publish(String channel, String message) {
         redisOperations.publish(channel, message);
     }
@@ -247,13 +245,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class RedisSubscriber {
-    
+
     @RedisListener("user-events")
     public void onUserEvent(String message) {
         System.out.println("Received message: " + message);
         // Обработка сообщения
     }
-    
+
     @RedisListener("order-events")
     public void onOrderEvent(String message) {
         System.out.println("Received order event: " + message);
@@ -275,28 +273,28 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class DistributedLockService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public DistributedLockService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public String acquireLock(String lockKey, Duration timeout) {
         String lockValue = UUID.randomUUID().toString();
-        String result = redisOperations.set(lockKey, lockValue, 
+        String result = redisOperations.set(lockKey, lockValue,
             SetArgs.Builder.nx().ex(timeout));
-        
+
         if ("OK".equals(result)) {
             return lockValue;
         }
         return null;
     }
-    
+
     public void releaseLock(String lockKey, String lockValue) {
-        String script = 
+        String script =
             "if redis.call('get', KEYS[1]) == ARGV[1] then " +
             "return redis.call('del', KEYS[1]) " +
             "else return 0 end";
-        redisOperations.eval(script, Collections.singletonList(lockKey), 
+        redisOperations.eval(script, Collections.singletonList(lockKey),
             Collections.singletonList(lockValue));
     }
 }
@@ -313,11 +311,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisTransactionService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public RedisTransactionService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public void executeTransaction() {
         redisOperations.multi();
         try {
@@ -397,23 +395,23 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisSetService {
     private final RedisSetOperations<String, String> setOperations;
-    
+
     public RedisSetService(RedisSetOperations<String, String> setOperations) {
         this.setOperations = setOperations;
     }
-    
+
     public void addToSet(String key, String... values) {
         setOperations.add(key, values);
     }
-    
+
     public Set<String> getSetMembers(String key) {
         return setOperations.members(key);
     }
-    
+
     public boolean isMember(String key, String value) {
         return setOperations.isMember(key, value);
     }
-    
+
     public void removeFromSet(String key, String... values) {
         setOperations.remove(key, values);
     }
@@ -431,19 +429,19 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RedisSortedSetService {
     private final RedisSortedSetOperations<String, String> sortedSetOperations;
-    
+
     public RedisSortedSetService(RedisSortedSetOperations<String, String> sortedSetOperations) {
         this.sortedSetOperations = sortedSetOperations;
     }
-    
+
     public void addToSortedSet(String key, double score, String value) {
         sortedSetOperations.add(key, score, value);
     }
-    
+
     public List<String> getRange(String key, long start, long end) {
         return sortedSetOperations.range(key, start, end);
     }
-    
+
     public List<String> getRangeByScore(String key, double min, double max) {
         return sortedSetOperations.rangeByScore(key, min, max);
     }
@@ -461,13 +459,13 @@ import jakarta.inject.Singleton;
 @Singleton
 public class LuaScriptService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public LuaScriptService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public Long incrementWithLimit(String key, long limit) {
-        String script = 
+        String script =
             "local current = redis.call('get', KEYS[1]) " +
             "if current == false then " +
             "  current = 0 " +
@@ -477,9 +475,9 @@ public class LuaScriptService {
             "else " +
             "  return tonumber(current) " +
             "end";
-        
-        return redisOperations.eval(script, 
-            Collections.singletonList(key), 
+
+        return redisOperations.eval(script,
+            Collections.singletonList(key),
             Collections.singletonList(String.valueOf(limit)));
     }
 }
@@ -534,11 +532,11 @@ import java.util.List;
 @Singleton
 public class PipelineService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public PipelineService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public List<Object> executePipeline(List<String> keys) {
         return redisOperations.executePipelined(connection -> {
             for (String key : keys) {
@@ -561,15 +559,15 @@ import jakarta.inject.Singleton;
 @Singleton
 public class StreamService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public StreamService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public void addToStream(String streamKey, String field, String value) {
         redisOperations.xadd(streamKey, Map.of(field, value));
     }
-    
+
     public List<Map<String, String>> readFromStream(String streamKey, String lastId) {
         return redisOperations.xread(streamKey, lastId, 10);
     }
@@ -587,19 +585,19 @@ import jakarta.inject.Singleton;
 @Singleton
 public class BitmapService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public BitmapService(RedisOperations<String, String> redisOperations) {
         this.redisOperations = redisOperations;
     }
-    
+
     public void setBit(String key, long offset, boolean value) {
         redisOperations.setbit(key, offset, value);
     }
-    
+
     public boolean getBit(String key, long offset) {
         return redisOperations.getbit(key, offset);
     }
-    
+
     public long bitCount(String key) {
         return redisOperations.bitcount(key);
     }
@@ -614,15 +612,15 @@ public class BitmapService {
 @Singleton
 public class HyperLogLogService {
     private final RedisOperations<String, String> redisOperations;
-    
+
     public void addToHyperLogLog(String key, String... values) {
         redisOperations.pfadd(key, values);
     }
-    
+
     public long countHyperLogLog(String key) {
         return redisOperations.pfcount(key);
     }
-    
+
     public void mergeHyperLogLog(String destKey, String... sourceKeys) {
         redisOperations.pfmerge(destKey, sourceKeys);
     }
@@ -645,3 +643,11 @@ public class HyperLogLogService {
 - [**Redis** Streams](https://redis.io/docs/data-types/streams/)
 - [**Redis** Bitmaps](https://redis.io/docs/data-types/bitmaps/)
 - [**Redis** HyperLogLog](https://redis.io/docs/data-types/hyperloglogs/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

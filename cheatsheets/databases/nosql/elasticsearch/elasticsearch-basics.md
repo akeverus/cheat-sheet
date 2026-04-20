@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Основы - Полное руководство по распределенному поисковому движку
+# **Elasticsearch**: Основы — Полное руководство по распределенному поисковому движку
 
 Комплексное руководство по **Elasticsearch**: архитектура, установка, основные понятия, **mapping**, анализ текста и работа с данными в **Java**/**Spring** приложениях.
 
@@ -1713,10 +1713,10 @@ public class ProductService {
 - **Resource usage**: **CPU**, **memory**, **disk**, **network**
 
 #### 2. **Common Alerts**
-- **Red cluster status**: **Critical** - **immediate action required**
-- **High `JVM` memory usage**: **Warning** - **investigate memory leaks**
-- **Slow queries**: **Info** - **performance monitoring**
-- **Disk space low**: **Warning** - **plan capacity expansion**
+- **Red cluster status**: **Critical** — **immediate action required**
+- **High `JVM` memory usage**: **Warning** — **investigate memory leaks**
+- **Slow queries**: **Info** — **performance monitoring**
+- **Disk space low**: **Warning** — **plan capacity expansion**
 
 #### 3. **Troubleshooting**
 - **Slow logs**: Включи **slow log** для анализа

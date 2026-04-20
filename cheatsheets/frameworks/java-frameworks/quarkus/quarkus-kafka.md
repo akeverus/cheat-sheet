@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 ---
 
-# Quarkus: Kafka - Reactive Messaging и Event Streaming
-
-
+# Quarkus: Kafka — Reactive Messaging и Event Streaming
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 
 ## Содержание
 
-- [Quarkus: Kafka - Reactive Messaging и Event Streaming](#quarkus-kafka-reactive-messaging-и-event-streaming)
+- [Quarkus: Kafka — Reactive Messaging и Event Streaming](#quarkus-kafka-reactive-messaging-и-event-streaming)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Конфигурация Kafka](#конфигурация-kafka)
@@ -170,7 +168,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class EventProducer {
-    
+
     @Outgoing("events")
     public Multi<String> produceEvents() {
         return Multi.createFrom().items(
@@ -192,7 +190,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserEventProducer {
-    
+
     @Outgoing("user-events")
     public Multi<Message<User>> produceUserEvents() {
         return Multi.createFrom().items(
@@ -214,7 +212,7 @@ import java.util.Map;
 
 @ApplicationScoped
 public class MetadataProducer {
-    
+
     @Outgoing("events")
     public Multi<Message<String>> produceWithMetadata() {
         return Multi.createFrom().items(
@@ -239,13 +237,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class EventConsumer {
-    
+
     @Incoming("events")
     public void consumeEvent(String event) {
         System.out.println("Received event: " + event);
         processEvent(event);
     }
-    
+
     private void processEvent(String event) {
         // Обработка события
     }
@@ -261,7 +259,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ReactiveEventConsumer {
-    
+
     @Incoming("events")
     public Uni<Void> consumeEventReactive(String event) {
         return Uni.createFrom().item(event)
@@ -281,18 +279,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MessageConsumer {
-    
+
     @Incoming("events")
     public CompletionStage<Void> consumeMessage(Message<String> message) {
         String payload = message.getPayload();
-        IncomingKafkaRecordMetadata<String, String> metadata = 
+        IncomingKafkaRecordMetadata<String, String> metadata =
             message.getMetadata(IncomingKafkaRecordMetadata.class)
                 .orElseThrow();
-        
+
         System.out.println("Topic: " + metadata.getTopic());
         System.out.println("Partition: " + metadata.getPartition());
         System.out.println("Offset: " + metadata.getOffset());
-        
+
         return message.ack();
     }
 }
@@ -315,9 +313,9 @@ import org.apache.kafka.common.serialization.Serializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class UserSerializer implements Serializer<User> {
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public byte[] serialize(String topic, User user) {
         try {
@@ -336,9 +334,9 @@ import org.apache.kafka.common.serialization.Deserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class UserDeserializer implements Deserializer<User> {
-    
+
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Override
     public User deserialize(String topic, byte[] data) {
         try {
@@ -378,7 +376,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ErrorHandlingConsumer {
-    
+
     @Incoming("events")
     public CompletionStage<Void> consumeWithErrorHandling(Message<String> message) {
         try {
@@ -410,7 +408,7 @@ import io.smallrye.mutiny.Multi;
 
 @ApplicationScoped
 public class PartitionedProducer {
-    
+
     @Outgoing("events")
     public Multi<Message<String>> produceWithPartitioning() {
         return Multi.createFrom().items(
@@ -439,11 +437,11 @@ import io.smallrye.reactive.messaging.providers.connectors.InMemoryConnector;
 
 @QuarkusTest
 public class ProducerTest {
-    
+
     @Inject
     @Any
     InMemoryConnector connector;
-    
+
     @Test
     void testProducer() {
         // Тестирование producer
@@ -462,16 +460,16 @@ import io.smallrye.reactive.messaging.providers.connectors.InMemoryConnector;
 
 @QuarkusTest
 public class ConsumerTest {
-    
+
     @Inject
     @Any
     InMemoryConnector connector;
-    
+
     @Test
     void testConsumer() {
         InMemorySink<String> sink = connector.sink("events");
         sink.send("Test event");
-        
+
         // Проверка обработки
         assertThat(sink.received()).hasSize(1);
     }
@@ -546,7 +544,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class TransactionalProducer {
-    
+
     @Outgoing("events")
     public Multi<Message<String>> produceTransactional() {
         return Multi.createFrom().items(
@@ -594,11 +592,11 @@ import jakarta.enterprise.inject.Produces;
 
 @ApplicationScoped
 public class StreamProcessor {
-    
+
     @Produces
     public KStream<String, String> processStream(StreamsBuilder builder) {
         KStream<String, String> source = builder.stream("input-topic");
-        
+
         return source
             .filter((key, value) -> value != null)
             .mapValues(value -> value.toUpperCase())
@@ -652,10 +650,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class KafkaMetrics {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public void recordMessageProcessed(String topic) {
         registry.counter("kafka.messages.processed", "topic", topic).increment();
     }
@@ -688,7 +686,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CircuitBreakerConsumer {
-    
+
     @Incoming("events")
     @CircuitBreaker(
         requestVolumeThreshold = 10,
@@ -710,10 +708,10 @@ public class CircuitBreakerConsumer {
 ```java
 @ApplicationScoped
 public class EventSourcingService {
-    
+
     @Channel("events")
     Emitter<Event> eventEmitter;
-    
+
     public void publishEvent(Event event) {
         eventEmitter.send(Message.of(event)
             .addMetadata(OutgoingKafkaRecordMetadata.builder()
@@ -730,10 +728,10 @@ public class EventSourcingService {
 ```java
 @ApplicationScoped
 public class CommandHandler {
-    
+
     @Channel("commands")
     Emitter<Command> commandEmitter;
-    
+
     public void handleCommand(Command command) {
         commandEmitter.send(Message.of(command));
     }
@@ -741,7 +739,7 @@ public class CommandHandler {
 
 @ApplicationScoped
 public class QueryHandler {
-    
+
     @Incoming("events")
     public void handleEvent(Event event) {
         // Обновление read model
@@ -757,14 +755,14 @@ public class QueryHandler {
 ```java
 @ApplicationScoped
 public class SagaOrchestrator {
-    
+
     @Channel("saga-events")
     Emitter<SagaEvent> sagaEventEmitter;
-    
+
     public void startSaga(Saga saga) {
         sagaEventEmitter.send(Message.of(new SagaStartedEvent(saga)));
     }
-    
+
     @Incoming("saga-events")
     public void handleSagaEvent(SagaEvent event) {
         if (event instanceof SagaStepCompleted) {
@@ -817,12 +815,12 @@ mp.messaging.incoming.events.session.timeout.ms=30000
 ```java
 @ApplicationScoped
 public class PartitioningService {
-    
+
     public String getPartitionKey(Event event) {
         // Использование агрегатного ID для партиционирования
         return event.getAggregateId();
     }
-    
+
     public int getPartition(String key, int totalPartitions) {
         return Math.abs(key.hashCode()) % totalPartitions;
     }
@@ -838,10 +836,10 @@ public class PartitioningService {
 ```java
 @ApplicationScoped
 public class LagMonitor {
-    
+
     @Inject
     KafkaAdmin kafkaAdmin;
-    
+
     public Uni<Long> getConsumerLag(String groupId, String topic) {
         return kafkaAdmin.describeConsumerGroups(List.of(groupId))
             .onItem().transform(groups -> {
@@ -859,19 +857,19 @@ public class LagMonitor {
 ```java
 @ApplicationScoped
 public class ThroughputMonitor {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     private final Counter messagesProcessed;
-    
+
     public ThroughputMonitor(MeterRegistry registry) {
         this.registry = registry;
         this.messagesProcessed = Counter.builder("kafka.messages.processed")
             .description("Number of messages processed")
             .register(registry);
     }
-    
+
     public void recordMessage() {
         messagesProcessed.increment();
     }
@@ -887,7 +885,7 @@ public class ThroughputMonitor {
 ```java
 @ApplicationScoped
 public class CircuitBreakerService {
-    
+
     @CircuitBreaker(requestVolumeThreshold = 10, failureRatio = 0.5)
     public Uni<String> processWithCircuitBreaker(String message) {
         return processMessage(message);
@@ -925,7 +923,7 @@ mp.messaging.incoming.events.retry.multiplier=2
 ```java
 @ApplicationScoped
 public class StreamProcessor {
-    
+
     @Incoming("input-stream")
     @Outgoing("output-stream")
     public Message<ProcessedEvent> process(Message<Event> message) {
@@ -943,7 +941,7 @@ public class StreamProcessor {
 ```java
 @ApplicationScoped
 public class WindowedAggregation {
-    
+
     @Incoming("events")
     @Outgoing("aggregated")
     public Multi<AggregatedResult> aggregate(Multi<Event> events) {
@@ -977,7 +975,7 @@ quarkus.kafka.schema.compatibility=BACKWARD
 ```java
 @ApplicationScoped
 public class SchemaVersioningService {
-    
+
     public void publishWithSchema(Event event, int schemaVersion) {
         Message<Event> message = Message.of(event)
             .addMetadata(OutgoingKafkaRecordMetadata.builder()
@@ -1000,3 +998,11 @@ public class SchemaVersioningService {
 - [**Apache Kafka** Documentation](https://kafka.apache.org/documentation/)
 - [**Kafka Streams** Documentation](https://kafka.apache.org/documentation/streams/)
 - [Confluent **Schema Registry**](https://docs.confluent.io/platform/current/schema-registry/index.html)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

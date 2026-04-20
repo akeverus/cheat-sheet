@@ -42,7 +42,7 @@ updated: "2026-02-11"
 
 Целью этой серии статей является объяснение идеи генетических алгоритмов.
 
-Генетические алгоритмы предназначены для решения проблем с использованием тех же процессов, что и в природе - они используют комбинацию отбора, рекомбинации и мутации для развития решения проблемы.
+Генетические алгоритмы предназначены для решения проблем с использованием тех же процессов, что и в природе — они используют комбинацию отбора, рекомбинации и мутации для развития решения проблемы.
 
 Давайте начнем с объяснения концепции этих алгоритмов на примере простейшего бинарного генетического алгоритма.
 
@@ -52,7 +52,7 @@ updated: "2026-02-11"
 
 Алгоритм начинается с набора решений (**представленных индивидуумами**), называемого населением. Берутся решения из одной популяции и используются для формирования новой популяции, так как есть шанс, что новая популяция будет лучше старой.
 
-Особи, отобранные для образования новых растворов (**потомков**), отбираются в соответствии с их приспособленностью - чем они более приспособлены, тем больше у них шансов на размножение.
+Особи, отобранные для образования новых растворов (**потомков**), отбираются в соответствии с их приспособленностью — чем они более приспособлены, тем больше у них шансов на размножение.
 
 ## Основные компоненты
 
@@ -64,7 +64,7 @@ updated: "2026-02-11"
 
 ### Популяция (Population)
 
-Популяция - это набор индивидуумов, которые эволюционируют вместе.
+Популяция — это набор индивидуумов, которые эволюционируют вместе.
 
 ### Фитнес-функция (Fitness Function)
 
@@ -102,7 +102,7 @@ Population myPop = new Population(populationSize, true);
 while (myPop.getFittest().getFitness() < getMaxFitness()) {
     System.out.println("Generation: " + generationCount
         + " Correct genes found: " + myPop.getFittest().getFitness());
-    
+
     myPop = evolvePopulation(myPop);
     generationCount++;
 }
@@ -118,11 +118,11 @@ public class Individual {
     private byte[] genes;
     private int fitness = 0;
     private static int defaultGeneLength = 64;
-    
+
     public Individual() {
         genes = new byte[defaultGeneLength];
     }
-    
+
     public void generateIndividual() {
         Random random = new Random();
         for (int i = 0; i < size(); i++) {
@@ -130,27 +130,27 @@ public class Individual {
             genes[i] = gene;
         }
     }
-    
+
     public byte getSingleGene(int index) {
         return genes[index];
     }
-    
+
     public void setSingleGene(int index, byte value) {
         genes[index] = value;
         fitness = 0;
     }
-    
+
     public int size() {
         return genes.length;
     }
-    
+
     public int getFitness() {
         if (fitness == 0) {
             fitness = FitnessCalc.getFitness(this);
         }
         return fitness;
     }
-    
+
     @Override
     public String toString() {
         String geneString = "";
@@ -169,11 +169,11 @@ public class Individual {
 ```java
 public class FitnessCalc {
     static byte[] solution = new byte[64];
-    
+
     public static void setSolution(byte[] newSolution) {
         solution = newSolution;
     }
-    
+
     public static void setSolution(String newSolution) {
         solution = new byte[newSolution.length()];
         for (int i = 0; i < newSolution.length(); i++) {
@@ -185,7 +185,7 @@ public class FitnessCalc {
             }
         }
     }
-    
+
     public static int getFitness(Individual individual) {
         int fitness = 0;
         for (int i = 0; i < individual.size() && i < solution.length; i++) {
@@ -195,7 +195,7 @@ public class FitnessCalc {
         }
         return fitness;
     }
-    
+
     public static int getMaxFitness() {
         int maxFitness = solution.length;
         return maxFitness;
@@ -210,7 +210,7 @@ public class FitnessCalc {
 ```java
 public class Population {
     Individual[] individuals;
-    
+
     public Population(int populationSize, boolean initialise) {
         individuals = new Individual[populationSize];
         if (initialise) {
@@ -221,11 +221,11 @@ public class Population {
             }
         }
     }
-    
+
     public Individual getIndividual(int index) {
         return individuals[index];
     }
-    
+
     public Individual getFittest() {
         Individual fittest = individuals[0];
         for (int i = 0; i < size(); i++) {
@@ -235,11 +235,11 @@ public class Population {
         }
         return fittest;
     }
-    
+
     public int size() {
         return individuals.length;
     }
-    
+
     public void saveIndividual(int index, Individual indiv) {
         individuals[index] = indiv;
     }
@@ -253,24 +253,24 @@ public class Population {
 ```java
 public Population evolvePopulation(Population pop) {
     Population newPopulation = new Population(pop.size(), false);
-    
+
     int elitismOffset = 0;
     if (elitism) {
         newPopulation.saveIndividual(0, pop.getFittest());
         elitismOffset = 1;
     }
-    
+
     for (int i = elitismOffset; i < pop.size(); i++) {
         Individual indiv1 = tournamentSelection(pop);
         Individual indiv2 = tournamentSelection(pop);
         Individual newIndiv = crossover(indiv1, indiv2);
         newPopulation.saveIndividual(i, newIndiv);
     }
-    
+
     for (int i = elitismOffset; i < newPopulation.size(); i++) {
         mutate(newPopulation.getIndividual(i));
     }
-    
+
     return newPopulation;
 }
 ```
@@ -334,11 +334,11 @@ private void mutate(Individual indiv) {
 
 **Чтобы реализовать эффективный генетический алгоритм, нам нужно настроить набор параметров. Этот раздел должен дать вам несколько основных рекомендаций, как начать с наиболее импортируемых параметров:**
 
-1. **Уровень кроссовера** - он должен быть высоким, около 80% - 95%
-2. **Скорость мутации** - она должна быть очень низкой, около 0.5% - 1%
-3. **Размер популяции** - хороший размер популяции составляет около 20 - 30, однако для некоторых задач лучше использовать размеры 50 - `100`
-4. **Выбор** - базовый выбор колеса рулетки можно использовать с концепцией элитарности
-5. **Кроссовер и тип мутации** - зависит от кодировки и проблемы
+1. **Уровень кроссовера** — он должен быть высоким, около 80% - 95%
+2. **Скорость мутации** — она должна быть очень низкой, около 0.5% - 1%
+3. **Размер популяции** — хороший размер популяции составляет около 20 — 30, однако для некоторых задач лучше использовать размеры 50 - `100`
+4. **Выбор** — базовый выбор колеса рулетки можно использовать с концепцией элитарности
+5. **Кроссовер и тип мутации** — зависит от кодировки и проблемы
 
 Обратите внимание, что рекомендации по настройке часто являются результатом эмпирических исследований генетических алгоритмов и могут варьироваться в зависимости от предлагаемых задач.
 
@@ -350,26 +350,26 @@ public class SimpleGeneticAlgorithm {
     private static final double mutationRate = 0.015;
     private static final int tournamentSize = 5;
     private static final boolean elitism = true;
-    
+
     public static void runAlgorithm(int populationSize, String solution) {
         FitnessCalc.setSolution(solution);
-        
+
         Population myPop = new Population(populationSize, true);
         int generationCount = 0;
-        
+
         while (myPop.getFittest().getFitness() < FitnessCalc.getMaxFitness()) {
             generationCount++;
             System.out.println("Generation: " + generationCount
                 + " Fittest: " + myPop.getFittest().getFitness());
             myPop = evolvePopulation(myPop);
         }
-        
+
         System.out.println("Solution found!");
         System.out.println("Generation: " + generationCount);
         System.out.println("Genes:");
         System.out.println(myPop.getFittest());
     }
-    
+
     public static void main(String[] args) {
         runAlgorithm(50,
             "1011000100000100010000100000100111001000000100000100000000001111");
@@ -442,31 +442,31 @@ public class SimpleGeneticAlgorithm {
 class IndividualK(private val defaultGeneLength: Int = 64) {
     private val genes = ByteArray(defaultGeneLength)
     private var fitness: Int = 0
-    
+
     fun generateIndividual() {
         for (i in genes.indices) {
             genes[i] = (Math.random().roundToInt()).toByte()
         }
     }
-    
+
     fun getSingleGene(index: Int): Byte {
         return genes[index]
     }
-    
+
     fun setSingleGene(index: Int, value: Byte) {
         genes[index] = value
         fitness = 0
     }
-    
+
     fun size(): Int = genes.size
-    
+
     fun getFitness(): Int {
         if (fitness == 0) {
             fitness = FitnessCalcK.getFitness(this)
         }
         return fitness
     }
-    
+
     override fun toString(): String {
         return genes.joinToString("")
     }
@@ -478,11 +478,11 @@ class IndividualK(private val defaultGeneLength: Int = 64) {
 ```kotlin
 object FitnessCalcK {
     private var solution: ByteArray = ByteArray(64)
-    
+
     fun setSolution(newSolution: ByteArray) {
         solution = newSolution
     }
-    
+
     fun setSolution(newSolution: String) {
         solution = ByteArray(newSolution.length)
         for (i in newSolution.indices) {
@@ -494,7 +494,7 @@ object FitnessCalcK {
             }
         }
     }
-    
+
     fun getFitness(individual: IndividualK): Int {
         var fitness = 0
         for (i in 0 until minOf(individual.size(), solution.size)) {
@@ -504,7 +504,7 @@ object FitnessCalcK {
         }
         return fitness
     }
-    
+
     fun getMaxFitness(): Int = solution.size
 }
 ```
@@ -514,7 +514,7 @@ object FitnessCalcK {
 ```kotlin
 class PopulationK(private val populationSize: Int, initialise: Boolean) {
     val individuals: Array<IndividualK> = Array(populationSize) { IndividualK() }
-    
+
     init {
         if (initialise) {
             for (i in individuals.indices) {
@@ -524,7 +524,7 @@ class PopulationK(private val populationSize: Int, initialise: Boolean) {
             }
         }
     }
-    
+
     fun getFittest(): IndividualK {
         var fittest = individuals[0]
         for (i in 1 until individuals.size) {
@@ -545,30 +545,30 @@ object SimpleGeneticAlgorithmK {
     private const val mutationRate = 0.015
     private const val tournamentSize = 5
     private const val elitism = true
-    
+
     fun evolvePopulation(pop: PopulationK): PopulationK {
         val newPopulation = PopulationK(pop.individuals.size, false)
         var offset = 0
-        
+
         if (elitism) {
             newPopulation.individuals[0] = pop.getFittest()
             offset = 1
         }
-        
+
         for (i in offset until newPopulation.individuals.size) {
             val indiv1 = tournamentSelection(pop)
             val indiv2 = tournamentSelection(pop)
             val newIndiv = crossover(indiv1, indiv2)
             newPopulation.individuals[i] = newIndiv
         }
-        
+
         for (i in offset until newPopulation.individuals.size) {
             mutate(newPopulation.individuals[i])
         }
-        
+
         return newPopulation
     }
-    
+
     private fun crossover(indiv1: IndividualK, indiv2: IndividualK): IndividualK {
         val newSol = IndividualK()
         for (i in 0 until newSol.size()) {
@@ -580,7 +580,7 @@ object SimpleGeneticAlgorithmK {
         }
         return newSol
     }
-    
+
     private fun mutate(indiv: IndividualK) {
         for (i in 0 until indiv.size()) {
             if (Math.random() <= mutationRate) {
@@ -589,7 +589,7 @@ object SimpleGeneticAlgorithmK {
             }
         }
     }
-    
+
     private fun tournamentSelection(pop: PopulationK): IndividualK {
         val tournament = PopulationK(tournamentSize, false)
         for (i in 0 until tournamentSize) {

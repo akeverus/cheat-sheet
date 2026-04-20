@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Kotlin Reactive: RxKotlin
 
-Кратко: полное руководство по **RxKotlin** - реактивным расширениям для **Kotlin**. Рассматриваются **Observable**, **Flowable**, операторы, преобразования, обработка ошибок и интеграция с корутинами.
+Кратко: полное руководство по **RxKotlin** — реактивным расширениям для **Kotlin**. Рассматриваются **Observable**, **Flowable**, операторы, преобразования, обработка ошибок и интеграция с корутинами.
 
 ## Полезные ссылки
 
@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [RxKotlin GitHub](https://github.com/ReactiveX/RxKotlin)
 - [RxJava Documentation](https://github.com/ReactiveX/RxJava)
 
-### **Baeldung**
+### Обучающие материалы
 - [RxKotlin Tutorial](https://www.baeldung.com/kotlin/rxkotlin)
 
 ### См. также
@@ -111,7 +111,7 @@ updated: "2026-02-11"
 
 ## Введение в **RxKotlin**
 
-**RxKotlin** - это набор **extension** функций для **RxJava**, адаптированный для использования с **Kotlin**. Он не является отдельной реализацией реактивных расширений, а дополняет **RxJava** с помощью **API**, разработанного специально для **Kotlin**.
+**RxKotlin** — это набор **extension** функций для **RxJava**, адаптированный для использования с **Kotlin**. Он не является отдельной реализацией реактивных расширений, а дополняет **RxJava** с помощью **API**, разработанного специально для **Kotlin**.
 
 ### Основные концепции
 
@@ -139,10 +139,10 @@ updated: "2026-02-11"
 dependencies {
     // RxKotlin
     implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
-    
+
     // RxJava (рекомендуется явно указывать версию)
     implementation("io.reactivex.rxjava2:rxjava:2.2.21")
-    
+
     // Для Android
     implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
 }
@@ -154,7 +154,7 @@ dependencies {
 
 ### **Observable**
 
-**Observable** - это источник данных, который может испускать ноль или более элементов, а затем либо завершиться успешно, либо с ошибкой. **Observable** не поддерживает **backpressure**.
+**Observable** — это источник данных, который может испускать ноль или более элементов, а затем либо завершиться успешно, либо с ошибкой. **Observable** не поддерживает **backpressure**.
 
 ```kotlin
 import io.reactivex.Observable
@@ -172,7 +172,7 @@ observable.subscribe(
 
 ### **Flowable**
 
-**Flowable** - это **Observable** с поддержкой **backpressure**. Он позволяет подписчику контролировать скорость получения данных.
+**Flowable** — это **Observable** с поддержкой **backpressure**. Он позволяет подписчику контролировать скорость получения данных.
 
 ```kotlin
 import io.reactivex.Flowable
@@ -283,7 +283,7 @@ observable.scan { acc, value -> acc + value }
     .subscribe { println(it) }  // 1, 3, 6, 10, ...
 ```
 
-`**map**` применяет функцию к каждому элементу. `**flatMap**` применяет функцию, которая возвращает **Observable**, и "разворачивает" результаты. `**scan**` накапливает значения, применяя функцию к текущему накопленному значению и новому элементу.
+`**map**` применяет функцию к каждому элементу. `**flatMap**` применяет функцию, которая возвращает **Observable**, и «разворачивает» результаты. `**scan**` накапливает значения, применяя функцию к текущему накопленному значению и новому элементу.
 
 ### Операторы фильтрации
 
@@ -618,7 +618,7 @@ observable.retryWhen { errors ->
 
 ## Работа с **Subject**
 
-**Subject** - это одновременно **Observable** и **Observer**, что позволяет передавать элементы между потоками.
+**Subject** — это одновременно **Observable** и **Observer**, что позволяет передавать элементы между потоками.
 
 ### Типы **Subject**
 
@@ -666,9 +666,9 @@ import io.reactivex.observers.TestObserver
 fun testObservable() {
     val observable = Observable.just(1, 2, 3)
     val testObserver = TestObserver<Int>()
-    
+
     observable.subscribe(testObserver)
-    
+
     testObserver.assertValues(1, 2, 3)
     testObserver.assertComplete()
     testObserver.assertNoErrors()
@@ -690,12 +690,12 @@ fun testTimeOperators() {
     val scheduler = TestScheduler()
     val observable = Observable.interval(1, TimeUnit.SECONDS, scheduler)
         .take(5)
-    
+
     val testObserver = TestObserver<Long>()
     observable.subscribe(testObserver)
-    
+
     scheduler.advanceTimeBy(5, TimeUnit.SECONDS)
-    
+
     testObserver.assertValueCount(5)
 }
 ```
@@ -794,7 +794,7 @@ fun fetchUserData(userId: Int): Observable<User> {
 }
 ```
 
-Обработка сетевых запросов с **retry** логикой и обработкой ошибок - типичный случай использования **RxKotlin**.
+Обработка сетевых запросов с **retry** логикой и обработкой ошибок — типичный случай использования **RxKotlin**.
 
 ### Обработка `UI` событий
 
@@ -843,10 +843,10 @@ Observable.combineLatest(
 ```kotlin
 class MainActivity : AppCompatActivity() {
     private val compositeDisposable = CompositeDisposable()
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Обработка поиска
         searchEditText.textChanges()
             .debounce(300, TimeUnit.MILLISECONDS)
@@ -858,7 +858,7 @@ class MainActivity : AppCompatActivity() {
             }
             .addTo(compositeDisposable)
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         compositeDisposable.clear()
@@ -875,7 +875,7 @@ class MainActivity : AppCompatActivity() {
 ```kotlin
 class MyViewModel : ViewModel() {
     private val compositeDisposable = CompositeDisposable()
-    
+
     fun loadData() {
         dataService.getData()
             .subscribeOn(Schedulers.io())
@@ -886,7 +886,7 @@ class MyViewModel : ViewModel() {
             )
             .addTo(compositeDisposable)
     }
-    
+
     override fun onCleared() {
         super.onCleared()
         compositeDisposable.clear()
@@ -905,11 +905,11 @@ class MyViewModel : ViewModel() {
 ```kotlin
 class EventBus {
     private val subject = PublishSubject.create<Any>()
-    
+
     fun post(event: Any) {
         subject.onNext(event)
     }
-    
+
     fun <T> observe(eventType: Class<T>): Observable<T> {
         return subject.ofType(eventType)
     }
@@ -937,11 +937,11 @@ eventBus.observe(UserLoginEvent::class.java)
 ```kotlin
 class CacheManager {
     private val cache = mutableMapOf<String, Observable<Any>>()
-    
+
     fun <T> getOrCreate(key: String, fetcher: () -> Observable<T>): Observable<T> {
         @Suppress("UNCHECKED_CAST")
         val cached = cache[key] as? Observable<T>
-        
+
         return if (cached != null) {
             cached
         } else {
@@ -1009,7 +1009,7 @@ composite.dispose()  // Отмена всех подписок
 // Избегайте утечек памяти
 class MyActivity : AppCompatActivity() {
     private val disposables = CompositeDisposable()
-    
+
     override fun onDestroy() {
         super.onDestroy()
         disposables.clear()  // Важно очистить подписки
@@ -1053,7 +1053,7 @@ fun <T> Observable<T>.debounceIf(
     return Observable.create { emitter ->
         var lastValue: T? = null
         var lastEmitTime = 0L
-        
+
         val subscription = subscribe(
             { value ->
                 val now = System.currentTimeMillis()
@@ -1073,7 +1073,7 @@ fun <T> Observable<T>.debounceIf(
             { error -> emitter.onError(error) },
             { emitter.onComplete() }
         )
-        
+
         emitter.setCancellable { subscription.dispose() }
     }
 }
@@ -1141,7 +1141,7 @@ class ObservableMetrics {
     private val requestCount = AtomicLong(0)
     private val errorCount = AtomicLong(0)
     private val averageLatency = AtomicReference<Double>(0.0)
-    
+
     fun <T> Observable<T>.withMetrics(): Observable<T> {
         return this
             .doOnSubscribe { requestCount.incrementAndGet() }
@@ -1149,15 +1149,15 @@ class ObservableMetrics {
             .doOnError { errorCount.incrementAndGet() }
             .doOnComplete { updateMetrics() }
     }
-    
+
     private fun recordSuccess() {
         // Запись успешного выполнения
     }
-    
+
     private fun updateMetrics() {
         // Обновление метрик
     }
-    
+
     fun getMetrics(): Map<String, Any> {
         return mapOf(
             "requests" to requestCount.get(),
@@ -1390,7 +1390,7 @@ Observable.merge(obs1, obs2.map { it.hashCode() })
 ```kotlin
 class SearchViewModel {
     private val searchSubject = PublishSubject.create<String>()
-    
+
     val searchResults: Observable<List<SearchResult>> = searchSubject
         .debounce(300, TimeUnit.MILLISECONDS)
         .distinctUntilChanged()
@@ -1402,7 +1402,7 @@ class SearchViewModel {
                     .onErrorReturn { emptyList() }
             }
         }
-    
+
     fun search(query: String) {
         searchSubject.onNext(query)
     }
@@ -1420,7 +1420,7 @@ fun loadUserDashboard(userId: Long): Observable<Dashboard> {
     val userObservable = userService.getUser(userId)
     val postsObservable = postService.getUserPosts(userId)
     val commentsObservable = commentService.getUserComments(userId)
-    
+
     return Observable.combineLatest(
         userObservable,
         postsObservable,

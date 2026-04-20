@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-testing.md"]
 ---
 
-# Quarkus: Reactive - Mutiny и Reactive Messaging
-
-
+# Quarkus: Reactive — Mutiny и Reactive Messaging
 
 ## Полезные ссылки
 
@@ -26,12 +24,12 @@ related: ["quarkus-rest.md", "quarkus-testing.md"]
 
 ## Содержание
 
-- [Quarkus: Reactive - Mutiny и Reactive Messaging](#quarkus-reactive-mutiny-и-reactive-messaging)
+- [Quarkus: Reactive — Mutiny и Reactive Messaging](#quarkus-reactive-mutiny-и-reactive-messaging)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Mutiny Basics](#mutiny-basics)
-  - [Uni - Single Item](#uni-single-item)
-  - [Multi - Multiple Items](#multi-multiple-items)
+  - [Uni — Single Item](#uni-single-item)
+  - [Multi — Multiple Items](#multi-multiple-items)
 - [Reactive Operations](#reactive-operations)
   - [Transformations](#transformations)
   - [Combining Streams](#combining-streams)
@@ -108,7 +106,7 @@ related: ["quarkus-rest.md", "quarkus-testing.md"]
 
 ## Mutiny Basics
 
-### **Uni** - **Single Item**
+### **Uni** — **Single Item**
 
 ```java
 import io.smallrye.mutiny.Uni;
@@ -117,7 +115,7 @@ import jakarta.ws.rs.Path;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     public Uni<User> getUser(Long id) {
@@ -126,7 +124,7 @@ public class UserResource {
 }
 ```
 
-### **Multi** - **Multiple Items**
+### **Multi** — **Multiple Items**
 
 ```java
 import io.smallrye.mutiny.Multi;
@@ -135,7 +133,7 @@ import jakarta.ws.rs.Path;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     public Multi<User> getAllUsers() {
         return Multi.createFrom().items(userService.findAll().stream());
@@ -165,7 +163,7 @@ import io.smallrye.mutiny.Uni;
 public Uni<CombinedResult> combineData(Long userId, Long orderId) {
     Uni<User> user = getUser(userId);
     Uni<Order> order = getOrder(orderId);
-    
+
     return Uni.combine().all().unis(user, order)
         .combinedWith((u, o) -> new CombinedResult(u, o));
 }
@@ -182,7 +180,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MessageProducer {
-    
+
     @Outgoing("users")
     public Multi<User> produceUsers() {
         return Multi.createFrom().items(userService.findAll().stream());
@@ -198,7 +196,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MessageConsumer {
-    
+
     @Incoming("users")
     public void consumeUser(User user) {
         System.out.println("Received user: " + user.getName());
@@ -247,7 +245,7 @@ public Uni<UserProfile> getUserProfile(Long userId) {
         .flatMap(user -> {
             Uni<List<Order>> orders = getOrders(userId);
             Uni<List<Address>> addresses = getAddresses(userId);
-            
+
             return Uni.combine().all().unis(orders, addresses)
                 .combinedWith((o, a) -> new UserProfile(user, o, a));
         });
@@ -281,9 +279,9 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.subscription.Cancellable;
 
 public class DataStream {
-    
+
     private Cancellable subscription;
-    
+
     public void startStream() {
         subscription = Multi.createFrom().ticks().every(Duration.ofSeconds(1))
             .onItem().transform(tick -> fetchData())
@@ -293,7 +291,7 @@ public class DataStream {
                 () -> onComplete()
             );
     }
-    
+
     public void stopStream() {
         if (subscription != null) {
             subscription.cancel();
@@ -330,7 +328,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RequestReplyProcessor {
-    
+
     @Incoming("requests")
     @Outgoing("replies")
     public Uni<Reply> processRequest(Request request) {
@@ -351,7 +349,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MessageTransformer {
-    
+
     @Incoming("raw-events")
     @Outgoing("processed-events")
     public Multi<ProcessedEvent> transform(Multi<RawEvent> events) {
@@ -360,12 +358,12 @@ public class MessageTransformer {
             .onItem().transform(this::validateEvent)
             .onFailure().retry().withBackOff(Duration.ofSeconds(1));
     }
-    
+
     private ProcessedEvent enrichEvent(RawEvent event) {
         // Обогащение события дополнительными данными
         return new ProcessedEvent(event, getMetadata(event));
     }
-    
+
     private ProcessedEvent validateEvent(ProcessedEvent event) {
         if (!event.isValid()) {
             throw new ValidationException("Invalid event");
@@ -385,7 +383,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ErrorHandlingConsumer {
-    
+
     @Incoming("events")
     public Uni<Void> consumeWithErrorHandling(Event event) {
         return processEvent(event)
@@ -415,10 +413,10 @@ import org.hibernate.reactive.mutiny.Mutiny;
 
 @Path("/users")
 public class ReactiveUserResource {
-    
+
     @Inject
     Mutiny.SessionFactory sessionFactory;
-    
+
     @GET
     @Path("/{id}")
     public Uni<User> getUser(Long id) {
@@ -426,7 +424,7 @@ public class ReactiveUserResource {
             session.find(User.class, id)
         );
     }
-    
+
     @GET
     public Multi<User> getAllUsers() {
         return sessionFactory.withSession(session ->
@@ -450,11 +448,11 @@ import io.smallrye.mutiny.Multi;
 public class User extends PanacheEntity {
     public String name;
     public String email;
-    
+
     public static Uni<User> findByName(String name) {
         return find("name", name).firstResult();
     }
-    
+
     public static Multi<User> findAllActive() {
         return find("active", true).stream();
     }
@@ -476,11 +474,11 @@ import io.smallrye.mutiny.Uni;
 @RegisterRestClient
 @Path("/api")
 public interface UserServiceClient {
-    
+
     @GET
     @Path("/users/{id}")
     Uni<User> getUser(@PathParam("id") Long id);
-    
+
     @GET
     @Path("/users")
     Multi<User> getAllUsers();
@@ -496,11 +494,11 @@ import jakarta.ws.rs.Path;
 
 @Path("/proxy")
 public class ProxyResource {
-    
+
     @Inject
     @RestClient
     UserServiceClient userService;
-    
+
     @GET
     @Path("/users/{id}")
     public Uni<User> proxyGetUser(Long id) {
@@ -526,7 +524,7 @@ import io.smallrye.mutiny.Multi;
 
 @ServerEndpoint("/chat")
 public class ChatEndpoint {
-    
+
     @OnOpen
     public void onOpen(Session session) {
         Multi.createFrom().ticks().every(Duration.ofSeconds(1))
@@ -536,7 +534,7 @@ public class ChatEndpoint {
                 failure -> handleError(session, failure)
             );
     }
-    
+
     @OnMessage
     public void onMessage(String message, Session session) {
         processMessage(message)
@@ -589,14 +587,14 @@ import org.junit.jupiter.api.Test;
 
 @QuarkusTest
 public class ReactiveServiceTest {
-    
+
     @Inject
     ReactiveService service;
-    
+
     @Test
     void testUni() {
         Uni<String> result = service.processData("input");
-        
+
         result
             .subscribe().withSubscriber(UniAssertSubscriber.create())
             .assertCompleted()
@@ -613,10 +611,10 @@ import io.smallrye.mutiny.helpers.test.AssertSubscriber;
 @Test
 void testMulti() {
     Multi<Integer> numbers = Multi.createFrom().items(1, 2, 3, 4, 5);
-    
+
     AssertSubscriber<Integer> subscriber = numbers
         .subscribe().withSubscriber(AssertSubscriber.create(5));
-    
+
     subscriber
         .assertCompleted()
         .assertItems(1, 2, 3, 4, 5);
@@ -636,13 +634,13 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ContextPropagationService {
-    
+
     @Inject
     SmallRyeContextManager contextManager;
-    
+
     public Uni<String> processWithContext(String input) {
         String contextValue = getCurrentContext();
-        
+
         return Uni.createFrom().item(() -> process(input))
             .runSubscriptionOn(contextManager.newManagedExecutor()
                 .withThreadContext()
@@ -664,7 +662,7 @@ import io.smallrye.mutiny.Uni;
 
 @ApplicationScoped
 public class CircuitBreakerService {
-    
+
     @CircuitBreaker(
         requestVolumeThreshold = 10,
         failureRatio = 0.5,
@@ -690,7 +688,7 @@ import io.smallrye.mutiny.subscription.BackPressureStrategy;
 
 @ApplicationScoped
 public class BackpressureService {
-    
+
     public Multi<Data> processWithBackpressure(Multi<Data> input) {
         return input
             .onOverflow().buffer(100)  // Буферизация
@@ -709,10 +707,10 @@ public class BackpressureService {
 ```java
 @ApplicationScoped
 public class ParallelProcessingService {
-    
+
     public Multi<Result> processParallel(Multi<Item> items) {
         return items
-            .onItem().transformToUni(item -> 
+            .onItem().transformToUni(item ->
                 Uni.createFrom().item(() -> processItem(item))
                     .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
             )
@@ -729,15 +727,15 @@ public class ParallelProcessingService {
 ```java
 @ApplicationScoped
 public class ReactiveCacheService {
-    
-    private final Cache<String, Uni<User>> cache = 
+
+    private final Cache<String, Uni<User>> cache =
         Caffeine.newBuilder()
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
-    
+
     public Uni<User> getUser(Long id) {
         String key = "user:" + id;
-        return cache.get(key, k -> 
+        return cache.get(key, k ->
             userRepository.findByIdAsync(id)
         );
     }
@@ -753,7 +751,7 @@ public class ReactiveCacheService {
 ```java
 @ApplicationScoped
 public class BackpressureService {
-    
+
     public Multi<Item> processWithBackpressure(Multi<Item> items) {
         return items
             .onOverflow().buffer(100)  // Буферизация
@@ -783,11 +781,11 @@ quarkus.thread-pool.queue-size=1000
 ```java
 @ApplicationScoped
 public class ErrorRecoveryService {
-    
+
     public Uni<String> processWithRecovery(String input) {
         return processData(input)
             .onFailure().recoverWithItem("default")
-            .onFailure(TimeoutException.class).recoverWithUni(() -> 
+            .onFailure(TimeoutException.class).recoverWithUni(() ->
                 retryProcess(input)
             )
             .onFailure().retry().atMost(3)
@@ -803,14 +801,14 @@ public class ErrorRecoveryService {
 ```java
 @ApplicationScoped
 public class ErrorClassificationService {
-    
+
     public Uni<Result> processWithClassification(String input) {
         return processData(input)
             .onFailure(RetryableException.class).retry().atMost(3)
             .onFailure(NonRetryableException.class).recoverWithItem(
                 Result.failure("Non-retryable error")
             )
-            .onFailure().transform(error -> 
+            .onFailure().transform(error ->
                 new ProcessingException("Processing failed", error)
             );
     }
@@ -826,11 +824,11 @@ public class ErrorClassificationService {
 ```java
 @QuarkusTest
 public class UniTest {
-    
+
     @Test
     void testUni() {
         Uni<String> uni = service.getData();
-        
+
         String result = uni.await().atMost(Duration.ofSeconds(5));
         assertEquals("expected", result);
     }
@@ -844,15 +842,15 @@ public class UniTest {
 ```java
 @QuarkusTest
 public class MultiTest {
-    
+
     @Test
     void testMulti() {
         Multi<String> multi = service.getDataStream();
-        
+
         List<String> results = multi
             .collect().asList()
             .await().atMost(Duration.ofSeconds(5));
-        
+
         assertEquals(3, results.size());
     }
 }
@@ -867,10 +865,10 @@ public class MultiTest {
 ```java
 @ApplicationScoped
 public class ThroughputMonitor {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public Uni<String> processWithMonitoring(String input) {
         Timer.Sample sample = Timer.start(registry);
         return processData(input)
@@ -889,10 +887,10 @@ public class ThroughputMonitor {
 ```java
 @ApplicationScoped
 public class LatencyTracker {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public Uni<String> processWithLatencyTracking(String input) {
         long startTime = System.currentTimeMillis();
         return processData(input)
@@ -917,3 +915,11 @@ public class LatencyTracker {
 - [**Hibernate Reactive**](https://hibernate.org/reactive/)
 - [**MicroProfile Reactive Messaging**](https://download.eclipse.org/microprofile/microprofile-reactive-messaging-3.0.html)
 - [**Circuit Breaker** Pattern](https://martinfowler.com/bliki/CircuitBreaker.html)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

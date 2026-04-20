@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["quarkus-rest.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Security - Authentication, Authorization и OAuth2
-
-
+# Quarkus: Security — Authentication, Authorization и OAuth2
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: Security - Authentication, Authorization и OAuth2](#quarkus-security-authentication-authorization-и-oauth2)
+- [Quarkus: Security — Authentication, Authorization и OAuth2](#quarkus-security-authentication-authorization-и-oauth2)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Security](#basic-security)
@@ -109,13 +107,13 @@ import jakarta.ws.rs.Path;
 
 @Path("/api/users")
 public class UserResource {
-    
+
     @GET
     @RolesAllowed("user")
     public List<User> getUsers() {
         return userService.findAll();
     }
-    
+
     @GET
     @Path("/admin")
     @RolesAllowed("admin")
@@ -159,10 +157,10 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/api/protected")
 public class ProtectedResource {
-    
+
     @Inject
     JsonWebToken jwt;
-    
+
     @GET
     @RolesAllowed("user")
     public String getProtectedData() {
@@ -193,7 +191,7 @@ import jakarta.ws.rs.Path;
 
 @Path("/api/oauth2")
 public class OAuth2Resource {
-    
+
     @GET
     @RolesAllowed("user")
     public String getOAuth2Data() {
@@ -259,21 +257,21 @@ import io.quarkus.security.runtime.QuarkusSecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class CustomIdentityProvider 
+public class CustomIdentityProvider
         implements io.quarkus.security.identity.IdentityProvider<UsernamePasswordAuthenticationRequest> {
-    
+
     @Override
     public Class<UsernamePasswordAuthenticationRequest> getRequestType() {
         return UsernamePasswordAuthenticationRequest.class;
     }
-    
+
     @Override
     public Uni<SecurityIdentity> authenticate(
             UsernamePasswordAuthenticationRequest request,
             AuthenticationRequestContext context) {
         String username = request.getUsername();
         String password = new String(request.getPassword().getPassword());
-        
+
         // Проверка учетных данных
         if (validateCredentials(username, password)) {
             SecurityIdentity identity = QuarkusSecurityIdentity.builder()
@@ -282,7 +280,7 @@ public class CustomIdentityProvider
                 .build();
             return Uni.createFrom().item(identity);
         }
-        
+
         return Uni.createFrom().failure(new AuthenticationFailedException());
     }
 }
@@ -301,28 +299,28 @@ import jakarta.ws.rs.Path;
 
 @Path("/api")
 public class SecurityResource {
-    
+
     @GET
     @Path("/public")
     @PermitAll
     public String publicEndpoint() {
         return "Public data";
     }
-    
+
     @GET
     @Path("/private")
     @RolesAllowed("user")
     public String privateEndpoint() {
         return "Private data";
     }
-    
+
     @GET
     @Path("/admin")
     @RolesAllowed("admin")
     public String adminEndpoint() {
         return "Admin data";
     }
-    
+
     @GET
     @Path("/denied")
     @DenyAll
@@ -344,10 +342,10 @@ import jakarta.ws.rs.Path;
 
 @Path("/api/user")
 public class UserInfoResource {
-    
+
     @Inject
     SecurityIdentity securityIdentity;
-    
+
     @GET
     @Path("/info")
     @RolesAllowed("user")
@@ -382,10 +380,10 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 
 @Path("/api/resource")
 public class ResourceServerEndpoint {
-    
+
     @Inject
     JsonWebToken jwt;
-    
+
     @GET
     @RolesAllowed("user")
     public String getResource() {
@@ -422,11 +420,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @Path("/oauth2")
 public class OAuth2ClientResource {
-    
+
     @Inject
     @RestClient
     OAuth2Service oAuth2Service;
-    
+
     @GET
     @Path("/userinfo")
     @RolesAllowed("user")
@@ -451,10 +449,10 @@ import jakarta.ws.rs.Path;
 
 @Path("/async")
 public class AsyncSecurityResource {
-    
+
     @Inject
     SecurityIdentity securityIdentity;
-    
+
     @GET
     @RolesAllowed("user")
     public Uni<String> getAsyncData() {
@@ -479,10 +477,10 @@ import jakarta.ws.rs.Path;
 
 @Path("/admin")
 public class AdminResource {
-    
+
     @Inject
     SecurityIdentity securityIdentity;
-    
+
     @GET
     @RolesAllowed("admin")
     public String adminOnly() {
@@ -506,18 +504,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CustomRoleProvider {
-    
+
     public SecurityIdentity enhanceSecurityIdentity(
             SecurityIdentity identity,
             AuthenticationRequest request) {
-        
+
         Set<String> roles = new HashSet<>(identity.getRoles());
-        
+
         // Добавление дополнительных ролей на основе контекста
         if (isAdmin(identity.getPrincipal().getName())) {
             roles.add("admin");
         }
-        
+
         return QuarkusSecurityIdentity.builder()
             .setPrincipal(identity.getPrincipal())
             .addRoles(roles)
@@ -538,11 +536,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class PasswordService {
-    
+
     public String hashPassword(String plainPassword) {
         return BCrypt.hashpw(plainPassword, BCrypt.gensalt());
     }
-    
+
     public boolean verifyPassword(String plainPassword, String hashedPassword) {
         return BCrypt.checkpw(plainPassword, hashedPassword);
     }
@@ -560,13 +558,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class Argon2PasswordService {
-    
+
     private final Argon2 argon2 = Argon2Factory.create();
-    
+
     public String hashPassword(String plainPassword) {
         return argon2.hash(10, 65536, 1, plainPassword.toCharArray());
     }
-    
+
     public boolean verifyPassword(String plainPassword, String hashedPassword) {
         return argon2.verify(hashedPassword, plainPassword.toCharArray());
     }
@@ -586,16 +584,16 @@ import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class SecurityHeadersFilter implements ContainerResponseFilter {
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext,
                       ContainerResponseContext responseContext) {
         responseContext.getHeaders().add("X-Content-Type-Options", "nosniff");
         responseContext.getHeaders().add("X-Frame-Options", "DENY");
         responseContext.getHeaders().add("X-XSS-Protection", "1; mode=block");
-        responseContext.getHeaders().add("Strict-Transport-Security", 
+        responseContext.getHeaders().add("Strict-Transport-Security",
             "max-age=31536000; includeSubDomains");
-        responseContext.getHeaders().add("Content-Security-Policy", 
+        responseContext.getHeaders().add("Content-Security-Policy",
             "default-src 'self'");
     }
 }
@@ -617,17 +615,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Provider
 public class RateLimitingFilter implements ContainerRequestFilter {
-    
+
     private final Map<String, AtomicInteger> requestCounts = new ConcurrentHashMap<>();
     private final int maxRequests = 100;
     private final long timeWindow = 60000; // 1 minute
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext) {
         String clientId = getClientId(requestContext);
         AtomicInteger count = requestCounts.computeIfAbsent(
             clientId, k -> new AtomicInteger(0));
-        
+
         if (count.incrementAndGet() > maxRequests) {
             requestContext.abortWith(
                 Response.status(429)
@@ -647,7 +645,7 @@ public class RateLimitingFilter implements ContainerRequestFilter {
 ```java
 @ApplicationScoped
 public class MFAService {
-    
+
     public Uni<AuthResult> authenticateWithMFA(String username, String password, String code) {
         return validateCredentials(username, password)
             .chain(() -> validateMFACode(username, code))
@@ -663,10 +661,10 @@ public class MFAService {
 ```java
 @ApplicationScoped
 public class SecurityAuditService {
-    
+
     @Inject
     SecurityIdentity identity;
-    
+
     public void auditSecurityEvent(String event, String details) {
         auditLog.log(new SecurityEvent(
             identity.getPrincipal().getName(),
@@ -685,7 +683,7 @@ public class SecurityAuditService {
 ```java
 @ApplicationScoped
 public class TokenRefreshService {
-    
+
     public Uni<String> refreshToken(String refreshToken) {
         return validateRefreshToken(refreshToken)
             .chain(valid -> generateNewAccessToken(valid.getUserId()))
@@ -703,10 +701,10 @@ public class TokenRefreshService {
 ```java
 @ApplicationScoped
 public class SecurityEventLogger {
-    
+
     @Inject
     SecurityIdentity identity;
-    
+
     public void logSecurityEvent(String eventType, String details) {
         SecurityEvent event = new SecurityEvent(
             identity.getPrincipal().getName(),
@@ -727,17 +725,17 @@ public class SecurityEventLogger {
 ```java
 @ApplicationScoped
 public class AuthenticationTracker {
-    
+
     private final Map<String, Integer> failedAttempts = new ConcurrentHashMap<>();
     private static final int MAX_ATTEMPTS = 5;
-    
+
     public void recordFailedAttempt(String username) {
         int attempts = failedAttempts.merge(username, 1, Integer::sum);
         if (attempts >= MAX_ATTEMPTS) {
             lockAccount(username);
         }
     }
-    
+
     public void recordSuccessfulAttempt(String username) {
         failedAttempts.remove(username);
     }
@@ -753,10 +751,10 @@ public class AuthenticationTracker {
 ```java
 @ApplicationScoped
 public class DynamicRoleService {
-    
+
     @Inject
     SecurityIdentity identity;
-    
+
     public boolean hasPermission(String resource, String action) {
         // Динамическая проверка прав на основе контекста
         return checkPermission(identity, resource, action);
@@ -771,7 +769,7 @@ public class DynamicRoleService {
 ```java
 @Path("/documents")
 public class DocumentResource {
-    
+
     @GET
     @Path("/{id}")
     @RolesAllowed("user")
@@ -799,3 +797,11 @@ public class DocumentResource {
 - [**OAuth2** Specification](https://oauth.net/2/)
 - [**JWT** Specification](https://datatracker.ietf.org/doc/html/rfc7519)
 - [**OWASP Top** 10](https://owasp.org/www-project-top-ten/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

@@ -44,7 +44,7 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Задача о рюкзаке - это задача комбинаторной оптимизации, имеющая множество приложений. В этом уроке мы решим эту проблему на **Java**.
+Задача о рюкзаке — это задача комбинаторной оптимизации, имеющая множество приложений. В этом уроке мы решим эту проблему на **Java**.
 
 Набор предметов с весами и стоимостями; ограничение по весу рюкзака. Нужно выбрать подмножество с максимальной суммой стоимостей, не превышающее лимит веса.
 
@@ -101,14 +101,14 @@ public static int knapsackDP(int[] w, int[] v, int n, int W) {
     if (n <= 0 || W <= 0) {
         return 0;
     }
-    
+
     int[][] m = new int[n + 1][W + 1];
-    
+
     // Инициализация: для 0 предметов стоимость всегда 0
     for (int j = 0; j <= W; j++) {
         m[0][j] = 0;
     }
-    
+
     // Заполнение таблицы
     for (int i = 1; i <= n; i++) {
         for (int j = 1; j <= W; j++) {
@@ -124,7 +124,7 @@ public static int knapsackDP(int[] w, int[] v, int n, int W) {
             }
         }
     }
-    
+
     return m[n][W];
 }
 ```
@@ -140,7 +140,7 @@ public static List<Integer> getSelectedItems(int[] w, int[] v, int n, int W, int
     List<Integer> selected = new ArrayList<>();
     int i = n;
     int j = W;
-    
+
     while (i > 0 && j > 0) {
         if (m[i][j] != m[i - 1][j]) {
             // Предмет i был выбран
@@ -149,7 +149,7 @@ public static List<Integer> getSelectedItems(int[] w, int[] v, int n, int W, int
         }
         i--;
     }
-    
+
     Collections.reverse(selected);
     return selected;
 }
@@ -164,16 +164,16 @@ public static int knapsackDPOptimized(int[] w, int[] v, int n, int W) {
     if (n <= 0 || W <= 0) {
         return 0;
     }
-    
+
     int[] dp = new int[W + 1];
-    
+
     for (int i = 0; i < n; i++) {
         // Идем справа налево, чтобы не использовать уже обновленные значения
         for (int j = W; j >= w[i]; j--) {
             dp[j] = Math.max(dp[j], dp[j - w[i]] + v[i]);
         }
     }
-    
+
     return dp[W];
 }
 ```
@@ -210,14 +210,14 @@ fun knapsackDPK(w: IntArray, v: IntArray, n: Int, W: Int): Int {
     if (n <= 0 || W <= 0) {
         return 0
     }
-    
+
     val m = Array(n + 1) { IntArray(W + 1) }
-    
+
     // Инициализация
     for (j in 0..W) {
         m[0][j] = 0
     }
-    
+
     // Заполнение таблицы
     for (i in 1..n) {
         for (j in 1..W) {
@@ -231,7 +231,7 @@ fun knapsackDPK(w: IntArray, v: IntArray, n: Int, W: Int): Int {
             }
         }
     }
-    
+
     return m[n][W]
 }
 ```
@@ -241,15 +241,15 @@ fun knapsackDPOptimizedK(w: IntArray, v: IntArray, n: Int, W: Int): Int {
     if (n <= 0 || W <= 0) {
         return 0
     }
-    
+
     val dp = IntArray(W + 1)
-    
+
     for (i in 0 until n) {
         for (j in W downTo w[i]) {
             dp[j] = Math.max(dp[j], dp[j - w[i]] + v[i])
         }
     }
-    
+
     return dp[W]
 }
 ```
@@ -260,13 +260,13 @@ fun main() {
     val values = intArrayOf(10, 30, 15)
     val capacity = 10
     val n = weights.size
-    
+
     val maxValueRec = KnapsackK.knapsackRecK(weights, values, n, capacity)
     println("Max value (recursive): $maxValueRec") // 40
-    
+
     val maxValueDP = knapsackDPK(weights, values, n, capacity)
     println("Max value (DP): $maxValueDP") // 40
-    
+
     val maxValueDPOpt = knapsackDPOptimizedK(weights, values, n, capacity)
     println("Max value (DP optimized): $maxValueDPOpt") // 40
 }
@@ -291,7 +291,7 @@ fun main() {
 ```java
 public static int unboundedKnapsack(int[] w, int[] v, int n, int W) {
     int[] dp = new int[W + 1];
-    
+
     for (int i = 0; i <= W; i++) {
         for (int j = 0; j < n; j++) {
             if (w[j] <= i) {
@@ -299,7 +299,7 @@ public static int unboundedKnapsack(int[] w, int[] v, int n, int W) {
             }
         }
     }
-    
+
     return dp[W];
 }
 ```
@@ -313,13 +313,13 @@ public static double fractionalKnapsack(int[] w, int[] v, int n, int W) {
     for (int i = 0; i < n; i++) {
         items[i] = new Item(w[i], v[i]);
     }
-    Arrays.sort(items, (a, b) -> 
+    Arrays.sort(items, (a, b) ->
         Double.compare(b.ratio, a.ratio)
     );
-    
+
     double totalValue = 0;
     int remainingWeight = W;
-    
+
     for (Item item : items) {
         if (remainingWeight >= item.weight) {
             totalValue += item.value;
@@ -329,7 +329,7 @@ public static double fractionalKnapsack(int[] w, int[] v, int n, int W) {
             break;
         }
     }
-    
+
     return totalValue;
 }
 ```

@@ -63,7 +63,7 @@ related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 
 ## Введение в **Redis Streams**
 
-**Redis Streams** - это структура данных для хранения логов сообщений, добавленная в **Redis** `5.0`. **Streams** обеспечивают гарантии доставки, **consumer groups** и позволяют обрабатывать сообщения в порядке их поступления.
+**Redis Streams** — это структура данных для хранения логов сообщений, добавленная в **Redis** `5.0`. **Streams** обеспечивают гарантии доставки, **consumer groups** и позволяют обрабатывать сообщения в порядке их поступления.
 
 ### Основные возможности
 
@@ -73,7 +73,6 @@ related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 - **Automatic acknowledgment**: Подтверждение обработки
 - **Message persistence**: Сохранение истории сообщений
 
----
 
 ## Базовые операции
 
@@ -107,7 +106,6 @@ XREAD COUNT 2 STREAMS mystream 0
 XREAD BLOCK 5000 STREAMS mystream $
 ```
 
----
 
 ## **Consumer Groups**
 
@@ -160,7 +158,6 @@ XINFO STREAM mystream
 XGROUP DELCONSUMER mystream mygroup consumer1
 ```
 
----
 
 ## Управление потоками
 
@@ -194,7 +191,6 @@ XTRIM mystream MINID 1640995200000-0
 XLEN mystream
 ```
 
----
 
 ## Программное использование
 
@@ -210,18 +206,18 @@ import java.util.Map;
 public class StreamProducer {
     private JedisPool jedisPool;
     private String streamName;
-    
+
     public StreamProducer(JedisPool jedisPool, String streamName) {
         this.jedisPool = jedisPool;
         this.streamName = streamName;
     }
-    
+
     public StreamEntryID produce(Map<String, String> data) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.xadd(streamName, StreamEntryID.NEW_ENTRY, data);
         }
     }
-    
+
     public void produceContinuously(long intervalMs) throws InterruptedException {
         int counter = 0;
         while (true) {
@@ -229,7 +225,7 @@ public class StreamProducer {
             message.put("counter", String.valueOf(counter));
             message.put("timestamp", String.valueOf(System.currentTimeMillis()));
             message.put("data", "message_" + counter);
-            
+
             produce(message);
             counter++;
             Thread.sleep(intervalMs);
@@ -254,15 +250,15 @@ public class StreamConsumer {
     private String streamName;
     private String groupName;
     private String consumerName;
-    
-    public StreamConsumer(JedisPool jedisPool, String streamName, 
+
+    public StreamConsumer(JedisPool jedisPool, String streamName,
                          String groupName, String consumerName) {
         this.jedisPool = jedisPool;
         this.streamName = streamName;
         this.groupName = groupName;
         this.consumerName = consumerName;
     }
-    
+
     public List<Map.Entry<String, List<StreamEntry>>> consume(int count, long blockMs) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.xreadGroup(
@@ -275,17 +271,17 @@ public class StreamConsumer {
             );
         }
     }
-    
+
     public void acknowledge(StreamEntryID messageId) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.xack(streamName, groupName, messageId);
         }
     }
-    
+
     public void processMessages(Consumer<Map<String, String>> handler) {
         while (true) {
             List<Map.Entry<String, List<StreamEntry>>> messages = consume(1, 1000);
-            
+
             for (Map.Entry<String, List<StreamEntry>> stream : messages) {
                 for (StreamEntry entry : stream.getValue()) {
                     try {
@@ -301,7 +297,6 @@ public class StreamConsumer {
 }
 ```
 
----
 
 ## Лучшие практики
 
@@ -345,8 +340,8 @@ public class ReliableStreamConsumer {
     private String groupName;
     private String consumerName;
     private Gson gson;
-    
-    public ReliableStreamConsumer(JedisPool jedisPool, String streamName, 
+
+    public ReliableStreamConsumer(JedisPool jedisPool, String streamName,
                                  String groupName, String consumerName) {
         this.jedisPool = jedisPool;
         this.streamName = streamName;
@@ -354,16 +349,16 @@ public class ReliableStreamConsumer {
         this.consumerName = consumerName;
         this.gson = new Gson();
     }
-    
+
     public void processWithRetry(Consumer<Map<String, String>> handler, int maxRetries) {
         while (true) {
             List<Map.Entry<String, List<StreamEntry>>> messages = consume(1, 1000);
-            
+
             for (Map.Entry<String, List<StreamEntry>> stream : messages) {
                 for (StreamEntry entry : stream.getValue()) {
                     int retries = 0;
                     boolean success = false;
-                    
+
                     while (retries < maxRetries && !success) {
                         try {
                             handler.accept(entry.getFields());
@@ -386,7 +381,7 @@ public class ReliableStreamConsumer {
             }
         }
     }
-    
+
     private List<Map.Entry<String, List<StreamEntry>>> consume(int count, long blockMs) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.xreadGroup(
@@ -399,13 +394,13 @@ public class ReliableStreamConsumer {
             );
         }
     }
-    
+
     private void acknowledge(StreamEntryID messageId) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.xack(streamName, groupName, messageId);
         }
     }
-    
+
     private void sendToDLQ(StreamEntryID originalId, Map<String, String> data, String error) {
         try (Jedis jedis = jedisPool.getResource()) {
             String dlqStream = streamName + ":dlq";
@@ -456,13 +451,13 @@ public class StreamProcessorWithDLQ {
         self.group_name = group_name
         self.consumer_name = consumer_name
         self.dlq_stream = f"{stream_name}:dlq"
-    
+
     def process_with_dlq(self, handler, max_retries=3):
         """Обработка с отправкой в DLQ при ошибках"""
         for msg_id, data in self.consume():
             retries = 0
             success = False
-            
+
             while retries < max_retries and not success:
                 try:
                     handler(data)
@@ -475,7 +470,7 @@ public class StreamProcessorWithDLQ {
                         self.send_to_dlq(msg_id, data, str(e))
                     else:
                         time.sleep(2  retries)
-    
+
     def send_to_dlq(self, original_id, data, error):
         """Отправка в dead letter queue"""
         dlq_message = {
@@ -497,32 +492,32 @@ public class StreamAggregator {
         self.redis = redis_client
         self.source_stream = source_stream
         self.target_stream = target_stream
-    
+
     def aggregate_by_window(self, window_seconds=60):
         """Агрегация данных по временным окнам"""
         last_id = '0'
-        
+
         while True:
             messages = self.redis.xread(
                 {self.source_stream: last_id},
                 count=100,
                 block=1000
             )
-            
+
             if not messages:
                 continue
-            
+
             stream, msgs = messages[0]
             window_data = {}
-            
+
             for msg_id, data in msgs:
                 timestamp = int(msg_id.split('-')[0]) / 1000
                 window = int(timestamp / window_seconds) * window_seconds
-                
+
                 if window not in window_data:
                     window_data[window] = []
                 window_data[window].append(data)
-            
+
             # Агрегировать и отправить в целевой поток
             for window, data_list in window_data.items():
                 aggregated = self.aggregate_data(data_list)
@@ -531,9 +526,9 @@ public class StreamAggregator {
                     aggregated,
                     id=f"{int(window * 1000)}-0"
                 )
-            
+
             last_id = msgs[-1][0]
-    
+
     def aggregate_data(self, data_list):
         """Агрегация данных"""
         # Пример: подсчет среднего значения
@@ -556,17 +551,17 @@ public class StreamReplayer {
     def __init__(self, redis_client, stream_name):
         self.redis = redis_client
         self.stream_name = stream_name
-    
+
     def replay_from_id(self, start_id, end_id=None):
         """Воспроизведение сообщений из потока"""
         if end_id:
             messages = self.redis.xrange(self.stream_name, start_id, end_id)
         else:
             messages = self.redis.xrange(self.stream_name, start_id, '+')
-        
+
         for msg_id, data in messages:
             yield msg_id, data
-    
+
     def replay_to_stream(self, source_id, target_stream, start_id, end_id=None):
         """Воспроизведение в другой поток"""
         for msg_id, data in self.replay_from_id(start_id, end_id):
@@ -585,13 +580,13 @@ public class StreamProcessorWithDLQ {
         self.group_name = group_name
         self.consumer_name = consumer_name
         self.dlq_stream = f"{stream_name}:dlq"
-    
+
     def process_with_dlq(self, handler, max_retries=3):
         """Обработка с отправкой в DLQ при ошибках"""
         for msg_id, data in self.consume():
             retries = 0
             success = False
-            
+
             while retries < max_retries and not success:
                 try:
                     handler(data)
@@ -604,7 +599,7 @@ public class StreamProcessorWithDLQ {
                         self.send_to_dlq(msg_id, data, str(e))
                     else:
                         time.sleep(2  retries)
-    
+
     def send_to_dlq(self, original_id, data, error):
         """Отправка в dead letter queue"""
         dlq_message = {
@@ -626,32 +621,32 @@ public class StreamAggregator {
         self.redis = redis_client
         self.source_stream = source_stream
         self.target_stream = target_stream
-    
+
     def aggregate_by_window(self, window_seconds=60):
         """Агрегация данных по временным окнам"""
         last_id = '0'
-        
+
         while True:
             messages = self.redis.xread(
                 {self.source_stream: last_id},
                 count=100,
                 block=1000
             )
-            
+
             if not messages:
                 continue
-            
+
             stream, msgs = messages[0]
             window_data = {}
-            
+
             for msg_id, data in msgs:
                 timestamp = int(msg_id.split('-')[0]) / 1000
                 window = int(timestamp / window_seconds) * window_seconds
-                
+
                 if window not in window_data:
                     window_data[window] = []
                 window_data[window].append(data)
-            
+
             # Агрегировать и отправить в целевой поток
             for window, data_list in window_data.items():
                 aggregated = self.aggregate_data(data_list)
@@ -660,9 +655,9 @@ public class StreamAggregator {
                     aggregated,
                     id=f"{int(window * 1000)}-0"
                 )
-            
+
             last_id = msgs[-1][0]
-    
+
     def aggregate_data(self, data_list):
         """Агрегация данных"""
         # Пример: подсчет среднего значения
@@ -685,28 +680,24 @@ public class StreamReplayer {
     def __init__(self, redis_client, stream_name):
         self.redis = redis_client
         self.stream_name = stream_name
-    
+
     def replay_from_id(self, start_id, end_id=None):
         """Воспроизведение сообщений из потока"""
         if end_id:
             messages = self.redis.xrange(self.stream_name, start_id, end_id)
         else:
             messages = self.redis.xrange(self.stream_name, start_id, '+')
-        
+
         for msg_id, data in messages:
             yield msg_id, data
-    
+
     def replay_to_stream(self, source_id, target_stream, start_id, end_id=None):
         """Воспроизведение в другой поток"""
         for msg_id, data in self.replay_from_id(start_id, end_id):
             self.redis.xadd(target_stream, data, id='*')
 ```
 
----
 
 - [Redis Streams](https://redis.io/docs/data-types/streams/)
 - [Redis Streams Tutorial](https://redis.io/docs/data-types/streams-tutorial/)
-
----
-
 

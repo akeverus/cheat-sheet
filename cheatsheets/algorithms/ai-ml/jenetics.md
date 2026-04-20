@@ -40,20 +40,20 @@ updated: "2026-02-11"
 
 ## Обзор
 
-Цель этой серии - объяснить идею генетических алгоритмов и показать наиболее известные реализации.
+Цель этой серии — объяснить идею генетических алгоритмов и показать наиболее известные реализации.
 
 В этом уроке мы опишем очень мощную **Java**-библиотеку **Jenetics**, которую можно использовать для решения различных задач оптимизации.
 
-Согласно официальным документам, **Jenetics** - это библиотека, основанная на эволюционном алгоритме, написанном на **Java**. Эволюционные алгоритмы уходят своими корнями в биологию, поскольку они используют механизмы, вдохновленные биологической эволюцией, такие как размножение, мутация, рекомбинация и отбор.
+Согласно официальным документам, **Jenetics** — это библиотека, основанная на эволюционном алгоритме, написанном на **Java**. Эволюционные алгоритмы уходят своими корнями в биологию, поскольку они используют механизмы, вдохновленные биологической эволюцией, такие как размножение, мутация, рекомбинация и отбор.
 
 **Jenetics** реализован с использованием интерфейса **Java Stream**, поэтому он без проблем работает с остальной частью **API Java Stream**.
 
 ## Основные особенности
 
-1. **Frictionless minimization** - нет необходимости изменять или настраивать фитнес-функцию; мы можем просто изменить конфигурацию класса **Engine**, и мы готовы запустить наше первое приложение
-2. **Dependency-free** - для использования **Jenetics** не требуются сторонние библиотеки времени выполнения
-3. **Java 8 ready** - полная поддержка **Stream** и лямбда-выражений
-4. **Multithreaded** - эволюционные шаги могут выполняться параллельно
+1. **Frictionless minimization** — нет необходимости изменять или настраивать фитнес-функцию; мы можем просто изменить конфигурацию класса **Engine**, и мы готовы запустить наше первое приложение
+2. **Dependency-free** — для использования **Jenetics** не требуются сторонние библиотеки времени выполнения
+3. **Java 8 ready** — полная поддержка **Stream** и лямбда-выражений
+4. **Multithreaded** — эволюционные шаги могут выполняться параллельно
 
 ## Настройка проекта
 
@@ -86,22 +86,22 @@ import io.jenetics.engine.EvolutionResult;
 import io.jenetics.util.Factory;
 
 public class SimpleGeneticAlgorithm {
-    
+
     private static Integer eval(Genotype<BitGene> gt) {
         return gt.getChromosome().as(BitChromosome.class).bitCount();
     }
-    
+
     public static void main(String[] args) {
         Factory<Genotype<BitGene>> gtf = Genotype.of(BitChromosome.of(10, 0.5));
-        
+
         Engine<BitGene, Integer> engine = Engine.builder(
             SimpleGeneticAlgorithm::eval, gtf
         ).build();
-        
+
         Genotype<BitGene> result = engine.stream()
             .limit(500)
             .collect(EvolutionResult.toBestGenotype());
-        
+
         System.out.println("Before the evolution:");
         System.out.println("[00000010|11111100]");
         System.out.println("After the evolution:");
@@ -128,7 +128,7 @@ public class SimpleGeneticAlgorithm {
 
 ## Задача суммы подмножеств
 
-Еще один пример использования **Jenetics** - решение проблемы суммы подмножеств. Короче говоря, задача оптимизации заключается в том, что для заданного набора целых чисел нам нужно найти непустое подмножество, сумма которого равна нулю.
+Еще один пример использования **Jenetics** — решение проблемы суммы подмножеств. Короче говоря, задача оптимизации заключается в том, что для заданного набора целых чисел нам нужно найти непустое подмножество, сумма которого равна нулю.
 
 **В **Jenetics** есть предопределенные интерфейсы для решения таких задач:**
 
@@ -142,33 +142,33 @@ import io.jenetics.util.ISeq;
 import io.jenetics.util.codecs;
 
 public class SubsetSum implements Problem<ISeq<Integer>, EnumGene<Integer>, Integer> {
-    
+
     private final ISeq<Integer> basicSet;
     private final int size;
-    
+
     public SubsetSum(ISeq<Integer> basicSet, int size) {
         this.basicSet = basicSet;
         this.size = size;
     }
-    
+
     @Override
     public Function<ISeq<Integer>, Integer> fitness() {
         return subset -> Math.abs(subset.stream()
             .mapToInt(Integer::intValue)
             .sum());
     }
-    
+
     @Override
     public Codec<ISeq<Integer>, EnumGene<Integer>> codec() {
         return codecs.ofSubSet(basicSet, size);
     }
-    
+
     public static void main(String[] args) {
         SubsetSum problem = new SubsetSum(
             ISeq.of(85, -76, 178, -197, 91, -106, -70, -243, -41, -98, 94, -213, 139, 238, 219),
             15
         );
-        
+
         Engine<EnumGene<Integer>, Integer> engine = Engine.builder(problem)
             .minimizing()
             .maximalPhenotypeAge(5)
@@ -177,11 +177,11 @@ public class SubsetSum implements Problem<ISeq<Integer>, EnumGene<Integer>, Inte
                 new Mutator<>(0.3)
             )
             .build();
-        
+
         Phenotype<EnumGene<Integer>, Integer> result = engine.stream()
             .limit(limit.bySteadyFitness(55))
             .collect(EvolutionResult.toBestPhenotype());
-        
+
         System.out.println(result);
     }
 }
@@ -218,18 +218,18 @@ import io.jenetics.engine.EvolutionStatistics;
 import io.jenetics.util.Factory;
 
 public class KnapsackProblem {
-    
+
     public static void main(String[] args) {
         int nItems = 15;
         double ksSize = nItems * 100.0 / 3.0;
-        
+
         KnapsackFF ff = new KnapsackFF(
             Stream.generate(KnapsackItem::random)
                 .limit(nItems)
                 .toArray(KnapsackItem[]::new),
             ksSize
         );
-        
+
         Engine<BitGene, Double> engine = Engine.builder(ff, BitChromosome.of(nItems, 0.5))
             .populationSize(500)
             .survivorsSelector(new TournamentSelector<>(5))
@@ -239,15 +239,15 @@ public class KnapsackProblem {
                 new SinglePointCrossover<>(0.16)
             )
             .build();
-        
+
         EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
-        
+
         Phenotype<BitGene, Double> best = engine.stream()
             .limit(limit.bySteadyFitness(7))
             .limit(100)
             .peek(statistics)
             .collect(EvolutionResult.toBestPhenotype());
-        
+
         System.out.println(statistics);
     }
 }
@@ -308,7 +308,7 @@ EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
 
 ## Рекомендации по использованию
 
-Это довольно простой процесс - просто откройте основной файл, связанный с проблемой, и сначала запустите алгоритм. Как только у нас появится общее представление, мы можем начать играть с параметрами.
+Это довольно простой процесс — просто откройте основной файл, связанный с проблемой, и сначала запустите алгоритм. Как только у нас появится общее представление, мы можем начать играть с параметрами.
 
 ### Настройка параметров
 
@@ -360,7 +360,7 @@ EvolutionStatistics<Double, ?> statistics = EvolutionStatistics.ofNumber();
 - Богатая статистика эволюции
 - Гибкая настройка параметров
 
-**Jenetics** - это инструмент для решения задач оптимизации в **Java**, который позволяет быстро создавать и тестировать эволюционные алгоритмы.
+**Jenetics** — это инструмент для решения задач оптимизации в **Java**, который позволяет быстро создавать и тестировать эволюционные алгоритмы.
 
 ## Реализация на Kotlin
 
@@ -377,19 +377,19 @@ object SimpleGeneticAlgorithmK {
     private fun eval(gt: Genotype<BitGene>): Int {
         return gt.chromosome().`as`(BitChromosome::class.java).bitCount()
     }
-    
+
     @JvmStatic
     fun main(args: Array<String>) {
         val gtf = Genotype.of(BitChromosome.of(10, 0.5))
-        
+
         val engine = Engine.builder(
             ::eval, gtf
         ).build()
-        
+
         val result = engine.stream()
             .limit(500)
             .collect(EvolutionResult.toBestGenotype())
-        
+
         println("Before the evolution:")
         println("[00000010|11111100]")
         println("After the evolution:")
@@ -409,7 +409,7 @@ class SubsetSumK(
     private val basicSet: ISeq<Int>,
     private val size: Int
 ) : Problem<ISeq<Int>, EnumGene<Int>, Int> {
-    
+
     override fun fitness(): Function<ISeq<Int>, Int> {
         return Function { subset ->
             Math.abs(subset.stream()
@@ -417,7 +417,7 @@ class SubsetSumK(
                 .sum())
         }
     }
-    
+
     override fun codec(): Codec<ISeq<Int>, EnumGene<Int>> {
         return codecs.ofSubSet(basicSet, size)
     }
@@ -428,7 +428,7 @@ fun main() {
         ISeq.of(85, -76, 178, -197, 91, -106, -70, -243, -41, -98, 94, -213, 139, 238, 219),
         15
     )
-    
+
     val engine = Engine.builder(problem)
         .minimizing()
         .maximalPhenotypeAge(5)
@@ -437,11 +437,11 @@ fun main() {
             Mutator<EnumGene<Int>, Int>(0.3)
         )
         .build()
-    
+
     val result = engine.stream()
         .limit(Limit.bySteadyFitness(55))
         .collect(EvolutionResult.toBestPhenotype())
-    
+
     println(result)
 }
 ```

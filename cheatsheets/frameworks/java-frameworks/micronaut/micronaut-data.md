@@ -19,8 +19,6 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
 
 # Micronaut: Data Access — JDBC, JPA и Repositories
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Micronaut](https://docs.micronaut.io/)
@@ -28,7 +26,7 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: Data Access - JDBC, JPA и Repositories](#micronaut-data-access-jdbc-jpa-и-repositories)
+- [Micronaut: Data Access — JDBC, JPA и Repositories](#micronaut-data-access-jdbc-jpa-и-repositories)
 - [Введение](#введение)
   - [Доступные опции](#доступные-опции)
 - [Micronaut Data JDBC](#micronaut-data-jdbc)
@@ -114,7 +112,7 @@ datasources:
     url: jdbc:h2:mem:devDb
     driverClassName: org.h2.Driver
     username: sa
-    password: 
+    password:
     schema-generate: CREATE_DROP
     dialect: H2
 
@@ -137,20 +135,20 @@ public class User {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     private String name;
     private String email;
     private Integer age;
-    
+
     // Constructors, getters, setters
     public User() {}
-    
+
     public User(String name, String email, Integer age) {
         this.name = name;
         this.email = email;
         this.age = age;
     }
-    
+
     // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -171,28 +169,28 @@ import io.micronaut.data.repository.CrudRepository;
 
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     // Автоматически генерируется: SELECT * FROM user WHERE name = ?
     Optional<User> findByName(String name);
-    
+
     // Автоматически генерируется: SELECT * FROM user WHERE email = ?
     Optional<User> findByEmail(String email);
-    
+
     // Автоматически генерируется: SELECT * FROM user WHERE age > ?
     List<User> findByAgeGreaterThan(Integer age);
-    
+
     // Автоматически генерируется: SELECT * FROM user WHERE name LIKE ?
     List<User> findByNameLike(String name);
-    
+
     // Автоматически генерируется: SELECT * FROM user WHERE age BETWEEN ? AND ?
     List<User> findByAgeBetween(Integer minAge, Integer maxAge);
-    
+
     // COUNT query
     long countByAgeGreaterThan(Integer age);
-    
+
     // EXISTS query
     boolean existsByEmail(String email);
-    
+
     // DELETE query
     void deleteByEmail(String email);
 }
@@ -206,28 +204,28 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private final UserRepository userRepository;
-    
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public User createUser(String name, String email, Integer age) {
         User user = new User(name, email, age);
         return userRepository.save(user);
     }
-    
+
     public Optional<User> findByName(String name) {
         return userRepository.findByName(name);
     }
-    
+
     public List<User> findAdults() {
         return userRepository.findByAgeGreaterThan(17);
     }
-    
+
     public long countAdults() {
         return userRepository.countByAgeGreaterThan(17);
     }
-    
+
     public void deleteByEmail(String email) {
         userRepository.deleteByEmail(email);
     }
@@ -242,16 +240,16 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect = Dialect.H2)
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM user WHERE age > :minAge AND age < :maxAge")
     List<User> findByAgeRange(@NonNull Integer minAge, @NonNull Integer maxAge);
-    
+
     @Query("UPDATE user SET email = :email WHERE id = :id")
     void updateEmail(@NonNull Long id, @NonNull String email);
-    
+
     @Query("SELECT COUNT(*) FROM user WHERE age > :age")
     long countAdults(@NonNull Integer age);
-    
+
     @Query("SELECT * FROM user ORDER BY name LIMIT :limit OFFSET :offset")
     List<User> findAllWithPagination(@NonNull Integer limit, @NonNull Integer offset);
 }
@@ -265,22 +263,22 @@ public class Order {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     @Relation(value = Relation.Kind.MANY_TO_ONE)
     private User user;
-    
+
     private BigDecimal total;
     private LocalDateTime createdAt;
-    
+
     // Getters and setters...
 }
 
 @Repository
 public interface OrderRepository extends CrudRepository<Order, Long> {
-    
+
     // Автоматически генерируется JOIN
     List<Order> findByUserEmail(String email);
-    
+
     // Custom JOIN query
     @Query("SELECT o FROM order o JOIN user u ON o.user_id = u.id WHERE u.age > :age")
     List<Order> findByUserAgeGreaterThan(Integer age);
@@ -337,24 +335,24 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, length = 100)
     private String name;
-    
+
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     private Integer age;
-    
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Order> orders = new ArrayList<>();
-    
+
     @CreatedDate
     private LocalDateTime createdAt;
-    
+
     @LastModifiedDate
     private LocalDateTime updatedAt;
-    
+
     // Constructors, getters, setters...
 }
 ```
@@ -367,14 +365,14 @@ import io.micronaut.data.jpa.repository.JpaRepository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    
+
     Optional<User> findByEmail(String email);
-    
+
     List<User> findByAgeGreaterThan(Integer age);
-    
+
     @Query("SELECT u FROM User u WHERE u.name LIKE :name")
     List<User> searchByName(String name);
-    
+
     @Query("SELECT u FROM User u JOIN u.orders o WHERE o.total > :amount")
     List<User> findUsersWithOrdersGreaterThan(BigDecimal amount);
 }
@@ -392,12 +390,12 @@ import jakarta.inject.Singleton;
 public class UserService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
-    
+
     public UserService(UserRepository userRepository, OrderRepository orderRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
     }
-    
+
     @Transactional
     public User createUserWithOrder(User user, Order order) {
         User savedUser = userRepository.save(user);
@@ -405,13 +403,13 @@ public class UserService {
         orderRepository.save(order);
         return savedUser;
     }
-    
+
     @Transactional(readOnly = true)
     public User getUserWithOrders(Long userId) {
         return userRepository.findById(userId)
             .orElseThrow(() -> new UserNotFoundException(userId));
     }
-    
+
     @Transactional(rollbackOn = {ValidationException.class})
     public void updateUser(Long id, User user) {
         User existing = userRepository.findById(id)
@@ -433,20 +431,20 @@ import java.sql.Connection;
 public class UserService {
     private final SynchronousTransactionManager<Connection> transactionManager;
     private final UserRepository userRepository;
-    
+
     public UserService(
             SynchronousTransactionManager<Connection> transactionManager,
             UserRepository userRepository) {
         this.transactionManager = transactionManager;
         this.userRepository = userRepository;
     }
-    
+
     public User createUserInTransaction(User user) {
         return transactionManager.executeWrite(status -> {
             return userRepository.save(user);
         });
     }
-    
+
     public User getUserInTransaction(Long id) {
         return transactionManager.executeRead(status -> {
             return userRepository.findById(id)
@@ -532,7 +530,7 @@ liquibase:
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
-    
+
     <include file="db/changelog/changes/V1__create_users_table.xml"/>
     <include file="db/changelog/changes/V2__create_orders_table.xml"/>
 </databaseChangeLog>
@@ -601,7 +599,7 @@ Optional<User> findByIdWithOrders(Long id);
 ```java
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("INSERT INTO user (name, email, age) VALUES (:name, :email, :age)")
     void insertUser(String name, String email, Integer age);
 }
@@ -609,11 +607,11 @@ public interface UserRepository extends CrudRepository<User, Long> {
 @Singleton
 public class BatchUserService {
     private final JdbcOperations jdbcOperations;
-    
+
     public BatchUserService(JdbcOperations jdbcOperations) {
         this.jdbcOperations = jdbcOperations;
     }
-    
+
     @Transactional
     public void batchInsertUsers(List<User> users) {
         String sql = "INSERT INTO user (name, email, age) VALUES (?, ?, ?)";
@@ -637,7 +635,7 @@ public class BatchUserService {
 @Singleton
 public class BatchUpdateService {
     private final JdbcOperations jdbcOperations;
-    
+
     @Transactional
     public void batchUpdateUsers(List<User> users) {
         String sql = "UPDATE user SET name = ?, email = ? WHERE id = ?";
@@ -662,10 +660,10 @@ public class BatchUpdateService {
 ```java
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Procedure("get_user_by_email")
     Optional<User> getUserByEmail(String email);
-    
+
     @Query(value = "CALL update_user_age(:id, :age)", nativeQuery = true)
     void updateUserAge(Long id, Integer age);
 }
@@ -679,21 +677,21 @@ public interface UserRepository extends CrudRepository<User, Long> {
 public class UserSummary {
     private String name;
     private String email;
-    
+
     public UserSummary(String name, String email) {
         this.name = name;
         this.email = email;
     }
-    
+
     // Getters
 }
 
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT u.name, u.email FROM user u WHERE u.id = :id")
     Optional<UserSummary> findSummaryById(Long id);
-    
+
     @Query("SELECT u.name, u.email FROM user u")
     List<UserSummary> findAllSummaries();
 }
@@ -710,9 +708,9 @@ import java.util.concurrent.CompletableFuture;
 
 @Repository
 public interface AsyncUserRepository extends AsyncCrudRepository<User, Long> {
-    
+
     CompletableFuture<Optional<User>> findByEmail(String email);
-    
+
     CompletableFuture<List<User>> findByAgeGreaterThan(Integer age);
 }
 ```
@@ -726,11 +724,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
 @Repository
-public interface ReactiveUserRepository 
+public interface ReactiveUserRepository
         extends ReactiveStreamsRepository<User, Long> {
-    
+
     Mono<User> findByEmail(String email);
-    
+
     Flux<User> findByAgeGreaterThan(Integer age);
 }
 ```
@@ -742,10 +740,10 @@ public interface ReactiveUserRepository
 ```java
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query(value = "SELECT * FROM users WHERE age > :age", nativeQuery = true)
     List<User> findAdultsNative(Integer age);
-    
+
     @Query(value = "CALL get_user_statistics(:userId)", nativeQuery = true)
     UserStatistics getUserStatistics(Long userId);
 }
@@ -757,25 +755,25 @@ public interface UserRepository extends CrudRepository<User, Long> {
 @Singleton
 public class DynamicQueryService {
     private final JdbcOperations jdbcOperations;
-    
+
     public DynamicQueryService(JdbcOperations jdbcOperations) {
         this.jdbcOperations = jdbcOperations;
     }
-    
+
     public List<User> findUsersWithDynamicQuery(Map<String, Object> filters) {
         StringBuilder sql = new StringBuilder("SELECT * FROM users WHERE 1=1");
         List<Object> params = new ArrayList<>();
-        
+
         if (filters.containsKey("name")) {
             sql.append(" AND name LIKE ?");
             params.add("%" + filters.get("name") + "%");
         }
-        
+
         if (filters.containsKey("age")) {
             sql.append(" AND age > ?");
             params.add(filters.get("age"));
         }
-        
+
         return jdbcOperations.prepareStatement(sql.toString(), statement -> {
             for (int i = 0; i < params.size(); i++) {
                 statement.setObject(i + 1, params.get(i));
@@ -793,7 +791,7 @@ public class DynamicQueryService {
 ```java
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM user WHERE email = :email")
     @QueryHint(name = "fetchSize", value = "100")
     Optional<User> findByEmail(String email);
@@ -805,10 +803,10 @@ public interface UserRepository extends CrudRepository<User, Long> {
 ```java
 @Repository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM user ORDER BY name LIMIT :limit OFFSET :offset")
     List<User> findAllWithPagination(Integer limit, Integer offset);
-    
+
     @Query("SELECT COUNT(*) FROM user")
     long countAll();
 }
@@ -882,7 +880,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 
 @JdbcRepository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT name, email FROM users WHERE age > :age")
     List<UserSummary> findUserSummaries(Integer age);
 }
@@ -902,3 +900,11 @@ public interface UserRepository extends CrudRepository<User, Long> {
 - [Liquibase Documentation](https://docs.liquibase.com/)
 - [**R2DBC** Documentation](https://r2dbc.io/)
 - [**HikariCP** Documentation](https://github.com/brettwooldridge/HikariCP#documentation)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

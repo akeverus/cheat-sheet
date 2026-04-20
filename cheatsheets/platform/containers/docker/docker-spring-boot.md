@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Полный перенос раздела **Docker and Spring Boot**: контейнеризация приложения, сборка образов (**Dockerfile, buildpacks, многослойные JAR**), доступ к логам, запуск с **PostgreSQL** через **Compose**, повторное использование слоёв **Docker** и кастомизация слоёв. Без сокращений.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -23,7 +21,7 @@ updated: "2026-02-11"
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Hub](https://hub.docker.com/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
@@ -231,7 +229,7 @@ mvn spring-boot:build-image
 
 **Пример вывода:**
 
-```
+```text
 [INFO] Building jar: target/demo-0.0.1-SNAPSHOT.jar
 [INFO] Building image 'docker.io/library/demo:0.0.1-SNAPSHOT'
 [INFO] > Pulling builder image 'gcr.io/paketo-buildpacks/builder:base-platform-api-0.3' 100%
@@ -247,7 +245,7 @@ mvn spring-boot:build-image
 
 **При последующих сборках переиспользуются слои:**
 
-```
+```text
 [INFO] [creator] Reusing layer 'paketo-buildpacks/executable-jar:class-path'
 [INFO] [creator] Reusing layer 'paketo-buildpacks/spring-boot:web-application-type'
 [INFO] Successfully built image 'docker.io/library/demo:0.0.1-SNAPSHOT'
@@ -281,7 +279,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 
 **Если не хотим **buildpacks**, **Spring Boot** поддерживает многослойные **JAR**. Типичная структура толстого **JAR**:**
 
-```
+```text
 org/springframework/boot/loader/BOOT-INF/classes/lib/
 ```
 
@@ -398,7 +396,7 @@ docker run --name=demo-container docker.io/library/spring-boot-docker:0.0.1-SNAP
 
 **Добавление файла журнала в `**application.properties**`:**
 
-```
+```text
 logging.file.path=logs
 ```
 
@@ -468,7 +466,7 @@ docker run --log-driver gelf --log-opt gelf-address=udp://1.2.3.4:12201 alpine e
 
 **Падает, т.к. нет БД:**
 
-```
+```text
 Failed to configure a DataSource: 'url' attribute is not specified ...
 Failed to determine a suitable driver class
 ```
@@ -533,7 +531,7 @@ docker-compose up
 
 **Сначала соберётся образ приложения, затем запустится **PostgreSQL**, затем приложение. Пример логов запуска:**
 
-```
+```text
 Starting DemoApplication v0.0.1-SNAPSHOT using Java 11.0.9 ...
 Finished Spring Data repository scanning in 28 ms. Found 0 JPA repository interfaces.
 Started DemoApplication in 4.751 seconds (JVM running for 6.512)
@@ -602,7 +600,7 @@ docker-compose up
 
 **Пример логов:**
 
-```
+```text
 Finished Spring Data repository scanning in 180 ms. Found 1 JPA repository interfaces.
 Number of customers: 0
 Saving new customer
@@ -670,3 +668,9 @@ docker history --format "{{.ID}} {{.CreatedBy}} {{.Size}}" spring-docker-demo
 
 В истории виден новый слой для **internal-dependencies**, остальные слои переиспользуются кэшем.
 
+## См. также
+
+- [[docker-advanced|Docker Advanced]]
+- [[docker-basics|Docker: Полное руководство по контейнеризации]]
+- [[docker-compose|Docker Compose]]
+- [[docker-containers|Docker: работа с контейнерами]]

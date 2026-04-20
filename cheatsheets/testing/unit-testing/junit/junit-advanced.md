@@ -41,7 +41,6 @@ updated: "2026-02-11"
 - [FAQ](#faq)
 - [Заключение](#заключение)
 
----
 
 ## Жизненный цикл тестов
 
@@ -89,7 +88,6 @@ public class UserServiceTest {
 }
 ```
 
----
 
 ## Extensions API
 
@@ -128,7 +126,6 @@ public class TimingExtension implements BeforeTestExecutionCallback, AfterTestEx
 }
 ```
 
----
 
 ## Параметризованные тесты
 
@@ -168,7 +165,6 @@ static Stream<Arguments> orderData() {
 }
 ```
 
----
 
 ## Динамические тесты
 
@@ -201,7 +197,6 @@ DynamicContainer testLifecycle() {
 }
 ```
 
----
 
 ## Вложенные тесты
 
@@ -248,7 +243,6 @@ public class UserServiceNestedTest {
 }
 ```
 
----
 
 ## Условное выполнение
 
@@ -282,7 +276,6 @@ boolean isDbAvailable() {
 }
 ```
 
----
 
 ## Параллельный запуск
 
@@ -311,7 +304,6 @@ void testRead() {
 }
 ```
 
----
 
 ## Интеграция Spring Boot
 
@@ -343,7 +335,6 @@ public class UserControllerTest {
 }
 ```
 
----
 
 ## Testcontainers
 
@@ -382,7 +373,6 @@ public class DatabaseIntegrationTest {
 
 Несколько контейнеров — объявить несколько полей с **@Container** и зарегистрировать их свойства через **@DynamicPropertySource**.
 
----
 
 ## Лучшие практики
 
@@ -393,7 +383,6 @@ public class DatabaseIntegrationTest {
 - **Расширения:** выносить общую логику (замер времени, повтор при падении, логирование) в extensions.
 - **Условный запуск:** отключать нерелевантные тесты по окружению (`@EnabledIf`/`@DisabledIf`), чтобы CI и локальный запуск были быстрыми и предсказуемыми.
 
----
 
 ## Решение проблем
 
@@ -406,23 +395,29 @@ public class DatabaseIntegrationTest {
 
 **Отладка:** логирование в `@BeforeEach`/`@AfterEach`, `TestInfo`/`TestReporter`; проверка активного профиля и свойств (например, `spring.datasource.url`) в тестовой конфигурации.
 
----
 
 ## FAQ
 
-**Когда использовать JUnit 5 Advanced?**  
+**Когда использовать JUnit 5 Advanced?**
 При сложных сценариях (параметризация, динамические тесты), интеграции с Spring Boot/Testcontainers, больших наборах тестов (параллельный запуск, условное выполнение), необходимости своих расширений и отчётов.
 
-**Достаточно ли базового JUnit для простых unit-тестов?**  
+**Достаточно ли базового JUnit для простых unit-тестов?**
 Да. Расширения, параметризация и динамические тесты имеют смысл при росте набора тестов и интеграционных сценариях.
 
-**Где актуальная документация?**  
+**Где актуальная документация?**
 [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/), [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing) — см. блок «Полезные ссылки» в начале документа.
 
----
 
 ## Заключение
 
 JUnit 5 Advanced даёт расширяемую модель тестов (Extensions API), параметризацию и динамическую генерацию тестов, вложенную структуру, условное и параллельное выполнение, удобную интеграцию с Spring Boot и Testcontainers. Это удобный выбор для сложных и интеграционных сценариев; для простых unit-тестов достаточно возможностей базового JUnit 5.
 
 **Далее:** [Mockito Advanced](mockito-advanced.md) — продвинутые приёмы мокирования.
+
+## См. также
+
+- [[assertj|AssertJ для Java]]
+- [[hamcrest|Hamcrest для Java]]
+- [[junit|JUnit 5]]
+- [[mockito-advanced|Mockito Advanced для Java]]
+- [[mockito|Mockito]]

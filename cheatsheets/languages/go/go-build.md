@@ -133,10 +133,10 @@ Go предоставляет простые и эффективные инст�
 
 ### Основные команды
 
-1. **go build** - компиляция пакетов
-2. **go install** - установка пакетов
-3. **go run** - компиляция и запуск
-4. **Cross-compilation** - компиляция для других платформ
+1. **go build** — компиляция пакетов
+2. **go install** — установка пакетов
+3. **go run** — компиляция и запуск
+4. **Cross-compilation** — компиляция для других платформ
 
 ## go **build**
 
@@ -539,7 +539,7 @@ ENTRYPOINT ["/myapp"]
 
 ### Практические примеры: .**dockerignore**
 
-```
+```text
 # .dockerignore
 *.md
 .git
@@ -573,20 +573,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         go-version: ['1.20', '1.21']
         os: [ubuntu-latest, windows-latest, macos-latest]
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
-    
+
     - name: Cache Go modules
       uses: actions/cache@v3
       with:
@@ -594,26 +594,26 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
-    
+
     - name: Download dependencies
       run: go mod download
-    
+
     - name: Run tests
       run: go test -v -race -coverprofile=coverage.out ./...
-    
+
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.out
-    
+
     - name: Build
       run: |
         VERSION=$(git describe --tags --always --dirty)
         BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
         GIT_COMMIT=$(git rev-parse HEAD)
-        
+
         go build -ldflags="-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT -s -w" -o myapp
-    
+
     - name: Build Docker image
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -659,15 +659,15 @@ build:
       VERSION=$(git describe --tags --always --dirty)
       BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
       GIT_COMMIT=$(git rev-parse HEAD)
-      
+
       GOOS=linux GOARCH=amd64 go build \
         -ldflags="-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT -s -w" \
         -o myapp-linux-amd64
-      
+
       GOOS=windows GOARCH=amd64 go build \
         -ldflags="-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT -s -w" \
         -o myapp-windows-amd64.exe
-      
+
       GOOS=darwin GOARCH=amd64 go build \
         -ldflags="-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommit=$GIT_COMMIT -s -w" \
         -o myapp-darwin-amd64
@@ -703,20 +703,20 @@ docker-build:
 ```groovy
 pipeline {
     agent any
-    
+
     environment {
         GO_VERSION = '1.21'
         DOCKER_REGISTRY = 'registry.example.com'
         IMAGE_NAME = 'myapp'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        
+
         stage('Test') {
             steps {
                 sh '''
@@ -733,7 +733,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Build') {
             steps {
                 script {
@@ -741,24 +741,24 @@ pipeline {
                         script: 'git describe --tags --always --dirty',
                         returnStdout: true
                     ).trim()
-                    
+
                     def buildTime = sh(
                         script: 'date -u +%Y-%m-%dT%H:%M:%SZ',
                         returnStdout: true
                     ).trim()
-                    
+
                     def gitCommit = sh(
                         script: 'git rev-parse HEAD',
                         returnStdout: true
                     ).trim()
-                    
+
                     sh """
                         go build -ldflags="-X main.Version=${version} -X main.BuildTime=${buildTime} -X main.GitCommit=${gitCommit} -s -w" -o myapp
                     """
                 }
             }
         }
-        
+
         stage('Docker Build') {
             steps {
                 script {
@@ -766,7 +766,7 @@ pipeline {
                         script: 'git describe --tags --always --dirty',
                         returnStdout: true
                     ).trim()
-                    
+
                     sh """
                         docker build \
                             --build-arg VERSION=${version} \
@@ -777,7 +777,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Docker Push') {
             steps {
                 script {
@@ -785,7 +785,7 @@ pipeline {
                         script: 'git describe --tags --always --dirty',
                         returnStdout: true
                     ).trim()
-                    
+
                     sh """
                         docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${version}
                         docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
@@ -900,12 +900,12 @@ LDFLAGS="-X main.Version=$VERSION -X main.BuildTime=$BUILD_TIME -X main.GitCommi
 for PLATFORM in "${PLATFORMS[@]}"; do
     GOOS=${PLATFORM%/*}
     GOARCH=${PLATFORM#*/}
-    
+
     OUTPUT_NAME="myapp-${GOOS}-${GOARCH}"
     if [ "$GOOS" = "windows" ]; then
         OUTPUT_NAME+=".exe"
     fi
-    
+
     echo "Building for $GOOS/$GOARCH..."
     GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=0 go build \
         -ldflags="$LDFLAGS" \
@@ -1045,28 +1045,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         go-version: [1.20, 1.21]
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go-version }}
-    
+
     - name: Download dependencies
       run: go mod download
-    
+
     - name: Run tests
       run: go test -v -race -coverprofile=coverage.out ./...
-    
+
     - name: Build
       run: go build -v -o app .
-    
+
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
@@ -1151,21 +1151,21 @@ go test -race ./...
 
 ## Лучшие практики
 
-1. **Используйте многоэтапную сборку** - для уменьшения размера образов
-2. **Оптимизируйте бинарники** - используйте -**ldflags**="-s -w"
-3. **Используйте .dockerignore** - для исключения ненужных файлов
-4. **Кэшируйте зависимости** - для ускорения сборки
-5. **Тестируйте сборки** - проверяйте сборки на разных платформах
-6. **Используйте build tags** - для условной компиляции
-7. **Встраивайте версию** - для отслеживания развернутых версий
-8. **Используйте статическую сборку** - для упрощения развертывания
-9. **Оптимизируйте `Docker` образы** - используйте **scratch** или **alpine**
-10. **Автоматизируйте сборку** - используйте `CI/CD`
-11. **Используйте Makefile** - для стандартизации сборки
-12. **Используйте версионирование** - встраивайте информацию о версии
-13. **Используйте race detector** - для обнаружения **race conditions**
-14. **Оптимизируйте размер** - минимизируйте размер бинарников
-15. **Документируйте процесс сборки** - описывайте требования и шаги
+1. **Используйте многоэтапную сборку** — для уменьшения размера образов
+2. **Оптимизируйте бинарники** — используйте -**ldflags**="-s -w"
+3. **Используйте .dockerignore** — для исключения ненужных файлов
+4. **Кэшируйте зависимости** — для ускорения сборки
+5. **Тестируйте сборки** — проверяйте сборки на разных платформах
+6. **Используйте build tags** — для условной компиляции
+7. **Встраивайте версию** — для отслеживания развернутых версий
+8. **Используйте статическую сборку** — для упрощения развертывания
+9. **Оптимизируйте `Docker` образы** — используйте **scratch** или **alpine**
+10. **Автоматизируйте сборку** — используйте `CI/CD`
+11. **Используйте Makefile** — для стандартизации сборки
+12. **Используйте версионирование** — встраивайте информацию о версии
+13. **Используйте race detector** — для обнаружения **race conditions**
+14. **Оптимизируйте размер** — минимизируйте размер бинарников
+15. **Документируйте процесс сборки** — описывайте требования и шаги
 
 
 ## Решение проблем
@@ -1184,3 +1184,11 @@ go test -race ./...
 
 - [Go Build Documentation](https://pkg.go.dev/cmd/go#hdr-Build_packages_and_dependencies)
 - [Go Cross Compilation](https://go.dev/wiki/CrossCompiling)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-collections|Go: коллекции]]

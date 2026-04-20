@@ -68,20 +68,20 @@ QuadTree — дерево, у каждого узла до четырех пот
 public class Point {
     private float x;
     private float y;
-    
+
     public Point(float x, float y) {
         this.x = x;
         this.y = y;
     }
-    
+
     public float getX() {
         return x;
     }
-    
+
     public float getY() {
         return y;
     }
-    
+
     @Override
     public String toString() {
         return "[" + x + ", " + y + "]";
@@ -98,37 +98,37 @@ public class Region {
     private float y1;
     private float x2;
     private float y2;
-    
+
     public Region(float x1, float y1, float x2, float y2) {
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
     }
-    
+
     public float getX1() {
         return x1;
     }
-    
+
     public float getY1() {
         return y1;
     }
-    
+
     public float getX2() {
         return x2;
     }
-    
+
     public float getY2() {
         return y2;
     }
-    
+
     public boolean containsPoint(Point point) {
         return point.getX() >= this.x1
             && point.getX() < this.x2
             && point.getY() >= this.y1
             && point.getY() < this.y2;
     }
-    
+
     public boolean doesOverlap(Region testRegion) {
         if (testRegion.getX2() < this.getX1()) {
             return false;
@@ -144,11 +144,11 @@ public class Region {
         }
         return true;
     }
-    
+
     public Region getQuadrant(int quadrantIndex) {
         float quadrantWidth = (this.x2 - this.x1) / 2;
         float quadrantHeight = (this.y2 - this.y1) / 2;
-        
+
         switch (quadrantIndex) {
             case 0:
                 return new Region(x1, y1, x1 + quadrantWidth, y1 + quadrantHeight);
@@ -176,11 +176,11 @@ public class QuadTree {
     private Region area;
     private List<Point> points = new ArrayList<>();
     private List<QuadTree> quadTrees = new ArrayList<>();
-    
+
     public QuadTree(Region area) {
         this.area = area;
     }
-    
+
     public boolean addPoint(Point point) {
         if (this.area.containsPoint(point)) {
             if (this.points.size() < MAX_POINTS) {
@@ -195,7 +195,7 @@ public class QuadTree {
         }
         return false;
     }
-    
+
     private boolean addPointToOneQuadrant(Point point) {
         boolean isPointAdded;
         for (int i = 0; i < 4; i++) {
@@ -206,7 +206,7 @@ public class QuadTree {
         }
         return false;
     }
-    
+
     private void createQuadrants() {
         Region region;
         for (int i = 0; i < 4; i++) {
@@ -214,12 +214,12 @@ public class QuadTree {
             quadTrees.add(new QuadTree(region));
         }
     }
-    
+
     public List<Point> search(Region searchRegion, List<Point> matches) {
         if (matches == null) {
             matches = new ArrayList<Point>();
         }
-        
+
         if (!this.area.doesOverlap(searchRegion)) {
             return matches;
         } else {
@@ -228,14 +228,14 @@ public class QuadTree {
                     matches.add(point);
                 }
             }
-            
+
             if (this.quadTrees.size() > 0) {
                 for (int i = 0; i < 4; i++) {
                     quadTrees.get(i).search(searchRegion, matches);
                 }
             }
         }
-        
+
         return matches;
     }
 }
@@ -297,7 +297,7 @@ public List<Point> findKNearestNeighbors(Point queryPoint, int k) {
     // Расширяем searchRadius, пока в области не наберётся >= k точек
     float searchRadius = 10.0f;
     List<Point> neighbors = new ArrayList<>();
-    
+
     while (neighbors.size() < k) {
         Region searchArea = new Region(
             queryPoint.getX() - searchRadius,
@@ -305,9 +305,9 @@ public List<Point> findKNearestNeighbors(Point queryPoint, int k) {
             queryPoint.getX() + searchRadius,
             queryPoint.getY() + searchRadius
         );
-        
+
         neighbors = search(searchArea, null);
-        
+
         if (neighbors.size() >= k) {
             // Сортируем по расстоянию и берем k ближайших
             neighbors.sort((p1, p2) -> {
@@ -317,10 +317,10 @@ public List<Point> findKNearestNeighbors(Point queryPoint, int k) {
             });
             return neighbors.subList(0, k);
         }
-        
+
         searchRadius *= 2;  // Увеличиваем радиус поиска
     }
-    
+
     return neighbors;
 }
 
@@ -340,11 +340,11 @@ public boolean removePoint(Point point) {
     if (!this.area.containsPoint(point)) {
         return false;
     }
-    
+
     if (this.points.remove(point)) {
         return true;
     }
-    
+
     if (this.quadTrees.size() > 0) {
         for (QuadTree quadTree : quadTrees) {
             if (quadTree.removePoint(point)) {
@@ -352,7 +352,7 @@ public boolean removePoint(Point point) {
             }
         }
     }
-    
+
     return false;
 }
 ```
@@ -366,21 +366,21 @@ public int countPointsInRegion(Region searchRegion) {
     if (!this.area.doesOverlap(searchRegion)) {
         return 0;
     }
-    
+
     int count = 0;
-    
+
     for (Point point : points) {
         if (searchRegion.containsPoint(point)) {
             count++;
         }
     }
-    
+
     if (this.quadTrees.size() > 0) {
         for (QuadTree quadTree : quadTrees) {
             count += quadTree.countPointsInRegion(searchRegion);
         }
     }
-    
+
     return count;
 }
 ```
@@ -408,18 +408,18 @@ data class RegionK(
             && point.y >= this.y1
             && point.y < this.y2
     }
-    
+
     fun doesOverlap(testRegion: RegionK): Boolean {
         return !(testRegion.x2 < this.x1
             || testRegion.x1 > this.x2
             || testRegion.y1 > this.y2
             || testRegion.y2 < this.y1)
     }
-    
+
     fun getQuadrant(quadrantIndex: Int): RegionK {
         val quadrantWidth = (this.x2 - this.x1) / 2
         val quadrantHeight = (this.y2 - this.y1) / 2
-        
+
         return when (quadrantIndex) {
             0 -> RegionK(x1, y1, x1 + quadrantWidth, y1 + quadrantHeight)
             1 -> RegionK(x1 + quadrantWidth, y1, x2, y1 + quadrantHeight)
@@ -439,61 +439,61 @@ class QuadTreeK(
 ) {
     private val points = mutableListOf<PointK>()
     private val quadTrees = mutableListOf<QuadTreeK>()
-    
+
     fun insert(point: PointK): Boolean {
         if (!this.area.containsPoint(point)) {
             return false
         }
-        
+
         if (this.points.size < bucketCapacity) {
             this.points.add(point)
             return true
         }
-        
+
         if (this.quadTrees.isEmpty()) {
             createQuadrants()
         }
-        
+
         return quadTrees.any { it.insert(point) }
     }
-    
+
     private fun createQuadrants() {
         for (i in 0 until 4) {
             quadTrees.add(QuadTreeK(area.getQuadrant(i), bucketCapacity))
         }
     }
-    
+
     fun search(searchArea: RegionK, foundPoints: MutableList<PointK>? = null): List<PointK> {
         val pointsInRange = foundPoints ?: mutableListOf()
-        
+
         if (!this.area.doesOverlap(searchArea)) {
             return pointsInRange
         }
-        
+
         for (point in points) {
             if (searchArea.containsPoint(point)) {
                 pointsInRange.add(point)
             }
         }
-        
+
         if (quadTrees.isNotEmpty()) {
             for (quadTree in quadTrees) {
                 quadTree.search(searchArea, pointsInRange)
             }
         }
-        
+
         return pointsInRange
     }
-    
+
     fun removePoint(point: PointK): Boolean {
         if (!this.area.containsPoint(point)) {
             return false
         }
-        
+
         if (points.remove(point)) {
             return true
         }
-        
+
         return quadTrees.any { it.removePoint(point) }
     }
 }
@@ -504,7 +504,7 @@ class QuadTreeK(
 fun QuadTreeK.findKNearestNeighborsK(queryPoint: PointK, k: Int): List<PointK> {
     var searchRadius = 10.0f
     var neighbors = mutableListOf<PointK>()
-    
+
     while (neighbors.size < k) {
         val searchArea = RegionK(
             queryPoint.x - searchRadius,
@@ -512,9 +512,9 @@ fun QuadTreeK.findKNearestNeighborsK(queryPoint: PointK, k: Int): List<PointK> {
             queryPoint.x + searchRadius,
             queryPoint.y + searchRadius
         )
-        
+
         neighbors = search(searchArea).toMutableList()
-        
+
         if (neighbors.size >= k) {
             neighbors.sortBy { p ->
                 val dx = p.x - queryPoint.x
@@ -523,10 +523,10 @@ fun QuadTreeK.findKNearestNeighborsK(queryPoint: PointK, k: Int): List<PointK> {
             }
             return neighbors.take(k)
         }
-        
+
         searchRadius *= 2
     }
-    
+
     return neighbors
 }
 
@@ -540,11 +540,11 @@ private fun euclideanDistanceK(p1: PointK, p2: PointK): Double {
 ```kotlin
 fun main() {
     val quadTree = QuadTreeK(RegionK(0f, 0f, 400f, 400f))
-    
+
     quadTree.insert(PointK(21f, 25f))
     quadTree.insert(PointK(55f, 53f))
     quadTree.insert(PointK(70f, 318f))
-    
+
     val searchArea = RegionK(0f, 0f, 100f, 100f)
     val result = quadTree.search(searchArea)
     println(result) // [[21.0, 25.0], [55.0, 53.0]]

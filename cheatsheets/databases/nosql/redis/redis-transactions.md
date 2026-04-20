@@ -35,7 +35,7 @@ related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 - [Базовые транзакции](#базовые-транзакции)
   - [Простая транзакция](#простая-транзакция)
   - [Отмена транзакции](#отмена-транзакции)
-- [**WATCH** - Оптимистическая блокировка](#watch-оптимистическая-блокировка)
+- [**WATCH** — Оптимистическая блокировка](#watch-оптимистическая-блокировка)
   - [Базовое использование](#базовое-использование)
   - [Пример использования](#пример-использования)
 - [Обработка ошибок в транзакциях](#обработка-ошибок-в-транзакциях)
@@ -76,7 +76,6 @@ related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 - **DISCARD**: Отмена транзакции
 - **WATCH**: Оптимистическая блокировка ключей
 
----
 
 ## Базовые транзакции
 
@@ -111,9 +110,8 @@ SET key2 "value2"
 DISCARD
 ```
 
----
 
-## **WATCH** - Оптимистическая блокировка
+## **WATCH** — Оптимистическая блокировка
 
 ### Базовое использование
 
@@ -144,35 +142,35 @@ import redis.clients.jedis.exceptions.JedisException;
 
 public class MoneyTransfer {
     private JedisPool jedisPool;
-    
+
     public MoneyTransfer(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public boolean transferMoney(String fromAccount, String toAccount, int amount) {
         while (true) {
             try (Jedis jedis = jedisPool.getResource()) {
                 // Наблюдать за обоими счетами
                 jedis.watch(fromAccount, toAccount);
-                
+
                 // Получить балансы
                 String fromBalanceStr = jedis.get(fromAccount);
                 String toBalanceStr = jedis.get(toAccount);
                 int fromBalance = fromBalanceStr != null ? Integer.parseInt(fromBalanceStr) : 0;
                 int toBalance = toBalanceStr != null ? Integer.parseInt(toBalanceStr) : 0;
-                
+
                 // Проверить достаточность средств
                 if (fromBalance < amount) {
                     jedis.unwatch();
                     return false;
                 }
-                
+
                 // Начать транзакцию
                 Transaction transaction = jedis.multi();
                 transaction.set(fromAccount, String.valueOf(fromBalance - amount));
                 transaction.set(toAccount, String.valueOf(toBalance + amount));
                 List<Object> result = transaction.exec();
-                
+
                 // Если транзакция выполнена успешно
                 if (result != null && !result.isEmpty()) {
                     return true;
@@ -187,7 +185,6 @@ public class MoneyTransfer {
 }
 ```
 
----
 
 ## Обработка ошибок в транзакциях
 
@@ -216,15 +213,15 @@ import java.util.Map;
 
 public class SafeTransaction {
     private JedisPool jedisPool;
-    
+
     public SafeTransaction(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public List<Object> safeTransaction(List<Operation> operations) {
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             for (Operation op : operations) {
                 if ("set".equals(op.getType())) {
                     transaction.set(op.getKey(), op.getValue());
@@ -237,7 +234,7 @@ public class SafeTransaction {
                     transaction.incr(op.getKey());
                 }
             }
-            
+
             try {
                 return transaction.exec();
             } catch (Exception e) {
@@ -246,18 +243,17 @@ public class SafeTransaction {
             }
         }
     }
-    
+
     public static class Operation {
         private String type;
         private String key;
         private String value;
-        
+
         // Constructors, getters...
     }
 }
 ```
 
----
 
 ## Лучшие практики
 
@@ -280,28 +276,28 @@ import java.util.function.Predicate;
 
 public class ConditionalTransaction {
     private JedisPool jedisPool;
-    
+
     public ConditionalTransaction(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
-    public boolean conditionalUpdate(String key, Predicate<String> condition, 
+
+    public boolean conditionalUpdate(String key, Predicate<String> condition,
                                      Function<String, String> update) {
         while (true) {
             try (Jedis jedis = jedisPool.getResource()) {
                 jedis.watch(key);
                 String currentValue = jedis.get(key);
-                
+
                 if (!condition.test(currentValue)) {
                     jedis.unwatch();
                     return false;
                 }
-                
+
                 Transaction transaction = jedis.multi();
                 String newValue = update.apply(currentValue);
                 transaction.set(key, newValue);
                 List<Object> result = transaction.exec();
-                
+
                 if (result != null && !result.isEmpty()) {
                     return true;
                 }
@@ -325,19 +321,19 @@ import java.util.Map;
 
 public class BatchUpdate {
     private JedisPool jedisPool;
-    
+
     public BatchUpdate(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public List<Object> batchUpdate(Map<String, String> updates) {
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             for (Map.Entry<String, String> entry : updates.entrySet()) {
                 transaction.set(entry.getKey(), entry.getValue());
             }
-            
+
             return transaction.exec();
         }
     }
@@ -356,16 +352,16 @@ import java.util.List;
 public class TransactionWithRollback {
     private JedisPool jedisPool;
     private List<RollbackOperation> rollbackOps;
-    
+
     public TransactionWithRollback(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.rollbackOps = new ArrayList<>();
     }
-    
+
     public boolean executeWithRollback(List<Operation> operations) {
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             // Сохранить текущие значения для отката
             for (Operation op : operations) {
                 if ("set".equals(op.getType())) {
@@ -374,7 +370,7 @@ public class TransactionWithRollback {
                     transaction.set(op.getKey(), op.getValue());
                 }
             }
-            
+
             try {
                 List<Object> result = transaction.exec();
                 if (result != null && !result.isEmpty()) {
@@ -388,11 +384,11 @@ public class TransactionWithRollback {
             }
         }
     }
-    
+
     public void rollback() {
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             for (RollbackOperation op : rollbackOps) {
                 if ("set".equals(op.getType())) {
                     if (op.getValue() != null) {
@@ -402,23 +398,23 @@ public class TransactionWithRollback {
                     }
                 }
             }
-            
+
             transaction.exec();
             rollbackOps.clear();
         }
     }
-    
+
     private static class RollbackOperation {
         private String type;
         private String key;
         private String value;
-        
+
         RollbackOperation(String type, String key, String value) {
             this.type = type;
             this.key = key;
             this.value = value;
         }
-        
+
         String getType() { return type; }
         String getKey() { return key; }
         String getValue() { return value; }
@@ -455,7 +451,7 @@ import java.util.Map;
 public class TransactionMonitor {
     private JedisPool jedisPool;
     private Map<String, Integer> stats;
-    
+
     public TransactionMonitor(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.stats = new HashMap<>();
@@ -464,13 +460,13 @@ public class TransactionMonitor {
         this.stats.put("failed", 0);
         this.stats.put("watch_errors", 0);
     }
-    
+
     public List<Object> executeWithMonitoring(List<Operation> operations) {
         stats.put("total", stats.get("total") + 1);
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             for (Operation op : operations) {
                 if ("set".equals(op.getType())) {
                     transaction.set(op.getKey(), op.getValue());
@@ -478,9 +474,9 @@ public class TransactionMonitor {
                     transaction.get(op.getKey());
                 }
             }
-            
+
             List<Object> result = transaction.exec();
-            
+
             if (result != null && !result.isEmpty()) {
                 stats.put("successful", stats.get("successful") + 1);
                 return result;
@@ -493,7 +489,7 @@ public class TransactionMonitor {
             throw new RuntimeException(e);
         }
     }
-    
+
     public Map<String, Integer> getStats() {
         return new HashMap<>(stats);
     }
@@ -512,19 +508,19 @@ public static boolean optimisticUpdate(redis_client, key, update_func, max_retri
             redis_client.watch(key)
             current_value = redis_client.get(key)
             new_value = update_func(current_value)
-            
+
             pipe = redis_client.pipeline()
             pipe.multi()
             pipe.set(key, new_value)
             result = pipe.execute()
-            
+
             if result:
                 return new_value
         except redis.WatchError:
             if attempt == max_retries - 1:
                 raise Exception("Max retries exceeded")
             time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-    
+
     raise Exception("Failed to update")
 ```
 
@@ -534,20 +530,20 @@ public static boolean optimisticUpdate(redis_client, key, update_func, max_retri
 public static List<Object> validatedTransaction(redis_client, operations, validators):
     """Транзакция с валидацией"""
     pipe = redis_client.pipeline()
-    
+
     # Валидация перед транзакцией
     for i, op in enumerate(operations):
         if i in validators:
             validator = validators[i]
             if not validator(redis_client, op):
                 raise ValueError(f"Validation failed for operation {i}")
-    
+
     # Выполнение транзакции
     pipe.multi()
     for op in operations:
         if op['type'] == 'set':
             pipe.set(op['key'], op['value'])
-    
+
     return pipe.execute()
 ```
 
@@ -566,7 +562,7 @@ import java.util.Map;
 public class TransactionMonitor {
     private JedisPool jedisPool;
     private Map<String, Integer> stats;
-    
+
     public TransactionMonitor(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.stats = new HashMap<>();
@@ -575,13 +571,13 @@ public class TransactionMonitor {
         this.stats.put("failed", 0);
         this.stats.put("watch_errors", 0);
     }
-    
+
     public List<Object> executeWithMonitoring(List<Operation> operations) {
         stats.put("total", stats.get("total") + 1);
-        
+
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             for (Operation op : operations) {
                 if ("set".equals(op.getType())) {
                     transaction.set(op.getKey(), op.getValue());
@@ -589,9 +585,9 @@ public class TransactionMonitor {
                     transaction.get(op.getKey());
                 }
             }
-            
+
             List<Object> result = transaction.exec();
-            
+
             if (result != null && !result.isEmpty()) {
                 stats.put("successful", stats.get("successful") + 1);
                 return result;
@@ -604,7 +600,7 @@ public class TransactionMonitor {
             throw new RuntimeException(e);
         }
     }
-    
+
     public Map<String, Integer> getStats() {
         return new HashMap<>(stats);
     }
@@ -623,19 +619,19 @@ public static boolean optimisticUpdate(redis_client, key, update_func, max_retri
             redis_client.watch(key)
             current_value = redis_client.get(key)
             new_value = update_func(current_value)
-            
+
             pipe = redis_client.pipeline()
             pipe.multi()
             pipe.set(key, new_value)
             result = pipe.execute()
-            
+
             if result:
                 return new_value
         except redis.WatchError:
             if attempt == max_retries - 1:
                 raise Exception("Max retries exceeded")
             time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-    
+
     raise Exception("Failed to update")
 ```
 
@@ -645,20 +641,20 @@ public static boolean optimisticUpdate(redis_client, key, update_func, max_retri
 public static List<Object> validatedTransaction(redis_client, operations, validators):
     """Транзакция с валидацией"""
     pipe = redis_client.pipeline()
-    
+
     # Валидация перед транзакцией
     for i, op in enumerate(operations):
         if i in validators:
             validator = validators[i]
             if not validator(redis_client, op):
                 raise ValueError(f"Validation failed for operation {i}")
-    
+
     # Выполнение транзакции
     pipe.multi()
     for op in operations:
         if op['type'] == 'set':
             pipe.set(op['key'], op['value'])
-    
+
     return pipe.execute()
 ```
 
@@ -669,10 +665,10 @@ public static List<Object> batchUpdate(redis_client, updates):
     """Пакетное обновление в транзакции"""
     pipe = redis_client.pipeline()
     pipe.multi()
-    
+
     for key, value in updates.items():
         pipe.set(key, value)
-    
+
     return pipe.execute()
 ```
 
@@ -688,16 +684,16 @@ import java.util.List;
 public class TransactionWithRollback {
     private JedisPool jedisPool;
     private List<RollbackOperation> rollbackOps;
-    
+
     public TransactionWithRollback(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
         this.rollbackOps = new ArrayList<>();
     }
-    
+
     public boolean executeWithRollback(List<Operation> operations) {
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             // Сохранить текущие значения для отката
             for (Operation op : operations) {
                 if ("set".equals(op.getType())) {
@@ -706,7 +702,7 @@ public class TransactionWithRollback {
                     transaction.set(op.getKey(), op.getValue());
                 }
             }
-            
+
             try {
                 List<Object> result = transaction.exec();
                 if (result != null && !result.isEmpty()) {
@@ -720,11 +716,11 @@ public class TransactionWithRollback {
             }
         }
     }
-    
+
     public void rollback() {
         try (Jedis jedis = jedisPool.getResource()) {
             Transaction transaction = jedis.multi();
-            
+
             for (RollbackOperation op : rollbackOps) {
                 if ("set".equals(op.getType())) {
                     if (op.getValue() != null) {
@@ -734,23 +730,23 @@ public class TransactionWithRollback {
                     }
                 }
             }
-            
+
             transaction.exec();
             rollbackOps.clear();
         }
     }
-    
+
     private static class RollbackOperation {
         private String type;
         private String key;
         private String value;
-        
+
         RollbackOperation(String type, String key, String value) {
             this.type = type;
             this.key = key;
             this.value = value;
         }
-        
+
         String getType() { return type; }
         String getKey() { return key; }
         String getValue() { return value; }
@@ -772,10 +768,6 @@ public class TransactionWithRollback {
 - Необходимость обработки ошибок внутри скрипта
 - Минимизация **round-trips**
 
----
 
 - [Redis Transactions](https://redis.io/docs/manual/transactions/)
-
----
-
 

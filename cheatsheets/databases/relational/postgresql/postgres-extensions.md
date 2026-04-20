@@ -136,7 +136,7 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
 
 ## Введение в расширения **PostgreSQL**
 
-Расширения (**extensions**) - это способ добавления дополнительной функциональности в **PostgreSQL** без изменения ядра системы. Расширения могут добавлять новые типы данных, функции, операторы, индексы и многое другое.
+Расширения (**extensions**) — это способ добавления дополнительной функциональности в **PostgreSQL** без изменения ядра системы. Расширения могут добавлять новые типы данных, функции, операторы, индексы и многое другое.
 
 ### Преимущества расширений
 
@@ -145,7 +145,6 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
 - **Совместимость**: Работают с различными версиями **PostgreSQL**
 - **Расширяемость**: Можно создавать собственные расширения
 
----
 
 ## Управление расширениями
 
@@ -204,7 +203,6 @@ DROP EXTENSION extension_name;
 DROP EXTENSION extension_name CASCADE;
 ```
 
----
 
 ## Популярные расширения
 
@@ -231,7 +229,7 @@ pg_stat_statements.max = 10000
 
 ```sql
 -- Топ запросов по времени выполнения
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -242,7 +240,7 @@ ORDER BY total_exec_time DESC
 LIMIT 10;
 
 -- Топ запросов по количеству вызовов
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -391,7 +389,7 @@ INSERT INTO metrics (time, device_id, temperature, humidity)
 VALUES (NOW(), 1, 25.5, 60.0);
 
 -- Запросы с агрегацией
-SELECT 
+SELECT
     time_bucket('1 hour', time) AS hour,
     AVG(temperature) AS avg_temp
 FROM metrics
@@ -504,13 +502,12 @@ CREATE TABLE users (
 SELECT * FROM users WHERE email = 'USER@EXAMPLE.COM';
 ```
 
----
 
 ## Создание собственных расширений
 
 ### Структура расширения
 
-```
+```text
 my_extension/
 ├── Makefile
 ├── my_extension.control
@@ -566,7 +563,6 @@ sudo make install
 CREATE EXTENSION my_extension;
 ```
 
----
 
 ## Лучшие практики
 
@@ -594,7 +590,7 @@ CREATE EXTENSION my_extension;
 CREATE EXTENSION pg_buffercache;
 
 -- Просмотр содержимого буфера
-SELECT 
+SELECT
     c.relname,
     COUNT(*) AS buffers,
     pg_size_pretty(COUNT(*) * 8192) AS size
@@ -615,7 +611,7 @@ LIMIT 20;
 CREATE EXTENSION pg_freespacemap;
 
 -- Просмотр свободного места
-SELECT 
+SELECT
     c.relname,
     pg_size_pretty(pg_relation_size(c.oid)) AS relation_size,
     pg_size_pretty(SUM(fsm.avail)) AS free_space
@@ -676,7 +672,7 @@ SELECT * FROM pgrowlocks('users');
 CREATE EXTENSION pg_trgm;
 
 -- Поиск с ранжированием
-SELECT 
+SELECT
     name,
     similarity(name, 'John Doe') AS sim,
     word_similarity('John Doe', name) AS word_sim
@@ -712,7 +708,7 @@ CREATE TABLE regions (
 
 -- Вставить полигон
 INSERT INTO regions (name, boundary)
-VALUES ('Moscow Region', 
+VALUES ('Moscow Region',
     ST_GeomFromText('POLYGON((37.0 55.0, 38.0 55.0, 38.0 56.0, 37.0 56.0, 37.0 55.0))', 4326)
 );
 
@@ -793,7 +789,7 @@ CREATE TABLE metrics (
     value DOUBLE PRECISION
 );
 
-SELECT create_hypertable('metrics', 'time', 
+SELECT create_hypertable('metrics', 'time',
     chunk_time_interval => INTERVAL '1 day',
     partitioning_column => 'device_id',
     number_partitions => 4
@@ -802,7 +798,7 @@ SELECT create_hypertable('metrics', 'time',
 -- Continuous aggregates
 CREATE MATERIALIZED VIEW metrics_hourly
 WITH (timescaledb.continuous) AS
-SELECT 
+SELECT
     time_bucket('1 hour', time) AS hour,
     device_id,
     AVG(value) AS avg_value,
@@ -985,15 +981,15 @@ my_function(PG_FUNCTION_ARGS)
     text *arg = PG_GETARG_TEXT_PP(0);
     char *result;
     int len;
-    
+
     len = VARSIZE_ANY_EXHDR(arg);
     result = (char *) palloc(len + 1);
     memcpy(result, VARDATA_ANY(arg), len);
     result[len] = '\0';
-    
+
     // Обработка данных
     // ...
-    
+
     PG_RETURN_TEXT_P(cstring_to_text(result));
 }
 ```
@@ -1062,7 +1058,7 @@ SELECT install_required_extensions();
 
 ```sql
 -- Просмотр всех установленных расширений
-SELECT 
+SELECT
     e.extname AS extension_name,
     e.extversion AS version,
     n.nspname AS schema,
@@ -1075,7 +1071,7 @@ GROUP BY e.extname, e.extversion, n.nspname
 ORDER BY e.extname;
 
 -- Проверить доступные обновления
-SELECT 
+SELECT
     e.extname,
     e.extversion AS current_version,
     a.version AS available_version
@@ -1105,13 +1101,13 @@ BEGIN
         WHERE name = ext_rec.extname
         ORDER BY version DESC
         LIMIT 1;
-        
+
         IF new_ver > ext_rec.extversion THEN
             -- Обновить расширение
-            EXECUTE format('ALTER EXTENSION %I UPDATE TO %L', 
+            EXECUTE format('ALTER EXTENSION %I UPDATE TO %L',
                 ext_rec.extname, new_ver);
-            
-            RETURN QUERY SELECT 
+
+            RETURN QUERY SELECT
                 ext_rec.extname::TEXT,
                 ext_rec.extversion::TEXT,
                 new_ver;
@@ -1151,7 +1147,7 @@ $$ LANGUAGE plpgsql;
 ```sql
 -- Создать представление для анализа запросов
 CREATE VIEW slow_queries AS
-SELECT 
+SELECT
     query,
     calls,
     total_exec_time,
@@ -1176,7 +1172,7 @@ CREATE OR REPLACE FUNCTION fuzzy_search(search_term TEXT, threshold REAL DEFAULT
 RETURNS TABLE(id INTEGER, name TEXT, similarity REAL) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         u.id,
         u.name,
         similarity(u.name, search_term) AS sim
@@ -1205,9 +1201,9 @@ DECLARE
     point GEOGRAPHY;
 BEGIN
     point := ST_GeogFromText(format('POINT(%s %s)', lon, lat), 4326);
-    
+
     RETURN QUERY
-    SELECT 
+    SELECT
         l.id,
         l.name,
         ST_Distance(l.location, point) AS distance
@@ -1226,7 +1222,7 @@ SELECT * FROM find_nearby_locations(55.7558, 37.6173, 5000);
 
 ```sql
 -- Настроить автоматическое обслуживание
-SELECT cron.schedule('vacuum-analyze', '0 3 * * *', 
+SELECT cron.schedule('vacuum-analyze', '0 3 * * *',
     $$VACUUM ANALYZE users;$$);
 
 SELECT cron.schedule('update-stats', '*/30 * * * *',
@@ -1253,7 +1249,7 @@ SELECT create_hypertable('sensor_metrics', 'time');
 -- Continuous aggregate для дашборда
 CREATE MATERIALIZED VIEW sensor_metrics_hourly
 WITH (timescaledb.continuous) AS
-SELECT 
+SELECT
     time_bucket('1 hour', time) AS hour,
     sensor_id,
     AVG(temperature) AS avg_temp,
@@ -1298,7 +1294,7 @@ rpm -qa | grep postgresql
 SELECT * FROM pg_settings WHERE name LIKE '%extension%';
 
 -- Проверить использование ресурсов
-SELECT 
+SELECT
     pid,
     usename,
     application_name,
@@ -1317,10 +1313,10 @@ SELECT pg_reload_conf();
 
 ```sql
 -- Проверить версии расширений
-SELECT 
+SELECT
     extname,
     extversion,
-    (SELECT version FROM pg_available_extension_versions 
+    (SELECT version FROM pg_available_extension_versions
      WHERE name = extname ORDER BY version DESC LIMIT 1) AS latest_version
 FROM pg_extension;
 
@@ -1449,7 +1445,7 @@ ALTER EXTENSION my_extension UPDATE TO '1.0';
 
 ### Структура проекта
 
-```
+```text
 my_extension/
 ├── Makefile
 ├── my_extension.control
@@ -1489,10 +1485,10 @@ SELECT * FROM test_results;
 -- Добавить комментарии
 COMMENT ON EXTENSION my_extension IS 'My custom extension for PostgreSQL';
 
-COMMENT ON FUNCTION my_function(TEXT) IS 
+COMMENT ON FUNCTION my_function(TEXT) IS
     'My function does something useful';
 
-COMMENT ON TYPE my_type IS 
+COMMENT ON TYPE my_type IS
     'My custom type for storing data';
 ```
 
@@ -1545,7 +1541,7 @@ sudo apt-get install postgresql-14-my-extension
 ```sql
 -- Создать представление для мониторинга
 CREATE VIEW extension_usage AS
-SELECT 
+SELECT
     e.extname,
     COUNT(DISTINCT d.objid) AS objects_count,
     pg_size_pretty(SUM(pg_total_relation_size(c.oid))) AS total_size
@@ -1577,10 +1573,10 @@ BEGIN
             WHERE name = ext_rec.extname
             AND version > ext_rec.extversion
         ) THEN
-            RETURN QUERY SELECT 
+            RETURN QUERY SELECT
                 ext_rec.extname::TEXT,
                 'UPDATE_AVAILABLE'::TEXT,
-                format('Update available: %s -> %s', 
+                format('Update available: %s -> %s',
                     ext_rec.extversion,
                     (SELECT version FROM pg_available_extension_versions
                      WHERE name = ext_rec.extname ORDER BY version DESC LIMIT 1)
@@ -1608,7 +1604,7 @@ BEGIN
     LOOP
         -- Обновить статистику для объектов расширения
         EXECUTE format('ANALYZE %I', ext_rec.extname);
-        
+
         -- Логировать
         RAISE NOTICE 'Maintained extension: %', ext_rec.extname;
     END LOOP;
@@ -1616,7 +1612,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Запланировать через pg_cron
-SELECT cron.schedule('maintain-extensions', '0 4 * * 0', 
+SELECT cron.schedule('maintain-extensions', '0 4 * * 0',
     'SELECT maintain_extensions();');
 ```
 
@@ -1624,7 +1620,7 @@ SELECT cron.schedule('maintain-extensions', '0 4 * * 0',
 
 ```sql
 -- Найти неиспользуемые расширения
-SELECT 
+SELECT
     e.extname,
     COUNT(DISTINCT d.objid) AS objects_count
 FROM pg_extension e
@@ -1669,7 +1665,7 @@ CREATE INDEX idx_name_fts ON users USING gin(to_tsvector('english', name));
 
 ```sql
 -- Проверить зависимости расширения
-SELECT 
+SELECT
     e.extname AS extension,
     d.objid::regclass AS dependent_object,
     d.deptype AS dependency_type
@@ -1678,7 +1674,7 @@ JOIN pg_depend d ON d.refobjid = e.oid
 WHERE e.extname = 'my_extension';
 
 -- Найти расширения, зависящие от другого
-SELECT 
+SELECT
     e.extname AS extension,
     d.refobjid::regclass AS depends_on
 FROM pg_extension e
@@ -1773,12 +1769,12 @@ SELECT * FROM users WHERE name % 'John';
 \timing on
 
 -- Без индекса
-SELECT * FROM locations 
+SELECT * FROM locations
 WHERE ST_DWithin(location, ST_GeogFromText('POINT(37.6173 55.7558)', 4326), 1000);
 
 -- С индексом
 CREATE INDEX idx_locations_location ON locations USING gist(location);
-SELECT * FROM locations 
+SELECT * FROM locations
 WHERE ST_DWithin(location, ST_GeogFromText('POINT(37.6173 55.7558)', 4326), 1000);
 
 \timing off
@@ -1826,7 +1822,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         'function'::TEXT,
         p.proname::TEXT,
         obj_description(p.oid, 'pg_proc')::TEXT
@@ -1836,7 +1832,7 @@ BEGIN
     JOIN pg_extension e ON d.refobjid = e.oid
     WHERE e.extname = ext_name
     UNION ALL
-    SELECT 
+    SELECT
         'type'::TEXT,
         t.typname::TEXT,
         obj_description(t.oid, 'pg_type')::TEXT
@@ -1899,13 +1895,9 @@ jobs:
           psql -d test_db -f test/sql/test.sql
 ```
 
----
 
-- [`PostgreSQL Extensions`](https://www.postgresql.org/docs/)
-- [`PostGIS Documentation`](https://www.postgresql.org/docs/)
-- [`TimescaleDB Documentation`](https://www.postgresql.org/docs/)
-- [`pg_cron Documentation`](https://www.postgresql.org/docs/)
-
----
-
+- [PostgreSQL Extensions](https://www.postgresql.org/docs/)
+- [PostGIS Documentation](https://www.postgresql.org/docs/)
+- [TimescaleDB Documentation](https://www.postgresql.org/docs/)
+- [pg_cron Documentation](https://www.postgresql.org/docs/)
 

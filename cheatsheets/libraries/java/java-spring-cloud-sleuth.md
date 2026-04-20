@@ -2370,7 +2370,13 @@ public class BadPerformanceTracing {
 
 **Spring Cloud Sleuth** рекомендуется как основной выбор для **distributed tracing** в **Spring Boot** приложениях, особенно в микросервисных архитектурах.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-apache-httpclient|Apache HttpClient: Мощный HTTP клиент для Java]]
+- [[java-apache-poi|Apache POI]]
+- [[java-bean-validation|Bean Validation (JSR-380 / Jakarta Validation 3.0)]]
+- [[java-hikaricp|HikariCP: Высокопроизводительный Connection Pool]]
+- [[java-http-clients|HTTP-клиенты в Java]]

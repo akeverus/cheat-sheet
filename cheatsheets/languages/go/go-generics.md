@@ -75,10 +75,10 @@ updated: "2026-02-06"
 
 ### Преимущества **Generics**
 
-1. **Типобезопасность** - проверка типов на этапе компиляции
-2. **Переиспользование кода** - один код для различных типов
-3. **Производительность** - нет накладных расходов **runtime**
-4. **Читаемость** - более выразительный код
+1. **Типобезопасность** — проверка типов на этапе компиляции
+2. **Переиспользование кода** — один код для различных типов
+3. **Производительность** — нет накладных расходов **runtime**
+4. **Читаемость** — более выразительный код
 
 ### Когда использовать **Generics**
 
@@ -437,11 +437,11 @@ func Values[K comparable, V any](m map[K]V) []V {
 func Sort[T comparable](slice []T, less func(T, T) bool) []T {
     result := make([]T, len(slice))
     copy(result, slice)
-    
+
     sort.Slice(result, func(i, j int) bool {
         return less(result[i], result[j])
     })
-    
+
     return result
 }
 
@@ -449,11 +449,11 @@ func Sort[T comparable](slice []T, less func(T, T) bool) []T {
 func SortBy[T any, K comparable](slice []T, key func(T) K) []T {
     result := make([]T, len(slice))
     copy(result, slice)
-    
+
     sort.Slice(result, func(i, j int) bool {
         return key(result[i]) < key(result[j])
     })
-    
+
     return result
 }
 ```
@@ -503,7 +503,7 @@ func Zip[T, U any](slice1 []T, slice2 []U) []Pair[T, U] {
     if len(slice2) < minLen {
         minLen = len(slice2)
     }
-    
+
     result := make([]Pair[T, U], minLen)
     for i := 0; i < minLen; i++ {
         result[i] = Pair[T, U]{First: slice1[i], Second: slice2[i]}
@@ -524,14 +524,14 @@ type Pair[T, U any] struct {
 func Unique[T comparable](slice []T) []T {
     seen := make(map[T]bool)
     var result []T
-    
+
     for _, v := range slice {
         if !seen[v] {
             seen[v] = true
             result = append(result, v)
         }
     }
-    
+
     return result
 }
 
@@ -539,7 +539,7 @@ func Unique[T comparable](slice []T) []T {
 func DistinctBy[T any, K comparable](slice []T, key func(T) K) []T {
     seen := make(map[K]bool)
     var result []T
-    
+
     for _, v := range slice {
         k := key(v)
         if !seen[k] {
@@ -547,7 +547,7 @@ func DistinctBy[T any, K comparable](slice []T, key func(T) K) []T {
             result = append(result, v)
         }
     }
-    
+
     return result
 }
 ```
@@ -634,15 +634,15 @@ func (h *Heap[T]) Pop() (T, bool) {
         var zero T
         return zero, false
     }
-    
+
     item := h.items[0]
     h.items[0] = h.items[len(h.items)-1]
     h.items = h.items[:len(h.items)-1]
-    
+
     if len(h.items) > 0 {
         h.down(0)
     }
-    
+
     return item, true
 }
 
@@ -662,18 +662,18 @@ func (h *Heap[T]) down(i int) {
         left := 2*i + 1
         right := 2*i + 2
         smallest := i
-        
+
         if left < len(h.items) && h.less(h.items[left], h.items[smallest]) {
             smallest = left
         }
         if right < len(h.items) && h.less(h.items[right], h.items[smallest]) {
             smallest = right
         }
-        
+
         if smallest == i {
             break
         }
-        
+
         h.items[i], h.items[smallest] = h.items[smallest], h.items[i]
         i = smallest
     }
@@ -699,7 +699,7 @@ func NewLinkedList[T any]() *LinkedList[T] {
 
 func (l *LinkedList[T]) Append(value T) {
     newNode := &Node[T]{Value: value}
-    
+
     if l.head == nil {
         l.head = newNode
     } else {
@@ -709,7 +709,7 @@ func (l *LinkedList[T]) Append(value T) {
         }
         current.Next = newNode
     }
-    
+
     l.size++
 }
 
@@ -724,12 +724,12 @@ func (l *LinkedList[T]) Get(index int) (T, bool) {
         var zero T
         return zero, false
     }
-    
+
     current := l.head
     for i := 0; i < index; i++ {
         current = current.Next
     }
-    
+
     return current.Value, true
 }
 
@@ -737,7 +737,7 @@ func (l *LinkedList[T]) Remove(index int) bool {
     if index < 0 || index >= l.size {
         return false
     }
-    
+
     if index == 0 {
         l.head = l.head.Next
     } else {
@@ -747,7 +747,7 @@ func (l *LinkedList[T]) Remove(index int) bool {
         }
         current.Next = current.Next.Next
     }
-    
+
     l.size--
     return true
 }
@@ -779,13 +779,13 @@ func (t *BinaryTree[T]) insertNode(node *TreeNode[T], value T) *TreeNode[T] {
     if node == nil {
         return &TreeNode[T]{Value: value}
     }
-    
+
     if t.less(value, node.Value) {
         node.Left = t.insertNode(node.Left, value)
     } else {
         node.Right = t.insertNode(node.Right, value)
     }
-    
+
     return node
 }
 
@@ -797,15 +797,15 @@ func (t *BinaryTree[T]) searchNode(node *TreeNode[T], value T) bool {
     if node == nil {
         return false
     }
-    
+
     if node.Value == value {
         return true
     }
-    
+
     if t.less(value, node.Value) {
         return t.searchNode(node.Left, value)
     }
-    
+
     return t.searchNode(node.Right, value)
 }
 ```
@@ -826,7 +826,7 @@ func NewCache[K comparable, V any](ttl time.Duration) *Cache[K, V] {
         ttl:   ttl,
         times: make(map[K]time.Time),
     }
-    
+
     go c.cleanup()
     return c
 }
@@ -834,25 +834,25 @@ func NewCache[K comparable, V any](ttl time.Duration) *Cache[K, V] {
 func (c *Cache[K, V]) Get(key K) (V, bool) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     value, exists := c.data[key]
     if !exists {
         var zero V
         return zero, false
     }
-    
+
     if time.Since(c.times[key]) > c.ttl {
         var zero V
         return zero, false
     }
-    
+
     return value, true
 }
 
 func (c *Cache[K, V]) Set(key K, value V) {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.data[key] = value
     c.times[key] = time.Now()
 }
@@ -860,7 +860,7 @@ func (c *Cache[K, V]) Set(key K, value V) {
 func (c *Cache[K, V]) cleanup() {
     ticker := time.NewTicker(c.ttl)
     defer ticker.Stop()
-    
+
     for range ticker.C {
         c.mu.Lock()
         for key, t := range c.times {
@@ -900,32 +900,32 @@ func NewInMemoryRepository[T any, ID comparable](getID func(T) ID) *InMemoryRepo
 func (r *InMemoryRepository[T, ID]) FindByID(id ID) (T, error) {
     r.mu.RLock()
     defer r.mu.RUnlock()
-    
+
     entity, exists := r.data[id]
     if !exists {
         var zero T
         return zero, fmt.Errorf("entity not found")
     }
-    
+
     return entity, nil
 }
 
 func (r *InMemoryRepository[T, ID]) FindAll() ([]T, error) {
     r.mu.RLock()
     defer r.mu.RUnlock()
-    
+
     result := make([]T, 0, len(r.data))
     for _, entity := range r.data {
         result = append(result, entity)
     }
-    
+
     return result, nil
 }
 
 func (r *InMemoryRepository[T, ID]) Save(entity T) error {
     r.mu.Lock()
     defer r.mu.Unlock()
-    
+
     id := r.getID(entity)
     r.data[id] = entity
     return nil
@@ -934,11 +934,11 @@ func (r *InMemoryRepository[T, ID]) Save(entity T) error {
 func (r *InMemoryRepository[T, ID]) Delete(id ID) error {
     r.mu.Lock()
     defer r.mu.Unlock()
-    
+
     if _, exists := r.data[id]; !exists {
         return fmt.Errorf("entity not found")
     }
-    
+
     delete(r.data, id)
     return nil
 }
@@ -1043,14 +1043,14 @@ func (tn *TreeNode[T]) Search(value T) bool {
     if tn.Value == value {
         return true
     }
-    
+
     if value < tn.Value {
         if tn.Left == nil {
             return false
         }
         return tn.Left.Search(value)
     }
-    
+
     if tn.Right == nil {
         return false
     }
@@ -1102,16 +1102,16 @@ func (g *Graph[T]) BFS(start T, visit func(T)) {
     queue := []T{start}
     visited[start] = true
     g.mu.RUnlock()
-    
+
     for len(queue) > 0 {
         node := queue[0]
         queue = queue[1:]
         visit(node)
-        
+
         g.mu.RLock()
         neighbors := g.nodes[node]
         g.mu.RUnlock()
-        
+
         for _, neighbor := range neighbors {
             if !visited[neighbor] {
                 visited[neighbor] = true
@@ -1130,14 +1130,14 @@ func (g *Graph[T]) dfsHelper(node T, visit func(T), visited map[T]bool) {
     if visited[node] {
         return
     }
-    
+
     visited[node] = true
     visit(node)
-    
+
     g.mu.RLock()
     neighbors := g.nodes[node]
     g.mu.RUnlock()
-    
+
     for _, neighbor := range neighbors {
         g.dfsHelper(neighbor, visit, visited)
     }
@@ -1213,7 +1213,7 @@ func (pq *PriorityQueue[T]) Dequeue() (T, bool) {
         var zero T
         return zero, false
     }
-    
+
     item := heap.Pop(pq).(*priorityItem[T])
     return item.value, true
 }
@@ -1246,7 +1246,7 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 func (c *Cache[K, V]) Set(key K, value V) {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     if len(c.data) >= c.maxSize && len(c.data) > 0 {
         // LRU eviction
         for k, v := range c.data {
@@ -1257,7 +1257,7 @@ func (c *Cache[K, V]) Set(key K, value V) {
             break
         }
     }
-    
+
     c.data[key] = value
 }
 
@@ -1305,11 +1305,11 @@ func NewConfig(opts ...Option[Config]) *Config {
         Timeout:    30 * time.Second,
         MaxRetries: 3,
     }
-    
+
     for _, opt := range opts {
         opt(c)
     }
-    
+
     return c
 }
 
@@ -1323,21 +1323,21 @@ config := NewConfig(
 
 ## Лучшие практики
 
-1. **Используйте constraints** - ограничивайте типы для безопасности
-2. **Избегайте излишней обобщенности** - используйте **generics** только когда это необходимо
-3. **Используйте type inference** - позволяйте компилятору выводить типы
-4. **Документируйте constraints** - объясняйте ограничения типов
-5. **Тестируйте с различными типами** - проверяйте работу с разными типами
-6. **Используйте конкретные типы когда возможно** - избегайте излишней обобщенности
-7. **Оптимизируйте производительность** - **generics** не добавляют **runtime overhead**
-8. **Используйте именованные constraints** - для переиспользования
-9. **Избегайте сложных constraints** - упрощайте ограничения типов
-10. **Тестируйте edge cases** - проверяйте граничные случаи
-11. **Используйте generic утилиты** - для часто используемых операций
-12. **Избегайте type assertions** - используйте **generics** вместо **type assertions**
-13. **Используйте constraints для ограничений** - применяйте **constraints** для безопасности
-14. **Документируйте generic функции** - объясняйте использование **generics**
-15. **Тестируйте производительность** - убедитесь, что **generics** не снижают производительность
+1. **Используйте constraints** — ограничивайте типы для безопасности
+2. **Избегайте излишней обобщенности** — используйте **generics** только когда это необходимо
+3. **Используйте type inference** — позволяйте компилятору выводить типы
+4. **Документируйте constraints** — объясняйте ограничения типов
+5. **Тестируйте с различными типами** — проверяйте работу с разными типами
+6. **Используйте конкретные типы когда возможно** — избегайте излишней обобщенности
+7. **Оптимизируйте производительность** — **generics** не добавляют **runtime overhead**
+8. **Используйте именованные constraints** — для переиспользования
+9. **Избегайте сложных constraints** — упрощайте ограничения типов
+10. **Тестируйте edge cases** — проверяйте граничные случаи
+11. **Используйте generic утилиты** — для часто используемых операций
+12. **Избегайте type assertions** — используйте **generics** вместо **type assertions**
+13. **Используйте constraints для ограничений** — применяйте **constraints** для безопасности
+14. **Документируйте generic функции** — объясняйте использование **generics**
+15. **Тестируйте производительность** — убедитесь, что **generics** не снижают производительность
 
 ### Практические примеры: **Generic** структуры данных
 
@@ -1362,7 +1362,7 @@ func (s *Stack[T]) Pop() (T, bool) {
         var zero T
         return zero, false
     }
-    
+
     item := s.items[len(s.items)-1]
     s.items = s.items[:len(s.items)-1]
     return item, true
@@ -1394,21 +1394,21 @@ func Sort[T any](slice []T, less func(T, T) bool) {
 // Generic бинарный поиск
 func BinarySearch[T comparable](slice []T, target T, less func(T, T) bool) int {
     left, right := 0, len(slice)-1
-    
+
     for left <= right {
         mid := (left + right) / 2
-        
+
         if slice[mid] == target {
             return mid
         }
-        
+
         if less(slice[mid], target) {
             left = mid + 1
         } else {
             right = mid - 1
         }
     }
-    
+
     return -1
 }
 ```
@@ -1431,3 +1431,11 @@ func BinarySearch[T comparable](slice []T, target T, less func(T, T) bool) int {
 - [Go Generics Tutorial](https://go.dev/doc/tutorial/generics)
 - [Go Generics Proposal](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md)
 - [Type Parameters Proposal](https://go.dev/blog/intro-generics)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

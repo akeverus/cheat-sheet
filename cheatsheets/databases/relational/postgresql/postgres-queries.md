@@ -14,21 +14,19 @@ updated: "2026-02-11"
 
 Кратко: выборка, сортировка, пагинация, агрегаты, группировка и подзапросы.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [`PostgreSQL Documentation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
-### **Baeldung**
+### Обучающие материалы
 
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [`postgres-data-ops`](postgres-data-ops.md) — [`postgres-joins`](postgres-joins.md) — [`postgres-indexes`](postgres-indexes.md).
+См. также: [[postgres-data-ops]] — [[postgres-joins]] — [[postgres-indexes]].
 
 ## Содержание
 
@@ -263,7 +261,7 @@ FROM Products;
 **Пример:**
 ```sql
 -- Получить самый дорогой товар каждого производителя
-SELECT DISTINCT ON (Manufacturer) 
+SELECT DISTINCT ON (Manufacturer)
     Manufacturer, ProductName, Price
 FROM Products
 ORDER BY Manufacturer, Price DESC;
@@ -672,7 +670,7 @@ SELECT STRING_AGG(ProductName, ', ' ORDER BY ProductName) FROM Products;
 
 **Комбинирование агрегатных функций:**
 ```sql
-SELECT 
+SELECT
     COUNT(*) AS ProdCount,
     SUM(ProductCount) AS TotalCount,
     MIN(Price) AS MinPrice,
@@ -1004,9 +1002,9 @@ WITH RECURSIVE tree AS (
     SELECT id, name, parent_id, 1 AS level
     FROM categories
     WHERE parent_id IS NULL
-    
+
     UNION ALL
-    
+
     -- Рекурсивная часть
     SELECT c.id, c.name, c.parent_id, t.level + 1
     FROM categories c
@@ -1036,4 +1034,10 @@ SELECT * FROM tree;
 
 **Неожиданные или пустые результаты:** проверьте условия в `WHERE` (NULL, типы, регистр), уровень изоляции транзакций и влияние видимости строк (MVCC). При чтении с реплики учитывайте задержку репликации.
 
+## См. также
 
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]

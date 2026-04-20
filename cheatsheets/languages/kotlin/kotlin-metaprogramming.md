@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Annotations](https://kotlinlang.org/docs/annotations.html)
 - [KSP Overview](https://kotlinlang.org/docs/ksp-overview.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Annotation Processing](https://www.baeldung.com/kotlin/annotation-processing)
 
 ### См. также
@@ -100,13 +100,13 @@ updated: "2026-02-11"
 
 ## Введение в метапрограммирование
 
-Метапрограммирование - это техника написания программ, которые генерируют или модифицируют другие программы.
+Метапрограммирование — это техника написания программ, которые генерируют или модифицируют другие программы.
 
 ### Типы метапрограммирования в **Kotlin**
 
-1. **Compile-time** - обработка аннотаций (**KAPT, KSP**)
-2. **Runtime** - рефлексия
-3. **Code Generation** - генерация кода
+1. **Compile-time** — обработка аннотаций (**KAPT, KSP**)
+2. **Runtime** — рефлексия
+3. **Code Generation** — генерация кода
 
 ### Преимущества
 
@@ -150,7 +150,7 @@ fun getUsers(): List<User> {
 data class User(
     @Column("id", nullable = false)
     val id: Int,
-    
+
     @Column("name")
     val name: String
 )
@@ -179,7 +179,7 @@ fun processFunction(function: KFunction<*>) {
 
 ## **KAPT** (**Kotlin `Annotation Processing` Tool**)
 
-**KAPT** (**Kotlin `Annotation Processing` Tool**) - это инструмент для обработки аннотаций в **Kotlin**, который обеспечивает совместимость с существующими **Java Annotation Processors**. **KAPT** работает путем генерации **Java stubs** из **Kotlin** кода, которые затем обрабатываются стандартными **Java** процессорами аннотаций.
+**KAPT** (**Kotlin `Annotation Processing` Tool**) — это инструмент для обработки аннотаций в **Kotlin**, который обеспечивает совместимость с существующими **Java Annotation Processors**. **KAPT** работает путем генерации **Java stubs** из **Kotlin** кода, которые затем обрабатываются стандартными **Java** процессорами аннотаций.
 
 **KAPT** был первым решением для обработки аннотаций в **Kotlin** и до сих пор широко используется, особенно в проектах, которые уже используют **Java** процессоры аннотаций, такие как **Dagger**, **Room**, или **Data Binding**. Однако **KAPT** имеет некоторые ограничения по производительности и не поддерживает все возможности **Kotlin**.
 
@@ -201,7 +201,7 @@ plugins {
     **kapt(**"`com.google.dagger`:`dagger-compiler`:2.44"**)
     **implementation(**"`com.google.dagger`:dagger:2.44"**)
 }
-```
+```text
 
 ### Пример: Dagger с KAPT
 
@@ -225,7 +225,7 @@ interface `AppComponent` {
 }
 
 // `KAPT` сгенерирует реализации компонентов
-```
+```text
 
 ### Пример: Room с KAPT
 
@@ -242,7 +242,7 @@ data class `User`(
 interface `UserDao` {
     ``@Query`("`SELECT` * `FROM` users")`
     fun `getAll()`: `List`<`User`>
-    
+
     `@Insert`
     fun insert(user: `User`)
 }
@@ -253,7 +253,7 @@ abstract class `AppDatabase` : `RoomDatabase()` {
 }
 
 // `KAPT` сгенерирует реализации `DAO`
-```
+```text
 
 ### Ограничения KAPT
 
@@ -290,7 +290,7 @@ dependencies {
     ksp("`com.`google.devtools`.ksp`:`symbol-processing-api`:1.8.0-1.0.9")
     implementation("`com.`google.devtools`.ksp`:`symbol-processing`:1.8.0-1.0.9")
 }
-```
+```text
 
 ### Создание KSP Processor
 
@@ -304,41 +304,41 @@ class `MySymbolProcessor`(
     private val `codeGenerator`: `CodeGenerator`,
     private val logger: KSPLogger
 ) : `SymbolProcessor` {
-    
+
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         // Получение всех символов с аннотацией
         val symbols = resolver
             .`getSymbolsWithAnnotation`("`com.example`.`MyAnnotation`")
             .`filterIsInstance`<KSClassDeclaration>()
-        
+
         symbols.`forEach` { symbol ->
             // Генерация кода
             `generateCode`(symbol)
         }
-        
+
         return symbols.`filterNot` { `it.validate`() }.`toList()`
     }
-    
+
     private fun `generateCode`(symbol: KSClassDeclaration) {
         val `packageName` = symbol.`packageName`.`asString()`
         val `className` = symbol.`simpleName`.`asString()`
-        
+
         val file = `codeGenerator`.`createNewFile`(
             `Dependencies`(`false`),
             `packageName`,
             "${`className`}`Generated`"
         )
-        
+
         file.`appendText`("""
             package $`packageName`
-            
+
             class ${`className`}`Generated` {
                 fun hello() {
                     println("`Generated for` $`className`")
                 }
             }
         """.`trimIndent()`)
-        
+
         `file.close`()
     }
 }
@@ -354,14 +354,14 @@ class `MySymbolProcessorProvider` : `SymbolProcessorProvider` {
         )
     }
 }
-```
+```text
 
 ### Регистрация Processor
 
 ```kotlin
 // resources/META-INF/services/com.google.devtools.ksp.processing.SymbolProcessorProvider
 `com.example`.`MySymbolProcessorProvider`
-```
+```text
 
 ### Пример: Генерация Builder
 
@@ -379,17 +379,17 @@ data class `User`(val name: `String`, val age: Int)
 class `UserBuilder` {
     private var name: `String`? = `null`
     private var age: Int? = `null`
-    
+
     fun name(name: `String`) = apply { `this.name` = name }
     fun age(age: Int) = apply { `this.age` = age }
-    
+
     fun build(): `User` {
         `requireNotNull`(name) { "name is required" }
         `requireNotNull`(age) { "age is required" }
         return `User`(name!!, age!!)
     }
 }
-```
+```text
 
 ## Code Generation
 
@@ -400,29 +400,29 @@ class `UserBuilder` {
 class `CodeGeneratorProcessor`(
     private val `codeGenerator`: `CodeGenerator`
 ) : `SymbolProcessor` {
-    
+
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         val symbols = resolver
             .`getSymbolsWithAnnotation`("`com.example`.`Generate`")
             .`filterIsInstance`<KSClassDeclaration>()
-        
+
         symbols.`forEach` { symbol ->
             `generateClass`(symbol)
         }
-        
+
         return `emptyList()`
     }
-    
+
     private fun `generateClass`(symbol: KSClassDeclaration) {
         val `packageName` = symbol.`packageName`.`asString()`
         val `className` = symbol.`simpleName`.`asString()`
-        
+
         val file = `codeGenerator`.`createNewFile`(
             `Dependencies`(`false`),
             `packageName`,
             "${`className`}`Factory`"
         )
-        
+
         file.`appendText`(`buildString` {
             `appendLine`("package $`packageName`")
             `appendLine()`
@@ -432,11 +432,11 @@ class `CodeGeneratorProcessor`(
             `appendLine`("    }")
             `appendLine`("}")
         })
-        
+
         `file.close`()
     }
 }
-```
+```text
 
 ### Генерация через Template
 
@@ -450,7 +450,7 @@ class `TemplateGenerator` {
     ): `String` {
         return """
             package $`packageName`
-            
+
             data class ${`className`}`Generated`(
                 ${properties.`joinToString`(",\n    ") { "${`it.name`}: ${`it.type`}" }}
             ) {
@@ -458,16 +458,16 @@ class `TemplateGenerator` {
                     fun `builder()` = ${`className`}`Builder()`
                 }
             }
-            
+
             class ${`className`}`Builder` {
-                ${properties.`joinToString`("\n    ") { 
-                    "private var ${`it.name`}: ${`it.type`}? = `null`" 
+                ${properties.`joinToString`("\n    ") {
+                    "private var ${`it.name`}: ${`it.type`}? = `null`"
                 }}
-                
+
                 ${properties.`joinToString`("\n    ") {
                     "fun ${`it.name`}(value: ${`it.type`}) = apply { this.${`it.name`} = value }"
                 }}
-                
+
                 fun build(): ${`className`}`Generated` {
                     return ${`className`}`Generated`(
                         ${properties.`joinToString`(",\n                        ") {
@@ -481,7 +481,7 @@ class `TemplateGenerator` {
 }
 
 data class `Property`(val name: `String`, val type: `String`)
-```
+```text
 
 ## Reflection-based метапрограммирование
 
@@ -510,7 +510,7 @@ val `proxy` = `createProxy`(`Service::class.java`) { _, method, args ->
 }
 
 `proxy`.`doWork()`
-```
+```text
 
 ### Dynamic Method Invocation
 
@@ -534,7 +534,7 @@ val invoker = `DynamicInvoker()`
 
 val result1 = `invoker.invoke`(calculator, "add", 5, 3)  // 8
 val result2 = `invoker.invoke`(calculator, "multiply", 4, 2)  // 8
-```
+```text
 
 ### Property Delegation для метапрограммирования
 
@@ -545,11 +545,11 @@ class `ValidatedProperty`<T>(
     private val `errorMessage`: `String`
 ) {
     private var value: T? = `null`
-    
+
     operator fun `getValue`(`thisRef`: Any?, property: KProperty<*>): T {
         return value ?: throw `IllegalStateException`("${`property.name`} not initialized")
     }
-    
+
     operator fun `setValue`(`thisRef`: Any?, property: KProperty<*>, value: T) {
         require(validator(value)) { `errorMessage` }
         `this.value` = value
@@ -562,13 +562,13 @@ class `User` {
         validator = { it >= 0 },
         `errorMessage` = "`Age must be non`-negative"
     )
-    
+
     var email: `String by ValidatedProperty`(
         validator = { `it.contains`("@") },
         `errorMessage` = "`Email must contain` @"
     )
 }
-```
+```text
 
 ## Лучшие практики
 
@@ -584,7 +584,7 @@ plugins {
 plugins {
     id("`com.`google.devtools`.ksp`")
 }
-```
+```text
 
 ### Кэшируйте результаты обработки
 
@@ -592,13 +592,13 @@ plugins {
 // Кэширование для производительности
 class `CachedProcessor` : `SymbolProcessor` {
     private val `cache` = `mutableMapOf`<`String`, `String`>()
-    
+
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         // Использование кэша
         // ...
     }
 }
-```
+```text
 
 ### Валидация входных данных
 
@@ -607,17 +607,17 @@ class `CachedProcessor` : `SymbolProcessor` {
 class `ValidatingProcessor` : `SymbolProcessor` {
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         val symbols = resolver.`getSymbolsWithAnnotation`("`com.example`.`Annotation`")
-        
+
         symbols.`forEach` { symbol ->
             if (!`symbol.validate`()) {
                 `logger.error`("`Invalid symbol`: ${symbol.`simpleName`}")
             }
         }
-        
+
         return symbols.`filterNot` { `it.validate`() }.`toList()`
     }
 }
-```
+```text
 
 ### Логирование и отладка
 
@@ -628,14 +628,14 @@ class `LoggingProcessor`(
 ) : `SymbolProcessor` {
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         `logger.info`("`Processing symbols`...")
-        
+
         // Обработка
-        
+
         `logger.info`("`Processing complete`")
         return `emptyList()`
     }
 }
-```
+```text
 
 ### Генерация читаемого кода
 
@@ -653,7 +653,7 @@ fun `generateCode`(`className`: `String`, properties: `List`<`Property`>): `Stri
         `appendLine`(")")
     }
 }
-```
+```text
 
 Этот файл содержит руководство по метапрограммированию в Kotlin, включая KAPT, KSP и различные техники генерации кода.
 
@@ -672,32 +672,32 @@ annotation class `GenerateBuilder`
 class `BuilderProcessor` : `SymbolProcessor` {
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         val symbols = resolver.`getSymbolsWithAnnotation`("`GenerateBuilder`")
-        
+
         symbols.`forEach` { symbol ->
             if (symbol is KSClassDeclaration) {
                 `generateBuilder`(symbol)
             }
         }
-        
+
         return `emptyList()`
     }
-    
+
     private fun `generateBuilder`(`classDeclaration`: KSClassDeclaration) {
         val `className` = `classDeclaration`.`simpleName`.`asString()`
         val `builderName` = "${`className`}`Builder`"
-        
+
         // Генерация кода `builder`
         val code = `buildString` {
             `appendLine`("class $`builderName` {")
             // Генерация методов `builder`
             `appendLine`("}")
         }
-        
+
         // Запись сгенерированного кода
         // ...
     }
 }
-```
+```text
 
 Генерация кода на основе аннотаций позволяет автоматизировать создание boilerplate кода и уменьшить ручную работу.
 
@@ -728,7 +728,7 @@ val result = method?.call(calculator, 2, 3)  // 5
 // Создание экземпляров через рефлексию
 val constructor = User::class.primaryConstructor
 val user = constructor?.call("`Alice`", 25)
-```
+```text
 
 Рефлексия позволяет создавать гибкие системы, которые могут работать с типами, известными только во время выполнения.
 
@@ -753,7 +753,7 @@ fun `createDynamicClass`(
     // Генерация класса через bytecode manipulation
     // ...
 }
-```
+```text
 
 Динамическая генерация классов позволяет создавать типы во время выполнения, что полезно для систем, требующих максимальной гибкости.
 
@@ -791,7 +791,7 @@ val file = `FileSpec`.`builder`("`com.example`", "`GeneratedClass`")
     .build()
 
 file.`writeTo`(`File`("src/main/kotlin"))
-```
+```text
 
 KotlinPoet предоставляет типобезопасный API для генерации Kotlin кода, что делает процесс более надежным и читаемым.
 
@@ -813,7 +813,7 @@ class `BytecodeModifier` {
         // Добавление метода
     }
 }
-```
+```text
 
 Манипуляция байт-кодом позволяет изменять поведение классов на низком уровне, что полезно для инструментов и фреймворков.
 
@@ -827,7 +827,7 @@ class `BytecodeModifier` {
 class `ReflectionCache` {
     private val `propertyCache` = `mutableMapOf`<`Class`<*>, `List`<`PropertyDescriptor`>>()
     private val `methodCache` = `mutableMapOf`<`Pair`<`Class`<*>, `String`>, `Method`>()
-    
+
     fun `getProperties`(clazz: `Class`<*>): `List`<`PropertyDescriptor`> {
         return `propertyCache`.`getOrPut`(clazz) {
             clazz.`declaredFields`.map { field ->
@@ -835,14 +835,14 @@ class `ReflectionCache` {
             }
         }
     }
-    
+
     fun `getMethod`(clazz: `Class`<*>, name: `String`): `Method`? {
         return `methodCache`.`getOrPut`(clazz to name) {
             clazz.`declaredMethods`.find { `it.name` == name }
         }
     }
 }
-```
+```text
 
 Кэширование результатов рефлексии значительно улучшает производительность при повторных обращениях.
 
@@ -853,10 +853,10 @@ class `ReflectionCache` {
 ```kotlin
 class `OptimizedProcessor` : `SymbolProcessor` {
     private val `processedSymbols` = `mutableSetOf`<`String`>()
-    
+
     override fun process(resolver: `Resolver`): `List`<KSAnnotated> {
         val symbols = resolver.`getSymbolsWithAnnotation`("`MyAnnotation`")
-        
+
         symbols.`forEach` { symbol ->
             val `qualifiedName` = symbol.`qualifiedName`?.`asString()`
             if (`qualifiedName` != `null` && !`processedSymbols`.contains(`qualifiedName`)) {
@@ -864,15 +864,15 @@ class `OptimizedProcessor` : `SymbolProcessor` {
                 `processedSymbols`.add(`qualifiedName`)
             }
         }
-        
+
         return `emptyList()`
     }
-    
+
     private fun `processSymbol`(symbol: KSAnnotated) {
         // Обработка символа
     }
 }
-```
+```text
 
 Избежание повторной обработки символов улучшает производительность процессоров.
 
@@ -890,7 +890,7 @@ class `RobustProcessor`(
         return try {
             val symbols = resolver.`getSymbolsWithAnnotation`("`MyAnnotation`")
             val errors = `mutableListOf`<KSAnnotated>()
-            
+
             symbols.`forEach` { symbol ->
                 try {
                     `processSymbol`(symbol)
@@ -899,7 +899,7 @@ class `RobustProcessor`(
                     `errors.add`(symbol)
                 }
             }
-            
+
             errors
         } catch (e: `Exception`) {
             `logger.error`("`Fatal error in processor`: ${`e.message`}")
@@ -907,7 +907,7 @@ class `RobustProcessor`(
         }
     }
 }
-```
+```text
 
 Правильная обработка ошибок предотвращает сбои компиляции и помогает разработчикам понять проблемы.
 
@@ -927,7 +927,7 @@ fun `generateDocumentedClass`(`className`: `String`): `String` {
         `appendLine`("}")
     }
 }
-```
+```text
 
 Документация помогает разработчикам понимать происхождение и назначение сгенерированного кода.
 
@@ -949,13 +949,13 @@ class `CodeGeneratorPlugin` : `Plugin`<`Project`> {
                 `generateCode()`
             }
         }
-        
+
         // Интеграция с процессом компиляции
         `project.tasks.named`("`compileKotlin`") {
             `dependsOn`("`generateCode`")
         }
     }
-    
+
     private fun `generateCode()` {
         // Логика генерации кода
     }
@@ -965,7 +965,7 @@ class `CodeGeneratorPlugin` : `Plugin`<`Project`> {
 plugins {
     id("`com.example`.`code-generator`")
 }
-```
+```text
 
 Gradle плагины позволяют автоматизировать генерацию кода и интегрировать ее в процесс сборки.
 
@@ -979,16 +979,16 @@ Gradle плагины позволяют автоматизировать ген
 class `CodeGeneratorMojo` : `AbstractMojo()` {
     ``@Parameter`(required = `true`)`
     lateinit var `sourceDirectory`: `File`
-    
+
     ``@Parameter`(required = `true`)`
     lateinit var `targetDirectory`: `File`
-    
+
     override fun execute() {
         // Генерация кода
         `generateCode`(`sourceDirectory`, `targetDirectory`)
     }
 }
-```
+```text
 
 Maven плагины позволяют интегрировать генерацию кода в процесс сборки Maven проектов.
 
@@ -1035,7 +1035,7 @@ val schema = `Schema`(
 )
 
 val `dtoCode` = `generateDTO`(schema)
-```
+```text
 
 Генерация DTO классов автоматизирует создание boilerplate кода и уменьшает ручную работу.
 
@@ -1069,7 +1069,7 @@ fun `generateApiClient`(endpoints: `List`<`ApiEndpoint`>): `String` {
         `appendLine`("}")
     }
 }
-```
+```text
 
 Генерация API клиентов автоматизирует создание клиентского кода для REST API и уменьшает вероятность ошибок.
 
@@ -1085,7 +1085,7 @@ fun `generateTestClass`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val `testClassName` = "${`className`}`Test`"
     val `packageName` = `sourceClass`.java.`package`.name
-    
+
     return `buildString` {
         `appendLine`("package $`packageName`")
         `appendLine()`
@@ -1114,7 +1114,7 @@ fun `generateTestClass`(`sourceClass`: KClass<*>): `String` {
 fun `generateConstructorTests`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val `testClassName` = "${`className`}`ConstructorTest`"
-    
+
     return `buildString` {
         `appendLine`("class $`testClassName` {")
         `sourceClass`.constructors.`forEach` { constructor ->
@@ -1140,7 +1140,7 @@ fun `generateConstructorTests`(`sourceClass`: KClass<*>): `String` {
         `appendLine`("}")
     }
 }
-```
+```text
 
 Генерация тестовых классов автоматизирует создание базовых тестов и улучшает покрытие тестами.
 
@@ -1153,7 +1153,7 @@ fun `generateConstructorTests`(`sourceClass`: KClass<*>): `String` {
 fun `generateDocumentation`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val `packageName` = `sourceClass`.java.`package`.name
-    
+
     return `buildString` {
         `appendLine`("# $`className`")
         `appendLine()`
@@ -1184,7 +1184,7 @@ fun `generateDocumentation`(`sourceClass`: KClass<*>): `String` {
 // Генерация `API` документации
 fun `generateApiDocumentation`(`apiClass`: KClass<*>): `String` {
     val `className` = `apiClass`.`simpleName` ?: "`Unknown`"
-    
+
     return `buildString` {
         `appendLine`("# `API`: $`className`")
         `appendLine()`
@@ -1206,7 +1206,7 @@ fun `generateApiDocumentation`(`apiClass`: KClass<*>): `String` {
         }
     }
 }
-```
+```text
 
 Генерация документации автоматизирует создание документации из кода, что упрощает поддержку проекта.
 
@@ -1223,7 +1223,7 @@ import `com.squareup.kotlinpoet`.*
 fun `generateClass`(`className`: `String`, properties: `List`<`Property`>): `FileSpec` {
     val `classBuilder` = `TypeSpec`.`classBuilder`(`className`)
         .`addModifiers`(KModifier.`DATA`)
-    
+
     properties.`forEach` { prop ->
         `classBuilder`.`addProperty`(
             `PropertySpec`.`builder`(`prop.name`, `prop.type`)
@@ -1231,7 +1231,7 @@ fun `generateClass`(`className`: `String`, properties: `List`<`Property`>): `Fil
                 .build()
         )
     }
-    
+
     return `FileSpec`.`builder`("`com.example`", `className`)
         .`addType`(`classBuilder`.build())
         .build()
@@ -1241,13 +1241,13 @@ fun `generateClass`(`className`: `String`, properties: `List`<`Property`>): `Fil
 fun `generateFunction`(`functionName`: `String`, parameters: `List`<`Parameter`>, `returnType`: `TypeName`): `FunSpec` {
     val `functionBuilder` = `FunSpec`.`builder`(`functionName`)
         .returns(`returnType`)
-    
+
     parameters.`forEach` { param ->
         `functionBuilder`.`addParameter`(`param.name`, `param.type`)
     }
-    
+
     `functionBuilder`.`addStatement`("return %L", "result")
-    
+
     return `functionBuilder`.build()
 }
 
@@ -1261,7 +1261,7 @@ val `fileSpec` = `generateClass`(
 )
 
 `fileSpec`.`writeTo`(`System`.out)
-```
+```text
 
 KotlinPoet предоставляет типобезопасный API для генерации Kotlin кода, что делает процесс генерации более надежным.
 
@@ -1276,9 +1276,9 @@ KotlinPoet предоставляет типобезопасный API для г
 fun `generateBuilder`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val `builderName` = "${`className`}`Builder`"
-    
+
     val properties = `sourceClass`.`memberProperties`
-    
+
     return `buildString` {
         `appendLine`("class $`builderName` {")
         properties.`forEach` { prop ->
@@ -1304,7 +1304,7 @@ fun `generateBuilder`(`sourceClass`: KClass<*>): `String` {
 fun `generateEqualsAndHashCode`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val properties = `sourceClass`.`memberProperties`
-    
+
     return `buildString` {
         `appendLine`("override fun equals(other: Any?): `Boolean` {")
         `appendLine`("    if (this === other) return `true`")
@@ -1328,7 +1328,7 @@ fun `generateEqualsAndHashCode`(`sourceClass`: KClass<*>): `String` {
         `appendLine`("}")
     }
 }
-```
+```text
 
 Генерация кода для различных сценариев автоматизирует создание boilerplate кода и улучшает продуктивность разработки.
 
@@ -1346,7 +1346,7 @@ fun `generateBuilder`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val `builderName` = "${`className`}`Builder`"
     val properties = `sourceClass`.`memberProperties`
-    
+
     return `buildString` {
         `appendLine`("class $`builderName` {")
         properties.`forEach` { prop ->
@@ -1380,7 +1380,7 @@ fun `generateBuilder`(`sourceClass`: KClass<*>): `String` {
 fun `generateDataClassMethods`(`sourceClass`: KClass<*>): `String` {
     val `className` = `sourceClass`.`simpleName` ?: "`Unknown`"
     val properties = `sourceClass`.`memberProperties`
-    
+
     return `buildString` {
         `appendLine`("override fun `toString()`: `String` {")
         `appendLine`("    return \"$`className`(\" +")
@@ -1393,7 +1393,7 @@ fun `generateDataClassMethods`(`sourceClass`: KClass<*>): `String` {
         `appendLine`("}")
     }
 }
-```
+```text
 
 Генерация кода для паттернов автоматизирует создание boilerplate кода и улучшает продуктивность.
 
@@ -1461,7 +1461,7 @@ data class `User`(
 // )
 //
 // fun `User`.`toDTO()`: `UserDTO` = `UserDTO`(id, name, email)
-```
+```text
 
 Генерация DTO классов автоматизирует создание слоя передачи данных.
 
@@ -1479,10 +1479,10 @@ annotation class Min(val value: Int, val message: `String` = "`Value too small`"
 data class `RegistrationForm`(
     ``@NotEmpty`("`Username is required`")`
     val username: `String`,
-    
+
     ``@NotEmpty`("`Email is required`")`
     val email: `String`,
-    
+
     `@Min(8, "`Password must be at least 8` characters")`
     val password: `String`
 )
@@ -1495,7 +1495,7 @@ data class `RegistrationForm`(
 //     if (`password.length` < 8) `errors.add`("`Password must be at least 8` characters")
 //     return if (errors.`isEmpty()`) `ValidationResult`.`Success else ValidationResult`.`Failure`(errors)
 // }
-```
+```text
 
 Генерация валидаторов упрощает проверку данных и уменьшает boilerplate код.
 
@@ -1521,12 +1521,12 @@ data class `User`(
 //     private var name: `String`? = `null`
 //     private var email: `String`? = `null`
 //     private var age: Int? = `null`
-//     
+//
 //     fun id(id: `Long`) = apply { `this.id` = id }
 //     fun name(name: `String`) = apply { `this.name` = name }
 //     fun email(email: `String`) = apply { `this.email` = email }
 //     fun age(age: Int) = apply { `this.age` = age }
-//     
+//
 //     fun build(): `User` {
 //         `requireNotNull`(id) { "id is required" }
 //         `requireNotNull`(name) { "name is required" }
@@ -1535,7 +1535,7 @@ data class `User`(
 //         return `User`(id!!, name!!, email!!, age!!)
 //     }
 // }
-```
+```text
 
 Генерация Builder классов упрощает создание сложных объектов.
 
@@ -1569,7 +1569,7 @@ data class `User`(
 //             email = `dto.email`
 //         )
 //     }
-//     
+//
 //     fun `toDTO`(domain: `User`): `UserDTO` {
 //         return `UserDTO`(
 //             id = `domain.id`,
@@ -1578,7 +1578,7 @@ data class `User`(
 //         )
 //     }
 // }
-```
+```text
 
 Генерация mapper классов автоматизирует преобразование между слоями приложения.
 
@@ -1610,7 +1610,7 @@ data class `User`(
 //                 email = `user.email`
 //             )
 //         }
-//         
+//
 //         fun `toDomain`(dto: `UserDTO`): `User` {
 //             return `User`(
 //                 id = `dto.id`,
@@ -1620,7 +1620,7 @@ data class `User`(
 //         }
 //     }
 // }
-```
+```text
 
 ### Практические примеры: Генерация Repository классов
 
@@ -1644,7 +1644,7 @@ data class `User`(
 //     fun delete(id: `Long`)
 //     fun `existsById`(id: `Long`): `Boolean`
 // }
-```
+```text
 
 ### Практические примеры: Генерация тестов
 
@@ -1663,7 +1663,7 @@ class `UserService`(
 }
 
 // Генератор создаст базовые тесты для всех методов
-```
+```text
 
 ### Практические примеры: Генерация API документации
 
@@ -1678,7 +1678,7 @@ class `UserService` {
 }
 
 // Генератор создаст OpenAPI/Swagger документацию
-```
+```text
 
 ### Практические примеры: Генерация валидаторов
 
@@ -1694,10 +1694,10 @@ annotation class `Validate`(
 data class `User`(
     ``@Validate`(min = 1)`
     val id: `Long`,
-    
+
     ``@Validate`(min = 1, max = `100`, required = `true`)`
     val name: `String`,
-    
+
     ``@Validate`(pattern = "^[`A-`Za-z0`-9`+_.-]+@(.+)`$", required = `true`)
     val email: `String`
 )
@@ -1706,17 +1706,17 @@ data class `User`(
 // object `UserValidator` {
 //     fun validate(user: `User`): `ValidationResult` {
 //         val errors = `mutableListOf`<`ValidationError`>()
-//         
+//
 //         if (`user.id` < 1) {
 //             `errors.add`(`ValidationError`("id", "must be >= 1"))
 //         }
-//         
+//
 //         if (`user.name`.`isEmpty()` || `user.name.length` > `100`) {
 //             `errors.add`(`ValidationError`("name", "length must `be 1`-100"))
 //         }
-//         
+//
 //         // ... больше проверок
-//         
+//
 //         return if (errors.`isEmpty()`) {
 //             `ValidationResult`.`Success`
 //         } else {
@@ -1724,7 +1724,7 @@ data class `User`(
 //         }
 //     }
 // }
-```
+```text
 
 Этот файл содержит полное руководство по метапрограммированию в Kotlin, покрывающее все основные аспекты от базовых техник до продвинутых подходов, оптимизации производительности, лучших практик, интеграции с системами сборки, генерации кода для различных сценариев, работы с KotlinPoet, создания генераторов кода, генерации кода для различных паттернов, генерации DTO, Repository, тестов, API документации, валидаторов, практические примеры использования, включая генерацию Builder и Mapper классов, заключение, дополнительные ресурсы и итоговые рекомендации.
 

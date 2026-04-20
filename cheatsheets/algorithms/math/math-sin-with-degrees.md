@@ -97,10 +97,10 @@ double degrees90 = Math.toDegrees(halfPi);  // 90.0
 public void givenAnAngleInDegrees_whenUsingToRadians_thenResultIsInRadians() {
     double angleInDegrees = 30;
     double sinForDegrees = Math.sin(Math.toRadians(angleInDegrees));
-    
+
     double thirtyDegreesInRadians = 1.0/6 * Math.PI;
     double sinForRadians = Math.sin(thirtyDegreesInRadians);
-    
+
     assertTrue(sinForDegrees == sinForRadians);
 }
 ```
@@ -207,23 +207,23 @@ public class Trigonometry {
     public static double sinDegrees(double degrees) {
         return Math.sin(Math.toRadians(degrees));
     }
-    
+
     public static double cosDegrees(double degrees) {
         return Math.cos(Math.toRadians(degrees));
     }
-    
+
     public static double tanDegrees(double degrees) {
         return Math.tan(Math.toRadians(degrees));
     }
-    
+
     public static double cotDegrees(double degrees) {
         return 1.0 / tanDegrees(degrees);
     }
-    
+
     public static double secDegrees(double degrees) {
         return 1.0 / cosDegrees(degrees);
     }
-    
+
     public static double cscDegrees(double degrees) {
         return 1.0 / sinDegrees(degrees);
     }
@@ -239,11 +239,11 @@ public class AngleConverter {
     public static double degreesToRadians(double degrees) {
         return Math.toRadians(degrees);
     }
-    
+
     public static double radiansToDegrees(double radians) {
         return Math.toDegrees(radians);
     }
-    
+
     public static double normalizeAngle(double degrees) {
         degrees = degrees % 360;
         if (degrees < 0) {
@@ -270,7 +270,7 @@ fun radiansToDegreesK(radians: Double): Double {
 fun main() {
     val degrees30 = 30.0
     val radians30 = Math.toRadians(degrees30) // ≈ 0.5236
-    
+
     val piRadians = Math.PI
     val degrees = Math.toDegrees(piRadians) // 180.0
 }
@@ -300,23 +300,23 @@ object TrigonometryK {
     fun sinDegrees(degrees: Double): Double {
         return Math.sin(Math.toRadians(degrees))
     }
-    
+
     fun cosDegrees(degrees: Double): Double {
         return Math.cos(Math.toRadians(degrees))
     }
-    
+
     fun tanDegrees(degrees: Double): Double {
         return Math.tan(Math.toRadians(degrees))
     }
-    
+
     fun cotDegrees(degrees: Double): Double {
         return 1.0 / tanDegrees(degrees)
     }
-    
+
     fun secDegrees(degrees: Double): Double {
         return 1.0 / cosDegrees(degrees)
     }
-    
+
     fun cscDegrees(degrees: Double): Double {
         return 1.0 / sinDegrees(degrees)
     }
@@ -330,11 +330,11 @@ object AngleConverterK {
     fun degreesToRadians(degrees: Double): Double {
         return Math.toRadians(degrees)
     }
-    
+
     fun radiansToDegrees(radians: Double): Double {
         return Math.toDegrees(radians)
     }
-    
+
     fun normalizeAngle(degrees: Double): Double {
         var angle = degrees % 360
         if (angle < 0) {
@@ -352,7 +352,7 @@ fun main() {
     val angle = 30.0
     val sinValue = TrigonometryK.sinDegrees(angle)
     println("sin($angle°) = $sinValue") // sin(30.0°) = 0.5
-    
+
     val normalized = AngleConverterK.normalizeAngle(-45.0)
     println("Normalized angle: $normalized") // 315.0
 }
@@ -371,7 +371,7 @@ fun main() {
 | Симптом | Возможная причина | Решение |
 |---------|-------------------|---------|
 | Неверное значение sin/cos | Угол передан в градусах, а метод ждёт радианы | Обернуть в Math.toRadians(degrees) перед вызовом |
-| assertEqual не срабатывает | Сравнение double без допуска | Сравнивать с epsilon: Math.abs(a - b) < 1e-9 |
+| assertEqual не срабатывает | Сравнение double без допуска | Сравнивать с epsilon: Math.abs(a — b) < 1e-9 |
 | Угол вне [0,360) | Не нормализован пользовательский ввод | Привести: angle = angle % 360; if (angle < 0) angle += 360 |
 
 ## Частые вопросы

@@ -17,8 +17,6 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 
 # Quarkus: Actuator — Health Checks и Metrics
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Quarkus](https://quarkus.io/guides/)
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 
 ## Содержание
 
-- [Quarkus: Actuator - Health Checks и Metrics](#quarkus-actuator-health-checks-и-metrics)
+- [Quarkus: Actuator — Health Checks и Metrics](#quarkus-actuator-health-checks-и-metrics)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Health Checks](#health-checks)
@@ -90,7 +88,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 @Liveness
 @ApplicationScoped
 public class LivenessCheck implements HealthCheck {
-    
+
     @Override
     public HealthCheckResponse call() {
         return HealthCheckResponse.named("Application")
@@ -112,10 +110,10 @@ import jakarta.inject.Inject;
 @Readiness
 @ApplicationScoped
 public class ReadinessCheck implements HealthCheck {
-    
+
     @Inject
     DataSource dataSource;
-    
+
     @Override
     public HealthCheckResponse call() {
         boolean isReady = checkDatabase();
@@ -124,7 +122,7 @@ public class ReadinessCheck implements HealthCheck {
             .withData("database", isReady ? "connected" : "disconnected")
             .build();
     }
-    
+
     private boolean checkDatabase() {
         try {
             dataSource.getConnection().close();
@@ -162,25 +160,25 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MetricsService {
-    
+
     private final Counter requestCounter;
     private final Counter errorCounter;
-    
+
     @Inject
     public MetricsService(MeterRegistry registry) {
         this.requestCounter = Counter.builder("requests.total")
             .description("Total number of requests")
             .register(registry);
-        
+
         this.errorCounter = Counter.builder("errors.total")
             .description("Total number of errors")
             .register(registry);
     }
-    
+
     public void incrementRequest() {
         requestCounter.increment();
     }
-    
+
     public void incrementError() {
         errorCounter.increment();
     }
@@ -231,7 +229,7 @@ import org.eclipse.microprofile.health.Startup;
 @Startup
 @ApplicationScoped
 public class StartupCheck implements HealthCheck {
-    
+
     @Override
     public HealthCheckResponse call() {
         return HealthCheckResponse.named("Application Startup")
@@ -254,10 +252,10 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class TimedService {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public void processRequest() {
         Timer.Sample sample = Timer.start(registry);
         try {
@@ -279,17 +277,17 @@ public class TimedService {
 ```java
 @ApplicationScoped
 public class GaugeService {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     @PostConstruct
     void init() {
         Gauge.builder("cache.size", this, GaugeService::getCacheSize)
             .description("Cache size")
             .register(registry);
     }
-    
+
     private double getCacheSize() {
         return cache.size();
     }
@@ -322,13 +320,13 @@ import jakarta.ws.rs.Path;
 
 @Path("/info")
 public class InfoResource {
-    
+
     @Inject
     BuildInfo buildInfo;
-    
+
     @Inject
     GitInfo gitInfo;
-    
+
     @GET
     public Map<String, Object> getInfo() {
         return Map.of(
@@ -350,16 +348,16 @@ public class InfoResource {
 @Readiness
 @ApplicationScoped
 public class CompositeReadinessCheck implements HealthCheck {
-    
+
     @Inject
     @Any
     Instance<HealthCheck> healthChecks;
-    
+
     @Override
     public HealthCheckResponse call() {
         boolean allReady = healthChecks.stream()
             .allMatch(check -> check.call().getStatus() == Status.UP);
-        
+
         return HealthCheckResponse.named("Composite")
             .status(allReady ? Status.UP : Status.DOWN)
             .build();
@@ -375,7 +373,7 @@ public class CompositeReadinessCheck implements HealthCheck {
 @Liveness
 @ApplicationScoped
 public class AsyncHealthCheck implements HealthCheck {
-    
+
     @Override
     public Uni<HealthCheckResponse> call() {
         return checkExternalService()
@@ -383,7 +381,7 @@ public class AsyncHealthCheck implements HealthCheck {
                 .status(isHealthy ? Status.UP : Status.DOWN)
                 .build());
     }
-    
+
     private Uni<Boolean> checkExternalService() {
         // Асинхронная проверка
         return Uni.createFrom().item(true);
@@ -400,10 +398,10 @@ public class AsyncHealthCheck implements HealthCheck {
 ```java
 @ApplicationScoped
 public class HistogramService {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public void recordValue(double value) {
         DistributionSummary.builder("request.size")
             .description("Request size distribution")
@@ -420,10 +418,10 @@ public class HistogramService {
 ```java
 @ApplicationScoped
 public class TaggedMetricsService {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public void recordRequest(String endpoint, String method, int statusCode) {
         Counter.builder("http.requests")
             .tag("endpoint", endpoint)
@@ -444,7 +442,7 @@ public class TaggedMetricsService {
 ```java
 @Path("/health/custom")
 public class CustomHealthEndpoint {
-    
+
     @GET
     public Response customHealth() {
         boolean isHealthy = checkHealth();
@@ -462,10 +460,10 @@ public class CustomHealthEndpoint {
 ```java
 @Path("/metrics/custom")
 public class CustomMetricsEndpoint {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     @GET
     public Map<String, Object> customMetrics() {
         return registry.getMeters().stream()
@@ -491,3 +489,11 @@ public class CustomMetricsEndpoint {
 
 icrometer.io/docs)
 - [Prometheus Documentation](https://prometheus.io/docs/)
+
+## См. также
+
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
+- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]

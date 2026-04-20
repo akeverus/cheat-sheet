@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Qute - Templating Engine
-
-
+# Quarkus: Qute — Templating Engine
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Содержание
 
-- [Quarkus: Qute - Templating Engine](#quarkus-qute-templating-engine)
+- [Quarkus: Qute — Templating Engine](#quarkus-qute-templating-engine)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Templates](#basic-templates)
@@ -56,7 +54,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Введение
 
-**Qute** - это современный и типобезопасный движок шаблонов для **Quarkus**. Он обеспечивает высокую производительность и безопасность при работе с шаблонами.
+**Qute** — это современный и типобезопасный движок шаблонов для **Quarkus**. Он обеспечивает высокую производительность и безопасность при работе с шаблонами.
 
 ### Основные возможности
 
@@ -96,10 +94,10 @@ import jakarta.ws.rs.Path;
 
 @Path("/hello")
 public class HelloResource {
-    
+
     @Inject
     Template hello;
-    
+
     @GET
     public String getHello() {
         return hello.data("name", "World").render();
@@ -116,7 +114,7 @@ public class HelloResource {
 ```java
 @CheckedTemplate
 public class Templates {
-    
+
     public static native TemplateInstance hello(String name);
 }
 ```
@@ -128,7 +126,7 @@ public class Templates {
 ```java
 @Path("/hello")
 public class HelloResource {
-    
+
     @GET
     public String getHello() {
         return Templates.hello("World").render();
@@ -238,7 +236,7 @@ template.data("user", user).render();
 ```java
 @ApplicationScoped
 public class UserTags {
-    
+
     public static Template.Fragment formatDate(LocalDateTime date) {
         return Template.Fragment.of(
             date.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
@@ -260,10 +258,10 @@ public class UserTags {
 ```java
 @Path("/users")
 public class ReactiveUserResource {
-    
+
     @Inject
     Template users;
-    
+
     @GET
     @Produces(MediaType.TEXT_HTML)
     public Uni<String> getUsers() {
@@ -348,3 +346,11 @@ quarkus.qute.optimize-templates=true
 
 - [**Quarkus Qute** Guide](https://quarkus.io/guides/qute)
 - [**Qute** Documentation](https://quarkus.io/guides/qute-reference)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

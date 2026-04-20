@@ -70,9 +70,9 @@ updated: "2026-02-06"
 
 ### Основные типы
 
-1. **time.Time** - представляет момент времени
-2. **time.Duration** - представляет продолжительность времени
-3. **time.Location** - представляет часовой пояс
+1. **time.Time** — представляет момент времени
+2. **time.Duration** — представляет продолжительность времени
+3. **time.Location** — представляет часовой пояс
 
 ## Создание времени
 
@@ -85,7 +85,7 @@ func main() {
     // Текущее время
     now := time.Now()
     fmt.Println(now)
-    
+
     // UTC время
     utc := time.Now().UTC()
     fmt.Println(utc)
@@ -101,7 +101,7 @@ func main() {
     // Создание времени
     t := time.Date(2025, 1, 11, 12, 30, 0, 0, time.UTC)
     fmt.Println(t)
-    
+
     // Unix timestamp
     unixTime := time.Unix(1704978000, 0)
     fmt.Println(unixTime)
@@ -120,7 +120,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println(t)
-    
+
     // Парсинг RFC3339
     t, err = time.Parse(time.RFC3339, "2025-01-11T12:30:00Z")
     if err != nil {
@@ -139,12 +139,12 @@ import "time"
 
 func main() {
     now := time.Now()
-    
+
     // Стандартные форматы
     fmt.Println(now.Format(time.RFC3339))
     fmt.Println(now.Format(time.RFC822))
     fmt.Println(now.Format(time.RFC1123))
-    
+
     // Кастомный формат
     fmt.Println(now.Format("2006-01-02 15:04:05"))
     fmt.Println(now.Format("02/01/2006"))
@@ -159,10 +159,10 @@ import "time"
 
 func main() {
     t := time.Now()
-    
+
     // String() метод
     fmt.Println(t.String())
-    
+
     // Unix timestamp
     fmt.Println(t.Unix())
     fmt.Println(t.UnixNano())
@@ -178,15 +178,15 @@ import "time"
 
 func main() {
     now := time.Now()
-    
+
     // Добавление
     future := now.Add(24 * time.Hour)
     fmt.Println(future)
-    
+
     // Вычитание
     past := now.Add(-24 * time.Hour)
     fmt.Println(past)
-    
+
     // Добавление компонентов
     future = now.AddDate(0, 1, 0)  // +1 месяц
     fmt.Println(future)
@@ -201,12 +201,12 @@ import "time"
 func main() {
     t1 := time.Now()
     t2 := t1.Add(1 * time.Hour)
-    
+
     // Сравнение
     fmt.Println(t1.Before(t2))  // true
     fmt.Println(t1.After(t2))   // false
     fmt.Println(t1.Equal(t2))   // false
-    
+
     // Разница
     diff := t2.Sub(t1)
     fmt.Println(diff)  // 1h0m0s
@@ -220,7 +220,7 @@ import "time"
 
 func main() {
     t := time.Now()
-    
+
     fmt.Println(t.Year())
     fmt.Println(t.Month())
     fmt.Println(t.Day())
@@ -241,7 +241,7 @@ import "time"
 func main() {
     // Создание таймера
     timer := time.NewTimer(2 * time.Second)
-    
+
     <-timer.C
     fmt.Println("Timer expired")
 }
@@ -256,7 +256,7 @@ func main() {
     // Создание ticker
     ticker := time.NewTicker(1 * time.Second)
     defer ticker.Stop()
-    
+
     for t := range ticker.C {
         fmt.Println("Tick at", t)
     }
@@ -270,12 +270,12 @@ import "time"
 
 func main() {
     ch := make(chan string)
-    
+
     go func() {
         time.Sleep(2 * time.Second)
         ch <- "result"
     }()
-    
+
     select {
     case res := <-ch:
         fmt.Println("Received:", res)
@@ -308,11 +308,11 @@ func main() {
     // UTC время
     utc := time.Now().UTC()
     fmt.Println("UTC:", utc)
-    
+
     // Локальное время
     local := time.Now().Local()
     fmt.Println("Local:", local)
-    
+
     // Конкретный часовой пояс
     loc, err := time.LoadLocation("America/New_York")
     if err != nil {
@@ -330,7 +330,7 @@ import "time"
 
 func main() {
     utc := time.Now().UTC()
-    
+
     // Конвертация в другой часовой пояс
     loc, _ := time.LoadLocation("Asia/Tokyo")
     tokyoTime := utc.In(loc)
@@ -346,7 +346,7 @@ func formatLocalized(t time.Time, locale string) string {
     if err != nil {
         return t.Format(time.RFC3339)
     }
-    
+
     return t.In(loc).Format("2006-01-02 15:04:05")
 }
 ```
@@ -356,16 +356,16 @@ func formatLocalized(t time.Time, locale string) string {
 ```go
 func timeDifference(t1, t2 time.Time) string {
     diff := t2.Sub(t1)
-    
+
     if diff < 0 {
         diff = -diff
     }
-    
+
     days := int(diff.Hours() / 24)
     hours := int(diff.Hours()) % 24
     minutes := int(diff.Minutes()) % 60
     seconds := int(diff.Seconds()) % 60
-    
+
     return fmt.Sprintf("%d days, %d hours, %d minutes, %d seconds",
         days, hours, minutes, seconds)
 }
@@ -377,23 +377,23 @@ func timeDifference(t1, t2 time.Time) string {
 func isBusinessHours(t time.Time, startHour, endHour int) bool {
     hour := t.Hour()
     weekday := t.Weekday()
-    
+
     // Выходные
     if weekday == time.Saturday || weekday == time.Sunday {
         return false
     }
-    
+
     return hour >= startHour && hour < endHour
 }
 
 func nextBusinessHour(t time.Time, startHour, endHour int) time.Time {
     result := t
-    
+
     for {
         if isBusinessHours(result, startHour, endHour) {
             return result
         }
-        
+
         // Если выходной, переходим к следующему понедельнику
         if result.Weekday() == time.Saturday {
             daysUntilMonday := 2
@@ -436,7 +436,7 @@ func NewReusableTimer() *ReusableTimer {
 func (rt *ReusableTimer) Reset(duration time.Duration) {
     rt.mu.Lock()
     defer rt.mu.Unlock()
-    
+
     if !rt.timer.Stop() {
         <-rt.timer.C
     }
@@ -470,13 +470,13 @@ func parseTimeFlexible(timeStr string) (time.Time, error) {
         time.RFC1123,
         time.RFC1123Z,
     }
-    
+
     for _, format := range formats {
         if t, err := time.Parse(format, timeStr); err == nil {
             return t, nil
         }
     }
-    
+
     return time.Time{}, fmt.Errorf("unable to parse time: %s", timeStr)
 }
 ```
@@ -486,21 +486,21 @@ func parseTimeFlexible(timeStr string) (time.Time, error) {
 ```go
 func calculateAge(birthDate time.Time) (years, months, days int) {
     now := time.Now()
-    
+
     years = now.Year() - birthDate.Year()
     months = int(now.Month()) - int(birthDate.Month())
     days = now.Day() - birthDate.Day()
-    
+
     if days < 0 {
         months--
         days += time.Date(now.Year(), now.Month(), 0, 0, 0, 0, 0, time.UTC).Day()
     }
-    
+
     if months < 0 {
         years--
         months += 12
     }
-    
+
     return years, months, days
 }
 ```
@@ -511,7 +511,7 @@ func calculateAge(birthDate time.Time) (years, months, days int) {
 func formatRelativeTime(t time.Time) string {
     now := time.Now()
     diff := now.Sub(t)
-    
+
     if diff < time.Minute {
         return "just now"
     } else if diff < time.Hour {
@@ -556,18 +556,18 @@ func NewCallbackTimer(duration time.Duration, callback func()) *CallbackTimer {
 func (ct *CallbackTimer) Start() {
     ct.mu.Lock()
     defer ct.mu.Unlock()
-    
+
     if ct.timer != nil {
         ct.timer.Stop()
     }
-    
+
     ct.timer = time.AfterFunc(ct.duration, ct.callback)
 }
 
 func (ct *CallbackTimer) Stop() {
     ct.mu.Lock()
     defer ct.mu.Unlock()
-    
+
     if ct.timer != nil {
         ct.timer.Stop()
         ct.timer = nil
@@ -581,7 +581,7 @@ func (ct *CallbackTimer) Stop() {
 func runPeriodically(ctx context.Context, interval time.Duration, fn func() error) error {
     ticker := time.NewTicker(interval)
     defer ticker.Stop()
-    
+
     for {
         select {
         case <-ctx.Done():
@@ -615,11 +615,11 @@ func NewDebouncer(duration time.Duration, fn func()) *Debouncer {
 func (d *Debouncer) Trigger() {
     d.mu.Lock()
     defer d.mu.Unlock()
-    
+
     if d.timer != nil {
         d.timer.Stop()
     }
-    
+
     d.timer = time.AfterFunc(d.duration, d.fn)
 }
 ```
@@ -636,13 +636,13 @@ func ParseMultipleFormats(timeStr string) (time.Time, error) {
         "2006-01-02",
         "15:04:05",
     }
-    
+
     for _, format := range formats {
         if t, err := time.Parse(format, timeStr); err == nil {
             return t, nil
         }
     }
-    
+
     return time.Time{}, fmt.Errorf("unable to parse time: %s", timeStr)
 }
 
@@ -663,26 +663,26 @@ func IsBusinessHours(t time.Time, timezone string) bool {
     if err != nil {
         return false
     }
-    
+
     localTime := t.In(loc)
     hour := localTime.Hour()
     weekday := localTime.Weekday()
-    
+
     // Понедельник - Пятница, 9:00 - 17:00
     if weekday >= time.Monday && weekday <= time.Friday {
         return hour >= 9 && hour < 17
     }
-    
+
     return false
 }
 
 func NextBusinessDay(t time.Time) time.Time {
     next := t.AddDate(0, 0, 1)
-    
+
     for next.Weekday() == time.Saturday || next.Weekday() == time.Sunday {
         next = next.AddDate(0, 0, 1)
     }
-    
+
     return next
 }
 ```
@@ -692,11 +692,11 @@ func NextBusinessDay(t time.Time) time.Time {
 ```go
 func ExecuteWithTimeout(fn func() error, timeout time.Duration) error {
     done := make(chan error, 1)
-    
+
     go func() {
         done <- fn()
     }()
-    
+
     select {
     case err := <-done:
         return err
@@ -710,20 +710,20 @@ func ExecuteWithDeadline(fn func() error, deadline time.Time) error {
     if deadline.Before(now) {
         return fmt.Errorf("deadline already passed")
     }
-    
+
     timeout := deadline.Sub(now)
     return ExecuteWithTimeout(fn, timeout)
 }
 
 func PeriodicTask(interval time.Duration, fn func()) *time.Ticker {
     ticker := time.NewTicker(interval)
-    
+
     go func() {
         for range ticker.C {
             fn()
         }
     }()
-    
+
     return ticker
 }
 ```
@@ -736,9 +736,9 @@ func FormatForLocale(t time.Time, locale string) string {
     if err != nil {
         loc = time.UTC
     }
-    
+
     localTime := t.In(loc)
-    
+
     // Различные форматы для разных локалей
     formats := map[string]string{
         "en_US": "January 2, 2006 3:04 PM",
@@ -746,33 +746,33 @@ func FormatForLocale(t time.Time, locale string) string {
         "fr_FR": "2 janvier 2006 15:04",
         "ru_RU": "2 января 2006 15:04",
     }
-    
+
     format := formats[locale]
     if format == "" {
         format = time.RFC3339
     }
-    
+
     return localTime.Format(format)
 }
 ```
 
 ## Лучшие практики
 
-1. **Используйте `UTC` для хранения** - конвертируйте в локальное время только для отображения
-2. **Используйте time.Duration** - для представления продолжительности
-3. **Проверяйте ошибки** - при парсинге времени
-4. **Используйте константы времени** - **time.Second**, **time.Minute**, **time.Hour**
-5. **Учитывайте часовые пояса** - при работе с датами и временем
-6. **Используйте таймеры правильно** - останавливайте таймеры после использования
-7. **Избегайте time.`Sleep` в циклах** - используйте таймеры или **tickers**
-8. **Проверяйте таймауты** - используйте **context** для таймаутов
-9. **Форматируйте правильно** - используйте правильные форматы для парсинга
-10. **Учитывайте летнее время** - при работе с часовыми поясами
-11. **Парсите множественные форматы** - обрабатывайте различные форматы времени
-12. **Используйте бизнес-логику** - проверяйте рабочие часы и дни
-13. **Используйте таймауты** - для ограничения времени операций
-14. **Используйте deadline** - для абсолютных временных ограничений
-15. **Форматируйте для локалей** - учитывайте локализацию времени
+1. **Используйте `UTC` для хранения** — конвертируйте в локальное время только для отображения
+2. **Используйте time.Duration** — для представления продолжительности
+3. **Проверяйте ошибки** — при парсинге времени
+4. **Используйте константы времени** — **time.Second**, **time.Minute**, **time.Hour**
+5. **Учитывайте часовые пояса** — при работе с датами и временем
+6. **Используйте таймеры правильно** — останавливайте таймеры после использования
+7. **Избегайте time.`Sleep` в циклах** — используйте таймеры или **tickers**
+8. **Проверяйте таймауты** — используйте **context** для таймаутов
+9. **Форматируйте правильно** — используйте правильные форматы для парсинга
+10. **Учитывайте летнее время** — при работе с часовыми поясами
+11. **Парсите множественные форматы** — обрабатывайте различные форматы времени
+12. **Используйте бизнес-логику** — проверяйте рабочие часы и дни
+13. **Используйте таймауты** — для ограничения времени операций
+14. **Используйте deadline** — для абсолютных временных ограничений
+15. **Форматируйте для локалей** — учитывайте локализацию времени
 
 
 ## Решение проблем
@@ -791,3 +791,11 @@ func FormatForLocale(t time.Time, locale string) string {
 
 - [Go time Package](https://pkg.go.dev/time)
 - [Go Time Formatting](https://go.dev/blog/formatting)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

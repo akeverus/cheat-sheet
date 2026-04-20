@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Kotlin Flow](https://kotlinlang.org/docs/flow.html)
 - [Kotlin Channels](https://kotlinlang.org/docs/channels.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Coroutines Tutorial](https://www.baeldung.com/kotlin/coroutines)
 - [Kotlin Flow Tutorial](https://www.baeldung.com/kotlin/flow)
 
@@ -33,9 +33,9 @@ updated: "2026-02-11"
 ## Содержание
 
 - [**Coroutine Context** и **Dispatchers** (**детально**)](#coroutine-context-и-dispatchers-детально)
-  - [**CoroutineContext** - детальное понимание](#coroutinecontext-детальное-понимание)
+  - [**CoroutineContext** — детальное понимание](#coroutinecontext-детальное-понимание)
   - [Композиция контекста](#композиция-контекста)
-  - [Dispatchers - детальное использование](#dispatchers-детальное-использование)
+  - [Dispatchers — детальное использование](#dispatchers-детальное-использование)
   - [Переключение Dispatchers](#переключение-dispatchers)
   - [CoroutineName](#coroutinename)
   - [ExceptionHandler в контексте](#exceptionhandler-в-контексте)
@@ -50,10 +50,10 @@ updated: "2026-02-11"
   - [**LifecycleScope** (**Android**)](#lifecyclescope-android)
   - [**ViewModelScope** (**Android**)](#viewmodelscope-android)
 - [**Job** и **Deferred**](#job-и-deferred)
-  - [**Job** - детальное использование](#job-детальное-использование)
+  - [**Job** — детальное использование](#job-детальное-использование)
   - [**Job** иерархия](#job-иерархия)
   - [**SupervisorJob**](#supervisorjob)
-  - [**Deferred** - результат **async**](#deferred-результат-async)
+  - [**Deferred** — результат **async**](#deferred-результат-async)
   - [**Deferred** с обработкой ошибок](#deferred-с-обработкой-ошибок)
   - [**awaitAll**](#awaitall)
 - [**Flow** (**продвинутое**)](#flow-продвинутое)
@@ -131,9 +131,9 @@ updated: "2026-02-11"
 
 **CoroutineContext** является фундаментальной концепцией в **Kotlin Coroutines**. Он определяет окружение, в котором выполняется корутина, включая поток выполнения, имя корутины, обработчик исключений и другие элементы. Понимание **CoroutineContext** критично для правильной работы с корутинами.
 
-### **CoroutineContext** - детальное понимание
+### **CoroutineContext** — детальное понимание
 
-**CoroutineContext** представляет собой набор элементов, которые определяют поведение корутины. Каждый элемент контекста отвечает за определенный аспект выполнения: **Dispatcher** определяет поток, **CoroutineName** - имя для отладки, **Job** - жизненный цикл корутины, **ExceptionHandler** - обработку ошибок.
+**CoroutineContext** представляет собой набор элементов, которые определяют поведение корутины. Каждый элемент контекста отвечает за определенный аспект выполнения: **Dispatcher** определяет поток, **CoroutineName** — имя для отладки, **Job** — жизненный цикл корутины, **ExceptionHandler** — обработку ошибок.
 
 Контекст можно комбинировать через оператор `+`, что позволяет создавать сложные конфигурации. Элементы контекста имеют приоритеты, и при объединении более поздние элементы могут переопределять более ранние.
 
@@ -151,7 +151,7 @@ val context: CoroutineContext = Dispatchers.Default + CoroutineName("MyCoroutine
 **val dispatcher** = **context**[**ContinuationInterceptor**]  // **Dispatcher**
 **val name** = **context**[**CoroutineName**]                  // **CoroutineName**
 **val job** = **context**[**Job**]                              // **Job**
-```
+```text
 
 ### Композиция контекста
 
@@ -167,7 +167,7 @@ val overridden = base + `CoroutineName`("`Overridden`") // CoroutineName пер�
 
 // Удаление элементов
 val `withoutName` = combined.`minusKey`(`CoroutineName`.Key)
-```
+```text
 
 ### Dispatchers - детальное использование
 
@@ -196,7 +196,7 @@ suspend fun unconfined() = `withContext`(`Dispatchers`.`Unconfined`) {
 
 // Кастомный `Dispatcher`
 val `customDispatcher` = `Executors`.`newFixedThreadPool`(4).`asCoroutineDispatcher()`
-```
+```text
 
 ### Переключение Dispatchers
 
@@ -205,22 +205,22 @@ suspend fun example() {
     // Начинаем в `Main`
     `withContext`(`Dispatchers`.`Main`) {
         println("`Main`: ${`Thread`.`currentThread()`.name}")
-        
+
         // Переключаемся на `IO`
         `withContext`(`Dispatchers`.`IO`) {
             println("`IO`: ${`Thread`.`currentThread()`.name}")
-            
+
             // Переключаемся на `Default`
             `withContext`(`Dispatchers`.`Default`) {
                 println("`Default`: ${`Thread`.`currentThread()`.name}")
             }
         }
-        
+
         // Возвращаемся в `Main`
         println("`Main again`: ${`Thread`.`currentThread()`.name}")
     }
 }
-```
+```text
 
 ### CoroutineName
 
@@ -236,7 +236,7 @@ suspend fun process() {
         println(`coroutineContext`[`CoroutineName`]) // CoroutineName(Processing)
     }
 }
-```
+```text
 
 ### ExceptionHandler в контексте
 
@@ -250,7 +250,7 @@ val scope = `CoroutineScope`(`Dispatchers`.`Default` + `exceptionHandler`)
 `scope.launch` {
     throw `RuntimeException`("`Test exception`")
 }
-```
+```text
 
 ## Structured Concurrency
 
@@ -271,16 +271,16 @@ suspend fun `structuredExample()` = `coroutineScope` {
         delay(`1000`)
         println("`Child 1`")
     }
-    
+
     launch {
         delay(`1000`)
         println("`Child 2`")
     }
-    
+
     // Родительская корутина ждет завершения всех дочерних
     println("`Parent waiting`")
 }
-```
+```text
 
 В этом примере `coroutineScope` создает scope, который ждет завершения всех дочерних корутин перед выходом из функции. Это гарантирует, что все асинхронные операции завершатся, и ресурсы будут освобождены корректно. Если любая из дочерних корутин выбросит исключение, оно будет распространено на родительскую корутину, что обеспечивает правильную обработку ошибок.
 
@@ -300,15 +300,15 @@ suspend fun cancellationExample() = coroutineScope {
             throw e
         }
     }
-    
+
     val job2 = launch {
         delay(1000)
         println("Job 2 completed")
     }
-    
+
     delay(2000)
     job1.cancel()  // Отмена одной корутины
-    
+
     // job2 продолжит выполнение
 }
 ```
@@ -323,12 +323,12 @@ suspend fun supervisorExample() = supervisorScope {
         delay(1000)
         throw RuntimeException("Error in job1")
     }
-    
+
     val job2 = launch {
         delay(2000)
         println("Job 2 completed")
     }
-    
+
     // job1 падает, но job2 продолжает выполнение
     joinAll(job1, job2)
 }
@@ -339,23 +339,23 @@ suspend fun supervisorExample() = supervisorScope {
 ```kotlin
 suspend fun hierarchyExample() = coroutineScope {
     println("Root coroutine")
-    
+
     launch {
         println("Child 1")
-        
+
         launch {
             println("Grandchild 1")
         }
-        
+
         launch {
             println("Grandchild 2")
         }
     }
-    
+
     launch {
         println("Child 2")
     }
-    
+
     // Все дочерние и внучатые корутины завершаются
 }
 ```
@@ -373,7 +373,7 @@ fun globalScopeExample() {
         delay(1000)
         println("GlobalScope coroutine")
     }
-    
+
     // Проблема: корутина может пережить компонент, который ее создал
 }
 
@@ -388,13 +388,13 @@ fun globalScopeExample() {
 // Создание собственного scope
 class MyComponent {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    
+
     fun doWork() {
         scope.launch {
             // Работа
         }
     }
-    
+
     fun cleanup() {
         scope.cancel()  // Отмена всех корутин в scope
     }
@@ -409,19 +409,19 @@ suspend fun supervisorScopeExample() = supervisorScope {
         delay(1000)
         throw RuntimeException("Error")
     }
-    
+
     val job2 = launch {
         delay(2000)
         println("Job 2 completed")
     }
-    
+
     // job1 падает, но не отменяет job2
     try {
         job1.join()
     } catch (e: Exception) {
         println("Job 1 failed: ${e.message}")
     }
-    
+
     job2.join()
 }
 ```
@@ -433,7 +433,7 @@ suspend fun supervisorScopeExample() = supervisorScope {
 class MyActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // LifecycleScope автоматически отменяется при уничтожении Activity
         lifecycleScope.launch {
             // Работа
@@ -457,7 +457,7 @@ class MyViewModel : ViewModel() {
 
 ## **Job** и **Deferred**
 
-### **Job** - детальное использование
+### **Job** — детальное использование
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -492,15 +492,15 @@ suspend fun jobHierarchy() = coroutineScope {
             delay(1000)
             println("Child 1")
         }
-        
+
         val childJob2 = launch {
             delay(2000)
             println("Child 2")
         }
-        
+
         // Отмена родителя отменяет всех детей
     }
-    
+
     delay(500)
     parentJob.cancel()  // Отменяет parentJob, childJob1, childJob2
 }
@@ -523,7 +523,7 @@ scope.launch {
 }
 ```
 
-### **Deferred** - результат **async**
+### **Deferred** — результат **async**
 
 ```kotlin
 suspend fun deferredExample() = coroutineScope {
@@ -532,16 +532,16 @@ suspend fun deferredExample() = coroutineScope {
         delay(1000)
         42
     }
-    
+
     val deferred2: Deferred<String> = async {
         delay(2000)
         "Hello"
     }
-    
+
     // Ожидание результата
     val result1 = deferred1.await()  // 42
     val result2 = deferred2.await()  // "Hello"
-    
+
     println("$result1, $result2")
 }
 ```
@@ -554,7 +554,7 @@ suspend fun deferredErrorHandling() = coroutineScope {
         delay(1000)
         throw RuntimeException("Error")
     }
-    
+
     try {
         val result = deferred.await()
     } catch (e: Exception) {
@@ -572,7 +572,7 @@ suspend fun awaitAllExample() = coroutineScope {
         async { delay(2000); 2 },
         async { delay(3000); 3 }
     )
-    
+
     val results = deferreds.awaitAll()  // [1, 2, 3]
     println(results)
 }
@@ -835,7 +835,7 @@ receiver2.receive()  // 1 (оба получают одно значение)
 // Fan-out - один производитель, много потребителей
 suspend fun fanOut() = coroutineScope {
     val channel = produceNumbers()
-    
+
     repeat(3) { id ->
         launch {
             channel.consumeEach { value ->
@@ -848,7 +848,7 @@ suspend fun fanOut() = coroutineScope {
 // Fan-in - много производителей, один потребитель
 suspend fun fanIn() = coroutineScope {
     val channel = Channel<Int>()
-    
+
     // Много производителей
     repeat(3) { id ->
         launch {
@@ -858,7 +858,7 @@ suspend fun fanIn() = coroutineScope {
             }
         }
     }
-    
+
     // Один потребитель
     launch {
         repeat(15) {
@@ -877,7 +877,7 @@ import kotlinx.coroutines.selects.*
 suspend fun selectExample() = coroutineScope {
     val channel1 = produce { repeat(5) { send(it); delay(100) } }
     val channel2 = produce { repeat(5) { send(it * 10); delay(150) } }
-    
+
     repeat(10) {
         select<Unit> {
             channel1.onReceive { value ->
@@ -894,12 +894,12 @@ suspend fun selectExample() = coroutineScope {
 suspend fun selectDeferred() = coroutineScope {
     val deferred1 = async { delay(100); 1 }
     val deferred2 = async { delay(200); 2 }
-    
+
     val result = select<Int> {
         deferred1.onAwait { it }
         deferred2.onAwait { it }
     }
-    
+
     println("First result: $result")
 }
 ```
@@ -916,7 +916,7 @@ val mutex = Mutex()
 
 suspend fun mutexExample() = coroutineScope {
     var counter = 0
-    
+
     repeat(100) {
         launch {
             mutex.withLock {
@@ -924,7 +924,7 @@ suspend fun mutexExample() = coroutineScope {
             }
         }
     }
-    
+
     delay(1000)
     println("Counter: $counter")  // 100
 }
@@ -978,7 +978,7 @@ suspend fun semaphoreExample() = coroutineScope {
 class ReadWriteLock {
     private val readSemaphore = Semaphore(Int.MAX_VALUE)
     private val writeMutex = Mutex()
-    
+
     suspend fun <T> read(block: suspend () -> T): T {
         readSemaphore.acquire()
         try {
@@ -987,7 +987,7 @@ class ReadWriteLock {
             readSemaphore.release()
         }
     }
-    
+
     suspend fun <T> write(block: suspend () -> T): T {
         writeMutex.withLock {
             readSemaphore.acquire(Int.MAX_VALUE)
@@ -1125,13 +1125,13 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
 
 suspend fun actorSolution() = coroutineScope {
     val counter = counterActor()
-    
+
     repeat(1000) {
         launch {
             counter.send(IncCounter)
         }
     }
-    
+
     delay(1000)
     val response = CompletableDeferred<Int>()
     counter.send(GetCounter(response))
@@ -1181,13 +1181,13 @@ import kotlinx.coroutines.test.*
 // TestCoroutineDispatcher - контролирует время выполнения
 fun testExample() {
     val testDispatcher = TestCoroutineDispatcher()
-    
+
     runBlockingTest(testDispatcher) {
         val job = launch {
             delay(1000)
             println("Delayed")
         }
-        
+
         advanceTimeBy(1000)  // Пропускаем время
         job.join()
     }
@@ -1199,7 +1199,7 @@ fun testWithRunBlockingTest() = runBlockingTest {
         delay(1000)
         42
     }
-    
+
     advanceTimeBy(1000)
     assertEquals(42, deferred.await())
 }
@@ -1210,12 +1210,12 @@ fun testWithRunBlockingTest() = runBlockingTest {
 ```kotlin
 fun testWithScope() {
     val testScope = TestCoroutineScope()
-    
+
     testScope.launch {
         delay(1000)
         println("Test")
     }
-    
+
     testScope.advanceTimeBy(1000)
     testScope.cleanupTestCoroutines()
 }
@@ -1235,7 +1235,7 @@ fun testFlow() = runBlockingTest {
         delay(100)
         emit(3)
     }
-    
+
     val results = flow.take(2).toList()
     assertEquals(listOf(1, 2), results)
 }
@@ -1255,7 +1255,7 @@ class Repository(private val dispatcher: CoroutineDispatcher) {
 fun testRepository() = runBlockingTest {
     val testDispatcher = TestCoroutineDispatcher()
     val repository = Repository(testDispatcher)
-    
+
     val result = repository.fetchData()
     assertEquals("Data", result)
 }
@@ -1276,13 +1276,13 @@ fun badExample() {
 // Хорошо
 class MyComponent {
     private val scope = CoroutineScope(Dispatchers.Default)
-    
+
     fun goodExample() {
         scope.launch {
             // Работа
         }
     }
-    
+
     fun cleanup() {
         scope.cancel()
     }
@@ -1406,7 +1406,7 @@ import kotlinx.coroutines.debug.CoroutineName
 
 suspend fun profileCoroutines() {
     val startTime = System.nanoTime()
-    
+
     coroutineScope {
         launch(CoroutineName("Task1")) {
             task1()
@@ -1415,7 +1415,7 @@ suspend fun profileCoroutines() {
             task2()
         }
     }
-    
+
     val duration = System.nanoTime() - startTime
     println("Total time: ${duration / 1_000_000}ms")
 }
@@ -1438,7 +1438,7 @@ val job = launch(CoroutineName("MyCoroutine")) {
 interface ApiService {
     @GET("/users/{id}")
     suspend fun getUser(@Path("id") id: Long): User
-    
+
     @POST("/users")
     suspend fun createUser(@Body user: User): User
 }
@@ -1465,13 +1465,13 @@ class UserRepository(private val api: ApiService) {
 interface UserDao {
     @Query("SELECT * FROM users")
     suspend fun getAllUsers(): List<User>
-    
+
     @Insert
     suspend fun insertUser(user: User): Long
-    
+
     @Update
     suspend fun updateUser(user: User)
-    
+
     @Delete
     suspend fun deleteUser(user: User)
 }
@@ -1496,7 +1496,7 @@ suspend fun pipelineExample() = coroutineScope {
     val input = Channel<Int>(Channel.UNLIMITED)
     val stage1 = Channel<Int>(Channel.UNLIMITED)
     val stage2 = Channel<String>(Channel.UNLIMITED)
-    
+
     // Stage 1: Фильтрация
     launch {
         for (value in input) {
@@ -1506,7 +1506,7 @@ suspend fun pipelineExample() = coroutineScope {
         }
         stage1.close()
     }
-    
+
     // Stage 2: Трансформация
     launch {
         for (value in stage1) {
@@ -1514,7 +1514,7 @@ suspend fun pipelineExample() = coroutineScope {
         }
         stage2.close()
     }
-    
+
     // Отправка данных
     launch {
         repeat(10) {
@@ -1522,7 +1522,7 @@ suspend fun pipelineExample() = coroutineScope {
         }
         input.close()
     }
-    
+
     // Получение результатов
     for (result in stage2) {
         println(result)
@@ -1540,7 +1540,7 @@ suspend fun pipelineExample() = coroutineScope {
 suspend fun workerPoolExample(items: List<Item>) = coroutineScope {
     val workChannel = Channel<Item>(Channel.UNLIMITED)
     val resultChannel = Channel<Result>(Channel.UNLIMITED)
-    
+
     // Создание воркеров
     repeat(4) {
         launch {
@@ -1550,20 +1550,20 @@ suspend fun workerPoolExample(items: List<Item>) = coroutineScope {
             }
         }
     }
-    
+
     // Отправка работы
     launch {
         items.forEach { workChannel.send(it) }
         workChannel.close()
     }
-    
+
     // Сбор результатов
     val results = mutableListOf<Result>()
     for (i in items.indices) {
         results.add(resultChannel.receive())
     }
     resultChannel.close()
-    
+
     results
 }
 ```
@@ -1589,7 +1589,7 @@ suspend fun monitorCoroutines() {
         delay(1000)
         // Работа
     }
-    
+
     // Получение информации о корутинах
     val dump = DebugProbes.dumpCoroutinesInfo()
     dump.forEach { info ->
@@ -1642,7 +1642,7 @@ fun <T> Flow<T>.debounceIf(
 ): Flow<T> = flow {
     var lastValue: T? = null
     var lastEmitTime = 0L
-    
+
     collect { value ->
         val now = System.currentTimeMillis()
         if (condition(value)) {
@@ -1704,7 +1704,7 @@ suspend fun combineMultipleFlows() {
     val flow1 = flowOf(1, 2, 3)
     val flow2 = flowOf("a", "b", "c")
     val flow3 = flowOf(true, false, true)
-    
+
     combine(flow1, flow2, flow3) { num, str, bool ->
         Triple(num, str, bool)
     }.collect { (num, str, bool) ->
@@ -1722,14 +1722,14 @@ suspend fun selectFirstFlow() {
         delay(50)
         emit(2)
     }
-    
+
     select<Int> {
         flow1.onEach { value ->
             emit(value)
         }.onEach {
             flow2.cancel()
         }
-        
+
         flow2.onEach { value ->
             emit(value)
         }.onEach {
@@ -1753,13 +1753,13 @@ suspend fun selectFirstFlow() {
 // Избегание захвата больших объектов
 class LargeObjectProcessor {
     private val largeData = List(1_000_000) { it }  // Большой объект
-    
+
     suspend fun process() {
         // Плохо - захватывает largeData
         launch {
             processData(largeData)  // Захватывает весь объект
         }
-        
+
         // Хорошо - передаем только нужные данные
         val neededData = largeData.take(100)
         launch {
@@ -1771,7 +1771,7 @@ class LargeObjectProcessor {
 // Использование weak references для предотвращения утечек
 class WeakReferenceProcessor {
     private val weakRef = WeakReference(largeObject)
-    
+
     suspend fun process() {
         weakRef.get()?.let { obj ->
             processObject(obj)
@@ -1807,7 +1807,7 @@ suspend fun optimizeBatchProcessing(items: List<Item>) = coroutineScope {
 // Использование ограничения параллелизма
 suspend fun optimizeConcurrency(items: List<Item>) = coroutineScope {
     val semaphore = Semaphore(10)  // Максимум 10 параллельных операций
-    
+
     items.map { item ->
         async {
             semaphore.withPermit {
@@ -1833,7 +1833,7 @@ import kotlinx.coroutines.flow.*
 class ViewModel {
     private val _state = MutableStateFlow(0)
     val state: StateFlow<Int> = _state.asStateFlow()
-    
+
     fun increment() {
         _state.value++
     }
@@ -1843,7 +1843,7 @@ class ViewModel {
 class EventBus {
     private val _events = MutableSharedFlow<Event>()
     val events: SharedFlow<Event> = _events.asSharedFlow()
-    
+
     fun emit(event: Event) {
         _events.emit(event)
     }
@@ -1912,17 +1912,17 @@ hot.collect { println("Collector 1: $it") }  // Может пропустить 
 fun main() = runBlocking {
     val supervisor = SupervisorJob()
     val scope = CoroutineScope(supervisor)
-    
+
     scope.launch {
         delay(100)
         throw RuntimeException("Error in coroutine 1")
     }
-    
+
     scope.launch {
         delay(200)
         println("Coroutine 2 completed")  // Выполнится несмотря на ошибку в первой
     }
-    
+
     delay(300)
 }
 
@@ -1933,7 +1933,7 @@ fun main() = runBlocking {
             delay(100)
             throw RuntimeException("Error")
         }
-        
+
         launch {
             delay(200)
             println("This will execute")  // Выполнится
@@ -1959,7 +1959,7 @@ fun <T> ReceiveChannel<T>.asFlow(): Flow<T> = flow {
 // Преобразование Flow в Channel
 suspend fun <T> Flow<T>.toChannel(capacity: Int = Channel.UNLIMITED): ReceiveChannel<T> {
     val channel = Channel<T>(capacity)
-    
+
     launch {
         try {
             collect { value ->
@@ -1969,7 +1969,7 @@ suspend fun <T> Flow<T>.toChannel(capacity: Int = Channel.UNLIMITED): ReceiveCha
             channel.close()
         }
     }
-    
+
     return channel
 }
 
@@ -2007,7 +2007,7 @@ class GetCounter(val response: CompletableDeferred<Int>) : CounterMsg()
 
 fun CoroutineScope.counterActor() = actor<CounterMsg> {
     var counter = 0
-    
+
     for (msg in channel) {
         when (msg) {
             is IncCounter -> counter++
@@ -2019,15 +2019,15 @@ fun CoroutineScope.counterActor() = actor<CounterMsg> {
 // Использование
 fun main() = runBlocking {
     val counter = counterActor()
-    
+
     repeat(100) {
         counter.send(IncCounter)
     }
-    
+
     val response = CompletableDeferred<Int>()
     counter.send(GetCounter(response))
     println("Counter: ${response.await()}")
-    
+
     counter.close()
 }
 ```
@@ -2088,7 +2088,7 @@ fun <T> Flow<T>.debounceWithCondition(
 ): Flow<T> = flow {
     var lastEmitted: T? = null
     var lastEmitTime = 0L
-    
+
     collect { value ->
         val currentTime = System.currentTimeMillis()
         if (condition(value)) {
@@ -2135,7 +2135,7 @@ fun combineUserData(
 class TaskProcessor {
     private val supervisorJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Default + supervisorJob)
-    
+
     fun processTasks(tasks: List<Task>) {
         tasks.forEach { task ->
             scope.launch {
@@ -2148,7 +2148,7 @@ class TaskProcessor {
             }
         }
     }
-    
+
     private suspend fun processTask(task: Task) {
         // Обработка задачи
     }
@@ -2165,19 +2165,19 @@ class TaskProcessor {
 class Counter {
     private var value = 0
     private val mutex = Mutex()
-    
+
     suspend fun increment() {
         mutex.withLock {
             value++
         }
     }
-    
+
     suspend fun decrement() {
         mutex.withLock {
             value--
         }
     }
-    
+
     suspend fun getValue(): Int {
         return mutex.withLock {
             value

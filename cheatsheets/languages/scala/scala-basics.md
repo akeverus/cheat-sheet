@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [Scala School](https://twitter.github.io/scala_school/)
 - [Scala Exercises](https://www.scala-exercises.org/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Scala Tutorial](https://www.baeldung.com/scala)
 
 ### См. также (библиотеки)
@@ -575,11 +575,11 @@ def greetPerson(person: Person): String = person match {
   // Декомпозиция с конкретным значением имени
   // Переменная age извлекается из объекта
   case Person("Alice", age) => s"Hello Alice, you are $age years old"
-  
+
   // Декомпозиция с guard (условием)
   // if age < 18 проверяет дополнительное условие
   case Person(name, age) if age < 18 => s"Hello $name, you are too young"
-  
+
   // Общий случай - извлекает оба поля
   case Person(name, age) => s"Hello $name, you are $age years old"
 }
@@ -677,7 +677,7 @@ class Person(val name: String, val age: Int)
 
 object Person {
   def apply(name: String, age: Int): Person = new Person(name, age)
-  
+
   def fromBirthYear(name: String, birthYear: Int): Person = {
     val currentYear = 2024
     new Person(name, currentYear - birthYear)
@@ -1220,7 +1220,7 @@ processUser(userId, email)
 ```scala
 object Email {
   def apply(user: String, domain: String): String = s"$user@$domain"
-  
+
   def unapply(email: String): Option[(String, String)] = {
     val parts = email.split("@")
     if (parts.length == 2) Some(parts(0), parts(1))
@@ -1313,7 +1313,7 @@ class Graph {
       // соединение узлов
     }
   }
-  
+
   def createNode(value: Int): Node = new Node(value)
 }
 
@@ -1367,7 +1367,7 @@ trait Validator {
 class UserService extends Logger with Validator {
   def log(message: String): Unit = println(s"Log: $message")
   def validate(data: String): Boolean = data.nonEmpty
-  
+
   def processUser(name: String): Unit = {
     if (validate(name)) {
       log(s"Processing user: $name")
@@ -1384,11 +1384,11 @@ class UserService extends Logger with Validator {
 // Generic класс для работы с различными типами
 class Repository[T] {
   private var items: List[T] = List.empty
-  
+
   def add(item: T): Unit = {
     items = item :: items
   }
-  
+
   def getAll: List[T] = items
 }
 
@@ -1417,7 +1417,7 @@ class OrderService {
       total = total
     )
   }
-  
+
   private def generateOrderId(): Long = System.currentTimeMillis()
 }
 ```
@@ -1445,7 +1445,7 @@ class UserService extends Logger with Timestamped with Validatable[User] {
     if (!isValid) log(s"Validation failed for user: ${user.name}")
     isValid
   }
-  
+
   def createUser(name: String, email: String): Option[User] = {
     val user = User(generateId(), name, email, 0)
     if (validate(user)) {
@@ -1453,7 +1453,7 @@ class UserService extends Logger with Timestamped with Validatable[User] {
       Some(user)
     } else None
   }
-  
+
   private def generateId(): Long = timestamp()
 }
 ```
@@ -1493,7 +1493,7 @@ object User {
   def apply(name: String): User = {
     new User(System.currentTimeMillis(), name)
   }
-  
+
   def unapply(user: User): Option[(Long, String)] = {
     Some((user.id, user.name))
   }
@@ -1566,12 +1566,12 @@ class UserRepository extends Repository[User] {
     // Реализация
     None
   }
-  
+
   def save(user: User): User = {
     // Реализация
     user
   }
-  
+
   def delete(id: Long): Unit = {
     // Реализация
   }

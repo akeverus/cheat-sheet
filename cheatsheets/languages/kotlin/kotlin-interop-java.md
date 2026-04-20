@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Calling Java from Kotlin](https://kotlinlang.org/docs/java-interop.html)
 - [Calling Kotlin from Java](https://kotlinlang.org/docs/java-to-kotlin-interop.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Java Interop Tutorial](https://www.baeldung.com/kotlin/java-interop)
 
 ### См. также
@@ -152,7 +152,7 @@ val name = javaClass.name  // Свойство вместо getter
 
 ### **Nullability**
 
-**Java** типы в **Kotlin** являются **platform types** - они могут быть **nullable** или **non-null**, в зависимости от контекста:**
+**Java** типы в **Kotlin** являются **platform types** — они могут быть **nullable** или **non-null**, в зависимости от контекста:**
 
 ```kotlin
 // Java метод может вернуть null
@@ -244,7 +244,7 @@ fun String.removeSpaces(): String {
 // String result = ExtensionFunctionsKt.removeSpaces("hello world");
 ```
 
-В **Java extension** функции вызываются как статические методы, где первый параметр - это объект-приемник.
+В **Java extension** функции вызываются как статические методы, где первый параметр — это объект-приемник.
 
 ## **Nullability** аннотации
 
@@ -747,11 +747,11 @@ javaList.add(4)  // mutableList также содержит 4
 
 ## Работа с **nullability**
 
-**Nullability** - одна из ключевых особенностей **Kotlin**, которая требует внимательности при работе с **Java**.
+**Nullability** — одна из ключевых особенностей **Kotlin**, которая требует внимательности при работе с **Java**.
 
 ### **Platform Types**
 
-**Java** типы в **Kotlin** являются **platform types** - они могут быть **nullable** или **non-null**:**
+**Java** типы в **Kotlin** являются **platform types** — они могут быть **nullable** или **non-null**:**
 
 ```kotlin
 // Java метод
@@ -792,7 +792,7 @@ val name: String = javaClass.name  // Non-null
 ```kotlin
 /
  * Creates a new user with the specified name and email.
- * 
+ *
  * @param name The user's name (non-null)
  * @param email The user's email (nullable)
  * @return The created user instance
@@ -852,7 +852,7 @@ object StringUtils {
 public class User {
     private final String name;
     private final int age;
-    
+
     public User(String name, int age) {
         this.name = name;
         this.age = age;
@@ -882,7 +882,7 @@ class UserService(private val repository: UserRepository) {
 class MyClass {
     @JvmName("getValueJava")
     fun getValue(): String = "value"
-    
+
     @JvmName("setValueJava")
     fun setValue(value: String) {
         // ...
@@ -1050,12 +1050,12 @@ object StringUtils {
 public class User {
     private final String name;
     private final int age;
-    
+
     public User(String name, int age) {
         this.name = name;
         this.age = age;
     }
-    
+
     // getters, equals, hashCode, toString
 }
 
@@ -1067,7 +1067,7 @@ class UserService(private val repository: UserRepository) {
     fun findUser(id: Long): User? {
         return repository.findById(id)
     }
-    
+
     fun saveUser(user: User): User {
         return repository.save(user)
     }
@@ -1085,7 +1085,7 @@ class UserService(private val repository: UserRepository) {
 class MyClass {
     @JvmName("getValueJava")
     fun getValue(): String = "value"
-    
+
     @JvmName("setValueJava")
     fun setValue(value: String) {
         // ...
@@ -1303,15 +1303,15 @@ fun method() {
 // Java код
 public class UserService {
     private final UserRepository repository;
-    
+
     public UserService(UserRepository repository) {
         this.repository = repository;
     }
-    
+
     public User findUser(Long id) {
         return repository.findById(id);
     }
-    
+
     public List<User> findAllUsers() {
         return repository.findAll();
     }
@@ -1324,7 +1324,7 @@ class UserService(private val repository: UserRepository) {
     fun findUser(id: Long): User? {
         return repository.findById(id)
     }
-    
+
     fun findAllUsers(): List<User> {
         return repository.findAll()
     }
@@ -1450,12 +1450,12 @@ val customDispatcher = Executors.newFixedThreadPool(4)
 // public class UserService {
 //     private final UserRepository repository;
 //     private final EmailService emailService;
-//     
+//
 //     public UserService(UserRepository repository, EmailService emailService) {
 //         this.repository = repository;
 //         this.emailService = emailService;
 //     }
-//     
+//
 //     public User createUser(String email, String name) {
 //         User user = new User(email, name);
 //         repository.save(user);
@@ -1486,10 +1486,10 @@ class UserService(
 object Calculator {
     @JvmName("addIntegers")
     fun add(a: Int, b: Int): Int = a + b
-    
+
     @JvmName("addDoubles")
     fun add(a: Double, b: Double): Double = a + b
-    
+
     @JvmStatic
     fun multiply(a: Int, b: Int): Int = a * b
 }
@@ -1525,10 +1525,10 @@ fun <T> invokeJavaMethod(
 
 ```kotlin
 // Kotlin nullable типы и Java Optional
-fun String?.toOptional(): Optional<String> = 
+fun String?.toOptional(): Optional<String> =
     Optional.ofNullable(this)
 
-fun Optional<String>.toNullable(): String? = 
+fun Optional<String>.toNullable(): String? =
     this.orElse(null)
 
 // Kotlin Unit и Java void

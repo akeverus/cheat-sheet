@@ -45,7 +45,6 @@ StatsD — лёгкий демон для приёма метрик по UDP (с
 - [Глоссарий и итоговые таблицы](#глоссарий)
 - [statsd_exporter (Prometheus)](#statsd_exporter-prometheus)
 
----
 
 ## Введение
 
@@ -55,7 +54,6 @@ StatsD — сетевой демон, принимающий метрики по
 
 **Ограничения:** UDP не гарантирует доставку; при перегрузке пакеты могут теряться. StatsD сам по себе не хранит историю — только пересылает в бэкенд.
 
----
 
 ## Протокол StatsD
 
@@ -77,7 +75,6 @@ users.unique:user123|s
 
 Несколько метрик в одном UDP-пакете разделяются переводом строки (`\n`).
 
----
 
 ## Типы метрик
 
@@ -90,7 +87,6 @@ users.unique:user123|s
 
 Counter: каждое значение добавляется к счётчику за интервал. Timer: все значения за интервал агрегируются; бэкенд получает count, sum, mean, min, max, перцентили. Gauge: последнее отправленное значение или инкремент/декремент от текущего. Set: количество уникальных строк за интервал.
 
----
 
 ## Установка и запуск
 
@@ -117,7 +113,6 @@ docker run -d --name statsd -p 8125:8125/udp -p 8126:8126/tcp graphite/statsd
 echo "test.counter:1|c" | nc -u -w0 localhost 8125
 ```
 
----
 
 ## Конфигурация
 
@@ -145,7 +140,6 @@ echo "test.counter:1|c" | nc -u -w0 localhost 8125
 
 Дополнительные бэкенды (InfluxDB, Prometheus через statsd_exporter, Datadog) подключаются через плагины; конфигурация зависит от реализации.
 
----
 
 ## Бэкенды
 
@@ -157,7 +151,6 @@ echo "test.counter:1|c" | nc -u -w0 localhost 8125
 | Prometheus    | Официального бэкенда StatsD → Prometheus нет; используют **statsd_exporter**: приложение шлёт в statsd_exporter по UDP; Prometheus скрапит statsd_exporter. |
 | Datadog       | Бэкенд/расширение для отправки в Datadog. |
 
----
 
 ## Клиенты (языки и библиотеки)
 
@@ -173,7 +166,6 @@ echo "test.counter:1|c" | nc -u -w0 localhost 8125
 
 Общий принцип: открыть UDP-сокет на адрес StatsD (или statsd_exporter), отправлять строки в формате bucket:value|type. Буферизация и асинхронная отправка снижают накладные расходы.
 
----
 
 ## Интеграция с приложениями
 
@@ -192,7 +184,6 @@ send_metric("app.latency_ms", 45, "ms")
 
 **Ручная отправка (bash):** `echo "app.requests:1|c" > /dev/udp/localhost/8125`
 
----
 
 ## Лучшие практики
 
@@ -203,7 +194,6 @@ send_metric("app.latency_ms", 45, "ms")
 5. **Кардинальность** — не использовать уникальные идентификаторы (userId, requestId) в имени метрики; ограниченный набор имён и тегов.
 6. **Таймеры** — отправлять в ms; StatsD агрегирует в перцентили на стороне сервера.
 
----
 
 ## Решение проблем
 
@@ -215,7 +205,6 @@ send_metric("app.latency_ms", 45, "ms")
 | Неверные значения счётчика при sample_rate | StatsD умножает на 1/sample_rate | Убедиться, что бэкенд корректно интерпретирует сэмплированные счётчики |
 | Метрики в Prometheus | Нужен statsd_exporter | Настроить приложение на отправку в statsd_exporter; Prometheus скрапит statsd_exporter |
 
----
 
 ## Частые вопросы
 
@@ -227,7 +216,6 @@ send_metric("app.latency_ms", 45, "ms")
 
 **Как добавить теги?** В классическом StatsD тегов нет; иерархия только через точку в имени. В расширениях (Datadog, InfluxDB-бэкенд, statsd_exporter) поддерживаются теги в формате bucket:value|type|#tag1:value1,tag2:value2.
 
----
 
 ## Глоссарий
 
@@ -256,7 +244,6 @@ send_metric("app.latency_ms", 45, "ms")
 | 8126 | TCP | Админ (stats, counters) в части реализаций |
 | 2003 | TCP | Carbon (Graphite) — приём от StatsD |
 
----
 
 ## statsd_exporter (Prometheus)
 
@@ -284,6 +271,5 @@ mappings:
 
 Для стека Prometheus приложение может слать метрики в формате StatsD в statsd_exporter; Prometheus собирает метрики с statsd_exporter без установки классического StatsD + Graphite.
 
----
 
 **Заключение.** StatsD — простой и распространённый способ сбора метрик по UDP с агрегацией на стороне сервера и пересылкой в Graphite, InfluxDB или (через statsd_exporter) в Prometheus. Используйте единый стиль именования, ограничивайте кардинальность и учитывайте потери UDP. Для JVM-приложений удобна связка Micrometer + StatsdMeterRegistry. См. [StatsD Wiki](https://github.com/statsd/statsd/wiki), [statsd_exporter](https://github.com/prometheus/statsd_exporter).

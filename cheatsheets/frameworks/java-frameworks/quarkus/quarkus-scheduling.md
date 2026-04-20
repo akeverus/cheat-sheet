@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Scheduling - Планирование задач
-
-
+# Quarkus: Scheduling — Планирование задач
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: Scheduling - Планирование задач](#quarkus-scheduling-планирование-задач)
+- [Quarkus: Scheduling — Планирование задач](#quarkus-scheduling-планирование-задач)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Scheduling](#basic-scheduling)
@@ -94,7 +92,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ScheduledTasks {
-    
+
     @Scheduled(every = "10s")
     void everyTenSeconds() {
         System.out.println("Executing every 10 seconds");
@@ -109,12 +107,12 @@ public class ScheduledTasks {
 ```java
 @ApplicationScoped
 public class CronTasks {
-    
+
     @Scheduled(cron = "0 0 * * * ?")  // Каждый час
     void everyHour() {
         System.out.println("Executing every hour");
     }
-    
+
     @Scheduled(cron = "0 0 0 * * ?")  // Каждый день в полночь
     void everyDay() {
         System.out.println("Executing every day");
@@ -131,12 +129,12 @@ public class CronTasks {
 ```java
 @ApplicationScoped
 public class ConditionalScheduling {
-    
+
     @Scheduled(every = "1m", skipExecutionIf = SkipPredicate.class)
     void conditionalTask() {
         // Выполняется только если условие выполнено
     }
-    
+
     public static class SkipPredicate implements Scheduled.SkipPredicate {
         @Override
         public boolean test(ScheduledExecution execution) {
@@ -157,7 +155,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class AsyncScheduledTasks {
-    
+
     @Scheduled(every = "5s")
     Uni<Void> asyncTask() {
         return Uni.createFrom().item(() -> {
@@ -178,7 +176,7 @@ public class AsyncScheduledTasks {
 ```java
 @ApplicationScoped
 public class IdentifiedTasks {
-    
+
     @Scheduled(identity = "my-task", every = "10s")
     void identifiedTask() {
         // Задача с идентификатором
@@ -197,10 +195,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ProgrammaticScheduling {
-    
+
     @Inject
     Scheduler scheduler;
-    
+
     public void scheduleTask() {
         scheduler.newJob("my-job")
             .setInterval(Duration.ofSeconds(10))
@@ -272,22 +270,22 @@ Uni<Void> longRunningTask() {
 ```java
 @ApplicationScoped
 public class CommonCronPatterns {
-    
+
     @Scheduled(cron = "0 0 * * * ?")      // Каждый час
     void everyHour() {}
-    
+
     @Scheduled(cron = "0 0 0 * * ?")      // Каждый день в полночь
     void everyDay() {}
-    
+
     @Scheduled(cron = "0 0 0 ? * MON")    // Каждый понедельник в полночь
     void everyMonday() {}
-    
+
     @Scheduled(cron = "0 0 0 1 * ?")      // Первое число каждого месяца
     void firstOfMonth() {}
-    
+
     @Scheduled(cron = "0 0/15 * * * ?")  // Каждые 15 минут
     void everyFifteenMinutes() {}
-    
+
     @Scheduled(cron = "0 0 9-17 * * MON-FRI")  // Каждый час с 9 до 17 в рабочие дни
     void businessHours() {}
 }
@@ -305,7 +303,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ContextAwareTasks {
-    
+
     @Scheduled(every = "10s")
     void taskWithContext(ScheduledExecution execution) {
         System.out.println("Scheduled fire time: " + execution.getScheduledFireTime());
@@ -325,18 +323,18 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CancellableTasks {
-    
+
     @Inject
     Scheduler scheduler;
-    
+
     public void cancelTask(String taskId) {
         scheduler.unschedule(taskId);
     }
-    
+
     public void pauseTask(String taskId) {
         scheduler.pause(taskId);
     }
-    
+
     public void resumeTask(String taskId) {
         scheduler.resume(taskId);
     }
@@ -352,7 +350,7 @@ public class CancellableTasks {
 ```java
 @ApplicationScoped
 public class ErrorHandlingTasks {
-    
+
     @Scheduled(every = "10s")
     void taskWithErrorHandling() {
         try {
@@ -362,7 +360,7 @@ public class ErrorHandlingTasks {
             // Задача продолжит выполняться по расписанию
         }
     }
-    
+
     @Scheduled(every = "1m")
     Uni<Void> reactiveTaskWithErrorHandling() {
         return processAsync()
@@ -383,7 +381,7 @@ import java.time.Duration;
 
 @ApplicationScoped
 public class RetryTasks {
-    
+
     @Scheduled(every = "5m")
     Uni<Void> taskWithRetry() {
         return processAsync()
@@ -417,7 +415,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class LockedTasks {
-    
+
     @Scheduled(every = "1m", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void lockedTask() {
         // Выполняется только если предыдущий запуск завершен
@@ -438,10 +436,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MonitoredTasks {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     @Scheduled(every = "10s")
     void monitoredTask() {
         long startTime = System.currentTimeMillis();
@@ -467,9 +465,9 @@ public class MonitoredTasks {
 ```java
 @ApplicationScoped
 public class JobQueueService {
-    
+
     private final Queue<Job> jobQueue = new ConcurrentLinkedQueue<>();
-    
+
     @Scheduled(every = "1s")
     void processJobQueue() {
         Job job = jobQueue.poll();
@@ -477,7 +475,7 @@ public class JobQueueService {
             processJob(job);
         }
     }
-    
+
     public void enqueueJob(Job job) {
         jobQueue.offer(job);
     }
@@ -491,10 +489,10 @@ public class JobQueueService {
 ```java
 @ApplicationScoped
 public class PriorityScheduler {
-    
-    private final PriorityQueue<PriorityJob> jobQueue = 
+
+    private final PriorityQueue<PriorityJob> jobQueue =
         new PriorityQueue<>(Comparator.comparing(PriorityJob::getPriority));
-    
+
     @Scheduled(every = "1s")
     void processPriorityJobs() {
         PriorityJob job = jobQueue.poll();
@@ -512,15 +510,15 @@ public class PriorityScheduler {
 ```java
 @ApplicationScoped
 public class DistributedScheduler {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     @Scheduled(every = "10s")
     void distributedTask() {
         String lockKey = "task:lock";
         String lockValue = UUID.randomUUID().toString();
-        
+
         // Попытка получить блокировку
         if (acquireLock(lockKey, lockValue, 30)) {
             try {
@@ -530,7 +528,7 @@ public class DistributedScheduler {
             }
         }
     }
-    
+
     private boolean acquireLock(String key, String value, int ttl) {
         // Реализация через Redis SET NX EX
         return redisClient.set(key, value, SetArgs.Builder.nx().ex(ttl));
@@ -547,17 +545,17 @@ public class DistributedScheduler {
 ```java
 @ApplicationScoped
 public class MonitoredScheduledTask {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     @Scheduled(every = "1m")
     void monitoredTask() {
         Timer.Sample sample = Timer.start(registry);
         try {
             executeTask();
         } finally {
-            sample.stop(registry.timer("scheduled.task.duration", 
+            sample.stop(registry.timer("scheduled.task.duration",
                 Tags.of("task", "monitoredTask")));
         }
     }
@@ -571,18 +569,18 @@ public class MonitoredScheduledTask {
 ```java
 @ApplicationScoped
 public class TrackedScheduledTask {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     @Scheduled(every = "10s")
     void trackedTask() {
         try {
             executeTask();
-            registry.counter("scheduled.task.success", 
+            registry.counter("scheduled.task.success",
                 Tags.of("task", "trackedTask")).increment();
         } catch (Exception e) {
-            registry.counter("scheduled.task.failure", 
+            registry.counter("scheduled.task.failure",
                 Tags.of("task", "trackedTask", "error", e.getClass().getSimpleName()))
                 .increment();
             throw e;
@@ -600,10 +598,10 @@ public class TrackedScheduledTask {
 ```java
 @ApplicationScoped
 public class ConditionalScheduledTask {
-    
+
     @ConfigProperty(name = "task.enabled")
     boolean taskEnabled;
-    
+
     @Scheduled(every = "1m")
     void conditionalTask() {
         if (taskEnabled) {
@@ -620,16 +618,16 @@ public class ConditionalScheduledTask {
 ```java
 @ApplicationScoped
 public class DependentTasks {
-    
+
     private volatile boolean firstTaskCompleted = false;
-    
+
     @Scheduled(every = "10s")
     void firstTask() {
         // Первая задача
         processData();
         firstTaskCompleted = true;
     }
-    
+
     @Scheduled(every = "5s")
     void secondTask() {
         // Вторая задача выполняется только после первой
@@ -647,10 +645,10 @@ public class DependentTasks {
 ```java
 @ApplicationScoped
 public class DynamicScheduleService {
-    
+
     @Inject
     Scheduler scheduler;
-    
+
     public void scheduleTask(String cronExpression) {
         scheduler.newJob("dynamic-job")
             .setCron(cronExpression)
@@ -672,3 +670,11 @@ public class DynamicScheduleService {
 - [**Quarkus Scheduling** Guide](https://quarkus.io/guides/scheduler)
 - [**Cron Expression** Guide](https://crontab.guru/)
 - [Quartz Scheduler](https://www.quartz-scheduler.org/documentation/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

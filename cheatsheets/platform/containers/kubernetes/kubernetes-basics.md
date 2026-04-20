@@ -16,8 +16,6 @@ updated: "2026-02-11"
 
 > **Примечание:** материал по `Kubernetes` поддерживается напрямую в этом документе; дополнительные примеры и пояснения переносятся в рабочем порядке при следующем тематическом обновлении.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -25,7 +23,7 @@ updated: "2026-02-11"
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 - [Kubernetes API Reference](https://kubernetes.io/docs/reference/kubernetes-api/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Kubernetes Tutorial](https://kubernetes.io/docs/tutorials/)
 
@@ -168,11 +166,11 @@ do {
     V1PodList podList = api.listPodForAllNamespaces(
         null, null, null, continueToken, 100, null, null, null, null, null
     );
-    
+
     for (V1Pod pod : podList.getItems()) {
         // Обработка пода
     }
-    
+
     continueToken = podList.getMetadata().getContinue();
 } while (continueToken != null);
 ```
@@ -187,15 +185,15 @@ ApiCallback<V1PodList> callback = new ApiCallback<V1PodList>() {
     public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
         // Обработка ошибки
     }
-    
+
     @Override
     public void onSuccess(V1PodList result, int statusCode, Map<String, List<String>> responseHeaders) {
         // Обработка результата
     }
-    
+
     @Override
     public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {}
-    
+
     @Override
     public void onDownloadProgress(long bytesRead, long contentLength, boolean done) {}
 };
@@ -737,7 +735,7 @@ spec:
 
 **Формат `Cron`:**
 
-```
+```text
 МИНУТЫ ЧАСЫ ДЕНЬ_МЕСЯЦА МЕСЯЦ ДЕНЬ_НЕДЕЛИ
 ```
 
@@ -2072,7 +2070,7 @@ $ kubectl logs <pod-name> -c <container-name> --follow
    ```
 
 2. **Откройте **Dashboard** в браузере:**
-   ```
+   ```text
    http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
    ```
 
@@ -2332,3 +2330,9 @@ $ kubectl rollout undo deployment/<deployment-name>
 - **Сеть и сервисы:** предпочитайте **ClusterIP** для внутренней связи; **Ingress** для **HTTP**/**HTTPS**; не публикуйте **NodePort** без необходимости.
 - **Управление конфигурацией:** используйте **ConfigMap** и **Secret**; не храните конфиг в образах; версионируйте манифесты в **Git** и применяйте через CI/CD.
 
+## См. также
+
+- [[kubernetes-advanced|Kubernetes Advanced]]
+- [[kubernetes-networking|Kubernetes Networking]]
+- [[kubernetes-security|Kubernetes Security]]
+- [[kubernetes-storage|Kubernetes Storage]]

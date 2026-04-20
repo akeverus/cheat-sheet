@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 ## Алгоритм имитации отжига
 
-Алгоритм имитации отжига - это эвристика для решения задач с большим пространством поиска.
+Алгоритм имитации отжига — это эвристика для решения задач с большим пространством поиска.
 
 Вдохновение и название пришли из отжига в металлургии; это метод, который включает нагрев и контролируемое охлаждение материала.
 
@@ -81,11 +81,11 @@ updated: "2026-02-11"
 
 **Алгоритм имеет несколько параметров для работы:**
 
-1. **Количество итераций** - условие остановки для моделирования
-2. **Начальная температура** - начальная энергия системы
-3. **Параметр скорости охлаждения** - процент, на который мы снижаем температуру системы
-4. **Минимальная температура** - опциональное условие остановки
-5. **Время симуляции** - необязательное условие остановки
+1. **Количество итераций** — условие остановки для моделирования
+2. **Начальная температура** — начальная энергия системы
+3. **Параметр скорости охлаждения** — процент, на который мы снижаем температуру системы
+4. **Минимальная температура** — опциональное условие остановки
+5. **Время симуляции** — необязательное условие остановки
 
 Значения этих параметров должны быть тщательно выбраны, так как они могут иметь существенное влияние на производительность процесса.
 
@@ -98,26 +98,26 @@ updated: "2026-02-11"
 public class City {
     private final int x; // координата X
     private final int y; // координата Y
-    
+
     // Случайное расположение города в квадрате 0..500
     public City() {
         this((int) (Math.random() * 500), (int) (Math.random() * 500));
     }
-    
+
     // Явно заданные координаты
     public City(int x, int y) {
         this.x = x;
         this.y = y;
     }
-    
+
     public int getX() {
         return x;
     }
-    
+
     public int getY() {
         return y;
     }
-    
+
     // Эвклидово расстояние до другого города
     public double distanceToCity(City city) {
         int dx = Math.abs(x - city.getX());
@@ -140,13 +140,13 @@ import java.util.List;
 public class Travel {
     private List<City> travel = new ArrayList<>();       // текущий маршрут
     private List<City> previousTravel = new ArrayList<>(); // маршрут до последней перестановки
-    
+
     public Travel(int numberOfCities) {
         for (int i = 0; i < numberOfCities; i++) {
             travel.add(new City()); // создаём случайные города
         }
     }
-    
+
     // Генерация начального случайного маршрута
     public void generateInitialTravel() {
         if (travel.isEmpty()) {
@@ -156,34 +156,34 @@ public class Travel {
         }
         Collections.shuffle(travel); // перемешиваем порядок городов
     }
-    
+
     // Меняем местами две случайные точки маршрута (кандидат-сосед)
     public void swapCities() {
         int a = generateRandomIndex();
         int b = generateRandomIndex();
-        
+
         previousTravel = new ArrayList<>(travel); // сохраняем копию для возможного отката
-        
+
         City first = travel.get(a);
         City second = travel.get(b);
-        
+
         travel.set(a, second);
         travel.set(b, first);
     }
-    
+
     // Откат последней перестановки, если шаг не принят
     public void revertSwap() {
         travel = previousTravel;
     }
-    
+
     private int generateRandomIndex() {
         return (int) (Math.random() * travel.size());
     }
-    
+
     public City getCity(int index) {
         return travel.get(index);
     }
-    
+
     // Полная длина маршрута с возвратом в стартовый город
     public int getDistance() {
         int distance = 0;
@@ -211,28 +211,28 @@ public class Travel {
 // Имитация отжига для TSP: принимает ухудшения с некоторой вероятностью, охлаждая температуру
 public class SimulatedAnnealing {
     private final Travel travel;
-    
+
     public SimulatedAnnealing(Travel travel) {
         this.travel = travel;
     }
-    
+
     public double simulateAnnealing(
-        double startingTemperature, 
-        int numberOfIterations, 
+        double startingTemperature,
+        int numberOfIterations,
         double coolingRate
     ) {
         double t = startingTemperature;          // текущая температура
         travel.generateInitialTravel();          // стартовый маршрут
-        
+
         double bestDistance = travel.getDistance(); // текущее лучшее расстояние
-        
+
         for (int i = 0; i < numberOfIterations; i++) {
             if (t <= 0.1) {                      // минимальная температура: можно завершить
                 break;
             }
             travel.swapCities();                 // генерируем соседа маршрута
             double currentDistance = travel.getDistance(); // длина нового маршрута
-            
+
             if (currentDistance < bestDistance) {
                 bestDistance = currentDistance;  // улучшаем лучшее решение
             } else {
@@ -279,7 +279,7 @@ System.out.println("Best distance: " + bestDistance);
 // Город в TSP: координаты и метод расстояния
 data class CityK(val x: Int, val y: Int) {
     constructor() : this((Math.random() * 500).toInt(), (Math.random() * 500).toInt()) // случайные координаты
-    
+
     fun distanceToCity(city: CityK): Double {
         val dx = (x - city.x).absoluteValue
         val dy = (y - city.y).absoluteValue
@@ -291,11 +291,11 @@ data class CityK(val x: Int, val y: Int) {
 class TravelK(private val numberOfCities: Int) {
     private val travel = mutableListOf<CityK>()          // текущий маршрут
     private var previousTravel = mutableListOf<CityK>()  // предыдущий маршрут для отката
-    
+
     init {
         repeat(numberOfCities) { travel.add(CityK()) }   // создаём случайные города
     }
-    
+
     // Случайный стартовый маршрут
     fun generateInitialTravel() {
         if (travel.isEmpty()) {
@@ -303,7 +303,7 @@ class TravelK(private val numberOfCities: Int) {
         }
         travel.shuffle()
     }
-    
+
     // Перестановка двух случайных городов
     fun swapCities() {
         val a = (Math.random() * travel.size).toInt()
@@ -311,15 +311,15 @@ class TravelK(private val numberOfCities: Int) {
         previousTravel = ArrayList(travel)               // сохраняем для отката
         Collections.swap(travel, a, b)                   // меняем местами
     }
-    
+
     // Откат перестановки
     fun revertSwap() {
         travel.clear()
         travel.addAll(previousTravel)
     }
-    
+
     fun getCity(index: Int): CityK = travel[index]
-    
+
     // Полная длина маршрута с возвратом в исходную точку
     fun getDistance(): Double {
         var distance = 0.0
@@ -345,15 +345,15 @@ class SimulatedAnnealingK(private val travel: TravelK) {
     ): Double {
         var t = startingTemperature           // текущая температура
         travel.generateInitialTravel()        // стартовый маршрут
-        
+
         var bestDistance = travel.getDistance() // лучшее расстояние
-        
+
         repeat(numberOfIterations) {
             if (t <= 0.1) return bestDistance // ранний выход при низкой температуре
-            
+
             travel.swapCities()               // генерируем сосед
             val currentDistance = travel.getDistance() // измеряем длину
-            
+
             if (currentDistance < bestDistance) {
                 bestDistance = currentDistance // улучшение найдено
             } else {
@@ -375,7 +375,7 @@ class SimulatedAnnealingK(private val travel: TravelK) {
 fun main() {
     val travel = TravelK(10)
     val sa = SimulatedAnnealingK(travel)
-    
+
     val bestDistance = sa.simulateAnnealing(10000.0, 1000, 0.9995)
     println("Best distance: $bestDistance")
 }
@@ -410,18 +410,18 @@ fun main() {
 
 ## Частые вопросы
 
-**Нужен ли точный оптимум?** Имитация отжига — эвристика, оптимум не гарантирован; используйте точные методы для малых графов.  
-**Можно ли комбинировать с 2-opt?** Да, 2-opt как оператор соседства обычно улучшает качество и скорость сходимости.  
-**Как выбрать температуру?** Берите стартовую температуру такой, чтобы на первых шагах принималось ~80–90% ухудшений; дальше регулируйте cooling rate.  
-**Работает ли с ограничениями (time windows, forbidden edges)?** Да, но оператор соседства и проверка валидности должны учитывать ограничения, иначе маршрут будет недопустимым.  
+**Нужен ли точный оптимум?** Имитация отжига — эвристика, оптимум не гарантирован; используйте точные методы для малых графов.
+**Можно ли комбинировать с 2-opt?** Да, 2-opt как оператор соседства обычно улучшает качество и скорость сходимости.
+**Как выбрать температуру?** Берите стартовую температуру такой, чтобы на первых шагах принималось ~80–90% ухудшений; дальше регулируйте cooling rate.
+**Работает ли с ограничениями (time windows, forbidden edges)?** Да, но оператор соседства и проверка валидности должны учитывать ограничения, иначе маршрут будет недопустимым.
 **Что делать с большими графами (1000+ городов)?** Уменьшайте число итераций, используйте агрессивное охлаждение, ограничивайте соседство (локальный swap), или переходите к гибридам (SA + 2-opt/lin-kernighan).
 
 ## Глоссарий
 
-`Simulated Annealing` — имитация отжига, стохастическая эвристика оптимизации.  
-`Cooling schedule` — правило уменьшения температуры (`t *= coolingRate`).  
-`Neighbor` — соседнее решение, например перестановка двух городов или 2-opt.  
-`Acceptance probability` — вероятность принять ухудшение, обычно `exp((best - current)/t)`.  
+`Simulated Annealing` — имитация отжига, стохастическая эвристика оптимизации.
+`Cooling schedule` — правило уменьшения температуры (`t *= coolingRate`).
+`Neighbor` — соседнее решение, например перестановка двух городов или 2-opt.
+`Acceptance probability` — вероятность принять ухудшение, обычно `exp((best - current)/t)`.
 `2-opt` — локальный оператор, переворачивающий подотрезок маршрута для сокращения длины.
 
 ## Дополнительные примеры использования
@@ -523,13 +523,13 @@ int routeLength(List<Integer> route, int[][] dist) {
 ```java
 public class ConstrainedTSP extends Travel {
     private Map<City, List<City>> constraints;
-    
+
     public boolean isValidRoute() {
         for (int i = 0; i < travel.size(); i++) {
             City current = travel.get(i);
-            City next = (i + 1 < travel.size()) ? 
+            City next = (i + 1 < travel.size()) ?
                 travel.get(i + 1) : travel.get(0);
-            
+
             if (constraints.containsKey(current)) {
                 if (!constraints.get(current).contains(next)) {
                     return false;
@@ -546,14 +546,14 @@ public class ConstrainedTSP extends Travel {
 ```java
 public class TSPWithTimeWindows extends Travel {
     private Map<City, TimeWindow> timeWindows;
-    
+
     public double getTotalTime() {
         double time = 0;
         for (int i = 0; i < travel.size(); i++) {
             City current = travel.get(i);
-            City next = (i + 1 < travel.size()) ? 
+            City next = (i + 1 < travel.size()) ?
                 travel.get(i + 1) : travel.get(0);
-            
+
             time += current.distanceToCity(next);
             time += getServiceTime(current);
         }
@@ -583,10 +583,10 @@ public class TSPWithTimeWindows extends Travel {
 void simulatedAnnealing_improvesRouteOnSmallGraph() {
     Travel travel = new Travel(5);
     SimulatedAnnealing sa = new SimulatedAnnealing(travel);
-    
+
     double initial = travel.getDistance(); // исходный маршрут
     double best = sa.simulateAnnealing(5000, 500, 0.995); // запускаем отжиг
-    
+
     assertTrue(best <= initial); // ожидаем не хуже исходного
 }
 ```
@@ -598,10 +598,10 @@ void simulatedAnnealing_improvesRouteOnSmallGraph() {
 fun `annealing improves small route`() {
     val travel = TravelK(5)
     val sa = SimulatedAnnealingK(travel)
-    
+
     val initial = travel.getDistance()
     val best = sa.simulateAnnealing(5000.0, 500, 0.995)
-    
+
     assertTrue(best <= initial)
 }
 ```

@@ -144,7 +144,7 @@ public class User {
     private boolean active;
     private Instant createdAt;
     private Instant updatedAt;
-    
+
     // Бизнес-логика для изменения состояния
     public void deactivate() {
         if (!active) {
@@ -153,7 +153,7 @@ public class User {
         this.active = false;
         this.updatedAt = Instant.now();
     }
-    
+
     public void changeEmail(String newEmail) {
         validateEmail(newEmail);
         this.email = newEmail;
@@ -170,7 +170,7 @@ public class UserView {
     private Instant createdAt;
     private List<OrderSummary> recentOrders;
     private int totalOrders;
-    
+
     // Оптимизирована для чтения, может быть денормализована
 }
 ```
@@ -193,7 +193,7 @@ public class CreateUserCommand implements Command {
     private final String email;
     private final String password;
     private final String name;
-    
+
     public CreateUserCommand(String email, String password, String name) {
         this.commandId = UUID.randomUUID().toString();
         this.timestamp = Instant.now();
@@ -201,7 +201,7 @@ public class CreateUserCommand implements Command {
         this.password = password;
         this.name = name;
     }
-    
+
     // Getters
 }
 
@@ -210,17 +210,17 @@ public class UpdateUserCommand implements Command {
     private final String userId;
     private final String email;
     private final String name;
-    
+
     // Constructor and getters
 }
 
 @Component
 public class UserCommandHandler {
-    
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final DomainEventPublisher eventPublisher;
-    
+
     public UserCommandHandler(UserRepository userRepository,
                              PasswordEncoder passwordEncoder,
                              DomainEventPublisher eventPublisher) {
@@ -228,14 +228,14 @@ public class UserCommandHandler {
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
     }
-    
+
     @Transactional
     public String handle(CreateUserCommand command) {
         // Валидация
         if (userRepository.existsByEmail(command.getEmail())) {
             throw new UserAlreadyExistsException(command.getEmail());
         }
-        
+
         // Создание агрегата
         User user = new User(
             UUID.randomUUID().toString(),
@@ -243,50 +243,50 @@ public class UserCommandHandler {
             passwordEncoder.encode(command.getPassword()),
             command.getName()
         );
-        
+
         // Сохранение
         userRepository.save(user);
-        
+
         // Публикация события для синхронизации Read модели
         eventPublisher.publish(new UserCreatedEvent(
             user.getId(),
             user.getEmail(),
             user.getName()
         ));
-        
+
         return user.getId();
     }
-    
+
     @Transactional
     public void handle(UpdateUserCommand command) {
         User user = userRepository.findById(command.getUserId())
             .orElseThrow(() -> new UserNotFoundException(command.getUserId()));
-        
+
         if (command.getEmail() != null) {
             user.changeEmail(command.getEmail());
         }
-        
+
         if (command.getName() != null) {
             user.changeName(command.getName());
         }
-        
+
         userRepository.save(user);
-        
+
         eventPublisher.publish(new UserUpdatedEvent(
             user.getId(),
             user.getEmail(),
             user.getName()
         ));
     }
-    
+
     @Transactional
     public void handle(DeactivateUserCommand command) {
         User user = userRepository.findById(command.getUserId())
             .orElseThrow(() -> new UserNotFoundException(command.getUserId()));
-        
+
         user.deactivate();
         userRepository.save(user);
-        
+
         eventPublisher.publish(new UserDeactivatedEvent(user.getId()));
     }
 }
@@ -304,33 +304,33 @@ public interface CommandBus {
 
 @Component
 public class SimpleCommandBus implements CommandBus {
-    
+
     private final Map<Class<? extends Command>, CommandHandler<?>> handlers = new HashMap<>();
     private final ApplicationContext applicationContext;
-    
+
     @PostConstruct
     public void init() {
-        Map<String, CommandHandler> handlerBeans = 
+        Map<String, CommandHandler> handlerBeans =
             applicationContext.getBeansOfType(CommandHandler.class);
-        
+
         for (CommandHandler handler : handlerBeans.values()) {
             Class<? extends Command> commandType = handler.getCommandType();
             handlers.put(commandType, handler);
         }
     }
-    
+
     @Override
     public <T extends Command> void send(T command) {
         CommandHandler<T> handler = findHandler(command);
         handler.handle(command);
     }
-    
+
     @Override
     public <T extends Command, R> R sendAndWait(T command, Class<R> resultType) {
         CommandHandler<T> handler = findHandler(command);
         return (R) handler.handle(command);
     }
-    
+
     @SuppressWarnings("unchecked")
     private <T extends Command> CommandHandler<T> findHandler(T command) {
         CommandHandler<?> handler = handlers.get(command.getClass());
@@ -345,9 +345,9 @@ public class SimpleCommandBus implements CommandBus {
 @RestController
 @RequestMapping("/api/users")
 public class UserCommandController {
-    
+
     private final CommandBus commandBus;
-    
+
     @PostMapping
     public ResponseEntity<String> createUser(@RequestBody CreateUserRequest request) {
         CreateUserCommand command = new CreateUserCommand(
@@ -355,7 +355,7 @@ public class UserCommandController {
             request.getPassword(),
             request.getName()
         );
-        
+
         String userId = commandBus.sendAndWait(command, String.class);
         return ResponseEntity.ok(userId);
     }
@@ -378,13 +378,13 @@ public class GetUserByIdQuery implements Query {
     private final String queryId;
     private final Instant timestamp;
     private final String userId;
-    
+
     public GetUserByIdQuery(String userId) {
         this.queryId = UUID.randomUUID().toString();
         this.timestamp = Instant.now();
         this.userId = userId;
     }
-    
+
     // Getters
 }
 
@@ -395,48 +395,48 @@ public class SearchUsersQuery implements Query {
     private final boolean activeOnly;
     private final int page;
     private final int size;
-    
+
     // Constructor and getters
 }
 
 @Component
 public class UserQueryHandler {
-    
+
     private final UserViewRepository userViewRepository;
-    
+
     public UserQueryHandler(UserViewRepository userViewRepository) {
         this.userViewRepository = userViewRepository;
     }
-    
+
     public UserView handle(GetUserByIdQuery query) {
         return userViewRepository.findById(query.getUserId())
             .orElseThrow(() -> new UserNotFoundException(query.getUserId()));
     }
-    
+
     public Page<UserView> handle(SearchUsersQuery query) {
         Specification<UserView> spec = Specification.where(null);
-        
+
         if (query.getEmailFilter() != null) {
-            spec = spec.and((root, criteriaQuery, cb) -> 
-                cb.like(cb.lower(root.get("email")), 
+            spec = spec.and((root, criteriaQuery, cb) ->
+                cb.like(cb.lower(root.get("email")),
                     "%" + query.getEmailFilter().toLowerCase() + "%"));
         }
-        
+
         if (query.getNameFilter() != null) {
-            spec = spec.and((root, criteriaQuery, cb) -> 
-                cb.like(cb.lower(root.get("name")), 
+            spec = spec.and((root, criteriaQuery, cb) ->
+                cb.like(cb.lower(root.get("name")),
                     "%" + query.getNameFilter().toLowerCase() + "%"));
         }
-        
+
         if (query.isActiveOnly()) {
-            spec = spec.and((root, criteriaQuery, cb) -> 
+            spec = spec.and((root, criteriaQuery, cb) ->
                 cb.equal(root.get("active"), true));
         }
-        
+
         Pageable pageable = PageRequest.of(query.getPage(), query.getSize());
         return userViewRepository.findAll(spec, pageable);
     }
-    
+
     public List<UserOrderView> handle(GetUserOrdersQuery query) {
         return userViewRepository.findUserOrders(query.getUserId());
     }
@@ -452,28 +452,28 @@ public interface QueryBus {
 
 @Component
 public class SimpleQueryBus implements QueryBus {
-    
+
     private final Map<Class<? extends Query>, QueryHandler<?, ?>> handlers = new HashMap<>();
     private final ApplicationContext applicationContext;
-    
+
     @PostConstruct
     public void init() {
-        Map<String, QueryHandler> handlerBeans = 
+        Map<String, QueryHandler> handlerBeans =
             applicationContext.getBeansOfType(QueryHandler.class);
-        
+
         for (QueryHandler handler : handlerBeans.values()) {
             Class<? extends Query> queryType = handler.getQueryType();
             handlers.put(queryType, handler);
         }
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> T send(Query query, Class<T> resultType) {
         QueryHandler<Query, T> handler = findHandler(query);
         return handler.handle(query);
     }
-    
+
     @SuppressWarnings("unchecked")
     private <Q extends Query, R> QueryHandler<Q, R> findHandler(Query query) {
         QueryHandler<?, ?> handler = handlers.get(query.getClass());
@@ -488,16 +488,16 @@ public class SimpleQueryBus implements QueryBus {
 @RestController
 @RequestMapping("/api/users")
 public class UserQueryController {
-    
+
     private final QueryBus queryBus;
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<UserView> getUser(@PathVariable String id) {
         GetUserByIdQuery query = new GetUserByIdQuery(id);
         UserView user = queryBus.send(query, UserView.class);
         return ResponseEntity.ok(user);
     }
-    
+
     @GetMapping
     public ResponseEntity<Page<UserView>> searchUsers(
             @RequestParam(required = false) String email,
@@ -505,7 +505,7 @@ public class UserQueryController {
             @RequestParam(defaultValue = "false") boolean activeOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         SearchUsersQuery query = new SearchUsersQuery(email, name, activeOnly, page, size);
         Page<UserView> users = queryBus.send(query, Page.class);
         return ResponseEntity.ok(users);
@@ -522,10 +522,10 @@ public class UserQueryController {
 ```java
 @Component
 public class UserViewUpdater {
-    
+
     private final UserViewRepository userViewRepository;
     private final OrderViewRepository orderViewRepository;
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserCreated(UserCreatedEvent event) {
         UserView view = new UserView();
@@ -535,39 +535,39 @@ public class UserViewUpdater {
         view.setActive(true);
         view.setCreatedAt(event.getOccurredOn());
         view.setTotalOrders(0);
-        
+
         userViewRepository.save(view);
     }
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserUpdated(UserUpdatedEvent event) {
         UserView view = userViewRepository.findById(event.getUserId())
             .orElseThrow(() -> new UserNotFoundException(event.getUserId()));
-        
+
         view.setEmail(event.getEmail());
         view.setName(event.getName());
         view.setUpdatedAt(event.getOccurredOn());
-        
+
         userViewRepository.save(view);
     }
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserDeactivated(UserDeactivatedEvent event) {
         UserView view = userViewRepository.findById(event.getUserId())
             .orElseThrow(() -> new UserNotFoundException(event.getUserId()));
-        
+
         view.setActive(false);
         view.setUpdatedAt(event.getOccurredOn());
-        
+
         userViewRepository.save(view);
     }
-    
+
     @KafkaListener(topics = "order-events", groupId = "user-view-updater")
     public void handleOrderCreated(OrderCreatedEvent event) {
         // Обновление статистики заказов пользователя
         UserView view = userViewRepository.findById(event.getCustomerId())
             .orElse(null);
-        
+
         if (view != null) {
             view.setTotalOrders(view.getTotalOrders() + 1);
             userViewRepository.save(view);
@@ -583,16 +583,16 @@ public class UserViewUpdater {
 ```java
 @Component
 public class UserCommandHandler {
-    
+
     private final UserRepository userRepository;
     private final UserViewRepository userViewRepository;
-    
+
     @Transactional
     public String handle(CreateUserCommand command) {
         // Сохранение в Write модель
         User user = new User(/* ... */);
         userRepository.save(user);
-        
+
         // Обновление Read модели в той же транзакции
         UserView view = new UserView();
         view.setId(user.getId());
@@ -600,7 +600,7 @@ public class UserCommandHandler {
         view.setName(user.getName());
         view.setActive(true);
         userViewRepository.save(view);
-        
+
         return user.getId();
     }
 }
@@ -617,28 +617,28 @@ public class UserCommandHandler {
 ```java
 @RestController
 public class UserController {
-    
+
     @PostMapping("/users")
     public ResponseEntity<CreateUserResponse> createUser(@RequestBody CreateUserRequest request) {
         String userId = commandBus.sendAndWait(new CreateUserCommand(/* ... */), String.class);
-        
+
         // Возвращаем ID, но предупреждаем о задержке
         return ResponseEntity.accepted()
             .header("X-Read-Model-Delay", "may-be-delayed")
             .body(new CreateUserResponse(userId, "User created. Read model will be updated shortly."));
     }
-    
+
     @GetMapping("/users/{id}")
     public ResponseEntity<UserView> getUser(@PathVariable String id) {
         UserView user = queryBus.send(new GetUserByIdQuery(id), UserView.class);
-        
+
         if (user == null) {
             // Возможно, Read модель еще не обновлена
             return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .header("Retry-After", "1")
                 .build();
         }
-        
+
         return ResponseEntity.ok(user);
     }
 }
@@ -649,24 +649,24 @@ public class UserController {
 ```java
 @RestController
 public class UserController {
-    
+
     @PostMapping("/users")
     public ResponseEntity<CreateUserResponse> createUser(@RequestBody CreateUserRequest request) {
         String userId = commandBus.sendAndWait(new CreateUserCommand(/* ... */), String.class);
-        
+
         return ResponseEntity.accepted()
             .header("Location", "/api/users/" + userId + "/status")
             .body(new CreateUserResponse(userId));
     }
-    
+
     @GetMapping("/users/{id}/status")
     public ResponseEntity<UserStatus> getUserStatus(@PathVariable String id) {
         UserView user = queryBus.send(new GetUserByIdQuery(id), UserView.class);
-        
+
         if (user != null) {
             return ResponseEntity.ok(new UserStatus(id, "READY", user));
         }
-        
+
         return ResponseEntity.ok(new UserStatus(id, "PENDING", null));
     }
 }
@@ -677,14 +677,14 @@ public class UserController {
 ```java
 @Component
 public class UserViewUpdater {
-    
+
     private final SimpMessagingTemplate messagingTemplate;
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserCreated(UserCreatedEvent event) {
         // Обновление Read модели
         UserView view = updateUserView(event);
-        
+
         // Отправка обновления через WebSocket
         messagingTemplate.convertAndSend("/topic/users/" + event.getUserId(), view);
     }
@@ -709,15 +709,15 @@ public class UserOrderSummaryView {
     private BigDecimal totalAmount;
     private Instant lastOrderDate;
     private List<OrderSummary> recentOrders; // Денормализованные данные
-    
+
     // Getters and setters
 }
 
 @Component
 public class UserOrderSummaryUpdater {
-    
+
     private final UserOrderSummaryRepository summaryRepository;
-    
+
     @KafkaListener(topics = "order-events", groupId = "order-summary-updater")
     public void handleOrderCreated(OrderCreatedEvent event) {
         UserOrderSummaryView summary = summaryRepository.findById(event.getCustomerId())
@@ -726,11 +726,11 @@ public class UserOrderSummaryUpdater {
                 newSummary.setUserId(event.getCustomerId());
                 return newSummary;
             });
-        
+
         summary.setTotalOrders(summary.getTotalOrders() + 1);
         summary.setTotalAmount(summary.getTotalAmount().add(event.getAmount()));
         summary.setLastOrderDate(event.getOccurredOn());
-        
+
         // Добавление в список недавних заказов
         OrderSummary orderSummary = new OrderSummary(
             event.getOrderId(),
@@ -738,12 +738,12 @@ public class UserOrderSummaryUpdater {
             event.getOccurredOn()
         );
         summary.getRecentOrders().add(0, orderSummary);
-        
+
         // Ограничение размера списка
         if (summary.getRecentOrders().size() > 10) {
             summary.getRecentOrders().remove(summary.getRecentOrders().size() - 1);
         }
-        
+
         summaryRepository.save(summary);
     }
 }
@@ -754,14 +754,14 @@ public class UserOrderSummaryUpdater {
 ```java
 @Component
 public class UserQueryHandler {
-    
+
     private final UserOrderSummaryRepository summaryRepository;
-    
+
     public UserOrderSummaryView handle(GetUserOrderSummaryQuery query) {
         return summaryRepository.findById(query.getUserId())
             .orElseThrow(() -> new UserNotFoundException(query.getUserId()));
     }
-    
+
     public List<UserOrderSummaryView> handle(GetTopUsersByOrdersQuery query) {
         return summaryRepository.findTopByTotalOrdersOrderByTotalOrdersDesc(query.getLimit());
     }
@@ -809,31 +809,31 @@ public class UserDetailView {
     private String name;
     private List<OrderSummary> orders;
     private int totalOrders;
-    
+
     public UserDetailView(String id, String email, String name) {
         this.id = id;
         this.email = email;
         this.name = name;
         this.orders = new ArrayList<>();
     }
-    
+
     // Getters and setters
 }
 
 // Query с проекцией
 @Repository
 public class UserQueryRepository {
-    
+
     private final EntityManager entityManager;
-    
+
     public UserDetailView findUserDetailById(String userId) {
         String jpql = "SELECT new UserDetailView(u.id, u.email, u.name) " +
                      "FROM User u WHERE u.id = :userId";
-        
+
         UserDetailView view = entityManager.createQuery(jpql, UserDetailView.class)
             .setParameter("userId", userId)
             .getSingleResult();
-        
+
         // Загрузка связанных данных
         String ordersJpql = "SELECT new OrderSummary(o.id, o.amount, o.createdAt) " +
                             "FROM Order o WHERE o.customerId = :userId ORDER BY o.createdAt DESC";
@@ -841,10 +841,10 @@ public class UserQueryRepository {
             .setParameter("userId", userId)
             .setMaxResults(10)
             .getResultList();
-        
+
         view.setOrders(orders);
         view.setTotalOrders(orders.size());
-        
+
         return view;
     }
 }
@@ -855,20 +855,20 @@ public class UserQueryRepository {
 ```java
 @Configuration
 public class DatabaseConfig {
-    
+
     @Bean
     @Primary
     @ConfigurationProperties("spring.datasource.write")
     public DataSource writeDataSource() {
         return DataSourceBuilder.create().build();
     }
-    
+
     @Bean
     @ConfigurationProperties("spring.datasource.read")
     public DataSource readDataSource() {
         return DataSourceBuilder.create().build();
     }
-    
+
     @Bean
     @Primary
     public LocalContainerEntityManagerFactoryBean writeEntityManagerFactory() {
@@ -878,7 +878,7 @@ public class DatabaseConfig {
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         return em;
     }
-    
+
     @Bean
     public LocalContainerEntityManagerFactoryBean readEntityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
@@ -887,7 +887,7 @@ public class DatabaseConfig {
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
         return em;
     }
-    
+
     @Bean
     @Primary
     public PlatformTransactionManager writeTransactionManager() {
@@ -895,7 +895,7 @@ public class DatabaseConfig {
         transactionManager.setEntityManagerFactory(writeEntityManagerFactory().getObject());
         return transactionManager;
     }
-    
+
     @Bean
     public PlatformTransactionManager readTransactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
@@ -917,7 +917,7 @@ public class UserViewDTO {
     private boolean active;
     private Instant createdAt;
     private UserStatistics statistics;
-    
+
     public static UserViewDTO from(UserView view) {
         UserViewDTO dto = new UserViewDTO();
         dto.setId(view.getId());
@@ -927,7 +927,7 @@ public class UserViewDTO {
         dto.setCreatedAt(view.getCreatedAt());
         return dto;
     }
-    
+
     // Getters and setters
 }
 
@@ -935,7 +935,7 @@ public class UserStatistics {
     private int totalOrders;
     private BigDecimal totalSpent;
     private Instant lastOrderDate;
-    
+
     // Getters and setters
 }
 ```
@@ -952,10 +952,10 @@ public interface UserViewMapper {
 
 @Component
 public class UserQueryHandler {
-    
+
     private final UserViewRepository userViewRepository;
     private final UserViewMapper mapper;
-    
+
     public UserViewDTO handle(GetUserByIdQuery query) {
         UserView view = userViewRepository.findById(query.getUserId())
             .orElseThrow(() -> new UserNotFoundException(query.getUserId()));
@@ -972,17 +972,17 @@ public class UserQueryHandler {
 @Configuration
 @EnableCaching
 public class CacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager() {
         RedisCacheManager.Builder builder = RedisCacheManager
             .RedisCacheManagerBuilder
             .fromConnectionFactory(redisConnectionFactory())
             .cacheDefaults(cacheConfiguration());
-        
+
         return builder.build();
     }
-    
+
     private RedisCacheConfiguration cacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofMinutes(5))
@@ -995,13 +995,13 @@ public class CacheConfig {
 
 @Component
 public class UserQueryHandler {
-    
+
     @Cacheable(value = "users", key = "#query.userId")
     public UserView handle(GetUserByIdQuery query) {
         return userViewRepository.findById(query.getUserId())
             .orElseThrow(() -> new UserNotFoundException(query.getUserId()));
     }
-    
+
     @CacheEvict(value = "users", key = "#event.userId")
     public void handleUserUpdated(UserUpdatedEvent event) {
         // Обновление Read модели
@@ -1029,38 +1029,38 @@ public class UserView {
 ```java
 @Component
 public class BatchUserViewUpdater {
-    
+
     private final List<UserCreatedEvent> pendingEvents = new ArrayList<>();
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-    
+
     @PostConstruct
     public void init() {
         executor.scheduleAtFixedRate(this::processBatch, 5, 5, TimeUnit.SECONDS);
     }
-    
+
     @KafkaListener(topics = "user-events", groupId = "batch-view-updater")
     public void handleUserCreated(UserCreatedEvent event) {
         synchronized (pendingEvents) {
             pendingEvents.add(event);
         }
     }
-    
+
     private void processBatch() {
         List<UserCreatedEvent> events;
         synchronized (pendingEvents) {
             events = new ArrayList<>(pendingEvents);
             pendingEvents.clear();
         }
-        
+
         if (events.isEmpty()) {
             return;
         }
-        
+
         // Batch обновление Read модели
         List<UserView> views = events.stream()
             .map(this::createUserView)
             .collect(Collectors.toList());
-        
+
         userViewRepository.saveAll(views);
     }
 }
@@ -1112,15 +1112,15 @@ public class UserQueryHandler {
 ```java
 @Component
 public class IdempotentUserViewUpdater {
-    
+
     private final Set<String> processedEventIds = ConcurrentHashMap.newKeySet();
-    
+
     @KafkaListener(topics = "user-events")
     public void handleUserCreated(UserCreatedEvent event) {
         if (processedEventIds.contains(event.getEventId())) {
             return; // Уже обработано
         }
-        
+
         updateUserView(event);
         processedEventIds.add(event.getEventId());
     }
@@ -1190,9 +1190,9 @@ public class UserReportView {
 ```java
 @Component
 public class UserViewUpdater {
-    
+
     private static final Logger log = LoggerFactory.getLogger(UserViewUpdater.class);
-    
+
     @KafkaListener(topics = "user-events", groupId = "user-view-updater")
     public void handleUserCreated(UserCreatedEvent event) {
         try {

@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 ---
 
-# **Scala Collections** - **List**
+# **Scala Collections** — **List**
 
 Кратко: руководство по работе со списками в **Scala**: **List**, **ListBuffer**, операции и лучшие практики.
 
@@ -24,7 +24,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [Scala Collections Overview](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 - [Scala List API](https://www.scala-lang.org/api/current/scala/collection/immutable/List.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Scala Collections Guide](https://www.baeldung.com/scala/collections)
 
 ### См. также
@@ -35,7 +35,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 ## Содержание
 
-- [**Scala Collections** - **List**](#scala-collections-list)
+- [**Scala Collections** — **List**](#scala-collections-list)
 - [Введение в **List**](#введение-в-list)
   - [Основные характеристики](#основные-характеристики)
   - [**Immutable** vs **Mutable**](#immutable-vs-mutable)
@@ -47,15 +47,15 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
   - [Основные операции](#основные-операции)
   - [Добавление элементов](#добавление-элементов)
 - [**Mutable ListBuffer**](#mutable-listbuffer)
-  - [**Map** - преобразование элементов](#map-преобразование-элементов)
-  - [**Filter** - фильтрация элементов](#filter-фильтрация-элементов)
-  - [**FlatMap** - преобразование и разворачивание](#flatmap-преобразование-и-разворачивание)
+  - [**Map** — преобразование элементов](#map-преобразование-элементов)
+  - [**Filter** — фильтрация элементов](#filter-фильтрация-элементов)
+  - [**FlatMap** — преобразование и разворачивание](#flatmap-преобразование-и-разворачивание)
 - [Поиск и фильтрация](#поиск-и-фильтрация)
   - [Поиск элементов](#поиск-элементов)
   - [**Take** и **Drop**](#take-и-drop)
 - [Преобразование списков](#преобразование-списков)
-  - [**Zip** - объединение списков](#zip-объединение-списков)
-  - [**Slice** - получение подсписка](#slice-получение-подсписка)
+  - [**Zip** — объединение списков](#zip-объединение-списков)
+  - [**Slice** — получение подсписка](#slice-получение-подсписка)
 - [Сортировка](#сортировка)
 - [Группировка и агрегация](#группировка-и-агрегация)
   - [**GroupBy**](#groupby)
@@ -90,7 +90,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 ## Введение в **List**
 
-**List** в **Scala** - это неизменяемый связанный список, который является основой функционального программирования в **Scala**. **List** оптимизирован для операций в начале списка и является основным типом для работы с последовательностями данных в функциональном стиле.
+**List** в **Scala** — это неизменяемый связанный список, который является основой функционального программирования в **Scala**. **List** оптимизирован для операций в начале списка и является основным типом для работы с последовательностями данных в функциональном стиле.
 
 ### Основные характеристики
 
@@ -106,8 +106,8 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 
 **Scala** предоставляет два варианта списков:**
 
-1. **List** (**immutable**) - неизменяемый список, рекомендуется по умолчанию
-2. **ListBuffer** (**mutable**) - изменяемый список для случаев, когда нужна эффективная модификация
+1. **List** (**immutable**) — неизменяемый список, рекомендуется по умолчанию
+2. **ListBuffer** (**mutable**) — изменяемый список для случаев, когда нужна эффективная модификация
 
 ## Создание списков
 
@@ -203,7 +203,7 @@ val combined = list ++ List(4, 5)  // List(1, 2, 3, 4, 5)
 val combined2 = list ::: List(4, 5)  // то же самое
 ```
 
-Важно помнить, что добавление в начало списка (::) эффективнее, чем добавление в конец (**:+**), так как **List** - это связанный список.
+Важно помнить, что добавление в начало списка (::) эффективнее, чем добавление в конец (**:+**), так как **List** — это связанный список.
 
 ## **Mutable ListBuffer**
 
@@ -235,7 +235,7 @@ val immutableList = buffer.toList
 
 ## Основные операции
 
-### **Map** - преобразование элементов
+### **Map** — преобразование элементов
 
 ```scala
 val numbers = List(1, 2, 3, 4, 5)
@@ -252,7 +252,7 @@ val withIndices = numbers.zipWithIndex.map { case (value, index) =>
 }  // List("0: 1", "1: 2", "2: 3", "3: 4", "4: 5")
 ```
 
-### **Filter** - фильтрация элементов
+### **Filter** — фильтрация элементов
 
 ```scala
 val numbers = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -267,7 +267,7 @@ val odds = numbers.filterNot(_ % 2 == 0)  // List(1, 3, 5, 7, 9)
 val (evens2, odds2) = numbers.partition(_ % 2 == 0)
 ```
 
-### **FlatMap** - преобразование и разворачивание
+### **FlatMap** — преобразование и разворачивание
 
 ```scala
 val numbers = List(1, 2, 3)
@@ -326,7 +326,7 @@ numbers.dropRight(3)       // List(1, 2, 3, 4, 5, 6, 7)
 
 ## Преобразование списков
 
-### **Zip** - объединение списков
+### **Zip** — объединение списков
 
 ```scala
 val numbers = List(1, 2, 3)
@@ -342,7 +342,7 @@ val withIndices = numbers.zipWithIndex  // List((1,0), (2,1), (3,2))
 val (nums, lets) = zipped.unzip
 ```
 
-### **Slice** - получение подсписка
+### **Slice** — получение подсписка
 
 ```scala
 val numbers = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -443,7 +443,7 @@ list.lastIndexOf("c")  // 2
 
 ## **Pattern Matching** со списками
 
-**Pattern matching** - инструмент для работы со списками:**
+**Pattern matching** — инструмент для работы со списками:**
 
 ```scala
 def describeList(list: List[Int]): String = list match {
@@ -476,10 +476,10 @@ def sumList(list: List[Int]): Int = list match {
 
 ### Рекомендации по производительности
 
-1. **Используйте :: для добавления в начало** - это эффективная операция
-2. **Избегайте :+ для больших списков** - используйте **ListBuffer** и преобразуйте в **List**
-3. **Используйте `Vector` для частого доступа по индексу** - **Vector** обеспечивает `O(**log32(n**)`) доступ
-4. **Используйте `ListBuffer` для накопления** - эффективнее, чем многократное использование :+
+1. **Используйте :: для добавления в начало** — это эффективная операция
+2. **Избегайте :+ для больших списков** — используйте **ListBuffer** и преобразуйте в **List**
+3. **Используйте `Vector` для частого доступа по индексу** — **Vector** обеспечивает `O(**log32(n**)`) доступ
+4. **Используйте `ListBuffer` для накопления** — эффективнее, чем многократное использование :+
 
 ## Лучшие практики
 
@@ -538,18 +538,18 @@ def processListBad(list: List[Int]): Int = {
 // Стек на основе List
 class Stack[T] {
   private var items: List[T] = Nil
-  
+
   def push(item: T): Unit = {
     items = item :: items
   }
-  
+
   def pop(): Option[T] = items match {
     case Nil => None
     case head :: tail =>
       items = tail
       Some(head)
   }
-  
+
   def peek: Option[T] = items.headOption
   def isEmpty: Boolean = items.isEmpty
 }
@@ -557,18 +557,18 @@ class Stack[T] {
 // Очередь на основе List
 class Queue[T] {
   private var items: List[T] = Nil
-  
+
   def enqueue(item: T): Unit = {
     items = items :+ item
   }
-  
+
   def dequeue(): Option[T] = items match {
     case Nil => None
     case head :: tail =>
       items = tail
       Some(head)
   }
-  
+
   def peek: Option[T] = items.headOption
   def isEmpty: Boolean = items.isEmpty
 }

@@ -23,22 +23,20 @@ updated: "2026-02-11"
 > - [Secrets Management](../data/secrets-management.md) — `Vault`, `KMS`, `Kubernetes Secrets`
 > - [Security Testing](../testing/security-testing.md) — `SAST`, `DAST`, `SCA`, пентесты
 
----
 
 ## Полезные ссылки
 
 ### Официальная документация
-- [`OWASP Top 10`](https://owasp.org/www-project-top-ten/) — основные классы уязвимостей
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/) — основные классы уязвимостей
 - [`OWASP` Cheat Sheet Series](https://cheatsheetseries.owasp.org/) — лаконичные шпаргалки
-- [`OAuth 2.0`](https://oauth.net/2/) — спецификация `OAuth2`
-- [`OpenID Connect`](https://openid.net/connect/) — спецификация `OIDC`
+- [OAuth 2.0](https://oauth.net/2/) — спецификация `OAuth2`
+- [OpenID Connect](https://openid.net/connect/) — спецификация `OIDC`
 - [`JWT` (`RFC 7519`)](https://datatracker.ietf.org/doc/html/rfc7519) — стандарт `JSON Web Token`
 
 ### Ресурсы
 - [`Spring Security` Reference](https://docs.spring.io/spring-security/reference/)
 - [`OWASP` Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
 
----
 
 ## Содержание
 
@@ -51,7 +49,6 @@ updated: "2026-02-11"
 - [Решение проблем](#решение-проблем)
 - [Минимальный чек-лист для прикладного кода](#минимальный-чеклист-для-прикладного-кода)
 
----
 
 ## Введение
 
@@ -64,7 +61,6 @@ updated: "2026-02-11"
 Конкретные атаки и криптография разбираются в других файлах раздела `security/`.
 Здесь — только то, что должен держать в голове разработчик прикладного кода.
 
----
 
 ## Аутентификация
 
@@ -93,7 +89,6 @@ updated: "2026-02-11"
 - Отправка паролей по почте.
 - Самописная криптография вместо проверенных библиотек.
 
----
 
 ## Авторизация и контроль доступа
 
@@ -119,7 +114,6 @@ updated: "2026-02-11"
 - **Запрет по умолчанию** — доступ явно предоставляется, а не отнимается.
 - Чётко разделять **аутентификацию** (кто?) и **авторизацию** (что можно?).
 
----
 
 ## OAuth2 и OpenID Connect
 
@@ -145,7 +139,6 @@ updated: "2026-02-11"
 - Белый список `redirect_uri`.
 - `PKCE` обязателен для публичных клиентов.
 
----
 
 ## JWT и управление токенами
 
@@ -171,7 +164,6 @@ updated: "2026-02-11"
 - `refresh token` в `localStorage` без защиты.
 - Токен без привязки к устройству/сессии.
 
----
 
 ## Управление сессиями
 
@@ -190,7 +182,6 @@ updated: "2026-02-11"
 - Регенерация идентификатора **после логина** (защита от session fixation).
 - В сессии — минимум данных (только идентификаторы).
 
----
 
 ## Решение проблем
 
@@ -202,7 +193,6 @@ updated: "2026-02-11"
 | Не работает `logout` при `JWT` | Нет отзыва `refresh token`, фронтенд не чистит хранилище | Хранить статус `refresh token` (активен/отозван), чистить `cookie` |
 | Частые подозрительные логины | Нет защиты от перебора | Добавить `rate limiting`, алерты, `MFA` |
 
----
 
 ## Минимальный чек-лист для прикладного кода
 
@@ -223,3 +213,10 @@ updated: "2026-02-11"
 - [ ] `access token` с ограниченным сроком, `refresh token` можно отозвать.
 - [ ] Для веб-клиентов токены в `cookie` с `HttpOnly` и `SameSite`.
 - [ ] Есть страница просмотра активных сессий и их завершения.
+
+## См. также
+
+- [[api-security|Безопасность API]]
+- [[jwt-oauth2|JWT и OAuth2 / OIDC]]
+- [[owasp-top-10|OWASP Top 10 (2021) — разбор категорий]]
+- [[web-security|Веб‑безопасность (Web Security)]]

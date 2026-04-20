@@ -25,7 +25,6 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Redis Commands](https://redis.io/commands/)
 - [Redis Patterns](https://redis.io/docs/manual/patterns/)
 
----
 
 ## Содержание
 
@@ -130,11 +129,10 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 8. **HyperLogLog**: Приблизительный подсчет уникальных элементов
 9. **Geospatial**: Геопространственные данные
 
----
 
 ## **Strings** (**Строки**)
 
-**Strings** - это самый простой тип данных в **Redis**. Строки могут содержать текст, числа или бинарные данные до 512MB.
+**Strings** — это самый простой тип данных в **Redis**. Строки могут содержать текст, числа или бинарные данные до 512MB.
 
 ### Базовые операции
 
@@ -235,11 +233,10 @@ BITPOS mykey 1 0 10    # В диапазоне
 3. **Сессии**: Хранение сессионных данных
 4. **Битовая аналитика**: **SETBIT**/**BITCOUNT** для аналитики
 
----
 
 ## **Lists** (**Списки**)
 
-**Lists** - это упорядоченные коллекции строк, реализованные как **linked lists**. Операции с начала и конца списка очень быстрые (**O(1**)).
+**Lists** — это упорядоченные коллекции строк, реализованные как **linked lists**. Операции с начала и конца списка очень быстрые (**O(1**)).
 
 ### Базовые операции
 
@@ -316,11 +313,10 @@ BRPOPLPUSH source dest 10
 3. **Timeline**: Хранение временных линий
 4. **Ограниченные коллекции**: **LTRIM** для ограничения размера
 
----
 
 ## **Sets** (**Множества**)
 
-**Sets** - это неупорядоченные коллекции уникальных строк. Операции добавления, удаления и проверки принадлежности выполняются за `O(1)`.
+**Sets** — это неупорядоченные коллекции уникальных строк. Операции добавления, удаления и проверки принадлежности выполняются за `O(1)`.
 
 ### Базовые операции
 
@@ -390,11 +386,10 @@ SMOVE source dest "member"
 3. **Операции над множествами**: **UNION**, **INTERSECTION**, **DIFFERENCE**
 4. **Случайный выбор**: **SRANDMEMBER** для случайных выборок
 
----
 
 ## **Hashes** (**Хэши**)
 
-**Hashes** - это карты полей и значений, идеально подходящие для представления объектов. Хэши оптимизированы для использования памяти.
+**Hashes** — это карты полей и значений, идеально подходящие для представления объектов. Хэши оптимизированы для использования памяти.
 
 ### Базовые операции
 
@@ -458,11 +453,10 @@ HSCAN user:1000 0 MATCH name* COUNT 10
 3. **Конфигурация**: Хранение настроек
 4. **Эффективное использование памяти**: Оптимизация для небольших объектов
 
----
 
 ## **Sorted Sets** (**Отсортированные множества**)
 
-**Sorted Sets** - это множества, где каждый элемент имеет оценку (**score**). Элементы автоматически сортируются по оценке.
+**Sorted Sets** — это множества, где каждый элемент имеет оценку (**score**). Элементы автоматически сортируются по оценке.
 
 ### Базовые операции
 
@@ -550,11 +544,10 @@ ZREMRANGEBYLEX myzset "[b" "(c"
 3. **Приоритетные очереди**: Очереди с приоритетами
 4. **Ранжирование**: Сортировка по различным критериям
 
----
 
 ## **Streams** (**Потоки**)
 
-**Streams** - это структура данных для хранения логов сообщений, добавленная в **Redis** `5.0`. **Streams** поддерживают **consumer groups** и обеспечивают гарантии доставки.
+**Streams** — это структура данных для хранения логов сообщений, добавленная в **Redis** `5.0`. **Streams** поддерживают **consumer groups** и обеспечивают гарантии доставки.
 
 ### Базовые операции
 
@@ -622,11 +615,10 @@ XREADGROUP GROUP mygroup consumer1 BLOCK 5000 COUNT 1 STREAMS mystream >
 3. **Time Series**: Временные ряды данных
 4. **Activity Feeds**: Ленты активности
 
----
 
 ## **Bitmaps** (**Битовые массивы**)
 
-**Bitmaps** - это эффективный способ работы с битовыми массивами. **Bitmaps** используют минимальное количество памяти.
+**Bitmaps** — это эффективный способ работы с битовыми массивами. **Bitmaps** используют минимальное количество памяти.
 
 ### Базовые операции
 
@@ -671,11 +663,10 @@ BITOP NOT dest key
 3. **Битовые флаги**: Хранение множества булевых флагов
 4. **Статистика**: Подсчет уникальных событий
 
----
 
 ## **HyperLogLog**
 
-**HyperLogLog** - это вероятностная структура данных для приблизительного подсчета уникальных элементов с минимальным использованием памяти.
+**HyperLogLog** — это вероятностная структура данных для приблизительного подсчета уникальных элементов с минимальным использованием памяти.
 
 ### Базовые операции
 
@@ -697,11 +688,10 @@ PFCOUNT visitors:2023-01
 2. **Cardinality**: Приблизительный подсчет уникальности
 3. **Аналитика**: Статистика с минимальным использованием памяти
 
----
 
 ## **Geospatial** (**Геопространственные данные**)
 
-**Geospatial** - это специальный тип данных для работы с географическими координатами, реализованный поверх **Sorted Sets**.
+**Geospatial** — это специальный тип данных для работы с географическими координатами, реализованный поверх **Sorted Sets**.
 
 ### Базовые операции
 
@@ -751,7 +741,6 @@ GEOHASH cities Palermo
 3. **Геокодирование**: Хранение и поиск по координатам
 4. **Логистика**: Оптимизация маршрутов
 
----
 
 ## Выбор правильной структуры данных
 
@@ -790,23 +779,23 @@ GEOHASH cities Palermo
 // Java пример кэширования с истечением
 public class CacheManager {
     private JedisPool jedisPool;
-    
+
     public CacheManager(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void cache(String key, String value, int ttlSeconds) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.setex(key, ttlSeconds, value);
         }
     }
-    
+
     public String getCached(String key) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.get(key);
         }
     }
-    
+
     public void refreshCache(String key, int ttlSeconds) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.expire(key, ttlSeconds);
@@ -825,36 +814,36 @@ import redis.clients.jedis.Response;
 
 public class DistributedCounter {
     private JedisPool jedisPool;
-    
+
     public DistributedCounter(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public long increment(String key, long amount) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.incrBy(key, amount);
         }
     }
-    
+
     public long decrement(String key, long amount) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.decrBy(key, amount);
         }
     }
-    
+
     public long get(String key) {
         try (Jedis jedis = jedisPool.getResource()) {
             String value = jedis.get(key);
             return value != null ? Long.parseLong(value) : 0;
         }
     }
-    
+
     public void reset(String key) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.del(key);
         }
     }
-    
+
     public long incrementWithExpiry(String key, long amount, int ttl) {
         try (Jedis jedis = jedisPool.getResource()) {
             Pipeline pipe = jedis.pipelined();
@@ -874,31 +863,31 @@ public class DistributedCounter {
 public class RedisQueue {
     private JedisPool jedisPool;
     private String queueName;
-    
+
     public RedisQueue(JedisPool jedisPool, String queueName) {
         this.jedisPool = jedisPool;
         this.queueName = queueName;
     }
-    
+
     public void enqueue(String item) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.rpush(queueName, item);
         }
     }
-    
+
     public String dequeue() {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.lpop(queueName);
         }
     }
-    
+
     public String blockingDequeue(int timeout) {
         try (Jedis jedis = jedisPool.getResource()) {
             List<String> result = jedis.blpop(timeout, queueName);
             return result != null && result.size() > 1 ? result.get(1) : null;
         }
     }
-    
+
     public long size() {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.llen(queueName);
@@ -916,11 +905,11 @@ import java.util.Set;
 
 public class TagSystem {
     private JedisPool jedisPool;
-    
+
     public TagSystem(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void addTags(String itemId, String... tags) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "item:" + itemId + ":tags";
@@ -931,20 +920,20 @@ public class TagSystem {
             }
         }
     }
-    
+
     public Set<String> getTags(String itemId) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "item:" + itemId + ":tags";
             return jedis.smembers(key);
         }
     }
-    
+
     public Set<String> getItemsByTag(String tag) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.smembers("tag:" + tag + ":items");
         }
     }
-    
+
     public Set<String> getItemsByTags(String... tags) {
         if (tags.length == 0) {
             return java.util.Collections.emptySet();
@@ -957,7 +946,7 @@ public class TagSystem {
             return jedis.sinter(keys);
         }
     }
-    
+
     public void removeTag(String itemId, String tag) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.srem("item:" + itemId + ":tags", tag);
@@ -973,11 +962,11 @@ public class TagSystem {
 // Java пример управления профилями пользователей
 public class UserProfileManager {
     private JedisPool jedisPool;
-    
+
     public UserProfileManager(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void createProfile(String userId, Map<String, String> profile) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "user:" + userId;
@@ -985,21 +974,21 @@ public class UserProfileManager {
             jedis.expire(key, 86400); // 24 часа
         }
     }
-    
+
     public Map<String, String> getProfile(String userId) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "user:" + userId;
             return jedis.hgetAll(key);
         }
     }
-    
+
     public void updateField(String userId, String field, String value) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "user:" + userId;
             jedis.hset(key, field, value);
         }
     }
-    
+
     public void incrementAge(String userId) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "user:" + userId;
@@ -1021,50 +1010,50 @@ import java.util.Set;
 public class Leaderboard {
     private JedisPool jedisPool;
     private String name;
-    
+
     public Leaderboard(JedisPool jedisPool, String leaderboardName) {
         this.jedisPool = jedisPool;
         this.name = leaderboardName;
     }
-    
+
     public void addPlayer(String playerId, double score) {
         try (Jedis jedis = jedisPool.getResource()) {
             jedis.zadd(name, score, playerId);
         }
     }
-    
+
     public double incrementScore(String playerId, double increment) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.zincrby(name, increment, playerId);
         }
     }
-    
+
     public Long getRank(String playerId) {
         try (Jedis jedis = jedisPool.getResource()) {
             Long rank = jedis.zrevrank(name, playerId);
             return rank != null ? rank + 1 : null;
         }
     }
-    
+
     public Set<Tuple> getTopPlayers(int count) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.zrevrangeWithScores(name, 0, count - 1);
         }
     }
-    
+
     public Set<Tuple> getPlayersAround(String playerId, int rangeSize) {
         try (Jedis jedis = jedisPool.getResource()) {
             Long rank = jedis.zrevrank(name, playerId);
             if (rank == null) {
                 return java.util.Collections.emptySet();
             }
-            
+
             long start = Math.max(0, rank - rangeSize);
             long end = rank + rangeSize;
             return jedis.zrevrangeWithScores(name, start, end);
         }
     }
-    
+
     public Double getScore(String playerId) {
         try (Jedis jedis = jedisPool.getResource()) {
             return jedis.zscore(name, playerId);
@@ -1080,23 +1069,23 @@ public class Leaderboard {
 public class EventLogger {
     private JedisPool jedisPool;
     private String streamName;
-    
+
     public EventLogger(JedisPool jedisPool, String streamName) {
         this.jedisPool = jedisPool;
         this.streamName = streamName;
     }
-    
+
     public String logEvent(String eventType, Map<String, String> data) {
         try (Jedis jedis = jedisPool.getResource()) {
             Map<String, String> fields = new HashMap<>();
             fields.put("event_type", eventType);
             fields.put("timestamp", String.valueOf(System.currentTimeMillis()));
             fields.putAll(data);
-            
+
             return jedis.xadd(streamName, StreamEntryID.NEW_ENTRY, fields);
         }
     }
-    
+
     public List<Map<String, String>> readEvents(int count) {
         try (Jedis jedis = jedisPool.getResource()) {
             List<Entry> entries = jedis.xrange(streamName, null, null, count);
@@ -1105,11 +1094,11 @@ public class EventLogger {
                 .collect(Collectors.toList());
         }
     }
-    
+
     public void createConsumerGroup(String groupName) {
         try (Jedis jedis = jedisPool.getResource()) {
             try {
-                jedis.xgroupCreate(streamName, groupName, 
+                jedis.xgroupCreate(streamName, groupName,
                     new StreamEntryID("0"), true);
             } catch (JedisDataException e) {
                 // Group already exists
@@ -1129,11 +1118,11 @@ import java.time.format.DateTimeFormatter;
 
 public class ActivityTracker {
     private JedisPool jedisPool;
-    
+
     public ActivityTracker(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
-    
+
     public void markActive(String userId, LocalDate date) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "activity:" + userId + ":" + date.format(DateTimeFormatter.ISO_DATE);
@@ -1144,7 +1133,7 @@ public class ActivityTracker {
             jedis.expire(key, 32 * 86400);
         }
     }
-    
+
     public boolean isActive(String userId, LocalDate date) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "activity:" + userId + ":" + date.format(DateTimeFormatter.ISO_DATE);
@@ -1152,19 +1141,19 @@ public class ActivityTracker {
             return jedis.getbit(key, day);
         }
     }
-    
+
     public long getActiveDays(String userId, LocalDate date) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "activity:" + userId + ":" + date.format(DateTimeFormatter.ISO_DATE);
             return jedis.bitcount(key);
         }
     }
-    
+
     public int getConsecutiveDays(String userId, LocalDate startDate, LocalDate endDate) {
         // Реализация через анализ битов
         int maxConsecutive = 0;
         int currentConsecutive = 0;
-        
+
         LocalDate current = startDate;
         while (!current.isAfter(endDate)) {
             if (isActive(userId, current)) {
@@ -1175,18 +1164,18 @@ public class ActivityTracker {
             }
             current = current.plusDays(1);
         }
-        
+
         return maxConsecutive;
     }
 }
 ```
         **max_consecutive** = 0
         **current_consecutive** = 0
-        
+
         # Итерация по датам
         # ... (**упрощенная версия**)
         **return max_consecutive**
-```
+```text
 
 ## Memory Optimization
 
@@ -1206,7 +1195,7 @@ public class ActivityTracker {
 
 # Хорошо: Использование списка
 `LPUSH` mylist "item1" "item2" "item3"
-```
+```text
 
 ### Memory-Efficient Patterns
 
@@ -1222,7 +1211,7 @@ public class ActivityTracker {
 # Использование `Bitmaps` для булевых флагов
 # Вместо множества ключей flag:user:1000:day:1
 # Используйте `Bitmap` с битами
-```
+```text
 
 ## Performance Considerations
 
@@ -1244,7 +1233,7 @@ public class ActivityTracker {
 # `O(log N)` операции
 `ZRANGE zset 0` -1      # Для sorted sets
 `ZRANK` zset member     # Для sorted sets
-```
+```text
 
 ### Лучшие практики
 
@@ -1263,11 +1252,11 @@ public class ActivityTracker {
 public class `ShoppingCart` {
     private `JedisPool jedisPool`;
     private static final int CART_TTL = 7 24  `3600`; // 7 дней
-    
+
     public `ShoppingCart`(`JedisPool jedisPool`) {
         this.`jedisPool` = `jedisPool`;
     }
-    
+
     public void `addItem`(`String userId`, `String productId`, int quantity) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             `String cartKey` = "cart:" + `userId`;
@@ -1275,21 +1264,21 @@ public class `ShoppingCart` {
             `jedis.expire`(`cartKey`, CART_TTL);
         }
     }
-    
+
     public void `removeItem`(`String userId`, `String productId`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             `String cartKey` = "cart:" + `userId`;
             `jedis.hdel`(`cartKey`, `productId`);
         }
     }
-    
+
     public Map<`String`, `String`> `getCart`(`String userId`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             `String cartKey` = "cart:" + `userId`;
             return jedis.`hgetAll`(`cartKey`);
         }
     }
-    
+
     public void `clearCart`(`String userId`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             `String cartKey` = "cart:" + `userId`;
@@ -1297,7 +1286,7 @@ public class `ShoppingCart` {
         }
     }
 }
-```
+```text
 
 ### Social Media: Followers System
 
@@ -1358,7 +1347,7 @@ public class `FollowersSystem` {
         }
     }
 }
-```
+```text
 
 ### Analytics: Page View Counter
 
@@ -1366,11 +1355,11 @@ public class `FollowersSystem` {
 // `Java` пример счетчика просмотров страниц
 public class `PageViewCounter` {
     private `JedisPool jedisPool`;
-    
+
     public `PageViewCounter`(`JedisPool jedisPool`) {
         this.`jedisPool` = `jedisPool`;
     }
-    
+
     public void `incrementView`(`String pageId`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             `String today` = `LocalDate`.now().`toString()`;
@@ -1379,7 +1368,7 @@ public class `PageViewCounter` {
             `jedis.expire`(key, `86400` * 7); // 7 дней
         }
     }
-    
+
     public long `getViews`(`String pageId`, `String date`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             `String key` = "pageviews:" + `pageId` + ":" + date;
@@ -1387,7 +1376,7 @@ public class `PageViewCounter` {
             return value != `null` ? `Long`.`parseLong`(value) : 0;
         }
     }
-    
+
     public long `getTotalViews`(`String pageId`, int days) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             long total = 0;
@@ -1403,7 +1392,7 @@ public class `PageViewCounter` {
         }
     }
 }
-```
+```text
 
 ### Gaming: Player Statistics
 
@@ -1451,11 +1440,11 @@ public class `PlayerStats` {
 
     public `java.util`.Set<`java.util`.Map.`Entry`<`String`, `Double`>> `getTopKillers`(int count) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
-            return jedis.`zrevrangeWithScores`("leaderboard", 0, count - 1);
+            return jedis.`zrevrangeWithScores`("leaderboard", 0, count — 1);
         }
     }
 }
-```
+```text
 
 ## Advanced Data Structure Patterns
 
@@ -1473,7 +1462,7 @@ public class `PlayerStats` {
 
 # Агрегация данных
 `ZCOUNT` temperature:2023-01-16 `1642320000 1642327200`
-```
+```text
 
 ### Rate Limiting with Sorted Sets
 
@@ -1484,7 +1473,7 @@ local window = tonumber(`ARGV`[1])
 local limit = tonumber(`ARGV`[2])
 
 local now = `redis.call`('`TIME`')[1]
-local `window_start` = now - window
+local `window_start` = now — window
 
 -- Удалить старые записи
 `redis.call`('`ZREMRANGEBYSCORE`', key, '-inf', `window_start`)
@@ -1502,7 +1491,7 @@ if current > limit then
 else
     return {1, current}
 end
-```
+```text
 
 ### Distributed Lock with Strings
 
@@ -1516,11 +1505,11 @@ local ttl = tonumber(`ARGV`[2])
 local result = `redis.call`('`SET`', `lock_key`, `lock_value`, '`NX`', '`PX`', ttl)
 
 if result then
-    `return 1`  -- `Lock acquired`
+    `return 1`  — `Lock acquired`
 else
-    `return 0`  -- `Lock not acquired`
+    `return 0`  — `Lock not acquired`
 end
-```
+```text
 
 ### Cache-Aside Pattern
 
@@ -1529,12 +1518,12 @@ end
 public class `CacheAsideCache` {
     private `JedisPool jedisPool`;
     private `Database database`; // Предполагаем наличие БД
-    
+
     public `CacheAsideCache`(`JedisPool jedisPool`, `Database database`) {
         this.`jedisPool` = `jedisPool`;
         `this.database` = database;
     }
-    
+
     public `String get`(`String key`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             // Попытка получить из кэша
@@ -1542,7 +1531,7 @@ public class `CacheAsideCache` {
             if (value != `null`) {
                 return value;
             }
-            
+
             // Получить из БД
             value = `database.get`(key);
             if (value != `null`) {
@@ -1552,7 +1541,7 @@ public class `CacheAsideCache` {
             return value;
         }
     }
-    
+
     public void set(`String key`, `String value`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             // Обновить БД
@@ -1561,7 +1550,7 @@ public class `CacheAsideCache` {
             `jedis.setex`(key, `3600`, value);
         }
     }
-    
+
     public void delete(`String key`) {
         try (`Jedis jedis` = `jedisPool`.`getResource()`) {
             // Удалить из БД
@@ -1571,7 +1560,7 @@ public class `CacheAsideCache` {
         }
     }
 }
-```
+```text
 
 ## Лучшие практики
 
@@ -1592,7 +1581,7 @@ public class `CacheAsideCache` {
 # Использование `Bitmaps` для булевых флагов
 # Вместо множества ключей flag:user:1000:day:1
 # Используйте `Bitmap` с битами
-```
+```text
 
 ### Performance Optimization
 
@@ -1614,7 +1603,7 @@ public class `CacheAsideCache` {
 `KEYS` user:*
 # Используйте:
 `SCAN 0 MATCH` user:* `COUNT 100`
-```
+```text
 
 ## Решение проблем
 
@@ -1630,7 +1619,7 @@ public class `CacheAsideCache` {
 # Используйте несколько множеств:
 `SADD` users:0 user1 user2 ... user10000
 `SADD` users:1 user10001 user10002 ... user20000
-```
+```text
 
 ### Issue: Memory Usage
 
@@ -1642,7 +1631,7 @@ public class `CacheAsideCache` {
 # Использовать `Bitmaps` для булевых значений
 # Использовать `HyperLogLog` для приблизительного подсчета
 # Установить `TTL` для временных данных
-```
+```text
 
 ### Issue: Slow Operations
 
@@ -1653,9 +1642,14 @@ public class `CacheAsideCache` {
 # Избегать `O(N)` операций на больших структурах
 # Использовать индексы (`Sorted Sets`) для поиска
 # Использовать `Pipeline` для множественных операций
+```text
 ```
-```
-
----
 
 
+## См. также
+
+- [[redis-basics|Redis: Основы]]
+- [[redis-clustering|Redis: Кластеризация]]
+- [[redis-geospatial|Redis: Геопространственные данные]]
+- [[redis-high-availability|Redis: Высокая доступность]]
+- [[redis-lua-scripting|Redis: Lua Scripting]]

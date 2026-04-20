@@ -56,7 +56,7 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Алгоритмы на месте - это те алгоритмы, которые не нуждаются в какой-либо вспомогательной структуре данных для преобразования входных данных. По сути, это означает, что алгоритм не использует дополнительное пространство для обработки ввода. Он практически переопределяет ввод с выводом.
+Алгоритмы на месте — это те алгоритмы, которые не нуждаются в какой-либо вспомогательной структуре данных для преобразования входных данных. По сути, это означает, что алгоритм не использует дополнительное пространство для обработки ввода. Он практически переопределяет ввод с выводом.
 
 Однако на самом деле алгоритм может потребовать небольшого и непостоянного дополнительного пространства для вспомогательных переменных. Сложность этого пространства в большинстве случаев `O(**log(n**)`), хотя иногда допускается что-то меньшее, чем линейное.
 
@@ -180,17 +180,17 @@ fun reverseInPlaceFunctionalK(A: IntArray) {
 ```kotlin
 fun main() {
     val input = intArrayOf(1, 2, 3, 4, 5, 6, 7)
-    
+
     // In-place
     val arr1 = input.copyOf()
     reverseInPlaceK(arr1)
     println(arr1.contentToString()) // [7, 6, 5, 4, 3, 2, 1]
-    
+
     // Out-of-place
     val reversed = reverseOutOfPlaceK(input)
     println(reversed.contentToString()) // [7, 6, 5, 4, 3, 2, 1]
     println(input.contentToString()) // [1, 2, 3, 4, 5, 6, 7] (не изменен)
-    
+
     // Функциональный стиль
     val arr2 = input.copyOf()
     reverseInPlaceFunctionalK(arr2)
@@ -380,10 +380,10 @@ swap(arr, 0, 4); // Меняет местами первый и последни
 public static int[] reverseWithCopy(int[] original) {
     // Создаём копию для сохранения исходных данных
     int[] copy = original.clone();
-    
+
     // Применяем in-place разворот к копии
     reverseInPlace(copy);
-    
+
     return copy; // Возвращаем развёрнутую копию, оригинал не изменён
 }
 
@@ -401,7 +401,7 @@ int[] reversed = reverseWithCopy(original);
 ```java
 public static int removeDuplicatesInPlace(int[] arr) {
     if (arr.length == 0) return 0;
-    
+
     int writeIndex = 1;
     for (int i = 1; i < arr.length; i++) {
         if (arr[i] != arr[writeIndex - 1]) {
@@ -409,7 +409,7 @@ public static int removeDuplicatesInPlace(int[] arr) {
             writeIndex++;
         }
     }
-    
+
     return writeIndex; // Возвращает новую длину массива без дубликатов
 }
 
@@ -427,7 +427,7 @@ int newLength = removeDuplicatesInPlace(arr);
 public static void rotateInPlace(int[] arr, int k) {
     int n = arr.length;
     k = k % n; // Нормализуем k
-    
+
     // Разворачиваем весь массив
     reverse(arr, 0, n - 1);
     // Разворачиваем первую часть
@@ -459,7 +459,7 @@ rotateInPlace(arr, 2); // Сдвигаем на 2 позиции вправо
 ```java
 public static void moveZerosToEnd(int[] arr) {
     int writeIndex = 0;
-    
+
     // Перемещаем все ненулевые элементы в начало
     for (int i = 0; i < arr.length; i++) {
         if (arr[i] != 0) {
@@ -467,7 +467,7 @@ public static void moveZerosToEnd(int[] arr) {
             writeIndex++;
         }
     }
-    
+
     // Заполняем оставшиеся позиции нулями
     while (writeIndex < arr.length) {
         arr[writeIndex] = 0;
@@ -491,18 +491,18 @@ moveZerosToEnd(arr);
 public static int partitionInPlace(int[] arr, int pivot) {
     int left = 0;
     int right = arr.length - 1;
-    
+
     while (left < right) {
         // Находим элемент слева, который больше или равен pivot
         while (left < right && arr[left] < pivot) {
             left++;
         }
-        
+
         // Находим элемент справа, который меньше pivot
         while (left < right && arr[right] >= pivot) {
             right--;
         }
-        
+
         // Меняем местами, если нужно
         if (left < right) {
             int temp = arr[left];
@@ -510,7 +510,7 @@ public static int partitionInPlace(int[] arr, int pivot) {
             arr[right] = temp;
         }
     }
-    
+
     return left; // Возвращаем индекс разделения
 }
 
@@ -532,12 +532,12 @@ public static void comparePerformance(int[] data) {
     long start1 = System.nanoTime();
     Arrays.sort(arr1); // In-place
     long time1 = System.nanoTime() - start1;
-    
+
     // Out-of-place сортировка (создание отсортированной копии)
     long start2 = System.nanoTime();
     int[] arr2 = Arrays.stream(data).sorted().toArray(); // Out-of-place
     long time2 = System.nanoTime() - start2;
-    
+
     System.out.println("In-place время: " + time1 + " нс");
     System.out.println("Out-of-place время: " + time2 + " нс");
     System.out.println("Разница: " + (time2 - time1) + " нс");

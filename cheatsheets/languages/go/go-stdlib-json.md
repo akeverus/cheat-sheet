@@ -12,7 +12,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
-# Go: стандартная библиотека - **JSON**
+# Go: стандартная библиотека — **JSON**
 
 ## Полезные ссылки
 
@@ -21,7 +21,7 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [Go: стандартная библиотека - **JSON**](#go-стандартная-библиотека-json)
+- [Go: стандартная библиотека — **JSON**](#go-стандартная-библиотека-json)
 - [Введение в **JSON**](#введение-в-json)
   - [Основные операции](#основные-операции)
 - [**Marshaling** (**Сериализация**)](#marshaling-сериализация)
@@ -79,9 +79,9 @@ updated: "2026-02-06"
 
 ### Основные операции
 
-1. **Marshaling** - преобразование Go структур в **JSON**
-2. **Unmarshaling** - преобразование **JSON** в Go структуры
-3. **Custom Marshaling** - кастомная логика сериализации/десериализации
+1. **Marshaling** — преобразование Go структур в **JSON**
+2. **Unmarshaling** — преобразование **JSON** в Go структуры
+3. **Custom Marshaling** — кастомная логика сериализации/десериализации
 
 ## **Marshaling** (**Сериализация**)
 
@@ -103,12 +103,12 @@ type User struct {
 
 func main() {
     user := User{ID: 1, Name: "Alice", Age: 30}
-    
+
     jsonData, err := json.Marshal(user)
     if err != nil {
         log.Fatal(err)
     }
-    
+
     fmt.Println(string(jsonData))
     // Output: {"id":1,"name":"Alice","age":30}
 }
@@ -121,12 +121,12 @@ import "encoding/json"
 
 func main() {
     user := User{ID: 1, Name: "Alice", Age: 30}
-    
+
     jsonData, err := json.MarshalIndent(user, "", "  ")
     if err != nil {
         log.Fatal(err)
     }
-    
+
     fmt.Println(string(jsonData))
     // Output:
     // {
@@ -147,7 +147,7 @@ import (
 
 func main() {
     user := User{ID: 1, Name: "Alice", Age: 30}
-    
+
     encoder := json.NewEncoder(os.Stdout)
     encoder.SetIndent("", "  ")
     encoder.Encode(user)
@@ -165,13 +165,13 @@ import "encoding/json"
 
 func main() {
     jsonData := `{"id":1,"name":"Alice","age":30}`
-    
+
     var user User
     err := json.Unmarshal([]byte(jsonData), &user)
     if err != nil {
         log.Fatal(err)
     }
-    
+
     fmt.Printf("User: %+v\n", user)
     // Output: User: {ID:1 Name:Alice Age:30}
 }
@@ -188,7 +188,7 @@ import (
 func main() {
     jsonData := `{"id":1,"name":"Alice","age":30}`
     reader := strings.NewReader(jsonData)
-    
+
     var user User
     decoder := json.NewDecoder(reader)
     err := decoder.Decode(&user)
@@ -205,7 +205,7 @@ import "encoding/json"
 
 func main() {
     jsonData := `{"id":1,"name":"Alice","age":30,"email":"alice@example.com"}`
-    
+
     // Unmarshaling только в поля, которые есть в структуре
     var user User
     json.Unmarshal([]byte(jsonData), &user)
@@ -264,12 +264,12 @@ func (d *CustomDate) UnmarshalJSON(data []byte) error {
     if err := json.Unmarshal(data, &str); err != nil {
         return err
     }
-    
+
     t, err := time.Parse("2006-01-02", str)
     if err != nil {
         return err
     }
-    
+
     d.Time = t
     return nil
 }
@@ -290,7 +290,7 @@ func main() {
         Name: "Alice",
         DOB:  CustomDate{Time: time.Now()},
     }
-    
+
     jsonData, _ := json.Marshal(user)
     fmt.Println(string(jsonData))
     // Output: {"id":1,"name":"Alice","dob":"2025-01-11"}
@@ -311,12 +311,12 @@ import (
 
 func main() {
     encoder := json.NewEncoder(os.Stdout)
-    
+
     users := []User{
         {ID: 1, Name: "Alice"},
         {ID: 2, Name: "Bob"},
     }
-    
+
     for _, user := range users {
         encoder.Encode(user)
     }
@@ -333,7 +333,7 @@ import (
 
 func main() {
     decoder := json.NewDecoder(reader)
-    
+
     for {
         var user User
         if err := decoder.Decode(&user); err == io.EOF {
@@ -341,7 +341,7 @@ func main() {
         } else if err != nil {
             log.Fatal(err)
         }
-        
+
         // Обработка user
         processUser(user)
     }
@@ -373,7 +373,7 @@ func main() {
             Country: "USA",
         },
     }
-    
+
     jsonData, _ := json.Marshal(user)
     fmt.Println(string(jsonData))
     // {"id":1,"name":"Alice","address":{"street":"123 Main St","city":"New York","country":"USA"}}
@@ -395,7 +395,7 @@ func main() {
         Name: "Alice",
         Tags: []string{"admin", "user", "developer"},
     }
-    
+
     jsonData, _ := json.Marshal(user)
     fmt.Println(string(jsonData))
     // {"id":1,"name":"Alice","tags":["admin","user","developer"]}
@@ -411,7 +411,7 @@ func main() {
         "age":   30,
         "email": "alice@example.com",
     }
-    
+
     jsonData, _ := json.Marshal(data)
     fmt.Println(string(jsonData))
     // {"age":30,"email":"alice@example.com","name":"Alice"}
@@ -430,17 +430,17 @@ type User struct {
 func main() {
     id := 1
     age := 30
-    
+
     user := User{
         ID:   &id,
         Name: "Alice",
         Age:  &age,
     }
-    
+
     jsonData, _ := json.Marshal(user)
     fmt.Println(string(jsonData))
     // {"id":1,"name":"Alice","age":30}
-    
+
     // Если указатель nil, поле будет пропущено с omitempty
     user2 := User{
         Name: "Bob",
@@ -457,10 +457,10 @@ func main() {
 ```go
 func main() {
     jsonData := `{"name":"Alice","age":30,"email":"alice@example.com"}`
-    
+
     var data map[string]interface{}
     json.Unmarshal([]byte(jsonData), &data)
-    
+
     fmt.Println(data["name"])  // Alice
     fmt.Println(data["age"])    // 30
 }
@@ -480,16 +480,16 @@ func unmarshalWithValidation(jsonData []byte) (*User, error) {
     if err := json.Unmarshal(jsonData, &user); err != nil {
         return nil, err
     }
-    
+
     // Валидация
     if user.Name == "" {
         return nil, fmt.Errorf("name is required")
     }
-    
+
     if user.Email == "" {
         return nil, fmt.Errorf("email is required")
     }
-    
+
     return &user, nil
 }
 ```
@@ -505,7 +505,7 @@ type PartialUser struct {
 func main() {
     // Полный JSON
     jsonData := `{"id":1,"name":"Alice","age":30,"email":"alice@example.com"}`
-    
+
     // Unmarshaling только в нужные поля
     var user PartialUser
     json.Unmarshal([]byte(jsonData), &user)
@@ -523,12 +523,12 @@ func (e *Email) UnmarshalJSON(data []byte) error {
     if err := json.Unmarshal(data, &s); err != nil {
         return err
     }
-    
+
     // Валидация email
     if !strings.Contains(s, "@") {
         return fmt.Errorf("invalid email format")
     }
-    
+
     *e = Email(s)
     return nil
 }
@@ -553,7 +553,7 @@ func main() {
     jsonData, _ := json.Marshal(user)
     fmt.Println(string(jsonData))
     // {"id":"1","name":"Alice"}
-    
+
     // Unmarshaling обратно
     jsonData2 := `{"id":"1","name":"Alice"}`
     var user2 User
@@ -575,10 +575,10 @@ type User struct {
 
 func main() {
     jsonData := `{"id":1,"name":"Alice","metadata":{"key":"value","nested":{"a":1}}}`
-    
+
     var user User
     json.Unmarshal([]byte(jsonData), &user)
-    
+
     // Metadata остается как raw JSON
     fmt.Println(string(user.Metadata))
     // {"key":"value","nested":{"a":1}}
@@ -647,12 +647,12 @@ func loadConfig(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config Config
     if err := json.Unmarshal(data, &config); err != nil {
         return nil, err
     }
-    
+
     return &config, nil
 }
 ```
@@ -668,22 +668,22 @@ func patchUser(userID int, patch map[string]interface{}) error {
     if err != nil {
         return err
     }
-    
+
     // Сериализация в JSON
     userJSON, _ := json.Marshal(user)
-    
+
     // Применение патча
     var userMap map[string]interface{}
     json.Unmarshal(userJSON, &userMap)
-    
+
     for key, value := range patch {
         userMap[key] = value
     }
-    
+
     // Обратная сериализация
     patchedJSON, _ := json.Marshal(userMap)
     json.Unmarshal(patchedJSON, &user)
-    
+
     // Сохранение
     _, err = db.Exec(
         "UPDATE users SET name = $1, email = $2 WHERE id = $3",
@@ -701,7 +701,7 @@ func transformJSON(input []byte, transformer func(map[string]interface{}) map[st
     if err := json.Unmarshal(input, &data); err != nil {
         return nil, err
     }
-    
+
     transformed := transformer(data)
     return json.Marshal(transformed)
 }
@@ -721,20 +721,20 @@ func validateJSONSchema(data []byte, schema map[string]interface{}) error {
     if err := json.Unmarshal(data, &jsonData); err != nil {
         return err
     }
-    
+
     // Простая валидация (в реальности используйте библиотеку)
     requiredFields, ok := schema["required"].([]interface{})
     if !ok {
         return nil
     }
-    
+
     for _, field := range requiredFields {
         fieldName := field.(string)
         if _, exists := jsonData[fieldName]; !exists {
             return fmt.Errorf("required field %s is missing", fieldName)
         }
     }
-    
+
     return nil
 }
 ```
@@ -744,23 +744,23 @@ func validateJSONSchema(data []byte, schema map[string]interface{}) error {
 ```go
 func streamLargeJSON(w io.Writer, items []Item) error {
     encoder := json.NewEncoder(w)
-    
+
     // Начало массива
     w.Write([]byte("["))
-    
+
     for i, item := range items {
         if i > 0 {
             w.Write([]byte(","))
         }
-        
+
         if err := encoder.Encode(item); err != nil {
             return err
         }
     }
-    
+
     // Конец массива
     w.Write([]byte("]"))
-    
+
     return nil
 }
 ```
@@ -770,35 +770,35 @@ func streamLargeJSON(w io.Writer, items []Item) error {
 ```go
 func parseJSONStream(reader io.Reader, callback func(map[string]interface{}) error) error {
     decoder := json.NewDecoder(reader)
-    
+
     // Пропуск начального токена
     token, err := decoder.Token()
     if err != nil {
         return err
     }
-    
+
     if delim, ok := token.(json.Delim); !ok || delim != '[' {
         return fmt.Errorf("expected array")
     }
-    
+
     // Парсинг элементов
     for decoder.More() {
         var item map[string]interface{}
         if err := decoder.Decode(&item); err != nil {
             return err
         }
-        
+
         if err := callback(item); err != nil {
             return err
         }
     }
-    
+
     // Пропуск конечного токена
     token, err = decoder.Token()
     if err != nil {
         return err
     }
-    
+
     return nil
 }
 ```
@@ -811,15 +811,15 @@ import "compress/gzip"
 func compressJSON(data []byte) ([]byte, error) {
     var buf bytes.Buffer
     writer := gzip.NewWriter(&buf)
-    
+
     if _, err := writer.Write(data); err != nil {
         return nil, err
     }
-    
+
     if err := writer.Close(); err != nil {
         return nil, err
     }
-    
+
     return buf.Bytes(), nil
 }
 
@@ -829,7 +829,7 @@ func decompressJSON(compressed []byte) ([]byte, error) {
         return nil, err
     }
     defer reader.Close()
-    
+
     return io.ReadAll(reader)
 }
 ```
@@ -846,11 +846,11 @@ func (c *JSONCache) Get(key string, target interface{}) error {
     c.mu.RLock()
     data, ok := c.cache[key]
     c.mu.RUnlock()
-    
+
     if !ok {
         return fmt.Errorf("cache miss")
     }
-    
+
     return json.Unmarshal(data, target)
 }
 
@@ -859,11 +859,11 @@ func (c *JSONCache) Set(key string, value interface{}) error {
     if err != nil {
         return err
     }
-    
+
     c.mu.Lock()
     c.cache[key] = data
     c.mu.Unlock()
-    
+
     return nil
 }
 ```
@@ -883,12 +883,12 @@ func ValidateJSON(data []byte, v interface{}) error {
     if err := json.Unmarshal(data, v); err != nil {
         return fmt.Errorf("unmarshal error: %w", err)
     }
-    
+
     validate := validator.New()
     if err := validate.Struct(v); err != nil {
         return fmt.Errorf("validation error: %w", err)
     }
-    
+
     return nil
 }
 ```
@@ -920,12 +920,12 @@ import "github.com/xeipuuv/gojsonschema"
 func ValidateJSONSchema(data []byte, schema []byte) error {
     documentLoader := gojsonschema.NewBytesLoader(data)
     schemaLoader := gojsonschema.NewBytesLoader(schema)
-    
+
     result, err := gojsonschema.Validate(schemaLoader, documentLoader)
     if err != nil {
         return err
     }
-    
+
     if !result.Valid() {
         var errors []string
         for _, desc := range result.Errors() {
@@ -933,7 +933,7 @@ func ValidateJSONSchema(data []byte, schema []byte) error {
         }
         return fmt.Errorf("validation errors: %v", errors)
     }
-    
+
     return nil
 }
 ```
@@ -959,7 +959,7 @@ func PrettyJSONString(data interface{}) (string, error) {
 ```go
 func StreamJSONArray(reader io.Reader, processor func(interface{}) error) error {
     decoder := json.NewDecoder(reader)
-    
+
     // Читаем открывающую скобку
     token, err := decoder.Token()
     if err != nil {
@@ -968,19 +968,19 @@ func StreamJSONArray(reader io.Reader, processor func(interface{}) error) error 
     if delim, ok := token.(json.Delim); !ok || delim != '[' {
         return fmt.Errorf("expected array start")
     }
-    
+
     // Читаем элементы массива
     for decoder.More() {
         var item interface{}
         if err := decoder.Decode(&item); err != nil {
             return fmt.Errorf("decode error: %w", err)
         }
-        
+
         if err := processor(item); err != nil {
             return fmt.Errorf("processor error: %w", err)
         }
     }
-    
+
     // Читаем закрывающую скобку
     token, err = decoder.Token()
     if err != nil {
@@ -989,7 +989,7 @@ func StreamJSONArray(reader io.Reader, processor func(interface{}) error) error 
     if delim, ok := token.(json.Delim); !ok || delim != ']' {
         return fmt.Errorf("expected array end")
     }
-    
+
     return nil
 }
 ```
@@ -1002,7 +1002,7 @@ func MarshalWithContext(ctx context.Context, v interface{}) ([]byte, error) {
         RequestID string `json:"request_id,omitempty"`
         UserID    string `json:"user_id,omitempty"`
     }
-    
+
     var cv contextValue
     if reqID := ctx.Value("request_id"); reqID != nil {
         cv.RequestID = reqID.(string)
@@ -1010,12 +1010,12 @@ func MarshalWithContext(ctx context.Context, v interface{}) ([]byte, error) {
     if userID := ctx.Value("user_id"); userID != nil {
         cv.UserID = userID.(string)
     }
-    
+
     data := map[string]interface{}{
         "data":    v,
         "context": cv,
     }
-    
+
     return json.Marshal(data)
 }
 ```
@@ -1030,19 +1030,19 @@ func CompressJSON(data interface{}) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var buf bytes.Buffer
     writer := gzip.NewWriter(&buf)
-    
+
     if _, err := writer.Write(jsonData); err != nil {
         writer.Close()
         return nil, err
     }
-    
+
     if err := writer.Close(); err != nil {
         return nil, err
     }
-    
+
     return buf.Bytes(), nil
 }
 
@@ -1052,7 +1052,7 @@ func DecompressJSON(data []byte, v interface{}) error {
         return err
     }
     defer reader.Close()
-    
+
     decoder := json.NewDecoder(reader)
     return decoder.Decode(v)
 }
@@ -1060,28 +1060,28 @@ func DecompressJSON(data []byte, v interface{}) error {
 
 ## Лучшие практики
 
-1. **Используйте `JSON` tags** - для контроля сериализации полей
-2. **Обрабатывайте ошибки** - всегда проверяйте ошибки при **marshaling**/**unmarshaling**
-3. **Используйте omitempty** - для пропуска пустых полей
-4. **Используйте streaming** - для больших **JSON** файлов
-5. **Валидируйте данные** - проверяйте данные после **unmarshaling**
-6. **Используйте custom marshaling** - для сложных типов данных
-7. **Используйте json.RawMessage** - для сохранения **raw JSON**
-8. **Избегайте interface{}** - используйте конкретные типы когда возможно
-9. **Используйте streaming для больших данных** - для экономии памяти
-10. **Кэшируйте скомпилированные JSON** - для часто используемых данных
-11. **Используйте валидацию** - проверяйте структуру данных
-12. **Используйте `JSON` Schema** - для строгой валидации
-13. **Используйте компрессию** - для уменьшения размера
-14. **Обрабатывайте контекст** - передавайте метаданные в **JSON**
-15. **Используйте pretty printing** - для отладки и логирования
+1. **Используйте `JSON` tags** — для контроля сериализации полей
+2. **Обрабатывайте ошибки** — всегда проверяйте ошибки при **marshaling**/**unmarshaling**
+3. **Используйте omitempty** — для пропуска пустых полей
+4. **Используйте streaming** — для больших **JSON** файлов
+5. **Валидируйте данные** — проверяйте данные после **unmarshaling**
+6. **Используйте custom marshaling** — для сложных типов данных
+7. **Используйте json.RawMessage** — для сохранения **raw JSON**
+8. **Избегайте interface{}** — используйте конкретные типы когда возможно
+9. **Используйте streaming для больших данных** — для экономии памяти
+10. **Кэшируйте скомпилированные JSON** — для часто используемых данных
+11. **Используйте валидацию** — проверяйте структуру данных
+12. **Используйте `JSON` Schema** — для строгой валидации
+13. **Используйте компрессию** — для уменьшения размера
+14. **Обрабатывайте контекст** — передавайте метаданные в **JSON**
+15. **Используйте pretty printing** — для отладки и логирования
 
 ### Практические примеры: **JSON streaming** для больших данных
 
 ```go
 func StreamJSONArray(w io.Writer, items []interface{}) error {
     encoder := json.NewEncoder(w)
-    
+
     w.Write([]byte("["))
     for i, item := range items {
         if i > 0 {
@@ -1092,13 +1092,13 @@ func StreamJSONArray(w io.Writer, items []interface{}) error {
         }
     }
     w.Write([]byte("]"))
-    
+
     return nil
 }
 
 func StreamJSONObjects(reader io.Reader, processor func(map[string]interface{}) error) error {
     decoder := json.NewDecoder(reader)
-    
+
     // Пропуск открывающей скобки
     token, err := decoder.Token()
     if err != nil {
@@ -1107,7 +1107,7 @@ func StreamJSONObjects(reader io.Reader, processor func(map[string]interface{}) 
     if delim, ok := token.(json.Delim); !ok || delim != '[' {
         return fmt.Errorf("expected array start")
     }
-    
+
     for decoder.More() {
         var obj map[string]interface{}
         if err := decoder.Decode(&obj); err != nil {
@@ -1117,7 +1117,7 @@ func StreamJSONObjects(reader io.Reader, processor func(map[string]interface{}) 
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -1139,3 +1139,11 @@ func StreamJSONObjects(reader io.Reader, processor func(map[string]interface{}) 
 
 - [Go encoding/json Documentation](https://pkg.go.dev/encoding/json)
 - [Go JSON Blog Post](https://go.dev/blog/json)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

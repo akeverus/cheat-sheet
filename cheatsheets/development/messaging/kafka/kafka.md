@@ -912,7 +912,7 @@ public class `KafkaProducerConfig` {
         `configProps`.put(`ProducerConfig`.BATCH_SIZE_CONFIG, `16384`);
 
         // Время ожидания накопления батча в миллисекундах
-        // 0 - отправка немедленно, >0 - ожидание для формирования батча
+        // 0 — отправка немедленно, >0 — ожидание для формирования батча
         `configProps`.put(`ProducerConfig`.LINGER_MS_CONFIG, 5);
 
         // Общий размер буфера в памяти для неотправленных сообщений
@@ -1294,7 +1294,7 @@ public class `KafkaConsumerConfig` {
         `configProps`.put(`ConsumerConfig`.MAX_POLL_RECORDS_CONFIG, `100`);
 
         // Максимальное время ожидания сообщений в poll() в миллисекундах
-        // 0 - немедленный возврат, >0 - ожидание новых сообщений
+        // 0 — немедленный возврат, >0 — ожидание новых сообщений
         `configProps`.put(`ConsumerConfig`.MAX_POLL_INTERVAL_MS_CONFIG, `300000`); // 5 минут
 
         // Таймаут для подключения к брокеру
@@ -1338,7 +1338,7 @@ public class `KafkaConsumerConfig` {
 
         // ======= `ACKNOWLEDGMENT` РЕЖИМЫ =======
 
-        // MANUAL_IMMEDIATE - немедленное подтверждение после обработки
+        // MANUAL_IMMEDIATE — немедленное подтверждение после обработки
         // `MANUAL` - подтверждение в конце транзакции
         // `BATCH` - подтверждение батча сообщений
         // `RECORD` - подтверждение каждого сообщения
@@ -1434,7 +1434,7 @@ public class `UserEventConsumer` {
 
         } catch (`Exception e`) {
             `logger.error`("`Failed to process user` event: " + record, e);
-            // Don't acknowledge - message will be retried
+            // Don't acknowledge — message will be retried
             throw e;
         }
     }
@@ -2896,8 +2896,8 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 
 Проблема: Rebalancing loop
 ```
-**INFO**  **ConsumerCoordinator** - **Revoking previously assigned partitions**
-**INFO**  **ConsumerCoordinator** - (**Re-**)**joining group**
+**INFO**  **ConsumerCoordinator** — **Revoking previously assigned partitions**
+**INFO**  **ConsumerCoordinator** — (**Re-**)**joining group**
 ```text
 
 Решение:

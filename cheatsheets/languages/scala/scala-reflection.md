@@ -141,7 +141,7 @@ import scala.reflect.runtime.universe._
 
 def analyzeType[T: TypeTag]: Unit = {
   val tpe = typeOf[T]
-  
+
   println(s"Type: ${tpe}")
   println(s"Type constructor: ${tpe.typeConstructor}")
   println(s"Type args: ${tpe.typeArgs}")
@@ -339,7 +339,7 @@ import scala.reflect.runtime.universe._
 def serialize[T: TypeTag](obj: T): Map[String, Any] = {
   val mirror = runtimeMirror(getClass.getClassLoader)
   val instanceMirror = mirror.reflect(obj)
-  
+
   typeOf[T].members.collect {
     case m: MethodSymbol if m.isCaseAccessor =>
       val fieldMirror = instanceMirror.reflectMethod(m)
@@ -364,7 +364,7 @@ import scala.reflect.runtime.universe._
 def validate[T: TypeTag](obj: T): List[String] = {
   val mirror = runtimeMirror(getClass.getClassLoader)
   val instanceMirror = mirror.reflect(obj)
-  
+
   typeOf[T].members.collect {
     case m: MethodSymbol if m.isCaseAccessor =>
       val fieldMirror = instanceMirror.reflectMethod(m)
@@ -410,7 +410,7 @@ import scala.collection.mutable
 
 object ReflectionCache {
   private val cache = mutable.Map[String, MethodSymbol]()
-  
+
   def getMethod[T: TypeTag](methodName: String): MethodSymbol = {
     val key = s"${typeOf[T]}.$methodName"
     cache.getOrElseUpdate(key, {
@@ -613,7 +613,7 @@ def createInstance[A](args: Any*)(implicit tag: TypeTag[A]): A = {
   val classSymbol = tpe.typeSymbol.asClass
   val classMirror = currentMirror.reflectClass(classSymbol)
   val constructorMirror = classMirror.reflectConstructor(constructorSymbol)
-  
+
   constructorMirror(args: _*).asInstanceOf[A]
 }
 

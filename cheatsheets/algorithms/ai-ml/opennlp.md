@@ -38,7 +38,7 @@ updated: "2026-02-11"
 
 ## Обзор
 
-**Apache OpenNLP** - это библиотека **Java** для обработки естественного языка с открытым исходным кодом.
+**Apache OpenNLP** — это библиотека **Java** для обработки естественного языка с открытым исходным кодом.
 
 Он имеет **API** для таких вариантов использования, как распознавание именованных объектов, обнаружение предложений, тегирование **POS** и токенизация.
 
@@ -82,19 +82,19 @@ import java.io.InputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SentenceDetectionTest {
-    
+
     @Test
     public void givenEnglishModel_whenDetect_thenSentencesAreDetected() throws Exception {
         String paragraph = "This is a statement. This is another statement. "
             + "Now is an abstract word for time, "
             + "that is always flying. And my email address is google@gmail.com.";
-        
+
         InputStream is = getClass().getResourceAsStream("/models/en-sent.bin");
         SentenceModel model = new SentenceModel(is);
         SentenceDetectorME sdetector = new SentenceDetectorME(model);
-        
+
         String sentences[] = sdetector.sentDetect(paragraph);
-        
+
         assertThat(sentences).contains(
             "This is a statement. ",
             "This is another statement. ",
@@ -111,7 +111,7 @@ public class SentenceDetectionTest {
 
 Теперь, когда мы можем разделить корпус текста на предложения, мы можем приступить к более подробному анализу предложения.
 
-Цель токенизации - разделить предложение на более мелкие части, называемые токенами. Обычно эти токены представляют собой слова, цифры или знаки препинания.
+Цель токенизации — разделить предложение на более мелкие части, называемые токенами. Обычно эти токены представляют собой слова, цифры или знаки препинания.
 
 В **OpenNLP** доступно три типа токенизаторов.
 
@@ -131,9 +131,9 @@ public void givenEnglishModel_whenTokenize_thenTokensAreDetected() throws Except
         .getResourceAsStream("/models/en-token.bin");
     TokenizerModel model = new TokenizerModel(inputStream);
     TokenizerME tokenizer = new TokenizerME(model);
-    
+
     String[] tokens = tokenizer.tokenize("Baeldung is a Spring Resource.");
-    
+
     assertThat(tokens).contains(
         "Baeldung", "is", "a", "Spring", "Resource", "."
     );
@@ -153,7 +153,7 @@ import opennlp.tools.tokenize.WhitespaceTokenizer;
 public void givenWhitespaceTokenizer_whenTokenize_thenTokensAreDetected() throws Exception {
     WhitespaceTokenizer tokenizer = WhitespaceTokenizer.INSTANCE;
     String[] tokens = tokenizer.tokenize("Baeldung is a Spring Resource.");
-    
+
     assertThat(tokens)
         .contains("Baeldung", "is", "a", "Spring", "Resource.");
 }
@@ -172,7 +172,7 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 public void givenSimpleTokenizer_whenTokenize_thenTokensAreDetected() throws Exception {
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     String[] tokens = tokenizer.tokenize("Baeldung is a Spring Resource.");
-    
+
     assertThat(tokens)
         .contains("Baeldung", "is", "a", "Spring", "Resource", ".");
 }
@@ -182,7 +182,7 @@ public void givenSimpleTokenizer_whenTokenize_thenTokensAreDetected() throws Exc
 
 Теперь, когда мы поняли токенизацию, давайте рассмотрим первый вариант использования, основанный на успешной токенизации: распознавание именованных объектов (**NER**).
 
-Цель **NER** - найти именованные объекты, такие как люди, местоположения, организации и другие именованные объекты в заданном тексте.
+Цель **NER** — найти именованные объекты, такие как люди, местоположения, организации и другие именованные объекты в заданном тексте.
 
 **OpenNLP** использует предопределенные модели для имен людей, даты и времени, местоположений и организаций. Нам нужно загрузить модель с помощью **TokenNameFinderModel** и передать ее экземпляру **NameFinderME**. Затем мы можем использовать метод **find**() для поиска именованных сущностей в заданном тексте:**
 
@@ -198,14 +198,14 @@ public void givenEnglishPersonModel_whenNER_thenPersonsAreDetected() throws Exce
         "John is 26 years old. His best friend's "
         + "name is Leonard. He has a sister named Penny."
     );
-    
+
     InputStream inputStreamNameFinder = getClass()
         .getResourceAsStream("/models/en-ner-person.bin");
     TokenNameFinderModel model = new TokenNameFinderModel(inputStreamNameFinder);
     NameFinderME nameFinderME = new NameFinderME(model);
-    
+
     List<Span> spans = Arrays.asList(nameFinderME.find(tokens));
-    
+
     assertThat(spans.toString())
         .isEqualTo("[[0..1) person, [13..14) person, [20..21) person]");
 }
@@ -219,15 +219,15 @@ public void givenEnglishPersonModel_whenNER_thenPersonsAreDetected() throws Exce
 
 **Часть речи (**POS**) определяет тип слова. **OpenNLP** использует следующие теги для разных частей речи:**
 
-1. **NN** - существительное в единственном числе или масса
-2. **DT** - определитель
-3. **VB** - глагол, основная форма
-4. **VBD** - глагол в прошедшем времени
-5. **VBZ** - глагол в третьем лице единственного числа настоящего времени
-6. **IN** - предлог или подчинительный союз
-7. **NNP** - имя собственное, единственное число
-8. **TO** - слово «to»
-9. **JJ** - прилагательное
+1. **NN** — существительное в единственном числе или масса
+2. **DT** — определитель
+3. **VB** — глагол, основная форма
+4. **VBD** — глагол в прошедшем времени
+5. **VBZ** — глагол в третьем лице единственного числа настоящего времени
+6. **IN** — предлог или подчинительный союз
+7. **NNP** — имя собственное, единственное число
+8. **TO** — слово «to»
+9. **JJ** — прилагательное
 
 Это те же теги, что и в банке **Penn Tree Bank**. Полный список см. в этом списке.
 
@@ -241,40 +241,40 @@ import opennlp.tools.postag.POSTaggerME;
 public void givenPOSModel_whenPOSTagging_thenPOSAreDetected() throws Exception {
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     String[] tokens = tokenizer.tokenize("John has a sister named Penny.");
-    
+
     InputStream inputStreamPOSTagger = getClass()
         .getResourceAsStream("/models/en-pos-maxent.bin");
     POSModel posModel = new POSModel(inputStreamPOSTagger);
     POSTaggerME posTagger = new POSTaggerME(posModel);
-    
+
     String tags[] = posTagger.tag(tokens);
-    
+
     assertThat(tags).contains("NNP", "VBZ", "DT", "NN", "VBN", "NNP", ".");
 }
 ```
 
 **Метод **tag**() отображает токены в список тегов **POS**. Результат в примере:**
 
-1. «**John**» - **NNP** (**имя собственное**)
-2. «**has**» - **VBZ** (**глагол**)
+1. «**John**» — **NNP** (**имя собственное**)
+2. «**has**» — **VBZ** (**глагол**)
 3. «a» - `DT` (**определитель**)
 4. «**sister**» - `NN` (**существительное**)
-5. «**named**» - **VBN** (**глагол в прошедшем времени**)
-6. «**Penny**» - **NNP** (**имя собственное**)
-7. «.» - период
+5. «**named**» — **VBN** (**глагол в прошедшем времени**)
+6. «**Penny**» — **NNP** (**имя собственное**)
+7. «.» — период
 
 ## Лемматизация
 
 Теперь, когда у нас есть информация о частях речи токенов в предложении, мы можем еще больше проанализировать текст.
 
-Лемматизация - это процесс сопоставления словоформы, которая может иметь время, род, наклонение или другую информацию, с базовой формой слова, также называемой «леммой».
+Лемматизация — это процесс сопоставления словоформы, которая может иметь время, род, наклонение или другую информацию, с базовой формой слова, также называемой «леммой».
 
 Лемматизатор принимает токен и его часть речи в качестве входных данных и возвращает лемму слова. Следовательно, перед лемматизацией предложение должно пройти через токенизатор и **POS**-теггер.
 
 **Apache OpenNLP** предоставляет два типа лемматизации:**
 
-1. **Статистический** - требуется модель лемматизатора, построенная с использованием обучающих данных для нахождения леммы заданного слова
-2. **На основе словаря** - требуется словарь, который содержит все допустимые комбинации слова, тегов **POS** и соответствующей леммы
+1. **Статистический** — требуется модель лемматизатора, построенная с использованием обучающих данных для нахождения леммы заданного слова
+2. **На основе словаря** — требуется словарь, который содержит все допустимые комбинации слова, тегов **POS** и соответствующей леммы
 
 Для статистической лемматизации нам нужно обучить модель, тогда как для лемматизации словаря нам просто нужен файл словаря, подобный этому.
 
@@ -287,19 +287,19 @@ import opennlp.tools.lemmatizer.DictionaryLemmatizer;
 public void givenEnglishDictionary_whenLemmatize_thenLemmasAreDetected() throws Exception {
     SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
     String[] tokens = tokenizer.tokenize("John has a sister named Penny.");
-    
+
     InputStream inputStreamPOSTagger = getClass()
         .getResourceAsStream("/models/en-pos-maxent.bin");
     POSModel posModel = new POSModel(inputStreamPOSTagger);
     POSTaggerME posTagger = new POSTaggerME(posModel);
     String tags[] = posTagger.tag(tokens);
-    
+
     InputStream dictLemmatizer = getClass()
         .getResourceAsStream("/models/en-lemmatizer.dict");
     DictionaryLemmatizer lemmatizer = new DictionaryLemmatizer(dictLemmatizer);
-    
+
     String[] lemmas = lemmatizer.lemmatize(tokens, tags);
-    
+
     assertThat(lemmas)
         .contains("O", "have", "a", "sister", "name", "O", "O");
 }
@@ -329,20 +329,20 @@ public void givenChunkerModel_whenChunk_thenChunksAreDetected() throws Exception
     String[] tokens = tokenizer.tokenize(
         "He reckons the current account deficit will narrow to only 8 billion."
     );
-    
+
     InputStream inputStreamPOSTagger = getClass()
         .getResourceAsStream("/models/en-pos-maxent.bin");
     POSModel posModel = new POSModel(inputStreamPOSTagger);
     POSTaggerME posTagger = new POSTaggerME(posModel);
     String tags[] = posTagger.tag(tokens);
-    
+
     InputStream inputStreamChunker = getClass()
         .getResourceAsStream("/models/en-chunker.bin");
     ChunkerModel chunkerModel = new ChunkerModel(inputStreamChunker);
     ChunkerME chunker = new ChunkerME(chunkerModel);
-    
+
     String[] chunks = chunker.chunk(tokens, tags);
-    
+
     assertThat(chunks).contains(
         "B-NP", "B-VP", "B-NP", "I-NP",
         "I-NP", "I-NP", "B-VP", "I-VP",
@@ -355,12 +355,12 @@ public void givenChunkerModel_whenChunk_thenChunksAreDetected() throws Exception
 
 **Разбирая вывод из нашего примера, мы получаем 6 чанков:**
 
-1. «He» - словосочетание (**NP**)
-2. «**reckons**» - глагольная фраза (**VP**)
-3. «**the current account deficit**» - словосочетание (**NP**)
-4. «**will narrow**» - глагольная фраза (**VP**)
-5. «to» - предлог (**PP**)
-6. «**only** 8 **billion**» - словосочетание (**NP**)
+1. «He» — словосочетание (**NP**)
+2. «**reckons**» — глагольная фраза (**VP**)
+3. «**the current account deficit**» — словосочетание (**NP**)
+4. «**will narrow**» — глагольная фраза (**VP**)
+5. «to» — предлог (**PP**)
+6. «**only** 8 **billion**» — словосочетание (**NP**)
 
 ## Определение языка
 
@@ -379,28 +379,28 @@ import opennlp.tools.langdetect.LanguageDetectorME;
 import opennlp.tools.langdetect.LanguageDetectorModel;
 
 @Test
-public void givenLanguageDictionary_whenLanguageDetect_thenLanguageIsDetected() 
+public void givenLanguageDictionary_whenLanguageDetect_thenLanguageIsDetected()
     throws FileNotFoundException, IOException {
-    
+
     InputStreamFactory dataIn = new MarkableFileInputStreamFactory(
         new File("src/main/resources/models/DoccatSample.txt")
     );
     ObjectStream lineStream = new PlainTextByLineStream(dataIn, "UTF-8");
     LanguageDetectorSampleStream sampleStream = new LanguageDetectorSampleStream(lineStream);
-    
+
     TrainingParameters params = new TrainingParameters();
     params.put(TrainingParameters.ITERATIONS_PARAM, 100);
     params.put(TrainingParameters.CUTOFF_PARAM, 5);
     params.put("DataIndexer", "TwoPass");
     params.put(TrainingParameters.ALGORITHM_PARAM, "NAIVEBAYES");
-    
+
     LanguageDetectorModel model = LanguageDetectorME.train(
         sampleStream, params, new LanguageDetectorFactory()
     );
     LanguageDetector ld = new LanguageDetectorME(model);
-    
+
     Language[] languages = ld.predictLanguages("estava em uma marcenaria na Rua Bruno");
-    
+
     assertThat(Arrays.asList(languages))
         .extracting("lang", "confidence")
         .contains(
@@ -424,49 +424,49 @@ public class TextProcessor {
     private TokenizerME tokenizer;
     private POSTaggerME posTagger;
     private NameFinderME nameFinder;
-    
+
     public TextProcessor() throws IOException {
         // Инициализация моделей
         SentenceModel sentenceModel = new SentenceModel(
             getClass().getResourceAsStream("/models/en-sent.bin")
         );
         sentenceDetector = new SentenceDetectorME(sentenceModel);
-        
+
         TokenizerModel tokenizerModel = new TokenizerModel(
             getClass().getResourceAsStream("/models/en-token.bin")
         );
         tokenizer = new TokenizerME(tokenizerModel);
-        
+
         POSModel posModel = new POSModel(
             getClass().getResourceAsStream("/models/en-pos-maxent.bin")
         );
         posTagger = new POSTaggerME(posModel);
-        
+
         TokenNameFinderModel nameModel = new TokenNameFinderModel(
             getClass().getResourceAsStream("/models/en-ner-person.bin")
         );
         nameFinder = new NameFinderME(nameModel);
     }
-    
+
     public ProcessingResult processText(String text) {
         // Разделение на предложения
         String[] sentences = sentenceDetector.sentDetect(text);
-        
+
         ProcessingResult result = new ProcessingResult();
-        
+
         for (String sentence : sentences) {
             // Токенизация
             String[] tokens = tokenizer.tokenize(sentence);
-            
+
             // POS тегирование
             String[] tags = posTagger.tag(tokens);
-            
+
             // Поиск именованных сущностей
             Span[] nameSpans = nameFinder.find(tokens);
-            
+
             result.addSentence(sentence, tokens, tags, nameSpans);
         }
-        
+
         return result;
     }
 }
@@ -503,7 +503,7 @@ public class TextProcessor {
 - Легко интегрируется в **Java**-приложения
 - Поддерживает обучение собственных моделей
 
-**Apache OpenNLP** - это инструмент для обработки естественного языка в **Java**, который позволяет быстро добавлять **NLP**-функциональность в приложения.
+**Apache OpenNLP** — это инструмент для обработки естественного языка в **Java**, который позволяет быстро добавлять **NLP**-функциональность в приложения.
 
 ## Реализация на Kotlin
 
@@ -537,11 +537,11 @@ class TokenizationK {
         val tokenizer = TokenizerME(model)
         return tokenizer.tokenize(text)
     }
-    
+
     fun tokenizeWithWhitespace(text: String): Array<String> {
         return WhitespaceTokenizer.INSTANCE.tokenize(text)
     }
-    
+
     fun tokenizeWithSimple(text: String): Array<String> {
         return SimpleTokenizer.INSTANCE.tokenize(text)
     }

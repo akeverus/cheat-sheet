@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Kotlin Ktor
 
-Кратко: полное руководство по **Ktor** - асинхронному фреймворку для создания веб-серверов и клиентов на **Kotlin**. Рассматриваются маршрутизация, обработка запросов, аутентификация, **WebSockets** и развертывание.
+Кратко: полное руководство по **Ktor** — асинхронному фреймворку для создания веб-серверов и клиентов на **Kotlin**. Рассматриваются маршрутизация, обработка запросов, аутентификация, **WebSockets** и развертывание.
 
 ## Полезные ссылки
 
@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Ktor Documentation](https://ktor.io/docs/)
 - [Ktor API Reference](https://api.ktor.io/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Ktor Tutorial](https://ktor.io/docs/creating-http-apis.html)
 
 ### См. также
@@ -114,7 +114,7 @@ updated: "2026-02-11"
 
 ## Введение в **Ktor**
 
-**Ktor** - это асинхронный фреймворк для создания веб-приложений на **Kotlin**, разработанный **JetBrains**. Он построен на корутинах и предоставляет легковесное решение для создания как серверных приложений, так и **HTTP**-клиентов.
+**Ktor** — это асинхронный фреймворк для создания веб-приложений на **Kotlin**, разработанный **JetBrains**. Он построен на корутинах и предоставляет легковесное решение для создания как серверных приложений, так и **HTTP**-клиентов.
 
 ### Основные преимущества **Ktor**
 
@@ -144,13 +144,13 @@ dependencies {
     // Ktor сервер
     implementation("io.ktor:ktor-server-core:2.3.5")
     implementation("io.ktor:ktor-server-netty:2.3.5")
-    
+
     // Плагины
     implementation("io.ktor:ktor-server-content-negotiation:2.3.5")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
     implementation("io.ktor:ktor-server-auth:2.3.5")
     implementation("io.ktor:ktor-server-cors:2.3.5")
-    
+
     // Логирование
     implementation("ch.qos.logback:logback-classic:1.4.11")
 }
@@ -179,7 +179,7 @@ dependencies {
 
 ### Базовый сервер
 
-**Самый простой способ создать **Ktor** сервер - использовать встроенную функцию `**embeddedServer**`:**
+**Самый простой способ создать **Ktor** сервер — использовать встроенную функцию `**embeddedServer**`:**
 
 ```kotlin
 import io.ktor.server.engine.*
@@ -210,7 +210,7 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-    
+
     routing {
         get("/") {
             call.respondText("Hello, World!")
@@ -255,11 +255,11 @@ routing {
     get("/") {
         call.respondText("Home")
     }
-    
+
     get("/about") {
         call.respondText("About")
     }
-    
+
     post("/users") {
         // Обработка POST запроса
     }
@@ -603,27 +603,27 @@ class ApplicationTest {
 ```kotlin
 class CustomHeaderPlugin(config: Configuration) {
     val headerName = config.headerName
-    
+
     companion object Plugin : BaseApplicationPlugin<Configuration, CustomHeaderPlugin> {
         override val key = AttributeKey<CustomHeaderPlugin>("CustomHeader")
-        
+
         override fun install(
             pipeline: ApplicationCallPipeline,
             configure: Configuration.() -> Unit
         ): CustomHeaderPlugin {
             val config = Configuration().apply(configure)
             val plugin = CustomHeaderPlugin(config)
-            
+
             pipeline.intercept(ApplicationCallPipeline.Call) {
                 call.response.headers.append(
                     plugin.headerName,
                     "CustomValue"
                 )
             }
-            
+
             return plugin
         }
-        
+
         class Configuration {
             var headerName = "X-Custom-Header"
         }
@@ -653,7 +653,7 @@ fun Application.module() {
             ignoreUnknownKeys = true
         })
     }
-    
+
     routing {
         post("/users") {
             val user = call.receive<User>()
@@ -708,7 +708,7 @@ fun Application.module() {
             }
         }
     }
-    
+
     routing {
         authenticate("jwt-auth") {
             get("/protected") {
@@ -732,7 +732,7 @@ fun Application.module() {
             cookie.maxAgeInSeconds = 60 * 60 * 24 // 24 часа
         }
     }
-    
+
     install(Authentication) {
         session<UserSession>("auth-session") {
             validate { session ->
@@ -743,14 +743,14 @@ fun Application.module() {
             }
         }
     }
-    
+
     routing {
         post("/login") {
             val username = call.receive<LoginRequest>().username
             call.sessions.set(UserSession(username))
             call.respond("Logged in")
         }
-        
+
         authenticate("auth-session") {
             get("/profile") {
                 val session = call.sessions.get<UserSession>()
@@ -777,7 +777,7 @@ fun Application.module() {
         user = "user",
         password = "password"
     )
-    
+
     routing {
         get("/users") {
             val users = transaction {
@@ -785,7 +785,7 @@ fun Application.module() {
             }
             call.respond(users)
         }
-        
+
         post("/users") {
             val user = call.receive<User>()
             transaction {
@@ -810,11 +810,11 @@ fun Application.module() {
         "jdbc:h2:mem:test",
         driver = "org.h2.Driver"
     )
-    
+
     transaction(database) {
         SchemaUtils.create(Users, Posts)
     }
-    
+
     // Или использовать Flyway
     val flyway = Flyway.configure()
         .dataSource("jdbc:h2:mem:test", "", "")
@@ -840,7 +840,7 @@ class ApplicationTest {
         val user = response.body<User>()
         assertEquals("Alice", user.name)
     }
-    
+
     @Test
     fun testPostUser() = testApplication {
         val user = User(name = "Bob", email = "bob@example.com")
@@ -862,7 +862,7 @@ class ApplicationTest {
 fun testWithMockedService() = testApplication {
     val mockService = mockk<UserService>()
     every { mockService.findById(1) } returns User(id = 1, name = "Alice")
-    
+
     application {
         routing {
             get("/users/{id}") {
@@ -872,7 +872,7 @@ fun testWithMockedService() = testApplication {
             }
         }
     }
-    
+
     val response = client.get("/users/1")
     assertEquals(HttpStatusCode.OK, response.status)
 }
@@ -960,7 +960,7 @@ fun Application.module() {
     install(MicrometerMetrics) {
         // Настройка метрик
     }
-    
+
     routing {
         get("/metrics") {
             // Возврат метрик
@@ -999,7 +999,7 @@ fun Application.module() {
             rateLimiter(10, Duration.ofSeconds(1))
         }
     }
-    
+
     routing {
         rateLimit("api") {
             get("/api/data") {
@@ -1023,19 +1023,19 @@ fun Application.module() {
 ```kotlin
 class ApiRouting {
     private val routes = mutableListOf<Route>()
-    
+
     fun api(init: ApiRouting.() -> Unit) {
         init()
     }
-    
+
     fun get(path: String, handler: suspend ApplicationCall.() -> Unit) {
         routes.add(Route("GET", path, handler))
     }
-    
+
     fun post(path: String, handler: suspend ApplicationCall.() -> Unit) {
         routes.add(Route("POST", path, handler))
     }
-    
+
     fun applyTo(application: Application) {
         application.routing {
             routes.forEach { route ->
@@ -1046,7 +1046,7 @@ class ApiRouting {
             }
         }
     }
-    
+
     data class Route(
         val method: String,
         val path: String,
@@ -1080,10 +1080,10 @@ fun Application.module() {
     install(Koin) {
         modules(applicationModule)
     }
-    
+
     routing {
         val userService by inject<UserService>()
-        
+
         get("/users") {
             val users = userService.getAllUsers()
             call.respond(users)
@@ -1110,16 +1110,16 @@ val applicationModule = module {
 fun Application.module() {
     // Использование SharedFlow для распределения состояния
     val sharedState = MutableSharedFlow<State>(replay = 1)
-    
+
     // Использование Redis для распределенного кэша
     val redisCache = RedisCache(redisConnection)
-    
+
     routing {
         get("/state") {
             val state = redisCache.get<State>("current-state")
             call.respond(state ?: getDefaultState())
         }
-        
+
         post("/state") {
             val state = call.receive<State>()
             redisCache.set("current-state", state)
@@ -1141,7 +1141,7 @@ fun Application.module() {
 fun Application.module() {
     install(XForwardedHeaderSupport)
     install(ForwardedHeaderSupport)
-    
+
     // Использование реального IP клиента
     routing {
         get("/client-ip") {
@@ -1165,33 +1165,33 @@ fun Application.module() {
 // Кастомный плагин для логирования
 class LoggingPlugin(config: Configuration) {
     val logLevel = config.logLevel
-    
+
     companion object Plugin : BaseApplicationPlugin<Configuration, LoggingPlugin> {
         override val key = AttributeKey<LoggingPlugin>("Logging")
-        
+
         override fun install(
             pipeline: ApplicationCallPipeline,
             configure: Configuration.() -> Unit
         ): LoggingPlugin {
             val config = Configuration().apply(configure)
             val plugin = LoggingPlugin(config)
-            
+
             pipeline.intercept(ApplicationCallPipeline.Call) {
                 val startTime = System.currentTimeMillis()
                 val method = call.request.httpMethod.value
                 val path = call.request.path()
-                
+
                 proceed()
-                
+
                 val duration = System.currentTimeMillis() - startTime
                 val status = call.response.status()
-                
+
                 println("[${plugin.logLevel}] $method $path - $status (${duration}ms)")
             }
-            
+
             return plugin
         }
-        
+
         class Configuration {
             var logLevel = "INFO"
         }
@@ -1219,9 +1219,9 @@ fun Application.module() {
         webSocket("/chat") {
             val session = this
             val user = call.request.queryParameters["user"] ?: "Anonymous"
-            
+
             send("Welcome, $user!")
-            
+
             try {
                 for (frame in incoming) {
                     when (frame) {
@@ -1247,7 +1247,7 @@ class WebSocketClient {
     private val client = HttpClient {
         install(WebSockets)
     }
-    
+
     suspend fun connect(url: String, messageHandler: (String) -> Unit) {
         client.webSocket(url) {
             for (frame in incoming) {
@@ -1257,7 +1257,7 @@ class WebSocketClient {
             }
         }
     }
-    
+
     suspend fun send(message: String) {
         client.webSocket(url) {
             send(message)
@@ -1296,12 +1296,12 @@ fun Application.module() {
                 }
             }
         }
-        
+
         // Скачивание файлов
         get("/download/{fileName}") {
             val fileName = call.parameters["fileName"] ?: return@get
             val file = File("uploads/$fileName")
-            
+
             if (file.exists()) {
                 call.response.header(
                     HttpHeaders.ContentDisposition,
@@ -1357,7 +1357,7 @@ fun Application.module() {
             cookie.maxAge = Duration.days(7)
         }
     }
-    
+
     install(Authentication) {
         session<UserSession>("session") {
             validate { session ->
@@ -1372,12 +1372,12 @@ fun Application.module() {
             }
         }
     }
-    
+
     routing {
         post("/login") {
             val credentials = call.receive<LoginCredentials>()
             val user = userService.authenticate(credentials)
-            
+
             if (user != null) {
                 call.sessions.set(UserSession(user.id, user.name))
                 call.respond(mapOf("status" to "success"))
@@ -1385,12 +1385,12 @@ fun Application.module() {
                 call.respond(HttpStatusCode.Unauthorized)
             }
         }
-        
+
         post("/logout") {
             call.sessions.clear<UserSession>()
             call.respond(mapOf("status" to "logged out"))
         }
-        
+
         authenticate("session") {
             get("/profile") {
                 val session = call.sessions.get<UserSession>()
@@ -1423,13 +1423,13 @@ fun Application.module() {
         json()
         xml()
     }
-    
+
     routing {
         get("/users") {
             val users = userService.getAllUsers()
             call.respond(users)  // Автоматически выберет формат на основе Accept заголовка
         }
-        
+
         post("/users") {
             val user = call.receive<User>()  // Автоматически десериализует на основе Content-Type
             val created = userService.createUser(user)
@@ -1453,11 +1453,11 @@ fun Application.module() {
         exception<NotFoundException> { call, cause ->
             call.respond(HttpStatusCode.NotFound, ErrorResponse(cause.message ?: "Not found"))
         }
-        
+
         exception<ValidationException> { call, cause ->
             call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Validation failed"))
         }
-        
+
         status(HttpStatusCode.NotFound) { call, status ->
             call.respond(ErrorResponse("Resource not found"))
         }
@@ -1560,9 +1560,9 @@ suspend fun uploadFile(file: File, metadata: Map<String, String>) {
 fun Application.configureMiddleware() {
     intercept(ApplicationCallPipeline.Call) {
         val startTime = System.currentTimeMillis()
-        
+
         proceed()
-        
+
         val duration = System.currentTimeMillis() - startTime
         call.response.header("X-Response-Time", duration.toString())
     }
@@ -1574,9 +1574,9 @@ fun Application.configureLogging() {
         val method = call.request.httpMethod.value
         val path = call.request.path()
         val status = call.response.status()
-        
+
         println("$method $path - $status")
-        
+
         proceed()
     }
 }
@@ -1603,21 +1603,21 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-    
+
     routing {
         route("/api/users") {
             get {
                 val users = userService.getAllUsers()
                 call.respond(users)
             }
-            
+
             get("/{id}") {
                 val id = call.parameters["id"]?.toLongOrNull()
                     ?: throw BadRequestException("Invalid user ID")
                 val user = userService.getUser(id)
                 call.respond(user)
             }
-            
+
             post {
                 val user = call.receive<User>()
                 val createdUser = userService.createUser(user)

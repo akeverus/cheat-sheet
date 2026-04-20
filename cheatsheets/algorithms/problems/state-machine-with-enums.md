@@ -14,13 +14,11 @@ updated: "2026-02-11"
 
 A **guide** to **implementing finite state machines** in **Java using Enums**, **providing** a **clean and type-safe approach** to **state management**.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
-- [`Java Enums`](https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html)
-- [`State Design Pattern`](https://refactoring.guru/design-patterns/state)
+- [Java Enums](https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html)
+- [State Design Pattern](https://refactoring.guru/design-patterns/state)
 
 ### См. также
 - [[finite-automata-input-validation|Валидация конечным автоматом]]
@@ -92,21 +90,21 @@ public enum LeaveRequestState {
             return "Employee";
         }
     },
-    
+
     Escalated {
         @Override
         public String responsiblePerson() {
             return "Team Leader";
         }
     },
-    
+
     Approved {
         @Override
         public String responsiblePerson() {
             return "Department Manager";
         }
     };
-    
+
     public abstract String responsiblePerson();
 }
 ```
@@ -152,37 +150,37 @@ public enum LeaveRequestState {
         public LeaveRequestState nextState() {
             return Escalated;
         }
-        
+
         @Override
         public String responsiblePerson() {
             return "Employee";
         }
     },
-    
+
     Escalated {
         @Override
         public LeaveRequestState nextState() {
             return Approved;
         }
-        
+
         @Override
         public String responsiblePerson() {
             return "Team Leader";
         }
     },
-    
+
     Approved {
         @Override
         public LeaveRequestState nextState() {
             return this;  // Final state, no transition
         }
-        
+
         @Override
         public String responsiblePerson() {
             return "Department Manager";
         }
     };
-    
+
     public abstract LeaveRequestState nextState();
     public abstract String responsiblePerson();
 }
@@ -198,13 +196,13 @@ In **this example**, **the finite state machine transitions are implemented usin
 @Test
 public void testStateTransitions() {
     LeaveRequestState state = LeaveRequestState.Submitted;
-    
+
     state = state.nextState();
     assertEquals(LeaveRequestState.Escalated, state);
-    
+
     state = state.nextState();
     assertEquals(LeaveRequestState.Approved, state);
-    
+
     state = state.nextState();
     assertEquals(LeaveRequestState.Approved, state);  // Final state
 }
@@ -223,13 +221,13 @@ public class LeaveRequest {
     private LeaveRequestState state;
     private String employeeName;
     private int days;
-    
+
     public LeaveRequest(String employeeName, int days) {
         this.employeeName = employeeName;
         this.days = days;
         this.state = LeaveRequestState.Submitted;
     }
-    
+
     public void escalate() {
         if (state == LeaveRequestState.Submitted) {
             state = state.nextState();
@@ -238,7 +236,7 @@ public class LeaveRequest {
             System.out.println("Cannot escalate from state: " + state);
         }
     }
-    
+
     public void approve() {
         if (state == LeaveRequestState.Escalated) {
             state = state.nextState();
@@ -247,15 +245,15 @@ public class LeaveRequest {
             System.out.println("Cannot approve from state: " + state);
         }
     }
-    
+
     public LeaveRequestState getState() {
         return state;
     }
-    
+
     public String getResponsiblePerson() {
         return state.responsiblePerson();
     }
-    
+
     @Override
     public String toString() {
         return String.format("LeaveRequest[employee=%s, days=%d, state=%s, responsible=%s]",
@@ -271,13 +269,13 @@ public class LeaveRequestDemo {
     public static void main(String[] args) {
         LeaveRequest request = new LeaveRequest("John Doe", 5);
         System.out.println(request);
-        
+
         request.escalate();
         System.out.println(request);
-        
+
         request.approve();
         System.out.println(request);
-        
+
         // Try to escalate again (should fail)
         request.escalate();
     }
@@ -336,17 +334,17 @@ enum class LeaveRequestStateK {
         override fun nextState(): LeaveRequestStateK = Escalated
         override fun responsiblePerson(): String = "Employee"
     },
-    
+
     Escalated {
         override fun nextState(): LeaveRequestStateK = Approved
         override fun responsiblePerson(): String = "Team Leader"
     },
-    
+
     Approved {
         override fun nextState(): LeaveRequestStateK = this // Final state
         override fun responsiblePerson(): String = "Department Manager"
     };
-    
+
     abstract fun nextState(): LeaveRequestStateK
     abstract fun responsiblePerson(): String
 }
@@ -362,7 +360,7 @@ class LeaveRequestK(
     fun nextState() {
         state = state.nextState()
     }
-    
+
     fun getResponsiblePerson(): String {
         return state.responsiblePerson()
     }
@@ -374,14 +372,14 @@ class LeaveRequestK(
 ```kotlin
 fun main() {
     val request = LeaveRequestK(employeeName = "John Doe")
-    
+
     println("Initial state: ${request.state}")
     println("Responsible: ${request.getResponsiblePerson()}")
-    
+
     request.nextState()
     println("After escalation: ${request.state}")
     println("Responsible: ${request.getResponsiblePerson()}")
-    
+
     request.nextState()
     println("After approval: ${request.state}")
     println("Responsible: ${request.getResponsiblePerson()}")

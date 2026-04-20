@@ -46,7 +46,6 @@ updated: "2026-02-11"
 - [Итоговые таблицы](#итоговые-таблицы)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -54,7 +53,6 @@ updated: "2026-02-11"
 
 **Ключевые понятия:** **Middleware**, **Dependency Injection**, **Kestrel**, **DbContext**, **Razor**, **SignalR**, **LINQ**, **NuGet**, **MSBuild**, **dotnet CLI**.
 
----
 
 ## Платформа .NET
 
@@ -84,7 +82,6 @@ cd MyApi
 dotnet run
 ```
 
----
 
 ## ASP.NET Core
 
@@ -112,7 +109,6 @@ builder.Services.AddSwaggerGen();
 
 **Конфигурация:** из `appsettings.json`, переменных окружения, **User Secrets** (разработка). Доступ через `IConfiguration` и **Options** pattern (`IOptions<T>`).
 
----
 
 ## Entity Framework Core
 
@@ -133,7 +129,6 @@ dotnet ef database update
 
 **Запросы:** **LINQ** преобразуется в **SQL**; осторожно с **N+1** — использовать **Include** / **ThenInclude** или проекции.
 
----
 
 ## Blazor и MAUI
 
@@ -143,7 +138,6 @@ dotnet ef database update
 
 **Когда что выбирать:** **Blazor Server** — быстрый старт, меньше трафика; **Blazor WebAssembly** — офлайн, клиентская логика; **MAUI** — нативные приложения с общим кодом.
 
----
 
 ## CLI и инструменты
 
@@ -161,7 +155,6 @@ dotnet ef database update
 
 **NuGet:** восстановление пакетов при `dotnet restore` (или автоматически при `build`). Источники: nuget.org, приватные feed.
 
----
 
 ## Тестирование
 
@@ -177,7 +170,6 @@ public class UnitTest1
 
 **Moq**, **NSubstitute** — моки. **FluentAssertions** — читаемые утверждения. **Testcontainers** — интеграция с БД в контейнерах.
 
----
 
 ## Развёртывание и контейнеры
 
@@ -191,7 +183,6 @@ dotnet publish -c Release -o ./publish
 
 **Kubernetes**, **Azure App Service**, **AWS**, **Linux**-хосты — типичные цели развёртывания.
 
----
 
 ## Лучшие практики
 
@@ -201,7 +192,6 @@ dotnet publish -c Release -o ./publish
 - **Health checks**: `AddHealthChecks()`, **UI** или endpoint для оркестраторов.
 - Логирование: **ILogger**, структурированные логи; не логировать чувствительные данные.
 
----
 
 ## Решение проблем
 
@@ -212,7 +202,6 @@ dotnet publish -c Release -o ./publish
 | 404 на **API** | Маршрутизация, порядок **Middleware** | Проверить `MapControllers`, атрибуты маршрутов |
 | Высокое потребление памяти | Утечки, кэши без ограничений | Профилирование, ограничить размер кэшей |
 
----
 
 ## Частые вопросы
 
@@ -222,7 +211,6 @@ dotnet publish -c Release -o ./publish
 
 **Когда использовать Blazor Server, когда WebAssembly?** **Blazor Server** — меньше загрузка на клиент, быстрый старт; задержка и нагрузка на сервер. **WebAssembly** — работа офлайн, тяжёлая логика на клиенте; первая загрузка больше.
 
----
 
 ## Глоссарий
 
@@ -239,7 +227,6 @@ dotnet publish -c Release -o ./publish
 | **SignalR** | Библиотека для real-time веб-функций |
 | **MAUI** | .NET Multi-platform App UI — кроссплатформенный UI для мобильных и десктопов |
 
----
 
 ## Итоговые таблицы
 
@@ -251,7 +238,6 @@ dotnet publish -c Release -o ./publish
 | **MAUI** | Нативные приложения **iOS**/ **Android**/ **Windows**/ **macOS** |
 | **dotnet CLI** | Сборка, тесты, публикация, **EF** миграции |
 
----
 
 ## Заключение
 

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Sealed классы и интерфейсы в Kotlin
 
-Краткое руководство по **sealed** классам и **sealed** интерфейсам в **Kotlin** - ограниченные иерархии типов для типобезопасного кода.
+Краткое руководство по **sealed** классам и **sealed** интерфейсам в **Kotlin** — ограниченные иерархии типов для типобезопасного кода.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -99,12 +99,12 @@ sealed class NetworkState {
 
 class NetworkManager {
     private var state: NetworkState = NetworkState.Idle
-    
+
     fun setState(newState: NetworkState) {
         state = newState
         onStateChanged(state)
     }
-    
+
     private fun onStateChanged(state: NetworkState) {
         when (state) {
             is NetworkState.Idle -> println("Network idle")
@@ -135,7 +135,7 @@ class ActionHandler {
             is Action.ShowSnackbar -> showSnackbar(action.message, action.duration)
         }
     }
-    
+
     private fun navigateBack() { /* ... */ }
     private fun navigate(route: String, params: Map<String, String>) { /* ... */ }
     private fun showDialog(title: String, message: String) { /* ... */ }
@@ -155,13 +155,13 @@ class Parser {
     fun parseNumber(input: String): ParseResult<Int> {
         val trimmed = input.trim()
         val number = trimmed.toIntOrNull()
-        
+
         return when {
             number != null -> ParseResult.Success(number, "")
             else -> ParseResult.Failure("Invalid number", 0)
         }
     }
-    
+
     fun parseExpression(input: String): ParseResult<Expression> {
         // Реализация парсинга
         return ParseResult.Failure("Not implemented", 0)
@@ -246,7 +246,7 @@ fun authenticate(method: Authenticated) {
 
 ## **When** выражения и **exhaustiveness**
 
-Одна из главных особенностей **sealed** классов - проверка полноты **when**-выражений.
+Одна из главных особенностей **sealed** классов — проверка полноты **when**-выражений.
 
 ### **Exhaustive when**
 
@@ -323,11 +323,11 @@ sealed class State {
 
 class StateMachine {
     private var state: State = State.Initial
-    
+
     fun transition(newState: State) {
         val oldState = state
         state = newState
-        
+
         when (state) {
             is State.Initial -> onInitial()
             is State.Loading -> onLoading(state.progress)
@@ -335,7 +335,7 @@ class StateMachine {
             is State.Error -> onError(state.exception)
         }
     }
-    
+
     private fun onInitial() { /* ... */ }
     private fun onLoading(progress: Int) { /* ... */ }
     private fun onLoaded(data: Any) { /* ... */ }
@@ -357,7 +357,7 @@ sealed class Command {
 class CommandProcessor {
     private val history = mutableListOf<String>()
     private var position = -1
-    
+
     fun execute(command: Command) {
         when (command) {
             is Command.Undo -> undo()
@@ -367,24 +367,24 @@ class CommandProcessor {
             is Command.Update -> update(command.oldItem, command.newItem)
         }
     }
-    
+
     private fun undo() {
         if (position > 0) position--
     }
-    
+
     private fun redo() {
         if (position < history.size - 1) position++
     }
-    
+
     private fun add(item: String) {
         history.add(item)
         position = history.size - 1
     }
-    
+
     private fun remove(item: String) {
         history.remove(item)
     }
-    
+
     private fun update(oldItem: String, newItem: String) {
         val index = history.indexOf(oldItem)
         if (index >= 0) {
@@ -409,7 +409,7 @@ interface NodeVisitor<T> {
 
 class SizeVisitor : NodeVisitor<Long> {
     override fun visitFile(file: Node.File): Long = file.size
-    
+
     override fun visitDirectory(directory: Node.Directory): Long {
         return directory.children.sumOf { node ->
             when (node) {
@@ -445,7 +445,7 @@ class EventProcessor {
             is Event.PageView -> handlePageView(event.userId, event.page)
         }
     }
-    
+
     private fun handleLogin(userId: String, timestamp: Long) { /* ... */ }
     private fun handleLogout(userId: String, timestamp: Long) { /* ... */ }
     private fun handlePurchase(userId: String, productId: String, amount: Double) { /* ... */ }
@@ -459,7 +459,7 @@ class EventProcessor {
 sealed class Either<out L, out R> {
     data class Left<L>(val value: L) : Either<L, Nothing>()
     data class Right<R>(val value: R) : Either<Nothing, R>()
-    
+
     fun <T> fold(
         left: (L) -> T,
         right: (R) -> T
@@ -467,12 +467,12 @@ sealed class Either<out L, out R> {
         is Left -> left(value)
         is Right -> right(value)
     }
-    
+
     fun <T> map(f: (R) -> T): Either<L, T> = when (this) {
         is Left -> this
         is Right -> Right(f(value))
     }
-    
+
     fun <T> flatMap(f: (R) -> Either<L, T>): Either<L, T> = when (this) {
         is Left -> this
         is Right -> f(value)
@@ -526,22 +526,22 @@ class ValidationException(val errors: List<String>) : Exception(errors.joinToStr
 sealed class Result<out T, out E> {
     data class Success<T>(val value: T) : Result<T, Nothing>()
     data class Failure<E>(val error: E) : Result<Nothing, E>()
-    
+
     fun <R> map(f: (T) -> R): Result<R, E> = when (this) {
         is Success -> Success(f(value))
         is Failure -> this
     }
-    
+
     fun <R> flatMap(f: (T) -> Result<R, E>): Result<R, E> = when (this) {
         is Success -> f(value)
         is Failure -> this
     }
-    
+
     fun getOrElse(default: () -> T): T = when (this) {
         is Success -> value
         is Failure -> default()
     }
-    
+
     fun getOrNull(): T? = when (this) {
         is Success -> value
         is Failure -> null
@@ -577,7 +577,7 @@ sealed class Response {
     // ✅ Хорошо - object для singleton
     object Loading : Response()
     object Empty : Response()
-    
+
     // ✅ Хорошо - data class для случаев с данными
     data class Success(val data: String) : Response()
     data class Error(val message: String) : Response()
@@ -606,7 +606,7 @@ enum class Priority {
 sealed class Result<out T> {
     data class Success<T>(val value: T) : Result<T>()
     data class Failure(val error: Throwable) : Result<Nothing>()
-    
+
     fun <R> map(transform: (T) -> R): Result<R> = when (this) {
         is Success -> Success(transform(value))
         is Failure -> this
@@ -633,7 +633,7 @@ class ExpressionEvaluator(private val variables: Map<String, Int>) {
         is Expr.Multiply -> evaluate(expr.left) * evaluate(expr.right)
         is Expr.FunctionCall -> evaluateFunction(expr.name, expr.args)
     }
-    
+
     private fun evaluateFunction(name: String, args: List<Expr>): Int {
         val evaluatedArgs = args.map { evaluate(it) }
         return when (name) {
@@ -671,7 +671,7 @@ class HttpClient {
             is HttpRequest.Delete -> handleDelete(request)
         }
     }
-    
+
     private fun handleGet(request: HttpRequest.Get): HttpResponse { /* ... */ }
     private fun handlePost(request: HttpRequest.Post): HttpResponse { /* ... */ }
     private fun handlePut(request: HttpRequest.Put): HttpResponse { /* ... */ }
@@ -698,18 +698,18 @@ sealed class ValidationError {
 class FormValidator {
     fun validateForm(form: Map<String, String>): ValidationResult {
         val errors = mutableListOf<ValidationError>()
-        
+
         if (form["name"].isNullOrBlank()) {
             errors.add(ValidationError.Required("name"))
         }
-        
+
         val email = form["email"] ?: ""
         if (email.isBlank()) {
             errors.add(ValidationError.Required("email"))
         } else if (!email.contains("@")) {
             errors.add(ValidationError.Pattern("email", "Invalid email format"))
         }
-        
+
         return if (errors.isEmpty()) {
             ValidationResult.Valid
         } else {
@@ -730,7 +730,7 @@ class FormValidator {
 
 ## Заключение
 
-**Sealed** классы и интерфейсы - это инструмент **Kotlin** для создания типобезопасных ограниченных иерархий типов. Они обеспечивают **compile-time** проверку полноты **when**-выражений, что помогает избежать ошибок и делает код более надежным.
+**Sealed** классы и интерфейсы — это инструмент **Kotlin** для создания типобезопасных ограниченных иерархий типов. Они обеспечивают **compile-time** проверку полноты **when**-выражений, что помогает избежать ошибок и делает код более надежным.
 
 Использование **sealed** классов для состояний, результатов операций, команд, событий, **AST**, **HTTP** запросов, валидации и других паттернов позволяет создавать выразительный, безопасный и легко расширяемый код.
 
@@ -739,3 +739,10 @@ class FormValidator {
 - [Kotlin Sealed Classes Documentation](https://kotlinlang.org/docs/sealed-classes.html)
 - [Kotlin Sealed Interfaces](https://kotlinlang.org/docs/sealed-classes.html)
 
+## См. также
+
+- [[kotlin-another|Kotlin Another]]
+- [[kotlin-basics|Основы Kotlin — Полное руководство]]
+- [[kotlin-collections-grouping|Kotlin Collections: Grouping and Aggregation]]
+- [[kotlin-collections-list|Kotlin Collections: List]]
+- [[kotlin-collections-map|Kotlin Collections: Map]]

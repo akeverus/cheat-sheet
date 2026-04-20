@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-basics.md", "quarkus-testing.md"]
 ---
 
-# Quarkus: Dev Services - Автоматические сервисы для разработки
-
-
+# Quarkus: Dev Services — Автоматические сервисы для разработки
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-basics.md", "quarkus-testing.md"]
 
 ## Содержание
 
-- [Quarkus: Dev Services - Автоматические сервисы для разработки](#quarkus-dev-services-автоматические-сервисы-для-разработки)
+- [Quarkus: Dev Services — Автоматические сервисы для разработки](#quarkus-dev-services-автоматические-сервисы-для-разработки)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Database Dev Services](#database-dev-services)
@@ -286,3 +284,11 @@ quarkus.datasource.devservices.healthcheck.timeout=5s
 
 - [**Quarkus** Dev **Services** Guide](https://quarkus.io/guides/dev-services)
 - [Docker Documentation](https://docs.docker.com/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

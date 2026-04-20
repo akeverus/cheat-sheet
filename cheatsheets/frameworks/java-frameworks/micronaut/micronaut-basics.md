@@ -102,7 +102,7 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 
 ## Введение в **Micronaut**
 
-**Micronaut** - это современный **JVM** фреймворк для создания модульных, легко тестируемых микросервисов. **Micronaut** использует **compile-time dependency injection** и **AOP**, что обеспечивает высокую производительность и минимальное потребление ресурсов.
+**Micronaut** — это современный **JVM** фреймворк для создания модульных, легко тестируемых микросервисов. **Micronaut** использует **compile-time dependency injection** и **AOP**, что обеспечивает высокую производительность и минимальное потребление ресурсов.
 
 ### Основные особенности
 
@@ -2036,35 +2036,35 @@ spec:
 
 ### Application Structure
 
-1. **Use `compile-time` DI** - **Micronaut resolves dependencies** at **compile time**
-2. **Prefer constructor injection** - It's **more testable and reliable**
-3. **Use reactive types** - **For better resource utilization**
-4. **Implement health checks** - **For monitoring application state**
-5. **Use configuration properties** - **For externalized configuration**
+1. **Use `compile-time` DI** — **Micronaut resolves dependencies** at **compile time**
+2. **Prefer constructor injection** — It's **more testable and reliable**
+3. **Use reactive types** — **For better resource utilization**
+4. **Implement health checks** — **For monitoring application state**
+5. **Use configuration properties** — **For externalized configuration**
 
 ### Performance
 
-1. **Build native images** - **For fastest startup and minimal memory usage**
-2. **Use reactive programming** - **For handling concurrent requests efficiently**
-3. **Implement caching** - **Use Micronaut**'s **caching annotations**
-4. **Monitor metrics** - **Use Micrometer for application metrics**
-5. **Optimize data access** - **Use Micronaut Data repositories effectively**
+1. **Build native images** — **For fastest startup and minimal memory usage**
+2. **Use reactive programming** — **For handling concurrent requests efficiently**
+3. **Implement caching** — **Use Micronaut**'s **caching annotations**
+4. **Monitor metrics** — **Use Micrometer for application metrics**
+5. **Optimize data access** — **Use Micronaut Data repositories effectively**
 
 ### Security
 
 1. **Use JWT tokens** — **For stateless authentication**
-2. **Implement proper authorization** - **Use role-based access control**
-3. **Validate input** - **Use Bean Validation annotations**
+2. **Implement proper authorization** — **Use role-based access control**
+3. **Validate input** — **Use Bean Validation annotations**
 4. **Use HTTPS** — **Always** in **production environments**
-5. **Implement rate limiting** - To **prevent abuse**
+5. **Implement rate limiting** — To **prevent abuse**
 
 ### Development
 
-1. **Use Dev Mode** - **For hot reloading during development**
-2. **Write tests** - **Unit and integration tests**
-3. **Use logging** - **Proper logging configuration**
-4. **Document APIs** - **Use OpenAPI**/**Swagger**
-5. **Follow conventions** - **Micronaut coding conventions**
+1. **Use Dev Mode** — **For hot reloading during development**
+2. **Write tests** — **Unit and integration tests**
+3. **Use logging** — **Proper logging configuration**
+4. **Document APIs** — **Use OpenAPI**/**Swagger**
+5. **Follow conventions** — **Micronaut coding conventions**
 
 ## Migration from Spring Boot
 
@@ -2152,3 +2152,11 @@ spec:
 | Медленный старт | Инициализация при старте | Использовать ленивую загрузку, проверить `@Context` |
 | Ошибки подключения | Неверная конфигурация `datasource` | Проверить `application.yml`, Dev Services |
 | 404 на endpoints | Неверный путь, отсутствует `@Controller` | Проверить `@Controller("/path")`, логирование |
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]
+- [[micronaut-core|Micronaut: Core — Dependency Injection и Bean Management]]

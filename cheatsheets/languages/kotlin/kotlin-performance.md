@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Performance](https://kotlinlang.org/docs/performance.html)
 - [Kotlin Inline Functions](https://kotlinlang.org/docs/inline-functions.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Performance Tips](https://kotlinlang.org/docs/performance.html)
 
 ### См. также
@@ -554,7 +554,7 @@ class MyActivity : Activity() {
 // Хорошо - используйте weak reference или очищайте listener
 class MyActivity : Activity() {
     private var listener: OnClickListener? = null
-    
+
     override fun onDestroy() {
         listener = null
         super.onDestroy()
@@ -610,7 +610,7 @@ fun getPropertyValue(obj: Any, name: String): Any? {
 }
 ```
 
-Рефлексия - это дорогая операция, поэтому кэширование результатов значительно улучшает производительность при повторных вызовах.
+Рефлексия — это дорогая операция, поэтому кэширование результатов значительно улучшает производительность при повторных вызовах.
 
 ### Бенчмаркинг и измерения
 
@@ -632,7 +632,7 @@ class MyBenchmark {
             .map { it * 2 }
             .toList()
     }
-    
+
     @Benchmark
     fun measureList() {
         (1..1000)
@@ -714,7 +714,7 @@ class PerformanceMonitor {
             recordMetric(operation, duration)
         }
     }
-    
+
     private fun recordMetric(operation: String, duration: Long) {
         // Отправка метрик в систему мониторинга
         metricsCollector.record(operation, duration)
@@ -744,7 +744,7 @@ class PerformanceAnalyzer {
             block()
             samples.add(System.nanoTime() - start)
         }
-        
+
         return PerformanceReport(
             min = samples.minOrNull() ?: 0,
             max = samples.maxOrNull() ?: 0,
@@ -779,7 +779,7 @@ object MySingleton {
 // Избегание создания лишних объектов
 class OptimizedProcessor {
     private val buffer = StringBuilder()  // Переиспользование
-    
+
     fun process(data: List<String>): String {
         buffer.clear()
         data.forEach { buffer.append(it) }
@@ -790,11 +790,11 @@ class OptimizedProcessor {
 // Использование пулов объектов
 class ObjectPool<T>(private val factory: () -> T, private val maxSize: Int = 10) {
     private val pool = mutableListOf<T>()
-    
+
     fun acquire(): T {
         return pool.removeLastOrNull() ?: factory()
     }
-    
+
     fun release(obj: T) {
         if (pool.size < maxSize) {
             pool.add(obj)
@@ -823,7 +823,7 @@ val list = ArrayList<Int>(10000)  // Избегает перераспредел
 // Кэширование результатов
 class CachedOperation<T, R>(private val operation: (T) -> R) {
     private val cache = mutableMapOf<T, R>()
-    
+
     fun execute(input: T): R {
         return cache.getOrPut(input) { operation(input) }
     }
@@ -844,13 +844,13 @@ class PerformanceProfiler {
     fun profileOperation(operationName: String, block: () -> Unit) {
         val startTime = System.nanoTime()
         val startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-        
+
         block()
-        
+
         val duration = System.nanoTime() - startTime
         val endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
         val memoryUsed = endMemory - startMemory
-        
+
         println("Operation: $operationName")
         println("Duration: ${duration / 1_000_000}ms")
         println("Memory used: ${memoryUsed / 1_024 / 1_024}MB")
@@ -877,7 +877,7 @@ class HeapAnalyzer {
         val freeMemory = runtime.freeMemory()
         val usedMemory = totalMemory - freeMemory
         val maxMemory = runtime.maxMemory()
-        
+
         println("Heap Analysis:")
         println("Total: ${totalMemory / 1_024 / 1_024}MB")
         println("Used: ${usedMemory / 1_024 / 1_024}MB")
@@ -902,13 +902,13 @@ class CoroutineProfiler {
     suspend fun profileCoroutine(name: String, block: suspend () -> Unit) {
         val startTime = System.nanoTime()
         val startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
-        
+
         block()
-        
+
         val duration = System.nanoTime() - startTime
         val endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
         val memoryUsed = endMemory - startMemory
-        
+
         println("Coroutine: $name")
         println("Duration: ${duration / 1_000_000}ms")
         println("Memory used: ${memoryUsed / 1_024 / 1_024}MB")
@@ -924,13 +924,13 @@ profiler.profileCoroutine("processData") {
 // Анализ параллельной производительности
 suspend fun analyzeParallelPerformance() = coroutineScope {
     val startTime = System.nanoTime()
-    
+
     val results = listOf(
         async { task1() },
         async { task2() },
         async { task3() }
     ).awaitAll()
-    
+
     val duration = System.nanoTime() - startTime
     println("Parallel execution time: ${duration / 1_000_000}ms")
     println("Average time per task: ${duration / 3 / 1_000_000}ms")
@@ -939,19 +939,19 @@ suspend fun analyzeParallelPerformance() = coroutineScope {
 // Сравнение последовательного и параллельного выполнения
 suspend fun compareExecutionModes() {
     val data = (1..1000).toList()
-    
+
     // Последовательное выполнение
     val sequentialStart = System.nanoTime()
     data.forEach { processItem(it) }
     val sequentialDuration = System.nanoTime() - sequentialStart
-    
+
     // Параллельное выполнение
     val parallelStart = System.nanoTime()
     coroutineScope {
         data.map { async { processItem(it) } }.awaitAll()
     }
     val parallelDuration = System.nanoTime() - parallelStart
-    
+
     println("Sequential: ${sequentialDuration / 1_000_000}ms")
     println("Parallel: ${parallelDuration / 1_000_000}ms")
     println("Speedup: ${sequentialDuration.toDouble() / parallelDuration}")
@@ -976,19 +976,19 @@ import org.openjdk.jmh.annotations.*
 @Measurement(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 class CollectionBenchmark {
-    
+
     private val list = (1..1000).toList()
-    
+
     @Benchmark
     fun listFilterMap(): List<Int> {
         return list.filter { it % 2 == 0 }.map { it * 2 }
     }
-    
+
     @Benchmark
     fun sequenceFilterMap(): List<Int> {
         return list.asSequence().filter { it % 2 == 0 }.map { it * 2 }.toList()
     }
-    
+
     @Benchmark
     fun parallelStreamFilterMap(): List<Int> {
         return list.parallelStream()
@@ -1016,13 +1016,13 @@ class CollectionBenchmark {
 class CustomBenchmark {
     fun <T> benchmark(name: String, iterations: Int = 1000, block: () -> T): BenchmarkResult {
         val times = mutableListOf<Long>()
-        
+
         repeat(iterations) {
             val startTime = System.nanoTime()
             block()
             times.add(System.nanoTime() - startTime)
         }
-        
+
         return BenchmarkResult(
             name = name,
             iterations = iterations,
@@ -1085,7 +1085,7 @@ object MySingleton {
 // Избегание создания лишних объектов
 class OptimizedProcessor {
     private val buffer = StringBuilder()  // Переиспользование
-    
+
     fun process(data: List<String>): String {
         buffer.clear()
         data.forEach { buffer.append(it) }
@@ -1096,11 +1096,11 @@ class OptimizedProcessor {
 // Использование пулов объектов
 class ObjectPool<T>(private val factory: () -> T, private val maxSize: Int = 10) {
     private val pool = mutableListOf<T>()
-    
+
     fun acquire(): T {
         return pool.removeLastOrNull() ?: factory()
     }
-    
+
     fun release(obj: T) {
         if (pool.size < maxSize) {
             pool.add(obj)
@@ -1114,7 +1114,7 @@ fun processArray(array: IntArray) {
     for (i in array.indices) {
         array[i] = array[i] * 2
     }
-    
+
     // Или использование forEachIndexed
     array.forEachIndexed { index, value ->
         array[index] = value * 2
@@ -1136,7 +1136,7 @@ kotlin {
         // Включение оптимизаций
         freeCompilerArgs.add("-Xopt-in=kotlin.RequiresOptIn")
         freeCompilerArgs.add("-Xbackend-threads=0")  // Использовать все ядра
-        
+
         // Оптимизация производительности
         freeCompilerArgs.add("-Xjvm-default=all")
         freeCompilerArgs.add("-Xno-param-assertions")
@@ -1171,14 +1171,14 @@ tasks.withType<KotlinCompile> {
 class ConnectionPool(private val maxSize: Int = 10) {
     private val pool = mutableListOf<Connection>()
     private val semaphore = Semaphore(maxSize)
-    
+
     suspend fun acquire(): Connection {
         semaphore.acquire()
         return synchronized(pool) {
             pool.removeLastOrNull() ?: createConnection()
         }
     }
-    
+
     fun release(connection: Connection) {
         synchronized(pool) {
             if (pool.size < maxSize) {
@@ -1314,11 +1314,11 @@ suspend fun processListParallel(list: List<Int>): List<Int> = coroutineScope {
 // Использование object pooling для часто создаваемых объектов
 class ObjectPool<T>(private val factory: () -> T, private val maxSize: Int = 10) {
     private val pool = ConcurrentLinkedQueue<T>()
-    
+
     fun acquire(): T {
         return pool.poll() ?: factory()
     }
-    
+
     fun release(obj: T) {
         if (pool.size < maxSize) {
             pool.offer(obj)
@@ -1414,7 +1414,7 @@ class ExpensiveResource {
         // Дорогая операция выполняется только при первом обращении
         computeExpensiveData()
     }
-    
+
     private fun computeExpensiveData(): String {
         // Долгая операция
         return "computed data"
@@ -1428,7 +1428,7 @@ class DataProcessor {
             .map { processItem(it) }
             .filter { it.isNotEmpty() }
     }
-    
+
     fun getData(): List<String> = processedData
 }
 ```
@@ -1438,12 +1438,12 @@ class DataProcessor {
 ```kotlin
 class CacheManager {
     private val cache = ConcurrentHashMap<String, Any>()
-    
+
     fun <T> getOrCompute(key: String, compute: () -> T): T {
         @Suppress("UNCHECKED_CAST")
         return cache.getOrPut(key) { compute() } as T
     }
-    
+
     fun clear() {
         cache.clear()
     }
@@ -1479,7 +1479,7 @@ class UserRepository {
     private val insertStatement = database.prepareStatement(
         "INSERT INTO users (username, email) VALUES (?, ?)"
     )
-    
+
     fun insertUser(user: User) {
         insertStatement.setString(1, user.username)
         insertStatement.setString(2, user.email)

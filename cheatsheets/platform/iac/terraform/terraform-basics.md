@@ -23,3 +23,7 @@ updated: "2026-02-11"
 [Terraform](terraform.md)
 [Terraform Advanced](terraform-advanced.md)
 
+## См. также
+
+- [[terraform-advanced|Terraform Advanced]]
+- [[terraform|Terraform]]

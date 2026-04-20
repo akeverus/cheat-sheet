@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Cache: Полное руководство по кешированию
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -105,7 +103,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 @Configuration
 @EnableCaching
 public class CacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager() {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
@@ -147,7 +145,7 @@ public class UserService {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @Cacheable(value = "users", key = "#id")
     public User getUser(Long id) {
         return userRepository.findById(id)
@@ -168,14 +166,14 @@ public class UserService {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @Cacheable(value = "users", unless = "#result == null")
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
-    
-    @Cacheable(value = "users", 
-               condition = "#id > 10", 
+
+    @Cacheable(value = "users",
+               condition = "#id > 10",
                unless = "#result.age < 18")
     public User findById(Long id) {
         return userRepository.findById(id)
@@ -195,18 +193,18 @@ public class UserService {
     public User save(User user) {
         return userRepository.save(user);
     }
-    
+
     @Cacheable(value = "users", key = "#p0")
     public User findById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @Cacheable(value = "users", key = "#id + '_' + #name")
     public User findByIdAndName(Long id, String name) {
         return userRepository.findByIdAndName(id, name);
     }
-    
+
     @Cacheable(value = "users", key = "T(String).valueOf(#id).concat('-').concat(#name)")
     public User findByIdAndNameComplex(Long id, String name) {
         return userRepository.findByIdAndName(id, name);
@@ -225,7 +223,7 @@ public class UserService {
     public List<User> findAll() {
         return userRepository.findAll();
     }
-    
+
     @Cacheable(value = "users", key = "#page + '_' + #size")
     public List<User> findAll(int page, int size) {
         return userRepository.findAll(PageRequest.of(page, size));
@@ -248,7 +246,7 @@ public class UserService {
     public void deleteById(Long id) {
         userRepository.deleteById(id);
     }
-    
+
     @CacheEvict(value = "users", allEntries = true)
     public void deleteAll() {
         userRepository.deleteAll();
@@ -261,13 +259,13 @@ public class UserService {
 ```java
 @Service
 public class UserService {
-    
+
     // Удаление происходит после выполнения метода
     @CacheEvict(value = "users", key = "#id")
     public void deleteById(Long id) {
         userRepository.deleteById(id);
     }
-    
+
     // Удаление происходит до выполнения метода
     @CacheEvict(value = "users", key = "#id", beforeInvocation = true)
     public void deleteByIdBefore(Long id) {
@@ -283,12 +281,12 @@ public class UserService {
 ```java
 @Service
 public class UserService {
-    
+
     @CachePut(value = "users", key = "#user.id")
     public User update(User user) {
         return userRepository.save(user);
     }
-    
+
     @CachePut(value = "users", key = "#result.id")
     public User create(User user) {
         return userRepository.save(user);
@@ -303,7 +301,7 @@ public class UserService {
 ```java
 @Service
 public class UserService {
-    
+
     @Caching(
         cacheable = {
             @Cacheable(value = "users", key = "#id")
@@ -316,7 +314,7 @@ public class UserService {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @Caching(
         put = {
             @CachePut(value = "users", key = "#user.id"),
@@ -347,7 +345,7 @@ public class UserService {
 @Configuration
 @EnableCaching
 public class RedisCacheConfig {
-    
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -355,7 +353,7 @@ public class RedisCacheConfig {
         config.setPort(6379);
         return new LettuceConnectionFactory(config);
     }
-    
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
@@ -365,10 +363,10 @@ public class RedisCacheConfig {
             .serializeValuesWith(RedisSerializationContext.SerializationPair
                 .fromSerializer(new GenericJackson2JsonRedisSerializer()))
             .disableCachingNullValues();
-        
+
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(config)
-            .withCacheConfiguration("users", 
+            .withCacheConfiguration("users",
                 config.entryTtl(Duration.ofMinutes(30)))
             .withCacheConfiguration("products",
                 config.entryTtl(Duration.ofHours(2)))
@@ -383,13 +381,13 @@ public class RedisCacheConfig {
 ```java
 @Service
 public class UserService {
-    
+
     @Cacheable(value = "users", key = "#id")
     public User findById(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @CacheEvict(value = "users", key = "#id")
     public void deleteById(Long id) {
         userRepository.deleteById(id);
@@ -434,7 +432,7 @@ spring.cache.redis.use-key-prefix=true
 ```xml
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="ehcache.xsd">
-    
+
     <cache alias="users">
         <key-type>java.lang.Long</key-type>
         <value-type>com.example.User</value-type>
@@ -446,7 +444,7 @@ spring.cache.redis.use-key-prefix=true
             <offheap unit="MB">10</offheap>
         </resources>
     </cache>
-    
+
     <cache alias="products">
         <key-type>java.lang.Long</key-type>
         <value-type>com.example.Product</value-type>
@@ -465,12 +463,12 @@ spring.cache.redis.use-key-prefix=true
 @Configuration
 @EnableCaching
 public class EhCacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager() {
         return new EhCacheCacheManager(ehCacheManager());
     }
-    
+
     @Bean
     public EhCacheManagerFactoryBean ehCacheManager() {
         EhCacheManagerFactoryBean factory = new EhCacheManagerFactoryBean();
@@ -496,7 +494,7 @@ public class EhCacheConfig {
 @Configuration
 @EnableCaching
 public class CaffeineCacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager() {
         CaffeineCache usersCache = new CaffeineCache("users",
@@ -505,14 +503,14 @@ public class CaffeineCacheConfig {
                 .expireAfterWrite(30, TimeUnit.MINUTES)
                 .recordStats()
                 .build());
-        
+
         CaffeineCache productsCache = new CaffeineCache("products",
             Caffeine.newBuilder()
                 .maximumSize(5000)
                 .expireAfterWrite(2, TimeUnit.HOURS)
                 .recordStats()
                 .build());
-        
+
         SimpleCacheManager cacheManager = new SimpleCacheManager();
         cacheManager.setCaches(Arrays.asList(usersCache, productsCache));
         return cacheManager;
@@ -525,31 +523,31 @@ public class CaffeineCacheConfig {
 ```java
 @Service
 public class CacheService {
-    
+
     @Autowired
     private CacheManager cacheManager;
-    
+
     public void evictUserCache(Long userId) {
         Cache cache = cacheManager.getCache("users");
         if (cache != null) {
             cache.evict(userId);
         }
     }
-    
+
     public void evictAllUsers() {
         Cache cache = cacheManager.getCache("users");
         if (cache != null) {
             cache.clear();
         }
     }
-    
+
     public void putUserInCache(User user) {
         Cache cache = cacheManager.getCache("users");
         if (cache != null) {
             cache.put(user.getId(), user);
         }
     }
-    
+
     public User getUserFromCache(Long userId) {
         Cache cache = cacheManager.getCache("users");
         if (cache != null) {
@@ -594,7 +592,7 @@ public class CacheService {
 
 ```java
 // ✅ Хорошо
-@Cacheable(value = "users", 
+@Cacheable(value = "users",
            condition = "#id > 0",
            unless = "#result == null")
 public User findById(Long id) {
@@ -630,3 +628,11 @@ Caffeine.newBuilder()
 - [**Spring Cache** Documentation](https://docs.spring.io/spring-framework/reference/integration/cache.html)
 - [**Spring Boot** Cache](https://docs.spring.io/spring-boot/docs/current/reference/html/io.html#io.caching)
 - [Baeldung **Spring** Cache](https://www.baeldung.com/spring-cache-tutorial)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

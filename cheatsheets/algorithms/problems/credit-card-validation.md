@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Определение типа карты по префиксу (регулярные выражения) и проверка номера алгоритмом Луна (Luhn) в Java.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -65,14 +63,14 @@ updated: "2026-02-11"
 
 **The Major Industry Identifier** is **the first digit** of **the card number**. We **can look** at **the first digit** of **the card number** to **determine the industry** to **which the card belongs**:**
 
-1. **1, 2** - **Airlines** (**among others**)
-2. **3** - **Travel and entertainment**
-3. **4, 5** - **Banking**
-4. **6** - **Retail and banking**
-5. **7** - **Fuel industry**
-6. **8** - **Healthcare and telecommunications**
-7. **9** - **National authorities**
-8. **0** - **Other**, **reserved for future use**
+1. **1, 2** — **Airlines** (**among others**)
+2. **3** — **Travel and entertainment**
+3. **4, 5** — **Banking**
+4. **6** — **Retail and banking**
+5. **7** — **Fuel industry**
+6. **8** — **Healthcare and telecommunications**
+7. **9** — **National authorities**
+8. **0** — **Other**, **reserved for future use**
 
 ## Issuer Identification Number (IIN)
 
@@ -149,11 +147,11 @@ We'll **need** to **take the full credit card number**, **including the IIN**.
 ```java
 for (int i = cardNumber.length() - 1; i >= 0; i--) {
     int digit = Integer.parseInt(cardNumber.substring(i, i + 1));
-    
+
     if ((cardNumber.length() - i) % 2 == 0) {
         digit = doubleAndSumDigits(digit);
     }
-    
+
     sum += digit;
 }
 ```
@@ -162,16 +160,16 @@ for (int i = cardNumber.length() - 1; i >= 0; i--) {
 
 ## Example Validation
 
-**Let**'s **see how this works** on a **short example** `of 4` **digits** (**instead of the `usual 16` digits**) - **let**'s **check** if **the number** `8642` **would** be a **valid card number**.
+**Let**'s **see how this works** on a **short example** `of 4` **digits** (**instead of the `usual 16` digits**) — **let**'s **check** if **the number** `8642` **would** be a **valid card number**.
 
 **Starting from the rightmost digit**, we'll **double every second digit**:**
 
-1. **For** 2 (**first digit from right**) - no **changes**.
+1. **For** 2 (**first digit from right**) — no **changes**.
 2. **Then** we **double the second digit**, 4, to **get** 8.
-3. **After that**, **the third digit**, 6 - no **changes**.
+3. **After that**, **the third digit**, 6 — no **changes**.
 4. **Finally**, we **double the fourth digit** 8 to **get** 16.
 
-If **doubling** a **digit results** in a **two-digit number**, **then** we **need** to do an **additional step** to **get back** to a **single digit** - we're **going** to **add those digits together** to **get** a **single-digit number**, so **for** 16, **this would** `be 1`+6=7.
+If **doubling** a **digit results** in a **two-digit number**, **then** we **need** to do an **additional step** to **get back** to a **single digit** — we're **going** to **add those digits together** to **get** a **single-digit number**, so **for** 16, **this would** `be 1`+6=7.
 
 **This step** is **equivalent** to **subtracting** 9, so we **can implement** it in **code** as **follows**:**
 
@@ -208,37 +206,37 @@ In **our example**, **the last digit** 2 **would** be **the check digit**. **For
 ```java
 // Валидатор номера карты: проверка по алгоритму Луна и определение типа эмитента
 public class CreditCardValidator {
-    
+
     public static boolean isValid(String cardNumber) {
         if (cardNumber == null || cardNumber.isEmpty()) {
             return false;
         }
-        
+
         // Remove spaces and non-digit characters
         cardNumber = cardNumber.replaceAll("[^0-9]", "");
-        
+
         if (cardNumber.length() < 13 || cardNumber.length() > 19) {
             return false;
         }
-        
+
         int sum = 0;
         boolean alternate = false;
-        
+
         // Process digits from right to left
         for (int i = cardNumber.length() - 1; i >= 0; i--) {
             int digit = Character.getNumericValue(cardNumber.charAt(i));
-            
+
             if (alternate) {
                 digit = doubleAndSumDigits(digit);
             }
-            
+
             sum += digit;
             alternate = !alternate;
         }
-        
+
         return sum % 10 == 0;
     }
-    
+
     private static int doubleAndSumDigits(int digit) {
         int doubled = digit * 2;
         if (doubled > 9) {
@@ -246,15 +244,15 @@ public class CreditCardValidator {
         }
         return doubled;
     }
-    
+
     public static String identifyCardType(String cardNumber) {
         if (cardNumber == null || cardNumber.isEmpty()) {
             return "Unknown";
         }
-        
+
         // Remove spaces and non-digit characters
         cardNumber = cardNumber.replaceAll("[^0-9]", "");
-        
+
         if (cardNumber.matches("^4[0-9]{12,15}$")) {
             return "Visa";
         } else if (cardNumber.matches("^3[47][0-9]{13}$")) {
@@ -264,7 +262,7 @@ public class CreditCardValidator {
         } else if (cardNumber.matches("^6(?:011|5[0-9]{2})[0-9]{12,15}$")) {
             return "Discover";
         }
-        
+
         return "Unknown";
     }
 }
@@ -280,45 +278,45 @@ object CreditCardValidatorK {
         if (cardNumber.isNullOrEmpty()) {
             return false
         }
-        
+
         // Remove spaces and non-digit characters
         val cleaned = cardNumber.replace(Regex("[^0-9]"), "")
-        
+
         if (cleaned.length < 13 || cleaned.length > 19) {
             return false
         }
-        
+
         var sum = 0
         var alternate = false
-        
+
         // Process digits from right to left
         for (i in cleaned.length - 1 downTo 0) {
             var digit = cleaned[i].digitToInt()
-            
+
             if (alternate) {
                 digit = doubleAndSumDigits(digit)
             }
-            
+
             sum += digit
             alternate = !alternate
         }
-        
+
         return sum % 10 == 0
     }
-    
+
     private fun doubleAndSumDigits(digit: Int): Int {
         val doubled = digit * 2
         return if (doubled > 9) doubled - 9 else doubled
     }
-    
+
     fun identifyCardType(cardNumber: String?): String {
         if (cardNumber.isNullOrEmpty()) {
             return "Unknown"
         }
-        
+
         // Remove spaces and non-digit characters
         val cleaned = cardNumber.replace(Regex("[^0-9]"), "")
-        
+
         return when {
             cleaned.matches(Regex("^4[0-9]{12,15}$")) -> "Visa"
             cleaned.matches(Regex("^3[47][0-9]{13}$")) -> "American Express"
@@ -335,14 +333,14 @@ object CreditCardValidatorK {
 ```kotlin
 fun main() {
     val cardNumber = "4532015112830366"
-    
+
     if (CreditCardValidatorK.isValid(cardNumber)) {
         println("Card number is valid")
         println("Card type: ${CreditCardValidatorK.identifyCardType(cardNumber)}")
     } else {
         println("Card number is invalid")
     }
-    
+
     // Example validation
     val testNumber = "8642"
     val isValid = CreditCardValidatorK.isValid(testNumber)

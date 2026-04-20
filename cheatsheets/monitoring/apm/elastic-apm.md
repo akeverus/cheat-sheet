@@ -41,7 +41,6 @@ APM на базе стека Elastic: метрики приложений, тр�
 - **APM Server** нормализует и пишет в Elasticsearch.
 - **Kibana** — дашборды APM: сервисы, транзакции, зависимости, ошибки, распределённые трейсы.
 
----
 
 ## Интеграция с Java
 
@@ -56,7 +55,6 @@ java -javaagent:/path/to/elastic-apm-agent.jar \
 
 Конфигурация через переменные окружения или `elastic-apm.properties`. Агент поддерживает сервлеты, Spring, JMS, JDBC, Redis и другие библиотеки.
 
----
 
 ## Метрики и дашборды в Kibana
 
@@ -66,13 +64,11 @@ java -javaagent:/path/to/elastic-apm-agent.jar \
 - **Distributed Tracing**: цепочка span'ов по запросу.
 - **Errors**: группировка исключений, stack traces.
 
----
 
 ## Ошибки и алертинг
 
 В Kibana можно создавать правила алертинга на основе APM-данных (пороги latency, error rate). Интеграция с Slack, email, webhook.
 
----
 
 ## Лучшие практики
 
@@ -81,7 +77,6 @@ java -javaagent:/path/to/elastic-apm-agent.jar \
 - Хранить секреты (API key для APM Server) в переменных окружения или vault.
 - Комбинировать APM с логами и метриками в одном стеке Elastic для полной картины.
 
----
 
 ## Решение проблем
 
@@ -102,5 +97,8 @@ Elastic APM поддерживает приём данных по протоко
 **Чем Elastic APM отличается от Datadog и New Relic?**
 Elastic APM — open-source решение, данные хранятся в вашем кластере Elasticsearch. Нет vendor lock-in и оплаты за объём данных, но требуется самостоятельное развёртывание и поддержка инфраструктуры.
 
----
 
+## См. также
+
+- [[datadog|Datadog APM]]
+- [[new-relic|New Relic APM]]

@@ -65,7 +65,7 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 
 ## Введение в **DSL**
 
-**DSL** (**Domain-`Specific` Language**) - это специализированный язык для решения задач в определенной области. **Scala** предоставляет мощные инструменты для создания внутренних **DSL**.
+**DSL** (**Domain-`Specific` Language**) — это специализированный язык для решения задач в определенной области. **Scala** предоставляет мощные инструменты для создания внутренних **DSL**.
 
 ### Основные техники
 
@@ -82,17 +82,17 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 class QueryBuilder {
   private var selectClause: Option[String] = None
   private var fromClause: Option[String] = None
-  
+
   def select(columns: String): QueryBuilder = {
     selectClause = Some(columns)
     this
   }
-  
+
   def from(table: String): QueryBuilder = {
     fromClause = Some(table)
     this
   }
-  
+
   def build(): String = {
     s"SELECT ${selectClause.getOrElse("*")} FROM ${fromClause.getOrElse("")}"
   }
@@ -135,7 +135,7 @@ case class Money(amount: Double, currency: String) {
     require(currency == other.currency, "Currencies must match")
     Money(amount + other.amount, currency)
   }
-  
+
   def *(factor: Double): Money = {
     Money(amount * factor, currency)
   }
@@ -155,16 +155,16 @@ val doubled = Money(100, "USD") * 2  // Money(200, "USD")
 ```scala
 class FluentBuilder {
   private var conditions: List[String] = Nil
-  
+
   def where(condition: String): FluentBuilder = {
     conditions = condition :: conditions
     this
   }
-  
+
   def and(condition: String): FluentBuilder = {
     where(condition)
   }
-  
+
   def build(): String = {
     if (conditions.isEmpty) ""
     else s"WHERE ${conditions.reverse.mkString(" AND ")}"
@@ -194,15 +194,15 @@ class QueryBuilder[S <: QueryState] private(val query: String) {
   def select(columns: String)(implicit ev: S =:= Empty): QueryBuilder[WithSelect] = {
     new QueryBuilder[WithSelect](s"SELECT $columns")
   }
-  
+
   def from(table: String)(implicit ev: S =:= WithSelect): QueryBuilder[WithFrom] = {
     new QueryBuilder[WithFrom](s"$query FROM $table")
   }
-  
+
   def where(condition: String)(implicit ev: S =:= WithFrom): QueryBuilder[WithWhere] = {
     new QueryBuilder[WithWhere](s"$query WHERE $condition")
   }
-  
+
   def build()(implicit ev: S =:= WithWhere): String = query
 }
 
@@ -242,11 +242,11 @@ class HtmlBuilder {
   def div(attributes: Map[String, String] = Map.empty)(children: HtmlElement*): HtmlTag = {
     HtmlTag("div", attributes, children.toList)
   }
-  
+
   def span(text: String): HtmlTag = {
     HtmlTag("span", children = List(HtmlText(text)))
   }
-  
+
   def p(text: String): HtmlTag = {
     HtmlTag("p", children = List(HtmlText(text)))
   }
@@ -267,13 +267,13 @@ page.render
 ```scala
 class TestScope {
   private var tests: List[Test] = Nil
-  
+
   case class Test(name: String, body: () => Unit)
-  
+
   def test(name: String)(body: => Unit): Unit = {
     tests = Test(name, () => body) :: tests
   }
-  
+
   def run(): Unit = {
     tests.reverse.foreach { test =>
       try {
@@ -297,7 +297,7 @@ test { t =>
   t.test("should add numbers") {
     assert(2 + 2 == 4)
   }
-  
+
   t.test("should multiply numbers") {
     assert(3 * 3 == 9)
   }
@@ -309,12 +309,12 @@ test { t =>
 ```scala
 class ConfigBuilder {
   private var config: Map[String, Any] = Map.empty
-  
+
   def set(key: String, value: Any): ConfigBuilder = {
     config = config + (key -> value)
     this
   }
-  
+
   def build(): Map[String, Any] = config
 }
 
@@ -324,7 +324,7 @@ implicit class ConfigOps(val builder: ConfigBuilder) extends AnyVal {
     block(dbConfig)
     builder.set("database", dbConfig.build())
   }
-  
+
   def server(block: ServerConfig => Unit): ConfigBuilder = {
     val serverConfig = new ServerConfig()
     block(serverConfig)
@@ -368,7 +368,7 @@ case class Vector2D(x: Double, y: Double) {
   def /(scalar: Double): Vector2D = Vector2D(x / scalar, y / scalar)
   def dot(other: Vector2D): Double = x * other.x + y * other.y
   def magnitude: Double = math.sqrt(x * x + y * y)
-  
+
   def unary_- : Vector2D = Vector2D(-x, -y)
   def unary_+ : Vector2D = this
 }
@@ -424,7 +424,7 @@ implicit def stringToInt(s: String): Int = s.toInt
 ```scala
 /
  * SQL Query Builder DSL
- * 
+ *
  * Использование:
  * {{{
  *   val query = QueryBuilder()
@@ -508,13 +508,13 @@ val config = """
 // Парсер для конфигурации
 class ConfigParser extends RegexParsers {
   def config: Parser[Config] = rep(section) ^^ Config
-  
-  def section: Parser[Section] = 
+
+  def section: Parser[Section] =
     identifier ~ "{" ~ rep(setting) ~ "}" ^^ {
       case name ~ _ ~ settings ~ _ => Section(name, settings)
     }
-  
-  def setting: Parser[Setting] = 
+
+  def setting: Parser[Setting] =
     identifier ~ "=" ~ value ^^ {
       case key ~ _ ~ value => Setting(key, value)
     }
@@ -562,17 +562,17 @@ import scala.util.parsing.combinator._
 // Парсер для конфигурационного DSL
 class ConfigParser extends RegexParsers {
   def config: Parser[Config] = rep(section) ^^ Config
-  
-  def section: Parser[Section] = 
+
+  def section: Parser[Section] =
     identifier ~ "{" ~ rep(setting) ~ "}" ^^ {
       case name ~ _ ~ settings ~ _ => Section(name, settings)
     }
-  
-  def setting: Parser[Setting] = 
+
+  def setting: Parser[Setting] =
     identifier ~ "=" ~ value ^^ {
       case key ~ _ ~ value => Setting(key, value)
     }
-  
+
   def identifier: Parser[String] = """[a-zA-Z_][a-zA-Z0-9_]*""".r
   def value: Parser[String] = """[^}]+""".r
 }
@@ -588,22 +588,22 @@ class QueryBuilder {
   private var selectClause: String = ""
   private var fromClause: String = ""
   private var whereClause: String = ""
-  
+
   def select(columns: String*): QueryBuilder = {
     selectClause = columns.mkString(", ")
     this
   }
-  
+
   def from(table: String): QueryBuilder = {
     fromClause = table
     this
   }
-  
+
   def where(condition: String): QueryBuilder = {
     whereClause = condition
     this
   }
-  
+
   def build(): String = {
     s"SELECT $selectClause FROM $fromClause WHERE $whereClause"
   }
@@ -623,17 +623,17 @@ val query = new QueryBuilder()
 case class QueryBuilder(table: String) {
   private var whereClauses: List[String] = Nil
   private var selectFields: List[String] = Nil
-  
+
   def select(fields: String*): QueryBuilder = {
     selectFields = fields.toList
     this
   }
-  
+
   def where(condition: String): QueryBuilder = {
     whereClauses = whereClauses :+ condition
     this
   }
-  
+
   def build: String = {
     val select = if (selectFields.isEmpty) "*" else selectFields.mkString(", ")
     val where = if (whereClauses.isEmpty) "" else s" WHERE ${whereClauses.mkString(" AND ")}"
@@ -694,13 +694,13 @@ println(html.render)
 ```scala
 class TestDSL {
   private var tests: List[Test] = Nil
-  
+
   case class Test(name: String, body: () => Unit)
-  
+
   def test(name: String)(body: => Unit): Unit = {
     tests = tests :+ Test(name, () => body)
   }
-  
+
   def run(): Unit = {
     tests.foreach { t =>
       try {
@@ -737,7 +737,7 @@ case class QueryBuilder(table: String, conditions: List[String] = Nil) {
   def where(condition: String): QueryBuilder = {
     copy(conditions = conditions :+ condition)
   }
-  
+
   def build: String = {
     val whereClause = if (conditions.nonEmpty) {
       s" WHERE ${conditions.mkString(" AND ")}"
@@ -766,7 +766,7 @@ object Html {
   def div(attributes: Map[String, String] = Map.empty)(children: HtmlNode*): HtmlNode = {
     HtmlElement("div", attributes, children.toList)
   }
-  
+
   def span(text: String): HtmlNode = HtmlText(text)
 }
 
@@ -784,22 +784,22 @@ class ConfigBuilder {
   private var host: Option[String] = None
   private var port: Option[Int] = None
   private var timeout: Option[Int] = None
-  
+
   def withHost(host: String): ConfigBuilder = {
     this.host = Some(host)
     this
   }
-  
+
   def withPort(port: Int): ConfigBuilder = {
     this.port = Some(port)
     this
   }
-  
+
   def withTimeout(timeout: Int): ConfigBuilder = {
     this.timeout = Some(timeout)
     this
   }
-  
+
   def build: Config = {
     Config(
       host.getOrElse("localhost"),
@@ -832,14 +832,14 @@ object SimpleParser extends JavaTokenParsers {
       case (x, "-" ~ y) => x - y
     }
   }
-  
+
   def term: Parser[Int] = factor ~ rep("*" ~ factor | "/" ~ factor) ^^ {
     case number ~ list => list.foldLeft(number) {
       case (x, "*" ~ y) => x * y
       case (x, "/" ~ y) => x / y
     }
   }
-  
+
   def factor: Parser[Int] = wholeNumber ^^ (_.toInt) | "(" ~ expr ~ ")" ^^ {
     case _ ~ e ~ _ => e
   }

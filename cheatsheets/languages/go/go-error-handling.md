@@ -70,10 +70,10 @@ Go использует явную обработку ошибок через в
 
 ### Принципы обработки ошибок в Go
 
-1. **Явная обработка** - ошибки возвращаются как значения
-2. **Проверка ошибок** - всегда проверяйте возвращаемые ошибки
-3. **Контекст ошибок** - добавляйте контекст к ошибкам
-4. **Типизация ошибок** - используйте типизированные ошибки для проверки
+1. **Явная обработка** — ошибки возвращаются как значения
+2. **Проверка ошибок** — всегда проверяйте возвращаемые ошибки
+3. **Контекст ошибок** — добавляйте контекст к ошибкам
+4. **Типизация ошибок** — используйте типизированные ошибки для проверки
 
 ## **Error Interface**
 
@@ -187,7 +187,7 @@ import "errors"
 func checkCustomError(err error) {
     var validationErr *ValidationError
     if errors.As(err, &validationErr) {
-        fmt.Printf("Field: %s, Message: %s\n", 
+        fmt.Printf("Field: %s, Message: %s\n",
             validationErr.Field, validationErr.Message)
     }
 }
@@ -267,14 +267,14 @@ func makeRequest(url string) error {
         }
     }
     defer resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusOK {
         return &APIError{
             Code:    resp.StatusCode,
             Message: "unexpected status code",
         }
     }
-    
+
     return nil
 }
 ```
@@ -288,7 +288,7 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "invalid user ID", http.StatusBadRequest)
         return
     }
-    
+
     user, err := getUser(id)
     if err != nil {
         if errors.Is(err, ErrNotFound) {
@@ -298,7 +298,7 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "internal server error", http.StatusInternalServerError)
         return
     }
-    
+
     json.NewEncoder(w).Encode(user)
 }
 ```
@@ -308,25 +308,25 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
 ```go
 func createUser(db *sql.DB, user User) error {
     query := "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id"
-    
+
     err := db.QueryRow(query, user.Name, user.Email).Scan(&user.ID)
     if err != nil {
         if errors.Is(err, sql.ErrNoRows) {
             return fmt.Errorf("failed to create user: %w", err)
         }
-        
+
         // Проверка на constraint violation
         var pgErr *pq.Error
         if errors.As(err, &pgErr) {
             if pgErr.Code == "23505" { // unique_violation
-                return fmt.Errorf("user with email %s already exists: %w", 
+                return fmt.Errorf("user with email %s already exists: %w",
                     user.Email, err)
             }
         }
-        
+
         return fmt.Errorf("database error: %w", err)
     }
-    
+
     return nil
 }
 ```
@@ -346,13 +346,13 @@ func readConfigFile(filename string) (*Config, error) {
         return nil, fmt.Errorf("failed to open config file: %w", err)
     }
     defer file.Close()
-    
+
     var config Config
     decoder := json.NewDecoder(file)
     if err := decoder.Decode(&config); err != nil {
         return nil, fmt.Errorf("failed to decode config file: %w", err)
     }
-    
+
     return &config, nil
 }
 ```
@@ -364,22 +364,22 @@ func makeHTTPRequest(url string) (*http.Response, error) {
     client := &http.Client{
         Timeout: 10 * time.Second,
     }
-    
+
     resp, err := client.Get(url)
     if err != nil {
         // Проверка на timeout
         if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
             return nil, fmt.Errorf("request to %s timed out: %w", url, err)
         }
-        
+
         // Проверка на DNS error
         if dnsErr, ok := err.(*net.DNSError); ok {
             return nil, fmt.Errorf("DNS error for %s: %w", url, dnsErr)
         }
-        
+
         return nil, fmt.Errorf("failed to make request to %s: %w", url, err)
     }
-    
+
     if resp.StatusCode != http.StatusOK {
         resp.Body.Close()
         return nil, &HTTPError{
@@ -388,7 +388,7 @@ func makeHTTPRequest(url string) (*http.Response, error) {
             Message:    fmt.Sprintf("unexpected status code: %d", resp.StatusCode),
         }
     }
-    
+
     return resp, nil
 }
 
@@ -409,30 +409,30 @@ func (e *HTTPError) Error() string {
 func processItemsConcurrently(items []Item) error {
     var wg sync.WaitGroup
     errCh := make(chan error, len(items))
-    
+
     for _, item := range items {
         wg.Add(1)
         go func(it Item) {
             defer wg.Done()
-            
+
             if err := processItem(it); err != nil {
                 errCh <- fmt.Errorf("failed to process item %d: %w", it.ID, err)
             }
         }(item)
     }
-    
+
     wg.Wait()
     close(errCh)
-    
+
     var errors []error
     for err := range errCh {
         errors = append(errors, err)
     }
-    
+
     if len(errors) > 0 {
         return fmt.Errorf("failed to process %d items: %v", len(errors), errors)
     }
-    
+
     return nil
 }
 ```
@@ -442,26 +442,26 @@ func processItemsConcurrently(items []Item) error {
 ```go
 func retryOperation(operation func() error, maxRetries int, delay time.Duration) error {
     var lastErr error
-    
+
     for i := 0; i < maxRetries; i++ {
         err := operation()
         if err == nil {
             return nil
         }
-        
+
         lastErr = err
-        
+
         // Проверка на временные ошибки
         if !isTemporaryError(err) {
             return fmt.Errorf("non-retryable error: %w", err)
         }
-        
+
         if i < maxRetries-1 {
             time.Sleep(delay)
             delay *= 2 // Exponential backoff
         }
     }
-    
+
     return fmt.Errorf("operation failed after %d retries: %w", maxRetries, lastErr)
 }
 
@@ -481,13 +481,13 @@ func processWithContext(ctx context.Context, data []byte) error {
     if err := ctx.Err(); err != nil {
         return fmt.Errorf("context cancelled: %w", err)
     }
-    
+
     // Обработка данных
     result, err := processData(data)
     if err != nil {
         return fmt.Errorf("failed to process data: %w", err)
     }
-    
+
     // Проверка на timeout
     select {
     case <-ctx.Done():
@@ -495,7 +495,7 @@ func processWithContext(ctx context.Context, data []byte) error {
     default:
         // Продолжение обработки
     }
-    
+
     return saveResult(result)
 }
 ```
@@ -524,21 +524,21 @@ func (e *ValidationErrors) Add(field, message string) {
 
 func validateUser(user User) error {
     var errors ValidationErrors
-    
+
     if user.Name == "" {
         errors.Add("name", "name is required")
     }
-    
+
     if user.Email == "" {
         errors.Add("email", "email is required")
     } else if !strings.Contains(user.Email, "@") {
         errors.Add("email", "email must be valid")
     }
-    
+
     if len(errors.Errors) > 0 {
         return &errors
     }
-    
+
     return nil
 }
 ```
@@ -548,15 +548,15 @@ func validateUser(user User) error {
 ```go
 func handleErrorWithLogging(err error, context map[string]interface{}) {
     logger := log.New(os.Stdout, "", log.LstdFlags)
-    
+
     // Логирование с контекстом
     var fields []string
     for key, value := range context {
         fields = append(fields, fmt.Sprintf("%s=%v", key, value))
     }
-    
+
     logger.Printf("Error: %v | Context: %s", err, strings.Join(fields, ", "))
-    
+
     // Логирование цепочки ошибок
     current := err
     depth := 0
@@ -585,7 +585,7 @@ func NewErrorMetrics() *ErrorMetrics {
 func (m *ErrorMetrics) RecordError(err error) {
     m.mu.Lock()
     defer m.mu.Unlock()
-    
+
     errorType := reflect.TypeOf(err).String()
     m.errorCounts[errorType]++
 }
@@ -593,7 +593,7 @@ func (m *ErrorMetrics) RecordError(err error) {
 func (m *ErrorMetrics) GetErrorCount(errorType string) int64 {
     m.mu.RLock()
     defer m.mu.RUnlock()
-    
+
     return m.errorCounts[errorType]
 }
 ```
@@ -607,10 +607,10 @@ func recoverFromPanic() {
         if !ok {
             err = fmt.Errorf("panic: %v", r)
         }
-        
+
         // Логирование паники
         log.Printf("Recovered from panic: %v", err)
-        
+
         // Отправка уведомления
         notifyPanic(err)
     }
@@ -618,7 +618,7 @@ func recoverFromPanic() {
 
 func safeOperation() {
     defer recoverFromPanic()
-    
+
     // Операция, которая может вызвать панику
     riskyOperation()
 }
@@ -635,10 +635,10 @@ func ErrorMiddleware(next http.Handler) http.Handler {
                 http.Error(w, "Internal Server Error", http.StatusInternalServerError)
             }
         }()
-        
+
         ww := &responseWriter{ResponseWriter: w}
         next.ServeHTTP(ww, r)
-        
+
         if ww.statusCode >= 400 {
             log.Printf("Error: %d %s", ww.statusCode, ww.body)
         }
@@ -668,7 +668,7 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 func ProcessWithErrorHandling(items []Item) []error {
     errCh := make(chan error, len(items))
     var wg sync.WaitGroup
-    
+
     for _, item := range items {
         wg.Add(1)
         go func(it Item) {
@@ -678,23 +678,23 @@ func ProcessWithErrorHandling(items []Item) []error {
                     errCh <- fmt.Errorf("panic processing item %v: %w", it, err.(error))
                 }
             }()
-            
+
             if err := processItem(it); err != nil {
                 errCh <- fmt.Errorf("error processing item %v: %w", it, err)
             }
         }(item)
     }
-    
+
     go func() {
         wg.Wait()
         close(errCh)
     }()
-    
+
     var errors []error
     for err := range errCh {
         errors = append(errors, err)
     }
-    
+
     return errors
 }
 ```
@@ -723,7 +723,7 @@ func HandleAPIError(err error) (int, interface{}) {
     if errors.As(err, &apiErr) {
         return apiErr.Code, apiErr
     }
-    
+
     return http.StatusInternalServerError, map[string]string{
         "error": "Internal server error",
     }
@@ -738,7 +738,7 @@ func ExecuteTransaction(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error)
     if err != nil {
         return fmt.Errorf("begin transaction: %w", err)
     }
-    
+
     defer func() {
         if p := recover(); p != nil {
             tx.Rollback()
@@ -751,7 +751,7 @@ func ExecuteTransaction(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error)
             err = tx.Commit()
         }
     }()
-    
+
     err = fn(tx)
     return err
 }
@@ -759,21 +759,21 @@ func ExecuteTransaction(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error)
 
 ## Лучшие практики
 
-1. **Всегда проверяйте ошибки** - не игнорируйте возвращаемые ошибки
-2. **Добавляйте контекст** - используйте **error wrapping** для добавления контекста
-3. **Используйте типизированные ошибки** - для проверки конкретных типов ошибок
-4. **Документируйте ошибки** - указывайте, какие ошибки может возвращать функция
-5. **Обрабатывайте ошибки на нужном уровне** - обрабатывайте ошибки там, где есть контекст для их обработки
-6. **Используйте errors.Is и errors.As** - для проверки ошибок в цепочке
-7. **Избегайте паники** - используйте возврат ошибок вместо паники
-8. **Логируйте ошибки** - добавляйте контекст при логировании
-9. **Используйте retry для временных ошибок** - обрабатывайте временные ошибки с повторами
-10. **Тестируйте обработку ошибок** - проверяйте все пути обработки ошибок
-11. **Обрабатывайте паники** - используйте **recover** для критических секций
-12. **Используйте middleware** - для централизованной обработки ошибок
-13. **Создавайте типизированные ошибки** - для разных типов ошибок **API**
-14. **Обрабатывайте ошибки в горутинах** - не позволяйте ошибкам пропадать
-15. **Откатывайте транзакции** - при ошибках в транзакциях
+1. **Всегда проверяйте ошибки** — не игнорируйте возвращаемые ошибки
+2. **Добавляйте контекст** — используйте **error wrapping** для добавления контекста
+3. **Используйте типизированные ошибки** — для проверки конкретных типов ошибок
+4. **Документируйте ошибки** — указывайте, какие ошибки может возвращать функция
+5. **Обрабатывайте ошибки на нужном уровне** — обрабатывайте ошибки там, где есть контекст для их обработки
+6. **Используйте errors.Is и errors.As** — для проверки ошибок в цепочке
+7. **Избегайте паники** — используйте возврат ошибок вместо паники
+8. **Логируйте ошибки** — добавляйте контекст при логировании
+9. **Используйте retry для временных ошибок** — обрабатывайте временные ошибки с повторами
+10. **Тестируйте обработку ошибок** — проверяйте все пути обработки ошибок
+11. **Обрабатывайте паники** — используйте **recover** для критических секций
+12. **Используйте middleware** — для централизованной обработки ошибок
+13. **Создавайте типизированные ошибки** — для разных типов ошибок **API**
+14. **Обрабатывайте ошибки в горутинах** — не позволяйте ошибкам пропадать
+15. **Откатывайте транзакции** — при ошибках в транзакциях
 
 
 ## Решение проблем
@@ -793,3 +793,11 @@ func ExecuteTransaction(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error)
 - [Go Error Handling](https://go.dev/doc/effective_go#errors)
 - [Go errors Package](https://pkg.go.dev/errors)
 - [Go Error Wrapping](https://go.dev/blog/go1.13errors)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

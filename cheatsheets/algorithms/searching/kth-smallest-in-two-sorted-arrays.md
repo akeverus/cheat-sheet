@@ -77,11 +77,11 @@ updated: "2026-02-11"
 int getKthElementSorted(int[] list1, int[] list2, int k) {
     int length1 = list1.length, length2 = list2.length;
     int[] combinedArray = new int[length1 + length2];
-    
+
     System.arraycopy(list1, 0, combinedArray, 0, list1.length);
     System.arraycopy(list2, 0, combinedArray, list1.length, list2.length);
     Arrays.sort(combinedArray);
-    
+
     return combinedArray[k - 1];
 }
 ```
@@ -107,7 +107,7 @@ int getKthElementSorted(int[] list1, int[] list2, int k) {
 ```java
 public static int getKthElementMerge(int[] list1, int[] list2, int k) {
     int i1 = 0, i2 = 0;
-    
+
     while (i1 < list1.length && i2 < list2.length && (i1 + i2) < k) {
         if (list1[i1] < list2[i2]) {
             i1++;
@@ -115,7 +115,7 @@ public static int getKthElementMerge(int[] list1, int[] list2, int k) {
             i2++;
         }
     }
-    
+
     if ((i1 + i2) < k) {
         return i1 < list1.length ? list1[k - i2 - 1] : list2[k - i1 - 1];
     } else if (i1 > 0 && i2 > 0) {
@@ -139,7 +139,7 @@ public static int getKthElementMerge(int[] list1, int[] list2, int k) {
 Давайте определим скелет метода, который мы собираемся реализовать:
 
 ```java
-int findKthElement(int k, int[] list1, int[] list2) 
+int findKthElement(int k, int[] list1, int[] list2)
     throws NoSuchElementException, IllegalArgumentException {
     // Реализация
 }
@@ -172,7 +172,7 @@ int left = 0;
 do {
     nElementsList1 = ((left + right) / 2) + 1;
     nElementsList2 = k - nElementsList1;
-    
+
     if (nElementsList2 > 0) {
         if (list1[nElementsList1 - 1] > list2[nElementsList2 - 1]) {
             right = nElementsList1 - 2;
@@ -201,24 +201,24 @@ do {
 ```java
 private static boolean foundCorrectNumberOfElementsInBothLists(
         int[] list1, int[] list2, int nElementsList1, int nElementsList2) {
-    
+
     if (nElementsList2 < 1) {
         return true;
     }
-    
+
     if (list1[nElementsList1 - 1] == list2[nElementsList2 - 1]) {
         return true;
     }
-    
+
     if (nElementsList1 == list1.length) {
         return list1[nElementsList1 - 1] <= list2[nElementsList2];
     }
-    
+
     if (nElementsList2 == list2.length) {
         return list2[nElementsList2 - 1] <= list1[nElementsList1];
     }
-    
-    return list1[nElementsList1 - 1] <= list2[nElementsList2] 
+
+    return list1[nElementsList1 - 1] <= list2[nElementsList2]
         && list2[nElementsList2 - 1] <= list1[nElementsList1];
 }
 ```
@@ -234,8 +234,8 @@ private static boolean foundCorrectNumberOfElementsInBothLists(
 Давайте посмотрим на это в коде:
 
 ```java
-return nElementsList2 == 0 
-    ? list1[nElementsList1 - 1] 
+return nElementsList2 == 0
+    ? list1[nElementsList1 - 1]
     : Math.max(list1[nElementsList1 - 1], list2[nElementsList2 - 1]);
 ```
 
@@ -252,7 +252,7 @@ int left = 0;
 
 Во-первых, если k превышает длину первого массива, нам нужно взять последний элемент в качестве правой границы. Причина этого довольно проста, так как мы не можем взять из массива больше элементов, чем есть.
 
-Во-вторых, если k больше, чем количество элементов во втором массиве, мы точно знаем, что нам нужно взять как минимум (k - length(list2)) из первого массива.
+Во-вторых, если k больше, чем количество элементов во втором массиве, мы точно знаем, что нам нужно взять как минимум (k — length(list2)) из первого массива.
 
 Вот код для адаптированных левой и правой границ:
 
@@ -291,17 +291,17 @@ if (k <= list2.length && list2[k - 1] < list1[0]) {
 Вот наша проверка в коде:
 
 ```java
-void checkInput(int k, int[] list1, int[] list2) 
+void checkInput(int k, int[] list1, int[] list2)
     throws NoSuchElementException, IllegalArgumentException {
-    
+
     if (list1 == null || list2 == null || k < 1) {
         throw new IllegalArgumentException();
     }
-    
+
     if (list1.length == 0 || list2.length == 0) {
         throw new IllegalArgumentException();
     }
-    
+
     if (k > list1.length + list2.length) {
         throw new NoSuchElementException();
     }
@@ -313,33 +313,33 @@ void checkInput(int k, int[] list1, int[] list2)
 Вот полный код алгоритма, который мы только что описали:
 
 ```java
-public static int findKthElement(int k, int[] list1, int[] list2) 
+public static int findKthElement(int k, int[] list1, int[] list2)
     throws NoSuchElementException, IllegalArgumentException {
-    
+
     checkInput(k, list1, list2);
-    
+
     if (k == 1) {
         return Math.min(list1[0], list2[0]);
     }
-    
+
     if (list1.length + list2.length == k) {
         return Math.max(list1[list1.length - 1], list2[list2.length - 1]);
     }
-    
+
     if (k <= list2.length && list2[k - 1] < list1[0]) {
         int[] temp = list1;
         list1 = list2;
         list2 = temp;
     }
-    
+
     int left = k < list2.length ? 0 : k - list2.length - 1;
     int right = Math.min(k - 1, list1.length - 1);
     int nElementsList1, nElementsList2;
-    
+
     do {
         nElementsList1 = ((left + right) / 2) + 1;
         nElementsList2 = k - nElementsList1;
-        
+
         if (nElementsList2 > 0) {
             if (list1[nElementsList1 - 1] > list2[nElementsList2 - 1]) {
                 right = nElementsList1 - 2;
@@ -348,9 +348,9 @@ public static int findKthElement(int k, int[] list1, int[] list2)
             }
         }
     } while (!foundCorrectNumberOfElementsInBothLists(list1, list2, nElementsList1, nElementsList2));
-    
-    return nElementsList2 == 0 
-        ? list1[nElementsList1 - 1] 
+
+    return nElementsList2 == 0
+        ? list1[nElementsList1 - 1]
         : Math.max(list1[nElementsList1 - 1], list2[nElementsList2 - 1]);
 }
 ```
@@ -381,7 +381,7 @@ fun getKthElementSortedK(list1: IntArray, list2: IntArray, k: Int): Int {
 fun getKthElementMergeK(list1: IntArray, list2: IntArray, k: Int): Int {
     var i1 = 0
     var i2 = 0
-    
+
     while (i1 < list1.size && i2 < list2.size && (i1 + i2) < k) {
         if (list1[i1] < list2[i2]) {
             i1++
@@ -389,7 +389,7 @@ fun getKthElementMergeK(list1: IntArray, list2: IntArray, k: Int): Int {
             i2++
         }
     }
-    
+
     return when {
         (i1 + i2) < k -> if (i1 < list1.size) list1[k - i2 - 1] else list2[k - i1 - 1]
         i1 > 0 && i2 > 0 -> maxOf(list1[i1 - 1], list2[i2 - 1])
@@ -405,10 +405,10 @@ fun getKthElementMergeK(list1: IntArray, list2: IntArray, k: Int): Int {
 fun main() {
     val list1 = intArrayOf(3, 4, 6, 10, 11, 15)
     val list2 = intArrayOf(1, 5, 8, 12, 14, 19)
-    
+
     val kth1 = getKthElementSortedK(list1, list2, 4)
     println("4th element (sorted): $kth1") // 5
-    
+
     val kth2 = getKthElementMergeK(list1, list2, 4)
     println("4th element (merge): $kth2") // 5
 }
@@ -440,18 +440,18 @@ fun main() {
 
 ## Частые вопросы
 
-Вопрос: Почему бинарный поиск двигает границы только в меньшем массиве? Ответ: Это ограничивает количество шагов `O(log(min(n,m)))` и упрощает проверку условий, сохраняя корректные индексы во втором массиве через k - nElementsList1.  
-Вопрос: Можно ли использовать подходы для массивов разной природы (например, списки)? Ответ: Да, если обеспечен `O(1)` доступ по индексу; иначе стоимость обращений делает бинарный поиск менее эффективным.  
-Вопрос: Как обрабатывать k, равный 1 или n+m? Ответ: Возвращайте минимум первых элементов при k=1 и максимум последних при k=n+m, чтобы избежать лишней логики в бинарном поиске.  
-Вопрос: Нужно ли копировать массивы перед сортировкой? Ответ: Да, если нельзя изменять исходные данные; копия предотвращает побочные эффекты и сохраняет контракт метода.  
+Вопрос: Почему бинарный поиск двигает границы только в меньшем массиве? Ответ: Это ограничивает количество шагов `O(log(min(n,m)))` и упрощает проверку условий, сохраняя корректные индексы во втором массиве через k — nElementsList1.
+Вопрос: Можно ли использовать подходы для массивов разной природы (например, списки)? Ответ: Да, если обеспечен `O(1)` доступ по индексу; иначе стоимость обращений делает бинарный поиск менее эффективным.
+Вопрос: Как обрабатывать k, равный 1 или n+m? Ответ: Возвращайте минимум первых элементов при k=1 и максимум последних при k=n+m, чтобы избежать лишней логики в бинарном поиске.
+Вопрос: Нужно ли копировать массивы перед сортировкой? Ответ: Да, если нельзя изменять исходные данные; копия предотвращает побочные эффекты и сохраняет контракт метода.
 Вопрос: Что делать с дубликатами? Ответ: Определите политику заранее; по умолчанию считаете каждое вхождение отдельным элементом, иначе придётся изменять критерии остановки и слияния.
 
 ## Глоссарий терминов
 
-`k-th order statistic` — k-я порядковая статистика, элемент, который стоит на k-й позиции в отсортированной последовательности.  
-`Merge` — поэлементное слияние двух отсортированных коллекций в один отсортированный поток.  
-`Partition` или «разрез» — выбор числа элементов из первого массива так, чтобы остаток k брался из второго, формируя две части объединения.  
-`Boundary conditions` — граничные случаи, включающие пустые массивы, экстремальные значения k и совпадающие элементы на границе разреза.  
+`k-th order statistic` — k-я порядковая статистика, элемент, который стоит на k-й позиции в отсортированной последовательности.
+`Merge` — поэлементное слияние двух отсортированных коллекций в один отсортированный поток.
+`Partition` или «разрез» — выбор числа элементов из первого массива так, чтобы остаток k брался из второго, формируя две части объединения.
+`Boundary conditions` — граничные случаи, включающие пустые массивы, экстремальные значения k и совпадающие элементы на границе разреза.
 `Idempotent read` — доступ к элементам без изменения коллекции; важно для работы бинарного поиска без копирования.
 
 ## Дополнительные примеры использования

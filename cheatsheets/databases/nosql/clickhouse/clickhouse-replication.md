@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-views.md"]
 ---
 
-# **ClickHouse**: Репликация и кластеры - Отказоустойчивость и масштабируемость
+# **ClickHouse**: Репликация и кластеры — Отказоустойчивость и масштабируемость
 
 Комплексное руководство по репликации **ClickHouse**: **ReplicatedMergeTree**, кластеры, **ZooKeeper**, отказоустойчивость и распределенные запросы.
 
@@ -26,7 +26,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 - [ReplicatedMergeTree](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/replicatedmergetree)
 - [Distributed DDL](https://clickhouse.com/docs/en/sql-reference/statements/system#distributed-ddl)
 
-### **Baeldung**
+### Обучающие материалы
 - [ClickHouse Replication](https://www.baeldung.com/clickhouse-replication)
 
 ### См. также
@@ -107,7 +107,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 
 ### Компоненты репликации
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     ClickHouse Cluster                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -195,7 +195,7 @@ sudo systemctl enable zookeeper
 
 ### Структура данных в **ZooKeeper**
 
-```
+```text
 /clickhouse
 ├── /tables/{shard}/{database}/{table}
 │   ├── /replicas/{replica_name}
@@ -773,9 +773,9 @@ GROUP BY database, table;
 
 ### Следующие темы:
 
-- **Производительность** - тюнинг кластеров
-- **Интеграции** - подключение внешних систем
-- **Мониторинг** - глубокий анализ метрик
+- **Производительность** — тюнинг кластеров
+- **Интеграции** — подключение внешних систем
+- **Мониторинг** — глубокий анализ метрик
 
 Репликация **ClickHouse** позволяет создавать надежные и масштабируемые аналитические системы.
 
@@ -794,7 +794,6 @@ GROUP BY database, table;
 - [ClickHouse Keeper](https://clickhouse.com/docs/en/operations/keeper) — альтернатива **ZooKeeper**
 - [Cluster Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
----
 
 **Следующие темы:**
 - [Производительность](clickhouse-performance.md)

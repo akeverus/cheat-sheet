@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 ### Определение
 
-Прежде всего, давайте определим, что такое шифр. Шифр - это метод шифрования сообщения с целью сделать его менее читаемым. Что касается шифра Цезаря, это шифр замены, который преобразует сообщение, сдвигая его буквы на заданное смещение.
+Прежде всего, давайте определим, что такое шифр. Шифр — это метод шифрования сообщения с целью сделать его менее читаемым. Что касается шифра Цезаря, это шифр замены, который преобразует сообщение, сдвигая его буквы на заданное смещение.
 
 Допустим, мы хотим сдвинуть алфавит на 3, тогда буква A будет преобразована в букву D, B в E, C в F и так далее.
 
@@ -197,7 +197,7 @@ assertThat(decipheredSentence).isEqualTo("he told me i could never teach a llama
 fun cipherK(message: String, offset: Int): String {
     val normalizedOffset = offset % 26
     val result = StringBuilder()
-    
+
     for (character in message) {
         if (character != ' ') {
             val originalAlphabetPosition = character - 'a'
@@ -208,7 +208,7 @@ fun cipherK(message: String, offset: Int): String {
             result.append(character)
         }
     }
-    
+
     return result.toString()
 }
 ```
@@ -219,7 +219,7 @@ fun cipherK(message: String, offset: Int): String {
 fun cipherWithCaseK(message: String, offset: Int): String {
     val normalizedOffset = offset % 26
     val result = StringBuilder()
-    
+
     for (character in message) {
         if (character.isLetter()) {
             val base = if (character.isUpperCase()) 'A' else 'a'
@@ -231,7 +231,7 @@ fun cipherWithCaseK(message: String, offset: Int): String {
             result.append(character)
         }
     }
-    
+
     return result.toString()
 }
 ```
@@ -277,19 +277,19 @@ fun rot13K(message: String): String {
 ```kotlin
 fun main() {
     val message = "he told me i could never teach a llama to drive"
-    
+
     // Шифрование
     val encrypted = cipherK(message, 3)
     println(encrypted) // "kh wrog ph l frxog qhyhu whdfk d oodpd wr gulyh"
-    
+
     // Расшифровка
     val decrypted = decipherK(encrypted, 3)
     println(decrypted) // "he told me i could never teach a llama to drive"
-    
+
     // ROT13
     val rot13Encrypted = rot13K(message)
     println(rot13Encrypted)
-    
+
     // Функциональный стиль
     val functionalEncrypted = cipherFunctionalK(message, 10)
     println(functionalEncrypted)
@@ -332,7 +332,7 @@ double[] expectedLettersFrequencies = Arrays.stream(englishLettersProbabilities)
     .toArray();
 ```
 
-Например, в сообщении длиной `100` мы должны ожидать, что буква а появится `7.3` раза, а буква е - 13 раз.
+Например, в сообщении длиной `100` мы должны ожидать, что буква а появится `7.3` раза, а буква е — 13 раз.
 
 Теперь мы собираемся вычислить хи-квадраты распределения букв расшифрованного сообщения и стандартного распределения английских букв.
 
@@ -525,7 +525,7 @@ String rot13(String message) {
 public String cipherAdvanced(String message, int offset) {
     int normalizedOffset = offset % 26;
     StringBuilder result = new StringBuilder();
-    
+
     for (char character : message.toCharArray()) {
         if (Character.isLetter(character)) {
             char base = Character.isUpperCase(character) ? 'A' : 'a';
@@ -538,7 +538,7 @@ public String cipherAdvanced(String message, int offset) {
             result.append(character);
         }
     }
-    
+
     return result.toString();
 }
 ```
@@ -551,14 +551,14 @@ public String cipherAdvanced(String message, int offset) {
 public String cipherWithKeyword(String message, String keyword) {
     keyword = keyword.toLowerCase().replaceAll("[^a-z]", "");
     int[] offsets = new int[keyword.length()];
-    
+
     for (int i = 0; i < keyword.length(); i++) {
         offsets[i] = (keyword.charAt(i) - 'a') % 26;
     }
-    
+
     StringBuilder result = new StringBuilder();
     int keywordIndex = 0;
-    
+
     for (char character : message.toCharArray()) {
         if (Character.isLetter(character)) {
             char base = Character.isUpperCase(character) ? 'A' : 'a';
@@ -572,7 +572,7 @@ public String cipherWithKeyword(String message, String keyword) {
             result.append(character);
         }
     }
-    
+
     return result.toString();
 }
 ```
@@ -588,36 +588,36 @@ public int breakCipherAdvanced(String message) {
         0.002, 0.003, 0.035, 0.025, 0.078, 0.074, 0.027, 0.003,
         0.077, 0.063, 0.093, 0.027, 0.013, 0.016, 0.005, 0.019, 0.001
     };
-    
+
     int letterCount = (int) message.chars()
         .filter(Character::isLetter)
         .count();
-    
+
     if (letterCount < 10) {
         throw new IllegalArgumentException(
             "Сообщение слишком короткое для статистического анализа");
     }
-    
+
     double[] expectedFrequencies = Arrays.stream(englishLettersProbabilities)
         .map(p -> p * letterCount)
         .toArray();
-    
+
     double[] chiSquares = new double[26];
-    
+
     for (int offset = 0; offset < 26; offset++) {
         String deciphered = decipher(message, offset);
         long[] observedFrequencies = observedLettersFrequencies(deciphered);
         chiSquares[offset] = new ChiSquareTest()
             .chiSquare(expectedFrequencies, observedFrequencies);
     }
-    
+
     int bestOffset = 0;
     for (int i = 1; i < chiSquares.length; i++) {
         if (chiSquares[i] < chiSquares[bestOffset]) {
             bestOffset = i;
         }
     }
-    
+
     return bestOffset;
 }
 ```
@@ -631,7 +631,7 @@ public String cipherForAlphabet(String message, int offset, String alphabet) {
     int alphabetSize = alphabet.length();
     int normalizedOffset = offset % alphabetSize;
     StringBuilder result = new StringBuilder();
-    
+
     for (char character : message.toCharArray()) {
         int index = alphabet.indexOf(character);
         if (index != -1) {
@@ -641,7 +641,7 @@ public String cipherForAlphabet(String message, int offset, String alphabet) {
             result.append(character);
         }
     }
-    
+
     return result.toString();
 }
 ```

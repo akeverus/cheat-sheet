@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.md"]
 ---
 
-# **ClickHouse**: Индексы и оптимизация - Полное руководство по индексации и партиционированию
+# **ClickHouse**: Индексы и оптимизация — Полное руководство по индексации и партиционированию
 
 Комплексное руководство по индексам **ClickHouse**: первичные ключи, вторичные индексы, партиционирование и оптимизация запросов.
 
@@ -25,7 +25,7 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 - [Partitioning](https://clickhouse.com/docs/en/guides/best-practices#partitioning)
 - [Query Optimization](https://clickhouse.com/docs/en/operations/optimizing-performance)
 
-### **Baeldung**
+### Обучающие материалы
 - [ClickHouse Indexing](https://www.baeldung.com/clickhouse-indexes)
 
 ### См. также
@@ -85,13 +85,13 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 
 ### Типы индексов в **ClickHouse**
 
-1. **Первичный ключ** - определяет порядок хранения данных
-2. **Вторичные индексы** - для пропуска нерелевантных данных (**data skipping indexes**)
-3. **Партиционирование** - логическое разделение данных
+1. **Первичный ключ** — определяет порядок хранения данных
+2. **Вторичные индексы** — для пропуска нерелевантных данных (**data skipping indexes**)
+3. **Партиционирование** — логическое разделение данных
 
 ### Принцип работы
 
-```
+```text
 Таблица без индексов:
 ┌─────────────────────────────────────┐
 │ Данные: 100M строк                  │
@@ -1047,9 +1047,9 @@ ORDER BY event_time DESC;
 
 ### Следующие темы:
 
-- **Материализованные представления** - предвычисленные агрегаты
-- **Репликация и кластеры** - масштабирование и отказоустойчивость
-- **Производительность** - глубокий тюнинг и оптимизация
+- **Материализованные представления** — предвычисленные агрегаты
+- **Репликация и кластеры** — масштабирование и отказоустойчивость
+- **Производительность** — глубокий тюнинг и оптимизация
 
 **ClickHouse** предоставляет мощные инструменты для оптимизации, но требует тщательного планирования и мониторинга. Продвинутые стратегии индексации позволяют добиться максимальной производительности даже с петабайтами данных.
 
@@ -1068,7 +1068,6 @@ ORDER BY event_time DESC;
 - [ClickHouse Benchmark](https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark)
 - [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
 
----
 
 **Следующие темы:**
 - [Материализованные представления](clickhouse-materialized-views.md)

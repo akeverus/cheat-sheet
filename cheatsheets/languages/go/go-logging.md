@@ -59,10 +59,10 @@ updated: "2026-02-06"
 
 ### Основные концепции
 
-1. **Уровни логирования** - **DEBUG**, **INFO**, **WARN**, **ERROR**
-2. **Structured Logging** - структурированные логи для анализа
-3. **Контекст** - добавление контекста к логам
-4. **Производительность** - эффективное логирование
+1. **Уровни логирования** — **DEBUG**, **INFO**, **WARN**, **ERROR**
+2. **Structured Logging** — структурированные логи для анализа
+3. **Контекст** — добавление контекста к логам
+4. **Производительность** — эффективное логирование
 
 ## Стандартный **log** пакет
 
@@ -101,13 +101,13 @@ import (
 func main() {
     // Настройка префикса
     log.SetPrefix("APP: ")
-    
+
     // Настройка флагов
     log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-    
+
     // Настройка вывода
     log.SetOutput(os.Stdout)
-    
+
     log.Println("Custom formatted log")
 }
 ```
@@ -126,7 +126,7 @@ func main() {
         log.Fatal(err)
     }
     defer file.Close()
-    
+
     log.SetOutput(file)
     log.Println("Log to file")
 }
@@ -144,12 +144,12 @@ import (
 
 func main() {
     logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-    
+
     logger.Info("User logged in",
         "user_id", 123,
         "ip", "192.168.1.1",
     )
-    
+
     logger.Error("Failed to process request",
         "error", "connection timeout",
         "request_id", "abc123",
@@ -167,7 +167,7 @@ import (
 
 func main() {
     logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-    
+
     logger.Info("User action",
         "user_id", 123,
         "action", "purchase",
@@ -188,9 +188,9 @@ func main() {
     opts := &slog.HandlerOptions{
         Level: slog.LevelDebug,
     }
-    
+
     logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
-    
+
     logger.Debug("Debug message")
     logger.Info("Info message")
     logger.Warn("Warning message")
@@ -288,7 +288,7 @@ func NewAsyncLogger() *AsyncLogger {
         logCh: make(chan string, 100),
         done:  make(chan bool),
     }
-    
+
     go logger.process()
     return logger
 }
@@ -339,7 +339,7 @@ func NewRotatingLogger(filePath string, maxSize int64) (*RotatingLogger, error) 
     if err != nil {
         return nil, err
     }
-    
+
     return &RotatingLogger{
         file:     file,
         logger:   log.New(file, "", log.LstdFlags),
@@ -351,20 +351,20 @@ func NewRotatingLogger(filePath string, maxSize int64) (*RotatingLogger, error) 
 func (rl *RotatingLogger) Write(p []byte) (n int, err error) {
     rl.mu.Lock()
     defer rl.mu.Unlock()
-    
+
     // Проверка размера файла
     info, err := rl.file.Stat()
     if err != nil {
         return 0, err
     }
-    
+
     if info.Size() >= rl.maxSize {
         rl.file.Close()
-        
+
         // Ротация: переименование старого файла
         backupPath := rl.filePath + "." + time.Now().Format("20060102-150405")
         os.Rename(rl.filePath, backupPath)
-        
+
         // Создание нового файла
         rl.file, err = os.OpenFile(rl.filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
         if err != nil {
@@ -372,7 +372,7 @@ func (rl *RotatingLogger) Write(p []byte) (n int, err error) {
         }
         rl.logger.SetOutput(rl.file)
     }
-    
+
     return rl.file.Write(p)
 }
 ```
@@ -446,10 +446,10 @@ func NewStructuredLogger(level slog.Level) *StructuredLogger {
         Level: level,
         AddSource: true,
     }
-    
+
     handler := slog.NewJSONHandler(os.Stdout, opts)
     logger := slog.New(handler)
-    
+
     return &StructuredLogger{
         handler: handler,
         logger:  logger,
@@ -486,7 +486,7 @@ type MetricsLogger struct {
 
 func NewMetricsLogger() *MetricsLogger {
     logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-    
+
     return &MetricsLogger{
         logger:  logger,
         metrics: make(map[string]int64),
@@ -495,7 +495,7 @@ func NewMetricsLogger() *MetricsLogger {
 
 func (ml *MetricsLogger) LogWithMetrics(level slog.Level, msg string, attrs ...interface{}) {
     ml.logger.Log(context.Background(), level, msg, attrs...)
-    
+
     // Обновление метрик
     ml.mu.Lock()
     ml.metrics[msg]++
@@ -505,7 +505,7 @@ func (ml *MetricsLogger) LogWithMetrics(level slog.Level, msg string, attrs ...i
 func (ml *MetricsLogger) GetMetrics() map[string]int64 {
     ml.mu.RLock()
     defer ml.mu.RUnlock()
-    
+
     result := make(map[string]int64)
     for k, v := range ml.metrics {
         result[k] = v
@@ -554,16 +554,16 @@ func (sl *SafeLogger) LogSafe(level slog.Level, msg string, attrs ...interface{}
             }
         }
     }
-    
+
     // Маскировка чувствительных данных
     masked := sl.maskSensitive(data)
-    
+
     // Преобразование обратно в attrs
     safeAttrs := make([]interface{}, 0, len(masked)*2)
     for k, v := range masked {
         safeAttrs = append(safeAttrs, k, v)
     }
-    
+
     sl.logger.Log(context.Background(), level, msg, safeAttrs...)
 }
 ```
@@ -589,9 +589,9 @@ func NewBufferedLogger(maxSize int) *BufferedLogger {
 func (bl *BufferedLogger) Log(msg string) {
     bl.mu.Lock()
     defer bl.mu.Unlock()
-    
+
     bl.buffer = append(bl.buffer, msg)
-    
+
     if len(bl.buffer) >= bl.maxSize {
         bl.Flush()
     }
@@ -600,7 +600,7 @@ func (bl *BufferedLogger) Log(msg string) {
 func (bl *BufferedLogger) Flush() {
     bl.mu.Lock()
     defer bl.mu.Unlock()
-    
+
     for _, msg := range bl.buffer {
         bl.logger.Println(msg)
     }
@@ -623,7 +623,7 @@ func SetupRotatingLogger(logPath string) *log.Logger {
         MaxAge:     28, // days
         Compress:   true,
     }
-    
+
     return log.New(writer, "", log.LstdFlags)
 }
 
@@ -635,7 +635,7 @@ func SetupSlogRotating(logPath string) *slog.Logger {
         MaxAge:     28,
         Compress:   true,
     }
-    
+
     handler := slog.NewJSONHandler(writer, nil)
     return slog.New(handler)
 }
@@ -661,12 +661,12 @@ func (cl *ContextLogger) WithFields(fields map[string]interface{}) *ContextLogge
     for k, v := range fields {
         attrs = append(attrs, slog.Any(k, v))
     }
-    
+
     // Добавление контекстных значений
     if reqID := cl.ctx.Value("request_id"); reqID != nil {
         attrs = append(attrs, slog.String("request_id", reqID.(string)))
     }
-    
+
     return &ContextLogger{
         logger: cl.logger.With(attrs...),
         ctx:    cl.ctx,
@@ -745,7 +745,7 @@ func LogDuration(logger *slog.Logger, operation string, fn func()) {
             "duration_ms", duration.Milliseconds(),
         )
     }()
-    
+
     fn()
 }
 
@@ -761,28 +761,28 @@ func LogSlowOperation(logger *slog.Logger, threshold time.Duration, operation st
             )
         }
     }()
-    
+
     fn()
 }
 ```
 
 ## Лучшие практики
 
-1. **Используйте structured logging** - для лучшего анализа логов
-2. **Добавляйте контекст** - включайте релевантную информацию в логи
-3. **Используйте уровни правильно** - **DEBUG** для отладки, **ERROR** для ошибок
-4. **Не логируйте чувствительные данные** - пароли, токены, персональные данные
-5. **Используйте асинхронное логирование** - для высокой производительности
-6. **Ротация логов** - управляйте размером лог-файлов
-7. **Используйте контекст** - передавайте **context** для логирования
-8. **Мониторьте производительность** - логирование не должно замедлять приложение
-9. **Используйте метрики** - отслеживайте частоту логов
-10. **Тестируйте логирование** - убедитесь, что логи записываются правильно
-11. **Используйте ротацию** - управляйте размером лог-файлов
-12. **Используйте контекстное логирование** - добавляйте контекст запросов
-13. **Используйте уровни** - правильно устанавливайте уровни логирования
-14. **Логируйте производительность** - отслеживайте время операций
-15. **Используйте structured logging** - для интеграции с системами анализа
+1. **Используйте structured logging** — для лучшего анализа логов
+2. **Добавляйте контекст** — включайте релевантную информацию в логи
+3. **Используйте уровни правильно** — **DEBUG** для отладки, **ERROR** для ошибок
+4. **Не логируйте чувствительные данные** — пароли, токены, персональные данные
+5. **Используйте асинхронное логирование** — для высокой производительности
+6. **Ротация логов** — управляйте размером лог-файлов
+7. **Используйте контекст** — передавайте **context** для логирования
+8. **Мониторьте производительность** — логирование не должно замедлять приложение
+9. **Используйте метрики** — отслеживайте частоту логов
+10. **Тестируйте логирование** — убедитесь, что логи записываются правильно
+11. **Используйте ротацию** — управляйте размером лог-файлов
+12. **Используйте контекстное логирование** — добавляйте контекст запросов
+13. **Используйте уровни** — правильно устанавливайте уровни логирования
+14. **Логируйте производительность** — отслеживайте время операций
+15. **Используйте structured logging** — для интеграции с системами анализа
 
 
 ## Решение проблем
@@ -801,3 +801,11 @@ func LogSlowOperation(logger *slog.Logger, threshold time.Duration, operation st
 
 - [Go log Package](https://pkg.go.dev/log)
 - [Go log/slog](https://pkg.go.dev/log/slog)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

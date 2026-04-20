@@ -73,7 +73,7 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 
 ## Введение в **Stream**
 
-**Stream** - это ленивый список, который вычисляет элементы по требованию. **Stream** позволяет работать с бесконечными последовательностями и откладывать вычисления до момента использования.
+**Stream** — это ленивый список, который вычисляет элементы по требованию. **Stream** позволяет работать с бесконечными последовательностями и откладывать вычисления до момента использования.
 
 ### Основные характеристики
 
@@ -137,7 +137,7 @@ val first10 = numbers.take(10).toList  // List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 val evens = Stream.from(2, 2)  // Stream(2, 4, 6, 8, ...)
 
 // Последовательность Фибоначчи
-val fib: Stream[BigInt] = BigInt(0) #:: BigInt(1) #:: 
+val fib: Stream[BigInt] = BigInt(0) #:: BigInt(1) #::
   fib.zip(fib.tail).map { case (a, b) => a + b }
 val first10Fib = fib.take(10).toList  // List(0, 1, 1, 2, 3, 5, 8, 13, 21, 34)
 ```
@@ -400,7 +400,7 @@ val result = (1 to 1000000).view
 ```scala
 // Генерация последовательности Фибоначчи
 def fibonacci: Stream[BigInt] = {
-  def fib(a: BigInt, b: BigInt): Stream[BigInt] = 
+  def fib(a: BigInt, b: BigInt): Stream[BigInt] =
     a #:: fib(b, a + b)
   fib(0, 1)
 }
@@ -435,9 +435,9 @@ val result = lines.take(1000).toList
 def naturalNumbers: LazyList[Int] = LazyList.from(1)
 
 def primes: LazyList[Int] = {
-  def isPrime(n: Int): Boolean = 
+  def isPrime(n: Int): Boolean =
     !(2 until n).exists(n % _ == 0)
-  
+
   naturalNumbers.filter(isPrime)
 }
 
@@ -455,7 +455,7 @@ case class Node[A](left: Tree[A], value: A, right: Tree[A]) extends Tree[A]
 
 def treeToStream[A](tree: Tree[A]): Stream[A] = tree match {
   case Leaf(value) => Stream(value)
-  case Node(left, value, right) => 
+  case Node(left, value, right) =>
     treeToStream(left) #::: Stream(value) #::: treeToStream(right)
 }
 
@@ -479,7 +479,7 @@ def combinations[A](list: List[A], n: Int): Stream[List[A]] = {
   else {
     val head = list.head
     val tail = list.tail
-    combinations(tail, n - 1).map(head :: _) #::: 
+    combinations(tail, n - 1).map(head :: _) #:::
     combinations(tail, n)
   }
 }
@@ -498,13 +498,13 @@ def parseNumbers(input: Stream[Char]): Stream[Int] = {
     stream.headOption.flatMap { ch =>
       if (ch.isDigit) {
         val number = ch.toString.toInt
-        parseDigit(stream.tail).map { case (n, rest) => 
+        parseDigit(stream.tail).map { case (n, rest) =>
           (number * 10 + n, rest)
         }.orElse(Some((number, stream.tail)))
       } else None
     }
   }
-  
+
   parseDigit(input).map { case (num, rest) =>
     Stream(num) #::: parseNumbers(rest.dropWhile(!_.isDigit))
   }.getOrElse(Stream.empty)
@@ -546,7 +546,7 @@ def groupBy[A, K](stream: Stream[A])(key: A => K): Stream[(K, List[A])] = {
         groups.toStream.map { case (k, list) => (k, list.reverse) }
     }
   }
-  
+
   group(stream, Map.empty)
 }
 
@@ -608,7 +608,7 @@ def partition[A](stream: Stream[A])(pred: A => Boolean): (Stream[A], Stream[A]) 
         (left.reverse.toStream, right.reverse.toStream)
     }
   }
-  
+
   partitionInternal(stream, Nil, Nil)
 }
 
@@ -637,7 +637,7 @@ val zippedWith = stream1.zip(stream2).map { case (a, b) => s"$a$b" }.toList
 ```scala
 // Добавление индексов к элементам
 val stream = Stream("a", "b", "c", "d", "e")
-val indexed = stream.zipWithIndex.map { case (value, index) => 
+val indexed = stream.zipWithIndex.map { case (value, index) =>
   (index, value)
 }.toList
 // List((0, "a"), (1, "b"), (2, "c"), (3, "d"), (4, "e"))
@@ -656,7 +656,7 @@ def distinct[A](stream: Stream[A]): Stream[A] = {
       case None => Stream.empty
     }
   }
-  
+
   distinctInternal(stream, Set.empty)
 }
 

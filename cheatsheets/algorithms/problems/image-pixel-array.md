@@ -56,13 +56,13 @@ public int[][] get2DPixelArraySlow(BufferedImage sampleImage) {
     int width = sampleImage.getWidth();
     int height = sampleImage.getHeight();
     int[][] result = new int[height][width];
-    
+
     for (int row = 0; row < height; row++) {
         for (int col = 0; col < width; col++) {
             result[row][col] = sampleImage.getRGB(col, row);
         }
     }
-    
+
     return result;
 }
 ```
@@ -75,21 +75,21 @@ public int[][] get2DPixelArrayFast(BufferedImage image) {
     int height = image.getHeight();
     boolean hasAlphaChannel = image.getAlphaRaster() != null;
     int[][] result = new int[height][width];
-    
+
     if (hasAlphaChannel) {
         int numberOfValues = 4; // ARGB
-        for (int valueIndex = 0, row = 0, col = 0; 
-             valueIndex + numberOfValues - 1 < pixelData.length; 
+        for (int valueIndex = 0, row = 0, col = 0;
+             valueIndex + numberOfValues - 1 < pixelData.length;
              valueIndex += numberOfValues) {
-            
+
             int argb = 0;
             argb |= (((int) pixelData[valueIndex] & 0xff) << 24); // Alpha
             argb |= (((int) pixelData[valueIndex + 1] & 0xff) << 16); // Red
             argb |= (((int) pixelData[valueIndex + 2] & 0xff) << 8); // Green
             argb |= ((int) pixelData[valueIndex + 3] & 0xff); // Blue
-            
+
             result[row][col] = argb;
-            
+
             col++;
             if (col == width) {
                 col = 0;
@@ -98,18 +98,18 @@ public int[][] get2DPixelArrayFast(BufferedImage image) {
         }
     } else {
         int numberOfValues = 3; // RGB
-        for (int valueIndex = 0, row = 0, col = 0; 
-             valueIndex + numberOfValues - 1 < pixelData.length; 
+        for (int valueIndex = 0, row = 0, col = 0;
+             valueIndex + numberOfValues - 1 < pixelData.length;
              valueIndex += numberOfValues) {
-            
+
             int argb = 0;
             argb |= (0xFF << 24); // Alpha (непрозрачный)
             argb |= (((int) pixelData[valueIndex] & 0xff) << 16); // Red
             argb |= (((int) pixelData[valueIndex + 1] & 0xff) << 8); // Green
             argb |= ((int) pixelData[valueIndex + 2] & 0xff); // Blue
-            
+
             result[row][col] = argb;
-            
+
             col++;
             if (col == width) {
                 col = 0;
@@ -117,7 +117,7 @@ public int[][] get2DPixelArrayFast(BufferedImage image) {
             }
         }
     }
-    
+
     return result;
 }
 ```
@@ -169,21 +169,21 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 public class PixelArrayExtractor {
-    
+
     public static int[][] get2DPixelArraySlow(BufferedImage sampleImage) {
         int width = sampleImage.getWidth();
         int height = sampleImage.getHeight();
         int[][] result = new int[height][width];
-        
+
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
                 result[row][col] = sampleImage.getRGB(col, row);
             }
         }
-        
+
         return result;
     }
-    
+
     public static int[][] get2DPixelArrayFast(BufferedImage image) {
         byte[] pixelData = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         int width = image.getWidth();
@@ -191,11 +191,11 @@ public class PixelArrayExtractor {
         boolean hasAlphaChannel = image.getAlphaRaster() != null;
         int[][] result = new int[height][width];
         int pixelLength = hasAlphaChannel ? 4 : 3;
-        
-        for (int pixel = 0, row = 0, col = 0; 
-             pixel < pixelData.length; 
+
+        for (int pixel = 0, row = 0, col = 0;
+             pixel < pixelData.length;
              pixel += pixelLength) {
-            
+
             int argb = 0;
             if (hasAlphaChannel) {
                 argb |= (((int) pixelData[pixel] & 0xff) << 24); // Alpha
@@ -208,30 +208,30 @@ public class PixelArrayExtractor {
                 argb |= (((int) pixelData[pixel + 1] & 0xff) << 8); // Green
                 argb |= ((int) pixelData[pixel + 2] & 0xff); // Blue
             }
-            
+
             result[row][col] = argb;
-            
+
             col++;
             if (col == width) {
                 col = 0;
                 row++;
             }
         }
-        
+
         return result;
     }
-    
+
     public static void main(String[] args) throws IOException {
         BufferedImage image = ImageIO.read(new File("image.jpg"));
-        
+
         long start = System.currentTimeMillis();
         int[][] pixelsSlow = get2DPixelArraySlow(image);
         long slowTime = System.currentTimeMillis() - start;
-        
+
         start = System.currentTimeMillis();
         int[][] pixelsFast = get2DPixelArrayFast(image);
         long fastTime = System.currentTimeMillis() - start;
-        
+
         System.out.println("Slow method: " + slowTime + " ms");
         System.out.println("Fast method: " + fastTime + " ms");
         System.out.println("Speedup: " + (slowTime / (double) fastTime) + "x");
@@ -253,7 +253,7 @@ public BufferedImage adjustBrightness(BufferedImage image, float factor) {
     int width = image.getWidth();
     int height = image.getHeight();
     BufferedImage result = new BufferedImage(width, height, image.getType());
-    
+
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             Color color = new Color(image.getRGB(x, y));
@@ -263,7 +263,7 @@ public BufferedImage adjustBrightness(BufferedImage image, float factor) {
             result.setRGB(x, y, new Color(r, g, b).getRGB());
         }
     }
-    
+
     return result;
 }
 ```
@@ -301,13 +301,13 @@ fun get2DPixelArraySlowK(sampleImage: BufferedImage): Array<IntArray> {
     val width = sampleImage.width
     val height = sampleImage.height
     val result = Array(height) { IntArray(width) }
-    
+
     for (row in 0 until height) {
         for (col in 0 until width) {
             result[row][col] = sampleImage.getRGB(col, row)
         }
     }
-    
+
     return result
 }
 ```
@@ -323,14 +323,14 @@ fun get2DPixelArrayFastK(image: BufferedImage): Array<IntArray> {
     val hasAlphaChannel = image.alphaRaster != null
     val result = Array(height) { IntArray(width) }
     val pixelLength = if (hasAlphaChannel) 4 else 3
-    
+
     var valueIndex = 0
     var row = 0
     var col = 0
-    
+
     while (valueIndex + pixelLength - 1 < pixelData.size) {
         var argb = 0
-        
+
         if (hasAlphaChannel) {
             argb = argb or (((pixelData[valueIndex].toInt() and 0xff) shl 24)) // Alpha
             argb = argb or (((pixelData[valueIndex + 1].toInt() and 0xff) shl 16)) // Red
@@ -342,18 +342,18 @@ fun get2DPixelArrayFastK(image: BufferedImage): Array<IntArray> {
             argb = argb or (((pixelData[valueIndex + 1].toInt() and 0xff) shl 8)) // Green
             argb = argb or (pixelData[valueIndex + 2].toInt() and 0xff) // Blue
         }
-        
+
         result[row][col] = argb
-        
+
         col++
         if (col == width) {
             col = 0
             row++
         }
-        
+
         valueIndex += pixelLength
     }
-    
+
     return result
 }
 ```

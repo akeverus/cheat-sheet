@@ -117,7 +117,6 @@ related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 3. **GIN индексы**: Индексы для быстрого поиска
 4. **Ранжирование**: Сортировка результатов по релевантности
 
----
 
 ## **tsvector**
 
@@ -166,7 +165,6 @@ SELECT to_tsvector('english', 'the quick brown fox');
 SELECT to_tsvector('english', 'PostgreSQL') = to_tsvector('english', 'postgresql');
 ```
 
----
 
 ## **tsquery**
 
@@ -218,7 +216,6 @@ SELECT to_tsquery('english', 'PostgreSQL <-> database');
 SELECT to_tsquery('english', 'PostgreSQL <2> database');
 ```
 
----
 
 ## Базовый полнотекстовый поиск
 
@@ -240,11 +237,11 @@ WHERE to_tsvector('english', title || ' ' || body) @@ to_tsquery('english', 'Pos
 
 ```sql
 -- Создать GIN индекс
-CREATE INDEX idx_articles_body_gin ON articles 
+CREATE INDEX idx_articles_body_gin ON articles
 USING gin(to_tsvector('english', body));
 
 -- Создать индекс для нескольких полей
-CREATE INDEX idx_articles_search_gin ON articles 
+CREATE INDEX idx_articles_search_gin ON articles
 USING gin(to_tsvector('english', title || ' ' || body));
 ```
 
@@ -263,7 +260,6 @@ FROM articles
 WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL');
 ```
 
----
 
 ## Ранжирование результатов
 
@@ -273,7 +269,7 @@ WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL');
 
 ```sql
 -- Базовое ранжирование
-SELECT 
+SELECT
     title,
     body,
     ts_rank(to_tsvector('english', body), to_tsquery('english', 'PostgreSQL')) AS rank
@@ -288,7 +284,7 @@ ORDER BY rank DESC;
 
 ```sql
 -- Ранжирование с покрытием плотности
-SELECT 
+SELECT
     title,
     body,
     ts_rank_cd(to_tsvector('english', body), to_tsquery('english', 'PostgreSQL')) AS rank
@@ -301,7 +297,7 @@ ORDER BY rank DESC;
 
 ```sql
 -- Ранжирование с весами
-SELECT 
+SELECT
     title,
     body,
     ts_rank(
@@ -321,7 +317,6 @@ ORDER BY rank DESC;
 - `B`: тело документа
 - `A`: аннотация
 
----
 
 ## Поиск по нескольким полям
 
@@ -329,7 +324,7 @@ ORDER BY rank DESC;
 
 ```sql
 -- Поиск в нескольких полях с разными весами
-SELECT 
+SELECT
     title,
     body,
     ts_rank(
@@ -339,7 +334,7 @@ SELECT
         to_tsquery('english', 'PostgreSQL')
     ) AS rank
 FROM articles
-WHERE 
+WHERE
     setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(body, '')), 'B')
     @@ to_tsquery('english', 'PostgreSQL')
@@ -359,7 +354,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
@@ -369,7 +364,7 @@ BEGIN
             to_tsquery('english', search_query)
         ) AS rank
     FROM articles a
-    WHERE 
+    WHERE
         setweight(to_tsvector('english', coalesce(a.title, '')), 'A') ||
         setweight(to_tsvector('english', coalesce(a.body, '')), 'B')
         @@ to_tsquery('english', search_query)
@@ -381,7 +376,6 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM articles_search('PostgreSQL & database');
 ```
 
----
 
 ## Конфигурации языков
 
@@ -423,7 +417,6 @@ CREATE TEXT SEARCH DICTIONARY my_stopwords (
 );
 ```
 
----
 
 ## **GIN** индексы для полнотекстового поиска
 
@@ -431,11 +424,11 @@ CREATE TEXT SEARCH DICTIONARY my_stopwords (
 
 ```sql
 -- Базовый GIN индекс
-CREATE INDEX idx_articles_body_gin ON articles 
+CREATE INDEX idx_articles_body_gin ON articles
 USING gin(to_tsvector('english', body));
 
 -- GIN индекс для нескольких полей
-CREATE INDEX idx_articles_search_gin ON articles 
+CREATE INDEX idx_articles_search_gin ON articles
 USING gin(
     setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
     setweight(to_tsvector('english', coalesce(body, '')), 'B')
@@ -446,7 +439,7 @@ USING gin(
 
 ```sql
 -- Настройка параметров GIN индекса
-CREATE INDEX idx_articles_body_gin ON articles 
+CREATE INDEX idx_articles_body_gin ON articles
 USING gin(to_tsvector('english', body))
 WITH (fastupdate = off);
 
@@ -458,11 +451,11 @@ REINDEX INDEX idx_articles_body_gin;
 
 ```sql
 -- Размер индекса
-SELECT 
+SELECT
     pg_size_pretty(pg_relation_size('idx_articles_body_gin')) AS index_size;
 
 -- Статистика использования индекса
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -473,7 +466,6 @@ FROM pg_stat_user_indexes
 WHERE indexname = 'idx_articles_body_gin';
 ```
 
----
 
 ## Продвинутые техники
 
@@ -506,7 +498,7 @@ WHERE to_tsvector('english', body) @@ to_tsquery('english', 'databases');
 
 ```sql
 -- Подсветка найденных терминов
-SELECT 
+SELECT
     title,
     ts_headline(
         'english',
@@ -518,7 +510,6 @@ FROM articles
 WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL');
 ```
 
----
 
 ## Лучшие практики
 
@@ -541,7 +532,7 @@ WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL');
 **Решение:**
 ```sql
 -- Создать GIN индекс
-CREATE INDEX idx_articles_body_gin ON articles 
+CREATE INDEX idx_articles_body_gin ON articles
 USING gin(to_tsvector('english', body));
 
 -- Проверить использование индекса
@@ -620,9 +611,9 @@ BEGIN
             query := query || to_tsquery(lang, search_text);
         END IF;
     END LOOP;
-    
+
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
@@ -631,7 +622,7 @@ BEGIN
             query
         ) AS rank
     FROM articles a
-    WHERE 
+    WHERE
         to_tsvector('english', coalesce(a.title, '') || ' ' || coalesce(a.body, '')) @@ query
     ORDER BY rank DESC;
 END;
@@ -660,7 +651,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
@@ -670,7 +661,7 @@ BEGIN
             to_tsquery('english', search_query)
         ) AS rank
     FROM articles a
-    WHERE 
+    WHERE
         setweight(to_tsvector('english', coalesce(a.title, '')), 'A') ||
         setweight(to_tsvector('english', coalesce(a.body, '')), 'B')
         @@ to_tsquery('english', search_query)
@@ -694,7 +685,7 @@ CREATE OR REPLACE FUNCTION search_autocomplete(
 RETURNS TABLE(term TEXT, count BIGINT) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         word AS term,
         ndoc AS count
     FROM ts_stat($$
@@ -734,16 +725,16 @@ DECLARE
     term TEXT;
 BEGIN
     expanded_query := to_tsquery('english', query_text);
-    
+
     FOR synonym_rec IN
         SELECT term, synonyms FROM search_synonyms
     LOOP
         IF to_tsquery('english', synonym_rec.term) @@ expanded_query THEN
-            expanded_query := expanded_query | to_tsquery('english', 
+            expanded_query := expanded_query | to_tsquery('english',
                 array_to_string(synonym_rec.synonyms, ' | '));
         END IF;
     END LOOP;
-    
+
     RETURN expanded_query;
 END;
 $$ LANGUAGE plpgsql;
@@ -760,12 +751,12 @@ WHERE body_tsvector @@ expand_query_with_synonyms('PostgreSQL');
 
 ```sql
 -- Создать частичный индекс для активных статей
-CREATE INDEX idx_articles_active_gin ON articles 
+CREATE INDEX idx_articles_active_gin ON articles
 USING gin(to_tsvector('english', body))
 WHERE status = 'active';
 
 -- Создать индекс с настройками производительности
-CREATE INDEX idx_articles_body_gin ON articles 
+CREATE INDEX idx_articles_body_gin ON articles
 USING gin(to_tsvector('english', body))
 WITH (
     fastupdate = off,
@@ -801,7 +792,7 @@ EXECUTE search_articles('PostgreSQL');
 
 ```sql
 -- Проверить использование индексов
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -813,7 +804,7 @@ WHERE indexname LIKE '%gin%'
 ORDER BY idx_scan DESC;
 
 -- Проверить размер индексов
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -842,7 +833,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
@@ -853,7 +844,7 @@ BEGIN
             similarity(a.title, search_text) * 0.3
         ) AS combined_rank
     FROM articles a
-    WHERE 
+    WHERE
         body_tsvector @@ to_tsquery('english', search_text)
         OR a.title % search_text
     ORDER BY combined_rank DESC;
@@ -882,16 +873,16 @@ DECLARE
     point GEOGRAPHY;
 BEGIN
     point := ST_GeogFromText(format('POINT(%s %s)', lon, lat), 4326);
-    
+
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
         ts_rank(body_tsvector, to_tsquery('english', search_text)) AS rank,
         ST_Distance(a.location, point) AS distance
     FROM articles a
-    WHERE 
+    WHERE
         body_tsvector @@ to_tsquery('english', search_text)
         AND ST_DWithin(a.location, point, radius_meters)
     ORDER BY rank DESC, distance;
@@ -922,7 +913,7 @@ CREATE INDEX idx_blog_posts_search ON blog_posts USING gin(search_vector);
 CREATE OR REPLACE FUNCTION update_blog_search_vector()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.search_vector := 
+    NEW.search_vector :=
         setweight(to_tsvector('english', coalesce(NEW.title, '')), 'A') ||
         setweight(to_tsvector('english', coalesce(NEW.content, '')), 'B');
     RETURN NEW;
@@ -947,13 +938,13 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         p.id,
         p.title,
         p.content,
         ts_rank(p.search_vector, to_tsquery('english', query_text)) AS rank
     FROM blog_posts p
-    WHERE 
+    WHERE
         p.search_vector @@ to_tsquery('english', query_text)
         AND (category_filter IS NULL OR p.category_id = category_filter)
     ORDER BY rank DESC
@@ -992,13 +983,13 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         d.id,
         d.filename,
         d.content,
         ts_rank(d.search_vector, to_tsquery('english', query_text)) AS rank
     FROM documents d
-    WHERE 
+    WHERE
         d.search_vector @@ to_tsquery('english', query_text)
         AND (metadata_filter IS NULL OR d.metadata @> metadata_filter)
     ORDER BY rank DESC;
@@ -1048,7 +1039,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
@@ -1083,7 +1074,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.id,
         a.title,
         a.body,
@@ -1092,7 +1083,7 @@ BEGIN
             (1.0 - EXTRACT(EPOCH FROM (NOW() - a.created_at)) / (days_old * 86400.0))
         ) AS rank
     FROM articles a
-    WHERE 
+    WHERE
         body_tsvector @@ to_tsquery('english', query_text)
         AND a.created_at > NOW() - (days_old || ' days')::INTERVAL
     ORDER BY rank DESC;
@@ -1116,7 +1107,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.category_id::TEXT AS cluster_value,
         a.id,
         a.title,
@@ -1219,7 +1210,7 @@ ANALYZE articles;
 ```sql
 -- Использовать prepared statements
 PREPARE search_articles(TEXT) AS
-SELECT 
+SELECT
     id,
     title,
     ts_rank(body_tsvector, to_tsquery('english', $1)) AS rank
@@ -1230,11 +1221,11 @@ LIMIT 20;
 
 -- Кэшировать результаты для популярных запросов
 CREATE MATERIALIZED VIEW popular_searches AS
-SELECT 
+SELECT
     query_text,
     array_agg(id ORDER BY rank DESC) AS article_ids
 FROM (
-    SELECT 
+    SELECT
         'PostgreSQL' AS query_text,
         id,
         ts_rank(body_tsvector, to_tsquery('english', 'PostgreSQL')) AS rank
@@ -1256,7 +1247,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY popular_searches;
 ```sql
 -- Создать представление для мониторинга
 CREATE VIEW fulltext_search_stats AS
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -1293,7 +1284,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Запланировать через pg_cron
-SELECT cron.schedule('maintain-gin-indexes', '0 3 * * 0', 
+SELECT cron.schedule('maintain-gin-indexes', '0 3 * * 0',
     'SELECT maintain_gin_indexes();');
 ```
 
@@ -1332,7 +1323,7 @@ ALTER INDEX idx_articles_body_gin SET (fastupdate = off);
 
 ```sql
 -- Проверить размер индекса
-SELECT 
+SELECT
     pg_size_pretty(pg_relation_size('idx_articles_body_gin')) AS index_size;
 
 -- Оптимизировать индекс
@@ -1340,7 +1331,7 @@ REINDEX INDEX CONCURRENTLY idx_articles_body_gin;
 
 -- Использовать частичный индекс
 DROP INDEX idx_articles_body_gin;
-CREATE INDEX idx_articles_body_gin ON articles 
+CREATE INDEX idx_articles_body_gin ON articles
 USING gin(body_tsvector)
 WHERE status = 'active';
 ```

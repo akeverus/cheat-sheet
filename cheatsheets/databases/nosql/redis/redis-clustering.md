@@ -98,7 +98,7 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 
 ## Введение в **Redis Cluster**
 
-**Redis Cluster** - это встроенное решение для горизонтального масштабирования **Redis**. Оно обеспечивает автоматическое шардинг данных, репликацию и высокую доступность без использования внешних инструментов.
+**Redis Cluster** — это встроенное решение для горизонтального масштабирования **Redis**. Оно обеспечивает автоматическое шардинг данных, репликацию и высокую доступность без использования внешних инструментов.
 
 ### Основные возможности **Redis Cluster**
 
@@ -110,7 +110,7 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 
 ### Архитектура **Redis Cluster**
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    Redis Cluster                       │
 ├─────────────────────────────────────────────────────────┤
@@ -122,7 +122,6 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
----
 
 ## Настройка **Redis Cluster**
 
@@ -191,7 +190,6 @@ OK
 "value"
 ```
 
----
 
 ## Работа с кластером
 
@@ -239,7 +237,6 @@ MGET user:{1000}:name user:{1000}:email user:{1000}:age
 # MGET key1 key2 key3  # Может вызвать ошибку CROSSSLOT
 ```
 
----
 
 ## Управление кластером
 
@@ -297,7 +294,6 @@ redis-cli --cluster rebalance \
   --cluster-weight node1=1 node2=2 node3=1
 ```
 
----
 
 ## Мониторинг кластера
 
@@ -331,28 +327,27 @@ CLUSTER_NODES="127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003"
 for node in $CLUSTER_NODES; do
     host=$(echo $node | cut -d: -f1)
     port=$(echo $node | cut -d: -f2)
-    
+
     echo "Checking node $node..."
-    
+
     # Проверить статус узла
     CLUSTER_INFO=$(redis-cli -h $host -p $port CLUSTER INFO)
     CLUSTER_STATE=$(echo "$CLUSTER_INFO" | grep "cluster_state" | cut -d: -f2 | tr -d ' ')
-    
+
     if [ "$CLUSTER_STATE" != "ok" ]; then
         echo "WARNING: Cluster state is $CLUSTER_STATE on $node"
     fi
-    
+
     # Проверить количество подключенных узлов
     CLUSTER_SIZE=$(echo "$CLUSTER_INFO" | grep "cluster_known_nodes" | cut -d: -f2 | tr -d ' ')
     echo "Cluster size: $CLUSTER_SIZE nodes"
-    
+
     # Проверить слоты
     SLOTS=$(redis-cli -h $host -p $port CLUSTER NODES | grep $node | grep -o "\[.*\]" | tr -d '[]' | cut -d'-' -f1)
     echo "Slots: $SLOTS"
 done
 ```
 
----
 
 ## **Failover** в кластере
 
@@ -377,7 +372,6 @@ CLUSTER FAILOVER FORCE
 CLUSTER FAILOVER TAKEOVER
 ```
 
----
 
 ## Оптимизация кластера
 
@@ -404,7 +398,6 @@ tcp-backlog 511
 tcp-keepalive 300
 ```
 
----
 
 ## Решение проблем
 
@@ -450,7 +443,6 @@ GET user:{1000}:email
 EXEC
 ```
 
----
 
 ## Лучшие практики
 
@@ -568,18 +560,18 @@ public class RedisClusterExample {
         jedisClusterNodes.add(new HostAndPort("127.0.0.1", 7001));
         jedisClusterNodes.add(new HostAndPort("127.0.0.1", 7002));
         jedisClusterNodes.add(new HostAndPort("127.0.0.1", 7003));
-        
+
         JedisCluster jedisCluster = new JedisCluster(
             jedisClusterNodes,
             2000,  // connection timeout
             5,     // max redirects
             new JedisPoolConfig()
         );
-        
+
         // Использование кластера
         jedisCluster.set("key", "value");
         String value = jedisCluster.get("key");
-        
+
         jedisCluster.close();
     }
 }
@@ -987,11 +979,7 @@ tcp-keepalive 300
 cluster-node-timeout 3000
 ```
 
----
 
 - [Redis Cluster Tutorial](https://redis.io/docs/manual/scaling/)
 - [Redis Cluster Specification](https://redis.io/docs/reference/cluster-spec/)
-
----
-
 

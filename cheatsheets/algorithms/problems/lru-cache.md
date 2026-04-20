@@ -66,7 +66,7 @@ public interface Cache<K, V> {
 }
 ```
 
-```
+```text
 ```java
 // LRUCache: map ключ→узел списка, двусвязный список для порядка LRU
 import java.util.HashMap;
@@ -76,14 +76,14 @@ public class LRUCache<K, V> implements Cache<K, V> {
     private int size;
     private Map<K, LinkedListNode<CacheElement<K, V>>> linkedListNodeMap;
     private DoublyLinkedList<CacheElement<K, V>> doublyLinkedList;
-    
+
     public LRUCache(int size) {
         this.size = size;
         this.linkedListNodeMap = new HashMap<>(size);
         this.doublyLinkedList = new DoublyLinkedList<>();
     }
 }
-```
+```text
 
 #### Метод put
 
@@ -92,7 +92,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
 public boolean put(K key, V value) {
     CacheElement<K, V> item = new CacheElement<>(key, value);
     LinkedListNode<CacheElement<K, V>> newNode;
-    
+
     if (this.linkedListNodeMap.containsKey(key)) {
         // Попадание в кэш - обновляем и перемещаем в начало
         LinkedListNode<CacheElement<K, V>> node = this.linkedListNodeMap.get(key);
@@ -104,11 +104,11 @@ public boolean put(K key, V value) {
         }
         newNode = this.doublyLinkedList.add(item);
     }
-    
+
     if (newNode.isEmpty()) {
         return false;
     }
-    
+
     this.linkedListNodeMap.put(key, newNode);
     return true;
 }
@@ -118,22 +118,22 @@ public boolean put(K key, V value) {
 
 #### Метод get
 
-```
+```text
 ```java
 public Optional<V> get(K key) {
     LinkedListNode<CacheElement<K, V>> linkedListNode = this.linkedListNodeMap.get(key);
-    
+
     if (linkedListNode != null && !linkedListNode.isEmpty()) {
         linkedListNodeMap.put(key, this.doublyLinkedList.moveToFront(linkedListNode));
         return Optional.of(linkedListNode.getElement().getValue());
     }
-    
+
     return Optional.empty();
 }
 
 Вспомогательные методы: отцепляем узел и добавляем в голову (`updateAndMoveToFront`), обёртка `moveToFront`.
 
-```
+```text
 ```java
 public LinkedListNode<T> updateAndMoveToFront(LinkedListNode<T> node, T newValue) {
     if (node.isEmpty() || (this != (node.getListReference()))) {
@@ -143,7 +143,7 @@ public LinkedListNode<T> updateAndMoveToFront(LinkedListNode<T> node, T newValue
     add(newValue);
     return head;
 }
-```
+```text
 
 
 ```
@@ -157,7 +157,7 @@ public LinkedListNode<T> moveToFront(LinkedListNode<T> node) {
 
 ReentrantReadWriteLock: readLock для get, writeLock для put/evict; при необходимости ConcurrentHashMap. Блокировку снимать в finally.
 
-```
+```text
 ```java
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -167,13 +167,13 @@ public class LRUCache<K, V> implements Cache<K, V> {
     private final Map<K, LinkedListNode<CacheElement<K, V>>> linkedListNodeMap;
     private final DoublyLinkedList<CacheElement<K, V>> doublyLinkedList;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    
+
     public LRUCache(int size) {
         this.size = size;
         this.linkedListNodeMap = new ConcurrentHashMap<>(size);
         this.doublyLinkedList = new DoublyLinkedList<>();
     }
-    
+
     public boolean put(K key, V value) {
         this.lock.writeLock().lock();
         try {
@@ -182,7 +182,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
             this.lock.writeLock().unlock();
         }
     }
-    
+
     public Optional<V> get(K key) {
         this.lock.readLock().lock();
         try {
@@ -192,7 +192,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
         }
     }
 }
-```
+```text
 
 ## Kotlin Implementation
 
@@ -207,27 +207,27 @@ class LRUCacheK<K, V>(private val capacity: Int) {
             return size > capacity
         }
     }
-    
+
     @Synchronized
     fun get(key: K): V? = cache[key]
-    
+
     @Synchronized
     fun put(key: K, value: V) {
         cache[key] = value
     }
-    
+
     @Synchronized
     fun size(): Int = cache.size
-    
+
     @Synchronized
     fun isEmpty(): Boolean = cache.isEmpty()
-    
+
     @Synchronized
     fun clear() = cache.clear()
 }
 ```
 
-```
+```text
 ```kotlin
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -240,23 +240,23 @@ class ThreadSafeLRUCacheK<K, V>(private val capacity: Int) {
         }
     }
     private val lock = ReentrantReadWriteLock()
-    
+
     fun get(key: K): V? = lock.read {
         cache[key]
     }
-    
+
     fun put(key: K, value: V): Boolean = lock.write {
         cache[key] = value
         true
     }
-    
+
     fun size(): Int = lock.read { cache.size }
-    
+
     fun isEmpty(): Boolean = lock.read { cache.isEmpty() }
-    
+
     fun clear() = lock.write { cache.clear() }
 }
-```
+```text
 
 ### Пример использования
 
@@ -264,15 +264,15 @@ class ThreadSafeLRUCacheK<K, V>(private val capacity: Int) {
 ```kotlin
 fun main() {
     val cache = LRUCacheK<Int, String>(3)
-    
+
     cache.put(1, "One")
     cache.put(2, "Two")
     cache.put(3, "Three")
-    
+
     println(cache.get(1)) // "One"
-    
+
     cache.put(4, "Four") // Вытесняет элемент 2
-    
+
     println(cache.get(2)) // null
     println(cache.get(4)) // "Four"
 }
@@ -294,7 +294,7 @@ get/put/evict — O(1). Память O(n) для n элементов кэша (
 
 ### Вариант 1: LinkedHashMap
 
-```
+```text
 ```java
 // accessOrder=true + removeEldestEntry — встроенный LRU
 import java.util.LinkedHashMap;
@@ -302,18 +302,18 @@ import java.util.Map;
 
 public class LRUCacheLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
     private final int capacity;
-    
+
     public LRUCacheLinkedHashMap(int capacity) {
         super(capacity, 0.75f, true);
         this.capacity = capacity;
     }
-    
+
     @Override
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
         return size() > capacity;
     }
 }
-```
+```text
 
 ### Вариант 2: LRU с TTL
 
@@ -322,13 +322,13 @@ public class LRUCacheLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
 public class LRUCacheWithTTL<K, V> extends LRUCache<K, V> {
     private final Map<K, Long> timestamps;
     private final long ttl;
-    
+
     public LRUCacheWithTTL(int size, long ttl) {
         super(size);
         this.timestamps = new HashMap<>();
         this.ttl = ttl;
     }
-    
+
     @Override
     public Optional<V> get(K key) {
         if (timestamps.containsKey(key)) {
@@ -371,4 +371,4 @@ LRU уместен при ограниченном размере кэша, ко
 
 В документе описана реализация LRU-кэша: HashMap + двусвязный список для O(1), потокобезопасный вариант, вариант на LinkedHashMap и с TTL. Для продакшена часто удобнее Caffeine или Guava Cache.
 
-```
+```text

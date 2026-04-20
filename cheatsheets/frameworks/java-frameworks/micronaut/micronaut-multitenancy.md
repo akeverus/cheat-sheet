@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-data.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Multitenancy - Multi-tenant Applications
-
-
+# Micronaut: Multitenancy — Multi-tenant Applications
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-data.md", "micronaut-security.md"]
 
 ## Содержание
 
-- [Micronaut: Multitenancy - Multi-tenant Applications](#micronaut-multitenancy-multi-tenant-applications)
+- [Micronaut: Multitenancy — Multi-tenant Applications](#micronaut-multitenancy-multi-tenant-applications)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Multitenancy](#настройка-multitenancy)
@@ -109,7 +107,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomTenantResolver implements HttpHeaderTenantResolver {
-    
+
     @Override
     public String resolveTenantIdentifier(HttpRequest<?> request) {
         return request.getHeaders().get("X-Tenant-Id");
@@ -125,7 +123,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class SubdomainTenantResolver implements TenantResolver {
-    
+
     @Override
     public String resolveTenantIdentifier(HttpRequest<?> request) {
         String host = request.getUri().getHost();
@@ -149,7 +147,7 @@ import io.micronaut.multitenancy.tenantresolver.TenantResolver;
 
 @JdbcRepository
 public interface UserRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM users WHERE tenant_id = :tenantId")
     List<User> findByTenantId(String tenantId);
 }
@@ -165,14 +163,14 @@ import jakarta.inject.Singleton;
 public class TenantAwareUserService {
     private final TenantResolver tenantResolver;
     private final UserRepository userRepository;
-    
+
     public TenantAwareUserService(
             TenantResolver tenantResolver,
             UserRepository userRepository) {
         this.tenantResolver = tenantResolver;
         this.userRepository = userRepository;
     }
-    
+
     public List<User> getUsers(HttpRequest<?> request) {
         String tenantId = tenantResolver.resolveTenantIdentifier(request);
         return userRepository.findByTenantId(tenantId);
@@ -206,11 +204,11 @@ import jakarta.inject.Singleton;
 @ConfigurationProperties("tenants")
 public class TenantConfiguration {
     private Map<String, TenantConfig> tenants = new HashMap<>();
-    
+
     public TenantConfig getTenantConfig(String tenantId) {
         return tenants.get(tenantId);
     }
-    
+
     // Getters and setters
 }
 ```
@@ -258,20 +256,20 @@ import jakarta.inject.Singleton;
 public class TenantContextProvider {
     private final ThreadLocal<String> tenantContext = new ThreadLocal<>();
     private final TenantResolver tenantResolver;
-    
+
     public TenantContextProvider(TenantResolver tenantResolver) {
         this.tenantResolver = tenantResolver;
     }
-    
+
     public void setTenant(HttpRequest<?> request) {
         String tenantId = tenantResolver.resolveTenantIdentifier(request);
         tenantContext.set(tenantId);
     }
-    
+
     public String getTenant() {
         return tenantContext.get();
     }
-    
+
     public void clear() {
         tenantContext.remove();
     }
@@ -289,7 +287,7 @@ import jakarta.inject.Singleton;
 
 @Factory
 public class TenantDataSourceFactory {
-    
+
     @Bean
     @Singleton
     public DataSource dataSource(TenantContextProvider tenantContext) {
@@ -311,10 +309,10 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 
 @JdbcRepository
 public interface TenantAwareRepository extends CrudRepository<User, Long> {
-    
+
     @Query("SELECT * FROM users WHERE tenant_id = :tenantId")
     List<User> findAllByTenant(String tenantId);
-    
+
     // Автоматическая фильтрация по tenant_id
     default List<User> findAllForCurrentTenant(String tenantId) {
         return findAllByTenant(tenantId);
@@ -334,12 +332,12 @@ import jakarta.inject.Singleton;
 public class TenantValidationService {
     private final TenantResolver tenantResolver;
     private final Set<String> validTenants;
-    
+
     public TenantValidationService(TenantResolver tenantResolver) {
         this.tenantResolver = tenantResolver;
         this.validTenants = Set.of("tenant1", "tenant2", "tenant3");
     }
-    
+
     public void validateTenant(HttpRequest<?> request) {
         String tenantId = tenantResolver.resolveTenantIdentifier(request);
         if (tenantId == null || !validTenants.contains(tenantId)) {
@@ -359,7 +357,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class TenantCacheService {
-    
+
     @Cacheable("tenant-config")
     public TenantConfig getTenantConfig(String tenantId) {
         return tenantConfiguration.getTenantConfig(tenantId);
@@ -379,7 +377,7 @@ import jakarta.inject.Singleton;
 @Controller("/api/tenant")
 @Secured("ROLE_TENANT_ADMIN")
 public class TenantController {
-    
+
     @Get("/{tenantId}/users")
     @Secured("ROLE_USER_MANAGER")
     public List<User> getUsers(String tenantId) {
@@ -400,3 +398,11 @@ public class TenantController {
 - [**Micronaut Multitenancy** Documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/#multitenancy)
 - [**Multi-tenancy Patterns**](https://docs.microsoft.com/en-us/azure/architecture/patterns/multi-tenancy)
 - [**Tenant Isolation** Strategies](https://www.baeldung.com/java-multitenancy-spring-boot)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

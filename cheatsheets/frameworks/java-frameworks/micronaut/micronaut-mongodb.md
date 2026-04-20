@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-data.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: MongoDB Integration - Repositories и Queries
-
-
+# Micronaut: MongoDB Integration — Repositories и Queries
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-data.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: MongoDB Integration - Repositories и Queries](#micronaut-mongodb-integration-repositories-и-queries)
+- [Micronaut: MongoDB Integration — Repositories и Queries](#micronaut-mongodb-integration-repositories-и-queries)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка MongoDB](#настройка-mongodb)
@@ -116,7 +114,7 @@ public class User {
     private String name;
     private String email;
     private Integer age;
-    
+
     // Getters and setters
 }
 ```
@@ -129,13 +127,13 @@ import io.micronaut.data.repository.CrudRepository;
 
 @MongoRepository
 public interface UserRepository extends CrudRepository<User, String> {
-    
+
     Optional<User> findByEmail(String email);
-    
+
     List<User> findByAgeGreaterThan(Integer age);
-    
+
     long countByAge(Integer age);
-    
+
     void deleteByEmail(String email);
 }
 ```
@@ -147,13 +145,13 @@ public interface UserRepository extends CrudRepository<User, String> {
 ```java
 @MongoRepository
 public interface UserRepository extends CrudRepository<User, String> {
-    
+
     @Query("{ 'age': { $gt: :minAge, $lt: :maxAge } }")
     List<User> findByAgeRange(Integer minAge, Integer maxAge);
-    
+
     @Query("{ 'name': { $regex: :name, $options: 'i' } }")
     List<User> findByNameLike(String name);
-    
+
     @Query(value = "{ 'age': { $gte: :age } }", sort = "{ 'name': 1 }")
     List<User> findAdultsSorted(Integer age);
 }
@@ -166,10 +164,10 @@ public interface UserRepository extends CrudRepository<User, String> {
 ```java
 @MongoRepository
 public interface UserRepository extends CrudRepository<User, String> {
-    
+
     @Aggregation("{ $group: { _id: '$age', count: { $sum: 1 } } }")
     List<AgeGroup> groupByAge();
-    
+
     @Aggregation(pipeline = {
         "{ $match: { age: { $gte: :minAge } } }",
         "{ $group: { _id: '$age', users: { $push: '$$ROOT' } } }",
@@ -192,16 +190,16 @@ import java.io.OutputStream;
 @Singleton
 public class GridFSService {
     private final GridFSBucket gridFSBucket;
-    
+
     public GridFSService(GridFSBucket gridFSBucket) {
         this.gridFSBucket = gridFSBucket;
     }
-    
+
     public String storeFile(String filename, InputStream inputStream) {
         ObjectId fileId = gridFSBucket.uploadFromStream(filename, inputStream);
         return fileId.toString();
     }
-    
+
     public void retrieveFile(String fileId, OutputStream outputStream) {
         gridFSBucket.downloadToStream(new ObjectId(fileId), outputStream);
     }
@@ -219,13 +217,13 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
 @MongoRepository
-public interface ReactiveUserRepository 
+public interface ReactiveUserRepository
         extends ReactiveStreamsRepository<User, String> {
-    
+
     Mono<User> findByEmail(String email);
-    
+
     Flux<User> findByAgeGreaterThan(Integer age);
-    
+
     Mono<Long> countByAge(Integer age);
 }
 ```
@@ -277,7 +275,7 @@ import jakarta.inject.Singleton;
 public class TransactionalUserService {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
-    
+
     @Transactional
     public User createUserWithOrder(User user, Order order) {
         User savedUser = userRepository.save(user);
@@ -300,15 +298,15 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ChangeStreamService {
     private final MongoDatabase mongoDatabase;
-    
+
     public ChangeStreamService(MongoDatabase mongoDatabase) {
         this.mongoDatabase = mongoDatabase;
     }
-    
+
     public void watchChanges() {
-        ChangeStreamIterable<Document> changeStream = 
+        ChangeStreamIterable<Document> changeStream =
             mongoDatabase.getCollection("users").watch();
-        
+
         changeStream.forEach(change -> {
             System.out.println("Change detected: " + change);
             // Обработка изменений
@@ -329,21 +327,21 @@ import jakarta.inject.Singleton;
 @Singleton
 public class IndexService {
     private final MongoCollection<Document> userCollection;
-    
+
     public IndexService(MongoCollection<Document> userCollection) {
         this.userCollection = userCollection;
     }
-    
+
     public void createIndexes() {
         // Создание индекса на поле email
         userCollection.createIndex(Indexes.ascending("email"));
-        
+
         // Создание составного индекса
         userCollection.createIndex(Indexes.compoundIndex(
             Indexes.ascending("name"),
             Indexes.ascending("age")
         ));
-        
+
         // Создание текстового индекса
         userCollection.createIndex(Indexes.text("name", "description"));
     }
@@ -365,19 +363,19 @@ import java.util.List;
 @Singleton
 public class BulkOperationService {
     private final MongoCollection<User> userCollection;
-    
+
     public BulkOperationService(MongoCollection<User> userCollection) {
         this.userCollection = userCollection;
     }
-    
+
     public void bulkInsert(List<User> users) {
         List<InsertOneModel<User>> inserts = users.stream()
             .map(InsertOneModel::new)
             .collect(Collectors.toList());
-        
+
         userCollection.bulkWrite(inserts, new BulkWriteOptions().ordered(false));
     }
-    
+
     public void bulkUpdate(List<User> users) {
         List<UpdateOneModel<User>> updates = users.stream()
             .map(user -> new UpdateOneModel<>(
@@ -385,7 +383,7 @@ public class BulkOperationService {
                 Updates.set("name", user.getName())
             ))
             .collect(Collectors.toList());
-        
+
         userCollection.bulkWrite(updates);
     }
 }
@@ -402,15 +400,15 @@ import com.mongodb.client.model.Filters;
 @Singleton
 public class TextSearchService {
     private final MongoCollection<User> userCollection;
-    
+
     public TextSearchService(MongoCollection<User> userCollection) {
         this.userCollection = userCollection;
     }
-    
+
     public void createTextIndex() {
         userCollection.createIndex(Indexes.text("name", "email"));
     }
-    
+
     public List<User> searchUsers(String searchText) {
         return userCollection.find(Filters.text(searchText))
             .into(new ArrayList<>());
@@ -443,3 +441,11 @@ mongodb:
 - [**MongoDB Change Streams**](https://www.mongodb.com/docs/manual/changeStreams/)
 - [**MongoDB** Indexes](https://www.mongodb.com/docs/manual/indexes/)
 - [**MongoDB Text Search**](https://www.mongodb.com/docs/manual/text-search/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

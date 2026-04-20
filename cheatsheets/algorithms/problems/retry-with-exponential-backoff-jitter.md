@@ -14,8 +14,6 @@ updated: "2026-02-11"
 
 Повторы с растущими паузами (exponential backoff) и джиттером снижают нагрузку на сервис и предотвращают «стадный» эффект синхронных повторов в распределённых системах.
 
-
-
 ## Полезные ссылки
 
 - [Resilience4j Retry](https://resilience4j.readme.io/docs/retry)
@@ -64,9 +62,9 @@ wait_interval = base * multiplier^n
 
 **where**:
 
-- **base** - **initial interval**, **i.e**., **wait for the first retry**
-- **n** - **number** of **failures that have occurred**
-- **multiplier** - **arbitrary multiplier that can** be **replaced with any suitable value**
+- **base** — **initial interval**, **i.e**., **wait for the first retry**
+- **n** — **number** of **failures that have occurred**
+- **multiplier** — **arbitrary multiplier that can** be **replaced with any suitable value**
 
 **With this approach**, we **give the system** a **breather** to **recover from periodic failures** or **even more serious problems**.
 
@@ -111,7 +109,7 @@ pingPongFn.apply("Hello");
 
 ```java
 ExecutorService executors = Executors.newFixedThreadPool(NUM_CONCURRENT_CLIENTS);
-List<Callable<String>> tasks = Collections.nCopies(NUM_CONCURRENT_CLIENTS, 
+List<Callable<String>> tasks = Collections.nCopies(NUM_CONCURRENT_CLIENTS,
     () -> pingPongFn.apply("Hello"));
 executors.invokeAll(tasks);
 ```
@@ -137,9 +135,9 @@ executors.invokeAll(tasks);
 [thread-1] At 00:37:49.808
 ```
 
-**Here** we **see** a **clear pattern** - **clients wait for exponentially growing intervals**, **but they all call the remote service** at **exactly the same time** on **each retry** (**collisions**).
+**Here** we **see** a **clear pattern** — **clients wait for exponentially growing intervals**, **but they all call the remote service** at **exactly the same time** on **each retry** (**collisions**).
 
-We've **only solved part** of **the problem** - we're no **longer hammering the remote service with retries**, **but instead** of **distributing the load over time**, we **have alternating periods** of **work with large idle times**. **This behavior** is **akin** to **the thundering herd problem**.
+We've **only solved part** of **the problem** — we're no **longer hammering the remote service with retries**, **but instead** of **distributing the load over time**, we **have alternating periods** of **work with large idle times**. **This behavior** is **akin** to **the thundering herd problem**.
 
 ### Добавление джиттера
 
@@ -175,8 +173,8 @@ wait_interval = random(base, previous_wait_interval * 3)
 
 ```java
 IntervalFunction intervalFn = IntervalFunction.ofExponentialRandomBackoff(
-    INITIAL_INTERVAL, 
-    MULTIPLIER, 
+    INITIAL_INTERVAL,
+    MULTIPLIER,
     RANDOMIZATION_FACTOR
 );
 ```
@@ -196,12 +194,12 @@ import java.time.LocalDateTime;
 import java.util.function.Function;
 
 public class RetryWithBackoffExample {
-    
+
     private static final long INITIAL_INTERVAL = 1000; // 1 second
     private static final double MULTIPLIER = 2.0;
     private static final double RANDOMIZATION_FACTOR = 0.5; // 50% jitter
     private static final int MAX_RETRIES = 5;
-    
+
     public static void main(String[] args) {
         // Create interval function with exponential backoff and jitter
         IntervalFunction intervalFn = IntervalFunction.ofExponentialRandomBackoff(
@@ -209,27 +207,27 @@ public class RetryWithBackoffExample {
             MULTIPLIER,
             RANDOMIZATION_FACTOR
         );
-        
+
         // Configure retry
         RetryConfig retryConfig = RetryConfig.custom()
             .maxAttempts(MAX_RETRIES)
             .intervalFunction(intervalFn)
             .retryOnException(exception -> exception instanceof PingPongServiceException)
             .build();
-        
+
         Retry retry = Retry.of("pingpong", retryConfig);
-        
+
         // Create service
         PingPongService service = new PingPongService();
-        
+
         // Decorate function with retry
         Function<String, String> pingPongFn = Retry
             .decorateFunction(retry, ping -> {
-                System.out.println("[" + Thread.currentThread().getName() + 
+                System.out.println("[" + Thread.currentThread().getName() +
                     "] Calling service at " + LocalDateTime.now());
                 return service.call(ping);
             });
-        
+
         // Test with multiple concurrent calls
         ExecutorService executor = Executors.newFixedThreadPool(4);
         for (int i = 0; i < 4; i++) {
@@ -242,13 +240,13 @@ public class RetryWithBackoffExample {
                 }
             });
         }
-        
+
         executor.shutdown();
     }
-    
+
     static class PingPongService {
         private int attemptCount = 0;
-        
+
         public String call(String ping) throws PingPongServiceException {
             attemptCount++;
             if (attemptCount < 3) {
@@ -257,7 +255,7 @@ public class RetryWithBackoffExample {
             return "Pong: " + ping;
         }
     }
-    
+
     static class PingPongServiceException extends Exception {
         public PingPongServiceException(String message) {
             super(message);
@@ -272,22 +270,22 @@ public class RetryWithBackoffExample {
 
 ```java
 public class CustomRetryWithJitter {
-    
+
     private static final long INITIAL_INTERVAL = 1000;
     private static final double MULTIPLIER = 2.0;
     private static final Random random = new Random();
-    
+
     public static long calculateBackoffWithJitter(int attemptNumber) {
         long baseInterval = (long) (INITIAL_INTERVAL * Math.pow(MULTIPLIER, attemptNumber));
-        
+
         // Full jitter: random between 0 and baseInterval
         return random.nextLong(baseInterval);
-        
+
         // Or equal jitter:
         // long halfInterval = baseInterval / 2;
         // return halfInterval + random.nextLong(halfInterval);
     }
-    
+
     public static <T> T retryWithBackoff(Supplier<T> operation, int maxRetries) {
         for (int attempt = 0; attempt < maxRetries; attempt++) {
             try {
@@ -296,11 +294,11 @@ public class CustomRetryWithJitter {
                 if (attempt == maxRetries - 1) {
                     throw new RuntimeException("Max retries exceeded", e);
                 }
-                
+
                 long backoff = calculateBackoffWithJitter(attempt);
-                System.out.println("Attempt " + (attempt + 1) + " failed. Retrying in " + 
+                System.out.println("Attempt " + (attempt + 1) + " failed. Retrying in " +
                     backoff + "ms");
-                
+
                 try {
                     Thread.sleep(backoff);
                 } catch (InterruptedException ie) {
@@ -352,22 +350,22 @@ object RetryWithBackoffExampleK {
     private const val MULTIPLIER = 2.0
     private const val RANDOMIZATION_FACTOR = 0.5 // 50% jitter
     private const val MAX_RETRIES = 5
-    
+
     fun createRetryWithBackoff(service: PingPongServiceK): Function<String, String> {
         val intervalFn = IntervalFunction.ofExponentialRandomBackoff(
             INITIAL_INTERVAL,
             MULTIPLIER,
             RANDOMIZATION_FACTOR
         )
-        
+
         val retryConfig = RetryConfig.custom<String>()
             .maxAttempts(MAX_RETRIES)
             .intervalFunction(intervalFn)
             .retryOnException { it is PingPongServiceExceptionK }
             .build()
-        
+
         val retry = Retry.of("pingpong", retryConfig)
-        
+
         return Retry.decorateFunction(retry) { ping ->
             println("${LocalDateTime.now()}: Calling service with: $ping")
             service.call(ping)
@@ -388,7 +386,7 @@ class PingPongServiceExceptionK(message: String) : Exception(message)
 fun main() {
     val service = object : PingPongServiceK {
         private var attemptCount = 0
-        
+
         override fun call(ping: String): String {
             attemptCount++
             if (attemptCount < 3) {
@@ -397,10 +395,17 @@ fun main() {
             return "Pong: $ping"
         }
     }
-    
+
     val retryFunction = RetryWithBackoffExampleK.createRetryWithBackoff(service)
     val result = retryFunction.apply("Hello")
     println("Result: $result")
 }
 ```
 
+## См. также
+
+- [[a-star-pathfinding|Поиск пути A* (A* Pathfinding Algorithm)]]
+- [[algorithms|Хеширование и хеш-функции (Hashing and Hash Functions)]]
+- [[branch-prediction|Предсказание ветвления (Branch Prediction)]]
+- [[calculator-implementation|Calculator Implementation]]
+- [[circular-buffer|Circular Buffer]]

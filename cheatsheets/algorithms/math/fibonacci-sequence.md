@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 Ряд Фибоначчи представляет собой ряд чисел, в котором каждый член является суммой двух предыдущих членов. Первые два члена 0 и 1.
 
-Например, первые 11 членов ряда - это 0, 1, 1, 2, 3, 5, 8, 13, 21, 34 и 55.
+Например, первые 11 членов ряда — это 0, 1, 1, 2, 3, 5, 8, 13, 21, 34 и 55.
 
 ### Математическое определение
 
@@ -114,12 +114,12 @@ private static int nthFibonacciTermMemoizedHelper(int n, Map<Integer, Integer> m
     if (n == 0 || n == 1) {
         return n;
     }
-    
+
     if (memo.containsKey(n)) {
         return memo.get(n);
     }
-    
-    int result = nthFibonacciTermMemoizedHelper(n-1, memo) + 
+
+    int result = nthFibonacciTermMemoizedHelper(n-1, memo) +
                  nthFibonacciTermMemoizedHelper(n-2, memo);
     memo.put(n, result);
     return result;
@@ -138,16 +138,16 @@ public static int nthFibonacciTerm(int n) {
     if (n == 0 || n == 1) {
         return n;
     }
-    
+
     int n0 = 0, n1 = 1;
     int tempNthTerm;
-    
+
     for (int i = 2; i <= n; i++) {
         tempNthTerm = n0 + n1;
         n0 = n1;
         n1 = tempNthTerm;
     }
-    
+
     return n1;
 }
 ```
@@ -164,15 +164,15 @@ public static int nthFibonacciTermArray(int n) {
     if (n == 0 || n == 1) {
         return n;
     }
-    
+
     int[] fib = new int[n + 1];
     fib[0] = 0;
     fib[1] = 1;
-    
+
     for (int i = 2; i <= n; i++) {
         fib[i] = fib[i-1] + fib[i-2];
     }
-    
+
     return fib[n];
 }
 ```
@@ -225,11 +225,11 @@ public static long nthFibonacciTermBinet(long n) {
     if (n <= 1) {
         return n;
     }
-    
+
     double sqrt5 = Math.sqrt(5);
     double phi = (1 + sqrt5) / 2;
     double psi = (1 - sqrt5) / 2;
-    
+
     return Math.round((Math.pow(phi, n) - Math.pow(psi, n)) / sqrt5);
 }
 ```
@@ -353,7 +353,7 @@ fun nthFibonacciTermSequence(n: Int): Int {
 fun main() {
     println(nthFibonacciTermIterative(10)) // 55
     println(nthFibonacciTermBinet(10)) // 55
-    
+
     // Генерация первых 10 чисел Фибоначчи
     fibonacciSequence().take(10).forEach { print("$it ") }
     // Выведет: 0 1 1 2 3 5 8 13 21 34
@@ -396,11 +396,11 @@ public static List<Integer> generateFibonacciSequence(int n) {
     List<Integer> sequence = new ArrayList<>();
     if (n >= 1) sequence.add(0);
     if (n >= 2) sequence.add(1);
-    
+
     for (int i = 2; i < n; i++) {
         sequence.add(sequence.get(i-1) + sequence.get(i-2));
     }
-    
+
     return sequence;
 }
 ```
@@ -425,17 +425,17 @@ public static long sumOfFibonacci(int n) {
     if (n <= 0) return 0;
     if (n == 1) return 0;
     if (n == 2) return 1;
-    
+
     long sum = 1;
     long a = 0, b = 1;
-    
+
     for (int i = 2; i < n; i++) {
         long next = a + b;
         sum += next;
         a = b;
         b = next;
     }
-    
+
     return sum;
 }
 ```

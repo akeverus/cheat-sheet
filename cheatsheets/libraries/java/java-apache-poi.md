@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Apache POI
 
-**Apache POI** - это **Java** библиотека для чтения и записи файлов **Microsoft Office** (**Excel, `Word`, PowerPoint**). Предоставляет программный доступ к форматам **Office** документов.
+**Apache POI** — это **Java** библиотека для чтения и записи файлов **Microsoft Office** (**Excel, `Word`, PowerPoint**). Предоставляет программный доступ к форматам **Office** документов.
 
 ## Полезные ссылки
 
@@ -357,10 +357,10 @@ try (FileInputStream fis = new FileInputStream("image.jpg")) {  // Открыв�
     // Добавляем изображение в презентацию и получаем его данные
     // PictureType.JPEG указывает формат изображения
     XSLFPictureData pictureData = ppt.addPicture(fis, XSLFPictureData.PictureType.JPEG);
-    
+
     // Создаем фигуру изображения на слайде
     XSLFPictureShape picture = slide.createPicture(pictureData);
-    
+
     // Устанавливаем позицию и размер изображения на слайде
     // Параметры: x, y, width, height (в точках)
     picture.setAnchor(new Rectangle2D.Double(100, 200, 300, 200));

@@ -352,3 +352,11 @@ volatile Map<String, String> map = new HashMap<>();
 5. **Не полагайтесь на тесты** — гонки не всегда воспроизводимы; используйте формальное рассуждение о happens-before
 6. **volatile + immutable object** — самый дешёвый способ безопасной публикации
 7. **Один монитор — одна группа данных** — не защищайте разные данные одним lock (ложная конкуренция)
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

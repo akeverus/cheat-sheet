@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-testing.md"]
 ---
 
-# Micronaut: OpenAPI - API Documentation и Swagger
-
-
+# Micronaut: OpenAPI — API Documentation и Swagger
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
 
 ## Содержание
 
-- [Micronaut: OpenAPI - API Documentation и Swagger](#micronaut-openapi-api-documentation-и-swagger)
+- [Micronaut: OpenAPI — API Documentation и Swagger](#micronaut-openapi-api-documentation-и-swagger)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка OpenAPI](#настройка-openapi)
@@ -118,7 +116,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Controller("/api/users")
 @Tag(name = "Users", description = "User management API")
 public class UserController {
-    
+
     @Get("/{id}")
     @Operation(
         summary = "Get user by ID",
@@ -141,16 +139,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "User entity")
 public class User {
-    
+
     @Schema(description = "User ID", example = "1")
     private Long id;
-    
+
     @Schema(description = "User name", example = "John Doe", required = true)
     private String name;
-    
+
     @Schema(description = "User email", example = "john@example.com", required = true)
     private String email;
-    
+
     // Getters and setters
 }
 ```
@@ -231,7 +229,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 )
 @Controller("/api/users")
 public class SecureUserController {
-    
+
     @Get("/{id}")
     @SecurityRequirement(name = "bearerAuth")
     public User getUser(Long id) {
@@ -314,13 +312,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Error response")
 public class ErrorResponse {
-    
+
     @Schema(description = "Error code", example = "404")
     private String code;
-    
+
     @Schema(description = "Error message", example = "Not found")
     private String message;
-    
+
     // Getters and setters
 }
 ```
@@ -381,3 +379,11 @@ micronaut:
 - [Swagger UI](https://swagger.io/tools/swagger-ui/)
 - [**OpenAPI** Generator](https://openapi-generator.tech/)
 - [**OpenAPI** Extensions](https://spec.openapis.org/oas/latest.html#specification-extensions)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

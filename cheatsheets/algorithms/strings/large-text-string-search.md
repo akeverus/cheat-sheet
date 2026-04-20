@@ -66,7 +66,7 @@ public static int simpleTextSearch(char[] pattern, char[] text) {
     int patternSize = pattern.length;
     int textSize = text.length;
     int i = 0;
-    
+
     while ((i + patternSize) <= textSize) {
         int j = 0;
         while (text[i + j] == pattern[j]) {
@@ -77,7 +77,7 @@ public static int simpleTextSearch(char[] pattern, char[] text) {
         }
         i += 1;
     }
-    
+
     return -1;
 }
 ```
@@ -124,25 +124,25 @@ public static int RabinKarpMethod(char[] pattern, char[] text) {
     int textSize = text.length;
     long prime = getBiggerPrime(patternSize);
     long r = 1;
-    
+
     for (int i = 0; i < patternSize - 1; i++) {
         r *= 2;
         r = r % prime;
     }
-    
+
     long[] t = new long[textSize];
     t[0] = 0;
     long pfinger = 0;
-    
+
     for (int j = 0; j < patternSize; j++) {
         t[0] = (2 * t[0] + text[j]) % prime;
         pfinger = (2 * pfinger + pattern[j]) % prime;
     }
-    
+
     int i = 0;
     boolean passed = false;
     int diff = textSize - patternSize;
-    
+
     for (i = 0; i <= diff; i++) {
         if (t[i] == pfinger) {
             passed = true;
@@ -156,13 +156,13 @@ public static int RabinKarpMethod(char[] pattern, char[] text) {
                 return i;
             }
         }
-        
+
         if (i < diff) {
             long value = 2 * (t[i] - r * text[i]) + text[i + patternSize];
             t[i + 1] = ((value % prime) + prime) % prime;
         }
     }
-    
+
     return -1;
 }
 ```
@@ -185,7 +185,7 @@ public static int KnuthMorrisPrattSearch(char[] pattern, char[] text) {
     int textSize = text.length;
     int i = 0, j = 0;
     int[] shift = KnuthMorrisPrattShift(pattern);
-    
+
     while ((i + patternSize) <= textSize) {
         while (text[i + j] == pattern[j]) {
             j += 1;
@@ -193,7 +193,7 @@ public static int KnuthMorrisPrattSearch(char[] pattern, char[] text) {
                 return i;
             }
         }
-        
+
         if (j > 0) {
             i += shift[j - 1];
             j = Math.max(j - shift[j - 1], 0);
@@ -202,7 +202,7 @@ public static int KnuthMorrisPrattSearch(char[] pattern, char[] text) {
             j = 0;
         }
     }
-    
+
     return -1;
 }
 ```
@@ -215,7 +215,7 @@ public static int[] KnuthMorrisPrattShift(char[] pattern) {
     int[] shift = new int[patternSize];
     shift[0] = 1;
     int i = 1, j = 0;
-    
+
     while ((i + j) < patternSize) {
         if (pattern[i + j] == pattern[j]) {
             shift[i + j] = i;
@@ -233,7 +233,7 @@ public static int[] KnuthMorrisPrattShift(char[] pattern) {
             }
         }
     }
-    
+
     return shift;
 }
 ```
@@ -249,7 +249,7 @@ public static int BoyerMooreHorspoolSimpleSearch(char[] pattern, char[] text) {
     int patternSize = pattern.length;
     int textSize = text.length;
     int i = 0, j = 0;
-    
+
     while ((i + patternSize) <= textSize) {
         j = patternSize - 1;
         while (text[i + j] == pattern[j]) {
@@ -260,7 +260,7 @@ public static int BoyerMooreHorspoolSimpleSearch(char[] pattern, char[] text) {
         }
         i++;
     }
-    
+
     return -1;
 }
 ```
@@ -274,17 +274,17 @@ public static int BoyerMooreHorspoolSimpleSearch(char[] pattern, char[] text) {
 ```java
 public static int BoyerMooreHorspoolSearch(char[] pattern, char[] text) {
     int shift[] = new int[256];
-    
+
     for (int k = 0; k < 256; k++) {
         shift[k] = pattern.length;
     }
-    
+
     for (int k = 0; k < pattern.length - 1; k++) {
         shift[pattern[k]] = pattern.length - 1 - k;
     }
-    
+
     int i = 0, j = 0;
-    
+
     while ((i + pattern.length) <= text.length) {
         j = pattern.length - 1;
         while (text[i + j] == pattern[j]) {
@@ -295,7 +295,7 @@ public static int BoyerMooreHorspoolSearch(char[] pattern, char[] text) {
         }
         i = i + shift[text[i + pattern.length - 1]];
     }
-    
+
     return -1;
 }
 ```
@@ -309,7 +309,7 @@ fun simpleTextSearchK(pattern: CharArray, text: CharArray): Int {
     val patternSize = pattern.size
     val textSize = text.size
     var i = 0
-    
+
     while (i + patternSize <= textSize) {
         var j = 0
         while (text[i + j] == pattern[j]) {
@@ -320,7 +320,7 @@ fun simpleTextSearchK(pattern: CharArray, text: CharArray): Int {
         }
         i++
     }
-    
+
     return -1
 }
 ```
@@ -338,21 +338,21 @@ fun rabinKarpMethodK(pattern: CharArray, text: CharArray): Int {
     val textSize = text.size
     val prime = getBiggerPrimeK(patternSize)
     var r = 1L
-    
+
     for (i in 0 until patternSize - 1) {
         r = (2 * r) % prime
     }
-    
+
     var fp = 0L
     var ft = 0L
-    
+
     for (i in 0 until patternSize) {
         fp = ((2 * fp) + pattern[i].toInt()) % prime
         ft = ((2 * ft) + text[i].toInt()) % prime
     }
-    
+
     var j = 0
-    
+
     while ((j + patternSize) <= textSize) {
         if (fp == ft) {
             var matches = true
@@ -366,7 +366,7 @@ fun rabinKarpMethodK(pattern: CharArray, text: CharArray): Int {
                 return j
             }
         }
-        
+
         if (j + patternSize < textSize) {
             ft = (2 * (ft - text[j].toInt() * r) + text[j + patternSize].toInt()) % prime
             if (ft < 0) {
@@ -375,7 +375,7 @@ fun rabinKarpMethodK(pattern: CharArray, text: CharArray): Int {
         }
         j++
     }
-    
+
     return -1
 }
 ```
@@ -389,7 +389,7 @@ fun knuthMorrisPrattShiftK(pattern: CharArray): IntArray {
     shift[0] = 1
     var i = 1
     var j = 0
-    
+
     while (i + j < patternSize) {
         if (pattern[i + j] == pattern[j]) {
             shift[i + j] = i
@@ -407,7 +407,7 @@ fun knuthMorrisPrattShiftK(pattern: CharArray): IntArray {
             }
         }
     }
-    
+
     return shift
 }
 
@@ -417,7 +417,7 @@ fun knuthMorrisPrattSearchK(pattern: CharArray, text: CharArray): Int {
     var i = 0
     var j = 0
     val shift = knuthMorrisPrattShiftK(pattern)
-    
+
     while (i + patternSize <= textSize) {
         while (text[i + j] == pattern[j]) {
             j++
@@ -425,7 +425,7 @@ fun knuthMorrisPrattSearchK(pattern: CharArray, text: CharArray): Int {
                 return i
             }
         }
-        
+
         if (j > 0) {
             i += shift[j - 1]
             j = maxOf(j - shift[j - 1], 0)
@@ -434,7 +434,7 @@ fun knuthMorrisPrattSearchK(pattern: CharArray, text: CharArray): Int {
             j = 0
         }
     }
-    
+
     return -1
 }
 ```
@@ -444,13 +444,13 @@ fun knuthMorrisPrattSearchK(pattern: CharArray, text: CharArray): Int {
 ```kotlin
 fun boyerMooreHorspoolSearchK(pattern: CharArray, text: CharArray): Int {
     val shift = IntArray(256) { pattern.size }
-    
+
     for (k in 0 until pattern.size - 1) {
         shift[pattern[k].code] = pattern.size - 1 - k
     }
-    
+
     var i = 0
-    
+
     while (i + pattern.size <= text.size) {
         var j = pattern.size - 1
         while (text[i + j] == pattern[j]) {
@@ -461,7 +461,7 @@ fun boyerMooreHorspoolSearchK(pattern: CharArray, text: CharArray): Int {
         }
         i += shift[text[i + pattern.size - 1].code]
     }
-    
+
     return -1
 }
 
@@ -469,7 +469,7 @@ fun boyerMooreHorspoolSimpleSearchK(pattern: CharArray, text: CharArray): Int {
     val patternSize = pattern.size
     val textSize = text.size
     var i = 0
-    
+
     while (i + patternSize <= textSize) {
         var j = patternSize - 1
         while (text[i + j] == pattern[j]) {
@@ -480,7 +480,7 @@ fun boyerMooreHorspoolSimpleSearchK(pattern: CharArray, text: CharArray): Int {
         }
         i++
     }
-    
+
     return -1
 }
 ```
@@ -491,19 +491,19 @@ fun boyerMooreHorspoolSimpleSearchK(pattern: CharArray, text: CharArray): Int {
 fun main() {
     val text = "baeldunbaeldunbaeldunbaeldung".toCharArray()
     val pattern = "baeldung".toCharArray()
-    
+
     // Наивный поиск
     val index1 = simpleTextSearchK(pattern, text)
     println("Наивный поиск: $index1")
-    
+
     // Рабина-Карпа
     val index2 = rabinKarpMethodK(pattern, text)
     println("Рабина-Карпа: $index2")
-    
+
     // KMP
     val index3 = knuthMorrisPrattSearchK(pattern, text)
     println("KMP: $index3")
-    
+
     // Бойера-Мура-Хорспула
     val index4 = boyerMooreHorspoolSearchK(pattern, text)
     println("Бойера-Мура-Хорспула: $index4")
@@ -628,7 +628,7 @@ public static List<Integer> findAllOccurrencesKMP(char[] pattern, char[] text) {
     int textSize = text.length;
     int i = 0, j = 0;
     int[] shift = KnuthMorrisPrattShift(pattern);
-    
+
     while ((i + patternSize) <= textSize) {
         while (text[i + j] == pattern[j]) {
             j += 1;
@@ -637,7 +637,7 @@ public static List<Integer> findAllOccurrencesKMP(char[] pattern, char[] text) {
                 break;
             }
         }
-        
+
         if (j > 0) {
             i += shift[j - 1];
             j = Math.max(j - shift[j - 1], 0);
@@ -646,7 +646,7 @@ public static List<Integer> findAllOccurrencesKMP(char[] pattern, char[] text) {
             j = 0;
         }
     }
-    
+
     return occurrences;
 }
 ```
@@ -671,7 +671,7 @@ public static int boyerMooreHorspoolCaseInsensitive(char[] pattern, char[] text)
 public static Map<String, List<Integer>> searchMultiplePatterns(
         List<char[]> patterns, char[] text) {
     Map<String, List<Integer>> results = new HashMap<>();
-    
+
     for (char[] pattern : patterns) {
         List<Integer> positions = new ArrayList<>();
         int pos = RabinKarpMethod(pattern, text);
@@ -688,7 +688,7 @@ public static Map<String, List<Integer>> searchMultiplePatterns(
         }
         results.put(new String(pattern), positions);
     }
-    
+
     return results;
 }
 ```
@@ -701,9 +701,9 @@ public static Map<String, List<Integer>> searchMultiplePatterns(
 public static int searchWithEarlyTermination(char[] pattern, char[] text, int maxPositions) {
     int count = 0;
     int pos = 0;
-    
+
     while (count < maxPositions && pos < text.length - pattern.length) {
-        int found = KnuthMorrisPrattSearch(pattern, 
+        int found = KnuthMorrisPrattSearch(pattern,
             Arrays.copyOfRange(text, pos, text.length));
         if (found == -1) {
             break;
@@ -711,7 +711,7 @@ public static int searchWithEarlyTermination(char[] pattern, char[] text, int ma
         count++;
         pos = found + pattern.length;
     }
-    
+
     return count;
 }
 ```

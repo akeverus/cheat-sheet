@@ -14,21 +14,19 @@ updated: "2026-02-11"
 
 Кратко: когда выбирать **B-Tree**, **Hash**, **GIN**, **BRIN**, **GiST** и как проверять план выполнения через **EXPLAIN**.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [`PostgreSQL Documentation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
-### **Baeldung**
+### Обучающие материалы
 
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [`postgres-basics`](postgres-basics.md) — [`postgres-queries`](postgres-queries.md).
+См. также: [[postgres-basics]] — [[postgres-queries]].
 
 ## Содержание
 
@@ -282,11 +280,11 @@ CREATE TABLE locations (
 CREATE INDEX idx_locations_point ON locations USING GIST (location);
 
 -- Поиск точек в пределах прямоугольника
-SELECT * FROM locations 
+SELECT * FROM locations
 WHERE location <@ BOX '(0,0),(100,100)';
 
 -- Поиск пересекающихся объектов
-SELECT * FROM polygons 
+SELECT * FROM polygons
 WHERE boundary && ST_MakeEnvelope(0, 0, 100, 100);
 ```
 
@@ -294,8 +292,8 @@ WHERE boundary && ST_MakeEnvelope(0, 0, 100, 100);
 **Индексы **GiST** также могут оптимизировать поиск «ближайшего соседа», например:**
 ```sql
 -- Поиск 10 ближайших точек к заданной (оператор <->)
-SELECT * FROM places 
-ORDER BY location <-> point '(101,456)' 
+SELECT * FROM places
+ORDER BY location <-> point '(101,456)'
 LIMIT 10;
 ```
 Этот запрос находит десять мест, ближайших к заданной целевой точке. Возможность сделать это снова зависит от конкретного используемого класса операторов.
@@ -317,7 +315,7 @@ CREATE TABLE reservations (
 CREATE INDEX idx_reservations_period ON reservations USING GIST (period);
 
 -- Поиск пересекающихся резерваций
-SELECT * FROM reservations 
+SELECT * FROM reservations
 WHERE period && '[2024-01-01, 2024-01-10)'::TSRANGE;
 ```
 
@@ -349,7 +347,7 @@ CREATE TABLE points (
 CREATE INDEX idx_points_location ON points USING SPGIST (location);
 
 -- Поиск ближайших точек
-SELECT * FROM points 
+SELECT * FROM points
 ORDER BY location <-> point '(100,200)'
 LIMIT 10;
 ```
@@ -413,7 +411,7 @@ UPDATE articles SET search_vector = to_tsvector('english', title || ' ' || conte
 CREATE INDEX idx_articles_search ON articles USING GIN (search_vector);
 
 -- Полнотекстовый поиск
-SELECT * FROM articles 
+SELECT * FROM articles
 WHERE search_vector @@ to_tsquery('english', 'postgresql & performance');
 ```
 
@@ -457,7 +455,7 @@ CREATE TABLE logs (
 CREATE INDEX idx_logs_created_at ON logs USING BRIN (created_at);
 
 -- Поиск по диапазону времени
-SELECT * FROM logs 
+SELECT * FROM logs
 WHERE created_at >= '2024-01-01' AND created_at < '2024-02-01';
 ```
 
@@ -475,7 +473,7 @@ WHERE created_at >= '2024-01-01' AND created_at < '2024-02-01';
 **Настройка `BRIN`:**
 ```sql
 -- Указать размер страниц (по умолчанию 128)
-CREATE INDEX idx_logs_created_at ON logs USING BRIN (created_at) 
+CREATE INDEX idx_logs_created_at ON logs USING BRIN (created_at)
 WITH (pages_per_range = 64);
 ```
 
@@ -546,7 +544,7 @@ LIMIT 10;
 **Преимущества:**
 - Быстрее для запросов, которые могут получить все данные из индекса.
 - Меньше нагрузка на таблицу.
-- Особенно полезно для "горячих" таблиц с высокой нагрузкой на чтение.
+- Особенно полезно для «горячих» таблиц с высокой нагрузкой на чтение.
 
 ### Частичные индексы (**Partial Indexes**)
 
@@ -583,7 +581,7 @@ WHERE deleted_at IS NULL;
 **Статистика использования индексов:**
 ```sql
 -- Список всех индексов с их использованием
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -598,7 +596,7 @@ ORDER BY idx_scan DESC;
 **Неиспользуемые индексы:**
 ```sql
 -- Найти индексы, которые никогда не использовались
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
@@ -614,13 +612,13 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 **Индексы с низким использованием:**
 ```sql
 -- Индексы, которые используются редко, но занимают много места
-SELECT 
+SELECT
     schemaname,
     tablename,
     indexname,
     idx_scan,
     pg_size_pretty(pg_relation_size(indexrelid)) AS index_size,
-    round((pg_relation_size(indexrelid)::numeric / 
+    round((pg_relation_size(indexrelid)::numeric /
            pg_total_relation_size(schemaname||'.'||tablename) * 100), 2) AS size_pct
 FROM pg_stat_user_indexes
 WHERE idx_scan < 10
@@ -711,16 +709,16 @@ CREATE INDEX idx_orders_good ON orders(user_id, status, created_at DESC);
 **Проверка дублирующихся индексов:**
 ```sql
 -- Найти индексы с одинаковыми столбцами
-SELECT 
+SELECT
     pg_size_pretty(SUM(pg_relation_size(idx))::BIGINT) AS size,
     (array_agg(idx))[1] AS idx1, (array_agg(idx))[2] AS idx2
 FROM (
-    SELECT indexrelid::regclass AS idx, 
+    SELECT indexrelid::regclass AS idx,
            (indrelid::text ||E'\n'|| indclass::text ||E'\n'|| indkey::text ||E'\n'||
             COALESCE(indexprs::text,'')||E'\n' || COALESCE(indpred::text,'')) AS KEY
     FROM pg_index
 ) sub
-GROUP BY KEY 
+GROUP BY KEY
 HAVING COUNT(*) > 1
 ORDER BY size DESC;
 ```
@@ -758,7 +756,7 @@ SELECT * FROM users WHERE email = 'user@example.com';
 **Пример оптимизации:**
 ```sql
 -- Исходный медленный запрос
-SELECT * FROM orders 
+SELECT * FROM orders
 WHERE user_id = 123 AND status = 'pending'
 ORDER BY created_at DESC
 LIMIT 10;
@@ -781,4 +779,10 @@ EXPLAIN ANALYZE ...;
 - **EXPLAIN (**ANALYZE**):** всегда проверяйте использование индекса после создания; избегайте лишних индексов на часто обновляемых таблицах.
 - **Обслуживание: REINDEX** при деградации; мониторинг **bloat**; **VACUUM** после массовых изменений.
 
+## См. также
 
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]

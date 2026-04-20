@@ -56,7 +56,7 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Задача о максимальном подмассиве - это задача найти ряд смежных элементов с максимальной суммой в любом заданном массиве.
+Задача о максимальном подмассиве — это задача найти ряд смежных элементов с максимальной суммой в любом заданном массиве.
 
 Например, в массиве `[-2, 1, -3, 4, -1, 2, 1, -5, 4]` подмассив `[4, -1, 2, 1]` имеет максимальную сумму 6.
 
@@ -75,13 +75,13 @@ public int maxSubArray(int[] nums) {
     int maximumSubArraySum = Integer.MIN_VALUE;
     int start = 0;
     int end = 0;
-    
+
     for (int left = 0; left < n; left++) {
         int runningWindowSum = 0;
-        
+
         for (int right = left; right < n; right++) {
             runningWindowSum += nums[right];
-            
+
             if (runningWindowSum > maximumSubArraySum) {
                 maximumSubArraySum = runningWindowSum;
                 start = left;
@@ -89,7 +89,7 @@ public int maxSubArray(int[] nums) {
             }
         }
     }
-    
+
     logger.info("Found Maximum Subarray between {} and {}", start, end);
     return maximumSubArraySum;
 }
@@ -120,7 +120,7 @@ public int maxSubArraySum(int[] arr) {
     int start = 0;
     int end = 0;
     int maxSoFar = arr[0], maxEndingHere = arr[0];
-    
+
     for (int i = 1; i < size; i++) {
         if (arr[i] > maxEndingHere + arr[i]) {
             start = i;
@@ -128,13 +128,13 @@ public int maxSubArraySum(int[] arr) {
         } else {
             maxEndingHere = maxEndingHere + arr[i];
         }
-        
+
         if (maxSoFar < maxEndingHere) {
             maxSoFar = maxEndingHere;
             end = i;
         }
     }
-    
+
     logger.info("Found Maximum Subarray between {} and {}", Math.min(start, end), end);
     return maxSoFar;
 }
@@ -153,12 +153,12 @@ public int maxSubArraySum(int[] arr) {
 public int maxSubArraySumSimple(int[] arr) {
     int maxSoFar = arr[0];
     int maxEndingHere = arr[0];
-    
+
     for (int i = 1; i < arr.length; i++) {
         maxEndingHere = Math.max(arr[i], maxEndingHere + arr[i]);
         maxSoFar = Math.max(maxSoFar, maxEndingHere);
     }
-    
+
     return maxSoFar;
 }
 ```

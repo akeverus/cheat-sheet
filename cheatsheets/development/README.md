@@ -20,12 +20,12 @@ updated: "2026-02-11"
 
 ## Быстрая навигация
 
-- [API](api/README.md) - проектирование, контракты, инструменты
-- [Инструменты сборки](build-tools/README.md) - Gradle и Maven
-- [Мессенджинг](messaging/README.md) - брокеры сообщений и паттерны интеграции
-- [Web Backend](web-backend/README.md) - базовые backend-практики
-- [Platform: CI/CD](../platform/ci-cd/README.md) - пайплайны, delivery, legacy-контекст Travis
-- [Platform: Containers](../platform/containers/README.md) - Docker/Kubernetes для окружений и деплоя
+- [API](api/README.md) — проектирование, контракты, инструменты
+- [Инструменты сборки](build-tools/README.md) — Gradle и Maven
+- [Мессенджинг](messaging/README.md) — брокеры сообщений и паттерны интеграции
+- [Web Backend](web-backend/README.md) — базовые backend-практики
+- [Platform: CI/CD](../platform/ci-cd/README.md) — пайплайны, delivery, legacy-контекст Travis
+- [Platform: Containers](../platform/containers/README.md) — Docker/Kubernetes для окружений и деплоя
 
 ## API
 

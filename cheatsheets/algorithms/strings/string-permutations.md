@@ -62,7 +62,7 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Перестановка - это перестановка элементов в множестве. Другими словами, это все возможные варианты порядка сбора.
+Перестановка — это перестановка элементов в множестве. Другими словами, это все возможные варианты порядка сбора.
 
 В этом руководстве мы узнаем, как легко создавать перестановки в **Java** с использованием сторонних библиотек. В частности, мы будем работать с перестановкой в строке.
 
@@ -116,11 +116,11 @@ public List<String> lazyPermutationWithoutRepetitions(final String string) {
     final List<Character> characters = Helper.toCharacterList(string);
     final PermutationIterator<Character> permutationIterator = new PermutationIterator<>(characters);
     final List<String> result = new ArrayList<>();
-    
+
     while (permutationIterator.hasNext()) {
         result.add(Helper.toString(permutationIterator.next()));
     }
-    
+
     return result;
 }
 ```
@@ -241,7 +241,7 @@ fun generatePermutations(input: String): List<String> {
 fun generatePermutationsIterative(input: String): List<String> {
     val result = mutableListOf<String>()
     val queue = mutableListOf("")
-    
+
     for (char in input) {
         val size = queue.size
         for (i in 0 until size) {
@@ -252,7 +252,7 @@ fun generatePermutationsIterative(input: String): List<String> {
             }
         }
     }
-    
+
     return queue
 }
 ```
@@ -262,7 +262,7 @@ fun generatePermutationsIterative(input: String): List<String> {
 ```kotlin
 fun String.permutations(): List<String> {
     if (length <= 1) return listOf(this)
-    
+
     return flatMapIndexed { index, char ->
         (substring(0, index) + substring(index + 1))
             .permutations()
@@ -299,9 +299,9 @@ fun generatePermutationsWithCombinatoricsLib(input: String): List<String> {
 
 ### Временная сложность
 
-- **Генерация всех перестановок:** `O(**n! * n**)`, где n - длина строки
+- **Генерация всех перестановок:** `O(**n! * n**)`, где n — длина строки
 - **Количество перестановок:** n! для строки без дубликатов
-- **С дубликатами:** n! / (**n1**! * **n2**! **... ** nk!**), где ni - количество повторений i-го символа
+- **С дубликатами:** n! / (**n1**! * **n2**! **... ** nk!**), где ni — количество повторений i-го символа
 
 ### Пространственная сложность
 

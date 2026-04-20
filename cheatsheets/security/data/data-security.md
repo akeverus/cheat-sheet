@@ -271,3 +271,7 @@ public class SensitiveDataMasker extends MessageConverter {
 | Hardcoded secret в Docker-образе | утечка при публикации образа | build-time secrets, multi-stage |
 | Неравная функция сравнения хэшей | timing attack | `MessageDigest.isEqual` или `Arrays.equals` с constant-time |
 | Backup без шифрования | утечка через s3 bucket | encryption sse-kms |
+
+## См. также
+
+- [[secrets-management|Управление секретами (Secrets Management)]]

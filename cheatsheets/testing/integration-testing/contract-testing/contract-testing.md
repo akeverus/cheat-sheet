@@ -26,7 +26,6 @@ updated: "2026-02-11"
 - [[wiremock|WireMock]]
 - [[testcontainers|Testcontainers]]
 
----
 
 ## Содержание
 
@@ -40,7 +39,6 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [Итоговые таблицы](#итоговые-таблицы)
 
----
 
 ## Зачем контрактное тестирование
 
@@ -50,7 +48,6 @@ updated: "2026-02-11"
 - **Живая документация** — контракт описывает реальные взаимодействия, а не просто схему.
 - **Для микросервисов** — типичная ситуация: много потребителей, один провайдер.
 
----
 
 ## Основные концепции
 
@@ -65,7 +62,6 @@ updated: "2026-02-11"
 | **Pact Broker** | Хранилище контрактов с версионированием, `can-i-deploy` |
 | **Stub** | Мок-сервер, отдающий ответы по контракту |
 
----
 
 ## Pact: подключение и примеры
 
@@ -159,7 +155,6 @@ class UserServiceContractProviderTest {
 | `regex("field", "[0-9]+", "123")` | Строка по regex |
 | `uuid("id")` | UUID |
 
----
 
 ## Spring Cloud Contract: подключение и примеры
 
@@ -243,7 +238,6 @@ class OrderServiceContractTest {
 }
 ```
 
----
 
 ## CI/CD и Pact Broker
 
@@ -256,7 +250,7 @@ class OrderServiceContractTest {
 
 ### Пайплайн
 
-```
+```text
 Consumer CI:
   тесты → генерация контракта → публикация в Pact Broker
 
@@ -277,7 +271,6 @@ mvn pact:publish -Dpact.broker.baseUrl=https://broker.example.com
 
 Стабы публикуются как Maven-артефакт (stub jar). Consumer подключает stub runner с координатами артефакта.
 
----
 
 ## Лучшие практики
 
@@ -288,7 +281,6 @@ mvn pact:publish -Dpact.broker.baseUrl=https://broker.example.com
 5. **Не дублировать E2E** — контрактные тесты не заменяют интеграционные, но сокращают количество тяжёлых сценариев.
 6. **Согласование имён** — имена consumer/provider в контракте должны совпадать с именами сервисов.
 
----
 
 ## Решение проблем
 
@@ -302,7 +294,6 @@ mvn pact:publish -Dpact.broker.baseUrl=https://broker.example.com
 | Pact Broker → 401 | Нет токена | Настроить `PACT_BROKER_TOKEN` |
 | `can-i-deploy` блокирует | Не все потребители верифицировали | Запустить верификацию от всех потребителей |
 
----
 
 ## Частые вопросы
 
@@ -318,7 +309,6 @@ mvn pact:publish -Dpact.broker.baseUrl=https://broker.example.com
 **А для сообщений (Kafka, RabbitMQ)?**
 Pact и SCC поддерживают message contracts — контракт для тела и заголовков сообщения.
 
----
 
 ## Итоговые таблицы
 
@@ -355,5 +345,4 @@ Pact и SCC поддерживают message contracts — контракт дл
 | `baseClassForTests` | Базовый класс тестов (MockMvc/RestAssured) |
 | `src/test/resources/contracts` | Папка с контрактами по умолчанию |
 
----
 

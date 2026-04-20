@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.md"]
 ---
 
-# **ClickHouse**: Производительность - Полное руководство по оптимизации и тюнингу
+# **ClickHouse**: Производительность — Полное руководство по оптимизации и тюнингу
 
 Комплексное руководство по оптимизации производительности **ClickHouse**: конфигурация, запросы, оборудование, мониторинг и **best practices**.
 
@@ -26,7 +26,7 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 - [Configuration Parameters](https://clickhouse.com/docs/en/operations/configuration-files)
 - [System Tables](https://clickhouse.com/docs/en/operations/system-tables)
 
-### **Baeldung**
+### Обучающие материалы
 - [ClickHouse Performance Tuning](https://www.baeldung.com/clickhouse-performance)
 
 ### См. также
@@ -843,9 +843,9 @@ ORDER BY read_bytes DESC;
 
 ### Следующие темы:
 
-- **Интеграции** - подключение внешних систем
-- **Экосистема** - инструменты и расширения
-- **Расширенные возможности** - специализированные движки
+- **Интеграции** — подключение внешних систем
+- **Экосистема** — инструменты и расширения
+- **Расширенные возможности** — специализированные движки
 
 **ClickHouse** — высокопроизводительная система, требующая тщательной настройки для достижения максимальной производительности.
 
@@ -864,7 +864,6 @@ ORDER BY read_bytes DESC;
 - [ClickHouse Benchmark](https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark)
 - [Performance Monitoring](https://clickhouse.com/docs/en/operations/monitoring)
 
----
 
 **Следующие темы:**
 - [Интеграции и экосистема](clickhouse-integration.md)

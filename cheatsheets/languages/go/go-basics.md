@@ -656,7 +656,7 @@ package mypackage  // объявление пакета
 import (
     "fmt"           // стандартная библиотека
     "math"
-    
+
     "example.com/mypackage/subpackage"  // внешний пакет
     alias "example.com/otherpackage"    // импорт с алиасом
     _ "example.com/unusedpackage"       // импорт только для side effects
@@ -689,7 +689,7 @@ go mod init example.com/myproject
 
 **Это создает файл `**go.mod**`:**
 
-```
+```text
 module example.com/myproject
 
 go 1.21
@@ -2803,14 +2803,14 @@ func createSecureClient() *http.Client {
 
 Этот блок оставлен как расширенная справка. Для production-работы удобнее идти по профильным документам:
 
-- [`go-configuration.md`](go-configuration.md) — конфигурация и работа с окружением
-- [`go-command-line.md`](go-command-line.md) — CLI, флаги и аргументы
-- [`go-time.md`](go-time.md) — время, таймеры, интервалы
-- [`go-regexp.md`](go-regexp.md) — регулярные выражения
-- [`go-database.md`](go-database.md) — БД, миграции, транзакции
-- [`go-concurrency.md`](go-concurrency.md) — каналы, worker pool, pipeline
-- [`go-observability.md`](go-observability.md) — метрики, логи, tracing
-- [`go-best-practices.md`](go-best-practices.md) — архитектура и эксплуатационные практики
+- [[go-configuration]] — конфигурация и работа с окружением
+- [[go-command-line]] — CLI, флаги и аргументы
+- [[go-time]] — время, таймеры, интервалы
+- [[go-regexp]] — регулярные выражения
+- [[go-database]] — БД, миграции, транзакции
+- [[go-concurrency]] — каналы, worker pool, pipeline
+- [[go-observability]] — метрики, логи, tracing
+- [[go-best-practices]] — архитектура и эксплуатационные практики
 
 ### Что изучать в этом файле, а что вынести в профильные документы
 
@@ -2860,14 +2860,14 @@ func main() {
     name := flag.String("name", "World", "Name to greet")
     age := flag.Int("age", 0, "Age")
     verbose := flag.Bool("verbose", false, "Verbose output")
-    
+
     flag.Parse()
-    
+
     fmt.Printf("Hello, %s! Age: %d\n", *name, *age)
     if *verbose {
         fmt.Println("Verbose mode enabled")
     }
-    
+
     // Аргументы без флагов
     args := flag.Args()
     fmt.Println("Arguments:", args)
@@ -3054,11 +3054,11 @@ func main() {
     // Канал для сигналов
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-    
+
     // Ожидание сигнала
     sig := <-sigChan
     fmt.Println("Received signal:", sig)
-    
+
     // Graceful shutdown
     cleanup()
     os.Exit(0)
@@ -3131,26 +3131,26 @@ func createZip(filename string, files []string) error {
         return err
     }
     defer zipFile.Close()
-    
+
     zipWriter := zip.NewWriter(zipFile)
     defer zipWriter.Close()
-    
+
     for _, file := range files {
         f, err := os.Open(file)
         if err != nil {
             return err
         }
-        
+
         w, err := zipWriter.Create(file)
         if err != nil {
             f.Close()
             return err
         }
-        
+
         io.Copy(w, f)
         f.Close()
     }
-    
+
     return nil
 }
 
@@ -3161,13 +3161,13 @@ func extractZip(zipFile, destDir string) error {
         return err
     }
     defer r.Close()
-    
+
     for _, f := range r.File {
         rc, err := f.Open()
         if err != nil {
             return err
         }
-        
+
         path := filepath.Join(destDir, f.Name)
         if f.FileInfo().IsDir() {
             os.MkdirAll(path, f.FileInfo().Mode())
@@ -3178,13 +3178,13 @@ func extractZip(zipFile, destDir string) error {
                 rc.Close()
                 return err
             }
-            
+
             io.Copy(out, rc)
             out.Close()
         }
         rc.Close()
     }
-    
+
     return nil
 }
 ```
@@ -3208,12 +3208,12 @@ func loadConfig(filename string) (*Config, error) {
     if err != nil {
         return nil, err
     }
-    
+
     var config Config
     if err := json.Unmarshal(data, &config); err != nil {
         return nil, err
     }
-    
+
     return &config, nil
 }
 
@@ -3222,7 +3222,7 @@ func saveConfig(filename string, config *Config) error {
     if err != nil {
         return err
     }
-    
+
     return os.WriteFile(filename, data, 0644)
 }
 ```
@@ -3277,7 +3277,7 @@ type Metrics struct {
 func (m *Metrics) RecordRequest(duration time.Duration, err error) {
     m.mu.Lock()
     defer m.mu.Unlock()
-    
+
     m.requestCount++
     m.totalTime += duration
     if err != nil {
@@ -3288,7 +3288,7 @@ func (m *Metrics) RecordRequest(duration time.Duration, err error) {
 func (m *Metrics) GetStats() (int64, int64, time.Duration) {
     m.mu.RLock()
     defer m.mu.RUnlock()
-    
+
     return m.requestCount, m.errorCount, m.totalTime
 }
 ```
@@ -3322,7 +3322,7 @@ func NewCache() *Cache {
 func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.items[key] = &CacheItem{
         Value:      value,
         Expiration: time.Now().Add(ttl),
@@ -3332,23 +3332,23 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
 func (c *Cache) Get(key string) (interface{}, bool) {
     c.mu.RLock()
     defer c.mu.RUnlock()
-    
+
     item, ok := c.items[key]
     if !ok {
         return nil, false
     }
-    
+
     if time.Now().After(item.Expiration) {
         return nil, false
     }
-    
+
     return item.Value, true
 }
 
 func (c *Cache) cleanup() {
     ticker := time.NewTicker(1 * time.Minute)
     defer ticker.Stop()
-    
+
     for range ticker.C {
         c.mu.Lock()
         now := time.Now()
@@ -3387,11 +3387,11 @@ func (q *Queue) Enqueue(item interface{}) {
 func (q *Queue) Dequeue() (interface{}, bool) {
     q.mu.Lock()
     defer q.mu.Unlock()
-    
+
     if q.items.Len() == 0 {
         return nil, false
     }
-    
+
     front := q.items.Front()
     q.items.Remove(front)
     return front.Value, true
@@ -3417,11 +3417,11 @@ func NewPool(size int, new func() interface{}) *Pool {
         items: make(chan interface{}, size),
         new:   new,
     }
-    
+
     for i := 0; i < size; i++ {
         p.items <- new()
     }
-    
+
     return p
 }
 
@@ -3469,11 +3469,11 @@ func (v *Validator) ValidatePassword(password string) error {
     if len(password) < 8 {
         return errors.New("password must be at least 8 characters")
     }
-    
+
     hasUpper := false
     hasLower := false
     hasDigit := false
-    
+
     for _, r := range password {
         if unicode.IsUpper(r) {
             hasUpper = true
@@ -3485,11 +3485,11 @@ func (v *Validator) ValidatePassword(password string) error {
             hasDigit = true
         }
     }
-    
+
     if !hasUpper || !hasLower || !hasDigit {
         return errors.New("password must contain uppercase, lowercase and digit")
     }
-    
+
     return nil
 }
 ```
@@ -3507,7 +3507,7 @@ func renderTemplate(templateStr string, data interface{}) error {
     if err != nil {
         return err
     }
-    
+
     return tmpl.Execute(os.Stdout, data)
 }
 
@@ -3536,24 +3536,24 @@ import "reflect"
 func getStructTags(v interface{}) map[string]map[string]string {
     result := make(map[string]map[string]string)
     typ := reflect.TypeOf(v)
-    
+
     if typ.Kind() == reflect.Ptr {
         typ = typ.Elem()
     }
-    
+
     for i := 0; i < typ.NumField(); i++ {
         field := typ.Field(i)
         tags := make(map[string]string)
-        
+
         for _, tagName := range []string{"json", "xml", "db"} {
             if tagValue := field.Tag.Get(tagName); tagValue != "" {
                 tags[tagName] = tagValue
             }
         }
-        
+
         result[field.Name] = tags
     }
-    
+
     return result
 }
 ```
@@ -3606,9 +3606,9 @@ import "net/http"
 func loggingMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
-        
+
         next.ServeHTTP(w, r)
-        
+
         duration := time.Since(start)
         log.Printf("%s %s %v", r.Method, r.URL.Path, duration)
     })
@@ -3622,13 +3622,13 @@ func authMiddleware(next http.Handler) http.Handler {
             http.Error(w, "Unauthorized", http.StatusUnauthorized)
             return
         }
-        
+
         // Проверка токена
         if !isValidToken(token) {
             http.Error(w, "Invalid token", http.StatusUnauthorized)
             return
         }
-        
+
         next.ServeHTTP(w, r)
     })
 }
@@ -3637,7 +3637,7 @@ func authMiddleware(next http.Handler) http.Handler {
 func setupRoutes() {
     mux := http.NewServeMux()
     mux.HandleFunc("/api", apiHandler)
-    
+
     handler := loggingMiddleware(authMiddleware(mux))
     http.ListenAndServe(":8080", handler)
 }
@@ -3692,7 +3692,7 @@ fmt.Println("Both operations completed")
 func processWithPool(items []Item, numWorkers int) []Result {
     jobs := make(chan Item, len(items))
     results := make(chan Result, len(items))
-    
+
     // Запуск воркеров
     var wg sync.WaitGroup
     for i := 0; i < numWorkers; i++ {
@@ -3705,25 +3705,25 @@ func processWithPool(items []Item, numWorkers int) []Result {
             }
         }()
     }
-    
+
     // Отправка заданий
     for _, item := range items {
         jobs <- item
     }
     close(jobs)
-    
+
     // Ожидание завершения
     go func() {
         wg.Wait()
         close(results)
     }()
-    
+
     // Сбор результатов
     var allResults []Result
     for result := range results {
         allResults = append(allResults, result)
     }
-    
+
     return allResults
 }
 ```
@@ -3734,11 +3734,11 @@ func processWithPool(items []Item, numWorkers int) []Result {
 // Fan-out: распределение работы между воркерами
 func fanOut(input <-chan int, numWorkers int) []<-chan int {
     outputs := make([]<-chan int, numWorkers)
-    
+
     for i := 0; i < numWorkers; i++ {
         output := make(chan int)
         outputs[i] = output
-        
+
         go func(out chan<- int) {
             defer close(out)
             for n := range input {
@@ -3746,7 +3746,7 @@ func fanOut(input <-chan int, numWorkers int) []<-chan int {
             }
         }(output)
     }
-    
+
     return outputs
 }
 
@@ -3754,7 +3754,7 @@ func fanOut(input <-chan int, numWorkers int) []<-chan int {
 func fanIn(inputs ...<-chan int) <-chan int {
     output := make(chan int)
     var wg sync.WaitGroup
-    
+
     for _, input := range inputs {
         wg.Add(1)
         go func(in <-chan int) {
@@ -3764,12 +3764,12 @@ func fanIn(inputs ...<-chan int) <-chan int {
             }
         }(input)
     }
-    
+
     go func() {
         wg.Wait()
         close(output)
     }()
-    
+
     return output
 }
 ```
@@ -3787,7 +3787,7 @@ func pipeline(input <-chan int) <-chan int {
             stage1 <- n * 2
         }
     }()
-    
+
     // Stage 2: Фильтрация
     stage2 := make(chan int)
     go func() {
@@ -3798,7 +3798,7 @@ func pipeline(input <-chan int) <-chan int {
             }
         }
     }()
-    
+
     return stage2
 }
 
@@ -3864,7 +3864,7 @@ func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
 
 func (cb *CircuitBreaker) Call(fn func() error) error {
     cb.mu.Lock()
-    
+
     if cb.state == "open" {
         if time.Since(cb.lastFailure) > cb.timeout {
             cb.state = "half-open"
@@ -3873,14 +3873,14 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
             return fmt.Errorf("circuit breaker is open")
         }
     }
-    
+
     cb.mu.Unlock()
-    
+
     err := fn()
-    
+
     cb.mu.Lock()
     defer cb.mu.Unlock()
-    
+
     if err != nil {
         cb.failures++
         cb.lastFailure = time.Now()
@@ -3889,12 +3889,12 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
         }
         return err
     }
-    
+
     if cb.state == "half-open" {
         cb.state = "closed"
     }
     cb.failures = 0
-    
+
     return nil
 }
 ```
@@ -3904,19 +3904,19 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 ```go
 func retry(attempts int, delay time.Duration, fn func() error) error {
     var lastErr error
-    
+
     for i := 0; i < attempts; i++ {
         if err := fn(); err == nil {
             return nil
         }
-        
+
         lastErr = err
         if i < attempts-1 {
             time.Sleep(delay)
             delay *= 2 // Exponential backoff
         }
     }
-    
+
     return fmt.Errorf("failed after %d attempts: %w", attempts, lastErr)
 }
 
@@ -3942,7 +3942,7 @@ var (
         },
         []string{"method", "status"},
     )
-    
+
     requestDuration = prometheus.NewHistogramVec(
         prometheus.HistogramOpts{
             Name: "http_request_duration_seconds",
@@ -3960,9 +3960,9 @@ func init() {
 func metricsMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
-        
+
         next.ServeHTTP(w, r)
-        
+
         duration := time.Since(start).Seconds()
         requestsTotal.WithLabelValues(r.Method, "200").Inc()
         requestDuration.WithLabelValues(r.Method).Observe(duration)
@@ -3981,17 +3981,17 @@ func setupMetrics() {
 func gracefulShutdown(server *http.Server) {
     sigChan := make(chan os.Signal, 1)
     signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-    
+
     <-sigChan
     log.Println("Shutting down server...")
-    
+
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
-    
+
     if err := server.Shutdown(ctx); err != nil {
         log.Fatal("Server forced to shutdown:", err)
     }
-    
+
     log.Println("Server exited")
 }
 ```
@@ -4035,24 +4035,24 @@ func runMigrations(db *sql.DB, migrations []Migration) error {
     db.Exec(`CREATE TABLE IF NOT EXISTS migrations (
         version INTEGER PRIMARY KEY
     )`)
-    
+
     for _, migration := range migrations {
         var exists bool
-        err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM migrations WHERE version = $1)", 
+        err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM migrations WHERE version = $1)",
             migration.Version).Scan(&exists)
         if err != nil {
             return err
         }
-        
+
         if !exists {
             if err := migration.Up(db); err != nil {
                 return err
             }
-            
+
             db.Exec("INSERT INTO migrations (version) VALUES ($1)", migration.Version)
         }
     }
-    
+
     return nil
 }
 ```
@@ -4066,21 +4066,21 @@ func transferMoney(db *sql.DB, from, to string, amount float64) error {
         return err
     }
     defer tx.Rollback()
-    
+
     // Снятие средств
-    _, err = tx.Exec("UPDATE accounts SET balance = balance - $1 WHERE id = $2", 
+    _, err = tx.Exec("UPDATE accounts SET balance = balance - $1 WHERE id = $2",
         amount, from)
     if err != nil {
         return err
     }
-    
+
     // Пополнение счета
-    _, err = tx.Exec("UPDATE accounts SET balance = balance + $1 WHERE id = $2", 
+    _, err = tx.Exec("UPDATE accounts SET balance = balance + $1 WHERE id = $2",
         amount, to)
     if err != nil {
         return err
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -4094,21 +4094,21 @@ func loadConfig() (*Config, error) {
     viper.SetConfigName("config")
     viper.SetConfigType("yaml")
     viper.AddConfigPath(".")
-    
+
     viper.AutomaticEnv()
     viper.SetEnvPrefix("APP")
-    
+
     if err := viper.ReadInConfig(); err != nil {
         if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
             return nil, err
         }
     }
-    
+
     var config Config
     if err := viper.Unmarshal(&config); err != nil {
         return nil, err
     }
-    
+
     return &config, nil
 }
 ```
@@ -4135,11 +4135,11 @@ func apiV2Handler(w http.ResponseWriter, r *http.Request) {
 
 func setupVersionedRoutes() {
     mux := http.NewServeMux()
-    
+
     v1 := http.NewServeMux()
     v1.HandleFunc("/users", apiV1Handler)
     mux.Handle("/v1/", http.StripPrefix("/v1", v1))
-    
+
     v2 := http.NewServeMux()
     v2.HandleFunc("/users", apiV2Handler)
     mux.Handle("/v2/", http.StripPrefix("/v2", v2))
@@ -4166,24 +4166,24 @@ func (cm *CacheMiddleware) Middleware(next http.Handler) http.Handler {
             next.ServeHTTP(w, r)
             return
         }
-        
+
         cm.mu.RLock()
         entry, ok := cm.cache[r.URL.Path]
         cm.mu.RUnlock()
-        
+
         if ok && time.Now().Before(entry.ExpiresAt) {
             w.Header().Set("X-Cache", "HIT")
             w.Write(entry.Data)
             return
         }
-        
+
         recorder := &responseRecorder{
             ResponseWriter: w,
             body:           &bytes.Buffer{},
         }
-        
+
         next.ServeHTTP(recorder, r)
-        
+
         if recorder.statusCode == 200 {
             cm.mu.Lock()
             cm.cache[r.URL.Path] = CacheEntry{
@@ -4205,7 +4205,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
         "cache":    checkCache(),
         "external": checkExternalAPI(),
     }
-    
+
     allHealthy := true
     for name, healthy := range checks {
         if !healthy {
@@ -4213,7 +4213,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
             log.Printf("Health check failed: %s", name)
         }
     }
-    
+
     if allHealthy {
         w.WriteHeader(http.StatusOK)
         json.NewEncoder(w).Encode(map[string]interface{}{
@@ -4233,7 +4233,7 @@ func checkDatabase() bool {
     // Проверка подключения к БД
     ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
     defer cancel()
-    
+
     err := db.PingContext(ctx)
     return err == nil
 }
@@ -4319,7 +4319,7 @@ func (s *UserService) Health() error {
 func (s *UserService) backgroundWorker(ctx context.Context) {
     ticker := time.NewTicker(1 * time.Minute)
     defer ticker.Stop()
-    
+
     for {
         select {
         case <-ctx.Done():
@@ -4439,7 +4439,7 @@ func (eb *EventBus) Publish(event Event) error {
     eb.mu.RLock()
     handlers := eb.handlers[event.Type()]
     eb.mu.RUnlock()
-    
+
     for _, handler := range handlers {
         if err := handler(event); err != nil {
             return err
@@ -4618,7 +4618,7 @@ func NewUnitOfWork(db *sql.DB) (UnitOfWork, error) {
     if err != nil {
         return nil, err
     }
-    
+
     return &unitOfWork{
         db:    db,
         tx:    tx,
@@ -4645,15 +4645,15 @@ func createUserWithOrder(db *sql.DB, user *User, order *Order) error {
         return err
     }
     defer uow.Rollback()
-    
+
     if err := uow.Users().Create(context.Background(), user); err != nil {
         return err
     }
-    
+
     if err := uow.Orders().Create(context.Background(), order); err != nil {
         return err
     }
-    
+
     return uow.Commit()
 }
 ```
@@ -4790,7 +4790,7 @@ func (s *Subject) Notify(event string, data interface{}) {
     observers := make([]Observer, len(s.observers))
     copy(observers, s.observers)
     s.mu.RUnlock()
-    
+
     for _, observer := range observers {
         observer.Update(event, data)
     }
@@ -4835,13 +4835,13 @@ func (qb *QueryBuilder) Where(condition string, value interface{}) *QueryBuilder
 }
 
 func (qb *QueryBuilder) Build() (string, []interface{}) {
-    query := fmt.Sprintf("SELECT %s FROM %s", 
+    query := fmt.Sprintf("SELECT %s FROM %s",
         strings.Join(qb.selects, ", "), qb.table)
-    
+
     if len(qb.wheres) > 0 {
         query += " WHERE " + strings.Join(qb.wheres, " AND ")
     }
-    
+
     return query, qb.args
 }
 
@@ -4997,7 +4997,7 @@ func (d *CachingDecorator) Operation() string {
     if cached, ok := d.cache[key]; ok {
         return cached
     }
-    
+
     result := d.Decorator.Operation()
     d.cache[key] = result
     return result
@@ -5185,14 +5185,14 @@ func (p *Paginator) HasPrev() bool {
 func (p *Paginator) GetItems(db *sql.DB, query string) ([]interface{}, error) {
     offset := p.Offset()
     limit := p.Limit()
-    
+
     paginatedQuery := fmt.Sprintf("%s LIMIT %d OFFSET %d", query, limit, offset)
     rows, err := db.Query(paginatedQuery)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var items []interface{}
     for rows.Next() {
         var item interface{}
@@ -5201,7 +5201,7 @@ func (p *Paginator) GetItems(db *sql.DB, query string) ([]interface{}, error) {
         }
         items = append(items, item)
     }
-    
+
     return items, nil
 }
 ```
@@ -5235,11 +5235,11 @@ func (s *Sorter) Apply(query string) string {
         "email": true,
         "created_at": true,
     }
-    
+
     if !allowedFields[s.Field] {
         return query
     }
-    
+
     return fmt.Sprintf("%s ORDER BY %s %s", query, s.Field, s.Order)
 }
 ```
@@ -5278,16 +5278,16 @@ func (fb *FilterBuilder) Build() (string, []interface{}) {
     if len(fb.filters) == 0 {
         return "", nil
     }
-    
+
     conditions := make([]string, 0, len(fb.filters))
     args := make([]interface{}, 0)
-    
+
     for _, filter := range fb.filters {
         condition := fmt.Sprintf("%s %s ?", filter.Field, filter.Operator)
         conditions = append(conditions, condition)
         args = append(args, filter.Value)
     }
-    
+
     whereClause := "WHERE " + strings.Join(conditions, " AND ")
     return whereClause, args
 }
@@ -5309,7 +5309,7 @@ func ProcessBatch[T any](items []T, batchSize int, processor func([]T) error) er
         if end > len(items) {
             end = len(items)
         }
-        
+
         batch := items[i:end]
         if err := processor(batch); err != nil {
             return fmt.Errorf("batch %d: %w", i/batchSize, err)
@@ -5353,7 +5353,7 @@ func (s *Service) Process(ctx context.Context, data interface{}) (interface{}, e
         }
         return result, nil
     }
-    
+
     return s.fallback.Process(ctx, data)
 }
 
@@ -5388,19 +5388,19 @@ func DefaultRetryConfig() *RetryConfig {
 func RetryWithBackoff(ctx context.Context, config *RetryConfig, fn func() error) error {
     delay := config.InitialDelay
     var lastErr error
-    
+
     for attempt := 0; attempt < config.MaxAttempts; attempt++ {
         if err := ctx.Err(); err != nil {
             return err
         }
-        
+
         err := fn()
         if err == nil {
             return nil
         }
-        
+
         lastErr = err
-        
+
         if attempt < config.MaxAttempts-1 {
             select {
             case <-ctx.Done():
@@ -5413,7 +5413,7 @@ func RetryWithBackoff(ctx context.Context, config *RetryConfig, fn func() error)
             }
         }
     }
-    
+
     return fmt.Errorf("failed after %d attempts: %w", config.MaxAttempts, lastErr)
 }
 ```
@@ -5440,7 +5440,7 @@ func (url *UserRateLimiter) getLimiter(userID string) *rate.Limiter {
     url.mu.RLock()
     limiter, ok := url.limiters[userID]
     url.mu.RUnlock()
-    
+
     if !ok {
         url.mu.Lock()
         limiter, ok = url.limiters[userID]
@@ -5450,7 +5450,7 @@ func (url *UserRateLimiter) getLimiter(userID string) *rate.Limiter {
         }
         url.mu.Unlock()
     }
-    
+
     return limiter
 }
 
@@ -5493,7 +5493,7 @@ func (t *Tracer) StartSpan(operation, parentSpanID string) *Trace {
         }
         t.mu.RUnlock()
     }
-    
+
     trace := &Trace{
         TraceID:   traceID,
         SpanID:    spanID,
@@ -5502,18 +5502,18 @@ func (t *Tracer) StartSpan(operation, parentSpanID string) *Trace {
         StartTime: time.Now(),
         Tags:      make(map[string]string),
     }
-    
+
     t.mu.Lock()
     t.traces[spanID] = trace
     t.mu.Unlock()
-    
+
     return trace
 }
 
 func (t *Tracer) FinishSpan(spanID string) {
     t.mu.Lock()
     defer t.mu.Unlock()
-    
+
     if trace, ok := t.traces[spanID]; ok {
         trace.EndTime = time.Now()
     }
@@ -5554,13 +5554,13 @@ func NewLogger(level LogLevel) *Logger {
 func (l *Logger) WithField(key string, value interface{}) *Logger {
     l.mu.Lock()
     defer l.mu.Unlock()
-    
+
     newFields := make(map[string]interface{})
     for k, v := range l.fields {
         newFields[k] = v
     }
     newFields[key] = value
-    
+
     return &Logger{
         level:  l.level,
         fields: newFields,
@@ -5571,17 +5571,17 @@ func (l *Logger) log(level LogLevel, msg string) {
     if level < l.level {
         return
     }
-    
+
     entry := map[string]interface{}{
         "level":   level.String(),
         "message": msg,
         "time":    time.Now().Format(time.RFC3339),
     }
-    
+
     for k, v := range l.fields {
         entry[k] = v
     }
-    
+
     data, _ := json.Marshal(entry)
     log.Println(string(data))
 }
@@ -5637,9 +5637,9 @@ func NewConfig() *Config {
 func (c *Config) Set(key string, value interface{}) {
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     c.data[key] = value
-    
+
     // Уведомление наблюдателей
     for _, watcher := range c.watchers {
         watcher(c.data)
@@ -5674,23 +5674,23 @@ func (c *Config) LoadFromFile(filename string) error {
     if err != nil {
         return err
     }
-    
+
     var config map[string]interface{}
     if err := json.Unmarshal(data, &config); err != nil {
         return err
     }
-    
+
     c.mu.Lock()
     defer c.mu.Unlock()
-    
+
     for k, v := range config {
         c.data[k] = v
     }
-    
+
     for _, watcher := range c.watchers {
         watcher(c.data)
     }
-    
+
     return nil
 }
 ```
@@ -5733,7 +5733,7 @@ func (wp *WorkerPool) Start() {
 
 func (wp *WorkerPool) worker() {
     defer wp.wg.Done()
-    
+
     for {
         select {
         case <-wp.ctx.Done():
@@ -5812,7 +5812,7 @@ func (mq *MessageQueue) process() {
         mq.mu.RLock()
         handlers := mq.handlers[message.Type]
         mq.mu.RUnlock()
-        
+
         for _, handler := range handlers {
             if err := handler(message); err != nil {
                 log.Printf("Error handling message: %v", err)
@@ -5847,7 +5847,7 @@ func (s *Saga) AddStep(step SagaStep) {
 
 func (s *Saga) Execute() error {
     executed := make([]SagaStep, 0)
-    
+
     for _, step := range s.steps {
         if err := step.Execute(); err != nil {
             // Компенсация выполненных шагов
@@ -5860,7 +5860,7 @@ func (s *Saga) Execute() error {
         }
         executed = append(executed, step)
     }
-    
+
     return nil
 }
 ```
@@ -5900,7 +5900,7 @@ func (dl *DistributedLock) Acquire(ctx context.Context) error {
     if !acquired {
         return fmt.Errorf("failed to acquire lock")
     }
-    
+
     // Запуск обновления блокировки
     go dl.renew(ctx)
     return nil
@@ -5909,7 +5909,7 @@ func (dl *DistributedLock) Acquire(ctx context.Context) error {
 func (dl *DistributedLock) renew(ctx context.Context) {
     ticker := time.NewTicker(dl.ttl / 2)
     defer ticker.Stop()
-    
+
     for {
         select {
         case <-ctx.Done():
@@ -5956,7 +5956,7 @@ func NewInMemoryEventStore() *InMemoryEventStore {
 func (es *InMemoryEventStore) Append(events []Event) error {
     es.mu.Lock()
     defer es.mu.Unlock()
-    
+
     for _, event := range events {
         aggregateID := event.AggregateID()
         es.events[aggregateID] = append(es.events[aggregateID], event)
@@ -5967,7 +5967,7 @@ func (es *InMemoryEventStore) Append(events []Event) error {
 func (es *InMemoryEventStore) GetEvents(aggregateID string) ([]Event, error) {
     es.mu.RLock()
     defer es.mu.RUnlock()
-    
+
     events, ok := es.events[aggregateID]
     if !ok {
         return []Event{}, nil
@@ -6032,11 +6032,11 @@ func (cb *CommandBus) Handle(cmd Command) error {
     cb.mu.RLock()
     handler, ok := cb.handlers[reflect.TypeOf(cmd).Name()]
     cb.mu.RUnlock()
-    
+
     if !ok {
         return fmt.Errorf("handler not found for command type")
     }
-    
+
     return handler.Handle(cmd)
 }
 ```
@@ -6075,7 +6075,7 @@ func (ed *EventDispatcher) Dispatch(event DomainEvent) error {
     ed.mu.RLock()
     handlers := ed.handlers[event.EventType()]
     ed.mu.RUnlock()
-    
+
     for _, handler := range handlers {
         if err := handler.Handle(event); err != nil {
             return err
@@ -6356,20 +6356,20 @@ func (ss *InMemorySnapshotStore) Load(aggregateID string) (Snapshot, error) {
 func RehydrateFromSnapshot(aggregate Aggregate, snapshot Snapshot, eventStore EventStore) error {
     // Загрузка снимка
     applySnapshot(aggregate, snapshot)
-    
+
     // Загрузка событий после снимка
     events, err := eventStore.GetEvents(aggregate.GetID())
     if err != nil {
         return err
     }
-    
+
     // Применение событий после снимка
     for _, event := range events {
         if event.Timestamp().After(snapshot.Timestamp()) {
             aggregate.Apply(event)
         }
     }
-    
+
     return nil
 }
 ```
@@ -6389,12 +6389,12 @@ func NewEventualConsistency(eventStore EventStore, projections []Projection) *Ev
         projections: projections,
         dispatcher:  NewEventDispatcher(),
     }
-    
+
     // Регистрация проекций как обработчиков событий
     for _, projection := range projections {
         ec.dispatcher.Register("", projection)
     }
-    
+
     return ec
 }
 
@@ -6403,13 +6403,13 @@ func (ec *EventualConsistency) ProcessEvents(aggregateID string) error {
     if err != nil {
         return err
     }
-    
+
     for _, event := range events {
         if err := ec.dispatcher.Dispatch(event); err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -6435,23 +6435,23 @@ func (so *SagaOrchestrator) AddStep(step SagaStep) {
 
 func (so *SagaOrchestrator) Execute(ctx context.Context) error {
     executed := make([]SagaStep, 0)
-    
+
     for _, step := range so.steps {
         if err := ctx.Err(); err != nil {
             // Компенсация при отмене
             so.compensate(executed)
             return err
         }
-        
+
         if err := step.Execute(); err != nil {
             // Компенсация при ошибке
             so.compensate(executed)
             return err
         }
-        
+
         executed = append(executed, step)
     }
-    
+
     return nil
 }
 
@@ -6489,14 +6489,14 @@ func (s *InMemoryIdempotencyStore) Store(key IdempotencyKey, result interface{},
     s.mu.Lock()
     defer s.mu.Unlock()
     s.store[key] = result
-    
+
     go func() {
         time.Sleep(ttl)
         s.mu.Lock()
         delete(s.store, key)
         s.mu.Unlock()
     }()
-    
+
     return nil
 }
 
@@ -6515,12 +6515,12 @@ func IdempotentHandler(
         if result, ok := idempotencyStore.Get(key); ok {
             return result, nil
         }
-        
+
         result, err := handler()
         if err != nil {
             return nil, err
         }
-        
+
         idempotencyStore.Store(key, result, 1*time.Hour)
         return result, nil
     }
@@ -6564,7 +6564,7 @@ func NewOutboxProcessor(store OutboxStore, dispatcher *EventDispatcher, interval
 func (op *OutboxProcessor) Start() {
     ticker := time.NewTicker(op.interval)
     defer ticker.Stop()
-    
+
     for {
         select {
         case <-op.stopCh:
@@ -6581,7 +6581,7 @@ func (op *OutboxProcessor) process() {
         log.Printf("Error getting unprocessed events: %v", err)
         return
     }
-    
+
     processedIDs := make([]string, 0)
     for _, event := range events {
         if err := op.dispatcher.Dispatch(event); err != nil {
@@ -6590,7 +6590,7 @@ func (op *OutboxProcessor) process() {
         }
         processedIDs = append(processedIDs, event.ID)
     }
-    
+
     if len(processedIDs) > 0 {
         op.store.MarkAsProcessed(processedIDs)
     }
@@ -6622,7 +6622,7 @@ func (bo *BulkOperation) Process(items []interface{}) error {
         if end > len(items) {
             end = len(items)
         }
-        
+
         batch := items[i:end]
         if err := bo.processor(batch); err != nil {
             return fmt.Errorf("batch %d failed: %w", i/bo.batchSize, err)
@@ -6636,16 +6636,16 @@ func bulkInsert(db *sql.DB, table string, records []map[string]interface{}) erro
     if len(records) == 0 {
         return nil
     }
-    
+
     keys := make([]string, 0, len(records[0]))
     for k := range records[0] {
         keys = append(keys, k)
     }
-    
+
     query := fmt.Sprintf("INSERT INTO %s (%s) VALUES ", table, strings.Join(keys, ", "))
     values := make([]string, 0, len(records))
     args := make([]interface{}, 0)
-    
+
     argIndex := 1
     for _, record := range records {
         placeholders := make([]string, 0, len(keys))
@@ -6656,7 +6656,7 @@ func bulkInsert(db *sql.DB, table string, records []map[string]interface{}) erro
         }
         values = append(values, "("+strings.Join(placeholders, ", ")+")")
     }
-    
+
     query += strings.Join(values, ", ")
     _, err := db.Exec(query, args...)
     return err
@@ -6695,33 +6695,33 @@ func UpdateWithOptimisticLock(db *sql.DB, entity *OptimisticEntity, update func(
         return err
     }
     defer tx.Rollback()
-    
+
     var currentVersion int
     err = tx.QueryRow("SELECT version FROM entities WHERE id = $1", entity.ID).Scan(&currentVersion)
     if err != nil {
         return err
     }
-    
+
     if currentVersion != entity.Version {
         return fmt.Errorf("optimistic lock conflict: expected version %d, got %d", entity.Version, currentVersion)
     }
-    
+
     if err := update(entity); err != nil {
         return err
     }
-    
+
     entity.Version++
     _, err = tx.Exec("UPDATE entities SET data = $1, version = $2 WHERE id = $3 AND version = $4",
         entity.Data, entity.Version, entity.ID, currentVersion)
     if err != nil {
         return err
     }
-    
+
     affected, _ := result.RowsAffected()
     if affected == 0 {
         return fmt.Errorf("optimistic lock conflict: no rows updated")
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -6818,7 +6818,7 @@ func NewAuditLogger() *AuditLogger {
 func (al *AuditLogger) Log(entityType, entityID, action string, changes map[string]interface{}, userID string) {
     al.mu.Lock()
     defer al.mu.Unlock()
-    
+
     log := AuditLog{
         ID:         generateID(),
         EntityType: entityType,
@@ -6828,14 +6828,14 @@ func (al *AuditLogger) Log(entityType, entityID, action string, changes map[stri
         UserID:     userID,
         Timestamp:  time.Now(),
     }
-    
+
     al.logs = append(al.logs, log)
 }
 
 func (al *AuditLogger) GetLogs(entityType, entityID string) []AuditLog {
     al.mu.RLock()
     defer al.mu.RUnlock()
-    
+
     var result []AuditLog
     for _, log := range al.logs {
         if log.EntityType == entityType && log.EntityID == entityID {
@@ -6892,7 +6892,7 @@ func TenantMiddleware(next http.Handler) http.Handler {
             http.Error(w, "Tenant ID required", http.StatusBadRequest)
             return
         }
-        
+
         ctx := WithTenant(r.Context(), tenantID)
         next.ServeHTTP(w, r.WithContext(ctx))
     })
@@ -6915,7 +6915,7 @@ type VersionRepository struct {
 }
 
 func (vr *VersionRepository) CreateVersion(entityID string, version int, data interface{}) error {
-    query := `INSERT INTO entity_versions (entity_id, version, data, created_at) 
+    query := `INSERT INTO entity_versions (entity_id, version, data, created_at)
               VALUES ($1, $2, $3, $4)`
     _, err := vr.db.Exec(query, entityID, version, data, time.Now())
     return err
@@ -6923,8 +6923,8 @@ func (vr *VersionRepository) CreateVersion(entityID string, version int, data in
 
 func (vr *VersionRepository) GetVersion(entityID string, version int) (*VersionedEntity, error) {
     var entity VersionedEntity
-    query := `SELECT entity_id, version, data, created_at 
-              FROM entity_versions 
+    query := `SELECT entity_id, version, data, created_at
+              FROM entity_versions
               WHERE entity_id = $1 AND version = $2`
     err := vr.db.QueryRow(query, entityID, version).Scan(
         &entity.ID, &entity.Version, &entity.Data, &entity.CreatedAt)
@@ -6935,16 +6935,16 @@ func (vr *VersionRepository) GetVersion(entityID string, version int) (*Versione
 }
 
 func (vr *VersionRepository) GetVersions(entityID string) ([]VersionedEntity, error) {
-    query := `SELECT entity_id, version, data, created_at 
-              FROM entity_versions 
-              WHERE entity_id = $1 
+    query := `SELECT entity_id, version, data, created_at
+              FROM entity_versions
+              WHERE entity_id = $1
               ORDER BY version DESC`
     rows, err := vr.db.Query(query, entityID)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var entities []VersionedEntity
     for rows.Next() {
         var entity VersionedEntity
@@ -6961,20 +6961,20 @@ func (vr *VersionRepository) RestoreVersion(entityID string, version int) error 
     if err != nil {
         return err
     }
-    
+
     tx, err := vr.db.Begin()
     if err != nil {
         return err
     }
     defer tx.Rollback()
-    
+
     // Обновление текущей версии
     _, err = tx.Exec("UPDATE entities SET data = $1, version = $2 WHERE id = $3",
         entity.Data, entity.Version, entityID)
     if err != nil {
         return err
     }
-    
+
     // Создание новой версии
     currentVersion := entity.Version + 1
     _, err = tx.Exec("INSERT INTO entity_versions (entity_id, version, data, created_at) VALUES ($1, $2, $3, $4)",
@@ -6982,7 +6982,7 @@ func (vr *VersionRepository) RestoreVersion(entityID string, version int) error 
     if err != nil {
         return err
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -7009,13 +7009,13 @@ func NewMaterializedView(name, query string, refreshInterval time.Duration) *Mat
 func (mv *MaterializedView) Refresh(db *sql.DB) error {
     mv.mu.Lock()
     defer mv.mu.Unlock()
-    
+
     refreshQuery := fmt.Sprintf("REFRESH MATERIALIZED VIEW CONCURRENTLY %s", mv.name)
     _, err := db.Exec(refreshQuery)
     if err != nil {
         return err
     }
-    
+
     mv.lastRefresh = time.Now()
     return nil
 }
@@ -7061,10 +7061,10 @@ func (dp *DatabasePool) GetReadDB() *sql.DB {
     if len(dp.replicas) == 0 {
         return dp.primary
     }
-    
+
     dp.mu.Lock()
     defer dp.mu.Unlock()
-    
+
     db := dp.replicas[dp.currentReplica]
     dp.currentReplica = (dp.currentReplica + 1) % len(dp.replicas)
     return db
@@ -7109,16 +7109,16 @@ func NewConnectionPool(dsn string, maxConns, idleConns int, maxIdleTime time.Dur
     if err != nil {
         return nil, err
     }
-    
+
     db.SetMaxOpenConns(maxConns)
     db.SetMaxIdleConns(idleConns)
     db.SetConnMaxIdleTime(maxIdleTime)
     db.SetConnMaxLifetime(1 * time.Hour)
-    
+
     if err := db.Ping(); err != nil {
         return nil, err
     }
-    
+
     return &ConnectionPool{
         pool:        db,
         maxConns:    maxConns,
@@ -7217,35 +7217,35 @@ func (qb *QueryBuilder) Offset(offset int) *QueryBuilder {
 
 func (qb *QueryBuilder) Build() (string, []interface{}) {
     query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(qb.selects, ", "), qb.table)
-    
+
     if len(qb.joins) > 0 {
         query += " " + strings.Join(qb.joins, " ")
     }
-    
+
     if len(qb.wheres) > 0 {
         query += " WHERE " + strings.Join(qb.wheres, " AND ")
     }
-    
+
     if len(qb.groups) > 0 {
         query += " GROUP BY " + strings.Join(qb.groups, ", ")
     }
-    
+
     if len(qb.having) > 0 {
         query += " HAVING " + strings.Join(qb.having, " AND ")
     }
-    
+
     if len(qb.orders) > 0 {
         query += " ORDER BY " + strings.Join(qb.orders, ", ")
     }
-    
+
     if qb.limitVal != nil {
         query += fmt.Sprintf(" LIMIT %d", *qb.limitVal)
     }
-    
+
     if qb.offsetVal != nil {
         query += fmt.Sprintf(" OFFSET %d", *qb.offsetVal)
     }
-    
+
     return query, qb.args
 }
 
@@ -7267,38 +7267,38 @@ query, args := builder.Build()
 ```go
 func ExecuteWithRetry(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error, maxRetries int) error {
     var lastErr error
-    
+
     for attempt := 0; attempt < maxRetries; attempt++ {
         tx, err := db.BeginTx(ctx, nil)
         if err != nil {
             return err
         }
-        
+
         if err := fn(tx); err != nil {
             tx.Rollback()
             lastErr = err
-            
+
             if isRetryableError(err) && attempt < maxRetries-1 {
                 time.Sleep(time.Duration(attempt+1) * 100 * time.Millisecond)
                 continue
             }
             return err
         }
-        
+
         if err := tx.Commit(); err != nil {
             tx.Rollback()
             lastErr = err
-            
+
             if isRetryableError(err) && attempt < maxRetries-1 {
                 time.Sleep(time.Duration(attempt+1) * 100 * time.Millisecond)
                 continue
             }
             return err
         }
-        
+
         return nil
     }
-    
+
     return fmt.Errorf("transaction failed after %d attempts: %w", maxRetries, lastErr)
 }
 
@@ -7329,25 +7329,25 @@ func (psc *PreparedStatementCache) Get(key string, query string) (*sql.Stmt, err
     psc.mu.RLock()
     stmt, ok := psc.statements[key]
     psc.mu.RUnlock()
-    
+
     if ok {
         return stmt, nil
     }
-    
+
     psc.mu.Lock()
     defer psc.mu.Unlock()
-    
+
     // Double-check
     stmt, ok = psc.statements[key]
     if ok {
         return stmt, nil
     }
-    
+
     preparedStmt, err := psc.db.Prepare(query)
     if err != nil {
         return nil, err
     }
-    
+
     psc.statements[key] = preparedStmt
     return preparedStmt, nil
 }
@@ -7355,7 +7355,7 @@ func (psc *PreparedStatementCache) Get(key string, query string) (*sql.Stmt, err
 func (psc *PreparedStatementCache) Clear() {
     psc.mu.Lock()
     defer psc.mu.Unlock()
-    
+
     for _, stmt := range psc.statements {
         stmt.Close()
     }
@@ -7370,10 +7370,10 @@ func BatchInsert(db *sql.DB, table string, columns []string, rows [][]interface{
     if len(rows) == 0 {
         return nil
     }
-    
+
     placeholders := make([]string, len(rows))
     args := make([]interface{}, 0, len(rows)*len(columns))
-    
+
     argIndex := 1
     for i, row := range rows {
         rowPlaceholders := make([]string, len(columns))
@@ -7384,10 +7384,10 @@ func BatchInsert(db *sql.DB, table string, columns []string, rows [][]interface{
         }
         placeholders[i] = "(" + strings.Join(rowPlaceholders, ", ") + ")"
     }
-    
+
     query := fmt.Sprintf("INSERT INTO %s (%s) VALUES %s",
         table, strings.Join(columns, ", "), strings.Join(placeholders, ", "))
-    
+
     _, err := db.Exec(query, args...)
     return err
 }
@@ -7398,19 +7398,19 @@ func BatchInsertWithTransaction(db *sql.DB, table string, columns []string, rows
         return err
     }
     defer tx.Rollback()
-    
+
     for i := 0; i < len(rows); i += batchSize {
         end := i + batchSize
         if end > len(rows) {
             end = len(rows)
         }
-        
+
         batch := rows[i:end]
         if err := BatchInsertTx(tx, table, columns, batch); err != nil {
             return err
         }
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -7422,7 +7422,7 @@ func Upsert(db *sql.DB, table string, data map[string]interface{}, conflictColum
     keys := make([]string, 0, len(data))
     values := make([]interface{}, 0, len(data))
     placeholders := make([]string, 0, len(data))
-    
+
     argIndex := 1
     for k, v := range data {
         keys = append(keys, k)
@@ -7430,19 +7430,19 @@ func Upsert(db *sql.DB, table string, data map[string]interface{}, conflictColum
         placeholders = append(placeholders, fmt.Sprintf("$%d", argIndex))
         argIndex++
     }
-    
+
     conflictClause := "(" + strings.Join(conflictColumns, ", ") + ")"
-    
+
     updates := make([]string, 0, len(updateColumns))
     for _, col := range updateColumns {
         updates = append(updates, fmt.Sprintf("%s = EXCLUDED.%s", col, col))
     }
-    
-    query := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) 
+
+    query := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s)
                           ON CONFLICT %s DO UPDATE SET %s`,
         table, strings.Join(keys, ", "), strings.Join(placeholders, ", "),
         conflictClause, strings.Join(updates, ", "))
-    
+
     _, err := db.Exec(query, values...)
     return err
 }
@@ -7464,12 +7464,12 @@ func (jf *JSONField) Scan(value interface{}) error {
         jf.Data = nil
         return nil
     }
-    
+
     bytes, ok := value.([]byte)
     if !ok {
         return fmt.Errorf("cannot scan %T into JSONField", value)
     }
-    
+
     return json.Unmarshal(bytes, &jf.Data)
 }
 
@@ -7504,13 +7504,13 @@ func (fts *FullTextSearch) Search(table, searchColumn, query string, limit int) 
     searchQuery := fmt.Sprintf(
         "SELECT * FROM %s WHERE to_tsvector('english', %s) @@ plainto_tsquery('english', $1) LIMIT $2",
         table, searchColumn)
-    
+
     rows, err := fts.db.Query(searchQuery, query, limit)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var results []interface{}
     for rows.Next() {
         // Scan results
@@ -7520,7 +7520,7 @@ func (fts *FullTextSearch) Search(table, searchColumn, query string, limit int) 
         }
         results = append(results, item)
     }
-    
+
     return results, nil
 }
 
@@ -7551,13 +7551,13 @@ func (p *Point) Scan(value interface{}) error {
     if !ok {
         return fmt.Errorf("cannot scan %T into Point", value)
     }
-    
+
     var lon, lat float64
     _, err := fmt.Sscanf(str, "POINT(%f %f)", &lon, &lat)
     if err != nil {
         return err
     }
-    
+
     p.Longitude = lon
     p.Latitude = lat
     return nil
@@ -7565,20 +7565,20 @@ func (p *Point) Scan(value interface{}) error {
 
 func FindNearby(db *sql.DB, table string, point Point, radiusKm float64) ([]interface{}, error) {
     query := fmt.Sprintf(
-        `SELECT *, 
+        `SELECT *,
          ST_Distance(location, ST_MakePoint($1, $2)::geography) / 1000 AS distance_km
-         FROM %s 
+         FROM %s
          WHERE ST_DWithin(location::geography, ST_MakePoint($1, $2)::geography, $3)
          ORDER BY distance_km`,
         table)
-    
+
     radiusMeters := radiusKm * 1000
     rows, err := db.Query(query, point.Longitude, point.Latitude, radiusMeters)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var results []interface{}
     for rows.Next() {
         var item interface{}
@@ -7587,7 +7587,7 @@ func FindNearby(db *sql.DB, table string, point Point, radiusKm float64) ([]inte
         }
         results = append(results, item)
     }
-    
+
     return results, nil
 }
 ```
@@ -7608,11 +7608,11 @@ func (im *IndexManager) CreateIndex(table, indexName string, columns []string, u
     if unique {
         uniqueClause = "UNIQUE"
     }
-    
+
     query := fmt.Sprintf(
         "CREATE %s INDEX IF NOT EXISTS %s ON %s (%s)",
         uniqueClause, indexName, table, strings.Join(columns, ", "))
-    
+
     _, err := im.db.Exec(query)
     return err
 }
@@ -7621,7 +7621,7 @@ func (im *IndexManager) CreatePartialIndex(table, indexName string, columns []st
     query := fmt.Sprintf(
         "CREATE INDEX IF NOT EXISTS %s ON %s (%s) WHERE %s",
         indexName, table, strings.Join(columns, ", "), condition)
-    
+
     _, err := im.db.Exec(query)
     return err
 }
@@ -7690,7 +7690,7 @@ func (mm *MigrationManager) GetAppliedMigrations() (map[int]bool, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     applied := make(map[int]bool)
     for rows.Next() {
         var version int
@@ -7699,7 +7699,7 @@ func (mm *MigrationManager) GetAppliedMigrations() (map[int]bool, error) {
         }
         applied[version] = true
     }
-    
+
     return applied, nil
 }
 
@@ -7708,23 +7708,23 @@ func (mm *MigrationManager) Up() error {
     if err != nil {
         return err
     }
-    
+
     for _, migration := range mm.migrations {
         if applied[migration.Version] {
             continue
         }
-        
+
         if err := migration.Up(mm.db); err != nil {
             return fmt.Errorf("migration %d (%s) failed: %w", migration.Version, migration.Name, err)
         }
-        
+
         _, err := mm.db.Exec("INSERT INTO schema_migrations (version, name) VALUES ($1, $2)",
             migration.Version, migration.Name)
         if err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 
@@ -7733,25 +7733,25 @@ func (mm *MigrationManager) Down(targetVersion int) error {
     if err != nil {
         return err
     }
-    
+
     for i := len(mm.migrations) - 1; i >= 0; i-- {
         migration := mm.migrations[i]
         if !applied[migration.Version] || migration.Version <= targetVersion {
             continue
         }
-        
+
         if migration.Down != nil {
             if err := migration.Down(mm.db); err != nil {
                 return fmt.Errorf("rollback migration %d (%s) failed: %w", migration.Version, migration.Name, err)
             }
         }
-        
+
         _, err := mm.db.Exec("DELETE FROM schema_migrations WHERE version = $1", migration.Version)
         if err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -7772,7 +7772,7 @@ func (vm *ViewManager) CreateView(name, query string, replace bool) error {
     if replace {
         replaceClause = "OR REPLACE"
     }
-    
+
     createQuery := fmt.Sprintf("CREATE %s VIEW %s AS %s", replaceClause, name, query)
     _, err := vm.db.Exec(createQuery)
     return err
@@ -7795,7 +7795,7 @@ func (vm *ViewManager) RefreshMaterializedView(name string, concurrently bool) e
     if concurrently {
         concurrentClause = "CONCURRENTLY"
     }
-    
+
     query := fmt.Sprintf("REFRESH MATERIALIZED VIEW %s %s", concurrentClause, name)
     _, err := vm.db.Exec(query)
     return err
@@ -7820,7 +7820,7 @@ func (tm *TriggerManager) CreateTrigger(name, table, timing, event string, funct
          FOR EACH ROW
          EXECUTE FUNCTION %s()`,
         name, timing, event, table, function)
-    
+
     _, err := tm.db.Exec(query)
     return err
 }
@@ -7842,7 +7842,7 @@ func (tm *TriggerManager) CreateTriggerFunction(name, body string) error {
          END;
          $$ LANGUAGE plpgsql;`,
         name, body)
-    
+
     _, err := tm.db.Exec(query)
     return err
 }
@@ -7868,7 +7868,7 @@ func (pm *ProcedureManager) CreateProcedure(name, parameters, body string) error
          END;
          $$ LANGUAGE plpgsql;`,
         name, parameters, body)
-    
+
     _, err := pm.db.Exec(query)
     return err
 }
@@ -7878,7 +7878,7 @@ func (pm *ProcedureManager) CallProcedure(name string, args ...interface{}) erro
     for i := range placeholders {
         placeholders[i] = fmt.Sprintf("$%d", i+1)
     }
-    
+
     query := fmt.Sprintf("CALL %s(%s)", name, strings.Join(placeholders, ", "))
     _, err := pm.db.Exec(query, args...)
     return err
@@ -7897,7 +7897,7 @@ func CreateFunction(db *sql.DB, name, returnType, body string) error {
          END;
          $$ LANGUAGE plpgsql;`,
         name, returnType, body)
-    
+
     _, err := db.Exec(query)
     return err
 }
@@ -7907,7 +7907,7 @@ func CallFunction(db *sql.DB, name string, args ...interface{}) (interface{}, er
     for i := range placeholders {
         placeholders[i] = fmt.Sprintf("$%d", i+1)
     }
-    
+
     query := fmt.Sprintf("SELECT %s(%s)", name, strings.Join(placeholders, ", "))
     var result interface{}
     err := db.QueryRow(query, args...).Scan(&result)
@@ -7944,7 +7944,7 @@ func (em *ExtensionManager) ListExtensions() ([]string, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     var extensions []string
     for rows.Next() {
         var name string
@@ -7953,7 +7953,7 @@ func (em *ExtensionManager) ListExtensions() ([]string, error) {
         }
         extensions = append(extensions, name)
     }
-    
+
     return extensions, nil
 }
 ```
@@ -7979,8 +7979,8 @@ func (cm *ConstraintManager) AddPrimaryKey(table, column string) error {
 
 func (cm *ConstraintManager) AddForeignKey(table, column, refTable, refColumn, constraintName string) error {
     query := fmt.Sprintf(
-        `ALTER TABLE %s 
-         ADD CONSTRAINT %s 
+        `ALTER TABLE %s
+         ADD CONSTRAINT %s
          FOREIGN KEY (%s) REFERENCES %s(%s)`,
         table, constraintName, column, refTable, refColumn)
     _, err := cm.db.Exec(query)
@@ -8097,7 +8097,7 @@ func (pm *PartitionManager) CreatePartitionedTable(name, column string, partitio
     default:
         return fmt.Errorf("unsupported partition type: %s", partitionType)
     }
-    
+
     _, err := pm.db.Exec(query)
     return err
 }
@@ -8146,23 +8146,23 @@ func (rm *ReplicationManager) DropReplicationSlot(slotName string) error {
 }
 
 func (rm *ReplicationManager) ListReplicationSlots() ([]map[string]interface{}, error) {
-    query := `SELECT slot_name, slot_type, active, restart_lsn 
+    query := `SELECT slot_name, slot_type, active, restart_lsn
               FROM pg_replication_slots`
     rows, err := rm.db.Query(query)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var slots []map[string]interface{}
     for rows.Next() {
         var slotName, slotType, restartLSN string
         var active bool
-        
+
         if err := rows.Scan(&slotName, &slotType, &active, &restartLSN); err != nil {
             return nil, err
         }
-        
+
         slots = append(slots, map[string]interface{}{
             "slot_name":   slotName,
             "slot_type":   slotType,
@@ -8170,7 +8170,7 @@ func (rm *ReplicationManager) ListReplicationSlots() ([]map[string]interface{}, 
             "restart_lsn": restartLSN,
         })
     }
-    
+
     return slots, nil
 }
 ```
@@ -8204,9 +8204,9 @@ func (bm *BackupManager) CreateBackup(outputPath string) error {
         "-d", bm.dbName,
         "-F", "c",
         "-f", outputPath)
-    
+
     cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", bm.dbPassword))
-    
+
     return cmd.Run()
 }
 
@@ -8218,9 +8218,9 @@ func (bm *BackupManager) RestoreBackup(backupPath string) error {
         "-d", bm.dbName,
         "-c",
         backupPath)
-    
+
     cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", bm.dbPassword))
-    
+
     return cmd.Run()
 }
 
@@ -8232,9 +8232,9 @@ func (bm *BackupManager) CreateSQLBackup(outputPath string) error {
         "-d", bm.dbName,
         "-F", "p",
         "-f", outputPath)
-    
+
     cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", bm.dbPassword))
-    
+
     return cmd.Run()
 }
 ```
@@ -8252,7 +8252,7 @@ func NewStatisticsManager(db *sql.DB) *StatisticsManager {
 
 func (sm *StatisticsManager) GetTableStats(table string) (map[string]interface{}, error) {
     query := `
-        SELECT 
+        SELECT
             schemaname,
             tablename,
             n_tup_ins as inserts,
@@ -8266,7 +8266,7 @@ func (sm *StatisticsManager) GetTableStats(table string) (map[string]interface{}
             last_autoanalyze
         FROM pg_stat_user_tables
         WHERE tablename = $1`
-    
+
     var stats map[string]interface{}
     err := sm.db.QueryRow(query, table).Scan(
         &stats["schema"], &stats["table"],
@@ -8274,13 +8274,13 @@ func (sm *StatisticsManager) GetTableStats(table string) (map[string]interface{}
         &stats["live_tuples"], &stats["dead_tuples"],
         &stats["last_vacuum"], &stats["last_autovacuum"],
         &stats["last_analyze"], &stats["last_autoanalyze"])
-    
+
     return stats, err
 }
 
 func (sm *StatisticsManager) GetIndexStats(index string) (map[string]interface{}, error) {
     query := `
-        SELECT 
+        SELECT
             schemaname,
             indexrelname,
             idx_scan as index_scans,
@@ -8288,12 +8288,12 @@ func (sm *StatisticsManager) GetIndexStats(index string) (map[string]interface{}
             idx_tup_fetch as tuples_fetched
         FROM pg_stat_user_indexes
         WHERE indexrelname = $1`
-    
+
     var stats map[string]interface{}
     err := sm.db.QueryRow(query, index).Scan(
         &stats["schema"], &stats["index"],
         &stats["scans"], &stats["tuples_read"], &stats["tuples_fetched"])
-    
+
     return stats, err
 }
 
@@ -8318,17 +8318,17 @@ func (sm *StatisticsManager) VacuumTable(table string, full bool) error {
 
 ### Каналы для координации
 
-Каналы в Go - это не только средство коммуникации, но и инструмент координации горутин. Используя каналы, можно реализовать различные паттерны синхронизации и координации.
+Каналы в Go — это не только средство коммуникации, но и инструмент координации горутин. Используя каналы, можно реализовать различные паттерны синхронизации и координации.
 
 ```go
 // Паттерн: Токен для ограничения параллелизма
 func WorkerPool(workers int, jobs <-chan Job, results chan<- Result) {
     tokens := make(chan struct{}, workers)
-    
+
     for i := 0; i < workers; i++ {
         tokens <- struct{}{}
     }
-    
+
     for job := range jobs {
         token := <-tokens
         go func(j Job) {
@@ -8401,7 +8401,7 @@ var (
 
 ## Заключение
 
-Go - это мощный, эффективный и простой язык программирования, который идеально подходит для создания современного программного обеспечения. Понимание основ Go, конкурентности, типов, интерфейсов, пакетов, тестирования и продвинутых техник позволяет создавать надежные, производительные и масштабируемые приложения.
+Go — это мощный, эффективный и простой язык программирования, который идеально подходит для создания современного программного обеспечения. Понимание основ Go, конкурентности, типов, интерфейсов, пакетов, тестирования и продвинутых техник позволяет создавать надежные, производительные и масштабируемые приложения.
 
 **Ключевые принципы Go:**
 - Простота и читаемость кода

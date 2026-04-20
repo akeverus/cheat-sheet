@@ -43,17 +43,17 @@ updated: "2026-02-11"
 
 ## Описание алгоритма
 
-Задача **Dining Philosophers** - одна из классических задач, используемых для описания проблем синхронизации в многопоточной среде и иллюстрации методов их решения. Дейкстра впервые сформулировал эту проблему и представил ее относительно компьютеров, обращающихся к периферийным устройствам ленточных накопителей.
+Задача **Dining Philosophers** — одна из классических задач, используемых для описания проблем синхронизации в многопоточной среде и иллюстрации методов их решения. Дейкстра впервые сформулировал эту проблему и представил ее относительно компьютеров, обращающихся к периферийным устройствам ленточных накопителей.
 
 Настоящая формулировка была дана Тони Хоаром, который также известен изобретением алгоритма быстрой сортировки. В этой статье мы анализируем эту известную проблему и кодируем популярное решение.
 
 ### Постановка задачи
 
-Пять молчаливых философов (**P1 - P5**) сидят за круглым столом, проводят свою жизнь за едой и размышлениями.
+Пять молчаливых философов (**P1 — P5**) сидят за круглым столом, проводят свою жизнь за едой и размышлениями.
 
-У них есть пять вилок, которыми они могут поделиться (1 - 5), и чтобы иметь возможность есть, философ должен иметь вилки в обеих руках. Поев, он кладет их обоих, а затем их может взять другой философ, который повторяет тот же цикл.
+У них есть пять вилок, которыми они могут поделиться (1 — 5), и чтобы иметь возможность есть, философ должен иметь вилки в обеих руках. Поев, он кладет их обоих, а затем их может взять другой философ, который повторяет тот же цикл.
 
-Цель состоит в том, чтобы придумать схему/протокол, который поможет философам достичь своей цели - есть и думать, не умирая от голода.
+Цель состоит в том, чтобы придумать схему/протокол, который поможет философам достичь своей цели — есть и думать, не умирая от голода.
 
 ## Проблема взаимоблокировки
 
@@ -83,35 +83,35 @@ while(true) {
 public class Philosopher implements Runnable {
     private Object leftFork;
     private Object rightFork;
-    
+
     public Philosopher(Object leftFork, Object rightFork) {
         this.leftFork = leftFork;
         this.rightFork = rightFork;
     }
-    
+
     private void doAction(String action) throws InterruptedException {
         System.out.println(
             Thread.currentThread().getName() + " " + action
         );
         Thread.sleep(((int) (Math.random() * 100)));
     }
-    
+
     @Override
     public void run() {
         try {
             while (true) {
                 doAction(System.nanoTime() + ": Thinking");
-                
+
                 synchronized (leftFork) {
                     doAction(System.nanoTime() + ": Picked up left fork");
-                    
+
                     synchronized (rightFork) {
-                        doAction(System.nanoTime() + 
+                        doAction(System.nanoTime() +
                                 ": Picked up right fork - eating");
                         doAction(System.nanoTime() + ": Put down right fork");
                     }
-                    
-                    doAction(System.nanoTime() + 
+
+                    doAction(System.nanoTime() +
                             ": Put down left fork. Back to thinking");
                 }
             }
@@ -129,22 +129,22 @@ public class DiningPhilosophers {
     public static void main(String[] args) throws Exception {
         final Philosopher[] philosophers = new Philosopher[5];
         Object[] forks = new Object[philosophers.length];
-        
+
         for (int i = 0; i < forks.length; i++) {
             forks[i] = new Object();
         }
-        
+
         for (int i = 0; i < philosophers.length; i++) {
             Object leftFork = forks[i];
             Object rightFork = forks[(i + 1) % forks.length];
-            
+
             // Исправление: последний философ берет вилки в обратном порядке
             if (i == philosophers.length - 1) {
                 philosophers[i] = new Philosopher(rightFork, leftFork);
             } else {
                 philosophers[i] = new Philosopher(leftFork, rightFork);
             }
-            
+
             Thread t = new Thread(philosophers[i], "Philosopher " + (i + 1));
             t.start();
         }
@@ -160,23 +160,23 @@ import java.util.concurrent.Semaphore;
 public class DiningPhilosophersSemaphore {
     private static final int NUM_PHILOSOPHERS = 5;
     private static final Semaphore table = new Semaphore(NUM_PHILOSOPHERS - 1);
-    
+
     public static void main(String[] args) {
         Philosopher[] philosophers = new Philosopher[NUM_PHILOSOPHERS];
         Object[] forks = new Object[NUM_PHILOSOPHERS];
-        
+
         for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
             forks[i] = new Object();
         }
-        
+
         for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
             Object leftFork = forks[i];
             Object rightFork = forks[(i + 1) % NUM_PHILOSOPHERS];
-            
+
             philosophers[i] = new PhilosopherWithSemaphore(
                 leftFork, rightFork, table, i + 1
             );
-            
+
             new Thread(philosophers[i], "Philosopher " + (i + 1)).start();
         }
     }
@@ -187,40 +187,40 @@ class PhilosopherWithSemaphore implements Runnable {
     private Object rightFork;
     private Semaphore table;
     private int id;
-    
-    public PhilosopherWithSemaphore(Object leftFork, Object rightFork, 
+
+    public PhilosopherWithSemaphore(Object leftFork, Object rightFork,
                                     Semaphore table, int id) {
         this.leftFork = leftFork;
         this.rightFork = rightFork;
         this.table = table;
         this.id = id;
     }
-    
+
     @Override
     public void run() {
         try {
             while (true) {
                 think();
                 table.acquire(); // Получить разрешение на стол
-                
+
                 synchronized (leftFork) {
                     synchronized (rightFork) {
                         eat();
                     }
                 }
-                
+
                 table.release(); // Освободить разрешение
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
-    
+
     private void think() throws InterruptedException {
         System.out.println("Philosopher " + id + " is thinking");
         Thread.sleep((int) (Math.random() * 100));
     }
-    
+
     private void eat() throws InterruptedException {
         System.out.println("Philosopher " + id + " is eating");
         Thread.sleep((int) (Math.random() * 100));
@@ -244,25 +244,25 @@ class PhilosopherK(
             while (true) {
                 think()
                 table.acquire() // Получить разрешение на стол
-                
+
                 synchronized(leftFork) {
                     synchronized(rightFork) {
                         eat()
                     }
                 }
-                
+
                 table.release() // Освободить разрешение
             }
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
         }
     }
-    
+
     private fun think() {
         println("Philosopher $id is thinking")
         Thread.sleep((Math.random() * 100).toLong())
     }
-    
+
     private fun eat() {
         println("Philosopher $id is eating")
         Thread.sleep((Math.random() * 100).toLong())
@@ -276,11 +276,11 @@ fun main() {
     val philosophers = arrayOfNulls<PhilosopherK>(numPhilosophers)
     val forks = Array(numPhilosophers) { Any() }
     val table = Semaphore(numPhilosophers - 1)
-    
+
     for (i in 0 until numPhilosophers) {
         val leftFork = forks[i]
         val rightFork = forks[(i + 1) % forks.size]
-        
+
         // Исправление: последний философ берет вилки в обратном порядке
         if (i == numPhilosophers - 1) {
             philosophers[i] = PhilosopherK(rightFork, leftFork, table, i)
@@ -288,7 +288,7 @@ fun main() {
             philosophers[i] = PhilosopherK(leftFork, rightFork, table, i)
         }
     }
-    
+
     philosophers.forEach { Thread(it).start() }
 }
 ```
@@ -299,11 +299,11 @@ import java.util.concurrent.locks.ReentrantLock
 
 class DiningPhilosophersLockK(private val numPhilosophers: Int = 5) {
     private val forks = Array(numPhilosophers) { ReentrantLock() }
-    
+
     fun eat(philosopherId: Int) {
         val leftFork = forks[philosopherId]
         val rightFork = forks[(philosopherId + 1) % numPhilosophers]
-        
+
         if (leftFork.tryLock()) {
             try {
                 if (rightFork.tryLock()) {
@@ -344,17 +344,17 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DiningPhilosophersLock {
     private static final int NUM_PHILOSOPHERS = 5;
     private ReentrantLock[] forks = new ReentrantLock[NUM_PHILOSOPHERS];
-    
+
     public DiningPhilosophersLock() {
         for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
             forks[i] = new ReentrantLock();
         }
     }
-    
+
     public void eat(int philosopherId) {
         ReentrantLock leftFork = forks[philosopherId];
         ReentrantLock rightFork = forks[(philosopherId + 1) % NUM_PHILOSOPHERS];
-        
+
         // Попытка захватить обе вилки с таймаутом
         if (leftFork.tryLock()) {
             try {
@@ -380,14 +380,14 @@ public class DiningPhilosophersMonitor {
     private enum State { THINKING, HUNGRY, EATING }
     private State[] states = new State[NUM_PHILOSOPHERS];
     private Object[] monitors = new Object[NUM_PHILOSOPHERS];
-    
+
     public DiningPhilosophersMonitor() {
         for (int i = 0; i < NUM_PHILOSOPHERS; i++) {
             states[i] = State.THINKING;
             monitors[i] = new Object();
         }
     }
-    
+
     public void takeForks(int i) {
         states[i] = State.HUNGRY;
         test(i);
@@ -401,13 +401,13 @@ public class DiningPhilosophersMonitor {
             }
         }
     }
-    
+
     public void putForks(int i) {
         states[i] = State.THINKING;
         test((i + 4) % 5);
         test((i + 1) % 5);
     }
-    
+
     private void test(int i) {
         if (states[(i + 4) % 5] != State.EATING &&
             states[i] == State.HUNGRY &&

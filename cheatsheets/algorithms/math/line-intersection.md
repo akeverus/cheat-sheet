@@ -68,19 +68,19 @@ import java.awt.Point;
 import java.util.Optional;
 
 public Optional<Point> calculateIntersectionPoint(
-    double m1, double b1, 
+    double m1, double b1,
     double m2, double b2
 ) {
     if (m1 == m2) {
         return Optional.empty();
     }
-    
+
     double x = (b2 - b1) / (m1 - m2);
     double y = m1 * x + b1;
-    
+
     Point point = new Point();
     point.setLocation(x, y);
-    
+
     return Optional.of(point);
 }
 ```
@@ -94,9 +94,9 @@ public void givenNotParallelLines_whenCalculatePoint_thenPresent() {
     double b1 = 0;
     double m2 = 1;
     double b2 = -1;
-    
+
     Optional<Point> point = calculateIntersectionPoint(m1, b1, m2, b2);
-    
+
     assertTrue(point.isPresent());
     assertEquals(1.0, point.get().getX(), 0.001);
     assertEquals(0.0, point.get().getY(), 0.001);
@@ -114,9 +114,9 @@ public void givenParallelLines_whenCalculatePoint_thenEmpty() {
     double b1 = 0;
     double m2 = 1;
     double b2 = -1;
-    
+
     Optional<Point> point = calculateIntersectionPoint(m1, b1, m2, b2);
-    
+
     assertFalse(point.isPresent());
 }
 ```
@@ -128,7 +128,7 @@ public void givenParallelLines_whenCalculatePoint_thenEmpty() {
 ```java
 // Проверка |m1-m2| < epsilon; при совпадении линий — одна точка
 public Optional<Point> calculateIntersectionPointImproved(
-    double m1, double b1, 
+    double m1, double b1,
     double m2, double b2
 ) {
     // Проверка на параллельность с учетом погрешности
@@ -141,10 +141,10 @@ public Optional<Point> calculateIntersectionPointImproved(
         }
         return Optional.empty();
     }
-    
+
     double x = (b2 - b1) / (m1 - m2);
     double y = m1 * x + b1;
-    
+
     return Optional.of(new Point((int)Math.round(x), (int)Math.round(y)));
 }
 ```
@@ -163,11 +163,11 @@ public Optional<Point> calculateIntersectionFromPoints(
     // Вычисляем наклон и пересечение для первой линии
     double m1 = (p2.getY() - p1.getY()) / (p2.getX() - p1.getX());
     double b1 = p1.getY() - m1 * p1.getX();
-    
+
     // Вычисляем наклон и пересечение для второй линии
     double m2 = (p4.getY() - p3.getY()) / (p4.getX() - p3.getX());
     double b2 = p3.getY() - m2 * p3.getX();
-    
+
     return calculateIntersectionPoint(m1, b1, m2, b2);
 }
 ```
@@ -182,21 +182,21 @@ public Optional<Point> calculateSegmentIntersection(
     Point p3, Point p4   // Второй отрезок
 ) {
     Optional<Point> intersection = calculateIntersectionFromPoints(p1, p2, p3, p4);
-    
+
     if (!intersection.isPresent()) {
         return Optional.empty();
     }
-    
+
     Point point = intersection.get();
-    
+
     // Проверяем, находится ли точка пересечения в пределах обоих отрезков
     boolean onSegment1 = isPointOnSegment(point, p1, p2);
     boolean onSegment2 = isPointOnSegment(point, p3, p4);
-    
+
     if (onSegment1 && onSegment2) {
         return Optional.of(point);
     }
-    
+
     return Optional.empty();
 }
 
@@ -205,7 +205,7 @@ private boolean isPointOnSegment(Point point, Point segmentStart, Point segmentE
     double maxX = Math.max(segmentStart.getX(), segmentEnd.getX());
     double minY = Math.min(segmentStart.getY(), segmentEnd.getY());
     double maxY = Math.max(segmentStart.getY(), segmentEnd.getY());
-    
+
     return point.getX() >= minX && point.getX() <= maxX
         && point.getY() >= minY && point.getY() <= maxY;
 }
@@ -238,10 +238,10 @@ fun calculateIntersectionPointK(
     if (m1 == m2) {
         return null
     }
-    
+
     val x = (b2 - b1) / (m1 - m2)
     val y = m1 * x + b1
-    
+
     return Point(x.toInt(), y.toInt())
 }
 ```
@@ -254,7 +254,7 @@ fun calculateIntersectionPointImprovedK(
     m2: Double, b2: Double
 ): Point? {
     val epsilon = 1e-10
-    
+
     if (Math.abs(m1 - m2) < epsilon) {
         // Если линии параллельны, проверяем, совпадают ли они
         if (Math.abs(b1 - b2) < epsilon) {
@@ -263,10 +263,10 @@ fun calculateIntersectionPointImprovedK(
         }
         return null
     }
-    
+
     val x = (b2 - b1) / (m1 - m2)
     val y = m1 * x + b1
-    
+
     return Point(Math.round(x).toInt(), Math.round(y).toInt())
 }
 ```
@@ -282,34 +282,34 @@ fun calculateIntersectionFromPointsK(
 ): PointK? {
     val m1 = if (p2.x != p1.x) (p2.y - p1.y) / (p2.x - p1.x) else Double.POSITIVE_INFINITY
     val b1 = if (m1 != Double.POSITIVE_INFINITY) p1.y - m1 * p1.x else Double.NaN
-    
+
     val m2 = if (p4.x != p3.x) (p4.y - p3.y) / (p4.x - p3.x) else Double.POSITIVE_INFINITY
     val b2 = if (m2 != Double.POSITIVE_INFINITY) p3.y - m2 * p3.x else Double.NaN
-    
+
     // Обработка вертикальных линий
     if (m1 == Double.POSITIVE_INFINITY && m2 == Double.POSITIVE_INFINITY) {
         return null // Обе линии вертикальны
     }
-    
+
     if (m1 == Double.POSITIVE_INFINITY) {
         val x = p1.x
         val y = m2 * x + b2
         return PointK(x, y)
     }
-    
+
     if (m2 == Double.POSITIVE_INFINITY) {
         val x = p3.x
         val y = m1 * x + b1
         return PointK(x, y)
     }
-    
+
     if (Math.abs(m1 - m2) < 1e-10) {
         return null
     }
-    
+
     val x = (b2 - b1) / (m1 - m2)
     val y = m1 * x + b1
-    
+
     return PointK(x, y)
 }
 ```
@@ -320,7 +320,7 @@ fun calculateIntersectionFromPointsK(
 fun main() {
     val point1 = calculateIntersectionPointK(0.0, 0.0, 1.0, -1.0)
     println(point1) // Point(1, 0)
-    
+
     val point2 = calculateIntersectionPointK(1.0, 0.0, 1.0, -1.0)
     println(point2) // null (параллельные линии)
 }
@@ -351,7 +351,7 @@ fun main() {
 | Симптом | Возможная причина | Решение |
 |---------|-------------------|---------|
 | Деление на ноль | Параллельные линии (m1 = m2) | Проверять m1 == m2 до вычисления x; возвращать empty |
-| Неверная точка при близких наклонах | Ошибки округления double | Сравнивать наклоны с epsilon: Math.abs(m1 - m2) < 1e-10 |
+| Неверная точка при близких наклонах | Ошибки округления double | Сравнивать наклоны с epsilon: Math.abs(m1 — m2) < 1e-10 |
 | Не работает для вертикальной прямой | Форма y=mx+b не задаёт x=const | Отдельная ветка: вертикаль x=a, вторая линия y=m2*a+b2 |
 
 ## Частые вопросы

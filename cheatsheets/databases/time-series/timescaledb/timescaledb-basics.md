@@ -75,7 +75,7 @@ SELECT create_hypertable('sensor_data', 'time');
 
 ```sql
 -- Запросы с временными окнами
-SELECT 
+SELECT
     time_bucket('1 hour', time) AS hour,
     AVG(temperature) AS avg_temp
 FROM sensor_data

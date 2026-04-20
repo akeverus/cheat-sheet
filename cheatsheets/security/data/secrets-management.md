@@ -282,3 +282,7 @@ repos:
 | API-ключ в URL (`?token=`) | попадает в access-log, referer, истории | HTTP header `Authorization: Bearer` |
 | `git commit -m "fix"` с секретом | остаётся в reflog и на форках | purge через BFG/git-filter-repo + rotation |
 | Rollback деплоя возвращает старый ключ | rotation эффект отменён | обновлённые секреты + immutable releases |
+
+## См. также
+
+- [[data-security|Безопасность данных (Data Security)]]

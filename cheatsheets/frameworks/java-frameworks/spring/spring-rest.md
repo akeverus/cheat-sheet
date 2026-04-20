@@ -29,7 +29,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
 - [**Spring Boot** REST](https://docs.spring.io/spring-boot/docs/current/reference/html/web.html#web.servlet)
 - [**REST API Design**](https://restfulapi.net/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Building a **REST API** with **Spring Boot**](https://www.baeldung.com/rest-with-spring-series)
 - [**Spring @RequestMapping**](https://www.baeldung.com/spring-requestmapping)
 - [**Spring Boot REST API Validation**](https://www.baeldung.com/spring-boot-bean-validation)
@@ -142,7 +142,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md", "api/rest-api-design.m
 @RestController
 @RequestMapping("/api")
 public class SimpleRestController {
-    
+
     @GetMapping("/hello")
     public String hello() {
         return "Hello, World!";
@@ -161,7 +161,7 @@ public class SimpleRestController {
 @RestController
 @RequestMapping("/api")
 public class HeaderController {
-    
+
     @GetMapping("/headers")
     public String readHeaders(@RequestHeader("User-Agent") String userAgent,
                              @RequestHeader("Accept") String accept) {
@@ -212,11 +212,11 @@ public HttpHeaders readAllHeadersHttp(@RequestHeader HttpHeaders headers) {
 
 **REST API** использует стандартные методы **HTTP** для выполнения операций:**
 
-- **GET** - получение ресурсов
-- **POST** - создание новых ресурсов
-- **PUT** - обновление существующих ресурсов
-- **PATCH** - частичное обновление ресурсов
-- **DELETE** - удаление ресурсов
+- **GET** — получение ресурсов
+- **POST** — создание новых ресурсов
+- **PUT** — обновление существующих ресурсов
+- **PATCH** — частичное обновление ресурсов
+- **DELETE** — удаление ресурсов
 
 ### Пример **REST** контроллера
 
@@ -226,15 +226,15 @@ public HttpHeaders readAllHeadersHttp(@RequestHeader HttpHeaders headers) {
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
-    
+
     @Autowired
     private BookService bookService;
-    
+
     @GetMapping
     public List<Book> getAllBooks() {
         return bookService.findAll();
     }
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<Book> getBook(@PathVariable Long id) {
         Book book = bookService.findById(id);
@@ -243,13 +243,13 @@ public class BookController {
         }
         return ResponseEntity.notFound().build();
     }
-    
+
     @PostMapping
     public ResponseEntity<Book> createBook(@RequestBody Book book) {
         Book createdBook = bookService.save(book);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
     }
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book book) {
         Book updatedBook = bookService.update(id, book);
@@ -258,7 +258,7 @@ public class BookController {
         }
         return ResponseEntity.notFound().build();
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         if (bookService.delete(id)) {
@@ -331,7 +331,7 @@ public class ResourceNotFoundException extends RuntimeException {
 @Controller
 @RequestMapping("/books")
 public class BookController {
-    
+
     @GetMapping("/list")
     public String listBooks(Model model) {
         model.addAttribute("books", bookService.findAll());
@@ -348,13 +348,13 @@ public class BookController {
 @Controller
 @RequestMapping("/books-rest")
 public class SimpleBookController {
-    
+
     @GetMapping("/{id}")
     @ResponseBody
     public Book getBook(@PathVariable int id) {
         return findBookById(id);
     }
-    
+
     private Book findBookById(int id) {
         // ...
     }
@@ -371,12 +371,12 @@ public class SimpleBookController {
 @RestController
 @RequestMapping("books-rest")
 public class SimpleBookRestController {
-    
+
     @GetMapping("/{id}")
     public Book getBook(@PathVariable int id) {
         return findBookById(id);
     }
-    
+
     private Book findBookById(int id) {
         // ...
     }
@@ -421,20 +421,20 @@ public class SimpleBookRestController {
 @Component
 @Order(1)
 public class RequestLoggingFilter implements Filter {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(RequestLoggingFilter.class);
-    
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        
+
         logger.info("Request URL: {}", httpRequest.getRequestURL());
         logger.info("Request Method: {}", httpRequest.getMethod());
         logger.info("Request Headers: {}", Collections.list(httpRequest.getHeaderNames()));
-        
+
         chain.doFilter(request, response);
-        
+
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         logger.info("Response Status: {}", httpResponse.getStatus());
     }
@@ -448,7 +448,7 @@ public class RequestLoggingFilter implements Filter {
 ```java
 @Configuration
 public class RequestLoggingFilterConfig {
-    
+
     @Bean
     public CommonsRequestLoggingFilter logFilter() {
         CommonsRequestLoggingFilter filter = new CommonsRequestLoggingFilter();
@@ -478,7 +478,7 @@ logging.level.org.springframework.web.filter.CommonsRequestLoggingFilter=DEBUG
 @Configuration
 @EnableAsync
 public class AsyncConfig {
-    
+
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -499,7 +499,7 @@ public class AsyncConfig {
 ```java
 @Service
 public class AsyncService {
-    
+
     @Async
     public CompletableFuture<String> asyncMethod() {
         // Долгая операция
@@ -514,10 +514,10 @@ public class AsyncService {
 @RestController
 @RequestMapping("/api")
 public class AsyncController {
-    
+
     @Autowired
     private AsyncService asyncService;
-    
+
     @GetMapping("/async")
     public CompletableFuture<String> asyncEndpoint() {
         return asyncService.asyncMethod();
@@ -533,7 +533,7 @@ public class AsyncController {
 @Configuration
 @EnableAsync
 public class AsyncConfig implements AsyncConfigurer {
-    
+
     @Override
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -544,7 +544,7 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.initialize();
         return executor;
     }
-    
+
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new CustomAsyncExceptionHandler();
@@ -562,7 +562,7 @@ public class AsyncConfig implements AsyncConfigurer {
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
-    
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         ErrorResponse error = new ErrorResponse();
@@ -580,7 +580,7 @@ public class BookController {
 ```java
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         ErrorResponse error = new ErrorResponse();
@@ -588,7 +588,7 @@ public class GlobalExceptionHandler {
         error.setStatus(HttpStatus.NOT_FOUND.value());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
-    
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
         ErrorResponse error = new ErrorResponse();
@@ -596,7 +596,7 @@ public class GlobalExceptionHandler {
         error.setStatus(HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         ErrorResponse error = new ErrorResponse();
@@ -614,7 +614,7 @@ public class GlobalExceptionHandler {
 ```java
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
-    
+
     @ExceptionHandler({UserNotFoundException.class})
     public ResponseEntity<Object> handleUserNotFound(RuntimeException ex, WebRequest request) {
         logger.error("404 Status Code", ex);
@@ -623,7 +623,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
         return handleExceptionInternal(
             ex, bodyOfResponse, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
-    
+
     @ExceptionHandler({MailAuthenticationException.class})
     public ResponseEntity<Object> handleMail(RuntimeException ex, WebRequest request) {
         logger.error("500 Status Code", ex);
@@ -631,7 +631,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
             messages.getMessage("message.email.config.error", null, request.getLocale()), "MailError");
         return handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
-    
+
     @ExceptionHandler({Exception.class})
     public ResponseEntity<Object> handleInternal(RuntimeException ex, WebRequest request) {
         logger.error("500 Status Code", ex);
@@ -673,7 +673,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 ```java
 @Configuration
 public class ModelMapperConfig {
-    
+
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper mapper = new ModelMapper();
@@ -711,19 +711,19 @@ public class BookDTO {
 ```java
 @Service
 public class BookService {
-    
+
     @Autowired
     private ModelMapper modelMapper;
-    
+
     @Autowired
     private BookRepository bookRepository;
-    
+
     public BookDTO findById(Long id) {
         Book book = bookRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
         return modelMapper.map(book, BookDTO.class);
     }
-    
+
     public BookDTO create(BookDTO bookDTO) {
         Book book = modelMapper.map(bookDTO, Book.class);
         Book savedBook = bookRepository.save(book);
@@ -739,11 +739,11 @@ public class BookService {
 ```java
 @Configuration
 public class ModelMapperConfig {
-    
+
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper mapper = new ModelMapper();
-        
+
         // Кастомное преобразование
         mapper.addMappings(new PropertyMap<Book, BookDTO>() {
             @Override
@@ -751,7 +751,7 @@ public class ModelMapperConfig {
                 map().setAuthor(source.getAuthor().getName());
             }
         });
-        
+
         return mapper;
     }
 }
@@ -765,16 +765,16 @@ public class ModelMapperConfig {
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
-    
+
     @Autowired
     private BookService bookService;
-    
+
     @GetMapping("/{id}")
     public ResponseEntity<BookDTO> getBook(@PathVariable Long id) {
         BookDTO bookDTO = bookService.findById(id);
         return ResponseEntity.ok(bookDTO);
     }
-    
+
     @PostMapping
     public ResponseEntity<BookDTO> createBook(@RequestBody BookDTO bookDTO) {
         BookDTO createdBookDTO = bookService.create(bookDTO);
@@ -787,10 +787,10 @@ public class BookController {
 
 **Использование **DTO** имеет несколько преимуществ:**
 
-1. **Изоляция внутренней модели** - мы можем изменять внутреннюю модель, не влияя на **API**
-2. **Контроль над данными** - мы можем контролировать, какие данные возвращаются клиенту
-3. **Безопасность** - мы можем скрыть чувствительные данные
-4. **Версионирование** - мы можем создавать разные версии **API** с разными **DTO**
+1. **Изоляция внутренней модели** — мы можем изменять внутреннюю модель, не влияя на **API**
+2. **Контроль над данными** — мы можем контролировать, какие данные возвращаются клиенту
+3. **Безопасность** — мы можем скрыть чувствительные данные
+4. **Версионирование** — мы можем создавать разные версии **API** с разными **DTO**
 
 ## Продвинутые возможности **REST API**
 
@@ -3299,3 +3299,11 @@ public class DocumentedController {
 ```
 
 Этот всесторонний гид по **Spring REST API** охватывает все основные аспекты разработки **RESTful** веб-сервисов: от базовых контроллеров до продвинутых техник, безопасности, тестирования, документации и **best practices**. Файл значительно превышает `2000` строк и предоставляет исчерпывающие знания для создания **production-ready REST API**.
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

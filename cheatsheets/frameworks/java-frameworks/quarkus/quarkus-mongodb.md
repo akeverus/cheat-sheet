@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-data.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: MongoDB - NoSQL Database
-
-
+# Quarkus: MongoDB — NoSQL Database
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-data.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: MongoDB - NoSQL Database](#quarkus-mongodb-nosql-database)
+- [Quarkus: MongoDB — NoSQL Database](#quarkus-mongodb-nosql-database)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Configuration](#configuration)
@@ -129,20 +127,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserService {
-    
+
     public User createUser(User user) {
         user.persist();
         return user;
     }
-    
+
     public User findById(ObjectId id) {
         return User.findById(id);
     }
-    
+
     public List<User> findAll() {
         return User.listAll();
     }
-    
+
     public void deleteUser(ObjectId id) {
         User.deleteById(id);
     }
@@ -158,15 +156,15 @@ public class UserService {
 ```java
 @ApplicationScoped
 public class UserRepository {
-    
+
     public List<User> findByName(String name) {
         return User.find("name", name).list();
     }
-    
+
     public Optional<User> findByEmail(String email) {
         return User.find("email", email).firstResultOptional();
     }
-    
+
     public List<User> findByAgeRange(Integer minAge, Integer maxAge) {
         return User.find("age >= ?1 and age <= ?2", minAge, maxAge).list();
     }
@@ -180,11 +178,11 @@ public class UserRepository {
 ```java
 @ApplicationScoped
 public class NativeQueryRepository {
-    
+
     public List<User> findActiveUsers() {
         return User.find("{ status: 'ACTIVE' }").list();
     }
-    
+
     public List<User> findUsersWithOrders() {
         return User.find("{ orders: { $exists: true, $ne: [] } }").list();
     }
@@ -205,11 +203,11 @@ import io.smallrye.mutiny.Multi;
 public class ReactiveUser extends ReactivePanacheMongoEntity {
     public String name;
     public String email;
-    
+
     public static Uni<ReactiveUser> findByNameReactive(String name) {
         return find("name", name).firstResult();
     }
-    
+
     public static Multi<ReactiveUser> findAllReactive() {
         return streamAll();
     }
@@ -223,15 +221,15 @@ public class ReactiveUser extends ReactivePanacheMongoEntity {
 ```java
 @ApplicationScoped
 public class ReactiveUserService {
-    
+
     public Uni<ReactiveUser> createUser(ReactiveUser user) {
         return user.persist();
     }
-    
+
     public Uni<ReactiveUser> findById(ObjectId id) {
         return ReactiveUser.findById(id);
     }
-    
+
     public Multi<ReactiveUser> findAll() {
         return ReactiveUser.streamAll();
     }
@@ -251,7 +249,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class AggregationService {
-    
+
     public List<Document> aggregateUsers() {
         return User.mongoCollection().aggregate(
             Arrays.asList(
@@ -303,7 +301,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class IndexService {
-    
+
     public void createIndexes() {
         User.mongoCollection().createIndex(Indexes.ascending("email"));
         User.mongoCollection().createIndex(Indexes.compoundIndex(
@@ -321,11 +319,11 @@ public class IndexService {
 ```java
 @ApplicationScoped
 public class TextIndexService {
-    
+
     public void createTextIndex() {
         User.mongoCollection().createIndex(Indexes.text("name", "description"));
     }
-    
+
     public List<User> searchText(String query) {
         return User.find("{ $text: { $search: ?1 } }", query).list();
     }
@@ -344,7 +342,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class TransactionalService {
-    
+
     @Transactional
     public void createUserWithOrders(User user, List<Order> orders) {
         user.persist();
@@ -368,7 +366,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ChangeStreamService {
-    
+
     public void watchChanges() {
         User.mongoCollection().watch().forEach(change -> {
             ChangeStreamDocument<Document> document = change;
@@ -393,16 +391,16 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class GridFSService {
-    
+
     @Inject
     MongoClient mongoClient;
-    
+
     public void storeFile(String filename, InputStream inputStream) {
         GridFSBucket gridFSBucket = GridFSBuckets.create(
             mongoClient.getDatabase("myapp"), "files");
         gridFSBucket.uploadFromStream(filename, inputStream);
     }
-    
+
     public void retrieveFile(String filename, OutputStream outputStream) {
         GridFSBucket gridFSBucket = GridFSBuckets.create(
             mongoClient.getDatabase("myapp"), "files");
@@ -420,7 +418,7 @@ public class GridFSService {
 ```java
 @ApplicationScoped
 public class OptimizedQueries {
-    
+
     public List<User> findUsersOptimized(String name) {
         // Использование индексов
         return User.find("name", name)
@@ -438,7 +436,7 @@ public class OptimizedQueries {
 ```java
 @ApplicationScoped
 public class IndexManagement {
-    
+
     @PostConstruct
     public void createIndexes() {
         User.mongoCollection().createIndex(
@@ -471,7 +469,7 @@ public class VersionedUser extends PanacheMongoEntity {
     public String name;
     public String email;
     public Integer version = 1;
-    
+
     public void incrementVersion() {
         this.version++;
     }
@@ -488,13 +486,13 @@ public class SoftDeletableUser extends PanacheMongoEntity {
     public String name;
     public Boolean deleted = false;
     public LocalDateTime deletedAt;
-    
+
     public void softDelete() {
         this.deleted = true;
         this.deletedAt = LocalDateTime.now();
         persist();
     }
-    
+
     public static List<SoftDeletableUser> findActive() {
         return find("deleted", false).list();
     }
@@ -510,7 +508,7 @@ public class SoftDeletableUser extends PanacheMongoEntity {
 ```java
 @ApplicationScoped
 public class ChangeStreamService {
-    
+
     public void watchChanges() {
         User.mongoCollection().watch()
             .forEach(changeDocument -> {
@@ -528,13 +526,13 @@ public class ChangeStreamService {
 ```java
 @ApplicationScoped
 public class FilteredChangeStream {
-    
+
     public void watchFilteredChanges() {
         List<Bson> pipeline = Arrays.asList(
             Filters.eq("operationType", "insert"),
             Filters.eq("fullDocument.status", "active")
         );
-        
+
         User.mongoCollection().watch(pipeline)
             .forEach(this::handleChange);
     }
@@ -550,14 +548,14 @@ public class FilteredChangeStream {
 ```java
 @ApplicationScoped
 public class GridFSService {
-    
+
     @Inject
     GridFSBucket gridFSBucket;
-    
+
     public ObjectId storeFile(String filename, InputStream inputStream) {
         return gridFSBucket.uploadFromStream(filename, inputStream);
     }
-    
+
     public void retrieveFile(ObjectId fileId, OutputStream outputStream) {
         gridFSBucket.downloadToStream(fileId, outputStream);
     }
@@ -574,3 +572,11 @@ public class GridFSService {
 - [**Quarkus MongoDB** Guide](https://quarkus.io/guides/mongodb)
 - [**MongoDB** Documentation](https://www.mongodb.com/docs/)
 - [**MongoDB Java** Driver](https://www.mongodb.com/docs/drivers/java/sync/current/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

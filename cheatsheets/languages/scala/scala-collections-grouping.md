@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 ---
 
-# **Scala Collections** - **Grouping and Aggregation**
+# **Scala Collections** — **Grouping and Aggregation**
 
 Кратко: руководство по группировке и агрегации коллекций в **Scala**: **groupBy**, агрегатные функции и продвинутые операции.
 
@@ -29,7 +29,7 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 
 ## Содержание
 
-- [**Scala Collections** - **Grouping and Aggregation**](#scala-collections-grouping-and-aggregation)
+- [**Scala Collections** — **Grouping and Aggregation**](#scala-collections-grouping-and-aggregation)
 - [Группировка](#группировка)
   - [**groupBy**](#groupby)
   - [Группировка с трансформацией](#группировка-с-трансформацией)
@@ -69,11 +69,11 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 
 Группировка позволяет разделить коллекцию на группы на основе некоторого критерия. Это одна из самых мощных операций при работе с данными, особенно при анализе и агрегации. Группировка является основой для многих операций анализа данных, таких как подсчет, суммирование, вычисление средних значений и других статистических операций по группам.
 
-Группировка особенно полезна для работы с реляционными данными, где нужно анализировать данные по категориям, временным периодам, регионам или другим критериям. Операция **groupBy** создает **Map**, где ключи - это значения критерия группировки, а значения - коллекции элементов, соответствующих этому критерию.
+Группировка особенно полезна для работы с реляционными данными, где нужно анализировать данные по категориям, временным периодам, регионам или другим критериям. Операция **groupBy** создает **Map**, где ключи — это значения критерия группировки, а значения — коллекции элементов, соответствующих этому критерию.
 
 ### **groupBy**
 
-Функция `**groupBy**` группирует элементы коллекции по ключу, вычисляемому функцией для каждого элемента. Результатом является **Map**, где каждый ключ соответствует уникальному значению критерия группировки, а значение - коллекции всех элементов, соответствующих этому критерию. Это позволяет эффективно организовывать данные для последующего анализа и агрегации.
+Функция `**groupBy**` группирует элементы коллекции по ключу, вычисляемому функцией для каждого элемента. Результатом является **Map**, где каждый ключ соответствует уникальному значению критерия группировки, а значение — коллекции всех элементов, соответствующих этому критерию. Это позволяет эффективно организовывать данные для последующего анализа и агрегации.
 
 **Функция `**groupBy**` группирует элементы коллекции по ключу:**
 
@@ -580,12 +580,12 @@ class SalesAnalyzer(sales: List[Sale]) {
   def salesByCategory: Map[String, Double] = {
     sales.groupMapReduce(_.category)(_.amount)(_ + _)
   }
-  
+
   // Группировка по регионам с топ-3 продуктами
   def topProductsByRegion(limit: Int = 3): Map[String, List[(String, Double)]] = {
     sales.groupBy(_.region)
       .view
-      .mapValues(regionSales => 
+      .mapValues(regionSales =>
         regionSales.groupMapReduce(_.product)(_.amount)(_ + _)
           .toList
           .sortBy(-_._2)
@@ -593,12 +593,12 @@ class SalesAnalyzer(sales: List[Sale]) {
       )
       .toMap
   }
-  
+
   // Продажи по месяцам
   def salesByMonth: Map[java.time.YearMonth, Double] = {
     sales.groupMapReduce(_.date.toYearMonth)(_.amount)(_ + _)
   }
-  
+
   // Статистика по категориям
   def categoryStatistics: Map[String, CategoryStats] = {
     sales.groupBy(_.category)
@@ -626,7 +626,7 @@ case class CategoryStats(
 )
 
 implicit class LocalDateOps(date: java.time.LocalDate) {
-  def toYearMonth: java.time.YearMonth = 
+  def toYearMonth: java.time.YearMonth =
     java.time.YearMonth.from(date)
 }
 ```
@@ -648,10 +648,10 @@ class UserAnalyzer(users: List[User]) {
   def usersByCity: Map[String, Int] = {
     users.groupMapReduce(_.city)(_ => 1)(_ + _)
   }
-  
+
   // Группировка по возрастным группам
   def usersByAgeGroup: Map[String, List[User]] = {
-    users.groupBy(user => 
+    users.groupBy(user =>
       user.age match {
         case age if age < 18 => "Minor"
         case age if age < 26 => "Young Adult"
@@ -661,7 +661,7 @@ class UserAnalyzer(users: List[User]) {
       }
     )
   }
-  
+
   // Группировка по типу подписки с средним возрастом
   def averageAgeBySubscription: Map[String, Double] = {
     users.groupBy(_.subscriptionType)
@@ -669,7 +669,7 @@ class UserAnalyzer(users: List[User]) {
       .mapValues(users => users.map(_.age).sum.toDouble / users.size)
       .toMap
   }
-  
+
   // Новые пользователи по месяцам
   def newUsersByMonth: Map[java.time.YearMonth, Int] = {
     users.groupMapReduce(_.registrationDate.toYearMonth)(_ => 1)(_ + _)

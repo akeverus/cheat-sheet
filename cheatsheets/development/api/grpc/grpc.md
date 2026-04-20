@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # gRPC
 
-Кратко: **gRPC** - высокопроизводительный фреймворк для удаленного вызова процедур. **Protocol Buffers**, **HTTP**/2, **streaming**, **Spring Boot** интеграция.
+Кратко: **gRPC** — высокопроизводительный фреймворк для удаленного вызова процедур. **Protocol Buffers**, **HTTP**/2, **streaming**, **Spring Boot** интеграция.
 
 ## Полезные ссылки
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Protocol Buffers](https://protobuf.dev/)
 - [gRPC Java](https://grpc.io/docs/languages/java/)
 
-### **Baeldung**
+### Обучающие материалы
 - [gRPC Tutorial](https://www.baeldung.com/grpc-introduction)
 
 ### См. также
@@ -85,7 +85,7 @@ updated: "2026-02-11"
 
 ## Введение в **gRPC**
 
-**gRPC** - это высокопроизводительный, открытый фреймворк для удаленного вызова процедур (**RPC**), разработанный **Google**. **gRPC** использует **HTTP**/2 для транспорта и **Protocol Buffers** для сериализации данных.
+**gRPC** — это высокопроизводительный, открытый фреймворк для удаленного вызова процедур (**RPC**), разработанный **Google**. **gRPC** использует **HTTP**/2 для транспорта и **Protocol Buffers** для сериализации данных.
 
 ### Преимущества **gRPC**
 
@@ -112,7 +112,7 @@ Client Application    gRPC Stub    Network    gRPC Server    Service Implementat
 
 ## **Protocol Buffers**
 
-**Protocol Buffers** (**protobuf**) - это язык описания интерфейсов и формат сериализации данных.
+**Protocol Buffers** (**protobuf**) — это язык описания интерфейсов и формат сериализации данных.
 
 ### Определение сообщения
 
@@ -134,13 +134,13 @@ message User {
   string email = 3;
   repeated string roles = 4;
   Address address = 5;
-  
+
   enum Status {
     ACTIVE = 0;
     INACTIVE = 1;
     SUSPENDED = 2;
   }
-  
+
   Status status = 6;
 }
 
@@ -193,7 +193,7 @@ service UserService {
       <version>1.7.1</version>
     </extension>
   </extensions>
-  
+
   <plugins>
     <plugin>
       <groupId>org.xolstice.maven.plugins</groupId>
@@ -242,12 +242,12 @@ stub.add(request, new StreamObserver<AddResponse>() {
     public void onNext(AddResponse response) {
         System.out.println("Result: " + response.getResult());
     }
-    
+
     @Override
     public void onError(Throwable t) {
         System.err.println("Error: " + t.getMessage());
     }
-    
+
     @Override
     public void onCompleted() {
         System.out.println("Completed");
@@ -271,12 +271,12 @@ stub.subscribe(request, new StreamObserver<Notification>() {
     public void onNext(Notification notification) {
         System.out.println("Received: " + notification.getMessage());
     }
-    
+
     @Override
     public void onError(Throwable t) {
         System.err.println("Stream error: " + t.getMessage());
     }
-    
+
     @Override
     public void onCompleted() {
         System.out.println("Stream completed");
@@ -300,12 +300,12 @@ StreamObserver<UploadRequest> requestObserver = stub.upload(new StreamObserver<U
     public void onNext(UploadResponse response) {
         System.out.println("Upload completed: " + response.getFileId());
     }
-    
+
     @Override
     public void onError(Throwable t) {
         System.err.println("Upload failed: " + t.getMessage());
     }
-    
+
     @Override
     public void onCompleted() {
         System.out.println("Upload finished");
@@ -337,12 +337,12 @@ StreamObserver<ChatMessage> requestObserver = stub.chat(new StreamObserver<ChatM
     public void onNext(ChatMessage message) {
         System.out.println("Received: " + message.getContent());
     }
-    
+
     @Override
     public void onError(Throwable t) {
         System.err.println("Chat error: " + t.getMessage());
     }
-    
+
     @Override
     public void onCompleted() {
         System.out.println("Chat ended");
@@ -362,36 +362,36 @@ requestObserver.onNext(ChatMessage.newBuilder()
 ```java
 // Запуск gRPC сервера на порту 50051 и ожидание завершения
 public class UserServer {
-    
+
     private Server server;
-    
+
     private void start() throws IOException {
         int port = 50051;
         server = ServerBuilder.forPort(port)
             .addService(new UserServiceImpl())
             .build()
             .start();
-            
+
         System.out.println("Server started on port " + port);
-        
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.err.println("Shutting down gRPC server");
             UserServer.this.stop();
         }));
     }
-    
+
     private void stop() {
         if (server != null) {
             server.shutdown();
         }
     }
-    
+
     private void blockUntilShutdown() throws InterruptedException {
         if (server != null) {
             server.awaitTermination();
         }
     }
-    
+
     public static void main(String[] args) throws IOException, InterruptedException {
         final UserServer server = new UserServer();
         server.start();
@@ -405,35 +405,35 @@ public class UserServer {
 ```java
 // Реализация gRPC-сервиса: createUser и getUser с маппингом в protobuf
 public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
-    
+
     private final UserRepository userRepository;
-    
+
     @Override
-    public void createUser(CreateUserRequest request, 
+    public void createUser(CreateUserRequest request,
                           StreamObserver<CreateUserResponse> responseObserver) {
-        
+
         try {
             // Создание пользователя
             User user = new User();
             user.setName(request.getName());
             user.setEmail(request.getEmail());
-            
+
             User savedUser = userRepository.save(user);
-            
+
             // Формирование ответа
             User protoUser = User.newBuilder()
                 .setId(savedUser.getId())
                 .setName(savedUser.getName())
                 .setEmail(savedUser.getEmail())
                 .build();
-                
+
             CreateUserResponse response = CreateUserResponse.newBuilder()
                 .setUser(protoUser)
                 .build();
-                
+
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-            
+
         } catch (Exception e) {
             responseObserver.onError(Status.INTERNAL
                 .withDescription("Failed to create user")
@@ -441,28 +441,28 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                 .asRuntimeException());
         }
     }
-    
+
     @Override
-    public void getUser(GetUserRequest request, 
+    public void getUser(GetUserRequest request,
                        StreamObserver<GetUserResponse> responseObserver) {
-        
+
         try {
             User user = userRepository.findById(request.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-                
+
             User protoUser = User.newBuilder()
                 .setId(user.getId())
                 .setName(user.getName())
                 .setEmail(user.getEmail())
                 .build();
-                
+
             GetUserResponse response = GetUserResponse.newBuilder()
                 .setUser(protoUser)
                 .build();
-                
+
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-            
+
         } catch (Exception e) {
             responseObserver.onError(Status.NOT_FOUND
                 .withDescription("User not found")
@@ -477,41 +477,41 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 ```java
 // Клиент: канал, blocking/async stub и вызовы createUser/getUser
 public class UserClient {
-    
+
     private final UserServiceGrpc.UserServiceBlockingStub blockingStub;
     private final UserServiceGrpc.UserServiceStub asyncStub;
-    
+
     public UserClient(Channel channel) {
         blockingStub = UserServiceGrpc.newBlockingStub(channel);
         asyncStub = UserServiceGrpc.newStub(channel);
     }
-    
+
     public void createUser(String name, String email) {
         CreateUserRequest request = CreateUserRequest.newBuilder()
             .setName(name)
             .setEmail(email)
             .build();
-            
+
         CreateUserResponse response = blockingStub.createUser(request);
-        
+
         System.out.println("Created user: " + response.getUser().getName());
     }
-    
+
     public void getUser(long id) {
         GetUserRequest request = GetUserRequest.newBuilder()
             .setId(id)
             .build();
-            
+
         GetUserResponse response = blockingStub.getUser(request);
-        
+
         System.out.println("User: " + response.getUser().getName());
     }
-    
+
     public static void main(String[] args) throws Exception {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
             .usePlaintext()
             .build();
-            
+
         try {
             UserClient client = new UserClient(channel);
             client.createUser("John Doe", "john@example.com");
@@ -535,7 +535,7 @@ public class UserClient {
         <artifactId>grpc-server-spring-boot-starter</artifactId>
         <version>3.1.0.RELEASE</version>
     </dependency>
-    
+
     <dependency>
         <groupId>net.devh</groupId>
         <artifactId>grpc-client-spring-boot-starter</artifactId>
@@ -563,33 +563,33 @@ grpc:
 // Сервис gRPC как Spring-бин; делегирование в UserService
 @GrpcService
 public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Override
-    public void createUser(CreateUserRequest request, 
+    public void createUser(CreateUserRequest request,
                           StreamObserver<CreateUserResponse> responseObserver) {
-        
+
         try {
             com.example.User user = userService.createUser(
-                request.getName(), 
+                request.getName(),
                 request.getEmail()
             );
-            
+
             User protoUser = User.newBuilder()
                 .setId(user.getId())
                 .setName(user.getName())
                 .setEmail(user.getEmail())
                 .build();
-                
+
             CreateUserResponse response = CreateUserResponse.newBuilder()
                 .setUser(protoUser)
                 .build();
-                
+
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-            
+
         } catch (Exception e) {
             responseObserver.onError(
                 Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException()
@@ -605,18 +605,18 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
 // Клиент gRPC через @GrpcClient; вызовы createUser/getUser
 @Service
 public class UserGrpcClient {
-    
+
     @GrpcClient("user-service")
     private UserServiceGrpc.UserServiceBlockingStub userServiceStub;
-    
+
     public com.example.User createUser(String name, String email) {
         CreateUserRequest request = CreateUserRequest.newBuilder()
             .setName(name)
             .setEmail(email)
             .build();
-            
+
         CreateUserResponse response = userServiceStub.createUser(request);
-        
+
         User protoUser = response.getUser();
         return new com.example.User(
             protoUser.getId(),
@@ -624,14 +624,14 @@ public class UserGrpcClient {
             protoUser.getEmail()
         );
     }
-    
+
     public com.example.User getUser(long id) {
         GetUserRequest request = GetUserRequest.newBuilder()
             .setId(id)
             .build();
-            
+
         GetUserResponse response = userServiceStub.getUser(request);
-        
+
         User protoUser = response.getUser();
         return new com.example.User(
             protoUser.getId(),
@@ -650,16 +650,16 @@ public class UserGrpcClient {
 // Серверный поток: отправка уведомлений по расписанию через StreamObserver
 @GrpcService
 public class NotificationService extends NotificationServiceGrpc.NotificationServiceImplBase {
-    
+
     @Override
-    public void subscribe(SubscribeRequest request, 
+    public void subscribe(SubscribeRequest request,
                          StreamObserver<Notification> responseObserver) {
-        
+
         String userId = request.getUserId();
-        
+
         // Имитация получения уведомлений
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        
+
         executor.scheduleAtFixedRate(() -> {
             try {
                 Notification notification = Notification.newBuilder()
@@ -668,13 +668,13 @@ public class NotificationService extends NotificationServiceGrpc.NotificationSer
                     .setMessage("New notification for " + userId)
                     .setTimestamp(System.currentTimeMillis())
                     .build();
-                    
+
                 responseObserver.onNext(notification);
             } catch (Exception e) {
                 responseObserver.onError(e);
             }
         }, 0, 5, TimeUnit.SECONDS);
-        
+
         // Остановить через 1 минуту
         executor.schedule(() -> {
             responseObserver.onCompleted();
@@ -690,13 +690,13 @@ public class NotificationService extends NotificationServiceGrpc.NotificationSer
 // Приём потока чанков от клиента и сохранение в файл
 @GrpcService
 public class FileUploadService extends FileUploadServiceGrpc.FileUploadServiceImplBase {
-    
+
     @Override
     public StreamObserver<UploadRequest> upload(StreamObserver<UploadResponse> responseObserver) {
-        
+
         return new StreamObserver<UploadRequest>() {
             private ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            
+
             @Override
             public void onNext(UploadRequest request) {
                 try {
@@ -707,26 +707,26 @@ public class FileUploadService extends FileUploadServiceGrpc.FileUploadServiceIm
                     );
                 }
             }
-            
+
             @Override
             public void onError(Throwable t) {
                 System.err.println("Upload failed: " + t.getMessage());
             }
-            
+
             @Override
             public void onCompleted() {
                 try {
                     // Сохранить файл
                     String fileId = saveFile(buffer.toByteArray());
-                    
+
                     UploadResponse response = UploadResponse.newBuilder()
                         .setFileId(fileId)
                         .setSize(buffer.size())
                         .build();
-                        
+
                     responseObserver.onNext(response);
                     responseObserver.onCompleted();
-                    
+
                 } catch (Exception e) {
                     responseObserver.onError(
                         Status.INTERNAL.withDescription("Failed to save file").asRuntimeException()
@@ -735,7 +735,7 @@ public class FileUploadService extends FileUploadServiceGrpc.FileUploadServiceIm
             }
         };
     }
-    
+
     private String saveFile(byte[] data) {
         // Логика сохранения файла
         return UUID.randomUUID().toString();
@@ -814,26 +814,26 @@ ManagedChannel channel = ManagedChannelBuilder
 // JWT Authentication
 @GrpcService
 public class AuthenticatedService extends AuthenticatedServiceGrpc.AuthenticatedServiceImplBase {
-    
+
     @Override
-    public void protectedMethod(ProtectedRequest request, 
+    public void protectedMethod(ProtectedRequest request,
                                StreamObserver<ProtectedResponse> responseObserver) {
-        
+
         // Извлечение токена из контекста
         String token = AUTHORIZATION_CONTEXT_KEY.get();
-        
+
         if (!validateToken(token)) {
             responseObserver.onError(
                 Status.UNAUTHENTICATED.withDescription("Invalid token").asRuntimeException()
             );
             return;
         }
-        
+
         // Обработка запроса
         ProtectedResponse response = ProtectedResponse.newBuilder()
             .setMessage("Authenticated request processed")
             .build();
-            
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -845,17 +845,17 @@ public class AuthenticatedService extends AuthenticatedServiceGrpc.Authenticated
 ```java
 // Перехват вызова: извлечение токена из Metadata и запись в Context
 public class AuthInterceptor implements ServerInterceptor {
-    
+
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
-            ServerCall<ReqT, RespT> call, 
-            Metadata headers, 
+            ServerCall<ReqT, RespT> call,
+            Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
-        
+
         String token = headers.get(AUTHORIZATION_METADATA_KEY);
-        
+
         Context context = Context.current().withValue(AUTHORIZATION_CONTEXT_KEY, token);
-        
+
         return Contexts.interceptCall(context, call, headers, next);
     }
 }
@@ -869,15 +869,15 @@ public class AuthInterceptor implements ServerInterceptor {
 // Проверка здоровья сервиса (стандартный gRPC health)
 @GrpcService
 public class HealthService extends HealthGrpc.HealthImplBase {
-    
+
     @Override
-    public void check(HealthCheckRequest request, 
+    public void check(HealthCheckRequest request,
                      StreamObserver<HealthCheckResponse> responseObserver) {
-        
+
         HealthCheckResponse response = HealthCheckResponse.newBuilder()
             .setStatus(HealthCheckResponse.ServingStatus.SERVING)
             .build();
-            
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -889,17 +889,17 @@ public class HealthService extends HealthGrpc.HealthImplBase {
 ```java
 @GrpcService
 public class MetricsService extends MetricsServiceGrpc.MetricsServiceImplBase {
-    
+
     @Override
-    public void getMetrics(MetricsRequest request, 
+    public void getMetrics(MetricsRequest request,
                           StreamObserver<MetricsResponse> responseObserver) {
-        
+
         // Сбор метрик
         MetricsResponse response = MetricsResponse.newBuilder()
             .setActiveConnections(getActiveConnections())
             .setTotalRequests(getTotalRequests())
             .build();
-            
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
@@ -912,12 +912,12 @@ public class MetricsService extends MetricsServiceGrpc.MetricsServiceImplBase {
 // Серверный и клиентский интерцепторы для трейсинга
 @Configuration
 public class TracingConfig {
-    
+
     @Bean
     public ServerInterceptor tracingInterceptor() {
         return new OpenTelemetryServerInterceptor();
     }
-    
+
     @Bean
     public ClientInterceptor clientTracingInterceptor() {
         return new OpenTelemetryClientInterceptor();
@@ -969,11 +969,11 @@ ManagedChannel channel = ManagedChannelBuilder
 ```java
 @GrpcService
 public class AsyncService extends AsyncServiceGrpc.AsyncServiceImplBase {
-    
+
     @Override
-    public void asyncOperation(AsyncRequest request, 
+    public void asyncOperation(AsyncRequest request,
                               StreamObserver<AsyncResponse> responseObserver) {
-        
+
         // Асинхронная обработка
         CompletableFuture.supplyAsync(() -> {
             // Долгая операция
@@ -982,7 +982,7 @@ public class AsyncService extends AsyncServiceGrpc.AsyncServiceImplBase {
             AsyncResponse response = AsyncResponse.newBuilder()
                 .setResult(result)
                 .build();
-                
+
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         }).exceptionally(throwable -> {
@@ -1023,16 +1023,16 @@ public class AsyncService extends AsyncServiceGrpc.AsyncServiceImplBase {
 // REST-эндпоинты проксируют запросы в gRPC-клиент
 @RestController
 public class ApiGatewayController {
-    
+
     @Autowired
     private UserGrpcClient userGrpcClient;
-    
+
     @PostMapping("/api/users")
     public User createUser(@RequestBody CreateUserRequest request) {
         // REST API вызывает gRPC
         return userGrpcClient.createUser(request.getName(), request.getEmail());
     }
-    
+
     @GetMapping("/api/users/{id}")
     public User getUser(@PathVariable Long id) {
         // REST API вызывает gRPC
@@ -1080,7 +1080,7 @@ message User {
   string email = 3;
   repeated string roles = 4;
   Status status = 5;
-  
+
   enum Status {
     ACTIVE = 0;
     INACTIVE = 1;
@@ -1133,7 +1133,7 @@ public class GrpcServerApplication {
 
 @Configuration
 public class GrpcConfig {
-    
+
     @Bean
     public ServerInterceptor authInterceptor() {
         return new AuthInterceptor();
@@ -1142,49 +1142,49 @@ public class GrpcConfig {
 
 @GrpcService
 public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Override
-    public void createUser(CreateUserRequest request, 
+    public void createUser(CreateUserRequest request,
                           StreamObserver<CreateUserResponse> responseObserver) {
-        
+
         try {
             com.example.domain.User user = userService.createUser(
                 request.getName(), request.getEmail()
             );
-            
+
             User protoUser = User.newBuilder()
                 .setId(user.getId())
                 .setName(user.getName())
                 .setEmail(user.getEmail())
                 .setStatus(User.Status.ACTIVE)
                 .build();
-                
+
             CreateUserResponse response = CreateUserResponse.newBuilder()
                 .setUser(protoUser)
                 .build();
-                
+
             responseObserver.onNext(response);
             responseObserver.onCompleted();
-            
+
         } catch (Exception e) {
             responseObserver.onError(
                 Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException()
             );
         }
     }
-    
+
     @Override
-    public void getUsers(GetUsersRequest request, 
+    public void getUsers(GetUsersRequest request,
                         StreamObserver<User> responseObserver) {
-        
+
         try {
             List<com.example.domain.User> users = userService.getUsers(
                 request.getPage(), request.getSize()
             );
-            
+
             for (com.example.domain.User user : users) {
                 User protoUser = User.newBuilder()
                     .setId(user.getId())
@@ -1192,12 +1192,12 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
                     .setEmail(user.getEmail())
                     .setStatus(User.Status.ACTIVE)
                     .build();
-                    
+
                 responseObserver.onNext(protoUser);
             }
-            
+
             responseObserver.onCompleted();
-            
+
         } catch (Exception e) {
             responseObserver.onError(
                 Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException()
@@ -1213,7 +1213,7 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
 // Бин канала и blocking stub для user-service
 @Configuration
 public class GrpcClientConfig {
-    
+
     @Bean
     @GrpcClient("user-service")
     public UserServiceGrpc.UserServiceBlockingStub userServiceStub() {
@@ -1227,18 +1227,18 @@ public class GrpcClientConfig {
 
 @Service
 public class UserGrpcClient {
-    
+
     @Autowired
     private UserServiceGrpc.UserServiceBlockingStub userServiceStub;
-    
+
     public com.example.domain.User createUser(String name, String email) {
         CreateUserRequest request = CreateUserRequest.newBuilder()
             .setName(name)
             .setEmail(email)
             .build();
-            
+
         CreateUserResponse response = userServiceStub.createUser(request);
-        
+
         User protoUser = response.getUser();
         return new com.example.domain.User(
             protoUser.getId(),
@@ -1246,15 +1246,15 @@ public class UserGrpcClient {
             protoUser.getEmail()
         );
     }
-    
+
     public List<com.example.domain.User> getUsers(int page, int size) {
         GetUsersRequest request = GetUsersRequest.newBuilder()
             .setPage(page)
             .setSize(size)
             .build();
-            
+
         Iterator<User> users = userServiceStub.getUsers(request);
-        
+
         List<com.example.domain.User> result = new ArrayList<>();
         users.forEachRemaining(protoUser -> {
             result.add(new com.example.domain.User(
@@ -1263,7 +1263,7 @@ public class UserGrpcClient {
                 protoUser.getEmail()
             ));
         });
-        
+
         return result;
     }
 }
@@ -1276,10 +1276,10 @@ public class UserGrpcClient {
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     @Autowired
     private UserGrpcClient userGrpcClient;
-    
+
     @PostMapping
     public ResponseEntity<com.example.domain.User> createUser(@RequestBody CreateUserRequest request) {
         try {
@@ -1291,12 +1291,12 @@ public class UserController {
             return ResponseEntity.status(500).build();
         }
     }
-    
+
     @GetMapping
     public ResponseEntity<List<com.example.domain.User>> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         try {
             List<com.example.domain.User> users = userGrpcClient.getUsers(page, size);
             return ResponseEntity.ok(users);

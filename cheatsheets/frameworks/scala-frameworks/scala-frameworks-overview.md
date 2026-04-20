@@ -42,7 +42,6 @@ updated: "2026-02-11"
 - [Глоссарий](#глоссарий)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -50,7 +49,6 @@ updated: "2026-02-11"
 
 **Ключевые понятия:** **Play**, **Akka**, **ZIO**, **http4s**, **Cats Effect**, **Tapir**, **effect**, **actor**.
 
----
 
 ## Play Framework
 
@@ -76,7 +74,6 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
 
 **Маршруты** задаются в `conf/routes`. См. [Play](../../libraries/scala/scala-play.md).
 
----
 
 ## Akka и Akka HTTP
 
@@ -93,7 +90,6 @@ Http().newServerAt("0.0.0.0", 8080).bind(route)
 
 **Особенности:** полностью асинхронный, интеграция с **Akka** акторами и потоками. См. [Akka](../../libraries/scala/scala-akka.md).
 
----
 
 ## ZIO и ZIO HTTP
 
@@ -112,7 +108,6 @@ Server.serve(app).provide(Server.defaultWithPort(8080))
 
 **Особенности:** типобезопасные зависимости, тестируемость, интеграция с **ZIO** экосистемой. См. [ZIO](../../libraries/scala/scala-zio.md).
 
----
 
 ## http4s и Cats Effect
 
@@ -130,13 +125,11 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 
 **Особенности:** tagless final, **IO**-ориентированность, совместимость с **Cats** экосистемой. См. [http4s](../../languages/scala/scala-http4s.md).
 
----
 
 ## Tapir
 
 **Tapir** — описание endpoint (путь, метод, вход/выход) как значений **Scala**; генерация **OpenAPI**, маршрутов для **Akka HTTP**, **http4s**, **ZIO HTTP**, **Play**. Удобен для контрактного **API** и документации.
 
----
 
 ## Сравнение и выбор
 
@@ -147,7 +140,6 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 | **ZIO HTTP** | Функциональный, **ZIO** | **ZIO**-стек, типобезопасность, тестируемость |
 | **http4s** | Функциональный, **Cats** | **Cats Effect**-стек, tagless final |
 
----
 
 ## Лучшие практики
 
@@ -155,7 +147,6 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 - **Tapir** для единого описания **API** и генерации документации и клиентов.
 - Управление ресурсами через **ZIO** **Resource** или **Cats** **Resource**; graceful shutdown.
 
----
 
 ## Решение проблем
 
@@ -165,7 +156,6 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 | **Akka HTTP** таймауты | Настроить `idle-timeout`, `request-timeout` |
 | **ZIO**/ **http4s** зависимости | Проверить слои и `provide` |
 
----
 
 ## Частые вопросы
 
@@ -173,7 +163,6 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 
 **ZIO или Cats Effect?** Оба — функциональные runtimes. **ZIO** — всё в одном (включая **ZIO HTTP**). **Cats Effect** + **http4s** — модульный стек. Выбор часто по предпочтениям команды.
 
----
 
 ## Глоссарий
 
@@ -187,11 +176,9 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 | **Cats Effect** | Библиотека для описания и выполнения эффектов |
 | **Tapir** | Библиотека описания **API** и генерации **OpenAPI**/маршрутов |
 
----
 
 ## Заключение
 
 **Scala**-экосистема предлагает **Play** для классического веб, **Akka HTTP** для реактивных сценариев, **ZIO** и **http4s** для функционального стека. **Tapir** объединяет описание **API** для разных бэкендов. См. [Frameworks README](../README.md) и [Scala (languages)](../../languages/scala/README.md).
 
----
 

@@ -161,7 +161,7 @@ related: ["scala/scala-concurrency.md", "scala/scala-akka.md", "scala/scala-fp-a
 
 ## Введение в реактивное программирование
 
-Реактивное программирование - это парадигма программирования, ориентированная на потоки данных и распространение изменений. В реактивном программировании данные представлены как потоки событий, которые можно трансформировать, фильтровать и комбинировать различными способами. Это делает реактивное программирование идеальным для обработки асинхронных событий, потоков данных, и создания отзывчивых приложений.
+Реактивное программирование — это парадигма программирования, ориентированная на потоки данных и распространение изменений. В реактивном программировании данные представлены как потоки событий, которые можно трансформировать, фильтровать и комбинировать различными способами. Это делает реактивное программирование идеальным для обработки асинхронных событий, потоков данных, и создания отзывчивых приложений.
 
 Реактивное программирование в **Scala** представлено несколькими библиотеками и подходами. **RxScala** (**Reactive `Extensions` для Scala**) предоставляет функциональный подход к реактивному программированию с богатым набором операторов. **Akka Streams** предоставляет типобезопасную модель для обработки потоков данных с автоматической обработкой **backpressure**. Оба подхода следуют спецификации **Reactive Streams**, которая определяет стандартный способ обработки асинхронных потоков данных с **backpressure**.
 
@@ -224,7 +224,7 @@ stream
 
 ## **Reactive Streams**
 
-**Reactive Streams** - это спецификация для асинхронной обработки потоков данных с **backpressure**. Спецификация определяет интерфейсы **Publisher**, **Subscriber**, **Subscription**, и **Processor**, которые обеспечивают стандартный способ обработки потоков данных между различными библиотеками и системами.
+**Reactive Streams** — это спецификация для асинхронной обработки потоков данных с **backpressure**. Спецификация определяет интерфейсы **Publisher**, **Subscriber**, **Subscription**, и **Processor**, которые обеспечивают стандартный способ обработки потоков данных между различными библиотеками и системами.
 
 ### Основные интерфейсы
 
@@ -255,7 +255,7 @@ trait Subscription {
 
 ## **RxScala**
 
-**RxScala** - это портирование **Reactive Extensions** (**Rx**) для **Scala**, которое предоставляет функциональный подход к реактивному программированию. **RxScala** предоставляет богатый набор операторов для работы с потоками данных, включая трансформации, фильтрацию, комбинирование, и обработку ошибок.
+**RxScala** — это портирование **Reactive Extensions** (**Rx**) для **Scala**, которое предоставляет функциональный подход к реактивному программированию. **RxScala** предоставляет богатый набор операторов для работы с потоками данных, включая трансформации, фильтрацию, комбинирование, и обработку ошибок.
 
 ### Создание **Observable**
 
@@ -367,7 +367,7 @@ graph.run()
 
 ### Материализация
 
-Материализация в **Akka Streams** - это процесс преобразования графа обработки данных в выполняемый поток. При материализации создаются необходимые акторы и потоки для выполнения графа. Материализация может возвращать различные значения в зависимости от типа **Sink**.
+Материализация в **Akka Streams** — это процесс преобразования графа обработки данных в выполняемый поток. При материализации создаются необходимые акторы и потоки для выполнения графа. Материализация может возвращать различные значения в зависимости от типа **Sink**.
 
 ```scala
 // Материализация с возвратом значения
@@ -385,7 +385,7 @@ val countFuture: Future[Int] = source
 
 ## **Backpressure**
 
-**Backpressure** - это механизм, который позволяет потребителю данных контролировать скорость производства данных источником. Когда потребитель не успевает обрабатывать данные, он может запросить меньше данных или приостановить получение данных, что предотвращает переполнение памяти и обеспечивает стабильную работу системы.
+**Backpressure** — это механизм, который позволяет потребителю данных контролировать скорость производства данных источником. Когда потребитель не успевает обрабатывать данные, он может запросить меньше данных или приостановить получение данных, что предотвращает переполнение памяти и обеспечивает стабильную работу системы.
 
 ### Как работает **Backpressure**
 
@@ -395,23 +395,23 @@ val countFuture: Future[Int] = source
 // Subscriber контролирует скорость получения данных
 class ControlledSubscriber extends Subscriber[Int] {
   private var subscription: Subscription = _
-  
+
   def onSubscribe(s: Subscription): Unit = {
     subscription = s
     subscription.request(1)  // Запрос одного элемента
   }
-  
+
   def onNext(element: Int): Unit = {
     // Обработка элемента
     processElement(element)
     // Запрос следующего элемента после обработки
     subscription.request(1)
   }
-  
+
   def onError(error: Throwable): Unit = {
     println(s"Error: ${error.getMessage}")
   }
-  
+
   def onComplete(): Unit = {
     println("Stream completed")
   }
@@ -647,7 +647,7 @@ def fetchDataFromMultipleServices: Observable[CombinedData] = {
   val service1 = Observable.from(Future(service1.getData()))
   val service2 = Observable.from(Future(service2.getData()))
   val service3 = Observable.from(Future(service3.getData()))
-  
+
   Observable.zip(service1, service2, service3)
     .map { case (d1, d2, d3) => CombinedData(d1, d2, d3) }
     .timeout(5.seconds)
@@ -670,7 +670,7 @@ val bad = stream.map(x => {
 })
 
 // Хорошо - асинхронная операция
-val good = stream.flatMap(x => 
+val good = stream.flatMap(x =>
   Observable.from(Future {
     Thread.sleep(1000)  // Выполняется асинхронно
     x * 2
@@ -810,21 +810,21 @@ import akka.stream.{ClosedShape, UniformFanInShape, UniformFanOutShape}
 // Граф с несколькими источниками и стоками
 val graph = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder =>
   import GraphDSL.Implicits._
-  
+
   val source1 = Source(1 to 10)
   val source2 = Source(11 to 20)
   val sink1 = Sink.foreach[Int](x => println(s"Sink 1: $x"))
   val sink2 = Sink.foreach[Int](x => println(s"Sink 2: $x"))
-  
+
   val merge = builder.add(Merge[Int](2))
   val broadcast = builder.add(Broadcast[Int](2))
-  
+
   source1 ~> merge.in(0)
   source2 ~> merge.in(1)
   merge.out ~> broadcast.in
   broadcast.out(0) ~> sink1
   broadcast.out(1) ~> sink2
-  
+
   ClosedShape
 })
 
@@ -1056,27 +1056,27 @@ import rx.lang.scala.Observable
 import scala.concurrent.duration._
 
 class ObservableSpec extends FlatSpec with Matchers {
-  
+
   "Observable" should "emit values" in {
     val observable = Observable.just(1, 2, 3)
     val result = observable.toSeq.toBlocking.single
-    
+
     result should contain allOf(1, 2, 3)
   }
-  
+
   it should "handle errors" in {
     val observable = Observable.error(new Exception("Error"))
       .onErrorReturn(0)
-    
+
     val result = observable.toBlocking.single
     result shouldBe 0
   }
-  
+
   it should "respect timeouts" in {
     val observable = Observable.timer(2.seconds)
       .timeout(1.second)
       .onErrorReturn(0)
-    
+
     val result = observable.toBlocking.single
     result shouldBe 0
   }
@@ -1091,33 +1091,33 @@ import akka.stream.testkit.scaladsl.{TestSource, TestSink}
 import akka.testkit.TestKit
 
 class StreamSpec extends TestKit(ActorSystem("TestSystem")) {
-  
+
   "Stream" should "process values correctly" in {
     val source = Source(1 to 10)
     val sink = Sink.seq[Int]
-    
+
     val result = source.runWith(sink)
     val values = Await.result(result, 5.seconds)
-    
+
     values should contain allOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
   }
-  
+
   it should "handle backpressure" in {
     val (source, sink) = TestSource.probe[Int]
       .toMat(TestSink.probe[Int])(Keep.both)
       .run()
-    
+
     sink.request(5)
     source.sendNext(1)
     source.sendNext(2)
     source.sendNext(3)
     sink.expectNext(1, 2, 3)
-    
+
     sink.request(2)
     source.sendNext(4)
     source.sendNext(5)
     sink.expectNext(4, 5)
-    
+
     source.sendComplete()
     sink.expectComplete()
   }
@@ -1237,7 +1237,7 @@ val timedStream = Source(1 to 100)
 // Подсчет обработанных элементов
 val countedStream = Source(1 to 1000)
   .scan(0)((count, _) => count + 1)
-  .runWith(Sink.foreach(count => 
+  .runWith(Sink.foreach(count =>
     if (count % 100 == 0) println(s"Processed $count elements")
   ))
 ```
@@ -1264,9 +1264,9 @@ val httpStream = Source.tick(1.second, 1.second, HttpRequest(uri = "https://api.
 
 // Обработка ошибок HTTP запросов
 val resilientHttpStream = Source.tick(1.second, 1.second, HttpRequest(uri = "https://api.example.com/data"))
-  .mapAsync(10)(request => 
+  .mapAsync(10)(request =>
     Http().singleRequest(request)
-      .recover { case e: Exception => 
+      .recover { case e: Exception =>
         println(s"Request failed: ${e.getMessage}")
         Http().singleRequest(request)  // Повторная попытка
       }
@@ -1324,13 +1324,13 @@ val breaker = new CircuitBreaker(
 )
 
 val resilientStream = Source.tick(1.second, 1.second, ())
-  .mapAsync(1)(_ => 
+  .mapAsync(1)(_ =>
     breaker.withCircuitBreaker {
       callExternalService()
     }
   )
   .recover {
-    case _: CircuitBreakerOpenException => 
+    case _: CircuitBreakerOpenException =>
       // Circuit breaker открыт, используем fallback
       getFallbackData()
   }
@@ -1397,7 +1397,7 @@ val buffered = stream.buffer(100)  // Буфер на 100 элементов
 val timeBuffered = stream.buffer(1.second, 100)  // Буфер по времени и размеру
 
 // Обработка окон
-windowed.flatMap(window => 
+windowed.flatMap(window =>
   window
     .toSeq
     .map(processWindow)
@@ -1528,7 +1528,7 @@ import akka.stream.scaladsl.{Source, Sink, Broadcast}
 // Репликация потока на несколько узлов
 val replicatedStream = Source(1 to 100)
   .via(Broadcast(3))  // Репликация на 3 потока
-  .mapAsync(1)(element => 
+  .mapAsync(1)(element =>
     replicateToNode(element)  // Репликация на узел
   )
   .mergeSubstreams
@@ -1595,7 +1595,7 @@ val logStream = FileTailSource.lines(
   .map(parseLogLine)
   .filter(_.level == "ERROR")
   .groupBy(_.service)
-  .mapAsync(10)(logEntry => 
+  .mapAsync(10)(logEntry =>
     sendToAlertSystem(logEntry)
   )
   .mergeSubstreams
@@ -1686,7 +1686,7 @@ val iotEventStream = MqttSource.atMostOnce(
   .map(parseIoTEvent)
   .filter(_.isValid)
   .groupBy(_.deviceType)
-  .mapAsync(10)(event => 
+  .mapAsync(10)(event =>
     processDeviceEvent(event)
   )
   .mergeSubstreams
@@ -1763,7 +1763,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 // Параллельная обработка с сохранением порядка
 val parallelOrdered = Source(1 to 1000)
-  .mapAsync(10)(element => 
+  .mapAsync(10)(element =>
     Future {
       processElement(element)
     }
@@ -1772,7 +1772,7 @@ val parallelOrdered = Source(1 to 1000)
 
 // Параллельная обработка без сохранения порядка (быстрее)
 val parallelUnordered = Source(1 to 1000)
-  .mapAsyncUnordered(10)(element => 
+  .mapAsyncUnordered(10)(element =>
     Future {
       processElement(element)
     }
@@ -1782,7 +1782,7 @@ val parallelUnordered = Source(1 to 1000)
 // Параллельная обработка с балансировкой нагрузки
 val balancedParallel = Source(1 to 1000)
   .balance(4)  // Балансировка на 4 потока
-  .mapAsync(1)(element => 
+  .mapAsync(1)(element =>
     Future {
       processElement(element)
     }
@@ -1838,7 +1838,7 @@ val redisStream = Source.fromPublisher(
 // Запись в Redis
 val redisSink = Source(1 to 1000)
   .map(createMessage)
-  .mapAsync(1)(message => 
+  .mapAsync(1)(message =>
     redisClient.xadd("my-stream", message)
   )
   .runWith(Sink.ignore)
@@ -1861,14 +1861,14 @@ val dbStream = Source.fromPublisher(
   )
 )
   .grouped(1000)
-  .mapAsync(1)(batch => 
+  .mapAsync(1)(batch =>
     processBatch(batch)
   )
   .runWith(Sink.foreach(saveBatch))
 
 // Параллельная обработка запросов
 val parallelQueries = Source(1 to 100)
-  .mapAsync(10)(id => 
+  .mapAsync(10)(id =>
     db.run(users.filter(_.id === id).result.headOption)
   )
   .collect { case Some(user) => user }
@@ -1945,7 +1945,7 @@ def rebuildState(events: Source[Event, NotUsed]): Observable[State] = {
 // Обработка команд и генерация событий
 def processCommand(command: Command): Observable[Event] = {
   Observable.from(validateCommand(command))
-    .flatMap(cmd => 
+    .flatMap(cmd =>
       Observable.from(executeCommand(cmd))
         .map(generateEvent)
     )
@@ -1963,7 +1963,7 @@ import akka.stream.scaladsl.{Source, Sink}
 val commandStream = Source.fromPublisher(commandPublisher)
   .map(validateCommand)
   .filter(_.isValid)
-  .mapAsync(10)(command => 
+  .mapAsync(10)(command =>
     executeCommand(command)
   )
   .map(generateEvent)
@@ -1971,7 +1971,7 @@ val commandStream = Source.fromPublisher(commandPublisher)
 
 // Query side - обработка запросов
 val queryStream = Source.fromPublisher(queryPublisher)
-  .mapAsync(10)(query => 
+  .mapAsync(10)(query =>
     processQuery(query)
   )
   .runWith(Sink.foreach(sendResponse))
@@ -1992,9 +1992,9 @@ def combineAsyncOperations: Observable[CombinedResult] = {
   val op1 = Observable.from(Future(operation1()))
   val op2 = Observable.from(Future(operation2()))
   val op3 = Observable.from(Future(operation3()))
-  
+
   Observable.zip(op1, op2, op3)
-    .map { case (r1, r2, r3) => 
+    .map { case (r1, r2, r3) =>
       CombinedResult(r1, r2, r3)
     }
     .timeout(5.seconds)
@@ -2004,9 +2004,9 @@ def combineAsyncOperations: Observable[CombinedResult] = {
 // Последовательное выполнение асинхронных операций
 def sequentialAsyncOperations: Observable[Result] = {
   Observable.from(Future(operation1()))
-    .flatMap(r1 => 
+    .flatMap(r1 =>
       Observable.from(Future(operation2(r1)))
-        .flatMap(r2 => 
+        .flatMap(r2 =>
           Observable.from(Future(operation3(r2)))
         )
     )
@@ -2058,10 +2058,10 @@ def metricsFlow[T](name: String): Flow[T, T, NotUsed] = {
       val start = System.nanoTime()
       val result = processElement(element)
       val duration = System.nanoTime() - start
-      
+
       recordMetric(s"$name.processing_time", duration)
       recordMetric(s"$name.throughput", 1)
-      
+
       result
     }
 }
@@ -2119,7 +2119,7 @@ import akka.http.scaladsl.Http
 
 // Обработка потока твитов
 val twitterStream = Source.tick(1.second, 1.second, ())
-  .mapAsync(10)(_ => 
+  .mapAsync(10)(_ =>
     Http().singleRequest(HttpRequest(uri = "https://api.twitter.com/stream"))
   )
   .map(_.entity.dataBytes)
@@ -2152,7 +2152,7 @@ val paymentStream = Observable.from(paymentSource)
   .filter(_.amount > 0)
   .map(validatePayment)
   .filter(_.isValid)
-  .mapAsync(10)(payment => 
+  .mapAsync(10)(payment =>
     Observable.from(processPayment(payment))
   )
   .retry(3)
@@ -2182,17 +2182,17 @@ import java.awt.image.BufferedImage
 
 // Обработка потока изображений
 val imageStream = Source.fromIterator(() => imageIterator)
-  .mapAsync(4)(image => 
+  .mapAsync(4)(image =>
     Future {
       applyFilter(image, "blur")
     }
   )
-  .mapAsync(4)(image => 
+  .mapAsync(4)(image =>
     Future {
       resizeImage(image, 800, 600)
     }
   )
-  .mapAsync(4)(image => 
+  .mapAsync(4)(image =>
     Future {
       compressImage(image)
     }
@@ -2203,7 +2203,7 @@ val imageStream = Source.fromIterator(() => imageIterator)
 // Параллельная обработка с балансировкой
 val balancedImageStream = Source.fromIterator(() => imageIterator)
   .balance(4)
-  .mapAsync(1)(image => 
+  .mapAsync(1)(image =>
     Future {
       processImage(image)
     }
@@ -2223,7 +2223,7 @@ import akka.util.ByteString
 // Обработка видеопотока
 val videoStream = Source.fromPublisher(videoSource)
   .grouped(30)  // Группировка в кадры
-  .mapAsync(2)(frames => 
+  .mapAsync(2)(frames =>
     Future {
       processFrames(frames)
     }
@@ -2256,7 +2256,7 @@ implicit val cpuExecutionContext = ExecutionContext.fromExecutor(
 )
 
 val cpuOptimizedStream = Source(1 to 10000)
-  .mapAsyncUnordered(Runtime.getRuntime.availableProcessors())(element => 
+  .mapAsyncUnordered(Runtime.getRuntime.availableProcessors())(element =>
     Future {
       cpuIntensiveOperation(element)
     }(cpuExecutionContext)
@@ -2296,9 +2296,9 @@ import akka.http.scaladsl.Http
 // Параллельные HTTP запросы с ограничением
 val httpStream = Source(1 to 1000)
   .map(id => HttpRequest(uri = s"https://api.example.com/data/$id"))
-  .mapAsync(10)(request => 
+  .mapAsync(10)(request =>
     Http().singleRequest(request)
-      .recover { case e: Exception => 
+      .recover { case e: Exception =>
         // Обработка ошибок
         HttpResponse(status = StatusCodes.InternalServerError)
       }
@@ -2328,7 +2328,7 @@ val s3Stream = Source.fromPublisher(
       .build()
   )
 )
-  .mapAsync(10)(objectSummary => 
+  .mapAsync(10)(objectSummary =>
     Future {
       s3Client.getObject(
         GetObjectRequest.builder()
@@ -2344,7 +2344,7 @@ val s3Stream = Source.fromPublisher(
 // Загрузка в S3
 val uploadStream = Source(1 to 1000)
   .map(createObject)
-  .mapAsync(10)(obj => 
+  .mapAsync(10)(obj =>
     Future {
       s3Client.putObject(
         PutObjectRequest.builder()
@@ -2367,10 +2367,10 @@ import akka.stream.scaladsl.{Source, Sink}
 import com.google.cloud.storage.Storage
 
 // Обработка объектов из Google Cloud Storage
-val gcsStream = Source.fromIterator(() => 
+val gcsStream = Source.fromIterator(() =>
   storage.list("my-bucket").iterateAll().iterator()
 )
-  .mapAsync(10)(blob => 
+  .mapAsync(10)(blob =>
     Future {
       blob.downloadTo(Paths.get(s"/tmp/${blob.getName()}"))
     }
@@ -2481,18 +2481,18 @@ val publisher = new Publisher[Int] {
   def subscribe(subscriber: Subscriber[_ >: Int]): Unit = {
     val subscription = new Subscription {
       var cancelled = false
-      
+
       def request(n: Long): Unit = {
         if (!cancelled && n > 0) {
           (1 to n.toInt).foreach(i => subscriber.onNext(i))
         }
       }
-      
+
       def cancel(): Unit = {
         cancelled = true
       }
     }
-    
+
     subscriber.onSubscribe(subscription)
   }
 }

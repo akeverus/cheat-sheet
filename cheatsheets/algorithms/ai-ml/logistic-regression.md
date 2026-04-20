@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Deeplearning4j Documentation](https://deeplearning4j.org/docs/latest/)
 - [MNIST Dataset](http://yann.lecun.com/exdb/mnist/)
 
-### Baeldung
+### Обучающие материалы
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
@@ -101,7 +101,7 @@ DataSetIterator train = new RecordReaderDataSetIterator(...);
 DataSetIterator test = new RecordReaderDataSetIterator(...);
 ```
 
-После того, как мы разметили входные изображения и разделили их на два набора, этап "обработки данных" завершен, и мы можем перейти к "построению модели".
+После того, как мы разметили входные изображения и разделили их на два набора, этап «обработки данных» завершен, и мы можем перейти к «построению модели».
 
 ## Построение модели LeNet-5
 
@@ -228,25 +228,25 @@ class LogisticRegressionK {
             .nOut(20)
             .activation(org.nd4j.linalg.activations.Activation.IDENTITY)
             .build()
-        
+
         val layer2 = SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
             .kernelSize(2, 2)
             .stride(2, 2)
             .build()
-        
+
         val config = NeuralNetConfiguration.Builder()
             .list()
             .layer(0, layer1)
             .layer(1, layer2)
             .build()
-        
+
         return MultiLayerNetwork(config)
     }
-    
+
     fun trainModel(model: MultiLayerNetwork, train: org.nd4j.linalg.dataset.api.iterator.DataSetIterator) {
         model.fit(train)
     }
-    
+
     fun evaluateModel(model: MultiLayerNetwork, test: org.nd4j.linalg.dataset.api.iterator.DataSetIterator) {
         val eval = model.evaluate(test)
         println(eval.stats())
@@ -277,13 +277,13 @@ class MnistPredictionK(private val model: MultiLayerNetwork) {
         val height = 28
         val width = 28
         val channels = 1
-        
+
         val image: INDArray = NativeImageLoader(height, width, channels).asMatrix(imageFile)
         ImagePreProcessingScaler(0.0, 1.0).transform(image)
-        
+
         val output: INDArray = model.output(image)
         val probabilities = output.toDoubleVector()
-        
+
         val maxIndex = probabilities.indices.maxByOrNull { probabilities[it] } ?: -1
         return probabilities.map { (it * 100).toInt() }.toIntArray()
     }

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Futures в Scala
 
-Краткое руководство по **Futures** в **Scala** - асинхронное программирование и конкурентность.
+Краткое руководство по **Futures** в **Scala** — асинхронное программирование и конкурентность.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -289,11 +289,11 @@ import scala.collection.mutable
 
 class Cache[K, V] {
   private val cache = mutable.Map[K, Future[V]]()
-  
+
   def get(key: K)(compute: => V): Future[V] = {
     cache.getOrElseUpdate(key, Future(compute))
   }
-  
+
   def invalidate(key: K): Unit = {
     cache.remove(key)
   }
@@ -325,12 +325,12 @@ import java.util.concurrent.TimeoutException
 
 def withTimeout[T](future: Future[T], timeout: Duration): Future[T] = {
   val promise = Promise[T]()
-  
+
   Future {
     Thread.sleep(timeout.toMillis)
     promise.tryFailure(new TimeoutException("Operation timed out"))
   }
-  
+
   future.onComplete(promise.tryComplete)
   promise.future
 }
@@ -396,7 +396,7 @@ val result = for {
 } yield (user, posts)
 
 // ❌ Плохо - трудно читать
-val result = findUser(id).flatMap(user => 
+val result = findUser(id).flatMap(user =>
   findUserPosts(user.id).map(posts => (user, posts))
 )
 ```
@@ -493,7 +493,7 @@ def retryFuture[T](maxRetries: Int, delay: Duration = 1.second)(
       case e => Future.failed(e)
     }
   }
-  
+
   attempt(maxRetries)
 }
 ```
@@ -508,12 +508,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 // Future с таймаутом
 def withTimeout[T](future: Future[T], timeout: Duration): Future[T] = {
   val promise = Promise[T]()
-  
+
   Future {
     Thread.sleep(timeout.toMillis)
     promise.tryFailure(new java.util.concurrent.TimeoutException("Operation timed out"))
   }
-  
+
   future.onComplete(promise.tryComplete)
   promise.future
 }
@@ -533,12 +533,12 @@ class CircuitBreaker[T](
 ) {
   private var failures = 0
   private var state: State = Closed
-  
+
   sealed trait State
   case object Closed extends State
   case object Open extends State
   case object HalfOpen extends State
-  
+
   def execute(f: => Future[T]): Future[T] = {
     state match {
       case Closed =>
@@ -555,10 +555,10 @@ class CircuitBreaker[T](
             }
         }
         f
-        
+
       case Open =>
         Future.failed(new Exception("Circuit breaker is open"))
-        
+
       case HalfOpen =>
         f.onComplete {
           case Success(_) =>
@@ -587,16 +587,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 // Rate limiter для ограничения частоты запросов
 class RateLimiter(requestsPerSecond: Int) {
   private val timestamps = mutable.Queue[Long]()
-  
+
   def execute[T](f: => Future[T]): Future[T] = {
     val now = System.currentTimeMillis()
     val oneSecondAgo = now - 1000
-    
+
     synchronized {
       while (timestamps.nonEmpty && timestamps.head < oneSecondAgo) {
         timestamps.dequeue()
       }
-      
+
       if (timestamps.size < requestsPerSecond) {
         timestamps.enqueue(now)
         f
@@ -624,15 +624,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
 // Кэширование Future результатов
 class FutureCache[K, V] {
   private val cache = mutable.Map[K, Future[V]]()
-  
+
   def get(key: K)(compute: => Future[V]): Future[V] = {
     cache.getOrElseUpdate(key, compute)
   }
-  
+
   def invalidate(key: K): Unit = {
     cache.remove(key)
   }
-  
+
   def clear(): Unit = {
     cache.clear()
   }
@@ -659,3 +659,10 @@ class FutureCache[K, V] {
 - [Scala Futures Documentation](https://www.scala-lang.org/api/current/scala/concurrent/Future.html)
 - [Scala Concurrency](https://docs.scala-lang.org/overviews/core/futures.html)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

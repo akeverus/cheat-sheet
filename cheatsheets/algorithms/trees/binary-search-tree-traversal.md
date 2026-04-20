@@ -114,7 +114,7 @@ class Node {
     int key;
     Node left;
     Node right;
-    
+
     Node(int key) {
         this.key = key;
         left = right = null;
@@ -189,11 +189,11 @@ void postorderTraversal(Node node) {
 ```java
 public class BinaryTreeTraversal {
     Node root;
-    
+
     BinaryTreeTraversal() {
         root = null;
     }
-    
+
     void inorderTraversal(Node node) {
         if (node != null) {
             inorderTraversal(node.left);
@@ -201,7 +201,7 @@ public class BinaryTreeTraversal {
             inorderTraversal(node.right);
         }
     }
-    
+
     void preorderTraversal(Node node) {
         if (node != null) {
             System.out.print(node.key + " ");
@@ -209,7 +209,7 @@ public class BinaryTreeTraversal {
             preorderTraversal(node.right);
         }
     }
-    
+
     void postorderTraversal(Node node) {
         if (node != null) {
             postorderTraversal(node.left);
@@ -217,16 +217,16 @@ public class BinaryTreeTraversal {
             System.out.print(node.key + " ");
         }
     }
-    
+
     // Обертки для вызова с корня
     void printInorder() {
         inorderTraversal(root);
     }
-    
+
     void printPreorder() {
         preorderTraversal(root);
     }
-    
+
     void printPostorder() {
         postorderTraversal(root);
     }
@@ -263,7 +263,7 @@ tree.printPostorder();  // 4 5 2 3 1
 void inorderIterative(Node root) {
     Stack<Node> stack = new Stack<>();
     Node current = root;
-    
+
     while (current != null || !stack.isEmpty()) {
         while (current != null) {
             stack.push(current);
@@ -281,14 +281,14 @@ void inorderIterative(Node root) {
 ```java
 void preorderIterative(Node root) {
     if (root == null) return;
-    
+
     Stack<Node> stack = new Stack<>();
     stack.push(root);
-    
+
     while (!stack.isEmpty()) {
         Node node = stack.pop();
         System.out.print(node.key + " ");
-        
+
         if (node.right != null) {
             stack.push(node.right);
         }
@@ -304,15 +304,15 @@ void preorderIterative(Node root) {
 ```java
 void postorderIterative(Node root) {
     if (root == null) return;
-    
+
     Stack<Node> stack1 = new Stack<>();
     Stack<Node> stack2 = new Stack<>();
     stack1.push(root);
-    
+
     while (!stack1.isEmpty()) {
         Node node = stack1.pop();
         stack2.push(node);
-        
+
         if (node.left != null) {
             stack1.push(node.left);
         }
@@ -320,7 +320,7 @@ void postorderIterative(Node root) {
             stack1.push(node.right);
         }
     }
-    
+
     while (!stack2.isEmpty()) {
         System.out.print(stack2.pop().key + " ");
     }
@@ -343,7 +343,7 @@ class NodeK(var key: Int) {
 ```kotlin
 class BinaryTreeTraversalK {
     var root: NodeK? = null
-    
+
     fun inorderTraversalK(node: NodeK?) {
         if (node != null) {
             inorderTraversalK(node.left)
@@ -351,7 +351,7 @@ class BinaryTreeTraversalK {
             inorderTraversalK(node.right)
         }
     }
-    
+
     fun preorderTraversalK(node: NodeK?) {
         if (node != null) {
             print("${node.key} ")
@@ -359,7 +359,7 @@ class BinaryTreeTraversalK {
             preorderTraversalK(node.right)
         }
     }
-    
+
     fun postorderTraversalK(node: NodeK?) {
         if (node != null) {
             postorderTraversalK(node.left)
@@ -367,7 +367,7 @@ class BinaryTreeTraversalK {
             print("${node.key} ")
         }
     }
-    
+
     fun printInorderK() = inorderTraversalK(root)
     fun printPreorderK() = preorderTraversalK(root)
     fun printPostorderK() = postorderTraversalK(root)
@@ -380,7 +380,7 @@ class BinaryTreeTraversalK {
 fun inorderIterativeK(root: NodeK?) {
     val stack = mutableListOf<NodeK>()
     var current = root
-    
+
     while (current != null || stack.isNotEmpty()) {
         while (current != null) {
             stack.add(current)
@@ -394,13 +394,13 @@ fun inorderIterativeK(root: NodeK?) {
 
 fun preorderIterativeK(root: NodeK?) {
     if (root == null) return
-    
+
     val stack = mutableListOf(root)
-    
+
     while (stack.isNotEmpty()) {
         val node = stack.removeAt(stack.size - 1)
         print("${node.key} ")
-        
+
         node.right?.let { stack.add(it) }
         node.left?.let { stack.add(it) }
     }
@@ -408,18 +408,18 @@ fun preorderIterativeK(root: NodeK?) {
 
 fun postorderIterativeK(root: NodeK?) {
     if (root == null) return
-    
+
     val stack1 = mutableListOf(root)
     val stack2 = mutableListOf<NodeK>()
-    
+
     while (stack1.isNotEmpty()) {
         val node = stack1.removeAt(stack1.size - 1)
         stack2.add(node)
-        
+
         node.left?.let { stack1.add(it) }
         node.right?.let { stack1.add(it) }
     }
-    
+
     while (stack2.isNotEmpty()) {
         print("${stack2.removeAt(stack2.size - 1).key} ")
     }
@@ -438,13 +438,13 @@ fun main() {
         }
         right = NodeK(3)
     }
-    
+
     print("Inorder: ")
     tree.printInorderK() // 4 2 5 1 3
-    
+
     print("\nPreorder: ")
     tree.printPreorderK() // 1 2 4 5 3
-    
+
     print("\nPostorder: ")
     tree.printPostorderK() // 4 5 2 3 1
 }

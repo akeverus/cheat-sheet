@@ -94,17 +94,17 @@ public static int lcm(int number1, int number2) {
     if (number1 == 0 || number2 == 0) {
         return 0;
     }
-    
+
     int absNumber1 = Math.abs(number1);
     int absNumber2 = Math.abs(number2);
     int absHigherNumber = Math.max(absNumber1, absNumber2);
     int absLowerNumber = Math.min(absNumber1, absNumber2);
     int lcm = absHigherNumber;
-    
+
     while (lcm % absLowerNumber != 0) {
         lcm += absHigherNumber;
     }
-    
+
     return lcm;
 }
 ```
@@ -133,7 +133,7 @@ public void testLCM() {
 public static Map<Integer, Integer> getPrimeFactors(int number) {
     int absNumber = Math.abs(number);
     Map<Integer, Integer> primeFactorsMap = new HashMap<Integer, Integer>();
-    
+
     for (int factor = 2; factor <= absNumber; factor++) {
         while (absNumber % factor == 0) {
             Integer power = primeFactorsMap.get(factor);
@@ -144,7 +144,7 @@ public static Map<Integer, Integer> getPrimeFactors(int number) {
             absNumber /= factor;
         }
     }
-    
+
     return primeFactorsMap;
 }
 ```
@@ -157,19 +157,19 @@ public static int lcm(int number1, int number2) {
     if (number1 == 0 || number2 == 0) {
         return 0;
     }
-    
+
     Map<Integer, Integer> primeFactorsForNum1 = getPrimeFactors(number1);
     Map<Integer, Integer> primeFactorsForNum2 = getPrimeFactors(number2);
     Set<Integer> primeFactorsUnionSet = new HashSet<>(primeFactorsForNum1.keySet());
     primeFactorsUnionSet.addAll(primeFactorsForNum2.keySet());
-    
+
     int lcm = 1;
     for (Integer primeFactor : primeFactorsUnionSet) {
         lcm *= Math.pow(primeFactor,
             Math.max(primeFactorsForNum1.getOrDefault(primeFactor, 0),
                      primeFactorsForNum2.getOrDefault(primeFactor, 0)));
     }
-    
+
     return lcm;
 }
 ```
@@ -221,17 +221,17 @@ fun lcmIterativeK(number1: Int, number2: Int): Int {
     if (number1 == 0 || number2 == 0) {
         return 0
     }
-    
+
     val absNumber1 = Math.abs(number1)
     val absNumber2 = Math.abs(number2)
     val absHigherNumber = maxOf(absNumber1, absNumber2)
     val absLowerNumber = minOf(absNumber1, absNumber2)
     var lcm = absHigherNumber
-    
+
     while (lcm % absLowerNumber != 0) {
         lcm += absHigherNumber
     }
-    
+
     return lcm
 }
 ```
@@ -243,7 +243,7 @@ fun lcmIterativeK(number1: Int, number2: Int): Int {
 fun getPrimeFactorsK(number: Int): Map<Int, Int> {
     var absNumber = Math.abs(number)
     val primeFactorsMap = mutableMapOf<Int, Int>()
-    
+
     var factor = 2
     while (factor <= absNumber) {
         while (absNumber % factor == 0) {
@@ -252,7 +252,7 @@ fun getPrimeFactorsK(number: Int): Map<Int, Int> {
         }
         factor++
     }
-    
+
     return primeFactorsMap
 }
 
@@ -260,11 +260,11 @@ fun lcmByPrimeFactorsK(number1: Int, number2: Int): Int {
     if (number1 == 0 || number2 == 0) {
         return 0
     }
-    
+
     val primeFactorsForNum1 = getPrimeFactorsK(number1)
     val primeFactorsForNum2 = getPrimeFactorsK(number2)
     val primeFactorsUnionSet = (primeFactorsForNum1.keys + primeFactorsForNum2.keys).toSet()
-    
+
     var lcm = 1
     for (primeFactor in primeFactorsUnionSet) {
         val power = maxOf(
@@ -273,7 +273,7 @@ fun lcmByPrimeFactorsK(number1: Int, number2: Int): Int {
         )
         lcm *= Math.pow(primeFactor.toDouble(), power.toDouble()).toInt()
     }
-    
+
     return lcm
 }
 ```
@@ -351,14 +351,14 @@ fun lcmBigIntegerK(a: BigInteger, b: BigInteger): BigInteger {
 fun main() {
     // Итеративный метод
     println(lcmIterativeK(12, 18)) // 36
-    
+
     // Использование НОД (рекомендуется)
     println(lcmByGcdK(12, 18)) // 36
     println(lcmByGcdTailRecursiveK(4, 6)) // 12
-    
+
     // Для массива
     println(lcmArrayK(intArrayOf(12, 18, 24))) // 72
-    
+
     // BigInteger
     val a = BigInteger("12345678901234567890")
     val b = BigInteger("98765432109876543210")

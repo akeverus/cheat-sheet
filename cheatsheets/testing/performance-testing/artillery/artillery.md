@@ -27,7 +27,6 @@ updated: "2026-02-11"
 
 **См. также:** [JMeter](../jmeter/jmeter.md), [Gatling](../gatling/gatling.md), [k6](../k6/k6.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
 
----
 
 ## Введение
 
@@ -49,7 +48,6 @@ updated: "2026-02-11"
 | **processor** | Файл с функциями на JavaScript (beforeScenario, afterResponse и др.). |
 | **payload** | Данные из CSV/JSON для параметризации (логины, тестовые данные). |
 
----
 
 ## Установка и настройка
 
@@ -74,7 +72,6 @@ artillery run config.yml --target https://staging.example.com
 artillery run config.yml --output report.json
 ```
 
----
 
 ## Структура теста (YAML)
 
@@ -128,7 +125,6 @@ scenarios:
           url: "/api/status"
 ```
 
----
 
 ## HTTP-запросы
 
@@ -155,7 +151,6 @@ scenarios:
 
 Переменные `username`, `password` — из payload (CSV). `token` — из capture предыдущего запроса.
 
----
 
 ## Processor и payload
 
@@ -183,7 +178,6 @@ module.exports = {
 };
 ```
 
----
 
 ## Отчёты и метрики
 
@@ -202,7 +196,6 @@ config:
     p95: 500            # 95-й перцентиль времени отклика не более 500 мс
 ```
 
----
 
 ## WebSocket
 
@@ -221,7 +214,6 @@ scenarios:
       - think: 1
 ```
 
----
 
 ## CI/CD
 
@@ -229,7 +221,6 @@ scenarios:
 - Переопределение target: `--target $TARGET_URL` (например, из переменной окружения в GitHub Actions).
 - Переменные окружения доступны в processor через `process.env`.
 
----
 
 ## Лучшие практики
 
@@ -241,7 +232,6 @@ scenarios:
 6. **ensure** — задать maxErrorRate и p95 для падения теста при деградации в CI.
 7. **Версионировать Artillery** в package.json для воспроизводимости.
 
----
 
 ## Решение проблем и FAQ
 
@@ -265,7 +255,6 @@ scenarios:
 - **gRPC?** — Стандартно нет; есть плагины (artillery-engine-grpc) или вызов gRPC-клиента из processor. Для нативной поддержки часто выбирают k6 или Gatling.
 - **Ограничить длительность?** — Суммарная duration фаз задаёт длительность; можно фазу с rampTo: 0 или pause для завершения.
 
----
 
 ## Глоссарий и команды
 
@@ -295,7 +284,6 @@ scenarios:
 | artillery version | Версия |
 | artillery quick | Интерактивное создание минимального config |
 
----
 
 ## Заключение
 

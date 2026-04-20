@@ -55,7 +55,6 @@ updated: "2026-02-11"
 - **Browser (RUM)**: мониторинг фронтенда.
 - **Synthetic Monitoring**: проверка доступности и сценариев извне.
 
----
 
 ## Интеграция с Java
 
@@ -69,7 +68,6 @@ java -javaagent:/path/to/newrelic.jar -jar app.jar
 
 При необходимости можно обернуть метод в транзакцию или добавить custom span через API агента.
 
----
 
 ## Конфигурация агента
 
@@ -104,7 +102,6 @@ common: &default_settings
 | labels | Теги (env, team) для фильтрации |
 | log_level | Уровень логов агента (info, fine, finer) |
 
----
 
 ## Метрики и дашборды
 
@@ -114,7 +111,6 @@ common: &default_settings
 - **External services**: вызовы внешних HTTP-сервисов; время ответа и ошибки по каждому хосту.
 - **Custom metrics**: свои метрики через API агента; отображение в дашбордах и NRQL.
 
----
 
 ## Custom metrics и API агента
 
@@ -132,7 +128,6 @@ NewRelic.noticeError(throwable);
 
 Именование кастомных метрик с префиксом `Custom/` упрощает фильтрацию. Не отправляйте высококардинальные метрики (по каждому user_id) без агрегации.
 
----
 
 ## NRQL
 
@@ -147,7 +142,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 
 Эти запросы можно сохранять в виджетах дашбордов и использовать в условиях алертов.
 
----
 
 ## Ошибки и исключения
 
@@ -156,7 +150,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - При вызове `NewRelic.noticeError(throwable)` или добавлении атрибутов — контекст привязывается к ошибке.
 - В конфигурации можно указать исключения или коды ответа, которые не считать ошибками (например, 404 для health check).
 
----
 
 ## Алертинг
 
@@ -166,7 +159,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - **Runbooks**: в описании алерта указывать ссылку на runbook — что проверять и как устранять инцидент.
 - **Избегать шума**: алертить на симптомы для пользователя (недоступность, высокая latency, рост ошибок).
 
----
 
 ## Distributed Tracing
 
@@ -175,7 +167,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - В UI New Relic — Service Map и цепочка span'ов по одному запросу; видно, какой сервис занял больше всего времени.
 - При высокой нагрузке настроить sampling (например, 10% транзакций) для снижения объёма данных.
 
----
 
 ## Интеграция с Kubernetes
 
@@ -184,7 +175,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - `license_key` хранить в Kubernetes Secret, монтировать как переменную окружения.
 - Конфигурация (newrelic.yml без секретов) может храниться в репозитории.
 
----
 
 ## Таблица: компоненты New Relic
 
@@ -199,7 +189,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 | NRQL | Язык запросов к данным |
 | Alerts | Условия и каналы уведомлений |
 
----
 
 ## Таблица: золотые сигналы
 
@@ -210,7 +199,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 | Errors | APM → Errors, Error rate в транзакциях |
 | Saturation | Infrastructure → CPU, Memory, Disk |
 
----
 
 ## Глоссарий
 
@@ -222,7 +210,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - **RUM** — Real User Monitoring; мониторинг фронтенда.
 - **Apdex** — метрика удовлетворённости пользователей по времени ответа.
 
----
 
 ## Лучшие практики
 
@@ -234,7 +221,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - При высокой нагрузке включить sampling транзакций.
 - Мониторить потребление ресурсов самим агентом.
 
----
 
 ## Чек-лист перед внедрением
 
@@ -246,7 +232,6 @@ SELECT average(cpuPercent) FROM SystemSample FACET hostname SINCE 1 hour ago
 - [ ] Документировать runbooks для типовых алертов.
 - [ ] При высокой нагрузке настроить sampling.
 
----
 
 ## Решение проблем
 
@@ -267,5 +252,8 @@ APM — метрики приложения (транзакции, эндпои�
 **Как связать логи с транзакциями?**
 Добавить trace_id в MDC логгера. В New Relic Logs поиск по trace_id вернёт все логи одного запроса, что ускоряет расследование инцидентов.
 
----
 
+## См. также
+
+- [[datadog|Datadog APM]]
+- [[elastic-apm|Elastic APM]]

@@ -98,22 +98,22 @@ public Character firstNonRepeatingCharBruteForceNaive(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     for (int outer = 0; outer < inputString.length(); outer++) {
         boolean repeat = false;
-        
+
         for (int inner = 0; inner < inputString.length(); inner++) {
             if (inner != outer && inputString.charAt(outer) == inputString.charAt(inner)) {
                 repeat = true;
                 break;
             }
         }
-        
+
         if (!repeat) {
             return inputString.charAt(outer);
         }
     }
-    
+
     return null;
 }
 ```
@@ -131,14 +131,14 @@ public Character firstNonRepeatingCharBruteForce(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     for (Character c : inputString.toCharArray()) {
         int indexOfC = inputString.indexOf(c);
         if (indexOfC == inputString.lastIndexOf(c)) {
             return c;
         }
     }
-    
+
     return null;
 }
 ```
@@ -162,20 +162,20 @@ public Character firstNonRepeatingCharWithMap(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     Map<Character, Integer> frequency = new HashMap<>();
-    
+
     for (int outer = 0; outer < inputString.length(); outer++) {
         char character = inputString.charAt(outer);
         frequency.put(character, frequency.getOrDefault(character, 0) + 1);
     }
-    
+
     for (Character c : inputString.toCharArray()) {
         if (frequency.get(c) == 1) {
             return c;
         }
     }
-    
+
     return null;
 }
 ```
@@ -191,13 +191,13 @@ public Character firstNonRepeatingCharWithLinkedHashMap(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     Map<Character, Integer> frequency = new LinkedHashMap<>();
-    
+
     for (char c : inputString.toCharArray()) {
         frequency.put(c, frequency.getOrDefault(c, 0) + 1);
     }
-    
+
     return frequency.entrySet().stream()
         .filter(entry -> entry.getValue() == 1)
         .map(Map.Entry::getKey)
@@ -221,20 +221,20 @@ public Character firstNonRepeatingCharWithArray(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     int[] frequency = new int[26];
-    
+
     for (int outer = 0; outer < inputString.length(); outer++) {
         char character = inputString.charAt(outer);
         frequency[character - 'a']++;
     }
-    
+
     for (Character c : inputString.toCharArray()) {
         if (frequency[c - 'a'] == 1) {
             return c;
         }
     }
-    
+
     return null;
 }
 ```
@@ -250,19 +250,19 @@ public Character firstNonRepeatingCharWithASCIIArray(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     int[] frequency = new int[256];
-    
+
     for (int i = 0; i < inputString.length(); i++) {
         frequency[inputString.charAt(i)]++;
     }
-    
+
     for (int i = 0; i < inputString.length(); i++) {
         if (frequency[inputString.charAt(i)] == 1) {
             return inputString.charAt(i);
         }
     }
-    
+
     return null;
 }
 ```
@@ -272,7 +272,7 @@ public Character firstNonRepeatingCharWithASCIIArray(String inputString) {
 | Подход | Временная сложность | Пространственная сложность | Когда использовать |
 |--------|---------------------|----------------------------|-------------------|
 | Грубая сила | `O(n²)` | `O(1)` | Малые строки |
-| `HashMap` | `O(n)` | `O(k)`, k - уникальные символы | Общий случай |
+| `HashMap` | `O(n)` | `O(k)`, k — уникальные символы | Общий случай |
 | `LinkedHashMap` | `O(n)` | `O(k)` | Нужен порядок |
 | Массив (26) | `O(n)` | `O(1)` | Только строчные буквы |
 | Массив (256) | `O(n)` | `O(1)` | Только `ASCII` |
@@ -304,13 +304,13 @@ public List<Character> allNonRepeatingChars(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return Collections.emptyList();
     }
-    
+
     Map<Character, Integer> frequency = new LinkedHashMap<>();
-    
+
     for (char c : inputString.toCharArray()) {
         frequency.put(c, frequency.getOrDefault(c, 0) + 1);
     }
-    
+
     return frequency.entrySet().stream()
         .filter(entry -> entry.getValue() == 1)
         .map(Map.Entry::getKey)
@@ -325,20 +325,20 @@ public int firstNonRepeatingCharIndex(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return -1;
     }
-    
+
     Map<Character, Integer> frequency = new HashMap<>();
-    
+
     for (int i = 0; i < inputString.length(); i++) {
         char c = inputString.charAt(i);
         frequency.put(c, frequency.getOrDefault(c, 0) + 1);
     }
-    
+
     for (int i = 0; i < inputString.length(); i++) {
         if (frequency.get(inputString.charAt(i)) == 1) {
             return i;
         }
     }
-    
+
     return -1;
 }
 ```
@@ -352,7 +352,7 @@ fun firstNonRepeatingCharBruteForceK(inputString: String?): Char? {
     if (inputString.isNullOrEmpty()) {
         return null
     }
-    
+
     for (i in inputString.indices) {
         var repeat = false
         for (j in inputString.indices) {
@@ -365,7 +365,7 @@ fun firstNonRepeatingCharBruteForceK(inputString: String?): Char? {
             return inputString[i]
         }
     }
-    
+
     return null
 }
 ```
@@ -377,13 +377,13 @@ fun firstNonRepeatingCharIndexK(inputString: String?): Char? {
     if (inputString.isNullOrEmpty()) {
         return null
     }
-    
+
     for (char in inputString) {
         if (inputString.indexOf(char) == inputString.lastIndexOf(char)) {
             return char
         }
     }
-    
+
     return null
 }
 ```
@@ -395,19 +395,19 @@ fun firstNonRepeatingCharHashMapK(inputString: String?): Char? {
     if (inputString.isNullOrEmpty()) {
         return null
     }
-    
+
     val frequency = mutableMapOf<Char, Int>()
-    
+
     for (char in inputString) {
         frequency[char] = frequency.getOrDefault(char, 0) + 1
     }
-    
+
     for (char in inputString) {
         if (frequency[char] == 1) {
             return char
         }
     }
-    
+
     return null
 }
 ```
@@ -419,21 +419,21 @@ fun firstNonRepeatingCharArrayK(inputString: String?): Char? {
     if (inputString.isNullOrEmpty()) {
         return null
     }
-    
+
     val frequency = IntArray(26)
-    
+
     for (char in inputString) {
         if (char in 'a'..'z') {
             frequency[char - 'a']++
         }
     }
-    
+
     for (char in inputString) {
         if (char in 'a'..'z' && frequency[char - 'a'] == 1) {
             return char
         }
     }
-    
+
     return null
 }
 ```
@@ -445,19 +445,19 @@ fun firstNonRepeatingCharASCIIK(inputString: String?): Char? {
     if (inputString.isNullOrEmpty()) {
         return null
     }
-    
+
     val frequency = IntArray(256)
-    
+
     for (char in inputString) {
         frequency[char.code]++
     }
-    
+
     for (char in inputString) {
         if (frequency[char.code] == 1) {
             return char
         }
     }
-    
+
     return null
 }
 ```
@@ -469,9 +469,9 @@ fun firstNonRepeatingCharFunctionalK(inputString: String?): Char? {
     if (inputString.isNullOrEmpty()) {
         return null
     }
-    
+
     val frequency = inputString.groupingBy { it }.eachCount()
-    
+
     return inputString.firstOrNull { frequency[it] == 1 }
 }
 ```
@@ -483,9 +483,9 @@ fun allNonRepeatingCharsK(inputString: String?): List<Char> {
     if (inputString.isNullOrEmpty()) {
         return emptyList()
     }
-    
+
     val frequency = inputString.groupingBy { it }.eachCount()
-    
+
     return inputString.filter { frequency[it] == 1 }.distinct()
 }
 ```
@@ -497,9 +497,9 @@ fun firstNonRepeatingCharIndexK(inputString: String?): Int {
     if (inputString.isNullOrEmpty()) {
         return -1
     }
-    
+
     val frequency = inputString.groupingBy { it }.eachCount()
-    
+
     return inputString.indexOfFirst { frequency[it] == 1 }
 }
 ```
@@ -511,14 +511,14 @@ fun main() {
     val input1 = "leetcode"
     val input2 = "loveleetcode"
     val input3 = "aabb"
-    
+
     println(firstNonRepeatingCharHashMapK(input1)) // 'l'
     println(firstNonRepeatingCharHashMapK(input2)) // 'v'
     println(firstNonRepeatingCharHashMapK(input3)) // null
-    
+
     // Функциональный стиль
     println(firstNonRepeatingCharFunctionalK(input1)) // 'l'
-    
+
     // Индекс
     println(firstNonRepeatingCharIndexK(input1)) // 0
 }
@@ -597,13 +597,13 @@ public Character firstNonRepeatingCharCaseSensitive(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     Map<Character, Integer> frequency = new LinkedHashMap<>();
-    
+
     for (char c : inputString.toCharArray()) {
         frequency.put(c, frequency.getOrDefault(c, 0) + 1);
     }
-    
+
     return frequency.entrySet().stream()
         .filter(entry -> entry.getValue() == 1)
         .map(Map.Entry::getKey)
@@ -621,14 +621,14 @@ public Character firstNonRepeatingCharCaseInsensitive(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     String lowerInput = inputString.toLowerCase();
     Map<Character, Integer> frequency = new LinkedHashMap<>();
-    
+
     for (char c : lowerInput.toCharArray()) {
         frequency.put(c, frequency.getOrDefault(c, 0) + 1);
     }
-    
+
     for (char c : lowerInput.toCharArray()) {
         if (frequency.get(c) == 1) {
             // Возвращаем оригинальный символ из исходной строки
@@ -636,7 +636,7 @@ public Character firstNonRepeatingCharCaseInsensitive(String inputString) {
             return inputString.charAt(index);
         }
     }
-    
+
     return null;
 }
 ```
@@ -650,7 +650,7 @@ public Character firstNonRepeatingCharStream(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     Map<Character, Long> frequency = inputString.chars()
         .mapToObj(c -> (char) c)
         .collect(Collectors.groupingBy(
@@ -658,7 +658,7 @@ public Character firstNonRepeatingCharStream(String inputString) {
             LinkedHashMap::new,
             Collectors.counting()
         ));
-    
+
     return frequency.entrySet().stream()
         .filter(entry -> entry.getValue() == 1)
         .map(Map.Entry::getKey)
@@ -676,9 +676,9 @@ public Character firstNonRepeatingLetter(String inputString) {
     if (null == inputString || inputString.isEmpty()) {
         return null;
     }
-    
+
     int[] frequency = new int[52]; // 26 строчных + 26 заглавных
-    
+
     for (char c : inputString.toCharArray()) {
         if (c >= 'a' && c <= 'z') {
             frequency[c - 'a']++;
@@ -686,7 +686,7 @@ public Character firstNonRepeatingLetter(String inputString) {
             frequency[26 + c - 'A']++;
         }
     }
-    
+
     for (char c : inputString.toCharArray()) {
         int index;
         if (c >= 'a' && c <= 'z') {
@@ -696,12 +696,12 @@ public Character firstNonRepeatingLetter(String inputString) {
         } else {
             continue;
         }
-        
+
         if (frequency[index] == 1) {
             return c;
         }
     }
-    
+
     return null;
 }
 ```

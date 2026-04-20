@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-core.md", "micronaut-redis.md"]
 ---
 
-# Micronaut: Caching - Cache Abstraction и Redis Cache
-
-
+# Micronaut: Caching — Cache Abstraction и Redis Cache
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-core.md", "micronaut-redis.md"]
 
 ## Содержание
 
-- [Micronaut: Caching - Cache Abstraction и Redis Cache](#micronaut-caching-cache-abstraction-и-redis-cache)
+- [Micronaut: Caching — Cache Abstraction и Redis Cache](#micronaut-caching-cache-abstraction-и-redis-cache)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Cache](#настройка-cache)
@@ -125,13 +123,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserService {
-    
+
     @Cacheable("users")
     public User getUser(Long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @Cacheable(value = "users", parameters = {"id", "name"})
     public User getUserByIdAndName(Long id, String name) {
         return userRepository.findByIdAndName(id, name)
@@ -148,13 +146,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserService {
-    
+
     @CachePut("users")
     public User createUser(User user) {
         User created = userRepository.save(user);
         return created;
     }
-    
+
     @CachePut(value = "users", parameters = "user.id")
     public User updateUser(User user) {
         return userRepository.update(user);
@@ -170,12 +168,12 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class UserService {
-    
+
     @CacheInvalidate("users")
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
-    
+
     @CacheInvalidate(value = "users", all = true)
     public void clearAllUsers() {
         // Очистка всего кэша
@@ -213,24 +211,24 @@ import jakarta.inject.Named;
 @Singleton
 public class UserService {
     private final SyncCache<String, User> userCache;
-    
+
     public UserService(@Named("users") SyncCache<String, User> userCache) {
         this.userCache = userCache;
     }
-    
+
     public User getUser(Long id) {
         String key = "user:" + id;
-        return userCache.get(key, () -> 
+        return userCache.get(key, () ->
             userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id))
         );
     }
-    
+
     public void putUser(User user) {
         String key = "user:" + user.getId();
         userCache.put(key, user);
     }
-    
+
     public void evictUser(Long id) {
         String key = "user:" + id;
         userCache.invalidate(key);
@@ -265,14 +263,14 @@ import jakarta.inject.Named;
 @Singleton
 public class UserService {
     private final SyncCache<String, User> userCache;
-    
+
     public UserService(@Named("users") SyncCache<String, User> userCache) {
         this.userCache = userCache;
     }
-    
+
     public User getUser(Long id) {
         String key = "user:" + id;
-        return userCache.get(key, () -> 
+        return userCache.get(key, () ->
             userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id))
         );
@@ -293,15 +291,15 @@ import reactor.core.publisher.Mono;
 @Singleton
 public class AsyncUserService {
     private final AsyncCache<String, User> userCache;
-    
+
     public AsyncUserService(@Named("users") AsyncCache<String, User> userCache) {
         this.userCache = userCache;
     }
-    
+
     public Mono<User> getUser(Long id) {
         String key = "user:" + id;
-        return userCache.get(key, () -> 
-            Mono.fromCallable(() -> 
+        return userCache.get(key, () ->
+            Mono.fromCallable(() ->
                 userRepository.findById(id)
                     .orElseThrow(() -> new UserNotFoundException(id))
             )
@@ -322,11 +320,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class CacheStatisticsService {
     private final CacheManager cacheManager;
-    
+
     public CacheStatisticsService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
-    
+
     public void printCacheStatistics() {
         Cache<String, User> cache = cacheManager.getCache("users", String.class, User.class);
         // Получение статистики кэша
@@ -397,32 +395,32 @@ import jakarta.inject.Named;
 public class MultiCacheService {
     private final SyncCache<String, User> localCache;
     private final SyncCache<String, User> distributedCache;
-    
+
     public MultiCacheService(
             @Named("local") SyncCache<String, User> localCache,
             @Named("distributed") SyncCache<String, User> distributedCache) {
         this.localCache = localCache;
         this.distributedCache = distributedCache;
     }
-    
+
     public User getUser(Long id) {
         String key = "user:" + id;
-        
+
         // Сначала проверяем локальный кэш
         User user = localCache.get(key, () -> null);
         if (user != null) {
             return user;
         }
-        
+
         // Затем проверяем распределенный кэш
-        user = distributedCache.get(key, () -> 
+        user = distributedCache.get(key, () ->
             userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id))
         );
-        
+
         // Сохраняем в локальный кэш
         localCache.put(key, user);
-        
+
         return user;
     }
 }
@@ -463,27 +461,27 @@ import jakarta.inject.Named;
 @Singleton
 public class CacheAsideService {
     private final SyncCache<String, User> userCache;
-    
+
     public CacheAsideService(@Named("users") SyncCache<String, User> userCache) {
         this.userCache = userCache;
     }
-    
+
     public User getUser(Long id) {
         String key = "user:" + id;
-        
+
         // Проверяем кэш
         User user = userCache.get(key, () -> null);
         if (user != null) {
             return user;
         }
-        
+
         // Загружаем из БД
         user = userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
-        
+
         // Сохраняем в кэш
         userCache.put(key, user);
-        
+
         return user;
     }
 }
@@ -497,7 +495,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class WriteThroughService {
-    
+
     @CachePut("users")
     public User createUser(User user) {
         // Сохранение в БД и кэш одновременно
@@ -517,17 +515,17 @@ import java.util.concurrent.CompletableFuture;
 @Singleton
 public class WriteBehindService {
     private final SyncCache<String, User> userCache;
-    
+
     public WriteBehindService(@Named("users") SyncCache<String, User> userCache) {
         this.userCache = userCache;
     }
-    
+
     public CompletableFuture<User> createUserAsync(User user) {
         String key = "user:" + user.getId();
-        
+
         // Сначала сохраняем в кэш
         userCache.put(key, user);
-        
+
         // Затем асинхронно сохраняем в БД
         return CompletableFuture.supplyAsync(() -> {
             return userRepository.save(user);
@@ -559,7 +557,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class EventBasedCacheService {
     private final ApplicationEventPublisher<UserUpdatedEvent> eventPublisher;
-    
+
     @CacheInvalidate("users")
     public void updateUser(User user) {
         userRepository.update(user);
@@ -582,14 +580,14 @@ import jakarta.annotation.PostConstruct;
 public class CacheWarmingService {
     private final SyncCache<String, User> userCache;
     private final UserRepository userRepository;
-    
+
     public CacheWarmingService(
             @Named("users") SyncCache<String, User> userCache,
             UserRepository userRepository) {
         this.userCache = userCache;
         this.userRepository = userRepository;
     }
-    
+
     @PostConstruct
     public void warmCache() {
         // Предзагрузка часто используемых данных в кэш
@@ -614,11 +612,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class CacheStatisticsService {
     private final CacheManager cacheManager;
-    
+
     public CacheStatisticsService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
     }
-    
+
     public void printCacheStatistics() {
         Cache<String, User> cache = cacheManager.getCache("users", String.class, User.class);
         // Получение и вывод статистики кэша
@@ -641,14 +639,14 @@ import jakarta.inject.Singleton;
 public class DistributedCacheService {
     private final SyncCache<String, User> userCache;
     private final ApplicationEventPublisher<CacheInvalidationEvent> eventPublisher;
-    
+
     public DistributedCacheService(
             @Named("users") SyncCache<String, User> userCache,
             ApplicationEventPublisher<CacheInvalidationEvent> eventPublisher) {
         this.userCache = userCache;
         this.eventPublisher = eventPublisher;
     }
-    
+
     @CacheInvalidate("users")
     public void invalidateUser(Long id) {
         String key = "user:" + id;
@@ -672,14 +670,14 @@ import jakarta.annotation.PostConstruct;
 public class CacheWarmupService {
     private final SyncCache<String, User> userCache;
     private final UserRepository userRepository;
-    
+
     public CacheWarmupService(
             @Named("users") SyncCache<String, User> userCache,
             UserRepository userRepository) {
         this.userCache = userCache;
         this.userRepository = userRepository;
     }
-    
+
     @PostConstruct
     public void warmupCache() {
         List<User> popularUsers = userRepository.findPopularUsers();
@@ -690,9 +688,6 @@ public class CacheWarmupService {
     }
 }
 ```
-
-
-
 
 ## Заключение
 
@@ -705,3 +700,11 @@ public class CacheWarmupService {
 - [Caffeine Documentation](https://github.com/ben-manes/caffeine/wiki)
 - [**EhCache** Documentation](https://www.ehcache.org/documentation/)
 - [Cache Patterns](https://docs.microsoft.com/en-us/azure/architecture/patterns/cache-aside)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]
+- [[micronaut-core|Micronaut: Core — Dependency Injection и Bean Management]]

@@ -107,7 +107,6 @@ related: ["quarkus/quarkus-reactive.md", "spring/spring-webflux.md"]
 - **Worker Verticles**: для блокирующих операций
 - **Event Bus**: обмен сообщениями между verticles
 
----
 
 ## Установка и настройка
 
@@ -142,7 +141,6 @@ project/
 └── pom.xml
 ```
 
----
 
 ## Основные концепции
 
@@ -252,7 +250,6 @@ vertx.createHttpServer()
     .onFailure(cause -> System.err.println("Failed: " + cause));
 ```
 
----
 
 ## HTTP Server
 
@@ -301,7 +298,6 @@ request.bodyHandler(buffer -> {
 });
 ```
 
----
 
 ## HTTP Client
 
@@ -335,7 +331,6 @@ client.post(8080, "localhost", "/api/users")
     });
 ```
 
----
 
 ## Worker Verticles
 
@@ -367,7 +362,6 @@ DeploymentOptions options = new DeploymentOptions()
 vertx.deployVerticle(new WorkerVerticle(), options);
 ```
 
----
 
 ## Конфигурация
 
@@ -400,7 +394,6 @@ public class ConfigurableVerticle extends AbstractVerticle {
 }
 ```
 
----
 
 ## Обработка ошибок
 
@@ -430,7 +423,6 @@ vertx.exceptionHandler(throwable -> {
 });
 ```
 
----
 
 ## Антипаттерны
 
@@ -479,7 +471,6 @@ Future.all(future1, future2)
     .onFailure(cause -> System.err.println("Failed: " + cause));
 ```
 
----
 
 ## WebSocket
 
@@ -509,7 +500,6 @@ client.webSocket(8080, "localhost", "/ws", ar -> {
 });
 ```
 
----
 
 ## Работа с БД
 
@@ -575,7 +565,6 @@ client.getConnection(ar -> {
 });
 ```
 
----
 
 ## Файловая система
 
@@ -595,7 +584,6 @@ fs.writeFile("output.txt", Buffer.buffer("Hello Vert.x!"), ar -> {
 });
 ```
 
----
 
 ## Таймеры и периодические задачи
 
@@ -613,7 +601,6 @@ long periodicId = vertx.setPeriodic(5000, id -> {
 vertx.cancelTimer(periodicId);
 ```
 
----
 
 ## Shared Data
 
@@ -639,7 +626,6 @@ sharedData.getLock("myLock", ar -> {
 });
 ```
 
----
 
 ## Router и маршрутизация
 
@@ -670,7 +656,6 @@ router.get("/api/users/:id/posts/:postId").handler(ctx -> {
 });
 ```
 
----
 
 ## Безопасность
 
@@ -715,7 +700,6 @@ router.route().handler(CorsHandler.create()
     .allowedHeaders(Set.of("Content-Type", "Authorization")));
 ```
 
----
 
 ## Тестирование
 
@@ -735,7 +719,6 @@ public class VerticleTest {
 }
 ```
 
----
 
 ## Метрики и мониторинг
 
@@ -755,7 +738,6 @@ vertx.setPeriodic(5000, id -> {
 });
 ```
 
----
 
 ## Развёртывание
 
@@ -800,7 +782,6 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 ```
 
----
 
 ## Лучшие практики
 
@@ -812,7 +793,6 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 6. **Закрытие ресурсов**: в `stop()` вертикла
 7. **Connection Pooling**: настраивайте `maxSize` для БД клиентов
 
----
 
 ## Решение проблем
 
@@ -863,7 +843,6 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 - Убедитесь, что `startPromise.complete()` вызывается при успехе
 - При ошибке: `startPromise.fail(throwable)`
 
----
 
 ## Заключение
 

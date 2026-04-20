@@ -63,24 +63,24 @@ public class Permutations {
     private static void swap(List<Integer> sequence, int i, int j) {
         Collections.swap(sequence, i, j);
     }
-    
+
     private static void permutationsInternal(
-        List<Integer> sequence, 
-        List<List<Integer>> results, 
+        List<Integer> sequence,
+        List<List<Integer>> results,
         int index
     ) {
         if (index == sequence.size() - 1) {
             results.add(new ArrayList<>(sequence));
             return;
         }
-        
+
         for (int i = index; i < sequence.size(); i++) {
             swap(sequence, i, index);
             permutationsInternal(sequence, results, index + 1);
             swap(sequence, i, index); // Откат изменений
         }
     }
-    
+
     public static List<List<Integer>> generatePermutations(List<Integer> sequence) {
         List<List<Integer>> permutations = new ArrayList<>();
         permutationsInternal(sequence, permutations, 0);
@@ -107,9 +107,9 @@ import java.util.List;
 
 public class Powerset {
     private static void powersetInternal(
-        List<Character> set, 
-        List<List<Character>> powerset, 
-        List<Character> accumulator, 
+        List<Character> set,
+        List<List<Character>> powerset,
+        List<Character> accumulator,
         int index
     ) {
         if (index == set.size()) {
@@ -118,13 +118,13 @@ public class Powerset {
             // Включаем текущий элемент
             accumulator.add(set.get(index));
             powersetInternal(set, powerset, accumulator, index + 1);
-            
+
             // Не включаем текущий элемент
             accumulator.remove(accumulator.size() - 1);
             powersetInternal(set, powerset, accumulator, index + 1);
         }
     }
-    
+
     public static List<List<Character>> generatePowerset(List<Character> sequence) {
         List<List<Character>> powerset = new ArrayList<>();
         powersetInternal(sequence, powerset, new ArrayList<>(), 0);
@@ -151,28 +151,28 @@ import java.util.List;
 
 public class Combinations {
     private static void combinationsInternal(
-        List<Integer> inputSet, 
-        int k, 
-        List<List<Integer>> results, 
-        ArrayList<Integer> accumulator, 
+        List<Integer> inputSet,
+        int k,
+        List<List<Integer>> results,
+        ArrayList<Integer> accumulator,
         int index
     ) {
         int needToAccumulate = k - accumulator.size();
         int canAccumulate = inputSet.size() - index;
-        
+
         if (accumulator.size() == k) {
             results.add(new ArrayList<>(accumulator));
         } else if (needToAccumulate <= canAccumulate) {
             // Не включаем текущий элемент
             combinationsInternal(inputSet, k, results, accumulator, index + 1);
-            
+
             // Включаем текущий элемент
             accumulator.add(inputSet.get(index));
             combinationsInternal(inputSet, k, results, accumulator, index + 1);
             accumulator.remove(accumulator.size() - 1);
         }
     }
-    
+
     public static List<List<Integer>> combinations(List<Integer> inputSet, int k) {
         List<List<Integer>> results = new ArrayList<>();
         combinationsInternal(inputSet, k, results, new ArrayList<>(), 0);
@@ -208,7 +208,7 @@ object PermutationsK {
         sequence[i] = sequence[j]
         sequence[j] = temp
     }
-    
+
     private fun permutationsInternal(
         sequence: MutableList<Int>,
         results: MutableList<List<Int>>,
@@ -218,14 +218,14 @@ object PermutationsK {
             results.add(ArrayList(sequence))
             return
         }
-        
+
         for (i in index until sequence.size) {
             swap(sequence, i, index)
             permutationsInternal(sequence, results, index + 1)
             swap(sequence, i, index) // Откат изменений
         }
     }
-    
+
     fun generatePermutations(sequence: List<Int>): List<List<Int>> {
         val permutations = mutableListOf<List<Int>>()
         permutationsInternal(sequence.toMutableList(), permutations, 0)
@@ -247,13 +247,13 @@ object PowersetK {
             results.add(ArrayList(accumulator))
             return
         }
-        
+
         accumulator.add(inputSet[index])
         powersetInternal(inputSet, accumulator, results, index + 1)
         accumulator.removeAt(accumulator.size - 1)
         powersetInternal(inputSet, accumulator, results, index + 1)
     }
-    
+
     fun generatePowerset(inputSet: List<Int>): List<List<Int>> {
         val powerset = mutableListOf<List<Int>>()
         powersetInternal(inputSet, mutableListOf(), powerset, 0)
@@ -275,17 +275,17 @@ object CombinationsK {
             results.add(ArrayList(accumulator))
             return
         }
-        
+
         if (index >= inputSet.size) {
             return
         }
-        
+
         accumulator.add(inputSet[index])
         combinationsInternal(inputSet, accumulator, results, index + 1, k)
         accumulator.removeAt(accumulator.size - 1)
         combinationsInternal(inputSet, accumulator, results, index + 1, k)
     }
-    
+
     fun generateCombinations(inputSet: List<Int>, k: Int): List<List<Int>> {
         val combinations = mutableListOf<List<Int>>()
         combinationsInternal(inputSet, mutableListOf(), combinations, 0, k)
@@ -301,13 +301,13 @@ fun main() {
     val permutations = PermutationsK.generatePermutations(sequence)
     println("Permutations: $permutations")
     // [[1,2,3], [1,3,2], [2,1,3], [2,3,1], [3,1,2], [3,2,1]]
-    
+
     // Powerset
     val inputSet = listOf(1, 2, 3)
     val powerset = PowersetK.generatePowerset(inputSet)
     println("Powerset: $powerset")
     // [[], [1], [2], [1,2], [3], [1,3], [2,3], [1,2,3]]
-    
+
     // Комбинации
     val combinations = CombinationsK.generateCombinations(listOf(1, 2, 3, 4), 2)
     println("Combinations: $combinations")
@@ -333,7 +333,7 @@ fun main() {
 
 ```java
 public static List<List<Integer>> generatePermutationsWithRepetitions(
-    List<Integer> sequence, 
+    List<Integer> sequence,
     int length
 ) {
     // Генерация перестановок с повторениями
@@ -344,7 +344,7 @@ public static List<List<Integer>> generatePermutationsWithRepetitions(
 
 ```java
 public static List<List<Integer>> combinationsWithRepetitions(
-    List<Integer> inputSet, 
+    List<Integer> inputSet,
     int k
 ) {
     // Генерация комбинаций с повторениями

@@ -23,3 +23,7 @@ updated: "2026-02-11"
 [Ansible](ansible.md)
 [Ansible Advanced](ansible-advanced.md)
 
+## См. также
+
+- [[ansible-advanced|Ansible Advanced]]
+- [[ansible|Ansible]]

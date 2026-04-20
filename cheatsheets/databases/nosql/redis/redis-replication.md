@@ -180,7 +180,6 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 - **Резервное копирование**: Использование **slaves** для бэкапов
 - **Географическое распределение**: Реплики в разных регионах
 
----
 
 ## Настройка **Master-Slave** репликации
 
@@ -245,7 +244,6 @@ INFO replication
 ROLE
 ```
 
----
 
 ## Мониторинг репликации
 
@@ -312,7 +310,6 @@ echo "OK: Replication is healthy"
 exit 0
 ```
 
----
 
 ## **Redis Sentinel**
 
@@ -386,7 +383,6 @@ SENTINEL master mymaster
 SENTINEL slaves mymaster
 ```
 
----
 
 ## **Failover** и восстановление
 
@@ -425,7 +421,6 @@ redis-cli -p 6379 REPLICAOF new-master-host 6380
 # 2. Или использовать Sentinel для автоматического восстановления
 ```
 
----
 
 ## Оптимизация репликации
 
@@ -460,7 +455,6 @@ repl-backlog-size 1gb
 repl-disable-tcp-nodelay no
 ```
 
----
 
 ## **Cascading Replication**
 
@@ -486,7 +480,6 @@ replicaof slave1-host 6380
 - Увеличенная задержка репликации
 - Больше точек отказа
 
----
 
 ## Решение проблем
 

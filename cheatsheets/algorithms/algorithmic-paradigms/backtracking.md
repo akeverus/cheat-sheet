@@ -19,12 +19,12 @@ updated: "2026-02-11"
 ### Официальная документация
 - [Backtracking Algorithms — GeeksforGeeks](https://www.geeksforgeeks.org/backtracking-algorithms/) — руководство
 
-### Baeldung
+### Обучающие материалы
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/) — `Java` API и руководства
 
 ### См. также
-- [`../problem-solving/README.md`](../problem-solving/README.md) — решение задач
-- [`../algorithms/README.md`](../algorithms/README.md) — алгоритмы
+- [[README]] — решение задач
+- [[README]] — алгоритмы
 - [[dynamic-programming|`dynamic-programming.md`]] — динамическое программирование (`DP`)
 - [[divide-and-conquer|`divide-and-conquer.md`]] — разделяй и властвуй (`divide and conquer`)
 
@@ -365,8 +365,8 @@ public class SubsetsBacktracking {
      * @param current текущее подмножество
      * @param result результирующий список всех подмножеств
      */
-    private static void backtrackSubsets(int[] nums, int start, 
-                                        List<Integer> current, 
+    private static void backtrackSubsets(int[] nums, int start,
+                                        List<Integer> current,
                                         List<List<Integer>> result) {
         // Добавляем текущее подмножество в результат (копия!)
         result.add(new ArrayList<>(current));
@@ -416,7 +416,7 @@ public class SudokuSolver {
     public static boolean solveSudoku(int[][] board) {
         // Находим первую пустую ячейку
         int[] emptyCell = findEmptyCell(board);
-        
+
         // Если пустых ячеек нет, судоку решено
         if (emptyCell == null) {
             return true; // Решение найдено
@@ -784,7 +784,7 @@ public class BacktrackingBestPractices {
 
 **Когда backtracking неэффективен?** Когда пространство решений слишком велико и отсечения не сильно уменьшают перебор. В таких случаях лучше использовать динамическое программирование (если есть перекрывающиеся подзадачи), жадные алгоритмы (если работает принцип жадного выбора) или приближённые методы.
 
-**Как определить, что задача решается backtracking?** Признаки: нужно найти все решения (или хотя бы одно), решение строится пошагово, на каждом шаге есть варианты выбора, и выбор можно "откатить". Классические примеры: N-Queens, Sudoku, генерация перестановок, задача о раскраске графа.
+**Как определить, что задача решается backtracking?** Признаки: нужно найти все решения (или хотя бы одно), решение строится пошагово, на каждом шаге есть варианты выбора, и выбор можно «откатить». Классические примеры: N-Queens, Sudoku, генерация перестановок, задача о раскраске графа.
 
 
 ## Заключение

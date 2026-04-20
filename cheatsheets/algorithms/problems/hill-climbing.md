@@ -61,7 +61,7 @@ import java.util.*;
 public class State {
     private List<Stack<String>> state;
     private int heuristics;
-    
+
     public State(List<Stack<String>> state, int heuristics) {
         this.state = new ArrayList<>();
         for (Stack<String> stack : state) {
@@ -71,11 +71,11 @@ public class State {
         }
         this.heuristics = heuristics;
     }
-    
+
     public List<Stack<String>> getState() {
         return state;
     }
-    
+
     public int getHeuristics() {
         return heuristics;
     }
@@ -85,24 +85,24 @@ public class State {
 
 ```java
 public class HillClimbingSolver {
-    
-    public int getHeuristicsValue(List<Stack<String>> currentState, 
+
+    public int getHeuristicsValue(List<Stack<String>> currentState,
                                   Stack<String> goalStateStack) {
         return currentState.stream()
             .mapToInt(stack -> getHeuristicsValueForStack(
                 stack, currentState, goalStateStack))
             .sum();
     }
-    
-    public int getHeuristicsValueForStack(Stack<String> stack, 
-                                         List<Stack<String>> currentState, 
+
+    public int getHeuristicsValueForStack(Stack<String> stack,
+                                         List<Stack<String>> currentState,
                                          Stack<String> goalStateStack) {
         int stackHeuristics = 0;
         boolean isPositionCorrect = true;
         int goalStartIndex = 0;
-        
+
         for (String currentBlock : stack) {
-            if (isPositionCorrect && 
+            if (isPositionCorrect &&
                 goalStartIndex < goalStateStack.size() &&
                 currentBlock.equals(goalStateStack.get(goalStartIndex))) {
                 stackHeuristics += goalStartIndex;
@@ -112,7 +112,7 @@ public class HillClimbingSolver {
             }
             goalStartIndex++;
         }
-        
+
         return stackHeuristics;
     }
 }
@@ -128,16 +128,16 @@ private State pushElementToNewStack(List<Stack<String>> currentStackList,
     State newState = null;
     Stack<String> newStack = new Stack<>();
     newStack.push(block);
-    
+
     List<Stack<String>> tempList = new ArrayList<>(currentStackList);
     tempList.add(newStack);
-    
+
     int newStateHeuristics = getHeuristicsValue(tempList, goalStateStack);
-    
+
     if (newStateHeuristics > currentStateHeuristics) {
         newState = new State(tempList, newStateHeuristics);
     }
-    
+
     return newState;
 }
 
@@ -162,11 +162,11 @@ private State pushElementToStack(Stack<String> stack,
                                 Stack<String> goalStateStack) {
     stack.push(block);
     int newStateHeuristics = getHeuristicsValue(currentStackList, goalStateStack);
-    
+
     if (newStateHeuristics > currentStateHeuristics) {
         return new State(currentStackList, newStateHeuristics);
     }
-    
+
     stack.pop();
     return null;
 }
@@ -174,37 +174,37 @@ private State pushElementToStack(Stack<String> stack,
 
 
 ```java
-public List<State> getRouteWithHillClimbing(Stack<String> initStateStack, 
-                                            Stack<String> goalStateStack) 
+public List<State> getRouteWithHillClimbing(Stack<String> initStateStack,
+                                            Stack<String> goalStateStack)
     throws Exception {
     List<State> resultPath = new ArrayList<>();
     State currentState = new State(
-        Collections.singletonList(initStateStack), 
+        Collections.singletonList(initStateStack),
         getHeuristicsValue(Collections.singletonList(initStateStack), goalStateStack)
     );
     resultPath.add(currentState);
-    
+
     boolean noStateFound = false;
-    
-    while (!currentState.getState().get(0).equals(goalStateStack) && 
+
+    while (!currentState.getState().get(0).equals(goalStateStack) &&
            !noStateFound) {
         noStateFound = true;
         State nextState = findNextState(currentState, goalStateStack);
-        
+
         if (nextState != null) {
             noStateFound = false;
             currentState = nextState;
             resultPath.add(currentState);
         }
     }
-    
+
     return resultPath;
 }
 
 public State findNextState(State currentState, Stack<String> goalStateStack) {
     List<Stack<String>> listOfStacks = currentState.getState();
     int currentStateHeuristics = currentState.getHeuristics();
-    
+
     return listOfStacks.stream()
         .map(stack -> applyOperationsOnState(
             listOfStacks, stack, currentStateHeuristics, goalStateStack))
@@ -220,19 +220,19 @@ public State applyOperationsOnState(List<Stack<String>> listOfStacks,
     State tempState;
     List<Stack<String>> tempStackList = new ArrayList<>(listOfStacks);
     String block = stack.pop();
-    
+
     if (stack.size() == 0) {
         tempStackList.remove(stack);
     }
-    
+
     tempState = pushElementToNewStack(
         tempStackList, block, currentStateHeuristics, goalStateStack);
-    
+
     if (tempState == null) {
         tempState = pushElementToExistingStacks(
             stack, tempStackList, block, currentStateHeuristics, goalStateStack);
     }
-    
+
     stack.push(block);
     return tempState;
 }
@@ -280,7 +280,7 @@ class HillClimbingSolverK {
             getHeuristicsValueForStack(stack, currentState, goalStateStack)
         }
     }
-    
+
     private fun getHeuristicsValueForStack(
         stack: Stack<String>,
         currentState: List<Stack<String>>,
@@ -289,7 +289,7 @@ class HillClimbingSolverK {
         var stackHeuristics = 0
         var isPositionCorrect = true
         var goalStartIndex = 0
-        
+
         for (currentBlock in stack) {
             if (isPositionCorrect &&
                 goalStartIndex < goalStateStack.size &&
@@ -301,7 +301,7 @@ class HillClimbingSolverK {
             }
             goalStartIndex++
         }
-        
+
         return stackHeuristics
     }
 }

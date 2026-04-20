@@ -452,11 +452,11 @@ import scala.collection.mutable
 
 class CacheManager {
   private val cache = mutable.Map.empty[String, Any]
-  
+
   def getOrCompute[T](key: String, compute: => T): T = {
     cache.getOrElseUpdate(key, compute).asInstanceOf[T]
   }
-  
+
   def clear(): Unit = cache.clear()
 }
 
@@ -694,7 +694,7 @@ val result = obj.method()  // Виртуальный вызов может бы�
 // private[this] для избежания синхронизации
 class OptimizedClass {
   private[this] var counter = 0
-  
+
   def increment(): Unit = {
     counter += 1  // Нет синхронизации
   }

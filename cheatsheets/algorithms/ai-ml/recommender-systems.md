@@ -41,13 +41,13 @@ updated: "2026-02-11"
 
 В этом уроке мы узнаем все об алгоритме **Slope One** в **Java**.
 
-Мы также покажем пример реализации задачи **Collaborative Filtering** (**CF**) - метода машинного обучения, используемого рекомендательными системами.
+Мы также покажем пример реализации задачи **Collaborative Filtering** (**CF**) — метода машинного обучения, используемого рекомендательными системами.
 
 Это можно использовать, например, для прогнозирования интересов пользователей к определенным элементам.
 
 ## Что такое Collaborative Filtering?
 
-Алгоритм **Slope One** представляет собой систему совместной фильтрации на основе элементов. Это означает, что он полностью основан на рейтинге пользовательских элементов. Когда мы вычисляем сходство между объектами, мы знаем только историю ранжирования, а не сам контент. Затем это сходство используется для прогнозирования рейтинга потенциальных пользователей для пар «пользователь - элемент», отсутствующих в наборе данных.
+Алгоритм **Slope One** представляет собой систему совместной фильтрации на основе элементов. Это означает, что он полностью основан на рейтинге пользовательских элементов. Когда мы вычисляем сходство между объектами, мы знаем только историю ранжирования, а не сам контент. Затем это сходство используется для прогнозирования рейтинга потенциальных пользователей для пар «пользователь — элемент», отсутствующих в наборе данных.
 
 **На изображении ниже показан полный процесс получения и подсчета рейтинга для конкретного пользователя:**
 
@@ -67,21 +67,21 @@ updated: "2026-02-11"
 
 Давайте начнем с простой модели **Java** для нашей проблемы и предметной области.
 
-**В нашей модели у нас есть два основных объекта - элементы и пользователи. Класс **Item** содержит имя элемента:**
+**В нашей модели у нас есть два основных объекта — элементы и пользователи. Класс **Item** содержит имя элемента:**
 
 ```java
 // Slope One: модель данных — Item и User; матрица различий рейтингов для предсказания.
 public class Item {
     private String itemName;
-    
+
     public Item(String itemName) {
         this.itemName = itemName;
     }
-    
+
     public String getItemName() {
         return itemName;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -89,7 +89,7 @@ public class Item {
         Item item = (Item) o;
         return Objects.equals(itemName, item.itemName);
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(itemName);
@@ -102,15 +102,15 @@ public class Item {
 ```java
 public class User {
     private String username;
-    
+
     public User(String username) {
         this.username = username;
     }
-    
+
     public String getUsername() {
         return username;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -118,7 +118,7 @@ public class User {
         User user = (User) o;
         return Objects.equals(username, user.username);
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(username);
@@ -161,7 +161,7 @@ import java.util.Map.Entry;
 public class SlopeOne {
     private Map<Item, HashMap<Item, Double>> diff = new HashMap<>();
     private Map<Item, HashMap<Item, Integer>> freq = new HashMap<>();
-    
+
     public void buildDiffMatrix(Map<User, HashMap<Item, Double>> data) {
         for (HashMap<Item, Double> user : data.values()) {
             for (Entry<Item, Double> e : user.entrySet()) {
@@ -169,25 +169,25 @@ public class SlopeOne {
                     diff.put(e.getKey(), new HashMap<Item, Double>());
                     freq.put(e.getKey(), new HashMap<Item, Integer>());
                 }
-                
+
                 for (Entry<Item, Double> e2 : user.entrySet()) {
                     int oldCount = 0;
                     if (freq.get(e.getKey()).containsKey(e2.getKey())) {
                         oldCount = freq.get(e.getKey()).get(e2.getKey()).intValue();
                     }
-                    
+
                     double oldDiff = 0.0;
                     if (diff.get(e.getKey()).containsKey(e2.getKey())) {
                         oldDiff = diff.get(e.getKey()).get(e2.getKey()).doubleValue();
                     }
-                    
+
                     double observedDiff = e.getValue() - e2.getValue();
                     freq.get(e.getKey()).put(e2.getKey(), oldCount + 1);
                     diff.get(e.getKey()).put(e2.getKey(), oldDiff + observedDiff);
                 }
             }
         }
-        
+
         for (Item j : diff.keySet()) {
             for (Item i : diff.get(j).keySet()) {
                 double oldValue = diff.get(j).get(i).doubleValue();
@@ -213,17 +213,17 @@ public class SlopeOne {
 public HashMap<Item, Double> predict(Map<User, HashMap<Item, Double>> data) {
     HashMap<Item, Double> uPred = new HashMap<Item, Double>();
     HashMap<Item, Integer> uFreq = new HashMap<Item, Integer>();
-    
+
     for (Item j : diff.keySet()) {
         uPred.put(j, 0.0);
         uFreq.put(j, 0);
     }
-    
+
     for (Entry<User, HashMap<Item, Double>> e : data.entrySet()) {
         for (Item j : e.getValue().keySet()) {
             for (Item k : diff.keySet()) {
                 try {
-                    double predictedValue = diff.get(k).get(j).doubleValue() 
+                    double predictedValue = diff.get(k).get(j).doubleValue()
                         + e.getValue().get(j).doubleValue();
                     double finalValue = predictedValue * freq.get(k).get(j).intValue();
                     uPred.put(k, uPred.get(k) + finalValue);
@@ -234,14 +234,14 @@ public HashMap<Item, Double> predict(Map<User, HashMap<Item, Double>> data) {
             }
         }
     }
-    
+
     HashMap<Item, Double> clean = new HashMap<Item, Double>();
     for (Item j : uPred.keySet()) {
         if (uFreq.get(j) > 0) {
             clean.put(j, uPred.get(j).doubleValue() / uFreq.get(j).intValue());
         }
     }
-    
+
     for (Item j : InputData.items) {
         if (e.getValue().containsKey(j)) {
             clean.put(j, e.getValue().get(j));
@@ -249,7 +249,7 @@ public HashMap<Item, Double> predict(Map<User, HashMap<Item, Double>> data) {
             clean.put(j, -1.0);
         }
     }
-    
+
     return clean;
 }
 ```
@@ -264,7 +264,7 @@ import java.util.*;
 public class SlopeOneRecommender {
     private Map<Item, HashMap<Item, Double>> diff = new HashMap<>();
     private Map<Item, HashMap<Item, Integer>> freq = new HashMap<>();
-    
+
     public void buildDiffMatrix(Map<User, HashMap<Item, Double>> data) {
         // Расчет матрицы различий
         for (HashMap<Item, Double> user : data.values()) {
@@ -273,20 +273,20 @@ public class SlopeOneRecommender {
                     diff.put(e.getKey(), new HashMap<>());
                     freq.put(e.getKey(), new HashMap<>());
                 }
-                
+
                 for (Entry<Item, Double> e2 : user.entrySet()) {
                     int oldCount = freq.get(e.getKey())
                         .getOrDefault(e2.getKey(), 0);
                     double oldDiff = diff.get(e.getKey())
                         .getOrDefault(e2.getKey(), 0.0);
-                    
+
                     double observedDiff = e.getValue() - e2.getValue();
                     freq.get(e.getKey()).put(e2.getKey(), oldCount + 1);
                     diff.get(e.getKey()).put(e2.getKey(), oldDiff + observedDiff);
                 }
             }
         }
-        
+
         // Нормализация
         for (Item j : diff.keySet()) {
             for (Item i : diff.get(j).keySet()) {
@@ -296,22 +296,22 @@ public class SlopeOneRecommender {
             }
         }
     }
-    
-    public HashMap<Item, Double> predict(User user, 
+
+    public HashMap<Item, Double> predict(User user,
                                         Map<User, HashMap<Item, Double>> data) {
         HashMap<Item, Double> uPred = new HashMap<>();
         HashMap<Item, Integer> uFreq = new HashMap<>();
         HashMap<Item, Double> userRatings = data.get(user);
-        
+
         for (Item j : diff.keySet()) {
             uPred.put(j, 0.0);
             uFreq.put(j, 0);
         }
-        
+
         for (Item j : userRatings.keySet()) {
             for (Item k : diff.keySet()) {
                 if (diff.get(k).containsKey(j) && freq.get(k).containsKey(j)) {
-                    double predictedValue = diff.get(k).get(j) 
+                    double predictedValue = diff.get(k).get(j)
                         + userRatings.get(j);
                     double finalValue = predictedValue * freq.get(k).get(j);
                     uPred.put(k, uPred.get(k) + finalValue);
@@ -319,14 +319,14 @@ public class SlopeOneRecommender {
                 }
             }
         }
-        
+
         HashMap<Item, Double> clean = new HashMap<>();
         for (Item j : uPred.keySet()) {
             if (uFreq.get(j) > 0) {
                 clean.put(j, uPred.get(j) / uFreq.get(j));
             }
         }
-        
+
         for (Item j : InputData.items) {
             if (userRatings.containsKey(j)) {
                 clean.put(j, userRatings.get(j));
@@ -334,7 +334,7 @@ public class SlopeOneRecommender {
                 clean.put(j, -1.0);
             }
         }
-        
+
         return clean;
     }
 }
@@ -345,12 +345,12 @@ public class SlopeOneRecommender {
 **Есть несколько основных факторов, влияющих на алгоритм **Slope One**. Вот несколько советов, как повысить точность и время обработки:**
 
 1. **Рассмотрите возможность получения рейтингов пользовательских элементов на стороне БД** для больших наборов данных
-2. **Установить временные рамки** для получения оценок, так как интересы людей могут меняться со временем - это также сократит время, необходимое для обработки входных данных
-3. **Разбивайте большие наборы данных на более мелкие** - не нужно каждый день рассчитывать прогнозы для всех пользователей; вы можете проверить, взаимодействовал ли пользователь с предсказанным элементом, а затем добавить/удалить его/ее из очереди обработки на следующий день
+2. **Установить временные рамки** для получения оценок, так как интересы людей могут меняться со временем — это также сократит время, необходимое для обработки входных данных
+3. **Разбивайте большие наборы данных на более мелкие** — не нужно каждый день рассчитывать прогнозы для всех пользователей; вы можете проверить, взаимодействовал ли пользователь с предсказанным элементом, а затем добавить/удалить его/ее из очереди обработки на следующий день
 
 ## Временная сложность
 
-- **Построение матрицы различий**: `O(**n * m^2**)`, где n - количество пользователей, m - количество элементов
+- **Построение матрицы различий**: `O(**n * m^2**)`, где n — количество пользователей, m — количество элементов
 - **Прогнозирование**: `O(**m^2**)` для одного пользователя
 
 ## Пространственная сложность
@@ -397,13 +397,13 @@ public class SlopeOneRecommender {
 В этом уроке мы смогли узнать об алгоритме **Slope One**. Кроме того, мы представили проблему совместной фильтрации для систем рекомендаций по элементам.
 
 **Ключевые моменты:**
-- **Slope One** - простой алгоритм совместной фильтрации
+- **Slope One** — простой алгоритм совместной фильтрации
 - Основан на разнице рейтингов между элементами
 - Требует построения матрицы различий
 - Эффективен для средних наборов данных
 - Легко реализуется и понимается
 
-**Slope One** - это отличный выбор для начала работы с рекомендательными системами благодаря своей простоте и эффективности.
+**Slope One** — это отличный выбор для начала работы с рекомендательными системами благодаря своей простоте и эффективности.
 
 ## Реализация на Kotlin
 
@@ -421,7 +421,7 @@ data class UserK(val username: String)
 class SlopeOneK {
     private val diff = mutableMapOf<ItemK, MutableMap<ItemK, Double>>()
     private val freq = mutableMapOf<ItemK, MutableMap<ItemK, Int>>()
-    
+
     fun buildDiffMatrix(data: Map<UserK, Map<ItemK, Double>>) {
         data.values.forEach { user ->
             user.forEach { (item1, rating1) ->
@@ -429,18 +429,18 @@ class SlopeOneK {
                     diff[item1] = mutableMapOf()
                     freq[item1] = mutableMapOf()
                 }
-                
+
                 user.forEach { (item2, rating2) ->
                     val oldCount = freq[item1]?.get(item2) ?: 0
                     val oldDiff = diff[item1]?.get(item2) ?: 0.0
                     val observedDiff = rating1 - rating2
-                    
+
                     freq[item1]?.put(item2, oldCount + 1)
                     diff[item1]?.put(item2, oldDiff + observedDiff)
                 }
             }
         }
-        
+
         diff.forEach { (j, itemDiffs) ->
             itemDiffs.forEach { (i, oldValue) ->
                 val count = freq[j]?.get(i) ?: 1
@@ -448,14 +448,14 @@ class SlopeOneK {
             }
         }
     }
-    
+
     fun predict(data: Map<UserK, Map<ItemK, Double>>): Map<UserK, Map<ItemK, Double>> {
         val predictions = mutableMapOf<UserK, MutableMap<ItemK, Double>>()
-        
+
         data.forEach { (user, userRatings) ->
             val uPred = mutableMapOf<ItemK, Double>()
             val uFreq = mutableMapOf<ItemK, Int>()
-            
+
             diff.forEach { (j, itemDiffs) ->
                 if (!userRatings.containsKey(j)) {
                     itemDiffs.forEach { (i, diffValue) ->
@@ -463,23 +463,23 @@ class SlopeOneK {
                             val rating = userRatings[i] ?: 0.0
                             val predictedValue = rating + diffValue
                             val count = freq[j]?.get(i) ?: 1
-                            
+
                             uPred[j] = (uPred[j] ?: 0.0) + predictedValue * count
                             uFreq[j] = (uFreq[j] ?: 0) + count
                         }
                     }
                 }
             }
-            
+
             val userPredictions = mutableMapOf<ItemK, Double>()
             uPred.forEach { (item, sum) ->
                 val count = uFreq[item] ?: 1
                 userPredictions[item] = sum / count
             }
-            
+
             predictions[user] = userPredictions
         }
-        
+
         return predictions
     }
 }

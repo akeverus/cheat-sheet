@@ -63,10 +63,10 @@ updated: "2026-02-06"
 
 ### Основные случаи использования
 
-1. **Отмена операций** - передача сигнала отмены
-2. **Таймауты** - установка временных ограничений
-3. **Передача значений** - передача данных через границы **API**
-4. **Управление жизненным циклом** - контроль выполнения операций
+1. **Отмена операций** — передача сигнала отмены
+2. **Таймауты** — установка временных ограничений
+3. **Передача значений** — передача данных через границы **API**
+4. **Управление жизненным циклом** — контроль выполнения операций
 
 ## Создание **Context**
 
@@ -102,13 +102,13 @@ import "context"
 func processWithCancel() {
     ctx, cancel := context.WithCancel(context.Background())
     defer cancel()  // Важно: всегда вызывайте cancel
-    
+
     go func() {
         // Долгая операция
         time.Sleep(5 * time.Second)
         cancel()  // Отмена операции
     }()
-    
+
     select {
     case <-ctx.Done():
         fmt.Println("Operation cancelled")
@@ -130,7 +130,7 @@ func longOperation(ctx context.Context) error {
         default:
             // Продолжение работы
         }
-        
+
         // Выполнение работы
         doWork()
     }
@@ -151,7 +151,7 @@ func processWithTimeout() {
     // Context с таймаутом
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancel()
-    
+
     // Выполнение операции
     err := doWork(ctx)
     if err != nil {
@@ -170,7 +170,7 @@ func processWithDeadline() {
     deadline := time.Now().Add(5 * time.Second)
     ctx, cancel := context.WithDeadline(context.Background(), deadline)
     defer cancel()
-    
+
     // Выполнение операции
     doWork(ctx)
 }
@@ -190,7 +190,7 @@ const userIDKey key = "userID"
 func processWithValue() {
     // Context с значением
     ctx := context.WithValue(context.Background(), userIDKey, 123)
-    
+
     // Получение значения
     userID := ctx.Value(userIDKey).(int)
     fmt.Println("User ID:", userID)
@@ -233,18 +233,18 @@ func makeRequest(ctx context.Context, url string) (*http.Response, error) {
     if err != nil {
         return nil, err
     }
-    
+
     client := &http.Client{
         Timeout: 10 * time.Second,
     }
-    
+
     return client.Do(req)
 }
 
 func main() {
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancel()
-    
+
     resp, err := makeRequest(ctx, "https://api.example.com/data")
     if err != nil {
         if err == context.DeadlineExceeded {
@@ -261,7 +261,7 @@ func main() {
 ```go
 func processItems(ctx context.Context, items []Item) error {
     errCh := make(chan error, len(items))
-    
+
     for _, item := range items {
         go func(item Item) {
             select {
@@ -272,13 +272,13 @@ func processItems(ctx context.Context, items []Item) error {
             }
         }(item)
     }
-    
+
     for i := 0; i < len(items); i++ {
         if err := <-errCh; err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -293,14 +293,14 @@ func queryDatabase(ctx context.Context, query string) ([]Row, error) {
         return nil, ctx.Err()
     default:
     }
-    
+
     // Выполнение запроса
     rows, err := db.QueryContext(ctx, query)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var results []Row
     for rows.Next() {
         // Проверка отмены во время обработки
@@ -309,14 +309,14 @@ func queryDatabase(ctx context.Context, query string) ([]Row, error) {
             return nil, ctx.Err()
         default:
         }
-        
+
         var row Row
         if err := rows.Scan(&row); err != nil {
             return nil, err
         }
         results = append(results, row)
     }
-    
+
     return results, nil
 }
 ```
@@ -332,7 +332,7 @@ func processChain(ctx context.Context, steps []func(context.Context) error) erro
             return fmt.Errorf("cancelled at step %d: %w", i, ctx.Err())
         default:
         }
-        
+
         if err := step(ctx); err != nil {
             return fmt.Errorf("step %d failed: %w", i, err)
         }
@@ -347,13 +347,13 @@ func processChain(ctx context.Context, steps []func(context.Context) error) erro
 func processWithPriority(ctx context.Context, highPriority, lowPriority []Task) error {
     ctx, cancel := context.WithCancel(ctx)
     defer cancel()
-    
+
     // Выполнение высокоприоритетных задач
     errCh := make(chan error, 1)
     go func() {
         errCh <- processTasks(ctx, highPriority)
     }()
-    
+
     // Выполнение низкоприоритетных задач с возможностью отмены
     go func() {
         select {
@@ -363,7 +363,7 @@ func processWithPriority(ctx context.Context, highPriority, lowPriority []Task) 
             processTasks(ctx, lowPriority)
         }
     }()
-    
+
     return <-errCh
 }
 ```
@@ -395,20 +395,20 @@ func (pc *ProgressContext) ReportProgress(percent int) {
 func processWithProgress(ctx context.Context, items []Item) error {
     progCtx, cancel := NewProgressContext(ctx)
     defer cancel()
-    
+
     go func() {
         for progress := range progCtx.progress {
             fmt.Printf("Progress: %d%%\n", progress)
         }
     }()
-    
+
     for i, item := range items {
         if err := processItem(progCtx, item); err != nil {
             return err
         }
         progCtx.ReportProgress((i + 1) * 100 / len(items))
     }
-    
+
     return nil
 }
 ```
@@ -419,12 +419,12 @@ func processWithProgress(ctx context.Context, items []Item) error {
 func processWithOperationTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context) error) error {
     opCtx, cancel := context.WithTimeout(ctx, timeout)
     defer cancel()
-    
+
     errCh := make(chan error, 1)
     go func() {
         errCh <- fn(opCtx)
     }()
-    
+
     select {
     case err := <-errCh:
         return err
@@ -439,7 +439,7 @@ func processWithOperationTimeout(ctx context.Context, timeout time.Duration, fn 
 ```go
 func retryWithContext(ctx context.Context, maxRetries int, fn func(context.Context) error) error {
     var lastErr error
-    
+
     for i := 0; i < maxRetries; i++ {
         // Проверка отмены перед каждой попыткой
         select {
@@ -447,14 +447,14 @@ func retryWithContext(ctx context.Context, maxRetries int, fn func(context.Conte
             return ctx.Err()
         default:
         }
-        
+
         err := fn(ctx)
         if err == nil {
             return nil
         }
-        
+
         lastErr = err
-        
+
         // Ожидание перед следующей попыткой
         if i < maxRetries-1 {
             select {
@@ -464,7 +464,7 @@ func retryWithContext(ctx context.Context, maxRetries int, fn func(context.Conte
             }
         }
     }
-    
+
     return fmt.Errorf("failed after %d retries: %w", maxRetries, lastErr)
 }
 ```
@@ -478,21 +478,21 @@ func propagateDeadline(ctx context.Context, operations []func(context.Context) e
     if !ok {
         deadline = time.Now().Add(30 * time.Second)
     }
-    
+
     remaining := time.Until(deadline)
     perOpTimeout := remaining / time.Duration(len(operations))
-    
+
     for i, op := range operations {
         opCtx, cancel := context.WithDeadline(ctx, deadline.Add(-time.Duration(len(operations)-i-1)*perOpTimeout))
-        
+
         err := op(opCtx)
         cancel()
-        
+
         if err != nil {
             return fmt.Errorf("operation %d failed: %w", i, err)
         }
     }
-    
+
     return nil
 }
 ```
@@ -524,10 +524,10 @@ func (tc *TraceContext) SpanID() string {
 
 func processWithTracing(ctx context.Context, operation string) error {
     traceCtx := NewTraceContext(ctx, generateTraceID())
-    
+
     log.Printf("[%s] Starting %s", traceCtx.TraceID(), operation)
     defer log.Printf("[%s] Completed %s", traceCtx.TraceID(), operation)
-    
+
     return doWork(traceCtx)
 }
 ```
@@ -537,11 +537,11 @@ func processWithTracing(ctx context.Context, operation string) error {
 ```go
 func HTTPHandler(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
-    
+
     // Добавление таймаута
     ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
     defer cancel()
-    
+
     // Передача context в бизнес-логику
     result, err := processRequest(ctx, r)
     if err != nil {
@@ -552,7 +552,7 @@ func HTTPHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusInternalServerError)
         return
     }
-    
+
     json.NewEncoder(w).Encode(result)
 }
 
@@ -563,7 +563,7 @@ func processRequest(ctx context.Context, r *http.Request) (interface{}, error) {
         return nil, ctx.Err()
     default:
     }
-    
+
     // Долгая операция с проверкой context
     return longRunningOperation(ctx)
 }
@@ -576,7 +576,7 @@ func QueryWithContext(ctx context.Context, db *sql.DB, query string, args ...int
     // Создание context с таймаутом для запроса
     queryCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
     defer cancel()
-    
+
     return db.QueryContext(queryCtx, query, args...)
 }
 
@@ -585,17 +585,17 @@ func TransactionWithContext(ctx context.Context, db *sql.DB, fn func(*sql.Tx) er
     if err != nil {
         return err
     }
-    
+
     defer func() {
         if err != nil {
             tx.Rollback()
         }
     }()
-    
+
     if err := fn(tx); err != nil {
         return err
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -608,20 +608,20 @@ func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
     if ctx.Err() != nil {
         return nil, ctx.Err()
     }
-    
+
     // Извлечение метаданных
     md, ok := metadata.FromIncomingContext(ctx)
     if ok {
         userID := md.Get("user-id")
         // Использование userID
     }
-    
+
     // Вызов с context
     user, err := s.repo.GetUser(ctx, req.Id)
     if err != nil {
         return nil, err
     }
-    
+
     return user, nil
 }
 ```
@@ -632,9 +632,9 @@ func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
 func ProcessWithCancellation(ctx context.Context, tasks []Task) error {
     ctx, cancel := context.WithCancel(ctx)
     defer cancel()
-    
+
     errCh := make(chan error, len(tasks))
-    
+
     for _, task := range tasks {
         go func(t Task) {
             if err := t.Execute(ctx); err != nil {
@@ -643,7 +643,7 @@ func ProcessWithCancellation(ctx context.Context, tasks []Task) error {
             }
         }(task)
     }
-    
+
     // Ожидание завершения или отмены
     select {
     case <-ctx.Done():
@@ -656,21 +656,21 @@ func ProcessWithCancellation(ctx context.Context, tasks []Task) error {
 
 ## Лучшие практики
 
-1. **Всегда передавайте context первым параметром** - конвенция Go
-2. **Не храните context в структурах** - передавайте как параметр
-3. **Всегда вызывайте cancel** - используйте **defer** для гарантированного вызова
-4. **Используйте типизированные ключи** - для **WithValue**
-5. **Проверяйте ctx.`Done()`** - в долгих операциях
-6. **Не передавайте nil context** - используйте **context.Background**() или **context.TODO**()
-7. **Используйте таймауты** - устанавливайте разумные таймауты
-8. **Распространяйте context** - передавайте **context** через все уровни
-9. **Обрабатывайте ошибки context** - проверяйте **context.DeadlineExceeded** и **context.Canceled**
-10. **Используйте context для отмены** - не используйте каналы для отмены, используйте **context**
-11. **Используйте context в HTTP** - передавайте **context** через **handlers**
-12. **Используйте context в БД** - для отмены долгих запросов
-13. **Используйте context в gRPC** - для управления жизненным циклом запросов
-14. **Используйте каскадную отмену** - для отмены связанных операций
-15. **Мониторьте таймауты** - логируйте превышения таймаутов
+1. **Всегда передавайте context первым параметром** — конвенция Go
+2. **Не храните context в структурах** — передавайте как параметр
+3. **Всегда вызывайте cancel** — используйте **defer** для гарантированного вызова
+4. **Используйте типизированные ключи** — для **WithValue**
+5. **Проверяйте ctx.`Done()`** — в долгих операциях
+6. **Не передавайте nil context** — используйте **context.Background**() или **context.TODO**()
+7. **Используйте таймауты** — устанавливайте разумные таймауты
+8. **Распространяйте context** — передавайте **context** через все уровни
+9. **Обрабатывайте ошибки context** — проверяйте **context.DeadlineExceeded** и **context.Canceled**
+10. **Используйте context для отмены** — не используйте каналы для отмены, используйте **context**
+11. **Используйте context в HTTP** — передавайте **context** через **handlers**
+12. **Используйте context в БД** — для отмены долгих запросов
+13. **Используйте context в gRPC** — для управления жизненным циклом запросов
+14. **Используйте каскадную отмену** — для отмены связанных операций
+15. **Мониторьте таймауты** — логируйте превышения таймаутов
 
 
 ## Решение проблем
@@ -689,3 +689,11 @@ func ProcessWithCancellation(ctx context.Context, tasks []Task) error {
 
 - [Go context Package](https://pkg.go.dev/context)
 - [Go Context Blog Post](https://go.dev/blog/context)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

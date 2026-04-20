@@ -62,7 +62,7 @@ docker run -d --name orientdb \
 CREATE VERTEX User SET name = 'Alice';
 
 -- Создание ребер
-CREATE EDGE Follows FROM (SELECT FROM User WHERE name = 'Alice') 
+CREATE EDGE Follows FROM (SELECT FROM User WHERE name = 'Alice')
 TO (SELECT FROM User WHERE name = 'Bob');
 ```
 
@@ -91,5 +91,4 @@ db.close();
 
 **Когда использовать графовую модель в OrientDB?** Когда связи между сущностями важны и запросы — обход связей (социальный граф, рекомендации). Для простых документов достаточно документной модели.
 
----
 

@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Functions](https://kotlinlang.org/docs/functions.html)
 - [Arrow Library](https://arrow-kt.io/)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Functional Programming](https://www.baeldung.com/kotlin/functional-programming)
 - [Arrow-Kt Tutorial](https://www.baeldung.com/kotlin/arrow-kt)
 
@@ -121,13 +121,13 @@ updated: "2026-02-11"
 
 ## **Functors**
 
-**Functor** - это математическая концепция из теории категорий, которая в программировании представляет тип, который можно отобразить (**map**) над функцией. **Functor** позволяет применять функцию к значению, обернутому в контекст, не извлекая его из контекста.
+**Functor** — это математическая концепция из теории категорий, которая в программировании представляет тип, который можно отобразить (**map**) над функцией. **Functor** позволяет применять функцию к значению, обернутому в контекст, не извлекая его из контекста.
 
 Идея **Functor** заключается в том, что мы можем преобразовывать значения внутри контекста (**например, внутри `Optional`, `List`, Future**), не нарушая структуру контекста. Это позволяет создавать композируемые трансформации данных.
 
 ### Определение **Functor**
 
-**Functor** определяется через интерфейс с методом `**map**`, который принимает функцию преобразования и возвращает новый **Functor** с преобразованным значением. Ключевое свойство **Functor** - он сохраняет структуру контекста при преобразовании.
+**Functor** определяется через интерфейс с методом `**map**`, который принимает функцию преобразования и возвращает новый **Functor** с преобразованным значением. Ключевое свойство **Functor** — он сохраняет структуру контекста при преобразовании.
 
 ```kotlin
 // Functor - это тип с функцией map
@@ -138,15 +138,15 @@ interface Functor<out T> {
 
 Метод `**map**` позволяет применить функцию к значению внутри **Functor**, создавая новый **Functor** с результатом. Это фундаментальная операция функционального программирования, которая позволяет строить цепочки преобразований.
 
-// **List** - это **Functor**
+// **List** — это **Functor**
 **val numbers** = **listOf**(1, 2, 3)
 **val doubled** = **numbers.map** { it * 2 }  // [2, 4, 6]
 
-// **Optional** - это **Functor**
+// **Optional** — это **Functor**
 **sealed class Maybe**<**out** T> : **Functor**<T> {
     **abstract override fun** <R> **map(**f: (T**) -> R): **Maybe**<R>
 }
-```
+```text
 
 ### Functor Laws
 
@@ -160,7 +160,7 @@ val identity: (Int) -> Int = { it }
 val f = { x: Int -> x * 2 }
 val g = { x: Int -> x + 1 }
 `list.map`(f compose g) == `list.map`(f).map(g) // true
-```
+```text
 
 ### Примеры Functors
 
@@ -175,7 +175,7 @@ sealed class `Maybe`<out T> {
 
 // `Future` как `Functor` (в корутинах - `Deferred`)
 suspend fun <T, R> `Deferred`<T>.map(f: suspend (T) -> R): `Deferred`<R>
-```
+```text
 
 ## Applicatives
 
@@ -199,7 +199,7 @@ fun <T, R> `List`<T>.ap(fs: `List`<(T) -> R>): `List`<R> {
     }
     return result
 }
-```
+```text
 
 ### Applicative Laws
 
@@ -208,7 +208,7 @@ fun <T, R> `List`<T>.ap(fs: `List`<(T) -> R>): `List`<R> {
 // 2. `Composition`: pure(compose) <*> u <*> v <*> w == u <*> (v <*> w)
 // 3. `Homomorphism`: pure(f) <*> pure(x) == pure(f(x))
 // 4. `Interchange`: u <*> pure(y) == pure({ f -> f(y) }) <*> u
-```
+```text
 
 ### Примеры Applicatives
 
@@ -222,7 +222,7 @@ val result = `numbers.ap`(functions)  // [2, 3, 4, 2, 3, 4]
 sealed class `Maybe`<out T> {
     abstract fun <R> ap(f: `Maybe`<(T) -> R>): `Maybe`<R>
 }
-```
+```text
 
 ## Monads
 
@@ -239,7 +239,7 @@ interface `Monad`<out T> : `Applicative`<T> {
 // `List` как `Monad`
 val numbers = `listOf`(1, 2, 3)
 val result = numbers.`flatMap` { n -> `listOf`(n, n * 2) }  // [1, 2, 2, 4, 3, 6]
-```
+```text
 
 ### Monad Laws
 
@@ -247,7 +247,7 @@ val result = numbers.`flatMap` { n -> `listOf`(n, n * 2) }  // [1, 2, 2, 4, 3, 6
 // 1. `Left identity`: return(a) >>= f == f(a)
 // 2. `Right identity`: m >>= return == m
 // 3. `Associativity`: (m >>= f) >>= g == m >>= { x -> f(x) >>= g }
-```
+```text
 
 ### Примеры Monads
 
@@ -264,7 +264,7 @@ sealed class `Maybe`<out T> {
 sealed class `Either`<out L, out R> {
     abstract fun <T> `flatMap`(f: (R) -> `Either`<L, T>): `Either`<L, T>
 }
-```
+```text
 
 ## Maybe/Option
 
@@ -278,27 +278,27 @@ sealed class `Maybe`<out T> {
     abstract fun <R> `flatMap`(f: (T) -> `Maybe`<R>): `Maybe`<R>
     abstract fun `getOrElse`(default: `@UnsafeVariance` T): T
     abstract fun `isEmpty()`: `Boolean`
-    
+
     data class `Just`<out T>(val value: T) : `Maybe`<T>() {
         override fun <R> map(f: (T) -> R): `Maybe`<R> = `Just`(f(value))
         override fun <R> `flatMap`(f: (T) -> `Maybe`<R>): `Maybe`<R> = f(value)
         override fun `getOrElse`(default: `@UnsafeVariance` T): T = value
         override fun `isEmpty()`: `Boolean` = `false`
     }
-    
+
     object `None` : `Maybe`<`Nothing`>() {
         override fun <R> map(f: (`Nothing`) -> R): `Maybe`<R> = `None`
         override fun <R> `flatMap`(f: (`Nothing`) -> `Maybe`<R>): `Maybe`<R> = `None`
         override fun `getOrElse`(default: `Nothing`): `Nothing` = default
         override fun `isEmpty()`: `Boolean` = `true`
     }
-    
+
     companion object {
         fun <T> just(value: T): `Maybe`<T> = `Just`(value)
         fun <T> none(): `Maybe`<T> = `None`
     }
 }
-```
+```text
 
 ### Использование Maybe
 
@@ -326,7 +326,7 @@ when (val maybe = some) {
     is `Maybe`.`Just` -> println("`Value`: ${`maybe.value`}")
     is `Maybe`.`None` -> println("`No value`")
 }
-```
+```text
 
 ### Maybe как альтернатива null
 
@@ -346,7 +346,7 @@ fun `findUser`(id: Int): `Maybe`<`User`> {
 val user = `findUser`(1)
     .map { `it.name` }
     .`getOrElse`("`Unknown`")
-```
+```text
 
 ## Either
 
@@ -361,7 +361,7 @@ sealed class `Either`<out L, out R> {
     abstract fun `getOrElse`(default: `@UnsafeVariance` R): R
     abstract fun `isLeft()`: `Boolean`
     abstract fun `isRight()`: `Boolean`
-    
+
     data class `Left`<out L>(val value: L) : `Either`<L, `Nothing`>() {
         override fun <T> map(f: (`Nothing`) -> T): `Either`<L, T> = this
         override fun <T> `flatMap`(f: (`Nothing`) -> `Either`<L, T>): `Either`<L, T> = this
@@ -369,7 +369,7 @@ sealed class `Either`<out L, out R> {
         override fun `isLeft()`: `Boolean` = `true`
         override fun `isRight()`: `Boolean` = `false`
     }
-    
+
     data class `Right`<out R>(val value: R) : `Either`<`Nothing`, R>() {
         override fun <T> map(f: (R) -> T): `Either`<`Nothing`, T> = `Right`(f(value))
         override fun <T> `flatMap`(f: (R) -> `Either`<`Nothing`, T>): `Either`<`Nothing`, T> = f(value)
@@ -377,13 +377,13 @@ sealed class `Either`<out L, out R> {
         override fun `isLeft()`: `Boolean` = `false`
         override fun `isRight()`: `Boolean` = `true`
     }
-    
+
     companion object {
         fun <L> left(value: L): `Either`<L, `Nothing`> = `Left`(value)
         fun <R> right(value: R): `Either`<`Nothing`, R> = `Right`(value)
     }
 }
-```
+```text
 
 ### Использование Either
 
@@ -411,7 +411,7 @@ when (val either = success) {
     is `Either`.`Left` -> println("`Error`: ${`either.value`}")
     is `Either`.`Right` -> println("`Success`: ${`either.value`}")
 }
-```
+```text
 
 ### Either для обработки ошибок
 
@@ -434,7 +434,7 @@ when (result) {
     is `Either`.`Left` -> println("`Error`: ${`result.value`}")
     is `Either`.`Right` -> println("`Result`: ${`result.value`}")
 }
-```
+```text
 
 ## Try
 
@@ -449,7 +449,7 @@ sealed class Try<out T> {
     abstract fun `getOrElse`(default: `@UnsafeVariance` T): T
     abstract fun `isSuccess()`: `Boolean`
     abstract fun `isFailure()`: `Boolean`
-    
+
     data class `Success`<out T>(val value: T) : Try<T>() {
         override fun <R> map(f: (T) -> R): Try<R> = Try { f(value) }
         override fun <R> `flatMap`(f: (T) -> Try<R>): Try<R> = f(value)
@@ -457,7 +457,7 @@ sealed class Try<out T> {
         override fun `isSuccess()`: `Boolean` = `true`
         override fun `isFailure()`: `Boolean` = `false`
     }
-    
+
     data class `Failure`(val exception: `Throwable`) : Try<`Nothing`>() {
         override fun <R> map(f: (`Nothing`) -> R): Try<R> = this
         override fun <R> `flatMap`(f: (`Nothing`) -> Try<R>): Try<R> = this
@@ -465,7 +465,7 @@ sealed class Try<out T> {
         override fun `isSuccess()`: `Boolean` = `false`
         override fun `isFailure()`: `Boolean` = `true`
     }
-    
+
     companion object {
         fun <T> of(block: () -> T): Try<T> {
             return try {
@@ -476,7 +476,7 @@ sealed class Try<out T> {
         }
     }
 }
-```
+```text
 
 ### Использование Try
 
@@ -503,7 +503,7 @@ when (val attempt = success) {
     is Try.`Success` -> println("`Value`: ${`attempt.value`}")
     is Try.`Failure` -> println("`Error`: ${`attempt.exception.message`}")
 }
-```
+```text
 
 ### Try для безопасных вычислений
 
@@ -522,7 +522,7 @@ when (result) {
     is Try.`Success` -> println("`Result`: ${`result.value`}")
     is Try.`Failure` -> println("`Error`: ${`result.exception.message`}")
 }
-```
+```text
 
 ## Arrow-Kt библиотека
 
@@ -536,7 +536,7 @@ dependencies {
     implementation("io.`arrow-kt`:`arrow-core`:1.2.0")
     implementation("io.`arrow-kt`:`arrow-fx-coroutines`:1.2.0")
 }
-```
+```text
 
 ### Option (Arrow)
 
@@ -560,7 +560,7 @@ val result = some.`flatMap` { value ->
 
 // `GetOrElse`
 val value = some.`getOrElse` { 0 }  // 42
-```
+```text
 
 ### Either (Arrow)
 
@@ -584,7 +584,7 @@ val result = success.`flatMap` { value ->
 
 // `GetOrElse`
 val value = success.`getOrElse` { 0 }  // 42
-```
+```text
 
 ### Validated (Arrow)
 
@@ -602,7 +602,7 @@ val result = `Validated`.zip(
     "name".valid(),
     "email".valid()
 ) { name, email -> "$name: $email" }
-```
+```text
 
 ### IO (Arrow)
 
@@ -610,7 +610,7 @@ val result = `Validated`.zip(
 import `arrow.fx.coroutines`.`IO`
 
 // `IO` для побочных эффектов
-val io: `IO`<`String`> = `IO` { 
+val io: `IO`<`String`> = `IO` {
     `readLine()` ?: ""
 }
 
@@ -622,7 +622,7 @@ val program = `IO` { println("`Hello`") }
 suspend fun main() {
     `program.bind`()
 }
-```
+```text
 
 ## Functional Data Structures
 
@@ -634,20 +634,20 @@ sealed class PList<out T> {
     abstract fun <R> map(f: (T) -> R): PList<R>
     abstract fun prepend(value: `@UnsafeVariance` T): PList<T>
     abstract fun append(value: `@UnsafeVariance` T): PList<T>
-    
+
     object Nil : PList<`Nothing`>() {
         override fun <R> map(f: (`Nothing`) -> R): PList<R> = Nil
         override fun prepend(value: `Nothing`): PList<`Nothing`> = `Cons`(value, Nil)
         override fun append(value: `Nothing`): PList<`Nothing`> = `Cons`(value, Nil)
     }
-    
+
     data class `Cons`<out T>(val head: T, val tail: PList<T>) : PList<T>() {
         override fun <R> map(f: (T) -> R): PList<R> = `Cons`(f(head), `tail.map`(f))
         override fun prepend(value: `@UnsafeVariance` T): PList<T> = `Cons`(value, this)
         override fun append(value: `@UnsafeVariance` T): PList<T> = `Cons`(head, `tail.append`(value))
     }
 }
-```
+```text
 
 ### Tree
 
@@ -655,21 +655,21 @@ sealed class PList<out T> {
 // `Binary Tree`
 sealed class `Tree`<out T> {
     abstract fun <R> map(f: (T) -> R): `Tree`<R>
-    
+
     object `Empty` : `Tree`<`Nothing`>() {
         override fun <R> map(f: (`Nothing`) -> R): `Tree`<R> = `Empty`
     }
-    
+
     data class `Node`<out T>(
         val value: T,
         val left: `Tree`<T> = `Empty`,
         val right: `Tree`<T> = `Empty`
     ) : `Tree`<T>() {
-        override fun <R> map(f: (T) -> R): `Tree`<R> = 
+        override fun <R> map(f: (T) -> R): `Tree`<R> =
             `Node`(f(value), `left.map`(f), `right.map`(f))
     }
 }
-```
+```text
 
 ## Category Theory basics
 
@@ -690,7 +690,7 @@ infix fun <A, B, C> ((B) -> C).compose(f: (A) -> B): (A) -> C {
 
 // `Functor` - отображение между категориями
 // F: C -> D, где F сохраняет структуру
-```
+```text
 
 ### Natural Transformations
 
@@ -703,7 +703,7 @@ fun <T> `maybeToList`(maybe: `Maybe`<T>): `List`<T> = when (maybe) {
     is `Maybe`.`Just` -> `listOf`(`maybe.value`)
     is `Maybe`.`None` -> `emptyList()`
 }
-```
+```text
 
 ## Лучшие практики
 
@@ -719,7 +719,7 @@ fun `findUser`(id: Int): `User`? {
 fun `findUser`(id: Int): `Maybe`<`User`> {
     // ...
 }
-```
+```text
 
 ### Используйте Either для обработки ошибок
 
@@ -735,7 +735,7 @@ fun divide(a: Int, b: Int): `Either`<`String`, Int> {
     return if (b == 0) `Either`.left("`Division by zero`")
     else `Either`.right(a / b)
 }
-```
+```text
 
 ### Композируйте Monads
 
@@ -744,7 +744,7 @@ fun divide(a: Int, b: Int): `Either`<`String`, Int> {
 val result = `findUser`(1)
     .`flatMap` { user -> `findPosts`(`user.id`) }
     .`flatMap` { posts -> `findComments`(`posts.first`().id) }
-```
+```text
 
 ### Используйте Arrow-Kt для сложных случаев
 
@@ -756,7 +756,7 @@ import `arrow.core`.`Either`
 val result: `Either`<`String`, Int> = `Either`.right(42)
     .map { it * 2 }
     .`flatMap` { if (it > 0) `Either`.right(it) else `Either`.left("`Error`") }
-```
+```text
 
 ### Используйте Arrow-Kt для сложных случаев
 
@@ -776,7 +776,7 @@ val result: `Either`<`String`, Int> = `Either`.right(42)
 val validated: `Validated`<Nel<`String`>, Int> = `Validated`.invalid(
     `NonEmptyList`.of("`Error 1`", "`Error 2`")
 )
-```
+```text
 
 Arrow-Kt предоставляет более богатый набор функциональных конструкций, чем базовые реализации, и рекомендуется для сложных проектов.
 
@@ -809,7 +809,7 @@ object `StringMonoid` : `Monoid`<`String`> {
     override fun combine(a: `String`, b: `String`): `String` = a + b
     override val empty: `String` = ""
 }
-```
+```text
 
 Monoids позволяют комбинировать значения ассоциативно, что полезно для агрегации данных и параллельных вычислений.
 
@@ -826,7 +826,7 @@ fun <T> `List`<T>.fold(monoid: `Monoid`<T>): T {
 val numbers = `listOf`(1, 2, 3, 4, 5)
 val sum = `numbers.fold`(`IntSumMonoid`)  // 15
 val product = `numbers.fold`(`IntProductMonoid`) // 120
-```
+```text
 
 Monoids упрощают агрегацию данных, предоставляя единый интерфейс для различных операций комбинирования.
 
@@ -854,7 +854,7 @@ fun <T, R> `List`<T>.ap(fs: `List`<(T) -> R>): `List`<R> {
     }
     return result
 }
-```
+```text
 
 Applicative позволяет применять функции с несколькими параметрами к значениям в контексте, что полезно для валидации и параллельных вычислений.
 
@@ -865,12 +865,12 @@ Applicative позволяет применять функции с нескол
 sealed class `Validation`<out E, out A> {
     data class `Success`<A>(val value: A) : `Validation`<`Nothing`, A>()
     data class `Failure`<E>(val errors: `List`<E>) : `Validation`<E, `Nothing`>()
-    
+
     fun <B> map(f: (A) -> B): `Validation`<E, B> = when (this) {
         is `Success` -> `Success`(f(value))
         is `Failure` -> this
     }
-    
+
     fun <B> ap(other: `Validation`<E, (A) -> B>): `Validation`<E, B> = when {
         this is `Success` && other is `Success` -> `Success`(`other.value`(`this.value`))
         this is `Failure` && other is `Failure` -> `Failure`(`this.errors` + `other.errors`)
@@ -878,7 +878,7 @@ sealed class `Validation`<out E, out A> {
         else -> other as `Failure`<E>
     }
 }
-```
+```text
 
 Applicative позволяет накапливать ошибки валидации, в отличие от Monad, который останавливается на первой ошибке.
 
@@ -904,7 +904,7 @@ fun <A, B> `List`<A>.traverse(
         f(a).ap(`acc.map` { list -> { b -> `listOf`(b) + list } })
     }
 }
-```
+```text
 
 Traversable позволяет преобразовывать коллекции значений в контексте Applicative, что полезно для валидации коллекций.
 
@@ -922,14 +922,14 @@ sealed class `Free`<out F, out A> {
         val fa: `Free`<F, A>,
         val f: (A) -> `Free`<F, B>
     ) : `Free`<F, B>()
-    
+
     fun <B> `flatMap`(f: (A) -> `Free`<F, B>): `Free`<F, B> =
         `FlatMapped`(this, f)
-    
+
     fun <B> map(f: (A) -> B): `Free`<F, B> =
         `flatMap` { `Pure`(f(it)) }
 }
-```
+```text
 
 Free Monads позволяют создавать DSL и интерпретировать их различными способами, что полезно для создания embedded domain-specific languages.
 
@@ -956,7 +956,7 @@ fun <F> program(`EF`: `Effect`<F>): `Kind`<F, Int> {
         }
     }
 }
-```
+```text
 
 Tagless Final позволяет писать код, независимый от конкретной реализации эффектов, что упрощает тестирование и композицию.
 
@@ -970,18 +970,18 @@ Tagless Final позволяет писать код, независимый о�
 sealed class FList<out T> {
     object Nil : FList<`Nothing`>()
     data class `Cons`<out T>(val head: T, val tail: FList<T>) : FList<T>()
-    
+
     fun <R> map(f: (T) -> R): FList<R> = when (this) {
         is Nil -> Nil
         is `Cons` -> `Cons`(f(head), `tail.map`(f))
     }
-    
+
     fun <R> fold(initial: R, f: (R, T) -> R): R = when (this) {
         is Nil -> initial
         is `Cons` -> `tail.fold`(f(initial, head), f)
     }
 }
-```
+```text
 
 Функциональные структуры данных используют структурное разделение, что позволяет эффективно создавать новые версии без копирования всего содержимого.
 
@@ -994,11 +994,11 @@ class `PersistentMap`<K, V> private constructor(
     fun put(key: K, value: V): `PersistentMap`<K, V> {
         return `PersistentMap`(`putNode`(root, key, value, 0))
     }
-    
+
     fun get(key: K): V? {
         return `getNode`(root, key, 0)
     }
-    
+
     private fun `putNode`(
         node: `Node`<K, V>?,
         key: K,
@@ -1008,7 +1008,7 @@ class `PersistentMap`<K, V> private constructor(
         // Реализация trie структуры
     }
 }
-```
+```text
 
 Persistent структуры данных позволяют эффективно создавать новые версии с изменениями, сохраняя старые версии для других ссылок.
 
@@ -1030,7 +1030,7 @@ fun <T, R> FList<T>.cata(
 
 // Использование
 val sum = `listOf`(1, 2, 3, 4, 5).cata(0) { a, b -> a + b }
-```
+```text
 
 Catamorphism позволяет выразить любую рекурсивную операцию над структурой данных через fold.
 
@@ -1047,7 +1047,7 @@ fun <T, R> ana(
         { (value, next) -> FList.`Cons`(value, ana(next, coalgebra)) }
     )
 }
-```
+```text
 
 Anamorphism позволяет создавать структуры данных из начального значения и функции развертывания.
 
@@ -1073,7 +1073,7 @@ fun <F> program(`hasRead`: Has<F, `Effect`.`Read`>, `hasWrite`: Has<F, `Effect`.
         }
     }
 }
-```
+```text
 
 Effect Systems позволяют статически проверять, какие эффекты может выполнить программа, что повышает безопасность и предсказуемость кода.
 
@@ -1101,7 +1101,7 @@ fun <T> `testFunctorIdentity`(functor: `Functor`<T>): `Boolean` {
     val identity: (T) -> T = { it }
     return `functor.map`(identity) == functor
 }
-```
+```text
 
 Property-based testing позволяет проверять математические свойства функциональных конструкций, что обеспечивает их корректность.
 
@@ -1118,12 +1118,12 @@ Property-based testing позволяет проверять математич�
 sealed class `Result`<out E, out A> {
     data class `Success`<A>(val value: A) : `Result`<`Nothing`, A>()
     data class `Error`<E>(val error: E) : `Result`<E, `Nothing`>()
-    
+
     fun <B> map(f: (A) -> B): `Result`<E, B> = when (this) {
         is `Success` -> `Success`(f(value))
         is `Error` -> this
     }
-    
+
     fun <B> `flatMap`(f: (A) -> `Result`<E, B>): `Result`<E, B> = when (this) {
         is `Success` -> f(value)
         is `Error` -> this
@@ -1144,7 +1144,7 @@ fun `processUser`(id: `Long`): `Result`<`String`, `ProcessedUser`> {
         .`flatMap` { user -> `validateUser`(user) }
         .map { user -> `processUser`(user) }
 }
-```
+```text
 
 Использование функциональных конструкций в production коде делает обработку ошибок более предсказуемой и безопасной.
 
@@ -1172,7 +1172,7 @@ fun `processOrderComprehension`(`orderId`: `Long`): `Result`<`String`, `Processe
         `createShipment`(paid).bind()
     }
 }
-```
+```text
 
 Композиция функциональных операций позволяет создавать сложную логику из простых компонентов, что делает код более модульным и тестируемым.
 
@@ -1210,7 +1210,7 @@ fun `processUsersMaybe`(ids: `List`<`Long`>): `List`<`User`> {
         .map { `it.value` }
         .filter { it.`isActive` }
 }
-```
+```text
 
 Адаптация императивного кода к функциональному стилю улучшает читаемость и тестируемость кода.
 
@@ -1229,10 +1229,10 @@ suspend fun `processUser`(id: `Long`): `Either`<`String`, `User`> = either {
     val user = `userRepository`.`findById`(id)
         ?.right()  // Преобразование в `Either`.`Right`
         ?: "`User not found`".left()
-    
+
     val validated = `validateUser`(user).bind()
     val processed = `processUser`(validated).bind()
-    
+
     processed
 }
 
@@ -1260,7 +1260,7 @@ fun `validateUser`(user: `User`): `ValidatedNel`<`String`, `User`> {
         `User`(name, email, age)
     }
 }
-```
+```text
 
 Arrow-Kt предоставляет готовые реализации функциональных конструкций, которые могут быть использованы в production коде для улучшения надежности и читаемости.
 
@@ -1286,10 +1286,10 @@ class `OrderService`(
         val priced = `calculateOrderPrice`(validated).bind()
         val paid = `paymentService`.`processPayment`(priced).bind()
         val saved = `orderRepository`.save(paid).bind()
-        
+
         saved
     }
-    
+
     private fun `validateOrder`(order: `Order`): `Either`<`String`, `Order`> {
         return when {
             `order.items`.`isEmpty()` -> "`Order must have items`".left()
@@ -1297,7 +1297,7 @@ class `OrderService`(
             else -> `order.right`()
         }
     }
-    
+
     private fun `calculateOrderPrice`(order: `Order`): `Either`<`String`, `Order`> {
         val total = `calculateTotalPrice`(`order.items`, `order.discount`)
         return `order.copy`(`totalPrice` = total).right()
@@ -1314,7 +1314,7 @@ class `OrderRepositoryImpl` : `OrderRepository` {
         }
     }
 }
-```
+```text
 
 Функциональная архитектура разделяет ответственность между слоями и делает код более тестируемым и поддерживаемым.
 
@@ -1336,7 +1336,7 @@ class `EitherMonad`<L> : `Monad`<`EitherPartialOf`<L>> {
     override fun <A> pure(a: A): `Either`<L, A> {
         return `Either`.`Right`(a)
     }
-    
+
     override fun <A, B> `Either`<L, A>.`flatMap`(f: (A) -> `Either`<L, B>): `Either`<L, B> {
         return when (this) {
             is `Either`.`Left` -> this
@@ -1357,7 +1357,7 @@ fun <F> compute(monad: `Monad`<F>): `Kind`<F, Int> {
 }
 
 val result: `Either`<`String`, Int> = compute(`EitherMonad`<`String`>())
-```
+```text
 
 Tagless Final позволяет создавать полиморфный код, который работает с различными монадическими типами.
 
@@ -1371,11 +1371,11 @@ sealed class `Free`<F, A> {
     data class `Pure`<F, A>(val value: A) : `Free`<F, A>()
     data class `Suspend`<F, A>(val fa: `Kind`<F, A>) : `Free`<F, A>()
     data class `FlatMap`<F, A, B>(val fa: `Free`<F, A>, val f: (A) -> `Free`<F, B>) : `Free`<F, B>()
-    
+
     fun <B> `flatMap`(f: (A) -> `Free`<F, B>): `Free`<F, B> {
         return `FlatMap`(this, f)
     }
-    
+
     fun <B> map(f: (A) -> B): `Free`<F, B> {
         return `flatMap` { a -> `Pure`(f(a)) }
     }
@@ -1401,7 +1401,7 @@ fun <F, G, A> `Free`<F, A>.`foldMap`(
         }
     }
 }
-```
+```text
 
 Free Monads позволяют создавать DSL, которые могут интерпретироваться различными способами.
 
@@ -1457,7 +1457,7 @@ val program = `readLine()`
     }
 
 `program.run`()
-```
+```text
 
 Effect Systems позволяют управлять побочными эффектами в функциональном стиле, что делает код более предсказуемым и тестируемым.
 
@@ -1498,7 +1498,7 @@ fun <T, R> anamorphism(
 
 // Использование
 val range = anamorphism(0, { it >= 10 }, { it to (it + 1) })  // [0, 1, 2, ..., 9]
-```
+```text
 
 Recursion Schemes предоставляют общие паттерны для работы с рекурсивными структурами данных.
 
@@ -1531,14 +1531,14 @@ fun <T> `testMonoidLaws`(
     // Ассоциативность
     val associativity = `monoid.combine`(`monoid.combine`(a, b), c) ==
             `monoid.combine`(a, `monoid.combine`(b, c))
-    
+
     // Нейтральный элемент
     val identity = `monoid.combine`(a, `monoid.empty`()) == a &&
             `monoid.combine`(`monoid.empty`(), a) == a
-    
+
     return associativity && identity
 }
-```
+```text
 
 Property-based testing позволяет проверять математические свойства функциональных конструкций.
 
@@ -1564,7 +1564,7 @@ data class `ListZipper`<T>(
             `null`
         }
     }
-    
+
     fun `moveRight()`: `ListZipper`<T>? {
         return if (right.`isNotEmpty()`) {
             `ListZipper`(left + `listOf`(focus), `right.first`(), `right.drop`(1))
@@ -1572,7 +1572,7 @@ data class `ListZipper`<T>(
             `null`
         }
     }
-    
+
     fun update(`newValue`: T): `ListZipper`<T> {
         return copy(focus = `newValue`)
     }
@@ -1582,7 +1582,7 @@ data class `ListZipper`<T>(
 val zipper = `ListZipper`(`listOf`(1, 2), 3, `listOf`(4, 5))
 val moved = zipper.`moveRight()` // ListZipper([1, 2, 3], 4, [5])
 val updated = `zipper.update`(10) // ListZipper([1, 2], 10, [4, 5])
-```
+```text
 
 Zippers позволяют эффективно навигироваться и модифицировать структуры данных.
 
@@ -1623,7 +1623,7 @@ val `personCityLens` = `addressLens`.compose(`cityLens`)
 val person = `Person`("`Alice`", `Address`("`Main St`", "`New York`"))
 val city = `personCityLens`.get(person) // "New York"
 val updated = `personCityLens`.set(person, "`Boston`") // Person с обновленным городом
-```
+```text
 
 Lenses позволяют безопасно работать с вложенными неизменяемыми структурами данных.
 
@@ -1662,7 +1662,7 @@ class `NonEmptyListComonad` : `Comonad`<`ForNonEmptyList`> {
     override fun <A> extract(fa: `NonEmptyList`<A>): A {
         return `fa.head`
     }
-    
+
     override fun <A, B> `coflatMap`(
         fa: `NonEmptyList`<A>,
         f: (`NonEmptyList`<A>) -> B
@@ -1670,7 +1670,7 @@ class `NonEmptyListComonad` : `Comonad`<`ForNonEmptyList`> {
         return `fa.tails`().map(f)
     }
 }
-```
+```text
 
 Комонады позволяют извлекать значения из контекста и применять функции к контексту.
 
@@ -1736,7 +1736,7 @@ fun `getUserEmail`(id: `Long`): `Either`<`String`, `String`> {
         }
     }
 }
-```
+```text
 
 Either позволяет явно обрабатывать ошибки без использования исключений.
 
@@ -1774,7 +1774,7 @@ val `personCityLens` = `addressLens`.compose(`cityLens`)
 // Использование
 val person = `Person`("`John`", `Address`("`Main St`", "`New York`"))
 val updated = `personCityLens`.modify(person) { it.`toUpperCase()` }
-```
+```text
 
 Lenses позволяют безопасно работать с вложенными структурами данных.
 
@@ -1817,7 +1817,7 @@ fun `getUserOrCreate`(id: `Long`): `UserCommand`<`User`> {
         }
     }
 }
-```
+```text
 
 Free Monads позволяют создавать композируемые DSL с чистой семантикой.
 
@@ -1838,7 +1838,7 @@ data class `Zipper`<A>(
             `null`
         }
     }
-    
+
     fun `moveRight()`: `Zipper`<A>? {
         return if (right.`isNotEmpty()`) {
             `Zipper`(left + `listOf`(focus), `right.first`(), `right.drop`(1))
@@ -1846,7 +1846,7 @@ data class `Zipper`<A>(
             `null`
         }
     }
-    
+
     fun update(f: (A) -> A): `Zipper`<A> {
         return `Zipper`(left, f(focus), right)
     }
@@ -1855,7 +1855,7 @@ data class `Zipper`<A>(
 // Использование
 val zipper = `Zipper`(`listOf`(1, 2), 3, `listOf`(4, 5))
 val moved = zipper.`moveRight()`?.update { it * 2 }
-```
+```text
 
 Zippers позволяют эффективно навигировать и модифицировать структуры данных.
 
@@ -1900,7 +1900,7 @@ fun <A, B> ana(
 val numbers = `listOf`(1, 2, 3, 4, 5)
 val sum = cata(numbers, 0) { head, tail -> head + tail }  // 15
 val range = ana(1, { it > 10 }) { it to (it + 1) }  // [1, 2, 3, ..., 9]
-```
+```text
 
 Recursion schemes предоставляют универсальные паттерны для работы с рекурсивными структурами данных.
 
@@ -1920,14 +1920,14 @@ class `PropertyBasedTest` {
             `list.reversed`().reversed() `shouldBe` list
         }
     }
-    
+
     `@Test`
     fun `list size is preserved after map`() {
         `checkAll`(Arb.list(Arb.int())) { list ->
             `list.map` { it * 2 }.size `shouldBe list.size`
         }
     }
-    
+
     `@Test`
     fun `addition is commutative`() {
         `checkAll`(Arb.int(), Arb.int()) { a, b ->
@@ -1935,7 +1935,7 @@ class `PropertyBasedTest` {
         }
     }
 }
-```
+```text
 
 Property-based testing проверяет свойства функций на множестве случайных входных данных.
 

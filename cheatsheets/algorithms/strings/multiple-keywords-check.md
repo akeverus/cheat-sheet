@@ -108,11 +108,11 @@ public static boolean containsWordsIndexOfImproved(String inputString, String[] 
 ```java
 public static boolean containsWordsPatternMatchEscaped(String inputString, String[] words) {
     StringBuilder regexp = new StringBuilder();
-    
+
     for (String word : words) {
         regexp.append("(?=.*").append(Pattern.quote(word)).append(")");
     }
-    
+
     Pattern pattern = Pattern.compile(regexp.toString());
     return pattern.matcher(inputString).find();
 }
@@ -149,11 +149,11 @@ public static boolean containsWordsStreamImproved(String inputString, String[] w
 public static boolean containsWordsAhoCorasickImproved(String inputString, String[] words) {
     Trie trie = Trie.builder().addKeywords(words).build();
     Collection<Emit> emits = trie.parseText(inputString);
-    
+
     Set<String> foundWords = emits.stream()
         .map(Emit::getKeyword)
         .collect(Collectors.toSet());
-    
+
     return foundWords.size() == words.length;
 }
 ```
@@ -251,10 +251,10 @@ fun findWordPositionsK(inputString: String, words: Array<String>): Map<String, L
 fun main() {
     val inputString = "hello there, Baeldung"
     val words = arrayOf("hello", "Baeldung")
-    
+
     println(containsWordsK(inputString, words)) // true
     println(containsWordsFunctionalK(inputString, words)) // true
-    
+
     val counts = countWordOccurrencesK("hello hello world", words)
     println(counts) // {hello=2, Baeldung=0}
 }
@@ -300,7 +300,7 @@ public static boolean containsWordsCaseInsensitive(String inputString, String[] 
 ```java
 public static Map<String, Integer> countWordOccurrences(String inputString, String[] words) {
     Map<String, Integer> counts = new HashMap<>();
-    
+
     for (String word : words) {
         int count = 0;
         int index = 0;
@@ -310,7 +310,7 @@ public static Map<String, Integer> countWordOccurrences(String inputString, Stri
         }
         counts.put(word, count);
     }
-    
+
     return counts;
 }
 ```
@@ -320,7 +320,7 @@ public static Map<String, Integer> countWordOccurrences(String inputString, Stri
 ```java
 public static Map<String, List<Integer>> findWordPositions(String inputString, String[] words) {
     Map<String, List<Integer>> positions = new HashMap<>();
-    
+
     for (String word : words) {
         List<Integer> wordPositions = new ArrayList<>();
         int index = 0;
@@ -330,7 +330,7 @@ public static Map<String, List<Integer>> findWordPositions(String inputString, S
         }
         positions.put(word, wordPositions);
     }
-    
+
     return positions;
 }
 ```

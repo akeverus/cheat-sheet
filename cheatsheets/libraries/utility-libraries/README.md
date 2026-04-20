@@ -11,7 +11,7 @@ updated: "2026-04-17"
 ---
 # Utility Libraries
 
-Раздел собирает утилитарные Java-библиотеки, которые расширяют стандартную библиотеку мелкими, но вездесущими хелперами: **Apache Commons** (lang3, collections4, io, csv и др.) и **Google Guava** (immutable-коллекции, `Preconditions`, `Multimap`, `Cache`, `EventBus`, `ListenableFuture`). Эти библиотеки — "швейцарский нож" для работы со строками, коллекциями, I/O, валидациями и кэшами.
+Раздел собирает утилитарные Java-библиотеки, которые расширяют стандартную библиотеку мелкими, но вездесущими хелперами: **Apache Commons** (lang3, collections4, io, csv и др.) и **Google Guava** (immutable-коллекции, `Preconditions`, `Multimap`, `Cache`, `EventBus`, `ListenableFuture`). Эти библиотеки — «швейцарский нож» для работы со строками, коллекциями, I/O, валидациями и кэшами.
 
 Для кого: Java-разработчики, избавляющиеся от велосипедных `StringUtils` и `CollectionUtils`; инженеры, которые хотят понимать, что уже есть в Commons/Guava, прежде чем писать свой хелпер.
 

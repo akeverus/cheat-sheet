@@ -13,8 +13,6 @@ updated: "2026-02-11"
 
 Основные принципы проектирования: `SOLID`, `DRY`, `KISS`, `YAGNI` и другие.
 
-
-
 ## Полезные ссылки
 
 - [SOLID Principles](https://www.geeksforgeeks.org/solid-principle-in-programming-understand-with-real-life-examples/)
@@ -88,11 +86,11 @@ class PayPalProcessor implements PaymentProcessor {
 
 class PaymentService {
     private PaymentProcessor processor;
-    
+
     PaymentService(PaymentProcessor processor) {
         this.processor = processor;
     }
-    
+
     void pay(double amount) {
         processor.processPayment(amount);
     }
@@ -112,7 +110,7 @@ class Sparrow extends Bird {
     void move() {
         fly(); // воробей летает
     }
-    
+
     void fly() { /* полёт */ }
 }
 
@@ -120,7 +118,7 @@ class Penguin extends Bird {
     void move() {
         swim(); // пингвин плавает
     }
-    
+
     void swim() { /* плавание */ }
 }
 ```
@@ -184,11 +182,11 @@ class PostgreSQLDatabase implements Database {
 
 class UserService {
     private Database database; // зависимость от интерфейса
-    
+
     UserService(Database database) {
         this.database = database;
     }
-    
+
     void saveUser(String userData) {
         database.save(userData);
     }
@@ -256,7 +254,7 @@ class ComplexCalculator {
         operations.put("add", (x, y) -> x + y);
         operations.put("subtract", (x, y) -> x - y);
         // ... много кода
-        
+
         return operations.getOrDefault(operation, (x, y) -> 0.0).apply(a, b);
     }
 }
@@ -266,7 +264,7 @@ class SimpleCalculator {
     public double add(double a, double b) {
         return a + b;
     }
-    
+
     public double subtract(double a, double b) {
         return a - b;
     }
@@ -349,4 +347,3 @@ class BankAccount {
 - [Enterprise Patterns](../enterprise-patterns/) — обзор enterprise-паттернов
 - [Design Patterns](../) — корневой раздел архитектуры
 
----

@@ -14,7 +14,6 @@ updated: "2026-02-11"
 
 **Кратко:** Apache JMeter — инструмент нагрузочного и функционального тестирования. Thread Group, Samplers (HTTP Request, JDBC и др.), Listeners, Assertions; GUI для построения планов, CLI для запуска; отчёты, CI/CD.
 
----
 
 ## Полезные ссылки
 
@@ -24,7 +23,6 @@ updated: "2026-02-11"
 | Практики | [Building a Test Plan](https://jmeter.apache.org/usermanual/build-test-plan.html), [Best Practices](https://jmeter.apache.org/usermanual/best-practices.html) |
 | Обзор | [Gatling](../gatling/gatling.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) |
 
----
 
 ## Введение
 
@@ -51,7 +49,6 @@ updated: "2026-02-11"
 | **Timer** | Задержка между запросами (Constant Timer, Random Timer) |
 | **Controller** | Группировка (Simple, Loop, If, Transaction, Throughput и т.д.) |
 
----
 
 ## Установка и настройка
 
@@ -73,7 +70,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl
 
 Проверка: `bin/jmeter --version`.
 
----
 
 ## Элементы Test Plan
 
@@ -118,7 +114,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl
 
 Assertion вешается на Sampler (или контроллер — тогда на все Samplers внутри). При падении запрос — Failed.
 
----
 
 ## Контроллеры и таймеры (кратко)
 
@@ -128,7 +123,6 @@ Assertion вешается на Sampler (или контроллер — тог�
 - **Throughput Controller** — доля итераций (например, 30% — поиск, 70% — главная).
 - **Constant Timer** / **Uniform Random Timer** — задержка между запросами (think time).
 
----
 
 ## Pre- и Post-процессоры
 
@@ -137,7 +131,6 @@ Assertion вешается на Sampler (или контроллер — тог�
 - **HTTP Header Manager** — заголовки запроса (глобально или для Sampler).
 - **JSR223 PreProcessor / PostProcessor** — скрипт Groovy до/после Sampler (расчёт переменных, разбор ответа). Предпочтительнее BeanShell.
 
----
 
 ## Базовое использование
 
@@ -167,7 +160,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 **-e** — сгенерировать отчёт, **-o report/** — каталог для HTML.
 
----
 
 ## Запуск: GUI и CLI
 
@@ -176,7 +168,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 Типичный порядок: создать и проверить план в GUI (мало потоков, 1–2 итерации), сохранить .jmx, затем запускать в CLI. Число потоков можно переопределять через **-J** или свойства.
 
----
 
 ## Отчёты и метрики
 
@@ -187,7 +178,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 После прогона с **-e -o report/** в **report/** создаётся HTML-дашборд (графики по времени отклика, throughput, ошибки). Для Grafana и др. — **Backend Listener** (InfluxDB, Graphite).
 
----
 
 ## Параметризация и переменные
 
@@ -198,7 +188,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 Полный список функций: **Options → Function Helper Dialog** в GUI.
 
----
 
 ## Пример: логин и запрос с токеном
 
@@ -211,7 +200,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 7. **Response Assertion** — Response Code equals `200`.
 8. **Summary Report** — сводка.
 
----
 
 ## CI/CD
 
@@ -221,7 +209,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 Переопределение параметров: в плане Number of Threads = `${__P(threads,10)}`, Ramp-up = `${__P(rampup,5)}`; запуск: `jmeter -n -t plan.jmx -Jthreads=100 -Jrampup=60 -l results.jtl`.
 
----
 
 ## Лучшие практики
 
@@ -234,7 +221,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 7. **Assertions** — минимально нужный набор.
 8. **Секреты** — не в .jmx; user.properties (не в репо) или -J из окружения.
 
----
 
 ## Решение проблем
 
@@ -255,7 +241,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 
 **Распределённый запуск?** Режим master/slave: на машинах-агентах — jmeter-server; в user.properties на master — remote_hosts=agent1:1099,agent2:1099; запуск «Remote Start All». Нужны совместимые версии JMeter/Java и открытые порты RMI.
 
----
 
 ## Справка: команды CLI и метрики
 
@@ -281,7 +266,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 | Error % | Доля неуспешных |
 | Throughput | Запросов в секунду |
 
----
 
 ## Сравнение с Gatling и k6
 
@@ -293,7 +277,6 @@ bin/jmeter -n -t plan.jmx -l results.jtl -e -o report/
 | Ресурсы на поток | Выше | Ниже | Ниже |
 | Отчёты | Summary, HTML, Backend Listener | HTML, Grafana | Встроенные, Grafana/InfluxDB |
 
----
 
 ## Заключение
 

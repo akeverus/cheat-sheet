@@ -1890,7 +1890,13 @@ public class UserRepositoryTest {
 
 **jOOQ** рекомендуется как основной инструмент для приложений, где требуется полный контроль над **SQL** запросами с сохранением **type safety** и удобства разработки.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-apache-httpclient|Apache HttpClient: Мощный HTTP клиент для Java]]
+- [[java-apache-poi|Apache POI]]
+- [[java-bean-validation|Bean Validation (JSR-380 / Jakarta Validation 3.0)]]
+- [[java-hikaricp|HikariCP: Высокопроизводительный Connection Pool]]
+- [[java-http-clients|HTTP-клиенты в Java]]

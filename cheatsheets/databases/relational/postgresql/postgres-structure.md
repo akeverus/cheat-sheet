@@ -14,21 +14,19 @@ updated: "2026-02-11"
 
 Кратко: создание/удаление БД, базовый синтаксис **CREATE TABLE**, типы данных и ключевые ограничения. Полезно как справочник при моделировании.
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [`PostgreSQL Documentation`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
-### **Baeldung**
+### Обучающие материалы
 
-- [`PostgreSQL Tutorial`](https://www.postgresql.org/docs/)
+- [PostgreSQL Tutorial](https://www.postgresql.org/docs/)
 
 
-См. также: [`postgres-design`](postgres-design.md) — [`postgres-data-ops`](postgres-data-ops.md) — [`postgres-indexes`](postgres-indexes.md).
+См. также: [[postgres-design]] — [[postgres-data-ops]] — [[postgres-indexes]].
 
 ## Содержание
 
@@ -248,7 +246,7 @@ CREATE TABLE cars (
 6. **bigint**: хранит числа от -9223372036854775808 до +9223372036854775807. Занимает 8 байт. Имеет псевдоним **int8**.
 
 **Типы с плавающей точкой:**
-7. **numeric**: хранит числа с фиксированной точностью, которые могут иметь до `131072` знаков в целой части и до `16383` знаков после запятой. Данный тип может принимать два параметра **precision** и **scale**: `**numeric(**precision, scale**)`. Параметр **precision** указывает на максимальное количество цифр, которые может хранить число. Параметр **scale** представляет максимальное количество цифр, которые может содержать число после запятой. Это значение должно находиться в диапазоне от 0 до значения параметра **precision**. По умолчанию оно равно 0. Например, для числа `23.5141` **precision** равно 6, а **scale** - 4.
+7. **numeric**: хранит числа с фиксированной точностью, которые могут иметь до `131072` знаков в целой части и до `16383` знаков после запятой. Данный тип может принимать два параметра **precision** и **scale**: `**numeric(**precision, scale**)`. Параметр **precision** указывает на максимальное количество цифр, которые может хранить число. Параметр **scale** представляет максимальное количество цифр, которые может содержать число после запятой. Это значение должно находиться в диапазоне от 0 до значения параметра **precision**. По умолчанию оно равно 0. Например, для числа `23.5141` **precision** равно 6, а **scale** — 4.
 
 8. **decimal**: хранит числа с фиксированной точностью, которые могут иметь до `131072` знаков в целой части и до `16383` знаков в дробной части. То же самое, что и **numeric**.
 
@@ -960,7 +958,7 @@ ALTER TABLE customers ADD COLUMN new_email VARCHAR(255);
 UPDATE customers SET new_email = old_email WHERE old_email IS NOT NULL;
 
 -- 3. Добавить NOT NULL с DEFAULT (для новых строк)
-ALTER TABLE customers 
+ALTER TABLE customers
 ALTER COLUMN new_email SET NOT NULL,
 ALTER COLUMN new_email SET DEFAULT '';
 
@@ -982,7 +980,7 @@ ALTER TABLE customers RENAME COLUMN new_email TO email;
 \d customers
 
 -- Структура таблицы через SQL
-SELECT 
+SELECT
     column_name,
     data_type,
     character_maximum_length,
@@ -995,7 +993,7 @@ ORDER BY ordinal_position;
 
 **Просмотр ограничений:**
 ```sql
-SELECT 
+SELECT
     constraint_name,
     constraint_type,
     table_name
@@ -1005,7 +1003,7 @@ WHERE table_name = 'customers';
 
 **Просмотр индексов:**
 ```sql
-SELECT 
+SELECT
     indexname,
     indexdef
 FROM pg_indexes
@@ -1030,3 +1028,10 @@ WHERE tablename = 'customers';
 
 **Нехватка места при создании индекса:** убедитесь в достаточном месте в табличном пространстве; большие индексы требуют места и времени. Используйте `CONCURRENTLY` для создания индекса без эксклюзивной блокировки таблицы (только для создания индекса, не для всех ALTER).
 
+## См. также
+
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]

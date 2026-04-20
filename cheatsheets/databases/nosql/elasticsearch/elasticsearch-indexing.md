@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Индексация документов - Управление данными и индексацией
+# **Elasticsearch**: Индексация документов — Управление данными и индексацией
 
 Комплексное руководство по индексации документов в **Elasticsearch**: **bulk operations**, **update strategies**, **routing**, **versioning** и оптимизация производительности индексации.
 
@@ -1867,6 +1867,6 @@ class BulkProcessorRetryPolicy implements RetryPolicy {
 
 **Высокое использование памяти при индексации:** уменьшите размер bulk-батча, увеличьте heap для узлов данных. Проверьте размер полей и отключите индексацию для полей, по которым не ищут (`index: false`).
 
-Следующий файл - **elasticsearch-queries.md**! 🚀
+Следующий файл — **elasticsearch-queries.md**! 🚀
 
 

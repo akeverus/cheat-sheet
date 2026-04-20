@@ -79,7 +79,7 @@ updated: "2026-02-11"
 
 Проще говоря, алгоритм сравнивает значение ключа со средним элементом массива; если они не равны, половина, частью которой не может быть ключ, исключается, и поиск оставшейся половины продолжается до тех пор, пока он не увенчается успехом.
 
-Помните - ключевым аспектом здесь является то, что массив уже отсортирован.
+Помните — ключевым аспектом здесь является то, что массив уже отсортирован.
 
 Если поиск заканчивается тем, что оставшаяся половина пуста, ключа нет в массиве.
 
@@ -100,10 +100,10 @@ updated: "2026-02-11"
 // Итеративный бинарный поиск в отсортированном массиве: двигаем границы low/high в зависимости от сравнения с серединой (O(log n))
 public int runBinarySearchIteratively(int[] sortedArray, int key, int low, int high) {
     int index = Integer.MAX_VALUE;
-    
+
     while (low <= high) {
         int mid = low + ((high - low) / 2);
-        
+
         if (sortedArray[mid] < key) {
             low = mid + 1;
         } else if (sortedArray[mid] > key) {
@@ -113,7 +113,7 @@ public int runBinarySearchIteratively(int[] sortedArray, int key, int low, int h
             break;
         }
     }
-    
+
     return index;
 }
 ```
@@ -139,11 +139,11 @@ int index = runBinarySearchIteratively(sortedArray, key, 0, sortedArray.length -
 // Рекурсивный бинарный поиск: на каждом шаге выбираем половину массива в зависимости от сравнения с серединой
 public int runBinarySearchRecursively(int[] sortedArray, int key, int low, int high) {
     int middle = low + ((high - low) / 2);
-    
+
     if (high < low) {
         return -1;
     }
-    
+
     if (key == sortedArray[middle]) {
         return middle;
     } else if (key < sortedArray[middle]) {

@@ -41,7 +41,6 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 
----
 
 ## Введение в AssertJ
 
@@ -56,7 +55,6 @@ updated: "2026-02-11"
 - **Типобезопасность** — проверки типов на этапе компиляции.
 - **Понятные сообщения об ошибках** и хорошая поддержка в IDE.
 
----
 
 ## Зависимости
 
@@ -114,12 +112,11 @@ dependencies {
 - **Зависимость не найдена** — проверьте дерево: `mvn dependency:tree` или `gradle dependencies --configuration testRuntimeClasspath`.
 - **IDE не видит методы** — добавьте static import: `import static org.assertj.core.api.Assertions.*;`
 
-**Миграция с JUnit/Hamcrest:**  
-`assertEquals("John", user.getName())` → `assertThat(user.getName()).isEqualTo("John")`  
-`assertTrue(list.size() > 0)` → `assertThat(list).isNotEmpty()`  
+**Миграция с JUnit/Hamcrest:**
+`assertEquals("John", user.getName())` → `assertThat(user.getName()).isEqualTo("John")`
+`assertTrue(list.size() > 0)` → `assertThat(list).isNotEmpty()`
 `assertThat(str, containsString("@"))` → `assertThat(str).contains("@")`
 
----
 
 ## Базовое использование
 
@@ -145,7 +142,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 }
 ```
 
----
 
 ## Проверки по типам
 
@@ -230,7 +226,6 @@ assertThat(optionalUser).isEmpty();
 assertThat(order.flatMap(Order::getCustomer).map(User::getEmail)).isPresent().hasValue("a@b.com");
 ```
 
----
 
 ## Мягкие и пользовательские проверки
 
@@ -309,7 +304,6 @@ assertThat(users).filteredOn(u -> u.getType() == UserType.PREMIUM).allMatch(u ->
 
 Можно сделать свой класс в стиле «then(user).shouldBeActive().shouldHaveEmail("...")», наследуя `AbstractAssert` и называя методы `should...` — тогда тесты читаются как сценарии.
 
----
 
 ## Spring Boot и JSON
 
@@ -373,7 +367,6 @@ assertThat(reportFile).hasName("user_report.txt").hasSizeGreaterThan(100);
 assertThat(contentOf(reportFile)).matches("(?s).*Total Users: \\d+.*");
 ```
 
----
 
 ## Лучшие практики
 
@@ -384,7 +377,6 @@ assertThat(contentOf(reportFile)).matches("(?s).*Total Users: \\d+.*");
 5. **Мягкие проверки** — когда нужно проверить много полей и увидеть все ошибки разом; не забывать `assertAll()`.
 6. **Пользовательские проверки** — для сложных доменных правил и повторного использования.
 
----
 
 ## Решение проблем
 
@@ -400,20 +392,18 @@ assertThat(contentOf(reportFile)).matches("(?s).*Total Users: \\d+.*");
 - Использовать `describedAs("...")` для пояснения в сообщении об ошибке.
 - Для сложных объектов — `assertThat(obj).satisfies(o -> { ... })` с несколькими проверками внутри.
 
----
 
 ## Частые вопросы
 
-**Когда использовать AssertJ?**  
+**Когда использовать AssertJ?**
 Для unit- и интеграционных тестов, когда нужны читаемые проверки, мягкие проверки или доменные проверки. Для тривиальных `assertEquals` можно оставаться на JUnit.
 
-**Как настроить под production?**  
+**Как настроить под production?**
 AssertJ — только для тестов (`scope test`). В production он не участвует; настройки относятся к тестовому окружению и CI.
 
-**Где актуальная документация?**  
+**Где актуальная документация?**
 В блоке «Полезные ссылки» в начале документа; основное — [AssertJ Documentation](https://assertj.github.io/doc/).
 
----
 
 ## Заключение
 

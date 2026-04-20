@@ -100,15 +100,15 @@ updated: "2026-02-11"
 int[] countElements(int[] input, int k) {
     int[] c = new int[k + 1];
     Arrays.fill(c, 0);
-    
+
     for (int i : input) {
         c[i] += 1;
     }
-    
+
     for (int i = 1; i < c.length; i++) {
         c[i] += c[i - 1];
     }
-    
+
     return c;
 }
 ```
@@ -136,13 +136,13 @@ void countElements_GivenAnArray_ShouldCalculateTheFrequencyArrayAsExpected() {
 int[] sort(int[] input, int k) {
     int[] c = countElements(input, k);
     int[] sorted = new int[input.length];
-    
+
     for (int i = input.length - 1; i >= 0; i--) {
         int current = input[i];
         sorted[c[current] - 1] = current;
         c[current] -= 1;
     }
-    
+
     return sorted;
 }
 ```
@@ -173,15 +173,15 @@ void sort_GivenAnArray_ShouldSortTheInputAsExpected() {
 ```kotlin
 fun countElementsK(input: IntArray, k: Int): IntArray {
     val c = IntArray(k + 1) { 0 }
-    
+
     for (i in input) {
         c[i] += 1
     }
-    
+
     for (i in 1 until c.size) {
         c[i] += c[i - 1]
     }
-    
+
     return c
 }
 ```
@@ -192,13 +192,13 @@ fun countElementsK(input: IntArray, k: Int): IntArray {
 fun countingSortK(input: IntArray, k: Int): IntArray {
     val c = countElementsK(input, k)
     val sorted = IntArray(input.size)
-    
+
     for (i in input.size - 1 downTo 0) {
         val current = input[i]
         sorted[c[current] - 1] = current
         c[current] -= 1
     }
-    
+
     return sorted
 }
 ```
@@ -210,15 +210,15 @@ fun countingSortK(input: IntArray, k: Int): IntArray {
 ```kotlin
 fun countingSortAutoK(input: IntArray): IntArray {
     if (input.isEmpty()) return intArrayOf()
-    
+
     val min = input.minOrNull() ?: 0
     val max = input.maxOrNull() ?: 0
     val k = max - min
-    
+
     // Сдвигаем значения для работы с неотрицательными индексами
     val shifted = input.map { it - min }.toIntArray()
     val sorted = countingSortK(shifted, k)
-    
+
     // Возвращаем сдвиг обратно
     return sorted.map { it + min }.toIntArray()
 }
@@ -232,18 +232,18 @@ fun countingSortAutoK(input: IntArray): IntArray {
 fun countingSortFunctionalK(input: IntArray, k: Int): IntArray {
     val counts = input.groupingBy { it }.eachCount()
     val cumulative = IntArray(k + 1) { 0 }
-    
+
     for (i in 1..k) {
         cumulative[i] = cumulative[i - 1] + (counts[i] ?: 0)
     }
-    
+
     val sorted = IntArray(input.size)
     for (i in input.size - 1 downTo 0) {
         val value = input[i]
         sorted[cumulative[value] - 1] = value
         cumulative[value]--
     }
-    
+
     return sorted
 }
 ```
@@ -256,20 +256,20 @@ fun countingSortFunctionalK(input: IntArray, k: Int): IntArray {
 fun main() {
     val k = 5
     val input = intArrayOf(4, 3, 2, 5, 4, 3, 5, 1, 0, 2, 5)
-    
+
     // Базовая версия с явным указанием диапазона
     val sorted = countingSortK(input, k)
     println(sorted.contentToString()) // [0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5]
-    
+
     // Автоматическое определение диапазона
     val input2 = intArrayOf(10, 8, 9, 10, 7, 8)
     val sorted2 = countingSortAutoK(input2)
     println(sorted2.contentToString()) // [7, 8, 8, 9, 10, 10]
-    
+
     // Функциональный стиль с использованием группировки
     val sorted3 = countingSortFunctionalK(input, k)
     println(sorted3.contentToString()) // [0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5]
-    
+
     // Демонстрация стабильности
     val input3 = intArrayOf(2, 1, 2, 1, 0)
     val sorted4 = countingSortK(input3, 2)
@@ -420,29 +420,29 @@ O(n + k) + O(n) = O(2n + k) = O(n + k)
 ```java
 public static int[] countingSortWithNegatives(int[] arr) {
     if (arr.length == 0) return new int[0];
-    
+
     int min = Arrays.stream(arr).min().orElse(0);
     int max = Arrays.stream(arr).max().orElse(0);
     int range = max - min + 1;
-    
+
     // Сдвигаем значения для работы с неотрицательными индексами
     int[] count = new int[range];
     for (int num : arr) {
         count[num - min]++;
     }
-    
+
     // Вычисляем кумулятивные суммы
     for (int i = 1; i < range; i++) {
         count[i] += count[i - 1];
     }
-    
+
     // Размещаем элементы в обратном порядке для стабильности
     int[] sorted = new int[arr.length];
     for (int i = arr.length - 1; i >= 0; i--) {
         sorted[count[arr[i] - min] - 1] = arr[i];
         count[arr[i] - min]--;
     }
-    
+
     return sorted;
 }
 ```
@@ -454,24 +454,24 @@ public static int[] countingSortWithNegatives(int[] arr) {
 ```java
 public static char[] countingSortChars(char[] arr) {
     int[] count = new int[256]; // ASCII диапазон
-    
+
     // Подсчитываем частоту каждого символа
     for (char c : arr) {
         count[c]++;
     }
-    
+
     // Вычисляем кумулятивные суммы
     for (int i = 1; i < 256; i++) {
         count[i] += count[i - 1];
     }
-    
+
     // Размещаем элементы в обратном порядке
     char[] sorted = new char[arr.length];
     for (int i = arr.length - 1; i >= 0; i--) {
         sorted[count[arr[i]] - 1] = arr[i];
         count[arr[i]]--;
     }
-    
+
     return sorted;
 }
 ```
@@ -486,13 +486,13 @@ public static int[] findKMostFrequent(int[] arr, int k) {
     int min = Arrays.stream(arr).min().orElse(0);
     int max = Arrays.stream(arr).max().orElse(0);
     int range = max - min + 1;
-    
+
     // Подсчитываем частоту каждого элемента
     int[] count = new int[range];
     for (int num : arr) {
         count[num - min]++;
     }
-    
+
     // Создаём массив пар (значение, частота) и сортируем по частоте
     List<int[]> pairs = new ArrayList<>();
     for (int i = 0; i < range; i++) {
@@ -500,10 +500,10 @@ public static int[] findKMostFrequent(int[] arr, int k) {
             pairs.add(new int[]{i + min, count[i]});
         }
     }
-    
+
     // Сортируем по частоте (по убыванию)
     pairs.sort((a, b) -> Integer.compare(b[1], a[1]));
-    
+
     // Возвращаем k наиболее частых элементов
     return pairs.stream()
                 .limit(k)
@@ -522,7 +522,7 @@ public static int[] findKMostFrequent(int[] arr, int k) {
 public static class Person {
     int age;
     String name;
-    
+
     Person(int age, String name) {
         this.age = age;
         this.name = name;
@@ -535,19 +535,19 @@ public static Person[] sortByAge(Person[] people, int maxAge) {
     for (Person p : people) {
         count[p.age]++;
     }
-    
+
     // Вычисляем кумулятивные суммы
     for (int i = 1; i <= maxAge; i++) {
         count[i] += count[i - 1];
     }
-    
+
     // Размещаем элементы в обратном порядке для стабильности
     Person[] sorted = new Person[people.length];
     for (int i = people.length - 1; i >= 0; i--) {
         sorted[count[people[i].age] - 1] = people[i];
         count[people[i].age]--;
     }
-    
+
     return sorted;
 }
 ```

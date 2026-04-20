@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Monads в Scala
 
-Краткое руководство по **Monads** в **Scala** - фундаментальная абстракция функционального программирования.
+Краткое руководство по **Monads** в **Scala** — фундаментальная абстракция функционального программирования.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -62,12 +62,12 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Monad** - это фундаментальная абстракция функционального программирования, которая позволяет структурировать вычисления с побочными эффектами. В **Scala** многие типы данных являются **Monads**: **Option**, **Either**, **Try**, **Future**, **List** и другие.
+**Monad** — это фундаментальная абстракция функционального программирования, которая позволяет структурировать вычисления с побочными эффектами. В **Scala** многие типы данных являются **Monads**: **Option**, **Either**, **Try**, **Future**, **List** и другие.
 
 **Monad** определяется тремя операциями:**
-1. **unit/pure** - создание **Monad** из значения
-2. **flatMap/bind** - композиция **Monadic** вычислений
-3. **map** - применение функции к значению внутри **Monad**
+1. **unit/pure** — создание **Monad** из значения
+2. **flatMap/bind** — композиция **Monadic** вычислений
+3. **map** — применение функции к значению внутри **Monad**
 
 ## Основы **Monads**
 
@@ -77,8 +77,8 @@ updated: "2026-02-11"
 trait Monad[M[_]] {
   def pure[A](a: A): M[A]
   def flatMap[A, B](ma: M[A])(f: A => M[B]): M[B]
-  
-  def map[A, B](ma: M[A])(f: A => B): M[B] = 
+
+  def map[A, B](ma: M[A])(f: A => B): M[B] =
     flatMap(ma)(a => pure(f(a)))
 }
 ```
@@ -348,7 +348,7 @@ def cartesianProduct[A, B](list1: List[A], list2: List[B]): List[(A, B)] = {
 ```scala
 case class Writer[A](value: A, log: List[String]) {
   def map[B](f: A => B): Writer[B] = Writer(f(value), log)
-  
+
   def flatMap[B](f: A => Writer[B]): Writer[B] = {
     val Writer(newValue, newLog) = f(value)
     Writer(newValue, log ++ newLog)
@@ -373,8 +373,8 @@ val result = for {
 ```scala
 case class Reader[R, A](run: R => A) {
   def map[B](f: A => B): Reader[R, B] = Reader(r => f(run(r)))
-  
-  def flatMap[B](f: A => Reader[R, B]): Reader[R, B] = 
+
+  def flatMap[B](f: A => Reader[R, B]): Reader[R, B] =
     Reader(r => f(run(r)).run(r))
 }
 
@@ -455,18 +455,18 @@ case class State[S, A](run: S => (S, A)) {
     val (s1, a) = run(s)
     f(a).run(s1)
   }
-  
+
   def map[B](f: A => B): State[S, B] = flatMap(a => State.pure(f(a)))
 }
 
 object State {
   def pure[S, A](a: A): State[S, A] = State(s => (s, a))
-  
+
   def get[S]: State[S, S] = State(s => (s, s))
-  
+
   def set[S](s: S): State[S, Unit] = State(_ => (s, ()))
-  
-  def modify[S](f: S => S): State[S, Unit] = 
+
+  def modify[S](f: S => S): State[S, Unit] =
     get.flatMap(s => set(f(s)))
 }
 
@@ -555,7 +555,7 @@ case class WriteFile(path: String, content: String) extends FileOperation[Unit]
 type FileOp[A] = Free[FileOperation, A]
 
 def readFile(path: String): FileOp[String] = liftF(ReadFile(path))
-def writeFile(path: String, content: String): FileOp[Unit] = 
+def writeFile(path: String, content: String): FileOp[Unit] =
   liftF(WriteFile(path, content))
 
 // Программа как значения
@@ -568,9 +568,9 @@ def program: FileOp[String] = for {
 // Интерпретатор
 val interpreter: FileOperation ~> Id = new (FileOperation ~> Id) {
   def apply[A](op: FileOperation[A]): Id[A] = op match {
-    case ReadFile(path) => 
+    case ReadFile(path) =>
       scala.io.Source.fromFile(path).mkString
-    case WriteFile(path, content) => 
+    case WriteFile(path, content) =>
       new java.io.PrintWriter(path) { write(content); close() }
   }
 }
@@ -590,7 +590,7 @@ val result: String = program.foldMap(interpreter)
 
 ## Заключение
 
-**Monads** - это мощная абстракция функционального программирования, которая позволяет структурировать вычисления с побочными эффектами. Понимание **Option**, **Either**, **Try**, **Future**, **List**, пользовательских **Monads** (**State, `Writer`, Reader**), **Monad Transformers** и **Free Monads** позволяет создавать чистый, композируемый и типобезопасный код.
+**Monads** — это мощная абстракция функционального программирования, которая позволяет структурировать вычисления с побочными эффектами. Понимание **Option**, **Either**, **Try**, **Future**, **List**, пользовательских **Monads** (**State, `Writer`, Reader**), **Monad Transformers** и **Free Monads** позволяет создавать чистый, композируемый и типобезопасный код.
 
 Использование **Monads** для обработки ошибок, асинхронных вычислений, валидации, композиции функций, управления состоянием, накопления логов, **dependency injection** и создания **DSL** критично для создания надежных, гибких функциональных приложений.
 
@@ -600,13 +600,13 @@ val result: String = program.foldMap(interpreter)
 // Простая реализация IO Monad
 case class IO[A](unsafeRun: () => A) {
   def map[B](f: A => B): IO[B] = IO(() => f(unsafeRun()))
-  
+
   def flatMap[B](f: A => IO[B]): IO[B] = IO(() => f(unsafeRun()).unsafeRun())
 }
 
 object IO {
   def pure[A](a: A): IO[A] = IO(() => a)
-  
+
   def delay[A](a: => A): IO[A] = IO(() => a)
 }
 
@@ -649,8 +649,8 @@ def createUser(name: String, email: String, age: Int): Validation[User] = {
 }
 
 val result = createUser("", "invalid", -5)
-// Invalid(List("Name must be between 1 and 100 characters", 
-//              "Invalid email format", 
+// Invalid(List("Name must be between 1 and 100 characters",
+//              "Invalid email format",
 //              "Age must be between 0 and 150"))
 ```
 
@@ -659,8 +659,8 @@ val result = createUser("", "invalid", -5)
 ```scala
 case class Cont[R, A](run: (A => R) => R) {
   def map[B](f: A => B): Cont[R, B] = Cont(k => run(a => k(f(a))))
-  
-  def flatMap[B](f: A => Cont[R, B]): Cont[R, B] = 
+
+  def flatMap[B](f: A => Cont[R, B]): Cont[R, B] =
     Cont(k => run(a => f(a).run(k)))
 }
 
@@ -728,10 +728,10 @@ import cats.data.ValidatedNel
 import cats.syntax.all._
 
 // Валидация с Monad
-def validateName(name: String): ValidatedNel[String, String] = 
+def validateName(name: String): ValidatedNel[String, String] =
   if (name.nonEmpty) name.validNel else "Name cannot be empty".invalidNel
 
-def validateAge(age: Int): ValidatedNel[String, Int] = 
+def validateAge(age: Int): ValidatedNel[String, Int] =
   if (age >= 0) age.validNel else "Age must be non-negative".invalidNel
 
 val validatedResult = for {
@@ -746,3 +746,10 @@ val validatedResult = for {
 - [Cats Monads](https://typelevel.org/cats/typeclasses/monad.html)
 - [Free Monads](https://typelevel.org/cats/datatypes/freemonad.html)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

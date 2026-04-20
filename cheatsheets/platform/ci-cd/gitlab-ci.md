@@ -485,7 +485,7 @@ generate_pipeline:
       stages:
         - build
         - test
-      
+
       # Dynamically generate build jobs
       $(for service in services/*; do
         if [ -d "$service" ]; then
@@ -500,7 +500,7 @@ generate_pipeline:
           paths:
             - $service/target/*.jar
           expire_in: 1 hour
-      
+
       test_$service_name:
         stage: test
         script:
@@ -508,7 +508,7 @@ generate_pipeline:
           - ./test.sh
         dependencies:
           - build_$service_name
-      
+
       JOB_EOF
         fi
       done)

@@ -26,7 +26,6 @@ updated: "2026-02-11"
 
 **См. также:** [JUnit Advanced](../unit-testing/junit/junit-advanced.md), [Mockito Advanced](../unit-testing/junit/mockito-advanced.md), [Spring Testing](../../frameworks/java-frameworks/spring/spring-testing.md), [REST Assured](rest-assured.md).
 
----
 
 ## Содержание
 
@@ -44,7 +43,6 @@ updated: "2026-02-11"
 - [Решение проблем](#решение-проблем)
 - [Заключение](#заключение)
 
----
 
 ## Введение в WireMock
 
@@ -59,7 +57,6 @@ updated: "2026-02-11"
 - Запись реальных взаимодействий и воспроизведение.
 - Интеграция с JUnit 5 и Spring Boot.
 
----
 
 ## Зависимости
 
@@ -106,7 +103,6 @@ testImplementation 'com.github.tomakehurst:wiremock-junit5:2.35.0'
 testImplementation 'com.github.tomakehurst:wiremock-spring-boot:2.35.0'
 ```
 
----
 
 ## Запуск (standalone, Docker)
 
@@ -125,7 +121,6 @@ docker run -d --name wiremock -p 8080:8080 \
   wiremock/wiremock:2.35.0 --global-response-templating --verbose --root-dir /home/wiremock
 ```
 
----
 
 ## JUnit 5
 
@@ -168,7 +163,6 @@ class WireMockJUnit5Test {
 
 **Импорты:** `get`, `post`, `urlEqualTo`, `aResponse`, `stubFor` — из `com.github.tomakehurst.wiremock.client.WireMock`.
 
----
 
 ## Базовый stubbing
 
@@ -192,7 +186,6 @@ class WireMockJUnit5Test {
                 .withBody("{\"data\": \"test\"}")));
 ```
 
----
 
 ## Сопоставление запросов
 
@@ -223,7 +216,6 @@ class WireMockJUnit5Test {
             .willReturn(aResponse().withStatus(201).withBody("{\"id\": 1}")));
 ```
 
----
 
 ## Шаблоны ответов
 
@@ -251,7 +243,6 @@ class WireMockJUnit5Test {
 
 Без `.withTransformers("response-template")` подстановки не выполняются.
 
----
 
 ## Stateful-сценарии
 
@@ -278,7 +269,6 @@ class WireMockJUnit5Test {
 // В тесте: сначала createPayment(), затем getPaymentStatus("pay_123")
 ```
 
----
 
 ## Spring Boot
 
@@ -313,7 +303,6 @@ class SpringWireMockTest {
 
 В `application-test.properties` или тестовом профиле задайте базовый URL сервиса как `http://localhost:${wiremock.server.port}` (или через `@DynamicPropertySource`), чтобы клиент ходил в WireMock.
 
----
 
 ## Продвинутые сценарии
 
@@ -358,7 +347,6 @@ apiClient.postData("test");
 
 **Запись и воспроизведение:** запуск standalone с проксированием на реальный сервис записывает запросы/ответы в файлы; затем тот же каталог можно использовать как `--root-dir` для воспроизведения без реального сервиса.
 
----
 
 ## Рекомендации
 
@@ -368,7 +356,6 @@ apiClient.postData("test");
 - **Проверка вызовов:** использовать `verify(...)` там, где важно убедиться в корректных запросах к моку.
 - **Порты:** предпочитать динамический порт (`port = 0` или `WireMockRuntimeInfo.getHttpPort()`), чтобы избежать конфликтов в CI и локально.
 
----
 
 ## Решение проблем
 
@@ -395,13 +382,16 @@ apiClient.postData("test");
 
 - В `spring-boot-starter-test` исключить старую зависимость `wiremock-core` и явно подключить нужную версию `wiremock-jre8` и при необходимости `wiremock-junit5` / `wiremock-spring-boot`.
 
----
 
 ## Заключение
 
 **WireMock** даёт полный контроль над HTTP-взаимодействиями в тестах: стабильные, воспроизводимые сценарии без зависимости от внешних API. Удобно использовать для интеграционных и контрактных тестов микросервисов, клиентов внешних API и сценариев с таймаутами, повторами и разными состояниями.
 
-**Когда уместен:** тестирование HTTP-клиентов, микросервисов, контрактов, отказоустойчивости, разработка без доступа к внешним сервисам.  
+**Когда уместен:** тестирование HTTP-клиентов, микросервисов, контрактов, отказоустойчивости, разработка без доступа к внешним сервисам.
 **Когда не нужен:** чистые unit-тесты без HTTP (достаточно Mockito), тесты, требующие реального интеграционного окружения или не-HTTP протоколов.
 
 **Дальше:** [REST Assured](rest-assured.md) — тестирование REST API.
+
+## См. также
+
+- [[rest-assured|REST Assured для Java]]

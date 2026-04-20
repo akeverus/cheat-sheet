@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **Gradle Advanced**
 
-**Gradle** - это мощная система автоматизации сборки с открытым исходным кодом, которая использует **Groovy** или **Kotlin DSL** для описания **build** скриптов. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** проектов на **Gradle**.
+**Gradle** — это мощная система автоматизации сборки с открытым исходным кодом, которая использует **Groovy** или **Kotlin DSL** для описания **build** скриптов. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** проектов на **Gradle**.
 
 ## Полезные ссылки
 - [Gradle Documentation](https://docs.gradle.org/current/userguide/userguide.html)

@@ -18,8 +18,6 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 
 # Micronaut: Actuator — Health Checks, Metrics и Endpoints
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Micronaut](https://docs.micronaut.io/)
@@ -27,7 +25,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 
 ## Содержание
 
-- [Micronaut: Actuator - Health Checks, Metrics и Endpoints](#micronaut-actuator-health-checks-metrics-и-endpoints)
+- [Micronaut: Actuator — Health Checks, Metrics и Endpoints](#micronaut-actuator-health-checks-metrics-и-endpoints)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Actuator](#настройка-actuator)
@@ -122,11 +120,11 @@ import reactor.core.publisher.Mono;
 @Singleton
 public class DatabaseHealthIndicator implements HealthIndicator {
     private final DataSource dataSource;
-    
+
     public DatabaseHealthIndicator(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-    
+
     @Override
     public Publisher<HealthResult> getResult() {
         return Mono.fromCallable(() -> {
@@ -152,7 +150,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 // Реализация своего индикатора здоровья приложения
 @Singleton
 public class CustomHealthIndicator implements HealthIndicator {
-    
+
     @Override
     public Publisher<HealthResult> getResult() {
         return Mono.just(HealthResult.builder("custom")
@@ -176,7 +174,7 @@ import jakarta.inject.Singleton;
 public class MetricsService {
     private final Counter userCreatedCounter;
     private final Timer userCreationTimer;
-    
+
     public MetricsService(MeterRegistry meterRegistry) {
         this.userCreatedCounter = Counter.builder("users.created")
             .description("Number of users created")
@@ -185,11 +183,11 @@ public class MetricsService {
             .description("Time taken to create a user")
             .register(meterRegistry);
     }
-    
+
     public void recordUserCreated() {
         userCreatedCounter.increment();
     }
-    
+
     public void recordUserCreationTime(Duration duration) {
         userCreationTimer.record(duration);
     }
@@ -209,7 +207,7 @@ import jakarta.inject.Singleton;
 @Endpoint(id = "custom", defaultEnabled = true)
 @Singleton
 public class CustomEndpoint {
-    
+
     @Read
     public Map<String, Object> getInfo() {
         return Map.of(
@@ -273,7 +271,7 @@ import jakarta.inject.Singleton;
 @Endpoint(id = "info", defaultEnabled = true)
 @Singleton
 public class InfoEndpoint {
-    
+
     @Read
     public Map<String, Object> getInfo() {
         return Map.of(
@@ -317,11 +315,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class PrometheusMetricsService {
     private final PrometheusMeterRegistry prometheusRegistry;
-    
+
     public PrometheusMetricsService(PrometheusMeterRegistry prometheusRegistry) {
         this.prometheusRegistry = prometheusRegistry;
     }
-    
+
     public void recordCustomMetric(String name, double value) {
         prometheusRegistry.gauge(name, value);
     }
@@ -343,7 +341,7 @@ import org.slf4j.LoggerFactory;
 @Endpoint(id = "loggers", defaultEnabled = true)
 @Singleton
 public class LoggersEndpoint {
-    
+
     @Write
     public void setLoggerLevel(String name, String level) {
         Logger logger = (Logger) LoggerFactory.getLogger(name);
@@ -366,7 +364,7 @@ import java.lang.management.ThreadMXBean;
 @Endpoint(id = "threaddump", defaultEnabled = true)
 @Singleton
 public class ThreadDumpEndpoint {
-    
+
     @Read
     public Map<String, Object> getThreadDump() {
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
@@ -392,7 +390,7 @@ import java.util.Map;
 @Endpoint(id = "env", defaultEnabled = true)
 @Singleton
 public class EnvironmentEndpoint {
-    
+
     @Read
     public Map<String, Object> getEnvironment() {
         return Map.of(
@@ -417,11 +415,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class BeansEndpoint {
     private final ApplicationContext applicationContext;
-    
+
     public BeansEndpoint(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
-    
+
     @Read
     public Map<String, Object> getBeans() {
         return applicationContext.getBeanDefinitions().stream()
@@ -445,3 +443,11 @@ public class BeansEndpoint {
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
 - [**JMX** Documentation](https://docs.oracle.com/javase/tutorial/jmx/)
+
+## См. также
+
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]
+- [[micronaut-core|Micronaut: Core — Dependency Injection и Bean Management]]

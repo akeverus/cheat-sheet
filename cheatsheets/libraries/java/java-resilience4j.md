@@ -1792,7 +1792,13 @@ public class ResilienceHealthContributor implements HealthContributor {
 
 **Resilience4j** рекомендуется как основной выбор для современных **Java** приложений, требующих высокой надежности и **fault tolerance**.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-apache-httpclient|Apache HttpClient: Мощный HTTP клиент для Java]]
+- [[java-apache-poi|Apache POI]]
+- [[java-bean-validation|Bean Validation (JSR-380 / Jakarta Validation 3.0)]]
+- [[java-hikaricp|HikariCP: Высокопроизводительный Connection Pool]]
+- [[java-http-clients|HTTP-клиенты в Java]]

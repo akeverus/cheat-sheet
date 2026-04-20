@@ -101,7 +101,7 @@ public Optional<String> findLongestWordWithStream(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Optional.empty();
     }
-    
+
     return Arrays.stream(sentence.split("\\s"))
         .max(Comparator.comparingInt(String::length));
 }
@@ -114,16 +114,16 @@ public Optional<String> findLongestWordManual(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Optional.empty();
     }
-    
+
     String[] words = sentence.split("\\s");
     String longestWord = words[0];
-    
+
     for (String word : words) {
         if (word.length() > longestWord.length()) {
             longestWord = word;
         }
     }
-    
+
     return Optional.of(longestWord);
 }
 ```
@@ -139,14 +139,14 @@ public List<String> findLongestWords(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Collections.emptyList();
     }
-    
+
     String[] words = sentence.split("\\s");
-    
+
     int maxWordLength = Arrays.stream(words)
         .mapToInt(String::length)
         .max()
         .orElseThrow();
-    
+
     return Arrays.stream(words)
         .filter(word -> word.length() == maxWordLength)
         .collect(Collectors.toList());
@@ -178,23 +178,23 @@ public List<String> findLongestWordsAlternative(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Collections.emptyList();
     }
-    
+
     String[] words = sentence.split("\\s");
     int maxLength = 0;
-    
+
     for (String word : words) {
         if (word.length() > maxLength) {
             maxLength = word.length();
         }
     }
-    
+
     List<String> longestWords = new ArrayList<>();
     for (String word : words) {
         if (word.length() == maxLength) {
             longestWords.add(word);
         }
     }
-    
+
     return longestWords;
 }
 ```
@@ -206,11 +206,11 @@ public List<String> findLongestWordsSinglePass(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Collections.emptyList();
     }
-    
+
     String[] words = sentence.split("\\s");
     int maxLength = 0;
     List<String> longestWords = new ArrayList<>();
-    
+
     for (String word : words) {
         if (word.length() > maxLength) {
             maxLength = word.length();
@@ -220,7 +220,7 @@ public List<String> findLongestWordsSinglePass(String sentence) {
             longestWords.add(word);
         }
     }
-    
+
     return longestWords;
 }
 ```
@@ -236,7 +236,7 @@ fun findLongestWordK(sentence: String?): String? {
     if (sentence.isNullOrBlank()) {
         return null
     }
-    
+
     return sentence.trim()
         .split("\\s+".toRegex())
         .maxByOrNull { it.length }
@@ -252,7 +252,7 @@ fun findLongestWordStreamK(sentence: String?): String? {
     if (sentence.isNullOrBlank()) {
         return null
     }
-    
+
     return sentence.split("\\s+".toRegex())
         .maxByOrNull { it.length }
 }
@@ -265,16 +265,16 @@ fun findLongestWordManualK(sentence: String?): String? {
     if (sentence.isNullOrBlank()) {
         return null
     }
-    
+
     val words = sentence.trim().split("\\s+".toRegex())
     var longestWord = words[0]
-    
+
     for (word in words) {
         if (word.length > longestWord.length) {
             longestWord = word
         }
     }
-    
+
     return longestWord
 }
 ```
@@ -286,10 +286,10 @@ fun findLongestWordsK(sentence: String?): List<String> {
     if (sentence.isNullOrBlank()) {
         return emptyList()
     }
-    
+
     val words = sentence.trim().split("\\s+".toRegex())
     val maxLength = words.maxOfOrNull { it.length } ?: return emptyList()
-    
+
     return words.filter { it.length == maxLength }
 }
 ```
@@ -301,11 +301,11 @@ fun findLongestWordsSinglePassK(sentence: String?): List<String> {
     if (sentence.isNullOrBlank()) {
         return emptyList()
     }
-    
+
     val words = sentence.trim().split("\\s+".toRegex())
     var maxLength = 0
     val longestWords = mutableListOf<String>()
-    
+
     for (word in words) {
         when {
             word.length > maxLength -> {
@@ -316,7 +316,7 @@ fun findLongestWordsSinglePassK(sentence: String?): List<String> {
             word.length == maxLength -> longestWords.add(word)
         }
     }
-    
+
     return longestWords
 }
 ```
@@ -328,10 +328,10 @@ fun findLongestWordsFunctionalK(sentence: String?): List<String> {
     if (sentence.isNullOrBlank()) {
         return emptyList()
     }
-    
+
     val words = sentence.trim().split("\\s+".toRegex())
     val maxLength = words.maxOfOrNull { it.length } ?: 0
-    
+
     return words.filter { it.length == maxLength }
 }
 ```
@@ -343,7 +343,7 @@ fun findLongestWordWithPunctuationK(sentence: String?): String? {
     if (sentence.isNullOrBlank()) {
         return null
     }
-    
+
     val words = sentence.split("[\\p{Punct}\\s]+".toRegex())
     return words.filter { it.isNotEmpty() }
         .maxByOrNull { it.length }
@@ -357,7 +357,7 @@ fun findWordsLongerThanK(sentence: String?, minLength: Int): List<String> {
     if (sentence.isNullOrBlank()) {
         return emptyList()
     }
-    
+
     return sentence.split("\\s+".toRegex())
         .filter { it.length >= minLength }
 }
@@ -369,16 +369,16 @@ fun findWordsLongerThanK(sentence: String?, minLength: Int): List<String> {
 fun main() {
     val sentence1 = "This is a phrase with words"
     val sentence2 = "Baeldung is another word of size eight in this sentence"
-    
+
     // Одно самое длинное слово
     println(findLongestWordK(sentence1)) // "phrase"
-    
+
     // Все самые длинные слова
     println(findLongestWordsK(sentence2)) // ["Baeldung", "sentence"]
-    
+
     // Функциональный стиль
     println(findLongestWordsFunctionalK(sentence2)) // ["Baeldung", "sentence"]
-    
+
     // С одним проходом
     println(findLongestWordsSinglePassK(sentence2)) // ["Baeldung", "sentence"]
 }
@@ -393,7 +393,7 @@ public Optional<String> findLongestWordWithPunctuation(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Optional.empty();
     }
-    
+
     String[] words = sentence.split("[\\p{Punct}\\s]+");
     return Arrays.stream(words)
         .filter(word -> !word.isEmpty())
@@ -408,7 +408,7 @@ public List<String> findWordsLongerThan(String sentence, int minLength) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Collections.emptyList();
     }
-    
+
     return Arrays.stream(sentence.split("\\s"))
         .filter(word -> word.length() >= minLength)
         .collect(Collectors.toList());
@@ -422,23 +422,23 @@ public Map<String, Integer> findLongestWordsWithIndices(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Collections.emptyMap();
     }
-    
+
     String[] words = sentence.split("\\s");
     int maxLength = Arrays.stream(words)
         .mapToInt(String::length)
         .max()
         .orElse(0);
-    
+
     Map<String, Integer> result = new LinkedHashMap<>();
     int index = 0;
-    
+
     for (String word : words) {
         if (word.length() == maxLength) {
             result.put(word, index);
         }
         index += word.length() + 1; // +1 for space
     }
-    
+
     return result;
 }
 ```
@@ -470,7 +470,7 @@ public Optional<String> findLongestWordNoRepeats(String sentence) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Optional.empty();
     }
-    
+
     return Arrays.stream(sentence.split("\\s"))
         .filter(word -> word.chars().distinct().count() == word.length())
         .max(Comparator.comparingInt(String::length));
@@ -484,7 +484,7 @@ public Optional<String> findLongestWordContaining(String sentence, char ch) {
     if (sentence == null || sentence.trim().isEmpty()) {
         return Optional.empty();
     }
-    
+
     return Arrays.stream(sentence.split("\\s"))
         .filter(word -> word.indexOf(ch) != -1)
         .max(Comparator.comparingInt(String::length));

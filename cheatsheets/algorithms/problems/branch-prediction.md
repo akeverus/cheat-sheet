@@ -41,7 +41,7 @@ updated: "2026-02-11"
 
 ## Обзор
 
-Предсказание ветвления - интересная концепция в компьютерных науках, которая может сильно повлиять на производительность наших приложений. Тем не менее, как правило, это не совсем понятно, и большинство разработчиков уделяют этому очень мало внимания.
+Предсказание ветвления — интересная концепция в компьютерных науках, которая может сильно повлиять на производительность наших приложений. Тем не менее, как правило, это не совсем понятно, и большинство разработчиков уделяют этому очень мало внимания.
 
 В этой статье мы собираемся подробно изучить, что это такое, как оно влияет на наше программное обеспечение и что мы можем с этим поделать.
 
@@ -88,9 +88,9 @@ a += 3;
 
 ## Что такое предсказание ветвления?
 
-Предсказание ветвления - это усовершенствование вышеописанного, когда наш компьютер пытается предсказать, в каком направлении пойдет ветвь, а затем действовать соответствующим образом.
+Предсказание ветвления — это усовершенствование вышеописанного, когда наш компьютер пытается предсказать, в каком направлении пойдет ветвь, а затем действовать соответствующим образом.
 
-В приведённом выше примере процессор может предсказать, что `if (a < 10)` скорее всего будет true, и поэтому он будет действовать так, как если бы следующей выполнялась инструкция `a += 2`. Это улучшает производительность программы - теперь она занимает девять тактов, а не 11, поэтому она на 19% быстрее.
+В приведённом выше примере процессор может предсказать, что `if (a < 10)` скорее всего будет true, и поэтому он будет действовать так, как если бы следующей выполнялась инструкция `a += 2`. Это улучшает производительность программы — теперь она занимает девять тактов, а не 11, поэтому она на 19% быстрее.
 
 Однако это не без риска. Если предсказание ветвления ошибается, то оно начнет ставить в очередь инструкции, которые не должны выполняться. Если это произойдет, то компьютеру нужно будет их выбросить и начать заново.
 
@@ -124,36 +124,36 @@ import java.util.*;
 import java.util.stream.*;
 
 public class BranchPredictionExample {
-    
+
     public static void main(String[] args) {
         int top = 10_000_000;
-        
+
         // Создаем отсортированный список
         List<Long> sortedNumbers = LongStream.range(0, top)
             .boxed()
             .collect(Collectors.toList());
-        
+
         // Создаем перемешанный список
         List<Long> shuffledNumbers = new ArrayList<>(sortedNumbers);
         Collections.shuffle(shuffledNumbers);
-        
+
         long cutoff = top / 2;
-        
+
         // Тестируем отсортированный список
         long start = System.currentTimeMillis();
         long sortedCount = countLessThan(sortedNumbers, cutoff);
         long sortedTime = System.currentTimeMillis() - start;
-        
+
         // Тестируем перемешанный список
         start = System.currentTimeMillis();
         long shuffledCount = countLessThan(shuffledNumbers, cutoff);
         long shuffledTime = System.currentTimeMillis() - start;
-        
+
         System.out.println("Отсортированный список: " + sortedTime + " мс, count = " + sortedCount);
         System.out.println("Перемешанный список: " + shuffledTime + " мс, count = " + shuffledCount);
         System.out.println("Разница: " + (shuffledTime / (double) sortedTime) + "x медленнее");
     }
-    
+
     private static long countLessThan(List<Long> numbers, long cutoff) {
         long count = 0;
         for (Long number : numbers) {
@@ -184,9 +184,9 @@ public void testConditionOrder(List<Long> numbers, double cutoffPercentage) {
     long cutoff = (long) (numbers.size() * cutoffPercentage);
     long low = 0;
     long high = 0;
-    
+
     long start = System.currentTimeMillis();
-    
+
     for (Long number : numbers) {
         if (number < cutoff) {
             ++low;
@@ -194,7 +194,7 @@ public void testConditionOrder(List<Long> numbers, double cutoffPercentage) {
             ++high;
         }
     }
-    
+
     long end = System.currentTimeMillis();
     System.out.println("Counted " + low + "/" + high + " numbers in " + (end - start) + "ms");
 }
@@ -206,30 +206,30 @@ public void testConditionOrder(List<Long> numbers, double cutoffPercentage) {
 public class ConditionReplacement {
     private static final int TOP = 10_000_000;
     private static final double FRACTION = 0.5;
-    
+
     public static void main(String[] args) {
         long[] first = LongStream.range(0, TOP)
             .map(n -> Math.random() < FRACTION ? 0 : n)
             .toArray();
-        
+
         long[] second = LongStream.range(0, TOP)
             .map(n -> Math.random() < FRACTION ? 0 : n)
             .toArray();
-        
+
         // Отдельные условия
         long start = System.currentTimeMillis();
         long count1 = countWithSeparateConditions(first, second);
         long time1 = System.currentTimeMillis() - start;
-        
+
         // Одно условие с умножением
         start = System.currentTimeMillis();
         long count2 = countWithMultiplication(first, second);
         long time2 = System.currentTimeMillis() - start;
-        
+
         System.out.println("Отдельные условия: " + time1 + " мс, count = " + count1);
         System.out.println("Умножение: " + time2 + " мс, count = " + count2);
     }
-    
+
     private static long countWithSeparateConditions(long[] first, long[] second) {
         long count = 0;
         for (int i = 0; i < TOP; i++) {
@@ -239,7 +239,7 @@ public class ConditionReplacement {
         }
         return count;
     }
-    
+
     private static long countWithMultiplication(long[] first, long[] second) {
         long count = 0;
         for (int i = 0; i < TOP; i++) {
@@ -269,27 +269,27 @@ fun countLessThanK(numbers: List<Long>, cutoff: Long): Long {
 
 fun main() {
     val top = 10_000_000
-    
+
     // Создаем отсортированный список
     val sortedNumbers = (0L until top).toList()
-    
+
     // Создаем перемешанный список
     val shuffledNumbers = sortedNumbers.shuffled()
-    
+
     val cutoff = top / 2
-    
+
     // Тестируем отсортированный список
     val sortedTime = measureTimeMillis {
         val sortedCount = countLessThanK(sortedNumbers, cutoff)
         println("Отсортированный список: count = $sortedCount")
     }
-    
+
     // Тестируем перемешанный список
     val shuffledTime = measureTimeMillis {
         val shuffledCount = countLessThanK(shuffledNumbers, cutoff)
         println("Перемешанный список: count = $shuffledCount")
     }
-    
+
     println("Отсортированный список: $sortedTime мс")
     println("Перемешанный список: $shuffledTime мс")
     println("Разница: ${shuffledTime.toDouble() / sortedTime}x медленнее")

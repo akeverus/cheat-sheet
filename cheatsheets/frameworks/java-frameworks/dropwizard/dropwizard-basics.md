@@ -99,7 +99,6 @@ related: ["spring/spring-boot.md", "micronaut/micronaut-basics.md"]
 - **Logback**: логирование
 - **Hibernate Validator**: валидация
 
----
 
 ## Установка и настройка
 
@@ -138,7 +137,6 @@ project/
 └── pom.xml
 ```
 
----
 
 ## Базовая архитектура
 
@@ -286,7 +284,6 @@ public class Saying {
 }
 ```
 
----
 
 ## Запуск приложения
 
@@ -302,7 +299,6 @@ java -jar target/hello-world-1.0.0.jar server config.yml
 - `check`: проверка конфигурации
 - `db migrate`: миграция БД (если подключена)
 
----
 
 ## Health Checks
 
@@ -345,7 +341,6 @@ public void run(HelloWorldConfiguration configuration, Environment environment) 
 curl http://localhost:8080/healthcheck
 ```
 
----
 
 ## Метрики
 
@@ -383,7 +378,6 @@ public class MetricsExample {
 curl http://localhost:8080/metrics
 ```
 
----
 
 ## Логирование
 
@@ -421,7 +415,6 @@ logging:
       archivedFileCount: 5
 ```
 
----
 
 ## Работа с БД
 
@@ -482,7 +475,6 @@ public class HibernateExample extends Application<HelloWorldConfiguration> {
 }
 ```
 
----
 
 ## REST API расширенные возможности
 
@@ -554,7 +546,6 @@ public class UserNotFoundExceptionMapper implements ExceptionMapper<UserNotFound
 env.jersey().register(new UserNotFoundExceptionMapper());
 ```
 
----
 
 ## Фильтры и Interceptors
 
@@ -575,7 +566,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 }
 ```
 
----
 
 ## Тестирование
 
@@ -623,7 +613,6 @@ public class IntegrationTest {
 }
 ```
 
----
 
 ## Аутентификация
 
@@ -661,7 +650,6 @@ env.jersey().register(new AuthDynamicFeature(
         .buildAuthFilter()));
 ```
 
----
 
 ## Развёртывание
 
@@ -698,7 +686,6 @@ spec:
               key: db-host
 ```
 
----
 
 ## Production Deployment
 
@@ -720,7 +707,6 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 }));
 ```
 
----
 
 ## Лучшие практики
 
@@ -732,7 +718,6 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 6. **Валидация**: применяйте Bean Validation на входных DTO
 7. **Метрики**: добавляйте таймеры для критичных операций
 
----
 
 ## Решение проблем
 
@@ -787,7 +772,6 @@ database:
 - Проверьте приоритет: `@Priority(1)` для кастомных мапперов
 - Для исключений Jetty используйте `ErrorHandler` в `Environment`
 
----
 
 ## Заключение
 

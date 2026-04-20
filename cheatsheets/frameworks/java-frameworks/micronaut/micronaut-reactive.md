@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-data.md"]
 ---
 
-# Micronaut: Reactive Programming - RxJava, Reactor и Reactive Streams
-
-
+# Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 ## Содержание
 
-- [Micronaut: Reactive Programming - RxJava, Reactor и Reactive Streams](#micronaut-reactive-programming-rxjava-reactor-и-reactive-streams)
+- [Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams](#micronaut-reactive-programming-rxjava-reactor-и-reactive-streams)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Reactive Streams](#reactive-streams)
@@ -94,7 +92,7 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 ### Основы
 
-**Reactive Streams** - это стандарт для асинхронной обработки потоков данных с необязательной обратной связью (**backpressure**).
+**Reactive Streams** — это стандарт для асинхронной обработки потоков данных с необязательной обратной связью (**backpressure**).
 
 ```java
 import org.reactivestreams.Publisher;
@@ -102,12 +100,12 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 public class ReactiveStreamsExample {
-    
+
     public Publisher<String> createPublisher() {
         return subscriber -> {
             subscriber.onSubscribe(new Subscription() {
                 private boolean cancelled = false;
-                
+
                 @Override
                 public void request(long n) {
                     if (!cancelled && n > 0) {
@@ -117,7 +115,7 @@ public class ReactiveStreamsExample {
                         subscriber.onComplete();
                     }
                 }
-                
+
                 @Override
                 public void cancel() {
                     cancelled = true;
@@ -153,23 +151,23 @@ import io.reactivex.rxjava3.core.Observable;
 @Controller("/api/users")
 public class UserController {
     private final UserService userService;
-    
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
-    
+
     @Get("/{id}")
     public Single<User> getUser(Long id) {
         return Single.fromCallable(() -> userService.findById(id))
             .subscribeOn(Schedulers.io());
     }
-    
+
     @Get
     public Observable<User> getAllUsers() {
         return Observable.fromIterable(userService.findAll())
             .subscribeOn(Schedulers.io());
     }
-    
+
     @Get("/stream")
     public Observable<User> streamUsers() {
         return Observable.interval(1, TimeUnit.SECONDS)
@@ -192,26 +190,26 @@ import jakarta.inject.Singleton;
 public class UserService {
     private final UserRepository userRepository;
     private final EmailService emailService;
-    
+
     public UserService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.emailService = emailService;
     }
-    
+
     public Single<User> createUser(User user) {
         return Single.fromCallable(() -> userRepository.save(user))
             .subscribeOn(Schedulers.io())
-            .flatMap(savedUser -> 
+            .flatMap(savedUser ->
                 emailService.sendWelcomeEmail(savedUser)
                     .map(v -> savedUser)
             );
     }
-    
+
     public Observable<User> findAllUsers() {
         return Observable.fromIterable(userRepository.findAll())
             .subscribeOn(Schedulers.io());
     }
-    
+
     public Single<List<User>> findUsersByAge(Integer minAge) {
         return Observable.fromIterable(userRepository.findAll())
             .filter(user -> user.getAge() >= minAge)
@@ -226,11 +224,11 @@ public class UserService {
 ```java
 @Singleton
 public class UserService {
-    
+
     public Single<User> getUser(Long id) {
         return Single.fromCallable(() -> userRepository.findById(id))
             .subscribeOn(Schedulers.io())
-            .flatMap(optional -> 
+            .flatMap(optional ->
                 optional.map(Single::just)
                     .orElse(Single.error(new UserNotFoundException(id)))
             )
@@ -241,7 +239,7 @@ public class UserService {
                 return Single.error(new ServiceException("Failed to get user", throwable));
             });
     }
-    
+
     public Observable<User> streamUsers() {
         return Observable.fromIterable(userRepository.findAll())
             .subscribeOn(Schedulers.io())
@@ -274,23 +272,23 @@ import reactor.core.publisher.Flux;
 @Controller("/api/users")
 public class UserController {
     private final UserService userService;
-    
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
-    
+
     @Get("/{id}")
     public Mono<User> getUser(Long id) {
         return Mono.fromCallable(() -> userService.findById(id))
             .subscribeOn(Schedulers.boundedElastic());
     }
-    
+
     @Get
     public Flux<User> getAllUsers() {
         return Flux.fromIterable(userService.findAll())
             .subscribeOn(Schedulers.boundedElastic());
     }
-    
+
     @Get("/stream")
     public Flux<User> streamUsers() {
         return Flux.interval(Duration.ofSeconds(1))
@@ -313,26 +311,26 @@ import jakarta.inject.Singleton;
 public class UserService {
     private final UserRepository userRepository;
     private final EmailService emailService;
-    
+
     public UserService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
         this.emailService = emailService;
     }
-    
+
     public Mono<User> createUser(User user) {
         return Mono.fromCallable(() -> userRepository.save(user))
             .subscribeOn(Schedulers.boundedElastic())
-            .flatMap(savedUser -> 
+            .flatMap(savedUser ->
                 emailService.sendWelcomeEmail(savedUser)
                     .thenReturn(savedUser)
             );
     }
-    
+
     public Flux<User> findAllUsers() {
         return Flux.fromIterable(userRepository.findAll())
             .subscribeOn(Schedulers.boundedElastic());
     }
-    
+
     public Mono<List<User>> findUsersByAge(Integer minAge) {
         return Flux.fromIterable(userRepository.findAll())
             .filter(user -> user.getAge() >= minAge)
@@ -365,10 +363,10 @@ import io.reactivex.rxjava3.core.Single;
 
 @Client("https://api.example.com")
 public interface ExternalApiClient {
-    
+
     @Get("/users/{id}")
     Single<User> getUser(Long id);
-    
+
     @Get("/users")
     Observable<User> getAllUsers();
 }
@@ -380,11 +378,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class UserService {
     private final ExternalApiClient apiClient;
-    
+
     public UserService(ExternalApiClient apiClient) {
         this.apiClient = apiClient;
     }
-    
+
     public Single<User> getUserFromExternalApi(Long id) {
         return apiClient.getUser(id)
             .timeout(5, TimeUnit.SECONDS)
@@ -426,13 +424,13 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
 @Repository
-public interface UserRepository 
+public interface UserRepository
         extends ReactiveStreamsRepository<User, Long> {
-    
+
     Mono<User> findByEmail(String email);
-    
+
     Flux<User> findByAgeGreaterThan(Integer age);
-    
+
     Mono<Long> countByAgeGreaterThan(Integer age);
 }
 ```
@@ -447,23 +445,23 @@ import reactor.core.publisher.Flux;
 @Singleton
 public class UserService {
     private final UserRepository userRepository;
-    
+
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-    
+
     public Mono<User> createUser(User user) {
         return userRepository.save(user);
     }
-    
+
     public Mono<User> getUser(Long id) {
         return userRepository.findById(id);
     }
-    
+
     public Flux<User> getAllUsers() {
         return userRepository.findAll();
     }
-    
+
     public Flux<User> findAdults() {
         return userRepository.findByAgeGreaterThan(17);
     }
@@ -560,11 +558,11 @@ Mono<Optional<User>> findUser(Long id);
 ```java
 @Singleton
 public class UserService {
-    
+
     public Mono<User> getUserWithOrders(Long userId) {
         Mono<User> userMono = userRepository.findById(userId);
         Flux<Order> ordersFlux = orderRepository.findByUserId(userId);
-        
+
         return userMono.zipWith(ordersFlux.collectList())
             .map(tuple -> {
                 User user = tuple.getT1();
@@ -573,10 +571,10 @@ public class UserService {
                 return user;
             });
     }
-    
+
     public Flux<User> getUsersWithParallelProcessing() {
         return userRepository.findAll()
-            .flatMap(user -> 
+            .flatMap(user ->
                 Mono.fromCallable(() -> enrichUser(user))
                     .subscribeOn(Schedulers.boundedElastic())
             )
@@ -592,17 +590,17 @@ public class UserService {
 ```java
 @Singleton
 public class ResilientUserService {
-    
+
     public Mono<User> getUserWithRetry(Long id) {
         return userRepository.findById(id)
             .retry(3)
             .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)))
-            .onErrorResume(UserNotFoundException.class, 
+            .onErrorResume(UserNotFoundException.class,
                 ex -> Mono.just(createDefaultUser()))
             .onErrorResume(TimeoutException.class,
                 ex -> getUserFromCache(id));
     }
-    
+
     public Flux<User> getAllUsersWithCircuitBreaker() {
         return Flux.fromIterable(userRepository.findAll())
             .transformDeferred(CircuitBreakerOperator.of(circuitBreaker))
@@ -617,7 +615,7 @@ public class ResilientUserService {
 ```java
 @Singleton
 public class BackpressureService {
-    
+
     public Flux<User> streamUsersWithBackpressure() {
         return Flux.create(emitter -> {
             userRepository.findAll()
@@ -628,13 +626,13 @@ public class BackpressureService {
                 );
         }, FluxSink.OverflowStrategy.BUFFER);
     }
-    
+
     public Flux<User> streamUsersWithDrop() {
         return Flux.create(emitter -> {
             // Drop strategy - пропускает элементы при переполнении
         }, FluxSink.OverflowStrategy.DROP);
     }
-    
+
     public Flux<User> streamUsersWithLatest() {
         return Flux.create(emitter -> {
             // Latest strategy - сохраняет только последний элемент
@@ -650,7 +648,7 @@ public class BackpressureService {
 ```java
 @Singleton
 public class TransformationService {
-    
+
     public Flux<String> transformUsers(Flux<User> users) {
         return users
             .map(user -> user.getName().toUpperCase())
@@ -658,10 +656,10 @@ public class TransformationService {
             .distinct()
             .sort();
     }
-    
+
     public Mono<User> enrichUser(Mono<User> userMono) {
         return userMono
-            .flatMap(user -> 
+            .flatMap(user ->
                 Mono.zip(
                     getProfile(user.getId()),
                     getOrders(user.getId())
@@ -681,12 +679,12 @@ public class TransformationService {
 ```java
 @Singleton
 public class CombiningService {
-    
+
     public Flux<User> combineUsers(Flux<User> users1, Flux<User> users2) {
         return Flux.merge(users1, users2)
             .distinct(User::getId);
     }
-    
+
     public Flux<User> zipUsers(Flux<User> users1, Flux<User> users2) {
         return Flux.zip(users1, users2)
             .map(tuple -> {
@@ -696,7 +694,7 @@ public class CombiningService {
                 return user1;
             });
     }
-    
+
     public Flux<User> concatUsers(Flux<User> users1, Flux<User> users2) {
         return Flux.concat(users1, users2);
     }
@@ -708,14 +706,14 @@ public class CombiningService {
 ```java
 @Singleton
 public class FilteringService {
-    
+
     public Flux<User> filterAdults(Flux<User> users) {
         return users
             .filter(user -> user.getAge() >= 18)
             .take(100)
             .skip(10);
     }
-    
+
     public Flux<User> distinctUsers(Flux<User> users) {
         return users
             .distinct(User::getEmail)
@@ -729,7 +727,7 @@ public class FilteringService {
 ```java
 @Singleton
 public class ErrorHandlingService {
-    
+
     public Flux<User> handleErrors(Flux<User> users) {
         return users
             .onErrorResume(error -> {
@@ -740,11 +738,11 @@ public class ErrorHandlingService {
             .retry(3)
             .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1)));
     }
-    
+
     public Mono<User> handleTimeout(Mono<User> userMono) {
         return userMono
             .timeout(Duration.ofSeconds(5))
-            .onErrorResume(TimeoutException.class, ex -> 
+            .onErrorResume(TimeoutException.class, ex ->
                 getUserFromCache()
             );
     }
@@ -756,14 +754,14 @@ public class ErrorHandlingService {
 ```java
 @Singleton
 public class BufferingService {
-    
+
     public Flux<List<User>> bufferUsers(Flux<User> users) {
         return users
             .buffer(10)
             .buffer(Duration.ofSeconds(1))
             .bufferTimeout(10, Duration.ofSeconds(1));
     }
-    
+
     public Flux<Flux<User>> windowUsers(Flux<User> users) {
         return users
             .window(10)
@@ -779,25 +777,25 @@ public class BufferingService {
 ```java
 @MicronautTest
 public class ReactiveTestingTest {
-    
+
     @Inject
     UserService userService;
-    
+
     @Test
     void testReactiveStream() {
         Flux<User> users = userService.findAllUsers();
-        
+
         StepVerifier.create(users)
             .expectNextCount(10)
             .expectNextMatches(user -> user.getAge() >= 18)
             .expectComplete()
             .verify(Duration.ofSeconds(5));
     }
-    
+
     @Test
     void testErrorHandling() {
         Mono<User> userMono = userService.getUser(999L);
-        
+
         StepVerifier.create(userMono)
             .expectError(UserNotFoundException.class)
             .verify();
@@ -816,13 +814,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class SchedulerService {
-    
+
     public Mono<User> getUserWithScheduler(Long id) {
         return Mono.fromCallable(() -> userRepository.findById(id))
             .subscribeOn(Schedulers.boundedElastic())
             .map(optional -> optional.orElseThrow());
     }
-    
+
     public Flux<User> processUsersWithParallelScheduler(Flux<User> users) {
         return users
             .parallel(4)
@@ -830,7 +828,7 @@ public class SchedulerService {
             .map(this::processUser)
             .sequential();
     }
-    
+
     private User processUser(User user) {
         // Обработка пользователя
         return user;
@@ -845,7 +843,7 @@ public class SchedulerService {
 ```java
 @Singleton
 public class ColdPublisherService {
-    
+
     public Flux<User> getColdUserStream() {
         return Flux.fromIterable(userRepository.findAll())
             .delayElements(Duration.ofSeconds(1));
@@ -862,11 +860,11 @@ import reactor.core.publisher.Sinks;
 @Singleton
 public class HotPublisherService {
     private final Sinks.Many<User> userSink = Sinks.many().multicast().onBackpressureBuffer();
-    
+
     public Flux<User> getUserStream() {
         return userSink.asFlux();
     }
-    
+
     public void emitUser(User user) {
         userSink.tryEmitNext(user);
     }
@@ -884,18 +882,18 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ReactiveTestService {
-    
+
     public Flux<User> getUsers() {
         return Flux.just(
             new User("John", "john@example.com"),
             new User("Jane", "jane@example.com")
         );
     }
-    
+
     @Test
     void testUserStream() {
         Flux<User> users = getUsers();
-        
+
         StepVerifier.create(users)
             .expectNextMatches(user -> user.getName().equals("John"))
             .expectNextMatches(user -> user.getName().equals("Jane"))
@@ -916,12 +914,12 @@ import java.time.Duration;
 
 @Singleton
 public class ErrorRecoveryService {
-    
+
     public Flux<User> getUsersWithRetry() {
         return userRepository.findAll()
             .retryWhen(Retry.backoff(3, Duration.ofSeconds(1))
                 .maxBackoff(Duration.ofSeconds(10))
-                .doBeforeRetry(retrySignal -> 
+                .doBeforeRetry(retrySignal ->
                     log.warn("Retrying after error: {}", retrySignal.failure())))
             .onErrorResume(error -> {
                 log.error("Failed to get users after retries", error);
@@ -930,9 +928,6 @@ public class ErrorRecoveryService {
     }
 }
 ```
-
-
-
 
 ## Заключение
 
@@ -945,3 +940,11 @@ public class ErrorRecoveryService {
 - [Project **Reactor** Documentation](https://projectreactor.io/docs/core/release/reference/)
 - [**Reactive Streams** Specification](https://www.reactive-streams.org/)
 - [**Reactor Reference** Guide](https://projectreactor.io/docs/core/release/reference/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

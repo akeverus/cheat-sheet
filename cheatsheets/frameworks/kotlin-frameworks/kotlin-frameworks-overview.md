@@ -41,7 +41,6 @@ updated: "2026-02-11"
 - [Глоссарий](#глоссарий)
 - [Заключение](#заключение)
 
----
 
 ## Введение
 
@@ -49,7 +48,6 @@ updated: "2026-02-11"
 
 **Ключевые понятия:** **Ktor**, **Exposed**, **coroutines**, **serialization**, **Koin**, **Spring Boot**.
 
----
 
 ## Ktor
 
@@ -83,13 +81,11 @@ fun main() {
 
 **Особенности:** корутины из коробки, плагинная архитектура, **Kotlin**-first **API**.
 
----
 
 ## Spring с Kotlin
 
 **Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (**spring-boot-starter-webflux**), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (**Security**, **Data**, **Cloud**) и пишут код на **Kotlin**. См. [Spring](../java-frameworks/spring/README.md) и [Kotlin Spring](../../languages/kotlin/kotlin-spring.md).
 
----
 
 ## Exposed
 
@@ -109,19 +105,16 @@ TransactionManager.default.exec { Users.selectAll().toList() }
 TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 ```
 
----
 
 ## Kotlinx библиотеки
 
 **kotlinx.coroutines** — корутины, `async`/`await`, `Flow`. **kotlinx.serialization** — сериализация в **JSON** (и другие форматы) на основе **Kotlin**-классов без рефлексии в runtime. **kotlinx-datetime** — дата/время. Эти библиотеки естественно сочетаются с **Ktor** и нативным **Kotlin**-стеком.
 
----
 
 ## Koin и DI
 
 **Koin** — лёгкий **dependency injection** для **Kotlin**: модули, `single`, `factory`, `viewModel`. Удобен с **Ktor** и **Android**. Для **Spring** используют встроенный **DI** контейнер.
 
----
 
 ## Сравнение и выбор
 
@@ -131,7 +124,6 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 | **Spring Boot** | Enterprise, готовые модули (**Security**, **Data**, **Cloud**), большая команда |
 | **Exposed** | Простая работа с БД без **JPA**, **DSL** |
 
----
 
 ## Лучшие практики
 
@@ -140,7 +132,6 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 - **Exposed**: использовать транзакции и миграции (например, **Flyway**).
 - **kotlinx.serialization**: задавать имена полей и стратегии по умолчанию для **API**.
 
----
 
 ## Решение проблем
 
@@ -150,7 +141,6 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 | **Exposed** исключения | Проверить драйвер БД и строку подключения |
 | Корутины не отменяются | Использовать `CoroutineScope` с `Job` и отмена при завершении |
 
----
 
 ## Частые вопросы
 
@@ -158,7 +148,6 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 
 **Exposed vs JPA?** **Exposed** — типобезопасный **DSL**, меньше «магии». **JPA** — стандарт, **Hibernate**, сложные маппинги. Для простых **CRUD** и **Kotlin** часто выбирают **Exposed**.
 
----
 
 ## Глоссарий
 
@@ -171,11 +160,9 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 | **Koin** | Лёгкий **DI** контейнер для **Kotlin** |
 | **Content Negotiation** | Согласование формата ответа (**JSON**, **XML**) |
 
----
 
 ## Заключение
 
 **Kotlin**-экосистема предлагает **Ktor** для легковесных асинхронных приложений и **Spring** для enterprise. **Exposed**, **kotlinx** и **Koin** дополняют стек. См. [Frameworks README](../README.md) и [Kotlin (languages)](../../languages/kotlin/README.md).
 
----
 

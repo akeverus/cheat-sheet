@@ -119,9 +119,9 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 - [Принципы SOLID](#принципы-solid)
 - [Type System (Система типов)](#type-system-система-типов)
   - [Базовые типы](#базовые-типы)
-  - [Any - корневой тип](#any-корневой-тип)
-  - [Unit - тип возвращаемого значения](#unit-тип-возвращаемого-значения)
-  - [Nothing - тип без значений](#nothing-тип-без-значений)
+  - [Any — корневой тип](#any-корневой-тип)
+  - [Unit — тип возвращаемого значения](#unit-тип-возвращаемого-значения)
+  - [Nothing — тип без значений](#nothing-тип-без-значений)
   - [Nullable типы](#nullable-типы)
   - [Smart Casts (Умные приведения)](#smart-casts-умные-приведения)
 - [Type Aliases (Псевдонимы типов)](#type-aliases-псевдонимы-типов)
@@ -188,10 +188,10 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
   - [Generic Functions (Generic функции)](#generic-functions-generic-функции)
   - [Type Erasure (Стирание типов)](#type-erasure-стирание-типов)
 - [Расширенное покрытие Reflection](#расширенное-покрытие-reflection)
-  - [KClass - информация о классе](#kclass-информация-о-классе)
-  - [KFunction - информация о функциях](#kfunction-информация-о-функциях)
-  - [KProperty - информация о свойствах](#kproperty-информация-о-свойствах)
-  - [KType - информация о типах](#ktype-информация-о-типах)
+  - [KClass — информация о классе](#kclass-информация-о-классе)
+  - [KFunction — информация о функциях](#kfunction-информация-о-функциях)
+  - [KProperty — информация о свойствах](#kproperty-информация-о-свойствах)
+  - [KType — информация о типах](#ktype-информация-о-типах)
   - [Аннотации через Reflection](#аннотации-через-reflection)
   - [Вызов функций через Reflection](#вызов-функций-через-reflection)
   - [Работа с конструкторами](#работа-с-конструкторами)
@@ -289,7 +289,7 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 
 ## Введение в Kotlin
 
-**Kotlin** - это статически типизированный язык программирования, разработанный компанией **JetBrains**. Он полностью совместим с **Java** и предназначен для создания надежного, лаконичного и безопасного кода.
+**Kotlin** — это статически типизированный язык программирования, разработанный компанией **JetBrains**. Он полностью совместим с **Java** и предназначен для создания надежного, лаконичного и безопасного кода.
 
 ### Основные особенности **Kotlin**
 
@@ -1877,7 +1877,7 @@ data class Person(var name: String, var age: Int) {
 
 Навигатор ниже сохранён для обратной совместимости со старыми якорями. Для первичного чтения используйте основное оглавление в начале файла.
 
-[**Kotlin Basics** - Полное руководство](#kotlin-basics-полное-руководство)
+[**Kotlin Basics** — Полное руководство](#kotlin-basics-полное-руководство)
 [Введение в **Kotlin**](#введение-в-kotlin)
   [Основные особенности **Kotlin**](#основные-особенности-kotlin)
   [История версий **Kotlin**](#история-версий-kotlin)
@@ -1972,9 +1972,9 @@ data class Person(var name: String, var age: Int) {
 [Принципы **SOLID**](#принципы-solid)
 [**Type System** (**Система типов**)](#type-system-система-типов)
   [Базовые типы](#базовые-типы)
-  [**Any** - корневой тип](#any-корневой-тип)
-  [**Unit** - тип возвращаемого значения](#unit-тип-возвращаемого-значения)
-  [**Nothing** - тип без значений](#nothing-тип-без-значений)
+  [**Any** — корневой тип](#any-корневой-тип)
+  [**Unit** — тип возвращаемого значения](#unit-тип-возвращаемого-значения)
+  [**Nothing** — тип без значений](#nothing-тип-без-значений)
   [**Smart Casts** (**Умные приведения**)](#smart-casts-умные-приведения)
 [**Type Aliases** (**Псевдонимы типов**)](#type-aliases-псевдонимы-типов)
   [Базовое использование](#базовое-использование)
@@ -2034,18 +2034,18 @@ data class Person(var name: String, var age: Int) {
 [Расширенное покрытие **Generics**](#расширенное-покрытие-generics)
   [**Variance** (**Вариантность**)](#variance-вариантность)
     [**Invariance** (**Инвариантность**)](#invariance-инвариантность)
-    [**Covariance** (**Ковариантность**) - **out**](#covariance-ковариантность-out)
-    [**Contravariance** (**Контравариантность**) - in](#contravariance-контравариантность-in)
+    [**Covariance** (**Ковариантность**) — **out**](#covariance-ковариантность-out)
+    [**Contravariance** (**Контравариантность**) — in](#contravariance-контравариантность-in)
   [**Star Projections** (**Звездные проекции**)](#star-projections-звездные-проекции)
   [**Upper Bounds** (**Верхние границы**)](#upper-bounds-верхние-границы)
   [**Reified Type Parameters** (**Овеществленные параметры типов**)](#reified-type-parameters-овеществленные-параметры-типов)
   [**Generic Functions** (**Generic функции**)](#generic-functions-generic-функции)
   [**Type Erasure** (**Стирание типов**)](#type-erasure-стирание-типов)
 [Расширенное покрытие **Reflection**](#расширенное-покрытие-reflection)
-  [**KClass** - информация о классе](#kclass-информация-о-классе)
-  [**KFunction** - информация о функциях](#kfunction-информация-о-функциях)
-  [**KProperty** - информация о свойствах](#kproperty-информация-о-свойствах)
-  [**KType** - информация о типах](#ktype-информация-о-типах)
+  [**KClass** — информация о классе](#kclass-информация-о-классе)
+  [**KFunction** — информация о функциях](#kfunction-информация-о-функциях)
+  [**KProperty** — информация о свойствах](#kproperty-информация-о-свойствах)
+  [**KType** — информация о типах](#ktype-информация-о-типах)
   [Аннотации через **Reflection**](#аннотации-через-reflection)
   [Вызов функций через **Reflection**](#вызов-функций-через-reflection)
   [Работа с конструкторами](#работа-с-конструкторами)
@@ -2142,48 +2142,48 @@ data class Person(var name: String, var age: Int) {
 
 ### Фильтрация
 
-1.  **filter()** - принимает условие-предикат в виде функции `(T) -> **Boolean**`
-2.  **filterIndexed()** - также получает индекс текущего элемента
-3.  **filterIsInstance()** - можно извлечь элементы определенного типа
-4.  **filterNotNull()** - позволяет выфильтровать все значения, которые равны `**null**`
+1.  **filter()** — принимает условие-предикат в виде функции `(T) -> **Boolean**`
+2.  **filterIndexed()** — также получает индекс текущего элемента
+3.  **filterIsInstance()** — можно извлечь элементы определенного типа
+4.  **filterNotNull()** — позволяет выфильтровать все значения, которые равны `**null**`
 
 ### Проверка элементов
 
-1.  **all {}** - проверяет, все ли элементы коллекции/последовательности соответствуют условию предиката
-2.  **any {}** - проверяет, соответствует хотя бы один элемент коллекции/последовательности условию предиката
-3.  **none {}** - возвращает `**true**`, если ни один из элементов НЕ соответствует условию предиката
-4.  **contains()** - возвращает `**true**`, если в коллекции/последовательности есть определенный элемент
-5.  **containsAll()** - возвращает `**true**`, если коллекция содержит все элементы другой коллекции
+1.  **all {}** — проверяет, все ли элементы коллекции/последовательности соответствуют условию предиката
+2.  **any {}** — проверяет, соответствует хотя бы один элемент коллекции/последовательности условию предиката
+3.  **none {}** — возвращает `**true**`, если ни один из элементов НЕ соответствует условию предиката
+4.  **contains()** — возвращает `**true**`, если в коллекции/последовательности есть определенный элемент
+5.  **containsAll()** — возвращает `**true**`, если коллекция содержит все элементы другой коллекции
 
 ### Трансформация
 
-1.  **map()** - для трансформации одной коллекции/последовательности
-2.  **mapIndexed()** - также передает в функцию преобразования индекс текущего элемента
-3.  **mapNotNull()** и **mapIndexedNotNull()** - если необходимо отсеять значения `**null**`, которые могут возникать при преобразовании
-4.  **flatten()** - позволяет преобразовать коллекцию/последовательность, которая содержит вложенные коллекции/последовательности
+1.  **map()** — для трансформации одной коллекции/последовательности
+2.  **mapIndexed()** — также передает в функцию преобразования индекс текущего элемента
+3.  **mapNotNull()** и **mapIndexedNotNull()** — если необходимо отсеять значения `**null**`, которые могут возникать при преобразовании
+4.  **flatten()** — позволяет преобразовать коллекцию/последовательность, которая содержит вложенные коллекции/последовательности
 
 ### Группировка
 
-1.  **groupBy()** - для группировки элементов коллекции/последовательности применяется функция
+1.  **groupBy()** — для группировки элементов коллекции/последовательности применяется функция
 
 ### Сортировка
 
-1.  **sortedWith()** - принимает компаратор и на его основе сортирует коллекцию/последовательность
-2.  **sortedBy()** - сортирует по возрастанию, а **sortedByDescending()** - по убыванию
-3.  **reversed()** - изменяет порядок элементов на обратный
-4.  **shuffle()** - перемешивает элементы случайным образом
+1.  **sortedWith()** — принимает компаратор и на его основе сортирует коллекцию/последовательность
+2.  **sortedBy()** — сортирует по возрастанию, а **sortedByDescending()** — по убыванию
+3.  **reversed()** — изменяет порядок элементов на обратный
+4.  **shuffle()** — перемешивает элементы случайным образом
 
 ### Агрегатные операции
 
-1.  **minOrNull()** и **maxOrNull()** - возвращают соответственно минимальное и максимальное значение (**если коллекция/последовательность пуста, то возвращается `null`**)
-2.  **minByOrNull()** и **maxByOrNull()** - принимают функцию селектора, которая позволяет определить критерий сравнения объектов
-3.  **minWithOrNull()** и **maxWithOrNull()** - принимают компаратор. В качестве критерия сравнения здесь применяется свойство `**length**` строк, то есть строки сравниваются по длине
-4.  **minOfWithOrNull()** и **maxOfWithOrNull()** - принимают реализацию интерфейса **Comparator** (**первый параметр**) и селектор критерия для сравнения (**второй параметр**)
+1.  **minOrNull()** и **maxOrNull()** — возвращают соответственно минимальное и максимальное значение (**если коллекция/последовательность пуста, то возвращается `null`**)
+2.  **minByOrNull()** и **maxByOrNull()** — принимают функцию селектора, которая позволяет определить критерий сравнения объектов
+3.  **minWithOrNull()** и **maxWithOrNull()** — принимают компаратор. В качестве критерия сравнения здесь применяется свойство `**length**` строк, то есть строки сравниваются по длине
+4.  **minOfWithOrNull()** и **maxOfWithOrNull()** — принимают реализацию интерфейса **Comparator** (**первый параметр**) и селектор критерия для сравнения (**второй параметр**)
 5.  Для получения среднего значения применяется функция **average()**
 6.  Для получения суммы числовых значений применяется функция **sum()**
 7.  Для получения количества элементов в коллекции/последовательности применяется функция **count()**
-8.  **reduce()** - сводит все значения потока к одному значению
-9.  **fold()** - также сводит все элементы потока в один. Но в отличие от **reduce** в качестве первого параметра принимает начальное значение
+8.  **reduce()** — сводит все значения потока к одному значению
+9.  **fold()** — также сводит все элементы потока в один. Но в отличие от **reduce** в качестве первого параметра принимает начальное значение
 
 ## **Inline** функции (**встроенные**)
 
@@ -2336,10 +2336,10 @@ typealias UserMap = Map<UserId, User>
 
 **Kotlin** предоставляет несколько встроенных делегатов:**
 
-1. **lazy()** - вычисляет значение только при первом обращении
-2. **observable()** - уведомляет об изменениях
-3. **vetoable()** - позволяет отклонить изменение значения
-4. **notNull()** - гарантирует, что значение будет установлено перед использованием
+1. **lazy()** — вычисляет значение только при первом обращении
+2. **observable()** — уведомляет об изменениях
+3. **vetoable()** — позволяет отклонить изменение значения
+4. **notNull()** — гарантирует, что значение будет установлено перед использованием
 
 ### **Lazy** делегат
 
@@ -2404,15 +2404,15 @@ val length = name!!.length  // выбросит NPE, если name == null
 
 ## Несколько переменных в функции **let**
 
-В **Kotlin** функция **let()** - довольно удобная функция области видимости. Это позволяет нам преобразовать данную переменную в значение другого типа.
+В **Kotlin** функция **let()** — довольно удобная функция области видимости. Это позволяет нам преобразовать данную переменную в значение другого типа.
 
 ### Простой пример **let**
 
 ```kotlin
 // Безопасный вызов let для nullable: выполняется только при non-null
 val str: String? = "hello"
-val lengthReport = str?.let { 
-    "The length of the string [$it] is: ${it.length}" 
+val lengthReport = str?.let {
+    "The length of the string [$it] is: ${it.length}"
 }
 println(lengthReport)
 // будет выведено: The length of the string [hello] is: 5
@@ -2428,8 +2428,8 @@ println(lengthReport)
 val theName: String? = "Kai"
 val theNumber: Int? = 7
 val result = theName?.let { name ->
-    theNumber?.let { num -> 
-        "Hi $name, $num squared is ${num * num}" 
+    theNumber?.let { num ->
+        "Hi $name, $num squared is ${num * num}"
     }
 }
 assertThat(result).isEqualTo("Hi Kai, 7 squared is 49")
@@ -2446,8 +2446,8 @@ inline fun <T1: Any, T2: Any, R: Any> let2(p1: T1?, p2: T2?, block: (T1, T2) -> 
 **Теперь мы можем использовать:**
 
 ```kotlin
-let2("Kai", 7) { name, num -> 
-    "Hi $name, $num squared is ${num * num}" 
+let2("Kai", 7) { name, num ->
+    "Hi $name, $num squared is ${num * num}"
 }
 ```
 
@@ -2601,9 +2601,9 @@ class Address(
     @Id
     @GeneratedValue
     var id: Long? = null,
-    
+
     var name: String,
-    
+
     @OneToMany
     var phones: List<PhoneNumber> = emptyList()
 ) {
@@ -2761,7 +2761,7 @@ class MyClass {
     companion object {
         private val logger = LoggerFactory.getLogger(MyClass::class.java)
     }
-    
+
     fun logSomething() {
         logger.info("Message")
     }
@@ -2792,7 +2792,7 @@ inline fun <reified T: Logging> T.logger(): Logger = getLogger(T::class.java)
 
 ```kotlin
 class LoggerDelegate<in R: Any>: ReadOnlyProperty<R, Logger> {
-    override fun getValue(thisRef: R, property: KProperty<*>): Logger = 
+    override fun getValue(thisRef: R, property: KProperty<*>): Logger =
         getLogger(getClassForLogging(thisRef.javaClass))
 }
 
@@ -2836,10 +2836,10 @@ class MyClass
 
 ### Встроенные аннотации
 
-- **@JvmStatic** - делает метод статическим в байт-коде
-- **@JvmOverloads** - генерирует перегруженные методы
-- **@JvmName** - изменяет имя в байт-коде
-- **@JvmField** - делает поле публичным без геттеров/сеттеров
+- **@JvmStatic** — делает метод статическим в байт-коде
+- **@JvmOverloads** — генерирует перегруженные методы
+- **@JvmName** — изменяет имя в байт-коде
+- **@JvmField** — делает поле публичным без геттеров/сеттеров
 
 ## Руководство по @**Deprecated**
 
@@ -2904,17 +2904,16 @@ println(person1 == person2)  // true
 
 Принципы **SOLID** применимы к **Kotlin** так же, как и к другим объектно-ориентированным языкам.
 
-Принцип **Single Responsibility** - это просто «разделяй и властвуй», с которым мы можем столкнуться во всех сферах, от образования до психологии. Правило **Open-Close** заставляет нас думать о массовом производстве, а не о единичных конструкциях. Прежде чем мы создадим наше программное обеспечение из классов и модулей, мы должны построить его из функций, и здесь функциональное программирование действительно становится очень полезным. Принцип Лискова и разделение интерфейса учат нас делать программные части небольшими и долговечными, а функция - это самая маленькая часть программного обеспечения. Инверсия зависимостей говорит о том, что эти части легко отделяются друг от друга.
+Принцип **Single Responsibility** — это просто «разделяй и властвуй», с которым мы можем столкнуться во всех сферах, от образования до психологии. Правило **Open-Close** заставляет нас думать о массовом производстве, а не о единичных конструкциях. Прежде чем мы создадим наше программное обеспечение из классов и модулей, мы должны построить его из функций, и здесь функциональное программирование действительно становится очень полезным. Принцип Лискова и разделение интерфейса учат нас делать программные части небольшими и долговечными, а функция — это самая маленькая часть программного обеспечения. Инверсия зависимостей говорит о том, что эти части легко отделяются друг от друга.
 
 **В **Kotlin** мы можем использовать:**
 
-1. **Single Responsibility** - каждый класс/функция должна иметь одну ответственность
-2. **Open/Closed** - открыт для расширения, закрыт для модификации
-3. **Liskov Substitution** - подклассы должны заменять базовые классы
-4. **Interface Segregation** - множество специфичных интерфейсов лучше одного общего
-5. **Dependency Inversion** - зависимость от абстракций, а не от конкретных реализаций
+1. **Single Responsibility** — каждый класс/функция должна иметь одну ответственность
+2. **Open/Closed** — открыт для расширения, закрыт для модификации
+3. **Liskov Substitution** — подклассы должны заменять базовые классы
+4. **Interface Segregation** — множество специфичных интерфейсов лучше одного общего
+5. **Dependency Inversion** — зависимость от абстракций, а не от конкретных реализаций
 
----
 
 ## **Type System** (**Система типов**)
 
@@ -2940,9 +2939,9 @@ val unit: Unit = Unit
 val nothing: Nothing? = null
 ```
 
-### **Any** - корневой тип
+### **Any** — корневой тип
 
-**Any** - это супертип всех типов в **Kotlin** (**аналог `Object` в Java**).
+**Any** — это супертип всех типов в **Kotlin** (**аналог `Object` в Java**).
 
 ```kotlin
 // Any может содержать любой тип
@@ -2962,7 +2961,7 @@ if (obj is String) {
 }
 ```
 
-### **Unit** - тип возвращаемого значения
+### **Unit** — тип возвращаемого значения
 
 **Unit** соответствует `**void**` в **Java**, но является полноценным типом.
 
@@ -2982,9 +2981,9 @@ val unitValue: Unit = Unit
 val unitFunction: () -> Unit = { println("Hello") }
 ```
 
-### **Nothing** - тип без значений
+### **Nothing** — тип без значений
 
-**Nothing** - это тип, который не имеет значений. Используется для обозначения невозможных ситуаций.
+**Nothing** — это тип, который не имеет значений. Используется для обозначения невозможных ситуаций.
 
 ```kotlin
 // Функция, которая никогда не возвращает значение
@@ -3069,7 +3068,7 @@ fun example() {
     if (global != null) {
         // println(global.length)  // ОШИБКА! global может измениться
     }
-    
+
     val local: String? = null
     if (local != null) {
         println(local.length)  // OK! local не может измениться
@@ -3077,7 +3076,6 @@ fun example() {
 }
 ```
 
----
 
 ## **Type Aliases** (**Псевдонимы типов**)
 
@@ -3144,7 +3142,6 @@ data class Order(
 )
 ```
 
----
 
 ## **Object Expressions** и **Object Declarations**
 
@@ -3165,7 +3162,7 @@ val listener = object : MouseListener {
     override fun mouseClicked(e: MouseEvent) {
         println("Clicked")
     }
-    
+
     override fun mouseEntered(e: MouseEvent) {
         println("Entered")
     }
@@ -3176,7 +3173,7 @@ val handler = object : Clickable, Focusable {
     override fun click() {
         println("Clicked")
     }
-    
+
     override fun focus() {
         println("Focused")
     }
@@ -3203,7 +3200,7 @@ object DatabaseManager {
     fun connect() {
         println("Connecting to database")
     }
-    
+
     fun disconnect() {
         println("Disconnecting from database")
     }
@@ -3217,7 +3214,7 @@ object DefaultListener : MouseListener {
     override fun mouseClicked(e: MouseEvent) {
         println("Default click")
     }
-    
+
     override fun mouseEntered(e: MouseEvent) {
         println("Default enter")
     }
@@ -3235,7 +3232,7 @@ val instance = MyClass.Factory.create()
 
 ### **Companion Objects**
 
-**Companion objects** - это объекты, связанные с классом (**аналог static в Java**).
+**Companion objects** — это объекты, связанные с классом (**аналог static в Java**).
 
 ```kotlin
 // Базовый companion object
@@ -3282,7 +3279,6 @@ class User private constructor(val name: String) {
 }
 ```
 
----
 
 ## **Enum Classes**
 
@@ -3321,7 +3317,7 @@ enum class Planet(val mass: Double, val radius: Double) {
     MERCURY(3.303e+23, 2.4397e6),
     VENUS(4.869e+24, 6.0518e6),
     EARTH(5.976e+24, 6.37814e6);
-    
+
     fun surfaceGravity(): Double {
         val G = 6.67300E-11
         return G * mass / (radius * radius)
@@ -3384,7 +3380,6 @@ if (Direction.NORTH < Direction.SOUTH) {
 }
 ```
 
----
 
 ## **Delegation** (**Делегирование**)
 
@@ -3436,7 +3431,7 @@ class Delegate {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): String {
         return "$thisRef, thank you for delegating '${property.name}' to me!"
     }
-    
+
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
         println("$value has been assigned to '${property.name}' in $thisRef.")
     }
@@ -3512,7 +3507,6 @@ class MutableUser(val map: MutableMap<String, Any?>) {
 }
 ```
 
----
 
 ## **Infix Functions** (**Инфиксные функции**)
 
@@ -3578,7 +3572,6 @@ for (i in 1..10 step 2) {
 }
 ```
 
----
 
 ## **Destructuring Declarations** (**Деструктуризация**)
 
@@ -3666,7 +3659,6 @@ val (x, y) = point
 println("x=$x, y=$y")  // x=10, y=20
 ```
 
----
 
 ## **Ranges** и **Progressions** (**Диапазоны и прогрессии**)
 
@@ -3747,7 +3739,6 @@ val charProgression = 'a'..'z' step 2
 val reverse = 10 downTo 1 step 2  // 10, 8, 6, 4, 2
 ```
 
----
 
 ## **String Templates** (**Шаблоны строк**)
 
@@ -3818,11 +3809,10 @@ val message = "You have ${items.size} ${if (items.size == 1) "item" else "items"
 val message2 = "First item: ${items.firstOrNull() ?: "none"}"
 ```
 
----
 
 ## **When Expression** (**Выражение when**)
 
-**When** - это мощная альтернатива **switch** в **Java**.
+**When** — это мощная альтернатива **switch** в **Java**.
 
 ### Базовое использование
 
@@ -3927,7 +3917,6 @@ fun process(result: Result): String = when (result) {
 }
 ```
 
----
 
 ## **Return** и **Labels** (**Возврат и метки**)
 
@@ -4029,7 +4018,6 @@ outer@ for (i in 1..3) {
 }
 ```
 
----
 
 ## **Visibility Modifiers** (**Модификаторы видимости**)
 
@@ -4112,7 +4100,6 @@ private class PrivateClass         // видно только в файле
 internal class InternalClass       // видно в модуле
 ```
 
----
 
 ## Расширенное покрытие **Generics**
 
@@ -4130,7 +4117,7 @@ val intBox = Box<Int>(42)
 // val numberBox: Box<Number> = intBox  // ОШИБКА! Box<Int> не является подтипом Box<Number>
 ```
 
-#### **Covariance** (**Ковариантность**) - **out**
+#### **Covariance** (**Ковариантность**) — **out**
 
 ```kotlin
 // out делает тип ковариантным (producer)
@@ -4151,7 +4138,7 @@ val producer: Producer<Any> = StringProducer()  // OK!
 // }
 ```
 
-#### **Contravariance** (**Контравариантность**) - in
+#### **Contravariance** (**Контравариантность**) — in
 
 ```kotlin
 // in делает тип контравариантным (consumer)
@@ -4289,11 +4276,10 @@ inline fun <reified T> checkType(obj: Any): Boolean {
 }
 ```
 
----
 
 ## Расширенное покрытие **Reflection**
 
-### **KClass** - информация о классе
+### **KClass** — информация о классе
 
 ```kotlin
 import kotlin.reflect.KClass
@@ -4312,7 +4298,7 @@ println(stringClass.isSealed)       // false
 println(stringClass.isCompanion)     // false
 ```
 
-### **KFunction** - информация о функциях
+### **KFunction** — информация о функциях
 
 ```kotlin
 import kotlin.reflect.KFunction
@@ -4334,7 +4320,7 @@ println(function.parameters[0].type) // String
 val result = function.call("Alice")  // "Hello, Alice!"
 ```
 
-### **KProperty** - информация о свойствах
+### **KProperty** — информация о свойствах
 
 ```kotlin
 import kotlin.reflect.KProperty
@@ -4357,7 +4343,7 @@ ageProperty.set(person, 26)
 println(person.age)  // 26
 ```
 
-### **KType** - информация о типах
+### **KType** — информация о типах
 
 ```kotlin
 import kotlin.reflect.KType
@@ -4445,7 +4431,6 @@ val person2 = constructor?.callBy(mapOf(
 ))
 ```
 
----
 
 ## Расширенное покрытие **Annotations**
 
@@ -4595,7 +4580,6 @@ class MyClass {
 fun internalFunction() {}
 ```
 
----
 
 ## **Multiplatform Projects** (**Мультиплатформенные проекты**)
 
@@ -4662,7 +4646,7 @@ actual class HttpClient {
 
 ### Структура проекта
 
-```
+```text
 multiplatform-project/
 ├── commonMain/
 │   └── kotlin/
@@ -4706,14 +4690,13 @@ actual class JvmFileSystem : FileSystem {
     actual override fun readFile(path: String): String {
         return java.io.File(path).readText()
     }
-    
+
     actual override fun writeFile(path: String, content: String) {
         java.io.File(path).writeText(content)
     }
 }
 ```
 
----
 
 ## Расширенное покрытие **Data Classes**
 
@@ -4780,18 +4763,17 @@ println(person1 == person2)  // true (сравниваются только name
 data class Person(val name: String, val age: Int) {
     // Можно добавлять методы
     fun isAdult(): Boolean = age >= 18
-    
+
     // Можно переопределять toString()
     override fun toString(): String {
         return "Person(name='$name', age=$age, adult=${isAdult()})"
     }
-    
+
     // Можно переопределять equals() и hashCode()
     // Но это не рекомендуется, так как нарушает контракт data класса
 }
 ```
 
----
 
 ## Расширенное покрытие **Sealed Classes**
 
@@ -4866,7 +4848,6 @@ fun <T> Result<T>.getOrThrow(): T = when (this) {
 }
 ```
 
----
 
 Это расширение значительно увеличивает покрытие тем **Kotlin**. Файл теперь содержит детальную информацию по многим важным аспектам языка.
 
@@ -4883,11 +4864,11 @@ interface Builder<out T> {
 
 class ListBuilder<T> : Builder<List<T>> {
     private val items = mutableListOf<T>()
-    
+
     fun add(item: T) {
         items.add(item)
     }
-    
+
     override fun build(): List<T> = items.toList()
 }
 
@@ -4924,12 +4905,12 @@ fun <T : Any> inspectType(obj: T) {
     val kClass = obj::class
     println("Class name: ${kClass.simpleName}")
     println("Qualified name: ${kClass.qualifiedName}")
-    
+
     // Получение свойств
     kClass.memberProperties.forEach { prop ->
         println("Property: ${prop.name} = ${prop.get(obj)}")
     }
-    
+
     // Получение функций
     kClass.memberFunctions.forEach { func ->
         println("Function: ${func.name}")
@@ -5054,7 +5035,7 @@ annotation class Range(val min: Double, val max: Double)
 class User {
     @NotNull("Name is required")
     var name: String? = null
-    
+
     @Range(min = 0.0, max = 150.0)
     var age: Int = 0
 }
@@ -5127,13 +5108,13 @@ import kotlin.properties.Delegates
 class ObservableProperty<T>(initialValue: T) {
     private var value: T = initialValue
     private val observers = mutableListOf<(T, T) -> Unit>()
-    
+
     fun addObserver(observer: (T, T) -> Unit) {
         observers.add(observer)
     }
-    
+
     fun getValue(): T = value
-    
+
     fun setValue(newValue: T) {
         val oldValue = value
         value = newValue
@@ -5145,7 +5126,7 @@ class User {
     var name: String by Delegates.observable("") { prop, old, new ->
         println("Name changed from $old to $new")
     }
-    
+
     var age: Int by Delegates.observable(0) { prop, old, new ->
         println("Age changed from $old to $new")
     }
@@ -5171,7 +5152,7 @@ user.age = 25        // Age changed from 0 to 25
 // Nested класс - не имеет доступа к членам внешнего класса
 class Outer {
     private val outerProperty = "Outer"
-    
+
     class Nested {
         fun getOuterProperty(): String {
             // Не может обратиться к outerProperty
@@ -5183,7 +5164,7 @@ class Outer {
 // Inner класс - имеет доступ к членам внешнего класса
 class Outer {
     private val outerProperty = "Outer"
-    
+
     inner class Inner {
         fun getOuterProperty(): String {
             return outerProperty  // Может обратиться к outerProperty
@@ -5209,7 +5190,7 @@ val listener = object : ClickListener {
     override fun onClick() {
         println("Clicked")
     }
-    
+
     fun customMethod() {
         println("Custom method")
     }
@@ -5368,17 +5349,17 @@ when (val result = processUserResult(user)) {
 sealed class Either<out L, out R> {
     data class Left<L>(val value: L) : Either<L, Nothing>()
     data class Right<R>(val value: R) : Either<Nothing, R>()
-    
+
     fun <B> map(f: (R) -> B): Either<L, B> = when (this) {
         is Left -> this
         is Right -> Right(f(value))
     }
-    
+
     fun <B> flatMap(f: (R) -> Either<L, B>): Either<L, B> = when (this) {
         is Left -> this
         is Right -> f(value)
     }
-    
+
     fun getOrElse(default: @UnsafeVariance R): R = when (this) {
         is Left -> default
         is Right -> value
@@ -5520,17 +5501,17 @@ fun <T : Any> inspectType(obj: T) {
     val kClass = obj::class
     println("Class: ${kClass.simpleName}")
     println("Qualified name: ${kClass.qualifiedName}")
-    
+
     // Получение свойств
     kClass.memberProperties.forEach { prop ->
         println("Property: ${prop.name} = ${prop.get(obj)}")
     }
-    
+
     // Получение функций
     kClass.memberFunctions.forEach { func ->
         println("Function: ${func.name}")
     }
-    
+
     // Получение конструкторов
     kClass.constructors.forEach { constructor ->
         println("Constructor: ${constructor.parameters.size} parameters")
@@ -5754,15 +5735,15 @@ interface NumberList {
 
 class MutableNumberList : NumberList {
     private val list = mutableListOf<Number>()
-    
+
     override fun add(number: Number) {
         list.add(number)
     }
-    
+
     override fun get(index: Int): Number? {
         return list.getOrNull(index)
     }
-    
+
     fun addInts(ints: List<Int>) {
         ints.forEach { add(it) }
     }
@@ -5813,7 +5794,7 @@ class CustomDelegate<T>(private var value: T) {
         println("Getting value of ${property.name}")
         return value
     }
-    
+
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         println("Setting value of ${property.name} to $value")
         this.value = value
@@ -5899,7 +5880,7 @@ value class Email(val value: String) {
     fun isValid(): Boolean {
         return value.contains("@")
     }
-    
+
     fun domain(): String {
         return value.substringAfter("@")
     }
@@ -5980,19 +5961,19 @@ data class Point(val x: Int, val y: Int) {
     operator fun plus(other: Point): Point {
         return Point(x + other.x, y + other.y)
     }
-    
+
     operator fun minus(other: Point): Point {
         return Point(x - other.x, y - other.y)
     }
-    
+
     operator fun times(factor: Int): Point {
         return Point(x * factor, y * factor)
     }
-    
+
     operator fun unaryMinus(): Point {
         return Point(-x, -y)
     }
-    
+
     operator fun compareTo(other: Point): Int {
         return (x + y).compareTo(other.x + other.y)
     }
@@ -6020,13 +6001,13 @@ class BankAccount(private var balance: Int) {
     init {
         require(balance >= 0) { "Balance cannot be negative" }
     }
-    
+
     fun deposit(amount: Int) {
         require(amount > 0) { "Deposit amount must be positive" }
         balance += amount
         check(balance >= 0) { "Balance invariant violated" }
     }
-    
+
     fun withdraw(amount: Int) {
         require(amount > 0) { "Withdrawal amount must be positive" }
         check(balance >= amount) { "Insufficient funds" }
@@ -6065,19 +6046,19 @@ class BankAccount(private var balance: Int) {
 
 ## Частые вопросы
 
-**Когда выбирать `val`, а когда `var`?**  
+**Когда выбирать `val`, а когда `var`?**
 По умолчанию использовать `val`; `var` только когда изменение состояния — явная часть модели.
 
-**Нужно ли писать явные типы, если есть type inference?**  
+**Нужно ли писать явные типы, если есть type inference?**
 В локальном коде можно полагаться на inference, но в публичном API явные типы обычно повышают читаемость и стабильность контракта.
 
-**`suspend` функция — это «параллельность»?**  
+**`suspend` функция — это «параллельность»?**
 Нет. `suspend` даёт неблокирующую приостановку; параллелизм появляется только при явном запуске нескольких coroutine jobs.
 
-**Что выбрать для модели: `data class`, `value class` или `sealed`?**  
+**Что выбрать для модели: `data class`, `value class` или `sealed`?**
 `data class` — для DTO/состояния, `value class` — для типобезопасных обёрток над одним значением, `sealed` — для закрытых иерархий состояний/результатов.
 
-**Как безопасно интегрироваться с Java-кодом?**  
+**Как безопасно интегрироваться с Java-кодом?**
 Явно отмечать nullability на Java-границе, избегать platform types без проверок и покрывать критичные interop-участки интеграционными тестами.
 
 ## Заключение
@@ -6120,7 +6101,7 @@ data class User(
     val age: Int
 ) {
     fun isAdult(): Boolean = age >= 18
-    
+
     fun getDisplayName(): String = "$name ($email)"
 }
 
@@ -6225,9 +6206,9 @@ class ExpensiveResource {
 class ObservableProperty<T>(initialValue: T) {
     private var value = initialValue
     private val observers = mutableListOf<(T) -> Unit>()
-    
+
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T = value
-    
+
     operator fun setValue(thisRef: Any?, property: KProperty<*>, newValue: T) {
         val oldValue = value
         value = newValue
@@ -6235,7 +6216,7 @@ class ObservableProperty<T>(initialValue: T) {
             observers.forEach { it(newValue) }
         }
     }
-    
+
     fun observe(observer: (T) -> Unit) {
         observers.add(observer)
     }

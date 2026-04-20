@@ -111,18 +111,18 @@ updated: "2026-02-06"
 
 ## Введение в отладку
 
-Отладка - это процесс поиска и исправления ошибок в программе. Go предоставляет несколько инструментов для отладки.
+Отладка — это процесс поиска и исправления ошибок в программе. Go предоставляет несколько инструментов для отладки.
 
 ### Основные инструменты
 
-1. **Delve** - современный отладчик для Go
-2. **GDB** - классический отладчик
-3. **Логирование** - добавление логов для отладки
-4. **Трассировка** - отслеживание выполнения программы
+1. **Delve** — современный отладчик для Go
+2. **GDB** — классический отладчик
+3. **Логирование** — добавление логов для отладки
+4. **Трассировка** — отслеживание выполнения программы
 
 ## **Delve**
 
-**Delve** - это отладчик, специально разработанный для Go.
+**Delve** — это отладчик, специально разработанный для Go.
 
 ### Установка
 
@@ -171,7 +171,7 @@ dlv debug main.go
 
 ## **GDB**
 
-**GDB** - классический отладчик, который также работает с Go.
+**GDB** — классический отладчик, который также работает с Go.
 
 ### Использование **GDB**
 
@@ -205,10 +205,10 @@ import "log"
 
 func processData(data []byte) error {
     log.Printf("Processing %d bytes", len(data))
-    
+
     // Обработка данных
     result := process(data)
-    
+
     log.Printf("Result: %v", result)
     return nil
 }
@@ -248,10 +248,10 @@ func main() {
         log.Fatal(err)
     }
     defer f.Close()
-    
+
     trace.Start(f)
     defer trace.Stop()
-    
+
     // Ваш код здесь
 }
 ```
@@ -414,17 +414,17 @@ func worker(id int, wg *sync.WaitGroup, ch chan int) {
 func main() {
     var wg sync.WaitGroup
     ch := make(chan int, 10)
-    
+
     for i := 0; i < 3; i++ {
         wg.Add(1)
         go worker(i, &wg, ch)
     }
-    
+
     for i := 0; i < 20; i++ {
         ch <- i
     }
     close(ch)
-    
+
     wg.Wait()
 }
 ```
@@ -468,7 +468,7 @@ func recoverPanic() {
 
 func main() {
     defer recoverPanic()
-    
+
     panic("something went wrong")
 }
 ```
@@ -499,10 +499,10 @@ func debugLog(format string, args ...interface{}) {
 
 func processData(data []byte) error {
     debugLog("Processing %d bytes", len(data))
-    
+
     // Обработка данных
     result := process(data)
-    
+
     debugLog("Result: %v", result)
     return nil
 }
@@ -535,26 +535,26 @@ func (l *DebugLogger) Log(event string, data map[string]interface{}) {
     if !l.enabled {
         return
     }
-    
+
     logData := map[string]interface{}{
         "event": event,
         "data":  data,
     }
-    
+
     jsonData, _ := json.Marshal(logData)
     l.logger.Println(string(jsonData))
 }
 
 func main() {
     logger := NewDebugLogger(os.Getenv("DEBUG") == "true")
-    
+
     logger.Log("processing_started", map[string]interface{}{
         "user_id": 123,
         "action":  "process_data",
     })
-    
+
     // Обработка
-    
+
     logger.Log("processing_completed", map[string]interface{}{
         "user_id": 123,
         "result":  "success",
@@ -576,7 +576,7 @@ import (
 
 func processWithTrace(ctx context.Context) {
     defer trace.StartRegion(ctx, "process").End()
-    
+
     // Обработка данных
     time.Sleep(100 * time.Millisecond)
 }
@@ -584,12 +584,12 @@ func processWithTrace(ctx context.Context) {
 func main() {
     f, _ := os.Create("trace.out")
     defer f.Close()
-    
+
     trace.Start(f)
     defer trace.Stop()
-    
+
     ctx := context.Background()
-    
+
     for i := 0; i < 10; i++ {
         processWithTrace(ctx)
     }
@@ -612,13 +612,13 @@ func debugWithProfiling() {
     defer cpuFile.Close()
     pprof.StartCPUProfile(cpuFile)
     defer pprof.StopCPUProfile()
-    
+
     // Memory профилирование
     memFile, _ := os.Create("mem.prof")
     defer memFile.Close()
-    
+
     // Ваш код здесь
-    
+
     pprof.WriteHeapProfile(memFile)
 }
 ```
@@ -638,9 +638,9 @@ func main() {
     go func() {
         log.Println(http.ListenAndServe("localhost:6060", nil))
     }()
-    
+
     // Ваш код здесь
-    
+
     // Доступ к профилям:
     // http://localhost:6060/debug/pprof/
     // http://localhost:6060/debug/pprof/heap
@@ -704,7 +704,7 @@ import (
 func checkMemory() {
     var m runtime.MemStats
     runtime.ReadMemStats(&m)
-    
+
     fmt.Printf("Alloc: %d KB\n", m.Alloc/1024)
     fmt.Printf("TotalAlloc: %d KB\n", m.TotalAlloc/1024)
     fmt.Printf("Sys: %d KB\n", m.Sys/1024)
@@ -718,7 +718,7 @@ func main() {
             time.Sleep(5 * time.Second)
         }
     }()
-    
+
     // Ваш код здесь
 }
 ```
@@ -736,15 +736,15 @@ import (
 func TestDebugFunction(t *testing.T) {
     // Включение детального вывода
     t.Log("Starting test")
-    
+
     // Выполнение функции
     result, err := processData(testData)
-    
+
     if err != nil {
         t.Logf("Error: %v\nStack: %s", err, debug.Stack())
         t.Fail()
     }
-    
+
     t.Logf("Result: %v", result)
 }
 ```
@@ -798,10 +798,10 @@ func debugHTTPRequest() {
             fmt.Printf("Connect Done: %s %s, err: %v\n", network, addr, err)
         },
     }
-    
+
     ctx := httptrace.WithClientTrace(context.Background(), trace)
     req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
-    
+
     client := &http.Client{}
     client.Do(req)
 }
@@ -815,7 +815,7 @@ import "runtime/debug"
 func DebugGoroutines() {
     // Печать стека всех горутин
     debug.PrintStack()
-    
+
     // Получение информации о горутинах
     buf := make([]byte, 1<<20)
     stackSize := runtime.Stack(buf, true)
@@ -839,7 +839,7 @@ import "runtime"
 func CheckMemory() {
     var m runtime.MemStats
     runtime.ReadMemStats(&m)
-    
+
     fmt.Printf("Alloc = %v KiB", bToKiB(m.Alloc))
     fmt.Printf("\tTotalAlloc = %v KiB", bToKiB(m.TotalAlloc))
     fmt.Printf("\tSys = %v KiB", bToKiB(m.Sys))
@@ -894,21 +894,21 @@ func (dc *DebugContext) Dump() {
 
 ## Лучшие практики
 
-1. **Используйте Delve** - для отладки Go программ
-2. **Добавляйте логи** - для понимания выполнения программы
-3. **Используйте breakpoints** - для остановки в нужных местах
-4. **Проверяйте переменные** - используйте **print** для просмотра значений
-5. **Используйте трассировку** - для анализа производительности
-6. **Используйте race detector** - для поиска **race conditions**
-7. **Используйте профилирование** - для анализа производительности
-8. **Используйте структурированное логирование** - для лучшей отладки
-9. **Используйте тесты для отладки** - для изоляции проблем
-10. **Документируйте известные проблемы** - для будущей отладки
-11. **Отлаживайте горутины** - используйте **stack traces** для горутин
-12. **Отлаживайте память** - отслеживайте использование памяти
-13. **Используйте условную отладку** - включайте/выключайте отладочный код
-14. **Используйте трассировку запросов** - для отладки распределенных систем
-15. **Документируйте процесс отладки** - описывайте найденные проблемы
+1. **Используйте Delve** — для отладки Go программ
+2. **Добавляйте логи** — для понимания выполнения программы
+3. **Используйте breakpoints** — для остановки в нужных местах
+4. **Проверяйте переменные** — используйте **print** для просмотра значений
+5. **Используйте трассировку** — для анализа производительности
+6. **Используйте race detector** — для поиска **race conditions**
+7. **Используйте профилирование** — для анализа производительности
+8. **Используйте структурированное логирование** — для лучшей отладки
+9. **Используйте тесты для отладки** — для изоляции проблем
+10. **Документируйте известные проблемы** — для будущей отладки
+11. **Отлаживайте горутины** — используйте **stack traces** для горутин
+12. **Отлаживайте память** — отслеживайте использование памяти
+13. **Используйте условную отладку** — включайте/выключайте отладочный код
+14. **Используйте трассировку запросов** — для отладки распределенных систем
+15. **Документируйте процесс отладки** — описывайте найденные проблемы
 
 
 ## Решение проблем
@@ -927,3 +927,11 @@ func (dc *DebugContext) Dump() {
 
 - [Delve Documentation](https://github.com/go-delve/delve)
 - [Go Debugging](https://go.dev/doc/diagnostics)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

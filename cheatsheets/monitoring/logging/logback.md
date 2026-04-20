@@ -63,11 +63,11 @@ Logger logger = LoggerFactory.getLogger(MyClass.class);
 <configuration>
     <property name="LOG_HOME" value="/app/logs"/>
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
-    
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder><pattern>${LOG_PATTERN}</pattern></encoder>
     </appender>
-    
+
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/application.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -77,7 +77,7 @@ Logger logger = LoggerFactory.getLogger(MyClass.class);
         </rollingPolicy>
         <encoder><pattern>${LOG_PATTERN}</pattern></encoder>
     </appender>
-    
+
     <logger name="com.example" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
@@ -164,11 +164,11 @@ Markers — метки для категоризации (AUDIT, SECURITY). Ис
 
 ## Частые вопросы
 
-**Почему в Spring Boot используется Logback, а не Log4j 2?**  
+**Почему в Spring Boot используется Logback, а не Log4j 2?**
 Spring Boot по умолчанию подключает spring-boot-starter-logging, который тянет Logback как реализацию SLF4J. Это упрощает конфигурацию и интеграцию (logback-spring.xml, springProfile). При необходимости можно переключиться на Log4j 2 через spring-boot-starter-log4j2 и отключить starter-logging.
 
-**Как включить разные уровни для dev и prod без двух конфигов?**  
+**Как включить разные уровни для dev и prod без двух конфигов?**
 Использовать logback-spring.xml и `<springProfile name="dev">` / `<springProfile name="prod">` с разными уровнями и appenders. Либо задавать уровень через переменную/системное свойство и подставлять в `<root level="${LOG_LEVEL:-INFO}">`.
 
-**Логи в файл пишутся с задержкой или теряются при остановке приложения?**  
+**Логи в файл пишутся с задержкой или теряются при остановке приложения?**
 При использовании AsyncAppender при shutdown очередь может не успеть сброситься. Можно уменьшить queueSize или не использовать neverBlock; для критичных логов рассмотреть синхронный appender или отдельный канал. Настройка maxFlushTime и корректное завершение приложения (flush при остановке) снижают риск потери.

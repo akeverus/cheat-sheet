@@ -14,7 +14,6 @@ updated: "2026-02-11"
 
 Краткое руководство по **Selenium WebDriver** для автоматизации веб-тестирования в Java: настройка, взаимодействия, Page Object, ожидания, data-driven тесты, параллельный запуск и интеграция со Spring Boot.
 
----
 
 ## Полезные ссылки
 
@@ -30,7 +29,6 @@ updated: "2026-02-11"
 - [[rest-assured|REST Assured]] — тестирование API
 - [[spring-testing|Spring Testing]] — тестирование Spring
 
----
 
 ## Содержание
 
@@ -50,7 +48,6 @@ updated: "2026-02-11"
 - [Сводные таблицы](#сводные-таблицы)
 - [Заключение](#заключение)
 
----
 
 ## Введение в Selenium
 
@@ -66,7 +63,6 @@ updated: "2026-02-11"
 - Selenium Grid для распределённого запуска
 - Скриншоты при падении теста
 
----
 
 ## Maven зависимости
 
@@ -108,7 +104,6 @@ testImplementation 'io.github.bonigarcia:webdrivermanager:5.5.3'
 
 **Важно:** Selenium 4 требует Java 8+. Драйверы можно не ставить вручную — WebDriverManager подгружает их автоматически.
 
----
 
 ## Простое использование
 
@@ -159,7 +154,6 @@ public class SeleniumBasicTest {
 }
 ```
 
----
 
 ## Настройка WebDriver
 
@@ -198,7 +192,6 @@ options.addArguments("--headless");
 WebDriver driver = new RemoteWebDriver(gridUrl, options);
 ```
 
----
 
 ## Взаимодействия с элементами
 
@@ -245,7 +238,6 @@ actions.dragAndDrop(source, target).perform();
 actions.keyDown(Keys.CONTROL).sendKeys("a").sendKeys("c").keyUp(Keys.CONTROL).perform();
 ```
 
----
 
 ## Локаторы
 
@@ -274,7 +266,6 @@ WebElement byXpath = driver.findElement(By.xpath("//form//input[@name='email']")
 List<WebElement> buttons = driver.findElements(By.tagName("button"));
 ```
 
----
 
 ## Ожидания
 
@@ -316,7 +307,6 @@ FluentWait<WebDriver> fluent = new FluentWait<>(driver)
 WebElement el = fluent.until(d -> d.findElement(By.id("dynamic")));
 ```
 
----
 
 ## Page Object Model
 
@@ -394,7 +384,6 @@ void testSuccessfulLogin() {
 }
 ```
 
----
 
 ## Data-driven тесты
 
@@ -429,7 +418,6 @@ static Stream<Arguments> loginData() {
 
 Данные можно подставлять из CSV, JSON или БД — через свой метод, возвращающий `Stream<Arguments>`.
 
----
 
 ## Скриншоты и JavaScript
 
@@ -456,7 +444,6 @@ js.executeScript("arguments[0].scrollIntoView(true);", element);
 js.executeScript("arguments[0].click();", element);
 ```
 
----
 
 ## Spring Boot и параллельный запуск
 
@@ -492,7 +479,6 @@ junit.jupiter.execution.parallel.config.strategy=dynamic
 
 В `@BeforeEach` создаёте драйвер и сохраняете в `ThreadLocal`, в `@AfterEach` вызываете `quit()` и удаляете из `ThreadLocal`.
 
----
 
 ## Лучшие практики
 
@@ -505,7 +491,6 @@ junit.jupiter.execution.parallel.config.strategy=dynamic
 7. **Таймауты** — задавать разумные значения; не ставить избыточно большой implicit wait.
 8. **Режим headless в CI** — использовать `--headless` и при необходимости отключать загрузку изображений для ускорения.
 
----
 
 ## Решение проблем и FAQ
 
@@ -550,7 +535,6 @@ junit.jupiter.execution.parallel.config.strategy=dynamic
 - В headless отключить загрузку картинок/части ресурсов при необходимости.
 - Запускать тесты параллельно (JUnit 5 или TestNG).
 
----
 
 ## Сводные таблицы
 
@@ -582,7 +566,6 @@ junit.jupiter.execution.parallel.config.strategy=dynamic
 | Кросс-браузерные проверки | Нагрузочное тестирование (JMeter, Gatling) |
 | Проверка сложных взаимодействий (drag-drop, загрузка файлов) | Мобильные приложения (Appium) |
 
----
 
 ## Заключение
 

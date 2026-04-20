@@ -59,7 +59,7 @@ updated: "2026-02-11"
 logger.error("Error occurred");
 
 // Хорошо
-logger.error("Failed to process payment for user {}: payment method {} invalid", 
+logger.error("Failed to process payment for user {}: payment method {} invalid",
              userId, paymentMethod, exception);
 
 // Структурированно (если используется API с key-value)

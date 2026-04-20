@@ -71,10 +71,10 @@ updated: "2026-02-06"
 
 ### Основные концепции
 
-1. **Паттерны** - строки, описывающие шаблоны текста
-2. **Компиляция** - преобразование паттерна в регулярное выражение
-3. **Совпадения** - поиск текста, соответствующего паттерну
-4. **Группы** - захват частей совпадения
+1. **Паттерны** — строки, описывающие шаблоны текста
+2. **Компиляция** — преобразование паттерна в регулярное выражение
+3. **Совпадения** — поиск текста, соответствующего паттерну
+4. **Группы** — захват частей совпадения
 
 ## Компиляция паттернов
 
@@ -89,7 +89,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     // Использование
     matched := re.MatchString("123")
     fmt.Println(matched)  // true
@@ -104,7 +104,7 @@ import "regexp"
 func main() {
     // Компиляция с паникой при ошибке
     re := regexp.MustCompile(`\d+`)
-    
+
     matched := re.MatchString("123")
     fmt.Println(matched)  // true
 }
@@ -121,7 +121,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     matched := re.MatchString("123")
     fmt.Println(matched)  // true
 }
@@ -136,7 +136,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`hello`)
-    
+
     matched := re.MatchString("hello world")
     fmt.Println(matched)  // true
 }
@@ -149,7 +149,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`\d+`)
-    
+
     // Поиск первого совпадения
     match := re.FindString("abc 123 def 456")
     fmt.Println(match)  // "123"
@@ -163,11 +163,11 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`\d+`)
-    
+
     // Поиск всех совпадений
     matches := re.FindAllString("abc 123 def 456", -1)
     fmt.Println(matches)  // ["123", "456"]
-    
+
     // Ограничение количества
     matches = re.FindAllString("abc 123 def 456", 1)
     fmt.Println(matches)  // ["123"]
@@ -181,7 +181,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`\d+`)
-    
+
     // Поиск индексов
     indices := re.FindStringIndex("abc 123 def")
     fmt.Println(indices)  // [4 7]
@@ -197,7 +197,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`\d+`)
-    
+
     // Замена всех совпадений
     result := re.ReplaceAllString("abc 123 def 456", "XXX")
     fmt.Println(result)  // "abc XXX def XXX"
@@ -211,7 +211,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`\d+`)
-    
+
     // Замена с функцией
     result := re.ReplaceAllStringFunc("abc 123 def 456", func(s string) string {
         return "[" + s + "]"
@@ -227,7 +227,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`\d+`)
-    
+
     // Буквальная замена (без интерпретации)
     result := re.ReplaceAllLiteralString("abc 123 def", "$1")
     fmt.Println(result)  // "abc $1 def"
@@ -243,11 +243,11 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`(\d+)-(\d+)`)
-    
+
     // Поиск с группами
     matches := re.FindStringSubmatch("123-456")
     fmt.Println(matches)  // ["123-456", "123", "456"]
-    
+
     // matches[0] - полное совпадение
     // matches[1] - первая группа
     // matches[2] - вторая группа
@@ -261,7 +261,7 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`(\d+)-(\d+)`)
-    
+
     // Поиск всех совпадений с группами
     matches := re.FindAllStringSubmatch("123-456 789-012", -1)
     for _, match := range matches {
@@ -278,14 +278,14 @@ import "regexp"
 
 func main() {
     re := regexp.MustCompile(`(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})`)
-    
+
     matches := re.FindStringSubmatch("2025-01-11")
     if len(matches) > 0 {
         // Получение именованных групп через индексы
         yearIndex := re.SubexpIndex("year")
         monthIndex := re.SubexpIndex("month")
         dayIndex := re.SubexpIndex("day")
-        
+
         if yearIndex >= 0 {
             fmt.Println("Year:", matches[yearIndex])
         }
@@ -354,14 +354,14 @@ func ParseDateNamed(dateStr string) (map[string]string, bool) {
     if len(matches) == 0 {
         return nil, false
     }
-    
+
     result := make(map[string]string)
     for i, name := range namedDateRegex.SubexpNames() {
         if i > 0 && name != "" {
             result[name] = matches[i]
         }
     }
-    
+
     return result, true
 }
 ```
@@ -378,13 +378,13 @@ func ExtractNumbers(text string) []string {
 func ExtractFloats(text string) []float64 {
     matches := numberRegex.FindAllString(text, -1)
     floats := make([]float64, 0, len(matches))
-    
+
     for _, match := range matches {
         if f, err := strconv.ParseFloat(match, 64); err == nil {
             floats = append(floats, f)
         }
     }
-    
+
     return floats
 }
 ```
@@ -399,7 +399,7 @@ func HighlightWords(text string, words []string) string {
     for _, word := range words {
         wordMap[strings.ToLower(word)] = true
     }
-    
+
     return wordRegex.ReplaceAllStringFunc(text, func(match string) string {
         if wordMap[strings.ToLower(match)] {
             return fmt.Sprintf("<mark>%s</mark>", match)
@@ -425,12 +425,12 @@ func ParseLogLine(line string) (*LogEntry, error) {
     if len(matches) != 4 {
         return nil, fmt.Errorf("invalid log format")
     }
-    
+
     timestamp, err := time.Parse("2006-01-02 15:04:05", matches[1])
     if err != nil {
         return nil, err
     }
-    
+
     return &LogEntry{
         Timestamp: timestamp,
         Level:     matches[2],
@@ -452,27 +452,27 @@ var (
 
 func ValidatePassword(password string) []string {
     var errors []string
-    
+
     if len(password) < minLength {
         errors = append(errors, fmt.Sprintf("password must be at least %d characters", minLength))
     }
-    
+
     if !hasUpper.MatchString(password) {
         errors = append(errors, "password must contain at least one uppercase letter")
     }
-    
+
     if !hasLower.MatchString(password) {
         errors = append(errors, "password must contain at least one lowercase letter")
     }
-    
+
     if !hasNumber.MatchString(password) {
         errors = append(errors, "password must contain at least one number")
     }
-    
+
     if !hasSpecial.MatchString(password) {
         errors = append(errors, "password must contain at least one special character")
     }
-    
+
     return errors
 }
 ```
@@ -485,7 +485,7 @@ var csvFieldRegex = regexp.MustCompile(`"([^"]*)"|([^,]+)`)
 func ParseCSVLine(line string) []string {
     matches := csvFieldRegex.FindAllStringSubmatch(line, -1)
     fields := make([]string, 0, len(matches))
-    
+
     for _, match := range matches {
         if match[1] != "" {
             fields = append(fields, match[1]) // Quoted field
@@ -493,7 +493,7 @@ func ParseCSVLine(line string) []string {
             fields = append(fields, strings.TrimSpace(match[2])) // Unquoted field
         }
     }
-    
+
     return fields
 }
 ```
@@ -513,14 +513,14 @@ func ValidateIP(ip string) bool {
     if len(parts) != 4 {
         return false
     }
-    
+
     for _, part := range parts {
         num, err := strconv.Atoi(part)
         if err != nil || num < 0 || num > 255 {
             return false
         }
     }
-    
+
     return true
 }
 ```
@@ -543,21 +543,21 @@ func (c *RegexCache) Get(pattern string) (*regexp.Regexp, error) {
     c.mu.RLock()
     re, exists := c.cache[pattern]
     c.mu.RUnlock()
-    
+
     if exists {
         return re, nil
     }
-    
+
     // Компиляция
     re, err := regexp.Compile(pattern)
     if err != nil {
         return nil, err
     }
-    
+
     c.mu.Lock()
     c.cache[pattern] = re
     c.mu.Unlock()
-    
+
     return re, nil
 }
 
@@ -583,7 +583,7 @@ func FindMatchesInRange(text string, pattern string, start, end int) []string {
     if start < 0 || end > len(text) || start > end {
         return nil
     }
-    
+
     re := regexp.MustCompile(pattern)
     matches := re.FindAllString(text[start:end], -1)
     return matches
@@ -611,13 +611,13 @@ var multiLineRegex = regexp.MustCompile(`(?m)^\s*(\w+):\s*(.+)$`)
 func ParseKeyValuePairs(text string) map[string]string {
     matches := multiLineRegex.FindAllStringSubmatch(text, -1)
     result := make(map[string]string)
-    
+
     for _, match := range matches {
         if len(match) == 3 {
             result[match[1]] = match[2]
         }
     }
-    
+
     return result
 }
 ```
@@ -685,20 +685,20 @@ func (rc *RegexCache) Get(pattern string) (*regexp.Regexp, error) {
         return re, nil
     }
     rc.mu.RUnlock()
-    
+
     rc.mu.Lock()
     defer rc.mu.Unlock()
-    
+
     // Двойная проверка
     if re, ok := rc.cache[pattern]; ok {
         return re, nil
     }
-    
+
     re, err := regexp.Compile(pattern)
     if err != nil {
         return nil, err
     }
-    
+
     rc.cache[pattern] = re
     return re, nil
 }
@@ -745,12 +745,12 @@ func ParseLogLine(line string) (*LogEntry, error) {
     if len(matches) != 4 {
         return nil, fmt.Errorf("invalid log format")
     }
-    
+
     timestamp, err := time.Parse("2006-01-02 15:04:05", matches[1])
     if err != nil {
         return nil, err
     }
-    
+
     return &LogEntry{
         Timestamp: timestamp,
         Level:     matches[2],
@@ -763,7 +763,7 @@ func ParseCSVLine(line string) []string {
     var fields []string
     var current strings.Builder
     inQuotes := false
-    
+
     for i := 0; i < len(line); i++ {
         char := line[i]
         switch {
@@ -777,7 +777,7 @@ func ParseCSVLine(line string) []string {
         }
     }
     fields = append(fields, current.String())
-    
+
     return fields
 }
 ```
@@ -815,21 +815,21 @@ func MaskSensitiveData(text string) string {
 
 ## Лучшие практики
 
-1. **Компилируйте регулярные выражения заранее** - для повторного использования
-2. **Используйте MustCompile** - если паттерн известен на этапе компиляции
-3. **Обрабатывайте ошибки** - при компиляции паттернов
-4. **Избегайте сложных паттернов** - для лучшей производительности
-5. **Кэшируйте скомпилированные выражения** - для повторного использования
-6. **Используйте именованные группы** - для лучшей читаемости
-7. **Экранируйте специальные символы** - при поиске литералов
-8. **Тестируйте паттерны** - проверяйте на различных входных данных
-9. **Используйте анкоры** - для точного поиска
-10. **Ограничивайте количество совпадений** - для производительности
-11. **Используйте для валидации** - проверяйте форматы данных
-12. **Парсите структурированные данные** - извлекайте данные из текста
-13. **Используйте функции замены** - для сложных преобразований
-14. **Оптимизируйте паттерны** - избегайте **backtracking**
-15. **Документируйте паттерны** - объясняйте сложные регулярные выражения
+1. **Компилируйте регулярные выражения заранее** — для повторного использования
+2. **Используйте MustCompile** — если паттерн известен на этапе компиляции
+3. **Обрабатывайте ошибки** — при компиляции паттернов
+4. **Избегайте сложных паттернов** — для лучшей производительности
+5. **Кэшируйте скомпилированные выражения** — для повторного использования
+6. **Используйте именованные группы** — для лучшей читаемости
+7. **Экранируйте специальные символы** — при поиске литералов
+8. **Тестируйте паттерны** — проверяйте на различных входных данных
+9. **Используйте анкоры** — для точного поиска
+10. **Ограничивайте количество совпадений** — для производительности
+11. **Используйте для валидации** — проверяйте форматы данных
+12. **Парсите структурированные данные** — извлекайте данные из текста
+13. **Используйте функции замены** — для сложных преобразований
+14. **Оптимизируйте паттерны** — избегайте **backtracking**
+15. **Документируйте паттерны** — объясняйте сложные регулярные выражения
 
 
 ## Решение проблем
@@ -848,3 +848,11 @@ func MaskSensitiveData(text string) string {
 
 - [Go regexp Package](https://pkg.go.dev/regexp)
 - [RE2 Syntax](https://github.com/google/re2/wiki/Syntax)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

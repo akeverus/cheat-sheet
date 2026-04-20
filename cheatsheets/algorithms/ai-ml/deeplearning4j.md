@@ -20,7 +20,7 @@ Deeplearning4j (DL4J) — это современная и библиотека 
 - [Deeplearning4j Documentation](https://deeplearning4j.org/docs/latest/)
 - [ND4J Documentation](https://deeplearning4j.org/docs/latest/nd4j-overview)
 
-### Baeldung
+### Обучающие материалы
 - [Introduction to Deeplearning4j](https://www.baeldung.com/deeplearning4j)
 
 ### См. также
@@ -242,11 +242,11 @@ activation() — это функция, которая запускается в
 
 ### Регуляризация
 
-Одной из проблем обучения нейронных сетей является случай переобучения, когда сеть "запоминает" обучающие данные.
+Одной из проблем обучения нейронных сетей является случай переобучения, когда сеть «запоминает» обучающие данные.
 
 Это происходит, когда сеть устанавливает чрезмерно высокие веса для обучающих данных и дает плохие результаты для любых других данных.
 
-Чтобы решить эту проблему, мы настроим регуляризацию l2 с помощью строки .regularization(true).l2(0.0001). Регуляризация "наказывает" сеть за слишком большие веса и предотвращает переобучение.
+Чтобы решить эту проблему, мы настроим регуляризацию l2 с помощью строки .regularization(true).l2(0.0001). Регуляризация «наказывает» сеть за слишком большие веса и предотвращает переобучение.
 
 ### Архитектура сети
 
@@ -336,20 +336,20 @@ import org.springframework.core.io.ClassPathResource
 class DeepLearning4jK {
     private val FEATURES_COUNT = 4
     private val CLASSES_COUNT = 3
-    
+
     fun loadData(): DataSet {
         val recordReader = CSVRecordReader(0, ',')
         recordReader.initialize(FileSplit(ClassPathResource("iris.txt").file))
-        
+
         val iterator = RecordReaderDataSetIterator(
             recordReader, 150, FEATURES_COUNT, CLASSES_COUNT
         )
         val allData = iterator.next()
         allData.shuffle(42)
-        
+
         return allData
     }
-    
+
     fun normalizeData(dataSet: DataSet): DataSet {
         val normalizer: DataNormalization = NormalizerStandardize()
         normalizer.fit(dataSet)
@@ -384,7 +384,7 @@ fun buildModel(): MultiLayerNetwork {
             .nIn(3).nOut(3).build())
         .backprop(true).pretrain(false)
         .build()
-    
+
     return MultiLayerNetwork(configuration)
 }
 ```
@@ -397,11 +397,11 @@ import org.deeplearning4j.eval.Evaluation
 fun trainAndEvaluate(model: MultiLayerNetwork, trainingData: DataSet, testData: DataSet) {
     model.init()
     model.fit(trainingData)
-    
+
     val eval = Evaluation(3)
     val output = model.output(testData.features)
     eval.eval(testData.labels, output)
-    
+
     println(eval.stats())
 }
 ```

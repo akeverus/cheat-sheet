@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Scala Collections Documentation](https://docs.scala-lang.org/overviews/collections-2.13/overview.html)
 - [Scala Collections API](https://www.scala-lang.org/api/current/scala/collection/index.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Scala Tutorial](https://www.baeldung.com/scala)
 
 ## Содержание
@@ -94,7 +94,7 @@ updated: "2026-02-11"
 
 ### Иерархия коллекций
 
-```
+```text
 Traversable
   ├── Iterable
   │     ├── Set
@@ -381,9 +381,9 @@ List("a", "bb", "ccc").map(_.length)  // List(1, 2, 3)
 
 ### **FlatMap**
 
-Операция `**flatMap**` применяет функцию, которая возвращает коллекцию, к каждому элементу, а затем "разворачивает" все результирующие коллекции в одну плоскую коллекцию. В отличие от `**map**`, который создает коллекцию коллекций, `**flatMap**` создает одну плоскую коллекцию, объединяя все результаты.
+Операция `**flatMap**` применяет функцию, которая возвращает коллекцию, к каждому элементу, а затем «разворачивает» все результирующие коллекции в одну плоскую коллекцию. В отличие от `**map**`, который создает коллекцию коллекций, `**flatMap**` создает одну плоскую коллекцию, объединяя все результаты.
 
-**Преобразует и "разворачивает" результат:**
+**Преобразует и «разворачивает» результат:**
 
 ```scala
 // flatMap применяет функцию, возвращающую коллекцию, и разворачивает результат
@@ -556,7 +556,7 @@ val view = numbers.view
 
 ## **Stream** (**ленивые списки**)
 
-**Stream** - это ленивый список, который вычисляет элементы по требованию:**
+**Stream** — это ленивый список, который вычисляет элементы по требованию:**
 
 ```scala
 // Бесконечный Stream
@@ -564,7 +564,7 @@ val infiniteStream = Stream.from(1)
 val first10 = infiniteStream.take(10).toList  // List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 // Stream с вычислениями
-val fibStream: Stream[BigInt] = BigInt(0) #:: BigInt(1) #:: 
+val fibStream: Stream[BigInt] = BigInt(0) #:: BigInt(1) #::
   fibStream.zip(fibStream.tail).map { case (a, b) => a + b }
 val first5Fib = fibStream.take(5).toList  // List(0, 1, 1, 2, 3)
 ```
@@ -783,7 +783,7 @@ val result = lines.take(1000).toList
 ```scala
 // LazyList для бесконечных последовательностей
 def fibonacci: LazyList[BigInt] = {
-  def fib(a: BigInt, b: BigInt): LazyList[BigInt] = 
+  def fib(a: BigInt, b: BigInt): LazyList[BigInt] =
     a #:: fib(b, a + b)
   fib(0, 1)
 }
@@ -839,3 +839,11 @@ val result = lines.take(1000).toList
 - [Scala Collections API](https://www.scala-lang.org/api/current/scala/collection/index.html)
 
 > **Примечание**: Это базовая информация о коллекциях **Scala**. Для более детального изучения см. разделы [List](scala-collections-list.md), [Set](scala-collections-set.md), [Map](scala-collections-map.md) и официальную документацию по коллекциям.
+
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

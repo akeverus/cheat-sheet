@@ -484,3 +484,8 @@ Page<Product> results = productRepository.findAll(predicate, pageable);
 | Checked exception не откатывает TX | Rollback только на `RuntimeException` | `rollbackFor = Exception.class` |
 | `save()` делает UPDATE вместо INSERT | Заполненный `@Id` = existing entity | `@GeneratedValue` или `Persistable<ID>` |
 | `@Modifying` без sync | Persistence context устарел | `@Modifying(clearAutomatically = true)` |
+
+## См. также
+
+- [[spring-boot|Spring Boot]]
+- [[spring-core|Spring Framework: Core]]

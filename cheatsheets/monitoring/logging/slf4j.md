@@ -61,7 +61,7 @@ import org.slf4j.LoggerFactory;
 
 public class LoggerExample {
     private static final Logger logger = LoggerFactory.getLogger(LoggerExample.class);
-    
+
     public void demo() {
         logger.info("Message from class logger");
     }
@@ -178,11 +178,11 @@ logger.info(AUDIT, "User {} performed {}", userId, action);
 
 ## Частые вопросы
 
-**Нужно ли в приложении использовать SLF4J или можно только Logback/Log4j?**  
+**Нужно ли в приложении использовать SLF4J или можно только Logback/Log4j?**
 Для приложений предпочтительно писать код против SLF4J API, а в classpath подключать одну реализацию (Logback или Log4j 2). Так проще менять реализацию и подключать библиотеки с разным логированием через мосты.
 
-**Почему после добавления библиотеки логи «пропали» или изменился формат?**  
+**Почему после добавления библиотеки логи «пропали» или изменился формат?**
 Скорее всего, в classpath попал второй binding (например, через транзитивную зависимость). Проверьте `mvn dependency:tree`, оставьте один binding и при необходимости исключите лишние артефакты.
 
-**Как передать контекст запроса (requestId, userId) в асинхронные задачи?**  
+**Как передать контекст запроса (requestId, userId) в асинхронные задачи?**
 Перед запуском задачи скопируйте MDC: `Map<String, String> ctx = MDC.getCopyOfContextMap()`. В начале run() дочернего потока вызовите `if (ctx != null) MDC.setContextMap(ctx);` и в `finally` обязательно `MDC.clear()`.

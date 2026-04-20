@@ -16,9 +16,7 @@ updated: "2026-02-11"
 related: ["micronaut-http.md", "micronaut-reactive.md"]
 ---
 
-# Micronaut: Mail - Email Sending и Templates
-
-
+# Micronaut: Mail — Email Sending и Templates
 
 ## Полезные ссылки
 
@@ -27,7 +25,7 @@ related: ["micronaut-http.md", "micronaut-reactive.md"]
 
 ## Содержание
 
-- [Micronaut: Mail - Email Sending и Templates](#micronaut-mail-email-sending-и-templates)
+- [Micronaut: Mail — Email Sending и Templates](#micronaut-mail-email-sending-и-templates)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Настройка Mail](#настройка-mail)
@@ -131,18 +129,18 @@ import jakarta.inject.Singleton;
 @Singleton
 public class EmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public EmailService(EmailSender<?, ?> emailSender) {
         this.emailSender = emailSender;
     }
-    
+
     public void sendSimpleEmail(String to, String subject, String body) {
         Email email = Email.builder()
             .to(to)
             .subject(subject)
             .body(body)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -158,7 +156,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class EmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendToMultipleRecipients(
             List<String> to,
             List<String> cc,
@@ -172,7 +170,7 @@ public class EmailService {
             .subject(subject)
             .body(body)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -190,14 +188,14 @@ import jakarta.inject.Singleton;
 @Singleton
 public class HtmlEmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         Email email = Email.builder()
             .to(to)
             .subject(subject)
             .body(htmlBody)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -213,11 +211,11 @@ import jakarta.inject.Singleton;
 @Singleton
 public class MultipartEmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendMultipartEmail(
-            String to, 
-            String subject, 
-            String plainText, 
+            String to,
+            String subject,
+            String plainText,
             String htmlBody) {
         Email email = Email.builder()
             .to(to)
@@ -225,7 +223,7 @@ public class MultipartEmailService {
             .body(plainText)
             .htmlBody(htmlBody)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -263,25 +261,25 @@ import java.util.Map;
 public class TemplateEmailService {
     private final EmailSender<?, ?> emailSender;
     private final ViewsRenderer<Map<String, Object>, ?> viewsRenderer;
-    
+
     public TemplateEmailService(
             EmailSender<?, ?> emailSender,
             ViewsRenderer<Map<String, Object>, ?> viewsRenderer) {
         this.emailSender = emailSender;
         this.viewsRenderer = viewsRenderer;
     }
-    
+
     public void sendWelcomeEmail(String to, String name) {
         Map<String, Object> model = Map.of("name", name);
         String htmlBody = viewsRenderer.render("email/welcome", model, false)
             .orElse("");
-        
+
         Email email = Email.builder()
             .to(to)
             .subject("Welcome!")
             .htmlBody(htmlBody)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -301,25 +299,25 @@ import java.io.File;
 @Singleton
 public class AttachmentEmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendEmailWithAttachment(
-            String to, 
-            String subject, 
-            String body, 
+            String to,
+            String subject,
+            String body,
             File attachment) {
         Attachment emailAttachment = Attachment.builder()
             .filename(attachment.getName())
             .contentType("application/pdf")
             .content(attachment)
             .build();
-        
+
         Email email = Email.builder()
             .to(to)
             .subject(subject)
             .body(body)
             .attachment(emailAttachment)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -339,18 +337,18 @@ import java.util.concurrent.CompletableFuture;
 @Singleton
 public class AsyncEmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     @Async
     public CompletableFuture<Void> sendEmailAsync(
-            String to, 
-            String subject, 
+            String to,
+            String subject,
             String body) {
         Email email = Email.builder()
             .to(to)
             .subject(subject)
             .body(body)
             .build();
-        
+
         emailSender.send(email);
         return CompletableFuture.completedFuture(null);
     }
@@ -422,16 +420,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class QueuedEmailService {
     private final EmailSender<?, ?> emailSender;
     private final BlockingQueue<Email> emailQueue = new LinkedBlockingQueue<>();
-    
+
     public QueuedEmailService(EmailSender<?, ?> emailSender) {
         this.emailSender = emailSender;
         startEmailProcessor();
     }
-    
+
     public void queueEmail(Email email) {
         emailQueue.offer(email);
     }
-    
+
     private void startEmailProcessor() {
         new Thread(() -> {
             while (true) {
@@ -463,30 +461,30 @@ import jakarta.inject.Singleton;
 public class TrackedEmailService {
     private final EmailSender<?, ?> emailSender;
     private final EmailTrackingRepository trackingRepository;
-    
+
     public TrackedEmailService(
             EmailSender<?, ?> emailSender,
             EmailTrackingRepository trackingRepository) {
         this.emailSender = emailSender;
         this.trackingRepository = trackingRepository;
     }
-    
+
     public void sendTrackedEmail(String to, String subject, String body) {
         EmailTracking tracking = new EmailTracking();
         tracking.setRecipient(to);
         tracking.setSubject(subject);
         tracking.setStatus("PENDING");
         tracking = trackingRepository.save(tracking);
-        
+
         try {
             Email email = Email.builder()
                 .to(to)
                 .subject(subject)
                 .body(body)
                 .build();
-            
+
             emailSender.send(email);
-            
+
             tracking.setStatus("SENT");
             tracking.setSentAt(LocalDateTime.now());
         } catch (Exception e) {
@@ -514,23 +512,23 @@ import java.util.Map;
 public class TemplateEmailService {
     private final EmailSender<?, ?> emailSender;
     private final ViewsRenderer<Map<String, Object>, ?> viewsRenderer;
-    
+
     public void sendWelcomeEmail(String to, String name, String activationLink) {
         Map<String, Object> model = Map.of(
             "name", name,
             "activationLink", activationLink,
             "supportEmail", "support@example.com"
         );
-        
+
         String htmlBody = viewsRenderer.render("email/welcome", model, false)
             .orElse("");
-        
+
         Email email = Email.builder()
             .to(to)
             .subject("Welcome to our service!")
             .htmlBody(htmlBody)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -549,7 +547,7 @@ import java.util.List;
 @Singleton
 public class BatchEmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendBatchEmails(List<String> recipients, String subject, String body) {
         List<Email> emails = recipients.stream()
             .map(to -> Email.builder()
@@ -558,7 +556,7 @@ public class BatchEmailService {
                 .body(body)
                 .build())
             .collect(Collectors.toList());
-        
+
         emails.forEach(emailSender::send);
     }
 }
@@ -579,20 +577,20 @@ import java.util.Map;
 public class ConditionalTemplateService {
     private final EmailSender<?, ?> emailSender;
     private final ViewsRenderer<Map<String, Object>, ?> viewsRenderer;
-    
+
     public void sendWelcomeEmail(String to, String name, String locale) {
         String templateName = "email/welcome-" + locale;
         Map<String, Object> model = Map.of("name", name);
-        
+
         String htmlBody = viewsRenderer.render(templateName, model, false)
             .orElse(viewsRenderer.render("email/welcome", model, false).orElse(""));
-        
+
         Email email = Email.builder()
             .to(to)
             .subject("Welcome!")
             .htmlBody(htmlBody)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -610,7 +608,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class DeliveryReportService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendEmailWithReport(String to, String subject, String body) {
         Email email = Email.builder()
             .to(to)
@@ -618,7 +616,7 @@ public class DeliveryReportService {
             .body(body)
             .header("X-Delivery-Report", "true")
             .build();
-        
+
         emailSender.send(email);
         // Обработка delivery report
     }
@@ -650,7 +648,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class RateLimitedEmailService {
     private final EmailSender<?, ?> emailSender;
-    
+
     @RateLimited(limit = 100, duration = "1m")
     public void sendEmail(String to, String subject, String body) {
         Email email = Email.builder()
@@ -658,7 +656,7 @@ public class RateLimitedEmailService {
             .subject(subject)
             .body(body)
             .build();
-        
+
         emailSender.send(email);
     }
 }
@@ -676,7 +674,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class BounceHandlingService {
     private final EmailSender<?, ?> emailSender;
-    
+
     public void sendEmailWithBounceHandler(String to, String subject, String body) {
         Email email = Email.builder()
             .to(to)
@@ -684,15 +682,12 @@ public class BounceHandlingService {
             .body(body)
             .header("Return-Path", "bounce@example.com")
             .build();
-        
+
         emailSender.send(email);
         // Обработка bounce сообщений
     }
 }
 ```
-
-
-
 
 ## Заключение
 
@@ -704,3 +699,11 @@ public class BounceHandlingService {
 - [JavaMail API](https://javaee.github.io/javamail/)
 - [Thymeleaf Documentation](https://www.thymeleaf.org/documentation.html)
 - [**Email Best Practices**](https://www.baeldung.com/spring-email)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-cloud|Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing]]

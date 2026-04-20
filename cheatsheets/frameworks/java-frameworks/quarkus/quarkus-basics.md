@@ -177,7 +177,7 @@ related: ["quarkus-reactive.md", "quarkus-testing.md", "quarkus-security.md"]
 
 ## Введение в **Quarkus**
 
-**Quarkus** - это **Kubernetes-native Java** фреймворк, оптимизированный для создания облачных микросервисов. Основные преимущества:**
+**Quarkus** — это **Kubernetes-native Java** фреймворк, оптимизированный для создания облачных микросервисов. Основные преимущества:**
 
 - **Быстрый запуск**: **Sub-second startup time**
 - **Низкое потребление памяти**: **Minimal footprint**
@@ -2123,7 +2123,7 @@ quarkus.opentelemetry.tracer.exporter.otlp.endpoint=http://jaeger:4317
 ```java
 @ApplicationScoped
 public class CommandHandler {
-    
+
     public <T> Uni<T> execute(Command<T> command) {
         return command.execute();
     }
@@ -2141,11 +2141,11 @@ public interface Command<T> {
 ```java
 @ApplicationScoped
 public class PaymentStrategyFactory {
-    
+
     @Inject
     @Any
     Instance<PaymentStrategy> strategies;
-    
+
     public PaymentStrategy getStrategy(String type) {
         return strategies.stream()
             .filter(s -> s.supports(type))
@@ -2162,10 +2162,10 @@ public class PaymentStrategyFactory {
 ```java
 @ApplicationScoped
 public class ServiceFactory {
-    
+
     @Inject
     Instance<Service> services;
-    
+
     public Service create(String type) {
         return services.stream()
             .filter(s -> s.getType().equals(type))
@@ -2263,10 +2263,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MetricsService {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     public void recordRequest(String endpoint) {
         registry.counter("http.requests", "endpoint", endpoint).increment();
     }
@@ -2280,19 +2280,19 @@ public class MetricsService {
 ```java
 @ApplicationScoped
 public class CustomMetrics {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     private final Counter customCounter;
-    
+
     public CustomMetrics(MeterRegistry registry) {
         this.registry = registry;
         this.customCounter = Counter.builder("custom.counter")
             .description("Custom counter metric")
             .register(registry);
     }
-    
+
     public void increment() {
         customCounter.increment();
     }
@@ -2308,7 +2308,7 @@ public class CustomMetrics {
 ```java
 @Provider
 public class GlobalExceptionHandler implements ExceptionMapper<Exception> {
-    
+
     @Override
     public Response toResponse(Exception exception) {
         ErrorResponse error = new ErrorResponse(
@@ -2327,7 +2327,7 @@ public class GlobalExceptionHandler implements ExceptionMapper<Exception> {
 ```java
 @ApplicationScoped
 public class RetryService {
-    
+
     public Uni<String> executeWithRetry(Uni<String> operation) {
         return operation
             .onFailure().retry().atMost(3)
@@ -2345,7 +2345,7 @@ public class RetryService {
 ```java
 @Path("/api/users")
 public class UserResource {
-    
+
     @POST
     public Response createUser(@Valid @NotNull User user) {
         User created = userService.create(user);
@@ -2361,7 +2361,7 @@ public class UserResource {
 ```java
 @ApplicationScoped
 public class SanitizationService {
-    
+
     public String sanitize(String input) {
         return input.replaceAll("<script>", "")
                    .replaceAll("</script>", "");
@@ -2437,13 +2437,13 @@ ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
 ```java
 @ApplicationScoped
 public class StartupService {
-    
+
     @PostConstruct
     void onStart() {
         // Инициализация при запуске
         initializeServices();
     }
-    
+
     @PreDestroy
     void onStop() {
         // Очистка при остановке
@@ -2459,13 +2459,13 @@ public class StartupService {
 ```java
 @ApplicationScoped
 public class ApplicationEventListener {
-    
+
     @Observes
     void onStartup(@Observes StartupEvent event) {
         // Обработка события запуска
         log.info("Application started");
     }
-    
+
     @Observes
     void onShutdown(@Observes ShutdownEvent event) {
         // Обработка события остановки
@@ -2628,14 +2628,14 @@ quarkus.http.ssl.certificate.key-file=/path/to/key.pem
 ```java
 @Provider
 public class SecurityHeadersFilter implements ContainerResponseFilter {
-    
+
     @Override
-    public void filter(ContainerRequestContext requestContext, 
+    public void filter(ContainerRequestContext requestContext,
                       ContainerResponseContext responseContext) {
         responseContext.getHeaders().add("X-Content-Type-Options", "nosniff");
         responseContext.getHeaders().add("X-Frame-Options", "DENY");
         responseContext.getHeaders().add("X-XSS-Protection", "1; mode=block");
-        responseContext.getHeaders().add("Strict-Transport-Security", 
+        responseContext.getHeaders().add("Strict-Transport-Security",
             "max-age=31536000; includeSubDomains");
     }
 }
@@ -2670,3 +2670,11 @@ quarkus.jvm.args=-XX:+HeapDumpOnOutOfMemoryError,-XX:HeapDumpPath=/tmp/heapdump.
 ```
 
 **This comprehensive guide covers all major aspects** of **Quarkus development**, **from basic setup** to **advanced features like reactive programming**, **security**, **deployment**, **build configuration**, **development tools**, **performance tuning**, **and observability**. **The file provides detailed examples and best practices for building cloud-native applications with Quarkus**.
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
+- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]

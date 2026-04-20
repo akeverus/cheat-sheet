@@ -45,7 +45,6 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 - [Частые вопросы](#частые-вопросы)
 - [Глоссарий и итоговые таблицы](#глоссарий)
 
----
 
 ## Введение
 
@@ -53,7 +52,6 @@ Micrometer — библиотека для сбора метрик в прило
 
 **Зачем использовать Micrometer:** единый API для разных бэкендов; интеграция с Spring Boot Actuator; типы метрик с семантикой и единицами; теги для фильтрации и группировки.
 
----
 
 ## Установка и настройка
 
@@ -89,7 +87,6 @@ timer.record(() -> { /* operation */ });
 // Scrape: registry.scrape() возвращает текст в формате Prometheus
 ```
 
----
 
 ## Registry и Meter
 
@@ -97,7 +94,6 @@ MeterRegistry — точка регистрации метрик. Один Regis
 
 CompositeMeterRegistry объединяет несколько дочерних регистров; при регистрации метрика попадает во все дочерние. Удобно для одновременного экспорта в Prometheus и StatsD.
 
----
 
 ## Counter, Timer, Gauge, DistributionSummary
 
@@ -133,7 +129,6 @@ summary.record(1024);
 
 LongTaskTimer — для длительных задач: учитывает текущее количество выполняющихся задач и их длительность. registry.more().longTaskTimer("task.name"); start() возвращает Sample, stop(sample) фиксирует длительность.
 
----
 
 ## Интеграция с Spring Boot
 
@@ -173,7 +168,6 @@ public class CustomMetrics implements MeterBinder {
 
 Свойства management.metrics.enable.* позволяют отключить отдельные метрики (например, jvm, process, tomcat).
 
----
 
 ## Экспорт в Prometheus и другие бэкенды
 
@@ -188,7 +182,6 @@ public class CustomMetrics implements MeterBinder {
 | JmxMeterRegistry | JMX | Локальный MBean |
 | SimpleMeterRegistry | In-memory | Тесты |
 
----
 
 ## Теги и именование
 
@@ -198,7 +191,6 @@ public class CustomMetrics implements MeterBinder {
 
 MeterFilter позволяет добавлять общие теги, переименовывать, отключать метрики. Пример: MeterFilter.commonTags(Arrays.asList(Tag.of("env", "prod"), Tag.of("service", "my-app"))).
 
----
 
 ## Лучшие практики
 
@@ -209,7 +201,6 @@ MeterFilter позволяет добавлять общие теги, пере�
 5. При использовании Prometheus учитывать кардинальность; ограничивать набор тегов для высокочастотных метрик.
 6. Не называть метрику вручную с зарезервированными суффиксами Prometheus (_total, _count, _sum) — Micrometer сам добавляет их.
 
----
 
 ## Решение проблем
 
@@ -223,7 +214,6 @@ MeterFilter позволяет добавлять общие теги, пере�
 | IllegalArgumentException: Prometheus reserved suffix | Имя метрики заканчивается на _total, _count, _sum | Переименовать метрику; Micrometer сам добавляет суффиксы |
 | Timeout при scrape | Слишком много метрик или медленный scrape() | Уменьшить число метрик; отключить ненужные MeterBinder; увеличить timeout в Prometheus |
 
----
 
 ## Частые вопросы
 
@@ -237,7 +227,6 @@ MeterFilter позволяет добавлять общие теги, пере�
 
 **Как измерить время метода в Spring MVC?** Spring Boot автоматически регистрирует Timer для http.server.requests при наличии actuator и micrometer-registry-*. Для кастомного кода обернуть вызов в timer.record(Runnable) или timer.record(Callable).
 
----
 
 ## Глоссарий
 
@@ -271,6 +260,5 @@ MeterFilter позволяет добавлять общие теги, пере�
 
 **Типы Meter и вывод в Prometheus:** Counter → name_total; Timer → name_seconds (histogram/summary), name_seconds_count, name_seconds_sum; Gauge → name; DistributionSummary → name_count, name_sum, name (histogram/summary); LongTaskTimer → name_active_count, name_duration_seconds.
 
----
 
 **Заключение.** Micrometer — фасад для метрик в JVM-приложениях с экспортом в Prometheus, Graphite, InfluxDB, StatsD и др. Используйте Counter, Timer, Gauge, DistributionSummary для инструментирования; в Spring Boot подключите micrometer-registry-prometheus и откройте /actuator/prometheus для Prometheus. Соблюдайте правила именования и ограничивайте кардинальность тегов. См. [Micrometer Docs](https://micrometer.io/docs), [Spring Boot Metrics](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.metrics).

@@ -82,9 +82,9 @@ Go предоставляет несколько способов работы �
 
 ### Основные подходы
 
-1. **database/sql** - стандартный пакет для работы с **SQL** базами данных
-2. **sqlx** - расширение **database**/**sql** с дополнительными возможностями
-3. **GORM** - **ORM** для работы с базами данных
+1. **database/sql** — стандартный пакет для работы с **SQL** базами данных
+2. **sqlx** — расширение **database**/**sql** с дополнительными возможностями
+3. **GORM** — **ORM** для работы с базами данных
 
 ## **database**/**sql**
 
@@ -104,7 +104,7 @@ func main() {
         log.Fatal(err)
     }
     defer db.Close()
-    
+
     // Проверка подключения
     if err := db.Ping(); err != nil {
         log.Fatal(err)
@@ -221,7 +221,7 @@ err := db.Get(&user, db.Rebind(namedQuery), args...)
 
 ## **GORM**
 
-**GORM** - это популярный **ORM** для Go.
+**GORM** — это популярный **ORM** для Go.
 
 ### Подключение
 
@@ -327,11 +327,11 @@ db.Transaction(func(tx *gorm.DB) error {
     if err := tx.Create(&user1).Error; err != nil {
         return err
     }
-    
+
     if err := tx.Create(&user2).Error; err != nil {
         return err
     }
-    
+
     return nil
 })
 ```
@@ -377,13 +377,13 @@ db.Migrator().DropColumn(&User{}, "Email")
 func configureConnectionPool(db *sql.DB) {
     // Максимальное количество открытых соединений
     db.SetMaxOpenConns(25)
-    
+
     // Максимальное количество неактивных соединений
     db.SetMaxIdleConns(5)
-    
+
     // Максимальное время жизни соединения
     db.SetConnMaxLifetime(5 * time.Minute)
-    
+
     // Максимальное время простоя соединения
     db.SetConnMaxIdleTime(10 * time.Minute)
 }
@@ -399,20 +399,20 @@ func batchInsert(db *sql.DB, users []User) error {
         return err
     }
     defer tx.Rollback()
-    
+
     stmt, err := tx.Prepare("INSERT INTO users (name, email) VALUES ($1, $2)")
     if err != nil {
         return err
     }
     defer stmt.Close()
-    
+
     for _, user := range users {
         _, err := stmt.Exec(user.Name, user.Email)
         if err != nil {
             return err
         }
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -446,26 +446,26 @@ func getUsersWithPosts(db *sql.DB) ([]UserWithPosts, error) {
         LEFT JOIN posts p ON u.id = p.user_id
         ORDER BY u.id, p.id
     `
-    
+
     rows, err := db.Query(query)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var results []UserWithPosts
     currentUser := &UserWithPosts{}
-    
+
     for rows.Next() {
         var userID int
         var userName string
         var postID sql.NullInt64
         var postTitle sql.NullString
-        
+
         if err := rows.Scan(&userID, &userName, &postID, &postTitle); err != nil {
             return nil, err
         }
-        
+
         if currentUser.ID != userID {
             if currentUser.ID != 0 {
                 results = append(results, *currentUser)
@@ -476,7 +476,7 @@ func getUsersWithPosts(db *sql.DB) ([]UserWithPosts, error) {
                 Posts: []Post{},
             }
         }
-        
+
         if postID.Valid {
             currentUser.Posts = append(currentUser.Posts, Post{
                 ID:    int(postID.Int64),
@@ -484,11 +484,11 @@ func getUsersWithPosts(db *sql.DB) ([]UserWithPosts, error) {
             })
         }
     }
-    
+
     if currentUser.ID != 0 {
         results = append(results, *currentUser)
     }
-    
+
     return results, nil
 }
 ```
@@ -534,13 +534,13 @@ func handleNullValues(db *sql.DB) {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     if user.Email.Valid {
         fmt.Println("Email:", user.Email.String)
     } else {
         fmt.Println("Email is NULL")
     }
-    
+
     if user.Age.Valid {
         fmt.Println("Age:", user.Age.Int64)
     }
@@ -608,7 +608,7 @@ func createIndexes(db *sql.DB) error {
     if err != nil {
         return err
     }
-    
+
     _, err = db.Exec("CREATE INDEX idx_users_name ON users(name)")
     return err
 }
@@ -620,7 +620,7 @@ func explainQuery(db *sql.DB, query string) error {
         return err
     }
     defer rows.Close()
-    
+
     for rows.Next() {
         var plan string
         if err := rows.Scan(&plan); err != nil {
@@ -642,18 +642,18 @@ func streamLargeResults(db *sql.DB, callback func(User) error) error {
         return err
     }
     defer rows.Close()
-    
+
     for rows.Next() {
         var user User
         if err := rows.Scan(&user.ID, &user.Name); err != nil {
             return err
         }
-        
+
         if err := callback(user); err != nil {
             return err
         }
     }
-    
+
     return rows.Err()
 }
 ```
@@ -665,13 +665,13 @@ func streamLargeResults(db *sql.DB, callback func(User) error) error {
 func getUsersPaginated(db *sql.DB, page, pageSize int) ([]User, error) {
     offset := (page - 1) * pageSize
     query := "SELECT id, name FROM users ORDER BY id LIMIT $1 OFFSET $2"
-    
+
     rows, err := db.Query(query, pageSize, offset)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var users []User
     for rows.Next() {
         var user User
@@ -680,20 +680,20 @@ func getUsersPaginated(db *sql.DB, page, pageSize int) ([]User, error) {
         }
         users = append(users, user)
     }
-    
+
     return users, nil
 }
 
 // Cursor-based pagination
 func getUsersCursor(db *sql.DB, cursor int, limit int) ([]User, int, error) {
     query := "SELECT id, name FROM users WHERE id > $1 ORDER BY id LIMIT $2"
-    
+
     rows, err := db.Query(query, cursor, limit)
     if err != nil {
         return nil, 0, err
     }
     defer rows.Close()
-    
+
     var users []User
     var lastID int
     for rows.Next() {
@@ -704,7 +704,7 @@ func getUsersCursor(db *sql.DB, cursor int, limit int) ([]User, int, error) {
         users = append(users, user)
         lastID = user.ID
     }
-    
+
     return users, lastID, nil
 }
 ```
@@ -764,7 +764,7 @@ func NewUnitOfWork(db *sql.DB) (*UnitOfWork, error) {
     if err != nil {
         return nil, err
     }
-    
+
     return &UnitOfWork{
         db:    db,
         tx:    tx,
@@ -794,16 +794,16 @@ func NewDBManager(dsn string) (*DBManager, error) {
     if err != nil {
         return nil, err
     }
-    
+
     // Настройка пула
     db.SetMaxOpenConns(25)
     db.SetMaxIdleConns(5)
     db.SetConnMaxLifetime(5 * time.Minute)
-    
+
     if err := db.Ping(); err != nil {
         return nil, err
     }
-    
+
     return &DBManager{db: db}, nil
 }
 
@@ -818,7 +818,7 @@ func (m *DBManager) Stats() sql.DBStats {
 func (m *DBManager) HealthCheck() error {
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancel()
-    
+
     return m.db.PingContext(ctx)
 }
 ```
@@ -855,23 +855,23 @@ func (qb *QueryBuilder) Limit(n int) *QueryBuilder {
 
 func (qb *QueryBuilder) Build() string {
     query := "SELECT * FROM " + qb.table
-    
+
     if len(qb.where) > 0 {
         query += " WHERE " + strings.Join(qb.where, " AND ")
     }
-    
+
     if qb.orderBy != "" {
         query += " ORDER BY " + qb.orderBy
     }
-    
+
     if qb.limit > 0 {
         query += fmt.Sprintf(" LIMIT %d", qb.limit)
     }
-    
+
     if qb.offset > 0 {
         query += fmt.Sprintf(" OFFSET %d", qb.offset)
     }
-    
+
     return query
 }
 ```
@@ -923,7 +923,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (r *UserRepository) Create(ctx context.Context, user *User) error {
-    query := `INSERT INTO users (email, name, created_at) 
+    query := `INSERT INTO users (email, name, created_at)
               VALUES ($1, $2, $3) RETURNING id`
     err := r.db.QueryRowContext(ctx, query, user.Email, user.Name, time.Now()).
         Scan(&user.ID)
@@ -947,16 +947,16 @@ func (r *UserRepository) Update(ctx context.Context, user *User) error {
     if err != nil {
         return err
     }
-    
+
     affected, err := result.RowsAffected()
     if err != nil {
         return err
     }
-    
+
     if affected == 0 {
         return ErrNotFound
     }
-    
+
     return nil
 }
 
@@ -966,30 +966,30 @@ func (r *UserRepository) Delete(ctx context.Context, id int) error {
     if err != nil {
         return err
     }
-    
+
     affected, err := result.RowsAffected()
     if err != nil {
         return err
     }
-    
+
     if affected == 0 {
         return ErrNotFound
     }
-    
+
     return nil
 }
 
 func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]User, error) {
-    query := `SELECT id, email, name, created_at 
-              FROM users 
-              ORDER BY created_at DESC 
+    query := `SELECT id, email, name, created_at
+              FROM users
+              ORDER BY created_at DESC
               LIMIT $1 OFFSET $2`
     rows, err := r.db.QueryContext(ctx, query, limit, offset)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
-    
+
     var users []User
     for rows.Next() {
         var user User
@@ -998,7 +998,7 @@ func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]User
         }
         users = append(users, user)
     }
-    
+
     return users, rows.Err()
 }
 ```
@@ -1012,20 +1012,20 @@ func BatchInsertUsers(ctx context.Context, db *sql.DB, users []User) error {
         return err
     }
     defer tx.Rollback()
-    
-    stmt, err := tx.PrepareContext(ctx, 
+
+    stmt, err := tx.PrepareContext(ctx,
         `INSERT INTO users (email, name, created_at) VALUES ($1, $2, $3)`)
     if err != nil {
         return err
     }
     defer stmt.Close()
-    
+
     for _, user := range users {
         if _, err := stmt.ExecContext(ctx, user.Email, user.Name, time.Now()); err != nil {
             return err
         }
     }
-    
+
     return tx.Commit()
 }
 
@@ -1035,20 +1035,20 @@ func BatchUpdateUsers(ctx context.Context, db *sql.DB, updates map[int]User) err
         return err
     }
     defer tx.Rollback()
-    
+
     stmt, err := tx.PrepareContext(ctx,
         `UPDATE users SET email = $1, name = $2 WHERE id = $3`)
     if err != nil {
         return err
     }
     defer stmt.Close()
-    
+
     for id, user := range updates {
         if _, err := stmt.ExecContext(ctx, user.Email, user.Name, id); err != nil {
             return err
         }
     }
-    
+
     return tx.Commit()
 }
 ```
@@ -1127,7 +1127,7 @@ func (mm *MigrationManager) GetAppliedMigrations() (map[int]bool, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     applied := make(map[int]bool)
     for rows.Next() {
         var version int
@@ -1136,7 +1136,7 @@ func (mm *MigrationManager) GetAppliedMigrations() (map[int]bool, error) {
         }
         applied[version] = true
     }
-    
+
     return applied, rows.Err()
 }
 
@@ -1146,18 +1146,18 @@ func (mm *MigrationManager) ApplyMigration(migration Migration) error {
         return err
     }
     defer tx.Rollback()
-    
+
     if _, err := tx.Exec(migration.Up); err != nil {
-        return fmt.Errorf("migration %d (%s) failed: %w", 
+        return fmt.Errorf("migration %d (%s) failed: %w",
             migration.Version, migration.Name, err)
     }
-    
+
     if _, err := tx.Exec(
         "INSERT INTO schema_migrations (version, name) VALUES ($1, $2)",
         migration.Version, migration.Name); err != nil {
         return err
     }
-    
+
     return tx.Commit()
 }
 
@@ -1165,22 +1165,22 @@ func (mm *MigrationManager) Migrate() error {
     if err := mm.EnsureMigrationsTable(); err != nil {
         return err
     }
-    
+
     applied, err := mm.GetAppliedMigrations()
     if err != nil {
         return err
     }
-    
+
     for _, migration := range mm.migrations {
         if applied[migration.Version] {
             continue
         }
-        
+
         if err := mm.ApplyMigration(migration); err != nil {
             return err
         }
     }
-    
+
     return nil
 }
 ```
@@ -1196,7 +1196,7 @@ func ExplainQuery(db *sql.DB, query string, args ...interface{}) error {
         return err
     }
     defer rows.Close()
-    
+
     for rows.Next() {
         var plan string
         if err := rows.Scan(&plan); err != nil {
@@ -1204,7 +1204,7 @@ func ExplainQuery(db *sql.DB, query string, args ...interface{}) error {
         }
         fmt.Println(plan)
     }
-    
+
     return rows.Err()
 }
 
@@ -1216,7 +1216,7 @@ type SlowQueryLogger struct {
 
 func (sql *SlowQueryLogger) LogQuery(query string, duration time.Duration) {
     if duration > sql.threshold {
-        sql.logger.Printf("Slow query (%.2fms): %s", 
+        sql.logger.Printf("Slow query (%.2fms): %s",
             duration.Seconds()*1000, query)
     }
 }
@@ -1224,34 +1224,34 @@ func (sql *SlowQueryLogger) LogQuery(query string, duration time.Duration) {
 
 ## Лучшие практики
 
-1. **Используйте пулы соединений** - настраивайте **SetMaxOpenConns**, **SetMaxIdleConns**
-2. **Используйте подготовленные запросы** - для повторяющихся запросов
-3. **Обрабатывайте ошибки** - всегда проверяйте ошибки при работе с БД
-4. **Используйте транзакции** - для атомарных операций
-5. **Закрывайте ресурсы** - используйте **defer** для закрытия **rows** и **connections**
-6. **Используйте context** - для отмены долгих запросов
-7. **Используйте индексы** - для оптимизации запросов
-8. **Избегайте N+1 проблем** - используйте **JOIN** или **Preload**
-9. **Используйте batch операции** - для массовых вставок
-10. **Мониторьте производительность** - отслеживайте медленные запросы
-11. **Используйте `Repository` паттерн** - для абстракции доступа к данным
-12. **Используйте миграции** - для управления схемой БД
-13. **Тестируйте запросы** - проверяйте производительность запросов
-14. **Используйте connection pooling** - правильно настраивайте пулы
-15. **Используйте prepared statements** - для безопасности и производительности
+1. **Используйте пулы соединений** — настраивайте **SetMaxOpenConns**, **SetMaxIdleConns**
+2. **Используйте подготовленные запросы** — для повторяющихся запросов
+3. **Обрабатывайте ошибки** — всегда проверяйте ошибки при работе с БД
+4. **Используйте транзакции** — для атомарных операций
+5. **Закрывайте ресурсы** — используйте **defer** для закрытия **rows** и **connections**
+6. **Используйте context** — для отмены долгих запросов
+7. **Используйте индексы** — для оптимизации запросов
+8. **Избегайте N+1 проблем** — используйте **JOIN** или **Preload**
+9. **Используйте batch операции** — для массовых вставок
+10. **Мониторьте производительность** — отслеживайте медленные запросы
+11. **Используйте `Repository` паттерн** — для абстракции доступа к данным
+12. **Используйте миграции** — для управления схемой БД
+13. **Тестируйте запросы** — проверяйте производительность запросов
+14. **Используйте connection pooling** — правильно настраивайте пулы
+15. **Используйте prepared statements** — для безопасности и производительности
 
 ### Практические примеры: Оптимизация запросов через **EXPLAIN**
 
 ```go
 func AnalyzeQuery(db *sql.DB, query string, args ...interface{}) error {
     explainQuery := "EXPLAIN ANALYZE " + query
-    
+
     rows, err := db.Query(explainQuery, args...)
     if err != nil {
         return err
     }
     defer rows.Close()
-    
+
     for rows.Next() {
         var plan string
         if err := rows.Scan(&plan); err != nil {
@@ -1259,7 +1259,7 @@ func AnalyzeQuery(db *sql.DB, query string, args ...interface{}) error {
         }
         log.Printf("Query plan: %s", plan)
     }
-    
+
     return rows.Err()
 }
 
@@ -1297,7 +1297,7 @@ func (qc *QueryCache) Set(key string, value interface{}) {
     qc.mu.Lock()
     defer qc.mu.Unlock()
     qc.cache[key] = value
-    
+
     // Автоматическое удаление через TTL
     time.AfterFunc(qc.ttl, func() {
         qc.mu.Lock()
@@ -1325,3 +1325,11 @@ func (qc *QueryCache) Set(key string, value interface{}) {
 - [Go database/sql Documentation](https://pkg.go.dev/database/sql)
 - [sqlx Documentation](https://pkg.go.dev/github.com/jmoiron/sqlx)
 - [GORM Documentation](https://gorm.io/docs/)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

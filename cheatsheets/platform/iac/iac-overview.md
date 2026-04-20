@@ -48,31 +48,26 @@ updated: "2026-02-11"
 
 **Ключевые понятия:** **state**, **idempotency**, **provider**, **module**, **playbook**, **role**, **template**.
 
----
 
 ## Terraform
 
 **Terraform** (**HashiCorp**) — декларативное описание ресурсов в **HCL**. **State** хранит текущее состояние; `terraform plan` / `apply` приводят инфраструктуру к описанному виду. Провайдеры: **AWS**, **GCP**, **Azure**, **Kubernetes** и др. Модули для переиспользования. См. [Terraform Basics](terraform/terraform-basics.md), [Terraform Advanced](terraform/terraform-advanced.md).
 
----
 
 ## Ansible
 
 **Ansible** — императивный подход: **playbooks** (**YAML**), **roles**, **inventory**. Без агентов (SSH); идемпотентность через модули. Конфигурация серверов, развёртывание приложений, оркестрация. См. [Ansible Basics](ansible/ansible-basics.md), [Ansible Advanced](ansible/ansible-advanced.md).
 
----
 
 ## Pulumi
 
 **Pulumi** — **IaC** на языках программирования: **TypeScript**, **Python**, **Go**, **C#**. Объектная модель и IDE-поддержка; state в **Pulumi Cloud** или в выбранном бэкенде. Поддержка облаков и **Kubernetes**. См. [Pulumi Basics](pulumi/pulumi-basics.md).
 
----
 
 ## Packer
 
 **Packer** — сборка образов (**AMI**, **GCP**, **Azure**, **Docker** и др.) из конфигурации и провижинеров (**Shell**, **Ansible**). Один шаблон — несколько платформ. См. [Packer Basics](packer/packer-basics.md), [Packer](packer/packer.md).
 
----
 
 ## Сравнение и выбор
 
@@ -93,7 +88,6 @@ updated: "2026-02-11"
 4. **Нужно стандартизировать образы VM/AMI/контейнеров** -> добавьте **Packer** в pipeline.
 5. **Нужен production-поток** -> типичный стек: `Packer` (образы) -> `Terraform` (ресурсы) -> `Ansible` (конфигурация).
 
----
 
 ## Лучшие практики
 
@@ -101,7 +95,6 @@ updated: "2026-02-11"
 - **State** — в удалённом бэкенде с блокировкой; не коммитить секреты в state.
 - Модули и **roles** для переиспользования; теги и именование ресурсов единообразно.
 
----
 
 ## Решение проблем
 
@@ -111,7 +104,6 @@ updated: "2026-02-11"
 | **Ansible** не находит хост | Проверить **inventory**, **SSH** доступ, переменные |
 | **Pulumi** конфликт ресурсов | Проверить логи; при необходимости refresh и повторный deploy |
 
----
 
 ## Частые вопросы
 
@@ -119,7 +111,6 @@ updated: "2026-02-11"
 
 **Ansible вместо Terraform?** **Ansible** не хранит state инфраструктуры; для создания/удаления облачных ресурсов чаще используют **Terraform** или **Pulumi**. **Ansible** — для конфигурации уже созданных ресурсов.
 
----
 
 ## Глоссарий
 
@@ -132,7 +123,6 @@ updated: "2026-02-11"
 | **role** | Набор задач и шаблонов в **Ansible** |
 | **idempotency** | Повторное применение даёт тот же результат |
 
----
 
 ## Заключение
 
@@ -140,5 +130,4 @@ updated: "2026-02-11"
 
 **Дата:** 2026-02-11
 
----
 

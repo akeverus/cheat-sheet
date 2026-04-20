@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-cache.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Redis - Caching и Data Structures
-
-
+# Quarkus: Redis — Caching и Data Structures
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-cache.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: Redis - Caching и Data Structures](#quarkus-redis-caching-и-data-structures)
+- [Quarkus: Redis — Caching и Data Structures](#quarkus-redis-caching-и-data-structures)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Configuration](#configuration)
@@ -109,14 +107,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RedisService {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     public void setValue(String key, String value) {
         redisClient.set(List.of(key, value));
     }
-    
+
     public String getValue(String key) {
         return redisClient.get(key).toString();
     }
@@ -134,15 +132,15 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class ReactiveRedisService {
-    
+
     @Inject
     ReactiveRedisClient reactiveRedisClient;
-    
+
     public Uni<Void> setValueReactive(String key, String value) {
         return reactiveRedisClient.set(List.of(key, value))
             .replaceWithVoid();
     }
-    
+
     public Uni<String> getValueReactive(String key) {
         return reactiveRedisClient.get(key)
             .map(response -> response.toString());
@@ -159,23 +157,23 @@ public class ReactiveRedisService {
 ```java
 @ApplicationScoped
 public class StringOperations {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     public void stringOperations() {
         // SET
         redisClient.set(List.of("key", "value"));
-        
+
         // GET
         String value = redisClient.get("key").toString();
-        
+
         // SETEX (set with expiration)
         redisClient.setex("key", 60, "value");
-        
+
         // INCR
         redisClient.incr("counter");
-        
+
         // APPEND
         redisClient.append("key", "suffix");
     }
@@ -189,23 +187,23 @@ public class StringOperations {
 ```java
 @ApplicationScoped
 public class ListOperations {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     public void listOperations() {
         // LPUSH
         redisClient.lpush("list", "value1", "value2");
-        
+
         // RPUSH
         redisClient.rpush("list", "value3");
-        
+
         // LRANGE
         List<String> values = redisClient.lrange("list", 0, -1);
-        
+
         // LPOP
         String value = redisClient.lpop("list").toString();
-        
+
         // LLEN
         Long length = redisClient.llen("list");
     }
@@ -219,20 +217,20 @@ public class ListOperations {
 ```java
 @ApplicationScoped
 public class SetOperations {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     public void setOperations() {
         // SADD
         redisClient.sadd("set", "member1", "member2");
-        
+
         // SMEMBERS
         Set<String> members = redisClient.smembers("set");
-        
+
         // SISMEMBER
         Boolean isMember = redisClient.sismember("set", "member1");
-        
+
         // SREM
         redisClient.srem("set", "member1");
     }
@@ -246,20 +244,20 @@ public class SetOperations {
 ```java
 @ApplicationScoped
 public class HashOperations {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     public void hashOperations() {
         // HSET
         redisClient.hset("hash", "field1", "value1");
-        
+
         // HGET
         String value = redisClient.hget("hash", "field1").toString();
-        
+
         // HGETALL
         Map<String, String> hash = redisClient.hgetall("hash");
-        
+
         // HDEL
         redisClient.hdel("hash", "field1");
     }
@@ -275,10 +273,10 @@ public class HashOperations {
 ```java
 @ApplicationScoped
 public class RedisPublisher {
-    
+
     @Inject
     ReactiveRedisClient reactiveRedisClient;
-    
+
     public Uni<Long> publish(String channel, String message) {
         return reactiveRedisClient.publish(channel, message);
     }
@@ -296,10 +294,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RedisSubscriber {
-    
+
     @Inject
     ReactiveRedisClient reactiveRedisClient;
-    
+
     public Multi<String> subscribe(String channel) {
         return reactiveRedisClient.subscribe(channel)
             .map(response -> response.toString());
@@ -316,10 +314,10 @@ public class RedisSubscriber {
 ```java
 @ApplicationScoped
 public class TransactionalService {
-    
+
     @Inject
     ReactiveRedisClient reactiveRedisClient;
-    
+
     public Uni<List<String>> executeTransaction() {
         return reactiveRedisClient.multi()
             .chain(() -> reactiveRedisClient.set(List.of("key1", "value1")))
@@ -372,24 +370,24 @@ redisClient.setex("key", 3600, "value");  // 1 hour expiration
 ```java
 @ApplicationScoped
 public class SortedSetOperations {
-    
+
     @Inject
     RedisClient redisClient;
-    
+
     public void sortedSetOperations() {
         // ZADD
         redisClient.zadd("sorted-set", 1.0, "member1");
         redisClient.zadd("sorted-set", 2.0, "member2");
-        
+
         // ZRANGE
         List<String> members = redisClient.zrange("sorted-set", 0, -1);
-        
+
         // ZRANK
         Long rank = redisClient.zrank("sorted-set", "member1");
-        
+
         // ZSCORE
         Double score = redisClient.zscore("sorted-set", "member1");
-        
+
         // ZREM
         redisClient.zrem("sorted-set", "member1");
     }
@@ -408,10 +406,10 @@ import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class DistributedLockService {
-    
+
     @Inject
     ReactiveRedisClient reactiveRedisClient;
-    
+
     public Uni<Boolean> acquireLock(String key, int timeoutSeconds) {
         String lockValue = UUID.randomUUID().toString();
         return reactiveRedisClient.setnx(key, lockValue)
@@ -423,7 +421,7 @@ public class DistributedLockService {
                 return Uni.createFrom().item(false);
             });
     }
-    
+
     public Uni<Void> releaseLock(String key, String lockValue) {
         return reactiveRedisClient.get(key)
             .chain(value -> {
@@ -443,10 +441,10 @@ public class DistributedLockService {
 ```java
 @ApplicationScoped
 public class RateLimitingService {
-    
+
     @Inject
     ReactiveRedisClient reactiveRedisClient;
-    
+
     public Uni<Boolean> isAllowed(String key, int maxRequests, int windowSeconds) {
         String rateLimitKey = "ratelimit:" + key;
         return reactiveRedisClient.incr(rateLimitKey)
@@ -479,10 +477,10 @@ quarkus.redis.cluster-mode=true
 ```java
 @ApplicationScoped
 public class ClusterRedisService {
-    
+
     @Inject
     ReactiveRedisClient redisClient;
-    
+
     public Uni<Void> setInCluster(String key, String value) {
         // Redis автоматически определяет нужный узел
         return redisClient.set(List.of(key, value)).replaceWithVoid();
@@ -499,10 +497,10 @@ public class ClusterRedisService {
 ```java
 @ApplicationScoped
 public class PipelineOptimization {
-    
+
     @Inject
     ReactiveRedisClient redisClient;
-    
+
     public Uni<List<Response>> batchGet(List<String> keys) {
         ReactiveTransaction transaction = redisClient.multi();
         keys.forEach(key -> transaction.get(key));
@@ -532,3 +530,11 @@ quarkus.redis.max-pool-waiting=24
 - [**Redis** Documentation](https://redis.io/docs/)
 - [**Redis Data Types**](https://redis.io/docs/data-types/)
 - [**Redis** Commands](https://redis.io/commands/)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Блочная сортировка (`Bucket Sort`)
 
-Блочная сортировка (`bucket sort`) — это алгоритм сортировки, который распределяет элементы по нескольким "ведрам" (`buckets`), сортирует каждое ведро отдельно, а затем объединяет результаты в отсортированный массив. Алгоритм особенно эффективен, когда входные данные равномерно распределены по диапазону значений, что позволяет достичь линейной временной сложности `O(n)` в среднем случае. В отличие от алгоритмов сравнения, блочная сортировка использует распределительный подход, который может быть быстрее для определённых типов данных. Алгоритм часто используется для сортировки чисел с плавающей точкой в диапазоне [0, 1) и может быть эффективно распараллелен. В этом документе рассматриваются принципы работы блочной сортировки, её реализация на `Java` и `Kotlin`, анализ сложности и практические рекомендации по применению.
+Блочная сортировка (`bucket sort`) — это алгоритм сортировки, который распределяет элементы по нескольким «ведрам» (`buckets`), сортирует каждое ведро отдельно, а затем объединяет результаты в отсортированный массив. Алгоритм особенно эффективен, когда входные данные равномерно распределены по диапазону значений, что позволяет достичь линейной временной сложности `O(n)` в среднем случае. В отличие от алгоритмов сравнения, блочная сортировка использует распределительный подход, который может быть быстрее для определённых типов данных. Алгоритм часто используется для сортировки чисел с плавающей точкой в диапазоне [0, 1) и может быть эффективно распараллелен. В этом документе рассматриваются принципы работы блочной сортировки, её реализация на `Java` и `Kotlin`, анализ сложности и практические рекомендации по применению.
 
 ## Полезные ссылки
 
@@ -169,34 +169,34 @@ public class BucketSort {
     public static List<Integer> sort(List<Integer> initialList) {
         final int numberOfBuckets = (int) Math.sqrt(initialList.size());
         List<List<Integer>> buckets = new ArrayList<>(numberOfBuckets);
-        
+
         for(int i = 0; i < numberOfBuckets; i++) {
             buckets.add(new ArrayList<>());
         }
-        
+
         int max = findMax(initialList);
-        
+
         for (int i : initialList) {
             buckets.get(hash(i, max, numberOfBuckets)).add(i);
         }
-        
+
         Comparator<Integer> comparator = Comparator.naturalOrder();
         for(List<Integer> bucket : buckets) {
             bucket.sort(comparator);
         }
-        
+
         List<Integer> sortedArray = new LinkedList<>();
         for(List<Integer> bucket : buckets) {
             sortedArray.addAll(bucket);
         }
-        
+
         return sortedArray;
     }
-    
+
     private static int hash(int i, int max, int numberOfBuckets) {
         return (int) ((double) i / max * (numberOfBuckets - 1));
     }
-    
+
     private static int findMax(List<Integer> input) {
         int m = Integer.MIN_VALUE;
         for (int i : input) {
@@ -231,17 +231,17 @@ assertEquals(expected, sorted);
 fun bucketSortK(initialList: List<Int>): List<Int> {
     val numberOfBuckets = Math.sqrt(initialList.size.toDouble()).toInt()
     val buckets = MutableList(numberOfBuckets) { mutableListOf<Int>() }
-    
+
     val max = findMaxK(initialList)
-    
+
     // Распределение элементов по ведрам
     for (i in initialList) {
         buckets[hashK(i, max, numberOfBuckets)].add(i)
     }
-    
+
     // Сортировка каждого ведра
     buckets.forEach { it.sort() }
-    
+
     // Объединение результатов
     return buckets.flatten()
 }
@@ -260,10 +260,10 @@ private fun findMaxK(input: List<Int>): Int {
 ```kotlin
 fun bucketSortFunctionalK(initialList: List<Int>): List<Int> {
     if (initialList.isEmpty()) return emptyList()
-    
+
     val numberOfBuckets = Math.sqrt(initialList.size.toDouble()).toInt()
     val max = initialList.maxOrNull() ?: return initialList
-    
+
     return initialList
         .groupBy { hashK(it, max, numberOfBuckets) }
         .values
@@ -277,19 +277,19 @@ fun bucketSortFunctionalK(initialList: List<Int>): List<Int> {
 ```kotlin
 fun bucketSortArrayK(arr: IntArray) {
     if (arr.isEmpty()) return
-    
+
     val numberOfBuckets = Math.sqrt(arr.size.toDouble()).toInt()
     val buckets = Array(numberOfBuckets) { mutableListOf<Int>() }
     val max = arr.maxOrNull() ?: return
-    
+
     // Распределение
     arr.forEach { element ->
         buckets[hashK(element, max, numberOfBuckets)].add(element)
     }
-    
+
     // Сортировка каждого ведра
     buckets.forEach { it.sort() }
-    
+
     // Объединение обратно в массив
     var index = 0
     buckets.forEach { bucket ->
@@ -305,16 +305,16 @@ fun bucketSortArrayK(arr: IntArray) {
 ```kotlin
 fun main() {
     val unsorted = listOf(80, 50, 60, 30, 20, 10, 70, 0, 40, 500, 600, 602, 200, 15)
-    
+
     // Базовая версия
     val sorted = bucketSortK(unsorted)
-    println(sorted) 
+    println(sorted)
     // [0, 10, 15, 20, 30, 40, 50, 60, 70, 80, 200, 500, 600, 602]
-    
+
     // Функциональный стиль
     val sorted2 = bucketSortFunctionalK(unsorted)
     println(sorted2)
-    
+
     // In-place для массива
     val arr = intArrayOf(80, 50, 60, 30, 20, 10, 70, 0, 40)
     bucketSortArrayK(arr)
@@ -350,7 +350,7 @@ fun main() {
 
 ## Применение
 
-`Bucket Sort` особенно полезен в следующих случаях. Когда входные данные равномерно распределены по диапазону, алгоритм может достичь линейной временной сложности `O(n)`, что делает его очень эффективным для таких случаев. Для сортировки чисел с плавающей точкой в диапазоне [0, 1) алгоритм особенно эффективен, так как такие данные обычно равномерно распределены. Когда нужно отсортировать данные, которые можно разделить на "ведра" на основе их значений, блочная сортировка может быть хорошим выбором. В комбинации с другими алгоритмами сортировки блочная сортировка может использоваться как часть более сложных алгоритмов для оптимизации производительности.
+`Bucket Sort` особенно полезен в следующих случаях. Когда входные данные равномерно распределены по диапазону, алгоритм может достичь линейной временной сложности `O(n)`, что делает его очень эффективным для таких случаев. Для сортировки чисел с плавающей точкой в диапазоне [0, 1) алгоритм особенно эффективен, так как такие данные обычно равномерно распределены. Когда нужно отсортировать данные, которые можно разделить на «ведра» на основе их значений, блочная сортировка может быть хорошим выбором. В комбинации с другими алгоритмами сортировки блочная сортировка может использоваться как часть более сложных алгоритмов для оптимизации производительности.
 
 Однако стоит отметить, что для типичных случаев использования, где распределение данных неизвестно или неравномерно, предпочтительнее использовать алгоритмы сравнения, такие как быстрая сортировка или сортировка слиянием, которые не зависят от распределения данных.
 
@@ -453,26 +453,26 @@ fun main() {
 ```java
 public static double[] bucketSortDoubles(double[] arr) {
     if (arr.length == 0) return new double[0];
-    
+
     int n = arr.length;
     List<List<Double>> buckets = new ArrayList<>(n);
-    
+
     // Инициализация ведёр
     for (int i = 0; i < n; i++) {
         buckets.add(new ArrayList<>());
     }
-    
+
     // Распределение элементов по ведрам
     for (double num : arr) {
         int bucketIndex = (int) (n * num);
         buckets.get(bucketIndex).add(num);
     }
-    
+
     // Сортировка каждого ведра
     for (List<Double> bucket : buckets) {
         Collections.sort(bucket);
     }
-    
+
     // Объединение результатов
     double[] sorted = new double[n];
     int index = 0;
@@ -481,7 +481,7 @@ public static double[] bucketSortDoubles(double[] arr) {
             sorted[index++] = num;
         }
     }
-    
+
     return sorted;
 }
 ```
@@ -494,7 +494,7 @@ public static double[] bucketSortDoubles(double[] arr) {
 public static class Student {
     int grade;
     String name;
-    
+
     Student(int grade, String name) {
         this.grade = grade;
         this.name = name;
@@ -504,22 +504,22 @@ public static class Student {
 public static Student[] sortByGrade(Student[] students, int maxGrade) {
     int numberOfBuckets = (int) Math.sqrt(students.length);
     List<List<Student>> buckets = new ArrayList<>(numberOfBuckets);
-    
+
     for (int i = 0; i < numberOfBuckets; i++) {
         buckets.add(new ArrayList<>());
     }
-    
+
     // Распределение по ведрам
     for (Student student : students) {
         int bucketIndex = (student.grade * numberOfBuckets) / (maxGrade + 1);
         buckets.get(bucketIndex).add(student);
     }
-    
+
     // Сортировка каждого ведра
     for (List<Student> bucket : buckets) {
         bucket.sort(Comparator.comparingInt(s -> s.grade));
     }
-    
+
     // Объединение результатов
     Student[] sorted = new Student[students.length];
     int index = 0;
@@ -528,7 +528,7 @@ public static Student[] sortByGrade(Student[] students, int maxGrade) {
             sorted[index++] = student;
         }
     }
-    
+
     return sorted;
 }
 ```
@@ -542,19 +542,19 @@ public static List<Integer> bucketSortOptimized(List<Integer> arr) {
     int n = arr.size();
     int numberOfBuckets = (int) Math.sqrt(n);
     List<List<Integer>> buckets = new ArrayList<>(numberOfBuckets);
-    
+
     for (int i = 0; i < numberOfBuckets; i++) {
         buckets.add(new ArrayList<>());
     }
-    
+
     int max = Collections.max(arr);
-    
+
     // Распределение элементов
     for (int num : arr) {
         int bucketIndex = hash(num, max, numberOfBuckets);
         buckets.get(bucketIndex).add(num);
     }
-    
+
     // Сортировка каждого ведра с выбором алгоритма
     for (List<Integer> bucket : buckets) {
         if (bucket.size() < 10) {
@@ -565,13 +565,13 @@ public static List<Integer> bucketSortOptimized(List<Integer> arr) {
             bucket.sort(Comparator.naturalOrder());
         }
     }
-    
+
     // Объединение результатов
     List<Integer> sorted = new ArrayList<>();
     for (List<Integer> bucket : buckets) {
         sorted.addAll(bucket);
     }
-    
+
     return sorted;
 }
 

@@ -88,7 +88,7 @@ g.addEdge("v1", "v2");
 
 ```java
 // Ориентированный граф: DefaultDirectedGraph
-DirectedGraph<String, DefaultEdge> directedGraph = 
+DirectedGraph<String, DefaultEdge> directedGraph =
     new DefaultDirectedGraph<>(DefaultEdge.class);
 
 directedGraph.addVertex("v1");
@@ -101,17 +101,17 @@ directedGraph.addEdge("v1", "v2");
 // Полный граф заданного размера через CompleteGraphGenerator и VertexFactory
 public void createCompleteGraph() {
     completeGraph = new SimpleWeightedGraph<>(DefaultEdge.class);
-    CompleteGraphGenerator<String, DefaultEdge> completeGenerator = 
+    CompleteGraphGenerator<String, DefaultEdge> completeGenerator =
         new CompleteGraphGenerator<>(size);
-    
+
     VertexFactory<String> vFactory = new VertexFactory<String>() {
         private int id = 0;
-        
+
         public String createVertex() {
             return "v" + id++;
         }
     };
-    
+
     completeGenerator.generateGraph(completeGraph, vFactory, null);
 }
 ```
@@ -120,13 +120,13 @@ public void createCompleteGraph() {
 // Мультиграф: несколько рёбер между v1 и v2 с разными весами
 public void createMultiGraphWithWeightedEdges() {
     multiGraph = new Multigraph<>(DefaultWeightedEdge.class);
-    
+
     multiGraph.addVertex("v1");
     multiGraph.addVertex("v2");
-    
+
     DefaultWeightedEdge edge1 = multiGraph.addEdge("v1", "v2");
     multiGraph.setEdgeWeight(edge1, 5);
-    
+
     DefaultWeightedEdge edge2 = multiGraph.addEdge("v1", "v2");
     multiGraph.setEdgeWeight(edge2, 3);
 }
@@ -137,10 +137,10 @@ public void createMultiGraphWithWeightedEdges() {
 Итераторы: `BreadthFirstIterator`, `DepthFirstIterator`, `ClosestFirstIterator`, `RandomWalkIterator`. Создаём итератор от графа, обходим через `hasNext()`/`next()`.
 
 ```java
-DepthFirstIterator<String, DefaultEdge> depthFirstIterator = 
+DepthFirstIterator<String, DefaultEdge> depthFirstIterator =
     new DepthFirstIterator<>(directedGraph);
 
-BreadthFirstIterator<String, DefaultEdge> breadthFirstIterator = 
+BreadthFirstIterator<String, DefaultEdge> breadthFirstIterator =
     new BreadthFirstIterator<>(directedGraph);
 ```
 
@@ -158,12 +158,12 @@ while (breadthFirstIterator.hasNext()) {
 ```java
 @Test
 void whenGetDijkstraShortestPath_thenGetNotNullPath() {
-    DijkstraShortestPath<String, DefaultEdge> dijkstraShortestPath = 
+    DijkstraShortestPath<String, DefaultEdge> dijkstraShortestPath =
         new DijkstraShortestPath<>(directedGraph);
-    
-    GraphPath<String, DefaultEdge> path = 
+
+    GraphPath<String, DefaultEdge> path =
         dijkstraShortestPath.getPath("v1", "v4");
-    
+
     List<String> shortestPath = path.getVertexList();
     assertNotNull(shortestPath);
 }
@@ -174,12 +174,12 @@ void whenGetDijkstraShortestPath_thenGetNotNullPath() {
 ```java
 @Test
 void whenGetBellmanFordShortestPath_thenGetNotNullPath() {
-    BellmanFordShortestPath<String, DefaultEdge> bellmanFordShortestPath = 
+    BellmanFordShortestPath<String, DefaultEdge> bellmanFordShortestPath =
         new BellmanFordShortestPath<>(directedGraph);
-    
-    GraphPath<String, DefaultEdge> path = 
+
+    GraphPath<String, DefaultEdge> path =
         bellmanFordShortestPath.getPath("v1", "v4");
-    
+
     List<String> shortestPath = path.getVertexList();
     assertNotNull(shortestPath);
 }
@@ -192,26 +192,26 @@ void whenGetBellmanFordShortestPath_thenGetNotNullPath() {
 ```java
 @Test
 void whenGetStronglyConnectedSubgraphs_thenPathExists() {
-    StrongConnectivityAlgorithm<String, DefaultEdge> scAlg = 
+    StrongConnectivityAlgorithm<String, DefaultEdge> scAlg =
         new KosarajuStrongConnectivityInspector<>(directedGraph);
-    
-    List<DirectedSubgraph<String, DefaultEdge>> stronglyConnectedSubgraphs = 
+
+    List<DirectedSubgraph<String, DefaultEdge>> stronglyConnectedSubgraphs =
         scAlg.stronglyConnectedSubgraphs();
-    
+
     List<String> stronglyConnectedVertices = new ArrayList<>(
         stronglyConnectedSubgraphs.get(3).vertexSet());
-    
+
     String randomVertex1 = stronglyConnectedVertices.get(0);
     String randomVertex2 = stronglyConnectedVertices.get(3);
-    
-    AllDirectedPaths<String, DefaultEdge> allDirectedPaths = 
+
+    AllDirectedPaths<String, DefaultEdge> allDirectedPaths =
         new AllDirectedPaths<>(directedGraph);
-    
-    List<GraphPath<String, DefaultEdge>> possiblePathList = 
+
+    List<GraphPath<String, DefaultEdge>> possiblePathList =
         allDirectedPaths.getAllPaths(
             randomVertex1, randomVertex2, false,
             stronglyConnectedVertices.size());
-    
+
     assertTrue(possiblePathList.size() > 0);
 }
 ```
@@ -224,12 +224,12 @@ void whenGetStronglyConnectedSubgraphs_thenPathExists() {
 
 ```java
 public void createGraphWithEulerianCircuit() {
-    SimpleWeightedGraph<String, DefaultEdge> simpleGraph = 
+    SimpleWeightedGraph<String, DefaultEdge> simpleGraph =
         new SimpleWeightedGraph<>(DefaultEdge.class);
-    
+
     IntStream.range(1, 5)
         .forEach(i -> simpleGraph.addVertex("v" + i));
-    
+
     IntStream.range(1, 5)
         .forEach(i -> {
             int endVertexNo = (i + 1) > 5 ? 1 : i + 1;
@@ -241,20 +241,20 @@ public void createGraphWithEulerianCircuit() {
 ```java
 @Test
 void givenGraph_whenCheckEulerianCycle_thenGetResult() {
-    HierholzerEulerianCycle<String, DefaultEdge> eulerianCycle = 
+    HierholzerEulerianCycle<String, DefaultEdge> eulerianCycle =
         new HierholzerEulerianCycle<>();
-    
+
     assertTrue(eulerianCycle.isEulerian(simpleGraph));
 }
 
 @Test
 void whenGetEulerianCycle_thenGetGraphPath() {
-    HierholzerEulerianCycle<String, DefaultEdge> eulerianCycle = 
+    HierholzerEulerianCycle<String, DefaultEdge> eulerianCycle =
         new HierholzerEulerianCycle<>();
-    
-    GraphPath<String, DefaultEdge> path = 
+
+    GraphPath<String, DefaultEdge> path =
         eulerianCycle.getEulerianCycle(simpleGraph);
-    
+
     assertTrue(path.getEdgeList().containsAll(simpleGraph.edgeSet()));
 }
 ```
@@ -267,7 +267,7 @@ void whenGetEulerianCycle_thenGetGraphPath() {
 void whenGetHamiltonianCyclePath_thenGetVerticeSequence() {
     List<String> verticeList = HamiltonianCycle
         .getApproximateOptimalForCompleteGraph(completeGraph);
-    
+
     assertEquals(verticeList.size(), completeGraph.vertexSet().size());
 }
 ```
@@ -279,11 +279,11 @@ void whenGetHamiltonianCyclePath_thenGetVerticeSequence() {
 ```java
 @Test
 void whenCheckCycles_thenDetectCycles() {
-    CycleDetector<String, DefaultEdge> cycleDetector = 
+    CycleDetector<String, DefaultEdge> cycleDetector =
         new CycleDetector<>(directedGraph);
-    
+
     assertTrue(cycleDetector.detectCycles());
-    
+
     Set<String> cycleVertices = cycleDetector.findCycles();
     assertTrue(cycleVertices.size() > 0);
 }
@@ -298,18 +298,18 @@ void whenCheckCycles_thenDetectCycles() {
 public void createGraph() {
     File imgFile = new File("src/test/resources/graph.png");
     imgFile.createNewFile();
-    
+
     DefaultDirectedGraph<String, DefaultEdge> g =
         new DefaultDirectedGraph<>(DefaultEdge.class);
-    
+
     String x1 = "x1";
     String x2 = "x2";
     String x3 = "x3";
-    
+
     g.addVertex(x1);
     g.addVertex(x2);
     g.addVertex(x3);
-    
+
     g.addEdge(x1, x2);
     g.addEdge(x2, x3);
     g.addEdge(x3, x1);
@@ -318,22 +318,22 @@ public void createGraph() {
 
 ```java
 @Test
-void givenAdaptedGraph_whenWriteBufferedImage_thenFileShouldExist() 
+void givenAdaptedGraph_whenWriteBufferedImage_thenFileShouldExist()
     throws IOException {
-    
+
     JGraphXAdapter<String, DefaultEdge> graphAdapter =
         new JGraphXAdapter<>(g);
-    
+
     mxIGraphLayout layout = new mxCircleLayout(graphAdapter);
     layout.execute(graphAdapter.getDefaultParent());
-    
+
     BufferedImage image =
         mxCellRenderer.createBufferedImage(
             graphAdapter, null, 2, Color.WHITE, true, null);
-    
+
     File imgFile = new File("src/test/resources/graph.png");
     ImageIO.write(image, "PNG", imgFile);
-    
+
     assertTrue(imgFile.exists());
 }
 ```
@@ -373,13 +373,13 @@ fun createMultiGraphWithWeightedEdgesK(): Multigraph<String, DefaultWeightedEdge
     val multiGraph = Multigraph<String, DefaultWeightedEdge>(DefaultWeightedEdge::class.java)
     multiGraph.addVertex("v1")
     multiGraph.addVertex("v2")
-    
+
     val edge1 = multiGraph.addEdge("v1", "v2")
     multiGraph.setEdgeWeight(edge1, 5.0)
-    
+
     val edge2 = multiGraph.addEdge("v1", "v2")
     multiGraph.setEdgeWeight(edge2, 3.0)
-    
+
     return multiGraph
 }
 ```
@@ -397,7 +397,7 @@ fun traverseGraphK(directedGraph: DefaultDirectedGraph<String, DefaultEdge>) {
         val vertex = depthFirstIterator.next()
         println("DFS: $vertex")
     }
-    
+
     // BFS
     val breadthFirstIterator = BreadthFirstIterator(directedGraph)
     while (breadthFirstIterator.hasNext()) {
@@ -443,10 +443,10 @@ fun main() {
     graph.addVertex("v4")
     graph.addEdge("v2", "v4")
     graph.addEdge("v3", "v4")
-    
+
     val path = findShortestPathK(graph, "v1", "v4")
     println("Shortest path: $path") // [v1, v2, v4]
-    
+
     traverseGraphK(graph)
 }
 ```

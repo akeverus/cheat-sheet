@@ -24,7 +24,6 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 - [Redis Data Types](https://redis.io/docs/data-types/)
 - [Redis Best Practices](https://redis.io/docs/management/optimization/)
 
----
 
 ## Содержание
 
@@ -55,7 +54,7 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 
 ## Введение в **Redis**
 
-**Redis** (**REmote DIctionary Server**) - это быстрая **in-memory** структура данных, которая может использоваться как база данных, кэш и **message broker**. **Redis** поддерживает различные типы данных и предлагает высокую производительность благодаря хранению данных в оперативной памяти.
+**Redis** (**REmote DIctionary Server**) — это быстрая **in-memory** структура данных, которая может использоваться как база данных, кэш и **message broker**. **Redis** поддерживает различные типы данных и предлагает высокую производительность благодаря хранению данных в оперативной памяти.
 
 ### Основные возможности **Redis**
 
@@ -98,7 +97,6 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 7. **Leaderboards**: Рейтинги и таблицы лидеров
 8. **Rate Limiting**: Ограничение частоты запросов
 
----
 
 ## Установка и первоначальная настройка
 
@@ -266,7 +264,7 @@ maxmemory 256mb
 maxmemory-policy noeviction
 ```
 
-НАСТРОЙКИ ПЕРСИСТЕНТНОСТИ - RDB (Snapshots)
+НАСТРОЙКИ ПЕРСИСТЕНТНОСТИ — RDB (Snapshots)
 ```ini
 # Правила для создания `RDB` snapshots
 # save <seconds> <changes> - создать `snapshot` если за N секунд >= M изменений
@@ -290,7 +288,7 @@ dbfilename dump.rdb
 dir /var/lib/redis
 ```
 
-НАСТРОЙКИ ПЕРСИСТЕНТНОСТИ - AOF (Append Only File)
+НАСТРОЙКИ ПЕРСИСТЕНТНОСТИ — AOF (Append Only File)
 ```ini
 # Включить `AOF` (рекомендуется yes для durability)
 appendonly yes
@@ -614,7 +612,7 @@ OK
 "Redis"
 127.0.0.1:6379> SELECT 1
 OK
-127.0.0.1:6379[1]> 
+127.0.0.1:6379[1]>
 ```
 
 #### Программные подключения
@@ -641,9 +639,9 @@ public class RedisJavaExample {
         poolConfig.setTimeBetweenEvictionRunsMillis(30000);
 
         this.jedisPool = new JedisPool(
-            poolConfig, 
-            "localhost", 
-            6379, 
+            poolConfig,
+            "localhost",
+            6379,
             2000,  // connection timeout
             "password"  // optional password
         );
@@ -710,9 +708,9 @@ public class RedisAdvancedExample {
         poolConfig.setTimeBetweenEvictionRunsMillis(30000);
 
         this.jedisPool = new JedisPool(
-            poolConfig, 
-            host, 
-            port, 
+            poolConfig,
+            host,
+            port,
             2000,  // connection timeout
             password  // optional password
         );
@@ -766,7 +764,6 @@ public class RedisAdvancedExample {
 }
 ```
 
----
 
 ## Базовые команды
 
@@ -898,7 +895,6 @@ CONFIG REWRITE
 CONFIG RESETSTAT
 ```
 
----
 
 ## Работа с ключами
 
@@ -1013,7 +1009,6 @@ HSET app:user:1000 name "John" email "john@example.com"
 HSET app:user:1001 name "Jane" email "jane@example.com"
 ```
 
----
 
 ## Лучшие практики
 
@@ -1123,25 +1118,25 @@ public class RedisConnectionPool {
 
     public RedisConnectionPool() {
         JedisPoolConfig config = new JedisPoolConfig();
-        
+
         // Размер пула
         config.setMaxTotal(20);
         config.setMaxIdle(10);
         config.setMinIdle(5);
-        
+
         // Проверка соединений
         config.setTestOnBorrow(true);
         config.setTestOnReturn(true);
         config.setTestWhileIdle(true);
-        
+
         // Эвакуация неактивных соединений
         config.setMinEvictableIdleTimeMillis(60000);
         config.setTimeBetweenEvictionRunsMillis(30000);
         config.setNumTestsPerEvictionRun(3);
-        
+
         // Таймауты
         config.setMaxWaitMillis(5000);
-        
+
         this.jedisPool = new JedisPool(
             config,
             "localhost",
@@ -1362,13 +1357,13 @@ public class SessionManager {
     public void createSession(String sessionId, String userId, Map<String, String> attributes) {
         try (Jedis jedis = jedisPool.getResource()) {
             String key = "session:" + sessionId;
-            
+
             // Сохранение атрибутов сессии
             jedis.hset(key, "user_id", userId);
             for (Map.Entry<String, String> entry : attributes.entrySet()) {
                 jedis.hset(key, entry.getKey(), entry.getValue());
             }
-            
+
             // Установка TTL
             jedis.expire(key, SESSION_TIMEOUT);
         }
@@ -1514,7 +1509,7 @@ public class Cached {
 // Java пример rate limiting
 public class RateLimiter {
     private JedisPool jedisPool;
-    
+
     public RateLimiter(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
     }
@@ -1522,23 +1517,23 @@ public class RateLimiter {
     public boolean isAllowed(String key, int maxRequests, int windowSeconds) {
         try (Jedis jedis = jedisPool.getResource()) {
             String rateLimitKey = "ratelimit:" + key;
-            
+
             // Получить текущее количество запросов
             String current = jedis.get(rateLimitKey);
-            
+
             if (current == null) {
                 // Первый запрос в окне
                 jedis.setex(rateLimitKey, windowSeconds, "1");
                 return true;
             }
-            
+
             int count = Integer.parseInt(current);
             if (count < maxRequests) {
                 // Увеличить счетчик
                 jedis.incr(rateLimitKey);
                 return true;
             }
-            
+
             // Лимит превышен
             return false;
         }
@@ -1549,20 +1544,20 @@ public class RateLimiter {
             String rateLimitKey = "ratelimit:" + key;
             long now = System.currentTimeMillis() / 1000;
             long windowStart = now - windowSeconds;
-            
+
             // Удалить старые записи
             jedis.zremrangeByScore(rateLimitKey, 0, windowStart);
-            
+
             // Подсчитать текущие запросы
             long count = jedis.zcard(rateLimitKey);
-            
+
             if (count < maxRequests) {
                 // Добавить новый запрос
                 jedis.zadd(rateLimitKey, now, String.valueOf(now));
                 jedis.expire(rateLimitKey, windowSeconds);
                 return true;
             }
-            
+
             return false;
         }
     }
@@ -1791,7 +1786,6 @@ spec:
 4. **Мониторьте подключения** через **INFO clients**
 5. **Настройте алерты** на критические метрики
 
----
 ## Дополнительные примеры конфигурации
 
 ### Настройка сети
@@ -1925,3 +1919,10 @@ spec:
 4. **Проверяйте логи** на ошибки
 5. **Обновляйте Redis** регулярно
 
+## См. также
+
+- [[redis-clustering|Redis: Кластеризация]]
+- [[redis-data-structures|Redis: Структуры данных]]
+- [[redis-geospatial|Redis: Геопространственные данные]]
+- [[redis-high-availability|Redis: Высокая доступность]]
+- [[redis-lua-scripting|Redis: Lua Scripting]]

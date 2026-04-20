@@ -12,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Java Reactive: RxJava
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -21,7 +19,7 @@ updated: "2026-02-11"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Java Tutorials](https://docs.oracle.com/javase/tutorial/)
 
@@ -81,17 +79,17 @@ updated: "2026-02-11"
 
 ## Руководство по **RxJava**
 
-**RxJava** - это библиотека для реактивного программирования на **Java**. Она позволяет работать с асинхронными потоками данных и событиями.
+**RxJava** — это библиотека для реактивного программирования на **Java**. Она позволяет работать с асинхронными потоками данных и событиями.
 
 ### Основные концепции
 
 **RxJava** использует концепцию реактивных потоков, вводя **Observables**, на которые может подписаться один или несколько наблюдателей.
 
 **Основные компоненты:**
-- **Observable** - источник данных, который может испускать ноль или более элементов
-- **Observer** - потребитель данных, который подписывается на **Observable**
-- **Subscriber** - расширение **Observer** с дополнительными методами управления подпиской
-- **Subject** - одновременно **Observable** и **Observer**
+- **Observable** — источник данных, который может испускать ноль или более элементов
+- **Observer** — потребитель данных, который подписывается на **Observable**
+- **Subscriber** — расширение **Observer** с дополнительными методами управления подпиской
+- **Subject** — одновременно **Observable** и **Observer**
 
 ### Создание **Observable**
 
@@ -259,7 +257,7 @@ assertTrue(sum[0] == 10);
 
 ```java
 String[] result = {""};
-ConnectableObservable<Long> connectable = 
+ConnectableObservable<Long> connectable =
     Observable.interval(200, TimeUnit.MILLISECONDS).publish();
 
 connectable.subscribe(i -> result[0] += i);
@@ -500,9 +498,9 @@ source.sample(100, TimeUnit.MILLISECONDS)
 **Существует **4** типа действий, которые могут быть выполнены при заполнении буфера:**
 
 1.  **ON_OVERFLOW_ERROR** — это поведение по умолчанию, сигнализирующее об исключении **BufferOverflowException**, когда буфер заполнен.
-2.  **ON_OVERFLOW_DEFAULT** - в настоящее время это то же самое, что и **ON_OVERFLOW_ERROR**.
-3.  **ON_OVERFLOW_DROP_LATEST** - если произойдет переполнение, текущее значение будет просто проигнорировано, и только старые значения будут доставлены после запроса нижестоящего **Observer**.
-4.  **ON_OVERFLOW_DROP_OLDEST** - удаляет самый старый элемент в буфере и добавляет к нему текущее значение
+2.  **ON_OVERFLOW_DEFAULT** — в настоящее время это то же самое, что и **ON_OVERFLOW_ERROR**.
+3.  **ON_OVERFLOW_DROP_LATEST** — если произойдет переполнение, текущее значение будет просто проигнорировано, и только старые значения будут доставлены после запроса нижестоящего **Observer**.
+4.  **ON_OVERFLOW_DROP_OLDEST** — удаляет самый старый элемент в буфере и добавляет к нему текущее значение
 
 **Давайте посмотрим, как указать эту стратегию:**
 
@@ -619,7 +617,7 @@ Observable<String> observable = Observable.just("1", "2", "3")
 
 ```java
 Observable<String> observable = Observable.error(new RuntimeException("Error"))
-    .retryWhen(throwableObservable -> 
+    .retryWhen(throwableObservable ->
         throwableObservable
             .zipWith(Observable.range(1, 3), (throwable, integer) -> integer)
             .flatMap(integer -> Observable.timer(integer, TimeUnit.SECONDS))
@@ -670,20 +668,20 @@ assertTrue(result.equals("13579"));
 
 ### Дополнительные фильтрующие операторы
 
-- **filter()** - фильтрует элементы по предикату
-- **distinct()** - удаляет дубликаты
-- **distinctUntilChanged()** - удаляет последовательные дубликаты
-- **take(n)** - берет первые n элементов
-- **takeLast(n)** - берет последние n элементов
-- **skip(n)** - пропускает первые n элементов
-- **skipLast(n)** - пропускает последние n элементов
-- **first()** - берет первый элемент
-- **last()** - берет последний элемент
-- **elementAt(n)** - берет элемент по индексу
+- **filter()** — фильтрует элементы по предикату
+- **distinct()** — удаляет дубликаты
+- **distinctUntilChanged()** — удаляет последовательные дубликаты
+- **take(n)** — берет первые n элементов
+- **takeLast(n)** — берет последние n элементов
+- **skip(n)** — пропускает первые n элементов
+- **skipLast(n)** — пропускает последние n элементов
+- **first()** — берет первый элемент
+- **last()** — берет последний элемент
+- **elementAt(n)** — берет элемент по индексу
 
 ## Руководство по **Maybe**
 
-**Maybe** - это тип **Observable**, который может испускать ноль или один элемент или завершиться с ошибкой. Это комбинация **Single** и **Completable**.
+**Maybe** — это тип **Observable**, который может испускать ноль или один элемент или завершиться с ошибкой. Это комбинация **Single** и **Completable**.
 
 ```java
 Maybe<String> maybe = Maybe.just("Hello");
@@ -712,7 +710,7 @@ Maybe<String> maybe4 = Single.just("Hello").toMaybe();
 
 ## Руководство по **Flowable**
 
-**Flowable** - это **Observable** с поддержкой обратного давления (**backpressure**). Он реализует спецификацию **Reactive Streams**.
+**Flowable** — это **Observable** с поддержкой обратного давления (**backpressure**). Он реализует спецификацию **Reactive Streams**.
 
 **Flowable** следует использовать вместо **Observable**, когда:**
 - Производитель может генерировать больше данных, чем потребитель может обработать
@@ -736,11 +734,11 @@ Flowable<Integer> flowable = observable.toFlowable(BackpressureStrategy.BUFFER);
 
 ### Стратегии обратного давления
 
-- **BUFFER** - буферизует все элементы (**может привести к OutOfMemoryError**)
-- **DROP** - отбрасывает элементы, если потребитель не успевает
-- **LATEST** - сохраняет только последний элемент
-- **ERROR** - выбрасывает **MissingBackpressureException**
-- **MISSING** - не обрабатывает обратное давление
+- **BUFFER** — буферизует все элементы (**может привести к OutOfMemoryError**)
+- **DROP** — отбрасывает элементы, если потребитель не успевает
+- **LATEST** — сохраняет только последний элемент
+- **ERROR** — выбрасывает **MissingBackpressureException**
+- **MISSING** — не обрабатывает обратное давление
 
 ## Руководство по **Schedulers**
 
@@ -748,12 +746,12 @@ Flowable<Integer> flowable = observable.toFlowable(BackpressureStrategy.BUFFER);
 
 ### Типы **Schedulers**
 
-1. **Schedulers.io()** - для I/O операций (**сеть, файлы**)
-2. **Schedulers.computation()** - для вычислений (**CPU-интенсивные задачи**)
-3. **Schedulers.`newThread()`** - создает новый поток для каждой задачи
-4. **Schedulers.single()** - один поток для всех задач
-5. **Schedulers.trampoline()** - выполнение в текущем потоке
-6. **Schedulers.from(**Executor**)** - пользовательский **Executor**
+1. **Schedulers.io()** — для I/O операций (**сеть, файлы**)
+2. **Schedulers.computation()** — для вычислений (**CPU-интенсивные задачи**)
+3. **Schedulers.`newThread()`** — создает новый поток для каждой задачи
+4. **Schedulers.single()** — один поток для всех задач
+5. **Schedulers.trampoline()** — выполнение в текущем потоке
+6. **Schedulers.from(**Executor**)** — пользовательский **Executor**
 
 ### Использование **subscribeOn** и **observeOn**
 
@@ -835,3 +833,11 @@ assertTrue(result[0].equals("MyResource"));
 - **Ресурсы:** связывать подписки с жизненным циклом через `**CompositeDisposable**`; отменять при уничтожении компонента; использовать `**using**()` для ресурсов с временем жизни.
 - **Тестирование:** использовать `**TestScheduler**` для детерминированных тестов; **TestObserver** / **TestSubscriber** для проверки сигналов; избегать реальных задержек в тестах.
 - **Избегать:** не создавать **Observable** внутри цикла без отмены подписок; не смешивать синхронные и асинхронные вызовы без чёткого контракта; не блокировать в цепочке операторов.
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

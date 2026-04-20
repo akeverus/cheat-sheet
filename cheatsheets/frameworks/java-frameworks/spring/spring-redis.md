@@ -17,8 +17,6 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
 
 # Spring Data Redis: Полное руководство
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -164,7 +162,7 @@ spring.redis.lettuce.pool.min-idle=0
 // Конфигурация RedisTemplate и сериализаторов
 @Configuration
 public class RedisConfig {
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -172,7 +170,7 @@ public class RedisConfig {
         config.setPort(6379);
         return new LettuceConnectionFactory(config);
     }
-    
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
             RedisConnectionFactory connectionFactory) {
@@ -195,26 +193,26 @@ public class RedisConfig {
 // Сервис для операций с Redis (get/set/delete)
 @Service
 public class RedisService {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     public void setValue(String key, String value) {
         redisTemplate.opsForValue().set(key, value);
     }
-    
+
     public String getValue(String key) {
         return redisTemplate.opsForValue().get(key);
     }
-    
+
     public void deleteValue(String key) {
         redisTemplate.delete(key);
     }
-    
+
     public boolean hasKey(String key) {
         return redisTemplate.hasKey(key);
     }
-    
+
     public void setValueWithExpiry(String key, String value, Duration timeout) {
         redisTemplate.opsForValue().set(key, value, timeout);
     }
@@ -226,18 +224,18 @@ public class RedisService {
 ```java
 @Service
 public class UserRedisService {
-    
+
     @Autowired
     private RedisTemplate<String, User> redisTemplate;
-    
+
     public void saveUser(String key, User user) {
         redisTemplate.opsForValue().set(key, user);
     }
-    
+
     public User getUser(String key) {
         return redisTemplate.opsForValue().get(key);
     }
-    
+
     public void saveUserWithExpiry(String key, User user, Duration timeout) {
         redisTemplate.opsForValue().set(key, user, timeout);
     }
@@ -249,22 +247,22 @@ public class UserRedisService {
 ```java
 @Service
 public class ListRedisService {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     public void addToList(String key, String value) {
         redisTemplate.opsForList().rightPush(key, value);
     }
-    
+
     public List<String> getList(String key) {
         return redisTemplate.opsForList().range(key, 0, -1);
     }
-    
+
     public String popFromList(String key) {
         return redisTemplate.opsForList().leftPop(key);
     }
-    
+
     public long getListSize(String key) {
         return redisTemplate.opsForList().size(key);
     }
@@ -276,22 +274,22 @@ public class ListRedisService {
 ```java
 @Service
 public class SetRedisService {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     public void addToSet(String key, String value) {
         redisTemplate.opsForSet().add(key, value);
     }
-    
+
     public Set<String> getSet(String key) {
         return redisTemplate.opsForSet().members(key);
     }
-    
+
     public boolean isMember(String key, String value) {
         return redisTemplate.opsForSet().isMember(key, value);
     }
-    
+
     public void removeFromSet(String key, String value) {
         redisTemplate.opsForSet().remove(key, value);
     }
@@ -303,22 +301,22 @@ public class SetRedisService {
 ```java
 @Service
 public class HashRedisService {
-    
+
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
-    
+
     public void setHashValue(String key, String hashKey, Object value) {
         redisTemplate.opsForHash().put(key, hashKey, value);
     }
-    
+
     public Object getHashValue(String key, String hashKey) {
         return redisTemplate.opsForHash().get(key, hashKey);
     }
-    
+
     public Map<Object, Object> getHash(String key) {
         return redisTemplate.opsForHash().entries(key);
     }
-    
+
     public void deleteHashKey(String key, String hashKey) {
         redisTemplate.opsForHash().delete(key, hashKey);
     }
@@ -333,7 +331,7 @@ public class HashRedisService {
 @Configuration
 @EnableRedisRepositories
 public class RedisRepositoryConfig {
-    
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory();
@@ -346,18 +344,18 @@ public class RedisRepositoryConfig {
 ```java
 @RedisHash("user")
 public class User {
-    
+
     @Id
     private String id;
-    
+
     @Indexed
     private String email;
-    
+
     @Indexed
     private String name;
-    
+
     private Integer age;
-    
+
     // Getters and setters...
 }
 ```
@@ -366,11 +364,11 @@ public class User {
 
 ```java
 public interface UserRepository extends CrudRepository<User, String> {
-    
+
     List<User> findByEmail(String email);
-    
+
     List<User> findByName(String name);
-    
+
     List<User> findByAgeGreaterThan(Integer age);
 }
 ```
@@ -383,7 +381,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 @Configuration
 @EnableCaching
 public class RedisCacheConfig {
-    
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
@@ -393,10 +391,10 @@ public class RedisCacheConfig {
             .serializeValuesWith(RedisSerializationContext.SerializationPair
                 .fromSerializer(new GenericJackson2JsonRedisSerializer()))
             .disableCachingNullValues();
-        
+
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(config)
-            .withCacheConfiguration("users", 
+            .withCacheConfiguration("users",
                 config.entryTtl(Duration.ofMinutes(30)))
             .withCacheConfiguration("products",
                 config.entryTtl(Duration.ofHours(2)))
@@ -411,13 +409,13 @@ public class RedisCacheConfig {
 ```java
 @Service
 public class UserService {
-    
+
     @Cacheable(value = "users", key = "#id")
     public User findById(String id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
-    
+
     @CacheEvict(value = "users", key = "#user.id")
     public User update(User user) {
         return userRepository.save(user);
@@ -432,10 +430,10 @@ public class UserService {
 ```java
 @Service
 public class RedisPublisher {
-    
+
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
-    
+
     public void publish(String channel, Object message) {
         redisTemplate.convertAndSend(channel, message);
     }
@@ -447,7 +445,7 @@ public class RedisPublisher {
 ```java
 @Component
 public class RedisSubscriber implements MessageListener {
-    
+
     @Override
     public void onMessage(Message message, byte[] pattern) {
         String channel = new String(message.getChannel());
@@ -458,7 +456,7 @@ public class RedisSubscriber implements MessageListener {
 
 @Configuration
 public class RedisPubSubConfig {
-    
+
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
@@ -478,19 +476,19 @@ public class RedisPubSubConfig {
 ```java
 @Service
 public class TransactionalRedisService {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     @Transactional
     public void transfer(String fromKey, String toKey, String amount) {
         String fromValue = redisTemplate.opsForValue().get(fromKey);
         String toValue = redisTemplate.opsForValue().get(toKey);
-        
+
         // Операции в транзакции
-        redisTemplate.opsForValue().set(fromKey, 
+        redisTemplate.opsForValue().set(fromKey,
             String.valueOf(Integer.parseInt(fromValue) - Integer.parseInt(amount)));
-        redisTemplate.opsForValue().set(toKey, 
+        redisTemplate.opsForValue().set(toKey,
             String.valueOf(Integer.parseInt(toValue) + Integer.parseInt(amount)));
     }
 }
@@ -552,15 +550,15 @@ public void transfer(String from, String to, String amount) {
 ```java
 @Service
 public class RedisStreamProducer {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     public void sendToStream(String stream, String key, String value) {
         Map<String, String> body = Map.of(key, value);
         redisTemplate.opsForStream().add(stream, body);
     }
-    
+
     public void sendToStreamWithId(String stream, String id, Map<String, String> body) {
         redisTemplate.opsForStream().add(Record.of(body).withStreamKey(stream).withId(RecordId.of(id)));
     }
@@ -572,31 +570,31 @@ public class RedisStreamProducer {
 ```java
 @Service
 public class RedisStreamConsumer {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     public List<MapRecord<String, Object, Object>> readFromStream(String stream, String lastId) {
         StreamReadOptions options = StreamReadOptions.empty()
             .count(10)
             .block(Duration.ofSeconds(1));
-        
+
         return redisTemplate.opsForStream().read(
             StreamOffset.create(stream, ReadOffset.from(lastId)),
             options
         );
     }
-    
+
     public void readFromMultipleStreams(Map<String, String> streams) {
         StreamReadOptions options = StreamReadOptions.empty()
             .count(10)
             .block(Duration.ofSeconds(1));
-        
+
         List<StreamOffset<String>> offsets = streams.entrySet().stream()
             .map(e -> StreamOffset.create(e.getKey(), ReadOffset.from(e.getValue())))
             .collect(Collectors.toList());
-        
-        List<MapRecord<String, Object, Object>> records = 
+
+        List<MapRecord<String, Object, Object>> records =
             redisTemplate.opsForStream().read(options, offsets);
     }
 }
@@ -607,28 +605,28 @@ public class RedisStreamConsumer {
 ```java
 @Configuration
 public class RedisStreamConfig {
-    
+
     @Bean
-    public StreamMessageListenerContainer<String, MapRecord<String, String, String>> 
+    public StreamMessageListenerContainer<String, MapRecord<String, String, String>>
             streamMessageListenerContainer(RedisConnectionFactory connectionFactory) {
-        StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options = 
+        StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
             StreamMessageListenerContainerOptions.builder()
                 .pollTimeout(Duration.ofSeconds(1))
                 .build();
-        
+
         return StreamMessageListenerContainer.create(connectionFactory, options);
     }
 }
 
 @Component
 public class StreamConsumerGroup {
-    
+
     @Autowired
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> container;
-    
+
     @PostConstruct
     public void start() {
-        StreamMessageListener<String, MapRecord<String, String, String>> listener = 
+        StreamMessageListener<String, MapRecord<String, String, String>> listener =
             new StreamMessageListener<String, MapRecord<String, String, String>>() {
                 @Override
                 public void onMessage(MapRecord<String, String, String> message) {
@@ -636,11 +634,11 @@ public class StreamConsumerGroup {
                     processMessage(message);
                 }
             };
-        
+
         StreamOffset<String> offset = StreamOffset.create("mystream", ReadOffset.lastConsumed());
         container.receive(Consumer.from("mygroup", "consumer1"), offset, listener);
     }
-    
+
     private void processMessage(MapRecord<String, String, String> message) {
         // Логика обработки
     }
@@ -664,7 +662,7 @@ spring.redis.lettuce.pool.min-idle=0
 ```java
 @Configuration
 public class RedisClusterConfig {
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         List<String> clusterNodes = Arrays.asList(
@@ -672,10 +670,10 @@ public class RedisClusterConfig {
             "localhost:7001",
             "localhost:7002"
         );
-        
+
         RedisClusterConfiguration clusterConfiguration = new RedisClusterConfiguration(clusterNodes);
         clusterConfiguration.setMaxRedirects(3);
-        
+
         return new LettuceConnectionFactory(clusterConfiguration);
     }
 }
@@ -686,19 +684,19 @@ public class RedisClusterConfig {
 ```java
 @Service
 public class RedisClusterService {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     public void setInCluster(String key, String value) {
         // Redis автоматически определяет узел по ключу
         redisTemplate.opsForValue().set(key, value);
     }
-    
+
     public String getFromCluster(String key) {
         return redisTemplate.opsForValue().get(key);
     }
-    
+
     public void setWithSlot(String key, String value) {
         // Использование hash tags для размещения на одном узле
         String hashTag = "{user:" + key + "}";
@@ -720,7 +718,7 @@ spring.redis.sentinel.nodes=localhost:26379,localhost:26380,localhost:26381
 ```java
 @Configuration
 public class RedisSentinelConfig {
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisSentinelConfiguration sentinelConfiguration = new RedisSentinelConfiguration()
@@ -728,7 +726,7 @@ public class RedisSentinelConfig {
             .sentinel("localhost", 26379)
             .sentinel("localhost", 26380)
             .sentinel("localhost", 26381);
-        
+
         return new LettuceConnectionFactory(sentinelConfiguration);
     }
 }
@@ -741,17 +739,17 @@ public class RedisSentinelConfig {
 ```java
 @Service
 public class RedisPipelineService {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     public List<Object> executePipeline(List<String> keys) {
         return redisTemplate.executePipelined(new RedisCallback<Object>() {
             @Override
             public Object doInRedis(RedisConnection connection) throws DataAccessException {
-                StringRedisConnection stringRedisConnection = 
+                StringRedisConnection stringRedisConnection =
                     (StringRedisConnection) connection;
-                
+
                 for (String key : keys) {
                     stringRedisConnection.get(key);
                 }
@@ -767,11 +765,11 @@ public class RedisPipelineService {
 ```java
 @Service
 public class RedisScriptService {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
-    private static final String INCREMENT_SCRIPT = 
+
+    private static final String INCREMENT_SCRIPT =
         "local current = redis.call('get', KEYS[1]) " +
         "if current == false then " +
         "  current = 0 " +
@@ -779,12 +777,12 @@ public class RedisScriptService {
         "local new = current + ARGV[1] " +
         "redis.call('set', KEYS[1], new) " +
         "return new";
-    
+
     public Long incrementWithScript(String key, Long delta) {
         DefaultRedisScript<Long> script = new DefaultRedisScript<>();
         script.setScriptText(INCREMENT_SCRIPT);
         script.setResultType(Long.class);
-        
+
         return redisTemplate.execute(script, Collections.singletonList(key), delta.toString());
     }
 }
@@ -795,28 +793,28 @@ public class RedisScriptService {
 ```java
 @Service
 public class RedisBitmapService {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     public void setBit(String key, long offset, boolean value) {
         redisTemplate.opsForValue().setBit(key, offset, value);
     }
-    
+
     public Boolean getBit(String key, long offset) {
         return redisTemplate.opsForValue().getBit(key, offset);
     }
-    
+
     public Long bitCount(String key) {
-        return redisTemplate.execute((RedisCallback<Long>) connection -> 
+        return redisTemplate.execute((RedisCallback<Long>) connection ->
             connection.bitCount(key.getBytes())
         );
     }
-    
+
     public Long bitOpAnd(String destination, String... keys) {
-        return redisTemplate.execute((RedisCallback<Long>) connection -> 
-            connection.bitOp(RedisStringCommands.BitOperation.AND, 
-                destination.getBytes(), 
+        return redisTemplate.execute((RedisCallback<Long>) connection ->
+            connection.bitOp(RedisStringCommands.BitOperation.AND,
+                destination.getBytes(),
                 Arrays.stream(keys).map(String::getBytes).toArray(byte[][]::new))
         );
     }
@@ -828,18 +826,18 @@ public class RedisBitmapService {
 ```java
 @Service
 public class RedisHyperLogLogService {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     public void addToHyperLogLog(String key, String... values) {
         redisTemplate.opsForHyperLogLog().add(key, values);
     }
-    
+
     public Long countHyperLogLog(String key) {
         return redisTemplate.opsForHyperLogLog().size(key);
     }
-    
+
     public Long unionHyperLogLog(String destination, String... keys) {
         return redisTemplate.opsForHyperLogLog().union(destination, keys);
     }
@@ -851,19 +849,19 @@ public class RedisHyperLogLogService {
 ```java
 @Service
 public class RedisGeospatialService {
-    
+
     @Autowired
     private StringRedisTemplate redisTemplate;
-    
+
     public void addLocation(String key, String member, double longitude, double latitude) {
         Point point = new Point(longitude, latitude);
         redisTemplate.opsForGeo().add(key, point, member);
     }
-    
+
     public Distance distance(String key, String member1, String member2) {
         return redisTemplate.opsForGeo().distance(key, member1, member2);
     }
-    
+
     public List<GeoResult<RedisGeoCommands.GeoLocation<String>>> findNearby(
             String key, String member, double radius) {
         Circle circle = new Circle(member, new Distance(radius, Metrics.KILOMETERS));
@@ -879,11 +877,11 @@ public class RedisGeospatialService {
 ```java
 @Component
 public class RedisMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter redisOperations;
     private final Timer redisOperationTimer;
-    
+
     public RedisMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.redisOperations = Counter.builder("redis.operations")
@@ -894,7 +892,7 @@ public class RedisMetrics {
             .description("Redis operation duration")
             .register(meterRegistry);
     }
-    
+
     public <T> T measureOperation(String operation, Supplier<T> supplier) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
@@ -916,17 +914,17 @@ public class RedisMetrics {
 ```java
 @Component
 public class RedisHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-    
+
     @Override
     public Health health() {
         try {
             String result = redisTemplate.execute((RedisCallback<String>) connection -> {
                 return connection.ping();
             });
-            
+
             if ("PONG".equals(result)) {
                 return Health.up()
                     .withDetail("redis", "Available")
@@ -952,7 +950,7 @@ public class RedisHealthIndicator implements HealthIndicator {
 ```java
 @Configuration
 public class OptimizedRedisConfig {
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
@@ -963,11 +961,11 @@ public class OptimizedRedisConfig {
                 .minIdle(5)
                 .build())
             .build();
-        
+
         RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration();
         serverConfig.setHostName("localhost");
         serverConfig.setPort(6379);
-        
+
         return new LettuceConnectionFactory(serverConfig, clientConfig);
     }
 }
@@ -978,19 +976,19 @@ public class OptimizedRedisConfig {
 ```java
 @Configuration
 public class OptimizedSerializationConfig {
-    
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
             RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        
+
         // Использование более эффективной сериализации
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
-        
+
         template.afterPropertiesSet();
         return template;
     }
@@ -1009,14 +1007,14 @@ spring.redis.password=your-password
 ```java
 @Configuration
 public class SecureRedisConfig {
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName("localhost");
         config.setPort(6379);
         config.setPassword(RedisPassword.of("your-password"));
-        
+
         return new LettuceConnectionFactory(config);
     }
 }
@@ -1027,22 +1025,22 @@ public class SecureRedisConfig {
 ```java
 @Configuration
 public class SecureRedisConfig {
-    
+
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         SslOptions sslOptions = SslOptions.builder()
             .truststore(new File("truststore.jks"), "password".toCharArray())
             .build();
-        
+
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
             .useSsl()
             .sslOptions(sslOptions)
             .build();
-        
+
         RedisStandaloneConfiguration serverConfig = new RedisStandaloneConfiguration();
         serverConfig.setHostName("localhost");
         serverConfig.setPort(6380);
-        
+
         return new LettuceConnectionFactory(serverConfig, clientConfig);
     }
 }
@@ -1060,3 +1058,11 @@ public class SecureRedisConfig {
 - [**Spring Boot** Redis](https://docs.spring.io/spring-boot/docs/current/reference/html/data.html#data.nosql.redis)
 - [**Redis** Streams](https://redis.io/docs/data-types/streams/)
 - [**Redis** Cluster](https://redis.io/docs/management/scaling/)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

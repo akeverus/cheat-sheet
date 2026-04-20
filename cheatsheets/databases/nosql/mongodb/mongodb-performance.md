@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# MongoDB: Производительность и оптимизация - Полное руководство по тюнингу и мониторингу
+# MongoDB: Производительность и оптимизация — Полное руководство по тюнингу и мониторингу
 
 Комплексное руководство по оптимизации производительности **MongoDB**: индексы, запросы, память, мониторинг и **best practices**.
 
@@ -23,7 +23,7 @@ updated: "2026-02-11"
 - [Database Profiler](https://www.mongodb.com/docs/manual/tutorial/manage-the-database-profiler/)
 - [Explain Results](https://www.mongodb.com/docs/manual/reference/explain-results/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Performance Tuning](https://www.baeldung.com/spring-data-mongodb-performance)
 
 ### См. также
@@ -447,51 +447,51 @@ db.posts.find({ createdAt: { $lt: lastCreatedAt } })
 ```java
 @Service
 public class OptimizedUserService {
-    
+
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     // Использование индексов
     public List<User> findUsersByName(String name) {
         Query query = new Query(Criteria.where("name").is(name));
         query.with(Sort.by(Sort.Direction.ASC, "name"));
-        
+
         // Добавить hint если нужно
         // query.withHint("name_1");
-        
+
         return mongoTemplate.find(query, User.class);
     }
-    
+
     // Оптимизированная пагинация
     public Page<User> findUsersPaginated(String lastId, int limit) {
         Query query = new Query();
-        
+
         if (lastId != null) {
             query.addCriteria(Criteria.where("_id").gt(new ObjectId(lastId)));
         }
-        
+
         query.with(Sort.by("_id")).limit(limit + 1);
-        
+
         List<User> users = mongoTemplate.find(query, User.class);
         boolean hasNext = users.size() > limit;
-        
+
         if (hasNext) {
             users = users.subList(0, limit);
         }
-        
+
         return new PageImpl<>(users, PageRequest.of(0, limit), hasNext ? limit + 1 : limit);
     }
-    
+
     // Batch операции
     public void updateUsersBatch(List<String> userIds, Status status) {
         Query query = new Query(Criteria.where("_id").in(userIds));
         Update update = Update.update("status", status)
             .set("updatedAt", new Date());
-        
+
         // Bulk update
         mongoTemplate.updateMulti(query, update, User.class);
     }
-    
+
     // Aggregation для аналитики
     public List<Document> getUserStats() {
         Aggregation aggregation = Aggregation.newAggregation(
@@ -501,7 +501,7 @@ public class OptimizedUserService {
                 .avg("salary").as("avgSalary"),
             Aggregation.sort(Sort.by(Sort.Direction.DESC, "userCount"))
         );
-        
+
         return mongoTemplate.aggregate(aggregation, "users", Document.class)
             .getMappedResults();
     }
@@ -581,11 +581,11 @@ storage:
 ```java
 @Configuration
 public class MongoConfig {
-    
+
     @Bean
     public MongoClientSettings mongoClientSettings() {
         return MongoClientSettings.builder()
-            .applyToConnectionPoolSettings(builder -> 
+            .applyToConnectionPoolSettings(builder ->
                 builder.maxSize(20)      // Максимум соединений
                     .minSize(5)          // Минимум соединений
                     .maxWaitTime(5000, TimeUnit.MILLISECONDS)
@@ -597,15 +597,15 @@ public class MongoConfig {
             )
             .build();
     }
-    
+
     @Bean
     public MongoTemplate mongoTemplate(MongoClient mongoClient) {
         MongoTemplate template = new MongoTemplate(mongoClient, "mydb");
-        
+
         // Настройки для производительности
         template.setReadPreference(ReadPreference.secondaryPreferred());
         template.setWriteConcern(WriteConcern.W1.withJournal(false));
-        
+
         return template;
     }
 }
@@ -623,16 +623,16 @@ storage:
   journal:
     enabled: true
     commitIntervalMs: 100  # Частота commit journal
-  
+
   wiredTiger:
     engineConfig:
       cacheSizeGB: 8
       journalMaxFileSizeGB: 0.5
       maxCacheOverflowSizeGB: 0.5
-      
+
     collectionConfig:
       blockCompressor: zstd  # Лучше чем snappy для CPU bound
-      
+
     indexConfig:
       prefixCompression: true
 ```
@@ -718,7 +718,7 @@ db.globalData.find().readPref("nearest")
 ```java
 @Configuration
 public class MongoConfig {
-    
+
     @Bean
     public MongoTemplate analyticsTemplate(MongoClient mongoClient) {
         // Secondary для аналитики
@@ -726,8 +726,8 @@ public class MongoConfig {
         template.setReadPreference(ReadPreference.secondaryPreferred());
         return template;
     }
-    
-    @Bean 
+
+    @Bean
     public MongoTemplate criticalTemplate(MongoClient mongoClient) {
         // Primary для критичных данных
         MongoTemplate template = new MongoTemplate(mongoClient, "critical");
@@ -832,42 +832,42 @@ db.users.aggregate([
 ```java
 @Service
 public class MongoPerformanceMonitor {
-    
+
     @Autowired
     private MongoClient mongoClient;
-    
+
     @Scheduled(fixedRate = 30000) // Каждые 30 секунд
     public void monitorPerformance() {
         MongoDatabase adminDb = mongoClient.getDatabase("admin");
-        
+
         // Server status
         Document serverStatus = adminDb.runCommand(new Document("serverStatus", 1));
-        
+
         // Memory usage
         Document mem = (Document) serverStatus.get("mem");
         int resident = mem.getInteger("resident");
         int virtual = mem.getInteger("virtual");
-        
+
         // Connections
         Document connections = (Document) serverStatus.get("connections");
         int current = connections.getInteger("current");
         int available = connections.getInteger("available");
-        
+
         // Operations counters
         Document opcounters = (Document) serverStatus.get("opcounters");
         int queries = opcounters.getInteger("query");
         int inserts = opcounters.getInteger("insert");
-        
+
         // Log metrics
         logger.info("MongoDB Memory - Resident: {}MB, Virtual: {}MB", resident, virtual);
         logger.info("MongoDB Connections - Current: {}, Available: {}", current, available);
         logger.info("MongoDB Operations - Queries: {}, Inserts: {}", queries, inserts);
     }
-    
+
     public Document getSlowQueries() {
         MongoDatabase db = mongoClient.getDatabase("mydb");
         MongoCollection<Document> profile = db.getCollection("system.profile");
-        
+
         return profile.find()
             .sort(new Document("millis", -1))
             .limit(10)
@@ -976,11 +976,11 @@ net:
 ```java
 @Configuration
 public class OptimizedMongoConfig {
-    
+
     @Bean
     public MongoClientSettings mongoClientSettings() {
         return MongoClientSettings.builder()
-            .applyToConnectionPoolSettings(builder -> 
+            .applyToConnectionPoolSettings(builder ->
                 builder.maxSize(100)     // Максимум соединений
                     .minSize(10)          // Минимум поддерживаемых
                     .maxWaitTime(2000, MILLISECONDS)
@@ -996,7 +996,7 @@ public class OptimizedMongoConfig {
 ```java
 @Service
 public class OptimizedService {
-    
+
     // Использовать projection для уменьшения данных
     public List<UserSummary> getUserSummaries() {
         Query query = new Query();
@@ -1005,19 +1005,19 @@ public class OptimizedService {
             .include("email")
             .include("lastLogin")
             .exclude("_id");
-        
+
         return mongoTemplate.find(query, UserSummary.class);
     }
-    
+
     // Batch операции вместо множественных
     public void updateUsersBatch(List<String> userIds, Status status) {
         Query query = new Query(Criteria.where("_id").in(userIds));
         Update update = Update.update("status", status)
             .set("updatedAt", new Date());
-        
+
         mongoTemplate.updateMulti(query, update, User.class);
     }
-    
+
     // Использовать aggregation для аналитики
     public List<DepartmentStats> getDepartmentStats() {
         Aggregation agg = Aggregation.newAggregation(
@@ -1027,7 +1027,7 @@ public class OptimizedService {
                 .avg("salary").as("avgSalary"),
             Aggregation.sort(Sort.by(Sort.Direction.DESC, "count"))
         );
-        
+
         return mongoTemplate.aggregate(agg, User.class, DepartmentStats.class)
             .getMappedResults();
     }
@@ -1047,13 +1047,13 @@ groups:
         for: 5m
         labels:
           severity: warning
-        
+
       - alert: MongoDBHighConnectionCount
         expr: mongodb_connections_current > 800
         for: 5m
         labels:
           severity: warning
-          
+
       - alert: MongoDBSlowQueries
         expr: rate(mongodb_opcounters_query[5m]) > 1000
         for: 2m
@@ -1170,8 +1170,8 @@ db.serverStatus().extra_info.page_faults
 // 2. Оптимизировать индексы
 // 3. Настроить WiredTiger cache
 // 4. Использовать compression
-db.collection.createIndex({ field: 1 }, { 
-  storageEngine: { 
+db.collection.createIndex({ field: 1 }, {
+  storageEngine: {
     wiredTiger: { configString: 'block_compressor=zstd' }
   }
 })
@@ -1247,7 +1247,7 @@ db.adminCommand({ replSetResizeOplog: 1, size: 1000 })
 ```java
 // Connection pooling
 MongoClientSettings.builder()
-    .applyToConnectionPoolSettings(builder -> 
+    .applyToConnectionPoolSettings(builder ->
         builder.maxSize(50).minSize(5)
     )
 

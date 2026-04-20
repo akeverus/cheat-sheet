@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Slick
 
-**Slick** (**Scala `Language`-`Integrated Connection` Kit**) - это современная **database query and access library** для **Scala**, предоставляющая функциональный, **type-safe** подход к работе с реляционными базами данных. **Slick** генерирует **SQL** запросы из **Scala** кода и обеспечивает **compile-time** проверку типов.
+**Slick** (**Scala `Language`-`Integrated Connection` Kit**) — это современная **database query and access library** для **Scala**, предоставляющая функциональный, **type-safe** подход к работе с реляционными базами данных. **Slick** генерирует **SQL** запросы из **Scala** кода и обеспечивает **compile-time** проверку типов.
 
 ## Полезные ссылки
 - [Официальная документация Slick](https://scala-slick.org/docs/)
@@ -131,16 +131,16 @@ class UserTable(tag: Tag) extends Table[User](tag, "users") {
   // O.PrimaryKey - первичный ключ
   // O.AutoInc - автоматическое увеличение значения (AUTO_INCREMENT/SERIAL)
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  
+
   // O.Length(255) - максимальная длина VARCHAR колонки
   def name = column[String]("name", O.Length(255))
-  
+
   // O.Unique - уникальное ограничение на колонку
   def email = column[String]("email", O.Length(255), O.Unique)
-  
+
   // O.Default(value) - значение по умолчанию для колонки
   def createdAt = column[Instant]("created_at", O.Default(Instant.now()))
-  
+
   // Option[T] - nullable колонка (может быть NULL в БД)
   def updatedAt = column[Option[Instant]]("updated_at")
 

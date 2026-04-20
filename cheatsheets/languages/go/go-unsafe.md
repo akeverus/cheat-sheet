@@ -78,10 +78,10 @@ updated: "2026-02-06"
 
 ### Предупреждения
 
-1. **Нарушение типобезопасности** - **unsafe** обходит проверки типов
-2. **Портативность** - код может быть непереносимым
-3. **Сложность отладки** - ошибки сложнее найти
-4. **Изменения в Go** - код может сломаться при обновлении Go
+1. **Нарушение типобезопасности** — **unsafe** обходит проверки типов
+2. **Портативность** — код может быть непереносимым
+3. **Сложность отладки** — ошибки сложнее найти
+4. **Изменения в Go** — код может сломаться при обновлении Go
 
 ## **unsafe.Pointer**
 
@@ -95,7 +95,7 @@ import "unsafe"
 func convertPointer() {
     var x int = 42
     ptr := unsafe.Pointer(&x)
-    
+
     // Преобразование в другой тип указателя
     var y *float64 = (*float64)(ptr)
     fmt.Println(*y)
@@ -127,7 +127,7 @@ type B struct {
 
 func convertStruct() {
     a := A{X: 1, Y: 2}
-    
+
     // Преобразование через unsafe.Pointer
     b := (*B)(unsafe.Pointer(&a))
     fmt.Println(b.X, b.Y)  // 1, 2
@@ -139,15 +139,15 @@ func convertStruct() {
 ```go
 func convertSlice() {
     intSlice := []int{1, 2, 3, 4}
-    
+
     // Преобразование в []byte
     byteSlice := *(*[]byte)(unsafe.Pointer(&intSlice))
-    
+
     // Изменение размера слайса
     header := (*reflect.SliceHeader)(unsafe.Pointer(&intSlice))
     header.Len *= 4  // размер int в байтах
     header.Cap *= 4
-    
+
     byteSlice = *(*[]byte)(unsafe.Pointer(header))
 }
 ```
@@ -167,11 +167,11 @@ type Struct struct {
 
 func getFieldOffset() {
     var s Struct
-    
+
     // Смещение поля B
     offset := unsafe.Offsetof(s.B)
     fmt.Printf("Offset of B: %d\n", offset)
-    
+
     // Доступ к полю через указатель
     ptr := unsafe.Pointer(&s)
     bPtr := (*string)(unsafe.Pointer(uintptr(ptr) + offset))
@@ -187,7 +187,7 @@ func getSize() {
     var x int
     size := unsafe.Sizeof(x)
     fmt.Printf("Size of int: %d bytes\n", size)
-    
+
     var s string
     size = unsafe.Sizeof(s)
     fmt.Printf("Size of string: %d bytes\n", size)
@@ -259,11 +259,11 @@ func demonstrateSizeof() {
     fmt.Printf("int16: %d bytes\n", unsafe.Sizeof(int16(0)))
     fmt.Printf("int32: %d bytes\n", unsafe.Sizeof(int32(0)))
     fmt.Printf("int64: %d bytes\n", unsafe.Sizeof(int64(0)))
-    
+
     // Размеры указателей
     var x int
     fmt.Printf("pointer to int: %d bytes\n", unsafe.Sizeof(&x))
-    
+
     // Размеры структур
     type Example struct {
         A int
@@ -281,14 +281,14 @@ func demonstrateAlignof() {
     // Выравнивание примитивных типов
     fmt.Printf("int alignment: %d\n", unsafe.Alignof(int(0)))
     fmt.Printf("int64 alignment: %d\n", unsafe.Alignof(int64(0)))
-    
+
     // Выравнивание структур
     type Unaligned struct {
         A int8
         B int64
     }
     fmt.Printf("Unaligned struct alignment: %d\n", unsafe.Alignof(Unaligned{}))
-    
+
     // Оптимизированное выравнивание
     type Aligned struct {
         B int64
@@ -311,13 +311,13 @@ type ComplexStruct struct {
 
 func demonstrateOffsetof() {
     var s ComplexStruct
-    
+
     fmt.Printf("Offset of A: %d\n", unsafe.Offsetof(s.A))
     fmt.Printf("Offset of B: %d\n", unsafe.Offsetof(s.B))
     fmt.Printf("Offset of C: %d\n", unsafe.Offsetof(s.C))
     fmt.Printf("Offset of D: %d\n", unsafe.Offsetof(s.D))
     fmt.Printf("Offset of E: %d\n", unsafe.Offsetof(s.E))
-    
+
     // Доступ к полям через offset
     ptr := unsafe.Pointer(&s)
     bOffset := unsafe.Offsetof(s.B)
@@ -375,11 +375,11 @@ func getElementFast(s *LargeStruct, index int) int {
     if index < 0 || index >= 1000 {
         panic("index out of range")
     }
-    
+
     base := uintptr(unsafe.Pointer(s))
     offset := unsafe.Offsetof(s.Data)
     elementSize := unsafe.Sizeof(int(0))
-    
+
     ptr := (*int)(unsafe.Pointer(base + offset + uintptr(index)*elementSize))
     return *ptr
 }
@@ -389,11 +389,11 @@ func setElementFast(s *LargeStruct, index int, value int) {
     if index < 0 || index >= 1000 {
         panic("index out of range")
     }
-    
+
     base := uintptr(unsafe.Pointer(s))
     offset := unsafe.Offsetof(s.Data)
     elementSize := unsafe.Sizeof(int(0))
-    
+
     ptr := (*int)(unsafe.Pointer(base + offset + uintptr(index)*elementSize))
     *ptr = value
 }
@@ -407,7 +407,7 @@ func stringToBytes(s string) []byte {
     if len(s) == 0 {
         return nil
     }
-    
+
     return *(*[]byte)(unsafe.Pointer(&struct {
         ptr unsafe.Pointer
         len int
@@ -424,7 +424,7 @@ func bytesToString(b []byte) string {
     if len(b) == 0 {
         return ""
     }
-    
+
     return *(*string)(unsafe.Pointer(&b))
 }
 
@@ -433,7 +433,7 @@ func demonstrateStringBytes() {
     s := "hello"
     b := stringToBytes(s)
     fmt.Printf("String: %s, Bytes: %v\n", s, b)
-    
+
     s2 := bytesToString(b)
     fmt.Printf("Back to string: %s\n", s2)
 }
@@ -472,11 +472,11 @@ func fastCopy(dst, src []byte) {
     if len(dst) < len(src) {
         panic("destination too small")
     }
-    
+
     dstPtr := unsafe.Pointer(&dst[0])
     srcPtr := unsafe.Pointer(&src[0])
     size := uintptr(len(src))
-    
+
     copy(*(*[]byte)(unsafe.Pointer(&struct {
         ptr unsafe.Pointer
         len int
@@ -538,19 +538,19 @@ func zeroCopyConvert[T, U any](src []T) []U {
     if len(src) == 0 {
         return nil
     }
-    
+
     // Проверка совместимости размеров
     if unsafe.Sizeof(T(0)) != unsafe.Sizeof(U(0)) {
         panic("types have different sizes")
     }
-    
+
     srcHeader := (*reflect.SliceHeader)(unsafe.Pointer(&src))
     dstHeader := &reflect.SliceHeader{
         Data: srcHeader.Data,
         Len:  srcHeader.Len,
         Cap:  srcHeader.Cap,
     }
-    
+
     return *(*[]U)(unsafe.Pointer(dstHeader))
 }
 ```
@@ -567,7 +567,7 @@ func getFieldOptimized(s *OptimizedStruct, index int) int {
     base := uintptr(unsafe.Pointer(s))
     offset := unsafe.Offsetof(s.fields)
     elementSize := unsafe.Sizeof(int(0))
-    
+
     ptr := (*int)(unsafe.Pointer(base + offset + uintptr(index)*elementSize))
     return *ptr
 }
@@ -629,12 +629,12 @@ func (s *SafeUnsafe) ConvertStringToBytes(str string) ([]byte, error) {
     if len(str) == 0 {
         return nil, nil
     }
-    
+
     // Проверка валидности строки
     if !utf8.ValidString(str) {
         return nil, fmt.Errorf("invalid UTF-8 string")
     }
-    
+
     return stringToBytes(str), nil
 }
 
@@ -642,12 +642,12 @@ func (s *SafeUnsafe) ConvertBytesToString(b []byte) (string, error) {
     if len(b) == 0 {
         return "", nil
     }
-    
+
     // Проверка валидности UTF-8
     if !utf8.Valid(b) {
         return "", fmt.Errorf("invalid UTF-8 bytes")
     }
-    
+
     return bytesToString(b), nil
 }
 ```
@@ -664,7 +664,7 @@ type PrivateStruct struct {
 func ReadPrivateField(s *PrivateStruct) int {
     // Получение указателя на первое поле
     ptr := unsafe.Pointer(s)
-    
+
     // Чтение int значения
     return *(*int)(ptr)
 }
@@ -684,11 +684,11 @@ func BytesToInt32s(b []byte) []int32 {
     if len(b)%4 != 0 {
         return nil
     }
-    
+
     header := (*reflect.SliceHeader)(unsafe.Pointer(&b))
     header.Len /= 4
     header.Cap /= 4
-    
+
     return *(*[]int32)(unsafe.Pointer(header))
 }
 
@@ -697,7 +697,7 @@ func Int32sToBytes(i []int32) []byte {
     header := (*reflect.SliceHeader)(unsafe.Pointer(&i))
     header.Len *= 4
     header.Cap *= 4
-    
+
     return *(*[]byte)(unsafe.Pointer(header))
 }
 ```
@@ -711,7 +711,7 @@ import "runtime"
 func AllocateNoGC(size int) unsafe.Pointer {
     ptr := make([]byte, size)
     runtime.KeepAlive(ptr) // Предотвращение сборки мусора
-    
+
     header := (*reflect.SliceHeader)(unsafe.Pointer(&ptr))
     return unsafe.Pointer(header.Data)
 }
@@ -749,10 +749,10 @@ func CheckAlignment(typ reflect.Type) bool {
 type OptimizedStruct struct {
     // 8 байт
     Field1 int64
-    
+
     // 4 байта
     Field2 int32
-    
+
     // 1 байт + 3 байта padding
     Field3 bool
 }
@@ -760,21 +760,21 @@ type OptimizedStruct struct {
 
 ## Лучшие практики
 
-1. **Избегайте unsafe когда возможно** - используйте обычный код для безопасности
-2. **Документируйте использование** - объясняйте, почему используется **unsafe**
-3. **Тестируйте тщательно** - **unsafe** код требует особого тестирования
-4. **Проверяйте границы** - убедитесь, что операции безопасны
-5. **Используйте комментарии** - объясняйте неочевидные преобразования
-6. **Проверяйте выравнивание** - учитывайте **alignment** при работе с памятью
-7. **Используйте безопасные обертки** - создавайте безопасные **API** поверх **unsafe**
-8. **Тестируйте на разных платформах** - **unsafe** код может быть непереносимым
-9. **Избегайте в production** - используйте **unsafe** только когда действительно необходимо
-10. **Проверяйте валидность данных** - всегда валидируйте данные перед **unsafe** операциями
-11. **Используйте для оптимизации** - только когда измерения показывают необходимость
-12. **Понимайте memory model** - знайте, как Go управляет памятью
-13. **Используйте для совместимости** - для работы с C кодом или системными вызовами
-14. **Проверяйте на race conditions** - **unsafe** код может создавать **race conditions**
-15. **Используйте осторожно** - **unsafe** код может привести к неопределенному поведению
+1. **Избегайте unsafe когда возможно** — используйте обычный код для безопасности
+2. **Документируйте использование** — объясняйте, почему используется **unsafe**
+3. **Тестируйте тщательно** — **unsafe** код требует особого тестирования
+4. **Проверяйте границы** — убедитесь, что операции безопасны
+5. **Используйте комментарии** — объясняйте неочевидные преобразования
+6. **Проверяйте выравнивание** — учитывайте **alignment** при работе с памятью
+7. **Используйте безопасные обертки** — создавайте безопасные **API** поверх **unsafe**
+8. **Тестируйте на разных платформах** — **unsafe** код может быть непереносимым
+9. **Избегайте в production** — используйте **unsafe** только когда действительно необходимо
+10. **Проверяйте валидность данных** — всегда валидируйте данные перед **unsafe** операциями
+11. **Используйте для оптимизации** — только когда измерения показывают необходимость
+12. **Понимайте memory model** — знайте, как Go управляет памятью
+13. **Используйте для совместимости** — для работы с C кодом или системными вызовами
+14. **Проверяйте на race conditions** — **unsafe** код может создавать **race conditions**
+15. **Используйте осторожно** — **unsafe** код может привести к неопределенному поведению
 
 
 ## Решение проблем
@@ -793,3 +793,11 @@ type OptimizedStruct struct {
 
 - [Go unsafe Package](https://pkg.go.dev/unsafe)
 - [Go unsafe Pointer](https://go.dev/blog/unsafe)
+
+## См. также
+
+- [[go-advanced-patterns|Go: продвинутые паттерны]]
+- [[go-basics|Go: основы]]
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-best-practices|Go: лучшие практики]]
+- [[go-build|Go: сборка и развертывание]]

@@ -69,28 +69,28 @@ import java.util.stream.Collectors;
 public class Graph<T extends GraphNode> {
     private final Set<T> nodes;
     private final Map<String, Set<String>> connections;
-    
+
     public Graph() {
         this.nodes = new HashSet<>();
         this.connections = new HashMap<>();
     }
-    
+
     public void addNode(T node) {
         nodes.add(node);
         connections.putIfAbsent(node.getId(), new HashSet<>());
     }
-    
+
     public void addConnection(T from, T to) {
         connections.get(from.getId()).add(to.getId());
     }
-    
+
     public T getNode(String id) {
         return nodes.stream()
             .filter(node -> node.getId().equals(id))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("No node found with ID"));
     }
-    
+
     public Set<T> getConnections(T node) {
         return connections.get(node.getId()).stream()
             .map(this::getNode)
@@ -113,18 +113,18 @@ class RouteNode<T extends GraphNode> implements Comparable<RouteNode> {
     private T previous;
     private double routeScore;
     private double estimatedScore;
-    
+
     RouteNode(T current) {
         this(current, null, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
     }
-    
+
     RouteNode(T current, T previous, double routeScore, double estimatedScore) {
         this.current = current;
         this.previous = previous;
         this.routeScore = routeScore;
         this.estimatedScore = estimatedScore;
     }
-    
+
     @Override
     public int compareTo(RouteNode other) {
         if (this.estimatedScore > other.estimatedScore) {
@@ -135,7 +135,7 @@ class RouteNode<T extends GraphNode> implements Comparable<RouteNode> {
             return 0;
         }
     }
-    
+
     // Геттеры и сеттеры
     public T getCurrent() { return current; }
     public T getPrevious() { return previous; }
@@ -156,51 +156,51 @@ public class RouteFinder<T extends GraphNode> {
     private final Graph<T> graph;
     private final Scorer<T> nextNodeScorer;
     private final Scorer<T> targetScorer;
-    
+
     public RouteFinder(Graph<T> graph, Scorer<T> nextNodeScorer, Scorer<T> targetScorer) {
         this.graph = graph;
         this.nextNodeScorer = nextNodeScorer;
         this.targetScorer = targetScorer;
     }
-    
+
     public List<T> findRoute(T from, T to) {
         Queue<RouteNode<T>> openSet = new PriorityQueue<>();
         Map<T, RouteNode<T>> allNodes = new HashMap<>();
-        
+
         RouteNode<T> start = new RouteNode<>(
-            from, 
-            null, 
-            0d, 
+            from,
+            null,
+            0d,
             targetScorer.computeCost(from, to)
         );
         openSet.add(start);
         allNodes.put(from, start);
-        
+
         while (!openSet.isEmpty()) {
             RouteNode<T> next = openSet.poll();
-            
+
             if (next.getCurrent().equals(to)) {
                 List<T> route = new ArrayList<>();
                 RouteNode<T> current = next;
-                
+
                 do {
                     route.add(0, current.getCurrent());
                     current = allNodes.get(current.getPrevious());
                 } while (current != null);
-                
+
                 return route;
             }
-            
+
             graph.getConnections(next.getCurrent()).forEach(connection -> {
                 RouteNode<T> nextNode = allNodes.getOrDefault(
-                    connection, 
+                    connection,
                     new RouteNode<>(connection)
                 );
                 allNodes.put(connection, nextNode);
-                
-                double newScore = next.getRouteScore() + 
+
+                double newScore = next.getRouteScore() +
                     nextNodeScorer.computeCost(next.getCurrent(), connection);
-                
+
                 if (newScore < nextNode.getRouteScore()) {
                     nextNode.setPrevious(next.getCurrent());
                     nextNode.setRouteScore(newScore);
@@ -211,7 +211,7 @@ public class RouteFinder<T extends GraphNode> {
                 }
             });
         }
-        
+
         throw new IllegalStateException("No route found");
     }
 }
@@ -227,27 +227,27 @@ public class Station implements GraphNode {
     private final String name;
     private final double latitude;
     private final double longitude;
-    
+
     public Station(String id, String name, double latitude, double longitude) {
         this.id = id;
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
     }
-    
+
     @Override
     public String getId() {
         return id;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public double getLatitude() {
         return latitude;
     }
-    
+
     public double getLongitude() {
         return longitude;
     }
@@ -258,18 +258,18 @@ public class Station implements GraphNode {
 ```java
 public class HaversineScorer implements Scorer<Station> {
     private static final double R = 6372.8; // Радиус Земли в километрах
-    
+
     @Override
     public double computeCost(Station from, Station to) {
         double dLat = Math.toRadians(to.getLatitude() - from.getLatitude());
         double dLon = Math.toRadians(to.getLongitude() - from.getLongitude());
         double lat1 = Math.toRadians(from.getLatitude());
         double lat2 = Math.toRadians(to.getLatitude());
-        
+
         double a = Math.pow(Math.sin(dLat / 2), 2) +
             Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1) * Math.cos(lat2);
         double c = 2 * Math.asin(Math.sqrt(a));
-        
+
         return R * c;
     }
 }
@@ -287,7 +287,7 @@ RouteFinder<Station> routeFinder = new RouteFinder<>(
 );
 
 List<Station> route = routeFinder.findRoute(
-    underground.getNode("74"), 
+    underground.getNode("74"),
     underground.getNode("7")
 );
 
@@ -306,21 +306,21 @@ interface GraphNodeK {
 class GraphK<T : GraphNodeK> {
     private val nodes = mutableSetOf<T>()
     private val connections = mutableMapOf<String, MutableSet<String>>()
-    
+
     fun addNode(node: T) {
         nodes.add(node)
         connections.putIfAbsent(node.getId(), mutableSetOf())
     }
-    
+
     fun addConnection(from: T, to: T) {
         connections[from.getId()]?.add(to.getId())
     }
-    
+
     fun getNode(id: String): T {
         return nodes.firstOrNull { it.getId() == id }
             ?: throw IllegalArgumentException("No node found with ID")
     }
-    
+
     fun getConnections(node: T): Set<T> {
         return connections[node.getId()]?.map { getNode(it) }?.toSet() ?: emptySet()
     }
@@ -353,29 +353,29 @@ class RouteFinderK<T : GraphNodeK>(
     fun findRoute(from: T, to: T): List<T> {
         val open = PriorityQueue<RouteNodeK<T>>()
         val allNodes = mutableMapOf<String, RouteNodeK<T>>()
-        
+
         val start = RouteNodeK(from)
         start.routeScore = 0.0
         start.estimatedScore = targetScorer.computeCost(from, to)
-        
+
         open.add(start)
         allNodes[from.getId()] = start
-        
+
         while (!open.isEmpty()) {
             val next = open.poll()
-            
+
             if (next.current.getId() == to.getId()) {
                 val route = mutableListOf<T>()
                 var current: RouteNodeK<T>? = next
-                
+
                 while (current != null) {
                     route.add(0, current.current)
                     current = allNodes[current.previous?.getId()]
                 }
-                
+
                 return route
             }
-            
+
             graph.getConnections(next.current).forEach { connection ->
                 val newRouteScore = next.routeScore + nextNodeScorer.computeCost(next.current, connection)
                 val routeNode = allNodes.getOrDefault(
@@ -383,7 +383,7 @@ class RouteFinderK<T : GraphNodeK>(
                     RouteNodeK(connection)
                 )
                 allNodes[connection.getId()] = routeNode
-                
+
                 if (newRouteScore < routeNode.routeScore) {
                     routeNode.previous = next.current
                     routeNode.routeScore = newRouteScore
@@ -392,7 +392,7 @@ class RouteFinderK<T : GraphNodeK>(
                 }
             }
         }
-        
+
         throw IllegalStateException("No route found")
     }
 }
@@ -408,13 +408,13 @@ fun main() {
     val station1 = StationK("Station1")
     val station2 = StationK("Station2")
     val station3 = StationK("Station3")
-    
+
     graph.addNode(station1)
     graph.addNode(station2)
     graph.addNode(station3)
     graph.addConnection(station1, station2)
     graph.addConnection(station2, station3)
-    
+
     val routeFinder = RouteFinderK(
         graph,
         object : ScorerK<StationK> {
@@ -424,7 +424,7 @@ fun main() {
             override fun computeCost(from: StationK, to: StationK): Double = 1.0
         }
     )
-    
+
     val route = routeFinder.findRoute(station1, station3)
     println(route.map { it.name }) // [Station1, Station2, Station3]
 }
@@ -451,7 +451,7 @@ fun main() {
 public class ManhattanDistance implements Scorer<GridNode> {
     @Override
     public double computeCost(GridNode from, GridNode to) {
-        return Math.abs(from.getX() - to.getX()) + 
+        return Math.abs(from.getX() - to.getX()) +
                Math.abs(from.getY() - to.getY());
     }
 }
@@ -472,17 +472,17 @@ public class EuclideanDistance implements Scorer<GridNode> {
 ```java
 public class WeightedAStar<T extends GraphNode> extends RouteFinder<T> {
     private final double weight;
-    
+
     public WeightedAStar(
-        Graph<T> graph, 
-        Scorer<T> nextNodeScorer, 
+        Graph<T> graph,
+        Scorer<T> nextNodeScorer,
         Scorer<T> targetScorer,
         double weight
     ) {
         super(graph, nextNodeScorer, targetScorer);
         this.weight = weight;
     }
-    
+
     // Переопределить оценку с учетом веса
     // f(n) = g(n) + weight * h(n)
 }

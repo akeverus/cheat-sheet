@@ -105,7 +105,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 
 ## Введение в персистентность **Redis**
 
-**Redis** - это **in-memory** база данных, но она поддерживает различные механизмы персистентности для сохранения данных на диск. Понимание этих механизмов критически важно для обеспечения надежности и восстановления данных.
+**Redis** — это **in-memory** база данных, но она поддерживает различные механизмы персистентности для сохранения данных на диск. Понимание этих механизмов критически важно для обеспечения надежности и восстановления данных.
 
 ### Типы персистентности
 
@@ -119,7 +119,6 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - **AOF**: Максимальная надежность, больше места на диске, медленнее восстановление
 - **Гибридный**: Баланс между надежностью и производительностью
 
----
 
 ## **RDB** (**Redis `Database` Backup**)
 
@@ -224,7 +223,6 @@ sudo systemctl start redis
 - Может быть медленным для больших баз данных
 - Не сохраняет точное состояние на момент сбоя
 
----
 
 ## **AOF** (**Append `Only` File**)
 
@@ -354,7 +352,6 @@ aof-rewrite-incremental-fsync yes
 - Медленнее восстановление
 - Больше операций записи на диск
 
----
 
 ## Гибридный подход (**RDB + AOF**)
 
@@ -387,7 +384,6 @@ aof-use-rdb-preamble yes
 - Оптимизированное использование диска
 - Гибкость в настройке
 
----
 
 ## Мониторинг персистентности
 
@@ -463,7 +459,6 @@ if [ "$AOF_REWRITE" = "1" ]; then
 fi
 ```
 
----
 
 ## Резервное копирование
 
@@ -549,7 +544,6 @@ aws s3 cp "$REDIS_DATA_DIR/appendonly.aof" "s3://$S3_BUCKET/aof/appendonly_$DATE
 echo "Backup uploaded to S3"
 ```
 
----
 
 ## Восстановление данных
 
@@ -622,7 +616,6 @@ sudo systemctl start redis
 echo "Restore completed"
 ```
 
----
 
 ## Оптимизация производительности
 
@@ -662,7 +655,6 @@ auto-aof-rewrite-min-size 64mb
 # Использование отдельного диска для данных Redis
 ```
 
----
 
 ## Решение проблем
 
@@ -708,7 +700,6 @@ redis-cli CONFIG SET aof-use-rdb-preamble yes
 redis-cli BGREWRITEAOF
 ```
 
----
 
 ## Лучшие практики
 
@@ -1171,12 +1162,8 @@ cp "$RDB_BACKUP" "$REDIS_DATA_DIR/dump.rdb"
 # (требует дополнительной обработки AOF файла)
 ```
 
----
 
 - [Redis Persistence](https://redis.io/docs/management/persistence/)
 - [Redis RDB](https://redis.io/docs/management/persistence/#rdb-snapshotting)
 - [Redis AOF](https://redis.io/docs/management/persistence/#append-only-file)
-
----
-
 

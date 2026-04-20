@@ -12,8 +12,6 @@ updated: "2026-02-11"
 ---
 # Java Concurrency: основы
 
-
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -21,7 +19,7 @@ updated: "2026-02-11"
 - [Oracle Java Documentation](https://docs.oracle.com/en/java/)
 - [Java API Documentation](https://docs.oracle.com/en/java/javase/17/docs/api/)
 
-### **Baeldung**
+### Обучающие материалы
 
 - [Java Tutorials](https://docs.oracle.com/javase/tutorial/)
 
@@ -110,7 +108,7 @@ updated: "2026-02-11"
 
 ### **Executor**
 
-**Executor** - это интерфейс, представляющий объект, выполняющий поставленные задачи.
+**Executor** — это интерфейс, представляющий объект, выполняющий поставленные задачи.
 
 Это зависит от конкретной реализации (**откуда инициируется вызов**), должна ли задача выполняться в новом или текущем потоке. Следовательно, используя этот интерфейс, мы можем отделить поток выполнения задачи от фактического механизма выполнения задачи.
 
@@ -140,7 +138,7 @@ public void execute() {
 
 ### **ExecutorService**
 
-**ExecutorService** - это комплексное решение для асинхронной обработки. Он управляет очередью в памяти и планирует отправленные задачи в зависимости от доступности потоков.
+**ExecutorService** — это комплексное решение для асинхронной обработки. Он управляет очередью в памяти и планирует отправленные задачи в зависимости от доступности потоков.
 
 **Чтобы использовать **ExecutorService**, нам нужно создать один класс **Runnable**:**
 
@@ -177,7 +175,7 @@ executor.submit(() -> {
 });
 ```
 
-Он также поставляется с двумя готовыми методами завершения выполнения. Первый - **shutdown()**; он ждет, пока все отправленные задачи не закончат выполнение. Другой метод - **shutdownNow()**, который пытается завершить все активно выполняющиеся задачи и останавливает обработку ожидающих задач.
+Он также поставляется с двумя готовыми методами завершения выполнения. Первый — **shutdown()**; он ждет, пока все отправленные задачи не закончат выполнение. Другой метод — **shutdownNow()**, который пытается завершить все активно выполняющиеся задачи и останавливает обработку ожидающих задач.
 
 **Существует также другой метод **awaitTermination(**long timeout**, **TimeUnit unit**)**, который принудительно блокируется до тех пор, пока все задачи не завершат выполнение после срабатывания события выключения или тайм-аута выполнения, или пока сам поток выполнения не будет прерван:**
 
@@ -191,7 +189,7 @@ try {
 
 ### **ScheduledExecutorService**
 
-**ScheduledExecutorService** - это интерфейс, аналогичный **ExecutorService**, но он может периодически выполнять задачи.
+**ScheduledExecutorService** — это интерфейс, аналогичный **ExecutorService**, но он может периодически выполнять задачи.
 
 Методы **Executor** и **ExecutorService** планируются на месте без какой-либо искусственной задержки. Ноль или любое отрицательное значение означает, что запрос должен быть выполнен мгновенно.
 
@@ -203,11 +201,11 @@ public void execute() {
     Future<String> future = executorService.schedule(() -> {
         return "Hello world";
     }, 1, TimeUnit.SECONDS);
-    
+
     ScheduledFuture<?> scheduledFuture = executorService.schedule(() -> {
         // task
     }, 1, TimeUnit.SECONDS);
-    
+
     executorService.shutdown();
 }
 ```
@@ -267,7 +265,7 @@ try {
 
 ### **CountDownLatch**
 
-**CountDownLatch** (**представленный в `JDK` 5**) - это служебный класс, который блокирует набор потоков до завершения некоторой операции.
+**CountDownLatch** (**представленный в `JDK` 5**) — это служебный класс, который блокирует набор потоков до завершения некоторой операции.
 
 **CountDownLatch** инициализируется счетчиком (**целочисленный тип**); этот счетчик уменьшается по мере завершения выполнения зависимых потоков.
 
@@ -282,11 +280,11 @@ try {
 ```java
 public class Task implements Runnable {
     private CyclicBarrier barrier;
-    
+
     public Task(CyclicBarrier barrier) {
         this.barrier = barrier;
     }
-    
+
     @Override
     public void run() {
         try {
@@ -307,11 +305,11 @@ public void start() {
     CyclicBarrier cyclicBarrier = new CyclicBarrier(3, () -> {
         LOG.info("All previous tasks are completed");
     });
-    
+
     Thread t1 = new Thread(new Task(cyclicBarrier), "T1");
     Thread t2 = new Thread(new Task(cyclicBarrier), "T2");
     Thread t3 = new Thread(new Task(cyclicBarrier), "T3");
-    
+
     if (!cyclicBarrier.isBroken()) {
         t1.start();
         t2.start();
@@ -342,7 +340,7 @@ static Semaphore semaphore = new Semaphore(10);
 public void execute() throws InterruptedException {
     LOG.info("Available permit: " + semaphore.availablePermits());
     LOG.info("Number of threads waiting to acquire: " + semaphore.getQueueLength());
-    
+
     if (semaphore.tryAcquire()) {
         try {
             // critical section
@@ -365,12 +363,12 @@ public void execute() throws InterruptedException {
 public class BaeldungThreadFactory implements ThreadFactory {
     private int threadId;
     private String name;
-    
+
     public BaeldungThreadFactory(String name) {
         threadId = 1;
         this.name = name;
     }
-    
+
     @Override
     public Thread newThread(Runnable r) {
         Thread t = new Thread(r, name + "-Thread_" + threadId);
@@ -395,11 +393,11 @@ for (int i = 0; i < 10; i++) {
 
 В асинхронном программировании одним из наиболее распространенных шаблонов интеграции является шаблон производитель-потребитель. Пакет **java.util.concurrent** поставляется со структурой данных, известной как **BlockingQueue**, которая может быть очень полезна в этих асинхронных сценариях.
 
-**DelayQueue** - это блокирующая очередь элементов бесконечного размера, из которой элемент может быть извлечен только в том случае, если время его истечения (**известное как задержка, определяемая пользователем**) завершено. Следовательно, самый верхний элемент (**head**) будет иметь наибольшую задержку и будет опрашиваться последним.
+**DelayQueue** — это блокирующая очередь элементов бесконечного размера, из которой элемент может быть извлечен только в том случае, если время его истечения (**известное как задержка, определяемая пользователем**) завершено. Следовательно, самый верхний элемент (**head**) будет иметь наибольшую задержку и будет опрашиваться последним.
 
 ### **Locks**
 
-**Lock** - это утилита для блокировки доступа других потоков к определенному сегменту кода, кроме потока, выполняющего его в данный момент.
+**Lock** — это утилита для блокировки доступа других потоков к определенному сегменту кода, кроме потока, выполняющего его в данный момент.
 
 Основное различие между блокировкой и синхронизированным блоком заключается в том, что синхронизированный блок полностью содержится в методе; однако мы можем иметь операции **lock()** и **unlock() Lock API** в отдельных методах.
 
@@ -422,7 +420,7 @@ for (int i = 0; i < 10; i++) {
 ```java
 public class BaeldungSynchronizedMethods {
     private int sum = 0;
-    
+
     public void calculate() {
         setSum(getSum() + 1);
     }
@@ -436,10 +434,10 @@ public class BaeldungSynchronizedMethods {
 public void givenMultiThread_whenNonSyncMethod() {
     ExecutorService service = Executors.newFixedThreadPool(3);
     BaeldungSynchronizedMethods summation = new BaeldungSynchronizedMethods();
-    
+
     IntStream.range(0, 1000).forEach(count -> service.submit(summation::calculate));
     service.awaitTermination(1000, TimeUnit.MILLISECONDS);
-    
+
     assertEquals(1000, summation.getSum());
 }
 ```
@@ -448,7 +446,7 @@ public void givenMultiThread_whenNonSyncMethod() {
 
 **Если бы мы выполняли это последовательно, ожидаемый результат был бы **1000**, но наше многопоточное выполнение почти каждый раз терпит неудачу с несогласованным фактическим результатом:**
 
-```
+```text
 java.lang.AssertionError: expected:<1000> but was:<965>
     at org.junit.Assert.fail(Assert.java:88)
     at org.junit.Assert.failNotEquals(Assert.java:834)
@@ -457,7 +455,7 @@ java.lang.AssertionError: expected:<1000> but was:<965>
 
 Конечно, мы не находим этот результат неожиданным.
 
-Простой способ избежать состояния гонки - сделать операцию потокобезопасной с помощью ключевого слова **synchronized**.
+Простой способ избежать состояния гонки — сделать операцию потокобезопасной с помощью ключевого слова **synchronized**.
 
 **Мы можем использовать синхронизированное ключевое слово на разных уровнях:**
 
@@ -484,10 +482,10 @@ public synchronized void synchronisedCalculate() {
 public void givenMultiThread_whenMethodSync() {
     ExecutorService service = Executors.newFixedThreadPool(3);
     SynchronizedMethods method = new SynchronizedMethods();
-    
+
     IntStream.range(0, 1000).forEach(count -> service.submit(method::synchronisedCalculate));
     service.awaitTermination(1000, TimeUnit.MILLISECONDS);
-    
+
     assertEquals(1000, method.getSum());
 }
 ```
@@ -512,10 +510,10 @@ public static synchronized void syncStaticCalculate() {
 @Test
 public void givenMultiThread_whenStaticSyncMethod() {
     ExecutorService service = Executors.newCachedThreadPool();
-    IntStream.range(0, 1000).forEach(count -> 
+    IntStream.range(0, 1000).forEach(count ->
         service.submit(BaeldungSynchronizedMethods::syncStaticCalculate));
     service.awaitTermination(100, TimeUnit.MILLISECONDS);
-    
+
     assertEquals(1000, BaeldungSynchronizedMethods.staticSum);
 }
 ```
@@ -539,11 +537,11 @@ public void performSynchronisedTask() {
 public void givenMultiThread_whenBlockSync() {
     ExecutorService service = Executors.newFixedThreadPool(3);
     BaeldungSynchronizedBlocks synchronizedBlocks = new BaeldungSynchronizedBlocks();
-    
-    IntStream.range(0, 1000).forEach(count -> 
+
+    IntStream.range(0, 1000).forEach(count ->
         service.submit(synchronizedBlocks::performSynchronisedTask));
     service.awaitTermination(100, TimeUnit.MILLISECONDS);
-    
+
     assertEquals(1000, synchronizedBlocks.getCount());
 }
 ```
@@ -566,10 +564,10 @@ public static void performStaticSyncTask() {
 @Test
 public void givenMultiThread_whenStaticSyncBlock() {
     ExecutorService service = Executors.newCachedThreadPool();
-    IntStream.range(0, 1000).forEach(count -> 
+    IntStream.range(0, 1000).forEach(count ->
         service.submit(BaeldungSynchronizedBlocks::performStaticSyncTask));
     service.awaitTermination(100, TimeUnit.MILLISECONDS);
-    
+
     assertEquals(1000, BaeldungSynchronizedBlocks.getStaticCount());
 }
 ```
@@ -597,9 +595,9 @@ synchronized (lock) {
 
 При отсутствии необходимых синхронизаций компилятор, среда выполнения или процессоры могут применять всевозможные оптимизации. Несмотря на то, что эти оптимизации в большинстве случаев полезны, иногда они могут вызывать тонкие проблемы.
 
-Кэширование и переупорядочивание относятся к числу тех оптимизаций, которые могут удивить нас в параллельных контекстах. **Java** и **JVM** предоставляют множество способов управления порядком памяти, и ключевое слово **volatile** - один из них.
+Кэширование и переупорядочивание относятся к числу тех оптимизаций, которые могут удивить нас в параллельных контекстах. **Java** и **JVM** предоставляют множество способов управления порядком памяти, и ключевое слово **volatile** — один из них.
 
-В этой статье мы сосредоточимся на фундаментальном, но часто неправильно понимаемом понятии языка **Java** - ключевом слове **volatile**. Во-первых, мы начнем с небольшого предыстории того, как работает базовая компьютерная архитектура, а затем познакомимся с порядком памяти в **Java**.
+В этой статье мы сосредоточимся на фундаментальном, но часто неправильно понимаемом понятии языка **Java** — ключевом слове **volatile**. Во-первых, мы начнем с небольшого предыстории того, как работает базовая компьютерная архитектура, а затем познакомимся с порядком памяти в **Java**.
 
 Процессоры отвечают за выполнение программных инструкций. Следовательно, им необходимо извлекать как программные инструкции, так и необходимые данные из ОЗУ.
 
@@ -615,7 +613,7 @@ synchronized (lock) {
 public class TaskRunner {
     private static int number;
     private static boolean ready;
-    
+
     private static class Reader extends Thread {
         @Override
         public void run() {
@@ -625,7 +623,7 @@ public class TaskRunner {
             System.out.println(number);
         }
     }
-    
+
     public static void main(String[] args) {
         new Reader().start();
         number = 42;
@@ -664,7 +662,7 @@ public static void main(String[] args) {
 
 Мы можем ожидать, что поток чтения напечатает **42**. Однако на самом деле можно увидеть ноль в качестве напечатанного значения!
 
-**Переупорядочивание** - это метод оптимизации для повышения производительности. Интересно, что эту оптимизацию могут применять разные компоненты:**
+**Переупорядочивание** — это метод оптимизации для повышения производительности. Интересно, что эту оптимизацию могут применять разные компоненты:**
 
 1. Процессор может очищать свой буфер записи в любом порядке, отличном от порядка программы.
 2. Процессор может применить технику выполнения не по порядку
@@ -681,29 +679,29 @@ public static void main(String[] args) {
 public class TaskRunner {
     private volatile static int number;
     private volatile static boolean ready;
-    
+
     // same as before
 }
 ```
 
-Таким образом, мы взаимодействуем со средой выполнения и процессором, чтобы не изменять порядок инструкций, связанных с **volatile** - переменной. Кроме того, процессоры понимают, что они должны немедленно сбрасывать любые обновления этих переменных.
+Таким образом, мы взаимодействуем со средой выполнения и процессором, чтобы не изменять порядок инструкций, связанных с **volatile** — переменной. Кроме того, процессоры понимают, что они должны немедленно сбрасывать любые обновления этих переменных.
 
 **Для многопоточных приложений нам нужно обеспечить пару правил для согласованного поведения:**
 
-1. **Взаимное исключение** - только один поток выполняет критическую секцию за раз
-2. **Видимость** - изменения, внесенные одним потоком в общие данные, видны другим потокам для обеспечения согласованности данных.
+1. **Взаимное исключение** — только один поток выполняет критическую секцию за раз
+2. **Видимость** — изменения, внесенные одним потоком в общие данные, видны другим потокам для обеспечения согласованности данных.
 
 Синхронизированные методы и блоки обеспечивают оба вышеуказанных свойства за счет производительности приложения.
 
-**volatile** - довольно полезное ключевое слово, потому что оно может помочь обеспечить видимость изменения данных, конечно же, не обеспечивая взаимное исключение. Таким образом, это полезно в тех случаях, когда мы согласны с несколькими потоками, выполняющими блок кода параллельно, но нам нужно обеспечить свойство видимости.
+**volatile** — довольно полезное ключевое слово, потому что оно может помочь обеспечить видимость изменения данных, конечно же, не обеспечивая взаимное исключение. Таким образом, это полезно в тех случаях, когда мы согласны с несколькими потоками, выполняющими блок кода параллельно, но нам нужно обеспечить свойство видимости.
 
 ### Эффекты видимости памяти
 
-Эффекты видимости памяти для **volatile** - переменных выходят за рамки самих **volatile** - переменных.
+Эффекты видимости памяти для **volatile** — переменных выходят за рамки самих **volatile** — переменных.
 
-**Для большей конкретности предположим, что поток **A** записывает в изменчивую переменную, а затем поток **B** читает ту же самую изменчивую переменную. В таких случаях значения, которые были видны **A** до записи **volatile** - переменной, будут видны **B** после считывания **volatile** - переменной:**
+**Для большей конкретности предположим, что поток **A** записывает в изменчивую переменную, а затем поток **B** читает ту же самую изменчивую переменную. В таких случаях значения, которые были видны **A** до записи **volatile** — переменной, будут видны **B** после считывания **volatile** — переменной:**
 
-С технической точки зрения, любая запись в **volatile** поле происходит до каждого последующего чтения того же поля. Это правило **volatile** - переменной модели памяти **Java (**JMM**)**.
+С технической точки зрения, любая запись в **volatile** поле происходит до каждого последующего чтения того же поля. Это правило **volatile** — переменной модели памяти **Java (**JMM**)**.
 
 **Из-за того, что происходит до упорядочения памяти, иногда мы можем использовать свойства видимости другой изменчивой переменной. Например, в нашем конкретном примере нам просто нужно пометить готовую переменную как **volatile**:**
 
@@ -711,7 +709,7 @@ public class TaskRunner {
 public class TaskRunner {
     private static int number; // not volatile
     private volatile static boolean ready;
-    
+
     // same as before
 }
 ```
@@ -741,7 +739,7 @@ public class TaskRunner {
 ```java
 public class SquareCalculator {
     private ExecutorService executor = Executors.newSingleThreadExecutor();
-    
+
     public Future<Integer> calculate(Integer input) {
         return executor.submit(() -> {
             Thread.sleep(1000);
@@ -755,7 +753,7 @@ public class SquareCalculator {
 
 Становится интереснее, когда мы обращаем внимание на использование **Callable** и **ExecutorService**.
 
-**Callable** - это интерфейс, представляющий задачу, которая возвращает результат и имеет единственный метод **call()**. Здесь мы создали его экземпляр, используя лямбда-выражение.
+**Callable** — это интерфейс, представляющий задачу, которая возвращает результат и имеет единственный метод **call()**. Здесь мы создали его экземпляр, используя лямбда-выражение.
 
 Создание экземпляра **Callable** никуда не приведет; нам все еще нужно передать этот экземпляр исполнителю, который позаботится о запуске задачи в новом потоке и вернет нам ценный объект **Future**. Вот тут-то и появляется **ExecutorService**.
 
@@ -767,7 +765,7 @@ public class SquareCalculator {
 
 **Future.`isDone()`** сообщает нам, завершил ли исполнитель задачу. Если задача завершена, она вернет **true**; в противном случае возвращается **false**.
 
-Метод, возвращающий фактический результат вычисления - **Future.get()**. Мы видим, что этот метод блокирует выполнение до тех пор, пока задача не будет завершена. Однако в нашем примере это не будет проблемой, потому что мы проверим, завершена ли задача, вызвав **isDone()**.
+Метод, возвращающий фактический результат вычисления — **Future.get()**. Мы видим, что этот метод блокирует выполнение до тех пор, пока задача не будет завершена. Однако в нашем примере это не будет проблемой, потому что мы проверим, завершена ли задача, вызвав **isDone()**.
 
 **Используя эти два метода, мы можем запускать другой код, пока ждем завершения основной задачи:**
 
@@ -834,7 +832,7 @@ squareCalculator.shutdown();
 
 **Теперь давайте проанализируем вывод для этого кода:**
 
-```
+```text
 calculating square for: 10
 future1 is not done and future2 is not done
 future1 is not done and future2 is not done
@@ -861,7 +859,7 @@ public class SquareCalculator {
 
 **Если мы снова запустим тот же клиентский код, мы получим следующий вывод:**
 
-```
+```text
 calculating square for: 10
 calculating square for: 100
 future1 is not done and future2 is not done
@@ -877,7 +875,7 @@ future1 is not done and future2 is not done
 
 ### **ForkJoinTask**
 
-**ForkJoinTask** - это абстрактный класс, который реализует **Future** и способен выполнять большое количество задач, размещенных в небольшом количестве реальных потоков в **ForkJoinPool**.
+**ForkJoinTask** — это абстрактный класс, который реализует **Future** и способен выполнять большое количество задач, размещенных в небольшом количестве реальных потоков в **ForkJoinPool**.
 
 Основная характеристика **ForkJoinTask** заключается в том, что он обычно порождает новые подзадачи как часть работы, необходимой для выполнения его основной задачи. Он генерирует новые задачи, вызывая **fork()**, и собирает все результаты с помощью **join()**, отсюда и название класса.
 
@@ -890,20 +888,20 @@ future1 is not done and future2 is not done
 ```java
 public class FactorialSquareCalculator extends RecursiveTask<Integer> {
     private Integer n;
-    
+
     public FactorialSquareCalculator(Integer n) {
         this.n = n;
     }
-    
+
     @Override
     protected Integer compute() {
         if (n <= 1) {
             return n;
         }
-        
+
         FactorialSquareCalculator calculator = new FactorialSquareCalculator(n - 1);
         calculator.fork();
-        
+
         return n * n + calculator.join();
     }
 }
@@ -963,7 +961,7 @@ threadLocal.remove();
 ```java
 public class Context {
     private String userName;
-    
+
     public Context(String userName) {
         this.userName = userName;
     }
@@ -979,7 +977,7 @@ public class SharedMapWithUserContext implements Runnable {
     public static Map<Integer, Context> userContextPerUserId = new ConcurrentHashMap<>();
     private Integer userId;
     private UserRepository userRepository = new UserRepository();
-    
+
     @Override
     public void run() {
         String userName = userRepository.getUserNameForUserId(userId);
@@ -1011,7 +1009,7 @@ public class ThreadLocalWithUserContext implements Runnable {
     private static ThreadLocal<Context> userContext = new ThreadLocal<>();
     private Integer userId;
     private UserRepository userRepository = new UserRepository();
-    
+
     @Override
     public void run() {
         String userName = userRepository.getUserNameForUserId(userId);
@@ -1033,7 +1031,7 @@ new Thread(secondUser).start();
 
 **После запуска этого кода мы увидим в стандартном выводе, что **ThreadLocal** был установлен для данного потока:**
 
-```
+```text
 thread context for given userId: 1 is: Context {userNameSecret='18a78f8e-24d2-4abf-91d6-79eaa198123f'}
 thread context for given userId: 2 is: Context {userNameSecret='e19f6a0a-253e-423e-8b2b-bca1f471ae5c'}
 ```
@@ -1054,7 +1052,7 @@ thread context for given userId: 2 is: Context {userNameSecret='e19f6a0a-253e-42
 
 Это может привести к неожиданным последствиям в высокопараллельных приложениях.
 
-Один из способов решить эту проблему - вручную удалить каждый **ThreadLocal** после того, как мы закончим его использовать. Поскольку этот подход требует тщательной проверки кода, он может быть подвержен ошибкам.
+Один из способов решить эту проблему — вручную удалить каждый **ThreadLocal** после того, как мы закончим его использовать. Поскольку этот подход требует тщательной проверки кода, он может быть подвержен ошибкам.
 
 Как оказалось, можно расширить класс **ThreadPoolExecutor** и предоставить собственную реализацию ловушки для методов **beforeExecute()** и **afterExecute()**. Пул потоков вызовет метод **beforeExecute()** перед запуском чего-либо с использованием заимствованного потока. С другой стороны, он вызовет метод **afterExecute()** после выполнения нашей логики.
 
@@ -1077,16 +1075,16 @@ public class ThreadLocalAwareThreadPool extends ThreadPoolExecutor {
 
 **Класс **java.lang.Thread** содержит статическое перечисление состояний, которое определяет его потенциальные состояния. В любой момент времени поток может находиться только в одном из следующих состояний:**
 
-1. **NEW** - вновь созданный поток, который еще не начал выполнение
-2. **RUNNABLE** - либо запущен, либо готов к выполнению, но ожидает выделения ресурсов
-3. **BLOCKED** - ожидание получения блокировки монитора для входа или повторного входа в синхронизированный блок/метод
-4. **WAITING** - ожидание выполнения какого-либо другого потока определенного действия без ограничения времени
-5. **TIMED_WAITING** - ожидание того, что какой-то другой поток выполнит определенное действие в течение указанного периода
-6. **TERMINATED** - завершил выполнение
+1. **NEW** — вновь созданный поток, который еще не начал выполнение
+2. **RUNNABLE** — либо запущен, либо готов к выполнению, но ожидает выделения ресурсов
+3. **BLOCKED** — ожидание получения блокировки монитора для входа или повторного входа в синхронизированный блок/метод
+4. **WAITING** — ожидание выполнения какого-либо другого потока определенного действия без ограничения времени
+5. **TIMED_WAITING** — ожидание того, что какой-то другой поток выполнит определенное действие в течение указанного периода
+6. **TERMINATED** — завершил выполнение
 
 ### **NEW**
 
-**NEW** - это поток, который был создан, но еще не запущен. Он остается в этом состоянии до тех пор, пока мы не запустим его с помощью метода **start()**.
+**NEW** — это поток, который был создан, но еще не запущен. Он остается в этом состоянии до тех пор, пока мы не запустим его с помощью метода **start()**.
 
 **В следующем фрагменте кода показан только что созданный поток, находящийся в состоянии **NEW**:**
 
@@ -1098,7 +1096,7 @@ Log.info(t.getState());
 
 **Поскольку мы не запустили указанный поток, метод **t.`getState()`** выводит:**
 
-```
+```text
 NEW
 ```
 
@@ -1119,7 +1117,7 @@ Log.info(t.getState());
 
 **Этот код, скорее всего, вернет вывод так:**
 
-```
+```text
 RUNNABLE
 ```
 
@@ -1138,10 +1136,10 @@ public class BlockedState {
     public static void main(String[] args) throws InterruptedException {
         Thread t1 = new Thread(new DemoThreadB());
         Thread t2 = new Thread(new DemoThreadB());
-        
+
         t1.start();
         t2.start();
-        
+
         Thread.sleep(1000);
         Log.info(t2.getState());
         System.exit(0);
@@ -1153,7 +1151,7 @@ class DemoThreadB implements Runnable {
     public void run() {
         commonResource();
     }
-    
+
     public static synchronized void commonResource() {
         while(true) {
             // infinite loop to block the method
@@ -1164,14 +1162,14 @@ class DemoThreadB implements Runnable {
 
 **В этом коде:**
 
-1. Мы создали два разных потока - **t1** и **t2**.
+1. Мы создали два разных потока — **t1** и **t2**.
 2. **t1** запускает и входит в синхронизированный метод **commonResource()**; это означает, что к нему может получить доступ только один поток; все другие последующие потоки, пытающиеся получить доступ к этому методу, будут заблокированы от дальнейшего выполнения до тех пор, пока текущий не завершит обработку
 3. Когда **t1** входит в этот метод, он сохраняется в бесконечном цикле **while**; это просто для имитации тяжелой обработки, чтобы все другие потоки не могли войти в этот метод
 4. Теперь, когда мы запускаем **t2**, он пытается войти в метод **commonResource()**, к которому уже обращается **t1**, таким образом, **t2** будет оставаться в состоянии **BLOCKED**.
 
 **Находясь в этом состоянии, мы вызываем **t2.`getState()`** и получаем результат в виде:**
 
-```
+```text
 BLOCKED
 ```
 
@@ -1190,16 +1188,16 @@ BLOCKED
 ```java
 public class WaitingState implements Runnable {
     public static Thread t1;
-    
+
     public static void main(String[] args) {
         t1 = new Thread(new WaitingState());
         t1.start();
     }
-    
+
     public void run() {
         Thread t2 = new Thread(new DemoThreadWS());
         t2.start();
-        
+
         try {
             t2.join();
         } catch (InterruptedException e) {
@@ -1231,7 +1229,7 @@ class DemoThreadWS implements Runnable {
 
 **Вывод здесь, как и следовало ожидать:**
 
-```
+```text
 WAITING
 ```
 
@@ -1255,7 +1253,7 @@ public class TimedWaitingState {
         DemoThread obj1 = new DemoThread();
         Thread t1 = new Thread(obj1);
         t1.start();
-        
+
         Thread.sleep(1000);
         Log.info(t1.getState());
     }
@@ -1276,13 +1274,13 @@ class DemoThread implements Runnable {
 
 **Здесь мы создали и запустили поток **t1**, который переходит в спящее состояние с периодом ожидания **5** секунд; вывод будет:**
 
-```
+```text
 TIMED_WAITING
 ```
 
 ### **TERMINATED**
 
-**TERMINATED** - состояние мертвого потока.
+**TERMINATED** — состояние мертвого потока.
 
 Он находится в состоянии **TERMINATED**, когда либо завершил выполнение, либо был аварийно завершен.
 
@@ -1293,11 +1291,11 @@ public class TerminatedState implements Runnable {
     public static void main(String[] args) throws InterruptedException {
         Thread t1 = new Thread(new TerminatedState());
         t1.start();
-        
+
         Thread.sleep(1000);
         Log.info(t1.getState());
     }
-    
+
     @Override
     public void run() {
         // empty run method
@@ -1307,7 +1305,7 @@ public class TerminatedState implements Runnable {
 
 **Здесь, когда мы запустили поток **t1**, следующий оператор **Thread.sleep(`1000`)** дает достаточно времени для завершения **t1**, поэтому эта программа выдает нам результат:**
 
-```
+```text
 TERMINATED
 ```
 
@@ -1334,20 +1332,20 @@ public class ControlSubThread implements Runnable {
     private Thread worker;
     private final AtomicBoolean running = new AtomicBoolean(false);
     private int interval;
-    
+
     public ControlSubThread(int sleepInterval) {
         interval = sleepInterval;
     }
-    
+
     public void start() {
         worker = new Thread(this);
         worker.start();
     }
-    
+
     public void stop() {
         running.set(false);
     }
-    
+
     public void run() {
         running.set(true);
         while (running.get()) {
@@ -1378,24 +1376,24 @@ public class ControlSubThread implements Runnable {
     private AtomicBoolean running = new AtomicBoolean(false);
     private AtomicBoolean stopped = new AtomicBoolean(false);
     private int interval;
-    
+
     public void interrupt() {
         running.set(false);
         worker.interrupt();
     }
-    
+
     boolean isRunning() {
         return running.get();
     }
-    
+
     boolean isStopped() {
         return stopped.get();
     }
-    
+
     public void run() {
         running.set(true);
         stopped.set(false);
-        
+
         while (running.get()) {
             try {
                 Thread.sleep(interval);
@@ -1404,7 +1402,7 @@ public class ControlSubThread implements Runnable {
                 System.out.println("Thread was interrupted, Failed to complete operation");
             }
         }
-        
+
         stopped.set(true);
     }
 }
@@ -1422,7 +1420,7 @@ public class ControlSubThread implements Runnable {
 
 В **Java** потоки сопоставляются с потоками системного уровня, которые являются ресурсами операционной системы. Если мы будем бесконтрольно создавать потоки, у нас могут быстро закончиться эти ресурсы.
 
-Операционная система также выполняет переключение контекста между потоками - для имитации параллелизма. Упрощенно говоря, чем больше потоков мы создаем, тем меньше времени каждый поток тратит на реальную работу.
+Операционная система также выполняет переключение контекста между потоками — для имитации параллелизма. Упрощенно говоря, чем больше потоков мы создаем, тем меньше времени каждый поток тратит на реальную работу.
 
 Шаблон пула потоков помогает экономить ресурсы в многопоточном приложении и сдерживать параллелизм в определенных предопределенных пределах.
 
@@ -1430,7 +1428,7 @@ public class ControlSubThread implements Runnable {
 
 Шаблон позволяет нам контролировать количество потоков, создаваемых приложением, и их жизненный цикл. Мы также можем планировать выполнение задач и держать входящие задачи в очереди.
 
-Вспомогательный класс **Executors** содержит несколько методов для создания предварительно настроенных экземпляров пула потоков. Эти классы - хорошее место для начала. Мы можем использовать их, если нам не нужно применять какую-либо тонкую настройку.
+Вспомогательный класс **Executors** содержит несколько методов для создания предварительно настроенных экземпляров пула потоков. Эти классы — хорошее место для начала. Мы можем использовать их, если нам не нужно применять какую-либо тонкую настройку.
 
 Мы используем интерфейсы **Executor** и **ExecutorService** для работы с различными реализациями пула потоков в **Java**. Обычно мы должны отделять наш код от фактической реализации пула потоков и использовать эти интерфейсы во всем нашем приложении.
 
@@ -1465,15 +1463,15 @@ String result = future.get();
 
 ### **ThreadPoolExecutor**
 
-**ThreadPoolExecutor** - это расширяемая реализация пула потоков с множеством параметров и ловушек для тонкой настройки.
+**ThreadPoolExecutor** — это расширяемая реализация пула потоков с множеством параметров и ловушек для тонкой настройки.
 
-Основные параметры конфигурации, которые мы здесь обсудим - это **corePoolSize, maxPoolSize** и **keepAliveTime**.
+Основные параметры конфигурации, которые мы здесь обсудим — это **corePoolSize, maxPoolSize** и **keepAliveTime**.
 
 Пул состоит из фиксированного количества основных потоков, которые все время хранятся внутри. Он также состоит из некоторых избыточных потоков, которые могут быть порождены, а затем прекращены, когда они больше не нужны.
 
-**Параметр corePoolSize** - это количество основных потоков, которые будут созданы и сохранены в пуле. При поступлении новой задачи, если все основные потоки заняты и внутренняя очередь заполнена, пул может увеличиться до **maxPoolSize**.
+**Параметр corePoolSize** — это количество основных потоков, которые будут созданы и сохранены в пуле. При поступлении новой задачи, если все основные потоки заняты и внутренняя очередь заполнена, пул может увеличиться до **maxPoolSize**.
 
-**Параметр keepAliveTime** - это интервал времени, в течение которого избыточные потоки (**экземпляры которых превышают corePoolSize**) могут существовать в состоянии простоя. По умолчанию **ThreadPoolExecutor** рассматривает для удаления только неосновные потоки. Чтобы применить ту же политику удаления к основным потокам, мы можем использовать метод **allowCoreThreadTimeOut(**true**)**.
+**Параметр keepAliveTime** — это интервал времени, в течение которого избыточные потоки (**экземпляры которых превышают corePoolSize**) могут существовать в состоянии простоя. По умолчанию **ThreadPoolExecutor** рассматривает для удаления только неосновные потоки. Чтобы применить ту же политику удаления к основным потокам, мы можем использовать метод **allowCoreThreadTimeOut(**true**)**.
 
 Эти параметры охватывают широкий спектр вариантов использования, но наиболее типичные конфигурации предопределены в статических методах **Executors**.
 
@@ -1505,7 +1503,7 @@ assertEquals(1, executor.getQueue().size());
 
 Мы создали три задачи **Callable**, которые имитируют тяжелую работу, засыпая на **1000** миллисекунд. Первые две задачи будут запущены одновременно, а третьей придется ждать в очереди. Мы можем проверить это, вызвав методы **getPoolSize()** и **getQueue().size()** сразу после отправки задач.
 
-**Мы можем создать еще один предварительно настроенный **ThreadPoolExecutor** с помощью метода **Executors.`newCachedThreadPool()`**. Этот метод вообще не получает количество потоков. Мы устанавливаем для **corePoolSize** значение **0**, а для **maxPoolSize** - значение **Integer.MAX_VALUE**. Наконец, **keepAliveTime** составляет **60** секунд:**
+**Мы можем создать еще один предварительно настроенный **ThreadPoolExecutor** с помощью метода **Executors.`newCachedThreadPool()`**. Этот метод вообще не получает количество потоков. Мы устанавливаем для **corePoolSize** значение **0**, а для **maxPoolSize** — значение **Integer.MAX_VALUE**. Наконец, **keepAliveTime** составляет **60** секунд:**
 
 ```java
 ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
@@ -1529,11 +1527,11 @@ assertEquals(3, executor.getPoolSize());
 assertEquals(0, executor.getQueue().size());
 ```
 
-Эти значения параметров означают, что пул кэшированных потоков может неограниченно увеличиваться для размещения любого количества отправленных задач. Но когда потоки больше не нужны, они будут утилизированы через **60** секунд бездействия. Типичный случай использования - это когда у нас есть много краткосрочных задач в нашем приложении.
+Эти значения параметров означают, что пул кэшированных потоков может неограниченно увеличиваться для размещения любого количества отправленных задач. Но когда потоки больше не нужны, они будут утилизированы через **60** секунд бездействия. Типичный случай использования — это когда у нас есть много краткосрочных задач в нашем приложении.
 
 Размер очереди всегда будет равен нулю, поскольку внутри используется экземпляр **SynchronousQueue**. В **SynchronousQueue** пары операций вставки и удаления всегда выполняются одновременно. Таким образом, очередь на самом деле никогда ничего не содержит.
 
-**Executors.`newSingleThreadExecutor()`** создает еще одну типичную форму **ThreadPoolExecutor**, содержащую один поток. Однопоточный исполнитель идеально подходит для создания цикла событий. Параметры **corePoolSize** и **maxPoolSize** равны **1**, а **keepAliveTime** - **0**.
+**Executors.`newSingleThreadExecutor()`** создает еще одну типичную форму **ThreadPoolExecutor**, содержащую один поток. Однопоточный исполнитель идеально подходит для создания цикла событий. Параметры **corePoolSize** и **maxPoolSize** равны **1**, а **keepAliveTime** — **0**.
 
 **Задачи в приведенном выше примере будут выполняться последовательно, поэтому после завершения задачи значение флага будет равно **2**:**
 
@@ -1558,7 +1556,7 @@ executor.submit(() -> {
 **ScheduledThreadPoolExecutor** расширяет класс **ThreadPoolExecutor**, а также реализует интерфейс **ScheduledExecutorService** с несколькими дополнительными методами:**
 
 1. Метод **schedule** позволяет нам запускать задачу один раз после указанной задержки.
-2. Метод **scheduleAtFixedRate** позволяет нам запускать задачу после указанной начальной задержки, а затем запускать ее повторно с определенным периодом. Аргумент периода - это время, измеренное между моментами запуска задач, поэтому скорость выполнения является фиксированной.
+2. Метод **scheduleAtFixedRate** позволяет нам запускать задачу после указанной начальной задержки, а затем запускать ее повторно с определенным периодом. Аргумент периода — это время, измеренное между моментами запуска задач, поэтому скорость выполнения является фиксированной.
 3. Метод **scheduleWithFixedDelay** похож на **scheduleAtFixedRate** тем, что он многократно запускает заданную задачу, но указанная задержка измеряется между окончанием предыдущей задачи и началом следующей. Скорость выполнения может варьироваться в зависимости от времени, необходимого для выполнения той или иной задачи.
 
 Обычно мы используем метод **Executors.`newScheduledThreadPool()`** для создания **ScheduledThreadPoolExecutor** с заданным **corePoolSize**, неограниченным **maxPoolSize** и нулевым **keepAliveTime**.
@@ -1591,7 +1589,7 @@ future.cancel(true);
 
 ### **ForkJoinPool**
 
-**ForkJoinPool** - это центральная часть инфраструктуры **fork/join**, представленной в **Java 7**.
+**ForkJoinPool** — это центральная часть инфраструктуры **fork/join**, представленной в **Java 7**.
 
 Она решает распространенную проблему порождения нескольких задач в рекурсивных алгоритмах. Мы быстро исчерпаем потоки, используя простой **ThreadPoolExecutor**, так как для каждой задачи или подзадачи требуется свой собственный поток.
 
@@ -1599,7 +1597,7 @@ future.cancel(true);
 
 ## Реализация **Runnable** и расширение потока
 
-**"Должен ли я реализовать `Runnable` или расширить класс `Thread`?"** - довольно распространенный вопрос.
+**"Должен ли я реализовать `Runnable` или расширить класс `Thread`?"** — довольно распространенный вопрос.
 
 В этой статье мы увидим, какой подход имеет больше смысла на практике и почему.
 
@@ -1608,7 +1606,7 @@ future.cancel(true);
 ```java
 public class SimpleThread extends Thread {
     private String message;
-    
+
     @Override
     public void run() {
         log.info(message);
@@ -1645,7 +1643,7 @@ public void givenAThread_whenSubmitToES_thenResult() throws Exception {
 ```java
 class SimpleRunnable implements Runnable {
     private String message;
-    
+
     @Override
     public void run() {
         log.info(message);
@@ -1653,9 +1651,9 @@ class SimpleRunnable implements Runnable {
 }
 ```
 
-**Вышеупомянутый SimpleRunnable** - это просто задача, которую мы хотим запустить в отдельном потоке.
+**Вышеупомянутый SimpleRunnable** — это просто задача, которую мы хотим запустить в отдельном потоке.
 
-**Существуют различные подходы, которые мы можем использовать для его запуска; один из них - использовать класс **Thread**:**
+**Существуют различные подходы, которые мы можем использовать для его запуска; один из них — использовать класс **Thread**:**
 
 ```java
 @Test
@@ -1697,7 +1695,7 @@ public void givenARunnableLambda_whenSubmitToES_thenResult() throws Exception {
 
 ## Руководство по методы **wait**() и **notify**()
 
-В этом уроке мы рассмотрим один из самых фундаментальных механизмов в **Java** - синхронизацию потоков.
+В этом уроке мы рассмотрим один из самых фундаментальных механизмов в **Java** — синхронизацию потоков.
 
 Сначала мы обсудим некоторые важные термины и методологии, связанные с параллелизмом.
 
@@ -1750,7 +1748,7 @@ public void givenARunnableLambda_whenSubmitToES_thenResult() throws Exception {
 
 ### Пример: **Sender-Receiver**
 
-**Теперь, когда мы познакомились с основами, давайте рассмотрим простое приложение **Sender - Receiver**, которое будет использовать методы **wait()** и **notify()** для настройки синхронизации между ними:**
+**Теперь, когда мы познакомились с основами, давайте рассмотрим простое приложение **Sender — Receiver**, которое будет использовать методы **wait()** и **notify()** для настройки синхронизации между ними:**
 
 1. Отправитель должен отправить пакет данных Получателю.
 2. Получатель не может обработать пакет данных, пока Отправитель не завершит его отправку.
@@ -1762,7 +1760,7 @@ public void givenARunnableLambda_whenSubmitToES_thenResult() throws Exception {
 public class Data {
     private String packet;
     private boolean transfer = true;
-    
+
     public synchronized String receive() {
         while (transfer) {
             try {
@@ -1777,7 +1775,7 @@ public class Data {
         notifyAll();
         return returnPacket;
     }
-    
+
     public synchronized void send(String packet) {
         while (!transfer) {
             try {
@@ -1820,7 +1818,7 @@ public class Data {
 ```java
 public class Sender implements Runnable {
     private Data data;
-    
+
     public void run() {
         String packets[] = {
             "First packet",
@@ -1829,7 +1827,7 @@ public class Sender implements Runnable {
             "Fourth packet",
             "End"
         };
-        
+
         for (String packet : packets) {
             data.send(packet);
             try {
@@ -1856,7 +1854,7 @@ public class Sender implements Runnable {
 ```java
 public class Receiver implements Runnable {
     private Data load;
-    
+
     public void run() {
         for(String receivedMessage = load.receive();
             !"End".equals(receivedMessage);
@@ -1882,7 +1880,7 @@ public static void main(String[] args) {
     Data data = new Data();
     Thread sender = new Thread(new Sender(data));
     Thread receiver = new Thread(new Receiver(data));
-    
+
     sender.start();
     receiver.start();
 }
@@ -1890,7 +1888,7 @@ public static void main(String[] args) {
 
 **Мы получим следующий вывод:**
 
-```
+```text
 First packet
 Second packet
 Third packet
@@ -1901,7 +1899,7 @@ Fourth packet
 
 ## Разница между **Runnable** и **Callable**
 
-С первых дней существования **Java** многопоточность была важным аспектом языка. **Runnable** - это основной интерфейс, предназначенный для представления многопоточных задач, а **Java 1.5** предоставляет **Callable** как улучшенную версию **Runnable**.
+С первых дней существования **Java** многопоточность была важным аспектом языка. **Runnable** — это основной интерфейс, предназначенный для представления многопоточных задач, а **Java 1.5** предоставляет **Callable** как улучшенную версию **Runnable**.
 
 В этом руководстве мы рассмотрим различия и области применения обоих интерфейсов.
 
@@ -1926,7 +1924,7 @@ public interface Runnable {
 ```java
 public class EventLoggingTask implements Runnable {
     private Logger logger = LoggerFactory.getLogger(EventLoggingTask.class);
-    
+
     @Override
     public void run() {
         logger.info("Message");
@@ -1950,7 +1948,7 @@ public void executeTask() {
 
 ### **Callable**
 
-**Интерфейс Callable** - это универсальный интерфейс, содержащий единственный метод **call()**, который возвращает универсальное значение **V**:**
+**Интерфейс Callable** — это универсальный интерфейс, содержащий единственный метод **call()**, который возвращает универсальное значение **V**:**
 
 ```java
 public interface Callable<V> {
@@ -1963,7 +1961,7 @@ public interface Callable<V> {
 ```java
 public class FactorialTask implements Callable<Integer> {
     int number;
-    
+
     public Integer call() throws InvalidParamaterException {
         int fact = 1;
         for(int count = number; count > 1; count--) {
@@ -2035,11 +2033,11 @@ public void whenException_ThenCallableDoesntThrowsItIfGetIsNotCalled() {
 
 В этой короткой статье мы рассмотрим стандартные методы **sleep()** и **wait()** в базовой версии **Java** и поймем различия и сходства между ними.
 
-Проще говоря, **wait()** - это метод экземпляра, который используется для синхронизации потоков.
+Проще говоря, **wait()** — это метод экземпляра, который используется для синхронизации потоков.
 
 Его можно вызвать для любого объекта, так как он определен прямо в **java.lang.Object**, но его можно вызвать только из синхронизированного блока. Он освобождает блокировку объекта, чтобы другой поток мог подключиться и получить блокировку.
 
-С другой стороны, **Thread.sleep()** - это статический метод, который можно вызывать из любого контекста. **Thread.sleep()** приостанавливает текущий поток и не снимает блокировки.
+С другой стороны, **Thread.sleep()** — это статический метод, который можно вызывать из любого контекста. **Thread.sleep()** приостанавливает текущий поток и не снимает блокировки.
 
 **Вот очень упрощенный начальный взгляд на эти два основных **API** в действии:**
 
@@ -2049,7 +2047,7 @@ private static Object LOCK = new Object();
 private static void sleepWaitExamples() throws InterruptedException {
     Thread.sleep(1000);
     System.out.println("Thread '" + Thread.currentThread().getName() + "' is woken after sleeping for 1 second");
-    
+
     synchronized (LOCK) {
         LOCK.wait(1000);
         System.out.println("Object '" + LOCK + "' is woken after waiting for 1 second");
@@ -2059,7 +2057,7 @@ private static void sleepWaitExamples() throws InterruptedException {
 
 **Выполнение этого примера приведет к следующему выводу:**
 
-```
+```text
 Thread 'main' is woken after sleeping for 1 second
 Object 'java.lang.Object@31befd9f' is woken after waiting for 1 second
 ```
@@ -2102,7 +2100,7 @@ public void run() {
 
 **Выполнение этого примера приведет к следующему выводу:**
 
-```
+```text
 Waiting for ThreadB to complete…
 ThreadB has completed. Sum from that thread is: 704982704
 ```
@@ -2128,12 +2126,12 @@ public final void join() throws InterruptedException
 ```java
 class SampleThread extends Thread {
     public int processingCount = 0;
-    
+
     SampleThread(int processingCount) {
         this.processingCount = processingCount;
         LOGGER.info("Thread Created");
     }
-    
+
     @Override
     public void run() {
         LOGGER.info("Thread " + this.getName() + " started");
@@ -2162,7 +2160,7 @@ public void givenStartedThread_whenJoinCalled_waitsTillCompletion() throws Inter
 
 **При выполнении кода следует ожидать результатов, подобных приведенным ниже:**
 
-```
+```text
 INFO: Thread Created
 INFO: Invoking join
 INFO: Thread Thread-1 started
@@ -2197,7 +2195,7 @@ public void givenStartedThread_whenTimedJoinCalled_waitsUntilTimedout() throws I
 
 **Timed join()** зависит от времени ОС. Таким образом, мы не можем предполагать, что **join()** будет ждать ровно столько времени, сколько указано.
 
-**В дополнение к ожиданию завершения вызов метода **join()** имеет эффект синхронизации. **join()** создает отношение **"происходит до"**:**
+**В дополнение к ожиданию завершения вызов метода **join()** имеет эффект синхронизации. **join()** создает отношение **«происходит до»**:**
 
 **"Все действия в потоке происходят до того, как какой-либо другой поток успешно вернется из функции join() в этом потоке".**
 
@@ -2222,7 +2220,7 @@ do {
 
 Мы называем этот сценарий состоянием гонки. И часть программы, которая обращается к общему ресурсу, называется критической секцией. Итак, чтобы избежать состояния гонки, нам нужно синхронизировать доступ к критической секции.
 
-Мьютекс - это простейший тип синхронизатора - он гарантирует, что только один поток может одновременно выполнять критическую секцию компьютерной программы.
+Мьютекс — это простейший тип синхронизатора — он гарантирует, что только один поток может одновременно выполнять критическую секцию компьютерной программы.
 
 Чтобы получить доступ к критической секции, поток захватывает мьютекс, затем обращается к критической секции и, наконец, освобождает мьютекс. Тем временем все остальные потоки блокируются до освобождения мьютекса. Как только поток выходит из критической секции, другой поток может войти в критическую секцию.
 
@@ -2231,7 +2229,7 @@ do {
 ```java
 public class SequenceGenerator {
     private int currentValue = 0;
-    
+
     public int getNextSequence() {
         currentValue = currentValue + 1;
         return currentValue;
@@ -2253,15 +2251,15 @@ private Set<Integer> getUniqueSequences(SequenceGenerator generator, int count) 
     ExecutorService executor = Executors.newFixedThreadPool(3);
     Set<Integer> uniqueSequences = new LinkedHashSet<>();
     List<Future<Integer>> futures = new ArrayList<>();
-    
+
     for (int i = 0; i < count; i++) {
         futures.add(executor.submit(generator::getNextSequence));
     }
-    
+
     for (Future<Integer> future : futures) {
         uniqueSequences.add(future.get());
     }
-    
+
     executor.awaitTermination(1, TimeUnit.SECONDS);
     executor.shutdown();
     return uniqueSequences;
@@ -2270,7 +2268,7 @@ private Set<Integer> getUniqueSequences(SequenceGenerator generator, int count) 
 
 **Как только мы выполним этот тестовый пример, мы увидим, что большую часть времени он терпит неудачу по следующей причине:**
 
-```
+```text
 java.lang.AssertionError: expected:<1000> but was:<989>
     at org.junit.Assert.fail(Assert.java:88)
     at org.junit.Assert.failNotEquals(Assert.java:834)
@@ -2307,7 +2305,7 @@ public class SequenceGeneratorUsingSynchronizedMethod extends SequenceGenerator 
 ```java
 public class SequenceGeneratorUsingSynchronizedBlock extends SequenceGenerator {
     private Object mutex = new Object();
-    
+
     @Override
     public int getNextSequence() {
         synchronized (mutex) {
@@ -2324,7 +2322,7 @@ public class SequenceGeneratorUsingSynchronizedBlock extends SequenceGenerator {
 ```java
 public class SequenceGeneratorUsingReentrantLock extends SequenceGenerator {
     private ReentrantLock mutex = new ReentrantLock();
-    
+
     @Override
     public int getNextSequence() {
         try {
@@ -2346,7 +2344,7 @@ public class SequenceGeneratorUsingReentrantLock extends SequenceGenerator {
 ```java
 public class SequenceGeneratorUsingSemaphore extends SequenceGenerator {
     private Semaphore mutex = new Semaphore(1);
-    
+
     @Override
     public int getNextSequence() {
         try {
@@ -2366,13 +2364,13 @@ public class SequenceGeneratorUsingSemaphore extends SequenceGenerator {
 
 **ThreadPoolTaskExecutor** является частью **Spring Framework** и предоставляет абстракцию над **ThreadPoolExecutor** из **JDK**.
 
-Основные параметры конфигурации, которые мы здесь обсудим - это **corePoolSize, maxPoolSize** и **keepAliveTime**.
+Основные параметры конфигурации, которые мы здесь обсудим — это **corePoolSize, maxPoolSize** и **keepAliveTime**.
 
-**Параметр corePoolSize** - это количество основных потоков, которые будут созданы и сохранены в пуле. При поступлении новой задачи, если все основные потоки заняты и внутренняя очередь заполнена, пул может увеличиться до **maxPoolSize**.
+**Параметр corePoolSize** — это количество основных потоков, которые будут созданы и сохранены в пуле. При поступлении новой задачи, если все основные потоки заняты и внутренняя очередь заполнена, пул может увеличиться до **maxPoolSize**.
 
-**Параметр maxPoolSize** - это максимальное количество потоков, которые могут быть созданы в пуле.
+**Параметр maxPoolSize** — это максимальное количество потоков, которые могут быть созданы в пуле.
 
-**Параметр keepAliveTime** - это интервал времени, в течение которого избыточные потоки (**экземпляры которых превышают corePoolSize**) могут существовать в состоянии простоя.
+**Параметр keepAliveTime** — это интервал времени, в течение которого избыточные потоки (**экземпляры которых превышают corePoolSize**) могут существовать в состоянии простоя.
 
 Когда количество задач превышает **corePoolSize** и очередь заполнена, пул начинает создавать дополнительные потоки до **maxPoolSize**. Если количество задач все еще превышает возможности пула (**все потоки заняты и очередь заполнена**), новые задачи будут отклонены.
 
@@ -2395,7 +2393,7 @@ public ThreadPoolTaskExecutor taskExecutor() {
 
 ### Использование **Thread**
 
-**Простейший способ запустить асинхронный код - использовать класс **Thread**:**
+**Простейший способ запустить асинхронный код — использовать класс **Thread**:**
 
 ```java
 int number = 20;
@@ -2447,7 +2445,7 @@ long result = completableFuture.get();
 public class LocalVariableExample {
     public void printNumber() {
         int localVar = 10; // локальная переменная
-        
+
         // Каждый поток имеет свою собственную копию localVar
         for (int i = 0; i < 5; i++) {
             System.out.println(Thread.currentThread().getName() + ": " + localVar);
@@ -2516,3 +2514,11 @@ public int getThreadCount() {
 - **Потоки vs `ExecutorService`:** для задач и расписаний — `**ExecutorService**`, `**ScheduledExecutorService**`; не создавать множество «голых» потоков для коротких задач.
 - **Пул потоков:** настраивать `**corePoolSize**` и `**maxPoolSize**` под нагрузку и тип задач; использовать ограниченные очереди и политику отказа при перегрузке; закрывать пул через **shutdown()** / **awaitTermination()**.
 - **ThreadLocal:** очищать в **finally** или при снятии контекста (**например, в веб-фильтрах**), чтобы избежать утечек в пулах потоков.
+
+## См. также
+
+- [[java-annotations-reflection|Java Annotations и Reflection]]
+- [[java-basics|Java: основы]]
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-collections-list|Java Collections: List]]
+- [[java-collections-map|Java Collections: Map]]

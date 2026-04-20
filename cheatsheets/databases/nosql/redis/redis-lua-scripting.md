@@ -87,7 +87,6 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - **Консистентность**: Гарантия целостности данных
 - **Гибкость**: Возможность реализации сложной логики
 
----
 
 ## Базовое использование
 
@@ -115,7 +114,6 @@ SCRIPT LOAD "return redis.call('GET', KEYS[1])"
 EVALSHA 4e6d8fc8bb01276962cce5371fa795a7763657ae 1 mykey
 ```
 
----
 
 ## Основные функции **Redis** в **Lua**
 
@@ -157,7 +155,6 @@ end
 return redis.status_reply('OK')
 ```
 
----
 
 ## Практические примеры
 
@@ -271,7 +268,6 @@ end
 return nil
 ```
 
----
 
 ## Оптимизация **Lua** скриптов
 
@@ -709,11 +705,7 @@ public class LuaScriptTest {
 }
 ```
 
----
 
 - [Redis Lua Scripting](https://redis.io/docs/manual/programmability/eval-intro/)
 - [Lua 5.1 Reference](https://www.lua.org/manual/5.1/)
-
----
-
 

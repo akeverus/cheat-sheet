@@ -16,8 +16,8 @@ updated: "2026-02-11"
 ## Полезные ссылки
 
 ### См. также
-- [`../README.md`](../README.md) — индекс NoSQL-раздела
-- [`../../README.md`](../../README.md) — индекс databases-раздела
+- [[README]] — индекс NoSQL-раздела
+- [[README]] — индекс databases-раздела
 - [[CHEATSHEETS_ARCHITECTURE_AND_RULES|`../../../../CHEATSHEETS_ARCHITECTURE_AND_RULES.md`]] — архитектурные и форматные правила
 
 ## Содержание
@@ -26,10 +26,10 @@ updated: "2026-02-11"
 
 ## Документы раздела
 
-- [`cassandra-basics.md`](cassandra-basics.md) — базовые концепции и старт
-- [`cassandra-clustering.md`](cassandra-clustering.md) — кластеризация и репликация
-- [`cassandra-data-modeling.md`](cassandra-data-modeling.md) — моделирование данных
-- [`cassandra-queries.md`](cassandra-queries.md) — запросы и шаблоны работы
-- [`cassandra-admin.md`](cassandra-admin.md) — эксплуатация и администрирование
-- [`cassandra-performance.md`](cassandra-performance.md) — производительность и тюнинг
+- [[cassandra-basics]] — базовые концепции и старт
+- [[cassandra-clustering]] — кластеризация и репликация
+- [[cassandra-data-modeling]] — моделирование данных
+- [[cassandra-queries]] — запросы и шаблоны работы
+- [[cassandra-admin]] — эксплуатация и администрирование
+- [[cassandra-performance]] — производительность и тюнинг
 

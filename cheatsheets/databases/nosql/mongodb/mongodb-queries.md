@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: Запросы и операторы - Полное руководство по поиску документов
+# **MongoDB**: Запросы и операторы — Полное руководство по поиску документов
 
 Комплексное руководство по запросам в **MongoDB**: операторы сравнения, логические операторы, работа с массивами, текстом и геоданными.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [MongoDB Query Operators](https://www.mongodb.com/docs/manual/reference/operator/query/)
 - [MongoDB Text Search](https://www.mongodb.com/docs/manual/text-search/)
 
-### **Baeldung**
+### Обучающие материалы
 - [MongoDB Query Methods](https://www.baeldung.com/java-mongodb-query) — запросы из **Java**
 
 ### См. также
@@ -1006,7 +1006,7 @@ public class IndexManagementService {
 
 // Геопространственный индекс
 **db.places.`createIndex`(**{ location: "2dsphere" }**)
-```
+```text
 
 ### Query optimization tips
 
@@ -1263,7 +1263,6 @@ MongoDB queries сочетают простоту использования с 
 
 **Проблемы с агрегацией (memory / timeout):** ограничьте объём данных на стадиях `$match` и `$group`, используйте `allowDiskUse: true` при необходимости. Упростите пайплайн или разбейте на несколько агрегаций.
 
----
 
 Следующие темы:
 - [Индексы](mongodb-indexes.md)

@@ -105,7 +105,7 @@ CREATE (u:User {
 })
 
 // Создание нескольких узлов
-CREATE 
+CREATE
     (u1:User {id: 1, username: "alice"}),
     (u2:User {id: 2, username: "bob"}),
     (p1:Post {id: 1, title: "First Post", content: "Hello World"})
@@ -152,7 +152,7 @@ RETURN path
 import org.neo4j.driver.*;
 
 public class Neo4jConnection {
-    
+
     /*
      * Создание подключения к Neo4j
      */
@@ -162,11 +162,11 @@ public class Neo4jConnection {
         String uri = "bolt://localhost:7687";  // Bolt протокол (быстрый бинарный протокол)
         String username = "neo4j";              // Имя пользователя по умолчанию
         String password = "password";           // Пароль
-        
+
         // Driver управляет пулом соединений автоматически
         return GraphDatabase.driver(uri, AuthTokens.basic(username, password));
     }
-    
+
     /*
      * Создание узла пользователя
      */
@@ -183,20 +183,20 @@ public class Neo4jConnection {
                 })
                 RETURN u
                 """;
-            
+
             // Выполнение запроса с параметрами
             Record record = session.writeTransaction(tx -> {
-                Result result = tx.run(query, 
+                Result result = tx.run(query,
                     Values.parameters("username", username, "email", email));
                 return result.single();  // Возвращаем первую запись
             });
-            
+
             // Получение созданного узла
             Node userNode = record.get("u").asNode();
             System.out.println("Создан пользователь: " + userNode.get("username"));
         }
     }
-    
+
     /*
      * Поиск пользователя и его связей
      */
@@ -207,19 +207,19 @@ public class Neo4jConnection {
                 MATCH (u:User {username: $username})-[r]->(related)
                 RETURN u, type(r) as relationshipType, related
                 """;
-            
+
             // Выполнение запроса
             List<Record> records = session.readTransaction(tx -> {
                 Result result = tx.run(query, Values.parameters("username", username));
                 return result.list();  // Возвращаем все записи
             });
-            
+
             // Обработка результатов
             for (Record record : records) {
                 Node user = record.get("u").asNode();
                 String relType = record.get("relationshipType").asString();
                 Node related = record.get("related").asNode();
-                
+
                 System.out.printf("%s -[%s]-> %s%n",
                     user.get("username"), relType, related.get("username"));
             }
@@ -236,7 +236,7 @@ public class Neo4jConnection {
  */
 @Configuration
 public class Neo4jConfiguration {
-    
+
     @Bean
     public Driver neo4jDriver() {
         return GraphDatabase.driver(
@@ -244,7 +244,7 @@ public class Neo4jConfiguration {
             AuthTokens.basic("neo4j", "password")
         );
     }
-    
+
     @Bean
     public Neo4jTransactionManager transactionManager(Driver driver) {
         return new Neo4jTransactionManager(driver);
@@ -259,13 +259,13 @@ public class UserNode {
     @Id
     @GeneratedValue
     private Long id;
-    
+
     private String username;
     private String email;
-    
+
     @Relationship(type = "FOLLOWS")
     private List<UserNode> following;
-    
+
     // Геттеры и сеттеры
 }
 
@@ -275,7 +275,7 @@ public class UserNode {
 @Repository
 public interface UserRepository extends Neo4jRepository<UserNode, Long> {
     UserNode findByUsername(String username);
-    
+
     @Query("MATCH (u:User)-[:FOLLOWS]->(f:User) WHERE u.username = $username RETURN f")
     List<UserNode> findFollowing(String username);
 }
@@ -304,5 +304,4 @@ public interface UserRepository extends Neo4jRepository<UserNode, Long> {
 
 **Как ограничить глубину обхода в Cypher?** Использовать `*1..5` в паттерне связей: например, `(a)-[:FOLLOWS*1..5]->(b)`. Иначе запрос может обойти весь граф.
 
----
 

@@ -42,7 +42,7 @@ updated: "2026-04-12"
 
 **Dependency Injection** — конкретный механизм IoC в Spring: контейнер создаёт бины и «вкалывает» зависимости.
 
-```
+```text
 ApplicationContext (IoC Container)
 ├── Читает конфигурацию (аннотации / XML / Java Config)
 ├── Создаёт BeanDefinition для каждого бина
@@ -151,7 +151,7 @@ public class OrderService {
 
 ## Жизненный цикл Bean
 
-```
+```text
 1. Instantiation        — конструктор
 2. Populate properties  — DI (setter / field injection)
 3. BeanNameAware        — setBeanName()
@@ -398,3 +398,8 @@ Spring Expression Language — выражения в аннотациях и к�
 | `@Value` = null | Поле инжектится до конструктора (field injection) | Constructor injection |
 | BeanNotFound | Компонент вне component scan | Проверить `@ComponentScan` / `@SpringBootApplication` package |
 | AOP не перехватывает | Метод private / final / вызов внутри класса | Сделать public, вынести в отдельный бин |
+
+## См. также
+
+- [[spring-boot|Spring Boot]]
+- [[spring-data|Spring Data: JPA, JDBC и работа с данными]]

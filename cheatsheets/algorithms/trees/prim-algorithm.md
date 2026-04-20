@@ -140,19 +140,19 @@ C   |   E   |
 public class Edge {
     private int weight;
     private boolean isIncluded = false;
-    
+
     public Edge(int weight) {
         this.weight = weight;
     }
-    
+
     public int getWeight() {
         return weight;
     }
-    
+
     public boolean isIncluded() {
         return isIncluded;
     }
-    
+
     public void setIncluded(boolean included) {
         isIncluded = included;
     }
@@ -170,27 +170,27 @@ public class Vertex {
     private String label = null;
     private Map<Vertex, Edge> edges = new HashMap<>();
     private boolean isVisited = false;
-    
+
     public Vertex(String label) {
         this.label = label;
     }
-    
+
     public void addEdge(Vertex vertex, Edge edge) {
         edges.put(vertex, edge);
     }
-    
+
     public boolean isVisited() {
         return isVisited;
     }
-    
+
     public void setVisited(boolean visited) {
         isVisited = visited;
     }
-    
+
     public Pair<Vertex, Edge> nextMinimum() {
         Edge nextMinimum = new Edge(Integer.MAX_VALUE);
         Vertex nextVertex = this;
-        
+
         for (Map.Entry<Vertex, Edge> pair : edges.entrySet()) {
             if (!pair.getKey().isVisited()) {
                 if (!pair.getValue().isIncluded()) {
@@ -201,7 +201,7 @@ public class Vertex {
                 }
             }
         }
-        
+
         return new Pair<>(nextVertex, nextMinimum);
     }
 }
@@ -216,20 +216,20 @@ public class Vertex {
 ```java
 public class Prim {
     private List<Vertex> graph;
-    
+
     public Prim(List<Vertex> graph) {
         this.graph = graph;
     }
-    
+
     public void run() {
         if (graph.size() > 0) {
             graph.get(0).setVisited(true);
         }
-        
+
         while (isDisconnected()) {
             Edge nextMinimum = new Edge(Integer.MAX_VALUE);
             Vertex nextVertex = graph.get(0);
-            
+
             for (Vertex vertex : graph) {
                 if (vertex.isVisited()) {
                     Pair<Vertex, Edge> candidate = vertex.nextMinimum();
@@ -239,12 +239,12 @@ public class Prim {
                     }
                 }
             }
-            
+
             nextMinimum.setIncluded(true);
             nextVertex.setVisited(true);
         }
     }
-    
+
     private boolean isDisconnected() {
         for (Vertex vertex : graph) {
             if (!vertex.isVisited()) {
@@ -267,21 +267,21 @@ public void runOptimized() {
     if (graph.isEmpty()) {
         return;
     }
-    
+
     PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(Edge::getWeight));
     Set<Vertex> visited = new HashSet<>();
-    
+
     Vertex start = graph.get(0);
     visited.add(start);
-    
+
     for (Map.Entry<Vertex, Edge> entry : start.edges.entrySet()) {
         pq.offer(entry.getValue());
     }
-    
+
     while (!pq.isEmpty() && visited.size() < graph.size()) {
         Edge minEdge = pq.poll();
         Vertex nextVertex = null;
-        
+
         // Найти вершину, связанную с минимальным ребром
         for (Vertex v : graph) {
             if (v.edges.containsValue(minEdge) && !visited.contains(v)) {
@@ -289,11 +289,11 @@ public void runOptimized() {
                 break;
             }
         }
-        
+
         if (nextVertex != null) {
             visited.add(nextVertex);
             minEdge.setIncluded(true);
-            
+
             for (Map.Entry<Vertex, Edge> entry : nextVertex.edges.entrySet()) {
                 if (!visited.contains(entry.getKey())) {
                     pq.offer(entry.getValue());
@@ -309,35 +309,35 @@ public void runOptimized() {
 ```java
 public static List<Vertex> createGraph() {
     List<Vertex> graph = new ArrayList<>();
-    
+
     Vertex a = new Vertex("A");
     Vertex b = new Vertex("B");
     Vertex c = new Vertex("C");
     Vertex d = new Vertex("D");
     Vertex e = new Vertex("E");
-    
+
     Edge ab = new Edge(2);
     a.addEdge(b, ab);
     b.addEdge(a, ab);
-    
+
     Edge bc = new Edge(2);
     b.addEdge(c, bc);
     c.addEdge(b, bc);
-    
+
     Edge cd = new Edge(1);
     c.addEdge(d, cd);
     d.addEdge(c, cd);
-    
+
     Edge ce = new Edge(1);
     c.addEdge(e, ce);
     e.addEdge(c, ce);
-    
+
     graph.add(a);
     graph.add(b);
     graph.add(c);
     graph.add(d);
     graph.add(e);
-    
+
     return graph;
 }
 
@@ -355,15 +355,15 @@ data class EdgeK(var weight: Int, var isIncluded: Boolean = false)
 class VertexK(val label: String) {
     private val edges = mutableMapOf<VertexK, EdgeK>()
     var isVisited: Boolean = false
-    
+
     fun addEdge(vertex: VertexK, edge: EdgeK) {
         edges[vertex] = edge
     }
-    
+
     fun nextMinimum(): Pair<VertexK, EdgeK> {
         var nextMinimum = EdgeK(Int.MAX_VALUE)
         var nextVertex = this
-        
+
         for ((vertex, edge) in edges) {
             if (!vertex.isVisited && !edge.isIncluded) {
                 if (edge.weight < nextMinimum.weight) {
@@ -372,7 +372,7 @@ class VertexK(val label: String) {
                 }
             }
         }
-        
+
         return Pair(nextVertex, nextMinimum)
     }
 }
@@ -384,14 +384,14 @@ class VertexK(val label: String) {
 class PrimK(private val graph: MutableList<VertexK>) {
     fun run() {
         if (graph.isEmpty()) return
-        
+
         graph[0].isVisited = true
-        
+
         while (hasUnvisitedVertices()) {
             var nextMinimum = EdgeK(Int.MAX_VALUE)
             var nextVertex = graph[0]
             var currentVertex = graph[0]
-            
+
             for (vertex in graph) {
                 if (vertex.isVisited) {
                     val (candidateVertex, candidateEdge) = vertex.nextMinimum()
@@ -402,12 +402,12 @@ class PrimK(private val graph: MutableList<VertexK>) {
                     }
                 }
             }
-            
+
             nextMinimum.isIncluded = true
             nextVertex.isVisited = true
         }
     }
-    
+
     private fun hasUnvisitedVertices(): Boolean {
         return graph.any { !it.isVisited }
     }
@@ -424,7 +424,7 @@ fun main() {
     val c = VertexK("C")
     val d = VertexK("D")
     val e = VertexK("E")
-    
+
     a.addEdge(b, EdgeK(2))
     a.addEdge(c, EdgeK(3))
     b.addEdge(a, EdgeK(2))
@@ -438,9 +438,9 @@ fun main() {
     d.addEdge(f, EdgeK(1))
     e.addEdge(b, EdgeK(5))
     e.addEdge(c, EdgeK(1))
-    
+
     graph.addAll(listOf(a, b, c, d, e))
-    
+
     val prim = PrimK(graph)
     prim.run()
 }

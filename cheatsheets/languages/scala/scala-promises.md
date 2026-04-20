@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # **Promises** в **Scala**
 
-Краткое руководство по **Promises** в **Scala** - создание и управление **Futures**.
+Краткое руководство по **Promises** в **Scala** — создание и управление **Futures**.
 
 **Последнее обновление**: 2024-01-`XX`
 
@@ -57,7 +57,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Promise** - это механизм для создания **Future**, который можно завершить вручную. **Promise** позволяет создавать **Future**, которые завершаются асинхронно из другого кода.
+**Promise** — это механизм для создания **Future**, который можно завершить вручную. **Promise** позволяет создавать **Future**, которые завершаются асинхронно из другого кода.
 
 **Promises** особенно полезны для адаптации **callback-based API** к **Future-based API**, координации нескольких асинхронных операций и создания кастомных асинхронных абстракций.
 
@@ -104,12 +104,12 @@ def callbackBasedApi(callback: (String, Throwable) => Unit): Unit = {
 // Адаптация к Future
 def futureBasedApi(): Future[String] = {
   val promise = Promise[String]()
-  
+
   callbackBasedApi { (result, error) =>
     if (error != null) promise.failure(error)
     else promise.success(result)
   }
-  
+
   promise.future
 }
 
@@ -118,12 +118,12 @@ import java.util.concurrent.CompletableFuture
 
 def scalaFuture[T](javaFuture: CompletableFuture[T]): Future[T] = {
   val promise = Promise[T]()
-  
+
   javaFuture.whenComplete { (result, error) =>
     if (error != null) promise.failure(error)
     else promise.success(result)
   }
-  
+
   promise.future
 }
 ```
@@ -161,7 +161,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class AsyncQueue[T] {
   private val queue = scala.collection.mutable.Queue[T]()
   private val waiting = scala.collection.mutable.Queue[Promise[T]]()
-  
+
   def enqueue(item: T): Unit = synchronized {
     if (waiting.nonEmpty) {
       waiting.dequeue().success(item)
@@ -169,7 +169,7 @@ class AsyncQueue[T] {
       queue.enqueue(item)
     }
   }
-  
+
   def dequeue(): Future[T] = synchronized {
     val promise = Promise[T]()
     if (queue.nonEmpty) {
@@ -191,16 +191,16 @@ import java.util.concurrent.TimeoutException
 
 def withTimeout[T](future: Future[T], timeout: Duration): Future[T] = {
   val promise = Promise[T]()
-  
+
   // Таймер
   Future {
     Thread.sleep(timeout.toMillis)
     promise.tryFailure(new TimeoutException("Operation timed out"))
   }
-  
+
   // Оригинальный Future
   future.onComplete(promise.tryComplete)
-  
+
   promise.future
 }
 ```
@@ -215,7 +215,7 @@ def retry[T](maxRetries: Int, delay: Duration = 1.second)(
   f: => Future[T]
 ): Future[T] = {
   val promise = Promise[T]()
-  
+
   def attempt(retriesLeft: Int): Unit = {
     f.onComplete {
       case Success(value) => promise.success(value)
@@ -227,7 +227,7 @@ def retry[T](maxRetries: Int, delay: Duration = 1.second)(
       case Failure(e) => promise.failure(e)
     }
   }
-  
+
   attempt(maxRetries)
   promise.future
 }
@@ -245,12 +245,12 @@ class CircuitBreaker[T](
 ) {
   private var failures = 0
   private var state: State = Closed
-  
+
   sealed trait State
   case object Closed extends State
   case object Open extends State
   case object HalfOpen extends State
-  
+
   def execute(f: => Future[T]): Future[T] = {
     state match {
       case Closed =>
@@ -271,10 +271,10 @@ class CircuitBreaker[T](
             promise.failure(e)
         }
         promise.future
-        
+
       case Open =>
         Future.failed(new Exception("Circuit breaker is open"))
-        
+
       case HalfOpen =>
         val promise = Promise[T]()
         f.onComplete {
@@ -304,16 +304,16 @@ import scala.collection.mutable
 
 class RateLimiter(requestsPerSecond: Int) {
   private val timestamps = mutable.Queue[Long]()
-  
+
   def execute[T](f: => Future[T]): Future[T] = {
     val now = System.currentTimeMillis()
     val oneSecondAgo = now - 1000
-    
+
     // Удаляем старые временные метки
     while (timestamps.nonEmpty && timestamps.head < oneSecondAgo) {
       timestamps.dequeue()
     }
-    
+
     if (timestamps.size < requestsPerSecond) {
       timestamps.enqueue(now)
       f
@@ -340,12 +340,12 @@ import scala.concurrent.duration._
 
 def promiseWithTimeout[T](timeout: Duration): (Promise[T], Future[T]) = {
   val promise = Promise[T]()
-  
+
   Future {
     Thread.sleep(timeout.toMillis)
     promise.tryFailure(new TimeoutException("Promise timed out"))
   }
-  
+
   (promise, promise.future)
 }
 ```
@@ -357,7 +357,7 @@ import scala.concurrent.{Promise, Future}
 
 class ConditionalPromise[T] {
   private val promise = Promise[T]()
-  
+
   def completeIf(condition: => Boolean)(value: T): Boolean = {
     if (condition) {
       promise.trySuccess(value)
@@ -366,7 +366,7 @@ class ConditionalPromise[T] {
       false
     }
   }
-  
+
   def future: Future[T] = promise.future
 }
 ```
@@ -448,12 +448,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 // Promise с автоматическим таймаутом
 def promiseWithTimeout[T](timeout: Duration): (Promise[T], Future[T]) = {
   val promise = Promise[T]()
-  
+
   Future {
     Thread.sleep(timeout.toMillis)
     promise.tryFailure(new java.util.concurrent.TimeoutException("Promise timed out"))
   }
-  
+
   (promise, promise.future)
 }
 
@@ -499,7 +499,7 @@ def retryFuture[T](maxRetries: Int, delay: Duration = 1.second)(
   f: => Future[T]
 ): Future[T] = {
   val promise = Promise[T]()
-  
+
   def attempt(retriesLeft: Int): Unit = {
     f.onComplete {
       case scala.util.Success(value) => promise.trySuccess(value)
@@ -511,7 +511,7 @@ def retryFuture[T](maxRetries: Int, delay: Duration = 1.second)(
       case scala.util.Failure(e) => promise.tryFailure(e)
     }
   }
-  
+
   attempt(maxRetries)
   promise.future
 }
@@ -527,10 +527,10 @@ import scala.collection.mutable
 class CustomSemaphore(permits: Int) {
   private val waiting = mutable.Queue[Promise[Unit]]()
   private var available = permits
-  
+
   def acquire(): Future[Unit] = {
     val promise = Promise[Unit]()
-    
+
     synchronized {
       if (available > 0) {
         available -= 1
@@ -539,10 +539,10 @@ class CustomSemaphore(permits: Int) {
         waiting.enqueue(promise)
       }
     }
-    
+
     promise.future
   }
-  
+
   def release(): Unit = {
     synchronized {
       if (waiting.nonEmpty) {
@@ -566,14 +566,14 @@ import scala.collection.mutable
 class CustomBarrier(count: Int) {
   private val promises = mutable.Queue[Promise[Unit]]()
   private var waiting = 0
-  
+
   def await(): Future[Unit] = {
     val promise = Promise[Unit]()
-    
+
     synchronized {
       promises.enqueue(promise)
       waiting += 1
-      
+
       if (waiting >= count) {
         while (promises.nonEmpty) {
           promises.dequeue().success(())
@@ -581,7 +581,7 @@ class CustomBarrier(count: Int) {
         waiting = 0
       }
     }
-    
+
     promise.future
   }
 }
@@ -597,7 +597,7 @@ import scala.collection.mutable
 class CustomCountDownLatch(count: Int) {
   private val promise = Promise[Unit]()
   private var remaining = count
-  
+
   def countDown(): Unit = {
     synchronized {
       remaining -= 1
@@ -606,7 +606,7 @@ class CustomCountDownLatch(count: Int) {
       }
     }
   }
-  
+
   def await(): Future[Unit] = {
     if (remaining == 0) {
       Future.successful(())
@@ -636,3 +636,10 @@ class CustomCountDownLatch(count: Int) {
 
 - [Scala Promises Documentation](https://www.scala-lang.org/api/current/scala/concurrent/Promise.html)
 
+## См. также
+
+- [[scala-akka-streams|Akka Streams в Scala]]
+- [[scala-another|Scala Additional Topics]]
+- [[scala-basics|Scala: основы]]
+- [[scala-cats-effect|Cats Effect в Scala]]
+- [[scala-collections-array|Scala Collections — Array]]

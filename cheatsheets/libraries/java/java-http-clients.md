@@ -29,7 +29,7 @@ updated: "2026-04-20"
 - [Retrofit](https://square.github.io/retrofit/)
 - [Spring Cloud OpenFeign](https://spring.io/projects/spring-cloud-openfeign)
 
-### Baeldung
+### Обучающие материалы
 - [Java HttpClient](https://www.baeldung.com/java-9-http-client)
 - [RestTemplate Guide](https://www.baeldung.com/rest-template)
 - [Spring WebClient](https://www.baeldung.com/spring-5-webclient)
@@ -265,7 +265,7 @@ try (Response resp = client.newCall(req).execute()) {
 ```
 
 **Плюсы:** простой API, connection pooling из коробки, interceptors, HTTP/2, WebSocket; легковесный.
-**Минусы:** нет Spring-интеграции "из коробки"; только sync + callback (не CompletableFuture/Mono).
+**Минусы:** нет Spring-интеграции «из коробки»; только sync + callback (не CompletableFuture/Mono).
 
 Подробнее — [OkHttp](java-okhttp.md).
 
@@ -587,7 +587,7 @@ ErrorDecoder decoder() {
 **`PKIX path building failed`**
 - Клиент не доверяет сертификату сервера. Добавьте CA в truststore (`-Djavax.net.ssl.trustStore=...`) или замените `SSLContext`. Не отключайте верификацию в production.
 
-**WebClient "висит" в WebFlux-приложении**
+**WebClient «висит» в WebFlux-приложении**
 - Вы вызвали `.block()` в реактивном обработчике. Либо собирайте цепочку через `flatMap`, либо вызывайте снаружи (в `@Scheduled`).
 
 **RestTemplate выдаёт 404 как `HttpClientErrorException`, а ожидался `Optional.empty()`**

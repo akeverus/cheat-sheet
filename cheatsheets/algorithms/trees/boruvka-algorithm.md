@@ -102,7 +102,7 @@ updated: "2026-02-11"
 public class UnionFind {
     private int[] parents;
     private int[] ranks;
-    
+
     public UnionFind(int n) {
         parents = new int[n];
         ranks = new int[n];
@@ -111,22 +111,22 @@ public class UnionFind {
             ranks[i] = 0;
         }
     }
-    
+
     public int find(int u) {
         while (u != parents[u]) {
             u = parents[u];
         }
         return u;
     }
-    
+
     public void union(int u, int v) {
         int uParent = find(u);
         int vParent = find(v);
-        
+
         if (uParent == vParent) {
             return;
         }
-        
+
         if (ranks[uParent] < ranks[vParent]) {
             parents[uParent] = vParent;
         } else if (ranks[uParent] > ranks[vParent]) {
@@ -171,11 +171,11 @@ public void setup() {
 public class BoruvkaMST {
     private static MutableValueGraph<Integer, Integer> mst = ValueGraphBuilder.undirected().build();
     private static int totalWeight;
-    
+
     public MutableValueGraph<Integer, Integer> getMST() {
         return mst;
     }
-    
+
     public int getTotalWeight() {
         return totalWeight;
     }
@@ -193,49 +193,49 @@ public BoruvkaMST(MutableValueGraph<Integer, Integer> graph) {
     int size = graph.nodes().size();
     UnionFind uf = new UnionFind(size);
     totalWeight = 0;
-    
+
     // Основной цикл алгоритма
     for (int t = 1; t < size && mst.edges().size() < size - 1; t = t + t) {
         EndpointPair<Integer>[] closestEdgeArray = new EndpointPair[size];
-        
+
         // Находим минимальное ребро для каждого дерева
         for (EndpointPair<Integer> edge : graph.edges()) {
             int u = edge.nodeU();
             int v = edge.nodeV();
             int uParent = uf.find(u);
             int vParent = uf.find(v);
-            
+
             if (uParent == vParent) {
                 continue;
             }
-            
+
             int weight = graph.edgeValueOrDefault(u, v, 0);
-            
+
             if (closestEdgeArray[uParent] == null) {
                 closestEdgeArray[uParent] = edge;
             }
-            
+
             if (closestEdgeArray[vParent] == null) {
                 closestEdgeArray[vParent] = edge;
             }
-            
+
             int uParentWeight = graph.edgeValueOrDefault(
                 closestEdgeArray[uParent].nodeU(),
                 closestEdgeArray[uParent].nodeV(), 0);
-            
+
             int vParentWeight = graph.edgeValueOrDefault(
                 closestEdgeArray[vParent].nodeU(),
                 closestEdgeArray[vParent].nodeV(), 0);
-            
+
             if (weight < uParentWeight) {
                 closestEdgeArray[uParent] = edge;
             }
-            
+
             if (weight < vParentWeight) {
                 closestEdgeArray[vParent] = edge;
             }
         }
-        
+
         // Добавляем найденные ребра в MST
         for (int i = 0; i < size; i++) {
             EndpointPair<Integer> edge = closestEdgeArray[i];
@@ -243,7 +243,7 @@ public BoruvkaMST(MutableValueGraph<Integer, Integer> graph) {
                 int u = edge.nodeU();
                 int v = edge.nodeV();
                 int weight = graph.edgeValueOrDefault(u, v, 0);
-                
+
                 if (uf.find(u) != uf.find(v)) {
                     mst.putEdgeValue(u, v, weight);
                     totalWeight += weight;
@@ -266,7 +266,7 @@ public BoruvkaMST(MutableValueGraph<Integer, Integer> graph) {
 void givenInputGraph_whenBoruvkaPerformed_thenMinimumSpanningTree() {
     BoruvkaMST boruvkaMST = new BoruvkaMST(graph);
     MutableValueGraph<Integer, Integer> mst = boruvkaMST.getMST();
-    
+
     assertEquals(30, boruvkaMST.getTotalWeight());
     assertEquals(4, mst.getEdgeCount());
 }
@@ -282,7 +282,7 @@ void givenInputGraph_whenBoruvkaPerformed_thenMinimumSpanningTree() {
 class UnionFindK(private val n: Int) {
     private val parents = IntArray(n) { it }
     private val ranks = IntArray(n) { 0 }
-    
+
     fun find(u: Int): Int {
         var current = u
         while (current != parents[current]) {
@@ -290,13 +290,13 @@ class UnionFindK(private val n: Int) {
         }
         return current
     }
-    
+
     fun union(u: Int, v: Int) {
         val uParent = find(u)
         val vParent = find(v)
-        
+
         if (uParent == vParent) return
-        
+
         when {
             ranks[uParent] < ranks[vParent] -> parents[uParent] = vParent
             ranks[uParent] > ranks[vParent] -> parents[vParent] = uParent
@@ -317,35 +317,35 @@ data class EdgeK(val u: Int, val v: Int, val weight: Int)
 class BoruvkaMSTK {
     private val mst = mutableListOf<EdgeK>()
     private var totalWeight = 0
-    
+
     fun getMST(graph: Map<Int, List<Pair<Int, Int>>>, vertexCount: Int): List<EdgeK> {
         val unionFind = UnionFindK(vertexCount)
         var treeCount = vertexCount
-        
+
         while (treeCount > 1) {
             val cheapest = IntArray(vertexCount) { -1 }
-            
+
             for ((u, neighbors) in graph) {
                 val uRoot = unionFind.find(u)
-                
+
                 for ((v, weight) in neighbors) {
                     val vRoot = unionFind.find(v)
-                    
+
                     if (uRoot != vRoot) {
-                        if (cheapest[uRoot] == -1 || 
+                        if (cheapest[uRoot] == -1 ||
                             weight < graph[u]!![cheapest[uRoot]].second) {
                             cheapest[uRoot] = neighbors.indexOfFirst { it.first == v }
                         }
                     }
                 }
             }
-            
+
             for (u in 0 until vertexCount) {
                 if (cheapest[u] != -1) {
                     val (v, weight) = graph[u]!![cheapest[u]]
                     val uRoot = unionFind.find(u)
                     val vRoot = unionFind.find(v)
-                    
+
                     if (uRoot != vRoot) {
                         mst.add(EdgeK(u, v, weight))
                         totalWeight += weight
@@ -355,10 +355,10 @@ class BoruvkaMSTK {
                 }
             }
         }
-        
+
         return mst
     }
-    
+
     fun getTotalWeight(): Int = totalWeight
 }
 ```
@@ -374,10 +374,10 @@ fun main() {
         3 to listOf(Pair(1, 11), Pair(2, 15), Pair(4, 7)),
         4 to listOf(Pair(2, 10), Pair(3, 7))
     )
-    
+
     val boruvka = BoruvkaMSTK()
     val mst = boruvka.getMST(graph, 5)
-    
+
     println("Total weight: ${boruvka.getTotalWeight()}") // 30
     println("Edges: ${mst.size}") // 4
 }

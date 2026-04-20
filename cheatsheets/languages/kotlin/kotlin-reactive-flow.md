@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Kotlin Reactive: Flow
 
-Кратко: полное руководство по **Kotlin Flow** - нативной библиотеке для асинхронных потоков данных в **Kotlin**. Рассматриваются **cold** и **hot flows**, операторы, **StateFlow**, **SharedFlow**, интеграция с корутинами и лучшие практики.
+Кратко: полное руководство по **Kotlin Flow** — нативной библиотеке для асинхронных потоков данных в **Kotlin**. Рассматриваются **cold** и **hot flows**, операторы, **StateFlow**, **SharedFlow**, интеграция с корутинами и лучшие практики.
 
 ## Полезные ссылки
 
@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Flow](https://kotlinlang.org/docs/flow.html)
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Flow Tutorial](https://www.baeldung.com/kotlin/flow)
 
 ### См. также
@@ -122,11 +122,11 @@ updated: "2026-02-11"
 
 ## Введение в **Flow**
 
-**Kotlin Flow** - это библиотека для асинхронных потоков данных, встроенная в **Kotlin Coroutines**. **Flow** представляет последовательность значений, которые вычисляются асинхронно.
+**Kotlin Flow** — это библиотека для асинхронных потоков данных, встроенная в **Kotlin Coroutines**. **Flow** представляет последовательность значений, которые вычисляются асинхронно.
 
 ### Основные концепции
 
-**Flow** построен на корутинах и следует тем же принципам. **Flow** является **cold** по умолчанию - он начинает испускать значения только при вызове терминальной операции (**например, `collect`**). Это отличает **Flow** от **RxJava Observable**, который может быть **hot**.
+**Flow** построен на корутинах и следует тем же принципам. **Flow** является **cold** по умолчанию — он начинает испускать значения только при вызове терминальной операции (**например, `collect`**). Это отличает **Flow** от **RxJava Observable**, который может быть **hot**.
 
 ### Преимущества **Flow**
 
@@ -185,7 +185,7 @@ runBlocking {
 
 ### **flow builder**
 
-**Самый распространенный способ создания **Flow** - использование `**flow**` **builder**:**
+**Самый распространенный способ создания **Flow** — использование `**flow**` **builder**:**
 
 ```kotlin
 fun numbersFlow(): Flow<Int> = flow {
@@ -320,7 +320,7 @@ flow1.combine(flow2) { num, letter ->
 
 ## **StateFlow**
 
-**StateFlow** - это **hot Flow**, который хранит текущее состояние и испускает его новым подписчикам.
+**StateFlow** — это **hot Flow**, который хранит текущее состояние и испускает его новым подписчикам.
 
 ### Создание **StateFlow**
 
@@ -348,7 +348,7 @@ stateFlow.collect { value ->
 class ViewModel : ViewModel() {
     private val _state = MutableStateFlow(0)
     val state: StateFlow<Int> = _state.asStateFlow()
-    
+
     fun increment() {
         _state.value++
     }
@@ -359,7 +359,7 @@ class ViewModel : ViewModel() {
 
 ## **SharedFlow**
 
-**SharedFlow** - это **hot Flow** без начального значения, который может иметь несколько подписчиков.
+**SharedFlow** — это **hot Flow** без начального значения, который может иметь несколько подписчиков.
 
 ### Создание **SharedFlow**
 
@@ -393,7 +393,7 @@ class EventBus {
         extraBufferCapacity = 64
     )
     val events: SharedFlow<Event> = _events.asSharedFlow()
-    
+
     fun post(event: Event) {
         _events.emit(event)
     }
@@ -720,24 +720,24 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 fun testFlowWithTime() = runTest {
     val scheduler = TestCoroutineScheduler()
     val dispatcher = StandardTestDispatcher(scheduler)
-    
+
     val flow = flow {
         emit(1)
         delay(1000)
         emit(2)
     }.flowOn(dispatcher)
-    
+
     val results = mutableListOf<Int>()
     val job = launch(dispatcher) {
         flow.collect { results.add(it) }
     }
-    
+
     scheduler.advanceTimeBy(500)
     assertEquals(listOf(1), results)
-    
+
     scheduler.advanceTimeBy(500)
     assertEquals(listOf(1, 2), results)
-    
+
     job.cancel()
 }
 ```
@@ -750,17 +750,17 @@ fun testFlowWithTime() = runTest {
 @Test
 fun testStateFlow() = runTest {
     val stateFlow = MutableStateFlow(0)
-    
+
     val results = mutableListOf<Int>()
     val job = launch {
         stateFlow.collect { results.add(it) }
     }
-    
+
     stateFlow.value = 1
     stateFlow.value = 2
-    
+
     assertEquals(listOf(0, 1, 2), results)
-    
+
     job.cancel()
 }
 ```
@@ -827,7 +827,7 @@ fun fetchUserData(userId: Int): Flow<User> = flow {
 }
 ```
 
-Обработка сетевых запросов с **retry** логикой и обработкой ошибок - типичный случай использования **Flow**.
+Обработка сетевых запросов с **retry** логикой и обработкой ошибок — типичный случай использования **Flow**.
 
 ### Обработка `UI` событий
 
@@ -950,10 +950,10 @@ flow {
 ```kotlin
 class MainActivity : AppCompatActivity() {
     private var job: Job? = null
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Запуск Flow в lifecycleScope
         job = lifecycleScope.launch {
             searchFlow()
@@ -963,7 +963,7 @@ class MainActivity : AppCompatActivity() {
                 }
         }
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         job?.cancel()  // Отмена при уничтожении Activity
@@ -981,7 +981,7 @@ class MainActivity : AppCompatActivity() {
 class MyViewModel : ViewModel() {
     private val _data = MutableStateFlow<List<Item>>(emptyList())
     val data: StateFlow<List<Item>> = _data.asStateFlow()
-    
+
     init {
         viewModelScope.launch {
             loadData()
@@ -990,7 +990,7 @@ class MyViewModel : ViewModel() {
                 }
         }
     }
-    
+
     private fun loadData(): Flow<List<Item>> = flow {
         emit(dataRepository.getAll())
     }
@@ -1059,7 +1059,7 @@ class CachedFlow<T>(
     private val source: Flow<T>,
     private val cache: MutableSharedFlow<T> = MutableSharedFlow(replay = 1)
 ) : Flow<T> by cache {
-    
+
     fun start() {
         CoroutineScope(Dispatchers.Default).launch {
             source.collect { value ->
@@ -1170,7 +1170,7 @@ try {
 // Кастомный оператор для batch обработки
 fun <T> Flow<T>.batch(size: Int): Flow<List<T>> = flow {
     val buffer = mutableListOf<T>()
-    
+
     collect { value ->
         buffer.add(value)
         if (buffer.size >= size) {
@@ -1178,7 +1178,7 @@ fun <T> Flow<T>.batch(size: Int): Flow<List<T>> = flow {
             buffer.clear()
         }
     }
-    
+
     if (buffer.isNotEmpty()) {
         emit(buffer)
     }
@@ -1196,7 +1196,7 @@ flow {
 // Кастомный оператор для window операций
 fun <T> Flow<T>.windowed(size: Int, step: Int = 1): Flow<List<T>> = flow {
     val window = mutableListOf<T>()
-    
+
     collect { value ->
         window.add(value)
         if (window.size >= size) {
@@ -1224,15 +1224,15 @@ fun <T> Flow<T>.rateLimit(permits: Int, period: Long, unit: TimeUnit = TimeUnit.
     val interval = unit.toMillis(period)
     var lastEmitTime = 0L
     var permitCount = 0
-    
+
     collect { value ->
         val now = System.currentTimeMillis()
-        
+
         if (now - lastEmitTime >= interval) {
             permitCount = 0
             lastEmitTime = now
         }
-        
+
         if (permitCount < permits) {
             emit(value)
             permitCount++
@@ -1253,7 +1253,7 @@ suspend fun combineMultipleFlows() {
     val flow1 = flowOf(1, 2, 3)
     val flow2 = flowOf("a", "b", "c")
     val flow3 = flowOf(true, false, true)
-    
+
     combine(flow1, flow2, flow3) { num, str, bool ->
         Triple(num, str, bool)
     }.collect { (num, str, bool) ->
@@ -1265,7 +1265,7 @@ suspend fun combineMultipleFlows() {
 suspend fun mergeMultipleFlows() {
     val flow1 = flowOf(1, 2, 3)
     val flow2 = flowOf(4, 5, 6)
-    
+
     merge(flow1, flow2).collect { value ->
         println(value)
     }
@@ -1275,7 +1275,7 @@ suspend fun mergeMultipleFlows() {
 suspend fun zipFlows() {
     val flow1 = flowOf(1, 2, 3)
     val flow2 = flowOf("a", "b", "c")
-    
+
     flow1.zip(flow2) { num, str ->
         "$num: $str"
     }.collect { result ->
@@ -1315,11 +1315,11 @@ class FlowMetrics {
     private val requestCount = AtomicLong(0)
     private val errorCount = AtomicLong(0)
     private val averageLatency = AtomicReference<Double>(0.0)
-    
+
     fun <T> Flow<T>.withMetrics(): Flow<T> = flow {
         requestCount.incrementAndGet()
         val startTime = System.nanoTime()
-        
+
         try {
             collect { value ->
                 emit(value)
@@ -1330,13 +1330,13 @@ class FlowMetrics {
             throw e
         }
     }
-    
+
     private fun recordSuccess(duration: Long) {
         val currentAvg = averageLatency.get()
         val newAvg = (currentAvg + duration / 1_000_000.0) / 2
         averageLatency.set(newAvg)
     }
-    
+
     fun getMetrics(): Map<String, Any> {
         return mapOf(
             "requests" to requestCount.get(),
@@ -1386,11 +1386,11 @@ sharedFlow.collect { value ->
 class Counter {
     private val _count = MutableStateFlow(0)
     val count: StateFlow<Int> = _count.asStateFlow()
-    
+
     fun increment() {
         _count.value++
     }
-    
+
     fun reset() {
         _count.value = 0
     }
@@ -1422,7 +1422,7 @@ suspend fun processFlow() = coroutineScope {
             delay(100)
         }
     }
-    
+
     flow
         .onEach { println("Emitted: $it") }
         .collect { value ->
@@ -1437,7 +1437,7 @@ suspend fun processFlowParallel() = coroutineScope {
             emit(it)
         }
     }
-    
+
     flow
         .buffer()  // Буферизация для параллельной обработки
         .map { value ->
@@ -1652,7 +1652,7 @@ flow { /* ... */ }
 class UserViewModel {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
-    
+
     fun loadUser(userId: Long) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(loading = true)
@@ -1683,7 +1683,7 @@ class UserViewModel {
 class EventBus {
     private val _events = MutableSharedFlow<Event>(replay = 0)
     val events: SharedFlow<Event> = _events.asSharedFlow()
-    
+
     fun emit(event: Event) {
         _events.emit(event)
     }
@@ -1709,7 +1709,7 @@ eventBus.events.collect { event ->
 class SearchViewModel {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-    
+
     val searchResults: StateFlow<List<SearchResult>> = _searchQuery
         .debounce(300)
         .distinctUntilChanged()
@@ -1726,7 +1726,7 @@ class SearchViewModel {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
-    
+
     fun updateQuery(query: String) {
         _searchQuery.value = query
     }
@@ -1742,14 +1742,14 @@ class SearchViewModel {
 ```kotlin
 class DataRepository {
     private val cache = mutableMapOf<Long, User>()
-    
+
     fun getUserFlow(userId: Long): Flow<User> = flow {
         // Проверка кэша
         cache[userId]?.let {
             emit(it)
             return@flow
         }
-        
+
         // Загрузка из сети
         val user = apiService.getUser(userId)
         cache[userId] = user

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # REST Assured
 
-**REST Assured** - это **Java DSL** для упрощения тестирования и валидации **REST API**.
+**REST Assured** — это **Java DSL** для упрощения тестирования и валидации **REST API**.
 
 ## Полезные ссылки
 

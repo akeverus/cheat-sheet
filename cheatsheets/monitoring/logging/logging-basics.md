@@ -97,7 +97,7 @@ import java.util.logging.Level;
 
 public class JulExample {
     private static final Logger logger = Logger.getLogger(JulExample.class.getName());
-    
+
     public void basicLogging() {
         logger.fine("Fine message");
         logger.info("Info message");
@@ -130,13 +130,13 @@ import org.slf4j.LoggerFactory;
 
 public class Slf4jExample {
     private static final Logger logger = LoggerFactory.getLogger(Slf4jExample.class);
-    
+
     public void basicSlf4j() {
         logger.debug("Processing user {} with id {}", username, userId);
         logger.info("Application started on port {}", port);
             logger.error("Failed to process data", e);
     }
-    
+
     public void conditionalLogging() {
         if (logger.isDebugEnabled()) {
             logger.debug("Expensive: {}", computeExpensiveDebugInfo());
@@ -157,7 +157,7 @@ public class Slf4jExample {
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    
+
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/application.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -169,7 +169,7 @@ public class Slf4jExample {
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    
+
     <logger name="com.example" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
@@ -232,7 +232,7 @@ logger.setLevel(Level.DEBUG);
 ```
 
 Использование MDC:
-    
+
 ```java
         MDC.put("userId", "12345");
         MDC.put("requestId", UUID.randomUUID().toString());

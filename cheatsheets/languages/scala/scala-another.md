@@ -118,7 +118,7 @@ object MergeSort extends SortingStrategy {
           else r :: merge(left, rs)
       }
     }
-    
+
     if (list.length <= 1) list
     else {
       val (left, right) = list.splitAt(list.length / 2)
@@ -129,7 +129,7 @@ object MergeSort extends SortingStrategy {
 
 // Использование
 class Sorter(strategy: SortingStrategy) {
-  def sort[T](list: List[T])(implicit ord: Ordering[T]): List[T] = 
+  def sort[T](list: List[T])(implicit ord: Ordering[T]): List[T] =
     strategy.sort(list)
 }
 
@@ -159,19 +159,19 @@ trait Observable[T] {
 // Реализация
 class EventEmitter[T] extends Observable[T] {
   private var observers: List[Observer[T]] = Nil
-  
+
   def subscribe(observer: Observer[T]): Unit = {
     observers = observer :: observers
   }
-  
+
   def emit(value: T): Unit = {
     observers.foreach(_.onNext(value))
   }
-  
+
   def error(error: Throwable): Unit = {
     observers.foreach(_.onError(error))
   }
-  
+
   def complete(): Unit = {
     observers.foreach(_.onComplete())
   }
@@ -340,10 +340,10 @@ case class UpdateUser(id: Long, user: User) extends UserAlgebra[Option[User]]
 type UserProgram[A] = Free[UserAlgebra, A]
 
 // Создание программ
-def findUser(id: Long): UserProgram[Option[User]] = 
+def findUser(id: Long): UserProgram[Option[User]] =
   liftF(FindUser(id))
 
-def createUser(user: User): UserProgram[User] = 
+def createUser(user: User): UserProgram[User] =
   liftF(CreateUser(user))
 
 // Композиция программ
@@ -498,32 +498,32 @@ class UserBuilder {
   private var email: String = ""
   private var age: Option[Int] = None
   private var address: Option[String] = None
-  
+
   def withId(id: Long): UserBuilder = {
     this.id = id
     this
   }
-  
+
   def withName(name: String): UserBuilder = {
     this.name = name
     this
   }
-  
+
   def withEmail(email: String): UserBuilder = {
     this.email = email
     this
   }
-  
+
   def withAge(age: Int): UserBuilder = {
     this.age = Some(age)
     this
   }
-  
+
   def withAddress(address: String): UserBuilder = {
     this.address = Some(address)
     this
   }
-  
+
   def build(): User = {
     if (name.isEmpty || email.isEmpty) {
       throw new IllegalArgumentException("Name and email are required")
@@ -741,11 +741,11 @@ trait EventHandler {
 // Event Bus
 class EventBus {
   private var handlers: List[EventHandler] = Nil
-  
+
   def subscribe(handler: EventHandler): Unit = {
     handlers = handler :: handlers
   }
-  
+
   def publish(event: Event): Unit = {
     handlers.foreach(_.handle(event))
   }
@@ -820,7 +820,7 @@ abstract class DataProcessor {
     val saved = save(transformed)
     saved
   }
-  
+
   // Шаги, которые должны быть реализованы подклассами
   def validate(data: String): String
   def transform(data: String): String
@@ -833,11 +833,11 @@ class CSVProcessor extends DataProcessor {
     if (data.contains(",")) data
     else throw new IllegalArgumentException("Invalid CSV")
   }
-  
+
   def transform(data: String): String = {
     data.split(",").map(_.trim).mkString("|")
   }
-  
+
   def save(data: String): String = {
     s"Saved CSV: $data"
   }
@@ -848,11 +848,11 @@ class JSONProcessor extends DataProcessor {
     if (data.startsWith("{") && data.endsWith("}")) data
     else throw new IllegalArgumentException("Invalid JSON")
   }
-  
+
   def transform(data: String): String = {
     data.replace("\"", "'")
   }
-  
+
   def save(data: String): String = {
     s"Saved JSON: $data"
   }
@@ -909,12 +909,12 @@ trait Handler {
 // Базовый обработчик
 abstract class BaseHandler extends Handler {
   private var next: Option[Handler] = None
-  
+
   def setNext(handler: Handler): Handler = {
     next = Some(handler)
     handler
   }
-  
+
   def handle(request: String): Option[String] = {
     if (canHandle(request)) {
       process(request)
@@ -922,7 +922,7 @@ abstract class BaseHandler extends Handler {
       next.flatMap(_.handle(request))
     }
   }
-  
+
   protected def canHandle(request: String): Boolean
   protected def process(request: String): Option[String]
 }
@@ -932,7 +932,7 @@ class AuthenticationHandler extends BaseHandler {
   protected def canHandle(request: String): Boolean = {
     request.startsWith("AUTH:")
   }
-  
+
   protected def process(request: String): Option[String] = {
     Some(s"Authenticated: ${request.substring(5)}")
   }
@@ -942,7 +942,7 @@ class AuthorizationHandler extends BaseHandler {
   protected def canHandle(request: String): Boolean = {
     request.startsWith("AUTHZ:")
   }
-  
+
   protected def process(request: String): Option[String] = {
     Some(s"Authorized: ${request.substring(6)}")
   }
@@ -952,7 +952,7 @@ class ValidationHandler extends BaseHandler {
   protected def canHandle(request: String): Boolean = {
     request.startsWith("VALID:")
   }
-  
+
   protected def process(request: String): Option[String] = {
     Some(s"Validated: ${request.substring(6)}")
   }
@@ -978,11 +978,11 @@ trait Command {
 // Конкретные команды
 case class CreateUserCommand(user: User, repository: UserRepository) extends Command {
   private var createdId: Option[Long] = None
-  
+
   def execute(): Unit = {
     createdId = Some(repository.create(user))
   }
-  
+
   def undo(): Unit = {
     createdId.foreach(repository.delete)
   }
@@ -992,7 +992,7 @@ case class UpdateUserCommand(id: Long, oldUser: User, newUser: User, repository:
   def execute(): Unit = {
     repository.update(id, newUser)
   }
-  
+
   def undo(): Unit = {
     repository.update(id, oldUser)
   }
@@ -1001,12 +1001,12 @@ case class UpdateUserCommand(id: Long, oldUser: User, newUser: User, repository:
 // Invoker
 class CommandInvoker {
   private var history: List[Command] = Nil
-  
+
   def execute(command: Command): Unit = {
     command.execute()
     history = command :: history
   }
-  
+
   def undo(): Unit = {
     history match {
       case head :: tail =>
@@ -1030,15 +1030,15 @@ case class Memento(state: String)
 // Originator
 class Originator {
   private var state: String = ""
-  
+
   def setState(state: String): Unit = {
     this.state = state
   }
-  
+
   def getState(): String = state
-  
+
   def save(): Memento = Memento(state)
-  
+
   def restore(memento: Memento): Unit = {
     state = memento.state
   }
@@ -1047,11 +1047,11 @@ class Originator {
 // Caretaker
 class Caretaker {
   private var mementos: List[Memento] = Nil
-  
+
   def save(memento: Memento): Unit = {
     mementos = memento :: mementos
   }
-  
+
   def restore(): Option[Memento] = {
     mementos match {
       case head :: tail =>
@@ -1082,7 +1082,7 @@ class DatabaseUserRepository extends UserRepository {
     // Реализация с базой данных
     None
   }
-  
+
   def save(user: User): User = {
     // Реализация сохранения
     user
@@ -1092,9 +1092,9 @@ class DatabaseUserRepository extends UserRepository {
 // Adapter для in-memory хранилища (для тестов)
 class InMemoryUserRepository extends UserRepository {
   private var users: Map[Long, User] = Map.empty
-  
+
   def findById(id: Long): Option[User] = users.get(id)
-  
+
   def save(user: User): User = {
     val saved = user.copy(id = System.currentTimeMillis())
     users = users + (saved.id -> saved)

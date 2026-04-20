@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: Mail - Отправка email
-
-
+# Quarkus: Mail — Отправка email
 
 ## Полезные ссылки
 
@@ -121,10 +119,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class EmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendSimpleEmail(String to, String subject, String body) {
         mailer.send(Mail.withText(to, subject, body));
     }
@@ -138,10 +136,10 @@ public class EmailService {
 ```java
 @ApplicationScoped
 public class HtmlEmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         mailer.send(Mail.withHtml(to, subject, htmlBody));
     }
@@ -160,14 +158,14 @@ import java.nio.file.Paths;
 
 @ApplicationScoped
 public class AttachmentEmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendEmailWithAttachment(String to, String subject, String body) {
         Mail mail = Mail.withText(to, subject, body);
-        mail.addAttachment("document.pdf", 
-            Paths.get("/path/to/document.pdf").toFile(), 
+        mail.addAttachment("document.pdf",
+            Paths.get("/path/to/document.pdf").toFile(),
             "application/pdf");
         mailer.send(mail);
     }
@@ -181,10 +179,10 @@ public class AttachmentEmailService {
 ```java
 @ApplicationScoped
 public class MultiRecipientService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendToMultiple(String subject, String body) {
         Mail mail = Mail.withText("", subject, body);
         mail.addTo("user1@example.com");
@@ -208,10 +206,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class AsyncEmailService {
-    
+
     @Inject
     ReactiveMailer mailer;
-    
+
     public Uni<Void> sendEmailAsync(String to, String subject, String body) {
         return mailer.send(Mail.withText(to, subject, body));
     }
@@ -231,13 +229,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class TemplateEmailService {
-    
+
     @Inject
     Template welcome;
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendWelcomeEmail(String to, String name) {
         String htmlBody = welcome.data("name", name).render();
         mailer.send(Mail.withHtml(to, "Welcome", htmlBody));
@@ -293,10 +291,10 @@ mailer.send(mail)
 ```java
 @ApplicationScoped
 public class HeaderEmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendEmailWithHeaders(String to, String subject, String body) {
         Mail mail = Mail.withText(to, subject, body);
         mail.addHeader("X-Custom-Header", "value");
@@ -313,10 +311,10 @@ public class HeaderEmailService {
 ```java
 @ApplicationScoped
 public class ReplyToService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendWithReplyTo(String to, String subject, String body) {
         Mail mail = Mail.withText(to, subject, body);
         mail.setReplyTo("support@example.com");
@@ -337,13 +335,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ValidatedEmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public void sendValidatedEmail(
-            @Email String to, 
-            String subject, 
+            @Email String to,
+            String subject,
             String body) {
         mailer.send(Mail.withText(to, subject, body));
     }
@@ -362,10 +360,10 @@ import java.util.List;
 
 @ApplicationScoped
 public class BulkEmailService {
-    
+
     @Inject
     ReactiveMailer mailer;
-    
+
     public Uni<Void> sendBulkEmails(List<String> recipients, String subject, String body) {
         return Uni.combine().all().unis(
             recipients.stream()
@@ -389,20 +387,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class QueuedEmailService {
-    
+
     @Inject
     Event<EmailEvent> emailEvent;
-    
+
     public void queueEmail(String to, String subject, String body) {
         emailEvent.fireAsync(new EmailEvent(to, subject, body));
     }
-    
+
     @ApplicationScoped
     public static class EmailProcessor {
-        
+
         @Inject
         Mailer mailer;
-        
+
         public void processEmail(@ObservesAsync EmailEvent event) {
             mailer.send(Mail.withText(event.getTo(), event.getSubject(), event.getBody()));
         }
@@ -419,13 +417,13 @@ public class QueuedEmailService {
 ```java
 @ApplicationScoped
 public class TemplateEmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     @Inject
     Template welcome;
-    
+
     public Uni<Void> sendWelcomeEmail(User user) {
         String htmlBody = welcome.data("user", user).render();
         return mailer.send(Mail.withHtml(user.getEmail(), "Welcome", htmlBody));
@@ -460,9 +458,9 @@ public class TemplateEmailService {
 ```java
 @ApplicationScoped
 public class EmailQueueService {
-    
+
     private final Queue<EmailTask> emailQueue = new ConcurrentLinkedQueue<>();
-    
+
     @Scheduled(every = "5s")
     void processEmailQueue() {
         EmailTask task = emailQueue.poll();
@@ -474,7 +472,7 @@ public class EmailQueueService {
                 });
         }
     }
-    
+
     public void enqueueEmail(EmailTask task) {
         emailQueue.offer(task);
     }
@@ -488,16 +486,16 @@ public class EmailQueueService {
 ```java
 @ApplicationScoped
 public class EmailTrackingService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public Uni<String> sendTrackedEmail(String to, String subject, String body) {
         String trackingId = UUID.randomUUID().toString();
-        
+
         Mail mail = Mail.withText(to, subject, body)
             .addHeader("X-Tracking-ID", trackingId);
-        
+
         return mailer.send(mail)
             .onItem().transform(v -> trackingId)
             .onFailure().recoverWithItem(() -> null);
@@ -514,15 +512,15 @@ public class EmailTrackingService {
 ```java
 @ApplicationScoped
 public class BatchEmailService {
-    
+
     @Inject
     Mailer mailer;
-    
+
     public Uni<Void> sendBatchEmails(List<String> recipients, String subject, String body) {
         List<Uni<Void>> emailTasks = recipients.stream()
             .map(to -> mailer.send(Mail.withText(to, subject, body)))
             .collect(Collectors.toList());
-        
+
         return Uni.combine().all().unis(emailTasks)
             .combinedWith(results -> null);
     }
@@ -536,9 +534,9 @@ public class BatchEmailService {
 ```java
 @ApplicationScoped
 public class RateLimitedEmailService {
-    
+
     private final RateLimiter rateLimiter = RateLimiter.create(10.0); // 10 emails per second
-    
+
     public Uni<Void> sendEmail(String to, String subject, String body) {
         rateLimiter.acquire();
         return mailer.send(Mail.withText(to, subject, body));
@@ -553,18 +551,18 @@ public class RateLimitedEmailService {
 ```java
 @ApplicationScoped
 public class CachedTemplateService {
-    
+
     @Inject
     Template welcomeTemplate;
-    
-    private final Cache<String, String> templateCache = 
+
+    private final Cache<String, String> templateCache =
         Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .build();
-    
+
     public String getRenderedTemplate(User user) {
         String key = "welcome:" + user.getId();
-        return templateCache.get(key, k -> 
+        return templateCache.get(key, k ->
             welcomeTemplate.data("user", user).render()
         );
     }
@@ -581,3 +579,11 @@ public class CachedTemplateService {
 - [**Quarkus Mail** Guide](https://quarkus.io/guides/mailer)
 - [**Jakarta Mail** Specification](https://jakarta.ee/specifications/mail/)
 - [**SMTP** Protocol (RFC 5321)](https://datatracker.ietf.org/doc/html/rfc5321)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

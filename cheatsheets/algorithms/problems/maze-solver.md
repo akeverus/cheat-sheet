@@ -59,43 +59,43 @@ public class Maze {
     private static final int ENTRANCE = 2;
     private static final int EXIT = 3;
     private static final int PATH = 4;
-    
+
     private int[][] maze;
     private boolean[][] visited;
     private Coordinate entrance;
     private Coordinate exit;
-    
+
     public Maze(int[][] maze) {
         this.maze = maze;
         this.visited = new boolean[maze.length][maze[0].length];
         findEntranceAndExit();
     }
-    
+
     public boolean isValidLocation(int row, int col) {
         return row >= 0 && row < maze.length &&
                col >= 0 && col < maze[0].length;
     }
-    
+
     public boolean isWall(int row, int col) {
         return maze[row][col] == WALL;
     }
-    
+
     public boolean isExit(int row, int col) {
         return maze[row][col] == EXIT;
     }
-    
+
     public boolean isExplored(int row, int col) {
         return visited[row][col];
     }
-    
+
     public void setVisited(int row, int col, boolean visited) {
         this.visited[row][col] = visited;
     }
-    
+
     public Coordinate getEntry() {
         return entrance;
     }
-    
+
     private void findEntranceAndExit() {
         for (int i = 0; i < maze.length; i++) {
             for (int j = 0; j < maze[0].length; j++) {
@@ -117,22 +117,22 @@ public class Coordinate {
     private int x;
     private int y;
     public Coordinate parent;
-    
+
     public Coordinate(int x, int y) {
         this.x = x;
         this.y = y;
     }
-    
+
     public Coordinate(int x, int y, Coordinate parent) {
         this.x = x;
         this.y = y;
         this.parent = parent;
     }
-    
+
     public int getX() {
         return x;
     }
-    
+
     public int getY() {
         return y;
     }
@@ -151,45 +151,45 @@ public class MazeSolverDFS {
         {0, -1},  // влево
         {-1, 0}   // вверх
     };
-    
+
     private Coordinate getNextCoordinate(int row, int col, int i, int j) {
         return new Coordinate(row + i, col + j);
     }
-    
+
     public List<Coordinate> solve(Maze maze) {
         List<Coordinate> path = new ArrayList<>();
-        
+
         if (explore(maze, maze.getEntry().getX(), maze.getEntry().getY(), path)) {
             return path;
         }
-        
+
         return Collections.emptyList();
     }
-    
+
     private boolean explore(Maze maze, int row, int col, List<Coordinate> path) {
-        if (!maze.isValidLocation(row, col) || 
-            maze.isWall(row, col) || 
+        if (!maze.isValidLocation(row, col) ||
+            maze.isWall(row, col) ||
             maze.isExplored(row, col)) {
             return false;
         }
-        
+
         path.add(new Coordinate(row, col));
         maze.setVisited(row, col, true);
-        
+
         if (maze.isExit(row, col)) {
             return true;
         }
-        
+
         for (int[] direction : DIRECTIONS) {
             Coordinate coordinate = getNextCoordinate(
                 row, col, direction[0], direction[1]
             );
-            
+
             if (explore(maze, coordinate.getX(), coordinate.getY(), path)) {
                 return true;
             }
         }
-        
+
         path.remove(path.size() - 1);
         return false;
     }
@@ -204,42 +204,42 @@ public class MazeSolverBFS {
     private static final int[][] DIRECTIONS = {
         {0, 1}, {1, 0}, {0, -1}, {-1, 0}
     };
-    
+
     private List<Coordinate> backtrackPath(Coordinate cur) {
         List<Coordinate> path = new ArrayList<>();
         Coordinate iter = cur;
-        
+
         while (iter != null) {
             path.add(iter);
             iter = iter.parent;
         }
-        
+
         Collections.reverse(path);
         return path;
     }
-    
+
     public List<Coordinate> solve(Maze maze) {
         LinkedList<Coordinate> nextToVisit = new LinkedList<>();
         Coordinate start = maze.getEntry();
         nextToVisit.add(start);
-        
+
         while (!nextToVisit.isEmpty()) {
             Coordinate cur = nextToVisit.remove();
-            
-            if (!maze.isValidLocation(cur.getX(), cur.getY()) || 
+
+            if (!maze.isValidLocation(cur.getX(), cur.getY()) ||
                 maze.isExplored(cur.getX(), cur.getY())) {
                 continue;
             }
-            
+
             if (maze.isWall(cur.getX(), cur.getY())) {
                 maze.setVisited(cur.getX(), cur.getY(), true);
                 continue;
             }
-            
+
             if (maze.isExit(cur.getX(), cur.getY())) {
                 return backtrackPath(cur);
             }
-            
+
             for (int[] direction : DIRECTIONS) {
                 Coordinate coordinate = new Coordinate(
                     cur.getX() + direction[0],
@@ -250,7 +250,7 @@ public class MazeSolverBFS {
                 maze.setVisited(cur.getX(), cur.getY(), true);
             }
         }
-        
+
         return Collections.emptyList();
     }
 }
@@ -276,19 +276,19 @@ class MazeK(private val maze: Array<IntArray>) {
         const val EXIT = 3
         const val PATH = 4
     }
-    
+
     private val visited = Array(maze.size) { BooleanArray(maze[0].size) }
     private var entrance: CoordinateK? = null
     private var exit: CoordinateK? = null
-    
+
     init {
         findEntranceAndExit()
     }
-    
+
     fun isValidLocation(row: Int, col: Int): Boolean {
         return row >= 0 && row < maze.size && col >= 0 && col < maze[0].size
     }
-    
+
     fun isWall(row: Int, col: Int): Boolean = maze[row][col] == WALL
     fun isExit(row: Int, col: Int): Boolean = maze[row][col] == EXIT
     fun isExplored(row: Int, col: Int): Boolean = visited[row][col]
@@ -296,7 +296,7 @@ class MazeK(private val maze: Array<IntArray>) {
         this.visited[row][col] = visited
     }
     fun getEntry(): CoordinateK? = entrance
-    
+
     private fun findEntranceAndExit() {
         for (i in maze.indices) {
             for (j in maze[0].indices) {
@@ -318,39 +318,39 @@ class MazeSolverDFSK {
         intArrayOf(0, -1),  // влево
         intArrayOf(-1, 0)   // вверх
     )
-    
+
     fun solve(maze: MazeK): List<CoordinateK> {
         val path = mutableListOf<CoordinateK>()
         val entry = maze.getEntry() ?: return emptyList()
-        
+
         if (explore(maze, entry.x, entry.y, path)) {
             return path
         }
-        
+
         return emptyList()
     }
-    
+
     private fun explore(maze: MazeK, row: Int, col: Int, path: MutableList<CoordinateK>): Boolean {
-        if (!maze.isValidLocation(row, col) || 
-            maze.isWall(row, col) || 
+        if (!maze.isValidLocation(row, col) ||
+            maze.isWall(row, col) ||
             maze.isExplored(row, col)) {
             return false
         }
-        
+
         path.add(CoordinateK(row, col))
         maze.setVisited(row, col, true)
-        
+
         if (maze.isExit(row, col)) {
             return true
         }
-        
+
         for (direction in DIRECTIONS) {
             val next = CoordinateK(row + direction[0], col + direction[1])
             if (explore(maze, next.x, next.y, path)) {
                 return true
             }
         }
-        
+
         path.removeAt(path.size - 1)
         return false
     }
@@ -364,27 +364,27 @@ class MazeSolverBFSK {
     private val DIRECTIONS = arrayOf(
         intArrayOf(0, 1), intArrayOf(1, 0), intArrayOf(0, -1), intArrayOf(-1, 0)
     )
-    
+
     fun solve(maze: MazeK): List<CoordinateK> {
         val entry = maze.getEntry() ?: return emptyList()
         val queue: Queue<CoordinateK> = LinkedList()
         queue.add(entry)
         maze.setVisited(entry.x, entry.y, true)
-        
+
         while (queue.isNotEmpty()) {
             val current = queue.poll()
-            
+
             if (maze.isExit(current.x, current.y)) {
                 return reconstructPath(current)
             }
-            
+
             for (direction in DIRECTIONS) {
                 val next = CoordinateK(
                     current.x + direction[0],
                     current.y + direction[1],
                     current
                 )
-                
+
                 if (maze.isValidLocation(next.x, next.y) &&
                     !maze.isWall(next.x, next.y) &&
                     !maze.isExplored(next.x, next.y)) {
@@ -393,19 +393,19 @@ class MazeSolverBFSK {
                 }
             }
         }
-        
+
         return emptyList()
     }
-    
+
     private fun reconstructPath(end: CoordinateK): List<CoordinateK> {
         val path = mutableListOf<CoordinateK>()
         var current: CoordinateK? = end
-        
+
         while (current != null) {
             path.add(current)
             current = current.parent
         }
-        
+
         return path.reversed()
     }
 }
@@ -420,13 +420,13 @@ fun main() {
         intArrayOf(1, 1, 0, 1, 0),
         intArrayOf(0, 0, 0, 0, 3)
     )
-    
+
     val maze = MazeK(mazeArray)
-    
+
     val dfsSolver = MazeSolverDFSK()
     val dfsPath = dfsSolver.solve(maze)
     println("DFS path length: ${dfsPath.size}")
-    
+
     val maze2 = MazeK(mazeArray)
     val bfsSolver = MazeSolverBFSK()
     val bfsPath = bfsSolver.solve(maze2)
@@ -454,37 +454,37 @@ fun main() {
 public List<List<Coordinate>> findAllPaths(Maze maze) {
     List<List<Coordinate>> allPaths = new ArrayList<>();
     List<Coordinate> currentPath = new ArrayList<>();
-    
-    findAllPathsDFS(maze, maze.getEntry().getX(), 
-                    maze.getEntry().getY(), 
+
+    findAllPathsDFS(maze, maze.getEntry().getX(),
+                    maze.getEntry().getY(),
                     currentPath, allPaths);
-    
+
     return allPaths;
 }
 
-private void findAllPathsDFS(Maze maze, int row, int col, 
+private void findAllPathsDFS(Maze maze, int row, int col,
                             List<Coordinate> currentPath,
                             List<List<Coordinate>> allPaths) {
-    if (!maze.isValidLocation(row, col) || 
-        maze.isWall(row, col) || 
+    if (!maze.isValidLocation(row, col) ||
+        maze.isWall(row, col) ||
         maze.isExplored(row, col)) {
         return;
     }
-    
+
     currentPath.add(new Coordinate(row, col));
     maze.setVisited(row, col, true);
-    
+
     if (maze.isExit(row, col)) {
         allPaths.add(new ArrayList<>(currentPath));
     } else {
         for (int[] direction : DIRECTIONS) {
-            Coordinate next = getNextCoordinate(row, col, 
+            Coordinate next = getNextCoordinate(row, col,
                                                direction[0], direction[1]);
-            findAllPathsDFS(maze, next.getX(), next.getY(), 
+            findAllPathsDFS(maze, next.getX(), next.getY(),
                           currentPath, allPaths);
         }
     }
-    
+
     currentPath.remove(currentPath.size() - 1);
     maze.setVisited(row, col, false);
 }
@@ -493,7 +493,7 @@ private void findAllPathsDFS(Maze maze, int row, int col,
 ### Вариант 2: Поиск пути с препятствиями
 
 ```java
-public List<Coordinate> solveWithObstacles(Maze maze, 
+public List<Coordinate> solveWithObstacles(Maze maze,
                                           Set<Coordinate> obstacles) {
     // Модифицировать isValidLocation для проверки препятствий
     // Остальная логика остается той же

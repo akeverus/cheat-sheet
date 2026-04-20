@@ -163,11 +163,11 @@ val scalaList2 = javaList2.asScala.toList
 // Java код
 public class UserService {
     private final UserRepository repository;
-    
+
     public UserService(UserRepository repository) {
         this.repository = repository;
     }
-    
+
     public User findUser(Long id) {
         return repository.findById(id);
     }
@@ -357,7 +357,7 @@ class Service {
   def init(): Unit = {
     // инициализация
   }
-  
+
   @PreDestroy
   def cleanup(): Unit = {
     // очистка
@@ -417,11 +417,11 @@ val scalaFuture = javaFuture.toScalaFuture
 // Java код
 // public class UserService {
 //     private final UserRepository repository;
-//     
+//
 //     public UserService(UserRepository repository) {
 //         this.repository = repository;
 //     }
-//     
+//
 //     public User createUser(String name) {
 //         User user = new User(name);
 //         repository.save(user);
@@ -452,9 +452,9 @@ object JavaOptionalUtils {
       case None => Optional.empty()
     }
   }
-  
+
   implicit class OptionalOps[T](val optional: Optional[T]) extends AnyVal {
-    def toScalaOption: Option[T] = 
+    def toScalaOption: Option[T] =
       if (optional.isPresent) Some(optional.get) else None
   }
 }
@@ -646,7 +646,7 @@ def readFileAsync(path: String): scala.concurrent.Future[String] = {
     Paths.get(path),
     StandardOpenOption.READ
   )
-  
+
   val buffer = ByteBuffer.allocate(1024)
   channel.read(buffer, 0, buffer, new CompletionHandler[Integer, ByteBuffer] {
     def completed(bytesRead: Integer, attachment: ByteBuffer): Unit = {
@@ -656,13 +656,13 @@ def readFileAsync(path: String): scala.concurrent.Future[String] = {
       promise.success(new String(bytes))
       channel.close()
     }
-    
+
     def failed(ex: Throwable, attachment: ByteBuffer): Unit = {
       promise.failure(ex)
       channel.close()
     }
   })
-  
+
   promise.future
 }
 ```

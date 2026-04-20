@@ -18,8 +18,6 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 
 # Spring Messaging: Полное руководство по messaging системам
 
-
-
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)
@@ -160,18 +158,18 @@ spring.jms.pub-sub-domain=false
 // Отправка сообщений в JMS/RabbitMQ
 @Service
 public class MessageProducer {
-    
+
     @Autowired
     private JmsTemplate jmsTemplate;
-    
+
     public void sendMessage(String destination, String message) {
         jmsTemplate.convertAndSend(destination, message);
     }
-    
+
     public void sendMessage(String destination, Object object) {
         jmsTemplate.convertAndSend(destination, object);
     }
-    
+
     public void sendMessageWithCallback(String destination, String message) {
         jmsTemplate.convertAndSend(destination, message, new MessagePostProcessor() {
             @Override
@@ -190,17 +188,17 @@ public class MessageProducer {
 // Получение сообщений через @JmsListener
 @Service
 public class MessageConsumer {
-    
+
     @JmsListener(destination = "queue.name")
     public void receiveMessage(String message) {
         System.out.println("Received message: " + message);
     }
-    
+
     @JmsListener(destination = "queue.object")
     public void receiveObject(User user) {
         System.out.println("Received user: " + user.getName());
     }
-    
+
     @JmsListener(destination = "queue.name", containerFactory = "jmsListenerContainerFactory")
     public void receiveMessageWithFactory(String message) {
         System.out.println("Received message: " + message);
@@ -214,21 +212,21 @@ public class MessageConsumer {
 @Configuration
 @EnableJms
 public class JmsConfig {
-    
+
     @Bean
     public ConnectionFactory connectionFactory() {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory();
         factory.setBrokerURL("tcp://localhost:61616");
         return factory;
     }
-    
+
     @Bean
     public JmsTemplate jmsTemplate(ConnectionFactory connectionFactory) {
         JmsTemplate template = new JmsTemplate(connectionFactory);
         template.setDefaultDestinationName("default.queue");
         return template;
     }
-    
+
     @Bean
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
             ConnectionFactory connectionFactory) {
@@ -269,18 +267,18 @@ spring.rabbitmq.password=guest
 ```java
 @Service
 public class RabbitMQProducer {
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     public void sendMessage(String exchange, String routingKey, String message) {
         rabbitTemplate.convertAndSend(exchange, routingKey, message);
     }
-    
+
     public void sendMessage(String queue, String message) {
         rabbitTemplate.convertAndSend(queue, message);
     }
-    
+
     public void sendMessage(String exchange, String routingKey, Object object) {
         rabbitTemplate.convertAndSend(exchange, routingKey, object);
     }
@@ -292,17 +290,17 @@ public class RabbitMQProducer {
 ```java
 @Component
 public class RabbitMQConsumer {
-    
+
     @RabbitListener(queues = "queue.name")
     public void receiveMessage(String message) {
         System.out.println("Received message: " + message);
     }
-    
+
     @RabbitListener(queues = "queue.object")
     public void receiveObject(User user) {
         System.out.println("Received user: " + user.getName());
     }
-    
+
     @RabbitListener(bindings = @QueueBinding(
         value = @Queue(value = "queue.name", durable = "true"),
         exchange = @Exchange(value = "exchange.name", type = ExchangeTypes.TOPIC),
@@ -320,17 +318,17 @@ public class RabbitMQConsumer {
 @Configuration
 @EnableRabbit
 public class RabbitMQConfig {
-    
+
     @Bean
     public Queue queue() {
         return QueueBuilder.durable("queue.name").build();
     }
-    
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange("exchange.name");
     }
-    
+
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder
@@ -338,12 +336,12 @@ public class RabbitMQConfig {
             .to(exchange)
             .with("routing.key");
     }
-    
+
     @Bean
     public MessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
-    
+
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
@@ -360,12 +358,12 @@ public class RabbitMQConfig {
 ```java
 @Configuration
 public class MessageConverterConfig {
-    
+
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
-    
+
     @Bean
     public JmsTemplate jmsTemplate(ConnectionFactory connectionFactory) {
         JmsTemplate template = new JmsTemplate(connectionFactory);
@@ -379,7 +377,7 @@ public class MessageConverterConfig {
 
 ```java
 public class UserMessageConverter implements MessageConverter {
-    
+
     @Override
     public Message toMessage(Object object, Session session) throws JMSException {
         User user = (User) object;
@@ -387,7 +385,7 @@ public class UserMessageConverter implements MessageConverter {
         message.setText(user.getId() + "," + user.getName() + "," + user.getEmail());
         return message;
     }
-    
+
     @Override
     public Object fromMessage(Message message) throws JMSException {
         TextMessage textMessage = (TextMessage) message;
@@ -409,17 +407,17 @@ public class UserMessageConverter implements MessageConverter {
 @Service
 @Transactional
 public class TransactionalMessageService {
-    
+
     @Autowired
     private JmsTemplate jmsTemplate;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public void processUser(User user) {
         // Сохранение в БД
         userRepository.save(user);
-        
+
         // Отправка сообщения (в той же транзакции)
         jmsTemplate.convertAndSend("user.queue", user);
     }
@@ -431,7 +429,7 @@ public class TransactionalMessageService {
 ```java
 @Configuration
 public class RabbitMQTransactionConfig {
-    
+
     @Bean
     public RabbitTransactionManager rabbitTransactionManager(
             ConnectionFactory connectionFactory) {
@@ -442,13 +440,13 @@ public class RabbitMQTransactionConfig {
 @Service
 @Transactional
 public class TransactionalRabbitMQService {
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     public void processUser(User user) {
         userRepository.save(user);
         rabbitTemplate.convertAndSend("user.queue", user);
@@ -522,7 +520,7 @@ public Queue queue() {
 @Configuration
 @EnableJms
 public class JmsErrorHandlingConfig {
-    
+
     @Bean
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
             ConnectionFactory connectionFactory) {
@@ -546,9 +544,9 @@ public class JmsErrorHandlingConfig {
 @Configuration
 @EnableRabbit
 public class RabbitMQErrorHandlingConfig {
-    
+
     @Bean
-    public RabbitListenerContainerFactory<SimpleMessageListenerContainer> 
+    public RabbitListenerContainerFactory<SimpleMessageListenerContainer>
             rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
@@ -566,33 +564,33 @@ public class RabbitMQErrorHandlingConfig {
 @Configuration
 @EnableRetry
 public class RetryConfig {
-    
+
     @Bean
     public RetryTemplate retryTemplate() {
         RetryTemplate retryTemplate = new RetryTemplate();
-        
+
         FixedBackOffPolicy backOffPolicy = new FixedBackOffPolicy();
         backOffPolicy.setBackOffPeriod(2000); // 2 секунды
-        
+
         SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
         retryPolicy.setMaxAttempts(3);
-        
+
         retryTemplate.setBackOffPolicy(backOffPolicy);
         retryTemplate.setRetryPolicy(retryPolicy);
-        
+
         return retryTemplate;
     }
 }
 
 @Service
 public class RetryableMessageService {
-    
+
     @Autowired
     private RetryTemplate retryTemplate;
-    
+
     @Autowired
     private JmsTemplate jmsTemplate;
-    
+
     public void sendMessageWithRetry(String destination, String message) {
         retryTemplate.execute(context -> {
             try {
@@ -612,17 +610,17 @@ public class RetryableMessageService {
 ```java
 @Configuration
 public class DeadLetterQueueConfig {
-    
+
     @Bean
     public Queue deadLetterQueue() {
         return QueueBuilder.durable("dlq.queue").build();
     }
-    
+
     @Bean
     public DirectExchange deadLetterExchange() {
         return new DirectExchange("dlx.exchange");
     }
-    
+
     @Bean
     public Binding deadLetterBinding() {
         return BindingBuilder
@@ -630,7 +628,7 @@ public class DeadLetterQueueConfig {
             .to(deadLetterExchange())
             .with("dlq.routing.key");
     }
-    
+
     @Bean
     public Queue mainQueue() {
         return QueueBuilder.durable("main.queue")
@@ -648,10 +646,10 @@ public class DeadLetterQueueConfig {
 ```java
 @Service
 public class RequestReplyService {
-    
+
     @Autowired
     private JmsTemplate jmsTemplate;
-    
+
     public String sendRequestAndWaitForReply(String request) {
         return (String) jmsTemplate.sendAndReceive("request.queue", session -> {
             TextMessage message = session.createTextMessage(request);
@@ -663,7 +661,7 @@ public class RequestReplyService {
 
 @Component
 public class RequestReplyListener {
-    
+
     @JmsListener(destination = "request.queue")
     @SendTo("reply.queue")
     public String handleRequest(String request) {
@@ -678,14 +676,14 @@ public class RequestReplyListener {
 ```java
 @Configuration
 public class PubSubConfig {
-    
+
     @Bean
     public TopicConnectionFactory topicConnectionFactory() {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory();
         factory.setBrokerURL("tcp://localhost:61616");
         return new ActiveMQTopicConnectionFactory(factory);
     }
-    
+
     @Bean
     public JmsTemplate topicJmsTemplate(TopicConnectionFactory connectionFactory) {
         JmsTemplate template = new JmsTemplate(connectionFactory);
@@ -696,11 +694,11 @@ public class PubSubConfig {
 
 @Service
 public class PublisherService {
-    
+
     @Autowired
     @Qualifier("topicJmsTemplate")
     private JmsTemplate topicJmsTemplate;
-    
+
     public void publish(String topic, String message) {
         topicJmsTemplate.convertAndSend(topic, message);
     }
@@ -708,12 +706,12 @@ public class PublisherService {
 
 @Component
 public class SubscriberService {
-    
+
     @JmsListener(destination = "news.topic", containerFactory = "topicFactory")
     public void subscribe1(String message) {
         System.out.println("Subscriber 1: " + message);
     }
-    
+
     @JmsListener(destination = "news.topic", containerFactory = "topicFactory")
     public void subscribe2(String message) {
         System.out.println("Subscriber 2: " + message);
@@ -726,22 +724,22 @@ public class SubscriberService {
 ```java
 @Configuration
 public class RoutingConfig {
-    
+
     @Bean
     public DirectExchange routingExchange() {
         return new DirectExchange("routing.exchange");
     }
-    
+
     @Bean
     public Queue highPriorityQueue() {
         return QueueBuilder.durable("high.priority.queue").build();
     }
-    
+
     @Bean
     public Queue lowPriorityQueue() {
         return QueueBuilder.durable("low.priority.queue").build();
     }
-    
+
     @Bean
     public Binding highPriorityBinding() {
         return BindingBuilder
@@ -749,7 +747,7 @@ public class RoutingConfig {
             .to(routingExchange())
             .with("high");
     }
-    
+
     @Bean
     public Binding lowPriorityBinding() {
         return BindingBuilder
@@ -761,14 +759,14 @@ public class RoutingConfig {
 
 @Service
 public class RoutingService {
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     public void sendHighPriority(String message) {
         rabbitTemplate.convertAndSend("routing.exchange", "high", message);
     }
-    
+
     public void sendLowPriority(String message) {
         rabbitTemplate.convertAndSend("routing.exchange", "low", message);
     }
@@ -780,22 +778,22 @@ public class RoutingService {
 ```java
 @Component
 public class MessageAggregator {
-    
+
     private final Map<String, List<Message>> messageGroups = new ConcurrentHashMap<>();
-    
+
     @JmsListener(destination = "input.queue")
     public void aggregate(Message message) {
         String correlationId = message.getJMSCorrelationID();
         messageGroups.computeIfAbsent(correlationId, k -> new ArrayList<>())
             .add(message);
-        
+
         if (messageGroups.get(correlationId).size() == 3) {
             // Все сообщения получены, обрабатываем
             processAggregatedMessages(correlationId);
             messageGroups.remove(correlationId);
         }
     }
-    
+
     private void processAggregatedMessages(String correlationId) {
         List<Message> messages = messageGroups.get(correlationId);
         // Обработка агрегированных сообщений
@@ -810,11 +808,11 @@ public class MessageAggregator {
 ```java
 @Service
 public class FilteredMessageProducer {
-    
+
     @Autowired
     private JmsTemplate jmsTemplate;
-    
-    public void sendMessageWithProperties(String destination, String message, 
+
+    public void sendMessageWithProperties(String destination, String message,
             String priority) {
         jmsTemplate.convertAndSend(destination, message, new MessagePostProcessor() {
             @Override
@@ -829,7 +827,7 @@ public class FilteredMessageProducer {
 
 @Component
 public class FilteredMessageConsumer {
-    
+
     @JmsListener(
         destination = "filtered.queue",
         selector = "priority = 'HIGH'"
@@ -837,7 +835,7 @@ public class FilteredMessageConsumer {
     public void receiveHighPriority(String message) {
         System.out.println("High priority: " + message);
     }
-    
+
     @JmsListener(
         destination = "filtered.queue",
         selector = "priority = 'LOW'"
@@ -853,22 +851,22 @@ public class FilteredMessageConsumer {
 ```java
 @Configuration
 public class HeadersExchangeConfig {
-    
+
     @Bean
     public HeadersExchange headersExchange() {
         return new HeadersExchange("headers.exchange");
     }
-    
+
     @Bean
     public Queue queue1() {
         return QueueBuilder.durable("queue1").build();
     }
-    
+
     @Bean
     public Queue queue2() {
         return QueueBuilder.durable("queue2").build();
     }
-    
+
     @Bean
     public Binding binding1() {
         return BindingBuilder
@@ -876,7 +874,7 @@ public class HeadersExchangeConfig {
             .to(headersExchange())
             .where("type").matches("order");
     }
-    
+
     @Bean
     public Binding binding2() {
         return BindingBuilder
@@ -888,14 +886,14 @@ public class HeadersExchangeConfig {
 
 @Service
 public class HeadersMessageService {
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     public void sendOrderMessage(String message) {
         MessageProperties properties = new MessageProperties();
         properties.setHeader("type", "order");
-        rabbitTemplate.send("headers.exchange", "", 
+        rabbitTemplate.send("headers.exchange", "",
             new org.springframework.amqp.core.Message(
                 message.getBytes(), properties
             ));
@@ -910,7 +908,7 @@ public class HeadersMessageService {
 ```java
 @Component
 public class MessageTransformer {
-    
+
     public String transform(String message) {
         // Трансформация сообщения
         return message.toUpperCase();
@@ -919,7 +917,7 @@ public class MessageTransformer {
 
 @Configuration
 public class TransformerConfig {
-    
+
     @Bean
     public IntegrationFlow transformationFlow() {
         return IntegrationFlows.from("input.channel")
@@ -935,15 +933,15 @@ public class TransformerConfig {
 ```java
 @Component
 public class MessageEnricher {
-    
+
     @Autowired
     private UserService userService;
-    
+
     public Message<User> enrich(Message<String> message) {
         String userId = message.getPayload();
         User user = userService.findById(Long.parseLong(userId))
             .orElseThrow();
-        
+
         return MessageBuilder
             .withPayload(user)
             .copyHeaders(message.getHeaders())
@@ -960,20 +958,20 @@ public class MessageEnricher {
 ```java
 @Component
 public class BatchMessageProcessor {
-    
+
     private final List<Message> batch = new ArrayList<>();
     private static final int BATCH_SIZE = 10;
-    
+
     @JmsListener(destination = "batch.queue")
     public void processBatch(Message message) {
         batch.add(message);
-        
+
         if (batch.size() >= BATCH_SIZE) {
             processBatch();
             batch.clear();
         }
     }
-    
+
     private void processBatch() {
         // Обработка батча сообщений
         batch.forEach(msg -> {
@@ -988,7 +986,7 @@ public class BatchMessageProcessor {
 ```java
 @Configuration
 public class BatchConsumerConfig {
-    
+
     @Bean
     public SimpleRabbitListenerContainerFactory batchContainerFactory(
             ConnectionFactory connectionFactory) {
@@ -1003,7 +1001,7 @@ public class BatchConsumerConfig {
 
 @Component
 public class BatchRabbitMQConsumer {
-    
+
     @RabbitListener(queues = "batch.queue", containerFactory = "batchContainerFactory")
     public void processBatch(List<Message> messages) {
         messages.forEach(message -> {
@@ -1020,12 +1018,12 @@ public class BatchRabbitMQConsumer {
 ```java
 @Component
 public class JmsMetrics {
-    
+
     private final MeterRegistry meterRegistry;
     private final Counter messageSentCounter;
     private final Counter messageReceivedCounter;
     private final Timer messageProcessingTimer;
-    
+
     public JmsMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         this.messageSentCounter = Counter.builder("jms.messages.sent")
@@ -1038,19 +1036,19 @@ public class JmsMetrics {
             .description("Message processing time")
             .register(meterRegistry);
     }
-    
+
     public void recordMessageSent() {
         messageSentCounter.increment();
     }
-    
+
     public void recordMessageReceived() {
         messageReceivedCounter.increment();
     }
-    
+
     public Timer.Sample startProcessing() {
         return Timer.start(meterRegistry);
     }
-    
+
     public void stopProcessing(Timer.Sample sample) {
         sample.stop(messageProcessingTimer);
     }
@@ -1062,10 +1060,10 @@ public class JmsMetrics {
 ```java
 @Component
 public class RabbitMQHealthIndicator implements HealthIndicator {
-    
+
     @Autowired
     private RabbitTemplate rabbitTemplate;
-    
+
     @Override
     public Health health() {
         try {
@@ -1093,7 +1091,7 @@ public class RabbitMQHealthIndicator implements HealthIndicator {
 ```java
 @Configuration
 public class SecureJmsConfig {
-    
+
     @Bean
     public ActiveMQConnectionFactory secureConnectionFactory() {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory();
@@ -1110,7 +1108,7 @@ public class SecureJmsConfig {
 ```java
 @Configuration
 public class SecureRabbitMQConfig {
-    
+
     @Bean
     public CachingConnectionFactory secureConnectionFactory() {
         CachingConnectionFactory factory = new CachingConnectionFactory();
@@ -1131,7 +1129,7 @@ public class SecureRabbitMQConfig {
 ```java
 @Configuration
 public class PooledConnectionConfig {
-    
+
     @Bean
     public PooledConnectionFactory pooledConnectionFactory() {
         PooledConnectionFactory factory = new PooledConnectionFactory();
@@ -1148,7 +1146,7 @@ public class PooledConnectionConfig {
 ```java
 @Configuration
 public class AsyncJmsConfig {
-    
+
     @Bean
     public DefaultJmsListenerContainerFactory asyncJmsListenerContainerFactory(
             ConnectionFactory connectionFactory) {
@@ -1158,7 +1156,7 @@ public class AsyncJmsConfig {
         factory.setTaskExecutor(taskExecutor());
         return factory;
     }
-    
+
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -1179,16 +1177,16 @@ public class AsyncJmsConfig {
 ```java
 @EnableBinding(MessageChannels.class)
 public class CloudStreamService {
-    
+
     @Autowired
     private MessageChannels channels;
-    
+
     public void sendMessage(String message) {
         channels.output().send(MessageBuilder
             .withPayload(message)
             .build());
     }
-    
+
     @StreamListener("input")
     public void receiveMessage(String message) {
         System.out.println("Received: " + message);
@@ -1198,7 +1196,7 @@ public class CloudStreamService {
 interface MessageChannels {
     @Output("output")
     MessageChannel output();
-    
+
     @Input("input")
     SubscribableChannel input();
 }
@@ -1216,3 +1214,11 @@ interface MessageChannels {
 - [**RabbitMQ** Documentation](https://www.rabbitmq.com/documentation.html)
 - [Enterprise Integration Patterns](https://www.enterpriseintegrationpatterns.com/)
 - [**Spring Cloud Stream**](https://spring.io/projects/spring-cloud-stream)
+
+## См. также
+
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
+- [[spring-ai|Spring AI]]
+- [[spring-aop|Spring AOP: Полное руководство по аспектно-ориентированному программированию]]
+- [[spring-batch|Spring Batch для Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]

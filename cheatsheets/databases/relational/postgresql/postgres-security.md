@@ -134,7 +134,6 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 4. **Аудит**: Отслеживание действий пользователей
 5. **Row `Level` Security**: Защита на уровне строк
 
----
 
 ## Роли и привилегии
 
@@ -147,8 +146,8 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 CREATE ROLE app_user WITH LOGIN PASSWORD 'secure_password';
 
 -- Создать роль с дополнительными правами
-CREATE ROLE admin_user WITH 
-    LOGIN 
+CREATE ROLE admin_user WITH
+    LOGIN
     PASSWORD 'secure_password'
     CREATEDB
     CREATEROLE
@@ -229,7 +228,6 @@ REVOKE admin_role FROM app_user;
 \dp table_name
 ```
 
----
 
 ## **Row Level Security** (**RLS**)
 
@@ -242,8 +240,8 @@ REVOKE admin_role FROM app_user;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Проверить статус RLS
-SELECT tablename, rowsecurity 
-FROM pg_tables 
+SELECT tablename, rowsecurity
+FROM pg_tables
 WHERE tablename = 'users';
 ```
 
@@ -299,8 +297,8 @@ FOR ALL
 TO manager_role
 USING (
     department_id = (
-        SELECT department_id 
-        FROM employees 
+        SELECT department_id
+        FROM employees
         WHERE id = current_setting('app.employee_id')::integer
     )
 );
@@ -329,7 +327,6 @@ USING (id = current_setting('app.user_id')::integer AND active = true);
 DROP POLICY user_select_policy ON users;
 ```
 
----
 
 ## **SSL**/**TLS** соединения
 
@@ -395,7 +392,6 @@ psql "host=localhost dbname=mydb user=app_user sslmode=verify-full sslrootcert=c
 - `**verify-ca**`: **SSL** обязателен + проверка `CA`
 - `**verify-full**`: **SSL** обязателен + проверка `CA` и **hostname**
 
----
 
 ## Аудит и логирование
 
@@ -476,7 +472,6 @@ AFTER INSERT OR UPDATE OR DELETE ON users
 FOR EACH ROW EXECUTE FUNCTION audit_trigger();
 ```
 
----
 
 ## Шифрование данных
 
@@ -500,8 +495,8 @@ INSERT INTO users (username, password_hash)
 VALUES ('user1', crypt('password123', gen_salt('bf', 10)));
 
 -- Проверка пароля
-SELECT * FROM users 
-WHERE username = 'user1' 
+SELECT * FROM users
+WHERE username = 'user1'
 AND password_hash = crypt('password123', password_hash);
 ```
 
@@ -534,7 +529,6 @@ VALUES (encrypt('secret data', 'my_key', 'aes'));
 2. **Encrypted filesystems**: Шифрование файловой системы
 3. **Database-level encryption**: Расширения для шифрования
 
----
 
 ## Лучшие практики безопасности
 
@@ -566,7 +560,6 @@ VALUES (encrypt('secret data', 'my_key', 'aes'));
 3. **Алерты**: Настроить уведомления о подозрительной активности
 4. **Регулярные проверки**: Аудит безопасности
 
----
 
 ## Решение проблем
 
@@ -655,7 +648,7 @@ VALUES (
 );
 
 -- Чтение с расшифровкой
-SELECT 
+SELECT
     id,
     username,
     decrypt_column(email_encrypted, 'encryption_key') AS email,
@@ -713,7 +706,7 @@ BEGIN
         '192.168.1.0/24'::INET,
         '10.0.0.0/8'::INET
     ];
-    
+
     RETURN client_ip = ANY(allowed_ips);
 END;
 $$ LANGUAGE plpgsql STABLE;
@@ -818,8 +811,8 @@ TO app_user
 USING (
     owner_id = current_setting('app.user_id')::INTEGER
     OR department_id IN (
-        SELECT department_id 
-        FROM employees 
+        SELECT department_id
+        FROM employees
         WHERE id = current_setting('app.user_id')::INTEGER
     )
     OR EXISTS (
@@ -880,7 +873,7 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key \
 
 ```sql
 -- Проверить SSL соединения
-SELECT 
+SELECT
     pid,
     usename,
     application_name,
@@ -931,7 +924,7 @@ BEGIN
     ELSIF TG_OP = 'UPDATE' THEN
         old_json := row_to_json(OLD)::JSONB;
         new_json := row_to_json(NEW)::JSONB;
-        
+
         -- Определить измененные столбцы
         SELECT array_agg(key) INTO changed_cols
         FROM jsonb_each(old_json)
@@ -940,7 +933,7 @@ BEGIN
         old_json := NULL;
         new_json := row_to_json(NEW)::JSONB;
     END IF;
-    
+
     INSERT INTO comprehensive_audit (
         event_type,
         schema_name,
@@ -966,7 +959,7 @@ BEGIN
         changed_cols,
         txid_current()
     );
-    
+
     RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
@@ -1020,27 +1013,27 @@ BEGIN
     IF length(password) < 12 THEN
         RAISE EXCEPTION 'Password must be at least 12 characters long';
     END IF;
-    
+
     -- Должен содержать заглавные буквы
     IF password !~ '[A-Z]' THEN
         RAISE EXCEPTION 'Password must contain uppercase letters';
     END IF;
-    
+
     -- Должен содержать строчные буквы
     IF password !~ '[a-z]' THEN
         RAISE EXCEPTION 'Password must contain lowercase letters';
     END IF;
-    
+
     -- Должен содержать цифры
     IF password !~ '[0-9]' THEN
         RAISE EXCEPTION 'Password must contain digits';
     END IF;
-    
+
     -- Должен содержать специальные символы
     IF password !~ '[!@#$%^&*(),.?":{}|<>]' THEN
         RAISE EXCEPTION 'Password must contain special characters';
     END IF;
-    
+
     RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
@@ -1061,10 +1054,10 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'Invalid old password';
     END IF;
-    
+
     -- Проверить новый пароль
     PERFORM validate_password(new_password);
-    
+
     -- Обновить пароль
     UPDATE users
     SET password_hash = crypt(new_password, gen_salt('bf', 12))
@@ -1083,7 +1076,7 @@ ALTER TABLE users ADD COLUMN password_expires_at TIMESTAMPTZ;
 CREATE OR REPLACE FUNCTION check_password_expiry()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.password_expires_at IS NOT NULL 
+    IF NEW.password_expires_at IS NOT NULL
        AND NEW.password_expires_at < NOW() THEN
         RAISE EXCEPTION 'Password has expired. Please change your password.';
     END IF;
@@ -1135,7 +1128,7 @@ host       all    all    0.0.0.0/0      reject
 ```sql
 -- Создать представление для мониторинга безопасности
 CREATE VIEW security_monitoring AS
-SELECT 
+SELECT
     pid,
     usename,
     application_name,
@@ -1162,7 +1155,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         a.pid,
         a.usename,
         a.client_addr,
@@ -1207,11 +1200,11 @@ BEGIN
     FROM failed_login_attempts
     WHERE username = p_username
     AND attempt_time > NOW() - INTERVAL '15 minutes';
-    
+
     IF attempt_count >= 5 THEN
         RAISE EXCEPTION 'Account temporarily locked due to multiple failed login attempts';
     END IF;
-    
+
     RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql;
@@ -1228,16 +1221,16 @@ RETURNS VOID AS $$
 BEGIN
     -- Анонимизировать данные
     UPDATE users
-    SET 
+    SET
         email = 'deleted_' || id || '@deleted.local',
         phone = NULL,
         address = NULL
     WHERE id = p_user_id;
-    
+
     -- Удалить связанные данные
     DELETE FROM user_preferences WHERE user_id = p_user_id;
     DELETE FROM user_sessions WHERE user_id = p_user_id;
-    
+
     -- Логировать удаление
     INSERT INTO audit_log (
         table_name,
@@ -1264,10 +1257,10 @@ BEGIN
     -- Удалить данные старше 7 лет
     DELETE FROM audit_logs
     WHERE created_at < NOW() - INTERVAL '7 years';
-    
+
     -- Анонимизировать данные старше 3 лет
     UPDATE user_data
-    SET 
+    SET
         personal_info = NULL,
         notes = 'Data anonymized per retention policy'
     WHERE created_at < NOW() - INTERVAL '3 years'
@@ -1276,7 +1269,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Запланировать через pg_cron
-SELECT cron.schedule('retention-policy', '0 2 * * 0', 
+SELECT cron.schedule('retention-policy', '0 2 * * 0',
     'SELECT apply_retention_policy();');
 ```
 
@@ -1333,11 +1326,11 @@ BEGIN
     LOOP
         -- Генерировать новый пароль
         new_password := gen_random_uuid()::TEXT;
-        
+
         -- Обновить пароль
-        EXECUTE format('ALTER ROLE %I WITH PASSWORD %L', 
+        EXECUTE format('ALTER ROLE %I WITH PASSWORD %L',
             user_rec.rolname, new_password);
-        
+
         -- Логировать изменение
         RAISE NOTICE 'Password rotated for user: %', user_rec.rolname;
     END LOOP;
@@ -1345,7 +1338,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Запланировать через pg_cron
-SELECT cron.schedule('rotate-passwords', '0 0 1 * *', 
+SELECT cron.schedule('rotate-passwords', '0 0 1 * *',
     'SELECT rotate_passwords();');
 ```
 
@@ -1362,28 +1355,28 @@ RETURNS TABLE(
 BEGIN
     RETURN QUERY
     -- Проверка ролей без паролей
-    SELECT 
+    SELECT
         'Roles without passwords'::TEXT,
         CASE WHEN COUNT(*) > 0 THEN 'WARNING' ELSE 'OK' END,
         format('%s roles without passwords', COUNT(*))
     FROM pg_roles
     WHERE rolcanlogin = true
     AND rolpassword IS NULL
-    
+
     UNION ALL
-    
+
     -- Проверка суперпользователей
-    SELECT 
+    SELECT
         'Superuser count'::TEXT,
         CASE WHEN COUNT(*) > 2 THEN 'WARNING' ELSE 'OK' END,
         format('%s superusers found', COUNT(*))
     FROM pg_roles
     WHERE rolsuper = true
-    
+
     UNION ALL
-    
+
     -- Проверка SSL
-    SELECT 
+    SELECT
         'SSL connections'::TEXT,
         CASE WHEN COUNT(*) = 0 THEN 'WARNING' ELSE 'OK' END,
         format('%s SSL connections', COUNT(*))
@@ -1429,13 +1422,13 @@ BEGIN
         p_severity,
         p_description
     ) RETURNING id INTO incident_id;
-    
+
     -- Отправить уведомление для критичных инцидентов
     IF p_severity = 'CRITICAL' THEN
-        PERFORM pg_notify('security_alert', 
+        PERFORM pg_notify('security_alert',
             format('Critical security incident: %s', p_description));
     END IF;
-    
+
     RETURN incident_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -1450,12 +1443,12 @@ RETURNS VOID AS $$
 BEGIN
     -- Заблокировать роль
     EXECUTE format('ALTER ROLE %I WITH NOLOGIN', p_username);
-    
+
     -- Завершить активные сессии
     PERFORM pg_terminate_backend(pid)
     FROM pg_stat_activity
     WHERE usename = p_username;
-    
+
     -- Логировать блокировку
     PERFORM log_security_incident(
         'USER_BLOCKED',
@@ -1481,7 +1474,7 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT 
+    SELECT
         u.can_read,
         u.can_write,
         u.can_delete,
@@ -1500,7 +1493,7 @@ USING (
         SELECT 1 FROM get_user_permissions(
             current_setting('app.user_id')::INTEGER
         ) p
-        WHERE 
+        WHERE
             (TG_OP = 'SELECT' AND p.can_read)
             OR (TG_OP IN ('INSERT', 'UPDATE') AND p.can_write)
             OR (TG_OP = 'DELETE' AND p.can_delete)
@@ -1551,11 +1544,11 @@ BEGIN
     WHERE key_name = p_key_name
     AND is_active = true
     AND (expires_at IS NULL OR expires_at > NOW());
-    
+
     IF key_value IS NULL THEN
         RAISE EXCEPTION 'Encryption key not found or expired';
     END IF;
-    
+
     RETURN key_value;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -1594,7 +1587,7 @@ SELECT * FROM pg_stat_activity WHERE query LIKE '%pg_read_file%';
 SELECT * FROM pg_tables WHERE schemaname = 'pg_catalog';
 
 -- Проверка прав на опасные функции
-SELECT 
+SELECT
     p.proname,
     p.proacl
 FROM pg_proc p
@@ -1605,7 +1598,7 @@ WHERE p.proname IN ('pg_read_file', 'pg_ls_dir', 'pg_stat_file');
 
 ```sql
 -- Аудит прав доступа
-SELECT 
+SELECT
     grantee,
     table_schema,
     table_name,
@@ -1615,7 +1608,7 @@ WHERE grantee NOT IN ('postgres', 'PUBLIC')
 ORDER BY grantee, table_schema, table_name;
 
 -- Аудит ролей
-SELECT 
+SELECT
     rolname,
     rolsuper,
     rolcreaterole,
@@ -1626,7 +1619,7 @@ FROM pg_roles
 ORDER BY rolname;
 
 -- Аудит RLS политик
-SELECT 
+SELECT
     schemaname,
     tablename,
     policyname,
@@ -1651,7 +1644,7 @@ BEGIN
     IF length(card_number) < 4 THEN
         RETURN '';
     END IF;
-    
+
     RETURN '---' || right(card_number, 4);
 END;
 $$ LANGUAGE plpgsql;
@@ -1686,7 +1679,7 @@ BEGIN
         NOW(),
         inet_client_addr()
     );
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -1729,13 +1722,9 @@ FOR EACH ROW EXECUTE FUNCTION hipaa_access_log();
 - [ ] Регулярно тестировать процедуры
 - [ ] Обучать команду процедурам
 
----
 
-- [`PostgreSQL Security`](https://www.postgresql.org/docs/)
-- [`Row Level Security`](https://www.postgresql.org/docs/)
+- [PostgreSQL Security](https://www.postgresql.org/docs/)
+- [Row Level Security](https://www.postgresql.org/docs/)
 - [SSL/TLS](https://www.postgresql.org/docs/current/ssl-tcp.html)
-- [`pgAudit`](https://www.postgresql.org/docs/)
-
----
-
+- [pgAudit](https://www.postgresql.org/docs/)
 

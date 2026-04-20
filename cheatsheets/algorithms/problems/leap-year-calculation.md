@@ -266,7 +266,7 @@ fun main() {
     println(LeapYearCheckerK.isLeapYear(2004)) // true
     println(LeapYearCheckerK.isLeapYear(1900)) // false
     println(LeapYearCheckerK.isLeapYear(2001)) // false
-    
+
     println(Year.isLeap(2000)) // true
     println(LeapYearCheckerCustomK.isLeapYear(2000)) // true
 }

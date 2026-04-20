@@ -220,7 +220,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
     annotations:
       summary: "Host {{ $labels.instance }} is down"
       runbook_url: "https://runbook.example.com/host-down"
-  
+
   - alert: HighCpuUsage
     expr: cpu_usage_percent > 90
     for: 5m
@@ -285,11 +285,11 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 
 ## Частые вопросы
 
-**Когда направлять алерты в PagerDuty, а когда в Slack?**  
+**Когда направлять алерты в PagerDuty, а когда в Slack?**
 Критичные (downtime, полная недоступность) — в PagerDuty с эскалацией и онколлом. Warning и info — в Slack или email, чтобы не создавать усталость от страниц.
 
-**Как уменьшить шум от флапующих алертов?**  
+**Как уменьшить шум от флапующих алертов?**
 Увеличить `for` в правиле Prometheus (например, 5–10 минут), чтобы алерт срабатывал только при стабильном нарушении. В Alertmanager настроить `group_interval` и `repeat_interval`, при необходимости inhibition.
 
-**Нужен ли отдельный Alertmanager для staging?**  
+**Нужен ли отдельный Alertmanager для staging?**
 Можно один кластер Alertmanager с маршрутизацией по метке `env` (prod/staging) в разные каналы. Либо отдельный экземпляр для изоляции тестовых алертов от продового онколла.

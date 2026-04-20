@@ -14,9 +14,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-rest.md"]
 ---
 
-# Quarkus: Validation - Bean Validation
-
-
+# Quarkus: Validation — Bean Validation
 
 ## Полезные ссылки
 
@@ -25,7 +23,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Содержание
 
-- [Quarkus: Validation - Bean Validation](#quarkus-validation-bean-validation)
+- [Quarkus: Validation — Bean Validation](#quarkus-validation-bean-validation)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Basic Validation](#basic-validation)
@@ -90,15 +88,15 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 
 public class User {
-    
+
     @NotNull
     @Size(min = 3, max = 50)
     private String name;
-    
+
     @NotNull
     @Email
     private String email;
-    
+
     @Min(18)
     @Max(100)
     private Integer age;
@@ -116,7 +114,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserService {
-    
+
     public User createUser(@Valid @NotNull User user) {
         // Валидация выполняется автоматически
         return userRepository.save(user);
@@ -138,7 +136,7 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/users")
 public class UserResource {
-    
+
     @POST
     public Response createUser(@Valid User user) {
         // Валидация выполняется перед вызовом метода
@@ -160,7 +158,7 @@ import jakarta.ws.rs.PathParam;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     public User getUser(@PathParam("id") @Min(1) Long id) {
@@ -181,7 +179,7 @@ import jakarta.ws.rs.QueryParam;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     public List<User> getUsers(
             @QueryParam("page") @Min(0) @DefaultValue("0") Integer page,
@@ -211,7 +209,7 @@ public @interface PhoneNumber {
     String message() default "Invalid phone number";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     class Validator implements ConstraintValidator<PhoneNumber, String> {
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -248,13 +246,13 @@ public interface UpdateGroup {}
 
 ```java
 public class User {
-    
+
     @NotNull(groups = {CreateGroup.class, UpdateGroup.class})
     private String name;
-    
+
     @NotNull(groups = CreateGroup.class)
     private String email;
-    
+
     @NotNull(groups = UpdateGroup.class)
     private Long id;
 }
@@ -267,13 +265,13 @@ import jakarta.validation.groups.Default;
 
 @Path("/users")
 public class UserResource {
-    
+
     @POST
     public Response createUser(@Valid @ConvertGroup(to = CreateGroup.class) User user) {
         // Валидация с группой CreateGroup
         return Response.ok(userService.create(user)).build();
     }
-    
+
     @PUT
     @Path("/{id}")
     public Response updateUser(
@@ -365,7 +363,7 @@ public @interface PasswordMatch {
     String message() default "Passwords do not match";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-    
+
     class Validator implements ConstraintValidator<PasswordMatch, UserRegistration> {
         @Override
         public boolean isValid(UserRegistration registration, ConstraintValidatorContext context) {
@@ -393,12 +391,12 @@ public class UserRegistration {
 import jakarta.validation.constraints.AssertTrue;
 
 public class User {
-    
+
     @NotNull
     private String email;
-    
+
     private Boolean newsletter;
-    
+
     @AssertTrue(message = "Email is required for newsletter")
     public boolean isEmailRequiredForNewsletter() {
         return !Boolean.TRUE.equals(newsletter) || email != null;
@@ -414,11 +412,11 @@ public class User {
 
 ```java
 public class User {
-    
+
     @NotNull(message = "Name cannot be null")
     @Size(min = 3, max = 50, message = "Name must be between {min} and {max} characters")
     private String name;
-    
+
     @Email(message = "Email must be a valid email address")
     private String email;
 }
@@ -455,13 +453,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class ManualValidationService {
-    
+
     @Inject
     Validator validator;
-    
+
     public ValidationResult validateUser(User user) {
         Set<ConstraintViolation<User>> violations = validator.validate(user);
-        
+
         if (violations.isEmpty()) {
             return ValidationResult.success();
         } else {
@@ -485,10 +483,10 @@ public class ManualValidationService {
 ```java
 @ApplicationScoped
 public class LazyValidationService {
-    
+
     @Inject
     Validator validator;
-    
+
     public ValidationResult validateLazy(User user, Class<?>... groups) {
         // Валидация только при необходимости
         if (shouldValidate(user)) {
@@ -506,12 +504,12 @@ public class LazyValidationService {
 ```java
 @ApplicationScoped
 public class ValidationCacheService {
-    
-    private final Cache<String, ValidationResult> cache = 
+
+    private final Cache<String, ValidationResult> cache =
         Caffeine.newBuilder()
             .expireAfterWrite(10, TimeUnit.MINUTES)
             .build();
-    
+
     public ValidationResult validateCached(User user) {
         String key = generateKey(user);
         return cache.get(key, k -> performValidation(user));
@@ -528,14 +526,14 @@ public class ValidationCacheService {
 ```java
 @ApplicationScoped
 public class AsyncValidationService {
-    
+
     @Inject
     Validator validator;
-    
+
     public Uni<ValidationResult> validateAsync(User user) {
         return Uni.createFrom().item(() -> {
             Set<ConstraintViolation<User>> violations = validator.validate(user);
-            return violations.isEmpty() 
+            return violations.isEmpty()
                 ? ValidationResult.success()
                 : ValidationResult.failure(violations);
         });
@@ -569,3 +567,11 @@ public @interface ConditionalValid {
 - [**Jakarta Bean Validation** Specification](https://beanvalidation.org/2.0/)
 - [**Hibernate Validator** Documentation](https://hibernate.org/validator/documentation/)
 - [**Bean Validation Best Practices**](https://www.baeldung.com/javax-validation)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

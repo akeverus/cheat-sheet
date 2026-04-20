@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 ---
 
-# **ClickHouse**: Таблицы и движки - Полное руководство по созданию и управлению таблицами
+# **ClickHouse**: Таблицы и движки — Полное руководство по созданию и управлению таблицами
 
 Комплексное руководство по таблицам **ClickHouse**: движки таблиц, типы данных, создание и оптимизация таблиц.
 
@@ -25,7 +25,7 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 - [Data Types](https://clickhouse.com/docs/en/sql-reference/data-types)
 - [Creating Tables](https://clickhouse.com/docs/en/sql-reference/statements/create/table)
 
-### **Baeldung**
+### Обучающие материалы
 - [ClickHouse Table Engines](https://www.baeldung.com/clickhouse-table-engines)
 
 ### См. также
@@ -944,7 +944,6 @@ SYSTEM RESTORE REPLICA table_name;
 - [ClickHouse Examples](https://clickhouse.com/docs/en/getting-started/tutorial)
 - [Real-world Schemas](https://clickhouse.com/docs/en/guides/best-practices)
 
----
 
 **Следующие темы:**
 - [Запросы и аналитика](clickhouse-queries.md)

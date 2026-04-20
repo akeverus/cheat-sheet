@@ -28,22 +28,22 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 
 ### Официальная документация **PostgreSQL**
 
-- [`PostgreSQL Data Types`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Arrays`](https://www.postgresql.org/docs/)
-- [`PostgreSQL JSON`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Enum Types`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Domains`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Full Text Search`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Range Types`](https://www.postgresql.org/docs/)
+- [PostgreSQL Data Types](https://www.postgresql.org/docs/)
+- [PostgreSQL Arrays](https://www.postgresql.org/docs/)
+- [PostgreSQL JSON](https://www.postgresql.org/docs/)
+- [PostgreSQL Enum Types](https://www.postgresql.org/docs/)
+- [PostgreSQL Domains](https://www.postgresql.org/docs/)
+- [PostgreSQL Full Text Search](https://www.postgresql.org/docs/)
+- [PostgreSQL Range Types](https://www.postgresql.org/docs/)
 
 ### Дополнительные ресурсы
 
-- [`PostgreSQL Advanced Data Types`](https://www.postgresql.org/docs/)
-- [`JSONB Performance Tips`](https://www.postgresql.org/docs/)
-- [`Full Text Search Tutorial`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Extensions`](https://www.postgresql.org/docs/)
+- [PostgreSQL Advanced Data Types](https://www.postgresql.org/docs/)
+- [JSONB Performance Tips](https://www.postgresql.org/docs/)
+- [Full Text Search Tutorial](https://www.postgresql.org/docs/)
+- [PostgreSQL Extensions](https://www.postgresql.org/docs/)
 
-См. также: [`postgres-basics`](postgres-basics.md) — [`postgres-design`](postgres-design.md) — [`postgres-joins`](postgres-joins.md).
+См. также: [[postgres-basics]] — [[postgres-design]] — [[postgres-joins]].
 
 ## Содержание
 
@@ -448,7 +448,7 @@ ALTER TYPE request_state ADD VALUE 'blocked';
 CREATE TYPE status_enum AS ENUM('created', 'approved', 'done');
 
 -- Изменить столбец на новое перечисление
-ALTER TABLE requests 
+ALTER TABLE requests
 ALTER COLUMN status TYPE status_enum
 USING status::text::status_enum;
 ```
@@ -495,7 +495,7 @@ CREATE TABLE request_statuses (
     name TEXT UNIQUE NOT NULL
 );
 
-INSERT INTO request_statuses (name) VALUES 
+INSERT INTO request_statuses (name) VALUES
     ('created'), ('approved'), ('finished');
 
 CREATE TABLE requests (
@@ -671,11 +671,11 @@ INSERT INTO documents (content)
 VALUES ('<root><title>Test</title></root>');
 
 -- Поиск в XML
-SELECT * FROM documents 
+SELECT * FROM documents
 WHERE content::text LIKE '%Test%';
 
 -- Использование XPath (требует расширение)
-SELECT xpath('/root/title/text()', content) 
+SELECT xpath('/root/title/text()', content)
 FROM documents;
 ```
 
@@ -775,7 +775,7 @@ ORDER BY typname;
     `ROW`('456 `Oak St`', '`Newtown`', '`NY`', '67890', '`USA`')
 )::`contact_info`
 `WHERE` id = 1;
-```
+```text
 
 Функции для работы с составными типами:
 ```sql
@@ -804,7 +804,7 @@ $$ `LANGUAGE` plpgsql;
 -- Использование функций
 `SELECT` name, `format_address`((contact).address)
 `FROM` customers;
-```
+```text
 
 ### Перечисления с дополнительными атрибутами
 
@@ -843,14 +843,14 @@ $$ `LANGUAGE` plpgsql;
 `DECLARE`
     `old_status user_status`;
 `BEGIN`
-    -- Получаем текущий статус
+    — Получаем текущий статус
     `SELECT` status `INTO old_status FROM` users `WHERE` id = `p_user_id`;
 
     `IF NOT FOUND THEN`
         `RAISE EXCEPTION` '`User with ID` % not found', `p_user_id`;
     `END IF`;
 
-    -- Бизнес-логика валидации
+    — Бизнес-логика валидации
     `IF old_status` = 'banned' `AND p_new_status` != 'banned' `THEN`
         `RAISE EXCEPTION` '`Cannot change status from` banned';
     `END IF`;
@@ -859,16 +859,16 @@ $$ `LANGUAGE` plpgsql;
         `RAISE EXCEPTION` '`Reason required for suspension`';
     `END IF`;
 
-    -- Обновляем статус
+    — Обновляем статус
     `UPDATE` users `SET` status = `p_new_status`, `updated_at` = CURRENT_TIMESTAMP
     `WHERE` id = `p_user_id`;
 
-    -- Логируем изменение
+    — Логируем изменение
     `INSERT INTO user_status_log` (`user_id`, `old_status`, `new_status`, reason, `changed_at`)
     `VALUES` (`p_user_id`, `old_status`, `p_new_status`, `p_reason`, CURRENT_TIMESTAMP);
 `END`;
 $$ `LANGUAGE` plpgsql;
-```
+```text
 
 ## Расширения PostgreSQL
 
@@ -894,7 +894,7 @@ $$ `LANGUAGE` plpgsql;
 `SELECT` extname, extversion, extrelocatable
 `FROM pg_extension`
 `ORDER BY` extname;
-```
+```text
 
 Расширения для работы с типами данных:
 
@@ -928,7 +928,7 @@ $$ `LANGUAGE` plpgsql;
 ('`Gaming Laptops`', '`electronics.laptops.gaming`');
 
 `SELECT` * `FROM` categories
-`WHERE` path <@ '`electronics.laptops`'; -- Потомки
+`WHERE` path <@ '`electronics.laptops`'; — Потомки
 
 -- intarray для массивов целых чисел
 `CREATE EXTENSION` intarray;
@@ -942,8 +942,8 @@ $$ `LANGUAGE` plpgsql;
 `CREATE INDEX idx_articles_tags ON` articles `USING GIN` (tags gin__int_ops);
 
 `SELECT` * `FROM` articles
-`WHERE` tags && `ARRAY`[1,3,5]; -- Пересечение массивов
-```
+`WHERE` tags && `ARRAY`[1,3,5]; — Пересечение массивов
+```text
 
 ### Создание пользовательских расширений
 
@@ -956,7 +956,7 @@ $$ `LANGUAGE` plpgsql;
 └── **test**/
     └── **sql**/
         └── **my_extension_test.sql**
-```
+```text
 
 Пример простого расширения:
 ```sql
@@ -965,7 +965,7 @@ comment = '`My custom PostgreSQL extension`'
 `default_version` = '1.0'
 `module_pathname` = `'my_extension'`
 relocatable = `true`
-```
+```text
 
 ```sql
 -- `my_extension`.sql
@@ -1003,7 +1003,7 @@ $$ `LANGUAGE` plpgsql `IMMUTABLE`;
     `LEFTARG` = rgb,
     `RIGHTARG` = rgb
 );
-```
+```text
 
 Установка расширения:
 ```sql
@@ -1011,8 +1011,8 @@ $$ `LANGUAGE` plpgsql `IMMUTABLE`;
 `CREATE EXTENSION my_extension`;
 
 -- Использование
-`SELECT make_rgb`(`255`, 0, 0) + `make_rgb`(0, `255`, 0); -- (`255`, `255`, 0)
-```
+`SELECT make_rgb`(`255`, 0, 0) + `make_rgb`(0, `255`, 0); — (`255`, `255`, 0)
+```text
 
 ## Продвинутые техники работы с массивами
 
@@ -1023,8 +1023,8 @@ $$ `LANGUAGE` plpgsql `IMMUTABLE`;
 `CREATE TABLE matrix_data` (
     id `SERIAL PRIMARY KEY`,
     `matrix_name VARCHAR`(50),
-    data integer[][],  -- Двумерный массив
-    dimensions integer[]  -- Размеры [rows, cols]
+    data integer[][],  — Двумерный массив
+    dimensions integer[]  — Размеры [rows, cols]
 );
 
 -- Вставка матрицы 3x3
@@ -1057,7 +1057,7 @@ $$ `LANGUAGE` plpgsql `IMMUTABLE`;
     i integer;
     j integer;
 `BEGIN`
-    -- Инициализация результата
+    — Инициализация результата
     result := `ARRAY`[]::integer[][];
 
     `FOR` j `IN 1`..cols `LOOP`
@@ -1104,7 +1104,7 @@ $$ `LANGUAGE` plpgsql;
     `RETURN` result;
 `END`;
 $$ `LANGUAGE` plpgsql;
-```
+```text
 
 ### Массивы с пользовательскими типами
 
@@ -1148,7 +1148,7 @@ $$ `LANGUAGE` plpgsql;
     `FOR` i `IN 1`..n `LOOP`
         j := i % n + 1;
         area := area + (vertices[i]).x * (vertices[j]).y;
-        area := area - (vertices[j]).x * (vertices[i]).y;
+        area := area — (vertices[j]).x * (vertices[i]).y;
     `END LOOP`;
 
     `RETURN` abs(area) / 2;
@@ -1158,7 +1158,7 @@ $$ `LANGUAGE` plpgsql;
 -- Использование
 `SELECT` name, `polygon_area`(vertices) as area
 `FROM` polygons;
-```
+```text
 
 ### Индексация массивов
 
@@ -1185,7 +1185,7 @@ $$ `LANGUAGE` plpgsql;
        `array_length`(`array_intersect`(tags, `ARRAY`['postgresql', 'database']), 1) as `common_count`
 `FROM` articles
 `ORDER BY common_count DESC`;
-```
+```text
 
 ## Продвинутые техники работы с JSONB
 
@@ -1202,7 +1202,7 @@ $$ `LANGUAGE` plpgsql;
     `profile_data JSONB`,
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP,
 
-    -- Валидация по схеме
+    — Валидация по схеме
     `CONSTRAINT valid_profile`
         `CHECK` (`jsonb_matches_schema`(
             '{
@@ -1238,7 +1238,7 @@ $$ `LANGUAGE` plpgsql;
         }
     }'::jsonb
 );
-```
+```text
 
 ### JSONB в OLAP кубах
 
@@ -1246,9 +1246,9 @@ $$ `LANGUAGE` plpgsql;
 -- Создание `OLAP` куба на `JSONB`
 `CREATE TABLE sales_cube` (
     id `SERIAL PRIMARY KEY`,
-    dimensions `JSONB`,  -- {"date": "2024-01", "region": "`US`", "product": "`Widget`"}
-    measures `JSONB`,    -- {"revenue": `1000.50`, "quantity": 10, "discount": `0.05`}
-    metadata `JSONB`,    -- {"source": "web", "currency": "`USD`"}
+    dimensions `JSONB`,  — {"date": "2024-01", "region": "`US`", "product": "`Widget`"}
+    measures `JSONB`,    — {"revenue": `1000.50`, "quantity": 10, "discount": `0.05`}
+    metadata `JSONB`,    — {"source": "web", "currency": "`USD`"}
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP
 );
 
@@ -1299,7 +1299,7 @@ $$ `LANGUAGE` plpgsql;
     min((measures->>'revenue')::numeric) as `min_revenue`,
     max((measures->>'revenue')::numeric) as `max_revenue`
 `FROM sales_cube`;
-```
+```text
 
 ### JSONB для поиска и фильтрации
 
@@ -1308,7 +1308,7 @@ $$ `LANGUAGE` plpgsql;
 `CREATE TABLE products_catalog` (
     id `SERIAL PRIMARY KEY`,
     name `VARCHAR`(`255`),
-    attributes `JSONB`,  -- Гибкие атрибуты продукта
+    attributes `JSONB`,  — Гибкие атрибуты продукта
     tags `TEXT`[],
     `created_at TIMESTAMP DEFAULT` CURRENT_TIMESTAMP
 );
@@ -1390,7 +1390,7 @@ $$ `LANGUAGE` plpgsql;
 `UPDATE products_catalog`
 `SET` attributes = attributes - '`old_field`'
 `WHERE` attributes ? '`old_field`';
-```
+```text
 
 ## Диапазоны и временные ряды
 
@@ -1405,7 +1405,7 @@ $$ `LANGUAGE` plpgsql;
     `guest_name VARCHAR`(`100`),
     `booking_status VARCHAR`(20) `DEFAULT` 'confirmed',
 
-    -- Исключение пересекающихся бронирований
+    — Исключение пересекающихся бронирований
     `EXCLUDE` (`room_id WITH` =, `booking_period WITH` &&)
     `WHERE` (`booking_status` = 'confirmed')
 );
@@ -1439,13 +1439,13 @@ $$ `LANGUAGE` plpgsql;
 `SELECT`
     `room_id`,
     count(*) as `total_bookings`,
-    sum(upper(`booking_period`) - lower(`booking_period`)) as `total_booked_hours`
+    sum(upper(`booking_period`) — lower(`booking_period`)) as `total_booked_hours`
 `FROM room_bookings`
 `WHERE booking_status` = 'confirmed'
   `AND booking_period` && '[2024-01-01, 2024-02-01)'::tsrange
 `GROUP BY room_id`
 `ORDER BY total_booked_hours DESC`;
-```
+```text
 
 ### Интеллектуальный полнотекстовый поиск
 
@@ -1533,7 +1533,7 @@ $$ `LANGUAGE` plpgsql;
 `FROM ts_stat`('`SELECT search_vector FROM` articles')
 `ORDER BY` ndoc `DESC`, nentry `DESC`
 `LIMIT 10`;
-```
+```text
 
 #### Расширенный полнотекстовый поиск
 
@@ -1554,13 +1554,13 @@ $$ `LANGUAGE` plpgsql;
 `DECLARE`
     result `TSVECTOR`;
 `BEGIN`
-    -- Основной контент
+    — Основной контент
     result := setweight(`to_tsvector`('`russian_config`', `COALESCE`(`doc_title`, '')), 'A');
 
-    -- Содержимое с меньшим весом
+    — Содержимое с меньшим весом
     result := result || setweight(`to_tsvector`('`russian_config`', `COALESCE`(`doc_content`, '')), 'B');
 
-    -- Метаданные
+    — Метаданные
     `IF doc_metadata IS NOT NULL THEN`
         result := result || setweight(`to_tsvector`('`russian_config`',
             `COALESCE`(`doc_metadata`->>'keywords', '') || ' ' ||
@@ -1608,7 +1608,7 @@ $$ `LANGUAGE` plpgsql;
 
 -- Использование
 `SELECT` * `FROM search_with_highlights`('postgresql индексы');
-```
+```text
 
 ## UUID и генерация идентификаторов
 
@@ -1647,13 +1647,13 @@ $$ `LANGUAGE` plpgsql;
     `prefix_bytes BYTEA`;
     `uuid_bytes BYTEA`;
 `BEGIN`
-    -- Преобразуем префикс в байты (первые 4 символа)
+    — Преобразуем префикс в байты (первые 4 символа)
     `prefix_bytes` := substring(prefix, 1, 4)::bytea;
 
-    -- Получаем байты `UUID`
+    — Получаем байты `UUID`
     `uuid_bytes` := `uuid_send`(`base_uuid`);
 
-    -- Заменяем первые байты
+    — Заменяем первые байты
     `uuid_bytes` := overlay(`uuid_bytes PLACING prefix_bytes FROM 1`);
 
     `RETURN uuid_recv`(`uuid_bytes`);
@@ -1677,13 +1677,13 @@ $$ `LANGUAGE` plpgsql;
     variant `INTEGER`;
     `timestamp_microsecs BIGINT`;
 `BEGIN`
-    -- Извлекаем версию (биты 48-51 первого октета)
+    — Извлекаем версию (биты 48-51 первого октета)
     version := (`get_byte`(`uuid_bytes`, 6) >> 4) & 15;
 
-    -- Извлекаем вариант (биты 60-63 второго октета)
+    — Извлекаем вариант (биты 60-63 второго октета)
     variant := `get_byte`(`uuid_bytes`, 8) >> 4;
 
-    -- Для версии 1 вычисляем timestamp
+    — Для версии 1 вычисляем timestamp
     `IF` version = 1 `THEN`
         `timestamp_microsecs` :=
             ((`get_byte`(`uuid_bytes`, 6) & 15) << 24) |
@@ -1691,7 +1691,7 @@ $$ `LANGUAGE` plpgsql;
             (`get_byte`(`uuid_bytes`, 4) << 8) |
             `get_byte`(`uuid_bytes`, 5);
 
-        -- Корректировка эпохи (`UUID` epoch = 1582-10-15, `Unix epoch` = 1970-01-01)
+        — Корректировка эпохи (`UUID` epoch = 1582-10-15, `Unix epoch` = 1970-01-01)
         `timestamp_microsecs` := `timestamp_microsecs` + `122192928000000000`;
     `END IF`;
 
@@ -1710,7 +1710,7 @@ $$ `LANGUAGE` plpgsql;
 -- Анализ `UUID`
 `SELECT` * `FROM analyze_uuid`(`gen_random_uuid()`);
 `SELECT` * `FROM analyze_uuid`(`uuid_generate_v1()`);
-```
+```text
 
 ### Генерация последовательностей и серий
 
@@ -1723,10 +1723,10 @@ $$ `LANGUAGE` plpgsql;
     `sequence_value INTEGER`;
     result `BIGINT`;
 `BEGIN`
-    -- Получаем следующее значение последовательности для типа
+    — Получаем следующее значение последовательности для типа
     `EXECUTE` format('`SELECT` nextval(''%`s_seq`'')', `entity_type`) `INTO sequence_value`;
 
-    -- Формируем `ID`: `YYYY000000` (год + 6-значный номер)
+    — Формируем `ID`: `YYYY000000` (год + 6-значный номер)
     result := (`current_year` * `1000000`) + `sequence_value`;
 
     `RETURN` result;
@@ -1748,10 +1748,10 @@ $$ `LANGUAGE` plpgsql;
     `sequence_value INTEGER`;
     sku `TEXT`;
 `BEGIN`
-    -- Получаем последовательность для категории
+    — Получаем последовательность для категории
     `EXECUTE` format('`SELECT` nextval(''%`s_seq`'')', lower(`category_code`)) `INTO sequence_value`;
 
-    -- Формируем `SKU`: `CAT-`SUB`-XXXXXX`
+    — Формируем `SKU`: `CAT-`SUB`-XXXXXX`
     sku := upper(`category_code`);
     `IF subcategory_code` != '' `THEN`
         sku := sku || '-' || upper(`subcategory_code`);
@@ -1768,7 +1768,7 @@ $$ `LANGUAGE` plpgsql;
 
 -- Генерация `SKU`
 `SELECT generate_sku`('electronics', 'laptop'), `generate_sku`('clothing');
-```
+```text
 
 ## Производительность и оптимизация
 
@@ -1820,7 +1820,7 @@ $$ `LANGUAGE` plpgsql;
 `WHERE created_at` >= CURRENT_DATE - `INTERVAL` '7 days'
 `GROUP BY event_data`->>'type'
 `ORDER BY event_count DESC`;
-```
+```text
 
 ### Оптимизация массивов
 
@@ -1901,7 +1901,7 @@ $$ `LANGUAGE` sql `IMMUTABLE`;
         `SELECT` unnest($2)
     );
 $$ `LANGUAGE` sql `IMMUTABLE`;
-```
+```text
 
 ### Кэширование и материализованные представления
 
@@ -1931,7 +1931,7 @@ $$ `LANGUAGE` sql `IMMUTABLE`;
 `BEGIN`
     `REFRESH MATERIALIZED VIEW CONCURRENTLY article_stats`;
 
-    -- Логируем обновление
+    — Логируем обновление
     `INSERT INTO refresh_log` (`view_name`, `refreshed_at`, duration)
     `VALUES` ('`article_stats`', CURRENT_TIMESTAMP, `clock_timestamp()` - CURRENT_TIMESTAMP);
 `END`;
@@ -1940,10 +1940,10 @@ $$ `LANGUAGE` plpgsql;
 -- Планировщик для автоматического обновления
 `SELECT cron.schedule`(
     '`refresh-article-stats`',
-    '0 */6 * * *',  -- Каждые 6 часов
+    '0 */6 * * *',  — Каждые 6 часов
     '`SELECT refresh_article_stats`();'
 );
-```
+```text
 
 ## Интеграция с приложениями
 
@@ -2007,7 +2007,7 @@ public class `StringArrayConverter` implements `AttributeConverter<String[], Str
     `@Override`
     public `String[] convertToEntityAttribute(String dbData)` {
         return dbData != null ?
-            dbData.substring(1, dbData.length() - 1).split(","):
+            dbData.substring(1, dbData.length() — 1).split(","):
             new String[0];
     }
 }
@@ -2035,7 +2035,7 @@ public class `Article` {
 
     // Геттеры и сеттеры
 }
-```
+```text
 
 ### Hibernate типы
 
@@ -2088,7 +2088,7 @@ public class `UserStatusConverter` implements `AttributeConverter`<`UserStatus`,
         return `dbData` != `null` ? `UserStatus`.`valueOf`(`dbData`.`toUpperCase()`) : `null`;
     }
 }
-```
+```text
 
 ### JDBC работа с расширенными типами
 
@@ -2177,7 +2177,7 @@ public class `PostgreSQLAdvancedTypesDemo` {
         }
     }
 }
-```
+```text
 
 Расширенные типы данных PostgreSQL предоставляют мощные возможности для создания гибких и эффективных схем баз данных. Ключевые аспекты успешного использования:
 
@@ -2222,3 +2222,10 @@ public class `PostgreSQLAdvancedTypesDemo` {
 PostgreSQL предоставляет богатый набор типов данных, которые позволяют создавать современные, гибкие и производительные приложения. Правильное использование этих типов в сочетании с хорошим проектированием схемы обеспечивает высокую эффективность и надежность систем.
 ```
 
+## См. также
+
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]

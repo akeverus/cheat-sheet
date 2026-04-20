@@ -99,16 +99,16 @@ interface Transition {
 ```java
 public class RtFiniteStateMachine implements FiniteStateMachine {
     private State current;
-    
+
     public RtFiniteStateMachine(State initial) {
         this.current = initial;
     }
-    
+
     @Override
     public FiniteStateMachine switchState(CharSequence c) {
         return new RtFiniteStateMachine(this.current.transit(c));
     }
-    
+
     @Override
     public boolean canStop() {
         return this.current.isFinal();
@@ -124,16 +124,16 @@ import java.util.List;
 public class RtState implements State {
     private List<Transition> transitions;
     private boolean isFinal;
-    
+
     public RtState() {
         this(false);
     }
-    
+
     public RtState(boolean isFinal) {
         this.transitions = new ArrayList<>();
         this.isFinal = isFinal;
     }
-    
+
     @Override
     public State transit(CharSequence c) {
         return transitions.stream()
@@ -142,12 +142,12 @@ public class RtState implements State {
             .findAny()
             .orElseThrow(() -> new IllegalArgumentException("Input not accepted: " + c));
     }
-    
+
     @Override
     public boolean isFinal() {
         return this.isFinal;
     }
-    
+
     @Override
     public State with(Transition tr) {
         this.transitions.add(tr);
@@ -162,17 +162,17 @@ RtTransition: правило (строка или условие) и следу�
 public class RtTransition implements Transition {
     private String rule;
     private State next;
-    
+
     public RtTransition(String rule, State next) {
         this.rule = rule;
         this.next = next;
     }
-    
+
     @Override
     public State state() {
         return this.next;
     }
-    
+
     @Override
     public boolean isPossible(CharSequence c) {
         return this.rule.equalsIgnoreCase(String.valueOf(c));
@@ -194,7 +194,7 @@ public class JsonStateMachineBuilder {
         State value = new RtState();
         State comma = new RtState();
         State closeBrace = new RtState(true); // Финальное состояние
-        
+
         start.with(new RtTransition("{", openBrace));
         openBrace.with(new RtTransition("\"", key));
         key.with(new RtTransition("\"", colon));
@@ -203,7 +203,7 @@ public class JsonStateMachineBuilder {
         value.with(new RtTransition("}", closeBrace));
         comma.with(new RtTransition(",", openBrace));
         comma.with(new RtTransition("}", closeBrace));
-        
+
         return new RtFiniteStateMachine(start);
     }
 }
@@ -215,7 +215,7 @@ public class JsonStateMachineBuilder {
 public class JsonValidator {
     public static boolean isValid(String json) {
         FiniteStateMachine machine = JsonStateMachineBuilder.buildJsonStateMachine();
-        
+
         for (int i = 0; i < json.length(); i++) {
             try {
                 machine = machine.switchState(String.valueOf(json.charAt(i)));
@@ -223,7 +223,7 @@ public class JsonValidator {
                 return false;
             }
         }
-        
+
         return machine.canStop();
     }
 }
@@ -262,21 +262,21 @@ class RtFiniteStateMachineK(private val current: StateK) : FiniteStateMachineK {
     override fun switchState(c: CharSequence): FiniteStateMachineK {
         return RtFiniteStateMachineK(current.transit(c))
     }
-    
+
     override fun canStop(): Boolean = current.isFinal()
 }
 
 class RtStateK(private var isFinal: Boolean = false) : StateK {
     private val transitions = mutableListOf<TransitionK>()
-    
+
     override fun transit(c: CharSequence): StateK {
         return transitions.firstOrNull { it.isPossible(c) }
             ?.state()
             ?: throw IllegalArgumentException("Input not accepted: $c")
     }
-    
+
     override fun isFinal(): Boolean = isFinal
-    
+
     override fun with(tr: TransitionK): StateK {
         transitions.add(tr)
         return this
@@ -285,7 +285,7 @@ class RtStateK(private var isFinal: Boolean = false) : StateK {
 
 class RtTransitionK(private val rule: String, private val next: StateK) : TransitionK {
     override fun state(): StateK = next
-    
+
     override fun isPossible(c: CharSequence): Boolean {
         return rule.equals(c.toString(), ignoreCase = true)
     }
@@ -297,14 +297,14 @@ object JsonValidatorK {
     fun isValid(input: String): Boolean {
         val automaton = buildJsonStateMachine()
         var currentAutomaton = automaton
-        
+
         for (c in input) {
             currentAutomaton = currentAutomaton.switchState(c.toString())
         }
-        
+
         return currentAutomaton.canStop()
     }
-    
+
     private fun buildJsonStateMachine(): FiniteStateMachineK {
         val start = RtStateK()
         val openBrace = RtStateK()
@@ -313,7 +313,7 @@ object JsonValidatorK {
         val value = RtStateK()
         val comma = RtStateK()
         val closeBrace = RtStateK(true) // Финальное состояние
-        
+
         start.with(RtTransitionK("{", openBrace))
         openBrace.with(RtTransitionK("\"", key))
         key.with(RtTransitionK(":", colon))
@@ -321,7 +321,7 @@ object JsonValidatorK {
         value.with(RtTransitionK("\"", comma))
         comma.with(RtTransitionK(",", openBrace))
         comma.with(RtTransitionK("}", closeBrace))
-        
+
         return RtFiniteStateMachineK(start)
     }
 }
@@ -331,7 +331,7 @@ object JsonValidatorK {
 fun main() {
     val validJson = "{\"key\":\"value\"}"
     println(JsonValidatorK.isValid(validJson)) // true
-    
+
     val invalidJson = "{\"key\":\"value\""
     println(JsonValidatorK.isValid(invalidJson)) // false
 }
@@ -361,10 +361,10 @@ public static FiniteStateMachine buildEmailStateMachine() {
     State domain = new RtState();
     State dot = new RtState();
     State tld = new RtState(true);
-    
+
     // Переходы для валидации email
     // ...
-    
+
     return new RtFiniteStateMachine(start);
 }
 ```
@@ -378,10 +378,10 @@ public static FiniteStateMachine buildNumberStateMachine() {
     State integer = new RtState();
     State dot = new RtState();
     State decimal = new RtState(true);
-    
+
     // Переходы для валидации чисел
     // ...
-    
+
     return new RtFiniteStateMachine(start);
 }
 ```

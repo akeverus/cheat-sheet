@@ -216,7 +216,7 @@ def add(x: Int, y: Int) = x + y  // возвращает Int
 ```scala
 class Outer {
   class Inner
-  
+
   def createInner: Inner = new Inner
 }
 
@@ -316,7 +316,7 @@ processInner(inner2)  // OK
 
 ### **Higher-Kinded Types**
 
-**Higher-Kinded Types** (**HKT**) - это типы, которые принимают другие типы как параметры:**
+**Higher-Kinded Types** (**HKT**) — это типы, которые принимают другие типы как параметры:**
 
 ```scala
 // F[_] - higher-kinded type
@@ -373,7 +373,7 @@ class UserLogger(val name: String) extends User with Logger
 
 ### **Phantom Types**
 
-**Phantom types** - это типы, которые используются только на этапе компиляции:**
+**Phantom types** — это типы, которые используются только на этапе компиляции:**
 
 ```scala
 sealed trait State
@@ -429,15 +429,15 @@ class QueryBuilder[S <: State] private(val query: String) {
   def select(columns: String)(implicit ev: S =:= Empty): QueryBuilder[WithSelect] = {
     new QueryBuilder[WithSelect](s"SELECT $columns")
   }
-  
+
   def from(table: String)(implicit ev: S =:= WithSelect): QueryBuilder[WithFrom] = {
     new QueryBuilder[WithFrom](s"$query FROM $table")
   }
-  
+
   def where(condition: String)(implicit ev: S =:= WithFrom): QueryBuilder[WithWhere] = {
     new QueryBuilder[WithWhere](s"$query WHERE $condition")
   }
-  
+
   def build()(implicit ev: S =:= WithWhere): String = query
 }
 
@@ -699,7 +699,7 @@ class Door[State](private var isOpen: Boolean) {
     isOpen = true
     this.asInstanceOf[Door[Open]]
   }
-  
+
   def close(implicit ev: State =:= Open): Door[Closed] = {
     isOpen = false
     this.asInstanceOf[Door[Closed]]

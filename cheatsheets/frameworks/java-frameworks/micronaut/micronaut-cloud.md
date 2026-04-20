@@ -17,9 +17,7 @@ updated: "2026-02-11"
 related: ["micronaut-reactive.md", "micronaut-security.md"]
 ---
 
-# Micronaut: Cloud Native - Service Discovery, Configuration и Distributed Tracing
-
-
+# Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing
 
 ## Полезные ссылки
 
@@ -28,7 +26,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Содержание
 
-- [Micronaut: Cloud Native - Service Discovery, Configuration и Distributed Tracing](#micronaut-cloud-native-service-discovery-configuration-и-distributed-tracing)
+- [Micronaut: Cloud Native — Service Discovery, Configuration и Distributed Tracing](#micronaut-cloud-native-service-discovery-configuration-и-distributed-tracing)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Service Discovery](#service-discovery)
@@ -254,13 +252,13 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ExternalApiService {
-    
+
     @CircuitBreaker(name = "external-api", fallbackMethod = "fallback")
     public String callExternalApi(String data) {
         // Вызов внешнего API
         return externalApiClient.call(data);
     }
-    
+
     public String fallback(String data, Exception e) {
         return "Fallback response for: " + data;
     }
@@ -289,7 +287,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ExternalApiService {
-    
+
     @Retry(name = "external-api")
     public String callExternalApi(String data) {
         return externalApiClient.call(data);
@@ -352,10 +350,10 @@ import jakarta.inject.Inject;
 
 @Controller("/api")
 public class ApiController {
-    
+
     @Inject
     Tracer tracer;
-    
+
     @Get("/users/{id}")
     public User getUser(Long id) {
         Span span = tracer.buildSpan("get-user").start();
@@ -395,13 +393,13 @@ import reactor.core.publisher.Mono;
 
 @Singleton
 public class DatabaseHealthIndicator implements HealthIndicator {
-    
+
     private final DataSource dataSource;
-    
+
     public DatabaseHealthIndicator(DataSource dataSource) {
         this.dataSource = dataSource;
     }
-    
+
     @Override
     public Publisher<HealthResult> getResult() {
         return Mono.fromCallable(() -> {
@@ -459,7 +457,7 @@ import jakarta.inject.Singleton;
 public class UserService {
     private final Counter userCreatedCounter;
     private final Timer userCreationTimer;
-    
+
     public UserService(MeterRegistry meterRegistry) {
         this.userCreatedCounter = Counter.builder("users.created")
             .description("Number of users created")
@@ -468,7 +466,7 @@ public class UserService {
             .description("Time taken to create a user")
             .register(meterRegistry);
     }
-    
+
     public User createUser(User user) {
         return userCreationTimer.recordCallable(() -> {
             User created = userRepository.save(user);
@@ -615,13 +613,13 @@ import io.micronaut.ratelimit.annotation.RateLimited;
 
 @Controller("/api")
 public class RateLimitedController {
-    
+
     @Get("/users")
     @RateLimited(limit = 10, duration = "PT1M")
     public List<User> getUsers() {
         return userService.findAll();
     }
-    
+
     @Get("/users/{id}")
     @RateLimited(limit = 100, duration = "PT1M", key = "#{id}")
     public User getUser(Long id) {
@@ -641,7 +639,7 @@ import io.micronaut.discovery.annotation.ServiceId;
 
 @Client(id = "user-service")
 public interface UserServiceClient {
-    
+
     @Get("/users/{id}")
     User getUser(Long id);
 }
@@ -698,10 +696,10 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ConfigurableService {
-    
+
     @Value("${app.feature.enabled:false}")
     private boolean featureEnabled;
-    
+
     @EventListener
     public void onRefresh(RefreshEvent event) {
         // Обработка обновления конфигурации
@@ -719,15 +717,15 @@ import jakarta.validation.constraints.Min;
 
 @ConfigurationProperties("app.service")
 public class ServiceConfiguration {
-    
+
     @NotBlank
     private String name;
-    
+
     @Min(1)
     private int maxRetries = 3;
-    
+
     private Duration timeout = Duration.ofSeconds(5);
-    
+
     // Getters and setters
 }
 ```
@@ -791,10 +789,10 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class ConfigurableService {
-    
+
     @Value("${app.feature.enabled:false}")
     private boolean featureEnabled;
-    
+
     @EventListener
     public void onRefresh(RefreshEvent event) {
         // Обработка обновления конфигурации
@@ -812,15 +810,15 @@ import jakarta.validation.constraints.Min;
 
 @ConfigurationProperties("app.service")
 public class ServiceConfiguration {
-    
+
     @NotBlank
     private String name;
-    
+
     @Min(1)
     private int maxRetries = 3;
-    
+
     private Duration timeout = Duration.ofSeconds(5);
-    
+
     // Getters and setters
 }
 ```
@@ -944,7 +942,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class TracedService {
-    
+
     @NewSpan("user-operation")
     public User getUser(@SpanTag("user.id") Long id) {
         return userRepository.findById(id)
@@ -968,3 +966,11 @@ public class TracedService {
 - [Envoy Documentation](https://www.envoyproxy.io/docs)
 - [Zipkin Documentation](https://zipkin.io/pages/instrumenting.html)
 - [Jaeger Documentation](https://www.jaegertracing.io/docs/)
+
+## См. также
+
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micronaut-basics|Micronaut: Основы]]
+- [[micronaut-batch|Micronaut: Batch Processing — Job Processing и Scheduling]]
+- [[micronaut-cache|Micronaut: Caching — Cache Abstraction и Redis Cache]]
+- [[micronaut-core|Micronaut: Core — Dependency Injection и Bean Management]]

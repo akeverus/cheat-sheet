@@ -26,7 +26,6 @@ BDD-фреймворк для написания автотестов на ес�
 - [[rest-assured|REST Assured]]
 - [[selenium|Selenium]]
 
----
 
 ## Содержание
 
@@ -45,7 +44,6 @@ BDD-фреймворк для написания автотестов на ес�
 - [Когда использовать и когда нет](#когда-использовать-и-когда-нет)
 - [Итоговые таблицы](#итоговые-таблицы)
 
----
 
 ## Зачем Cucumber
 
@@ -57,7 +55,6 @@ Cucumber решает проблему разрыва между бизнесо�
 - **Переиспользование шагов** — один раз написанный step definition используется в любых сценариях
 - **Параметризация** — Scenario Outline позволяет проверять десятки вариантов одним сценарием
 
----
 
 ## Подключение
 
@@ -132,7 +129,6 @@ dependencies {
 public class CucumberTestRunner {}
 ```
 
----
 
 ## Gherkin-синтаксис
 
@@ -199,7 +195,6 @@ Feature: Правила интернет-магазина
       Then стоимость доставки = 299 руб.
 ```
 
----
 
 ## Step definitions
 
@@ -259,7 +254,6 @@ public class UserSteps {
 }
 ```
 
----
 
 ## Data tables
 
@@ -287,7 +281,6 @@ public void createUsers(DataTable dataTable) {
 }
 ```
 
----
 
 ## Scenario Outline
 
@@ -325,7 +318,6 @@ public void verifyResult(String expectedResult, String expectedType) {
 }
 ```
 
----
 
 ## Hooks и жизненный цикл
 
@@ -386,7 +378,6 @@ public class TestHooks {
 @BeforeAll → @Before → @BeforeStep → шаг → @AfterStep → ... → @After → @AfterAll
 ```
 
----
 
 ## Интеграция со Spring Boot
 
@@ -450,7 +441,6 @@ public class ApiSteps {
 }
 ```
 
----
 
 ## Параллельное выполнение
 
@@ -509,7 +499,6 @@ public class ThreadSafeSteps {
 }
 ```
 
----
 
 ## Пользовательские типы параметров
 
@@ -551,7 +540,6 @@ public class CucumberConfig {
 }
 ```
 
----
 
 ## Рекомендации по организации проекта
 
@@ -616,7 +604,6 @@ Scenario: Тест формы входа
 - **Теги** — используйте `@SmokeTest`, `@RegressionTest`, `@API`, `@WebUI` для фильтрации запуска.
 - **Данные** — чувствительные данные (пароли) — через переменные окружения, не хардкодить в `.feature`.
 
----
 
 ## Решение проблем
 
@@ -645,7 +632,6 @@ public void takeScreenshotOnFailure(Scenario scenario) {
 }
 ```
 
----
 
 ## Когда использовать и когда нет
 
@@ -658,7 +644,6 @@ public void takeScreenshotOnFailure(Scenario scenario) {
 | Кросс-функциональные команды | Проект без участия бизнес-аналитиков |
 | E2E и API тестирование | Legacy-код без чёткой архитектуры |
 
----
 
 ## Итоговые таблицы
 
@@ -698,5 +683,4 @@ public void takeScreenshotOnFailure(Scenario scenario) {
 | `dryRun` | Проверка без выполнения | `true` — генерирует заглушки для неопределённых шагов |
 | `monochrome` | Чистый вывод в консоль | `true` |
 
----
 

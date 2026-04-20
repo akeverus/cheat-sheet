@@ -53,15 +53,15 @@ updated: "2026-02-11"
 
 | Iteration | Unsettled | Settled | EvaluationNode | A | B | C | D | E | F |
 |-----------|-----------|---------|-----------------|---|---|---|---|---|---|
-| 1 | A | - | A | 0 | A - 10 | A - 15 | X - ∞ | X - ∞ | X - ∞ |
-| 2 | B, C | A | B | 0 | A - 10 | A - 15 | B - 22 | X - ∞ | B - 25 |
-| 3 | C, F, D | A, B | C | 0 | A - 10 | A - 15 | B - 22 | C - 25 | B - 25 |
-| 4 | D, E, F | A, B, C | D | 0 | A - 10 | A - 15 | B - 22 | D - 24 | D - 23 |
-| 5 | E, F | A, B, C, D | F | 0 | A - 10 | A - 15 | B - 22 | D - 24 | D - 23 |
-| 6 | E | A, B, C, D, F | E | 0 | A - 10 | A - 15 | B - 22 | D - 24 | D - 23 |
-| Final | - | ALL | NONE | 0 | A - 10 | A - 15 | B - 22 | D - 24 | D - 23 |
+| 1 | A | - | A | 0 | A — 10 | A — 15 | X - ∞ | X - ∞ | X - ∞ |
+| 2 | B, C | A | B | 0 | A — 10 | A — 15 | B — 22 | X - ∞ | B — 25 |
+| 3 | C, F, D | A, B | C | 0 | A — 10 | A — 15 | B — 22 | C — 25 | B — 25 |
+| 4 | D, E, F | A, B, C | D | 0 | A — 10 | A — 15 | B — 22 | D — 24 | D — 23 |
+| 5 | E, F | A, B, C, D | F | 0 | A — 10 | A — 15 | B — 22 | D — 24 | D — 23 |
+| 6 | E | A, B, C, D, F | E | 0 | A — 10 | A — 15 | B — 22 | D — 24 | D — 23 |
+| Final | - | ALL | NONE | 0 | A — 10 | A — 15 | B — 22 | D — 24 | D — 23 |
 
-Обозначение B - 22: предшественник B, суммарное расстояние от A равно 22. Итоговые пути: B 10, C 15, D 22 (A→B→D), E 24 (A→B→D→E), F 23 (A→B→D→F).
+Обозначение B — 22: предшественник B, суммарное расстояние от A равно 22. Итоговые пути: B 10, C 15, D 22 (A→B→D), E 24 (A→B→D→E), F 23 (A→B→D→F).
 
 ## Реализация на Java
 
@@ -71,7 +71,7 @@ updated: "2026-02-11"
 // Граф — множество узлов; у каждого узла список смежности и расстояние до источника
 public class Graph {
     private Set<Node> nodes = new HashSet<>();
-    
+
     public void addNode(Node nodeA) {
         nodes.add(nodeA);
     }
@@ -83,11 +83,11 @@ public class Node {
     private List<Node> shortestPath = new LinkedList<>();
     private Integer distance = Integer.MAX_VALUE;
     Map<Node, Integer> adjacentNodes = new HashMap<>();
-    
+
     public void addDestination(Node destination, int distance) {
         adjacentNodes.put(destination, distance);
     }
-    
+
     public Node(String name) {
         this.name = name;
     }
@@ -96,30 +96,30 @@ public class Node {
 // Источник: distance=0. Цикл: выбираем вершину с мин. расстоянием из unsettled, релаксируем рёбра к соседям, переносим вершину в settled
 public static Graph calculateShortestPathFromSource(Graph graph, Node source) {
     source.setDistance(0);
-    
+
     Set<Node> settledNodes = new HashSet<>();
     Set<Node> unsettledNodes = new HashSet<>();
-    
+
     unsettledNodes.add(source);
-    
+
     while (unsettledNodes.size() != 0) {
         Node currentNode = getLowestDistanceNode(unsettledNodes);
         unsettledNodes.remove(currentNode);
-        
-        for (Entry<Node, Integer> adjacencyPair : 
+
+        for (Entry<Node, Integer> adjacencyPair :
              currentNode.getAdjacentNodes().entrySet()) {
             Node adjacentNode = adjacencyPair.getKey();
             Integer edgeWeight = adjacencyPair.getValue();
-            
+
             if (!settledNodes.contains(adjacentNode)) {
                 calculateMinimumDistance(adjacentNode, edgeWeight, currentNode);
                 unsettledNodes.add(adjacentNode);
             }
         }
-        
+
         settledNodes.add(currentNode);
     }
-    
+
     return graph;
 }
 ```
@@ -130,7 +130,7 @@ public static Graph calculateShortestPathFromSource(Graph graph, Node source) {
 private static Node getLowestDistanceNode(Set<Node> unsettledNodes) {
     Node lowestDistanceNode = null;
     int lowestDistance = Integer.MAX_VALUE;
-    
+
     for (Node node : unsettledNodes) {
         int nodeDistance = node.getDistance();
         if (nodeDistance < lowestDistance) {
@@ -138,15 +138,15 @@ private static Node getLowestDistanceNode(Set<Node> unsettledNodes) {
             lowestDistanceNode = node;
         }
     }
-    
+
     return lowestDistanceNode;
 }
 
 private static void calculateMinimumDistance(Node evaluationNode,
-                                             Integer edgeWeight, 
+                                             Integer edgeWeight,
                                              Node sourceNode) {
     Integer sourceDistance = sourceNode.getDistance();
-    
+
     if (sourceDistance + edgeWeight < evaluationNode.getDistance()) {
         evaluationNode.setDistance(sourceDistance + edgeWeight);
         LinkedList<Node> shortestPath = new LinkedList<>(sourceNode.getShortestPath());
@@ -195,7 +195,7 @@ class NodeK(val name: String) {
     val shortestPath = mutableListOf<NodeK>()
     var distance: Int = Int.MAX_VALUE
     val adjacentNodes = mutableMapOf<NodeK, Int>()
-    
+
     fun addDestination(destination: NodeK, distance: Int) {
         adjacentNodes[destination] = distance
     }
@@ -203,7 +203,7 @@ class NodeK(val name: String) {
 
 class GraphK {
     val nodes = mutableSetOf<NodeK>()
-    
+
     fun addNode(node: NodeK) {
         nodes.add(node)
     }
@@ -216,33 +216,33 @@ class GraphK {
 object DijkstraK {
     fun calculateShortestPathFromSource(graph: GraphK, source: NodeK): GraphK {
         source.distance = 0
-        
+
         val settledNodes = mutableSetOf<NodeK>()
         val unsettledNodes = mutableSetOf<NodeK>()
-        
+
         unsettledNodes.add(source)
-        
+
         while (unsettledNodes.isNotEmpty()) {
             val currentNode = getLowestDistanceNode(unsettledNodes)
             unsettledNodes.remove(currentNode)
-            
+
             for ((adjacentNode, edgeWeight) in currentNode.adjacentNodes) {
                 if (adjacentNode !in settledNodes) {
                     calculateMinimumDistance(adjacentNode, edgeWeight, currentNode)
                     unsettledNodes.add(adjacentNode)
                 }
             }
-            
+
             settledNodes.add(currentNode)
         }
-        
+
         return graph
     }
-    
+
     private fun getLowestDistanceNode(unsettledNodes: Set<NodeK>): NodeK {
         var lowestDistanceNode: NodeK? = null
         var lowestDistance = Int.MAX_VALUE
-        
+
         for (node in unsettledNodes) {
             val nodeDistance = node.distance
             if (nodeDistance < lowestDistance) {
@@ -250,17 +250,17 @@ object DijkstraK {
                 lowestDistanceNode = node
             }
         }
-        
+
         return lowestDistanceNode!!
     }
-    
+
     private fun calculateMinimumDistance(
         evaluationNode: NodeK,
         edgeWeight: Int,
         sourceNode: NodeK
     ) {
         val sourceDistance = sourceNode.distance
-        
+
         if (sourceDistance + edgeWeight < evaluationNode.distance) {
             evaluationNode.distance = sourceDistance + edgeWeight
             val shortestPath = mutableListOf<NodeK>()
@@ -283,7 +283,7 @@ fun main() {
     val nodeD = NodeK("D")
     val nodeE = NodeK("E")
     val nodeF = NodeK("F")
-    
+
     nodeA.addDestination(nodeB, 10)
     nodeA.addDestination(nodeC, 15)
     nodeB.addDestination(nodeD, 12)
@@ -292,7 +292,7 @@ fun main() {
     nodeD.addDestination(nodeE, 2)
     nodeD.addDestination(nodeF, 1)
     nodeF.addDestination(nodeE, 5)
-    
+
     val graph = GraphK()
     graph.addNode(nodeA)
     graph.addNode(nodeB)
@@ -300,9 +300,9 @@ fun main() {
     graph.addNode(nodeD)
     graph.addNode(nodeE)
     graph.addNode(nodeF)
-    
+
     DijkstraK.calculateShortestPathFromSource(graph, nodeA)
-    
+
     println("Distance to B: ${nodeB.distance}") // 10
     println("Distance to D: ${nodeD.distance}") // 22
 }

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Jackson: **JSON** сериализация в **Java**
 
-**Комплексное руководство по использованию `Jackson` для работы с `JSON` в `Java` приложениях - от основ до продвинутых техник.**
+**Комплексное руководство по использованию `Jackson` для работы с `JSON` в `Java` приложениях — от основ до продвинутых техник.**
 
 ## Полезные ссылки
 
@@ -192,7 +192,7 @@ public class JacksonConfig {
         // Настройки форматирования JSON вывода
         // INDENT_OUTPUT включает красивое форматирование с отступами для читаемости
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        
+
         // Отключаем запись дат как timestamp (миллисекунды с 1970 года)
         // Вместо этого даты будут записываться в ISO-8601 формате (например, "2023-01-15T10:30:00")
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -1427,7 +1427,9 @@ public class JacksonTroubleshooting {
 
 **Jackson** рекомендуется как основной выбор для большинства **Java** проектов, особенно **enterprise** приложений с **complex JSON processing requirements**.
 
----
 
 [⬆️ Наверх](../)
 
+## См. также
+
+- [[java-gson|Gson]]

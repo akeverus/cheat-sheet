@@ -270,13 +270,13 @@ fun log2IntegerK(x: Int): Int {
 fun main() {
     println(Math.log10(100.0)) // 2.0
     println(Math.log10(1000.0)) // 3.0
-    
+
     println(Math.log(Math.E)) // 1.0
     println(Math.log(10.0)) // ≈ 2.302585
-    
+
     println(customLogK(2.0, 256.0)) // 8.0
     println(customLogK(10.0, 100.0)) // 2.0
-    
+
     println(log2K(8.0)) // 3.0
     println(log2IntegerK(8)) // 3
 }
@@ -304,7 +304,7 @@ fun main() {
 
 **Когда использовать log10, а когда log?** log10 — для десятичных логарифмов (порядки величин, pH, децибелы); log — для натурального (теория, производные, ряды). Для произвольного основания оба дают один результат по формуле смены основания.
 
-**Как получить целочисленный log2?** Для положительного int: 31 - Integer.numberOfLeadingZeros(x) даёт floor(log2(x)); для long — 63 - Long.numberOfLeadingZeros(x).
+**Как получить целочисленный log2?** Для положительного int: 31 — Integer.numberOfLeadingZeros(x) даёт floor(log2(x)); для long — 63 — Long.numberOfLeadingZeros(x).
 
 ## Заключение
 

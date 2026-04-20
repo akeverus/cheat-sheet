@@ -67,20 +67,20 @@ updated: "2026-02-11"
 // Генеральная совокупность: дисперсия = сумма (x_i - mean)² / n
 public static double calculateStandardDeviation(double[] array) {
     double sum = 0.0;
-    
+
     for (double i : array) {
         sum += i;
     }
-    
+
     int length = array.length;
     double mean = sum / length;
-    
+
     double standardDeviation = 0.0;
-    
+
     for (double num : array) {
         standardDeviation += Math.pow(num - mean, 2);
     }
-    
+
     return Math.sqrt(standardDeviation / length);
 }
 ```
@@ -106,12 +106,12 @@ public static double calculateMean(double[] array) {
 public static double calculateStandardDeviationSeparated(double[] array) {
     double mean = calculateMean(array);
     double sumSquaredDifferences = 0.0;
-    
+
     for (double value : array) {
         double difference = value - mean;
         sumSquaredDifferences += difference * difference;
     }
-    
+
     double variance = sumSquaredDifferences / array.length;
     return Math.sqrt(variance);
 }
@@ -127,15 +127,15 @@ public static double calculateSampleStandardDeviation(double[] array) {
     if (array.length <= 1) {
         return 0.0;
     }
-    
+
     double mean = calculateMean(array);
     double sumSquaredDifferences = 0.0;
-    
+
     for (double value : array) {
         double difference = value - mean;
         sumSquaredDifferences += difference * difference;
     }
-    
+
     // Используем (n-1) для выборочного стандартного отклонения
     double variance = sumSquaredDifferences / (array.length - 1);
     return Math.sqrt(variance);
@@ -152,12 +152,12 @@ public static double calculateStandardDeviationStreams(double[] array) {
     double mean = Arrays.stream(array)
         .average()
         .orElse(0.0);
-    
+
     double variance = Arrays.stream(array)
         .map(x -> Math.pow(x - mean, 2))
         .average()
         .orElse(0.0);
-    
+
     return Math.sqrt(variance);
 }
 ```
@@ -172,13 +172,13 @@ public static class Statistics {
     private final double mean;
     private final double variance;
     private final double standardDeviation;
-    
+
     public Statistics(double[] array) {
         this.mean = calculateMean(array);
         this.variance = calculateVariance(array, mean);
         this.standardDeviation = Math.sqrt(variance);
     }
-    
+
     private double calculateVariance(double[] array, double mean) {
         double sumSquaredDifferences = 0.0;
         for (double value : array) {
@@ -186,15 +186,15 @@ public static class Statistics {
         }
         return sumSquaredDifferences / array.length;
     }
-    
+
     public double getMean() {
         return mean;
     }
-    
+
     public double getVariance() {
         return variance;
     }
-    
+
     public double getStandardDeviation() {
         return standardDeviation;
     }
@@ -209,7 +209,7 @@ fun calculateStandardDeviationK(array: DoubleArray): Double {
     val sum = array.sum()
     val length = array.size
     val mean = sum / length
-    
+
     val standardDeviation = array.sumOf { Math.pow(it - mean, 2.0) }
     return Math.sqrt(standardDeviation / length)
 }
@@ -222,7 +222,7 @@ fun calculateSampleStandardDeviationK(array: DoubleArray): Double {
     if (array.size <= 1) {
         return 0.0
     }
-    
+
     val mean = calculateMeanK(array)
     val sumSquaredDifferences = array.sumOf { (it - mean) * (it - mean) }
     val variance = sumSquaredDifferences / (array.size - 1)

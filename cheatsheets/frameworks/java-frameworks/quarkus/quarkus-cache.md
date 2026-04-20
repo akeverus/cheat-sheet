@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-redis.md"]
 ---
 
-# Quarkus: Cache - Кеширование данных
-
-
+# Quarkus: Cache — Кеширование данных
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-redis.md"]
 
 ## Содержание
 
-- [Quarkus: Cache - Кеширование данных](#quarkus-cache-кеширование-данных)
+- [Quarkus: Cache — Кеширование данных](#quarkus-cache-кеширование-данных)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [Caffeine Cache](#caffeine-cache)
@@ -113,12 +111,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class UserService {
-    
+
     @CacheResult(cacheName = "users")
     public User getUser(@CacheKey Long id) {
         return userRepository.findById(id);
     }
-    
+
     @CacheInvalidate(cacheName = "users")
     public void invalidateUser(@CacheKey Long id) {
         // Кеш будет инвалидирован
@@ -138,14 +136,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CacheService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public void configureCache() {
         Cache cache = cacheManager.getCache("users")
             .orElseThrow();
-        
+
         // Программная настройка кеша
     }
 }
@@ -173,7 +171,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RedisCacheService {
-    
+
     @CacheResult(cacheName = "redis-cache")
     public String getCachedData(String key) {
         return fetchDataFromDatabase(key);
@@ -195,14 +193,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CacheAsideService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public User getUser(Long id) {
         Cache cache = cacheManager.getCache("users")
             .orElseThrow();
-        
+
         return cache.get(id, () -> {
             // Загрузка из БД если нет в кеше
             return userRepository.findById(id);
@@ -218,17 +216,17 @@ public class CacheAsideService {
 ```java
 @ApplicationScoped
 public class WriteThroughService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public User saveUser(User user) {
         User saved = userRepository.save(user);
-        
+
         Cache cache = cacheManager.getCache("users")
             .orElseThrow();
         cache.put(saved.getId(), saved);
-        
+
         return saved;
     }
 }
@@ -246,12 +244,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class InvalidationService {
-    
+
     @CacheInvalidate(cacheName = "users")
     public void invalidateUser(@CacheKey Long id) {
         // Инвалидация конкретного ключа
     }
-    
+
     @CacheInvalidateAll(cacheName = "users")
     public void invalidateAllUsers() {
         // Инвалидация всего кеша
@@ -266,7 +264,7 @@ public class InvalidationService {
 ```java
 @ApplicationScoped
 public class ConditionalInvalidationService {
-    
+
     @CacheInvalidate(cacheName = "users")
     public void updateUser(Long id, User user) {
         userRepository.update(id, user);
@@ -342,10 +340,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CacheStatisticsService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public CacheStatistics getStatistics(String cacheName) {
         Cache cache = cacheManager.getCache(cacheName)
             .orElseThrow();
@@ -363,17 +361,17 @@ public class CacheStatisticsService {
 ```java
 @ApplicationScoped
 public class WriteBehindService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public void saveUser(User user) {
         Cache cache = cacheManager.getCache("users")
             .orElseThrow();
-        
+
         // Сохранение в кеш немедленно
         cache.put(user.getId(), user);
-        
+
         // Асинхронное сохранение в БД
         Uni.createFrom().item(() -> {
             userRepository.save(user);
@@ -393,14 +391,14 @@ public class WriteBehindService {
 ```java
 @ApplicationScoped
 public class ReadThroughService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public User getUser(Long id) {
         Cache cache = cacheManager.getCache("users")
             .orElseThrow();
-        
+
         return cache.get(id, () -> {
             // Автоматическая загрузка из БД при промахе кеша
             return userRepository.findById(id);
@@ -421,15 +419,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class CacheWarmingService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     @PostConstruct
     void warmCache() {
         Cache cache = cacheManager.getCache("users")
             .orElseThrow();
-        
+
         List<User> popularUsers = userRepository.findPopularUsers();
         popularUsers.forEach(user -> {
             cache.put(user.getId(), user);
@@ -458,11 +456,11 @@ quarkus.cache.redis.cluster-mode=true
 ```java
 @ApplicationScoped
 public class DistributedCacheService {
-    
+
     @Inject
     @RedisCache("users")
     Cache cache;
-    
+
     public void updateUser(User user) {
         // Обновление в Redis (синхронизируется со всеми инстансами)
         cache.put(user.getId(), user);
@@ -479,13 +477,13 @@ public class DistributedCacheService {
 ```java
 @ApplicationScoped
 public class OptimizedCacheService {
-    
+
     @CacheResult(cacheName = "users")
     public User getUser(@CacheKey Long id) {
         // Использование кеша для часто запрашиваемых данных
         return userRepository.findById(id);
     }
-    
+
     // Не кешируем редко запрашиваемые данные
     public User getRareUser(Long id) {
         return userRepository.findById(id);
@@ -513,15 +511,15 @@ quarkus.cache.caffeine.expire-after-access=5m
 ```java
 @ApplicationScoped
 public class CacheWarmingService {
-    
+
     @Inject
     Cache cache;
-    
+
     @PostConstruct
     public void warmCache() {
         // Предзагрузка часто используемых данных
         List<User> popularUsers = userService.findPopularUsers();
-        popularUsers.forEach(user -> 
+        popularUsers.forEach(user ->
             cache.put(user.getId(), user)
         );
     }
@@ -535,7 +533,7 @@ public class CacheWarmingService {
 ```java
 @ApplicationScoped
 public class LazyCacheService {
-    
+
     @CacheResult(cacheName = "users")
     public User getUser(Long id) {
         // Загрузка из БД только если нет в кеше
@@ -553,16 +551,16 @@ public class LazyCacheService {
 ```java
 @ApplicationScoped
 public class CacheOptimizationService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public void optimizeCache() {
         Cache cache = cacheManager.getCache("users");
         CacheStatistics stats = cache.getStatistics();
-        
+
         double hitRate = stats.getHitCount() / (double) stats.getRequestCount();
-        
+
         if (hitRate < 0.7) {
             // Увеличить размер кеша или TTL
             adjustCacheSettings();
@@ -590,12 +588,12 @@ quarkus.cache.caffeine.initial-capacity=1000
 ```java
 @ApplicationScoped
 public class StampedePreventionService {
-    
+
     private final Map<String, CompletableFuture<User>> loading = new ConcurrentHashMap<>();
-    
+
     public Uni<User> getUser(Long id) {
         String key = "user:" + id;
-        
+
         CompletableFuture<User> future = loading.computeIfAbsent(key, k -> {
             return CompletableFuture.supplyAsync(() -> {
                 try {
@@ -605,7 +603,7 @@ public class StampedePreventionService {
                 }
             });
         });
-        
+
         return Uni.createFrom().completionStage(future);
     }
 }
@@ -618,7 +616,7 @@ public class StampedePreventionService {
 ```java
 @ApplicationScoped
 public class CacheCoherenceService {
-    
+
     @CacheInvalidate(cacheName = "users")
     @CacheInvalidate(cacheName = "user-profiles")
     public void invalidateUserCaches(@CacheKey Long userId) {
@@ -636,14 +634,14 @@ public class CacheCoherenceService {
 ```java
 @ApplicationScoped
 public class CacheStatisticsService {
-    
+
     @Inject
     CacheManager cacheManager;
-    
+
     public CacheStats getCacheStats(String cacheName) {
         Cache cache = cacheManager.getCache(cacheName);
         CacheStatistics stats = cache.getStatistics();
-        
+
         return new CacheStats(
             stats.getHitCount(),
             stats.getMissCount(),
@@ -661,25 +659,25 @@ public class CacheStatisticsService {
 ```java
 @ApplicationScoped
 public class CacheMetricsService {
-    
+
     @Inject
     MeterRegistry registry;
-    
+
     @PostConstruct
     void registerMetrics() {
         Gauge.builder("cache.size", this, CacheMetricsService::getCacheSize)
             .description("Cache size")
             .register(registry);
-        
+
         Gauge.builder("cache.hit.rate", this, CacheMetricsService::getHitRate)
             .description("Cache hit rate")
             .register(registry);
     }
-    
+
     private double getCacheSize() {
         return cacheManager.getCache("users").getStatistics().getSize();
     }
-    
+
     private double getHitRate() {
         CacheStatistics stats = cacheManager.getCache("users").getStatistics();
         return stats.getHitCount() / (double) stats.getRequestCount();
@@ -696,10 +694,10 @@ public class CacheMetricsService {
 ```java
 @ApplicationScoped
 public class CacheAsideService {
-    
+
     @Inject
     Cache cache;
-    
+
     public User getUser(Long id) {
         User user = cache.get(id, User.class);
         if (user == null) {
@@ -720,10 +718,10 @@ public class CacheAsideService {
 ```java
 @ApplicationScoped
 public class WriteThroughService {
-    
+
     @Inject
     Cache cache;
-    
+
     public void saveUser(User user) {
         // Сохранение в кеш и БД одновременно
         cache.put(user.getId(), user);
@@ -743,3 +741,11 @@ public class WriteThroughService {
 - [Caffeine Documentation](https://github.com/ben-manes/caffeine/wiki)
 - [**Redis** Documentation](https://redis.io/docs/)
 - [Cache Patterns](https://docs.microsoft.com/en-us/azure/architecture/patterns/cache-aside)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]
+- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]

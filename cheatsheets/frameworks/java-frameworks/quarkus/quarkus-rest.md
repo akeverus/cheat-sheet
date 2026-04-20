@@ -15,9 +15,7 @@ updated: "2026-02-11"
 related: ["quarkus-core.md", "quarkus-reactive.md"]
 ---
 
-# Quarkus: REST - RESTEasy Reactive и JAX-RS
-
-
+# Quarkus: REST — RESTEasy Reactive и JAX-RS
 
 ## Полезные ссылки
 
@@ -26,7 +24,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Содержание
 
-- [Quarkus: REST - RESTEasy Reactive и JAX-RS](#quarkus-rest-resteasy-reactive-и-jax-rs)
+- [Quarkus: REST — RESTEasy Reactive и JAX-RS](#quarkus-rest-resteasy-reactive-и-jax-rs)
 - [Введение](#введение)
   - [Основные возможности](#основные-возможности)
 - [RESTEasy Reactive](#resteasy-reactive)
@@ -124,7 +122,7 @@ import jakarta.ws.rs.core.MediaType;
 
 @Path("/hello")
 public class HelloResource {
-    
+
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
@@ -143,7 +141,7 @@ import io.smallrye.mutiny.Uni;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     public Uni<User> getUser(Long id) {
@@ -163,30 +161,30 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/api/users")
 public class UserResource {
-    
+
     @GET
     public List<User> getAllUsers() {
         return userService.findAll();
     }
-    
+
     @GET
     @Path("/{id}")
     public User getUser(@PathParam("id") Long id) {
         return userService.findById(id);
     }
-    
+
     @POST
     public Response createUser(User user) {
         User created = userService.create(user);
         return Response.status(201).entity(created).build();
     }
-    
+
     @PUT
     @Path("/{id}")
     public User updateUser(@PathParam("id") Long id, User user) {
         return userService.update(id, user);
     }
-    
+
     @DELETE
     @Path("/{id}")
     public Response deleteUser(@PathParam("id") Long id) {
@@ -208,10 +206,10 @@ import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class LoggingFilter implements ContainerRequestFilter {
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext) {
-        System.out.println("Request: " + requestContext.getMethod() + 
+        System.out.println("Request: " + requestContext.getMethod() +
                           " " + requestContext.getUriInfo().getPath());
     }
 }
@@ -227,7 +225,7 @@ import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class CORSFilter implements ContainerResponseFilter {
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext,
                       ContainerResponseContext responseContext) {
@@ -247,9 +245,9 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
 @Provider
-public class UserNotFoundExceptionMapper 
+public class UserNotFoundExceptionMapper
         implements ExceptionMapper<UserNotFoundException> {
-    
+
     @Override
     public Response toResponse(UserNotFoundException exception) {
         return Response.status(404)
@@ -306,13 +304,13 @@ import jakarta.ws.rs.PathParam;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     public User getUser(@PathParam("id") Long id) {
         return userService.findById(id);
     }
-    
+
     @GET
     @Path("/{userId}/orders/{orderId}")
     public Order getUserOrder(
@@ -334,7 +332,7 @@ import jakarta.ws.rs.PathParam;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     public User getUser(@PathParam("id") @Min(1) Long id) {
@@ -356,7 +354,7 @@ import jakarta.ws.rs.DefaultValue;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     public List<User> getUsers(
             @QueryParam("page") @DefaultValue("0") Integer page,
@@ -378,7 +376,7 @@ import java.util.List;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/search")
     public List<User> searchUsers(
@@ -404,7 +402,7 @@ import jakarta.ws.rs.core.MediaType;
 
 @Path("/users")
 public class UserResource {
-    
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -425,7 +423,7 @@ import jakarta.ws.rs.core.MediaType;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -449,7 +447,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     public void getUserAsync(
@@ -476,7 +474,7 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/users")
 public class UserResource {
-    
+
     @GET
     @Path("/{id}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -505,10 +503,10 @@ import jakarta.ws.rs.sse.OutboundSseEvent;
 
 @Path("/events")
 public class SSEResource {
-    
+
     @Inject
     Sse sse;
-    
+
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
     public void streamEvents(@Context SseEventSink eventSink) {
@@ -545,7 +543,7 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 @Path("/upload")
 public class FileUploadResource {
-    
+
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadFile(
@@ -554,11 +552,11 @@ public class FileUploadResource {
         // Обработка файла
         return Response.ok().build();
     }
-    
+
     public static class FileUploadForm {
         @FormParam("file")
         public FileUpload file;
-        
+
         @FormParam("description")
         public String description;
     }
@@ -582,13 +580,13 @@ import java.io.IOException;
 
 @Path("/download")
 public class FileDownloadResource {
-    
+
     @GET
     @Path("/{filename}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response downloadFile(@PathParam("filename") String filename) {
         File file = new File("/path/to/" + filename);
-        
+
         StreamingOutput stream = output -> {
             try (FileInputStream input = new FileInputStream(file)) {
                 byte[] buffer = new byte[1024];
@@ -598,7 +596,7 @@ public class FileDownloadResource {
                 }
             }
         };
-        
+
         return Response.ok(stream)
             .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
             .build();
@@ -622,14 +620,14 @@ import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class CORSFilter implements ContainerResponseFilter {
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext,
                       ContainerResponseContext responseContext) {
         responseContext.getHeaders().add("Access-Control-Allow-Origin", "*");
-        responseContext.getHeaders().add("Access-Control-Allow-Methods", 
+        responseContext.getHeaders().add("Access-Control-Allow-Methods",
             "GET, POST, PUT, DELETE, OPTIONS");
-        responseContext.getHeaders().add("Access-Control-Allow-Headers", 
+        responseContext.getHeaders().add("Access-Control-Allow-Headers",
             "Content-Type, Authorization");
     }
 }
@@ -662,7 +660,7 @@ import jakarta.ws.rs.ext.Provider;
 
 @Provider
 public class TimingInterceptor implements ContainerRequestFilter {
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext) {
         long startTime = System.currentTimeMillis();
@@ -672,7 +670,7 @@ public class TimingInterceptor implements ContainerRequestFilter {
 
 @Provider
 public class TimingResponseFilter implements ContainerResponseFilter {
-    
+
     @Override
     public void filter(ContainerRequestContext requestContext,
                       ContainerResponseContext responseContext) {
@@ -701,18 +699,18 @@ import jakarta.ws.rs.Path;
 
 @Path("/users")
 public class ValidatedResource {
-    
+
     @POST
     public Response createUser(@Valid User user) {
         // Валидация выполняется автоматически
         return Response.ok(userService.create(user)).build();
     }
-    
+
     public static class User {
         @NotNull
         @Size(min = 3, max = 50)
         public String name;
-        
+
         @NotNull
         @Email
         public String email;
@@ -738,7 +736,7 @@ public @interface PhoneNumber {
     String message() default "Invalid phone number";
     Class<?>[] groups() default {};
     Class<? extends jakarta.validation.Payload>[] payload() default {};
-    
+
     class Validator implements ConstraintValidator<PhoneNumber, String> {
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
@@ -776,7 +774,7 @@ import jakarta.ws.rs.Path;
 
 @Path("/users")
 public class OpenAPIResource {
-    
+
     @GET
     @Path("/{id}")
     @Operation(summary = "Get user by ID", description = "Returns a user by ID")
@@ -811,11 +809,11 @@ import jakarta.ws.rs.PathParam;
 @RegisterRestClient
 @Path("/api")
 public interface UserServiceClient {
-    
+
     @GET
     @Path("/users/{id}")
     User getUser(@PathParam("id") Long id);
-    
+
     @GET
     @Path("/users")
     List<User> getAllUsers();
@@ -833,11 +831,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @Path("/proxy")
 public class ProxyResource {
-    
+
     @Inject
     @RestClient
     UserServiceClient userService;
-    
+
     @GET
     @Path("/users/{id}")
     public User proxyGetUser(@PathParam("id") Long id) {
@@ -858,7 +856,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @RegisterRestClient
 @Path("/api")
 public interface ReactiveUserServiceClient {
-    
+
     @GET
     @Path("/users/{id}")
     Uni<User> getUser(@PathParam("id") Long id);
@@ -878,14 +876,14 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/cached")
 public class CachedResource {
-    
+
     @GET
     @Path("/data")
     public Response getCachedData() {
         CacheControl cacheControl = new CacheControl();
         cacheControl.setMaxAge(3600);  // 1 hour
         cacheControl.setPrivate(false);
-        
+
         return Response.ok(data)
             .cacheControl(cacheControl)
             .build();
@@ -912,15 +910,15 @@ public @interface RateLimited {
 @Provider
 @RateLimited
 public class RateLimitFilter implements ContainerRequestFilter {
-    
+
     private final Map<String, RateLimiter> limiters = new ConcurrentHashMap<>();
-    
+
     @Override
     public void filter(ContainerRequestContext context) {
         String key = getClientKey(context);
-        RateLimiter limiter = limiters.computeIfAbsent(key, 
+        RateLimiter limiter = limiters.computeIfAbsent(key,
             k -> RateLimiter.create(100.0 / 60.0));
-        
+
         if (!limiter.tryAcquire()) {
             throw new TooManyRequestsException();
         }
@@ -936,7 +934,7 @@ public class RateLimitFilter implements ContainerRequestFilter {
 // Кеширование ответа через @CacheControl
 @Path("/cache")
 public class CacheableResource {
-    
+
     @GET
     @Path("/{id}")
     @CacheControl(maxAge = 3600)
@@ -974,7 +972,7 @@ quarkus.rest-client.keep-alive-time=30s
 // Асинхронный эндпоинт на worker pool
 @Path("/users")
 public class OptimizedResource {
-    
+
     @GET
     @Path("/{id}")
     public Uni<User> getUser(@PathParam("id") Long id) {
@@ -1011,7 +1009,7 @@ public class UserResourceV2 {
 // Выбор версии по заголовку API-Version
 @Path("/users")
 public class VersionedUserResource {
-    
+
     @GET
     @HeaderParam("API-Version")
     public Response getUsers(@HeaderParam("API-Version") String version) {
@@ -1037,11 +1035,11 @@ public Response getUser(@PathParam("id") Long id,
                        @HeaderParam("If-None-Match") String ifNoneMatch) {
     User user = userService.findById(id);
     String etag = generateETag(user);
-    
+
     if (etag.equals(ifNoneMatch)) {
         return Response.notModified().build();
     }
-    
+
     return Response.ok(user)
         .header("ETag", etag)
         .build();
@@ -1076,14 +1074,14 @@ public Response getUserPartial(@PathParam("id") Long id,
 // Логирование запросов и ответов REST-клиента
 @Provider
 public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseFilter {
-    
+
     @Override
     public void filter(ClientRequestContext requestContext) {
         log.info("Request: {} {}", requestContext.getMethod(), requestContext.getUri());
     }
-    
+
     @Override
-    public void filter(ClientRequestContext requestContext, 
+    public void filter(ClientRequestContext requestContext,
                       ClientResponseContext responseContext) {
         log.info("Response: {}", responseContext.getStatus());
     }
@@ -1098,7 +1096,7 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
 // Асинхронный REST-клиент с CompletableFuture
 @RegisterRestClient
 public interface AsyncUserService {
-    
+
     @GET
     @Path("/users/{id}")
     CompletionStage<User> getUserAsync(@PathParam("id") Long id);
@@ -1118,3 +1116,11 @@ public interface AsyncUserService {
 - [**REST API Best Practices**](https://restfulapi.net/)
 - [**OpenAPI** Specification](https://spec.openapis.org/oas/latest.html)
 - [**MicroProfile REST Client**](https://download.eclipse.org/microprofile/microprofile-rest-client-3.0.html)
+
+## См. также
+
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[quarkus-basics|Quarkus: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[quarkus-cloud|Quarkus: Cloud Native — Kubernetes, OpenShift и Service Mesh]]
+- [[quarkus-core|Quarkus: Core — CDI, Bean Scopes и Configuration]]

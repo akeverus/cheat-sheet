@@ -113,12 +113,12 @@ import java.util.Queue;
 class MedianOfIntegerStream {
     private final Queue<Integer> minHeap; // правая половина (минимум сверху)
     private final Queue<Integer> maxHeap; // левая половина (максимум сверху)
-    
+
     MedianOfIntegerStream() {
         minHeap = new PriorityQueue<>();
         maxHeap = new PriorityQueue<>(Comparator.reverseOrder());
     }
-    
+
     // Добавляем число, выбирая кучу и поддерживая баланс
     void add(int num) {
         if (!minHeap.isEmpty() && num > minHeap.peek()) {
@@ -128,7 +128,7 @@ class MedianOfIntegerStream {
         }
         rebalance();                               // sizes differ by at most 1
     }
-    
+
     // Медиана: корень большей кучи или среднее корней
     double getMedian() {
         if (minHeap.size() > maxHeap.size()) {
@@ -139,7 +139,7 @@ class MedianOfIntegerStream {
         }
         return (minHeap.peek() + maxHeap.peek()) / 2.0;
     }
-    
+
     private void rebalance() {
         if (minHeap.size() > maxHeap.size() + 1) {
             maxHeap.offer(minHeap.poll());         // переносим минимум справа
@@ -163,7 +163,7 @@ import java.util.Queue;
 class MedianOfIntegerStreamBalanced {
     private final Queue<Integer> minHeap = new PriorityQueue<>();
     private final Queue<Integer> maxHeap = new PriorityQueue<>(Comparator.reverseOrder());
-    
+
     void add(int num) {
         if (minHeap.size() == maxHeap.size()) {
             maxHeap.offer(num);            // кладём в левую кучу
@@ -173,7 +173,7 @@ class MedianOfIntegerStreamBalanced {
             maxHeap.offer(minHeap.poll()); // переносим минимум справа влево
         }
     }
-    
+
     double getMedian() {
         if (minHeap.size() > maxHeap.size()) {
             return minHeap.peek();
@@ -210,7 +210,7 @@ import java.util.PriorityQueue
 class MedianOfIntegerStreamK {
     private val minHeap = PriorityQueue<Int>()                         // правая половина
     private val maxHeap = PriorityQueue<Int>(compareByDescending { it }) // левая половина
-    
+
     // Балансируем после каждой вставки
     fun add(num: Int) {
         if (minHeap.size == maxHeap.size) {
@@ -221,7 +221,7 @@ class MedianOfIntegerStreamK {
             maxHeap.offer(minHeap.poll())  // переносим минимум справа влево
         }
     }
-    
+
     // Медиана за O(1)
     fun getMedian(): Double {
         return if (minHeap.size > maxHeap.size) {
@@ -236,7 +236,7 @@ class MedianOfIntegerStreamK {
 class MedianOfIntegerStreamImprovedK {
     private val minHeap = PriorityQueue<Int>()
     private val maxHeap = PriorityQueue<Int>(compareByDescending { it })
-    
+
     fun add(num: Int) {
         if (minHeap.isNotEmpty() && num > minHeap.peek()) {
             minHeap.offer(num)
@@ -245,13 +245,13 @@ class MedianOfIntegerStreamImprovedK {
         }
         rebalance()
     }
-    
+
     fun getMedian(): Double = when {
         minHeap.size > maxHeap.size -> minHeap.peek().toDouble()
         maxHeap.size > minHeap.size -> maxHeap.peek().toDouble()
         else -> (minHeap.peek() + maxHeap.peek()) / 2.0
     }
-    
+
     private fun rebalance() {
         if (minHeap.size > maxHeap.size + 1) {
             maxHeap.offer(minHeap.poll())
@@ -297,22 +297,22 @@ import java.util.Map;
 // Ленивое удаление: помечаем число, удаляем при извлечении корня
 class MedianStreamWithRemoval extends MedianOfIntegerStream {
     private final Map<Integer, Integer> toDelete = new HashMap<>();
-    
+
     void remove(int num) {
         toDelete.put(num, toDelete.getOrDefault(num, 0) + 1);
     }
-    
+
     @Override
     double getMedian() {
         cleanup(); // удаляем помеченные элементы перед вычислением
         return super.getMedian();
     }
-    
+
     private void cleanup() {
         prune(minHeap);
         prune(maxHeap);
     }
-    
+
     private void prune(Queue<Integer> heap) {
         while (!heap.isEmpty()) {
             int v = heap.peek();
@@ -397,17 +397,17 @@ fun `median within min..max`(@ForAll data: List<Int>) {
 
 ## Частые вопросы
 
-**Почему две кучи, а не дерево поиска?** Кучи проще и дают `O(log n)` на вставку и `O(1)` на медиану без сложного API.  
-**Можно ли поддерживать удаление?** Да, через ленивое удаление и периодическую очистку корней.  
-**Как быть с дубликатами?** Кучи поддерживают дубликаты, инвариант разницы размеров сохраняется.  
+**Почему две кучи, а не дерево поиска?** Кучи проще и дают `O(log n)` на вставку и `O(1)` на медиану без сложного API.
+**Можно ли поддерживать удаление?** Да, через ленивое удаление и периодическую очистку корней.
+**Как быть с дубликатами?** Кучи поддерживают дубликаты, инвариант разницы размеров сохраняется.
 **Поддерживает ли код потоки с миллионами элементов?** Да, но учитывайте память `O(n)`; для очень длинных потоков нужна агрегация или выборочное хранение.
 
 ## Глоссарий
 
-`min-heap` — куча, где минимум на вершине.  
-`max-heap` — куча, где максимум на вершине.  
-`rebalance` — операция выравнивания размеров куч.  
-`median` — значение, делящее отсортированный набор пополам.  
+`min-heap` — куча, где минимум на вершине.
+`max-heap` — куча, где максимум на вершине.
+`rebalance` — операция выравнивания размеров куч.
+`median` — значение, делящее отсортированный набор пополам.
 `lazy deletion` — пометка на удаление с фактическим удалением при обращении к элементу.
 
 ## Альтернативы и оптимизации

@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Kotlin Collections Overview](https://kotlinlang.org/docs/collections-overview.html)
 - [Kotlin Grouping API](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/grouping-by.html)
 
-### **Baeldung**
+### Обучающие материалы
 - [Kotlin Collections Guide](https://www.baeldung.com/kotlin/collections-api)
 
 ### См. также
@@ -103,7 +103,7 @@ updated: "2026-02-11"
 
 ### **groupBy**
 
-Функция `**groupBy**` группирует элементы коллекции по ключу, который вычисляется для каждого элемента. Результатом является словарь (**Map**), где ключи - это значения функции группировки, а значения - списки элементов, соответствующих этому ключу.
+Функция `**groupBy**` группирует элементы коллекции по ключу, который вычисляется для каждого элемента. Результатом является словарь (**Map**), где ключи — это значения функции группировки, а значения — списки элементов, соответствующих этому ключу.
 
 ```kotlin
 val list = listOf("apple", "banana", "apricot", "blueberry")
@@ -125,7 +125,7 @@ val grouped = list.groupBy { it[0] }
     **valueTransform** = { **it.uppercase**() }
 )
 // {'a': ["**APPLE**", "**APRICOT**"], 'b': ["**BANANA**", "**BLUEBERRY**"]}
-```
+```text
 
 ### groupBy с фильтрацией
 
@@ -139,11 +139,11 @@ val grouped = list
 // {'b': ["banana", "blueberry"]}
 
 // Группировка с условием
-val grouped = list.`groupBy` { 
-    if (`it.length` > 6) "long" else "short" 
+val grouped = list.`groupBy` {
+    if (`it.length` > 6) "long" else "short"
 }
 // {"short": ["apple", "banana"], "long": ["apricot", "blueberry", "avocado"]}
-```
+```text
 
 ## GroupingBy
 
@@ -158,7 +158,7 @@ val grouping = list.`groupingBy` { it[0] }
 // Преобразование в Map
 val map = grouping.`eachCount()`
 // {'a': 2, 'b': 2}
-```
+```text
 
 ### eachCount
 
@@ -173,7 +173,7 @@ val counts = list.`groupingBy` { it[0] }.`eachCount()`
 val counts = list.`groupingBy` { it[0] }
     .`eachCount` { `it.length` > 5 }
 // {'a': 1, 'b': 2} (только длинные слова)
-```
+```text
 
 ### eachFold
 
@@ -191,7 +191,7 @@ val folded = list.`groupingBy` { it[0] }
         acc + `element.uppercase`()
     }
 // {'a': ["`APPLE`", "`APRICOT`"], 'b': ["`BANANA`", "`BLUEBERRY`"]}
-```
+```text
 
 ### eachReduce
 
@@ -207,7 +207,7 @@ val reduced = numbers.`groupingBy` { it % 3 }
 val reduced = numbers.`groupingBy` { it % 3 }
     .reduce { key, acc, element -> `maxOf`(acc, element) }
 // {0: 9, 1: 10, 2: 8} (максимум в каждой группе)
-```
+```text
 
 ### aggregate
 
@@ -229,7 +229,7 @@ val aggregated = list.`groupingBy` { it[0] }
         else (accumulator ?: `emptyList()`) + element
     }
 // {'a': ["apple", "apricot"], 'b': ["banana", "blueberry"]}
-```
+```text
 
 ## Агрегация
 
@@ -254,7 +254,7 @@ val `totalByCategory` = products.`groupBy` { `it.category` }
 val `totalByCategory2` = products.`groupingBy` { `it.category` }
     .fold(`0.0`) { acc, product -> acc + `product.price` }
 // {"`Electronics`": `1699.98`, "`Education`": `22.98`}
-```
+```text
 
 ### Среднее по группам
 
@@ -282,7 +282,7 @@ val `avgByCategory2` = products.`groupingBy` { `it.category` }
         }
     }
     .`mapValues` { (_, pair) -> `pair.first` / `pair.second` }
-```
+```text
 
 ## Подсчет
 
@@ -299,7 +299,7 @@ val counts = list.`groupingBy` { it[0] }.`eachCount()`
 val counts = list.`groupingBy` { it[0] }
     .`eachCount` { `it.length` > 5 }
 // {'a': 1, 'b': 2} (только длинные слова)
-```
+```text
 
 ### Подсчет уникальных значений
 
@@ -314,7 +314,7 @@ val `uniqueLengths` = list.`groupingBy` { it[0] }
     }
     .`mapValues` { (_, set) -> `set.size` }
 // {'a': 2, 'b': 1} (количество разных длин)
-```
+```text
 
 ## Суммирование
 
@@ -339,7 +339,7 @@ val `totalByRegion` = sales.`groupingBy` { `it.region` }
 val `totalByProduct` = sales.`groupingBy` { `it.product` }
     .fold(`0.0`) { acc, sale -> acc + `sale.amount` }
 // {"`Laptop`": `1999.98`, "`Phone`": `699.99`, "`Tablet`": `399.99`}
-```
+```text
 
 ### Сумма с условием
 
@@ -357,7 +357,7 @@ val `totalExpensive` = sales.`groupingBy` { `it.region` }
         acc + if (`sale.amount` > `500`) `sale.amount else 0.0`
     }
 // {"`North`": `1699.98`, "`South`": `999.99`}
-```
+```text
 
 ## Минимум и максимум
 
@@ -376,8 +376,8 @@ val scores = `listOf`(
 // Максимальный балл по предметам
 val `maxBySubject` = scores.`groupingBy` { `it.subject` }
     .reduce { key, accumulator, element ->
-        `maxOf`(`accumulator.score`, `element.score`).let { 
-            `Score`("", key, it) 
+        `maxOf`(`accumulator.score`, `element.score`).let {
+            `Score`("", key, it)
         }
     }
     .`mapValues` { (_, score) -> `score.score` }
@@ -392,7 +392,7 @@ val `minByStudent` = scores.`groupingBy` { `it.student` }
     }
     .`mapValues` { (_, score) -> `score.score` }
 // {"`Alice`": 88, "Bob": 90}
-```
+```text
 
 ## Fold и Reduce в группировке
 
@@ -410,7 +410,7 @@ val `sumByRemainder` = numbers.`groupingBy` { it % 3 }
 val `productByRemainder` = numbers.`groupingBy` { it % 3 }
     .fold(1) { acc, element -> acc * element }
 // {0: `162`, 1: `280`, 2: 80}
-```
+```text
 
 ### Reduce без начального значения
 
@@ -430,7 +430,7 @@ val `minByRemainder` = numbers.`groupingBy` { it % 3 }
         `minOf`(accumulator, element)
     }
 // {0: 3, 1: 1, 2: 2}
-```
+```text
 
 ## Продвинутые операции
 
@@ -455,9 +455,9 @@ val `byCustomerAndProduct` = orders
                 orders.`sumOf` { `it.quantity` * `it.price` }
             }
     }
-// {"`Alice`": {"`Laptop`": `999.99`, "`Phone`": `1399.98`}, 
+// {"`Alice`": {"`Laptop`": `999.99`, "`Phone`": `1399.98`},
 //  "Bob": {"`Laptop`": `999.99`, "`Tablet`": `1199.97`}}
-```
+```text
 
 ### Группировка с трансформацией
 
@@ -475,7 +475,7 @@ val grouped = list.`groupBy`(
 val `byLength` = list.`groupBy` { `it.length` }
     .`mapKeys` { "length_${`it.key`}" }
 // {"`length_5`": ["apple"], "`length_6`": ["banana", "apricot"], "`length_9`": ["blueberry"]}
-```
+```text
 
 ### Фильтрация групп
 
@@ -488,11 +488,11 @@ val `filteredGroups` = list.`groupBy` { it[0] }
 // {'a': ["apple", "apricot", "avocado"], 'b': ["banana", "blueberry"]}
 
 // Группировка с условием на ключ
-val grouped = list.`groupBy` { 
-    if (`it.length` > 6) "long" else "short" 
+val grouped = list.`groupBy` {
+    if (`it.length` > 6) "long" else "short"
 }
 // {"short": ["apple", "banana"], "long": ["apricot", "blueberry", "avocado"]}
-```
+```text
 
 ## Лучшие практики
 
@@ -511,7 +511,7 @@ val complex = list.`groupingBy` { `it.category` }
     .aggregate { key, acc, element, first ->
         // сложная логика
     }
-```
+```text
 
 ### Производительность
 
@@ -527,7 +527,7 @@ val counts = grouping.`eachCount` — O(n) (вычисляется здесь)
 val grouped = `largeList`.`asSequence()`
     .`groupBy` { `it.key` }
     .`toMap()`
-```
+```text
 
 ### Идиоматичный Kotlin
 
@@ -547,7 +547,7 @@ val result = data
     .filter { it.`isValid()` }
     .`groupBy` { `it.category` }
     .`mapValues` { (_, items) -> items.`sumOf` { `it.value` } }
-```
+```text
 
 ## Продвинутые техники группировки
 
@@ -574,7 +574,7 @@ val `multiLevel` = orders.`groupBy` { `it.category` }
 // Использование `Pair` для составных ключей
 val `byCompositeKey` = orders.`groupBy` { `it.category` to `it.region` }
 // {(`Electronics`, `US`): [...], (`Electronics`, `EU`): [...], ...}
-```
+```text
 
 Многоуровневая группировка позволяет создавать сложные иерархические структуры данных для анализа.
 
@@ -592,14 +592,14 @@ val grouped = numbers.`groupBy` { it % 3 }
     }
 
 // Группировка с условием на ключ
-val conditional = numbers.`groupBy` { 
+val conditional = numbers.`groupBy` {
     when {
         it < 3 -> "small"
         it < 7 -> "medium"
         else -> "large"
     }
 }
-```
+```text
 
 Условная группировка позволяет создавать динамические категории на основе свойств элементов.
 
@@ -624,7 +624,7 @@ val grouped = items.`groupBy` { `it.category` }
 // Группировка с сортировкой ключей
 val `sortedGroups` = items.`groupBy` { `it.category` }
     .`toSortedMap`(`compareBy` { it })
-```
+```text
 
 Сортировка в сочетании с группировкой позволяет создавать упорядоченные структуры данных для анализа и представления.
 
@@ -658,7 +658,7 @@ val `medianByProduct` = sales.`groupBy` { `it.product` }
 // Стандартное отклонение
 fun `List`<`Double`>.`stdDev()`: `Double` {
     val mean = average()
-    val variance = map { (it - mean).pow(2) }.average()
+    val variance = map { (it — mean).pow(2) }.average()
     return sqrt(variance)
 }
 
@@ -666,7 +666,7 @@ val `stdDevByProduct` = sales.`groupBy` { `it.product` }
     .`mapValues` { (_, sales) ->
         `sales.map` { `it.amount` }.`stdDev()`
     }
-```
+```text
 
 Статистический анализ с группировкой позволяет получать insights из данных и выявлять закономерности.
 
@@ -681,8 +681,8 @@ val events = `listOf`(/события с временными метками /)
 val `byDay` = events.`groupBy` { `it.timestamp`.`toLocalDate()` }
 
 // Группировка по часам
-val `byHour` = events.`groupBy` { 
-    `it.timestamp`.`toLocalTime()`.hour 
+val `byHour` = events.`groupBy` {
+    `it.timestamp`.`toLocalTime()`.hour
 }
 
 // Группировка по периодам
@@ -694,7 +694,7 @@ val `byPeriod` = events.`groupBy` {
         else -> "`Night`"
     }
 }
-```
+```text
 
 Временной анализ позволяет выявлять временные закономерности и тренды в данных.
 
@@ -719,7 +719,7 @@ val counts = grouping.`eachCount()`  // Вычисляется только пр
 // Параллельная группировка для очень больших коллекций
 val `parallelGrouped` = `largeList`.`parallelStream()`
     .collect(`groupingBy`({ it % `1000` }, counting()))
-```
+```text
 
 Оптимизация особенно важна для коллекций с миллионами элементов, где накладные расходы на группировку могут быть значительными.
 
@@ -731,7 +731,7 @@ val `parallelGrouped` = `largeList`.`parallelStream()`
 class `CachedGrouping`<T, K>(private val `keySelector`: (T) -> K) {
     private var `cache`: Map<K, `List`<T>>? = `null`
     private var `lastData`: `Collection`<T>? = `null`
-    
+
     fun group(data: `Collection`<T>): Map<K, `List`<T>> {
         return if (data === `lastData` && `cache` != `null`) {
             `cache`!!
@@ -748,7 +748,7 @@ class `CachedGrouping`<T, K>(private val `keySelector`: (T) -> K) {
 val grouping = `CachedGrouping`<`User`> { `it.department` }
 val grouped1 = `grouping.group`(users)  // Выполняется группировка
 val grouped2 = `grouping.group`(users)  // Используется кэш
-```
+```text
 
 Кэширование полезно, когда группировка выполняется многократно над одними и теми же данными.
 
@@ -790,7 +790,7 @@ fun `List`<Int>.quartiles(): `Triple`<Int, Int, Int>? {
 val numbers = `listOf`(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 val median = `numbers.median`()  // 5 или 6
 val quartiles = `numbers.quartiles`()  // (3, 5, 8)
-```
+```text
 
 Кастомные агрегатные функции позволяют выполнять специфичные для домена вычисления.
 
@@ -830,7 +830,7 @@ val `timeAnalysis` = sales
             "average" to `daySales`.map { `it.amount` }.average()
         )
     }
-```
+```text
 
 Сложные агрегации позволяют получать детальную аналитику данных на различных уровнях.
 
@@ -844,12 +844,12 @@ val `timeAnalysis` = sales
 // Стриминговая агрегация для больших коллекций
 fun `streamAggregate`(items: `Sequence`<`Item`>): Map<`String`, `AggregateResult`> {
     val aggregator = `mutableMapOf`<`String`, `MutableList`<`Double`>>()
-    
+
     items.`forEach` { item ->
         aggregator.`getOrPut`(`item.category`) { `mutableListOf()` }
             .add(`item.value`)
     }
-    
+
     return aggregator.`mapValues` { (_, values) ->
         `AggregateResult`(
             sum = `values.sum`(),
@@ -874,7 +874,7 @@ val `largeDataset` = `generateSequence` { `generateItem()` }
     .take(1_000_000)
 
 val aggregates = `streamAggregate`(`largeDataset`)
-```
+```text
 
 Стриминговая агрегация позволяет обрабатывать большие объемы данных без загрузки всех данных в память.
 
@@ -886,7 +886,7 @@ val aggregates = `streamAggregate`(`largeDataset`)
 // Инкрементальная агрегация
 class `IncrementalAggregator`<T, K> {
     private val aggregates = `mutableMapOf`<K, `AggregateState`>()
-    
+
     data class `AggregateState`(
         var sum: `Double` = `0.0`,
         var count: Int = 0,
@@ -896,7 +896,7 @@ class `IncrementalAggregator`<T, K> {
         val average: `Double`
             get() = if (count > 0) sum / count `else 0.0`
     }
-    
+
     fun add(key: K, value: `Double`) {
         val state = aggregates.`getOrPut`(key) { `AggregateState()` }
         `state.sum` += value
@@ -904,7 +904,7 @@ class `IncrementalAggregator`<T, K> {
         `state.max` = `maxOf`(`state.max`, value)
         `state.min` = `minOf`(`state.min`, value)
     }
-    
+
     fun `getAggregates()`: Map<K, `AggregateState`> {
         return aggregates.`toMap()`
     }
@@ -918,7 +918,7 @@ sales.`forEach` { sale ->
 }
 
 val aggregates = aggregator.`getAggregates()`
-```
+```text
 
 Инкрементальная агрегация позволяет обновлять агрегаты без пересчета всех данных, что улучшает производительность для больших объемов данных.
 
@@ -969,7 +969,7 @@ fun `aggregateByHour`(events: `List`<`Event`>): Map<`LocalDateTime`, `Double`> {
             `events.map` { `it.value` }.average()
         }
 }
-```
+```text
 
 Агрегация временных данных позволяет анализировать данные по различным временным интервалам.
 
@@ -1001,7 +1001,7 @@ val prices = `listOf`(`100.0`, `102.0`, `101.0`, `103.0`, `105.0`, `104.0`, `106
 val `movingAvg` = `movingAverage`(102.0, 103.0, 104.0, 105.0)
 val `movingMax` = `movingWindow`(prices, 3) { it.`maxOrNull()` ?: `0.0` }
 val `movingMin` = `movingWindow`(prices, 3) { it.`minOrNull()` ?: `0.0` }
-```
+```text
 
 Скользящие окна позволяют анализировать временные ряды и выявлять тренды в данных.
 
@@ -1045,7 +1045,7 @@ fun <T, R> `List`<T>.scan(initial: R, operation: (R, T) -> R): `List`<R> {
 // Использование
 val `runningSum` = `numbers.scan`(0) { acc, value -> acc + value }
 // [0, 1, 3, 6, 10, 15]
-```
+```text
 
 Накопление позволяет эффективно агрегировать данные с сохранением промежуточных результатов.
 
@@ -1071,7 +1071,7 @@ val `movingAverage` = prices.`windowedAggregate`(3) { `it.average`() }
 
 val `movingMax` = prices.`windowedAggregate`(3) { it.`maxOrNull()` ?: `0.0` }
 val `movingMin` = prices.`windowedAggregate`(3) { it.`minOrNull()` ?: `0.0` }
-```
+```text
 
 Окна данных позволяют анализировать локальные паттерны в данных.
 
@@ -1088,13 +1088,13 @@ val `movingMin` = prices.`windowedAggregate`(3) { it.`minOrNull()` ?: `0.0` }
 fun <T> `List`<T>.histogram(bins: Int = 10): Map<Int, Int> {
     val min = this.`minOrNull()`?.let { it as? `Comparable`<*> } ?: return `emptyMap()`
     val max = this.`maxOrNull()`?.let { it as? `Comparable`<*> } ?: return `emptyMap()`
-    
+
     val range = (max as `Number`).`toDouble()` - (min as `Number`).`toDouble()`
     val `binSize` = range / bins
-    
+
     return this.`groupBy` { value ->
         val `numValue` = (value as? `Number`)?.`toDouble()` ?: `0.0`
-        ((`numValue` - (min as `Number`).`toDouble()` / `binSize`).`toInt()`.`coerceIn`(0, bins - 1)
+        ((`numValue` - (min as `Number`).`toDouble()` / `binSize`).`toInt()`.`coerceIn`(0, bins — 1)
     }.`mapValues` { `it.value.size` }
 }
 
@@ -1102,7 +1102,7 @@ fun <T> `List`<T>.histogram(bins: Int = 10): Map<Int, Int> {
 val numbers = `listOf`(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 val histogram = `numbers.histogram`(5)
 // {0: 2, 1: 2, 2: 2, 3: 2, 4: 2}
-```
+```text
 
 Гистограммы позволяют визуализировать распределение данных.
 
@@ -1144,7 +1144,7 @@ fun `analyzeSalesByCategory`(sales: `List`<`Sale`>): Map<`String`, `SaleStats`> 
 }
 
 data class `SaleStats`(val total: `Double`, val average: `Double`, val count: Int)
-```
+```text
 
 Группировка позволяет эффективно анализировать данные по категориям.
 
@@ -1163,7 +1163,7 @@ fun `aggregateByHour`(events: `List`<`Event`>): Map<`Long`, `Double`> {
         `events.map` { `it.value` }.average()
     }
 }
-```
+```text
 
 Группировка по времени позволяет анализировать временные ряды.
 
@@ -1199,7 +1199,7 @@ val sales = `listOf`(
 )
 val grouped = `groupByCategoryAndRegion`(sales)
 val aggregated = `aggregateByCategoryAndRegion`(sales)
-```
+```text
 
 Многоуровневая группировка позволяет анализировать данные по нескольким измерениям.
 
@@ -1229,7 +1229,7 @@ fun <T> `List`<T>.`partitionBy`(predicate: (T) -> `Boolean`): `Pair`<`List`<T>, 
 val numbers = `listOf`(-5, 0, 5, 15, 50, `150`)
 val grouped = `groupByCondition`(numbers)
 val (evens, odds) = numbers.`partitionBy` { it % 2 == 0 }
-```
+```text
 
 Условная группировка позволяет классифицировать данные по различным критериям.
 
@@ -1250,7 +1250,7 @@ class `SalesAnalyzer`(private val sales: `List`<`Sale`>) {
         return sales.`groupBy` { `it.category` }
             .`mapValues` { (_, sales) -> sales.`sumOf` { `it.amount` } }
     }
-    
+
     // Группировка по регионам с топ-3 продуктами
     fun `topProductsByRegion`(limit: Int = 3): Map<`String`, `List`<`Pair`<`String`, `Double`>>> {
         return sales.`groupBy` { `it.region` }
@@ -1262,7 +1262,7 @@ class `SalesAnalyzer`(private val sales: `List`<`Sale`>) {
                     .take(limit)
             }
     }
-    
+
     // Продажи по месяцам
     fun `salesByMonth()`: Map<`YearMonth`, `Double`> {
         return sales.`groupingBy` { `YearMonth`.from(`it.date`) }
@@ -1270,7 +1270,7 @@ class `SalesAnalyzer`(private val sales: `List`<`Sale`>) {
                 (accumulator ?: `0.0`) + `element.amount`
             }
     }
-    
+
     // Статистика по категориям
     fun `categoryStatistics()`: Map<`String`, `CategoryStats`> {
         return sales.`groupBy` { `it.category` }
@@ -1293,7 +1293,7 @@ data class `CategoryStats`(
     val `maxSale`: `Double`,
     val `minSale`: `Double`
 )
-```
+```text
 
 ### Практические примеры: Группировка пользователей
 
@@ -1313,7 +1313,7 @@ class `UserAnalyzer`(private val users: `List`<`User`>) {
         return users.`groupingBy` { `it.city` }
             .`eachCount()`
     }
-    
+
     // Группировка по возрастным группам
     fun `usersByAgeGroup()`: Map<`String`, `List`<`User`>> {
         return users.`groupBy` { user ->
@@ -1326,20 +1326,20 @@ class `UserAnalyzer`(private val users: `List`<`User`>) {
             }
         }
     }
-    
+
     // Группировка по типу подписки с средним возрастом
     fun `averageAgeBySubscription()`: Map<`String`, `Double`> {
         return users.`groupBy` { it.`subscriptionType` }
             .`mapValues` { (_, users) -> `users.map` { `it.age` }.average() }
     }
-    
+
     // Новые пользователи по месяцам
     fun `newUsersByMonth()`: Map<`YearMonth`, Int> {
         return users.`groupingBy` { `YearMonth`.from(it.`registrationDate`) }
             .`eachCount()`
     }
 }
-```
+```text
 
 ### Практические примеры: Работа с временными рядами
 
@@ -1353,21 +1353,21 @@ data class `TimeSeriesPoint`(
 class `TimeSeriesAnalyzer`(private val points: `List`<`TimeSeriesPoint`>) {
     // Группировка по часам
     fun `groupByHour()`: Map<Int, `List`<`TimeSeriesPoint`>> {
-        return points.`groupBy` { 
-            `it.timestamp`.`atZone`(`ZoneId`.`systemDefault()`).hour 
+        return points.`groupBy` {
+            `it.timestamp`.`atZone`(`ZoneId`.`systemDefault()`).hour
         }
     }
-    
+
     // Группировка по дням недели
     fun `groupByDayOfWeek()`: Map<`DayOfWeek`, `List`<`TimeSeriesPoint`>> {
-        return points.`groupBy` { 
-            `it.timestamp`.`atZone`(`ZoneId`.`systemDefault()`).`dayOfWeek` 
+        return points.`groupBy` {
+            `it.timestamp`.`atZone`(`ZoneId`.`systemDefault()`).`dayOfWeek`
         }
     }
-    
+
     // Агрегация по категориям и дням
     fun `aggregateByCategoryAndDay()`: Map<`Pair`<`String`, `LocalDate`>, `Double`> {
-        return points.`groupingBy` { 
+        return points.`groupingBy` {
             `Pair`(
                 `it.category`,
                 `it.timestamp`.`atZone`(`ZoneId`.`systemDefault()`).`toLocalDate()`
@@ -1377,7 +1377,7 @@ class `TimeSeriesAnalyzer`(private val points: `List`<`TimeSeriesPoint`>) {
             (accumulator ?: `0.0`) + `element.value`
         }
     }
-    
+
     // Скользящее среднее по окнам
     fun `movingAverage`(`windowSize`: Int): `List`<`Double`> {
         return `points.map` { `it.value` }
@@ -1385,7 +1385,7 @@ class `TimeSeriesAnalyzer`(private val points: `List`<`TimeSeriesPoint`>) {
             .map { `it.average`() }
     }
 }
-```
+```text
 
 Этот файл содержит полное руководство по группировке и агрегации коллекций в Kotlin, покрывающее все основные аспекты от базовых операций до продвинутых техник, анализа данных, оптимизации производительности, работы с большими данными, временными рядами, накоплением данных, работой с окнами данных, гистограммами, практические примеры использования для анализа продаж, пользователей, временных рядов, включая многоуровневую и условную группировку, заключение и дополнительные ресурсы.
 

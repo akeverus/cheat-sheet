@@ -11,7 +11,7 @@ updated: "2026-02-11"
 
 Раздел содержит шпаргалки по языкам: Go, Java, Kotlin, Scala — основы, коллекции, конкурентность и смежные темы.
 
-Библиотеки и фреймворки (Cats, ZIO, Akka, Play, Ktor, Exposed и др.) см. в [`../libraries/`](../libraries/).
+Библиотеки и фреймворки (Cats, ZIO, Akka, Play, Ktor, Exposed и др.) см. в [../libraries/](../libraries/).
 
 ## Полезные ссылки
 

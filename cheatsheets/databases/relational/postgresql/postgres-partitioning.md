@@ -28,19 +28,19 @@ related: ["databases/postgres-basics.md", "databases/postgres-design.md", "datab
 
 ### Официальная документация **PostgreSQL**
 
-- [`PostgreSQL Partitioning`](https://www.postgresql.org/docs/)
+- [PostgreSQL Partitioning](https://www.postgresql.org/docs/)
 - [`PostgreSQL CREATE TABLE` - `Partitioning`](https://www.postgresql.org/docs/)
-- [`PostgreSQL Partitioning Best Practices`](https://www.postgresql.org/docs/)
-- [`Partitioning and Constraint Exclusion`](https://www.postgresql.org/docs/)
+- [PostgreSQL Partitioning Best Practices](https://www.postgresql.org/docs/)
+- [Partitioning and Constraint Exclusion](https://www.postgresql.org/docs/)
 
 ### Дополнительные ресурсы
 
-- [`PostgreSQL Partitioning Tutorial`](https://www.postgresql.org/docs/)
-- [`Partitioning Strategies`](https://www.postgresql.org/docs/)
-- [`Partitioning Performance`](https://www.postgresql.org/docs/)
-- [`PG Partition Manager`](https://www.postgresql.org/docs/)
+- [PostgreSQL Partitioning Tutorial](https://www.postgresql.org/docs/)
+- [Partitioning Strategies](https://www.postgresql.org/docs/)
+- [Partitioning Performance](https://www.postgresql.org/docs/)
+- [PG Partition Manager](https://www.postgresql.org/docs/)
 
-См. также: [`postgres-basics`](postgres-basics.md) — [`postgres-design`](postgres-design.md) — [`postgres-indexes`](postgres-indexes.md) — [`postgres-admin`](postgres-admin.md).
+См. также: [[postgres-basics]] — [[postgres-design]] — [[postgres-indexes]] — [[postgres-admin]].
 
 ## Содержание
 
@@ -213,9 +213,9 @@ DECLARE
   partition_name TEXT;
 BEGIN
   end_date := start_date + INTERVAL '3 months';
-  partition_name := parent_table || '_' || to_char(start_date, 'YYYY_q') || 
+  partition_name := parent_table || '_' || to_char(start_date, 'YYYY_q') ||
                     EXTRACT(QUARTER FROM start_date);
-  
+
   EXECUTE format(
     'CREATE TABLE IF NOT EXISTS %I PARTITION OF %I FOR VALUES FROM (%L) TO (%L)',
     partition_name, parent_table, start_date, end_date
@@ -237,7 +237,7 @@ $$ LANGUAGE plpgsql;
    ```sql
    -- Вариант 1: COPY TO
    COPY events_2024_q1 TO '/backup/events_2024_q1.csv' WITH CSV HEADER;
-   
+
    -- Вариант 2: pg_dump
    -- В shell:
    pg_dump -t events_2024_q1 mydb > events_2024_q1.dump
@@ -281,7 +281,7 @@ CREATE INDEX idx_events_2024_q3_created_at ON events_2024_q3 (created_at);
 **Проверка индексов на партициях:**
 ```sql
 -- Список всех индексов на партициях
-SELECT 
+SELECT
     schemaname,
     tablename AS partition_name,
     indexname,
@@ -321,7 +321,7 @@ VACUUM (ANALYZE) events;
 
 **Мониторинг статистики по партициям:**
 ```sql
-SELECT 
+SELECT
     schemaname,
     tablename AS partition_name,
     n_live_tup,
@@ -553,7 +553,7 @@ SELECT * FROM events WHERE EXTRACT(MONTH FROM created_at) = 4;  -- НЕ эффе
 SELECT * FROM events WHERE created_at::text LIKE '2024-04%';    -- НЕ эффективно!
 
 -- Лучше переписать:
-SELECT * FROM events 
+SELECT * FROM events
 WHERE created_at >= '2024-04-01' AND created_at < '2024-05-01';
 ```
 
@@ -647,7 +647,7 @@ WHERE status = 'active';
 
 **Проверка размера партиций:**
 ```sql
-SELECT 
+SELECT
     schemaname,
     tablename AS partition_name,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size,
@@ -683,12 +683,12 @@ ORDER BY tablename;
 **Статистика по партициям:**
 ```sql
 -- Размеры партиций
-SELECT 
+SELECT
     schemaname,
     tablename AS partition_name,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS total_size,
     pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) AS table_size,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) - 
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) -
                    pg_relation_size(schemaname||'.'||tablename)) AS index_size,
     n_live_tup AS row_count,
     n_dead_tup AS dead_rows
@@ -700,7 +700,7 @@ ORDER BY tablename;
 **Использование партиций в запросах:**
 ```sql
 -- Проверить, какие партиции используются в запросах
-SELECT 
+SELECT
     schemaname,
     tablename AS partition_name,
     seq_scan,
@@ -1975,12 +1975,12 @@ echo "Partition maintenance completed"
 
 ### Лучшие практики:
 
-1. **Выбирайте правильный ключ партиционирования** - наиболее часто используемый в **WHERE**
-2. **Планируйте партиции заранее** - учитывайте рост данных и паттерны запросов
-3. **Автоматизируйте обслуживание** - создание и удаление партиций
-4. **Мониторьте производительность** - анализируйте эффективность **partition pruning**
-5. **Тестируйте стратегии** - сравнивайте производительность разных подходов
-6. **Документируйте схему** - поддерживайте актуальную документацию партиций
+1. **Выбирайте правильный ключ партиционирования** — наиболее часто используемый в **WHERE**
+2. **Планируйте партиции заранее** — учитывайте рост данных и паттерны запросов
+3. **Автоматизируйте обслуживание** — создание и удаление партиций
+4. **Мониторьте производительность** — анализируйте эффективность **partition pruning**
+5. **Тестируйте стратегии** — сравнивайте производительность разных подходов
+6. **Документируйте схему** — поддерживайте актуальную документацию партиций
 
 ### Типичные ошибки и их избежание:
 
@@ -2599,13 +2599,20 @@ ORDER BY hour DESC;
 
 ### Ключевые принципы успешного партиционирования:
 
-1. **Правильный выбор ключа партиционирования** - наиболее селективный столбец
-2. **Понимание паттернов запросов** - какие фильтры используются чаще всего
-3. **Планирование роста** - создание партиций на будущее
-4. **Автоматизация обслуживания** - регулярное создание и удаление партиций
-5. **Мониторинг и оптимизация** - постоянный анализ эффективности
-6. **Тестирование стратегий** - сравнение производительности разных подходов
-7. **Документирование** - поддержание актуальной документации схемы партиций
+1. **Правильный выбор ключа партиционирования** — наиболее селективный столбец
+2. **Понимание паттернов запросов** — какие фильтры используются чаще всего
+3. **Планирование роста** — создание партиций на будущее
+4. **Автоматизация обслуживания** — регулярное создание и удаление партиций
+5. **Мониторинг и оптимизация** — постоянный анализ эффективности
+6. **Тестирование стратегий** — сравнение производительности разных подходов
+7. **Документирование** — поддержание актуальной документации схемы партиций
 
 Партиционирование требует тщательного планирования и постоянного мониторинга, но при правильной реализации обеспечивает отличную производительность и управляемость для больших **PostgreSQL** баз данных, поддерживая рост приложений от небольших проектов до **enterprise**-систем с миллионами записей.
 
+## См. также
+
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
+- [[postgres-data-ops|PostgreSQL: операции с данными (CRUD)]]
+- [[postgres-design|PostgreSQL: проектирование и нормализация]]

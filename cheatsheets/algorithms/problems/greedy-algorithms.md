@@ -51,7 +51,7 @@ updated: "2026-02-11"
 
 В этом коротком руководстве мы собираемся реализовать жадную стратегию для извлечения данных из социальной сети с использованием ее **API**.
 
-Допустим, мы хотим охватить больше пользователей в социальной сети. Лучший способ достичь нашей цели - опубликовать оригинальный контент или ретвитнуть что-то, что вызовет интерес у широкой аудитории.
+Допустим, мы хотим охватить больше пользователей в социальной сети. Лучший способ достичь нашей цели — опубликовать оригинальный контент или ретвитнуть что-то, что вызовет интерес у широкой аудитории.
 
 Как найти такую аудиторию? Что ж, мы должны найти учетную запись с большим количеством подписчиков и твитнуть для них какой-нибудь контент.
 
@@ -93,19 +93,19 @@ import lombok.Setter;
 public class SocialConnector {
     private boolean isCounterEnabled = true;
     private int counter = 4;
-    
+
     @Getter @Setter
     private List<SocialUser> users;
-    
+
     public SocialConnector() {
         users = new ArrayList<>();
     }
-    
+
     public boolean switchCounter() {
         this.isCounterEnabled = !this.isCounterEnabled;
         return this.isCounterEnabled;
     }
-    
+
     public List<SocialUser> getFollowers(String account) {
         if (counter < 0) {
             throw new IllegalStateException("API limit reached");
@@ -114,13 +114,13 @@ public class SocialConnector {
                 counter--;
             }
         }
-        
+
         for (SocialUser user : users) {
             if (user.getUsername().equals(account)) {
                 return user.getFollowers();
             }
         }
-        
+
         return new ArrayList<>();
     }
 }
@@ -136,28 +136,28 @@ import lombok.Getter;
 public class SocialUser {
     @Getter
     private String username;
-    
+
     @Getter
     private List<SocialUser> followers;
-    
+
     public SocialUser(String username) {
         this.username = username;
         this.followers = new ArrayList<>();
     }
-    
+
     public SocialUser(String username, List<SocialUser> followers) {
         this.username = username;
         this.followers = followers;
     }
-    
+
     public void addFollowers(List<SocialUser> followers) {
         this.followers.addAll(followers);
     }
-    
+
     public long getFollowersCount() {
         return followers.size();
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SocialUser) {
@@ -174,17 +174,17 @@ public class GreedyAlgorithm {
     int currentLevel = 0;
     final int maxLevel = 3;
     SocialConnector sc;
-    
+
     public GreedyAlgorithm(SocialConnector sc) {
         this.sc = sc;
     }
-    
+
     public long findMostFollowersPath(String account) {
         long max = 0;
         SocialUser toFollow = null;
-        
+
         List<SocialUser> followers = sc.getFollowers(account);
-        
+
         for (SocialUser el : followers) {
             long followersCount = el.getFollowersCount();
             if (followersCount > max) {
@@ -192,12 +192,12 @@ public class GreedyAlgorithm {
                 max = followersCount;
             }
         }
-        
+
         if (currentLevel < maxLevel - 1) {
             currentLevel++;
             max += findMostFollowersPath(toFollow.getUsername());
         }
-        
+
         return max;
     }
 }
@@ -210,37 +210,37 @@ public class NonGreedyAlgorithm {
     int currentLevel = 0;
     final int maxLevel = 3;
     SocialConnector tc;
-    
+
     public NonGreedyAlgorithm(SocialConnector tc, int level) {
         this.tc = tc;
         this.currentLevel = level;
     }
-    
+
     public long findMostFollowersPath(String account) {
         List<SocialUser> followers = tc.getFollowers(account);
         long total = currentLevel > 0 ? followers.size() : 0;
-        
+
         if (currentLevel < maxLevel) {
             currentLevel++;
             long[] count = new long[followers.size()];
             int i = 0;
-            
+
             for (SocialUser el : followers) {
                 NonGreedyAlgorithm sub = new NonGreedyAlgorithm(tc, currentLevel);
                 count[i] = sub.findMostFollowersPath(el.getUsername());
                 i++;
             }
-            
+
             long max = 0;
             for (int j = 0; j < i; j++) {
                 if (count[j] > max) {
                     max = count[j];
                 }
             }
-            
+
             return total + max;
         }
-        
+
         return total;
     }
 }
@@ -260,11 +260,11 @@ public class NonGreedyAlgorithm {
 ```kotlin
 class SocialUserK(val username: String) {
     val followers = mutableListOf<SocialUserK>()
-    
+
     fun addFollowers(followers: List<SocialUserK>) {
         this.followers.addAll(followers)
     }
-    
+
     fun getFollowersCount(): Long = followers.size.toLong()
 }
 
@@ -272,12 +272,12 @@ class SocialConnectorK {
     private var isCounterEnabled = true
     private var counter = 4
     val users = mutableListOf<SocialUserK>()
-    
+
     fun switchCounter(): Boolean {
         isCounterEnabled = !isCounterEnabled
         return isCounterEnabled
     }
-    
+
     fun getFollowers(account: String): List<SocialUserK> {
         if (counter < 0) {
             throw IllegalStateException("API limit reached")
@@ -286,7 +286,7 @@ class SocialConnectorK {
                 counter--
             }
         }
-        
+
         return users.firstOrNull { it.username == account }?.followers ?: emptyList()
     }
 }
@@ -296,13 +296,13 @@ class SocialConnectorK {
 class GreedyAlgorithmK(private val sc: SocialConnectorK) {
     private var currentLevel = 0
     private val maxLevel = 3
-    
+
     fun findMostFollowersPath(account: String): Long {
         var max = 0L
         var toFollow: SocialUserK? = null
-        
+
         val followers = sc.getFollowers(account)
-        
+
         for (el in followers) {
             val followersCount = el.getFollowersCount()
             if (followersCount > max) {
@@ -310,12 +310,12 @@ class GreedyAlgorithmK(private val sc: SocialConnectorK) {
                 max = followersCount
             }
         }
-        
+
         if (currentLevel < maxLevel - 1 && toFollow != null) {
             currentLevel++
             max += findMostFollowersPath(toFollow.username)
         }
-        
+
         return max
     }
 }
@@ -327,10 +327,10 @@ fun main() {
     val user1 = SocialUserK("user1")
     val user2 = SocialUserK("user2")
     val user3 = SocialUserK("user3")
-    
+
     user1.addFollowers(listOf(user2, user3))
     sc.users.addAll(listOf(user1, user2, user3))
-    
+
     val greedy = GreedyAlgorithmK(sc)
     val result = greedy.findMostFollowersPath("user1")
     println("Max followers: $result")
@@ -357,18 +357,18 @@ fun main() {
 public class ActivitySelection {
     public List<Activity> selectActivities(List<Activity> activities) {
         activities.sort(Comparator.comparing(Activity::getEndTime));
-        
+
         List<Activity> selected = new ArrayList<>();
         Activity last = activities.get(0);
         selected.add(last);
-        
+
         for (Activity activity : activities) {
             if (activity.getStartTime() >= last.getEndTime()) {
                 selected.add(activity);
                 last = activity;
             }
         }
-        
+
         return selected;
     }
 }
@@ -379,25 +379,25 @@ public class ActivitySelection {
 ```java
 public class FractionalKnapsack {
     public double getMaxValue(List<Item> items, int capacity) {
-        items.sort((a, b) -> 
-            Double.compare(b.getValue() / b.getWeight(), 
+        items.sort((a, b) ->
+            Double.compare(b.getValue() / b.getWeight(),
                           a.getValue() / a.getWeight())
         );
-        
+
         double totalValue = 0;
         int remainingCapacity = capacity;
-        
+
         for (Item item : items) {
             if (remainingCapacity >= item.getWeight()) {
                 totalValue += item.getValue();
                 remainingCapacity -= item.getWeight();
             } else {
-                totalValue += item.getValue() * 
+                totalValue += item.getValue() *
                     ((double) remainingCapacity / item.getWeight());
                 break;
             }
         }
-        
+
         return totalValue;
     }
 }

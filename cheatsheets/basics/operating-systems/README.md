@@ -18,6 +18,7 @@ updated: "2026-04-17"
 
 ### Основной документ
 - [Операционные системы: основы](operating-systems-basics.md)
+- [Linux и Bash: практический справочник](linux-handbook.md) — рабочий справочник: команды, права, systemd, production-troubleshooting
 
 ### Соседние разделы
 - [Computer Science](../computer-science/README.md)
