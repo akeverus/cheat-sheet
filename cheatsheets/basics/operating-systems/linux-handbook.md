@@ -117,14 +117,12 @@ ls -li                # показать inode
 
 Классическая модель — `rwx` для user/group/others:
 
-```text
--rwxr-xr-- 1 user group 1024 Apr 20 12:00 file
- │└┬┘└┬┘└┬┘   │     │
- │ │  │  └─── others: r--
- │ │  └────── group:  r-x
- │ └───────── user:   rwx
- └─────────── тип: - файл, d директория, l symlink
-```
+Разбор строки `-rwxr-xr-- 1 user group 1024 Apr 20 12:00 file`:
+
+- `-` — тип (`-` файл, `d` директория, `l` symlink)
+- `rwx` — user
+- `r-x` — group
+- `r--` — others
 
 Права для файла и директории интерпретируются по-разному:
 

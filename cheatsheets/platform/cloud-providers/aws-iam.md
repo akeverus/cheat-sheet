@@ -68,12 +68,13 @@ updated: "2026-02-11"
 ## Основы IAM
 
 ### IAM Entities
-```text
-IAM Entities:
-├── Users          # Долгосрочные credentials для людей/приложений
-├── Groups         # Коллекции users с общими permissions
-├── Roles          # Временные permissions для AWS ресурсов
-└── Policies       # Документы определяющие permissions
+```mermaid
+flowchart TD
+    IAM["IAM Entities"]
+    IAM --> Users["Users — Долгосрочные credentials для людей/приложений"]
+    IAM --> Groups["Groups — Коллекции users с общими permissions"]
+    IAM --> Roles["Roles — Временные permissions для AWS ресурсов"]
+    IAM --> Policies["Policies — Документы определяющие permissions"]
 ```
 
 ### IAM Limits
@@ -100,18 +101,17 @@ service-limits:
 ```
 
 ### ARN (`Amazon Resource Name`)
-```text
-ARN Format: arn:partition:service:region:account-id:resource
+Формат: `arn:partition:service:region:account-id:resource`
 
-Examples:
-├── User:          arn:aws:iam::123456789012:user/JohnDoe
-├── Group:         arn:aws:iam::123456789012:group/Developers
-├── Role:          arn:aws:iam::123456789012:role/EC2-WebServer-Role
-├── Policy:        arn:aws:iam::123456789012:policy/MyCustomPolicy
-├── S3 Bucket:     arn:aws:s3:::my-bucket
-├── EC2 Instance:  arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0
-└── Lambda:        arn:aws:lambda:us-east-1:123456789012:function:my-function
-```
+Примеры:
+
+- **User:** `arn:aws:iam::123456789012:user/JohnDoe`
+- **Group:** `arn:aws:iam::123456789012:group/Developers`
+- **Role:** `arn:aws:iam::123456789012:role/EC2-WebServer-Role`
+- **Policy:** `arn:aws:iam::123456789012:policy/MyCustomPolicy`
+- **S3 Bucket:** `arn:aws:s3:::my-bucket`
+- **EC2 Instance:** `arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0`
+- **Lambda:** `arn:aws:lambda:us-east-1:123456789012:function:my-function`
 
 ## IAM Policies
 

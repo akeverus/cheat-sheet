@@ -107,25 +107,15 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 
 ### Компоненты репликации
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                     ClickHouse Cluster                      │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│  │ Replica 1   │    │ Replica 2   │    │ Replica 3   │      │
-│  │ (Leader)    │    │             │    │             │      │
-│  └─────────────┘    └─────────────┘    └─────────────┘      │
-│         │                    │                    │         │
-│         └────────────────────┼────────────────────┘         │
-│                              │                              │
-│                   ┌─────────────┐                            │
-│                   │ ZooKeeper   │                            │
-│                   │ Cluster     │                            │
-│                   │ • Metadata  │                            │
-│                   │ • Locks     │                            │
-│                   │ • Elections │                            │
-│                   └─────────────┘                            │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    R1["Replica 1 (Leader)"]
+    R2["Replica 2"]
+    R3["Replica 3"]
+    ZK["ZooKeeper Cluster<br/>• Metadata<br/>• Locks<br/>• Elections"]
+    R1 --- ZK
+    R2 --- ZK
+    R3 --- ZK
 ```
 
 ### Роли в репликации

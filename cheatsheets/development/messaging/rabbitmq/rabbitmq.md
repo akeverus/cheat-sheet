@@ -308,31 +308,26 @@ try {
 #### Broker (Брокер)
 **Основной сервер **RabbitMQ**:**
 
-```text
-# Компоненты брокера: connections, channels, exchanges, queues
-┌─────────────────────────────────────┐
-│         RabbitMQ Broker             │
-├─────────────────────────────────────┤
-│  ┌─────────────┐ ┌─────────────┐    │
-│  │ Connection  │ │ Connection  │    │
-│  │  Manager    │ │  Manager    │    │
-│  └─────────────┘ └─────────────┘    │
-├─────────────────────────────────────┤
-│  ┌─────────────┐ ┌─────────────┐    │
-│  │   Channel   │ │   Channel   │    │
-│  │   Manager   │ │   Manager   │    │
-│  └─────────────┘ └─────────────┘    │
-├─────────────────────────────────────┤
-│  ┌─────────────┐ ┌─────────────┐    │
-│  │   Exchange  │ │    Queue    │    │
-│  │   Manager   │ │   Manager   │    │
-│  └─────────────┘ └─────────────┘    │
-├─────────────────────────────────────┤
-│  ┌─────────────┐ ┌─────────────┐    │
-│  │   Message   │ │   Message   │    │
-│  │   Store     │ │   Store     │    │
-│  └─────────────┘ └─────────────┘    │
-└─────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Broker[RabbitMQ Broker]
+        subgraph Conn[Connections]
+            CM1[Connection Manager]
+            CM2[Connection Manager]
+        end
+        subgraph Chan[Channels]
+            ChM1[Channel Manager]
+            ChM2[Channel Manager]
+        end
+        subgraph Routing[Routing]
+            EM[Exchange Manager]
+            QM[Queue Manager]
+        end
+        subgraph Store[Storage]
+            MS1[Message Store]
+            MS2[Message Store]
+        end
+    end
 ```
 
 #### Connections и Channels
@@ -3722,10 +3717,14 @@ Producer → Exchange → Queue (routing key match)
 ```
 
 #### RPC (Request-Response)
-```text
-Client → Callback Queue → Server
-   ↑                        ↓
-   └──── Response ←─────────┘
+```mermaid
+sequenceDiagram
+    participant Client
+    participant CQ as Callback Queue
+    participant Server
+    Client->>Server: Request
+    Server->>CQ: Response
+    CQ->>Client: Response
 ```
 
 ### Когда выбирать RabbitMQ:

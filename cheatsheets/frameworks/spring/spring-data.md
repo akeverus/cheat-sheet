@@ -40,11 +40,23 @@ updated: "2026-04-12"
 
 ## Иерархия репозиториев
 
-```text
-Repository<T, ID>                    — маркерный интерфейс
-└── CrudRepository<T, ID>           — CRUD (save, findById, delete, findAll)
-    └── PagingAndSortingRepository  — + пагинация и сортировка
-        └── JpaRepository<T, ID>    — + flush, saveAll, batch-delete, Example API
+```mermaid
+classDiagram
+    class Repository~T, ID~ {
+        маркерный интерфейс
+    }
+    class CrudRepository~T, ID~ {
+        CRUD: save, findById, delete, findAll
+    }
+    class PagingAndSortingRepository {
+        + пагинация и сортировка
+    }
+    class JpaRepository~T, ID~ {
+        + flush, saveAll, batch-delete, Example API
+    }
+    Repository <|-- CrudRepository
+    CrudRepository <|-- PagingAndSortingRepository
+    PagingAndSortingRepository <|-- JpaRepository
 ```
 
 ```java

@@ -57,16 +57,11 @@ Deploy-вариант: standalone binary, Docker-compose, Kubernetes-опера�
 
 ## Архитектура и деплой
 
-```text
-┌────────────┐     ┌─────────────┐     ┌──────────────┐
-│  Clients   │────▶│ Mattermost  │────▶│ PostgreSQL / │
-│ web/mobile │     │   Server    │     │   MySQL      │
-└────────────┘     └─────────────┘     └──────────────┘
-                          │
-                          ▼
-                   ┌─────────────┐
-                   │ S3 / MinIO  │  ← вложения
-                   └─────────────┘
+```mermaid
+flowchart LR
+    C["Clients<br/>web/mobile"] --> M[Mattermost Server]
+    M --> DB["PostgreSQL / MySQL"]
+    M --> S["S3 / MinIO<br/>вложения"]
 ```
 
 **HA:** несколько нод Mattermost за LB, общая БД (Postgres с репликой), общий объектный стораж.

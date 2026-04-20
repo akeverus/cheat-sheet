@@ -1148,15 +1148,11 @@ bootstrap:
 
 ### Active-Passive (Hot Standby)
 
-```text
-┌─────────────┐         ┌─────────────┐
-│   Primary   │────────▶│   Standby   │
-│  (Active)   │  WAL    │  (Passive)  │
-└─────────────┘         └─────────────┘
-     │                         │
-     │                         │
-     ▼                         ▼
-  Clients                  (Standby)
+```mermaid
+flowchart LR
+    Primary["Primary (Active)"] -- WAL --> Standby["Standby (Passive)"]
+    Primary --> Clients
+    Standby --> StandbyState["(Standby)"]
 ```
 
 **Характеристики:**
@@ -1172,15 +1168,11 @@ bootstrap:
 
 ### Active-Active (Multi-Master)
 
-```text
-┌─────────────┐         ┌─────────────┐
-│   Master 1  │◀───────▶│   Master 2  │
-│  (Active)   │  Sync   │  (Active)   │
-└─────────────┘         └─────────────┘
-     │                         │
-     │                         │
-     ▼                         ▼
-  Clients                  Clients
+```mermaid
+flowchart LR
+    M1["Master 1 (Active)"] <-- Sync --> M2["Master 2 (Active)"]
+    M1 --> C1[Clients]
+    M2 --> C2[Clients]
 ```
 
 **Характеристики:**
@@ -1196,11 +1188,9 @@ bootstrap:
 
 ### Cascading Replication
 
-```text
-┌─────────────┐         ┌─────────────┐         ┌─────────────┐
-│   Primary   │────────▶│   Standby 1  │────────▶│   Standby 2 │
-│             │  WAL    │             │  WAL    │             │
-└─────────────┘         └─────────────┘         └─────────────┘
+```mermaid
+flowchart LR
+    Primary --> |WAL| Standby1["Standby 1"] --> |WAL| Standby2["Standby 2"]
 ```
 
 **Характеристики:**
@@ -1216,26 +1206,14 @@ bootstrap:
 
 ### Read Replicas с Load Balancing
 
-```text
-                    ┌─────────────┐
-                    │   Primary   │
-                    │   (Write)    │
-                    └─────────────┘
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
-        ▼                 ▼                 ▼
-  ┌─────────┐      ┌─────────┐      ┌─────────┐
-  │Replica 1 │      │Replica 2│      │Replica 3│
-  │  (Read)  │      │  (Read) │      │  (Read)  │
-  └─────────┘      └─────────┘      └─────────┘
-        │                 │                 │
-        └─────────────────┼─────────────────┘
-                          │
-                          ▼
-                  ┌─────────────┐
-                  │Load Balancer│
-                  └─────────────┘
+```mermaid
+flowchart TD
+    Primary["Primary (Write)"] --> R1["Replica 1 (Read)"]
+    Primary --> R2["Replica 2 (Read)"]
+    Primary --> R3["Replica 3 (Read)"]
+    R1 --> LB["Load Balancer"]
+    R2 --> LB
+    R3 --> LB
 ```
 
 **Характеристики:**

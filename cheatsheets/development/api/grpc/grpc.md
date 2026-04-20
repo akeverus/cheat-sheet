@@ -100,14 +100,12 @@ updated: "2026-02-11"
 
 Схема взаимодействия клиента и сервера **gRPC** (**HTTP/2**, `Protocol Buffers`).
 
-```text
-# Цепочка: клиент → stub → сеть → сервер → реализация сервиса
-Client Application    gRPC Stub    Network    gRPC Server    Service Implementation
-        │                 │           │             │                 │
-        └─────────────────┼───────────┼─────────────┼─────────────────┘
-                          │           │             │
-                     HTTP/2      Protocol       gRPC
-                    Transport    Buffers      Runtime
+```mermaid
+flowchart LR
+    A[Client Application] --> B[gRPC Stub]
+    B -->|HTTP/2 Transport| C[Network]
+    C -->|Protocol Buffers| D[gRPC Server]
+    D -->|gRPC Runtime| E[Service Implementation]
 ```
 
 ## Protocol Buffers

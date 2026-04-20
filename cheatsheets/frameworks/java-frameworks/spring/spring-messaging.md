@@ -98,33 +98,24 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 
 ### Архитектура Spring Messaging
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Code                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Message    │  │   Message    │  │   Message    │  │
-│  │   Producer   │  │   Listener   │  │   Converter  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Messaging Abstraction                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   JMS        │  │   RabbitMQ   │  │   ActiveMQ   │  │
-│  │   Template   │  │   Template   │  │   Template   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Message Broker                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Queue      │  │   Topic      │  │   Exchange   │  │
-│  │   (Point-to- │  │   (Pub/Sub)  │  │   (Routing)  │  │
-│  │    Point)    │  │              │  │              │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AC["Application Code"]
+        MP["Message Producer"]
+        ML["Message Listener"]
+        MC["Message Converter"]
+    end
+    subgraph MA["Messaging Abstraction"]
+        JMS["JMS Template"]
+        Rabbit["RabbitMQ Template"]
+        Active["ActiveMQ Template"]
+    end
+    subgraph MB["Message Broker"]
+        Queue["Queue (Point-to-Point)"]
+        Topic["Topic (Pub/Sub)"]
+        Exchange["Exchange (Routing)"]
+    end
+    AC --> MA --> MB
 ```
 
 ## JMS (`Java Message Service`)

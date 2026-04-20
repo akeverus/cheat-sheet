@@ -3068,23 +3068,15 @@ class UpgradeValidationResult {
 ### Мониторинг и alerting
 
 #### 1. Key Metrics Dashboard
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        Cassandra Dashboard                       │
-├─────────────────────────────────────────────────────────────────┤
-│ Status: 🟢 UP  ◾ 9/9 nodes  ◾  2.1TB data  ◾  99.9% uptime     │
-├─────────────────────────────────────────────────────────────────┤
-│ Latency    │ Throughput │ Errors   │ Queue     │ Disk I/O       │
-│ 12.3ms     │ 45.2k/sec  │ 0.01%    │ 12 ops    │ 234 MB/s       │
-├─────────────────────────────────────────────────────────────────┤
-│ CPU: 67%  │ Memory: 78% │ Disk: 45% │ Network: 34%              │
-├─────────────────────────────────────────────────────────────────┤
-│ Top Slow Queries:                                                │
-│ 1. SELECT * FROM large_table LIMIT 1000          2.3s           │
-│ 2. SELECT COUNT(*) FROM events WHERE date = ?     890ms         │
-│ 3. Complex aggregation query                      567ms          │
-└─────────────────────────────────────────────────────────────────┘
-```
+Пример Cassandra Dashboard — набор панелей для мониторинга:
+
+- **Status**: UP, 9/9 nodes, 2.1TB data, 99.9% uptime
+- **Performance**: Latency 12.3ms | Throughput 45.2k/sec | Errors 0.01% | Queue 12 ops | Disk I/O 234 MB/s
+- **Resources**: CPU 67% | Memory 78% | Disk 45% | Network 34%
+- **Top Slow Queries**:
+  1. `SELECT * FROM large_table LIMIT 1000` — 2.3s
+  2. `SELECT COUNT(*) FROM events WHERE date = ?` — 890ms
+  3. Complex aggregation query — 567ms
 
 #### 2. Alert Hierarchy
 - **Critical**: **Cluster down**, **data loss**, **security breach**

@@ -146,21 +146,10 @@ updated: "2026-02-11"
 
 Схема уровней оптимизации: **Application** → **Database** → **Infrastructure**.
 
-```text
-Performance Pyramid:
-┌─────────────────────────────────────────────────────────────┐
-│                    Application Layer                        │
-│  • Connection Pooling    • Query Optimization              │
-│  • Caching Strategy      • Schema Design                   │
-├─────────────────────────────────────────────────────────────┤
-│                     Database Layer                          │
-│  • Indexing Strategy     • Memory Management               │
-│  • Storage Engine        • Replication/Sharding            │
-├─────────────────────────────────────────────────────────────┤
-│                   Infrastructure Layer                      │
-│  • Hardware Specs        • Network Latency                 │
-│  • Disk I/O              • CPU Resources                   │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Application Layer<br/>Connection Pooling, Query Optimization<br/>Caching Strategy, Schema Design"] --> B["Database Layer<br/>Indexing Strategy, Memory Management<br/>Storage Engine, Replication/Sharding"]
+    B --> C["Infrastructure Layer<br/>Hardware Specs, Network Latency<br/>Disk I/O, CPU Resources"]
 ```
 
 ### Основные метрики производительности

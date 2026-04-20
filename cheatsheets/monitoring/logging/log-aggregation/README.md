@@ -56,18 +56,11 @@ updated: "2026-04-17"
 
 ## Карта инструментов
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│                 Log aggregation stack                       │
-├──────────────────────┬─────────────────────────────────────┤
-│ Transport buffer     │ Kafka, RabbitMQ, Kinesis             │
-├──────────────────────┼─────────────────────────────────────┤
-│ Stream processor     │ Flink, Spark Streaming, Kafka Streams│
-├──────────────────────┼─────────────────────────────────────┤
-│ In-process pipeline  │ Disruptor, RxJava, Reactor           │
-├──────────────────────┼─────────────────────────────────────┤
-│ Sink                 │ Elasticsearch, ClickHouse, S3, Loki  │
-└──────────────────────┴─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    T["Transport buffer<br/>Kafka, RabbitMQ, Kinesis"] --> S["Stream processor<br/>Flink, Spark Streaming, Kafka Streams"]
+    S --> P["In-process pipeline<br/>Disruptor, RxJava, Reactor"]
+    P --> K["Sink<br/>Elasticsearch, ClickHouse, S3, Loki"]
 ```
 
 ## Типичные связки стека

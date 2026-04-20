@@ -100,109 +100,43 @@ updated: "2026-02-11"
 
 ### Hot path (production)
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                     Application                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ 1. Span Creation                               │    │
-│  │    - @Traced methods                            │    │
-│  │    - HTTP requests                              │    │
-│  │    - Database calls                             │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Jaeger Agent                          │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ 2. Span Collection                             │    │
-│  │    - UDP receiver                               │    │
-│  │    - Batch processing                           │    │
-│  │    - Compression                                │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                 Jaeger Collector                        │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ 3. Span Processing                             │    │
-│  │    - Validation                                 │    │
-│  │    - Transformation                             │    │
-│  │    - Storage indexing                           │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                 Storage Backend                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ 4. Persistence                                  │    │
-│  │    - Cassandra                                   │    │
-│  │    - Elasticsearch                               │    │
-│  │    - Memory                                       │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Application<br/>1. Span Creation<br/>@Traced methods, HTTP requests, Database calls"] --> B["Jaeger Agent<br/>2. Span Collection<br/>UDP receiver, Batch processing, Compression"]
+    B --> C["Jaeger Collector<br/>3. Span Processing<br/>Validation, Transformation, Storage indexing"]
+    C --> D["Storage Backend<br/>4. Persistence<br/>Cassandra, Elasticsearch, Memory"]
 ```
 
 ### Query path (UI)
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                     Jaeger UI                           │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Search & Filter                               │    │
-│  │ - Service selection                            │    │
-│  │ - Time range                                    │    │
-│  │ - Tags filtering                               │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                 Query Service                           │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Trace Retrieval                               │    │
-│  │ - Archive storage                              │    │
-│  │ - Real-time queries                            │    │
-│  │ - Aggregation                                  │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                 Storage Backend                         │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │ Data Access                                     │    │
-│  │ - Trace storage                                 │    │
-│  │ - Index lookup                                  │    │
-│  │ - Aggregation queries                           │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Jaeger UI<br/>Search & Filter<br/>Service selection, Time range, Tags filtering"] --> B["Query Service<br/>Trace Retrieval<br/>Archive storage, Real-time queries, Aggregation"]
+    B --> C["Storage Backend<br/>Data Access<br/>Trace storage, Index lookup, Aggregation queries"]
 ```
 
 ### Sampling strategies
 
 #### Head sampling
-```text
-Request Flow: Client → Service A → Service B → Service C
-
-Sampling Decision:
-├── Sampled (10%) → Full trace collected
-├── Not sampled (90%) → No trace data
-└── Consistent across all services
+```mermaid
+flowchart LR
+    C[Client] --> A[Service A] --> B[Service B] --> D[Service C]
+    A -.-> S{Sampling Decision}
+    S -->|Sampled 10%| F[Full trace collected]
+    S -->|Not sampled 90%| N[No trace data]
 ```
 
+Решение консистентно для всех сервисов.
+
 #### Tail sampling
-```text
-Request Flow: Client → Service A → Service B → Service C
-                                      ↓
-                              All spans buffered
-                                      ↓
-                         Sampling decision at end
-                    ├── Error detected → Keep full trace
-                    ├── High latency → Keep full trace
-                    └── Normal → Discard
+```mermaid
+flowchart TD
+    C[Client] --> A[Service A] --> B[Service B] --> D[Service C]
+    D --> X[All spans buffered]
+    X --> Y{Sampling decision at end}
+    Y -->|Error detected| K1[Keep full trace]
+    Y -->|High latency| K2[Keep full trace]
+    Y -->|Normal| Z[Discard]
 ```
 
 ## Установка и настройка

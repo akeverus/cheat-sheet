@@ -87,38 +87,11 @@ updated: "2026-02-11"
 
 Схема слоёв **MongoDB**: приложение (драйверы, ODM), сервер (mongod, mongos, config), хранилище (WiredTiger), ОС.
 
-```text
-# Архитектура MongoDB: документы, коллекции, шарды
-┌─────────────────────────────────────────────────────────────┐
-│                          MongoDB                            │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │                Application Layer                   │    │
-│  │  • Drivers (Java, Python, Node.js, etc.)           │    │
-│  │  • ODM Libraries (Spring Data, Mongoose, etc.)     │    │
-│  └─────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │               MongoDB Server                        │    │
-│  │  • mongod (Database Server)                        │    │
-│  │  • mongos (Query Router)                           │    │
-│  │  • config servers                                  │    │
-│  └─────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │              Storage Layer                          │    │
-│  │  • WiredTiger Storage Engine                       │    │
-│  │  • MMAPv1 (legacy)                                 │    │
-│  │  • In-Memory                                        │    │
-│  └─────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │               Operating System                      │    │
-│  │  • Filesystem (XFS, EXT4)                          │    │
-│  │  • Memory Management                               │    │
-│  │  • I/O Scheduling                                  │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Application Layer<br/>• Drivers (Java, Python, Node.js)<br/>• ODM Libraries (Spring Data, Mongoose)"] --> B["MongoDB Server<br/>• mongod (Database Server)<br/>• mongos (Query Router)<br/>• config servers"]
+    B --> C["Storage Layer<br/>• WiredTiger Storage Engine<br/>• MMAPv1 (legacy)<br/>• In-Memory"]
+    C --> D["Operating System<br/>• Filesystem (XFS, EXT4)<br/>• Memory Management<br/>• I/O Scheduling"]
 ```
 
 ### Основные характеристики MongoDB
@@ -748,12 +721,7 @@ MongoDB хранит данные в формате BSON (Binary JSON):
 
 ObjectId — это 12-байтовый BSON тип, который гарантированно уникален в коллекции:
 
-```text
-# Структура ObjectId: timestamp, machine, pid, counter
-┌─────────┬─────────┬─────────┬─────────┐
-│ 4 **bytes** │ 3 **bytes** │ 2 **bytes** │ 3 **bytes** │
-│ **timestamp** │ **machine**  │ **pid**     │ **counter** │
-└─────────┴─────────┴─────────┴─────────┘
+Структура ObjectId: 4 байта timestamp, 3 байта machine, 2 байта pid, 3 байта counter.
 ```text
 
 ```javascript
@@ -1568,22 +1536,12 @@ MongoDB была разработана для решения проблем т�
 
 ### Архитектура MongoDB
 
-```text
-# Кластер: Config Servers, Mongos, Shards, Replica Sets, WiredTiger
-┌─────────────────────────────────────────────────────────────────┐
-│                          **MongoDB Cluster**                        │
-├─────────────────────────────────────────────────────────────────┤
-│  **Config Servers** │ **Mongos Routers** │ **Shard Servers** │ **Replica Sets** │
-├─────────────────────────────────────────────────────────────────┤
-│                    **MongoDB Core Engine**                          │
-├─────────────────────────────────────────────────────────────────┤
-│  **Database** │ **Collections** │ **Documents** │ **Indexes** │ **Aggregation**    │
-├─────────────────────────────────────────────────────────────────┤
-│                    **Storage Engine** (WiredTiger)                  │
-├─────────────────────────────────────────────────────────────────┤
-│                     **Operating System**                            │
-└─────────────────────────────────────────────────────────────────┘
-```text
+```mermaid
+flowchart TD
+    A["MongoDB Cluster<br/>Config Servers | Mongos Routers | Shard Servers | Replica Sets"] --> B["MongoDB Core Engine<br/>Database | Collections | Documents | Indexes | Aggregation"]
+    B --> C["Storage Engine (WiredTiger)"]
+    C --> D["Operating System"]
+```
 
 #### Ключевые компоненты:
 

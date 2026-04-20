@@ -97,22 +97,12 @@ updated: "2026-02-11"
 
 ### Архитектура OpenTelemetry
 
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Application   │────│   OpenTelemetry │────│   Observability │
-│                 │    │     SDK         │    │   Platform      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │
-                       ┌──────┴──────┐
-                       │  Exporters  │
-                       └─────────────┘
-                              │
-                       ┌──────┴──────┐
-                       │   Signals   │
-                       │ • Tracing   │
-                       │ • Metrics   │
-                       │ • Logs      │
-                       └─────────────┘
+```mermaid
+flowchart LR
+    A[Application] --- B[OpenTelemetry SDK]
+    B --- C[Observability Platform]
+    B --> E[Exporters]
+    E --> S["Signals<br/>Tracing<br/>Metrics<br/>Logs"]
 ```
 
 ## Установка и настройка

@@ -42,14 +42,15 @@ updated: "2026-04-12"
 
 **Dependency Injection** — конкретный механизм IoC в Spring: контейнер создаёт бины и «вкалывает» зависимости.
 
-```text
-ApplicationContext (IoC Container)
-├── Читает конфигурацию (аннотации / XML / Java Config)
-├── Создаёт BeanDefinition для каждого бина
-├── Разрешает зависимости (autowiring)
-├── Создаёт экземпляры (singleton по умолчанию)
-├── Вызывает lifecycle-колбэки
-└── Готов к работе
+```mermaid
+flowchart TD
+    AC["ApplicationContext (IoC Container)"]
+    AC --> S1["Читает конфигурацию (аннотации / XML / Java Config)"]
+    S1 --> S2["Создаёт BeanDefinition для каждого бина"]
+    S2 --> S3["Разрешает зависимости (autowiring)"]
+    S3 --> S4["Создаёт экземпляры (singleton по умолчанию)"]
+    S4 --> S5["Вызывает lifecycle-колбэки"]
+    S5 --> S6["Готов к работе"]
 ```
 
 **BeanFactory** vs **ApplicationContext**:

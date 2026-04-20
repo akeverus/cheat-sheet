@@ -90,23 +90,19 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 
 ### Архитектура Spring Mail
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Code                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Mail       │  │   Template  │  │   Attachment│  │
-│  │   Service    │  │   Engine    │  │   Handler   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              JavaMailSender                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   SMTP       │  │   IMAP       │  │   POP3      │  │
-│  │   Server     │  │   Server     │  │   Server    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AC["Application Code"]
+        MS["Mail Service"]
+        TE["Template Engine"]
+        AH["Attachment Handler"]
+    end
+    subgraph JMS["JavaMailSender"]
+        SMTP["SMTP Server"]
+        IMAP["IMAP Server"]
+        POP3["POP3 Server"]
+    end
+    AC --> JMS
 ```
 
 ## Настройка Spring Mail

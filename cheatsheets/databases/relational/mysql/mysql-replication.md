@@ -318,32 +318,34 @@ Connecting - попытка подключения
 ### Типы топологий репликации
 
 #### Один Master — Множество Slaves
-```text
-Master
-├── Slave 1 (Read-only)
-├── Slave 2 (Read-only)
-└── Slave 3 (Backup)
+```mermaid
+flowchart TD
+    Master --> S1["Slave 1 (Read-only)"]
+    Master --> S2["Slave 2 (Read-only)"]
+    Master --> S3["Slave 3 (Backup)"]
 ```
 **Использование:** Масштабирование чтения, резервное копирование
 
 #### Master-Master (Active-Active)
-```text
-Master A ↔ Master B
+```mermaid
+flowchart LR
+    MA["Master A"] <--> MB["Master B"]
 ```
 **Использование:** Высокая доступность, распределенная нагрузка
 
 #### Master-Slave с Cascade
-```text
-Master
-└── Slave 1
-    ├── Slave 1.1
-    └── Slave 1.2
+```mermaid
+flowchart TD
+    Master --> S1["Slave 1"]
+    S1 --> S11["Slave 1.1"]
+    S1 --> S12["Slave 1.2"]
 ```
 **Использование:** Снижение нагрузки на **master**, геораспределение
 
 #### Ring Replication
-```text
-Master A → Master B → Master C → Master A
+```mermaid
+flowchart LR
+    MA["Master A"] --> MB["Master B"] --> MC["Master C"] --> MA
 ```
 **Использование:** Специфические случаи, требует осторожности
 

@@ -91,27 +91,19 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 
 ### Master-Slave с Sentinel
 
-```text
-┌─────────────┐
-│   Sentinel  │
-│   Cluster   │
-└──────┬──────┘
-       │
-   ┌───┴───┐
-   │       │
-┌──▼──┐ ┌──▼──┐
-│Master│ │Slave│
-└──────┘ └─────┘
+```mermaid
+flowchart TD
+    SC["Sentinel Cluster"] --> M["Master"]
+    SC --> S["Slave"]
 ```
 
 ### Redis Cluster
 
-```text
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│ Master 1 │  │ Master 2 │  │ Master 3 │
-│          │  │          │  │          │
-│ Slave 1  │  │ Slave 2  │  │ Slave 3  │
-└──────────┘  └──────────┘  └──────────┘
+```mermaid
+flowchart TB
+    M1["Master 1"] --> SL1["Slave 1"]
+    M2["Master 2"] --> SL2["Slave 2"]
+    M3["Master 3"] --> SL3["Slave 3"]
 ```
 
 

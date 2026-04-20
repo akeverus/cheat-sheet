@@ -137,11 +137,11 @@ updated: "2026-02-11"
 
 Схема операций **CRUD** в **MongoDB** (insert → find → update → remove).
 
-```text
-┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│ CREATE  │ -> │  READ   │ -> │ UPDATE  │ -> │ DELETE  │
-│ insert  │    │  find   │    │ update  │    │ remove │
-└─────────┘    └─────────┘    └─────────┘    └─────────┘
+```mermaid
+flowchart LR
+    A["CREATE<br/>insert"] --> B["READ<br/>find"]
+    B --> C["UPDATE<br/>update"]
+    C --> D["DELETE<br/>remove"]
 ```
 
 ## Create (Создание документов)

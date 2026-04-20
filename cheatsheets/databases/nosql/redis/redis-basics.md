@@ -72,18 +72,10 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 
 Диаграмма компонентов **Redis**: кластер (Master/`Slave`, Sentinel), ядро (Event `Loop`, структуры данных, персистентность, сеть), ОС.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                        Redis Cluster                       │
-├─────────────────────────────────────────────────────────────┤
-│  Master Nodes │ Slave Nodes │ Cluster Bus │ Sentinel       │
-├─────────────────────────────────────────────────────────────┤
-│                    Redis Core Engine                       │
-├─────────────────────────────────────────────────────────────┤
-│  Event Loop │ Data Structures │ Persistence │ Networking   │
-├─────────────────────────────────────────────────────────────┤
-│                    Operating System                        │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Redis Cluster<br/>Master Nodes | Slave Nodes | Cluster Bus | Sentinel"] --> B["Redis Core Engine<br/>Event Loop | Data Structures | Persistence | Networking"]
+    B --> C["Operating System"]
 ```
 
 ### Варианты использования Redis

@@ -96,32 +96,24 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 ### Архитектура Spring Vault
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Vault      │  │   Vault      │  │   Vault      │  │
-│  │   Template   │  │   Operations │  │   Repositories│  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Spring Vault Client                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Session    │  │   Lease      │  │   Auth       │  │
-│  │   Management │  │   Management │  │   Management │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              HashiCorp Vault                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   KV Store   │  │   PKI        │  │   Database   │  │
-│  │   Secrets    │  │   Secrets    │  │   Secrets    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph App["Application"]
+        VT["Vault Template"]
+        VO["Vault Operations"]
+        VR["Vault Repositories"]
+    end
+    subgraph SVC["Spring Vault Client"]
+        Sess["Session Management"]
+        Lease["Lease Management"]
+        Auth["Auth Management"]
+    end
+    subgraph HV["HashiCorp Vault"]
+        KV["KV Store Secrets"]
+        PKI["PKI Secrets"]
+        DB["Database Secrets"]
+    end
+    App --> SVC --> HV
 ```
 
 ## Настройка Spring Vault

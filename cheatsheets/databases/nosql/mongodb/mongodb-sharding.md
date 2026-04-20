@@ -51,23 +51,12 @@ updated: "2026-02-11"
 
 Схема шардированного кластера **MongoDB**: **Shards**, **Config Servers**, **Mongos**.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                     MongoDB Sharded Cluster                 │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│  │   Shard 1   │    │   Shard 2   │    │   Shard 3   │      │
-│  │  RS: P+S+S  │    │  RS: P+S+S  │    │  RS: P+S+S  │      │
-│  └─────────────┘    └─────────────┘    └─────────────┘      │
-│         │                    │                    │         │
-│         └────────────┬───────┴────────────┬───────┘         │
-│                      │                    │                  │
-│               ┌─────────────┐      ┌─────────────┐          │
-│               │ Config      │      │   Mongos    │          │
-│               │ Servers     │      │   Router    │          │
-│               │ RS: P+S+S  │      │             │          │
-│               └─────────────┘      └─────────────┘          │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    M["Mongos Router"] --> S1["Shard 1<br/>RS: P+S+S"]
+    M --> S2["Shard 2<br/>RS: P+S+S"]
+    M --> S3["Shard 3<br/>RS: P+S+S"]
+    CS["Config Servers<br/>RS: P+S+S"] --> M
 ```
 
 ### Преимущества шардирования
@@ -106,36 +95,13 @@ updated: "2026-02-11"
 
 ### Логическая архитектура
 
-```text
-Application
-    │
-    ▼
-┌─────────────┐
-│   Mongos    │ ← Query Router
-│   Router    │
-└─────────────┘
-       │
-       ▼
-┌─────────────┐    ┌─────────────┐
-│ Config      │    │ Shard Key   │
-│ Servers     │    │ Evaluation  │
-│             │    │             │
-│ • Metadata  │    │ • Routing   │
-│ • Chunks    │    │ • Target    │
-│ • Shards    │    │ • Shard     │
-└─────────────┘    └─────────────┘
-       │                    │
-       └─────────┬──────────┘
-                 │
-                 ▼
-        ┌─────────────────┐
-        │     Shards      │
-        │  (Data Storage) │
-        │                 │
-        │ • Chunk Storage │
-        │ • Replication   │
-        │ • Local Indexes │
-        └─────────────────┘
+```mermaid
+flowchart TD
+    A["Application"] --> M["Mongos Router<br/>(Query Router)"]
+    M --> CS["Config Servers<br/>Metadata, Chunks, Shards"]
+    M --> SK["Shard Key Evaluation<br/>Routing, Target, Shard"]
+    CS --> SH["Shards (Data Storage)<br/>Chunk Storage, Replication, Local Indexes"]
+    SK --> SH
 ```
 
 ## Shard Key (Ключ шардирования)

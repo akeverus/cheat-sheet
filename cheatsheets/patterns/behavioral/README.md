@@ -54,20 +54,12 @@ updated: "2026-04-17"
 
 ## Карта паттернов
 
-```text
-┌────────────────────────────────────────────────────────────────┐
-│                     Behavioral GoF                             │
-├──────────────────────┬─────────────────────────────────────────┤
-│ Interaction          │ Chain of Responsibility, Mediator,      │
-│                      │ Observer, Command                       │
-├──────────────────────┼─────────────────────────────────────────┤
-│ Algorithm / State    │ Strategy, State, Template Method        │
-├──────────────────────┼─────────────────────────────────────────┤
-│ Structure traversal  │ Iterator, Visitor, Interpreter          │
-├──────────────────────┼─────────────────────────────────────────┤
-│ Snapshot / undo      │ Memento, Command (undo)                 │
-└──────────────────────┴─────────────────────────────────────────┘
-```
+| Категория | Паттерны |
+|-----------|----------|
+| Interaction | Chain of Responsibility, Mediator, Observer, Command |
+| Algorithm / State | Strategy, State, Template Method |
+| Structure traversal | Iterator, Visitor, Interpreter |
+| Snapshot / undo | Memento, Command (undo) |
 
 ## Когда применять: паттерн и задача
 

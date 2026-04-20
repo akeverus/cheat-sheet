@@ -34,17 +34,12 @@ related: ["java/java-basics.md", "spring/spring-boot.md", "spring/spring-aop.md"
 
 ### Архитектура Spring Core
 
-```text
-# Архитектура Spring: контейнер, бины, конфигурация
-┌─────────────────────────────────────────────────────────────┐
-│                    Spring Framework                         │
-├─────────────────────────────────────────────────────────────┤
-│  Core Container │ AOP │ Aspects │ Instrumentation │ JDBC   │
-├─────────────────────────────────────────────────────────────┤
-│  IoC Container │ BeanFactory │ ApplicationContext          │
-├─────────────────────────────────────────────────────────────┤
-│  Dependency Injection │ Bean Scopes │ Bean Lifecycle       │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    SF["Spring Framework"]
+    SF --> L1["Core Container / AOP / Aspects / Instrumentation / JDBC"]
+    SF --> L2["IoC Container / BeanFactory / ApplicationContext"]
+    SF --> L3["Dependency Injection / Bean Scopes / Bean Lifecycle"]
 ```
 
 ## Полезные ссылки

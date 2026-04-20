@@ -8069,20 +8069,13 @@ System.out.println(s1 == s2); // false
 ### Структура String Pool
 
 #### В HotSpot JVM
-```text
-┌─────────────────────────────────────┐
-│         String Pool                 │
-│  ┌─────────────────────────────────┐ │
-│  │ "hello" ──────────┐             │ │
-│  └───────────────────│─────────────┘ │
-│                      │               │
-│  ┌───────────────────▼─────────────┐ │
-│  │ String object                 │ │
-│  │ ├─ hash: 123456               │ │
-│  │ ├─ value: ['h','e','l','l','o'] │ │
-│  │ └─ ...                        │ │
-│  └─────────────────────────────────┘ │
-└─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph SP[String Pool]
+        K["hello"]
+        O["String object<br/>hash: 123456<br/>value: ['h','e','l','l','o']"]
+    end
+    K --> O
 ```
 
 #### Хранение в Metaspace (Java 8+) или PermGen (до `Java` 8)
@@ -11000,15 +10993,13 @@ public class UuidGenerator {
 
 ### Структура UUID
 
-```text
-UUID Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-             └────┬───┘ └─┬─┘ └─┬┘ └─┬┘ └─────┬─────┘
-                 │       │    │    │         │
-               time      │    │    │       node
-                       clock  │    │
-                            clock  │
-                                 variant
-```
+Формат `UUID`: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` — пять групп:
+
+- 1-я группа — `time`
+- 2-я группа — `clock`
+- 3-я группа — `clock`
+- 4-я группа — `variant`
+- 5-я группа — `node`
 
 - **Version**: Версия **UUID** (1-5)
 - **Variant**: Вариант (обычно 2 для `RFC` 4122)

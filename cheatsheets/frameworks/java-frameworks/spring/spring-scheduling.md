@@ -98,23 +98,19 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Архитектура Scheduling
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Scheduled Tasks                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Fixed      │  │   Cron       │  │   Async      │  │
-│  │   Rate       │  │   Scheduled  │  │   Tasks      │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Task Scheduler                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Thread     │  │   Task       │  │   Executor   │  │
-│  │   Pool       │  │   Queue      │  │   Service    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph ST["Scheduled Tasks"]
+        FR["Fixed Rate"]
+        CS["Cron Scheduled"]
+        AT["Async Tasks"]
+    end
+    subgraph TS["Task Scheduler"]
+        TP["Thread Pool"]
+        TQ["Task Queue"]
+        ES["Executor Service"]
+    end
+    ST --> TS
 ```
 
 ## Настройка Scheduling

@@ -71,34 +71,35 @@ updated: "2026-02-11"
 
 Схема глобальной инфраструктуры **Microsoft Azure** (регионы, зоны доступности, категории сервисов).
 
-```text
-Azure Global Infrastructure:
-├── Geography (География)
-│   ├── North America (Северная Америка)
-│   ├── Europe (Европа)
-│   ├── Asia Pacific (Азиатско-Тихоокеанский регион)
-│   ├── Middle East & Africa (Ближний Восток и Африка)
-│   └── South America (Южная Америка)
-│
-├── Region (Регион) - Paris
-│   ├── Availability Zones (Зоны доступности)
-│   │   ├── Zone 1
-│   │   ├── Zone 2
-│   │   └── Zone 3
-│   ├── Regional Services (Региональные сервисы)
-│   └── Zonal Services (Зональные сервисы)
-│
-├── Azure Services Categories
-│   ├── Compute (Вычисления)
-│   ├── Storage (Хранение)
-│   ├── Networking (Сеть)
-│   ├── Databases (Базы данных)
-│   ├── AI & Machine Learning
-│   ├── IoT & Edge
-│   ├── Security & Identity
-│   ├── DevOps
-│   ├── Analytics
-│   └── Management & Governance
+```mermaid
+flowchart TD
+    Azure["Azure Global Infrastructure"]
+    Azure --> Geo["Geography (География)"]
+    Geo --> NA["North America (Северная Америка)"]
+    Geo --> EU["Europe (Европа)"]
+    Geo --> AP["Asia Pacific (Азиатско-Тихоокеанский регион)"]
+    Geo --> MEA["Middle East & Africa (Ближний Восток и Африка)"]
+    Geo --> SA["South America (Южная Америка)"]
+
+    Azure --> Region["Region (Регион) — Paris"]
+    Region --> AZ["Availability Zones (Зоны доступности)"]
+    AZ --> Z1["Zone 1"]
+    AZ --> Z2["Zone 2"]
+    AZ --> Z3["Zone 3"]
+    Region --> RS["Regional Services (Региональные сервисы)"]
+    Region --> ZS["Zonal Services (Зональные сервисы)"]
+
+    Azure --> Cat["Azure Services Categories"]
+    Cat --> Compute["Compute (Вычисления)"]
+    Cat --> Storage["Storage (Хранение)"]
+    Cat --> Networking["Networking (Сеть)"]
+    Cat --> DB["Databases (Базы данных)"]
+    Cat --> AI["AI & Machine Learning"]
+    Cat --> IoT["IoT & Edge"]
+    Cat --> Sec["Security & Identity"]
+    Cat --> DevOps["DevOps"]
+    Cat --> Analytics["Analytics"]
+    Cat --> MG["Management & Governance"]
 ```
 
 ### Service Models

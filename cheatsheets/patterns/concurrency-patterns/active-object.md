@@ -134,30 +134,6 @@ sequenceDiagram
     Servant-->>Client: Future result
 ```
 
-```text
-┌─────────────────┐     ┌─────────────────┐
-│    Client       │     │  Active Object  │
-│                 │     │                 │
-│ method()        │────▶│ enqueueRequest()│
-│                 │     │                 │
-└─────────────────┘     └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   Scheduler     │
-                       │                 │
-                       │ dispatch()      │
-                       │                 │
-                       └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │  Servant        │
-                       │                 │
-                       │ method()        │
-                       └─────────────────┘
-```
-
 ### Компоненты
 
 1. **Proxy/`Active` Object**: Принимает вызовы клиентов, создает **MethodRequest**

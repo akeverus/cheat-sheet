@@ -70,30 +70,31 @@ updated: "2026-02-11"
 
 Схема глобальной инфраструктуры **Google Cloud Platform** (регионы, зоны, категории сервисов).
 
-```text
-Google Cloud Platform Global Infrastructure:
-├── Geography (География)
-│   ├── Americas (Америки)
-│   ├── Europe (Европа)
-│   ├── Asia Pacific (Азиатско-Тихоокеанский регион)
-│   ├── Middle East & Africa (Ближний Восток и Африка)
-│
-├── Region (Регион) - us-central1
-│   ├── Zones (Зоны) - us-central1-a, us-central1-b, us-central1-c
-│   ├── Regional Services (Региональные сервисы)
-│   └── Zonal Services (Зональные сервисы)
-│
-├── GCP Services Categories
-│   ├── Compute (Вычисления)
-│   ├── Storage (Хранение)
-│   ├── Networking (Сеть)
-│   ├── Databases (Базы данных)
-│   ├── AI & Machine Learning
-│   ├── IoT & Edge
-│   ├── Security & Identity
-│   ├── DevOps
-│   ├── Analytics
-│   └── Management & Governance
+```mermaid
+flowchart TD
+    GCP["Google Cloud Platform Global Infrastructure"]
+    GCP --> Geo["Geography (География)"]
+    Geo --> AM["Americas (Америки)"]
+    Geo --> EU["Europe (Европа)"]
+    Geo --> AP["Asia Pacific (Азиатско-Тихоокеанский регион)"]
+    Geo --> MEA["Middle East & Africa (Ближний Восток и Африка)"]
+
+    GCP --> Region["Region (Регион) — us-central1"]
+    Region --> Zones["Zones (Зоны) — us-central1-a, us-central1-b, us-central1-c"]
+    Region --> RS["Regional Services (Региональные сервисы)"]
+    Region --> ZS["Zonal Services (Зональные сервисы)"]
+
+    GCP --> Cat["GCP Services Categories"]
+    Cat --> Compute["Compute (Вычисления)"]
+    Cat --> Storage["Storage (Хранение)"]
+    Cat --> Networking["Networking (Сеть)"]
+    Cat --> DB["Databases (Базы данных)"]
+    Cat --> AI["AI & Machine Learning"]
+    Cat --> IoT["IoT & Edge"]
+    Cat --> Sec["Security & Identity"]
+    Cat --> DevOps["DevOps"]
+    Cat --> Analytics["Analytics"]
+    Cat --> MG["Management & Governance"]
 ```
 
 ### Service Models

@@ -100,32 +100,24 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
 
 ### Архитектура Spring Data Redis
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Code                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Redis      │  │   Redis     │  │   Cache      │  │
-│  │   Template   │  │   Repository│  │   Abstraction│  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Redis Client                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Lettuce    │  │   Jedis      │  │   Reactive    │  │
-│  │   Client     │  │   Client     │  │   Client      │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Redis Server                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Key-Value  │  │   Pub/Sub     │  │   Cache      │  │
-│  │   Store      │  │   Messaging   │  │   Layer      │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AC["Application Code"]
+        RT["Redis Template"]
+        RR["Redis Repository"]
+        CA["Cache Abstraction"]
+    end
+    subgraph RC["Redis Client"]
+        Lettuce["Lettuce Client"]
+        Jedis["Jedis Client"]
+        Reactive["Reactive Client"]
+    end
+    subgraph RS["Redis Server"]
+        KV["Key-Value Store"]
+        PS["Pub/Sub Messaging"]
+        CL["Cache Layer"]
+    end
+    AC --> RC --> RS
 ```
 
 ## Настройка Spring Data Redis

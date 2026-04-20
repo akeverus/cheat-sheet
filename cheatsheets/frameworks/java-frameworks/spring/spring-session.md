@@ -108,32 +108,24 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 ### Архитектура Spring Session
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   HTTP       │  │   WebSocket  │  │   REST       │  │
-│  │   Session    │  │   Session    │  │   Session    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Spring Session Abstraction                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Redis      │  │   JDBC       │  │   MongoDB   │  │
-│  │   Session    │  │   Session    │  │   Session   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Session Store                                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Redis      │  │   Database   │  │   MongoDB   │  │
-│  │   Server     │  │   Server      │  │   Server    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph App["Application"]
+        HTTP["HTTP Session"]
+        WS["WebSocket Session"]
+        REST["REST Session"]
+    end
+    subgraph SSA["Spring Session Abstraction"]
+        RS["Redis Session"]
+        JS["JDBC Session"]
+        MS["MongoDB Session"]
+    end
+    subgraph SStore["Session Store"]
+        RSrv["Redis Server"]
+        DB["Database Server"]
+        MSrv["MongoDB Server"]
+    end
+    App --> SSA --> SStore
 ```
 
 ## Redis Session

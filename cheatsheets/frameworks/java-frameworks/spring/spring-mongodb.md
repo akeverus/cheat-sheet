@@ -94,31 +94,24 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
 
 ### Архитектура Spring Data MongoDB
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Code                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Mongo      │  │   Mongo      │  │   GridFS     │  │
-│  │   Repository │  │   Template   │  │   Template   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              MongoDB Driver                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Sync       │  │   Reactive   │  │   GridFS      │  │
-│  │   Driver     │  │   Driver     │  │   API         │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              MongoDB Server                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Collections│  │   Documents  │  │   Indexes    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AC["Application Code"]
+        MR["Mongo Repository"]
+        MT["Mongo Template"]
+        GT["GridFS Template"]
+    end
+    subgraph MD["MongoDB Driver"]
+        Sync["Sync Driver"]
+        Reactive["Reactive Driver"]
+        GridAPI["GridFS API"]
+    end
+    subgraph MS["MongoDB Server"]
+        Colls["Collections"]
+        Docs["Documents"]
+        Idx["Indexes"]
+    end
+    AC --> MD --> MS
 ```
 
 ## Настройка Spring Data MongoDB

@@ -47,13 +47,10 @@ Fluentd — open-source сборщик логов от CNCF, который ун
 
 ## Позиционирование Fluentd
 
-```text
-┌──────────────┐    ┌──────────┐    ┌───────────────┐
-│  Sources     │───▶│ Fluentd  │───▶│  Sinks        │
-│  files, tcp  │    │ parser / │    │  ES, S3,      │
-│  syslog,     │    │ filter / │    │  Kafka,       │
-│  k8s pods    │    │ buffer   │    │  CloudWatch   │
-└──────────────┘    └──────────┘    └───────────────┘
+```mermaid
+flowchart LR
+    S["Sources<br/>files, tcp, syslog, k8s pods"] --> F["Fluentd<br/>parser / filter / buffer"]
+    F --> K["Sinks<br/>ES, S3, Kafka, CloudWatch"]
 ```
 
 Fluentd реализует pattern "unified logging layer": входные плагины (input), фильтры (parse/record_transformer/grep), буфер (memory/file) и выходные плагины (match). Данные унифицируются в формате JSON с тегами маршрутизации.

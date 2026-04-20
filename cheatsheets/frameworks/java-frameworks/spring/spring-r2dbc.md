@@ -103,32 +103,24 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 
 ### Архитектура R2DBC
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Layer                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Reactive   │  │   Reactive   │  │   Reactive   │  │
-│  │   Repository │  │   Service    │  │   Controller │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Spring Data R2DBC                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   R2dbc      │  │   Reactive   │  │   Reactive   │  │
-│  │   Entity     │  │   Query      │  │   Transaction│  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              R2DBC Driver                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   PostgreSQL │  │   MySQL      │  │   H2         │  │
-│  │   Driver     │  │   Driver     │  │   Driver     │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AL["Application Layer"]
+        RR["Reactive Repository"]
+        RS["Reactive Service"]
+        RC["Reactive Controller"]
+    end
+    subgraph SDR["Spring Data R2DBC"]
+        RE["R2dbc Entity"]
+        RQ["Reactive Query"]
+        RT["Reactive Transaction"]
+    end
+    subgraph RD["R2DBC Driver"]
+        PG["PostgreSQL Driver"]
+        MySQL["MySQL Driver"]
+        H2["H2 Driver"]
+    end
+    AL --> SDR --> RD
 ```
 
 ## Настройка R2DBC

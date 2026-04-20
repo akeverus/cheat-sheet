@@ -64,16 +64,17 @@ updated: "2026-02-11"
 
 ### Архитектура Tekton
 Ниже — архитектура **Tekton** (текст).
-```text
-Tekton Architecture:
-├── PipelineRuns    # Исполнение pipelines
-├── TaskRuns       # Исполнение tasks
-├── Pipelines      # Определение workflow
-├── Tasks          # Определение steps
-├── PipelineResources # Входные/выходные ресурсы
-├── Triggers       # Event-driven execution
-├── Conditions     # Условное исполнение
-└── Workspaces     # Shared storage
+```mermaid
+flowchart TD
+    Tekton["Tekton Architecture"]
+    Tekton --> PipelineRuns["PipelineRuns — Исполнение pipelines"]
+    Tekton --> TaskRuns["TaskRuns — Исполнение tasks"]
+    Tekton --> Pipelines["Pipelines — Определение workflow"]
+    Tekton --> Tasks["Tasks — Определение steps"]
+    Tekton --> PipelineResources["PipelineResources — Входные/выходные ресурсы"]
+    Tekton --> Triggers["Triggers — Event-driven execution"]
+    Tekton --> Conditions["Conditions — Условное исполнение"]
+    Tekton --> Workspaces["Workspaces — Shared storage"]
 ```
 
 ### Core Concepts

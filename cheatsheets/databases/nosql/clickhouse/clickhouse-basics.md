@@ -170,18 +170,17 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 
 Сравнение строкового (реляционная БД) и колоночного (ClickHouse) хранения.
 
-```text
-# Сравнение: строки в реляционной БД vs колоночное хранение
 Реляционная БД (строки):
-┌─────────────┬─────────────┬─────────────┐
-│ user_id     │ timestamp   │ amount      │
-├─────────────┼─────────────┼─────────────┤
-│ 1           │ 2024-01-01  │ 100.50      │
-│ 2           │ 2024-01-01  │ 200.75      │
-│ 3           │ 2024-01-01  │ 150.25      │
-└─────────────┴─────────────┴─────────────┘
+
+| user_id | timestamp  | amount |
+|---------|------------|--------|
+| 1       | 2024-01-01 | 100.50 |
+| 2       | 2024-01-01 | 200.75 |
+| 3       | 2024-01-01 | 150.25 |
 
 ClickHouse (столбцы):
+
+```text
 user_id: [1, 2, 3]
 timestamp: [2024-01-01, 2024-01-01, 2024-01-01]
 amount: [100.50, 200.75, 150.25]
@@ -553,28 +552,15 @@ ORDER BY month, total_amount DESC;
 
 ### Компоненты ClickHouse
 
-```text
-# Кластер ClickHouse: серверы, Query Processor, Storage, ZooKeeper
-┌─────────────────────────────────────────────────────────────┐
-│                     ClickHouse Cluster                      │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│  │  ClickHouse │    │  ClickHouse │    │  ClickHouse │      │
-│  │   Server    │    │   Server    │    │   Server    │      │
-│  │             │    │             │    │             │      │
-│  │ • Query     │    │ • Query     │    │ • Query     │      │
-│  │   Processor │    │   Processor │    │   Processor │      │
-│  │ • Storage   │    │ • Storage   │    │ • Storage   │      │
-│  │   Engine    │    │   Storage   │    │   Engine    │      │
-│  └─────────────┘    └─────────────┘    └─────────────┘      │
-│         │                    │                    │         │
-│         └────────────────────┼────────────────────┘         │
-│                              │                              │
-│                   ┌─────────────┐                            │
-│                   │ ZooKeeper   │                            │
-│                   │ (metadata) │                            │
-│                   └─────────────┘                            │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    CH1["ClickHouse Server<br/>Query Processor<br/>Storage Engine"]
+    CH2["ClickHouse Server<br/>Query Processor<br/>Storage Engine"]
+    CH3["ClickHouse Server<br/>Query Processor<br/>Storage Engine"]
+    ZK["ZooKeeper (metadata)"]
+    CH1 --- ZK
+    CH2 --- ZK
+    CH3 --- ZK
 ```
 
 ### Ключевые компоненты

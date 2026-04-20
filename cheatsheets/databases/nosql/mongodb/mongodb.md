@@ -25,18 +25,10 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 
 ### Архитектура MongoDB
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                          MongoDB Cluster                        │
-├─────────────────────────────────────────────────────────────────┤
-│  Config Servers │ Mongos Routers │ Shard Servers │ Replica Sets │
-├─────────────────────────────────────────────────────────────────┤
-│                    MongoDB Core Engine                          │
-├─────────────────────────────────────────────────────────────────┤
-│  Database │ Collections │ Documents │ Indexes │ Aggregation    │
-├─────────────────────────────────────────────────────────────────┤
-│                    WiredTiger Storage Engine                    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["MongoDB Cluster<br/>Config Servers | Mongos Routers | Shard Servers | Replica Sets"] --> B["MongoDB Core Engine<br/>Database | Collections | Documents | Indexes | Aggregation"]
+    B --> C["WiredTiger Storage Engine"]
 ```
 
 ### Основные характеристики MongoDB
@@ -521,11 +513,11 @@ $project: {
 
 ### Replica Set архитектура
 
-```text
-Primary Node ──┐
-               ├── Secondary Node 1
-               ├── Secondary Node 2
-               └── Arbiter Node (optional)
+```mermaid
+flowchart LR
+    P["Primary Node"] --> S1["Secondary Node 1"]
+    P --> S2["Secondary Node 2"]
+    P --> A["Arbiter Node (optional)"]
 ```
 
 ### Настройка Replica Set
@@ -575,10 +567,10 @@ sh.status()
 
 ### Архитектура Sharded Cluster
 
-```text
-Config Servers ──┐
-                 ├── Mongos Router
-                 └── Shard Servers (Replica Sets)
+```mermaid
+flowchart LR
+    CS["Config Servers"] --> MR["Mongos Router"]
+    CS --> SS["Shard Servers (Replica Sets)"]
 ```
 
 ## Производительность

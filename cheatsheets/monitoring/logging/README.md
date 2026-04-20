@@ -55,22 +55,13 @@ updated: "2026-04-17"
 
 ## Карта инструментов
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│                   Logging pipeline                          │
-├──────────────────────┬─────────────────────────────────────┤
-│ Facade               │ SLF4J                                │
-├──────────────────────┼─────────────────────────────────────┤
-│ Backend              │ Logback, Log4j 2, JUL                │
-├──────────────────────┼─────────────────────────────────────┤
-│ Format               │ JSON / Logstash encoder / ECS        │
-├──────────────────────┼─────────────────────────────────────┤
-│ Shipper              │ Fluentd, Filebeat, Logstash, Vector  │
-├──────────────────────┼─────────────────────────────────────┤
-│ Storage / Search     │ Elasticsearch, Loki, CloudWatch      │
-├──────────────────────┼─────────────────────────────────────┤
-│ UI                   │ Kibana, Grafana Loki                 │
-└──────────────────────┴─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    A[Facade: SLF4J] --> B["Backend<br/>Logback, Log4j 2, JUL"]
+    B --> C["Format<br/>JSON / Logstash encoder / ECS"]
+    C --> D["Shipper<br/>Fluentd, Filebeat, Logstash, Vector"]
+    D --> E["Storage / Search<br/>Elasticsearch, Loki, CloudWatch"]
+    E --> F["UI<br/>Kibana, Grafana Loki"]
 ```
 
 ## Когда что использовать

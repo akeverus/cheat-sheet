@@ -77,17 +77,12 @@ updated: "2026-02-11"
 
 Схема категорий операторов запросов **MongoDB** (Comparison, `Logical`, `Element` и др.).
 
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Comparison    │ -> │    Logical      │ -> │    Element      │
-│   Operators     │    │   Operators     │    │   Operators     │
-│ ($eq, $gt, $lt) │    │ ($and, $or, $nor)│    │ ($exists, $type)│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-┌─────────────────┐    ┌─────────────────┐    └─────────────────┘
-│   Array         │ -> │   Evaluation     │ -> │   Geospatial     │
-│   Operators     │    │   Operators      │    │   Operators      │
-│ ($in, $all, $size)│   │ ($regex, $mod)    │    │ ($near, $geoWithin)
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart LR
+    C["Comparison Operators<br/>$eq, $gt, $lt"] --> L["Logical Operators<br/>$and, $or, $nor"]
+    L --> E["Element Operators<br/>$exists, $type"]
+    A["Array Operators<br/>$in, $all, $size"] --> V["Evaluation Operators<br/>$regex, $mod"]
+    V --> G["Geospatial Operators<br/>$near, $geoWithin"]
 ```
 
 ## Базовые запросы

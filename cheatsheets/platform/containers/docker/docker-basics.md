@@ -139,21 +139,15 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 
 Схема компонентов **Docker**: хост (демон, образы, контейнеры, тома, сети), **runtime**, ядро ОС и цикл сборки образа и запуска контейнера.
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    Docker Host                              │
-├─────────────────────────────────────────────────────────────┤
-│  Docker Daemon │ Images │ Containers │ Volumes │ Networks   │
-├─────────────────────────────────────────────────────────────┤
-│  Container Runtime (containerd/runc)                        │
-├─────────────────────────────────────────────────────────────┤
-│  Operating System Kernel                                    │
-└─────────────────────────────────────────────────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Dockerfile → Build → Image → Run → Container               │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Host["Docker Host"]
+        Daemon["Docker Daemon | Images | Containers | Volumes | Networks"]
+        Runtime["Container Runtime (containerd/runc)"]
+        Kernel["Operating System Kernel"]
+        Daemon --> Runtime --> Kernel
+    end
+    Host --> Flow["Dockerfile → Build → Image → Run → Container"]
 ```
 
 ## Установка Docker

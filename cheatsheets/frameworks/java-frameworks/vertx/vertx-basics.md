@@ -89,14 +89,13 @@ related: ["quarkus/quarkus-reactive.md", "spring/spring-webflux.md"]
 
 ### Архитектура Vert.x
 
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Application   │───▶│   Event Loop     │───▶│   Verticles     │
-│    Code         │    │   (Non-blocking) │    │   (Workers)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┴───────────────────────┘
-                           Event Bus
+```mermaid
+flowchart LR
+    App["Application Code"] --> EL["Event Loop (Non-blocking)"]
+    EL --> V["Verticles (Workers)"]
+    App --- EB["Event Bus"]
+    EL --- EB
+    V --- EB
 ```
 
 ### Event Loop Model

@@ -188,19 +188,13 @@ related: ["quarkus-reactive.md", "quarkus-testing.md", "quarkus-security.md"]
 
 ### Архитектура Quarkus
 
-```text
-# Стек Quarkus: приложение, расширения, нативная сборка GraalVM
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Quarkus App   │───▶│  Extensions     │───▶│  GraalVM        │
-│                 │    │  (CDI, REST,    │    │  Native Image   │
-│  Java Code      │    │   JPA, etc.)    │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Build Time      │    │ Runtime         │    │ Native Binary   │
-│ Optimizations   │    │ Optimizations   │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart LR
+    App["Quarkus App (Java Code)"] --> Ext["Extensions (CDI, REST, JPA, etc.)"]
+    Ext --> Native["GraalVM Native Image"]
+    App --> BT["Build Time Optimizations"]
+    Ext --> RT["Runtime Optimizations"]
+    Native --> NB["Native Binary"]
 ```
 
 ## Установка и настройка

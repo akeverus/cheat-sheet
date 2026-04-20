@@ -47,20 +47,12 @@ updated: "2026-04-17"
 
 ## Карта инструментов
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│                 Metrics pipeline                            │
-├──────────────────────┬─────────────────────────────────────┤
-│ Инструментация       │ Micrometer, Prometheus Java client   │
-├──────────────────────┼─────────────────────────────────────┤
-│ Экспозиция           │ /actuator/prometheus, StatsD UDP     │
-├──────────────────────┼─────────────────────────────────────┤
-│ Сбор / TSDB          │ Prometheus, VictoriaMetrics, Thanos  │
-├──────────────────────┼─────────────────────────────────────┤
-│ Визуализация         │ Grafana                              │
-├──────────────────────┼─────────────────────────────────────┤
-│ Алерты               │ Alertmanager / Grafana Alerting      │
-└──────────────────────┴─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    I["Инструментация<br/>Micrometer, Prometheus Java client"] --> E["Экспозиция<br/>/actuator/prometheus, StatsD UDP"]
+    E --> T["Сбор / TSDB<br/>Prometheus, VictoriaMetrics, Thanos"]
+    T --> V[Визуализация: Grafana]
+    T --> A["Алерты<br/>Alertmanager / Grafana Alerting"]
 ```
 
 ## Когда что использовать

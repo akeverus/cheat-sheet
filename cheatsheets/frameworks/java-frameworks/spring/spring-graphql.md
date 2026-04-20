@@ -108,28 +108,18 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 
 ### Архитектура Spring GraphQL
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              GraphQL Query                               │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              GraphQL Engine                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Schema     │  │   Resolver   │  │   Data      │  │
-│  │   Parser     │  │   Chain      │  │   Fetcher   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Data Sources                                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Database   │  │   Service    │  │   External   │  │
-│  │   Layer      │  │   Layer      │  │   API       │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Q["GraphQL Query"] --> Eng
+    subgraph Eng["GraphQL Engine"]
+        SP["Schema Parser"] --> RC["Resolver Chain"] --> DF["Data Fetcher"]
+    end
+    Eng --> DS
+    subgraph DS["Data Sources"]
+        DB["Database Layer"]
+        Svc["Service Layer"]
+        Ext["External API"]
+    end
 ```
 
 ## Настройка Spring GraphQL

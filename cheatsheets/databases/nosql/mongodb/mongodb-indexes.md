@@ -106,17 +106,22 @@ updated: "2026-02-11"
 
 Сравнение поиска без индекса (COLLSCAN) и с индексом (INDEX SCAN).
 
-```text
-Без индекса:           С индексом:
-┌─────────────────┐    ┌─────────────────┐
-│ Document 1      │    │ Index Entry 1   │ -> Document 1
-│ Document 2      │    │ Index Entry 2   │ -> Document 2
-│ Document 3      │    │ Index Entry 3   │ -> Document 3
-│ Document 4      │    │ Index Entry 4   │ -> Document 4
-│ Document 5      │    │ Index Entry 5   │ -> Document 5
-└─────────────────┘    └─────────────────┘
-   COLLSCAN              INDEX SCAN
-   O(n) time             O(log n) time
+```mermaid
+flowchart LR
+    subgraph NoIdx["Без индекса — COLLSCAN, O(n)"]
+        D1["Document 1"]
+        D2["Document 2"]
+        D3["Document 3"]
+        D4["Document 4"]
+        D5["Document 5"]
+    end
+    subgraph Idx["С индексом — INDEX SCAN, O(log n)"]
+        E1["Index Entry 1"] --> T1["Document 1"]
+        E2["Index Entry 2"] --> T2["Document 2"]
+        E3["Index Entry 3"] --> T3["Document 3"]
+        E4["Index Entry 4"] --> T4["Document 4"]
+        E5["Index Entry 5"] --> T5["Document 5"]
+    end
 ```
 
 ### Преимущества индексов

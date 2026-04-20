@@ -47,19 +47,11 @@ updated: "2026-04-17"
 
 ## Карта инструментов
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│                  Tracing pipeline                           │
-├──────────────────────┬─────────────────────────────────────┤
-│ SDK / инструментация │ OpenTelemetry SDK, Sleuth,           │
-│                      │ Micrometer Tracing                   │
-├──────────────────────┼─────────────────────────────────────┤
-│ Context propagation  │ W3C traceparent, B3, Jaeger format   │
-├──────────────────────┼─────────────────────────────────────┤
-│ Collector            │ OpenTelemetry Collector, Jaeger agent│
-├──────────────────────┼─────────────────────────────────────┤
-│ Storage / UI         │ Jaeger, Zipkin, Tempo, APM-платформы │
-└──────────────────────┴─────────────────────────────────────┘
+```mermaid
+flowchart LR
+    S["SDK / инструментация<br/>OpenTelemetry SDK, Sleuth, Micrometer Tracing"] --> P["Context propagation<br/>W3C traceparent, B3, Jaeger format"]
+    P --> C["Collector<br/>OpenTelemetry Collector, Jaeger agent"]
+    C --> T["Storage / UI<br/>Jaeger, Zipkin, Tempo, APM-платформы"]
 ```
 
 ## Когда что использовать

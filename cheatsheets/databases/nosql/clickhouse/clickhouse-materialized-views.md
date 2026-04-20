@@ -81,22 +81,9 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 
 ### Принцип работы
 
-```text
-Исходная таблица (events)
-┌─────────────────────────────────┐
-│ event_id | user_id | event_type │
-│ timestamp| category| value      │
-└─────────────────────────────────┘
-           │
-           │ INSERT автоматически
-           │ обновляет MV
-           ▼
-Материализованное представление (daily_stats)
-┌─────────────────────────────────┐
-│ date | category | count | sum   │
-│ 2024-01-01 | clicks | 1500 | 750│
-│ 2024-01-01 | views  | 3200 | 160│
-└─────────────────────────────────┘
+```mermaid
+flowchart TD
+    E["Исходная таблица (events)<br/>event_id | user_id | event_type<br/>timestamp | category | value"] -->|INSERT автоматически обновляет MV| MV["Материализованное представление (daily_stats)<br/>date | category | count | sum"]
 ```
 
 ### Преимущества материализованных представлений

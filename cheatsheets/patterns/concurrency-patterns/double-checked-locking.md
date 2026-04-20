@@ -179,33 +179,6 @@ sequenceDiagram
     Thread2-->>Singleton: return instance
 ```
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    Client Code                              │
-│                                                             │
-│  Singleton.getInstance() ───────────────────────────────┐   │
-│                                                         │   │
-└─────────────────────────────────────────────────────────┼───┘
-                                                          │
-┌─────────────────────────────────────────────────────────┼───┐
-│                    Double-Checked Locking               │   │
-│                                                         │   │
-│  ┌─────────────────────────────────────────────────┐    │   │
-│  │ 1. First Check (no lock)                     │    │   │
-│  │    if (instance == null)                     │    │   │
-│  │                                              │    │   │
-│  │ 2. Synchronized Block                        │    │   │
-│  │    synchronized (lock) {                     │    │   │
-│  │      3. Second Check (with lock)             │    │   │
-│  │         if (instance == null)                │    │   │
-│  │         instance = new Singleton();          │    │   │
-│  │    }                                         │    │   │
-│  │                                              │    │   │
-│  │ 4. Return instance                           │    │   │
-│  └─────────────────────────────────────────────────┘    │   │
-└─────────────────────────────────────────────────────────┘
-```
-
 ### Компоненты
 
 1. **Volatile Field**: Поле, помеченное как **volatile** для **memory visibility**

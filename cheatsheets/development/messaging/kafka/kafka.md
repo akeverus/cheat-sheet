@@ -187,16 +187,20 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 #### Brokers (Брокеры)
 **Брокеры — это серверы **Kafka**, которые хранят данные и обслуживают клиентов:**
 
-```text
-# Кластер брокеров: партиции распределены по узлам
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Broker 1      │    │   Broker 2      │    │   Broker 3      │
-│                 │    │                 │    │                 │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │ Partition 1 │ │    │ │ Partition 2 │ │    │ │ Partition 3 │ │
-│ │ Partition 2 │ │    │ │ Partition 1 │ │    │ │ Partition 2 │ │
-│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart LR
+    subgraph B1[Broker 1]
+        P1A[Partition 1]
+        P2A[Partition 2]
+    end
+    subgraph B2[Broker 2]
+        P2B[Partition 2]
+        P1B[Partition 1]
+    end
+    subgraph B3[Broker 3]
+        P3[Partition 3]
+        P2C[Partition 2]
+    end
 ```
 
 #### Zookeeper
@@ -331,13 +335,23 @@ public class CustomPartitioner implements Partitioner {
 #### Consumer Groups (Группы потребителей)
 **Механизм масштабирования **consumer**'ов:**
 
-```text
-# Группа потребителей: партиции закреплены за consumer'ами
-Topic: orders
-├── Partition 0 ──┬─ Consumer Group A
-├── Partition 1 ──┼─ Consumer A1 (active)
-├── Partition 2 ──┘─ Consumer A2 (active)
-└── Partition 3    ─ Consumer A3 (standby)
+```mermaid
+flowchart LR
+    subgraph T[Topic: orders]
+        P0[Partition 0]
+        P1[Partition 1]
+        P2[Partition 2]
+        P3[Partition 3]
+    end
+    subgraph CG[Consumer Group A]
+        C1[Consumer A1 active]
+        C2[Consumer A2 active]
+        C3[Consumer A3 standby]
+    end
+    P0 --> C1
+    P1 --> C1
+    P2 --> C2
+    P3 --> C3
 ```
 
 **Свойства consumer groups:**

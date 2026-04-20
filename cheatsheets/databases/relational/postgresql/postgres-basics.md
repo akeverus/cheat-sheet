@@ -60,19 +60,15 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
 
 Схема компонентов **PostgreSQL**: пул соединений, парсер, оптимизатор, исполнитель, слой хранения (буферы, `WAL`, блокировки, vacuum), ОС.
 
-```text
-# Архитектура: Connection Pool → Parser → Optimizer → Executor → Storage
-┌─────────────────────────────────────────────────────────────┐
-│                    PostgreSQL Server                        │
-├─────────────────────────────────────────────────────────────┤
-│  Connection Pool  │  Parser  │  Optimizer  │  Executor     │
-├─────────────────────────────────────────────────────────────┤
-│                 Storage Engine                              │
-├─────────────────────────────────────────────────────────────┤
-│  Buffer Manager  │  WAL  │  Lock Manager  │  Vacuum        │
-├─────────────────────────────────────────────────────────────┤
-│                    Operating System                         │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph PG["PostgreSQL Server"]
+        L1["Connection Pool | Parser | Optimizer | Executor"]
+        L2["Storage Engine"]
+        L3["Buffer Manager | WAL | Lock Manager | Vacuum"]
+    end
+    OS["Operating System"]
+    L1 --> L2 --> L3 --> OS
 ```
 
 ## Установка и первоначальная настройка

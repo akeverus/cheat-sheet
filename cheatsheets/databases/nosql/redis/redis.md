@@ -92,18 +92,10 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 
 ### Архитектура Redis
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                        Redis Cluster                       │
-├─────────────────────────────────────────────────────────────┤
-│  Master Nodes │ Slave Nodes │ Cluster Bus │ Sentinel       │
-├─────────────────────────────────────────────────────────────┤
-│                    Redis Core Engine                       │
-├─────────────────────────────────────────────────────────────┤
-│  Event Loop │ Data Structures │ Persistence │ Networking   │
-├─────────────────────────────────────────────────────────────┤
-│                    Operating System                        │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Redis Cluster<br/>Master Nodes | Slave Nodes | Cluster Bus | Sentinel"] --> B["Redis Core Engine<br/>Event Loop | Data Structures | Persistence | Networking"]
+    B --> C["Operating System"]
 ```
 
 ## Установка и первоначальная настройка

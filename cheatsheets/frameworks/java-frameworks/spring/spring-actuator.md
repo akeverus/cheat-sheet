@@ -137,23 +137,19 @@ related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 
 ### Архитектура Actuator
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Spring Boot Application                     │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Health     │  │   Metrics    │  │   Info       │  │
-│  │   Indicators │  │   Registry   │  │   Endpoint   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Actuator Endpoints                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   HTTP       │  │   JMX        │  │   Custom     │  │
-│  │   Endpoints  │  │   Endpoints  │  │   Endpoints  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph App["Spring Boot Application"]
+        HI["Health Indicators"]
+        MR["Metrics Registry"]
+        IE["Info Endpoint"]
+    end
+    subgraph AE["Actuator Endpoints"]
+        HTTP["HTTP Endpoints"]
+        JMX["JMX Endpoints"]
+        Custom["Custom Endpoints"]
+    end
+    App --> AE
 ```
 
 ## Настройка Actuator

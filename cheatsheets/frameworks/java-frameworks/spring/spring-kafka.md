@@ -89,31 +89,24 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
 
 ### Архитектура Spring Kafka
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Code                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Kafka      │  │   @Kafka     │  │   Kafka      │  │
-│  │   Template   │  │   Listener   │  │   Streams    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Apache Kafka                                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Producer   │  │   Consumer   │  │   Streams     │  │
-│  │   API        │  │   API        │  │   API        │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Kafka Broker                                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Topics     │  │   Partitions │  │   Replicas   │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AC["Application Code"]
+        KT["Kafka Template"]
+        KL["@Kafka Listener"]
+        KS["Kafka Streams"]
+    end
+    subgraph AK["Apache Kafka"]
+        PA["Producer API"]
+        CA["Consumer API"]
+        SA["Streams API"]
+    end
+    subgraph KB["Kafka Broker"]
+        Topics["Topics"]
+        Partitions["Partitions"]
+        Replicas["Replicas"]
+    end
+    AC --> AK --> KB
 ```
 
 ## Настройка Spring Kafka

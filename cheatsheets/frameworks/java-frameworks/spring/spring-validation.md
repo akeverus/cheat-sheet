@@ -74,28 +74,20 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Архитектура валидации
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Input Data                                  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Validation Layer                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Bean       │  │   Custom     │  │   Group      │  │
-│  │   Validation │  │   Validators │  │   Validation │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Validation Result                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Valid      │  │   Invalid    │  │   Errors     │  │
-│  │   Data       │  │   Data       │  │   Details    │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    ID["Input Data"] --> VL
+    subgraph VL["Validation Layer"]
+        BV["Bean Validation"]
+        CV["Custom Validators"]
+        GV["Group Validation"]
+    end
+    VL --> VR
+    subgraph VR["Validation Result"]
+        Valid["Valid Data"]
+        Invalid["Invalid Data"]
+        Errors["Errors Details"]
+    end
 ```
 
 ## Настройка валидации

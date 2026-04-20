@@ -122,16 +122,11 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 
 ### Архитектура Streaming Replication
 
-```text
-┌─────────────────┐         ┌─────────────────┐
-│   Primary       │────────▶│   Standby        │
-│   Server        │  WAL    │   Server        │
-│                 │  Stream │                 │
-└─────────────────┘         └─────────────────┘
-       │                           │
-       │                           │
-       ▼                           ▼
-   WAL Files                  Apply WAL
+```mermaid
+flowchart LR
+    Primary["Primary Server"] -- "WAL Stream" --> Standby["Standby Server"]
+    Primary --> WF["WAL Files"]
+    Standby --> AW["Apply WAL"]
 ```
 
 ### Настройка Primary сервера
@@ -420,19 +415,11 @@ DROP SUBSCRIPTION my_subscription;
 
 ### Архитектура Master-Slave
 
-```text
-┌─────────────┐
-│   Master    │
-│  (Primary)  │
-└──────┬──────┘
-       │
-       ├──────────────┬──────────────┐
-       │              │              │
-       ▼              ▼              ▼
-┌──────────┐   ┌──────────┐   ┌──────────┐
-│  Slave 1 │   │  Slave 2 │   │  Slave 3 │
-│ (Standby)│   │ (Standby) │   │ (Standby)│
-└──────────┘   └──────────┘   └──────────┘
+```mermaid
+flowchart TD
+    Master["Master (Primary)"] --> S1["Slave 1 (Standby)"]
+    Master --> S2["Slave 2 (Standby)"]
+    Master --> S3["Slave 3 (Standby)"]
 ```
 
 ### Настройка нескольких Standby серверов
@@ -491,11 +478,9 @@ ORDER BY application_name;
 
 ### Архитектура Master-Master
 
-```text
-┌─────────────┐         ┌─────────────┐
-│  Server A   │◀───────▶│  Server B   │
-│  (Primary)  │  Logical│  (Primary)   │
-└─────────────┘  Repl   └─────────────┘
+```mermaid
+flowchart LR
+    A["Server A (Primary)"] <-- "Logical Repl" --> B["Server B (Primary)"]
 ```
 
 ### Настройка двунаправленной репликации

@@ -91,34 +91,17 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Архитектура Spring MVC
 
-```text
-# Обработка запроса: DispatcherServlet → HandlerMapping → Controller → View
-┌─────────────────────────────────────────────────────────┐
-│                    HTTP Request                          │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              DispatcherServlet                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Handler    │  │  Controller │  │   Model &    │  │
-│  │   Mapping    │─▶│             │─▶│   View Name │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              View Resolver                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   View       │  │   Template   │  │   Response   │  │
-│  │   Selection  │─▶│   Engine     │─▶│   Rendering  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│                    HTTP Response                         │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Req["HTTP Request"] --> DS
+    subgraph DS["DispatcherServlet"]
+        HM["Handler Mapping"] --> Ctrl["Controller"] --> MV["Model & View Name"]
+    end
+    DS --> VR
+    subgraph VR["View Resolver"]
+        VS["View Selection"] --> TE["Template Engine"] --> RR["Response Rendering"]
+    end
+    VR --> Resp["HTTP Response"]
 ```
 
 ## DispatcherServlet

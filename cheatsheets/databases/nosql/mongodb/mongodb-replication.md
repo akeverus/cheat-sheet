@@ -145,19 +145,13 @@ updated: "2026-02-11"
 
 **Репликация** в **MongoDB** обеспечивает высокую доступность, отказоустойчивость и масштабируемость чтения данных. Основной механизм репликации — **Replica Set** — это группа **MongoDB** серверов, которые поддерживают одинаковый набор данных.
 
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Primary       │ -> │   Secondary     │ -> │   Secondary     │
-│   (Read/Write)  │    │   (Read Only)   │    │   (Read Only)   │
-│                 │    │                 │    │                 │
-│ • Operations    │    │ • Replication   │    │ • Replication   │
-│ • Heartbeat     │    │ • Heartbeat     │    │ • Heartbeat     │
-│ • Election      │    │ • Election      │    │ • Election      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-       ▲                       ▲                       ▲
-       │                       │                       │
-       └─────────── Oplog ────────────────────────────┘
-                   (Capped Collection)
+```mermaid
+flowchart LR
+    P["Primary<br/>(Read/Write)<br/>Operations, Heartbeat, Election"] --> S1["Secondary<br/>(Read Only)<br/>Replication, Heartbeat, Election"]
+    S1 --> S2["Secondary<br/>(Read Only)<br/>Replication, Heartbeat, Election"]
+    OP["Oplog (Capped Collection)"] -.-> P
+    OP -.-> S1
+    OP -.-> S2
 ```
 
 ### Преимущества репликации
@@ -189,17 +183,14 @@ updated: "2026-02-11"
 
 ### Базовая архитектура
 
-```text
-Production Environment:
-┌─────────────────────────────────────────────────────────────┐
-│                        Replica Set                          │
-├─────────────────────────────────────────────────────────────┤
-│  Primary    Secondary   Secondary   Arbiter (optional)      │
-│  Node       Node        Node        Node                    │
-│                                                             │
-│  Data       Data        Data        No Data                 │
-│  Center 1   Center 2    Center 3    Center 1                │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph RS["Replica Set (Production)"]
+        P["Primary Node<br/>Data Center 1"]
+        S1["Secondary Node<br/>Data Center 2"]
+        S2["Secondary Node<br/>Data Center 3"]
+        A["Arbiter Node (optional)<br/>No Data, Data Center 1"]
+    end
 ```
 
 ### Рекомендуемые конфигурации
@@ -1145,17 +1136,14 @@ db.createUser({
 
 ### Базовая архитектура
 
-```
-Production Environment:
-┌─────────────────────────────────────────────────────────────┐
-│                        Replica Set                          │
-├─────────────────────────────────────────────────────────────┤
-│  Primary    Secondary   Secondary   Arbiter (optional)      │
-│  Node       Node        Node        Node                    │
-│                                                             │
-│  Data       Data        Data        No Data                 │
-│  Center 1   Center 2    Center 3    Center 1                │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph RS["Replica Set (Production)"]
+        P["Primary Node<br/>Data Center 1"]
+        S1["Secondary Node<br/>Data Center 2"]
+        S2["Secondary Node<br/>Data Center 3"]
+        A["Arbiter Node (optional)<br/>No Data, Data Center 1"]
+    end
 ```text
 
 ### Рекомендуемые конфигурации

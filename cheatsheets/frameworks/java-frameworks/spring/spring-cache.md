@@ -73,23 +73,17 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Архитектура Spring Cache
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              Application Code                            │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Service    │  │   @Cacheable │  │   Cache     │  │
-│  │   Method     │─▶│   Aspect     │─▶│   Provider  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Cache Storage                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Simple     │  │   Redis      │  │   EhCache    │  │
-│  │   Cache      │  │   Cache      │  │   Cache      │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph AC["Application Code"]
+        SM["Service Method"] --> CA["@Cacheable Aspect"] --> CP["Cache Provider"]
+    end
+    subgraph CS["Cache Storage"]
+        Simple["Simple Cache"]
+        Redis["Redis Cache"]
+        EhCache["EhCache Cache"]
+    end
+    AC --> CS
 ```
 
 ## Настройка Spring Cache

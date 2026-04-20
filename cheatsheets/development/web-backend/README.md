@@ -48,16 +48,11 @@ Backend — это мост между множеством доменов:
 
 ## Слои типичного backend
 
-```text
-┌──────────────────────────────────────────────┐
-│ Controllers / GraphQL resolvers / gRPC stubs │  <-- HTTP-слой, сериализация, валидация
-├──────────────────────────────────────────────┤
-│ Service layer / Use cases                    │  <-- бизнес-логика, транзакции
-├──────────────────────────────────────────────┤
-│ Repositories / DAO / Clients                 │  <-- persistence и внешние вызовы
-├──────────────────────────────────────────────┤
-│ Domain model                                 │  <-- чистые классы, инварианты
-└──────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["Controllers / GraphQL resolvers / gRPC stubs<br/>HTTP-слой, сериализация, валидация"] --> B["Service layer / Use cases<br/>бизнес-логика, транзакции"]
+    B --> C["Repositories / DAO / Clients<br/>persistence и внешние вызовы"]
+    C --> D["Domain model<br/>чистые классы, инварианты"]
 ```
 
 ## Карта тем и где читать

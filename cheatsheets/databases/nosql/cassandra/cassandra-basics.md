@@ -308,13 +308,12 @@ updated: "2026-02-11"
 
 Схема кольца **consistent hashing**: диапазон токенов от 0 до 2^128−1 для распределения данных по узлам.
 
-```text
-# Токенное кольцо Cassandra: диапазоны по 2^128
-Ring: 0 → 2^128 - 1
-├── Node A: Token range 0-25
-├── Node B: Token range 26-50
-├── Node C: Token range 51-75
-└── Node D: Token range 76-100
+```mermaid
+flowchart LR
+    R["Ring: 0 → 2^128 - 1"] --> A["Node A<br/>Token range 0-25"]
+    R --> B["Node B<br/>Token range 26-50"]
+    R --> C["Node C<br/>Token range 51-75"]
+    R --> D["Node D<br/>Token range 76-100"]
 ```
 
 #### Преимущества Ring архитектуры:

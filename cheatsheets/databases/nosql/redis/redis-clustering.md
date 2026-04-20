@@ -110,16 +110,11 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 
 ### Архитектура Redis Cluster
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    Redis Cluster                       │
-├─────────────────────────────────────────────────────────┤
-│  Node 1 (Master)  │  Node 2 (Master)  │  Node 3 (Master)│
-│  Slots: 0-5460    │  Slots: 5461-10922│  Slots: 10923-16383│
-├─────────────────────────────────────────────────────────┤
-│  Node 4 (Slave)   │  Node 5 (Slave)   │  Node 6 (Slave)  │
-│  Replica of 1     │  Replica of 2     │  Replica of 3    │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    M1["Node 1 (Master)<br/>Slots: 0-5460"] --> S4["Node 4 (Slave)<br/>Replica of 1"]
+    M2["Node 2 (Master)<br/>Slots: 5461-10922"] --> S5["Node 5 (Slave)<br/>Replica of 2"]
+    M3["Node 3 (Master)<br/>Slots: 10923-16383"] --> S6["Node 6 (Slave)<br/>Replica of 3"]
 ```
 
 

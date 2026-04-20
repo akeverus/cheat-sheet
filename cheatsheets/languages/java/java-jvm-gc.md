@@ -42,23 +42,29 @@ updated: "2026-04-11"
 
 ## Архитектура JVM
 
-```text
-┌─────────────────────────────────────────────┐
-│                   JVM                       │
-│  ┌──────────┐  ┌──────────┐  ┌───────────┐ │
-│  │ClassLoader│  │ Execution│  │  Runtime   │ │
-│  │ Subsystem │  │  Engine  │  │   Data    │ │
-│  │           │  │          │  │   Areas   │ │
-│  │ Bootstrap │  │ Interpr. │  │ Heap      │ │
-│  │ Extension │  │ JIT (C1) │  │ Stack     │ │
-│  │ App       │  │ JIT (C2) │  │ Metaspace │ │
-│  └──────────┘  │ GC       │  │ PC Reg    │ │
-│                └──────────┘  │ Native St. │ │
-│                              └───────────┘ │
-│  ┌─────────────────────────────────────┐   │
-│  │    Native Method Interface (JNI)    │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph JVM
+        subgraph CL[ClassLoader Subsystem]
+            BS[Bootstrap]
+            EX[Extension]
+            AP[App]
+        end
+        subgraph EE[Execution Engine]
+            IN[Interpreter]
+            C1[JIT C1]
+            C2[JIT C2]
+            GC[GC]
+        end
+        subgraph RDA[Runtime Data Areas]
+            H[Heap]
+            S[Stack]
+            M[Metaspace]
+            PC[PC Register]
+            NS[Native Stack]
+        end
+        JNI[Native Method Interface JNI]
+    end
 ```
 
 **ClassLoader** загружает `.class` файлы (Bootstrap → Extension → Application).
@@ -127,13 +133,7 @@ Heap
 - Целевая пауза: `-XX:MaxGCPauseMillis=200` (по умолчанию)
 - Подходит для большинства серверных приложений (heap 4-64 GB)
 
-```text
-┌──────────────────────────────────────┐
-│  E │ E │ S │ O │ O │ H │ E │ O │ F  │  G1 Region Layout
-│eden│eden│sur│old│old│hum│eden│old│free│
-└──────────────────────────────────────┘
-E = Eden, S = Survivor, O = Old, H = Humongous, F = Free
-```
+`G1 Region Layout` — heap как массив регионов: `[E][E][S][O][O][H][E][O][F]`, где `E` = `Eden`, `S` = `Survivor`, `O` = `Old`, `H` = `Humongous`, `F` = `Free`.
 
 **Humongous regions** — для объектов > 50% размера региона. Собираются отдельно.
 

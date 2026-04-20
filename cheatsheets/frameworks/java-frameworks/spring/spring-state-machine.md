@@ -98,16 +98,16 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 
 ### Архитектура State Machine
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│              State Machine                               │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   States     │  │   Transitions │  │   Events     │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │   Guards     │  │   Actions    │  │   Listeners  │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph SM["State Machine"]
+        States["States"]
+        Transitions["Transitions"]
+        Events["Events"]
+        Guards["Guards"]
+        Actions["Actions"]
+        Listeners["Listeners"]
+    end
 ```
 
 ## Настройка State Machine
