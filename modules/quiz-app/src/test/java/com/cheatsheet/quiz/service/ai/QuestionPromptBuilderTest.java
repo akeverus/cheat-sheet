@@ -57,4 +57,12 @@ class QuestionPromptBuilderTest {
 
         assertThat(prompt).contains("general");
     }
+
+    @Test
+    void optionPromptContainsTopicAnchorAndNegationAndExplanationRules() {
+        String prompt = com.cheatsheet.quiz.service.ai.prompt.AiPrompts.USER_PROMPT_TEMPLATE;
+        assertThat(prompt).contains("той же технической области");
+        assertThat(prompt).contains("простым отрицанием или инверсией");
+        assertThat(prompt).contains("1–2 предложения");
+    }
 }
