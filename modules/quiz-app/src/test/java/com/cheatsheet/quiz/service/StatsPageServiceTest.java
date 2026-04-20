@@ -8,6 +8,7 @@ import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.infrastructure.search.SearchService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,12 +37,15 @@ class StatsPageServiceTest {
     SearchService searchService;
     @Mock
     ObjectMapper objectMapper;
+    @Mock
+    QuestionStatsRepository questionStatsRepository;
 
     StatsPageService service;
 
     @BeforeEach
     void setUp() {
-        service = new StatsPageService(facade, questionRepository, topicCatalogService, searchService, objectMapper);
+        service = new StatsPageService(facade, questionRepository, topicCatalogService,
+                searchService, objectMapper, questionStatsRepository);
     }
 
     @Test

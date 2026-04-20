@@ -9,6 +9,7 @@ import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.infrastructure.search.SearchService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.FieldDefaults;
@@ -26,11 +27,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StatsPageService {
+    private static final int COVERAGE_GAP_THRESHOLD = 5;
+    private static final int COVERAGE_GAP_LIMIT = 10;
+
     InterviewFacade facade;
     QuestionRepository questionRepository;
     TopicCatalogService topicCatalogService;
     SearchService searchService;
     ObjectMapper objectMapper;
+    QuestionStatsRepository questionStatsRepository;
 
     /**
      * Строит state страницы статистики по фильтру и поисковому запросу.
@@ -49,6 +54,8 @@ public class StatsPageService {
         }
         log.info("stats_page_state_built topic={} group={} searchQueryPresent={}",
                 filter.topic(), selectedGroup, query != null && !query.isBlank());
+        List<QuestionStatsRepository.TopicCoverage> coverageGaps =
+                questionStatsRepository.findTopicCoverageGaps(COVERAGE_GAP_THRESHOLD, COVERAGE_GAP_LIMIT);
         return new StatsPageState(
                 stats,
                 topics,
@@ -58,7 +65,8 @@ public class StatsPageService {
                 query,
                 searchService.search(query, searchLimit),
                 topicStats,
-                topicStatsJson
+                topicStatsJson,
+                coverageGaps
         );
     }
 
@@ -72,7 +80,15 @@ public class StatsPageService {
             String searchQuery,
             List<SearchService.SearchItem> searchResults,
             List<TopicStats> topicStats,
-            String topicStatsJson
+            String topicStatsJson,
+            List<QuestionStatsRepository.TopicCoverage> coverageGaps
     ) {
+        public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
+                              String selectedGroup, InterviewFilter filter, String searchQuery,
+                              List<SearchService.SearchItem> searchResults,
+                              List<TopicStats> topicStats, String topicStatsJson) {
+            this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
+                    topicStats, topicStatsJson, List.of());
+        }
     }
 }

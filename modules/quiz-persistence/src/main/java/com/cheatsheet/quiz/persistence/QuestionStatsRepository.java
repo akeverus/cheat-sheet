@@ -260,6 +260,24 @@ public class QuestionStatsRepository {
     }
 
     /**
+     * Возвращает темы с числом вопросов ниже порога (для подсказки «банк вопросов бедный»).
+     *
+     * @param threshold порог (обычно 5)
+     * @param limit     максимальное число тем
+     */
+    public List<TopicCoverage> findTopicCoverageGaps(int threshold, int limit) {
+        return jdbcTemplate.query(
+                "SELECT q.topic AS topic, COUNT(*) AS total " +
+                        "FROM questions q " +
+                        "GROUP BY q.topic HAVING COUNT(*) < ? " +
+                        "ORDER BY total ASC, topic ASC LIMIT ?",
+                (rs, rowNum) -> new TopicCoverage(rs.getString("topic"), rs.getLong("total")),
+                threshold, limit);
+    }
+
+    public record TopicCoverage(String topic, long total) {}
+
+    /**
      * Возвращает полный дамп прогресса для экспорта (JSON/CSV).
      */
     public List<ProgressExportRow> findProgressForExport() {
