@@ -1,15 +1,36 @@
 ---
-title: "Spring GraphQL — Interview"
-description: "Вопросы на собеседовании по Spring GraphQL: schema, @QueryMapping, @MutationMapping, DataLoader, N+1, подписки, тестирование."
+title: "Вопросы на собеседовании: Spring for GraphQL"
+description: "Spring for GraphQL: @QueryMapping, @MutationMapping, @SchemaMapping, DataLoader для N+1, subscriptions, тестирование, Spring Security интеграция"
 tags:
   - interview
   - spring
-  - graphql
-  - api
+  - spring-graphql-interview
+aliases:
+  - "Spring GraphQL interview"
+  - "Spring GraphQL собеседование"
+  - "Spring for GraphQL вопросы"
+  - "GraphQL Spring Boot interview"
 difficulty: "intermediate"
 updated: "2026-04-20"
 ---
-# Spring GraphQL — Interview
+# Вопросы на собеседовании: `Spring for GraphQL`
+
+`Spring for GraphQL` — официальная интеграция GraphQL в экосистему Spring (с Spring Boot 2.7+). Построена поверх `GraphQL Java`, поддерживает HTTP и WebSocket транспорты, `DataLoader` для решения N+1 проблемы. Часто спрашивается в контексте альтернатив REST.
+
+Дата последнего обновления: 2026-04-20
+
+## Полезные ссылки
+
+### Официальная документация
+
+- [Spring for GraphQL Docs](https://docs.spring.io/spring-graphql/docs/current/reference/html/) — официальная документация
+- [GraphQL Java Docs](https://www.graphql-java.com/documentation/getting-started) — GraphQL Java документация
+- [Baeldung: Spring GraphQL](https://www.baeldung.com/spring-graphql) — практическое введение
+
+## Содержание
+
+- [Полезные ссылки](#полезные-ссылки)
+- [See also](#see-also)
 
 ## Q1. Что такое Spring GraphQL и в чём его преимущества перед REST?
 
@@ -555,8 +576,13 @@ logging:
 
 ## See also
 
-- [[spring-graphql|Spring GraphQL]] — полный cheatsheet
-- [[graphql-interview|GraphQL Interview]] — общие вопросы по GraphQL
-- [[spring-webflux-interview|Spring WebFlux Interview]] — реактивный стек
-- [[spring-boot-interview|Spring Boot Interview]] — общие вопросы Spring Boot
-- [[spring-rest-client-interview|Spring REST Clients]] — REST как альтернатива
+- [[graphql-interview|GraphQL]] — основы GraphQL (schema, queries, resolvers, N+1 проблема)
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек для GraphQL subscriptions
+- [[spring-boot-interview|Spring Boot]] — auto-configuration, starter dependencies
+- [[spring-rest-client-interview|Spring REST Clients]] — REST как альтернатива GraphQL
+- [[spring-security-interview|Spring Security]] — интеграция безопасности с GraphQL
+- [[spring-testing-interview|Spring Testing]] — GraphQlTester для тестирования
+- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории, используемые в resolvers
+- [[micrometer-interview|Micrometer]] — метрики graphql.* через Actuator
+- [[http-rest-interview|HTTP & REST]] — REST-обзор для сравнения
+- [[openapi-swagger-interview|OpenAPI/Swagger]] — документирование REST в противовес GraphQL introspection

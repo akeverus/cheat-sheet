@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **258**.
+Всего файлов: **259**.
 
 ## Быстрые маршруты подготовки
 
@@ -305,6 +305,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java 17-21`](programming-languages/java/java-17-21-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Java Types`](programming-languages/java/java-types-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: `Java Virtual Threads`](programming-languages/java/java-virtual-threads-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Java Records`](programming-languages/java/java-records-interview.md) — `15` вопросов
 
 ## programming-languages/scala
 
