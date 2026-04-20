@@ -69,6 +69,18 @@
                 <div class="answer markdown-content" th:utext="${answerHtml}"></div>
             </div>
 
+            <details th:if="${reviewState != null}" class="sm2-details">
+                <summary>SM-2 состояние</summary>
+                <dl class="sm2-grid">
+                    <dt>Повторений</dt><dd th:text="${reviewState.repetitions()}">0</dd>
+                    <dt>Интервал</dt><dd><span th:text="${reviewState.intervalDays()}">0</span> дн.</dd>
+                    <dt>Ease factor</dt><dd th:text="${#numbers.formatDecimal(reviewState.easeFactor(), 1, 2)}">2.50</dd>
+                    <dt>Следующее повторение</dt><dd th:text="${#dates.format(new java.util.Date(reviewState.nextReviewAt() * 1000), 'yyyy-MM-dd HH:mm')}">—</dd>
+                    <dt>Последний результат</dt><dd th:text="${reviewState.lastResult().name()}">NEW</dd>
+                    <dt>Правильно / неправильно</dt><dd><span th:text="${reviewState.correctCount()}">0</span> / <span th:text="${reviewState.wrongCount()}">0</span></dd>
+                </dl>
+            </details>
+
             <div th:replace="~{fragments/result-zone-head :: result-zone-head(
                 id='result-zone-head-main',
                 chipText='Разбор ответа',

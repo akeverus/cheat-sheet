@@ -135,6 +135,7 @@ public class MvcModelAttributeMapper {
         }
         model.addAttribute("relatedQuestions", state.relatedQuestions());
         model.addAttribute("aiEnabled", appProperties.isAiEnabled());
+        model.addAttribute("reviewState", state.reviewState());
     }
 
     /**

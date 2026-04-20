@@ -15,6 +15,7 @@ import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,12 +37,14 @@ class AnswerPageServiceTest {
     QuestionRepository questionRepository;
     @Mock
     TopicCatalogService topicCatalogService;
+    @Mock
+    ReviewStateRepository reviewStateRepository;
 
     AnswerPageService service;
 
     @BeforeEach
     void setUp() {
-        service = new AnswerPageService(facade, questionRepository, topicCatalogService);
+        service = new AnswerPageService(facade, questionRepository, topicCatalogService, reviewStateRepository);
     }
 
     @Test
