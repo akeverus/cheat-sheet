@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Promises** в **Scala**
+# Promises в Scala
 
 Краткое руководство по **Promises** в **Scala** — создание и управление **Futures**.
 
@@ -61,9 +61,9 @@ updated: "2026-02-11"
 
 **Promises** особенно полезны для адаптации **callback-based API** к **Future-based API**, координации нескольких асинхронных операций и создания кастомных асинхронных абстракций.
 
-## Основы **Promises**
+## Основы Promises
 
-### Создание **Promise**
+### Создание Promise
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -76,7 +76,7 @@ val promise = Promise[Int]()
 val future: Future[Int] = promise.future
 ```
 
-### Завершение **Promise**
+### Завершение Promise
 
 ```scala
 // Успешное завершение
@@ -92,7 +92,7 @@ promise.tryFailure(new Exception("Error"))
 
 ## Практические примеры
 
-### Адаптация **callback-based API**
+### Адаптация callback-based API
 
 ```scala
 def callbackBasedApi(callback: (String, Throwable) => Unit): Unit = {
@@ -205,7 +205,7 @@ def withTimeout[T](future: Future[T], timeout: Duration): Future[T] = {
 }
 ```
 
-### Реализация **retry** механизма
+### Реализация retry механизма
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -233,7 +233,7 @@ def retry[T](maxRetries: Int, delay: Duration = 1.second)(
 }
 ```
 
-### Реализация **circuit breaker**
+### Реализация circuit breaker
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -296,7 +296,7 @@ class CircuitBreaker[T](
 }
 ```
 
-### Реализация **rate limiter**
+### Реализация rate limiter
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -332,7 +332,7 @@ class RateLimiter(requestsPerSecond: Int) {
 
 ## Продвинутые техники
 
-### **Promise** с таймаутом
+### Promise с таймаутом
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -350,7 +350,7 @@ def promiseWithTimeout[T](timeout: Duration): (Promise[T], Future[T]) = {
 }
 ```
 
-### **Promise** с условием
+### Promise с условием
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -371,9 +371,9 @@ class ConditionalPromise[T] {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Завершайте **Promise** только один раз
+### 1. Завершайте Promise только один раз
 
 ```scala
 // ✅ Хорошо - используйте trySuccess/tryFailure
@@ -395,7 +395,7 @@ try {
 }
 ```
 
-### 3. Используйте **Promise** для адаптации внешних **API**
+### 3. Используйте Promise для адаптации внешних API
 
 ```scala
 // ✅ Хорошо - адаптация callback-based API
@@ -420,7 +420,7 @@ promise.future.onComplete { _ =>
 }
 ```
 
-### 5. Используйте **Promise** для координации
+### 5. Используйте Promise для координации
 
 ```scala
 // ✅ Хорошо - координация нескольких асинхронных операций
@@ -467,7 +467,7 @@ Future {
 val result = future  // Future[String]
 ```
 
-### Использование для координации нескольких **Promise**
+### Использование для координации нескольких Promise
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -488,7 +488,7 @@ promises.zipWithIndex.foreach { case (promise, index) =>
 val allResults = Future.sequence(promises.map(_.future))
 ```
 
-### Использование для создания кастомных **Future** операций
+### Использование для создания кастомных Future операций
 
 ```scala
 import scala.concurrent.{Promise, Future}
@@ -587,7 +587,7 @@ class CustomBarrier(count: Int) {
 }
 ```
 
-### Использование для создания кастомных **latch**
+### Использование для создания кастомных latch
 
 ```scala
 import scala.concurrent.{Promise, Future}

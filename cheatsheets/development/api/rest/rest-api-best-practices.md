@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **REST API Best Practices**
+# REST API Best Practices
 
-Этот документ содержит лучшие практики проектирования, реализации и поддержки **REST API**. Он охватывает **HTTP** методы, статус коды, версионирование, безопасность, документацию, тестирование и мониторинг. Документ дополняет [REST API Design](rest-api-design.md) практическими рекомендациями.
+Этот документ содержит лучшие практики проектирования, реализации и поддержки **REST API**. Он охватывает **HTTP** методы, статус коды, версионирование, безопасность, документацию, тестирование и мониторинг. Документ дополняет [[rest-api-design|REST API Design]] практическими рекомендациями.
 
 ## Полезные ссылки
 - [REST API Design Guidelines](https://www.baeldung.com/rest-api-design-maturity-model)
@@ -70,10 +70,10 @@ updated: "2026-02-11"
 - [Лучшие практики (сводка)](#лучшие-практики-сводка)
 - [См. также](#см-также)
 
-## **HTTP Methods** и **Status Codes**
+## HTTP Methods и Status Codes
 
-### **HTTP Methods Usage**
-Ниже — примеры использования **HTTP**-методов для **CRUD** (**Node.js/Express**).
+### HTTP Methods Usage
+Ниже — примеры использования **HTTP**-методов для **CRUD** (Node.js/Express).
 ```javascript
 // GET - получение ресурсов
 app.get('/api/users', async (req, res) => {
@@ -148,7 +148,7 @@ app.delete('/api/users/:id', async (req, res) => {
 });
 ```
 
-### **Status Codes Best Practices**
+### Status Codes Best Practices
 ```javascript
 // 2xx Success
 const SUCCESS_CODES = {
@@ -224,9 +224,9 @@ app.post('/api/users', async (req, res) => {
 });
 ```
 
-## **API Design Patterns**
+## API Design Patterns
 
-### **Content Negotiation**
+### Content Negotiation
 ```javascript
 // Accept header negotiation
 app.get('/api/users/:id', (req, res) => {
@@ -272,7 +272,7 @@ app.get('/api/users/:id', (req, res) => {
 });
 ```
 
-### **Pagination**
+### Pagination
 ```javascript
 // Cursor-based pagination (recommended for large datasets)
 app.get('/api/users', async (req, res) => {
@@ -341,7 +341,7 @@ app.get('/api/products', async (req, res) => {
 });
 ```
 
-### **Filtering** и **Searching**
+### Filtering и Searching
 ```javascript
 // Query parameters for filtering
 app.get('/api/products', async (req, res) => {
@@ -397,7 +397,7 @@ app.get('/api/products', async (req, res) => {
 });
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 ```javascript
 // Express rate limiting middleware
 const rateLimit = require('express-rate-limit');
@@ -461,9 +461,9 @@ const customRateLimit = async (req, res, next) => {
 };
 ```
 
-## **Versioning Strategies**
+## Versioning Strategies
 
-### **URL Path Versioning**
+### URL Path Versioning
 ```javascript
 // URL path versioning
 app.get('/api/v1/users', (req, res) => {
@@ -484,7 +484,7 @@ app.use('/api/v1/users', v1Routes);
 app.use('/api/v2/users', v2Routes);
 ```
 
-### **Header Versioning**
+### Header Versioning
 ```javascript
 // Accept header versioning
 app.get('/api/users', (req, res) => {
@@ -518,7 +518,7 @@ app.get('/api/users', (req, res) => {
 });
 ```
 
-### **Media Type Versioning**
+### Media Type Versioning
 ```javascript
 // Content-Type versioning
 app.post('/api/users', (req, res) => {
@@ -554,7 +554,7 @@ app.get('/api/users/:id', (req, res) => {
 });
 ```
 
-### **Semantic Versioning for APIs**
+### Semantic Versioning for APIs
 ```javascript
 // Semantic versioning helper
 class ApiVersion {
@@ -604,9 +604,9 @@ function parseVersion(versionString) {
 }
 ```
 
-## **Error Handling**
+## Error Handling
 
-### **Consistent Error Responses**
+### Consistent Error Responses
 ```javascript
 // Error response structure
 class ApiError extends Error {
@@ -692,7 +692,7 @@ app.use((error, req, res, next) => {
 });
 ```
 
-### **Error Recovery Patterns**
+### Error Recovery Patterns
 ```javascript
 // Circuit breaker pattern
 class CircuitBreaker {
@@ -757,7 +757,7 @@ app.get('/api/external-data', async (req, res) => {
 });
 ```
 
-### **Graceful Degradation**
+### Graceful Degradation
 ```javascript
 // Graceful degradation with fallbacks
 app.get('/api/user-profile/:id', async (req, res) => {
@@ -800,7 +800,7 @@ app.get('/api/user-profile/:id', async (req, res) => {
 
 ## Лучшие практики безопасности
 
-### **Authentication** и **Authorization**
+### Authentication и Authorization
 ```javascript
 // JWT authentication middleware
 const jwt = require('jsonwebtoken');
@@ -850,7 +850,7 @@ app.get('/api/admin/users',
 );
 ```
 
-### **Input Validation** и **Sanitization**
+### Input Validation и Sanitization
 ```javascript
 // Input validation with Joi
 const Joi = require('joi');
@@ -932,7 +932,7 @@ app.get('/api/users/search', async (req, res) => {
 });
 ```
 
-### **CORS Configuration**
+### CORS Configuration
 ```javascript
 // CORS configuration
 const cors = require('cors');
@@ -968,7 +968,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 ```
 
-### **API Keys** и **Tokens**
+### API Keys и Tokens
 ```javascript
 // API key authentication
 const apiKeyAuth = (req, res, next) => {
@@ -1016,9 +1016,9 @@ const verifyWebhookSignature = (req, res, next) => {
 };
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Caching Strategies**
+### Caching Strategies
 ```javascript
 // HTTP caching headers
 app.get('/api/products', (req, res) => {
@@ -1070,7 +1070,7 @@ const cacheMiddleware = (duration) => {
 app.get('/api/products', cacheMiddleware(300), getProductsHandler);
 ```
 
-### **Database Optimization**
+### Database Optimization
 ```javascript
 // Connection pooling
 const { Pool } = require('pg');
@@ -1130,7 +1130,7 @@ app.get('/api/products', async (req, res) => {
 });
 ```
 
-### **Response Compression**
+### Response Compression
 ```javascript
 // Compression middleware
 const compression = require('compression');
@@ -1158,7 +1158,7 @@ app.get('/api/large-dataset', compression({ level: 9 }), async (req, res) => {
 });
 ```
 
-### **Asynchronous Processing**
+### Asynchronous Processing
 ```javascript
 // Background job processing with Bull
 const Queue = require('bull');
@@ -1205,9 +1205,9 @@ emailQueue.on('failed', (job, err) => {
 });
 ```
 
-## **Documentation**
+## Documentation
 
-### **API Documentation Standards**
+### API Documentation Standards
 ```yaml
 # API documentation structure
 const apiDocs = {
@@ -1333,7 +1333,7 @@ const apiDocs = {
 };
 ```
 
-### **Interactive Documentation**
+### Interactive Documentation
 ```javascript
 // Swagger UI setup
 const swaggerUi = require('swagger-ui-express');
@@ -1403,9 +1403,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.get('/users', getUsersHandler);
 ```
 
-## **Testing Strategies**
+## Testing Strategies
 
-### **Unit Testing**
+### Unit Testing
 ```javascript
 // API handler unit test
 const request = require('supertest');
@@ -1465,7 +1465,7 @@ describe('GET /api/users', () => {
 });
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```javascript
 // Database integration test
 const mongoose = require('mongoose');
@@ -1527,7 +1527,7 @@ describe('User API Integration', () => {
 });
 ```
 
-### **Load Testing**
+### Load Testing
 ```javascript
 // Load testing with Artillery
 // artillery.yml
@@ -1598,9 +1598,9 @@ const instance = autocannon({
 });
 ```
 
-## **Monitoring** и **Analytics**
+## Monitoring и Analytics
 
-### **API Metrics Collection**
+### API Metrics Collection
 ```javascript
 // Prometheus metrics for API
 const promClient = require('prom-client');
@@ -1674,7 +1674,7 @@ app.get('/metrics', async (req, res) => {
 });
 ```
 
-### **Logging Best Practices**
+### Logging Best Practices
 ```javascript
 // Structured logging with Winston
 const winston = require('winston');
@@ -1748,7 +1748,7 @@ app.use((error, req, res, next) => {
 });
 ```
 
-### **API Analytics**
+### API Analytics
 ```javascript
 // API usage analytics
 const apiAnalytics = (req, res, next) => {
@@ -1807,9 +1807,9 @@ app.get('/health', async (req, res) => {
 });
 ```
 
-## **API Lifecycle Management**
+## API Lifecycle Management
 
-### **API Versioning Strategy**
+### API Versioning Strategy
 ```javascript
 // Version management utility
 class ApiVersionManager {
@@ -1870,7 +1870,7 @@ const versionRouter = (req, res, next) => {
 };
 ```
 
-### **API Deprecation Process**
+### API Deprecation Process
 ```javascript
 // Deprecation middleware
 const deprecationMiddleware = (version, removalDate) => {
@@ -1917,7 +1917,7 @@ app.use('/api/v1/*', (req, res, next) => {
 });
 ```
 
-### **API Governance**
+### API Governance
 ```yaml
 // API governance rules
 const apiGovernance = {
@@ -1995,7 +1995,7 @@ function parseSize(sizeString) {
 
 ## Решение проблем
 
-### **CORS** блокирует запросы с фронтенда
+### CORS блокирует запросы с фронтенда
 
 **Проблема:** Браузер отклоняет запросы с `https://app.example.com` к `https://api.example.com` с ошибкой **CORS**.
 
@@ -2003,7 +2003,7 @@ function parseSize(sizeString) {
 
 **Решение:** Настроить `allowedOrigins` для конкретных доменов; при `credentials: true` не использовать `*`; добавить `allowedMethods` и `allowedHeaders`; отдавать корректные заголовки в ответ на `OPTIONS` preflight.
 
-### **Rate limit** превышен — клиент не знает, когда повторять
+### Rate limit превышен — клиент не знает, когда повторять
 
 **Проблема:** Ответ `429 Too Many Requests` без информации о времени разблокировки.
 
@@ -2027,7 +2027,7 @@ function parseSize(sizeString) {
 
 **Решение:** Хранить секрет в env/vault; при смене ключа поддерживать grace period с двумя ключами; для кластера — общий секрет или **JWKS** endpoint.
 
-### **Breaking changes** при версионировании
+### Breaking changes при версионировании
 
 **Проблема:** Обновление формата ответа ломает старых клиентов без явного перехода на новую версию.
 
@@ -2039,9 +2039,9 @@ function parseSize(sizeString) {
 
 - Используйте правильные **HTTP**-методы и коды состояния; придерживайтесь идемпотентности и безопасности методов.
 - Версионируйте **API** через **URL** или заголовки; документируйте изменения.
-- Обрабатывайте ошибки единообразно (**формат ответа, коды**); не раскрывайте внутренние детали.
+- Обрабатывайте ошибки единообразно (формат ответа, коды); не раскрывайте внутренние детали.
 - Применяйте аутентификацию и авторизацию (**OAuth2**, `API keys`); валидируйте входные данные.
-- Документируйте **API** (**OpenAPI/Swagger**); пишите тесты и мониторьте метрики и логи.
+- Документируйте **API** (OpenAPI/Swagger); пишите тесты и мониторьте метрики и логи.
 ## См. также
 - [[rest-api-design|REST API Design]] — основы **REST API**
 - [[graphql|GraphQL]] — альтернативный подход к **API**

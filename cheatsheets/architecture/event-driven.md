@@ -11,7 +11,7 @@ updated: "2026-02-11"
 ---
 # Event-Driven Architecture
 
-**Event-Driven Architecture** (**EDA**) — это архитектурный паттерн, в котором компоненты системы взаимодействуют через асинхронную передачу событий. Это позволяет создавать слабосвязанные, масштабируемые и отзывчивые системы, где компоненты реагируют на события, происходящие в системе.
+**Event-Driven Architecture** (EDA) — это архитектурный паттерн, в котором компоненты системы взаимодействуют через асинхронную передачу событий. Это позволяет создавать слабосвязанные, масштабируемые и отзывчивые системы, где компоненты реагируют на события, происходящие в системе.
 
 ## Полезные ссылки
 
@@ -34,9 +34,9 @@ updated: "2026-02-11"
   - [Преимущества **Event-Driven Architecture**](#преимущества-event-driven-architecture)
   - [Недостатки **Event-Driven Architecture**](#недостатки-event-driven-architecture)
 - [Основные концепции](#основные-концепции)
-  - [Событие (**Event**)](#событие-event)
-  - [**Event Producer** (**Производитель событий**)](#event-producer-производитель-событий)
-  - [**Event Consumer** (**Потребитель событий**)](#event-consumer-потребитель-событий)
+  - [Событие (Event)](#событие-event)
+  - [**Event Producer** (Производитель событий)](#event-producer-производитель-событий)
+  - [**Event Consumer** (Потребитель событий)](#event-consumer-потребитель-событий)
   - [**Event Bus**](#event-bus)
 - [**Event Producers** и **Consumers**](#event-producers-и-consumers)
   - [Паттерны **Producer**](#паттерны-producer)
@@ -90,19 +90,19 @@ updated: "2026-02-11"
   - [Проблема: Медленная обработка событий](#проблема-медленная-обработка-событий)
 - [Частые вопросы](#частые-вопросы)
 
-## Введение в **Event-Driven Architecture**
+## Введение в Event-Driven Architecture
 
 **Event-Driven Architecture** представляет собой парадигму проектирования, где компоненты системы взаимодействуют через события. Событие — это значимое изменение состояния системы, которое может быть обработано одним или несколькими компонентами.
 
-### Преимущества **Event-Driven Architecture**
+### Преимущества Event-Driven Architecture
 
-**Слабая связанность (**Loose Coupling**)**
+**Слабая связанность (Loose Coupling)**
 Компоненты не знают друг о друге напрямую, они взаимодействуют только через события. Это позволяет изменять один компонент без влияния на другие.
 
 **Масштабируемость**
 Компоненты могут масштабироваться независимо в зависимости от нагрузки на обработку событий.
 
-**Отзывчивость (**Responsiveness**)**
+**Отзывчивость (Responsiveness)**
 Система может реагировать на события в реальном времени, обеспечивая быструю обработку и низкую задержку.
 
 **Гибкость**
@@ -111,7 +111,7 @@ updated: "2026-02-11"
 **Отказоустойчивость**
 При сбое одного компонента другие продолжают работать, так как события могут быть обработаны позже.
 
-### Недостатки **Event-Driven Architecture**
+### Недостатки Event-Driven Architecture
 
 **Сложность отладки**
 Асинхронная природа событий усложняет отслеживание потока выполнения и отладку.
@@ -127,16 +127,16 @@ updated: "2026-02-11"
 
 ## Основные концепции
 
-### Событие (**Event**)
+### Событие (Event)
 
 **Событие представляет собой неизменяемый факт о том, что что-то произошло в системе. События обычно содержат:**
 - Уникальный идентификатор события
 - Тип события
 - Временную метку
 - Данные события
-- Метаданные (**источник, версия и т.д.**)
+- Метаданные (источник, версия и т.д.)
 
-Ниже — пример определения события домена (**Java**).
+Ниже — пример определения события домена (Java).
 ```java
 public abstract class DomainEvent {
     private final String eventId;
@@ -188,7 +188,7 @@ public class UserCreatedEvent extends DomainEvent {
 }
 ```
 
-### **Event Producer** (**Производитель событий**)
+### Event Producer (Производитель событий)
 
 **Event Producer** — это компонент, который создает и публикует события в систему. **Producer** не знает, кто будет обрабатывать события.
 
@@ -214,7 +214,7 @@ public class UserEventProducer {
 }
 ```
 
-### **Event Consumer** (**Потребитель событий**)
+### Event Consumer (Потребитель событий)
 
 **Event Consumer** — это компонент, который подписывается на события и обрабатывает их. **Consumer** может быть одним из многих обработчиков одного и того же события.
 
@@ -242,16 +242,16 @@ public class UserEventConsumer {
 }
 ```
 
-### **Event Bus**
+### Event Bus
 
 **Event Bus** — это инфраструктурный компонент, который обеспечивает доставку событий от **producers** к **consumers**. **Event Bus** может быть реализован различными способами:**
-- **Message Broker** (**Kafka, `RabbitMQ`, ActiveMQ**)
-- **Event Store** (**EventStore, `Axon` Server**)
-- **In-memory Event Bus** (**для простых случаев**)
+- **Message Broker** (Kafka, `RabbitMQ`, ActiveMQ)
+- **Event Store** (EventStore, `Axon` Server)
+- **In-memory Event Bus** (для простых случаев)
 
-## **Event Producers** и **Consumers**
+## Event Producers и Consumers
 
-### Паттерны **Producer**
+### Паттерны Producer
 
 **Fire-and-Forget**
 **Producer** отправляет событие и не ждет подтверждения. Подходит для случаев, когда потеря события не критична.
@@ -324,7 +324,7 @@ public class OrderEventProducer {
 }
 ```
 
-### Паттерны **Consumer**
+### Паттерны Consumer
 
 **Single Consumer**
 Один **consumer** обрабатывает все события. Подходит для критичных операций, где важно обработать каждое событие.
@@ -393,9 +393,9 @@ public class OrderProcessor {
 }
 ```
 
-## **Event Bus** и **Message Brokers**
+## Event Bus и Message Brokers
 
-### Выбор **Message Broker**
+### Выбор Message Broker
 
 **Apache Kafka**
 - Высокая пропускная способность
@@ -530,7 +530,7 @@ public class RedisEventSubscriber implements MessageListener {
 }
 ```
 
-### **Spring Cloud Stream**
+### Spring Cloud Stream
 
 **Spring Cloud Stream** предоставляет абстракцию над различными **message brokers**, позволяя легко переключаться между ними.
 
@@ -592,9 +592,9 @@ spring:
           defaultBrokerPort: 9092
 ```
 
-## **Event Sourcing** vs **Event Streaming**
+## Event Sourcing vs Event Streaming
 
-### **Event Sourcing**
+### Event Sourcing
 
 **Event Sourcing** — это паттерн, где состояние приложения определяется последовательностью событий. Вместо хранения текущего состояния, хранятся все события, которые привели к этому состоянию.
 
@@ -602,7 +602,7 @@ spring:
 - События являются источником истины
 - Состояние восстанавливается путем **replay** событий
 - Полная история изменений
-- Поддержка временных запросов (**time-travel queries**)
+- Поддержка временных запросов (time-travel queries)
 
 ```java
 public class UserAggregate {
@@ -659,7 +659,7 @@ public class UserAggregate {
 }
 ```
 
-### **Event Streaming**
+### Event Streaming
 
 **Event Streaming** — это паттерн, где события используются для передачи данных между компонентами в реальном времени. События могут быть временными и не обязательно хранятся долго.
 
@@ -698,7 +698,7 @@ public class OrderService {
 }
 ```
 
-### Когда использовать **Event Sourcing**
+### Когда использовать Event Sourcing
 
 **Event Sourcing** уместен, когда:
 
@@ -707,7 +707,7 @@ public class OrderService {
 - Аудит и **compliance** требования
 - Сложная бизнес-логика с множеством состояний
 
-### Когда использовать **Event Streaming**
+### Когда использовать Event Streaming
 
 **Event Streaming** подходит для сценариев, где:
 
@@ -716,11 +716,11 @@ public class OrderService {
 - Обработка потоков данных
 - Не требуется полная история событий
 
-## **Saga Pattern** для распределенных транзакций
+## Saga Pattern для распределенных транзакций
 
-**Saga Pattern** используется для управления распределенными транзакциями в микросервисной архитектуре. Вместо использования двухфазного коммита (**2PC**), **Saga** разбивает транзакцию на последовательность локальных транзакций с компенсирующими действиями.
+**Saga Pattern** используется для управления распределенными транзакциями в микросервисной архитектуре. Вместо использования двухфазного коммита (2PC), **Saga** разбивает транзакцию на последовательность локальных транзакций с компенсирующими действиями.
 
-### **Choreography-based Saga**
+### Choreography-based Saga
 
 В **Choreography-based Saga** каждый сервис знает, какие события слушать и какие события публиковать. Нет центрального координатора.
 
@@ -790,9 +790,9 @@ public class InventorySaga {
 }
 ```
 
-### **Orchestration-based Saga**
+### Orchestration-based Saga
 
-В **Orchestration-based Saga** есть центральный координатор (**orchestrator**), который управляет выполнением шагов **Saga**.
+В **Orchestration-based Saga** есть центральный координатор (orchestrator), который управляет выполнением шагов **Saga**.
 
 ```java
 @Component
@@ -902,23 +902,23 @@ class SagaState {
 }
 ```
 
-## **Event Choreography** vs **Orchestration**
+## Event Choreography vs Orchestration
 
-### **Event Choreography**
+### Event Choreography
 
 В **Event Choreography** каждый сервис знает, какие события слушать и какие публиковать. Нет центрального координатора.
 
 **Преимущества:**
 - Слабая связанность
 - Простота добавления новых участников
-- Отказоустойчивость (**нет единой точки отказа**)
+- Отказоустойчивость (нет единой точки отказа)
 
 **Недостатки:**
 - Сложность понимания потока выполнения
 - Сложность отладки
 - Риск циклических зависимостей
 
-### **Orchestration**
+### Orchestration
 
 В **Orchestration** есть центральный координатор, который управляет выполнением шагов.
 
@@ -944,7 +944,7 @@ class SagaState {
 - Нужен четкий контроль над выполнением
 - Важна простота отладки
 
-## Реализация на **Spring Cloud Stream**
+## Реализация на Spring Cloud Stream
 
 **Spring Cloud Stream** предоставляет удобную абстракцию для работы с **event-driven** архитектурой.
 
@@ -967,7 +967,7 @@ class SagaState {
 </dependencies>
 ```
 
-### Определение **Channels**
+### Определение Channels
 
 ```java
 public interface EventChannels {
@@ -986,7 +986,7 @@ public interface EventChannels {
 }
 ```
 
-### **Producer**
+### Producer
 
 ```java
 @Component
@@ -1017,7 +1017,7 @@ public class OrderEventProducer {
 }
 ```
 
-### **Consumer**
+### Consumer
 
 ```java
 @Component
@@ -1084,9 +1084,9 @@ spring:
               auto-offset-reset: earliest
 ```
 
-## Реализация на **Apache Kafka**
+## Реализация на Apache Kafka
 
-### **Producer Configuration**
+### Producer Configuration
 
 ```java
 @Configuration
@@ -1126,7 +1126,7 @@ public class KafkaProducerConfig {
 }
 ```
 
-### **Consumer Configuration**
+### Consumer Configuration
 
 ```java
 @Configuration
@@ -1224,9 +1224,9 @@ public class OrderEventHandler {
 }
 ```
 
-## Обработка ошибок и **Retry** механизмы
+## Обработка ошибок и Retry механизмы
 
-### **Retry Policy**
+### Retry Policy
 
 ```java
 @Configuration
@@ -1253,7 +1253,7 @@ public class RetryConfig {
 }
 ```
 
-### **Dead Letter Queue**
+### Dead Letter Queue
 
 ```java
 @Component
@@ -1285,7 +1285,7 @@ public class OrderEventConsumer {
 }
 ```
 
-### **Circuit Breaker**
+### Circuit Breaker
 
 ```java
 @Component
@@ -1318,7 +1318,7 @@ public class OrderEventProcessor {
 }
 ```
 
-## Мониторинг и **Observability**
+## Мониторинг и Observability
 
 ### Метрики для мониторинга
 
@@ -1357,7 +1357,7 @@ public class EventMetrics {
 }
 ```
 
-### **Distributed Tracing**
+### Distributed Tracing
 
 ```java
 @Component
@@ -1507,7 +1507,7 @@ public void handleOrderEvent(OrderEvent event) {
 }
 ```
 
-## **Anti-patterns**
+## Anti-patterns
 
 ### 1. Синхронное ожидание событий
 
@@ -1612,7 +1612,7 @@ public void handleOrderEvent(
 **Причины:**
 - Подтверждение **offset** до обработки
 - Сбои в обработке без **retry**
-- Неправильная конфигурация **producer** (**acks=0**)
+- Неправильная конфигурация **producer** (acks=0)
 
 **Решение:**
 ```java

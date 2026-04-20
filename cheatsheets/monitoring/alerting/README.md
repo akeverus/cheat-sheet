@@ -18,17 +18,17 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Alerting (обзор)](alerting.md) — концепции, каналы, частые ошибки
-- [Alertmanager](alertmanager.md) — маршрутизация, группировка, silence, inhibition
-- [PagerDuty](pagerduty.md) — инцидент-менеджмент и on-call ротации
-- [Slack Alerting](slack-alerting.md) — форматирование, threads, mention-политика
+- [[alerting|Alerting (обзор)]] — концепции, каналы, частые ошибки
+- [[alertmanager]] — маршрутизация, группировка, silence, inhibition
+- [[pagerduty]] — инцидент-менеджмент и on-call ротации
+- [[slack-alerting|Slack Alerting]] — форматирование, threads, mention-политика
 
 ### Соседние разделы
-- [Monitoring](../README.md) — корень раздела
-- [Metrics](../metrics/README.md) — Prometheus, Grafana, Micrometer
-- [Logging](../logging/README.md) — структурированные логи как источник алертов
-- [Tracing](../tracing/README.md) — корреляция алерта с трейсом
-- [APM](../apm/README.md) — альтернативные источники алертов
+- [[README|Monitoring]] — корень раздела
+- [[README|Metrics]] — Prometheus, Grafana, Micrometer
+- [[README|Logging]] — структурированные логи как источник алертов
+- [[README|Tracing]] — корреляция алерта с трейсом
+- [[README|APM]] — альтернативные источники алертов
 
 ### Внешние ресурсы
 - [Google SRE: Alerting on SLOs](https://sre.google/workbook/alerting-on-slos/)
@@ -63,20 +63,20 @@ updated: "2026-04-17"
 
 | Задача | Инструмент |
 |--------|-----------|
-| Правила на Prometheus-метрики (rate/latency/error) | Prometheus + [Alertmanager](alertmanager.md) |
-| Правила поверх Grafana Unified Alerting | Grafana (см. [../metrics/grafana.md](../metrics/grafana.md)) + [Alertmanager](alertmanager.md) |
-| Маршрутизация, группировка, silence | [Alertmanager](alertmanager.md) |
-| On-call, эскалации, schedule | [PagerDuty](pagerduty.md) |
-| Уведомления команде в чат | [Slack Alerting](slack-alerting.md) |
-| Общие принципы и антипаттерны | [Alerting (обзор)](alerting.md) |
+| Правила на Prometheus-метрики (rate/latency/error) | Prometheus + [[alertmanager]] |
+| Правила поверх Grafana Unified Alerting | Grafana (см. [[grafana]]) + [[alertmanager]] |
+| Маршрутизация, группировка, silence | [[alertmanager]] |
+| On-call, эскалации, schedule | [[pagerduty]] |
+| Уведомления команде в чат | [[slack-alerting|Slack Alerting]] |
+| Общие принципы и антипаттерны | [[alerting|Alerting (обзор)]] |
 
 ## Связки с экосистемой
 
-- **Prometheus** ([../metrics/prometheus.md](../metrics/prometheus.md)) отправляет алерты в Alertmanager через `alerting.alertmanagers`.
-- **Grafana** ([../metrics/grafana.md](../metrics/grafana.md)) может использовать внешний Alertmanager или собственный Unified Alerting.
-- **ELK** ([../logging/elk-stack.md](../logging/elk-stack.md)) — ElastAlert / Watcher для алертов на логи.
-- **Jaeger/OTel** ([../tracing/jaeger.md](../tracing/jaeger.md)) — алерты по аномалиям в трейсах через APM.
-- **Kubernetes** ([../../platform/containers/kubernetes/README.md](../../platform/containers/kubernetes/README.md)) — kube-prometheus-stack содержит готовые алерты для control plane и нод.
+- **Prometheus** ([[prometheus]]) отправляет алерты в Alertmanager через `alerting.alertmanagers`.
+- **Grafana** ([[grafana]]) может использовать внешний Alertmanager или собственный Unified Alerting.
+- **ELK** ([[elk-stack]]) — ElastAlert / Watcher для алертов на логи.
+- **Jaeger/OTel** ([[jaeger]]) — алерты по аномалиям в трейсах через APM.
+- **Kubernetes** ([[README]]) — kube-prometheus-stack содержит готовые алерты для control plane и нод.
 
 ## Маршруты чтения
 
@@ -86,7 +86,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Метрики и дашборды — [../metrics/README.md](../metrics/README.md)
-- Практики мониторинга — [../monitoring-best-practices.md](../monitoring-best-practices.md)
-- Observability в целом — [../observability-guide.md](../observability-guide.md)
-- Логи и трейсы для расследования инцидента — [../logging/README.md](../logging/README.md), [../tracing/README.md](../tracing/README.md)
+- Метрики и дашборды — [[README]]
+- Практики мониторинга — [[monitoring-best-practices]]
+- Observability в целом — [[observability-guide]]
+- Логи и трейсы для расследования инцидента — [[README]], [[README]]

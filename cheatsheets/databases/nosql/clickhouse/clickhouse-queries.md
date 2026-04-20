@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 ---
 
-# **ClickHouse**: Запросы и аналитика — Полное руководство по **SQL** запросам
+# ClickHouse: Запросы и аналитика — Полное руководство по SQL запросам
 
 Комплексное руководство по запросам **ClickHouse**: **SELECT**, агрегация, оконные функции и аналитические возможности.
 
@@ -102,7 +102,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 
 ## Вставка данных
 
-### **INSERT** синтаксис
+### INSERT синтаксис
 
 ```sql
 -- Вставка одной строки
@@ -170,7 +170,7 @@ FROM order_items
 WHERE order_date = today();
 ```
 
-## Базовые **SELECT** запросы
+## Базовые SELECT запросы
 
 ### Простые запросы
 
@@ -198,7 +198,7 @@ SELECT
 FROM sales;
 ```
 
-### **DISTINCT** — уникальные значения
+### DISTINCT — уникальные значения
 
 ```sql
 -- Уникальные продукты
@@ -214,7 +214,7 @@ SELECT
 FROM sales;
 ```
 
-## Условия **WHERE**
+## Условия WHERE
 
 ### Операторы сравнения
 
@@ -255,7 +255,7 @@ WHERE (product_id = 101 OR product_id = 102)
   AND total > 50;
 ```
 
-### `IN` и **NOT** `IN`
+### `IN` и NOT `IN`
 
 ```sql
 -- В списке значений
@@ -274,7 +274,7 @@ WHERE customer_id IN (
 );
 ```
 
-### **LIKE** для строк
+### LIKE для строк
 
 ```sql
 -- Создание таблицы с именами
@@ -296,7 +296,7 @@ SELECT * FROM users WHERE name LIKE '% Doe %';    -- Содержит " Doe "
 SELECT * FROM users WHERE name NOT LIKE '%Bob%';  -- Не содержит "Bob"
 ```
 
-### Работа с **NULL**
+### Работа с NULL
 
 ```sql
 -- Создание таблицы с nullable полями
@@ -320,7 +320,7 @@ SELECT
 FROM products;
 ```
 
-### Диапазоны и **BETWEEN**
+### Диапазоны и BETWEEN
 
 ```sql
 -- BETWEEN для диапазонов
@@ -338,7 +338,7 @@ WHERE date BETWEEN '2024-01-01' AND '2024-01-31';
 
 ## Сортировка и пагинация
 
-### **ORDER** `BY`
+### ORDER `BY`
 
 ```sql
 -- Сортировка по возрастанию (по умолчанию)
@@ -359,7 +359,7 @@ SELECT * FROM products
 ORDER BY price NULLS LAST;   -- NULL значения последними
 ```
 
-### **LIMIT** и **OFFSET**
+### LIMIT и OFFSET
 
 ```sql
 -- Ограничение количества результатов
@@ -430,7 +430,7 @@ GROUP BY product_id;
 
 ## Группировка данных
 
-### **GROUP** `BY`
+### GROUP `BY`
 
 ```sql
 -- Группировка по продукту
@@ -464,7 +464,7 @@ GROUP BY month, product_id
 ORDER BY month, monthly_revenue DESC;
 ```
 
-### **HAVING** — фильтрация групп
+### HAVING — фильтрация групп
 
 ```sql
 -- Фильтрация после группировки
@@ -487,7 +487,7 @@ HAVING orders_count >= 3 AND total_spent > 500
 ORDER BY total_spent DESC;
 ```
 
-### **WITH ROLLUP**, **CUBE**, **TOTALS**
+### WITH ROLLUP, CUBE, TOTALS
 
 ```sql
 -- WITH ROLLUP - промежуточные итоги
@@ -522,7 +522,7 @@ ORDER BY total DESC;
 
 ## Оконные функции
 
-### **ROW_NUMBER**, **RANK**, **DENSE_RANK**
+### ROW_NUMBER, RANK, DENSE_RANK
 
 ```sql
 -- Нумерация строк
@@ -543,7 +543,7 @@ FROM sales
 ORDER BY product_id, product_rank;
 ```
 
-### **LAG** и **LEAD**
+### LAG и LEAD
 
 ```sql
 -- Предыдущие и следующие значения
@@ -563,7 +563,7 @@ FROM (
 ) t;
 ```
 
-### **FIRST_VALUE**, **LAST_VALUE**
+### FIRST_VALUE, LAST_VALUE
 
 ```sql
 -- Первое и последнее значение в окне
@@ -577,7 +577,7 @@ FROM sales
 ORDER BY product_id, date;
 ```
 
-### **NTH_VALUE**
+### NTH_VALUE
 
 ```sql
 -- N-е значение в окне
@@ -589,7 +589,7 @@ FROM sales
 ORDER BY total DESC;
 ```
 
-### **NTILE** — разделение на группы
+### NTILE — разделение на группы
 
 ```sql
 -- Разделение на квартили
@@ -647,9 +647,9 @@ FROM (
 ORDER BY date;
 ```
 
-## **JOIN** операции
+## JOIN операции
 
-### **INNER JOIN**
+### INNER JOIN
 
 ```sql
 -- Создание таблиц для примера
@@ -679,7 +679,7 @@ INNER JOIN orders o ON c.customer_id = o.customer_id
 ORDER BY c.customer_id, o.order_date;
 ```
 
-### **LEFT JOIN**
+### LEFT JOIN
 
 ```sql
 -- LEFT JOIN (все клиенты, даже без заказов)
@@ -695,7 +695,7 @@ GROUP BY c.customer_id, c.name, c.city
 ORDER BY total_spent DESC NULLS LAST;
 ```
 
-### **RIGHT JOIN** и **FULL JOIN**
+### RIGHT JOIN и FULL JOIN
 
 ```sql
 -- RIGHT JOIN (все заказы, даже без клиентов - редко используется)
@@ -716,7 +716,7 @@ FROM customers c
 FULL JOIN orders o ON c.customer_id = o.customer_id;
 ```
 
-### **CROSS JOIN**
+### CROSS JOIN
 
 ```sql
 -- Создание таблицы размеров
@@ -752,7 +752,7 @@ FROM orders
 WHERE total > (SELECT avg(total) FROM orders);
 ```
 
-### Подзапросы в **FROM**
+### Подзапросы в FROM
 
 ```sql
 -- Агрегация по клиентам
@@ -774,7 +774,7 @@ WHERE orders_count >= 3
 ORDER BY total_spent DESC;
 ```
 
-### **EXISTS** и `IN` с подзапросами
+### EXISTS и `IN` с подзапросами
 
 ```sql
 -- Клиенты с заказами
@@ -971,7 +971,7 @@ SELECT * FROM optimized_sales
 WHERE product_id = 101 AND date >= '2024-01-01';
 ```
 
-### **PREWHERE** для фильтрации
+### PREWHERE для фильтрации
 
 ```sql
 -- PREWHERE для предварительной фильтрации (быстрее WHERE для больших таблиц)
@@ -984,7 +984,7 @@ WHERE product_id IN (101, 102, 103)  -- Дополнительная фильт�
 GROUP BY product_id;
 ```
 
-### **SAMPLE** для приближенных расчетов
+### SAMPLE для приближенных расчетов
 
 ```sql
 -- Приближенные расчеты на сэмпле данных
@@ -1005,7 +1005,7 @@ SAMPLE 10000  -- Точное количество строк
 GROUP BY product_id;
 ```
 
-### **UNION ALL** для объединения
+### UNION ALL для объединения
 
 ```sql
 -- Объединение результатов из разных таблиц
@@ -1376,6 +1376,6 @@ ORDER BY total_read_bytes DESC;
 
 
 **Следующие темы:**
-- [Индексы и оптимизация](clickhouse-indexes.md)
-- [Материализованные представления](clickhouse-materialized-views.md)
+- [[clickhouse-indexes|Индексы и оптимизация]]
+- [[clickhouse-materialized-views|Материализованные представления]]
 

@@ -71,7 +71,7 @@ related: ["micronaut-http.md", "micronaut-mail.md"]
 - **View Rendering**: Рендеринг **views** в контроллерах
 - **Email Templates**: Использование шаблонов для **email**
 
-## Настройка **Views**
+## Настройка Views
 
 ### Зависимости
 
@@ -258,7 +258,7 @@ public class UserViewModel {
 
 ## Лучшие практики
 
-### 1. Используйте **view models**
+### 1. Используйте view models
 
 ```java
 // ✅ Хорошо
@@ -278,7 +278,7 @@ public Map<String, Object> listUsers() {
 }
 ```
 
-### 3. Используйте **layout templates**
+### 3. Используйте layout templates
 
 ```html
 <!-- ✅ Хорошо -->

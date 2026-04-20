@@ -134,7 +134,7 @@ related: ["quarkus-basics.md", "quarkus-rest.md"]
 
 ## CDI Basics
 
-### **Bean Definition**
+### Bean Definition
 
 ```java
 // Внедрение зависимостей: @ApplicationScoped и @Inject
@@ -156,7 +156,7 @@ public class UserService {
 }
 ```
 
-### **Constructor Injection**
+### Constructor Injection
 
 ```java
 // Бин в контексте приложения (singleton на приложение)
@@ -177,7 +177,7 @@ public class OrderService {
 
 ## Bean Scopes
 
-### **ApplicationScoped**
+### ApplicationScoped
 
 ```java
 // Бин в контексте приложения (singleton на приложение)
@@ -194,7 +194,7 @@ public class ApplicationScopedService {
 }
 ```
 
-### **RequestScoped**
+### RequestScoped
 
 ```java
 import jakarta.enterprise.context.RequestScoped;
@@ -214,7 +214,7 @@ public class RequestScopedService {
 }
 ```
 
-### **Singleton**
+### Singleton
 
 ```java
 import jakarta.inject.Singleton;
@@ -228,7 +228,7 @@ public class SingletonService {
 }
 ```
 
-### **Dependent**
+### Dependent
 
 ```java
 import jakarta.enterprise.context.Dependent;
@@ -244,7 +244,7 @@ public class DependentService {
 
 ## Configuration
 
-### **Type-safe Configuration**
+### Type-safe Configuration
 
 ```java
 import io.quarkus.arc.config.ConfigProperties;
@@ -263,7 +263,7 @@ public class AppConfiguration {
 }
 ```
 
-### **Using Configuration**
+### Using Configuration
 
 ```java
 import jakarta.inject.Inject;
@@ -283,7 +283,7 @@ public class ConfigService {
 
 ## Profiles
 
-### **Profile Configuration**
+### Profile Configuration
 
 **application.properties:**
 
@@ -301,7 +301,7 @@ app.port=8080
 %prod.app.port=8080
 ```
 
-### **Conditional Beans**
+### Conditional Beans
 
 ```java
 import jakarta.enterprise.inject.Produces;
@@ -327,7 +327,7 @@ public class BeanProducer {
 
 ## Лучшие практики
 
-### 1. Используйте **constructor injection**
+### 1. Используйте constructor injection
 
 ```java
 // ✅ Хорошо
@@ -341,7 +341,7 @@ public class Service {
 }
 ```
 
-### 2. Выбирайте правильный **scope**
+### 2. Выбирайте правильный scope
 
 ```java
 // ✅ Хорошо
@@ -349,7 +349,7 @@ public class Service {
 @RequestScoped      // Для request-specific данных
 ```
 
-### 3. Используйте **type-safe configuration**
+### 3. Используйте type-safe configuration
 
 ```java
 // ✅ Хорошо
@@ -361,7 +361,7 @@ public class AppConfig {
 
 ## Bean Producers
 
-### **Producer Methods**
+### Producer Methods
 
 ```java
 import jakarta.enterprise.inject.Produces;
@@ -391,7 +391,7 @@ public class DataSourceProducer {
 }
 ```
 
-### **Producer Fields**
+### Producer Fields
 
 ```java
 import jakarta.enterprise.inject.Produces;
@@ -412,7 +412,7 @@ public class ConfigurationProducer {
 
 ## Qualifiers
 
-### **Custom Qualifiers**
+### Custom Qualifiers
 
 ```java
 import jakarta.inject.Qualifier;
@@ -426,7 +426,7 @@ public @interface Database {
 }
 ```
 
-### **Using Qualifiers**
+### Using Qualifiers
 
 ```java
 import jakarta.inject.Inject;
@@ -447,7 +447,7 @@ public class DatabaseService {
 
 ## Interceptors
 
-### **Interceptor Definition**
+### Interceptor Definition
 
 ```java
 import jakarta.interceptor.Interceptor;
@@ -473,7 +473,7 @@ public class LoggingInterceptor {
 }
 ```
 
-### **Interceptor Binding**
+### Interceptor Binding
 
 ```java
 import jakarta.interceptor.InterceptorBinding;
@@ -488,7 +488,7 @@ public @interface Loggable {
 
 ## Events
 
-### **Event Producer**
+### Event Producer
 
 ```java
 import jakarta.enterprise.event.Event;
@@ -509,7 +509,7 @@ public class UserService {
 }
 ```
 
-### **Event Observer**
+### Event Observer
 
 ```java
 import jakarta.enterprise.event.Observes;
@@ -527,7 +527,7 @@ public class UserEventListener {
 
 ## Configuration Properties
 
-### **Nested Configuration**
+### Nested Configuration
 
 ```java
 import io.quarkus.arc.config.ConfigProperties;
@@ -557,7 +557,7 @@ public class AppConfiguration {
 }
 ```
 
-### **Configuration Mapping**
+### Configuration Mapping
 
 **application.properties:**
 
@@ -574,7 +574,7 @@ app.database.pool.max-size=20
 
 ## Conditional Configuration
 
-### **Profile-based Configuration**
+### Profile-based Configuration
 
 ```java
 import io.quarkus.arc.DefaultBean;
@@ -606,7 +606,7 @@ public class ConditionalProducer {
 
 ## Bean Lifecycle
 
-### **PostConstruct** и **PreDestroy**
+### PostConstruct и PreDestroy
 
 ```java
 import jakarta.annotation.PostConstruct;
@@ -632,7 +632,7 @@ public class LifecycleService {
 
 ## Bean Validation
 
-### **Validation Integration**
+### Validation Integration
 
 ```java
 import jakarta.validation.Valid;
@@ -651,7 +651,7 @@ public class ValidationService {
 
 ## Advanced CDI Features
 
-### **Stereotypes**
+### Stereotypes
 
 **Создание и использование **stereotypes**:**
 
@@ -676,7 +676,7 @@ public class UserService {
 }
 ```
 
-### **Decorators**
+### Decorators
 
 **Создание **decorators** для расширения функциональности:**
 
@@ -706,7 +706,7 @@ public abstract class CachingUserService implements UserService {
 }
 ```
 
-### **Alternatives**
+### Alternatives
 
 **Использование **alternatives** для замены реализации:**
 
@@ -731,7 +731,7 @@ quarkus.arc.selected-alternatives=com.example.MockUserService
 
 ## Configuration Sources
 
-### **Multiple Configuration Files**
+### Multiple Configuration Files
 
 **Использование нескольких файлов конфигурации:**
 
@@ -746,7 +746,7 @@ app.name=My Application
 %prod.app.name=My Application (Prod)
 ```
 
-### **Environment Variables**
+### Environment Variables
 
 **Использование переменных окружения:**
 
@@ -757,7 +757,7 @@ app.database.username=${DB_USERNAME:user}
 app.database.password=${DB_PASSWORD:password}
 ```
 
-### **System Properties**
+### System Properties
 
 **Использование **system properties**:**
 
@@ -767,7 +767,7 @@ java -Dapp.name=MyApp -jar app.jar
 
 ## Build-Time vs Runtime
 
-### **Build-Time Configuration**
+### Build-Time Configuration
 
 **Конфигурация на этапе сборки:**
 
@@ -784,7 +784,7 @@ public class BuildTimeRecorder {
 }
 ```
 
-### **Runtime Configuration**
+### Runtime Configuration
 
 **Конфигурация в **runtime**:**
 
@@ -804,7 +804,7 @@ public class RuntimeConfig {
 
 ## Observers и Async Events
 
-### **Async Event Observers**
+### Async Event Observers
 
 **Асинхронная обработка событий:**
 
@@ -823,7 +823,7 @@ public class AsyncEventObserver {
 }
 ```
 
-### **Conditional Observers**
+### Conditional Observers
 
 **Условные **observers**:**
 
@@ -844,7 +844,7 @@ public class ConditionalObserver {
 
 ## Bean Disposal
 
-### **Disposal Methods**
+### Disposal Methods
 
 **Методы для очистки ресурсов:**
 
@@ -870,7 +870,7 @@ public class ResourceProducer {
 
 ## Interceptor Ordering
 
-### **Interceptor Priority**
+### Interceptor Priority
 
 **Управление порядком выполнения **interceptors**:**
 
@@ -896,7 +896,7 @@ public class TransactionInterceptor {
 
 ## Bean Validation Integration
 
-### **Method Validation**
+### Method Validation
 
 **Валидация параметров и возвращаемых значений:**
 
@@ -921,7 +921,7 @@ public class ValidationService {
 
 ## Configuration Validation
 
-### **Configuration Validation**
+### Configuration Validation
 
 **Валидация конфигурации при старте:**
 
@@ -946,7 +946,7 @@ public class ValidatedConfiguration {
 
 ## Build-Time vs Runtime Optimization
 
-### **Build-Time Processing**
+### Build-Time Processing
 
 **Обработка на этапе сборки:**
 
@@ -964,7 +964,7 @@ public class BuildTimeProcessor {
 }
 ```
 
-### **Runtime Processing**
+### Runtime Processing
 
 **Обработка в **runtime**:**
 
@@ -985,7 +985,7 @@ public class RuntimeProcessor {
 
 ## Bean Validation Integration
 
-### **Method Parameter Validation**
+### Method Parameter Validation
 
 **Валидация параметров методов:**
 
@@ -1007,7 +1007,7 @@ public class ValidatedService {
 }
 ```
 
-### **Return Value Validation**
+### Return Value Validation
 
 **Валидация возвращаемых значений:**
 
@@ -1025,7 +1025,7 @@ public class ReturnValueValidation {
 
 ## Advanced CDI Patterns
 
-### **Decorator Pattern**
+### Decorator Pattern
 
 **Реализация **Decorator pattern**:**
 
@@ -1050,7 +1050,7 @@ public abstract class UserServiceDecorator implements UserService {
 }
 ```
 
-### **Observer Pattern**
+### Observer Pattern
 
 **Реализация **Observer pattern**:**
 
@@ -1073,7 +1073,7 @@ public class EventObserver {
 }
 ```
 
-### **Strategy Pattern with CDI**
+### Strategy Pattern with CDI
 
 **Реализация **Strategy pattern**:**
 
@@ -1104,7 +1104,7 @@ public class PaymentService {
 
 ## Configuration Management
 
-### **Dynamic Configuration**
+### Dynamic Configuration
 
 **Динамическая конфигурация:**
 
@@ -1125,7 +1125,7 @@ public class DynamicConfigService {
 }
 ```
 
-### **Configuration Validation**
+### Configuration Validation
 
 **Валидация конфигурации:**
 
@@ -1145,7 +1145,7 @@ public interface AppConfig {
 
 ## Advanced Bean Lifecycle
 
-### **Application Startup Events**
+### Application Startup Events
 
 **События запуска приложения:**
 
@@ -1167,7 +1167,7 @@ public class StartupListener {
 }
 ```
 
-### **Bean Initialization Order**
+### Bean Initialization Order
 
 **Порядок инициализации бинов:**
 
@@ -1187,7 +1187,7 @@ public class LowPriorityService {
 
 ## Configuration Patterns
 
-### **Environment-Specific Configuration**
+### Environment-Specific Configuration
 
 **Конфигурация для разных окружений:**
 
@@ -1204,7 +1204,7 @@ app.name=My App (Production)
 app.debug=false
 ```
 
-### **Configuration Reload**
+### Configuration Reload
 
 **Перезагрузка конфигурации:**
 
@@ -1228,7 +1228,7 @@ public class ConfigReloadService {
 
 ## Bean Validation Integration
 
-### **Method Parameter Validation**
+### Method Parameter Validation
 
 **Валидация параметров методов:**
 
@@ -1244,7 +1244,7 @@ public class ValidatedService {
 }
 ```
 
-### **Return Value Validation**
+### Return Value Validation
 
 **Валидация возвращаемых значений:**
 
@@ -1261,7 +1261,7 @@ public class ValidatedReturnService {
 
 ## Build-Time Optimization
 
-### **Build Steps**
+### Build Steps
 
 **Шаги сборки:**
 
@@ -1273,7 +1273,7 @@ public void buildStep(BuildProducer<AdditionalBeanBuildItem> producer) {
 }
 ```
 
-### **Native Image Configuration**
+### Native Image Configuration
 
 **Конфигурация для **native image**:**
 

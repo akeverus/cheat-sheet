@@ -12,7 +12,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
-# Go: **Generics**
+# Go: Generics
 
 ## Полезные ссылки
 
@@ -69,25 +69,25 @@ updated: "2026-02-06"
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Generics**
+## Введение в Generics
 
-**Generics** (**обобщения**) были добавлены в `Go 1.18` и позволяют писать код, который работает с различными типами данных, сохраняя типобезопасность.
+**Generics** (обобщения) были добавлены в `Go 1.18` и позволяют писать код, который работает с различными типами данных, сохраняя типобезопасность.
 
-### Преимущества **Generics**
+### Преимущества Generics
 
 1. **Типобезопасность** — проверка типов на этапе компиляции
 2. **Переиспользование кода** — один код для различных типов
 3. **Производительность** — нет накладных расходов **runtime**
 4. **Читаемость** — более выразительный код
 
-### Когда использовать **Generics**
+### Когда использовать Generics
 
 **Generics** полезны для:**
 - Функций, работающих с различными типами
-- Структур данных (**списки, стеки, очереди**)
+- Структур данных (списки, стеки, очереди)
 - Алгоритмов, работающих с различными типами
 
-## **Type Parameters**
+## Type Parameters
 
 **Type Parameters** позволяют определять функции и типы, работающие с различными типами.
 
@@ -105,7 +105,7 @@ Print("hello")   // string
 Print(3.14)      // float64
 ```
 
-### Функции с несколькими **type parameters**
+### Функции с несколькими type parameters
 
 ```go
 func Swap[T, U any](a T, b U) (U, T) {
@@ -117,7 +117,7 @@ x, y := Swap(1, "hello")
 // x = "hello", y = 1
 ```
 
-### Типы с **type parameters**
+### Типы с type parameters
 
 ```go
 // Стек с type parameter
@@ -144,11 +144,11 @@ func (s *Stack[T]) Pop() (T, bool) {
 }
 ```
 
-## **Constraints**
+## Constraints
 
 **Constraints** ограничивают типы, которые могут быть использованы в качестве **type parameters**.
 
-### Встроенные **constraints**
+### Встроенные constraints
 
 ```go
 // any - любой тип (эквивалент interface{})
@@ -167,7 +167,7 @@ func Find[T comparable](slice []T, value T) int {
 }
 ```
 
-### Кастомные **constraints**
+### Кастомные constraints
 
 ```go
 // Определение constraint
@@ -187,7 +187,7 @@ func Sum[T Number](numbers []T) T {
 }
 ```
 
-### **Constraints** с методами
+### Constraints с методами
 
 ```go
 // Constraint с методами
@@ -200,7 +200,7 @@ func PrintString[T Stringer](value T) {
 }
 ```
 
-### Комбинированные **constraints**
+### Комбинированные constraints
 
 ```go
 // Constraint с типами и методами
@@ -214,7 +214,7 @@ func FormatNumber[T Numeric](value T) string {
 }
 ```
 
-## **Type Inference**
+## Type Inference
 
 **Type Inference** позволяет компилятору автоматически определять типы.
 
@@ -552,7 +552,7 @@ func DistinctBy[T any, K comparable](slice []T, key func(T) K) []T {
 }
 ```
 
-### Обобщенные структуры данных: **Set**
+### Обобщенные структуры данных: Set
 
 ```go
 type Set[T comparable] struct {
@@ -609,7 +609,7 @@ func (s *Set[T]) Intersection(other *Set[T]) *Set[T] {
 }
 ```
 
-### Обобщенные структуры данных: **Heap**
+### Обобщенные структуры данных: Heap
 
 ```go
 type Heap[T any] struct {
@@ -680,7 +680,7 @@ func (h *Heap[T]) down(i int) {
 }
 ```
 
-### Обобщенные структуры данных: **Linked List**
+### Обобщенные структуры данных: Linked List
 
 ```go
 type Node[T any] struct {
@@ -753,7 +753,7 @@ func (l *LinkedList[T]) Remove(index int) bool {
 }
 ```
 
-### Обобщенные структуры данных: **Tree**
+### Обобщенные структуры данных: Tree
 
 ```go
 type TreeNode[T any] struct {
@@ -944,7 +944,7 @@ func (r *InMemoryRepository[T, ID]) Delete(id ID) error {
 }
 ```
 
-### Практические примеры: **Generic** функциональные утилиты
+### Практические примеры: Generic функциональные утилиты
 
 ```go
 // Map для преобразования элементов
@@ -1008,7 +1008,7 @@ func Any[T any](slice []T, fn func(T) bool) bool {
 }
 ```
 
-### Практические примеры: **Generic** деревья
+### Практические примеры: Generic деревья
 
 ```go
 type TreeNode[T comparable] struct {
@@ -1068,7 +1068,7 @@ func (tn *TreeNode[T]) Traverse(fn func(T)) {
 }
 ```
 
-### Практические примеры: **Generic** графы
+### Практические примеры: Generic графы
 
 ```go
 type Graph[T comparable] struct {
@@ -1144,7 +1144,7 @@ func (g *Graph[T]) dfsHelper(node T, visit func(T), visited map[T]bool) {
 }
 ```
 
-### Практические примеры: **Generic** очереди с приоритетами
+### Практические примеры: Generic очереди с приоритетами
 
 ```go
 import "container/heap"
@@ -1219,7 +1219,7 @@ func (pq *PriorityQueue[T]) Dequeue() (T, bool) {
 }
 ```
 
-### Практические примеры: **Generic** кэш
+### Практические примеры: Generic кэш
 
 ```go
 type Cache[K comparable, V any] struct {
@@ -1280,7 +1280,7 @@ func (c *Cache[K, V]) Size() int {
 }
 ```
 
-### Практические примеры: **Generic** функциональные опции
+### Практические примеры: Generic функциональные опции
 
 ```go
 type Option[T any] func(*T)
@@ -1339,7 +1339,7 @@ config := NewConfig(
 14. **Документируйте generic функции** — объясняйте использование **generics**
 15. **Тестируйте производительность** — убедитесь, что **generics** не снижают производительность
 
-### Практические примеры: **Generic** структуры данных
+### Практические примеры: Generic структуры данных
 
 ```go
 // Generic Stack
@@ -1381,7 +1381,7 @@ func (s *Stack[T]) Size() int {
 }
 ```
 
-### Практические примеры: **Generic** алгоритмы
+### Практические примеры: Generic алгоритмы
 
 ```go
 // Generic сортировка с пользовательской функцией сравнения

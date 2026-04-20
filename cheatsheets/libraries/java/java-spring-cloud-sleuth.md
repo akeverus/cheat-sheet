@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Spring Cloud Sleuth: **Distributed Tracing** для **Spring**
+# Spring Cloud Sleuth: Distributed Tracing для Spring
 
 **Комплексное руководство по использованию `Spring `Cloud` Sleuth` для distributed tracing в `Spring Boot` приложениях с интеграцией `OpenTelemetry`.**
 
@@ -77,11 +77,11 @@ updated: "2026-02-11"
   - [Когда использовать Spring Cloud Sleuth](#когда-использовать-spring-cloud-sleuth)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **Spring Cloud Sleuth**
+## Введение в Spring Cloud Sleuth
 
 **Spring `Cloud` Sleuth** — это библиотека для **distributed tracing** в **Spring Boot** приложениях. Она автоматически добавляет **trace** и **span** `ID` к логи, **HTTP** запросам и сообщениям, обеспечивая **traceability** в микросервисных архитектурах.
 
-### Почему **Spring Cloud Sleuth**?
+### Почему Spring Cloud Sleuth?
 
 **Spring Cloud Sleuth** предлагает множество преимуществ:**
 
@@ -94,7 +94,7 @@ updated: "2026-02-11"
 7. **Reactive support** — Поддержка **WebFlux** и **Reactor**
 8. **Baggage propagation** — Передача кастомных данных
 
-### Как работает **Sleuth**?
+### Как работает Sleuth?
 
 **Sleuth** автоматически:**
 - Генерирует **trace** `ID` для входящих запросов
@@ -114,9 +114,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимость **Maven** для **Spring Cloud Sleuth** (**distributed tracing**).
+Зависимость **Maven** для **Spring Cloud Sleuth** (distributed tracing).
 
 ```xml
 <dependency>
@@ -140,7 +140,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -173,7 +173,7 @@ management:
       probability: 1.0
 ```
 
-### Конфигурация **sampling**
+### Конфигурация sampling
 
 ```java
 @Configuration
@@ -215,9 +215,9 @@ public class TracingConfiguration {
 }
 ```
 
-## Основы **Tracing**
+## Основы Tracing
 
-### Автоматическое **tracing**
+### Автоматическое tracing
 
 ```java
 /
@@ -326,7 +326,7 @@ public class UserService {
 }
 ```
 
-### Ручное управление **span**
+### Ручное управление span
 
 ```java
 @Service
@@ -411,7 +411,7 @@ public class ManualTracingService {
 }
 ```
 
-### Логи с **trace** `ID`
+### Логи с trace `ID`
 
 ```java
 @RestController
@@ -473,9 +473,9 @@ public class DebugController {
 }
 ```
 
-## Интеграция с **Spring** компонентами
+## Интеграция с Spring компонентами
 
-### **Web MVC** интеграция
+### Web MVC интеграция
 
 ```java
 @Configuration
@@ -530,7 +530,7 @@ public class TracingInterceptor implements HandlerInterceptor {
 }
 ```
 
-### **Data JPA** интеграция
+### Data JPA интеграция
 
 ```java
 @Repository
@@ -633,7 +633,7 @@ public class TracingUserRepository {
 }
 ```
 
-### **Spring Cloud Stream** интеграция
+### Spring Cloud Stream интеграция
 
 ```java
 @Configuration
@@ -691,7 +691,7 @@ public class MessagingTracingConfiguration {
 
 ## Анотационная конфигурация
 
-### @**NewSpan**
+### @NewSpan
 
 ```java
 @Service
@@ -876,7 +876,7 @@ public class CustomAnnotatedService {
 
 ## Распространение контекста
 
-### **Baggage propagation**
+### Baggage propagation
 
 ```java
 @Configuration
@@ -993,7 +993,7 @@ public class TransferService {
 }
 ```
 
-### **HTTP headers propagation**
+### HTTP headers propagation
 
 ```java
 @Configuration
@@ -1109,7 +1109,7 @@ public class TracingWebClientFilter implements ExchangeFilterFunction {
 
 ## Интеграция с внешними системами
 
-### **Zipkin**
+### Zipkin
 
 ```yaml
 # application.yml
@@ -1133,7 +1133,7 @@ management:
       endpoint: http://localhost:9411/api/v2/spans
 ```
 
-### **Jaeger**
+### Jaeger
 
 ```yaml
 # application.yml
@@ -1156,7 +1156,7 @@ otel:
     exporter: jaeger
 ```
 
-### **OpenTelemetry Collector**
+### OpenTelemetry Collector
 
 ```yaml
 # application.yml
@@ -1271,7 +1271,7 @@ public class CustomMetricsFilter implements MeterFilter {
 
 ## Мониторинг и отладка
 
-### **Tracing endpoint**
+### Tracing endpoint
 
 ```java
 @RestController
@@ -1350,7 +1350,7 @@ public class TracingEndpointController {
 }
 ```
 
-### **Health indicators**
+### Health indicators
 
 ```java
 @Component
@@ -1478,9 +1478,9 @@ public class TracingDebugAspect {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Правильная конфигурация **sampling**
+### 1. Правильная конфигурация sampling
 
 ```java
 // ✅ Хорошо - адаптивное sampling
@@ -1618,7 +1618,7 @@ public class BadSamplingConfiguration {
 }
 ```
 
-### 2. Правильное именование **span**
+### 2. Правильное именование span
 
 ```java
 // ✅ Хорошо - последовательное именование
@@ -2321,7 +2321,7 @@ public class BadPerformanceTracing {
 
 **Spring Cloud Sleuth** — это библиотека для **distributed tracing** в **Spring Boot** приложениях, которая значительно упрощает **observability** микросервисных систем.
 
-### Преимущества **Spring Cloud Sleuth**
+### Преимущества Spring Cloud Sleuth
 
 1. **Автоматическая инструментация** — Работает **out-`of-the`-box** с **Spring** компонентами
 2. **Spring `Boot` интеграция** — Простая конфигурация через **properties**
@@ -2342,7 +2342,7 @@ public class BadPerformanceTracing {
 6. **Custom `Span` паттерн** — Ручное создание **span**
 7. **Baggage `Propagation` паттерн** — Передача контекста
 
-### Когда использовать **Spring Cloud Sleuth**
+### Когда использовать Spring Cloud Sleuth
 
 **Рекомендуется:**
 - Микросервисная архитектура

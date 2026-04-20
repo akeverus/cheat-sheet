@@ -32,8 +32,8 @@ updated: "2026-02-11"
   - [Coroutine Builders](#coroutine-builders)
   - [Job и управление жизненным циклом](#job-и-управление-жизненным-циклом)
 - [Продвинутые возможности](#продвинутые-возможности)
-  - [Flow (**реактивные потоки**)](#flow-реактивные-потоки)
-  - [Channel (**коммуникация между корутинами**)](#channel-коммуникация-между-корутинами)
+  - [Flow (реактивные потоки)](#flow-реактивные-потоки)
+  - [Channel (коммуникация между корутинами)](#channel-коммуникация-между-корутинами)
   - [Exception Handling](#exception-handling)
 - [Context и Dispatchers](#context-и-dispatchers)
   - [Dispatchers](#dispatchers)
@@ -42,7 +42,7 @@ updated: "2026-02-11"
   - [Channel selection](#channel-selection)
   - [Complex select expressions](#complex-select-expressions)
 - [Shared Mutable State](#shared-mutable-state)
-  - [Mutex (**взаимное исключение**)](#mutex-взаимное-исключение)
+  - [Mutex (взаимное исключение)](#mutex-взаимное-исключение)
   - [Semaphore](#semaphore)
   - [Actor pattern](#actor-pattern)
 - [Testing с coroutines](#testing-с-coroutines)
@@ -79,7 +79,7 @@ updated: "2026-02-11"
 
 ### Создание и запуск корутин
 
-Пример создания и запуска корутин в **kotlinx-coroutines** (**Kotlin**).
+Пример создания и запуска корутин в **kotlinx-coroutines** (Kotlin).
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -131,7 +131,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Coroutine Builders**
+### Coroutine Builders
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.produce
@@ -189,7 +189,7 @@ suspend fun main() = coroutineScope {
 }
 ```
 
-### **Job** и управление жизненным циклом
+### Job и управление жизненным циклом
 ```kotlin
 import kotlinx.coroutines.*
 
@@ -227,7 +227,7 @@ fun main() = runBlocking {
 
 ## Продвинутые возможности
 
-### **Flow** (**реактивные потоки**)
+### Flow (реактивные потоки)
 ```kotlin
 import kotlinx.coroutines.flow.*
 
@@ -300,7 +300,7 @@ fun advancedFlow(): Flow<String> = flow {
 // Итоговый Flow: "Before a", "a", "After a", "Before c", "c", "After c"
 ```
 
-### **Channel** (**коммуникация между корутинами**)
+### Channel (коммуникация между корутинами)
 ```kotlin
 import kotlinx.coroutines.channels.*
 
@@ -347,7 +347,7 @@ suspend fun bufferedChannel() = coroutineScope {
 }
 ```
 
-### **Exception Handling**
+### Exception Handling
 ```kotlin
 import kotlinx.coroutines.*
 
@@ -404,9 +404,9 @@ suspend fun cleanupExample() = coroutineScope {
 }
 ```
 
-## **Context** и **Dispatchers**
+## Context и Dispatchers
 
-### **Dispatchers**
+### Dispatchers
 ```kotlin
 import kotlinx.coroutines.*
 
@@ -445,7 +445,7 @@ suspend fun networkCall() {
 }
 ```
 
-### **Context manipulation**
+### Context manipulation
 ```kotlin
 import kotlinx.coroutines.*
 
@@ -479,9 +479,9 @@ suspend fun saveProcessedData(data: String) {
 }
 ```
 
-## **Select Expression**
+## Select Expression
 
-### **Channel selection**
+### Channel selection
 ```kotlin
 import kotlinx.coroutines.selects.*
 
@@ -511,7 +511,7 @@ suspend fun selectExample() = coroutineScope {
 }
 ```
 
-### **Complex select expressions**
+### Complex select expressions
 ```kotlin
 suspend fun complexSelect() = coroutineScope {
     val channels = List(3) { Channel<Int>() }
@@ -538,9 +538,9 @@ suspend fun complexSelect() = coroutineScope {
 }
 ```
 
-## **Shared Mutable State**
+## Shared Mutable State
 
-### **Mutex** (**взаимное исключение**)
+### Mutex (взаимное исключение)
 ```kotlin
 import kotlinx.coroutines.sync.*
 
@@ -563,7 +563,7 @@ suspend fun main() = coroutineScope {
 }
 ```
 
-### **Semaphore**
+### Semaphore
 ```kotlin
 import kotlinx.coroutines.sync.*
 
@@ -587,7 +587,7 @@ suspend fun main() = coroutineScope {
 }
 ```
 
-### **Actor pattern**
+### Actor pattern
 ```kotlin
 import kotlinx.coroutines.channels.*
 
@@ -623,9 +623,9 @@ suspend fun main() = coroutineScope {
 }
 ```
 
-## **Testing** с **coroutines**
+## Testing с coroutines
 
-### **Testing suspend functions**
+### Testing suspend functions
 ```kotlin
 import kotlinx.coroutines.test.*
 import kotlin.test.*
@@ -656,7 +656,7 @@ class UserServiceTest {
 }
 ```
 
-### **Testing Flow**
+### Testing Flow
 ```kotlin
 import app.cash.turbine.test
 
@@ -686,7 +686,7 @@ class DataRepositoryTest {
 }
 ```
 
-### **Mocking coroutines**
+### Mocking coroutines
 ```kotlin
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -721,9 +721,9 @@ class ApiServiceTest {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Service Layer** с **coroutines**
+### Service Layer с coroutines
 ```kotlin
 @Service
 class UserService(
@@ -787,7 +787,7 @@ class UserService(
 }
 ```
 
-### **Controller** с **coroutines**
+### Controller с coroutines
 ```kotlin
 @RestController
 @RequestMapping("/api/users")
@@ -839,7 +839,7 @@ class UserController(
 }
 ```
 
-### **Repository** с **coroutines**
+### Repository с coroutines
 ```kotlin
 @Repository
 class UserRepositoryImpl(
@@ -906,9 +906,9 @@ class UserRepositoryImpl(
 }
 ```
 
-## **Reactive Programming Integration**
+## Reactive Programming Integration
 
-### **Flow** с **Reactor**
+### Flow с Reactor
 ```kotlin
 import reactor.core.publisher.*
 
@@ -933,7 +933,7 @@ suspend fun reactorExample() {
 }
 ```
 
-### **RxJava Integration**
+### RxJava Integration
 ```kotlin
 import io.reactivex.rxjava3.core.*
 
@@ -959,9 +959,9 @@ suspend fun rxJavaExample() {
 }
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Structured Concurrency**
+### Structured Concurrency
 ```kotlin
 suspend fun processBatch(items: List<Item>) = coroutineScope {
     // Все дочерние корутины завершаются при завершении scope
@@ -987,7 +987,7 @@ suspend fun safeBatchProcessing(items: List<Item>) = supervisorScope {
 }
 ```
 
-### **Resource Management**
+### Resource Management
 ```kotlin
 class DatabaseConnection : AutoCloseable {
     suspend fun connect() { /* ... */ }
@@ -1013,7 +1013,7 @@ suspend fun useDatabase(): List<User> {
 }
 ```
 
-### **Memory-efficient Flow Processing**
+### Memory-efficient Flow Processing
 ```kotlin
 fun processLargeFile(file: File): Flow<String> = flow {
     file.useLines { lines ->
@@ -1039,7 +1039,7 @@ suspend fun efficientProcessing() {
 
 ## Лучшие практики
 
-### **Error Handling Patterns**
+### Error Handling Patterns
 ```kotlin
 // Result pattern with coroutines
 sealed class Result<out T> {
@@ -1066,7 +1066,7 @@ suspend fun handleResult() {
 }
 ```
 
-### **Cancellation Best Practices**
+### Cancellation Best Practices
 ```kotlin
 class CancellableService {
 
@@ -1094,7 +1094,7 @@ class CancellableService {
 }
 ```
 
-### **Testing Patterns**
+### Testing Patterns
 ```kotlin
 class CoroutineTestingPatterns {
 
@@ -1139,9 +1139,9 @@ class CoroutineTestingPatterns {
 }
 ```
 
-## **Debugging** и **Troubleshooting**
+## Debugging и Troubleshooting
 
-### **Debugging Coroutines**
+### Debugging Coroutines
 ```kotlin
 suspend fun debugCoroutines() = coroutineScope {
     val job = launch(CoroutineName("DebugJob")) {
@@ -1179,7 +1179,7 @@ suspend fun robustCoroutine() {
 }
 ```
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 object CoroutineTroubleshooting {
 
@@ -1215,9 +1215,9 @@ object CoroutineTroubleshooting {
 }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From Callbacks** to **Coroutines**
+### From Callbacks to Coroutines
 ```kotlin
 // Callback-based code
 fun fetchUser(id: Int, callback: (User?, Throwable?) -> Unit) {
@@ -1246,7 +1246,7 @@ suspend fun loadUser() {
 }
 ```
 
-### **From RxJava** to **Coroutines Flow**
+### From RxJava to Coroutines Flow
 ```kotlin
 // RxJava
 fun getUsers(): Observable<User> = userApi.getUsers()
@@ -1271,7 +1271,7 @@ suspend fun collectUsers() {
 }
 ```
 
-### **From Threading** to **Coroutines**
+### From Threading to Coroutines
 ```kotlin
 // Thread-based code
 fun processInBackground(callback: (Result) -> Unit) {
@@ -1293,9 +1293,9 @@ suspend fun main() {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Kotlin** 1.7+ **Features**
+### Kotlin 1.7+ Features
 ```kotlin
 // Auto-closeable coroutines (предполагаемый API)
 suspend fun useResource(): String = autoCloseableResource { resource ->
@@ -1320,7 +1320,7 @@ suspend fun advancedFlowOperations() {
 }
 ```
 
-### **SharedFlow** и **StateFlow**
+### SharedFlow и StateFlow
 ```kotlin
 // SharedFlow для broadcasting
 class EventBus {
@@ -1352,6 +1352,6 @@ class UserPreferences {
 
 ## См. также
 - [[kotlin-basics|Kotlin Basics]] — Основы **Kotlin**
-- [Паттерны](../../patterns/README.md) — Реактивные паттерны
+- [[README|Паттерны]] — Реактивные паттерны
 - [[java-concurrency-basics|Java Concurrency]] — Асинхронное программирование в **Java**
 

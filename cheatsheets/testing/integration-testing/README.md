@@ -17,8 +17,8 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [REST Assured](rest-assured.md)
-- [WireMock](wiremock.md)
-- [Testcontainers](testcontainers/testcontainers.md)
-- [Contract Testing](contract-testing/contract-testing.md)
-- [Database Testing](database-testing/database-testing.md)
+- [[rest-assured|REST Assured]]
+- [[wiremock]]
+- [[testcontainers]]
+- [[contract-testing|Contract Testing]]
+- [[database-testing|Database Testing]]

@@ -60,7 +60,7 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [Заключение](#заключение)
 
-## Что такое **Decorator**?
+## Что такое Decorator?
 
 **Decorator** — это структурный паттерн проектирования, который позволяет динамически добавлять новые обязанности объектам. Он выступает прозрачной оболочкой для объекта, добавляя поведение без изменения его интерфейса.
 
@@ -102,7 +102,7 @@ BorderedTextView bordered = new BorderedDecorator(scrollable);
 // Или: new BorderedDecorator(new ScrollableDecorator(new TextView()))
 ```
 
-## Когда использовать **Decorator**?
+## Когда использовать Decorator?
 
 ### Подходящие сценарии
 
@@ -237,7 +237,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Decorator**
+### Классический Decorator
 
 ```java
 // Component
@@ -500,7 +500,7 @@ println(tree.decorate())  // "Christmas tree with Bubble Lights with Garlands"
 
 ## Продвинутые реализации
 
-### 1. **Generic Decorator**
+### 1. Generic Decorator
 
 ```java
 // Обобщенный декоратор
@@ -610,7 +610,7 @@ public class GenericDecoratorDemo {
 }
 ```
 
-### 2. **Conditional Decorator**
+### 2. Conditional Decorator
 
 ```java
 // Декоратор с условиями применения
@@ -725,7 +725,7 @@ public class ConditionalDecoratorDemo {
 }
 ```
 
-### 3. **Dynamic Decorator**
+### 3. Dynamic Decorator
 
 ```java
 // Динамический декоратор с reflection
@@ -845,7 +845,7 @@ public class DynamicDecoratorDemo {
 
 ## Примеры использования
 
-### 1. **Spring AOP-like Decorator**
+### 1. Spring AOP-like Decorator
 
 ```java
 @Service
@@ -940,7 +940,7 @@ public class LoggingDecoratorExample {
 }
 ```
 
-### 2. **Database Connection Decorator**
+### 2. Database Connection Decorator
 
 ```java
 @Configuration
@@ -1388,7 +1388,7 @@ public class DatabaseDecoratorConfig {
 }
 ```
 
-### 3. **HTTP Client Decorator**
+### 3. HTTP Client Decorator
 
 ```java
 @Service
@@ -1565,7 +1565,7 @@ public class HttpClientDecoratorExample {
 
 ## Лучшие практики
 
-### 1. Когда использовать **Decorator**
+### 1. Когда использовать Decorator
 
 ```java
 public class DecoratorGuidelines {

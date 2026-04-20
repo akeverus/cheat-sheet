@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Apache ActiveMQ**
+# Apache ActiveMQ
 
 **Apache ActiveMQ** — это популярный **open-source message broker**, реализующий **JMS** (`Java Message Service`) спецификацию и поддерживающий множество протоколов обмена сообщениями. **ActiveMQ** предоставляет надежную, масштабируемую и высокопроизводительную платформу для асинхронной коммуникации между приложениями.
 
@@ -51,9 +51,9 @@ updated: "2026-02-11"
   - [**Transport Connectors**](#transport-connectors)
   - [**Failover Transport**](#failover-transport)
   - [**Network Bridges**](#network-bridges)
-- [**Destinations** (**Очереди и Топики**)](#destinations-очереди-и-топики)
-  - [**Queues** (**Очереди**)](#queues-очереди)
-  - [**Topics** (**Топики**)](#topics-топики)
+- [**Destinations** (Очереди и Топики)](#destinations-очереди-и-топики)
+  - [**Queues** (Очереди)](#queues-очереди)
+  - [**Topics** (Топики)](#topics-топики)
   - [**Virtual Destinations**](#virtual-destinations)
 - [**Message Types**](#message-types)
   - [**Text Messages**](#text-messages)
@@ -120,9 +120,9 @@ updated: "2026-02-11"
   - [**Performance Tuning**](#performance-tuning)
 - [Лучшие практики](#лучшие-практики)
 
-## Основы **ActiveMQ**
+## Основы ActiveMQ
 
-### Что такое **ActiveMQ**
+### Что такое ActiveMQ
 ```xml
 <!-- ActiveMQ - Message Broker для асинхронной коммуникации -->
 <beans xmlns="http://www.springframework.org/schema/beans">
@@ -145,7 +145,7 @@ updated: "2026-02-11"
 - **Web Console** — Управление через веб-интерфейс
 - **REST API** — **HTTP** интерфейс для управления
 
-### **Use Cases**
+### Use Cases
 ```yaml
 # Типичные сценарии использования ActiveMQ
 use_cases:
@@ -177,7 +177,7 @@ use_cases:
 
 ## Архитектура и компоненты
 
-### **Core Components**
+### Core Components
 ```text
 # Архитектура ActiveMQ: брокер, очереди, топики и коннекторы
 ActiveMQ Architecture:
@@ -203,7 +203,7 @@ ActiveMQ Architecture:
     └── Browsers                # Просмотр сообщений
 ```
 
-### **Message Flow**
+### Message Flow
 ```java
 // Producer отправляет сообщение
 public class MessageProducer {
@@ -266,7 +266,7 @@ cd apache-activemq-5.17.3
 tail -f data/activemq.log
 ```
 
-### **Docker** установка
+### Docker установка
 ```yaml
 # Docker Compose для ActiveMQ
 version: '3.8'
@@ -295,7 +295,7 @@ networks:
     driver: bridge
 ```
 
-### Конфигурация **activemq.xml**
+### Конфигурация activemq.xml
 ```xml
 <!-- Основная конфигурация ActiveMQ -->
 <beans xmlns="http://www.springframework.org/schema/beans">
@@ -351,7 +351,7 @@ networks:
 
 ## Протоколы и транспорт
 
-### **Transport Connectors**
+### Transport Connectors
 ```xml
 <!-- Различные транспортные коннекторы -->
 <transportConnectors>
@@ -378,7 +378,7 @@ networks:
 </transportConnectors>
 ```
 
-### **Failover Transport**
+### Failover Transport
 ```java
 // Failover для высокой доступности
 String failoverUrl = "failover:(tcp://broker1:61616,tcp://broker2:61616,tcp://broker3:61616)" +
@@ -391,7 +391,7 @@ ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(failoverUrl);
 Connection connection = factory.createConnection();
 ```
 
-### **Network Bridges**
+### Network Bridges
 ```xml
 <!-- Network Bridges для кластеризации -->
 <networkConnectors>
@@ -408,9 +408,9 @@ Connection connection = factory.createConnection();
 </networkConnectors>
 ```
 
-## **Destinations** (**Очереди и Топики**)
+## Destinations (Очереди и Топики)
 
-### **Queues** (**Очереди**)
+### Queues (Очереди)
 ```java
 // Работа с очередями
 public class QueueExample {
@@ -445,7 +445,7 @@ public class QueueExample {
 }
 ```
 
-### **Topics** (**Топики**)
+### Topics (Топики)
 ```java
 // Работа с топиками (Publish/Subscribe)
 public class TopicExample {
@@ -480,7 +480,7 @@ public class TopicExample {
 }
 ```
 
-### **Virtual Destinations**
+### Virtual Destinations
 ```xml
 <!-- Virtual Destinations для гибкой маршрутизации -->
 <destinationInterceptors>
@@ -505,9 +505,9 @@ public class TopicExample {
 </destinationInterceptors>
 ```
 
-## **Message Types**
+## Message Types
 
-### **Text Messages**
+### Text Messages
 ```java
 // TextMessage - наиболее распространенный тип
 public void sendTextMessage() throws JMSException {
@@ -545,7 +545,7 @@ public void sendTextMessage() throws JMSException {
 }
 ```
 
-### **Object Messages**
+### Object Messages
 ```java
 // ObjectMessage - сериализованные Java объекты
 public void sendObjectMessage() throws JMSException {
@@ -585,7 +585,7 @@ public void receiveObjectMessage() throws JMSException {
 }
 ```
 
-### **Bytes Messages** и **Streams**
+### Bytes Messages и Streams
 ```java
 // BytesMessage для бинарных данных
 public void sendBytesMessage() throws JMSException {
@@ -615,7 +615,7 @@ public void sendBytesMessage() throws JMSException {
 }
 ```
 
-### **Message Properties** и **Headers**
+### Message Properties и Headers
 ```java
 // Расширенные свойства сообщений
 public void sendMessageWithProperties() throws JMSException {
@@ -650,9 +650,9 @@ public void sendMessageWithProperties() throws JMSException {
 }
 ```
 
-## Клиенты и **API**
+## Клиенты и API
 
-### **Java JMS Client**
+### Java JMS Client
 ```java
 // Полный пример JMS клиента
 public class JMSClient {
@@ -723,7 +723,7 @@ public class JMSClient {
 }
 ```
 
-### **Spring Boot Integration**
+### Spring Boot Integration
 ```java
 // Spring Boot с ActiveMQ
 @SpringBootApplication
@@ -776,7 +776,7 @@ public class OrderConsumer {
 }
 ```
 
-### **REST API** для **ActiveMQ**
+### REST API для ActiveMQ
 ```bash
 # Отправка сообщения через REST API
 curl -X POST "http://localhost:8161/api/message/orders.queue?type=queue" \
@@ -803,7 +803,7 @@ curl -X GET "http://localhost:8161/api/jolokia/read/org.apache.activemq:type=Bro
 
 ## Управление и мониторинг
 
-### **Web Console**
+### Web Console
 ```bash
 # Доступ к веб-консоли
 # URL: http://localhost:8161/admin
@@ -817,7 +817,7 @@ curl -X GET "http://localhost:8161/api/jolokia/read/org.apache.activemq:type=Bro
 # - Просматривать статистику
 ```
 
-### **JMX Monitoring**
+### JMX Monitoring
 ```java
 // JMX мониторинг ActiveMQ
 public class ActiveMQMonitor {
@@ -851,7 +851,7 @@ public class ActiveMQMonitor {
 }
 ```
 
-### **Metrics** и **Alerting**
+### Metrics и Alerting
 ```yaml
 # Prometheus metrics для ActiveMQ
 # ActiveMQ экспортирует метрики через JMX
@@ -875,7 +875,7 @@ scrape_configs:
 
 ## Кластеризация и `HA`
 
-### **Master**/**Slave Configuration**
+### Master/Slave Configuration
 ```xml
 <!-- Shared File System Master/Slave -->
 <broker xmlns="http://activemq.apache.org/schema/core" brokerName="master-slave-broker">
@@ -910,7 +910,7 @@ scrape_configs:
 </bean>
 ```
 
-### **Network** of **Brokers**
+### Network of Brokers
 ```xml
 <!-- Network of Brokers для масштабирования -->
 <broker xmlns="http://activemq.apache.org/schema/core" brokerName="broker1">
@@ -939,7 +939,7 @@ scrape_configs:
 </broker>
 ```
 
-### **Load Balancing**
+### Load Balancing
 ```xml
 <!-- Load Balancing с помощью Network Connectors -->
 <networkConnectors>
@@ -959,7 +959,7 @@ scrape_configs:
 
 ## Интеграция с приложениями
 
-### **Spring Integration**
+### Spring Integration
 ```xml
 <!-- Spring Integration с ActiveMQ -->
 <beans xmlns="http://www.springframework.org/schema/beans"
@@ -996,7 +996,7 @@ scrape_configs:
 </beans>
 ```
 
-### **Apache Camel Integration**
+### Apache Camel Integration
 ```java
 // Apache Camel routes с ActiveMQ
 public class CamelRoutes extends RouteBuilder {
@@ -1031,7 +1031,7 @@ public class CamelRoutes extends RouteBuilder {
 }
 ```
 
-### **Microservices Communication**
+### Microservices Communication
 ```java
 // Service Discovery с Eureka
 @Configuration
@@ -1091,7 +1091,7 @@ public class EventConsumer {
 
 ## Решение проблем
 
-### **Common Issues** и **Solutions**
+### Common Issues и Solutions
 ```bash
 # 1. Connection refused
 # Решение: Проверить что ActiveMQ запущен и порт открыт
@@ -1115,7 +1115,7 @@ ACTIVEMQ_OPTS="-Xms1G -Xmx4G"
 jstack $(pgrep java) | grep -A 10 -B 10 "deadlock"
 ```
 
-### **Monitoring Queries**
+### Monitoring Queries
 ```bash
 # JMX queries для диагностики
 # Получить информацию о брокере
@@ -1131,7 +1131,7 @@ curl -s "http://localhost:8161/api/jolokia/read/org.apache.activemq:type=Broker,
 curl -f "http://localhost:8161/api/health" || echo "ActiveMQ is not healthy"
 ```
 
-### **Performance Tuning**
+### Performance Tuning
 ```xml
 <!-- Performance tuning конфигурация -->
 <broker xmlns="http://activemq.apache.org/schema/core" brokerName="tuned-broker">
@@ -1183,5 +1183,5 @@ curl -f "http://localhost:8161/api/health" || echo "ActiveMQ is not healthy"
 - **Выбор destination:** очереди — для балансировки нагрузки и гарантированной доставки одному потребителю; топики — для **broadcast** и **pub**/**sub**; не смешивайте сценарии в одном **destination**.
 - **Persistence и производительность: KahaDB** для большинства сценариев; **JDBC** для кластера и `HA`; отключайте **persistence** для временных сообщений, если допустима потеря.
 - **Кластеризация:** используйте **Network** of **Brokers** или **Master**/**Slave** для `HA`; настройте **failover transport** на клиенте; тестируйте отказ узлов.
-- **Безопасность:** включайте аутентификацию и авторизацию; шифруйте транспорт (**SSL/TLS**); не экспонируйте **broker** в интернет без защиты.
+- **Безопасность:** включайте аутентификацию и авторизацию; шифруйте транспорт (SSL/TLS); не экспонируйте **broker** в интернет без защиты.
 - **Мониторинг:** используйте **Web Console** и **JMX**; отслеживайте глубину очередей, количество потребителей и задержки; настройте алерты на накопление сообщений.

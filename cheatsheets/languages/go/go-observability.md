@@ -68,7 +68,7 @@ updated: "2026-02-06"
 
 ## Метрики
 
-### **Prometheus** метрики
+### Prometheus метрики
 
 ```go
 import (
@@ -137,7 +137,7 @@ func NewCustomMetrics() *CustomMetrics {
 
 ## Трейсинг
 
-### **OpenTelemetry** трейсинг
+### OpenTelemetry трейсинг
 
 ```go
 import (
@@ -205,7 +205,7 @@ func contextualLogging(ctx context.Context) {
 
 ## Мониторинг
 
-### **Health checks**
+### Health checks
 
 ```go
 func healthCheck(w http.ResponseWriter, r *http.Request) {
@@ -232,7 +232,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### **Readiness** и **Liveness**
+### Readiness и Liveness
 
 ```go
 func readinessCheck(w http.ResponseWriter, r *http.Request) {
@@ -250,7 +250,7 @@ func livenessCheck(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Детальная настройка **Prometheus** метрик
+### Детальная настройка Prometheus метрик
 
 ```go
 import (
@@ -299,7 +299,7 @@ var (
 )
 ```
 
-### Практические примеры: **Middleware** для метрик
+### Практические примеры: Middleware для метрик
 
 ```go
 func metricsMiddleware(next http.Handler) http.Handler {
@@ -378,7 +378,7 @@ func (m *BusinessMetrics) RecordOrder(amount float64, duration time.Duration) {
 }
 ```
 
-### Практические примеры: **OpenTelemetry** трейсинг
+### Практические примеры: OpenTelemetry трейсинг
 
 ```go
 import (
@@ -531,7 +531,7 @@ func (l *ContextLogger) LogRequest(ctx context.Context, method, path string, sta
 }
 ```
 
-### Практические примеры: **Health checks** с деталями
+### Практические примеры: Health checks с деталями
 
 ```go
 type HealthChecker interface {
@@ -606,7 +606,7 @@ func (s *HealthService) HealthCheck(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Readiness** и **Liveness probes**
+### Практические примеры: Readiness и Liveness probes
 
 ```go
 type ReadinessProbe struct {
@@ -732,7 +732,7 @@ func (m *OrderMetrics) RecordOrderFailed(reason string) {
 }
 ```
 
-### Практические примеры: Интеграция с **Grafana**
+### Практические примеры: Интеграция с Grafana
 
 ```go
 // Экспорт метрик для Prometheus
@@ -753,7 +753,7 @@ func setupMetrics() {
 //           summary: "High error rate detected"
 ```
 
-### Практические примеры: **Health checks**
+### Практические примеры: Health checks
 
 ```go
 type HealthChecker interface {
@@ -826,7 +826,7 @@ func HealthCheckHandler(registry *HealthRegistry) http.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Distributed tracing** с **OpenTelemetry**
+### Практические примеры: Distributed tracing с OpenTelemetry
 
 ```go
 import (

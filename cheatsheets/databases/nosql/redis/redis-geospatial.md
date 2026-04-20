@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 ---
 
-# **Redis**: Геопространственные данные
+# Redis: Геопространственные данные
 
 ## Полезные ссылки
 
@@ -38,7 +38,7 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [Поиск в радиусе](#поиск-в-радиусе)
   - [**GEORADIUS**](#georadius)
   - [**GEORADIUSBYMEMBER**](#georadiusbymember)
-  - [**GEOSEARCH** (**Redis 6.2+**)](#geosearch-redis-6-2)
+  - [**GEOSEARCH** (Redis 6.2+)](#geosearch-redis-6-2)
 - [Геохэши](#геохэши)
   - [Получение геохэша](#получение-геохэша)
 - [Программное использование](#программное-использование)
@@ -114,7 +114,7 @@ GEODIST cities Palermo Catania ft
 
 ## Поиск в радиусе
 
-### **GEORADIUS**
+### GEORADIUS
 
 ```redis
 # Поиск точек в радиусе от координат
@@ -137,7 +137,7 @@ GEORADIUS cities 15 37 200 km WITHDIST ASC
 GEORADIUS cities 15 37 200 km WITHDIST DESC
 ```
 
-### **GEORADIUSBYMEMBER**
+### GEORADIUSBYMEMBER
 
 ```redis
 # Поиск в радиусе от существующей точки
@@ -150,7 +150,7 @@ GEORADIUSBYMEMBER cities Palermo 200 km WITHCOORD WITHDIST
 GEORADIUSBYMEMBER cities Palermo 200 km COUNT 10
 ```
 
-### **GEOSEARCH** (**Redis 6.2+**)
+### GEOSEARCH (Redis 6.2+)
 
 ```redis
 # Поиск в прямоугольной области
@@ -180,7 +180,7 @@ GEOHASH cities Palermo
 
 ## Программное использование
 
-### **Java** пример
+### Java пример
 
 ```java
 import redis.clients.jedis.GeoCoordinate;
@@ -215,7 +215,7 @@ public class GeoRedisExample {
 ```
 
 
-## **Use Cases**
+## Use Cases
 
 ### Поиск ближайших объектов
 
@@ -291,7 +291,7 @@ public class NearbySearch {
 }
 ```
 
-### **Delivery Route Optimization**
+### Delivery Route Optimization
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -356,15 +356,15 @@ public class DeliveryOptimizer {
 
 ## Лучшие практики
 
-1. **Используйте правильные единицы измерения** (**km, mi, m, ft**)
+1. **Используйте правильные единицы измерения** (km, mi, m, ft)
 2. **Ограничивайте результаты** через **COUNT** для производительности
 3. **Используйте сортировку** для получения ближайших объектов
 4. **Кэшируйте результаты** для часто запрашиваемых местоположений
 5. **Мониторьте производительность** геопространственных запросов
 
-## **Advanced Geospatial Operations**
+## Advanced Geospatial Operations
 
-### **Complex Queries**
+### Complex Queries
 
 ```redis
 # Поиск с фильтрацией по дополнительным данным
@@ -378,7 +378,7 @@ GEORADIUS restaurants 15 37 5 km
 ZRANGEBYSCORE restaurant_ratings 4 +inf
 ```
 
-### **Geospatial Indexing**
+### Geospatial Indexing
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -422,7 +422,7 @@ public class GeospatialIndex {
 }
 ```
 
-### **Performance Optimization**
+### Performance Optimization
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -477,9 +477,9 @@ public class OptimizedGeoSearch {
 }
 ```
 
-### **Real-World Use Cases**
+### Real-World Use Cases
 
-#### **Location-Based Services**
+#### Location-Based Services
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -552,7 +552,7 @@ public class LocationService {
 }
 ```
 
-#### **Delivery Optimization**
+#### Delivery Optimization
 
 ```java
 import redis.clients.jedis.Jedis;

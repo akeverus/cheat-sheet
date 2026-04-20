@@ -18,10 +18,10 @@ updated: "2026-02-11"
 > Файл **сознательно сжат**: здесь только то, что нужно разработчику в 80 % случаев.
 > Детали — в соседних документах:
 >
-> - [Web Security](web-security.md) — `OWASP Top 10`, `XSS`, `CSRF`, `SQL Injection`
-> - [API Security](api-security.md) — `JWT`, `API Keys`, `Rate Limiting`
-> - [Secrets Management](../data/secrets-management.md) — `Vault`, `KMS`, `Kubernetes Secrets`
-> - [Security Testing](../testing/security-testing.md) — `SAST`, `DAST`, `SCA`, пентесты
+> - [[web-security|Web Security]] — `OWASP Top 10`, `XSS`, `CSRF`, `SQL Injection`
+> - [[api-security|API Security]] — `JWT`, `API Keys`, `Rate Limiting`
+> - [[secrets-management|Secrets Management]] — `Vault`, `KMS`, `Kubernetes Secrets`
+> - [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA`, пентесты
 
 
 ## Полезные ссылки

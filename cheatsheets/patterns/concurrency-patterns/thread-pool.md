@@ -68,7 +68,7 @@ updated: "2026-02-11"
 
 **Когда применять:** серверные запросы, пакетная обработка, параллельные вычисления.
 
-## Что такое **Thread Pool**?
+## Что такое Thread Pool?
 
 **Thread Pool** — это паттерн, который управляет пулом потоков для выполнения задач. Вместо создания нового потока для каждой задачи, поток берется из пула, выполняет задачу и возвращается обратно в пул для повторного использования.
 
@@ -109,7 +109,7 @@ public class GoodApproach {
 }
 ```
 
-## Когда использовать **Thread Pool**?
+## Когда использовать Thread Pool?
 
 ### Подходящие сценарии
 
@@ -217,7 +217,7 @@ flowchart LR
 
 ## Реализация на Java
 
-### Базовый **Thread Pool**
+### Базовый Thread Pool
 
 ```java
 import java.util.concurrent.*;
@@ -342,7 +342,7 @@ public class ThreadPoolExample {
 }
 ```
 
-### Использование **ExecutorService**
+### Использование ExecutorService
 
 ```java
 // Использование стандартного ExecutorService
@@ -433,7 +433,7 @@ public class ExecutorServiceExample {
 }
 ```
 
-### Кастомный **ThreadPoolExecutor**
+### Кастомный ThreadPoolExecutor
 
 ```java
 // Продвинутая реализация с кастомными настройками
@@ -548,7 +548,7 @@ public class CustomPoolExample {
 
 ## Продвинутые реализации
 
-### 1. **Work Stealing Pool**
+### 1. Work Stealing Pool
 
 ```java
 import java.util.concurrent.*;
@@ -649,7 +649,7 @@ public class WorkStealingExample {
 }
 ```
 
-### 2. **Priority Thread Pool**
+### 2. Priority Thread Pool
 
 ```java
 // Thread Pool с приоритетами задач
@@ -762,7 +762,7 @@ public class PriorityPoolExample {
 }
 ```
 
-### 3. **Adaptive Thread Pool**
+### 3. Adaptive Thread Pool
 
 ```java
 // Адаптивный пул потоков, который сам подстраивает размер
@@ -884,7 +884,7 @@ public class AdaptiveThreadPool {
 
 ## Примеры использования
 
-### 1. **Web Server Request Processing**
+### 1. Web Server Request Processing
 
 ```java
 @Service
@@ -967,7 +967,7 @@ public class WebRequestProcessor {
 }
 ```
 
-### 2. **Batch File Processor**
+### 2. Batch File Processor
 
 ```java
 @Service
@@ -1051,7 +1051,7 @@ public class BatchFileProcessor {
 }
 ```
 
-### 3. **Image Processing Pipeline**
+### 3. Image Processing Pipeline
 
 ```java
 @Service

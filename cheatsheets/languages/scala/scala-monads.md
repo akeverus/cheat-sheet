@@ -69,9 +69,9 @@ updated: "2026-02-11"
 2. **flatMap/bind** — композиция **Monadic** вычислений
 3. **map** — применение функции к значению внутри **Monad**
 
-## Основы **Monads**
+## Основы Monads
 
-### Определение **Monad**
+### Определение Monad
 
 ```scala
 trait Monad[M[_]] {
@@ -83,15 +83,15 @@ trait Monad[M[_]] {
 }
 ```
 
-### Законы **Monads**
+### Законы Monads
 
 **Monad** должна удовлетворять трем законам:**
 
 1. **Left identity**: `**pure**(a).**flatMap**(f) == f(a)`
-2. **Right identity**: `**m.`flatMap`(**pure**) == m`
+2. **Right identity**: `**m.`flatMap`(pure) == m`
 3. **Associativity**: `**m.flatMap**(f).**flatMap**(g) == **m.`flatMap`(**x => f(x**).**flatMap**(g))`
 
-## **Option Monad**
+## Option Monad
 
 **Option** представляет вычисление, которое может вернуть значение или отсутствие значения.
 
@@ -123,7 +123,7 @@ val result3 = for {
 // result3: None
 ```
 
-### Практические примеры: **Option** для обработки данных
+### Практические примеры: Option для обработки данных
 
 ```scala
 case class User(id: Int, name: String, email: Option[String])
@@ -145,9 +145,9 @@ val result = for {
 } yield emailResult
 ```
 
-## **Either Monad**
+## Either Monad
 
-**Either** представляет вычисление, которое может вернуть успешный результат (**Right**) или ошибку (**Left**).
+**Either** представляет вычисление, которое может вернуть успешный результат (Right) или ошибку (Left).
 
 ```scala
 // Either - это Monad (начиная с Scala 2.12)
@@ -177,7 +177,7 @@ val result3 = for {
 // result3: Left("Error")
 ```
 
-### Практические примеры: **Either** для валидации
+### Практические примеры: Either для валидации
 
 ```scala
 def validateAge(age: Int): Either[String, Int] = {
@@ -199,7 +199,7 @@ def createUser(age: Int, email: String): Either[String, User] = {
 }
 ```
 
-## **Try Monad**
+## Try Monad
 
 **Try** представляет вычисление, которое может вернуть успешный результат или исключение.
 
@@ -233,7 +233,7 @@ val result3 = for {
 // result3: Failure(ArithmeticException)
 ```
 
-### Практические примеры: **Try** для обработки исключений
+### Практические примеры: Try для обработки исключений
 
 ```scala
 def parseNumber(s: String): Try[Int] = Try(s.toInt)
@@ -253,7 +253,7 @@ val result2 = calculate("10", "0")  // Failure(ArithmeticException)
 val result3 = calculate("abc", "2") // Failure(NumberFormatException)
 ```
 
-## **Future Monad**
+## Future Monad
 
 **Future** представляет асинхронное вычисление, которое может вернуть результат в будущем.
 
@@ -277,7 +277,7 @@ val result2 = for {
 } yield x + y + z
 ```
 
-### Практические примеры: **Future** для асинхронных операций
+### Практические примеры: Future для асинхронных операций
 
 ```scala
 def fetchUser(id: Int): Future[User] = Future {
@@ -298,7 +298,7 @@ def fetchUserData(id: Int): Future[(User, List[Post])] = {
 }
 ```
 
-## **List Monad**
+## List Monad
 
 **List** представляет коллекцию значений и является **Monad**.
 
@@ -319,7 +319,7 @@ val result2 = for {
 // result2: List(11, 21, 12, 22, 13, 23)
 ```
 
-### Практические примеры: **List Monad** для комбинаторики
+### Практические примеры: List Monad для комбинаторики
 
 ```scala
 // Генерация всех комбинаций
@@ -341,9 +341,9 @@ def cartesianProduct[A, B](list1: List[A], list2: List[B]): List[(A, B)] = {
 }
 ```
 
-## Пользовательские **Monads**
+## Пользовательские Monads
 
-### Реализация **Writer Monad**
+### Реализация Writer Monad
 
 ```scala
 case class Writer[A](value: A, log: List[String]) {
@@ -368,7 +368,7 @@ val result = for {
 // result: Writer(40, List("Multiplied by 2", "Added 30"))
 ```
 
-### Реализация **Reader Monad**
+### Реализация Reader Monad
 
 ```scala
 case class Reader[R, A](run: R => A) {
@@ -397,11 +397,11 @@ val config = Config("localhost", 8080)
 val result = connectionString.run(config)  // "localhost:8080"
 ```
 
-## **Monad Transformers**
+## Monad Transformers
 
 **Monad Transformers** позволяют комбинировать несколько **Monads** вместе.
 
-### **OptionT** для **Future**[**Option**[A]]
+### OptionT для Future[Option[A]]
 
 ```scala
 import cats.data.OptionT
@@ -419,9 +419,9 @@ val result: FutureOption[(User, List[Post])] = for {
 } yield (user, posts)
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Используйте **for-comprehension** для читаемости
+### 1. Используйте for-comprehension для читаемости
 
 ```scala
 // ✅ Хорошо - читаемо
@@ -438,7 +438,7 @@ val result = findUser(1)
       .map(comments => (user, posts, comments))))
 ```
 
-### 2. Избегайте вложенных **Monads** когда возможно
+### 2. Избегайте вложенных Monads когда возможно
 
 ```scala
 // ✅ Используйте Monad Transformers
@@ -447,7 +447,7 @@ type FutureEither[A] = EitherT[Future, String, A]
 // ❌ Избегайте Future[Either[String, A]]
 ```
 
-### Практические примеры: **State Monad**
+### Практические примеры: State Monad
 
 ```scala
 case class State[S, A](run: S => (S, A)) {
@@ -484,7 +484,7 @@ val (finalState, result) = increment.run(initialState)
 // finalState: 1, result: 1
 ```
 
-### Практические примеры: **Writer Monad** с **Cats**
+### Практические примеры: Writer Monad с Cats
 
 ```scala
 import cats.data.Writer
@@ -513,7 +513,7 @@ val (logs, result) = computation.run
 // result: 60
 ```
 
-### Практические примеры: **Reader Monad** с **Cats**
+### Практические примеры: Reader Monad с Cats
 
 ```scala
 import cats.data.Reader
@@ -539,7 +539,7 @@ val result = connectionString.run(config)
 // "localhost:8080 (timeout: 30000ms)"
 ```
 
-### Практические примеры: **Free Monad**
+### Практические примеры: Free Monad
 
 ```scala
 import cats.free.Free
@@ -590,11 +590,11 @@ val result: String = program.foldMap(interpreter)
 
 ## Заключение
 
-**Monads** — это мощная абстракция функционального программирования, которая позволяет структурировать вычисления с побочными эффектами. Понимание **Option**, **Either**, **Try**, **Future**, **List**, пользовательских **Monads** (**State, `Writer`, Reader**), **Monad Transformers** и **Free Monads** позволяет создавать чистый, композируемый и типобезопасный код.
+**Monads** — это мощная абстракция функционального программирования, которая позволяет структурировать вычисления с побочными эффектами. Понимание **Option**, **Either**, **Try**, **Future**, **List**, пользовательских **Monads** (State, `Writer`, Reader), **Monad Transformers** и **Free Monads** позволяет создавать чистый, композируемый и типобезопасный код.
 
 Использование **Monads** для обработки ошибок, асинхронных вычислений, валидации, композиции функций, управления состоянием, накопления логов, **dependency injection** и создания **DSL** критично для создания надежных, гибких функциональных приложений.
 
-### Практические примеры: `IO` **Monad**
+### Практические примеры: `IO` Monad
 
 ```scala
 // Простая реализация IO Monad
@@ -620,7 +620,7 @@ val program: IO[Int] = for {
 val result = program.unsafeRun()
 ```
 
-### Практические примеры: **Validation Monad**
+### Практические примеры: Validation Monad
 
 ```scala
 import cats.data.Validated
@@ -654,7 +654,7 @@ val result = createUser("", "invalid", -5)
 //              "Age must be between 0 and 150"))
 ```
 
-### Практические примеры: **Continuation Monad**
+### Практические примеры: Continuation Monad
 
 ```scala
 case class Cont[R, A](run: (A => R) => R) {

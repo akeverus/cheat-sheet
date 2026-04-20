@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Kubernetes Networking**
+# Kubernetes Networking
 
-**Kubernetes networking** — это сложная и важная часть платформы, обеспечивающая коммуникацию между подами, сервисами и внешними системами. Сеть в **Kubernetes** построена на принципах плоскости управления (**control plane**) и плоскости данных (**data plane**), обеспечивая масштабируемость, безопасность и гибкость.
+**Kubernetes networking** — это сложная и важная часть платформы, обеспечивающая коммуникацию между подами, сервисами и внешними системами. Сеть в **Kubernetes** построена на принципах плоскости управления (control plane) и плоскости данных (data plane), обеспечивая масштабируемость, безопасность и гибкость.
 
 ## Полезные ссылки
 - [Kubernetes Networking](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
@@ -61,9 +61,9 @@ updated: "2026-02-11"
 
 ## Основные концепции сети
 
-### **Pod networking**
+### Pod networking
 
-Ниже — пример **Pod** с сетевым доступом (**YAML**).
+Ниже — пример **Pod** с сетевым доступом (YAML).
 ```yaml
 # Каждый под получает уникальный IP адрес в кластерной сети
 apiVersion: v1
@@ -88,7 +88,7 @@ kubectl describe pod nginx-pod | grep IP
 kubectl run busybox --image=busybox --rm -it -- wget -O- http://nginx-pod:80
 ```
 
-### **Service networking**
+### Service networking
 ```yaml
 # ClusterIP Service - внутренний доступ
 apiVersion: v1
@@ -148,9 +148,9 @@ spec:
   externalName: database.example.com
 ```
 
-## **Ingress** контроллеры
+## Ingress контроллеры
 
-### **Nginx Ingress Controller**
+### Nginx Ingress Controller
 ```yaml
 # Установка Nginx Ingress Controller
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.7.0/deploy/static/provider/cloud/deploy.yaml
@@ -216,7 +216,7 @@ spec:
               number: 443
 ```
 
-### **Traefik Ingress**
+### Traefik Ingress
 ```yaml
 # Установка Traefik через Helm
 helm repo add traefik https://helm.traefik.io/traefik
@@ -267,9 +267,9 @@ spec:
     average: 50
 ```
 
-## **Network Policies**
+## Network Policies
 
-### Основы **Network Policies**
+### Основы Network Policies
 ```yaml
 # Базовая изоляция - запретить весь трафик
 apiVersion: networking.k8s.io/v1
@@ -331,7 +331,7 @@ spec:
       port: 53  # DNS
 ```
 
-### Продвинутые **Network Policies**
+### Продвинутые Network Policies
 ```yaml
 # Multi-tier приложение
 apiVersion: networking.k8s.io/v1
@@ -426,9 +426,9 @@ spec:
       port: 80
 ```
 
-## **Service Mesh** (**Istio**)
+## Service Mesh (Istio)
 
-### Установка **Istio**
+### Установка Istio
 ```bash
 # Скачивание Istio
 curl -L https://istio.io/downloadIstio | sh -
@@ -444,7 +444,7 @@ kubectl label namespace default istio-injection=enabled
 kubectl apply -f samples/addons/
 ```
 
-### **Traffic Management**
+### Traffic Management
 ```yaml
 # Virtual Service для маршрутизации
 apiVersion: networking.istio.io/v1beta1
@@ -513,9 +513,9 @@ spec:
     mode: STRICT
 ```
 
-## **DNS** в **Kubernetes**
+## DNS в Kubernetes
 
-### **CoreDNS** конфигурация
+### CoreDNS конфигурация
 ```yaml
 # ConfigMap для CoreDNS
 apiVersion: v1
@@ -552,7 +552,7 @@ data:
     }
 ```
 
-### **External DNS**
+### External DNS
 ```yaml
 # Установка External DNS
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/master/docs/tutorials/aws.md
@@ -594,9 +594,9 @@ spec:
               number: 80
 ```
 
-## **Load Balancing**
+## Load Balancing
 
-### **MetalLB** для **bare metal**
+### MetalLB для bare metal
 ```yaml
 # Установка MetalLB
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
@@ -622,7 +622,7 @@ spec:
   - first-pool
 ```
 
-### **HAProxy Ingress**
+### HAProxy Ingress
 ```yaml
 # Установка HAProxy Ingress
 helm repo add haproxytech https://haproxytech.github.io/helm-charts
@@ -645,7 +645,7 @@ data:
     timeout server 30s
 ```
 
-## **Network Troubleshooting**
+## Network Troubleshooting
 
 ### Диагностика сетевых проблем
 ```bash
@@ -668,7 +668,7 @@ kubectl logs -n kube-system kube-proxy-xxxxx
 kubectl logs -n kube-flannel flannel-xxxxx
 ```
 
-### **Network debugging tools**
+### Network debugging tools
 ```yaml
 # Debug pod с сетевыми инструментами
 apiVersion: v1
@@ -706,9 +706,9 @@ tcpdump -i eth0 -n port 80
 nc -zv service-name.namespace 80
 ```
 
-## **CNI** плагины
+## CNI плагины
 
-### **Calico**
+### Calico
 ```yaml
 # Установка Calico
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
@@ -756,7 +756,7 @@ spec:
   - action: Allow
 ```
 
-### **Flannel**
+### Flannel
 ```yaml
 # Установка Flannel
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
@@ -797,7 +797,7 @@ data:
     }
 ```
 
-### **Cilium**
+### Cilium
 ```bash
 # Установка Cilium через Helm
 helm repo add cilium https://helm.cilium.io/
@@ -831,9 +831,9 @@ spec:
         protocol: TCP
 ```
 
-## **IPv6** поддержка
+## IPv6 поддержка
 
-### **Dual-stack** конфигурация
+### Dual-stack конфигурация
 ```yaml
 # kube-apiserver с IPv6
 --bind-address=::
@@ -876,9 +876,9 @@ spec:
   hostNetwork: true  # Для IPv6 host networking
 ```
 
-## **Service Discovery**
+## Service Discovery
 
-### **EndpointSlices**
+### EndpointSlices
 ```yaml
 # EndpointSlice для большого количества endpoints
 apiVersion: discovery.k8s.io/v1
@@ -910,7 +910,7 @@ kubectl get endpointslices
 kubectl describe endpointslice my-service-abc
 ```
 
-### **Headless Services**
+### Headless Services
 ```yaml
 # Headless Service для прямого доступа к подам
 apiVersion: v1
@@ -953,9 +953,9 @@ kubectl exec -it web-0 -- curl http://web-0.headless-service:80
 kubectl exec -it web-1 -- curl http://web-1.headless-service:80
 ```
 
-## **Performance** и масштабирование
+## Performance и масштабирование
 
-### **Network performance tuning**
+### Network performance tuning
 ```bash
 # Оптимизация sysctl параметров
 kubectl apply -f - <<EOF
@@ -1008,7 +1008,7 @@ spec:
 EOF
 ```
 
-### **Load balancing optimization**
+### Load balancing optimization
 ```yaml
 # MetalLB с BGP
 apiVersion: metallb.io/v1beta1
@@ -1044,7 +1044,7 @@ data:
 
 - **Сеть подов:** каждый под получает уникальный `IP`; не полагайтесь на `IP` подов для постоянной связи — используйте **Services** и **DNS**.
 - **Network `Policies`:** включайте по умолчанию **deny** и разрешайте только нужный трафик; тестируйте политики в **non-prod** перед применением.
-- **Ingress:** один **Ingress**-контроллер на кластер (**или по namespace**); **TLS termination** на **Ingress**; ограничение размера тела и **rate limiting**.
+- **Ingress:** один **Ingress**-контроллер на кластер (или по namespace); **TLS termination** на **Ingress**; ограничение размера тела и **rate limiting**.
 - **Service `Mesh`:** внедряйте **Istio**/**Linkerd** при необходимости **mTLS**, **observability** и продвинутой маршрутизации; учитывайте накладные расходы.
 - **DNS и `Load Balancing`:** используйте внутренние **DNS**-имена сервисов; настройте **readiness**/**liveness** для корректного исключения подов из балансировки.
 ## См. также

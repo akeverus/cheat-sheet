@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 ---
 
-# **Scala Type System**
+# Scala Type System
 
 Кратко: полное руководство по системе типов **Scala**: типы, **generics**, **variance**, **bounds**, **type inference**, **path-dependent types**.
 
@@ -37,9 +37,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
   - [Ссылочные типы](#ссылочные-типы)
 - [**Generics**](#generics)
 - [**Variance**](#variance)
-  - [**Covariance** (**ковариантность**)](#covariance-ковариантность)
-  - [**Contravariance** (**контравариантность**)](#contravariance-контравариантность)
-  - [**Invariance** (**инвариантность**)](#invariance-инвариантность)
+  - [**Covariance** (ковариантность)](#covariance-ковариантность)
+  - [**Contravariance** (контравариантность)](#contravariance-контравариантность)
+  - [**Invariance** (инвариантность)](#invariance-инвариантность)
 - [**Type Bounds**](#type-bounds)
   - [**Upper Bounds**](#upper-bounds)
   - [**Lower Bounds**](#lower-bounds)
@@ -67,9 +67,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [FAQ](#faq)
 - [Заключение](#заключение)
 - [Дополнительные продвинутые возможности системы типов](#дополнительные-продвинутые-возможности-системы-типов)
-  - [**Type Tags** (**расширенные**)](#type-tags-расширенные)
-  - [**Structural Types** (**расширенные**)](#structural-types-расширенные)
-  - [**Type Projections** (**расширенные**)](#type-projections-расширенные)
+  - [**Type Tags** (расширенные)](#type-tags-расширенные)
+  - [**Structural Types** (расширенные)](#structural-types-расширенные)
+  - [**Type Projections** (расширенные)](#type-projections-расширенные)
   - [Практические примеры: **Type-level** вычисления](#практические-примеры-type-level-вычисления)
   - [Практические примеры: **Phantom Types**](#практические-примеры-phantom-types)
   - [Практические примеры: Работа с **Higher-Kinded Types**](#практические-примеры-работа-с-higher-kinded-types)
@@ -112,7 +112,7 @@ val list: List[Int] = List(1, 2, 3)
 val option: Option[String] = Some("value")
 ```
 
-## **Generics**
+## Generics
 
 **Generics** позволяют создавать параметризованные типы:**
 
@@ -130,11 +130,11 @@ val stringBox = new Box[String]("Hello")
 
 **Generics** обеспечивают типобезопасность и переиспользование кода.
 
-## **Variance**
+## Variance
 
 **Variance** определяет, как отношения между типами распространяются на **generic** типы:**
 
-### **Covariance** (**ковариантность**)
+### Covariance (ковариантность)
 
 ```scala
 // List ковариантен по типу элемента
@@ -146,7 +146,7 @@ class Box[+T](val value: T)
 
 **Covariance** позволяет использовать более конкретные типы там, где ожидается более общий.
 
-### **Contravariance** (**контравариантность**)
+### Contravariance (контравариантность)
 
 ```scala
 // Function контравариантен по типу параметра
@@ -157,7 +157,7 @@ trait Writer[-T] {
 
 **Contravariance** позволяет использовать более общие типы там, где ожидается более конкретный.
 
-### **Invariance** (**инвариантность**)
+### Invariance (инвариантность)
 
 ```scala
 // По умолчанию generics инвариантны
@@ -166,11 +166,11 @@ class Container[T](var value: T)
 
 **Invariance** означает, что типы должны точно совпадать.
 
-## **Type Bounds**
+## Type Bounds
 
 **Type bounds** ограничивают возможные типы параметров:**
 
-### **Upper Bounds**
+### Upper Bounds
 
 ```scala
 // T должен быть подтипом Comparable
@@ -181,7 +181,7 @@ class SortedList[T <: Comparable[T]] {
 
 **Upper bounds** ограничивают тип сверху.
 
-### **Lower Bounds**
+### Lower Bounds
 
 ```scala
 // T должен быть супертипом String
@@ -192,7 +192,7 @@ def addToList[T >: String](list: List[T], element: T): List[T] = {
 
 **Lower bounds** ограничивают тип снизу.
 
-## **Type Inference**
+## Type Inference
 
 **Scala** автоматически выводит типы во многих случаях:**
 
@@ -209,7 +209,7 @@ def add(x: Int, y: Int) = x + y  // возвращает Int
 
 **Type inference** делает код более лаконичным, сохраняя безопасность типов.
 
-## **Path-Dependent Types**
+## Path-Dependent Types
 
 **Path-dependent types** связывают типы с конкретными экземплярами:**
 
@@ -233,7 +233,7 @@ val inner2: outer2.Inner = outer2.createInner
 
 ## Лучшие практики
 
-### Использование явных типов для публичных **API**
+### Использование явных типов для публичных API
 
 ```scala
 // Хорошо - явный тип для публичного метода
@@ -247,7 +247,7 @@ def processData(data: List[String]) = {
 }
 ```
 
-### **Structural Types**
+### Structural Types
 
 **Structural types** позволяют определять типы по структуре, а не по имени:**
 
@@ -269,7 +269,7 @@ process(company)  // "Acme"
 
 **Structural types** полезны для работы с объектами, имеющими общую структуру, но не общий супертип.
 
-### **Abstract Type Members**
+### Abstract Type Members
 
 **Abstract type members** позволяют определять типы внутри **traits**:**
 
@@ -288,7 +288,7 @@ class IntContainer(val value: Int) extends Container {
 
 **Abstract type members** обеспечивают гибкость в определении типов.
 
-### **Type Projections**
+### Type Projections
 
 **Type projections** позволяют ссылаться на вложенные типы:**
 
@@ -314,9 +314,9 @@ processInner(inner2)  // OK
 
 **Type projections** позволяют работать с вложенными типами независимо от конкретного экземпляра.
 
-### **Higher-Kinded Types**
+### Higher-Kinded Types
 
-**Higher-Kinded Types** (**HKT**) — это типы, которые принимают другие типы как параметры:**
+**Higher-Kinded Types** (HKT) — это типы, которые принимают другие типы как параметры:**
 
 ```scala
 // F[_] - higher-kinded type
@@ -336,7 +336,7 @@ implicit val optionFunctor: Functor[Option] = new Functor[Option] {
 
 **HKT** позволяют создавать абстракции над типами, которые сами параметризованы типами.
 
-### **Type Lambdas**
+### Type Lambdas
 
 **Type lambdas** позволяют создавать анонимные типы:**
 
@@ -350,7 +350,7 @@ val optionList: OptionList[Int] = Some(List(1, 2, 3))
 
 **Type lambdas** полезны для работы с **higher-kinded types**.
 
-### **Self Types**
+### Self Types
 
 **Self types** позволяют указывать зависимости между **traits**:**
 
@@ -371,7 +371,7 @@ class UserLogger(val name: String) extends User with Logger
 
 **Self types** обеспечивают зависимости между **traits** на уровне типов.
 
-### **Phantom Types**
+### Phantom Types
 
 **Phantom types** — это типы, которые используются только на этапе компиляции:**
 
@@ -398,7 +398,7 @@ val closed = opened.close()  // Door[Closed]
 
 **Phantom types** обеспечивают дополнительную безопасность на этапе компиляции.
 
-### **Type Erasure** и **Manifest**
+### Type Erasure и Manifest
 
 **Scala** использует **type erasure**, но предоставляет способы сохранения информации о типах:**
 
@@ -416,7 +416,7 @@ val stringArray = createArray[String](5)  // Array[String]
 
 **ClassTag** позволяет работать с типами во время выполнения.
 
-### Практический пример: **Type-Safe Builder**
+### Практический пример: Type-Safe Builder
 
 ```scala
 sealed trait State
@@ -455,7 +455,7 @@ val query = QueryBuilder()
 
 **Type-safe builder** гарантирует правильный порядок вызовов методов.
 
-### Практический пример: **Tagged Types**
+### Практический пример: Tagged Types
 
 ```scala
 import shapeless.tag
@@ -482,7 +482,7 @@ val user = createUser(userId, email)
 
 ## Лучшие практики
 
-### Использование явных типов для публичных **API**
+### Использование явных типов для публичных API
 
 ```scala
 // Хорошо - явный тип для публичного метода
@@ -496,7 +496,7 @@ def processData(data: List[String]) = {
 }
 ```
 
-### Использование **variance** правильно
+### Использование variance правильно
 
 ```scala
 // Хорошо - ковариантность для immutable коллекций
@@ -506,7 +506,7 @@ class Box[+T](val value: T)
 class MutableBox[+T](var value: T)  // Ошибка компиляции
 ```
 
-### Использование **type bounds** для ограничений
+### Использование type bounds для ограничений
 
 ```scala
 // Хорошо - type bounds для ограничения типов
@@ -522,7 +522,7 @@ def processBad[T](value: T): T = {
 
 ## Дополнительные темы
 
-### **Type-level** вычисления
+### Type-level вычисления
 
 **Scala** позволяет выполнять вычисления на уровне типов.
 
@@ -544,7 +544,7 @@ type Three = Succ[Succ[Succ[Zero]]]
 type Five = Add[Two, Three]
 ```
 
-### **Singleton Types**
+### Singleton Types
 
 **Singleton Types** позволяют работать с конкретными значениями на уровне типов.
 
@@ -561,7 +561,7 @@ process("hello")  // OK
 // process("world")  // Ошибка компиляции
 ```
 
-### **Match Types**
+### Match Types
 
 **Match Types** позволяют выполнять **pattern matching** на уровне типов.
 
@@ -591,7 +591,7 @@ val int: Elem[Array[Int]] = 42
 
 ## Дополнительные продвинутые возможности системы типов
 
-### **Type Erasure** и **Manifest**
+### Type Erasure и Manifest
 
 **Type Erasure** и **Manifest** позволяют работать с типами во время выполнения.
 
@@ -608,7 +608,7 @@ val intArray = Array(1, 2, 3)
 processArray(intArray)  // "Integer"
 ```
 
-### **Type Tags** (**расширенные**)
+### Type Tags (расширенные)
 
 **Type Tags** предоставляют расширенные возможности для работы с типами.
 
@@ -627,7 +627,7 @@ val mirror = runtimeMirror(getClass.getClassLoader)
 val classSymbol = mirror.classSymbol(classOf[User])
 ```
 
-### **Structural Types** (**расширенные**)
+### Structural Types (расширенные)
 
 **Structural Types** позволяют определять типы по их структуре.
 
@@ -648,7 +648,7 @@ printName(Person("Alice"))  // OK
 printName(Animal("Dog"))    // OK
 ```
 
-### **Type Projections** (**расширенные**)
+### Type Projections (расширенные)
 
 **Type Projections** позволяют работать с типами из внешних классов.
 
@@ -670,7 +670,7 @@ val inner1 = new outer1.Inner
 processInner(inner1)  // OK
 ```
 
-### Практические примеры: **Type-level** вычисления
+### Практические примеры: Type-level вычисления
 
 ```scala
 import shapeless.{Nat, Succ, _0, _1, _2, _3}
@@ -686,7 +686,7 @@ type TwoPlusThree = Sum[Two, Three]  // _5
 type TwoTimesThree = Prod[Two, Three]  // _6
 ```
 
-### Практические примеры: **Phantom Types**
+### Практические примеры: Phantom Types
 
 ```scala
 // Phantom Types для типобезопасности
@@ -713,9 +713,9 @@ val closedDoor = openDoor.close  // Door[Closed]
 // door.open.open  // Ошибка компиляции - дверь уже открыта
 ```
 
-Система типов **Scala** предоставляет мощные инструменты для создания безопасного и выразительного кода. Понимание **generics**, **variance**, **type bounds**, **type inference**, **path-dependent types**, **structural types**, **abstract type members**, **type projections**, **higher-kinded types**, **type lambdas**, **self types**, **phantom types**, **type-level** вычислений, **singleton types**, **match types**, **type erasure**, **Manifest**, **Type Tags**, расширенных **Structural Types**, расширенных **Type Projections**, **type-level** вычислений с **Shapeless**, **Phantom Types** для типобезопасности и их практических применений (**type-safe builders, tagged types, phantom types**) позволяет эффективно использовать возможности системы типов. Правильное использование этих возможностей критично для создания типобезопасного и поддерживаемого кода. Система типов **Scala** особенно полезна для создания библиотек и фреймворков, которые требуют высокой типобезопасности и выразительности, **type-level** вычислений и использования **Phantom Types** для предотвращения ошибок на этапе компиляции.
+Система типов **Scala** предоставляет мощные инструменты для создания безопасного и выразительного кода. Понимание **generics**, **variance**, **type bounds**, **type inference**, **path-dependent types**, **structural types**, **abstract type members**, **type projections**, **higher-kinded types**, **type lambdas**, **self types**, **phantom types**, **type-level** вычислений, **singleton types**, **match types**, **type erasure**, **Manifest**, **Type Tags**, расширенных **Structural Types**, расширенных **Type Projections**, **type-level** вычислений с **Shapeless**, **Phantom Types** для типобезопасности и их практических применений (type-safe builders, tagged types, phantom types) позволяет эффективно использовать возможности системы типов. Правильное использование этих возможностей критично для создания типобезопасного и поддерживаемого кода. Система типов **Scala** особенно полезна для создания библиотек и фреймворков, которые требуют высокой типобезопасности и выразительности, **type-level** вычислений и использования **Phantom Types** для предотвращения ошибок на этапе компиляции.
 
-### Практические примеры: Работа с **Higher-Kinded Types**
+### Практические примеры: Работа с Higher-Kinded Types
 
 ```scala
 // Higher-Kinded Type для работы с различными контейнерами
@@ -740,7 +740,7 @@ val listResult = double(List(1, 2, 3))  // List(2, 4, 6)
 val optionResult = double(Some(5))  // Some(10)
 ```
 
-### Практические примеры: Работа с **Type Lambdas**
+### Практические примеры: Работа с Type Lambdas
 
 ```scala
 // Type Lambda для работы с вложенными типами
@@ -784,7 +784,7 @@ findProduct(productId)  // OK
 // findUser(productId)  // Ошибка компиляции
 ```
 
-### Использование с различными техниками для **type-level** вычислений
+### Использование с различными техниками для type-level вычислений
 
 ```scala
 import shapeless.{Nat, Succ, _0, _1, _2, _3}

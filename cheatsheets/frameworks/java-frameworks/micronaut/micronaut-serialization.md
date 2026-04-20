@@ -69,7 +69,7 @@ related: ["micronaut-http.md", "micronaut-kafka.md"]
 - **Jackson Integration**: Интеграция с **Jackson**
 - **Gson Support**: Поддержка **Gson**
 
-## Настройка **Serialization**
+## Настройка Serialization
 
 ### Зависимости
 
@@ -202,7 +202,7 @@ private Long id;
 private String password;
 ```
 
-### 3. Используйте **custom serializers** для сложных объектов
+### 3. Используйте custom serializers для сложных объектов
 
 ```java
 // ✅ Хорошо

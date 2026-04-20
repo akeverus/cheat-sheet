@@ -57,7 +57,7 @@ updated: "2026-02-11"
 
 **Jaeger** — это **open-source** система для **distributed tracing**, которая помогает отслеживать запросы через сложные распределенные системы. **Jaeger** собирает, хранит и визуализирует **traces** — последовательности связанных операций в микросервисной архитектуре.
 
-### Почему **Jaeger**?
+### Почему Jaeger?
 
 **Jaeger** предоставляет комплексные возможности для tracing:
 
@@ -72,25 +72,25 @@ updated: "2026-02-11"
 
 ### Основные компоненты
 
-#### **Jaeger Client**
+#### Jaeger Client
 - **Instrumentation** — добавление **tracing** кода
 - **Span creation** — создание и управление **spans**
 - **Context propagation** — передача контекста между сервисами
 - **Sampling** — выборка **traces** для анализа
 
-#### **Jaeger Agent**
+#### Jaeger Agent
 - **Data collection** — сбор **traces** от клиентов
 - **Buffering** — буферизация данных
 - **Batch sending** — пакетная отправка в **collector**
 - **Load balancing** — распределение нагрузки
 
-#### **Jaeger Collector**
+#### Jaeger Collector
 - **Data processing** — обработка и валидация **traces**
 - **Storage** — сохранение в **backend**
 - **Indexing** — индексация для быстрого поиска
 - **Aggregation** — агрегация данных
 
-#### **Storage Backends**
+#### Storage Backends
 - **Cassandra** — распределенное хранение
 - **Elasticsearch** — поиск и аналитика
 - **Memory** — **in-memory storage** для **development**
@@ -98,7 +98,7 @@ updated: "2026-02-11"
 
 ## Архитектура Jaeger
 
-### **Hot path** (**production**)
+### Hot path (production)
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -145,7 +145,7 @@ updated: "2026-02-11"
 └─────────────────────────────────────────────────────────┘
 ```
 
-### **Query path** (**UI**)
+### Query path (UI)
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -183,7 +183,7 @@ updated: "2026-02-11"
 
 ### Sampling strategies
 
-#### **Head sampling**
+#### Head sampling
 ```text
 Request Flow: Client → Service A → Service B → Service C
 
@@ -193,7 +193,7 @@ Sampling Decision:
 └── Consistent across all services
 ```
 
-#### **Tail sampling**
+#### Tail sampling
 ```text
 Request Flow: Client → Service A → Service B → Service C
                                       ↓
@@ -207,11 +207,11 @@ Request Flow: Client → Service A → Service B → Service C
 
 ## Установка и настройка
 
-### Установка **Jaeger**
+### Установка Jaeger
 
 **Jaeger** может быть развернут различными способами: **all-in-one** для разработки, распределенное развертывание для **production**. Выбор архитектуры зависит от требований к масштабируемости и надежности.
 
-#### **Docker** (**all-in-one**)
+#### Docker (all-in-one)
 
 **All-in-one** образ объединяет все компоненты **Jaeger** в одном контейнере, что идеально подходит для разработки, тестирования и небольших **production** сред.
 
@@ -258,19 +258,19 @@ docker run -d \
 
 Compose: образ `jaegertracing/all-in-one`, порты 16686 (UI), 14268 (HTTP), 14250 (gRPC), `COLLECTOR_OTLP_ENABLED=true`, `SPAN_STORAGE_TYPE=memory`. См. [документацию](https://www.jaegertracing.io/docs/latest/deployment/).
 
-#### **Kubernetes** развертывание
+#### Kubernetes развертывание
 
 Deployment с образом `jaegertracing/all-in-one`, порты 16686 (UI), 14268, 14250; env: `COLLECTOR_OTLP_ENABLED=true`, `SPAN_STORAGE_TYPE=memory`. Service (ClusterIP) для доступа к Jaeger. Для production: отдельные Collector и Query, Cassandra или Elasticsearch; PVC для хранения. Полные манифесты — [документация Jaeger](https://www.jaegertracing.io/docs/latest/deployment/#kubernetes).
 
-### **Storage configuration**
+### Storage configuration
 
 **Cassandra:** StatefulSet с образом `cassandra:3.11`, keyspace и таблицы создаются Jaeger или вручную (см. [документацию](https://www.jaegertracing.io/docs/latest/deployment/#cassandra)). **Elasticsearch:** Deployment с образом Elasticsearch 7.x, индексы `jaeger-span-*`.
 
 ## OpenTelemetry интеграция
 
-### **OpenTelemetry Java Agent**
+### OpenTelemetry Java Agent
 
-#### **Auto-instrumentation**
+#### Auto-instrumentation
 ```bash
 # Запуск приложения с OpenTelemetry agent
 java -javaagent:opentelemetry-javaagent.jar \
@@ -289,7 +289,7 @@ java -javaagent:opentelemetry-javaagent.jar \
   -jar my-application.jar
 ```
 
-#### **Manual instrumentation**
+#### Manual instrumentation
 
 Зависимости **Maven** для **OpenTelemetry** и экспорта в **Jaeger**.
 
@@ -315,9 +315,9 @@ java -javaagent:opentelemetry-javaagent.jar \
 
 ## Spring Boot интеграция
 
-### **Spring Cloud Sleuth**
+### Spring Cloud Sleuth
 
-#### **Maven** зависимости
+#### Maven зависимости
 ```xml
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -329,7 +329,7 @@ java -javaagent:opentelemetry-javaagent.jar \
 </dependency>
 ```
 
-#### **Application properties**
+#### Application properties
 ```yaml
 spring:
   application:
@@ -345,13 +345,13 @@ spring:
     base-url: http://zipkin:9411/  # Для совместимости
 ```
 
-#### **Custom tracing**
+#### Custom tracing
 
 `Tracer tracer` — инжектируется Sleuth. Создание span: `tracer.nextSpan().name("createUser").start()`, обёртка в `tracer.withSpanInScope(span)`, теги `span.tag("key", "value")`, дочерние span для вложенных операций, `span.error(e)` и `span.finish()` в finally.
 
-### **Spring Boot** 3 + **Micrometer**
+### Spring Boot 3 + Micrometer
 
-#### **Configuration**
+#### Configuration
 ```yaml
 management:
   tracing:
@@ -367,23 +367,23 @@ management:
 
 ## Micrometer Tracing
 
-### **Micrometer Tracing API**
+### Micrometer Tracing API
 
 **Observation API:** `Observation.createNotStarted("processPayment", observationRegistry).lowCardinalityKeyValue(...).observe(() -> { ... })` — создаёт span и метрики. **Timer API:** `Timer.builder("db.query.duration").register(registry)` и `queryTimer.recordCallable(() -> ...)` для замера длительности.
 
 ## Custom instrumentation
 
-### **Database tracing**
+### Database tracing
 
-#### **JDBC instrumentation**
+#### JDBC instrumentation
 
 Расширение `JdbcTemplate` или обёртка вызовов: span с именем `jdbc.query`, теги `db.statement`, `db.operation`, `db.instance`; вызов `super.queryForObject` в `withSpanInScope`, `span.error(e)` и `span.finish()` в finally.
 
 JPA/Hibernate: оборачивание вызовов репозитория в span через @Aspect или использование автоинструментации OpenTelemetry.
 
-### **HTTP client tracing**
+### HTTP client tracing
 
-#### **RestTemplate tracing**
+#### RestTemplate tracing
 
 `RestTemplate.getInterceptors().add(new ClientHttpRequestInterceptor)` — в interceptor создаётся span `http.client`, теги `http.method`, `http.url`, `http.status_code`; инъекция `x-trace-id` и `x-span-id` в заголовки запроса; вызов `execution.execute()` в `withSpanInScope`.
 
@@ -393,15 +393,15 @@ JPA/Hibernate: оборачивание вызовов репозитория в
 
 ## Context propagation
 
-### **Baggage propagation**
+### Baggage propagation
 
 **Baggage** передаётся через `Baggage.current().toBuilder().put("key", "value").build().makeCurrent()`. **W3C Trace Context**: заголовок `traceparent` в формате `00-{traceId}-{spanId}-{flags}`; извлечение и инъекция через OpenTelemetry API.
 
 ## Sampling strategies
 
-### **Probabilistic sampling**
+### Probabilistic sampling
 
-#### **Constant sampling**
+#### Constant sampling
 ```java
 @Configuration
 public class SamplingConfig {
@@ -430,9 +430,9 @@ public class SamplingConfig {
 
 ## Storage backends
 
-### **Cassandra configuration**
+### Cassandra configuration
 
-#### **Schema initialization**
+#### Schema initialization
 ```bash
 # Создание keyspace
 cqlsh -e "CREATE KEYSPACE IF NOT EXISTS jaeger_v1 WITH REPLICATION = {'class' : 'SimpleStrategy', 'replication_factor' : 1 };"
@@ -442,7 +442,7 @@ cqlsh -e "CREATE KEYSPACE IF NOT EXISTS jaeger_v1 WITH REPLICATION = {'class' : 
 cqlsh -e "USE jaeger_v1; DESCRIBE TABLES;"
 ```
 
-#### **Production Cassandra**
+#### Production Cassandra
 ```yaml
 # Cassandra cluster configuration
 apiVersion: cassandra.k8s.elastic.co/v1beta1
@@ -469,15 +469,15 @@ spec:
     size: 500Gi
 ```
 
-### **Elasticsearch configuration**
+### Elasticsearch configuration
 
 **Index templates** и **index lifecycle management**: шаблоны для `jaeger-span-*` (traceID, spanID, operationName, serviceName, startTime, duration); ILM для rollover, warm/cold и удаления старых индексов — см. [документацию Jaeger](https://www.jaegertracing.io/docs/latest/deployment/#elasticsearch).
 
 ## Query и анализ
 
-### **Jaeger Query API**
+### Jaeger Query API
 
-#### **Search traces**
+#### Search traces
 ```bash
 # Поиск traces по service
 curl "http://jaeger:16686/api/traces?service=user-service&limit=20"
@@ -492,7 +492,7 @@ curl "http://jaeger:16686/api/traces/1234567890abcdef"
 curl "http://jaeger:16686/api/traces?service=user-service&tags=%7B%22error%22%3A%22true%22%7D"
 ```
 
-#### **Dependencies**
+#### Dependencies
 ```bash
 # Получение dependency graph
 curl "http://jaeger:16686/api/dependencies?endTs=1609462800000&lookback=3600000000000"
@@ -504,19 +504,19 @@ curl "http://jaeger:16686/api/services"
 curl "http://jaeger:16686/api/operations?service=user-service"
 ```
 
-### **Advanced queries**
+### Advanced queries
 
 Анализ задержек и ошибок: фильтрация по тегам `db.instance`, `http.url`, `error` через Jaeger Query API; агрегация по сервисам и операциям — см. [Jaeger Query API](https://www.jaegertracing.io/docs/latest/apis/#jaeger-query-api).
 
 ## Performance monitoring
 
-### **Tracing metrics**
+### Tracing metrics
 
 Jaeger экспортирует метрики коллектора, агента и query service в формате Prometheus. Ключевые метрики: jaeger_collector_traces_received_total, jaeger_collector_spans_received_total, jaeger_agent_queue_length.
 
-### **Performance dashboards**
+### Performance dashboards
 
-#### **Jaeger performance queries**
+#### Jaeger performance queries
 ```promql
 # Jaeger collector metrics
 jaeger_collector_traces_received_total
@@ -543,7 +543,7 @@ jaeger_query_latency_bucket
 
 ### Распространенные проблемы
 
-#### **Traces not appearing**
+#### Traces not appearing
 
 **Symptoms:**
 - **Traces** отправляются но не отображаются в `UI`
@@ -563,19 +563,19 @@ curl http://jaeger-collector:14268/api/traces \
 # Убедиться что sampling rate > 0
 ```
 
-#### **Missing spans**
+#### Missing spans
 
 Проверить передачу контекста: вывод `Span.current().getSpanContext().getTraceId()` и `getSpanId()`; убедиться, что заголовки (traceparent, x-trace-id) пробрасываются между сервисами.
 
-#### **High latency**
+#### High latency
 
 Снизить sampling rate; исключить health-check из sampling; включить batch export (maxSize 512, timeout 5s); проверить нагрузку на collector и storage.
 
-#### **Storage issues**
+#### Storage issues
 
 Cassandra: `nodetool status`, `cqlsh -e "DESCRIBE KEYSPACES;"`. Elasticsearch: `curl http://elasticsearch:9200/_cluster/health`, `_cat/indices`. Проверить логи collector на ошибки записи.
 
-### **Debug techniques**
+### Debug techniques
 
 Проверка: вывод `Span.current().getSpanContext().getTraceId()` и `getSpanId()`; проверка span processors и sampler через `GlobalOpenTelemetry.get().getTracerProvider()`; логи collector и storage.
 
@@ -583,7 +583,7 @@ Cassandra: `nodetool status`, `cqlsh -e "DESCRIBE KEYSPACES;"`. Elasticsearch: `
 
 ### 1. Span naming
 
-#### **Consistent naming**
+#### Consistent naming
 
 Единые имена: `http.client`, `http.server`, `db.query`, `user.create`, `msg.send`. Атрибуты: `http.method`, `http.url`, `db.operation`, `db.table`. Использовать `tracer.spanBuilder("http.client").setAttribute(...).startSpan()`.
 

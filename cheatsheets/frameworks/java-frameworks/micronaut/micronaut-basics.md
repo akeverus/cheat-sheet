@@ -100,20 +100,20 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
   - [Migration Steps](#migration-steps)
 - [Решение проблем](#решение-проблем)
 
-## Введение в **Micronaut**
+## Введение в Micronaut
 
 **Micronaut** — это современный **JVM** фреймворк для создания модульных, легко тестируемых микросервисов. **Micronaut** использует **compile-time dependency injection** и **AOP**, что обеспечивает высокую производительность и минимальное потребление ресурсов.
 
 ### Основные особенности
 
 - **Compile-time DI**: Зависимости разрешаются во время компиляции
-- **AOT (**Ahead-of-Time**) compilation**: **Native image support** без **reflection**
+- **AOT (Ahead-of-Time) compilation**: **Native image support** без **reflection**
 - **Reactive**: Полная поддержка **reactive programming**
 - **Multi-language**: **Java**, **Kotlin**, **Groovy**
 - **Cloud-native**: Оптимизирован для контейнеров и **Kubernetes**
 - **Low memory footprint**: Минимальное потребление памяти
 
-### Архитектура **Micronaut**
+### Архитектура Micronaut
 
 ```text
 # Архитектура Micronaut: приложение → Bean Context → контейнеры
@@ -129,7 +129,7 @@ related: ["micronaut-data.md", "micronaut-hibernate.md", "micronaut-kafka.md"]
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Сравнение с **Spring Boot**
+### Сравнение с Spring Boot
 
 | Характеристика | **Spring Boot** | **Micronaut** |
 |----------------|-------------|-----------|

@@ -11,7 +11,7 @@ updated: "2026-02-11"
 ---
 # Event Sourcing
 
-**Event Sourcing** — это архитектурный паттерн, при котором состояние приложения определяется последовательностью событий, а не текущим состоянием. Вместо хранения текущего состояния объекта, система хранит все события, которые привели к этому состоянию, и состояние восстанавливается путем воспроизведения (**replay**) этих событий.
+**Event Sourcing** — это архитектурный паттерн, при котором состояние приложения определяется последовательностью событий, а не текущим состоянием. Вместо хранения текущего состояния объекта, система хранит все события, которые привели к этому состоянию, и состояние восстанавливается путем воспроизведения (replay) этих событий.
 
 ## Полезные ссылки
 
@@ -32,8 +32,8 @@ updated: "2026-02-11"
   - [Преимущества **Event Sourcing**](#преимущества-event-sourcing)
   - [Недостатки **Event Sourcing**](#недостатки-event-sourcing)
 - [Основные концепции](#основные-концепции)
-  - [Событие (**Event**)](#событие-event)
-  - [**Aggregate** (**Агрегат**)](#aggregate-агрегат)
+  - [Событие (Event)](#событие-event)
+  - [**Aggregate** (Агрегат)](#aggregate-агрегат)
 - [**Event Store**](#event-store)
   - [Простая реализация **Event Store**](#простая-реализация-event-store)
   - [Использование **Kafka** как **Event Store**](#использование-kafka-как-event-store)
@@ -68,11 +68,11 @@ updated: "2026-02-11"
   - [Проблема: Большой размер **Event Store**](#проблема-большой-размер-event-store)
 - [Частые вопросы](#частые-вопросы)
 
-## Введение в **Event Sourcing**
+## Введение в Event Sourcing
 
 **Event Sourcing** хранит все изменения состояния приложения как последовательность событий. Каждое событие представляет собой неизменяемый факт о том, что произошло в системе.
 
-### Преимущества **Event Sourcing**
+### Преимущества Event Sourcing
 
 **Полная история изменений**
 Все изменения сохраняются, что позволяет восстановить состояние на любой момент времени.
@@ -89,7 +89,7 @@ updated: "2026-02-11"
 **Временные запросы**
 Можно запросить состояние системы на любой момент времени в прошлом.
 
-### Недостатки **Event Sourcing**
+### Недостатки Event Sourcing
 
 **Сложность**
 Увеличивает сложность системы за счет необходимости работы с событиями.
@@ -105,11 +105,11 @@ updated: "2026-02-11"
 
 ## Основные концепции
 
-### Событие (**Event**)
+### Событие (Event)
 
 Событие представляет собой неизменяемый факт о том, что произошло в системе.
 
-Ниже — пример определения события в **Event Sourcing** (**Java**).
+Ниже — пример определения события в **Event Sourcing** (Java).
 ```java
 public abstract class DomainEvent {
     private final String eventId;
@@ -180,7 +180,7 @@ public class UserEmailChangedEvent extends DomainEvent {
 }
 ```
 
-### **Aggregate** (**Агрегат**)
+### Aggregate (Агрегат)
 
 **Aggregate** — это кластер связанных объектов, которые рассматриваются как единое целое. Состояние **Aggregate** определяется событиями.
 
@@ -296,7 +296,7 @@ public class UserAggregate {
 }
 ```
 
-## **Event Store**
+## Event Store
 
 **Event Store** — это специализированное хранилище для событий. Оно обеспечивает:**
 - Сохранение событий
@@ -304,7 +304,7 @@ public class UserAggregate {
 - Версионирование для оптимистичной блокировки
 - Поддержку **snapshots**
 
-### Простая реализация **Event Store**
+### Простая реализация Event Store
 
 ```java
 public interface EventStore {
@@ -475,7 +475,7 @@ public class SnapshotEntity {
 }
 ```
 
-### Использование **Kafka** как **Event Store**
+### Использование Kafka как Event Store
 
 ```java
 @Component
@@ -505,9 +505,9 @@ public class KafkaEventStore implements EventStore {
 }
 ```
 
-## **Aggregates** и **Domain Events**
+## Aggregates и Domain Events
 
-### **Repository** для **Aggregate**
+### Repository для Aggregate
 
 ```java
 public interface AggregateRepository<T extends Aggregate> {
@@ -568,9 +568,9 @@ public class UserRepository implements AggregateRepository<UserAggregate> {
 }
 ```
 
-## **Event Replay** и **Snapshots**
+## Event Replay и Snapshots
 
-### **Event Replay**
+### Event Replay
 
 **Event Replay** — это процесс восстановления состояния агрегата путем применения всех событий в порядке их возникновения.
 
@@ -607,7 +607,7 @@ public class UserAggregate {
 }
 ```
 
-### **Snapshots**
+### Snapshots
 
 **Snapshots** — это снимки состояния агрегата на определенный момент времени, используемые для оптимизации восстановления состояния.
 
@@ -738,7 +738,7 @@ public class EventMigrator {
 
 Миграция событий позволяет обновлять старые события при их загрузке.
 
-### **Upcaster** для миграции событий
+### Upcaster для миграции событий
 
 ```java
 public interface EventUpcaster {
@@ -793,7 +793,7 @@ public class EventStore {
 }
 ```
 
-## Интеграция с **CQRS**
+## Интеграция с CQRS
 
 **Event Sourcing** естественно сочетается с **CQRS**. **Write** модель использует **Event Sourcing**, а **Read** модель обновляется на основе событий.
 
@@ -850,7 +850,7 @@ public class UserViewUpdater {
 }
 ```
 
-## Реализация на **Spring**
+## Реализация на Spring
 
 ### Конфигурация
 
@@ -876,7 +876,7 @@ public class EventSourcingConfig {
 }
 ```
 
-### **Command Handler**
+### Command Handler
 
 ```java
 @Component
@@ -909,7 +909,7 @@ public class UserCommandHandler {
 }
 ```
 
-## Реализация с **Axon Framework**
+## Реализация с Axon Framework
 
 **Axon Framework** предоставляет готовую инфраструктуру для **Event Sourcing** и **CQRS**.
 
@@ -928,7 +928,7 @@ public class UserCommandHandler {
 </dependencies>
 ```
 
-### **Aggregate** с **Axon**
+### Aggregate с Axon
 
 ```java
 @Aggregate
@@ -977,7 +977,7 @@ public class UserAggregate {
 }
 ```
 
-### **Command** и **Query Handlers**
+### Command и Query Handlers
 
 ```java
 @RestController
@@ -1046,7 +1046,7 @@ public class CachedUserRepository implements AggregateRepository<UserAggregate> 
 }
 ```
 
-### **Batch** обработка событий
+### Batch обработка событий
 
 ```java
 @Component
@@ -1090,7 +1090,7 @@ public class BatchEventProcessor {
 
 ## Лучшие практики
 
-### 1. Используйте **Snapshots** для больших агрегатов
+### 1. Используйте Snapshots для больших агрегатов
 
 Создавайте **snapshots** регулярно для агрегатов с большим количеством событий.
 
@@ -1100,7 +1100,7 @@ public class BatchEventProcessor {
 
 ### 3. Храните метаданные событий
 
-Сохраняйте метаданные (**user `ID`, correlation ID**) для аудита и отладки.
+Сохраняйте метаданные (user `ID`, correlation ID) для аудита и отладки.
 
 ### 4. Используйте оптимистичную блокировку
 
@@ -1126,7 +1126,7 @@ public class BatchEventProcessor {
 - Реализуйте **retry** механизмы
 - Используйте команды вместо прямого изменения состояния
 
-### Проблема: Большой размер **Event Store**
+### Проблема: Большой размер Event Store
 
 **Решение:**
 - Архивируйте старые события

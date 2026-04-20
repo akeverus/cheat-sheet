@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Docker** и **Spring Boot**
+# Docker и Spring Boot
 
-Полный перенос раздела **Docker and Spring Boot**: контейнеризация приложения, сборка образов (**Dockerfile, buildpacks, многослойные JAR**), доступ к логам, запуск с **PostgreSQL** через **Compose**, повторное использование слоёв **Docker** и кастомизация слоёв. Без сокращений.
+Полный перенос раздела **Docker and Spring Boot**: контейнеризация приложения, сборка образов (Dockerfile, buildpacks, многослойные JAR), доступ к логам, запуск с **PostgreSQL** через **Compose**, повторное использование слоёв **Docker** и кастомизация слоёв. Без сокращений.
 
 ## Полезные ссылки
 
@@ -34,7 +34,7 @@ updated: "2026-02-11"
 - [Запуск Spring Boot с PostgreSQL в Docker Compose](#запуск-spring-boot-с-postgresql-в-docker-compose)
 - [Повторное использование слоев Docker с Spring Boot](#повторное-использование-слоев-docker-с-spring-boot)
 
-## Контейнеризация приложения **Spring Boot**
+## Контейнеризация приложения Spring Boot
 
 В этом руководстве мы сосредоточимся на том, как докеризировать приложение **Spring Boot**, чтобы запустить его в изолированной среде, также известной как контейнер.
 
@@ -44,7 +44,7 @@ updated: "2026-02-11"
 
 В качестве примера приложения, которое мы можем докеризовать, мы создадим простое приложение **Spring Boot**, **docker-message-server**, которое предоставляет одну конечную точку и возвращает статическое сообщение.
 
-Ниже — пример контроллера **Spring Boot** для докеризации (**Java**).
+Ниже — пример контроллера **Spring Boot** для докеризации (Java).
 ```java
 @RestController
 public class DockerMessageController {
@@ -131,7 +131,7 @@ public class DockerProductController {
 
 Собираем и запускаем аналогично серверу сообщений.
 
-**Файл `**docker-compose.yml**`:**
+**Файл `docker-compose.yml`:**
 
 ```yaml
 version: '2'
@@ -162,12 +162,12 @@ networks:
 ```
 
 **Разбор ключей:**
-- **version**: версия формата (**обязательное поле**).
-- **services**: перечень служб/контейнеров (**обязательное поле**).
+- **version**: версия формата (обязательное поле).
+- **services**: перечень служб/контейнеров (обязательное поле).
 - **build**: сборка образа из **Dockerfile**.
 - **context**: каталог сборки с **Dockerfile**.
 - **dockerfile**: альтернативное имя **Dockerfile**.
-- **image**: имя образа (**если build**) или поиск в реестре.
+- **image**: имя образа (если build) или поиск в реестре.
 - **networks**: именованные сети; секция ниже описывает **bridge**-сеть.
 
 **Проверка синтаксиса:**
@@ -188,7 +188,7 @@ docker-compose up --build
 docker-compose down
 ```
 
-Масштабирование сервисов: убрать `**container_name**`, настроить маппинг портов без конфликтов (**пример диапазона**):
+Масштабирование сервисов: убрать `container_name`, настроить маппинг портов без конфликтов (пример диапазона):
 
 ```yaml
 ports:
@@ -225,7 +225,7 @@ mvn spring-boot:build-image
 ./gradlew bootBuildImage
 ```
 
-Нужен установленный **Docker**. Идея **buildpacks** — опыт как **Heroku**/**Cloud Foundry**: цель `**build-image**` собирает и деплоит артефакт. **Buildpacks** создают многослойный образ и используют развернутую версию **JAR**.
+Нужен установленный **Docker**. Идея **buildpacks** — опыт как **Heroku**/**Cloud Foundry**: цель `build-image` собирает и деплоит артефакт. **Buildpacks** создают многослойный образ и используют развернутую версию **JAR**.
 
 **Пример вывода:**
 
@@ -251,7 +251,7 @@ mvn spring-boot:build-image
 [INFO] Successfully built image 'docker.io/library/demo:0.0.1-SNAPSHOT'
 ```
 
-## Создание образов с помощью **Spring Boot**
+## Создание образов с помощью Spring Boot
 
 **Традиционный способ — **Dockerfile**:**
 
@@ -269,7 +269,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 
 Разбивая банку перед сборкой, код приложения и сторонние библиотеки получают свой слой → работает кэш **Docker**.
 
-**Пакеты сборки (**buildpacks**) обеспечивают зависимости/рантайм, можно обойтись без **Dockerfile**, автоматически получить разумный образ. **Maven**/**Gradle** поддержка:**
+**Пакеты сборки (buildpacks) обеспечивают зависимости/рантайм, можно обойтись без **Dockerfile**, автоматически получить разумный образ. **Maven**/**Gradle** поддержка:**
 
 ```bash
 ./mvnw spring-boot:build-image
@@ -283,7 +283,7 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 org/springframework/boot/loader/BOOT-INF/classes/lib/
 ```
 
-**Добавляется `**layers.idx**`, который сопоставляет каталоги со слоями. Слои по умолчанию:**
+**Добавляется `layers.idx`, который сопоставляет каталоги со слоями. Слои по умолчанию:**
 - **dependencies**: сторонние зависимости
 - **snapshot-dependencies**: **snapshot** зависимости
 - **spring-boot-loader**: загрузчик
@@ -307,7 +307,7 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
 
 Каждая директива **COPY** создаёт слой. При изменении кода перестраивается только слой **application**.
 
-**При необходимости можно кастомизировать слои через `**layers.xml**`:**
+**При необходимости можно кастомизировать слои через `layers.xml`:**
 
 ```xml
 <layers xmlns="http://www.springframework.org/schema/boot/layers"
@@ -380,7 +380,7 @@ java -Djarmode=layertools -jar target/docker-spring-boot-0.0.1.jar extract
 docker history --format "{{.ID}} {{.CreatedBy}} {{.Size}}" spring-docker-demo
 ```
 
-## Доступ к журналам **Spring Boot**
+## Доступ к журналам Spring Boot
 
 **Сборка образа:**
 
@@ -394,7 +394,7 @@ mvn spring-boot:build-image
 docker run --name=demo-container docker.io/library/spring-boot-docker:0.0.1-SNAPSHOT
 ```
 
-**Добавление файла журнала в `**application.properties**`:**
+**Добавление файла журнала в `application.properties`:**
 
 ```text
 logging.file.path=logs
@@ -428,16 +428,16 @@ network-example-service-available-to-host-on-port-1337:
 docker-compose up
 ```
 
-Продвинуто: `**docker logs**` (**driver `json-file`/local/journald**):
+Продвинуто: `docker logs` (driver `json-file`/local/journald):
 
 ```bash
 docker ps
 docker logs -f 877bb028a143
 ```
 
-В **Swarm** использовать `**docker service** ps` и `**docker service logs**`.
+В **Swarm** использовать `**docker service** ps` и `docker service logs`.
 
-**Настройка лог-драйвера **GELF** (**Graylog**) глобально `**daemon.json**`:**
+**Настройка лог-драйвера **GELF** (Graylog) глобально `daemon.json`:**
 
 ```json
 {
@@ -454,11 +454,11 @@ docker logs -f 877bb028a143
 docker run --log-driver gelf --log-opt gelf-address=udp://1.2.3.4:12201 alpine echo hello world
 ```
 
-## Запуск **Spring Boot** с **PostgreSQL** в **Docker Compose**
+## Запуск Spring Boot с PostgreSQL в Docker Compose
 
 Цель: запустить **Spring Boot** + **PostgreSQL** через **Docker Compose**.
 
-**Создаём проект **Spring Boot** (**PostgreSQL `Driver`, `Spring Data` JPA**):**
+**Создаём проект **Spring Boot** (PostgreSQL `Driver`, `Spring Data` JPA):**
 
 ```bash
 ./mvnw spring-boot:run
@@ -477,7 +477,7 @@ Failed to determine a suitable driver class
 ./mvnw clean package -DskipTests
 ```
 
-**JAR** в `**target**` с именем `**docker-`spring-`boot-postgres`-0`.0.1-`SNAPSHOT`.jar**`. Копируем в образ:**
+**JAR** в `target` с именем `**docker-`spring-`boot-postgres`-0`.0.1-`SNAPSHOT`.jar**`. Копируем в образ:**
 
 ```bash
 cp target/docker-spring-boot-postgres-0.0.1-SNAPSHOT.jar src/main/docker
@@ -607,13 +607,13 @@ Saving new customer
 Number of customers: 1
 ```
 
-## Повторное использование слоев **Docker** с **Spring Boot**
+## Повторное использование слоев Docker с Spring Boot
 
 **Docker** — стандарт де-факто для автономных приложений. С версии `2.3`.0 **Spring Boot** включает улучшения для эффективных образов: слои и **buildpacks**.
 
 Контейнеры **Docker** состоят из базового образа и слоёв. Слои кэшируются; изменения в нижних слоях перестраивают верхние, поэтому редко меняющиеся слои должны быть ниже.
 
-**Spring Boot** отображает содержимое артефакта на слои (**dependencies, `spring-boot-loader`, `snapshot-dependencies`, application**). Код приложения в отдельном слое → при изменении перестраивается только он, загрузчик и зависимости остаются в кэше → быстрее сборка и запуск.
+**Spring Boot** отображает содержимое артефакта на слои (dependencies, `spring-boot-loader`, `snapshot-dependencies`, application). Код приложения в отдельном слое → при изменении перестраивается только он, загрузчик и зависимости остаются в кэше → быстрее сборка и запуск.
 
 **Традиционный подход «толстая банка» — всё в одном артефакте, любое изменение требует перестройки слоя. Новые функции:**
 - **Buildpack**: предоставляет **Java runtime**, можно пропустить **Dockerfile** и автоматически создать образ.
@@ -656,7 +656,7 @@ COPY --from=builder application/./
 ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
 ```
 
-При изменении исходного кода перестраивается только слой **application**. Однако слой **dependencies** может быть монолитным. Кастомизация слоёв через `**layers.xml**` (**пример выше**) позволяет выделять **internal-dependencies** и управлять порядком.
+При изменении исходного кода перестраивается только слой **application**. Однако слой **dependencies** может быть монолитным. Кастомизация слоёв через `layers.xml` (пример выше) позволяет выделять **internal-dependencies** и управлять порядком.
 
 **Пример включения **internal-dependencies** в образ:**
 

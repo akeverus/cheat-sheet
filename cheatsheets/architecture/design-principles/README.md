@@ -18,15 +18,15 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [design-principles.md](design-principles.md) — обзор всех принципов (SOLID, DRY, KISS, YAGNI, LoD, POLA)
-- [solid-principles.md](solid-principles.md) — подробный разбор каждой буквы SOLID с Java-примерами
+- [[design-principles]] — обзор всех принципов (SOLID, DRY, KISS, YAGNI, LoD, POLA)
+- [[solid-principles]] — подробный разбор каждой буквы SOLID с Java-примерами
 
 ### Соседние разделы
-- [Родительский раздел: Architecture](../README.md)
-- [Design Patterns](../../patterns/README.md) — конкретные паттерны, реализующие принципы
-- [Software Architecture](../software-architecture/README.md) — стили, где принципы проявляются на уровне системы
-- [Code Quality: Refactoring](../../interview/code-quality/refactoring-patterns-interview.md) — как применять принципы при рефакторинге
-- [Clean Code practices](../../development/README.md)
+- [[README|Родительский раздел: Architecture]]
+- [[README|Design Patterns]] — конкретные паттерны, реализующие принципы
+- [[README|Software Architecture]] — стили, где принципы проявляются на уровне системы
+- [[refactoring-patterns-interview|Code Quality: Refactoring]] — как применять принципы при рефакторинге
+- [[README|Clean Code practices]]
 
 ### Внешние ресурсы
 - [Refactoring Guru — SOLID](https://refactoring.guru/design-patterns/solid-principles)
@@ -45,15 +45,15 @@ updated: "2026-04-17"
 
 | Принцип | Что говорит | Где читать |
 |---------|-------------|------------|
-| SRP — Single Responsibility | У класса одна причина для изменения | [solid-principles.md](solid-principles.md#s-single-responsibility) |
-| OCP — Open/Closed | Открыт для расширения, закрыт для модификации | [solid-principles.md](solid-principles.md#o-openclosed) |
-| LSP — Liskov Substitution | Подкласс взаимозаменяем с базой без сюрпризов | [solid-principles.md](solid-principles.md#l-liskov-substitution) |
-| ISP — Interface Segregation | Много маленьких интерфейсов вместо одного большого | [solid-principles.md](solid-principles.md#i-interface-segregation) |
-| DIP — Dependency Inversion | Зависим от абстракций, не от реализаций | [solid-principles.md](solid-principles.md#d-dependency-inversion) |
-| DRY | Одно знание — одно место | [design-principles.md](design-principles.md#dry-dont-repeat-yourself) |
-| KISS | Проще — лучше; сложность добавлять по доказательству | [design-principles.md](design-principles.md#kiss-keep-it-simple-stupid) |
-| YAGNI | Не строить обобщения «на всякий случай» | [design-principles.md](design-principles.md#yagni-you-arent-gonna-need-it) |
-| Principle of Least Astonishment | Код не должен удивлять читателя | [design-principles.md](design-principles.md#принцип-наименьшего-удивления) |
+| SRP — Single Responsibility | У класса одна причина для изменения | [[solid-principles#s-single-responsibility]] |
+| OCP — Open/Closed | Открыт для расширения, закрыт для модификации | [[solid-principles#o-openclosed]] |
+| LSP — Liskov Substitution | Подкласс взаимозаменяем с базой без сюрпризов | [[solid-principles#l-liskov-substitution]] |
+| ISP — Interface Segregation | Много маленьких интерфейсов вместо одного большого | [[solid-principles#i-interface-segregation]] |
+| DIP — Dependency Inversion | Зависим от абстракций, не от реализаций | [[solid-principles#d-dependency-inversion]] |
+| DRY | Одно знание — одно место | [[design-principles#dry-dont-repeat-yourself]] |
+| KISS | Проще — лучше; сложность добавлять по доказательству | [[design-principles#kiss-keep-it-simple-stupid]] |
+| YAGNI | Не строить обобщения «на всякий случай» | [[design-principles#yagni-you-arent-gonna-need-it]] |
+| Principle of Least Astonishment | Код не должен удивлять читателя | [[design-principles#принцип-наименьшего-удивления]] |
 
 ## Когда применять какой принцип
 
@@ -67,12 +67,12 @@ updated: "2026-04-17"
 ## Маршруты чтения
 
 - **Быстрый обзор (45 мин):** `design-principles.md` целиком → главы SRP/OCP в `solid-principles.md`.
-- **Подготовка к собеседованию (2-3 ч):** весь `solid-principles.md` с примерами + вопросы из [interview/design-patterns](../../interview/design-patterns/design-patterns-interview.md).
+- **Подготовка к собеседованию (2-3 ч):** весь `solid-principles.md` с примерами + вопросы из [[design-patterns-interview|interview/design-patterns]].
 - **Применение на практике:** принципы → паттерны → практика код-ревью с упором на нарушения SRP/OCP.
 
 ## Куда идти дальше
 
 - Паттерны как реализации принципов — [patterns/creational-patterns/](../../patterns/creational-patterns/README.md), [patterns/structural-patterns/](../../patterns/structural-patterns/README.md)
-- Архитектурные стили — [architecture/software-architecture/](../software-architecture/README.md)
-- ADR-шаблон для фиксации принципиальных решений — [architecture/architectural-decision-records/](../architectural-decision-records/README.md)
+- Архитектурные стили — [[README|architecture/software-architecture/]]
+- ADR-шаблон для фиксации принципиальных решений — [[README|architecture/architectural-decision-records/]]
 - Рефакторинг и код-ревью — [interview/code-quality/](../../interview/code-quality/)

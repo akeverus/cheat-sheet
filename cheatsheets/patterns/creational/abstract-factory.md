@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 **Когда применять:** несколько связанных продуктов (UI-тема, набор драйверов, платформа).
 
-## Что такое **Abstract Factory**?
+## Что такое Abstract Factory?
 
 **Abstract Factory** — это порождающий паттерн проектирования, который позволяет создавать семейства связанных объектов без привязки к конкретным классам. Вместо создания объектов напрямую, клиент работает с абстрактными интерфейсами фабрики.
 
@@ -121,7 +121,7 @@ public class Application {
 }
 ```
 
-## Когда использовать **Abstract Factory**?
+## Когда использовать Abstract Factory?
 
 ### Подходящие сценарии
 
@@ -264,7 +264,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классическая **Abstract Factory**
+### Классическая Abstract Factory
 
 ```java
 // Абстрактные продукты
@@ -486,7 +486,7 @@ public class Application {
 }
 ```
 
-### **Parameterized Abstract Factory**
+### Parameterized Abstract Factory
 
 ```java
 // Параметризованная фабрика
@@ -606,7 +606,7 @@ public class DatabaseClient {
 }
 ```
 
-### **ServiceLoader Abstract Factory**
+### ServiceLoader Abstract Factory
 
 ```java
 // Фабрика на основе ServiceLoader (Java SPI)
@@ -720,7 +720,7 @@ public class SerializationClient {
 
 ## Продвинутые реализации
 
-### 1. **Hierarchical Abstract Factory**
+### 1. Hierarchical Abstract Factory
 
 ```java
 // Иерархическая фабрика для сложных систем
@@ -837,7 +837,7 @@ public class ApplicationContext {
 }
 ```
 
-### 2. **Dynamic Abstract Factory**
+### 2. Dynamic Abstract Factory
 
 ```java
 // Динамическая фабрика с reflection
@@ -922,7 +922,7 @@ public class DynamicFactoryDemo {
 }
 ```
 
-### 3. **Composite Abstract Factory**
+### 3. Composite Abstract Factory
 
 ```java
 // Композитная фабрика для сложных объектов
@@ -1085,7 +1085,7 @@ public class CompositeFactoryDemo {
 
 ## Примеры использования
 
-### 1. **Spring Application Context Factory**
+### 1. Spring Application Context Factory
 
 ```java
 @Configuration
@@ -1170,7 +1170,7 @@ public class ApplicationService {
 }
 ```
 
-### 2. **Database Migration Factory**
+### 2. Database Migration Factory
 
 ```java
 @Service
@@ -1313,7 +1313,7 @@ public class DatabaseMigrationService {
 }
 ```
 
-### 3. **Serialization Factory**
+### 3. Serialization Factory
 
 ```java
 @Service
@@ -1450,7 +1450,7 @@ public class SerializationController {
 
 ## Лучшие практики
 
-### 1. Когда использовать **Abstract Factory**
+### 1. Когда использовать Abstract Factory
 
 ```java
 public class AbstractFactoryGuidelines {
@@ -1668,7 +1668,7 @@ public class FactoryErrorHandling {
 }
 ```
 
-### 4. Тестирование **Abstract Factory**
+### 4. Тестирование Abstract Factory
 
 ```java
 @ExtendWith(MockitoExtension.class)

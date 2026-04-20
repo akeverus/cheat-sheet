@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Gradle Advanced**
+# Gradle Advanced
 
 **Gradle** — это мощная система автоматизации сборки с открытым исходным кодом, которая использует **Groovy** или **Kotlin DSL** для описания **build** скриптов. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** проектов на **Gradle**.
 
@@ -86,7 +86,7 @@ updated: "2026-02-11"
 ### Много-модульные проекты
 
 #### Настройка композитной сборки
-Ниже — настройка многомодульного проекта и композитной сборки (**Kotlin `DSL`, `settings.gradle`.kts**).
+Ниже — настройка многомодульного проекта и композитной сборки (Kotlin `DSL`, `settings.gradle`.kts).
 ```kotlin
 // settings.gradle.kts
 rootProject.name = "enterprise-project"
@@ -139,7 +139,7 @@ dependencyResolutionManagement {
 }
 ```
 
-#### **Version Catalogs**
+#### Version Catalogs
 ```toml
 # gradle/libs.versions.toml
 [versions]
@@ -175,7 +175,7 @@ spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ```
 
-#### **Gradle.properties** для больших проектов
+#### Gradle.properties для больших проектов
 ```properties
 # gradle.properties
 org.gradle.parallel=true
@@ -273,7 +273,7 @@ class EnterprisePlugin : Plugin<Project> {
 }
 ```
 
-#### **Convention Plugin**
+#### Convention Plugin
 ```kotlin
 // buildSrc/src/main/kotlin/com/example/JavaConventionPlugin.kt
 package com.example
@@ -425,7 +425,7 @@ tasks.register<CodeQualityTask>("codeQuality")
 tasks.named("check").configure { dependsOn("codeQuality") }
 ```
 
-### **Build lifecycle hooks**
+### Build lifecycle hooks
 ```kotlin
 // build.gradle.kts
 import org.gradle.api.tasks.*
@@ -564,7 +564,7 @@ configurations.all {
 }
 ```
 
-### **Dependency locking**
+### Dependency locking
 ```bash
 # Создание lock файла
 ./gradlew dependencies --write-locks
@@ -676,7 +676,7 @@ spotless {
 }
 ```
 
-### **Mutation testing**
+### Mutation testing
 ```kotlin
 // build.gradle.kts
 plugins {
@@ -703,7 +703,7 @@ configure<PitestPluginExtension> {
 
 ## Публикация и доставка
 
-### **Multi-repository publishing**
+### Multi-repository publishing
 ```kotlin
 // build.gradle.kts
 plugins {
@@ -789,7 +789,7 @@ scmVersion {
 }
 ```
 
-### **Docker integration**
+### Docker integration
 ```kotlin
 // build.gradle.kts
 plugins {
@@ -838,7 +838,7 @@ tasks.named("dockerPush") {
 
 ## Производительность и оптимизация
 
-### **Build cache** и **incremental builds**
+### Build cache и incremental builds
 ```kotlin
 // build.gradle.kts
 // Build cache configuration
@@ -879,7 +879,7 @@ tasks.register("customTask") {
 }
 ```
 
-### **Memory** и **performance tuning**
+### Memory и performance tuning
 ```properties
 # gradle.properties
 org.gradle.parallel=true
@@ -913,7 +913,7 @@ enableSonarQube=true
 
 ## CI/CD интеграция
 
-### **Jenkins pipeline**
+### Jenkins pipeline
 ```groovy
 // Jenkinsfile
 pipeline {
@@ -1016,7 +1016,7 @@ pipeline {
 }
 ```
 
-### **GitHub Actions**
+### GitHub Actions
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -1115,7 +1115,7 @@ gradle build --no-configuration-cache
 gradle cleanConfigurationCache
 ```
 
-### **Performance monitoring**
+### Performance monitoring
 ```kotlin
 // build.gradle.kts
 plugins {
@@ -1162,7 +1162,7 @@ gradle.taskGraph.whenReady { taskGraph ->
 
 ## Лучшие практики
 
-### **Enterprise project structure**
+### Enterprise project structure
 ```text
 enterprise-project/
 ├── gradle/
@@ -1206,7 +1206,7 @@ enterprise-project/
 └── README.md
 ```
 
-### **Quality gates**
+### Quality gates
 ```kotlin
 // build.gradle.kts
 plugins {
@@ -1249,7 +1249,7 @@ tasks.named("build").configure {
 }
 ```
 
-### **Release management**
+### Release management
 ```kotlin
 // build.gradle.kts
 plugins {

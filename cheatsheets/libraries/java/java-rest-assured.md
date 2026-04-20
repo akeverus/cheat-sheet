@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [REST Assured Documentation](https://github.com/rest-assured/rest-assured/wiki) — документация
 
 ### См. также
-- [Интеграционное тестирование](../../testing/integration-testing/README.md) — интеграционное тестирование
+- [[README|Интеграционное тестирование]] — интеграционное тестирование
 - [[java-wiremock|WireMock]] — **WireMock** для мокирования **API**
 
 ## Содержание
@@ -60,9 +60,9 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### Простые **GET** запросы
+### Простые GET запросы
 
-Пример теста **GET**-запроса и валидации ответа с **REST Assured** (**Java**).
+Пример теста **GET**-запроса и валидации ответа с **REST Assured** (Java).
 
 ```java
 @Test
@@ -76,7 +76,7 @@ public void testGetUser() {
 }
 ```
 
-### **POST** запросы с **JSON**
+### POST запросы с JSON
 ```java
 @Test
 public void testCreateUser() {
@@ -128,7 +128,7 @@ given()
     .statusCode(200);
 ```
 
-### Валидация **JSON** ответа
+### Валидация JSON ответа
 ```java
 @Test
 public void testJsonResponseValidation() {
@@ -147,7 +147,7 @@ public void testJsonResponseValidation() {
 }
 ```
 
-### **XML** валидация
+### XML валидация
 ```java
 @Test
 public void testXmlResponse() {
@@ -161,7 +161,7 @@ public void testXmlResponse() {
 }
 ```
 
-### **Path Parameters**
+### Path Parameters
 ```java
 @Test
 public void testPathParameters() {
@@ -177,7 +177,7 @@ public void testPathParameters() {
 }
 ```
 
-### **Query Parameters**
+### Query Parameters
 ```java
 @Test
 public void testQueryParameters() {
@@ -193,7 +193,7 @@ public void testQueryParameters() {
 }
 ```
 
-### **Form Parameters**
+### Form Parameters
 ```java
 @Test
 public void testFormParameters() {
@@ -209,7 +209,7 @@ public void testFormParameters() {
 }
 ```
 
-### **File Upload**
+### File Upload
 ```java
 /
  * Тест загрузки файла через REST API
@@ -229,7 +229,7 @@ public void testFileUpload() {
 }
 ```
 
-### **Cookies** и **Headers**
+### Cookies и Headers
 ```java
 /
  * Тест работы с cookies и headers в REST API
@@ -250,7 +250,7 @@ public void testCookiesAndHeaders() {
 }
 ```
 
-### **Response Time Validation**
+### Response Time Validation
 ```java
 /
  * Тест проверки времени ответа API
@@ -268,7 +268,7 @@ public void testResponseTime() {
 }
 ```
 
-### **Schema Validation**
+### Schema Validation
 ```java
 /
  * Тест валидации JSON схемы ответа API
@@ -287,9 +287,9 @@ public void testJsonSchemaValidation() {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Test Slices**
+### Test Slices
 ```java
 /
  * Интеграционный тест REST API с Spring Boot
@@ -325,7 +325,7 @@ public class UserApiIntegrationTest {
 }
 ```
 
-### **MockMvc Integration**
+### MockMvc Integration
 ```java
 /
  * Тест REST контроллера с использованием MockMvc и REST Assured
@@ -368,9 +368,9 @@ public class UserControllerTest {
 }
 ```
 
-## **Configuration**
+## Configuration
 
-### **Base Configuration**
+### Base Configuration
 ```java
 /
  * Базовый класс для REST API тестов
@@ -407,7 +407,7 @@ public class ApiTestBase {
 }
 ```
 
-### **Custom Filters**
+### Custom Filters
 ```java
 /
  * Кастомный фильтр для логирования запросов и ответов в REST Assured
@@ -449,9 +449,9 @@ given()
     .get("/api/test");
 ```
 
-## **Advanced Features**
+## Advanced Features
 
-### **Object Mapping**
+### Object Mapping
 ```java
 // POJO класс
 public class User {
@@ -477,7 +477,7 @@ public void testObjectMapping() {
 }
 ```
 
-### **Extract Response Data**
+### Extract Response Data
 ```java
 @Test
 public void testExtractData() {
@@ -501,7 +501,7 @@ public void testExtractData() {
 }
 ```
 
-### **Specification Reuse**
+### Specification Reuse
 ```java
 public class ApiSpecifications {
 
@@ -529,7 +529,7 @@ given()
 
 ## Лучшие практики
 
-### **Test Organization**
+### Test Organization
 ```java
 public class ApiTestSuite {
 
@@ -555,7 +555,7 @@ public class ApiTestSuite {
 }
 ```
 
-### **Data-Driven Tests**
+### Data-Driven Tests
 ```java
 @ParameterizedTest
 @CsvSource({
@@ -574,7 +574,7 @@ public void testUserRetrieval(int userId, String expectedName) {
 }
 ```
 
-### **Custom Matchers**
+### Custom Matchers
 ```java
 public class CustomMatchers {
 
@@ -597,9 +597,9 @@ public class CustomMatchers {
 .body("email", CustomMatchers.isValidEmail());
 ```
 
-## **Integration** с другими инструментами
+## Integration с другими инструментами
 
-### **Cucumber Integration**
+### Cucumber Integration
 ```java
 public class ApiSteps {
 
@@ -622,7 +622,7 @@ public class ApiSteps {
 }
 ```
 
-### **Allure Reporting**
+### Allure Reporting
 ```java
 @Test
 @DisplayName("Create new user via API")
@@ -644,7 +644,7 @@ public void testCreateUser() {
 - [Официальная документация REST Assured](https://rest-assured.io/)
 - [GitHub репозиторий](https://github.com/rest-assured/rest-assured)
 - [Spring Boot интеграция](https://docs.spring.io/spring-boot/docs/current/reference/html/io.html#io.testing.rest-assured)
-- [Hamcrest matchers](../../testing/unit-testing/junit/hamcrest.md)
+- [[hamcrest|Hamcrest matchers]]
 
 ## См. также
 - [[java-wiremock|WireMock]] — для **mock**-серверов

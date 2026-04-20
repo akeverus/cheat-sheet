@@ -263,8 +263,8 @@ jcmd <pid> VM.native_memory summary
 
 ## Антипаттерны
 
-- **`System.gc()`** — не вызывайте явно. Используйте `-XX:+DisableExplicitGc` для защиты.
-- **`finalize()`** — deprecated с Java 9. Используйте `Cleaner` или try-with-resources.
+- `System.gc()` — не вызывайте явно. Используйте `-XX:+DisableExplicitGc` для защиты.
+- `finalize()` — deprecated с Java 9. Используйте `Cleaner` или try-with-resources.
 - **Object pooling для мелких объектов** — GC справляется лучше. Пулы оправданы только для тяжёлых ресурсов (DB connections, threads).
 - **-Xms ≠ -Xmx в контейнерах** — heap будет resize'иться, вызывая лишние GC. Устанавливайте одинаковые значения.
 - **Не логировать GC в production** — GC-логи почти бесплатны и критичны для диагностики. Всегда включайте `-Xlog:gc*`.

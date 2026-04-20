@@ -46,8 +46,8 @@ updated: "2026-02-11"
   - [Работа с **NonEmptyList** для гарантии непустых списков](#работа-с-nonemptylist-для-гарантии-непустых-списков)
   - [Работа с **IList** для иммутабельных списков](#работа-с-ilist-для-иммутабельных-списков)
   - [Работа с **ISet** для иммутабельных множеств](#работа-с-iset-для-иммутабельных-множеств)
-  - [Работа с \/ (**Disjunction**) для обработки ошибок](#работа-с-disjunction-для-обработки-ошибок)
-  - [Работа с **Maybe** (**Option**) с дополнительными операциями](#работа-с-maybe-option-с-дополнительными-операциями)
+  - [Работа с \/ (Disjunction) для обработки ошибок](#работа-с-disjunction-для-обработки-ошибок)
+  - [Работа с **Maybe** (Option) с дополнительными операциями](#работа-с-maybe-option-с-дополнительными-операциями)
   - [Работа с **Const** для **type-level** вычислений](#работа-с-const-для-type-level-вычислений)
   - [Работа с **Free Monad** для **DSL**](#работа-с-free-monad-для-dsl)
   - [Работа с **Coyoneda** для оптимизации](#работа-с-coyoneda-для-оптимизации)
@@ -91,11 +91,11 @@ updated: "2026-02-11"
 
 **Scalaz** особенно полезен для создания чистого функционального кода, обработки ошибок, работы с эффектами и создания композируемого кода.
 
-## **Type Classes** в **Scalaz**
+## Type Classes в Scalaz
 
 **Scalaz** предоставляет множество **Type Classes** для различных операций.
 
-### **Semigroup** и **Monoid**
+### Semigroup и Monoid
 
 ```scala
 import scalaz._
@@ -115,7 +115,7 @@ val sum = 1 |+| 2  // 3
 val list = List(1, 2, 3) |+| List(4, 5)  // List(1, 2, 3, 4, 5)
 ```
 
-### **Functor**
+### Functor
 
 ```scala
 import scalaz._
@@ -131,9 +131,9 @@ val mapped = optionFunctor.map(option)(_ * 2)  // Some(20)
 val result = option.map(_ * 2)  // Some(20)
 ```
 
-## **Monads** и **Functors**
+## Monads и Functors
 
-### **Monad**
+### Monad
 
 ```scala
 import scalaz._
@@ -153,7 +153,7 @@ val computation = for {
 // Some(60)
 ```
 
-### **Applicative**
+### Applicative
 
 ```scala
 import scalaz._
@@ -170,11 +170,11 @@ val result = optionApplicative.ap(value)(add)  // Some(11)
 val result2 = (some(_ + 1) <*> some(10))  // Some(11)
 ```
 
-## **Validation**
+## Validation
 
 **Validation** позволяет накапливать ошибки валидации.
 
-### Накопление ошибок с **Validation**
+### Накопление ошибок с Validation
 
 ```scala
 import scalaz._
@@ -210,11 +210,11 @@ val result = createUser("", "invalid-email", -5)
 //                       "Age must be between 0 and 150"))
 ```
 
-## **Lens**
+## Lens
 
 **Lens** в **Scalaz** — это функциональные ссылки на поля.
 
-### Использование **Lens**
+### Использование Lens
 
 ```scala
 import scalaz.Lens
@@ -322,7 +322,7 @@ val (logs, result) = computation.run
 // result: 60
 ```
 
-### Практические примеры: **Reader Monad** для **dependency injection**
+### Практические примеры: Reader Monad для dependency injection
 
 ```scala
 import scalaz._
@@ -348,7 +348,7 @@ val result = connectionString.run(config)
 // "localhost:8080 (timeout: 30000ms)"
 ```
 
-### Практические примеры: **State Monad**
+### Практические примеры: State Monad
 
 ```scala
 import scalaz._
@@ -367,7 +367,7 @@ val (finalState, result) = increment.run(initialState)
 // finalState: 1, result: 1
 ```
 
-### Практические примеры: **Kleisli** для композиции функций
+### Практические примеры: Kleisli для композиции функций
 
 ```scala
 import scalaz._
@@ -387,7 +387,7 @@ val parseAndDivide: String => String => Option[Double] =
 val result = parseAndDivide("10")("")  // Some(5.0)
 ```
 
-### Работа с **Task** для асинхронных операций
+### Работа с Task для асинхронных операций
 
 ```scala
 import scalaz.concurrent.Task
@@ -407,7 +407,7 @@ val computation: Task[String] = for {
 val future = computation.runAsync(result => println(result))
 ```
 
-### Работа с **Either** для обработки ошибок
+### Работа с Either для обработки ошибок
 
 ```scala
 import scalaz._
@@ -437,7 +437,7 @@ val result = computation
 // Right(5.0)
 ```
 
-### Работа с **Tree** для иерархических структур
+### Работа с Tree для иерархических структур
 
 ```scala
 import scalaz._
@@ -459,7 +459,7 @@ val sum = tree.foldMap(identity)  // 15
 val depth = tree.foldMap(_ => 1)  // 3
 ```
 
-### Работа с **NonEmptyList** для гарантии непустых списков
+### Работа с NonEmptyList для гарантии непустых списков
 
 ```scala
 import scalaz._
@@ -480,7 +480,7 @@ def validateNonEmpty[A](list: List[A]): ValidationNel[String, NonEmptyList[A]] =
 }
 ```
 
-### Работа с **IList** для иммутабельных списков
+### Работа с IList для иммутабельных списков
 
 ```scala
 import scalaz.IList
@@ -494,7 +494,7 @@ val filtered = ilist.filter(_ % 2 == 0)  // IList(2, 4)
 val sum = ilist.foldLeft(0)(_ + _)  // 15
 ```
 
-### Работа с **ISet** для иммутабельных множеств
+### Работа с ISet для иммутабельных множеств
 
 ```scala
 import scalaz.ISet
@@ -509,7 +509,7 @@ val intersection = iset1 intersection iset2  // ISet(4, 5)
 val difference = iset1 difference iset2  // ISet(1, 2, 3)
 ```
 
-### Работа с \/ (**Disjunction**) для обработки ошибок
+### Работа с \/ (Disjunction) для обработки ошибок
 
 ```scala
 import scalaz._
@@ -541,7 +541,7 @@ val mapped = computation.map(_ * 2)
 val flatMapped = computation.flatMap(r => (r + 1).right)
 ```
 
-### Работа с **Maybe** (**Option**) с дополнительными операциями
+### Работа с Maybe (Option) с дополнительными операциями
 
 ```scala
 import scalaz._
@@ -560,7 +560,7 @@ val getOrElse = empty.getOrElse(0)  // 0
 val validated = maybe.toSuccessNel("Value is missing")
 ```
 
-### Работа с **Const** для **type-level** вычислений
+### Работа с Const для type-level вычислений
 
 ```scala
 import scalaz._
@@ -577,7 +577,7 @@ val traverseResult = List(1, 2, 3).traverse(x => Const("a"))
 // Const("aaa")
 ```
 
-### Работа с **Free Monad** для **DSL**
+### Работа с Free Monad для DSL
 
 ```scala
 import scalaz._
@@ -621,7 +621,7 @@ def interpreter: UserDSL ~> Id = new (UserDSL ~> Id) {
 val result = program.foldMap(interpreter)
 ```
 
-### Работа с **Coyoneda** для оптимизации
+### Работа с Coyoneda для оптимизации
 
 ```scala
 import scalaz._
@@ -639,7 +639,7 @@ val result = mapped.run
 // List(3, 5, 7, 9, 11)
 ```
 
-### Работа с **Codensity** для оптимизации **Monad** операций
+### Работа с Codensity для оптимизации Monad операций
 
 ```scala
 import scalaz._
@@ -671,9 +671,9 @@ val result = flatMapped.run
 
 Использование **Scalaz** для обработки ошибок, работы с эффектами, валидации, создания **Lens**, **dependency injection**, управления состоянием, композиции функций и практических применений критично для создания надежных, гибких функциональных приложений.
 
-**Scalaz** предоставляет мощные инструменты для работы с асинхронными операциями (**Task**), обработки ошибок (**Either, \/**), иерархических структур (**Tree**), непустыми списками (**NonEmptyList**), иммутабельными структурами (**IList, ISet**), **Maybe**, **type-level** вычислениями (**Const**), **DSL** (**Free Monad**), и оптимизацией (**Coyoneda, Codensity**). Понимание этих техник позволяет создавать сложные, масштабируемые функциональные приложения.
+**Scalaz** предоставляет мощные инструменты для работы с асинхронными операциями (Task), обработки ошибок (Either, \/), иерархических структур (Tree), непустыми списками (NonEmptyList), иммутабельными структурами (IList, ISet), **Maybe**, **type-level** вычислениями (Const), **DSL** (Free Monad), и оптимизацией (Coyoneda, Codensity). Понимание этих техник позволяет создавать сложные, масштабируемые функциональные приложения.
 
-### Работа с **Order** для упорядочивания
+### Работа с Order для упорядочивания
 
 ```scala
 import scalaz._
@@ -690,7 +690,7 @@ val result = 10 ?|? 20  // Ordering.LT
 val isLess = 10 <| 20  // true
 ```
 
-### Работа с **Equal** для сравнения
+### Работа с Equal для сравнения
 
 ```scala
 import scalaz._
@@ -707,7 +707,7 @@ val result = 10 === 10  // true
 val notEqual = 10 =/= 20  // true
 ```
 
-### Работа с **Show** для преобразования в строку
+### Работа с Show для преобразования в строку
 
 ```scala
 import scalaz._
@@ -722,7 +722,7 @@ val string = intShow.show(42)  // "42"
 val result = 42.shows  // "42"
 ```
 
-### Работа с **Foldable** для операций над коллекциями
+### Работа с Foldable для операций над коллекциями
 
 ```scala
 import scalaz._
@@ -740,7 +740,7 @@ val sum2 = list.suml  // 15
 val product2 = list.productr  // 120
 ```
 
-### Работа с **Traverse** для трансформации коллекций
+### Работа с Traverse для трансформации коллекций
 
 ```scala
 import scalaz._
@@ -760,7 +760,7 @@ val validatedList = list.traverse(x =>
 // Success(List(1, 2, 3, 4, 5))
 ```
 
-### Работа с **Plus** для комбинирования значений
+### Работа с Plus для комбинирования значений
 
 ```scala
 import scalaz._
@@ -777,7 +777,7 @@ val combined = optionPlus.plus(option1, option2)  // Some(1)
 val result = option1 <+> option2  // Some(1)
 ```
 
-### Работа с **ApplicativePlus** для дополнительных операций
+### Работа с ApplicativePlus для дополнительных операций
 
 ```scala
 import scalaz._
@@ -796,7 +796,7 @@ val combined = list1 <+> list2  // List(1, 2, 3, 4, 5, 6)
 val empty = listApplicativePlus.empty[List[Int]]  // List()
 ```
 
-### Работа с **MonadPlus** для дополнительных операций
+### Работа с MonadPlus для дополнительных операций
 
 ```scala
 import scalaz._
@@ -818,7 +818,7 @@ val result = for {
 // List(6, 8, 10)
 ```
 
-### Работа с **Arrow** для композиции функций
+### Работа с Arrow для композиции функций
 
 ```scala
 import scalaz._
@@ -837,7 +837,7 @@ val composed = arrow.compose(f, g)  // x => (x + 1) * 2
 val parallel = arrow.split(f, g)  // (x, y) => (x * 2, y + 1)
 ```
 
-### Работа с **Comonad** для операций над структурами
+### Работа с Comonad для операций над структурами
 
 ```scala
 import scalaz._
@@ -855,7 +855,7 @@ val head = streamComonad.copoint(stream)  // 1
 val mapped = streamComonad.cobind(stream)(s => s.sum)  // Stream(15, 14, 12, 9, 5)
 ```
 
-### Работа с **Bifunctor** для работы с двумя типами
+### Работа с Bifunctor для работы с двумя типами
 
 ```scala
 import scalaz._
@@ -875,7 +875,7 @@ val mapped = eitherBifunctor.bimap(
 // Right(84)
 ```
 
-### Работа с **Profunctor** для работы с функциями
+### Работа с Profunctor для работы с функциями
 
 ```scala
 import scalaz._
@@ -895,7 +895,7 @@ val mapped = functionProfunctor.dimap(
 // String => String
 ```
 
-### Работа с **Contravariant** для контравариантных функторов
+### Работа с Contravariant для контравариантных функторов
 
 ```scala
 import scalaz._
@@ -915,7 +915,7 @@ implicit val orderingContravariant: Contravariant[Ordering] =
   }
 ```
 
-### Работа с **InvariantFunctor** для инвариантных функторов
+### Работа с InvariantFunctor для инвариантных функторов
 
 ```scala
 import scalaz._
@@ -937,7 +937,7 @@ implicit val codecInvariant: InvariantFunctor[Codec] =
   }
 ```
 
-### Работа с **Zip** для параллельной композиции
+### Работа с Zip для параллельной композиции
 
 ```scala
 import scalaz._
@@ -953,7 +953,7 @@ val list2 = List(4, 5, 6)
 val zipped = listZip.zip(list1, list2)  // List((1, 4), (2, 5), (3, 6))
 ```
 
-### Работа с **Unzip** для разделения
+### Работа с Unzip для разделения
 
 ```scala
 import scalaz._
@@ -970,7 +970,7 @@ val (list1, list2) = listUnzip.unzip(list)
 // list2: List(4, 5, 6)
 ```
 
-### Работа с **Align** для выравнивания коллекций
+### Работа с Align для выравнивания коллекций
 
 ```scala
 import scalaz._
@@ -987,7 +987,7 @@ val aligned = listAlign.align(list1, list2)
 // List(\/-(1, 4), \/-(2, 5), -\/(3))
 ```
 
-### Работа с **Cozip** для разделения **Coproduct**
+### Работа с Cozip для разделения Coproduct
 
 ```scala
 import scalaz._
@@ -1006,7 +1006,7 @@ val (maybeInt, maybeString) = cozip.cozip(either)
 // maybeString: Option[String] = Some("hello")
 ```
 
-### Работа с **Cobind** для операций над структурами
+### Работа с Cobind для операций над структурами
 
 ```scala
 import scalaz._
@@ -1021,7 +1021,7 @@ val stream = Stream(1, 2, 3, 4, 5)
 val mapped = streamCobind.cobind(stream)(s => s.sum)  // Stream(15, 14, 12, 9, 5)
 ```
 
-### Работа с **Cojoin** для дублирования структуры
+### Работа с Cojoin для дублирования структуры
 
 ```scala
 import scalaz._
@@ -1037,7 +1037,7 @@ val duplicated = streamCojoin.cojoin(stream)
 // Stream(Stream(1, 2, 3), Stream(2, 3), Stream(3))
 ```
 
-### Работа с **Compose** для композиции
+### Работа с Compose для композиции
 
 ```scala
 import scalaz._
@@ -1053,7 +1053,7 @@ val g: String => Int = _.length
 val composed = functionCompose.compose(f, g)  // Int => Int
 ```
 
-### Работа с **Category** для категорий
+### Работа с Category для категорий
 
 ```scala
 import scalaz._
@@ -1072,7 +1072,7 @@ val composed = functionCategory.compose(f, g)  // Int => Int
 val id = functionCategory.id[Int]  // Int => Int
 ```
 
-### Работа с **Strong** для сильных профункторов
+### Работа с Strong для сильных профункторов
 
 ```scala
 import scalaz._
@@ -1087,7 +1087,7 @@ val f: Int => String = _.toString
 val strengthened = functionStrong.first(f)  // (Int, B) => (String, B)
 ```
 
-### Работа с **Choice** для выбора
+### Работа с Choice для выбора
 
 ```scala
 import scalaz._
@@ -1102,7 +1102,7 @@ val f: Int => String = _.toString
 val chosen = functionChoice.choice(f, f)  // Either[Int, Int] => Either[String, String]
 ```
 
-### Работа с **Split** для разделения
+### Работа с Split для разделения
 
 ```scala
 import scalaz._
@@ -1118,7 +1118,7 @@ val g: Int => Int = _ * 2
 val split = functionSplit.split(f, g)  // (Int, Int) => (String, Int)
 ```
 
-### Работа с **Choice** для выбора между функциями
+### Работа с Choice для выбора между функциями
 
 ```scala
 import scalaz._
@@ -1134,7 +1134,7 @@ val g: String => Int = _.length
 val chosen = functionChoice.choice(f, g)  // Either[Int, String] => Either[String, Int]
 ```
 
-### Работа с **Costar** для контравариантных функторов
+### Работа с Costar для контравариантных функторов
 
 ```scala
 import scalaz._
@@ -1148,7 +1148,7 @@ val functionCostar: Costar[Function1, Option] =
   }
 ```
 
-### Работа с **Star** для ковариантных функторов
+### Работа с Star для ковариантных функторов
 
 ```scala
 import scalaz._

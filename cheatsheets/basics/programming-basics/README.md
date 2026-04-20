@@ -17,14 +17,14 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основной документ
-- [Основы программирования (на примере Java)](programming-basics.md)
+- [[programming-basics|Основы программирования (на примере Java)]]
 
 ### Соседние разделы
-- [Computer Science](../computer-science/README.md)
-- [Алгоритмы и структуры данных](../../algorithms/README.md)
-- [Паттерны проектирования](../../patterns/README.md)
-- [Java](../../languages/java/README.md)
-- [Принципы проектирования](../../architecture/design-principles/README.md)
+- [[README|Computer Science]]
+- [[README|Алгоритмы и структуры данных]]
+- [[README|Паттерны проектирования]]
+- [[README|Java]]
+- [[README|Принципы проектирования]]
 
 ### Внешние ресурсы
 - [Java Language Specification](https://docs.oracle.com/javase/specs/jls/se21/html/)
@@ -43,18 +43,18 @@ updated: "2026-04-17"
 
 | Тема | Где изучать глубже |
 |------|-------------------|
-| Переменные, типы, литералы | [programming-basics.md](programming-basics.md#типы-данных) |
-| Управляющие конструкции, циклы | [programming-basics.md](programming-basics.md#управляющие-конструкции) |
-| Функции/методы, параметры, возврат | [programming-basics.md](programming-basics.md#функции-и-модули) |
-| ООП: классы, объекты, наследование, полиморфизм | [programming-basics.md](programming-basics.md#объектно-ориентированное-программирование) |
-| Обработка ошибок, исключения | [programming-basics.md](programming-basics.md#обработка-ошибок) |
-| Парадигмы: императивная, функциональная, декларативная | [programming-basics.md](programming-basics.md#парадигмы-программирования) |
-| SOLID и принципы | [architecture/design-principles/](../../architecture/design-principles/README.md) |
-| Design Patterns | [patterns/](../../patterns/README.md) |
+| Переменные, типы, литералы | [[programming-basics#типы-данных]] |
+| Управляющие конструкции, циклы | [[programming-basics#управляющие-конструкции]] |
+| Функции/методы, параметры, возврат | [[programming-basics#функции-и-модули]] |
+| ООП: классы, объекты, наследование, полиморфизм | [[programming-basics#объектно-ориентированное-программирование]] |
+| Обработка ошибок, исключения | [[programming-basics#обработка-ошибок]] |
+| Парадигмы: императивная, функциональная, декларативная | [[programming-basics#парадигмы-программирования]] |
+| SOLID и принципы | [[README|architecture/design-principles/]] |
+| Design Patterns | [[README|patterns/]] |
 
 ## Что внутри документа
 
-[programming-basics.md](programming-basics.md) содержит:
+[[programming-basics]] содержит:
 
 - Что такое программа, компиляция и выполнение (bytecode, JIT)
 - Переменные и константы, области видимости, scope
@@ -70,13 +70,13 @@ updated: "2026-04-17"
 ## Маршруты чтения
 
 - **С нуля (3 ч):** весь документ по порядку, с практическим написанием кода.
-- **Переход с Python/JS на Java:** `Типы → ООП → Исключения → Парадигмы`, затем [languages/java/](../../languages/java/README.md).
-- **Подготовка к junior-интервью:** весь документ + [algorithms/data-structures/](../../algorithms/data-structures/README.md).
+- **Переход с Python/JS на Java:** `Типы → ООП → Исключения → Парадигмы`, затем [[README|languages/java/]].
+- **Подготовка к junior-интервью:** весь документ + [[README|algorithms/data-structures/]].
 
 ## Куда идти дальше
 
-- Глубже в Java: JVM, GC, Collections — [languages/java/](../../languages/java/README.md)
-- Паттерны проектирования (GoF) — [patterns/](../../patterns/README.md)
-- SOLID, DRY, KISS, YAGNI — [architecture/design-principles/](../../architecture/design-principles/README.md)
-- Алгоритмы и структуры данных — [algorithms/](../../algorithms/README.md)
-- Тестирование и TDD — [testing/unit-testing/](../../testing/unit-testing/README.md)
+- Глубже в Java: JVM, GC, Collections — [[README|languages/java/]]
+- Паттерны проектирования (GoF) — [[README|patterns/]]
+- SOLID, DRY, KISS, YAGNI — [[README|architecture/design-principles/]]
+- Алгоритмы и структуры данных — [[README|algorithms/]]
+- Тестирование и TDD — [[README|testing/unit-testing/]]

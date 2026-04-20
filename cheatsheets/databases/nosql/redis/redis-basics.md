@@ -52,15 +52,15 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 - [Решение проблем](#решение-проблем)
 
 
-## Введение в **Redis**
+## Введение в Redis
 
-**Redis** (**REmote DIctionary Server**) — это быстрая **in-memory** структура данных, которая может использоваться как база данных, кэш и **message broker**. **Redis** поддерживает различные типы данных и предлагает высокую производительность благодаря хранению данных в оперативной памяти.
+**Redis** (REmote DIctionary Server) — это быстрая **in-memory** структура данных, которая может использоваться как база данных, кэш и **message broker**. **Redis** поддерживает различные типы данных и предлагает высокую производительность благодаря хранению данных в оперативной памяти.
 
-### Основные возможности **Redis**
+### Основные возможности Redis
 
 - **In-memory хранилище**: Все данные хранятся в **RAM** для максимальной скорости
 - **Разнообразие типов данных**: **Strings**, **Lists**, **Sets**, **Hashes**, **Sorted Sets**, **Streams**
-- **Персистентность**: **RDB snapshots** и **AOF** (**Append `Only` File**)
+- **Персистентность**: **RDB snapshots** и **AOF** (Append `Only` File)
 - **Репликация**: **Master-slave** репликация с автоматическим **failover**
 - **Кластеризация**: Автоматическое шардинг и распределение данных
 - **Pub/Sub**: **Publish-Subscribe messaging**
@@ -68,9 +68,9 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 - **Transactions**: **ACID** транзакции
 - **TTL**: Автоматическое истечение ключей
 
-### Архитектура **Redis**
+### Архитектура Redis
 
-Диаграмма компонентов **Redis**: кластер (**Master/`Slave`, Sentinel**), ядро (**Event `Loop`, структуры данных, персистентность, сеть**), ОС.
+Диаграмма компонентов **Redis**: кластер (Master/`Slave`, Sentinel), ядро (Event `Loop`, структуры данных, персистентность, сеть), ОС.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -86,7 +86,7 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Варианты использования **Redis**
+### Варианты использования Redis
 
 1. **Кэширование**: Кэш для веб-приложений
 2. **Сессии**: Хранение сессий пользователей
@@ -100,11 +100,11 @@ related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql
 
 ## Установка и первоначальная настройка
 
-### Установка **Redis**
+### Установка Redis
 
 Команды для установки **Redis** на **Ubuntu**/**Debian**: обновление пакетов, установка **redis-server**, проверка статуса и управление службой.
 
-#### **Linux** (**Ubuntu/Debian**)
+#### Linux (Ubuntu/Debian)
 
 ```bash
 # Обновление пакетов
@@ -123,7 +123,7 @@ sudo systemctl stop redis
 sudo systemctl restart redis
 ```
 
-#### **Linux** (**RHEL/CentOS**)
+#### Linux (RHEL/CentOS)
 
 ```bash
 # Установка EPEL репозитория
@@ -137,7 +137,7 @@ sudo systemctl start redis
 sudo systemctl enable redis
 ```
 
-#### **macOS** (**с Homebrew**)
+#### macOS (с Homebrew)
 
 ```bash
 # Установка Redis
@@ -150,7 +150,7 @@ brew services start redis
 redis-server /usr/local/etc/redis.conf
 ```
 
-#### **Docker**
+#### Docker
 
 ```bash
 # Запуск Redis в Docker
@@ -577,9 +577,9 @@ tcp-keepalive 60
 timeout 300
 ```
 
-### Подключение к **Redis**
+### Подключение к Redis
 
-#### **Redis CLI**
+#### Redis CLI
 
 ```bash
 # Подключение к локальному Redis
@@ -617,7 +617,7 @@ OK
 
 #### Программные подключения
 
-##### **Java** с **Jedis**
+##### Java с Jedis
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -684,7 +684,7 @@ public class RedisJavaExample {
 }
 ```
 
-##### **Java** с **Jedis** (**расширенный пример**)
+##### Java с Jedis (расширенный пример)
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -825,7 +825,7 @@ COPY sourcekey destkey
 RANDOMKEY
 ```
 
-### Работа с **TTL** (**Time To Live**)
+### Работа с TTL (Time To Live)
 
 ```redis
 # Установка TTL для ключа (в секундах)
@@ -1056,7 +1056,7 @@ maxmemory-samples 5
 # volatile-ttl - удалять ключи с наименьшим TTL
 ```
 
-### **Network Configuration**
+### Network Configuration
 
 ```conf
 # Настройки сети
@@ -1075,7 +1075,7 @@ tcp-backlog 511
 # tls-ca-cert-file /path/to/ca.pem
 ```
 
-### **Performance Tuning**
+### Performance Tuning
 
 ```conf
 # Оптимизация производительности
@@ -1105,9 +1105,9 @@ zset-max-ziplist-value 64
 
 ## Управление подключениями
 
-### **Connection Pooling**
+### Connection Pooling
 
-#### **Java** (**Jedis**)
+#### Java (Jedis)
 
 ```java
 import redis.clients.jedis.JedisPool;
@@ -1156,7 +1156,7 @@ public class RedisConnectionPool {
 }
 ```
 
-#### **Java** (**Jedis**)
+#### Java (Jedis)
 
 ```java
 import redis.clients.jedis.JedisPool;
@@ -1193,7 +1193,7 @@ public class RedisConnectionPool {
 }
 ```
 
-### **Connection Monitoring**
+### Connection Monitoring
 
 ```redis
 # Информация о подключениях
@@ -1227,7 +1227,7 @@ CONFIG SET maxclients 10000
 
 ## Расширенные операции с ключами
 
-### **Batch Operations**
+### Batch Operations
 
 ```redis
 # Множественная установка
@@ -1243,7 +1243,7 @@ MSETNX key1 "value1" key2 "value2"
 GETSET key "new_value"
 ```
 
-### **Key Expiration Patterns**
+### Key Expiration Patterns
 
 ```redis
 # Установка значения с TTL
@@ -1265,7 +1265,7 @@ EXPIRE key 60 LT
 PERSIST key
 ```
 
-### **Key Scanning**
+### Key Scanning
 
 ```redis
 # Безопасный перебор ключей
@@ -1280,7 +1280,7 @@ SCAN 0 MATCH user:* COUNT 100 DB 1
 
 ## Мониторинг и отладка
 
-### **Server Information**
+### Server Information
 
 ```redis
 # Полная информация о сервере
@@ -1304,7 +1304,7 @@ CONFIG GET maxmemory
 CONFIG GET "*memory*"
 ```
 
-### **Slow Log**
+### Slow Log
 
 ```redis
 # Настройка slow log
@@ -1322,7 +1322,7 @@ SLOWLOG RESET
 SLOWLOG LEN
 ```
 
-### **Memory Analysis**
+### Memory Analysis
 
 ```redis
 # Информация о памяти
@@ -1342,7 +1342,7 @@ MEMORY SAMPLES 5
 
 ## Реальные примеры
 
-### **Session Management**
+### Session Management
 
 ```java
 // Java пример управления сессиями
@@ -1396,7 +1396,7 @@ public class SessionManager {
 }
 ```
 
-### **Cache Implementation**
+### Cache Implementation
 
 ```java
 // Java пример реализации кэша
@@ -1503,7 +1503,7 @@ public class Cached {
 }
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 ```java
 // Java пример rate limiting
@@ -1566,9 +1566,9 @@ public class RateLimiter {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 
-#### **Issue** 1: **Connection Refused**
+#### Issue 1: Connection Refused
 
 ```bash
 # Проверить статус Redis
@@ -1585,7 +1585,7 @@ redis-cli CONFIG GET bind
 redis-cli CONFIG GET port
 ```
 
-#### **Issue** 2: **Out** of **Memory**
+#### Issue 2: Out of Memory
 
 ```redis
 # Проверить использование памяти
@@ -1602,7 +1602,7 @@ CONFIG SET maxmemory 4gb
 CONFIG SET maxmemory-policy allkeys-lru
 ```
 
-#### **Issue** 3: **Slow Performance**
+#### Issue 3: Slow Performance
 
 ```redis
 # Проверить slow log
@@ -1622,7 +1622,7 @@ CONFIG SET save ""
 CONFIG SET appendfsync everysec
 ```
 
-#### **Issue** 4: Высокая задержка из-за `KEYS` в production
+#### Issue 4: Высокая задержка из-за `KEYS` в production
 
 ```redis
 # Найти проблемные команды
@@ -1639,7 +1639,7 @@ MEMORY USAGE user:123
 
 ## Развёртывание в продакшене
 
-### **Systemd Service Configuration**
+### Systemd Service Configuration
 
 ```ini
 # /etc/systemd/system/redis.service
@@ -1662,7 +1662,7 @@ RuntimeDirectoryMode=0755
 WantedBy=multi-user.target
 ```
 
-### **Docker Deployment**
+### Docker Deployment
 
 ```yaml
 # docker-compose.yml для production
@@ -1696,7 +1696,7 @@ networks:
     driver: bridge
 ```
 
-### **Kubernetes Deployment**
+### Kubernetes Deployment
 
 ```yaml
 # redis-deployment.yaml
@@ -1754,15 +1754,15 @@ spec:
 
 ## Сводка лучших практик
 
-### **Configuration**
+### Configuration
 
 1. **Настройте maxmemory** в зависимости от доступной **RAM**
 2. **Выберите правильную политику eviction** для вашего **use case**
 3. **Используйте AOF** для критически важных данных
-4. **Настройте правильный appendfsync** (**everysec для баланса**)
+4. **Настройте правильный appendfsync** (everysec для баланса)
 5. **Отключите опасные команды** в **production**
 
-### **Performance**
+### Performance
 
 1. **Используйте Pipeline** для множественных операций
 2. **Используйте SCAN** вместо **KEYS** для перебора
@@ -1770,7 +1770,7 @@ spec:
 4. **Настройте правильные структуры данных** для ваших задач
 5. **Мониторьте slow log** регулярно
 
-### **Security**
+### Security
 
 1. **Установите пароль** через **requirepass**
 2. **Ограничьте доступ** через **bind**
@@ -1778,7 +1778,7 @@ spec:
 4. **Отключите опасные команды** через **rename-command**
 5. **Регулярно обновляйте Redis**
 
-### **Monitoring**
+### Monitoring
 
 1. **Мониторьте использование памяти** через **INFO memory**
 2. **Отслеживайте количество ключей** через **DBSIZE**
@@ -1851,7 +1851,7 @@ Group=redis
 WantedBy=multi-user.target
 ```
 
-### **Docker Deployment**
+### Docker Deployment
 
 ```yaml
 version: '3.8'
@@ -1870,7 +1870,7 @@ volumes:
   redis_data:
 ```
 
-### **Kubernetes Deployment**
+### Kubernetes Deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -1903,7 +1903,7 @@ spec:
 
 ## Сводка лучших практик
 
-### **Configuration**
+### Configuration
 
 1. **Используйте пароли** для **production**
 2. **Настройте maxmemory** правильно

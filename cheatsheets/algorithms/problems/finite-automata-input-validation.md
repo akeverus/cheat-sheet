@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [`Baeldung`: Finite State Machines](https://www.baeldung.com/cs-finite-state-machines)
 
 ### См. также
-- [Регулярные выражения](../strings/README.md) — алгоритмы со строками
+- [[README|Регулярные выражения]] — алгоритмы со строками
 - [[state-machine-with-enums|Конечный автомат с enum]] — state machine с enum
 
 ## Содержание

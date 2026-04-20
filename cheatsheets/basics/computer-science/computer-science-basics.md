@@ -62,11 +62,11 @@ updated: "2026-02-11"
   - [Важность изучения CS](#важность-изучения-cs)
   - [Рекомендации по изучению](#рекомендации-по-изучению)
 
-## Введение в **Computer Science**
+## Введение в Computer Science
 
 **Computer Science** — это дисциплина, изучающая принципы, методы и приложения вычислительных систем. Она охватывает широкий спектр тем от аппаратного обеспечения до программного обеспечения и теоретических основ.
 
-### Основные области **Computer Science**
+### Основные области Computer Science
 
 ```java
 /**
@@ -142,7 +142,7 @@ public enum ComputerScienceFields {
 }
 ```
 
-### Важность **Computer Science**
+### Важность Computer Science
 
 ```java
 public class ComputerScienceImportance {
@@ -1562,7 +1562,7 @@ public class DatabaseNormalization {
 
 ## Компьютерные сети
 
-### Модель **OSI**
+### Модель OSI
 
 ```java
     /**
@@ -1703,7 +1703,7 @@ public class OSIModel {
 }
 ```
 
-### **TCP**/`IP` стек
+### TCP/`IP` стек
 
 ```java
     /**
@@ -2385,7 +2385,7 @@ public class GodelsIncompleteness {
 
 - **Сложно оценить сложность алгоритма** — см. раздел «Вычислительная сложность»; учитывать циклы, рекурсию и размер входа.
 - **Неясно, какая структура данных подходит** — см. разделы «Алгоритмы и структуры данных» и «Основные структуры данных»; сопоставить операции и их стоимость.
-- **Переход к практике** — см. смежные документы: [алгоритмы](../../algorithms/), [структуры данных](../../algorithms/), [сети](../networks/networks-basics.md), [ОС](../operating-systems/operating-systems-basics.md).
+- **Переход к практике** — см. смежные документы: [алгоритмы](../../algorithms/), [структуры данных](../../algorithms/), [[networks-basics|сети]], [[operating-systems-basics|ОС]].
 
 ## Частые вопросы
 
@@ -2421,7 +2421,7 @@ public class GodelsIncompleteness {
 
 1. **Начинайте с основ**: Изучите базовые алгоритмы и структуры данных
 2. **Практикуйте регулярно**: Решайте задачи на платформах типа **LeetCode**
-3. **Читаите книги**: "**Introduction** to **Algorithms**" (**CLRS**), "**Computer Science**: An **Interdisciplinary Approach**"
+3. **Читаите книги**: "**Introduction** to **Algorithms**" (CLRS), "**Computer Science**: An **Interdisciplinary Approach**"
 4. **Изучайте языки**: **Java**, **Python**, C++ для разных типов задач
 5. **Следите за развитием**: `CS` - быстро меняющаяся область
 6. **Комбинируйте теорию и практику**: Понимайте почему и как работают алгоритмы

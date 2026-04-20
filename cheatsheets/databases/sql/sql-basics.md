@@ -109,7 +109,7 @@ FROM payments;
 
 ## Транзакции и изоляция
 
-> Подробная шпаргалка: [sql-transactions-isolation](sql-transactions-isolation.md) — ACID, уровни изоляции, аномалии, MVCC, блокировки, Spring @Transactional.
+> Подробная шпаргалка: [[sql-transactions-isolation]] — ACID, уровни изоляции, аномалии, MVCC, блокировки, Spring @Transactional.
 
 Транзакция нужна, когда несколько изменений должны быть атомарными.
 

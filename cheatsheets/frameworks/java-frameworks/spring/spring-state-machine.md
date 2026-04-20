@@ -83,9 +83,9 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring State Machine**
+## Введение в Spring State Machine
 
-**Spring State Machine** предоставляет фреймворк для создания конечных автоматов (**state machines**) в **Spring** приложениях. Это позволяет моделировать сложные бизнес-процессы с состояниями и переходами.
+**Spring State Machine** предоставляет фреймворк для создания конечных автоматов (state machines) в **Spring** приложениях. Это позволяет моделировать сложные бизнес-процессы с состояниями и переходами.
 
 ### Основные возможности
 
@@ -96,7 +96,7 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 - **Actions**: Действия при переходах
 - **Persistence**: Сохранение состояния
 
-### Архитектура **State Machine**
+### Архитектура State Machine
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -110,11 +110,11 @@ related: ["spring/spring-boot.md", "spring/spring-core.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **State Machine**
+## Настройка State Machine
 
 ### Зависимости
 
-**Зависимости **spring-statemachine-core** и **spring-`statemachine-data`-jpa** (**pom.xml**):**
+**Зависимости **spring-statemachine-core** и **spring-`statemachine-data`-jpa** (pom.xml):**
 
 ```xml
 <dependency>
@@ -157,7 +157,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<String, St
 
 ## Определение состояний
 
-### **Enum States**
+### Enum States
 
 ```java
 public enum States {
@@ -183,7 +183,7 @@ public class EnumStateMachineConfig extends StateMachineConfigurerAdapter<States
 }
 ```
 
-### **Hierarchical States**
+### Hierarchical States
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -208,7 +208,7 @@ public class HierarchicalStateMachineConfig extends StateMachineConfigurerAdapte
 
 ## Переходы
 
-### **External Transitions**
+### External Transitions
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -231,7 +231,7 @@ public class TransitionConfig extends StateMachineConfigurerAdapter<States, Even
 }
 ```
 
-### **Internal Transitions**
+### Internal Transitions
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -259,7 +259,7 @@ public class InternalTransitionConfig extends StateMachineConfigurerAdapter<Stat
 
 ## Guards
 
-### **Guard Conditions**
+### Guard Conditions
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -287,7 +287,7 @@ public class GuardConfig extends StateMachineConfigurerAdapter<States, Events> {
 
 ## Actions
 
-### **Transition Actions**
+### Transition Actions
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -315,7 +315,7 @@ public class ActionConfig extends StateMachineConfigurerAdapter<States, Events> 
 }
 ```
 
-### **Entry**/**Exit Actions**
+### Entry/Exit Actions
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -348,7 +348,7 @@ public class EntryExitActionConfig extends StateMachineConfigurerAdapter<States,
 }
 ```
 
-## Использование **State Machine**
+## Использование State Machine
 
 ### Отправка событий
 
@@ -377,7 +377,7 @@ public class StateMachineService {
 }
 ```
 
-### **State Machine Listeners**
+### State Machine Listeners
 
 ```java
 @Component
@@ -439,7 +439,7 @@ public class StateMachineListener implements StateMachineListener<States, Events
 
 ## Persistence
 
-### **JPA Persistence**
+### JPA Persistence
 
 ```java
 @Entity
@@ -498,7 +498,7 @@ public class PersistentStateMachineService {
 
 ## Лучшие практики
 
-### 1. Используйте **enum** для состояний и событий
+### 1. Используйте enum для состояний и событий
 
 ```java
 // ✅ Хорошо
@@ -506,21 +506,21 @@ public enum States { SI, S1, S2 }
 public enum Events { E1, E2 }
 ```
 
-### 2. Определяйте **guards** для валидации
+### 2. Определяйте guards для валидации
 
 ```java
 // ✅ Хорошо
 .guard(context -> validateCondition(context))
 ```
 
-### 3. Используйте **actions** для бизнес-логики
+### 3. Используйте actions для бизнес-логики
 
 ```java
 // ✅ Хорошо
 .action(context -> executeBusinessLogic(context))
 ```
 
-### 4. Настраивайте **persistence** для критических процессов
+### 4. Настраивайте persistence для критических процессов
 
 ```java
 // ✅ Хорошо
@@ -542,7 +542,7 @@ public void stateMachineError(StateMachine<States, Events> stateMachine, Excepti
 
 ## Продвинутые возможности
 
-### **Choice States**
+### Choice States
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -592,7 +592,7 @@ public class ChoiceStateConfig extends StateMachineConfigurerAdapter<States, Eve
 }
 ```
 
-### **Junction States**
+### Junction States
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -626,7 +626,7 @@ public class JunctionStateConfig extends StateMachineConfigurerAdapter<States, E
 }
 ```
 
-### **Fork and Join**
+### Fork and Join
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -668,7 +668,7 @@ public class ForkJoinConfig extends StateMachineConfigurerAdapter<States, Events
 }
 ```
 
-### **History States**
+### History States
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -701,7 +701,7 @@ public class HistoryStateConfig extends StateMachineConfigurerAdapter<States, Ev
 
 ## Регионы
 
-### **Parallel Regions**
+### Parallel Regions
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -731,7 +731,7 @@ public class ParallelRegionConfig extends StateMachineConfigurerAdapter<States, 
 
 ## State Machine Factory
 
-### **Factory Pattern**
+### Factory Pattern
 
 ```java
 @Configuration
@@ -768,7 +768,7 @@ public class StateMachineFactoryService {
 
 ## Тестирование
 
-### **State Machine Testing**
+### State Machine Testing
 
 ```java
 @SpringBootTest
@@ -793,7 +793,7 @@ class StateMachineTest {
 
 ## Продвинутые паттерны
 
-### **State Machine** для заказов
+### State Machine для заказов
 
 ```java
 public enum OrderState {
@@ -850,7 +850,7 @@ public class OrderStateMachineConfig extends StateMachineConfigurerAdapter<Order
 }
 ```
 
-### **State Machine** для документов
+### State Machine для документов
 
 ```java
 public enum DocumentState {
@@ -887,7 +887,7 @@ public class DocumentStateMachineConfig extends StateMachineConfigurerAdapter<Do
 }
 ```
 
-### **State Machine** с таймерами
+### State Machine с таймерами
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -913,7 +913,7 @@ public class TimedStateMachineConfig extends StateMachineConfigurerAdapter<State
 }
 ```
 
-### **State Machine** с условиями
+### State Machine с условиями
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -939,7 +939,7 @@ public class ConditionalStateMachineConfig extends StateMachineConfigurerAdapter
 }
 ```
 
-### **State Machine** с композицией
+### State Machine с композицией
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -969,7 +969,7 @@ public class CompositeStateMachineConfig extends StateMachineConfigurerAdapter<S
 
 ## Интеграция с другими компонентами
 
-### **State Machine** + **Spring Integration**
+### State Machine + Spring Integration
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -993,7 +993,7 @@ public class IntegrationStateMachineConfig extends StateMachineConfigurerAdapter
 }
 ```
 
-### **State Machine** + **Spring Batch**
+### State Machine + Spring Batch
 
 ```java
 @Component
@@ -1014,7 +1014,7 @@ public class BatchStateMachineProcessor implements ItemProcessor<Order, Order> {
 
 ## Продвинутые паттерны
 
-### **State Machine Builder**
+### State Machine Builder
 
 ```java
 @Service
@@ -1059,7 +1059,7 @@ public class StateMachineBuilderService {
 }
 ```
 
-### **Extended State Variables**
+### Extended State Variables
 
 ```java
 @Service
@@ -1104,7 +1104,7 @@ public class ExtendedStateConfig extends StateMachineConfigurerAdapter<States, E
 }
 ```
 
-### **State Machine Interceptors**
+### State Machine Interceptors
 
 ```java
 @Component
@@ -1140,7 +1140,7 @@ public class StateMachineInterceptor implements StateMachineInterceptor<States, 
 }
 ```
 
-### **State Machine Timers**
+### State Machine Timers
 
 ```java
 // Включение State Machine и настройка состояний/переходов
@@ -1169,7 +1169,7 @@ public class TimerConfig extends StateMachineConfigurerAdapter<States, Events> {
 }
 ```
 
-### **State Machine Metrics**
+### State Machine Metrics
 
 ```java
 @Component
@@ -1199,7 +1199,7 @@ public class StateMachineMetrics {
 }
 ```
 
-### **Error Recovery**
+### Error Recovery
 
 ```java
 @Component
@@ -1219,7 +1219,7 @@ public class StateMachineErrorHandler implements StateMachineListener<States, Ev
 }
 ```
 
-### **State Machine Persistence with Redis**
+### State Machine Persistence with Redis
 
 ```java
 // Включение State Machine и настройка состояний/переходов

@@ -21,14 +21,14 @@ sqlmap — открытый инструмент для автоматическ
 ## Полезные ссылки
 
 ### Основные документы
-- [sqlmap](sqlmap.md) — обнаружение, извлечение, tamper, обход WAF
+- [[sqlmap]] — обнаружение, извлечение, tamper, обход WAF
 
 ### Соседние разделы
-- [Security Testing](../README.md)
-- [Burp Suite](../burp-suite/README.md)
-- [OWASP ZAP](../owasp-zap/README.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
-- [Security](../../../security/README.md)
+- [[README|Security Testing]]
+- [[README|Burp Suite]]
+- [[README|OWASP ZAP]]
+- [[testing-tools-overview|Testing Tools Overview]]
+- [[README|Security]]
 
 ### Внешние ресурсы
 - [sqlmap Official](https://sqlmap.org/)
@@ -46,11 +46,11 @@ sqlmap — открытый инструмент для автоматическ
 
 | Тема | Где читать |
 |------|-----------|
-| Установка, базовые команды | [sqlmap.md](sqlmap.md) |
-| Параметры GET/POST/Cookie/Header | [sqlmap.md](sqlmap.md) |
-| Извлечение данных: `--dbs`, `--tables`, `--dump` | [sqlmap.md](sqlmap.md) |
-| Tamper-скрипты и обход WAF | [sqlmap.md](sqlmap.md) |
-| Интеграция с Burp / ZAP, CI-сценарии | [sqlmap.md](sqlmap.md) |
+| Установка, базовые команды | [[sqlmap]] |
+| Параметры GET/POST/Cookie/Header | [[sqlmap]] |
+| Извлечение данных: `--dbs`, `--tables`, `--dump` | [[sqlmap]] |
+| Tamper-скрипты и обход WAF | [[sqlmap]] |
+| Интеграция с Burp / ZAP, CI-сценарии | [[sqlmap]] |
 
 ## Когда использовать
 
@@ -65,7 +65,7 @@ sqlmap — открытый инструмент для автоматическ
 
 ## Куда идти дальше
 
-- Обзор security testing — [../README.md](../README.md)
-- Универсальный DAST — [../owasp-zap/README.md](../owasp-zap/README.md)
-- Платформенный пентест — [../burp-suite/README.md](../burp-suite/README.md)
-- OWASP Top 10 — [../../../security/README.md](../../../security/README.md)
+- Обзор security testing — [[README]]
+- Универсальный DAST — [[README]]
+- Платформенный пентест — [[README]]
+- OWASP Top 10 — [[README]]

@@ -83,11 +83,11 @@ updated: "2026-02-11"
   - [**Spring Boot gRPC Client**](#spring-boot-grpc-client)
   - [**REST API Gateway**](#rest-api-gateway)
 
-## Введение в **gRPC**
+## Введение в gRPC
 
-**gRPC** — это высокопроизводительный, открытый фреймворк для удаленного вызова процедур (**RPC**), разработанный **Google**. **gRPC** использует **HTTP**/2 для транспорта и **Protocol Buffers** для сериализации данных.
+**gRPC** — это высокопроизводительный, открытый фреймворк для удаленного вызова процедур (RPC), разработанный **Google**. **gRPC** использует **HTTP**/2 для транспорта и **Protocol Buffers** для сериализации данных.
 
-### Преимущества **gRPC**
+### Преимущества gRPC
 
 - **Высокая производительность**: Бинарный протокол, **HTTP**/2 **multiplexing**
 - **Строгая типизация**: **Protocol Buffers** обеспечивают типобезопасность
@@ -110,13 +110,13 @@ Client Application    gRPC Stub    Network    gRPC Server    Service Implementat
                     Transport    Buffers      Runtime
 ```
 
-## **Protocol Buffers**
+## Protocol Buffers
 
-**Protocol Buffers** (**protobuf**) — это язык описания интерфейсов и формат сериализации данных.
+**Protocol Buffers** (protobuf) — это язык описания интерфейсов и формат сериализации данных.
 
 ### Определение сообщения
 
-Пример определения сообщения **User** и **Address** в **Protocol Buffers** (**proto3**).
+Пример определения сообщения **User** и **Address** в **Protocol Buffers** (proto3).
 
 ```protobuf
 syntax = "proto3";
@@ -219,7 +219,7 @@ service UserService {
 
 ## Типы сервисов
 
-### **Unary RPC**
+### Unary RPC
 
 ```protobuf
 // Unary RPC: один запрос — один ответ
@@ -255,7 +255,7 @@ stub.add(request, new StreamObserver<AddResponse>() {
 });
 ```
 
-### **Server Streaming**
+### Server Streaming
 
 ```protobuf
 // Серверный поток: сервер отправляет последовательность сообщений
@@ -284,7 +284,7 @@ stub.subscribe(request, new StreamObserver<Notification>() {
 });
 ```
 
-### **Client Streaming**
+### Client Streaming
 
 ```protobuf
 // Клиентский поток: клиент отправляет последовательность запросов
@@ -321,7 +321,7 @@ for (byte[] chunk : chunks) {
 requestObserver.onCompleted();
 ```
 
-### **Bidirectional Streaming**
+### Bidirectional Streaming
 
 ```protobuf
 // Двунаправленный поток: оба направления — потоки сообщений
@@ -355,7 +355,7 @@ requestObserver.onNext(ChatMessage.newBuilder()
     .build());
 ```
 
-## **gRPC Java**
+## gRPC Java
 
 ### Создание сервера
 
@@ -523,7 +523,7 @@ public class UserClient {
 }
 ```
 
-## **Spring Boot** и **gRPC**
+## Spring Boot и gRPC
 
 ### Зависимости
 
@@ -557,7 +557,7 @@ grpc:
       negotiation-type: plaintext
 ```
 
-### **gRPC Service** с **Spring**
+### gRPC Service с Spring
 
 ```java
 // Сервис gRPC как Spring-бин; делегирование в UserService
@@ -599,7 +599,7 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
 }
 ```
 
-### **gRPC Client** с **Spring**
+### gRPC Client с Spring
 
 ```java
 // Клиент gRPC через @GrpcClient; вызовы createUser/getUser
@@ -642,9 +642,9 @@ public class UserGrpcClient {
 }
 ```
 
-## **Streaming**
+## Streaming
 
-### **Server-side Streaming**
+### Server-side Streaming
 
 ```java
 // Серверный поток: отправка уведомлений по расписанию через StreamObserver
@@ -684,7 +684,7 @@ public class NotificationService extends NotificationServiceGrpc.NotificationSer
 }
 ```
 
-### **Client-side Streaming**
+### Client-side Streaming
 
 ```java
 // Приём потока чанков от клиента и сохранение в файл
@@ -743,9 +743,9 @@ public class FileUploadService extends FileUploadServiceGrpc.FileUploadServiceIm
 }
 ```
 
-## **Load Balancing**
+## Load Balancing
 
-### **Client-side Load Balancing**
+### Client-side Load Balancing
 
 ```java
 // Канал с round_robin балансировкой по целевому имени
@@ -756,7 +756,7 @@ ManagedChannel channel = ManagedChannelBuilder
     .build();
 ```
 
-### **Service Discovery**
+### Service Discovery
 
 ```java
 // С Eureka
@@ -768,7 +768,7 @@ ManagedChannel channel = ManagedChannelBuilder
     .build();
 ```
 
-### **Spring Cloud LoadBalancer**
+### Spring Cloud LoadBalancer
 
 ```yaml
 # application.yml
@@ -779,9 +779,9 @@ grpc:
       negotiation-type: plaintext
 ```
 
-## **Security**
+## Security
 
-### **SSL**/**TLS**
+### SSL/TLS
 
 ```java
 // Server с SSL
@@ -808,7 +808,7 @@ ManagedChannel channel = ManagedChannelBuilder
     .build();
 ```
 
-### **Authentication**
+### Authentication
 
 ```java
 // JWT Authentication
@@ -840,7 +840,7 @@ public class AuthenticatedService extends AuthenticatedServiceGrpc.Authenticated
 }
 ```
 
-### **Interceptor**
+### Interceptor
 
 ```java
 // Перехват вызова: извлечение токена из Metadata и запись в Context
@@ -861,9 +861,9 @@ public class AuthInterceptor implements ServerInterceptor {
 }
 ```
 
-## **Monitoring**
+## Monitoring
 
-### **Health Checks**
+### Health Checks
 
 ```java
 // Проверка здоровья сервиса (стандартный gRPC health)
@@ -884,7 +884,7 @@ public class HealthService extends HealthGrpc.HealthImplBase {
 }
 ```
 
-### **Metrics**
+### Metrics
 
 ```java
 @GrpcService
@@ -906,7 +906,7 @@ public class MetricsService extends MetricsServiceGrpc.MetricsServiceImplBase {
 }
 ```
 
-### **OpenTelemetry Integration**
+### OpenTelemetry Integration
 
 ```java
 // Серверный и клиентский интерцепторы для трейсинга
@@ -925,9 +925,9 @@ public class TracingConfig {
 }
 ```
 
-## **Performance**
+## Performance
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 // Канал с ограничением размера сообщений и keepalive
@@ -940,7 +940,7 @@ ManagedChannel channel = ManagedChannelBuilder
     .build();
 ```
 
-### **Compression**
+### Compression
 
 ```java
 // Server с compression
@@ -964,7 +964,7 @@ ManagedChannel channel = ManagedChannelBuilder
     .build();
 ```
 
-### **Async Processing**
+### Async Processing
 
 ```java
 @GrpcService
@@ -995,9 +995,9 @@ public class AsyncService extends AsyncServiceGrpc.AsyncServiceImplBase {
 }
 ```
 
-## **Migration from REST**
+## Migration from REST
 
-### Сравнение **REST** vs **gRPC**
+### Сравнение REST vs gRPC
 
 | Аспект | **REST** | **gRPC** |
 |--------|------|------|
@@ -1017,7 +1017,7 @@ public class AsyncService extends AsyncServiceGrpc.AsyncServiceImplBase {
 5. **Тестирование**: Полное тестирование
 6. **Мониторинг**: Настроить **observability**
 
-### **API Gateway** для **REST** и **gRPC**
+### API Gateway для REST и gRPC
 
 ```java
 // REST-эндпоинты проксируют запросы в gRPC-клиент
@@ -1056,7 +1056,7 @@ public class ApiGatewayController {
 
 ## Примеры
 
-### Полный **gRPC** сервис с **Spring Boot**
+### Полный gRPC сервис с Spring Boot
 
 ```protobuf
 // user-service.proto
@@ -1120,7 +1120,7 @@ message UpdateUserResponse {
 }
 ```
 
-### **Spring Boot gRPC Server**
+### Spring Boot gRPC Server
 
 ```java
 // Точка входа и конфигурация gRPC-сервиса с AuthInterceptor
@@ -1207,7 +1207,7 @@ public class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
 }
 ```
 
-### **Spring Boot gRPC Client**
+### Spring Boot gRPC Client
 
 ```java
 // Бин канала и blocking stub для user-service
@@ -1269,7 +1269,7 @@ public class UserGrpcClient {
 }
 ```
 
-### **REST API Gateway**
+### REST API Gateway
 
 ```java
 // REST-контроллер: проксирование createUser/getUsers в gRPC-клиент

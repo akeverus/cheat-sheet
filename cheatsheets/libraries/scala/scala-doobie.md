@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [Doobie Examples](https://github.com/tpolecat/doobie/tree/series/0.9.x/modules/example)
 - [Cats Effect](https://typelevel.org/cats-effect/)
 - [FS2](https://fs2.io/)
-- [HikariCP](../java/java-hikaricp.md)
+- [[java-hikaricp|HikariCP]]
 
 ## Содержание
 
@@ -62,11 +62,11 @@ updated: "2026-02-11"
   - [From Slick to Doobie](#from-slick-to-doobie)
 - [См. также](#см-также)
 
-## Основы **Doobie**
+## Основы Doobie
 
 ### Подключение и конфигурация
 
-Зависимости **Doobie** и конфигурация подключения к **PostgreSQL** (**Scala**).
+Зависимости **Doobie** и конфигурация подключения к **PostgreSQL** (Scala).
 
 ```scala
 // build.sbt
@@ -87,7 +87,7 @@ doobie {
 }
 ```
 
-### **Transactor** для управления соединениями
+### Transactor для управления соединениями
 ```scala
 import doobie._
 import doobie.implicits._
@@ -186,9 +186,9 @@ object CompanyMeta {
 }
 ```
 
-## **CRUD** операции
+## CRUD операции
 
-### Создание (**Create**)
+### Создание (Create)
 ```scala
 import doobie.implicits._
 import cats.effect.IO
@@ -242,7 +242,7 @@ class UserRepository(xa: Transactor[IO]) {
 }
 ```
 
-### Чтение (**Read**)
+### Чтение (Read)
 ```scala
 class UserRepository(xa: Transactor[IO]) {
 
@@ -314,7 +314,7 @@ class UserRepository(xa: Transactor[IO]) {
 }
 ```
 
-### Обновление (**Update**)
+### Обновление (Update)
 ```scala
 class UserRepository(xa: Transactor[IO]) {
 
@@ -382,7 +382,7 @@ class UserRepository(xa: Transactor[IO]) {
 }
 ```
 
-### Удаление (**Delete**)
+### Удаление (Delete)
 ```scala
 class UserRepository(xa: Transactor[IO]) {
 
@@ -434,7 +434,7 @@ class UserRepository(xa: Transactor[IO]) {
 
 ## Продвинутые запросы
 
-### **Joins** и сложные запросы
+### Joins и сложные запросы
 ```scala
 case class Post(id: Long, userId: Long, title: String, content: String, createdAt: Instant)
 case class UserWithPosts(user: User, posts: List[Post])
@@ -533,7 +533,7 @@ class AdvancedRepository(xa: Transactor[IO]) {
 }
 ```
 
-### **Fragments** для динамических запросов
+### Fragments для динамических запросов
 ```scala
 import doobie.implicits._
 import doobie.Fragments
@@ -710,9 +710,9 @@ class TransactionalRepository(xa: Transactor[IO]) {
 }
 ```
 
-## **Streaming** и большие данные
+## Streaming и большие данные
 
-### **Stream API**
+### Stream API
 ```scala
 import fs2.Stream
 import doobie.implicits._
@@ -788,9 +788,9 @@ case class ProcessedUser(name: String, email: String)
 case class MigrationResult(batchSize: Int, migratedCount: Int)
 ```
 
-## **Connection pooling** и конфигурация
+## Connection pooling и конфигурация
 
-### **HikariCP** конфигурация
+### HikariCP конфигурация
 ```scala
 import doobie.hikari._
 import cats.effect.{IO, Resource}
@@ -857,7 +857,7 @@ case class DbConfig(
 
 ## Тестирование
 
-### **Unit** тесты
+### Unit тесты
 ```scala
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -914,7 +914,7 @@ class UserRepositorySpec extends AnyFlatSpec with Matchers {
 }
 ```
 
-### **Integration** тесты
+### Integration тесты
 ```scala
 import org.testcontainers.containers.PostgreSQLContainer
 import cats.effect.{IO, Resource}
@@ -968,7 +968,7 @@ class UserRepositoryIntegrationSpec extends AnyFlatSpec with Matchers {
 
 ## Обработка ошибок
 
-### **Domain** ошибки
+### Domain ошибки
 ```scala
 import doobie.util.invariant._
 
@@ -1043,7 +1043,7 @@ class SafeUserRepository(xa: Transactor[IO]) {
 
 ## Оптимизация производительности
 
-### **Connection pooling**
+### Connection pooling
 ```scala
 // application.conf
 doobie {
@@ -1073,7 +1073,7 @@ val highLoadConfig = DbConfig(
 )
 ```
 
-### **Query optimization**
+### Query optimization
 ```scala
 class OptimizedRepository(xa: Transactor[IO]) {
 
@@ -1211,7 +1211,7 @@ case class Repositories(
 )
 ```
 
-### **Error handling patterns**
+### Error handling patterns
 ```scala
 import cats.data.EitherT
 import cats.implicits._
@@ -1310,7 +1310,7 @@ class ErrorHandlingRepository(xa: Transactor[IO]) {
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object DoobieTroubleshooting {
 
@@ -1392,7 +1392,7 @@ object DoobieTroubleshooting {
 }
 ```
 
-### **Debugging Doobie**
+### Debugging Doobie
 ```scala
 // Логирование SQL запросов
 val loggingTransactor = Transactor.after.set(xa, HC.rollback)
@@ -1440,7 +1440,7 @@ println(s"Query took ${duration}ms")
 
 ## Руководство по миграции
 
-### **From JDBC** to **Doobie**
+### From JDBC to Doobie
 ```scala
 // JDBC approach
 def findUser(id: Long): User = {
@@ -1466,7 +1466,7 @@ def findUser(id: Long): IO[User] = {
 }
 ```
 
-### **From Anorm** to **Doobie**
+### From Anorm to Doobie
 ```scala
 // Anorm
 def findById(id: Long): Future[Option[User]] = Future {
@@ -1484,7 +1484,7 @@ def findById(id: Long): IO[Option[User]] = {
 }
 ```
 
-### **From Slick** to **Doobie**
+### From Slick to Doobie
 ```scala
 // Slick
 def findById(id: Long): Future[Option[User]] = {

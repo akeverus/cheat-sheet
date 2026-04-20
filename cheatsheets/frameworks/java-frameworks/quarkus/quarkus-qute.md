@@ -65,7 +65,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Basic Templates
 
-### **Simple Template**
+### Simple Template
 
 **Простой шаблон:**
 
@@ -82,7 +82,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 </html>
 ```
 
-### **Using Template**
+### Using Template
 
 **Использование шаблона:**
 
@@ -107,7 +107,7 @@ public class HelloResource {
 
 ## Type-safe Templates
 
-### **Type-safe Template**
+### Type-safe Template
 
 **Типобезопасный шаблон:**
 
@@ -119,7 +119,7 @@ public class Templates {
 }
 ```
 
-### **Using Type-safe Template**
+### Using Type-safe Template
 
 **Использование типобезопасного шаблона:**
 
@@ -136,7 +136,7 @@ public class HelloResource {
 
 ## Template Features
 
-### **Conditionals**
+### Conditionals
 
 **Условные выражения:**
 
@@ -148,7 +148,7 @@ public class HelloResource {
 {/if}
 ```
 
-### **Loops**
+### Loops
 
 **Циклы:**
 
@@ -160,7 +160,7 @@ public class HelloResource {
 </ul>
 ```
 
-### **Includes**
+### Includes
 
 **Инклюды:**
 
@@ -172,7 +172,7 @@ public class HelloResource {
 
 ## Лучшие практики
 
-### 1. Используйте **type-safe templates**
+### 1. Используйте type-safe templates
 
 ```java
 // ✅ Хорошо
@@ -189,7 +189,7 @@ public class Templates {
 template.data("user", user).render();
 ```
 
-### 3. Используйте **fragments** для переиспользования
+### 3. Используйте fragments для переиспользования
 
 ```html
 <!-- ✅ Хорошо -->
@@ -200,7 +200,7 @@ template.data("user", user).render();
 
 ## Advanced Qute Features
 
-### **Fragments and Sections**
+### Fragments and Sections
 
 **Фрагменты и секции:**
 
@@ -229,7 +229,7 @@ template.data("user", user).render();
 {/include}
 ```
 
-### **User-defined Tags**
+### User-defined Tags
 
 **Пользовательские теги:**
 
@@ -251,7 +251,7 @@ public class UserTags {
 {user:formatDate(user.createdAt)}
 ```
 
-### **Reactive Templates**
+### Reactive Templates
 
 **Реактивные шаблоны:**
 
@@ -271,7 +271,7 @@ public class ReactiveUserResource {
 }
 ```
 
-### **Template Inheritance**
+### Template Inheritance
 
 **Наследование шаблонов:**
 
@@ -298,7 +298,7 @@ public class ReactiveUserResource {
 
 ## Qute Best Practices
 
-### 1. Используйте **type-safe templates**
+### 1. Используйте type-safe templates
 
 ```java
 // ✅ Хорошо
@@ -315,7 +315,7 @@ public class Templates {
 template.data("user", user).render();
 ```
 
-### 3. Используйте **fragments** для переиспользования
+### 3. Используйте fragments для переиспользования
 
 ```html
 <!-- ✅ Хорошо -->
@@ -324,14 +324,14 @@ template.data("user", user).render();
 {/fragment}
 ```
 
-### 4. Используйте **includes** для компонентов
+### 4. Используйте includes для компонентов
 
 ```html
 <!-- ✅ Хорошо -->
 {@include("components/header.html")}
 ```
 
-### 5. Оптимизируйте для **production**
+### 5. Оптимизируйте для production
 
 ```properties
 quarkus.qute.optimize-templates=true

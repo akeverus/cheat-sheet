@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 **Когда применять:** много опциональных полей, читаемое создание, валидация до создания.
 
-## Что такое **Builder**?
+## Что такое Builder?
 
 **Builder** — это порождающий паттерн проектирования, который позволяет создавать сложные объекты пошагово. Вместо большого количества конструкторов или сеттеров, используется строитель, который накапливает конфигурацию и создает объект за один шаг.
 
@@ -124,7 +124,7 @@ User user = new UserBuilder()
 // Читаемо и понятно!
 ```
 
-## Когда использовать **Builder**?
+## Когда использовать Builder?
 
 ### Подходящие сценарии
 
@@ -254,7 +254,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Builder**
+### Классический Builder
 
 ```java
 // Продукт
@@ -389,7 +389,7 @@ public class BuilderDemo {
 }
 ```
 
-### **Fluent Builder** с методом **chaining**
+### Fluent Builder с методом chaining
 
 ```java
 // Более гибкий Builder с fluent интерфейсом
@@ -521,7 +521,7 @@ public class FluentBuilderDemo {
 }
 ```
 
-### **Builder** с **Director**
+### Builder с Director
 
 ```java
 // Builder с Director для сложных объектов
@@ -647,7 +647,7 @@ public class DirectorBuilderDemo {
 
 ## Продвинутые реализации
 
-### 1. **Generic Builder**
+### 1. Generic Builder
 
 ```java
 // Обобщенный Builder для любых объектов
@@ -765,7 +765,7 @@ public class GenericBuilderDemo {
 }
 ```
 
-### 2. **Builder** с валидацией и пост-обработкой
+### 2. Builder с валидацией и пост-обработкой
 
 ```java
 // Builder с расширенной функциональностью
@@ -1049,7 +1049,7 @@ public class DSLBuilderDemo {
 
 ## Примеры использования
 
-### 1. **HTTP Request Builder**
+### 1. HTTP Request Builder
 
 ```java
 @Service
@@ -1202,7 +1202,7 @@ public class HttpRequestBuilderService {
 }
 ```
 
-### 2. **Database Query Builder**
+### 2. Database Query Builder
 
 ```java
 @Repository
@@ -1336,7 +1336,7 @@ public class User {
 }
 ```
 
-### 3. **Configuration Builder**
+### 3. Configuration Builder
 
 ```java
 @Configuration
@@ -1515,7 +1515,7 @@ public class ApplicationConfig {
 
 ## Лучшие практики
 
-### 1. Когда использовать **Builder**
+### 1. Когда использовать Builder
 
 ```java
 public class BuilderGuidelines {
@@ -1718,7 +1718,7 @@ public class BuilderErrorHandling {
 }
 ```
 
-### 4. Тестирование **Builder**
+### 4. Тестирование Builder
 
 ```java
 @ExtendWith(MockitoExtension.class)

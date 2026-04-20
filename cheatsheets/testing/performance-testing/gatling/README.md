@@ -19,14 +19,14 @@ Gatling — инструмент нагрузочного тестировани
 ## Полезные ссылки
 
 ### Основные документы
-- [Gatling](gatling.md) — Simulation, инжекция, отчёты, CI/CD
+- [[gatling]] — Simulation, инжекция, отчёты, CI/CD
 
 ### Соседние разделы
-- [Performance Testing](../README.md)
-- [JMeter](../jmeter/README.md)
-- [k6](../k6/README.md)
-- [Artillery](../artillery/README.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [[README|Performance Testing]]
+- [[README|JMeter]]
+- [[README|k6]]
+- [[README|Artillery]]
+- [[testing-tools-overview|Testing Tools Overview]]
 
 ### Внешние ресурсы
 - [Gatling Docs](https://gatling.io/docs/gatling/)
@@ -44,10 +44,10 @@ Gatling — инструмент нагрузочного тестировани
 
 | Тема | Где читать |
 |------|-----------|
-| Структура Simulation, Scenario, HTTP | [gatling.md](gatling.md) |
-| Инжекция: atOnceUsers, rampUsers, stressPeak | [gatling.md](gatling.md) |
-| Параметризация, feeder-ы, checks | [gatling.md](gatling.md) |
-| Отчёты (HTML), Grafana/InfluxDB, CI/CD | [gatling.md](gatling.md) |
+| Структура Simulation, Scenario, HTTP | [[gatling]] |
+| Инжекция: atOnceUsers, rampUsers, stressPeak | [[gatling]] |
+| Параметризация, feeder-ы, checks | [[gatling]] |
+| Отчёты (HTML), Grafana/InfluxDB, CI/CD | [[gatling]] |
 
 ## Когда использовать: сравнение perf-инструментов
 
@@ -67,6 +67,6 @@ Gatling — оптимален для JVM-команд, которые хотя�
 
 ## Куда идти дальше
 
-- Обзор нагрузочного тестирования — [../README.md](../README.md)
-- Альтернатива JMeter — [../jmeter/README.md](../jmeter/README.md)
-- Легковесный k6 — [../k6/README.md](../k6/README.md)
+- Обзор нагрузочного тестирования — [[README]]
+- Альтернатива JMeter — [[README]]
+- Легковесный k6 — [[README]]

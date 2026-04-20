@@ -21,14 +21,14 @@ Burp Suite от PortSwigger — промышленная платформа дл
 ## Полезные ссылки
 
 ### Основные документы
-- [Burp Suite](burp-suite.md) — Proxy, Scanner, Repeater, Intruder, расширения
+- [[burp-suite|Burp Suite]] — Proxy, Scanner, Repeater, Intruder, расширения
 
 ### Соседние разделы
-- [Security Testing](../README.md)
-- [OWASP ZAP](../owasp-zap/README.md)
-- [sqlmap](../sqlmap/README.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
-- [Security](../../../security/README.md)
+- [[README|Security Testing]]
+- [[README|OWASP ZAP]]
+- [[README|sqlmap]]
+- [[testing-tools-overview|Testing Tools Overview]]
+- [[README|Security]]
 
 ### Внешние ресурсы
 - [Burp Suite Documentation](https://portswigger.net/burp/documentation)
@@ -46,11 +46,11 @@ Burp Suite от PortSwigger — промышленная платформа дл
 
 | Тема | Где читать |
 |------|-----------|
-| Proxy: перехват, модификация, HTTPS | [burp-suite.md](burp-suite.md) |
-| Scanner: passive/active crawl | [burp-suite.md](burp-suite.md) |
-| Repeater и Intruder (фаззинг, перебор) | [burp-suite.md](burp-suite.md) |
-| Decoder, Comparer, BApp-расширения | [burp-suite.md](burp-suite.md) |
-| Отчёты, CI-интеграция (Enterprise) | [burp-suite.md](burp-suite.md) |
+| Proxy: перехват, модификация, HTTPS | [[burp-suite]] |
+| Scanner: passive/active crawl | [[burp-suite]] |
+| Repeater и Intruder (фаззинг, перебор) | [[burp-suite]] |
+| Decoder, Comparer, BApp-расширения | [[burp-suite]] |
+| Отчёты, CI-интеграция (Enterprise) | [[burp-suite]] |
 
 ## Когда использовать
 
@@ -65,7 +65,7 @@ Burp Suite от PortSwigger — промышленная платформа дл
 
 ## Куда идти дальше
 
-- Обзор security testing — [../README.md](../README.md)
-- Open-source альтернатива — [../owasp-zap/README.md](../owasp-zap/README.md)
-- Специализированный SQLi — [../sqlmap/README.md](../sqlmap/README.md)
-- Безопасность приложений — [../../../security/README.md](../../../security/README.md)
+- Обзор security testing — [[README]]
+- Open-source альтернатива — [[README]]
+- Специализированный SQLi — [[README]]
+- Безопасность приложений — [[README]]

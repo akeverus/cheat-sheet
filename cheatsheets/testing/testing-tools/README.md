@@ -17,4 +17,4 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Testing Tools Overview](testing-tools-overview.md)
+- [[testing-tools-overview|Testing Tools Overview]]

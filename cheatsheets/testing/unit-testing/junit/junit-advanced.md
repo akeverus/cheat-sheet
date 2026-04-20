@@ -23,7 +23,7 @@ updated: "2026-02-11"
 - [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
 - [Testcontainers](https://www.testcontainers.org/)
 
-**См. также:** [Mockito Advanced](mockito-advanced.md), [AssertJ](assertj.md), [Spring Testing](../../../frameworks/java-frameworks/spring/spring-testing.md)
+**См. также:** [[mockito-advanced|Mockito Advanced]], [[assertj]], [[spring-testing|Spring Testing]]
 
 ## Содержание
 
@@ -412,7 +412,7 @@ public class DatabaseIntegrationTest {
 
 JUnit 5 Advanced даёт расширяемую модель тестов (Extensions API), параметризацию и динамическую генерацию тестов, вложенную структуру, условное и параллельное выполнение, удобную интеграцию с Spring Boot и Testcontainers. Это удобный выбор для сложных и интеграционных сценариев; для простых unit-тестов достаточно возможностей базового JUnit 5.
 
-**Далее:** [Mockito Advanced](mockito-advanced.md) — продвинутые приёмы мокирования.
+**Далее:** [[mockito-advanced|Mockito Advanced]] — продвинутые приёмы мокирования.
 
 ## См. также
 

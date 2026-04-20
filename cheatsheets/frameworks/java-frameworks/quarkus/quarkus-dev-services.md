@@ -74,7 +74,7 @@ related: ["quarkus-basics.md", "quarkus-testing.md"]
 
 ## Введение
 
-**Quarkus Dev Services** автоматически запускает необходимые сервисы (**базы данных, брокеры сообщений, кеши**) в контейнерах **Docker** во время разработки. Это значительно упрощает настройку окружения разработки.
+**Quarkus Dev Services** автоматически запускает необходимые сервисы (базы данных, брокеры сообщений, кеши) в контейнерах **Docker** во время разработки. Это значительно упрощает настройку окружения разработки.
 
 ### Основные возможности
 
@@ -85,7 +85,7 @@ related: ["quarkus-basics.md", "quarkus-testing.md"]
 
 ## Database Dev Services
 
-### **PostgreSQL Dev Service**
+### PostgreSQL Dev Service
 
 **Автоматический **PostgreSQL**:**
 
@@ -95,7 +95,7 @@ quarkus.datasource.devservices.enabled=true
 quarkus.datasource.db-kind=postgresql
 ```
 
-### **MySQL Dev Service**
+### MySQL Dev Service
 
 **Автоматический **MySQL**:**
 
@@ -104,7 +104,7 @@ quarkus.datasource.devservices.enabled=true
 quarkus.datasource.db-kind=mysql
 ```
 
-### **MongoDB Dev Service**
+### MongoDB Dev Service
 
 **Автоматический **MongoDB**:**
 
@@ -114,7 +114,7 @@ quarkus.mongodb.devservices.enabled=true
 
 ## Message Broker Dev Services
 
-### **Kafka Dev Service**
+### Kafka Dev Service
 
 **Автоматический **Kafka**:**
 
@@ -122,7 +122,7 @@ quarkus.mongodb.devservices.enabled=true
 quarkus.kafka.devservices.enabled=true
 ```
 
-### **AMQP Dev Service**
+### AMQP Dev Service
 
 **Автоматический **AMQP** брокер:**
 
@@ -132,7 +132,7 @@ quarkus.amqp.devservices.enabled=true
 
 ## Cache Dev Services
 
-### **Redis Dev Service**
+### Redis Dev Service
 
 **Автоматический **Redis**:**
 
@@ -142,7 +142,7 @@ quarkus.redis.devservices.enabled=true
 
 ## Advanced Configuration
 
-### **Custom Ports**
+### Custom Ports
 
 **Настройка портов:**
 
@@ -150,7 +150,7 @@ quarkus.redis.devservices.enabled=true
 quarkus.datasource.devservices.port=5433
 ```
 
-### **Custom Images**
+### Custom Images
 
 **Использование кастомных образов:**
 
@@ -158,7 +158,7 @@ quarkus.datasource.devservices.port=5433
 quarkus.datasource.devservices.image-name=postgres:13
 ```
 
-### **Resource Limits**
+### Resource Limits
 
 **Ограничение ресурсов:**
 
@@ -168,14 +168,14 @@ quarkus.datasource.devservices.memory=512m
 
 ## Лучшие практики
 
-### 1. Используйте **Dev Services** для разработки
+### 1. Используйте Dev Services для разработки
 
 ```properties
 # ✅ Хорошо
 quarkus.datasource.devservices.enabled=true
 ```
 
-### 2. Отключайте в **production**
+### 2. Отключайте в production
 
 ```properties
 # ✅ Хорошо
@@ -191,7 +191,7 @@ quarkus.datasource.devservices.enabled=true
 
 ## Dev Services Configuration
 
-### **Multiple Services**
+### Multiple Services
 
 **Настройка нескольких сервисов:**
 
@@ -207,7 +207,7 @@ quarkus.redis.devservices.enabled=true
 quarkus.kafka.devservices.enabled=true
 ```
 
-### **Service Isolation**
+### Service Isolation
 
 **Изоляция сервисов:**
 
@@ -216,7 +216,7 @@ quarkus.kafka.devservices.enabled=true
 quarkus.devservices.service-name=my-project
 ```
 
-### **Shared Services**
+### Shared Services
 
 **Разделяемые сервисы:**
 
@@ -227,7 +227,7 @@ quarkus.devservices.shared=true
 
 ## Dev Services Lifecycle
 
-### **Container Management**
+### Container Management
 
 **Управление контейнерами:**
 
@@ -238,7 +238,7 @@ quarkus.devservices.shared=true
 # 3. Переиспользует контейнеры при повторном запуске
 ```
 
-### **Container Persistence**
+### Container Persistence
 
 **Сохранение данных контейнеров:**
 
@@ -249,7 +249,7 @@ quarkus.datasource.devservices.reuse=true
 
 ## Advanced Dev Services
 
-### **Custom Service Configuration**
+### Custom Service Configuration
 
 **Кастомная конфигурация сервисов:**
 
@@ -259,7 +259,7 @@ quarkus.datasource.devservices.container-env.POSTGRES_USER=myuser
 quarkus.datasource.devservices.container-env.POSTGRES_PASSWORD=mypassword
 ```
 
-### **Volume Mounts**
+### Volume Mounts
 
 **Монтирование томов:**
 
@@ -267,7 +267,7 @@ quarkus.datasource.devservices.container-env.POSTGRES_PASSWORD=mypassword
 quarkus.datasource.devservices.volumes=/path/to/data:/var/lib/postgresql/data
 ```
 
-### **Health Checks**
+### Health Checks
 
 **Проверка здоровья:**
 

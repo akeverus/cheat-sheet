@@ -22,7 +22,7 @@ updated: "2026-02-11"
 - [WireMock Documentation](https://wiremock.org/docs/) — документация
 
 ### См. также
-- [Интеграционное тестирование](../../testing/integration-testing/README.md) — интеграционное тестирование
+- [[README|Интеграционное тестирование]] — интеграционное тестирование
 - [[java-rest-assured|REST Assured]] — **REST Assured** для тестирования **API**
 
 ## Содержание
@@ -49,7 +49,7 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### **Mock Server Setup**
+### Mock Server Setup
 
 Базовый пример: **WireMockRule**, **stubFor** и проверка ответа **mock**-сервера в тесте.
 
@@ -85,7 +85,7 @@ public void testExternalApiCall() {
 }
 ```
 
-### **Request Matching**
+### Request Matching
 ```java
 /
  * Демонстрация различных способов сопоставления запросов в WireMock

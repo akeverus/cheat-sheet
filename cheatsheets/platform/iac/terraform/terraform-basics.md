@@ -12,16 +12,16 @@ updated: "2026-02-11"
 ---
 # Основы Terraform (редирект)
 
-Основной документ по теме: **[Terraform](terraform.md)**.
+Основной документ по теме: **[[terraform]]**.
 
 В нём: основы HCL, переменные, провайдеры, модули, state management, workspaces, CI/CD, troubleshooting и лучшие практики.
 
-Продвинутые enterprise-паттерны: **[Terraform Advanced](terraform-advanced.md)**.
+Продвинутые enterprise-паттерны: **[[terraform-advanced|Terraform Advanced]]**.
 
 ## Полезные ссылки
 
-[Terraform](terraform.md)
-[Terraform Advanced](terraform-advanced.md)
+[[terraform]]
+[[terraform-advanced|Terraform Advanced]]
 
 ## См. также
 

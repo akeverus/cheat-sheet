@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Protocol Buffers (**Protobuf**)
+# Protocol Buffers (Protobuf)
 
 **Protocol Buffers** — это язык-агностичный бинарный формат сериализации структурированных данных от **Google**. Предоставляет эффективную и быструю альтернативу **JSON**/**XML** для сериализации данных.
 
@@ -78,12 +78,12 @@ updated: "2026-02-11"
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
 - [Experimental Features](#experimental-features)
-  - [Proto4 (**предварительная версия**)](#proto4-предварительная-версия)
+  - [Proto4 (предварительная версия)](#proto4-предварительная-версия)
   - [Zero-copy сериализация](#zero-copy-сериализация)
 
 ## Основные возможности
 
-### Определение схемы (**.proto файлы**)
+### Определение схемы (.proto файлы)
 
 Пример определения сообщения **User** и **enum Status** в **proto3**.
 
@@ -149,7 +149,7 @@ message ListUsersResponse {
 }
 ```
 
-### Генерация **Java** кода
+### Генерация Java кода
 ```bash
 # Генерация Java классов из .proto файла
 protoc --java_out=src/main/java user.proto
@@ -188,7 +188,7 @@ user.writeTo(outputStream);
 UserProto.User userFromStream = UserProto.User.parseFrom(inputStream);
 ```
 
-### Работа с **JSON**
+### Работа с JSON
 ```java
 // Конвертация в JSON
 JsonFormat.Printer printer = JsonFormat.printer();
@@ -203,7 +203,7 @@ UserProto.User userFromJson = builder.build();
 
 ## Продвинутые возможности
 
-### **Oneof** поля
+### Oneof поля
 ```protobuf
 message SearchRequest {
   string query = 1;
@@ -252,7 +252,7 @@ if (request.hasExactMatch()) {
 // Если ни одно поле oneof не установлено, все has* методы вернут false
 ```
 
-### **Map** поля
+### Map поля
 ```protobuf
 message Config {
   map<string, string> properties = 1;
@@ -296,7 +296,7 @@ for (Map.Entry<String, String> entry : config.getPropertiesMap().entrySet()) {
 }
 ```
 
-### **Any** тип
+### Any тип
 ```protobuf
 import "google/protobuf/any.proto";
 
@@ -340,7 +340,7 @@ try {
 }
 ```
 
-### **Extensions**
+### Extensions
 ```protobuf
 message Person {
   string name = 1;
@@ -366,7 +366,7 @@ String nickname = person.getExtension(PersonProto.nickname);
 Integer age = person.getExtension(PersonProto.age);
 ```
 
-## **gRPC Integration**
+## gRPC Integration
 
 ### Определение сервиса
 ```protobuf
@@ -378,7 +378,7 @@ service UserService {
 }
 ```
 
-### **gRPC** клиент
+### gRPC клиент
 ```java
 // Создание blocking stub
 ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080)
@@ -401,7 +401,7 @@ while (users.hasNext()) {
 channel.shutdown();
 ```
 
-### **gRPC** асинхронный клиент
+### gRPC асинхронный клиент
 ```java
 // Async stub
 UserServiceGrpc.UserServiceStub asyncStub = UserServiceGrpc.newStub(channel);
@@ -425,7 +425,7 @@ asyncStub.getUser(request, new StreamObserver<User>() {
 });
 ```
 
-### **gRPC** сервер
+### gRPC сервер
 ```java
 public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
@@ -463,9 +463,9 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 }
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Lazy Parsing**
+### Lazy Parsing
 ```java
 // Использование parseFrom для lazy parsing
 UserProto.User user = UserProto.User.parseFrom(data);
@@ -474,7 +474,7 @@ UserProto.User user = UserProto.User.parseFrom(data);
 String name = user.getName(); // Парсинг происходит здесь
 ```
 
-### **Direct ByteBuffer**
+### Direct ByteBuffer
 ```java
 // Использование DirectByteBuffer для zero-copy
 ByteBuffer buffer = ByteBuffer.allocateDirect(data.length);
@@ -484,7 +484,7 @@ buffer.flip();
 UserProto.User user = UserProto.User.parseFrom(CodedInputStream.newInstance(buffer));
 ```
 
-### **Object Reuse**
+### Object Reuse
 ```java
 // Повторное использование билдера для уменьшения аллокаций
 UserProto.User.Builder builder = UserProto.User.newBuilder();
@@ -501,7 +501,7 @@ for (UserEntity entity : entities) {
 }
 ```
 
-### **Message Merging**
+### Message Merging
 ```java
 // Слияние сообщений
 UserProto.User baseUser = UserProto.User.newBuilder()
@@ -522,7 +522,7 @@ UserProto.User mergedUser = UserProto.User.newBuilder(baseUser)
 // Результат: id=1, name="John", email="john@example.com", status=ACTIVE
 ```
 
-## **Schema Evolution**
+## Schema Evolution
 
 ### Добавление полей
 ```protobuf
@@ -548,7 +548,7 @@ String email = user.getEmail();   // "" (default для string)
 int age = user.getAge();         // 0 (default для int32)
 ```
 
-### **Reserved** поля
+### Reserved поля
 ```protobuf
 message User {
   reserved 4, 8 to 10;      // Зарезервированные номера полей
@@ -560,7 +560,7 @@ message User {
 }
 ```
 
-### Обновление **enum**
+### Обновление enum
 ```protobuf
 enum Status {
   ACTIVE = 0;
@@ -578,7 +578,7 @@ enum Status {
 }
 ```
 
-## **Custom Options**
+## Custom Options
 
 ### Определение опций
 ```protobuf
@@ -628,9 +628,9 @@ for (Descriptors.FieldDescriptor field : descriptor.getFields()) {
 }
 ```
 
-## **Validation**
+## Validation
 
-### **Custom Validators**
+### Custom Validators
 ```java
 public class ProtobufValidator {
 
@@ -660,7 +660,7 @@ public class ProtobufValidator {
 }
 ```
 
-### **Schema Validation**
+### Schema Validation
 ```java
 public class SchemaValidator {
 
@@ -689,9 +689,9 @@ public class SchemaValidator {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration**
+### Configuration
 ```java
 @Configuration
 public class ProtobufConfig {
@@ -710,7 +710,7 @@ public class ProtobufConfig {
 }
 ```
 
-### **gRPC Service**
+### gRPC Service
 ```java
 @Service
 public class GrpcUserService {
@@ -741,7 +741,7 @@ public class GrpcUserService {
 }
 ```
 
-### **Web MVC Controller**
+### Web MVC Controller
 ```java
 @RestController
 @RequestMapping("/api/users")
@@ -762,9 +762,9 @@ public class UserController {
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit Testing**
+### Unit Testing
 ```java
 public class ProtobufTest {
 
@@ -814,7 +814,7 @@ public class ProtobufTest {
 }
 ```
 
-### **gRPC Testing**
+### gRPC Testing
 ```java
 @SpringBootTest
 @DirtiesContext
@@ -844,9 +844,9 @@ public class GrpcServiceTest {
 }
 ```
 
-## **Performance Comparison**
+## Performance Comparison
 
-### **Protobuf** vs **JSON** vs **XML**
+### Protobuf vs JSON vs XML
 ```java
 public class SerializationBenchmark {
 
@@ -891,9 +891,9 @@ public class SerializationBenchmark {
 }
 ```
 
-## **Migration** и **Best Practices**
+## Migration и Best Practices
 
-### **Migration from JSON**
+### Migration from JSON
 ```java
 // Преобразование JSON в Protobuf
 public UserProto.User convertFromJson(String json) throws Exception {
@@ -969,9 +969,9 @@ message Product {
 }
 ```
 
-## **Advanced Features**
+## Advanced Features
 
-### **Dynamic Messages**
+### Dynamic Messages
 ```java
 // Работа с динамическими сообщениями
 Descriptors.Descriptor descriptor = UserProto.User.getDescriptor();
@@ -990,7 +990,7 @@ byte[] data = message.toByteArray();
 DynamicMessage parsed = DynamicMessage.parseFrom(descriptor, data);
 ```
 
-### **Custom Code Generation**
+### Custom Code Generation
 ```java
 // Кастомный кодогенератор
 public class CustomProtobufGenerator extends Generator {
@@ -1026,7 +1026,7 @@ public class CustomProtobufGenerator extends Generator {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```java
 public class ProtobufTroubleshooting {
 
@@ -1067,7 +1067,7 @@ public class ProtobufTroubleshooting {
 }
 ```
 
-### **Debugging**
+### Debugging
 ```java
 public class ProtobufDebugger {
 
@@ -1109,9 +1109,9 @@ public class ProtobufDebugger {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Proto4** (**предварительная версия**)
+### Proto4 (предварительная версия)
 ```protobuf
 // Proto4 синтаксис (экспериментальный)
 edition = "2023";
@@ -1126,7 +1126,7 @@ message User {
 }
 ```
 
-### **Zero-copy** сериализация
+### Zero-copy сериализация
 ```java
 // Экспериментальная zero-copy сериализация
 public class ZeroCopySerializer {

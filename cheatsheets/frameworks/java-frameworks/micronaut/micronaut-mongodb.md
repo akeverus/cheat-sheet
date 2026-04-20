@@ -73,7 +73,7 @@ related: ["micronaut-data.md", "micronaut-reactive.md"]
 - **GridFS**: Работа с файлами
 - **Reactive Support**: Реактивные операции
 
-## Настройка **MongoDB**
+## Настройка MongoDB
 
 ### Зависимости
 
@@ -140,7 +140,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 
 ## Custom Queries
 
-### @**Query Annotation**
+### @Query Annotation
 
 ```java
 @MongoRepository
@@ -252,7 +252,7 @@ public class User {
 List<User> findAdultsProjection(Integer age);
 ```
 
-### 3. Используйте **aggregation** для сложных запросов
+### 3. Используйте aggregation для сложных запросов
 
 ```java
 // ✅ Хорошо

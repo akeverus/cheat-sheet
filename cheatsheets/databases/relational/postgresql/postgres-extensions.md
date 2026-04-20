@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-performance-tuning.md", "databases/postgres-replication.md"]
 ---
 
-# **PostgreSQL**: Расширения
+# PostgreSQL: Расширения
 
 ## Полезные ссылки
 
@@ -38,7 +38,7 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
   - [Удаление расширений](#удаление-расширений)
 - [Популярные расширения](#популярные-расширения)
   - [**pg_stat_statements**](#pgstatstatements)
-  - [**pg_trgm** (**Trigram**)](#pgtrgm-trigram)
+  - [**pg_trgm** (Trigram)](#pgtrgm-trigram)
   - [**PostGIS**](#postgis)
   - [**pg_cron**](#pgcron)
   - [**TimescaleDB**](#timescaledb)
@@ -58,10 +58,10 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
   - [**pg_prewarm**](#pgprewarm)
   - [**pgstattuple**](#pgstattuple)
   - [**pgrowlocks**](#pgrowlocks)
-  - [**pg_trgm** (**расширенное использование**)](#pgtrgm-расширенное-использование)
-  - [**PostGIS** (**расширенное использование**)](#postgis-расширенное-использование)
-  - [**pg_cron** (**расширенное использование**)](#pgcron-расширенное-использование)
-  - [**TimescaleDB** (**расширенное использование**)](#timescaledb-расширенное-использование)
+  - [**pg_trgm** (расширенное использование)](#pgtrgm-расширенное-использование)
+  - [**PostGIS** (расширенное использование)](#postgis-расширенное-использование)
+  - [**pg_cron** (расширенное использование)](#pgcron-расширенное-использование)
+  - [**TimescaleDB** (расширенное использование)](#timescaledb-расширенное-использование)
   - [**pg_partman**](#pgpartman)
   - [**pg_repack**](#pgrepack)
   - [**pg_audit**](#pgaudit)
@@ -134,9 +134,9 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
   - [Автоматическое развертывание](#автоматическое-развертывание)
   - [CI/CD для расширений](#ci-cd-для-расширений)
 
-## Введение в расширения **PostgreSQL**
+## Введение в расширения PostgreSQL
 
-Расширения (**extensions**) — это способ добавления дополнительной функциональности в **PostgreSQL** без изменения ядра системы. Расширения могут добавлять новые типы данных, функции, операторы, индексы и многое другое.
+Расширения (extensions) — это способ добавления дополнительной функциональности в **PostgreSQL** без изменения ядра системы. Расширения могут добавлять новые типы данных, функции, операторы, индексы и многое другое.
 
 ### Преимущества расширений
 
@@ -206,7 +206,7 @@ DROP EXTENSION extension_name CASCADE;
 
 ## Популярные расширения
 
-### **pg_stat_statements**
+### pg_stat_statements
 
 Расширение для отслеживания статистики выполнения **SQL** запросов.
 
@@ -253,7 +253,7 @@ LIMIT 10;
 SELECT pg_stat_statements_reset();
 ```
 
-### **pg_trgm** (**Trigram**)
+### pg_trgm (Trigram)
 
 Расширение для нечеткого поиска и сравнения текста.
 
@@ -281,7 +281,7 @@ FROM users
 WHERE name LIKE '%John%';
 ```
 
-### **PostGIS**
+### PostGIS
 
 Расширение для работы с географическими данными.
 
@@ -321,9 +321,9 @@ ORDER BY location <-> ST_GeogFromText('POINT(37.6173 55.7558)')
 LIMIT 10;
 ```
 
-### **pg_cron**
+### pg_cron
 
-Расширение для планирования задач (**cron jobs**) внутри **PostgreSQL**.
+Расширение для планирования задач (cron jobs) внутри **PostgreSQL**.
 
 #### Установка
 
@@ -355,7 +355,7 @@ SELECT * FROM cron.job;
 SELECT cron.unschedule('update-stats');
 ```
 
-### **TimescaleDB**
+### TimescaleDB
 
 Расширение для работы с временными рядами.
 
@@ -398,7 +398,7 @@ GROUP BY hour
 ORDER BY hour;
 ```
 
-### **uuid-ossp**
+### uuid-ossp
 
 Расширение для генерации **UUID**.
 
@@ -421,7 +421,7 @@ CREATE TABLE users (
 );
 ```
 
-### **hstore**
+### hstore
 
 Расширение для хранения пар ключ-значение.
 
@@ -454,7 +454,7 @@ WHERE attributes ? 'color';
 CREATE INDEX idx_products_attributes ON products USING gin(attributes);
 ```
 
-### **pgcrypto**
+### pgcrypto
 
 Расширение для криптографических функций.
 
@@ -478,7 +478,7 @@ SELECT encrypt('sensitive data', 'key', 'aes');
 SELECT decrypt(encrypted_data, 'key', 'aes');
 ```
 
-### **citext**
+### citext
 
 Расширение для **case-insensitive** текстовых типов.
 
@@ -517,7 +517,7 @@ my_extension/
 
 ### Создание простого расширения
 
-#### 1. Создать файл **my_extension.control**
+#### 1. Создать файл my_extension.control
 
 ```ini
 # my_extension.control
@@ -527,7 +527,7 @@ module_pathname = '$libdir/my_extension'
 relocatable = true
 ```
 
-#### 2. Создать файл **my_extension--1.0.sql**
+#### 2. Создать файл my_extension--1.0.sql
 
 ```sql
 -- my_extension--1.0.sql
@@ -539,7 +539,7 @@ LANGUAGE C STRICT;
 COMMENT ON FUNCTION my_function(text) IS 'My custom function';
 ```
 
-#### 3. Создать **Makefile**
+#### 3. Создать Makefile
 
 ```makefile
 # Makefile
@@ -581,7 +581,7 @@ CREATE EXTENSION my_extension;
 
 ## Дополнительные популярные расширения
 
-### **pg_buffercache**
+### pg_buffercache
 
 Расширение для просмотра содержимого **shared buffer cache**.
 
@@ -602,7 +602,7 @@ ORDER BY buffers DESC
 LIMIT 20;
 ```
 
-### **pg_freespacemap**
+### pg_freespacemap
 
 Расширение для просмотра **free space map**.
 
@@ -620,7 +620,7 @@ JOIN pg_class c ON c.relname = 'users'
 GROUP BY c.relname, c.oid;
 ```
 
-### **pg_prewarm**
+### pg_prewarm
 
 Расширение для предварительной загрузки данных в кэш.
 
@@ -638,7 +638,7 @@ SELECT pg_prewarm('users', 'read', 'buffer');
 SELECT pg_prewarm('users', 'prefetch', 'main');
 ```
 
-### **pgstattuple**
+### pgstattuple
 
 Расширение для анализа статистики кортежей.
 
@@ -653,7 +653,7 @@ SELECT * FROM pgstattuple('users');
 SELECT * FROM pgstattuple('idx_users_email');
 ```
 
-### **pgrowlocks**
+### pgrowlocks
 
 Расширение для просмотра блокировок строк.
 
@@ -665,7 +665,7 @@ CREATE EXTENSION pgrowlocks;
 SELECT * FROM pgrowlocks('users');
 ```
 
-### **pg_trgm** (**расширенное использование**)
+### pg_trgm (расширенное использование)
 
 ```sql
 -- Расширенное использование триграмм
@@ -691,7 +691,7 @@ CREATE INDEX idx_users_name_trgm ON users USING gin(name gin_trgm_ops);
 CREATE INDEX idx_users_name_trgm_gist ON users USING gist(name gist_trgm_ops);
 ```
 
-### **PostGIS** (**расширенное использование**)
+### PostGIS (расширенное использование)
 
 ```sql
 -- Расширенное использование PostGIS
@@ -736,7 +736,7 @@ CREATE TABLE elevation (
 );
 ```
 
-### **pg_cron** (**расширенное использование**)
+### pg_cron (расширенное использование)
 
 ```sql
 -- Расширенное использование pg_cron
@@ -775,7 +775,7 @@ SELECT cron.alter_job(
 );
 ```
 
-### **TimescaleDB** (**расширенное использование**)
+### TimescaleDB (расширенное использование)
 
 ```sql
 -- Расширенное использование TimescaleDB
@@ -827,7 +827,7 @@ ALTER TABLE metrics SET (
 SELECT add_compression_policy('metrics', INTERVAL '7 days');
 ```
 
-### **pg_partman**
+### pg_partman
 
 Расширение для автоматического партиционирования.
 
@@ -858,7 +858,7 @@ SET retention = '30 days',
 WHERE parent_table = 'public.events';
 ```
 
-### **pg_repack**
+### pg_repack
 
 Расширение для переупаковки таблиц без блокировок.
 
@@ -871,7 +871,7 @@ pg_repack -d mydb -t users
 pg_repack -d mydb --table users --only-indexes
 ```
 
-### **pg_audit**
+### pg_audit
 
 Расширение для аудита **SQL** операций.
 
@@ -891,7 +891,7 @@ SELECT pg_reload_conf();
 ALTER TABLE users SET (pgaudit.log = 'all');
 ```
 
-### **pg_similarity**
+### pg_similarity
 
 Расширение для вычисления схожести строк.
 
@@ -909,7 +909,7 @@ SELECT levenshtein('hello', 'hallo');
 SELECT cosine('hello world', 'hallo welt');
 ```
 
-## **Advanced Extension Development**
+## Advanced Extension Development
 
 ### Создание расширения с типами данных
 
@@ -1020,7 +1020,7 @@ FOR TYPE text USING my_am AS
     FUNCTION 1 my_cmp(text, text);
 ```
 
-## **Extension Management**
+## Extension Management
 
 ### Автоматическая установка расширений
 
@@ -1117,7 +1117,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
 ### Установка расширений
 
@@ -1140,9 +1140,9 @@ $$ LANGUAGE plpgsql;
 3. **Тестировать** на разных версиях **PostgreSQL**
 4. **Использовать версионирование** для миграций
 
-## **Real-World Use Cases**
+## Real-World Use Cases
 
-### **Use Case** 1: Аналитика с **pg_stat_statements**
+### Use Case 1: Аналитика с pg_stat_statements
 
 ```sql
 -- Создать представление для анализа запросов
@@ -1164,7 +1164,7 @@ ORDER BY mean_exec_time DESC;
 SELECT * FROM slow_queries LIMIT 20;
 ```
 
-### **Use Case** 2: Поиск с **pg_trgm**
+### Use Case 2: Поиск с pg_trgm
 
 ```sql
 -- Создать функцию для нечеткого поиска
@@ -1187,7 +1187,7 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM fuzzy_search('John Doe', 0.3);
 ```
 
-### **Use Case** 3: Геолокация с **PostGIS**
+### Use Case 3: Геолокация с PostGIS
 
 ```sql
 -- Найти ближайшие точки
@@ -1218,7 +1218,7 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM find_nearby_locations(55.7558, 37.6173, 5000);
 ```
 
-### **Use Case** 4: Автоматизация с **pg_cron**
+### Use Case 4: Автоматизация с pg_cron
 
 ```sql
 -- Настроить автоматическое обслуживание
@@ -1232,7 +1232,7 @@ SELECT cron.schedule('cleanup-old-data', '0 2 * * 0',
     $$DELETE FROM events WHERE created_at < NOW() - INTERVAL '90 days';$$);
 ```
 
-### **Use Case** 5: Временные ряды с **TimescaleDB**
+### Use Case 5: Временные ряды с TimescaleDB
 
 ```sql
 -- Создать систему мониторинга метрик
@@ -1327,9 +1327,9 @@ ALTER EXTENSION extension_name UPDATE;
 ALTER EXTENSION extension_name UPDATE TO 'previous_version';
 ```
 
-## **Extension Performance Tuning**
+## Extension Performance Tuning
 
-### Оптимизация **pg_stat_statements**
+### Оптимизация pg_stat_statements
 
 ```conf
 # postgresql.conf
@@ -1340,7 +1340,7 @@ pg_stat_statements.track_utility = on
 pg_stat_statements.save = on
 ```
 
-### Оптимизация **pg_trgm**
+### Оптимизация pg_trgm
 
 ```sql
 -- Выбрать правильный тип индекса
@@ -1355,7 +1355,7 @@ SET pg_trgm.similarity_threshold = 0.3;
 SET pg_trgm.word_similarity_threshold = 0.4;
 ```
 
-### Оптимизация **PostGIS**
+### Оптимизация PostGIS
 
 ```sql
 -- Использовать правильные типы данных
@@ -1376,7 +1376,7 @@ CREATE INDEX idx_locations_location ON locations USING gist(location);
 CREATE INDEX idx_regions_boundary ON regions USING gist(boundary);
 ```
 
-## **Extension Security**
+## Extension Security
 
 ### Безопасная установка расширений
 
@@ -1413,7 +1413,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Extension Migration Strategies**
+## Extension Migration Strategies
 
 ### Стратегия 1: Постепенная миграция
 
@@ -1441,7 +1441,7 @@ ALTER EXTENSION my_extension UPDATE;
 ALTER EXTENSION my_extension UPDATE TO '1.0';
 ```
 
-## **Extension Development Best Practices**
+## Extension Development Best Practices
 
 ### Структура проекта
 
@@ -1492,7 +1492,7 @@ COMMENT ON TYPE my_type IS
     'My custom type for storing data';
 ```
 
-## **Extension Packaging**
+## Extension Packaging
 
 ### Создание пакета расширения
 
@@ -1534,7 +1534,7 @@ pgxn install my_extension
 sudo apt-get install postgresql-14-my-extension
 ```
 
-## **Monitoring Extensions**
+## Monitoring Extensions
 
 ### Мониторинг использования
 
@@ -1587,7 +1587,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Extension Maintenance**
+## Extension Maintenance
 
 ### Регулярное обслуживание
 
@@ -1632,11 +1632,11 @@ HAVING COUNT(DISTINCT d.objid) = 0;
 DROP EXTENSION IF EXISTS unused_extension;
 ```
 
-## **Extension Comparison**
+## Extension Comparison
 
 ### Сравнение расширений для похожих задач
 
-#### **UUID** генерация
+#### UUID генерация
 
 ```sql
 -- uuid-ossp (встроенное)
@@ -1659,7 +1659,7 @@ CREATE INDEX idx_name_trgm ON users USING gin(name gin_trgm_ops);
 CREATE INDEX idx_name_fts ON users USING gin(to_tsvector('english', name));
 ```
 
-## **Extension Dependencies**
+## Extension Dependencies
 
 ### Управление зависимостями
 
@@ -1682,7 +1682,7 @@ JOIN pg_depend d ON d.objid = e.oid
 WHERE d.refobjid::regclass::text LIKE '%other_extension%';
 ```
 
-## **Extension Versioning**
+## Extension Versioning
 
 ### Семантическое версионирование
 
@@ -1705,9 +1705,9 @@ ALTER TABLE my_table ADD COLUMN old_column TEXT;
 DROP TABLE new_table;
 ```
 
-## **Extension Testing**
+## Extension Testing
 
-### **Unit** тесты
+### Unit тесты
 
 ```sql
 -- test/sql/test.sql
@@ -1725,7 +1725,7 @@ SELECT my_type 'value1' = my_type 'value2';
 ROLLBACK;
 ```
 
-### **Integration** тесты
+### Integration тесты
 
 ```sql
 -- test/sql/integration_test.sql
@@ -1740,9 +1740,9 @@ SELECT my_function('test') || ' ' || uuid_generate_v4();
 ROLLBACK;
 ```
 
-## **Extension Performance Benchmarks**
+## Extension Performance Benchmarks
 
-### Бенчмарк **pg_trgm**
+### Бенчмарк pg_trgm
 
 ```sql
 -- Тест производительности поиска
@@ -1762,7 +1762,7 @@ SELECT * FROM users WHERE name % 'John';
 \timing off
 ```
 
-### Бенчмарк **PostGIS**
+### Бенчмарк PostGIS
 
 ```sql
 -- Тест производительности геопространственных запросов
@@ -1780,7 +1780,7 @@ WHERE ST_DWithin(location, ST_GeogFromText('POINT(37.6173 55.7558)', 4326), 1000
 \timing off
 ```
 
-## **Extension Security Best Practices**
+## Extension Security Best Practices
 
 ### Минимизация привилегий
 
@@ -1808,7 +1808,7 @@ ALTER SYSTEM SET pgaudit.log_extension = on;
 SELECT pg_reload_conf();
 ```
 
-## **Extension Documentation**
+## Extension Documentation
 
 ### Автоматическая документация
 
@@ -1848,7 +1848,7 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM generate_extension_docs('my_extension');
 ```
 
-## **Extension Deployment**
+## Extension Deployment
 
 ### Автоматическое развертывание
 

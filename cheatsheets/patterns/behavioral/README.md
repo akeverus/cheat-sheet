@@ -18,26 +18,26 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Обзор поведенческих паттернов](behavioral-patterns.md) — общая карта группы и сравнения
-- [Chain of Responsibility](chain-of-responsibility.md) — цепочка обработчиков
-- [Command](command.md) — команда как объект, undo/redo
-- [Iterator](iterator.md) — обход коллекции без раскрытия структуры
-- [Mediator](mediator.md) — централизованный посредник
-- [Memento](memento.md) — сохранение и восстановление состояния
-- [Observer](observer.md) — publish/subscribe
-- [State](state.md) — смена поведения по состоянию
-- [Strategy](strategy.md) — взаимозаменяемые алгоритмы
-- [Template Method](template-method.md) — скелет алгоритма в базовом классе
-- [Visitor](visitor.md) — операции над иерархией без изменения классов
-- [Interpreter](interpreter.md) — грамматика и её интерпретация
-- [Delegate](delegate.md) — делегирование в стиле Kotlin
+- [[behavioral-patterns|Обзор поведенческих паттернов]] — общая карта группы и сравнения
+- [[chain-of-responsibility|Chain of Responsibility]] — цепочка обработчиков
+- [[command]] — команда как объект, undo/redo
+- [[iterator]] — обход коллекции без раскрытия структуры
+- [[mediator]] — централизованный посредник
+- [[memento]] — сохранение и восстановление состояния
+- [[observer]] — publish/subscribe
+- [[state]] — смена поведения по состоянию
+- [[strategy]] — взаимозаменяемые алгоритмы
+- [[template-method|Template Method]] — скелет алгоритма в базовом классе
+- [[visitor]] — операции над иерархией без изменения классов
+- [[interpreter]] — грамматика и её интерпретация
+- [[delegate]] — делегирование в стиле Kotlin
 
 ### Соседние разделы
-- [Patterns](../README.md) — корень раздела паттернов
-- [Creational](../creational/README.md) — порождающие паттерны
-- [Structural](../structural/README.md) — структурные паттерны
-- [Concurrency](../concurrency-patterns/README.md) — паттерны многопоточности
-- [Design Patterns Interview](../../interview/design-patterns/design-patterns-interview.md)
+- [[README|Patterns]] — корень раздела паттернов
+- [[README|Creational]] — порождающие паттерны
+- [[README|Structural]] — структурные паттерны
+- [[README|Concurrency]] — паттерны многопоточности
+- [[design-patterns-interview|Design Patterns Interview]]
 
 ### Внешние ресурсы
 - [Refactoring.Guru: Behavioral Patterns](https://refactoring.guru/design-patterns/behavioral-patterns)
@@ -102,8 +102,8 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Структурные паттерны — [../structural/README.md](../structural/README.md)
-- Порождающие паттерны — [../creational/README.md](../creational/README.md)
-- Многопоточность — [../concurrency-patterns/README.md](../concurrency-patterns/README.md)
-- Вопросы на собеседовании — [../../interview/design-patterns/design-patterns-interview.md](../../interview/design-patterns/design-patterns-interview.md)
-- Архитектура приложений — [../../architecture/README.md](../../architecture/README.md)
+- Структурные паттерны — [[README]]
+- Порождающие паттерны — [[README]]
+- Многопоточность — [[README]]
+- Вопросы на собеседовании — [[design-patterns-interview]]
+- Архитектура приложений — [[README]]

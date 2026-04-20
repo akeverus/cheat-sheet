@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: Индексы — Полное руководство по индексации и оптимизации запросов
+# MongoDB: Индексы — Полное руководство по индексации и оптимизации запросов
 
 Комплексное руководство по индексам в **MongoDB**: типы индексов, стратегии индексации, управление и оптимизация производительности.
 
@@ -35,29 +35,29 @@ updated: "2026-02-11"
   - [Недостатки индексов](#недостатки-индексов)
   - [**Default** индекс](#default-индекс)
 - [Типы индексов в **MongoDB**](#типы-индексов-в-mongodb)
-  - [1. **Single Field Index** (**Однопольный индекс**)](#1-single-field-index-однопольный-индекс)
+  - [1. **Single Field Index** (Однопольный индекс)](#1-single-field-index-однопольный-индекс)
     - [Создание в **MongoDB Shell**](#создание-в-mongodb-shell)
     - [**Java** + **Spring** реализация](#java-spring-реализация)
     - [**Spring Data MongoDB** аннотации](#spring-data-mongodb-аннотации)
-  - [2. **Compound Index** (**Составной индекс**)](#2-compound-index-составной-индекс)
+  - [2. **Compound Index** (Составной индекс)](#2-compound-index-составной-индекс)
     - [Создание составных индексов](#создание-составных-индексов)
     - [**Java** реализация](#java-реализация)
     - [**Spring Data MongoDB**](#spring-data-mongodb)
     - [Оптимизация запросов с **compound** индексами](#оптимизация-запросов-с-compound-индексами)
-  - [3. **Multikey Index** (**Мультиключевой индекс**)](#3-multikey-index-мультиключевой-индекс)
+  - [3. **Multikey Index** (Мультиключевой индекс)](#3-multikey-index-мультиключевой-индекс)
     - [Создание **multikey** индексов](#создание-multikey-индексов)
     - [Ограничения **multikey** индексов](#ограничения-multikey-индексов)
-  - [4. **Text Index** (**Текстовый индекс**)](#4-text-index-текстовый-индекс)
+  - [4. **Text Index** (Текстовый индекс)](#4-text-index-текстовый-индекс)
     - [Создание **text** индексов](#создание-text-индексов)
     - [**Text** поиск](#text-поиск)
-  - [5. **Geospatial Index** (**Геопространственный индекс**)](#5-geospatial-index-геопространственный-индекс)
-    - [2d индекс (**для плоских координат**)](#2d-индекс-для-плоских-координат)
-    - [2dsphere индекс (**для сферических координат**)](#2dsphere-индекс-для-сферических-координат)
+  - [5. **Geospatial Index** (Геопространственный индекс)](#5-geospatial-index-геопространственный-индекс)
+    - [2d индекс (для плоских координат)](#2d-индекс-для-плоских-координат)
+    - [2dsphere индекс (для сферических координат)](#2dsphere-индекс-для-сферических-координат)
     - [**Java** реализация геоиндексов](#java-реализация-геоиндексов)
     - [**Spring Data MongoDB** гео](#spring-data-mongodb-гео)
-  - [6. **Partial Index** (**Частичный индекс**)](#6-partial-index-частичный-индекс)
+  - [6. **Partial Index** (Частичный индекс)](#6-partial-index-частичный-индекс)
     - [Создание **partial** индексов](#создание-partial-индексов)
-  - [7. **TTL Index** (**Time-To-Live индекс**)](#7-ttl-index-time-to-live-индекс)
+  - [7. **TTL Index** (Time-To-Live индекс)](#7-ttl-index-time-to-live-индекс)
     - [Создание **TTL** индексов](#создание-ttl-индексов)
 - [Управление индексами](#управление-индексами)
   - [Просмотр индексов](#просмотр-индексов)
@@ -65,7 +65,7 @@ updated: "2026-02-11"
   - [Удаление индексов](#удаление-индексов)
   - [Перестройка индексов](#перестройка-индексов)
 - [Стратегии индексации](#стратегии-индексации)
-  - [1. **ESR** (**Equality, Sort, Range**) правило](#1-esr-equality-sort-range-правило)
+  - [1. **ESR** (Equality, Sort, Range) правило](#1-esr-equality-sort-range-правило)
   - [2. **Covering indexes**](#2-covering-indexes)
   - [3. **Index intersection**](#3-index-intersection)
   - [4. **Sparse indexes**](#4-sparse-indexes)
@@ -100,11 +100,11 @@ updated: "2026-02-11"
   - [Рекомендации по типам индексов:](#рекомендации-по-типам-индексов)
   - [Производительность:](#производительность)
 
-## Введение в индексы **MongoDB**
+## Введение в индексы MongoDB
 
 **Индексы** в **MongoDB** — это специальные структуры данных, которые хранят упорядоченную копию части данных коллекции. Они позволяют **MongoDB** быстро находить документы без сканирования всей коллекции.
 
-Сравнение поиска без индекса (**COLLSCAN**) и с индексом (**INDEX SCAN**).
+Сравнение поиска без индекса (COLLSCAN) и с индексом (INDEX SCAN).
 
 ```text
 Без индекса:           С индексом:
@@ -132,7 +132,7 @@ updated: "2026-02-11"
 2. **Замедление вставки**: Обновление индексов при модификации данных
 3. **Память**: Большие индексы могут не помещаться в **RAM**
 
-### **Default** индекс
+### Default индекс
 
 **MongoDB** автоматически создает индекс на поле `_id` для каждой коллекции:**
 
@@ -148,13 +148,13 @@ public class User {
 }
 ```
 
-## Типы индексов в **MongoDB**
+## Типы индексов в MongoDB
 
-### 1. **Single Field Index** (**Однопольный индекс**)
+### 1. Single Field Index (Однопольный индекс)
 
 Самый простой тип индекса, создаваемый на одном поле документа.
 
-#### Создание в **MongoDB Shell**
+#### Создание в MongoDB Shell
 ```javascript
 // Создание индекса на поле name
 db.users.createIndex({ name: 1 })
@@ -166,7 +166,7 @@ db.users.createIndex({ email: 1 }, { unique: true })
 db.users.createIndex({ "address.city": 1 })
 ```
 
-#### **Java** + **Spring** реализация
+#### Java + Spring реализация
 ```java
 // Зависимость Maven
 <dependency>
@@ -191,7 +191,7 @@ collection.createIndex(Indexes.compoundIndex(
     Indexes.ascending("firstName")));
 ```
 
-#### **Spring Data MongoDB** аннотации
+#### Spring Data MongoDB аннотации
 ```java
 @Document(collection = "users")
 public class User {
@@ -214,7 +214,7 @@ public class User {
 }
 ```
 
-### 2. **Compound Index** (**Составной индекс**)
+### 2. Compound Index (Составной индекс)
 
 Индекс на нескольких полях документа. Порядок полей в индексе важен для оптимизации запросов.
 
@@ -230,7 +230,7 @@ db.users.createIndex({ "address.city": 1, name: 1 })
 db.users.createIndex({ createdAt: -1, name: 1 })
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Compound index с сортировкой
 collection.createIndex(Indexes.compoundIndex(
@@ -243,7 +243,7 @@ collection.createIndex(Indexes.compoundIndex(
 collection.createIndex(Indexes.ascending("metadata.$"));
 ```
 
-#### **Spring Data MongoDB**
+#### Spring Data MongoDB
 ```java
 @Document(collection = "employees")
 public class Employee {
@@ -266,7 +266,7 @@ public class Employee {
 }
 ```
 
-#### Оптимизация запросов с **compound** индексами
+#### Оптимизация запросов с compound индексами
 
 ```javascript
 // Запрос использует индекс {name: 1, age: -1}
@@ -279,11 +279,11 @@ db.users.find({ "address.city": "Moscow", name: /^A/ })
 db.users.find({ age: { $gt: 25 } }).sort({ name: 1 })
 ```
 
-### 3. **Multikey Index** (**Мультиключевой индекс**)
+### 3. Multikey Index (Мультиключевой индекс)
 
 Индекс на массивы. **MongoDB** создает отдельную запись индекса для каждого элемента массива.
 
-#### Создание **multikey** индексов
+#### Создание multikey индексов
 ```javascript
 // Индекс на массив тегов
 db.articles.createIndex({ tags: 1 })
@@ -295,7 +295,7 @@ db.products.createIndex({ "specifications.color": 1 })
 db.products.createIndex({ category: 1, tags: 1 })
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Multikey index для массива
 collection.createIndex(Indexes.ascending("tags"));
@@ -310,16 +310,16 @@ collection.createIndex(Indexes.compoundIndex(
 ));
 ```
 
-#### Ограничения **multikey** индексов
+#### Ограничения multikey индексов
 - **Один массив на индекс**: **Compound** индекс может иметь только одно поле массива
 - **Порядок**: **Multikey** поля должны быть последними в **compound** индексе
 - **Sparse**: **Multikey** индексы не могут быть **sparse**
 
-### 4. **Text Index** (**Текстовый индекс**)
+### 4. Text Index (Текстовый индекс)
 
 Полнотекстовый поиск по текстовым полям с поддержкой языков и **stemming**.
 
-#### Создание **text** индексов
+#### Создание text индексов
 ```javascript
 // Простой text index
 db.articles.createIndex({ content: "text" })
@@ -341,7 +341,7 @@ db.articles.createIndex({
 })
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Text index
 collection.createIndex(Indexes.text("content"));
@@ -362,7 +362,7 @@ TextIndexOptions options = new TextIndexOptions()
 collection.createIndex(Indexes.text(Arrays.asList("title", "content")), options);
 ```
 
-#### **Spring Data MongoDB**
+#### Spring Data MongoDB
 ```java
 @Document(collection = "articles")
 public class Article {
@@ -389,7 +389,7 @@ public class Article {
 }
 ```
 
-#### **Text** поиск
+#### Text поиск
 ```javascript
 // Простой поиск
 db.articles.find({ $text: { $search: "database optimization" } })
@@ -410,11 +410,11 @@ db.articles.find({
 })
 ```
 
-### 5. **Geospatial Index** (**Геопространственный индекс**)
+### 5. Geospatial Index (Геопространственный индекс)
 
 Индексы для географических данных: точки, линии, полигоны.
 
-#### 2d индекс (**для плоских координат**)
+#### 2d индекс (для плоских координат)
 ```javascript
 // 2d index для точек
 db.places.createIndex({ location: "2d" })
@@ -429,7 +429,7 @@ db.places.createIndex({ location: "2d" }, { min: -180, max: 180 })
 }
 ```
 
-#### 2dsphere индекс (**для сферических координат**)
+#### 2dsphere индекс (для сферических координат)
 ```javascript
 // 2dsphere для GeoJSON
 db.places.createIndex({ location: "2dsphere" })
@@ -458,7 +458,7 @@ db.places.createIndex({ location: "2dsphere" })
 }
 ```
 
-#### **Java** реализация геоиндексов
+#### Java реализация геоиндексов
 ```java
 // 2d index
 collection.createIndex(Indexes.geo2d("location"));
@@ -473,7 +473,7 @@ collection.find(Filters.near("location",
 collection.find(Filters.geoWithinCenter("location", 37.617, 55.755, 5.0));
 ```
 
-#### **Spring Data MongoDB** гео
+#### Spring Data MongoDB гео
 ```java
 @Document(collection = "places")
 public class Place {
@@ -491,11 +491,11 @@ public class Place {
 }
 ```
 
-### 6. **Partial Index** (**Частичный индекс**)
+### 6. Partial Index (Частичный индекс)
 
 Индекс только на документах, удовлетворяющих условию фильтра.
 
-#### Создание **partial** индексов
+#### Создание partial индексов
 ```javascript
 // Индекс только на активных пользователях
 db.users.createIndex(
@@ -513,7 +513,7 @@ db.products.createIndex(
 )
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Partial index
 PartialIndexOptions options = new PartialIndexOptions()
@@ -525,11 +525,11 @@ collection.createIndex(
 );
 ```
 
-### 7. **TTL Index** (**Time-`To-Live` индекс**)
+### 7. TTL Index (Time-`To-Live` индекс)
 
 Автоматическое удаление документов по истечении времени.
 
-#### Создание **TTL** индексов
+#### Создание TTL индексов
 ```javascript
 // TTL на поле с датой
 db.sessions.createIndex(
@@ -544,7 +544,7 @@ db.notifications.createIndex(
 )
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // TTL index
 collection.createIndex(
@@ -563,7 +563,7 @@ collection.createIndex(
 
 ### Просмотр индексов
 
-#### **MongoDB Shell**
+#### MongoDB Shell
 ```javascript
 // Просмотр всех индексов коллекции
 db.users.getIndexes()
@@ -578,7 +578,7 @@ db.getCollectionNames().forEach(function(collection) {
 db.users.stats().indexSizes
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Получить все индексы
 for (Document index : collection.listIndexes()) {
@@ -592,7 +592,7 @@ Document indexSizes = (Document) stats.get("indexSizes");
 
 ### Удаление индексов
 
-#### **MongoDB Shell**
+#### MongoDB Shell
 ```javascript
 // Удалить индекс по имени
 db.users.dropIndex("name_1")
@@ -604,7 +604,7 @@ db.users.dropIndex({ name: 1, age: -1 })
 db.users.dropIndexes()
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Удалить индекс по имени
 collection.dropIndex("name_1");
@@ -618,7 +618,7 @@ collection.dropIndexes();
 
 ### Перестройка индексов
 
-#### **MongoDB Shell**
+#### MongoDB Shell
 ```javascript
 // Перестроить индексы коллекции
 db.users.reIndex()
@@ -627,7 +627,7 @@ db.users.reIndex()
 db.runCommand({ compact: "users" })
 ```
 
-#### **Java** реализация
+#### Java реализация
 ```java
 // Перестроить индексы
 database.runCommand(new Document("reIndex", "users"));
@@ -638,7 +638,7 @@ database.runCommand(new Document("compact", "users"));
 
 ## Стратегии индексации
 
-### 1. **ESR** (**Equality, `Sort`, Range**) правило
+### 1. ESR (Equality, `Sort`, Range) правило
 
 При создании **compound** индексов следовать порядку: **Equality** → **Sort** → **Range**.
 
@@ -656,7 +656,7 @@ db.orders.find({ customerId: "123" })
     .limit(10)
 ```
 
-### 2. **Covering indexes**
+### 2. Covering indexes
 
 Индекс покрывает все поля запроса, данные читаются только из индекса.
 
@@ -675,7 +675,7 @@ db.users.find(
 ).explain("executionStats")
 ```
 
-### 3. **Index intersection**
+### 3. Index intersection
 
 **MongoDB** может использовать несколько индексов для одного запроса.
 
@@ -691,7 +691,7 @@ db.users.find({
 })
 ```
 
-### 4. **Sparse indexes**
+### 4. Sparse indexes
 
 Индексы только на документах, содержащих индексируемое поле.
 
@@ -712,9 +712,9 @@ db.users.createIndex(
 
 ## Оптимизация запросов с индексами
 
-### **Explain plan** анализ
+### Explain plan анализ
 
-#### **MongoDB Shell**
+#### MongoDB Shell
 ```javascript
 // Анализ плана выполнения
 db.users.find({ name: "John" }).explain("executionStats")
@@ -730,7 +730,7 @@ db.users.find({ name: "John" }).explain("executionStats")
 }
 ```
 
-#### **Java** анализ
+#### Java анализ
 ```java
 // Анализ с Java драйвером
 FindIterable<Document> iterable = collection.find(Filters.eq("name", "John"));
@@ -742,7 +742,7 @@ System.out.println("Execution stats: " + explanation.get("executionStats"));
 
 ### Индексные паттерны
 
-#### 1. **Zero** or **few documents match**
+#### 1. Zero or few documents match
 
 Для запросов возвращающих мало документов — индекс обязателен.
 
@@ -755,7 +755,7 @@ db.users.createIndex({ email: 1 })
 db.users.find({ email: "unique@example.com" })  // INDEX SCAN
 ```
 
-#### 2. **Many documents match**
+#### 2. Many documents match
 
 Для запросов возвращающих много документов — **compound** индексы с сортировкой.
 
@@ -773,7 +773,7 @@ db.products.find({ category: "electronics" })
     .limit(20)
 ```
 
-#### 3. **Aggregation optimization**
+#### 3. Aggregation optimization
 
 Индексы для **aggregation pipeline**.
 
@@ -853,7 +853,7 @@ db.users.dropIndex("unused_index")
 
 ## Решение проблем
 
-### 1. **Index not used**
+### 1. Index not used
 
 ```javascript
 // Проблема: индекс не используется
@@ -867,7 +867,7 @@ db.users.find({ age: { $gt: 25 } }).explain()
 db.users.find({ age: { $gt: 25 } }).hint({ age: 1 })
 ```
 
-### 2. **Index too large**
+### 2. Index too large
 
 ```javascript
 // Проблема: индекс не помещается в память
@@ -887,7 +887,7 @@ db.products.createIndex(
 )
 ```
 
-### 3. **Write performance degradation**
+### 3. Write performance degradation
 
 ```javascript
 // Проблема: вставка замедлилась после создания индексов
@@ -909,7 +909,7 @@ db.users.bulkWrite([
 ])
 ```
 
-### 4. **Index key too long**
+### 4. Index key too long
 
 ```javascript
 // Проблема: ключ индекса превышает лимит (1024 байта)
@@ -931,7 +931,7 @@ db.users.createIndex(
 
 ### Метрики индексов
 
-#### **MongoDB metrics**
+#### MongoDB metrics
 ```javascript
 // Размер индексов
 db.users.stats().indexSizes
@@ -946,7 +946,7 @@ db.users.aggregate([
 ])
 ```
 
-#### **Java** мониторинг
+#### Java мониторинг
 ```java
 // Получить статистику индексов
 Document collStats = database.runCommand(new Document("collStats", "users"));
@@ -996,7 +996,7 @@ db.getCollectionNames().forEach(function(collection) {
 });
 ```
 
-#### **Java monitoring service**
+#### Java monitoring service
 ```java
 @Service
 public class IndexMonitorService {
@@ -1050,7 +1050,7 @@ public class IndexMonitorService {
 - **Memory**: Индексы должны помещаться в **RAM**
 - **Storage**: Индексы занимают 10-50% от размера данных
 
-### **Best practices**:
+### Best practices:
 
 1. **Создавайте индексы на полях частых запросов**
 2. **Используйте compound индексы для сложных условий**

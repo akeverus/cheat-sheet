@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-type-system.md"]
 ---
 
-# **Scala Additional Topics**
+# Scala Additional Topics
 
 Кратко: дополнительные темы **Scala**: расширения, полезные паттерны, **best practices**, продвинутые техники программирования.
 
@@ -53,17 +53,17 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
   - [**Builder Pattern**](#builder-pattern)
   - [**Adapter Pattern**](#adapter-pattern)
   - [**Decorator Pattern**](#decorator-pattern)
-- [Продвинутые техники (**расширенные**)](#продвинутые-техники-расширенные)
+- [Продвинутые техники (расширенные)](#продвинутые-техники-расширенные)
   - [**Type-level Programming**](#type-level-programming)
   - [**Dependent Types**](#dependent-types)
   - [**Phantom Types**](#phantom-types)
-- [Оптимизация кода (**расширенная**)](#оптимизация-кода-расширенная)
+- [Оптимизация кода (расширенная)](#оптимизация-кода-расширенная)
   - [Специализация](#специализация)
   - [**Inline** методы](#inline-методы)
   - [Оптимизация коллекций](#оптимизация-коллекций)
-- [Архитектурные паттерны (**расширенные**)](#архитектурные-паттерны-расширенные)
+- [Архитектурные паттерны (расширенные)](#архитектурные-паттерны-расширенные)
   - [**Event-Driven Architecture**](#event-driven-architecture)
-  - [**CQRS** (**Command Query Responsibility Segregation**)](#cqrs-command-query-responsibility-segregation)
+  - [**CQRS** (Command Query Responsibility Segregation)](#cqrs-command-query-responsibility-segregation)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Заключение](#заключение)
@@ -74,13 +74,13 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
   - [**Chain of Responsibility Pattern**](#chain-of-responsibility-pattern)
   - [**Command Pattern**](#command-pattern)
   - [**Memento Pattern**](#memento-pattern)
-- [Заключение (**финальное расширенное**)](#заключение-финальное-расширенное)
+- [Заключение (финальное расширенное)](#заключение-финальное-расширенное)
   - [Практические примеры: Архитектурные паттерны](#практические-примеры-архитектурные-паттерны)
   - [Практические примеры: **Event-Driven Architecture**](#практические-примеры-event-driven-architecture)
 
 ## Паттерны проектирования
 
-### **Strategy Pattern**
+### Strategy Pattern
 
 **Strategy Pattern** позволяет выбирать алгоритм во время выполнения.
 
@@ -139,7 +139,7 @@ val mergeSorter = new Sorter(MergeSort)
 
 **Strategy Pattern** особенно полезен, когда нужно выбирать алгоритм во время выполнения или когда есть несколько способов выполнения одной задачи. В функциональном программировании стратегии часто представлены как функции высшего порядка, что делает код более гибким и композируемым.
 
-### **Observer Pattern**
+### Observer Pattern
 
 **Observer Pattern** позволяет объектам подписываться на события и получать уведомления.
 
@@ -180,7 +180,7 @@ class EventEmitter[T] extends Observable[T] {
 
 **Observer Pattern** в **Scala** часто реализуется через функциональные подходы, такие как функции обратного вызова или реактивные потоки, что делает код более декларативным и композируемым.
 
-### **Factory Pattern**
+### Factory Pattern
 
 **Factory Pattern** позволяет создавать объекты без указания их конкретных классов.
 
@@ -274,7 +274,7 @@ def divideBad(a: Int, b: Int): Int = {
 
 ## Продвинутые техники
 
-### **Tagless Final**
+### Tagless Final
 
 **Tagless Final** позволяет создавать интерпретируемые **DSL** без фиксации на конкретном эффекте.
 
@@ -323,7 +323,7 @@ class FutureUserAlgebra extends UserAlgebra[Future] {
 
 **Tagless Final** особенно полезен для создания тестируемого и переиспользуемого кода, который не зависит от конкретной реализации эффектов.
 
-### **Free Monad**
+### Free Monad
 
 **Free Monad** позволяет создавать **DSL** и интерпретировать их различными способами.
 
@@ -401,7 +401,7 @@ val memoizedFactorial = memoize { (n: Int) =>
 
 ## Архитектурные паттерны
 
-### **Layered Architecture**
+### Layered Architecture
 
 Многослойная архитектура разделяет код на логические слои.
 
@@ -432,7 +432,7 @@ class UserController(service: UserService) {
 }
 ```
 
-### **Hexagonal Architecture**
+### Hexagonal Architecture
 
 **Hexagonal Architecture** разделяет бизнес-логику от внешних зависимостей.
 
@@ -479,7 +479,7 @@ class UserApplication(
 
 ## Дополнительные паттерны
 
-### **Builder Pattern**
+### Builder Pattern
 
 **Builder Pattern** позволяет создавать сложные объекты пошагово.
 
@@ -548,7 +548,7 @@ val user = UserBuilder()
 
 **Builder Pattern** в **Scala** часто реализуется через **fluent interface** или **case class** с методами **copy**, что делает код более функциональным и типобезопасным.
 
-### **Adapter Pattern**
+### Adapter Pattern
 
 **Adapter Pattern** позволяет объектам работать вместе, несмотря на несовместимые интерфейсы.
 
@@ -571,7 +571,7 @@ class ServiceAdapter(oldService: OldService) extends NewService {
 }
 ```
 
-### **Decorator Pattern**
+### Decorator Pattern
 
 **Decorator Pattern** позволяет добавлять новое поведение к объектам динамически.
 
@@ -609,9 +609,9 @@ class SugarDecorator(coffee: Coffee) extends CoffeeDecorator(coffee) {
 val coffee = new SugarDecorator(new MilkDecorator(new SimpleCoffee()))
 ```
 
-## Продвинутые техники (**расширенные**)
+## Продвинутые техники (расширенные)
 
-### **Type-level Programming**
+### Type-level Programming
 
 **Type-level** программирование позволяет выполнять вычисления на уровне типов.
 
@@ -633,7 +633,7 @@ type Three = Succ[Succ[Succ[Zero]]]
 type Five = Add[Two, Three]
 ```
 
-### **Dependent Types**
+### Dependent Types
 
 **Dependent Types** позволяют типам зависеть от значений.
 
@@ -650,7 +650,7 @@ def dotProduct[N <: Nat](v1: Vector[N], v2: Vector[N]): Double = {
 }
 ```
 
-### **Phantom Types**
+### Phantom Types
 
 **Phantom Types** используются для обеспечения безопасности типов без накладных расходов.
 
@@ -676,7 +676,7 @@ val totalDistance = add(distance1, distance2)  // OK
 // val invalid = add(distance1, time)  // Ошибка компиляции
 ```
 
-## Оптимизация кода (**расширенная**)
+## Оптимизация кода (расширенная)
 
 ### Специализация
 
@@ -690,7 +690,7 @@ def process[@specialized(Int, Long, Double) T](value: T): T = {
 }
 ```
 
-### **Inline** методы
+### Inline методы
 
 **Inline** методы позволяют встраивать код для улучшения производительности.
 
@@ -720,9 +720,9 @@ val set = Set(1, 2, 3, 4, 5)
 val contains = set.contains(3)  // O(1) в среднем
 ```
 
-## Архитектурные паттерны (**расширенные**)
+## Архитектурные паттерны (расширенные)
 
-### **Event-Driven Architecture**
+### Event-Driven Architecture
 
 **Event-Driven Architecture** позволяет создавать системы, реагирующие на события.
 
@@ -757,7 +757,7 @@ eventBus.subscribe(new UserEventHandler())
 eventBus.publish(UserCreated(User(1, "Alice", "alice@example.com")))
 ```
 
-### **CQRS** (**Command `Query Responsibility` Segregation**)
+### CQRS (Command `Query Responsibility` Segregation)
 
 **CQRS** разделяет операции чтения и записи.
 
@@ -794,7 +794,7 @@ trait QueryHandler {
 
 ## Заключение
 
-**Scala** предоставляет множество продвинутых техник и паттернов для создания эффективного и поддерживаемого кода. Понимание паттернов проектирования (**Strategy, `Observer`, `Factory`, `Builder`, `Adapter`, Decorator**), **best practices**, продвинутых техник (**Tagless `Final`, `Free Monad`, `Type-level Programming`, `Dependent Types`, `Phantom` Types**), оптимизации кода (**ленивые вычисления, мемоизация, специализация, inline методы, оптимизация коллекций**), и архитектурных паттернов (**Layered `Architecture`, `Hexagonal Architecture`, `Event`-`Driven Architecture`, CQRS**) позволяет создавать масштабируемые, надежные и высокопроизводительные приложения. **Scala** особенно полезен для создания приложений, которые требуют типобезопасности, функционального подхода, высокой производительности, и сложной архитектуры.
+**Scala** предоставляет множество продвинутых техник и паттернов для создания эффективного и поддерживаемого кода. Понимание паттернов проектирования (Strategy, `Observer`, `Factory`, `Builder`, `Adapter`, Decorator), **best practices**, продвинутых техник (Tagless `Final`, `Free Monad`, `Type-level Programming`, `Dependent Types`, `Phantom` Types), оптимизации кода (ленивые вычисления, мемоизация, специализация, inline методы, оптимизация коллекций), и архитектурных паттернов (Layered `Architecture`, `Hexagonal Architecture`, `Event`-`Driven Architecture`, CQRS) позволяет создавать масштабируемые, надежные и высокопроизводительные приложения. **Scala** особенно полезен для создания приложений, которые требуют типобезопасности, функционального подхода, высокой производительности, и сложной архитектуры.
 
 ## Дополнительные ресурсы
 
@@ -806,7 +806,7 @@ trait QueryHandler {
 
 ## Дополнительные паттерны и техники
 
-### **Template Method Pattern**
+### Template Method Pattern
 
 **Template Method Pattern** определяет скелет алгоритма, позволяя подклассам переопределять некоторые шаги.
 
@@ -859,7 +859,7 @@ class JSONProcessor extends DataProcessor {
 }
 ```
 
-### **Visitor Pattern**
+### Visitor Pattern
 
 **Visitor Pattern** позволяет добавлять новые операции к объектам без изменения их классов.
 
@@ -895,7 +895,7 @@ class MarkdownVisitor extends Visitor {
 }
 ```
 
-### **Chain of Responsibility Pattern**
+### Chain of Responsibility Pattern
 
 **Chain of Responsibility Pattern** позволяет передавать запросы по цепочке обработчиков.
 
@@ -964,7 +964,7 @@ val chain = new AuthenticationHandler()
   .setNext(new ValidationHandler())
 ```
 
-### **Command Pattern**
+### Command Pattern
 
 **Command Pattern** инкапсулирует запросы как объекты.
 
@@ -1019,7 +1019,7 @@ class CommandInvoker {
 }
 ```
 
-### **Memento Pattern**
+### Memento Pattern
 
 **Memento Pattern** позволяет сохранять и восстанавливать состояние объекта.
 
@@ -1063,9 +1063,9 @@ class Caretaker {
 }
 ```
 
-## Заключение (**финальное расширенное**)
+## Заключение (финальное расширенное)
 
-**Scala** предоставляет множество продвинутых техник и паттернов для создания эффективного и поддерживаемого кода. Понимание паттернов проектирования (**Strategy, `Observer`, `Factory`, `Builder`, `Adapter`, `Decorator`, `Template Method`, `Visitor`, `Chain of Responsibility`, `Command`, Memento**), **best practices**, продвинутых техник (**Tagless `Final`, `Free Monad`, `Type-level Programming`, `Dependent Types`, `Phantom` Types**), оптимизации кода (**ленивые вычисления, мемоизация, специализация, inline методы, оптимизация коллекций**), и архитектурных паттернов (**Layered `Architecture`, `Hexagonal Architecture`, `Event`-`Driven Architecture`, CQRS**) позволяет создавать масштабируемые, надежные и высокопроизводительные приложения. **Scala** особенно полезен для создания приложений, которые требуют типобезопасности, функционального подхода, высокой производительности, и сложной архитектуры.
+**Scala** предоставляет множество продвинутых техник и паттернов для создания эффективного и поддерживаемого кода. Понимание паттернов проектирования (Strategy, `Observer`, `Factory`, `Builder`, `Adapter`, `Decorator`, `Template Method`, `Visitor`, `Chain of Responsibility`, `Command`, Memento), **best practices**, продвинутых техник (Tagless `Final`, `Free Monad`, `Type-level Programming`, `Dependent Types`, `Phantom` Types), оптимизации кода (ленивые вычисления, мемоизация, специализация, inline методы, оптимизация коллекций), и архитектурных паттернов (Layered `Architecture`, `Hexagonal Architecture`, `Event`-`Driven Architecture`, CQRS) позволяет создавать масштабируемые, надежные и высокопроизводительные приложения. **Scala** особенно полезен для создания приложений, которые требуют типобезопасности, функционального подхода, высокой производительности, и сложной архитектуры.
 
 ### Практические примеры: Архитектурные паттерны
 
@@ -1103,7 +1103,7 @@ class InMemoryUserRepository extends UserRepository {
 }
 ```
 
-### Практические примеры: **Event-Driven Architecture**
+### Практические примеры: Event-Driven Architecture
 
 ```scala
 // Event-Driven Architecture

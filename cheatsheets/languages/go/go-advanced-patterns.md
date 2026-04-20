@@ -72,9 +72,9 @@ updated: "2026-02-06"
 3. **Fan-out/Fan-in** — распределение и сбор результатов
 4. **Rate Limiting** — ограничение скорости обработки
 
-## **Worker Pools**
+## Worker Pools
 
-### Базовый **worker pool**
+### Базовый worker pool
 
 ```go
 import (
@@ -110,7 +110,7 @@ func workerPool(ctx context.Context, jobs <-chan Job, results chan<- Result) {
 }
 ```
 
-### **Worker pool** с ограничением
+### Worker pool с ограничением
 
 ```go
 func workerPoolWithLimit(jobs <-chan Job, results chan<- Result, limit int) {
@@ -137,9 +137,9 @@ func workerPoolWithLimit(jobs <-chan Job, results chan<- Result, limit int) {
 }
 ```
 
-## **Pipelines**
+## Pipelines
 
-### Базовый **pipeline**
+### Базовый pipeline
 
 ```go
 func pipeline(input <-chan int) <-chan int {
@@ -165,7 +165,7 @@ func pipeline(input <-chan int) <-chan int {
 }
 ```
 
-### **Pipeline** с обработкой ошибок
+### Pipeline с обработкой ошибок
 
 ```go
 type Result struct {
@@ -188,9 +188,9 @@ func pipelineWithErrors(input <-chan int) <-chan Result {
 }
 ```
 
-## **Fan-out**/**Fan-in**
+## Fan-out/Fan-in
 
-### **Fan-out**
+### Fan-out
 
 ```go
 func fanOut(input <-chan int, numWorkers int) []<-chan int {
@@ -212,7 +212,7 @@ func fanOut(input <-chan int, numWorkers int) []<-chan int {
 }
 ```
 
-### **Fan-in**
+### Fan-in
 
 ```go
 func fanIn(inputs []<-chan int) <-chan int {
@@ -238,9 +238,9 @@ func fanIn(inputs []<-chan int) <-chan int {
 }
 ```
 
-## **Rate Limiting**
+## Rate Limiting
 
-### **Token bucket**
+### Token bucket
 
 ```go
 import "golang.org/x/time/rate"
@@ -258,7 +258,7 @@ func rateLimitedHandler(limiter *rate.Limiter) http.HandlerFunc {
 }
 ```
 
-### **Sliding window**
+### Sliding window
 
 ```go
 type SlidingWindow struct {
@@ -301,7 +301,7 @@ func (sw *SlidingWindow) Allow() bool {
 }
 ```
 
-### Практические примеры: Улучшенный **Worker Pool**
+### Практические примеры: Улучшенный Worker Pool
 
 ```go
 type WorkerPool struct {
@@ -376,7 +376,7 @@ func (wp *WorkerPool) Stop() {
 }
 ```
 
-### Практические примеры: **Pipeline** с обработкой ошибок
+### Практические примеры: Pipeline с обработкой ошибок
 
 ```go
 type PipelineStage func(<-chan int) (<-chan int, <-chan error)
@@ -445,7 +445,7 @@ func RunPipeline(input <-chan int, stages ...PipelineStage) (<-chan int, <-chan 
 }
 ```
 
-### Практические примеры: **Circuit Breaker**
+### Практические примеры: Circuit Breaker
 
 ```go
 type CircuitBreaker struct {
@@ -502,7 +502,7 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 }
 ```
 
-### Практические примеры: **Retry Pattern**
+### Практические примеры: Retry Pattern
 
 ```go
 type RetryConfig struct {
@@ -554,7 +554,7 @@ func Retry(ctx context.Context, config *RetryConfig, fn func() error) error {
 }
 ```
 
-### Практические примеры: **Backpressure Pattern**
+### Практические примеры: Backpressure Pattern
 
 ```go
 type Backpressure struct {
@@ -599,7 +599,7 @@ func (bp *Backpressure) Dropped() int64 {
 }
 ```
 
-### Практические примеры: **Semaphore Pattern**
+### Практические примеры: Semaphore Pattern
 
 ```go
 type Semaphore struct {
@@ -639,7 +639,7 @@ func (s *Semaphore) AcquireWithContext(ctx context.Context) error {
 }
 ```
 
-### Практические примеры: **Producer-Consumer Pattern**
+### Практические примеры: Producer-Consumer Pattern
 
 ```go
 type ProducerConsumer struct {
@@ -677,7 +677,7 @@ func (pc *ProducerConsumer) Stop() {
 }
 ```
 
-### Практические примеры: **Barrier Pattern**
+### Практические примеры: Barrier Pattern
 
 ```go
 type Barrier struct {
@@ -712,7 +712,7 @@ func (b *Barrier) Wait() {
 }
 ```
 
-### Практические примеры: **Future Pattern**
+### Практические примеры: Future Pattern
 
 ```go
 type Future struct {
@@ -762,7 +762,7 @@ func (f *Future) GetWithTimeout(timeout time.Duration) (interface{}, error) {
 }
 ```
 
-### Практические примеры: **Observer Pattern**
+### Практические примеры: Observer Pattern
 
 ```go
 type Observer interface {
@@ -810,7 +810,7 @@ func (s *Subject) Notify(event string, data interface{}) {
 }
 ```
 
-### Практические примеры: **Throttle Pattern**
+### Практические примеры: Throttle Pattern
 
 ```go
 type Throttler struct {
@@ -838,7 +838,7 @@ func (t *Throttler) Throttle(fn func()) {
 }
 ```
 
-### Практические примеры: **Debounce Pattern**
+### Практические примеры: Debounce Pattern
 
 ```go
 type Debouncer struct {
@@ -874,7 +874,7 @@ func (d *Debouncer) Debounce(fn func()) {
 }
 ```
 
-### Практические примеры: **Circuit Breaker** паттерн
+### Практические примеры: Circuit Breaker паттерн
 
 ```go
 type CircuitState int
@@ -938,7 +938,7 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 }
 ```
 
-### Практические примеры: **Retry** паттерн с экспоненциальной задержкой
+### Практические примеры: Retry паттерн с экспоненциальной задержкой
 
 ```go
 type RetryConfig struct {
@@ -989,7 +989,7 @@ func (r *Retrier) Do(ctx context.Context, fn func() error) error {
 }
 ```
 
-### Практические примеры: **Bulkhead** паттерн
+### Практические примеры: Bulkhead паттерн
 
 ```go
 type Bulkhead struct {
@@ -1020,7 +1020,7 @@ func (b *Bulkhead) Execute(ctx context.Context, fn func() error) error {
 }
 ```
 
-### Практические примеры: **Timeout** паттерн
+### Практические примеры: Timeout паттерн
 
 ```go
 func WithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context) error) error {
@@ -1058,7 +1058,7 @@ func WithDeadline(ctx context.Context, deadline time.Time, fn func(context.Conte
 }
 ```
 
-### Практические примеры: **Timeout** и **Retry** комбинированный паттерн
+### Практические примеры: Timeout и Retry комбинированный паттерн
 
 ```go
 type TimeoutRetryConfig struct {
@@ -1100,7 +1100,7 @@ func ExecuteWithTimeoutAndRetry(
 }
 ```
 
-### Практические примеры: **Graceful shutdown** паттерн
+### Практические примеры: Graceful shutdown паттерн
 
 ```go
 type ShutdownManager struct {
@@ -1183,7 +1183,7 @@ func (sm *ShutdownManager) Shutdown(ctx context.Context) error {
 14. **Тестируйте паттерны** — проверяйте поведение паттернов
 15. **Мониторьте паттерны** — отслеживайте использование паттернов
 
-### Практические примеры: **Event-driven** паттерн
+### Практические примеры: Event-driven паттерн
 
 ```go
 type Event struct {

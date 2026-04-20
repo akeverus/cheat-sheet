@@ -19,13 +19,13 @@ Couchbase — распределённая NoSQL-СУБД, которая сов
 ## Полезные ссылки
 
 ### Основные документы
-- [Couchbase: Основы](couchbase-basics.md) — архитектура, установка, N1QL, интеграция с Java
+- [[couchbase-basics|Couchbase: Основы]] — архитектура, установка, N1QL, интеграция с Java
 
 ### Соседние разделы
-- [NoSQL базы данных](../README.md)
+- [[README|NoSQL базы данных]]
 - [MongoDB](../mongodb/) — документная альтернатива
-- [Redis](../redis/README.md) — key-value альтернатива
-- [Базы данных](../../README.md)
+- [[README|Redis]] — key-value альтернатива
+- [[README|Базы данных]]
 
 ### Внешние ресурсы
 - [Couchbase Documentation](https://docs.couchbase.com/)
@@ -43,7 +43,7 @@ Couchbase — распределённая NoSQL-СУБД, которая сов
 
 ## Что внутри раздела
 
-[couchbase-basics.md](couchbase-basics.md) покрывает:
+[[couchbase-basics]] покрывает:
 
 - Архитектуру: ноды, сервисы (Data, Index, Query, Search, Eventing, Analytics), buckets, scopes, collections
 - Установку через Docker
@@ -83,7 +83,7 @@ Couchbase — распределённая NoSQL-СУБД, которая сов
 
 ## Куда идти дальше
 
-- NoSQL в целом — [databases/nosql/README.md](../README.md)
+- NoSQL в целом — [[README|databases/nosql/README.md]]
 - Документные альтернативы — [MongoDB](../mongodb/)
-- Key-value альтернатива — [Redis](../redis/README.md)
-- Интервью по БД — [interview/databases/mongodb-interview.md](../../../interview/databases/mongodb-interview.md)
+- Key-value альтернатива — [[README|Redis]]
+- Интервью по БД — [[mongodb-interview|interview/databases/mongodb-interview.md]]

@@ -77,7 +77,7 @@ related: ["quarkus-cache.md", "quarkus-reactive.md"]
 
 ## Configuration
 
-### **Basic Configuration**
+### Basic Configuration
 
 **application.properties:**
 
@@ -87,7 +87,7 @@ quarkus.redis.password=
 quarkus.redis.database=0
 ```
 
-### **Multiple Redis Instances**
+### Multiple Redis Instances
 
 ```properties
 quarkus.redis.hosts=redis://localhost:6379
@@ -96,7 +96,7 @@ quarkus.redis.secondary.hosts=redis://localhost:6380
 
 ## Redis Client
 
-### **Synchronous Client**
+### Synchronous Client
 
 **Использование синхронного клиента:**
 
@@ -121,7 +121,7 @@ public class RedisService {
 }
 ```
 
-### **Reactive Client**
+### Reactive Client
 
 **Использование реактивного клиента:**
 
@@ -150,7 +150,7 @@ public class ReactiveRedisService {
 
 ## Data Structures
 
-### **Strings**
+### Strings
 
 **Работа со строками:**
 
@@ -180,7 +180,7 @@ public class StringOperations {
 }
 ```
 
-### **Lists**
+### Lists
 
 **Работа со списками:**
 
@@ -210,7 +210,7 @@ public class ListOperations {
 }
 ```
 
-### **Sets**
+### Sets
 
 **Работа с множествами:**
 
@@ -237,7 +237,7 @@ public class SetOperations {
 }
 ```
 
-### **Hashes**
+### Hashes
 
 **Работа с хешами:**
 
@@ -266,7 +266,7 @@ public class HashOperations {
 
 ## Pub/Sub
 
-### **Publisher**
+### Publisher
 
 **Публикация сообщений:**
 
@@ -283,7 +283,7 @@ public class RedisPublisher {
 }
 ```
 
-### **Subscriber**
+### Subscriber
 
 **Подписка на каналы:**
 
@@ -307,7 +307,7 @@ public class RedisSubscriber {
 
 ## Transactions
 
-### **Redis Transactions**
+### Redis Transactions
 
 **Использование транзакций:**
 
@@ -329,7 +329,7 @@ public class TransactionalService {
 
 ## Лучшие практики
 
-### 1. Используйте **reactive** для неблокирующих операций
+### 1. Используйте reactive для неблокирующих операций
 
 ```java
 // ✅ Хорошо
@@ -338,7 +338,7 @@ public Uni<String> getValueReactive(String key) {
 }
 ```
 
-### 2. Настраивайте **connection pooling**
+### 2. Настраивайте connection pooling
 
 ```properties
 # ✅ Хорошо
@@ -346,7 +346,7 @@ quarkus.redis.max-pool-size=10
 quarkus.redis.min-pool-size=2
 ```
 
-### 3. Используйте подходящие **data structures**
+### 3. Используйте подходящие data structures
 
 ```java
 // ✅ Хорошо - для простых значений
@@ -356,7 +356,7 @@ redisClient.set("key", "value");
 redisClient.hset("user:1", "name", "John", "email", "john@example.com");
 ```
 
-### 4. Используйте **expiration** для временных данных
+### 4. Используйте expiration для временных данных
 
 ```java
 // ✅ Хорошо
@@ -396,7 +396,7 @@ public class SortedSetOperations {
 
 ## Advanced Patterns
 
-### **Distributed Lock**
+### Distributed Lock
 
 **Реализация **distributed lock**:**
 
@@ -434,7 +434,7 @@ public class DistributedLockService {
 }
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 **Реализация **rate limiting**:**
 
@@ -461,7 +461,7 @@ public class RateLimitingService {
 
 ## Redis Clustering
 
-### **Cluster Configuration**
+### Cluster Configuration
 
 **Настройка кластера:**
 
@@ -470,7 +470,7 @@ quarkus.redis.hosts=redis://node1:6379,redis://node2:6379,redis://node3:6379
 quarkus.redis.cluster-mode=true
 ```
 
-### **Cluster Operations**
+### Cluster Operations
 
 **Операции с кластером:**
 
@@ -490,7 +490,7 @@ public class ClusterRedisService {
 
 ## Redis Performance Tuning
 
-### **Pipeline Optimization**
+### Pipeline Optimization
 
 **Оптимизация **pipeline**:**
 
@@ -509,7 +509,7 @@ public class PipelineOptimization {
 }
 ```
 
-### **Connection Pool Tuning**
+### Connection Pool Tuning
 
 **Настройка пула соединений:**
 

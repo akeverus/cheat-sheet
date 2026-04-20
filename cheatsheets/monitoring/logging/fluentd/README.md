@@ -19,16 +19,16 @@ Fluentd — open-source сборщик логов от CNCF, который ун
 ## Полезные ссылки
 
 ### Документы репозитория по теме
-- [Централизованное логирование](../centralized-logging.md) — включает Fluentd/Fluent Bit как shipper
-- [Агрегация логов](../log-aggregation.md) — stream-обработка поверх собранных логов
-- [ELK Stack](../elk-stack.md) — типичный приёмник Fluentd-пайплайна
-- [Структурированное логирование](../structured-logging.md) — формат, который Fluentd парсит и обогащает
+- [[centralized-logging|Централизованное логирование]] — включает Fluentd/Fluent Bit как shipper
+- [[log-aggregation|Агрегация логов]] — stream-обработка поверх собранных логов
+- [[elk-stack|ELK Stack]] — типичный приёмник Fluentd-пайплайна
+- [[structured-logging|Структурированное логирование]] — формат, который Fluentd парсит и обогащает
 
 ### Соседние разделы
-- [Logging (корень)](../README.md)
-- [Log Aggregation](../log-aggregation/README.md)
-- [Monitoring](../../README.md)
-- [Kubernetes](../../../platform/containers/kubernetes/README.md) — запуск Fluentd как DaemonSet
+- [[README|Logging (корень)]]
+- [[README|Log Aggregation]]
+- [[README|Monitoring]]
+- [[README|Kubernetes]] — запуск Fluentd как DaemonSet
 
 ### Внешние ресурсы
 - [Fluentd Documentation](https://docs.fluentd.org/)
@@ -71,20 +71,20 @@ Fluentd реализует pattern "unified logging layer": входные пл�
 ## Типичные связки стека
 
 - **Kubernetes -> Fluent Bit (DaemonSet) -> Fluentd (aggregator) -> Elasticsearch / Kafka** — стандартная двухуровневая схема.
-- **App stdout -> Fluent Bit -> Loki + Grafana** ([../../metrics/grafana.md](../../metrics/grafana.md)) — лёгкая альтернатива ELK.
-- **Fluentd -> Kafka -> Flink -> ES** — для stream processing логов, см. [../log-aggregation/README.md](../log-aggregation/README.md).
+- **App stdout -> Fluent Bit -> Loki + Grafana** ([[grafana]]) — лёгкая альтернатива ELK.
+- **Fluentd -> Kafka -> Flink -> ES** — для stream processing логов, см. [[README]].
 - **Приложение -> Fluentd -> CloudWatch / S3** — дешёвое архивирование.
-- **Alertmanager** ([../../alerting/alertmanager.md](../../alerting/alertmanager.md)) не использует Fluentd напрямую, но алерты на паттерны логов строятся поверх ES, куда Fluentd доставляет данные.
+- **Alertmanager** ([[alertmanager]]) не использует Fluentd напрямую, но алерты на паттерны логов строятся поверх ES, куда Fluentd доставляет данные.
 
 ## Маршруты чтения
 
-- **Быстрый старт:** раздел про Fluentd в [centralized-logging.md](../centralized-logging.md) -> официальный quickstart Fluentd.
+- **Быстрый старт:** раздел про Fluentd в [[centralized-logging|centralized-logging.md]] -> официальный quickstart Fluentd.
 - **Kubernetes pipeline:** Kubernetes Logging Architecture (внешняя ссылка) -> DaemonSet с Fluent Bit -> агрегатор Fluentd.
-- **Потоковая обработка логов:** [../log-aggregation/README.md](../log-aggregation/README.md).
+- **Потоковая обработка логов:** [[README]].
 
 ## Куда идти дальше
 
-- ELK в деталях — [../elk-stack.md](../elk-stack.md)
-- Лучшие практики логирования — [../logging-best-practices.md](../logging-best-practices.md)
-- Метрики и дашборды — [../../metrics/README.md](../../metrics/README.md)
-- Kubernetes observability — [../../../platform/containers/kubernetes/README.md](../../../platform/containers/kubernetes/README.md)
+- ELK в деталях — [[elk-stack]]
+- Лучшие практики логирования — [[logging-best-practices]]
+- Метрики и дашборды — [[README]]
+- Kubernetes observability — [[README]]

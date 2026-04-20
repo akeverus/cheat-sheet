@@ -17,15 +17,15 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Algorithms (overview)](algorithms.md)
-- [A* Pathfinding](a-star-pathfinding.md)
-- [Knapsack Problem](knapsack-problem.md)
-- [Traveling Salesman Problem](traveling-salesman-problem.md)
-- [LRU Cache](lru-cache.md)
-- [Retry with Exponential Backoff + Jitter](retry-with-exponential-backoff-jitter.md)
-- [Combinatorial Problems Overview](combinatorial-problems-overview.md)
-- [Sudoku Solver](sudoku-solver.md)
-- [Maze Solver](maze-solver.md)
+- [[algorithms|Algorithms (overview)]]
+- [[a-star-pathfinding|A* Pathfinding]]
+- [[knapsack-problem|Knapsack Problem]]
+- [[traveling-salesman-problem|Traveling Salesman Problem]]
+- [[lru-cache|LRU Cache]]
+- [[retry-with-exponential-backoff-jitter|Retry with Exponential Backoff + Jitter]]
+- [[combinatorial-problems-overview|Combinatorial Problems Overview]]
+- [[sudoku-solver|Sudoku Solver]]
+- [[maze-solver|Maze Solver]]
 
 Дополнительные задачи см. в остальных файлах папки.
 

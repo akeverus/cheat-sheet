@@ -54,12 +54,12 @@ updated: "2026-02-11"
   - [From Spring Configuration to Konfig](#from-spring-configuration-to-konfig)
   - [From Environment Variables to Konfig](#from-environment-variables-to-konfig)
 - [Экспериментальные возможности](#экспериментальные-возможности)
-  - [Konfig 2.0+ **Features** (**Future**)](#konfig-20-features-future)
+  - [Konfig 2.0+ **Features** (Future)](#konfig-20-features-future)
 - [См. также](#см-также)
 
 ## Основные возможности
 
-### **Basic Configuration Definition**
+### Basic Configuration Definition
 
 Базовое описание конфигурации через **DSL** и типобезопасные ключи.
 
@@ -84,7 +84,7 @@ val url = config[AppConfig.databaseUrl]
 val port = config[AppConfig.port]
 ```
 
-### **Configuration Sources**
+### Configuration Sources
 ```kotlin
 // Из Properties файла
 val config1 = AppConfig.fromPropertiesFile(File("app.properties"))
@@ -110,7 +110,7 @@ val config4 = AppConfig.fromMap(mapConfig)
 val config5 = AppConfig.fromPropertiesResource("config.properties")
 ```
 
-### **Type-Safe Properties**
+### Type-Safe Properties
 ```kotlin
 object ServerConfig : Configuration {
     // Primitive types
@@ -143,7 +143,7 @@ enum class DatabaseType { POSTGRESQL, MYSQL, H2 }
 
 ## Продвинутые возможности
 
-### **Custom Property Types**
+### Custom Property Types
 ```kotlin
 // Кастомный тип для паролей
 object PasswordType : PropertyType<String> {
@@ -178,7 +178,7 @@ object UserConfig : Configuration {
 }
 ```
 
-### **Configuration Groups**
+### Configuration Groups
 ```kotlin
 // Группировка конфигураций
 object DatabaseConfig : Configuration {
@@ -213,7 +213,7 @@ val dbUrl = config[AppConfig.database.url]
 val apiTimeout = config[AppConfig.api.timeout]
 ```
 
-### **Configuration Validation**
+### Configuration Validation
 ```kotlin
 // Валидация конфигурации
 object ValidatedConfig : Configuration {
@@ -251,7 +251,7 @@ try {
 }
 ```
 
-### **Environment-Specific Configuration**
+### Environment-Specific Configuration
 ```kotlin
 // Конфигурация для разных сред
 object EnvironmentConfig : Configuration {
@@ -292,9 +292,9 @@ object ProdConfig : Configuration {
 }
 ```
 
-## Интеграция с **Kotlin**
+## Интеграция с Kotlin
 
-### **DSL for Configuration**
+### DSL for Configuration
 ```kotlin
 // DSL для создания конфигурации
 fun configuration(block: ConfigurationBuilder.() -> Unit): Configuration {
@@ -329,7 +329,7 @@ val config = configuration {
 }
 ```
 
-### **Inline Classes** для **Type Safety**
+### Inline Classes для Type Safety
 ```kotlin
 // Inline classes для type safety
 @JvmInline
@@ -380,7 +380,7 @@ object TypeSafeConfig : Configuration {
 }
 ```
 
-### **Sealed Classes** для **Configuration Variants**
+### Sealed Classes для Configuration Variants
 ```kotlin
 // Sealed classes для разных типов конфигурации
 sealed class AppConfiguration {
@@ -438,9 +438,9 @@ fun loadAppConfiguration(): AppConfiguration {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
-### **Configuration Properties**
+### Configuration Properties
 ```kotlin
 @Configuration
 @ConfigurationProperties("app")
@@ -504,7 +504,7 @@ class KonfigConfig {
 }
 ```
 
-### **Service Layer** с **Configuration**
+### Service Layer с Configuration
 ```kotlin
 @Service
 class DatabaseService(
@@ -555,7 +555,7 @@ class ApiService(
 }
 ```
 
-### **Controller** с **Configuration**
+### Controller с Configuration
 ```kotlin
 @RestController
 @RequestMapping("/api/config")
@@ -603,7 +603,7 @@ class ConfigController(
 
 ## Тестирование
 
-### **Unit Testing Configuration**
+### Unit Testing Configuration
 ```kotlin
 class ConfigurationTest {
 
@@ -675,7 +675,7 @@ class ConfigurationTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```kotlin
 @SpringBootTest
 @TestPropertySource(properties = [
@@ -722,7 +722,7 @@ class ConfigurationIntegrationTest {
 
 ## Лучшие практики
 
-### **Configuration Structure**
+### Configuration Structure
 ```kotlin
 // Рекомендуемая структура конфигурации
 object ApplicationConfig : Configuration {
@@ -773,7 +773,7 @@ object FeatureConfig : Configuration {
 }
 ```
 
-### **Environment Management**
+### Environment Management
 ```kotlin
 // Управление конфигурацией для разных сред
 object EnvironmentManager {
@@ -841,7 +841,7 @@ fun <T : Configuration> T.overrideWith(properties: Map<String, String>): T {
 }
 ```
 
-### **Security Considerations**
+### Security Considerations
 ```kotlin
 // Безопасная обработка конфиденциальных данных
 object SecureConfig : Configuration {
@@ -902,7 +902,7 @@ object ConfigEncryption {
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 object KonfigTroubleshooting {
 
@@ -983,7 +983,7 @@ object KonfigTroubleshooting {
 }
 ```
 
-### **Debugging Configuration Loading**
+### Debugging Configuration Loading
 ```kotlin
 // Расширенный debug для загрузки конфигурации
 class ConfigurationLoader {
@@ -1044,7 +1044,7 @@ class ConfigurationLoader {
 
 ## Руководство по миграции
 
-### **From Typesafe Config** to **Konfig**
+### From Typesafe Config to Konfig
 ```kotlin
 // Typesafe Config (HOCON)
 val config = ConfigFactory.load()
@@ -1062,7 +1062,7 @@ val databaseUrl = config[AppConfig.databaseUrl]
 val port = config[AppConfig.port]
 ```
 
-### **From Spring Configuration** to **Konfig**
+### From Spring Configuration to Konfig
 ```kotlin
 // Spring @ConfigurationProperties
 @Component
@@ -1083,7 +1083,7 @@ val config = AppConfig.fromSystemProperties()
 val databaseUrl = config[AppConfig.databaseUrl]
 ```
 
-### **From Environment Variables** to **Konfig**
+### From Environment Variables to Konfig
 ```kotlin
 // Manual environment variable handling
 val databaseUrl = System.getenv("DATABASE_URL") ?: "default"
@@ -1100,7 +1100,7 @@ val config = AppConfig.fromEnvironmentVariables()
 
 ## Экспериментальные возможности
 
-### **Konfig** 2.0+ **Features** (**Future**)
+### Konfig 2.0+ Features (Future)
 ```kotlin
 // Предполагаемые возможности Konfig 2.0+
 
@@ -1150,6 +1150,6 @@ object StructuredConfig : Configuration {
 ```
 ## См. также
 - [[spring-boot|Spring Boot]] — **Spring** конфигурация
-- [Библиотеки](../) — **HOCON** (**Human-Optimized Config Object Notation**)
+- [Библиотеки](../) — **HOCON** (Human-Optimized Config Object Notation)
 - [Platform](../../platform/) — Инфраструктура и переменные окружения
 

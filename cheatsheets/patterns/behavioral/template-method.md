@@ -66,7 +66,7 @@ updated: "2026-02-11"
 
 **Когда применять:** общая последовательность действий, детали различаются (обработка запросов, тесты, пайплайны).
 
-## Что такое **Template Method**?
+## Что такое Template Method?
 
 **Template Method** — это поведенческий паттерн проектирования, который определяет основу алгоритма и позволяет наследникам переопределять некоторые шаги алгоритма, не изменяя его структуру в целом.
 
@@ -153,7 +153,7 @@ public abstract class DataProcessor {
 }
 ```
 
-## Когда использовать **Template Method**?
+## Когда использовать Template Method?
 
 ### Подходящие сценарии
 
@@ -281,7 +281,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Template Method**
+### Классический Template Method
 
 ```java
 // Abstract Class
@@ -416,7 +416,7 @@ public class TemplateMethodDemo {
 }
 ```
 
-### **Template Method** с хуками
+### Template Method с хуками
 
 ```java
 // Abstract Class с множеством хуков
@@ -611,7 +611,7 @@ public class GameTemplateDemo {
 }
 ```
 
-### **Template Method** с **Spring**
+### Template Method с Spring
 
 ```java
 // Spring-based Template Method
@@ -760,7 +760,7 @@ public class DataExportService {
 
 ## Продвинутые реализации
 
-### 1. **Template Method** с **AOP**
+### 1. Template Method с AOP
 
 ```java
 // Template Method с аспектами для логирования и метрик
@@ -882,7 +882,7 @@ public class AopTemplateDemo {
 }
 ```
 
-### 2. **Hierarchical Template Methods**
+### 2. Hierarchical Template Methods
 
 ```java
 // Иерархические шаблонные методы
@@ -1043,7 +1043,7 @@ public class HierarchicalTemplateDemo {
 }
 ```
 
-### 3. **Template Method** с функциональными интерфейсами
+### 3. Template Method с функциональными интерфейсами
 
 ```java
 // Template Method с функциональными интерфейсами
@@ -1250,7 +1250,7 @@ public class FunctionalTemplateDemo {
 
 ## Примеры использования
 
-### 1. **HTTP Request Processing**
+### 1. HTTP Request Processing
 
 ```java
 // Template Method для обработки HTTP запросов
@@ -1436,7 +1436,7 @@ public class HttpProcessingDemo {
 }
 ```
 
-### 2. **Database Transaction Template**
+### 2. Database Transaction Template
 
 ```java
 // Template Method для транзакций БД
@@ -1653,7 +1653,7 @@ public class TransactionTemplateDemo {
 }
 ```
 
-### 3. **Test Execution Template**
+### 3. Test Execution Template
 
 ```java
 // Template Method для выполнения тестов
@@ -1962,7 +1962,7 @@ public class TestTemplateDemo {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -2029,7 +2029,7 @@ class ConfigurableProcessor<T, R> extends AbstractProcessor<T, R> {
 }
 ```
 
-### 2. **Testing Template Method**
+### 2. Testing Template Method
 
 ```java
 @ExtendWith(MockitoExtension.class)

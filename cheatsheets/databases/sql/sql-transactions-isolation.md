@@ -22,7 +22,7 @@ updated: "2026-04-10"
 - [PostgreSQL — Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 - [MySQL — InnoDB Transaction Isolation Levels](https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html)
 
-См. также: [sql-basics](sql-basics.md) — [postgres-transactions](../relational/postgresql/postgres-transactions.md).
+См. также: [[sql-basics]] — [[postgres-transactions]].
 
 ## Содержание
 

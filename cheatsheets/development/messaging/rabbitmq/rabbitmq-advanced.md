@@ -35,7 +35,7 @@ updated: "2026-02-11"
   - [**Headers Exchange**](#headers-exchange)
   - [**Custom Exchange**](#custom-exchange)
 - [**Message patterns**](#message-patterns)
-  - [**Request-Reply** (**RPC**)](#request-reply-rpc)
+  - [**Request-Reply** (RPC)](#request-reply-rpc)
   - [**Saga Pattern**](#saga-pattern)
 - [**Federation** и **Shovel**](#federation-и-shovel)
   - [**Federation setup**](#federation-setup)
@@ -103,7 +103,7 @@ updated: "2026-02-11"
 ## Кластеризация и высокая доступность
 
 ### Настройка кластера
-Ниже — **docker-compose** для кластера **RabbitMQ** (**YAML**).
+Ниже — **docker-compose** для кластера **RabbitMQ** (YAML).
 ```yaml
 # docker-compose.yml для кластера RabbitMQ
 version: '3.8'
@@ -186,9 +186,9 @@ docker exec rabbitmq1 rabbitmqctl cluster_status
 docker exec rabbitmq1 rabbitmqctl set_policy ha-all ".*" '{"ha-mode":"all","ha-sync-mode":"automatic"}'
 ```
 
-## Продвинутые **exchange** типы
+## Продвинутые exchange типы
 
-### **Headers Exchange**
+### Headers Exchange
 ```java
 @Configuration
 public class RabbitMQConfig {
@@ -262,7 +262,7 @@ public class MessageProducer {
 }
 ```
 
-### **Custom Exchange**
+### Custom Exchange
 ```java
 public class CustomExchange extends AbstractExchange {
 
@@ -297,9 +297,9 @@ public class CustomExchange extends AbstractExchange {
 }
 ```
 
-## **Message patterns**
+## Message patterns
 
-### **Request-Reply** (**RPC**)
+### Request-Reply (RPC)
 ```java
 @Service
 public class RpcClient {
@@ -377,7 +377,7 @@ public class RpcServer {
 }
 ```
 
-### **Saga Pattern**
+### Saga Pattern
 ```java
 @Service
 public class OrderSagaCoordinator {
@@ -454,9 +454,9 @@ public class OrderSagaCoordinator {
 }
 ```
 
-## **Federation** и **Shovel**
+## Federation и Shovel
 
-### **Federation setup**
+### Federation setup
 ```bash
 # Включить federation plugin
 rabbitmq-plugins enable rabbitmq_federation
@@ -478,7 +478,7 @@ curl -i -u admin:admin123 -H "content-type:application/json" \
   -d '{"pattern":"^federated","definition":{"federation-upstream-set":"all"}}'
 ```
 
-### **Shovel configuration**
+### Shovel configuration
 ```yaml
 # advanced.config для shovel
 [
@@ -507,9 +507,9 @@ curl -i -u admin:admin123 -H "content-type:application/json" \
         {reconnect_delay, 5}]}]}]}].
 ```
 
-## **Management** и **monitoring**
+## Management и monitoring
 
-### **Custom management plugin**
+### Custom management plugin
 ```java
 @Component
 public class RabbitMQMetricsCollector {
@@ -571,7 +571,7 @@ public class RabbitMQMetricsCollector {
 }
 ```
 
-### **Health checks**
+### Health checks
 ```java
 @Component
 public class RabbitMQHealthIndicator implements HealthIndicator {
@@ -609,9 +609,9 @@ public class RabbitMQHealthIndicator implements HealthIndicator {
 }
 ```
 
-## **Security**
+## Security
 
-### **Advanced authentication**
+### Advanced authentication
 ```yaml
 # advanced.config для LDAP authentication
 [
@@ -628,7 +628,7 @@ public class RabbitMQHealthIndicator implements HealthIndicator {
 ].
 ```
 
-### **TLS**/**SSL configuration**
+### TLS/SSL configuration
 ```properties
 # rabbitmq.conf для TLS
 listeners.ssl.default = 5671
@@ -650,7 +650,7 @@ auth_mechanisms.1 = EXTERNAL
 ssl_options.client_renegotiation = false
 ```
 
-### **Access control**
+### Access control
 ```bash
 # Создать vhost
 rabbitmqctl add_vhost /production
@@ -675,9 +675,9 @@ rabbitmqctl set_policy -p /production ha-orders "orders.*" '{"ha-mode":"all"}'
 rabbitmqctl set_policy -p /production ttl-logs "logs.*" '{"message-ttl":86400000}'
 ```
 
-## **Performance tuning**
+## Performance tuning
 
-### **Connection pooling**
+### Connection pooling
 ```java
 @Configuration
 public class RabbitMQConnectionConfig {
@@ -728,7 +728,7 @@ public class RabbitMQConnectionConfig {
 }
 ```
 
-### **Queue optimization**
+### Queue optimization
 ```java
 @Configuration
 public class OptimizedQueueConfig {
@@ -810,7 +810,7 @@ rabbitmqctl reset
 rabbitmqctl force_reset
 ```
 
-### **Log analysis**
+### Log analysis
 ```bash
 # Анализ логов RabbitMQ
 tail -f /var/log/rabbitmq/rabbit@localhost.log
@@ -828,7 +828,7 @@ grep "connection" /var/log/rabbitmq/rabbit@localhost.log | tail -20
 grep "queue" /var/log/rabbitmq/rabbit@localhost.log | tail -20
 ```
 
-### **Performance monitoring**
+### Performance monitoring
 ```java
 @Component
 public class RabbitMQPerformanceMonitor {
@@ -888,9 +888,9 @@ public class RabbitMQPerformanceMonitor {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### **Production configuration**
+### Production configuration
 ```properties
 # rabbitmq.conf для production
 # Network
@@ -930,7 +930,7 @@ cluster_partition_handling = pause_minority
 cluster_keepalive_interval = 10000
 ```
 
-### **Monitoring dashboard**
+### Monitoring dashboard
 ```yaml
 # Prometheus configuration for RabbitMQ
 global:

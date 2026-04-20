@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md"]
 ---
 
-# **Scala Logging**
+# Scala Logging
 
 Кратко: полное руководство по логированию в **Scala**: **SLF4J**, **Logback**, структурированное логирование, **MDC**.
 
@@ -35,7 +35,7 @@ related: ["scala/scala-basics.md"]
 - [**SLF4J**](#slf4j)
 - [**Logback**](#logback)
 - [Структурированное логирование](#структурированное-логирование)
-- [**MDC** (**Mapped Diagnostic Context**)](#mdc-mapped-diagnostic-context)
+- [**MDC** (Mapped Diagnostic Context)](#mdc-mapped-diagnostic-context)
   - [**Scala Logging** библиотека](#scala-logging-библиотека)
   - [Конфигурация **Logback**](#конфигурация-logback)
   - [Уровни логирования](#уровни-логирования)
@@ -77,7 +77,7 @@ related: ["scala/scala-basics.md"]
 - **Logback**: популярная реализация **SLF4J**
 - **Log4j2**: альтернативная реализация
 
-## **SLF4J**
+## SLF4J
 
 **SLF4J** предоставляет простой **API** для логирования:**
 
@@ -98,7 +98,7 @@ class MyService {
 
 **SLF4J** обеспечивает единый интерфейс для логирования, независимо от конкретной реализации.
 
-## **Logback**
+## Logback
 
 **Logback** — это реализация **SLF4J** с мощными возможностями:**
 
@@ -130,7 +130,7 @@ logger.info(
 
 Структурированное логирование упрощает анализ и обработку логов.
 
-## **MDC** (**Mapped `Diagnostic` Context**)
+## MDC (Mapped `Diagnostic` Context)
 
 **MDC** позволяет добавлять контекстную информацию к логам:**
 
@@ -149,7 +149,7 @@ MDC.clear()
 
 **MDC** позволяет отслеживать контекст выполнения через все уровни приложения.
 
-### **Scala Logging** библиотека
+### Scala Logging библиотека
 
 **Scala Logging** предоставляет удобный **wrapper** над **SLF4J**:**
 
@@ -179,9 +179,9 @@ class MyService2 {
 
 **Scala Logging** предоставляет более удобный синтаксис и автоматическое форматирование.
 
-### Конфигурация **Logback**
+### Конфигурация Logback
 
-**Logback** конфигурируется через `**logback.xml**`:**
+**Logback** конфигурируется через `logback.xml`:**
 
 ```xml
 <configuration>
@@ -258,7 +258,7 @@ logger.info(
 )
 ```
 
-### **MDC** — расширенное использование
+### MDC — расширенное использование
 
 **MDC** позволяет добавлять контекстную информацию, которая автоматически включается в логи:**
 
@@ -353,7 +353,7 @@ if (logger.isDebugEnabled) {
 logger.debug("Expensive computation: {}", () => expensiveOperation())
 ```
 
-### Кастомные **Appenders**
+### Кастомные Appenders
 
 **Можно создавать кастомные **appenders** для специальных целей:**
 
@@ -376,7 +376,7 @@ class CustomAppender extends AppenderBase[ILoggingEvent] {
 }
 ```
 
-### Логирование в **Akka**
+### Логирование в Akka
 
 **Akka** предоставляет свой **logger**:**
 
@@ -395,7 +395,7 @@ class MyActor extends Actor {
 }
 ```
 
-### Логирование в **Play Framework**
+### Логирование в Play Framework
 
 **Play Framework** интегрирован с логированием:**
 
@@ -468,7 +468,7 @@ logger.info(s"User logged in with password: $password")
 logger.info(s"User ${userId} logged in")
 ```
 
-### Использование **MDC** для контекста
+### Использование MDC для контекста
 
 ```scala
 // Хорошо - использование MDC для контекста запроса
@@ -559,9 +559,9 @@ class CustomAppender extends AppenderBase[ILoggingEvent] {
 
 ## Дополнительные техники логирования
 
-### Контекстное логирование с **MDC**
+### Контекстное логирование с MDC
 
-**MDC** (**Mapped `Diagnostic` Context**) позволяет добавлять контекстную информацию к логам.
+**MDC** (Mapped `Diagnostic` Context) позволяет добавлять контекстную информацию к логам.
 
 ```scala
 import org.slf4j.MDC
@@ -629,7 +629,7 @@ logUserAction(
 )
 ```
 
-### Практические примеры: Контекстное логирование с **MDC**
+### Практические примеры: Контекстное логирование с MDC
 
 ```scala
 import org.slf4j.MDC

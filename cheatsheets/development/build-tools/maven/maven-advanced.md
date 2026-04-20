@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Maven Advanced**
+# Maven Advanced
 
 **Apache Maven** — это мощная система управления проектами и сборки с открытым исходным кодом, которая использует декларативный подход для описания проекта и его зависимостей. Этот документ охватывает продвинутые концепции, **enterprise** паттерны, производительность и **best practices** для крупных проектов.
 
@@ -71,8 +71,8 @@ updated: "2026-02-11"
 
 ### Много-модульные проекты
 
-#### **Reactor** и **build order**
-Ниже — родительский **POM** многомодульного **Maven**-проекта (**reactor, build order**).
+#### Reactor и build order
+Ниже — родительский **POM** многомодульного **Maven**-проекта (reactor, build order).
 ```xml
 <!-- parent/pom.xml -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -190,7 +190,7 @@ updated: "2026-02-11"
 </project>
 ```
 
-#### **Custom reactor**
+#### Custom reactor
 ```xml
 <!-- Custom reactor configuration -->
 <project>
@@ -297,7 +297,7 @@ public class ValidateProjectMojo extends AbstractMojo {
 }
 ```
 
-### **Extension development**
+### Extension development
 ```java
 // Maven Extension
 public class EnterpriseExtension implements Extension {
@@ -433,7 +433,7 @@ public class EnterpriseExtension implements Extension {
 </build>
 ```
 
-### **Dependency locking**
+### Dependency locking
 ```xml
 <!-- Dependency lock file -->
 <project>
@@ -603,7 +603,7 @@ public class EnterpriseExtension implements Extension {
 </profiles>
 ```
 
-### **Settings.xml profiles**
+### Settings.xml profiles
 ```xml
 <!-- ~/.m2/settings.xml -->
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
@@ -801,7 +801,7 @@ public class EnterpriseExtension implements Extension {
 </build>
 ```
 
-### **Mutation testing**
+### Mutation testing
 ```xml
 <!-- PIT mutation testing -->
 <plugin>
@@ -843,7 +843,7 @@ public class EnterpriseExtension implements Extension {
 
 ## Публикация и доставка
 
-### **Multi-repository publishing**
+### Multi-repository publishing
 ```xml
 <!-- Distribution management -->
 <distributionManagement>
@@ -936,7 +936,7 @@ public class EnterpriseExtension implements Extension {
 </build>
 ```
 
-### **Release management**
+### Release management
 ```xml
 <!-- Maven release plugin configuration -->
 <plugin>
@@ -964,7 +964,7 @@ public class EnterpriseExtension implements Extension {
 
 ## Производительность и оптимизация
 
-### **Build optimization**
+### Build optimization
 ```xml
 <!-- Build performance optimization -->
 <properties>
@@ -1031,7 +1031,7 @@ public class EnterpriseExtension implements Extension {
 </build>
 ```
 
-### **Maven wrapper**
+### Maven wrapper
 ```xml
 <!-- Maven wrapper plugin -->
 <plugin>
@@ -1055,7 +1055,7 @@ public class EnterpriseExtension implements Extension {
 
 ## CI/CD интеграция
 
-### **Jenkins pipeline**
+### Jenkins pipeline
 ```groovy
 // Jenkinsfile
 pipeline {
@@ -1184,7 +1184,7 @@ pipeline {
 }
 ```
 
-### **GitHub Actions**
+### GitHub Actions
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -1300,7 +1300,7 @@ mvn clean install -Dmaven.wagon.http.pool=false
 mvn clean install -Dmaven.wagon.http.ssl.insecure=true
 ```
 
-### **Build analysis**
+### Build analysis
 ```xml
 <!-- Build analysis plugin -->
 <plugin>
@@ -1368,10 +1368,10 @@ mvn clean install -Dmaven.wagon.http.ssl.insecure=true
 ### CI/CD
 
 - **Maven Wrapper:** храните `mvnw` и `mvnw.cmd` в репозитории для единой версии Maven.
-- **Артефакты:** публикуйте `sources` и `javadoc` для библиотек; подписывайте релизы (**GPG**).
+- **Артефакты:** публикуйте `sources` и `javadoc` для библиотек; подписывайте релизы (GPG).
 - **Release:** используйте `maven-release-plugin` или **GitHub Actions** с семантическим версионированием.
 
-### **Enterprise POM structure**
+### Enterprise POM structure
 ```text
 enterprise-project/
 ├── pom.xml (root reactor)
@@ -1417,7 +1417,7 @@ enterprise-project/
 └── README.md
 ```
 
-### **Quality gates**
+### Quality gates
 ```xml
 <!-- Quality gate plugin -->
 <plugin>

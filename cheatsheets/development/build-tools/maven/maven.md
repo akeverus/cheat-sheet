@@ -12,13 +12,13 @@ updated: "2026-02-11"
 ---
 # Maven (основы)
 
-**Apache Maven** — система управления проектами и сборки с открытым исходным кодом; использует декларативную модель (**POM** — **Project Object Model**) для зависимостей и плагинов. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [maven-advanced.md](maven-advanced.md).
+**Apache Maven** — система управления проектами и сборки с открытым исходным кодом; использует декларативную модель (**POM** — **Project Object Model**) для зависимостей и плагинов. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [[maven-advanced]].
 
 ## Полезные ссылки
 
 - [Официальная документация Maven](https://maven.apache.org/guides/)
 - [Maven Getting Started](https://maven.apache.org/guides/getting-started/)
-- **См. также:** [maven-advanced.md](maven-advanced.md) — продвинутые концепции, многомодульные проекты, **CI/CD**, **Dependency locking**; [README.md](../) — обзор раздела Build Tools.
+- **См. также:** [[maven-advanced]] — продвинутые концепции, многомодульные проекты, **CI/CD**, **Dependency locking**; [README.md](../) — обзор раздела Build Tools.
 
 ## Содержание
 
@@ -31,7 +31,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Maven** стандартизирует структуру каталогов (**convention over configuration**) и управляет зависимостями через центральный репозиторий (**Maven Central**). Ключевые понятия: **POM** (`pom.xml`), **артефакт** (`groupId`, `artifactId`, `version`), **фазы жизненного цикла** (`compile`, `test`, `package`, `install`, `deploy`), **плагины** и **профили**.
+**Maven** стандартизирует структуру каталогов (convention over configuration) и управляет зависимостями через центральный репозиторий (Maven Central). Ключевые понятия: **POM** (`pom.xml`), **артефакт** (`groupId`, `artifactId`, `version`), **фазы жизненного цикла** (`compile`, `test`, `package`, `install`, `deploy`), **плагины** и **профили**.
 
 ## Установка
 

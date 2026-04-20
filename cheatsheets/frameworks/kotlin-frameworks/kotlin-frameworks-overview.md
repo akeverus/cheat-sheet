@@ -22,9 +22,9 @@ updated: "2026-02-11"
 - [Exposed](https://github.com/JetBrains/Exposed)
 
 ### См. также
-- [Frameworks README](../README.md) — раздел фреймворков
-- [Java Frameworks](../java-frameworks/README.md) — **Spring**, **Quarkus**
-- [Kotlin (languages)](../../languages/kotlin/README.md) — язык **Kotlin**
+- [[README|Frameworks README]] — раздел фреймворков
+- [[README|Java Frameworks]] — **Spring**, **Quarkus**
+- [[README|Kotlin (languages)]] — язык **Kotlin**
 
 ## Содержание
 
@@ -51,7 +51,7 @@ updated: "2026-02-11"
 
 ## Ktor
 
-**Ktor** — асинхронный фреймворк для **Kotlin**: плагины (**middleware**), маршрутизация, **Content Negotiation**, **Authentication**, клиент и сервер.
+**Ktor** — асинхронный фреймворк для **Kotlin**: плагины (middleware), маршрутизация, **Content Negotiation**, **Authentication**, клиент и сервер.
 
 **Зависимости (Gradle):**
 ```kotlin
@@ -84,7 +84,7 @@ fun main() {
 
 ## Spring с Kotlin
 
-**Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (**spring-boot-starter-webflux**), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (**Security**, **Data**, **Cloud**) и пишут код на **Kotlin**. См. [Spring](../java-frameworks/spring/README.md) и [Kotlin Spring](../../languages/kotlin/kotlin-spring.md).
+**Spring Boot** полностью поддерживает **Kotlin**: **Kotlin DSL** для конфигурации, корутины (spring-boot-starter-webflux), **null-safety**. Многие проекты выбирают **Spring** для готовой экосистемы (**Security**, **Data**, **Cloud**) и пишут код на **Kotlin**. См. [[README|Spring]] и [[kotlin-spring|Kotlin Spring]].
 
 
 ## Exposed
@@ -163,6 +163,6 @@ TransactionManager.default.exec { Users.insert { it[name] = "Alice" } }
 
 ## Заключение
 
-**Kotlin**-экосистема предлагает **Ktor** для легковесных асинхронных приложений и **Spring** для enterprise. **Exposed**, **kotlinx** и **Koin** дополняют стек. См. [Frameworks README](../README.md) и [Kotlin (languages)](../../languages/kotlin/README.md).
+**Kotlin**-экосистема предлагает **Ktor** для легковесных асинхронных приложений и **Spring** для enterprise. **Exposed**, **kotlinx** и **Koin** дополняют стек. См. [[README|Frameworks README]] и [[README|Kotlin (languages)]].
 
 

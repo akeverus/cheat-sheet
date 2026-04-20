@@ -17,11 +17,11 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Python Frameworks — обзор](python-frameworks-overview.md) — Django, FastAPI, Flask, Starlette, ORM, сравнение
+- [[python-frameworks-overview|Python Frameworks — обзор]] — Django, FastAPI, Flask, Starlette, ORM, сравнение
 
 ### Соседние разделы
-- [Frameworks](../README.md)
-- [Java Frameworks](../java-frameworks/README.md) — для сравнения со Spring/Quarkus
+- [[README|Frameworks]]
+- [[README|Java Frameworks]] — для сравнения со Spring/Quarkus
 
 ### Внешние ресурсы
 - [Django Documentation](https://docs.djangoproject.com/)
@@ -71,6 +71,6 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Общая разработка backend — [development/web-backend](../../development/web-backend/README.md)
-- Базы данных — [databases](../../databases/README.md)
-- Docker-деплой — [platform/containers/docker](../../platform/containers/docker/README.md)
+- Общая разработка backend — [[README|development/web-backend]]
+- Базы данных — [[README|databases]]
+- Docker-деплой — [[README|platform/containers/docker]]

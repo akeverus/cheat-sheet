@@ -15,12 +15,12 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Gradle Advanced](gradle/gradle-advanced.md)
-[Maven Advanced](maven/maven-advanced.md)
+[[gradle-advanced|Gradle Advanced]]
+[[maven-advanced|Maven Advanced]]
 
 ## Содержание
 
-- [Maven](maven/maven.md)
-- [Maven Advanced](maven/maven-advanced.md)
-- [Gradle](gradle/gradle.md)
-- [Gradle Advanced](gradle/gradle-advanced.md)
+- [[maven]]
+- [[maven-advanced|Maven Advanced]]
+- [[gradle]]
+- [[gradle-advanced|Gradle Advanced]]

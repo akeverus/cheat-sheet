@@ -88,9 +88,9 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Введение
 
-**Micronaut** использует **compile-time dependency injection** (**DI**), что является ключевым отличием от других **JVM** фреймворков. Это означает, что все зависимости разрешаются во время компиляции, а не во время выполнения, что обеспечивает высокую производительность, минимальное потребление памяти и полную поддержку **native images**.
+**Micronaut** использует **compile-time dependency injection** (DI), что является ключевым отличием от других **JVM** фреймворков. Это означает, что все зависимости разрешаются во время компиляции, а не во время выполнения, что обеспечивает высокую производительность, минимальное потребление памяти и полную поддержку **native images**.
 
-### Преимущества **Compile-time** `DI`
+### Преимущества Compile-time `DI`
 
 1. **Производительность**: Нет накладных расходов на **reflection** во время выполнения
 2. **Память**: Минимальное потребление памяти, так как не нужны **runtime proxies**
@@ -98,7 +98,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 4. **Валидация**: Ошибки зависимостей обнаруживаются на этапе компиляции
 5. **Type safety**: Полная типобезопасность на уровне компилятора
 
-### Архитектура `DI` в **Micronaut**
+### Архитектура `DI` в Micronaut
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -121,7 +121,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Dependency Injection
 
-### **Constructor Injection** (**Рекомендуется**)
+### Constructor Injection (Рекомендуется)
 
 **Constructor injection** является предпочтительным способом внедрения зависимостей в **Micronaut**, так как обеспечивает неизменяемость и упрощает тестирование.
 
@@ -148,12 +148,12 @@ public class UserService {
 ```
 
 **Преимущества constructor injection:**
-- Неизменяемость: поля могут быть `**final**`
+- Неизменяемость: поля могут быть `final`
 - Явные зависимости: все зависимости видны в конструкторе
 - Легкое тестирование: просто создать объект с **mock**-зависимостями
 - Валидация на этапе компиляции: если зависимость отсутствует, код не скомпилируется
 
-### **Field Injection**
+### Field Injection
 
 **Field injection** поддерживается, но не рекомендуется для **production** кода. Используется в основном для тестирования или **legacy** кода.
 
@@ -179,12 +179,12 @@ public class UserService {
 ```
 
 **Недостатки field injection:**
-- Поля не могут быть `**final**`
+- Поля не могут быть `final`
 - Скрытые зависимости: зависимости не видны в конструкторе
 - Сложнее тестирование: нужны специальные инструменты для **mock**-инъекции
 - Меньше типобезопасности
 
-### **Method Injection**
+### Method Injection
 
 **Method injection** используется редко, в основном для **optional dependencies** или **lifecycle callbacks**.
 
@@ -209,7 +209,7 @@ public class UserService {
 }
 ```
 
-### **Provider Injection**
+### Provider Injection
 
 Для получения зависимостей лениво или для работы с **generic types** используется `**Provider**<T>`.
 
@@ -233,9 +233,9 @@ public class OrderService {
 }
 ```
 
-### **Optional Dependencies**
+### Optional Dependencies
 
-Для опциональных зависимостей используется `@**Nullable**` или `**Optional**<T>`.
+Для опциональных зависимостей используется `@**Nullable` или `Optional**<T>`.
 
 ```java
 import jakarta.inject.Singleton;
@@ -263,7 +263,7 @@ public class NotificationService {
 }
 ```
 
-**Или с использованием `**Optional**`:**
+**Или с использованием `Optional`:**
 
 ```java
 import jakarta.inject.Singleton;
@@ -292,7 +292,7 @@ public class NotificationService {
 
 **Bean scopes** определяют жизненный цикл и количество экземпляров **bean**'ов в приложении.
 
-### **Singleton** (**По умолчанию**)
+### Singleton (По умолчанию)
 
 **Singleton scope** создает один экземпляр **bean**'а на все приложение. Это самый распространенный **scope**.
 
@@ -317,10 +317,10 @@ public class UserService {
 **Характеристики `Singleton`:**
 - Создается один раз при старте приложения
 - Живет в течение всего жизненного цикла приложения
-- **Thread-safe** по умолчанию (**но нужно быть осторожным с состоянием**)
+- **Thread-safe** по умолчанию (но нужно быть осторожным с состоянием)
 - Используется для **stateless** сервисов
 
-### **Prototype**
+### Prototype
 
 **Prototype scope** создает новый экземпляр **bean**'а каждый раз, когда он запрашивается.
 
@@ -354,7 +354,7 @@ public class RequestProcessor {
 - Больше накладных расходов на создание
 - Не подходит для тяжелых объектов
 
-### **Request Scope**
+### Request Scope
 
 **Request scope** создает один экземпляр **bean**'а на **HTTP** запрос.
 
@@ -387,9 +387,9 @@ public class RequestContext {
 - Используется для хранения контекста запроса
 - Доступен только в **HTTP** контексте
 
-### **Context Scope**
+### Context Scope
 
-**Context scope** создает один экземпляр **bean**'а в определенном контексте (**например, в контексте транзакции**).
+**Context scope** создает один экземпляр **bean**'а в определенном контексте (например, в контексте транзакции).
 
 ```java
 import io.micronaut.context.annotation.Context;
@@ -408,7 +408,7 @@ public class TransactionContext {
 }
 ```
 
-### **Custom Scopes**
+### Custom Scopes
 
 Можно создавать собственные **scopes** для специфических нужд приложения.
 
@@ -447,7 +447,7 @@ public class UserSession {
 
 **Micronaut** предоставляет несколько способов управления жизненным циклом **bean**'ов.
 
-### @**PostConstruct** и @**PreDestroy**
+### @PostConstruct и @PreDestroy
 
 Стандартные **JSR-250** аннотации для **lifecycle callbacks**.
 
@@ -488,7 +488,7 @@ public class DatabaseConnection {
 }
 ```
 
-### **Lifecycle Interfaces**
+### Lifecycle Interfaces
 
 **Micronaut** предоставляет интерфейсы для более детального контроля жизненного цикла.
 
@@ -525,7 +525,7 @@ public class CacheManager implements LifeCycle<CacheManager> {
 }
 ```
 
-### @**EventListener** для **Application Events**
+### @EventListener для Application Events
 
 Можно слушать события жизненного цикла приложения.
 
@@ -567,7 +567,7 @@ public class ApplicationLifecycleListener
 
 **Micronaut** предоставляет мощную систему конфигурации с поддержкой различных источников.
 
-### @**ConfigurationProperties**
+### @ConfigurationProperties
 
 Для типобезопасной конфигурации используется `@**ConfigurationProperties**`.
 
@@ -645,7 +645,7 @@ public class DatabaseConfiguration {
 }
 ```
 
-**Соответствующий `**application.yml**`:**
+**Соответствующий `application.yml`:**
 
 ```yaml
 app:
@@ -658,7 +658,7 @@ app:
     max-pool-size: 20
 ```
 
-### @**EachProperty** для **Collections**
+### @EachProperty для Collections
 
 Для конфигурации коллекций используется `@**EachProperty**`.
 
@@ -707,7 +707,7 @@ public class DataSourceConfiguration {
 }
 ```
 
-**Соответствующий `**application.yml**`:**
+**Соответствующий `application.yml`:**
 
 ```yaml
 app:
@@ -722,7 +722,7 @@ app:
       password: pass2
 ```
 
-### **Property Sources**
+### Property Sources
 
 **Micronaut** поддерживает множественные источники конфигурации с приоритетами.
 
@@ -740,7 +740,7 @@ public class Application {
 }
 ```
 
-### **Environment Variables**
+### Environment Variables
 
 Переменные окружения автоматически доступны через `${**ENV_VAR**}` синтаксис.
 
@@ -751,7 +751,7 @@ database:
   password: ${DATABASE_PASSWORD:secret}
 ```
 
-### @**Value Annotation**
+### @Value Annotation
 
 Для инъекции отдельных значений используется `@**Value**`.
 
@@ -776,7 +776,7 @@ public class ApiService {
 }
 ```
 
-### **Configuration Validation**
+### Configuration Validation
 
 Конфигурация может быть валидирована с помощью **Bean Validation**.
 
@@ -808,7 +808,7 @@ public class MailConfiguration {
 
 **Bean factories** позволяют создавать **bean**'ы программно.
 
-### @**Factory Methods**
+### @Factory Methods
 
 ```java
 import io.micronaut.context.annotation.Bean;
@@ -837,7 +837,7 @@ public class BeanFactory {
 }
 ```
 
-### **Conditional Beans**
+### Conditional Beans
 
 **Bean**'ы могут быть созданы условно на основе конфигурации или окружения.
 
@@ -898,7 +898,7 @@ public class BeanIntrospectionExample {
 
 ## Лучшие практики
 
-### 1. Используйте **Constructor Injection**
+### 1. Используйте Constructor Injection
 
 ```java
 // ✅ Хорошо
@@ -919,7 +919,7 @@ public class UserService {
 }
 ```
 
-### 2. Используйте **Singleton** для **Stateless Services**
+### 2. Используйте Singleton для Stateless Services
 
 ```java
 // ✅ Хорошо - stateless service
@@ -952,7 +952,7 @@ public class AppConfiguration {
 }
 ```
 
-### 4. Используйте @**Requires** для Условных **Bean**'ов
+### 4. Используйте @Requires для Условных Bean'ов
 
 ```java
 @Singleton
@@ -973,7 +973,7 @@ public class DatabaseConfiguration {
 
 ## Advanced Topics
 
-### **Bean Qualifiers**
+### Bean Qualifiers
 
 **Qualifiers** позволяют различать несколько **bean**'ов одного типа.
 
@@ -1007,7 +1007,7 @@ public class DataService {
 }
 ```
 
-### **Custom Qualifiers**
+### Custom Qualifiers
 
 ```java
 import jakarta.inject.Qualifier;
@@ -1027,7 +1027,7 @@ public class PrimaryDatabase implements DatabaseConnection {
 }
 ```
 
-### **Bean Replacement**
+### Bean Replacement
 
 Можно заменять **bean**'ы для тестирования или разных окружений.
 
@@ -1046,7 +1046,7 @@ public class MockEmailService implements EmailService {
 }
 ```
 
-### **Conditional Bean Creation**
+### Conditional Bean Creation
 
 ```java
 import io.micronaut.context.annotation.Requires;
@@ -1071,7 +1071,7 @@ public class FeatureService {
 }
 ```
 
-### **Circular Dependencies**
+### Circular Dependencies
 
 **Micronaut** предупреждает о циклических зависимостях на этапе компиляции.
 
@@ -1103,7 +1103,7 @@ public class ServiceA {
 }
 ```
 
-### **Bean Execution Order**
+### Bean Execution Order
 
 ```java
 import io.micronaut.core.order.Ordered;
@@ -1126,7 +1126,7 @@ public class SecondService implements Ordered {
 }
 ```
 
-### **Environment-specific Configuration**
+### Environment-specific Configuration
 
 ```yaml
 # application.yml
@@ -1143,7 +1143,7 @@ app:
     password: ${DATABASE_PASSWORD}
 ```
 
-### **Configuration Validation**
+### Configuration Validation
 
 ```java
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -1172,14 +1172,14 @@ public class MailConfiguration {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 
 1. **Bean not found**: Проверьте, что класс имеет аннотацию `@**Singleton**` или другой **scope**
 2. **Circular dependency**: Используйте `**Provider**<T>` для разрыва цикла
 3. **Configuration not loaded**: Проверьте пути к конфигурационным файлам и **property sources**
 4. **Bean not injected**: Убедитесь, что зависимость доступна в контексте
 
-### **Debugging**
+### Debugging
 
 ```java
 import io.micronaut.context.ApplicationContext;
@@ -1210,7 +1210,7 @@ public class DebugService {
 
 ## Event Publishing
 
-### **Application Events**
+### Application Events
 
 ```java
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -1256,7 +1256,7 @@ public class UserEventListener {
 
 ## Bean Validation
 
-### **Validation Annotations**
+### Validation Annotations
 
 ```java
 import jakarta.validation.constraints.*;
@@ -1281,7 +1281,7 @@ public class UserService {
 }
 ```
 
-### **Custom Validators**
+### Custom Validators
 
 ```java
 import jakarta.validation.Constraint;
@@ -1306,7 +1306,7 @@ public @interface ValidEmail {
 
 ## AOP (Aspect-Oriented Programming)
 
-### **Method Interceptors**
+### Method Interceptors
 
 ```java
 import io.micronaut.aop.MethodInterceptor;
@@ -1332,7 +1332,7 @@ public class LoggingInterceptor implements MethodInterceptor<Object, Object> {
 }
 ```
 
-### **Custom Annotations**
+### Custom Annotations
 
 ```java
 import io.micronaut.aop.Around;
@@ -1347,7 +1347,7 @@ public @interface Logged {
 
 ## Bean Factories
 
-### **Factory Beans**
+### Factory Beans
 
 ```java
 import io.micronaut.context.annotation.Bean;
@@ -1371,7 +1371,7 @@ public class BeanFactory {
 
 ## Conditional Beans
 
-### **Conditional Bean Creation**
+### Conditional Bean Creation
 
 ```java
 import io.micronaut.context.annotation.Requires;

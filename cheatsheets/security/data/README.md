@@ -19,15 +19,15 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [data-security.md](data-security.md) — обзор шифрования и хеширования
-- [secrets-management.md](secrets-management.md) — Vault, KMS, Kubernetes Secrets, ротация
+- [[data-security]] — обзор шифрования и хеширования
+- [[secrets-management]] — Vault, KMS, Kubernetes Secrets, ротация
 
 ### Соседние разделы
-- [security/](../README.md) — корень раздела
-- [security/application/](../application/README.md) — токены и аутентификация
-- [security/infrastructure/](../infrastructure/README.md) — mTLS, сертификаты, PKI
-- [security/testing/](../testing/README.md) — проверка корректности криптопримитивов
-- [basics/computer-science/](../../basics/computer-science/README.md) — теория шифров и хешей
+- [[README|security/]] — корень раздела
+- [[README|security/application/]] — токены и аутентификация
+- [[README|security/infrastructure/]] — mTLS, сертификаты, PKI
+- [[README|security/testing/]] — проверка корректности криптопримитивов
+- [[README|basics/computer-science/]] — теория шифров и хешей
 
 ### Внешние ресурсы
 - [NIST SP 800-175B](https://csrc.nist.gov/publications/detail/sp/800-175b/rev-1/final) — руководство по криптографии
@@ -48,15 +48,15 @@ updated: "2026-04-17"
 
 | Тема | Файл |
 |------|------|
-| AES, режимы (GCM, CBC), IV/nonce | [data-security.md](data-security.md) |
-| RSA, ECDSA, кривые | [data-security.md](data-security.md) |
-| TLS 1.3, cipher suites | [data-security.md](data-security.md) |
-| Хеши: SHA-256, HMAC | [data-security.md](data-security.md) |
-| Пароли: bcrypt, Argon2, scrypt | [data-security.md](data-security.md) |
-| Vault, KMS (AWS/GCP/Azure) | [secrets-management.md](secrets-management.md) |
-| Kubernetes Secrets, Sealed Secrets | [secrets-management.md](secrets-management.md) |
-| Ротация ключей и секретов | [secrets-management.md](secrets-management.md) |
-| PII, GDPR-маскирование | [data-security.md](data-security.md) |
+| AES, режимы (GCM, CBC), IV/nonce | [[data-security]] |
+| RSA, ECDSA, кривые | [[data-security]] |
+| TLS 1.3, cipher suites | [[data-security]] |
+| Хеши: SHA-256, HMAC | [[data-security]] |
+| Пароли: bcrypt, Argon2, scrypt | [[data-security]] |
+| Vault, KMS (AWS/GCP/Azure) | [[secrets-management]] |
+| Kubernetes Secrets, Sealed Secrets | [[secrets-management]] |
+| Ротация ключей и секретов | [[secrets-management]] |
+| PII, GDPR-маскирование | [[data-security]] |
 
 ## Что и когда шифровать
 
@@ -77,7 +77,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Secrets в CI/CD и Kubernetes — [../infrastructure/README.md](../infrastructure/README.md)
-- Тестирование криптостойкости — [../testing/README.md](../testing/README.md)
-- Процессы и compliance — [../security-practices.md](../security-practices.md)
-- Теория шифров и протоколов — [../../basics/computer-science/README.md](../../basics/computer-science/README.md)
+- Secrets в CI/CD и Kubernetes — [[README]]
+- Тестирование криптостойкости — [[README]]
+- Процессы и compliance — [[security-practices]]
+- Теория шифров и протоколов — [[README]]

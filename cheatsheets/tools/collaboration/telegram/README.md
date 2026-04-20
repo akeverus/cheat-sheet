@@ -19,12 +19,12 @@ Telegram — мессенджер с двумя API: **Bot API** (HTTPS-обёр
 ## Полезные ссылки
 
 ### Основной документ
-- [Основы Telegram Bot API](telegram-basics.md) — полное руководство по ботам
+- [[telegram-basics|Основы Telegram Bot API]] — полное руководство по ботам
 
 ### Соседние разделы
-- [Slack](../slack/README.md)
-- [Mattermost](../mattermost/README.md)
-- [Alerting](../../../monitoring/alerting/README.md)
+- [[README|Slack]]
+- [[README|Mattermost]]
+- [[README|Alerting]]
 
 ### Внешние ресурсы
 - [Bot API](https://core.telegram.org/bots/api)
@@ -158,12 +158,12 @@ HTML-страница, которая открывается внутри Telegr
 
 ## Маршруты чтения
 
-- **Новичок:** [telegram-basics.md](telegram-basics.md) → @BotFather → первый sendMessage.
+- **Новичок:** [[telegram-basics]] → @BotFather → первый sendMessage.
 - **DevOps:** alerting-бот + callback buttons + ChatOps.
 - **Продуктовик:** Mini Apps, Payment API, inline-режим.
 
 ## Куда идти дальше
 
-- [Alerting](../../../monitoring/alerting/README.md) — routing в Telegram
-- [Slack](../slack/README.md) — сравнение для выбора платформы
-- [API / REST](../../../development/api/rest/README.md) — принципы HTTP API
+- [[README|Alerting]] — routing в Telegram
+- [[README|Slack]] — сравнение для выбора платформы
+- [[README|API / REST]] — принципы HTTP API

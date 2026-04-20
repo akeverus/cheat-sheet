@@ -135,7 +135,7 @@ executors.invokeAll(tasks);
 [thread-1] At 00:37:49.808
 ```
 
-**Here** we **see** a **clear pattern** — **clients wait for exponentially growing intervals**, **but they all call the remote service** at **exactly the same time** on **each retry** (**collisions**).
+**Here** we **see** a **clear pattern** — **clients wait for exponentially growing intervals**, **but they all call the remote service** at **exactly the same time** on **each retry** (collisions).
 
 We've **only solved part** of **the problem** — we're no **longer hammering the remote service with retries**, **but instead** of **distributing the load over time**, we **have alternating periods** of **work with large idle times**. **This behavior** is **akin** to **the thundering herd problem**.
 
@@ -179,7 +179,7 @@ IntervalFunction intervalFn = IntervalFunction.ofExponentialRandomBackoff(
 );
 ```
 
-**Where** `**RANDOMIZATION_FACTOR**` is a **value between** 0 **and** 1 **that determines the amount** of **jitter**.
+**Where** `RANDOMIZATION_FACTOR` is a **value between** 0 **and** 1 **that determines the amount** of **jitter**.
 
 ## Полный пример
 

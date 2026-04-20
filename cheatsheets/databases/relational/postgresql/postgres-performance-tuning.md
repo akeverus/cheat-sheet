@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 ---
 
-# **PostgreSQL**: Тюнинг производительности
+# PostgreSQL: Тюнинг производительности
 
 ## Полезные ссылки
 
@@ -32,8 +32,8 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 - [Введение в оптимизацию **PostgreSQL**](#введение-в-оптимизацию-postgresql)
   - [Основные области оптимизации](#основные-области-оптимизации)
 - [Настройка **postgresql.conf**](#настройка-postgresql-conf)
-  - [Память (**Memory Settings**)](#память-memory-settings)
-  - [**WAL** (**Write-`Ahead` Log**) **Settings**](#wal-write-ahead-log-settings)
+  - [Память (Memory Settings)](#память-memory-settings)
+  - [**WAL** (Write-`Ahead` Log) **Settings**](#wal-write-ahead-log-settings)
   - [**Autovacuum** настройки](#autovacuum-настройки)
   - [**Connection Settings**](#connection-settings)
 - [**Connection Pooling**](#connection-pooling)
@@ -50,7 +50,7 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
   - [Составные индексы](#составные-индексы)
   - [Частичные индексы](#частичные-индексы)
   - [Индексы на выражениях](#индексы-на-выражениях)
-  - [**Covering Indexes** (**PostgreSQL 11+**)](#covering-indexes-postgresql-11)
+  - [**Covering Indexes** (PostgreSQL 11+)](#covering-indexes-postgresql-11)
 - [Мониторинг производительности](#мониторинг-производительности)
   - [**pg_stat_statements**](#pgstatstatements)
   - [**pg_stat_activity**](#pgstatactivity)
@@ -108,7 +108,7 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
   - [**Regular Maintenance**](#regular-maintenance)
   - [**Optimization Process**](#optimization-process)
 
-## Введение в оптимизацию **PostgreSQL**
+## Введение в оптимизацию PostgreSQL
 
 Оптимизация производительности **PostgreSQL** — это комплексный процесс, включающий настройку параметров сервера, оптимизацию запросов, правильное использование индексов и мониторинг производительности.
 
@@ -121,13 +121,13 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 5. **Мониторинг**: Отслеживание производительности
 
 
-## Настройка **postgresql.conf**
+## Настройка postgresql.conf
 
-### Память (**Memory Settings**)
+### Память (Memory Settings)
 
-#### **shared_buffers**
+#### shared_buffers
 
-`**shared_buffers**` определяет объем памяти, используемый **PostgreSQL** для кэширования данных.
+`shared_buffers` определяет объем памяти, используемый **PostgreSQL** для кэширования данных.
 
 **Примеры настройки **shared_buffers** для разных объёмов **RAM**:**
 
@@ -148,9 +148,9 @@ shared_buffers = 2GB
 - Для сервера с другими приложениями: 15-20% от **RAM**
 - Не устанавливать более 40% от **RAM**
 
-#### **effective_cache_size**
+#### effective_cache_size
 
-`**effective_cache_size**` - оценка памяти, доступной для кэширования операционной системой.
+`effective_cache_size` - оценка памяти, доступной для кэширования операционной системой.
 
 ```conf
 # Рекомендуемое значение: 50-75% от RAM
@@ -160,9 +160,9 @@ effective_cache_size = 12GB
 effective_cache_size = 12GB
 ```
 
-#### **work_mem**
+#### work_mem
 
-`**work_mem**` определяет память для операций сортировки и хеш-таблиц.
+`work_mem` определяет память для операций сортировки и хеш-таблиц.
 
 ```conf
 # Рекомендуемое значение: (RAM - shared_buffers) / (max_connections * 2)
@@ -170,20 +170,20 @@ effective_cache_size = 12GB
 work_mem = 64MB
 ```
 
-**Важно:** `**work_mem**` умножается на количество операций в запросе, поэтому не устанавливайте слишком большое значение.
+**Важно:** `work_mem` умножается на количество операций в запросе, поэтому не устанавливайте слишком большое значение.
 
-#### **maintenance_work_mem**
+#### maintenance_work_mem
 
-`**maintenance_work_mem**` используется для операций обслуживания (**VACUUM, `CREATE` INDEX**).
+`maintenance_work_mem` используется для операций обслуживания (VACUUM, `CREATE` INDEX).
 
 ```conf
 # Рекомендуемое значение: 1-2GB
 maintenance_work_mem = 1GB
 ```
 
-### **WAL** (**Write-`Ahead` Log**) **Settings**
+### WAL (Write-`Ahead` Log) Settings
 
-#### **wal_buffers**
+#### wal_buffers
 
 ```conf
 # Автоматическое определение (рекомендуется)
@@ -193,7 +193,7 @@ wal_buffers = -1
 wal_buffers = 16MB
 ```
 
-#### **checkpoint** настройки
+#### checkpoint настройки
 
 ```conf
 # Интервал между checkpoint
@@ -209,7 +209,7 @@ min_wal_size = 1GB
 wal_compression = on
 ```
 
-### **Autovacuum** настройки
+### Autovacuum настройки
 
 ```conf
 # Включить autovacuum
@@ -231,7 +231,7 @@ autovacuum_max_workers = 3
 autovacuum_work_mem = 256MB
 ```
 
-### **Connection Settings**
+### Connection Settings
 
 ```conf
 # Максимальное количество подключений
@@ -242,16 +242,16 @@ max_connections = 100
 max_connections = 50
 ```
 
-**Рекомендация:** Используйте **connection pooling** (**PgBouncer**) вместо увеличения `**max_connections**`.
+**Рекомендация:** Используйте **connection pooling** (PgBouncer) вместо увеличения `max_connections`.
 
 
-## **Connection Pooling**
+## Connection Pooling
 
-### **PgBouncer**
+### PgBouncer
 
 **PgBouncer** — легковесный **connection pooler** для **PostgreSQL**.
 
-#### Установка **PgBouncer**
+#### Установка PgBouncer
 
 ```bash
 # Ubuntu/Debian
@@ -261,7 +261,7 @@ sudo apt-get install pgbouncer
 sudo yum install pgbouncer
 ```
 
-#### Конфигурация **PgBouncer**
+#### Конфигурация PgBouncer
 
 ```ini
 # /etc/pgbouncer/pgbouncer.ini
@@ -284,20 +284,20 @@ min_pool_size = 5
 reserve_pool_size = 5
 ```
 
-#### Режимы **pooling**
+#### Режимы pooling
 
 1. **Session**: Подключение на всю сессию клиента
-2. **Transaction**: Подключение на транзакцию (**рекомендуется**)
+2. **Transaction**: Подключение на транзакцию (рекомендуется)
 3. **Statement**: Подключение на каждый **statement**
 
-### **pgpool-II**
+### pgpool-II
 
 **pgpool-II** — более функциональный **connection pooler** с дополнительными возможностями.
 
 
 ## Оптимизация запросов
 
-### **EXPLAIN** и **EXPLAIN ANALYZE**
+### EXPLAIN и EXPLAIN ANALYZE
 
 #### Базовое использование
 
@@ -328,14 +328,14 @@ LIMIT 10;
 ```
 
 **Ключевые метрики:**
-- **cost**: Стоимость операции (**ниже = лучше**)
+- **cost**: Стоимость операции (ниже = лучше)
 - **actual time**: Фактическое время выполнения
 - **rows**: Количество обработанных строк
 - **loops**: Количество итераций
 
 ### Типы планов выполнения
 
-#### 1. **Seq Scan** (**Sequential Scan**)
+#### 1. Seq Scan (Sequential Scan)
 
 ```sql
 EXPLAIN SELECT * FROM users WHERE age > 30;
@@ -349,7 +349,7 @@ EXPLAIN SELECT * FROM users WHERE age > 30;
 CREATE INDEX idx_users_age ON users(age);
 ```
 
-#### 2. **Index Scan**
+#### 2. Index Scan
 
 ```sql
 EXPLAIN SELECT * FROM users WHERE email = 'user@example.com';
@@ -357,7 +357,7 @@ EXPLAIN SELECT * FROM users WHERE email = 'user@example.com';
 
 **Хорошо:** Используется индекс
 
-#### 3. **Index Only Scan**
+#### 3. Index Only Scan
 
 ```sql
 EXPLAIN SELECT email FROM users WHERE email = 'user@example.com';
@@ -365,7 +365,7 @@ EXPLAIN SELECT email FROM users WHERE email = 'user@example.com';
 
 **Отлично:** Данные берутся только из индекса
 
-#### 4. **Bitmap Heap Scan**
+#### 4. Bitmap Heap Scan
 
 ```sql
 EXPLAIN SELECT * FROM users WHERE age > 30 AND city = 'Moscow';
@@ -373,7 +373,7 @@ EXPLAIN SELECT * FROM users WHERE age > 30 AND city = 'Moscow';
 
 **Хорошо:** Используется **bitmap** для объединения условий
 
-#### 5. **Nested Loop**
+#### 5. Nested Loop
 
 ```sql
 EXPLAIN
@@ -386,9 +386,9 @@ JOIN orders o ON u.id = o.user_id;
 
 **Решение:** Использовать **Hash Join** или **Merge Join**
 
-### Оптимизация **JOIN**
+### Оптимизация JOIN
 
-#### **Hash Join**
+#### Hash Join
 
 ```sql
 -- Принудительно использовать Hash Join
@@ -401,7 +401,7 @@ FROM users u
 JOIN orders o ON u.id = o.user_id;
 ```
 
-#### **Merge Join**
+#### Merge Join
 
 ```sql
 -- Принудительно использовать Merge Join
@@ -415,7 +415,7 @@ JOIN orders o ON u.id = o.user_id
 ORDER BY u.id;
 ```
 
-### Статистика и **ANALYZE**
+### Статистика и ANALYZE
 
 #### Обновление статистики
 
@@ -447,7 +447,7 @@ ANALYZE orders;
 
 ### Оптимизация конкретных запросов
 
-#### 1. Оптимизация **WHERE** условий
+#### 1. Оптимизация WHERE условий
 
 ```sql
 -- Плохо: функция в WHERE
@@ -458,7 +458,7 @@ CREATE INDEX idx_users_email_upper ON users(UPPER(email));
 SELECT * FROM users WHERE UPPER(email) = 'USER@EXAMPLE.COM';
 ```
 
-#### 2. Оптимизация **ORDER** `BY`
+#### 2. Оптимизация ORDER `BY`
 
 ```sql
 -- Плохо: сортировка без индекса
@@ -469,7 +469,7 @@ CREATE INDEX idx_users_created_at ON users(created_at DESC);
 SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
 ```
 
-#### 3. Оптимизация **LIMIT**
+#### 3. Оптимизация LIMIT
 
 ```sql
 -- Использовать индекс для быстрого LIMIT
@@ -482,7 +482,7 @@ SELECT * FROM users ORDER BY created_at DESC LIMIT 10;
 
 ### Типы индексов
 
-#### 1. **B-tree** (**по умолчанию**)
+#### 1. B-tree (по умолчанию)
 
 ```sql
 CREATE INDEX idx_users_email ON users(email);
@@ -493,7 +493,7 @@ CREATE INDEX idx_users_email ON users(email);
 - Сортировка
 - Уникальность
 
-#### 2. **Hash**
+#### 2. Hash
 
 ```sql
 CREATE INDEX idx_users_email_hash ON users USING hash(email);
@@ -503,7 +503,7 @@ CREATE INDEX idx_users_email_hash ON users USING hash(email);
 - Только равенство
 - Быстрее **B-tree** для равенства
 
-#### 3. **GIN** (**Generalized `Inverted` Index**)
+#### 3. GIN (Generalized `Inverted` Index)
 
 ```sql
 CREATE INDEX idx_users_tags_gin ON users USING gin(tags);
@@ -514,7 +514,7 @@ CREATE INDEX idx_users_tags_gin ON users USING gin(tags);
 - Полнотекстовый поиск
 - **JSONB**
 
-#### 4. **GiST** (**Generalized `Search` Tree**)
+#### 4. GiST (Generalized `Search` Tree)
 
 ```sql
 CREATE INDEX idx_users_location_gist ON users USING gist(location);
@@ -524,7 +524,7 @@ CREATE INDEX idx_users_location_gist ON users USING gist(location);
 - Географические данные
 - Полнотекстовый поиск
 
-#### 5. **BRIN** (**Block `Range` Index**)
+#### 5. BRIN (Block `Range` Index)
 
 ```sql
 CREATE INDEX idx_orders_created_at_brin ON orders USING brin(created_at);
@@ -566,7 +566,7 @@ CREATE INDEX idx_users_email_lower ON users(LOWER(email));
 SELECT * FROM users WHERE LOWER(email) = 'user@example.com';
 ```
 
-### **Covering Indexes** (**PostgreSQL 11+**)
+### Covering Indexes (PostgreSQL 11+)
 
 ```sql
 -- Индекс, включающий дополнительные столбцы
@@ -578,7 +578,7 @@ INCLUDE (total);
 
 ## Мониторинг производительности
 
-### **pg_stat_statements**
+### pg_stat_statements
 
 #### Установка
 
@@ -615,7 +615,7 @@ LIMIT 10;
 SELECT pg_stat_statements_reset();
 ```
 
-### **pg_stat_activity**
+### pg_stat_activity
 
 ```sql
 -- Активные запросы
@@ -642,7 +642,7 @@ WHERE state = 'active'
 AND now() - query_start > interval '5 minutes';
 ```
 
-### **pg_stat_database**
+### pg_stat_database
 
 ```sql
 -- Статистика по базам данных
@@ -732,11 +732,11 @@ SELECT * FROM pg_locks WHERE NOT granted;
 - Использовать меньшие транзакции
 - Проверить **deadlocks**
 
-## **Advanced Performance Tuning**
+## Advanced Performance Tuning
 
-### **Query Optimization Techniques**
+### Query Optimization Techniques
 
-#### **Materialized Views**
+#### Materialized Views
 
 ```sql
 -- Создать материализованное представление
@@ -761,7 +761,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY user_order_summary;
 SELECT * FROM user_order_summary WHERE user_id = 1;
 ```
 
-#### **Common Table Expressions** (**CTE**) **Optimization**
+#### Common Table Expressions (CTE) Optimization
 
 ```sql
 -- CTE может быть материализован
@@ -785,7 +785,7 @@ WITH MATERIALIZED large_cte AS (
 SELECT * FROM large_cte;
 ```
 
-#### **Window Functions Optimization**
+#### Window Functions Optimization
 
 ```sql
 -- Оптимизированные window functions
@@ -801,7 +801,7 @@ WHERE user_id = 1;
 CREATE INDEX idx_orders_user_created ON orders(user_id, created_at DESC);
 ```
 
-### **Parallel Query Execution**
+### Parallel Query Execution
 
 #### Настройка параллелизма
 
@@ -833,9 +833,9 @@ SET max_parallel_workers_per_gather = 4;
 SET parallel_setup_cost = 0;
 ```
 
-### **Index Optimization Strategies**
+### Index Optimization Strategies
 
-#### **Partial Indexes for Performance**
+#### Partial Indexes for Performance
 
 ```sql
 -- Индекс только для активных записей
@@ -847,7 +847,7 @@ CREATE INDEX idx_orders_recent_user ON orders(user_id, created_at)
 WHERE created_at > NOW() - INTERVAL '1 year';
 ```
 
-#### **Expression Indexes**
+#### Expression Indexes
 
 ```sql
 -- Индекс на функцию
@@ -858,7 +858,7 @@ CREATE INDEX idx_users_name_trgm ON users USING gin(name gin_trgm_ops)
 WHERE name IS NOT NULL;
 ```
 
-#### **Composite Index Column Order**
+#### Composite Index Column Order
 
 ```sql
 -- Правильный порядок столбцов в составном индексе
@@ -870,9 +870,9 @@ CREATE INDEX idx_orders_user_date ON orders(user_id, created_at);
 CREATE INDEX idx_orders_created_at ON orders(created_at);
 ```
 
-### **Connection Pooling Optimization**
+### Connection Pooling Optimization
 
-#### **PgBouncer Advanced Configuration**
+#### PgBouncer Advanced Configuration
 
 ```ini
 # /etc/pgbouncer/pgbouncer.ini
@@ -909,9 +909,9 @@ log_pooler_errors = 1
 stats_period = 60
 ```
 
-### **Query Plan Optimization**
+### Query Plan Optimization
 
-#### **Forcing Query Plans**
+#### Forcing Query Plans
 
 ```sql
 -- Отключить определенные типы планов
@@ -931,7 +931,7 @@ RESET enable_hashjoin;
 RESET enable_mergejoin;
 ```
 
-#### **Plan Hints** (**через расширения**)
+#### Plan Hints (через расширения)
 
 ```sql
 -- Использование pg_hint_plan
@@ -944,11 +944,11 @@ FROM users u
 JOIN orders o ON u.id = o.user_id;
 ```
 
-## **System-Level Optimization**
+## System-Level Optimization
 
-### **OS-Level Tuning**
+### OS-Level Tuning
 
-#### **Linux Kernel Parameters**
+#### Linux Kernel Parameters
 
 ```bash
 # /etc/sysctl.conf
@@ -969,7 +969,7 @@ net.ipv4.tcp_wmem = 4096 65536 16777216
 sysctl -p
 ```
 
-#### I/O **Scheduler**
+#### I/O Scheduler
 
 ```bash
 # Проверить текущий scheduler
@@ -979,9 +979,9 @@ cat /sys/block/sda/queue/scheduler
 echo deadline > /sys/block/sda/queue/scheduler
 ```
 
-### **PostgreSQL Configuration Optimization**
+### PostgreSQL Configuration Optimization
 
-#### **Memory Configuration Calculator**
+#### Memory Configuration Calculator
 
 ```sql
 -- Функция для расчета оптимальных настроек памяти
@@ -1025,9 +1025,9 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM calculate_memory_settings(16);
 ```
 
-## **Query Rewriting for Performance**
+## Query Rewriting for Performance
 
-### **Optimizing Subqueries**
+### Optimizing Subqueries
 
 ```sql
 -- Плохо: коррелированный подзапрос
@@ -1050,7 +1050,7 @@ LEFT JOIN (
 ) o ON u.id = o.user_id;
 ```
 
-### **Optimizing EXISTS** vs `IN`
+### Optimizing EXISTS vs `IN`
 
 ```sql
 -- EXISTS обычно быстрее для больших наборов
@@ -1065,7 +1065,7 @@ SELECT * FROM users
 WHERE id IN (1, 2, 3, 4, 5);
 ```
 
-### **Optimizing DISTINCT**
+### Optimizing DISTINCT
 
 ```sql
 -- Плохо: DISTINCT на большом результате
@@ -1079,9 +1079,9 @@ SELECT id FROM users u
 WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id);
 ```
 
-## **Advanced Indexing Strategies**
+## Advanced Indexing Strategies
 
-### **Index Maintenance**
+### Index Maintenance
 
 ```sql
 -- Перестроить индекс для оптимизации
@@ -1094,7 +1094,7 @@ REINDEX TABLE CONCURRENTLY users;
 REINDEX DATABASE CONCURRENTLY mydb;
 ```
 
-### **Index Bloat Management**
+### Index Bloat Management
 
 ```sql
 -- Проверить раздувание индексов
@@ -1112,7 +1112,7 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 REINDEX INDEX CONCURRENTLY idx_large_index;
 ```
 
-### **Index Usage Monitoring**
+### Index Usage Monitoring
 
 ```sql
 -- Найти неиспользуемые индексы
@@ -1141,9 +1141,9 @@ AND idx_scan > 0
 ORDER BY usage_ratio;
 ```
 
-## **Performance Testing**
+## Performance Testing
 
-### **Benchmarking Queries**
+### Benchmarking Queries
 
 ```sql
 -- Функция для бенчмарка запросов
@@ -1182,7 +1182,7 @@ SELECT
 FROM benchmark_query('SELECT * FROM users WHERE email = ''test@example.com''', 100);
 ```
 
-### **Load Testing**
+### Load Testing
 
 ```sql
 -- Использовать pgbench для нагрузочного тестирования
@@ -1199,9 +1199,9 @@ pgbench -c 10 -j 2 -T 60 pgbench_test
 pgbench -c 10 -j 2 -T 60 -f custom_script.sql pgbench_test
 ```
 
-## **Real-World Optimization Examples**
+## Real-World Optimization Examples
 
-### **Example** 1: **E-Commerce Query Optimization**
+### Example 1: E-Commerce Query Optimization
 
 ```sql
 -- Исходный медленный запрос
@@ -1247,7 +1247,7 @@ ORDER BY s.total_spent DESC NULLS LAST
 LIMIT 100;
 ```
 
-### **Example** 2: **Reporting Query Optimization**
+### Example 2: Reporting Query Optimization
 
 ```sql
 -- Исходный запрос для отчета
@@ -1269,32 +1269,32 @@ CREATE INDEX idx_orders_recent_created ON orders(created_at)
 WHERE created_at >= NOW() - INTERVAL '1 year';
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
-### **Configuration**
+### Configuration
 
 1. **Начните с базовых настроек** и корректируйте постепенно
 2. **Мониторьте метрики** после каждого изменения
 3. **Тестируйте изменения** на **staging** окружении
 4. **Документируйте изменения** и их влияние
 
-### **Query Optimization**
+### Query Optimization
 
 1. **Всегда используйте `EXPLAIN` ANALYZE** перед оптимизацией
 2. **Создавайте индексы осознанно** — каждый индекс замедляет записи
 3. **Обновляйте статистику регулярно** с помощью **ANALYZE**
 4. **Используйте материализованные представления** для сложных запросов
 
-### **Monitoring**
+### Monitoring
 
 1. **Настройте pg_stat_statements** для отслеживания запросов
 2. **Мониторьте активные запросы** регулярно
 3. **Отслеживайте использование индексов** и удаляйте неиспользуемые
 4. **Настройте алерты** на критические метрики
 
-## **Advanced Query Optimization**
+## Advanced Query Optimization
 
-### **Partitioning for Performance**
+### Partitioning for Performance
 
 ```sql
 -- Создать партиционированную таблицу
@@ -1323,7 +1323,7 @@ CREATE INDEX idx_orders_2024_q1_user_id ON orders_2024_q1(user_id);
 CREATE INDEX idx_orders_2024_q1_created_at ON orders_2024_q1(created_at);
 ```
 
-### **Query Plan Caching**
+### Query Plan Caching
 
 ```sql
 -- Использовать prepared statements для кэширования планов
@@ -1336,7 +1336,7 @@ EXECUTE get_user_orders(1);
 -- Prepared statements автоматически кэшируют план выполнения
 ```
 
-### **Batch Processing Optimization**
+### Batch Processing Optimization
 
 ```sql
 -- Обработка больших объемов данных батчами
@@ -1369,9 +1369,9 @@ BEGIN
 END $$;
 ```
 
-## **Storage Optimization**
+## Storage Optimization
 
-### **Tablespace Management**
+### Tablespace Management
 
 ```sql
 -- Создать tablespace на быстром диске
@@ -1387,7 +1387,7 @@ CREATE TABLE fast_table (
 ALTER TABLE large_table SET TABLESPACE fast_disk;
 ```
 
-### **TOAST Optimization**
+### TOAST Optimization
 
 ```sql
 -- Проверить использование TOAST
@@ -1406,9 +1406,9 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ALTER TABLE large_table ALTER COLUMN large_text SET STORAGE EXTENDED;
 ```
 
-## **Advanced Monitoring**
+## Advanced Monitoring
 
-### **Custom Performance Metrics**
+### Custom Performance Metrics
 
 ```sql
 -- Создать представление для ключевых метрик
@@ -1446,7 +1446,7 @@ SELECT
 FROM pg_stat_activity;
 ```
 
-### **Performance Regression Detection**
+### Performance Regression Detection
 
 ```sql
 -- Создать таблицу для baseline метрик
@@ -1482,9 +1482,9 @@ SELECT cron.schedule('record-baseline', '0 * * * *',
     'SELECT record_performance_baseline();');
 ```
 
-## **Optimization Workflows**
+## Optimization Workflows
 
-### **Workflow** 1: **Optimizing Slow Query**
+### Workflow 1: Optimizing Slow Query
 
 ```sql
 -- Шаг 1: Найти медленный запрос
@@ -1519,7 +1519,7 @@ FROM pg_stat_statements
 WHERE query = '<slow_query>';
 ```
 
-### **Workflow** 2: **Database-Wide Optimization**
+### Workflow 2: Database-Wide Optimization
 
 ```sql
 -- Шаг 1: Анализ всех медленных запросов
@@ -1556,9 +1556,9 @@ REINDEX DATABASE CONCURRENTLY mydb;
 ANALYZE;
 ```
 
-## **Performance Tuning Checklist**
+## Performance Tuning Checklist
 
-### **Initial Setup**
+### Initial Setup
 
 - [ ] Настроить базовые параметры памяти
 - [ ] Настроить **WAL** параметры
@@ -1567,7 +1567,7 @@ ANALYZE;
 - [ ] Создать необходимые индексы
 - [ ] Настроить мониторинг
 
-### **Regular Maintenance**
+### Regular Maintenance
 
 - [ ] Анализировать медленные запросы еженедельно
 - [ ] Проверять использование индексов ежемесячно
@@ -1576,7 +1576,7 @@ ANALYZE;
 - [ ] Мониторить метрики производительности
 - [ ] Оптимизировать конфигурацию на основе метрик
 
-### **Optimization Process**
+### Optimization Process
 
 - [ ] Измерять производительность до изменений
 - [ ] Вносить изменения постепенно

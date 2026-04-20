@@ -34,18 +34,18 @@ updated: "2026-02-11"
   - [**Data Access Layer**](#data-access-layer)
 - [Клиент-серверная архитектура](#клиент-серверная-архитектура)
   - [**Thin Client**](#thin-client)
-  - [**Thick Client** (**Rich Client**)](#thick-client-rich-client)
+  - [**Thick Client** (Rich Client)](#thick-client-rich-client)
 - [Трехуровневая архитектура](#трехуровневая-архитектура)
   - [**Presentation Tier**](#presentation-tier)
-  - [**Application Tier** (**Business Logic**)](#application-tier-business-logic)
+  - [**Application Tier** (Business Logic)](#application-tier-business-logic)
   - [**Data Tier**](#data-tier)
 - [Гексагональная архитектура](#гексагональная-архитектура)
   - [**Ports and Adapters**](#ports-and-adapters)
   - [**Adapters**](#adapters)
   - [**Configuration** и **Dependency Injection**](#configuration-и-dependency-injection)
 - [Чистая архитектура](#чистая-архитектура)
-  - [**Entities** (**Domain Objects**)](#entities-domain-objects)
-  - [**Use Cases** (**Application Layer**)](#use-cases-application-layer)
+  - [**Entities** (Domain Objects)](#entities-domain-objects)
+  - [**Use Cases** (Application Layer)](#use-cases-application-layer)
   - [**Interface Adapters**](#interface-adapters)
   - [**Frameworks** & **Drivers**](#frameworks-drivers)
 - [Паттерны интеграции](#паттерны-интеграции)
@@ -61,9 +61,9 @@ updated: "2026-02-11"
 
 ## Основные принципы архитектуры
 
-### **SOLID** принципы
+### SOLID принципы
 
-Ниже — пример **SOLID** принципов (**TypeScript**).
+Ниже — пример **SOLID** принципов (TypeScript).
 ```typescript
 // Single Responsibility Principle (SRP)
 // Класс должен иметь только одну причину для изменения
@@ -217,7 +217,7 @@ class OrderService {
 }
 ```
 
-### **GRASP** принципы
+### GRASP принципы
 ```typescript
 // Information Expert
 // Объект должен содержать всю информацию, необходимую для выполнения его обязанностей
@@ -415,7 +415,7 @@ src/
 
 ## Многоуровневая архитектура
 
-### **Presentation Layer**
+### Presentation Layer
 ```typescript
 // Presentation Layer (MVC Pattern)
 class UserController {
@@ -458,7 +458,7 @@ interface UserResponse {
 }
 ```
 
-### **Business Logic Layer**
+### Business Logic Layer
 ```typescript
 // Business Logic Layer (Domain Services)
 class UserService {
@@ -502,7 +502,7 @@ class UserService {
 }
 ```
 
-### **Data Access Layer**
+### Data Access Layer
 ```typescript
 // Data Access Layer (Repository Pattern)
 interface UserRepository {
@@ -554,7 +554,7 @@ class MongoUserRepository implements UserRepository {
 
 ## Клиент-серверная архитектура
 
-### **Thin Client**
+### Thin Client
 ```typescript
 // Thin Client Architecture
 // Клиент только отображает данные и отправляет запросы
@@ -602,7 +602,7 @@ class UserServer {
 }
 ```
 
-### **Thick Client** (**Rich Client**)
+### Thick Client (Rich Client)
 ```typescript
 // Thick Client Architecture
 // Клиент содержит часть бизнес-логики
@@ -662,7 +662,7 @@ class RichUserClient {
 
 ## Трехуровневая архитектура
 
-### **Presentation Tier**
+### Presentation Tier
 ```typescript
 // Presentation Tier
 // Web Layer / API Layer
@@ -722,7 +722,7 @@ class ApiGateway {
 }
 ```
 
-### **Application Tier** (**Business Logic**)
+### Application Tier (Business Logic)
 ```typescript
 // Application Tier
 // Business Logic Layer
@@ -777,7 +777,7 @@ class UserService {
 }
 ```
 
-### **Data Tier**
+### Data Tier
 ```typescript
 // Data Tier
 // Data Access Layer
@@ -849,7 +849,7 @@ class TypeORMUserRepository implements UserRepository {
 
 ## Гексагональная архитектура
 
-### **Ports and Adapters**
+### Ports and Adapters
 ```typescript
 // Domain Layer (Core Business Logic)
 export class User {
@@ -913,7 +913,7 @@ export class CreateUserUseCase {
 }
 ```
 
-### **Adapters**
+### Adapters
 ```typescript
 // Infrastructure Layer (Adapters)
 
@@ -979,7 +979,7 @@ export class UUIDGenerator implements IdGenerator {
 }
 ```
 
-### **Configuration** и **Dependency Injection**
+### Configuration и Dependency Injection
 ```typescript
 // Dependency Injection Container
 export class Container {
@@ -1064,7 +1064,7 @@ export async function bootstrap() {
 
 ## Чистая архитектура
 
-### **Entities** (**Domain Objects**)
+### Entities (Domain Objects)
 ```typescript
 // Entities (Core Business Rules)
 export class User {
@@ -1164,7 +1164,7 @@ export class UserId {
 }
 ```
 
-### **Use Cases** (**Application Layer**)
+### Use Cases (Application Layer)
 ```typescript
 // Use Cases (Application Business Rules)
 export interface CreateUserUseCase {
@@ -1251,7 +1251,7 @@ export class UserUpdatedEvent {
 }
 ```
 
-### **Interface Adapters**
+### Interface Adapters
 ```typescript
 // Interface Adapters (Controllers, Presenters)
 export class UserController {
@@ -1378,7 +1378,7 @@ export interface UserListResponse {
 }
 ```
 
-### **Frameworks** & **Drivers**
+### Frameworks & Drivers
 ```typescript
 // Frameworks & Drivers (External Interfaces)
 
@@ -1492,7 +1492,7 @@ export class RedisCache implements Cache {
 
 ## Паттерны интеграции
 
-### **API Gateway Pattern**
+### API Gateway Pattern
 ```typescript
 // API Gateway Implementation
 class ApiGateway {
@@ -1562,7 +1562,7 @@ class ApiGateway {
 }
 ```
 
-### **Circuit Breaker Pattern**
+### Circuit Breaker Pattern
 ```typescript
 // Circuit Breaker Implementation
 enum CircuitState {
@@ -1643,7 +1643,7 @@ class ExternalServiceClient {
 }
 ```
 
-### **Saga Pattern**
+### Saga Pattern
 ```typescript
 // Saga Pattern for distributed transactions
 interface SagaStep {
@@ -1754,7 +1754,7 @@ await orderSaga.execute(new Map([['orderData', orderData]]));
 
 ## Распределенные паттерны
 
-### **Bulkhead Pattern**
+### Bulkhead Pattern
 ```typescript
 // Bulkhead Pattern для изоляции ресурсов
 class Bulkhead {
@@ -1825,7 +1825,7 @@ class DatabaseService {
 }
 ```
 
-### **Ambassador Pattern**
+### Ambassador Pattern
 ```typescript
 // Ambassador Pattern для service mesh integration
 class ServiceAmbassador {

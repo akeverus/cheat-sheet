@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Akka Streams** в **Scala**
+# Akka Streams в Scala
 
 Краткое руководство по **Akka Streams** — реактивные потоки данных для обработки данных в **Scala**.
 
@@ -81,7 +81,7 @@ updated: "2026-02-11"
 
 **Akka Streams** особенно полезен для обработки больших объемов данных, создания реактивных приложений, обработки файлов, работы с сетью и создания микросервисов.
 
-## Основы **Akka Streams**
+## Основы Akka Streams
 
 ### Базовый пример
 
@@ -105,9 +105,9 @@ val graph = source.via(flow).to(sink)
 val result = graph.run()
 ```
 
-## **Source**, **Flow**, **Sink**
+## Source, Flow, Sink
 
-### **Source** — источник данных
+### Source — источник данных
 
 ```scala
 import akka.stream.scaladsl.Source
@@ -134,7 +134,7 @@ import java.nio.file.Paths
 val fileSource = FileIO.fromPath(Paths.get("file.txt"))
 ```
 
-### **Flow** — трансформация данных
+### Flow — трансформация данных
 
 ```scala
 import akka.stream.scaladsl.Flow
@@ -161,7 +161,7 @@ val groupFlow = Flow[Int].grouped(10)
 val slidingFlow = Flow[Int].sliding(5, 1)
 ```
 
-### **Sink** — приемник данных
+### Sink — приемник данных
 
 ```scala
 import akka.stream.scaladsl.Sink
@@ -212,7 +212,7 @@ val totalLength = fileSource
   .runWith(sink)
 ```
 
-### Обработка с **backpressure**
+### Обработка с backpressure
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -274,7 +274,7 @@ val parallelFlow = Flow[Int]
 val result = source.via(parallelFlow).runWith(Sink.seq)
 ```
 
-### **Fan-out** и **Fan-in**
+### Fan-out и Fan-in
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink, Broadcast, Merge}
@@ -304,9 +304,9 @@ val graph = Source.fromGraph(
 )
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Используйте **throttling** для контроля скорости
+### 1. Используйте throttling для контроля скорости
 
 ```scala
 val flow = Flow[Int]
@@ -314,7 +314,7 @@ val flow = Flow[Int]
   .map(process)
 ```
 
-### 2. Используйте **buffer** для буферизации
+### 2. Используйте buffer для буферизации
 
 ```scala
 val flow = Flow[Int]
@@ -322,7 +322,7 @@ val flow = Flow[Int]
   .map(process)
 ```
 
-### 3. Используйте **mapAsync** для асинхронной обработки
+### 3. Используйте mapAsync для асинхронной обработки
 
 ```scala
 val flow = Flow[Int]
@@ -364,7 +364,7 @@ val result = fileSource
   .runWith(sink)
 ```
 
-### Обработка с использованием **GraphDSL**
+### Обработка с использованием GraphDSL
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink, Broadcast, Merge, GraphDSL}
@@ -416,7 +416,7 @@ source.via(partitionFlow.outlet(0)).to(sinkEven).run()
 source.via(partitionFlow.outlet(1)).to(sinkOdd).run()
 ```
 
-### Обработка с использованием **Materializer**
+### Обработка с использованием Materializer
 
 ```scala
 import akka.actor.ActorSystem
@@ -437,7 +437,7 @@ val graph = source.via(flow).to(sink)
 val result = graph.run()(materializer)
 ```
 
-### Обработка **HTTP** запросов
+### Обработка HTTP запросов
 
 ```scala
 import akka.http.scaladsl.Http
@@ -468,7 +468,7 @@ val result = httpRequests
   .runWith(Sink.seq)
 ```
 
-### Обработка с использованием **State**
+### Обработка с использованием State
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -545,7 +545,7 @@ source.sendComplete()
 sink.expectComplete()
 ```
 
-### Обработка с использованием **Rate Limiting**
+### Обработка с использованием Rate Limiting
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -565,7 +565,7 @@ val source = Source(1 to 10000)
 val result = source.via(rateLimitedFlow).runWith(Sink.ignore)
 ```
 
-### Обработка с использованием **Windowing**
+### Обработка с использованием Windowing
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -583,7 +583,7 @@ val source = Source(1 to 1000)
 val result = source.via(windowedFlow).runWith(Sink.seq)
 ```
 
-### Обработка с использованием **Keep**
+### Обработка с использованием Keep
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink, Keep}
@@ -605,7 +605,7 @@ val (sourceMat, sinkMat) = source.viaMat(flow)(Keep.left).toMat(sink)(Keep.both)
 
 ## Дополнительные техники
 
-### Обработка с использованием **Substreams**
+### Обработка с использованием Substreams
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -620,7 +620,7 @@ val source = Source(1 to 10000)
 val result = source.via(substreamFlow).runWith(Sink.seq)
 ```
 
-### Обработка с использованием **KillSwitch**
+### Обработка с использованием KillSwitch
 
 ```scala
 import akka.stream.KillSwitches
@@ -644,7 +644,7 @@ Thread.sleep(5000)
 killSwitch.shutdown()
 ```
 
-### Обработка с использованием **Timers**
+### Обработка с использованием Timers
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -687,7 +687,7 @@ val result = source.via(timerFlow).runWith(Sink.seq)
 
 **Akka Streams** предоставляет мощные инструменты для работы с потоками данных, включая обработку файлов, **HTTP** запросов, динамических потоков, тестирования, **rate limiting**, **windowing**, **substreams**, **kill switches** и таймеров. Понимание этих техник позволяет создавать сложные, масштабируемые системы обработки данных.
 
-### Обработка с использованием **MergeHub** и **BroadcastHub**
+### Обработка с использованием MergeHub и BroadcastHub
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, MergeHub, BroadcastHub}
@@ -707,7 +707,7 @@ mergeSource.to(Sink.foreach(println)).run()
 mergeSource.to(Sink.foreach(x => println(s"Doubled: ${x * 2}"))).run()
 ```
 
-### Обработка с использованием **Partition** для разделения потока
+### Обработка с использованием Partition для разделения потока
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink, Partition}
@@ -727,7 +727,7 @@ source.via(partitionFlow).out(0).to(sinkEven).run()
 source.via(partitionFlow).out(1).to(sinkOdd).run()
 ```
 
-### Обработка с использованием **Balance** для балансировки нагрузки
+### Обработка с использованием Balance для балансировки нагрузки
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink, Balance}
@@ -746,7 +746,7 @@ source.via(balanceFlow).out(1).to(sink2).run()
 source.via(balanceFlow).out(2).to(sink3).run()
 ```
 
-### Обработка с использованием **Zip** для объединения потоков
+### Обработка с использованием Zip для объединения потоков
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, Zip}
@@ -760,7 +760,7 @@ val result = zipped.runWith(Sink.seq)
 // Seq((1, 11), (2, 12), ..., (10, 20))
 ```
 
-### Обработка с использованием **ZipWith** для объединения с функцией
+### Обработка с использованием ZipWith для объединения с функцией
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, ZipWith}
@@ -774,7 +774,7 @@ val result = zipped.runWith(Sink.seq)
 // Seq(12, 14, 16, ..., 30)
 ```
 
-### Обработка с использованием **Concat** для последовательного объединения
+### Обработка с использованием Concat для последовательного объединения
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, Concat}
@@ -788,7 +788,7 @@ val result = concatenated.runWith(Sink.seq)
 // Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 ```
 
-### Обработка с использованием **Interleave** для чередования
+### Обработка с использованием Interleave для чередования
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, Interleave}
@@ -802,7 +802,7 @@ val result = interleaved.runWith(Sink.seq)
 // Seq(1, 6, 2, 7, 3, 8, 4, 9, 5, 10)
 ```
 
-### Обработка с использованием **Merge** для параллельного объединения
+### Обработка с использованием Merge для параллельного объединения
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, Merge}
@@ -816,7 +816,7 @@ val result = merged.runWith(Sink.seq)
 // Порядок не гарантирован
 ```
 
-### Обработка с использованием **MergePreferred** для приоритетного объединения
+### Обработка с использованием MergePreferred для приоритетного объединения
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, MergePreferred}
@@ -832,7 +832,7 @@ val merged = preferredSource
   .runWith(Sink.seq)
 ```
 
-### Обработка с использованием **MergeSorted** для сортированного объединения
+### Обработка с использованием MergeSorted для сортированного объединения
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink, MergeSorted}
@@ -846,7 +846,7 @@ val result = merged.runWith(Sink.seq)
 // Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 ```
 
-### Обработка с использованием **OrElse** для альтернативных источников
+### Обработка с использованием OrElse для альтернативных источников
 
 ```scala
 import akka.stream.scaladsl.{Source, Sink}
@@ -859,7 +859,7 @@ val result = primarySource.orElse(fallbackSource).runWith(Sink.seq)
 // Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 ```
 
-### Обработка с использованием **Conflate** для агрегации
+### Обработка с использованием Conflate для агрегации
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -871,7 +871,7 @@ val conflateFlow = Flow[Int].conflate((acc, elem) => acc + elem)
 val result = source.via(conflateFlow).runWith(Sink.seq)
 ```
 
-### Обработка с использованием **Batch** для батчинга
+### Обработка с использованием Batch для батчинга
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}
@@ -884,7 +884,7 @@ val result = source.via(batchFlow).runWith(Sink.seq)
 // Seq(List(1, 2, ..., 10), List(11, 12, ..., 20), ...)
 ```
 
-### Обработка с использованием **Expand** для расширения потока
+### Обработка с использованием Expand для расширения потока
 
 ```scala
 import akka.stream.scaladsl.{Source, Flow, Sink}

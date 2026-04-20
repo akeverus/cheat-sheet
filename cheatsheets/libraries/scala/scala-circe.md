@@ -31,7 +31,7 @@ updated: "2026-02-11"
 - [Продвинутые возможности](#продвинутые-возможности)
   - [HCursor для навигации по JSON](#hcursor-для-навигации-по-json)
   - [Optics для функционального доступа](#optics-для-функционального-доступа)
-  - [JSON Pointer (**RFC 6901**)](#json-pointer-rfc-6901)
+  - [JSON Pointer (RFC 6901)](#json-pointer-rfc-6901)
 - [Работа с различными типами данных](#работа-с-различными-типами-данных)
   - [Перечисления и sealed traits](#перечисления-и-sealed-traits)
   - [Опциональные поля и значения по умолчанию](#опциональные-поля-и-значения-по-умолчанию)
@@ -61,11 +61,11 @@ updated: "2026-02-11"
   - [From Argonaut to Circe](#from-argonaut-to-circe)
 - [См. также](#см-также)
 
-## Основы **Circe**
+## Основы Circe
 
 ### Подключение и базовое использование
 
-Зависимости **Circe** в **build.sbt** и базовый импорт (**Scala**).
+Зависимости **Circe** в **build.sbt** и базовый импорт (Scala).
 
 ```scala
 // build.sbt
@@ -115,7 +115,7 @@ val age = json.getOrElse(Json.Null).hcursor.get[Int]("age")       // Right(30)
 // get[Int]("age") - получение целочисленного значения поля "age"
 ```
 
-### **Case classes** и кодеки
+### Case classes и кодеки
 ```scala
 import io.circe._
 import io.circe.generic.auto._
@@ -181,7 +181,7 @@ implicit val userDecoderSemi: Decoder[User] = deriveDecoder[User]
 
 ## Продвинутые возможности
 
-### **HCursor** для навигации по **JSON**
+### HCursor для навигации по JSON
 ```scala
 import io.circe._
 
@@ -220,7 +220,7 @@ val isActive = cursor.get[Boolean]("active") // Right(true)
 val isString = cursor.get[String]("active") // Left(DecodingFailure)
 ```
 
-### **Optics** для функционального доступа
+### Optics для функционального доступа
 ```scala
 import io.circe.optics.JsonPath._
 
@@ -258,7 +258,7 @@ val transformed = root.users.each.obj.modify { userObj =>
 }(json)
 ```
 
-### **JSON Pointer** (**RFC 6901**)
+### JSON Pointer (RFC 6901)
 ```scala
 import io.circe.pointer._
 
@@ -300,7 +300,7 @@ val updatedJson2 = pointer.set(modifiedUser.getOrElse(Json.Null))(json)
 
 ## Работа с различными типами данных
 
-### Перечисления и **sealed traits**
+### Перечисления и sealed traits
 ```scala
 import io.circe._
 import io.circe.generic.extras._
@@ -403,7 +403,7 @@ val treeJson = tree.asJson
 
 ## Кастомизация и конфигурация
 
-### **Configuration** для **generic derivation**
+### Configuration для generic derivation
 ```scala
 import io.circe.generic.extras._
 
@@ -432,7 +432,7 @@ val obj = CustomCaseClass("john_doe", 25, Some("john@example.com"))
 val json = obj.asJson // {"USER_NAME":"john_doe","USER_AGE":25,"USER_EMAIL":"john@example.com"}
 ```
 
-### Кастомные **type classes**
+### Кастомные type classes
 ```scala
 import io.circe._
 
@@ -457,7 +457,7 @@ val productJson = product.asJson
 
 ## Обработка ошибок
 
-### **Accumulating errors**
+### Accumulating errors
 ```scala
 import io.circe._
 import cats.data.NonEmptyList
@@ -508,7 +508,7 @@ implicit val userDecoderWithMessages: Decoder[User] = new Decoder[User] {
 
 ## Потоковая обработка
 
-### **FS2** интеграция
+### FS2 интеграция
 ```scala
 import fs2._
 import io.circe.fs2._
@@ -543,7 +543,7 @@ val complexProcessing: Stream[IO, ProcessedResult] = jsonStream
 
 ## Тестирование
 
-### **Unit** тесты для кодеков
+### Unit тесты для кодеков
 ```scala
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -596,7 +596,7 @@ class CirceCodecSpec extends AnyFlatSpec with Matchers {
 
 ## Оптимизация производительности
 
-### **Jsoniter Scala** интеграция
+### Jsoniter Scala интеграция
 ```scala
 // Для высокой производительности можно использовать jsoniter-scala
 libraryDependencies += "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-circe" % "2.23.1"
@@ -612,7 +612,7 @@ val jsonBytes = writeToArray(user) // Byte array
 val decodedUser = readFromArray[User](jsonBytes)
 ```
 
-### **Memoization** для кодеков
+### Memoization для кодеков
 ```scala
 import io.circe._
 import scala.collection.concurrent.TrieMap
@@ -690,7 +690,7 @@ val user = User(1, "John", "john@example.com")
 val json = user.asJson
 ```
 
-### **Error handling patterns**
+### Error handling patterns
 ```scala
 import cats.data.ValidatedNel
 import cats.implicits._
@@ -782,7 +782,7 @@ object JsonSecurity {
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object CirceTroubleshooting {
 
@@ -851,7 +851,7 @@ object CirceTroubleshooting {
 }
 ```
 
-### **Debugging Circe** кодеков
+### Debugging Circe кодеков
 ```scala
 import io.circe._
 
@@ -921,7 +921,7 @@ val formattedJson = customPrinter.print(json)
 
 ## Руководство по миграции
 
-### **From Play JSON** to **Circe**
+### From Play JSON to Circe
 ```scala
 // Play JSON
 import play.api.libs.json._
@@ -951,7 +951,7 @@ val parsed = parse(jsonString) // Either[Error, Json]
 val decoded = parsed.flatMap(_.as[User]) // Either[Error, User]
 ```
 
-### **From Spray JSON** to **Circe**
+### From Spray JSON to Circe
 ```scala
 // Spray JSON
 import spray.json._
@@ -980,7 +980,7 @@ val json = user.asJson.noSpaces
 val parsed = decode[User](json) // Either[Error, User]
 ```
 
-### **From Argonaut** to **Circe**
+### From Argonaut to Circe
 ```scala
 // Argonaut
 import argonaut._
@@ -1009,5 +1009,5 @@ val parsed = decode[User](json) // Either[Error, User]
 ## См. также
 - [[scala-play|Play Framework]] — **Web framework** с **JSON** поддержкой
 - [[scala-cats|Cats]] — Функциональная библиотека
-- [Паттерны](../../patterns/README.md) — Функциональные паттерны
+- [[README|Паттерны]] — Функциональные паттерны
 

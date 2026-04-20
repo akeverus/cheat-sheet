@@ -71,14 +71,14 @@ updated: "2026-02-11"
   - [Полный RAG pipeline](#полный-rag-pipeline)
   - [AI-powered REST API](#ai-powered-rest-api)
 
-## Введение в **Spring** `AI`
+## Введение в Spring `AI`
 
 **Spring** `AI` - это фреймворк, который упрощает интеграцию искусственного интеллекта в **Spring** приложения. Он предоставляет унифицированный **API** для работы с различными `AI` провайдерами и моделями.
 
 ### Основные возможности
 
 - **Унифицированный API**: Единый интерфейс для разных `AI` провайдеров
-- **Поддержка чата**: Интеграция с **chat** моделями (**GPT, `Claude`, etc.**)
+- **Поддержка чата**: Интеграция с **chat** моделями (GPT, `Claude`, etc.)
 - **Embeddings**: Работа с векторными представлениями текста
 - **Image Generation**: Создание изображений через `AI`
 - **Vector Stores**: Хранение и поиск векторов
@@ -97,7 +97,7 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven** зависимости
+### Maven зависимости
 
 Ниже — **Maven**-зависимости **Spring AI** (**core**, **OpenAI**, **Chroma**, **PDF reader**) в формате **XML**.
 ```xml
@@ -176,7 +176,7 @@ public class ChatService {
 }
 ```
 
-### Конфигурация **Chat Client**
+### Конфигурация Chat Client
 
 ```java
 // Конфигурация Chat Client (модель, temperature, maxTokens)
@@ -226,7 +226,7 @@ public class ChatService {
 
 **Embeddings** позволяют преобразовать текст в векторные представления для семантического поиска.
 
-### Создание **embeddings**
+### Создание embeddings
 
 ```java
 @Service
@@ -256,7 +256,7 @@ public class EmbeddingService {
 }
 ```
 
-### Поиск по **similarity**
+### Поиск по similarity
 
 ```java
 public class SimilaritySearchService {
@@ -315,7 +315,7 @@ public class ImageGenerationService {
 
 **Vector Stores** позволяют хранить и искать векторные представления документов.
 
-### **ChromaDB**
+### ChromaDB
 
 ```yaml
 # application.yml
@@ -354,7 +354,7 @@ public class DocumentService {
 }
 ```
 
-### Другие **Vector Stores**
+### Другие Vector Stores
 
 **Spring** `AI` поддерживает:**
 - **ChromaDB**: **Open-source vector database**
@@ -366,9 +366,9 @@ public class DocumentService {
 
 ## Retrieval-Augmented Generation (RAG)
 
-**RAG** комбинирует **retrieval** (**поиск**) с **generation** (**генерацией**) для более точных ответов.
+**RAG** комбинирует **retrieval** (поиск) с **generation** (генерацией) для более точных ответов.
 
-### Базовый **RAG**
+### Базовый RAG
 
 ```java
 @Service
@@ -413,7 +413,7 @@ public class RagService {
 }
 ```
 
-### **Advanced RAG** с **metadata filtering**
+### Advanced RAG с metadata filtering
 
 ```java
 public List<Document> searchWithFilter(String query, String category) {
@@ -429,7 +429,7 @@ public List<Document> searchWithFilter(String query, String category) {
 
 ## Prompt Engineering
 
-### **Template-based** промпты
+### Template-based промпты
 
 ```java
 @Configuration
@@ -481,7 +481,7 @@ public class CodeReviewService {
 }
 ```
 
-### **Few-shot learning**
+### Few-shot learning
 
 ```java
 public String classifySentiment(String text) {
@@ -631,7 +631,7 @@ public class ChatController {
 
 ## Observability
 
-### **Metrics** и **tracing**
+### Metrics и tracing
 
 ```java
 @Configuration
@@ -677,7 +677,7 @@ public class AiLoggingAspect {
 
 ## Security
 
-### **API Key management**
+### API Key management
 
 ```java
 @Configuration
@@ -694,7 +694,7 @@ public class SecurityConfig {
 }
 ```
 
-### **Input validation** и **sanitization**
+### Input validation и sanitization
 
 ```java
 @Service
@@ -740,7 +740,7 @@ public class SecureChatService {
 
 ## Integration Patterns
 
-### **AI-powered microservices**
+### AI-powered microservices
 
 ```java
 @Service
@@ -769,7 +769,7 @@ public class AiEnhancedUserService extends UserService {
 }
 ```
 
-### **Content moderation**
+### Content moderation
 
 ```java
 @Service
@@ -817,7 +817,7 @@ public class ContentModerationService {
 
 ## Примеры
 
-### Полный **RAG pipeline**
+### Полный RAG pipeline
 
 ```java
 @Configuration
@@ -897,7 +897,7 @@ public class IntelligentAssistant {
 }
 ```
 
-### **AI-powered REST API**
+### AI-powered REST API
 
 ```java
 @RestController

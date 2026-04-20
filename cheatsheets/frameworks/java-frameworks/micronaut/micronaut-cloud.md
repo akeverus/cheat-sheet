@@ -97,7 +97,7 @@ related: ["micronaut-reactive.md", "micronaut-security.md"]
 
 ## Service Discovery
 
-### **Consul**
+### Consul
 
 **build.gradle:**
 
@@ -124,7 +124,7 @@ micronaut:
         health-interval: 10s
 ```
 
-### **Eureka**
+### Eureka
 
 **build.gradle:**
 
@@ -151,7 +151,7 @@ micronaut:
         prefer-ip-address: true
 ```
 
-### **Kubernetes Service Discovery**
+### Kubernetes Service Discovery
 
 **application.yml:**
 
@@ -167,7 +167,7 @@ micronaut:
 
 ## Distributed Configuration
 
-### **Consul Configuration**
+### Consul Configuration
 
 **build.gradle:**
 
@@ -189,7 +189,7 @@ micronaut:
         - config/my-service
 ```
 
-### **Vault Configuration**
+### Vault Configuration
 
 **build.gradle:**
 
@@ -244,7 +244,7 @@ resilience4j:
         slowCallDurationThreshold: 2s
 ```
 
-### Использование **Circuit Breaker**
+### Использование Circuit Breaker
 
 ```java
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -265,7 +265,7 @@ public class ExternalApiService {
 }
 ```
 
-### **Retry**
+### Retry
 
 **application.yml:**
 
@@ -297,7 +297,7 @@ public class ExternalApiService {
 
 ## Distributed Tracing
 
-### **Zipkin**
+### Zipkin
 
 **build.gradle:**
 
@@ -319,7 +319,7 @@ tracing:
       probability: 1.0
 ```
 
-### **Jaeger**
+### Jaeger
 
 **build.gradle:**
 
@@ -339,7 +339,7 @@ tracing:
       probability: 1.0
 ```
 
-### Использование **Tracing**
+### Использование Tracing
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -381,7 +381,7 @@ micronaut:
       details-visible: ANONYMOUS
 ```
 
-### **Custom Health Indicators**
+### Custom Health Indicators
 
 ```java
 import io.micronaut.health.HealthStatus;
@@ -421,7 +421,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 
 ## Metrics
 
-### **Micrometer Integration**
+### Micrometer Integration
 
 **build.gradle:**
 
@@ -445,7 +445,7 @@ micronaut:
         step: PT1M
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 ```java
 import io.micrometer.core.instrument.Counter;
@@ -479,7 +479,7 @@ public class UserService {
 
 ## Kubernetes
 
-### **Deployment Configuration**
+### Deployment Configuration
 
 **deployment.yaml:**
 
@@ -520,7 +520,7 @@ spec:
           periodSeconds: 5
 ```
 
-### **Service Configuration**
+### Service Configuration
 
 **service.yaml:**
 
@@ -540,7 +540,7 @@ spec:
 
 ## Лучшие практики
 
-### 1. Используйте **Service Discovery**
+### 1. Используйте Service Discovery
 
 ```yaml
 # ✅ Хорошо
@@ -550,7 +550,7 @@ micronaut:
       enabled: true
 ```
 
-### 2. Настройте **Circuit Breaker**
+### 2. Настройте Circuit Breaker
 
 ```java
 // ✅ Хорошо
@@ -560,7 +560,7 @@ public String callExternalApi(String data) {
 }
 ```
 
-### 3. Используйте **Distributed Tracing**
+### 3. Используйте Distributed Tracing
 
 ```yaml
 # ✅ Хорошо
@@ -569,7 +569,7 @@ tracing:
     enabled: true
 ```
 
-### 4. Настройте **Health Checks**
+### 4. Настройте Health Checks
 
 ```yaml
 # ✅ Хорошо
@@ -579,7 +579,7 @@ micronaut:
       enabled: true
 ```
 
-### 5. Используйте **Metrics**
+### 5. Используйте Metrics
 
 ```java
 // ✅ Хорошо
@@ -589,7 +589,7 @@ Counter.builder("users.created")
 
 ## Rate Limiting
 
-### Настройка **Rate Limiting**
+### Настройка Rate Limiting
 
 **application.yml:**
 
@@ -603,7 +603,7 @@ micronaut:
         default-period: PT1M
 ```
 
-### **Custom Rate Limiter**
+### Custom Rate Limiter
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -630,7 +630,7 @@ public class RateLimitedController {
 
 ## Load Balancing
 
-### **Client-side Load Balancing**
+### Client-side Load Balancing
 
 ```java
 import io.micronaut.http.annotation.Get;
@@ -645,7 +645,7 @@ public interface UserServiceClient {
 }
 ```
 
-### **Load Balancer Configuration**
+### Load Balancer Configuration
 
 **application.yml:**
 
@@ -659,7 +659,7 @@ micronaut:
 
 ## Service Mesh Integration
 
-### **Istio Integration**
+### Istio Integration
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -686,7 +686,7 @@ spec:
 
 ## Distributed Configuration
 
-### **Configuration Refresh**
+### Configuration Refresh
 
 ```java
 import io.micronaut.context.annotation.Value;
@@ -708,7 +708,7 @@ public class ConfigurableService {
 }
 ```
 
-### **Configuration Properties**
+### Configuration Properties
 
 ```java
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -732,7 +732,7 @@ public class ServiceConfiguration {
 
 ## Service Mesh
 
-### **Istio Sidecar**
+### Istio Sidecar
 
 ```yaml
 apiVersion: v1
@@ -749,7 +749,7 @@ spec:
     image: istio/proxyv2:latest
 ```
 
-### **Envoy Configuration**
+### Envoy Configuration
 
 ```yaml
 static_resources:
@@ -779,7 +779,7 @@ static_resources:
 
 ## Configuration Management
 
-### **Configuration Refresh**
+### Configuration Refresh
 
 ```java
 import io.micronaut.context.annotation.Value;
@@ -801,7 +801,7 @@ public class ConfigurableService {
 }
 ```
 
-### **Configuration Properties**
+### Configuration Properties
 
 ```java
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -825,7 +825,7 @@ public class ServiceConfiguration {
 
 ## Service Mesh
 
-### **Istio Sidecar**
+### Istio Sidecar
 
 ```yaml
 apiVersion: v1
@@ -842,7 +842,7 @@ spec:
     image: istio/proxyv2:latest
 ```
 
-### **Envoy Configuration**
+### Envoy Configuration
 
 ```yaml
 static_resources:
@@ -872,7 +872,7 @@ static_resources:
 
 ## Kubernetes Integration
 
-### **Kubernetes Deployment**
+### Kubernetes Deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -901,7 +901,7 @@ spec:
               fieldPath: metadata.namespace
 ```
 
-### **Kubernetes Service**
+### Kubernetes Service
 
 ```yaml
 apiVersion: v1
@@ -919,7 +919,7 @@ spec:
 
 ## Distributed Tracing
 
-### **Tracing Configuration**
+### Tracing Configuration
 
 **application.yml:**
 
@@ -933,7 +933,7 @@ tracing:
     url: http://jaeger:14268/api/traces
 ```
 
-### **Custom Spans**
+### Custom Spans
 
 ```java
 import io.micronaut.tracing.annotation.NewSpan;

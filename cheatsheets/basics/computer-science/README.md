@@ -17,15 +17,15 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основной документ
-- [Основы Computer Science](computer-science-basics.md) — полный обзор раздела
+- [[computer-science-basics|Основы Computer Science]] — полный обзор раздела
 
 ### Соседние разделы
-- [Основы программирования](../programming-basics/README.md)
-- [Компьютерные сети](../networks/README.md)
-- [Операционные системы](../operating-systems/README.md)
-- [Алгоритмы и структуры данных](../../algorithms/README.md)
-- [Базы данных](../../databases/README.md)
-- [Безопасность](../../security/README.md)
+- [[README|Основы программирования]]
+- [[README|Компьютерные сети]]
+- [[README|Операционные системы]]
+- [[README|Алгоритмы и структуры данных]]
+- [[README|Базы данных]]
+- [[README|Безопасность]]
 
 ### Внешние ресурсы
 - [Computer Science Field Guide](https://www.csfieldguide.org.nz/) — интерактивное руководство по CS
@@ -43,18 +43,18 @@ updated: "2026-04-17"
 
 | Тема | Где глубже |
 |------|-----------|
-| Вычислительная сложность, P vs NP, теория информации | [computer-science-basics.md](computer-science-basics.md#вычислительная-сложность) |
-| Структуры данных (массивы, списки, деревья, хэш-таблицы, графы) | [algorithms/data-structures/](../../algorithms/data-structures/README.md) |
-| Алгоритмы сортировки и поиска | [algorithms/sorting/](../../algorithms/sorting/README.md), [algorithms/searching/](../../algorithms/searching/README.md) |
-| Архитектура компьютеров, иерархия памяти, параллельные вычисления | [computer-science-basics.md](computer-science-basics.md#архитектура-компьютеров) |
-| Процессы, потоки, планирование | [basics/operating-systems/](../operating-systems/README.md) |
-| TCP/IP, OSI, прикладные протоколы | [basics/networks/](../networks/README.md) |
-| Реляционная модель, нормализация | [databases/relational/](../../databases/relational/README.md) |
-| Криптография | [security/data/](../../security/data/README.md) |
+| Вычислительная сложность, P vs NP, теория информации | [[computer-science-basics#вычислительная-сложность]] |
+| Структуры данных (массивы, списки, деревья, хэш-таблицы, графы) | [[README|algorithms/data-structures/]] |
+| Алгоритмы сортировки и поиска | [[README|algorithms/sorting/]], [[README|algorithms/searching/]] |
+| Архитектура компьютеров, иерархия памяти, параллельные вычисления | [[computer-science-basics#архитектура-компьютеров]] |
+| Процессы, потоки, планирование | [[README|basics/operating-systems/]] |
+| TCP/IP, OSI, прикладные протоколы | [[README|basics/networks/]] |
+| Реляционная модель, нормализация | [[README|databases/relational/]] |
+| Криптография | [[README|security/data/]] |
 
 ## Что внутри документа
 
-[computer-science-basics.md](computer-science-basics.md) содержит:
+[[computer-science-basics]] содержит:
 
 - Обзор основных областей CS и их связей
 - Классы сложности P, NP, NP-complete, NP-hard и примеры задач
@@ -75,7 +75,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Алгоритмические паттерны и сложность — [algorithms/algorithmic-paradigms/](../../algorithms/algorithmic-paradigms/README.md)
-- Практика JVM и памяти — [languages/java/](../../languages/java/README.md)
-- Производительность запросов и индексы — [databases/sql/](../../databases/sql/README.md)
-- Конкурентность и синхронизация — [patterns/concurrency-patterns/](../../patterns/concurrency-patterns/README.md)
+- Алгоритмические паттерны и сложность — [[README|algorithms/algorithmic-paradigms/]]
+- Практика JVM и памяти — [[README|languages/java/]]
+- Производительность запросов и индексы — [[README|databases/sql/]]
+- Конкурентность и синхронизация — [[README|patterns/concurrency-patterns/]]

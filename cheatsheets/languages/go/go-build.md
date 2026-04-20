@@ -138,7 +138,7 @@ Go предоставляет простые и эффективные инст�
 3. **go run** — компиляция и запуск
 4. **Cross-compilation** — компиляция для других платформ
 
-## go **build**
+## go build
 
 ### Базовая сборка
 
@@ -166,7 +166,7 @@ go build -ldflags="-s -w"
 CGO_ENABLED=0 go build
 ```
 
-### Сборка для **production**
+### Сборка для production
 
 ```bash
 # Оптимизированная сборка
@@ -176,7 +176,7 @@ go build -ldflags="-s -w" -o myapp
 go build -ldflags="-X main.Version=1.0.0" -o myapp
 ```
 
-## **Cross-compilation**
+## Cross-compilation
 
 ### Компиляция для других платформ
 
@@ -201,9 +201,9 @@ GOOS=linux GOARCH=arm64 go build -o myapp-arm64
 go tool dist list
 ```
 
-## **Docker**
+## Docker
 
-### Базовый **Dockerfile**
+### Базовый Dockerfile
 
 ```dockerfile
 # Многоэтапная сборка
@@ -224,7 +224,7 @@ COPY --from=builder /app/myapp .
 CMD ["./myapp"]
 ```
 
-### Оптимизированный **Dockerfile**
+### Оптимизированный Dockerfile
 
 ```dockerfile
 FROM golang:1.21-alpine AS builder
@@ -246,7 +246,7 @@ ENTRYPOINT ["/myapp"]
 
 ## `CI/CD`
 
-### **GitHub Actions**
+### GitHub Actions
 
 ```yaml
 name: Build
@@ -265,7 +265,7 @@ jobs:
       - run: go test ./...
 ```
 
-### **GitLab** `CI`
+### GitLab `CI`
 
 ```yaml
 build:
@@ -297,7 +297,7 @@ go build -ldflags="-X main.Version=1.0.0 -X main.BuildTime=$(date -u +%Y-%m-%dT%
 go build -gcflags="-N -l" -o myapp-debug
 ```
 
-### **Build tags** и **constraints**
+### Build tags и constraints
 
 ```go
 // +build linux darwin
@@ -315,7 +315,7 @@ package main
 // Этот код будет скомпилирован для всех платформ кроме Windows
 ```
 
-### Использование **build tags**
+### Использование build tags
 
 ```bash
 # Сборка с определенным тегом
@@ -328,7 +328,7 @@ go build -tags="dev,debug"
 go build -tags=""
 ```
 
-### **Build constraints** примеры
+### Build constraints примеры
 
 ```go
 // +build linux,amd64
@@ -346,7 +346,7 @@ package main
 // Код только для Go 1.18+
 ```
 
-### **CGO** интеграция
+### CGO интеграция
 
 ```go
 /*
@@ -371,7 +371,7 @@ CGO_ENABLED=1 go build
 CGO_ENABLED=0 go build
 ```
 
-### **Static linking**
+### Static linking
 
 ```bash
 # Статическая сборка
@@ -420,7 +420,7 @@ func main() {
 go build -ldflags="-X main.Version=1.0.0 -X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) -X main.GitCommit=$(git rev-parse HEAD)" -o myapp
 ```
 
-### Практические примеры: **Makefile** для сборки
+### Практические примеры: Makefile для сборки
 
 ```makefile
 .PHONY: build build-linux build-windows build-macos clean test
@@ -455,7 +455,7 @@ install:
 	go install $(LDFLAGS)
 ```
 
-### Практические примеры: Улучшенный **Dockerfile**
+### Практические примеры: Улучшенный Dockerfile
 
 ```dockerfile
 # Build stage
@@ -512,7 +512,7 @@ EXPOSE 8080
 ENTRYPOINT ["./myapp"]
 ```
 
-### Практические примеры: **Dockerfile** с кэшированием
+### Практические примеры: Dockerfile с кэшированием
 
 ```dockerfile
 FROM golang:1.21-alpine AS builder
@@ -537,7 +537,7 @@ COPY --from=builder /app/myapp /myapp
 ENTRYPOINT ["/myapp"]
 ```
 
-### Практические примеры: .**dockerignore**
+### Практические примеры: .dockerignore
 
 ```text
 # .dockerignore
@@ -559,7 +559,7 @@ coverage/
 *~
 ```
 
-### Практические примеры: **GitHub Actions** с кэшированием
+### Практические примеры: GitHub Actions с кэшированием
 
 ```yaml
 name: Build and Test
@@ -621,7 +621,7 @@ jobs:
         docker tag myapp:${{ github.sha }} myapp:latest
 ```
 
-### Практические примеры: **GitLab** `CI` с артефактами
+### Практические примеры: GitLab `CI` с артефактами
 
 ```yaml
 stages:
@@ -698,7 +698,7 @@ docker-build:
     - main
 ```
 
-### Практические примеры: **Jenkins Pipeline**
+### Практические примеры: Jenkins Pipeline
 
 ```groovy
 pipeline {
@@ -797,7 +797,7 @@ pipeline {
 }
 ```
 
-### Практические примеры: **Docker Compose** для разработки
+### Практические примеры: Docker Compose для разработки
 
 ```yaml
 version: '3.8'
@@ -829,7 +829,7 @@ volumes:
   go-modules:
 ```
 
-### Практические примеры: **Multi-stage build** с тестированием
+### Практические примеры: Multi-stage build с тестированием
 
 ```dockerfile
 # Test stage
@@ -914,7 +914,7 @@ for PLATFORM in "${PLATFORMS[@]}"; do
 done
 ```
 
-### Практические примеры: **Build** с версионированием
+### Практические примеры: Build с версионированием
 
 ```go
 package main
@@ -942,7 +942,7 @@ func printVersion() {
 // go build -ldflags "-X main.Version=1.0.0 -X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ) -X main.GitCommit=$(git rev-parse HEAD)"
 ```
 
-### Практические примеры: **Dockerfile** с **multi-stage build**
+### Практические примеры: Dockerfile с multi-stage build
 
 ```dockerfile
 # Stage 1: Build
@@ -974,7 +974,7 @@ EXPOSE 8080
 CMD ["./app"]
 ```
 
-### Практические примеры: **Makefile** для сборки
+### Практические примеры: Makefile для сборки
 
 ```makefile
 APP_NAME=myapp
@@ -1012,7 +1012,7 @@ docker-build:
 	docker tag $(APP_NAME):$(VERSION) $(APP_NAME):latest
 ```
 
-### Практические примеры: **Build tags** для разных окружений
+### Практические примеры: Build tags для разных окружений
 
 ```go
 // +build production
@@ -1031,7 +1031,7 @@ const Debug = true
 // go build -tags production
 ```
 
-### Практические примеры: **GitHub Actions** `CI/CD`
+### Практические примеры: GitHub Actions `CI/CD`
 
 ```yaml
 name: Build and Test
@@ -1073,7 +1073,7 @@ jobs:
         file: ./coverage.out
 ```
 
-### Практические примеры: **GitLab** `CI/CD`
+### Практические примеры: GitLab `CI/CD`
 
 ```yaml
 stages:
@@ -1109,7 +1109,7 @@ deploy:
     - main
 ```
 
-### Практические примеры: Сборка с **CGO**
+### Практические примеры: Сборка с CGO
 
 ```bash
 # Сборка с CGO
@@ -1136,7 +1136,7 @@ upx --best app
 go tool nm -size app | sort -k2 -n | tail -20
 ```
 
-### Практические примеры: **Build** с **race detector**
+### Практические примеры: Build с race detector
 
 ```bash
 # Сборка с race detector

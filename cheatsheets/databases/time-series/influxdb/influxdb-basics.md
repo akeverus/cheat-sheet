@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **InfluxDB**: Основы временных рядов
+# InfluxDB: Основы временных рядов
 
 **Комплексное руководство по использованию `InfluxDB` — высокопроизводительной базы данных временных рядов.**
 
@@ -43,11 +43,11 @@ updated: "2026-02-11"
   - [**InfluxDB Java Client**](#influxdb-java-client)
 - [**Best Practices**](#лучшие-практики)
 
-## Введение в **InfluxDB**
+## Введение в InfluxDB
 
-**InfluxDB** — специализированная база данных временных рядов, оптимизированная для хранения и анализа данных с временными метками (**метрики, логи, события IoT**).
+**InfluxDB** — специализированная база данных временных рядов, оптимизированная для хранения и анализа данных с временными метками (метрики, логи, события IoT).
 
-### Почему **InfluxDB**?
+### Почему InfluxDB?
 
 **InfluxDB** предлагает преимущества для временных рядов:
 
@@ -57,16 +57,16 @@ updated: "2026-02-11"
 4. **Continuous queries** — Автоматическое агрегирование
 5. **InfluxQL** — **SQL**-подобный язык запросов
 
-### Архитектура **InfluxDB**
+### Архитектура InfluxDB
 
 **InfluxDB** использует:
-- **TSM (**Time-Structured Merge Tree**)** — Структура хранения данных
+- **TSM (Time-Structured Merge Tree)** — Структура хранения данных
 - **Shards** — Партиции данных по времени
 - **Retention Policies** — Политики хранения данных
 
 ## Установка и настройка
 
-### **Docker** установка
+### Docker установка
 
 ```bash
 # Запуск InfluxDB в Docker
@@ -222,9 +222,9 @@ public class InfluxDBReader {
 }
 ```
 
-## **InfluxQL** запросы
+## InfluxQL запросы
 
-### **SELECT** запросы
+### SELECT запросы
 
 ```sql
 /*
@@ -272,9 +272,9 @@ SELECT count(value) FROM temperature;
 SELECT mean(value), stddev(value) FROM temperature;
 ```
 
-## Интеграция с **Java**
+## Интеграция с Java
 
-### **InfluxDB Java Client**
+### InfluxDB Java Client
 
 ```java
 /*

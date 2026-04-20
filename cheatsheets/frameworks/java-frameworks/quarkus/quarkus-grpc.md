@@ -79,7 +79,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Service Definition
 
-### **Protocol Buffers**
+### Protocol Buffers
 
 **Определение сервиса в .**proto** файле:**
 
@@ -117,7 +117,7 @@ message User {
 
 ## gRPC Server
 
-### **Service Implementation**
+### Service Implementation
 
 **Реализация **gRPC** сервиса:**
 
@@ -172,7 +172,7 @@ public class UserServiceImpl implements UserService {
 
 ## gRPC Client
 
-### **Client Configuration**
+### Client Configuration
 
 **Настройка клиента:**
 
@@ -182,7 +182,7 @@ quarkus.grpc.clients.userservice.host=localhost
 quarkus.grpc.clients.userservice.port=9000
 ```
 
-### **Client Usage**
+### Client Usage
 
 **Использование клиента:**
 
@@ -213,7 +213,7 @@ public class GrpcProxyResource {
 
 ## Streaming
 
-### **Server Streaming**
+### Server Streaming
 
 **Server-side streaming**:**
 
@@ -230,7 +230,7 @@ public class StreamingServiceImpl implements StreamingService {
 }
 ```
 
-### **Client Streaming**
+### Client Streaming
 
 **Client-side streaming**:**
 
@@ -253,7 +253,7 @@ public class ClientStreamingServiceImpl implements ClientStreamingService {
 
 ## Interceptors
 
-### **Server Interceptor**
+### Server Interceptor
 
 **Серверный **interceptor**:**
 
@@ -281,7 +281,7 @@ public class LoggingServerInterceptor implements ServerInterceptor {
 
 ## Error Handling
 
-### **gRPC Status**
+### gRPC Status
 
 **Обработка ошибок:**
 
@@ -309,7 +309,7 @@ public class ErrorHandlingServiceImpl implements UserService {
 
 ## Лучшие практики
 
-### 1. Используйте **streaming** для больших данных
+### 1. Используйте streaming для больших данных
 
 ```java
 // ✅ Хорошо
@@ -329,7 +329,7 @@ if (user == null) {
 }
 ```
 
-### 3. Используйте **interceptors** для **cross-cutting concerns**
+### 3. Используйте interceptors для cross-cutting concerns
 
 ```java
 // ✅ Хорошо
@@ -341,7 +341,7 @@ public class LoggingInterceptor implements ServerInterceptor {
 
 ## Bidirectional Streaming
 
-### **Full Duplex Streaming**
+### Full Duplex Streaming
 
 **Двунаправленный **streaming**:**
 
@@ -360,7 +360,7 @@ public class BidirectionalStreamingServiceImpl implements BidirectionalStreaming
 
 ## Metadata
 
-### **Request Metadata**
+### Request Metadata
 
 **Работа с метаданными:**
 
@@ -386,7 +386,7 @@ public class MetadataServiceImpl implements UserService {
 
 ## Security
 
-### **gRPC Security**
+### gRPC Security
 
 **Безопасность **gRPC**:**
 
@@ -397,7 +397,7 @@ quarkus.grpc.server.ssl.key=server.key
 quarkus.grpc.server.use-ssl=true
 ```
 
-### **Authentication**
+### Authentication
 
 **Аутентификация:**
 
@@ -427,7 +427,7 @@ public class AuthInterceptor implements ServerInterceptor {
 
 ## gRPC Performance Optimization
 
-### **Connection Pooling**
+### Connection Pooling
 
 **Оптимизация пула соединений:**
 
@@ -437,7 +437,7 @@ quarkus.grpc.clients.user-service.keep-alive-timeout=5s
 quarkus.grpc.clients.user-service.max-connection-idle=10s
 ```
 
-### **Message Compression**
+### Message Compression
 
 **Сжатие сообщений:**
 
@@ -446,7 +446,7 @@ quarkus.grpc.server.compression=gzip
 quarkus.grpc.clients.user-service.compression=gzip
 ```
 
-### **Load Balancing**
+### Load Balancing
 
 **Балансировка нагрузки:**
 
@@ -456,7 +456,7 @@ quarkus.grpc.clients.user-service.hosts=localhost:9000,localhost:9001,localhost:
 
 ## Advanced gRPC Patterns
 
-### **Circuit Breaker Pattern**
+### Circuit Breaker Pattern
 
 **Реализация **Circuit Breaker**:**
 
@@ -473,7 +473,7 @@ public class CircuitBreakerUserService implements UserService {
 }
 ```
 
-### **Retry Pattern**
+### Retry Pattern
 
 **Реализация **retry**:**
 

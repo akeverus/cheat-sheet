@@ -18,28 +18,28 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Concurrency и эффекты
-- [Akka](scala-akka.md)
-- [Cats / Cats Effect](scala-cats.md)
-- [ZIO](scala-zio.md)
+- [[scala-akka|Akka]]
+- [[scala-cats|Cats / Cats Effect]]
+- [[scala-zio|ZIO]]
 
 ### Web / REST
-- [Play](scala-play.md)
+- [[scala-play|Play]]
 
 ### Persistence
-- [Slick](scala-slick.md)
-- [Doobie](scala-doobie.md)
+- [[scala-slick|Slick]]
+- [[scala-doobie|Doobie]]
 
 ### JSON
-- [Circe](scala-circe.md)
+- [[scala-circe|Circe]]
 
 ### Testing
-- [ScalaTest](scala-scalatest.md)
+- [[scala-scalatest|ScalaTest]]
 
 ### Соседние разделы
-- [Libraries](../README.md)
-- [Scala Frameworks](../../frameworks/scala-frameworks/README.md)
-- [Scala (язык)](../../languages/scala/README.md)
-- [Java-библиотеки](../java/README.md)
+- [[README|Libraries]]
+- [[README|Scala Frameworks]]
+- [[README|Scala (язык)]]
+- [[README|Java-библиотеки]]
 
 ## Содержание
 
@@ -77,6 +77,6 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Scala-фреймворки — [frameworks/scala-frameworks](../../frameworks/scala-frameworks/README.md)
-- Язык Scala — [languages/scala](../../languages/scala/README.md)
-- Смежные JVM-библиотеки — [libraries/java](../java/README.md)
+- Scala-фреймворки — [[README|frameworks/scala-frameworks]]
+- Язык Scala — [[README|languages/scala]]
+- Смежные JVM-библиотеки — [[README|libraries/java]]

@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "../java/java-basics.md"]
 ---
 
-# **Scala Java Interoperability**
+# Scala Java Interoperability
 
 Кратко: полное руководство по взаимодействию **Scala** и **Java**: использование **Java** библиотек, вызов **Scala** из **Java**, миграция.
 
@@ -72,7 +72,7 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
   - [Использование с **Java Concurrency** для параллельных операций](#использование-с-java-concurrency-для-параллельных-операций)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Interop**
+## Введение в Interop
 
 **Scala** полностью совместим с **Java** и может использовать **Java** библиотеки напрямую, так как оба языка компилируются в байт-код **JVM**. Это означает, что **Scala** может использовать огромную экосистему **Java** библиотек без дополнительных оберток или адаптеров. Оба языка работают на одной и той же виртуальной машине и используют одинаковые примитивные типы и объекты на уровне байт-кода.
 
@@ -82,13 +82,13 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
 
 - **Scala** код может вызывать **Java** код напрямую. **Java** классы, методы и библиотеки доступны в **Scala** без дополнительных преобразований. Это позволяет использовать любую **Java** библиотеку в **Scala** проектах, что значительно расширяет доступные инструменты и решения.
 
-- **Java** код может вызывать **Scala** код. **Scala** классы компилируются в стандартный байт-код **JVM**, который может быть использован из **Java**. Однако некоторые особенности **Scala** (**например, default параметры, implicit параметры**) требуют специальных аннотаций для удобного использования из **Java**.
+- **Java** код может вызывать **Scala** код. **Scala** классы компилируются в стандартный байт-код **JVM**, который может быть использован из **Java**. Однако некоторые особенности **Scala** (например, default параметры, implicit параметры) требуют специальных аннотаций для удобного использования из **Java**.
 
-- Оба языка используют одинаковые типы данных на уровне **JVM**. Примитивные типы (**Int, `Long`, `Double` и т.д.**) и ссылочные типы (**String, `Object` и т.д.**) соответствуют друг другу. Это обеспечивает прозрачную передачу данных между **Java** и **Scala** кодом.
+- Оба языка используют одинаковые типы данных на уровне **JVM**. Примитивные типы (Int, `Long`, `Double` и т.д.) и ссылочные типы (String, `Object` и т.д.) соответствуют друг другу. Это обеспечивает прозрачную передачу данных между **Java** и **Scala** кодом.
 
-- Коллекции требуют преобразования. **Scala** и **Java** имеют разные коллекции, поэтому при передаче коллекций между языками необходимо использовать преобразователи из пакета `**scala.jdk.CollectionConverters**`. Это позволяет конвертировать коллекции в обе стороны без потери данных.
+- Коллекции требуют преобразования. **Scala** и **Java** имеют разные коллекции, поэтому при передаче коллекций между языками необходимо использовать преобразователи из пакета `scala.jdk.CollectionConverters`. Это позволяет конвертировать коллекции в обе стороны без потери данных.
 
-## Использование **Java** библиотек
+## Использование Java библиотек
 
 ### Прямое использование
 
@@ -106,7 +106,7 @@ map.put("one", 1)
 map.put("two", 2)
 ```
 
-### Использование **Java Streams**
+### Использование Java Streams
 
 ```scala
 import java.util.stream.Collectors
@@ -118,7 +118,7 @@ val result = javaList.stream()
   .collect(Collectors.toList())
 ```
 
-## Вызов **Scala** из **Java**
+## Вызов Scala из Java
 
 **Scala** код может быть вызван из **Java**:**
 
@@ -185,7 +185,7 @@ class UserService(repository: UserRepository) {
 
 ## Лучшие практики
 
-### Использование **Option** вместо **null**
+### Использование Option вместо null
 
 ```scala
 // Хорошо - использование Option
@@ -213,7 +213,7 @@ val scalaList = javaList.asScala.toList
 val mixed = javaList  // может вызвать проблемы
 ```
 
-## Обработка **null**
+## Обработка null
 
 **Scala** использует **Option** для безопасной работы с возможными **null** значениями:**
 
@@ -238,7 +238,7 @@ findUserSafe(1L) match {
 
 Использование **Option** вместо **null** делает код более безопасным и выразительным.
 
-## Аннотации для **Java**
+## Аннотации для Java
 
 **Scala** предоставляет аннотации для улучшения совместимости с **Java**:**
 
@@ -253,7 +253,7 @@ class User(@BeanProperty var name: String, @BeanProperty var age: Int)
 
 Аннотации помогают создавать **Scala** код, который легко используется из **Java**.
 
-## Использование **Java Generics**
+## Использование Java Generics
 
 **Scala generics** совместимы с **Java generics**:**
 
@@ -267,9 +267,9 @@ class Box[T](val value: T)
 
 **Generics** работают одинаково в обоих языках на уровне **JVM**.
 
-## Продвинутые техники **interop**
+## Продвинутые техники interop
 
-### Использование **Java Streams** из **Scala**
+### Использование Java Streams из Scala
 
 **Scala** может использовать **Java Streams API**.
 
@@ -286,7 +286,7 @@ val result = javaList.stream()
   .asScala
 ```
 
-### Использование **Scala Futures** с **Java CompletableFuture**
+### Использование Scala Futures с Java CompletableFuture
 
 **Scala Futures** могут работать с **Java CompletableFuture**.
 
@@ -304,7 +304,7 @@ val javaCompletableFuture: CompletableFuture[Int] = CompletableFuture.supplyAsyn
 val scalaFutureFromJava: Future[Int] = javaCompletableFuture.toScala
 ```
 
-### Использование **Java Optional** с **Scala Option**
+### Использование Java Optional с Scala Option
 
 **Scala Option** может работать с **Java Optional**.
 
@@ -330,9 +330,9 @@ val scalaOptionFromJava: Option[String] = javaOptionalValue.toScala
 
 ## Заключение
 
-## Расширенные техники **Interop**
+## Расширенные техники Interop
 
-### Использование **Java Reflection** из **Scala**
+### Использование Java Reflection из Scala
 
 **Java Reflection** может использоваться из **Scala** для динамической работы с классами.
 
@@ -344,7 +344,7 @@ val method: Method = classOf[String].getMethod("substring", classOf[Int])
 val result = method.invoke("Hello", 2)  // "llo"
 ```
 
-### Работа с **Java Annotations**
+### Работа с Java Annotations
 
 **Java** аннотации могут использоваться в **Scala** коде.
 
@@ -365,7 +365,7 @@ class Service {
 }
 ```
 
-### Миграция **Java** кода в **Scala**
+### Миграция Java кода в Scala
 
 Постепенная миграция **Java** кода в **Scala** позволяет сохранить работоспособность приложения.
 
@@ -387,7 +387,7 @@ val name = javaUser.getName()
 
 **Scala** и **Java** полностью совместимы на уровне **JVM**, что позволяет использовать существующие **Java** библиотеки и постепенно мигрировать код. Понимание особенностей **interop**, преобразования коллекций, обработки **null**, использования **Java Streams**, работы с **Java CompletableFuture**, работы с **Java Optional**, использования **Java Reflection** из **Scala**, работы с **Java Annotations**, и миграции **Java** кода в **Scala** критично для успешной интеграции. Использование **Option**, аннотаций, правильное преобразование коллекций, использование библиотек для преобразования между типами, использование **Java Reflection** для динамической работы с классами, работа с **Java Annotations**, и постепенная миграция **Java** кода в **Scala** обеспечивает плавную интеграцию между двумя языками. **Interop** особенно важен для создания приложений, которые должны использовать существующие **Java** библиотеки, постепенно мигрировать код, интегрироваться с **Java** экосистемой, и использовать **Java Reflection** и **Annotations**.
 
-### Практические примеры: Использование **Java** библиотек в **Scala**
+### Практические примеры: Использование Java библиотек в Scala
 
 ```scala
 import java.util.concurrent.{CompletableFuture, Executors}
@@ -411,7 +411,7 @@ val javaFuture = CompletableFuture.supplyAsync(() => "result")
 val scalaFuture = javaFuture.toScalaFuture
 ```
 
-### Практические примеры: Миграция **Java** кода в **Scala**
+### Практические примеры: Миграция Java кода в Scala
 
 ```scala
 // Java код
@@ -439,7 +439,7 @@ class UserService(repository: UserRepository) {
 }
 ```
 
-### Практические примеры: Работа с **Java Optional**
+### Практические примеры: Работа с Java Optional
 
 ```scala
 import java.util.Optional
@@ -467,7 +467,7 @@ val javaOpt: Optional[String] = Optional.of("value")
 val scalaOpt: Option[String] = javaOpt.toScalaOption
 ```
 
-### Практические примеры: Использование **Java NIO**
+### Практические примеры: Использование Java NIO
 
 ```scala
 import java.nio.file.{Files, Paths, StandardOpenOption}
@@ -495,7 +495,7 @@ def copyFile(source: String, dest: String): Unit = {
 }
 ```
 
-### Практические примеры: Использование **Java Concurrency**
+### Практические примеры: Использование Java Concurrency
 
 ```scala
 import java.util.concurrent.{ExecutorService, Executors, Future, Callable}
@@ -528,7 +528,7 @@ val javaFuture = executeJavaTask(javaTask)
 val scalaFuture = javaFutureToScala(javaFuture)
 ```
 
-### Практические примеры: Использование **Java Time API**
+### Практические примеры: Использование Java Time API
 
 ```scala
 import java.time.{LocalDate, LocalDateTime, LocalTime, ZonedDateTime}
@@ -550,7 +550,7 @@ val parsed = LocalDateTime.parse("2024-01-01 12:00:00", formatter)
 val zonedDateTime = ZonedDateTime.now(java.time.ZoneId.of("UTC"))
 ```
 
-### Практические примеры: Использование **Java Collections**
+### Практические примеры: Использование Java Collections
 
 ```scala
 import java.util.{List => JList, Map => JMap, Set => JSet}
@@ -570,7 +570,7 @@ val javaSet: JSet[Int] = scalaSet.asJava
 val backToScalaSet: Set[Int] = javaSet.asScala.toSet
 ```
 
-### Практические примеры: Использование **Java Streams**
+### Практические примеры: Использование Java Streams
 
 ```scala
 import java.util.stream.{Stream => JStream, Collectors}
@@ -592,7 +592,7 @@ val result = JStream.of(1, 2, 3, 4, 5)
 // List(4, 8)
 ```
 
-### Практические примеры: Использование **Java Reflection**
+### Практические примеры: Использование Java Reflection
 
 ```scala
 import java.lang.reflect.{Method, Field, Constructor}
@@ -615,7 +615,7 @@ val result = method.invoke("hello")
 // "HELLO"
 ```
 
-### Практические примеры: Использование **Java Annotations**
+### Практические примеры: Использование Java Annotations
 
 ```scala
 import java.lang.annotation.{Annotation, Retention, RetentionPolicy}
@@ -632,7 +632,7 @@ val annotations: Array[Annotation] = classOf[MyClass].getAnnotations()
 val hasAnnotation = classOf[MyClass].isAnnotationPresent(classOf[MyAnnotation])
 ```
 
-### Практические примеры: Использование **Java NIO** для асинхронного I/O
+### Практические примеры: Использование Java NIO для асинхронного I/O
 
 ```scala
 import java.nio.channels.{AsynchronousFileChannel, CompletionHandler}
@@ -673,7 +673,7 @@ def readFileAsync(path: String): scala.concurrent.Future[String] = {
 
 Использование **Java** библиотек в **Scala** приложениях, обработка **null**, конвертация между **Java** и **Scala** типами, использование **Java** коллекций, **Java Streams**, **Java Time API**, **Java NIO**, **Java Concurrency**, **Java Reflection** и **Java Annotations** критично для создания полнофункциональных, совместимых приложений.
 
-### Использование с различными **Java** библиотеками
+### Использование с различными Java библиотеками
 
 ```scala
 import java.util.{Properties, Properties => JProperties}
@@ -689,7 +689,7 @@ val scalaMap = props.asScala.toMap
 // Map("key1" -> "value1", "key2" -> "value2")
 ```
 
-### Использование с **Java NIO** для работы с файлами
+### Использование с Java NIO для работы с файлами
 
 ```scala
 import java.nio.file.{Paths, Files, StandardOpenOption}
@@ -704,7 +704,7 @@ val content = List("line1", "line2", "line3")
 Files.write(path, content.asJava, StandardOpenOption.CREATE)
 ```
 
-### Использование с **Java Streams** для обработки данных
+### Использование с Java Streams для обработки данных
 
 ```scala
 import java.util.stream.{Stream, Collectors}
@@ -723,7 +723,7 @@ val scalaList = javaStream
 // List(4, 8)
 ```
 
-### Использование с **Java Concurrency** для параллельных операций
+### Использование с Java Concurrency для параллельных операций
 
 ```scala
 import java.util.concurrent.{ExecutorService, Executors, Future => JFuture}

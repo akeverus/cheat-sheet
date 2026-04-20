@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cassandra**: Моделирование данных — Проектирование схем в распределенной базе данных
+# Cassandra: Моделирование данных — Проектирование схем в распределенной базе данных
 
 Комплексное руководство по моделированию данных в **Apache Cassandra**: денормализация, паттерны запросов, партиционирование и оптимизация схем.
 
@@ -41,7 +41,7 @@ updated: "2026-02-11"
 
 - [Принципы моделирования данных в **Cassandra**](#принципы-моделирования-данных-в-cassandra)
   - [Отличия от реляционных баз данных](#отличия-от-реляционных-баз-данных)
-    - [Реляционная модель (**PostgreSQL/MySQL**)](#реляционная-модель-postgresqlmysql)
+    - [Реляционная модель (PostgreSQL/MySQL)](#реляционная-модель-postgresqlmysql)
     - [**Cassandra** модель](#cassandra-модель)
   - [Основные принципы](#основные-принципы)
     - [1. **Query-First Design**](#1-query-first-design)
@@ -87,11 +87,11 @@ updated: "2026-02-11"
 - [Вторичные индексы](#вторичные-индексы)
   - [Создание вторичных индексов](#создание-вторичных-индексов)
     - [Простые вторичные индексы](#простые-вторичные-индексы)
-    - [**SASI** индексы (**SSTable Attached Secondary Index**)](#sasi-индексы-sstable-attached-secondary-index)
+    - [**SASI** индексы (SSTable Attached Secondary Index)](#sasi-индексы-sstable-attached-secondary-index)
   - [Когда использовать вторичные индексы](#когда-использовать-вторичные-индексы)
     - [Подходящие случаи](#подходящие-случаи)
     - [Когда избегать](#когда-избегать)
-- [Пользовательские типы (**UDT**)](#пользовательские-типы-udt)
+- [Пользовательские типы (UDT)](#пользовательские-типы-udt)
   - [Создание и использование **UDT**](#создание-и-использование-udt)
     - [Определение **UDT**](#определение-udt)
     - [Использование **UDT** в таблицах](#использование-udt-в-таблицах)
@@ -154,13 +154,13 @@ updated: "2026-02-11"
   - [Вызовы и решения:](#вызовы-и-решения)
   - [Когда выбирать **Cassandra**:](#когда-выбирать-cassandra)
 
-## Принципы моделирования данных в **Cassandra**
+## Принципы моделирования данных в Cassandra
 
 ### Отличия от реляционных баз данных
 
-#### Реляционная модель (**PostgreSQL/MySQL**)
+#### Реляционная модель (PostgreSQL/MySQL)
 
-Пример нормализованной схемы в реляционной БД для сравнения с **Cassandra** (**SQL**).
+Пример нормализованной схемы в реляционной БД для сравнения с **Cassandra** (SQL).
 
 ```sql
 -- Нормализованная схема
@@ -193,7 +193,7 @@ JOIN order_items oi ON o.id = oi.order_id
 WHERE u.email = 'user@example.com';
 ```
 
-#### **Cassandra** модель
+#### Cassandra модель
 ```cql
 -- Денормализованная схема для конкретных запросов
 CREATE TABLE user_orders (
@@ -215,7 +215,7 @@ WHERE user_id = ? AND created_at >= ?;
 
 ### Основные принципы
 
-#### 1. **Query-First Design**
+#### 1. Query-First Design
 ```text
 ❌ Традиционный подход:
    Создать нормализованную схему → Написать запросы
@@ -241,7 +241,7 @@ WHERE user_id = ? AND created_at >= ?;
 
 ## Анализ паттернов запросов
 
-### Методология **Query-Based Modeling**
+### Методология Query-Based Modeling
 
 #### Шаг 1: Сбор требований
 ```java
@@ -283,7 +283,7 @@ public class QueryRequirements {
 }
 ```
 
-#### Шаг 2: Определение **access patterns**
+#### Шаг 2: Определение access patterns
 ```java
 @Service
 public class AccessPatternAnalyzer {
@@ -468,9 +468,9 @@ public class QueryPrioritizer {
 
 ## Партиционирование и ключи
 
-### Выбор **Partition Key**
+### Выбор Partition Key
 
-#### Хорошие **Partition Keys**
+#### Хорошие Partition Keys
 ```cql
 -- Высокая кардинальность, равномерное распределение
 CREATE TABLE user_events (
@@ -504,7 +504,7 @@ CREATE TABLE location_events (
 );
 ```
 
-#### Проблемные **Partition Keys**
+#### Проблемные Partition Keys
 ```cql
 -- Низкая кардинальность - все данные в одной партиции
 CREATE TABLE system_config (
@@ -523,7 +523,7 @@ CREATE TABLE daily_orders (
 -- Все заказы за день в одной партиции
 ```
 
-### **Clustering Columns**
+### Clustering Columns
 
 #### Определение порядка сортировки
 ```cql
@@ -569,7 +569,7 @@ WHERE sensor_group = ? AND sensor_id = ?
 AND timestamp >= ? AND timestamp <= ?;
 ```
 
-### **Bucket Pattern**
+### Bucket Pattern
 
 #### Временные бакеты
 ```cql
@@ -694,7 +694,7 @@ FROM users u
 JOIN orders o ON u.user_id = o.user_id;
 ```
 
-#### **Batch** синхронизация
+#### Batch синхронизация
 ```java
 @Service
 public class DataDenormalizationService {
@@ -727,7 +727,7 @@ public class DataDenormalizationService {
 
 ## Типичные паттерны моделирования
 
-### **Time Series Pattern**
+### Time Series Pattern
 
 #### Временные ряды
 ```cql
@@ -782,7 +782,7 @@ ORDER BY log_id DESC
 LIMIT 100;
 ```
 
-### **Queue Pattern**
+### Queue Pattern
 
 #### Очереди сообщений
 ```cql
@@ -809,7 +809,7 @@ AND task_id = (
 );
 ```
 
-#### **Inbox Pattern**
+#### Inbox Pattern
 ```cql
 -- Входящие сообщения пользователя
 CREATE TABLE user_inbox (
@@ -830,7 +830,7 @@ WHERE user_id = ? AND read = false
 ORDER BY created_at DESC;
 ```
 
-### **Graph Pattern**
+### Graph Pattern
 
 #### Связи между сущностями
 ```cql
@@ -857,7 +857,7 @@ WHERE ur1.user_id = ? AND ur2.user_id = ?
 AND ur1.relation_type = 'friend' AND ur2.relation_type = 'friend';
 ```
 
-### **Search Pattern**
+### Search Pattern
 
 #### Поисковые индексы
 ```cql
@@ -880,7 +880,7 @@ ORDER BY relevance_score DESC
 LIMIT 20;
 ```
 
-#### **Full-text search**
+#### Full-text search
 ```cql
 -- SASI индекс для полнотекстового поиска
 CREATE CUSTOM INDEX product_name_sasi_idx
@@ -915,7 +915,7 @@ SELECT * FROM orders WHERE status = 'pending' ALLOW FILTERING;
 SELECT * FROM products WHERE category = 'electronics' ALLOW FILTERING;
 ```
 
-#### **SASI** индексы (**SSTable `Attached Secondary` Index**)
+#### SASI индексы (SSTable `Attached Secondary` Index)
 ```cql
 -- SASI для префиксного поиска
 CREATE CUSTOM INDEX user_name_sasi
@@ -975,11 +975,11 @@ CREATE INDEX idx_users_active ON users(active);
 -- active имеет только 2 значения, индекс бесполезен
 ```
 
-## Пользовательские типы (**UDT**)
+## Пользовательские типы (UDT)
 
-### Создание и использование **UDT**
+### Создание и использование UDT
 
-#### Определение **UDT**
+#### Определение UDT
 ```cql
 -- Адрес
 CREATE TYPE address (
@@ -1008,7 +1008,7 @@ CREATE TYPE product_specs (
 );
 ```
 
-#### Использование **UDT** в таблицах
+#### Использование UDT в таблицах
 ```cql
 -- Компании
 CREATE TABLE companies (
@@ -1047,7 +1047,7 @@ CREATE TYPE order_item (
 );
 ```
 
-### Работа с **UDT** в **Java**
+### Работа с UDT в Java
 
 ```java
 @Configuration
@@ -1239,7 +1239,7 @@ LANGUAGE java AS '
 ';
 ```
 
-### **TTL** и автоматическая очистка
+### TTL и автоматическая очистка
 
 #### Управление временем жизни данных
 ```cql
@@ -1310,7 +1310,7 @@ public class DataArchivalService {
 
 ### Геохэширование
 
-#### **Geohash** для **Cassandra**
+#### Geohash для Cassandra
 ```cql
 -- Таблица геособытий
 CREATE TABLE geo_events (
@@ -1339,7 +1339,7 @@ CREATE TABLE location_search (
 );
 ```
 
-#### Работа с геоданными в **Java**
+#### Работа с геоданными в Java
 ```java
 @Service
 public class GeoService {
@@ -1470,7 +1470,7 @@ CREATE TABLE user_preferences (
 
 ### Инструменты миграции
 
-#### **Cassandra Migration**
+#### Cassandra Migration
 ```java
 @Configuration
 public class CassandraMigrationConfig {
@@ -1506,7 +1506,7 @@ CREATE TABLE user_preferences (
 );
 ```
 
-#### **Liquibase** для **Cassandra**
+#### Liquibase для Cassandra
 ```xml
 <!-- liquibase changelog -->
 <databaseChangeLog>
@@ -1713,7 +1713,7 @@ class OptimizationRecommendation {
 
 ## Инструменты моделирования
 
-### **Cassandra Designer**
+### Cassandra Designer
 
 #### Визуальное моделирование
 ```java
@@ -1809,7 +1809,7 @@ public class CassandraModelDesigner {
 }
 ```
 
-### **DataStax Studio**
+### DataStax Studio
 
 #### Анализ и оптимизация запросов
 ```cql
@@ -1829,7 +1829,7 @@ LIMIT 10;
 -- - Рекомендации по оптимизации
 ```
 
-### **KillrVideo**
+### KillrVideo
 
 #### Референсная архитектура
 ```java
@@ -1943,22 +1943,22 @@ public class VideoService {
 
 ### Проектирование схемы
 
-#### 1. **Query-First Design**
+#### 1. Query-First Design
 - **Определяйте запросы до схемы**
 - **Создавайте таблицы для конкретных паттернов**
 - **Денормализуйте для производительности**
 - **Тестируйте на реальных данных**
 
-#### 2. Выбор **Partition Key**
+#### 2. Выбор Partition Key
 - **Высокая кардинальность** для равномерного распределения
 - **Естественное распределение** запросов
 - **Избегайте hot partitions**
 - **Используйте composite keys** при необходимости
 
-#### 3. **Clustering Columns**
+#### 3. Clustering Columns
 - **Определяйте порядок сортировки**
 - **Используйте для range queries**
-- **Ограничивайте количество** (**не более 4-5**)
+- **Ограничивайте количество** (не более 4-5)
 - **Учитывайте размер clustering key**
 
 ### Оптимизация производительности
@@ -1999,7 +1999,7 @@ public class VideoService {
 
 #### 1. Безопасность данных
 - **Шифрование** в транзите и at **rest**
-- **RBAC** (**Role-`Based Access` Control**)
+- **RBAC** (Role-`Based Access` Control)
 - **Аудит** доступа к данным
 - **Маскировка** чувствительных данных
 
@@ -2083,7 +2083,7 @@ public class VideoService {
 3. **Индексы** — вторичные индексы и **SASI**
 4. **TTL** — автоматическая очистка временных данных
 
-### Инструменты и **best practices**:
+### Инструменты и best practices:
 
 - **DataStax Studio** для визуального моделирования
 - **CQL** для определения схемы
@@ -2097,7 +2097,7 @@ public class VideoService {
 3. **Консистентность** — **trade-off** между скоростью и надежностью
 4. **Масштабирование** — требует планирования с самого начала
 
-### Когда выбирать **Cassandra**:
+### Когда выбирать Cassandra:
 
 - **Big Data** с высокими требованиями к масштабируемости
 - **Time-series данные** — логи, метрики, события

@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 ---
 
-# **Scala Implicit**
+# Scala Implicit
 
 Кратко: полное руководство по **Implicit** в **Scala**: **implicit** параметры, **implicit conversions**, **type classes**, **Scala** 3 **given**/**using**.
 
@@ -52,10 +52,10 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
   - [Использование **context bounds** для краткости](#использование-context-bounds-для-краткости)
   - [Документирование **implicit** значений](#документирование-implicit-значений)
 - [Продвинутые техники работы с **Implicit**](#продвинутые-техники-работы-с-implicit)
-  - [**Implicit Classes** (**расширенные**)](#implicit-classes-расширенные)
-  - [**Implicit Conversions** (**расширенные**)](#implicit-conversions-расширенные)
-  - [**Type Classes** (**расширенные**)](#type-classes-расширенные)
-- [Заключение (**расширенное**)](#заключение-расширенное)
+  - [**Implicit Classes** (расширенные)](#implicit-classes-расширенные)
+  - [**Implicit Conversions** (расширенные)](#implicit-conversions-расширенные)
+  - [**Type Classes** (расширенные)](#type-classes-расширенные)
+- [Заключение (расширенное)](#заключение-расширенное)
 - [Дополнительные техники работы с **Implicit**](#дополнительные-техники-работы-с-implicit)
   - [**Implicit Conversions** для расширения типов](#implicit-conversions-для-расширения-типов)
   - [**Type Classes** с **Implicit**](#type-classes-с-implicit)
@@ -71,7 +71,7 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
   - [Использование с различными техниками для **Type Classes**](#использование-с-различными-техниками-для-type-classes)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Implicit**
+## Введение в Implicit
 
 **Implicit** механизм в **Scala** позволяет автоматически передавать параметры и преобразовывать типы. Это инструмент, который требует осторожного использования.
 
@@ -82,7 +82,7 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - **Context Parameters**: передача конфигурации и зависимостей
 - **Type Conversions**: автоматическое преобразование типов
 
-## **Implicit** параметры
+## Implicit параметры
 
 **Implicit** параметры автоматически передаются из неявного контекста:**
 
@@ -101,7 +101,7 @@ greet("Bob")("Hi")  // "Hi, Bob!"
 
 **Implicit** параметры особенно полезны для передачи контекстной информации, такой как **ExecutionContext**, **Logger** или конфигурация.
 
-## **Implicit conversions**
+## Implicit conversions
 
 **Implicit conversions** позволяют автоматически преобразовывать типы:**
 
@@ -124,7 +124,7 @@ implicit class RichInt(val x: Int) extends AnyVal {
 
 **Implicit conversions** следует использовать осторожно, так как они могут сделать код менее явным.
 
-## **Type Classes**
+## Type Classes
 
 **Type classes** позволяют добавлять поведение к типам без изменения их определения:**
 
@@ -149,9 +149,9 @@ print("hello") // "String(hello)"
 
 **Type classes** обеспечивают полиморфизм без наследования, что делает код более гибким и композируемым.
 
-## **Scala** 3: **given** и **using**
+## Scala 3: given и using
 
-**В **Scala** 3 **implicit** заменены на `**given**` и `**using**` для большей ясности:**
+**В **Scala** 3 **implicit** заменены на `given` и `using` для большей ясности:**
 
 ```scala
 // Scala 3 синтаксис
@@ -166,7 +166,7 @@ greet("Alice")  // "Hello, Alice!"
 
 Новый синтаксис делает использование **implicit** более явным и понятным.
 
-### **Implicit scope** и разрешение
+### Implicit scope и разрешение
 
 **Scala** ищет **implicit** значения в определенном порядке:**
 
@@ -195,7 +195,7 @@ import MyImplicits._
 def method(implicit s: String) = s
 ```
 
-### **Implicit classes** для **extension methods**
+### Implicit classes для extension methods
 
 **Implicit classes** позволяют добавлять методы к существующим типам:**
 
@@ -217,7 +217,7 @@ implicit class RichInt(val x: Int) extends AnyVal {
 3.times(println("Hello"))  // печатает "Hello" 3 раза
 ```
 
-### **Type Classes** — расширенные примеры
+### Type Classes — расширенные примеры
 
 **Type classes** обеспечивают полиморфизм без наследования:**
 
@@ -244,7 +244,7 @@ serialize("hello")  // "\"hello\""
 serialize(List(1, 2, 3))  // "[1,2,3]"
 ```
 
-### **Context Bounds**
+### Context Bounds
 
 **Context bounds** — синтаксический сахар для **implicit** параметров:**
 
@@ -262,7 +262,7 @@ def serialize[A: Serializer](a: A): String = {
 // Оба эквивалентны, но context bound более лаконичен
 ```
 
-### **Implicit conversions** — когда использовать
+### Implicit conversions — когда использовать
 
 **Implicit conversions** следует использовать осторожно:**
 
@@ -274,7 +274,7 @@ implicit def intToDouble(x: Int): Double = x.toDouble
 implicit def stringToInt(s: String): Int = s.toInt  // может выбросить исключение
 ```
 
-### Практический пример: **Type class** для **JSON** сериализации
+### Практический пример: Type class для JSON сериализации
 
 ```scala
 // Type class для JSON сериализации
@@ -302,7 +302,7 @@ toJson(Some("hello"))  // "\"hello\""
 toJson(None: Option[String])  // "null"
 ```
 
-### Практический пример: **Type class** для сравнения
+### Практический пример: Type class для сравнения
 
 ```scala
 // Type class для сравнения
@@ -324,7 +324,7 @@ max(5, 3)  // 5
 max("apple", "banana")  // "banana"
 ```
 
-### **Scala** 3: **given** и **using** — подробнее
+### Scala 3: given и using — подробнее
 
 **В **Scala** 3 **implicit** заменены на более явный синтаксис:**
 
@@ -345,7 +345,7 @@ given defaultGreeting: String = "Hello"
 greet("Alice")  // "Hello, Alice!"
 ```
 
-### **Scala** 3: **Extension Methods**
+### Scala 3: Extension Methods
 
 **В **Scala** 3 **extension methods** более явные:**
 
@@ -364,7 +364,7 @@ extension (x: Int) {
 5.isEven  // false
 ```
 
-### Избегание конфликтов **implicit**
+### Избегание конфликтов implicit
 
 **При наличии нескольких **implicit** значений одного типа может возникнуть конфликт:**
 
@@ -388,7 +388,7 @@ def greet(name: String)(implicit greeting: Greeting): String = {
 }
 ```
 
-### Практический пример: **Type class** для моноидов
+### Практический пример: Type class для моноидов
 
 ```scala
 // Type class для моноидов
@@ -420,7 +420,7 @@ combineAll(List("a", "b", "c"))  // "abc"
 
 ## Лучшие практики
 
-### Использование **type classes** вместо наследования
+### Использование type classes вместо наследования
 
 ```scala
 // Хорошо - использование type classes
@@ -449,7 +449,7 @@ implicit def intToString(x: Int): String = x.toString
 processString(42)  // неявное преобразование может скрыть ошибки
 ```
 
-### Использование **context bounds** для краткости
+### Использование context bounds для краткости
 
 ```scala
 // Хорошо - context bounds для краткости
@@ -463,7 +463,7 @@ def serialize[A](a: A)(implicit serializer: Serializer[A]): String = {
 }
 ```
 
-### Документирование **implicit** значений
+### Документирование implicit значений
 
 **Всегда документируйте **implicit** значения:**
 
@@ -475,9 +475,9 @@ def serialize[A](a: A)(implicit serializer: Serializer[A]): String = {
 implicit val intSerializer: Serializer[Int] = (a: Int) => a.toString
 ```
 
-## Продвинутые техники работы с **Implicit**
+## Продвинутые техники работы с Implicit
 
-### **Implicit Classes** (**расширенные**)
+### Implicit Classes (расширенные)
 
 **Implicit Classes** позволяют добавлять методы к существующим типам.
 
@@ -495,7 +495,7 @@ implicit class IntOps(val x: Int) extends AnyVal {
 3.times(println("Hello"))  // Выводит "Hello" 3 раза
 ```
 
-### **Implicit Conversions** (**расширенные**)
+### Implicit Conversions (расширенные)
 
 **Implicit Conversions** позволяют автоматически преобразовывать типы.
 
@@ -511,7 +511,7 @@ val result: Int = "42"  // Автоматическое преобразован
 val str: String = 42    // Автоматическое преобразование
 ```
 
-### **Type Classes** (**расширенные**)
+### Type Classes (расширенные)
 
 **Type Classes** позволяют добавлять поведение к типам без изменения их определения.
 
@@ -535,11 +535,11 @@ print(42)      // "Int(42)"
 print("hello") // "String(hello)"
 ```
 
-## Заключение (**расширенное**)
+## Заключение (расширенное)
 
-## Дополнительные техники работы с **Implicit**
+## Дополнительные техники работы с Implicit
 
-### **Implicit Conversions** для расширения типов
+### Implicit Conversions для расширения типов
 
 **Implicit Conversions** позволяют расширять функциональность существующих типов.
 
@@ -555,7 +555,7 @@ implicit class StringExtensions(val s: String) extends AnyVal {
 val number = "123".toIntOption  // Some(123)
 ```
 
-### **Type Classes** с **Implicit**
+### Type Classes с Implicit
 
 **Type Classes** позволяют создавать полиморфные абстракции.
 
@@ -575,7 +575,7 @@ def print[A](a: A)(implicit show: Show[A]): Unit = {
 }
 ```
 
-### **Scala** 3 **Contextual Abstractions**
+### Scala 3 Contextual Abstractions
 
 **Scala** 3 предоставляет более явный синтаксис для **implicit**.
 
@@ -590,7 +590,7 @@ def print[A](a: A)(using show: Show[A]): Unit = {
 }
 ```
 
-### Практические примеры: **Scala** 3 **given**/**using**
+### Практические примеры: Scala 3 given/using
 
 ```scala
 // Scala 3 синтаксис
@@ -608,7 +608,7 @@ def max[A](x: A, y: A)(using ord: Ordering[A]): A = {
 val result = max(10, 20)  // 20
 ```
 
-### Практические примеры: **Extension Methods** в **Scala** 3
+### Практические примеры: Extension Methods в Scala 3
 
 ```scala
 // Scala 3 extension methods
@@ -627,7 +627,7 @@ val reversed = "hello world".reverseWords  // "world hello"
 val isEmail = "test@example.com".isEmail   // true
 ```
 
-### Практические примеры: **Implicit Conversions** для расширения типов
+### Практические примеры: Implicit Conversions для расширения типов
 
 ```scala
 // Implicit class для расширения типов (Pimp My Library pattern)
@@ -651,9 +651,9 @@ val doubleValue = "3.14".toDoubleOption  // Some(3.14)
 val invalid = "abc".toIntOption       // None
 ```
 
-**Implicit** механизм является мощным инструментом **Scala** для создания гибкого и выразительного кода. Понимание **implicit** параметров, **conversions**, **type classes**, **context bounds**, **implicit scope**, **implicit classes**, **implicit Conversions** для расширения типов, **Type Classes** с **Implicit**, **Scala** 3 **Contextual Abstractions** (**given/using, extension methods**), расширения типов с помощью **implicit classes** и их практических применений позволяет эффективно использовать этот механизм. Переход на **Scala** 3 синтаксис (**given/using, extension methods**) делает код более явным и понятным. Правильное использование **implicit**, **implicit Conversions** для расширения функциональности существующих типов, создание **Type Classes** с **Implicit** для полиморфных абстракций, использование **Scala** 3 **Contextual Abstractions**, **extension methods** для расширения типов и расширение типов с помощью **implicit classes** критично для создания чистого и поддерживаемого кода. **Implicit** особенно полезен для создания библиотек, **DSL**, расширения функциональности существующих типов без изменения их определения, создания полиморфных абстракций, использования более явного синтаксиса в **Scala** 3 и расширения функциональности типов через **implicit classes** и **extension methods**.
+**Implicit** механизм является мощным инструментом **Scala** для создания гибкого и выразительного кода. Понимание **implicit** параметров, **conversions**, **type classes**, **context bounds**, **implicit scope**, **implicit classes**, **implicit Conversions** для расширения типов, **Type Classes** с **Implicit**, **Scala** 3 **Contextual Abstractions** (given/using, extension methods), расширения типов с помощью **implicit classes** и их практических применений позволяет эффективно использовать этот механизм. Переход на **Scala** 3 синтаксис (given/using, extension methods) делает код более явным и понятным. Правильное использование **implicit**, **implicit Conversions** для расширения функциональности существующих типов, создание **Type Classes** с **Implicit** для полиморфных абстракций, использование **Scala** 3 **Contextual Abstractions**, **extension methods** для расширения типов и расширение типов с помощью **implicit classes** критично для создания чистого и поддерживаемого кода. **Implicit** особенно полезен для создания библиотек, **DSL**, расширения функциональности существующих типов без изменения их определения, создания полиморфных абстракций, использования более явного синтаксиса в **Scala** 3 и расширения функциональности типов через **implicit classes** и **extension methods**.
 
-### Практические примеры: **Implicit** для конвертации типов
+### Практические примеры: Implicit для конвертации типов
 
 ```scala
 // Implicit conversion для автоматической конвертации
@@ -666,7 +666,7 @@ val number = 42
 printString(number)  // Автоматически конвертирует Int в String
 ```
 
-### Практические примеры: **Implicit** для расширения функциональности
+### Практические примеры: Implicit для расширения функциональности
 
 ```scala
 // Implicit class для добавления методов к существующим типам
@@ -686,7 +686,7 @@ val isValid = email.isEmail  // true
 val number = "123".toIntOption  // Some(123)
 ```
 
-### Практические примеры: **Scala** 3 **Extension Methods**
+### Практические примеры: Scala 3 Extension Methods
 
 ```scala
 // Scala 3 extension methods
@@ -734,7 +734,7 @@ val squared = number.square  // 25
 val even = number.isEven  // false
 ```
 
-### Использование с различными техниками для **Type Classes**
+### Использование с различными техниками для Type Classes
 
 ```scala
 // Type Class для сериализации

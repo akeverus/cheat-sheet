@@ -17,13 +17,13 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Scala Frameworks — обзор](scala-frameworks-overview.md) — карта экосистемы и сравнение
+- [[scala-frameworks-overview|Scala Frameworks — обзор]] — карта экосистемы и сравнение
 
 ### Соседние разделы
-- [Frameworks](../README.md)
-- [Java Frameworks](../java-frameworks/README.md)
-- [Scala (язык)](../../languages/scala/README.md)
-- [Scala-библиотеки](../../libraries/scala/README.md) — Akka, Cats, ZIO, Play, Slick, Doobie, Circe
+- [[README|Frameworks]]
+- [[README|Java Frameworks]]
+- [[README|Scala (язык)]]
+- [[README|Scala-библиотеки]] — Akka, Cats, ZIO, Play, Slick, Doobie, Circe
 
 ### Внешние ресурсы
 - [Play Framework](https://www.playframework.com/)
@@ -70,11 +70,11 @@ updated: "2026-04-17"
 ## Маршруты чтения
 
 - **Обзор экосистемы:** `scala-frameworks-overview.md` целиком.
-- **FP-путь:** `scala-frameworks-overview.md` (ZIO/http4s) → [scala-cats](../../libraries/scala/scala-cats.md) → [scala-zio](../../libraries/scala/scala-zio.md).
-- **Enterprise/реактивный путь:** `scala-frameworks-overview.md` (Play/Akka) → [scala-akka](../../libraries/scala/scala-akka.md).
+- **FP-путь:** `scala-frameworks-overview.md` (ZIO/http4s) → [[scala-cats]] → [[scala-zio]].
+- **Enterprise/реактивный путь:** `scala-frameworks-overview.md` (Play/Akka) → [[scala-akka]].
 
 ## Куда идти дальше
 
-- Библиотеки Scala — [libraries/scala](../../libraries/scala/README.md)
-- Язык Scala — [languages/scala](../../languages/scala/README.md)
-- Сравнение с Java-стеком — [java-frameworks](../java-frameworks/README.md)
+- Библиотеки Scala — [[README|libraries/scala]]
+- Язык Scala — [[README|languages/scala]]
+- Сравнение с Java-стеком — [[README|java-frameworks]]

@@ -77,7 +77,7 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### Простой интерфейс **API**
+### Простой интерфейс API
 
 Определение **Retrofit API** через **Java**-интерфейс с аннотациями @**GET**, @**POST**, @**Path**, @**Query**, @**Body**.
 
@@ -132,7 +132,7 @@ GitHubService service = retrofit.create(GitHubService.class);
 // При вызове методов интерфейса Retrofit автоматически выполняет HTTP запросы
 ```
 
-### **HTTP** методы
+### HTTP методы
 ```java
 /
  * Демонстрация различных HTTP методов в Retrofit
@@ -184,9 +184,9 @@ public interface ApiService {
 }
 ```
 
-### **Parameters**
+### Parameters
 
-#### **Path Parameters**
+#### Path Parameters
 ```java
 public interface ApiService {
     @GET("users/{userId}/posts/{postId}")
@@ -197,7 +197,7 @@ public interface ApiService {
 }
 ```
 
-#### **Query Parameters**
+#### Query Parameters
 ```java
 public interface SearchService {
     @GET("search")
@@ -217,7 +217,7 @@ public interface SearchService {
 }
 ```
 
-#### **Header Parameters**
+#### Header Parameters
 ```java
 public interface AuthService {
     @GET("profile")
@@ -232,7 +232,7 @@ public interface AuthService {
 }
 ```
 
-#### **Form Parameters**
+#### Form Parameters
 ```java
 public interface FormService {
     // URL-encoded form
@@ -254,9 +254,9 @@ public interface FormService {
 }
 ```
 
-## **Converters**
+## Converters
 
-### **Gson Converter**
+### Gson Converter
 ```java
 // Добавление Gson converter
 Retrofit retrofit = new Retrofit.Builder()
@@ -276,7 +276,7 @@ Retrofit retrofit = new Retrofit.Builder()
     .build();
 ```
 
-### **Jackson Converter**
+### Jackson Converter
 ```java
 Retrofit retrofit = new Retrofit.Builder()
     .baseUrl(BASE_URL)
@@ -294,7 +294,7 @@ Retrofit retrofit = new Retrofit.Builder()
     .build();
 ```
 
-### **Moshi Converter**
+### Moshi Converter
 ```java
 Retrofit retrofit = new Retrofit.Builder()
     .baseUrl(BASE_URL)
@@ -312,7 +312,7 @@ Retrofit retrofit = new Retrofit.Builder()
     .build();
 ```
 
-### **Custom Converter**
+### Custom Converter
 ```java
 public class CustomConverterFactory extends Converter.Factory {
 
@@ -342,9 +342,9 @@ Retrofit retrofit = new Retrofit.Builder()
     .build();
 ```
 
-## **Call Adapters**
+## Call Adapters
 
-### **Default Call**
+### Default Call
 ```java
 public interface ApiService {
     @GET("users")
@@ -371,7 +371,7 @@ call.enqueue(new Callback<List<User>>() {
 });
 ```
 
-### **RxJava Call Adapter**
+### RxJava Call Adapter
 ```java
 Retrofit retrofit = new Retrofit.Builder()
     .baseUrl(BASE_URL)
@@ -401,7 +401,7 @@ apiService.getUsers()
     });
 ```
 
-### **Coroutines Call Adapter**
+### Coroutines Call Adapter
 ```java
 Retrofit retrofit = new Retrofit.Builder()
     .baseUrl(BASE_URL)
@@ -429,7 +429,7 @@ try {
 }
 ```
 
-### **Guava Call Adapter**
+### Guava Call Adapter
 ```java
 Retrofit retrofit = new Retrofit.Builder()
     .baseUrl(BASE_URL)
@@ -460,9 +460,9 @@ Futures.addCallback(future, new FutureCallback<List<User>>() {
 });
 ```
 
-## **Interceptors**
+## Interceptors
 
-### **OkHttp Interceptors**
+### OkHttp Interceptors
 ```java
 // Application Interceptor
 class AuthInterceptor implements Interceptor {
@@ -518,7 +518,7 @@ Retrofit retrofit = new Retrofit.Builder()
     .build();
 ```
 
-### **Dynamic Headers**
+### Dynamic Headers
 ```java
 class DynamicHeaderInterceptor implements Interceptor {
     @Override
@@ -541,9 +541,9 @@ class DynamicHeaderInterceptor implements Interceptor {
 }
 ```
 
-## **Error Handling**
+## Error Handling
 
-### **Response Validation**
+### Response Validation
 ```java
 public interface ApiService {
     @GET("users/{id}")
@@ -594,7 +594,7 @@ call.enqueue(new Callback<User>() {
 });
 ```
 
-### **Custom Error Handling**
+### Custom Error Handling
 ```java
 public class ApiException extends RuntimeException {
     private int code;
@@ -615,9 +615,9 @@ public class ErrorHandlingCallAdapterFactory extends CallAdapter.Factory {
 }
 ```
 
-## **Advanced Features**
+## Advanced Features
 
-### **Multipart Upload**
+### Multipart Upload
 ```java
 public interface FileService {
     @Multipart
@@ -645,7 +645,7 @@ RequestBody description = RequestBody.create("Image description", MediaType.pars
 Call<UploadResponse> call = fileService.uploadFile(description, body);
 ```
 
-### **Streaming**
+### Streaming
 ```java
 public interface StreamingService {
     @Streaming
@@ -686,7 +686,7 @@ private boolean writeResponseBodyToDisk(ResponseBody body) {
 }
 ```
 
-### **Custom Annotations**
+### Custom Annotations
 ```java
 @Target(METHOD)
 @Retention(RUNTIME)
@@ -706,9 +706,9 @@ public class CacheableCallAdapterFactory extends CallAdapter.Factory {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration**
+### Configuration
 ```java
 @Configuration
 public class RetrofitConfig {
@@ -739,7 +739,7 @@ public class RetrofitConfig {
 }
 ```
 
-### **Service Layer**
+### Service Layer
 ```java
 @Service
 public class GitHubApiService {
@@ -771,9 +771,9 @@ public class GitHubApiService {
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit Testing** с **MockWebServer**
+### Unit Testing с MockWebServer
 ```java
 public class ApiServiceTest {
 
@@ -831,7 +831,7 @@ public class ApiServiceTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```java
 @SpringBootTest
 @AutoConfigureWireMock(port = 0)
@@ -860,9 +860,9 @@ public class ApiServiceIntegrationTest {
 }
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Connection Pooling**
+### Connection Pooling
 ```java
 OkHttpClient client = new OkHttpClient.Builder()
     .connectionPool(new ConnectionPool(10, 5, TimeUnit.MINUTES))
@@ -873,7 +873,7 @@ Retrofit retrofit = new Retrofit.Builder()
     .build();
 ```
 
-### **Caching**
+### Caching
 ```java
 int cacheSize = 10 * 1024 * 1024; // 10 MB
 Cache cache = new Cache(new File("cache"), cacheSize);
@@ -883,7 +883,7 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 ```
 
-### **Compression**
+### Compression
 ```java
 OkHttpClient client = new OkHttpClient.Builder()
     .addInterceptor(new GzipRequestInterceptor())
@@ -909,9 +909,9 @@ class GzipRequestInterceptor implements Interceptor {
 }
 ```
 
-## **Migration** и **Best Practices**
+## Migration и Best Practices
 
-### **Migration from HttpUrlConnection**
+### Migration from HttpUrlConnection
 ```java
 // Старый код
 URL url = new URL("https://api.example.com/users");
@@ -987,9 +987,9 @@ public class RetrofitBestPractices {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Kotlin Coroutines Support**
+### Kotlin Coroutines Support
 ```kotlin
 interface ApiService {
     @GET("users/{id}")
@@ -1008,7 +1008,7 @@ try {
 }
 ```
 
-### **Kotlin Serialization**
+### Kotlin Serialization
 ```kotlin
 @Serializable
 data class User(
@@ -1028,7 +1028,7 @@ val retrofit = Retrofit.Builder()
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```java
 // Проблема: Timeout
 OkHttpClient client = new OkHttpClient.Builder()
@@ -1049,7 +1049,7 @@ call.enqueue(new Callback<T>() {  // Всегда используйте enqueue
 });
 ```
 
-### **Debugging**
+### Debugging
 ```java
 // Включение логирования
 HttpLoggingInterceptor logging = new HttpLoggingInterceptor();

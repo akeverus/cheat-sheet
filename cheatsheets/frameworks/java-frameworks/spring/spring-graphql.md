@@ -94,7 +94,7 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring GraphQL**
+## Введение в Spring GraphQL
 
 **Spring GraphQL** предоставляет интеграцию с **GraphQL** для создания гибких **API**. **GraphQL** позволяет клиентам запрашивать только нужные данные, что делает **API** более эффективным и гибким по сравнению с **REST**.
 
@@ -106,7 +106,7 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 - **Subscriptions**: **Real-time** обновления через **WebSocket**
 - **Error Handling**: Обработка ошибок в **GraphQL**
 
-### Архитектура **Spring GraphQL**
+### Архитектура Spring GraphQL
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -132,11 +132,11 @@ related: ["spring/spring-boot.md", "spring/spring-rest.md", "api/graphql.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring GraphQL**
+## Настройка Spring GraphQL
 
 ### Зависимости
 
-**Зависимости **spring-`boot-starter`-graphql** и **spring-`boot-starter`-web** (**pom.xml**):**
+**Зависимости **spring-`boot-starter`-graphql** и **spring-`boot-starter`-web** (pom.xml):**
 
 ```xml
 <dependency>
@@ -164,7 +164,7 @@ spring.graphql.schema.file-extensions=.graphqls
 
 ## Schema Definition
 
-### Базовый **Schema**
+### Базовый Schema
 
 **schema.graphqls:**
 
@@ -222,7 +222,7 @@ type Subscription {
 
 ## Query Resolvers
 
-### Базовый **Query Resolver**
+### Базовый Query Resolver
 
 ```java
 // Базовый резолвер запросов GraphQL (Query)
@@ -247,7 +247,7 @@ public class UserQueryResolver implements GraphQLQueryResolver {
 }
 ```
 
-### **Field Resolvers**
+### Field Resolvers
 
 ```java
 // Резолвер поля для типа User (GraphQLResolver)
@@ -302,7 +302,7 @@ public class UserMutationResolver implements GraphQLMutationResolver {
 
 ## DataFetchers
 
-### **Custom DataFetcher**
+### Custom DataFetcher
 
 ```java
 @Component
@@ -332,7 +332,7 @@ public class GraphQLConfig {
 }
 ```
 
-### **Batch DataFetcher**
+### Batch DataFetcher
 
 ```java
 @Component
@@ -351,7 +351,7 @@ public class OrderDataFetcher implements DataFetcher<List<Order>> {
 
 ## Subscriptions
 
-### **WebSocket Configuration**
+### WebSocket Configuration
 
 ```java
 @Configuration
@@ -370,7 +370,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 }
 ```
 
-### **Subscription Resolver**
+### Subscription Resolver
 
 ```java
 @Component
@@ -391,7 +391,7 @@ public class UserSubscriptionResolver implements GraphQLSubscriptionResolver {
 
 ## Error Handling
 
-### **Custom Exception Handler**
+### Custom Exception Handler
 
 ```java
 @Component
@@ -435,7 +435,7 @@ type User {
 }
 ```
 
-### 2. Используйте **Input** типы для мутаций
+### 2. Используйте Input типы для мутаций
 
 ```graphql
 # ✅ Хорошо
@@ -464,7 +464,7 @@ public GraphQLError handleException(Exception ex) {
 }
 ```
 
-### 4. Используйте **DataLoader** для N+1 проблем
+### 4. Используйте DataLoader для N+1 проблем
 
 ```java
 // ✅ Хорошо
@@ -504,7 +504,7 @@ public class UserResolver implements GraphQLResolver<User> {
 }
 ```
 
-### Решение с **DataLoader**
+### Решение с DataLoader
 
 ```java
 @Component
@@ -556,7 +556,7 @@ public class UserResolver implements GraphQLResolver<User> {
 }
 ```
 
-### Кэширование в **DataLoader**
+### Кэширование в DataLoader
 
 ```java
 @Component
@@ -577,7 +577,7 @@ public class OrderDataLoader implements BatchLoader<Long, List<Order>> {
 
 ## Фильтрация и пагинация
 
-### Фильтрация в **Schema**
+### Фильтрация в Schema
 
 ```graphql
 type Query {
@@ -669,7 +669,7 @@ public class UserQueryResolver implements GraphQLQueryResolver {
 
 ## Сортировка
 
-### **Schema** для сортировки
+### Schema для сортировки
 
 ```graphql
 type Query {
@@ -737,9 +737,9 @@ public class UserQueryResolver implements GraphQLQueryResolver {
 }
 ```
 
-## Интерфейсы и **Union** типы
+## Интерфейсы и Union типы
 
-### Интерфейсы в **Schema**
+### Интерфейсы в Schema
 
 ```graphql
 interface Node {
@@ -796,7 +796,7 @@ public class NodeQueryResolver implements GraphQLQueryResolver {
 }
 ```
 
-### **Union** типы
+### Union типы
 
 ```graphql
 union SearchResult = User | Product | Order
@@ -917,7 +917,7 @@ fragment OrderDetails on Order {
 }
 ```
 
-### Инлайн фрагменты для **Union** типов
+### Инлайн фрагменты для Union типов
 
 ```graphql
 query {
@@ -1049,9 +1049,9 @@ public class GraphQLLoggingInstrumentation implements Instrumentation {
 }
 ```
 
-## Тестирование **GraphQL**
+## Тестирование GraphQL
 
-### Тестирование с **MockMvc**
+### Тестирование с MockMvc
 
 ```java
 @SpringBootTest
@@ -1091,7 +1091,7 @@ class UserGraphQLTest {
 }
 ```
 
-### Тестирование с **GraphQLTestTemplate**
+### Тестирование с GraphQLTestTemplate
 
 ```java
 @SpringBootTest
@@ -1136,7 +1136,7 @@ public class GraphQLSecurityConfig {
 }
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 ```java
 @Component
@@ -1178,7 +1178,7 @@ public class CachedUserResolver implements GraphQLResolver<User> {
 }
 ```
 
-### Асинхронные **resolvers**
+### Асинхронные resolvers
 
 ```java
 @Component
@@ -1195,9 +1195,9 @@ public class AsyncUserResolver implements GraphQLResolver<User> {
 }
 ```
 
-## Интеграция с **Spring Security**
+## Интеграция с Spring Security
 
-### Аутентификация в **GraphQL**
+### Аутентификация в GraphQL
 
 ```java
 @Component

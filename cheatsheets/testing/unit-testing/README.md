@@ -17,13 +17,13 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [JUnit](junit/junit.md)
-- [JUnit Advanced](junit/junit-advanced.md)
-- [Mockito](junit/mockito.md)
-- [Mockito Advanced](junit/mockito-advanced.md)
-- [AssertJ](junit/assertj.md)
-- [Hamcrest](junit/hamcrest.md)
-- [TestNG](testng/testng.md)
-- [pytest](pytest/pytest.md)
-- [Jest](jest/jest.md)
-- [xUnit](xunit/xunit.md)
+- [[junit]]
+- [[junit-advanced|JUnit Advanced]]
+- [[mockito]]
+- [[mockito-advanced|Mockito Advanced]]
+- [[assertj]]
+- [[hamcrest]]
+- [[testng]]
+- [[pytest]]
+- [[jest]]
+- [[xunit]]

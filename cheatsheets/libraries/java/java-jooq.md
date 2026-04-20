@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# jOOQ: **Type-Safe SQL** в **Java**
+# jOOQ: Type-Safe SQL в Java
 
-**Комплексное руководство по использованию `jOOQ` (**Java Object Oriented Querying**) для создания `type-safe SQL` запросов в `Java` приложениях.**
+**Комплексное руководство по использованию `jOOQ` (Java Object Oriented Querying) для создания `type-safe SQL` запросов в `Java` приложениях.**
 
 ## Полезные ссылки
 
@@ -86,11 +86,11 @@ updated: "2026-02-11"
   - [Когда использовать jOOQ](#когда-использовать-jooq)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **jOOQ**
+## Введение в jOOQ
 
-**jOOQ (**Java Object Oriented Querying**)** — это библиотека для создания **type-safe SQL** запросов в **Java**. Она предоставляет **fluent API** для построения **SQL** запросов, обеспечивая **compile-time** проверку типов и предотвращая **SQL injection**.
+**jOOQ (Java Object Oriented Querying)** — это библиотека для создания **type-safe SQL** запросов в **Java**. Она предоставляет **fluent API** для построения **SQL** запросов, обеспечивая **compile-time** проверку типов и предотвращая **SQL injection**.
 
-### Почему **jOOQ**?
+### Почему jOOQ?
 
 **jOOQ** предлагает множество преимуществ:**
 
@@ -103,7 +103,7 @@ updated: "2026-02-11"
 7. **IDE support** — Полная поддержка автодополнения
 8. **Migration friendly** — Легкая адаптация к изменениям схемы
 
-### Как работает **jOOQ**?
+### Как работает jOOQ?
 
 **jOOQ** использует **code generation** для создания **Java** классов, представляющих таблицы, поля и другие элементы базы данных. Эти классы позволяют строить **type-safe SQL** запросы используя **fluent API**.
 
@@ -124,7 +124,7 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
 Зависимость **Maven** для **jOOQ** и плагин генерации кода из схемы БД.
 
@@ -170,7 +170,7 @@ updated: "2026-02-11"
 </plugin>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 plugins {
@@ -207,7 +207,7 @@ jooq {
 }
 ```
 
-### Настройка **DSLContext**
+### Настройка DSLContext
 
 ```java
 @Configuration
@@ -334,9 +334,9 @@ public class UserRecord extends UpdatableRecordImpl<UserRecord> {
 }
 ```
 
-## Основы **DSL**
+## Основы DSL
 
-### Создание **DSLContext**
+### Создание DSLContext
 
 ```java
 /
@@ -419,9 +419,9 @@ public class UserRepository {
 }
 ```
 
-## **SELECT** запросы
+## SELECT запросы
 
-### Простые **SELECT** запросы
+### Простые SELECT запросы
 
 ```java
 public class SelectExamples {
@@ -468,7 +468,7 @@ public class SelectExamples {
 }
 ```
 
-### **SELECT** с условиями
+### SELECT с условиями
 
 ```java
 public class ConditionalSelectExamples {
@@ -519,7 +519,7 @@ public class ConditionalSelectExamples {
 }
 ```
 
-### **ORDER** `BY` и **LIMIT**
+### ORDER `BY` и LIMIT
 
 ```java
 public class OrderingExamples {
@@ -559,9 +559,9 @@ public class OrderingExamples {
 }
 ```
 
-## **INSERT**, **UPDATE**, **DELETE**
+## INSERT, UPDATE, DELETE
 
-### **INSERT** операции
+### INSERT операции
 
 ```java
 public class InsertExamples {
@@ -626,7 +626,7 @@ public class InsertExamples {
 }
 ```
 
-### **UPDATE** операции
+### UPDATE операции
 
 ```java
 public class UpdateExamples {
@@ -678,7 +678,7 @@ public class UpdateExamples {
 }
 ```
 
-### **DELETE** операции
+### DELETE операции
 
 ```java
 public class DeleteExamples {
@@ -716,9 +716,9 @@ public class DeleteExamples {
 }
 ```
 
-## **JOIN** операции
+## JOIN операции
 
-### **INNER JOIN**
+### INNER JOIN
 
 ```java
 public class JoinExamples {
@@ -754,7 +754,7 @@ public class JoinExamples {
 }
 ```
 
-### **LEFT** и **RIGHT JOIN**
+### LEFT и RIGHT JOIN
 
 ```java
 public class OuterJoinExamples {
@@ -801,7 +801,7 @@ public class OuterJoinExamples {
 }
 ```
 
-### **CROSS JOIN** и **UNION**
+### CROSS JOIN и UNION
 
 ```java
 public class AdvancedJoinExamples {
@@ -858,7 +858,7 @@ public class AdvancedJoinExamples {
 
 ## Условные запросы
 
-### **WHERE** условия
+### WHERE условия
 
 ```java
 public class WhereConditionExamples {
@@ -918,7 +918,7 @@ public class WhereConditionExamples {
 }
 ```
 
-### **EXISTS** и **NOT EXISTS**
+### EXISTS и NOT EXISTS
 
 ```java
 public class ExistsExamples {
@@ -1078,7 +1078,7 @@ public class AdvancedAggregateExamples {
 
 ## Работа с транзакциями
 
-### **Spring** транзакции
+### Spring транзакции
 
 ```java
 @Service
@@ -1168,9 +1168,9 @@ public class TransactionalService {
 }
 ```
 
-## Интеграция с **Spring**
+## Интеграция с Spring
 
-### **Spring Boot** конфигурация
+### Spring Boot конфигурация
 
 ```java
 @Configuration
@@ -1200,7 +1200,7 @@ public class JooqConfiguration {
 }
 ```
 
-### **Repository** паттерн
+### Repository паттерн
 
 ```java
 @Repository
@@ -1258,7 +1258,7 @@ public class UserRepository {
 }
 ```
 
-### **Service** слой
+### Service слой
 
 ```java
 @Service
@@ -1441,7 +1441,7 @@ public class JooqConvertersConfig {
 }
 ```
 
-### **Batch** операции
+### Batch операции
 
 ```java
 @Service
@@ -1487,7 +1487,7 @@ public class BatchService {
 }
 ```
 
-### **RecordMapper** для **DTO**
+### RecordMapper для DTO
 
 ```java
 @Configuration
@@ -1524,7 +1524,7 @@ public List<UserDto> findUsers() {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Правильная структура проекта
 
@@ -1546,7 +1546,7 @@ public List<UserDto> findUsers() {
         └── records/
 ```
 
-### 2. Использование **Repository** паттерна
+### 2. Использование Repository паттерна
 
 ```java
 // ✅ Хорошо - чистый repository
@@ -1842,7 +1842,7 @@ public class UserRepositoryTest {
 
 **jOOQ** — это библиотека для создания **type-safe SQL** запросов в **Java**, которая значительно повышает безопасность и удобство работы с базами данных.
 
-### Преимущества **jOOQ**
+### Преимущества jOOQ
 
 1. **Type safety** — Полная проверка типов на этапе компиляции
 2. **Fluent API** — Читаемый и интуитивный синтаксис
@@ -1862,7 +1862,7 @@ public class UserRepositoryTest {
 5. **Batch паттерн** — Для массовых операций
 6. **Criteria паттерн** — Для динамических запросов
 
-### Когда использовать **jOOQ**
+### Когда использовать jOOQ
 
 **Рекомендуется:**
 - **Enterprise** приложения с **complex SQL**

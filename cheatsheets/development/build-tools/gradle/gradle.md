@@ -12,13 +12,13 @@ updated: "2026-02-11"
 ---
 # Gradle (основы)
 
-**Gradle** — система автоматизации сборки с открытым исходным кодом; использует **Groovy** или **Kotlin DSL** для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [gradle-advanced.md](gradle-advanced.md).
+**Gradle** — система автоматизации сборки с открытым исходным кодом; использует **Groovy** или **Kotlin DSL** для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [[gradle-advanced]].
 
 ## Полезные ссылки
 
 - [Официальная документация Gradle](https://docs.gradle.org/)
 - [Gradle User Manual](https://docs.gradle.org/current/userguide/userguide.html)
-- **См. также:** [gradle-advanced.md](gradle-advanced.md) — продвинутые концепции, многомодульные проекты, **CI/CD**, **Version Catalogs**, **Docker**; [README.md](../) — обзор раздела Build Tools.
+- **См. также:** [[gradle-advanced]] — продвинутые концепции, многомодульные проекты, **CI/CD**, **Version Catalogs**, **Docker**; [README.md](../) — обзор раздела Build Tools.
 
 ## Содержание
 

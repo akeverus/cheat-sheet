@@ -67,7 +67,7 @@ updated: "2026-02-06"
 
 ## Введение в регулярные выражения
 
-Пакет `**regexp**` предоставляет функциональность для работы с регулярными выражениями. Go использует **RE2 engine**, который обеспечивает линейную производительность.
+Пакет `regexp` предоставляет функциональность для работы с регулярными выражениями. Go использует **RE2 engine**, который обеспечивает линейную производительность.
 
 ### Основные концепции
 
@@ -78,7 +78,7 @@ updated: "2026-02-06"
 
 ## Компиляция паттернов
 
-### **Compile**
+### Compile
 
 ```go
 import "regexp"
@@ -96,7 +96,7 @@ func main() {
 }
 ```
 
-### **MustCompile**
+### MustCompile
 
 ```go
 import "regexp"
@@ -110,7 +110,7 @@ func main() {
 }
 ```
 
-### **CompilePOSIX**
+### CompilePOSIX
 
 ```go
 import "regexp"
@@ -129,7 +129,7 @@ func main() {
 
 ## Поиск совпадений
 
-### **MatchString**
+### MatchString
 
 ```go
 import "regexp"
@@ -142,7 +142,7 @@ func main() {
 }
 ```
 
-### **FindString**
+### FindString
 
 ```go
 import "regexp"
@@ -156,7 +156,7 @@ func main() {
 }
 ```
 
-### **FindAllString**
+### FindAllString
 
 ```go
 import "regexp"
@@ -174,7 +174,7 @@ func main() {
 }
 ```
 
-### **FindStringIndex**
+### FindStringIndex
 
 ```go
 import "regexp"
@@ -190,7 +190,7 @@ func main() {
 
 ## Замена текста
 
-### **ReplaceAllString**
+### ReplaceAllString
 
 ```go
 import "regexp"
@@ -204,7 +204,7 @@ func main() {
 }
 ```
 
-### **ReplaceAllStringFunc**
+### ReplaceAllStringFunc
 
 ```go
 import "regexp"
@@ -220,7 +220,7 @@ func main() {
 }
 ```
 
-### **ReplaceAllLiteralString**
+### ReplaceAllLiteralString
 
 ```go
 import "regexp"
@@ -236,7 +236,7 @@ func main() {
 
 ## Группы захвата
 
-### **FindStringSubmatch**
+### FindStringSubmatch
 
 ```go
 import "regexp"
@@ -254,7 +254,7 @@ func main() {
 }
 ```
 
-### **FindAllStringSubmatch**
+### FindAllStringSubmatch
 
 ```go
 import "regexp"
@@ -299,7 +299,7 @@ func main() {
 }
 ```
 
-### Практические примеры: Валидация **email**
+### Практические примеры: Валидация email
 
 ```go
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
@@ -316,7 +316,7 @@ func ValidateEmailStrict(email string) bool {
 }
 ```
 
-### Практические примеры: Валидация **URL**
+### Практические примеры: Валидация URL
 
 ```go
 var urlRegex = regexp.MustCompile(`^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$`)
@@ -477,7 +477,7 @@ func ValidatePassword(password string) []string {
 }
 ```
 
-### Практические примеры: Парсинг **CSV** с **regex**
+### Практические примеры: Парсинг CSV с regex
 
 ```go
 var csvFieldRegex = regexp.MustCompile(`"([^"]*)"|([^,]+)`)

@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-queries.md", "databases/postgres-performance-tuning.md"]
 ---
 
-# **PostgreSQL**: **Foreign Data Wrappers**
+# PostgreSQL: Foreign Data Wrappers
 
 ## Полезные ссылки
 
@@ -97,11 +97,11 @@ related: ["databases/postgres-queries.md", "databases/postgres-performance-tunin
   - [При использовании FDW](#при-использовании-fdw)
   - [При обслуживании FDW](#при-обслуживании-fdw)
 
-## Введение в **Foreign Data Wrappers**
+## Введение в Foreign Data Wrappers
 
-**Foreign Data Wrappers** (**FDW**) — это механизм **PostgreSQL** для доступа к данным, хранящимся во внешних источниках, как если бы они были обычными таблицами **PostgreSQL**.
+**Foreign Data Wrappers** (FDW) — это механизм **PostgreSQL** для доступа к данным, хранящимся во внешних источниках, как если бы они были обычными таблицами **PostgreSQL**.
 
-### Преимущества **FDW**
+### Преимущества FDW
 
 - **Единый интерфейс**: Доступ к различным источникам данных через **SQL**
 - **Прозрачность**: Внешние данные выглядят как обычные таблицы
@@ -109,7 +109,7 @@ related: ["databases/postgres-queries.md", "databases/postgres-performance-tunin
 - **Расширяемость**: Возможность создания собственных **FDW**
 
 
-## Установка и настройка **FDW**
+## Установка и настройка FDW
 
 ### Установка расширения
 
@@ -128,13 +128,13 @@ CREATE EXTENSION file_fdw;
 3. **Foreign Table**: Таблица, представляющая внешние данные
 
 
-## **postgres_fdw**
+## postgres_fdw
 
 **postgres_fdw** позволяет подключаться к другим серверам **PostgreSQL**.
 
 ### Настройка подключения
 
-#### 1. Создать **Foreign Server**
+#### 1. Создать Foreign Server
 
 ```sql
 -- Создать foreign server
@@ -147,7 +147,7 @@ OPTIONS (
 );
 ```
 
-#### 2. Создать **User Mapping**
+#### 2. Создать User Mapping
 
 ```sql
 -- Создать user mapping
@@ -159,7 +159,7 @@ OPTIONS (
 );
 ```
 
-#### 3. Создать **Foreign Table**
+#### 3. Создать Foreign Table
 
 ```sql
 -- Создать foreign table
@@ -175,7 +175,7 @@ OPTIONS (
 );
 ```
 
-### Использование **Foreign Table**
+### Использование Foreign Table
 
 ```sql
 -- Запросы к foreign table
@@ -217,13 +217,13 @@ OPTIONS (ADD fetch_size '100');
 ```
 
 
-## **file_fdw**
+## file_fdw
 
 **file_fdw** позволяет читать данные из файлов как из таблиц.
 
-### Настройка **file_fdw**
+### Настройка file_fdw
 
-#### 1. Создать **Foreign Server**
+#### 1. Создать Foreign Server
 
 ```sql
 -- Создать foreign server для файлов
@@ -231,7 +231,7 @@ CREATE SERVER file_server
 FOREIGN DATA WRAPPER file_fdw;
 ```
 
-#### 2. Создать **Foreign Table** для **CSV**
+#### 2. Создать Foreign Table для CSV
 
 ```sql
 -- Создать foreign table для CSV файла
@@ -275,9 +275,9 @@ OPTIONS (format 'text', delimiter E'\t');
 ```
 
 
-## Другие популярные **FDW**
+## Другие популярные FDW
 
-### **mysql_fdw**
+### mysql_fdw
 
 Подключение к **MySQL** базам данных.
 
@@ -314,7 +314,7 @@ OPTIONS (
 );
 ```
 
-### **oracle_fdw**
+### oracle_fdw
 
 Подключение к **Oracle** базам данных.
 
@@ -338,7 +338,7 @@ OPTIONS (
 );
 ```
 
-### **mongo_fdw**
+### mongo_fdw
 
 Подключение к **MongoDB**.
 
@@ -368,9 +368,9 @@ OPTIONS (
 ```
 
 
-## Создание собственного **FDW**
+## Создание собственного FDW
 
-### Структура **FDW**
+### Структура FDW
 
 ```c
 // my_fdw.c
@@ -460,7 +460,7 @@ VALIDATOR my_fdw_validator;
 
 ## Решение проблем
 
-### Проблема: Медленные запросы к **foreign tables**
+### Проблема: Медленные запросы к foreign tables
 
 **Решение:**
 ```sql
@@ -487,7 +487,7 @@ SELECT * FROM pg_user_mappings WHERE srvname = 'foreign_server';
 SELECT * FROM foreign_users LIMIT 1;
 ```
 
-## **Advanced postgres_fdw**
+## Advanced postgres_fdw
 
 ### Транзакции и изоляция
 
@@ -503,7 +503,7 @@ UPDATE foreign_users SET name = 'Jane' WHERE id = 1;
 COMMIT;
 ```
 
-### **Bulk Operations**
+### Bulk Operations
 
 ```sql
 -- Массовая вставка
@@ -531,7 +531,7 @@ SET max_parallel_workers_per_gather = 4;
 SELECT * FROM foreign_users WHERE id > 1000;
 ```
 
-### Оптимизация **JOIN**
+### Оптимизация JOIN
 
 ```sql
 -- JOIN с pushdown
@@ -574,9 +574,9 @@ WHERE schemaname = 'public'
 AND tablename LIKE 'foreign_%';
 ```
 
-## **Advanced file_fdw**
+## Advanced file_fdw
 
-### Работа с **JSON** файлами
+### Работа с JSON файлами
 
 ```sql
 -- Создать foreign table для JSON
@@ -598,7 +598,7 @@ FROM json_data
 WHERE (data->>'status')::boolean = true;
 ```
 
-### Работа с **XML** файлами
+### Работа с XML файлами
 
 ```sql
 -- Создать foreign table для XML
@@ -642,7 +642,7 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM read_multiple_files() WHERE id > 1000;
 ```
 
-### Динамическое создание **foreign tables**
+### Динамическое создание foreign tables
 
 ```sql
 -- Функция для создания foreign table из файла
@@ -678,9 +678,9 @@ $$ LANGUAGE plpgsql;
 SELECT create_file_fdw_table('new_data', '/path/to/new_data.csv', 'csv');
 ```
 
-## Дополнительные **FDW**
+## Дополнительные FDW
 
-### **redis_fdw**
+### redis_fdw
 
 ```sql
 -- Установить расширение
@@ -708,7 +708,7 @@ OPTIONS (
 SELECT * FROM redis_data WHERE key = 'user:1';
 ```
 
-### **clickhouse_fdw**
+### clickhouse_fdw
 
 ```sql
 -- Установить расширение
@@ -743,7 +743,7 @@ WHERE timestamp > NOW() - INTERVAL '24 hours'
 GROUP BY hour;
 ```
 
-### **multicorn_fdw**
+### multicorn_fdw
 
 **Multicorn** — это **FDW framework** для создания **FDW** на **Python**.
 

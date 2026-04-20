@@ -35,7 +35,7 @@ updated: "2026-02-06"
 - [Запуск с подробным выводом](#запуск-с-подробным-выводом)
 - [Запуск тестов во всех пакетах](#запуск-тестов-во-всех-пакетах)
   - [Использование **t.Helper**()](#использование-thelper)
-  - [Подтесты (**Subtests**)](#подтесты-subtests)
+  - [Подтесты (Subtests)](#подтесты-subtests)
 - [**Table-Driven Tests**](#table-driven-tests)
   - [Базовый пример](#базовый-пример)
   - [Тестирование с ошибками](#тестирование-с-ошибками)
@@ -48,7 +48,7 @@ updated: "2026-02-06"
 - [Запуск с указанием времени](#запуск-с-указанием-времени)
   - [Сравнение производительности](#сравнение-производительности)
   - [**Benchmark** с подготовкой данных](#benchmark-с-подготовкой-данных)
-- [Примеры (**Examples**)](#примеры-examples)
+- [Примеры (Examples)](#примеры-examples)
   - [Пример с функцией](#пример-с-функцией)
   - [Пример с типом](#пример-с-типом)
 - [Покрытие кода](#покрытие-кода)
@@ -96,7 +96,7 @@ updated: "2026-02-06"
 
 ## Введение в тестирование
 
-Go предоставляет встроенную поддержку тестирования через пакет `**testing**`. Тестирование в Go следует простым правилам и конвенциям, что делает написание тестов простым и эффективным.
+Go предоставляет встроенную поддержку тестирования через пакет `testing`. Тестирование в Go следует простым правилам и конвенциям, что делает написание тестов простым и эффективным.
 
 ### Основные концепции
 
@@ -110,9 +110,9 @@ Go предоставляет встроенную поддержку тести
 **Тестовые файлы в Go должны:**
 - Иметь суффикс `_test.go`
 - Находиться в том же пакете, что и тестируемый код
-- Содержать функции с префиксом `**Test**`, `**Benchmark**` или `**Example**`
+- Содержать функции с префиксом `Test`, `Benchmark` или `Example`
 
-## **Unit** тесты
+## Unit тесты
 
 **Unit** тесты проверяют корректность работы отдельных функций и методов.
 
@@ -157,7 +157,7 @@ go test -v
 go test ./...
 ```
 
-### Использование **t.Helper**()
+### Использование t.Helper()
 
 ```go
 func TestAdd(t *testing.T) {
@@ -170,7 +170,7 @@ func TestAdd(t *testing.T) {
 }
 ```
 
-### Подтесты (**Subtests**)
+### Подтесты (Subtests)
 
 ```go
 func TestAdd(t *testing.T) {
@@ -197,7 +197,7 @@ func TestAdd(t *testing.T) {
 }
 ```
 
-## **Table-Driven Tests**
+## Table-Driven Tests
 
 **Table-Driven Tests** — это популярный паттерн в Go для тестирования множественных сценариев.
 
@@ -295,11 +295,11 @@ func TestDivide(t *testing.T) {
 }
 ```
 
-## **Benchmarks**
+## Benchmarks
 
 **Benchmarks** позволяют измерять производительность кода.
 
-### Базовый **benchmark**
+### Базовый benchmark
 
 ```go
 func BenchmarkAdd(b *testing.B) {
@@ -309,7 +309,7 @@ func BenchmarkAdd(b *testing.B) {
 }
 ```
 
-### Запуск **benchmarks**
+### Запуск benchmarks
 
 ```bash
 # Запуск всех benchmarks
@@ -343,7 +343,7 @@ func BenchmarkAdd(b *testing.B) {
 }
 ```
 
-### **Benchmark** с подготовкой данных
+### Benchmark с подготовкой данных
 
 ```go
 func BenchmarkProcess(b *testing.B) {
@@ -360,7 +360,7 @@ func BenchmarkProcess(b *testing.B) {
 }
 ```
 
-## Примеры (**Examples**)
+## Примеры (Examples)
 
 **Examples** — это специальные функции, которые служат как документация и тесты одновременно.
 
@@ -524,7 +524,7 @@ func TestUserService_Integration(t *testing.T) {
 }
 ```
 
-### Тестирование **HTTP handlers**
+### Тестирование HTTP handlers
 
 ```go
 func TestUserHandler(t *testing.T) {
@@ -548,7 +548,7 @@ func TestUserHandler(t *testing.T) {
 }
 ```
 
-### **Property-Based Testing**
+### Property-Based Testing
 
 **Property-based testing** позволяет тестировать свойства функций вместо конкретных примеров.
 
@@ -570,7 +570,7 @@ func TestAddCommutative(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **testify**
+### Тестирование с использованием testify
 
 **Testify** предоставляет дополнительные утилиты для тестирования.
 
@@ -590,7 +590,7 @@ func TestWithTestify(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **gomock**
+### Тестирование с использованием gomock
 
 **Gomock** позволяет генерировать моки на основе интерфейсов.
 
@@ -644,7 +644,7 @@ func TestConcurrentAccess(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **httptest**
+### Тестирование с использованием httptest
 
 ```go
 func TestHTTPHandler(t *testing.T) {
@@ -663,7 +663,7 @@ func TestHTTPHandler(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **testcontainers**
+### Тестирование с использованием testcontainers
 
 **Testcontainers** позволяет использовать реальные контейнеры в тестах.
 
@@ -693,7 +693,7 @@ func TestWithPostgres(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **golden files**
+### Тестирование с использованием golden files
 
 **Golden files** позволяют сохранять ожидаемые результаты тестов.
 
@@ -713,7 +713,7 @@ func TestWithGoldenFile(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **table-driven tests** для ошибок
+### Тестирование с использованием table-driven tests для ошибок
 
 ```go
 func TestErrorCases(t *testing.T) {
@@ -771,7 +771,7 @@ func TestSequential(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **cleanup**
+### Тестирование с использованием cleanup
 
 ```go
 func TestWithCleanup(t *testing.T) {
@@ -787,7 +787,7 @@ func TestWithCleanup(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **skip**
+### Тестирование с использованием skip
 
 ```go
 func TestSkipOnCondition(t *testing.T) {
@@ -799,7 +799,7 @@ func TestSkipOnCondition(t *testing.T) {
 }
 ```
 
-### Тестирование с использованием **fatal**
+### Тестирование с использованием fatal
 
 ```go
 func TestWithFatal(t *testing.T) {
@@ -834,7 +834,7 @@ func TestUserService_CreateUser(t *testing.T) {
 }
 ```
 
-### Практические примеры: тестирование **middleware**
+### Практические примеры: тестирование middleware
 
 ```go
 func TestAuthMiddleware(t *testing.T) {
@@ -896,7 +896,7 @@ func TestWithTime(t *testing.T) {
 }
 ```
 
-### Практические примеры: Тестирование **HTTP handlers**
+### Практические примеры: Тестирование HTTP handlers
 
 ```go
 func TestHTTPHandler(t *testing.T) {
@@ -997,7 +997,7 @@ func TestRaceCondition(t *testing.T) {
 }
 ```
 
-### Практические примеры: Тестирование с **cleanup**
+### Практические примеры: Тестирование с cleanup
 
 ```go
 func TestWithCleanup(t *testing.T) {
@@ -1068,7 +1068,7 @@ func TestErrorHandling(t *testing.T) {
 }
 ```
 
-### Практические примеры: Интеграционные тесты с **testcontainers**
+### Практические примеры: Интеграционные тесты с testcontainers
 
 ```go
 func TestWithDatabase(t *testing.T) {
@@ -1116,7 +1116,7 @@ func TestWithDatabase(t *testing.T) {
 }
 ```
 
-### Практические примеры: **Property-based** тестирование
+### Практические примеры: Property-based тестирование
 
 ```go
 import (
@@ -1210,7 +1210,7 @@ func TestWithMock(t *testing.T) {
 14. **Используйте интеграционные тесты** — для тестирования всего стека
 15. **Документируйте тесты** — объясняйте что тестируется
 
-### Практические примеры: Тестирование с использованием **testify**
+### Практические примеры: Тестирование с использованием testify
 
 ```go
 import (
@@ -1247,7 +1247,7 @@ func TestUserSuite(t *testing.T) {
 }
 ```
 
-### Практические примеры: **Golden** файлы для тестирования
+### Практические примеры: Golden файлы для тестирования
 
 ```go
 func TestWithGoldenFiles(t *testing.T) {

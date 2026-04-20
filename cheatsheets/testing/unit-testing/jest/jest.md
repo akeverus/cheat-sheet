@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Jest
 
-**Jest** — фреймворк для юнит- и интеграционных тестов в экосистеме **JavaScript**/**TypeScript**: встроенные моки (`jest.fn()`, `jest.mock()`), снапшот-тестирование, покрытие (**Istanbul**), поддержка **ES modules** и **TypeScript**. Часто используется с **React** (**React Testing Library**), **Vue**, **Node.js**.
+**Jest** — фреймворк для юнит- и интеграционных тестов в экосистеме **JavaScript**/**TypeScript**: встроенные моки (`jest.fn()`, `jest.mock()`), снапшот-тестирование, покрытие (Istanbul), поддержка **ES modules** и **TypeScript**. Часто используется с **React** (React Testing Library), **Vue**, **Node.js**.
 
 **Дата:** 2026-02-06
 
@@ -20,7 +20,7 @@ updated: "2026-02-11"
 
 - [Jest — Getting Started](https://jestjs.io/docs/getting-started) · [API Reference](https://jestjs.io/docs/api) · [Expect](https://jestjs.io/docs/expect)
 - [Testing Library — React](https://testing-library.com/docs/react-testing-library/intro/) · [Snapshot Testing](https://jestjs.io/docs/snapshot-testing) · [Mocking](https://jestjs.io/docs/mocking)
-- [Unit Testing](../) · [JUnit](../junit/junit.md) · [pytest](../pytest/pytest.md) · [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [Unit Testing](../) · [[junit]] · [[pytest]] · [[testing-tools-overview|Testing Tools Overview]]
 
 ## Содержание
 
@@ -40,7 +40,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**Jest** — фреймворк для тестирования **JavaScript** и **TypeScript** (Meta/Facebook). Моки, снапшоты, измерение покрытия (**Istanbul**), поддержка **ES modules** и **TypeScript** из коробки. Часто используется с **React** (**React Testing Library**), **Vue**, **Node.js**, **Vite**, **Webpack**.
+**Jest** — фреймворк для тестирования **JavaScript** и **TypeScript** (Meta/Facebook). Моки, снапшоты, измерение покрытия (Istanbul), поддержка **ES modules** и **TypeScript** из коробки. Часто используется с **React** (React Testing Library), **Vue**, **Node.js**, **Vite**, **Webpack**.
 
 ### Зачем Jest
 
@@ -395,6 +395,6 @@ jobs:
 
 ## Заключение
 
-**Jest** — мощный фреймворк для тестирования **JavaScript** и **TypeScript** с встроенными моками, снапшотами и покрытием. Моки — для изоляции, снапшоты — для стабильного вывода, покрытие — для контроля качества. Для **React** — **React Testing Library**, для **Vue** — **Vue Test Utils**. Документация: [Jest](https://jestjs.io/docs/getting-started), [Unit Testing](../), [pytest](../pytest/pytest.md), [JUnit](../junit/junit.md).
+**Jest** — мощный фреймворк для тестирования **JavaScript** и **TypeScript** с встроенными моками, снапшотами и покрытием. Моки — для изоляции, снапшоты — для стабильного вывода, покрытие — для контроля качества. Для **React** — **React Testing Library**, для **Vue** — **Vue Test Utils**. Документация: [Jest](https://jestjs.io/docs/getting-started), [Unit Testing](../), [[pytest]], [[junit]].
 
 *Дата: 2026-02-06*

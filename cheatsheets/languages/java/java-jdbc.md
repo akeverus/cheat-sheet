@@ -175,7 +175,7 @@ spring:
       max-lifetime: 1800000
 ```
 
-Подробнее в [HikariCP: пул соединений](../../libraries/java/java-hikaricp.md).
+Подробнее в [[java-hikaricp|HikariCP: пул соединений]].
 
 ## Statement, PreparedStatement, CallableStatement
 
@@ -663,8 +663,8 @@ public List<User> page(int offset, int size) throws SQLException {
 **Когда что использовать:**
 
 - **Raw JDBC** — утилиты миграции, скрипты, batch-загрузка миллионов строк, драйверы/фреймворки.
-- **JdbcTemplate / Spring Data JDBC** — сервис с простой реляционной моделью, когда важен контроль SQL и отсутствие магии. См. [Spring Data JDBC](../../frameworks/java-frameworks/spring/spring-data-jdbc.md).
-- **JPA / Hibernate** — сложные агрегаты, много связей, редко пишете SQL. См. [Spring Data JPA](../../frameworks/java-frameworks/spring/spring-data-jpa.md).
+- **JdbcTemplate / Spring Data JDBC** — сервис с простой реляционной моделью, когда важен контроль SQL и отсутствие магии. См. [[spring-data-jdbc|Spring Data JDBC]].
+- **JPA / Hibernate** — сложные агрегаты, много связей, редко пишете SQL. См. [[spring-data-jpa|Spring Data JPA]].
 
 **Пример сравнения:** вставка пользователя с возвратом ID.
 
@@ -695,7 +695,7 @@ em.persist(u); // id проставится автоматически
 - **Всегда try-with-resources.** Закрытие в `finally` вручную — источник утечек.
 - **Всегда `DataSource` + пул.** `DriverManager` только для одноразовых скриптов.
 - **Батчуйте вставки/апдейты.** 1 batch на 1000 строк вместо 1000 отдельных round-trip.
-- **`setFetchSize()`** для выборок > 10K строк — иначе OOM.
+- `setFetchSize()` для выборок > 10K строк — иначе OOM.
 - **Явно `autoCommit=false`** для бизнес-транзакций, commit/rollback в `finally`.
 - **Логируйте SQL и параметры** через `p6spy` или `datasource-proxy` — драйвер сам этого не умеет.
 - **Мерьте pool** через метрики (`HikariDataSource` → Micrometer).
@@ -708,11 +708,11 @@ em.persist(u); // id проставится автоматически
 - Не закрыли `Connection` — проверьте все ветки кода, оберните в try-with-resources.
 - `leakDetectionThreshold` в HikariCP покажет stack trace места, где коннект взяли и не вернули.
 
-**`ResultSet is closed`**:
+`ResultSet is closed`:
 - Прочитали `rs` после `close()` или `commit()` (при `CLOSE_CURSORS_AT_COMMIT`).
 - Вызвали новый `executeQuery` на том же `Statement` (старый `ResultSet` автоматически закрылся).
 
-**`No suitable driver found`**:
+`No suitable driver found`:
 - Драйвер не в classpath — проверьте `build.gradle` / `pom.xml`.
 - Начиная с JDBC 4.0 драйвер подгружается через `META-INF/services/java.sql.Driver` (ServiceLoader). Если jar кривой — `Class.forName("org.postgresql.Driver")` явно.
 

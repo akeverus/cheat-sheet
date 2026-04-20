@@ -238,7 +238,7 @@ upstream fastest_backend {
 }
 ```
 
-### Health checks и **failover**
+### Health checks и failover
 ```nginx
 # Passive health checks
 upstream backend {
@@ -365,7 +365,7 @@ server {
 
 ## Security hardening
 
-### SSL/**TLS** конфигурация
+### SSL/TLS конфигурация
 ```nginx
 # Современная SSL конфигурация
 server {
@@ -412,7 +412,7 @@ server {
 }
 ```
 
-### Rate limiting и **DDoS** защита
+### Rate limiting и DDoS защита
 ```nginx
 # Rate limiting zones
 limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
@@ -495,7 +495,7 @@ server {
 
 ## API Gateway паттерны
 
-### API versioning и **routing**
+### API versioning и routing
 ```nginx
 # API Gateway с версионированием
 map $request_uri $api_version {
@@ -627,7 +627,7 @@ server {
 
 ## Microservices паттерны
 
-### Service mesh с **Nginx**
+### Service mesh с Nginx
 ```nginx
 # Service discovery через DNS
 upstream auth-service {
@@ -745,7 +745,7 @@ server {
 }
 ```
 
-### Memory и **CPU optimization**
+### Memory и CPU optimization
 ```nginx
 # Worker process optimizations
 worker_processes auto;
@@ -784,7 +784,7 @@ http {
 }
 ```
 
-### Monitoring и **metrics**
+### Monitoring и metrics
 ```nginx
 # Stub status module
 server {
@@ -1010,11 +1010,11 @@ http {
 
 ## Лучшие практики
 
-- **Worker processes и connections:** `**worker_processes auto**`; `**worker_connections**` с учётом лимитов ОС (**`ulimit -n`**); `**worker_rlimit_nofile**` не меньше `**worker_connections**`.
-- **Буферы и таймауты:** настройте `**client_body_buffer_size**`, `**proxy_buffer_size**`, `**proxy_connect_timeout**` под размер запросов/ответов и латентность бэкендов; избегайте избыточных буферов (**OOM**).
+- **Worker processes и connections:** `worker_processes auto`; `worker_connections` с учётом лимитов ОС (`ulimit -n`); `worker_rlimit_nofile` не меньше `worker_connections`.
+- **Буферы и таймауты:** настройте `client_body_buffer_size`, `proxy_buffer_size`, `proxy_connect_timeout` под размер запросов/ответов и латентность бэкендов; избегайте избыточных буферов (OOM).
 - **Безопасность:** скрывайте версию **Nginx**; ограничивайте методы и размер тела; используйте **rate limiting** и **WAF** при необходимости; **TLS** для всех публичных сервисов.
-- **Кэширование:** задавайте `**proxy_cache_path**` и ключи кэша; используйте `**proxy_cache_valid**` и условное кэширование; не кэшируйте персональные данные без учёта ключа.
-- **Мониторинг:** логируйте `**request_time**`, `upstream_*`; используйте **stub_status** или **OpenResty**/**nginx-plus** для метрик; интегрируйте с **Prometheus**/**Grafana**.
+- **Кэширование:** задавайте `proxy_cache_path` и ключи кэша; используйте `proxy_cache_valid` и условное кэширование; не кэшируйте персональные данные без учёта ключа.
+- **Мониторинг:** логируйте `request_time`, `upstream_*`; используйте **stub_status** или **OpenResty**/**nginx-plus** для метрик; интегрируйте с **Prometheus**/**Grafana**.
 ## См. также
 - [[docker-basics|Docker]] — контейнеризация
 - [[kubernetes-basics|Kubernetes]] — оркестрация контейнеров

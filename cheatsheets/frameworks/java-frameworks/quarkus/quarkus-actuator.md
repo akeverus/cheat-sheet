@@ -74,7 +74,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 
 ## Health Checks
 
-### **Basic Health Check**
+### Basic Health Check
 
 **Базовый **health check**:**
 
@@ -99,7 +99,7 @@ public class LivenessCheck implements HealthCheck {
 }
 ```
 
-### **Readiness Check**
+### Readiness Check
 
 **Readiness check**:**
 
@@ -136,7 +136,7 @@ public class ReadinessCheck implements HealthCheck {
 
 ## Metrics
 
-### **Micrometer Integration**
+### Micrometer Integration
 
 **Интеграция с **Micrometer**:**
 
@@ -147,7 +147,7 @@ quarkus.micrometer.export.prometheus.enabled=true
 quarkus.micrometer.export.prometheus.path=/metrics
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 **Создание кастомных метрик:**
 
@@ -187,7 +187,7 @@ public class MetricsService {
 
 ## Лучшие практики
 
-### 1. Всегда настраивайте **health checks**
+### 1. Всегда настраивайте health checks
 
 ```java
 // ✅ Хорошо
@@ -198,7 +198,7 @@ public class LivenessCheck implements HealthCheck {
 }
 ```
 
-### 2. Используйте **metrics** для мониторинга
+### 2. Используйте metrics для мониторинга
 
 ```properties
 # ✅ Хорошо
@@ -206,7 +206,7 @@ quarkus.micrometer.enabled=true
 quarkus.micrometer.export.prometheus.enabled=true
 ```
 
-### 3. Создавайте кастомные **health checks** для критических компонентов
+### 3. Создавайте кастомные health checks для критических компонентов
 
 ```java
 // ✅ Хорошо
@@ -219,7 +219,7 @@ public class DatabaseReadinessCheck implements HealthCheck {
 
 ## Startup Health Check
 
-### **Startup Probe**
+### Startup Probe
 
 **Startup health check**:**
 
@@ -242,7 +242,7 @@ public class StartupCheck implements HealthCheck {
 
 ## Advanced Metrics
 
-### **Timers**
+### Timers
 
 **Использование таймеров:**
 
@@ -270,7 +270,7 @@ public class TimedService {
 }
 ```
 
-### **Gauges**
+### Gauges
 
 **Использование **gauges**:**
 
@@ -296,7 +296,7 @@ public class GaugeService {
 
 ## Info Endpoint
 
-### **Application Info**
+### Application Info
 
 **Информация о приложении:**
 
@@ -307,7 +307,7 @@ quarkus.info.version=1.0.0
 quarkus.info.description=My Application Description
 ```
 
-### **Custom Info**
+### Custom Info
 
 **Кастомная информация:**
 
@@ -340,7 +340,7 @@ public class InfoResource {
 
 ## Advanced Health Check Patterns
 
-### **Composite Health Checks**
+### Composite Health Checks
 
 **Составные **health checks**:**
 
@@ -365,7 +365,7 @@ public class CompositeReadinessCheck implements HealthCheck {
 }
 ```
 
-### **Async Health Checks**
+### Async Health Checks
 
 **Асинхронные **health checks**:**
 
@@ -391,7 +391,7 @@ public class AsyncHealthCheck implements HealthCheck {
 
 ## Advanced Metrics Patterns
 
-### **Histograms**
+### Histograms
 
 **Использование гистограмм:**
 
@@ -411,7 +411,7 @@ public class HistogramService {
 }
 ```
 
-### **Metrics with Tags**
+### Metrics with Tags
 
 **Метрики с тегами:**
 
@@ -435,7 +435,7 @@ public class TaggedMetricsService {
 
 ## Custom Endpoints
 
-### **Custom Health Endpoint**
+### Custom Health Endpoint
 
 **Кастомный **health endpoint**:**
 
@@ -453,7 +453,7 @@ public class CustomHealthEndpoint {
 }
 ```
 
-### **Custom Metrics Endpoint**
+### Custom Metrics Endpoint
 
 **Кастомный **metrics endpoint**:**
 

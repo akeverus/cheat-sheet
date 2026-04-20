@@ -66,7 +66,7 @@ updated: "2026-02-11"
 
 **Когда применять:** undo/redo, сохранение/загрузка состояния, откат конфигурации.
 
-## Что такое **Memento**?
+## Что такое Memento?
 
 **Memento** — это поведенческий паттерн проектирования, который позволяет сохранять и восстанавливать предыдущее состояние объекта без нарушения принципа инкапсуляции. Паттерн позволяет реализовать функциональность отмены операций(undo).
 
@@ -202,7 +202,7 @@ public class TextEditorCaretaker {
 }
 ```
 
-## Когда использовать **Memento**?
+## Когда использовать Memento?
 
 ### Подходящие сценарии
 
@@ -372,7 +372,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Memento**
+### Классический Memento
 
 ```java
 // Memento
@@ -514,7 +514,7 @@ public class MementoDemo {
 }
 ```
 
-### **Memento** с **Command** паттерном
+### Memento с Command паттерном
 
 ```java
 // Memento для Command паттерна
@@ -694,7 +694,7 @@ public class CommandMementoDemo {
 }
 ```
 
-### **Memento** с сериализацией
+### Memento с сериализацией
 
 ```java
 // Memento с сериализацией
@@ -887,7 +887,7 @@ public class SerializableMementoDemo {
 
 ## Продвинутые реализации
 
-### 1. **Memento** с ограниченной историей
+### 1. Memento с ограниченной историей
 
 ```java
 // Memento с ограниченной историей и компрессией
@@ -1092,7 +1092,7 @@ public class BoundedHistoryDemo {
 }
 ```
 
-### 2. **Memento** с разными уровнями детализации
+### 2. Memento с разными уровнями детализации
 
 ```java
 // Memento с разными уровнями детализации
@@ -1321,7 +1321,7 @@ public class SmartMementoDemo {
 
 ## Примеры использования
 
-### 1. **Text Editor** с **Undo**/**Redo**
+### 1. Text Editor с Undo/Redo
 
 ```java
 // Полноценный текстовый редактор с undo/redo
@@ -1481,7 +1481,7 @@ public class AdvancedTextEditorDemo {
 }
 ```
 
-### 2. **Game Save System**
+### 2. Game Save System
 
 ```java
 // Система сохранений для игры
@@ -1698,7 +1698,7 @@ public class GameSaveSystem {
 }
 ```
 
-### 3. **Database Transaction Rollback**
+### 3. Database Transaction Rollback
 
 ```java
 // Memento для транзакций базы данных
@@ -1900,7 +1900,7 @@ public class DatabaseTransactionManager {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -1997,7 +1997,7 @@ class CommandProcessor {
 }
 ```
 
-### 2. **Testing Memento Pattern**
+### 2. Testing Memento Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

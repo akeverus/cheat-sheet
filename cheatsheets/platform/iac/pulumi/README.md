@@ -19,14 +19,14 @@ Pulumi — современная IaC-платформа, где инфраст�
 ## Полезные ссылки
 
 ### Основные документы
-- [pulumi-basics.md](pulumi-basics.md) — установка, первый stack, базовые ресурсы
-- [pulumi.md](pulumi.md) — полное руководство: компоненты, stacks, automation API, CI/CD
+- [[pulumi-basics]] — установка, первый stack, базовые ресурсы
+- [[pulumi]] — полное руководство: компоненты, stacks, automation API, CI/CD
 
 ### Соседние разделы
-- [platform/iac/](../README.md) — родительский раздел
-- [platform/iac/terraform/](../terraform/README.md) — основной конкурент и альтернатива
-- [platform/iac/ansible/](../ansible/README.md) — configuration management
-- [platform/cloud-providers/](../../cloud-providers/README.md) — AWS/GCP/Azure
+- [[README|platform/iac/]] — родительский раздел
+- [[README|platform/iac/terraform/]] — основной конкурент и альтернатива
+- [[README|platform/iac/ansible/]] — configuration management
+- [[README|platform/cloud-providers/]] — AWS/GCP/Azure
 
 ### Внешние ресурсы
 - [Pulumi Documentation](https://www.pulumi.com/docs/)
@@ -46,14 +46,14 @@ Pulumi — современная IaC-платформа, где инфраст�
 
 | Тема | Файл |
 |------|------|
-| Установка, первый проект | [pulumi-basics.md](pulumi-basics.md) |
-| Ресурсы и провайдеры | [pulumi.md](pulumi.md) |
-| Stacks и окружения | [pulumi.md](pulumi.md) |
-| Компоненты (переиспользование) | [pulumi.md](pulumi.md) |
-| StackReferences (зависимости между стеками) | [pulumi.md](pulumi.md) |
-| Secrets и шифрование | [pulumi.md](pulumi.md) |
-| CI/CD и Automation API | [pulumi.md](pulumi.md) |
-| Policy as Code (CrossGuard) | [pulumi.md](pulumi.md) |
+| Установка, первый проект | [[pulumi-basics]] |
+| Ресурсы и провайдеры | [[pulumi]] |
+| Stacks и окружения | [[pulumi]] |
+| Компоненты (переиспользование) | [[pulumi]] |
+| StackReferences (зависимости между стеками) | [[pulumi]] |
+| Secrets и шифрование | [[pulumi]] |
+| CI/CD и Automation API | [[pulumi]] |
+| Policy as Code (CrossGuard) | [[pulumi]] |
 
 ## Pulumi vs Terraform/Ansible/Packer
 
@@ -82,7 +82,7 @@ Pulumi — современная IaC-платформа, где инфраст�
 
 ## Куда идти дальше
 
-- Сравнение с Terraform — [../terraform/README.md](../terraform/README.md)
-- Configuration management — [../ansible/README.md](../ansible/README.md)
-- Build образов — [../packer/README.md](../packer/README.md)
-- Обзор подходов IaC — [../iac-overview.md](../iac-overview.md)
+- Сравнение с Terraform — [[README]]
+- Configuration management — [[README]]
+- Build образов — [[README]]
+- Обзор подходов IaC — [[iac-overview]]

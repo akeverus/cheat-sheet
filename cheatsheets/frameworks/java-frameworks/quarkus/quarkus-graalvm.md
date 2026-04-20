@@ -117,7 +117,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 
 ## Native Compilation
 
-### **Building Native Image**
+### Building Native Image
 
 ```bash
 # Сборка native image
@@ -127,7 +127,7 @@ related: ["quarkus-core.md", "quarkus-cloud.md"]
 ./mvnw package -Pnative -Dquarkus.native.container-build=true
 ```
 
-### **Native Image Configuration**
+### Native Image Configuration
 
 **application.properties:**
 
@@ -139,7 +139,7 @@ quarkus.native.native-image-xmx=4g
 
 ## Reflection Configuration
 
-### **Reflection Config**
+### Reflection Config
 
 **reflection-`config.json`:**
 
@@ -152,7 +152,7 @@ quarkus.native.native-image-xmx=4g
 }
 ```
 
-### **Using Reflection**
+### Using Reflection
 
 ```java
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -168,7 +168,7 @@ public class User {
 
 ## Лучшие практики
 
-### 1. Используйте @**RegisterForReflection**
+### 1. Используйте @RegisterForReflection
 
 ```java
 // ✅ Хорошо
@@ -178,14 +178,14 @@ public class MyClass {
 }
 ```
 
-### 2. Минимизируйте использование **reflection**
+### 2. Минимизируйте использование reflection
 
 ```java
 // ✅ Хорошо
 // Избегайте reflection где возможно
 ```
 
-### 3. Тестируйте **native image**
+### 3. Тестируйте native image
 
 ```bash
 # ✅ Хорошо
@@ -194,7 +194,7 @@ public class MyClass {
 
 ## Native Image Build Options
 
-### **Build Configuration**
+### Build Configuration
 
 **Детальная настройка **native image build**:**
 
@@ -207,7 +207,7 @@ quarkus.native.container-build=true
 quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-native-image:22.3-java17
 ```
 
-### **Build Arguments**
+### Build Arguments
 
 **Дополнительные **build arguments**:**
 
@@ -221,7 +221,7 @@ quarkus.native.additional-build-args=\
 
 ## Reflection Configuration
 
-### **Automatic Reflection Registration**
+### Automatic Reflection Registration
 
 **Автоматическая регистрация для **reflection**:**
 
@@ -237,7 +237,7 @@ public class User {
 }
 ```
 
-### **Selective Reflection**
+### Selective Reflection
 
 **Селективная регистрация:**
 
@@ -252,7 +252,7 @@ public class ReflectionConfig {
 }
 ```
 
-### **Manual Reflection Config**
+### Manual Reflection Config
 
 **Ручная настройка **reflection**:**
 
@@ -270,7 +270,7 @@ public class ReflectionConfig {
 
 ## Resource Configuration
 
-### **Native Image Resources**
+### Native Image Resources
 
 **Настройка ресурсов для **native image**:**
 
@@ -279,7 +279,7 @@ quarkus.native.resources.includes=/*.properties,/*.xml
 quarkus.native.resources.excludes=/*.test.properties
 ```
 
-### **Resource Bundles**
+### Resource Bundles
 
 **Регистрация **resource bundles**:**
 
@@ -296,7 +296,7 @@ public class ResourceConfig {
 
 ## Proxy Configuration
 
-### **Dynamic Proxy Registration**
+### Dynamic Proxy Registration
 
 **Регистрация **dynamic proxies**:**
 
@@ -324,7 +324,7 @@ public class ProxyConfig {
 
 ## Serialization Configuration
 
-### **Java Serialization**
+### Java Serialization
 
 **Настройка **Java serialization**:**
 
@@ -345,7 +345,7 @@ public class SerializableUser implements Serializable {
 }
 ```
 
-### **JSON Serialization**
+### JSON Serialization
 
 **Настройка **JSON serialization** для **native**:**
 
@@ -365,7 +365,7 @@ public class JsonUser {
 
 ## Build-Time vs Runtime
 
-### **Build-Time Initialization**
+### Build-Time Initialization
 
 **Инициализация на этапе сборки:**
 
@@ -382,7 +382,7 @@ public class BuildTimeRecorder {
 }
 ```
 
-### **Runtime Initialization**
+### Runtime Initialization
 
 **Инициализация в **runtime**:**
 
@@ -402,7 +402,7 @@ public class RuntimeInitializer {
 
 ## Native Image Optimization
 
-### **Memory Configuration**
+### Memory Configuration
 
 **Настройка памяти для **native image**:**
 
@@ -411,7 +411,7 @@ quarkus.native.native-image-xmx=4g
 quarkus.native.enable-all-security-services=true
 ```
 
-### **Garbage Collector**
+### Garbage Collector
 
 **Выбор **garbage collector**:**
 
@@ -421,7 +421,7 @@ quarkus.native.additional-build-args=--gc=G1
 quarkus.native.additional-build-args=--gc=serial
 ```
 
-### **Optimization Levels**
+### Optimization Levels
 
 **Уровни оптимизации:**
 
@@ -435,7 +435,7 @@ quarkus.native.additional-build-args=-H:+OmitInlinedExceptionDetails
 
 ## Testing Native Images
 
-### **Native Image Tests**
+### Native Image Tests
 
 **Тестирование **native images**:**
 
@@ -455,7 +455,7 @@ public class NativeUserResourceIT {
 }
 ```
 
-### **Build Configuration** для тестов
+### Build Configuration для тестов
 
 ```properties
 # application.properties
@@ -465,7 +465,7 @@ quarkus.test.native-image-profile=test
 
 ## Container Build
 
-### **Docker Build**
+### Docker Build
 
 **Сборка **native image** в **Docker**:**
 
@@ -473,7 +473,7 @@ quarkus.test.native-image-profile=test
 ./mvnw package -Pnative -Dquarkus.native.container-build=true
 ```
 
-### **Custom Builder Image**
+### Custom Builder Image
 
 **Использование кастомного **builder image**:**
 
@@ -482,7 +482,7 @@ quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-native-image:22.3-java1
 quarkus.native.container-build=true
 ```
 
-### **Dockerfile** для **Native**
+### Dockerfile для Native
 
 ```dockerfile
 FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java17 AS build
@@ -506,7 +506,7 @@ ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
 
 ## Performance Tuning
 
-### **Startup Time Optimization**
+### Startup Time Optimization
 
 **Оптимизация времени запуска:**
 
@@ -517,7 +517,7 @@ quarkus.native.additional-build-args=\
   -H:+ReportExceptionStackTraces
 ```
 
-### **Memory Footprint**
+### Memory Footprint
 
 **Уменьшение потребления памяти:**
 
@@ -527,7 +527,7 @@ quarkus.native.additional-build-args=\
   -H:InitialCollectionPolicy=com.oracle.svm.core.genscavenge.CollectionPolicy$BySpaceAndTime
 ```
 
-### **Runtime Performance**
+### Runtime Performance
 
 **Оптимизация **runtime** производительности:**
 
@@ -539,7 +539,7 @@ quarkus.native.additional-build-args=\
 
 ## Common Issues и Solutions
 
-### **Reflection Issues**
+### Reflection Issues
 
 **Решение проблем с **reflection**:**
 
@@ -556,7 +556,7 @@ public class ProblematicClass {
 }
 ```
 
-### **Class Loading Issues**
+### Class Loading Issues
 
 **Решение проблем с **class loading**:**
 
@@ -566,7 +566,7 @@ quarkus.native.additional-build-args=\
   --report-unsupported-elements-at-runtime
 ```
 
-### **Resource Access Issues**
+### Resource Access Issues
 
 **Решение проблем с доступом к ресурсам:**
 
@@ -576,7 +576,7 @@ quarkus.native.resources.includes=/*.properties,/*.xml,/*.json
 
 ## Native Image Debugging
 
-### **Debug Configuration**
+### Debug Configuration
 
 **Настройка отладки:**
 
@@ -588,7 +588,7 @@ quarkus.native.additional-build-args=\
   -H:+PrintAnalysisCallTree
 ```
 
-### **Native Image Logging**
+### Native Image Logging
 
 **Логирование в **native image**:**
 
@@ -599,7 +599,7 @@ quarkus.log.category."io.quarkus".level=DEBUG
 
 ## Build Optimization
 
-### **Incremental Builds**
+### Incremental Builds
 
 **Инкрементальная сборка:**
 
@@ -608,7 +608,7 @@ quarkus.native.enable-all-security-services=true
 quarkus.native.additional-build-args=-H:+InlineBeforeAnalysis
 ```
 
-### **Build Caching**
+### Build Caching
 
 **Кеширование сборки:**
 
@@ -619,7 +619,7 @@ quarkus.native.additional-build-args=-H:+InlineBeforeAnalysis
 
 ## Лучшие практики
 
-### 1. Всегда регистрируйте классы для **reflection**
+### 1. Всегда регистрируйте классы для reflection
 
 ```java
 // ✅ Хорошо
@@ -629,7 +629,7 @@ public class MyClass {
 }
 ```
 
-### 2. Минимизируйте использование **reflection**
+### 2. Минимизируйте использование reflection
 
 ```java
 // ✅ Хорошо - избегайте reflection где возможно
@@ -648,7 +648,7 @@ public class ReflectionAccess {
 }
 ```
 
-### 3. Тестируйте **native image**
+### 3. Тестируйте native image
 
 ```java
 // ✅ Хорошо
@@ -658,7 +658,7 @@ public class NativeTest {
 }
 ```
 
-### 4. Используйте **build-time initialization** где возможно
+### 4. Используйте build-time initialization где возможно
 
 ```java
 // ✅ Хорошо
@@ -686,7 +686,7 @@ quarkus.native.additional-build-args=\
 
 ## Advanced Native Image Patterns
 
-### **Build-Time Initialization**
+### Build-Time Initialization
 
 **Инициализация на этапе сборки:**
 
@@ -702,7 +702,7 @@ public class BuildTimeRecorder {
 }
 ```
 
-### **Conditional Native Compilation**
+### Conditional Native Compilation
 
 **Условная компиляция:**
 
@@ -721,7 +721,7 @@ public class ConditionalService {
 }
 ```
 
-### **Native Image Optimization**
+### Native Image Optimization
 
 **Оптимизация **native image**:**
 
@@ -735,7 +735,7 @@ quarkus.native.additional-build-args=\
 
 ## Native Image Build Optimization
 
-### **Build Time Analysis**
+### Build Time Analysis
 
 **Анализ времени сборки:**
 
@@ -744,7 +744,7 @@ quarkus.native.additional-build-args=\
 ./mvnw package -Pnative -Dquarkus.native.additional-build-args=-H:+PrintAnalysisCallTree
 ```
 
-### **Memory Configuration**
+### Memory Configuration
 
 **Конфигурация памяти:**
 
@@ -752,7 +752,7 @@ quarkus.native.additional-build-args=\
 quarkus.native.native-image-xmx=4g
 ```
 
-### **Build Caching**
+### Build Caching
 
 **Кеширование сборки:**
 
@@ -763,7 +763,7 @@ quarkus.native.enable-all-charsets=true
 
 ## Native Image Runtime Optimization
 
-### **Garbage Collection**
+### Garbage Collection
 
 **Настройка сборки мусора:**
 
@@ -771,7 +771,7 @@ quarkus.native.enable-all-charsets=true
 quarkus.native.additional-build-args=-H:+UseG1GC
 ```
 
-### **Class Initialization**
+### Class Initialization
 
 **Инициализация классов:**
 
@@ -783,7 +783,7 @@ quarkus.native.additional-build-args=\
 
 ## Troubleshooting Native Images
 
-### **Common Build Errors**
+### Common Build Errors
 
 **Типичные ошибки сборки:**
 
@@ -791,7 +791,7 @@ quarkus.native.additional-build-args=\
 2. **Resource not found**: Настройте ресурсы в **application.properties**
 3. **Class initialization errors**: Настройте инициализацию классов
 
-### **Debugging Native Images**
+### Debugging Native Images
 
 **Отладка **native images**:**
 

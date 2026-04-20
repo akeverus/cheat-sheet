@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cassandra**: Производительность и оптимизация — Тюнинг и мониторинг высоконагруженных кластеров
+# Cassandra: Производительность и оптимизация — Тюнинг и мониторинг высоконагруженных кластеров
 
 Комплексное руководство по оптимизации производительности **Apache Cassandra**: настройка **JVM**, тюнинг запросов, мониторинг метрик и устранение узких мест в высоконагруженных системах.
 
@@ -72,7 +72,7 @@ updated: "2026-02-11"
     - [**Heap Dump Analysis**](#heap-dump-analysis)
 - [Создание heap dump](#создание-heap-dump)
 - [Анализ с помощью Eclipse MAT или VisualVM](#анализ-с-помощью-eclipse-mat-или-visualvm)
-    - [**JFR** (**Java Flight Recorder**)](#jfr-java-flight-recorder)
+    - [**JFR** (Java Flight Recorder)](#jfr-java-flight-recorder)
 - [Включение JFR](#включение-jfr)
 - [Создание recording](#создание-recording)
 - [Анализ recording в Java Mission Control](#анализ-recording-в-java-mission-control)
@@ -185,9 +185,9 @@ updated: "2026-02-11"
 
 ### Ключевые факторы производительности
 
-#### **Read Performance Factors**
+#### Read Performance Factors
 
-Пример факторов, влияющих на производительность чтения в **Cassandra** (**Java**).
+Пример факторов, влияющих на производительность чтения в **Cassandra** (Java).
 
 ```java
 public class ReadPerformanceAnalyzer {
@@ -272,7 +272,7 @@ class PerformanceFactors {
 }
 ```
 
-#### **Write Performance Factors**
+#### Write Performance Factors
 ```java
 public class WritePerformanceAnalyzer {
 
@@ -363,9 +363,9 @@ class WritePerformanceProfile {
 }
 ```
 
-### **Performance Trade-offs**
+### Performance Trade-offs
 
-#### **CAP Theorem** в **Cassandra**
+#### CAP Theorem в Cassandra
 ```java
 public class CAPTradeoffAnalyzer {
 
@@ -459,11 +459,11 @@ enum TuningProfile {
 }
 ```
 
-## Оптимизация **JVM**
+## Оптимизация JVM
 
-### **JVM Memory Tuning**
+### JVM Memory Tuning
 
-#### **Heap Size Configuration**
+#### Heap Size Configuration
 ```bash
 # Оптимальная конфигурация heap
 # cassandra-env.sh
@@ -488,7 +488,7 @@ JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=4"
 JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=1"
 ```
 
-#### **Garbage Collection Tuning**
+#### Garbage Collection Tuning
 ```bash
 # G1GC для Cassandra 3.0+
 JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
@@ -516,7 +516,7 @@ JVM_OPTS="$JVM_OPTS -XX:NumberOfGCLogFiles=10"
 JVM_OPTS="$JVM_OPTS -XX:GCLogFileSize=10M"
 ```
 
-#### **Off-heap Memory**
+#### Off-heap Memory
 ```java
 @Service
 public class OffHeapMemoryManager {
@@ -581,9 +581,9 @@ class OffHeapConfig {
 }
 ```
 
-### **JVM Diagnostic Tools**
+### JVM Diagnostic Tools
 
-#### **Thread Dump Analysis**
+#### Thread Dump Analysis
 ```bash
 # Создание thread dump
 kill -3 <cassandra_pid>
@@ -599,7 +599,7 @@ jstack -l <cassandra_pid> > thread_dump.txt
 # - RUNNABLE threads в suspicious states
 ```
 
-#### **Heap Dump Analysis**
+#### Heap Dump Analysis
 ```bash
 # Создание heap dump
 jmap -dump:format=b,file=heap.hprof <cassandra_pid>
@@ -612,7 +612,7 @@ jmap -dump:format=b,file=heap.hprof <cassandra_pid>
 # - Dominator tree
 ```
 
-#### **JFR** (**Java `Flight` Recorder**)
+#### JFR (Java `Flight` Recorder)
 ```bash
 # Включение JFR
 JVM_OPTS="$JVM_OPTS -XX:+UnlockCommercialFeatures"
@@ -628,9 +628,9 @@ jcmd <cassandra_pid> JFR.start duration=60s filename=recording.jfr
 
 ## Тюнинг операционной системы
 
-### **Linux Kernel Tuning**
+### Linux Kernel Tuning
 
-#### **Network Optimization**
+#### Network Optimization
 ```bash
 # /etc/sysctl.conf
 
@@ -659,7 +659,7 @@ net.nf_conntrack_max = 1048576
 sysctl -p
 ```
 
-#### **Disk** I/O **Optimization**
+#### Disk I/O Optimization
 ```bash
 # I/O scheduler (для SSD)
 echo 'deadline' > /sys/block/sda/queue/scheduler
@@ -680,7 +680,7 @@ echo 1 > /proc/sys/vm/overcommit_memory
 echo 0 > /proc/sys/vm/overcommit_ratio
 ```
 
-#### **File System Tuning**
+#### File System Tuning
 ```bash
 # Для XFS (рекомендуется для Cassandra)
 mkfs.xfs -f -d su=64k,sw=8 -l size=128m /dev/sda
@@ -697,9 +697,9 @@ tune2fs -O ^has_journal /dev/sda
 UUID=... /var/lib/cassandra ext4 noatime,nodiratime,nobarrier,data=writeback 0 0
 ```
 
-### **Resource Limits**
+### Resource Limits
 
-#### **System Limits**
+#### System Limits
 ```bash
 # /etc/security/limits.conf
 
@@ -718,7 +718,7 @@ root soft nofile 1048576
 root hard nofile 1048576
 ```
 
-#### **Cassandra User Setup**
+#### Cassandra User Setup
 ```bash
 # Создание пользователя cassandra
 useradd -r -m -d /var/lib/cassandra -s /bin/bash cassandra
@@ -733,9 +733,9 @@ mkdir -p /var/log/cassandra
 chown -R cassandra:cassandra /var/log/cassandra
 ```
 
-### **CPU Affinity and NUMA**
+### CPU Affinity and NUMA
 
-#### **CPU Pinning**
+#### CPU Pinning
 ```bash
 # CPU affinity для JVM
 JVM_OPTS="$JVM_OPTS -XX:UseNUMA"
@@ -751,9 +751,9 @@ numactl --cpunodebind=0 --membind=0 cassandra
 
 ## Оптимизация запросов
 
-### **Query Pattern Analysis**
+### Query Pattern Analysis
 
-#### **Identifying Slow Queries**
+#### Identifying Slow Queries
 ```java
 @Service
 public class QueryPerformanceAnalyzer {
@@ -895,9 +895,9 @@ class QueryPerformanceIssue {
 }
 ```
 
-### **Query Optimization Techniques**
+### Query Optimization Techniques
 
-#### **Pagination Optimization**
+#### Pagination Optimization
 ```java
 @Service
 public class QueryOptimizer {
@@ -1015,9 +1015,9 @@ class OptimizedQuery {
 
 ## Индексы и кэширование
 
-### **Index Strategy Optimization**
+### Index Strategy Optimization
 
-#### **Choosing Index Types**
+#### Choosing Index Types
 ```java
 @Service
 public class IndexStrategyOptimizer {
@@ -1131,9 +1131,9 @@ class StorageImpact {
 }
 ```
 
-### **Caching Strategies**
+### Caching Strategies
 
-#### **Row Cache Configuration**
+#### Row Cache Configuration
 ```cql
 -- Включение row cache для часто читаемых данных
 ALTER TABLE frequently_read_table
@@ -1148,7 +1148,7 @@ row_cache_save_period: 0
 row_cache_keys_to_save: 100
 ```
 
-#### **Key Cache Optimization**
+#### Key Cache Optimization
 ```yaml
 # cassandra.yaml
 key_cache_size_in_mb: 512
@@ -1161,7 +1161,7 @@ counter_cache_save_period: 7200  # 2 hours
 counter_cache_keys_to_save: 10000
 ```
 
-#### **Custom Caching Strategy**
+#### Custom Caching Strategy
 ```java
 @Service
 public class SmartCacheManager {
@@ -1247,9 +1247,9 @@ public class SmartCacheManager {
 
 ## Оптимизация хранения
 
-### **Compaction Strategy Selection**
+### Compaction Strategy Selection
 
-#### **Choosing Compaction Strategy**
+#### Choosing Compaction Strategy
 ```java
 @Service
 public class CompactionStrategyOptimizer {
@@ -1388,9 +1388,9 @@ class CompactionRecommendation {
 }
 ```
 
-### **Compression Tuning**
+### Compression Tuning
 
-#### **Compression Configuration**
+#### Compression Configuration
 ```cql
 -- Оптимизация сжатия для разных типов данных
 ALTER TABLE time_series_data WITH compression = {
@@ -1411,9 +1411,9 @@ ALTER TABLE binary_data WITH compression = {
 
 ## Масштабирование производительности
 
-### **Horizontal Scaling**
+### Horizontal Scaling
 
-#### **Cluster Expansion Planning**
+#### Cluster Expansion Planning
 ```java
 @Service
 public class ClusterScalingPlanner {
@@ -1554,9 +1554,9 @@ class ScalingAction {
 }
 ```
 
-### **Vertical Scaling**
+### Vertical Scaling
 
-#### **Node Upgrade Planning**
+#### Node Upgrade Planning
 ```java
 @Service
 public class NodeUpgradePlanner {
@@ -1628,9 +1628,9 @@ class HardwareUpgrade {
 
 ## Мониторинг и метрики
 
-### **Key Performance Indicators**
+### Key Performance Indicators
 
-#### **System Metrics**
+#### System Metrics
 ```java
 @Service
 public class PerformanceMetricsCollector {
@@ -1765,9 +1765,9 @@ class PerformanceAlert {
 
 ## Инструменты профилирования
 
-### **Cassandra Stress Tool**
+### Cassandra Stress Tool
 
-#### **Load Testing**
+#### Load Testing
 ```bash
 # Простой write тест
 cassandra-stress write n=1000000 -rate threads=50
@@ -1783,7 +1783,7 @@ cassandra-stress write n=100000 cl=QUORUM -rate threads=50
 cassandra-stress read n=100000 cl=ONE -rate threads=50
 ```
 
-#### **Custom Stress Profile**
+#### Custom Stress Profile
 ```yaml
 # stress-profile.yaml
 keyspace: stress_keyspace
@@ -1820,7 +1820,7 @@ queries:
     fields: samerow
 ```
 
-#### **Results Analysis**
+#### Results Analysis
 ```java
 @Service
 public class StressTestAnalyzer {
@@ -1907,9 +1907,9 @@ public class StressTestAnalyzer {
 }
 ```
 
-### **Performance Profiling Tools**
+### Performance Profiling Tools
 
-#### **Async Profiler**
+#### Async Profiler
 ```bash
 # Установка async-profiler
 wget https://github.com/jvm-profiling-tools/async-profiler/releases/download/v2.9/async-profiler-2.9-linux-x64.tar.gz
@@ -1925,7 +1925,7 @@ tar xzf async-profiler-2.9-linux-x64.tar.gz
 ./profiler.sh -d 60 -e lock -f lock_profile.html <cassandra_pid>
 ```
 
-#### **YourKit Java Profiler**
+#### YourKit Java Profiler
 ```java
 // Программная интеграция с profiler
 public class ProfilingIntegration {
@@ -1996,9 +1996,9 @@ public class ProfilingIntegration {
 
 ## Решение проблем производительности
 
-### **Common Performance Issues**
+### Common Performance Issues
 
-#### **Memory Issues**
+#### Memory Issues
 ```java
 @Service
 public class MemoryIssueDiagnoser {
@@ -2096,7 +2096,7 @@ class MemoryIssue {
 }
 ```
 
-#### **Disk** I/O **Issues**
+#### Disk I/O Issues
 ```java
 @Service
 public class DiskIOPerformanceDiagnoser {
@@ -2210,52 +2210,52 @@ class DiskOptimizationPlan {
 
 ## Лучшие практики
 
-### **Performance Monitoring**
+### Performance Monitoring
 
-#### 1. **Key Metrics** to **Monitor**
-- **Latency**: **Read**/**Write latency** (**target: < 10ms**)
-- **Throughput**: **Operations per second** (**target: maximize**)
-- **Resource Utilization**: **CPU**, **Memory**, **Disk**, **Network** (**< 80%**)
-- **Error Rates**: **Application and system errors** (**< 1%**)
-- **Cache Hit Rates**: **Key cache**, **Row cache** (**> 90%**)
+#### 1. Key Metrics to Monitor
+- **Latency**: **Read**/**Write latency** (target: < 10ms)
+- **Throughput**: **Operations per second** (target: maximize)
+- **Resource Utilization**: **CPU**, **Memory**, **Disk**, **Network** (< 80%)
+- **Error Rates**: **Application and system errors** (< 1%)
+- **Cache Hit Rates**: **Key cache**, **Row cache** (> 90%)
 - **Compaction Statistics**: **Pending tasks**, **throughput**
 
-#### 2. **Alert Thresholds**
+#### 2. Alert Thresholds
 - **Critical**: > 95% **resource utilization**, > 100ms **latency**
 - **Warning**: > 80% **resource utilization**, > 50ms **latency**
 - **Info**: > 60% **resource utilization**, > 20ms **latency**
 
-### **Capacity Planning**
+### Capacity Planning
 
-#### 1. **Growth Projections**
+#### 1. Growth Projections
 - **Data growth**: 30-50% **annually**
 - **Traffic growth**: 20-40% **annually**
 - **Hardware lifecycle**: 3-5 **years**
 - **Buffer capacity**: 20-30% **overhead**
 
-#### 2. **Scaling Strategies**
+#### 2. Scaling Strategies
 - **Horizontal scaling**: **Add nodes gradually**
 - **Vertical scaling**: **Upgrade existing hardware**
 - **Storage scaling**: **Add disks**/**nodes** as **needed**
 - **Network scaling**: **Upgrade network infrastructure**
 
-### **Configuration Management**
+### Configuration Management
 
-#### 1. **Version Control**
+#### 1. Version Control
 - **Configuration files** in **Git**
 - **Change tracking and rollback capability**
 - **Environment-specific configurations**
 - **Automated deployment** of **changes**
 
-#### 2. **Testing Changes**
+#### 2. Testing Changes
 - **Staging environment for testing**
 - **Load testing before production deployment**
 - **Gradual rollout with monitoring**
 - **Rollback plans for failed changes**
 
-### **Troubleshooting Methodology**
+### Troubleshooting Methodology
 
-#### 1. **Systematic Approach**
+#### 1. Systematic Approach
 1. **Define the problem clearly**
 2. **Gather metrics and logs**
 3. **Identify bottlenecks using profiling tools**
@@ -2263,22 +2263,22 @@ class DiskOptimizationPlan {
 5. **Implement fixes with monitoring**
 6. **Validate improvements with benchmarks**
 
-#### 2. **Common Tools**
+#### 2. Common Tools
 - **nodetool**: **Status**, **statistics**, **maintenance**
 - **JMX**: **Detailed metrics and management**
 - **OS tools**: **iostat**, **iotop**, **vmstat**, **sar**
 - **Application logs**: **Error patterns**, **slow queries**
 - **Third-party**: **Prometheus**, **Grafana**, **DataDog**
 
-### **Performance Culture**
+### Performance Culture
 
-#### 1. **Team Practices**
+#### 1. Team Practices
 - **Performance reviews** in **development process**
 - **Load testing** as **part** of **CI/CD**
 - **Performance budgets for features**
 - **Shared responsibility for performance**
 
-#### 2. **Continuous Improvement**
+#### 2. Continuous Improvement
 - **Regular benchmarking and profiling**
 - **Performance trend analysis**
 - **Technology evaluation for improvements**
@@ -2311,7 +2311,7 @@ class DiskOptimizationPlan {
 2. **Вертикальное масштабирование** — апгрейд **hardware**
 3. **Capacity planning** — прогнозирование роста и планирование ресурсов
 
-### **Best practices**:
+### Best practices:
 
 1. **Query optimization** — анализ паттернов, устранение **anti-patterns**
 2. **Индекс strategy** — правильный выбор типов индексов

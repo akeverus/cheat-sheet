@@ -21,8 +21,8 @@ A **guide** to **implementing** a **basic calculator** in **Java that supports a
 - [Switch Statement (Java Tutorial)](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/switch.html)
 
 ### См. также
-- [Математические алгоритмы](../math/README.md) — раздел math
-- [Алгоритмы со строками](../strings/README.md) — раздел strings
+- [[README|Математические алгоритмы]] — раздел math
+- [[README|Алгоритмы со строками]] — раздел strings
 
 ## Содержание
 
@@ -69,7 +69,7 @@ System.out.println("Following operations are supported:\n" +
 
 ## Reading User Input
 
-**Now let**'s **use** `**java.util.Scanner**` to **read user input**:**
+**Now let**'s **use** `java.util.Scanner` to **read user input**:**
 
 ```java
 Scanner scanner = new Scanner(System.in);
@@ -164,7 +164,7 @@ switch (operation) {
 }
 ```
 
-We **can use** a **variable** to **store the calculation results**. `As a` **result**, it **can** be **printed** at **the end**. In **this case**, `**System.out.println**` **will** be **used only once**.
+We **can use** a **variable** to **store the calculation results**. `As a` **result**, it **can** be **printed** at **the end**. In **this case**, `System.out.println` **will** be **used only once**.
 
 ### Complete Implementation
 
@@ -413,7 +413,7 @@ fun calculateWithIfElse(operation: Char, num1: Double, num2: Double): Double {
 
 **Additionally**, **the maximum range for calculations** `is 2147483647`. **Therefore**, if we **exceed** it, **overflow will occur from the int data type**. `So it` **should** be **stored** in a **variable** of a **larger data type**, **such** as **the double data type**.
 
-**Using** `**double**` **instead** of `**int**` **provides**:**
+**Using** `double` **instead** of `int` **provides**:**
 - **Larger range** of **values**
 - **Support for decimal numbers**
 - **Prevention** of **integer overflow**

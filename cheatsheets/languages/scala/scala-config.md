@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-play.md"]
 ---
 
-# **Scala Configuration**
+# Scala Configuration
 
 Кратко: полное руководство по конфигурации в **Scala**: **Typesafe Config**, **Play Configuration**, переменные окружения.
 
@@ -76,7 +76,7 @@ related: ["scala/scala-basics.md", "scala/scala-play.md"]
 - **Play Configuration**: конфигурация в **Play Framework**
 - **Переменные окружения**: для чувствительных данных
 
-## **Typesafe Config**
+## Typesafe Config
 
 **Typesafe Config** предоставляет мощный **API** для работы с конфигурацией:**
 
@@ -97,7 +97,7 @@ val maxRetries: Int = config.getInt("app.maxRetries")
 
 **Typesafe Config** поддерживает **HOCON** формат, который более выразителен, чем **JSON**.
 
-## **Play Configuration**
+## Play Configuration
 
 **Play Framework** предоставляет свой **API** для конфигурации:**
 
@@ -249,7 +249,7 @@ def validateConfig(config: Config): Either[String, AppConfig] = {
 }
 ```
 
-### **Play Configuration** — расширенные возможности
+### Play Configuration — расширенные возможности
 
 ```scala
 import play.api.Configuration
@@ -280,7 +280,7 @@ class MyService @Inject()(config: Configuration) {
 }
 ```
 
-### **PureConfig** для типобезопасной конфигурации
+### PureConfig для типобезопасной конфигурации
 
 **PureConfig** предоставляет автоматическое преобразование конфигурации в **case** классы:**
 
@@ -591,7 +591,7 @@ val config = ConfigFactory.load()
 val dbPassword = config.getString("database.password")
 ```
 
-### Практические примеры: **Hot reload** конфигурации
+### Практические примеры: Hot reload конфигурации
 
 ```scala
 import com.typesafe.config.{Config, ConfigFactory}

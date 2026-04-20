@@ -23,7 +23,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [[mockito|Mockito]] — **Mockito** для мокирования
-- [Unit-тестирование](../../testing/unit-testing/README.md) — **Unit** тестирование
+- [[README|Unit-тестирование]] — **Unit** тестирование
 
 ## Содержание
 
@@ -103,7 +103,7 @@ public class CalculatorTest {
 }
 ```
 
-### **Assertions API**
+### Assertions API
 ```java
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
@@ -184,7 +184,7 @@ public class AssertionsExamples {
 
 ## Аннотации и жизненный цикл
 
-### **Test Lifecycle**
+### Test Lifecycle
 ```java
 import org.junit.jupiter.api.*;
 
@@ -229,7 +229,7 @@ public class LifecycleTest {
 }
 ```
 
-### **Conditional Test Execution**
+### Conditional Test Execution
 ```java
 import org.junit.jupiter.api.condition.*;
 
@@ -307,7 +307,7 @@ public class ConditionalTests {
 }
 ```
 
-### **Parameterized Tests**
+### Parameterized Tests
 ```java
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
@@ -405,9 +405,9 @@ public class ParameterizedTests {
 }
 ```
 
-## **Extensions API**
+## Extensions API
 
-### **Custom Extensions**
+### Custom Extensions
 ```java
 // Создание кастомной extension
 public class TimingExtension implements BeforeTestExecutionCallback, AfterTestExecutionCallback {
@@ -439,7 +439,7 @@ public class ExtendedTest {
 }
 ```
 
-### **Test Templates**
+### Test Templates
 ```java
 @TestTemplate
 @ExtendWith(DatabaseTestTemplateInvocationContextProvider.class)
@@ -482,9 +482,9 @@ public class DatabaseTestTemplateInvocationContextProvider
 }
 ```
 
-## **Dynamic Tests**
+## Dynamic Tests
 
-### **Dynamic Test Generation**
+### Dynamic Test Generation
 ```java
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -517,9 +517,9 @@ public class DynamicTests {
 }
 ```
 
-## **Test Interfaces** и **Inheritance**
+## Test Interfaces и Inheritance
 
-### **Test Interfaces**
+### Test Interfaces
 ```java
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public interface TestLifecycleLogger {
@@ -558,9 +558,9 @@ public class UserServiceTest implements TestLifecycleLogger, DatabaseTests {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Spring Extension**
+### Spring Extension
 ```java
 @SpringBootTest
 @ExtendWith(SpringExtension.class) // Или @ExtendWith(SpringJUnit4ClassRunner.class) для обратной совместимости
@@ -585,7 +585,7 @@ public class SpringBootTest {
 }
 ```
 
-### **Test Slices**
+### Test Slices
 ```java
 @JdbcTest // Только JDBC компоненты
 public class UserRepositoryTest {
@@ -638,9 +638,9 @@ public class UserJpaTest {
 }
 ```
 
-## **Testing Best Practices**
+## Testing Best Practices
 
-### **Test Organization**
+### Test Organization
 ```java
 // Структура тестов
 public class UserServiceTest {
@@ -709,7 +709,7 @@ public class UserServiceTest {
 }
 ```
 
-### **Custom Assertions**
+### Custom Assertions
 ```java
 public class UserAssertions {
 
@@ -742,9 +742,9 @@ void testUserCreation() {
 }
 ```
 
-## **Migration from JUnit** 4
+## Migration from JUnit 4
 
-### **Basic Migration**
+### Basic Migration
 ```java
 // JUnit 4
 import org.junit.Test;
@@ -793,7 +793,7 @@ public class JUnit5Test {
 }
 ```
 
-### **Advanced Migration**
+### Advanced Migration
 ```java
 // JUnit 4 с Rules
 public class JUnit4RuleTest {
@@ -826,9 +826,9 @@ public class JUnit5ExtensionTest {
 }
 ```
 
-## **Performance Testing**
+## Performance Testing
 
-### **Benchmark Tests**
+### Benchmark Tests
 ```java
 public class PerformanceTest {
 
@@ -875,9 +875,9 @@ public class PerformanceTest {
 }
 ```
 
-## **Parallel Execution**
+## Parallel Execution
 
-### **Parallel Test Execution**
+### Parallel Test Execution
 ```java
 // junit-platform.properties
 junit.jupiter.execution.parallel.enabled = true
@@ -905,9 +905,9 @@ public class ParallelTests {
 }
 ```
 
-## **Custom Test Engines**
+## Custom Test Engines
 
-### **Implementing Custom Test Engine**
+### Implementing Custom Test Engine
 ```java
 public class CustomTestEngine implements TestEngine {
 
@@ -933,9 +933,9 @@ public class CustomTestEngine implements TestEngine {
 // META-INF/services/org.junit.platform.engine.TestEngine
 ```
 
-## **Integration** с другими инструментами
+## Integration с другими инструментами
 
-### **Mockito Integration**
+### Mockito Integration
 ```java
 @ExtendWith(MockitoExtension.class)
 public class MockitoIntegrationTest {
@@ -962,7 +962,7 @@ public class MockitoIntegrationTest {
 }
 ```
 
-### **Testcontainers Integration**
+### Testcontainers Integration
 ```java
 @SpringBootTest
 @Testcontainers
@@ -997,7 +997,7 @@ public class TestcontainersIntegrationTest {
 
 ## Лучшие практики
 
-### **Test Naming Conventions**
+### Test Naming Conventions
 ```java
 public class TestNamingExamples {
 
@@ -1030,7 +1030,7 @@ public class TestNamingExamples {
 }
 ```
 
-### **Test Data Management**
+### Test Data Management
 ```java
 public class TestDataManagement {
 
@@ -1093,7 +1093,7 @@ public class TestDataManagement {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```java
 public class JUnit5Troubleshooting {
 
@@ -1138,7 +1138,7 @@ public class JUnit5Troubleshooting {
 }
 ```
 
-### **Debugging Tests**
+### Debugging Tests
 ```java
 public class TestDebugging {
 
@@ -1169,9 +1169,9 @@ public class TestDebugging {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **JUnit** 6 **Preview Features**
+### JUnit 6 Preview Features
 ```java
 // Предполагаемые возможности JUnit 6
 // (основанные на текущих планах развития)
@@ -1208,7 +1208,7 @@ public class PropertyBasedTest {
 - [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
 
 ## См. также
-- [Mockito](../../testing/unit-testing/junit/mockito.md), [Mockito Advanced](../../testing/unit-testing/junit/mockito-advanced.md) — моки и стабы
+- [[mockito]], [[mockito-advanced|Mockito Advanced]] — моки и стабы
 - [[assertj|AssertJ]] — **Fluent assertions**
 - [Testcontainers](https://www.testcontainers.org/) — интеграционные тесты
 

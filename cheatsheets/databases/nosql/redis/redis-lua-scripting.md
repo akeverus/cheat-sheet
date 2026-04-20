@@ -16,7 +16,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 ---
 
-# **Redis**: **Lua Scripting**
+# Redis: Lua Scripting
 
 ## Полезные ссылки
 
@@ -76,11 +76,11 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [**Script Testing**](#script-testing)
   - [**Unit Testing Lua Scripts**](#unit-testing-lua-scripts)
 
-## Введение в **Lua Scripting**
+## Введение в Lua Scripting
 
 **Lua** скриптинг в **Redis** позволяет выполнять сложные операции атомарно на сервере, что критически важно для обеспечения консистентности данных и оптимизации производительности.
 
-### Преимущества **Lua Scripting**
+### Преимущества Lua Scripting
 
 - **Атомарность**: Все команды выполняются атомарно
 - **Производительность**: Меньше **round-trips** между клиентом и сервером
@@ -90,7 +90,7 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 
 ## Базовое использование
 
-### **EVAL** команда
+### EVAL команда
 
 ```redis
 # Базовый синтаксис
@@ -103,7 +103,7 @@ EVAL "return redis.call('GET', KEYS[1])" 1 mykey
 EVAL "return redis.call('SET', KEYS[1], ARGV[1])" 1 mykey "value"
 ```
 
-### **EVALSHA** команда
+### EVALSHA команда
 
 ```redis
 # Загрузка скрипта
@@ -115,9 +115,9 @@ EVALSHA 4e6d8fc8bb01276962cce5371fa795a7763657ae 1 mykey
 ```
 
 
-## Основные функции **Redis** в **Lua**
+## Основные функции Redis в Lua
 
-### **redis.call**()
+### redis.call()
 
 ```lua
 -- Выполнение команды Redis
@@ -128,7 +128,7 @@ redis.call('SET', 'mykey', 'newvalue')
 local result = redis.call('INCR', 'counter')
 ```
 
-### **redis.pcall**()
+### redis.pcall()
 
 ```lua
 -- Выполнение команды с обработкой ошибок
@@ -139,7 +139,7 @@ if result['err'] then
 end
 ```
 
-### **redis.error_reply**()
+### redis.error_reply()
 
 ```lua
 -- Возврат ошибки
@@ -148,7 +148,7 @@ if condition then
 end
 ```
 
-### **redis.status_reply**()
+### redis.status_reply()
 
 ```lua
 -- Возврат статуса
@@ -188,7 +188,7 @@ return {from_balance - amount, to_balance + amount}
 redis-cli --eval transfer.lua from_account to_account , 100
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 ```lua
 -- rate_limit.lua
@@ -218,7 +218,7 @@ end
 return current_requests
 ```
 
-### **Distributed Lock**
+### Distributed Lock
 
 ```lua
 -- acquire_lock.lua
@@ -250,7 +250,7 @@ else
 end
 ```
 
-### **Cache Aside Pattern**
+### Cache Aside Pattern
 
 ```lua
 -- cache_aside.lua
@@ -269,7 +269,7 @@ return nil
 ```
 
 
-## Оптимизация **Lua** скриптов
+## Оптимизация Lua скриптов
 
 ### Лучшие практики
 
@@ -295,9 +295,9 @@ end
 return results
 ```
 
-## **Advanced Lua Patterns**
+## Advanced Lua Patterns
 
-### **Atomic Operations**
+### Atomic Operations
 
 ```lua
 -- Атомарное обновление с проверкой
@@ -314,7 +314,7 @@ else
 end
 ```
 
-### **Batch Operations**
+### Batch Operations
 
 ```lua
 -- Пакетная обработка ключей
@@ -329,7 +329,7 @@ end
 return results
 ```
 
-### **Conditional Logic**
+### Conditional Logic
 
 ```lua
 -- Условная логика
@@ -347,7 +347,7 @@ else
 end
 ```
 
-### **Error Handling**
+### Error Handling
 
 ```lua
 -- Обработка ошибок
@@ -361,9 +361,9 @@ end
 return result
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Script Caching**
+### Script Caching
 
 ```bash
 # Загрузка скрипта один раз
@@ -373,7 +373,7 @@ SCRIPT LOAD "$(cat script.lua)"
 EVALSHA <sha1> numkeys key [key ...] arg [arg ...]
 ```
 
-### **Minimizing Round Trips**
+### Minimizing Round Trips
 
 ```lua
 -- Плохо: Множественные round-trips
@@ -385,9 +385,9 @@ local value3 = redis.call('GET', 'key3')
 local values = redis.call('MGET', 'key1', 'key2', 'key3')
 ```
 
-## **Real-World Examples**
+## Real-World Examples
 
-### **Shopping Cart Operations**
+### Shopping Cart Operations
 
 ```lua
 -- add_to_cart.lua
@@ -408,7 +408,7 @@ redis.call('EXPIRE', cart_key, 3600)
 return current_qty + quantity
 ```
 
-### **Leaderboard Update**
+### Leaderboard Update
 
 ```lua
 -- update_leaderboard.lua
@@ -425,7 +425,7 @@ local rank = redis.call('ZREVRANK', leaderboard_key, player_id)
 return {new_score, rank}
 ```
 
-### **Distributed Counter**
+### Distributed Counter
 
 ```lua
 -- distributed_counter.lua
@@ -444,9 +444,9 @@ redis.call('SET', counter_key, new_value)
 return new_value
 ```
 
-## **Advanced Script Management**
+## Advanced Script Management
 
-### **Script Loading and Caching**
+### Script Loading and Caching
 
 ```bash
 # Загрузка скрипта
@@ -462,7 +462,7 @@ SCRIPT FLUSH
 SCRIPT KILL
 ```
 
-### **Script Optimization Techniques**
+### Script Optimization Techniques
 
 ```lua
 -- Использование локальных переменных
@@ -482,7 +482,7 @@ else
 end
 ```
 
-### **Error Handling Patterns**
+### Error Handling Patterns
 
 ```lua
 -- Комплексная обработка ошибок
@@ -502,9 +502,9 @@ end
 return value
 ```
 
-## **Real-World Script Examples**
+## Real-World Script Examples
 
-### **Distributed Rate Limiter**
+### Distributed Rate Limiter
 
 ```lua
 -- distributed_rate_limiter.lua
@@ -528,7 +528,7 @@ else
 end
 ```
 
-### **Atomic Counter with Expiry**
+### Atomic Counter with Expiry
 
 ```lua
 -- atomic_counter_with_expiry.lua
@@ -545,7 +545,7 @@ redis.call('EXPIRE', key, ttl)
 return new_value
 ```
 
-### **Conditional List Operations**
+### Conditional List Operations
 
 ```lua
 -- conditional_list_ops.lua
@@ -565,7 +565,7 @@ end
 return redis.call('LLEN', list_key)
 ```
 
-### **Hash Field Updates**
+### Hash Field Updates
 
 ```lua
 -- hash_field_updates.lua
@@ -587,7 +587,7 @@ return new_value
 
 ## Лучшие практики производительности скриптов
 
-### **Minimizing Redis Calls**
+### Minimizing Redis Calls
 
 ```lua
 -- Плохо: Множественные вызовы
@@ -599,7 +599,7 @@ local value3 = redis.call('GET', 'key3')
 local values = redis.call('MGET', 'key1', 'key2', 'key3')
 ```
 
-### **Using Local Variables**
+### Using Local Variables
 
 ```lua
 -- Плохо: Повторные вычисления
@@ -614,7 +614,7 @@ if value == 'value' then
 end
 ```
 
-### **Avoiding Large Loops**
+### Avoiding Large Loops
 
 ```lua
 -- Плохо: Большой цикл с вызовами Redis
@@ -635,9 +635,9 @@ for i = 1, 10000, batch_size do
 end
 ```
 
-## **Script Testing**
+## Script Testing
 
-### **Unit Testing Lua Scripts**
+### Unit Testing Lua Scripts
 
 ```java
 // Java пример тестирования Lua скриптов

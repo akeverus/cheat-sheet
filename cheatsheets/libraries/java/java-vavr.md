@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Vavr
 
-**Vavr** (**ранее известная как Javaslang**) — это функциональная библиотека для **Java** 8+, предоставляющая неизменяемые структуры данных и функциональное **API**. Делает **Java** более функциональным языком.
+**Vavr** (ранее известная как Javaslang) — это функциональная библиотека для **Java** 8+, предоставляющая неизменяемые структуры данных и функциональное **API**. Делает **Java** более функциональным языком.
 
 ## Полезные ссылки
 
@@ -28,10 +28,10 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
-  - [Option (**замена Optional**)](#option-замена-optional)
-  - [Try (**обработка исключений**)](#try-обработка-исключений)
-  - [Either (**обработка ошибок с типами**)](#either-обработка-ошибок-с-типами)
-  - [Validation (**валидация с накоплением ошибок**)](#validation-валидация-с-накоплением-ошибок)
+  - [Option (замена Optional)](#option-замена-optional)
+  - [Try (обработка исключений)](#try-обработка-исключений)
+  - [Either (обработка ошибок с типами)](#either-обработка-ошибок-с-типами)
+  - [Validation (валидация с накоплением ошибок)](#validation-валидация-с-накоплением-ошибок)
 - [Неизменяемые коллекции](#неизменяемые-коллекции)
   - [List](#list)
   - [Set](#set)
@@ -76,16 +76,16 @@ updated: "2026-02-11"
   - [Type classes и Higher-kinded types](#type-classes-и-higher-kinded-types)
   - [Trampoline для stack-safe recursion](#trampoline-для-stack-safe-recursion)
 - [Experimental Features](#experimental-features)
-  - [Vavr 1.0 **Features** (**Future**)](#vavr-10-features-future)
+  - [Vavr 1.0 **Features** (Future)](#vavr-10-features-future)
 - [Troubleshooting](#troubleshooting)
   - [Common Issues](#common-issues)
   - [Debugging](#debugging)
 
 ## Основные возможности
 
-### **Option** (**замена Optional**)
+### Option (замена Optional)
 
-Создание **Option**, проверка наличия значения и функциональные операции (**map, flatMap**).
+Создание **Option**, проверка наличия значения и функциональные операции (map, flatMap).
 
 ```java
 import io.vavr.control.Option;
@@ -113,7 +113,7 @@ Option<String> upper = some.map(String::toUpperCase); // Some("VALUE")
 Option<String> flatMapped = some.flatMap(s -> Option.of(s + "!")); // Some("value!")
 ```
 
-### **Try** (**обработка исключений**)
+### Try (обработка исключений)
 ```java
 import io.vavr.control.Try;
 
@@ -144,7 +144,7 @@ Try<String> chained = Try.of(() -> readFile("data.txt"))
     .getOrElse("Default content");
 ```
 
-### **Either** (**обработка ошибок с типами**)
+### Either (обработка ошибок с типами)
 ```java
 import io.vavr.control.Either;
 
@@ -172,7 +172,7 @@ Either<String, Integer> doubled = result.map(x -> x * 2);
 Either<String, String> mappedError = error.mapLeft(err -> "Error: " + err);
 ```
 
-### **Validation** (**валидация с накоплением ошибок**)
+### Validation (валидация с накоплением ошибок)
 ```java
 import io.vavr.control.Validation;
 
@@ -220,7 +220,7 @@ if (validation.isValid()) {
 
 ## Неизменяемые коллекции
 
-### **List**
+### List
 ```java
 import io.vavr.collection.List;
 
@@ -254,7 +254,7 @@ Map<Integer, List<String>> byLength = list.groupBy(String::length);  // Груп
 Tuple2<List<String>, List<String>> partitioned = list.partition(s -> s.contains("a"));  // Разбиение на два списка: с "a" и без "a"
 ```
 
-### **Set**
+### Set
 ```java
 import io.vavr.collection.Set;
 
@@ -279,7 +279,7 @@ Set<String> mapped = set.map(String::toUpperCase);        // Преобразо�
 Set<String> filtered = set.filter(s -> s.startsWith("S")); // Фильтрация элементов начинающихся с "S"
 ```
 
-### **Map**
+### Map
 ```java
 import io.vavr.collection.Map;
 
@@ -305,7 +305,7 @@ Map<String, Integer> flatMapped = map.flatMap((key, value) ->  // FlatMap - пр
 );
 ```
 
-### **Queue** и **Stack**
+### Queue и Stack
 ```java
 import io.vavr.collection.Queue;
 import io.vavr.collection.Stack;
@@ -321,9 +321,9 @@ Tuple2<String, Stack<String>> popped = stack.pop(); // ("top", Stack("bottom", "
 Stack<String> pushed = stack.push("new_top");
 ```
 
-## **Pattern Matching**
+## Pattern Matching
 
-### **Match API**
+### Match API
 ```java
 import static io.vavr.API.*;
 import static io.vavr.Predicates.*;
@@ -359,7 +359,7 @@ String result2 = Match(either).of(
 );
 ```
 
-### **When pattern**
+### When pattern
 ```java
 // Условное выполнение
 Option<String> maybeValue = Option.of("test");
@@ -379,7 +379,7 @@ String category = when(number % 15 == 0)
     .otherwise(() -> String.valueOf(number));
 ```
 
-## **Tuple**
+## Tuple
 
 ### Создание и использование
 ```java
@@ -409,9 +409,9 @@ String combined = person.transform((n, a) -> n + " is " + a + " years old");
 // "John is 30 years old"
 ```
 
-## **Lazy evaluation**
+## Lazy evaluation
 
-### **Lazy**
+### Lazy
 ```java
 import io.vavr.Lazy;
 
@@ -437,9 +437,9 @@ Lazy<String> lazyString = lazyPi.map(d -> "PI is " + d);
 Lazy<Integer> lazyLength = lazyString.map(String::length);
 ```
 
-## **Function composition**
+## Function composition
 
-### **Function**
+### Function
 ```java
 import io.vavr.Function1;
 import io.vavr.Function2;
@@ -467,7 +467,7 @@ Function1<Integer, Integer> add10 = curriedAdd.apply(10);
 int result3 = add10.apply(5); // 15
 ```
 
-### **Memoization**
+### Memoization
 ```java
 // Мемоизация для оптимизации
 Function1<Integer, Integer> expensiveFunction = n -> {
@@ -482,9 +482,9 @@ System.out.println(memoized.apply(5)); // Из кеша
 System.out.println(memoized.apply(6)); // Вычисление
 ```
 
-## **Property** и **Lens**
+## Property и Lens
 
-### **Property**
+### Property
 ```java
 // Property для безопасного доступа к полям
 Property<User, String> nameProp = Property.of(User::getName, User::setName);
@@ -500,7 +500,7 @@ User updated = nameProp.set(user, "Jane");
 boolean exists = nameProp.exists(user, "John"::equals);
 ```
 
-### **Lens**
+### Lens
 ```java
 // Lens для глубокого обновления неизменяемых структур
 Lens<User, Address> addressLens = Lens.of(User::getAddress, User::withAddress);
@@ -516,9 +516,9 @@ User updated = cityLens.set(user, "New York");
 String city = cityLens.get(user);
 ```
 
-## **Concurrent programming**
+## Concurrent programming
 
-### **Future**
+### Future
 ```java
 import io.vavr.concurrent.Future;
 
@@ -546,7 +546,7 @@ Future<String> future2 = Future.of(() -> "World");
 Future<String> combined = future1.zip(future2, (a, b) -> a + " " + b);
 ```
 
-### **Promise**
+### Promise
 ```java
 import io.vavr.concurrent.Promise;
 
@@ -570,9 +570,9 @@ Future<String> future = promise.future();
 String result = future.get();
 ```
 
-## **JSON processing**
+## JSON processing
 
-### **Vavr Jackson module**
+### Vavr Jackson module
 ```xml
 <dependency>
     <groupId>io.vavr</groupId>
@@ -597,9 +597,9 @@ List<String> deserialized = mapper.readValue(json,
     new TypeReference<List<String>>() {});
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration**
+### Configuration
 ```java
 @Configuration
 public class VavrConfig {
@@ -628,7 +628,7 @@ public class VavrConfig {
 }
 ```
 
-### **Service Layer** с **Vavr**
+### Service Layer с Vavr
 ```java
 @Service
 public class UserService {
@@ -683,7 +683,7 @@ public class UserService {
 }
 ```
 
-### **Controller** с **Vavr**
+### Controller с Vavr
 ```java
 @RestController
 @RequestMapping("/api/users")
@@ -719,9 +719,9 @@ public class UserController {
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit Testing** с **Vavr**
+### Unit Testing с Vavr
 ```java
 public class UserServiceTest {
 
@@ -799,7 +799,7 @@ public class UserServiceTest {
 }
 ```
 
-### **Property-based Testing**
+### Property-based Testing
 ```java
 @Property
 public void optionLaws(@ForAll @IntRange(min = 0, max = 100) int value) {
@@ -819,9 +819,9 @@ public void optionLaws(@ForAll @IntRange(min = 0, max = 100) int value) {
 }
 ```
 
-## **Performance Considerations**
+## Performance Considerations
 
-### **Memory usage**
+### Memory usage
 ```java
 // Vavr коллекции могут использовать больше памяти чем Java коллекции
 // из-за неизменяемости и структурного шарринга
@@ -841,7 +841,7 @@ public List<String> processLargeList(List<String> largeList) {
 }
 ```
 
-### **Lazy evaluation benefits**
+### Lazy evaluation benefits
 ```java
 // Lazy evaluation может значительно улучшить производительность
 public Lazy<List<String>> getExpensiveData() {
@@ -861,9 +861,9 @@ if (someCondition) {
 }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From Java Optional** to **Vavr Option**
+### From Java Optional to Vavr Option
 ```java
 // Java Optional
 Optional<String> optional = Optional.of("value");
@@ -877,7 +877,7 @@ boolean defined = option.isDefined();
 boolean empty = option.isEmpty();
 ```
 
-### **From Java Stream** to **Vavr Collections**
+### From Java Stream to Vavr Collections
 ```java
 // Java Stream
 List<String> result = list.stream()
@@ -891,7 +891,7 @@ List<String> result = list
     .map(String::toUpperCase);
 ```
 
-### **From try-catch** to **Try**
+### From try-catch to Try
 ```java
 // Java try-catch
 String result;
@@ -910,7 +910,7 @@ tried.onFailure(e -> log.error("Operation failed", e));
 
 ## Лучшие практики
 
-### **When** to **use Vavr**
+### When to use Vavr
 ```java
 public class VavrBestPractices {
 
@@ -958,7 +958,7 @@ public class VavrBestPractices {
 }
 ```
 
-### **Error Handling Patterns**
+### Error Handling Patterns
 ```java
 public class ErrorHandlingPatterns {
 
@@ -991,9 +991,9 @@ public class ErrorHandlingPatterns {
 }
 ```
 
-## **Advanced Features**
+## Advanced Features
 
-### **Type classes** и **Higher-kinded types**
+### Type classes и Higher-kinded types
 ```java
 // Vavr предоставляет некоторые type class паттерны
 public interface Functor<T, F extends Functor<?, ?>> {
@@ -1010,7 +1010,7 @@ public interface Monad<T, M extends Monad<?, ?>> extends Functor<T, M> {
 }
 ```
 
-### **Trampoline** для **stack-safe recursion**
+### Trampoline для stack-safe recursion
 ```java
 import io.vavr.control.Trampoline;
 
@@ -1026,9 +1026,9 @@ List<Integer> largeList = List.range(1, 100000);
 int result = sum(largeList).run();
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Vavr** `1.0` **Features** (**Future**)
+### Vavr `1.0` Features (Future)
 ```java
 // Предполагаемые будущие возможности
 // (на основе текущих development планов)
@@ -1047,7 +1047,7 @@ Option<String> result = future.toOption();
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```java
 public class VavrTroubleshooting {
 
@@ -1077,7 +1077,7 @@ public class VavrTroubleshooting {
 }
 ```
 
-### **Debugging**
+### Debugging
 ```java
 public class VavrDebugger {
 
@@ -1116,6 +1116,6 @@ public class VavrDebugger {
 
 ## См. также
 - [[java-streams-fp|Java Streams]] — **Java** 8 **Streams**
-- [Паттерны](../../patterns/README.md) — Функциональные паттерны
+- [[README|Паттерны]] — Функциональные паттерны
 - [[scala-collections|Scala Collections]] — **Scala** коллекции
 

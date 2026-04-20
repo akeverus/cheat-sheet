@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Circular Buffer
 
-A **guide** to **implementing** a **circular buffer** (**ring buffer**) in **Java for efficient data buffering between threads**.
+A **guide** to **implementing** a **circular buffer** (ring buffer) in **Java for efficient data buffering between threads**.
 
 ## Полезные ссылки
 
@@ -21,7 +21,7 @@ A **guide** to **implementing** a **circular buffer** (**ring buffer**) in **Jav
 - [Disruptor Pattern](https://lmax-exchange.github.io/disruptor/)
 
 ### См. также
-- [Задачи и алгоритмы](../README.md)
+- [[README|Задачи и алгоритмы]]
 - [[collections-lock-free|Thread-Safe Data Structures]]
 - [Структуры данных](../data-structures/)
 
@@ -53,7 +53,7 @@ A **guide** to **implementing** a **circular buffer** (**ring buffer**) in **Jav
 
 ## Обзор
 
-A **circular buffer** (**or ring buffer**) is a **bounded circular data structure used for buffering data between two** or **more threads**. `As we` **continue writing** to **the circular buffer**, it **wraps around when** it **reaches the end**.
+A **circular buffer** (or ring buffer) is a **bounded circular data structure used for buffering data between two** or **more threads**. `As we` **continue writing** to **the circular buffer**, it **wraps around when** it **reaches the end**.
 
 **The circular buffer** is **implemented using** a **fixed-size array that wraps around boundaries**.
 
@@ -112,7 +112,7 @@ In **this case**, we **perform** a **post-increment** of **the sequence**. **Con
 
 `As we` **wrap around the array**, we **start overwriting data** in **the buffer**. If **the buffer** is **full**, we **can either overwrite the oldest data regardless** of **whether the reader has consumed** it, or **prevent overwriting data that hasn**'t **been read**.
 
-If **the reader can afford** to **skip intermediate** or **old values** (**such as a stock price ticker**), we **can overwrite data without waiting for** it to be **consumed**. On **the other hand**, if **the reader must consume all values** (**as in `e-commerce` transactions**), we **must wait** (**blocking wait/busy wait**) **until** a **free slot appears** in **the buffer**.
+If **the reader can afford** to **skip intermediate** or **old values** (such as a stock price ticker), we **can overwrite data without waiting for** it to be **consumed**. On **the other hand**, if **the reader must consume all values** (as in `e-commerce` transactions), we **must wait** (blocking wait/busy wait) **until** a **free slot appears** in **the buffer**.
 
 **The buffer** is **full** if **the buffer size equals its capacity**, **where its size equals the number** of **unread elements**:**
 
@@ -388,7 +388,7 @@ We **talked about using** a **circular buffer for exchanging data between two** 
 
 **The producer writes data** to **the buffer and increments writeSequence**, **while the consumer only reads from the buffer and increments readSequence**. **Thus**, **the backing array doesn**'t **conflict**, **and** we **can get away without synchronization**.
 
-**But** we **still need** to **ensure that the consumer can see the latest value** of **the writeSequence field** (**visibility**) **and that writeSequence** is **not updated until the data** is **actually available** in **the buffer** (**ordering**).
+**But** we **still need** to **ensure that the consumer can see the latest value** of **the writeSequence field** (visibility) **and that writeSequence** is **not updated until the data** is **actually available** in **the buffer** (ordering).
 
 **In **this case**, we **can make the circular buffer concurrent and lock-free** by **making the sequence fields volatile**:**
 
@@ -424,7 +424,7 @@ public class Producer<T> implements Runnable {
 }
 ```
 
-**The producer thread will wait for** an **empty slot** to **appear** in a **loop** (**busy wait**).
+**The producer thread will wait for** an **empty slot** to **appear** in a **loop** (busy wait).
 
 **We **implement** a **Callable consumer that reads from the buffer**:**
 
@@ -499,7 +499,7 @@ Consumed: Hexagram
 
 ## Complexity Analysis
 
-- **Time `Complexity`: All operations** (**offer, poll, size**) **are** `O(1)`
+- **Time `Complexity`: All operations** (offer, poll, size) **are** `O(1)`
 - **Space `Complexity`:** `O(n)` **where** n is **the capacity** of **the buffer**
 
 ## Лучшие практики

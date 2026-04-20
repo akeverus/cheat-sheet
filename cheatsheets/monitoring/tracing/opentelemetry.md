@@ -123,4 +123,4 @@ updated: "2026-02-11"
 | Baggage | Ключ-значение, распространяемые по цепочке запросов |
 | W3C Trace Context | Стандарт заголовков для передачи trace context |
 
-См. [Jaeger](jaeger.md), [Distributed Tracing](../), [Monitoring README](../).
+См. [[jaeger]], [Distributed Tracing](../), [Monitoring README](../).

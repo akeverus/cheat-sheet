@@ -18,17 +18,17 @@ API-документация — это контракт между команд
 ## Полезные ссылки
 
 ### Основные документы в соседней папке
-- [api-documentation-basics.md](../swagger/api-documentation-basics.md) — практика: lifecycle, versioning, CI-валидация
-- [openapi-swagger.md](../swagger/openapi-swagger.md) — полный референс OpenAPI / Swagger
+- [[api-documentation-basics|api-documentation-basics.md]] — практика: lifecycle, versioning, CI-валидация
+- [[openapi-swagger|openapi-swagger.md]] — полный референс OpenAPI / Swagger
 
 ### Соседние разделы
-- [Родительский раздел: API Tools](../README.md)
-- [API Testing](../api-testing/README.md) — контрактные и интеграционные тесты
-- [Swagger / OpenAPI](../swagger/README.md)
-- [Postman](../postman/README.md) — сохранение запросов и примеров
-- [REST API](../../rest/README.md) — проектирование API, которое документируем
-- [GraphQL](../../graphql/README.md) — альтернативный подход к контракту (schema-first)
-- [gRPC](../../grpc/README.md) — proto как источник контракта
+- [[README|Родительский раздел: API Tools]]
+- [[README|API Testing]] — контрактные и интеграционные тесты
+- [[README|Swagger / OpenAPI]]
+- [[README|Postman]] — сохранение запросов и примеров
+- [[README|REST API]] — проектирование API, которое документируем
+- [[README|GraphQL]] — альтернативный подход к контракту (schema-first)
+- [[README|gRPC]] — proto как источник контракта
 
 ### Внешние ресурсы
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
@@ -86,7 +86,7 @@ API-документация — это контракт между команд
 
 ## Куда идти дальше
 
-- Практика работы с Swagger/OpenAPI — [../swagger/README.md](../swagger/README.md)
-- Тестирование API по контракту — [../api-testing/README.md](../api-testing/README.md)
-- Проектирование REST API — [../../rest/README.md](../../rest/README.md)
-- GraphQL-схема как контракт — [../../graphql/README.md](../../graphql/README.md)
+- Практика работы с Swagger/OpenAPI — [[README]]
+- Тестирование API по контракту — [[README]]
+- Проектирование REST API — [[README]]
+- GraphQL-схема как контракт — [[README]]

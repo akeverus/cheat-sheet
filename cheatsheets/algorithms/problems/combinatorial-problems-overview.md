@@ -20,7 +20,7 @@ updated: "2026-02-11"
 - [`Baeldung`: `Combinatorial Problems`](https://www.baeldung.com/)
 
 ### См. также
-- [Перестановки строк](../strings/README.md) — алгоритмы со строками
+- [[README|Перестановки строк]] — алгоритмы со строками
 - [[factorial-calculation|Вычисление факториала]] — факториал
 - [[pascal-triangle|Треугольник Паскаля]] — треугольник Паскаля
 

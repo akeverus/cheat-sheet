@@ -52,11 +52,11 @@ updated: "2026-02-11"
   - [**ListIterator**](#listiterator)
 - [Удаление элементов из коллекций](#удаление-элементов-из-коллекций)
   - [Использование **Iterator.remove**()](#использование-iteratorremove)
-  - [Использование **Collection.removeIf**() (**Java 8+**)](#использование-collectionremoveif-java-8)
+  - [Использование **Collection.removeIf**() (Java 8+)](#использование-collectionremoveif-java-8)
   - [Обратное удаление](#обратное-удаление)
 - [Лучшие практики](#лучшие-практики)
 
-## Сбор элементов **Stream** в **List**
+## Сбор элементов Stream в List
 
 Получение списка из потока — наиболее часто используемая терминальная операция конвейера потока. До **Java 16** мы использовали метод **Stream.collect()** и передавали его коллектору в качестве аргумента для сбора элементов. Сам коллектор был создан путем вызова метода **Collectors.`toList()`.**
 
@@ -64,7 +64,7 @@ updated: "2026-02-11"
 
 **Мы можем накапливать элементы **Stream** в список, используя:**
 
-### **Java** 16+
+### Java 16+
 
 ```java
 // Java 16+: получение неизменяемого списка напрямую из потока
@@ -73,7 +73,7 @@ List<Integer> list = stream.toList();
 
 Этот метод возвращает неизменяемый список, поэтому мы не можем добавлять, удалять или заменять элементы после его создания.
 
-### До **Java** 16
+### До Java 16
 
 ```java
 // Сбор элементов потока в изменяемый List через коллектор
@@ -97,13 +97,13 @@ List<Integer> list = stream.collect(Collectors.collectingAndThen(
 ));
 ```
 
-## Разница между **Collection.stream**().**forEach**() и **Collection.forEach**()
+## Разница между Collection.stream().forEach() и Collection.forEach()
 
 В этой статье мы рассмотрим различия между **Collection.`forEach()`** и **Collection.`stream()`.`forEach()`.**
 
-### **Collection.forEach**()
+### Collection.forEach()
 
-**Collection.`forEach()`** использует итератор коллекции (**если он указан**)**. Это означает, что порядок обработки элементов определён. В большинстве случаев порядок, в котором мы выбираем элементы, не имеет значения.
+**Collection.`forEach()`** использует итератор коллекции (если он указан)**. Это означает, что порядок обработки элементов определён. В большинстве случаев порядок, в котором мы выбираем элементы, не имеет значения.
 
 Потокобезопасность: Если мы модифицируем коллекцию во время выполнения **forEach()**, мы получим исключение **ConcurrentModificationException**.
 
@@ -114,7 +114,7 @@ list.forEach(e -> {
 });
 ```
 
-### **Collection.stream**().**forEach**()
+### Collection.stream().forEach()
 
 **Collection.`stream()`.`forEach()`** также обрабатывает элементы по порядку, но мы можем обрабатывать поток параллельно, если мы явно создадим параллельный поток. Порядок выполнения не гарантируется, даже если мы используем поток последовательно.
 
@@ -139,7 +139,7 @@ list.forEach(e -> {
 
 Причина этого в том, что поток должен способствовать параллельному выполнению. Здесь изменение элементов потока может привести к неожиданному поведению.
 
-## **Null-Safe Stream** из коллекций
+## Null-Safe Stream из коллекций
 
 В этом руководстве мы узнаем, как создавать **Null-Safe Stream** из коллекций **Java**.
 
@@ -176,7 +176,7 @@ public <T> Stream<T> collectionAsStream(Collection<T> collection) {
 }
 ```
 
-### Использование **Apache Commons Collections**
+### Использование Apache Commons Collections
 
 **Мы также можем использовать **CollectionUtils** из **Apache Commons Collections** для безопасной работы с **null** коллекциями:**
 
@@ -184,11 +184,11 @@ public <T> Stream<T> collectionAsStream(Collection<T> collection) {
 Stream<String> stream = CollectionUtils.emptyIfNull(collection).stream();
 ```
 
-## Сортировка **Array**, **List**, **Set** и **Map**
+## Сортировка Array, List, Set и Map
 
 **
 
-### Сортировка **Array**
+### Сортировка Array
 
 **Для массивов примитивов и объектов мы можем использовать **Arrays.sort()**:**
 
@@ -204,7 +204,7 @@ String[] array = {"c", "b", "a"};
 Arrays.sort(array, String.CASE_INSENSITIVE_ORDER);
 ```
 
-### Сортировка **List**
+### Сортировка List
 
 **Для списков можем использовать **Collections.sort()**:**
 
@@ -221,7 +221,7 @@ List<String> sorted = list.stream()
     .collect(Collectors.toList());
 ```
 
-### Сортировка **Set**
+### Сортировка Set
 
 **Поскольку **Set** не гарантирует порядок, для сортировки мы обычно преобразуем его в **List** или используем **TreeSet**:**
 
@@ -238,7 +238,7 @@ List<String> sorted = set.stream()
 Set<String> sortedSet = new TreeSet<>(set);
 ```
 
-### Сортировка **Map**
+### Сортировка Map
 
 **Для сортировки **Map** по ключам или значениям, мы можем использовать **Stream API**:**
 
@@ -301,7 +301,7 @@ List<String> flatList = nestedList.stream()
 
 **Для объединения нескольких коллекций мы можем использовать несколько подходов:**
 
-### Использование **addAll**()
+### Использование addAll()
 
 ```java
 List<String> list1 = Arrays.asList("a", "b");
@@ -311,14 +311,14 @@ combined.addAll(list1);
 combined.addAll(list2);
 ```
 
-### Использование **Stream API**
+### Использование Stream API
 
 ```java
 List<String> combined = Stream.concat(list1.stream(), list2.stream())
     .collect(Collectors.toList());
 ```
 
-### Использование **flatMap**()
+### Использование flatMap()
 
 ```java
 List<String> combined = Stream.of(list1, list2)
@@ -330,7 +330,7 @@ List<String> combined = Stream.of(list1, list2)
 
 **Для поиска максимального и минимального значения в коллекции мы можем использовать несколько подходов:**
 
-### Использование **Collections.max**() и **Collections.min**()
+### Использование Collections.max() и Collections.min()
 
 ```java
 List<Integer> list = Arrays.asList(1, 5, 3, 7, 2);
@@ -338,7 +338,7 @@ Integer max = Collections.max(list);
 Integer min = Collections.min(list);
 ```
 
-### Использование **Stream API**
+### Использование Stream API
 
 ```java
 Optional<Integer> max = list.stream().max(Integer::compareTo);
@@ -352,13 +352,13 @@ Optional<String> maxLength = list.stream()
     .max(Comparator.comparing(String::length));
 ```
 
-## Руководство по **Iterator**
+## Руководство по Iterator
 
 **Итератор — это интерфейс, который позволяет перебирать элементы коллекции. **Iterator** предоставляет следующие методы:**
 
 - **hasNext()** — возвращает **true**, если есть следующий элемент
 - **next()** — возвращает следующий элемент
-- **remove()** — удаляет текущий элемент (**опционально**)
+- **remove()** — удаляет текущий элемент (опционально)
 
 ```java
 List<String> list = Arrays.asList("a", "b", "c");
@@ -370,7 +370,7 @@ while (iterator.hasNext()) {
 }
 ```
 
-### **ListIterator**
+### ListIterator
 
 **ListIterator** расширяет **Iterator** и позволяет перемещаться в обоих направлениях:**
 
@@ -401,7 +401,7 @@ while (listIterator.hasPrevious()) {
 
 Естественно, мы также рассмотрим некоторые предостережения.
 
-### Использование **Iterator.remove**()
+### Использование Iterator.remove()
 
 **Самый безопасный способ удаления элементов во время итерации:**
 
@@ -417,7 +417,7 @@ while (iterator.hasNext()) {
 }
 ```
 
-### Использование **Collection.removeIf**() (**Java 8+**)
+### Использование Collection.removeIf() (Java 8+)
 
 **Более элегантный способ с **Java 8+**:**
 
@@ -426,7 +426,7 @@ List<String> list = new ArrayList<>(Arrays.asList("a", "b", "c", "d"));
 list.removeIf(element -> element.equals("b"));
 ```
 
-### Использование **Stream API**
+### Использование Stream API
 
 **Если нам нужно создать новую коллекцию без определённых элементов:**
 
@@ -454,9 +454,9 @@ for (int i = list.size() - 1; i >= 0; i--) {
 
 ## Лучшие практики
 
-- **Удаление при итерации:** не удалять элементы из коллекции в **for-each**; использовать `**Iterator.remove**()`, `**removeIf(**predicate**)` или **Stream filter** + **collect** в новую коллекцию.
-- **Обратный цикл по индексу:** при удалении по индексу в цикле итерировать с конца (**size-1 до 0**), чтобы индексы не сбивались.
-- **Stream для преобразований:** для фильтрации и сбора в новую коллекцию — `**stream**().**filter**().**collect(**Collectors.`toList`(**))`; для неизменяемого списка — `**toUnmodifiableList**()` (**Java 10+**).
+- **Удаление при итерации:** не удалять элементы из коллекции в **for-each**; использовать `**Iterator.remove**()`, `**removeIf(predicate)` или **Stream filter** + **collect** в новую коллекцию.
+- **Обратный цикл по индексу:** при удалении по индексу в цикле итерировать с конца (size-1 до 0), чтобы индексы не сбивались.
+- **Stream для преобразований:** для фильтрации и сбора в новую коллекцию — `**stream**().**filter**().**collect(**Collectors.`toList`(**))`; для неизменяемого списка — `**toUnmodifiableList**()` (Java 10+).
 - **forEach vs for:** не использовать `**collection.forEach**()` с удалением внутри; для мутаций при обходе — итератор или индексный цикл с учётом сдвига.
 - **Объединение и сведение:** использовать `**Stream.concat**()` или `**flatMap**()` для вложенных коллекций; избегать вложенных циклов, когда достаточно одного **stream**-пайплайна.
 

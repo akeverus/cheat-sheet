@@ -73,7 +73,7 @@ related: ["quarkus-rest.md", "quarkus-security.md"]
 
 ## Configuration
 
-### **Basic Configuration**
+### Basic Configuration
 
 **application.properties:**
 
@@ -88,7 +88,7 @@ quarkus.swagger-ui.path=/swagger-ui
 
 ## OpenAPI Annotations
 
-### **Basic Annotations**
+### Basic Annotations
 
 **Базовые аннотации:**
 
@@ -127,7 +127,7 @@ public class UserResource {
 }
 ```
 
-### **Request Body Documentation**
+### Request Body Documentation
 
 **Документирование **request body**:**
 
@@ -151,7 +151,7 @@ public Response createUser(@Valid User user) {
 }
 ```
 
-### **Parameter Documentation**
+### Parameter Documentation
 
 **Документирование параметров:**
 
@@ -172,7 +172,7 @@ public List<User> getUsers(
 
 ## Security Schemes
 
-### **API Key Security**
+### API Key Security
 
 **Определение **API Key security**:**
 
@@ -197,7 +197,7 @@ public class SecureResource {
 }
 ```
 
-### **OAuth2 Security**
+### OAuth2 Security
 
 **Определение **OAuth2 security**:**
 
@@ -217,7 +217,7 @@ public class SecureResource {
 
 ## Code Generation
 
-### **Client Generation**
+### Client Generation
 
 **Генерация клиентского кода:**
 
@@ -227,7 +227,7 @@ openapi-generator generate -i openapi.yaml -g java -o client
 ```
 
 ## Лучшие практики
-### 1. Документируйте все **endpoints**
+### 1. Документируйте все endpoints
 
 ```java
 // ✅ Хорошо
@@ -246,7 +246,7 @@ public User getUser(@PathParam("id") Long id) {
 @PathParam("id") Long id
 ```
 
-### 3. Определяйте **security schemes**
+### 3. Определяйте security schemes
 
 ```java
 // ✅ Хорошо
@@ -255,7 +255,7 @@ public User getUser(@PathParam("id") Long id) {
 
 ## Advanced OpenAPI Features
 
-### **Custom Schema Definitions**
+### Custom Schema Definitions
 
 **Определение кастомных схем:**
 
@@ -275,7 +275,7 @@ public class User {
 }
 ```
 
-### **Response Examples**
+### Response Examples
 
 **Примеры ответов:**
 
@@ -300,7 +300,7 @@ public User getUser(@PathParam("id") Long id) {
 }
 ```
 
-### **OpenAPI Filters**
+### OpenAPI Filters
 
 **Фильтры **OpenAPI**:**
 
@@ -317,7 +317,7 @@ public class OpenAPIFilter implements OASFilter {
 }
 ```
 
-### **Tag Organization**
+### Tag Organization
 
 **Организация тегов:**
 
@@ -339,7 +339,7 @@ public class OrderResource {
 
 ## OpenAPI Code Generation
 
-### **Server Code Generation**
+### Server Code Generation
 
 **Генерация серверного кода:**
 
@@ -350,7 +350,7 @@ openapi-generator generate \
     -o server-code
 ```
 
-### **Client Code Generation**
+### Client Code Generation
 
 **Генерация клиентского кода:**
 
@@ -362,7 +362,7 @@ openapi-generator generate \
     --library jersey2
 ```
 
-### **TypeScript Client Generation**
+### TypeScript Client Generation
 
 **Генерация **TypeScript** клиента:**
 
@@ -375,7 +375,7 @@ openapi-generator generate \
 
 ## Swagger `UI` Customization
 
-### **Custom Theme**
+### Custom Theme
 
 **Кастомная тема:**
 
@@ -384,7 +384,7 @@ quarkus.swagger-ui.theme=dark
 quarkus.swagger-ui.theme.css-path=/custom-theme.css
 ```
 
-### **Custom Configuration**
+### Custom Configuration
 
 **Кастомная конфигурация:**
 

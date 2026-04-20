@@ -174,7 +174,7 @@ Anti-pattern: обновить только локальную версию Go �
 1. **Статическая типизация**: Типы проверяются во время компиляции
 2. **Компилируемый язык**: Код компилируется в нативный машинный код
 3. **Сборка мусора**: Автоматическое управление памятью
-4. **Параллелизм**: Встроенная поддержка горутин (**goroutines**) и каналов (**channels**)
+4. **Параллелизм**: Встроенная поддержка горутин (goroutines) и каналов (channels)
 5. **Простота**: Минималистичный синтаксис, быстрая компиляция
 6. **Быстрая компиляция**: Компиляция происходит очень быстро
 
@@ -193,8 +193,8 @@ Anti-pattern: обновить только локальную версию Go �
 **Go можно установить несколькими способами:**
 
 1. **С официального сайта**: [go.dev/dl](https://go.dev/dl/)
-2. **Через пакетный менеджер** (**Homebrew, apt, yum и др.**)
-3. **Использование версионных менеджеров** (**g, gvm**)
+2. **Через пакетный менеджер** (Homebrew, apt, yum и др.)
+3. **Использование версионных менеджеров** (g, gvm)
 
 ### Проверка установки
 
@@ -289,7 +289,7 @@ func PrintHello() {
 go fmt ./...  # форматирует весь код в проекте
 ```
 
-**Или используйте `**gofmt**`:**
+**Или используйте `gofmt`:**
 
 ```bash
 gofmt -w main.go  # форматирует и сохраняет файл
@@ -302,16 +302,16 @@ gofmt -w main.go  # форматирует и сохраняет файл
 #### Числовые типы
 
 **Целочисленные:**
-- `**int**`, `**int8**`, `**int16**`, `**int32**`, `**int64**` — знаковые целые
-- `**uint**`, `**uint8**`, `**uint16**`, `**uint32**`, `**uint64**`, `**uintptr**` — беззнаковые целые
-- `**byte**` — псевдоним для `**uint8**`
-- `**rune**` — псевдоним для `**int32**` (**Unicode кодпоинт**)
+- `int`, `int8`, `int16`, `int32`, `int64` — знаковые целые
+- `uint`, `uint8`, `uint16`, `uint32`, `uint64`, `uintptr` — беззнаковые целые
+- `byte` — псевдоним для `uint8`
+- `rune` — псевдоним для `int32` (Unicode кодпоинт)
 
 **С плавающей точкой:**
-- `**float32**`, `**float64**` — числа с плавающей точкой
+- `float32`, `float64` — числа с плавающей точкой
 
 **Комплексные:**
-- `**complex64**`, `**complex128**` — комплексные числа
+- `complex64`, `complex128` — комплексные числа
 
 ```go
 // Объявление переменных с явным типом
@@ -340,7 +340,7 @@ var isActive bool = false
 
 ### Составные типы
 
-#### Массивы (**Arrays**)
+#### Массивы (Arrays)
 
 **Массив — это последовательность элементов фиксированной длины:**
 
@@ -351,7 +351,7 @@ arr3 := [3]int{1, 2, 3}          // короткая запись
 arr4 := [...]int{1, 2, 3}        // длина определяется автоматически
 ```
 
-#### Срезы (**Slices**)
+#### Срезы (Slices)
 
 **Срез — это динамический массив:**
 
@@ -367,9 +367,9 @@ s = append(s, 5, 6, 7)           // добавление нескольких э
 sub := s[1:3]                    // подсрез (индексы 1, 2)
 ```
 
-#### Карты (**Maps**)
+#### Карты (Maps)
 
-**Карта — это ассоциативный массив (**хэш-таблица**):**
+**Карта — это ассоциативный массив (хэш-таблица):**
 
 ```go
 var m map[string]int              // nil карта
@@ -386,7 +386,7 @@ value, ok := m["four"]            // проверка существования
 delete(m, "two")                  // удаление элемента
 ```
 
-#### Каналы (**Channels**)
+#### Каналы (Channels)
 
 **Каналы используются для связи между горутинами:**
 
@@ -430,8 +430,8 @@ x, y = y, x  // обмен значений
 
 - Числа: `0`
 - Строки: `""`
-- Булевы: `**false**`
-- Указатели, срезы, карты, каналы, функции, интерфейсы: `**nil**`
+- Булевы: `false`
+- Указатели, срезы, карты, каналы, функции, интерфейсы: `nil`
 
 ```go
 var i int      // 0
@@ -536,7 +536,7 @@ fmt.Println(c())  // 1
 fmt.Println(c())  // 2
 ```
 
-## Структуры (**Structs**)
+## Структуры (Structs)
 
 **Структура — это тип данных, который группирует связанные поля:**
 
@@ -591,7 +591,7 @@ person := struct {
 }
 ```
 
-## Интерфейсы (**Interfaces**)
+## Интерфейсы (Interfaces)
 
 **Интерфейс определяет набор методов, которые должен реализовать тип:**
 
@@ -646,7 +646,7 @@ default:
 }
 ```
 
-## Пакеты (**Packages**)
+## Пакеты (Packages)
 
 **Пакет — это способ организации кода. Каждый файл Go принадлежит пакету:**
 
@@ -665,7 +665,7 @@ import (
 
 ### Экспорт
 
-**Имена, начинающиеся с заглавной буквы, экспортируются (**публичные**):**
+**Имена, начинающиеся с заглавной буквы, экспортируются (публичные):**
 
 ```go
 package mypackage
@@ -677,9 +677,9 @@ func PublicFunction() {}   // экспортируется
 func privateFunction() {}  // не экспортируется
 ```
 
-## Модули (**Modules**)
+## Модули (Modules)
 
-**Модули появились в `Go 1.11` и заменяют старую систему `**GOPATH**`:**
+**Модули появились в `Go 1.11` и заменяют старую систему `GOPATH`:**
 
 ### Создание модуля
 
@@ -687,7 +687,7 @@ func privateFunction() {}  // не экспортируется
 go mod init example.com/myproject
 ```
 
-**Это создает файл `**go.mod**`:**
+**Это создает файл `go.mod`:**
 
 ```text
 module example.com/myproject
@@ -707,11 +707,11 @@ go mod tidy  # очистка неиспользуемых зависимост�
 
 **Go использует семантическое версионирование:**
 
-- `**v1.2.3**` — стабильная версия
-- `**v1.2.3-beta.1**` — предварительная версия
-- `**v0.1.0**` — нестабильная версия
+- `v1.2.3` — стабильная версия
+- `v1.2.3-beta.1` — предварительная версия
+- `v0.1.0` — нестабильная версия
 
-## Указатели (**Pointers**)
+## Указатели (Pointers)
 
 **Указатель хранит адрес памяти переменной:**
 
@@ -751,9 +751,9 @@ p.Age = 31  // автоматическое разыменование
 (*p).Age = 31
 ```
 
-## Методы (**Methods**)
+## Методы (Methods)
 
-**Метод — это функция с получателем (**receiver**):**
+**Метод — это функция с получателем (receiver):**
 
 ```go
 type Rectangle struct {
@@ -778,11 +778,11 @@ rect.Scale(2)
 fmt.Println(rect.Area())  // 200
 ```
 
-### Когда использовать **pointer receiver**:
+### Когда использовать pointer receiver:
 
 - Когда нужно изменить получателя
-- Когда структура большая (**избегаем копирования**)
-- Для консистентности (**если есть методы, меняющие состояние**)
+- Когда структура большая (избегаем копирования)
+- Для консистентности (если есть методы, меняющие состояние)
 
 ## Управление ошибками
 
@@ -836,7 +836,7 @@ if errors.As(err, &divErr) {
 }
 ```
 
-## Горутины (**Goroutines**)
+## Горутины (Goroutines)
 
 **Горутины — это легковесные потоки выполнения в Go. Они позволяют выполнять функции конкурентно:**
 
@@ -863,7 +863,7 @@ func main() {
 
 ### Основные концепции горутин:
 
-1. **Легковесность**: Горутины используют минимальный стек (**2KB**) и могут масштабироваться до тысяч
+1. **Легковесность**: Горутины используют минимальный стек (2KB) и могут масштабироваться до тысяч
 2. **Планирование**: Go **runtime** автоматически планирует выполнение горутин на доступных **CPU**
 3. **Связь через каналы**: Для безопасной коммуникации между горутинами используются каналы
 
@@ -917,7 +917,7 @@ func main() {
 }
 ```
 
-## Каналы (**Channels**)
+## Каналы (Channels)
 
 **Каналы — это типизированные конвейеры для передачи данных между горутинами:**
 
@@ -967,7 +967,7 @@ func main() {
 }
 ```
 
-### **Select statement**:
+### Select statement:
 
 ```go
 func main() {
@@ -999,7 +999,7 @@ func main() {
 
 ### Паттерны работы с каналами:
 
-#### **Generator pattern**:
+#### Generator pattern:
 
 ```go
 func fibonacci(n int, c chan int) {
@@ -1020,7 +1020,7 @@ func main() {
 }
 ```
 
-#### **Fan-in pattern**:
+#### Fan-in pattern:
 
 ```go
 func fanIn(input1, input2 <-chan string) <-chan string {
@@ -1033,9 +1033,9 @@ func fanIn(input1, input2 <-chan string) <-chan string {
 
 ## Синхронизация
 
-**Пакет `**sync**` предоставляет примитивы синхронизации:**
+**Пакет `sync` предоставляет примитивы синхронизации:**
 
-### **Mutex**:
+### Mutex:
 
 ```go
 package main
@@ -1071,7 +1071,7 @@ func main() {
 }
 ```
 
-### **RWMutex**:
+### RWMutex:
 
 ```go
 type SafeMap struct {
@@ -1092,7 +1092,7 @@ func (m *SafeMap) Set(key string, value int) {
 }
 ```
 
-### **WaitGroup**:
+### WaitGroup:
 
 ```go
 func main() {
@@ -1111,7 +1111,7 @@ func main() {
 }
 ```
 
-### **Once**:
+### Once:
 
 ```go
 var once sync.Once
@@ -1126,7 +1126,7 @@ func loadConfig() *Config {
 }
 ```
 
-### **Cond**:
+### Cond:
 
 ```go
 var cond = sync.NewCond(&sync.Mutex{})
@@ -1149,9 +1149,9 @@ func makeReady() {
 }
 ```
 
-## **Context**
+## Context
 
-**Пакет `**context**` используется для управления жизненным циклом операций:**
+**Пакет `context` используется для управления жизненным циклом операций:**
 
 ```go
 package main
@@ -1203,7 +1203,7 @@ ctx, cancel := context.WithDeadline(parentCtx, time.Now().Add(time.Hour))
 ctx := context.WithValue(parentCtx, "user_id", 123)
 ```
 
-## **JSON**
+## JSON
 
 **Go имеет встроенную поддержку **JSON**:**
 
@@ -1253,7 +1253,7 @@ func main() {
 }
 ```
 
-### Теги **JSON**:
+### Теги JSON:
 
 ```go
 type User struct {
@@ -1382,7 +1382,7 @@ filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 
 **Go имеет драйверы для большинства популярных БД:**
 
-### **PostgreSQL**:
+### PostgreSQL:
 
 ```go
 package main
@@ -1473,7 +1473,7 @@ func main() {
 }
 ```
 
-### **Connection pooling**:
+### Connection pooling:
 
 ```go
 db.SetMaxOpenConns(25)                 // максимум открытых соединений
@@ -1481,9 +1481,9 @@ db.SetMaxIdleConns(25)                 // максимум простаиваю�
 db.SetConnMaxLifetime(5 * time.Minute) // максимальное время жизни соединения
 ```
 
-## **HTTP** клиент и сервер
+## HTTP клиент и сервер
 
-### **HTTP** сервер:
+### HTTP сервер:
 
 ```go
 package main
@@ -1531,7 +1531,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### **HTTP** клиент:
+### HTTP клиент:
 
 ```go
 package main
@@ -1603,7 +1603,7 @@ func main() {
 }
 ```
 
-### **REST API** с **Gin**:
+### REST API с Gin:
 
 ```go
 package main
@@ -1665,7 +1665,7 @@ func postAlbums(c *gin.Context) {
 }
 ```
 
-## **Generics** (**Go 1.18+**)
+## Generics (Go 1.18+)
 
 **Generics** позволяют писать обобщенный код:**
 
@@ -1734,7 +1734,7 @@ func main() {
 }
 ```
 
-### Сложные **constraints**:
+### Сложные constraints:
 
 ```go
 // Constraint для типов с методом String()
@@ -1773,7 +1773,7 @@ func PrintPersonInfo[T Person](p T) {
 }
 ```
 
-## Рефлексия (**Reflection**)
+## Рефлексия (Reflection)
 
 **Рефлексия позволяет инспектировать и модифицировать переменные во время выполнения:**
 
@@ -1908,9 +1908,9 @@ func ValidateStruct(obj interface{}) error {
 }
 ```
 
-## **Unsafe** операции
+## Unsafe операции
 
-**Пакет `**unsafe**` позволяет обходить систему типов Go для низкоуровневых операций:**
+**Пакет `unsafe` позволяет обходить систему типов Go для низкоуровневых операций:**
 
 ```go
 package main
@@ -1961,7 +1961,7 @@ func main() {
 }
 ```
 
-⚠️ **Предупреждение**: Использование `**unsafe**` может привести к неопределенному поведению и нарушению безопасности памяти. Используйте только при необходимости и с осторожностью.
+⚠️ **Предупреждение**: Использование `unsafe` может привести к неопределенному поведению и нарушению безопасности памяти. Используйте только при необходимости и с осторожностью.
 
 ## Тестирование
 
@@ -2048,7 +2048,7 @@ func TestUserService_GetUser(t *testing.T) {
 }
 ```
 
-### **HTTP** тестирование:
+### HTTP тестирование:
 
 ```go
 func TestGetUserHandler(t *testing.T) {
@@ -2081,7 +2081,7 @@ func TestGetUserHandler(t *testing.T) {
 }
 ```
 
-## **Benchmarking**
+## Benchmarking
 
 ```go
 func BenchmarkStringConcat(b *testing.B) {
@@ -2186,7 +2186,7 @@ go tool pprof mem.prof
 
 ## Отладка
 
-### **Delve debugger**:
+### Delve debugger:
 
 ```bash
 # Установка
@@ -2334,7 +2334,7 @@ func (u User) MarshalJSON() ([]byte, error) {
 
 ## Распространенные паттерны
 
-### **Singleton**:
+### Singleton:
 
 ```go
 type singleton struct{}
@@ -2350,7 +2350,7 @@ func GetInstance() *singleton {
 }
 ```
 
-### **Factory**:
+### Factory:
 
 ```go
 type Database interface {
@@ -2380,7 +2380,7 @@ func CreateDatabase(dbType string) Database {
 }
 ```
 
-### **Decorator**:
+### Decorator:
 
 ```go
 type HttpHandler func(http.ResponseWriter, *http.Request)
@@ -2413,7 +2413,7 @@ func main() {
 }
 ```
 
-### **Worker Pool**:
+### Worker Pool:
 
 ```go
 type WorkerPool struct {
@@ -2472,7 +2472,7 @@ func (wp *WorkerPool) Shutdown() {
 }
 ```
 
-### **Dependency Injection**:
+### Dependency Injection:
 
 ```go
 type UserService struct {
@@ -2575,7 +2575,7 @@ func putUser(u *User) {
 }
 ```
 
-### Оптимизация **CPU**:
+### Оптимизация CPU:
 
 ```go
 // SIMD операции (если поддерживается)
@@ -2714,7 +2714,7 @@ go safeGoroutine(func() {
 })
 ```
 
-### Защита от **race conditions**:
+### Защита от race conditions:
 
 ```go
 type SafeCounter struct {
@@ -2750,7 +2750,7 @@ func (c *AtomicCounter) Value() int64 {
 }
 ```
 
-### **HTTPS** и **TLS**:
+### HTTPS и TLS:
 
 ```go
 // HTTP сервер с TLS
@@ -2975,7 +2975,7 @@ filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 })
 ```
 
-### Работа с **URL**
+### Работа с URL
 
 ```go
 import (
@@ -3597,7 +3597,7 @@ go func() {
 }()
 ```
 
-### Работа с **middleware**
+### Работа с middleware
 
 ```go
 import "net/http"
@@ -3774,7 +3774,7 @@ func fanIn(inputs ...<-chan int) <-chan int {
 }
 ```
 
-### Работа с **pipeline**
+### Работа с pipeline
 
 ```go
 // Pipeline для обработки данных
@@ -3817,7 +3817,7 @@ for result := range output {
 }
 ```
 
-### Работа с **rate limiting**
+### Работа с rate limiting
 
 ```go
 import "golang.org/x/time/rate"
@@ -3842,7 +3842,7 @@ if err := limiter.Wait(ctx); err != nil {
 makeRequest()
 ```
 
-### Работа с **circuit breaker**
+### Работа с circuit breaker
 
 ```go
 type CircuitBreaker struct {
@@ -3899,7 +3899,7 @@ func (cb *CircuitBreaker) Call(fn func() error) error {
 }
 ```
 
-### Работа с **retry** механизмом
+### Работа с retry механизмом
 
 ```go
 func retry(attempts int, delay time.Duration, fn func() error) error {
@@ -3926,7 +3926,7 @@ err := retry(3, time.Second, func() error {
 })
 ```
 
-### Работа с **observability**
+### Работа с observability
 
 ```go
 import (
@@ -3975,7 +3975,7 @@ func setupMetrics() {
 }
 ```
 
-### Работа с **graceful shutdown**
+### Работа с graceful shutdown
 
 ```go
 func gracefulShutdown(server *http.Server) {
@@ -4113,7 +4113,7 @@ func loadConfig() (*Config, error) {
 }
 ```
 
-### Работа с версионированием **API**
+### Работа с версионированием API
 
 ```go
 func versionMiddleware(version string) func(http.Handler) http.Handler {
@@ -4146,7 +4146,7 @@ func setupVersionedRoutes() {
 }
 ```
 
-### Работа с кэшированием **HTTP** ответов
+### Работа с кэшированием HTTP ответов
 
 ```go
 type CacheMiddleware struct {
@@ -4196,7 +4196,7 @@ func (cm *CacheMiddleware) Middleware(next http.Handler) http.Handler {
 }
 ```
 
-### Работа с **health checks**
+### Работа с health checks
 
 ```go
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -4239,7 +4239,7 @@ func checkDatabase() bool {
 }
 ```
 
-### Работа с **feature flags**
+### Работа с feature flags
 
 ```go
 type FeatureFlags struct {
@@ -4363,7 +4363,7 @@ func (sm *ServiceManager) StopAll(ctx context.Context) error {
 }
 ```
 
-### Работа с **dependency injection**
+### Работа с dependency injection
 
 ```go
 // Контейнер зависимостей
@@ -4408,7 +4408,7 @@ container.Register("logger", logger)
 db := container.MustGet("db").(*sql.DB)
 ```
 
-### Работа с **event-driven** архитектурой
+### Работа с event-driven архитектурой
 
 ```go
 type Event interface {
@@ -4476,7 +4476,7 @@ eventBus.Publish(UserCreatedEvent{
 })
 ```
 
-### Работа с **CQRS** паттерном
+### Работа с CQRS паттерном
 
 ```go
 // Command
@@ -4540,7 +4540,7 @@ func (h *GetUserHandler) Handle(q Query) (interface{}, error) {
 }
 ```
 
-### Работа с **repository** паттерном
+### Работа с repository паттерном
 
 ```go
 type UserRepository interface {
@@ -4597,7 +4597,7 @@ func (r *userRepository) Delete(ctx context.Context, id int) error {
 }
 ```
 
-### Работа с **unit of work** паттерном
+### Работа с unit of work паттерном
 
 ```go
 type UnitOfWork interface {
@@ -4658,7 +4658,7 @@ func createUserWithOrder(db *sql.DB, user *User, order *Order) error {
 }
 ```
 
-### Работа с **factory** паттерном
+### Работа с factory паттерном
 
 ```go
 type DatabaseFactory interface {
@@ -4706,7 +4706,7 @@ func NewDatabaseFactory(dbType, connectionString string) (DatabaseFactory, error
 }
 ```
 
-### Работа с **strategy** паттерном
+### Работа с strategy паттерном
 
 ```go
 type PaymentStrategy interface {
@@ -4750,7 +4750,7 @@ processor := NewPaymentProcessor(&CreditCardStrategy{cardNumber: "1234"})
 processor.ProcessPayment(100.0)
 ```
 
-### Работа с **observer** паттерном
+### Работа с observer паттерном
 
 ```go
 type Observer interface {
@@ -4804,7 +4804,7 @@ func (o *LogObserver) Update(event string, data interface{}) {
 }
 ```
 
-### Работа с **builder** паттерном
+### Работа с builder паттерном
 
 ```go
 type QueryBuilder struct {
@@ -4854,7 +4854,7 @@ builder := NewQueryBuilder("users").
 query, args := builder.Build()
 ```
 
-### Работа с **chain of responsibility**
+### Работа с chain of responsibility
 
 ```go
 type Handler interface {
@@ -4922,7 +4922,7 @@ chain.SetNext(&LoggingHandler{})
 err := chain.Handle(request)
 ```
 
-### Работа с **adapter** паттерном
+### Работа с adapter паттерном
 
 ```go
 // Старый интерфейс
@@ -4955,7 +4955,7 @@ newSvc := NewServiceAdapter(oldSvc)
 output, _ := newSvc.Process([]byte("input"))
 ```
 
-### Работа с **decorator** паттерном
+### Работа с decorator паттерном
 
 ```go
 type Component interface {
@@ -5016,7 +5016,7 @@ cached := &CachingDecorator{
 result := cached.Operation()
 ```
 
-### Работа с **middleware** цепочкой
+### Работа с middleware цепочкой
 
 ```go
 type Middleware func(http.Handler) http.Handler
@@ -5300,7 +5300,7 @@ builder.AddFilter("age", ">=", 18).
 where, args := builder.Build()
 ```
 
-### Работа с **batch** обработкой
+### Работа с batch обработкой
 
 ```go
 func ProcessBatch[T any](items []T, batchSize int, processor func([]T) error) error {
@@ -5326,7 +5326,7 @@ err := ProcessBatch(users, 100, func(batch []User) error {
 })
 ```
 
-### Работа с **graceful degradation**
+### Работа с graceful degradation
 
 ```go
 type Service struct {
@@ -5366,7 +5366,7 @@ func (s *Service) HealthCheck(ctx context.Context) error {
 }
 ```
 
-### Работа с **retry** с **exponential backoff**
+### Работа с retry с exponential backoff
 
 ```go
 type RetryConfig struct {
@@ -5418,7 +5418,7 @@ func RetryWithBackoff(ctx context.Context, config *RetryConfig, fn func() error)
 }
 ```
 
-### Работа с **rate limiter per user**
+### Работа с rate limiter per user
 
 ```go
 type UserRateLimiter struct {
@@ -5459,7 +5459,7 @@ func (url *UserRateLimiter) Allow(userID string) bool {
 }
 ```
 
-### Работа с **distributed tracing**
+### Работа с distributed tracing
 
 ```go
 type Trace struct {
@@ -5526,7 +5526,7 @@ func generateID() string {
 }
 ```
 
-### Работа с **structured logging**
+### Работа с structured logging
 
 ```go
 type LogLevel int
@@ -5618,7 +5618,7 @@ func (l LogLevel) String() string {
 }
 ```
 
-### Работа с **configuration management**
+### Работа с configuration management
 
 ```go
 type Config struct {
@@ -5695,7 +5695,7 @@ func (c *Config) LoadFromFile(filename string) error {
 }
 ```
 
-### Работа с **worker pool**
+### Работа с worker pool
 
 ```go
 type WorkerPool struct {
@@ -5769,7 +5769,7 @@ func (wp *WorkerPool) Stop() {
 }
 ```
 
-### Работа с **message queue**
+### Работа с message queue
 
 ```go
 type MessageQueue struct {
@@ -5822,7 +5822,7 @@ func (mq *MessageQueue) process() {
 }
 ```
 
-### Работа с **saga** паттерном
+### Работа с saga паттерном
 
 ```go
 type SagaStep struct {
@@ -5865,7 +5865,7 @@ func (s *Saga) Execute() error {
 }
 ```
 
-### Работа с **distributed locks**
+### Работа с distributed locks
 
 ```go
 type DistributedLock struct {
@@ -5928,7 +5928,7 @@ func (dl *DistributedLock) Release() error {
 }
 ```
 
-### Работа с **event sourcing**
+### Работа с event sourcing
 
 ```go
 type Event interface {
@@ -5992,7 +5992,7 @@ func (a *EventSourcedAggregate) Apply(event Event) {
 }
 ```
 
-### Работа с **CQRS** и **event sourcing**
+### Работа с CQRS и event sourcing
 
 ```go
 type Command interface {
@@ -6041,7 +6041,7 @@ func (cb *CommandBus) Handle(cmd Command) error {
 }
 ```
 
-### Работа с **domain events**
+### Работа с domain events
 
 ```go
 type DomainEvent interface {
@@ -6085,7 +6085,7 @@ func (ed *EventDispatcher) Dispatch(event DomainEvent) error {
 }
 ```
 
-### Работа с **specification pattern**
+### Работа с specification pattern
 
 ```go
 type Specification interface {
@@ -6160,7 +6160,7 @@ func (as *AgeSpecification) IsSatisfiedBy(candidate interface{}) bool {
 }
 ```
 
-### Работа с **value objects**
+### Работа с value objects
 
 ```go
 type ValueObject interface {
@@ -6221,7 +6221,7 @@ func (m *Money) Equals(other ValueObject) bool {
 }
 ```
 
-### Работа с **aggregate roots**
+### Работа с aggregate roots
 
 ```go
 type AggregateRoot interface {
@@ -6268,7 +6268,7 @@ func (ar *BaseAggregateRoot) AddEvent(event DomainEvent) {
 }
 ```
 
-### Работа с **projection**
+### Работа с projection
 
 ```go
 type Projection interface {
@@ -6311,7 +6311,7 @@ func (p *ReadModelProjection) handleUserUpdated(event *UserUpdatedEvent) error {
 }
 ```
 
-### Работа с **snapshot**
+### Работа с snapshot
 
 ```go
 type Snapshot interface {
@@ -6374,7 +6374,7 @@ func RehydrateFromSnapshot(aggregate Aggregate, snapshot Snapshot, eventStore Ev
 }
 ```
 
-### Работа с **eventual consistency**
+### Работа с eventual consistency
 
 ```go
 type EventualConsistency struct {
@@ -6414,7 +6414,7 @@ func (ec *EventualConsistency) ProcessEvents(aggregateID string) error {
 }
 ```
 
-### Работа с **saga orchestration**
+### Работа с saga orchestration
 
 ```go
 type SagaOrchestrator struct {
@@ -6464,7 +6464,7 @@ func (so *SagaOrchestrator) compensate(executed []SagaStep) {
 }
 ```
 
-### Работа с **idempotency**
+### Работа с idempotency
 
 ```go
 type IdempotencyKey string
@@ -6527,7 +6527,7 @@ func IdempotentHandler(
 }
 ```
 
-### Работа с **outbox pattern**
+### Работа с outbox pattern
 
 ```go
 type OutboxEvent struct {
@@ -6601,7 +6601,7 @@ func (op *OutboxProcessor) Stop() {
 }
 ```
 
-### Работа с **bulk operations**
+### Работа с bulk operations
 
 ```go
 type BulkOperation struct {
@@ -6663,7 +6663,7 @@ func bulkInsert(db *sql.DB, table string, records []map[string]interface{}) erro
 }
 ```
 
-### Работа с **optimistic locking**
+### Работа с optimistic locking
 
 ```go
 type OptimisticLock struct {
@@ -6726,7 +6726,7 @@ func UpdateWithOptimisticLock(db *sql.DB, entity *OptimisticEntity, update func(
 }
 ```
 
-### Работа с **soft delete**
+### Работа с soft delete
 
 ```go
 type SoftDeletable struct {
@@ -6771,7 +6771,7 @@ func FindWithSoftDelete(db *sql.DB, table string, id string) (*sql.Row, error) {
 }
 ```
 
-### Работа с **auditing**
+### Работа с auditing
 
 ```go
 type Auditable struct {
@@ -6846,7 +6846,7 @@ func (al *AuditLogger) GetLogs(entityType, entityID string) []AuditLog {
 }
 ```
 
-### Работа с **multi-tenancy**
+### Работа с multi-tenancy
 
 ```go
 type Tenant struct {
@@ -6899,7 +6899,7 @@ func TenantMiddleware(next http.Handler) http.Handler {
 }
 ```
 
-### Работа с **versioning** данных
+### Работа с versioning данных
 
 ```go
 type VersionedEntity struct {
@@ -6987,7 +6987,7 @@ func (vr *VersionRepository) RestoreVersion(entityID string, version int) error 
 }
 ```
 
-### Работа с **materialized views**
+### Работа с materialized views
 
 ```go
 type MaterializedView struct {
@@ -7040,7 +7040,7 @@ func (mv *MaterializedView) StartAutoRefresh(db *sql.DB) {
 }
 ```
 
-### Работа с **read replicas**
+### Работа с read replicas
 
 ```go
 type DatabasePool struct {
@@ -7094,7 +7094,7 @@ func (rwr *ReadWriteRepository) Save(ctx context.Context, entity *Entity) error 
 }
 ```
 
-### Работа с **connection pooling**
+### Работа с connection pooling
 
 ```go
 type ConnectionPool struct {
@@ -7144,7 +7144,7 @@ func (cp *ConnectionPool) Close() error {
 }
 ```
 
-### Работа с **query builder**
+### Работа с query builder
 
 ```go
 type QueryBuilder struct {
@@ -7262,7 +7262,7 @@ builder := NewQueryBuilder("users").
 query, args := builder.Build()
 ```
 
-### Работа с транзакциями с **retry**
+### Работа с транзакциями с retry
 
 ```go
 func ExecuteWithRetry(ctx context.Context, db *sql.DB, fn func(*sql.Tx) error, maxRetries int) error {
@@ -7309,7 +7309,7 @@ func isRetryableError(err error) bool {
 }
 ```
 
-### Работа с **prepared statements**
+### Работа с prepared statements
 
 ```go
 type PreparedStatementCache struct {
@@ -7363,7 +7363,7 @@ func (psc *PreparedStatementCache) Clear() {
 }
 ```
 
-### Работа с **batch insert**
+### Работа с batch insert
 
 ```go
 func BatchInsert(db *sql.DB, table string, columns []string, rows [][]interface{}) error {
@@ -7415,7 +7415,7 @@ func BatchInsertWithTransaction(db *sql.DB, table string, columns []string, rows
 }
 ```
 
-### Работа с **upsert** (**INSERT `ON` CONFLICT**)
+### Работа с upsert (INSERT `ON` CONFLICT)
 
 ```go
 func Upsert(db *sql.DB, table string, data map[string]interface{}, conflictColumns []string, updateColumns []string) error {
@@ -7448,7 +7448,7 @@ func Upsert(db *sql.DB, table string, data map[string]interface{}, conflictColum
 }
 ```
 
-### Работа с **JSON** в базе данных
+### Работа с JSON в базе данных
 
 ```go
 type JSONField struct {
@@ -7756,7 +7756,7 @@ func (mm *MigrationManager) Down(targetVersion int) error {
 }
 ```
 
-### Работа с **database views**
+### Работа с database views
 
 ```go
 type ViewManager struct {
@@ -7802,7 +7802,7 @@ func (vm *ViewManager) RefreshMaterializedView(name string, concurrently bool) e
 }
 ```
 
-### Работа с **database triggers**
+### Работа с database triggers
 
 ```go
 type TriggerManager struct {
@@ -7848,7 +7848,7 @@ func (tm *TriggerManager) CreateTriggerFunction(name, body string) error {
 }
 ```
 
-### Работа с **stored procedures**
+### Работа с stored procedures
 
 ```go
 type ProcedureManager struct {
@@ -7885,7 +7885,7 @@ func (pm *ProcedureManager) CallProcedure(name string, args ...interface{}) erro
 }
 ```
 
-### Работа с **database functions**
+### Работа с database functions
 
 ```go
 func CreateFunction(db *sql.DB, name, returnType, body string) error {
@@ -7915,7 +7915,7 @@ func CallFunction(db *sql.DB, name string, args ...interface{}) (interface{}, er
 }
 ```
 
-### Работа с **database extensions**
+### Работа с database extensions
 
 ```go
 type ExtensionManager struct {
@@ -7958,7 +7958,7 @@ func (em *ExtensionManager) ListExtensions() ([]string, error) {
 }
 ```
 
-### Работа с **database constraints**
+### Работа с database constraints
 
 ```go
 type ConstraintManager struct {
@@ -8010,7 +8010,7 @@ func (cm *ConstraintManager) DropConstraint(table, constraintName string) error 
 }
 ```
 
-### Работа с **database sequences**
+### Работа с database sequences
 
 ```go
 type SequenceManager struct {
@@ -8056,7 +8056,7 @@ func (sm *SequenceManager) DropSequence(name string) error {
 }
 ```
 
-### Работа с **database partitioning**
+### Работа с database partitioning
 
 ```go
 type PartitionManager struct {
@@ -8122,7 +8122,7 @@ func (pm *PartitionManager) CreateListPartition(table, partitionName string, val
 }
 ```
 
-### Работа с **database replication**
+### Работа с database replication
 
 ```go
 type ReplicationManager struct {
@@ -8175,7 +8175,7 @@ func (rm *ReplicationManager) ListReplicationSlots() ([]map[string]interface{}, 
 }
 ```
 
-### Работа с **database backups**
+### Работа с database backups
 
 ```go
 type BackupManager struct {
@@ -8239,7 +8239,7 @@ func (bm *BackupManager) CreateSQLBackup(outputPath string) error {
 }
 ```
 
-### Работа с **database statistics**
+### Работа с database statistics
 
 ```go
 type StatisticsManager struct {
@@ -8367,7 +8367,7 @@ func PutBuffer(buf *bytes.Buffer) {
 }
 ```
 
-### Проектирование **API**
+### Проектирование API
 
 Создание хороших **API** требует понимания принципов проектирования, обработки ошибок, версионирования и документации.
 

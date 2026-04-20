@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Micrometer: Метрики и мониторинг в **Java**
+# Micrometer: Метрики и мониторинг в Java
 
 **Комплексное руководство по использованию `Micrometer` — библиотеки для создания и экспорта метрик в `Java` приложениях с поддержкой `Prometheus`, `InfluxDB`, `CloudWatch` и других систем мониторинга.**
 
@@ -75,11 +75,11 @@ updated: "2026-02-11"
   - [Когда использовать Micrometer](#когда-использовать-micrometer)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **Micrometer**
+## Введение в Micrometer
 
 **Micrometer** — это библиотека для создания и экспорта метрик в **Java** приложениях. Она предоставляет **vendor-neutral** интерфейс для интеграции с различными системами мониторинга: **Prometheus**, **InfluxDB**, **CloudWatch**, **New Relic**, **Datadog** и другими.
 
-### Почему **Micrometer**?
+### Почему Micrometer?
 
 **Micrometer** предлагает множество преимуществ:**
 
@@ -110,9 +110,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимости **Maven** для **Micrometer** (**core и реестры `Prometheus`, `InfluxDB`, JMX**).
+Зависимости **Maven** для **Micrometer** (core и реестры `Prometheus`, `InfluxDB`, JMX).
 
 ```xml
 <dependency>
@@ -143,7 +143,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -184,7 +184,7 @@ public class MetricsConfiguration {
 
 ## Основные концепции
 
-### **MeterRegistry**
+### MeterRegistry
 
 ```java
 @Service
@@ -223,7 +223,7 @@ public class MetricsService {
 }
 ```
 
-### **Tags** и измерения
+### Tags и измерения
 
 ```java
 /
@@ -317,9 +317,9 @@ public class TaggedMetricsService {
 }
 ```
 
-## **Counters**
+## Counters
 
-### Основы **Counter**
+### Основы Counter
 
 ```java
 /
@@ -484,9 +484,9 @@ public class AdvancedCounterService {
 }
 ```
 
-## **Gauges**
+## Gauges
 
-### Основы **Gauge**
+### Основы Gauge
 
 ```java
 @Service
@@ -550,7 +550,7 @@ class SystemMetrics {
 }
 ```
 
-### Продвинутые **gauges**
+### Продвинутые gauges
 
 ```java
 @Service
@@ -683,9 +683,9 @@ public class AdvancedGaugeService {
 }
 ```
 
-## **Timers**
+## Timers
 
-### Основы **Timer**
+### Основы Timer
 
 ```java
 @Service
@@ -891,9 +891,9 @@ public class AdvancedTimerService {
 }
 ```
 
-## **Distribution Summaries**
+## Distribution Summaries
 
-### Основы **DistributionSummary**
+### Основы DistributionSummary
 
 ```java
 @Service
@@ -961,7 +961,7 @@ public class DistributionSummaryService {
 }
 ```
 
-### Продвинутые **distribution summaries**
+### Продвинутые distribution summaries
 
 ```java
 @Service
@@ -1057,7 +1057,7 @@ public class AdvancedDistributionSummaryService {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
 ### Автоматическая конфигурация
 
@@ -1085,7 +1085,7 @@ app:
       version: ${app.version:1.0.0}
 ```
 
-### Кастомные метрики в **Spring Boot**
+### Кастомные метрики в Spring Boot
 
 ```java
 @Configuration
@@ -1294,7 +1294,7 @@ public class BusinessService {
 
 ## Экспорт метрик
 
-### **Prometheus**
+### Prometheus
 
 ```java
 @Configuration
@@ -1337,7 +1337,7 @@ public class PrometheusConfiguration {
 // http_request_duration_seconds{method="GET",uri="/api/users",count="42",sum="15.0"}
 ```
 
-### **InfluxDB**
+### InfluxDB
 
 ```java
 @Configuration
@@ -1363,7 +1363,7 @@ public class InfluxConfiguration {
 // http_request_duration_seconds_mean,method=GET,uri=/api/users value=0.357
 ```
 
-### **JMX**
+### JMX
 
 ```java
 @Configuration
@@ -1380,7 +1380,7 @@ public class JmxConfiguration {
 }
 ```
 
-### **Composite registry**
+### Composite registry
 
 ```java
 @Configuration
@@ -1433,7 +1433,7 @@ public class CompositeRegistryConfiguration {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Именование метрик
 
@@ -1869,7 +1869,7 @@ public class AlertingService {
 
 **Micrometer** — это современная и библиотека для создания и экспорта метрик в **Java** приложениях. Она обеспечивает **vendor-neutral** подход к мониторингу и поддерживает большинство популярных систем мониторинга.
 
-### Преимущества **Micrometer**
+### Преимущества Micrometer
 
 1. **Vendor neutral** — Единый **API** для всех систем мониторинга
 2. **Dimensional metrics** — Поддержка тегов и измерений
@@ -1889,7 +1889,7 @@ public class AlertingService {
 5. **Tagging паттерн** — Для категоризации метрик
 6. **Registry `Composition` паттерн** — Для множественных систем мониторинга
 
-### Когда использовать **Micrometer**
+### Когда использовать Micrometer
 
 **Рекомендуется:**
 - **Enterprise** приложения с высокими требованиями к мониторингу
@@ -1899,7 +1899,7 @@ public class AlertingService {
 - Проекты с `CI/CD` и **DevOps** практиками
 
 **Особенно полезно:**
-- В **Spring Boot** приложениях (**автоматическая интеграция**)
+- В **Spring Boot** приложениях (автоматическая интеграция)
 - При работе с **Prometheus**, **InfluxDB**, **CloudWatch**
 - Для создания **custom business metrics**
 - В системах с **high availability** требованиями
@@ -1912,7 +1912,7 @@ public class AlertingService {
 | **Micrometer** | **Vendor neutral**, **dimensional**, **Spring Boot support** | Более сложная настройка |
 | **Dropwizard Metrics** | Простая, **functional** | Только **Java**, меньше **integrations** |
 | **Metrics v3** | Продвинутые возможности | Сложность, меньше экосистемы |
-| **Spectator (**Netflix**)** | **Netflix battle-tested** | Только **Netflix stack** |
+| **Spectator (Netflix)** | **Netflix battle-tested** | Только **Netflix stack** |
 
 **Micrometer** рекомендуется как основной выбор для метрик в современных **Java** приложениях, особенно в экосистеме **Spring Boot** и микросервисной архитектуре.
 

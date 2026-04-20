@@ -19,14 +19,14 @@ OrientDB — мультимодельная NoSQL СУБД, которая в о
 ## Полезные ссылки
 
 ### Основные документы
-- [OrientDB: Основы](orientdb-basics.md) — модель, установка, работа с графами, интеграция с Java
+- [[orientdb-basics|OrientDB: Основы]] — модель, установка, работа с графами, интеграция с Java
 
 ### Соседние разделы
-- [Графовые БД](../README.md)
-- [Neo4j](../neo4j/README.md) — нативная графовая альтернатива
-- [NoSQL](../../nosql/README.md)
+- [[README|Графовые БД]]
+- [[README|Neo4j]] — нативная графовая альтернатива
+- [[README|NoSQL]]
 - [MongoDB](../../nosql/mongodb/)
-- [Базы данных](../../README.md)
+- [[README|Базы данных]]
 
 ### Внешние ресурсы
 - [OrientDB Documentation](https://orientdb.org/docs/)
@@ -43,7 +43,7 @@ OrientDB — мультимодельная NoSQL СУБД, которая в о
 
 ## Что внутри раздела
 
-[orientdb-basics.md](orientdb-basics.md) покрывает:
+[[orientdb-basics]] покрывает:
 
 - Мультимодельную концепцию (document + graph + key-value + object)
 - Установку через Docker
@@ -76,11 +76,11 @@ OrientDB — мультимодельная NoSQL СУБД, которая в о
 
 - **Ознакомление (30-60 мин):** `orientdb-basics.md` целиком.
 - **Сравнение с Neo4j:** `orientdb-basics.md` + `../neo4j/neo4j-basics.md`, сравнить Cypher и Extended SQL на одинаковых запросах.
-- **Выбор хранилища:** этот README + раздел «vs альтернативы» + [графовые БД](../README.md).
+- **Выбор хранилища:** этот README + раздел «vs альтернативы» + [[README|графовые БД]].
 
 ## Куда идти дальше
 
-- Сравнение графовых БД — [графовые БД](../README.md)
-- Обзор NoSQL — [databases/nosql/](../../nosql/README.md)
-- Проектирование данных — [databases/README.md](../../README.md)
-- Интервью по БД — [interview/databases/](../../../interview/databases/database-architecture-interview.md)
+- Сравнение графовых БД — [[README|графовые БД]]
+- Обзор NoSQL — [[README|databases/nosql/]]
+- Проектирование данных — [[README|databases/README.md]]
+- Интервью по БД — [[database-architecture-interview|interview/databases/]]

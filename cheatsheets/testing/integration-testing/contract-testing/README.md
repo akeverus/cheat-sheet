@@ -18,14 +18,14 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Contract Testing](contract-testing.md) — Pact, Spring Cloud Contract, CI/CD
+- [[contract-testing|Contract Testing]] — Pact, Spring Cloud Contract, CI/CD
 
 ### Соседние разделы
-- [Integration Testing](../README.md)
-- [Testcontainers](../testcontainers/README.md)
-- [WireMock](../wiremock.md)
-- [REST Assured](../rest-assured.md)
-- [JUnit](../../unit-testing/junit/README.md)
+- [[README|Integration Testing]]
+- [[README|Testcontainers]]
+- [[wiremock]]
+- [[rest-assured|REST Assured]]
+- [[README|JUnit]]
 
 ### Внешние ресурсы
 - [Pact](https://docs.pact.io/)
@@ -43,10 +43,10 @@ updated: "2026-04-17"
 
 | Тема | Где читать |
 |------|-----------|
-| Зачем контрактное тестирование, consumer-driven vs provider-driven | [contract-testing.md](contract-testing.md) |
-| Pact (JVM): генерация pact-файла, верификация провайдером | [contract-testing.md](contract-testing.md) |
-| Spring Cloud Contract: Groovy DSL, stub runner | [contract-testing.md](contract-testing.md) |
-| Pact Broker, can-i-deploy, CI/CD интеграция | [contract-testing.md](contract-testing.md) |
+| Зачем контрактное тестирование, consumer-driven vs provider-driven | [[contract-testing]] |
+| Pact (JVM): генерация pact-файла, верификация провайдером | [[contract-testing]] |
+| Spring Cloud Contract: Groovy DSL, stub runner | [[contract-testing]] |
+| Pact Broker, can-i-deploy, CI/CD интеграция | [[contract-testing]] |
 
 ## Когда использовать
 
@@ -61,6 +61,6 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Интеграционное тестирование в целом — [../README.md](../README.md)
-- Мок внешних HTTP-сервисов — [../wiremock.md](../wiremock.md)
-- REST-клиентские проверки — [../rest-assured.md](../rest-assured.md)
+- Интеграционное тестирование в целом — [[README]]
+- Мок внешних HTTP-сервисов — [[wiremock]]
+- REST-клиентские проверки — [[rest-assured]]

@@ -144,7 +144,7 @@ micronaut:
 
 ## JWT Authentication
 
-### Генерация **JWT Tokens**
+### Генерация JWT Tokens
 
 ```java
 // Логин и генерация JWT (UsernamePasswordCredentials → BearerAccessRefreshToken)
@@ -188,7 +188,7 @@ public class AuthenticationService {
 }
 ```
 
-### **JWT Login Endpoint**
+### JWT Login Endpoint
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -218,7 +218,7 @@ public class LoginController {
 }
 ```
 
-### **Custom Authentication Provider**
+### Custom Authentication Provider
 
 ```java
 // Провайдер аутентификации (проверка учётных данных)
@@ -275,7 +275,7 @@ public class CustomAuthenticationProvider
 }
 ```
 
-### Защита **Endpoints**
+### Защита Endpoints
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -314,7 +314,7 @@ public class UserController {
 
 ## OAuth2
 
-### Настройка **OAuth2**
+### Настройка OAuth2
 
 **application.yml:**
 
@@ -337,7 +337,7 @@ micronaut:
             url: https://github.com/login/oauth/access_token
 ```
 
-### **OAuth2 Login Controller**
+### OAuth2 Login Controller
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -402,7 +402,7 @@ public class UserService {
 }
 ```
 
-### **Custom Security Rules**
+### Custom Security Rules
 
 ```java
 import io.micronaut.security.rules.SecurityRule;
@@ -458,7 +458,7 @@ public class BCryptPasswordEncoder implements PasswordEncoder {
 
 ## Лучшие практики
 
-### 1. Используйте **JWT** для **Stateless Applications**
+### 1. Используйте JWT для Stateless Applications
 
 ```java
 // ✅ Хорошо - JWT для микросервисов
@@ -480,7 +480,7 @@ public HttpResponse<?> login(@Valid @Body LoginRequest request) {
 }
 ```
 
-### 3. Используйте **HTTPS** в **Production**
+### 3. Используйте HTTPS в Production
 
 ```yaml
 # ✅ Хорошо
@@ -504,7 +504,7 @@ micronaut:
             expiration: 3600  # 1 hour
 ```
 
-### 5. Используйте **Role-based Access Control**
+### 5. Используйте Role-based Access Control
 
 ```java
 // ✅ Хорошо
@@ -516,7 +516,7 @@ public void deleteUser(Long id) {
 
 ## LDAP Authentication
 
-### Настройка **LDAP**
+### Настройка LDAP
 
 **application.yml:**
 
@@ -532,7 +532,7 @@ micronaut:
           filter: (uid={0})
 ```
 
-### **LDAP Authentication Provider**
+### LDAP Authentication Provider
 
 ```java
 import io.micronaut.security.authentication.providers.LdapAuthenticationProvider;
@@ -557,7 +557,7 @@ public class CustomLdapAuthenticationProvider
 
 ## Session-based Authentication
 
-### Настройка **Session**
+### Настройка Session
 
 **application.yml:**
 
@@ -574,7 +574,7 @@ micronaut:
         cookie-secure: true
 ```
 
-### **Session Controller**
+### Session Controller
 
 ```java
 @Controller("/session")
@@ -607,7 +607,7 @@ public class SessionController {
 
 ## Token Refresh
 
-### **Refresh Token Endpoint**
+### Refresh Token Endpoint
 
 ```java
 @Controller("/token")
@@ -628,7 +628,7 @@ public class TokenController {
 
 ## Rate Limiting
 
-### Настройка **Rate Limiting**
+### Настройка Rate Limiting
 
 **application.yml:**
 
@@ -643,7 +643,7 @@ micronaut:
         window: PT15M
 ```
 
-### **Custom Rate Limiter**
+### Custom Rate Limiter
 
 ```java
 @Singleton
@@ -667,7 +667,7 @@ public class CustomRateLimiter implements RateLimiter {
 
 ## CORS Configuration
 
-### Настройка **CORS**
+### Настройка CORS
 
 **application.yml:**
 
@@ -697,7 +697,7 @@ micronaut:
 
 ## Security Headers
 
-### Настройка **Security Headers**
+### Настройка Security Headers
 
 **application.yml:**
 
@@ -714,7 +714,7 @@ micronaut:
 
 ## Token Validation
 
-### **JWT Token Validation**
+### JWT Token Validation
 
 ```java
 import io.micronaut.security.token.Claims;
@@ -757,7 +757,7 @@ public class CustomTokenValidator implements JwtTokenValidator {
 
 ## Security Events
 
-### **Security Event Listeners**
+### Security Event Listeners
 
 ```java
 import io.micronaut.security.event.LoginSuccessfulEvent;
@@ -784,7 +784,7 @@ public class SecurityEventListener {
 
 ## Password Policies
 
-### **Password Validation**
+### Password Validation
 
 ```java
 import jakarta.validation.Constraint;
@@ -817,7 +817,7 @@ public @interface StrongPassword {
 
 ## Security Headers
 
-### **Security Headers Configuration**
+### Security Headers Configuration
 
 **application.yml:**
 
@@ -845,7 +845,7 @@ micronaut:
 
 ## Role-based Access Control
 
-### **RBAC Implementation**
+### RBAC Implementation
 
 ```java
 import io.micronaut.security.annotation.Secured;

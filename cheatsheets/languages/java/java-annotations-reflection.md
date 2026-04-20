@@ -28,15 +28,15 @@ updated: "2026-02-11"
   - [Мета-аннотации](#мета-аннотации)
 - [Обработка аннотаций](#обработка-аннотаций)
   - [**Runtime** обработка](#runtime-обработка)
-  - [**Compile-time** обработка (**APT**)](#compile-time-обработка-apt)
+  - [**Compile-time** обработка (APT)](#compile-time-обработка-apt)
 - [Основы рефлексии](#основы-рефлексии)
   - [**Class introspection**](#class-introspection)
   - [Динамическое создание объектов](#динамическое-создание-объектов)
   - [Доступ к полям и методам](#доступ-к-полям-и-методам)
 - [Продвинутые возможности](#продвинутые-возможности)
   - [**Bytecode manipulation** с **ASM**](#bytecode-manipulation-с-asm)
-  - [**CDI** (**Contexts and Dependency Injection**) через **reflection**](#cdi-contexts-and-dependency-injection-через-reflection)
-- [**AOP** (**Aspect-Oriented Programming**) через **reflection**](#aop-aspect-oriented-programming-через-reflection)
+  - [**CDI** (Contexts and Dependency Injection) через **reflection**](#cdi-contexts-and-dependency-injection-через-reflection)
+- [**AOP** (Aspect-Oriented Programming) через **reflection**](#aop-aspect-oriented-programming-через-reflection)
   - [Динамический **AOP**](#динамический-aop)
 - [**ORM** через **reflection**](#orm-через-reflection)
   - [Простой **ORM**](#простой-orm)
@@ -49,7 +49,7 @@ updated: "2026-02-11"
 
 ### Создание аннотаций
 
-**Примеры объявления аннотаций (**`@Entity`, `@Column`, `@Transactiona`l**):**
+**Примеры объявления аннотаций (`@Entity`, `@Column`, `@Transactiona`l):**
 
 ```java
 // Простая аннотация-маркер
@@ -185,7 +185,7 @@ public class UserManagementService {
 
 ## Обработка аннотаций
 
-### **Runtime** обработка
+### Runtime обработка
 ```java
 public class AnnotationProcessor {
 
@@ -236,7 +236,7 @@ public class AnnotationProcessor {
 }
 ```
 
-### **Compile-time** обработка (**APT**)
+### Compile-time обработка (APT)
 ```java
 // Annotation Processor
 @SupportedAnnotationTypes("com.example.annotations.Builder")
@@ -328,7 +328,7 @@ public class BuilderProcessor extends AbstractProcessor {
 
 ## Основы рефлексии
 
-### **Class introspection**
+### Class introspection
 ```java
 public class ReflectionBasics {
 
@@ -616,7 +616,7 @@ public class FieldAndMethodAccess {
 
 ## Продвинутые возможности
 
-### **Bytecode manipulation** с **ASM**
+### Bytecode manipulation с ASM
 ```java
 public class BytecodeTransformer {
 
@@ -687,7 +687,7 @@ public class TransformationAgent {
 }
 ```
 
-### **CDI** (**Contexts and `Dependency` Injection**) через **reflection**
+### CDI (Contexts and `Dependency` Injection) через reflection
 ```java
 public class CDIContainer {
 
@@ -793,9 +793,9 @@ public class CDIContainer {
 }
 ```
 
-## **AOP** (**Aspect-`Oriented` Programming**) через **reflection**
+## AOP (Aspect-`Oriented` Programming) через reflection
 
-### Динамический **AOP**
+### Динамический AOP
 ```java
 public class DynamicAOP {
 
@@ -976,9 +976,9 @@ public class DynamicAOP {
 }
 ```
 
-## **ORM** через **reflection**
+## ORM через reflection
 
-### Простой **ORM**
+### Простой ORM
 ```java
 public class SimpleORM {
 
@@ -1147,9 +1147,9 @@ public class SimpleORM {
 }
 ```
 
-## **Performance** и **best practices**
+## Performance и best practices
 
-### Кэширование **reflection** данных
+### Кэширование reflection данных
 ```java
 public class ReflectionCache {
 
@@ -1262,7 +1262,7 @@ public class ReflectionCache {
 }
 ```
 
-### Безопасность **reflection**
+### Безопасность reflection
 ```java
 public class SecureReflection {
 

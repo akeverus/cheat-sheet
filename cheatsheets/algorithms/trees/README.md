@@ -17,12 +17,12 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [AVL-дерево](avl-tree.md)
-- [Проверка сбалансированности](balanced-binary-tree-check.md)
-- [Обход BST](binary-search-tree-traversal.md)
-- [Бинарное дерево](binary-tree.md)
-- [Алгоритм Борувки](boruvka-algorithm.md)
-- [Алгоритм Крускала](kruskal-algorithm.md)
-- [Monte Carlo для крестиков-ноликов](monte-carlo-tree-search-tic-tac-toe.md)
-- [Алгоритм Прима](prim-algorithm.md)
+- [[avl-tree|AVL-дерево]]
+- [[balanced-binary-tree-check|Проверка сбалансированности]]
+- [[binary-search-tree-traversal|Обход BST]]
+- [[binary-tree|Бинарное дерево]]
+- [[boruvka-algorithm|Алгоритм Борувки]]
+- [[kruskal-algorithm|Алгоритм Крускала]]
+- [[monte-carlo-tree-search-tic-tac-toe|Monte Carlo для крестиков-ноликов]]
+- [[prim-algorithm|Алгоритм Прима]]
 

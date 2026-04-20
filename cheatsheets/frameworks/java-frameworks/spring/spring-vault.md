@@ -82,7 +82,7 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Vault**
+## Введение в Spring Vault
 
 **Spring Vault** предоставляет интеграцию с **HashiCorp Vault** для безопасного управления секретами, ключами шифрования и другими конфиденциальными данными.
 
@@ -94,7 +94,7 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 - **Dynamic Secrets**: Динамические секреты
 - **Lease Management**: Управление **lease**
 
-### Архитектура **Spring Vault**
+### Архитектура Spring Vault
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -124,11 +124,11 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring Vault**
+## Настройка Spring Vault
 
 ### Зависимости
 
-**Зависимости **spring-vault-core** и **spring-`boot-starter`-vault** (**pom.xml**):**
+**Зависимости **spring-vault-core** и **spring-`boot-starter`-vault** (pom.xml):**
 
 ```xml
 <dependency>
@@ -153,7 +153,7 @@ spring.cloud.vault.kv.backend=secret
 spring.cloud.vault.kv.application-name=my-app
 ```
 
-### **Java Configuration**
+### Java Configuration
 
 ```java
 // Конфигурация VaultTemplate и подключения к Vault
@@ -181,7 +181,7 @@ public class VaultConfig {
 
 ## Аутентификация
 
-### **Token Authentication**
+### Token Authentication
 
 ```java
 @Configuration
@@ -194,7 +194,7 @@ public class TokenAuthConfig {
 }
 ```
 
-### **AppRole Authentication**
+### AppRole Authentication
 
 ```java
 @Configuration
@@ -217,7 +217,7 @@ public class AppRoleAuthConfig {
 }
 ```
 
-### **AWS Authentication**
+### AWS Authentication
 
 ```java
 @Configuration
@@ -236,7 +236,7 @@ public class AwsAuthConfig {
 
 ## Работа с секретами
 
-### `KV` **Secrets**
+### `KV` Secrets
 
 ```java
 // Чтение и запись секретов через VaultTemplate
@@ -262,7 +262,7 @@ public class VaultSecretService {
 }
 ```
 
-### **Vault Repositories**
+### Vault Repositories
 
 ```java
 @VaultRepository
@@ -297,7 +297,7 @@ public class SecretService {
 
 ## Dynamic Secrets
 
-### **Database Credentials**
+### Database Credentials
 
 ```java
 @Service
@@ -314,7 +314,7 @@ public class DynamicSecretService {
 }
 ```
 
-### **PKI Certificates**
+### PKI Certificates
 
 ```java
 @Service
@@ -336,7 +336,7 @@ public class PkiService {
 
 ## Lease Management
 
-### **Lease Renewal**
+### Lease Renewal
 
 ```java
 @Service
@@ -360,7 +360,7 @@ public class LeaseService {
 
 ## Encryption
 
-### **Transit Encryption**
+### Transit Encryption
 
 ```java
 @Service
@@ -393,7 +393,7 @@ public ClientAuthentication clientAuthentication() {
 }
 ```
 
-### 2. Управляйте **lease** правильно
+### 2. Управляйте lease правильно
 
 ```java
 // ✅ Хорошо
@@ -403,7 +403,7 @@ public LeaseRenewalScheduler leaseRenewalScheduler() {
 }
 ```
 
-### 3. Используйте **encryption** для чувствительных данных
+### 3. Используйте encryption для чувствительных данных
 
 ```java
 // ✅ Хорошо
@@ -431,7 +431,7 @@ try {
 
 ## Продвинутые возможности
 
-### **Vault Operations**
+### Vault Operations
 
 ```java
 @Service
@@ -459,7 +459,7 @@ public class VaultOperationsService {
 }
 ```
 
-### **Environment Variables Integration**
+### Environment Variables Integration
 
 ```java
 @Configuration
@@ -478,7 +478,7 @@ public class VaultEnvironmentConfig {
 }
 ```
 
-### **Health Check**
+### Health Check
 
 ```java
 @Component
@@ -507,7 +507,7 @@ public class VaultHealthIndicator implements HealthIndicator {
 }
 ```
 
-### **Metrics**
+### Metrics
 
 ```java
 @Component
@@ -548,7 +548,7 @@ public class VaultMetrics {
 }
 ```
 
-### **Kubernetes Authentication**
+### Kubernetes Authentication
 
 ```java
 @Configuration
@@ -578,7 +578,7 @@ public class KubernetesAuthConfig {
 }
 ```
 
-### **Azure Authentication**
+### Azure Authentication
 
 ```java
 @Configuration
@@ -595,7 +595,7 @@ public class AzureAuthConfig {
 }
 ```
 
-### **GCP Authentication**
+### GCP Authentication
 
 ```java
 @Configuration
@@ -612,7 +612,7 @@ public class GcpAuthConfig {
 }
 ```
 
-### **LDAP Authentication**
+### LDAP Authentication
 
 ```java
 @Configuration
@@ -630,7 +630,7 @@ public class LdapAuthConfig {
 }
 ```
 
-### **Certificate Authentication**
+### Certificate Authentication
 
 ```java
 @Configuration
@@ -658,7 +658,7 @@ public class CertificateAuthConfig {
 }
 ```
 
-### **Secret Versioning**
+### Secret Versioning
 
 ```java
 @Service
@@ -685,7 +685,7 @@ public class VersionedSecretService {
 }
 ```
 
-### **Secret Metadata**
+### Secret Metadata
 
 ```java
 @Service
@@ -706,7 +706,7 @@ public class SecretMetadataService {
 }
 ```
 
-### **Transit Key Management**
+### Transit Key Management
 
 ```java
 @Service
@@ -737,7 +737,7 @@ public class TransitKeyService {
 }
 ```
 
-### **Data Key Generation**
+### Data Key Generation
 
 ```java
 @Service
@@ -760,7 +760,7 @@ public class DataKeyService {
 }
 ```
 
-### **Rewrap Operation**
+### Rewrap Operation
 
 ```java
 @Service
@@ -776,7 +776,7 @@ public class RewrapService {
 }
 ```
 
-### **Batch Operations**
+### Batch Operations
 
 ```java
 @Service
@@ -811,7 +811,7 @@ public class BatchVaultService {
 }
 ```
 
-### **Hash and Sign Operations**
+### Hash and Sign Operations
 
 ```java
 @Service
@@ -837,7 +837,7 @@ public class HashSignService {
 }
 ```
 
-### **HSM Integration**
+### HSM Integration
 
 ```java
 @Configuration
@@ -869,7 +869,7 @@ public class HsmConfig {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 
 ```java
 @Service
@@ -905,7 +905,7 @@ public class ErrorHandlingVaultService {
 }
 ```
 
-### **Configuration Properties Binding**
+### Configuration Properties Binding
 
 ```java
 @ConfigurationProperties(prefix = "vault")
@@ -958,7 +958,7 @@ public class VaultPropertiesConfig {
 }
 ```
 
-### **Spring Cloud Vault Integration**
+### Spring Cloud Vault Integration
 
 ```java
 @Configuration
@@ -982,7 +982,7 @@ public class SpringCloudVaultConfig {
 }
 ```
 
-### **Vault Configuration Properties**
+### Vault Configuration Properties
 
 ```java
 @ConfigurationProperties(prefix = "spring.cloud.vault")
@@ -1017,7 +1017,7 @@ public class VaultConfigProperties {
 }
 ```
 
-### **Vault Secrets Injection**
+### Vault Secrets Injection
 
 ```java
 @Service
@@ -1037,7 +1037,7 @@ public class SecretsInjectionService {
 }
 ```
 
-### **Vault Response Wrapping**
+### Vault Response Wrapping
 
 ```java
 @Service
@@ -1066,7 +1066,7 @@ public class ResponseWrappingService {
 }
 ```
 
-### **Vault Policies**
+### Vault Policies
 
 ```java
 @Service
@@ -1088,7 +1088,7 @@ public class PolicyService {
 }
 ```
 
-### **Vault Audit Logging**
+### Vault Audit Logging
 
 ```java
 @Configuration
@@ -1115,7 +1115,7 @@ public class AuditLoggingConfig {
 
 ## Заключение
 
-**Spring Vault** предоставляет мощные инструменты для безопасного управления секретами. Правильное использование аутентификации (**Token, `AppRole`, `AWS`, `Kubernetes`, `Azure`, `GCP`, `LDAP`, Certificate**), работы с секретами, **dynamic secrets**, **lease management**, **encryption**, **transit operations**, **versioning**, **metadata**, **batch operations**, **hash**/**sign operations**, **HSM integration**, **error handling**, **Spring Cloud Vault integration**, **response wrapping**, **policies**, **audit logging** и других продвинутых возможностей позволяет создавать безопасные приложения с централизованным управлением конфиденциальными данными.
+**Spring Vault** предоставляет мощные инструменты для безопасного управления секретами. Правильное использование аутентификации (Token, `AppRole`, `AWS`, `Kubernetes`, `Azure`, `GCP`, `LDAP`, Certificate), работы с секретами, **dynamic secrets**, **lease management**, **encryption**, **transit operations**, **versioning**, **metadata**, **batch operations**, **hash**/**sign operations**, **HSM integration**, **error handling**, **Spring Cloud Vault integration**, **response wrapping**, **policies**, **audit logging** и других продвинутых возможностей позволяет создавать безопасные приложения с централизованным управлением конфиденциальными данными.
 
 ## Дополнительные ресурсы
 

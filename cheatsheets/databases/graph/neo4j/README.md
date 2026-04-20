@@ -19,14 +19,14 @@ Neo4j — нативная графовая база данных с property gr
 ## Полезные ссылки
 
 ### Основные документы
-- [Neo4j: Основы](neo4j-basics.md) — архитектура, Cypher, установка, интеграция с Java
+- [[neo4j-basics|Neo4j: Основы]] — архитектура, Cypher, установка, интеграция с Java
 
 ### Соседние разделы
-- [Графовые БД](../README.md)
-- [OrientDB](../orientdb/README.md) — мультимодельная альтернатива
-- [NoSQL](../../nosql/README.md)
-- [Базы данных](../../README.md)
-- [Spring Data](../../../frameworks/java-frameworks/spring/README.md) — есть Spring Data Neo4j
+- [[README|Графовые БД]]
+- [[README|OrientDB]] — мультимодельная альтернатива
+- [[README|NoSQL]]
+- [[README|Базы данных]]
+- [[README|Spring Data]] — есть Spring Data Neo4j
 
 ### Внешние ресурсы
 - [Neo4j Documentation](https://neo4j.com/docs/)
@@ -44,7 +44,7 @@ Neo4j — нативная графовая база данных с property gr
 
 ## Что внутри раздела
 
-[neo4j-basics.md](neo4j-basics.md) покрывает:
+[[neo4j-basics]] покрывает:
 
 - Property graph модель: узлы (nodes), связи (relationships), свойства, метки (labels)
 - Установка через Docker и Desktop
@@ -80,11 +80,11 @@ Neo4j — нативная графовая база данных с property gr
 
 - **Быстрый старт (1-2 часа):** `neo4j-basics.md` → секции установки и Cypher → попробовать запросы на sample-датасете.
 - **Backend-интеграция:** Cypher → Java Driver → Spring Data Neo4j → собственный прототип.
-- **Дизайн графа:** моделирование узлов/связей → индексы → производительность → [архитектура БД](../../README.md).
+- **Дизайн графа:** моделирование узлов/связей → индексы → производительность → [[README|архитектура БД]].
 
 ## Куда идти дальше
 
-- Сравнение графовых БД — [графовые БД](../README.md)
-- Обзор всех СУБД — [databases/README.md](../../README.md)
-- Проектирование данных и нормализация — [databases/relational/README.md](../../relational/README.md)
-- Интервью по базам данных — [interview/databases/database-architecture-interview.md](../../../interview/databases/database-architecture-interview.md)
+- Сравнение графовых БД — [[README|графовые БД]]
+- Обзор всех СУБД — [[README|databases/README.md]]
+- Проектирование данных и нормализация — [[README|databases/relational/README.md]]
+- Интервью по базам данных — [[database-architecture-interview|interview/databases/database-architecture-interview.md]]

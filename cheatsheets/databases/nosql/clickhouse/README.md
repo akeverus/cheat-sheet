@@ -19,20 +19,20 @@ ClickHouse — колоночная OLAP-СУБД, созданная для а�
 ## Полезные ссылки
 
 ### Основные документы
-- [ClickHouse: Основы](clickhouse-basics.md) — архитектура, установка, концепции
-- [ClickHouse](clickhouse.md) — сводный обзор
-- [Таблицы и движки](clickhouse-tables.md) — MergeTree семейство
-- [Запросы](clickhouse-queries.md) — SQL-диалект ClickHouse
-- [Индексы](clickhouse-indexes.md) — primary key, skip indexes
-- [Материализованные представления](clickhouse-materialized-views.md) — преагрегация
-- [Репликация](clickhouse-replication.md) — ReplicatedMergeTree, ZooKeeper/ClickHouse Keeper
-- [Производительность](clickhouse-performance.md) — оптимизация запросов
-- [Интеграция](clickhouse-integration.md) — Kafka, JDBC, драйверы
+- [[clickhouse-basics|ClickHouse: Основы]] — архитектура, установка, концепции
+- [[clickhouse]] — сводный обзор
+- [[clickhouse-tables|Таблицы и движки]] — MergeTree семейство
+- [[clickhouse-queries|Запросы]] — SQL-диалект ClickHouse
+- [[clickhouse-indexes|Индексы]] — primary key, skip indexes
+- [[clickhouse-materialized-views|Материализованные представления]] — преагрегация
+- [[clickhouse-replication|Репликация]] — ReplicatedMergeTree, ZooKeeper/ClickHouse Keeper
+- [[clickhouse-performance|Производительность]] — оптимизация запросов
+- [[clickhouse-integration|Интеграция]] — Kafka, JDBC, драйверы
 
 ### Соседние разделы
-- [NoSQL базы данных](../README.md)
-- [TimescaleDB](../../time-series/timescaledb/README.md) — альтернатива для time-series
-- [InfluxDB](../../time-series/influxdb/README.md) — специализированный time-series
+- [[README|NoSQL базы данных]]
+- [[README|TimescaleDB]] — альтернатива для time-series
+- [[README|InfluxDB]] — специализированный time-series
 - [PostgreSQL](../../relational/postgresql/)
 - [Kafka](../../../development/messaging/)
 
@@ -54,14 +54,14 @@ ClickHouse — колоночная OLAP-СУБД, созданная для а�
 
 | Тема | Файл |
 |------|------|
-| Архитектура и первые шаги | [clickhouse-basics.md](clickhouse-basics.md) |
-| Движки таблиц MergeTree | [clickhouse-tables.md](clickhouse-tables.md) |
-| SQL-запросы и функции | [clickhouse-queries.md](clickhouse-queries.md) |
-| Первичные и skip-индексы | [clickhouse-indexes.md](clickhouse-indexes.md) |
-| Materialized views и преагрегация | [clickhouse-materialized-views.md](clickhouse-materialized-views.md) |
-| Репликация и шардирование | [clickhouse-replication.md](clickhouse-replication.md) |
-| Настройка производительности | [clickhouse-performance.md](clickhouse-performance.md) |
-| Интеграции (Kafka, JDBC) | [clickhouse-integration.md](clickhouse-integration.md) |
+| Архитектура и первые шаги | [[clickhouse-basics]] |
+| Движки таблиц MergeTree | [[clickhouse-tables]] |
+| SQL-запросы и функции | [[clickhouse-queries]] |
+| Первичные и skip-индексы | [[clickhouse-indexes]] |
+| Materialized views и преагрегация | [[clickhouse-materialized-views]] |
+| Репликация и шардирование | [[clickhouse-replication]] |
+| Настройка производительности | [[clickhouse-performance]] |
+| Интеграции (Kafka, JDBC) | [[clickhouse-integration]] |
 
 ## Когда брать ClickHouse
 
@@ -97,8 +97,8 @@ ClickHouse — колоночная OLAP-СУБД, созданная для а�
 
 ## Куда идти дальше
 
-- Обзор NoSQL — [databases/nosql/README.md](../README.md)
-- Time-series специализированные — [databases/time-series/README.md](../../time-series/README.md)
+- Обзор NoSQL — [[README|databases/nosql/README.md]]
+- Time-series специализированные — [[README|databases/time-series/README.md]]
 - Очереди и стриминг (Kafka integration) — [development/messaging/](../../../development/messaging/)
-- Мониторинг и логи — [monitoring/README.md](../../../monitoring/README.md)
-- Интервью по БД — [interview/databases/](../../../interview/databases/database-architecture-interview.md)
+- Мониторинг и логи — [[README|monitoring/README.md]]
+- Интервью по БД — [[database-architecture-interview|interview/databases/]]

@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 ---
 
-# **Redis**: Репликация
+# Redis: Репликация
 
 ## Полезные ссылки
 
@@ -37,7 +37,7 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
   - [Настройка **Master**](#настройка-master)
 - [redis-master.conf](#redis-masterconf)
 - [Настройки репликации](#настройки-репликации)
-  - [Настройка **Slave** (**Replica**)](#настройка-slave-replica)
+  - [Настройка **Slave** (Replica)](#настройка-slave-replica)
 - [redis-slave.conf](#redis-slaveconf)
 - [Настройка репликации](#настройка-репликации)
   - [Команды для настройки репликации](#команды-для-настройки-репликации)
@@ -163,13 +163,13 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 - [**Replication Lag Management**](#replication-lag-management)
   - [**Monitoring Lag**](#monitoring-lag)
 
-## Введение в репликацию **Redis**
+## Введение в репликацию Redis
 
 Репликация в **Redis** позволяет создавать копии данных на других серверах для обеспечения высокой доступности, распределения нагрузки чтения и резервного копирования.
 
 ### Типы репликации
 
-1. **Master-`Slave` (**Replica**)**: Один **master**, один или несколько **slaves**
+1. **Master-`Slave` (Replica)**: Один **master**, один или несколько **slaves**
 2. **Cascading Replication**: **Slave** может быть **master** для других **slaves**
 3. **Sentinel**: Автоматический мониторинг и **failover**
 
@@ -181,9 +181,9 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 - **Географическое распределение**: Реплики в разных регионах
 
 
-## Настройка **Master-Slave** репликации
+## Настройка Master-Slave репликации
 
-### Настройка **Master**
+### Настройка Master
 
 ```conf
 # redis-master.conf
@@ -201,7 +201,7 @@ repl-backlog-size 1mb
 repl-backlog-ttl 3600
 ```
 
-### Настройка **Slave** (**Replica**)
+### Настройка Slave (Replica)
 
 ```conf
 # redis-slave.conf
@@ -311,11 +311,11 @@ exit 0
 ```
 
 
-## **Redis Sentinel**
+## Redis Sentinel
 
 **Sentinel** обеспечивает автоматический мониторинг и **failover** для **Redis master-slave** репликации.
 
-### Настройка **Sentinel**
+### Настройка Sentinel
 
 ```conf
 # sentinel.conf
@@ -340,7 +340,7 @@ sentinel parallel-syncs mymaster 1
 sentinel deny-scripts-reconfig yes
 ```
 
-### Запуск **Sentinel**
+### Запуск Sentinel
 
 ```bash
 # Запуск Sentinel
@@ -350,7 +350,7 @@ redis-sentinel sentinel.conf
 redis-server sentinel.conf --sentinel
 ```
 
-### Команды **Sentinel**
+### Команды Sentinel
 
 ```redis
 # Подключение к Sentinel
@@ -372,7 +372,7 @@ SENTINEL get-master-addr-by-name mymaster
 SENTINEL failover mymaster
 ```
 
-### Конфигурация через **Sentinel**
+### Конфигурация через Sentinel
 
 ```redis
 # Sentinel автоматически обновляет конфигурацию
@@ -384,9 +384,9 @@ SENTINEL slaves mymaster
 ```
 
 
-## **Failover** и восстановление
+## Failover и восстановление
 
-### Автоматический **failover**
+### Автоматический failover
 
 ```bash
 # Sentinel автоматически выполняет failover при:
@@ -401,7 +401,7 @@ SENTINEL slaves mymaster
 # 4. Обновление конфигурации других slaves
 ```
 
-### Ручной **failover**
+### Ручной failover
 
 ```bash
 # На slave сервере
@@ -411,7 +411,7 @@ redis-cli -p 6380 REPLICAOF NO ONE
 redis-cli -p 6381 REPLICAOF new-master-host 6380
 ```
 
-### Восстановление после **failover**
+### Восстановление после failover
 
 ```bash
 # После восстановления старого master
@@ -456,11 +456,11 @@ repl-disable-tcp-nodelay no
 ```
 
 
-## **Cascading Replication**
+## Cascading Replication
 
 **Cascading Replication** позволяет создавать цепочки реплик, где **slave** может быть **master** для других **slaves**.
 
-### Настройка **Cascading Replication**
+### Настройка Cascading Replication
 
 ```conf
 # Slave 1 (подключен к Master)
@@ -483,7 +483,7 @@ replicaof slave1-host 6380
 
 ## Решение проблем
 
-### Проблема: **Slave** не подключается к **Master**
+### Проблема: Slave не подключается к Master
 
 ```bash
 # Проверить сетевую связность
@@ -501,7 +501,7 @@ redis-cli CONFIG GET replicaof
 redis-cli CONFIG GET masterauth
 ```
 
-### Проблема: Высокий **lag** репликации
+### Проблема: Высокий lag репликации
 
 ```bash
 # Проверить lag
@@ -514,7 +514,7 @@ redis-cli INFO replication | grep lag
 # 4. Проверить производительность slave
 ```
 
-### Проблема: **Sentinel** не обнаруживает **failover**
+### Проблема: Sentinel не обнаруживает failover
 
 ```bash
 # Проверить кворум
@@ -551,9 +551,9 @@ tail -f /var/log/redis/sentinel.log
 4. **Регулярно обновляйте Redis**
 5. **Мониторьте подозрительную активность**
 
-## **Advanced Replication Configuration**
+## Advanced Replication Configuration
 
-### **Partial Resynchronization**
+### Partial Resynchronization
 
 ```conf
 # Backlog для частичной ресинхронизации
@@ -565,7 +565,7 @@ repl-backlog-ttl 3600
 # необходимые данные в backlog
 ```
 
-### **Diskless Replication**
+### Diskless Replication
 
 ```conf
 # Diskless replication для быстрой синхронизации
@@ -576,7 +576,7 @@ repl-diskless-sync-delay 5
 # в сокет slave, минуя диск
 ```
 
-### **Replication Timeouts**
+### Replication Timeouts
 
 ```conf
 # Таймауты репликации
@@ -587,9 +587,9 @@ repl-timeout 60              # Таймаут 60 секунд
 # master считает его недоступным
 ```
 
-## **Sentinel Advanced Configuration**
+## Sentinel Advanced Configuration
 
-### **Quorum** и **Voting**
+### Quorum и Voting
 
 ```conf
 # Quorum определяет количество Sentinel, которые должны
@@ -600,7 +600,7 @@ sentinel monitor mymaster 127.0.0.1 6379 2
 # должны согласиться с failover
 ```
 
-### **Multiple Masters**
+### Multiple Masters
 
 ```conf
 # Мониторинг нескольких masters
@@ -612,7 +612,7 @@ sentinel down-after-milliseconds mymaster1 5000
 sentinel down-after-milliseconds mymaster2 10000
 ```
 
-### **Sentinel Scripts**
+### Sentinel Scripts
 
 ```conf
 # Скрипты для уведомлений
@@ -628,9 +628,9 @@ sentinel client-reconfig-script mymaster /path/to/script.sh
 
 Храните на репликах столько же памяти, сколько на мастере, и мониторьте лаг репликации (`master_last_io_seconds_ago`, `repl_backlog_size`). При необходимости ограничьте трафик репликации через `client-output-buffer-limit` для replica, чтобы мастер не блокировался при медленных репликах. Регулярно проверяйте целостность данных на репликах (например, сравнение ключей или контрольные суммы).
 
-## **Replication Lag Management**
+## Replication Lag Management
 
-### **Monitoring Lag**
+### Monitoring Lag
 
 ```java
 // Redis Python example replaced with Java Spring

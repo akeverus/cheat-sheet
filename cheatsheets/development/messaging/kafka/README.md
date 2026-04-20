@@ -19,17 +19,17 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [kafka.md](kafka.md) — комплексное руководство: producers, consumers, Streams, Spring Kafka, кластер, мониторинг
-- [kafka-advanced.md](kafka-advanced.md) — multi-region, tiered storage, transactional producers, Streams advanced, security
+- [[kafka]] — комплексное руководство: producers, consumers, Streams, Spring Kafka, кластер, мониторинг
+- [[kafka-advanced]] — multi-region, tiered storage, transactional producers, Streams advanced, security
 
 ### Соседние разделы
-- [Родительский раздел: Messaging](../README.md)
-- [ActiveMQ](../activemq/README.md) — JMS-альтернатива
+- [[README|Родительский раздел: Messaging]]
+- [[README|ActiveMQ]] — JMS-альтернатива
 - [RabbitMQ](../rabbitmq/) — брокер с exchange-routing
-- [NATS](../nats/README.md) — lightweight альтернатива
+- [[README|NATS]] — lightweight альтернатива
 - [Event-Driven / Event Sourcing / CQRS](../../../architecture/enterprise-patterns/)
 - [Spring Boot](../../../frameworks/java-frameworks/spring/) — Spring Kafka
-- [Monitoring](../../../monitoring/README.md)
+- [[README|Monitoring]]
 
 ### Внешние ресурсы
 - [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
@@ -82,15 +82,15 @@ updated: "2026-04-17"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Топики, партиции, replication, leader | [kafka.md](kafka.md) |
-| Producer (acks, idempotent, transactional) | [kafka.md](kafka.md), [kafka-advanced.md](kafka-advanced.md#idempotent-и-transactional-producers) |
-| Consumer groups, rebalancing, offsets | [kafka.md](kafka.md), [kafka-advanced.md](kafka-advanced.md#consumer-groups-и-rebalancing) |
-| Spring Kafka (`@KafkaListener`) | [kafka.md](kafka.md) |
-| Kafka Streams: KStream, KTable, join, window | [kafka.md](kafka.md), [kafka-advanced.md](kafka-advanced.md#kafka-streams) |
-| Schema Registry, Avro/Protobuf | [kafka-advanced.md](kafka-advanced.md) |
-| Security: TLS, SASL, ACL | [kafka-advanced.md](kafka-advanced.md) |
-| Multi-region, MirrorMaker 2, tiered storage | [kafka-advanced.md](kafka-advanced.md#multi-region-deployment) |
-| Мониторинг (lag, Burrow, AKHQ) | [kafka.md](kafka.md) |
+| Топики, партиции, replication, leader | [[kafka]] |
+| Producer (acks, idempotent, transactional) | [[kafka]], [[kafka-advanced#idempotent-и-transactional-producers]] |
+| Consumer groups, rebalancing, offsets | [[kafka]], [[kafka-advanced#consumer-groups-и-rebalancing]] |
+| Spring Kafka (`@KafkaListener`) | [[kafka]] |
+| Kafka Streams: KStream, KTable, join, window | [[kafka]], [[kafka-advanced#kafka-streams]] |
+| Schema Registry, Avro/Protobuf | [[kafka-advanced]] |
+| Security: TLS, SASL, ACL | [[kafka-advanced]] |
+| Multi-region, MirrorMaker 2, tiered storage | [[kafka-advanced#multi-region-deployment]] |
+| Мониторинг (lag, Burrow, AKHQ) | [[kafka]] |
 
 ## Production-каталог
 
@@ -115,6 +115,6 @@ updated: "2026-04-17"
 ## Куда идти дальше
 
 - Event-driven архитектура и паттерны — [../../../architecture/enterprise-patterns/](../../../architecture/enterprise-patterns/)
-- ActiveMQ для JMS-сценариев — [../activemq/README.md](../activemq/README.md)
-- NATS для низколатентной связи — [../nats/README.md](../nats/README.md)
-- Мониторинг (lag, throughput, SLO) — [../../../monitoring/README.md](../../../monitoring/README.md)
+- ActiveMQ для JMS-сценариев — [[README]]
+- NATS для низколатентной связи — [[README]]
+- Мониторинг (lag, throughput, SLO) — [[README]]

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Docker Advanced**
+# Docker Advanced
 
 **Docker** — это платформа для разработки, доставки и запуска приложений в контейнерах. Этот документ охватывает продвинутые концепции, **best practices** и **enterprise-grade** паттерны работы с **Docker**.
 
@@ -19,7 +19,7 @@ updated: "2026-02-11"
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
 - [Docker Security](https://docs.docker.com/engine/security/)
 - [BuildKit](https://docs.docker.com/build/buildkit/)
-- [Docker Compose](docker-compose.md)
+- [[docker-compose|Docker Compose]]
 - [Docker Swarm](https://docs.docker.com/engine/swarm/)
 
 ## Содержание
@@ -67,9 +67,9 @@ updated: "2026-02-11"
 
 ## Продвинутая архитектура образов
 
-### **Multi-stage builds**
+### Multi-stage builds
 
-Ниже — пример **multi-stage Dockerfile** для **Java**-приложения (**dockerfile**).
+Ниже — пример **multi-stage Dockerfile** для **Java**-приложения (dockerfile).
 ```dockerfile
 # Multi-stage build для Java приложения
 FROM maven:3.9.0-eclipse-temurin-17-alpine AS build
@@ -115,7 +115,7 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
 ```
 
-### **Advanced layer optimization**
+### Advanced layer optimization
 ```dockerfile
 # Оптимизация слоев для Python приложения
 FROM python:3.11-slim AS base
@@ -167,9 +167,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 CMD ["python", "app.py"]
 ```
 
-## **Security hardening**
+## Security hardening
 
-### **Security best practices**
+### Security best practices
 ```dockerfile
 # Безопасный образ с минимальными привилегиями
 FROM alpine:3.17
@@ -207,7 +207,7 @@ EXPOSE 8080
 ENTRYPOINT ["/app/myapp"]
 ```
 
-### **Security scanning**
+### Security scanning
 ```bash
 # Сканирование образов на уязвимости
 docker scan myapp:latest
@@ -229,9 +229,9 @@ snyk container test myapp:latest --file=Dockerfile
 trufflehog --regex --entropy=False file://./Dockerfile
 ```
 
-## **Networking**
+## Networking
 
-### **Advanced networking**
+### Advanced networking
 ```bash
 # Создание custom networks
 docker network create --driver bridge --subnet 172.20.0.0/16 --gateway 172.20.0.1 mynetwork
@@ -250,7 +250,7 @@ docker network create -d macvlan \
 docker network create --ipv6 --subnet=2001:db8::/64 ipv6-net
 ```
 
-### **Service discovery**
+### Service discovery
 ```yaml
 # Docker Compose с service discovery
 version: '3.8'
@@ -285,7 +285,7 @@ networks:
     internal: true  # Изолированная сеть
 ```
 
-### **DNS** и **service aliases**
+### DNS и service aliases
 ```bash
 # DNS конфигурация
 docker run --dns 8.8.8.8 --dns 8.8.4.4 nginx
@@ -304,9 +304,9 @@ docker run --name web --network mynet nginx
 docker run --name api --network mynet --network-alias api-service myapi
 ```
 
-## **Storage**
+## Storage
 
-### **Advanced volume management**
+### Advanced volume management
 ```bash
 # Создание named volumes
 docker volume create --driver local \
@@ -336,7 +336,7 @@ docker volume create --driver vieux/sshfs \
 docker run --rm -v myvolume:/data -v $(pwd):/backup alpine tar czf /backup/backup.tar.gz -C /data .
 ```
 
-### **Persistent data patterns**
+### Persistent data patterns
 ```dockerfile
 # Pattern для stateful приложений
 FROM postgres:15
@@ -357,9 +357,9 @@ EXPOSE 5432
 CMD ["postgres"]
 ```
 
-## **Docker Compose advanced**
+## Docker Compose advanced
 
-### **Production-ready compose**
+### Production-ready compose
 ```yaml
 version: '3.8'
 
@@ -463,7 +463,7 @@ configs:
     file: ./nginx.conf
 ```
 
-### **Environment management**
+### Environment management
 ```yaml
 # docker-compose.override.yml для development
 version: '3.8'
@@ -496,9 +496,9 @@ volumes:
   dev_db_data:
 ```
 
-## **Docker Swarm**
+## Docker Swarm
 
-### **Swarm mode cluster**
+### Swarm mode cluster
 ```bash
 # Инициализация Swarm
 docker swarm init --advertise-addr 192.168.1.100
@@ -542,7 +542,7 @@ docker config create nginx_config nginx.conf
 docker service create --config nginx_config nginx
 ```
 
-### **Swarm monitoring**
+### Swarm monitoring
 ```bash
 # Состояние кластера
 docker node ls
@@ -562,9 +562,9 @@ docker stats
 docker service ps mystack_web
 ```
 
-## **Docker Registry**
+## Docker Registry
 
-### **Private registry**
+### Private registry
 ```bash
 # Запуск private registry
 docker run -d \
@@ -600,7 +600,7 @@ docker push localhost:5000/myapp:latest
 docker pull localhost:5000/myapp:latest
 ```
 
-### **Registry API**
+### Registry API
 ```bash
 # Список репозиториев
 curl -X GET http://localhost:5000/v2/_catalog
@@ -615,9 +615,9 @@ curl -X DELETE http://localhost:5000/v2/myapp/manifests/latest
 docker exec registry bin/registry garbage-collect /etc/docker/registry/config.yml
 ```
 
-## **Performance optimization**
+## Performance optimization
 
-### **Runtime optimization**
+### Runtime optimization
 ```dockerfile
 # Оптимизированный runtime
 FROM alpine:latest
@@ -643,7 +643,7 @@ EXPOSE 8080
 ENTRYPOINT ["/myapp"]
 ```
 
-### **Build optimization**
+### Build optimization
 ```dockerfile
 # BuildKit для параллельной сборки
 # syntax=docker/dockerfile:1.4
@@ -675,7 +675,7 @@ EXPOSE 8080
 CMD ["/myapp"]
 ```
 
-### **Resource management**
+### Resource management
 ```bash
 # Ограничение ресурсов
 docker run --cpus=0.5 --memory=512m --memory-swap=1g nginx
@@ -699,9 +699,9 @@ docker run --memory=512m --memory-swap=1g nginx
 docker run --oom-kill-disable nginx
 ```
 
-## **Monitoring** и **logging**
+## Monitoring и logging
 
-### **Container monitoring**
+### Container monitoring
 ```bash
 # Docker stats API
 curl --unix-socket /var/run/docker.sock http://localhost/containers/json
@@ -724,7 +724,7 @@ docker run -d \
   google/cadvisor:latest
 ```
 
-### **Advanced logging**
+### Advanced logging
 ```bash
 # JSON logging с опциями
 docker run --log-driver json-file \
@@ -755,9 +755,9 @@ docker run --log-driver awslogs \
   nginx
 ```
 
-## CI/CD **integration**
+## CI/CD integration
 
-### **GitHub Actions**
+### GitHub Actions
 ```yaml
 name: Build and Push Docker Image
 
@@ -821,7 +821,7 @@ jobs:
         sarif_file: 'trivy-results.sarif'
 ```
 
-### **Jenkins pipeline**
+### Jenkins pipeline
 ```groovy
 pipeline {
     agent any
@@ -935,7 +935,7 @@ docker volume ls
 docker volume inspect <volume>
 ```
 
-### **Debug containers**
+### Debug containers
 ```bash
 # Вход в running container
 docker exec -it <container> /bin/bash
@@ -956,7 +956,7 @@ RUN apt-get update && apt-get install -y \
 CMD ["sleep", "infinity"]
 ```
 
-### **Performance debugging**
+### Performance debugging
 ```bash
 # CPU profiling
 docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -982,9 +982,9 @@ docker run --rm -it \
   tcpdump -i eth0
 ```
 
-## **Best practices**
+## Best practices
 
-### **Production deployment**
+### Production deployment
 ```bash
 # Health checks
 docker run -d \
@@ -1027,7 +1027,7 @@ docker run -d \
   myapp
 ```
 
-### **Image management**
+### Image management
 ```bash
 # Multi-architecture builds
 docker buildx build \

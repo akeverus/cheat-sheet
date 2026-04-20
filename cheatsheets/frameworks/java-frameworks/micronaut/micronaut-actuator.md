@@ -72,7 +72,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 - **Custom Endpoints**: Создание собственных **endpoints**
 - **Prometheus Integration**: Интеграция с **Prometheus**
 
-## Настройка **Actuator**
+## Настройка Actuator
 
 ### Зависимости
 
@@ -220,7 +220,7 @@ public class CustomEndpoint {
 
 ## Лучшие практики
 
-### 1. Настраивайте **security** для **endpoints**
+### 1. Настраивайте security для endpoints
 
 ```yaml
 # ✅ Хорошо
@@ -230,7 +230,7 @@ micronaut:
       sensitive: true
 ```
 
-### 2. Используйте **health indicators**
+### 2. Используйте health indicators
 
 ```java
 // ✅ Хорошо

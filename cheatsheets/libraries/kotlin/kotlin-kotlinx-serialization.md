@@ -35,7 +35,7 @@ updated: "2026-02-11"
   - [Custom Serializers](#custom-serializers)
   - [Polymorphic сериализация](#polymorphic-сериализация)
   - [Contextual сериализация](#contextual-сериализация)
-  - [Value Classes (**Inline classes**)](#value-classes-inline-classes)
+  - [Value Classes (Inline classes)](#value-classes-inline-classes)
 - [Работа с различными форматами](#работа-с-различными-форматами)
   - [Protobuf](#protobuf)
   - [CBOR](#cbor)
@@ -79,7 +79,7 @@ updated: "2026-02-11"
   - [From org.json to kotlinx.serialization](#from-orgjson-to-kotlinxserialization)
 - [Experimental Features](#experimental-features)
   - [Inline Classes и Value Classes](#inline-classes-и-value-classes)
-  - [Context Receivers (**Kotlin 1.6.20+**)](#context-receivers-kotlin-1620)
+  - [Context Receivers (Kotlin 1.6.20+)](#context-receivers-kotlin-1620)
   - [Unsigned Types Support](#unsigned-types-support)
 
 ## Основные возможности
@@ -126,7 +126,7 @@ fun main() {
 }
 ```
 
-### Настройка **JSON** формата
+### Настройка JSON формата
 ```kotlin
 // Красивый вывод JSON
 val prettyJson = Json {
@@ -166,7 +166,7 @@ val customJson = Json {
 
 ## Продвинутые возможности
 
-### **Custom Serializers**
+### Custom Serializers
 ```kotlin
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.*
@@ -200,7 +200,7 @@ println(json) // {"name":"Conference","date":"2023-12-25"}
 val deserializedEvent = Json.decodeFromString<Event>(json)
 ```
 
-### **Polymorphic** сериализация
+### Polymorphic сериализация
 ```kotlin
 import kotlinx.serialization.modules.*
 
@@ -235,7 +235,7 @@ println(serialized)
 val deserializedShapes = json.decodeFromString<List<Shape>>(serialized)
 ```
 
-### **Contextual** сериализация
+### Contextual сериализация
 ```kotlin
 @Serializable
 data class User(
@@ -267,7 +267,7 @@ val serialized = json.encodeToString(user)
 val deserializedUser = json.decodeFromString<User>(serialized)
 ```
 
-### **Value Classes** (**Inline classes**)
+### Value Classes (Inline classes)
 ```kotlin
 @JvmInline
 @Serializable
@@ -294,7 +294,7 @@ val deserializedUser = Json.decodeFromString<User>(json)
 
 ## Работа с различными форматами
 
-### **Protobuf**
+### Protobuf
 ```kotlin
 import kotlinx.serialization.protobuf.ProtoBuf
 
@@ -320,7 +320,7 @@ fun main() {
 }
 ```
 
-### **CBOR**
+### CBOR
 ```kotlin
 import kotlinx.serialization.cbor.Cbor
 
@@ -348,7 +348,7 @@ fun main() {
 }
 ```
 
-### **Properties**
+### Properties
 ```kotlin
 import kotlinx.serialization.properties.Properties
 
@@ -379,7 +379,7 @@ fun main() {
 }
 ```
 
-### **HOCON**
+### HOCON
 ```kotlin
 import kotlinx.serialization.hocon.Hocon
 
@@ -429,7 +429,7 @@ fun main() {
 
 ## Кастомизация сериализации
 
-### **Field Naming Strategy**
+### Field Naming Strategy
 ```kotlin
 // Snake_case
 val snakeCaseJson = Json {
@@ -453,7 +453,7 @@ val customJson = Json {
 }
 ```
 
-### **Transient** поля
+### Transient поля
 ```kotlin
 @Serializable
 data class User(
@@ -474,7 +474,7 @@ val json = Json.encodeToString(user)
 // passwordHash не включен, version включен несмотря на default значение
 ```
 
-### **Required** поля
+### Required поля
 ```kotlin
 @Serializable
 data class User(
@@ -492,7 +492,7 @@ val user1 = Json.decodeFromString<User>(jsonWithRequired) // OK
 // val user2 = Json.decodeFromString<User>(jsonWithoutRequired) // Exception
 ```
 
-### **Optional** поля с @**EncodeDefault**
+### Optional поля с @EncodeDefault
 ```kotlin
 @Serializable
 data class ApiResponse<T>(
@@ -569,9 +569,9 @@ data class CustomCollection(
 )
 ```
 
-## **Enums** и **Sealed Classes**
+## Enums и Sealed Classes
 
-### **Enum** сериализация
+### Enum сериализация
 ```kotlin
 @Serializable
 enum class Status {
@@ -592,7 +592,7 @@ val json = Json.encodeToString(user)
 val deserializedUser = Json.decodeFromString<User>(json)
 ```
 
-### **Sealed Classes**
+### Sealed Classes
 ```kotlin
 @Serializable
 sealed class PaymentMethod
@@ -627,9 +627,9 @@ val json = Json.encodeToString(order)
 val deserializedOrder = Json.decodeFromString<Order>(json)
 ```
 
-## **Exception Handling**
+## Exception Handling
 
-### **Safe** десериализация
+### Safe десериализация
 ```kotlin
 import kotlinx.serialization.SerializationException
 
@@ -653,7 +653,7 @@ val validUser = safeDeserializeUser(validJson) // User object
 val invalidUser = safeDeserializeUser(invalidJson) // null
 ```
 
-### **Custom Exception Handling**
+### Custom Exception Handling
 ```kotlin
 object SafeJson {
     private val json = Json {
@@ -689,9 +689,9 @@ val defaultUser = SafeJson.decodeOrDefault("""{"invalid":"data"}""",
     User(0, "Default", "default@example.com"))
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Reuse Json instances**
+### Reuse Json instances
 ```kotlin
 // Создавайте Json экземпляры один раз
 object JsonConfig {
@@ -717,7 +717,7 @@ val json = JsonConfig.default.encodeToString(user)
 val prettyJson = JsonConfig.pretty.encodeToString(user)
 ```
 
-### **Streaming** сериализация
+### Streaming сериализация
 ```kotlin
 // Для больших объемов данных используйте streaming
 fun serializeLargeList(users: List<User>): String {
@@ -750,9 +750,9 @@ fun deserializeLargeList(json: String): List<User> {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration Properties**
+### Configuration Properties
 ```kotlin
 @ConfigurationProperties("app.api")
 @ConstructorBinding
@@ -781,7 +781,7 @@ class SerializationConfig {
 }
 ```
 
-### **REST Controller** с сериализацией
+### REST Controller с сериализацией
 ```kotlin
 @RestController
 @RequestMapping("/api/users")
@@ -817,7 +817,7 @@ class UserController(
 }
 ```
 
-### **Repository** с сериализацией
+### Repository с сериализацией
 ```kotlin
 @Repository
 class UserRepositoryImpl(
@@ -857,9 +857,9 @@ class UserRepositoryImpl(
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit Testing** сериализации
+### Unit Testing сериализации
 ```kotlin
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.decodeFromString
@@ -936,7 +936,7 @@ class SerializationTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```kotlin
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -1067,7 +1067,7 @@ object Serializers {
 }
 ```
 
-### Конфигурация **JSON**
+### Конфигурация JSON
 ```kotlin
 object JsonConfig {
 
@@ -1099,7 +1099,7 @@ object JsonConfig {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 ```kotlin
 sealed class SerializationError {
     data class InvalidJson(val json: String, val cause: Throwable) : SerializationError()
@@ -1133,7 +1133,7 @@ class SafeDeserializer(private val json: Json = Json.Default) {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 object Troubleshooting {
 
@@ -1179,7 +1179,7 @@ object Troubleshooting {
 }
 ```
 
-### **Debugging** сериализации
+### Debugging сериализации
 ```kotlin
 object SerializationDebugger {
 
@@ -1222,9 +1222,9 @@ object SerializationDebugger {
 }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From Gson** to **kotlinx.serialization**
+### From Gson to kotlinx.serialization
 ```kotlin
 // Gson
 data class User(val name: String, val age: Int)
@@ -1243,7 +1243,7 @@ val json = Json.encodeToString(user)  // {"name":"John","age":30}
 val fromJson = Json.decodeFromString<User>(json)
 ```
 
-### **From Jackson** to **kotlinx.serialization**
+### From Jackson to kotlinx.serialization
 ```kotlin
 // Jackson
 data class User(val name: String, val age: Int)
@@ -1262,7 +1262,7 @@ val json = Json.encodeToString(user)
 val fromJson = Json.decodeFromString<User>(json)
 ```
 
-### **From org.json** to **kotlinx.serialization**
+### From org.json to kotlinx.serialization
 ```kotlin
 // org.json
 val jsonObject = JSONObject()
@@ -1283,9 +1283,9 @@ val json = Json.encodeToString(user)
 val fromJson = Json.decodeFromString<User>(json)
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Inline Classes** и **Value Classes**
+### Inline Classes и Value Classes
 ```kotlin
 // Kotlin 1.5+ inline classes
 @JvmInline
@@ -1317,7 +1317,7 @@ val json = Json.encodeToString(user)
 // {"id":123456789,"email":"john@example.com","name":"John"}
 ```
 
-### **Context Receivers** (**Kotlin `1.6`.20+**)
+### Context Receivers (Kotlin `1.6`.20+)
 ```kotlin
 // Экспериментальная возможность
 context(Json)
@@ -1328,7 +1328,7 @@ data class ContextualData(val value: String) {
 }
 ```
 
-### **Unsigned Types Support**
+### Unsigned Types Support
 ```kotlin
 // Поддержка unsigned типов (экспериментально)
 @Serializable

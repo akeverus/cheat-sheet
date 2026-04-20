@@ -15,15 +15,15 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Terraform](terraform/terraform.md)
-[Ansible](ansible/ansible.md)
-[Pulumi](pulumi/pulumi.md)
-[Packer](packer/packer.md)
+[[terraform]]
+[[ansible]]
+[[pulumi]]
+[[packer]]
 
 ## Содержание
 
-- [IaC Overview](iac-overview.md)
-- [Terraform](terraform/terraform.md)
-- [Ansible](ansible/ansible.md)
-- [Packer](packer/packer.md)
-- [Pulumi](pulumi/pulumi.md)
+- [[iac-overview|IaC Overview]]
+- [[terraform]]
+- [[ansible]]
+- [[packer]]
+- [[pulumi]]

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Tekton**
+# Tekton
 
 **Tekton** — это мощный, **Kubernetes-native** фреймворк для создания CI/CD **pipelines**. Разработанный **Google** и **IBM**, **Tekton** предоставляет декларативный подход к определению и запуску **pipelines**, интегрируясь глубоко с **Kubernetes** экосистемой. Этот документ охватывает архитектуру, конфигурацию, продвинутые паттерны и **best practices** для использования **Tekton** в **production** средах.
 
@@ -60,10 +60,10 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Основы **Tekton**
+## Основы Tekton
 
-### Архитектура **Tekton**
-Ниже — архитектура **Tekton** (**текст**).
+### Архитектура Tekton
+Ниже — архитектура **Tekton** (текст).
 ```text
 Tekton Architecture:
 ├── PipelineRuns    # Исполнение pipelines
@@ -77,7 +77,7 @@ Tekton Architecture:
 ```
 
 ### Core Concepts
-Пример **Task** и **Pipeline** (**YAML**).
+Пример **Task** и **Pipeline** (YAML).
 ```yaml
 # Task - базовый строительный блок
 apiVersion: tekton.dev/v1beta1
@@ -156,7 +156,7 @@ spec:
 
 ## Установка и настройка
 
-### Установка через **Operator**
+### Установка через Operator
 ```bash
 # Установка Tekton Operator
 kubectl apply -f https://storage.googleapis.com/tekton-releases/operator/latest/release.yaml
@@ -196,7 +196,7 @@ tar -xzf tkn_0.28.0_Linux_x86_64.tar.gz
 sudo mv tkn /usr/local/bin/
 ```
 
-### Настройка **Persistent Volumes**
+### Настройка Persistent Volumes
 ```yaml
 # PersistentVolumeClaim для workspaces
 apiVersion: v1
@@ -416,7 +416,7 @@ spec:
         ls -la *.tgz
 ```
 
-## Tasks и **Pipelines**
+## Tasks и Pipelines
 
 ### Advanced Task patterns
 ```yaml
@@ -479,7 +479,7 @@ spec:
         - containerPort: 6379
 ```
 
-### Pipeline с **DAG** (`Directed Acyclic Graph`)
+### Pipeline с DAG (`Directed Acyclic Graph`)
 ```yaml
 # Pipeline с complex dependencies
 apiVersion: tekton.dev/v1beta1
@@ -563,7 +563,7 @@ spec:
           workspace: shared-workspace
 ```
 
-### Pipeline Templates и **Reusability**
+### Pipeline Templates и Reusability
 ```yaml
 # Pipeline Template
 apiVersion: tekton.dev/v1beta1
@@ -642,7 +642,7 @@ spec:
         claimName: tekton-workspace
 ```
 
-### Conditions и **Gates**
+### Conditions и Gates
 ```yaml
 # Condition для проверки качества кода
 apiVersion: tekton.dev/v1beta1
@@ -730,9 +730,9 @@ spec:
           workspace: source
 ```
 
-## Triggers и **Event-driven Pipelines**
+## Triggers и Event-driven Pipelines
 
-### Trigger Templates и **Bindings**
+### Trigger Templates и Bindings
 ```yaml
 # TriggerTemplate
 apiVersion: triggers.tekton.dev/v1beta1
@@ -1152,7 +1152,7 @@ spec:
           workspace: source
 ```
 
-## Monitoring и **Observability**
+## Monitoring и Observability
 
 ### Metrics collection
 ```yaml
@@ -1311,9 +1311,9 @@ spec:
         echo "Completed $(params.operation-name)"
 ```
 
-## Security и **Best Practices**
+## Security и Best Practices
 
-### RBAC и **Security Contexts**
+### RBAC и Security Contexts
 ```yaml
 # Security Context для pipeline tasks
 apiVersion: tekton.dev/v1beta1

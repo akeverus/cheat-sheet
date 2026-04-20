@@ -13,35 +13,35 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Java Frameworks](java-frameworks/README.md)
+[[README|Java Frameworks]]
 [Go Frameworks](go-frameworks/)
 
 ## .NET Frameworks
 
-- [Обзор .NET Frameworks](dotnet-frameworks/dotnet-frameworks-overview.md)
+- [[dotnet-frameworks-overview|Обзор .NET Frameworks]]
 
 ## Go Frameworks
 
-- [Обзор Go Frameworks](go-frameworks/go-frameworks-overview.md)
+- [[go-frameworks-overview|Обзор Go Frameworks]]
 
 ## Java Frameworks
 
-- [Обзор Java Frameworks](java-frameworks/README.md)
-- [Dropwizard](java-frameworks/dropwizard/dropwizard-basics.md)
-- [Javalin](java-frameworks/javalin/javalin-basics.md)
-- [Micronaut](java-frameworks/micronaut/micronaut-basics.md)
-- [Quarkus](java-frameworks/quarkus/quarkus-basics.md)
-- [Spring](java-frameworks/spring/README.md)
-- [Vert.x](java-frameworks/vertx/vertx-basics.md)
+- [[README|Обзор Java Frameworks]]
+- [[dropwizard-basics|Dropwizard]]
+- [[javalin-basics|Javalin]]
+- [[micronaut-basics|Micronaut]]
+- [[quarkus-basics|Quarkus]]
+- [[README|Spring]]
+- [[vertx-basics|Vert.x]]
 
 ## Kotlin Frameworks
 
-- [Обзор Kotlin Frameworks](kotlin-frameworks/kotlin-frameworks-overview.md)
+- [[kotlin-frameworks-overview|Обзор Kotlin Frameworks]]
 
 ## Python Frameworks
 
-- [Обзор Python Frameworks](python-frameworks/python-frameworks-overview.md)
+- [[python-frameworks-overview|Обзор Python Frameworks]]
 
 ## Scala Frameworks
 
-- [Обзор Scala Frameworks](scala-frameworks/scala-frameworks-overview.md)
+- [[scala-frameworks-overview|Обзор Scala Frameworks]]

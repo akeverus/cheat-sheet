@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# HikariCP: Высокопроизводительный **Connection Pool**
+# HikariCP: Высокопроизводительный Connection Pool
 
 **Комплексное руководство по использованию `HikariCP` — самого быстрого и надежного `JDBC` connection pool для `Java` приложений.**
 
@@ -72,11 +72,11 @@ updated: "2026-02-11"
   - [Когда использовать HikariCP](#когда-использовать-hikaricp)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **HikariCP**
+## Введение в HikariCP
 
 **HikariCP** — это высокопроизводительный **JDBC connection pool** для **Java**. Он является самым быстрым и надежным **connection pool**, используемым по умолчанию в **Spring Boot**.
 
-### Почему **HikariCP**?
+### Почему HikariCP?
 
 **HikariCP** предлагает множество преимуществ:**
 
@@ -89,7 +89,7 @@ updated: "2026-02-11"
 7. **Широкая поддержка** — Поддержка всех основных СУБД
 8. **Активное развитие** — Регулярные обновления и улучшения
 
-### Как работает **HikariCP**?
+### Как работает HikariCP?
 
 **HikariCP** использует несколько оптимизаций для достижения высокой производительности:**
 
@@ -115,9 +115,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимость **Maven** для **HikariCP** (**JDBC connection pool**).
+Зависимость **Maven** для **HikariCP** (JDBC connection pool).
 
 ```xml
 <dependency>
@@ -127,7 +127,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -316,7 +316,7 @@ public class DatabaseConfigurations {
 
 ## Расширенные настройки
 
-### **Connection testing**
+### Connection testing
 
 ```java
 public class ConnectionTestingConfiguration {
@@ -356,7 +356,7 @@ public class ConnectionTestingConfiguration {
 }
 ```
 
-### **Timeout** настройки
+### Timeout настройки
 
 ```java
 public class TimeoutConfiguration {
@@ -393,7 +393,7 @@ public class TimeoutConfiguration {
 }
 ```
 
-### **Pool sizing**
+### Pool sizing
 
 ```java
 public class PoolSizingConfiguration {
@@ -525,7 +525,7 @@ class CustomMetricsTracker implements MetricsTracker {
 }
 ```
 
-### Интеграция с **Micrometer**
+### Интеграция с Micrometer
 
 ```java
 import io.micrometer.core.instrument.MeterRegistry;
@@ -553,7 +553,7 @@ public class MetricsConfiguration {
 }
 ```
 
-### **Pool** статистика
+### Pool статистика
 
 ```java
 @Service
@@ -625,7 +625,7 @@ public class PoolMonitoringService {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
 ### Автоматическая конфигурация
 
@@ -728,7 +728,7 @@ public class ConnectionRepository {
 }
 ```
 
-### Множественные **DataSource**
+### Множественные DataSource
 
 ```java
 @Configuration
@@ -836,7 +836,7 @@ public class OptimizedHikariConfiguration {
 }
 ```
 
-### **Connection pooling** стратегии
+### Connection pooling стратегии
 
 ```java
 public class PoolingStrategies {
@@ -989,7 +989,7 @@ public class TroubleshootingService {
 }
 ```
 
-### **Recovery** стратегии
+### Recovery стратегии
 
 ```java
 @Configuration
@@ -1044,7 +1044,7 @@ class CustomSQLExceptionOverride implements SQLExceptionOverride {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Правильный размер пула
 
@@ -1421,7 +1421,7 @@ public class HikariConnectionPoolTest {
 
 **HikariCP** — это высокопроизводительный и надежный **JDBC connection pool**, который является стандартом для **Java** приложений. Он обеспечивает оптимальное управление соединениями с базой данных и высокую производительность.
 
-### Преимущества **HikariCP**
+### Преимущества HikariCP
 
 1. **Высокая производительность** — Самый быстрый **connection pool** для **Java**
 2. **Надежность** — Минимальное количество багов и проблем
@@ -1440,7 +1440,7 @@ public class HikariConnectionPoolTest {
 4. **Error `Handling` паттерн** — **Graceful** обработка ошибок
 5. **Recovery паттерн** — Автоматическое восстановление
 
-### Когда использовать **HikariCP**
+### Когда использовать HikariCP
 
 **Рекомендуется:**
 - **Enterprise** приложения с высокими требованиями к производительности
@@ -1450,7 +1450,7 @@ public class HikariConnectionPoolTest {
 - Проекты где важна надежность подключений к БД
 
 **Особенно полезно:**
-- В **Spring Boot** приложениях (**используется по умолчанию**)
+- В **Spring Boot** приложениях (используется по умолчанию)
 - При работе с **PostgreSQL**, **MySQL**, **Oracle**
 - В **distributed** системах
 - При необходимости **connection pooling**

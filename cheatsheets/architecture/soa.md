@@ -11,7 +11,7 @@ updated: "2026-02-11"
 ---
 # SOA (Service-Oriented Architecture)
 
-**Service-Oriented Architecture** (**SOA**) — это архитектурный подход к проектированию распределенных систем, основанный на использовании сервисов как основных строительных блоков. Сервисы в **SOA** являются автономными, слабосвязанными и могут быть использованы повторно.
+**Service-Oriented Architecture** (SOA) — это архитектурный подход к проектированию распределенных систем, основанный на использовании сервисов как основных строительных блоков. Сервисы в **SOA** являются автономными, слабосвязанными и могут быть использованы повторно.
 
 ## Полезные ссылки
 
@@ -32,26 +32,26 @@ updated: "2026-02-11"
   - [Преимущества **SOA**](#преимущества-soa)
   - [Недостатки **SOA**](#недостатки-soa)
 - [Принципы **SOA**](#принципы-soa)
-  - [1. **Service Autonomy** (**Автономность сервисов**)](#1-service-autonomy-автономность-сервисов)
-  - [2. **Service Loose Coupling** (**Слабая связанность**)](#2-service-loose-coupling-слабая-связанность)
-  - [3. **Service Reusability** (**Переиспользование**)](#3-service-reusability-переиспользование)
-  - [4. **Service Discoverability** (**Обнаруживаемость**)](#4-service-discoverability-обнаруживаемость)
+  - [1. **Service Autonomy** (Автономность сервисов)](#1-service-autonomy-автономность-сервисов)
+  - [2. **Service Loose Coupling** (Слабая связанность)](#2-service-loose-coupling-слабая-связанность)
+  - [3. **Service Reusability** (Переиспользование)](#3-service-reusability-переиспользование)
+  - [4. **Service Discoverability** (Обнаруживаемость)](#4-service-discoverability-обнаруживаемость)
 - [**Service Contracts**](#service-contracts)
   - [**REST Service Contract**](#rest-service-contract)
-  - [**SOAP Service Contract** (**WSDL**)](#soap-service-contract-wsdl)
+  - [**SOAP Service Contract** (WSDL)](#soap-service-contract-wsdl)
   - [**OpenAPI Specification**](#openapi-specification)
 - [**Service Registry** и **Discovery**](#service-registry-и-discovery)
   - [**Eureka Service Registry**](#eureka-service-registry)
   - [**Service Discovery** с **RestTemplate**](#service-discovery-с-resttemplate)
   - [**Service Discovery** с **Feign Client**](#service-discovery-с-feign-client)
-- [**ESB** (**Enterprise Service Bus**)](#esb-enterprise-service-bus)
+- [**ESB** (Enterprise Service Bus)](#esb-enterprise-service-bus)
   - [**Apache Camel** как **ESB**](#apache-camel-как-esb)
 - [**Service Composition**](#service-composition)
   - [**Orchestration Pattern**](#orchestration-pattern)
   - [**Choreography Pattern**](#choreography-pattern)
 - [**SOAP** vs **REST**](#soap-vs-rest)
-  - [**SOAP** (**Simple Object Access Protocol**)](#soap-simple-object-access-protocol)
-  - [**REST** (**Representational State Transfer**)](#rest-representational-state-transfer)
+  - [**SOAP** (Simple Object Access Protocol)](#soap-simple-object-access-protocol)
+  - [**REST** (Representational State Transfer)](#rest-representational-state-transfer)
 - [Реализация на **Spring** WS](#реализация-на-spring-ws)
   - [Зависимости](#зависимости)
   - [Конфигурация](#конфигурация)
@@ -69,11 +69,11 @@ updated: "2026-02-11"
   - [Проблема: Таймауты при вызове сервисов](#проблема-таймауты-при-вызове-сервисов)
 - [Частые вопросы](#частые-вопросы)
 
-## Введение в **SOA**
+## Введение в SOA
 
 **Service-Oriented Architecture** — это стиль архитектуры, в котором приложения состоят из сервисов, которые взаимодействуют через стандартизированные интерфейсы. Сервисы являются независимыми, могут быть разработаны разными командами и развернуты на разных платформах.
 
-### Основные характеристики **SOA**
+### Основные характеристики SOA
 
 **Автономность сервисов**
 Сервисы независимы и могут функционировать самостоятельно.
@@ -90,7 +90,7 @@ updated: "2026-02-11"
 **Композиция**
 Сервисы могут быть объединены для создания более сложных сервисов.
 
-### Преимущества **SOA**
+### Преимущества SOA
 
 Ключевые преимущества подхода **SOA**:
 
@@ -100,7 +100,7 @@ updated: "2026-02-11"
 - **Интеграция** — упрощает интеграцию различных систем
 - **Независимость от платформы** — сервисы могут быть реализованы на разных технологиях
 
-### Недостатки **SOA**
+### Недостатки SOA
 
 Среди ограничений **SOA** можно выделить:
 
@@ -109,13 +109,13 @@ updated: "2026-02-11"
 - **Управление версиями** — сложность управления версиями сервисов
 - **Безопасность** — необходимость обеспечения безопасности на уровне сервисов
 
-## Принципы **SOA**
+## Принципы SOA
 
-### 1. **Service Autonomy** (**Автономность сервисов**)
+### 1. Service Autonomy (Автономность сервисов)
 
 Сервисы должны быть автономными и контролировать свои ресурсы.
 
-Ниже — пример контракта сервиса в **SOA** (**Java**).
+Ниже — пример контракта сервиса в **SOA** (Java).
 ```java
 @Service
 public class UserService {
@@ -143,7 +143,7 @@ public class UserService {
 }
 ```
 
-### 2. **Service Loose Coupling** (**Слабая связанность**)
+### 2. Service Loose Coupling (Слабая связанность)
 
 Сервисы взаимодействуют через стандартизированные интерфейсы.
 
@@ -178,7 +178,7 @@ public class OrderService {
 }
 ```
 
-### 3. **Service Reusability** (**Переиспользование**)
+### 3. Service Reusability (Переиспользование)
 
 Сервисы должны быть спроектированы для переиспользования.
 
@@ -220,7 +220,7 @@ public class OrderService {
 }
 ```
 
-### 4. **Service Discoverability** (**Обнаруживаемость**)
+### 4. Service Discoverability (Обнаруживаемость)
 
 Сервисы должны быть легко обнаруживаемы через **Service Registry**.
 
@@ -252,11 +252,11 @@ public class OrderService {
 }
 ```
 
-## **Service Contracts**
+## Service Contracts
 
 **Service Contract** определяет интерфейс сервиса, включая операции, параметры, возвращаемые значения и исключения.
 
-### **REST Service Contract**
+### REST Service Contract
 
 ```java
 // REST API Contract
@@ -312,7 +312,7 @@ public class User {
 }
 ```
 
-### **SOAP Service Contract** (**WSDL**)
+### SOAP Service Contract (WSDL)
 
 ```java
 // SOAP Service Contract через WSDL
@@ -364,7 +364,7 @@ public class CreateUserRequest {
 }
 ```
 
-### **OpenAPI Specification**
+### OpenAPI Specification
 
 ```java
 @RestController
@@ -387,11 +387,11 @@ public class UserController {
 }
 ```
 
-## **Service Registry** и **Discovery**
+## Service Registry и Discovery
 
 **Service Registry** — это централизованное хранилище информации о доступных сервисах. **Service Discovery** позволяет сервисам находить друг друга динамически.
 
-### **Eureka Service Registry**
+### Eureka Service Registry
 
 ```java
 // Eureka Server
@@ -425,7 +425,7 @@ eureka:
     prefer-ip-address: true
 ```
 
-### **Service Discovery** с **RestTemplate**
+### Service Discovery с RestTemplate
 
 ```java
 @Configuration
@@ -454,7 +454,7 @@ public class OrderService {
 }
 ```
 
-### **Service Discovery** с **Feign Client**
+### Service Discovery с Feign Client
 
 ```java
 @FeignClient(name = "user-service")
@@ -479,11 +479,11 @@ public class OrderService {
 }
 ```
 
-## **ESB** (**Enterprise `Service` Bus**)
+## ESB (Enterprise `Service` Bus)
 
 **ESB** — это архитектурный паттерн, который обеспечивает централизованную интеграцию сервисов через единую шину сообщений.
 
-### **Apache Camel** как **ESB**
+### Apache Camel как ESB
 
 ```java
 @Configuration
@@ -528,11 +528,11 @@ public class OrderService {
 }
 ```
 
-## **Service Composition**
+## Service Composition
 
 **Service Composition** — это объединение нескольких сервисов для создания более сложного сервиса.
 
-### **Orchestration Pattern**
+### Orchestration Pattern
 
 ```java
 @Service
@@ -591,7 +591,7 @@ public class OrderOrchestrationService {
 }
 ```
 
-### **Choreography Pattern**
+### Choreography Pattern
 
 ```java
 // Каждый сервис реагирует на события
@@ -631,16 +631,16 @@ public class InventoryService {
 }
 ```
 
-## **SOAP** vs **REST**
+## SOAP vs REST
 
-### **SOAP** (**Simple `Object Access` Protocol**)
+### SOAP (Simple `Object Access` Protocol)
 
 **SOAP** — это протокол для обмена структурированными сообщениями в веб-сервисах.
 
 **Преимущества:**
 - Стандартизированный протокол
 - Поддержка транзакций
-- Встроенная безопасность (**WS-Security**)
+- Встроенная безопасность (WS-Security)
 - Поддержка сложных типов данных
 
 **Недостатки:**
@@ -664,7 +664,7 @@ public class UserServiceEndpoint {
 }
 ```
 
-### **REST** (**Representational `State` Transfer**)
+### REST (Representational `State` Transfer)
 
 **REST** — это архитектурный стиль для веб-сервисов, использующий **HTTP** методы.
 
@@ -693,7 +693,7 @@ public class UserController {
 }
 ```
 
-## Реализация на **Spring** `WS`
+## Реализация на Spring `WS`
 
 ### Зависимости
 
@@ -743,7 +743,7 @@ public class WebServiceConfig extends WsConfigurerAdapter {
 }
 ```
 
-### **Endpoint**
+### Endpoint
 
 ```java
 @Endpoint
@@ -773,9 +773,9 @@ public class UserServiceEndpoint {
 }
 ```
 
-## Реализация на **Spring Cloud**
+## Реализация на Spring Cloud
 
-### **Service Registration** и **Discovery**
+### Service Registration и Discovery
 
 ```java
 // Eureka Server
@@ -807,7 +807,7 @@ public class OrderServiceApplication {
 }
 ```
 
-### **API Gateway**
+### API Gateway
 
 ```java
 @SpringBootApplication

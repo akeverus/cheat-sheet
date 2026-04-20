@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **ORM**: **Object-Relational Mapping**
+# ORM: Object-Relational Mapping
 
-**Комплексное руководство по технологиям `ORM` (**Object-Relational Mapping**) для `Java` - от основ до продвинутых техник.**
+**Комплексное руководство по технологиям `ORM` (Object-Relational Mapping) для `Java` - от основ до продвинутых техник.**
 
 ## Полезные ссылки
 
@@ -31,7 +31,7 @@ updated: "2026-02-11"
 - [Введение в **ORM**](#введение-в-orm)
   - [Что такое **ORM**?](#что-такое-orm)
   - [Преимущества и недостатки](#преимущества-и-недостатки)
-- [**JPA** (**Jakarta Persistence API**)](#jpa-jakarta-persistence-api)
+- [**JPA** (Jakarta Persistence API)](#jpa-jakarta-persistence-api)
   - [**Entity** классы](#entity-классы)
   - [**EntityManager**](#entitymanager)
   - [**JPQL** запросы](#jpql-запросы)
@@ -42,11 +42,11 @@ updated: "2026-02-11"
   - [**Repository** интерфейсы](#repository-интерфейсы)
 - [**Best Practices**](#лучшие-практики)
 
-## Введение в **ORM**
+## Введение в ORM
 
-**ORM (**Object-Relational Mapping**)** — это техника программирования, которая позволяет работать с реляционными базами данных используя объектно-ориентированный подход.
+**ORM (Object-Relational Mapping)** — это техника программирования, которая позволяет работать с реляционными базами данных используя объектно-ориентированный подход.
 
-### Что такое **ORM**?
+### Что такое ORM?
 
 **ORM** автоматически преобразует объекты **Java** в записи базы данных и обратно, избавляя разработчика от написания **SQL** запросов вручную.
 
@@ -63,9 +63,9 @@ updated: "2026-02-11"
 - Производительность для сложных запросов
 - Сложность отладки
 
-## **JPA** (**Jakarta `Persistence` API**)
+## JPA (Jakarta `Persistence` API)
 
-### **Entity** классы
+### Entity классы
 
 Пример **JPA**-сущности: маппинг таблицы **users**, первичный ключ с автоинкрементом, колонки **username** и **email** с ограничениями.
 
@@ -145,7 +145,7 @@ public class Order {
 }
 ```
 
-### **EntityManager**
+### EntityManager
 
 ```java
 /*
@@ -242,7 +242,7 @@ public class UserService {
 }
 ```
 
-### **JPQL** запросы
+### JPQL запросы
 
 ```java
 /*
@@ -331,9 +331,9 @@ public class UserRepository {
 }
 ```
 
-## **Hibernate**
+## Hibernate
 
-### Конфигурация **Hibernate**
+### Конфигурация Hibernate
 
 ```java
 /*
@@ -362,7 +362,7 @@ public class HibernateConfig {
 }
 ```
 
-### **Mapping** аннотации
+### Mapping аннотации
 
 ```java
 /*
@@ -407,9 +407,9 @@ public class Product {
 }
 ```
 
-## **Spring Data JPA**
+## Spring Data JPA
 
-### **Repository** интерфейсы
+### Repository интерфейсы
 
 ```java
 /*

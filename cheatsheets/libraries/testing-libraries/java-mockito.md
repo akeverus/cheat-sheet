@@ -24,7 +24,7 @@ updated: "2026-02-11"
 ### См. также
 - [[junit|JUnit 5]] — **JUnit** 5 для тестирования
 - [MockK](https://mockk.io/) — **MockK** для **Kotlin**
-- [Unit-тестирование](../../testing/unit-testing/README.md) и [Mockito Advanced](../../testing/unit-testing/junit/mockito-advanced.md)
+- [[README|Unit-тестирование]] и [[mockito-advanced|Mockito Advanced]]
 
 ## Содержание
 
@@ -74,7 +74,7 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### Создание **Mock** объектов
+### Создание Mock объектов
 
 Создание **mock**-объекта списка и проверка взаимодействий через `verify()`.
 
@@ -94,7 +94,7 @@ verify(mockedList).add("one");
 verify(mockedList).clear();
 ```
 
-### **Stubbing** методов
+### Stubbing методов
 ```java
 /
  * Демонстрация настройки поведения mock объектов через stubbing

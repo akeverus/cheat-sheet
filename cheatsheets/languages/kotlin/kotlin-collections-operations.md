@@ -104,9 +104,9 @@ updated: "2026-02-11"
 
 Трансформации позволяют преобразовывать элементы коллекции в другие значения или типы. Это одна из самых распространенных операций при работе с коллекциями.
 
-### **Map**
+### Map
 
-Операция `**map**` применяет функцию преобразования к каждому элементу коллекции и возвращает новую коллекцию с преобразованными элементами. Это эквивалентно циклу, который проходит по всем элементам и применяет к ним функцию.
+Операция `map` применяет функцию преобразования к каждому элементу коллекции и возвращает новую коллекцию с преобразованными элементами. Это эквивалентно циклу, который проходит по всем элементам и применяет к ним функцию.
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5)
@@ -116,7 +116,7 @@ val doubled = list.map { it * 2 }              // [2, 4, 6, 8, 10]
 val strings = list.map { it.toString() }       // ["1", "2", "3", "4", "5"]
 ```
 
-Операция `**map**` создает новую коллекцию того же размера, что и исходная. Каждый элемент исходной коллекции преобразуется в один элемент результирующей коллекции. Это делает `**map**` идеальным для простых преобразований типов или значений.
+Операция `map` создает новую коллекцию того же размера, что и исходная. Каждый элемент исходной коллекции преобразуется в один элемент результирующей коллекции. Это делает `map` идеальным для простых преобразований типов или значений.
 
 // С индексом
 **val indexed** = **list.mapIndexed** { **index**, **value** ->
@@ -124,7 +124,7 @@ val strings = list.map { it.toString() }       // ["1", "2", "3", "4", "5"]
 }                                               // ["0: 1", "1: 2", "2: 3", "3: 4", "4: 5"]
 
 // С фильтрацией **null**
-**val nullable** = **listOf(**1, `null`, 2, `null`, 3**)
+**val nullable** = **listOf(1, `null`, 2, `null`, 3)
 **val mapped** = **nullable.mapNotNull** { it?.**let** { it * 2 } }  // [2, 4, 6]
 ```text
 
@@ -153,7 +153,7 @@ val nested = listOf(listOf(1, 2), listOf(3, 4))
 val flat = nested.flatten()                    // [1, 2, 3, 4]
 ```
 
-### **Zip**
+### Zip
 
 ```kotlin
 val list1 = listOf(1, 2, 3)
@@ -177,7 +177,7 @@ val (numbers, letters) = pairs.unzip()
 // numbers = [1, 2, 3], letters = ["a", "b", "c"]
 ```
 
-### **Windowed** и **Chunked**
+### Windowed и Chunked
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5)
@@ -219,7 +219,7 @@ val nullable = listOf(1, null, 2, null, 3)
 val nonNull = nullable.filterNotNull()         // [1, 2, 3]
 ```
 
-### **Take** и **Drop**
+### Take и Drop
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -249,7 +249,7 @@ list.dropLast(3)                                // [1, 2, 3, 4, 5, 6, 7]
 list.dropLastWhile { it > 7 }                   // [1, 2, 3, 4, 5, 6, 7]
 ```
 
-### **Partition**
+### Partition
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5, 6)
@@ -261,7 +261,7 @@ val (evens, odds) = list.partition { it % 2 == 0 }
 
 ## Агрегация
 
-### **Sum** и **Average**
+### Sum и Average
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5)
@@ -274,7 +274,7 @@ val sumBy = listOf("a", "ab", "abc").sumOf { it.length }  // 6
 val average = list.average()                    // 3.0
 ```
 
-### **Min** и **Max**
+### Min и Max
 
 ```kotlin
 val list = listOf(3, 1, 4, 1, 5, 9, 2, 6)
@@ -293,7 +293,7 @@ val minWith = list.minWithOrNull(compareBy { it })  // 1
 val maxWith = list.maxWithOrNull(compareByDescending { it })  // 9
 ```
 
-### **Fold** и **Reduce**
+### Fold и Reduce
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5)
@@ -315,7 +315,7 @@ val running2 = list.runningReduce { acc, value -> acc + value }
 // [1, 3, 6, 10, 15]
 ```
 
-### **Count**
+### Count
 
 ```kotlin
 val list = listOf(1, 2, 3, 4, 5, 6)
@@ -548,7 +548,7 @@ val doubled = filtered.map { it * 2 }
 val result = list.filter { it > 0 }.map { it * 2 }
 ```
 
-### Идиоматичный **Kotlin**
+### Идиоматичный Kotlin
 
 ```kotlin
 // Используйте деструктуризацию
@@ -639,7 +639,7 @@ val result = largeList.parallelMap { it * 2 }
 
 Параллельная обработка может значительно ускорить обработку больших коллекций, но требует осторожности из-за накладных расходов на синхронизацию.
 
-### Ленивые вычисления с **Sequences**
+### Ленивые вычисления с Sequences
 
 **Sequences** позволяют отложить вычисления до момента, когда результат действительно нужен:**
 
@@ -741,7 +741,7 @@ val result2 = expensiveOperation.execute(1000)  // Используется кэ
 
 ## Работа с типами
 
-### **Type-safe** операции
+### Type-safe операции
 
 **Kotlin** позволяет создавать типобезопасные операции над коллекциями:**
 
@@ -759,7 +759,7 @@ val strings: List<String> = mixed.filterIsInstance<String>()
 
 **Type-safe** операции предотвращают ошибки во время выполнения и делают код более безопасным.
 
-### **Generic** операции
+### Generic операции
 
 **Создание переиспользуемых операций с **generics**:**
 

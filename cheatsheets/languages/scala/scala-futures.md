@@ -71,9 +71,9 @@ updated: "2026-02-11"
 
 **Futures** особенно полезны для работы с I/O операциями, вызовами внешних **API**, обработки больших объемов данных и создания конкурентных приложений.
 
-## Основы **Futures**
+## Основы Futures
 
-### Создание **Future**
+### Создание Future
 
 ```scala
 // Импорт Future и глобального ExecutionContext для выполнения
@@ -106,9 +106,9 @@ val result = Await.result(future, 5.seconds)
 val result2 = Await.result(future, 2.seconds)
 ```
 
-## Композиция **Futures**
+## Композиция Futures
 
-### **Map** и **FlatMap**
+### Map и FlatMap
 
 ```scala
 // Map для трансформации результата
@@ -144,7 +144,7 @@ val firstResult = Future.firstCompletedOf(List(future1, future2, future3))
 
 ## Обработка ошибок
 
-### **Recover** и **RecoverWith**
+### Recover и RecoverWith
 
 ```scala
 // Восстановление после ошибок
@@ -164,11 +164,11 @@ future.onComplete {
 }
 ```
 
-## **ExecutionContext**
+## ExecutionContext
 
 **ExecutionContext** определяет, где и как выполняются **Futures**. Это критически важно для управления ресурсами и производительностью.
 
-### Глобальный **ExecutionContext**
+### Глобальный ExecutionContext
 
 ```scala
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -179,7 +179,7 @@ val future = Future {
 }
 ```
 
-### Кастомный **ExecutionContext**
+### Кастомный ExecutionContext
 
 ```scala
 // Собственный ExecutionContext на пуле потоков для изоляции выполнения
@@ -195,7 +195,7 @@ val future = Future {
 }(customEc)
 ```
 
-### **ExecutionContext** для блокирующих операций
+### ExecutionContext для блокирующих операций
 
 ```scala
 import scala.concurrent.ExecutionContext
@@ -214,7 +214,7 @@ def blockingIO(): Future[String] = Future {
 
 ## Практические примеры
 
-### **HTTP** запросы
+### HTTP запросы
 
 ```scala
 import scala.concurrent.Future
@@ -281,7 +281,7 @@ val files = List("file1.txt", "file2.txt", "file3.txt")
 val contents = Future.sequence(files.map(readFile))
 ```
 
-### Кэширование с **Future**
+### Кэширование с Future
 
 ```scala
 import scala.concurrent.Future
@@ -300,7 +300,7 @@ class Cache[K, V] {
 }
 ```
 
-### **Retry** механизм
+### Retry механизм
 
 ```scala
 import scala.concurrent.Future
@@ -338,7 +338,7 @@ def withTimeout[T](future: Future[T], timeout: Duration): Future[T] = {
 
 ## Продвинутые техники
 
-### **Future.sequence** и **Future.traverse**
+### Future.sequence и Future.traverse
 
 ```scala
 // Future.sequence - преобразует List[Future[T]] в Future[List[T]]
@@ -350,7 +350,7 @@ val numbers = List(1, 2, 3)
 val doubled = Future.traverse(numbers)(n => Future(n * 2))
 ```
 
-### **Future.foldLeft** и **Future.reduceLeft**
+### Future.foldLeft и Future.reduceLeft
 
 ```scala
 val futures = List(Future(1), Future(2), Future(3))
@@ -362,7 +362,7 @@ val sum = Future.foldLeft(futures)(0)(_ + _)
 val product = Future.reduceLeft(futures)(_ * _)
 ```
 
-### **Future.firstCompletedOf**
+### Future.firstCompletedOf
 
 ```scala
 // Получение первого завершившегося Future
@@ -374,7 +374,7 @@ val futures = List(
 val first = Future.firstCompletedOf(futures)  // "fast"
 ```
 
-### **Future.zip**
+### Future.zip
 
 ```scala
 val future1 = Future(1)
@@ -384,9 +384,9 @@ val future2 = Future(2)
 val zipped = future1.zip(future2)  // Future((1, 2))
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Используйте **for-comprehension** для читаемости
+### 1. Используйте for-comprehension для читаемости
 
 ```scala
 // ✅ Хорошо - читаемо
@@ -411,7 +411,7 @@ val result = future.map(process)
 val result = Await.result(future, Duration.Inf)
 ```
 
-### 3. Используйте правильный **ExecutionContext**
+### 3. Используйте правильный ExecutionContext
 
 ```scala
 // ✅ Хорошо - отдельный контекст для блокирующих операций
@@ -442,7 +442,7 @@ val result = future.recover {
 val result = future.map(process)  // Ошибки не обрабатываются
 ```
 
-### 5. Используйте **Future.successful** и **Future.failed** для создания уже завершенных **Futures**
+### 5. Используйте Future.successful и Future.failed для создания уже завершенных Futures
 
 ```scala
 // ✅ Хорошо - создание уже завершенных Futures
@@ -519,7 +519,7 @@ def withTimeout[T](future: Future[T], timeout: Duration): Future[T] = {
 }
 ```
 
-### Использование для создания кастомных операций с **circuit breaker**
+### Использование для создания кастомных операций с circuit breaker
 
 ```scala
 import scala.concurrent.Future
@@ -577,7 +577,7 @@ class CircuitBreaker[T](
 }
 ```
 
-### Использование для создания кастомных операций с **rate limiting**
+### Использование для создания кастомных операций с rate limiting
 
 ```scala
 import scala.concurrent.{Future, Promise}

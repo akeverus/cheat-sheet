@@ -15,13 +15,13 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Go Web Frameworks](go-web-frameworks.md)
+[[go-web-frameworks|Go Web Frameworks]]
 
 ## Содержание
 
-- [Go Basics](go-basics.md)
-- [Go Concurrency](go-concurrency.md)
-- [Go Collections](go-collections.md)
-- [Go Testing](go-testing.md)
-- [Go Modules](go-modules.md)
-- [Go Best Practices](go-best-practices.md)
+- [[go-basics|Go Basics]]
+- [[go-concurrency|Go Concurrency]]
+- [[go-collections|Go Collections]]
+- [[go-testing|Go Testing]]
+- [[go-modules|Go Modules]]
+- [[go-best-practices|Go Best Practices]]

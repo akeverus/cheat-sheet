@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Jenkins**
+# Jenkins
 
-**Jenkins** — это открытый сервер автоматизации для **continuous integration** и **continuous delivery** (**CI/CD**). Он позволяет автоматизировать процесс сборки, тестирования и развертывания программного обеспечения. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **Jenkins** в **production** средах.
+**Jenkins** — это открытый сервер автоматизации для **continuous integration** и **continuous delivery** (CI/CD). Он позволяет автоматизировать процесс сборки, тестирования и развертывания программного обеспечения. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **Jenkins** в **production** средах.
 
 ## Полезные ссылки
 - [Jenkins Documentation](https://www.jenkins.io/doc/)
@@ -57,10 +57,10 @@ updated: "2026-02-11"
   - [Debug pipeline execution](#debug-pipeline-execution)
 - [См. также](#см-также)
 
-## Основы **Jenkins**
+## Основы Jenkins
 
 ### Установка и настройка
-Ниже — установка **Jenkins** на **Ubuntu**/**Debian** и запуск в **Docker** (**bash**).
+Ниже — установка **Jenkins** на **Ubuntu**/**Debian** и запуск в **Docker** (bash).
 ```bash
 # Установка на Ubuntu/Debian
 wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
@@ -592,7 +592,7 @@ def slack(Map config = [:]) {
 
 ## Distributed Builds
 
-### Jenkins agents (**slaves**)
+### Jenkins agents (slaves)
 ```xml
 <!-- node-config.xml - конфигурация Jenkins agent -->
 <slave>
@@ -708,7 +708,7 @@ pipeline {
 }
 ```
 
-## Security и **Compliance**
+## Security и Compliance
 
 ### Credentials management
 ```groovy
@@ -762,7 +762,7 @@ def vaultCredentials = new CertificateCredentialsImpl(
 store.addCredentials(domain, vaultCredentials)
 ```
 
-### RBAC (**Role-`Based Access` Control**)
+### RBAC (Role-`Based Access` Control)
 ```groovy
 // role-strategy.groovy - настройка ролей и разрешений
 import hudson.security.*
@@ -837,7 +837,7 @@ Jenkins.instance.authorizationStrategy = authStrategy
 Jenkins.instance.save()
 ```
 
-## Monitoring и **Metrics**
+## Monitoring и Metrics
 
 ### Prometheus integration
 ```xml
@@ -859,7 +859,7 @@ Jenkins.instance.save()
 </prometheus>
 ```
 
-### Health checks и **alerts**
+### Health checks и alerts
 ```groovy
 // health-check.groovy - health check для Jenkins
 import hudson.model.*
@@ -1162,7 +1162,7 @@ pipeline {
 </hudson>
 ```
 
-## Backup и **Disaster Recovery**
+## Backup и Disaster Recovery
 
 ### Backup strategy
 ```bash

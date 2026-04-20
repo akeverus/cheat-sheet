@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Kafka Streams Documentation](https://kafka.apache.org/documentation/streams/) — документация **Streams API**
 - [Kafka Connect Documentation](https://kafka.apache.org/documentation/connect/) — документация **Connect**
 
-### **Java** интеграции
+### Java интеграции
 - [Spring Kafka](https://docs.spring.io/spring-kafka/reference/html/) — **Spring Boot** интеграция
 - [Kafka Java Client](https://kafka.apache.org/documentation/#api) — **Java** клиент **Kafka**
 - [Kafka Streams JavaDoc](https://kafka.apache.org/documentation/streams/) — **Streams API**
@@ -39,8 +39,8 @@ updated: "2026-02-11"
 ### См. также
 - [[rest-api-best-practices|REST API]] — практики проектирования **REST API**
 - [[grpc|gRPC]] — **gRPC**
-- [RabbitMQ](../rabbitmq/README.md) — **RabbitMQ**
-- [Spring Frameworks](../../../frameworks/java-frameworks/spring/README.md) — экосистема **Spring**
+- [[README|RabbitMQ]] — **RabbitMQ**
+- [[README|Spring Frameworks]] — экосистема **Spring**
 - [[postgres-basics|PostgreSQL]] — БД для **Kafka**
 - [[distributed-tracing|Observability]] — мониторинг и трейсинг
 
@@ -114,11 +114,11 @@ updated: "2026-02-11"
   - [Рекомендации по внедрению:](#рекомендации-по-внедрению)
   - [Будущее Kafka:](#будущее-kafka)
 
-## Введение в **Apache Kafka**
+## Введение в Apache Kafka
 
 **Apache Kafka** — это распределенная платформа для потоковой обработки данных в реальном времени. **Kafka** была разработана **LinkedIn** в `2010` году и стала **open-source** проектом **Apache** в `2011` году. Сегодня **Kafka** является одним из ключевых компонентов современной микросервисной архитектуры и **event-driven** систем.
 
-### Почему **Kafka**?
+### Почему Kafka?
 
 **Kafka** решает критические проблемы масштабируемости и надежности в системах обработки больших объемов данных:**
 
@@ -131,11 +131,11 @@ updated: "2026-02-11"
 7. **Stream processing** — обработка данных в реальном времени
 8. **Backpressure handling** — автоматическое управление нагрузкой
 
-### **Kafka** vs традиционный **messaging**
+### Kafka vs традиционный messaging
 
-#### Традиционные **message brokers** (**RabbitMQ, ActiveMQ**):
+#### Традиционные message brokers (RabbitMQ, ActiveMQ):
 
-Ниже — схема традиционного брокера (**текст**).
+Ниже — схема традиционного брокера (текст).
 ```text
 # Схема традиционного брокера: одна очередь на producer-consumer
 Producer → Queue → Consumer
@@ -148,7 +148,7 @@ Producer → Queue → Consumer
 - Нет **stream processing**
 - Проблемы с **backpressure**
 
-#### **Kafka** архитектура:
+#### Kafka архитектура:
 ```text
 # Архитектура Kafka: топики, партиции и группы потребителей
 Producers → Topics (Partitions) → Consumers (Consumer Groups)
@@ -162,7 +162,7 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 - **Stream processing** — **KSQL**, **Kafka Streams**
 - **Exactly-once semantics** — гарантии доставки
 
-### Когда использовать **Kafka**?
+### Когда использовать Kafka?
 
 #### ✅ Идеально подходит для:
 - **Event-driven архитектура** — асинхронная коммуникация
@@ -171,7 +171,7 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 - **Real-time analytics** — обработка в реальном времени
 - **Microservices decoupling** — независимое масштабирование сервисов
 - **Event sourcing** — хранение истории состояний
-- **CDC (**Change Data Capture**)** — синхронизация баз данных
+- **CDC (Change Data Capture)** — синхронизация баз данных
 
 #### ❌ Не подходит для:
 - **Request-response** — использовать **REST**/**gRPC**
@@ -180,11 +180,11 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 - **Кеширование** — использовать **Redis**/**Memcached**
 - **Простые очереди** — **RabbitMQ** для простых случаев
 
-## Архитектура **Kafka**
+## Архитектура Kafka
 
-### Компоненты **Kafka** кластера
+### Компоненты Kafka кластера
 
-#### **Brokers** (**Брокеры**)
+#### Brokers (Брокеры)
 **Брокеры — это серверы **Kafka**, которые хранят данные и обслуживают клиентов:**
 
 ```text
@@ -199,14 +199,14 @@ Producers → Topics (Partitions) → Consumers (Consumer Groups)
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-#### **Zookeeper**
+#### Zookeeper
 **Zookeeper** координирует работу кластера:**
 - **Controller election** — выбор лидера кластера
 - **Topic management** — управление топиками и партициями
 - **Broker registration** — регистрация брокеров
 - **Access control** — управление доступом
 
-#### **Producers** (**Производители**)
+#### Producers (Производители)
 **Клиенты, которые отправляют сообщения в **Kafka**:**
 
 ```java
@@ -225,7 +225,7 @@ producer.send(record);
 producer.close();
 ```
 
-#### **Consumers** (**Потребители**)
+#### Consumers (Потребители)
 **Клиенты, которые читают сообщения из **Kafka**:**
 
 ```java
@@ -247,9 +247,9 @@ while (true) {
 }
 ```
 
-### **Topics** и **Partitions**
+### Topics и Partitions
 
-#### **Topics** (**Топики**)
+#### Topics (Топики)
 **Topics** представляют собой логическую группировку сообщений в **Kafka**. Это фундаментальная абстракция, которая позволяет организовывать поток данных по категориям или доменам. Каждый топик может содержать миллиарды сообщений и автоматически партиционируется для обеспечения масштабируемости.
 
 **Почему топики важны:**
@@ -259,10 +259,10 @@ while (true) {
 4. **Security** — **granular** контроль доступа на уровне топиков
 
 **Примеры использования топиков:**
-- `**user-events**` — все события, связанные с пользователями (**регистрация, логин, обновление профиля**)
-- `**order-events**` — события заказов (**создание, оплата, доставка**)
-- `**audit-logs**` — логи аудита для **compliance**
-- `**metrics**` — метрики приложений для мониторинга
+- `user-events` — все события, связанные с пользователями (регистрация, логин, обновление профиля)
+- `order-events` — события заказов (создание, оплата, доставка)
+- `audit-logs` — логи аудита для **compliance**
+- `metrics` — метрики приложений для мониторинга
 
 ```text
 # Пример топика: три партиции с сообщениями по ключу
@@ -272,7 +272,7 @@ Topic: user-events
 └── Partition 2: [user.updated:7, user.login:8, user.registered:9]
 ```
 
-#### **Partitions** (**Партиции**)
+#### Partitions (Партиции)
 **Partitions** — это единицы параллелизма в **Kafka**, которые позволяют системе обрабатывать огромные объемы данных. Каждая партиция представляет собой упорядоченный, неизменяемый лог сообщений. Партиции распределяются между брокерами кластера и реплицируются для обеспечения отказоустойчивости.
 
 **Характеристики партиций:**
@@ -284,7 +284,7 @@ Topic: user-events
 
 **Как работают партиции:**
 1. **Сообщение** поступает в партицию по ключу или **round-robin**
-2. **Offset** присваивается сообщению (**позиция в логе**)
+2. **Offset** присваивается сообщению (позиция в логе)
 3. **Consumer** читает сообщения последовательно по **offset**'ам
 4. **Retention** управляет временем жизни сообщений в партиции
 
@@ -298,9 +298,9 @@ Partition 2: offset 0-79 (80 messages)
 ```
 
 **Ключевые параметры партиций:**
-- `**num.partitions**` — количество партиций при создании топика (**по умолчанию 1**)
-- `**replication.factor**` — коэффициент репликации (**по умолчанию 1**)
-- `**min.insync.replicas**` — минимальное количество синхронизированных реплик
+- `num.partitions` — количество партиций при создании топика (по умолчанию 1)
+- `replication.factor` — коэффициент репликации (по умолчанию 1)
+- `min.insync.replicas` — минимальное количество синхронизированных реплик
 - `**unclean.`leader.election`.enable**` — разрешить выбор лидера из не-синхронизированных реплик
 - **Immutable** — сообщения нельзя изменить
 - **Distributed** — партиции распределены по брокерам
@@ -326,9 +326,9 @@ public class CustomPartitioner implements Partitioner {
 }
 ```
 
-### **Consumer Groups**
+### Consumer Groups
 
-#### **Consumer Groups** (**Группы потребителей**)
+#### Consumer Groups (Группы потребителей)
 **Механизм масштабирования **consumer**'ов:**
 
 ```text
@@ -348,7 +348,7 @@ Topic: orders
 
 ## Основные концепции
 
-### **Messages** (**Сообщения**)
+### Messages (Сообщения)
 
 #### Структура сообщения
 ```java
@@ -363,7 +363,7 @@ public class ProducerRecord<K, V> {
 }
 ```
 
-#### **Headers** (**Заголовки**)
+#### Headers (Заголовки)
 **Метаданные сообщения:**
 
 ```java
@@ -376,7 +376,7 @@ record.headers().add("version", "1.0".getBytes());
 record.headers().add("source", "web-app".getBytes());
 ```
 
-#### **Timestamps** (**Временные метки**)
+#### Timestamps (Временные метки)
 **Временные метки в сообщениях:**
 
 ```java
@@ -388,9 +388,9 @@ props.put("message.timestamp.type", "CreateTime");
 props.put("message.timestamp.type", "LogAppendTime");
 ```
 
-### **Retention** и **Cleanup**
+### Retention и Cleanup
 
-#### **Retention policies** (**Политики хранения**)
+#### Retention policies (Политики хранения)
 **Управление жизненным циклом данных:**
 
 ```properties
@@ -407,7 +407,7 @@ log.cleanup.policy=compact
 log.cleanup.policy=delete,compact
 ```
 
-#### **Log Compaction**
+#### Log Compaction
 **Удаление дубликатов для **changelog** топиков:**
 
 ```text
@@ -423,9 +423,9 @@ Key1 → Value3 (offset 2)  // Latest value
 Key2 → Value4 (offset 3)  // Only value
 ```
 
-### **Delivery Semantics**
+### Delivery Semantics
 
-#### At **most once** (**Максимум один раз**)
+#### At most once (Максимум один раз)
 **Сообщение может быть потеряно, но не дублировано:**
 
 ```java
@@ -435,7 +435,7 @@ props.put("acks", "0");  // No acknowledgment
 props.put("enable.idempotence", false);
 ```
 
-#### At **least once** (**Минимум один раз**)
+#### At least once (Минимум один раз)
 **Сообщение может быть дублировано, но не потеряно:**
 
 ```java
@@ -446,7 +446,7 @@ props.put("enable.idempotence", false);
 props.put("retries", Integer.MAX_VALUE);
 ```
 
-#### **Exactly once** (**Ровно один раз**)
+#### Exactly once (Ровно один раз)
 **Идеальная гарантия доставки:**
 
 ```java
@@ -460,11 +460,11 @@ props.put("retries", Integer.MAX_VALUE);
 
 ## Установка и настройка
 
-### **Single-node** установка
+### Single-node установка
 
 **Single-node установка** представляет собой развертывание **Kafka** на одном сервере. Это подходит для разработки, тестирования и небольших **production** сред. В этой конфигурации запускается один брокер **Kafka** и один **Zookeeper**.
 
-#### **Docker Compose**
+#### Docker Compose
 
 **Docker Compose** позволяет определить и запустить **multi-container** приложение. Для **Kafka** это означает одновременный запуск **Zookeeper** и **Kafka** брокера с правильной конфигурацией сети.
 
@@ -542,7 +542,7 @@ docker-compose down -v
 **Что происходит при запуске:**
 1. **Zookeeper** стартует первым и начинает слушать порт `2181`
 2. **Kafka брокер** подключается к **Zookeeper** и регистрируется
-3. Брокер создает внутренние топики (**__consumer_offsets, __transaction_state**)
+3. Брокер создает внутренние топики (__consumer_offsets, __transaction_state)
 4. Брокер готов принимать подключения от клиентов на порту `9092`
 
 #### Конфигурация брокера
@@ -655,11 +655,11 @@ num.network.threads=8
 num.io.threads=16
 ```
 
-### **Multi-node** кластер
+### Multi-node кластер
 
 **Multi-node кластер** обеспечивает высокую доступность и масштабируемость. Рекомендуется минимум 3 брокера для отказоустойчивости.
 
-#### **Docker Compose** для кластера
+#### Docker Compose для кластера
 ```yaml
 version: '3.8'
 services:
@@ -712,11 +712,11 @@ docker exec kafka1 kafka-broker-api-versions --bootstrap-server kafka1:9092
 docker exec kafka1 kafka-topics --describe --bootstrap-server kafka1:9092
 ```
 
-### **Kubernetes** развертывание
+### Kubernetes развертывание
 
 **Kubernetes** предоставляет оркестрацию для **production** развертываний **Kafka**.
 
-#### **StatefulSet** для **Kafka**
+#### StatefulSet для Kafka
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -2897,7 +2897,7 @@ public void `processBatch`(`List`<`ConsumerRecord`<`String`, `String`>> records)
 Проблема: Rebalancing loop
 ```
 **INFO**  **ConsumerCoordinator** — **Revoking previously assigned partitions**
-**INFO**  **ConsumerCoordinator** — (**Re-**)**joining group**
+**INFO**  **ConsumerCoordinator** — (Re-)**joining group**
 ```text
 
 Решение:
@@ -3319,12 +3319,12 @@ Apache Kafka — это мощная и гибкая платформа для �
 
 #### Event Sourcing
 ```
-**Commands** → **Events** (**Kafka**) → **Event Handlers** → **Projections**
+**Commands** → **Events** (Kafka) → **Event Handlers** → **Projections**
 ```text
 
 #### CQRS
 ```
-**Commands** → **Write Model** → **Events** (**Kafka**) → **Read Models**
+**Commands** → **Write Model** → **Events** (Kafka) → **Read Models**
 ```text
 
 #### Saga Pattern
@@ -3334,7 +3334,7 @@ Apache Kafka — это мощная и гибкая платформа для �
 
 #### Event-Driven Microservices
 ```
-**API Gateway** → **Commands** (**Kafka**) → **Services** → **Events** (**Kafka**) → **Subscribers**
+**API Gateway** → **Commands** (Kafka) → **Services** → **Events** (Kafka) → **Subscribers**
 ```text
 
 ### Когда выбирать Kafka:

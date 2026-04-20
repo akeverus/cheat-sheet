@@ -18,21 +18,21 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Обзор структурных паттернов](structural-patterns.md)
-- [Adapter](adapter.md) — адаптация несовместимых интерфейсов
-- [Bridge](structural-patterns.md) — отделение абстракции от реализации (в обзоре)
-- [Composite](composite.md) — дерево объектов, единый интерфейс для листьев и узлов
-- [Decorator](decorator.md) — динамическое расширение поведения
-- [Facade](facade.md) — упрощённый фасад над сложной подсистемой
-- [Flyweight](flyweight.md) — разделение состояния для экономии памяти
-- [Proxy](proxy.md) — контроль доступа, ленивая инициализация, AOP
+- [[structural-patterns|Обзор структурных паттернов]]
+- [[adapter]] — адаптация несовместимых интерфейсов
+- [[structural-patterns|Bridge]] — отделение абстракции от реализации (в обзоре)
+- [[composite]] — дерево объектов, единый интерфейс для листьев и узлов
+- [[decorator]] — динамическое расширение поведения
+- [[facade]] — упрощённый фасад над сложной подсистемой
+- [[flyweight]] — разделение состояния для экономии памяти
+- [[proxy]] — контроль доступа, ленивая инициализация, AOP
 
 ### Соседние разделы
-- [Patterns](../README.md) — корень паттернов
-- [Creational](../creational/README.md)
-- [Behavioral](../behavioral/README.md)
-- [Concurrency](../concurrency-patterns/README.md)
-- [Design Patterns Interview](../../interview/design-patterns/design-patterns-interview.md)
+- [[README|Patterns]] — корень паттернов
+- [[README|Creational]]
+- [[README|Behavioral]]
+- [[README|Concurrency]]
+- [[design-patterns-interview|Design Patterns Interview]]
 
 ### Внешние ресурсы
 - [Refactoring.Guru: Structural Patterns](https://refactoring.guru/design-patterns/structural-patterns)
@@ -86,12 +86,12 @@ updated: "2026-04-17"
 ## Маршруты чтения
 
 - **Быстрый старт:** `Facade` -> `Decorator` -> `Adapter` -> `Proxy`.
-- **Подготовка к собеседованию:** обзор + все семь паттернов + [Design Patterns Interview](../../interview/design-patterns/design-patterns-interview.md).
-- **Оптимизация памяти:** `Flyweight` -> анализ hot allocations в [../../monitoring/apm/README.md](../../monitoring/apm/README.md).
+- **Подготовка к собеседованию:** обзор + все семь паттернов + [[design-patterns-interview|Design Patterns Interview]].
+- **Оптимизация памяти:** `Flyweight` -> анализ hot allocations в [[README]].
 
 ## Куда идти дальше
 
-- Поведенческие паттерны — [../behavioral/README.md](../behavioral/README.md)
-- Порождающие паттерны — [../creational/README.md](../creational/README.md)
-- Spring AOP и proxy-бины — [../../frameworks/java-frameworks/spring/spring-aop.md](../../frameworks/java-frameworks/spring/spring-aop.md)
-- Архитектурные паттерны уровня системы — [../../architecture/README.md](../../architecture/README.md)
+- Поведенческие паттерны — [[README]]
+- Порождающие паттерны — [[README]]
+- Spring AOP и proxy-бины — [[spring-aop]]
+- Архитектурные паттерны уровня системы — [[README]]

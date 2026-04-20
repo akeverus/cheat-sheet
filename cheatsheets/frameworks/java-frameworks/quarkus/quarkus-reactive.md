@@ -106,7 +106,7 @@ related: ["quarkus-rest.md", "quarkus-testing.md"]
 
 ## Mutiny Basics
 
-### **Uni** — **Single Item**
+### Uni — Single Item
 
 ```java
 import io.smallrye.mutiny.Uni;
@@ -124,7 +124,7 @@ public class UserResource {
 }
 ```
 
-### **Multi** — **Multiple Items**
+### Multi — Multiple Items
 
 ```java
 import io.smallrye.mutiny.Multi;
@@ -143,7 +143,7 @@ public class UserResource {
 
 ## Reactive Operations
 
-### **Transformations**
+### Transformations
 
 ```java
 import io.smallrye.mutiny.Uni;
@@ -155,7 +155,7 @@ public Uni<String> processUser(Long id) {
 }
 ```
 
-### **Combining Streams**
+### Combining Streams
 
 ```java
 import io.smallrye.mutiny.Uni;
@@ -171,7 +171,7 @@ public Uni<CombinedResult> combineData(Long userId, Long orderId) {
 
 ## Reactive Messaging
 
-### **Message Producer**
+### Message Producer
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -188,7 +188,7 @@ public class MessageProducer {
 }
 ```
 
-### **Message Consumer**
+### Message Consumer
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -206,7 +206,7 @@ public class MessageConsumer {
 
 ## Лучшие практики
 
-### 1. Используйте **Uni** для **single items**
+### 1. Используйте Uni для single items
 
 ```java
 // ✅ Хорошо
@@ -215,7 +215,7 @@ public Uni<User> getUser(Long id) {
 }
 ```
 
-### 2. Используйте **Multi** для **streams**
+### 2. Используйте Multi для streams
 
 ```java
 // ✅ Хорошо
@@ -233,7 +233,7 @@ return uni.onFailure().recoverWithItem(defaultValue);
 
 ## Advanced Mutiny Operations
 
-### **FlatMap** для асинхронных операций
+### FlatMap для асинхронных операций
 
 **FlatMap** позволяет выполнять асинхронные операции и возвращать новый **Uni** или **Multi**:**
 
@@ -252,7 +252,7 @@ public Uni<UserProfile> getUserProfile(Long userId) {
 }
 ```
 
-### **Retry** и **Timeout**
+### Retry и Timeout
 
 **Mutiny** предоставляет встроенные механизмы для **retry** и **timeout**:**
 
@@ -270,7 +270,7 @@ public Uni<String> fetchDataWithRetry() {
 }
 ```
 
-### **Subscription** и **Cancellation**
+### Subscription и Cancellation
 
 **Управление подписками и отмена операций:**
 
@@ -300,7 +300,7 @@ public class DataStream {
 }
 ```
 
-### **Backpressure Handling**
+### Backpressure Handling
 
 **Обработка **backpressure** в **Multi**:**
 
@@ -317,7 +317,7 @@ public Multi<Data> processWithBackpressure() {
 
 ## Reactive Messaging Patterns
 
-### **Request-Reply Pattern**
+### Request-Reply Pattern
 
 **Реализация **request-reply** паттерна с **reactive messaging**:**
 
@@ -338,7 +338,7 @@ public class RequestReplyProcessor {
 }
 ```
 
-### **Message Transformation**
+### Message Transformation
 
 **Трансформация сообщений в **reactive pipeline**:**
 
@@ -373,7 +373,7 @@ public class MessageTransformer {
 }
 ```
 
-### **Error Handling** в **Reactive Messaging**
+### Error Handling в Reactive Messaging
 
 **Обработка ошибок в **reactive messaging**:**
 
@@ -401,7 +401,7 @@ public class ErrorHandlingConsumer {
 
 ## Reactive Database Access
 
-### **Reactive Hibernate**
+### Reactive Hibernate
 
 **Использование **Hibernate Reactive** для неблокирующего доступа к БД:**
 
@@ -435,7 +435,7 @@ public class ReactiveUserResource {
 }
 ```
 
-### **Reactive Panache**
+### Reactive Panache
 
 **Использование **Panache** для упрощенного **reactive** доступа:**
 
@@ -461,7 +461,7 @@ public class User extends PanacheEntity {
 
 ## Reactive REST Clients
 
-### **Async REST Client**
+### Async REST Client
 
 **Создание асинхронных **REST** клиентов:**
 
@@ -485,7 +485,7 @@ public interface UserServiceClient {
 }
 ```
 
-### Использование **Reactive Client**
+### Использование Reactive Client
 
 ```java
 import jakarta.inject.Inject;
@@ -511,7 +511,7 @@ public class ProxyResource {
 
 ## Reactive WebSockets
 
-### **WebSocket Server**
+### WebSocket Server
 
 **Создание **reactive WebSocket** сервера:**
 
@@ -565,7 +565,7 @@ public Multi<ProcessedData> optimizeStream(Multi<RawData> input) {
 }
 ```
 
-### **Connection Pooling**
+### Connection Pooling
 
 **Настройка **connection pooling** для **reactive** клиентов:**
 
@@ -578,7 +578,7 @@ quarkus.datasource.reactive.max-lifetime=60m
 
 ## Testing Reactive Code
 
-### Тестирование **Uni**
+### Тестирование Uni
 
 ```java
 import io.quarkus.test.junit.QuarkusTest;
@@ -603,7 +603,7 @@ public class ReactiveServiceTest {
 }
 ```
 
-### Тестирование **Multi**
+### Тестирование Multi
 
 ```java
 import io.smallrye.mutiny.helpers.test.AssertSubscriber;
@@ -623,7 +623,7 @@ void testMulti() {
 
 ## Reactive Context Propagation
 
-### **Context Propagation**
+### Context Propagation
 
 **Передача контекста в **reactive** потоках:**
 
@@ -652,7 +652,7 @@ public class ContextPropagationService {
 
 ## Reactive Error Recovery
 
-### **Circuit Breaker Pattern**
+### Circuit Breaker Pattern
 
 **Реализация **circuit breaker**:**
 
@@ -678,7 +678,7 @@ public class CircuitBreakerService {
 
 ## Reactive Backpressure
 
-### **Backpressure Handling**
+### Backpressure Handling
 
 **Обработка **backpressure**:**
 
@@ -700,7 +700,7 @@ public class BackpressureService {
 
 ## Advanced Reactive Patterns
 
-### **Parallel Processing**
+### Parallel Processing
 
 **Параллельная обработка:**
 
@@ -720,7 +720,7 @@ public class ParallelProcessingService {
 }
 ```
 
-### **Reactive Caching**
+### Reactive Caching
 
 **Реактивное кеширование:**
 
@@ -744,7 +744,7 @@ public class ReactiveCacheService {
 
 ## Reactive Performance Optimization
 
-### **Backpressure Strategies**
+### Backpressure Strategies
 
 **Стратегии **backpressure**:**
 
@@ -762,7 +762,7 @@ public class BackpressureService {
 }
 ```
 
-### **Thread Pool Optimization**
+### Thread Pool Optimization
 
 **Оптимизация пула потоков:**
 
@@ -774,7 +774,7 @@ quarkus.thread-pool.queue-size=1000
 
 ## Reactive Error Handling Patterns
 
-### **Error Recovery Strategies**
+### Error Recovery Strategies
 
 **Стратегии восстановления после ошибок:**
 
@@ -794,7 +794,7 @@ public class ErrorRecoveryService {
 }
 ```
 
-### **Error Classification**
+### Error Classification
 
 **Классификация ошибок:**
 
@@ -817,7 +817,7 @@ public class ErrorClassificationService {
 
 ## Reactive Testing Patterns
 
-### **Testing Uni**
+### Testing Uni
 
 **Тестирование **Uni**:**
 
@@ -835,7 +835,7 @@ public class UniTest {
 }
 ```
 
-### **Testing Multi**
+### Testing Multi
 
 **Тестирование **Multi**:**
 
@@ -858,7 +858,7 @@ public class MultiTest {
 
 ## Reactive Performance Monitoring
 
-### **Throughput Monitoring**
+### Throughput Monitoring
 
 **Мониторинг пропускной способности:**
 
@@ -880,7 +880,7 @@ public class ThroughputMonitor {
 }
 ```
 
-### **Latency Tracking**
+### Latency Tracking
 
 **Отслеживание задержек:**
 

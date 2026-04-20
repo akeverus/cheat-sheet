@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Consul**
+# Consul
 
 **Consul** — это распределенная система для **service discovery**, **configuration management** и **service mesh** от **HashiCorp**. Он обеспечивает надежное обнаружение сервисов, распределенную конфигурацию, **health checking** и **service-to-service communication** с автоматическим шифрованием. Этот документ охватывает **enterprise-grade** паттерны использования **Consul** в **production** средах.
 
@@ -74,10 +74,10 @@ updated: "2026-02-11"
   - [Security checklist](#security-checklist)
 - [См. также](#см-также)
 
-## Основы **Consul**
+## Основы Consul
 
 ### Установка и настройка
-Ниже — установка **Consul** на **Linux**/**macOS** (**bash**).
+Ниже — установка **Consul** на **Linux**/**macOS** (bash).
 ```bash
 # Linux/macOS установка
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
@@ -195,7 +195,7 @@ consul agent -data-dir=/tmp/consul-client -node=client1 \
 }
 ```
 
-### HTTP API для **service discovery**
+### HTTP API для service discovery
 ```bash
 # Регистрация сервиса
 curl -X PUT \
@@ -253,7 +253,7 @@ dig @127.0.0.1 -p 8600 web-prod.query.consul
 
 ## Key-Value Store
 
-### `KV` **operations**
+### `KV` operations
 ```bash
 # Установка значения
 curl -X PUT \
@@ -323,7 +323,7 @@ server {
 }
 ```
 
-## Service Mesh (**Consul Connect**)
+## Service Mesh (Consul Connect)
 
 ### Sidecar proxy
 ```json
@@ -471,7 +471,7 @@ curl -H "X-Consul-Token: $WEB_TOKEN" \
 
 ## Health Checks
 
-### Различные типы **health checks**
+### Различные типы health checks
 ```json
 // comprehensive-health-checks.json
 {
@@ -537,7 +537,7 @@ else
 fi
 ```
 
-## Federation и **Multi-datacenter**
+## Federation и Multi-datacenter
 
 ### WAN federation
 ```json
@@ -588,7 +588,7 @@ curl -X POST \
 curl "http://localhost:8500/v1/health/connect/web?peer=dc2"
 ```
 
-## Monitoring и **Observability**
+## Monitoring и Observability
 
 ### Metrics collection
 ```json

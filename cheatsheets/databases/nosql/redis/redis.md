@@ -35,11 +35,11 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
   - [Архитектура **Redis**](#архитектура-redis)
 - [Установка и первоначальная настройка](#установка-и-первоначальная-настройка)
   - [Установка **Redis**](#установка-redis)
-    - [**Linux** (**Ubuntu/Debian**)](#linux-ubuntudebian)
+    - [**Linux** (Ubuntu/Debian)](#linux-ubuntudebian)
 - [Обновление пакетов](#обновление-пакетов)
 - [Проверка статуса](#проверка-статуса)
 - [Управление службой](#управление-службой)
-    - [**macOS** (**с Homebrew**)](#macos-с-homebrew)
+    - [**macOS** (с Homebrew)](#macos-с-homebrew)
 - [Запуск Redis](#запуск-redis)
 - [Или запуск вручную](#или-запуск-вручную)
     - [**Docker**](#docker)
@@ -74,15 +74,15 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
       - [**Java** с **Jedis**](#java-с-jedis)
       - [**Python** с **redis-py**](#python-с-redis-py)
 
-## Введение в **Redis**
+## Введение в Redis
 
-**Redis** (**REmote DIctionary Server**) — это быстрая **in-memory** структура данных, которая может использоваться как база данных, кэш и **message broker**. **Redis** поддерживает различные типы данных и предлагает высокую производительность благодаря хранению данных в оперативной памяти.
+**Redis** (REmote DIctionary Server) — это быстрая **in-memory** структура данных, которая может использоваться как база данных, кэш и **message broker**. **Redis** поддерживает различные типы данных и предлагает высокую производительность благодаря хранению данных в оперативной памяти.
 
-### Основные возможности **Redis**
+### Основные возможности Redis
 
 - **In-memory хранилище**: Все данные хранятся в **RAM** для максимальной скорости
 - **Разнообразие типов данных**: **Strings**, **Lists**, **Sets**, **Hashes**, **Sorted Sets**, **Streams**
-- **Персистентность**: **RDB snapshots** и **AOF** (**Append `Only` File**)
+- **Персистентность**: **RDB snapshots** и **AOF** (Append `Only` File)
 - **Репликация**: **Master-slave** репликация с автоматическим **failover**
 - **Кластеризация**: Автоматическое шардинг и распределение данных
 - **Pub/Sub**: **Publish-Subscribe messaging**
@@ -90,7 +90,7 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 - **Transactions**: **ACID** транзакции
 - **TTL**: Автоматическое истечение ключей
 
-### Архитектура **Redis**
+### Архитектура Redis
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -108,9 +108,9 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 
 ## Установка и первоначальная настройка
 
-### Установка **Redis**
+### Установка Redis
 
-#### **Linux** (**Ubuntu/Debian**)
+#### Linux (Ubuntu/Debian)
 
 ```bash
 # Обновление пакетов
@@ -129,7 +129,7 @@ sudo systemctl stop redis
 sudo systemctl restart redis
 ```
 
-#### **macOS** (**с Homebrew**)
+#### macOS (с Homebrew)
 
 ```bash
 # Установка Redis
@@ -142,7 +142,7 @@ brew services start redis
 redis-server /usr/local/etc/redis.conf
 ```
 
-#### **Docker**
+#### Docker
 
 ```bash
 # Запуск Redis в Docker
@@ -224,9 +224,9 @@ maxmemory-policy allkeys-lru
 lua-time-limit 5000
 ```
 
-### Подключение к **Redis**
+### Подключение к Redis
 
-#### **Redis CLI**
+#### Redis CLI
 
 ```bash
 # Подключение к локальному Redis
@@ -255,7 +255,7 @@ OK
 
 #### Программные подключения
 
-##### **Java** с **Jedis**
+##### Java с Jedis
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -323,7 +323,7 @@ public class RedisJavaExample {
 }
 ```
 
-##### **Python** с **redis-py**
+##### Python с redis-py
 
 ```java
 // Redis Python example replaced with Java Spring

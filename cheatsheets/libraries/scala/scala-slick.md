@@ -12,14 +12,14 @@ updated: "2026-02-11"
 ---
 # Slick
 
-**Slick** (**Scala `Language`-`Integrated Connection` Kit**) — это современная **database query and access library** для **Scala**, предоставляющая функциональный, **type-safe** подход к работе с реляционными базами данных. **Slick** генерирует **SQL** запросы из **Scala** кода и обеспечивает **compile-time** проверку типов.
+**Slick** (Scala `Language`-`Integrated Connection` Kit) — это современная **database query and access library** для **Scala**, предоставляющая функциональный, **type-safe** подход к работе с реляционными базами данных. **Slick** генерирует **SQL** запросы из **Scala** кода и обеспечивает **compile-time** проверку типов.
 
 ## Полезные ссылки
 - [Официальная документация Slick](https://scala-slick.org/docs/)
 - [Slick GitHub](https://github.com/slick/slick)
 - [Slick Play Integration](https://www.playframework.com/documentation/2.8.x/PlaySlick)
 - [Typesafe Config](https://github.com/lightbend/config)
-- [HikariCP](../java/java-hikaricp.md)
+- [[java-hikaricp|HikariCP]]
 - [Flyway](https://flywaydb.org/)
 
 ## Содержание
@@ -62,11 +62,11 @@ updated: "2026-02-11"
   - [From Slick 3.2 to 3.4](#from-slick-32-to-34)
 - [См. также](#см-также)
 
-## Основы **Slick**
+## Основы Slick
 
 ### Подключение и конфигурация
 
-Зависимости **Slick** и конфигурация **HikariCP**/**PostgreSQL** (**Scala**).
+Зависимости **Slick** и конфигурация **HikariCP**/**PostgreSQL** (Scala).
 
 ```scala
 // build.sbt
@@ -177,7 +177,7 @@ object UserTable {
 }
 ```
 
-### **Database configuration**
+### Database configuration
 ```scala
 package database
 
@@ -198,9 +198,9 @@ class DatabaseConfig @Inject()(
 }
 ```
 
-## **CRUD** операции
+## CRUD операции
 
-### Создание (**Create**)
+### Создание (Create)
 ```scala
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -251,7 +251,7 @@ class UserRepository @Inject()(
 }
 ```
 
-### Чтение (**Read**)
+### Чтение (Read)
 ```scala
 class UserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionContext) {
 
@@ -336,7 +336,7 @@ class UserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionC
 }
 ```
 
-### Обновление (**Update**)
+### Обновление (Update)
 ```scala
 class UserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionContext) {
 
@@ -398,7 +398,7 @@ class UserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionC
 }
 ```
 
-### Удаление (**Delete**)
+### Удаление (Delete)
 ```scala
 class UserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionContext) {
 
@@ -454,7 +454,7 @@ class UserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionC
 
 ## Продвинутые запросы
 
-### **Joins**
+### Joins
 ```scala
 // Модели с отношениями
 case class Company(id: Long, name: String, address: String)
@@ -760,7 +760,7 @@ class IsolationLevelExample @Inject()(dbConfig: DatabaseConfig)(implicit ec: Exe
 
 ## Миграции базы данных
 
-### **Flyway** миграции
+### Flyway миграции
 ```scala
 // build.sbt
 libraryDependencies += "org.flywaydb" %% "flyway-play" % "7.0.0"
@@ -863,7 +863,7 @@ class H2Database @Inject()(
 
 ## Тестирование
 
-### **Unit** тесты для **Slick**
+### Unit тесты для Slick
 ```scala
 import org.scalatestplus.play._
 import org.mockito.Mockito._
@@ -913,7 +913,7 @@ class UserRepositorySpec extends PlaySpec with MockitoSugar {
 }
 ```
 
-### **Integration** тесты
+### Integration тесты
 ```scala
 import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.JdbcProfile
@@ -955,7 +955,7 @@ class UserRepositoryIntegrationSpec extends PlaySpec with OneAppPerTest {
 
 ## Оптимизация производительности
 
-### **Connection pooling**
+### Connection pooling
 ```scala
 // application.conf
 slick {
@@ -975,7 +975,7 @@ slick {
 }
 ```
 
-### **Query optimization**
+### Query optimization
 ```scala
 class OptimizedRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionContext) {
 
@@ -1047,7 +1047,7 @@ class OptimizedRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: Execu
 
 ## Расширенные возможности
 
-### **Custom column types**
+### Custom column types
 ```scala
 import slick.ast.BaseTypedType
 import slick.jdbc.JdbcType
@@ -1099,7 +1099,7 @@ implicit val jsonMapColumnType: JdbcType[Map[String, String]] with BaseTypedType
   )
 ```
 
-### **Schema evolution**
+### Schema evolution
 ```scala
 // Schema management
 class SchemaManager @Inject()(dbConfig: DatabaseConfig)(implicit ec: ExecutionContext) {
@@ -1212,7 +1212,7 @@ class BaseUserRepository @Inject()(
 }
 ```
 
-### **Error handling**
+### Error handling
 ```scala
 // Domain errors
 sealed trait RepositoryError
@@ -1260,7 +1260,7 @@ class SafeUserRepository @Inject()(dbConfig: DatabaseConfig)(implicit ec: Execut
 }
 ```
 
-### **Logging** и **monitoring**
+### Logging и monitoring
 ```scala
 import play.api.Logger
 
@@ -1307,7 +1307,7 @@ class MonitoredUserRepository @Inject()(
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object SlickTroubleshooting {
 
@@ -1379,7 +1379,7 @@ object SlickTroubleshooting {
 
 ## Руководство по миграции
 
-### **From Anorm** to **Slick**
+### From Anorm to Slick
 ```scala
 // Anorm approach
 def findById(id: Long): Future[Option[User]] = Future {
@@ -1416,7 +1416,7 @@ def updateUser(id: Long, name: String): Future[Int] = {
 }
 ```
 
-### **From Slick** `3.2 to 3.4`
+### From Slick `3.2 to 3.4`
 ```scala
 // Slick 3.2 style
 class UserTable(tag: Tag) extends Table[User](tag, "users") {
@@ -1443,5 +1443,5 @@ db.run {
 - [[scala-play|Play Framework]] — **Web framework**
 - [[postgres-basics|PostgreSQL]] — **Database**
 - [[mysql-basics|MySQL]] — **Database**
-- [Паттерны](../../patterns/README.md) — **Patterns**
+- [[README|Паттерны]] — **Patterns**
 

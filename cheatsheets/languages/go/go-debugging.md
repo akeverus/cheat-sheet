@@ -120,7 +120,7 @@ updated: "2026-02-06"
 3. **Логирование** — добавление логов для отладки
 4. **Трассировка** — отслеживание выполнения программы
 
-## **Delve**
+## Delve
 
 **Delve** — это отладчик, специально разработанный для Go.
 
@@ -153,7 +153,7 @@ dlv debug main.go
 (dlv) stack
 ```
 
-### Команды **Delve**
+### Команды Delve
 
 ```bash
 # Список breakpoints
@@ -169,11 +169,11 @@ dlv debug main.go
 (dlv) exit
 ```
 
-## **GDB**
+## GDB
 
 **GDB** — классический отладчик, который также работает с Go.
 
-### Использование **GDB**
+### Использование GDB
 
 ```bash
 # Компиляция с отладочной информацией
@@ -234,7 +234,7 @@ func main() {
 
 ## Трассировка
 
-### Использование **runtime**/**trace**
+### Использование runtime/trace
 
 ```go
 import (
@@ -262,7 +262,7 @@ func main() {
 go tool trace trace.out
 ```
 
-### Детальные команды **Delve**
+### Детальные команды Delve
 
 ```bash
 # Запуск программы
@@ -313,7 +313,7 @@ go tool trace trace.out
 (dlv) list main.main
 ```
 
-### Установка **breakpoints**
+### Установка breakpoints
 
 ```bash
 # Breakpoint на строке
@@ -382,7 +382,7 @@ go tool trace trace.out
 (dlv) trace main.go:20 print count
 ```
 
-### **Remote debugging** с **Delve**
+### Remote debugging с Delve
 
 ```bash
 # Запуск Delve в headless режиме
@@ -437,7 +437,7 @@ func main() {
 (dlv) goroutine 1 stack
 ```
 
-### Практические примеры: Отладка **race conditions**
+### Практические примеры: Отладка race conditions
 
 ```bash
 # Компиляция с race detector
@@ -623,7 +623,7 @@ func debugWithProfiling() {
 }
 ```
 
-### Практические примеры: Отладка через **HTTP endpoint**
+### Практические примеры: Отладка через HTTP endpoint
 
 ```go
 package main
@@ -648,7 +648,7 @@ func main() {
 }
 ```
 
-### Практические примеры: Отладка с использованием **GDB**
+### Практические примеры: Отладка с использованием GDB
 
 ```bash
 # Компиляция с отладочной информацией
@@ -671,7 +671,7 @@ gdb ./myapp
 (gdb) quit
 ```
 
-### Практические примеры: Отладка с использованием **core dumps**
+### Практические примеры: Отладка с использованием core dumps
 
 ```bash
 # Включение core dumps
@@ -691,7 +691,7 @@ gdb ./myapp core
 (gdb) info locals
 ```
 
-### Практические примеры: Отладка **memory leaks**
+### Практические примеры: Отладка memory leaks
 
 ```go
 package main
@@ -749,7 +749,7 @@ func TestDebugFunction(t *testing.T) {
 }
 ```
 
-### Практические примеры: Отладка с использованием **assertions**
+### Практические примеры: Отладка с использованием assertions
 
 ```go
 package main
@@ -773,7 +773,7 @@ func main() {
 }
 ```
 
-### Практические примеры: Отладка **network connections**
+### Практические примеры: Отладка network connections
 
 ```go
 package main
@@ -859,7 +859,7 @@ func ForceGC() {
 }
 ```
 
-### Практические примеры: Отладка с условными **breakpoints**
+### Практические примеры: Отладка с условными breakpoints
 
 ```go
 // Условное логирование для отладки

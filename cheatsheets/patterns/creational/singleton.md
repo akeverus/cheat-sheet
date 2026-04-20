@@ -53,7 +53,7 @@ updated: "2026-02-11"
 
 **Когда применять:** пул соединений, логгер, конфиг, драйвер — ресурс в единственном экземпляре.
 
-## Что такое **Singleton**?
+## Что такое Singleton?
 
 Порождающий паттерн: у класса только один экземпляр в приложении и одна точка доступа к нему (например, статический метод `getInstance()`).
 
@@ -104,7 +104,7 @@ public class DatabaseConnectionPool {
 }
 ```
 
-## Когда использовать **Singleton**?
+## Когда использовать Singleton?
 
 ### Подходящие сценарии
 
@@ -368,7 +368,7 @@ public class HolderSingleton {
 // - Невозможно сломать через reflection (без дополнительных усилий)
 ```
 
-### **Enum Singleton**
+### Enum Singleton
 
 ```java
 /
@@ -423,7 +423,7 @@ public class EnumSingletonDemo {
 
 ## Продвинутые реализации
 
-### 1. **Configurable Singleton**
+### 1. Configurable Singleton
 
 ```java
 // Singleton с конфигурацией
@@ -465,7 +465,7 @@ public class ConfigurableSingleton {
 
 ## Примеры использования
 
-### 1. **Database Connection Pool**
+### 1. Database Connection Pool
 
 ```java
 @Service
@@ -540,7 +540,7 @@ public class DatabaseConnectionPool {
 }
 ```
 
-### 2. **Application Logger**
+### 2. Application Logger
 
 ```java
 @Service
@@ -751,7 +751,7 @@ public class SingletonPitfalls {
 
 ```
 
-### 3. Тестирование **Singleton**
+### 3. Тестирование Singleton
 
 ```java
 @ExtendWith(MockitoExtension.class)

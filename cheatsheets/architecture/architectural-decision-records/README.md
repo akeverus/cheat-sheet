@@ -18,14 +18,14 @@ Architectural Decision Record — короткий документ, фикси�
 ## Полезные ссылки
 
 ### Основные документы
-- [adr-template.md](adr-template.md) — шаблон ADR с полным примером (PostgreSQL vs MongoDB)
+- [[adr-template]] — шаблон ADR с полным примером (PostgreSQL vs MongoDB)
 
 ### Соседние разделы
-- [Родительский раздел: Architecture](../README.md)
-- [Design Principles](../design-principles/README.md) — принципы, которые часто цитируются в ADR
-- [Software Architecture](../software-architecture/README.md) — стили, между которыми выбирают в ADR
-- [System Design](../system-design/README.md) — контекст для high-level решений
-- [Design Patterns](../../patterns/README.md) — паттерны, которые всплывают в вариантах
+- [[README|Родительский раздел: Architecture]]
+- [[README|Design Principles]] — принципы, которые часто цитируются в ADR
+- [[README|Software Architecture]] — стили, между которыми выбирают в ADR
+- [[README|System Design]] — контекст для high-level решений
+- [[README|Design Patterns]] — паттерны, которые всплывают в вариантах
 
 ### Внешние ресурсы
 - [adr.github.io](https://adr.github.io/) — коллекция шаблонов MADR, Nygard, Y-Statements
@@ -56,12 +56,12 @@ ADR имеет смысл заводить, когда решение:
 
 | Тема | Где смотреть |
 |------|--------------|
-| Полный шаблон ADR | [adr-template.md](adr-template.md#шаблон-adr) |
-| Пример: PostgreSQL vs MongoDB | [adr-template.md](adr-template.md#adr-001-использование-postgresql-вместо-mongodb-для-основного-хранилища) |
-| Варианты решения и их сравнение | [adr-template.md](adr-template.md#варианты-решения) |
-| Последствия решения (trade-offs) | [adr-template.md](adr-template.md#последствия) |
-| Связи между ADR (supersedes / relates-to) | [adr-template.md](adr-template.md#связанные-решения) |
-| Лучшие практики ведения ADR | [adr-template.md](adr-template.md#лучшие-практики) |
+| Полный шаблон ADR | [[adr-template#шаблон-adr]] |
+| Пример: PostgreSQL vs MongoDB | [[adr-template#adr-001-использование-postgresql-вместо-mongodb-для-основного-хранилища]] |
+| Варианты решения и их сравнение | [[adr-template#варианты-решения]] |
+| Последствия решения (trade-offs) | [[adr-template#последствия]] |
+| Связи между ADR (supersedes / relates-to) | [[adr-template#связанные-решения]] |
+| Лучшие практики ведения ADR | [[adr-template#лучшие-практики]] |
 
 ## Маршруты чтения
 
@@ -71,7 +71,7 @@ ADR имеет смысл заводить, когда решение:
 
 ## Куда идти дальше
 
-- Стили архитектуры, между которыми выбирают в ADR — [architecture/software-architecture/](../software-architecture/README.md)
-- Принципы, которые цитируются в обосновании — [architecture/design-principles/](../design-principles/README.md)
-- Паттерны как кандидаты в «варианты» — [patterns/](../../patterns/README.md)
-- High-level проектирование — [architecture/system-design/](../system-design/README.md)
+- Стили архитектуры, между которыми выбирают в ADR — [[README|architecture/software-architecture/]]
+- Принципы, которые цитируются в обосновании — [[README|architecture/design-principles/]]
+- Паттерны как кандидаты в «варианты» — [[README|patterns/]]
+- High-level проектирование — [[README|architecture/system-design/]]

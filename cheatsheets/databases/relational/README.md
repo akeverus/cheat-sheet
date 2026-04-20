@@ -13,12 +13,12 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[PostgreSQL](postgresql/README.md)
-[MySQL](mysql/README.md)
+[[README|PostgreSQL]]
+[[README|MySQL]]
 
 ## Содержание
 
-- [PostgreSQL](postgresql/postgres-basics.md)
-- [MySQL](mysql/mysql-basics.md)
-- [Oracle](oracle/oracle-basics.md)
-- [SQL Server](sql-server/sql-server-basics.md)
+- [[postgres-basics|PostgreSQL]]
+- [[mysql-basics|MySQL]]
+- [[oracle-basics|Oracle]]
+- [[sql-server-basics|SQL Server]]

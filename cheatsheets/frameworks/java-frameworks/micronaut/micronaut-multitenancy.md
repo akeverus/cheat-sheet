@@ -99,7 +99,7 @@ micronaut:
 
 ## Tenant Resolution
 
-### **HTTP Header Resolver**
+### HTTP Header Resolver
 
 ```java
 import io.micronaut.multitenancy.tenantresolver.HttpHeaderTenantResolver;
@@ -115,7 +115,7 @@ public class CustomTenantResolver implements HttpHeaderTenantResolver {
 }
 ```
 
-### **Subdomain Resolver**
+### Subdomain Resolver
 
 ```java
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
@@ -138,7 +138,7 @@ public class SubdomainTenantResolver implements TenantResolver {
 
 ## Data Isolation
 
-### **Tenant-aware Repository**
+### Tenant-aware Repository
 
 ```java
 import io.micronaut.data.annotation.Repository;
@@ -153,7 +153,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
 }
 ```
 
-### **Tenant Service**
+### Tenant Service
 
 ```java
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
@@ -180,7 +180,7 @@ public class TenantAwareUserService {
 
 ## Configuration per Tenant
 
-### **Tenant-specific Configuration**
+### Tenant-specific Configuration
 
 **application.yml:**
 
@@ -194,7 +194,7 @@ tenants:
       url: jdbc:postgresql://localhost:5432/tenant2
 ```
 
-### **Dynamic Configuration**
+### Dynamic Configuration
 
 ```java
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -215,7 +215,7 @@ public class TenantConfiguration {
 
 ## Лучшие практики
 
-### 1. Всегда проверяйте **tenant** `ID`
+### 1. Всегда проверяйте tenant `ID`
 
 ```java
 // ✅ Хорошо
@@ -233,7 +233,7 @@ if (tenantId == null) {
 List<User> findByTenantId(String tenantId);
 ```
 
-### 3. Используйте **connection pooling per tenant**
+### 3. Используйте connection pooling per tenant
 
 ```yaml
 # ✅ Хорошо
@@ -246,7 +246,7 @@ tenants:
 
 ## Tenant Context
 
-### **Tenant Context Provider**
+### Tenant Context Provider
 
 ```java
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
@@ -278,7 +278,7 @@ public class TenantContextProvider {
 
 ## Database per Tenant
 
-### **Dynamic DataSource**
+### Dynamic DataSource
 
 ```java
 import io.micronaut.context.annotation.Bean;
@@ -301,7 +301,7 @@ public class TenantDataSourceFactory {
 
 ## Tenant Filtering
 
-### **Automatic Tenant Filtering**
+### Automatic Tenant Filtering
 
 ```java
 import io.micronaut.data.annotation.Repository;
@@ -322,7 +322,7 @@ public interface TenantAwareRepository extends CrudRepository<User, Long> {
 
 ## Tenant Validation
 
-### **Tenant Validation Service**
+### Tenant Validation Service
 
 ```java
 import io.micronaut.multitenancy.tenantresolver.TenantResolver;
@@ -349,7 +349,7 @@ public class TenantValidationService {
 
 ## Tenant Caching
 
-### **Tenant-aware Cache**
+### Tenant-aware Cache
 
 ```java
 import io.micronaut.cache.annotation.Cacheable;
@@ -367,7 +367,7 @@ public class TenantCacheService {
 
 ## Tenant Security
 
-### **Tenant-based Security**
+### Tenant-based Security
 
 ```java
 import io.micronaut.security.annotation.Secured;

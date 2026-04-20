@@ -17,5 +17,5 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [UI Testing Overview](ui-testing-overview.md)
-- [Selenium](selenium/selenium.md)
+- [[ui-testing-overview|UI Testing Overview]]
+- [[selenium]]

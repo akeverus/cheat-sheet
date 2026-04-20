@@ -67,7 +67,7 @@ Go предоставляет несколько пакетов для коди�
 2. **Hex** — кодирование в шестнадцатеричный формат
 3. **Binary** — бинарное кодирование для сериализации
 
-## **Base64**
+## Base64
 
 **Base64** кодирует бинарные данные в текстовый формат, используя 64 символа.
 
@@ -100,7 +100,7 @@ func main() {
 }
 ```
 
-### **URL-safe** кодирование
+### URL-safe кодирование
 
 ```go
 func encodeURLSafe(data []byte) string {
@@ -112,7 +112,7 @@ func decodeURLSafe(encoded string) ([]byte, error) {
 }
 ```
 
-### Кодирование с **padding**
+### Кодирование с padding
 
 ```go
 import "encoding/base64"
@@ -137,7 +137,7 @@ func decodeWithPadding(encoded string) ([]byte, error) {
 }
 ```
 
-## **Hex**
+## Hex
 
 **Hex** кодирует данные в шестнадцатеричный формат.
 
@@ -186,7 +186,7 @@ func encodeHexWithSeparator(data []byte, separator string) string {
 }
 ```
 
-## **Binary**
+## Binary
 
 **Binary** кодирование используется для сериализации данных в бинарный формат.
 
@@ -257,7 +257,7 @@ func encodeBigEndian(value uint32) []byte {
 }
 ```
 
-### **Stream encoding** для **Base64**
+### Stream encoding для Base64
 
 ```go
 import (
@@ -292,7 +292,7 @@ func main() {
 }
 ```
 
-### Кастомный **Base64 encoding**
+### Кастомный Base64 encoding
 
 ```go
 import "encoding/base64"
@@ -339,7 +339,7 @@ func encodeImageToBase64(filename string) (string, error) {
 }
 ```
 
-### Практические примеры: Кодирование для **URL**
+### Практические примеры: Кодирование для URL
 
 ```go
 import "encoding/base64"
@@ -362,7 +362,7 @@ func decodeFromURL(encoded string) ([]byte, error) {
 }
 ```
 
-### Практические примеры: **Hex dump**
+### Практические примеры: Hex dump
 
 ```go
 import (
@@ -406,7 +406,7 @@ func hexDump(data []byte) string {
 }
 ```
 
-### Практические примеры: **Binary** протокол
+### Практические примеры: Binary протокол
 
 ```go
 import (
@@ -711,7 +711,7 @@ func DecodeMessage(data []byte) (*Message, error) {
 }
 ```
 
-### Практические примеры: **Streaming** кодирование
+### Практические примеры: Streaming кодирование
 
 ```go
 func EncodeStream(w io.Writer, data []byte) error {

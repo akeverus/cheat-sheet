@@ -18,13 +18,13 @@ Javalin — минималистичный веб-фреймворк для Java
 ## Полезные ссылки
 
 ### Основные документы
-- [Javalin: Основы](javalin-basics.md) — роуты, контекст, WebSocket, JSON
+- [[javalin-basics|Javalin: Основы]] — роуты, контекст, WebSocket, JSON
 
 ### Соседние разделы
-- [Java Frameworks](../README.md) — сравнение со Spring/Quarkus/Micronaut/Vert.x/Dropwizard
-- [Spring](../spring/README.md), [Dropwizard](../dropwizard/README.md)
-- [Kotlin Frameworks](../../kotlin-frameworks/README.md) — Javalin часто используют с Kotlin
-- [Ktor](../../../libraries/kotlin/kotlin-ktor.md) — ближайший kotlin-native аналог
+- [[README|Java Frameworks]] — сравнение со Spring/Quarkus/Micronaut/Vert.x/Dropwizard
+- [[README|Spring]], [[README|Dropwizard]]
+- [[README|Kotlin Frameworks]] — Javalin часто используют с Kotlin
+- [[kotlin-ktor|Ktor]] — ближайший kotlin-native аналог
 
 ### Внешние ресурсы
 - [Javalin Official Site](https://javalin.io)
@@ -69,11 +69,11 @@ Javalin — минималистичный веб-фреймворк для Java
 ## Маршруты чтения
 
 - **Прототип за час:** `javalin-basics.md` → разделы "Простой HTTP сервер" + "JSON" + "WebSocket".
-- **Kotlin-проект:** `javalin-basics.md` + [Ktor](../../../libraries/kotlin/kotlin-ktor.md) для сравнения.
+- **Kotlin-проект:** `javalin-basics.md` + [[kotlin-ktor|Ktor]] для сравнения.
 - **Миграция с Spring:** секции «Контекст» + "middleware" + чек-лист расхождений в `../README.md`.
 
 ## Куда идти дальше
 
-- Kotlin-экосистема — [Kotlin Frameworks](../../kotlin-frameworks/README.md)
-- Сравнение с остальными JVM-фреймворками — [../README.md](../README.md)
-- REST-контракты — [development/api/rest](../../../development/api/rest/README.md)
+- Kotlin-экосистема — [[README|Kotlin Frameworks]]
+- Сравнение с остальными JVM-фреймворками — [[README]]
+- REST-контракты — [[README|development/api/rest]]

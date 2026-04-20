@@ -228,7 +228,7 @@ for i := 0; i < 1000; i++ {
 }
 ```
 
-### Использование **strings.Builder**
+### Использование strings.Builder
 
 ```go
 // Плохо
@@ -275,7 +275,7 @@ func ProcessUser(user User) error {
 }
 ```
 
-### Избегайте **SQL** инъекций
+### Избегайте SQL инъекций
 
 ```go
 // Плохо
@@ -326,7 +326,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **Dependency Injection**
+### Практические примеры: Dependency Injection
 
 ```go
 // Плохо - глобальные зависимости
@@ -354,7 +354,7 @@ func (r *UserRepository) GetUser(id int) (*User, error) {
 }
 ```
 
-### Практические примеры: Использование **defer**
+### Практические примеры: Использование defer
 
 ```go
 // Всегда используйте defer для очистки
@@ -548,7 +548,7 @@ func createUser(username, password string) (*User, error) {
 }
 ```
 
-### Практические примеры: Защита от **SQL** инъекций
+### Практические примеры: Защита от SQL инъекций
 
 ```go
 // Плохо - уязвимо к SQL инъекциям
@@ -582,7 +582,7 @@ func preparedQuery(userID int) (*User, error) {
 }
 ```
 
-### Практические примеры: Защита от **XSS**
+### Практические примеры: Защита от XSS
 
 ```go
 import "html/template"
@@ -604,7 +604,7 @@ func renderTemplate(w http.ResponseWriter, data map[string]interface{}) {
 }
 ```
 
-### Практические примеры: Защита от **CSRF**
+### Практические примеры: Защита от CSRF
 
 ```go
 import "github.com/gorilla/csrf"
@@ -631,7 +631,7 @@ func formHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Rate limiting**
+### Практические примеры: Rate limiting
 
 ```go
 import "golang.org/x/time/rate"
@@ -901,7 +901,7 @@ type User struct {
 }
 ```
 
-### Практические примеры: **Dependency Injection**
+### Практические примеры: Dependency Injection
 
 ```go
 // Плохо: жесткая зависимость

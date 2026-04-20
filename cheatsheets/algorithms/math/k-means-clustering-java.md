@@ -20,8 +20,8 @@ updated: "2026-02-11"
 - [Baeldung: K-Means Clustering](https://www.baeldung.com/)
 
 ### См. также
-- [Градиентный спуск](gradient-descent.md) — градиентный спуск
-- [Вычисление расстояния](distance-between-points.md) — расстояние между точками
+- [[gradient-descent|Градиентный спуск]] — градиентный спуск
+- [[distance-between-points|Вычисление расстояния]] — расстояние между точками
 
 ## Содержание
 

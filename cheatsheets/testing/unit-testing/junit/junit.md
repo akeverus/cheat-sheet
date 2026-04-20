@@ -19,7 +19,7 @@ updated: "2026-02-11"
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
 - [JUnit 5 API](https://junit.org/junit5/docs/current/api/)
 - [Baeldung — JUnit 5](https://www.baeldung.com/junit-5)
-- [Mockito](mockito.md) · [AssertJ](assertj.md) · [Testcontainers](../../integration-testing/testcontainers/testcontainers.md)
+- [[mockito]] · [[assertj]] · [[testcontainers]]
 
 ## Содержание
 
@@ -382,7 +382,7 @@ junit.jupiter.execution.parallel.config.fixed.parallelism=4
 | `@AfterClass` | **@AfterAll** |
 | `@Ignore` | **@Disabled** |
 | `Assert.assertEquals` | `Assertions.assertEquals` |
-| **@Rule** / **@ClassRule** | **Extensions** (**@ExtendWith**) |
+| **@Rule** / **@ClassRule** | **Extensions** (@ExtendWith) |
 
 Для запуска старых тестов JUnit 4 подключите **junit-vintage-engine**.
 
@@ -449,14 +449,14 @@ CSV: путь вида `resources = "/data.csv"` — файл в `src/test/resou
 - **JUnit Vintage** — движок для тестов JUnit 3/4.
 - **Extension** — расширение жизненного цикла (MockitoExtension, SpringExtension и др.).
 - **Parameterized Test** — тест с несколькими наборами входных данных.
-- **Dynamic Test** — тест, сгенерированный во время выполнения (**@TestFactory**).
+- **Dynamic Test** — тест, сгенерированный во время выполнения (@TestFactory).
 - **Assertion** — проверка ожидаемого результата.
 - **Assumption** — условие, при невыполнении которого тест пропускается.
 
 
 ## См. также
 
-- [JUnit Advanced](junit-advanced.md) · [Mockito](mockito.md) · [AssertJ](assertj.md) · [Hamcrest](hamcrest.md) · [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md)
+- [[junit-advanced|JUnit Advanced]] · [[mockito]] · [[assertj]] · [[hamcrest]] · [[testing-tools-overview|Обзор инструментов тестирования]]
 
 
 ## Заключение

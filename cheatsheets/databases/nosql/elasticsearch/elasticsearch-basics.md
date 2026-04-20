@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Основы — Полное руководство по распределенному поисковому движку
+# Elasticsearch: Основы — Полное руководство по распределенному поисковому движку
 
 Комплексное руководство по **Elasticsearch**: архитектура, установка, основные понятия, **mapping**, анализ текста и работа с данными в **Java**/**Spring** приложениях.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Elasticsearch Guide](https://www.elastic.co/guide/en/elasticsearch/guide/current/index.html)
 - [Java API Client](https://www.elastic.co/guide/en/elasticsearch/client/java-api-client/current/index.html)
 
-### **Spring Data Elasticsearch**
+### Spring Data Elasticsearch
 - [Spring Data Elasticsearch](https://docs.spring.io/spring-data/elasticsearch/docs/current/reference/html/)
 - [Spring Boot Elasticsearch](https://docs.spring.io/spring-boot/docs/current/reference/html/data.html#data.nosql.elasticsearch)
 
@@ -85,7 +85,7 @@ updated: "2026-02-11"
 - [Основные понятия](#основные-понятия)
   - [Документы и индексы](#документы-и-индексы)
     - [**Document Structure**](#document-structure)
-    - [**Index** vs **Type** (**Legacy**)](#index-vs-type-legacy)
+    - [**Index** vs **Type** (Legacy)](#index-vs-type-legacy)
   - [**CRUD** операции](#crud-операции)
     - [**Create Document**](#create-document)
 - [Автоматическая генерация ID](#автоматическая-генерация-id)
@@ -142,7 +142,7 @@ updated: "2026-02-11"
 - [Результат:](#результат)
 - [**Java API** и интеграция](#java-api-и-интеграция)
   - [**Elasticsearch Java Client**](#elasticsearch-java-client)
-    - [**High Level REST Client** (**Legacy**)](#high-level-rest-client-legacy)
+    - [**High Level REST Client** (Legacy)](#high-level-rest-client-legacy)
   - [**Java API Client** 8.x](#java-api-client-8x)
   - [**Configuration**](#configuration)
   - [**Entity Mapping**](#entity-mapping)
@@ -173,11 +173,11 @@ updated: "2026-02-11"
   - [Производительность:](#производительность)
   - [Интеграция:](#интеграция)
 
-## Введение в **Elasticsearch**
+## Введение в Elasticsearch
 
 **Elasticsearch** — это распределенный, **RESTful** поисковый и аналитический движок, построенный на основе **Apache Lucene**. **Elasticsearch** предоставляет возможности полнотекстового поиска, аналитики в реальном времени и масштабируемого хранения данных.
 
-### Ключевые особенности **Elasticsearch**
+### Ключевые особенности Elasticsearch
 
 #### Масштабируемость и производительность
 - **Горизонтальная масштабируемость** — добавление узлов для увеличения **capacity**
@@ -221,7 +221,7 @@ logAnalysis.source()
         .calendarInterval(DateHistogramInterval.HOUR));
 ```
 
-#### Мониторинг и **observability**
+#### Мониторинг и observability
 ```java
 // Мониторинг производительности
 SearchRequest metricsRequest = new SearchRequest("system-metrics");
@@ -234,7 +234,7 @@ metricsRequest.source()
         .field("response_time").percentiles(50.0, 95.0, 99.0));
 ```
 
-#### **Business intelligence**
+#### Business intelligence
 ```java
 // Анализ продаж
 SearchRequest salesAnalysis = new SearchRequest("sales-data");
@@ -248,7 +248,7 @@ salesAnalysis.source()
         .calendarInterval(DateHistogramInterval.MONTH));
 ```
 
-## Архитектура **Elasticsearch**
+## Архитектура Elasticsearch
 
 ### Компоненты системы
 
@@ -371,7 +371,7 @@ public class ShardManagement {
 
 ### Распределенная архитектура
 
-#### **Cluster State**
+#### Cluster State
 ```java
 // Состояние кластера: узлы, индексы, шарды
 public class ClusterState {
@@ -426,9 +426,9 @@ public class RoutingTable {
 
 ## Установка и настройка
 
-### Установка **Elasticsearch**
+### Установка Elasticsearch
 
-#### **Single Node Installation**
+#### Single Node Installation
 ```bash
 # Скачивание и установка
 wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.11.0-linux-x86_64.tar.gz
@@ -442,7 +442,7 @@ cd elasticsearch-8.11.0/
 curl -X GET "localhost:9200/"
 ```
 
-#### **Docker Installation**
+#### Docker Installation
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -469,7 +469,7 @@ networks:
     driver: bridge
 ```
 
-#### **Production Setup**
+#### Production Setup
 ```bash
 # Создание пользователя elasticsearch
 sudo useradd -r -s /bin/false elasticsearch
@@ -504,7 +504,7 @@ sudo systemctl start elasticsearch
 
 ### Базовая конфигурация
 
-#### **elasticsearch.yml**
+#### elasticsearch.yml
 ```yaml
 # Cluster configuration
 cluster.name: my-application
@@ -531,7 +531,7 @@ xpack.security.transport.ssl.enabled: false
 xpack.security.http.ssl.enabled: false
 ```
 
-#### **JVM Configuration**
+#### JVM Configuration
 ```bash
 # jvm.options
 -Xms4g
@@ -546,7 +546,7 @@ xpack.security.http.ssl.enabled: false
 
 ### Безопасность
 
-#### **Basic Security Setup**
+#### Basic Security Setup
 ```bash
 # Включение security
 echo "xpack.security.enabled: true" >> config/elasticsearch.yml
@@ -571,7 +571,7 @@ curl -X POST "localhost:9200/_security/user/kibana_system/_password" \
 
 ### Документы и индексы
 
-#### **Document Structure**
+#### Document Structure
 ```json
 // JSON документ в Elasticsearch
 {
@@ -598,7 +598,7 @@ curl -X POST "localhost:9200/_security/user/kibana_system/_password" \
 }
 ```
 
-#### **Index** vs **Type** (**Legacy**)
+#### Index vs Type (Legacy)
 ```java
 // До Elasticsearch 7.x
 PUT /products/electronics/1
@@ -615,9 +615,9 @@ PUT /products/_doc/1
 }
 ```
 
-### **CRUD** операции
+### CRUD операции
 
-#### **Create Document**
+#### Create Document
 ```bash
 # Автоматическая генерация ID
 curl -X POST "localhost:9200/products/_doc" \
@@ -640,7 +640,7 @@ curl -X POST "localhost:9200/_bulk" \
 '
 ```
 
-#### **Read Document**
+#### Read Document
 ```bash
 # Получение по ID
 curl -X GET "localhost:9200/products/_doc/1"
@@ -657,7 +657,7 @@ curl -X GET "localhost:9200/_mget" \
   -d '{"docs":[{"_index":"products","_id":"1"},{"_index":"products","_id":"2"}]}'
 ```
 
-#### **Update Document**
+#### Update Document
 ```bash
 # Полное обновление
 curl -X PUT "localhost:9200/products/_doc/1" \
@@ -688,7 +688,7 @@ curl -X POST "localhost:9200/products/_update/1" \
   }'
 ```
 
-#### **Delete Document**
+#### Delete Document
 ```bash
 # Удаление по ID
 curl -X DELETE "localhost:9200/products/_doc/1"
@@ -706,7 +706,7 @@ curl -X DELETE "localhost:9200/products/_doc/1?routing=user123"
 
 ### Создание индексов
 
-#### **Basic Index Creation**
+#### Basic Index Creation
 ```bash
 # Создание индекса с настройками по умолчанию
 curl -X PUT "localhost:9200/products" \
@@ -739,7 +739,7 @@ curl -X PUT "localhost:9200/logs-2023-01" \
   }'
 ```
 
-#### **Index Templates**
+#### Index Templates
 ```bash
 # Создание шаблона для индексов логов
 curl -X PUT "localhost:9200/_template/logs_template" \
@@ -803,7 +803,7 @@ curl -X PUT "localhost:9200/_ilm/policy/logs_lifecycle" \
 
 ### Управление индексами
 
-#### **Index Operations**
+#### Index Operations
 ```bash
 # Получение информации об индексе
 curl -X GET "localhost:9200/products"
@@ -829,7 +829,7 @@ curl -X POST "localhost:9200/products/_open"
 curl -X DELETE "localhost:9200/products"
 ```
 
-#### **Index Aliases**
+#### Index Aliases
 ```bash
 # Создание алиаса
 curl -X POST "localhost:9200/_aliases" \
@@ -865,11 +865,11 @@ curl -X POST "localhost:9200/_aliases" \
   }'
 ```
 
-## **Mapping** и схемы
+## Mapping и схемы
 
-### **Data Types**
+### Data Types
 
-#### **Core Data Types**
+#### Core Data Types
 ```json
 {
   "mappings": {
@@ -918,7 +918,7 @@ curl -X POST "localhost:9200/_aliases" \
 }
 ```
 
-#### **Complex Data Types**
+#### Complex Data Types
 ```json
 {
   "mappings": {
@@ -962,9 +962,9 @@ curl -X POST "localhost:9200/_aliases" \
 }
 ```
 
-### **Dynamic Mapping**
+### Dynamic Mapping
 
-#### **Dynamic Mapping Rules**
+#### Dynamic Mapping Rules
 ```json
 {
   "mappings": {
@@ -1000,7 +1000,7 @@ curl -X POST "localhost:9200/_aliases" \
 }
 ```
 
-#### **Runtime Fields**
+#### Runtime Fields
 ```json
 {
   "mappings": {
@@ -1033,9 +1033,9 @@ curl -X POST "localhost:9200/_aliases" \
 
 ## Анализ текста
 
-### **Analyzers**
+### Analyzers
 
-#### **Built-in Analyzers**
+#### Built-in Analyzers
 ```json
 {
   "settings": {
@@ -1091,7 +1091,7 @@ curl -X POST "localhost:9200/_aliases" \
 }
 ```
 
-#### **Language Analyzers**
+#### Language Analyzers
 ```json
 {
   "settings": {
@@ -1130,9 +1130,9 @@ curl -X POST "localhost:9200/_aliases" \
 }
 ```
 
-### **Text Analysis Process**
+### Text Analysis Process
 
-#### **Analyze API**
+#### Analyze API
 ```bash
 # Анализ текста
 curl -X GET "localhost:9200/_analyze" \
@@ -1158,11 +1158,11 @@ curl -X GET "localhost:9200/_analyze" \
 }
 ```
 
-## **Java API** и интеграция
+## Java API и интеграция
 
-### **Elasticsearch Java Client**
+### Elasticsearch Java Client
 
-#### **High Level REST Client** (**Legacy**)
+#### High Level REST Client (Legacy)
 ```xml
 <dependency>
     <groupId>org.elasticsearch.client</groupId>
@@ -1265,7 +1265,7 @@ public class ElasticsearchService {
 }
 ```
 
-### **Java API Client** 8.x
+### Java API Client 8.x
 ```xml
 <dependency>
     <groupId>co.elastic.clients</groupId>
@@ -1387,9 +1387,9 @@ public class ModernElasticsearchService {
 }
 ```
 
-## **Spring Data Elasticsearch**
+## Spring Data Elasticsearch
 
-### **Configuration**
+### Configuration
 ```java
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "com.example.repository")
@@ -1413,7 +1413,7 @@ public class ElasticsearchConfiguration extends AbstractElasticsearchConfigurati
 }
 ```
 
-### **Entity Mapping**
+### Entity Mapping
 ```java
 @Document(indexName = "products", createIndex = false)
 @Setting(settingPath = "/settings/products-settings.json")
@@ -1475,7 +1475,7 @@ public class Review {
 }
 ```
 
-### **Repository Interface**
+### Repository Interface
 ```java
 public interface ProductRepository extends ElasticsearchRepository<Product, String> {
 
@@ -1530,7 +1530,7 @@ public interface ProductRepository extends ElasticsearchRepository<Product, Stri
 }
 ```
 
-### **Service Layer**
+### Service Layer
 ```java
 @Service
 @Transactional
@@ -1664,81 +1664,81 @@ public class ProductService {
 
 ## Лучшие практики
 
-### **Index Design**
+### Index Design
 
-#### 1. **Shard Strategy**
+#### 1. Shard Strategy
 - **Правильное количество шардов**: 1 шард на 30-50GB данных
 - **Не переусердствуй**: Начни с 1-5 шардов на индекс
 - **Реплики для redundancy**: Минимум 1 реплика для **production**
 - **Rolling индексы**: Для **time-series** данных
 
-#### 2. **Mapping Best Practices**
+#### 2. Mapping Best Practices
 - **Явное mapping**: Не полагайся на **dynamic mapping** в **production**
 - **Keywords для exact match**: Используй **keyword** тип для фильтров
 - **Multi-fields**: Для анализа и агрегаций
 - **Disable unused features**: Отключи _all, **norms** если не нужны
 
-#### 3. **Data Modeling**
+#### 3. Data Modeling
 - **Denormalize when needed**: Для **search performance**
 - **Use nested objects**: Для связанных данных
 - **Avoid deep nesting**: Максимум 3-4 уровня вложенности
 - **Plan for updates**: Обновления переиндексируют весь документ
 
-### **Performance Optimization**
+### Performance Optimization
 
-#### 1. **Query Optimization**
+#### 1. Query Optimization
 - **Filter before query**: Используй **filters** для **frequently changing data**
 - **Pagination limits**: Ограничь **size** и **from** параметры
 - **Cache queries**: Для повторяющихся запросов
 - **Use scroll API**: Для больших **result sets**
 
-#### 2. **Index Optimization**
+#### 2. Index Optimization
 - **Merge policy**: Оптимизируй **segment merging**
 - **Refresh interval**: Установи оптимальный интервал обновления
 - **Translog settings**: Балансируй **durability** и **performance**
 - **Codec selection**: Выбери подходящий **compression codec**
 
-#### 3. **Hardware Considerations**
+#### 3. Hardware Considerations
 - **SSD storage**: Обязательно для **production**
 - **Memory allocation**: 50% от **system memory** для **heap**
 - **CPU cores**: Минимум 4 **cores** для **data nodes**
 - **Network bandwidth**: 1Gbps минимум, 10Gbps рекомендуется
 
-### **Monitoring and Alerting**
+### Monitoring and Alerting
 
-#### 1. **Key Metrics**
+#### 1. Key Metrics
 - **Search performance**: **Response time**, **throughput**
 - **Indexing performance**: **Index rate**, **refresh time**
 - **Cluster health**: **Status**, **unassigned shards**
 - **Resource usage**: **CPU**, **memory**, **disk**, **network**
 
-#### 2. **Common Alerts**
+#### 2. Common Alerts
 - **Red cluster status**: **Critical** — **immediate action required**
 - **High `JVM` memory usage**: **Warning** — **investigate memory leaks**
 - **Slow queries**: **Info** — **performance monitoring**
 - **Disk space low**: **Warning** — **plan capacity expansion**
 
-#### 3. **Troubleshooting**
+#### 3. Troubleshooting
 - **Slow logs**: Включи **slow log** для анализа
 - **Hot threads**: Анализ горячих потоков
 - **Circuit breakers**: Мониторинг **circuit breaker exceptions**
 - **Index statistics**: Анализ индексных метрик
 
-### **Security Best Practices**
+### Security Best Practices
 
-#### 1. **Authentication** & **Authorization**
+#### 1. Authentication & Authorization
 - **Enable `X-Pack` Security**: Для **production deployments**
 - **Strong passwords**: Сложные пароли для системных пользователей
 - **Role-based access**: Ограничь доступ по ролям
 - **TLS encryption**: Шифрование всех коммуникаций
 
-#### 2. **Network Security**
+#### 2. Network Security
 - **Firewall rules**: Ограничь доступ к **Elasticsearch ports**
 - **VPC/`Security` groups**: Изоляция сети
 - **SSL/TLS**: Для всех соединений
 - **API keys**: Для **application access**
 
-#### 3. **Data Protection**
+#### 3. Data Protection
 - **Field-level security**: Ограничь доступ к чувствительным полям
 - **Index-level permissions**: Контроль доступа к индексам
 - **Audit logging**: Включи аудит всех операций
@@ -1793,7 +1793,7 @@ public class ProductService {
 3. **REST API** — Универсальный интерфейс для всех языков
 4. **Third-party tools** — **Kibana**, **Logstash**, **Beats**
 
-### **Best practices**:
+### Best practices:
 
 1. **Правильное планирование** — **Shard strategy**, **mapping design**
 2. **Performance monitoring** — Ключевые метрики и **alerting**
@@ -1803,7 +1803,7 @@ public class ProductService {
 **Elasticsearch** — отличный выбор для приложений, требующих мощного поиска, аналитики и масштабируемого хранения данных. С правильной архитектурой и настройкой он обеспечивает высокую производительность и надежность в **production** средах. 🎯
 
 **Следующие файлы `Elasticsearch`:**
-- ✅ **elasticsearch-basics.md** (**завершен**)
+- ✅ **elasticsearch-basics.md** (завершен)
 - 🔄 **elasticsearch-indexing.md**
 - 🔄 **elasticsearch-queries.md**
 - 🔄 **elasticsearch-aggregations.md**

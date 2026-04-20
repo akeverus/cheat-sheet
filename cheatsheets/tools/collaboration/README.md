@@ -20,15 +20,15 @@ updated: "2026-04-17"
 
 | Инструмент | Категория | Основной документ |
 |-----------|-----------|-------------------|
-| [Jira](jira/README.md) | issue tracker | [jira-basics.md](jira/jira-basics.md) |
-| [Confluence](confluence/README.md) | wiki / docs | [confluence-basics.md](confluence/confluence-basics.md) |
-| [Slack](slack/README.md) | чат, ChatOps | [slack-basics.md](slack/slack-basics.md) |
-| [Mattermost](mattermost/README.md) | self-hosted чат | [mattermost-basics.md](mattermost/mattermost-basics.md) |
-| [Telegram](telegram/README.md) | мессенджер, боты | [telegram-basics.md](telegram/telegram-basics.md) |
+| [[README|Jira]] | issue tracker | [[jira-basics|jira-basics.md]] |
+| [[README|Confluence]] | wiki / docs | [[confluence-basics|confluence-basics.md]] |
+| [[README|Slack]] | чат, ChatOps | [[slack-basics|slack-basics.md]] |
+| [[README|Mattermost]] | self-hosted чат | [[mattermost-basics|mattermost-basics.md]] |
+| [[README|Telegram]] | мессенджер, боты | [[telegram-basics|telegram-basics.md]] |
 
 ### Соседние разделы
-- [CI/CD](../../platform/ci-cd/README.md) — интеграция с трекерами и чатами
-- [Alerting](../../monitoring/alerting/README.md) — вывод алертов в чаты
+- [[README|CI/CD]] — интеграция с трекерами и чатами
+- [[README|Alerting]] — вывод алертов в чаты
 - [AI-инструменты](../ai/) — AI-ассистенты в коммуникации
 
 ### Внешние ресурсы
@@ -86,5 +86,5 @@ updated: "2026-04-17"
 ## Куда идти дальше
 
 - Интеграция с AI-ассистентами в чате — [tools/ai/](../ai/)
-- Автоматизация pipeline → чат — [platform/ci-cd/](../../platform/ci-cd/README.md)
-- Мониторинг и алертинг — [monitoring/alerting/](../../monitoring/alerting/README.md)
+- Автоматизация pipeline → чат — [[README|platform/ci-cd/]]
+- Мониторинг и алертинг — [[README|monitoring/alerting/]]

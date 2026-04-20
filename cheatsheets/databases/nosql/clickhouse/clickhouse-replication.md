@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-views.md"]
 ---
 
-# **ClickHouse**: Репликация и кластеры — Отказоустойчивость и масштабируемость
+# ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость
 
 Комплексное руководство по репликации **ClickHouse**: **ReplicatedMergeTree**, кластеры, **ZooKeeper**, отказоустойчивость и распределенные запросы.
 
@@ -80,18 +80,18 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
   - [Преимущества:](#преимущества)
   - [Следующие темы:](#следующие-темы)
 
-## Введение в репликацию **ClickHouse**
+## Введение в репликацию ClickHouse
 
 Репликация в **ClickHouse** обеспечивает высокую доступность, отказоустойчивость и масштабируемость чтения. В отличие от традиционных СУБД, **ClickHouse** использует асинхронную репликацию на уровне партиций.
 
 ### Типы репликации
 
-1. **Репликация таблиц** (**ReplicatedMergeTree**)
+1. **Репликация таблиц** (ReplicatedMergeTree)
    - Синхронизация данных между узлами
    - Автоматическое восстановление после сбоев
    - Отказоустойчивость операций
 
-2. **Распределенные запросы** (**Distributed engine**)
+2. **Распределенные запросы** (Distributed engine)
    - Распределение запросов по кластеру
    - Балансировка нагрузки
    - Масштабируемость чтения
@@ -130,26 +130,26 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 
 ### Роли в репликации
 
-#### **Leader Replica**
+#### Leader Replica
 - Координирует слияния партиций
 - Записывает логи операций в **ZooKeeper**
 - Распределяет задачи между репликами
 
-#### **Follower Replicas**
+#### Follower Replicas
 - Синхронизируют данные с **leader**
 - Применяют операции из логов
 - Могут обслуживать чтение
 
-#### **ZooKeeper Cluster**
+#### ZooKeeper Cluster
 - Хранит метаданные репликации
 - Координирует блокировки
 - Обеспечивает консистентность
 
-## **ZooKeeper** для координации
+## ZooKeeper для координации
 
 **ZooKeeper** — обязательный компонент для репликации **ClickHouse**. Он хранит состояние кластера и координирует действия реплик.
 
-### Установка **ZooKeeper**
+### Установка ZooKeeper
 
 ```bash
 # На Ubuntu/Debian
@@ -171,7 +171,7 @@ sudo systemctl start zookeeper
 sudo systemctl enable zookeeper
 ```
 
-### Конфигурация **ClickHouse** для **ZooKeeper**
+### Конфигурация ClickHouse для ZooKeeper
 
 ```xml
 <!-- config.xml -->
@@ -193,7 +193,7 @@ sudo systemctl enable zookeeper
 </clickhouse>
 ```
 
-### Структура данных в **ZooKeeper**
+### Структура данных в ZooKeeper
 
 ```text
 /clickhouse
@@ -208,7 +208,7 @@ sudo systemctl enable zookeeper
 └── /blocks
 ```
 
-## **ReplicatedMergeTree** движок
+## ReplicatedMergeTree движок
 
 Основной движок для реплицированных таблиц. Обеспечивает синхронизацию данных между репликами.
 
@@ -230,7 +230,7 @@ ORDER BY (user_id, timestamp)
 SETTINGS index_granularity = 8192;
 ```
 
-### Параметры **ReplicatedMergeTree**
+### Параметры ReplicatedMergeTree
 
 ```sql
 ENGINE = ReplicatedMergeTree(
@@ -681,7 +681,7 @@ GROUP BY database, table;
    -- Мониторить skew данных
    ```
 
-### Конфигурация **ZooKeeper**
+### Конфигурация ZooKeeper
 
 1. **Кластер ZooKeeper**
    ```xml
@@ -796,6 +796,6 @@ GROUP BY database, table;
 
 
 **Следующие темы:**
-- [Производительность](clickhouse-performance.md)
-- [Интеграции и экосистема](clickhouse-integration.md)
+- [[clickhouse-performance|Производительность]]
+- [[clickhouse-integration|Интеграции и экосистема]]
 

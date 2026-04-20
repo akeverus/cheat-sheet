@@ -17,15 +17,15 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Computer Science](computer-science/README.md)
-[Networks](networks/README.md)
-[Operating Systems](operating-systems/README.md)
-[Programming Basics](programming-basics/README.md)
+[[README|Computer Science]]
+[[README|Networks]]
+[[README|Operating Systems]]
+[[README|Programming Basics]]
 
 ## Содержание
 
-- [Чистый код](clean-code.md) — именование, функции, комментарии, структура, обработка ошибок
-- [Git](git-basics.md) — ветки, коммиты, merge, rebase, типовой workflow
+- [[clean-code|Чистый код]] — именование, функции, комментарии, структура, обработка ошибок
+- [[git-basics|Git]] — ветки, коммиты, merge, rebase, типовой workflow
 - [Computer Science](computer-science/) — вычислительная сложность, алгоритмы, архитектура, сети
 - [Программирование](programming-basics/) — переменные, типы, ООП, парадигмы
 - [Компьютерные сети](networks/) — модель OSI, TCP/IP, протоколы

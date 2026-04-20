@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Azure DevOps**
+# Azure DevOps
 
 **Azure DevOps** — это комплексная платформа от **Microsoft** для **DevOps**, которая включает в себя **Azure Pipelines** для CI/CD, **Azure Boards** для управления проектами, **Azure Repos** для **Git** репозиториев, **Azure Artifacts** для управления пакетами и **Azure Test Plans** для тестирования. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **Azure DevOps** в **production** средах.
 
@@ -52,10 +52,10 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Основы **Azure DevOps**
+## Основы Azure DevOps
 
 ### Структура организации и проектов
-Ниже — структура организации и проектов **Azure DevOps** (**текст**).
+Ниже — структура организации и проектов **Azure DevOps** (текст).
 ```text
 azure-devops-organization/
 ├── Projects/
@@ -89,7 +89,7 @@ azure-devops-organization/
 ```
 
 ### YAML Pipeline основы
-Пример базового **azure-pipelines.yml** (**YAML**).
+Пример базового **azure-pipelines.yml** (YAML).
 ```yaml
 # azure-pipelines.yml - базовая конфигурация
 name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
@@ -199,9 +199,9 @@ stages:
               package: '$(Pipeline.Workspace)/drop//*.zip'
 ```
 
-## Продвинутые **Pipeline** паттерны
+## Продвинутые Pipeline паттерны
 
-### Multi-stage deployments с **approvals**
+### Multi-stage deployments с approvals
 ```yaml
 # azure-pipelines-advanced.yml - продвинутые deployment паттерны
 name: $(BuildDefinitionName)_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
@@ -602,7 +602,7 @@ steps:
   condition: succeededOrFailed()
 ```
 
-## Environments и **Approvals**
+## Environments и Approvals
 
 ### Environment management
 ```yaml
@@ -722,7 +722,7 @@ stages:
           - script: echo "Deploying to production..."
 ```
 
-## Service Connections и **Security**
+## Service Connections и Security
 
 ### Service connections
 ```yaml
@@ -786,7 +786,7 @@ steps:
     overrideParameters: '-environment staging'
 ```
 
-### Variable groups и **secrets**
+### Variable groups и secrets
 ```yaml
 # azure-pipelines-variables.yml - управление переменными
 variables:
@@ -830,9 +830,9 @@ stages:
         # Note: Secret variables are not expanded in script output
 ```
 
-## Multi-repository и **Monorepo** стратегии
+## Multi-repository и Monorepo стратегии
 
-### Monorepo с **path filters**
+### Monorepo с path filters
 ```yaml
 # azure-pipelines-monorepo.yml - monorepo стратегия
 trigger:
@@ -946,7 +946,7 @@ stages:
     serviceName: 'web-app'
 ```
 
-## Monitoring и **Analytics**
+## Monitoring и Analytics
 
 ### Pipeline analytics
 ```yaml
@@ -1033,7 +1033,7 @@ stages:
       displayName: 'Send analytics data'
 ```
 
-### Integration с **Azure Monitor**
+### Integration с Azure Monitor
 ```yaml
 # azure-pipelines-monitoring.yml - интеграция с Azure Monitor
 trigger:
@@ -1088,7 +1088,7 @@ steps:
 
 ## Enterprise Features
 
-### Branch policies и **code reviews**
+### Branch policies и code reviews
 ```yaml
 # azure-pipelines-policy.yml - интеграция с branch policies
 trigger:
@@ -1154,7 +1154,7 @@ stages:
     - script: echo "Building application..."
 ```
 
-### Audit и **compliance**
+### Audit и compliance
 ```yaml
 # azure-pipelines-audit.yml - audit и compliance
 trigger:
@@ -1262,7 +1262,7 @@ stages:
 
 ## Performance Optimization
 
-### Agent pools и **scaling**
+### Agent pools и scaling
 ```yaml
 # azure-pipelines-scaling.yml - оптимизация производительности
 trigger:

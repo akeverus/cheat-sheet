@@ -13,7 +13,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
-# Go: стандартная библиотека — **HTTP**
+# Go: стандартная библиотека — HTTP
 
 ## Полезные ссылки
 
@@ -89,7 +89,7 @@ updated: "2026-02-06"
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **HTTP**
+## Введение в HTTP
 
 Пакет `net/http` предоставляет полную поддержку **HTTP** клиента и сервера. Понимание работы с **HTTP** критично для создания веб-приложений и **API**.
 
@@ -100,11 +100,11 @@ updated: "2026-02-06"
 3. **HTTP Client** — выполнение **HTTP** запросов
 4. **Middleware** — промежуточная обработка запросов
 
-## **HTTP Server**
+## HTTP Server
 
 **HTTP** сервер в Go создается с помощью пакета `net/http`.
 
-### Базовый **HTTP** сервер
+### Базовый HTTP сервер
 
 ```go
 package main
@@ -144,7 +144,7 @@ func main() {
 }
 ```
 
-### **HTTPS** сервер
+### HTTPS сервер
 
 ```go
 import (
@@ -164,11 +164,11 @@ func main() {
 }
 ```
 
-## **HTTP Handlers**
+## HTTP Handlers
 
 **Handlers** обрабатывают **HTTP** запросы и формируют ответы.
 
-### **Handler** функция
+### Handler функция
 
 ```go
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +182,7 @@ func main() {
 }
 ```
 
-### **Handler** интерфейс
+### Handler интерфейс
 
 ```go
 type Handler interface {
@@ -244,7 +244,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Работа с **JSON**
+### Работа с JSON
 
 ```go
 import (
@@ -277,11 +277,11 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## **HTTP Client**
+## HTTP Client
 
 **HTTP** клиент позволяет выполнять **HTTP** запросы к внешним сервисам.
 
-### Базовый **GET** запрос
+### Базовый GET запрос
 
 ```go
 import (
@@ -305,7 +305,7 @@ func main() {
 }
 ```
 
-### **POST** запрос
+### POST запрос
 
 ```go
 import (
@@ -383,11 +383,11 @@ func main() {
 }
 ```
 
-## **Middleware**
+## Middleware
 
 **Middleware** позволяет добавлять промежуточную обработку запросов.
 
-### Базовый **middleware**
+### Базовый middleware
 
 ```go
 func loggingMiddleware(next http.Handler) http.Handler {
@@ -408,7 +408,7 @@ func main() {
 }
 ```
 
-### Цепочка **middleware**
+### Цепочка middleware
 
 ```go
 func chainMiddleware(handler http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
@@ -433,7 +433,7 @@ func main() {
 }
 ```
 
-## **Routing**
+## Routing
 
 Роутинг позволяет направлять запросы к соответствующим обработчикам.
 
@@ -464,7 +464,7 @@ func main() {
 }
 ```
 
-## **Templates**
+## Templates
 
 Шаблоны позволяют генерировать динамический **HTML** контент.
 
@@ -510,7 +510,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Аутентификация **middleware**
+### Аутентификация middleware
 
 ```go
 func authMiddleware(next http.Handler) http.Handler {
@@ -534,7 +534,7 @@ func authMiddleware(next http.Handler) http.Handler {
 }
 ```
 
-### **CORS middleware**
+### CORS middleware
 
 ```go
 func corsMiddleware(next http.Handler) http.Handler {
@@ -553,7 +553,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 ```
 
-### **Rate limiting middleware**
+### Rate limiting middleware
 
 ```go
 import "golang.org/x/time/rate"
@@ -571,7 +571,7 @@ func rateLimitMiddleware(limiter *rate.Limiter) func(http.Handler) http.Handler 
 }
 ```
 
-### **Recovery middleware**
+### Recovery middleware
 
 ```go
 func recoveryMiddleware(next http.Handler) http.Handler {
@@ -587,7 +587,7 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 }
 ```
 
-### **Request** `ID` **middleware**
+### Request `ID` middleware
 
 ```go
 import "github.com/google/uuid"
@@ -606,7 +606,7 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 }
 ```
 
-### **Compression middleware**
+### Compression middleware
 
 ```go
 import "compress/gzip"
@@ -637,7 +637,7 @@ func (w *gzipResponseWriter) Write(b []byte) (int, error) {
 }
 ```
 
-### Практические примеры: **REST API**
+### Практические примеры: REST API
 
 ```go
 type UserAPI struct {
@@ -681,7 +681,7 @@ func (api *UserAPI) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **File Server**
+### Практические примеры: File Server
 
 ```go
 // Статические файлы
@@ -701,7 +701,7 @@ func cachedFileServer() {
 }
 ```
 
-### Практические примеры: **WebSocket**
+### Практические примеры: WebSocket
 
 ```go
 import "github.com/gorilla/websocket"
@@ -733,7 +733,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Server-Sent Events**
+### Практические примеры: Server-Sent Events
 
 ```go
 func sseHandler(w http.ResponseWriter, r *http.Request) {
@@ -755,7 +755,7 @@ func sseHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Multipart Form**
+### Практические примеры: Multipart Form
 
 ```go
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -790,7 +790,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Cookie Management**
+### Практические примеры: Cookie Management
 
 ```go
 func setCookieHandler(w http.ResponseWriter, r *http.Request) {
@@ -816,7 +816,7 @@ func getCookieHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Session Management**
+### Практические примеры: Session Management
 
 ```go
 type SessionStore struct {
@@ -853,7 +853,7 @@ func (s *SessionStore) CreateSession() *Session {
 }
 ```
 
-### Практические примеры: **HTTP**/2 **Server Push**
+### Практические примеры: HTTP/2 Server Push
 
 ```go
 func pushHandler(w http.ResponseWriter, r *http.Request) {
@@ -868,7 +868,7 @@ func pushHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **HTTP Client** с **Retry**
+### Практические примеры: HTTP Client с Retry
 
 ```go
 func httpClientWithRetry(url string, maxRetries int) (*http.Response, error) {
@@ -890,7 +890,7 @@ func httpClientWithRetry(url string, maxRetries int) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **HTTP Client** с **Circuit Breaker**
+### Практические примеры: HTTP Client с Circuit Breaker
 
 ```go
 type CircuitBreakerClient struct {
@@ -928,7 +928,7 @@ func (c *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **HTTP Client Pool**
+### Практические примеры: HTTP Client Pool
 
 ```go
 type ClientPool struct {
@@ -962,7 +962,7 @@ func (p *ClientPool) Put(client *http.Client) {
 }
 ```
 
-### Практические примеры: **HTTP Proxy**
+### Практические примеры: HTTP Proxy
 
 ```go
 func proxyHandler(targetURL string) http.HandlerFunc {
@@ -994,7 +994,7 @@ func proxyHandler(targetURL string) http.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Graceful Shutdown**
+### Практические примеры: Graceful Shutdown
 
 ```go
 func gracefulShutdown(server *http.Server) {
@@ -1015,7 +1015,7 @@ func gracefulShutdown(server *http.Server) {
 }
 ```
 
-### Практические примеры: **Health Check Endpoint**
+### Практические примеры: Health Check Endpoint
 
 ```go
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -1045,7 +1045,7 @@ func livenessHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Request Validation**
+### Практические примеры: Request Validation
 
 ```go
 func validateRequest(r *http.Request) error {
@@ -1071,7 +1071,7 @@ func validatedHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **Response Caching**
+### Практические примеры: Response Caching
 
 ```go
 type CacheEntry struct {
@@ -1126,7 +1126,7 @@ func cachedHandler(cache *ResponseCache) http.HandlerFunc {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **retry**
+### Практические примеры: HTTP клиент с retry
 
 ```go
 type RetryClient struct {
@@ -1176,7 +1176,7 @@ func (rc *RetryClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **circuit breaker**
+### Практические примеры: HTTP клиент с circuit breaker
 
 ```go
 type CircuitBreakerClient struct {
@@ -1237,7 +1237,7 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **HTTP** сервер с **metrics**
+### Практические примеры: HTTP сервер с metrics
 
 ```go
 type MetricsHandler struct {
@@ -1325,7 +1325,7 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 }
 ```
 
-### Практические примеры: **HTTP** сервер с **health checks**
+### Практические примеры: HTTP сервер с health checks
 
 ```go
 type HealthChecker interface {
@@ -1404,7 +1404,7 @@ func setupHealthCheck(mux *http.ServeMux, hcs *HealthCheckServer) {
 }
 ```
 
-### Практические примеры: **HTTP** сервер с **request** `ID`
+### Практические примеры: HTTP сервер с request `ID`
 
 ```go
 type RequestIDGenerator func() string
@@ -1442,7 +1442,7 @@ func GetRequestID(r *http.Request) string {
 }
 ```
 
-### Практические примеры: **HTTP** сервер с **compression**
+### Практические примеры: HTTP сервер с compression
 
 ```go
 import "github.com/klauspost/compress/gzip"
@@ -1483,7 +1483,7 @@ func CompressionMiddleware(next http.Handler) http.Handler {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с прокси
+### Практические примеры: HTTP клиент с прокси
 
 ```go
 func NewProxyClient(proxyURL string) (*http.Client, error) {
@@ -1519,7 +1519,7 @@ func NewSOCKS5Client(proxyAddr string) (*http.Client, error) {
 }
 ```
 
-### Практические примеры: **HTTP** сервер с **file serving**
+### Практические примеры: HTTP сервер с file serving
 
 ```go
 func FileServerMiddleware(root string, stripPrefix string) http.Handler {
@@ -1546,7 +1546,7 @@ func setupFileServer(mux *http.ServeMux, path string, directory string) {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **cookies**
+### Практические примеры: HTTP клиент с cookies
 
 ```go
 type CookieJar struct {
@@ -1600,7 +1600,7 @@ func NewClientWithCookies() *http.Client {
 1. **Используйте context** — передавайте **context** в запросы для отмены
 2. **Обрабатывайте ошибки** — всегда проверяйте ошибки при работе с **HTTP**
 3. **Закрывайте тела ответов** — используйте **defer** для закрытия **resp.Body**
-4. **Используйте middleware** — для общей логики (**логирование, аутентификация**)
+4. **Используйте middleware** — для общей логики (логирование, аутентификация)
 5. **Настраивайте таймауты** — устанавливайте таймауты для клиентов и серверов
 6. **Используйте пулы соединений** — настраивайте **Transport** для переиспользования соединений
 7. **Используйте graceful shutdown** — корректно завершайте работу сервера
@@ -1613,7 +1613,7 @@ func NewClientWithCookies() *http.Client {
 14. **Используйте circuit breaker** — для защиты от каскадных отказов
 15. **Реализуйте retry логику** — для обработки временных ошибок
 
-### Практические примеры: **Graceful shutdown HTTP** сервера
+### Практические примеры: Graceful shutdown HTTP сервера
 
 ```go
 func GracefulShutdown(server *http.Server, timeout time.Duration) error {
@@ -1655,7 +1655,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **connection pooling**
+### Практические примеры: HTTP клиент с connection pooling
 
 ```go
 func NewPooledClient(maxIdleConns, maxConnsPerHost int) *http.Client {

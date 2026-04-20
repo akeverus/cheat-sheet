@@ -19,9 +19,9 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Redis](redis/redis-basics.md)
-- [MongoDB](mongodb/mongodb-basics.md)
-- [Cassandra](cassandra/cassandra-basics.md)
-- [Elasticsearch](elasticsearch/elasticsearch-basics.md)
-- [ClickHouse](clickhouse/clickhouse-basics.md)
-- [Couchbase](couchbase/couchbase-basics.md)
+- [[redis-basics|Redis]]
+- [[mongodb-basics|MongoDB]]
+- [[cassandra-basics|Cassandra]]
+- [[elasticsearch-basics|Elasticsearch]]
+- [[clickhouse-basics|ClickHouse]]
+- [[couchbase-basics|Couchbase]]

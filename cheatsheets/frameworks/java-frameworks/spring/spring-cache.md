@@ -60,7 +60,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Cache**
+## Введение в Spring Cache
 
 **Spring Cache** предоставляет абстракцию для кеширования, которая позволяет легко добавлять кеширование в приложения без изменения бизнес-логики. Поддерживаются различные провайдеры кеширования: простой **in-memory cache**, **EhCache**, **Caffeine**, **Redis** и другие.
 
@@ -71,7 +71,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - **Гибкость**: Легкое переключение между провайдерами
 - **Производительность**: Значительное улучшение производительности приложений
 
-### Архитектура **Spring Cache**
+### Архитектура Spring Cache
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -92,7 +92,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring Cache**
+## Настройка Spring Cache
 
 ### Включение кеширования
 
@@ -117,7 +117,7 @@ public class CacheConfig {
 }
 ```
 
-### **Spring Boot Auto-Configuration**
+### Spring Boot Auto-Configuration
 
 **Spring Boot** автоматически настраивает кеширование при наличии зависимости:**
 
@@ -128,7 +128,7 @@ public class CacheConfig {
 </dependency>
 ```
 
-## @**Cacheable**
+## @Cacheable
 
 Аннотация @**Cacheable** указывает, что результат метода должен быть закеширован.
 
@@ -231,7 +231,7 @@ public class UserService {
 }
 ```
 
-## @**CacheEvict**
+## @CacheEvict
 
 Аннотация @**CacheEvict** позволяет удалять записи из кеша.
 
@@ -254,7 +254,7 @@ public class UserService {
 }
 ```
 
-### **beforeInvocation**
+### beforeInvocation
 
 ```java
 @Service
@@ -274,7 +274,7 @@ public class UserService {
 }
 ```
 
-## @**CachePut**
+## @CachePut
 
 Аннотация @**CachePut** обновляет кеш, не проверяя существующие записи.
 
@@ -294,7 +294,7 @@ public class UserService {
 }
 ```
 
-## @**Caching**
+## @Caching
 
 Аннотация @**Caching** позволяет комбинировать несколько операций кеширования.
 
@@ -332,7 +332,7 @@ public class UserService {
 
 ## Redis Cache
 
-### Настройка **Redis Cache Manager**
+### Настройка Redis Cache Manager
 
 ```xml
 <dependency>
@@ -376,7 +376,7 @@ public class RedisCacheConfig {
 }
 ```
 
-### Использование **Redis Cache**
+### Использование Redis Cache
 
 ```java
 @Service
@@ -395,7 +395,7 @@ public class UserService {
 }
 ```
 
-### Конфигурация через **application.properties**
+### Конфигурация через application.properties
 
 ```properties
 # Redis Configuration
@@ -414,7 +414,7 @@ spring.cache.redis.use-key-prefix=true
 
 ## EhCache
 
-### Настройка **EhCache**
+### Настройка EhCache
 
 ```xml
 <dependency>
@@ -481,7 +481,7 @@ public class EhCacheConfig {
 
 ## Caffeine Cache
 
-### Настройка **Caffeine**
+### Настройка Caffeine
 
 ```xml
 <dependency>
@@ -576,7 +576,7 @@ public class CacheService {
 @Cacheable("data")
 ```
 
-### 2. Настраивайте **TTL** в зависимости от данных
+### 2. Настраивайте TTL в зависимости от данных
 
 ```java
 // ✅ Хорошо - статические данные кешируются дольше
@@ -588,7 +588,7 @@ public class CacheService {
 // TTL: 30 minutes
 ```
 
-### 3. Используйте **condition** и **unless**
+### 3. Используйте condition и unless
 
 ```java
 // ✅ Хорошо

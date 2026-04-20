@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # GraphQL для Java
 
-Комплексное руководство по использованию **GraphQL** в **Java**-приложениях: **Schema Definition Language** (**SDL**), **resolvers**, **data fetching**, **Spring Boot** интеграция, **Apollo Client**, **subscriptions**, **federation** и **best practices**.
+Комплексное руководство по использованию **GraphQL** в **Java**-приложениях: **Schema Definition Language** (SDL), **resolvers**, **data fetching**, **Spring Boot** интеграция, **Apollo Client**, **subscriptions**, **federation** и **best practices**.
 
 ## Полезные ссылки
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [GraphQL Foundation](https://graphql.org/) — сайт **GraphQL**
 - [GraphQL Java](https://www.graphql-java.com/) — **Java** реализация **GraphQL**
 
-### **Java** интеграции
+### Java интеграции
 - [Spring GraphQL](https://spring.io/projects/spring-graphql) — **Spring Boot** интеграция
 - [GraphQL Java Tools](https://www.graphql-java-kickstart.com/tools/) — schema-first подход
 - [Netflix DGS](https://netflix.github.io/dgs/) — **Domain Graph Service**
@@ -31,7 +31,7 @@ updated: "2026-02-11"
 - [GraphQL Request](https://github.com/jasonkuhrt/graphql-request) — простой **JS** клиент
 - [Spring WebClient](https://docs.spring.io/spring-framework/reference/web/webflux-webclient.html) — реактивный **HTTP** клиент
 
-### **Best practices**
+### Best practices
 - [GraphQL Best Practices](https://graphql.org/learn/best-practices/) — рекомендации **GraphQL**
 - [GraphQL Schema Design](https://graphql.org/learn/schema/) — дизайн схем
 - [GraphQL Security](https://graphql.org/learn/authorization/) — безопасность
@@ -40,18 +40,18 @@ updated: "2026-02-11"
 - [[rest-api-design|rest-api-design.md]] — дизайн **REST API**
 - [[grpc|grpc.md]] — **gRPC**
 - [[spring-graphql|Spring GraphQL]] — интеграция **Spring GraphQL**
-- [PostgreSQL](../../../databases/relational/postgresql/README.md) — базы данных для **GraphQL**
-- [Мониторинг](../../../monitoring/README.md) — мониторинг и **observability**
+- [[README|PostgreSQL]] — базы данных для **GraphQL**
+- [[README|Мониторинг]] — мониторинг и **observability**
 
 ## Содержание
 
 - [Введение в **GraphQL**](#введение-в-graphql)
   - [Почему **GraphQL**?](#почему-graphql)
   - [Основные концепции](#основные-концепции)
-    - [**Schema** (**Схема**)](#schema-схема)
-    - [**Query** (**Запросы**)](#query-запросы)
-    - [**Mutation** (**Мутации**)](#mutation-мутации)
-    - [**Subscription** (**Подписки**)](#subscription-подписки)
+    - [**Schema** (Схема)](#schema-схема)
+    - [**Query** (Запросы)](#query-запросы)
+    - [**Mutation** (Мутации)](#mutation-мутации)
+    - [**Subscription** (Подписки)](#subscription-подписки)
 - [**GraphQL** vs **REST**](#graphql-vs-rest)
   - [Сравнение архитектур](#сравнение-архитектур)
     - [**REST API** типичный сценарий](#rest-api-типичный-сценарий)
@@ -161,15 +161,15 @@ updated: "2026-02-11"
     - [**Developer Experience**:](#developer-experience)
   - [Когда НЕ использовать:](#когда-не-использовать)
   - [Типы **Operations** по назначению:](#типы-operations-по-назначению)
-    - [**Queries** (**Чтение**):](#queries-чтение)
-    - [**Mutations** (**Изменение**):](#mutations-изменение)
-    - [**Subscriptions** (**Подписки**):](#subscriptions-подписки)
+    - [**Queries** (Чтение):](#queries-чтение)
+    - [**Mutations** (Изменение):](#mutations-изменение)
+    - [**Subscriptions** (Подписки):](#subscriptions-подписки)
 
-## Введение в **GraphQL**
+## Введение в GraphQL
 
 **GraphQL** — это **query language** для **API**, разработанный **Facebook** в `2012` году и открытый в `2015`. **GraphQL** предоставляет более эффективный, мощный и гибкий подход к разработке **API** по сравнению с **REST**.
 
-### Почему **GraphQL**?
+### Почему GraphQL?
 
 **GraphQL** решает основные проблемы традиционных **REST API**:**
 
@@ -183,11 +183,11 @@ updated: "2026-02-11"
 
 ### Основные концепции
 
-#### **Schema** (**Схема**)
+#### Schema (Схема)
 
-Схема **GraphQL** определяет структуру данных и доступные операции (**Query, `Mutation`, Subscription**).
+Схема **GraphQL** определяет структуру данных и доступные операции (Query, `Mutation`, Subscription).
 
-Пример определения корневой схемы (**Query**) с типами **User**.
+Пример определения корневой схемы (Query) с типами **User**.
 
 ```graphql
 # Корневая схема: Query, Mutation, Subscription и типы User, Post
@@ -221,7 +221,7 @@ type Post {
 }
 ```
 
-#### **Query** (**Запросы**)
+#### Query (Запросы)
 **Клиенты запрашивают только нужные данные:**
 
 ```graphql
@@ -239,7 +239,7 @@ query GetUsers {
 }
 ```
 
-#### **Mutation** (**Мутации**)
+#### Mutation (Мутации)
 **Изменение данных через **typed** операции:**
 
 ```graphql
@@ -253,7 +253,7 @@ mutation CreateUser($input: CreateUserInput!) {
 }
 ```
 
-#### **Subscription** (**Подписки**)
+#### Subscription (Подписки)
 **Real-time** обновления через **WebSocket**:**
 
 ```graphql
@@ -267,11 +267,11 @@ subscription OnUserCreated {
 }
 ```
 
-## **GraphQL** vs **REST**
+## GraphQL vs REST
 
 ### Сравнение архитектур
 
-#### **REST API** типичный сценарий
+#### REST API типичный сценарий
 ```text
 # Типичный REST ответ: пользователь и все посты с автором (over-fetching)
 GET /api/users/1
@@ -299,7 +299,7 @@ GET /api/users/1
 - Множество **endpoints** для разных представлений данных
 - Сложности с **versioning**
 
-#### **GraphQL** решение
+#### GraphQL решение
 ```graphql
 # Запрос одного пользователя с постами — только нужные поля
 query GetUserWithPosts($userId: ID!) {
@@ -323,7 +323,7 @@ query GetUserWithPosts($userId: ID!) {
 - **Type-safe** контракты
 - **Built-in documentation** через **introspection**
 
-### Когда использовать **GraphQL**?
+### Когда использовать GraphQL?
 
 #### ✅ Идеально подходит для:
 - **Mobile приложения** — Снижение сетевого трафика
@@ -333,15 +333,15 @@ query GetUserWithPosts($userId: ID!) {
 - **Multiple clients** — Разные представления данных
 
 #### ❌ Не подходит для:
-- **`Simple CRUD APIs`** — **Overhead** не оправдан
+- `Simple CRUD APIs` — **Overhead** не оправдан
 - **File uploads** — Лучше использовать **REST**
 - **Real-time messaging** — Использовать **WebSocket**/**STOMP**
 - **Caching на CDN** — **GraphQL** сложнее кешировать
 - **Legacy системы** — Требует значительных изменений
 
-## **Schema Definition Language**
+## Schema Definition Language
 
-### Основы **SDL**
+### Основы SDL
 
 #### Типы данных
 ```graphql
@@ -430,7 +430,7 @@ input PostFilter {
 }
 ```
 
-### **Schema directives**
+### Schema directives
 
 #### Встроенные директивы
 ```graphql
@@ -462,9 +462,9 @@ input PetInput @oneOf {
 }
 ```
 
-### **Schema stitching** и **composition**
+### Schema stitching и composition
 
-#### **Schema composition**
+#### Schema composition
 ```graphql
 # user-schema.graphql
 type User @key(fields: "id") {
@@ -504,11 +504,11 @@ type UserWithPosts {
 }
 ```
 
-## **GraphQL Java**
+## GraphQL Java
 
-### **GraphQL Java** основы
+### GraphQL Java основы
 
-#### **Maven** зависимости
+#### Maven зависимости
 ```xml
 <!-- Зависимости GraphQL Java и Spring Boot starter -->
 <dependency>
@@ -594,9 +594,9 @@ public class GraphQLApplication {
 }
 ```
 
-### **Data fetchers**
+### Data fetchers
 
-#### Реализация **data fetchers**
+#### Реализация data fetchers
 ```java
 // Data fetcher для списка пользователей (реализация DataFetcher)
 @Component
@@ -682,9 +682,9 @@ public class CreateUserDataFetcher implements DataFetcher<User> {
 }
 ```
 
-### **Schema-first** подход
+### Schema-first подход
 
-#### **GraphQL Java Tools**
+#### GraphQL Java Tools
 ```java
 // Конфигурация схемы и словарь типов для schema-first (User, Post, Comment)
 @Configuration
@@ -827,11 +827,11 @@ public class SubscriptionResolver implements GraphQLSubscriptionResolver {
 }
 ```
 
-## **Spring Boot** интеграция
+## Spring Boot интеграция
 
-### **Spring GraphQL**
+### Spring GraphQL
 
-#### **Maven** зависимости
+#### Maven зависимости
 ```xml
 <!-- Spring Boot GraphQL starter и тестовый модуль -->
 <dependency>
@@ -847,7 +847,7 @@ public class SubscriptionResolver implements GraphQLSubscriptionResolver {
 </dependency>
 ```
 
-#### **Configuration**
+#### Configuration
 ```java
 // Регистрация скаляров, data fetchers и подписок для Spring GraphQL
 @Configuration
@@ -901,9 +901,9 @@ public class GraphQLConfig {
 }
 ```
 
-### **Controller approach**
+### Controller approach
 
-#### @**Controller** для **GraphQL**
+#### @Controller для GraphQL
 ```java
 // Маппинг Query/Mutation/Subscription на методы сервиса через аннотации
 @Controller
@@ -970,9 +970,9 @@ public class PostController {
 }
 ```
 
-### **Input**/**Output types**
+### Input/Output types
 
-#### **DTO** классы
+#### DTO классы
 ```java
 // Input types
 public class CreateUserInput {
@@ -1036,9 +1036,9 @@ public class PostDto {
 }
 ```
 
-## **Resolvers** и **Data Fetching**
+## Resolvers и Data Fetching
 
-### **Field resolvers**
+### Field resolvers
 
 #### Разрешение полей
 ```java
@@ -1149,7 +1149,7 @@ public class PostResolver implements GraphQLResolver<Post> {
 }
 ```
 
-### **DataLoader** для **batch loading**
+### DataLoader для batch loading
 
 #### Оптимизация N+1 проблемы
 ```java
@@ -1227,7 +1227,7 @@ public class UserService {
 }
 ```
 
-### **Custom scalars**
+### Custom scalars
 
 #### Пользовательские скаляры
 ```java
@@ -1321,11 +1321,11 @@ public class ScalarConfig {
 }
 ```
 
-## **Apollo Client**
+## Apollo Client
 
-### **JavaScript**/**TypeScript client**
+### JavaScript/TypeScript client
 
-#### **Apollo Client setup**
+#### Apollo Client setup
 ```typescript
 // React application with Apollo Client
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
@@ -1412,9 +1412,9 @@ function CreateUserForm() {
 }
 ```
 
-### **React hooks**
+### React hooks
 
-#### **Apollo Client hooks**
+#### Apollo Client hooks
 ```typescript
 // Custom hooks for GraphQL operations
 import { useQuery, useMutation, useSubscription } from '@apollo/client';
@@ -1533,9 +1533,9 @@ export const client = new ApolloClient({
 });
 ```
 
-### **Java GraphQL client**
+### Java GraphQL client
 
-#### **GraphQL Java client**
+#### GraphQL Java client
 ```java
 // Клиент GraphQL на WebClient: запросы, мутации и подписки
 @Service
@@ -1655,11 +1655,11 @@ public class GraphQLError {
 }
 ```
 
-## **Subscriptions**
+## Subscriptions
 
-### **WebSocket subscriptions**
+### WebSocket subscriptions
 
-#### **GraphQL over WebSocket**
+#### GraphQL over WebSocket
 ```java
 // Регистрация WebSocket-эндпоинта для GraphQL подписок
 @Configuration
@@ -1741,9 +1741,9 @@ public class UserService {
 }
 ```
 
-### **Apollo Client subscriptions**
+### Apollo Client subscriptions
 
-#### **React subscription hooks**
+#### React subscription hooks
 ```typescript
 // Subscription hook
 import { useSubscription, gql } from '@apollo/client';
@@ -1853,11 +1853,11 @@ function PostFeed() {
 }
 ```
 
-## **Federation**
+## Federation
 
-### **Apollo Federation**
+### Apollo Federation
 
-#### **Federation setup**
+#### Federation setup
 ```java
 // Подграф федерации: схема сервиса User
 @Configuration
@@ -1966,9 +1966,9 @@ public class PostResolver {
 }
 ```
 
-### **Schema composition**
+### Schema composition
 
-#### **Federation gateway**
+#### Federation gateway
 ```java
 // Шлюз федерации: агрегация подграфов (User, Post)
 @Configuration
@@ -2041,11 +2041,11 @@ public class GatewayConfig {
 }
 ```
 
-## **Security**
+## Security
 
-### **Authentication**
+### Authentication
 
-#### **JWT authentication**
+#### JWT authentication
 ```java
 // Настройка безопасности: JWT и CORS для GraphQL
 @Configuration
@@ -2128,9 +2128,9 @@ public class SecurityDataFetcher implements DataFetcher<Object> {
 }
 ```
 
-### **Authorization**
+### Authorization
 
-#### **Field-level authorization**
+#### Field-level authorization
 ```java
 // Проверка прав доступа к полям User на уровне резолвера
 @Component
@@ -2200,9 +2200,9 @@ public class PostFieldSecurityResolver implements GraphQLResolver<Post> {
 }
 ```
 
-### **Rate limiting**
+### Rate limiting
 
-#### **Rate limiting** для **GraphQL**
+#### Rate limiting для GraphQL
 ```java
 // Ограничение частоты запросов через DataFetcher
 @Component
@@ -2246,11 +2246,11 @@ public class RateLimitConfig {
 }
 ```
 
-## **Performance optimization**
+## Performance optimization
 
-### **Query complexity**
+### Query complexity
 
-#### **Complexity analysis**
+#### Complexity analysis
 ```java
 // Анализ сложности запроса и отклонение при превышении лимита
 @Component
@@ -2314,9 +2314,9 @@ public class ComplexityCalculator {
 }
 ```
 
-### **Caching**
+### Caching
 
-#### **GraphQL caching**
+#### GraphQL caching
 ```java
 // Кэширование ответов по запросу и переменным
 @Configuration
@@ -2381,9 +2381,9 @@ public class GraphQLCacheConfig {
 }
 ```
 
-### **Query optimization**
+### Query optimization
 
-#### **Automatic persisted queries**
+#### Automatic persisted queries
 ```java
 // Регистрация persisted-запросов по хэшу
 @Configuration
@@ -2497,11 +2497,11 @@ public class GraphQLController {
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit testing resolvers**
+### Unit testing resolvers
 
-#### Тестирование **data fetchers**
+#### Тестирование data fetchers
 ```java
 // Юнит-тест data fetcher с моками сервисов
 @SpringBootTest
@@ -2585,9 +2585,9 @@ public class UserResolverTest {
 }
 ```
 
-### **Integration testing**
+### Integration testing
 
-#### Тестирование **GraphQL endpoints**
+#### Тестирование GraphQL endpoints
 ```java
 // Интеграционный тест с GraphQLTester и случайным портом
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -2757,9 +2757,9 @@ public class GraphQLIntegrationTest {
 }
 ```
 
-### **E2E testing**
+### E2E testing
 
-#### **End-to-end GraphQL testing**
+#### End-to-end GraphQL testing
 ```java
 // E2E-тест: запрос к реальному эндпоинту и проверка ответа
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -2878,11 +2878,11 @@ public class GraphQLE2ETest {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### **Schema design**
+### Schema design
 
-#### **Schema design principles**
+#### Schema design principles
 ```graphql
 # Good: Clear, focused schema
 type User {
@@ -2945,9 +2945,9 @@ type PageInfo {
 }
 ```
 
-### **Error handling**
+### Error handling
 
-#### **Error handling best practices**
+#### Error handling best practices
 ```java
 // Глобальная обработка ошибок GraphQL и маппинг в расширения
 @Configuration
@@ -3012,9 +3012,9 @@ public class ErrorHandlingService {
 }
 ```
 
-### **Performance optimization**
+### Performance optimization
 
-#### **Performance best practices**
+#### Performance best practices
 ```java
 // Настройка кэширования и лимитов для производительности
 @Configuration
@@ -3095,7 +3095,7 @@ public class OptimizedUserService {
 
 ### Распространенные проблемы
 
-#### **Schema validation errors**
+#### Schema validation errors
 
 **Symptoms:**
 - **Schema parsing fails with validation errors**
@@ -3151,7 +3151,7 @@ public class SchemaValidationConfig {
 }
 ```
 
-#### N+1 **query problem**
+#### N+1 query problem
 
 **Symptoms:**
 - **GraphQL queries cause excessive database queries**
@@ -3224,7 +3224,7 @@ public class UserResolver implements GraphQLResolver<Post> {
 }
 ```
 
-#### **Introspection security**
+#### Introspection security
 
 **Symptoms:**
 - **Schema information** is **exposed** in **production**
@@ -3280,9 +3280,9 @@ public class IntrospectionProtectionInstrumentation implements Instrumentation {
 }
 ```
 
-### **Debug techniques**
+### Debug techniques
 
-#### **Query analysis**
+#### Query analysis
 ```java
 // Логирование запросов и ошибок для отладки
 @Configuration
@@ -3375,21 +3375,21 @@ public class GraphQLDebugController {
 
 ### Архитектурные преимущества:
 
-#### **API Design**:
+#### API Design:
 - **Single endpoint** — один **endpoint** для всех операций
 - **Versionless API** — эволюция без **breaking changes**
 - **Declarative schemas** — четкие контракты данных
 - **Built-in documentation** — **schema** as **documentation**
 - **Type validation** — **compile-time** проверка запросов
 
-#### **Developer Experience**:
+#### Developer Experience:
 - **IntelliSense** — автодополнение в **IDE**
 - **Static analysis** — проверка запросов на этапе разработки
 - **Mocking** — легкое создание **mock** данных
 - **Testing** — мощные инструменты для тестирования
 - **Debugging** — детальная информация об ошибках
 
-### Когда использовать **GraphQL**:
+### Когда использовать GraphQL:
 
 ✅ **Mobile applications** — Снижение сетевого трафика
 ✅ **Microservices architecture** — Единый **API gateway**
@@ -3402,7 +3402,7 @@ public class GraphQLDebugController {
 
 ### Когда НЕ использовать:
 
-❌ **`Simple CRUD APIs`** — **Overhead** не оправдан
+❌ `Simple CRUD APIs` — **Overhead** не оправдан
 ❌ **File uploads** — Лучше использовать **REST**
 ❌ **Real-time messaging** — Использовать **WebSocket**/**STOMP**
 ❌ **Caching at CDN** — **GraphQL** сложнее кешировать
@@ -3410,7 +3410,7 @@ public class GraphQLDebugController {
 ❌ **Simple clients** — **REST** проще для **basic needs**
 ❌ **Rate limiting** — Сложнее реализовать на уровне запросов
 
-### **Best practices**:
+### Best practices:
 
 1. **Schema design** — четкие, **focused** типы и отношения
 2. **Query optimization** — **DataLoader** для решения N+1 проблемы
@@ -3421,21 +3421,21 @@ public class GraphQLDebugController {
 7. **Documentation** — **schema** как **living documentation**
 8. **Evolution** — **backward-compatible** изменения
 
-### Типы **Operations** по назначению:
+### Типы Operations по назначению:
 
-#### **Queries** (**Чтение**):
+#### Queries (Чтение):
 - **Single entity** — получение одного объекта по `ID`
 - **List with filters** — список с фильтрацией и пагинацией
 - **Related data** — связанные объекты и отношения
 - **Aggregated data** — статистика и агрегации
 
-#### **Mutations** (**Изменение**):
+#### Mutations (Изменение):
 - **Create operations** — создание новых сущностей
 - **Update operations** — изменение существующих данных
 - **Delete operations** — удаление данных
 - **Bulk operations** — массовые операции
 
-#### **Subscriptions** (**Подписки**):
+#### Subscriptions (Подписки):
 - **Entity changes** — уведомления об изменениях
 - **Real-time updates** — **live** данные для `UI`
 - **Event streams** — потоки событий
@@ -3443,4 +3443,4 @@ public class GraphQLDebugController {
 
 **GraphQL** представляет собой значительный шаг вперед в эволюции **API design**. Он сочетает преимущества **REST** с гибкостью и мощью современных подходов, обеспечивая отличную **developer experience** и эффективную коммуникацию между **frontend** и **backend**. 🚀
 
-**Далее: `Kafka` (**message streaming**)**
+**Далее: `Kafka` (message streaming)**

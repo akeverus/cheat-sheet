@@ -11,7 +11,7 @@ updated: "2026-02-11"
 ---
 # CQRS (Command Query Responsibility Segregation)
 
-**CQRS** (**Command Query Responsibility Segregation**) — это архитектурный паттерн, который разделяет операции чтения (**queries**) и записи (**commands**) данных на отдельные модели. Это позволяет оптимизировать каждую сторону независимо и создавать более масштабируемые системы.
+**CQRS** (Command Query Responsibility Segregation) — это архитектурный паттерн, который разделяет операции чтения (queries) и записи (commands) данных на отдельные модели. Это позволяет оптимизировать каждую сторону независимо и создавать более масштабируемые системы.
 
 ## Полезные ссылки
 
@@ -34,10 +34,10 @@ updated: "2026-02-11"
 - [Принципы **CQRS**](#принципы-cqrs)
   - [Разделение ответственности](#разделение-ответственности)
   - [Разделение моделей](#разделение-моделей)
-- [**Command Side** (**Write Model**)](#command-side-write-model)
+- [**Command Side** (Write Model)](#command-side-write-model)
   - [**Command Handlers**](#command-handlers)
   - [**Command Bus**](#command-bus)
-- [**Query Side** (**Read Model**)](#query-side-read-model)
+- [**Query Side** (Read Model)](#query-side-read-model)
   - [**Query Handlers**](#query-handlers)
   - [**Query Bus**](#query-bus)
 - [Синхронизация между моделями](#синхронизация-между-моделями)
@@ -72,11 +72,11 @@ updated: "2026-02-11"
   - [Проблема: Несогласованность данных](#проблема-несогласованность-данных)
 - [Частые вопросы](#частые-вопросы)
 
-## Введение в **CQRS**
+## Введение в CQRS
 
 **CQRS** разделяет модель данных на две части:
-- **Command Model** (**Write Model**) — оптимизирована для записи данных
-- **Query Model** (**Read Model**) — оптимизирована для чтения данных
+- **Command Model** (Write Model) — оптимизирована для записи данных
+- **Query Model** (Read Model) — оптимизирована для чтения данных
 
 **Это разделение позволяет:**
 - Оптимизировать каждую модель независимо
@@ -84,7 +84,7 @@ updated: "2026-02-11"
 - Упростить сложные доменные модели
 - Улучшить производительность запросов
 
-### Преимущества **CQRS**
+### Преимущества CQRS
 
 **Независимая оптимизация**
 **Write** модель может быть нормализована для целостности данных, а **Read** модель — денормализована для быстрых запросов.
@@ -96,9 +96,9 @@ updated: "2026-02-11"
 Разделение позволяет упростить сложную бизнес-логику на стороне записи.
 
 **Гибкость**
-**Read** модель может быть оптимизирована для различных типов запросов (**отчеты, аналитика, поиск**).
+**Read** модель может быть оптимизирована для различных типов запросов (отчеты, аналитика, поиск).
 
-### Недостатки **CQRS**
+### Недостатки CQRS
 
 **Сложность**
 Увеличивает сложность системы за счет необходимости синхронизации двух моделей.
@@ -112,17 +112,17 @@ updated: "2026-02-11"
 **Не всегда необходимо**
 Для простых **CRUD** приложений **CQRS** может быть избыточным.
 
-## Принципы **CQRS**
+## Принципы CQRS
 
 ### Разделение ответственности
 
-**Commands (**Команды**)**
+**Commands (Команды)**
 - Изменяют состояние системы
-- Возвращают минимальную информацию (**ID созданного объекта или статус**)
+- Возвращают минимальную информацию (ID созданного объекта или статус)
 - Могут вызывать побочные эффекты
 - Примеры: **CreateUser**, **UpdateOrder**, **CancelPayment**
 
-**Queries (**Запросы**)**
+**Queries (Запросы)**
 - Не изменяют состояние системы
 - Возвращают данные для чтения
 - Должны быть идемпотентными
@@ -130,7 +130,7 @@ updated: "2026-02-11"
 
 ### Разделение моделей
 
-Ниже — пример разделения **Command**/**Query** моделей (**Java**).
+Ниже — пример разделения **Command**/**Query** моделей (Java).
 ```java
 // Command Model - Write Side
 @Entity
@@ -175,9 +175,9 @@ public class UserView {
 }
 ```
 
-## **Command Side** (**Write Model**)
+## Command Side (Write Model)
 
-### **Command Handlers**
+### Command Handlers
 
 **Command Handler** обрабатывает команды и изменяет состояние системы.
 
@@ -292,7 +292,7 @@ public class UserCommandHandler {
 }
 ```
 
-### **Command Bus**
+### Command Bus
 
 **Command Bus** обеспечивает централизованную обработку команд.
 
@@ -362,9 +362,9 @@ public class UserCommandController {
 }
 ```
 
-## **Query Side** (**Read Model**)
+## Query Side (Read Model)
 
-### **Query Handlers**
+### Query Handlers
 
 **Query Handler** обрабатывает запросы и возвращает данные из **Read** модели.
 
@@ -443,7 +443,7 @@ public class UserQueryHandler {
 }
 ```
 
-### **Query Bus**
+### Query Bus
 
 ```java
 public interface QueryBus {
@@ -515,7 +515,7 @@ public class UserQueryController {
 
 ## Синхронизация между моделями
 
-### **Event-Driven** синхронизация
+### Event-Driven синхронизация
 
 **Read** модель обновляется на основе событий, публикуемых **Command** моделью.
 
@@ -606,11 +606,11 @@ public class UserCommandHandler {
 }
 ```
 
-## **Eventual Consistency**
+## Eventual Consistency
 
 **Eventual Consistency** означает, что **Read** модель может быть неактуальной в течение некоторого времени после изменения в **Write** модели.
 
-### Стратегии работы с **Eventual Consistency**
+### Стратегии работы с Eventual Consistency
 
 **1. `Accept` и информировать пользователя**
 
@@ -691,11 +691,11 @@ public class UserViewUpdater {
 }
 ```
 
-## **Materialized Views**
+## Materialized Views
 
 **Materialized Views** — это предварительно вычисленные представления данных, оптимизированные для чтения.
 
-### Создание **Materialized Views**
+### Создание Materialized Views
 
 ```java
 @Entity
@@ -749,7 +749,7 @@ public class UserOrderSummaryUpdater {
 }
 ```
 
-### Использование **Materialized Views** в запросах
+### Использование Materialized Views в запросах
 
 ```java
 @Component
@@ -768,9 +768,9 @@ public class UserQueryHandler {
 }
 ```
 
-## Реализация на **Spring**
+## Реализация на Spring
 
-### Использование **Spring Data Projections**
+### Использование Spring Data Projections
 
 **Spring Data Projections** позволяют создавать оптимизированные представления данных для чтения.
 
@@ -850,7 +850,7 @@ public class UserQueryRepository {
 }
 ```
 
-### Использование отдельной базы данных для **Read** модели
+### Использование отдельной базы данных для Read модели
 
 ```java
 @Configuration
@@ -905,9 +905,9 @@ public class DatabaseConfig {
 }
 ```
 
-## Проекции и **DTO**
+## Проекции и DTO
 
-### Создание **DTO** для **Query** модели
+### Создание DTO для Query модели
 
 ```java
 public class UserViewDTO {
@@ -940,7 +940,7 @@ public class UserStatistics {
 }
 ```
 
-### Маппинг с использованием **MapStruct**
+### Маппинг с использованием MapStruct
 
 ```java
 @Mapper(componentModel = "spring")
@@ -966,7 +966,7 @@ public class UserQueryHandler {
 
 ## Оптимизация производительности
 
-### Кэширование **Read** модели
+### Кэширование Read модели
 
 ```java
 @Configuration
@@ -1024,7 +1024,7 @@ public class UserView {
 }
 ```
 
-### **Batch** обработка обновлений
+### Batch обработка обновлений
 
 ```java
 @Component
@@ -1068,7 +1068,7 @@ public class BatchUserViewUpdater {
 
 ## Лучшие практики
 
-### 1. Четкое разделение **Command** и **Query**
+### 1. Четкое разделение Command и Query
 
 Не смешивайте операции чтения и записи в одном обработчике.
 
@@ -1127,7 +1127,7 @@ public class IdempotentUserViewUpdater {
 }
 ```
 
-### 4. Оптимизация **Read** модели для конкретных запросов
+### 4. Оптимизация Read модели для конкретных запросов
 
 Создавайте специализированные представления для различных типов запросов.
 
@@ -1156,9 +1156,9 @@ public class UserReportView {
 }
 ```
 
-## Когда использовать **CQRS**
+## Когда использовать CQRS
 
-### Используйте **CQRS** когда:
+### Используйте CQRS когда:
 
 **CQRS** оправдан в следующих случаях:
 
@@ -1168,7 +1168,7 @@ public class UserReportView {
 - **Команда разработчиков** — разные команды могут работать над **Command** и **Query** сторонами
 - **Интеграция с `Event` Sourcing** — **CQRS** естественно сочетается с **Event Sourcing**
 
-### Не используйте **CQRS** когда:
+### Не используйте CQRS когда:
 
 От **CQRS** лучше отказаться, если:
 
@@ -1179,7 +1179,7 @@ public class UserReportView {
 
 ## Решение проблем
 
-### Проблема: **Read** модель не обновляется
+### Проблема: Read модель не обновляется
 
 **Причины:**
 - События не публикуются
@@ -1208,7 +1208,7 @@ public class UserViewUpdater {
 }
 ```
 
-### Проблема: Задержка обновления **Read** модели
+### Проблема: Задержка обновления Read модели
 
 **Причины:**
 - Медленная обработка событий

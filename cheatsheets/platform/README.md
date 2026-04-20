@@ -13,25 +13,25 @@ CI/CD, облака, контейнеры, IaC, инструменты.
 
 ## Полезные ссылки
 
-[CI/CD](ci-cd/README.md)
-[Cloud Providers](cloud-providers/README.md)
-[Containers](containers/README.md)
-[Infrastructure as Code](iac/README.md)
-[Infrastructure Tools](infrastructure-tools/README.md)
+[[README|CI/CD]]
+[[README|Cloud Providers]]
+[[README|Containers]]
+[[README|Infrastructure as Code]]
+[[README|Infrastructure Tools]]
 
 ## Разделы
 
 | Раздел | Ссылка |
 |--------|--------|
-| **CI/CD** (Jenkins, GitLab CI, CircleCI, Azure DevOps, Tekton, GitHub Actions, Travis CI legacy) | [ci-cd/README.md](ci-cd/README.md) |
-| **Облака** (AWS, Azure, GCP, Kubernetes) | [cloud-providers/README.md](cloud-providers/README.md) |
-| **Контейнеры** (Docker, Kubernetes) | [containers/README.md](containers/README.md) |
-| **IaC** (Terraform, Ansible, Packer, Pulumi) | [iac/README.md](iac/README.md) |
-| **Инструменты** (Vagrant, Consul, Nginx) | [infrastructure-tools/README.md](infrastructure-tools/README.md) |
+| **CI/CD** (Jenkins, GitLab CI, CircleCI, Azure DevOps, Tekton, GitHub Actions, Travis CI legacy) | [[README]] |
+| **Облака** (AWS, Azure, GCP, Kubernetes) | [[README]] |
+| **Контейнеры** (Docker, Kubernetes) | [[README]] |
+| **IaC** (Terraform, Ansible, Packer, Pulumi) | [[README]] |
+| **Инструменты** (Vagrant, Consul, Nginx) | [[README]] |
 
 ## Быстрые ссылки
 
-- [CI/CD](ci-cd/README.md) · [Облака](cloud-providers/README.md) · [Контейнеры](containers/README.md) · [IaC](iac/README.md) · [Инструменты](infrastructure-tools/README.md)
+- [[README|CI/CD]] · [[README|Облака]] · [[README|Контейнеры]] · [[README|IaC]] · [[README|Инструменты]]
 
 ## Навигация по задачам
 

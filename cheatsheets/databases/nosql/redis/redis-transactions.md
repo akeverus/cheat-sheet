@@ -16,7 +16,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 ---
 
-# **Redis**: Транзакции
+# Redis: Транзакции
 
 ## Полезные ссылки
 
@@ -65,7 +65,7 @@ related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
   - [Когда использовать транзакции](#когда-использовать-транзакции-1)
   - [Когда использовать **Lua** скрипты](#когда-использовать-lua-скрипты-1)
 
-## Введение в транзакции **Redis**
+## Введение в транзакции Redis
 
 Транзакции в **Redis** обеспечивают атомарное выполнение группы команд. Все команды в транзакции выполняются последовательно и атомарно, без вмешательства других команд.
 
@@ -111,7 +111,7 @@ DISCARD
 ```
 
 
-## **WATCH** — Оптимистическая блокировка
+## WATCH — Оптимистическая блокировка
 
 ### Базовое использование
 
@@ -263,9 +263,9 @@ public class SafeTransaction {
 4. **Используйте Lua скрипты** для сложной логики
 5. **Проверяйте результаты EXEC** перед использованием
 
-## **Advanced Transaction Patterns**
+## Advanced Transaction Patterns
 
-### **Conditional Transactions**
+### Conditional Transactions
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -310,7 +310,7 @@ public class ConditionalTransaction {
 }
 ```
 
-### **Batch Operations with Transactions**
+### Batch Operations with Transactions
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -340,7 +340,7 @@ public class BatchUpdate {
 }
 ```
 
-### **Transaction with Rollback Logic**
+### Transaction with Rollback Logic
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -422,7 +422,7 @@ public class TransactionWithRollback {
 }
 ```
 
-## **Transaction** vs **Lua Scripts**
+## Transaction vs Lua Scripts
 
 ### Когда использовать транзакции
 
@@ -430,126 +430,15 @@ public class TransactionWithRollback {
 - Оптимистическая блокировка через **WATCH**
 - Группировка нескольких команд
 
-### Когда использовать **Lua** скрипты
+### Когда использовать Lua скрипты
 
 - Сложная логика с условиями
 - Необходимость обработки ошибок внутри скрипта
 - Минимизация **round-trips**
 
-## **Transaction Monitoring**
+## Transaction Monitoring
 
-### **Tracking Transaction Performance**
-
-```java
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.Transaction;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-public class TransactionMonitor {
-    private JedisPool jedisPool;
-    private Map<String, Integer> stats;
-
-    public TransactionMonitor(JedisPool jedisPool) {
-        this.jedisPool = jedisPool;
-        this.stats = new HashMap<>();
-        this.stats.put("total", 0);
-        this.stats.put("successful", 0);
-        this.stats.put("failed", 0);
-        this.stats.put("watch_errors", 0);
-    }
-
-    public List<Object> executeWithMonitoring(List<Operation> operations) {
-        stats.put("total", stats.get("total") + 1);
-
-        try (Jedis jedis = jedisPool.getResource()) {
-            Transaction transaction = jedis.multi();
-
-            for (Operation op : operations) {
-                if ("set".equals(op.getType())) {
-                    transaction.set(op.getKey(), op.getValue());
-                } else if ("get".equals(op.getType())) {
-                    transaction.get(op.getKey());
-                }
-            }
-
-            List<Object> result = transaction.exec();
-
-            if (result != null && !result.isEmpty()) {
-                stats.put("successful", stats.get("successful") + 1);
-                return result;
-            } else {
-                stats.put("failed", stats.get("failed") + 1);
-                return null;
-            }
-        } catch (Exception e) {
-            stats.put("watch_errors", stats.get("watch_errors") + 1);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Map<String, Integer> getStats() {
-        return new HashMap<>(stats);
-    }
-}
-```
-
-## **Transaction Patterns**
-
-### **Optimistic Locking Pattern**
-
-```java
-public static boolean optimisticUpdate(redis_client, key, update_func, max_retries=10):
-    """Оптимистическое обновление с повторными попытками"""
-    for attempt in range(max_retries):
-        try:
-            redis_client.watch(key)
-            current_value = redis_client.get(key)
-            new_value = update_func(current_value)
-
-            pipe = redis_client.pipeline()
-            pipe.multi()
-            pipe.set(key, new_value)
-            result = pipe.execute()
-
-            if result:
-                return new_value
-        except redis.WatchError:
-            if attempt == max_retries - 1:
-                raise Exception("Max retries exceeded")
-            time.sleep(0.1 * (attempt + 1))  # Exponential backoff
-
-    raise Exception("Failed to update")
-```
-
-### **Transaction with Validation**
-
-```java
-public static List<Object> validatedTransaction(redis_client, operations, validators):
-    """Транзакция с валидацией"""
-    pipe = redis_client.pipeline()
-
-    # Валидация перед транзакцией
-    for i, op in enumerate(operations):
-        if i in validators:
-            validator = validators[i]
-            if not validator(redis_client, op):
-                raise ValueError(f"Validation failed for operation {i}")
-
-    # Выполнение транзакции
-    pipe.multi()
-    for op in operations:
-        if op['type'] == 'set':
-            pipe.set(op['key'], op['value'])
-
-    return pipe.execute()
-```
-
-## **Transaction Monitoring**
-
-### **Tracking Transaction Performance**
+### Tracking Transaction Performance
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -607,9 +496,9 @@ public class TransactionMonitor {
 }
 ```
 
-## **Transaction Patterns**
+## Transaction Patterns
 
-### **Optimistic Locking Pattern**
+### Optimistic Locking Pattern
 
 ```java
 public static boolean optimisticUpdate(redis_client, key, update_func, max_retries=10):
@@ -635,7 +524,7 @@ public static boolean optimisticUpdate(redis_client, key, update_func, max_retri
     raise Exception("Failed to update")
 ```
 
-### **Transaction with Validation**
+### Transaction with Validation
 
 ```java
 public static List<Object> validatedTransaction(redis_client, operations, validators):
@@ -658,7 +547,118 @@ public static List<Object> validatedTransaction(redis_client, operations, valida
     return pipe.execute()
 ```
 
-### **Batch Operations with Transactions**
+## Transaction Monitoring
+
+### Tracking Transaction Performance
+
+```java
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.Transaction;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class TransactionMonitor {
+    private JedisPool jedisPool;
+    private Map<String, Integer> stats;
+
+    public TransactionMonitor(JedisPool jedisPool) {
+        this.jedisPool = jedisPool;
+        this.stats = new HashMap<>();
+        this.stats.put("total", 0);
+        this.stats.put("successful", 0);
+        this.stats.put("failed", 0);
+        this.stats.put("watch_errors", 0);
+    }
+
+    public List<Object> executeWithMonitoring(List<Operation> operations) {
+        stats.put("total", stats.get("total") + 1);
+
+        try (Jedis jedis = jedisPool.getResource()) {
+            Transaction transaction = jedis.multi();
+
+            for (Operation op : operations) {
+                if ("set".equals(op.getType())) {
+                    transaction.set(op.getKey(), op.getValue());
+                } else if ("get".equals(op.getType())) {
+                    transaction.get(op.getKey());
+                }
+            }
+
+            List<Object> result = transaction.exec();
+
+            if (result != null && !result.isEmpty()) {
+                stats.put("successful", stats.get("successful") + 1);
+                return result;
+            } else {
+                stats.put("failed", stats.get("failed") + 1);
+                return null;
+            }
+        } catch (Exception e) {
+            stats.put("watch_errors", stats.get("watch_errors") + 1);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Map<String, Integer> getStats() {
+        return new HashMap<>(stats);
+    }
+}
+```
+
+## Transaction Patterns
+
+### Optimistic Locking Pattern
+
+```java
+public static boolean optimisticUpdate(redis_client, key, update_func, max_retries=10):
+    """Оптимистическое обновление с повторными попытками"""
+    for attempt in range(max_retries):
+        try:
+            redis_client.watch(key)
+            current_value = redis_client.get(key)
+            new_value = update_func(current_value)
+
+            pipe = redis_client.pipeline()
+            pipe.multi()
+            pipe.set(key, new_value)
+            result = pipe.execute()
+
+            if result:
+                return new_value
+        except redis.WatchError:
+            if attempt == max_retries - 1:
+                raise Exception("Max retries exceeded")
+            time.sleep(0.1 * (attempt + 1))  # Exponential backoff
+
+    raise Exception("Failed to update")
+```
+
+### Transaction with Validation
+
+```java
+public static List<Object> validatedTransaction(redis_client, operations, validators):
+    """Транзакция с валидацией"""
+    pipe = redis_client.pipeline()
+
+    # Валидация перед транзакцией
+    for i, op in enumerate(operations):
+        if i in validators:
+            validator = validators[i]
+            if not validator(redis_client, op):
+                raise ValueError(f"Validation failed for operation {i}")
+
+    # Выполнение транзакции
+    pipe.multi()
+    for op in operations:
+        if op['type'] == 'set':
+            pipe.set(op['key'], op['value'])
+
+    return pipe.execute()
+```
+
+### Batch Operations with Transactions
 
 ```java
 public static List<Object> batchUpdate(redis_client, updates):
@@ -672,7 +672,7 @@ public static List<Object> batchUpdate(redis_client, updates):
     return pipe.execute()
 ```
 
-### **Transaction with Rollback Logic**
+### Transaction with Rollback Logic
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -754,7 +754,7 @@ public class TransactionWithRollback {
 }
 ```
 
-## **Transaction** vs **Lua Scripts**
+## Transaction vs Lua Scripts
 
 ### Когда использовать транзакции
 
@@ -762,7 +762,7 @@ public class TransactionWithRollback {
 - Оптимистическая блокировка через **WATCH**
 - Группировка нескольких команд
 
-### Когда использовать **Lua** скрипты
+### Когда использовать Lua скрипты
 
 - Сложная логика с условиями
 - Необходимость обработки ошибок внутри скрипта

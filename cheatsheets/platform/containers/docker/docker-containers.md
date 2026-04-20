@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Docker**: работа с контейнерами
+# Docker: работа с контейнерами
 
 Полный перенос раздела **Docker Containers**: список контейнеров, изучение файловой системы, передача переменных окружения, вход в оболочку, копирование файлов, получение контейнера через **API**, **attach**/**detach**, разница между **expose** и **publish**. Без сокращений.
 
@@ -46,9 +46,9 @@ updated: "2026-02-11"
 
 Чтобы вывести список контейнеров **Docker**, можно использовать `**docker** ps` или `**docker container** ls`. Все псевдонимы имеют одинаковые опции; рекомендуется новый синтаксис `**docker container** ls`.
 
-Запущенные контейнеры (**вывод списка контейнеров — рекомендуется синтаксис `docker container ls`**).
+Запущенные контейнеры (вывод списка контейнеров — рекомендуется синтаксис `docker container ls`).
 
-Ниже — список запущенных контейнеров (**bash**).
+Ниже — список запущенных контейнеров (bash).
 ```bash
 # Список запущенных контейнеров
 docker container ls
@@ -67,7 +67,7 @@ b06cfe3053e5   postgres:11           "docker-…"     29 minutes ago   Up 29 min
 
 Колонки: **CONTAINER ID**, **IMAGE:TAG**, **COMMAND**, **CREATED**, **STATUS**, **PORTS** (маппинги вида `hostPort:containerPort`), **NAMES**.
 
-**Показать все (**запущенные и остановленные**):**
+**Показать все (запущенные и остановленные):**
 
 ```bash
 docker container ls -a
@@ -102,7 +102,7 @@ docker container ls -q
 docker container ls --quiet --no-trunc
 ```
 
-**Удалить все контейнеры (**осторожно**):**
+**Удалить все контейнеры (осторожно):**
 
 ```bash
 docker container rm -f $(docker container ls -aq)
@@ -114,9 +114,9 @@ docker container rm -f $(docker container ls -aq)
 docker container ls --latest -s
 ```
 
-Пример: `**mysql**:5.6 2B (**virtual 256MB**)` — 2B слой `RW`, 256MB размер образа.
+Пример: `**mysql**:5.6 2B (virtual 256MB)` — 2B слой `RW`, 256MB размер образа.
 
-**Кастомный вывод (**Go templates**):**
+**Кастомный вывод (Go templates):**
 
 ```bash
 docker container ls --format "{{.ID}}-> Based on {{.Image}}, named {{.Names}}, ({{.Status}})"
@@ -125,7 +125,7 @@ docker container ls --format "table{{.ID}}\t{{.Image}}\t{{.Names}}"
 
 Доступные плейсхолдеры: .`ID`, .**Image**, .**Command**, .**CreatedAt**, .**Running**, .**Ports**, .**Status**, .**Size**, .**Names**, .**Labels**, .**Mounts**, .**Networks**.
 
-**Фильтрация `--**filter**` (**`-f`**), формат `**key**=**value**`:**
+**Фильтрация `--**filter**` (`-f`), формат `**key**=**value**`:**
 
 - По статусу: `**docker container** ls --**filter** "**status**=**exited**"`; `--**filter** "**status**=**paused**"`.
 - Несколько фильтров: `--**filter** "**status**=**exited**" --**filter** "**exited**=1"`.
@@ -142,7 +142,7 @@ docker run -it alpine
 /# ls -all
 ```
 
-**Если образ стартует не в **shell** (**например, cassandra**), можно переопределить команду:**
+**Если образ стартует не в **shell** (например, cassandra), можно переопределить команду:**
 
 ```bash
 docker run -it cassandra /bin/bash
@@ -150,7 +150,7 @@ docker run -it cassandra /bin/bash
 
 Недостаток: приложение не стартует автоматически, надо запускать вручную.
 
-**Лучше подключаться к уже работающему контейнеру через `**docker exec**`:**
+**Лучше подключаться к уже работающему контейнеру через `docker exec`:**
 
 ```bash
 docker run cassandra   # запустить в фоне/форграунд по умолчанию
@@ -164,7 +164,7 @@ docker exec -it <id> /bin/bash   # или /bin/sh для Alpine
 docker exec -it 8408c85b3c57 /bin/sh
 ```
 
-**Если контейнер остановлен или без **shell** (**hello-world**), можно сделать дамп ФС:**
+**Если контейнер остановлен или без **shell** (hello-world), можно сделать дамп ФС:**
 
 ```bash
 docker run hello-world
@@ -182,7 +182,7 @@ ls -all test/
 
 ## Передача переменных среды
 
-Лучше отделять конфигурацию от кода (**12-factor**). Переменные окружения передаются через `-e` или `--env-file`.
+Лучше отделять конфигурацию от кода (12-factor). Переменные окружения передаются через `-e` или `--env-file`.
 
 **Передача пары ключ=значение:**
 
@@ -200,7 +200,7 @@ docker run --env VARIABLE2 alpine:3 env
 # VARIABLE2=foobar2
 ```
 
-**Файл со списком переменных (**`key=value`**):**
+**Файл со списком переменных (`key=value`):**
 
 ```bash
 echo VARIABLE1=foobar1 > my-env.txt
@@ -217,14 +217,14 @@ VARIABLE2=foobar2
 VARIABLE3=foobar3
 ```
 
-Безопасность: передавать секреты через командную строку — риск утечки (**история shell, список процессов**). Лучше из окружения или файла с ограничениями доступа. Любой, у кого есть доступ к **Docker**, может увидеть переменные через `**docker inspect**`:
+Безопасность: передавать секреты через командную строку — риск утечки (история shell, список процессов). Лучше из окружения или файла с ограничениями доступа. Любой, у кого есть доступ к **Docker**, может увидеть переменные через `docker inspect`:
 
 ```bash
 docker inspect <id>
 # "Env": ["VARIABLE1=foobar1", ...]
 ```
 
-Для секретов использовать **Docker Secrets** или механизмы оркестраторов (**Kubernetes `Secrets`, `AWS`/Azure**).
+Для секретов использовать **Docker Secrets** или механизмы оркестраторов (Kubernetes `Secrets`, `AWS`/Azure).
 
 ## Как попасть в оболочку контейнера
 
@@ -247,19 +247,19 @@ b8b17f1f5e28   hello-world           "/hello"                 10 minutes ago   E
 
 Перед **attach** важно знать, что будет происходить при `**Ctrl**+C`/выходе: можно остановить контейнер или оставить работающим.
 
-**1) `**docker attach**` (**старая форма `docker container attach`**):**
+**1) `docker attach` (старая форма `docker container attach`):**
 
 ```bash
 docker attach nginx
 ```
 
-**Остановка контейнера после выхода (**можно отменить `Ctrl+C`**):**
+**Остановка контейнера после выхода (можно отменить `Ctrl+C`):**
 
 ```bash
 docker stop nginx
 ```
 
-**2) `**docker exec**` — безопаснее для запуска **shell** без остановки сервиса:**
+**2) `docker exec` — безопаснее для запуска **shell** без остановки сервиса:**
 
 ```bash
 docker exec -it nginx bash
@@ -267,7 +267,7 @@ docker exec -it nginx bash
 exit
 ```
 
-3) Если **shell** недоступен (**hello-world**), использовать `**docker** cp` или `**docker export**` (**см. выше**).
+3) Если **shell** недоступен (hello-world), использовать `**docker** cp` или `docker export` (см. выше).
 
 ## Копирование файлов в контейнеры и из них
 
@@ -285,18 +285,18 @@ docker cp ./test.txt nginx:/usr/share/nginx/html/test.txt
 docker cp nginx:/usr/share/nginx/html/index.html ./index.html
 ```
 
-**Копирование всей ФС остановленного контейнера (**пример hello-world**):**
+**Копирование всей ФС остановленного контейнера (пример hello-world):**
 
 ```bash
 docker cp a0af60c72d93:/ ./test
 ls -all test/
 ```
 
-## Получение контейнера из **API Docker Engine**
+## Получение контейнера из API Docker Engine
 
 Нужно `ID` или имя контейнера. Берём через `docker ps` или `docker container ls`. Далее — обращение к API (endpoint).
 
-**Если **Docker** слушает **UNIX**-сокет (**по умолчанию**), можно обращаться через **curl** с `--**unix-socket**`:**
+**Если **Docker** слушает **UNIX**-сокет (по умолчанию), можно обращаться через **curl** с `--**unix-socket**`:**
 
 ```bash
 CID=$(docker ps -q | head -n1)
@@ -309,13 +309,13 @@ curl --unix-socket /var/run/docker.sock http://localhost/containers/$CID/json
 curl http://127.0.0.1:2375/containers/$CID/json
 ```
 
-Пример структур (**Config, `State`, `NetworkSettings` и т.д.**) — использовать по назначению.
+Пример структур (Config, `State`, `NetworkSettings` и т.д.) — использовать по назначению.
 
 Безопасность: не открывать незашифрованный **API** наружу; использовать **TLS**, авторизацию, **firewall**.
 
-## Присоединение (**attach**) и отсоединение (**detach**)
+## Присоединение (attach) и отсоединение (detach)
 
-**`**docker attach**` присоединяет **STDIN**/**STDOUT**/**STDERR** к основному процессу контейнера:**
+**`docker attach` присоединяет **STDIN**/**STDOUT**/**STDERR** к основному процессу контейнера:**
 
 ```bash
 docker attach nginx
@@ -325,12 +325,12 @@ docker attach nginx
 
 Если нужно просто войти в контейнер без рисков остановить основной процесс, используйте `docker exec -it <id> bash` или `sh`.
 
-## Разница между **expose** и **publish**
+## Разница между expose и publish
 
 **В **Dockerfile** или **compose**:**
 
 - `**EXPOSE** <**port**>` — документирует/делает порт доступным другим контейнерам в одной сети, но не публикует на хост.
-- **Publish** (**`-p `hostPort`:containerPort` или `ports:` в compose**) — пробрасывает порт на хост.
+- **Publish** (`-p `hostPort`:containerPort` или `ports:` в compose) — пробрасывает порт на хост.
 
 **Пример **publish**:**
 
@@ -353,10 +353,10 @@ services:
 
 ## Лучшие практики
 
-- **Список и фильтрация:** используйте `**docker container** ls` с фильтрами (**`-f status=exited`, `-f name=...`**) для быстрого поиска; регулярно удаляйте остановленные контейнеры (**`docker container prune`**).
+- **Список и фильтрация:** используйте `**docker container** ls` с фильтрами (`-f status=exited`, `-f name=...`) для быстрого поиска; регулярно удаляйте остановленные контейнеры (`docker container prune`).
 - **Файловая система и копирование:** для копирования файлов предпочитайте `**docker** cp` или **volume mount**; не полагайтесь на данные в **writable layer** при пересоздании контейнера.
-- **Переменные среды:** передавайте секреты через секреты (**Docker secrets, переменные CI**), не через `-e` в командной строке; используйте `.**env**` с осторожностью (**не коммитить в git**).
-- **attach vs exec:** для интерактивной отладки используйте `**docker exec** -it`; `**attach**` привязывается к основному процессу — риск остановки контейнера по **Ctrl**+C.
+- **Переменные среды:** передавайте секреты через секреты (Docker secrets, переменные CI), не через `-e` в командной строке; используйте `.**env**` с осторожностью (не коммитить в git).
+- **attach vs exec:** для интерактивной отладки используйте `**docker exec** -it`; `attach` привязывается к основному процессу — риск остановки контейнера по **Ctrl**+C.
 - **expose и publish:** документируйте порты через **EXPOSE** в **Dockerfile**; публикуйте только необходимые порты на хосте; в **production** используйте обратный прокси вместо публикации множества портов.
 
 ## Решение проблем

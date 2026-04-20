@@ -315,7 +315,7 @@ public void whenDeleteCreatedBook_thenOk() {
 
 В этом руководстве мы перенесем код из файла **web.xml** в **DispatcherServlet** в приложении **Spring Boot**. Кроме того, мы сопоставим классы **Filter**, **Servlet** и **Listener** из **web.xml** с приложением **Spring Boot**.
 
-### Настройка **DispatcherServlet**
+### Настройка DispatcherServlet
 
 Во-первых, мы должны добавить зависимость **spring-`boot-starter-web` Maven** в наш файл **pom.xml:**
 
@@ -358,7 +358,7 @@ spring.mvc.servlet.path=/baeldung
 
 С этими настройками **DispatcherServlet** настроен на обработку шаблона **URL** /**baeldung**, а корневой **contextPath** будет **/demo**. Таким образом, **DispatcherServlet** прослушивает **http://localhost:8080/demo/baeldung/**.
 
-### Регистрация **Filter**
+### Регистрация Filter
 
 Давайте создадим фильтр, реализовав интерфейс **Filter:**
 
@@ -385,7 +385,7 @@ public class CustomFilter implements Filter {
 
 Чтобы **Spring Boot** мог распознавать фильтр, нам просто нужно было определить его как **bean**-компонент с аннотацией **@Component**.
 
-### Регистрация **Servlet**
+### Регистрация Servlet
 
 Давайте определим сервлет, расширив класс **HttpServlet:**
 
@@ -424,7 +424,7 @@ public ServletRegistrationBean customServletBean() {
 }
 ```
 
-### Регистрация **Listener**
+### Регистрация Listener
 
 Давайте определим слушателя, расширив класс **ServletContextListener:**
 
@@ -459,13 +459,13 @@ public ServletListenerRegistrationBean<ServletContextListener> customListenerBea
 }
 ```
 
-## Сравнение **Spring** и **Spring Boot**
+## Сравнение Spring и Spring Boot
 
 **Spring Boot** — это, по сути, расширение инфраструктуры **Spring**, которое исключает стандартные конфигурации, необходимые для настройки приложения **Spring.**
 
 Он относится к платформе **Spring**, что открывает путь к более быстрой и эффективной экосистеме разработки.
 
-### Основные функции **Spring Boot**
+### Основные функции Spring Boot
 
 **Вот лишь некоторые из функций **Spring Boot**:**
 
@@ -513,7 +513,7 @@ public class Application {
 
 По умолчанию **Spring Boot** использует встроенный контейнер для запуска приложения. В этом случае **Spring Boot** использует основную точку входа **public static void** для запуска встроенного веб-сервера.
 
-### Преимущества **Spring Boot** в развертывании
+### Преимущества Spring Boot в развертывании
 
 _Некоторые из преимуществ **Spring Boot** над **Spring** в контексте развертывания включают:_
 
@@ -523,7 +523,7 @@ _Некоторые из преимуществ **Spring Boot** над **Spring*
 4. Возможность указать активные профили при развертывании
 5. Генерация случайных портов для интеграционных тестов
 
-## Руководство по **Spring Boot Starters**
+## Руководство по Spring Boot Starters
 
 Во-первых, давайте посмотрим на разработку службы **REST**; мы можем использовать такие библиотеки, как **Spring MVC**, **Tomcat** и **Jackson** — множество зависимостей для одного приложения.
 
@@ -550,7 +550,7 @@ _Некоторые из преимуществ **Spring Boot** над **Spring*
 
 Обратите внимание, что вам не нужно указывать номер версии артефакта. **Spring Boot** определит, какую версию использовать — все, что вам нужно указать, это версия артефакта **spring-`boot-starter`-parent**. Если позже вам потребуется обновить библиотеку загрузки и зависимости, просто обновите версию загрузки в одном месте, а все остальное сделает она сама.
 
-### Работа с **JPA**
+### Работа с JPA
 
 Большинство веб-приложений обладают некоторой устойчивостью — и это довольно часто **JPA.**
 
@@ -593,7 +593,7 @@ spring.mail.port=25
 spring.mail.properties.mail.smtp.auth=false
 ```
 
-## Руководство по **Actuator**
+## Руководство по Actuator
 
 По сути, **Actuator** привносит в наше приложение готовые к работе функции.
 
@@ -603,7 +603,7 @@ spring.mail.properties.mail.smtp.auth=false
 
 **Actuator** в основном используется для предоставления оперативной информации о запущенном приложении — о работоспособности, показателях, информации, дампе**, env** и т. Д. Он использует конечные точки **HTTP** или **JMX-**бины, чтобы мы могли взаимодействовать с ним.
 
-### Настройка **Actuator**
+### Настройка Actuator
 
 Как только эта зависимость находится в пути к классам, несколько конечных точек становятся доступны для нас из коробки. Как и большинство модулей **Spring**, мы можем легко настроить или расширить его разными способами.
 
@@ -651,7 +651,7 @@ public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 17. **/shutdown** выполняет плавное завершение работы приложения.
 18. **/threaddump** выгружает информацию о потоках базовой **JVM**.
 
-## Руководство по @**PropertySource**
+## Руководство по @PropertySource
 
 В этом руководстве будет показано, как настраивать и использовать свойства в **Spring** с помощью конфигурации **Java** и **`@PropertySource`.**
 
@@ -659,7 +659,7 @@ public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
 **Spring 3.1** также представляет новую аннотацию **@PropertySource** как удобный механизм для добавления источников свойств в среду.
 
-### Использование @**PropertySource**
+### Использование @PropertySource
 
 Мы можем использовать эту аннотацию вместе с аннотацией **`@Configuration`:**
 
@@ -737,7 +737,7 @@ private Environment env;
 dataSource.setUrl(env.getProperty("jdbc.url"));
 ```
 
-### Использование в **Spring Boot**
+### Использование в Spring Boot
 
 **Boot** применяет свое типичное соглашение по подходу к настройке к файлам свойств.
 
@@ -816,7 +816,7 @@ public class SpringBootPropertyInjectionIntegrationTest {
 }
 ```
 
-## Руководство по @**ConfigurationProperties**
+## Руководство по @ConfigurationProperties
 
 В официальной документации рекомендуется выделить свойства конфигурации в отдельные объекты **POJO.**
 
@@ -838,7 +838,7 @@ public class ConfigProperties {
 
 Инфраструктура **Spring** использует стандартные сеттеры **Java bean**, поэтому мы должны объявить сеттеры для каждого свойства.
 
-Примечание: если мы не используем **@Configuration** в **POJO**, нам нужно добавить **`@EnableConfigurationProperties`(**ConfigProperties.class**)** в основной класс приложения **Spring**, чтобы привязать свойства к **POJO**:
+Примечание: если мы не используем **@Configuration** в **POJO**, нам нужно добавить **`@EnableConfigurationProperties`(ConfigProperties.class)** в основной класс приложения **Spring**, чтобы привязать свойства к **POJO**:
 
 ```java
 // Включение @ConfigurationProperties для класса ConfigProperties
@@ -964,7 +964,7 @@ private String from;
 
 **Spring Boot** предоставляет мощные инструменты для тестирования приложений. В дополнение к базовому тестированию, рассмотренному ранее, существуют специализированные аннотации для различных типов тестов.
 
-### Интеграционное тестирование с @**DataJpaTest**
+### Интеграционное тестирование с @DataJpaTest
 
 **Мы собираемся работать с сущностью с именем **Employee,** у которой в качестве свойств есть идентификатор и имя:**
 
@@ -1010,7 +1010,7 @@ public class EmployeeRepositoryIntegrationTest {
 }
 ```
 
-**`@RunWith` (**SpringRunner.class**)** обеспечивает мост между функциями тестирования **Spring Boot** и **JUnit.**
+**`@RunWith` (SpringRunner.class)** обеспечивает мост между функциями тестирования **Spring Boot** и **JUnit.**
 
 Эта аннотация потребуется всякий раз, когда мы используем какие-либо функции тестирования **Spring Boot** в наших тестах **JUnit.**
 
@@ -1043,7 +1043,7 @@ public void whenFindByName_thenReturnEmployee() {
 
 В приведенном выше тесте мы используем **TestEntityManager**, чтобы вставить сотрудника в базу данных и прочитать его через **API** поиска по имени.
 
-### Модульное тестирование с @**WebMvcTest**
+### Модульное тестирование с @WebMvcTest
 
 **Наш Контроллер зависит от уровня сервисов, давайте для простоты включим только один метод:**
 
@@ -1113,11 +1113,11 @@ public void givenEmployees_whenGetEmployees_thenReturnJsonArray() throws Excepti
 3. **@JooqTest**: для тестирования тестов, связанных с **jOOQ**, мы можем использовать аннотацию @**JooqTest**, которая настраивает **DSLContext**.
 4. **@DataMongoTest**: для тестирования приложений **MongoDB** полезной аннотацией является @**DataMongoTest**. По умолчанию он настраивает встроенный в память **MongoDB**, если драйвер доступен через зависимости, настраивает **MongoTemplate**, сканирует классы @**Document** и настраивает репозитории **Spring Data MongoDB**.
 5. **@DataRedisTest** упрощает тестирование приложений **Redis**. Он сканирует классы @**RedisHash** и по умолчанию настраивает репозитории **Spring Data Redis**.
-6. **@DataLdapTest** настраивает встроенный **LDAP** в памяти (**если доступен**), настраивает **LdapTemplate**, сканирует классы **@Entry** и по умолчанию настраивает репозитории **Spring Data LDAP**.
+6. **@DataLdapTest** настраивает встроенный **LDAP** в памяти (если доступен), настраивает **LdapTemplate**, сканирует классы **@Entry** и по умолчанию настраивает репозитории **Spring Data LDAP**.
 7. **@RestClientTest**: обычно мы используем аннотацию @**RestClientTest** для тестирования клиентов **REST**. Он автоматически настраивает различные зависимости, такие как поддержка **Jackson**, **GSON** и **Jsonb**; настраивает **RestTemplateBuilder**; и по умолчанию добавляет поддержку **MockRestServiceServer**.
 8. **@JsonTest**: инициализирует контекст приложения **Spring** только теми компонентами, которые необходимы для тестирования сериализации **JSON**.
 
-## Интеграционные тесты БД с **TestContainers**
+## Интеграционные тесты БД с TestContainers
 
 **Spring Data JPA** предоставляет простой способ создавать запросы к базе данных и тестировать их с помощью встроенной базы данных **H2**.
 
@@ -1168,7 +1168,7 @@ public class EmployeeRepositoryTest {
 }
 ```
 
-## Тестирование **REST** клиентов с @**RestClientTest**
+## Тестирование REST клиентов с @RestClientTest
 
 Обычно мы используем аннотацию **@RestClientTest** для тестирования клиентов **REST**. Он автоматически настраивает различные зависимости, такие как поддержка **Jackson**, **GSON** и **Jsonb**; настраивает **RestTemplateBuilder**; и по умолчанию добавляет поддержку **MockRestServiceServer**.
 
@@ -1186,7 +1186,7 @@ public class EmployeeRepositoryTest {
 
 В случае ведения журнала единственной обязательной зависимостью является ведение журнала **Apache Commons**.
 
-Нам нужно импортировать его только при использовании **Spring 4.x** (**Spring `Boot 1`.x**), поскольку он предоставляется модулем **spring-jcl** в **Spring 5** (**Spring `Boot 2`.x**).
+Нам нужно импортировать его только при использовании **Spring 4.x** (Spring `Boot 1`.x), поскольку он предоставляется модулем **spring-jcl** в **Spring 5** (Spring `Boot 2`.x).
 
 Нам не следует вообще беспокоиться об импорте **spring-jcl**, если мы используем **Spring Boot Starter** (что мы почти всегда используем). Это потому, что каждый стартер, как и наш **spring-boot-starter-web**, зависит от **spring-boot-starter-logging**, который уже подключает **spring-jcl** для нас.
 
@@ -1230,7 +1230,7 @@ logging.level.com.baeldung=TRACE
 
 Наконец, мы можем изменить уровень ведения журнала навсегда, используя файл конфигурации нашей платформы ведения журнала.
 
-### Использование **Lombok** для логирования
+### Использование Lombok для логирования
 
 В примерах, которые мы видели до сих пор, нам нужно было объявить экземпляр регистратора из нашей среды ведения журнала.
 
@@ -1271,7 +1271,7 @@ public class LombokLoggingController {
 }
 ```
 
-## Приложение как **Service** (**Linux**)
+## Приложение как Service (Linux)
 
 Чтобы превратить приложение **Spring Boot** в службу **Linux**, нам нужно создать скрипт инициализации. В зависимости от дистрибутива **Linux** это может быть **systemd**, **init.d** или **Upstart**.
 
@@ -1294,11 +1294,11 @@ exec java -jar /path/to/your-app.jar
 
 Хотя ранее уже была поддержка **Java 17,** эта версия **LTS** теперь получает базовый уровень.
 
-### Новые функции **Java**
+### Новые функции Java
 
 При переходе с **LTS** версии **11** разработчики **Java** получают преимущества от новых языковых функций. Поскольку в этой статье **Java** сама по себе не является темой, давайте только назовем самые важные новые функции для разработчиков **Spring Boot**.
 
-#### **Records**
+#### Records
 
 **Record Java** были введены с намерением использовать их в качестве быстрого способа создания классов носителей данных, то есть классов, целью которых является простое хранение данных и перенос их между модулями, также известные как **POJO** и **DTO**.
 
@@ -1309,7 +1309,7 @@ exec java -jar /path/to/your-app.jar
 public record Person (String name, String address) {}
 ```
 
-В настоящее время нам нужно быть осторожными при объединении их с проверкой **Bean `Validation`,** потому что ограничения проверки не поддерживаются для аргументов конструктора, например, когда экземпляр создается при десериализации **JSON (**Jackson**)** и помещается в метод контроллера в качестве параметра.
+В настоящее время нам нужно быть осторожными при объединении их с проверкой **Bean `Validation`,** потому что ограничения проверки не поддерживаются для аргументов конструктора, например, когда экземпляр создается при десериализации **JSON (Jackson)** и помещается в метод контроллера в качестве параметра.
 
 #### Текстовые блоки
 
@@ -1324,9 +1324,9 @@ String textBlock = """
     """;
 ```
 
-#### **Switch** выражения
+#### Switch выражения
 
-В **Java 12** появились выражения переключения, которые (**как и все выражения**) оценивают одно значение и могут использоваться в операторах. Вместо объединения вложенных операторов **if-else (?:)** теперь мы можем использовать конструкцию **switch-case**:
+В **Java 12** появились выражения переключения, которые (как и все выражения) оценивают одно значение и могут использоваться в операторах. Вместо объединения вложенных операторов **if-else (?:)** теперь мы можем использовать конструкцию **switch-case**:
 
 ```java
 // Switch-выражение (Java 14+) возвращает значение
@@ -1339,7 +1339,7 @@ int numOfLetters = switch (day) {
 };
 ```
 
-#### **Pattern Matching**
+#### Pattern Matching
 
 Сопоставление с образцом было разработано в проекте **Amber** и нашло своё применение в языке **Java**. В случае языка **Java** они могут помочь упростить код для вычислений **instanceof**.
 
@@ -1366,7 +1366,7 @@ static double getDoubleUsingSwitch(Object o) {
 }
 ```
 
-#### **Sealed** классы
+#### Sealed классы
 
 **Sealed** классы могут ограничить наследование, указав разрешенные подклассы:**
 
@@ -1375,7 +1375,7 @@ static double getDoubleUsingSwitch(Object o) {
 public abstract sealed class Pet permits Dog, Cat {}
 ```
 
-### Миграция на **Jakarta** `EE`
+### Миграция на Jakarta `EE`
 
 Наиболее важным критическим изменением может быть переход от **Java EE** к **Jakarta `EE` 9**, где пространство имен пакетов изменилось с **javax.** на **jakarta.**. Поэтому нам нужно настроить весь импорт в нашем коде всякий раз, когда мы используем классы из **Java EE** напрямую.
 
@@ -1393,9 +1393,9 @@ import javax.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 ```
 
-## Продвинутые возможности **Spring Boot**
+## Продвинутые возможности Spring Boot
 
-### Микросервисы с **Spring Boot**
+### Микросервисы с Spring Boot
 
 ```java
 // Микросервис с Eureka, Feign и Hystrix
@@ -1488,7 +1488,7 @@ public class ProductServiceFallback implements ProductServiceClient {
 }
 ```
 
-### **Reactive Spring Boot**
+### Reactive Spring Boot
 
 ```java
 // Реактивное приложение Spring Boot с WebFlux
@@ -1581,7 +1581,7 @@ public interface ReactiveUserRepository extends ReactiveCrudRepository<User, Lon
 }
 ```
 
-### **Spring Boot** с **Kotlin**
+### Spring Boot с Kotlin
 
 ```kotlin
 @SpringBootApplication
@@ -1714,7 +1714,7 @@ class UserMapper {
 }
 ```
 
-### **Cloud Native Spring Boot**
+### Cloud Native Spring Boot
 
 ```java
 // Cloud Native приложение: Eureka, Feign, Circuit Breaker, Async
@@ -1917,7 +1917,7 @@ public class ObservabilityConfig {
 }
 ```
 
-### Мониторинг и **Observability**
+### Мониторинг и Observability
 
 ```java
 // Конфигурация метрик и таймингов для Micrometer
@@ -2090,7 +2090,7 @@ public class HealthCheckService {
 
 ## Производительность и оптимизация
 
-### **JVM** оптимизации для **Spring Boot**
+### JVM оптимизации для Spring Boot
 
 ```properties
 # application.properties для production
@@ -2401,7 +2401,7 @@ public class CacheController {
 
 ## Развертывание
 
-### **Docker** с **Spring Boot**
+### Docker с Spring Boot
 
 ```dockerfile
 # Multi-stage Dockerfile для Spring Boot
@@ -2538,7 +2538,7 @@ volumes:
   grafana_data:
 ```
 
-### **Kubernetes** развертывание
+### Kubernetes развертывание
 
 ```yaml
 # Deployment для Spring Boot приложения

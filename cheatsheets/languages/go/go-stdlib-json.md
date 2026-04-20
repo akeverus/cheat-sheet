@@ -12,7 +12,7 @@ prerequisites: ["go/go-basics.md"]
 updated: "2026-02-06"
 ---
 
-# Go: стандартная библиотека — **JSON**
+# Go: стандартная библиотека — JSON
 
 ## Полезные ссылки
 
@@ -24,11 +24,11 @@ updated: "2026-02-06"
 - [Go: стандартная библиотека — **JSON**](#go-стандартная-библиотека-json)
 - [Введение в **JSON**](#введение-в-json)
   - [Основные операции](#основные-операции)
-- [**Marshaling** (**Сериализация**)](#marshaling-сериализация)
+- [**Marshaling** (Сериализация)](#marshaling-сериализация)
   - [Базовый **marshaling**](#базовый-marshaling)
   - [Форматированный **JSON**](#форматированный-json)
   - [**Marshaling** в **Writer**](#marshaling-в-writer)
-- [**Unmarshaling** (**Десериализация**)](#unmarshaling-десериализация)
+- [**Unmarshaling** (Десериализация)](#unmarshaling-десериализация)
   - [Базовый **unmarshaling**](#базовый-unmarshaling)
   - [**Unmarshaling** из **Reader**](#unmarshaling-из-reader)
   - [Частичный **unmarshaling**](#частичный-unmarshaling)
@@ -73,7 +73,7 @@ updated: "2026-02-06"
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **JSON**
+## Введение в JSON
 
 Пакет `encoding/json` предоставляет полную поддержку работы с **JSON** в Go. Понимание работы с **JSON** критично для создания **API** и работы с внешними сервисами.
 
@@ -83,11 +83,11 @@ updated: "2026-02-06"
 2. **Unmarshaling** — преобразование **JSON** в Go структуры
 3. **Custom Marshaling** — кастомная логика сериализации/десериализации
 
-## **Marshaling** (**Сериализация**)
+## Marshaling (Сериализация)
 
 **Marshaling** преобразует Go структуры в **JSON** формат.
 
-### Базовый **marshaling**
+### Базовый marshaling
 
 ```go
 import (
@@ -114,7 +114,7 @@ func main() {
 }
 ```
 
-### Форматированный **JSON**
+### Форматированный JSON
 
 ```go
 import "encoding/json"
@@ -137,7 +137,7 @@ func main() {
 }
 ```
 
-### **Marshaling** в **Writer**
+### Marshaling в Writer
 
 ```go
 import (
@@ -154,11 +154,11 @@ func main() {
 }
 ```
 
-## **Unmarshaling** (**Десериализация**)
+## Unmarshaling (Десериализация)
 
 **Unmarshaling** преобразует **JSON** в Go структуры.
 
-### Базовый **unmarshaling**
+### Базовый unmarshaling
 
 ```go
 import "encoding/json"
@@ -177,7 +177,7 @@ func main() {
 }
 ```
 
-### **Unmarshaling** из **Reader**
+### Unmarshaling из Reader
 
 ```go
 import (
@@ -198,7 +198,7 @@ func main() {
 }
 ```
 
-### Частичный **unmarshaling**
+### Частичный unmarshaling
 
 ```go
 import "encoding/json"
@@ -213,7 +213,7 @@ func main() {
 }
 ```
 
-## **JSON Tags**
+## JSON Tags
 
 **JSON tags** позволяют контролировать сериализацию полей структуры.
 
@@ -242,11 +242,11 @@ type User struct {
 }
 ```
 
-## **Custom Marshaling**
+## Custom Marshaling
 
 **Custom marshaling** позволяет определять собственную логику сериализации.
 
-### Реализация **json.Marshaler**
+### Реализация json.Marshaler
 
 ```go
 import "encoding/json"
@@ -275,7 +275,7 @@ func (d *CustomDate) UnmarshalJSON(data []byte) error {
 }
 ```
 
-### Использование **custom marshaling**
+### Использование custom marshaling
 
 ```go
 type User struct {
@@ -297,11 +297,11 @@ func main() {
 }
 ```
 
-## **Streaming JSON**
+## Streaming JSON
 
 **Streaming JSON** позволяет обрабатывать большие **JSON** файлы без загрузки всего в память.
 
-### **Streaming encoder**
+### Streaming encoder
 
 ```go
 import (
@@ -323,7 +323,7 @@ func main() {
 }
 ```
 
-### **Streaming decoder**
+### Streaming decoder
 
 ```go
 import (
@@ -348,7 +348,7 @@ func main() {
 }
 ```
 
-### **Marshaling** вложенных структур
+### Marshaling вложенных структур
 
 ```go
 type Address struct {
@@ -380,7 +380,7 @@ func main() {
 }
 ```
 
-### **Marshaling** массивов и слайсов
+### Marshaling массивов и слайсов
 
 ```go
 type User struct {
@@ -402,7 +402,7 @@ func main() {
 }
 ```
 
-### **Marshaling** карт
+### Marshaling карт
 
 ```go
 func main() {
@@ -418,7 +418,7 @@ func main() {
 }
 ```
 
-### **Marshaling** указателей
+### Marshaling указателей
 
 ```go
 type User struct {
@@ -452,7 +452,7 @@ func main() {
 }
 ```
 
-### **Unmarshaling** в карты
+### Unmarshaling в карты
 
 ```go
 func main() {
@@ -466,7 +466,7 @@ func main() {
 }
 ```
 
-### **Unmarshaling** с валидацией
+### Unmarshaling с валидацией
 
 ```go
 type User struct {
@@ -494,7 +494,7 @@ func unmarshalWithValidation(jsonData []byte) (*User, error) {
 }
 ```
 
-### **Unmarshaling** частичных данных
+### Unmarshaling частичных данных
 
 ```go
 type PartialUser struct {
@@ -513,7 +513,7 @@ func main() {
 }
 ```
 
-### **Custom Unmarshaler** для валидации
+### Custom Unmarshaler для валидации
 
 ```go
 type Email string
@@ -562,7 +562,7 @@ func main() {
 }
 ```
 
-### Работа с **raw JSON**
+### Работа с raw JSON
 
 ```go
 import "encoding/json"
@@ -585,7 +585,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **API** сериализация
+### Практические примеры: API сериализация
 
 ```go
 type APIResponse struct {
@@ -613,7 +613,7 @@ func errorResponse(err error) []byte {
 }
 ```
 
-### Практические примеры: Парсинг **JSON** конфигурации
+### Практические примеры: Парсинг JSON конфигурации
 
 ```go
 type Config struct {
@@ -657,7 +657,7 @@ func loadConfig(filename string) (*Config, error) {
 }
 ```
 
-### Практические примеры: **JSON** патчинг
+### Практические примеры: JSON патчинг
 
 ```go
 func patchUser(userID int, patch map[string]interface{}) error {
@@ -693,7 +693,7 @@ func patchUser(userID int, patch map[string]interface{}) error {
 }
 ```
 
-### Практические примеры: **JSON** трансформация
+### Практические примеры: JSON трансформация
 
 ```go
 func transformJSON(input []byte, transformer func(map[string]interface{}) map[string]interface{}) ([]byte, error) {
@@ -713,7 +713,7 @@ func addTimestamp(data map[string]interface{}) map[string]interface{} {
 }
 ```
 
-### Практические примеры: **JSON** валидация схемы
+### Практические примеры: JSON валидация схемы
 
 ```go
 func validateJSONSchema(data []byte, schema map[string]interface{}) error {
@@ -739,7 +739,7 @@ func validateJSONSchema(data []byte, schema map[string]interface{}) error {
 }
 ```
 
-### Практические примеры: **JSON streaming** для больших данных
+### Практические примеры: JSON streaming для больших данных
 
 ```go
 func streamLargeJSON(w io.Writer, items []Item) error {
@@ -765,7 +765,7 @@ func streamLargeJSON(w io.Writer, items []Item) error {
 }
 ```
 
-### Практические примеры: **JSON** инкрементальный парсинг
+### Практические примеры: JSON инкрементальный парсинг
 
 ```go
 func parseJSONStream(reader io.Reader, callback func(map[string]interface{}) error) error {
@@ -803,7 +803,7 @@ func parseJSONStream(reader io.Reader, callback func(map[string]interface{}) err
 }
 ```
 
-### Практические примеры: **JSON** сжатие
+### Практические примеры: JSON сжатие
 
 ```go
 import "compress/gzip"
@@ -834,7 +834,7 @@ func decompressJSON(compressed []byte) ([]byte, error) {
 }
 ```
 
-### Практические примеры: **JSON** кэширование
+### Практические примеры: JSON кэширование
 
 ```go
 type JSONCache struct {
@@ -868,7 +868,7 @@ func (c *JSONCache) Set(key string, value interface{}) error {
 }
 ```
 
-### Практические примеры: Валидация **JSON**
+### Практические примеры: Валидация JSON
 
 ```go
 import "github.com/go-playground/validator/v10"
@@ -893,7 +893,7 @@ func ValidateJSON(data []byte, v interface{}) error {
 }
 ```
 
-### Практические примеры: **JSON Patch**
+### Практические примеры: JSON Patch
 
 ```go
 import "github.com/evanphx/json-patch/v5"
@@ -912,7 +912,7 @@ patch := []byte(`{"age":31,"city":"New York"}`)
 patched, _ := ApplyJSONPatch(original, patch)
 ```
 
-### Практические примеры: **JSON Schema** валидация
+### Практические примеры: JSON Schema валидация
 
 ```go
 import "github.com/xeipuuv/gojsonschema"
@@ -938,7 +938,7 @@ func ValidateJSONSchema(data []byte, schema []byte) error {
 }
 ```
 
-### Практические примеры: **JSON** с индентацией
+### Практические примеры: JSON с индентацией
 
 ```go
 func PrettyJSON(data interface{}) ([]byte, error) {
@@ -954,7 +954,7 @@ func PrettyJSONString(data interface{}) (string, error) {
 }
 ```
 
-### Практические примеры: **JSON streaming** с обработкой ошибок
+### Практические примеры: JSON streaming с обработкой ошибок
 
 ```go
 func StreamJSONArray(reader io.Reader, processor func(interface{}) error) error {
@@ -994,7 +994,7 @@ func StreamJSONArray(reader io.Reader, processor func(interface{}) error) error 
 }
 ```
 
-### Практические примеры: **JSON** с контекстом
+### Практические примеры: JSON с контекстом
 
 ```go
 func MarshalWithContext(ctx context.Context, v interface{}) ([]byte, error) {
@@ -1020,7 +1020,7 @@ func MarshalWithContext(ctx context.Context, v interface{}) ([]byte, error) {
 }
 ```
 
-### Практические примеры: **JSON** с компрессией
+### Практические примеры: JSON с компрессией
 
 ```go
 import "compress/gzip"
@@ -1076,7 +1076,7 @@ func DecompressJSON(data []byte, v interface{}) error {
 14. **Обрабатывайте контекст** — передавайте метаданные в **JSON**
 15. **Используйте pretty printing** — для отладки и логирования
 
-### Практические примеры: **JSON streaming** для больших данных
+### Практические примеры: JSON streaming для больших данных
 
 ```go
 func StreamJSONArray(w io.Writer, items []interface{}) error {

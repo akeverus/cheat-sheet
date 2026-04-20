@@ -134,7 +134,7 @@ updated: "2026-02-06"
 
 Профилирование позволяет выявить узкие места в коде и оптимизировать их.
 
-### **CPU** профилирование
+### CPU профилирование
 
 ```go
 import (
@@ -158,7 +158,7 @@ func cpuProfile() {
 }
 ```
 
-### **Memory** профилирование
+### Memory профилирование
 
 ```go
 import (
@@ -182,7 +182,7 @@ func memoryProfile() {
 }
 ```
 
-### Использование **pprof**
+### Использование pprof
 
 ```bash
 # CPU профилирование
@@ -299,7 +299,7 @@ func process(items []Item) {
 }
 ```
 
-### Использование **sync.Pool**
+### Использование sync.Pool
 
 ```go
 import "sync"
@@ -368,7 +368,7 @@ for i := 0; i < length; i++ {
 }
 ```
 
-### **HTTP** профилирование
+### HTTP профилирование
 
 ```go
 import _ "net/http/pprof"
@@ -388,7 +388,7 @@ func main() {
 // http://localhost:6060/debug/pprof/profile?seconds=30
 ```
 
-### Анализ **CPU** профиля
+### Анализ CPU профиля
 
 ```bash
 # Интерактивный режим
@@ -404,7 +404,7 @@ go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
 (pprof) list functionName
 ```
 
-### Анализ **Memory** профиля
+### Анализ Memory профиля
 
 ```bash
 # Интерактивный режим
@@ -420,7 +420,7 @@ go tool pprof http://localhost:6060/debug/pprof/heap
 (pprof) list functionName
 ```
 
-### **Trace** профилирование
+### Trace профилирование
 
 ```go
 import (
@@ -491,7 +491,7 @@ func buildMap(items []Item) map[string]Item {
 }
 ```
 
-### Оптимизация строк: использование **strings.Builder**
+### Оптимизация строк: использование strings.Builder
 
 ```go
 import "strings"
@@ -584,7 +584,7 @@ func processBest(slice []int) {
 }
 ```
 
-### Оптимизация функций: **inline** функции
+### Оптимизация функций: inline функции
 
 ```go
 //go:inline
@@ -595,7 +595,7 @@ func smallFunction(a, b int) int {
 // Компилятор может встроить функцию для оптимизации
 ```
 
-### Оптимизация функций: избегание **defer** в горячих путях
+### Оптимизация функций: избегание defer в горячих путях
 
 ```go
 // Плохо: defer в горячем пути
@@ -635,7 +635,7 @@ func processGood(items []Item) {
 }
 ```
 
-### Оптимизация памяти: использование **sync.Pool**
+### Оптимизация памяти: использование sync.Pool
 
 ```go
 import "sync"
@@ -703,7 +703,7 @@ func processGood(items []Item) []Result {
 }
 ```
 
-### Оптимизация `GC`: настройка **GOGC**
+### Оптимизация `GC`: настройка GOGC
 
 ```bash
 # Уменьшение частоты сборки мусора (больше памяти, меньше GC)
@@ -761,7 +761,7 @@ func processGood(items []Item) {
 }
 ```
 
-### Оптимизация конкурентности: **worker pools**
+### Оптимизация конкурентности: worker pools
 
 ```go
 func processWithWorkers(items []Item, numWorkers int) []Result {
@@ -864,7 +864,7 @@ func readParallel(files []string) error {
 }
 ```
 
-### Практические примеры: оптимизация **HTTP** сервера
+### Практические примеры: оптимизация HTTP сервера
 
 ```go
 func optimizedHTTPServer() *http.Server {
@@ -878,7 +878,7 @@ func optimizedHTTPServer() *http.Server {
 }
 ```
 
-### Практические примеры: оптимизация **HTTP** клиента
+### Практические примеры: оптимизация HTTP клиента
 
 ```go
 func optimizedHTTPClient() *http.Client {
@@ -897,7 +897,7 @@ func optimizedHTTPClient() *http.Client {
 }
 ```
 
-### Практические примеры: оптимизация **JSON**
+### Практические примеры: оптимизация JSON
 
 ```go
 import "encoding/json"
@@ -1017,7 +1017,7 @@ func (c *Cache) Set(key string, value interface{}, ttl time.Duration) {
 }
 ```
 
-### Измерение производительности: использование **benchstat**
+### Измерение производительности: использование benchstat
 
 ```bash
 # Запуск benchmarks несколько раз
@@ -1030,7 +1030,7 @@ go test -bench=. -count=5 > new.txt
 benchstat old.txt new.txt
 ```
 
-### Измерение производительности: использование **go-torch**
+### Измерение производительности: использование go-torch
 
 ```bash
 # Установка
@@ -1103,7 +1103,7 @@ func processItemsBest(items []Item) []Result {
 }
 ```
 
-### Практические примеры: Оптимизация **map**
+### Практические примеры: Оптимизация map
 
 ```go
 // Предварительное выделение для map
@@ -1125,7 +1125,7 @@ func updateMapSafe(m map[string]int, key string, value int) {
 }
 ```
 
-### Практические примеры: Оптимизация с использованием **sync.Pool**
+### Практические примеры: Оптимизация с использованием sync.Pool
 
 ```go
 var bufferPool = sync.Pool{
@@ -1276,7 +1276,7 @@ func checkStructSize() {
 }
 ```
 
-### Практические примеры: Оптимизация с помощью **escape analysis**
+### Практические примеры: Оптимизация с помощью escape analysis
 
 ```go
 // Структуры, которые не escape на heap
@@ -1303,7 +1303,7 @@ func inlineFunction() {
 }
 ```
 
-### Практические примеры: Оптимизация с помощью **compiler flags**
+### Практические примеры: Оптимизация с помощью compiler flags
 
 ```bash
 # Оптимизация размера бинарника
@@ -1319,7 +1319,7 @@ GOARCH=amd64 GOOS=linux go build main.go
 go build -pgo=default.pgo main.go
 ```
 
-### Практические примеры: Мониторинг производительности в **runtime**
+### Практические примеры: Мониторинг производительности в runtime
 
 ```go
 import "runtime"
@@ -1480,7 +1480,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 14. **Избегайте лишних копий** — используйте указатели для больших структур
 15. **Используйте worker pools** — ограничивайте количество горутин
 
-### Практические примеры: Оптимизация через **escape analysis**
+### Практические примеры: Оптимизация через escape analysis
 
 ```go
 // Проверка escape analysis
@@ -1510,7 +1510,7 @@ func processPointer(data *[]byte) {
 // go build -gcflags="-m" main.go
 ```
 
-### Практические примеры: Оптимизация через **inlining**
+### Практические примеры: Оптимизация через inlining
 
 ```go
 // Подсказка компилятору для inline

@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-replication.md", "databases/postgres-backup-restore.md"]
 ---
 
-# **PostgreSQL**: Высокая доступность
+# PostgreSQL: Высокая доступность
 
 ## Полезные ссылки
 
@@ -150,8 +150,8 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
   - [Перед развертыванием](#перед-развертыванием)
   - [После развертывания](#после-развертывания)
 - [Архитектурные паттерны HA](#архитектурные-паттерны-ha)
-  - [**Active-Passive** (**Hot Standby**)](#active-passive-hot-standby)
-  - [**Active-Active** (**Multi-Master**)](#active-active-multi-master)
+  - [**Active-Passive** (Hot Standby)](#active-passive-hot-standby)
+  - [**Active-Active** (Multi-Master)](#active-active-multi-master)
   - [**Cascading Replication**](#cascading-replication)
   - [**Read Replicas** с **Load Balancing**](#read-replicas-с-load-balancing)
 - [Географическое распределение](#географическое-распределение)
@@ -165,7 +165,7 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
 
 ## Введение в высокую доступность
 
-Высокая доступность (**High `Availability`, HA**) — это способность системы оставаться доступной даже при сбоях отдельных компонентов.
+Высокая доступность (High `Availability`, HA) — это способность системы оставаться доступной даже при сбоях отдельных компонентов.
 
 ### Компоненты `HA` решения
 
@@ -175,11 +175,11 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
 4. **Мониторинг**: Отслеживание состояния системы
 
 
-## **Patroni**
+## Patroni
 
 **Patroni** — это решение для автоматического управления репликацией и **failover** в **PostgreSQL**.
 
-### Установка **Patroni**
+### Установка Patroni
 
 **Установка **Patroni** с поддержкой **etcd**, **Consul** или **Zookeeper**:**
 
@@ -192,9 +192,9 @@ pip install patroni[consul]
 pip install patroni[zookeeper]
 ```
 
-### Конфигурация **Patroni**
+### Конфигурация Patroni
 
-#### **patroni.yml**
+#### patroni.yml
 
 ```yaml
 scope: postgres
@@ -255,7 +255,7 @@ tags:
   nosync: false
 ```
 
-### Запуск **Patroni**
+### Запуск Patroni
 
 ```bash
 # Запустить Patroni
@@ -266,7 +266,7 @@ sudo systemctl start patroni
 sudo systemctl enable patroni
 ```
 
-### Управление через **REST API**
+### Управление через REST API
 
 ```bash
 # Проверить статус
@@ -280,7 +280,7 @@ curl -X POST http://localhost:8008/patroni -d '{"action": "restart"}'
 ```
 
 
-## **pg_auto_failover**
+## pg_auto_failover
 
 **pg_auto_failover** — это расширение **PostgreSQL** для автоматического **failover**.
 
@@ -294,7 +294,7 @@ sudo apt-get install postgresql-14-auto-failover
 sudo yum install postgresql14-auto-failover
 ```
 
-### Настройка **Monitor**
+### Настройка Monitor
 
 ```bash
 # Создать monitor
@@ -305,7 +305,7 @@ pg_auto_failover create monitor \
   --run
 ```
 
-### Настройка **Primary**
+### Настройка Primary
 
 ```bash
 pg_auto_failover create postgres \
@@ -316,7 +316,7 @@ pg_auto_failover create postgres \
   --run
 ```
 
-### Настройка **Standby**
+### Настройка Standby
 
 ```bash
 pg_auto_failover create postgres \
@@ -340,7 +340,7 @@ pg_auto_failover show state \
 ```
 
 
-## **Streaming Replication** для `HA`
+## Streaming Replication для `HA`
 
 ### Настройка синхронной репликации
 
@@ -363,9 +363,9 @@ FROM pg_stat_replication;
 ```
 
 
-## **Load Balancing**
+## Load Balancing
 
-### **PgBouncer** для **Load Balancing**
+### PgBouncer для Load Balancing
 
 ```ini
 # /etc/pgbouncer/pgbouncer.ini
@@ -382,7 +382,7 @@ pool_mode = transaction
 query_wait_timeout = 120
 ```
 
-### **HAProxy** для **Load Balancing**
+### HAProxy для Load Balancing
 
 ```conf
 # /etc/haproxy/haproxy.cfg
@@ -481,7 +481,7 @@ exit 0
 3. **Connection pooling**: Для управления подключениями
 4. **Load balancing**: Для распределения нагрузки
 
-### **Patroni** с **Consul**
+### Patroni с Consul
 
 ```yaml
 # patroni-consul.yml
@@ -556,7 +556,7 @@ tags:
   replicatefrom: null
 ```
 
-### **Patroni** с **ZooKeeper**
+### Patroni с ZooKeeper
 
 ```yaml
 # patroni-zookeeper.yml
@@ -602,7 +602,7 @@ postgresql:
       password: postgres_password
 ```
 
-### **Patroni** с **Kubernetes**
+### Patroni с Kubernetes
 
 ```yaml
 # patroni-k8s.yml
@@ -650,7 +650,7 @@ postgresql:
       password: ${POSTGRES_PASSWORD}
 ```
 
-### **Patroni Watchdog**
+### Patroni Watchdog
 
 **Настройка **watchdog** для автоматического перезапуска при проблемах:**
 
@@ -664,7 +664,7 @@ watchdog:
   ttl: 30
 ```
 
-### **Patroni** с **Custom Hooks**
+### Patroni с Custom Hooks
 
 ```yaml
 # patroni.yml
@@ -676,7 +676,7 @@ postgresql:
     on_restart: /usr/local/bin/on_restart.sh
 ```
 
-**Пример скрипта `**on_role_change.sh**`:**
+**Пример скрипта `on_role_change.sh`:**
 
 ```bash
 #!/bin/bash
@@ -697,9 +697,9 @@ elif [ "$ROLE" = "replica" ]; then
 fi
 ```
 
-## **Advanced pg_auto_failover Configuration**
+## Advanced pg_auto_failover Configuration
 
-### **Multi-Node Setup**
+### Multi-Node Setup
 
 ```bash
 # Monitor
@@ -734,7 +734,7 @@ pg_auto_failover create postgres \
   --run
 ```
 
-### **pg_auto_failover** с **SSL**
+### pg_auto_failover с SSL
 
 ```bash
 # Создать сертификаты
@@ -752,7 +752,7 @@ pg_auto_failover create postgres \
   --run
 ```
 
-### Мониторинг **pg_auto_failover**
+### Мониторинг pg_auto_failover
 
 ```sql
 -- Статус всех узлов
@@ -778,9 +778,9 @@ ORDER BY eventtime DESC
 LIMIT 20;
 ```
 
-## **Advanced Load Balancing**
+## Advanced Load Balancing
 
-### **PgBouncer Advanced Configuration**
+### PgBouncer Advanced Configuration
 
 ```ini
 # /etc/pgbouncer/pgbouncer.ini
@@ -822,7 +822,7 @@ admin_users = admin
 stats_users = stats
 ```
 
-### **HAProxy Advanced Configuration**
+### HAProxy Advanced Configuration
 
 ```conf
 # /etc/haproxy/haproxy.cfg
@@ -876,7 +876,7 @@ backend postgresql_replicas
     server standby2 standby2_host:5432 check port 5432 inter 3s fall 3 rise 2 backup
 ```
 
-### **Keepalived** для **VIP**
+### Keepalived для VIP
 
 ```conf
 # /etc/keepalived/keepalived.conf
@@ -911,9 +911,9 @@ vrrp_instance VI_1 {
 }
 ```
 
-## Мониторинг с **Prometheus** и **Grafana**
+## Мониторинг с Prometheus и Grafana
 
-### **Prometheus Exporter** для **Patroni**
+### Prometheus Exporter для Patroni
 
 ```yaml
 # prometheus.yml
@@ -924,7 +924,7 @@ scrape_configs:
     metrics_path: '/metrics'
 ```
 
-### **Prometheus Exporter** для **PostgreSQL**
+### Prometheus Exporter для PostgreSQL
 
 ```yaml
 # prometheus.yml
@@ -934,7 +934,7 @@ scrape_configs:
       - targets: ['postgres1:9187', 'postgres2:9187', 'postgres3:9187']
 ```
 
-### **Grafana Dashboard** для `HA`
+### Grafana Dashboard для `HA`
 
 ```json
 {
@@ -973,9 +973,9 @@ scrape_configs:
 }
 ```
 
-## **Disaster Recovery Strategies**
+## Disaster Recovery Strategies
 
-### **Backup Strategy**
+### Backup Strategy
 
 ```bash
 #!/bin/bash
@@ -994,7 +994,7 @@ find /backup/daily -type d -mtime +7 -exec rm -rf {} \;
 find /backup/weekly -type d -mtime +30 -exec rm -rf {} \;
 ```
 
-### **Point-in-Time Recovery**
+### Point-in-Time Recovery
 
 ```bash
 # Восстановление на определенный момент времени
@@ -1011,7 +1011,7 @@ pg_ctl start -D /var/lib/postgresql/data
 
 ## Тестирование `HA`
 
-### Тестирование **Failover**
+### Тестирование Failover
 
 ```bash
 #!/bin/bash
@@ -1057,7 +1057,7 @@ pgbench -h standby_host -U postgres -c 20 -j 4 -T 60 -S mydb
 
 ## Решение проблем
 
-### Проблема: **Failover** не происходит
+### Проблема: Failover не происходит
 
 **Решение:**
 ```bash
@@ -1078,7 +1078,7 @@ telnet primary_host 5432
 sudo iptables -L -n
 ```
 
-### Проблема: Большой **lag** после **failover**
+### Проблема: Большой lag после failover
 
 **Решение:**
 ```sql
@@ -1093,7 +1093,7 @@ pg_rewind --target-pgdata=/var/lib/postgresql/data \
 SELECT * FROM pg_replication_slots;
 ```
 
-### Проблема: **Split-brain**
+### Проблема: Split-brain
 
 **Решение:**
 ```bash
@@ -1109,7 +1109,7 @@ pg_rewind --target-pgdata=/var/lib/postgresql/data \
   --source-server="host=correct_primary port=5432 user=postgres"
 ```
 
-### Проблема: Медленный **failover**
+### Проблема: Медленный failover
 
 **Решение:**
 ```yaml
@@ -1121,20 +1121,20 @@ bootstrap:
     retry_timeout: 15  # Уменьшить с 30 до 15
 ```
 
-## **Production Deployment Checklist**
+## Production Deployment Checklist
 
 ### Перед развертыванием
 
-- [ ] Настроена репликация (**Streaming или Logical**)
-- [ ] Настроен автоматический **failover** (**Patroni или pg_auto_failover**)
-- [ ] Настроен **Load Balancing** (**PgBouncer или HAProxy**)
-- [ ] Настроен мониторинг (**Prometheus, Grafana**)
+- [ ] Настроена репликация (Streaming или Logical)
+- [ ] Настроен автоматический **failover** (Patroni или pg_auto_failover)
+- [ ] Настроен **Load Balancing** (PgBouncer или HAProxy)
+- [ ] Настроен мониторинг (Prometheus, Grafana)
 - [ ] Настроены алерты
 - [ ] Настроено резервное копирование
 - [ ] Протестирован **failover**
 - [ ] Документирована процедура восстановления
 - [ ] Настроена аутентификация и авторизация
-- [ ] Настроено шифрование соединений (**SSL/TLS**)
+- [ ] Настроено шифрование соединений (SSL/TLS)
 
 ### После развертывания
 
@@ -1146,7 +1146,7 @@ bootstrap:
 
 ## Архитектурные паттерны `HA`
 
-### **Active-Passive** (**Hot Standby**)
+### Active-Passive (Hot Standby)
 
 ```text
 ┌─────────────┐         ┌─────────────┐
@@ -1170,7 +1170,7 @@ bootstrap:
 - Системы, где потеря данных недопустима
 - Приложения с преимущественно **write** операциями
 
-### **Active-Active** (**Multi-Master**)
+### Active-Active (Multi-Master)
 
 ```text
 ┌─────────────┐         ┌─────────────┐
@@ -1194,7 +1194,7 @@ bootstrap:
 - Высокая нагрузка на чтение и запись
 - Требования к низкой задержке в разных регионах
 
-### **Cascading Replication**
+### Cascading Replication
 
 ```text
 ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
@@ -1214,7 +1214,7 @@ bootstrap:
 - Географическое распределение
 - Разные уровни доступности данных
 
-### **Read Replicas** с **Load Balancing**
+### Read Replicas с Load Balancing
 
 ```text
                     ┌─────────────┐
@@ -1251,7 +1251,7 @@ bootstrap:
 
 ## Географическое распределение
 
-### **Multi-Region Setup**
+### Multi-Region Setup
 
 ```yaml
 # Регион 1: US-East
@@ -1277,7 +1277,7 @@ regions:
       - standby2-ap-south.example.com
 ```
 
-### Настройка для **Multi-Region**
+### Настройка для Multi-Region
 
 ```sql
 -- На Primary в каждом регионе
@@ -1286,7 +1286,7 @@ ALTER SYSTEM SET synchronous_commit = 'remote_write';
 SELECT pg_reload_conf();
 ```
 
-### **Routing** по региону
+### Routing по региону
 
 ```java
 // PostgreSQL Python example replaced with Java Spring — HikariCP configuration

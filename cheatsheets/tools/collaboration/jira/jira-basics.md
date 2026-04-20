@@ -357,4 +357,4 @@ JQL: `assignee = currentUser() AND resolution = Unresolved ORDER BY priority DES
 
 ## Заключение
 
-Для углублённого изучения — [официальная документация Atlassian](https://www.atlassian.com/software/jira). См. также: [Confluence](../confluence/confluence-basics.md) — [Slack](../slack/slack-basics.md) — [Mattermost](../mattermost/mattermost-basics.md) — [Telegram](../telegram/telegram-basics.md).
+Для углублённого изучения — [официальная документация Atlassian](https://www.atlassian.com/software/jira). См. также: [[confluence-basics|Confluence]] — [[slack-basics|Slack]] — [[mattermost-basics|Mattermost]] — [[telegram-basics|Telegram]].

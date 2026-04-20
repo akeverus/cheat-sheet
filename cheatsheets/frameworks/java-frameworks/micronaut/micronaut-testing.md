@@ -107,7 +107,7 @@ dependencies {
 
 ## Unit Tests
 
-### Простые **Unit Tests**
+### Простые Unit Tests
 
 ```java
 import org.junit.jupiter.api.Test;
@@ -162,7 +162,7 @@ public class UserServiceTest {
 
 ## Integration Tests
 
-### @**MicronautTest**
+### @MicronautTest
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -196,7 +196,7 @@ public class UserServiceIntegrationTest {
 }
 ```
 
-### **HTTP Client Testing**
+### HTTP Client Testing
 
 ```java
 import io.micronaut.http.HttpRequest;
@@ -244,7 +244,7 @@ public class UserControllerTest {
 }
 ```
 
-### **Reactive Testing**
+### Reactive Testing
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -301,7 +301,7 @@ public class ReactiveUserServiceTest {
 
 ## Database Testing
 
-### **In-Memory Database**
+### In-Memory Database
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -332,7 +332,7 @@ public class UserRepositoryTest {
 }
 ```
 
-### **Test Containers**
+### Test Containers
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -373,7 +373,7 @@ public class UserRepositoryTestContainersTest {
 
 ## Mocking
 
-### @**MockBean**
+### @MockBean
 
 ```java
 import io.micronaut.test.annotation.MockBean;
@@ -410,7 +410,7 @@ public class UserServiceMockTest {
 }
 ```
 
-### **Spying**
+### Spying
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -496,7 +496,7 @@ public class SecuredControllerTest {
 
 ## Лучшие практики
 
-### 1. Используйте @**MicronautTest** для **Integration Tests**
+### 1. Используйте @MicronautTest для Integration Tests
 
 ```java
 // ✅ Хорошо
@@ -517,7 +517,7 @@ void testCreateUser() {
 }
 ```
 
-### 3. Используйте **Test Containers** для **Real Database Testing**
+### 3. Используйте Test Containers для Real Database Testing
 
 ```java
 // ✅ Хорошо
@@ -530,7 +530,7 @@ public class DatabaseTest {
 }
 ```
 
-### 4. **Mock External Dependencies**
+### 4. Mock External Dependencies
 
 ```java
 // ✅ Хорошо
@@ -540,7 +540,7 @@ ExternalApiClient externalApiClient() {
 }
 ```
 
-### 5. Используйте **Assertions Library**
+### 5. Используйте Assertions Library
 
 ```java
 // ✅ Хорошо - используйте AssertJ или Hamcrest
@@ -552,7 +552,7 @@ assertThat(user.getName()).isEqualTo("John");
 
 ## Property-based Testing
 
-### **Micronaut Test Resources**
+### Micronaut Test Resources
 
 **application-`test.yml`:**
 
@@ -568,7 +568,7 @@ micronaut:
             - 5432
 ```
 
-### **Test Containers Integration**
+### Test Containers Integration
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -600,7 +600,7 @@ public class DatabaseIntegrationTest {
 
 ## Performance Testing
 
-### **Benchmark Tests**
+### Benchmark Tests
 
 ```java
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -637,7 +637,7 @@ public class PerformanceTest {
 
 ## Contract Testing
 
-### **Pact Testing**
+### Pact Testing
 
 ```java
 import au.com.dius.pact.consumer.Pact;
@@ -678,7 +678,7 @@ public class ContractTest {
 
 ## Test Configuration
 
-### **Test-specific Configuration**
+### Test-specific Configuration
 
 **application-`test.yml`:**
 
@@ -694,7 +694,7 @@ micronaut:
       enabled: true
 ```
 
-### **Test Environment Variables**
+### Test Environment Variables
 
 ```java
 @MicronautTest(environments = "test")
@@ -705,7 +705,7 @@ public class EnvironmentTest {
 
 ## Parameterized Tests
 
-### **JUnit** 5 **Parameterized Tests**
+### JUnit 5 Parameterized Tests
 
 ```java
 @MicronautTest
@@ -733,7 +733,7 @@ public class ParameterizedUserTest {
 
 ## Test Execution Order
 
-### **Ordered Tests**
+### Ordered Tests
 
 ```java
 @MicronautTest
@@ -762,7 +762,7 @@ public class OrderedUserTest {
 
 ## Test Lifecycle
 
-### **Test Lifecycle Hooks**
+### Test Lifecycle Hooks
 
 ```java
 @MicronautTest
@@ -792,7 +792,7 @@ public class LifecycleTest {
 
 ## Test Fixtures
 
-### **Test Data Builders**
+### Test Data Builders
 
 ```java
 public class UserTestBuilder {
@@ -834,7 +834,7 @@ User user = UserTestBuilder.aUser()
 
 ## Test Utilities
 
-### **Test Helpers**
+### Test Helpers
 
 ```java
 public class TestHelpers {
@@ -852,7 +852,7 @@ public class TestHelpers {
 
 ## Test Execution Order
 
-### **Test Ordering**
+### Test Ordering
 
 ```java
 import org.junit.jupiter.api.MethodOrderer;
@@ -879,7 +879,7 @@ public class OrderedTest {
 
 ## Test Parallelization
 
-### **Parallel Test Execution**
+### Parallel Test Execution
 
 **junit-`platform.properties`:**
 

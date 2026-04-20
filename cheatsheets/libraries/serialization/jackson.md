@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Jackson: **JSON** сериализация в **Java**
+# Jackson: JSON сериализация в Java
 
 **Комплексное руководство по использованию `Jackson` для работы с `JSON` в `Java` приложениях — от основ до продвинутых техник.**
 
@@ -73,7 +73,7 @@ updated: "2026-02-11"
     - [JsonPointer Support](#jsonpointer-support)
     - [Property-based Filtering](#property-based-filtering)
     - [TypeFactory Enhancements](#typefactory-enhancements)
-  - [Blackbird Module (**Jackson 2.12+**)](#blackbird-module-jackson-212)
+  - [Blackbird Module (Jackson 2.12+)](#blackbird-module-jackson-212)
   - [Afterburner Module](#afterburner-module)
 - [Продвинутые возможности сериализации](#продвинутые-возможности-сериализации)
   - [Custom Serializer с Context](#custom-serializer-с-context)
@@ -93,17 +93,17 @@ updated: "2026-02-11"
   - [Jackson Test Utils](#jackson-test-utils)
   - [Property-based Testing с Jackson](#property-based-testing-с-jackson)
 - [Миграция и обновление](#миграция-и-обновление)
-  - [Migration Guide (**Jackson 2.x**)](#migration-guide-jackson-2x)
+  - [Migration Guide (Jackson 2.x)](#migration-guide-jackson-2x)
 - [Troubleshooting и дебаггинг](#troubleshooting-и-дебаггинг)
   - [Debug Logging](#debug-logging)
   - [Common Issues и Solutions](#common-issues-и-solutions)
 - [Альтернативы](#альтернативы)
 
-## Введение в **Jackson**
+## Введение в Jackson
 
-**Jackson** — это высокопроизводительная библиотека для обработки **JSON** в **Java**. Она предоставляет мощный **API** для сериализации (**преобразования объектов в JSON**) и десериализации (**преобразования `JSON` в объекты**).
+**Jackson** — это высокопроизводительная библиотека для обработки **JSON** в **Java**. Она предоставляет мощный **API** для сериализации (преобразования объектов в JSON) и десериализации (преобразования `JSON` в объекты).
 
-### Почему **Jackson**?
+### Почему Jackson?
 
 **Jackson** предлагает несколько ключевых преимуществ:**
 
@@ -127,9 +127,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимость **Maven** для **Jackson Databind** (**сериализация и десериализация JSON**).
+Зависимость **Maven** для **Jackson Databind** (сериализация и десериализация JSON).
 
 ```xml
 <dependency>
@@ -153,7 +153,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -312,7 +312,7 @@ public class CollectionSerialization {
 }
 ```
 
-### Сериализация с **pretty printing**
+### Сериализация с pretty printing
 
 ```java
 public class PrettyPrinting {
@@ -604,7 +604,7 @@ public class AdvancedAnnotations {
 }
 ```
 
-## Настройка **ObjectMapper**
+## Настройка ObjectMapper
 
 ### Глобальная конфигурация
 
@@ -737,7 +737,7 @@ public class CustomSerializers {
 
 ## Обработка сложных типов
 
-### **Generic** типы
+### Generic типы
 
 ```java
 import java.util.*;
@@ -784,7 +784,7 @@ public class GenericTypes {
 }
 ```
 
-### Работа с **JSON Tree Model**
+### Работа с JSON Tree Model
 
 ```java
 import com.fasterxml.jackson.databind.node.*;
@@ -875,7 +875,7 @@ public class PerformanceOptimization {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
 ### Автоматическая конфигурация
 
@@ -905,7 +905,7 @@ public class JacksonConfiguration {
 }
 ```
 
-### **Spring Boot Properties**
+### Spring Boot Properties
 
 ```yaml
 # application.yml
@@ -922,7 +922,7 @@ spring:
 
 ## Лучшие практики
 
-### 1. Переиспользование **ObjectMapper**
+### 1. Переиспользование ObjectMapper
 
 ```java
 // ✅ Хорошо
@@ -996,7 +996,7 @@ String internalJson = mapper.writerWithView(Views.Internal.class)
 
 **Jackson** — это мощная и гибкая библиотека для работы с **JSON** в **Java**, которая является стандартом де-факто для большинства **Java** приложений.
 
-### Преимущества **Jackson**
+### Преимущества Jackson
 
 1. **Высокая производительность** — Одна из самых быстрых **JSON** библиотек
 2. **Гибкость** — Множество способов настройки и расширения
@@ -1007,7 +1007,7 @@ String internalJson = mapper.writerWithView(Views.Internal.class)
 7. **Tree Model** — Гибкая работа с **JSON** структурой
 8. **Annotation-based configuration** — Легкая настройка через аннотации
 
-### Когда использовать **Jackson**
+### Когда использовать Jackson
 
 - **REST API** — Сериализация/десериализация для **HTTP API**
 - **Конфигурационные файлы** — Чтение **JSON** конфигураций
@@ -1025,9 +1025,9 @@ String internalJson = mapper.writerWithView(Views.Internal.class)
 
 ## Экспериментальные и новые возможности
 
-### **Jackson** 2.15+ **Features**
+### Jackson 2.15+ Features
 
-#### **JsonPointer Support**
+#### JsonPointer Support
 ```java
 // Работа с JSON Pointer (RFC 6901)
 ObjectMapper mapper = new ObjectMapper();
@@ -1042,7 +1042,7 @@ JsonPointer pointer = JsonPointer.compile("/user/address/city");
 JsonNode city = root.at(pointer);
 ```
 
-#### **Property-based Filtering**
+#### Property-based Filtering
 ```java
 // Фильтрация свойств на основе аннотаций
 @JsonFilter("dynamicFilter")
@@ -1061,7 +1061,7 @@ mapper.setFilterProvider(filters);
 String filtered = mapper.writeValueAsString(user);
 ```
 
-#### **TypeFactory Enhancements**
+#### TypeFactory Enhancements
 ```java
 // Создание generic типов
 TypeFactory tf = TypeFactory.defaultInstance();
@@ -1073,7 +1073,7 @@ JavaType paramType = tf.constructParametricType(List.class, User.class);
 JavaType wildCardType = tf.constructType(new TypeReference<List<? extends Number>>() {});
 ```
 
-### **Blackbird Module** (**Jackson 2.12+**)
+### Blackbird Module (Jackson 2.12+)
 ```xml
 <dependency>
     <groupId>com.fasterxml.jackson.module</groupId>
@@ -1089,7 +1089,7 @@ ObjectMapper mapper = JsonMapper.builder()
     .build();
 ```
 
-### **Afterburner Module**
+### Afterburner Module
 ```xml
 <dependency>
     <groupId>com.fasterxml.jackson.module</groupId>
@@ -1105,7 +1105,7 @@ mapper.registerModule(new AfterburnerModule());
 
 ## Продвинутые возможности сериализации
 
-### **Custom Serializer** с **Context**
+### Custom Serializer с Context
 ```java
 public class ContextAwareSerializer extends JsonSerializer<User> {
     @Override
@@ -1129,7 +1129,7 @@ public class ContextAwareSerializer extends JsonSerializer<User> {
 }
 ```
 
-### **Streaming API** с фильтрами
+### Streaming API с фильтрами
 ```java
 public class FilteredJsonWriter {
     public void writeFilteredJson(JsonGenerator gen, User user) throws IOException {
@@ -1148,7 +1148,7 @@ public class FilteredJsonWriter {
 
 ## Десериализация сложных структур
 
-### **External Type** Id **Resolution**
+### External Type Id Resolution
 ```java
 public class CustomTypeIdResolver extends TypeIdResolverBase {
     private JavaType baseType;
@@ -1181,7 +1181,7 @@ public class CustomTypeIdResolver extends TypeIdResolverBase {
 }
 ```
 
-### **Custom Deserializer** с **Dependency Injection**
+### Custom Deserializer с Dependency Injection
 ```java
 @Component
 public class UserDeserializer extends JsonDeserializer<User> {
@@ -1234,7 +1234,7 @@ public class CustomJacksonModule extends SimpleModule {
 }
 ```
 
-### **Dynamic Module Loading**
+### Dynamic Module Loading
 ```java
 public class ModuleLoader {
     public ObjectMapper createMapperWithModules() {
@@ -1253,7 +1253,7 @@ public class ModuleLoader {
 
 ## Производительность и оптимизация
 
-### **Buffer Recycling**
+### Buffer Recycling
 ```java
 public class OptimizedObjectMapper {
     private final ObjectMapper mapper;
@@ -1274,7 +1274,7 @@ public class OptimizedObjectMapper {
 }
 ```
 
-### **Memory-Mapped Files**
+### Memory-Mapped Files
 ```java
 public class MemoryMappedJsonReader {
     public JsonNode readLargeJsonFile(Path filePath) throws IOException {
@@ -1290,7 +1290,7 @@ public class MemoryMappedJsonReader {
 
 ## Интеграция с другими технологиями
 
-### **Reactive Streams**
+### Reactive Streams
 ```java
 public class ReactiveJsonProcessor {
     public Flux<JsonNode> processJsonStream(Flux<String> jsonLines) {
@@ -1308,7 +1308,7 @@ public class ReactiveJsonProcessor {
 }
 ```
 
-### **Akka Streams Integration**
+### Akka Streams Integration
 ```java
 public class AkkaJsonFlow {
     public Flow<String, JsonNode, NotUsed> createJsonFlow() {
@@ -1320,9 +1320,9 @@ public class AkkaJsonFlow {
 }
 ```
 
-## Тестирование **Jackson** кода
+## Тестирование Jackson кода
 
-### **Jackson Test Utils**
+### Jackson Test Utils
 ```java
 public class JacksonTestUtils {
 
@@ -1341,7 +1341,7 @@ public class JacksonTestUtils {
 }
 ```
 
-### **Property-based Testing** с **Jackson**
+### Property-based Testing с Jackson
 ```java
 @Property
 public void jsonRoundTrip(@ForAll User user) throws Exception {
@@ -1354,7 +1354,7 @@ public void jsonRoundTrip(@ForAll User user) throws Exception {
 
 ## Миграция и обновление
 
-### **Migration Guide** (**Jackson 2.x**)
+### Migration Guide (Jackson 2.x)
 ```java
 public class JacksonMigrationHelper {
 
@@ -1379,7 +1379,7 @@ public class JacksonMigrationHelper {
 
 ## Решение проблем и дебаггинг
 
-### **Debug Logging**
+### Debug Logging
 ```java
 // Включение детального логирования
 Logger jacksonLogger = LoggerFactory.getLogger("com.fasterxml.jackson");
@@ -1389,7 +1389,7 @@ Logger jacksonLogger = LoggerFactory.getLogger("com.fasterxml.jackson");
 System.setProperty("logging.level.com.fasterxml.jackson", "DEBUG");
 ```
 
-### **Common Issues** и **Solutions**
+### Common Issues и Solutions
 ```java
 public class JacksonTroubleshooting {
 

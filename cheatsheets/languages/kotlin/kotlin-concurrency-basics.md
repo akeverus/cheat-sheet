@@ -17,7 +17,7 @@ updated: "2026-02-06"
 
 # Kotlin Concurrency: основы
 
-**Конкурентность в Kotlin** — это мощная система для написания асинхронного и параллельного кода. Основанная на корутинах (**coroutines**), она позволяет писать асинхронный код в синхронном стиле, обеспечивая высокую производительность и безопасность.
+**Конкурентность в Kotlin** — это мощная система для написания асинхронного и параллельного кода. Основанная на корутинах (coroutines), она позволяет писать асинхронный код в синхронном стиле, обеспечивая высокую производительность и безопасность.
 
 ## Полезные ссылки
 
@@ -73,7 +73,7 @@ updated: "2026-02-06"
   - [Структурированный параллелизм](#структурированный-параллелизм)
   - [Корутины в **Kotlin**](#корутины-в-kotlin)
   - [**Project Loom**](#project-loom)
-- [Ожидание завершения нескольких потоков (**корутин**)](#ожидание-завершения-нескольких-потоков-корутин)
+- [Ожидание завершения нескольких потоков (корутин)](#ожидание-завершения-нескольких-потоков-корутин)
 - [Получить имя выполняемой в данный момент функции](#получить-имя-выполняемой-в-данный-момент-функции)
 - [Руководство по функции **yield**](#руководство-по-функции-yield)
 - [Вызов функции после задержки](#вызов-функции-после-задержки)
@@ -103,11 +103,11 @@ updated: "2026-02-06"
 - [Продвинутые паттерны каналов](#продвинутые-паттерны-каналов)
   - [**Buffered channels**](#buffered-channels)
   - [**Channel producers**](#channel-producers)
-  - [**Fan-out** (**multiple consumers**)](#fan-out-multiple-consumers)
-  - [**Fan-in** (**multiple producers**)](#fan-in-multiple-producers)
+  - [**Fan-out** (multiple consumers)](#fan-out-multiple-consumers)
+  - [**Fan-in** (multiple producers)](#fan-in-multiple-producers)
   - [**Select expression**](#select-expression)
 - [**Mutex** и семафоры](#mutex-и-семафоры)
-  - [**Mutex** (**Mutual exclusion**)](#mutex-mutual-exclusion)
+  - [**Mutex** (Mutual exclusion)](#mutex-mutual-exclusion)
   - [**Semaphore**](#semaphore)
   - [**Read-write mutex**](#read-write-mutex)
 - [**Lifecycle** и **cleanup**](#lifecycle-и-cleanup)
@@ -203,7 +203,7 @@ updated: "2026-02-06"
   - [Использование **Semaphore** для ограничения параллелизма](#использование-semaphore-для-ограничения-параллелизма)
   - [Использование атомарных операций](#использование-атомарных-операций)
 
-## Руководство по **Coroutines**
+## Руководство по Coroutines
 
 В этой статье мы рассмотрим корутины из языка **Kotlin**. Проще говоря, корутины позволяют нам плавно создавать асинхронные программы, и они основаны на концепции программирования в стиле продолжения.
 
@@ -242,7 +242,7 @@ public abstract suspend fun yield(value: T)
 
 Если мы приостановили вызов в **buildSequence**, этот вызов будет преобразован в выделенное состояние в конечном автомате. Корутину можно передать и присвоить переменной, как и любую другую функцию.
 
-В сопрограмме **fibonacciSeq** у нас есть две точки приостановки. Во-первых, когда мы вызываем **yield(1)**, а во-вторых, когда мы вызываем **yield (**a + b**)**.
+В сопрограмме **fibonacciSeq** у нас есть две точки приостановки. Во-первых, когда мы вызываем **yield(1)**, а во-вторых, когда мы вызываем **yield (a + b)**.
 
 Если эта функция **yield** приводит к некоторому блокирующему вызову, текущий поток не будет блокироваться на нём. Он сможет выполнить какой-то другой код. Как только приостановленная функция завершает своё выполнение, поток может возобновить выполнение корутины **fibonacciSeq**.
 
@@ -256,7 +256,7 @@ val res = fibonacciSeq
 assertEquals(res, listOf(1, 1, 2, 3, 5))
 ```
 
-### Библиотека **kotlinx-coroutines**
+### Библиотека kotlinx-coroutines
 
 Давайте посмотрим на библиотеку **kotlinx-coroutines**, в которой есть полезные конструкции, построенные поверх базовых сопрограмм.
 
@@ -370,7 +370,7 @@ fun givenAsyncAction_whenDeclareTimeout_thenShouldFinishWhenTimedOut() {
 
 Если мы не определим тайм-аут, возможно, что наш поток будет заблокирован навсегда, потому что это вычисление зависнет. Мы не можем обработать этот случай в нашем коде, если тайм-аут не определён.
 
-### Параллельное выполнение с **async**
+### Параллельное выполнение с async
 
 Допустим, нам нужно запустить два асинхронных действия одновременно, а потом дождаться их результатов. Если наша обработка занимает одну секунду и нам нужно выполнить эту обработку дважды, время выполнения синхронного выполнения блокировки составит две секунды.
 
@@ -425,7 +425,7 @@ fun givenTwoExpensiveAction_whenExecuteThemLazy_thenTheyShouldNotConcurrently() 
 
 Нам нужно помнить о ленивом выполнении асинхронных действий, поскольку они могут выполняться блокирующим образом.
 
-## **CoroutineContext** и **Dispatchers**
+## CoroutineContext и Dispatchers
 
 В этом руководстве мы узнаем о **CoroutineContext** а затем продолжим рассмотрение диспетчеров как одного из важных элементов **CoroutineContext**
 
@@ -433,7 +433,7 @@ fun givenTwoExpensiveAction_whenExecuteThemLazy_thenTheyShouldNotConcurrently() 
 
 У нас есть несколько функций построения сопрограмм: **launch** и **async** — расширения **CoroutineScope**, а также **runBlocking**
 
-### **CoroutineContext**
+### CoroutineContext
 
 **Каждая корутина имеет связанный **CoroutineContext**, который представляет собой индексированный набор **Element**s. Итак, что такое индексированный набор? Это смесь набора и карты, или, другими словами, это набор с уникальным ключом для каждого из элементов. Кроме того, **CoroutineContext#get** примечателен тем, что обеспечивает безопасность типов при поиске разнородных элементов:**
 
@@ -460,7 +460,7 @@ runBlocking {
 
 **CoroutineContext** неизменяем, но мы можем получить новый контекст, добавив элемент, удалив один или объединив два существующих контекста. Кроме того, контекст без какого-либо элемента может быть создан как экземпляр **EmptyCoroutineContext**.
 
-**Мы можем объединить два **CoroutineContext** с помощью оператора плюс (**+**). Примечательным дизайном здесь является то, что экземпляр **Element** сам по себе является одноэлементным **CoroutineContext**. Следовательно, мы можем легко создать новый контекст, добавив элемент в контекст:**
+**Мы можем объединить два **CoroutineContext** с помощью оператора плюс (+). Примечательным дизайном здесь является то, что экземпляр **Element** сам по себе является одноэлементным **CoroutineContext**. Следовательно, мы можем легко создать новый контекст, добавив элемент в контекст:**
 
 ```kotlin
 // Добавление элемента в контекст корутины (оператор +)
@@ -480,7 +480,7 @@ val newContext = context.minusKey(CoroutineName)
 Assertions.assertNull(newContext[CoroutineName])
 ```
 
-### Элементы **CoroutineContext**
+### Элементы CoroutineContext
 
 **В **Kotlin** есть множество реализаций **CoroutineContext.Element** для сохранения и управления различными аспектами корутины:**
 
@@ -489,9 +489,9 @@ Assertions.assertNull(newContext[CoroutineName])
 3.  Обработка исключений: **CoroutineExceptionHandler** обрабатывает возникшие исключения в сборщиках сопрограмм, таких как запуск которые не распространяют исключения
 4.  Управление потоком: **ContinuationInterceptor** который прослушивает продолжение внутри корутины и перехватывает его возобновление. Реализации **CoroutineDispatcher** являются наиболее часто используемыми типами в этой категории. Более того, элементом **ContinuationInterceptor** по умолчанию является **Dispatchers.Default**
 
-### **CoroutineDispatcher**
+### CoroutineDispatcher
 
-**CoroutineDispatcher** — это подтип элемента контекста **ContinuationInterceptor**, следовательно, он отвечает за определение потока (**или потоков**) выполнения корутины.
+**CoroutineDispatcher** — это подтип элемента контекста **ContinuationInterceptor**, следовательно, он отвечает за определение потока (или потоков) выполнения корутины.
 
 Когда **Kotlin** выполняет корутину, он сначала проверяет, возвращает ли **CoroutineDispatcher#isDispatchNeeded** значение **true** или нет. Если да, то **CoroutineDispatcher#dispatch** назначает поток выполнения; в противном случае **Kotlin** выполняет корутину без ограничений.
 
@@ -544,7 +544,7 @@ runBlocking(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) {
 }
 ```
 
-### **Dispatchers.Unconfined**
+### Dispatchers.Unconfined
 
 С другой стороны, **Dispatchers.Unconfined** ссылается на внутренний объект **Unconfined**, который переопределяет **CoroutineDispatcher#isDispatchNeeded** значением **false**.
 
@@ -566,12 +566,12 @@ runBlocking {
 
 Для **Dispatchers#Unconfined** подходят корутины, которые не загружают ЦП и не обновляют какие-либо общие данные.
 
-### **CoroutineScope**
+### CoroutineScope
 
 Как мы поняли из предыдущего обсуждения, **CoroutineScope** — это интерфейс только с одним свойством: **coroutineContext**. Кроме того, мы можем создавать корутины, используя функции построения сопрограмм — расширения **CoroutineScope**, называемые **async** и **launch**. Обе функции-компоновщика запрашивают три параметра:
 
-1.  **context** (**необязательно**): если ничего не передано, значение по умолчанию — **EmptyCoroutineContext**
-2.  **coroutineStart** (**необязательно**): если ничего не прошло, предполагается, что **CoroutineStart.DEFAULT**. Другие доступные варианты: **LAZY**, **ATOMIC** и **UNDISPATCHED**.
+1.  **context** (необязательно): если ничего не передано, значение по умолчанию — **EmptyCoroutineContext**
+2.  **coroutineStart** (необязательно): если ничего не прошло, предполагается, что **CoroutineStart.DEFAULT**. Другие доступные варианты: **LAZY**, **ATOMIC** и **UNDISPATCHED**.
 3.  **suspend block:** исполняемый блок кода внутри корутины
 
 Нас интересует аргумент контекста Чтобы создать контекст для новой корутины, функция компоновщика добавляет аргумент контекста к текущему **CoroutineScope.coroutineContext**, а затем добавляет некоторые элементы конфигурации.
@@ -583,7 +583,7 @@ runBlocking {
 
 Затем построитель передаёт новый контекст в конструктор.
 
-**Контекст AbstractCoroutine** — это **parentContext** (**контекст предыдущего шага**) плюс сама корутина. Поскольку **AbstractCoroutine** является и **CoroutineScope**, и **Job**, контекст корутины содержит элемент **Job**.
+**Контекст AbstractCoroutine** — это **parentContext** (контекст предыдущего шага) плюс сама корутина. Поскольку **AbstractCoroutine** является и **CoroutineScope**, и **Job**, контекст корутины содержит элемент **Job**.
 
 ```kotlin
 public final override val context: CoroutineContext = parentContext + this
@@ -591,17 +591,17 @@ public final override val context: CoroutineContext = parentContext + this
 
 **GlobalScope** — это одноэлементный **CoroutineScope**, но без какого-либо ограниченного задания и с **EmptyCoroutineContext**. Хотя мы должны избегать его использования со сборщиками сопрограмм, его могут использовать корутины верхнего уровня или неограниченные.
 
-## **Threads** против **Coroutines**
+## Threads против Coroutines
 
 В этом кратком руководстве мы собираемся создавать и выполнять потоки в **Kotlin.**
 
 Позже мы обсудим, как вообще избежать этого в пользу **Kotlin Coroutines**.
 
-### Создание потоков в **Kotlin**
+### Создание потоков в Kotlin
 
 Создание потока в **Kotlin** аналогично созданию потока в **Java.**
 
-**Мы могли бы либо расширить класс **Thread** (**хотя это не рекомендуется, поскольку `Kotlin` не поддерживает множественное наследование**):**
+**Мы могли бы либо расширить класс **Thread** (хотя это не рекомендуется, поскольку `Kotlin` не поддерживает множественное наследование):**
 
 ```kotlin
 class SimpleThread: Thread() {
@@ -641,7 +641,7 @@ val thread = Thread {
 thread.start()
 ```
 
-### Функция **thread**()
+### Функция thread()
 
 **Другой способ — рассмотреть функцию **thread**(), которую предоставляет **Kotlin**:**
 
@@ -695,7 +695,7 @@ thread(start = true) {
 
 Мы увидим, как указать контекст, когда будем описывать корутины на следующих этапах.
 
-### Функция **launch**
+### Функция launch
 
 **Функция запуска -** это построитель сопрограмм, который запускает новую корутину, не блокируя текущий поток, и возвращает ссылку на корутину в виде объекта **Job:**
 
@@ -726,7 +726,7 @@ val job = GlobalScope.launch {
 
 Когда мы используем **Dispatchers.Default** или **GlobalScope.launch**, мы создаём корутину верхнего уровня. Несмотря на то, что она лёгкая, она всё же потребляет некоторые ресурсы памяти во время работы.
 
-**Вместо запуска сопрограмм в **GlobalScope,** как мы обычно делаем с потоками (**потоки всегда глобальны**),** мы можем запускать корутины в конкретной области действия, которую мы выполняем:**
+**Вместо запуска сопрограмм в **GlobalScope,** как мы обычно делаем с потоками (потоки всегда глобальны),** мы можем запускать корутины в конкретной области действия, которую мы выполняем:**
 
 ```kotlin
 runBlocking {
@@ -736,9 +736,9 @@ runBlocking {
 }
 ```
 
-В этом случае мы запускаем новую корутину внутри построителя корутины **runBlocking** (**которую мы опишем позже**) без указания контекста. Таким образом, корутина наследует контекст **runBlocking**.
+В этом случае мы запускаем новую корутину внутри построителя корутины **runBlocking** (которую мы опишем позже) без указания контекста. Таким образом, корутина наследует контекст **runBlocking**.
 
-### Функция **async**
+### Функция async
 
 Ещё одна функция, которую **Kotlin** предоставляет для создания корутины, — это **async**.
 
@@ -774,7 +774,7 @@ val deferred = async(Dispatchers.IO) {
 
 **Dispatchers.IO** рекомендуется, когда нам нужно выполнять интенсивные операции ввода-вывода.
 
-### **runBlocking**
+### runBlocking
 
 Ранее мы уже рассматривали **runBlocking**, но теперь давайте поговорим о нём более подробно.
 
@@ -809,7 +809,7 @@ runBlocking(newSingleThreadContext("dedicatedThread")) {
 
 Обратите внимание, что мы можем создать новый поток, в котором мы могли бы выполнить корутину. Однако выделенный поток является дорогостоящим ресурсом. И, когда он больше не нужен, мы должны освободить его или, что ещё лучше, повторно использовать его во всём приложении.
 
-## **runBlocking** против **coroutineScope**
+## runBlocking против coroutineScope
 
 В этом руководстве мы сравним два метода запуска сопрограмм **Kotlin runBlocking** и **coroutineScope**
 
@@ -869,7 +869,7 @@ fun demoWithCoroutineScope() = runBlocking {
 
 Когда мы используем **runBlocking**, отмена дочерней корутины не приводит к отмене **runBlocking**, и он продолжает выполнение, если только мы явно не обработаем отмену.
 
-## Руководство по **volatile**
+## Руководство по volatile
 
 В **Kotlin**, как и в **Java**, ключевое слово **volatile** используется для гарантии видимости изменений переменной между потоками.
 
@@ -882,7 +882,7 @@ var flag = false
 
 Однако при работе с корутинами **volatile** может быть недостаточным, и лучше использовать атомарные классы или другие примитивы синхронизации.
 
-## Руководство по **Channel**
+## Руководство по Channel
 
 Каналы — это способ передачи данных между корутинами. Они похожи на блокирующие очереди, но являются приостанавливающими функциями.
 
@@ -904,11 +904,11 @@ launch {
 ### Типы каналов
 
 - **Channel<T>** — неограниченный канал
-- **Channel<T>(**capacity**)** — канал с фиксированной емкостью
-- **Channel<T>(**Channel.UNLIMITED**)** — неограниченный канал
-- **Channel<T>(**Channel.CONFLATED**)** — канал, который сохраняет только последнее значение
+- **Channel<T>(capacity)** — канал с фиксированной емкостью
+- **Channel<T>(Channel.UNLIMITED)** — неограниченный канал
+- **Channel<T>(Channel.CONFLATED)** — канал, который сохраняет только последнее значение
 
-### **Produce builder**
+### Produce builder
 
 ```kotlin
 val channel = produce {
@@ -916,7 +916,7 @@ val channel = produce {
 }
 ```
 
-### **Broadcast channel**
+### Broadcast channel
 
 ```kotlin
 val broadcast = broadcastChannel<Int>(Channel.BUFFERED)
@@ -932,7 +932,7 @@ val receiver1 = launch {
 }
 ```
 
-### **Fan-out** и **Fan-in**
+### Fan-out и Fan-in
 
 **Fan-out** — это когда несколько корутин получают данные из одного канала:**
 
@@ -969,7 +969,7 @@ repeat(2) {
 channel.close()
 ```
 
-### **Ticker channel**
+### Ticker channel
 
 **Тикерный канал** — это сопрограммный эквивалент традиционного таймера. Он выдаёт значение **Unit** с заданным регулярным интервалом. Этот тип канала удобен для выполнения задания через равные промежутки времени.
 
@@ -994,7 +994,7 @@ fun main() = runBlocking {
 
 Здесь мы видим, что новая цена акции печатается каждые пять секунд. Когда мы закончим, мы остановим канал тикера, вызвав для него метод отмены.
 
-## Облегченный параллелизм в **Java** и **Kotlin**
+## Облегченный параллелизм в Java и Kotlin
 
 В этом руководстве мы рассмотрим основные концепции параллелизма и то, как их решают различные языки программирования, в частности **Java** и **Kotlin**.
 
@@ -1034,7 +1034,7 @@ fun main() = runBlocking {
 
 Однако мы можем добиться структурированного параллелизма в **Kotlin** с помощью такого решения, как корутины.
 
-### Корутины в **Kotlin**
+### Корутины в Kotlin
 
 **Kotlin** обеспечивает поддержку облегчённых потоков в виде сопрограмм, которые реализованы в виде богатой библиотеки — **kotlinx.coroutines**. Интересно, что **JVM** не имеет встроенной поддержки облегчённой конструкции параллелизма, такой как корутина, — ну, по крайней мере, пока! Тем не менее, **Kotlin** представил корутины как экспериментальную языковую функцию довольно рано, и они стали официальными в версии **1.3**.
 
@@ -1042,7 +1042,7 @@ fun main() = runBlocking {
 
 Когда мы используем их для параллелизма, они кажутся похожими на потоки ядра. Однако есть тонкие различия. Например, планировщик упреждающе управляет потоками ядра, в то время как корутины добровольно уступают управление, что приводит к совместной многозадачности.
 
-### **Project Loom**
+### Project Loom
 
 **Java** имеет первоклассную поддержку параллелизма с первых дней своего существования. Однако в **Java** нет встроенной поддержки того, что мы называем облегчёнными потоками. Хотя было несколько попыток создать такую поддержку вне ядра **Java**, ни одна из них не увенчалась успехом.
 
@@ -1062,7 +1062,7 @@ fun main() = runBlocking {
 
 К настоящему времени нам нетрудно догадаться, что, возможно, пришло время для **Java** вернуть поддержку легковесных потоков. На самом деле это мотивация **Project Loom**. Целью этого проекта является исследование и инкубация упрощённой модели параллелизма на платформе **Java**. Идея состоит в том, чтобы создать поддержку облегчённых потоков поверх потоков **JVM** и фундаментально отделить потоки **JVM** от собственных потоков ядра.
 
-## Ожидание завершения нескольких потоков (**корутин**)
+## Ожидание завершения нескольких потоков (корутин)
 
 **В **Kotlin** мы можем ожидать завершения нескольких корутин с помощью функции **joinAll**:**
 
@@ -1108,7 +1108,7 @@ suspend fun getCurrentCoroutineName(): String? {
 }
 ```
 
-## Руководство по функции **yield**
+## Руководство по функции yield
 
 **Функция **yield** позволяет корутине добровольно уступить управление другим корутинам:**
 
@@ -1170,7 +1170,7 @@ runBlocking(dispatcher) {
 }
 ```
 
-## Сравнение **Coroutines** и **RxKotlin**
+## Сравнение Coroutines и RxKotlin
 
 **Корутины и **RxKotlin** решают похожие задачи, но имеют разные подходы:**
 
@@ -1181,14 +1181,14 @@ runBlocking(dispatcher) {
 - Поддержка структурированного параллелизма
 - Отличная интеграция с языком **Kotlin**
 
-### **RxKotlin**
+### RxKotlin
 
 - Реактивное программирование с потоками данных
 - Богатый набор операторов для трансформации потоков
 - **Backpressure** поддержка
 - Широко используется в **Android** разработке
 
-## Работа с **Reactive Flow** с **MongoDB** и **Spring WebFlux**
+## Работа с Reactive Flow с MongoDB и Spring WebFlux
 
 **Kotlin** корутины могут быть интегрированы с **Spring WebFlux** для работы с реактивными потоками:**
 
@@ -1215,11 +1215,11 @@ suspend fun findUsers(): Flow<User> = flow {
 
 Корутины предоставляют удобный способ работы с реактивными потоками, сохраняя синхронный стиль кода.
 
-## **Flow API** и холодные потоки
+## Flow API и холодные потоки
 
 **Flow** — это холодный асинхронный поток данных в **Kotlin**, который последовательно выдает значения и завершается успешно или с исключением.
 
-### Создание **Flow**
+### Создание Flow
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -1239,9 +1239,9 @@ fun main() = runBlocking {
 }
 ```
 
-### Операторы **Flow**
+### Операторы Flow
 
-#### **Transform operators**
+#### Transform operators
 
 ```kotlin
 fun main() = runBlocking {
@@ -1252,7 +1252,7 @@ fun main() = runBlocking {
 }
 ```
 
-#### **Terminal operators**
+#### Terminal operators
 
 ```kotlin
 fun main() = runBlocking {
@@ -1263,7 +1263,7 @@ fun main() = runBlocking {
 }
 ```
 
-#### **Size-limiting operators**
+#### Size-limiting operators
 
 ```kotlin
 fun main() = runBlocking {
@@ -1284,7 +1284,7 @@ fun numbers(): Flow<Int> = flow {
 }
 ```
 
-### **Exception handling** в **Flow**
+### Exception handling в Flow
 
 ```kotlin
 fun main() = runBlocking {
@@ -1306,7 +1306,7 @@ fun simpleFlow2(): Flow<Int> = flow {
 }
 ```
 
-### **Flow completion**
+### Flow completion
 
 ```kotlin
 fun main() = runBlocking {
@@ -1317,7 +1317,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Buffering** и **conflation**
+### Buffering и conflation
 
 ```kotlin
 fun main() = runBlocking {
@@ -1338,11 +1338,11 @@ fun main() = runBlocking {
 }
 ```
 
-## **StateFlow** и **SharedFlow**
+## StateFlow и SharedFlow
 
 **StateFlow** и **SharedFlow** — это горячие потоки, которые могут иметь несколько коллекторов.
 
-### **StateFlow**
+### StateFlow
 
 **StateFlow** — это наблюдаемый контейнер состояния с одним значением, который всегда имеет значение и может быть коллектирован множеством коллекторов.
 
@@ -1382,7 +1382,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **SharedFlow**
+### SharedFlow
 
 **SharedFlow** — это горячий поток, который выдает значения множеству коллекторов в режиме **broadcast**.
 
@@ -1410,7 +1410,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Replay** и **buffering**
+### Replay и buffering
 
 ```kotlin
 fun main() = runBlocking {
@@ -1435,9 +1435,9 @@ fun main() = runBlocking {
 }
 ```
 
-## **Exception handling** в корутинах
+## Exception handling в корутинах
 
-### **Exception propagation**
+### Exception propagation
 
 ```kotlin
 fun main() = runBlocking {
@@ -1452,7 +1452,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **CoroutineExceptionHandler**
+### CoroutineExceptionHandler
 
 ```kotlin
 val handler = CoroutineExceptionHandler { _, exception ->
@@ -1467,7 +1467,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Exception** в **async**
+### Exception в async
 
 ```kotlin
 fun main() = runBlocking {
@@ -1482,7 +1482,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **SupervisorJob**
+### SupervisorJob
 
 **SupervisorJob** позволяет дочерним корутинам завершаться с исключением, не отменяя другие дочерние корутины.
 
@@ -1509,7 +1509,7 @@ fun main() = runBlocking {
 
 ## Продвинутые паттерны каналов
 
-### **Buffered channels**
+### Buffered channels
 
 ```kotlin
 fun main() = runBlocking {
@@ -1532,7 +1532,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Channel producers**
+### Channel producers
 
 ```kotlin
 fun CoroutineScope.produceNumbers() = produce<Int> {
@@ -1561,7 +1561,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Fan-out** (**multiple consumers**)
+### Fan-out (multiple consumers)
 
 ```kotlin
 fun CoroutineScope.processChannel(channel: ReceiveChannel<String>) = launch {
@@ -1592,7 +1592,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Fan-in** (**multiple producers**)
+### Fan-in (multiple producers)
 
 ```kotlin
 suspend fun sendString(channel: SendChannel<String>, s: String, time: Long) {
@@ -1616,7 +1616,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Select expression**
+### Select expression
 
 ```kotlin
 suspend fun selectExample() {
@@ -1654,9 +1654,9 @@ fun main() = runBlocking {
 }
 ```
 
-## **Mutex** и семафоры
+## Mutex и семафоры
 
-### **Mutex** (**Mutual exclusion**)
+### Mutex (Mutual exclusion)
 
 ```kotlin
 val mutex = Mutex()
@@ -1681,7 +1681,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Semaphore**
+### Semaphore
 
 ```kotlin
 val semaphore = Semaphore(2) // Allow 2 concurrent operations
@@ -1707,7 +1707,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Read-write mutex**
+### Read-write mutex
 
 ```kotlin
 class ReadWriteResource {
@@ -1743,9 +1743,9 @@ class ReadWriteResource {
 }
 ```
 
-## **Lifecycle** и **cleanup**
+## Lifecycle и cleanup
 
-### **withContext** и **resource management**
+### withContext и resource management
 
 ```kotlin
 class DatabaseConnection {
@@ -1773,7 +1773,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Coroutine lifecycle hooks**
+### Coroutine lifecycle hooks
 
 ```kotlin
 suspend fun lifecycleExample() = coroutineScope {
@@ -1795,7 +1795,7 @@ suspend fun lifecycleExample() = coroutineScope {
 }
 ```
 
-### **Disposable resources**
+### Disposable resources
 
 ```kotlin
 interface Disposable {
@@ -1823,9 +1823,9 @@ suspend fun useResource() = Resource().use { resource ->
 }
 ```
 
-## **Timeouts** и **deadlines**
+## Timeouts и deadlines
 
-### **withTimeout**
+### withTimeout
 
 ```kotlin
 suspend fun longRunningTask(): String {
@@ -1845,7 +1845,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **withTimeoutOrNull**
+### withTimeoutOrNull
 
 ```kotlin
 suspend fun fetchData(): String? = withTimeoutOrNull(1000) {
@@ -1863,7 +1863,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Deadline-based timeouts**
+### Deadline-based timeouts
 
 ```kotlin
 fun main() = runBlocking {
@@ -1883,7 +1883,7 @@ fun main() = runBlocking {
 
 ## Тестирование корутин
 
-### **Testing suspended functions**
+### Testing suspended functions
 
 ```kotlin
 class UserService(private val repository: UserRepository) {
@@ -1908,7 +1908,7 @@ fun `should return user when found`() = runBlocking {
 }
 ```
 
-### **Testing coroutine builders**
+### Testing coroutine builders
 
 ```kotlin
 class AsyncService {
@@ -1930,7 +1930,7 @@ fun `should process data asynchronously`() = runBlocking {
 }
 ```
 
-### **Testing Flow**
+### Testing Flow
 
 ```kotlin
 class DataService {
@@ -1956,7 +1956,7 @@ fun `should emit data in correct order`() = runBlocking {
 }
 ```
 
-### **Testing with TestCoroutineDispatcher**
+### Testing with TestCoroutineDispatcher
 
 ```kotlin
 class TimerService(private val dispatcher: CoroutineDispatcher = Dispatchers.Default) {
@@ -1988,9 +1988,9 @@ fun `should execute after delay`() = runBlocking {
 }
 ```
 
-## **Debugging concurrent code**
+## Debugging concurrent code
 
-### **Coroutine debugging**
+### Coroutine debugging
 
 ```kotlin
 fun main() = runBlocking(CoroutineName("Main")) {
@@ -2018,14 +2018,14 @@ fun log(msg: String) {
 }
 ```
 
-### **Debug output with** -**Dkotlinx.coroutines.debug**
+### Debug output with -Dkotlinx.coroutines.debug
 
 ```bash
 # Run with debug enabled
 java -Dkotlinx.coroutines.debug -jar app.jar
 ```
 
-### **Stack trace recovery**
+### Stack trace recovery
 
 ```kotlin
 suspend fun deepFunction(depth: Int): String {
@@ -2039,7 +2039,7 @@ suspend fun deepFunction(depth: Int): String {
 }
 ```
 
-### **Thread dump analysis**
+### Thread dump analysis
 
 ```kotlin
 fun printThreadDump() {
@@ -2059,9 +2059,9 @@ fun printThreadDump() {
 }
 ```
 
-## **Profiling** и **performance**
+## Profiling и performance
 
-### **CPU profiling**
+### CPU profiling
 
 ```kotlin
 suspend fun cpuIntensiveTask() {
@@ -2085,7 +2085,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Memory profiling**
+### Memory profiling
 
 ```kotlin
 suspend fun memoryIntensiveTask() {
@@ -2118,7 +2118,7 @@ fun getMemoryUsage(): String {
 }
 ```
 
-### **Benchmarking coroutines**
+### Benchmarking coroutines
 
 ```kotlin
 @Benchmark
@@ -2150,9 +2150,9 @@ fun benchmarkCoroutineVsThread() = runBlocking {
 }
 ```
 
-## **Integration** с **Java** кодом
+## Integration с Java кодом
 
-### **Calling Java from Kotlin coroutines**
+### Calling Java from Kotlin coroutines
 
 ```kotlin
 // Java class
@@ -2182,7 +2182,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Calling Kotlin coroutines from Java**
+### Calling Kotlin coroutines from Java
 
 ```kotlin
 // Kotlin suspend function
@@ -2203,7 +2203,7 @@ public class JavaCaller {
 }
 ```
 
-### **Bridging callback-based APIs**
+### Bridging callback-based APIs
 
 ```kotlin
 suspend fun <T> awaitCallback(callback: (Callback<T>) -> Unit): T =
@@ -2242,9 +2242,9 @@ suspend fun getData(): String = awaitCallback { callback ->
 }
 ```
 
-## **Migration patterns**
+## Migration patterns
 
-### **From threads** to **coroutines**
+### From threads to coroutines
 
 ```kotlin
 // Before (threads)
@@ -2280,7 +2280,7 @@ fun newApproach() = runBlocking {
 }
 ```
 
-### **From callbacks** to **suspend functions**
+### From callbacks to suspend functions
 
 ```kotlin
 // Before (callbacks)
@@ -2323,7 +2323,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **From RxJava** to **Flow**
+### From RxJava to Flow
 
 ```kotlin
 // RxJava approach
@@ -2368,9 +2368,9 @@ fun main() = runBlocking {
 }
 ```
 
-## **Best practices** для корутин
+## Best practices для корутин
 
-### **Structured concurrency**
+### Structured concurrency
 
 ```kotlin
 suspend fun processUserData(userId: Int) = coroutineScope {
@@ -2393,7 +2393,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Proper resource management**
+### Proper resource management
 
 ```kotlin
 class DatabaseConnection : AutoCloseable {
@@ -2418,7 +2418,7 @@ suspend fun queryUser(id: Int): User = DatabaseConnection().use { conn ->
 }
 ```
 
-### **Error handling patterns**
+### Error handling patterns
 
 ```kotlin
 suspend fun safeApiCall(): Result<String> = try {
@@ -2443,7 +2443,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Testing best practices**
+### Testing best practices
 
 ```kotlin
 class UserServiceTest {
@@ -2482,9 +2482,9 @@ class UserServiceTest {
 }
 ```
 
-## **Performance optimization**
+## Performance optimization
 
-### **Choosing the right dispatcher**
+### Choosing the right dispatcher
 
 ```kotlin
 // CPU-bound work
@@ -2506,7 +2506,7 @@ suspend fun uiUpdate() = withContext(Dispatchers.Main) {
 }
 ```
 
-### **Flow optimization**
+### Flow optimization
 
 ```kotlin
 // Inefficient - creates intermediate collections
@@ -2522,7 +2522,7 @@ val result = flowOf(1, 2, 3, 4, 5)
     .toList()
 ```
 
-### **Channel buffering**
+### Channel buffering
 
 ```kotlin
 // Unbuffered channel - slow
@@ -2535,7 +2535,7 @@ val channel2 = Channel<Int>(capacity = 100)
 val channel3 = Channel<Int>(capacity = Channel.CONFLATED)
 ```
 
-### **Custom coroutine builders**
+### Custom coroutine builders
 
 ```kotlin
 fun CoroutineScope.launchWithRetry(
@@ -2564,9 +2564,9 @@ launchWithRetry {
 }
 ```
 
-## **Common pitfalls** и их избежание
+## Common pitfalls и их избежание
 
-### 1. **GlobalScope usage**
+### 1. GlobalScope usage
 
 ```kotlin
 // Плохо - утечка корутины
@@ -2584,7 +2584,7 @@ suspend fun goodExample() = coroutineScope {
 }
 ```
 
-### 2. **Blocking operations**
+### 2. Blocking operations
 
 ```kotlin
 // Плохо - блокирует поток
@@ -2598,7 +2598,7 @@ suspend fun goodNonBlocking() {
 }
 ```
 
-### 3. **Exception swallowing**
+### 3. Exception swallowing
 
 ```kotlin
 // Плохо - глотает исключения
@@ -2621,7 +2621,7 @@ val job = launch {
 }
 ```
 
-### 4. **Resource leaks**
+### 4. Resource leaks
 
 ```kotlin
 // Плохо - утечка ресурсов
@@ -2636,7 +2636,7 @@ suspend fun goodResource() = File("data.txt").use {
 }
 ```
 
-### 5. **Race conditions**
+### 5. Race conditions
 
 ```kotlin
 // Плохо - race condition
@@ -2654,9 +2654,9 @@ suspend fun increment() {
 }
 ```
 
-## **Real-world examples**
+## Real-world examples
 
-### **HTTP client with timeout and retry**
+### HTTP client with timeout and retry
 
 ```kotlin
 class HttpClient(
@@ -2705,7 +2705,7 @@ suspend fun fetchWithRetry(client: HttpClient, url: String, maxRetries: Int = 3)
 }
 ```
 
-### **Producer-consumer pattern**
+### Producer-consumer pattern
 
 ```kotlin
 class ProducerConsumer<T>(
@@ -2763,7 +2763,7 @@ fun main() = runBlocking {
 }
 ```
 
-### **Actor pattern**
+### Actor pattern
 
 ```kotlin
 sealed class Message
@@ -2821,9 +2821,9 @@ fun main() = runBlocking {
 
 Это исчерпывающее руководство охватывает все аспекты конкурентности в **Kotlin**, от основных концепций до продвинутых паттернов и лучших практик. Корутины предоставляют мощный и эффективный способ написания асинхронного кода, сохраняя простоту и читаемость.
 
-## Интеграция с **Android**
+## Интеграция с Android
 
-### **Lifecycle-aware** корутины
+### Lifecycle-aware корутины
 
 **В **Android** важно учитывать **lifecycle** компонентов при работе с корутинами:**
 
@@ -2864,7 +2864,7 @@ class MyViewModel : ViewModel() {
 
 **Lifecycle-aware** корутины автоматически отменяются при уничтожении компонентов, что предотвращает утечки памяти и неожиданное поведение.
 
-### Работа с **LiveData** и **StateFlow**
+### Работа с LiveData и StateFlow
 
 **Интеграция корутин с **LiveData** и **StateFlow** для реактивных `UI`:**
 
@@ -2900,9 +2900,9 @@ lifecycleScope.launch {
 
 **StateFlow** и **LiveData** обеспечивают реактивное обновление `UI` при изменении данных, что делает работу с асинхронными данными более удобной.
 
-## Интеграция с **Spring WebFlux**
+## Интеграция с Spring WebFlux
 
-### **Reactive** контроллеры с корутинами
+### Reactive контроллеры с корутинами
 
 **Корутины могут использоваться с **Spring WebFlux** для создания реактивных контроллеров:**
 
@@ -2957,7 +2957,7 @@ class UserService(private val repository: ReactiveUserRepository) {
 
 ## Тестирование корутин
 
-### Тестирование **suspend** функций
+### Тестирование suspend функций
 
 **Тестирование **suspend** функций требует использования **runTest**:**
 
@@ -3345,7 +3345,7 @@ class CoroutineResourceMonitor {
 
 Мониторинг корутин позволяет отслеживать состояние выполнения и выявлять проблемы в **production**.
 
-### Обработка ошибок в **production**
+### Обработка ошибок в production
 
 **Продвинутая обработка ошибок для **production**:**
 
@@ -3512,7 +3512,7 @@ fun main() = runBlocking {
 
 ## Дополнительные техники конкурентности
 
-### Работа с **Mutex** и **Semaphore**
+### Работа с Mutex и Semaphore
 
 **Использование **Mutex** и **Semaphore** для синхронизации:**
 
@@ -3561,7 +3561,7 @@ repeat(10) {
 
 **Mutex** и **Semaphore** позволяют контролировать доступ к общим ресурсам и ограничивать параллелизм.
 
-### Работа с **Atomic** операциями
+### Работа с Atomic операциями
 
 **Использование атомарных операций:**
 
@@ -3654,7 +3654,7 @@ fun <T> CoroutineScope.asyncToFuture(block: suspend () -> T): CompletableFuture<
 
 Интеграция корутин с **Java** потоками позволяет использовать корутины в существующих **Java** приложениях.
 
-### Работа с корутинами и **RxJava**
+### Работа с корутинами и RxJava
 
 **Интеграция корутин с **RxJava**:**
 
@@ -3693,7 +3693,7 @@ fun <T> Flow<T>.asObservable(): Observable<T> = Observable.create { emitter ->
 
 ## Дополнительные техники
 
-### Работа с корутинами и **CompletableFuture**
+### Работа с корутинами и CompletableFuture
 
 **Интеграция корутин с **CompletableFuture**:**
 
@@ -3833,7 +3833,7 @@ class EventProcessor {
 
 Каналы позволяют эффективно обрабатывать потоки событий в реальном времени.
 
-### Параллельная обработка с использованием **async**/**await**
+### Параллельная обработка с использованием async/await
 
 **Пример параллельной обработки данных:**
 
@@ -3856,7 +3856,7 @@ val results = processMultipleUsers(userIds)
 
 Использование **async**/**await** позволяет эффективно распараллеливать независимые операции.
 
-### Координация корутин с использованием **select**
+### Координация корутин с использованием select
 
 **Пример использования **select** для координации нескольких корутин:**
 
@@ -3876,7 +3876,7 @@ suspend fun selectFromChannels(
 
 **Select** позволяет обрабатывать данные из нескольких источников одновременно.
 
-### Использование **Semaphore** для ограничения параллелизма
+### Использование Semaphore для ограничения параллелизма
 
 **Пример использования **Semaphore**:**
 

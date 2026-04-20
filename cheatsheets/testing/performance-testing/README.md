@@ -17,7 +17,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [JMeter](jmeter/jmeter.md)
-- [k6](k6/k6.md)
-- [Gatling](gatling/gatling.md)
-- [Artillery](artillery/artillery.md)
+- [[jmeter]]
+- [[k6]]
+- [[gatling]]
+- [[artillery]]

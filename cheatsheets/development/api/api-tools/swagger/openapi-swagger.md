@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **OpenAPI**/**Swagger**
+# OpenAPI/Swagger
 
-**OpenAPI Specification** (**OAS**) — это стандарт для описания **REST API**. Ранее известная как **Swagger**, эта спецификация позволяет описывать **API endpoints**, параметры, запросы и ответы в машиночитаемом формате. Этот документ охватывает создание, валидацию и использование **OpenAPI** спецификаций для документирования и тестирования **API**.
+**OpenAPI Specification** (OAS) — это стандарт для описания **REST API**. Ранее известная как **Swagger**, эта спецификация позволяет описывать **API endpoints**, параметры, запросы и ответы в машиночитаемом формате. Этот документ охватывает создание, валидацию и использование **OpenAPI** спецификаций для документирования и тестирования **API**.
 
 ## Полезные ссылки
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
@@ -98,7 +98,7 @@ updated: "2026-02-11"
 - [Generate Java client](#generate-java-client)
 - [Generate Go client](#generate-go-client)
 - [List available generators](#list-available-generators)
-  - [**Swagger Codegen** (**Legacy**)](#swagger-codegen-legacy)
+  - [**Swagger Codegen** (Legacy)](#swagger-codegen-legacy)
 - [Install Swagger Codegen](#install-swagger-codegen)
 - [Generate client](#generate-client)
 - [Generate server](#generate-server)
@@ -118,10 +118,10 @@ updated: "2026-02-11"
 - [Лучшие практики](#лучшие-практики)
 - [См. также](#см-также)
 
-## Основы **OpenAPI**
+## Основы OpenAPI
 
-### **OpenAPI Versions**
-Ниже — пример заголовка **OpenAPI** 3.0 (**YAML**).
+### OpenAPI Versions
+Ниже — пример заголовка **OpenAPI** 3.0 (YAML).
 ```yaml
 # OpenAPI 3.0.x (recommended)
 openapi: 3.0.3
@@ -137,7 +137,7 @@ info:
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 ```
 
-### **Basic Structure**
+### Basic Structure
 ```yaml
 openapi: 3.0.3
 info:
@@ -206,9 +206,9 @@ components:
           format: date-time
 ```
 
-## Структура **OpenAPI** документа
+## Структура OpenAPI документа
 
-### **Info Object**
+### Info Object
 ```yaml
 info:
   title: E-commerce API
@@ -244,7 +244,7 @@ info:
     - Go
 ```
 
-### **Servers Object**
+### Servers Object
 ```yaml
 servers:
   - url: https://api.company.com/v3
@@ -277,7 +277,7 @@ servers:
         description: Base path
 ```
 
-### **External Documentation**
+### External Documentation
 ```yaml
 externalDocs:
   description: Find more info here
@@ -293,7 +293,7 @@ x-external-docs:
     url: https://docs.company.com/api/changelog
 ```
 
-### **Extensions**
+### Extensions
 ```yaml
 # OpenAPI extensions (x-*)
 openapi: 3.0.3
@@ -325,9 +325,9 @@ paths:
         burst: 100
 ```
 
-## **Paths** и **Operations**
+## Paths и Operations
 
-### **Path Templates**
+### Path Templates
 ```yaml
 paths:
   # Static paths
@@ -418,7 +418,7 @@ paths:
             enum: [S, M, L, XL]
 ```
 
-### **Operations**
+### Operations
 ```yaml
 /users:
   get:
@@ -476,7 +476,7 @@ paths:
         $ref: '#/components/responses/Conflict'
 ```
 
-### **Tags** и **Grouping**
+### Tags и Grouping
 ```yaml
 # Tags for logical grouping
 tags:
@@ -512,9 +512,9 @@ paths:
       tags: [Orders, Admin]
 ```
 
-## **Parameters** и **Request Bodies**
+## Parameters и Request Bodies
 
-### **Parameter Types**
+### Parameter Types
 ```yaml
 # Path parameters
 parameters:
@@ -597,7 +597,7 @@ paths:
           description: Preferred language for responses
 ```
 
-### **Request Bodies**
+### Request Bodies
 ```yaml
 # Simple request body
 paths:
@@ -670,9 +670,9 @@ paths:
                 style: form
 ```
 
-## **Responses** и **Schemas**
+## Responses и Schemas
 
-### **Response Definitions**
+### Response Definitions
 ```yaml
 # Response components
 components:
@@ -749,7 +749,7 @@ components:
             $ref: '#/components/schemas/Error'
 ```
 
-### **Schema Definitions**
+### Schema Definitions
 ```yaml
 # Schema components
 components:
@@ -874,7 +874,7 @@ components:
           description: Additional error details
 ```
 
-### **Advanced Schemas**
+### Advanced Schemas
 ```yaml
 # Complex schemas with polymorphism
 components:
@@ -985,9 +985,9 @@ components:
             - $ref: '#/components/schemas/Address'
 ```
 
-## **Security**
+## Security
 
-### **Security Schemes**
+### Security Schemes
 ```yaml
 # Security schemes
 components:
@@ -1046,7 +1046,7 @@ paths:
         - bearerAuth: [write:users]
 ```
 
-### **Security Requirements**
+### Security Requirements
 ```yaml
 # Multiple security requirements (OR logic)
 security:
@@ -1078,9 +1078,9 @@ paths:
       security: []  # Empty array means no security
 ```
 
-## **Components** и **Reusability**
+## Components и Reusability
 
-### **Reusable Components**
+### Reusable Components
 ```yaml
 # Parameters
 components:
@@ -1182,7 +1182,7 @@ components:
         orderId: '$response.body#/orderId'
 ```
 
-### **Examples**
+### Examples
 ```yaml
 # Examples
 components:
@@ -1232,9 +1232,9 @@ components:
         role: user
 ```
 
-## **Validation** и **Linting**
+## Validation и Linting
 
-### **OpenAPI Validation**
+### OpenAPI Validation
 ```bash
 # Validate OpenAPI spec with swagger-cli
 npm install -g swagger-cli
@@ -1265,7 +1265,7 @@ rules:
 npx @apidevtools/swagger-cli validate --schema https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.yaml api-spec.yaml
 ```
 
-### **Common Validation Issues**
+### Common Validation Issues
 ```yaml
 # Fix common issues
 
@@ -1313,7 +1313,7 @@ responses:
           type: string
 ```
 
-### **Custom Validation Rules**
+### Custom Validation Rules
 ```javascript
 // Custom validation with Speccy
 const speccy = require('speccy');
@@ -1354,9 +1354,9 @@ speccy.lint('api-spec.yaml', { rules })
   });
 ```
 
-## **Code Generation**
+## Code Generation
 
-### **OpenAPI Generator**
+### OpenAPI Generator
 ```bash
 # Install OpenAPI Generator
 npm install -g @openapitools/openapi-generator-cli
@@ -1393,7 +1393,7 @@ openapi-generator generate \
 openapi-generator list
 ```
 
-### **Swagger Codegen** (**Legacy**)
+### Swagger Codegen (Legacy)
 ```bash
 # Install Swagger Codegen
 npm install -g swagger-codegen-cli
@@ -1412,7 +1412,7 @@ swagger-codegen generate \
   -o ./server
 ```
 
-### **Custom Code Generation**
+### Custom Code Generation
 ```javascript
 // Custom code generation with OpenAPI Parser
 const OpenAPI = require('openapi-typescript-codegen');
@@ -1464,9 +1464,9 @@ function generateClient(spec) {
 }
 ```
 
-## **API Testing**
+## API Testing
 
-### **Swagger** `UI` для **Manual Testing**
+### Swagger `UI` для Manual Testing
 ```html
 <!-- Swagger UI HTML -->
 <!DOCTYPE html>
@@ -1508,7 +1508,7 @@ function generateClient(spec) {
 </html>
 ```
 
-### **Automated API Testing**
+### Automated API Testing
 ```javascript
 // API testing with Newman (Postman)
 const newman = require('newman');
@@ -1560,7 +1560,7 @@ dredd.run(dreddConfig, function (err, stats) {
 });
 ```
 
-### **Contract Testing**
+### Contract Testing
 ```javascript
 // Pact for consumer-driven contract testing
 const { Pact } = require('@pact-foundation/pact');
@@ -1624,9 +1624,9 @@ describe('API Consumer', () => {
 });
 ```
 
-## **Documentation**
+## Documentation
 
-### **Swagger** `UI` **Configuration**
+### Swagger `UI` Configuration
 ```javascript
 // Express.js with Swagger UI
 const swaggerUi = require('swagger-ui-express');
@@ -1701,7 +1701,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
 }));
 ```
 
-### **Redoc** для **Clean Documentation**
+### Redoc для Clean Documentation
 ```javascript
 // Redoc configuration
 const redoc = require('redoc-express');
@@ -1742,7 +1742,7 @@ app.use('/docs', redoc({
 }));
 ```
 
-### **API Documentation Best Practices**
+### API Documentation Best Practices
 ```yaml
 # Documentation metadata
 info:
@@ -1855,7 +1855,7 @@ components:
 
 **Решение:** Обновить до актуальной версии (`openapi-generator-cli` или **Maven** plugin); проверить список: `openapi-generator list`; использовать корректный идентификатор из [списка генераторов](https://openapi-generator.tech/docs/generators/); для **Java** с **Retrofit** — `java-retrofit2`, для **Spring** — `spring`.
 
-### Спецификация не валидируется **Spectral**
+### Спецификация не валидируется Spectral
 
 **Проблема:** Линтер выдаёт десятки предупреждений; неясно, какие правки критичны.
 
@@ -1871,7 +1871,7 @@ components:
 
 **Решение:** Синхронизировать **OpenAPI** с кодом через аннотации (**Spring** `@Operation`, **FastAPI** и т.д.) или генерировать спецификацию из реализации; добавить тесты контракта (**Pact**, **Schemathesis**); документировать `additionalProperties` если сервер отдаёт лишние поля.
 
-### **Swagger UI** не отображает схемы
+### Swagger UI не отображает схемы
 
 **Проблема:** В UI пустые модели или ошибка `Failed to load schema`.
 
@@ -1881,10 +1881,10 @@ components:
 
 ## Лучшие практики
 
-- Ведите спецификацию в репозитории рядом с кодом; используйте линтеры (**Spectral**) для проверки.
+- Ведите спецификацию в репозитории рядом с кодом; используйте линтеры (Spectral) для проверки.
 - Переиспользуйте схемы через **$ref**; версионируйте **OpenAPI**-документ.
-- Описывайте все ответы (**в т.ч. ошибки**); указывайте примеры запросов и ответов.
-- Документируйте безопасность (**securitySchemes**); генерируйте клиенты и серверы из спецификации.
+- Описывайте все ответы (в т.ч. ошибки); указывайте примеры запросов и ответов.
+- Документируйте безопасность (securitySchemes); генерируйте клиенты и серверы из спецификации.
 - Регулярно валидируйте спецификацию и синхронизируйте с реализацией **API**.
 ## См. также
 - [[rest-api-design|rest-api-design.md]] — основы **REST API**

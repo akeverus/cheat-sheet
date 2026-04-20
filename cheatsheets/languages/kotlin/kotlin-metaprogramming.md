@@ -36,7 +36,7 @@ updated: "2026-02-11"
   - [Создание аннотаций](#создание-аннотаций)
   - [Использование аннотаций](#использование-аннотаций)
   - [Обработка аннотаций через **Reflection**](#обработка-аннотаций-через-reflection)
-- [**KAPT** (**Kotlin Annotation Processing Tool**)](#kapt-kotlin-annotation-processing-tool)
+- [**KAPT** (Kotlin Annotation Processing Tool)](#kapt-kotlin-annotation-processing-tool)
   - [Настройка **KAPT**](#настройка-kapt)
   - [Пример: Dagger с KAPT](#пример-dagger-с-kapt)
   - [Пример: Room с KAPT](#пример-room-с-kapt)
@@ -102,9 +102,9 @@ updated: "2026-02-11"
 
 Метапрограммирование — это техника написания программ, которые генерируют или модифицируют другие программы.
 
-### Типы метапрограммирования в **Kotlin**
+### Типы метапрограммирования в Kotlin
 
-1. **Compile-time** — обработка аннотаций (**KAPT, KSP**)
+1. **Compile-time** — обработка аннотаций (KAPT, KSP)
 2. **Runtime** — рефлексия
 3. **Code Generation** — генерация кода
 
@@ -113,9 +113,9 @@ updated: "2026-02-11"
 - **Меньше boilerplate кода**
 - **Автоматическая генерация кода**
 - **Безопасность типов**
-- **Производительность** (**compile-time обработка**)
+- **Производительность** (compile-time обработка)
 
-## **Annotations Processing**
+## Annotations Processing
 
 ### Создание аннотаций
 
@@ -156,7 +156,7 @@ data class User(
 )
 ```
 
-### Обработка аннотаций через **Reflection**
+### Обработка аннотаций через Reflection
 
 ```kotlin
 import kotlin.reflect.full.*
@@ -177,15 +177,15 @@ fun processFunction(function: KFunction<*>) {
 }
 ```
 
-## **KAPT** (**Kotlin `Annotation Processing` Tool**)
+## KAPT (Kotlin `Annotation Processing` Tool)
 
-**KAPT** (**Kotlin `Annotation Processing` Tool**) — это инструмент для обработки аннотаций в **Kotlin**, который обеспечивает совместимость с существующими **Java Annotation Processors**. **KAPT** работает путем генерации **Java stubs** из **Kotlin** кода, которые затем обрабатываются стандартными **Java** процессорами аннотаций.
+**KAPT** (Kotlin `Annotation Processing` Tool) — это инструмент для обработки аннотаций в **Kotlin**, который обеспечивает совместимость с существующими **Java Annotation Processors**. **KAPT** работает путем генерации **Java stubs** из **Kotlin** кода, которые затем обрабатываются стандартными **Java** процессорами аннотаций.
 
 **KAPT** был первым решением для обработки аннотаций в **Kotlin** и до сих пор широко используется, особенно в проектах, которые уже используют **Java** процессоры аннотаций, такие как **Dagger**, **Room**, или **Data Binding**. Однако **KAPT** имеет некоторые ограничения по производительности и не поддерживает все возможности **Kotlin**.
 
-### Настройка **KAPT**
+### Настройка KAPT
 
-Настройка **KAPT** требует добавления плагина `**kapt**` в проект. Плагин автоматически генерирует **Java stubs** и интегрируется с системой сборки для запуска процессоров аннотаций.
+Настройка **KAPT** требует добавления плагина `kapt` в проект. Плагин автоматически генерирует **Java stubs** и интегрируется с системой сборки для запуска процессоров аннотаций.
 
 ```kotlin
 // build.gradle.kts
@@ -195,11 +195,11 @@ plugins {
 }
 ```
 
-После добавления плагина зависимости для процессоров аннотаций указываются с префиксом `**kapt**` вместо `**implementation**`. Это позволяет **KAPT** обработать эти зависимости и запустить процессоры аннотаций на сгенерированных **Java stubs**.
+После добавления плагина зависимости для процессоров аннотаций указываются с префиксом `kapt` вместо `implementation`. Это позволяет **KAPT** обработать эти зависимости и запустить процессоры аннотаций на сгенерированных **Java stubs**.
 
 **dependencies** {
-    **kapt(**"`com.google.dagger`:`dagger-compiler`:2.44"**)
-    **implementation(**"`com.google.dagger`:dagger:2.44"**)
+    **kapt("`com.google.dagger`:`dagger-compiler`:2.44")
+    **implementation("`com.google.dagger`:dagger:2.44")
 }
 ```text
 

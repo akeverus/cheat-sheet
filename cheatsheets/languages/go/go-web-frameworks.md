@@ -104,7 +104,7 @@ updated: "2026-02-06"
 4. **Chi** — легковесный роутер
 5. **Gorilla Mux** — мощный **HTTP** роутер
 
-## **Gin**
+## Gin
 
 **Gin** — один из самых популярных веб-фреймворков в Go.
 
@@ -180,7 +180,7 @@ func createUser(c *gin.Context) {
 }
 ```
 
-### **Middleware**
+### Middleware
 
 ```go
 // Логирование
@@ -204,7 +204,7 @@ v1.Use(authMiddleware())
 }
 ```
 
-## **Echo**
+## Echo
 
 **Echo** — высокопроизводительный веб-фреймворк.
 
@@ -260,7 +260,7 @@ func createUser(c echo.Context) error {
 }
 ```
 
-### **Middleware**
+### Middleware
 
 ```go
 // Логирование
@@ -283,7 +283,7 @@ e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 })
 ```
 
-## **Fiber**
+## Fiber
 
 **Fiber** — **Express**-подобный фреймворк, построенный на **Fasthttp**.
 
@@ -339,7 +339,7 @@ func createUser(c *fiber.Ctx) error {
 }
 ```
 
-## **Chi**
+## Chi
 
 **Chi** — легковесный **HTTP** роутер.
 
@@ -365,7 +365,7 @@ func main() {
 }
 ```
 
-## **Gorilla Mux**
+## Gorilla Mux
 
 **Gorilla Mux** — мощный **HTTP** роутер.
 
@@ -390,7 +390,7 @@ func main() {
 }
 ```
 
-### **Gin**: Валидация
+### Gin: Валидация
 
 ```go
 import "github.com/go-playground/validator/v10"
@@ -413,7 +413,7 @@ func createUser(c *gin.Context) {
 }
 ```
 
-### **Gin**: Группы роутов
+### Gin: Группы роутов
 
 ```go
 func setupRoutes(r *gin.Engine) {
@@ -444,7 +444,7 @@ func setupRoutes(r *gin.Engine) {
 }
 ```
 
-### **Gin**: Файлы и загрузка
+### Gin: Файлы и загрузка
 
 ```go
 func uploadFile(c *gin.Context) {
@@ -470,7 +470,7 @@ func downloadFile(c *gin.Context) {
 }
 ```
 
-### **Gin**: Статические файлы
+### Gin: Статические файлы
 
 ```go
 // Статические файлы
@@ -488,7 +488,7 @@ r.GET("/", func(c *gin.Context) {
 })
 ```
 
-### **Gin**: Кастомные валидаторы
+### Gin: Кастомные валидаторы
 
 ```go
 import "github.com/go-playground/validator/v10"
@@ -506,7 +506,7 @@ func customValidator(fl validator.FieldLevel) bool {
 }
 ```
 
-### **Gin**: Обработка ошибок
+### Gin: Обработка ошибок
 
 ```go
 func errorHandler() gin.HandlerFunc {
@@ -529,7 +529,7 @@ func main() {
 }
 ```
 
-### **Echo**: Валидация
+### Echo: Валидация
 
 ```go
 import "github.com/go-playground/validator/v10"
@@ -554,7 +554,7 @@ func createUser(c echo.Context) error {
 }
 ```
 
-### **Echo**: Группы роутов
+### Echo: Группы роутов
 
 ```go
 func setupRoutes(e *echo.Echo) {
@@ -576,7 +576,7 @@ func setupRoutes(e *echo.Echo) {
 }
 ```
 
-### **Echo**: Статические файлы
+### Echo: Статические файлы
 
 ```go
 // Статические файлы
@@ -591,7 +591,7 @@ e.Renderer = &TemplateRenderer{
 }
 ```
 
-### **Echo**: Кастомные обработчики ошибок
+### Echo: Кастомные обработчики ошибок
 
 ```go
 func customErrorHandler(err error, c echo.Context) {
@@ -615,7 +615,7 @@ func main() {
 }
 ```
 
-### **Fiber**: Валидация
+### Fiber: Валидация
 
 ```go
 import "github.com/gofiber/fiber/v2/middleware/validator"
@@ -641,7 +641,7 @@ func createUser(c *fiber.Ctx) error {
 }
 ```
 
-### **Fiber**: Группы роутов
+### Fiber: Группы роутов
 
 ```go
 func setupRoutes(app *fiber.App) {
@@ -663,7 +663,7 @@ func setupRoutes(app *fiber.App) {
 }
 ```
 
-### **Fiber**: Статические файлы
+### Fiber: Статические файлы
 
 ```go
 // Статические файлы
@@ -681,7 +681,7 @@ app.Get("/", func(c *fiber.Ctx) error {
 })
 ```
 
-### **Chi**: **Middleware**
+### Chi: Middleware
 
 ```go
 import "github.com/go-chi/chi/middleware"
@@ -704,7 +704,7 @@ func setupMiddleware(r *chi.Mux) {
 }
 ```
 
-### **Chi**: Группы роутов
+### Chi: Группы роутов
 
 ```go
 func setupRoutes(r *chi.Mux) {
@@ -725,7 +725,7 @@ func setupRoutes(r *chi.Mux) {
 }
 ```
 
-### **Gorilla Mux**: Продвинутый роутинг
+### Gorilla Mux: Продвинутый роутинг
 
 ```go
 func setupRoutes(r *mux.Router) {
@@ -744,7 +744,7 @@ func setupRoutes(r *mux.Router) {
 }
 ```
 
-### Практические примеры: **REST API** с **Gin**
+### Практические примеры: REST API с Gin
 
 ```go
 type UserController struct {
@@ -839,7 +839,7 @@ func setupUserRoutes(r *gin.Engine, controller *UserController) {
 }
 ```
 
-### Практические примеры: **REST API** с **Echo**
+### Практические примеры: REST API с Echo
 
 ```go
 type UserHandler struct {
@@ -888,7 +888,7 @@ func setupUserRoutes(e *echo.Echo, handler *UserHandler) {
 }
 ```
 
-### Практические примеры: **REST API** с **Fiber**
+### Практические примеры: REST API с Fiber
 
 ```go
 type UserHandler struct {
@@ -933,7 +933,7 @@ func setupUserRoutes(app *fiber.App, handler *UserHandler) {
 }
 ```
 
-### Практические примеры: Аутентификация с **JWT**
+### Практические примеры: Аутентификация с JWT
 
 ```go
 import "github.com/golang-jwt/jwt/v5"
@@ -973,7 +973,7 @@ func authMiddleware() gin.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Rate Limiting**
+### Практические примеры: Rate Limiting
 
 ```go
 import "golang.org/x/time/rate"
@@ -997,7 +997,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **CORS**
+### Практические примеры: CORS
 
 ```go
 func corsMiddleware() gin.HandlerFunc {
@@ -1133,7 +1133,7 @@ func uploadMultipleFiles(c *gin.Context) {
 }
 ```
 
-### Практические примеры: **WebSocket** с **Gin**
+### Практические примеры: WebSocket с Gin
 
 ```go
 import "github.com/gorilla/websocket"
@@ -1165,7 +1165,7 @@ func websocketHandler(c *gin.Context) {
 }
 ```
 
-### Практические примеры: **Graceful Shutdown**
+### Практические примеры: Graceful Shutdown
 
 ```go
 func gracefulShutdown(server *http.Server) {
@@ -1204,7 +1204,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **Health Checks**
+### Практические примеры: Health Checks
 
 ```go
 func healthCheck(c *gin.Context) {
@@ -1242,7 +1242,7 @@ func livenessCheck(c *gin.Context) {
 }
 ```
 
-### Практические примеры: **API Versioning**
+### Практические примеры: API Versioning
 
 ```go
 func setupVersionedRoutes(r *gin.Engine) {
@@ -1260,7 +1260,7 @@ func setupVersionedRoutes(r *gin.Engine) {
 }
 ```
 
-### Практические примеры: **Request** `ID`
+### Практические примеры: Request `ID`
 
 ```go
 import "github.com/google/uuid"
@@ -1279,7 +1279,7 @@ func requestIDMiddleware() gin.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Compression**
+### Практические примеры: Compression
 
 ```go
 import "github.com/gin-contrib/gzip"
@@ -1291,7 +1291,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **Caching**
+### Практические примеры: Caching
 
 ```go
 type CacheMiddleware struct {
@@ -1337,7 +1337,7 @@ func (cm *CacheMiddleware) Handler() gin.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Request Timeout**
+### Практические примеры: Request Timeout
 
 ```go
 func timeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
@@ -1364,7 +1364,7 @@ func timeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Metrics**
+### Практические примеры: Metrics
 
 ```go
 import "github.com/prometheus/client_golang/prometheus"
@@ -1408,7 +1408,7 @@ func metricsMiddleware() gin.HandlerFunc {
 
 ### Производительность
 
-- **Fiber** — самый быстрый (**на основе Fasthttp**)
+- **Fiber** — самый быстрый (на основе Fasthttp)
 - **Echo** — очень быстрый
 - **Gin** — быстрый
 - **Chi** — быстрый
@@ -1438,7 +1438,7 @@ func metricsMiddleware() gin.HandlerFunc {
 - **Chi** — для легковесных приложений
 - **Gorilla Mux** — для сложного роутинга
 
-### Практические примеры: Полное приложение на **Gin**
+### Практические примеры: Полное приложение на Gin
 
 ```go
 package main
@@ -1581,7 +1581,7 @@ func (app *Application) Run() error {
 }
 ```
 
-### Практические примеры: **RESTful API** с валидацией
+### Практические примеры: RESTful API с валидацией
 
 ```go
 type CreateUserRequest struct {
@@ -1654,7 +1654,7 @@ func (app *Application) handleGetUsers(c *gin.Context) {
 }
 ```
 
-### Практические примеры: **Middleware** для метрик
+### Практические примеры: Middleware для метрик
 
 ```go
 func metricsMiddleware() gin.HandlerFunc {
@@ -1740,7 +1740,7 @@ func (app *Application) handleFileUpload(c *gin.Context) {
 }
 ```
 
-### Практические примеры: **WebSocket** с **Gin**
+### Практические примеры: WebSocket с Gin
 
 ```go
 import "github.com/gorilla/websocket"
@@ -1789,7 +1789,7 @@ func (app *Application) handleWebSocket(c *gin.Context) {
 }
 ```
 
-### Практические примеры: **API** версионирование
+### Практические примеры: API версионирование
 
 ```go
 func (app *Application) setupVersionedRoutes() {
@@ -1823,7 +1823,7 @@ func deprecationWarning() gin.HandlerFunc {
 }
 ```
 
-### Практические примеры: **Graceful shutdown** для **Gin**
+### Практические примеры: Graceful shutdown для Gin
 
 ```go
 func (app *Application) RunWithGracefulShutdown() error {
@@ -1859,7 +1859,7 @@ func (app *Application) RunWithGracefulShutdown() error {
 }
 ```
 
-### Практические примеры: Интеграция с **Swagger**
+### Практические примеры: Интеграция с Swagger
 
 ```go
 import (
@@ -1898,7 +1898,7 @@ func (app *Application) setupSwagger() {
 
 ## Лучшие практики
 
-1. **Используйте middleware** — для общей логики (**логирование, аутентификация**)
+1. **Используйте middleware** — для общей логики (логирование, аутентификация)
 2. **Валидируйте входные данные** — всегда проверяйте данные от клиентов
 3. **Обрабатывайте ошибки** — правильно обрабатывайте ошибки
 4. **Используйте группы роутов** — для организации кода
@@ -1914,7 +1914,7 @@ func (app *Application) setupSwagger() {
 14. **Используйте compression** — для уменьшения размера ответов
 15. **Тестируйте API** — пишите **unit** и **integration** тесты
 
-### Практические примеры: **Middleware** для **rate limiting**
+### Практические примеры: Middleware для rate limiting
 
 ```go
 import "golang.org/x/time/rate"

@@ -36,9 +36,9 @@ updated: "2026-02-11"
     - [Semigroup и Monoid](#semigroup-и-monoid)
     - [Foldable](#foldable)
     - [Traverse](#traverse)
-  - [Cats Effects (**IO Monad**)](#cats-effects-io-monad)
+  - [Cats Effects (IO Monad)](#cats-effects-io-monad)
     - [IO для управления side effects](#io-для-управления-side-effects)
-  - [Optics (**линзы**)](#optics-линзы)
+  - [Optics (линзы)](#optics-линзы)
     - [Lens для работы с вложенными структурами](#lens-для-работы-с-вложенными-структурами)
 - [Integration с Scala](#integration-с-scala)
   - [Cats with Scala Collections](#cats-with-scala-collections)
@@ -68,11 +68,11 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### **Type Classes**
+### Type Classes
 
-#### **Functor**
+#### Functor
 
-**Type class Functor** для **Option** и **List** — **map** внутри контекста (**Scala**).
+**Type class Functor** для **Option** и **List** — **map** внутри контекста (Scala).
 
 ```scala
 import cats.Functor
@@ -110,7 +110,7 @@ val mappedEither = either.map(_ * 2)  // Right(84)
 // Если either = Left("error"), map не применяется, остается Left("error")
 ```
 
-#### **Applicative**
+#### Applicative
 ```scala
 import cats.Applicative
 import cats.implicits._
@@ -165,7 +165,7 @@ val invalidUser = validateUser("", 15, "invalid")
 // Все три ошибки накоплены в одном Left (преимущество Applicative над Monad)
 ```
 
-#### **Monad**
+#### Monad
 ```scala
 import cats.Monad
 import cats.implicits._
@@ -214,9 +214,9 @@ val combinations = for {
 // Эквивалентно: List(1, 2).flatMap(x => List('a', 'b').map(y => s"$x$y"))
 ```
 
-### **Data Types**
+### Data Types
 
-#### **Option**
+#### Option
 ```scala
 import cats.implicits._
 
@@ -249,7 +249,7 @@ val allSome = List(Some(1), Some(2), Some(3))
 val sequencedAll = Traverse[List].sequence(allSome) // Some(List(1, 2, 3))
 ```
 
-#### **Either**
+#### Either
 ```scala
 import cats.implicits._
 
@@ -286,7 +286,7 @@ val swapped = valid.swap // Left(42)
 val ensured = valid.ensure("Must be even")(_ % 2 == 0) // проверка четности
 ```
 
-#### **Validated**
+#### Validated
 ```scala
 import cats.data.Validated
 import cats.data.Validated.{Valid, Invalid}
@@ -326,7 +326,7 @@ val result = validUser.fold(
 )
 ```
 
-#### **State Monad**
+#### State Monad
 ```scala
 import cats.data.State
 
@@ -370,9 +370,9 @@ println(s"Final calculator: $finalCalc") // Calculator(28)
 println(s"Result: $result") // 28
 ```
 
-### **Type Classes** в **Cats**
+### Type Classes в Cats
 
-#### **Semigroup** и **Monoid**
+#### Semigroup и Monoid
 ```scala
 import cats.Semigroup
 import cats.Monoid
@@ -404,7 +404,7 @@ val sum = numbers.foldLeft(intMonoid.empty)(intMonoid.combine) // 15
 val total = Monoid[Int].combineAll(numbers) // 15
 ```
 
-#### **Foldable**
+#### Foldable
 ```scala
 import cats.Foldable
 import cats.implicits._
@@ -441,7 +441,7 @@ val evens = listFoldable.collect(numbers) {
 val countEvens = listFoldable.count(numbers)(_ % 2 == 0) // 2
 ```
 
-#### **Traverse**
+#### Traverse
 ```scala
 import cats.Traverse
 import cats.implicits._
@@ -475,9 +475,9 @@ val futureResult = listTraverse.traverse(strings)(asyncParseInt)
 // Future[List[Int]]
 ```
 
-### **Cats Effects** (**IO Monad**)
+### Cats Effects (IO Monad)
 
-#### `IO` для управления **side effects**
+#### `IO` для управления side effects
 ```scala
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
@@ -530,9 +530,9 @@ val fiberProgram = for {
 fiberProgram.unsafeRunSync()
 ```
 
-### **Optics** (**линзы**)
+### Optics (линзы)
 
-#### **Lens** для работы с вложенными структурами
+#### Lens для работы с вложенными структурами
 ```scala
 import monocle.Lens
 import monocle.macros.GenLens
@@ -567,9 +567,9 @@ val nextYear = personAge.modify(_ + 1)(person)
 val complexUpdate = (personName.set("Bob") andThen personAge.modify(_ + 5))(person)
 ```
 
-## **Integration** с **Scala**
+## Integration с Scala
 
-### **Cats with Scala Collections**
+### Cats with Scala Collections
 ```scala
 import cats.implicits._
 
@@ -597,7 +597,7 @@ val withEffects = for {
 } yield s"$x$y" // List("1a", "1b", "2a", "2b", "3a", "3b")
 ```
 
-### **Cats with Scala Futures**
+### Cats with Scala Futures
 ```scala
 import cats.implicits._
 import scala.concurrent.Future
@@ -622,7 +622,7 @@ val combined = for {
 val withErrorHandling = Future(1 / 0).attempt // Future[Either[Throwable, Int]]
 ```
 
-### **Cats with Akka**
+### Cats with Akka
 ```scala
 import cats.implicits._
 import akka.actor.{Actor, ActorSystem, Props}
@@ -647,9 +647,9 @@ case class Add(x: Int, y: Int)
 case class Multiply(x: Int, y: Int)
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration** с **Cats**
+### Configuration с Cats
 ```scala
 @Configuration
 class CatsConfig {
@@ -716,7 +716,7 @@ class UserController @Autowired()(
 
 ## Тестирование
 
-### Тестирование с **Cats**
+### Тестирование с Cats
 ```scala
 import cats.implicits._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -790,7 +790,7 @@ class UserServiceSpec extends AnyFlatSpec with Matchers {
 }
 ```
 
-### **Property-based Testing** с **Cats**
+### Property-based Testing с Cats
 ```scala
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalacheck.Gen
@@ -835,7 +835,7 @@ class CatsPropertiesSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks
 
 ## Лучшие практики
 
-### **Railway Oriented Programming**
+### Railway Oriented Programming
 ```scala
 // Использование Either для обработки ошибок в цепочке операций
 sealed trait DomainError
@@ -882,7 +882,7 @@ result match {
 }
 ```
 
-### **Error Accumulation**
+### Error Accumulation
 ```scala
 // Использование Validated для накопления ошибок
 case class ValidationError(field: String, message: String)
@@ -916,7 +916,7 @@ val invalidUser = validateUser("", "invalid", 15)
 // ))
 ```
 
-### **Resource Management**
+### Resource Management
 ```scala
 import cats.effect.{Resource, IO}
 import java.sql.Connection
@@ -951,7 +951,7 @@ val program = databaseConnection.use { conn =>
 program.unsafeRunSync()
 ```
 
-### **Performance Optimization**
+### Performance Optimization
 ```scala
 // Оптимизация с Eval для ленивых вычислений
 import cats.Eval
@@ -994,7 +994,7 @@ val (log, result) = loggedOperation(21).run
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object CatsTroubleshooting {
 
@@ -1041,7 +1041,7 @@ object CatsTroubleshooting {
 }
 ```
 
-### **Debugging Cats Code**
+### Debugging Cats Code
 ```scala
 // Расширение для логирования операций
 implicit class DebuggableOps[F[_], A](fa: F[A]) {
@@ -1095,7 +1095,7 @@ val computation = for {
 
 ## Руководство по миграции
 
-### **From Scala Standard Library**
+### From Scala Standard Library
 ```scala
 // Scala Option
 val option: Option[Int] = Some(42)
@@ -1125,7 +1125,7 @@ val catsFuture = Future(42).map(_ * 2)
 val sequenced = List(Future(1), Future(2)).sequence
 ```
 
-### **From Scalaz**
+### From Scalaz
 ```scala
 // Scalaz imports
 import scalaz._
@@ -1148,7 +1148,7 @@ implicitly[Monad[Option]].point(42)
 implicitly[Applicative[Option]].pure(42)
 ```
 
-### **From Cats** 1.x `to 2`.x
+### From Cats 1.x `to 2`.x
 ```scala
 // Cats 1.x
 import cats.implicits._
@@ -1167,7 +1167,7 @@ val ioProgram = IO(42).flatMap(x => IO(x * 2))
 
 ## Экспериментальные возможности
 
-### **Cats Effect** 3.x
+### Cats Effect 3.x
 ```scala
 // Cats Effect 3.x особенности
 import cats.effect.{IO, Resource}
@@ -1198,7 +1198,7 @@ val timedOperation = IO.realTimeInstant.flatMap { start =>
 }
 ```
 
-### **Cats Collections**
+### Cats Collections
 ```scala
 // Cats Collections (отдельная библиотека)
 import cats.collections._
@@ -1221,5 +1221,5 @@ val withoutMin = heap.remove // Heap without minimum
 ```
 ## См. также
 - [Обзор библиотек](../) — **Scala** библиотеки
-- [Паттерны](../../patterns/README.md) — Функциональные паттерны
+- [[README|Паттерны]] — Функциональные паттерны
 

@@ -59,7 +59,7 @@ related: ["micronaut-http.md", "micronaut-views.md"]
 
 ## Введение
 
-**Micronaut** предоставляет поддержку интернационализации (**i18n**) для создания многоязычных приложений. Это позволяет локализовать сообщения и контент для различных языков и регионов.
+**Micronaut** предоставляет поддержку интернационализации (i18n) для создания многоязычных приложений. Это позволяет локализовать сообщения и контент для различных языков и регионов.
 
 ### Основные возможности
 
@@ -95,7 +95,7 @@ micronaut:
 
 ## Message Bundles
 
-### **Message Files**
+### Message Files
 
 **messages.properties:**
 
@@ -115,7 +115,7 @@ user.updated=Пользователь успешно обновлен
 
 ## Locale Resolution
 
-### **HTTP Header Resolver**
+### HTTP Header Resolver
 
 ```java
 import io.micronaut.i18n.MessageSource;
@@ -137,7 +137,7 @@ public class LocalizedService {
 }
 ```
 
-### **Query Parameter Resolver**
+### Query Parameter Resolver
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -158,7 +158,7 @@ public class LocalizedController {
 
 ## Dynamic Messages
 
-### **Parameterized Messages**
+### Parameterized Messages
 
 **messages.properties:**
 
@@ -167,7 +167,7 @@ user.welcome=Welcome, {0}!
 user.age=You are {0} years old
 ```
 
-### **Using Parameters**
+### Using Parameters
 
 ```java
 import io.micronaut.i18n.MessageSource;
@@ -202,7 +202,7 @@ order.notfound=Order not found
 order.created=Order created
 ```
 
-### 3. Предоставляйте **fallback** для отсутствующих переводов
+### 3. Предоставляйте fallback для отсутствующих переводов
 
 ```java
 // ✅ Хорошо
@@ -212,7 +212,7 @@ String message = messageSource.getMessage(key, locale)
 
 ## Locale-aware Formatting
 
-### **Number Formatting**
+### Number Formatting
 
 ```java
 import java.text.NumberFormat;
@@ -242,7 +242,7 @@ public class LocaleFormattingService {
 
 ## Message Source Hierarchy
 
-### **Hierarchical Message Sources**
+### Hierarchical Message Sources
 
 **application.yml:**
 
@@ -257,7 +257,7 @@ micronaut:
 
 ## Custom Locale Resolver
 
-### **Custom Resolver Implementation**
+### Custom Resolver Implementation
 
 ```java
 import io.micronaut.i18n.LocaleResolver;
@@ -281,7 +281,7 @@ public class CustomLocaleResolver implements LocaleResolver {
 
 ## Message Source Caching
 
-### **Caching Configuration**
+### Caching Configuration
 
 **application.yml:**
 
@@ -296,7 +296,7 @@ micronaut:
 
 ## Resource Bundle Loading
 
-### **Custom Resource Bundle**
+### Custom Resource Bundle
 
 ```java
 import io.micronaut.i18n.MessageSource;

@@ -13,19 +13,19 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Jenkins](jenkins.md)
-[GitLab CI](gitlab-ci.md)
-[Azure DevOps](azure-devops.md)
+[[jenkins]]
+[[gitlab-ci|GitLab CI]]
+[[azure-devops|Azure DevOps]]
 
 ## Содержание
 
-- [Jenkins](jenkins.md)
-- [GitLab CI](gitlab-ci.md)
-- [GitHub Actions](github-actions.md)
-- [CircleCI](circleci.md)
-- [Azure DevOps](azure-devops.md)
-- [Tekton](tekton.md)
-- [Travis CI](travis-ci.md) (legacy/исторический контекст)
+- [[jenkins]]
+- [[gitlab-ci|GitLab CI]]
+- [[github-actions|GitHub Actions]]
+- [[circleci]]
+- [[azure-devops|Azure DevOps]]
+- [[tekton]]
+- [[travis-ci|Travis CI]] (legacy/исторический контекст)
 
 ## Быстрый маршрут: pipeline с нуля
 
@@ -39,7 +39,7 @@ updated: "2026-02-11"
 
 - `Travis CI` в 2026 рассматривается как legacy-вариант; для новых проектов предпочтительны `GitHub Actions` или `GitLab CI`.
 - Перед миграцией зафиксировать эквиваленты: матрица версий, секреты, кэширование, release-джобы.
-- Детальный контекст и ограничения: [travis-ci.md](travis-ci.md).
+- Детальный контекст и ограничения: [[travis-ci]].
 
 ## См. также
 

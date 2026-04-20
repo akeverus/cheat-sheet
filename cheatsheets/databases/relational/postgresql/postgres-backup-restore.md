@@ -40,9 +40,9 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
   - [**pg_dumpall**](#pgdumpall)
 - [Физический снимок: **pg_basebackup**](#физический-снимок-pgbasebackup)
   - [Основные сценарии **pg_basebackup**](#основные-сценарии-pgbasebackup)
-- [**Continuous Archiving** и **Point-in-Time Recovery** (**PITR**)](#continuous-archiving-и-point-in-time-recovery-pitr)
+- [**Continuous Archiving** и **Point-in-Time Recovery** (PITR)](#continuous-archiving-и-point-in-time-recovery-pitr)
   - [Настройка **Continuous Archiving**](#настройка-continuous-archiving)
-  - [**Point-in-Time Recovery** (**PITR**)](#point-in-time-recovery-pitr)
+  - [**Point-in-Time Recovery** (PITR)](#point-in-time-recovery-pitr)
   - [Именованные точки восстановления](#именованные-точки-восстановления)
 - [Примеры скриптов резервного копирования](#примеры-скриптов-резервного-копирования)
   - [Ежедневный логический дамп](#ежедневный-логический-дамп)
@@ -70,7 +70,7 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
   - [**Automated Backup Alerts**](#automated-backup-alerts)
 - [**Disaster Recovery Planning**](#disaster-recovery-planning)
   - [`DR` **Plan Template**](#dr-plan-template)
-  - [**Recovery Time Objectives** (**RTO**) **and Recovery Point Objectives** (**RPO**)](#recovery-time-objectives-rto-and-recovery-point-objectives-rpo)
+  - [**Recovery Time Objectives** (RTO) **and Recovery Point Objectives** (RPO)](#recovery-time-objectives-rto-and-recovery-point-objectives-rpo)
 - [**Backup Compression and Optimization**](#backup-compression-and-optimization)
   - [**Advanced Compression Strategies**](#advanced-compression-strategies)
   - [**Incremental Backup Strategy**](#incremental-backup-strategy)
@@ -79,16 +79,16 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
   - [**Security**](#security)
   - [**Monitoring**](#monitoring)
 
-## Резервное копирование и восстановление **PostgreSQL**
+## Резервное копирование и восстановление PostgreSQL
 
 Резервное копирование — важнейшая часть эксплуатации любой базы данных. **PostgreSQL** предоставляет несколько встроенных способов резервного копирования, каждый из которых подходит для разных сценариев восстановления.
 
 ### Типы резервного копирования
 
-1. **Логический дамп (**Logical Dump**)**: **pg_dump**, **pg_dumpall**
-2. **Физический снимок (**Physical Backup**)**: **pg_basebackup**, файловый снимок
+1. **Логический дамп (Logical Dump)**: **pg_dump**, **pg_dumpall**
+2. **Физический снимок (Physical Backup)**: **pg_basebackup**, файловый снимок
 3. **Continuous Archiving**: непрерывная архивация **WAL** файлов
-4. **Point-in-`Time Recovery` (**PITR**)**: восстановление на заданный момент времени
+4. **Point-in-`Time Recovery` (PITR)**: восстановление на заданный момент времени
 
 ### Когда какой тип использовать
 
@@ -97,13 +97,13 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
 - **Continuous Archiving**: для любой точки во времени, минимальная потеря данных
 
 
-## Логический дамп: **pg_dump**
+## Логический дамп: pg_dump
 
 **pg_dump** создаёт логический дамп одной БД в **SQL** формате для последующего восстановления.
 
-### Основные сценарии **pg_dump**
+### Основные сценарии pg_dump
 
-#### 1. Текстовый дамп (**SQL**)
+#### 1. Текстовый дамп (SQL)
 
 **Простой вызов **pg_dump** с сжатием вывода:**
 
@@ -118,7 +118,7 @@ pg_dump -h localhost -U postgres -d mydb | gzip > mydb.sql.gz
 pg_dump -h localhost -U postgres -d mydb -f mydb.sql
 ```
 
-#### 2. **Custom** формат (**сжатый бинарный**)
+#### 2. Custom формат (сжатый бинарный)
 
 ```bash
 # Custom формат (сжатый)
@@ -128,7 +128,7 @@ pg_dump -h localhost -U postgres -d mydb -Fc -f mydb.dump
 pg_dump -h localhost -U postgres -d mydb -Fc -Z 9 -f mydb.dump
 ```
 
-#### 3. **Directory** формат (**параллельный дамп**)
+#### 3. Directory формат (параллельный дамп)
 
 ```bash
 # Directory формат для параллельного восстановления
@@ -138,14 +138,14 @@ pg_dump -h localhost -U postgres -d mydb -Fd -f mydb_backup
 pg_dump -h localhost -U postgres -d mydb -Fd -j 4 -f mydb_backup
 ```
 
-#### 4. **Tar** формат
+#### 4. Tar формат
 
 ```bash
 # Tar формат
 pg_dump -h localhost -U postgres -d mydb -Ft -f mydb.tar
 ```
 
-### Опции **pg_dump**
+### Опции pg_dump
 
 #### Выбор объектов
 
@@ -185,9 +185,9 @@ pg_dump -h localhost -U postgres -d mydb --lock-wait-timeout=10000 -f mydb.sql
 pg_dump -h localhost -U postgres -d mydb --snapshot=snapshot_name -f mydb.sql
 ```
 
-### Восстановление из **pg_dump**
+### Восстановление из pg_dump
 
-#### Восстановление из **SQL** дампа
+#### Восстановление из SQL дампа
 
 ```bash
 # восстановление из текстового дампа
@@ -197,7 +197,7 @@ psql -h localhost -U postgres -d mydb < mydb.sql
 psql -h localhost -U postgres -d mydb -f mydb.sql
 ```
 
-#### Восстановление из **Custom** дампа
+#### Восстановление из Custom дампа
 
 ```bash
 # восстановление из custom дампа
@@ -216,14 +216,14 @@ pg_restore -h localhost -U postgres -d mydb -t users -v mydb.dump
 pg_restore -h localhost -U postgres -d mydb --create -v mydb.dump
 ```
 
-#### Восстановление из **Directory** дампа
+#### Восстановление из Directory дампа
 
 ```bash
 # восстановление из directory дампа (параллельно)
 pg_restore -h localhost -U postgres -d mydb -j 4 -v mydb_backup
 ```
 
-### **pg_dumpall**
+### pg_dumpall
 
 **pg_dumpall** создаёт дамп всех БД кластера **PostgreSQL**.
 
@@ -242,11 +242,11 @@ psql -h localhost -U postgres < all_databases.sql
 ```
 
 
-## Физический снимок: **pg_basebackup**
+## Физический снимок: pg_basebackup
 
 **pg_basebackup** создаёт физический снимок всего кластера **PostgreSQL**. Для полного снимка нужна репликация или носитель.
 
-### Основные сценарии **pg_basebackup**
+### Основные сценарии pg_basebackup
 
 #### 1. Базовый снимок
 
@@ -258,7 +258,7 @@ pg_basebackup -h localhost -U postgres -D /backup/postgresql -Ft -z -P
 pg_basebackup -h localhost -U postgres -D /backup/postgresql -Fp -P
 ```
 
-#### 2. Опции **pg_basebackup**
+#### 2. Опции pg_basebackup
 
 ```bash
 # Tar формат со сжатием
@@ -277,7 +277,7 @@ pg_basebackup -h localhost -U postgres -D /backup/postgresql -c fast -Fp -P
 pg_basebackup -h localhost -U postgres -D /backup/postgresql -l "Backup $(date +%Y%m%d)" -Fp -P
 ```
 
-#### 3. Восстановление из **pg_basebackup**
+#### 3. Восстановление из pg_basebackup
 
 ```bash
 # остановить PostgreSQL
@@ -301,13 +301,13 @@ sudo systemctl start postgresql
 ```
 
 
-## **Continuous Archiving** и **Point-in-Time Recovery** (**PITR**)
+## Continuous Archiving и Point-in-Time Recovery (PITR)
 
 **Continuous Archiving** — непрерывная архивация **WAL** файлов для восстановления на любой момент времени.
 
-### Настройка **Continuous Archiving**
+### Настройка Continuous Archiving
 
-#### 1. Параметры **postgresql.conf**
+#### 1. Параметры postgresql.conf
 
 ```conf
 # уровень WAL архивации
@@ -324,7 +324,7 @@ archive_command = 'test ! -f /backup/wal_archive/%f && rsync -a %p /backup/wal_a
 archive_command = 'test ! -f /backup/wal_archive/%f && scp %p backup_server:/backup/wal_archive/%f'
 ```
 
-#### 2. Создание каталога архива **WAL**
+#### 2. Создание каталога архива WAL
 
 ```bash
 mkdir -p /backup/wal_archive
@@ -374,7 +374,7 @@ chown postgres:postgres /usr/local/bin/archive_wal.sh
 archive_command = '/usr/local/bin/archive_wal.sh %p'
 ```
 
-### **Point-in-Time Recovery** (**PITR**)
+### Point-in-Time Recovery (PITR)
 
 #### 1. Создание базового снимка
 
@@ -476,7 +476,7 @@ find "$BACKUP_DIR" -type d -mtime +30 -exec rm -rf {} \;
 echo "Backup completed: $BACKUP_DIR/$DATE"
 ```
 
-### Инкрементальный снимок с **WAL** архивацией
+### Инкрементальный снимок с WAL архивацией
 
 ```bash
 #!/bin/bash
@@ -527,7 +527,7 @@ find "$WAL_ARCHIVE_DIR" -type f -mtime +14 -delete
 
 ## Автоматизация резервного копирования
 
-### Планировщик **cron**
+### Планировщик cron
 
 ```bash
 crontab -e
@@ -537,7 +537,7 @@ crontab -e
 0 1 * * 0 /usr/local/bin/weekly_backup.sh >> /var/log/postgresql_backup.log 2>&1
 ```
 
-### Планировщик **systemd timer**
+### Планировщик systemd timer
 
 **Восстановление из архива:**
 
@@ -743,7 +743,7 @@ exit 0
 
 ## Решение проблем
 
-### Проблема: **pg_dump** завершается с ошибкой
+### Проблема: pg_dump завершается с ошибкой
 
 **Симптомы:**
 - Недостаточно прав пользователя.
@@ -778,7 +778,7 @@ pg_restore -j 4 -d mydb mydb.dump
 # Проверьте shared_buffers и work_mem
 ```
 
-### Проблема: **WAL** архивирование не работает
+### Проблема: WAL архивирование не работает
 
 **Симптомы:**
 - Некорректный `archive_command`.
@@ -797,9 +797,9 @@ psql -c "SHOW archive_command;"
 # Перезапустить PostgreSQL после исправления конфигурации
 ```
 
-## **Advanced Backup Strategies**
+## Advanced Backup Strategies
 
-### **Streaming Replication** для бэкапов
+### Streaming Replication для бэкапов
 
 ```bash
 pg_basebackup -h primary_host -U replicator -D /backup/replica -Ft -z -P -S backup_replica
@@ -808,7 +808,7 @@ hot_standby = on
 max_standby_streaming_delay = 30s
 ```
 
-### **Incremental Backups** с **pgBackRest**
+### Incremental Backups с pgBackRest
 
 ```bash
 # Ubuntu/Debian
@@ -829,9 +829,9 @@ pgbackrest --stanza=mydb --type=incr backup
 pgbackrest --stanza=mydb restore
 ```
 
-### **Cloud Backups**
+### Cloud Backups
 
-#### **AWS S3 Backup**
+#### AWS S3 Backup
 
 ```bash
 #!/bin/bash
@@ -852,7 +852,7 @@ aws s3 ls "s3://$S3_BUCKET/backups/" --recursive | \
     xargs -I {} aws s3 rm "s3://$S3_BUCKET/{}"
 ```
 
-#### **Google Cloud Storage Backup**
+#### Google Cloud Storage Backup
 
 ```bash
 #!/bin/bash
@@ -869,9 +869,9 @@ gsutil cp "$BACKUP_FILE" "$GCS_PATH"
 rm "$BACKUP_FILE"
 ```
 
-## **Advanced Restore Techniques**
+## Advanced Restore Techniques
 
-### **Selective Table Restore**
+### Selective Table Restore
 
 ```sql
 CREATE OR REPLACE FUNCTION restore_table_from_backup(
@@ -893,7 +893,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Cross-Version Restore**
+### Cross-Version Restore
 
 ```bash
 /usr/lib/postgresql/12/bin/pg_dump -h old_host -U postgres -d mydb -Fc -f mydb_old.dump
@@ -903,7 +903,7 @@ $$ LANGUAGE plpgsql;
 psql -h new_host -U postgres -d mydb -c "ALTER EXTENSION ALL UPDATE;"
 ```
 
-### **Point-in-Time Recovery Advanced**
+### Point-in-Time Recovery Advanced
 
 ```bash
 
@@ -920,9 +920,9 @@ recovery_target_name = 'before_migration'
 recovery_target_action = 'promote'
 ```
 
-## **Backup Verification**
+## Backup Verification
 
-### **Automated Backup Verification**
+### Automated Backup Verification
 
 ```sql
 CREATE OR REPLACE FUNCTION verify_backup(backup_file TEXT)
@@ -972,7 +972,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Backup Integrity Checks**
+### Backup Integrity Checks
 
 ```bash
 #!/bin/bash
@@ -1009,9 +1009,9 @@ echo "OK: Backup integrity check passed"
 exit 0
 ```
 
-## **Backup Monitoring and Alerting**
+## Backup Monitoring and Alerting
 
-### **Backup Status Monitoring**
+### Backup Status Monitoring
 
 ```sql
 CREATE TABLE backup_history (
@@ -1057,7 +1057,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Automated Backup Alerts**
+### Automated Backup Alerts
 
 ```bash
 #!/bin/bash
@@ -1098,9 +1098,9 @@ echo "OK: Backup verified successfully"
 exit 0
 ```
 
-## **Disaster Recovery Planning**
+## Disaster Recovery Planning
 
-### `DR` **Plan Template**
+### `DR` Plan Template
 
 ```bash
 #!/bin/bash
@@ -1135,7 +1135,7 @@ sudo systemctl start myapp
 echo "Disaster recovery completed"
 ```
 
-### **Recovery Time Objectives** (**RTO**) **and Recovery Point Objectives** (**RPO**)
+### Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO)
 
 ```sql
 CREATE TABLE recovery_metrics (
@@ -1190,9 +1190,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Backup Compression and Optimization**
+## Backup Compression and Optimization
 
-### **Advanced Compression Strategies**
+### Advanced Compression Strategies
 
 ```bash
 #!/bin/bash
@@ -1215,7 +1215,7 @@ rm -rf "$BACKUP_DIR/$DATE"
 echo "Optimized backup completed: $BACKUP_DIR/$DATE.tar.gz"
 ```
 
-### **Incremental Backup Strategy**
+### Incremental Backup Strategy
 
 ```bash
 #!/bin/bash
@@ -1250,22 +1250,22 @@ find "$INCREMENTAL_BACKUP_DIR" -type f -mtime +7 -delete
 find "$WAL_ARCHIVE_DIR" -type f -mtime +14 -delete
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
-### **Backup Strategy**
+### Backup Strategy
 
 1. **Регулярные проверки**: комбинируйте логические и физические бэкапы.
 2. **Тестирование**: регулярно проверяйте восстановление на тестовом контуре.
 3. **Ротация**: храните бэкапы в разных зонах (локально и в облаке).
 4. **Мониторинг**: контролируйте успешность задач и SLA восстановления.
 
-### **Security**
+### Security
 
 1. **Шифрование**: шифруйте бэкапы при хранении.
 2. **Права доступа**: ограничивайте доступ по ролям.
 3. **Аудит**: ведите журнал действий по бэкапам и восстановлениям.
 
-### **Monitoring**
+### Monitoring
 
 1. **Автоматические проверки**: контролируйте актуальность последнего бэкапа.
 2. **Алерты**: уведомляйте ответственных о проблемах.

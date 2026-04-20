@@ -192,7 +192,7 @@ updated: "2026-02-11"
 
 ### Запуск и анализ
 
-- **Start attack** — в таблице: запросы, статус, длина ответа, время, совпадения (**Grep – Match**). Сортировка и фильтры по столбцам — поиск аномалий (другая длина, код, текст).
+- **Start attack** — в таблице: запросы, статус, длина ответа, время, совпадения (Grep – Match). Сортировка и фильтры по столбцам — поиск аномалий (другая длина, код, текст).
 - **Grep – Match** — подсветка ответов с заданными строками; **Grep – Extract** — извлечение значений из ответов в столбец.
 
 ### Пример
@@ -332,4 +332,4 @@ Burp Suite Professional поддерживает **Burp Suite Headless** для 
 
 ## Заключение
 
-Burp Suite — стандартный инструмент для ручного и полуавтоматического тестирования безопасности веб-приложений. Proxy, Repeater и Intruder покрывают перехват, ручную проверку и фаззинг; Scanner (Professional) ускоряет поиск уязвимостей. Используйте scope, Session handling и расширения для эффективной работы. Дополнительно: [Burp Suite Documentation](https://portswigger.net/burp/documentation), [OWASP ZAP](../owasp-zap/owasp-zap.md), [sqlmap](../sqlmap/sqlmap.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).
+Burp Suite — стандартный инструмент для ручного и полуавтоматического тестирования безопасности веб-приложений. Proxy, Repeater и Intruder покрывают перехват, ручную проверку и фаззинг; Scanner (Professional) ускоряет поиск уязвимостей. Используйте scope, Session handling и расширения для эффективной работы. Дополнительно: [Burp Suite Documentation](https://portswigger.net/burp/documentation), [[owasp-zap|OWASP ZAP]], [[sqlmap]], [[testing-tools-overview|Testing Tools Overview]].

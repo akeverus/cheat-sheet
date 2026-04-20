@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# OpenTelemetry: **Observability** в **Java**
+# OpenTelemetry: Observability в Java
 
-**Комплексное руководство по использованию `OpenTelemetry` — открытого стандарта для сбора и экспорта телеметрии (**метрики, трейсы, логи**) в `Java` приложениях.**
+**Комплексное руководство по использованию `OpenTelemetry` — открытого стандарта для сбора и экспорта телеметрии (метрики, трейсы, логи) в `Java` приложениях.**
 
 ## Полезные ссылки
 
@@ -36,14 +36,14 @@ updated: "2026-02-11"
   - [Maven](#maven)
   - [Gradle](#gradle)
   - [Базовая настройка](#базовая-настройка)
-- [Tracing (**Трейсинг**)](#tracing-трейсинг)
+- [Tracing (Трейсинг)](#tracing-трейсинг)
   - [Основы Tracing](#основы-tracing)
   - [Атрибуты и события](#атрибуты-и-события)
   - [Context Propagation](#context-propagation)
-- [Metrics (**Метрики**)](#metrics-метрики)
+- [Metrics (Метрики)](#metrics-метрики)
   - [Основы Metrics](#основы-metrics)
   - [Продвинутые метрики](#продвинутые-метрики)
-- [Logs (**Логирование**)](#logs-логирование)
+- [Logs (Логирование)](#logs-логирование)
   - [OpenTelemetry Logging](#opentelemetry-logging)
   - [Интеграция с существующими логгерами](#интеграция-с-существующими-логгерами)
 - [Интеграция с Spring Boot](#интеграция-с-spring-boot)
@@ -58,7 +58,7 @@ updated: "2026-02-11"
 - [Экспорт данных](#экспорт-данных)
   - [Jaeger](#jaeger)
   - [Prometheus](#prometheus)
-  - [OTLP (**OpenTelemetry Protocol**)](#otlp-opentelemetry-protocol)
+  - [OTLP (OpenTelemetry Protocol)](#otlp-opentelemetry-protocol)
   - [ELK Stack](#elk-stack)
 - [Best practices](#best-practices)
   - [1. Правильная структура трейсов](#1-правильная-структура-трейсов)
@@ -72,11 +72,11 @@ updated: "2026-02-11"
   - [Когда использовать OpenTelemetry](#когда-использовать-opentelemetry)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **OpenTelemetry**
+## Введение в OpenTelemetry
 
-**OpenTelemetry** — это набор инструментов, **API** и **SDK** для сбора и экспорта телеметрии (**метрики, трейсы, логи**) для анализа поведения и производительности приложений. Это **vendor-neutral** открытый стандарт, поддерживаемый **CNCF**.
+**OpenTelemetry** — это набор инструментов, **API** и **SDK** для сбора и экспорта телеметрии (метрики, трейсы, логи) для анализа поведения и производительности приложений. Это **vendor-neutral** открытый стандарт, поддерживаемый **CNCF**.
 
-### Почему **OpenTelemetry**?
+### Почему OpenTelemetry?
 
 **OpenTelemetry** предлагает множество преимуществ:**
 
@@ -89,13 +89,13 @@ updated: "2026-02-11"
 7. **Широкая экосистема** — Интеграции с популярными инструментами
 8. **Future-proof** — Стандарт для облачных и микросервисных архитектур
 
-### Три столпа **Observability**
+### Три столпа Observability
 
 **Tracing** — Отслеживание пути запроса через систему
 **Metrics** — Количественные измерения производительности
 **Logs** — Структурированные текстовые записи о событиях
 
-### Архитектура **OpenTelemetry**
+### Архитектура OpenTelemetry
 
 ```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -117,9 +117,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимости **Maven** для **OpenTelemetry SDK** (**tracing, metrics**).
+Зависимости **Maven** для **OpenTelemetry SDK** (tracing, metrics).
 
 ```xml
 <dependency>
@@ -155,7 +155,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -209,9 +209,9 @@ public class OpenTelemetryConfiguration {
 }
 ```
 
-## **Tracing** (**Трейсинг**)
+## Tracing (Трейсинг)
 
-### Основы **Tracing**
+### Основы Tracing
 
 ```java
 /
@@ -416,7 +416,7 @@ public class TracingAttributesService {
 }
 ```
 
-### **Context Propagation**
+### Context Propagation
 
 ```java
 @Service
@@ -515,9 +515,9 @@ public class ContextPropagationService {
 }
 ```
 
-## **Metrics** (**Метрики**)
+## Metrics (Метрики)
 
-### Основы **Metrics**
+### Основы Metrics
 
 ```java
 @Service
@@ -753,9 +753,9 @@ public class AdvancedMetricsService {
 }
 ```
 
-## **Logs** (**Логирование**)
+## Logs (Логирование)
 
-### **OpenTelemetry Logging**
+### OpenTelemetry Logging
 
 ```java
 @Service
@@ -923,7 +923,7 @@ public class TracingLoggingAspect {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
 ### Автоматическая конфигурация
 
@@ -971,7 +971,7 @@ management:
         enabled: true
 ```
 
-### **Spring Boot** конфигурация
+### Spring Boot конфигурация
 
 ```java
 @Configuration
@@ -1112,7 +1112,7 @@ public @interface Traceable {
 }
 ```
 
-### **REST** контроллеры с трейсингом
+### REST контроллеры с трейсингом
 
 ```java
 @RestController
@@ -1205,7 +1205,7 @@ public class UserController {
 
 ## Экспорт данных
 
-### **Jaeger**
+### Jaeger
 
 ```java
 @Configuration
@@ -1232,7 +1232,7 @@ public class JaegerConfiguration {
 }
 ```
 
-### **Prometheus**
+### Prometheus
 
 ```java
 @Configuration
@@ -1272,7 +1272,7 @@ public class PrometheusConfiguration {
 }
 ```
 
-### **OTLP** (**OpenTelemetry Protocol**)
+### OTLP (OpenTelemetry Protocol)
 
 ```java
 @Configuration
@@ -1327,7 +1327,7 @@ public class OTLPConfiguration {
 }
 ```
 
-### **ELK Stack**
+### ELK Stack
 
 ```java
 @Configuration
@@ -1351,7 +1351,7 @@ public class ELKConfiguration {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Правильная структура трейсов
 
@@ -1641,7 +1641,7 @@ public class InefficientMetricsService {
 }
 ```
 
-### 3. **Context propagation**
+### 3. Context propagation
 
 ```java
 // ✅ Хорошо - правильная propagation
@@ -1790,7 +1790,7 @@ public class BadPropagationService {
 
 **OpenTelemetry** — это мощный и универсальный стандарт для **observability** в современных приложениях. Он предоставляет единый подход к сбору и экспорту метрик, трейсов и логов.
 
-### Преимущества **OpenTelemetry**
+### Преимущества OpenTelemetry
 
 1. **Vendor neutral** — Не зависит от конкретных платформ мониторинга
 2. **Единый стандарт** — Общий формат для метрик, трейсов и логов
@@ -1810,7 +1810,7 @@ public class BadPropagationService {
 5. **Auto `Instrumentation` паттерн** — Автоматическая инструментация
 6. **Custom `Instrumentation` паттерн** — Ручная инструментация для бизнес-логики
 
-### Когда использовать **OpenTelemetry**
+### Когда использовать OpenTelemetry
 
 **Рекомендуется:**
 - Микросервисная архитектура
@@ -1822,7 +1822,7 @@ public class BadPropagationService {
 
 **Особенно полезно:**
 - В **Kubernetes** и облачных средах
-- При использовании **service mesh** (**Istio, Linkerd**)
+- При использовании **service mesh** (Istio, Linkerd)
 - В системах с **event-driven** архитектурой
 - При интеграции с **APM** инструментами
 - В проектах с **DevOps** практиками

@@ -18,17 +18,17 @@ RabbitMQ — открытый брокер сообщений, реализую�
 ## Полезные ссылки
 
 ### Основные документы
-- [RabbitMQ для Java (основы)](rabbitmq.md) — exchanges, queues, Spring AMQP, надёжная доставка
-- [RabbitMQ Advanced](rabbitmq-advanced.md) — кластеризация, HA, Federation, performance tuning
+- [[rabbitmq|RabbitMQ для Java (основы)]] — exchanges, queues, Spring AMQP, надёжная доставка
+- [[rabbitmq-advanced|RabbitMQ Advanced]] — кластеризация, HA, Federation, performance tuning
 
 ### Соседние разделы
-- [Messaging (обзор)](../README.md)
-- [Kafka](../kafka/README.md)
-- [ActiveMQ](../activemq/README.md)
-- [NATS](../nats/README.md)
-- [Event-driven patterns](../../../architecture/software-architecture/README.md)
-- [Spring Boot](../../../frameworks/java-frameworks/spring/README.md)
-- [Distributed tracing](../../../monitoring/tracing/README.md)
+- [[README|Messaging (обзор)]]
+- [[README|Kafka]]
+- [[README|ActiveMQ]]
+- [[README|NATS]]
+- [[README|Event-driven patterns]]
+- [[README|Spring Boot]]
+- [[README|Distributed tracing]]
 
 ### Официальная документация
 - [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)
@@ -48,14 +48,14 @@ RabbitMQ — открытый брокер сообщений, реализую�
 
 | Вопрос | Файл |
 |--------|------|
-| Что такое exchange, queue, binding, routing key | [rabbitmq.md](rabbitmq.md) |
-| Как объявить `@RabbitListener` в Spring Boot | [rabbitmq.md](rabbitmq.md) |
-| Publisher confirms, mandatory, return callback | [rabbitmq.md](rabbitmq.md) |
-| Dead Letter Exchange и retry-паттерны | [rabbitmq.md](rabbitmq.md), [rabbitmq-advanced.md](rabbitmq-advanced.md) |
-| Как собрать кластер из 3 нод | [rabbitmq-advanced.md](rabbitmq-advanced.md#настройка-кластера) |
-| Quorum queues и HA-политики | [rabbitmq-advanced.md](rabbitmq-advanced.md) |
-| Federation и Shovel между дата-центрами | [rabbitmq-advanced.md](rabbitmq-advanced.md#federation-и-shovel) |
-| Метрики и алерты в Prometheus | [rabbitmq-advanced.md](rabbitmq-advanced.md) |
+| Что такое exchange, queue, binding, routing key | [[rabbitmq]] |
+| Как объявить `@RabbitListener` в Spring Boot | [[rabbitmq]] |
+| Publisher confirms, mandatory, return callback | [[rabbitmq]] |
+| Dead Letter Exchange и retry-паттерны | [[rabbitmq]], [[rabbitmq-advanced]] |
+| Как собрать кластер из 3 нод | [[rabbitmq-advanced#настройка-кластера]] |
+| Quorum queues и HA-политики | [[rabbitmq-advanced]] |
+| Federation и Shovel между дата-центрами | [[rabbitmq-advanced#federation-и-shovel]] |
+| Метрики и алерты в Prometheus | [[rabbitmq-advanced]] |
 
 ## Exchange types — шпаргалка
 
@@ -80,13 +80,13 @@ RabbitMQ — открытый брокер сообщений, реализую�
 
 ## Маршруты чтения
 
-- **Базовое использование в микросервисе (1 ч):** [rabbitmq.md](rabbitmq.md) → настройка Spring AMQP → publisher confirms → DLX.
-- **Production deployment (3 ч):** [rabbitmq-advanced.md](rabbitmq-advanced.md) → quorum queues → мониторинг → runbook.
+- **Базовое использование в микросервисе (1 ч):** [[rabbitmq]] → настройка Spring AMQP → publisher confirms → DLX.
+- **Production deployment (3 ч):** [[rabbitmq-advanced]] → quorum queues → мониторинг → runbook.
 - **Миграция с Kafka → RabbitMQ:** exchange types → routing → retention → DLX.
 
 ## Куда идти дальше
 
-- Паттерны событийной архитектуры — [architecture/software-architecture/](../../../architecture/software-architecture/README.md)
-- Idempotency, Outbox Pattern — [patterns/](../../../patterns/README.md)
-- Observability: трассировка, метрики — [monitoring/tracing/](../../../monitoring/tracing/README.md)
-- Spring Cloud Stream для абстракции над брокерами — [frameworks/java-frameworks/spring/](../../../frameworks/java-frameworks/spring/README.md)
+- Паттерны событийной архитектуры — [[README|architecture/software-architecture/]]
+- Idempotency, Outbox Pattern — [[README|patterns/]]
+- Observability: трассировка, метрики — [[README|monitoring/tracing/]]
+- Spring Cloud Stream для абстракции над брокерами — [[README|frameworks/java-frameworks/spring/]]

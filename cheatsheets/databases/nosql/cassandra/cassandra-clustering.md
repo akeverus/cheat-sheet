@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cassandra**: Кластеризация — Управление узлами и масштабирование
+# Cassandra: Кластеризация — Управление узлами и масштабирование
 
 Комплексное руководство по развертыванию, управлению и масштабированию кластеров **Apache Cassandra**: топологии, стратегии репликации, балансировка нагрузки и отказоустойчивость.
 
@@ -103,7 +103,7 @@ updated: "2026-02-11"
 - [Узел будет автоматически остановлен после завершения](#узел-будет-автоматически-остановлен-после-завершения)
 - [5. Удаление из конфигурации (опционально)](#5-удаление-из-конфигурации-опционально)
 - [Убрать из seeds если был seed node](#убрать-из-seeds-если-был-seed-node)
-    - [**Force remove** (**для недоступных узлов**)](#force-remove-для-недоступных-узлов)
+    - [**Force remove** (для недоступных узлов)](#force-remove-для-недоступных-узлов)
 - [Только для недоступных узлов!](#только-для-недоступных-узлов)
 - [1. Проверка что узел действительно недоступен](#1-проверка-что-узел-действительно-недоступен)
 - [2. Удаление узла принудительно](#2-удаление-узла-принудительно)
@@ -270,11 +270,11 @@ updated: "2026-02-11"
 
 ## Архитектура кластера
 
-### **Ring Architecture**
+### Ring Architecture
 
 #### Основные компоненты
 
-Пример модели кластера **Cassandra**: узлы, токены, **keyspaces** (**Java**).
+Пример модели кластера **Cassandra**: узлы, токены, **keyspaces** (Java).
 
 ```java
 public class CassandraCluster {
@@ -350,7 +350,7 @@ enum NodeStatus {
 }
 ```
 
-#### **Gossip Protocol**
+#### Gossip Protocol
 ```java
 @Service
 public class GossipProtocol {
@@ -423,9 +423,9 @@ class GossipDigest {
 }
 ```
 
-### **Seed Nodes**
+### Seed Nodes
 
-#### Конфигурация **seed nodes**
+#### Конфигурация seed nodes
 ```yaml
 # cassandra.yaml
 seed_provider:
@@ -440,7 +440,7 @@ seed_provider:
 # - Seeds должны быть первыми узлами при развертывании
 ```
 
-#### Управление **seed nodes**
+#### Управление seed nodes
 ```java
 @Service
 public class SeedNodeManager {
@@ -490,7 +490,7 @@ public class SeedNodeManager {
 
 ## Топологии развертывания
 
-### **Single Data Center**
+### Single Data Center
 
 #### Простая топология
 ```bash
@@ -514,7 +514,7 @@ rpc_address: 192.168.1.12
 seeds: "192.168.1.10"
 ```
 
-#### Настройка **keyspace**
+#### Настройка keyspace
 ```cql
 -- Keyspace для single DC
 CREATE KEYSPACE myapp WITH replication = {
@@ -523,9 +523,9 @@ CREATE KEYSPACE myapp WITH replication = {
 };
 ```
 
-### **Multiple Data Centers**
+### Multiple Data Centers
 
-#### **Active-Active** топология
+#### Active-Active топология
 ```bash
 # Топология: 2 датацентра, по 3 узла в каждом
 # Использование: global applications, disaster recovery
@@ -575,7 +575,7 @@ rpc_address: 10.0.2.12
 seeds: "10.0.1.10,10.0.2.10"
 ```
 
-#### Настройка **keyspace** для **multi-DC**
+#### Настройка keyspace для multi-DC
 ```cql
 -- Keyspace для multiple DC с NetworkTopologyStrategy
 CREATE KEYSPACE global_app WITH replication = {
@@ -585,9 +585,9 @@ CREATE KEYSPACE global_app WITH replication = {
 };
 ```
 
-### **Hybrid Cloud Topologies**
+### Hybrid Cloud Topologies
 
-#### **On-Premise** + **Cloud**
+#### On-Premise + Cloud
 ```yaml
 # cassandra.yaml для hybrid deployment
 # Data Center 1: On-premise
@@ -720,7 +720,7 @@ public class NodeProvisioningService {
 
 ### Удаление узла
 
-#### **Graceful decommission**
+#### Graceful decommission
 ```bash
 # 1. Проверка возможности удаления
 nodetool status
@@ -739,7 +739,7 @@ nodetool compactionstats
 # Убрать из seeds если был seed node
 ```
 
-#### **Force remove** (**для недоступных узлов**)
+#### Force remove (для недоступных узлов)
 ```bash
 # Только для недоступных узлов!
 # 1. Проверка что узел действительно недоступен
@@ -861,7 +861,7 @@ nodetool cleanup
 
 ## Стратегии репликации
 
-### **NetworkTopologyStrategy**
+### NetworkTopologyStrategy
 
 #### Конфигурация для разных топологий
 ```cql
@@ -888,7 +888,7 @@ CREATE KEYSPACE hybrid_ks WITH replication = {
 };
 ```
 
-#### Расчет оптимального **replication factor**
+#### Расчет оптимального replication factor
 ```java
 @Service
 public class ReplicationStrategyOptimizer {
@@ -955,7 +955,7 @@ public class ReplicationStrategyOptimizer {
 }
 ```
 
-### **Consistency Levels**
+### Consistency Levels
 
 #### Настройка консистентности
 ```cql
@@ -1060,9 +1060,9 @@ public class ConsistencyManager {
 
 ## Балансировка нагрузки
 
-### **Token Distribution**
+### Token Distribution
 
-#### **Vnodes** vs **Single Token**
+#### Vnodes vs Single Token
 ```java
 public class TokenDistributionManager {
 
@@ -1122,7 +1122,7 @@ public class TokenDistributionManager {
 }
 ```
 
-### **Rebalancing**
+### Rebalancing
 
 #### Ручное перебалансирование
 ```bash
@@ -1249,9 +1249,9 @@ class TokenMove {
 
 ## Отказоустойчивость
 
-### **Failure Detection**
+### Failure Detection
 
-#### **Phi Accrual Failure Detector**
+#### Phi Accrual Failure Detector
 ```java
 @Service
 public class FailureDetector {
@@ -1350,9 +1350,9 @@ public class FailureDetector {
 }
 ```
 
-### **Hinted Handoff**
+### Hinted Handoff
 
-#### Механизм **hinted handoff**
+#### Механизм hinted handoff
 ```java
 @Service
 public class HintedHandoffManager {
@@ -1457,9 +1457,9 @@ class Hint {
 }
 ```
 
-### **Read Repair**
+### Read Repair
 
-#### Механизм **read repair**
+#### Механизм read repair
 ```java
 @Service
 public class ReadRepairService {
@@ -1591,7 +1591,7 @@ class ReadResult {
 
 ## Масштабирование кластера
 
-### **Horizontal Scaling**
+### Horizontal Scaling
 
 #### Добавление датацентра
 ```bash
@@ -1747,7 +1747,7 @@ class ScalingDecision {
 }
 ```
 
-### **Vertical Scaling**
+### Vertical Scaling
 
 #### Увеличение ресурсов узла
 ```bash
@@ -1770,7 +1770,7 @@ nodetool repair
 
 ## Мониторинг кластера
 
-### **Nodetool Commands**
+### Nodetool Commands
 
 #### Основные команды мониторинга
 ```bash
@@ -1817,9 +1817,9 @@ nodetool captureheap
 nodetool verify
 ```
 
-### **JMX Monitoring**
+### JMX Monitoring
 
-#### **Java Management Extensions**
+#### Java Management Extensions
 ```java
 @Service
 public class JmxMonitoringService {
@@ -1898,9 +1898,9 @@ public class JmxMonitoringService {
 }
 ```
 
-### **Prometheus Integration**
+### Prometheus Integration
 
-#### Метрики для **Prometheus**
+#### Метрики для Prometheus
 ```yaml
 # prometheus.yml
 scrape_configs:
@@ -1917,7 +1917,7 @@ scrape_configs:
 #   cassandra:latest
 ```
 
-#### Конфигурация **JMX Exporter**
+#### Конфигурация JMX Exporter
 ```yaml
 # jmx-config.yml
 startDelaySeconds: 0
@@ -1943,9 +1943,9 @@ rules:
 
 ## Резервное копирование
 
-### **Snapshot-based Backup**
+### Snapshot-based Backup
 
-#### Создание **snapshot**
+#### Создание snapshot
 ```bash
 # 1. Создание snapshot для всех keyspaces
 nodetool snapshot
@@ -1963,7 +1963,7 @@ nodetool listsnapshots
 # Из /var/lib/cassandra/data/ копировать .db файлы
 ```
 
-#### Восстановление из **snapshot**
+#### Восстановление из snapshot
 ```bash
 # 1. Остановка Cassandra
 sudo systemctl stop cassandra
@@ -1981,9 +1981,9 @@ sudo systemctl start cassandra
 nodetool repair
 ```
 
-### **Incremental Backup**
+### Incremental Backup
 
-#### Настройка **incremental backup**
+#### Настройка incremental backup
 ```yaml
 # cassandra.yaml
 incremental_backups: true
@@ -1992,7 +1992,7 @@ incremental_backups: true
 # Каждый compaction создает hard link на SSTable файлы
 ```
 
-#### Использование **incremental backup**
+#### Использование incremental backup
 ```bash
 # 1. Поиск incremental backup файлов
 find /var/lib/cassandra/data/ -name "backups" -type d
@@ -2004,9 +2004,9 @@ find /var/lib/cassandra/data/ -name "backups" -type d
 # Сначала восстановить snapshot, затем скопировать incremental файлы
 ```
 
-### **Medusa Backup Tool**
+### Medusa Backup Tool
 
-#### Настройка **Medusa**
+#### Настройка Medusa
 ```yaml
 # /etc/medusa/medusa.ini
 [cassandra]
@@ -2026,7 +2026,7 @@ monitoring_provider = local
 grpc_enabled = true
 ```
 
-#### Использование **Medusa**
+#### Использование Medusa
 ```bash
 # Создание backup
 medusa backup --name daily_backup
@@ -2043,7 +2043,7 @@ medusa status
 
 ## Восстановление после сбоев
 
-### **Node Recovery**
+### Node Recovery
 
 #### Восстановление упавшего узла
 ```bash
@@ -2086,7 +2086,7 @@ nodetool netstats
 nodetool repair
 ```
 
-### **Data Center Recovery**
+### Data Center Recovery
 
 #### Восстановление датацентра
 ```bash
@@ -2117,9 +2117,9 @@ ALTER KEYSPACE myapp WITH replication = {
 };
 ```
 
-### **Disaster Recovery**
+### Disaster Recovery
 
-#### План **disaster recovery**
+#### План disaster recovery
 ```java
 @Service
 public class DisasterRecoveryService {
@@ -2244,11 +2244,11 @@ class DisasterAssessment {
 
 ### Планирование кластера
 
-#### 1. **Capacity Planning**
+#### 1. Capacity Planning
 - **Анализ нагрузки** перед развертыванием
 - **Мониторинг роста** данных и нагрузки
 - **Планирование масштабирования** заранее
-- **Резервирование ресурсов** (**20-30%**)
+- **Резервирование ресурсов** (20-30%)
 
 #### 2. Топология
 - **Минимальный кластер**: 3 узла
@@ -2266,14 +2266,14 @@ class DisasterAssessment {
 
 #### 1. Регулярное обслуживание
 - **Еженедельный repair** для всех **keyspaces**
-- **Мониторинг disk space** (**> 50% free**)
+- **Мониторинг disk space** (> 50% free)
 - **Ротация логов** и **cleanup**
 - **Обновление версий Cassandra**
 
 #### 2. Производительность
-- **Мониторинг latency** (**< 10ms reads, < 5ms writes**)
-- **Оптимизация запросов** (**EXPLAIN, индексы**)
-- **Настройка JVM** (**heap, GC**)
+- **Мониторинг latency** (< 10ms reads, < 5ms writes)
+- **Оптимизация запросов** (EXPLAIN, индексы)
+- **Настройка JVM** (heap, GC)
 - **Кэширование** на уровне приложения
 
 #### 3. Безопасность
@@ -2288,7 +2288,7 @@ class DisasterAssessment {
 - **Добавление узлов** по одному
 - **Rebalancing** после добавления
 - **Мониторинг распределения** нагрузки
-- **Оптимизация токенов** (**vnodes**)
+- **Оптимизация токенов** (vnodes)
 
 #### 2. Вертикальное масштабирование
 - **Увеличение ресурсов** узла
@@ -2297,15 +2297,15 @@ class DisasterAssessment {
 
 ### Резервное копирование
 
-#### 1. Стратегия **backup**
+#### 1. Стратегия backup
 - **Ежедневные snapshots** для критичных данных
 - **Incremental backups** между **snapshots**
 - **Хранение в нескольких локациях**
 - **Тестирование восстановления**
 
-#### 2. **Disaster Recovery**
+#### 2. Disaster Recovery
 - **Документированный план** восстановления
-- **Регулярные drills** (**учения**)
+- **Регулярные drills** (учения)
 - **Автоматизация** восстановления
 - **Мониторинг `RTO`/RPO**
 

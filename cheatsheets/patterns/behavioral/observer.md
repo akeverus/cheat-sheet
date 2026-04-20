@@ -52,7 +52,7 @@ updated: "2026-02-11"
 
 **Когда применять:** события в UI, уведомления, кэш-инвалидация, модель в MVC.
 
-## Что такое **Observer**?
+## Что такое Observer?
 
 **Observer** — это поведенческий паттерн проектирования, который создает механизм подписки, позволяющий одним объектам следить и реагировать на события, происходящие в других объектах.
 
@@ -105,7 +105,7 @@ weatherStation.addObserver(display2);
 weatherStation.addObserver(display3);
 ```
 
-## Когда использовать **Observer**?
+## Когда использовать Observer?
 
 ### Подходящие сценарии
 
@@ -220,7 +220,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Observer**
+### Классический Observer
 
 ```java
 // Subject интерфейс
@@ -407,7 +407,7 @@ class CurrentConditionsDisplay implements java.util.Observer {
 }
 ```
 
-### **Property Change Listener**
+### Property Change Listener
 
 ```java
 // Современный подход с PropertyChangeSupport
@@ -562,7 +562,7 @@ newsletter.newestArticleObservers.add { url ->
 
 ## Продвинутые реализации
 
-### 1. **Reactive Observer** с **RxJava**
+### 1. Reactive Observer с RxJava
 
 ```java
 // RxJava-style Observer
@@ -796,7 +796,7 @@ public class MVCExample {
 }
 ```
 
-### 2. **Cache Invalidation**
+### 2. Cache Invalidation
 
 ```java
 @Service
@@ -1020,7 +1020,7 @@ public class ThreadSafeObserver {
 }
 ```
 
-### 2. **Memory Leaks Prevention**
+### 2. Memory Leaks Prevention
 
 ```java
 public class MemoryLeakPrevention {

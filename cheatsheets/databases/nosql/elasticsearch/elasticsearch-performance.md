@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Производительность — Оптимизация и тюнинг высоконагруженных кластеров
+# Elasticsearch: Производительность — Оптимизация и тюнинг высоконагруженных кластеров
 
 Комплексное руководство по оптимизации производительности **Elasticsearch**: настройка **JVM**, тюнинг запросов, оптимизация хранения, кэширование и масштабирование для высоких нагрузок.
 
@@ -189,9 +189,9 @@ updated: "2026-02-11"
 
 ## Архитектура производительности
 
-### **Performance Factors**
+### Performance Factors
 
-#### **Key Performance Components**
+#### Key Performance Components
 ```java
 public class PerformanceAnalyzer {
 
@@ -291,9 +291,9 @@ public class PerformanceAnalyzer {
 }
 ```
 
-### **Performance Trade-offs**
+### Performance Trade-offs
 
-#### **Indexing** vs **Search Performance**
+#### Indexing vs Search Performance
 ```java
 public class PerformanceTradeoffAnalyzer {
 
@@ -395,11 +395,11 @@ enum BottleneckType {
 }
 ```
 
-## **JVM** оптимизация
+## JVM оптимизация
 
-### **Heap Size Configuration**
+### Heap Size Configuration
 
-#### **Optimal Heap Sizing**
+#### Optimal Heap Sizing
 ```bash
 # Рекомендации по размеру heap
 # Для dedicated data nodes: heap = system_memory / 2
@@ -421,7 +421,7 @@ enum BottleneckType {
 -Xmx40g
 ```
 
-#### `GC` **Tuning for Elasticsearch**
+#### `GC` Tuning for Elasticsearch
 ```bash
 # G1GC настройки для Elasticsearch (рекомендуется)
 -XX:+UseG1GC
@@ -453,9 +453,9 @@ enum BottleneckType {
 -XX:GCLogFileSize=10m
 ```
 
-### **Memory Management**
+### Memory Management
 
-#### **Off-heap Memory Optimization**
+#### Off-heap Memory Optimization
 ```java
 @Service
 public class MemoryManager {
@@ -511,9 +511,9 @@ public class MemoryManager {
 }
 ```
 
-### **JVM Diagnostic Tools**
+### JVM Diagnostic Tools
 
-#### **Hot Threads Analysis**
+#### Hot Threads Analysis
 ```bash
 # Получение hot threads
 curl -X GET "localhost:9200/_nodes/hot_threads"
@@ -525,7 +525,7 @@ curl -X GET "localhost:9200/_nodes/hot_threads?threads=500&ignore_idle_threads=f
 curl -X GET "localhost:9200/_nodes/node1/hot_threads"
 ```
 
-#### **Heap Dump Analysis**
+#### Heap Dump Analysis
 ```bash
 # Создание heap dump
 jmap -dump:format=b,file=heap.hprof <elasticsearch_pid>
@@ -543,9 +543,9 @@ jmap -dump:format=b,file=heap.hprof <elasticsearch_pid>
 
 ## Оптимизация хранения
 
-### **Index Settings Optimization**
+### Index Settings Optimization
 
-#### **Merge Policy Tuning**
+#### Merge Policy Tuning
 ```json
 PUT my_index/_settings
 {
@@ -563,7 +563,7 @@ PUT my_index/_settings
 }
 ```
 
-#### **Compression Settings**
+#### Compression Settings
 ```json
 PUT my_index/_settings
 {
@@ -587,9 +587,9 @@ PUT logs-*/_settings
 }
 ```
 
-### **Translog Optimization**
+### Translog Optimization
 
-#### **Durability** vs **Performance Trade-off**
+#### Durability vs Performance Trade-off
 ```json
 # Для максимальной производительности индексации
 PUT my_index/_settings
@@ -616,9 +616,9 @@ PUT my_index/_settings
 }
 ```
 
-### **Force Merge for Read Performance**
+### Force Merge for Read Performance
 
-#### **Optimizing for Search**
+#### Optimizing for Search
 ```bash
 # Force merge для оптимизации поиска
 curl -X POST "localhost:9200/my_index/_forcemerge?max_num_segments=1"
@@ -632,9 +632,9 @@ curl -X GET "localhost:9200/_cat/tasks?v"
 
 ## Тюнинг индексации
 
-### **Bulk Request Optimization**
+### Bulk Request Optimization
 
-#### **Optimal Bulk Size**
+#### Optimal Bulk Size
 ```java
 @Service
 public class BulkOptimizer {
@@ -700,9 +700,9 @@ public class BulkOptimizer {
 }
 ```
 
-### **Index Refresh Tuning**
+### Index Refresh Tuning
 
-#### **Refresh Strategy**
+#### Refresh Strategy
 ```json
 # Для bulk индексации - редкий refresh
 PUT my_index/_settings
@@ -729,9 +729,9 @@ PUT bulk_index/_settings
 }
 ```
 
-### **Thread Pool Optimization**
+### Thread Pool Optimization
 
-#### **Thread Pool Settings**
+#### Thread Pool Settings
 ```yaml
 # elasticsearch.yml
 thread_pool:
@@ -749,7 +749,7 @@ thread_pool:
     queue_size: 200
 ```
 
-#### **Adaptive Thread Pool Sizing**
+#### Adaptive Thread Pool Sizing
 ```java
 @Service
 public class ThreadPoolOptimizer {
@@ -808,9 +808,9 @@ public class ThreadPoolOptimizer {
 
 ## Оптимизация поиска
 
-### **Query Optimization**
+### Query Optimization
 
-#### **Filter** vs **Query Context**
+#### Filter vs Query Context
 ```java
 @Service
 public class QueryOptimizer {
@@ -934,9 +934,9 @@ public class QueryOptimizer {
 }
 ```
 
-### **Search Template Optimization**
+### Search Template Optimization
 
-#### **Pre-compiled Queries**
+#### Pre-compiled Queries
 ```bash
 # Создание search template
 PUT _scripts/search_template
@@ -992,9 +992,9 @@ GET my_index/_search/template
 
 ## Кэширование стратегии
 
-### **Query Cache**
+### Query Cache
 
-#### **Query Cache Configuration**
+#### Query Cache Configuration
 ```yaml
 # elasticsearch.yml
 indices.queries.cache.size: 10%
@@ -1004,7 +1004,7 @@ indices.requests.cache.size: 1%
 node.roles: [ data ]
 ```
 
-#### **Cache Monitoring**
+#### Cache Monitoring
 ```bash
 # Статистика query cache
 curl -X GET "localhost:9200/_nodes/stats/indices/query_cache?pretty"
@@ -1029,9 +1029,9 @@ curl -X GET "localhost:9200/_nodes/stats/indices/query_cache?pretty"
 }
 ```
 
-### **Request Cache**
+### Request Cache
 
-#### **Request Cache Usage**
+#### Request Cache Usage
 ```bash
 # Включение request cache для индекса
 curl -X PUT "localhost:9200/my_index/_settings" \
@@ -1053,9 +1053,9 @@ curl -X GET "localhost:9200/my_index/_search?request_cache=true" \
   }'
 ```
 
-### **Field Data Cache**
+### Field Data Cache
 
-#### **Field Data Cache for Aggregations**
+#### Field Data Cache for Aggregations
 ```bash
 # Мониторинг field data cache
 curl -X GET "localhost:9200/_nodes/stats/indices/fielddata?pretty"
@@ -1075,9 +1075,9 @@ curl -X PUT "localhost:9200/_cluster/settings" \
 
 ## Масштабирование производительности
 
-### **Horizontal Scaling**
+### Horizontal Scaling
 
-#### **Node Addition Strategy**
+#### Node Addition Strategy
 ```java
 @Service
 public class ScalingOptimizer {
@@ -1186,9 +1186,9 @@ class ScalingRecommendation {
 }
 ```
 
-### **Vertical Scaling**
+### Vertical Scaling
 
-#### **Node Upgrade Planning**
+#### Node Upgrade Planning
 ```java
 @Service
 public class NodeUpgradePlanner {
@@ -1261,9 +1261,9 @@ public class NodeUpgradePlanner {
 
 ## Мониторинг и профилирование
 
-### **Performance Metrics Collection**
+### Performance Metrics Collection
 
-#### **Custom Metrics Collector**
+#### Custom Metrics Collector
 ```java
 @Service
 public class PerformanceMetricsCollector {
@@ -1378,9 +1378,9 @@ public class PerformanceMetricsCollector {
 }
 ```
 
-### **Query Profiling**
+### Query Profiling
 
-#### **Profile API Usage**
+#### Profile API Usage
 ```bash
 # Профилирование запроса
 curl -X GET "localhost:9200/my_index/_search" \
@@ -1439,9 +1439,9 @@ curl -X GET "localhost:9200/my_index/_search" \
 
 ## Решение проблем производительности
 
-### **Common Performance Issues**
+### Common Performance Issues
 
-#### **High Search Latency**
+#### High Search Latency
 ```java
 @Service
 public class PerformanceTroubleshooter {
@@ -1569,7 +1569,7 @@ enum Severity {
 }
 ```
 
-#### **Slow Query Analysis**
+#### Slow Query Analysis
 ```bash
 # Включение slow log
 curl -X PUT "localhost:9200/my_index/_settings" \
@@ -1587,11 +1587,11 @@ curl -X PUT "localhost:9200/my_index/_settings" \
 tail -f /var/log/elasticsearch/my_index_index_search_slowlog.log
 ```
 
-## **Hardware** рекомендации
+## Hardware рекомендации
 
-### **CPU Optimization**
+### CPU Optimization
 
-#### **CPU Configuration**
+#### CPU Configuration
 ```bash
 # CPU affinity для Elasticsearch
 taskset -c 0-15 elasticsearch  # Привязка к первым 16 ядрам
@@ -1608,9 +1608,9 @@ cpupower frequency-set -g performance
 # - Enable all cores
 ```
 
-### **Memory Optimization**
+### Memory Optimization
 
-#### **Memory Configuration**
+#### Memory Configuration
 ```bash
 # Huge pages для JVM
 echo 14336 > /proc/sys/vm/nr_hugepages  # 14336 * 2MB = 28GB
@@ -1628,9 +1628,9 @@ echo never > /sys/kernel/mm/transparent_hugepage/defrag
 sysctl -p
 ```
 
-### **Storage Optimization**
+### Storage Optimization
 
-#### **Disk Configuration**
+#### Disk Configuration
 ```bash
 # I/O scheduler для SSD
 echo "deadline" > /sys/block/sda/queue/scheduler
@@ -1649,9 +1649,9 @@ echo 0 > /sys/block/sda/queue/rotational
 UUID=... /var/lib/elasticsearch ext4 noatime,nodiratime,nobarrier,data=writeback 0 0
 ```
 
-### **Network Optimization**
+### Network Optimization
 
-#### **Network Configuration**
+#### Network Configuration
 ```bash
 # Network buffer sizes
 echo "net.core.rmem_max=16777216" >> /etc/sysctl.conf
@@ -1672,89 +1672,89 @@ sysctl -p
 
 ## Лучшие практики
 
-### **Configuration Best Practices**
+### Configuration Best Practices
 
-#### 1. **Heap Size Guidelines**
+#### 1. Heap Size Guidelines
 - **Data nodes**: 50% of **system memory**, **max** 32GB
 - **Master nodes**: 50% of **system memory**, **max** 16GB
 - **Coordinating nodes**: 50% of **system memory**, **max** 32GB
 - **Never exceed 32GB without disabling Compressed Oops**
 
-#### 2. **Shard Strategy**
+#### 2. Shard Strategy
 - **Size per shard**: 10-50GB **for optimal performance**
 - **Total shards per node**: **Keep under** 20-25 **per** `GB` **heap**
 - **Start small**: **Better** to **have larger shards initially**
 - **Plan for growth**: **Consider future data volume**
 
-#### 3. **Index Settings**
+#### 3. Index Settings
 - **Refresh interval**: 1s **for real-time**, 30s **for bulk indexing**
-- **Number of replicas**: 1 **for most use cases** (**adjust based on SLAs**)
+- **Number of replicas**: 1 **for most use cases** (adjust based on SLAs)
 - **Translog settings**: **Balance durability** vs **performance**
 - **Merge policy**: **Optimize based** on **use case**
 
-### **Monitoring Best Practices**
+### Monitoring Best Practices
 
-#### 1. **Key Metrics** to **Monitor**
+#### 1. Key Metrics to Monitor
 - **Search performance**: **P50**, **P95**, **P99 latency**
 - **Indexing performance**: **Throughput**, **latency**
 - **Resource usage**: **CPU**, **memory**, **disk**, **network**
 - **Cluster health**: **Status**, **unassigned shards**, **pending tasks**
 
-#### 2. **Alert Thresholds**
+#### 2. Alert Thresholds
 - **Critical**: **Red cluster status**, **unassigned shards**
 - **High**: **P95 latency** > 500ms, **heap usage** > 85%
 - **Medium**: **CPU usage** > 80%, **disk usage** > 75%
 - **Low**: **Indexing throughput drops** > 20%
 
-#### 3. **Performance Baselines**
+#### 3. Performance Baselines
 - **Establish baselines during normal operation**
 - **Monitor trends over time**
 - **Set realistic targets based** on **use case**
 - **Regular benchmarking after changes**
 
-### **Optimization Workflow**
+### Optimization Workflow
 
-#### 1. **Performance Analysis**
+#### 1. Performance Analysis
 1. **Identify bottlenecks using monitoring and profiling**
 2. **Analyze query patterns and slow logs**
 3. **Review resource usage and saturation points**
 4. **Test hypotheses with controlled changes**
 
-#### 2. **Optimization Steps**
+#### 2. Optimization Steps
 1. **Start with `low-risk` changes**: **Index settings**, **refresh intervals**
 2. **Optimize queries**: **Filters**, **pagination**, **search templates**
 3. **Tune JVM**: **Heap size**, `GC` **settings**
 4. **Scale infrastructure**: **Add nodes** or **upgrade hardware**
 
-#### 3. **Validation**
+#### 3. Validation
 1. **Benchmark before and after changes**
 2. **Monitor for regressions** in **other areas**
 3. **Load test with production-like data**
 4. **Document changes and their impact**
 
-### **Capacity Planning**
+### Capacity Planning
 
-#### 1. **Growth Projections**
+#### 1. Growth Projections
 - **Data volume**: 30-50% **annual growth typical**
 - **Query load**: 20-40% **annual growth**
 - **Hardware lifecycle**: 3-5 **years**
 - **Buffer capacity**: **Plan for** 20-30% **extra capacity**
 
-#### 2. **Scaling Strategy**
+#### 2. Scaling Strategy
 - **Horizontal scaling**: **Preferred for Elasticsearch**
 - **Vertical scaling**: **For CPU** or **memory bound workloads**
 - **Storage scaling**: **Add nodes** or **increase disk capacity**
 - **Network scaling**: **Ensure sufficient bandwidth**
 
-### **Disaster Recovery**
+### Disaster Recovery
 
-#### 1. **Backup Strategy**
+#### 1. Backup Strategy
 - **Snapshot frequency**: **Based** on **RPO requirements**
 - **Retention period**: **Based** on **compliance and business needs**
 - **Storage location**: **Multiple regions for geo-redundancy**
 - **Backup validation**: **Regular restore testing**
 
-#### 2. **Recovery Planning**
+#### 2. Recovery Planning
 - **RTO targets**: **Maximum acceptable downtime**
 - **RPO targets**: **Maximum acceptable data loss**
 - **Recovery procedures**: **Documented step-by-step processes**
@@ -1783,14 +1783,14 @@ sysctl -p
 3. **Index optimization**: **Mapping design**, **analyzer selection**
 4. **Hardware optimization**: **CPU**, **memory**, **disk**, **network tuning**
 
-### Мониторинг и **troubleshooting**:
+### Мониторинг и troubleshooting:
 
 1. **Комплексный мониторинг**: **System metrics**, **Elasticsearch metrics**, **application metrics**
 2. **Query profiling**: **Profile API**, **slow logs**, **performance analysis**
 3. **Alerting**: **Thresholds**, **escalation**, **automated response**
 4. **Root cause analysis**: **Systematic troubleshooting approach**
 
-### **Best practices**:
+### Best practices:
 
 1. **Performance culture**: **Regular benchmarking**, **trend monitoring**
 2. **Capacity planning**: **Growth projections**, **scaling strategies**
@@ -1807,12 +1807,12 @@ sysctl -p
 Оптимальная производительность достигается не разовыми оптимизациями, а систематическим подходом к мониторингу, анализу и улучшениям. **Elasticsearch** способен обеспечить превосходную производительность в самых требовательных сценариях при правильной настройке и оптимизации. 🎯
 
 **Завершение `Elasticsearch` проекта:**
-- ✅ **elasticsearch-basics.md** (**завершен**)
-- ✅ **elasticsearch-indexing.md** (**завершен**)
-- ✅ **elasticsearch-queries.md** (**завершен**)
-- ✅ **elasticsearch-aggregations.md** (**завершен**)
-- ✅ **elasticsearch-clustering.md** (**завершен**)
-- ✅ **elasticsearch-performance.md** (**завершен**)
+- ✅ **elasticsearch-basics.md** (завершен)
+- ✅ **elasticsearch-indexing.md** (завершен)
+- ✅ **elasticsearch-queries.md** (завершен)
+- ✅ **elasticsearch-aggregations.md** (завершен)
+- ✅ **elasticsearch-clustering.md** (завершен)
+- ✅ **elasticsearch-performance.md** (завершен)
 
 **Все файлы `Elasticsearch` завершены! 🎉**
 

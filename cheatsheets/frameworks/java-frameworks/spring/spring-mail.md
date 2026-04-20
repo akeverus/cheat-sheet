@@ -76,7 +76,7 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Mail**
+## Введение в Spring Mail
 
 **Spring Mail** предоставляет простой и мощный **API** для отправки **email** сообщений. Он абстрагирует детали работы с **JavaMail API** и интегрируется с различными шаблонизаторами для создания красивых **HTML** писем.
 
@@ -88,7 +88,7 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 - **HTML Email**: Создание **HTML** писем
 - **Асинхронная отправка**: Отправка **email** в фоновом режиме
 
-### Архитектура **Spring Mail**
+### Архитектура Spring Mail
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -109,11 +109,11 @@ related: ["spring/spring-boot.md", "spring/spring-scheduling.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring Mail**
+## Настройка Spring Mail
 
 ### Зависимости
 
-**Зависимость **spring-`boot-starter`-mail** (**pom.xml**):**
+**Зависимость **spring-`boot-starter`-mail** (pom.xml):**
 
 ```xml
 <dependency>
@@ -140,7 +140,7 @@ spring.mail.properties.mail.smtp.starttls.required=true
 spring.mail.default-encoding=UTF-8
 ```
 
-### **Java Configuration**
+### Java Configuration
 
 ```java
 // Конфигурация JavaMailSender (SMTP)
@@ -219,9 +219,9 @@ public class EmailService {
 }
 ```
 
-## Отправка **MIME** сообщений
+## Отправка MIME сообщений
 
-### **HTML Email**
+### HTML Email
 
 ```java
 // Сервис отправки простого текстового письма
@@ -249,7 +249,7 @@ public class EmailService {
 }
 ```
 
-### **Email** с вложениями
+### Email с вложениями
 
 ```java
 // Сервис отправки простого текстового письма
@@ -284,7 +284,7 @@ public class EmailService {
 }
 ```
 
-### **Email** с встроенными изображениями
+### Email с встроенными изображениями
 
 ```java
 // Сервис отправки простого текстового письма
@@ -319,9 +319,9 @@ public class EmailService {
 }
 ```
 
-## Шаблоны **Email**
+## Шаблоны Email
 
-### **Thymeleaf Templates**
+### Thymeleaf Templates
 
 **Зависимости:**
 
@@ -386,7 +386,7 @@ public class EmailService {
 }
 ```
 
-### **FreeMarker Templates**
+### FreeMarker Templates
 
 **Зависимости:**
 
@@ -466,7 +466,7 @@ public class EmailService {
 
 ## Асинхронная отправка
 
-### @**Async**
+### @Async
 
 ```java
 @Configuration
@@ -498,7 +498,7 @@ public class EmailService {
 
 ## Лучшие практики
 
-### 1. Используйте шаблоны для **HTML email**
+### 1. Используйте шаблоны для HTML email
 
 ```java
 // ✅ Хорошо
@@ -531,7 +531,7 @@ public CompletableFuture<Void> sendEmailAsync(...) {
 }
 ```
 
-### 4. Валидируйте **email** адреса
+### 4. Валидируйте email адреса
 
 ```java
 // ✅ Хорошо
@@ -539,7 +539,7 @@ public CompletableFuture<Void> sendEmailAsync(...) {
 private String email;
 ```
 
-### 5. Используйте конфигурацию из **properties**
+### 5. Используйте конфигурацию из properties
 
 ```properties
 # ✅ Хорошо
@@ -643,7 +643,7 @@ public class EmailQueueConsumer {
 
 ## Мониторинг и метрики
 
-### **Email Metrics**
+### Email Metrics
 
 ```java
 @Component
@@ -745,9 +745,9 @@ public class MultilingualEmailService {
 }
 ```
 
-## Валидация **email**
+## Валидация email
 
-### **Email Validation**
+### Email Validation
 
 ```java
 @Service
@@ -774,7 +774,7 @@ public class EmailValidationService {
 }
 ```
 
-### **Bean Validation**
+### Bean Validation
 
 ```java
 public class EmailRequest {
@@ -814,7 +814,7 @@ public class ValidatedEmailService {
 
 ## Безопасность
 
-### **Email Security**
+### Email Security
 
 ```java
 @Configuration
@@ -867,7 +867,7 @@ public class SpamProtectionService {
 
 ## Тестирование
 
-### **Mock Email Service**
+### Mock Email Service
 
 ```java
 @SpringBootTest
@@ -890,7 +890,7 @@ class EmailServiceTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
 ```java
 @SpringBootTest
@@ -914,7 +914,7 @@ class EmailIntegrationTest {
 
 ## Оптимизация производительности
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 @Configuration
@@ -936,7 +936,7 @@ public class OptimizedMailConfig {
 }
 ```
 
-### **Batch Sending**
+### Batch Sending
 
 ```java
 @Service

@@ -34,8 +34,8 @@ updated: "2026-02-11"
   - [Микросервисная архитектура](#микросервисная-архитектура)
   - [Когда использовать микросервисы?](#когда-использовать-микросервисы)
 - [Принципы проектирования](#принципы-проектирования)
-  - [**Single Responsibility Principle** (**SRP**)](#single-responsibility-principle-srp)
-  - [**Domain-Driven Design** (**DDD**)](#domain-driven-design-ddd)
+  - [**Single Responsibility Principle** (SRP)](#single-responsibility-principle-srp)
+  - [**Domain-Driven Design** (DDD)](#domain-driven-design-ddd)
   - [**API First Design**](#api-first-design)
   - [**Failure Isolation**](#failure-isolation)
 - [Паттерны микросервисов](#паттерны-микросервисов)
@@ -45,7 +45,7 @@ updated: "2026-02-11"
   - [4. **Database per Service Pattern**](#4-database-per-service-pattern)
   - [5. **Saga Pattern**](#5-saga-pattern)
   - [6. **Event Sourcing Pattern**](#6-event-sourcing-pattern)
-  - [7. **CQRS** (**Command Query Responsibility Segregation**)](#7-cqrs-command-query-responsibility-segregation)
+  - [7. **CQRS** (Command Query Responsibility Segregation)](#7-cqrs-command-query-responsibility-segregation)
   - [8. **Bulkhead Pattern**](#8-bulkhead-pattern)
 - [Коммуникация между сервисами](#коммуникация-между-сервисами)
   - [Синхронная коммуникация](#синхронная-коммуникация)
@@ -53,14 +53,14 @@ updated: "2026-02-11"
   - [Выбор типа коммуникации](#выбор-типа-коммуникации)
 - [**API Gateway**](#api-gateway)
   - [Функции **API Gateway**](#функции-api-gateway)
-  - [Пример конфигурации (**Kong**)](#пример-конфигурации-kong)
+  - [Пример конфигурации (Kong)](#пример-конфигурации-kong)
 - [**Service Discovery**](#service-discovery)
   - [**Client-Side Discovery**](#client-side-discovery)
   - [**Server-Side Discovery**](#server-side-discovery)
   - [Реализации](#реализации)
 - [**Circuit Breaker**](#circuit-breaker)
   - [Состояния **Circuit Breaker**](#состояния-circuit-breaker)
-  - [Реализация (**Resilience4j**)](#реализация-resilience4j)
+  - [Реализация (Resilience4j)](#реализация-resilience4j)
   - [Конфигурация](#конфигурация)
 - [**Database per Service**](#database-per-service)
   - [Принципы](#принципы)
@@ -69,12 +69,12 @@ updated: "2026-02-11"
   - [**Event Sourcing**](#event-sourcing)
   - [**CQRS**](#cqrs)
 - [**Saga Pattern**](#saga-pattern)
-  - [**Choreography** (**Хореография**)](#choreography-хореография)
-  - [**Orchestration** (**Оркестрация**)](#orchestration-оркестрация)
+  - [**Choreography** (Хореография)](#choreography-хореография)
+  - [**Orchestration** (Оркестрация)](#orchestration-оркестрация)
   - [**Compensating Transactions**](#compensating-transactions)
 - [**Bulkhead Pattern**](#bulkhead-pattern)
   - [Типы изоляции](#типы-изоляции)
-  - [Пример (**Hystrix**)](#пример-hystrix)
+  - [Пример (Hystrix)](#пример-hystrix)
 - [**Deployment Strategies**](#deployment-strategies)
   - [**Blue-Green Deployment**](#blue-green-deployment)
   - [**Canary Deployment**](#canary-deployment)
@@ -86,7 +86,7 @@ updated: "2026-02-11"
 - [Тестирование микросервисов](#тестирование-микросервисов)
   - [Типы тестов](#типы-тестов)
   - [**Test Containers**](#test-containers)
-  - [**Contract Testing** (**Pact**)](#contract-testing-pact)
+  - [**Contract Testing** (Pact)](#contract-testing-pact)
 - [Решение проблем](#решение-проблем)
 - [Частые вопросы](#частые-вопросы)
 
@@ -98,7 +98,7 @@ updated: "2026-02-11"
 
 **Микросервисы — это подход к разработке единого приложения как набора небольших сервисов, каждый из которых:**
 - Запускается в собственном процессе
-- Взаимодействует через легковесные механизмы (**обычно `HTTP REST` API**)
+- Взаимодействует через легковесные механизмы (обычно `HTTP REST` API)
 - Развертывается независимо
 - Может быть написан на разных языках программирования
 - Имеет собственную базу данных
@@ -121,7 +121,7 @@ updated: "2026-02-11"
 - Простота разработки на начальном этапе
 - Простое тестирование
 - Простое развертывание
-- Производительность (**вызовы внутри процесса**)
+- Производительность (вызовы внутри процесса)
 
 **Недостатки монолита:**
 - Сложность поддержки при росте кодовой базы
@@ -143,13 +143,13 @@ updated: "2026-02-11"
 - Сложность коммуникации между сервисами
 - Распределенные транзакции
 - Сложность тестирования
-- Необходимость инфраструктуры (**мониторинг, логирование, discovery**)
+- Необходимость инфраструктуры (мониторинг, логирование, discovery)
 - **Overhead** на сетевые вызовы
 
 ### Когда использовать микросервисы?
 
 **Используйте микросервисы, когда:**
-- Команда большая (**multiple teams**)
+- Команда большая (multiple teams)
 - Масштаб приложения большой
 - Разные части имеют разные требования к масштабированию
 - Нужна технологическая разнородность
@@ -163,7 +163,7 @@ updated: "2026-02-11"
 
 ## Принципы проектирования
 
-### **Single Responsibility Principle** (**SRP**)
+### Single Responsibility Principle (SRP)
 
 Каждый микросервис должен отвечать за одну бизнес-функцию или домен.
 
@@ -173,21 +173,21 @@ updated: "2026-02-11"
 - **Payment Service** — обработка платежей
 - **Notification Service** — отправка уведомлений
 
-### **Domain-Driven Design** (**DDD**)
+### Domain-Driven Design (DDD)
 
 **Используйте доменно-ориентированное проектирование для определения границ сервисов:**
 - **Bounded Context**: Четкие границы домена
 - **Ubiquitous Language**: Общий язык для домена
 - **Aggregates**: Группы связанных сущностей
 
-### **API First Design**
+### API First Design
 
 **Сначала проектируйте **API**, затем реализуйте:**
 - Используйте **OpenAPI**/**Swagger** для спецификации
 - Версионируйте **API**
 - Обратная совместимость важна
 
-### **Failure Isolation**
+### Failure Isolation
 
 **Изолируйте отказы:**
 - **Circuit Breaker** для защиты от каскадных отказов
@@ -197,7 +197,7 @@ updated: "2026-02-11"
 
 ## Паттерны микросервисов
 
-### 1. **API Gateway Pattern**
+### 1. API Gateway Pattern
 
 Единая точка входа для всех клиентов.
 
@@ -213,10 +213,10 @@ updated: "2026-02-11"
 **Примеры:**
 - **Kong**
 - **AWS API Gateway**
-- **Zuul** (**Netflix**)
+- **Zuul** (Netflix)
 - **Spring Cloud Gateway**
 
-### 2. **Service Discovery Pattern**
+### 2. Service Discovery Pattern
 
 Автоматическое обнаружение сетевых расположений сервисов.
 
@@ -226,11 +226,11 @@ updated: "2026-02-11"
 
 **Примеры:**
 - **Consul**
-- **Eureka** (**Netflix**)
+- **Eureka** (Netflix)
 - **etcd**
 - **Kubernetes Service Discovery**
 
-### 3. **Circuit Breaker Pattern**
+### 3. Circuit Breaker Pattern
 
 Защита от каскадных отказов.
 
@@ -240,11 +240,11 @@ updated: "2026-02-11"
 - **Half-Open**: Проверка восстановления сервиса
 
 **Примеры:**
-- **Resilience4j** (**Java**)
-- **Hystrix** (**Netflix, deprecated**)
-- **Polly** (**.NET**)
+- **Resilience4j** (Java)
+- **Hystrix** (Netflix, deprecated)
+- **Polly** (.NET)
 
-### 4. **Database per Service Pattern**
+### 4. Database per Service Pattern
 
 Каждый микросервис имеет свою базу данных.
 
@@ -258,7 +258,7 @@ updated: "2026-02-11"
 - Сложность запросов через несколько БД
 - **Eventual consistency**
 
-### 5. **Saga Pattern**
+### 5. Saga Pattern
 
 Управление распределенными транзакциями.
 
@@ -268,12 +268,12 @@ updated: "2026-02-11"
 
 **Пример:**
 
-Ниже — схема вызова сервисов в **Saga** (**текст**).
+Ниже — схема вызова сервисов в **Saga** (текст).
 ```text
 Order Service → Payment Service → Inventory Service → Shipping Service
 ```
 
-### 6. **Event Sourcing Pattern**
+### 6. Event Sourcing Pattern
 
 Хранение всех изменений состояния как последовательности событий.
 
@@ -286,21 +286,21 @@ Order Service → Payment Service → Inventory Service → Shipping Service
 - Сложность реализации
 - Рост размера хранилища
 
-### 7. **CQRS** (**Command `Query Responsibility` Segregation**)
+### 7. CQRS (Command `Query Responsibility` Segregation)
 
 Разделение операций чтения и записи.
 
 **Command `Side`:**
-- Обработка команд (**изменение состояния**)
+- Обработка команд (изменение состояния)
 - **Event Sourcing**
 - Оптимизация для записи
 
 **Query `Side`:**
-- Обработка запросов (**чтение**)
+- Обработка запросов (чтение)
 - Денормализованные представления
 - Оптимизация для чтения
 
-### 8. **Bulkhead Pattern**
+### 8. Bulkhead Pattern
 
 Изоляция ресурсов для предотвращения каскадных отказов.
 
@@ -316,7 +316,7 @@ Order Service → Payment Service → Inventory Service → Shipping Service
 **REST `API`:**
 - **HTTP**/**HTTPS**
 - **JSON**
-- Стандартные методы (**GET, `POST`, `PUT`, DELETE**)
+- Стандартные методы (GET, `POST`, `PUT`, DELETE)
 - Простота реализации
 
 **gRPC:**
@@ -362,11 +362,11 @@ Order Service → Payment Service → Inventory Service → Shipping Service
 - Долгие операции
 - Нужна отказоустойчивость
 
-## **API Gateway**
+## API Gateway
 
 **API Gateway** — это единая точка входа для всех клиентов.
 
-### Функции **API Gateway**
+### Функции API Gateway
 
 1. **Маршрутизация**
    - **Route requests** to **appropriate services**
@@ -397,9 +397,9 @@ Order Service → Payment Service → Inventory Service → Shipping Service
    - **Metrics collection**
    - **Analytics**
 
-### Пример конфигурации (**Kong**)
+### Пример конфигурации (Kong)
 
-Ниже — пример конфигурации **API Gateway** (**Kong**) в **YAML**.
+Ниже — пример конфигурации **API Gateway** (Kong) в **YAML**.
 ```yaml
 services:
   - name: user-service
@@ -418,11 +418,11 @@ plugins:
       secret_is_base64: false
 ```
 
-## **Service Discovery**
+## Service Discovery
 
 **Service Discovery** позволяет сервисам находить друг друга в сети.
 
-### **Client-Side Discovery**
+### Client-Side Discovery
 
 **Клиент запрашивает у **Service Registry** адреса сервисов:**
 
@@ -439,7 +439,7 @@ Client → Service Instance (direct call)
 - Клиент должен знать о **Registry**
 - Усложнение клиента
 
-### **Server-Side Discovery**
+### Server-Side Discovery
 
 **Router**/**Load Balancer** запрашивает у **Service Registry**:**
 
@@ -464,7 +464,7 @@ Client → Load Balancer → Service Instance
 - **Key-value store**
 - **Multi-datacenter support**
 
-**Eureka (**Netflix**):**
+**Eureka (Netflix):**
 - **Self-preservation mode**
 - **Client-side caching**
 - **Spring Cloud integration**
@@ -474,28 +474,28 @@ Client → Load Balancer → Service Instance
 - **DNS-based**
 - **Service objects**
 
-## **Circuit Breaker**
+## Circuit Breaker
 
 **Circuit Breaker** предотвращает каскадные отказы.
 
-### Состояния **Circuit Breaker**
+### Состояния Circuit Breaker
 
-**Closed (**Закрыт**):**
+**Closed (Закрыт):**
 - Нормальная работа
 - Мониторинг ошибок
 - При превышении **threshold** → **Open**
 
-**Open (**Открыт**):**
+**Open (Открыт):**
 - Запросы блокируются немедленно
 - Возвращается ошибка без вызова сервиса
 - По истечении **timeout** → **Half-Open**
 
-**Half-Open** (**Полуоткрыт**):**
+**Half-Open** (Полуоткрыт):**
 - Пробные запросы для проверки восстановления
 - При успехе → **Closed**
 - При ошибке → **Open**
 
-### Реализация (**Resilience4j**)
+### Реализация (Resilience4j)
 
 ```java
 CircuitBreaker circuitBreaker = CircuitBreaker.ofDefaults("backendService");
@@ -518,7 +518,7 @@ CircuitBreakerConfig config = CircuitBreakerConfig.custom()
     .build();
 ```
 
-## **Database per Service**
+## Database per Service
 
 Каждый микросервис имеет свою базу данных.
 
@@ -549,9 +549,9 @@ CircuitBreakerConfig config = CircuitBreakerConfig.custom()
 - **Eventual consistency**
 - **Event-driven updates**
 
-## **Event Sourcing** и **CQRS**
+## Event Sourcing и CQRS
 
-### **Event Sourcing**
+### Event Sourcing
 
 Хранение всех изменений состояния как последовательности событий.
 
@@ -572,7 +572,7 @@ Current State: Order { status: "DELIVERED", ... }
 - Рост хранилища
 - **Eventual consistency**
 
-### **CQRS**
+### CQRS
 
 Разделение операций чтения и записи.
 
@@ -592,11 +592,11 @@ Current State: Order { status: "DELIVERED", ... }
 - Оптимизация для чтения/записи
 - Гибкость в выборе технологий
 
-## **Saga Pattern**
+## Saga Pattern
 
 Управление распределенными транзакциями.
 
-### **Choreography** (**Хореография**)
+### Choreography (Хореография)
 
 Каждый сервис публикует события и реагирует на события других.
 
@@ -614,7 +614,7 @@ Inventory Service → listens → InventoryReserved event
 - Сложность отслеживания
 - Сложность отката
 
-### **Orchestration** (**Оркестрация**)
+### Orchestration (Оркестрация)
 
 Центральный оркестратор управляет транзакцией.
 
@@ -635,7 +635,7 @@ Orchestrator:
 - Точка отказа
 - Дополнительный компонент
 
-### **Compensating Transactions**
+### Compensating Transactions
 
 **Откат изменений при ошибке:**
 
@@ -651,7 +651,7 @@ try {
 }
 ```
 
-## **Bulkhead Pattern**
+## Bulkhead Pattern
 
 Изоляция ресурсов для предотвращения каскадных отказов.
 
@@ -667,9 +667,9 @@ try {
 
 **Resource `Isolation`:**
 - Изоляция **CPU**, памяти
-- Контейнеризация (**Docker, Kubernetes**)
+- Контейнеризация (Docker, Kubernetes)
 
-### Пример (**Hystrix**)
+### Пример (Hystrix)
 
 ```java
 HystrixThreadPoolProperties.Setter()
@@ -678,50 +678,50 @@ HystrixThreadPoolProperties.Setter()
     .withMaxQueueSize(-1);
 ```
 
-## **Deployment Strategies**
+## Deployment Strategies
 
-### **Blue-Green Deployment**
+### Blue-Green Deployment
 
 **Два идентичных окружения:**
-- **Blue**: Текущая версия (**production**)
-- **Green**: Новая версия (**staging**)
+- **Blue**: Текущая версия (production)
+- **Green**: Новая версия (staging)
 
 Переключение трафика происходит мгновенно.
 
-### **Canary Deployment**
+### Canary Deployment
 
 **Постепенное развертывание:**
 - Небольшой процент трафика на новую версию
 - Мониторинг метрик
 - Постепенное увеличение
 
-### **Rolling Deployment**
+### Rolling Deployment
 
 **Постепенное обновление экземпляров:**
 - Обновление по одному/несколько экземпляров
 - Без **downtime**
 - Медленнее чем **blue-green**
 
-## Мониторинг и **Observability**
+## Мониторинг и Observability
 
-### Три столпа **Observability**
+### Три столпа Observability
 
-1. **Metrics (**Метрики**)**
+1. **Metrics (Метрики)**
    - Количественные данные
    - **Prometheus**, **Grafana**
    - **CPU**, **Memory**, **Request rate**, **Error rate**
 
-2. **Logs (**Логи**)**
+2. **Logs (Логи)**
    - События с временными метками
    - **ELK Stack**, **Loki**
    - Структурированное логирование
 
-3. **Traces (**Трейсы**)**
+3. **Traces (Трейсы)**
    - Распределенное трассирование
    - **Jaeger**, **Zipkin**
    - **End-to-end request tracking**
 
-### **Distributed Tracing**
+### Distributed Tracing
 
 **Трассировка запроса через несколько сервисов:**
 
@@ -731,7 +731,7 @@ Trace ID: abc123
 Span IDs: gateway-1, user-2, order-3, payment-4
 ```
 
-### **Health Checks**
+### Health Checks
 
 **Проверка здоровья сервисов:**
 
@@ -766,7 +766,7 @@ public ResponseEntity<Health> health() {
    - Тестирование полного потока
    - Сложно поддерживать
 
-### **Test Containers**
+### Test Containers
 
 **Запуск реальных зависимостей в тестах:**
 
@@ -780,7 +780,7 @@ class UserServiceTest {
 }
 ```
 
-### **Contract Testing** (**Pact**)
+### Contract Testing (Pact)
 
 ```java
 @Pact(consumer = "UserService", provider = "OrderService")

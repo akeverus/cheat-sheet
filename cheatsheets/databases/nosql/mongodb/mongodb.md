@@ -17,13 +17,13 @@ updated: "2026-02-06"
 related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/java-basics.md"]
 ---
 
-# **MongoDB**: Полное руководство по документо-ориентированной **NoSQL** базе данных
+# MongoDB: Полное руководство по документо-ориентированной NoSQL базе данных
 
-## Введение в **MongoDB**
+## Введение в MongoDB
 
-**MongoDB** — это высокопроизводительная, документо-ориентированная **NoSQL** база данных с открытым исходным кодом. **MongoDB** хранит данные в формате **BSON** (**Binary JSON**) и обеспечивает гибкую схему данных, горизонтальную масштабируемость и богатый набор функций для работы с данными.
+**MongoDB** — это высокопроизводительная, документо-ориентированная **NoSQL** база данных с открытым исходным кодом. **MongoDB** хранит данные в формате **BSON** (Binary JSON) и обеспечивает гибкую схему данных, горизонтальную масштабируемость и богатый набор функций для работы с данными.
 
-### Архитектура **MongoDB**
+### Архитектура MongoDB
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
@@ -39,7 +39,7 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Основные характеристики **MongoDB**
+### Основные характеристики MongoDB
 
 - **Документо-ориентированная модель**: Данные хранятся в виде **JSON**-подобных документов
 - **Гибкая схема**: Не требует предварительного определения структуры данных
@@ -49,7 +49,7 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 - **Мощный aggregation framework**: Для сложных запросов и аналитики
 - **Поддержка транзакций**: **ACID** транзакции для нескольких документов
 
-### Преимущества **MongoDB**
+### Преимущества MongoDB
 
 1. **Гибкость схемы**: Легко адаптировать структуру данных без миграций
 2. **Масштабируемость**: Горизонтальное масштабирование через шардирование
@@ -58,14 +58,14 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 5. **Rich `Query` Language**: Мощные возможности для запросов и агрегаций
 6. **Community и Ecosystem**: Большое сообщество и множество инструментов
 
-### Недостатки **MongoDB**
+### Недостатки MongoDB
 
-1. **ACID транзакции**: Ограниченная поддержка для сложных транзакций (**до версии 4.0**)
+1. **ACID транзакции**: Ограниченная поддержка для сложных транзакций (до версии 4.0)
 2. **JOIN операции**: Отсутствие встроенных **JOIN**, требуется денормализация
 3. **Потребление памяти**: Высокое потребление **RAM** для индексов
 4. **Согласованность**: **Eventual consistency** в распределенных системах
 
-### Варианты использования **MongoDB**
+### Варианты использования MongoDB
 
 - **Контент-менеджмент системы**: Хранение контента и метаданных
 - **Социальные сети**: Профили пользователей, посты, комментарии
@@ -81,11 +81,11 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
 
 | Аспект | **MongoDB** | Реляционные СУБД |
 |--------|---------|-------------------|
-| **Модель данных** | Документы (**BSON**) | Таблицы с фиксированной схемой |
-| **Схема** | Гибкая (**schema-less**) | Строгая схема |
+| **Модель данных** | Документы (BSON) | Таблицы с фиксированной схемой |
+| **Схема** | Гибкая (schema-less) | Строгая схема |
 | **Запросы** | **JSON**-подобные | **SQL** |
 | **Масштабируемость** | Горизонтальная | Вертикальная |
-| **Транзакции** | Много-документные (**с 4.0**) | **ACID** по умолчанию |
+| **Транзакции** | Много-документные (с 4.0) | **ACID** по умолчанию |
 | **JOIN** | $**lookup** в **aggregation** | Встроенные **JOIN** |
 | **Индексы** | **B-tree**, **geospatial**, **text** | **B-tree**, **hash**, **etc**. |
 
@@ -138,10 +138,10 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
   - [Документы и **BSON**](#документы-и-bson)
   - [Типы данных **BSON**](#типы-данных-bson)
 - [**CRUD** операции](#crud-операции)
-  - [**Create** (**Вставка**)](#create-вставка)
-  - [**Read** (**Чтение**)](#read-чтение)
-  - [**Update** (**Обновление**)](#update-обновление)
-  - [**Delete** (**Удаление**)](#delete-удаление)
+  - [**Create** (Вставка)](#create-вставка)
+  - [**Read** (Чтение)](#read-чтение)
+  - [**Update** (Обновление)](#update-обновление)
+  - [**Delete** (Удаление)](#delete-удаление)
 - [Запросы и фильтры](#запросы-и-фильтры)
   - [Операторы сравнения](#операторы-сравнения)
   - [Логические операторы](#логические-операторы)
@@ -185,9 +185,9 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "java/jav
   - [Когда использовать **MongoDB**:](#когда-использовать-mongodb)
   - [Когда НЕ использовать:](#когда-не-использовать)
 
-## Установка и настройка **MongoDB**
+## Установка и настройка MongoDB
 
-### Установка на **Ubuntu**/**Debian**
+### Установка на Ubuntu/Debian
 
 ```bash
 # Импорт публичного ключа MongoDB
@@ -213,7 +213,7 @@ sudo systemctl status mongod
 mongod --version
 ```
 
-### Установка через **Docker**
+### Установка через Docker
 
 ```bash
 # Запуск MongoDB в Docker
@@ -230,7 +230,7 @@ docker ps
 docker logs mongodb
 ```
 
-### Конфигурационный файл **MongoDB**
+### Конфигурационный файл MongoDB
 
 ```yaml
 # /etc/mongod.conf
@@ -259,7 +259,7 @@ operationProfiling:
   mode: slowOp
 ```
 
-## Основные концепции **MongoDB**
+## Основные концепции MongoDB
 
 ### Терминология
 
@@ -271,9 +271,9 @@ operationProfiling:
 | **Field** | **Column** |
 | **Index** | **Index** |
 
-### Документы и **BSON**
+### Документы и BSON
 
-**MongoDB** хранит данные в формате **BSON** (**Binary JSON**):**
+**MongoDB** хранит данные в формате **BSON** (Binary JSON):**
 
 ```javascript
 {
@@ -291,7 +291,7 @@ operationProfiling:
 }
 ```
 
-### Типы данных **BSON**
+### Типы данных BSON
 
 - **ObjectId**: Уникальный идентификатор
 - **String**: Строки текста
@@ -302,9 +302,9 @@ operationProfiling:
 - **Object**: Вложенные документы
 - **Null**: **null** значения
 
-## **CRUD** операции
+## CRUD операции
 
-### **Create** (**Вставка**)
+### Create (Вставка)
 
 ```javascript
 // Вставка одного документа
@@ -321,7 +321,7 @@ db.users.insertMany([
 ])
 ```
 
-### **Read** (**Чтение**)
+### Read (Чтение)
 
 ```javascript
 // Найти все документы
@@ -334,7 +334,7 @@ db.users.find({ age: { $gte: 25 } })
 db.users.findOne({ email: "john@example.com" })
 ```
 
-### **Update** (**Обновление**)
+### Update (Обновление)
 
 ```javascript
 // Обновить один документ
@@ -350,7 +350,7 @@ db.users.updateMany(
 )
 ```
 
-### **Delete** (**Удаление**)
+### Delete (Удаление)
 
 ```javascript
 // Удалить один документ
@@ -466,9 +466,9 @@ db.places.createIndex({ location: "2dsphere" })
 - **Geospatial**: Географические данные
 - **Hashed**: Хэшированные значения
 
-## **Aggregation Framework**
+## Aggregation Framework
 
-### **Pipeline** стадии
+### Pipeline стадии
 
 ```javascript
 db.sales.aggregate([
@@ -492,7 +492,7 @@ db.sales.aggregate([
 
 ### Операторы агрегации
 
-#### **Accumulators**
+#### Accumulators
 
 ```javascript
 $group: {
@@ -506,7 +506,7 @@ $group: {
 }
 ```
 
-#### **Expression** операторы
+#### Expression операторы
 
 ```javascript
 $project: {
@@ -519,7 +519,7 @@ $project: {
 
 ## Репликация
 
-### **Replica Set** архитектура
+### Replica Set архитектура
 
 ```text
 Primary Node ──┐
@@ -528,7 +528,7 @@ Primary Node ──┐
                └── Arbiter Node (optional)
 ```
 
-### Настройка **Replica Set**
+### Настройка Replica Set
 
 ```javascript
 // Инициализация
@@ -545,7 +545,7 @@ rs.initiate({
 rs.status()
 ```
 
-### **Read Preferences**
+### Read Preferences
 
 ```javascript
 // Чтение с secondary
@@ -560,7 +560,7 @@ db.collection.find().readPref("nearest")
 
 ## Шардирование
 
-### **Shard Key**
+### Shard Key
 
 ```javascript
 // Включение шардирования
@@ -573,7 +573,7 @@ sh.shardCollection("mydb.users", { userId: 1 })
 sh.status()
 ```
 
-### Архитектура **Sharded Cluster**
+### Архитектура Sharded Cluster
 
 ```text
 Config Servers ──┐
@@ -597,7 +597,7 @@ db.setProfilingLevel(1, { slowms: 100 })
 db.system.profile.find().sort({ millis: -1 })
 ```
 
-### **Memory** управление
+### Memory управление
 
 ```javascript
 // Проверка использования памяти
@@ -610,7 +610,7 @@ storage:
       cacheSizeGB: 4  # 50-80% от RAM
 ```
 
-### **Connection pooling**
+### Connection pooling
 
 ```javascript
 // Настройка пула соединений
@@ -622,9 +622,9 @@ storage:
 //     ).build();
 ```
 
-## Интеграция с **Java**/**Spring**
+## Интеграция с Java/Spring
 
-### Зависимости **Maven**
+### Зависимости Maven
 
 ```xml
 <dependency>
@@ -639,7 +639,7 @@ storage:
 </dependency>
 ```
 
-### **Spring Boot** конфигурация
+### Spring Boot конфигурация
 
 ```yaml
 spring:
@@ -650,7 +650,7 @@ spring:
       # uri: mongodb://host1:27017,host2:27017,host3:27017/mydb?replicaSet=rs0
 ```
 
-### **Entity** и **Repository**
+### Entity и Repository
 
 ```java
 @Document(collection = "users")
@@ -672,7 +672,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 }
 ```
 
-### **Service** слой
+### Service слой
 
 ```java
 @Service
@@ -696,7 +696,7 @@ public class UserService {
 
 ### 1. Дизайн схемы
 
-#### **Embedded** vs **References**
+#### Embedded vs References
 ```javascript
 // Embedded для часто читаемых вместе данных
 {
@@ -746,7 +746,7 @@ db.users.bulkWrite([
 ])
 ```
 
-#### **Connection management**
+#### Connection management
 ```java
 // Правильное управление соединениями
 @Configuration
@@ -801,7 +801,7 @@ db.serverStatus().connections
 db.system.profile.find().limit(5)
 ```
 
-#### **Health checks**
+#### Health checks
 ```javascript
 // Проверка доступности
 db.adminCommand({ ping: 1 })
@@ -831,7 +831,7 @@ sh.status()
 - **Sharding** — распределение данных
 - **ACID транзакции** — консистентность данных
 
-### Когда использовать **MongoDB**:
+### Когда использовать MongoDB:
 
 ✅ **Современные веб-приложения** — **JSON API**, микросервисы
 ✅ **Big `Data` и аналитика** — обработка больших объемов данных

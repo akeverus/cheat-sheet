@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Testcontainers: Интеграционное тестирование с **Docker**
+# Testcontainers: Интеграционное тестирование с Docker
 
 **Комплексное руководство по использованию `Testcontainers` для создания интеграционных тестов с реальными зависимостями в `Docker` контейнерах.**
 
@@ -73,11 +73,11 @@ updated: "2026-02-11"
   - [Когда использовать Testcontainers](#когда-использовать-testcontainers)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **Testcontainers**
+## Введение в Testcontainers
 
-**Testcontainers** — это **Java** библиотека, которая позволяет запускать **Docker** контейнеры в рамках **JUnit** тестов. Она предоставляет реальные зависимости (**базы данных, очереди сообщений, веб-серверы**) для интеграционного тестирования, обеспечивая высокую точность и надежность тестов.
+**Testcontainers** — это **Java** библиотека, которая позволяет запускать **Docker** контейнеры в рамках **JUnit** тестов. Она предоставляет реальные зависимости (базы данных, очереди сообщений, веб-серверы) для интеграционного тестирования, обеспечивая высокую точность и надежность тестов.
 
-### Почему **Testcontainers**?
+### Почему Testcontainers?
 
 **Testcontainers** предлагает множество преимуществ:**
 
@@ -90,7 +90,7 @@ updated: "2026-02-11"
 7. **Docker Compose** — Поддержка **multi-container setups**
 8. **JUnit 5 интеграция** — Современная тестовая инфраструктура
 
-### Как работает **Testcontainers**?
+### Как работает Testcontainers?
 
 **Testcontainers** использует **JUnit Testcontainers extension** для автоматического управления жизненным циклом контейнеров:**
 
@@ -116,9 +116,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимости **Maven** для **Testcontainers** (**JUnit `Jupiter` и модули `PostgreSQL`, `MySQL`, Kafka**).
+Зависимости **Maven** для **Testcontainers** (JUnit `Jupiter` и модули `PostgreSQL`, `MySQL`, Kafka).
 
 ```xml
 <dependency>
@@ -153,7 +153,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -198,9 +198,9 @@ image.pull.timeout=5m
 log.level.org.testcontainers=INFO
 ```
 
-## **Database containers**
+## Database containers
 
-### **PostgreSQL**
+### PostgreSQL
 
 ```java
 @SpringBootTest
@@ -275,7 +275,7 @@ public class PostgreSQLIntegrationTest {
 }
 ```
 
-### **MySQL**
+### MySQL
 
 ```java
 /
@@ -444,9 +444,9 @@ public class CustomDatabaseTest {
 }
 ```
 
-## **Message broker containers**
+## Message broker containers
 
-### **Kafka**
+### Kafka
 
 ```java
 @SpringBootTest
@@ -534,7 +534,7 @@ public class KafkaIntegrationTest {
 }
 ```
 
-### **RabbitMQ**
+### RabbitMQ
 
 ```java
 @SpringBootTest
@@ -600,9 +600,9 @@ public class RabbitMQIntegrationTest {
 }
 ```
 
-## **WebDriver containers**
+## WebDriver containers
 
-### **Selenium**
+### Selenium
 
 ```java
 @SpringBootTest
@@ -678,7 +678,7 @@ public class SeleniumIntegrationTest {
 }
 ```
 
-## **Generic containers**
+## Generic containers
 
 ### Кастомные сервисы
 
@@ -790,7 +790,7 @@ public class GenericContainerTest {
 }
 ```
 
-### **Docker Compose**
+### Docker Compose
 
 ```java
 @SpringBootTest
@@ -1064,9 +1064,9 @@ public class StateManagementTest {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
-### **Test slices**
+### Test slices
 
 ```java
 // Тестирование только репозитория
@@ -1186,7 +1186,7 @@ public class ParallelTestcontainersExtension implements BeforeAllCallback, After
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Правильная организация тестов
 
@@ -1658,13 +1658,13 @@ public class BadResourceManagementTest {
 
 **Testcontainers** — это библиотека для создания интеграционных тестов с реальными зависимостями в **Docker** контейнерах. Она значительно повышает качество и надежность тестирования за счет использования настоящих сервисов вместо **mock**-объектов.
 
-### Преимущества **Testcontainers**
+### Преимущества Testcontainers
 
 1. **Реальные зависимости** — Тесты используют настоящие сервисы вместо **in-memory** заглушек
 2. **Изоляция** — Каждый тест получает чистое состояние зависимостей
 3. **Совместимость** — Работает с любыми **Docker** образами
 4. **Простота использования** — Минимальная конфигурация для большинства сценариев
-5. **Широкая поддержка** — Модули для популярных технологий (**PostgreSQL, `MySQL`, `Kafka`, `Redis` и др.**)
+5. **Широкая поддержка** — Модули для популярных технологий (PostgreSQL, `MySQL`, `Kafka`, `Redis` и др.)
 6. **CI/`CD` интеграция** — Работает в **pipeline** с **Docker**
 7. **Параллельное выполнение** — Поддержка параллельных тестов
 8. **Переиспользование** — Возможность переиспользования контейнеров для ускорения
@@ -1678,12 +1678,12 @@ public class BadResourceManagementTest {
 5. **Resource `Management` паттерн** — Правильное управление ресурсами контейнеров
 6. **CI/CD Optimization** паттерн — Оптимизация для конвейеров `CI/CD`
 
-### Когда использовать **Testcontainers**
+### Когда использовать Testcontainers
 
 **Рекомендуется:**
 - **Enterprise** приложения с **complex** интеграциями
 - Микросервисная архитектура
-- Приложения с внешними зависимостями (**БД, очереди, кэш**)
+- Приложения с внешними зависимостями (БД, очереди, кэш)
 - Проекты с высокими требованиями к качеству
 - Команды практикующие **test-driven development**
 - Приложения с **legacy** кодом и сложной логикой

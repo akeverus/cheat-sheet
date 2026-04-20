@@ -77,10 +77,10 @@ updated: "2026-02-11"
 
 Рекомендуемый подход: рассматривать этот документ как практический гайд для поддержки и мягкой миграции, а не как дефолтный выбор CI для новых проектов.
 
-## Основы **Travis** `CI`
+## Основы Travis `CI`
 
-### Структура проекта **Travis** `CI`
-Ниже — структура проекта **Travis** `CI` (**текст**).
+### Структура проекта Travis `CI`
+Ниже — структура проекта **Travis** `CI` (текст).
 ```text
 my-project/
 ├── .travis.yml          # Основной конфигурационный файл
@@ -97,7 +97,7 @@ my-project/
 ```
 
 ### Минимальная конфигурация
-Пример минимальной конфигурации .**travis.yml** (**YAML**).
+Пример минимальной конфигурации .**travis.yml** (YAML).
 ```yaml
 # .travis.yml - минимальная конфигурация
 language: node_js
@@ -212,7 +212,7 @@ notifications:
     on_failure: always
 ```
 
-## Конфигурация .**travis.yml**
+## Конфигурация .travis.yml
 
 ### Языки и среды выполнения
 ```yaml
@@ -517,7 +517,7 @@ jobs:
       if: branch = main
 ```
 
-## Deployments и **Releases**
+## Deployments и Releases
 
 ### GitHub Releases
 ```yaml
@@ -738,7 +738,7 @@ before_script:
   - docker run -d -p 27017:27017 mongo:5
 ```
 
-## Security и **Best Practices**
+## Security и Best Practices
 
 ### Encrypted variables
 ```yaml
@@ -844,7 +844,7 @@ jobs:
 
 ## Enterprise Features
 
-### Travis `CI` **Enterprise**
+### Travis `CI` Enterprise
 ```yaml
 # Enterprise конфигурация
 language: java
@@ -889,7 +889,7 @@ language: python
 # или наследование конфигураций через before_script
 ```
 
-### Audit и **compliance**
+### Audit и compliance
 ```yaml
 # Audit logging для enterprise
 language: node_js
@@ -941,9 +941,9 @@ env:
   TRAVIS_WORKER_CAPACITY: 4
 ```
 
-## Миграция и **Troubleshooting**
+## Миграция и Troubleshooting
 
-### Миграция с **Travis** `CI` .**org** на .**com** (исторический контекст)
+### Миграция с Travis `CI` .org на .com (исторический контекст)
 ```bash
 # Миграция с travis-ci.org на travis-ci.com
 # 1. Обновить webhook URL в GitHub

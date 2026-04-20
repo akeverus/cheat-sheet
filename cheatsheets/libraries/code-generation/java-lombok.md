@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Lombok: Автоматизация **boilerplate** кода в **Java**
+# Lombok: Автоматизация boilerplate кода в Java
 
 **Комплексное руководство по использованию `Project Lombok` для автоматической генерации boilerplate кода в `Java` проектах.**
 
@@ -89,11 +89,11 @@ updated: "2026-02-11"
   - [Альтернативы](#альтернативы)
   - [Советы по миграции](#советы-по-миграции)
 
-## Введение в **Lombok**
+## Введение в Lombok
 
 **Project Lombok** — это библиотека для **Java**, которая автоматически генерирует **boilerplate** код во время компиляции. Вместо написания геттеров, сеттеров, конструкторов и других повторяющихся методов, вы просто добавляете аннотации.
 
-### Почему **Lombok**?
+### Почему Lombok?
 
 **Lombok** решает следующие проблемы:**
 
@@ -105,9 +105,9 @@ updated: "2026-02-11"
 6. **Нулевая производительность** — Код генерируется во время компиляции
 7. **Безопасность** — Генерируемый код безопасен и предсказуем
 
-### Как работает **Lombok**?
+### Как работает Lombok?
 
-**Lombok** использует **Annotation `Processing Tool` (**APT**)** для генерации кода во время компиляции. Аннотации **Lombok** анализируются процессором аннотаций, который генерирует соответствующий **Java** код.
+**Lombok** использует **Annotation `Processing Tool` (APT)** для генерации кода во время компиляции. Аннотации **Lombok** анализируются процессором аннотаций, который генерирует соответствующий **Java** код.
 
 ### Преимущества и недостатки
 
@@ -125,9 +125,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Подключение **Lombok** в **Maven**: зависимость с **scope provided** (**генерация на этапе компиляции**).
+Подключение **Lombok** в **Maven**: зависимость с **scope provided** (генерация на этапе компиляции).
 
 ```xml
 <dependency>
@@ -138,7 +138,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -151,9 +151,9 @@ dependencies {
 }
 ```
 
-### Настройка в **IDE**
+### Настройка в IDE
 
-#### **IntelliJ IDEA**
+#### IntelliJ IDEA
 1. **Установка плагина:**
    - **File** → **Settings** → **Plugins**
    - Поиск "**Lombok**"
@@ -163,7 +163,7 @@ dependencies {
    - **File** → **Settings** → **Build**, **Execution**, **Deployment** → **Compiler** → **Annotation Processors**
    - Включить "**Enable annotation processing**"
 
-#### **Eclipse**
+#### Eclipse
 1. **Установка плагина:**
    - **Help** → **Eclipse Marketplace**
    - Поиск "**Lombok**"
@@ -172,7 +172,7 @@ dependencies {
 2. **Настройка:**
    - Плагин автоматически настраивает **annotation processing**
 
-#### `VS` **Code**
+#### `VS` Code
 - Установка расширения "**Lombok Annotations Support**"
 
 ## Основные аннотации
@@ -315,7 +315,7 @@ public class User {
 }
 ```
 
-## **equals**, **hashCode** и **toString**
+## equals, hashCode и toString
 
 ### `@EqualsAndHashCode`
 
@@ -380,7 +380,7 @@ public class ExtendedUser extends User {
 }
 ```
 
-## **Builder** паттерн
+## Builder паттерн
 
 ### `@Builder`
 
@@ -471,7 +471,7 @@ Employee employee = Employee.builder()
     .build();
 ```
 
-## **Data** классы
+## Data классы
 
 ### `@Data`
 
@@ -514,7 +514,7 @@ public class User {
 }
 ```
 
-## **Value** объекты
+## Value объекты
 
 ### `@Value`
 
@@ -718,9 +718,9 @@ public class EnhancedList<T> implements List<T> {
 }
 ```
 
-## Интеграция с **IDE**
+## Интеграция с IDE
 
-### **Lombok Configuration**
+### Lombok Configuration
 
 **Создайте файл `lombok.config` в корне проекта:**
 
@@ -743,7 +743,7 @@ src/test/java/lombok.config:
 lombok.addLombokGeneratedAnnotation = false
 ```
 
-### **Lombok MapStruct Integration**
+### Lombok MapStruct Integration
 
 ```java
 // lombok.config
@@ -751,7 +751,7 @@ lombok.addLombokGeneratedAnnotation = true
 lombok.anyConstructor.addConstructorProperties = true
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Использование `@Data` разумно
 
@@ -789,7 +789,7 @@ public class UserEntity {
 }
 ```
 
-### 2. **Builder** паттерн
+### 2. Builder паттерн
 
 ```java
 // ✅ Хорошо - для сложных объектов
@@ -813,7 +813,7 @@ ComplexObject obj = ComplexObject.builder()
     .build();
 ```
 
-### 3. **Value** объекты для **immutable** данных
+### 3. Value объекты для immutable данных
 
 ```java
 // ✅ Хорошо - для immutable данных
@@ -901,7 +901,7 @@ public class FileProcessor {
 }
 ```
 
-### 7. Избегайте `@Data` для **JPA** сущностей
+### 7. Избегайте `@Data` для JPA сущностей
 
 ```java
 // ❌ Плохо - @Data для JPA
@@ -943,20 +943,20 @@ public class User {
 
 **Lombok** — это инструмент для сокращения **boilerplate** кода в **Java** проектах. Он значительно улучшает читаемость и поддерживаемость кода, позволяя разработчикам сосредоточиться на бизнес-логике.
 
-### Когда использовать **Lombok**
+### Когда использовать Lombok
 
 **Рекомендуется:**
 - **DTO** классы
-- **Entity** классы (**с осторожностью**)
+- **Entity** классы (с осторожностью)
 - Конфигурационные классы
 - **Value** объекты
 - **Builder** паттерны
 - Логирование
 
 **Осторожно:**
-- **JPA Entity** классы (**может конфликтовать с lazy loading**)
-- Классы с наследованием (**проверить equals/hashCode**)
-- **Public API** (**генерируемый код может измениться**)
+- **JPA Entity** классы (может конфликтовать с lazy loading)
+- Классы с наследованием (проверить equals/hashCode)
+- **Public API** (генерируемый код может измениться)
 
 ### Альтернативы
 
@@ -978,7 +978,7 @@ public class User {
 **Lombok** особенно полезен в **enterprise** проектах с большим количеством **boilerplate** кода, где он может значительно сократить объем кода и улучшить его читаемость.
 
 
-[⬆️ Наверх](../) | [Следующий: Guava](../utility-libraries/java-guava.md)
+[⬆️ Наверх](../) | [[java-guava|Следующий: Guava]]
 
 ## См. также
 

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MySQL**: Производительность и тюнинг — Полное руководство по оптимизации
+# MySQL: Производительность и тюнинг — Полное руководство по оптимизации
 
 Комплексное руководство по оптимизации производительности **MySQL**: конфигурация, индексы, запросы, мониторинг и тюнинг.
 
@@ -84,13 +84,13 @@ updated: "2026-02-11"
 - [Временные таблицы](#временные-таблицы)
     - [**Connection pool**](#connection-pool)
   - [Оптимизация кэшей](#оптимизация-кэшей)
-    - [**Query Cache** (**MySQL 5.7**)](#query-cache-mysql-57)
+    - [**Query Cache** (MySQL 5.7)](#query-cache-mysql-57)
 - [Настройки query cache](#настройки-query-cache)
 - [Размер кэша запросов](#размер-кэша-запросов)
 - [Тип кэширования](#тип-кэширования)
 - [Ограничения](#ограничения)
 - [Статистика](#статистика)
-  - [Оптимизация **MyISAM** (**если используется**)](#оптимизация-myisam-если-используется)
+  - [Оптимизация **MyISAM** (если используется)](#оптимизация-myisam-если-используется)
 - [Настройки MyISAM](#настройки-myisam)
 - [Ключевой буфер](#ключевой-буфер)
 - [Размер буфера для чтения](#размер-буфера-для-чтения)
@@ -142,7 +142,7 @@ updated: "2026-02-11"
     - [Включение мониторинга](#включение-мониторинга)
     - [Сбор метрик](#сбор-метрик)
   - [Системы мониторинга](#системы-мониторинга)
-    - [**PMM** (**Percona Monitoring and Management**)](#pmm-percona-monitoring-and-management)
+    - [**PMM** (Percona Monitoring and Management)](#pmm-percona-monitoring-and-management)
 - [Установка PMM Client](#установка-pmm-client)
 - [Регистрация сервера](#регистрация-сервера)
     - [Пользовательские алерты](#пользовательские-алерты)
@@ -220,7 +220,7 @@ updated: "2026-02-11"
 
 #### 1. Установление базовой линии
 
-Пример запросов для установления базовой линии производительности (**SQL**).
+Пример запросов для установления базовой линии производительности (SQL).
 
 ```sql
 -- Измерение текущей производительности
@@ -338,7 +338,7 @@ CREATE TABLE performance_tests (
 
 ### Системные метрики
 
-#### **CPU** и память
+#### CPU и память
 ```sql
 -- Загрузка CPU
 SELECT
@@ -421,7 +421,7 @@ FROM performance_schema.global_status
 WHERE VARIABLE_NAME = 'Connections';
 ```
 
-### Метрики **MySQL**
+### Метрики MySQL
 
 #### Общая статистика
 ```sql
@@ -472,7 +472,7 @@ WHERE table_schema = DATABASE()
 
 ## Оптимизация конфигурации
 
-### Оптимизация **InnoDB**
+### Оптимизация InnoDB
 
 #### Буферный пул
 ```ini
@@ -514,7 +514,7 @@ sync_binlog = 1
 innodb_log_buffer_size = 16M
 ```
 
-#### Прочие настройки **InnoDB**
+#### Прочие настройки InnoDB
 ```ini
 # Дополнительные оптимизации
 [mysqld]
@@ -537,7 +537,7 @@ innodb_random_read_ahead = OFF
 
 ### Оптимизация подключений
 
-#### **Thread pool**
+#### Thread pool
 ```ini
 # Настройки подключений
 [mysqld]
@@ -556,7 +556,7 @@ tmp_table_size = 128M
 max_heap_table_size = 128M
 ```
 
-#### **Connection pool**
+#### Connection pool
 ```java
 @Configuration
 public class DataSourceConfig {
@@ -585,7 +585,7 @@ public class DataSourceConfig {
 
 ### Оптимизация кэшей
 
-#### **Query Cache** (**MySQL 5.7**)
+#### Query Cache (MySQL 5.7)
 ```ini
 # Настройки query cache
 [mysqld]
@@ -603,7 +603,7 @@ query_cache_min_res_unit = 4096
 SHOW STATUS LIKE 'Qcache%';
 ```
 
-#### **MySQL** `8.0` - **Query Cache** удален
+#### MySQL `8.0` - Query Cache удален
 ```sql
 -- В MySQL 8.0 используйте кэширование на уровне приложения
 -- Spring Cache, Redis, или другие решения
@@ -619,7 +619,7 @@ public class CacheConfig {
 }
 ```
 
-### Оптимизация **MyISAM** (**если используется**)
+### Оптимизация MyISAM (если используется)
 
 ```ini
 # Настройки MyISAM
@@ -644,7 +644,7 @@ table_open_cache = 2048
 
 ### Анализ плана выполнения
 
-#### **EXPLAIN** для отдельных запросов
+#### EXPLAIN для отдельных запросов
 ```sql
 -- Базовый EXPLAIN
 EXPLAIN SELECT
@@ -663,7 +663,7 @@ EXPLAIN FORMAT=JSON SELECT ...;
 EXPLAIN ANALYZE SELECT ...;
 ```
 
-#### Оптимизация **JOIN**
+#### Оптимизация JOIN
 ```sql
 -- Неоптимальный запрос
 SELECT u.*, p.*, o.*
@@ -771,7 +771,7 @@ GROUP BY DATE(order_date)
 ORDER BY date DESC;
 ```
 
-#### **Loose Index Scan**
+#### Loose Index Scan
 ```sql
 -- Использование loose index scan для MIN/MAX
 SELECT
@@ -800,7 +800,7 @@ EXPLAIN SELECT * FROM users ORDER BY last_login DESC;
 -- Extra: (пусто - использует индекс)
 ```
 
-#### Оптимизация **LIMIT** с **ORDER** `BY`
+#### Оптимизация LIMIT с ORDER `BY`
 ```sql
 -- Неоптимальный запрос
 SELECT * FROM orders
@@ -896,7 +896,7 @@ WHERE i.table_schema = DATABASE()
 
 ### Индексные стратегии
 
-#### **Composite indexes**
+#### Composite indexes
 ```sql
 -- Правильный порядок столбцов
 CREATE INDEX idx_orders_user_date_amount
@@ -911,7 +911,7 @@ SELECT * FROM orders WHERE user_id = 1 AND order_date >= '2024-01-01' AND total_
 SELECT * FROM orders WHERE user_id = 1 ORDER BY order_date, total_amount;
 ```
 
-#### **Partial indexes**
+#### Partial indexes
 ```sql
 -- Индекс только для активных записей
 CREATE INDEX idx_active_users_email
@@ -928,7 +928,7 @@ WHERE order_date >= '2024-01-01';
 
 ### Выбор движка хранения
 
-#### **InnoDB** vs **MyISAM**
+#### InnoDB vs MyISAM
 ```sql
 -- InnoDB (рекомендуется)
 CREATE TABLE users (
@@ -946,7 +946,7 @@ CREATE TABLE logs (
 ) ENGINE=MyISAM;
 ```
 
-#### **MEMORY** таблицы
+#### MEMORY таблицы
 ```sql
 -- Таблицы в памяти для кэширования
 CREATE TABLE cache_data (
@@ -1005,7 +1005,7 @@ OPTIMIZE TABLE orders;
 
 ### Партиционирование
 
-#### **Range partitioning**
+#### Range partitioning
 ```sql
 -- Партиционирование по датам
 CREATE TABLE orders (
@@ -1029,7 +1029,7 @@ ALTER TABLE orders ADD PARTITION (
 );
 ```
 
-#### **Hash partitioning**
+#### Hash partitioning
 ```sql
 -- Равномерное распределение
 CREATE TABLE user_sessions (
@@ -1043,7 +1043,7 @@ PARTITION BY HASH(user_id) PARTITIONS 8;
 
 ## Кэширование
 
-### **Query Cache** (**MySQL 5.7**)
+### Query Cache (MySQL 5.7)
 
 #### Настройка и мониторинг
 ```ini
@@ -1066,9 +1066,9 @@ SELECT
 FROM dual;
 ```
 
-### **Application-level caching**
+### Application-level caching
 
-#### **Spring Cache**
+#### Spring Cache
 ```java
 @Service
 public class CachedUserService {
@@ -1099,7 +1099,7 @@ public class CachedUserService {
 }
 ```
 
-#### **Redis** для кэширования
+#### Redis для кэширования
 ```java
 @Configuration
 public class RedisConfig {
@@ -1166,7 +1166,7 @@ DO CALL refresh_user_stats();
 
 ## Мониторинг и алерты
 
-### **Performance Schema**
+### Performance Schema
 
 #### Включение мониторинга
 ```sql
@@ -1234,7 +1234,7 @@ DELIMITER ;
 
 ### Системы мониторинга
 
-#### **PMM** (**Percona `Monitoring and` Management**)
+#### PMM (Percona `Monitoring and` Management)
 ```bash
 # Установка PMM Client
 wget https://www.percona.com/downloads/pmm2/2.0.0/binary/tarball/pmm2-client-2.0.0.tar.gz
@@ -1297,7 +1297,7 @@ DELIMITER ;
 
 ## Инструменты профилирования
 
-### **Percona Toolkit**
+### Percona Toolkit
 
 #### Анализ медленных запросов
 ```bash
@@ -1323,7 +1323,7 @@ pt-index-usage /var/log/mysql/mysql.log --host localhost
 pt-query-advisor /var/log/mysql/mysql-slow.log
 ```
 
-### **MySQL Enterprise Monitor**
+### MySQL Enterprise Monitor
 
 #### Настройка мониторинга
 ```sql
@@ -1349,7 +1349,7 @@ SELECT
 FROM dual;
 ```
 
-### **SHOW PROCESSLIST** и анализ
+### SHOW PROCESSLIST и анализ
 
 ```sql
 -- Анализ активных подключений
@@ -1381,7 +1381,7 @@ ORDER BY time DESC;
 
 ## Автоматическая оптимизация
 
-### **MySQL** `8.0` **Invisible Indexes**
+### MySQL `8.0` Invisible Indexes
 
 #### Создание невидимых индексов
 ```sql
@@ -1440,7 +1440,7 @@ END //
 DELIMITER ;
 ```
 
-### **Query Rewrite Plugin**
+### Query Rewrite Plugin
 
 #### Автоматическая перезапись запросов
 ```sql
@@ -1462,7 +1462,7 @@ CALL query_rewrite.flush_rewrite_rules();
 
 ## Масштабирование
 
-### **Read**/**Write Splitting**
+### Read/Write Splitting
 
 #### Настройка репликации для масштабирования
 ```java
@@ -1531,9 +1531,9 @@ public class ShardingService {
 }
 ```
 
-### Кэширование и **CDN**
+### Кэширование и CDN
 
-#### **Multi-level caching**
+#### Multi-level caching
 ```java
 @Service
 @CacheConfig(cacheNames = "users")
@@ -1569,7 +1569,7 @@ public class MultiLevelCacheService {
 
 ### Распространенные проблемы производительности
 
-#### Высокая загрузка **CPU**
+#### Высокая загрузка CPU
 ```sql
 -- Поиск причин высокой загрузки CPU
 SELECT
@@ -1744,8 +1744,8 @@ START SLAVE;
 
 ### Конфигурация сервера
 
-#### 1. **InnoDB** оптимизация
-- **Настройте buffer pool (**70-80% памяти**)**
+#### 1. InnoDB оптимизация
+- **Настройте buffer pool (70-80% памяти)**
 - **Оптимизируйте log files**
 - **Настройте flush параметры**
 - **Используйте `SSD` оптимизации**
@@ -1796,7 +1796,7 @@ START SLAVE;
 - **Профилируйте приложение**
 - **Мониторьте системные ресурсы**
 
-### Автоматизация и **DevOps**
+### Автоматизация и DevOps
 
 #### 1. Автоматизированное тестирование
 - **Нагрузочное тестирование**
@@ -1810,7 +1810,7 @@ START SLAVE;
 - **Автоматизируйте отчеты**
 - **Интегрируйте с системами мониторинга**
 
-#### 3. **CI/CD** для баз данных
+#### 3. CI/CD для баз данных
 - **Миграции как код**
 - **Автоматизированное тестирование схемы**
 - **Роллбэк планы**

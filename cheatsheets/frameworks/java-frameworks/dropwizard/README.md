@@ -18,13 +18,13 @@ Dropwizard — "opinionated" Java-фреймворк для быстрой сб�
 ## Полезные ссылки
 
 ### Основные документы
-- [Dropwizard: Основы](dropwizard-basics.md) — архитектура, конфигурация, REST, health, metrics
+- [[dropwizard-basics|Dropwizard: Основы]] — архитектура, конфигурация, REST, health, metrics
 
 ### Соседние разделы
-- [Java Frameworks](../README.md) — сравнение со Spring/Quarkus/Micronaut/Vert.x/Javalin
-- [Spring Boot](../spring/README.md)
-- [Javalin](../javalin/README.md)
-- [Micronaut](../micronaut/README.md)
+- [[README|Java Frameworks]] — сравнение со Spring/Quarkus/Micronaut/Vert.x/Javalin
+- [[README|Spring Boot]]
+- [[README|Javalin]]
+- [[README|Micronaut]]
 
 ### Внешние ресурсы
 - [Dropwizard — официальный сайт](https://www.dropwizard.io)
@@ -74,6 +74,6 @@ Dropwizard — "opinionated" Java-фреймворк для быстрой сб�
 
 ## Куда идти дальше
 
-- Сравнение Java-фреймворков — [Java Frameworks](../README.md)
-- Метрики и мониторинг — [monitoring](../../../monitoring/README.md)
-- REST API — [development/api/rest](../../../development/api/rest/README.md)
+- Сравнение Java-фреймворков — [[README|Java Frameworks]]
+- Метрики и мониторинг — [[README|monitoring]]
+- REST API — [[README|development/api/rest]]

@@ -80,7 +80,7 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Data MongoDB**
+## Введение в Spring Data MongoDB
 
 **Spring Data MongoDB** предоставляет простую интеграцию с **MongoDB** для работы с документ-ориентированной базой данных. Он поддерживает репозитории, автоматические запросы, агрегации и другие возможности **MongoDB**.
 
@@ -92,7 +92,7 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
 - **Aggregation**: Поддержка агрегационных **pipeline**
 - **GridFS**: Работа с файлами через **GridFS**
 
-### Архитектура **Spring Data MongoDB**
+### Архитектура Spring Data MongoDB
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -121,11 +121,11 @@ related: ["spring/spring-boot.md", "spring/spring-data-jpa.md", "databases/mongo
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring Data MongoDB**
+## Настройка Spring Data MongoDB
 
 ### Зависимости
 
-**Зависимость **spring-`boot-starter-data`-mongodb** (**pom.xml**):**
+**Зависимость **spring-`boot-starter-data`-mongodb** (pom.xml):**
 
 ```xml
 <dependency>
@@ -149,7 +149,7 @@ spring.data.mongodb.password=password
 spring.data.mongodb.authentication-database=admin
 ```
 
-### **Java Configuration**
+### Java Configuration
 
 ```java
 // Включение репозиториев MongoDB и сканирование пакета
@@ -176,7 +176,7 @@ public class MongoConfig {
 
 ## Document Entity
 
-### Базовый **Document**
+### Базовый Document
 
 ```java
 import org.springframework.data.annotation.Id;
@@ -269,7 +269,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 }
 ```
 
-### **Custom Queries**
+### Custom Queries
 
 ```java
 // Spring Data MongoDB репозиторий для User
@@ -289,7 +289,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 }
 ```
 
-### **Queries** с сортировкой и пагинацией
+### Queries с сортировкой и пагинацией
 
 ```java
 // Spring Data MongoDB репозиторий для User
@@ -333,7 +333,7 @@ public class UserService {
 }
 ```
 
-### **Query Building**
+### Query Building
 
 ```java
 @Service
@@ -376,7 +376,7 @@ public class UserService {
 }
 ```
 
-### **Projection**
+### Projection
 
 ```java
 @Service
@@ -619,7 +619,7 @@ public class ChangeStreamService {
 }
 ```
 
-### Фильтрация **Change Streams**
+### Фильтрация Change Streams
 
 ```java
 @Service
@@ -654,7 +654,7 @@ public class FilteredChangeStreamService {
 
 ## Продвинутые агрегации
 
-### **Lookup Aggregation**
+### Lookup Aggregation
 
 ```java
 @Service
@@ -681,7 +681,7 @@ public class LookupAggregationService {
 }
 ```
 
-### **Facet Aggregation**
+### Facet Aggregation
 
 ```java
 @Service
@@ -714,7 +714,7 @@ public class FacetAggregationService {
 
 ## Текстовый поиск
 
-### **Text Index**
+### Text Index
 
 ```java
 @Document(collection = "articles")
@@ -750,7 +750,7 @@ public class TextSearchService {
 
 ## Мониторинг и метрики
 
-### **MongoDB Metrics**
+### MongoDB Metrics
 
 ```java
 @Component
@@ -783,7 +783,7 @@ public class MongoMetrics {
 }
 ```
 
-### **Health Check**
+### Health Check
 
 ```java
 @Component
@@ -811,7 +811,7 @@ public class MongoHealthIndicator implements HealthIndicator {
 
 ## Оптимизация производительности
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```properties
 # MongoDB Connection Pool Configuration
@@ -821,7 +821,7 @@ spring.data.mongodb.options.min-pool-size=10
 spring.data.mongodb.options.max-connection-idle-time=60000
 ```
 
-### **Read Preferences**
+### Read Preferences
 
 ```java
 @Configuration
@@ -839,7 +839,7 @@ public class MongoReadPreferenceConfig {
 }
 ```
 
-### **Write Concerns**
+### Write Concerns
 
 ```java
 @Service
@@ -862,14 +862,14 @@ public class WriteConcernService {
 
 ## Безопасность
 
-### **MongoDB Authentication**
+### MongoDB Authentication
 
 ```properties
 # MongoDB Authentication
 spring.data.mongodb.uri=mongodb://username:password@localhost:27017/mydb?authSource=admin
 ```
 
-### **SSL**/**TLS Configuration**
+### SSL/TLS Configuration
 
 ```java
 @Configuration
@@ -892,7 +892,7 @@ public class SecureMongoConfig {
 
 ## Тестирование
 
-### **Embedded MongoDB**
+### Embedded MongoDB
 
 ```xml
 <dependency>

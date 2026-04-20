@@ -18,14 +18,14 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [security-tools.md](security-tools.md) — обзор категорий и ключевых представителей
+- [[security-tools]] — обзор категорий и ключевых представителей
 
 ### Соседние разделы
-- [security/](../README.md) — корень раздела
-- [security/testing/](../testing/README.md) — методологии тестирования
-- [security/infrastructure/](../infrastructure/README.md) — кластер и облако
-- [monitoring/](../../monitoring/README.md) — наблюдаемость и SIEM
-- [platform/ci-cd/](../../platform/ci-cd/README.md) — интеграция в пайплайн
+- [[README|security/]] — корень раздела
+- [[README|security/testing/]] — методологии тестирования
+- [[README|security/infrastructure/]] — кластер и облако
+- [[README|monitoring/]] — наблюдаемость и SIEM
+- [[README|platform/ci-cd/]] — интеграция в пайплайн
 
 ### Внешние ресурсы
 - [OWASP Source Code Analysis Tools](https://owasp.org/www-community/Source_Code_Analysis_Tools)
@@ -78,7 +78,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Методики тестирования — [../testing/README.md](../testing/README.md)
-- Инфраструктурный hardening — [../infrastructure/README.md](../infrastructure/README.md)
-- Secrets и vault — [../data/secrets-management.md](../data/secrets-management.md)
-- Observability и SIEM — [../../monitoring/README.md](../../monitoring/README.md)
+- Методики тестирования — [[README]]
+- Инфраструктурный hardening — [[README]]
+- Secrets и vault — [[secrets-management]]
+- Observability и SIEM — [[README]]

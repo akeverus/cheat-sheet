@@ -17,15 +17,15 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Бисерная сортировка](bead-sort.md)
-- [Пузырьковая сортировка](bubble-sort.md)
-- [Блочная сортировка](bucket-sort.md)
-- [Сортировка подсчётом](counting-sort.md)
-- [Сортировка кучей](heap-sort.md)
-- [In-place сортировка](in-place-sort.md)
-- [Сортировка слиянием](merge-sort.md)
-- [Быстрая сортировка](quick-sort.md)
-- [Поразрядная сортировка](radix-sort.md)
-- [Сортировка выбором](selection-sort.md)
-- [Сортировка Шелла](shell-sort.md)
+- [[bead-sort|Бисерная сортировка]]
+- [[bubble-sort|Пузырьковая сортировка]]
+- [[bucket-sort|Блочная сортировка]]
+- [[counting-sort|Сортировка подсчётом]]
+- [[heap-sort|Сортировка кучей]]
+- [[in-place-sort|In-place сортировка]]
+- [[merge-sort|Сортировка слиянием]]
+- [[quick-sort|Быстрая сортировка]]
+- [[radix-sort|Поразрядная сортировка]]
+- [[selection-sort|Сортировка выбором]]
+- [[shell-sort|Сортировка Шелла]]
 

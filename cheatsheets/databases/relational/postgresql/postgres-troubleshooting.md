@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **PostgreSQL**: Решение проблем
+# PostgreSQL: Решение проблем
 
 Руководство по диагностике и решению типичных проблем в **PostgreSQL**, включая блокировки, медленные запросы, проблемы с памятью и диском.
 
@@ -43,7 +43,7 @@ updated: "2026-02-11"
 - [Проблемы с памятью](#проблемы-с-памятью)
   - [Мониторинг использования памяти](#мониторинг-использования-памяти)
   - [Настройка памяти](#настройка-памяти)
-  - [Проблемы с **OOM** (**Out of Memory**)](#проблемы-с-oom-out-of-memory)
+  - [Проблемы с **OOM** (Out of Memory)](#проблемы-с-oom-out-of-memory)
   - [Оптимизация использования памяти](#оптимизация-использования-памяти)
 - [Проблемы с диском](#проблемы-с-диском)
   - [Мониторинг использования диска](#мониторинг-использования-диска)
@@ -139,7 +139,7 @@ updated: "2026-02-11"
 - Проблемы с репликацией
 
 
-## Блокировки и **Deadlocks**
+## Блокировки и Deadlocks
 
 ### Обнаружение блокировок
 
@@ -214,7 +214,7 @@ FROM pg_stat_activity
 WHERE usename = 'problematic_user';
 ```
 
-### **Deadlocks**
+### Deadlocks
 
 ```sql
 -- Проверка deadlocks в логах
@@ -303,7 +303,7 @@ WHERE schemaname = 'public'
   AND correlation < 0.1;
 ```
 
-### Проблемы с **JOIN**
+### Проблемы с JOIN
 
 ```sql
 -- Проверка статистики для JOIN
@@ -353,7 +353,7 @@ WHERE name LIKE '%mem%' OR name LIKE '%buffer%'
 ORDER BY name;
 ```
 
-### Проблемы с **OOM** (**Out of Memory**)
+### Проблемы с OOM (Out of Memory)
 
 ```sql
 -- Мониторинг использования памяти процессами
@@ -401,7 +401,7 @@ WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ```
 
-### Проблемы с **WAL**
+### Проблемы с WAL
 
 ```sql
 -- Размер WAL файлов
@@ -463,7 +463,7 @@ GROUP BY usename
 ORDER BY connection_count DESC;
 ```
 
-### Проблемы с **max_connections**
+### Проблемы с max_connections
 
 ```sql
 -- Текущее значение max_connections
@@ -477,7 +477,7 @@ SHOW max_connections;
 -- PgBouncer или pgpool-II для управления соединениями
 ```
 
-### Долгие **idle** соединения
+### Долгие idle соединения
 
 ```sql
 -- Соединения в состоянии idle in transaction
@@ -684,7 +684,7 @@ WHERE datname = current_database();
 4. **Мониторьте размер WAL**
 5. **Используйте индексы правильно**
 
-## **Advanced Troubleshooting Techniques**
+## Advanced Troubleshooting Techniques
 
 ### Диагностические скрипты
 
@@ -837,9 +837,9 @@ ORDER BY mean_exec_time DESC;
 SELECT * FROM slow_queries_analysis LIMIT 20;
 ```
 
-## **Common Issues and Solutions**
+## Common Issues and Solutions
 
-### **Issue** 1: **Database Won**'t **Start**
+### Issue 1: Database Won't Start
 
 ```bash
 # Проверить логи
@@ -855,7 +855,7 @@ netstat -tuln | grep 5432
 postgres --check-config -D /var/lib/postgresql/data
 ```
 
-### **Issue** 2: **Connection Refused**
+### Issue 2: Connection Refused
 
 ```sql
 -- Проверить настройки подключения
@@ -869,7 +869,7 @@ SELECT * FROM pg_hba_file_rules;
 sudo iptables -L -n | grep 5432
 ```
 
-### **Issue** 3: **Out** of **Disk Space**
+### Issue 3: Out of Disk Space
 
 ```sql
 -- Найти большие таблицы
@@ -899,7 +899,7 @@ DELETE FROM old_table WHERE created_at < NOW() - INTERVAL '1 year';
 VACUUM FULL old_table;
 ```
 
-### **Issue** 4: **High CPU Usage**
+### Issue 4: High CPU Usage
 
 ```sql
 -- Найти запросы, использующие CPU
@@ -928,7 +928,7 @@ ORDER BY calls DESC
 LIMIT 20;
 ```
 
-### **Issue** 5: **Memory Leaks**
+### Issue 5: Memory Leaks
 
 ```sql
 -- Мониторинг использования памяти
@@ -958,9 +958,9 @@ WHERE name IN (
 );
 ```
 
-## **Performance Bottleneck Identification**
+## Performance Bottleneck Identification
 
-### **CPU Bottlenecks**
+### CPU Bottlenecks
 
 ```sql
 -- Запросы, использующие CPU
@@ -980,7 +980,7 @@ AND wait_event_type IS NULL
 ORDER BY query_start;
 ```
 
-### I/O **Bottlenecks**
+### I/O Bottlenecks
 
 ```sql
 -- Запросы с большим I/O
@@ -1001,7 +1001,7 @@ ORDER BY shared_blks_read DESC
 LIMIT 20;
 ```
 
-### **Network Bottlenecks**
+### Network Bottlenecks
 
 ```sql
 -- Проверить репликацию (может указывать на сетевые проблемы)
@@ -1014,9 +1014,9 @@ SELECT
 FROM pg_stat_replication;
 ```
 
-## **Diagnostic Tools and Scripts**
+## Diagnostic Tools and Scripts
 
-### **Health Check Script**
+### Health Check Script
 
 ```sql
 -- Комплексный health check
@@ -1105,7 +1105,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Automated Problem Detection**
+### Automated Problem Detection
 
 ```sql
 -- Функция для автоматического обнаружения проблем
@@ -1173,9 +1173,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Troubleshooting Workflows**
+## Troubleshooting Workflows
 
-### **Workflow** 1: **Database Performance Degradation**
+### Workflow 1: Database Performance Degradation
 
 ```sql
 -- Шаг 1: Проверить активные запросы
@@ -1194,7 +1194,7 @@ SELECT * FROM comprehensive_diagnostics();
 EXPLAIN ANALYZE <problematic_query>;
 ```
 
-### **Workflow** 2: **Connection Issues**
+### Workflow 2: Connection Issues
 
 ```sql
 -- Шаг 1: Проверить текущие соединения
@@ -1227,7 +1227,7 @@ WHERE state = 'idle in transaction'
 AND now() - state_change > interval '1 hour';
 ```
 
-### **Workflow** 3: **Disk Space Issues**
+### Workflow 3: Disk Space Issues
 
 ```sql
 -- Шаг 1: Проверить размер БД
@@ -1262,9 +1262,9 @@ SELECT pg_size_pretty(sum(size)) AS total_wal_size
 FROM pg_ls_waldir();
 ```
 
-## **Real-World Troubleshooting Scenarios**
+## Real-World Troubleshooting Scenarios
 
-### **Scenario** 1: **Sudden Performance Drop**
+### Scenario 1: Sudden Performance Drop
 
 ```sql
 -- Диагностика внезапного падения производительности
@@ -1292,7 +1292,7 @@ SELECT * FROM pg_stat_database WHERE datname = current_database();
 SELECT * FROM pg_stat_activity WHERE query LIKE '%autovacuum%';
 ```
 
-### **Scenario** 2: **Database Corruption**
+### Scenario 2: Database Corruption
 
 ```bash
 # Проверить целостность данных
@@ -1305,7 +1305,7 @@ grep -i "corrupt\|error\|fatal" /var/log/postgresql/postgresql-*.log
 psql -d mydb -c "VACUUM FULL VERBOSE;"
 ```
 
-### **Scenario** 3: **Replication Failure**
+### Scenario 3: Replication Failure
 
 ```sql
 -- Диагностика проблем с репликацией
@@ -1325,7 +1325,7 @@ SELECT
 FROM pg_stat_replication;
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
 ### Регулярный мониторинг
 
@@ -1348,9 +1348,9 @@ FROM pg_stat_replication;
 3. **Создавайте runbooks** для типичных проблем
 4. **Обучайте команду** процедурам **troubleshooting**
 
-## **Advanced Diagnostic Queries**
+## Advanced Diagnostic Queries
 
-### **Query Performance Analysis**
+### Query Performance Analysis
 
 ```sql
 -- Детальный анализ производительности запросов
@@ -1398,7 +1398,7 @@ GROUP BY operation_type
 ORDER BY total_time DESC;
 ```
 
-### **Index Usage Analysis**
+### Index Usage Analysis
 
 ```sql
 -- Анализ использования индексов
@@ -1432,7 +1432,7 @@ AND schemaname = 'public'
 ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
-### **Table Bloat Analysis**
+### Table Bloat Analysis
 
 ```sql
 -- Анализ раздувания таблиц
@@ -1458,9 +1458,9 @@ WHERE schemaname = 'public'
 ORDER BY n_dead_tup DESC;
 ```
 
-## **Specific Problem Solutions**
+## Specific Problem Solutions
 
-### **Solution** 1: **Resolving Deadlocks**
+### Solution 1: Resolving Deadlocks
 
 ```sql
 -- Шаг 1: Найти deadlocks в логах
@@ -1485,7 +1485,7 @@ SELECT * FROM table2 WHERE id = 2 FOR UPDATE NOWAIT;
 COMMIT;
 ```
 
-### **Solution** 2: **Fixing Slow Queries**
+### Solution 2: Fixing Slow Queries
 
 ```sql
 -- Шаг 1: Найти проблемные запросы
@@ -1514,7 +1514,7 @@ EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 <problematic_query>;
 ```
 
-### **Solution** 3: **Resolving Connection Exhaustion**
+### Solution 3: Resolving Connection Exhaustion
 
 ```sql
 -- Шаг 1: Проверить использование соединений
@@ -1539,7 +1539,7 @@ ALTER SYSTEM SET max_connections = 200;
 SELECT pg_reload_conf();
 ```
 
-### **Solution** 4: **Fixing Replication Lag**
+### Solution 4: Fixing Replication Lag
 
 ```sql
 -- Шаг 1: Проверить лаг
@@ -1565,9 +1565,9 @@ pg_rewind --target-pgdata=/var/lib/postgresql/data \
   --source-server="host=primary_host port=5432 user=postgres"
 ```
 
-## **Monitoring and Alerting**
+## Monitoring and Alerting
 
-### **Automated Monitoring Queries**
+### Automated Monitoring Queries
 
 ```sql
 -- Создать функцию для мониторинга
@@ -1620,7 +1620,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Alerting Configuration**
+### Alerting Configuration
 
 ```sql
 -- Создать таблицу для алертов
@@ -1657,9 +1657,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Performance Regression Detection**
+## Performance Regression Detection
 
-### **Baseline Comparison**
+### Baseline Comparison
 
 ```sql
 -- Создать таблицу для baseline метрик
@@ -1731,9 +1731,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Emergency Procedures**
+## Emergency Procedures
 
-### **Database Unresponsive**
+### Database Unresponsive
 
 ```bash
 # Шаг 1: Проверить процесс PostgreSQL
@@ -1752,7 +1752,7 @@ sudo kill -9 <problematic_pid>
 sudo systemctl restart postgresql
 ```
 
-### **Data Corruption Recovery**
+### Data Corruption Recovery
 
 ```sql
 -- Шаг 1: Проверить целостность
@@ -1768,7 +1768,7 @@ VACUUM FULL VERBOSE;
 -- pg_restore -d mydb backup.dump
 ```
 
-### **Emergency Maintenance Mode**
+### Emergency Maintenance Mode
 
 ```sql
 -- Перевести в режим обслуживания
@@ -1782,9 +1782,9 @@ REINDEX DATABASE mydb;
 ALTER DATABASE mydb SET default_transaction_read_only = off;
 ```
 
-## **Troubleshooting Checklist**
+## Troubleshooting Checklist
 
-### **Daily Checks**
+### Daily Checks
 
 - [ ] Проверить количество соединений
 - [ ] Проверить **cache hit ratio**
@@ -1792,7 +1792,7 @@ ALTER DATABASE mydb SET default_transaction_read_only = off;
 - [ ] Проверить медленные запросы
 - [ ] Проверить размер БД
 
-### **Weekly Checks**
+### Weekly Checks
 
 - [ ] Анализ использования индексов
 - [ ] Проверка раздувания таблиц
@@ -1800,7 +1800,7 @@ ALTER DATABASE mydb SET default_transaction_read_only = off;
 - [ ] Проверка репликации
 - [ ] Обзор логов на ошибки
 
-### **Monthly Checks**
+### Monthly Checks
 
 - [ ] Полный аудит производительности
 - [ ] Оптимизация индексов

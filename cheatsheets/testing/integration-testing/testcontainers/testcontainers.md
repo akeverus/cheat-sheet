@@ -22,7 +22,7 @@ updated: "2026-02-11"
 | GitHub | [testcontainers-java](https://github.com/testcontainers/testcontainers-java) |
 | JUnit 5 | [Getting Started JUnit 5](https://www.testcontainers.org/guides/getting_started_junit_5/) |
 | Модули | [Modules](https://www.testcontainers.org/modules/) |
-| См. также | [JUnit](../../unit-testing/junit/junit.md), [Database Testing](../database-testing/database-testing.md), [WireMock](../wiremock.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md) |
+| См. также | [[junit]], [[database-testing|Database Testing]], [[wiremock]], [[testing-tools-overview|Testing Tools Overview]] |
 
 
 ## Содержание
@@ -327,7 +327,7 @@ class MyApplicationIntegrationTest {
 | **Could not find a valid Docker environment** | Docker не установлен или недоступен | Установить Docker, проверить `docker info`, права пользователя |
 | **Port already in use** | Конфликт портов или старый контейнер | Остановить старые контейнеры (`docker ps -a`), проверить занятость портов |
 | **Image pull failed** | Нет доступа к registry | Настроить сеть/прокси, проверить доступ к Docker Hub или внутреннему registry |
-| **Container startup timeout** | Сервис долго стартует | Увеличить таймаут (**withStartupTimeout**), добавить **waitingFor** под готовность |
+| **Container startup timeout** | Сервис долго стартует | Увеличить таймаут (withStartupTimeout), добавить **waitingFor** под готовность |
 | **OutOfMemoryError** в CI | Мало памяти у агента | Увеличить память для JVM/агента или использовать лёгкие образы (alpine) |
 | **Tests pass locally, fail in CI** | Разные версии Docker/образов, права | Унифицировать версии образов, проверить переменные окружения в CI |
 | **withInitScript — No such file** | Файл не в classpath | Положить в `src/test/resources`; путь указывать относительно classpath |
@@ -337,7 +337,7 @@ class MyApplicationIntegrationTest {
 
 - **Нужно ли ставить PostgreSQL/MySQL локально?** — Нет, достаточно Docker.
 - **Testcontainers в production?** — Нет, только для тестов.
-- **Как ускорить тесты?** — Один контейнер на класс (**static @Container**), фиксированные образы, при необходимости alpine.
+- **Как ускорить тесты?** — Один контейнер на класс (static @Container), фиксированные образы, при необходимости alpine.
 - **Работает ли с Kotlin?** — Да, те же аннотации и вызовы.
 - **JUnit 4?** — Поддерживается через **@Rule** (см. документацию).
 - **Свой Dockerfile?** — Собрать образ локально или в CI и указать в **DockerImageName.parse("myimage:tag")**.
@@ -421,4 +421,4 @@ class MyApplicationIntegrationTest {
 
 **Testcontainers** позволяет запускать реальные Docker-контейнеры (БД, очереди, сервисы) в интеграционных тестах на JUnit 5. Используйте специализированные модули где возможно, фиксируйте версии образов; один контейнер на класс даёт хороший баланс скорости и изоляции. Интеграция с Spring Boot через **@DynamicPropertySource** упрощает подстановку URL и кредов. В CI убедитесь в доступности Docker и при необходимости настройте таймауты и ресурсы.
 
-Для углублённого изучения: [официальная документация](https://www.testcontainers.org/) и [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).
+Для углублённого изучения: [официальная документация](https://www.testcontainers.org/) и [[testing-tools-overview|Testing Tools Overview]].

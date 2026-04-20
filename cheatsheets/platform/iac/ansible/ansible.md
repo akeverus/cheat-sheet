@@ -60,9 +60,9 @@ updated: "2026-02-11"
   - [Отладка](#отладка)
 - [См. также](#см-также)
 
-## Основы **Ansible**
+## Основы Ansible
 
-### Архитектура **Ansible**
+### Архитектура Ansible
 
 Краткое описание компонентов **Ansible**: **control node**, **managed nodes**, **inventory**, **playbooks**, модули, плагины, **roles**.
 
@@ -79,7 +79,7 @@ updated: "2026-02-11"
 
 ### Установка
 
-#### **Linux**
+#### Linux
 ```bash
 # Ubuntu/Debian
 sudo apt update
@@ -100,7 +100,7 @@ sudo pacman -S ansible
 pip install ansible
 ```
 
-#### **macOS**
+#### macOS
 ```bash
 # Через Homebrew
 brew install ansible
@@ -109,7 +109,7 @@ brew install ansible
 pip install ansible
 ```
 
-#### **Windows**
+#### Windows
 ```bash
 # Через WSL
 # или через pip в virtualenv
@@ -151,9 +151,9 @@ control_path_dir = /tmp/.ansible-cp
 pipelining = true
 ```
 
-## **Inventory**
+## Inventory
 
-### Статический **inventory**
+### Статический inventory
 ```ini
 # /etc/ansible/hosts
 [webservers]
@@ -184,7 +184,7 @@ db_port=5432
 db_name=myapp
 ```
 
-### Динамический **inventory**
+### Динамический inventory
 ```python
 #!/usr/bin/env python3
 # dynamic_inventory.py
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         print("Usage: {} --list or {} --host <hostname>".format(sys.argv[0], sys.argv[0]))
 ```
 
-### **AWS EC2** динамический **inventory**
+### AWS EC2 динамический inventory
 ```python
 #!/usr/bin/env python3
 # aws_ec2_inventory.py
@@ -287,9 +287,9 @@ if __name__ == "__main__":
     print(json.dumps(get_instances(), indent=2))
 ```
 
-## **Playbooks**
+## Playbooks
 
-### Структура **playbook**
+### Структура playbook
 ```yaml
 ---
 # web-server.yml
@@ -344,7 +344,7 @@ if __name__ == "__main__":
 
 ### Основные модули
 
-#### **Package management**
+#### Package management
 ```yaml
 ---
 - name: Install packages
@@ -378,7 +378,7 @@ if __name__ == "__main__":
       when: ansible_os_family == "Debian"
 ```
 
-#### **File operations**
+#### File operations
 ```yaml
 ---
 - name: File operations
@@ -425,7 +425,7 @@ if __name__ == "__main__":
         checksum: sha256:abc123...
 ```
 
-#### **Service management**
+#### Service management
 ```yaml
 ---
 - name: Manage services
@@ -465,7 +465,7 @@ if __name__ == "__main__":
         daemon_reload: yes
 ```
 
-#### **User management**
+#### User management
 ```yaml
 ---
 - name: Manage users
@@ -506,7 +506,7 @@ if __name__ == "__main__":
         mode: '0600'
 ```
 
-## **Roles**
+## Roles
 
 ### Структура роли
 ```text
@@ -626,7 +626,7 @@ dependencies:
       app_port: 3000
 ```
 
-## **Templates** (**Jinja2**)
+## Templates (Jinja2)
 
 ### Основы шаблонизации
 ```jinja2
@@ -721,7 +721,7 @@ nginx_sites:
       include_tasks: "{{ ansible_os_family | lower }}.yml"
 ```
 
-## **Ansible Vault**
+## Ansible Vault
 
 ### Шифрование секретов
 ```bash
@@ -744,7 +744,7 @@ ansible-vault view secrets.yml
 ansible-vault rekey secrets.yml
 ```
 
-### Использование **vault**
+### Использование vault
 ```yaml
 # secrets.yml (encrypted)
 ---
@@ -816,9 +816,9 @@ ssl:
       notify: reload nginx
 ```
 
-## **Ansible Tower** / **AWX**
+## Ansible Tower / AWX
 
-### Установка **AWX**
+### Установка AWX
 ```bash
 # Установка через Docker Compose
 git clone https://github.com/ansible/awx.git
@@ -833,7 +833,7 @@ cp installer/inventory.example installer/inventory
 ansible-playbook -i installer/inventory installer/install.yml
 ```
 
-### **Job Templates**
+### Job Templates
 ```yaml
 # job_template.yml
 ---
@@ -875,7 +875,7 @@ survey_spec:
 
 ## Тестирование и валидация
 
-### **Molecule** для тестирования ролей
+### Molecule для тестирования ролей
 ```yaml
 # molecule/default/molecule.yml
 ---

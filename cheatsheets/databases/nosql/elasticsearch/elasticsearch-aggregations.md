@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Агрегации — Аналитика и статистика данных
+# Elasticsearch: Агрегации — Аналитика и статистика данных
 
 Комплексное руководство по агрегациям **Elasticsearch**: от базовых метрик до сложных вложенных агрегаций, **pipeline aggregations** и аналитики в реальном времени.
 
@@ -55,7 +55,7 @@ updated: "2026-02-11"
 - [Сумма](#сумма)
 - [Минимум/Максимум](#минимуммаксимум)
 - [Количество значений](#количество-значений)
-    - [**Cardinality** (**уникальные значения**)](#cardinality-уникальные-значения)
+    - [**Cardinality** (уникальные значения)](#cardinality-уникальные-значения)
 - [Количество уникальных значений](#количество-уникальных-значений)
 - [Cardinality с высокой точностью](#cardinality-с-высокой-точностью)
   - [**Multi-value Metrics**](#multi-value-metrics)
@@ -196,7 +196,7 @@ updated: "2026-02-11"
 
 ### Структура запроса с агрегациями
 
-#### **Basic Aggregation Query**
+#### Basic Aggregation Query
 ```bash
 # Простая агрегация
 curl -X GET "localhost:9200/products/_search" \
@@ -232,7 +232,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Response Structure**
+#### Response Structure
 ```json
 {
   "took": 15,
@@ -259,19 +259,19 @@ curl -X GET "localhost:9200/products/_search" \
 }
 ```
 
-### **Aggregation Types**
+### Aggregation Types
 
-#### **Four Main Categories**
-1. **Metrics** — Вычисление метрик (**sum, avg, min, max, etc.**)
+#### Four Main Categories
+1. **Metrics** — Вычисление метрик (sum, avg, min, max, etc.)
 2. **Bucket** — Группировка документов в **buckets**
 3. **Pipeline** — Агрегации на основе результатов других агрегаций
 4. **Matrix** — Операции над несколькими полями
 
-## **Metrics Aggregations**
+## Metrics Aggregations
 
-### **Single-value Metrics**
+### Single-value Metrics
 
-#### **Basic Metrics**
+#### Basic Metrics
 ```bash
 # Среднее значение
 curl -X GET "localhost:9200/sales/_search" \
@@ -321,7 +321,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Cardinality** (**уникальные значения**)
+#### Cardinality (уникальные значения)
 ```bash
 # Количество уникальных значений
 curl -X GET "localhost:9200/users/_search" \
@@ -354,9 +354,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Multi-value Metrics**
+### Multi-value Metrics
 
-#### **Stats Aggregation**
+#### Stats Aggregation
 ```bash
 # Полная статистика
 curl -X GET "localhost:9200/products/_search" \
@@ -382,7 +382,7 @@ curl -X GET "localhost:9200/products/_search" \
 }
 ```
 
-#### **Extended Stats**
+#### Extended Stats
 ```bash
 # Расширенная статистика
 curl -X GET "localhost:9200/sales/_search" \
@@ -415,7 +415,7 @@ curl -X GET "localhost:9200/sales/_search" \
 }
 ```
 
-#### **Percentiles**
+#### Percentiles
 ```bash
 # Перцентили
 curl -X GET "localhost:9200/response_times/_search" \
@@ -448,11 +448,11 @@ curl -X GET "localhost:9200/scores/_search" \
   }'
 ```
 
-## **Bucket Aggregations**
+## Bucket Aggregations
 
-### **Terms Aggregation**
+### Terms Aggregation
 
-#### **Basic Terms**
+#### Basic Terms
 ```bash
 # Группировка по категориям
 curl -X GET "localhost:9200/products/_search" \
@@ -487,7 +487,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Terms with Sub-aggregations**
+#### Terms with Sub-aggregations
 ```bash
 # Terms с подагрегациями
 curl -X GET "localhost:9200/products/_search" \
@@ -518,9 +518,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Range Aggregations**
+### Range Aggregations
 
-#### **Numeric Ranges**
+#### Numeric Ranges
 ```bash
 # Диапазоны цен
 curl -X GET "localhost:9200/products/_search" \
@@ -567,7 +567,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Date Ranges**
+#### Date Ranges
 ```bash
 # Диапазоны дат
 curl -X GET "localhost:9200/sales/_search" \
@@ -591,9 +591,9 @@ curl -X GET "localhost:9200/sales/_search" \
   }'
 ```
 
-### **Histogram Aggregations**
+### Histogram Aggregations
 
-#### **Numeric Histogram**
+#### Numeric Histogram
 ```bash
 # Гистограмма цен
 curl -X GET "localhost:9200/products/_search" \
@@ -631,11 +631,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Date Histogram**
+## Date Histogram
 
-### **Time-based Bucketing**
+### Time-based Bucketing
 
-#### **Basic Date Histogram**
+#### Basic Date Histogram
 ```bash
 # Гистограмма по дням
 curl -X GET "localhost:9200/logs/_search" \
@@ -671,7 +671,7 @@ curl -X GET "localhost:9200/logs/_search" \
   }'
 ```
 
-#### **Date Histogram with Sub-aggregations**
+#### Date Histogram with Sub-aggregations
 ```bash
 # Date histogram с метриками
 curl -X GET "localhost:9200/sales/_search" \
@@ -701,9 +701,9 @@ curl -X GET "localhost:9200/sales/_search" \
   }'
 ```
 
-### **Advanced Date Operations**
+### Advanced Date Operations
 
-#### **Fixed** vs **Calendar Intervals**
+#### Fixed vs Calendar Intervals
 ```bash
 # Calendar intervals (рекомендуется)
 curl -X GET "localhost:9200/sales/_search" \
@@ -736,11 +736,11 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-## **Pipeline Aggregations**
+## Pipeline Aggregations
 
-### **Parent Pipeline Aggregations**
+### Parent Pipeline Aggregations
 
-#### **Derivative**
+#### Derivative
 ```bash
 # Производная (скорость изменения)
 curl -X GET "localhost:9200/metrics/_search" \
@@ -768,7 +768,7 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-#### **Cumulative Sum**
+#### Cumulative Sum
 ```bash
 # Кумулятивная сумма
 curl -X GET "localhost:9200/sales/_search" \
@@ -796,7 +796,7 @@ curl -X GET "localhost:9200/sales/_search" \
   }'
 ```
 
-#### **Moving Average**
+#### Moving Average
 ```bash
 # Скользящее среднее
 curl -X GET "localhost:9200/metrics/_search" \
@@ -826,9 +826,9 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-### **Sibling Pipeline Aggregations**
+### Sibling Pipeline Aggregations
 
-#### **Max**/**Min Bucket**
+#### Max/Min Bucket
 ```bash
 # Максимальное значение среди buckets
 curl -X GET "localhost:9200/sales/_search" \
@@ -853,7 +853,7 @@ curl -X GET "localhost:9200/sales/_search" \
   }'
 ```
 
-#### **Bucket Script**
+#### Bucket Script
 ```bash
 # Арифметические операции над buckets
 curl -X GET "localhost:9200/sales/_search" \
@@ -884,11 +884,11 @@ curl -X GET "localhost:9200/sales/_search" \
   }'
 ```
 
-## **Matrix Aggregations**
+## Matrix Aggregations
 
-### **Matrix Stats**
+### Matrix Stats
 
-#### **Multi-field Statistics**
+#### Multi-field Statistics
 ```bash
 # Статистика по нескольким полям
 curl -X GET "localhost:9200/products/_search" \
@@ -935,11 +935,11 @@ curl -X GET "localhost:9200/products/_search" \
 }
 ```
 
-## **Nested Aggregations**
+## Nested Aggregations
 
-### **Nested Objects**
+### Nested Objects
 
-#### **Nested Aggregation**
+#### Nested Aggregation
 ```bash
 # Агрегации по nested объектам
 curl -X GET "localhost:9200/products/_search" \
@@ -964,7 +964,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Reverse Nested**
+#### Reverse Nested
 ```bash
 # Обратный nested для доступа к parent документу
 curl -X GET "localhost:9200/products/_search" \
@@ -998,11 +998,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Geo Aggregations**
+## Geo Aggregations
 
-### **Geo Bounds**
+### Geo Bounds
 
-#### **Geographic Bounding Box**
+#### Geographic Bounding Box
 ```bash
 # Границы географических данных
 curl -X GET "localhost:9200/stores/_search" \
@@ -1036,9 +1036,9 @@ curl -X GET "localhost:9200/stores/_search" \
 }
 ```
 
-### **Geo Centroid**
+### Geo Centroid
 
-#### **Geographic Center**
+#### Geographic Center
 ```bash
 # Географический центр
 curl -X GET "localhost:9200/stores/_search" \
@@ -1066,11 +1066,11 @@ curl -X GET "localhost:9200/stores/_search" \
 }
 ```
 
-## **Significant Terms**
+## Significant Terms
 
-### **Significant Terms Aggregation**
+### Significant Terms Aggregation
 
-#### **Finding Significant Correlations**
+#### Finding Significant Correlations
 ```bash
 # Значимые термины
 curl -X GET "localhost:9200/products/_search" \
@@ -1110,11 +1110,11 @@ curl -X GET "localhost:9200/reviews/_search" \
   }'
 ```
 
-## **Sampler Aggregation**
+## Sampler Aggregation
 
-### **Document Sampling**
+### Document Sampling
 
-#### **Random Sampling**
+#### Random Sampling
 ```bash
 # Сэмплирование для производительности
 curl -X GET "localhost:9200/logs/_search" \
@@ -1137,7 +1137,7 @@ curl -X GET "localhost:9200/logs/_search" \
   }'
 ```
 
-#### **Diversified Sampling**
+#### Diversified Sampling
 ```bash
 # Разнообразное сэмплирование
 curl -X GET "localhost:9200/user_events/_search" \
@@ -1160,11 +1160,11 @@ curl -X GET "localhost:9200/user_events/_search" \
   }'
 ```
 
-## **Real-time Analytics**
+## Real-time Analytics
 
-### **Time Series Analytics**
+### Time Series Analytics
 
-#### **Rolling Time Windows**
+#### Rolling Time Windows
 ```bash
 # Скользящие временные окна
 curl -X GET "localhost:9200/metrics/_search" \
@@ -1195,7 +1195,7 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-#### **Real-time Dashboards**
+#### Real-time Dashboards
 ```bash
 # Агрегации для dashboard
 curl -X GET "localhost:9200/metrics/_search" \
@@ -1242,9 +1242,9 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-### **Anomaly Detection**
+### Anomaly Detection
 
-#### **Statistical Anomaly Detection**
+#### Statistical Anomaly Detection
 ```bash
 # Обнаружение аномалий с помощью статистических методов
 curl -X GET "localhost:9200/metrics/_search" \
@@ -1276,11 +1276,11 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-## **Java Aggregations API**
+## Java Aggregations API
 
-### **High Level REST Client**
+### High Level REST Client
 
-#### **Building Aggregations**
+#### Building Aggregations
 ```java
 @Service
 public class ElasticsearchAggregationService {
@@ -1421,9 +1421,9 @@ public class ElasticsearchAggregationService {
 }
 ```
 
-### **Java API Client** 8.x
+### Java API Client 8.x
 
-#### **Modern Aggregation API**
+#### Modern Aggregation API
 ```java
 @Service
 public class ModernAggregationService {
@@ -1540,11 +1540,11 @@ public class ModernAggregationService {
 }
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Aggregation Performance Tips**
+### Aggregation Performance Tips
 
-#### 1. **Limit Aggregation Scope**
+#### 1. Limit Aggregation Scope
 ```bash
 # Используй фильтры для ограничения данных
 curl -X GET "localhost:9200/products/_search" \
@@ -1571,7 +1571,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### 2. **Optimize Terms Aggregation**
+#### 2. Optimize Terms Aggregation
 ```bash
 # Ограничь размер terms aggregation
 curl -X GET "localhost:9200/products/_search" \
@@ -1591,7 +1591,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### 3. **Use Approximate Aggregations**
+#### 3. Use Approximate Aggregations
 ```bash
 # Cardinality с precision threshold
 curl -X GET "localhost:9200/users/_search" \
@@ -1625,9 +1625,9 @@ curl -X GET "localhost:9200/response_times/_search" \
   }'
 ```
 
-### **Caching and Memory Management**
+### Caching and Memory Management
 
-#### **Aggregation Caching**
+#### Aggregation Caching
 ```yaml
 # elasticsearch.yml - Aggregation cache settings
 indices.queries.cache.size: 10%
@@ -1640,7 +1640,7 @@ indices.fielddata.cache.size: 40%
 indices.requests.cache.expire: 1h
 ```
 
-#### **Memory-conscious Aggregations**
+#### Memory-conscious Aggregations
 ```bash
 # Используй circuit breaker для предотвращения OOM
 curl -X PUT "localhost:9200/_cluster/settings" \
@@ -1655,29 +1655,29 @@ curl -X PUT "localhost:9200/_cluster/settings" \
 
 ## Лучшие практики
 
-### **Aggregation Design**
+### Aggregation Design
 
-#### 1. **Choose Right Aggregation Type**
+#### 1. Choose Right Aggregation Type
 - **Terms** для категориальных данных
 - **Date histogram** для временных рядов
 - **Range** для числовых диапазонов
-- **Cardinality** для уникальных значений (**с осторожностью**)
+- **Cardinality** для уникальных значений (с осторожностью)
 
-#### 2. **Optimize for Performance**
+#### 2. Optimize for Performance
 - **Фильтруй данные** перед агрегацией
 - **Ограничивай размер terms aggregations**
 - **Используй shard_size** для точности vs производительности
 - **Кэшируй** повторяющиеся агрегации
 
-#### 3. **Handle Large Datasets**
+#### 3. Handle Large Datasets
 - **Используй pagination** для больших результатов
 - **Sampler aggregation** для предварительного анализа
 - **Composite aggregation** для эффективной пагинации
 - **Shard-level reduction** для распределенных вычислений
 
-### **Common Patterns**
+### Common Patterns
 
-#### 1. **Dashboard Analytics**
+#### 1. Dashboard Analytics
 ```bash
 # Комплексная dashboard агрегация
 curl -X GET "localhost:9200/metrics/_search" \
@@ -1720,7 +1720,7 @@ curl -X GET "localhost:9200/metrics/_search" \
   }'
 ```
 
-#### 2. **E-commerce Analytics**
+#### 2. E-commerce Analytics
 ```bash
 # Аналитика продаж
 curl -X GET "localhost:9200/sales/_search" \
@@ -1758,7 +1758,7 @@ curl -X GET "localhost:9200/sales/_search" \
   }'
 ```
 
-#### 3. **Log Analytics**
+#### 3. Log Analytics
 ```bash
 # Анализ логов
 curl -X GET "localhost:9200/logs-*/_search" \
@@ -1799,29 +1799,29 @@ curl -X GET "localhost:9200/logs-*/_search" \
   }'
 ```
 
-### **Error Handling**
+### Error Handling
 
-#### 1. **Handle Aggregation Errors**
+#### 1. Handle Aggregation Errors
 - **Circuit breaker exceptions** — уменьши нагрузку
 - **Timeout errors** — увеличивай **timeout** или оптимизируй запрос
 - **Memory errors** — уменьши **scope** агрегаций
 - **Shard failures** — проверь здоровье кластера
 
-#### 2. **Validation and Testing**
+#### 2. Validation and Testing
 - **Тестируй агрегации** на тестовых данных
 - **Валидируй результаты** на соответствие ожиданиям
 - **Мониторь производительность** агрегаций
 - **Документируй** сложные агрегации
 
-### **Scaling Considerations**
+### Scaling Considerations
 
-#### 1. **Large Scale Aggregations**
+#### 1. Large Scale Aggregations
 - **Используй composite aggregation** для больших **terms**
 - **Shard-level aggregations** для предварительной обработки
 - **Distributed coordination** для сложных вычислений
 - **Async processing** для **long-running aggregations**
 
-#### 2. **Real-time Requirements**
+#### 2. Real-time Requirements
 - **Near `real-time` aggregations** с **refresh intervals**
 - **Incremental updates** для часто меняющихся данных
 - **Caching strategies** для повторяющихся запросов
@@ -1831,8 +1831,8 @@ curl -X GET "localhost:9200/logs-*/_search" \
 
 ### Ключевые возможности:
 
-1. **Metrics aggregations** — статистические расчеты (**avg, sum, percentiles**)
-2. **Bucket aggregations** — группировка данных (**terms, `date_histogram`, ranges**)
+1. **Metrics aggregations** — статистические расчеты (avg, sum, percentiles)
+2. **Bucket aggregations** — группировка данных (terms, `date_histogram`, ranges)
 3. **Pipeline aggregations** — анализ трендов и производных
 4. **Matrix aggregations** — многомерная статистика
 5. **Geo aggregations** — географический анализ
@@ -1853,14 +1853,14 @@ curl -X GET "localhost:9200/logs-*/_search" \
 4. **Approximations** — **cardinality**, **percentiles** с **controllable accuracy**
 5. **Parallel execution** — одновременная обработка на всех шардах
 
-### **Java** интеграция:
+### Java интеграция:
 
 1. **High `Level REST` Client** — **imperative API** для **complex aggregations**
 2. **Java `API Client 8`.x** — **modern fluent API**
 3. **Spring `Data` Elasticsearch** — **declarative aggregations**
 4. **Reactive support** — **asynchronous aggregation processing**
 
-### **Best practices**:
+### Best practices:
 
 1. **Query design** — правильная структура агрегаций
 2. **Performance optimization** — фильтры, **limits**, **approximations**
@@ -1879,10 +1879,10 @@ curl -X GET "localhost:9200/logs-*/_search" \
 Агрегации **Elasticsearch** позволяют превращать сырые данные в **actionable insights**, обеспечивая мощную аналитику для принятия решений. Правильное проектирование и оптимизация агрегаций критически важны для масштабируемых и производительных аналитических систем. 🎯
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (**завершен**)
-- ✅ **elasticsearch-indexing.md** (**завершен**)
-- ✅ **elasticsearch-queries.md** (**завершен**)
-- ✅ **elasticsearch-aggregations.md** (**завершен**)
+- ✅ **elasticsearch-basics.md** (завершен)
+- ✅ **elasticsearch-indexing.md** (завершен)
+- ✅ **elasticsearch-queries.md** (завершен)
+- ✅ **elasticsearch-aggregations.md** (завершен)
 - 🔄 **elasticsearch-clustering.md**
 - 🔄 **elasticsearch-performance.md**
 

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cats Effect** в **Scala**
+# Cats Effect в Scala
 
 Краткое руководство по **Cats Effect** — библиотека для работы с эффектами в функциональном программировании **Scala**.
 
@@ -79,7 +79,7 @@ updated: "2026-02-11"
 
 **Cats Effect** особенно полезен для создания чистых функциональных приложений, работы с асинхронными операциями, управления ресурсами и создания типобезопасного кода.
 
-## Основы **Cats Effect**
+## Основы Cats Effect
 
 ### Базовое использование `IO`
 
@@ -102,7 +102,7 @@ val lazyIO = IO.delay {
 }
 ```
 
-## `IO` **Monad**
+## `IO` Monad
 
 ### Композиция `IO`
 
@@ -213,9 +213,9 @@ def retry[A](io: IO[A], maxRetries: Int): IO[A] = {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Используйте **Resource** для управления ресурсами
+### 1. Используйте Resource для управления ресурсами
 
 ```scala
 // ✅ Хорошо - автоматическое управление ресурсами
@@ -230,7 +230,7 @@ try {
 }
 ```
 
-### 2. Используйте **IO.delay** для побочных эффектов
+### 2. Используйте IO.delay для побочных эффектов
 
 ```scala
 // ✅ Хорошо - IO.delay для побочных эффектов
@@ -322,7 +322,7 @@ val copyFile: IO[Unit] = {
 }
 ```
 
-### **HTTP** клиент с **HTTP4S**
+### HTTP клиент с HTTP4S
 
 ```scala
 import cats.effect.IO
@@ -341,7 +341,7 @@ val program = clientResource.use { client =>
 val result = program.unsafeRunSync()
 ```
 
-### Обработка стримов с **FS2**
+### Обработка стримов с FS2
 
 ```scala
 import cats.effect.IO
@@ -369,7 +369,7 @@ val fileStream = Stream.eval(
 val processed = fileStream.compile.toList.unsafeRunSync()
 ```
 
-### Обработка с использованием **Deferred**
+### Обработка с использованием Deferred
 
 ```scala
 import cats.effect.IO
@@ -393,7 +393,7 @@ val program = for {
 val result = program.unsafeRunSync()  // 42
 ```
 
-### Обработка с использованием **Queue**
+### Обработка с использованием Queue
 
 ```scala
 import cats.effect.IO
@@ -422,7 +422,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Обработка с использованием **Fiber**
+### Обработка с использованием Fiber
 
 ```scala
 import cats.effect.IO
@@ -443,7 +443,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Обработка с использованием **Timeout**
+### Обработка с использованием Timeout
 
 ```scala
 import cats.effect.IO
@@ -463,7 +463,7 @@ val result = timedOperation.attempt.unsafeRunSync() match {
 }
 ```
 
-### Обработка с использованием **Race**
+### Обработка с использованием Race
 
 ```scala
 import cats.effect.IO
@@ -480,7 +480,7 @@ winner match {
 }
 ```
 
-### Обработка с использованием **Supervisor**
+### Обработка с использованием Supervisor
 
 ```scala
 import cats.effect.IO
@@ -500,7 +500,7 @@ val program = Supervisor[IO].use { supervisor =>
 program.unsafeRunSync()
 ```
 
-### Обработка с использованием **Bracket**
+### Обработка с использованием Bracket
 
 ```scala
 import cats.effect.IO
@@ -525,7 +525,7 @@ val program = resource.bracket(use)(release)
 val result = program.unsafeRunSync()
 ```
 
-### Обработка с использованием **MonadCancel**
+### Обработка с использованием MonadCancel
 
 ```scala
 import cats.effect.IO
@@ -546,7 +546,7 @@ val fiber = cancellable.start.unsafeRunSync()
 fiber.cancel.unsafeRunSync()
 ```
 
-### Обработка с использованием **Clock**
+### Обработка с использованием Clock
 
 ```scala
 import cats.effect.IO
@@ -566,7 +566,7 @@ println(s"Elapsed time: ${elapsed.toMillis}ms")
 
 ## Интеграция с другими библиотеками
 
-### Интеграция с **Doobie**
+### Интеграция с Doobie
 
 ```scala
 import cats.effect.IO
@@ -588,7 +588,7 @@ val program = for {
 val value = program.unsafeRunSync()
 ```
 
-### Интеграция с **HTTP4S**
+### Интеграция с HTTP4S
 
 ```scala
 import cats.effect.IO
@@ -627,7 +627,7 @@ server.use(_ => IO.never).unsafeRunSync()
 
 **Cats Effect** предоставляет мощные инструменты для работы с конкурентностью, синхронизацией, файлами, **HTTP**, стримами, **Fibers**, таймаутами, гонками, супервизорами, **Bracket**, **MonadCancel**, **Clock** и интеграцией с другими библиотеками. Понимание этих техник позволяет создавать сложные, масштабируемые функциональные приложения.
 
-### Интеграция с **ZIO**
+### Интеграция с ZIO
 
 ```scala
 import cats.effect.IO
@@ -642,7 +642,7 @@ val task2: Task[String] = Task("Hello")
 val io2: IO[String] = task2.toIO
 ```
 
-### Использование с **Ref** для разделяемого состояния
+### Использование с Ref для разделяемого состояния
 
 ```scala
 import cats.effect.IO
@@ -662,7 +662,7 @@ val program = for {
 val result = program.unsafeRunSync()  // 5050
 ```
 
-### Использование с **Deferred** для синхронизации
+### Использование с Deferred для синхронизации
 
 ```scala
 import cats.effect.IO
@@ -686,7 +686,7 @@ val program = for {
 val result = program.unsafeRunSync()  // "Hello"
 ```
 
-### Использование с **Queue** для обмена данными
+### Использование с Queue для обмена данными
 
 ```scala
 import cats.effect.IO
@@ -714,7 +714,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Использование с **Semaphore** для ограничения параллелизма
+### Использование с Semaphore для ограничения параллелизма
 
 ```scala
 import cats.effect.IO
@@ -736,7 +736,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Использование с **CountDownLatch**
+### Использование с CountDownLatch
 
 ```scala
 import cats.effect.IO
@@ -764,7 +764,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Использование с **MVar**
+### Использование с MVar
 
 ```scala
 import cats.effect.IO
@@ -788,7 +788,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Использование с **Hotswap**
+### Использование с Hotswap
 
 ```scala
 import cats.effect.IO
@@ -810,7 +810,7 @@ val program = Hotswap.create[IO, String].use { hotswap =>
 program.unsafeRunSync()
 ```
 
-### Использование с **Random**
+### Использование с Random
 
 ```scala
 import cats.effect.IO
@@ -832,7 +832,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Использование с **Console**
+### Использование с Console
 
 ```scala
 import cats.effect.IO
@@ -848,7 +848,7 @@ val program = for {
 program.unsafeRunSync()
 ```
 
-### Использование с **Dispatcher**
+### Использование с Dispatcher
 
 ```scala
 import cats.effect.IO
@@ -879,7 +879,7 @@ val program = Dispatcher[IO].use { dispatcher =>
 program.unsafeRunSync()
 ```
 
-### Использование с **Resource** для управления соединениями
+### Использование с Resource для управления соединениями
 
 ```scala
 import cats.effect.IO
@@ -913,7 +913,7 @@ val program = connectionResource.use { conn =>
 program.unsafeRunSync()
 ```
 
-### Использование с **Background** для фоновых задач
+### Использование с Background для фоновых задач
 
 ```scala
 import cats.effect.IO
@@ -937,7 +937,7 @@ val program = Background[IO].use { bg =>
 program.unsafeRunSync()
 ```
 
-### Использование с **IOApp** для приложений
+### Использование с IOApp для приложений
 
 ```scala
 import cats.effect.{IO, IOApp}
@@ -958,7 +958,7 @@ object MyApp extends IOApp {
 }
 ```
 
-### Использование с **SyncIO** для синхронных операций
+### Использование с SyncIO для синхронных операций
 
 ```scala
 import cats.effect.SyncIO
@@ -972,7 +972,7 @@ val syncIO = SyncIO {
 val result = syncIO.unsafeRunSync()  // Выполняется синхронно
 ```
 
-### Использование с **AsyncIO** для асинхронных операций
+### Использование с AsyncIO для асинхронных операций
 
 ```scala
 import cats.effect.IO

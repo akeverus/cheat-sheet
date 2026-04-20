@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 ---
 
-# **Scala For Comprehensions**
+# Scala For Comprehensions
 
 Кратко: полное руководство по **For-comprehensions** в **Scala**: синтаксический сахар для **flatMap**, фильтрация, генераторы.
 
@@ -71,11 +71,11 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
   - [Использование с различными типами для работы с логами](#использование-с-различными-типами-для-работы-с-логами)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **For-comprehensions**
+## Введение в For-comprehensions
 
 **For-comprehensions** — это синтаксический сахар для работы с **Monads** в **Scala**. **For-comprehensions** делают код более читаемым и выразительным при работе с вложенными **flatMap** и **map**. Вместо написания цепочек вложенных **flatMap** и **map**, **for-comprehensions** позволяют выразить ту же логику в более императивном стиле, который легче читать и понимать.
 
-**For-comprehensions** компилируются в комбинацию **map**, **flatMap** и **filter**, что означает, что они работают с любыми типами, которые имеют эти методы. Это включает коллекции (**List, `Option`, `Future`, Try, Either**) и пользовательские типы, реализующие эти методы.
+**For-comprehensions** компилируются в комбинацию **map**, **flatMap** и **filter**, что означает, что они работают с любыми типами, которые имеют эти методы. Это включает коллекции (List, `Option`, `Future`, Try, Either) и пользовательские типы, реализующие эти методы.
 
 **For-comprehensions** — это синтаксический сахар для работы с **Monads** в **Scala**. **For-comprehensions** делают код более читаемым и выразительным при работе с вложенными **flatMap** и **map**.
 
@@ -85,9 +85,9 @@ related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 
 - **Композиция**: легко комбинировать несколько операций. **For-comprehensions** позволяют естественным образом комбинировать несколько операций, каждая из которых может зависеть от результата предыдущей. Это делает код более декларативным и выразительным, показывая последовательность операций явно.
 
-- **Универсальность**: работает с любыми типами, имеющими **map** и **flatMap**. **For-comprehensions** не ограничены конкретными типами и работают с любыми типами, которые реализуют методы **map** и **flatMap**. Это включает стандартные типы **Scala** (**List, `Option`, `Future`, Try, Either**) и пользовательские типы, что делает **for-comprehensions** универсальным инструментом для работы с различными контекстами вычислений.
+- **Универсальность**: работает с любыми типами, имеющими **map** и **flatMap**. **For-comprehensions** не ограничены конкретными типами и работают с любыми типами, которые реализуют методы **map** и **flatMap**. Это включает стандартные типы **Scala** (List, `Option`, `Future`, Try, Either) и пользовательские типы, что делает **for-comprehensions** универсальным инструментом для работы с различными контекстами вычислений.
 
-## Базовые **For-comprehensions**
+## Базовые For-comprehensions
 
 Базовые **for-comprehensions** с одним генератором являются простейшей формой и эквивалентны вызову метода **map**. Они позволяют трансформировать каждый элемент коллекции, применяя функцию к каждому элементу. Это делает код более читаемым, особенно когда функция трансформации сложная и требует нескольких строк.
 
@@ -148,7 +148,7 @@ val evens2 = numbers.filter(_ % 2 == 0).map(_ * 2)
 
 Фильтры в **for-comprehensions** эквивалентны вызову **filter**.
 
-## **For-comprehensions** с **Option**
+## For-comprehensions с Option
 
 ```scala
 def getUser(id: Long): Option[User] = ???
@@ -169,7 +169,7 @@ val result2 = getUser(1L).flatMap(user =>
 
 **For-comprehensions** с **Option** позволяют элегантно обрабатывать возможные отсутствующие значения.
 
-## **For-comprehensions** с **Future**
+## For-comprehensions с Future
 
 ```scala
 import scala.concurrent.Future
@@ -188,7 +188,7 @@ val result = for {
 
 **For-comprehensions** с **Future** позволяют комбинировать асинхронные операции в последовательном стиле.
 
-### **For-comprehensions** с **Try**
+### For-comprehensions с Try
 
 **For-comprehensions** работают с **Try** для обработки ошибок:**
 
@@ -211,7 +211,7 @@ result match {
 }
 ```
 
-### **For-comprehensions** с **Either**
+### For-comprehensions с Either
 
 **For-comprehensions** работают с **Either**:**
 
@@ -239,7 +239,7 @@ result match {
 }
 ```
 
-### **For-comprehensions** с **List**
+### For-comprehensions с List
 
 **For-comprehensions** естественно работают со списками:**
 
@@ -262,7 +262,7 @@ val filtered = for {
 // List((2,a), (2,c), (3,a), (3,c))
 ```
 
-### Вложенные **for-comprehensions**
+### Вложенные for-comprehensions
 
 **For-comprehensions** можно вкладывать:**
 
@@ -283,7 +283,7 @@ val result = for {
 }
 ```
 
-### **For-comprehensions** с присваиваниями
+### For-comprehensions с присваиваниями
 
 **В **for-comprehensions** можно использовать присваивания:**
 
@@ -347,7 +347,7 @@ createPerson("alice@example.com", 30)  // Right(Person(...))
 createPerson("invalid", 200)  // Left("Invalid email")
 ```
 
-### Десюгаризация **for-comprehensions**
+### Десюгаризация for-comprehensions
 
 **For-comprehensions** десюгаризуются в вызовы **map**, **flatMap** и **filter**:**
 
@@ -367,7 +367,7 @@ val result2 = option1.flatMap(a =>
 )
 ```
 
-### **For-comprehensions** без **yield**
+### For-comprehensions без yield
 
 **For-comprehensions** без **yield** выполняют побочные эффекты:**
 
@@ -388,7 +388,7 @@ numbers.filter(_ % 2 == 0).foreach(n => println(s"Even number: $n"))
 
 ## Лучшие практики
 
-### Использование **for-comprehensions** вместо вложенных **flatMap**
+### Использование for-comprehensions вместо вложенных flatMap
 
 ```scala
 // Хорошо - использование for-comprehension
@@ -406,7 +406,7 @@ val result2 = option1.flatMap(a =>
 )
 ```
 
-### Использование фильтров в **for-comprehensions**
+### Использование фильтров в for-comprehensions
 
 ```scala
 // Хорошо - фильтры в for-comprehension
@@ -422,7 +422,7 @@ val user = getUser(id).filter(_.isActive)
 val posts = user.flatMap(u => getPosts(u.id)).filter(_.nonEmpty)
 ```
 
-### Использование **for-comprehensions** с различными типами
+### Использование for-comprehensions с различными типами
 
 **For-comprehensions** могут использоваться с различными типами, поддерживающими **flatMap**.
 
@@ -502,9 +502,9 @@ val result2 = for {
 
 ## Заключение
 
-## Дополнительные техники работы с **For-comprehensions**
+## Дополнительные техники работы с For-comprehensions
 
-### Работа с вложенными **For-comprehensions**
+### Работа с вложенными For-comprehensions
 
 Вложенные **For-comprehensions** позволяют обрабатывать сложные структуры данных.
 
@@ -517,7 +517,7 @@ val result = for {
 } yield city.name
 ```
 
-### Использование **Guards** в **For-comprehensions**
+### Использование Guards в For-comprehensions
 
 **Guards** позволяют фильтровать данные внутри **For-comprehensions**.
 
@@ -530,7 +530,7 @@ val result = for {
 } yield (x, y)
 ```
 
-### Комбинирование различных **Monads**
+### Комбинирование различных Monads
 
 **For-comprehensions** могут комбинировать различные типы **Monads**.
 
@@ -545,7 +545,7 @@ val result = for {
 } yield (user, profile)
 ```
 
-### Практические примеры: Вложенные **For-comprehensions**
+### Практические примеры: Вложенные For-comprehensions
 
 ```scala
 // Обработка вложенных структур
@@ -565,7 +565,7 @@ val allItems = for {
 } yield item
 ```
 
-### Практические примеры: **For-comprehensions** с **Guards**
+### Практические примеры: For-comprehensions с Guards
 
 ```scala
 // Фильтрация с использованием guards
@@ -580,7 +580,7 @@ val evenSquares = for {
 // List(16, 36, 64, 100)
 ```
 
-### Практические примеры: **For-comprehensions** для валидации
+### Практические примеры: For-comprehensions для валидации
 
 ```scala
 def validateUser(name: String, age: Int, email: String): Either[String, User] = {
@@ -592,9 +592,9 @@ def validateUser(name: String, age: Int, email: String): Either[String, User] = 
 }
 ```
 
-**For-comprehensions** являются мощным инструментом для работы с **Monads** в **Scala**. Понимание их синтаксиса, эквивалентности с **map** и **flatMap**, работы с различными типами (**Option, `Future`, Try, `Either`, List**), работы с вложенными **For-comprehensions**, использования **Guards** в **For-comprehensions**, комбинирования различных **Monads**, обработки вложенных структур, валидации данных и практических применений позволяет создавать читаемый и выразительный код. **For-comprehensions** особенно полезны для обработки вложенных структур, валидации данных, комбинирования асинхронных операций, обработки вложенных структур данных, фильтрации данных с использованием **guards**, комбинирования различных типов **Monads**, обработки вложенных коллекций и валидации с накоплением ошибок.
+**For-comprehensions** являются мощным инструментом для работы с **Monads** в **Scala**. Понимание их синтаксиса, эквивалентности с **map** и **flatMap**, работы с различными типами (Option, `Future`, Try, `Either`, List), работы с вложенными **For-comprehensions**, использования **Guards** в **For-comprehensions**, комбинирования различных **Monads**, обработки вложенных структур, валидации данных и практических применений позволяет создавать читаемый и выразительный код. **For-comprehensions** особенно полезны для обработки вложенных структур, валидации данных, комбинирования асинхронных операций, обработки вложенных структур данных, фильтрации данных с использованием **guards**, комбинирования различных типов **Monads**, обработки вложенных коллекций и валидации с накоплением ошибок.
 
-### Практические примеры: **For-comprehensions** с различными коллекциями
+### Практические примеры: For-comprehensions с различными коллекциями
 
 ```scala
 // С Set
@@ -618,7 +618,7 @@ val result = for {
 // Map("ax" -> 11, "ay" -> 21, "bx" -> 12, "by" -> 22)
 ```
 
-### Практические примеры: **For-comprehensions** для обработки ошибок
+### Практические примеры: For-comprehensions для обработки ошибок
 
 ```scala
 import scala.util.{Try, Success, Failure}
@@ -639,7 +639,7 @@ result match {
 }
 ```
 
-### Практические примеры: **For-comprehensions** для асинхронных операций
+### Практические примеры: For-comprehensions для асинхронных операций
 
 ```scala
 import scala.concurrent.{Future, ExecutionContext}

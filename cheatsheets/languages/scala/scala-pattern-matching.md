@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
-# **Scala Pattern Matching**
+# Scala Pattern Matching
 
 Кратко: полное руководство по **Pattern Matching** в **Scala**: базовые паттерны, продвинутые техники, извлечение данных.
 
@@ -38,7 +38,7 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [**Pattern Matching** с коллекциями](#pattern-matching-с-коллекциями)
   - [Списки](#списки)
   - [Векторы](#векторы)
-- [**Guards** (**охранники**)](#guards-охранники)
+- [**Guards** (охранники)](#guards-охранники)
 - [**Type Patterns**](#type-patterns)
 - [**Sealed Classes** и **Exhaustive Matching**](#sealed-classes-и-exhaustive-matching)
 - [Лучшие практики](#лучшие-практики)
@@ -55,7 +55,7 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
   - [Практический пример: Парсинг **JSON**](#практический-пример-парсинг-json)
   - [Практический пример: Обработка **AST**](#практический-пример-обработка-ast)
   - [**Pattern Matching** в циклах](#pattern-matching-в-циклах)
-  - [@ (**as-pattern**)](#as-pattern)
+  - [@ (as-pattern)](#as-pattern)
   - [Использование **guards** для сложных условий](#использование-guards-для-сложных-условий)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
@@ -71,11 +71,11 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
   - [Использование с различными типами для обработки коллекций](#использование-с-различными-типами-для-обработки-коллекций)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Pattern Matching**
+## Введение в Pattern Matching
 
 **Pattern Matching** — это мощный механизм **Scala** для декомпозиции данных и сопоставления с образцами. **Pattern Matching** позволяет элегантно обрабатывать различные случаи и извлекать данные из структур, заменяя множественные **if-else** конструкции более выразительным и безопасным синтаксисом. **Pattern Matching** является одной из ключевых особенностей функционального программирования в **Scala** и позволяет создавать декларативный код, который явно показывает все возможные случаи обработки.
 
-**Pattern Matching** в **Scala** более мощный, чем **switch**-конструкции в других языках, так как поддерживает декомпозицию сложных структур данных, **guards** (**условия**), извлечение значений и проверку типов. Компилятор **Scala** может проверить полноту **pattern matching**, что предотвращает ошибки, связанные с необработанными случаями.
+**Pattern Matching** в **Scala** более мощный, чем **switch**-конструкции в других языках, так как поддерживает декомпозицию сложных структур данных, **guards** (условия), извлечение значений и проверку типов. Компилятор **Scala** может проверить полноту **pattern matching**, что предотвращает ошибки, связанные с необработанными случаями.
 
 **Pattern Matching** — это мощный механизм **Scala** для декомпозиции данных и сопоставления с образцами. **Pattern Matching** позволяет элегантно обрабатывать различные случаи и извлекать данные из структур.
 
@@ -113,7 +113,7 @@ def matchValue(x: Any): String = x match {
 }
 ```
 
-## **Pattern Matching** с **Case Classes**
+## Pattern Matching с Case Classes
 
 **Case classes** идеально подходят для **pattern matching**:**
 
@@ -131,7 +131,7 @@ def describe(p: Person): String = p match {
 
 **Pattern matching** с **case classes** позволяет декомпозировать структуры данных и извлекать значения полей.
 
-## **Pattern Matching** с коллекциями
+## Pattern Matching с коллекциями
 
 ### Списки
 
@@ -155,7 +155,7 @@ def describeVector(vec: Vector[Int]): String = vec match {
 }
 ```
 
-## **Guards** (**охранники**)
+## Guards (охранники)
 
 **Guards** позволяют добавлять условия к паттернам, расширяя возможности **pattern matching** за пределы простого сопоставления структур. **Guards** используют ключевое слово `if` для проверки дополнительных условий после сопоставления паттерна. Это позволяет обрабатывать более сложные случаи, где одного сопоставления структуры недостаточно, и нужно проверить значения или выполнить вычисления.
 
@@ -187,7 +187,7 @@ def matchWithGuard(x: Int): String = x match {
 
 **Guards** расширяют возможности **pattern matching**, позволяя проверять дополнительные условия. Это делает **pattern matching** более гибким и выразительным, позволяя обрабатывать сложные случаи, где нужно проверить не только структуру данных, но и значения или выполнить вычисления. **Guards** особенно полезны для валидации данных, проверки диапазонов и обработки бизнес-логики.
 
-## **Type Patterns**
+## Type Patterns
 
 **Type patterns** позволяют сопоставлять типы, проверяя тип значения во время выполнения. Это особенно полезно при работе с полиморфными данными, где тип значения неизвестен на этапе компиляции, или при интеграции с **Java** кодом, где типы могут быть стерты. **Type patterns** используют синтаксис `**value**: **Type**` для проверки типа значения.
 
@@ -221,7 +221,7 @@ def matchType(x: Any): String = x match {
 
 **Type patterns** полезны для работы с полиморфными данными и обработки различных типов, но их следует использовать только когда типобезопасные альтернативы недоступны. **Type patterns** нарушают безопасность типов, так как проверка типа происходит во время выполнения, а не на этапе компиляции. Для типобезопасного **pattern matching** лучше использовать **sealed** классы и **case** классы, которые обеспечивают проверку типов на этапе компиляции.
 
-## **Sealed Classes** и **Exhaustive Matching**
+## Sealed Classes и Exhaustive Matching
 
 **Sealed classes** обеспечивают исчерпывающий анализ:**
 
@@ -241,7 +241,7 @@ def handleResult[A](result: Result[A]): String = result match {
 
 ## Лучшие практики
 
-### Использование **sealed traits** для безопасности
+### Использование sealed traits для безопасности
 
 ```scala
 // Хорошо - sealed trait обеспечивает исчерпывающий анализ
@@ -256,7 +256,7 @@ def handleStatus(status: Status): String = status match {
 }
 ```
 
-### Избегание **catch-all** паттернов
+### Избегание catch-all паттернов
 
 ```scala
 // Хорошо - явная обработка всех случаев
@@ -274,7 +274,7 @@ def matchValueBad(x: Int): String = x match {
 }
 ```
 
-### **Pattern Matching** с **Tuples**
+### Pattern Matching с Tuples
 
 **Tuples** можно декомпозировать через **pattern matching**:**
 
@@ -292,7 +292,7 @@ def processNested(tuple: ((String, Int), Boolean)): String = tuple match {
 }
 ```
 
-### **Pattern Matching** с **Option**
+### Pattern Matching с Option
 
 **Option** часто используется с **pattern matching**:**
 
@@ -310,7 +310,7 @@ val result = for {
 } yield a + b  // Some(8)
 ```
 
-### **Pattern Matching** с **Try**
+### Pattern Matching с Try
 
 **Try** можно обрабатывать через **pattern matching**:**
 
@@ -324,7 +324,7 @@ def processTry(t: Try[Int]): String = t match {
 }
 ```
 
-### **Pattern Matching** с **Either**
+### Pattern Matching с Either
 
 **Either** обрабатывается через **pattern matching**:**
 
@@ -335,7 +335,7 @@ def processEither(either: Either[String, Int]): String = either match {
 }
 ```
 
-### Вложенный **Pattern Matching**
+### Вложенный Pattern Matching
 
 **Можно вкладывать **pattern matching**:**
 
@@ -353,7 +353,7 @@ def processPerson(person: Person): String = person match {
 }
 ```
 
-### **Pattern Matching** в функциях
+### Pattern Matching в функциях
 
 **Pattern matching** можно использовать прямо в определении функции:**
 
@@ -377,7 +377,7 @@ processNumber(0)  // "zero"
 processNumber(5)  // "positive"
 ```
 
-### **Pattern Matching** с регулярными выражениями
+### Pattern Matching с регулярными выражениями
 
 ```scala
 val EmailPattern = """(\w+)@(\w+)\.(\w+)""".r
@@ -391,7 +391,7 @@ extractEmail("alice@example.com")  // Some(("alice", "example", "com"))
 extractEmail("invalid")  // None
 ```
 
-### **Pattern Matching** с типами и значениями
+### Pattern Matching с типами и значениями
 
 **Можно комбинировать проверку типов и значений:**
 
@@ -406,7 +406,7 @@ def processValue(value: Any): String = value match {
 }
 ```
 
-### Практический пример: Парсинг **JSON**
+### Практический пример: Парсинг JSON
 
 ```scala
 import play.api.libs.json._
@@ -423,7 +423,7 @@ def parseJson(json: JsValue): String = json match {
 }
 ```
 
-### Практический пример: Обработка **AST**
+### Практический пример: Обработка AST
 
 ```scala
 sealed trait Expr
@@ -444,7 +444,7 @@ val expr = Add(Multiply(Number(2), Number(3)), Variable("x"))
 evaluate(expr, Map("x" -> 5))  // 11
 ```
 
-### **Pattern Matching** в циклах
+### Pattern Matching в циклах
 
 **Pattern matching** можно использовать в циклах:**
 
@@ -466,7 +466,7 @@ val extracted = list.collect {
 // List(1, 2, 3)
 ```
 
-### @ (**as-pattern**)
+### @ (as-pattern)
 
 **Оператор @ позволяет сохранить весь паттерн:**
 
@@ -483,7 +483,7 @@ list match {
 
 ## Лучшие практики
 
-### Использование **sealed traits** для безопасности
+### Использование sealed traits для безопасности
 
 ```scala
 // Хорошо - sealed trait обеспечивает исчерпывающий анализ
@@ -498,7 +498,7 @@ def handleStatus(status: Status): String = status match {
 }
 ```
 
-### Избегание **catch-all** паттернов
+### Избегание catch-all паттернов
 
 ```scala
 // Хорошо - явная обработка всех случаев
@@ -516,7 +516,7 @@ def matchValueBad(x: Int): String = x match {
 }
 ```
 
-### Использование **guards** для сложных условий
+### Использование guards для сложных условий
 
 ```scala
 // Хорошо - использование guards для сложных условий
@@ -548,9 +548,9 @@ def processNumberBad(n: Int): String = {
 
 ## Заключение
 
-## Дополнительные техники **Pattern Matching**
+## Дополнительные техники Pattern Matching
 
-### Использование **Extractors**
+### Использование Extractors
 
 **Extractors** позволяют создавать кастомные паттерны для **pattern matching**.
 
@@ -571,7 +571,7 @@ email match {
 }
 ```
 
-### **Pattern Matching** с регулярными выражениями
+### Pattern Matching с регулярными выражениями
 
 **Pattern Matching** может использоваться с регулярными выражениями.
 
@@ -586,7 +586,7 @@ val pattern = new Regex("(\\d+)-(\\d+)")
 }
 ```
 
-### Исчерпывающий **Pattern Matching**
+### Исчерпывающий Pattern Matching
 
 Исчерпывающий **Pattern Matching** гарантирует обработку всех случаев.
 
@@ -605,7 +605,7 @@ def processStatus(status: Status): String = status match {
 }
 ```
 
-### Практические примеры: **Pattern Matching** для парсинга **JSON**
+### Практические примеры: Pattern Matching для парсинга JSON
 
 ```scala
 import play.api.libs.json._
@@ -623,7 +623,7 @@ def parseJson(json: JsValue): Option[String] = json match {
 }
 ```
 
-### Практические примеры: **Pattern Matching** для обработки **AST**
+### Практические примеры: Pattern Matching для обработки AST
 
 ```scala
 sealed trait Expr
@@ -650,7 +650,7 @@ class ExpressionEvaluator(variables: Map[String, Int]) {
 }
 ```
 
-### Практические примеры: **Pattern Matching** для обработки сообщений
+### Практические примеры: Pattern Matching для обработки сообщений
 
 ```scala
 sealed trait Message
@@ -670,9 +670,9 @@ def processMessage(message: Message): String = message match {
 }
 ```
 
-**Pattern Matching** является одним из самых мощных инструментов **Scala** для работы с данными. Понимание различных паттернов (**базовые, с case classes, коллекциями, tuples, `Option`, Try, Either**), **guards**, **type patterns**, вложенного **pattern matching**, использования **sealed classes** для исчерпывающего анализа, использования **Extractors**, **Pattern Matching** с регулярными выражениями, исчерпывающего **Pattern Matching**, парсинга **JSON**, обработки **AST**, обработки сообщений и практических применений позволяет создавать безопасный и выразительный код. **Pattern Matching** особенно полезен для декомпозиции данных, обработки различных случаев, создания читаемого кода, создания кастомных паттернов с использованием **Extractors**, работы с регулярными выражениями, гарантии обработки всех случаев с исчерпывающим **Pattern Matching**, парсинга структурированных данных и обработки различных типов сообщений.
+**Pattern Matching** является одним из самых мощных инструментов **Scala** для работы с данными. Понимание различных паттернов (базовые, с case classes, коллекциями, tuples, `Option`, Try, Either), **guards**, **type patterns**, вложенного **pattern matching**, использования **sealed classes** для исчерпывающего анализа, использования **Extractors**, **Pattern Matching** с регулярными выражениями, исчерпывающего **Pattern Matching**, парсинга **JSON**, обработки **AST**, обработки сообщений и практических применений позволяет создавать безопасный и выразительный код. **Pattern Matching** особенно полезен для декомпозиции данных, обработки различных случаев, создания читаемого кода, создания кастомных паттернов с использованием **Extractors**, работы с регулярными выражениями, гарантии обработки всех случаев с исчерпывающим **Pattern Matching**, парсинга структурированных данных и обработки различных типов сообщений.
 
-### Практические примеры: **Pattern Matching** с регулярными выражениями
+### Практические примеры: Pattern Matching с регулярными выражениями
 
 ```scala
 import scala.util.matching.Regex
@@ -687,7 +687,7 @@ def extractEmail(email: String): Option[(String, String)] = email match {
 val result = extractEmail("user@example.com")  // Some(("user", "example.com"))
 ```
 
-### Практические примеры: **Pattern Matching** для обработки **AST**
+### Практические примеры: Pattern Matching для обработки AST
 
 ```scala
 sealed trait Expr

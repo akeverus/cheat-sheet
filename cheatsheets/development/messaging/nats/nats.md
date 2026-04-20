@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **NATS**
+# NATS
 
 **NATS** — это высокопроизводительная, облачно-нативная система обмена сообщениями с открытым исходным кодом. Этот документ охватывает архитектуру, паттерны коммуникации, интеграцию с **Java**/**Spring** и **best practices** для современных приложений.
 
@@ -27,9 +27,9 @@ updated: "2026-02-11"
 - [docker-compose.yml для NATS кластера](#docker-composeyml-для-nats-кластера)
   - [**Java** клиент](#java-клиент)
 - [**Core Messaging Patterns**](#core-messaging-patterns)
-  - [**Publish-Subscribe** (**Pub-Sub**)](#publish-subscribe-pub-sub)
+  - [**Publish-Subscribe** (Pub-Sub)](#publish-subscribe-pub-sub)
   - [**Request-Reply**](#request-reply)
-- [**JetStream** (**Persistent Messaging**)](#jetstream-persistent-messaging)
+- [**JetStream** (Persistent Messaging)](#jetstream-persistent-messaging)
   - [Настройка **JetStream**](#настройка-jetstream)
   - [Работа с **JetStream**](#работа-с-jetstream)
 - [**Key-Value Store**](#key-value-store)
@@ -60,10 +60,10 @@ updated: "2026-02-11"
   - [**Production configuration**](#production-configuration)
 - [См. также](#см-также)
 
-## Основы **NATS**
+## Основы NATS
 
 ### Архитектура
-Ниже — **docker-compose** для **NATS**-кластера (**YAML**).
+Ниже — **docker-compose** для **NATS**-кластера (YAML).
 ```yaml
 # docker-compose.yml для NATS кластера
 version: '3.8'
@@ -109,7 +109,7 @@ services:
       - nats3
 ```
 
-### **Java** клиент
+### Java клиент
 ```xml
 <!-- Зависимости NATS Java-клиента -->
 <dependency>
@@ -152,9 +152,9 @@ public class NATSConfig {
 }
 ```
 
-## **Core Messaging Patterns**
+## Core Messaging Patterns
 
-### **Publish-Subscribe** (**Pub-Sub**)
+### Publish-Subscribe (Pub-Sub)
 ```java
 // Публикация событий заказа в subject (Publish-Subscribe)
 @Service
@@ -251,7 +251,7 @@ public class OrderEventSubscriber {
 }
 ```
 
-### **Request-Reply**
+### Request-Reply
 ```java
 // Сервис-обработчик: подписка на запросы и ответ через reply subject
 @Service
@@ -395,9 +395,9 @@ public class OrderService {
 }
 ```
 
-## **JetStream** (**Persistent Messaging**)
+## JetStream (Persistent Messaging)
 
-### Настройка **JetStream**
+### Настройка JetStream
 ```java
 // Конфигурация JetStream: Stream и контекст
 @Configuration
@@ -468,7 +468,7 @@ public class JetStreamInitializer {
 }
 ```
 
-### Работа с **JetStream**
+### Работа с JetStream
 ```java
 // Публикация в JetStream с подтверждением
 @Service
@@ -568,7 +568,7 @@ public class JetStreamOrderConsumer {
 }
 ```
 
-## **Key-Value Store**
+## Key-Value Store
 
 ### `KV` операции
 ```java
@@ -661,7 +661,7 @@ public class UserPreferencesService {
 }
 ```
 
-## **Object Store**
+## Object Store
 
 ### Работа с объектами
 ```java
@@ -754,9 +754,9 @@ public class DocumentService {
 }
 ```
 
-## **Service Mesh Integration**
+## Service Mesh Integration
 
-### **Service discovery** через **NATS**
+### Service discovery через NATS
 ```java
 // Регистрация сервиса и обработка входящих запросов
 @Service
@@ -871,9 +871,9 @@ public class ServiceClient {
 }
 ```
 
-## **Monitoring** и **Observability**
+## Monitoring и Observability
 
-### **Metrics collection**
+### Metrics collection
 ```java
 // Сбор метрик подключений и подписок
 @Component
@@ -932,7 +932,7 @@ public class NATSMonitor {
 }
 ```
 
-### **Distributed tracing**
+### Distributed tracing
 ```java
 // Интеграция трейсинга с NATS (контекст и интерцепторы)
 @Configuration
@@ -980,9 +980,9 @@ public class NatsMessageTracing {
 }
 ```
 
-## **Security**
+## Security
 
-### **Authentication** и **Authorization**
+### Authentication и Authorization
 ```java
 // Настройка TLS и JWT-аутентификации для NATS
 @Configuration
@@ -1050,7 +1050,7 @@ public class NATSSecurityConfig {
 }
 ```
 
-## **Performance Tuning**
+## Performance Tuning
 
 ### Оптимизация подключения
 ```java
@@ -1092,7 +1092,7 @@ public class OptimizedNATSConfig {
 }
 ```
 
-### **Batch operations**
+### Batch operations
 ```java
 @Service
 public class BatchMessageProcessor {
@@ -1189,7 +1189,7 @@ nats bench --pub 1 --sub 1 --size 128 test.latency
 nats --trace pub test.debug "Debug message"
 ```
 
-### **Health checks**
+### Health checks
 ```java
 @Component
 public class NATSHealthIndicator implements HealthIndicator {
@@ -1231,7 +1231,7 @@ public class NATSHealthIndicator implements HealthIndicator {
 
 ## Лучшие практики
 
-### **Production configuration**
+### Production configuration
 ```java
 @Configuration
 public class ProductionNATSConfig {

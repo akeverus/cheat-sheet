@@ -77,7 +77,7 @@ updated: "2026-02-11"
   - [**using**](#using)
 - [Лучшие практики](#лучшие-практики)
 
-## Руководство по **RxJava**
+## Руководство по RxJava
 
 **RxJava** — это библиотека для реактивного программирования на **Java**. Она позволяет работать с асинхронными потоками данных и событиями.
 
@@ -91,7 +91,7 @@ updated: "2026-02-11"
 - **Subscriber** — расширение **Observer** с дополнительными методами управления подпиской
 - **Subject** — одновременно **Observable** и **Observer**
 
-### Создание **Observable**
+### Создание Observable
 
 ```java
 // Создание из массива
@@ -109,7 +109,7 @@ Observable<String> observable = Observable.just("Hello");
 Observable<Integer> observable = Observable.range(1, 10);
 ```
 
-### Подписка на **Observable**
+### Подписка на Observable
 
 **Возвращаемое значение для метода подписки **Observables** — это интерфейс подписки:**
 
@@ -128,7 +128,7 @@ assertTrue(result.equals("abcdefg_Completed"));
 
 ### Основные операторы
 
-#### **map**
+#### map
 
 **map** преобразует элементы, испускаемые **Observable**, применяя функцию к каждому элементу.
 
@@ -142,7 +142,7 @@ Observable.from(letters)
 assertTrue(result.equals("ABCDEFG"));
 ```
 
-#### **flatMap**
+#### flatMap
 
 **flatMap** можно использовать для выравнивания **Observables** всякий раз, когда мы получаем вложенные **Observables**.
 
@@ -160,7 +160,7 @@ Observable.just("book1", "book2")
 assertTrue(result.equals("titletitle"));
 ```
 
-#### **scan**
+#### scan
 
 **scan** последовательно применяет функцию к каждому элементу, испускаемому **Observable**, и выдаёт каждое последующее значение.
 
@@ -175,7 +175,7 @@ Observable.from(letters)
 assertTrue(result.equals("aababc"));
 ```
 
-#### **groupBy**
+#### groupBy
 
 Группировка по оператору позволяет нам классифицировать события во входном **Observable** по выходным категориям.
 
@@ -198,7 +198,7 @@ assertTrue(EVEN[0].equals("0246810"));
 assertTrue(ODD[0].equals("13579"));
 ```
 
-#### **filter**
+#### filter
 
 **filter** испускает только те элементы наблюдаемого объекта, которые проходят предикатную проверку.
 
@@ -212,7 +212,7 @@ Observable.from(numbers)
 assertTrue(result.equals("13579"));
 ```
 
-#### **defaultIfEmpty**
+#### defaultIfEmpty
 
 **defaultIfEmpty** создает элемент из исходного **Observable** или элемент по умолчанию, если исходный **Observable** пуст:**
 
@@ -235,7 +235,7 @@ Observable.from(letters)
 assertTrue(result.equals("a"));
 ```
 
-#### **takeWhile**
+#### takeWhile
 
 **takeWhile** отбрасывает элементы, испускаемые **Observable** после того, как указанное условие становится ложным:**
 
@@ -249,7 +249,7 @@ assertTrue(sum[0] == 10);
 
 Конечно, есть и другие **Operators**, которые могли бы удовлетворить наши потребности, такие как **Contain**, **SkipWhile**, **SkipUntil**, **TakeUntil** и т. д.
 
-### **ConnectableObservable**
+### ConnectableObservable
 
 **ConnectableObservable** похож на обычный **Observable**, за исключением того, что он не начинает испускать элементы, когда на него подписаны, а только когда к нему применяется **Operator** соединения.
 
@@ -271,7 +271,7 @@ Thread.sleep(500);
 assertTrue(result[0].equals("01"));
 ```
 
-### **Single**
+### Single
 
 **Single** похож на **Observable**, который вместо серии значений выдает одно значение или уведомление об ошибке.
 
@@ -294,7 +294,7 @@ single.subscribe();
 assertTrue(result[0].equals("Hello"));
 ```
 
-### **Subject**
+### Subject
 
 **Subject** — это одновременно два элемента: **Subscriber** и **Observable**. В качестве **Subscriber Subject** может использоваться для публикации событий, происходящих из более чем одного **Observable**.
 
@@ -320,11 +320,11 @@ subject.onCompleted();
 assertTrue(subscriber1 + subscriber2 == 14);
 ```
 
-## **Single.just**() против **Single.fromCallable**()
+## Single.just() против Single.fromCallable()
 
 В этом коротком руководстве мы сравним два популярных способа создания объекта **Single** в **RxJava** и протестируем реализации с помощью **TestSubscriber**. Во-первых, мы рассмотрим фабричный метод **Single.just()** и воспользуемся им для создания экземпляра объекта. После этого мы узнаем о **Single.`fromCallable()`** и посмотрим, как использовать его для повышения производительности.
 
-### **Single.just**()
+### Single.just()
 
 **Single.just() -** это простой способ создания экземпляра **Observable.** Он принимает объект в качестве аргумента и оборачивает его внутри **Single `RxJava`:**
 
@@ -332,9 +332,9 @@ assertTrue(subscriber1 + subscriber2 == 14);
 Single<String> employee = Single.just("John Doe");
 ```
 
-Проблема с этим подходом заключается в том, что объект создаётся до подписки. Это означает, что если мы передадим тяжёлую операцию (**например, запрос к базе данных**), она выполнится немедленно, даже если никто не подписался на **Single**.
+Проблема с этим подходом заключается в том, что объект создаётся до подписки. Это означает, что если мы передадим тяжёлую операцию (например, запрос к базе данных), она выполнится немедленно, даже если никто не подписался на **Single**.
 
-### **Single.fromCallable**()
+### Single.fromCallable()
 
 **Single.`fromCallable()`** позволяет нам создавать **Single** ленивым способом. Вычисление значения происходит только при подписке:**
 
@@ -383,11 +383,11 @@ public void whenUsingFromCallable_thenLazyExecution() {
 
 Несложно попасть в ситуацию, когда **Observable** выдаёт элементы быстрее, чем подписчик может их потреблять. Мы рассмотрим различные решения проблемы растущего буфера неиспользованных предметов.
 
-### **Hot** и **Cold Observables**
+### Hot и Cold Observables
 
 У нас есть два типа **Observables** — **Hot** и **Cold** — которые совершенно разные, когда дело доходит до обработки противодавления.
 
-#### **Cold Observable**
+#### Cold Observable
 
 Холодный **Observable** испускает определённую последовательность элементов, но может начать испускать эту последовательность, когда его **Observer** сочтёт это удобным, и с любой скоростью, которую желает **Observer**, не нарушая целостность последовательности. **Cold Observable** предоставляет предметы ленивым способом.
 
@@ -405,7 +405,7 @@ Observable.range(1, 1_000_000)
 
 Холодные наблюдаемые объекты не нуждаются в какой-либо форме противодавления, потому что они работают по принципу вытягивания. Примеры элементов, испускаемых холодным **Observable**, могут включать результаты запроса к базе данных, поиска файлов или веб-запроса.
 
-#### **Hot Observable**
+#### Hot Observable
 
 Горячий **Observable** начинает генерировать элементы и испускает их сразу же после их создания. Это противоречит вытягивающей модели обработки **Cold Observables**. **Hot Observable** испускает предметы в своём собственном темпе, и его **Observers** должны не отставать.
 
@@ -487,7 +487,7 @@ source.sample(100, TimeUnit.MILLISECONDS)
 
 Помните, однако, что эти **Operators** только снижают скорость получения значения нижестоящим наблюдателем и, таким образом, они все еще могут приводить к **MissingBackpressureException.**
 
-#### **onBackpressureBuffer**
+#### onBackpressureBuffer
 
 В случае, если наши стратегии выборки или пакетирования элементов не помогают с заполнением буфера, нам необходимо реализовать стратегию обработки случаев, когда буфер заполняется.
 
@@ -515,7 +515,7 @@ Observable.range(1, 1_000_000)
 
 Обратите внимание, что последние две стратегии вызывают разрыв в потоке, поскольку они пропускают элементы. Кроме того, они не будут сигнализировать об исключении **BufferOverflowException.**
 
-#### **onBackpressureDrop**
+#### onBackpressureDrop
 
 Всякий раз, когда нижестоящий **Observer** не готов принять элемент, мы можем использовать метод **onBackpressureDrop()**, чтобы удалить этот элемент из последовательности.
 
@@ -541,7 +541,7 @@ Observable.range(1, 1_000_000)
 
 Во-первых, имейте в виду, что **Observable** обычно не генерирует исключений. Вместо этого по умолчанию **Observable** вызывает метод **onError()** своего **Observer,** уведомляя **Observer** о том, что только что произошла неисправимая ошибка, а затем завершает работу, не вызывая больше никаких методов своего **Observer.**
 
-### **onErrorReturn**
+### onErrorReturn
 
 **Метод **onErrorReturn** позволяет вернуть значение по умолчанию при возникновении ошибки:**
 
@@ -561,7 +561,7 @@ observable.subscribe(
 );
 ```
 
-### **onErrorResumeNext**
+### onErrorResumeNext
 
 **Метод **onErrorResumeNext** позволяет предоставить альтернативный **Observable** при возникновении ошибки:**
 
@@ -581,7 +581,7 @@ observable.subscribe(
 );
 ```
 
-### **onExceptionResumeNext**
+### onExceptionResumeNext
 
 **Метод **onExceptionResumeNext** работает аналогично **onErrorResumeNext**, но перехватывает только **Exception**, а не другие типы ошибок (например, **Error**):**
 
@@ -596,7 +596,7 @@ Observable<String> observable = Observable.just("1", "2", "3")
     .onExceptionResumeNext(Observable.just("fallback"));
 ```
 
-### **retry**
+### retry
 
 **Метод **retry** позволяет повторить операцию при возникновении ошибки:**
 
@@ -611,7 +611,7 @@ Observable<String> observable = Observable.just("1", "2", "3")
     .retry(3); // Повторить до 3 раз
 ```
 
-### **retryWhen**
+### retryWhen
 
 **Метод **retryWhen** позволяет определить более сложную логику повторных попыток:**
 
@@ -624,11 +624,11 @@ Observable<String> observable = Observable.error(new RuntimeException("Error"))
     );
 ```
 
-Этот пример повторяет операцию 3 раза с экспоненциальной задержкой (**1, 2, 3 секунды**).
+Этот пример повторяет операцию 3 раза с экспоненциальной задержкой (1, 2, 3 секунды).
 
-## Разница между **flatMap** и **switchMap**
+## Разница между flatMap и switchMap
 
-### **flatMap**
+### flatMap
 
 **flatMap** преобразует каждый элемент **Observable** в новый **Observable**, а затем объединяет все эти **Observable** в один поток. Все **Observable** выполняются параллельно:**
 
@@ -639,7 +639,7 @@ Observable.just("a", "b", "c")
     .subscribe(System.out::println);
 ```
 
-### **switchMap**
+### switchMap
 
 **switchMap** похож на **flatMap**, но если новый элемент приходит до завершения предыдущего **Observable**, предыдущий **Observable** отменяется, и начинается обработка нового:**
 
@@ -652,7 +652,7 @@ Observable.just("a", "b", "c")
 
 **switchMap** полезен, когда нас интересует только последнее значение, например, при поиске, где пользователь может быстро вводить текст.
 
-## Руководство по **filter**
+## Руководство по filter
 
 **filter** испускает только те элементы наблюдаемого объекта, которые проходят предикатную проверку.
 
@@ -679,7 +679,7 @@ assertTrue(result.equals("13579"));
 - **last()** — берет последний элемент
 - **elementAt(n)** — берет элемент по индексу
 
-## Руководство по **Maybe**
+## Руководство по Maybe
 
 **Maybe** — это тип **Observable**, который может испускать ноль или один элемент или завершиться с ошибкой. Это комбинация **Single** и **Completable**.
 
@@ -692,7 +692,7 @@ maybe.subscribe(
 );
 ```
 
-### Создание **Maybe**
+### Создание Maybe
 
 ```java
 // Из одного значения
@@ -708,9 +708,9 @@ Maybe<String> maybe3 = Observable.just("Hello").firstElement();
 Maybe<String> maybe4 = Single.just("Hello").toMaybe();
 ```
 
-## Руководство по **Flowable**
+## Руководство по Flowable
 
-**Flowable** — это **Observable** с поддержкой обратного давления (**backpressure**). Он реализует спецификацию **Reactive Streams**.
+**Flowable** — это **Observable** с поддержкой обратного давления (backpressure). Он реализует спецификацию **Reactive Streams**.
 
 **Flowable** следует использовать вместо **Observable**, когда:**
 - Производитель может генерировать больше данных, чем потребитель может обработать
@@ -725,7 +725,7 @@ Flowable<Integer> flowable = Flowable.range(1, 1000000)
 flowable.subscribe(System.out::println);
 ```
 
-### Преобразование **Observable** в **Flowable**
+### Преобразование Observable в Flowable
 
 ```java
 Observable<Integer> observable = Observable.range(1, 1000);
@@ -734,26 +734,26 @@ Flowable<Integer> flowable = observable.toFlowable(BackpressureStrategy.BUFFER);
 
 ### Стратегии обратного давления
 
-- **BUFFER** — буферизует все элементы (**может привести к OutOfMemoryError**)
+- **BUFFER** — буферизует все элементы (может привести к OutOfMemoryError)
 - **DROP** — отбрасывает элементы, если потребитель не успевает
 - **LATEST** — сохраняет только последний элемент
 - **ERROR** — выбрасывает **MissingBackpressureException**
 - **MISSING** — не обрабатывает обратное давление
 
-## Руководство по **Schedulers**
+## Руководство по Schedulers
 
 **Schedulers** определяют, в каком потоке будут выполняться операции **Observable**.
 
-### Типы **Schedulers**
+### Типы Schedulers
 
-1. **Schedulers.io()** — для I/O операций (**сеть, файлы**)
-2. **Schedulers.computation()** — для вычислений (**CPU-интенсивные задачи**)
+1. **Schedulers.io()** — для I/O операций (сеть, файлы)
+2. **Schedulers.computation()** — для вычислений (CPU-интенсивные задачи)
 3. **Schedulers.`newThread()`** — создает новый поток для каждой задачи
 4. **Schedulers.single()** — один поток для всех задач
 5. **Schedulers.trampoline()** — выполнение в текущем потоке
-6. **Schedulers.from(**Executor**)** — пользовательский **Executor**
+6. **Schedulers.from(Executor)** — пользовательский **Executor**
 
-### Использование **subscribeOn** и **observeOn**
+### Использование subscribeOn и observeOn
 
 **subscribeOn** определяет, в каком потоке будет выполняться **Observable**:**
 
@@ -773,7 +773,7 @@ Observable.just("Hello")
     .subscribe(System.out::println);
 ```
 
-## Руководство по настройке нескольких **Subscribers** на один **Observable**
+## Руководство по настройке нескольких Subscribers на один Observable
 
 По умолчанию, каждый **Subscriber** получает собственную копию данных от **Observable**. Это называется **Cold Observable**.
 
@@ -799,7 +799,7 @@ shared.subscribe(s -> System.out.println("Subscriber 1: " + s));
 shared.subscribe(s -> System.out.println("Subscriber 2: " + s));
 ```
 
-### **using**
+### using
 
 **using** позволяет нам связать ресурсы, такие как соединение с базой данных **JDBC,** сетевое соединение или открытые файлы, с нашими **Observables.**
 
@@ -828,10 +828,10 @@ assertTrue(result[0].equals("MyResource"));
 ## Лучшие практики
 
 - **Schedulers:** не выполнять блокирующие вызовы на `**Schedulers.io**()` без ограничения; для **CPU-bound** — `**Schedulers.computation**()`; для тяжёлых или блокирующих задач — отдельный пул; не подписываться на `**Schedulers.trampoline**()` для длинных цепочек.
-- **Обработка ошибок:** использовать `**onErrorResumeNext**`, `**onErrorReturn**`, `**doOnError**`; не оставлять подписки без `**onError**` — иначе исключения теряются; для критичных ошибок — логировать и перебрасывать.
-- **Backpressure:** для больших потоков использовать `**Flowable**` и операторы с поддержкой **backpressure**; избегать `**Observable**` с быстрым **producer** и медленным **consumer** без буферов/стратегий.
-- **Ресурсы:** связывать подписки с жизненным циклом через `**CompositeDisposable**`; отменять при уничтожении компонента; использовать `**using**()` для ресурсов с временем жизни.
-- **Тестирование:** использовать `**TestScheduler**` для детерминированных тестов; **TestObserver** / **TestSubscriber** для проверки сигналов; избегать реальных задержек в тестах.
+- **Обработка ошибок:** использовать `onErrorResumeNext`, `onErrorReturn`, `doOnError`; не оставлять подписки без `onError` — иначе исключения теряются; для критичных ошибок — логировать и перебрасывать.
+- **Backpressure:** для больших потоков использовать `Flowable` и операторы с поддержкой **backpressure**; избегать `Observable` с быстрым **producer** и медленным **consumer** без буферов/стратегий.
+- **Ресурсы:** связывать подписки с жизненным циклом через `CompositeDisposable`; отменять при уничтожении компонента; использовать `**using**()` для ресурсов с временем жизни.
+- **Тестирование:** использовать `TestScheduler` для детерминированных тестов; **TestObserver** / **TestSubscriber** для проверки сигналов; избегать реальных задержек в тестах.
 - **Избегать:** не создавать **Observable** внутри цикла без отмены подписок; не смешивать синхронные и асинхронные вызовы без чёткого контракта; не блокировать в цепочке операторов.
 
 ## См. также

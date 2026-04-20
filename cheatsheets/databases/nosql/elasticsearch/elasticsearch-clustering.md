@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Кластеризация — Управление кластером и масштабирование
+# Elasticsearch: Кластеризация — Управление кластером и масштабирование
 
 Комплексное руководство по развертыванию и управлению кластерами **Elasticsearch**: топологии, репликация, балансировка нагрузки, отказоустойчивость и масштабирование.
 
@@ -240,7 +240,7 @@ updated: "2026-02-11"
 
 ### Основные компоненты
 
-#### **Master-eligible Nodes**
+#### Master-eligible Nodes
 ```java
 public class MasterNode {
 
@@ -291,7 +291,7 @@ public class MasterNode {
 }
 ```
 
-#### **Data Nodes**
+#### Data Nodes
 ```java
 public class DataNode {
 
@@ -358,9 +358,9 @@ public class DataNode {
 }
 ```
 
-### **Cluster State**
+### Cluster State
 
-#### **State Management**
+#### State Management
 ```java
 public class ClusterStateManager {
 
@@ -435,7 +435,7 @@ public class ClusterStateManager {
 
 ## Типы узлов
 
-### **Master-eligible Nodes**
+### Master-eligible Nodes
 
 #### Конфигурация
 ```yaml
@@ -456,7 +456,7 @@ node.ingest: false
 node.ml: false
 ```
 
-#### **Master Election Process**
+#### Master Election Process
 ```java
 public class MasterElectionService {
 
@@ -505,7 +505,7 @@ public class MasterElectionService {
 }
 ```
 
-### **Data Nodes**
+### Data Nodes
 
 #### Конфигурация
 ```yaml
@@ -530,9 +530,9 @@ node.master: false
 node.ingest: false
 ```
 
-### **Coordinating Nodes**
+### Coordinating Nodes
 
-#### **Load Balancer Configuration**
+#### Load Balancer Configuration
 ```yaml
 # elasticsearch.yml for coordinating node
 node.roles: [ ]
@@ -555,9 +555,9 @@ node.master: false
 node.ingest: false
 ```
 
-### **Ingest Nodes**
+### Ingest Nodes
 
-#### **Data Processing Configuration**
+#### Data Processing Configuration
 ```yaml
 # elasticsearch.yml for ingest node
 node.roles: [ ingest ]
@@ -577,11 +577,11 @@ thread_pool.write.queue_size: 200
 thread_pool.write.size: 4
 ```
 
-## **Discovery** и формирование кластера
+## Discovery и формирование кластера
 
-### **Seed Hosts**
+### Seed Hosts
 
-#### Конфигурация **discovery**
+#### Конфигурация discovery
 ```yaml
 # elasticsearch.yml
 discovery.seed_hosts:
@@ -598,9 +598,9 @@ discovery.ec2.host_type: private_ip
 discovery.ec2.tag.ElasticSearch: elasticsearch-node
 ```
 
-### **Cluster Bootstrap**
+### Cluster Bootstrap
 
-#### **Initial Cluster Formation**
+#### Initial Cluster Formation
 ```bash
 # Start first master-eligible node
 bin/elasticsearch -E cluster.name=my-cluster \
@@ -621,7 +621,7 @@ bin/elasticsearch -E cluster.name=my-cluster \
   -E cluster.initial_master_nodes=node1,node2,node3
 ```
 
-#### **Bootstrap Validation**
+#### Bootstrap Validation
 ```bash
 # Check cluster health
 curl -X GET "localhost:9200/_cluster/health?pretty"
@@ -633,9 +633,9 @@ curl -X GET "localhost:9200/_cluster/state"
 curl -X GET "localhost:9200/_cat/nodes?v"
 ```
 
-### **Network Configuration**
+### Network Configuration
 
-#### **Cluster Communication**
+#### Cluster Communication
 ```yaml
 # elasticsearch.yml
 network.host: 0.0.0.0
@@ -655,9 +655,9 @@ xpack.security.transport.ssl.keystore.path: certs/elastic-certificates.p12
 
 ## Управление шардами
 
-### **Shard Allocation**
+### Shard Allocation
 
-#### **Allocation Strategies**
+#### Allocation Strategies
 ```java
 public class ShardAllocationService {
 
@@ -748,9 +748,9 @@ public class ShardAllocationService {
 }
 ```
 
-### **Shard Rebalancing**
+### Shard Rebalancing
 
-#### **Automatic Rebalancing**
+#### Automatic Rebalancing
 ```yaml
 # elasticsearch.yml
 cluster.routing.allocation.enable: all
@@ -769,7 +769,7 @@ cluster.routing.allocation.disk.watermark.high: 90%
 cluster.routing.allocation.disk.watermark.flood_stage: 95%
 ```
 
-#### **Manual Rebalancing**
+#### Manual Rebalancing
 ```bash
 # Check current allocation
 curl -X GET "localhost:9200/_cat/shards?v"
@@ -809,9 +809,9 @@ curl -X POST "localhost:9200/_cluster/reroute" \
 
 ## Репликация и отказоустойчивость
 
-### **Primary-Replica Model**
+### Primary-Replica Model
 
-#### **Replication Process**
+#### Replication Process
 ```java
 public class ReplicationManager {
 
@@ -915,9 +915,9 @@ public class ReplicationManager {
 }
 ```
 
-### **Consistency Levels**
+### Consistency Levels
 
-#### **Write Consistency**
+#### Write Consistency
 ```java
 public enum ConsistencyLevel {
     ONE,        // Wait for 1 replica (including primary)
@@ -962,9 +962,9 @@ public class ConsistencyManager {
 }
 ```
 
-### **Failure Recovery**
+### Failure Recovery
 
-#### **Replica Failover**
+#### Replica Failover
 ```java
 public class ReplicaFailoverService {
 
@@ -1058,9 +1058,9 @@ public class ReplicaFailoverService {
 
 ## Балансировка нагрузки
 
-### **Load Balancing Strategies**
+### Load Balancing Strategies
 
-#### **Request-Level Load Balancing**
+#### Request-Level Load Balancing
 ```java
 public class LoadBalancer {
 
@@ -1172,9 +1172,9 @@ public class NodeSelector {
 }
 ```
 
-### **Shard-Level Balancing**
+### Shard-Level Balancing
 
-#### **Shard Rebalancing**
+#### Shard Rebalancing
 ```java
 public class ShardRebalancer {
 
@@ -1344,9 +1344,9 @@ public class ShardRebalancer {
 
 ## Масштабирование кластера
 
-### **Horizontal Scaling**
+### Horizontal Scaling
 
-#### **Adding Nodes**
+#### Adding Nodes
 ```bash
 # 1. Prepare new node
 # Configure elasticsearch.yml
@@ -1368,7 +1368,7 @@ curl -X GET "localhost:9200/_cat/shards?v"
 curl -X POST "localhost:9200/_cluster/reroute?retry_failed"
 ```
 
-#### **Automated Node Provisioning**
+#### Automated Node Provisioning
 ```java
 @Service
 public class NodeProvisioningService {
@@ -1496,9 +1496,9 @@ public class NodeProvisioningService {
 }
 ```
 
-### **Vertical Scaling**
+### Vertical Scaling
 
-#### **Node Upgrade**
+#### Node Upgrade
 ```bash
 # 1. Disable shard allocation
 curl -X PUT "localhost:9200/_cluster/settings" \
@@ -1533,9 +1533,9 @@ curl -X GET "localhost:9200/_cluster/health?wait_for_status=yellow&timeout=30s"
 
 ## Мониторинг кластера
 
-### **Cluster Health API**
+### Cluster Health API
 
-#### **Health Monitoring**
+#### Health Monitoring
 ```bash
 # Basic cluster health
 curl -X GET "localhost:9200/_cluster/health?pretty"
@@ -1550,7 +1550,7 @@ curl -X GET "localhost:9200/_cluster/health?wait_for_status=green&timeout=50s"
 curl -X GET "localhost:9200/_cluster/health/my_index*?pretty"
 ```
 
-#### **Health Response Analysis**
+#### Health Response Analysis
 ```json
 {
   "cluster_name": "elasticsearch",
@@ -1571,9 +1571,9 @@ curl -X GET "localhost:9200/_cluster/health/my_index*?pretty"
 }
 ```
 
-### **Cluster Stats**
+### Cluster Stats
 
-#### **Detailed Statistics**
+#### Detailed Statistics
 ```bash
 # Cluster statistics
 curl -X GET "localhost:9200/_cluster/stats?pretty"
@@ -1588,9 +1588,9 @@ curl -X GET "localhost:9200/_stats?pretty"
 curl -X GET "localhost:9200/_cat/shards?v"
 ```
 
-### **Custom Monitoring**
+### Custom Monitoring
 
-#### **Cluster Metrics Collector**
+#### Cluster Metrics Collector
 ```java
 @Service
 public class ClusterMetricsCollector {
@@ -1730,11 +1730,11 @@ public class ClusterMetricsCollector {
 }
 ```
 
-## **Hot-`Warm`-Cold** архитектура
+## Hot-`Warm`-Cold архитектура
 
-### **Data Lifecycle Management**
+### Data Lifecycle Management
 
-#### **Index Lifecycle Policy**
+#### Index Lifecycle Policy
 ```json
 PUT _ilm/policy/hot_warm_cold_policy
 {
@@ -1795,7 +1795,7 @@ PUT _ilm/policy/hot_warm_cold_policy
 }
 ```
 
-#### **Node Attributes for Data Tiers**
+#### Node Attributes for Data Tiers
 ```yaml
 # Hot nodes
 node.name: hot-node-1
@@ -1816,9 +1816,9 @@ node.attr.box_type: cold
 node.attr.temperature: cold
 ```
 
-### **Automated Data Movement**
+### Automated Data Movement
 
-#### **Data Tier Migration**
+#### Data Tier Migration
 ```java
 @Service
 public class DataTierMigrationService {
@@ -1960,11 +1960,11 @@ public class DataTierMigrationService {
 }
 ```
 
-## **Cluster APIs**
+## Cluster APIs
 
-### **Cluster Management APIs**
+### Cluster Management APIs
 
-#### **Cluster Settings**
+#### Cluster Settings
 ```bash
 # Get cluster settings
 curl -X GET "localhost:9200/_cluster/settings?pretty"
@@ -1988,7 +1988,7 @@ curl -X PUT "localhost:9200/_cluster/settings" \
   }'
 ```
 
-#### **Cluster Reroute API**
+#### Cluster Reroute API
 ```bash
 # Manual shard allocation
 curl -X POST "localhost:9200/_cluster/reroute" \
@@ -2021,9 +2021,9 @@ curl -X POST "localhost:9200/_cluster/reroute" \
   }'
 ```
 
-### **Node APIs**
+### Node APIs
 
-#### **Node Information**
+#### Node Information
 ```bash
 # Node info
 curl -X GET "localhost:9200/_nodes"
@@ -2041,9 +2041,9 @@ curl -X GET "localhost:9200/_nodes/stats/jvm"
 curl -X GET "localhost:9200/_nodes/stats/os"
 ```
 
-### **Cluster State API**
+### Cluster State API
 
-#### **State Information**
+#### State Information
 ```bash
 # Get cluster state
 curl -X GET "localhost:9200/_cluster/state"
@@ -2057,9 +2057,9 @@ curl -X GET "localhost:9200/_cluster/state/my_index*"
 
 ## Решение проблем
 
-### **Common Cluster Issues**
+### Common Cluster Issues
 
-#### **Red Cluster Status**
+#### Red Cluster Status
 ```bash
 # Check cluster health
 curl -X GET "localhost:9200/_cluster/health?pretty"
@@ -2077,7 +2077,7 @@ curl -X GET "localhost:9200/_cat/shards?h=index,shard,prirep,state,node,unassign
 curl -X POST "localhost:9200/_cluster/reroute?retry_failed"
 ```
 
-#### **Yellow Cluster Status**
+#### Yellow Cluster Status
 ```bash
 # Yellow status means some replicas are unassigned
 # This is normal for single-node clusters
@@ -2091,7 +2091,7 @@ curl -X PUT "localhost:9200/_settings" \
   -d '{"number_of_replicas": 0}'
 ```
 
-#### **High CPU Usage**
+#### High CPU Usage
 ```bash
 # Check hot threads
 curl -X GET "localhost:9200/_nodes/hot_threads"
@@ -2103,7 +2103,7 @@ curl -X GET "localhost:9200/_cat/thread_pool?v"
 curl -X GET "localhost:9200/_cluster/state?filter_path=metadata.persistent.task.task.xpack.searchable_snapshots.cache.prewarming"
 ```
 
-#### **Memory Issues**
+#### Memory Issues
 ```bash
 # Check JVM memory
 curl -X GET "localhost:9200/_nodes/stats/jvm?pretty"
@@ -2115,9 +2115,9 @@ curl -X GET "localhost:9200/_nodes/stats/breaker?pretty"
 curl -X POST "localhost:9200/_nodes/_all/_refresh"
 ```
 
-### **Node Issues**
+### Node Issues
 
-#### **Node Not Joining Cluster**
+#### Node Not Joining Cluster
 ```bash
 # Check node logs
 tail -f /var/log/elasticsearch/elasticsearch.log
@@ -2132,7 +2132,7 @@ grep "cluster.name" /etc/elasticsearch/elasticsearch.yml
 curl -X GET "localhost:9200/_nodes"
 ```
 
-#### **Slow Node Performance**
+#### Slow Node Performance
 ```bash
 # Check disk I/O
 iostat -x 1
@@ -2147,9 +2147,9 @@ curl -X GET "localhost:9200/_nodes/stats/jvm?filter_path=nodes.*.jvm.gc"
 jstack $(pgrep -f elasticsearch) > thread_dump.txt
 ```
 
-### **Index Issues**
+### Index Issues
 
-#### **Index Creation Failures**
+#### Index Creation Failures
 ```bash
 # Check index settings
 curl -X GET "localhost:9200/_cluster/settings"
@@ -2163,7 +2163,7 @@ curl -X GET "localhost:9200/_cluster/allocation/explain" \
   -d '{"index": "problematic_index", "shard": 0, "primary": true}'
 ```
 
-#### **Search Issues**
+#### Search Issues
 ```bash
 # Enable slow log
 curl -X PUT "localhost:9200/_settings" \
@@ -2179,81 +2179,81 @@ curl -X GET "localhost:9200/_nodes/stats/indices/search?pretty"
 
 ## Лучшие практики
 
-### **Cluster Planning**
+### Cluster Planning
 
-#### 1. **Sizing Guidelines**
+#### 1. Sizing Guidelines
 - **Master nodes**: 3 **dedicated master nodes for production**
 - **Data nodes**: **Size based** on **data volume and query load**
 - **Coordinating nodes**: **Separate for heavy search workloads**
 - **Ingest nodes**: **For data preprocessing pipelines**
 
-#### 2. **Network Configuration**
+#### 2. Network Configuration
 - **Use dedicated network for cluster communication**
 - **Configure firewall rules properly**
 - **Use TLS for inter-node communication**
 - **Monitor network latency and bandwidth usage**
 
-#### 3. **Security Setup**
+#### 3. Security Setup
 - **Enable `X-Pack` Security from day one**
 - **Configure `TLS` certificates for all nodes**
 - **Set up proper authentication and authorization**
 - **Regular security audits and updates**
 
-### **Operational Best Practices**
+### Operational Best Practices
 
-#### 1. **Monitoring Setup**
+#### 1. Monitoring Setup
 - **Implement comprehensive monitoring with Prometheus**/**Grafana**
 - **Set up alerting for critical metrics**
 - **Regular health checks and trend analysis**
 - **Capacity planning based** on **metrics**
 
-#### 2. **Backup Strategy**
+#### 2. Backup Strategy
 - **Regular snapshots** to **reliable storage**
 - **Test restore procedures regularly**
 - **Multiple backup locations for disaster recovery**
 - **Encrypt sensitive backups**
 
-#### 3. **Maintenance Windows**
+#### 3. Maintenance Windows
 - **Schedule maintenance during low-traffic periods**
 - **Rolling upgrades** to **minimize downtime**
 - **Test changes** in **staging environment first**
 - **Have rollback plans for failed deployments**
 
-### **Performance Optimization**
+### Performance Optimization
 
-#### 1. **Shard Strategy**
+#### 1. Shard Strategy
 - **Right-size shards**: 10-50GB **per shard**
 - **Avoid oversharding**: **Start with fewer larger shards**
 - **Monitor shard performance and rebalance** as **needed**
 - **Use index lifecycle for data tiering**
 
-#### 2. **Query Optimization**
+#### 2. Query Optimization
 - **Use filters for cached**, **non-scoring queries**
 - **Optimize date ranges and numeric ranges**
 - **Consider search templates for repeated queries**
 - **Monitor slow queries and optimize them**
 
-#### 3. **Resource Management**
-- **Configure `heap` size appropriately** (**50% of system memory**)
+#### 3. Resource Management
+- **Configure `heap` size appropriately** (50% of system memory)
 - **Monitor `JVM` metrics and garbage collection**
 - **Tune `thread` pools based** on **workload**
 - **Use circuit breakers** to **prevent cascading failures**
 
-### **Disaster Recovery**
+### Disaster Recovery
 
-#### 1. **High Availability**
+#### 1. High Availability
 - **Multiple availability zones for geo-redundancy**
 - **Replica configuration for fault tolerance**
 - **Automated failover procedures**
 - **Regular `DR` drills**
 
-#### 2. **Backup and Restore**
+#### 2. Backup and Restore
 - **Snapshot lifecycle management**
 - **Cross-region backups for major disasters**
 - **Point-`in-time` recovery capabilities**
 - **Backup validation and integrity checks**
 
-#### 3. **Incident Response**
+#### 3. Incident Response
 - **Documented procedures for common failures**
 - **Escalation paths and communication plans**
 - **Post-mortem analysis for improvement**
@@ -2289,14 +2289,14 @@ curl -X GET "localhost:9200/_nodes/stats/indices/search?pretty"
 3. **Data replication** — обеспечение доступности данных
 4. **Recovery procedures** — восстановление после сбоев
 
-### Мониторинг и **troubleshooting**:
+### Мониторинг и troubleshooting:
 
 1. **Cluster APIs** — программный доступ к состоянию кластера
 2. **Metrics collection** — сбор и анализ метрик производительности
 3. **Alerting** — своевременное оповещение о проблемах
 4. **Diagnostic tools** — инструменты для анализа и решения проблем
 
-### **Best practices**:
+### Best practices:
 
 1. **Configuration management** — версионирование и автоматизация настроек
 2. **Security hardening** — защита кластера от угроз
@@ -2306,11 +2306,11 @@ curl -X GET "localhost:9200/_nodes/stats/indices/search?pretty"
 Управление **Elasticsearch** кластером требует глубокого понимания распределенных систем и постоянного внимания к деталям. Правильная архитектура, мониторинг и процедуры обслуживания обеспечивают высокую производительность, надежность и масштабируемость системы. 🎯
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (**завершен**)
-- ✅ **elasticsearch-indexing.md** (**завершен**)
-- ✅ **elasticsearch-queries.md** (**завершен**)
-- ✅ **elasticsearch-aggregations.md** (**завершен**)
-- ✅ **elasticsearch-clustering.md** (**завершен**)
+- ✅ **elasticsearch-basics.md** (завершен)
+- ✅ **elasticsearch-indexing.md** (завершен)
+- ✅ **elasticsearch-queries.md** (завершен)
+- ✅ **elasticsearch-aggregations.md** (завершен)
+- ✅ **elasticsearch-clustering.md** (завершен)
 - 🔄 **elasticsearch-performance.md**
 
 Последний файл — **elasticsearch-performance.md**! 🚀

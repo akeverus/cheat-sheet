@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 ---
 
-# **Redis**: Производительность
+# Redis: Производительность
 
 ## Полезные ссылки
 
@@ -81,7 +81,7 @@ related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
   - [**Load Testing Script**](#load-testing-script)
   - [**Stress Testing**](#stress-testing)
 
-## Введение в оптимизацию производительности **Redis**
+## Введение в оптимизацию производительности Redis
 
 Производительность **Redis** зависит от множества факторов: конфигурации, использования памяти, сетевых настроек, структуры данных и паттернов доступа. Понимание этих факторов критически важно для достижения максимальной производительности.
 
@@ -96,7 +96,7 @@ related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 
 ## Бенчмаркинг
 
-### **Redis Benchmark Tool**
+### Redis Benchmark Tool
 
 ```bash
 # Базовый бенчмарк
@@ -213,7 +213,7 @@ public class RedisBenchmark {
 
 ## Профилирование
 
-### **Slow Log**
+### Slow Log
 
 ```redis
 # Настройка slow log
@@ -246,7 +246,7 @@ INFO commandstats
 CONFIG RESETSTAT
 ```
 
-### **Memory Profiling**
+### Memory Profiling
 
 ```redis
 # Анализ использования памяти
@@ -302,7 +302,7 @@ zset-max-ziplist-entries 128
 zset-max-ziplist-value 64
 ```
 
-### **Lazy Free**
+### Lazy Free
 
 ```conf
 # Ленивое освобождение памяти
@@ -315,7 +315,7 @@ replica-lazy-flush yes
 
 ## Оптимизация сети
 
-### **TCP** настройки
+### TCP настройки
 
 ```conf
 # TCP backlog
@@ -328,7 +328,7 @@ tcp-keepalive 300
 timeout 0
 ```
 
-### **Client Output Buffers**
+### Client Output Buffers
 
 ```conf
 # Ограничения буферов для клиентов
@@ -337,7 +337,7 @@ client-output-buffer-limit replica 256mb 64mb 60
 client-output-buffer-limit pubsub 32mb 8mb 60
 ```
 
-### **Pipeline**
+### Pipeline
 
 ```java
 // Использование Pipeline для множественных операций
@@ -377,7 +377,7 @@ public class PipelineExample {
 
 ## Оптимизация персистентности
 
-### **RDB** оптимизация
+### RDB оптимизация
 
 ```conf
 # Отключить RDB если используется только AOF
@@ -390,7 +390,7 @@ rdbchecksum yes
 rdb-save-incremental-fsync yes
 ```
 
-### **AOF** оптимизация
+### AOF оптимизация
 
 ```conf
 # Оптимизация синхронизации
@@ -427,7 +427,7 @@ INFO keyspace
 INFO replication
 ```
 
-### **Prometheus Metrics**
+### Prometheus Metrics
 
 ```yaml
 # prometheus.yml
@@ -473,9 +473,9 @@ docker run -d \
 4. **Оптимизируйте размер данных**
 5. **Мониторьте сетевую задержку**
 
-## **Advanced Performance Tuning**
+## Advanced Performance Tuning
 
-### **Memory Optimization Strategies**
+### Memory Optimization Strategies
 
 ```conf
 # Оптимизация использования памяти
@@ -494,7 +494,7 @@ lazyfree-lazy-server-del yes
 replica-lazy-flush yes
 ```
 
-### **CPU Optimization**
+### CPU Optimization
 
 ```conf
 # Оптимизация использования CPU
@@ -506,7 +506,7 @@ io-threads-do-reads yes
 taskset -c 0,1,2,3 redis-server
 ```
 
-### **Network Optimization**
+### Network Optimization
 
 ```conf
 # Оптимизация сети
@@ -523,9 +523,9 @@ client-output-buffer-limit replica 256mb 64mb 60
 client-output-buffer-limit pubsub 32mb 8mb 60
 ```
 
-## **Performance Monitoring Tools**
+## Performance Monitoring Tools
 
-### **Redis Insight**
+### Redis Insight
 
 ```bash
 # Redis Insight - GUI инструмент для мониторинга
@@ -535,7 +535,7 @@ docker run -d \
   redislabs/redisinsight:latest
 ```
 
-### **Custom Monitoring Script**
+### Custom Monitoring Script
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -636,9 +636,9 @@ public class RedisPerformanceMonitor {
 }
 ```
 
-## **Performance Testing Scenarios**
+## Performance Testing Scenarios
 
-### **Load Testing**
+### Load Testing
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -720,9 +720,9 @@ public class LoadTester {
 }
 ```
 
-## **Optimization Patterns**
+## Optimization Patterns
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 // Java пример connection pooling
@@ -752,7 +752,7 @@ public class OptimizedRedisPool {
 }
 ```
 
-### **Batch Operations**
+### Batch Operations
 
 ```java
 // Java пример batch операций
@@ -802,7 +802,7 @@ public class BatchOperations {
 
 ## Решение проблем производительности
 
-### **High Memory Usage**
+### High Memory Usage
 
 ```redis
 # Проверить использование памяти
@@ -816,7 +816,7 @@ MEMORY STATS
 MEMORY DOCTOR
 ```
 
-### **Slow Operations**
+### Slow Operations
 
 ```redis
 # Проверить slow log
@@ -827,7 +827,7 @@ CONFIG SET slowlog-log-slower-than 10000
 CONFIG SET slowlog-max-len 128
 ```
 
-### **High CPU Usage**
+### High CPU Usage
 
 ```redis
 # Проверить использование CPU
@@ -840,9 +840,9 @@ INFO commandstats
 SLOWLOG GET 10
 ```
 
-## **Performance Tuning Guide**
+## Performance Tuning Guide
 
-### **Memory Optimization**
+### Memory Optimization
 
 ```conf
 # Оптимизация использования памяти
@@ -861,7 +861,7 @@ lazyfree-lazy-server-del yes
 replica-lazy-flush yes
 ```
 
-### **CPU Optimization**
+### CPU Optimization
 
 ```conf
 # Оптимизация использования CPU
@@ -873,7 +873,7 @@ io-threads-do-reads yes
 taskset -c 0,1,2,3 redis-server
 ```
 
-### **Network Optimization**
+### Network Optimization
 
 ```conf
 # Оптимизация сети
@@ -890,9 +890,9 @@ client-output-buffer-limit replica 256mb 64mb 60
 client-output-buffer-limit pubsub 32mb 8mb 60
 ```
 
-## **Performance Testing**
+## Performance Testing
 
-### **Load Testing Script**
+### Load Testing Script
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -974,7 +974,7 @@ public class PerformanceTester {
 }
 ```
 
-### **Stress Testing**
+### Stress Testing
 
 ```bash
 # Stress тест с redis-benchmark

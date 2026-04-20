@@ -68,7 +68,7 @@ related: ["quarkus-core.md", "quarkus-actuator.md"]
 
 ## Basic Logging
 
-### **Simple Logging**
+### Simple Logging
 
 **Простое логирование:**
 
@@ -91,7 +91,7 @@ public class LoggingService {
 }
 ```
 
-### **Log Levels**
+### Log Levels
 
 **Уровни логирования:**
 
@@ -104,7 +104,7 @@ quarkus.log.category."io.quarkus".level=WARN
 
 ## Structured Logging
 
-### **JSON Logging**
+### JSON Logging
 
 **JSON** логирование:**
 
@@ -114,7 +114,7 @@ quarkus.log.console.json=true
 quarkus.log.console.json.pretty-print=true
 ```
 
-### **Structured Log Messages**
+### Structured Log Messages
 
 **Структурированные сообщения:**
 
@@ -130,9 +130,9 @@ public class StructuredLoggingService {
 }
 ```
 
-## MDC** (`Mapped Diagnostic Context`)
+## MDC (`Mapped Diagnostic Context`)
 
-### **Using MDC**
+### Using MDC
 
 **Использование **MDC**:**
 
@@ -170,14 +170,14 @@ logger.warn("Warning message");
 logger.error("Error message", exception);
 ```
 
-### 2. Используйте **structured logging**
+### 2. Используйте structured logging
 
 ```java
 // ✅ Хорошо
 logger.info("User created: userId={}, email={}", userId, email);
 ```
 
-### 3. Используйте **MDC** для контекста
+### 3. Используйте MDC для контекста
 
 ```java
 // ✅ Хорошо
@@ -191,7 +191,7 @@ try {
 
 ## Advanced Logging Configuration
 
-### **File Appenders**
+### File Appenders
 
 **Настройка **file appenders**:**
 
@@ -202,7 +202,7 @@ quarkus.log.file.rotation.max-file-size=10M
 quarkus.log.file.rotation.max-backup-index=10
 ```
 
-### **Async Appenders**
+### Async Appenders
 
 **Асинхронные **appenders**:**
 
@@ -212,7 +212,7 @@ quarkus.log.async.queue-length=256
 quarkus.log.async.overflow=discard
 ```
 
-### **Custom Formatters**
+### Custom Formatters
 
 **Кастомные форматтеры:**
 
@@ -222,7 +222,7 @@ quarkus.log.console.format=%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %c{1}: %m%n
 
 ## Logging Performance
 
-### **Log Level Optimization**
+### Log Level Optimization
 
 **Оптимизация уровней логирования:**
 
@@ -235,7 +235,7 @@ quarkus.log.console.format=%d{yyyy-MM-dd HH:mm:ss} %-5p [%t] %c{1}: %m%n
 %dev.quarkus.log.level=DEBUG
 ```
 
-### **Structured Logging Performance**
+### Structured Logging Performance
 
 **Производительность **structured logging**:**
 
@@ -267,14 +267,14 @@ logger.warn("Warning message");
 logger.error("Error message", exception);
 ```
 
-### 2. Используйте **structured logging**
+### 2. Используйте structured logging
 
 ```java
 // ✅ Хорошо
 logger.info("User created: userId={}, email={}", userId, email);
 ```
 
-### 3. Используйте **MDC** для контекста
+### 3. Используйте MDC для контекста
 
 ```java
 // ✅ Хорошо
@@ -295,7 +295,7 @@ if (logger.isDebugEnabled()) {
 }
 ```
 
-### 5. Используйте правильные **appenders**
+### 5. Используйте правильные appenders
 
 ```properties
 # ✅ Хорошо - для production

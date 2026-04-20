@@ -24,13 +24,13 @@ updated: "2026-04-17"
 - [sql-data-analysis.pdf](sql-data-analysis.pdf) — аналитические запросы: когортный анализ, retention, pivot/unpivot, CTE, `GROUP BY ROLLUP/CUBE`
 
 ### Связанные markdown-документы
-- [databases/sql/](../../databases/sql/README.md) — основной раздел по SQL
-- [databases/sql/sql-basics.md](../../databases/sql/sql-basics.md) — базовый синтаксис (соответствует `sql-basic-commands.pdf`)
-- [databases/relational/](../../databases/relational/README.md) — реляционные СУБД
-- [interview/databases/sql-interview.md](../../interview/databases/sql-interview.md) — вопросы по SQL на собеседовании
+- [[README|databases/sql/]] — основной раздел по SQL
+- [[sql-basics|databases/sql/sql-basics.md]] — базовый синтаксис (соответствует `sql-basic-commands.pdf`)
+- [[README|databases/relational/]] — реляционные СУБД
+- [[sql-interview|interview/databases/sql-interview.md]] — вопросы по SQL на собеседовании
 
 ### Соседние разделы
-- [sheets-pdf (корень)](../README.md)
+- [[README|sheets-pdf (корень)]]
 - [INDEX.yaml](../INDEX.yaml) — машиночитаемый индекс всех PDF
 
 ### Внешние ресурсы
@@ -56,21 +56,21 @@ updated: "2026-04-17"
 
 ## Когда какой PDF использовать
 
-- **Учу SQL с нуля** — `sql-basic-commands.pdf` + [databases/sql/sql-basics.md](../../databases/sql/sql-basics.md).
+- **Учу SQL с нуля** — `sql-basic-commands.pdf` + [[sql-basics|databases/sql/sql-basics.md]].
 - **Запутался в JOIN-ах** — `sql-joins.pdf` как референс под рукой.
 - **Нужно посчитать rank / top-N per group** — `sql-window-functions.pdf`.
 - **Аналитический запрос для дашборда/отчёта** — `sql-data-analysis.pdf`.
-- **Собеседование с SQL-задачами** — все четыре PDF + [interview/databases/sql-interview.md](../../interview/databases/sql-interview.md).
+- **Собеседование с SQL-задачами** — все четыре PDF + [[sql-interview|interview/databases/sql-interview.md]].
 
 ## Маршруты чтения
 
 - **Быстрый повтор перед собеседованием (1 вечер):** `sql-basic-commands` -> `sql-joins` -> `sql-window-functions`.
 - **Middle-to-senior апгрейд:** `sql-window-functions` -> `sql-data-analysis` + практика на реальных данных в PostgreSQL.
-- **Разработка отчётов:** `sql-data-analysis` + оконные функции + CTE; затем производительность в [databases/sql/](../../databases/sql/README.md).
+- **Разработка отчётов:** `sql-data-analysis` + оконные функции + CTE; затем производительность в [[README|databases/sql/]].
 
 ## Куда идти дальше
 
-- Основной раздел SQL — [../../databases/sql/README.md](../../databases/sql/README.md)
-- PostgreSQL и диалекты — [../../databases/relational/postgresql/](../../databases/relational/postgresql/README.md)
-- SQL на собеседовании — [../../interview/databases/sql-interview.md](../../interview/databases/sql-interview.md)
-- Корень PDF-каталога — [../README.md](../README.md) и [../INDEX.yaml](../INDEX.yaml)
+- Основной раздел SQL — [[README]]
+- PostgreSQL и диалекты — [[README|../../databases/relational/postgresql/]]
+- SQL на собеседовании — [[sql-interview]]
+- Корень PDF-каталога — [[README]] и [../INDEX.yaml](../INDEX.yaml)

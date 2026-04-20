@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Apache Commons: Обширная коллекция **Java** утилит
+# Apache Commons: Обширная коллекция Java утилит
 
 **Комплексное руководство по использованию `Apache Commons` — набора высококачественных `Java` утилит, которые дополняют стандартную библиотеку `Java`.**
 
@@ -79,11 +79,11 @@ updated: "2026-02-11"
   - [Когда использовать Apache Commons](#когда-использовать-apache-commons)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **Apache Commons**
+## Введение в Apache Commons
 
 **Apache Commons** — это проект **Apache Software Foundation**, предоставляющий переиспользуемые **Java** компоненты. Это одна из старейших и наиболее зрелых библиотек утилит для **Java**.
 
-### Почему **Apache Commons**?
+### Почему Apache Commons?
 
 **Apache Commons** предлагает множество преимуществ:**
 
@@ -109,7 +109,7 @@ updated: "2026-02-11"
 
 ## Установка и структура
 
-### **Maven** зависимости
+### Maven зависимости
 
 Зависимости **Maven** для **Commons Lang** и других модулей **Apache Commons**.
 
@@ -143,7 +143,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -154,11 +154,11 @@ dependencies {
 }
 ```
 
-## **Commons Lang**
+## Commons Lang
 
 Основной модуль с расширениями для **java.lang**.
 
-### **StringUtils**
+### StringUtils
 
 Мощные утилиты для работы со строками.
 
@@ -210,7 +210,7 @@ public class StringUtilsExample {
 }
 ```
 
-### **ObjectUtils**
+### ObjectUtils
 
 Утилиты для работы с объектами.
 
@@ -253,7 +253,7 @@ public class ObjectUtilsExample {
 }
 ```
 
-### **ArrayUtils**
+### ArrayUtils
 
 Утилиты для работы с массивами.
 
@@ -314,7 +314,7 @@ public class ArrayUtilsExample {
 }
 ```
 
-### **NumberUtils**
+### NumberUtils
 
 Утилиты для работы с числами.
 
@@ -362,7 +362,7 @@ public class NumberUtilsExample {
 }
 ```
 
-### **RandomStringUtils** и **RandomUtils**
+### RandomStringUtils и RandomUtils
 
 Генерация случайных значений.
 
@@ -402,7 +402,7 @@ public class RandomUtilsExample {
 }
 ```
 
-### **ClassUtils**
+### ClassUtils
 
 Утилиты для работы с классами.
 
@@ -440,11 +440,11 @@ public class ClassUtilsExample {
 }
 ```
 
-## **Commons** `IO`
+## Commons `IO`
 
 Утилиты для работы с файлами и `IO` операциями.
 
-### **FileUtils**
+### FileUtils
 
 Операции с файлами.
 
@@ -496,7 +496,7 @@ public class FileUtilsExample {
 }
 ```
 
-### **IOUtils**
+### IOUtils
 
 Утилиты для работы с потоками.
 
@@ -547,7 +547,7 @@ public class IOUtilsExample {
 }
 ```
 
-### **FilenameUtils**
+### FilenameUtils
 
 Утилиты для работы с именами файлов.
 
@@ -592,11 +592,11 @@ public class FilenameUtilsExample {
 }
 ```
 
-## **Commons Collections**
+## Commons Collections
 
 Расширенные коллекции и утилиты.
 
-### **CollectionUtils**
+### CollectionUtils
 
 Утилиты для работы с коллекциями.
 
@@ -646,7 +646,7 @@ public class CollectionUtilsExample {
 }
 ```
 
-### **MapUtils**
+### MapUtils
 
 Утилиты для работы с **Map**.
 
@@ -690,7 +690,7 @@ public class MapUtilsExample {
 }
 ```
 
-### **Bag**
+### Bag
 
 Коллекция, которая может содержать дубликаты с подсчетом количества.
 
@@ -730,7 +730,7 @@ public class BagExample {
 }
 ```
 
-### **MultiMap**
+### MultiMap
 
 **Map**, которая может содержать несколько значений для одного ключа.
 
@@ -774,11 +774,11 @@ public class MultiMapExample {
 }
 ```
 
-## **Commons Codec**
+## Commons Codec
 
 Кодирование и декодирование данных.
 
-### **Base64**
+### Base64
 
 Кодирование **Base64**.
 
@@ -818,7 +818,7 @@ public class Base64Example {
 }
 ```
 
-### **Hex**
+### Hex
 
 Шестнадцатеричное кодирование.
 
@@ -854,7 +854,7 @@ public class HexExample {
 }
 ```
 
-### **DigestUtils**
+### DigestUtils
 
 Хэширование данных.
 
@@ -901,11 +901,11 @@ public class DigestUtilsExample {
 }
 ```
 
-## **Commons Compress**
+## Commons Compress
 
 Работа с архивами.
 
-### **Zip**
+### Zip
 
 ```java
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -981,7 +981,7 @@ public class ZipExample {
 }
 ```
 
-## **Commons CSV**
+## Commons CSV
 
 Обработка **CSV** файлов.
 
@@ -1045,7 +1045,7 @@ public class CSVExample {
 
 ## Другие полезные модули
 
-### **Commons Math**
+### Commons Math
 
 Математические функции и статистика.
 
@@ -1083,7 +1083,7 @@ public class MathExample {
 }
 ```
 
-### **Commons CLI**
+### Commons CLI
 
 Парсинг командной строки.
 
@@ -1145,7 +1145,7 @@ public class CLIExample {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
 ### Автоматическая конфигурация
 
@@ -1202,7 +1202,7 @@ public class FileProcessingService {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Использование правильных модулей
 
@@ -1254,7 +1254,7 @@ public class BadUsageExample {
 }
 ```
 
-### 2. **Null-safety**
+### 2. Null-safety
 
 ```java
 // ✅ Хорошо - использование null-safe методов
@@ -1436,7 +1436,7 @@ public class DataProcessingService {
 
 **Apache Commons** — это фундаментальная библиотека для **Java** проектов, которая значительно расширяет возможности стандартной библиотеки и упрощает разработку.
 
-### Преимущества **Apache Commons**
+### Преимущества Apache Commons
 
 1. **Широкая функциональность** — Более 50 различных модулей
 2. **Высокое качество** — Тщательно протестированный код
@@ -1456,7 +1456,7 @@ public class DataProcessingService {
 5. **DigestUtils паттерн** — Для хэширования и безопасности
 6. **Base64 паттерн** — Для кодирования данных
 
-### Когда использовать **Apache Commons**
+### Когда использовать Apache Commons
 
 **Рекомендуется:**
 - **Enterprise** приложения
@@ -1466,10 +1466,10 @@ public class DataProcessingService {
 - Проекты с **legacy** кодом
 
 **Особенно полезно:**
-- При работе с **CSV** файлами (**Commons CSV**)
-- При архивных операциях (**Commons Compress**)
-- При математических расчетах (**Commons Math**)
-- При парсинге командной строки (**Commons CLI**)
+- При работе с **CSV** файлами (Commons CSV)
+- При архивных операциях (Commons Compress)
+- При математических расчетах (Commons Math)
+- При парсинге командной строки (Commons CLI)
 
 ### Сравнение с альтернативами
 

@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tuning.md"]
 ---
 
-# **PostgreSQL**: Репликация
+# PostgreSQL: Репликация
 
 ## Полезные ссылки
 
@@ -32,7 +32,7 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 - [Введение в репликацию **PostgreSQL**](#введение-в-репликацию-postgresql)
   - [Типы репликации](#типы-репликации)
   - [Преимущества репликации](#преимущества-репликации)
-- [**Streaming Replication** (**физическая репликация**)](#streaming-replication-физическая-репликация)
+- [**Streaming Replication** (физическая репликация)](#streaming-replication-физическая-репликация)
   - [Архитектура **Streaming Replication**](#архитектура-streaming-replication)
   - [Настройка **Primary** сервера](#настройка-primary-сервера)
   - [Создание базовой реплики](#создание-базовой-реплики)
@@ -49,7 +49,7 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
   - [Архитектура **Master-Slave**](#архитектура-master-slave)
   - [Настройка нескольких **Standby** серверов](#настройка-нескольких-standby-серверов)
   - [Проверка всех реплик](#проверка-всех-реплик)
-- [Настройка **Master-Master** (**Bidirectional Replication**)](#настройка-master-master-bidirectional-replication)
+- [Настройка **Master-Master** (Bidirectional Replication)](#настройка-master-master-bidirectional-replication)
   - [Архитектура **Master-Master**](#архитектура-master-master)
   - [Настройка двунаправленной репликации](#настройка-двунаправленной-репликации)
   - [Обработка конфликтов](#обработка-конфликтов)
@@ -97,13 +97,13 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
   - [**Maintenance**](#maintenance)
   - [**Performance**](#performance)
 
-## Введение в репликацию **PostgreSQL**
+## Введение в репликацию PostgreSQL
 
 Репликация в **PostgreSQL** позволяет создавать копии базы данных на других серверах для обеспечения высокой доступности, распределения нагрузки и резервного копирования. **PostgreSQL** поддерживает несколько типов репликации, каждый из которых подходит для различных сценариев использования.
 
 ### Типы репликации
 
-1. **Streaming `Replication` (**физическая репликация**)**: Синхронная или асинхронная репликация на уровне файлов **WAL**
+1. **Streaming `Replication` (физическая репликация)**: Синхронная или асинхронная репликация на уровне файлов **WAL**
 2. **Logical Replication**: Репликация на уровне логических изменений данных
 3. **Cascading Replication**: Многоуровневая репликация через промежуточные серверы
 4. **Synchronous Replication**: Синхронная репликация с гарантией консистентности
@@ -116,11 +116,11 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 - **Географическое распределение**: Реплики в разных регионах для снижения задержек
 
 
-## **Streaming Replication** (**физическая репликация**)
+## Streaming Replication (физическая репликация)
 
-**Streaming Replication** — это метод физической репликации, при котором изменения передаются в реальном времени через **WAL** (**Write-`Ahead` Log**) файлы.
+**Streaming Replication** — это метод физической репликации, при котором изменения передаются в реальном времени через **WAL** (Write-`Ahead` Log) файлы.
 
-### Архитектура **Streaming Replication**
+### Архитектура Streaming Replication
 
 ```text
 ┌─────────────────┐         ┌─────────────────┐
@@ -134,9 +134,9 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
    WAL Files                  Apply WAL
 ```
 
-### Настройка **Primary** сервера
+### Настройка Primary сервера
 
-#### 1. Настройка **postgresql.conf**
+#### 1. Настройка postgresql.conf
 
 **Основные параметры для **WAL** и репликации:**
 
@@ -160,7 +160,7 @@ wal_keep_segments = 32
 hot_standby = on
 ```
 
-#### 2. Настройка **pg_hba.conf**
+#### 2. Настройка pg_hba.conf
 
 ```conf
 # Разрешить подключение для репликации
@@ -179,30 +179,30 @@ CREATE USER replicator WITH REPLICATION PASSWORD 'secure_password';
 
 ### Создание базовой реплики
 
-#### 1. Остановка **PostgreSQL** на **Standby** сервере
+#### 1. Остановка PostgreSQL на Standby сервере
 
 ```bash
 sudo systemctl stop postgresql
 ```
 
-#### 2. Резервное копирование с **Primary** сервера
+#### 2. Резервное копирование с Primary сервера
 
 ```bash
 # На Primary сервере
 pg_basebackup -h primary_host -D /var/lib/postgresql/data -U replicator -v -P -W
 ```
 
-#### 3. Настройка **recovery.conf** (**PostgreSQL 12+**)
+#### 3. Настройка recovery.conf (PostgreSQL 12+)
 
-В **PostgreSQL** 12+ файл `**recovery.conf**` был удален. Настройки переносятся в `**postgresql.conf**` и `**postgresql.auto.conf**`.
+В **PostgreSQL** 12+ файл `recovery.conf` был удален. Настройки переносятся в `postgresql.conf` и `postgresql.auto.conf`.
 
-**Создайте файл `**standby.signal**`:**
+**Создайте файл `standby.signal`:**
 
 ```bash
 touch /var/lib/postgresql/data/standby.signal
 ```
 
-**Настройте `**postgresql.conf**` на **Standby**:**
+**Настройте `postgresql.conf` на **Standby**:**
 
 ```conf
 # Настройки репликации
@@ -210,9 +210,9 @@ primary_conninfo = 'host=primary_host port=5432 user=replicator password=secure_
 primary_slot_name = 'standby_slot'
 ```
 
-#### 4. Альтернативный способ (**PostgreSQL < 12**)
+#### 4. Альтернативный способ (PostgreSQL < 12)
 
-**Для старых версий создайте `**recovery.conf**`:**
+**Для старых версий создайте `recovery.conf`:**
 
 ```conf
 standby_mode = 'on'
@@ -221,7 +221,7 @@ primary_slot_name = 'standby_slot'
 trigger_file = '/tmp/postgresql.trigger'
 ```
 
-### Создание **replication slot**
+### Создание replication slot
 
 **Replication slots** предотвращают удаление **WAL** файлов, необходимых для репликации.
 
@@ -245,7 +245,7 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 
 ### Мониторинг репликации
 
-#### На **Primary** сервере
+#### На Primary сервере
 
 ```sql
 -- Проверить статус репликации
@@ -272,7 +272,7 @@ SELECT
 FROM pg_replication_slots;
 ```
 
-#### На **Standby** сервере
+#### На Standby сервере
 
 ```sql
 -- Проверить статус репликации
@@ -316,20 +316,20 @@ WHERE sync_state = 'sync';
 ```
 
 
-## **Logical Replication**
+## Logical Replication
 
 **Logical Replication** позволяет реплицировать данные на уровне таблиц, а не на уровне файлов. Это полезно для выборочной репликации, миграций и обновлений.
 
-### Преимущества **Logical Replication**
+### Преимущества Logical Replication
 
 - Выборочная репликация таблиц
 - Репликация между разными версиями **PostgreSQL**
 - Возможность фильтрации данных
 - Репликация в другие системы
 
-### Настройка **Logical Replication**
+### Настройка Logical Replication
 
-#### 1. Настройка **Primary** сервера
+#### 1. Настройка Primary сервера
 
 ```conf
 # В postgresql.conf
@@ -353,7 +353,7 @@ FOR TABLE users, orders
 WITH (publish = 'insert,update,delete');
 ```
 
-#### 3. Создание подписки на **Standby**
+#### 3. Создание подписки на Standby
 
 ```sql
 -- На Standby сервере создать таблицы (структура должна совпадать)
@@ -370,7 +370,7 @@ SELECT * FROM pg_subscription;
 SELECT * FROM pg_subscription_rel;
 ```
 
-### Мониторинг **Logical Replication**
+### Мониторинг Logical Replication
 
 ```sql
 -- На Primary сервере
@@ -416,9 +416,9 @@ DROP SUBSCRIPTION my_subscription;
 ```
 
 
-## Настройка **Master-Slave**
+## Настройка Master-Slave
 
-### Архитектура **Master-Slave**
+### Архитектура Master-Slave
 
 ```text
 ┌─────────────┐
@@ -435,9 +435,9 @@ DROP SUBSCRIPTION my_subscription;
 └──────────┘   └──────────┘   └──────────┘
 ```
 
-### Настройка нескольких **Standby** серверов
+### Настройка нескольких Standby серверов
 
-#### 1. На **Primary** сервере
+#### 1. На Primary сервере
 
 ```conf
 # Увеличить количество слотов
@@ -456,9 +456,9 @@ SELECT pg_create_physical_replication_slot('standby2_slot');
 SELECT pg_create_physical_replication_slot('standby3_slot');
 ```
 
-#### 3. Настройка каждой **Standby** реплики
+#### 3. Настройка каждой Standby реплики
 
-**На каждой **Standby** сервере настройте уникальный `**primary_slot_name**`:**
+**На каждой **Standby** сервере настройте уникальный `primary_slot_name`:**
 
 ```conf
 # Standby 1
@@ -485,11 +485,11 @@ ORDER BY application_name;
 ```
 
 
-## Настройка **Master-Master** (**Bidirectional Replication**)
+## Настройка Master-Master (Bidirectional Replication)
 
 **PostgreSQL** не поддерживает нативную **Master-Master** репликацию, но можно использовать логическую репликацию для двунаправленной синхронизации.
 
-### Архитектура **Master-Master**
+### Архитектура Master-Master
 
 ```text
 ┌─────────────┐         ┌─────────────┐
@@ -500,7 +500,7 @@ ORDER BY application_name;
 
 ### Настройка двунаправленной репликации
 
-#### 1. Настройка **Server** A
+#### 1. Настройка Server A
 
 ```sql
 -- Создать публикацию
@@ -512,7 +512,7 @@ CONNECTION 'host=server_b port=5432 dbname=mydb user=replicator password=secure_
 PUBLICATION pub_server_b;
 ```
 
-#### 2. Настройка **Server** B
+#### 2. Настройка Server B
 
 ```sql
 -- Создать публикацию
@@ -555,7 +555,7 @@ EXECUTE FUNCTION resolve_replication_conflict();
 
 ### Ключевые метрики
 
-#### 1. **Lag** (**задержка репликации**)
+#### 1. Lag (задержка репликации)
 
 ```sql
 -- Задержка в байтах
@@ -592,7 +592,7 @@ SELECT
 FROM pg_stat_replication;
 ```
 
-#### 3. **Replication Slots**
+#### 3. Replication Slots
 
 ```sql
 -- Информация о слотах
@@ -647,11 +647,11 @@ exit 0
 ```
 
 
-## **Failover** и автоматическое переключение
+## Failover и автоматическое переключение
 
-### Ручной **failover**
+### Ручной failover
 
-#### 1. Промоутинг **Standby** в **Primary**
+#### 1. Промоутинг Standby в Primary
 
 ```bash
 # На Standby сервере
@@ -665,11 +665,11 @@ touch /tmp/postgresql.trigger
 
 После промоутинга обновите подключения приложений на новый **Primary** сервер.
 
-### Автоматический **failover** с **Patroni**
+### Автоматический failover с Patroni
 
 **Patroni** — это решение для автоматического управления репликацией и **failover**.
 
-#### Установка **Patroni**
+#### Установка Patroni
 
 ```bash
 pip install patroni[etcd]
@@ -679,7 +679,7 @@ pip install patroni[consul]
 pip install patroni[zookeeper]
 ```
 
-#### Конфигурация **Patroni**
+#### Конфигурация Patroni
 
 ```yaml
 # patroni.yml
@@ -732,13 +732,13 @@ tags:
   nosync: false
 ```
 
-#### Запуск **Patroni**
+#### Запуск Patroni
 
 ```bash
 patroni patroni.yml
 ```
 
-### Автоматический **failover** с **pg_auto_failover**
+### Автоматический failover с pg_auto_failover
 
 **pg_auto_failover** — это расширение **PostgreSQL** для автоматического **failover**.
 
@@ -752,7 +752,7 @@ sudo apt-get install postgresql-14-auto-failover
 sudo yum install postgresql14-auto-failover
 ```
 
-#### Настройка **Monitor**
+#### Настройка Monitor
 
 ```bash
 # Создать monitor
@@ -762,7 +762,7 @@ pg_auto_failover create monitor \
   --pgdata /var/lib/postgresql/data/monitor
 ```
 
-#### Настройка **Primary**
+#### Настройка Primary
 
 ```bash
 pg_auto_failover create postgres \
@@ -772,7 +772,7 @@ pg_auto_failover create postgres \
   --monitor 'postgres://autoctl_node@monitor_host:5432/pg_auto_failover'
 ```
 
-#### Настройка **Standby**
+#### Настройка Standby
 
 ```bash
 pg_auto_failover create postgres \
@@ -793,7 +793,7 @@ pg_auto_failover status --monitor 'postgres://autoctl_node@monitor_host:5432/pg_
 
 ### Настройка производительности
 
-#### 1. Оптимизация **WAL**
+#### 1. Оптимизация WAL
 
 ```conf
 # Увеличить размер WAL буфера
@@ -915,7 +915,7 @@ psql -c "SHOW max_wal_senders;"
 psql -c "\du replicator"
 ```
 
-### Проблема: Большой **lag** репликации
+### Проблема: Большой lag репликации
 
 **Причины:**
 - Медленная сеть
@@ -932,7 +932,7 @@ SELECT pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) AS lag_bytes;
 -- Оптимизировать запросы на Primary
 ```
 
-### Проблема: **Replication slot** переполнен
+### Проблема: Replication slot переполнен
 
 **Причины:**
 - **Standby** сервер долго не подключался
@@ -947,13 +947,13 @@ SELECT * FROM pg_replication_slots;
 SELECT pg_drop_replication_slot('old_slot_name');
 ```
 
-## **Advanced Replication Scenarios**
+## Advanced Replication Scenarios
 
-### **Cascading Replication**
+### Cascading Replication
 
 **Cascading Replication** позволяет создавать цепочку реплик, где одна реплика может быть источником для другой.
 
-#### Настройка **Cascading Replication**
+#### Настройка Cascading Replication
 
 ```bash
 # Primary -> Standby1 -> Standby2
@@ -973,7 +973,7 @@ primary_conninfo = 'host=standby1_host port=5432 user=replicator password=secure
 primary_slot_name = 'standby2_slot'
 ```
 
-### **Delayed Replication**
+### Delayed Replication
 
 **Delayed Replication** позволяет задержать применение изменений на реплике, что полезно для защиты от ошибок.
 
@@ -982,7 +982,7 @@ primary_slot_name = 'standby2_slot'
 recovery_min_apply_delay = '1h'  # Задержка 1 час
 ```
 
-### **Selective Replication**
+### Selective Replication
 
 **Использование **Logical Replication** для выборочной репликации таблиц:**
 
@@ -997,9 +997,9 @@ CREATE PUBLICATION schema_pub
 FOR ALL TABLES IN SCHEMA public;
 ```
 
-## **Replication Monitoring and Management**
+## Replication Monitoring and Management
 
-### **Comprehensive Replication Dashboard**
+### Comprehensive Replication Dashboard
 
 ```sql
 -- Создать представление для комплексного мониторинга репликации
@@ -1025,7 +1025,7 @@ FROM pg_stat_replication r;
 SELECT * FROM replication_dashboard;
 ```
 
-### **Automated Replication Health Checks**
+### Automated Replication Health Checks
 
 ```sql
 -- Функция для проверки здоровья репликации
@@ -1085,7 +1085,7 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM check_replication_health();
 ```
 
-### **Replication Slot Management**
+### Replication Slot Management
 
 ```sql
 -- Функция для управления replication slots
@@ -1124,9 +1124,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Replication Performance Tuning**
+## Replication Performance Tuning
 
-### **Optimizing WAL Generation**
+### Optimizing WAL Generation
 
 ```conf
 # Оптимизация генерации WAL
@@ -1149,7 +1149,7 @@ commit_delay = 0
 commit_siblings = 5
 ```
 
-### **Network Optimization**
+### Network Optimization
 
 ```conf
 # Оптимизация сетевых параметров для репликации
@@ -1165,7 +1165,7 @@ wal_sender_timeout = 60s
 wal_receiver_timeout = 60s
 ```
 
-### **Standby Server Optimization**
+### Standby Server Optimization
 
 ```conf
 # Оптимизация Standby сервера
@@ -1188,9 +1188,9 @@ effective_cache_size = 12GB
 work_mem = 64MB
 ```
 
-## **Advanced Failover Strategies**
+## Advanced Failover Strategies
 
-### **Automated Failover Script**
+### Automated Failover Script
 
 ```bash
 #!/bin/bash
@@ -1232,7 +1232,7 @@ echo "OK: Replication is healthy"
 exit 0
 ```
 
-### **Failover with pg_rewind**
+### Failover with pg_rewind
 
 **pg_rewind** позволяет быстро синхронизировать старый **Primary** с новым **Primary** после **failover**.
 
@@ -1258,9 +1258,9 @@ primary_conninfo = 'host=new_primary port=5432 user=replicator password=secure_p
 sudo systemctl start postgresql
 ```
 
-## **Logical Replication Advanced**
+## Logical Replication Advanced
 
-### **Filtered Logical Replication**
+### Filtered Logical Replication
 
 ```sql
 -- Репликация с фильтрацией данных
@@ -1281,7 +1281,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Cross-Version Logical Replication**
+### Cross-Version Logical Replication
 
 ```sql
 -- Репликация между разными версиями PostgreSQL
@@ -1296,7 +1296,7 @@ CONNECTION 'host=pg12_host port=5432 dbname=mydb user=replicator password=secure
 PUBLICATION cross_version_pub;
 ```
 
-### **Logical Replication Monitoring**
+### Logical Replication Monitoring
 
 ```sql
 -- Детальный мониторинг Logical Replication
@@ -1316,30 +1316,30 @@ LEFT JOIN pg_stat_subscription st ON s.oid = st.subid;
 SELECT * FROM logical_replication_status;
 ```
 
-## **Replication Best Practices Summary**
+## Replication Best Practices Summary
 
-### **Setup**
+### Setup
 
 1. **Использовать replication slots** для предотвращения потери **WAL** файлов
-2. **Настроить правильный wal_level** (**replica для streaming, logical для logical replication**)
+2. **Настроить правильный wal_level** (replica для streaming, logical для logical replication)
 3. **Создать отдельного пользователя** для репликации
 4. **Использовать SSL** для защищенной репликации
 
-### **Monitoring**
+### Monitoring
 
-1. **Мониторить lag** регулярно (**байты и время**)
+1. **Мониторить lag** регулярно (байты и время)
 2. **Проверять replication slots** на переполнение
 3. **Отслеживать статус репликации** автоматически
 4. **Настроить алерты** на проблемы
 
-### **Maintenance**
+### Maintenance
 
 1. **Регулярно тестировать failover** процедуры
 2. **Обновлять реплики** при обновлении **Primary**
 3. **Очищать старые replication slots** при необходимости
 4. **Документировать конфигурацию** репликации
 
-### **Performance**
+### Performance
 
 1. **Оптимизировать `WAL` генерацию** на **Primary**
 2. **Настроить параллельную репликацию** на **Standby**

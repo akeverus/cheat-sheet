@@ -50,7 +50,7 @@ updated: "2026-02-11"
   - [2. Используйте **object** для **singleton** случаев](#2-используйте-object-для-singleton-случаев)
   - [3. Предпочитайте **sealed** классы **enum**'ам для сложных данных](#3-предпочитайте-sealed-классы-enumам-для-сложных-данных)
   - [4. Используйте **generic** параметры для типобезопасности](#4-используйте-generic-параметры-для-типобезопасности)
-  - [Практические примеры: **AST** (**Abstract Syntax Tree**)](#практические-примеры-ast-abstract-syntax-tree)
+  - [Практические примеры: **AST** (Abstract Syntax Tree)](#практические-примеры-ast-abstract-syntax-tree)
   - [Практические примеры: **HTTP** запросы и ответы](#практические-примеры-http-запросы-и-ответы)
   - [Практические примеры: Валидация форм](#практические-примеры-валидация-форм)
 - [Troubleshooting](#troubleshooting)
@@ -64,7 +64,7 @@ updated: "2026-02-11"
 
 **Sealed** классы идеально подходят для моделирования состояний, результатов операций, вариантов выбора и других случаев, когда набор возможных типов ограничен.
 
-## **Sealed** классы
+## Sealed классы
 
 ### Базовое определение
 
@@ -86,7 +86,7 @@ fun handleResult(result: Result<String>) {
 }
 ```
 
-### **Sealed** классы для состояний
+### Sealed классы для состояний
 
 ```kotlin
 // Ограниченный набор состояний сети (idle, loading, success, error)
@@ -116,7 +116,7 @@ class NetworkManager {
 }
 ```
 
-### **Sealed** классы для выражения действий
+### Sealed классы для выражения действий
 
 ```kotlin
 sealed class Action {
@@ -143,7 +143,7 @@ class ActionHandler {
 }
 ```
 
-### **Sealed** классы для парсинга
+### Sealed классы для парсинга
 
 ```kotlin
 sealed class ParseResult<out T> {
@@ -175,7 +175,7 @@ sealed class Expression {
 }
 ```
 
-## **Sealed** интерфейсы
+## Sealed интерфейсы
 
 **Sealed** интерфейсы позволяют создавать ограниченные иерархии для интерфейсов, особенно полезны для множественного наследования.
 
@@ -201,7 +201,7 @@ fun handleResponse(response: Response) {
 }
 ```
 
-### **Sealed** интерфейсы для различных доменов
+### Sealed интерфейсы для различных доменов
 
 ```kotlin
 sealed interface PaymentMethod {
@@ -244,11 +244,11 @@ fun authenticate(method: Authenticated) {
 }
 ```
 
-## **When** выражения и **exhaustiveness**
+## When выражения и exhaustiveness
 
 Одна из главных особенностей **sealed** классов — проверка полноты **when**-выражений.
 
-### **Exhaustive when**
+### Exhaustive when
 
 ```kotlin
 sealed class Direction {
@@ -277,7 +277,7 @@ fun move(direction: Direction): Unit = when (direction) {
 }
 ```
 
-### **Non-exhaustive when**
+### Non-exhaustive when
 
 ```kotlin
 fun handlePartial(direction: Direction) {
@@ -290,7 +290,7 @@ fun handlePartial(direction: Direction) {
 }
 ```
 
-### **When** как выражение
+### When как выражение
 
 ```kotlin
 sealed class Status {
@@ -311,7 +311,7 @@ val priority = getStatusPriority(Status.Active) // 1
 
 ## Паттерны использования
 
-### **State Machine**
+### State Machine
 
 ```kotlin
 sealed class State {
@@ -343,7 +343,7 @@ class StateMachine {
 }
 ```
 
-### **Command Pattern**
+### Command Pattern
 
 ```kotlin
 sealed class Command {
@@ -394,7 +394,7 @@ class CommandProcessor {
 }
 ```
 
-### **Visitor Pattern**
+### Visitor Pattern
 
 ```kotlin
 sealed class Node {
@@ -426,7 +426,7 @@ fun Node.accept(visitor: NodeVisitor<Long>): Long = when (this) {
 }
 ```
 
-### **Event System**
+### Event System
 
 ```kotlin
 sealed class Event {
@@ -453,7 +453,7 @@ class EventProcessor {
 }
 ```
 
-### **Algebraic Data Types**
+### Algebraic Data Types
 
 ```kotlin
 sealed class Either<out L, out R> {
@@ -495,9 +495,9 @@ result.fold(
 )
 ```
 
-## Расширения для **sealed** классов
+## Расширения для sealed классов
 
-### **Extension** функции
+### Extension функции
 
 ```kotlin
 sealed class ValidationResult {
@@ -520,7 +520,7 @@ fun ValidationResult.getOrThrow(): Unit = when (this) {
 class ValidationException(val errors: List<String>) : Exception(errors.joinToString())
 ```
 
-### **Utility** функции
+### Utility функции
 
 ```kotlin
 sealed class Result<out T, out E> {
@@ -549,9 +549,9 @@ sealed class Result<out T, out E> {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Используйте **sealed** классы для ограниченных наборов типов
+### 1. Используйте sealed классы для ограниченных наборов типов
 
 ```kotlin
 // ✅ Хорошо - ограниченный набор состояний
@@ -570,7 +570,7 @@ class Processing : Status()
 // Можно добавить бесконечно много подклассов
 ```
 
-### 2. Используйте **object** для **singleton** случаев
+### 2. Используйте object для singleton случаев
 
 ```kotlin
 sealed class Response {
@@ -584,7 +584,7 @@ sealed class Response {
 }
 ```
 
-### 3. Предпочитайте **sealed** классы **enum**'ам для сложных данных
+### 3. Предпочитайте sealed классы enum'ам для сложных данных
 
 ```kotlin
 // ✅ Sealed классы для случаев с данными
@@ -600,7 +600,7 @@ enum class Priority {
 }
 ```
 
-### 4. Используйте **generic** параметры для типобезопасности
+### 4. Используйте generic параметры для типобезопасности
 
 ```kotlin
 sealed class Result<out T> {
@@ -614,7 +614,7 @@ sealed class Result<out T> {
 }
 ```
 
-### Практические примеры: **AST** (`Abstract Syntax Tree`)
+### Практические примеры: AST (`Abstract Syntax Tree`)
 
 ```kotlin
 sealed class Expr {
@@ -646,7 +646,7 @@ class ExpressionEvaluator(private val variables: Map<String, Int>) {
 }
 ```
 
-### Практические примеры: **HTTP** запросы и ответы
+### Практические примеры: HTTP запросы и ответы
 
 ```kotlin
 sealed class HttpRequest {

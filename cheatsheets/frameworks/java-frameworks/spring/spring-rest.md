@@ -150,9 +150,9 @@ public class SimpleRestController {
 }
 ```
 
-## Как читать заголовки **HTTP** в контроллерах?
+## Как читать заголовки HTTP в контроллерах?
 
-### Использование @**RequestHeader**
+### Использование @RequestHeader
 
 Мы можем использовать аннотацию **@RequestHeader** для чтения заголовков **HTTP:**
 
@@ -170,7 +170,7 @@ public class HeaderController {
 }
 ```
 
-### Использование **HttpServletRequest**
+### Использование HttpServletRequest
 
 **Мы также можем использовать **HttpServletRequest** для чтения заголовков:**
 
@@ -206,9 +206,9 @@ public HttpHeaders readAllHeadersHttp(@RequestHeader HttpHeaders headers) {
 }
 ```
 
-## Создание **REST API**
+## Создание REST API
 
-### Основные **HTTP** методы
+### Основные HTTP методы
 
 **REST API** использует стандартные методы **HTTP** для выполнения операций:**
 
@@ -218,7 +218,7 @@ public HttpHeaders readAllHeadersHttp(@RequestHeader HttpHeaders headers) {
 - **PATCH** — частичное обновление ресурсов
 - **DELETE** — удаление ресурсов
 
-### Пример **REST** контроллера
+### Пример REST контроллера
 
 Давайте создадим простой **REST** контроллер для работы с сущностью **Book:**
 
@@ -269,7 +269,7 @@ public class BookController {
 }
 ```
 
-### Использование **ResponseEntity**
+### Использование ResponseEntity
 
 **ResponseEntity** позволяет нам полностью контролировать **HTTP**-ответ, включая статус код и заголовки:**
 
@@ -285,7 +285,7 @@ public ResponseEntity<Book> getBookWithCustomHeaders() {
 }
 ```
 
-### **HTTP** статус коды
+### HTTP статус коды
 
 **Spring** предоставляет удобные методы для создания ответов с различными статус кодами:**
 
@@ -321,9 +321,9 @@ public class ResourceNotFoundException extends RuntimeException {
 
 Также обратите внимание, что это не проверенные исключения, а исключения времени выполнения — в соответствии с практиками и идиомами **Spring**.
 
-## Руководство @**Controller** и @**RestController**
+## Руководство @Controller и @RestController
 
-### @**Controller**
+### @Controller
 
 **@Controller** — это стандартная аннотация для контроллеров **Spring MVC**. Контроллеры, аннотированные **@Controller**, обычно возвращают имя представления, которое **Spring MVC** использует для рендеринга **HTML**-страницы.
 
@@ -340,9 +340,9 @@ public class BookController {
 }
 ```
 
-### @**ResponseBody**
+### @ResponseBody
 
-Если мы хотим, чтобы контроллер возвращал данные напрямую (**например, JSON**),** мы можем использовать аннотацию **@**ResponseBody**:**
+Если мы хотим, чтобы контроллер возвращал данные напрямую (например, JSON),** мы можем использовать аннотацию **@**ResponseBody**:**
 
 ```java
 @Controller
@@ -363,7 +363,7 @@ public class SimpleBookController {
 
 Мы аннотировали метод обработки запроса с помощью **`@ResponseBody`.** Эта аннотация позволяет автоматически сериализовать возвращаемый объект в **HttpResponse.**
 
-### @**RestController**
+### @RestController
 
 **@RestController** — это специализированная версия контроллера. Он включает аннотации **@Controller** и **@ResponseBody** и, как следствие, упрощает реализацию контроллера:**
 
@@ -387,12 +387,12 @@ public class SimpleBookRestController {
 
 Каждый метод обработки запросов класса контроллера автоматически сериализует возвращаемые объекты в **HttpResponse.**
 
-### Различия между @**Controller** и @**RestController**
+### Различия между @Controller и @RestController
 
 | @**Controller** | @**RestController** |
 | --- | --- |
-| Используется для веб-приложений с представлениями (**HTML**) | Используется для **REST API** |
-| Возвращает имя представления | Возвращает данные (**JSON, `XML` и т.д.**) |
+| Используется для веб-приложений с представлениями (HTML) | Используется для **REST API** |
+| Возвращает имя представления | Возвращает данные (JSON, `XML` и т.д.) |
 | Требует **@ResponseBody** для возврата данных | Автоматически возвращает данные |
 | Используется с **ModelAndView** | Используется с **ResponseEntity** или объектами |
 
@@ -402,7 +402,7 @@ public class SimpleBookRestController {
 
 В этом кратком руководстве мы изучим основы регистрации входящих запросов с использованием фильтра регистрации **Spring Boot**.
 
-### Настройка **Logging Filter**
+### Настройка Logging Filter
 
 Начнем с добавления зависимости **spring-`boot-starter`-web** в наш **pom.xml:**
 
@@ -413,7 +413,7 @@ public class SimpleBookRestController {
 </dependency>
 ```
 
-### Создание **Custom Filter**
+### Создание Custom Filter
 
 **Мы можем создать собственный фильтр для логирования запросов:**
 
@@ -441,7 +441,7 @@ public class RequestLoggingFilter implements Filter {
 }
 ```
 
-### Использование **CommonsRequestLoggingFilter**
+### Использование CommonsRequestLoggingFilter
 
 **Spring Boot** предоставляет **CommonsRequestLoggingFilter** для логирования запросов:**
 
@@ -468,9 +468,9 @@ public class RequestLoggingFilterConfig {
 logging.level.org.springframework.web.filter.CommonsRequestLoggingFilter=DEBUG
 ```
 
-## Руководство по @**Async**
+## Руководство по @Async
 
-### Включение поддержки @**Async**
+### Включение поддержки @Async
 
 **Для использования **@Async** нам нужно включить поддержку асинхронного выполнения:**
 
@@ -492,7 +492,7 @@ public class AsyncConfig {
 }
 ```
 
-### Использование @**Async** в контроллере
+### Использование @Async в контроллере
 
 **Мы можем использовать **@Async** для асинхронного выполнения методов:**
 
@@ -525,7 +525,7 @@ public class AsyncController {
 }
 ```
 
-### Обработка исключений в @**Async**
+### Обработка исключений в @Async
 
 Для обработки исключений в асинхронных методах мы можем создать **AsyncUncaughtExceptionHandler:**
 
@@ -552,9 +552,9 @@ public class AsyncConfig implements AsyncConfigurer {
 }
 ```
 
-## Руководство по @**ExceptionHandler** и @**ControllerAdvice**
+## Руководство по @ExceptionHandler и @ControllerAdvice
 
-### @**ExceptionHandler** на уровне контроллера
+### @ExceptionHandler на уровне контроллера
 
 **Мы можем использовать **@ExceptionHandler** для обработки исключений на уровне контроллера:**
 
@@ -573,7 +573,7 @@ public class BookController {
 }
 ```
 
-### @**ControllerAdvice** для глобальной обработки
+### @ControllerAdvice для глобальной обработки
 
 Для глобальной обработки исключений мы можем использовать **`@ControllerAdvice`:**
 
@@ -607,7 +607,7 @@ public class GlobalExceptionHandler {
 }
 ```
 
-### Расширение **ResponseEntityExceptionHandler**
+### Расширение ResponseEntityExceptionHandler
 
 **Мы можем расширить **ResponseEntityExceptionHandler** для обработки стандартных исключений **Spring MVC**:**
 
@@ -648,11 +648,11 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 
 Хотя **ResponseEntity** очень инструмент, нам не следует злоупотреблять им. В простых случаях есть другие варианты, которые удовлетворяют наши потребности, и они приводят к гораздо более чистому коду**.
 
-## Преобразование **Entity** в **DTO**
+## Преобразование Entity в DTO
 
-В этом руководстве мы будем обрабатывать преобразования, которые должны произойти между внутренними сущностями приложения **Spring** и внешними **DTO** (**объектами передачи данных**), которые публикуются обратно для клиента.
+В этом руководстве мы будем обрабатывать преобразования, которые должны произойти между внутренними сущностями приложения **Spring** и внешними **DTO** (объектами передачи данных), которые публикуются обратно для клиента.
 
-### Использование **ModelMapper**
+### Использование ModelMapper
 
 Давайте начнем с представления основной библиотеки, которую мы собираемся использовать для выполнения преобразования сущности в **DTO, `ModelMapper`.**
 
@@ -666,7 +666,7 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
 </dependency>
 ```
 
-### Конфигурация **ModelMapper**
+### Конфигурация ModelMapper
 
 Давайте создадим **bean**-компонент **ModelMapper:**
 
@@ -685,7 +685,7 @@ public class ModelMapperConfig {
 }
 ```
 
-### Преобразование **Entity** в **DTO**
+### Преобразование Entity в DTO
 
 **Давайте создадим пример сущности и **DTO**:**
 
@@ -783,7 +783,7 @@ public class BookController {
 }
 ```
 
-### Преимущества использования **DTO**
+### Преимущества использования DTO
 
 **Использование **DTO** имеет несколько преимуществ:**
 
@@ -792,9 +792,9 @@ public class BookController {
 3. **Безопасность** — мы можем скрыть чувствительные данные
 4. **Версионирование** — мы можем создавать разные версии **API** с разными **DTO**
 
-## Продвинутые возможности **REST API**
+## Продвинутые возможности REST API
 
-### **Content Negotiation**
+### Content Negotiation
 
 ```java
 @RestController
@@ -836,7 +836,7 @@ public class ProductController {
 }
 ```
 
-### **Matrix Variables**
+### Matrix Variables
 
 ```java
 @RestController
@@ -875,7 +875,7 @@ public class ProductMatrixController {
 }
 ```
 
-### **Custom HTTP Methods**
+### Custom HTTP Methods
 
 ```java
 @RestController
@@ -918,7 +918,7 @@ public class CustomMethodController {
 }
 ```
 
-### **Conditional Requests**
+### Conditional Requests
 
 ```java
 @RestController
@@ -1205,9 +1205,9 @@ class ErrorResponse {
 }
 ```
 
-## Безопасность **REST API**
+## Безопасность REST API
 
-### **JWT Authentication**
+### JWT Authentication
 
 ```java
 @RestController
@@ -1298,7 +1298,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 }
 ```
 
-### **CORS Configuration**
+### CORS Configuration
 
 ```java
 @Configuration
@@ -1333,7 +1333,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 }
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 ```java
 @RestController
@@ -1394,9 +1394,9 @@ public class RateLimitingAspect {
 }
 ```
 
-## Кэширование в **REST API**
+## Кэширование в REST API
 
-### **HTTP Caching**
+### HTTP Caching
 
 ```java
 @RestController
@@ -1462,7 +1462,7 @@ public class CachedProductController {
 }
 ```
 
-### **Conditional GET**
+### Conditional GET
 
 ```java
 @RestController
@@ -1509,9 +1509,9 @@ public class ConditionalController {
 }
 ```
 
-## Тестирование **REST** контроллеров
+## Тестирование REST контроллеров
 
-### **Unit** тестирование
+### Unit тестирование
 
 ```java
 @WebMvcTest(UserController.class)
@@ -1721,7 +1721,7 @@ public class UserControllerIntegrationTest {
 }
 ```
 
-### Тестирование с **Security**
+### Тестирование с Security
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -1797,9 +1797,9 @@ public class JwtIntegrationTest {
 }
 ```
 
-## Документация **API**
+## Документация API
 
-### **OpenAPI**/**Swagger**
+### OpenAPI/Swagger
 
 ```java
 @Configuration
@@ -1912,7 +1912,7 @@ public class ProductController {
 }
 ```
 
-### **Spring REST Docs**
+### Spring REST Docs
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -2024,7 +2024,7 @@ public class ApiDocumentationTest {
 
 ## Мониторинг и метрики
 
-### **Actuator Endpoints**
+### Actuator Endpoints
 
 ```java
 @Configuration
@@ -2110,7 +2110,7 @@ public class AdminController {
 }
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 ```java
 @Service
@@ -2218,9 +2218,9 @@ public class ApiMetricsAspect {
 }
 ```
 
-## Версионирование **API**
+## Версионирование API
 
-### **URI Versioning**
+### URI Versioning
 
 ```java
 @RestController
@@ -2264,7 +2264,7 @@ public class UserControllerV2 {
 }
 ```
 
-### **Header Versioning**
+### Header Versioning
 
 ```java
 @RestController
@@ -2321,7 +2321,7 @@ public class UserController {
 }
 ```
 
-### **Parameter Versioning**
+### Parameter Versioning
 
 ```java
 @RestController
@@ -2468,7 +2468,7 @@ public class HateoasConfig {
 
 ## Файловые операции
 
-### **File Upload**
+### File Upload
 
 ```java
 @RestController
@@ -2624,7 +2624,7 @@ public class FileController {
 
 ## WebSocket интеграция
 
-### **WebSocket** с **STOMP**
+### WebSocket с STOMP
 
 ```java
 @Configuration
@@ -2719,7 +2719,7 @@ public class WebSocketEventController {
 }
 ```
 
-### **SSE** (`Server-Sent Events`)
+### SSE (`Server-Sent Events`)
 
 ```java
 @RestController
@@ -2812,7 +2812,7 @@ public class EventService {
 
 ## Асинхронные операции
 
-### **CompletableFuture** в **REST** контроллерах
+### CompletableFuture в REST контроллерах
 
 ```java
 @RestController
@@ -2970,7 +2970,7 @@ public class AsyncService {
 
 ## Лучшие практики
 
-### 1. Правильная структура **URL**
+### 1. Правильная структура URL
 
 ```java
 // ХОРОШО: RESTful URLs
@@ -2991,7 +2991,7 @@ GET    /api/userDetails?id=123
 POST   /api/updateUser
 ```
 
-### 2. **HTTP** статус коды
+### 2. HTTP статус коды
 
 ```java
 @PostMapping
@@ -3021,7 +3021,7 @@ public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
 }
 ```
 
-### 3. **Content Negotiation**
+### 3. Content Negotiation
 
 ```java
 @GetMapping(value = "/export/{id}", produces = {
@@ -3063,7 +3063,7 @@ public ResponseEntity<Resource> exportUser(@PathVariable Long id,
 }
 ```
 
-### 4. **API Evolution** (**версионирование**)
+### 4. API Evolution (версионирование)
 
 ```java
 // URI versioning
@@ -3098,7 +3098,7 @@ public class UserController {
 }
 ```
 
-### 5. **Security best practices**
+### 5. Security best practices
 
 ```java
 @RestController
@@ -3133,7 +3133,7 @@ public class SecureController {
 }
 ```
 
-### 6. **Performance optimization**
+### 6. Performance optimization
 
 ```java
 @RestController
@@ -3199,7 +3199,7 @@ public class OptimizedController {
 }
 ```
 
-### 7. **Error handling patterns**
+### 7. Error handling patterns
 
 ```java
 @RestControllerAdvice
@@ -3258,7 +3258,7 @@ public class GlobalExceptionHandler {
 }
 ```
 
-### 8. **Documentation best practices**
+### 8. Documentation best practices
 
 ```java
 @RestController

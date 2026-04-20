@@ -17,9 +17,9 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Backtracking](backtracking.md)
-- [Branch and Bound](branch-and-bound.md)
-- [Разделяй и властвуй](divide-and-conquer.md)
-- [Динамическое программирование](dynamic-programming.md)
-- [Жадные алгоритмы](greedy-algorithms.md)
+- [[backtracking]]
+- [[branch-and-bound|Branch and Bound]]
+- [[divide-and-conquer|Разделяй и властвуй]]
+- [[dynamic-programming|Динамическое программирование]]
+- [[greedy-algorithms|Жадные алгоритмы]]
 

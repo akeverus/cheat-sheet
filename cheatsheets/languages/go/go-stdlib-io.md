@@ -81,7 +81,7 @@ updated: "2026-02-06"
 
 ## Введение в I/O
 
-Пакеты `io`, `os` и `**bufio**` предоставляют мощные инструменты для работы с вводом-выводом в Go. Понимание работы с I/O критично для создания приложений, работающих с файлами и потоками данных.
+Пакеты `io`, `os` и `bufio` предоставляют мощные инструменты для работы с вводом-выводом в Go. Понимание работы с I/O критично для создания приложений, работающих с файлами и потоками данных.
 
 ### Основные интерфейсы
 
@@ -90,11 +90,11 @@ updated: "2026-02-06"
 3. **io.Closer** — закрытие ресурсов
 4. **io.ReadWriter** — комбинация **Reader** и **Writer**
 
-## **io.Reader** и **io.Writer**
+## io.Reader и io.Writer
 
-Интерфейсы `**io.Reader**` и `**io.Writer**` являются основой работы с I/O в Go.
+Интерфейсы `io.Reader` и `io.Writer` являются основой работы с I/O в Go.
 
-### **io.Reader**
+### io.Reader
 
 ```go
 import "io"
@@ -114,7 +114,7 @@ func readData(r io.Reader) ([]byte, error) {
 }
 ```
 
-### **io.Writer**
+### io.Writer
 
 ```go
 import "io"
@@ -308,9 +308,9 @@ filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 })
 ```
 
-## **Buffered** I/O
+## Buffered I/O
 
-Пакет `**bufio**` предоставляет буферизованный I/O для повышения производительности.
+Пакет `bufio` предоставляет буферизованный I/O для повышения производительности.
 
 ### Буферизованное чтение
 
@@ -369,7 +369,7 @@ writer.WriteString("Hello, World!\n")
 writer.Write([]byte("Data\n"))
 ```
 
-### **Scanner** для чтения строк
+### Scanner для чтения строк
 
 ```go
 import (
@@ -453,7 +453,7 @@ if err != nil {
 }
 ```
 
-### **MultiWriter**
+### MultiWriter
 
 ```go
 import "io"
@@ -474,7 +474,7 @@ func main() {
 }
 ```
 
-### **MultiReader**
+### MultiReader
 
 ```go
 import "io"
@@ -493,7 +493,7 @@ func main() {
 }
 ```
 
-### **TeeReader**
+### TeeReader
 
 ```go
 import "io"
@@ -510,7 +510,7 @@ func teeReaderExample() {
 }
 ```
 
-### **LimitReader**
+### LimitReader
 
 ```go
 import "io"
@@ -524,7 +524,7 @@ func limitReaderExample() {
 }
 ```
 
-### **SectionReader**
+### SectionReader
 
 ```go
 import "io"
@@ -540,7 +540,7 @@ func sectionReaderExample() {
 }
 ```
 
-### **Pipe**
+### Pipe
 
 ```go
 import "io"
@@ -1104,7 +1104,7 @@ func ReadFilesParallel(filenames []string) (map[string][]byte, error) {
 }
 ```
 
-### Практические примеры: **MultiWriter** для записи в несколько мест
+### Практические примеры: MultiWriter для записи в несколько мест
 
 ```go
 func WriteToMultiple(writers ...io.Writer) io.Writer {
@@ -1182,7 +1182,7 @@ func ReadFileWithProgress(filename string) error {
 }
 ```
 
-### Практические примеры: Телескопирование **reader**/**writer**
+### Практические примеры: Телескопирование reader/writer
 
 ```go
 type TeeReader struct {
@@ -1374,7 +1374,7 @@ func ReadFileWithLimit(filename string, maxSize int64) ([]byte, error) {
 }
 ```
 
-### Практические примеры: Запись с буферизацией и **flush**
+### Практические примеры: Запись с буферизацией и flush
 
 ```go
 type BufferedWriter struct {
@@ -1513,7 +1513,7 @@ func (aio *AsyncIO) Start(ctx context.Context) error {
 }
 ```
 
-### Практические примеры: **Pipeline** обработки данных
+### Практические примеры: Pipeline обработки данных
 
 ```go
 func ProcessPipeline(input io.Reader, processors []func([]byte) []byte, output io.Writer) error {

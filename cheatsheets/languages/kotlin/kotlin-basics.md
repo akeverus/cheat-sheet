@@ -291,7 +291,7 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 
 **Kotlin** — это статически типизированный язык программирования, разработанный компанией **JetBrains**. Он полностью совместим с **Java** и предназначен для создания надежного, лаконичного и безопасного кода.
 
-### Основные особенности **Kotlin**
+### Основные особенности Kotlin
 
 - **Null Safety**: Система типов, предотвращающая **NullPointerException**
 - **Conciseness**: Меньше **boilerplate** кода по сравнению с **Java**
@@ -301,54 +301,54 @@ related: ["java/java-basics.md", "kotlin/kotlin-concurrency-basics.md", "kotlin/
 - **DSL Support**: Отличная поддержка создания **DSL**
 - **Inline Functions**: **Zero-cost abstractions**
 
-### История версий **Kotlin**
+### История версий Kotlin
 
-#### **Kotlin** `1.0` (`2016`)
+#### Kotlin `1.0` (`2016`)
 - Стабильный релиз
 - **Android** поддержка
 - **Java interoperability**
 
-#### **Kotlin** `1.1` (`2016`)
-- **Coroutines** (**experimental**)
+#### Kotlin `1.1` (`2016`)
+- **Coroutines** (experimental)
 - **Inline functions improvements**
 - **JavaScript backend**
 
-#### **Kotlin** `1.2` (`2017`)
+#### Kotlin `1.2` (`2017`)
 - **Multiplatform projects**
 - **Array literals** in **annotations**
 - **lateinit improvements**
 
-#### **Kotlin** `1.3` (`2018`)
+#### Kotlin `1.3` (`2018`)
 - **Coroutines stable**
 - **Inline classes**
 - **Unsigned integers**
 
-#### **Kotlin** `1.4` (`2020`)
+#### Kotlin `1.4` (`2020`)
 - **SAM conversions for Kotlin interfaces**
 - **Mixed named and positional arguments**
 - **Trailing comma**
 
-#### **Kotlin** `1.5` (`2021`)
+#### Kotlin `1.5` (`2021`)
 - **JVM records support**
 - **Sealed interfaces**
 - **Inline classes improvements**
 
-#### **Kotlin** `1.6` (`2021`)
+#### Kotlin `1.6` (`2021`)
 - **New Kotlin K2 compiler**
 - **Exhaustive when expressions**
 - **Type inference improvements**
 
-#### **Kotlin** `1.7` (`2022`)
+#### Kotlin `1.7` (`2022`)
 - **Definitely non-nullable types**
 - **Builder inference**
 - **Opt-in requirements**
 
-#### **Kotlin** `1.8` (`2022`)
+#### Kotlin `1.8` (`2022`)
 - **Improved JVM records support**
-- **Value classes** (**inline classes successor**)
+- **Value classes** (inline classes successor)
 - **Context receivers**
 
-#### **Kotlin** `1.9` (`2023`)
+#### Kotlin `1.9` (`2023`)
 - **Auto-generated enum entries**
 - **Data objects**
 - **Improved generics**
@@ -393,7 +393,7 @@ val pair = "key" to "value"
 val triple = Triple("first", "second", "third")
 ```
 
-### **Null Safety**
+### Null Safety
 
 ```kotlin
 // Nullable типы
@@ -602,7 +602,7 @@ dog.move()      // Buddy runs, energy: 105
 dog.sleep()     // Buddy is sleeping
 ```
 
-### **Generics**
+### Generics
 
 ```kotlin
 // Generic класс
@@ -866,7 +866,7 @@ sealed class Result<T> {
 }
 ```
 
-### Расширения (**Extensions**)
+### Расширения (Extensions)
 
 ```kotlin
 // Extension функция
@@ -952,7 +952,7 @@ fun demonstrateExtensions() {
 }
 ```
 
-### **Data Classes** и **Sealed Classes**
+### Data Classes и Sealed Classes
 
 ```kotlin
 // Data class
@@ -1044,7 +1044,7 @@ fun processNetworkState(state: NetworkState): String = when (state) {
 }
 ```
 
-### **Inline Classes** и **Value Classes**
+### Inline Classes и Value Classes
 
 ```kotlin
 // Inline class (Kotlin 1.3+)
@@ -1094,7 +1094,7 @@ fun findUser(users: UserIdMap, id: UserId): User? {
 }
 ```
 
-### Корутины (**Coroutines**)
+### Корутины (Coroutines)
 
 ```kotlin
 // Запуск корутин: launch, async, delay
@@ -1243,7 +1243,7 @@ fun contextExample() = runBlocking {
 }
 ```
 
-### **DSL** (**Domain `Specific` Language**)
+### DSL (Domain `Specific` Language)
 
 ```kotlin
 // Простой DSL для HTML билдера
@@ -1477,7 +1477,7 @@ fun runUserTests() {
 }
 ```
 
-### Инлайновые функции (**Inline Functions**)
+### Инлайновые функции (Inline Functions)
 
 ```kotlin
 // Простая inline функция
@@ -1546,7 +1546,7 @@ fun demonstrateInlineFunctions() {
 }
 ```
 
-### Оператор перегрузка (**Operator Overloading**)
+### Оператор перегрузка (Operator Overloading)
 
 ```kotlin
 // Вектор класс с перегрузкой операторов
@@ -1700,7 +1700,7 @@ fun demonstrateOperatorOverloading() {
 }
 ```
 
-### **Reflection API**
+### Reflection API
 
 ```kotlin
 // Reflection API: импорты и базовая интроспекция класса
@@ -1900,13 +1900,13 @@ data class Person(var name: String, var age: Int) {
   [**Generics**](#generics)
   [Коллекции](#коллекции)
   [Исключения](#исключения)
-  [Расширения (**Extensions**)](#расширения-extensions)
+  [Расширения (Extensions)](#расширения-extensions)
   [**Data Classes** и **Sealed Classes**](#data-classes-и-sealed-classes)
   [**Inline Classes** и **Value Classes**](#inline-classes-и-value-classes)
-  [Корутины (**Coroutines**)](#корутины-coroutines)
-  [**DSL** (**Domain Specific Language**)](#dsl-domain-specific-language)
-  [Инлайновые функции (**Inline Functions**)](#инлайновые-функции-inline-functions)
-  [Оператор перегрузка (**Operator Overloading**)](#оператор-перегрузка-operator-overloading)
+  [Корутины (Coroutines)](#корутины-coroutines)
+  [**DSL** (Domain Specific Language)](#dsl-domain-specific-language)
+  [Инлайновые функции (Inline Functions)](#инлайновые-функции-inline-functions)
+  [Оператор перегрузка (Operator Overloading)](#оператор-перегрузка-operator-overloading)
   [**Reflection API**](#reflection-api)
 [Ссылки по расширенным темам](#ссылки-по-расширенным-темам)
 [Функции работы с коллекциями](#функции-работы-с-коллекциями)
@@ -1916,16 +1916,16 @@ data class Person(var name: String, var age: Int) {
   [Группировка](#группировка)
   [Сортировка](#сортировка)
   [Агрегатные операции](#агрегатные-операции)
-[**Inline** функции (**встроенные**)](#inline-функции-встроенные)
+[**Inline** функции (встроенные)](#inline-функции-встроенные)
   [Проблема с производительностью лямбд](#проблема-с-производительностью-лямбд)
   [Использование **inline** функций](#использование-inline-функций)
   [**noinline**](#noinline)
   [Возврат из **inline** функций](#возврат-из-inline-функций)
-[**Inline** классы (**встроенные**)](#inline-классы-встроенные)
+[**Inline** классы (встроенные)](#inline-классы-встроенные)
   [Определение **inline** класса](#определение-inline-класса)
   [Свойства и функции в **inline** классах](#свойства-и-функции-в-inline-классах)
-[**Reified** функции (**овеществлённые**)](#reified-функции-овеществлённые)
-[Руководство по **Type Alias** (**псевдонимы**)](#руководство-по-type-alias-псевдонимы)
+[**Reified** функции (овеществлённые)](#reified-функции-овеществлённые)
+[Руководство по **Type Alias** (псевдонимы)](#руководство-по-type-alias-псевдонимы)
 [Руководство по **Delegate**](#руководство-по-delegate)
   [Стандартные делегаты](#стандартные-делегаты)
   [**Lazy** делегат](#lazy-делегат)
@@ -1970,61 +1970,61 @@ data class Person(var name: String, var age: Int) {
 [Расширение **Data** класса](#расширение-data-класса)
 [Сравнение объектов данных](#сравнение-объектов-данных)
 [Принципы **SOLID**](#принципы-solid)
-[**Type System** (**Система типов**)](#type-system-система-типов)
+[**Type System** (Система типов)](#type-system-система-типов)
   [Базовые типы](#базовые-типы)
   [**Any** — корневой тип](#any-корневой-тип)
   [**Unit** — тип возвращаемого значения](#unit-тип-возвращаемого-значения)
   [**Nothing** — тип без значений](#nothing-тип-без-значений)
-  [**Smart Casts** (**Умные приведения**)](#smart-casts-умные-приведения)
-[**Type Aliases** (**Псевдонимы типов**)](#type-aliases-псевдонимы-типов)
+  [**Smart Casts** (Умные приведения)](#smart-casts-умные-приведения)
+[**Type Aliases** (Псевдонимы типов)](#type-aliases-псевдонимы-типов)
   [Базовое использование](#базовое-использование)
   [Псевдонимы для сложных типов](#псевдонимы-для-сложных-типов)
   [Практические примеры](#практические-примеры)
 [**Object Expressions** и **Object Declarations**](#object-expressions-и-object-declarations)
-  [**Object Expressions** (**Анонимные объекты**)](#object-expressions-анонимные-объекты)
-  [**Object Declarations** (**Singleton**)](#object-declarations-singleton)
+  [**Object Expressions** (Анонимные объекты)](#object-expressions-анонимные-объекты)
+  [**Object Declarations** (Singleton)](#object-declarations-singleton)
   [**Companion Objects**](#companion-objects)
 [**Enum Classes**](#enum-classes)
   [**Enum** с параметрами](#enum-с-параметрами)
   [**Enum** с интерфейсами](#enum-с-интерфейсами)
   [Работа с **enum**](#работа-с-enum)
-[**Delegation** (**Делегирование**)](#delegation-делегирование)
-  [**Class Delegation** (**Делегирование класса**)](#class-delegation-делегирование-класса)
-  [**Property Delegation** (**Делегирование свойств**)](#property-delegation-делегирование-свойств)
+[**Delegation** (Делегирование)](#delegation-делегирование)
+  [**Class Delegation** (Делегирование класса)](#class-delegation-делегирование-класса)
+  [**Property Delegation** (Делегирование свойств)](#property-delegation-делегирование-свойств)
     [**Lazy**](#lazy)
     [**Observable**](#observable)
     [**Map Delegation**](#map-delegation)
-[**Infix Functions** (**Инфиксные функции**)](#infix-functions-инфиксные-функции)
+[**Infix Functions** (Инфиксные функции)](#infix-functions-инфиксные-функции)
   [Определение **infix** функций](#определение-infix-функций)
   [Требования к **infix** функциям](#требования-к-infix-функциям)
   [Стандартные **infix** функции](#стандартные-infix-функции)
-[**Destructuring Declarations** (**Деструктуризация**)](#destructuring-declarations-деструктуризация)
+[**Destructuring Declarations** (Деструктуризация)](#destructuring-declarations-деструктуризация)
   [Деструктуризация **data** классов](#деструктуризация-data-классов)
   [Деструктуризация пар и триплетов](#деструктуризация-пар-и-триплетов)
   [Деструктуризация **Map**](#деструктуризация-map)
   [Деструктуризация в лямбдах](#деструктуризация-в-лямбдах)
   [Кастомная деструктуризация](#кастомная-деструктуризация)
-[**Ranges** и **Progressions** (**Диапазоны и прогрессии**)](#ranges-и-progressions-диапазоны-и-прогрессии)
+[**Ranges** и **Progressions** (Диапазоны и прогрессии)](#ranges-и-progressions-диапазоны-и-прогрессии)
   [Создание диапазонов](#создание-диапазонов)
   [Итерация по диапазонам](#итерация-по-диапазонам)
   [Операции с диапазонами](#операции-с-диапазонами)
-  [**Progressions** (**Прогрессии**)](#progressions-прогрессии)
-[**String Templates** (**Шаблоны строк**)](#string-templates-шаблоны-строк)
-  [**Raw Strings** (**Сырые строки**)](#raw-strings-сырые-строки)
+  [**Progressions** (Прогрессии)](#progressions-прогрессии)
+[**String Templates** (Шаблоны строк)](#string-templates-шаблоны-строк)
+  [**Raw Strings** (Сырые строки)](#raw-strings-сырые-строки)
   [**String Templates** с выражениями](#string-templates-с-выражениями)
-[**When Expression** (**Выражение when**)](#when-expression-выражение-when)
+[**When Expression** (Выражение when)](#when-expression-выражение-when)
   [Множественные значения](#множественные-значения)
   [**When** с диапазонами](#when-с-диапазонами)
-  [**When** с типами (**Smart Cast**)](#when-с-типами-smart-cast)
+  [**When** с типами (Smart Cast)](#when-с-типами-smart-cast)
   [**When** без аргумента](#when-без-аргумента)
   [**When** с функциями](#when-с-функциями)
-  [**Exhaustive when** (**Исчерпывающий when**)](#exhaustive-when-исчерпывающий-when)
-[**Return** и **Labels** (**Возврат и метки**)](#return-и-labels-возврат-и-метки)
+  [**Exhaustive when** (Исчерпывающий when)](#exhaustive-when-исчерпывающий-when)
+[**Return** и **Labels** (Возврат и метки)](#return-и-labels-возврат-и-метки)
   [Обычный **return**](#обычный-return)
-  [**Labeled Return** (**Возврат с меткой**)](#labeled-return-возврат-с-меткой)
+  [**Labeled Return** (Возврат с меткой)](#labeled-return-возврат-с-меткой)
   [**Return** из лямбд](#return-из-лямбд)
   [**Break** и **Continue** с метками](#break-и-continue-с-метками)
-[**Visibility Modifiers** (**Модификаторы видимости**)](#visibility-modifiers-модификаторы-видимости)
+[**Visibility Modifiers** (Модификаторы видимости)](#visibility-modifiers-модификаторы-видимости)
   [Модификаторы для членов класса](#модификаторы-для-членов-класса)
   [Модификаторы для классов](#модификаторы-для-классов)
   [Модификаторы для функций](#модификаторы-для-функций)
@@ -2032,15 +2032,15 @@ data class Person(var name: String, var age: Int) {
   [Сравнение с **Java**](#сравнение-с-java)
   [**Top-level** элементы](#top-level-элементы)
 [Расширенное покрытие **Generics**](#расширенное-покрытие-generics)
-  [**Variance** (**Вариантность**)](#variance-вариантность)
-    [**Invariance** (**Инвариантность**)](#invariance-инвариантность)
-    [**Covariance** (**Ковариантность**) — **out**](#covariance-ковариантность-out)
-    [**Contravariance** (**Контравариантность**) — in](#contravariance-контравариантность-in)
-  [**Star Projections** (**Звездные проекции**)](#star-projections-звездные-проекции)
-  [**Upper Bounds** (**Верхние границы**)](#upper-bounds-верхние-границы)
-  [**Reified Type Parameters** (**Овеществленные параметры типов**)](#reified-type-parameters-овеществленные-параметры-типов)
-  [**Generic Functions** (**Generic функции**)](#generic-functions-generic-функции)
-  [**Type Erasure** (**Стирание типов**)](#type-erasure-стирание-типов)
+  [**Variance** (Вариантность)](#variance-вариантность)
+    [**Invariance** (Инвариантность)](#invariance-инвариантность)
+    [**Covariance** (Ковариантность) — **out**](#covariance-ковариантность-out)
+    [**Contravariance** (Контравариантность) — in](#contravariance-контравариантность-in)
+  [**Star Projections** (Звездные проекции)](#star-projections-звездные-проекции)
+  [**Upper Bounds** (Верхние границы)](#upper-bounds-верхние-границы)
+  [**Reified Type Parameters** (Овеществленные параметры типов)](#reified-type-parameters-овеществленные-параметры-типов)
+  [**Generic Functions** (Generic функции)](#generic-functions-generic-функции)
+  [**Type Erasure** (Стирание типов)](#type-erasure-стирание-типов)
 [Расширенное покрытие **Reflection**](#расширенное-покрытие-reflection)
   [**KClass** — информация о классе](#kclass-информация-о-классе)
   [**KFunction** — информация о функциях](#kfunction-информация-о-функциях)
@@ -2055,7 +2055,7 @@ data class Person(var name: String, var age: Int) {
   [Использование аннотаций](#использование-аннотаций)
   [Встроенные аннотации **Kotlin**](#встроенные-аннотации-kotlin)
   [Аннотации для **Java Interop**](#аннотации-для-java-interop)
-[**Multiplatform Projects** (**Мультиплатформенные проекты**)](#multiplatform-projects-мультиплатформенные-проекты)
+[**Multiplatform Projects** (Мультиплатформенные проекты)](#multiplatform-projects-мультиплатформенные-проекты)
   [Общие концепции](#общие-концепции)
   [**Expect**/**Actual** механизм](#expectactual-механизм)
   [Структура проекта](#структура-проекта)
@@ -2069,7 +2069,7 @@ data class Person(var name: String, var age: Int) {
 [Расширенное покрытие **Sealed Classes**](#расширенное-покрытие-sealed-classes)
   [**Sealed Classes** vs **Enum Classes**](#sealed-classes-vs-enum-classes)
   [**Sealed Classes** с данными](#sealed-classes-с-данными)
-  [**Sealed Interfaces** (**Kotlin 1.5+**)](#sealed-interfaces-kotlin-15)
+  [**Sealed Interfaces** (Kotlin 1.5+)](#sealed-interfaces-kotlin-15)
   [**Exhaustive When**](#exhaustive-when)
 [Продвинутые техники работы с типами](#продвинутые-техники-работы-с-типами)
   [**Type-safe builders** с обобщенными типами](#type-safe-builders-с-обобщенными-типами)
@@ -2105,7 +2105,7 @@ data class Person(var name: String, var age: Int) {
 [Дополнительные возможности **Kotlin**](#дополнительные-возможности-kotlin)
   [Работа с делегатами](#работа-с-делегатами)
   [Работа с контрактами](#работа-с-контрактами)
-  [**Inline** классы (**Value Classes**)](#inline-классы-value-classes)
+  [**Inline** классы (Value Classes)](#inline-классы-value-classes)
 [Дополнительные возможности языка](#дополнительные-возможности-языка)
   [Работа с контекстами](#работа-с-контекстами)
   [Работа с операторами перегрузки](#работа-с-операторами-перегрузки)
@@ -2132,9 +2132,9 @@ data class Person(var name: String, var age: Int) {
 - [Kotlin Documentation](https://kotlinlang.org/docs/)
 
 ### См. также (библиотеки)
-- [kotlinx.serialization](../../libraries/kotlin/kotlin-kotlinx-serialization.md) — сериализация **JSON**, **Protobuf**, **CBOR**
-- [Exposed](../../libraries/kotlin/kotlin-exposed.md) — **ORM** для **Kotlin**
-- [Ktor](../../libraries/kotlin/kotlin-ktor.md) — веб-фреймворк
+- [[kotlin-kotlinx-serialization|kotlinx.serialization]] — сериализация **JSON**, **Protobuf**, **CBOR**
+- [[kotlin-exposed|Exposed]] — **ORM** для **Kotlin**
+- [[kotlin-ktor|Ktor]] — веб-фреймворк
 
 ## Функции работы с коллекциями
 
@@ -2145,21 +2145,21 @@ data class Person(var name: String, var age: Int) {
 1.  **filter()** — принимает условие-предикат в виде функции `(T) -> **Boolean**`
 2.  **filterIndexed()** — также получает индекс текущего элемента
 3.  **filterIsInstance()** — можно извлечь элементы определенного типа
-4.  **filterNotNull()** — позволяет выфильтровать все значения, которые равны `**null**`
+4.  **filterNotNull()** — позволяет выфильтровать все значения, которые равны `null`
 
 ### Проверка элементов
 
 1.  **all {}** — проверяет, все ли элементы коллекции/последовательности соответствуют условию предиката
 2.  **any {}** — проверяет, соответствует хотя бы один элемент коллекции/последовательности условию предиката
-3.  **none {}** — возвращает `**true**`, если ни один из элементов НЕ соответствует условию предиката
-4.  **contains()** — возвращает `**true**`, если в коллекции/последовательности есть определенный элемент
-5.  **containsAll()** — возвращает `**true**`, если коллекция содержит все элементы другой коллекции
+3.  **none {}** — возвращает `true`, если ни один из элементов НЕ соответствует условию предиката
+4.  **contains()** — возвращает `true`, если в коллекции/последовательности есть определенный элемент
+5.  **containsAll()** — возвращает `true`, если коллекция содержит все элементы другой коллекции
 
 ### Трансформация
 
 1.  **map()** — для трансформации одной коллекции/последовательности
 2.  **mapIndexed()** — также передает в функцию преобразования индекс текущего элемента
-3.  **mapNotNull()** и **mapIndexedNotNull()** — если необходимо отсеять значения `**null**`, которые могут возникать при преобразовании
+3.  **mapNotNull()** и **mapIndexedNotNull()** — если необходимо отсеять значения `null`, которые могут возникать при преобразовании
 4.  **flatten()** — позволяет преобразовать коллекцию/последовательность, которая содержит вложенные коллекции/последовательности
 
 ### Группировка
@@ -2175,17 +2175,17 @@ data class Person(var name: String, var age: Int) {
 
 ### Агрегатные операции
 
-1.  **minOrNull()** и **maxOrNull()** — возвращают соответственно минимальное и максимальное значение (**если коллекция/последовательность пуста, то возвращается `null`**)
+1.  **minOrNull()** и **maxOrNull()** — возвращают соответственно минимальное и максимальное значение (если коллекция/последовательность пуста, то возвращается `null`)
 2.  **minByOrNull()** и **maxByOrNull()** — принимают функцию селектора, которая позволяет определить критерий сравнения объектов
-3.  **minWithOrNull()** и **maxWithOrNull()** — принимают компаратор. В качестве критерия сравнения здесь применяется свойство `**length**` строк, то есть строки сравниваются по длине
-4.  **minOfWithOrNull()** и **maxOfWithOrNull()** — принимают реализацию интерфейса **Comparator** (**первый параметр**) и селектор критерия для сравнения (**второй параметр**)
+3.  **minWithOrNull()** и **maxWithOrNull()** — принимают компаратор. В качестве критерия сравнения здесь применяется свойство `length` строк, то есть строки сравниваются по длине
+4.  **minOfWithOrNull()** и **maxOfWithOrNull()** — принимают реализацию интерфейса **Comparator** (первый параметр) и селектор критерия для сравнения (второй параметр)
 5.  Для получения среднего значения применяется функция **average()**
 6.  Для получения суммы числовых значений применяется функция **sum()**
 7.  Для получения количества элементов в коллекции/последовательности применяется функция **count()**
 8.  **reduce()** — сводит все значения потока к одному значению
 9.  **fold()** — также сводит все элементы потока в один. Но в отличие от **reduce** в качестве первого параметра принимает начальное значение
 
-## **Inline** функции (**встроенные**)
+## Inline функции (встроенные)
 
 В **Kotlin** функции являются гражданами первого класса поэтому мы можем передавать функции или возвращать их, как и другие обычные типы. Однако представление этих функций во время выполнения иногда может вызвать некоторые ограничения или проблемы с производительностью.
 
@@ -2200,7 +2200,7 @@ data class Person(var name: String, var age: Int) {
 
 **Kotlin** стремится к совместимости с **Java 6**, а **invokedynamic** недоступен до **Java 7**, поэтому создаются экземпляры функциональных типов.
 
-### Использование **inline** функций
+### Использование inline функций
 
 **Чтобы избежать накладных расходов, мы можем пометить функцию ключевым словом **inline**:**
 
@@ -2231,7 +2231,7 @@ for (number in numbers)
 
 При использовании встроенных функций нет дополнительного выделения объектов и дополнительных вызовов виртуальных методов.
 
-### **noinline**
+### noinline
 
 **По умолчанию все лямбда-выражения, переданные встроенной функции, также будут встроенными. Однако мы можем пометить некоторые лямбды ключевым словом **noinline** чтобы исключить их из встраивания:**
 
@@ -2240,9 +2240,9 @@ for (number in numbers)
 inline fun foo(inlined: () -> Unit, noinline notInlined: () -> Unit) {.. }
 ```
 
-### Возврат из **inline** функций
+### Возврат из inline функций
 
-В **Kotlin** мы можем использовать выражение **return** (**также известное как unqualified return**) только для выхода из именованной или анонимной функции.
+В **Kotlin** мы можем использовать выражение **return** (также известное как unqualified return) только для выхода из именованной или анонимной функции.
 
 Однако мы не можем использовать неквалифицированные выражения возврата для выхода из лямбда-выражения. Встроенные функции являются исключением — возврат из встроенной лямбды эквивалентен возврату из объёмлющей функции.
 
@@ -2258,15 +2258,15 @@ inline fun CharSequence.replace(regex: Regex, noinline transform: (MatchResult) 
 
 Фрагмент кода выше передаёт лямбда **transform** в обычную функцию **replace** — отсюда и **noinline**
 
-## **Inline** классы (**встроенные**)
+## Inline классы (встроенные)
 
 В **Kotlin 1.3+** у нас есть экспериментальный новый тип класса, называемый встроенным классом. В этом руководстве мы сосредоточимся на использовании встроенных классов, а также на некоторых их ограничениях.
 
 Встроенные классы предоставляют нам способ обернуть тип, таким образом добавляя функциональность и создавая новый тип сам по себе.
 
-В отличие от обычных (**не встроенных**)** оболочек, они выиграют от повышения производительности. Это происходит из-за того, что данные встроены в их использование, а создание объектов пропускается в результирующем скомпилированном коде.
+В отличие от обычных (не встроенных)** оболочек, они выиграют от повышения производительности. Это происходит из-за того, что данные встроены в их использование, а создание объектов пропускается в результирующем скомпилированном коде.
 
-### Определение **inline** класса
+### Определение inline класса
 
 Одно свойство, инициализированное в основном конструкторе, является основным требованием встроенного класса Единственное свойство будет представлять экземпляр класса во время выполнения.
 
@@ -2291,7 +2291,7 @@ val circleRadius = 5.5
 
 Обратите внимание, что экземпляр **InlinedCircleRadius** не создается в скомпилированном коде, потому что базовое значение встроено, что избавляет нас от снижения производительности, связанного с созданием экземпляра.
 
-### Свойства и функции в **inline** классах
+### Свойства и функции в inline классах
 
 **Они также позволяют нам определять свойства и функции так же, как обычные классы. В следующем примере определяется свойство, представляющее диаметр, и функция, возвращающая площадь круга:**
 
@@ -2303,7 +2303,7 @@ inline class CircleRadius(private val circleRadius: Double) {
 }
 ```
 
-## **Reified** функции (**овеществлённые**)
+## Reified функции (овеществлённые)
 
 Как мы видели ранее, **Kotlin** стирает информацию об универсальном типе во время выполнения, но для встроенных функций мы можем обойти это ограничение. То есть компилятор может материализовать информацию об универсальном типе для встроенных функций.
 
@@ -2316,7 +2316,7 @@ inline fun <reified T> Any.isA(): Boolean = this is T
 
 Без **inline** и **reified** функция **isA** не будет компилироваться, так как информация о типе стирается во время выполнения.
 
-## Руководство по **Type Alias** (**псевдонимы**)
+## Руководство по Type Alias (псевдонимы)
 
 **Type Alias** позволяет создать псевдоним для существующего типа. Это полезно для улучшения читаемости кода и работы со сложными типами:**
 
@@ -2328,7 +2328,7 @@ typealias UserMap = Map<UserId, User>
 
 Теперь мы можем использовать **UserId** вместо **String** для большей ясности.
 
-## Руководство по **Delegate**
+## Руководство по Delegate
 
 Делегирование — это мощный паттерн в **Kotlin**, который позволяет передавать реализацию определённых методов другому объекту.
 
@@ -2341,7 +2341,7 @@ typealias UserMap = Map<UserId, User>
 3. **vetoable()** — позволяет отклонить изменение значения
 4. **notNull()** — гарантирует, что значение будет установлено перед использованием
 
-### **Lazy** делегат
+### Lazy делегат
 
 ```kotlin
 // Ленивая инициализация: значение вычисляется при первом обращении
@@ -2353,7 +2353,7 @@ val lazyValue: String by lazy {
 
 Значение будет вычислено только при первом обращении, и результат будет кэширован.
 
-### **Observable** делегат
+### Observable делегат
 
 ```kotlin
 // Делегат observable: колбэк при каждом изменении свойства
@@ -2364,11 +2364,11 @@ var name: String by Delegates.observable("Initial") { prop, old, new ->
 
 При изменении значения будет вызван указанный **callback**.
 
-## Руководство по **Null Safety**
+## Руководство по Null Safety
 
-Одной из ключевых особенностей **Kotlin** является безопасность работы с **null** значениями. Система типов различает ссылки, которые могут содержать **null** (**nullable**), и те, которые не могут (**non-nullable**).
+Одной из ключевых особенностей **Kotlin** является безопасность работы с **null** значениями. Система типов различает ссылки, которые могут содержать **null** (nullable), и те, которые не могут (non-nullable).
 
-### **Nullable** типы
+### Nullable типы
 
 **Типы, допускающие значение **null**, помечаются знаком ?:**
 
@@ -2385,7 +2385,7 @@ var age: Int = 25         // non-nullable
 val length = name?.length  // вернет null, если name == null
 ```
 
-### Оператор **Elvis**
+### Оператор Elvis
 
 Оператор **?:** предоставляет значение по умолчанию, если выражение слева равно **null**:
 
@@ -2402,11 +2402,11 @@ val length = name?.length ?: 0
 val length = name!!.length  // выбросит NPE, если name == null
 ```
 
-## Несколько переменных в функции **let**
+## Несколько переменных в функции let
 
 В **Kotlin** функция **let()** — довольно удобная функция области видимости. Это позволяет нам преобразовать данную переменную в значение другого типа.
 
-### Простой пример **let**
+### Простой пример let
 
 ```kotlin
 // Безопасный вызов let для nullable: выполняется только при non-null
@@ -2471,7 +2471,7 @@ inline fun <T: Any, R: Any> letIfAllNotNull(vararg arguments: T?, block: (List<T
 
 Хотя **Kotlin** наследует концепцию исключений от **Java**, он не поддерживает проверенные исключения, такие как в **Java**.
 
-### **Try-catch** блок
+### Try-catch блок
 
 Мы можем использовать блок **try-catch** для обработки исключений в **Kotlin**. В частности, внутри блока **try** помещается код, который может генерировать исключение. Кроме того, для обработки исключения используется соответствующий блок **catch**.
 
@@ -2486,7 +2486,7 @@ try {
 }
 ```
 
-### **Try-catch** как выражение
+### Try-catch как выражение
 
 Выражение может быть комбинацией одного или нескольких значений, переменных, операторов и функций, которые выполняются для получения другого значения. Следовательно, мы можем использовать блок **try-catch** как выражение в **Kotlin.**
 
@@ -2501,7 +2501,7 @@ val number = try {
 }
 ```
 
-### Несколько блоков **catch**
+### Несколько блоков catch
 
 Мы можем использовать несколько блоков **catch** вместе с блоком **try** в **Kotlin**. В частности, это часто требуется, если мы выполняем разного рода операции в блоке **try**, что увеличивает вероятность отлова множественных исключений.
 
@@ -2520,7 +2520,7 @@ try {
 }
 ```
 
-### Вложенные **try-catch**
+### Вложенные try-catch
 
 Мы можем использовать вложенный блок **try-catch**, реализуя блок **try-catch** внутри другого блока **try**. Например, это может потребоваться, когда блок кода может генерировать исключение, а в этом блоке кода другой оператор может дополнительно генерировать исключение.
 
@@ -2581,17 +2581,17 @@ File("file.txt").appendText("\nNew line")
 File("file.txt").writeBytes(byteArrayOf(1, 2, 3))
 ```
 
-## Работа с **JPA**
+## Работа с JPA
 
 **При работе с **JPA** в **Kotlin** нужно учитывать некоторые особенности:**
 
-### Проблемы с **Data** классами
+### Проблемы с Data классами
 
 Классы данных в **Kotlin** автоматически генерируют методы `equals()`, **hashCode()** и **toString()** на основе всех свойств. Это может вызвать проблемы с ленивыми ассоциациями в **JPA**.
 
 ### Решение
 
-1. Не использовать **data** классы для **JPA** сущностей (**или использовать только для простых случаев**)
+1. Не использовать **data** классы для **JPA** сущностей (или использовать только для простых случаев)
 2. Реализовать `equals()` и **hashCode()** вручную на основе `ID`
 3. Использовать **@Entity** аннотацию и явно определять методы
 
@@ -2619,7 +2619,7 @@ class Address(
 }
 ```
 
-## Руководство по @**JvmField**
+## Руководство по @JvmField
 
 **@JvmField** аннотация позволяет достичь совместимости между **Kotlin** и **Java**.
 
@@ -2652,7 +2652,7 @@ public class KotlinJvmSample {
 }
 ```
 
-### Использование с **companion object**
+### Использование с companion object
 
 **Другой случай, когда аннотация пригодится, — это всякий раз, когда свойство, объявленное в объекте имени или сопутствующем объекте, имеет статическое поле поддержки:**
 
@@ -2672,7 +2672,7 @@ class Sample {
 2. Свойства с модификаторами **open, override, const**
 3. Делегированные свойства
 
-## Плагин **Allopen**
+## Плагин Allopen
 
 В **Kotlin** все классы по умолчанию являются **final**, что, помимо очевидных преимуществ, может быть проблематичным в приложениях **Spring**. Проще говоря, некоторые области **Spring** работают только с незавершёнными классами.
 
@@ -2704,9 +2704,9 @@ class Sample {
 </plugin>
 ```
 
-Теперь все классы, помеченные аннотациями **Spring** (**например, `@Configuration`, `@Service`, `@Repositor`y**), будут автоматически открытыми.
+Теперь все классы, помеченные аннотациями **Spring** (например, `@Configuration`, `@Service`, `@Repositor`y), будут автоматически открытыми.
 
-## Работа со **Spring Boot**
+## Работа со Spring Boot
 
 **Kotlin** отлично работает со **Spring Boot**. Вот некоторые ключевые моменты:**
 
@@ -2782,7 +2782,7 @@ class MyClass : Logging {
 }
 ```
 
-### Реified **generic**
+### Реified generic
 
 ```kotlin
 inline fun <reified T: Logging> T.logger(): Logger = getLogger(T::class.java)
@@ -2841,7 +2841,7 @@ class MyClass
 - **@JvmName** — изменяет имя в байт-коде
 - **@JvmField** — делает поле публичным без геттеров/сеттеров
 
-## Руководство по @**Deprecated**
+## Руководство по @Deprecated
 
 **Аннотация **@Deprecated** помечает элемент как устаревший:**
 
@@ -2854,7 +2854,7 @@ fun oldFunction() {
 
 Компилятор будет предупреждать о использовании устаревших элементов.
 
-## **Kotlin** быстрее, чем **Java**?
+## Kotlin быстрее, чем Java?
 
 **Производительность **Kotlin** и **Java** схожа, так как оба компилируются в байт-код **JVM**. **Однако**:**
 
@@ -2863,16 +2863,16 @@ fun oldFunction() {
 3. **Extension функции** компилируются как статические методы, не добавляя накладных расходов
 4. В некоторых случаях **Kotlin** может быть даже быстрее благодаря оптимизациям компилятора
 
-## Преобразование массива в **varargs**
+## Преобразование массива в varargs
 
-**В **Kotlin** можно преобразовать массив в **varargs** с помощью оператора **\** (**spread operator**):**
+**В **Kotlin** можно преобразовать массив в **varargs** с помощью оператора **\** (spread operator):**
 
 ```kotlin
 val array = arrayOf("a", "b", "c")
 someFunction(*array)  // распаковывает массив в varargs
 ```
 
-## Расширение **Data** класса
+## Расширение Data класса
 
 **Data** классы в **Kotlin** можно расширять, но с некоторыми ограничениями:**
 
@@ -2900,7 +2900,7 @@ println(person1 == person2)  // true
 
 Если нужно сравнение только по определённым полям, нужно переопределить `equals()` и **hashCode()** вручную.
 
-## Принципы **SOLID**
+## Принципы SOLID
 
 Принципы **SOLID** применимы к **Kotlin** так же, как и к другим объектно-ориентированным языкам.
 
@@ -2915,7 +2915,7 @@ println(person1 == person2)  // true
 5. **Dependency Inversion** — зависимость от абстракций, а не от конкретных реализаций
 
 
-## **Type System** (**Система типов**)
+## Type System (Система типов)
 
 **Kotlin** имеет богатую систему типов, которая обеспечивает безопасность и выразительность кода.
 
@@ -2939,9 +2939,9 @@ val unit: Unit = Unit
 val nothing: Nothing? = null
 ```
 
-### **Any** — корневой тип
+### Any — корневой тип
 
-**Any** — это супертип всех типов в **Kotlin** (**аналог `Object` в Java**).
+**Any** — это супертип всех типов в **Kotlin** (аналог `Object` в Java).
 
 ```kotlin
 // Any может содержать любой тип
@@ -2961,9 +2961,9 @@ if (obj is String) {
 }
 ```
 
-### **Unit** — тип возвращаемого значения
+### Unit — тип возвращаемого значения
 
-**Unit** соответствует `**void**` в **Java**, но является полноценным типом.
+**Unit** соответствует `void` в **Java**, но является полноценным типом.
 
 ```kotlin
 // Функция возвращает Unit (неявно)
@@ -2981,7 +2981,7 @@ val unitValue: Unit = Unit
 val unitFunction: () -> Unit = { println("Hello") }
 ```
 
-### **Nothing** — тип без значений
+### Nothing — тип без значений
 
 **Nothing** — это тип, который не имеет значений. Используется для обозначения невозможных ситуаций.
 
@@ -3005,7 +3005,7 @@ val x: String = when {
 val nothing: Nothing? = null
 ```
 
-### **Nullable** типы
+### Nullable типы
 
 ```kotlin
 // Nullable типы обозначаются символом ?
@@ -3027,7 +3027,7 @@ val length = nullableString?.length ?: 0  // Int
 val length = nullableString!!.length  // Int, но может выбросить NPE
 ```
 
-### **Smart Casts** (**Умные приведения**)
+### Smart Casts (Умные приведения)
 
 **Kotlin** автоматически приводит типы после проверок.
 
@@ -3077,7 +3077,7 @@ fun example() {
 ```
 
 
-## **Type Aliases** (**Псевдонимы типов**)
+## Type Aliases (Псевдонимы типов)
 
 **Type aliases** позволяют создавать альтернативные имена для типов.
 
@@ -3143,9 +3143,9 @@ data class Order(
 ```
 
 
-## **Object Expressions** и **Object Declarations**
+## Object Expressions и Object Declarations
 
-### **Object Expressions** (**Анонимные объекты**)
+### Object Expressions (Анонимные объекты)
 
 **Object expressions** создают объекты без явного объявления класса.
 
@@ -3190,7 +3190,7 @@ fun createCounter(): () -> Int {
 }
 ```
 
-### **Object Declarations** (**Singleton**)
+### Object Declarations (Singleton)
 
 **Object declarations** создают **singleton** объекты.
 
@@ -3230,9 +3230,9 @@ class MyClass {
 val instance = MyClass.Factory.create()
 ```
 
-### **Companion Objects**
+### Companion Objects
 
-**Companion objects** — это объекты, связанные с классом (**аналог static в Java**).
+**Companion objects** — это объекты, связанные с классом (аналог static в Java).
 
 ```kotlin
 // Базовый companion object
@@ -3280,7 +3280,7 @@ class User private constructor(val name: String) {
 ```
 
 
-## **Enum Classes**
+## Enum Classes
 
 **Enum classes** представляют набор констант.
 
@@ -3302,7 +3302,7 @@ when (direction) {
 }
 ```
 
-### **Enum** с параметрами
+### Enum с параметрами
 
 ```kotlin
 // Enum с свойствами
@@ -3328,7 +3328,7 @@ enum class Planet(val mass: Double, val radius: Double) {
 val gravity = Planet.EARTH.surfaceGravity()
 ```
 
-### **Enum** с интерфейсами
+### Enum с интерфейсами
 
 ```kotlin
 // Enum реализующий интерфейс
@@ -3355,7 +3355,7 @@ enum class Color(val rgb: Int) : Printable {
 }
 ```
 
-### Работа с **enum**
+### Работа с enum
 
 ```kotlin
 enum class Direction {
@@ -3381,9 +3381,9 @@ if (Direction.NORTH < Direction.SOUTH) {
 ```
 
 
-## **Delegation** (**Делегирование**)
+## Delegation (Делегирование)
 
-### **Class Delegation** (**Делегирование класса**)
+### Class Delegation (Делегирование класса)
 
 **Kotlin** поддерживает делегирование на уровне класса.
 
@@ -3417,7 +3417,7 @@ class Derived(b: Base) : Base by b {
 }
 ```
 
-### **Property Delegation** (**Делегирование свойств**)
+### Property Delegation (Делегирование свойств)
 
 Делегирование свойств позволяет вынести логику работы со свойствами в отдельные классы.
 
@@ -3440,7 +3440,7 @@ class Delegate {
 
 ### Стандартные делегаты
 
-#### **Lazy**
+#### Lazy
 
 ```kotlin
 // Lazy инициализация
@@ -3459,7 +3459,7 @@ val lazyValue: String by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
 }
 ```
 
-#### **Observable**
+#### Observable
 
 ```kotlin
 import kotlin.properties.Delegates
@@ -3483,7 +3483,7 @@ value = 5   // 0 -> 5 (разрешено)
 value = 3   // 5 -> 3 (отменено, значение останется 5)
 ```
 
-#### **Map Delegation**
+#### Map Delegation
 
 ```kotlin
 // Делегирование к Map
@@ -3508,11 +3508,11 @@ class MutableUser(val map: MutableMap<String, Any?>) {
 ```
 
 
-## **Infix Functions** (**Инфиксные функции**)
+## Infix Functions (Инфиксные функции)
 
 **Infix** функции позволяют вызывать функции без точки и скобок.
 
-### Определение **infix** функций
+### Определение infix функций
 
 ```kotlin
 // Infix функция-расширение
@@ -3535,7 +3535,7 @@ val point = Point(1, 2)
 val moved = point move 5  // Point(6, 2)
 ```
 
-### Требования к **infix** функциям
+### Требования к infix функциям
 
 ```kotlin
 // Infix функция должна:
@@ -3553,7 +3553,7 @@ infix fun String.matches(regex: Regex): Boolean {
 // infix fun String.matches(regex: Regex = Regex(".*"))  // параметры по умолчанию не допускаются
 ```
 
-### Стандартные **infix** функции
+### Стандартные infix функции
 
 ```kotlin
 // to - создание пары
@@ -3573,11 +3573,11 @@ for (i in 1..10 step 2) {
 ```
 
 
-## **Destructuring Declarations** (**Деструктуризация**)
+## Destructuring Declarations (Деструктуризация)
 
 Деструктуризация позволяет извлекать значения из объектов в отдельные переменные.
 
-### Деструктуризация **data** классов
+### Деструктуризация data классов
 
 ```kotlin
 data class Person(val name: String, val age: Int)
@@ -3615,7 +3615,7 @@ val (key, value) = pair
 // val (a, b, c) = triple
 ```
 
-### Деструктуризация **Map**
+### Деструктуризация Map
 
 ```kotlin
 val map = mapOf("Alice" to 25, "Bob" to 30)
@@ -3660,7 +3660,7 @@ println("x=$x, y=$y")  // x=10, y=20
 ```
 
 
-## **Ranges** и **Progressions** (**Диапазоны и прогрессии**)
+## Ranges и Progressions (Диапазоны и прогрессии)
 
 ### Создание диапазонов
 
@@ -3726,7 +3726,7 @@ range.isEmpty()   // false
 (3..7) in (1..10)  // true
 ```
 
-### **Progressions** (**Прогрессии**)
+### Progressions (Прогрессии)
 
 ```kotlin
 // IntProgression
@@ -3740,7 +3740,7 @@ val reverse = 10 downTo 1 step 2  // 10, 8, 6, 4, 2
 ```
 
 
-## **String Templates** (**Шаблоны строк**)
+## String Templates (Шаблоны строк)
 
 **Kotlin** поддерживает интерполяцию строк.
 
@@ -3763,7 +3763,7 @@ val message3 = "Next year you will be ${age + 1} years old."  // "Next year you 
 val message4 = "Name length: ${name.length}"  // "Name length: 5"
 ```
 
-### **Raw Strings** (**Сырые строки**)
+### Raw Strings (Сырые строки)
 
 ```kotlin
 // Тройные кавычки для многострочных строк
@@ -3790,7 +3790,7 @@ val raw = """
 """.trimIndent()
 ```
 
-### **String Templates** с выражениями
+### String Templates с выражениями
 
 ```kotlin
 val items = listOf("apple", "banana", "orange")
@@ -3810,7 +3810,7 @@ val message2 = "First item: ${items.firstOrNull() ?: "none"}"
 ```
 
 
-## **When Expression** (**Выражение when**)
+## When Expression (Выражение when)
 
 **When** — это мощная альтернатива **switch** в **Java**.
 
@@ -3845,7 +3845,7 @@ when (x) {
 }
 ```
 
-### **When** с диапазонами
+### When с диапазонами
 
 ```kotlin
 val x = 5
@@ -3857,7 +3857,7 @@ when (x) {
 }
 ```
 
-### **When** с типами (**Smart Cast**)
+### When с типами (Smart Cast)
 
 ```kotlin
 fun process(value: Any) {
@@ -3870,7 +3870,7 @@ fun process(value: Any) {
 }
 ```
 
-### **When** без аргумента
+### When без аргумента
 
 ```kotlin
 val x = 5
@@ -3890,7 +3890,7 @@ when {
 }
 ```
 
-### **When** с функциями
+### When с функциями
 
 ```kotlin
 fun isEven(x: Int) = x % 2 == 0
@@ -3902,7 +3902,7 @@ when {
 }
 ```
 
-### **Exhaustive when** (**Исчерпывающий when**)
+### Exhaustive when (Исчерпывающий when)
 
 ```kotlin
 // Когда when используется как выражение, все случаи должны быть покрыты
@@ -3918,9 +3918,9 @@ fun process(result: Result): String = when (result) {
 ```
 
 
-## **Return** и **Labels** (**Возврат и метки**)
+## Return и Labels (Возврат и метки)
 
-### Обычный **return**
+### Обычный return
 
 ```kotlin
 fun findFirstEven(numbers: List<Int>): Int? {
@@ -3933,7 +3933,7 @@ fun findFirstEven(numbers: List<Int>): Int? {
 }
 ```
 
-### **Labeled Return** (**Возврат с меткой**)
+### Labeled Return (Возврат с меткой)
 
 ```kotlin
 // Return с меткой для цикла
@@ -3968,7 +3968,7 @@ fun process() {
 }
 ```
 
-### **Return** из лямбд
+### Return из лямбд
 
 ```kotlin
 // Return из лямбды возвращает из внешней функции
@@ -3994,7 +3994,7 @@ fun process() {
 }
 ```
 
-### **Break** и **Continue** с метками
+### Break и Continue с метками
 
 ```kotlin
 // Break с меткой
@@ -4019,7 +4019,7 @@ outer@ for (i in 1..3) {
 ```
 
 
-## **Visibility Modifiers** (**Модификаторы видимости**)
+## Visibility Modifiers (Модификаторы видимости)
 
 **Kotlin** имеет четыре модификатора видимости.
 
@@ -4077,16 +4077,16 @@ val instance = Example.create(10)  // OK
 // val instance2 = Example(10)     // ОШИБКА! конструктор приватный
 ```
 
-### Сравнение с **Java**
+### Сравнение с Java
 
 | **Kotlin** | **Java** | Видимость |
 |--------|------|-----------|
-| `**public**` | `**public**` | Везде |
-| `**private**` | `**private**` | Только в классе |
-| `**protected**` | `**protected**` | Класс и подклассы |
-| `**internal**` | **package-private** | В том же модуле |
+| `public` | `public` | Везде |
+| `private` | `private` | Только в классе |
+| `protected` | `protected` | Класс и подклассы |
+| `internal` | **package-private** | В том же модуле |
 
-### **Top-level** элементы
+### Top-level элементы
 
 ```kotlin
 // Top-level функции и свойства
@@ -4101,13 +4101,13 @@ internal class InternalClass       // видно в модуле
 ```
 
 
-## Расширенное покрытие **Generics**
+## Расширенное покрытие Generics
 
-### **Variance** (**Вариантность**)
+### Variance (Вариантность)
 
 Вариантность определяет, как отношения между типами влияют на отношения между **generic** типами.
 
-#### **Invariance** (**Инвариантность**)
+#### Invariance (Инвариантность)
 
 ```kotlin
 // По умолчанию generic типы инвариантны
@@ -4117,7 +4117,7 @@ val intBox = Box<Int>(42)
 // val numberBox: Box<Number> = intBox  // ОШИБКА! Box<Int> не является подтипом Box<Number>
 ```
 
-#### **Covariance** (**Ковариантность**) — **out**
+#### Covariance (Ковариантность) — out
 
 ```kotlin
 // out делает тип ковариантным (producer)
@@ -4138,7 +4138,7 @@ val producer: Producer<Any> = StringProducer()  // OK!
 // }
 ```
 
-#### **Contravariance** (**Контравариантность**) — in
+#### Contravariance (Контравариантность) — in
 
 ```kotlin
 // in делает тип контравариантным (consumer)
@@ -4161,7 +4161,7 @@ val consumer: Consumer<String> = AnyConsumer()  // OK!
 // }
 ```
 
-### **Star Projections** (**Звездные проекции**)
+### Star Projections (Звездные проекции)
 
 ```kotlin
 // Star projection - неизвестный тип
@@ -4188,7 +4188,7 @@ val consumer: Consumer<*> = getConsumer()
 // consumer.consume(anything)  // ОШИБКА! нельзя передать ничего, кроме null
 ```
 
-### **Upper Bounds** (**Верхние границы**)
+### Upper Bounds (Верхние границы)
 
 ```kotlin
 // Ограничение типа сверху
@@ -4208,7 +4208,7 @@ fun <T> copyWhenGreater(list: List<T>, threshold: T): List<String>
 }
 ```
 
-### **Reified Type Parameters** (**Овеществленные параметры типов**)
+### Reified Type Parameters (Овеществленные параметры типов)
 
 ```kotlin
 // Reified позволяет обращаться к типу во время выполнения
@@ -4237,7 +4237,7 @@ val mixed = listOf(1, "a", 2, "b", 3)
 val numbers = mixed.filterIsInstance<Int>()  // [1, 2, 3]
 ```
 
-### **Generic Functions** (**Generic функции**)
+### Generic Functions (Generic функции)
 
 ```kotlin
 // Простая generic функция
@@ -4261,7 +4261,7 @@ fun <T, R> List<T>.map(transform: (T) -> R): List<R> {
 }
 ```
 
-### **Type Erasure** (**Стирание типов**)
+### Type Erasure (Стирание типов)
 
 ```kotlin
 // Во время выполнения generic типы стираются
@@ -4277,9 +4277,9 @@ inline fun <reified T> checkType(obj: Any): Boolean {
 ```
 
 
-## Расширенное покрытие **Reflection**
+## Расширенное покрытие Reflection
 
-### **KClass** — информация о классе
+### KClass — информация о классе
 
 ```kotlin
 import kotlin.reflect.KClass
@@ -4298,7 +4298,7 @@ println(stringClass.isSealed)       // false
 println(stringClass.isCompanion)     // false
 ```
 
-### **KFunction** — информация о функциях
+### KFunction — информация о функциях
 
 ```kotlin
 import kotlin.reflect.KFunction
@@ -4320,7 +4320,7 @@ println(function.parameters[0].type) // String
 val result = function.call("Alice")  // "Hello, Alice!"
 ```
 
-### **KProperty** — информация о свойствах
+### KProperty — информация о свойствах
 
 ```kotlin
 import kotlin.reflect.KProperty
@@ -4343,7 +4343,7 @@ ageProperty.set(person, 26)
 println(person.age)  // 26
 ```
 
-### **KType** — информация о типах
+### KType — информация о типах
 
 ```kotlin
 import kotlin.reflect.KType
@@ -4363,7 +4363,7 @@ val listStringType = List::class.createType(listOf(String::class.createType()))
 println(listStringType.arguments[0].type)  // String
 ```
 
-### Аннотации через **Reflection**
+### Аннотации через Reflection
 
 ```kotlin
 import kotlin.reflect.full.*
@@ -4385,7 +4385,7 @@ println(myAnnotation?.value)  // "test"
 val hasAnnotation = MyClass::class.hasAnnotation<MyAnnotation>()  // true
 ```
 
-### Вызов функций через **Reflection**
+### Вызов функций через Reflection
 
 ```kotlin
 import kotlin.reflect.full.*
@@ -4432,7 +4432,7 @@ val person2 = constructor?.callBy(mapOf(
 ```
 
 
-## Расширенное покрытие **Annotations**
+## Расширенное покрытие Annotations
 
 ### Создание аннотаций
 
@@ -4516,7 +4516,7 @@ class MyClass @Inject constructor(val value: String)
 fun process(): @NotNull String = "test"
 ```
 
-### Встроенные аннотации **Kotlin**
+### Встроенные аннотации Kotlin
 
 ```kotlin
 // @JvmStatic - статический метод в JVM
@@ -4550,7 +4550,7 @@ fun readFile() {}
 fun oldFunction() {}
 ```
 
-### Аннотации для **Java Interop**
+### Аннотации для Java Interop
 
 ```kotlin
 // @JvmStatic
@@ -4581,7 +4581,7 @@ fun internalFunction() {}
 ```
 
 
-## **Multiplatform Projects** (**Мультиплатформенные проекты**)
+## Multiplatform Projects (Мультиплатформенные проекты)
 
 ### Общие концепции
 
@@ -4613,7 +4613,7 @@ actual class Platform actual constructor() {
 }
 ```
 
-### **Expect**/**Actual** механизм
+### Expect/Actual механизм
 
 ```kotlin
 // expect - объявление в commonMain
@@ -4676,7 +4676,7 @@ fun formatDate(date: Date): String {
 }
 ```
 
-### Платформенно-специфичные **API**
+### Платформенно-специфичные API
 
 ```kotlin
 // Общий интерфейс
@@ -4698,7 +4698,7 @@ actual class JvmFileSystem : FileSystem {
 ```
 
 
-## Расширенное покрытие **Data Classes**
+## Расширенное покрытие Data Classes
 
 ### Автоматически генерируемые методы
 
@@ -4725,7 +4725,7 @@ val (name, age) = person1
 println("$name is $age years old")  // Alice is 25 years old
 ```
 
-### Ограничения **Data Classes**
+### Ограничения Data Classes
 
 ```kotlin
 // Data класс должен иметь хотя бы один параметр
@@ -4744,7 +4744,7 @@ data class Person(val name: String, var age: Int)  // OK
 // }
 ```
 
-### Наследование **Data Classes**
+### Наследование Data Classes
 
 ```kotlin
 // Data класс может наследоваться от других классов
@@ -4757,7 +4757,7 @@ val person2 = Person("Alice", 25)
 println(person1 == person2)  // true (сравниваются только name и age, не id)
 ```
 
-### **Custom** методы в **Data Classes**
+### Custom методы в Data Classes
 
 ```kotlin
 data class Person(val name: String, val age: Int) {
@@ -4775,9 +4775,9 @@ data class Person(val name: String, val age: Int) {
 ```
 
 
-## Расширенное покрытие **Sealed Classes**
+## Расширенное покрытие Sealed Classes
 
-### **Sealed Classes** vs **Enum Classes**
+### Sealed Classes vs Enum Classes
 
 ```kotlin
 // Enum - фиксированный набор констант
@@ -4795,7 +4795,7 @@ sealed class Result<out T> {
 // Sealed Class более гибкий, так как может содержать данные
 ```
 
-### **Sealed Classes** с данными
+### Sealed Classes с данными
 
 ```kotlin
 sealed class NetworkResult {
@@ -4814,7 +4814,7 @@ fun process(result: NetworkResult) {
 }
 ```
 
-### **Sealed Interfaces** (**Kotlin 1.5+**)
+### Sealed Interfaces (Kotlin 1.5+)
 
 ```kotlin
 // Sealed Interface
@@ -4832,7 +4832,7 @@ sealed interface Writable
 class File : Readable, Writable
 ```
 
-### **Exhaustive When**
+### Exhaustive When
 
 ```kotlin
 sealed class Result<out T> {
@@ -4853,7 +4853,7 @@ fun <T> Result<T>.getOrThrow(): T = when (this) {
 
 ## Продвинутые техники работы с типами
 
-### **Type-safe builders** с обобщенными типами
+### Type-safe builders с обобщенными типами
 
 **Создание типобезопасных билдеров с использованием обобщенных типов:**
 
@@ -4926,7 +4926,7 @@ inspectType(Person("Alice", 25))
 
 ## Оптимизация производительности
 
-### **Inline** функции для производительности
+### Inline функции для производительности
 
 **Использование **inline** функций для улучшения производительности:**
 
@@ -5067,7 +5067,7 @@ fun validate(obj: Any): List<String> {
 
 ## Продвинутые паттерны проектирования
 
-### **Strategy Pattern** с функциональным подходом
+### Strategy Pattern с функциональным подходом
 
 **Реализация паттерна **Strategy** с использованием функций высшего порядка:**
 
@@ -5098,7 +5098,7 @@ val sorted = sorter.sort(listOf(3, 1, 4, 1, 5, 9, 2, 6))
 
 Использование функций вместо классов для паттерна **Strategy** делает код более функциональным и гибким.
 
-### **Observer Pattern** с **Delegated Properties**
+### Observer Pattern с Delegated Properties
 
 **Реализация паттерна **Observer** с использованием делегированных свойств:**
 
@@ -5144,7 +5144,7 @@ user.age = 25        // Age changed from 0 to 25
 
 ## Продвинутые техники работы с классами
 
-### **Nested** классы и **Inner** классы
+### Nested классы и Inner классы
 
 **Работа с вложенными и внутренними классами:**
 
@@ -5180,7 +5180,7 @@ val inner = outer.Inner()    // Inner класс
 
 Понимание различий между **nested** и **inner** классами помогает создавать правильные структуры данных.
 
-### **Anonymous** классы и **Object expressions**
+### Anonymous классы и Object expressions
 
 **Использование анонимных классов и **object expressions**:**
 
@@ -5217,7 +5217,7 @@ logger.log("Test message")
 
 ## Работа с типами
 
-### **Type inference** и **explicit** типы
+### Type inference и explicit типы
 
 **Работа с выведением типов и явным указанием типов:**
 
@@ -5248,7 +5248,7 @@ val strings: List<String> = process(listOf("a", "b", "c"))  // T выводит�
 
 Понимание **type inference** и когда нужно использовать **explicit** типы помогает писать более читаемый и безопасный код.
 
-### **Type casting** и проверки типов
+### Type casting и проверки типов
 
 **Работа с приведением типов и проверками типов:**
 
@@ -5340,7 +5340,7 @@ when (val result = processUserResult(user)) {
 
 Продвинутая обработка исключений позволяет создавать более надежные приложения с правильной обработкой различных типов ошибок.
 
-### **Functional** подход к обработке ошибок
+### Functional подход к обработке ошибок
 
 **Использование функционального подхода для обработки ошибок:**
 
@@ -5441,7 +5441,7 @@ fun main() = runBlocking {
 
 Корутины позволяют писать асинхронный код в синхронном стиле, что делает код более читаемым и понятным.
 
-### **Flow** для обработки потоков данных
+### Flow для обработки потоков данных
 
 **Использование **Flow** для обработки асинхронных потоков данных:**
 
@@ -5546,7 +5546,7 @@ val newPerson = createInstance(Person::class, "Bob", 30)
 
 ## Дополнение: Extension-подходы для классов
 
-### **Extension** функции для классов
+### Extension функции для классов
 
 **Расширение функциональности существующих классов:**
 
@@ -5600,7 +5600,7 @@ println(list.swap(0, 4))  // [5, 2, 3, 4, 1]
 
 **Extension** функции позволяют добавлять функциональность к существующим классам без наследования.
 
-### **Extension** свойства
+### Extension свойства
 
 **Добавление свойств к существующим классам:**
 
@@ -5645,9 +5645,9 @@ println(sb.toString())  // "Hella"
 
 **Extension** свойства позволяют добавлять вычисляемые свойства к существующим классам, что делает код более выразительным.
 
-## Работа с типами и **generics**
+## Работа с типами и generics
 
-### Продвинутые **generics**
+### Продвинутые generics
 
 **Использование продвинутых возможностей **generics**:**
 
@@ -5709,7 +5709,7 @@ val filtered = copyIfGreater(strings, "banana")  // ["cherry"]
 
 Продвинутые **generics** позволяют создавать гибкие и типобезопасные **API**.
 
-### **Type constraints** и **bounds**
+### Type constraints и bounds
 
 **Использование ограничений типов для **generics**:**
 
@@ -5761,7 +5761,7 @@ process(text)  // "ehllo"
 
 Этот файл содержит полное руководство по основам **Kotlin**, покрывающее все основные аспекты от базовых концепций до продвинутых техник, работы с типами, корутинами, рефлексией, обработкой ошибок, оптимизации производительности и паттернов проектирования.
 
-## Дополнительные возможности **Kotlin**
+## Дополнительные возможности Kotlin
 
 ### Работа с делегатами
 
@@ -5846,7 +5846,7 @@ fun requireNotNull(value: String?): String {
 
 Контракты помогают компилятору лучше понимать код и улучшают статический анализ.
 
-### **Inline** классы (**Value Classes**)
+### Inline классы (Value Classes)
 
 **Использование **inline** классов для типобезопасности:**
 
@@ -6029,7 +6029,7 @@ class BankAccount(private var balance: Int) {
 
 Кодовые примеры вынесены в профильные разделы выше, чтобы не дублировать блоки.
 
-### Работа с типами и **type inference**
+### Работа с типами и type inference
 
 Для `type inference` правило простое: использовать вывод типов по умолчанию, но явно фиксировать тип в публичном API и в сложных generic-сигнатурах, где это повышает читаемость.
 
@@ -6089,7 +6089,7 @@ class BankAccount(private var balance: Int) {
 
 ## Практические примеры использования
 
-### Создание **data class** для модели данных
+### Создание data class для модели данных
 
 **Пример использования **data class** для создания модели:**
 
@@ -6113,7 +6113,7 @@ println(user.getDisplayName())  // "John Doe (john@example.com)"
 
 **Data class** автоматически генерирует **equals**, **hashCode**, **toString** и **copy** методы.
 
-### Использование **sealed class** для состояний
+### Использование sealed class для состояний
 
 **Пример использования **sealed class** для представления состояний:**
 
@@ -6135,7 +6135,7 @@ fun <T> handleResult(result: Result<T>) {
 
 **Sealed class** обеспечивает типобезопасную обработку состояний.
 
-### Использование **extension functions** для расширения функциональности
+### Использование extension functions для расширения функциональности
 
 **Пример использования **extension functions**:**
 
@@ -6164,7 +6164,7 @@ val sorted = numbers.isSorted()  // true
 
 **Extension functions** позволяют расширять функциональность существующих классов без наследования.
 
-### Использование **inline classes** для типобезопасности
+### Использование inline classes для типобезопасности
 
 **Пример использования **inline classes**:**
 
@@ -6260,9 +6260,9 @@ fun processString(str: String?) {
 
 ## Лучшие практики
 
-- **Null safety:** использовать типы с `?` явно; предпочитать `**val**` и неизменяемые структуры; применять `?.`, `?:`, `!!` осознанно (**избегать `!!` в production**).
+- **Null safety:** использовать типы с `?` явно; предпочитать `val` и неизменяемые структуры; применять `?.`, `?:`, `!!` осознанно (избегать `!!` в production).
 - **Идиомы `Kotlin`:** предпочитать **data class** для **DTO**; **object** для синглтонов; **sealed class** для закрытых иерархий; **extension**-функции вместо утилитных классов.
-- **Коллекции:** использовать неизменяемые `**listOf**()`, `**mapOf**()`, `**setOf**()` по умолчанию; изменяемые — `**mutableListOf**()` и т.д. только при необходимости; предпочитать операции над коллекциями (**filter, map**) вместо циклов.
-- **Корутины:** использовать структурированную конкурентность (**CoroutineScope**); не запускать корутины без привязки к **scope**; обрабатывать отмену и исключения (**SupervisorJob, CoroutineExceptionHandler**).
+- **Коллекции:** использовать неизменяемые `**listOf**()`, `**mapOf**()`, `**setOf**()` по умолчанию; изменяемые — `**mutableListOf**()` и т.д. только при необходимости; предпочитать операции над коллекциями (filter, map) вместо циклов.
+- **Корутины:** использовать структурированную конкурентность (CoroutineScope); не запускать корутины без привязки к **scope**; обрабатывать отмену и исключения (SupervisorJob, CoroutineExceptionHandler).
 - **Совместимость с `Java`:** аннотировать `@**JvmStatic**`, `@**JvmOverloads**`, `@**JvmField**` при экспорте в **Java**; учитывать **nullability** в сигнатурах для **Java**-вызовов.
 - **Производительность:** использовать **inline** для функций с лямбдами в горячих путях; **reified** только где нужна информация о типе; избегать избыточной аллокации в циклах.

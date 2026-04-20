@@ -37,8 +37,8 @@ Secrets management — системное решение для хранения
 - [NIST SP 800-57](https://csrc.nist.gov/publications/detail/sp/800-57-part-1/rev-5/final)
 
 ### Соседние разделы
-- [Data Security](data-security.md)
-- [Application Security](../application/application-security.md)
+- [[data-security|Data Security]]
+- [[application-security|Application Security]]
 - [Infrastructure Security](../infrastructure/)
 - [Kubernetes](../../platform/containers/kubernetes/)
 

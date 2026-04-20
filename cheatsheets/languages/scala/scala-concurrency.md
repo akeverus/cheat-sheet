@@ -15,9 +15,9 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---
 
-# **Scala Concurrency**
+# Scala Concurrency
 
-Кратко: полное руководство по конкурентности в **Scala**: **Futures**, **Promises**, **Actors** (**Akka**), параллельные коллекции, синхронизация.
+Кратко: полное руководство по конкурентности в **Scala**: **Futures**, **Promises**, **Actors** (Akka), параллельные коллекции, синхронизация.
 
 ## Полезные ссылки
 
@@ -77,15 +77,15 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 **Scala** предоставляет несколько подходов к конкурентному программированию:**
 
 1. **Futures и Promises** — для асинхронных вычислений
-2. **Actors (**Akka**)** — для акторной модели программирования
+2. **Actors (Akka)** — для акторной модели программирования
 3. **Параллельные коллекции** — для параллельной обработки данных
 4. **Синхронизация** — для координации потоков
 
-## **Futures**
+## Futures
 
 **Future** представляет асинхронное вычисление, которое может завершиться успешно или с ошибкой. **Future** не блокирует текущий поток выполнения, позволяя программе продолжать работу, пока вычисление выполняется в фоновом режиме. Это ключевой механизм для создания неблокирующих асинхронных приложений в **Scala**.
 
-### Создание **Futures**
+### Создание Futures
 
 При создании **Future** код внутри блока выполняется асинхронно в контексте **ExecutionContext**. **ExecutionContext** определяет пул потоков, где будет выполняться вычисление. Глобальный **ExecutionContext** использует **ForkJoinPool**, который автоматически масштабируется в зависимости от нагрузки.
 
@@ -107,7 +107,7 @@ val future2 = Future {
 }(ExecutionContext.global)
 ```
 
-### Операции с **Futures**
+### Операции с Futures
 
 ```scala
 val future = Future(5)
@@ -151,7 +151,7 @@ future.onComplete {
 }
 ```
 
-## **Promises**
+## Promises
 
 **Promise** — это **writable Future**, который позволяет завершить **Future** извне. В то время как **Future** представляет результат вычисления, **Promise** позволяет контролировать, когда и как это вычисление завершится. Это полезно для интеграции асинхронного кода с **callback-based API** или для создания **Future** из кода, который не может быть обернут в **Future** напрямую.
 
@@ -177,9 +177,9 @@ future.onComplete {
 }
 ```
 
-**Promise** особенно полезен при работе с **callback-based API**, где нужно преобразовать **callback** в **Future**, или когда результат вычисления определяется внешними событиями (**например, пользовательский ввод или сетевые события**).
+**Promise** особенно полезен при работе с **callback-based API**, где нужно преобразовать **callback** в **Future**, или когда результат вычисления определяется внешними событиями (например, пользовательский ввод или сетевые события).
 
-## **ExecutionContext**
+## ExecutionContext
 
 **ExecutionContext** определяет, где и как выполняются асинхронные вычисления:**
 
@@ -238,7 +238,7 @@ parVector.tasksupport = new scala.collection.parallel.ForkJoinTaskSupport(
 )
 ```
 
-## Композиция **Futures**
+## Композиция Futures
 
 ### Последовательное выполнение
 
@@ -267,7 +267,7 @@ val result = for {
 } yield (user, posts, comments)
 ```
 
-### Обработка множественных **Futures**
+### Обработка множественных Futures
 
 ```scala
 import scala.concurrent.Future
@@ -297,7 +297,7 @@ val results = Future.traverse(ids) { id =>
 
 **Scala** предоставляет различные механизмы синхронизации:**
 
-### **Synchronized**
+### Synchronized
 
 ```scala
 class Counter {
@@ -310,7 +310,7 @@ class Counter {
 }
 ```
 
-### **Atomic Variables**
+### Atomic Variables
 
 ```scala
 import java.util.concurrent.atomic.AtomicInteger
@@ -337,7 +337,7 @@ val future = Future {
 val result = Await.result(future, Duration.Inf)
 ```
 
-### Правильное использование **ExecutionContext**
+### Правильное использование ExecutionContext
 
 ```scala
 // Хорошо - использование подходящего ExecutionContext
@@ -347,7 +347,7 @@ val future = Future {
 }(ioEc)
 ```
 
-## Обработка ошибок в **Futures**
+## Обработка ошибок в Futures
 
 **Futures** предоставляют несколько способов обработки ошибок:**
 
@@ -412,7 +412,7 @@ val cancellable = Future {
 
 ## Продвинутые техники конкурентности
 
-### **ExecutionContext**
+### ExecutionContext
 
 **ExecutionContext** определяет, где и как выполняются асинхронные операции.
 
@@ -434,7 +434,7 @@ val future = Future {
 }(customEc)
 ```
 
-### Координация **Future**
+### Координация Future
 
 Координация нескольких **Future** позволяет создавать сложные асинхронные сценарии.
 
@@ -458,7 +458,7 @@ val allResults = for {
 val firstResult = Future.firstCompletedOf(Seq(future1, future2, future3))
 ```
 
-### Обработка ошибок в **Future**
+### Обработка ошибок в Future
 
 Обработка ошибок в **Future** позволяет создавать устойчивые асинхронные системы.
 
@@ -504,7 +504,7 @@ def retry[T](n: Int)(f: => Future[T]): Future[T] = {
 
 ## Расширенные техники конкурентности
 
-### Работа с **ExecutionContext**
+### Работа с ExecutionContext
 
 **ExecutionContext** определяет, где выполняются асинхронные операции.
 
@@ -525,7 +525,7 @@ val future = Future {
 }(ec)
 ```
 
-### Координация множественных **Future**
+### Координация множественных Future
 
 Координация множественных **Future** позволяет создавать сложные асинхронные сценарии.
 
@@ -549,7 +549,7 @@ val allResults = for {
 val firstResult = Future.firstCompletedOf(Seq(future1, future2, future3))
 ```
 
-### Обработка ошибок в **Future**
+### Обработка ошибок в Future
 
 Правильная обработка ошибок критична для надежности.
 
@@ -572,7 +572,7 @@ val recovered = future.recover {
 }
 ```
 
-### Практические примеры: Координация множественных **Future**
+### Практические примеры: Координация множественных Future
 
 ```scala
 import scala.concurrent.{Future, ExecutionContext}
@@ -632,7 +632,7 @@ val result = Future.firstCompletedOf(Seq(slowOperation(), timeout.future))
 
 **Scala** предоставляет мощные инструменты для конкурентного программирования. Понимание **Futures**, **Promises**, параллельных коллекций, синхронизации, **ExecutionContext**, координации **Future**, обработки ошибок в **Future**, работы с **ExecutionContext**, координации множественных **Future**, обработки ошибок в **Future**, параллельного выполнения **Future**, таймаутов и отмены и их практических применений позволяет создавать эффективные, масштабируемые и надежные приложения. Правильная обработка ошибок, использование таймаутов, отмены, координации **Future**, обработки ошибок, создание кастомных **ExecutionContext**, координация множественных **Future**, использование **recover** для обработки ошибок, параллельное выполнение нескольких **Future** и использование таймаутов критичны для создания надежных систем. Конкурентность в **Scala** особенно важна для создания высокопроизводительных приложений, которые должны обрабатывать множество одновременных операций, интегрироваться с внешними системами, обеспечивать отзывчивость пользовательского интерфейса и корректно обрабатывать таймауты.
 
-### Практические примеры: Работа с **ExecutionContext**
+### Практические примеры: Работа с ExecutionContext
 
 ```scala
 import scala.concurrent.{ExecutionContext, Future}
@@ -652,7 +652,7 @@ val future = Future {
 threadPool.shutdown()
 ```
 
-### Практические примеры: Работа с **Promise** для координации
+### Практические примеры: Работа с Promise для координации
 
 ```scala
 import scala.concurrent.{Promise, Future}

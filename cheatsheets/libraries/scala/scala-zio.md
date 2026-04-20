@@ -66,9 +66,9 @@ updated: "2026-02-11"
 - [Experimental Features](#experimental-features)
   - [ZIO 2.x Features](#zio-2x-features)
 
-## Основные концепции **ZIO**
+## Основные концепции ZIO
 
-### **ZIO Type**
+### ZIO Type
 
 Пример определения и использования типа **ZIO**[R, E, A] для эффектов в **Scala**.
 
@@ -282,7 +282,7 @@ val userServiceLogic: ZIO[UserRepository with EmailService with Logger, Throwabl
 val program = userServiceLogic.provideLayer(fullLayer)
 ```
 
-### **Fiber** — легковесные потоки
+### Fiber — легковесные потоки
 ```scala
 import zio._
 
@@ -321,7 +321,7 @@ val supervisedProgram = ZIO.supervise {
 }
 ```
 
-### **Schedule** — повторение и **retry**
+### Schedule — повторение и retry
 ```scala
 import zio._
 import zio.Schedule._
@@ -361,9 +361,9 @@ val counterSchedule = Schedule.unfold[Long](0L) { counter =>
 }
 ```
 
-## **ZIO Streams**
+## ZIO Streams
 
-### **ZStream** для работы с потоками данных
+### ZStream для работы с потоками данных
 ```scala
 import zio.stream._
 
@@ -436,9 +436,9 @@ val result = simpleStream.run(sumSink) // ZIO[Any, Nothing, Int]
 val collected = simpleStream.run(collectSink) // ZIO[Any, Nothing, List[Int]]
 ```
 
-## **ZIO HTTP**
+## ZIO HTTP
 
-### **HTTP Server** с **ZIO HTTP**
+### HTTP Server с ZIO HTTP
 ```scala
 import zio.http._
 import zio.http.model.Method
@@ -485,9 +485,9 @@ val serverProgram = Server.serve(app).provide(
 )
 ```
 
-## Тестирование с **ZIO Test**
+## Тестирование с ZIO Test
 
-### **Unit Testing**
+### Unit Testing
 ```scala
 import zio.test._
 import zio.test.Assertion._
@@ -547,7 +547,7 @@ case class FailingUserRepository() extends UserRepository {
 }
 ```
 
-### **Property-based Testing**
+### Property-based Testing
 ```scala
 import zio.test._
 import zio.test.magnolia._
@@ -586,7 +586,7 @@ object PropertySpec extends ZIOSpecDefault {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```scala
 import zio.test._
 import zio.http._
@@ -622,9 +622,9 @@ object HttpSpec extends ZIOSpecDefault {
 }
 ```
 
-## **ZIO Config**
+## ZIO Config
 
-### **Configuration Management**
+### Configuration Management
 ```scala
 import zio.config._
 import zio.config.magnolia._
@@ -690,7 +690,7 @@ val program = for {
 } yield ()
 ```
 
-### **Environment Variables**
+### Environment Variables
 ```scala
 import zio.config._
 
@@ -713,9 +713,9 @@ val envConfigProvider = ConfigProvider.envProvider
 val loadFromEnv: Task[EnvConfig] = ZIO.config[EnvConfig].provide(ZLayer.succeed(envConfigProvider))
 ```
 
-## **ZIO Logging**
+## ZIO Logging
 
-### **Structured Logging**
+### Structured Logging
 ```scala
 import zio.logging._
 import zio.logging.slf4j.Slf4jLogger
@@ -764,9 +764,9 @@ val loggingProgram = for {
 } yield result
 ```
 
-## **ZIO Schema**
+## ZIO Schema
 
-### **Type-safe Data Validation**
+### Type-safe Data Validation
 ```scala
 import zio.schema._
 
@@ -805,9 +805,9 @@ case class PersonV1(name: String, age: Int)
 case class PersonV2(name: String, age: Int, email: String)
 ```
 
-## **ZIO Query**
+## ZIO Query
 
-### **Compositional Data Access**
+### Compositional Data Access
 ```scala
 import zio.query._
 
@@ -863,9 +863,9 @@ val batchedUsers: ZQuery[UserDataSource, Throwable, List[User]] = {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
-### **ZIO** в **Spring** приложении
+### ZIO в Spring приложении
 ```scala
 @Configuration
 class ZioConfig {
@@ -930,7 +930,7 @@ object ZioEnvironmentLive {
 
 ## Лучшие практики
 
-### **Error Handling**
+### Error Handling
 ```scala
 // Определение domain ошибок
 sealed trait DomainError extends Throwable
@@ -956,7 +956,7 @@ val refinedOperation = databaseOperation.refineOrDie {
 }
 ```
 
-### **Resource Management**
+### Resource Management
 ```scala
 import zio.ZManaged
 
@@ -986,7 +986,7 @@ val fullEnvironment = for {
 } yield Environment(db, redis, kafka)
 ```
 
-### **Testing Patterns**
+### Testing Patterns
 ```scala
 // Test constructors
 def testUserService(repo: UserRepository = TestUserRepository()) = {
@@ -1023,7 +1023,7 @@ test("full user workflow") {
 }
 ```
 
-### **Performance Optimization**
+### Performance Optimization
 ```scala
 // Parallel execution
 val parallelOperations = ZIO.foreachPar(1 to 100) { i =>
@@ -1065,7 +1065,7 @@ val cachedResult = Ref.make[Map[String, (Long, String)]](Map.empty).map { cache 
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object ZIOTroubleshooting {
 
@@ -1113,7 +1113,7 @@ object ZIOTroubleshooting {
 }
 ```
 
-### **Debugging ZIO Programs**
+### Debugging ZIO Programs
 ```scala
 // Runtime debugging
 val debugProgram = for {
@@ -1146,7 +1146,7 @@ val withStackTrace = operation.stackTrace.tap { trace =>
 
 ## Руководство по миграции
 
-### **From Cats Effect**
+### From Cats Effect
 ```scala
 // Cats Effect IO
 import cats.effect.IO
@@ -1180,7 +1180,7 @@ val zioResource: ZManaged[Any, Throwable, Connection] = ZManaged.make(
 )(conn => ZIO.attempt(closeConnection()).orDie)
 ```
 
-### **From Future-based code**
+### From Future-based code
 ```scala
 // Scala Future
 import scala.concurrent.Future
@@ -1206,9 +1206,9 @@ def fromFuture[A](future: => Future[A]): Task[A] = {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **ZIO** 2.x **Features**
+### ZIO 2.x Features
 ```scala
 // ZIO 2.x улучшения
 import zio._
@@ -1252,5 +1252,5 @@ object ZIOSpec2 extends ZIOSpecDefault {
 ## См. также
 - [[scala-cats|Cats]] — Альтернативная функциональная библиотека
 - [[scala-akka|Akka]] — Фреймворк для конкурентного программирования
-- [Паттерны](../../patterns/README.md) — Функциональные паттерны
+- [[README|Паттерны]] — Функциональные паттерны
 

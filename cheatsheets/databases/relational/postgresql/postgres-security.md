@@ -16,7 +16,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 ---
 
-# **PostgreSQL**: Безопасность
+# PostgreSQL: Безопасность
 
 ## Полезные ссылки
 
@@ -36,7 +36,7 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
   - [Создание ролей](#создание-ролей)
   - [Управление привилегиями](#управление-привилегиями)
   - [Управление ролями](#управление-ролями)
-- [**Row Level Security** (**RLS**)](#row-level-security-rls)
+- [**Row Level Security** (RLS)](#row-level-security-rls)
   - [Включение **RLS**](#включение-rls)
   - [Создание политик](#создание-политик)
   - [Сложные политики](#сложные-политики)
@@ -122,7 +122,7 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
   - [**Regular Maintenance**](#regular-maintenance)
   - [**Incident Response**](#incident-response)
 
-## Введение в безопасность **PostgreSQL**
+## Введение в безопасность PostgreSQL
 
 Безопасность **PostgreSQL** включает управление доступом, шифрование данных, аудит и множество других аспектов защиты данных.
 
@@ -229,11 +229,11 @@ REVOKE admin_role FROM app_user;
 ```
 
 
-## **Row Level Security** (**RLS**)
+## Row Level Security (RLS)
 
 **Row Level Security** позволяет ограничивать доступ к строкам таблицы на основе политик.
 
-### Включение **RLS**
+### Включение RLS
 
 ```sql
 -- Включить RLS на таблице
@@ -247,7 +247,7 @@ WHERE tablename = 'users';
 
 ### Создание политик
 
-#### Политика для **SELECT**
+#### Политика для SELECT
 
 ```sql
 -- Пользователи могут видеть только свои данные
@@ -257,7 +257,7 @@ TO app_user
 USING (id = current_setting('app.user_id')::integer);
 ```
 
-#### Политика для **INSERT**
+#### Политика для INSERT
 
 ```sql
 -- Пользователи могут вставлять только свои данные
@@ -267,7 +267,7 @@ TO app_user
 WITH CHECK (id = current_setting('app.user_id')::integer);
 ```
 
-#### Политика для **UPDATE**
+#### Политика для UPDATE
 
 ```sql
 -- Пользователи могут обновлять только свои данные
@@ -278,7 +278,7 @@ USING (id = current_setting('app.user_id')::integer)
 WITH CHECK (id = current_setting('app.user_id')::integer);
 ```
 
-#### Политика для **DELETE**
+#### Политика для DELETE
 
 ```sql
 -- Пользователи могут удалять только свои данные
@@ -328,9 +328,9 @@ DROP POLICY user_select_policy ON users;
 ```
 
 
-## **SSL**/**TLS** соединения
+## SSL/TLS соединения
 
-### Настройка **SSL** на сервере
+### Настройка SSL на сервере
 
 #### Генерация сертификатов
 
@@ -346,7 +346,7 @@ chmod 600 server.key
 chown postgres:postgres server.key server.crt
 ```
 
-#### Настройка **postgresql.conf**
+#### Настройка postgresql.conf
 
 ```conf
 # Включить SSL
@@ -363,7 +363,7 @@ ssl_ca_file = 'ca.crt'
 ssl_min_protocol_version = 'TLSv1.2'
 ```
 
-#### Настройка **pg_hba.conf**
+#### Настройка pg_hba.conf
 
 ```conf
 # Требовать SSL для всех подключений
@@ -373,7 +373,7 @@ hostssl    all    all    0.0.0.0/0    md5
 hostssl    mydb    app_user    192.168.1.0/24    md5
 ```
 
-### Настройка **SSL** на клиенте
+### Настройка SSL на клиенте
 
 ```bash
 # Подключение с SSL
@@ -383,21 +383,21 @@ psql "host=localhost dbname=mydb user=app_user sslmode=require"
 psql "host=localhost dbname=mydb user=app_user sslmode=verify-full sslrootcert=ca.crt"
 ```
 
-### Режимы **sslmode**
+### Режимы sslmode
 
-- `**disable**`: **SSL** отключен
-- `**allow**`: **SSL** опционален
-- `**prefer**`: **SSL** предпочтителен
-- `**require**`: **SSL** обязателен
-- `**verify-ca**`: **SSL** обязателен + проверка `CA`
-- `**verify-full**`: **SSL** обязателен + проверка `CA` и **hostname**
+- `disable`: **SSL** отключен
+- `allow`: **SSL** опционален
+- `prefer`: **SSL** предпочтителен
+- `require`: **SSL** обязателен
+- `verify-ca`: **SSL** обязателен + проверка `CA`
+- `verify-full`: **SSL** обязателен + проверка `CA` и **hostname**
 
 
 ## Аудит и логирование
 
 ### Настройка логирования
 
-#### **postgresql.conf**
+#### postgresql.conf
 
 ```conf
 # Включить логирование
@@ -423,7 +423,7 @@ log_min_duration_statement = 1000
 log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
 ```
 
-### **pgAudit** расширение
+### pgAudit расширение
 
 ```sql
 -- Установить pgAudit
@@ -477,7 +477,7 @@ FOR EACH ROW EXECUTE FUNCTION audit_trigger();
 
 ### Шифрование на уровне приложения
 
-#### Использование **pgcrypto**
+#### Использование pgcrypto
 
 ```sql
 -- Установить расширение
@@ -521,7 +521,7 @@ VALUES (encrypt('secret data', 'my_key', 'aes'));
 
 ### Шифрование на уровне диска
 
-#### **Transparent Data Encryption** (**TDE**)
+#### Transparent Data Encryption (TDE)
 
 **PostgreSQL** не поддерживает нативный **TDE**, но можно использовать:**
 
@@ -576,7 +576,7 @@ GRANT CONNECT ON DATABASE mydb TO app_user;
 -- Проверить pg_hba.conf
 ```
 
-### Проблема: **RLS** блокирует доступ
+### Проблема: RLS блокирует доступ
 
 **Решение:**
 ```sql
@@ -590,7 +590,7 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 SHOW app.user_id;
 ```
 
-### Проблема: **SSL** соединение не устанавливается
+### Проблема: SSL соединение не устанавливается
 
 **Решение:**
 ```bash
@@ -604,9 +604,9 @@ ls -l server.key server.crt
 tail -f /var/log/postgresql/postgresql-*.log
 ```
 
-## **Advanced Security Features**
+## Advanced Security Features
 
-### **Column-Level Encryption**
+### Column-Level Encryption
 
 ```sql
 -- Создать функцию для шифрования столбцов
@@ -656,7 +656,7 @@ SELECT
 FROM users;
 ```
 
-### **Dynamic RLS Policies**
+### Dynamic RLS Policies
 
 ```sql
 -- Создать функцию для динамических политик
@@ -675,7 +675,7 @@ USING (tenant_id = get_user_tenant_id())
 WITH CHECK (tenant_id = get_user_tenant_id());
 ```
 
-### **Time-Based Access Control**
+### Time-Based Access Control
 
 ```sql
 -- Политика с временными ограничениями
@@ -691,7 +691,7 @@ USING (
 );
 ```
 
-### **IP-Based Access Control**
+### IP-Based Access Control
 
 ```sql
 -- Функция для проверки IP
@@ -718,7 +718,7 @@ TO app_user
 USING (check_allowed_ip());
 ```
 
-## **Security Hardening**
+## Security Hardening
 
 ### Удаление небезопасных функций
 
@@ -740,7 +740,7 @@ REVOKE ALL ON SCHEMA information_schema FROM PUBLIC;
 GRANT USAGE ON SCHEMA pg_catalog TO postgres;
 ```
 
-### Защита от **SQL Injection**
+### Защита от SQL Injection
 
 ```sql
 -- Использовать prepared statements
@@ -761,7 +761,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-### Защита от **DoS** атак
+### Защита от DoS атак
 
 ```sql
 -- Ограничить количество подключений
@@ -774,9 +774,9 @@ ALTER ROLE app_user SET statement_timeout = '30s';
 ALTER ROLE app_user SET work_mem = '16MB';
 ```
 
-## **Advanced RLS Patterns**
+## Advanced RLS Patterns
 
-### **Multi-Tenant Isolation**
+### Multi-Tenant Isolation
 
 ```sql
 -- Создать таблицу с tenant_id
@@ -801,7 +801,7 @@ WITH CHECK (tenant_id = current_setting('app.tenant_id')::INTEGER);
 SET app.tenant_id = '1';
 ```
 
-### **Hierarchical Access Control**
+### Hierarchical Access Control
 
 ```sql
 -- Политика с иерархией доступа
@@ -823,7 +823,7 @@ USING (
 );
 ```
 
-### **Time-Based RLS**
+### Time-Based RLS
 
 ```sql
 -- Политика с временными ограничениями
@@ -836,9 +836,9 @@ USING (
 );
 ```
 
-## **SSL**/**TLS Advanced Configuration**
+## SSL/TLS Advanced Configuration
 
-### **Client Certificate Authentication**
+### Client Certificate Authentication
 
 ```conf
 # postgresql.conf
@@ -852,7 +852,7 @@ ssl_crl_file = 'ca.crl'
 hostssl    all    all    0.0.0.0/0    cert
 ```
 
-### **Certificate Generation for Clients**
+### Certificate Generation for Clients
 
 ```bash
 # Создать CA
@@ -869,7 +869,7 @@ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key \
     -CAcreateserial -out client.crt -days 365
 ```
 
-### **SSL Connection Monitoring**
+### SSL Connection Monitoring
 
 ```sql
 -- Проверить SSL соединения
@@ -885,9 +885,9 @@ FROM pg_stat_ssl
 JOIN pg_stat_activity USING (pid);
 ```
 
-## **Advanced Auditing**
+## Advanced Auditing
 
-### **Comprehensive Audit System**
+### Comprehensive Audit System
 
 ```sql
 -- Создать расширенную таблицу аудита
@@ -965,7 +965,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Query-Level Auditing**
+### Query-Level Auditing
 
 ```sql
 -- Аудит на уровне запросов
@@ -1000,9 +1000,9 @@ ON ddl_command_end
 EXECUTE FUNCTION audit_query();
 ```
 
-## **Password Management**
+## Password Management
 
-### **Password Policies**
+### Password Policies
 
 ```sql
 -- Создать функцию для проверки сложности пароля
@@ -1066,7 +1066,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Password Expiration**
+### Password Expiration
 
 ```sql
 -- Добавить поле для срока действия пароля
@@ -1090,9 +1090,9 @@ BEFORE SELECT ON users
 FOR EACH ROW EXECUTE FUNCTION check_password_expiry();
 ```
 
-## **Network Security**
+## Network Security
 
-### **Firewall Configuration**
+### Firewall Configuration
 
 ```bash
 # iptables rules для PostgreSQL
@@ -1109,7 +1109,7 @@ iptables -A INPUT -p tcp --dport 5432 -j DROP
 iptables-save > /etc/iptables/rules.v4
 ```
 
-### **VPN Integration**
+### VPN Integration
 
 ```conf
 # pg_hba.conf для VPN
@@ -1121,9 +1121,9 @@ hostssl    all    all    10.9.0.0/24    md5
 host       all    all    0.0.0.0/0      reject
 ```
 
-## **Security Monitoring**
+## Security Monitoring
 
-### **Real-Time Security Monitoring**
+### Real-Time Security Monitoring
 
 ```sql
 -- Создать представление для мониторинга безопасности
@@ -1178,7 +1178,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Failed Login Attempts Tracking**
+### Failed Login Attempts Tracking
 
 ```sql
 -- Создать таблицу для отслеживания неудачных попыток входа
@@ -1210,9 +1210,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Compliance and Regulations**
+## Compliance and Regulations
 
-### **GDPR Compliance**
+### GDPR Compliance
 
 ```sql
 -- Функция для удаления персональных данных (GDPR)
@@ -1247,7 +1247,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### **Data Retention Policies**
+### Data Retention Policies
 
 ```sql
 -- Функция для автоматического удаления старых данных
@@ -1273,9 +1273,9 @@ SELECT cron.schedule('retention-policy', '0 2 * * 0',
     'SELECT apply_retention_policy();');
 ```
 
-## **Security Best Practices Summary**
+## Security Best Practices Summary
 
-### **Authentication**
+### Authentication
 
 1. **Использовать сильные пароли** с проверкой сложности
 2. **Реализовать двухфакторную аутентификацию** где возможно
@@ -1283,7 +1283,7 @@ SELECT cron.schedule('retention-policy', '0 2 * * 0',
 4. **Использовать `SSL`/TLS** для всех подключений
 5. **Регулярно менять пароли** администраторов
 
-### **Authorization**
+### Authorization
 
 1. **Принцип наименьших привилегий**
 2. **Использовать RLS** для изоляции данных
@@ -1291,15 +1291,15 @@ SELECT cron.schedule('retention-policy', '0 2 * * 0',
 4. **Регулярно аудировать права доступа**
 5. **Удалять неиспользуемые роли**
 
-### **Encryption**
+### Encryption
 
-1. **Шифровать данные при передаче** (**SSL/TLS**)
+1. **Шифровать данные при передаче** (SSL/TLS)
 2. **Шифровать чувствительные данные** в БД
 3. **Использовать сильные алгоритмы** шифрования
 4. **Безопасно хранить ключи** шифрования
 5. **Регулярно обновлять сертификаты**
 
-### **Monitoring**
+### Monitoring
 
 1. **Включить детальное логирование**
 2. **Мониторить подозрительную активность**
@@ -1307,7 +1307,7 @@ SELECT cron.schedule('retention-policy', '0 2 * * 0',
 4. **Регулярно проверять логи**
 5. **Вести аудит всех изменений**
 
-## **Security Automation**
+## Security Automation
 
 ### Автоматическая ротация паролей
 
@@ -1386,7 +1386,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Security Incident Response**
+## Security Incident Response
 
 ### Процедура реагирования на инциденты
 
@@ -1459,9 +1459,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Advanced RLS Scenarios**
+## Advanced RLS Scenarios
 
-### **Dynamic Policy Based** on **User Attributes**
+### Dynamic Policy Based on User Attributes
 
 ```sql
 -- Создать функцию для получения прав пользователя
@@ -1501,7 +1501,7 @@ USING (
 );
 ```
 
-### **Cross-Table RLS**
+### Cross-Table RLS
 
 ```sql
 -- Политика с проверкой связанных таблиц
@@ -1518,9 +1518,9 @@ USING (
 );
 ```
 
-## **Encryption Best Practices**
+## Encryption Best Practices
 
-### **Key Management**
+### Key Management
 
 ```sql
 -- Создать таблицу для хранения ключей
@@ -1554,7 +1554,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-### **Encrypted Column with Automatic Key Rotation**
+### Encrypted Column with Automatic Key Rotation
 
 ```sql
 -- Функция для шифрования с ротацией ключей
@@ -1572,9 +1572,9 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Security Testing**
+## Security Testing
 
-### **Penetration Testing Queries**
+### Penetration Testing Queries
 
 ```sql
 -- Проверка на SQL injection уязвимости
@@ -1594,7 +1594,7 @@ FROM pg_proc p
 WHERE p.proname IN ('pg_read_file', 'pg_ls_dir', 'pg_stat_file');
 ```
 
-### **Security Audit Queries**
+### Security Audit Queries
 
 ```sql
 -- Аудит прав доступа
@@ -1632,9 +1632,9 @@ FROM pg_policies
 ORDER BY schemaname, tablename, policyname;
 ```
 
-## **Compliance Frameworks**
+## Compliance Frameworks
 
-### **PCI DSS Compliance**
+### PCI DSS Compliance
 
 ```sql
 -- Функция для маскирования данных карт
@@ -1659,7 +1659,7 @@ USING (
 );
 ```
 
-### **HIPAA Compliance**
+### HIPAA Compliance
 
 ```sql
 -- Функция для логирования доступа к медицинским данным
@@ -1690,9 +1690,9 @@ AFTER SELECT OR INSERT OR UPDATE OR DELETE ON patient_records
 FOR EACH ROW EXECUTE FUNCTION hipaa_access_log();
 ```
 
-## **Security Checklist**
+## Security Checklist
 
-### **Initial Setup**
+### Initial Setup
 
 - [ ] Изменить пароль суперпользователя
 - [ ] Создать отдельные роли для приложений
@@ -1703,7 +1703,7 @@ FOR EACH ROW EXECUTE FUNCTION hipaa_access_log();
 - [ ] Отключить небезопасные функции
 - [ ] Настроить резервное копирование
 
-### **Regular Maintenance**
+### Regular Maintenance
 
 - [ ] Проверять права доступа ежемесячно
 - [ ] Ротировать пароли каждые 90 дней
@@ -1714,7 +1714,7 @@ FOR EACH ROW EXECUTE FUNCTION hipaa_access_log();
 - [ ] Тестировать процедуры восстановления
 - [ ] Обновлять документацию
 
-### **Incident Response**
+### Incident Response
 
 - [ ] Иметь план реагирования на инциденты
 - [ ] Настроить мониторинг и алерты

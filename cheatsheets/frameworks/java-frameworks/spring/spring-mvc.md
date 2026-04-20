@@ -77,11 +77,11 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring MVC**
+## Введение в Spring MVC
 
-**Spring MVC** (**Model-`View`-Controller**) — это мощный веб-фреймворк, построенный на основе паттерна **MVC**. Он предоставляет гибкую архитектуру для создания веб-приложений с разделением логики представления, бизнес-логики и данных.
+**Spring MVC** (Model-`View`-Controller) — это мощный веб-фреймворк, построенный на основе паттерна **MVC**. Он предоставляет гибкую архитектуру для создания веб-приложений с разделением логики представления, бизнес-логики и данных.
 
-### Основные компоненты **Spring MVC**
+### Основные компоненты Spring MVC
 
 1. **DispatcherServlet**: **Front Controller**, который обрабатывает все входящие запросы
 2. **Handler Mapping**: Определяет, какой контроллер обработает запрос
@@ -89,7 +89,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 4. **View Resolver**: Определяет, какое представление использовать
 5. **Model**: Данные, передаваемые в представление
 
-### Архитектура **Spring MVC**
+### Архитектура Spring MVC
 
 ```text
 # Обработка запроса: DispatcherServlet → HandlerMapping → Controller → View
@@ -125,9 +125,9 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 **DispatcherServlet** является центральным компонентом **Spring MVC**. Он действует как **Front Controller** и обрабатывает все входящие **HTTP**-запросы.
 
-### Настройка **DispatcherServlet**
+### Настройка DispatcherServlet
 
-#### **Java Configuration**
+#### Java Configuration
 
 ```java
 // Регистрация DispatcherServlet и маппинг корня приложения
@@ -160,7 +160,7 @@ public class WebAppInitializer
 }
 ```
 
-#### **XML Configuration**
+#### XML Configuration
 
 ```xml
 <!-- Регистрация DispatcherServlet в web.xml -->
@@ -184,20 +184,20 @@ public class WebAppInitializer
 </web-app>
 ```
 
-### Жизненный цикл **DispatcherServlet**
+### Жизненный цикл DispatcherServlet
 
 1. **Инициализация**: Загрузка конфигурации и создание **ApplicationContext**
 2. **Обработка запроса**:**
    - Определение **Handler**
-   - Выполнение **Interceptors** (**preHandle**)
+   - Выполнение **Interceptors** (preHandle)
    - Вызов **Handler Method**
-   - Выполнение **Interceptors** (**postHandle**)
+   - Выполнение **Interceptors** (postHandle)
    - Обработка исключений
    - Рендеринг **View**
-   - Выполнение **Interceptors** (**afterCompletion**)
+   - Выполнение **Interceptors** (afterCompletion)
 3. **Уничтожение**: Очистка ресурсов
 
-### Настройка **DispatcherServlet** в **Spring Boot**
+### Настройка DispatcherServlet в Spring Boot
 
 **В **Spring Boot DispatcherServlet** настраивается автоматически:**
 
@@ -224,7 +224,7 @@ spring.mvc.static-path-pattern=/static/
 
 Контроллеры в **Spring MVC** обрабатывают **HTTP**-запросы и возвращают ответы.
 
-### @**Controller**
+### @Controller
 
 ```java
 // @Controller - возвращает имя View для рендеринга
@@ -254,7 +254,7 @@ public class UserController {
 }
 ```
 
-### @**RestController**
+### @RestController
 
 ```java
 // @RestController = @Controller + @ResponseBody (JSON/XML ответ)
@@ -279,7 +279,7 @@ public class UserRestController {
 }
 ```
 
-### **Request Mapping**
+### Request Mapping
 
 #### Базовое маппирование
 
@@ -320,7 +320,7 @@ public class MappingController {
 }
 ```
 
-#### **Path Variables**
+#### Path Variables
 
 ```java
 // @PathVariable - извлечение параметров из URL пути
@@ -361,7 +361,7 @@ public class UserController {
 }
 ```
 
-#### **Request Parameters**
+#### Request Parameters
 
 ```java
 // @RequestParam - извлечение параметров из query string (?name=value)
@@ -405,7 +405,7 @@ public class UserController {
 }
 ```
 
-#### **Request Headers**
+#### Request Headers
 
 ```java
 // @RequestHeader - извлечение HTTP заголовков
@@ -439,7 +439,7 @@ public class HeaderController {
 }
 ```
 
-#### **Request Body**
+#### Request Body
 
 ```java
 // @RequestBody - десериализация JSON/XML из тела запроса
@@ -472,9 +472,9 @@ public class UserRestController {
 }
 ```
 
-### **Model Attributes**
+### Model Attributes
 
-#### @**ModelAttribute** на параметре
+#### @ModelAttribute на параметре
 
 ```java
 // @ModelAttribute - привязка данных формы к объекту
@@ -499,7 +499,7 @@ public class UserController {
 }
 ```
 
-#### @**ModelAttribute** на методе
+#### @ModelAttribute на методе
 
 ```java
 // @ModelAttribute на методе - заполнение Model перед обработчиком
@@ -529,7 +529,7 @@ public class UserController {
 }
 ```
 
-### **Session Attributes**
+### Session Attributes
 
 ```java
 // @SessionAttributes - хранение данных между запросами в сессии
@@ -566,7 +566,7 @@ public class CartController {
 
 **View Resolver** определяет, какое представление использовать для рендеринга ответа.
 
-### **InternalResourceViewResolver** (**JSP**)
+### InternalResourceViewResolver (JSP)
 
 ```java
 // Конфигурация ViewResolver для JSP
@@ -585,7 +585,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-### **Thymeleaf View Resolver**
+### Thymeleaf View Resolver
 
 ```java
 // Конфигурация Thymeleaf шаблонизатора
@@ -622,7 +622,7 @@ public class ThymeleafConfig {
 }
 ```
 
-### **Content Negotiation**
+### Content Negotiation
 
 ```java
 // Content Negotiation - выбор формата ответа (JSON/XML)
@@ -642,7 +642,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-### **Custom View**
+### Custom View
 
 ```java
 // Кастомный ViewResolver для генерации PDF
@@ -690,7 +690,7 @@ public class PdfView implements View {
 
 **Interceptors** позволяют перехватывать запросы и ответы для выполнения дополнительной логики.
 
-### **HandlerInterceptor**
+### HandlerInterceptor
 
 ```java
 // HandlerInterceptor - перехватчик HTTP запросов
@@ -743,7 +743,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
 }
 ```
 
-### Регистрация **Interceptor**
+### Регистрация Interceptor
 
 ```java
 // Регистрация Interceptor в конфигурации
@@ -764,7 +764,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-### **Authentication Interceptor**
+### Authentication Interceptor
 
 ```java
 // Interceptor для проверки JWT токена
@@ -804,7 +804,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
 **Spring MVC** предоставляет несколько способов обработки исключений.
 
-### @**ExceptionHandler** на уровне контроллера
+### @ExceptionHandler на уровне контроллера
 
 ```java
 // @ExceptionHandler на уровне контроллера - локальная обработка
@@ -834,7 +834,7 @@ public class UserController {
 }
 ```
 
-### @**ControllerAdvice** для глобальной обработки
+### @ControllerAdvice для глобальной обработки
 
 ```java
 // @ControllerAdvice - глобальная обработка исключений для всех контроллеров
@@ -880,7 +880,7 @@ public class GlobalExceptionHandler {
 }
 ```
 
-### @**ResponseStatus**
+### @ResponseStatus
 
 ```java
 // @ResponseStatus - автоматический HTTP статус при выбросе исключения
@@ -932,7 +932,7 @@ public class UserController {
 }
 ```
 
-### **Thymeleaf** форма
+### Thymeleaf форма
 
 ```html
 <form th:action="@{/users}" th:object="${user}" method="post">
@@ -981,7 +981,7 @@ public class UserController {
 
 ## File Upload
 
-### **Multipart Configuration**
+### Multipart Configuration
 
 ```java
 // Конфигурация загрузки файлов
@@ -998,7 +998,7 @@ public class MultipartConfig {
 }
 ```
 
-### **File Upload Controller**
+### File Upload Controller
 
 ```java
 // Контроллер загрузки файлов
@@ -1033,7 +1033,7 @@ public class FileController {
 
 ## Лучшие практики
 
-### 1. Используйте @**RestController** для **REST API**
+### 1. Используйте @RestController для REST API
 
 ```java
 // ✅ Хорошо
@@ -1068,7 +1068,7 @@ public class OrderController {
 }
 ```
 
-### 3. Используйте @**ControllerAdvice** для глобальной обработки ошибок
+### 3. Используйте @ControllerAdvice для глобальной обработки ошибок
 
 ```java
 // ✅ Хорошо
@@ -1091,7 +1091,7 @@ public String createUser(@Valid @ModelAttribute User user, BindingResult result)
 }
 ```
 
-### 5. Используйте правильные **HTTP** методы
+### 5. Используйте правильные HTTP методы
 
 ```java
 // ✅ Хорошо

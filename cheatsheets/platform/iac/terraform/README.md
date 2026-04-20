@@ -19,16 +19,16 @@ Terraform — самый распространённый инструмент I
 ## Полезные ссылки
 
 ### Основные документы
-- [terraform-basics.md](terraform-basics.md) — установка, первый provider, базовые команды
-- [terraform.md](terraform.md) — полное руководство: state, модули, data sources, workflows
-- [terraform-advanced.md](terraform-advanced.md) — remote state, workspaces, policy, enterprise
+- [[terraform-basics]] — установка, первый provider, базовые команды
+- [[terraform]] — полное руководство: state, модули, data sources, workflows
+- [[terraform-advanced]] — remote state, workspaces, policy, enterprise
 
 ### Соседние разделы
-- [platform/iac/](../README.md) — родительский раздел
-- [platform/iac/pulumi/](../pulumi/README.md) — альтернатива на полноценных ЯП
-- [platform/iac/ansible/](../ansible/README.md) — configuration management поверх
-- [platform/iac/packer/](../packer/README.md) — сборка образов для TF-deploy
-- [platform/cloud-providers/](../../cloud-providers/README.md) — провайдеры AWS/GCP/Azure
+- [[README|platform/iac/]] — родительский раздел
+- [[README|platform/iac/pulumi/]] — альтернатива на полноценных ЯП
+- [[README|platform/iac/ansible/]] — configuration management поверх
+- [[README|platform/iac/packer/]] — сборка образов для TF-deploy
+- [[README|platform/cloud-providers/]] — провайдеры AWS/GCP/Azure
 
 ### Внешние ресурсы
 - [Terraform Documentation](https://developer.hashicorp.com/terraform/docs)
@@ -49,14 +49,14 @@ Terraform — самый распространённый инструмент I
 
 | Тема | Файл |
 |------|------|
-| HCL, providers, resources | [terraform-basics.md](terraform-basics.md) |
-| init/plan/apply/destroy | [terraform-basics.md](terraform-basics.md) |
-| State и его хранение (remote, lock) | [terraform.md](terraform.md) |
-| Модули и их структура | [terraform.md](terraform.md) |
-| Data sources | [terraform.md](terraform.md) |
-| Workspaces, окружения dev/stage/prod | [terraform-advanced.md](terraform-advanced.md) |
-| Terraform Cloud / Enterprise | [terraform-advanced.md](terraform-advanced.md) |
-| Sentinel / OPA для policy | [terraform-advanced.md](terraform-advanced.md) |
+| HCL, providers, resources | [[terraform-basics]] |
+| init/plan/apply/destroy | [[terraform-basics]] |
+| State и его хранение (remote, lock) | [[terraform]] |
+| Модули и их структура | [[terraform]] |
+| Data sources | [[terraform]] |
+| Workspaces, окружения dev/stage/prod | [[terraform-advanced]] |
+| Terraform Cloud / Enterprise | [[terraform-advanced]] |
+| Sentinel / OPA для policy | [[terraform-advanced]] |
 
 ## Terraform vs Pulumi/Ansible/Packer
 
@@ -84,7 +84,7 @@ Terraform выигрывает за счёт **зрелости экосисте
 
 ## Куда идти дальше
 
-- Альтернатива на ЯП — [../pulumi/README.md](../pulumi/README.md)
-- Configuration management — [../ansible/README.md](../ansible/README.md)
-- Сборка образов — [../packer/README.md](../packer/README.md)
-- Облачные провайдеры — [../../cloud-providers/README.md](../../cloud-providers/README.md)
+- Альтернатива на ЯП — [[README]]
+- Configuration management — [[README]]
+- Сборка образов — [[README]]
+- Облачные провайдеры — [[README]]

@@ -12,7 +12,7 @@ updated: "2026-02-11"
 ---
 # Apache POI
 
-**Apache POI** — это **Java** библиотека для чтения и записи файлов **Microsoft Office** (**Excel, `Word`, PowerPoint**). Предоставляет программный доступ к форматам **Office** документов.
+**Apache POI** — это **Java** библиотека для чтения и записи файлов **Microsoft Office** (Excel, `Word`, PowerPoint). Предоставляет программный доступ к форматам **Office** документов.
 
 ## Полезные ссылки
 
@@ -27,7 +27,7 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
-  - [Работа с Excel файлами (**XSSF/HSSF**)](#работа-с-excel-файлами-xssfhssf)
+  - [Работа с Excel файлами (XSSF/HSSF)](#работа-с-excel-файлами-xssfhssf)
     - [Создание Excel файла](#создание-excel-файла)
     - [Чтение Excel файла](#чтение-excel-файла)
     - [Форматирование ячеек](#форматирование-ячеек)
@@ -67,11 +67,11 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### Работа с **Excel** файлами (**XSSF/HSSF**)
+### Работа с Excel файлами (XSSF/HSSF)
 
-#### Создание **Excel** файла
+#### Создание Excel файла
 
-Создание **workbook**, листа, строк и ячеек через **XSSFWorkbook** (**формат .xlsx**).
+Создание **workbook**, листа, строк и ячеек через **XSSFWorkbook** (формат .xlsx).
 
 ```java
 import org.apache.poi.ss.usermodel.*;
@@ -115,7 +115,7 @@ try (FileOutputStream fos = new FileOutputStream("example.xlsx")) {
 workbook.close();  // Закрываем workbook и освобождаем ресурсы
 ```
 
-#### Чтение **Excel** файла
+#### Чтение Excel файла
 ```java
 /
  * Чтение Excel файла через Apache POI
@@ -245,9 +245,9 @@ double sum = cellValue.getNumberValue();             // Получаем чис�
 // cellValue также может содержать строковое значение (getStringValue()) или ошибку (getErrorValue())
 ```
 
-### Работа с **Word** документами
+### Работа с Word документами
 
-#### Создание **Word** документа
+#### Создание Word документа
 ```java
 import org.apache.poi.xwpf.usermodel.*;
 
@@ -291,7 +291,7 @@ try (FileOutputStream fos = new FileOutputStream("example.docx")) {
 document.close();  // Закрываем документ и освобождаем ресурсы
 ```
 
-#### Чтение **Word** документа
+#### Чтение Word документа
 ```java
 /
  * Чтение Word документа (DOCX) через Apache POI
@@ -326,7 +326,7 @@ try (FileInputStream fis = new FileInputStream("example.docx")) {  // Откры
 }
 ```
 
-### Работа с **PowerPoint**
+### Работа с PowerPoint
 
 #### Создание презентации
 ```java
@@ -375,7 +375,7 @@ ppt.close();  // Закрываем презентацию и освобожда
 
 ## Продвинутые возможности
 
-### **Event-driven** чтение больших файлов
+### Event-driven чтение больших файлов
 ```java
 /
  * Event-driven чтение больших Excel файлов через Apache POI
@@ -459,7 +459,7 @@ try (FileInputStream fis = new FileInputStream("large-file.xlsx")) {
 }
 ```
 
-### **SXSSF** для больших файлов
+### SXSSF для больших файлов
 ```java
 // SXSSF для записи больших файлов с низким потреблением памяти
 SXSSFWorkbook workbook = new SXSSFWorkbook(100); // 100 строк в памяти
@@ -579,9 +579,9 @@ try (FileInputStream fis = new FileInputStream("diagram.png")) {
 }
 ```
 
-## **Integration** с **Spring Boot**
+## Integration с Spring Boot
 
-### **Excel Import**/**Export Service**
+### Excel Import/Export Service
 ```java
 @Service
 public class ExcelService {
@@ -653,7 +653,7 @@ public class ExcelService {
 }
 ```
 
-### **REST Controller** для **Excel** операций
+### REST Controller для Excel операций
 ```java
 @RestController
 @RequestMapping("/api/excel")
@@ -698,9 +698,9 @@ public class ExcelController {
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit Testing Excel** операций
+### Unit Testing Excel операций
 ```java
 public class ExcelServiceTest {
 
@@ -788,7 +788,7 @@ public class ExcelServiceTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```java
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -850,9 +850,9 @@ public class ExcelControllerIntegrationTest {
 }
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Memory Management**
+### Memory Management
 ```java
 public class OptimizedExcelProcessor {
 
@@ -901,7 +901,7 @@ public class OptimizedExcelProcessor {
 }
 ```
 
-### **Streaming** для больших отчетов
+### Streaming для больших отчетов
 ```java
 public class StreamingExcelExporter {
 
@@ -938,7 +938,7 @@ public class StreamingExcelExporter {
 
 ## Лучшие практики
 
-### **File Handling**
+### File Handling
 ```java
 public class ExcelFileHandler {
 
@@ -991,7 +991,7 @@ public class ExcelFileHandler {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 ```java
 public class RobustExcelProcessor {
 
@@ -1044,7 +1044,7 @@ public class RobustExcelProcessor {
 }
 ```
 
-### **Security Considerations**
+### Security Considerations
 ```java
 public class SecureExcelProcessor {
 
@@ -1093,9 +1093,9 @@ public class SecureExcelProcessor {
 }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From JXL** to **POI**
+### From JXL to POI
 ```java
 // Старый код с JXL
 import jxl.*;
@@ -1144,7 +1144,7 @@ public class JxlToPoiMigration {
 }
 ```
 
-### **From Apache POI** 3.x `to 5`.x
+### From Apache POI 3.x `to 5`.x
 ```java
 // POI 3.x
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -1187,9 +1187,9 @@ public class PoiMigration {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **POI** 6.0+ **Features**
+### POI 6.0+ Features
 ```java
 // Предполагаемые будущие возможности
 // (основанные на roadmap и текущих разработках)
@@ -1232,7 +1232,7 @@ public class FuturePoiFeatures {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```java
 public class PoiTroubleshooting {
 
@@ -1287,7 +1287,7 @@ public class PoiTroubleshooting {
 }
 ```
 
-### **Debugging**
+### Debugging
 ```java
 public class PoiDebugger {
 

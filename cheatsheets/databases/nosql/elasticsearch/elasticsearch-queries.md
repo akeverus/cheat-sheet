@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Поиск и запросы — Полное руководство по поисковым запросам
+# Elasticsearch: Поиск и запросы — Полное руководство по поисковым запросам
 
 Комплексное руководство по поисковым запросам **Elasticsearch**: от базовых до сложных запросов, фильтрация, сортировка, пагинация и оптимизация производительности поиска.
 
@@ -222,13 +222,13 @@ updated: "2026-02-11"
   - [**Java** интеграция:](#java-интеграция)
 - [Решение проблем](#решение-проблем)
 
-## **Search API**
+## Search API
 
-### **Basic Search**
+### Basic Search
 
-#### **URI Search**
+#### URI Search
 
-Пример **URI Search** для поиска в **Elasticsearch** (**bash/curl**).
+Пример **URI Search** для поиска в **Elasticsearch** (bash/curl).
 
 ```bash
 # Поиск всех документов
@@ -247,7 +247,7 @@ curl -X GET "localhost:9200/products/_search?size=50"
 curl -X GET "localhost:9200/products/_search?from=100&size=50"
 ```
 
-#### **Request Body Search**
+#### Request Body Search
 ```bash
 # Поиск с request body
 curl -X GET "localhost:9200/products/_search" \
@@ -285,9 +285,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Search Parameters**
+### Search Parameters
 
-#### **Common Parameters**
+#### Common Parameters
 ```bash
 # Timeout
 curl -X GET "localhost:9200/products/_search?timeout=5s" \
@@ -310,11 +310,11 @@ curl -X GET "localhost:9200/products/_search?allow_partial_search_results=false"
   -d '{"query": {"match_all": {}}}'
 ```
 
-## **Query DSL**
+## Query DSL
 
-### **Structure** of **Queries**
+### Structure of Queries
 
-#### **Query Context** vs **Filter Context**
+#### Query Context vs Filter Context
 ```json
 {
   "query": {
@@ -348,7 +348,7 @@ curl -X GET "localhost:9200/products/_search?allow_partial_search_results=false"
 }
 ```
 
-#### **Query** vs **Filter Performance**
+#### Query vs Filter Performance
 ```java
 public class QueryContextAnalyzer {
 
@@ -442,11 +442,11 @@ public class QueryContextAnalyzer {
 }
 ```
 
-## **Term Queries**
+## Term Queries
 
-### **Exact Value Queries**
+### Exact Value Queries
 
-#### **Term Query**
+#### Term Query
 ```bash
 # Точное совпадение
 curl -X GET "localhost:9200/products/_search" \
@@ -474,7 +474,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Terms Query**
+#### Terms Query
 ```bash
 # Несколько значений
 curl -X GET "localhost:9200/products/_search" \
@@ -503,7 +503,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Range Query**
+#### Range Query
 ```bash
 # Числовой диапазон
 curl -X GET "localhost:9200/products/_search" \
@@ -550,7 +550,7 @@ curl -X GET "localhost:9200/logs/_search" \
   }'
 ```
 
-#### **Exists Query**
+#### Exists Query
 ```bash
 # Документы с непустым полем
 curl -X GET "localhost:9200/products/_search" \
@@ -579,9 +579,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Prefix**, **Wildcard**, **and Regexp**
+### Prefix, Wildcard, and Regexp
 
-#### **Prefix Query**
+#### Prefix Query
 ```bash
 # Поиск по префиксу
 curl -X GET "localhost:9200/products/_search" \
@@ -611,7 +611,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Wildcard Query**
+#### Wildcard Query
 ```bash
 # Wildcard поиск
 curl -X GET "localhost:9200/products/_search" \
@@ -642,7 +642,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Regexp Query**
+#### Regexp Query
 ```bash
 # Регулярные выражения
 curl -X GET "localhost:9200/products/_search" \
@@ -674,11 +674,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Full-text Queries**
+## Full-text Queries
 
-### **Match Queries**
+### Match Queries
 
-#### **Match Query**
+#### Match Query
 ```bash
 # Базовый match
 curl -X GET "localhost:9200/products/_search" \
@@ -708,7 +708,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Match Phrase**
+#### Match Phrase
 ```bash
 # Точная фраза
 curl -X GET "localhost:9200/products/_search" \
@@ -736,7 +736,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Match Phrase Prefix**
+#### Match Phrase Prefix
 ```bash
 # Автодополнение
 curl -X GET "localhost:9200/products/_search" \
@@ -753,9 +753,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Multi-match Query**
+### Multi-match Query
 
-#### **Multi-field Search**
+#### Multi-field Search
 ```bash
 # Поиск в нескольких полях
 curl -X GET "localhost:9200/products/_search" \
@@ -800,9 +800,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Query String Query**
+### Query String Query
 
-#### **Advanced Query Syntax**
+#### Advanced Query Syntax
 ```bash
 # Query string syntax
 curl -X GET "localhost:9200/products/_search" \
@@ -831,11 +831,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Compound Queries**
+## Compound Queries
 
-### **Bool Query**
+### Bool Query
 
-#### **Boolean Logic**
+#### Boolean Logic
 ```bash
 # Must, should, must_not, filter
 curl -X GET "localhost:9200/products/_search" \
@@ -862,7 +862,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Nested Bool Queries**
+#### Nested Bool Queries
 ```bash
 # Сложные логические выражения
 curl -X GET "localhost:9200/products/_search" \
@@ -893,9 +893,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Boosting Query**
+### Boosting Query
 
-#### **Negative Boosting**
+#### Negative Boosting
 ```bash
 # Повышение релевантности одних документов над другими
 curl -X GET "localhost:9200/products/_search" \
@@ -919,9 +919,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Constant Score Query**
+### Constant Score Query
 
-#### **Filter** as **Query**
+#### Filter as Query
 ```bash
 # Преобразование фильтра в запрос с постоянным score
 curl -X GET "localhost:9200/products/_search" \
@@ -958,9 +958,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Disjunction Max Query**
+### Disjunction Max Query
 
-#### **Best Fields Search**
+#### Best Fields Search
 ```bash
 # Поиск лучшего поля
 curl -X GET "localhost:9200/products/_search" \
@@ -978,11 +978,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Geo Queries**
+## Geo Queries
 
-### **Geo-point Queries**
+### Geo-point Queries
 
-#### **Geo Distance Query**
+#### Geo Distance Query
 ```bash
 # Поиск в радиусе
 curl -X GET "localhost:9200/stores/_search" \
@@ -1021,7 +1021,7 @@ curl -X GET "localhost:9200/stores/_search" \
   }'
 ```
 
-#### **Geo Bounding Box**
+#### Geo Bounding Box
 ```bash
 # Прямоугольная область
 curl -X GET "localhost:9200/stores/_search" \
@@ -1058,9 +1058,9 @@ curl -X GET "localhost:9200/stores/_search" \
   }'
 ```
 
-### **Geo-shape Queries**
+### Geo-shape Queries
 
-#### **Complex Shapes**
+#### Complex Shapes
 ```bash
 # Geo shape с polygon
 curl -X GET "localhost:9200/regions/_search" \
@@ -1104,11 +1104,11 @@ curl -X GET "localhost:9200/locations/_search" \
   }'
 ```
 
-## **Nested Queries**
+## Nested Queries
 
-### **Nested Objects Search**
+### Nested Objects Search
 
-#### **Nested Query**
+#### Nested Query
 ```bash
 # Поиск в nested объектах
 curl -X GET "localhost:9200/products/_search" \
@@ -1145,7 +1145,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Parent-Child Relationships**
+#### Parent-Child Relationships
 ```bash
 # Join queries (parent-child)
 curl -X GET "localhost:9200/products/_search" \
@@ -1182,11 +1182,11 @@ curl -X GET "localhost:9200/reviews/_search" \
   }'
 ```
 
-## **Function Score Queries**
+## Function Score Queries
 
-### **Score Modification**
+### Score Modification
 
-#### **Boost** by **Field Value**
+#### Boost by Field Value
 ```bash
 # Boost на основе числового поля
 curl -X GET "localhost:9200/products/_search" \
@@ -1215,7 +1215,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Time-based Decay**
+#### Time-based Decay
 ```bash
 # Decay по времени (свежие документы получают boost)
 curl -X GET "localhost:9200/news/_search" \
@@ -1244,7 +1244,7 @@ curl -X GET "localhost:9200/news/_search" \
   }'
 ```
 
-#### **Custom Scoring Scripts**
+#### Custom Scoring Scripts
 ```bash
 # Пользовательские scoring функции
 curl -X GET "localhost:9200/products/_search" \
@@ -1270,11 +1270,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Filtering** и **Post-filtering**
+## Filtering и Post-filtering
 
-### **Pre-filtering** vs **Post-filtering**
+### Pre-filtering vs Post-filtering
 
-#### **Search with Filters**
+#### Search with Filters
 ```bash
 # Pre-filtering (рекомендуется)
 curl -X GET "localhost:9200/products/_search" \
@@ -1329,11 +1329,11 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-## **Sorting** и **Relevance**
+## Sorting и Relevance
 
-### **Sort Options**
+### Sort Options
 
-#### **Field-based Sorting**
+#### Field-based Sorting
 ```bash
 # Сортировка по полю
 curl -X GET "localhost:9200/products/_search" \
@@ -1363,7 +1363,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Script-based Sorting**
+#### Script-based Sorting
 ```bash
 # Сортировка с script
 curl -X GET "localhost:9200/products/_search" \
@@ -1384,9 +1384,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Relevance Tuning**
+### Relevance Tuning
 
-#### **Custom Scoring**
+#### Custom Scoring
 ```bash
 # Explicit score
 curl -X GET "localhost:9200/products/_search" \
@@ -1411,7 +1411,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Explain API**
+#### Explain API
 ```bash
 # Получить объяснение scoring
 curl -X GET "localhost:9200/products/_search?explain=true" \
@@ -1436,11 +1436,11 @@ curl -X GET "localhost:9200/products/_explain/1" \
   }'
 ```
 
-## **Pagination**
+## Pagination
 
-### **From**/**Size Pagination**
+### From/Size Pagination
 
-#### **Basic Pagination**
+#### Basic Pagination
 ```bash
 # Первая страница
 curl -X GET "localhost:9200/products/_search" \
@@ -1461,9 +1461,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Search After**
+### Search After
 
-#### **Cursor-based Pagination**
+#### Cursor-based Pagination
 ```bash
 # Первая страница
 curl -X GET "localhost:9200/products/_search" \
@@ -1489,9 +1489,9 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-### **Scroll API**
+### Scroll API
 
-#### **Deep Pagination**
+#### Deep Pagination
 ```bash
 # Инициализация scroll
 curl -X GET "localhost:9200/products/_search?scroll=1m" \
@@ -1514,11 +1514,11 @@ curl -X GET "localhost:9200/_search/scroll" \
 curl -X DELETE "localhost:9200/_search/scroll/DXF1ZXJ5QW5kRmV0Y2gBAAAAAAAAA..."
 ```
 
-## **Search Templates**
+## Search Templates
 
-### **Mustache Templates**
+### Mustache Templates
 
-#### **Template Definition**
+#### Template Definition
 ```bash
 # Сохранение шаблона
 curl -X PUT "localhost:9200/_scripts/product_search" \
@@ -1567,9 +1567,9 @@ curl -X GET "localhost:9200/products/_search/template" \
   }'
 ```
 
-### **Stored Scripts**
+### Stored Scripts
 
-#### **Script Management**
+#### Script Management
 ```bash
 # Список всех scripts
 curl -X GET "localhost:9200/_scripts"
@@ -1581,11 +1581,11 @@ curl -X GET "localhost:9200/_scripts/product_search"
 curl -X DELETE "localhost:9200/_scripts/product_search"
 ```
 
-## **Query Profiling**
+## Query Profiling
 
-### **Profile API**
+### Profile API
 
-#### **Query Performance Analysis**
+#### Query Performance Analysis
 ```bash
 # Профилирование запроса
 curl -X GET "localhost:9200/products/_search" \
@@ -1600,7 +1600,7 @@ curl -X GET "localhost:9200/products/_search" \
   }'
 ```
 
-#### **Profile Response Analysis**
+#### Profile Response Analysis
 ```json
 {
   "profile": {
@@ -1640,11 +1640,11 @@ curl -X GET "localhost:9200/products/_search" \
 }
 ```
 
-## **Java Search API**
+## Java Search API
 
-### **High Level REST Client**
+### High Level REST Client
 
-#### **Basic Search**
+#### Basic Search
 ```java
 @Service
 public class ElasticsearchSearchService {
@@ -1736,9 +1736,9 @@ public class ElasticsearchSearchService {
 }
 ```
 
-### **Java API Client** 8.x
+### Java API Client 8.x
 
-#### **Modern Search API**
+#### Modern Search API
 ```java
 @Service
 public class ModernElasticsearchSearchService {
@@ -1858,29 +1858,29 @@ public class ModernElasticsearchSearchService {
 
 ## Лучшие практики
 
-### **Query Design**
+### Query Design
 
-#### 1. **Query Structure**
+#### 1. Query Structure
 - **Используй bool queries** для сложной логики
 - **Фильтры для точных условий**, **query** для поиска
 - **Избегай deep nesting** в **bool queries**
 - **Используй named queries** для **debugging**
 
-#### 2. **Performance Optimization**
+#### 2. Performance Optimization
 - **Фильтры кэшируются**, используй их для повторяющихся условий
 - **Pre-filter** когда возможно вместо **post-filter**
 - **Используй routing** для **targeted searches**
 - **Оптимизируй pagination** — **search_after** вместо **from**/**size** для **deep pagination**
 
-#### 3. **Relevance Tuning**
+#### 3. Relevance Tuning
 - **Настраивай boost** для важных полей
 - **Используй function_score** для **custom scoring**
 - **Тестируй разные analyzers** для текстового поиска
 - **Мониторь explain** для понимания **scoring**
 
-### **Search Patterns**
+### Search Patterns
 
-#### 1. **Multi-field Search**
+#### 1. Multi-field Search
 ```json
 {
   "query": {
@@ -1894,7 +1894,7 @@ public class ModernElasticsearchSearchService {
 }
 ```
 
-#### 2. **Faceted Search**
+#### 2. Faceted Search
 ```json
 {
   "query": {
@@ -1917,7 +1917,7 @@ public class ModernElasticsearchSearchService {
 }
 ```
 
-#### 3. **Personalized Search**
+#### 3. Personalized Search
 ```json
 {
   "query": {
@@ -1938,9 +1938,9 @@ public class ModernElasticsearchSearchService {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 
-#### 1. **Timeout Management**
+#### 1. Timeout Management
 ```bash
 # Query timeout
 curl -X GET "localhost:9200/products/_search?timeout=5s" \
@@ -1948,21 +1948,21 @@ curl -X GET "localhost:9200/products/_search?timeout=5s" \
   -d '{"query": {"match_all": {}}}'
 ```
 
-#### 2. **Circuit Breaker**
+#### 2. Circuit Breaker
 - **Настраивай timeouts** для предотвращения **hanging queries**
 - **Используй retry logic** для **transient errors**
 - **Monitor slow queries** и оптимизируй их
 - **Implement fallbacks** для **degraded search**
 
-### **Monitoring**
+### Monitoring
 
-#### 1. **Key Metrics**
-- **Query latency** (**P50, `P95`, P99**)
-- **Query throughput** (**queries per second**)
-- **Cache hit rates** (**query `cache`, field data cache**)
-- **Error rates** (**timeouts, failures**)
+#### 1. Key Metrics
+- **Query latency** (P50, `P95`, P99)
+- **Query throughput** (queries per second)
+- **Cache hit rates** (query `cache`, field data cache)
+- **Error rates** (timeouts, failures)
 
-#### 2. **Search Slow Logs**
+#### 2. Search Slow Logs
 ```yaml
 # elasticsearch.yml
 index.search.slowlog.threshold.query.warn: 10s
@@ -1998,14 +1998,14 @@ index.search.slowlog.threshold.query.trace: 500ms
 3. **Pagination** — эффективная навигация по результатам
 4. **Caching** — использование различных типов кэшей
 
-### **Java** интеграция:
+### Java интеграция:
 
 1. **High `Level REST` Client** — **legacy client** для **complex operations**
 2. **Java `API Client 8`.x** — **modern fluent API**
 3. **Spring `Data` Elasticsearch** — **declarative data access**
 4. **Reactive support** — **asynchronous operations**
 
-### **Best practices**:
+### Best practices:
 
 1. **Query design** — правильная структура и оптимизация
 2. **Performance monitoring** — метрики и **profiling**
@@ -2015,9 +2015,9 @@ index.search.slowlog.threshold.query.trace: 500ms
 Эффективное использование **Elasticsearch** требует глубокого понимания **Query DSL** и принципов работы поисковых систем. Правильное проектирование запросов обеспечивает высокую производительность и точность поиска. 🎯
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (**завершен**)
-- ✅ **elasticsearch-indexing.md** (**завершен**)
-- ✅ **elasticsearch-queries.md** (**завершен**)
+- ✅ **elasticsearch-basics.md** (завершен)
+- ✅ **elasticsearch-indexing.md** (завершен)
+- ✅ **elasticsearch-queries.md** (завершен)
 - 🔄 **elasticsearch-aggregations.md**
 - 🔄 **elasticsearch-clustering.md**
 - 🔄 **elasticsearch-performance.md**

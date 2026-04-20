@@ -18,14 +18,14 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Database Testing](database-testing.md) — подходы, @DataJpaTest, миграции, изоляция
+- [[database-testing|Database Testing]] — подходы, @DataJpaTest, миграции, изоляция
 
 ### Соседние разделы
-- [Integration Testing](../README.md)
-- [Testcontainers](../testcontainers/README.md)
-- [Contract Testing](../contract-testing/README.md)
-- [JUnit](../../unit-testing/junit/README.md)
-- [Databases / SQL](../../../databases/sql/README.md)
+- [[README|Integration Testing]]
+- [[README|Testcontainers]]
+- [[README|Contract Testing]]
+- [[README|JUnit]]
+- [[README|Databases / SQL]]
 
 ### Внешние ресурсы
 - [Testcontainers](https://www.testcontainers.org/)
@@ -44,16 +44,16 @@ updated: "2026-04-17"
 
 | Тема | Где читать |
 |------|-----------|
-| Подходы: embedded vs реальная БД в контейнере | [database-testing.md](database-testing.md) |
-| `@DataJpaTest`, `@SpringBootTest` | [database-testing.md](database-testing.md) |
-| Изоляция: транзакции, `@Transactional`, `@Sql` | [database-testing.md](database-testing.md) |
-| Миграции в тестах (Flyway, Liquibase) | [database-testing.md](database-testing.md) |
+| Подходы: embedded vs реальная БД в контейнере | [[database-testing]] |
+| `@DataJpaTest`, `@SpringBootTest` | [[database-testing]] |
+| Изоляция: транзакции, `@Transactional`, `@Sql` | [[database-testing]] |
+| Миграции в тестах (Flyway, Liquibase) | [[database-testing]] |
 
 ## Когда использовать какой подход
 
 - **H2 / embedded** — быстро, но расхождения с продакшен-СУБД (функции, типы, FTS) могут пропускать баги.
 - **Testcontainers + реальная СУБД** — точно как в проде, медленнее на старт, решается `reuse = true` и shared singleton.
-- **`@DataJpaTest`** — только JPA-слой, откатывает транзакцию, быстро; для полного флоу — `@SpringBootTest`.
+- `@DataJpaTest` — только JPA-слой, откатывает транзакцию, быстро; для полного флоу — `@SpringBootTest`.
 
 ## Маршруты чтения
 
@@ -62,6 +62,6 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Контейнерный запуск инфраструктуры — [../testcontainers/README.md](../testcontainers/README.md)
-- SQL и индексы — [../../../databases/sql/README.md](../../../databases/sql/README.md)
-- ORM и JPA — [../../../databases/orm/README.md](../../../databases/orm/README.md)
+- Контейнерный запуск инфраструктуры — [[README]]
+- SQL и индексы — [[README]]
+- ORM и JPA — [[README]]

@@ -85,7 +85,7 @@ dependencies {
 }
 ```
 
-### **Protobuf Configuration**
+### Protobuf Configuration
 
 **build.gradle:**
 
@@ -109,7 +109,7 @@ protobuf {
 
 ## gRPC Services
 
-### **Service Definition**
+### Service Definition
 
 **user.proto:**
 
@@ -125,7 +125,7 @@ service UserService {
 }
 ```
 
-### **Service Implementation**
+### Service Implementation
 
 ```java
 import io.grpc.stub.StreamObserver;
@@ -162,7 +162,7 @@ public class UserServiceImpl extends UserServiceGrpc.UserServiceImplBase {
 
 ## gRPC Clients
 
-### **Client Usage**
+### Client Usage
 
 ```java
 import io.micronaut.grpc.annotation.GrpcChannel;
@@ -188,7 +188,7 @@ public class UserClientService {
 
 ## Streaming
 
-### **Server Streaming**
+### Server Streaming
 
 ```java
 @Override
@@ -200,7 +200,7 @@ public void listUsers(ListUsersRequest request, StreamObserver<User> responseObs
 }
 ```
 
-### **Client Streaming**
+### Client Streaming
 
 ```java
 @Override
@@ -227,7 +227,7 @@ public StreamObserver<CreateUserRequest> createUsers(StreamObserver<User> respon
 
 ## Interceptors
 
-### **Server Interceptor**
+### Server Interceptor
 
 ```java
 import io.grpc.*;
@@ -249,7 +249,7 @@ public class LoggingInterceptor implements ServerInterceptor {
 
 ## Лучшие практики
 
-### 1. Используйте **streaming** для больших данных
+### 1. Используйте streaming для больших данных
 
 ```java
 // ✅ Хорошо
@@ -269,7 +269,7 @@ try {
 }
 ```
 
-### 3. Используйте **interceptors** для логирования
+### 3. Используйте interceptors для логирования
 
 ```java
 // ✅ Хорошо
@@ -281,7 +281,7 @@ public class LoggingInterceptor implements ServerInterceptor {
 
 ## Error Handling
 
-### **Status Codes**
+### Status Codes
 
 ```java
 import io.grpc.Status;
@@ -308,7 +308,7 @@ public void getUser(GetUserRequest request, StreamObserver<User> responseObserve
 
 ## Health Checks
 
-### **gRPC Health Service**
+### gRPC Health Service
 
 ```java
 import io.grpc.health.v1.HealthCheckResponse;
@@ -331,7 +331,7 @@ public class HealthServiceImpl extends HealthGrpc.HealthImplBase {
 
 ## gRPC Metadata
 
-### **Metadata Handling**
+### Metadata Handling
 
 ```java
 import io.grpc.Metadata;
@@ -349,7 +349,7 @@ public void getUser(GetUserRequest request, StreamObserver<User> responseObserve
 
 ## gRPC Compression
 
-### **Compression Configuration**
+### Compression Configuration
 
 **application.yml:**
 
@@ -363,7 +363,7 @@ grpc:
 
 ## gRPC Reflection
 
-### **Reflection Service**
+### Reflection Service
 
 ```java
 import io.grpc.protobuf.services.ProtoReflectionService;
@@ -377,7 +377,7 @@ public class ReflectionService extends ProtoReflectionService {
 
 ## gRPC Load Balancing
 
-### **Load Balancing Configuration**
+### Load Balancing Configuration
 
 **application.yml:**
 

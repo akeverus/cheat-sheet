@@ -75,7 +75,7 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring for Apache Kafka**
+## Введение в Spring for Apache Kafka
 
 **Spring for Apache Kafka** предоставляет простую интеграцию с **Apache Kafka** для создания **producers**, **consumers** и **stream processing** приложений. Он абстрагирует сложности работы с **Kafka API** и предоставляет удобные аннотации и шаблоны.
 
@@ -87,7 +87,7 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
 - **Transactions**: Транзакционная поддержка
 - **Error Handling**: Обработка ошибок и **retry**
 
-### Архитектура **Spring Kafka**
+### Архитектура Spring Kafka
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -116,11 +116,11 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring Kafka**
+## Настройка Spring Kafka
 
 ### Зависимости
 
-**Зависимость **spring-kafka** (**pom.xml**):**
+**Зависимость **spring-kafka** (pom.xml):**
 
 ```xml
 <dependency>
@@ -203,7 +203,7 @@ public class UserKafkaProducer {
 }
 ```
 
-### Асинхронная отправка с **Callback**
+### Асинхронная отправка с Callback
 
 ```java
 @Service
@@ -232,7 +232,7 @@ public class KafkaProducer {
 }
 ```
 
-## @**KafkaListener** (**Consumer**)
+## @KafkaListener (Consumer)
 
 ### Базовое использование
 
@@ -281,7 +281,7 @@ public class UserKafkaConsumer {
 }
 ```
 
-### Несколько **topics**
+### Несколько topics
 
 ```java
 @Component
@@ -313,7 +313,7 @@ public class FilteredConsumer {
 
 ## Kafka Streams
 
-### Настройка **Kafka Streams**
+### Настройка Kafka Streams
 
 ```xml
 <dependency>
@@ -326,7 +326,7 @@ public class FilteredConsumer {
 </dependency>
 ```
 
-### Базовый **Stream Processing**
+### Базовый Stream Processing
 
 ```java
 @Configuration
@@ -380,7 +380,7 @@ public class ComplexStreamsConfig {
 
 ## Transactions
 
-### Транзакционные **Producers**
+### Транзакционные Producers
 
 ```java
 @Configuration
@@ -425,7 +425,7 @@ public class TransactionalKafkaService {
 
 ## Error Handling
 
-### Обработка ошибок в **Consumer**
+### Обработка ошибок в Consumer
 
 ```java
 @Component
@@ -445,7 +445,7 @@ public class ErrorHandlingConsumer {
 }
 ```
 
-### **Dead Letter Queue**
+### Dead Letter Queue
 
 ```java
 @Configuration
@@ -468,7 +468,7 @@ public class DeadLetterQueueConfig {
 }
 ```
 
-### **Retry Configuration**
+### Retry Configuration
 
 ```java
 @Configuration
@@ -510,7 +510,7 @@ configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.cla
 configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 ```
 
-### 2. Настраивайте **consumer groups**
+### 2. Настраивайте consumer groups
 
 ```java
 // ✅ Хорошо
@@ -542,16 +542,16 @@ public void processUser(User user) {
 }
 ```
 
-### 5. Настраивайте **retry** для надежности
+### 5. Настраивайте retry для надежности
 
 ```java
 // ✅ Хорошо
 factory.setRetryTemplate(retryTemplate);
 ```
 
-## Kafka Streams (**расширенная**)
+## Kafka Streams (расширенная)
 
-### **Stream Processing**
+### Stream Processing
 
 ```java
 @Configuration
@@ -590,7 +590,7 @@ public class StreamProcessor {
 }
 ```
 
-### **Windowing**
+### Windowing
 
 ```java
 @Component
@@ -614,7 +614,7 @@ public class WindowedStreamProcessor {
 }
 ```
 
-### **State Stores**
+### State Stores
 
 ```java
 @Component
@@ -665,7 +665,7 @@ public class StateStoreProcessor {
 
 ## Продвинутая обработка ошибок
 
-### **Dead Letter Topic**
+### Dead Letter Topic
 
 ```java
 @Configuration
@@ -702,7 +702,7 @@ public class DeadLetterTopicConfig {
 }
 ```
 
-### **Custom Error Handler**
+### Custom Error Handler
 
 ```java
 @Component
@@ -742,7 +742,7 @@ public class CustomKafkaErrorHandler implements ConsumerAwareErrorHandler {
 
 ## Мониторинг и метрики
 
-### **Kafka Metrics**
+### Kafka Metrics
 
 ```java
 @Component
@@ -793,7 +793,7 @@ public class KafkaMetrics {
 
 ## Продвинутые паттерны
 
-### **Exactly-Once Semantics**
+### Exactly-Once Semantics
 
 ```java
 @Configuration
@@ -824,7 +824,7 @@ public class ExactlyOnceConfig {
 }
 ```
 
-### **Idempotent Consumer**
+### Idempotent Consumer
 
 ```java
 @Component
@@ -859,7 +859,7 @@ public class IdempotentKafkaConsumer {
 }
 ```
 
-### **Transactional Producer**
+### Transactional Producer
 
 ```java
 @Configuration
@@ -905,7 +905,7 @@ public class TransactionalKafkaService {
 
 ## Оптимизация производительности
 
-### **Batch Processing**
+### Batch Processing
 
 ```java
 @Configuration
@@ -936,7 +936,7 @@ public class BatchKafkaConsumer {
 }
 ```
 
-### **Compression**
+### Compression
 
 ```java
 @Configuration

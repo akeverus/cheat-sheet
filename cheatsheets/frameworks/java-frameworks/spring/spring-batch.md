@@ -33,7 +33,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [[spring-boot|**Spring Boot**]] — **Spring Boot** основы
-- [**PostgreSQL**](../../../databases/relational/postgresql/README.md) — БД для **batch processing**
+- [[README|**PostgreSQL**]] — БД для **batch processing**
 - [Мониторинг](../../../monitoring/) — мониторинг **batch jobs**
 - [[spring-integration|**Spring Integration**]] — интеграция с другими системами
 
@@ -176,11 +176,11 @@ updated: "2026-02-11"
   - [Production considerations:](#production-considerations)
   - [Best practices summary:](#best-practices-summary)
 
-## Введение в **Spring Batch**
+## Введение в Spring Batch
 
 **Spring Batch** — это легковесный, всесторонний фреймворк, предназначенный для разработки надежных пакетных приложений для предприятий. **Spring Batch** предоставляет переиспользуемые функции, необходимые для обработки большого количества данных, включая ведение журнала, отслеживание транзакций, управление заданиями, обработку заданий, управление ресурсами и административные функции.
 
-### Почему **Spring Batch**?
+### Почему Spring Batch?
 
 **Spring Batch** решает сложные задачи пакетной обработки данных:**
 
@@ -193,13 +193,13 @@ updated: "2026-02-11"
 7. **Транзакционность** — **ACID**-подобная обработка данных
 8. **Перезапуск** — возможность перезапуска с места остановки
 
-### Когда использовать **Spring Batch**?
+### Когда использовать Spring Batch?
 
 #### ✅ Идеально подходит для:
 - **ETL процессы** — извлечение, трансформация, загрузка данных
 - **Data Migration** — миграция данных между системами
 - **Report Generation** — генерация сложных отчетов
-- **File Processing** — обработка больших файлов (**CSV, `XML`, JSON**)
+- **File Processing** — обработка больших файлов (CSV, `XML`, JSON)
 - **Database Updates** — массовые обновления базы данных
 - **Integration Tasks** — интеграция с внешними системами
 - **Scheduled Tasks** — регулярные пакетные операции
@@ -214,7 +214,7 @@ updated: "2026-02-11"
 
 ### Основные возможности
 
-#### **Transaction Management**
+#### Transaction Management
 **Spring Batch** предоставляет декларативное управление транзакциями:**
 
 **Chunk-based Processing** — обработка данных порциями в транзакциях:**
@@ -231,13 +231,13 @@ Item 150 fails → Skip and continue
 Job fails at 75% → Restart from last checkpoint
 ```
 
-#### **Job Repository**
+#### Job Repository
 **Хранит метаданные выполнения заданий:**
 
 **Job Executions** — информация о каждом запуске **job**'а:**
 - **Job execution** `ID`
 - **Start**/**end times**
-- **Status** (**STARTING, `STARTED`, `STOPPING`, `STOPPED`, `FAILED`, `COMPLETED`, ABANDONED**)
+- **Status** (STARTING, `STARTED`, `STOPPING`, `STOPPED`, `FAILED`, `COMPLETED`, ABANDONED)
 - **Exit code and description**
 
 **Step Executions** — информация о каждом шаге:**
@@ -248,14 +248,14 @@ Job fails at 75% → Restart from last checkpoint
 - **Status information**
 
 **Job Parameters** — параметры запуска **job**'а:**
-- **Identifying parameters** (**affect job identity**)
-- **Non-identifying parameters** (**configuration only**)
+- **Identifying parameters** (affect job identity)
+- **Non-identifying parameters** (configuration only)
 
 ## Архитектура и концепции
 
-### **Core Components**
+### Core Components
 
-#### **Job**
+#### Job
 **Job** — это сущность, представляющая собой полную пакетную операцию. **Job** состоит из одного или нескольких **Step**'ов и определяет, как и когда выполнять эти шаги.
 
 **Job Configuration** определяет:**
@@ -273,12 +273,12 @@ Job fails at 75% → Restart from last checkpoint
 - **Stopped** — **job** был остановлен
 - **Abandoned** — **job** был **abandoned**
 
-#### **Step**
+#### Step
 **Step** — это независимая фаза обработки в **job**'е. Каждый **step** выполняет определенную задачу и может быть перезапущен независимо.
 
 **Step `Types`:**
 - **Tasklet Step** — выполняет произвольную логику в одном методе
-- **Chunk-oriented Step** — обрабатывает данные порциями (**chunks**)
+- **Chunk-oriented Step** — обрабатывает данные порциями (chunks)
 - **Partitioned Step** — параллельная обработка с **partitioning**
 - **Job Step** — запускает другой **job** как **step**
 
@@ -291,7 +291,7 @@ Job fails at 75% → Restart from last checkpoint
 - **Skip/`Retry` Logic** — обработка ошибок
 - **Listeners** — обработчики событий **step**'а
 
-#### **Execution Context**
+#### Execution Context
 **Execution Context** — это механизм хранения состояния между запусками **job**'ов и **step**'ов:**
 
 **Job Execution Context** — сохраняется между перезапусками **job**'а:
@@ -306,7 +306,7 @@ Job fails at 75% → Restart from last checkpoint
 - **Processing statistics**
 - **Custom step data**
 
-### **Job Repository**
+### Job Repository
 
 **Job Repository** — это **persistence** механизм для хранения метаданных выполнения:**
 
@@ -336,9 +336,9 @@ spring.batch.job.enabled=false
 
 ## Job и Step конфигурация
 
-### **Basic Job Configuration**
+### Basic Job Configuration
 
-#### **Java-based Configuration**
+#### Java-based Configuration
 
 Пример **Java-based** конфигурации **Job** и **Step** в **Spring Batch**.
 
@@ -381,7 +381,7 @@ public class BatchConfiguration {
 - **JobRepository** для хранения метаданных
 - **JobLauncher** для запуска **job**'ов
 
-**`**jobBuilderFactory.get(**"`importUserJob`"**)` — создает **job** с именем "**importUserJob**":**
+**`**jobBuilderFactory.get("`importUserJob`")` — создает **job** с именем "**importUserJob**":**
 - Имя используется для идентификации **job**'а
 - Должно быть уникальным в приложении
 
@@ -390,11 +390,11 @@ public class BatchConfiguration {
 - Позволяет запускать один **job** многократно
 - Параметры хранятся в **BATCH_JOB_EXECUTION_PARAMS**
 
-**`.**listener(**listener**)` — добавляет слушатель событий **job**'а:**
+**`.**listener(listener)` — добавляет слушатель событий **job**'а:**
 - **JobCompletionNotificationListener** получает уведомления о завершении
 - Может логировать, отправлять **email**, вызывать другие системы
 
-**`.**flow(**step1**)` — определяет последовательность выполнения:**
+**`.**flow(step1)` — определяет последовательность выполнения:**
 - **step1** будет выполнен первым
 - Можно добавить условия и ветвления (**.on(**).to().**from**())
 
@@ -405,7 +405,7 @@ public class BatchConfiguration {
 - Валидирует конфигурацию
 - Регистрирует **job** в **JobRegistry**
 
-#### **XML-based Configuration**
+#### XML-based Configuration
 ```xml
 <!-- Конфигурация Job и Step в XML: tasklet, listeners -->
 <batch:job id="importUserJob" incrementer="runIdIncrementer">
@@ -421,9 +421,9 @@ public class BatchConfiguration {
 </batch:job>
 ```
 
-### **Job Parameters**
+### Job Parameters
 
-#### **Parameter Types**
+#### Parameter Types
 ```java
 // Job с параметрами: inputFile, chunkSize, runDate (JobParametersBuilder)
 @Bean
@@ -443,8 +443,8 @@ public Job job(JobBuilderFactory jobBuilderFactory, Step step) {
 ```
 
 **Типы параметров:**
-- **String** — текстовые значения (**"`inputFile`", "`outputPath`"**)
-- **Long** — числовые значения (**100L, 1000L**)
+- **String** — текстовые значения ("`inputFile`", "`outputPath`")
+- **Long** — числовые значения (100L, 1000L)
 - **Double** — дробные числа (`1.5`, `99.99`)
 - **Date** — даты и время (**new `Date`(**), **run date**)
 
@@ -470,9 +470,9 @@ JobParameters params2 = new JobParametersBuilder()
     .toJobParameters();
 ```
 
-### **Step Configuration**
+### Step Configuration
 
-#### **Tasklet Step**
+#### Tasklet Step
 ```java
 @Bean
 public Step taskletStep(StepBuilderFactory stepBuilderFactory) {
@@ -501,7 +501,7 @@ public interface Tasklet {
 - **FINISHED** — **step** завершен успешно
 - **CONTINUABLE** — **step** должен продолжить выполнение
 
-#### **Chunk-oriented Step**
+#### Chunk-oriented Step
 ```java
 @Bean
 public Step chunkStep(StepBuilderFactory stepBuilderFactory,
@@ -531,9 +531,9 @@ Reader reads next 10 → Processor processes each → Writer writes 10 → Commi
 
 ## Item Readers
 
-### **Flat File Reader**
+### Flat File Reader
 
-#### **CSV File Reader**
+#### CSV File Reader
 ```java
 @Bean
 @StepScope
@@ -554,7 +554,7 @@ public FlatFileItemReader<Person> personCsvReader(
 
 **Конфигурация параметров:**
 
-**`.**name(**"`personCsvReader`"**)` — уникальное имя **reader**'а:**
+**`.**name("`personCsvReader`")` — уникальное имя **reader**'а:**
 - Используется для логирования и мониторинга
 - Должно быть уникальным в **job**'е
 
@@ -565,9 +565,9 @@ public FlatFileItemReader<Person> personCsvReader(
 
 **`.**delimited**()` — указывает на разделители:**
 - По умолчанию запятая
-- Можно указать **custom delimiter**: .**delimiter(**"|"**)
+- Можно указать **custom delimiter**: .**delimiter("|")
 
-**`.**names(**new `String`[]{"`firstName`", "`lastName`", "email", "age"}**)` — имена полей:**
+**`.**names(new `String`[]{"`firstName`", "`lastName`", "email", "age"})` — имена полей:**
 - Должны соответствовать заголовкам **CSV**
 - Используются для **mapping** в объект
 
@@ -575,7 +575,7 @@ public FlatFileItemReader<Person> personCsvReader(
 - **BeanWrapperFieldSetMapper** использует **setters**
 - Можно реализовать **custom FieldSetMapper**
 
-#### **Fixed Width File Reader**
+#### Fixed Width File Reader
 ```java
 @Bean
 @StepScope
@@ -603,9 +603,9 @@ public FlatFileItemReader<Person> personFixedWidthReader() {
 - **Range**(21, 40) — символы с 21 по 40
 - **Range**(41, 60) — символы с 41 по 60
 
-### **Database Readers**
+### Database Readers
 
-#### **JDBC Cursor Reader**
+#### JDBC Cursor Reader
 ```java
 @Bean
 @StepScope
@@ -624,15 +624,15 @@ public JdbcCursorItemReader<Person> personJdbcReader(
 
 **JDBC `Reader` параметры:**
 
-**`.**dataSource(**dataSource**)` — источник данных:**
+**`.**dataSource(dataSource)` — источник данных:**
 - **DataSource** для подключения к базе данных
 - Поддерживает **connection pooling**
 
-**`.**sql(**"`SELECT` ..."**)` — **SQL** запрос:**
+**`.**sql("`SELECT` ...")` — **SQL** запрос:**
 - Может содержать параметры (?)
 - Должен возвращать **ResultSet** подходящий для **mapping**
 
-**`.**parameters(**new `Object`[]{`lastUpdate`}**)` — параметры запроса:**
+**`.**parameters(new `Object`[]{`lastUpdate`})` — параметры запроса:**
 - Передаются в **prepared statement**
 - Могут быть получены из **job parameters**
 
@@ -640,7 +640,7 @@ public JdbcCursorItemReader<Person> personJdbcReader(
 - **BeanPropertyRowMapper** использует **column names**
 - Можно реализовать **custom RowMapper**
 
-#### **JPA Reader**
+#### JPA Reader
 ```java
 @Bean
 @StepScope
@@ -656,11 +656,11 @@ public JpaCursorItemReader<Person> personJpaReader() {
 
 **JPA `Reader` особенности:**
 
-**`.**entityManagerFactory(**entityManagerFactory**)` — **JPA EntityManagerFactory**:**
+**`.**entityManagerFactory(entityManagerFactory)` — **JPA EntityManagerFactory**:**
 - Использует **JPA** для чтения данных
 - Поддерживает **lazy loading**
 
-**`.**queryString(**"`SELECT` p `FROM Person p`..."**)` — **JPQL** запрос:**
+**`.**queryString("`SELECT` p `FROM Person p`...")` — **JPQL** запрос:**
 - Использует **JPA entity names**
 - Поддерживает **joins** и **complex queries**
 
@@ -668,9 +668,9 @@ public JpaCursorItemReader<Person> personJpaReader() {
 - **Map** с именами параметров
 - Поддерживает все **JPA** типы параметров
 
-### **Custom Readers**
+### Custom Readers
 
-#### **Custom ItemReader**
+#### Custom ItemReader
 ```java
 public class CustomPersonReader implements ItemReader<Person> {
 
@@ -716,9 +716,9 @@ public class CustomPersonReader implements ItemReader<Person> {
 
 ## Item Writers
 
-### **Database Writers**
+### Database Writers
 
-#### **JDBC Batch Writer**
+#### JDBC Batch Writer
 ```java
 @Bean
 public JdbcBatchItemWriter<Person> personJdbcWriter() {
@@ -737,10 +737,10 @@ public JdbcBatchItemWriter<Person> personJdbcWriter() {
 
 **JDBC `Writer` параметры:**
 
-**`.**dataSource(**dataSource**)` — **DataSource** для подключения:**
+**`.**dataSource(dataSource)` — **DataSource** для подключения:**
 - Использует **JDBC batch updates** для производительности
 
-**`.**sql(**"`INSERT INTO`..."**)` — **SQL** для вставки:**
+**`.**sql("`INSERT INTO`...")` — **SQL** для вставки:**
 - **Prepared statement** с параметрами
 - Поддерживает **INSERT**, **UPDATE**, **DELETE**
 
@@ -748,7 +748,7 @@ public JdbcBatchItemWriter<Person> personJdbcWriter() {
 - Вызывается для каждого **item**'а
 - Устанавливает значения в **prepared statement**
 
-#### **JPA Writer**
+#### JPA Writer
 ```java
 @Bean
 public JpaItemWriter<Person> personJpaWriter() {
@@ -763,9 +763,9 @@ public JpaItemWriter<Person> personJpaWriter() {
 - Поддерживает **batch inserts**/**updates**
 - Управляет транзакциями через **Spring**
 
-### **File Writers**
+### File Writers
 
-#### **CSV File Writer**
+#### CSV File Writer
 ```java
 @Bean
 @StepScope
@@ -801,7 +801,7 @@ public FlatFileItemWriter<Person> personCsvWriter(
 - Записывается в конец файла
 - Можно использовать для статистики
 
-#### **XML File Writer**
+#### XML File Writer
 ```java
 @Bean
 @StepScope
@@ -832,9 +832,9 @@ public XStreamMarshaller personMarshaller() {
 - **XStreamMarshaller** для сериализации объектов
 - Поддерживает **root element** и **namespace**
 
-### **Composite Writers**
+### Composite Writers
 
-#### **MultiResource Writer**
+#### MultiResource Writer
 ```java
 @Bean
 @StepScope
@@ -860,11 +860,11 @@ public MultiResourceItemWriter<Person> multiFileWriter(
 
 **MultiResource параметры:**
 - **Delegate** — базовый **writer** для каждого файла
-- **Resource pattern** — шаблон имен файлов (**%d для номера**)
+- **Resource pattern** — шаблон имен файлов (%d для номера)
 - **Item count limit** — максимум элементов на файл
 - **Save state** — сохраняет состояние для перезапуска
 
-#### **Composite Writer**
+#### Composite Writer
 ```java
 @Bean
 public CompositeItemWriter<Person> compositeWriter() {
@@ -887,9 +887,9 @@ public CompositeItemWriter<Person> compositeWriter() {
 
 ## Chunk Processing
 
-### **Chunk-oriented Processing**
+### Chunk-oriented Processing
 
-#### **Chunk Size Configuration**
+#### Chunk Size Configuration
 ```java
 @Bean
 public Step chunkProcessingStep(StepBuilderFactory stepBuilderFactory) {
@@ -922,9 +922,9 @@ public Step chunkProcessingStep(StepBuilderFactory stepBuilderFactory) {
 - **Error recovery** — перезапуск с последнего **commit**'а
 - **Performance** — **batch operations** для I/O
 
-### **Item Processor**
+### Item Processor
 
-#### **Simple Processor**
+#### Simple Processor
 ```java
 public class PersonProcessor implements ItemProcessor<Person, Person> {
 
@@ -957,7 +957,7 @@ public class PersonProcessor implements ItemProcessor<Person, Person> {
 - **Exception** — для ошибок обработки
 - **Idempotent** — многократный вызов безопасен
 
-#### **Composite Processor**
+#### Composite Processor
 ```java
 @Bean
 public CompositeItemProcessor<Person, Person> personCompositeProcessor() {
@@ -1011,9 +1011,9 @@ public ItemProcessor<Person, Person> enrichmentProcessor() {
 
 ## Error Handling
 
-### **Skip Logic**
+### Skip Logic
 
-#### **Skip Configuration**
+#### Skip Configuration
 ```java
 @Bean
 public Step faultTolerantStep(StepBuilderFactory stepBuilderFactory) {
@@ -1035,9 +1035,9 @@ public Step faultTolerantStep(StepBuilderFactory stepBuilderFactory) {
 
 **`.**skipLimit**(5)` — максимальное количество пропусков:**
 - После превышения лимита **step fails**
-- Можно использовать **percentage**: **skipLimit(**10%**)
+- Можно использовать **percentage**: **skipLimit(10%)
 
-**`.**skip(**Exception.class**)` — какие исключения пропускать:**
+**`.**skip(Exception.class)` — какие исключения пропускать:**
 - **ValidationException** — бизнес-логика ошибки
 - **DataIntegrityViolationException** — `DB` **constraint violations**
 - **Custom exceptions**
@@ -1046,7 +1046,7 @@ public Step faultTolerantStep(StepBuilderFactory stepBuilderFactory) {
 - Реализует **SkipPolicy interface**
 - Позволяет **complex** логику принятия решения
 
-#### **Custom Skip Policy**
+#### Custom Skip Policy
 ```java
 public class PersonSkipPolicy implements SkipPolicy {
 
@@ -1065,9 +1065,9 @@ public class PersonSkipPolicy implements SkipPolicy {
 }
 ```
 
-### **Retry Logic**
+### Retry Logic
 
-#### **Retry Configuration**
+#### Retry Configuration
 ```java
 @Bean
 public Step retryStep(StepBuilderFactory stepBuilderFactory) {
@@ -1092,7 +1092,7 @@ public Step retryStep(StepBuilderFactory stepBuilderFactory) {
 - 1 **initial** + 3 **retries** = 4 **total attempts**
 - После исчерпания **retry step fails**
 
-**`.**retry(**Exception.class**)` — какие исключения повторять:**
+**`.**retry(Exception.class)` — какие исключения повторять:**
 - **IOException** — **network** проблемы
 - **HttpServerErrorException** — временные **server** ошибки
 - **TimeoutException** — **timeout**'ы
@@ -1106,7 +1106,7 @@ public Step retryStep(StepBuilderFactory stepBuilderFactory) {
 - **Exponential backoff** — экспоненциальная задержка
 - **Random backoff** — случайная задержка
 
-#### **Backoff Policies**
+#### Backoff Policies
 ```java
 @Bean
 public BackOffPolicy fixedBackOff() {
@@ -1134,9 +1134,9 @@ public BackOffPolicy randomBackOff() {
 }
 ```
 
-### **Error Handling Strategies**
+### Error Handling Strategies
 
-#### **Circuit Breaker Pattern**
+#### Circuit Breaker Pattern
 ```java
 public class CircuitBreakerProcessor implements ItemProcessor<Person, Person> {
 
@@ -1170,9 +1170,9 @@ public class CircuitBreakerProcessor implements ItemProcessor<Person, Person> {
 
 ## Listeners и Callbacks
 
-### **Job Listeners**
+### Job Listeners
 
-#### **Job Execution Listener**
+#### Job Execution Listener
 ```java
 @Component
 public class JobCompletionNotificationListener implements JobExecutionListener {
@@ -1234,11 +1234,11 @@ public class JobCompletionNotificationListener implements JobExecutionListener {
 
 **Job `Listener Events`:**
 - **beforeJob** — перед началом выполнения **job**'а
-- **afterJob** — после завершения **job**'а (**успешно или с ошибкой**)
+- **afterJob** — после завершения **job**'а (успешно или с ошибкой)
 
-### **Step Listeners**
+### Step Listeners
 
-#### **Step Execution Listener**
+#### Step Execution Listener
 ```java
 @Component
 public class StepExecutionListener implements org.springframework.batch.core.StepExecutionListener {
@@ -1276,7 +1276,7 @@ public class StepExecutionListener implements org.springframework.batch.core.Ste
 }
 ```
 
-#### **Chunk Listener**
+#### Chunk Listener
 ```java
 @Component
 public class ChunkExecutionListener implements ChunkListener {
@@ -1315,7 +1315,7 @@ public class ChunkExecutionListener implements ChunkListener {
 }
 ```
 
-#### **Item Read**/**Write**/**Process Listeners**
+#### Item Read/Write/Process Listeners
 ```java
 @Component
 public class ItemProcessingListener implements
@@ -1380,9 +1380,9 @@ public class ItemProcessingListener implements
 
 ## Parallel Processing
 
-### **Multi-threaded Step**
+### Multi-threaded Step
 
-#### **Thread Pool Configuration**
+#### Thread Pool Configuration
 ```java
 @Bean
 public Step multiThreadedStep(StepBuilderFactory stepBuilderFactory) {
@@ -1412,7 +1412,7 @@ public TaskExecutor taskExecutor() {
 
 **`.**taskExecutor(**taskExecutor(**))` — **thread pool** для выполнения:**
 - **ThreadPoolTaskExecutor** для управления потоками
-- **SimpleAsyncTaskExecutor** для **unlimited threads** (**не рекомендуется**)
+- **SimpleAsyncTaskExecutor** для **unlimited threads** (не рекомендуется)
 
 **`.**throttleLimit**(4)` — максимум одновременных **chunk**'ов:**
 - Ограничивает **parallelism** для контроля ресурсов
@@ -1424,9 +1424,9 @@ public TaskExecutor taskExecutor() {
 - **Memory Usage** — увеличенное потребление памяти
 - **Ordering** — порядок обработки может быть неопределенным
 
-### **Partitioned Step**
+### Partitioned Step
 
-#### **Partitioning Configuration**
+#### Partitioning Configuration
 ```java
 @Configuration
 public class PartitionedStepConfig {
@@ -1475,7 +1475,7 @@ public class PartitionedStepConfig {
 }
 ```
 
-#### **Custom Partitioner**
+#### Custom Partitioner
 ```java
 public class CustomPartitioner implements Partitioner {
 
@@ -1505,9 +1505,9 @@ public class CustomPartitioner implements Partitioner {
 
 ## Scaling и Performance
 
-### **Performance Optimization**
+### Performance Optimization
 
-#### **Reader Optimization**
+#### Reader Optimization
 ```java
 @Bean
 @StepScope
@@ -1532,9 +1532,9 @@ public JdbcCursorItemReader<Person> optimizedReader() {
 - **ORDER BY** — важен для **cursor stability**
 - **WHERE clauses** — фильтрация на **database** уровне
 - **Indexes** — правильные индексы на фильтруемых полях
-- **Fetch size** — размер **batch fetch** (**для JDBC**)
+- **Fetch size** — размер **batch fetch** (для JDBC)
 
-#### **Writer Optimization**
+#### Writer Optimization
 ```java
 @Bean
 public JdbcBatchItemWriter<Person> optimizedWriter() {
@@ -1561,7 +1561,7 @@ public JdbcBatchItemWriter<Person> optimizedWriter() {
 - **Prepared statements** — **compiled queries**
 - **Minimal logging** — отключение ненужного **logging**
 
-#### **Processor Optimization**
+#### Processor Optimization
 ```java
 public class OptimizedPersonProcessor implements ItemProcessor<Person, Person> {
 
@@ -1603,9 +1603,9 @@ public class OptimizedPersonProcessor implements ItemProcessor<Person, Person> {
 }
 ```
 
-### **Memory Management**
+### Memory Management
 
-#### **Chunk Size Tuning**
+#### Chunk Size Tuning
 ```java
 @Configuration
 public class PerformanceConfig {
@@ -1637,11 +1637,11 @@ public class PerformanceConfig {
 **Chunk `Size` рекомендации:**
 - **Small chunks (10-50)** — для **error-prone processing**, **low memory**
 - **Medium chunks (50-200)** — **balanced approach**
-- **Large chunks (**200+**)** — для **reliable processing**, **high throughput**
+- **Large chunks (200+)** — для **reliable processing**, **high throughput**
 
-### **Database Optimization**
+### Database Optimization
 
-#### **Connection Pooling**
+#### Connection Pooling
 ```yaml
 spring:
   datasource:
@@ -1653,7 +1653,7 @@ spring:
       max-lifetime: 1800000
 ```
 
-#### **Batch Insert Optimization**
+#### Batch Insert Optimization
 ```sql
 -- Создание индексов для batch processing
 CREATE INDEX idx_person_status ON person(status);
@@ -1671,9 +1671,9 @@ CREATE TABLE person_y2023 PARTITION OF person
 
 ## Spring Boot интеграция
 
-### **Auto-configuration**
+### Auto-configuration
 
-#### **Spring Boot Batch Starter**
+#### Spring Boot Batch Starter
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -1694,7 +1694,7 @@ CREATE TABLE person_y2023 PARTITION OF person
 - @**EnableBatchProcessing** не требуется
 - **Metrics integration**
 
-#### **Application Properties**
+#### Application Properties
 ```yaml
 spring:
   batch:
@@ -1711,9 +1711,9 @@ spring:
     password: password
 ```
 
-### **Job Scheduling**
+### Job Scheduling
 
-#### @**Scheduled Integration**
+#### @Scheduled Integration
 ```java
 @SpringBootApplication
 @EnableScheduling
@@ -1748,7 +1748,7 @@ public class BatchApplication {
 }
 ```
 
-#### **Command Line Runner**
+#### Command Line Runner
 ```java
 @SpringBootApplication
 public class BatchApplication implements CommandLineRunner {
@@ -1777,9 +1777,9 @@ public class BatchApplication implements CommandLineRunner {
 }
 ```
 
-### **REST API** для управления
+### REST API для управления
 
-#### **Job Controller**
+#### Job Controller
 ```java
 @RestController
 @RequestMapping("/api/jobs")
@@ -1854,9 +1854,9 @@ public class JobController {
 
 ## Testing
 
-### **Unit Testing**
+### Unit Testing
 
-#### **Testing Components**
+#### Testing Components
 ```java
 @SpringBootTest
 public class PersonProcessorTest {
@@ -1894,7 +1894,7 @@ public class PersonProcessorTest {
 }
 ```
 
-#### **Testing Readers**/**Writers**
+#### Testing Readers/Writers
 ```java
 @SpringBootTest
 public class ItemReaderWriterTest {
@@ -1929,9 +1929,9 @@ public class ItemReaderWriterTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
-#### **Testing Complete Job**
+#### Testing Complete Job
 ```java
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -1987,7 +1987,7 @@ public class ImportUserJobTest {
 }
 ```
 
-#### **Testing with Testcontainers**
+#### Testing with Testcontainers
 ```java
 @SpringBootTest
 @Testcontainers
@@ -2024,9 +2024,9 @@ public class DatabaseIntegrationTest {
 
 ## Production Deployment
 
-### **Configuration Management**
+### Configuration Management
 
-#### **Environment-specific Properties**
+#### Environment-specific Properties
 ```yaml
 # application-prod.yaml
 spring:
@@ -2049,7 +2049,7 @@ batch:
   output-directory: /app/output
 ```
 
-#### **Docker Deployment**
+#### Docker Deployment
 ```dockerfile
 FROM openjdk:17-jre-slim
 
@@ -2072,7 +2072,7 @@ ENTRYPOINT ["java", "-jar", "app.jar", \
     "--batch.output-directory=/app/output"]
 ```
 
-#### **Kubernetes Deployment**
+#### Kubernetes Deployment
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -2107,9 +2107,9 @@ spec:
           claimName: batch-output-pvc
 ```
 
-### **Monitoring** и **Alerting**
+### Monitoring и Alerting
 
-#### **Spring Boot Actuator**
+#### Spring Boot Actuator
 ```yaml
 management:
   endpoints:
@@ -2125,7 +2125,7 @@ management:
         enabled: true
 ```
 
-#### **Health Indicators**
+#### Health Indicators
 ```java
 @Component
 public class BatchHealthIndicator implements HealthIndicator {
@@ -2180,9 +2180,9 @@ public class BatchHealthIndicator implements HealthIndicator {
 
 ## Лучшие практики
 
-### **Job Design**
+### Job Design
 
-#### 1. **Job Naming Convention**
+#### 1. Job Naming Convention
 ```java
 @Configuration
 public class JobNamingConfig {
@@ -2213,7 +2213,7 @@ public class JobNamingConfig {
 }
 ```
 
-#### 2. **Parameter Management**
+#### 2. Parameter Management
 ```java
 @Configuration
 public class ParameterManagementConfig {
@@ -2248,7 +2248,7 @@ public class ParameterManagementConfig {
 
 ### Error Handling
 
-#### 3. **Comprehensive Error Handling**
+#### 3. Comprehensive Error Handling
 ```java
 @Configuration
 public class ErrorHandlingConfig {
@@ -2273,9 +2273,9 @@ public class ErrorHandlingConfig {
 }
 ```
 
-### **Performance**
+### Performance
 
-#### 4. **Chunk Size Optimization**
+#### 4. Chunk Size Optimization
 ```java
 @Configuration
 public class PerformanceConfig {
@@ -2312,7 +2312,7 @@ public class PerformanceConfig {
 
 ### Testing
 
-#### 5. **Test Coverage**
+#### 5. Test Coverage
 ```java
 @SpringBootTest
 public class ComprehensiveJobTest {
@@ -2355,9 +2355,9 @@ public class ComprehensiveJobTest {
 }
 ```
 
-### **Operations**
+### Operations
 
-#### 6. **Operational Readiness**
+#### 6. Operational Readiness
 ```java
 @SpringBootApplication
 public class BatchApplication implements CommandLineRunner {
@@ -2400,7 +2400,7 @@ public class BatchApplication implements CommandLineRunner {
 
 ### Распространенные проблемы
 
-#### **Job** не запускается
+#### Job не запускается
 ```text
 org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException
 ```
@@ -2422,7 +2422,7 @@ JobParameters params = new JobParametersBuilder()
         .toJobParameters();
 ```
 
-#### **Chunk processing** проблемы
+#### Chunk processing проблемы
 ```text
 Memory usage keeps growing during processing
 ```
@@ -2452,7 +2452,7 @@ public JdbcCursorItemReader<Person> reader() {
 }
 ```
 
-#### **Database connection** проблемы
+#### Database connection проблемы
 ```text
 Timeout waiting for connection from pool
 ```
@@ -2468,7 +2468,7 @@ spring:
       max-lifetime: 1800000      # Recycle connections
 ```
 
-#### **Reader**/**Writer performance**
+#### Reader/Writer performance
 ```text
 Processing 1000 records takes too long
 ```
@@ -2510,9 +2510,9 @@ public JdbcBatchItemWriter<Person> optimizedWriter() {
 }
 ```
 
-### **Debug techniques**
+### Debug techniques
 
-#### **Job execution monitoring**
+#### Job execution monitoring
 ```java
 @Component
 public class JobMonitoringAspect {
@@ -2550,7 +2550,7 @@ public class JobMonitoringAspect {
 }
 ```
 
-#### **Memory monitoring**
+#### Memory monitoring
 ```java
 @Component
 public class MemoryMonitor {
@@ -2604,19 +2604,19 @@ public class MemoryMonitor {
 
 ### Архитектурные преимущества:
 
-#### **Reliability**:
+#### Reliability:
 - **Transaction boundaries** — контролируемые транзакции
 - **Skip/retry logic** — гибкая обработка ошибок
 - **Job repository** — **persistent** состояние выполнения
 - **Execution context** — сохранение промежуточного состояния
 
-#### **Scalability**:
+#### Scalability:
 - **Chunk processing** — ограниченное использование ресурсов
 - **Parallel execution** — **multi-threaded** и **partitioned processing**
 - **Resource management** — эффективное использование **CPU**/**memory**
 - **Load balancing** — распределение нагрузки
 
-### Когда использовать **Spring Batch**:
+### Когда использовать Spring Batch:
 
 ✅ **ETL operations** — извлечение, трансформация, загрузка данных
 ✅ **Data migration** — миграция между системами
@@ -2636,7 +2636,7 @@ public class MemoryMonitor {
 ❌ **Streaming data** — используйте **Kafka** или **WebSocket**
 ❌ **Simple workflows** — используйте @**Scheduled** методы
 
-### **Production considerations**:
+### Production considerations:
 
 1. **Configuration management** — **environment-specific** настройки
 2. **Monitoring setup** — **metrics**, **alerts**, **dashboards**
@@ -2645,7 +2645,7 @@ public class MemoryMonitor {
 5. **Performance tuning** — **chunk sizes**, **parallel processing**
 6. **Operational procedures** — **deployment**, **maintenance**, **troubleshooting**
 
-### **Best practices summary**:
+### Best practices summary:
 
 1. **Job design** — **logical step separation**, **clear naming**
 2. **Error handling** — **skip**/**retry policies**, **dead letter queues**
@@ -2657,4 +2657,4 @@ public class MemoryMonitor {
 
 **Spring Batch** является **industrial standard** для **enterprise batch processing**. Его зрелость, надежность и интеграция с **Spring** делают его идеальным выбором для критически важных пакетных операций в **enterprise** системах. 🚀
 
-**Далее: `Spring Integration` (**enterprise integration patterns**)**
+**Далее: `Spring Integration` (enterprise integration patterns)**

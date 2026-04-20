@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.md"]
 ---
 
-# **ClickHouse**: Производительность — Полное руководство по оптимизации и тюнингу
+# ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу
 
 Комплексное руководство по оптимизации производительности **ClickHouse**: конфигурация, запросы, оборудование, мониторинг и **best practices**.
 
@@ -43,7 +43,7 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
     - [**CPU**](#cpu)
 - [Оптимальная конфигурация CPU](#оптимальная-конфигурация-cpu)
 - [Проверка CPU](#проверка-cpu)
-    - [Память (**RAM**)](#память-ram)
+    - [Память (RAM)](#память-ram)
 - [Минимум: 32GB для небольших кластеров](#минимум-32gb-для-небольших-кластеров)
 - [Рекомендуется: 128GB+ для production](#рекомендуется-128gb-для-production)
 - [Максимум: Ограничено только ОС](#максимум-ограничено-только-ос)
@@ -144,7 +144,7 @@ LIMIT 10;
 
 ### Рекомендации по оборудованию
 
-#### **CPU**
+#### CPU
 ```bash
 # Оптимальная конфигурация CPU
 # - 8+ ядер для аналитических нагрузок
@@ -155,7 +155,7 @@ LIMIT 10;
 lscpu | grep -E "(Architecture|CPU\(s\)|Model name|CPU MHz)"
 ```
 
-#### Память (**RAM**)
+#### Память (RAM)
 ```bash
 # Минимум: 32GB для небольших кластеров
 # Рекомендуется: 128GB+ для production
@@ -190,7 +190,7 @@ ethtool eth0 | grep Speed
 iperf3 -c target_host
 ```
 
-### Оптимизация **Linux**
+### Оптимизация Linux
 
 ```bash
 # Отключение SWAP (критично для ClickHouse)
@@ -253,7 +253,7 @@ sudo sysctl -w vm.dirty_background_ratio=5
 </clickhouse>
 ```
 
-### Оптимизация **MergeTree**
+### Оптимизация MergeTree
 
 ```xml
 <!-- merge_tree.xml -->
@@ -456,7 +456,7 @@ DELETE WHERE timestamp < now() - INTERVAL 1 YEAR,
 TO DISK 'hdd' WHERE timestamp < now() - INTERVAL 1 MONTH;  -- Перемещение на HDD
 ```
 
-### Настройка **TTL**
+### Настройка TTL
 
 ```sql
 -- Многоуровневое TTL
@@ -474,7 +474,7 @@ TTL session_start + INTERVAL 1 DAY DELETE,  -- Удаление через де�
 
 ## Оптимизация вставки данных
 
-### **Batch** вставка
+### Batch вставка
 
 ```sql
 -- Вставка больших батчей
@@ -650,7 +650,7 @@ EXPLAIN SELECT * FROM large_table WHERE date = '2024-01-01';
 -- Проверить использование первичного ключа и партиций
 ```
 
-### Высокое использование **CPU**
+### Высокое использование CPU
 
 ```sql
 -- Мониторинг CPU
@@ -866,5 +866,5 @@ ORDER BY read_bytes DESC;
 
 
 **Следующие темы:**
-- [Интеграции и экосистема](clickhouse-integration.md)
+- [[clickhouse-integration|Интеграции и экосистема]]
 

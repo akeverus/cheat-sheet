@@ -23,9 +23,9 @@ updated: "2026-02-11"
 - [http4s](https://http4s.org/)
 
 ### См. также
-- [Frameworks README](../README.md) — раздел фреймворков
-- [Java Frameworks](../java-frameworks/README.md) — **Spring**, **Quarkus**
-- [Scala (languages)](../../languages/scala/README.md) — язык **Scala**
+- [[README|Frameworks README]] — раздел фреймворков
+- [[README|Java Frameworks]] — **Spring**, **Quarkus**
+- [[README|Scala (languages)]] — язык **Scala**
 
 ## Содержание
 
@@ -72,12 +72,12 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
 }
 ```
 
-**Маршруты** задаются в `conf/routes`. См. [Play](../../libraries/scala/scala-play.md).
+**Маршруты** задаются в `conf/routes`. См. [[scala-play|Play]].
 
 
 ## Akka и Akka HTTP
 
-**Akka** — toolkit для реактивных распределённых приложений: акторы, потоки (**Streams**), кластеризация. **Akka HTTP** — сервер и клиент **HTTP** на базе **Akka Streams**.
+**Akka** — toolkit для реактивных распределённых приложений: акторы, потоки (Streams), кластеризация. **Akka HTTP** — сервер и клиент **HTTP** на базе **Akka Streams**.
 
 **Пример маршрута:**
 ```scala
@@ -88,7 +88,7 @@ val route = path("api" / "items" / LongNumber) { id =>
 Http().newServerAt("0.0.0.0", 8080).bind(route)
 ```
 
-**Особенности:** полностью асинхронный, интеграция с **Akka** акторами и потоками. См. [Akka](../../libraries/scala/scala-akka.md).
+**Особенности:** полностью асинхронный, интеграция с **Akka** акторами и потоками. См. [[scala-akka|Akka]].
 
 
 ## ZIO и ZIO HTTP
@@ -106,7 +106,7 @@ val app = Routes(
 Server.serve(app).provide(Server.defaultWithPort(8080))
 ```
 
-**Особенности:** типобезопасные зависимости, тестируемость, интеграция с **ZIO** экосистемой. См. [ZIO](../../libraries/scala/scala-zio.md).
+**Особенности:** типобезопасные зависимости, тестируемость, интеграция с **ZIO** экосистемой. См. [[scala-zio|ZIO]].
 
 
 ## http4s и Cats Effect
@@ -123,7 +123,7 @@ val routes = HttpRoutes.of[IO] {
 BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).resource
 ```
 
-**Особенности:** tagless final, **IO**-ориентированность, совместимость с **Cats** экосистемой. См. [http4s](../../languages/scala/scala-http4s.md).
+**Особенности:** tagless final, **IO**-ориентированность, совместимость с **Cats** экосистемой. См. [[scala-http4s|http4s]].
 
 
 ## Tapir
@@ -179,6 +179,6 @@ BlazeServerBuilder[IO].bindHttp(8080, "0.0.0.0").withHttpApp(routes.orNotFound).
 
 ## Заключение
 
-**Scala**-экосистема предлагает **Play** для классического веб, **Akka HTTP** для реактивных сценариев, **ZIO** и **http4s** для функционального стека. **Tapir** объединяет описание **API** для разных бэкендов. См. [Frameworks README](../README.md) и [Scala (languages)](../../languages/scala/README.md).
+**Scala**-экосистема предлагает **Play** для классического веб, **Akka HTTP** для реактивных сценариев, **ZIO** и **http4s** для функционального стека. **Tapir** объединяет описание **API** для разных бэкендов. См. [[README|Frameworks README]] и [[README|Scala (languages)]].
 
 

@@ -89,7 +89,7 @@ related: ["quarkus-core.md", "quarkus-data.md"]
 
 ## Unit Tests
 
-### **Basic Unit Test**
+### Basic Unit Test
 
 ```java
 import org.junit.jupiter.api.Test;
@@ -109,7 +109,7 @@ public class UserServiceTest {
 
 ## Integration Tests
 
-### @**QuarkusTest**
+### @QuarkusTest
 
 ```java
 import io.quarkus.test.junit.QuarkusTest;
@@ -132,7 +132,7 @@ public class UserResourceTest {
 
 ## Mocking
 
-### @**MockBean**
+### @MockBean
 
 ```java
 import io.quarkus.test.junit.QuarkusMock;
@@ -155,7 +155,7 @@ public class UserResourceTest {
 
 ## Лучшие практики
 
-### 1. Используйте @**QuarkusTest** для **integration tests**
+### 1. Используйте @QuarkusTest для integration tests
 
 ```java
 // ✅ Хорошо
@@ -165,7 +165,7 @@ public class IntegrationTest {
 }
 ```
 
-### 2. Используйте обычные тесты для **unit tests**
+### 2. Используйте обычные тесты для unit tests
 
 ```java
 // ✅ Хорошо
@@ -174,7 +174,7 @@ public class UnitTest {
 }
 ```
 
-### 3. Используйте **Testcontainers** для внешних зависимостей
+### 3. Используйте Testcontainers для внешних зависимостей
 
 ```java
 // ✅ Хорошо
@@ -186,7 +186,7 @@ public class DatabaseTest {
 
 ## Advanced Testing Patterns
 
-### **Testing Reactive Code**
+### Testing Reactive Code
 
 **Тестирование **reactive** кода с **Uni** и **Multi**:**
 
@@ -215,7 +215,7 @@ public class ReactiveServiceTest {
 }
 ```
 
-### **Testing REST Endpoints**
+### Testing REST Endpoints
 
 **Тестирование **REST endpoints** с **REST Assured**:**
 
@@ -256,7 +256,7 @@ public class UserResourceTest {
 }
 ```
 
-### **Testing with Testcontainers**
+### Testing with Testcontainers
 
 **Использование **Testcontainers** для интеграционных тестов:**
 
@@ -285,7 +285,7 @@ public class DatabaseTest {
 }
 ```
 
-### **Custom Test Resources**
+### Custom Test Resources
 
 **Создание кастомных **test resources**:**
 
@@ -313,7 +313,7 @@ public class CustomTestResource implements QuarkusTestResourceLifecycleManager {
 
 ## Mocking Strategies
 
-### **Mocking CDI Beans**
+### Mocking CDI Beans
 
 **Мокирование **CDI** бинов:**
 
@@ -337,7 +337,7 @@ public class ServiceTest {
 }
 ```
 
-### **Partial Mocking**
+### Partial Mocking
 
 **Частичное мокирование:**
 
@@ -358,7 +358,7 @@ public class PartialMockTest {
 }
 ```
 
-### **Mocking Reactive Services**
+### Mocking Reactive Services
 
 **Мокирование **reactive** сервисов:**
 
@@ -378,7 +378,7 @@ void setupReactiveMock() {
 
 ## Test Profiles
 
-### Использование **Test Profiles**
+### Использование Test Profiles
 
 **Создание тестовых профилей:**
 
@@ -399,7 +399,7 @@ public class ProfileTest {
 }
 ```
 
-### **Custom Test Profile**
+### Custom Test Profile
 
 ```java
 import io.quarkus.test.junit.TestProfile;
@@ -420,7 +420,7 @@ public class CustomTestProfile implements QuarkusTestProfile {
 
 ## Database Testing
 
-### **Testing with H2**
+### Testing with H2
 
 **Тестирование с **H2 in-memory** БД:**
 
@@ -430,7 +430,7 @@ quarkus.datasource.jdbc.url=jdbc:h2:mem:testdb
 quarkus.hibernate.orm.database.generation=drop-and-create
 ```
 
-### **Testing with Panache**
+### Testing with Panache
 
 **Тестирование **Panache entities**:**
 
@@ -450,7 +450,7 @@ public class PanacheTest {
 }
 ```
 
-### **Transaction Management** в тестах
+### Transaction Management в тестах
 
 **Управление транзакциями в тестах:**
 
@@ -473,7 +473,7 @@ public class TransactionTest {
 
 ## Security Testing
 
-### **Testing Security**
+### Testing Security
 
 **Тестирование **security**:**
 
@@ -506,7 +506,7 @@ public class SecurityTest {
 
 ## Performance Testing
 
-### **Load Testing**
+### Load Testing
 
 **Нагрузочное тестирование:**
 
@@ -542,7 +542,7 @@ public class LoadTest {
 
 ## Contract Testing
 
-### **Pact Testing**
+### Pact Testing
 
 **Использование **Pact** для **contract testing**:**
 
@@ -584,7 +584,7 @@ public class PactContractTest {
 
 ## Performance Testing
 
-### **JMeter Integration**
+### JMeter Integration
 
 **Интеграция с **JMeter**:**
 
@@ -619,7 +619,7 @@ public class PerformanceTest {
 
 ## Advanced Testing Patterns
 
-### **Test Data Builders**
+### Test Data Builders
 
 **Строители тестовых данных:**
 
@@ -649,7 +649,7 @@ public class UserTestDataBuilder {
 }
 ```
 
-### **Parameterized Tests**
+### Parameterized Tests
 
 **Параметризованные тесты:**
 
@@ -678,7 +678,7 @@ public class ParameterizedTest {
 }
 ```
 
-### **Test Fixtures**
+### Test Fixtures
 
 **Тестовые фикстуры:**
 
@@ -703,7 +703,7 @@ public class TestWithFixtures {
 
 ## Advanced Testing Patterns
 
-### **Test Containers for Integration Testing**
+### Test Containers for Integration Testing
 
 **Использование **Testcontainers** для интеграционных тестов:**
 
@@ -723,7 +723,7 @@ public class IntegrationTest {
 }
 ```
 
-### **Contract Testing with Pact**
+### Contract Testing with Pact
 
 **Contract testing**:**
 
@@ -745,7 +745,7 @@ public class UserServiceContractTest {
 }
 ```
 
-### **Performance Testing**
+### Performance Testing
 
 **Тестирование производительности:**
 
@@ -770,7 +770,7 @@ public class PerformanceTest {
 
 ## Test Data Management
 
-### **Test Data Builders**
+### Test Data Builders
 
 **Строители тестовых данных:**
 
@@ -804,7 +804,7 @@ public class UserTestDataBuilder {
 }
 ```
 
-### **Test Fixtures**
+### Test Fixtures
 
 **Тестовые фикстуры:**
 

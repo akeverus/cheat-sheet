@@ -65,7 +65,7 @@ updated: "2026-02-11"
 
 **Когда применять:** конечный автомат (TCP, ATM, документооборот), разное поведение в зависимости от режима.
 
-## Что такое **State**?
+## Что такое State?
 
 **State** — это поведенческий паттерн проектирования, который позволяет объекту изменять свое поведение при изменении его внутреннего состояния. При этом создается впечатление, что изменился класс объекта.
 
@@ -192,7 +192,7 @@ class ListenState implements ConnectionState {
 }
 ```
 
-## Когда использовать **State**?
+## Когда использовать State?
 
 ### Подходящие сценарии
 
@@ -349,7 +349,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **State**
+### Классический State
 
 ```java
 // State интерфейс
@@ -621,7 +621,7 @@ public class OrderStateDemo {
 }
 ```
 
-### **State** с **Java Enum**
+### State с Java Enum
 
 ```java
 // State с использованием Enum
@@ -778,7 +778,7 @@ public class VendingMachineDemo {
 }
 ```
 
-### **State** с историей и переходами
+### State с историей и переходами
 
 ```java
 // State с историей переходов
@@ -968,7 +968,7 @@ public class StateMachineDemo {
 
 ## Продвинутые реализации
 
-### 1. **State** с **Spring**
+### 1. State с Spring
 
 ```java
 // Spring State Machine
@@ -1068,7 +1068,7 @@ public class OrderStateMachineListener extends StateMachineListenerAdapter<Order
 }
 ```
 
-### 2. **Hierarchical State Machine**
+### 2. Hierarchical State Machine
 
 ```java
 // Иерархическая машина состояний
@@ -1342,7 +1342,7 @@ public class HierarchicalStateDemo {
 
 ## Примеры использования
 
-### 1. **TCP Connection State**
+### 1. TCP Connection State
 
 ```java
 // Полная реализация TCP-подобного соединения
@@ -1494,7 +1494,7 @@ public class TCPConnectionDemo {
 }
 ```
 
-### 2. **ATM Machine State**
+### 2. ATM Machine State
 
 ```java
 // ATM машина с состояниями
@@ -1635,7 +1635,7 @@ public class ATMDemo {
 }
 ```
 
-### 3. **Document Workflow**
+### 3. Document Workflow
 
 ```java
 // Workflow для документов
@@ -1901,7 +1901,7 @@ public class DocumentWorkflowDemo {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -1972,7 +1972,7 @@ class StateFactory {
 }
 ```
 
-### 2. **Testing State Pattern**
+### 2. Testing State Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

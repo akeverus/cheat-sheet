@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# MapStruct: Маппинг объектов в **Java**
+# MapStruct: Маппинг объектов в Java
 
 **Комплексное руководство по использованию `MapStruct` для автоматического маппинга между `Java` объектами — от основ до продвинутых техник.**
 
@@ -84,11 +84,11 @@ updated: "2026-02-11"
   - [Когда использовать MapStruct](#когда-использовать-mapstruct)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **MapStruct**
+## Введение в MapStruct
 
 **MapStruct** — это **code generator**, который значительно упрощает и ускоряет реализацию маппинга между **Java bean**-ами. Во время компиляции он генерирует реализации интерфейсов мапперов, избавляя от необходимости писать **boilerplate** код.
 
-### Почему **MapStruct**?
+### Почему MapStruct?
 
 **MapStruct** предлагает множество преимуществ:**
 
@@ -101,7 +101,7 @@ updated: "2026-02-11"
 7. **Широкая поддержка** — Работает с любыми **Java** фреймворками
 8. **Конфигурируемость** — Гибкие настройки маппинга
 
-### Как работает **MapStruct**?
+### Как работает MapStruct?
 
 **MapStruct** использует **Annotation Processing Tool (APT)** для генерации кода во время компиляции. Он анализирует интерфейсы с аннотацией `@Mapper` и генерирует реализации, которые копируют данные между объектами используя простые **getter**/**setter** методы.
 
@@ -121,9 +121,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимости **Maven** для **MapStruct** (**mapstruct и annotation processor для генерации кода**).
+Зависимости **Maven** для **MapStruct** (mapstruct и annotation processor для генерации кода).
 
 ```xml
 <dependency>
@@ -141,7 +141,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 plugins {
@@ -153,13 +153,13 @@ dependencies {
 }
 ```
 
-### Настройка в **IDE**
+### Настройка в IDE
 
-#### **IntelliJ IDEA**
+#### IntelliJ IDEA
 - **Annotation `Processing`:** Включено по умолчанию в современных версиях
 - **MapStruct `Plugin`:** Рекомендуется установить для лучшей поддержки
 
-#### **Eclipse**
+#### Eclipse
 - Требуется настройка **annotation processing**
 - Рекомендуется использовать **m2e-apt plugin**
 
@@ -441,7 +441,7 @@ public interface ArrayMapper {
 }
 ```
 
-### **Map**
+### Map
 
 ```java
 @Mapper
@@ -546,7 +546,7 @@ public class CompanySummaryDto {
 
 ## Конфигурация маппинга
 
-### **Component Model**
+### Component Model
 
 ```java
 // Spring component
@@ -578,7 +578,7 @@ public interface DefaultUserMapper {
 }
 ```
 
-### **Injection Strategy**
+### Injection Strategy
 
 ```java
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
@@ -597,7 +597,7 @@ public interface SetterInjectionMapper {
 }
 ```
 
-### **Null Value Mapping**
+### Null Value Mapping
 
 ```java
 @Mapper(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_NULL)
@@ -725,9 +725,9 @@ public interface VehicleMapper {
 }
 ```
 
-## Интеграция с **Spring**
+## Интеграция с Spring
 
-### **Spring Boot** конфигурация
+### Spring Boot конфигурация
 
 ```java
 @Configuration
@@ -752,7 +752,7 @@ public class UserService {
 }
 ```
 
-### **Spring Expression Language**
+### Spring Expression Language
 
 ```java
 @Mapper(componentModel = "spring")
@@ -766,7 +766,7 @@ public interface ExpressionMapper {
 }
 ```
 
-### Кастомные мапперы в **Spring**
+### Кастомные мапперы в Spring
 
 ```java
 @Component
@@ -827,7 +827,7 @@ public interface AdvancedMapper {
 }
 ```
 
-### **Generic** мапперы
+### Generic мапперы
 
 ```java
 public interface GenericMapper<E, D> {
@@ -850,7 +850,7 @@ public interface UserMapper extends GenericMapper<User, UserDto> {
 }
 ```
 
-### **Builder** паттерн
+### Builder паттерн
 
 ```java
 // Для объектов с builder паттерном
@@ -871,7 +871,7 @@ public interface BuilderMapper {
 }
 ```
 
-### Маппинг **enums**
+### Маппинг enums
 
 ```java
 public enum UserStatus {
@@ -911,7 +911,7 @@ public interface EnumMapper {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### 1. Правильная структура мапперов
 
@@ -971,7 +971,7 @@ public interface MonolithicMapper {
 }
 ```
 
-### 2. Обработка **null** значений
+### 2. Обработка null значений
 
 ```java
 // ✅ Хорошо - явная обработка null
@@ -1191,7 +1191,7 @@ public class UserMapperDecorator implements UserMapper {
 
 **MapStruct** — это библиотека для автоматического маппинга **Java** объектов, которая значительно упрощает разработку и повышает производительность приложений.
 
-### Преимущества **MapStruct**
+### Преимущества MapStruct
 
 1. **Высокая производительность** — Генерирует оптимальный код без **reflection**
 2. **Type safety** — Полная проверка типов на этапе компиляции
@@ -1211,7 +1211,7 @@ public class UserMapperDecorator implements UserMapper {
 5. **Context паттерн** — Передача дополнительной информации
 6. **Inheritance паттерн** — Работа с наследованием
 
-### Когда использовать **MapStruct**
+### Когда использовать MapStruct
 
 **Рекомендуется:**
 - **REST API** с **DTO** слоем

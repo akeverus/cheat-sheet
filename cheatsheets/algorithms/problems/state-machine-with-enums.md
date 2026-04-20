@@ -78,7 +78,7 @@ LeaveRequestState state = LeaveRequestState.Submitted;
 
 **Enumerations can also contain methods**. We **can write** an **abstract method** in an **enumeration**, **which will force each enumeration instance** to **implement this method**. **This** is **very important for implementing finite state machines**, as we'll **see below**.
 
-**Since Java enumerations implicitly extend the** `**java.lang.Enum**` **class**, **they cannot extend another class**. **However**, **they can implement** an **interface**, **just like any other class**.
+**Since Java enumerations implicitly extend the** `java.lang.Enum` **class**, **they cannot extend another class**. **However**, **they can implement** an **interface**, **just like any other class**.
 
 **Here**'s an **example enumeration containing** an **abstract method**:**
 
@@ -318,10 +318,10 @@ Cannot escalate from state: Approved
 
 ## Лучшие практики
 
-- **Типобезопасность: Enum** для состояний исключает невалидные значения; переходы задавайте в самом **enum** (**метод `nextState` или Map**) или в отдельном классе контекста.
-- **Иммутабельность состояний:** Не храните изменяемое состояние в **enum**-константах; контекст (**текущее состояние, данные**) держите в отдельном объекте.
-- **Тестирование:** Покройте все переходы и недопустимые переходы (**ошибка или игнор**); проверяйте начальное и конечное состояния.
-- **Расширяемость:** При добавлении состояний обновляйте все переходы; рассмотрите таблицу переходов (**Map**) для сложных автоматов.
+- **Типобезопасность: Enum** для состояний исключает невалидные значения; переходы задавайте в самом **enum** (метод `nextState` или Map) или в отдельном классе контекста.
+- **Иммутабельность состояний:** Не храните изменяемое состояние в **enum**-константах; контекст (текущее состояние, данные) держите в отдельном объекте.
+- **Тестирование:** Покройте все переходы и недопустимые переходы (ошибка или игнор); проверяйте начальное и конечное состояния.
+- **Расширяемость:** При добавлении состояний обновляйте все переходы; рассмотрите таблицу переходов (Map) для сложных автоматов.
 - **Документирование:** Описывайте диаграмму состояний или список допустимых переходов в комментариях или документации.
 
 ## Реализация на Kotlin

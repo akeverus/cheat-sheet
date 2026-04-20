@@ -185,8 +185,8 @@ class ApplicationIntegrationTest {
 ### Инициализация данных
 
 - **Flyway / Liquibase** — при старте контекста миграции применяются автоматически.
-- **`@Sql`** — выполнить скрипт перед тестом: `@Sql(scripts = {"/clean.sql", "/data.sql"})`.
-- **`withInitScript`** — в `PostgreSQLContainer` при первом запуске контейнера.
+- `@Sql` — выполнить скрипт перед тестом: `@Sql(scripts = {"/clean.sql", "/data.sql"})`.
+- `withInitScript` — в `PostgreSQLContainer` при первом запуске контейнера.
 
 ```java
 @Test
@@ -199,8 +199,8 @@ void testWithData() {
 
 ## Изоляция данных и транзакции
 
-- **`@DataJpaTest`** по умолчанию откатывает транзакцию после каждого теста (`@Transactional` с rollback). Данные не накапливаются.
-- **`@SpringBootTest`** без `@Transactional` — изменения в БД сохраняются. Варианты изоляции:
+- `@DataJpaTest` по умолчанию откатывает транзакцию после каждого теста (`@Transactional` с rollback). Данные не накапливаются.
+- `@SpringBootTest` без `@Transactional` — изменения в БД сохраняются. Варианты изоляции:
   - Добавить `@Transactional` (откат)
   - Очищать таблицы в `@BeforeEach`
   - Использовать `@Sql` с cleanup-скриптом
@@ -212,7 +212,7 @@ void testWithData() {
 }
 ```
 
-- **`@DirtiesContext`** — перезапуск контекста после теста. Медленно — используйте только как крайнюю меру.
+- `@DirtiesContext` — перезапуск контекста после теста. Медленно — используйте только как крайнюю меру.
 
 
 ## Миграции в тестах

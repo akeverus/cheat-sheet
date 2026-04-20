@@ -98,7 +98,7 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 
 ## Basic Security
 
-### **Secured Endpoint**
+### Secured Endpoint
 
 ```java
 import jakarta.annotation.security.RolesAllowed;
@@ -123,7 +123,7 @@ public class UserResource {
 }
 ```
 
-### **Security Configuration**
+### Security Configuration
 
 **application.properties:**
 
@@ -136,7 +136,7 @@ quarkus.security.users.embedded.roles.admin=admin,user
 
 ## JWT Authentication
 
-### **JWT Configuration**
+### JWT Configuration
 
 **application.properties:**
 
@@ -147,7 +147,7 @@ quarkus.security.jwt.audience=https://example.com/audience
 mp.jwt.verify.publickey.location=https://example.com/public-key
 ```
 
-### **JWT Resource**
+### JWT Resource
 
 ```java
 import jakarta.annotation.security.RolesAllowed;
@@ -172,7 +172,7 @@ public class ProtectedResource {
 
 ## OAuth2
 
-### **OAuth2 Configuration**
+### OAuth2 Configuration
 
 **application.properties:**
 
@@ -182,7 +182,7 @@ quarkus.oidc.client-id=my-client
 quarkus.oidc.credentials.secret=my-secret
 ```
 
-### **OAuth2 Resource**
+### OAuth2 Resource
 
 ```java
 import jakarta.annotation.security.RolesAllowed;
@@ -202,7 +202,7 @@ public class OAuth2Resource {
 
 ## Keycloak Integration
 
-### **Keycloak Configuration**
+### Keycloak Configuration
 
 **application.properties:**
 
@@ -215,7 +215,7 @@ quarkus.oidc.application-type=web-app
 
 ## Лучшие практики
 
-### 1. Используйте **JWT** для **stateless authentication**
+### 1. Используйте JWT для stateless authentication
 
 ```java
 // ✅ Хорошо
@@ -237,7 +237,7 @@ public Response createUser(@Valid User user) {
 }
 ```
 
-### 3. Используйте **HTTPS** в **production**
+### 3. Используйте HTTPS в production
 
 ```properties
 # ✅ Хорошо
@@ -247,7 +247,7 @@ quarkus.http.ssl.certificate.file=server.crt
 
 ## Custom Authentication
 
-### **Custom Identity Provider**
+### Custom Identity Provider
 
 ```java
 import io.quarkus.security.identity.SecurityIdentity;
@@ -288,7 +288,7 @@ public class CustomIdentityProvider
 
 ## Security Annotations
 
-### **Permissions**
+### Permissions
 
 ```java
 import jakarta.annotation.security.PermitAll;
@@ -332,7 +332,7 @@ public class SecurityResource {
 
 ## Security Context
 
-### **Accessing Security Context**
+### Accessing Security Context
 
 ```java
 import io.quarkus.security.identity.SecurityIdentity;
@@ -360,7 +360,7 @@ public class UserInfoResource {
 
 ## OAuth2 Resource Server
 
-### **Resource Server Configuration**
+### Resource Server Configuration
 
 **application.properties:**
 
@@ -370,7 +370,7 @@ quarkus.oidc.client-id=my-resource-server
 quarkus.oidc.application-type=service
 ```
 
-### **Resource Server Endpoint**
+### Resource Server Endpoint
 
 ```java
 import jakarta.annotation.security.RolesAllowed;
@@ -395,7 +395,7 @@ public class ResourceServerEndpoint {
 
 ## OAuth2 Client
 
-### **OAuth2 Client Configuration**
+### OAuth2 Client Configuration
 
 **Настройка **OAuth2** клиента:**
 
@@ -408,7 +408,7 @@ quarkus.oidc.application-type=web-app
 quarkus.oidc.authentication.redirect-path=/callback
 ```
 
-### **OAuth2 Client Resource**
+### OAuth2 Client Resource
 
 **Использование **OAuth2** клиента:**
 
@@ -436,7 +436,7 @@ public class OAuth2ClientResource {
 
 ## Security Context Propagation
 
-### **Async Security Context**
+### Async Security Context
 
 **Передача **security context** в асинхронных операциях:**
 
@@ -465,7 +465,7 @@ public class AsyncSecurityResource {
 
 ## Role-Based Access Control
 
-### **Dynamic Role Assignment**
+### Dynamic Role Assignment
 
 **Динамическое назначение ролей:**
 
@@ -492,7 +492,7 @@ public class AdminResource {
 }
 ```
 
-### **Custom Role Provider**
+### Custom Role Provider
 
 **Создание кастомного провайдера ролей:**
 
@@ -526,7 +526,7 @@ public class CustomRoleProvider {
 
 ## Password Hashing
 
-### **BCrypt Password Hashing**
+### BCrypt Password Hashing
 
 **Хеширование паролей:**
 
@@ -547,7 +547,7 @@ public class PasswordService {
 }
 ```
 
-### **Argon2 Password Hashing**
+### Argon2 Password Hashing
 
 **Использование **Argon2**:**
 
@@ -573,7 +573,7 @@ public class Argon2PasswordService {
 
 ## Security Headers
 
-### **Security Headers Filter**
+### Security Headers Filter
 
 **Добавление **security headers**:**
 
@@ -601,7 +601,7 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
 
 ## Rate Limiting
 
-### **Rate Limiting Filter**
+### Rate Limiting Filter
 
 **Ограничение частоты запросов:**
 
@@ -638,7 +638,7 @@ public class RateLimitingFilter implements ContainerRequestFilter {
 
 ## Advanced Security Patterns
 
-### **Multi-Factor Authentication**
+### Multi-Factor Authentication
 
 **Многофакторная аутентификация:**
 
@@ -654,7 +654,7 @@ public class MFAService {
 }
 ```
 
-### **Security Audit Logging**
+### Security Audit Logging
 
 **Аудит безопасности:**
 
@@ -676,7 +676,7 @@ public class SecurityAuditService {
 }
 ```
 
-### **Token Refresh Strategy**
+### Token Refresh Strategy
 
 **Стратегия обновления токенов:**
 
@@ -694,7 +694,7 @@ public class TokenRefreshService {
 
 ## Security Monitoring and Auditing
 
-### **Security Event Logging**
+### Security Event Logging
 
 **Логирование событий безопасности:**
 
@@ -718,7 +718,7 @@ public class SecurityEventLogger {
 }
 ```
 
-### **Failed Authentication Tracking**
+### Failed Authentication Tracking
 
 **Отслеживание неудачных попыток аутентификации:**
 
@@ -744,7 +744,7 @@ public class AuthenticationTracker {
 
 ## Advanced Authorization Patterns
 
-### **Dynamic Role Assignment**
+### Dynamic Role Assignment
 
 **Динамическое назначение ролей:**
 
@@ -762,7 +762,7 @@ public class DynamicRoleService {
 }
 ```
 
-### **Resource-Based Authorization**
+### Resource-Based Authorization
 
 **Авторизация на основе ресурсов:**
 

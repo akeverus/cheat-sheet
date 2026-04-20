@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Azure Basics**
+# Azure Basics
 
 **Microsoft Azure** — облачная платформа от **Microsoft**, предоставляющая более `200` сервисов для создания, развертывания и управления приложениями через глобальную сеть дата-центров. Этот документ охватывает фундаментальные концепции **Azure**, архитектуру платформы, модели развертывания и основные сервисы для начинающих пользователей.
 
@@ -65,11 +65,11 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Основы **Azure**
+## Основы Azure
 
 ### Azure Architecture
 
-Схема глобальной инфраструктуры **Microsoft Azure** (**регионы, зоны доступности, категории сервисов**).
+Схема глобальной инфраструктуры **Microsoft Azure** (регионы, зоны доступности, категории сервисов).
 
 ```text
 Azure Global Infrastructure:
@@ -198,7 +198,7 @@ hybrid-cloud:
     - disaster_recovery
 ```
 
-## Azure Regions и **Availability Zones**
+## Azure Regions и Availability Zones
 
 ### Azure Regions
 ```yaml
@@ -322,7 +322,7 @@ sla-calculation:
   composite_sla: "min(SLA1, SLA2, SLA3)"
 ```
 
-## Resource Groups и **Management**
+## Resource Groups и Management
 
 ### Resource Groups
 ```yaml
@@ -528,7 +528,7 @@ output storageAccountName string = storageAccount.name
 output storageAccountId string = storageAccount.id
 ```
 
-## Identity и **Access Management**
+## Identity и Access Management
 
 ### Azure Active Directory
 ```yaml
@@ -567,7 +567,7 @@ azure-ad-structure:
     - service_principals
 ```
 
-### Role-Based Access Control (**RBAC**)
+### Role-Based Access Control (RBAC)
 ```yaml
 # Built-in Azure Roles
 built-in-roles:
@@ -1013,7 +1013,7 @@ function-config:
     scriptFile: "index.js"
 ```
 
-## Azure CLI и **PowerShell**
+## Azure CLI и PowerShell
 
 ### Azure CLI Basics
 ```bash
@@ -1095,7 +1095,7 @@ $storageParams = @{
 New-AzStorageAccount @storageParams
 ```
 
-## Monitoring и **Logging**
+## Monitoring и Logging
 
 ### Azure Monitor
 ```yaml

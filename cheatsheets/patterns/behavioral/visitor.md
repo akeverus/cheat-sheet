@@ -65,7 +65,7 @@ updated: "2026-02-11"
 
 **Когда применять:** стабильная иерархия элементов, много разных операций (экспорт, сериализация, рендер), AST, компиляторы.
 
-## Что такое **Visitor**?
+## Что такое Visitor?
 
 **Visitor** — это поведенческий паттерн проектирования, который позволяет добавлять новые операции к объектам без изменения их классов. Паттерн позволяет определить операцию для объектов различных классов, не изменяя сами классы.
 
@@ -186,7 +186,7 @@ class DrawVisitor implements ShapeVisitor {
 }
 ```
 
-## Когда использовать **Visitor**?
+## Когда использовать Visitor?
 
 ### Подходящие сценарии
 
@@ -336,7 +336,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Visitor**
+### Классический Visitor
 
 ```java
 // Visitor интерфейс
@@ -570,7 +570,7 @@ public class VisitorDemo {
 }
 ```
 
-### **Visitor** с **Generic Types**
+### Visitor с Generic Types
 
 ```java
 // Generic Visitor
@@ -693,7 +693,7 @@ public class GenericVisitorDemo {
 }
 ```
 
-### **Visitor** с **Reflection**
+### Visitor с Reflection
 
 ```java
 // Visitor с использованием reflection для автоматического определения типов
@@ -1208,7 +1208,7 @@ Visitor можно комбинировать с Spring AOP: аспект по �
 
 ## Примеры использования
 
-### 1. **File System Visitor**
+### 1. File System Visitor
 
 ```java
 // Visitor для работы с файловой системой
@@ -1417,7 +1417,7 @@ public class FileSystemVisitorDemo {
 }
 ```
 
-### 2. **Database Schema Visitor**
+### 2. Database Schema Visitor
 
 ```java
 // Visitor для работы со схемой базы данных
@@ -1810,7 +1810,7 @@ public class DatabaseSchemaVisitorDemo {
 }
 ```
 
-### 3. **XML**/**HTML Document Visitor**
+### 3. XML/HTML Document Visitor
 
 ```java
 // Visitor для XML/HTML документов
@@ -2102,7 +2102,7 @@ public class DocumentVisitorDemo {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -2170,7 +2170,7 @@ class ElementProcessor {
 }
 ```
 
-### 2. **Testing Visitor Pattern**
+### 2. Testing Visitor Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

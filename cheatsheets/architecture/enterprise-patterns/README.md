@@ -13,8 +13,8 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Enterprise Patterns Overview](enterprise-patterns-overview.md)
+[[enterprise-patterns-overview|Enterprise Patterns Overview]]
 
 ## Содержание
 
-- [Обзор Enterprise Patterns](enterprise-patterns-overview.md)
+- [[enterprise-patterns-overview|Обзор Enterprise Patterns]]

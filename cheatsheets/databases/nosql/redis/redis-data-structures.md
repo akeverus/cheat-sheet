@@ -17,7 +17,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
-# **Redis**: Структуры данных
+# Redis: Структуры данных
 
 ## Полезные ссылки
 
@@ -30,50 +30,50 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 
 - [Введение в структуры данных **Redis**](#введение-в-структуры-данных-redis)
   - [Типы структур данных](#типы-структур-данных)
-- [**Strings** (**Строки**)](#strings-строки)
+- [**Strings** (Строки)](#strings-строки)
   - [Базовые операции](#базовые-операции)
   - [Атомарные операции](#атомарные-операции)
   - [Операции со строками](#операции-со-строками)
   - [Битовые операции](#битовые-операции)
   - [**Use Cases** для **Strings**](#use-cases-для-strings)
-- [**Lists** (**Списки**)](#lists-списки)
+- [**Lists** (Списки)](#lists-списки)
   - [Базовые операции](#базовые-операции-1)
   - [Извлечение элементов](#извлечение-элементов)
   - [Модификация списков](#модификация-списков)
   - [Атомарные операции](#атомарные-операции-1)
   - [**Use Cases** для **Lists**](#use-cases-для-lists)
-- [**Sets** (**Множества**)](#sets-множества)
+- [**Sets** (Множества)](#sets-множества)
   - [Базовые операции](#базовые-операции-2)
   - [Операции над множествами](#операции-над-множествами)
   - [Извлечение элементов](#извлечение-элементов-1)
   - [Перемещение элементов](#перемещение-элементов)
   - [**Use Cases** для **Sets**](#use-cases-для-sets)
-- [**Hashes** (**Хэши**)](#hashes-хэши)
+- [**Hashes** (Хэши)](#hashes-хэши)
   - [Базовые операции](#базовые-операции-3)
   - [Множественные операции](#множественные-операции)
   - [Числовые операции](#числовые-операции)
   - [Итерация по полям](#итерация-по-полям)
   - [**Use Cases** для **Hashes**](#use-cases-для-hashes)
-- [**Sorted Sets** (**Отсортированные множества**)](#sorted-sets-отсортированные-множества)
+- [**Sorted Sets** (Отсортированные множества)](#sorted-sets-отсортированные-множества)
   - [Базовые операции](#базовые-операции-4)
   - [Диапазонные операции](#диапазонные-операции)
   - [Модификация](#модификация)
   - [Операции над множествами](#операции-над-множествами-1)
   - [Лексикографические операции](#лексикографические-операции)
   - [**Use Cases** для **Sorted Sets**](#use-cases-для-sorted-sets)
-- [**Streams** (**Потоки**)](#streams-потоки)
+- [**Streams** (Потоки)](#streams-потоки)
   - [Базовые операции](#базовые-операции-5)
   - [**Consumer Groups**](#consumer-groups)
   - [Управление потоком](#управление-потоком)
   - [**Use Cases** для **Streams**](#use-cases-для-streams)
-- [**Bitmaps** (**Битовые массивы**)](#bitmaps-битовые-массивы)
+- [**Bitmaps** (Битовые массивы)](#bitmaps-битовые-массивы)
   - [Базовые операции](#базовые-операции-6)
   - [Битовые операции](#битовые-операции-1)
   - [**Use Cases** для **Bitmaps**](#use-cases-для-bitmaps)
 - [**HyperLogLog**](#hyperloglog)
   - [Базовые операции](#базовые-операции-7)
   - [**Use Cases** для **HyperLogLog**](#use-cases-для-hyperloglog)
-- [**Geospatial** (**Геопространственные данные**)](#geospatial-геопространственные-данные)
+- [**Geospatial** (Геопространственные данные)](#geospatial-геопространственные-данные)
   - [Базовые операции](#базовые-операции-8)
   - [Поиск по радиусу](#поиск-по-радиусу)
   - [Геохэши](#геохэши)
@@ -113,7 +113,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Issue: Memory Usage](#issue-memory-usage)
   - [Issue: Slow Operations](#issue-slow-operations)
 
-## Введение в структуры данных **Redis**
+## Введение в структуры данных Redis
 
 **Redis** поддерживает множество типов структур данных, каждая из которых оптимизирована для определенных **use cases**. Понимание особенностей каждой структуры данных критически важно для эффективного использования **Redis**.
 
@@ -124,13 +124,13 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 3. **Sets**: Неупорядоченные коллекции уникальных строк
 4. **Hashes**: Карты полей и значений
 5. **Sorted Sets**: Упорядоченные множества с оценками
-6. **Streams**: Логи сообщений (**Redis 5.0+**)
+6. **Streams**: Логи сообщений (Redis 5.0+)
 7. **Bitmaps**: Битовые массивы
 8. **HyperLogLog**: Приблизительный подсчет уникальных элементов
 9. **Geospatial**: Геопространственные данные
 
 
-## **Strings** (**Строки**)
+## Strings (Строки)
 
 **Strings** — это самый простой тип данных в **Redis**. Строки могут содержать текст, числа или бинарные данные до 512MB.
 
@@ -226,7 +226,7 @@ BITPOS mykey 1
 BITPOS mykey 1 0 10    # В диапазоне
 ```
 
-### **Use Cases** для **Strings**
+### Use Cases для Strings
 
 1. **Кэширование**: Простые значения
 2. **Счетчики**: **INCR**/**DECR** операции
@@ -234,7 +234,7 @@ BITPOS mykey 1 0 10    # В диапазоне
 4. **Битовая аналитика**: **SETBIT**/**BITCOUNT** для аналитики
 
 
-## **Lists** (**Списки**)
+## Lists (Списки)
 
 **Lists** — это упорядоченные коллекции строк, реализованные как **linked lists**. Операции с начала и конца списка очень быстрые (**O(1**)).
 
@@ -306,7 +306,7 @@ RPOPLPUSH source dest
 BRPOPLPUSH source dest 10
 ```
 
-### **Use Cases** для **Lists**
+### Use Cases для Lists
 
 1. **Очереди**: **LPUSH**/**RPOP** для **FIFO** очередей
 2. **Стеки**: **LPUSH**/**LPOP** для **LIFO** стеков
@@ -314,7 +314,7 @@ BRPOPLPUSH source dest 10
 4. **Ограниченные коллекции**: **LTRIM** для ограничения размера
 
 
-## **Sets** (**Множества**)
+## Sets (Множества)
 
 **Sets** — это неупорядоченные коллекции уникальных строк. Операции добавления, удаления и проверки принадлежности выполняются за `O(1)`.
 
@@ -379,7 +379,7 @@ SPOP myset 3            # 3 случайных элемента с удален�
 SMOVE source dest "member"
 ```
 
-### **Use Cases** для **Sets**
+### Use Cases для Sets
 
 1. **Теги**: Хранение тегов объектов
 2. **Уникальные значения**: Гарантия уникальности
@@ -387,7 +387,7 @@ SMOVE source dest "member"
 4. **Случайный выбор**: **SRANDMEMBER** для случайных выборок
 
 
-## **Hashes** (**Хэши**)
+## Hashes (Хэши)
 
 **Hashes** — это карты полей и значений, идеально подходящие для представления объектов. Хэши оптимизированы для использования памяти.
 
@@ -446,7 +446,7 @@ HSTRLEN user:1000 name
 HSCAN user:1000 0 MATCH name* COUNT 10
 ```
 
-### **Use Cases** для **Hashes**
+### Use Cases для Hashes
 
 1. **Объекты**: Представление объектов с полями
 2. **Профили пользователей**: Хранение данных профиля
@@ -454,9 +454,9 @@ HSCAN user:1000 0 MATCH name* COUNT 10
 4. **Эффективное использование памяти**: Оптимизация для небольших объектов
 
 
-## **Sorted Sets** (**Отсортированные множества**)
+## Sorted Sets (Отсортированные множества)
 
-**Sorted Sets** — это множества, где каждый элемент имеет оценку (**score**). Элементы автоматически сортируются по оценке.
+**Sorted Sets** — это множества, где каждый элемент имеет оценку (score). Элементы автоматически сортируются по оценке.
 
 ### Базовые операции
 
@@ -537,7 +537,7 @@ ZLEXCOUNT myzset "[b" "(c"
 ZREMRANGEBYLEX myzset "[b" "(c"
 ```
 
-### **Use Cases** для **Sorted Sets**
+### Use Cases для Sorted Sets
 
 1. **Leaderboards**: Рейтинги и таблицы лидеров
 2. **Временные ряды**: Данные с временными метками
@@ -545,7 +545,7 @@ ZREMRANGEBYLEX myzset "[b" "(c"
 4. **Ранжирование**: Сортировка по различным критериям
 
 
-## **Streams** (**Потоки**)
+## Streams (Потоки)
 
 **Streams** — это структура данных для хранения логов сообщений, добавленная в **Redis** `5.0`. **Streams** поддерживают **consumer groups** и обеспечивают гарантии доставки.
 
@@ -572,7 +572,7 @@ XLEN mystream
 XINFO STREAM mystream
 ```
 
-### **Consumer Groups**
+### Consumer Groups
 
 ```redis
 # Создание consumer group
@@ -608,7 +608,7 @@ XREAD BLOCK 5000 STREAMS mystream $
 XREADGROUP GROUP mygroup consumer1 BLOCK 5000 COUNT 1 STREAMS mystream >
 ```
 
-### **Use Cases** для **Streams**
+### Use Cases для Streams
 
 1. **Event Logging**: Логирование событий
 2. **Message Queues**: Очереди сообщений с гарантиями
@@ -616,7 +616,7 @@ XREADGROUP GROUP mygroup consumer1 BLOCK 5000 COUNT 1 STREAMS mystream >
 4. **Activity Feeds**: Ленты активности
 
 
-## **Bitmaps** (**Битовые массивы**)
+## Bitmaps (Битовые массивы)
 
 **Bitmaps** — это эффективный способ работы с битовыми массивами. **Bitmaps** используют минимальное количество памяти.
 
@@ -656,7 +656,7 @@ BITOP XOR dest key1 key2
 BITOP NOT dest key
 ```
 
-### **Use Cases** для **Bitmaps**
+### Use Cases для Bitmaps
 
 1. **Аналитика**: Отслеживание активности пользователей
 2. **Фильтры Bloom**: Реализация **Bloom** фильтров
@@ -664,7 +664,7 @@ BITOP NOT dest key
 4. **Статистика**: Подсчет уникальных событий
 
 
-## **HyperLogLog**
+## HyperLogLog
 
 **HyperLogLog** — это вероятностная структура данных для приблизительного подсчета уникальных элементов с минимальным использованием памяти.
 
@@ -682,14 +682,14 @@ PFMERGE visitors:2023-01 visitors:2023-01-01 visitors:2023-01-02
 PFCOUNT visitors:2023-01
 ```
 
-### **Use Cases** для **HyperLogLog**
+### Use Cases для HyperLogLog
 
 1. **Уникальные посетители**: Подсчет уникальных пользователей
 2. **Cardinality**: Приблизительный подсчет уникальности
 3. **Аналитика**: Статистика с минимальным использованием памяти
 
 
-## **Geospatial** (**Геопространственные данные**)
+## Geospatial (Геопространственные данные)
 
 **Geospatial** — это специальный тип данных для работы с географическими координатами, реализованный поверх **Sorted Sets**.
 
@@ -734,7 +734,7 @@ GEOHASH cities Palermo
 # Геохэш можно использовать для поиска в других системах
 ```
 
-### **Use Cases** для **Geospatial**
+### Use Cases для Geospatial
 
 1. **Поиск поблизости**: Поиск объектов в радиусе
 2. **Расстояния**: Расчет расстояний между точками
@@ -752,7 +752,7 @@ GEOHASH cities Palermo
 | **Lists** | `O(1)` для **LPUSH**/**RPOP** | Очереди, стеки |
 | **Sets** | `O(1)` для **SADD**/**SISMEMBER** | Уникальные значения, теги |
 | **Hashes** | `O(1)` для **HGET**/**HSET** | Объекты, профили |
-| **Sorted Sets** | `O(**log N**)` для **ZADD**/**ZRANGE** | Рейтинги, временные ряды |
+| **Sorted Sets** | `O(log N)` для **ZADD**/**ZRANGE** | Рейтинги, временные ряды |
 | **Streams** | `O(1)` для **XADD** | Логи, очереди сообщений |
 | **Bitmaps** | `O(1)` для **SETBIT**/**GETBIT** | Аналитика, флаги |
 | **HyperLogLog** | `O(1)` для **PFADD** | Приблизительный подсчет |
@@ -769,11 +769,11 @@ GEOHASH cities Palermo
 8. **Приблизительный подсчет** → **HyperLogLog**
 9. **Географические данные** → **Geospatial**
 
-## **Advanced Patterns and Examples**
+## Advanced Patterns and Examples
 
-### **Strings**: **Advanced Use Cases**
+### Strings: Advanced Use Cases
 
-#### **Caching with Expiration**
+#### Caching with Expiration
 
 ```java
 // Java пример кэширования с истечением
@@ -804,7 +804,7 @@ public class CacheManager {
 }
 ```
 
-#### **Distributed Counters**
+#### Distributed Counters
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -856,7 +856,7 @@ public class DistributedCounter {
 }
 ```
 
-### **Lists**: **Queue Implementation**
+### Lists: Queue Implementation
 
 ```java
 // Java пример реализации очереди
@@ -896,7 +896,7 @@ public class RedisQueue {
 }
 ```
 
-### **Sets**: **Tag System**
+### Sets: Tag System
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -956,7 +956,7 @@ public class TagSystem {
 }
 ```
 
-### **Hashes**: **User Profile Management**
+### Hashes: User Profile Management
 
 ```java
 // Java пример управления профилями пользователей
@@ -998,7 +998,7 @@ public class UserProfileManager {
 }
 ```
 
-### **Sorted Sets**: **Leaderboard Implementation**
+### Sorted Sets: Leaderboard Implementation
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -1062,7 +1062,7 @@ public class Leaderboard {
 }
 ```
 
-### **Streams**: **Event Logging System**
+### Streams: Event Logging System
 
 ```java
 // Java пример системы логирования событий
@@ -1108,7 +1108,7 @@ public class EventLogger {
 }
 ```
 
-### **Bitmaps**: **User Activity Tracking**
+### Bitmaps: User Activity Tracking
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -1173,7 +1173,7 @@ public class ActivityTracker {
         **current_consecutive** = 0
 
         # Итерация по датам
-        # ... (**упрощенная версия**)
+        # ... (упрощенная версия)
         **return max_consecutive**
 ```text
 

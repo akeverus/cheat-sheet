@@ -15,12 +15,12 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[REST API Best Practices](rest/rest-api-best-practices.md)
-[OpenAPI / Swagger](api-tools/swagger/openapi-swagger.md)
+[[rest-api-best-practices|REST API Best Practices]]
+[[openapi-swagger|OpenAPI / Swagger]]
 
 ## Содержание
 
-- [REST](rest/rest-api-best-practices.md)
-- [GraphQL](graphql/graphql.md)
-- [gRPC](grpc/grpc.md)
-- [API Tools](api-tools/README.md)
+- [[rest-api-best-practices|REST]]
+- [[graphql]]
+- [[grpc]]
+- [[README|API Tools]]

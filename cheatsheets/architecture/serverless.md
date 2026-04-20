@@ -32,10 +32,10 @@ updated: "2026-02-11"
   - [Основные характеристики **Serverless**](#основные-характеристики-serverless)
   - [Преимущества **Serverless**](#преимущества-serverless)
   - [Недостатки **Serverless**](#недостатки-serverless)
-- [**Function** as a **Service** (**FaaS**)](#function-as-a-service-faas)
+- [**Function** as a **Service** (FaaS)](#function-as-a-service-faas)
   - [Основные концепции **FaaS**](#основные-концепции-faas)
   - [Пример простой функции](#пример-простой-функции)
-- [**Backend** as a **Service** (**BaaS**)](#backend-as-a-service-baas)
+- [**Backend** as a **Service** (BaaS)](#backend-as-a-service-baas)
   - [Примеры **BaaS** сервисов](#примеры-baas-сервисов)
 - [**AWS Lambda**](#aws-lambda)
   - [Создание **Lambda** функции на **Java**](#создание-lambda-функции-на-java)
@@ -72,11 +72,11 @@ updated: "2026-02-11"
   - [Проблема: Ошибки выполнения](#проблема-ошибки-выполнения)
 - [Частые вопросы](#частые-вопросы)
 
-## Введение в **Serverless Architecture**
+## Введение в Serverless Architecture
 
 **Serverless Architecture** позволяет разработчикам создавать приложения без необходимости управления серверами. Провайдер облачных услуг автоматически управляет инфраструктурой, масштабированием и доступностью.
 
-### Основные характеристики **Serverless**
+### Основные характеристики Serverless
 
 **Автоматическое масштабирование**
 Функции автоматически масштабируются в зависимости от нагрузки.
@@ -90,7 +90,7 @@ updated: "2026-02-11"
 **Event-driven**
 Функции запускаются в ответ на события.
 
-### Преимущества **Serverless**
+### Преимущества Serverless
 
 Основные преимущества **Serverless**:
 
@@ -100,7 +100,7 @@ updated: "2026-02-11"
 - **Снижение затрат** — оплата только за фактическое использование
 - **Фокус на бизнес-логике** — разработчики фокусируются на коде, а не на инфраструктуре
 
-### Недостатки **Serverless**
+### Недостатки Serverless
 
 Ограничения и компромиссы **Serverless**:
 
@@ -110,27 +110,27 @@ updated: "2026-02-11"
 - **Vendor `Lock`-in** — зависимость от конкретного провайдера
 - **Ограничения ресурсов** — ограничения на память и **CPU**
 
-## **Function** as a **Service** (**FaaS**)
+## Function as a Service (FaaS)
 
 **FaaS** — это модель облачных вычислений, которая позволяет разработчикам выполнять код в ответ на события без управления серверами.
 
-### Основные концепции **FaaS**
+### Основные концепции FaaS
 
-**Function (**Функция**)**
+**Function (Функция)**
 Единица выполнения кода, которая обрабатывает событие.
 
-**Trigger (**Триггер**)**
+**Trigger (Триггер)**
 Событие, которое запускает выполнение функции.
 
-**Runtime (**Среда выполнения**)**
-Среда выполнения кода (**Java, `Python`, `Node`.js и т.д.**).
+**Runtime (Среда выполнения)**
+Среда выполнения кода (Java, `Python`, `Node`.js и т.д.).
 
-**Event Source** (**Источник событий**)
-Источник событий, который запускает функцию (**HTTP запрос, сообщение из очереди, изменение в базе данных и т.д.**).
+**Event Source** (Источник событий)
+Источник событий, который запускает функцию (HTTP запрос, сообщение из очереди, изменение в базе данных и т.д.).
 
 ### Пример простой функции
 
-Ниже — пример обработчика события в **serverless**-функции (**Java**).
+Ниже — пример обработчика события в **serverless**-функции (Java).
 ```java
 // AWS Lambda функция
 public class HelloFunction implements RequestHandler<String, String> {
@@ -157,11 +157,11 @@ public class ServerlessApplication {
 }
 ```
 
-## **Backend** as a **Service** (**BaaS**)
+## Backend as a Service (BaaS)
 
-**BaaS** — это модель облачных вычислений, которая предоставляет готовые **backend** сервисы (**база данных, аутентификация, хранилище файлов и т.д.**).
+**BaaS** — это модель облачных вычислений, которая предоставляет готовые **backend** сервисы (база данных, аутентификация, хранилище файлов и т.д.).
 
-### Примеры **BaaS** сервисов
+### Примеры BaaS сервисов
 
 **Firebase**
 - **Realtime Database**
@@ -171,7 +171,7 @@ public class ServerlessApplication {
 
 **AWS Amplify**
 - **Authentication**
-- **API** (**GraphQL/REST**)
+- **API** (GraphQL/REST)
 - **Storage**
 - **Analytics**
 
@@ -181,11 +181,11 @@ public class ServerlessApplication {
 - **Push Notifications**
 - **Offline Support**
 
-## **AWS Lambda**
+## AWS Lambda
 
 **AWS Lambda** — это сервис для выполнения кода без управления серверами.
 
-### Создание **Lambda** функции на **Java**
+### Создание Lambda функции на Java
 
 ```java
 // Lambda Handler
@@ -231,7 +231,7 @@ public class OrderResult {
 }
 ```
 
-### Конфигурация **Lambda**
+### Конфигурация Lambda
 
 ```yaml
 # serverless.yml для Serverless Framework
@@ -255,7 +255,7 @@ functions:
           arn: arn:aws:sqs:us-east-1:123456789:order-queue
 ```
 
-### Использование **Spring Boot** с **Lambda**
+### Использование Spring Boot с Lambda
 
 ```java
 @SpringBootApplication
@@ -287,11 +287,11 @@ public class LambdaApplication implements RequestHandler<APIGatewayProxyRequestE
 }
 ```
 
-## **Azure Functions**
+## Azure Functions
 
 **Azure Functions** — это сервис для выполнения кода без управления серверами в **Azure**.
 
-### Создание **Azure Function** на **Java**
+### Создание Azure Function на Java
 
 ```java
 @FunctionName("ProcessOrder")
@@ -318,7 +318,7 @@ public class OrderProcessor {
 }
 ```
 
-### Конфигурация **Azure Function**
+### Конфигурация Azure Function
 
 ```json
 {
@@ -341,11 +341,11 @@ public class OrderProcessor {
 }
 ```
 
-## **Google Cloud Functions**
+## Google Cloud Functions
 
 **Google Cloud Functions** — это сервис для выполнения кода без управления серверами в **Google Cloud**.
 
-### Создание **Cloud Function** на **Java**
+### Создание Cloud Function на Java
 
 ```java
 public class OrderProcessor implements HttpFunction {
@@ -368,7 +368,7 @@ public class OrderProcessor implements HttpFunction {
 }
 ```
 
-## **Spring Cloud Function**
+## Spring Cloud Function
 
 **Spring Cloud Function** предоставляет абстракцию для создания **serverless** функций, которые могут работать на различных платформах.
 
@@ -408,7 +408,7 @@ public class ServerlessApplication {
 }
 ```
 
-### Конфигурация для **AWS Lambda**
+### Конфигурация для AWS Lambda
 
 ```yaml
 spring:
@@ -420,7 +420,7 @@ spring:
         handler: processOrder
 ```
 
-### Конфигурация для **Azure Functions**
+### Конфигурация для Azure Functions
 
 ```yaml
 spring:
@@ -432,9 +432,9 @@ spring:
         definition: processOrder
 ```
 
-## **Event-driven Serverless Patterns**
+## Event-driven Serverless Patterns
 
-### **HTTP Trigger**
+### HTTP Trigger
 
 ```java
 @SpringBootApplication
@@ -453,7 +453,7 @@ public class HttpFunctionApplication {
 }
 ```
 
-### **Message Queue Trigger**
+### Message Queue Trigger
 
 ```java
 @SpringBootApplication
@@ -475,7 +475,7 @@ public class QueueFunctionApplication {
 }
 ```
 
-### **Database Trigger**
+### Database Trigger
 
 ```java
 @SpringBootApplication
@@ -494,7 +494,7 @@ public class DatabaseFunctionApplication {
 }
 ```
 
-### **Scheduled Trigger**
+### Scheduled Trigger
 
 ```java
 @SpringBootApplication
@@ -510,11 +510,11 @@ public class ScheduledFunctionApplication {
 }
 ```
 
-## **Cold Start** проблема
+## Cold Start проблема
 
 **Cold Start** — это задержка при первом запуске функции после периода бездействия.
 
-### Стратегии уменьшения **Cold Start**
+### Стратегии уменьшения Cold Start
 
 **1. `Provisioned` Concurrency**
 
@@ -703,7 +703,7 @@ public class FunctionConfig {
 
 ## Решение проблем
 
-### Проблема: **Cold Start** задержки
+### Проблема: Cold Start задержки
 
 **Решение:**
 - Используйте **Provisioned Concurrency**

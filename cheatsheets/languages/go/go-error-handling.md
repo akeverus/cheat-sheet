@@ -75,11 +75,11 @@ Go использует явную обработку ошибок через в
 3. **Контекст ошибок** — добавляйте контекст к ошибкам
 4. **Типизация ошибок** — используйте типизированные ошибки для проверки
 
-## **Error Interface**
+## Error Interface
 
-Интерфейс `**error**` является основой обработки ошибок в Go.
+Интерфейс `error` является основой обработки ошибок в Go.
 
-### Определение **error**
+### Определение error
 
 ```go
 // Встроенный интерфейс error в Go
@@ -109,7 +109,7 @@ fmt.Println(result)
 
 ## Создание ошибок
 
-### **errors.New**
+### errors.New
 
 ```go
 import "errors"
@@ -117,7 +117,7 @@ import "errors"
 err := errors.New("something went wrong")
 ```
 
-### **fmt.Errorf**
+### fmt.Errorf
 
 ```go
 import "fmt"
@@ -138,11 +138,11 @@ func (e *ValidationError) Error() string {
 }
 ```
 
-## **Error Wrapping**
+## Error Wrapping
 
 **Error Wrapping** позволяет добавлять контекст к ошибкам, сохраняя исходную ошибку.
 
-### **fmt.Errorf** с %w
+### fmt.Errorf с %w
 
 ```go
 import "fmt"
@@ -157,7 +157,7 @@ func processUser(id int) error {
 }
 ```
 
-### **errors.Unwrap**
+### errors.Unwrap
 
 ```go
 import "errors"
@@ -167,7 +167,7 @@ func unwrapError(err error) error {
 }
 ```
 
-### **errors.Is**
+### errors.Is
 
 ```go
 import "errors"
@@ -179,7 +179,7 @@ func checkError(err error) bool {
 }
 ```
 
-### **errors.As**
+### errors.As
 
 ```go
 import "errors"
@@ -279,7 +279,7 @@ func makeRequest(url string) error {
 }
 ```
 
-### Практические примеры: Обработка ошибок в **HTTP handlers**
+### Практические примеры: Обработка ошибок в HTTP handlers
 
 ```go
 func handleGetUser(w http.ResponseWriter, r *http.Request) {
@@ -303,7 +303,7 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: Обработка ошибок в **database** операциях
+### Практические примеры: Обработка ошибок в database операциях
 
 ```go
 func createUser(db *sql.DB, user User) error {
@@ -331,7 +331,7 @@ func createUser(db *sql.DB, user User) error {
 }
 ```
 
-### Практические примеры: Обработка ошибок в **file operations**
+### Практические примеры: Обработка ошибок в file operations
 
 ```go
 func readConfigFile(filename string) (*Config, error) {
@@ -357,7 +357,7 @@ func readConfigFile(filename string) (*Config, error) {
 }
 ```
 
-### Практические примеры: Обработка ошибок в **network operations**
+### Практические примеры: Обработка ошибок в network operations
 
 ```go
 func makeHTTPRequest(url string) (*http.Response, error) {
@@ -403,7 +403,7 @@ func (e *HTTPError) Error() string {
 }
 ```
 
-### Практические примеры: Обработка ошибок в **concurrent operations**
+### Практические примеры: Обработка ошибок в concurrent operations
 
 ```go
 func processItemsConcurrently(items []Item) error {
@@ -437,7 +437,7 @@ func processItemsConcurrently(items []Item) error {
 }
 ```
 
-### Практические примеры: Обработка ошибок с **retry**
+### Практические примеры: Обработка ошибок с retry
 
 ```go
 func retryOperation(operation func() error, maxRetries int, delay time.Duration) error {
@@ -473,7 +473,7 @@ func isTemporaryError(err error) bool {
 }
 ```
 
-### Практические примеры: Обработка ошибок с **context**
+### Практические примеры: Обработка ошибок с context
 
 ```go
 func processWithContext(ctx context.Context, data []byte) error {
@@ -543,7 +543,7 @@ func validateUser(user User) error {
 }
 ```
 
-### Практические примеры: Обработка ошибок с **logging**
+### Практические примеры: Обработка ошибок с logging
 
 ```go
 func handleErrorWithLogging(err error, context map[string]interface{}) {
@@ -568,7 +568,7 @@ func handleErrorWithLogging(err error, context map[string]interface{}) {
 }
 ```
 
-### Практические примеры: Обработка ошибок с **metrics**
+### Практические примеры: Обработка ошибок с metrics
 
 ```go
 type ErrorMetrics struct {
@@ -598,7 +598,7 @@ func (m *ErrorMetrics) GetErrorCount(errorType string) int64 {
 }
 ```
 
-### Практические примеры: Обработка ошибок с **recovery**
+### Практические примеры: Обработка ошибок с recovery
 
 ```go
 func recoverFromPanic() {
@@ -624,7 +624,7 @@ func safeOperation() {
 }
 ```
 
-### Практические примеры: Обработка ошибок в **middleware**
+### Практические примеры: Обработка ошибок в middleware
 
 ```go
 func ErrorMiddleware(next http.Handler) http.Handler {
@@ -699,7 +699,7 @@ func ProcessWithErrorHandling(items []Item) []error {
 }
 ```
 
-### Практические примеры: Типизированные ошибки для **API**
+### Практические примеры: Типизированные ошибки для API
 
 ```go
 type APIError struct {

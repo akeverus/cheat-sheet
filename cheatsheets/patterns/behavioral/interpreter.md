@@ -364,7 +364,7 @@ fun main() {
 }
 ```
 
-## Использование в **JDK**
+## Использование в JDK
 
 Наконец, вы можете найти использование этого шаблона в **JDK**, в частности, в `java.util.Pattern`, `java.text.Format` или `java.text.Normalizer`.
 

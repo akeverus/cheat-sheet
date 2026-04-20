@@ -80,7 +80,7 @@ related: ["micronaut-cache.md", "micronaut-messaging.md"]
 - **Transactions**: Транзакции **Redis**
 - **Distributed Locks**: Распределенные блокировки
 
-## Настройка **Redis**
+## Настройка Redis
 
 ### Зависимости
 
@@ -332,7 +332,7 @@ public class RedisTransactionService {
 
 ## Лучшие практики
 
-### 1. Используйте **connection pooling**
+### 1. Используйте connection pooling
 
 ```yaml
 # ✅ Хорошо
@@ -342,7 +342,7 @@ redis:
     max-idle: 8
 ```
 
-### 2. Настраивайте **timeout** правильно
+### 2. Настраивайте timeout правильно
 
 ```yaml
 # ✅ Хорошо
@@ -350,7 +350,7 @@ redis:
   timeout: 2000ms
 ```
 
-### 3. Используйте **pub**/**sub** для событий
+### 3. Используйте pub/sub для событий
 
 ```java
 // ✅ Хорошо
@@ -360,7 +360,7 @@ public void onEvent(String message) {
 }
 ```
 
-### 4. Используйте **distributed locks** для критических секций
+### 4. Используйте distributed locks для критических секций
 
 ```java
 // ✅ Хорошо
@@ -372,7 +372,7 @@ try {
 }
 ```
 
-### 5. Обрабатывайте ошибки **Redis**
+### 5. Обрабатывайте ошибки Redis
 
 ```java
 // ✅ Хорошо

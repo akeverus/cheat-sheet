@@ -19,15 +19,15 @@ Ansible — инструмент автоматизации от Red Hat: опи
 ## Полезные ссылки
 
 ### Основные документы
-- [ansible-basics.md](ansible-basics.md) — установка, первый playbook, inventory
-- [ansible.md](ansible.md) — полное руководство: roles, handlers, Jinja2, Vault
-- [ansible-advanced.md](ansible-advanced.md) — dynamic inventory, молекула, CI, custom modules
+- [[ansible-basics]] — установка, первый playbook, inventory
+- [[ansible]] — полное руководство: roles, handlers, Jinja2, Vault
+- [[ansible-advanced]] — dynamic inventory, молекула, CI, custom modules
 
 ### Соседние разделы
-- [platform/iac/](../README.md) — родительский раздел IaC
-- [platform/iac/terraform/](../terraform/README.md) — провижининг облачной инфры
-- [platform/iac/packer/](../packer/README.md) — сборка базовых образов
-- [platform/ci-cd/](../../ci-cd/README.md) — запуск playbooks из пайплайна
+- [[README|platform/iac/]] — родительский раздел IaC
+- [[README|platform/iac/terraform/]] — провижининг облачной инфры
+- [[README|platform/iac/packer/]] — сборка базовых образов
+- [[README|platform/ci-cd/]] — запуск playbooks из пайплайна
 
 ### Внешние ресурсы
 - [Ansible Documentation](https://docs.ansible.com/)
@@ -48,13 +48,13 @@ Ansible — инструмент автоматизации от Red Hat: опи
 
 | Тема | Файл |
 |------|------|
-| Установка, inventory, первый playbook | [ansible-basics.md](ansible-basics.md) |
-| Playbook, tasks, handlers | [ansible.md](ansible.md) |
-| Roles и их структура | [ansible.md](ansible.md) |
-| Jinja2-шаблоны | [ansible.md](ansible.md) |
-| Vault (шифрование секретов) | [ansible.md](ansible.md) |
-| Dynamic inventory (AWS EC2 и др.) | [ansible-advanced.md](ansible-advanced.md) |
-| Molecule, тесты, CI | [ansible-advanced.md](ansible-advanced.md) |
+| Установка, inventory, первый playbook | [[ansible-basics]] |
+| Playbook, tasks, handlers | [[ansible]] |
+| Roles и их структура | [[ansible]] |
+| Jinja2-шаблоны | [[ansible]] |
+| Vault (шифрование секретов) | [[ansible]] |
+| Dynamic inventory (AWS EC2 и др.) | [[ansible-advanced]] |
+| Molecule, тесты, CI | [[ansible-advanced]] |
 
 ## Ansible vs Terraform/Pulumi/Packer
 
@@ -83,7 +83,7 @@ Ansible — инструмент автоматизации от Red Hat: опи
 
 ## Куда идти дальше
 
-- Provisioning инфры — [../terraform/README.md](../terraform/README.md)
-- Сборка образов — [../packer/README.md](../packer/README.md)
-- IaC с полноценным языком — [../pulumi/README.md](../pulumi/README.md)
-- CI/CD-интеграция — [../../ci-cd/README.md](../../ci-cd/README.md)
+- Provisioning инфры — [[README]]
+- Сборка образов — [[README]]
+- IaC с полноценным языком — [[README]]
+- CI/CD-интеграция — [[README]]

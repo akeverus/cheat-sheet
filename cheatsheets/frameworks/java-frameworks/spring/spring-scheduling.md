@@ -84,7 +84,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Scheduling**
+## Введение в Spring Scheduling
 
 **Spring Scheduling** предоставляет простой и мощный способ выполнения задач по расписанию. Он поддерживает как простые задачи с фиксированной задержкой, так и сложные задачи с использованием **cron** выражений.
 
@@ -96,7 +96,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - **Cron Expressions**: Гибкое планирование с **cron**
 - **Quartz Integration**: Интеграция с **Quartz Scheduler**
 
-### Архитектура **Scheduling**
+### Архитектура Scheduling
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -117,9 +117,9 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Scheduling**
+## Настройка Scheduling
 
-### Включение **Scheduling**
+### Включение Scheduling
 
 **Конфигурация с @**EnableScheduling**:**
 
@@ -132,7 +132,7 @@ public class SchedulingConfig {
 }
 ```
 
-### **Spring Boot Auto-Configuration**
+### Spring Boot Auto-Configuration
 
 **В **Spring Boot scheduling** включается автоматически при использовании `@**EnableScheduling**`:**
 
@@ -146,9 +146,9 @@ public class Application {
 }
 ```
 
-## @**Scheduled**
+## @Scheduled
 
-### **Fixed Rate**
+### Fixed Rate
 
 ```java
 // Задача по расписанию (@Scheduled)
@@ -167,7 +167,7 @@ public class ScheduledTasks {
 }
 ```
 
-### **Fixed Delay**
+### Fixed Delay
 
 ```java
 // Задача по расписанию (@Scheduled)
@@ -182,7 +182,7 @@ public class ScheduledTasks {
 }
 ```
 
-### **Cron Expressions**
+### Cron Expressions
 
 ```java
 // Задача по расписанию (@Scheduled)
@@ -221,7 +221,7 @@ public class ScheduledTasks {
 }
 ```
 
-### **Cron Expression Format**
+### Cron Expression Format
 
 ```text
 ┌───────────── секунды (0-59)
@@ -262,7 +262,7 @@ scheduling.task.rate=5000
 
 ## TaskExecutor
 
-### Настройка **TaskExecutor**
+### Настройка TaskExecutor
 
 ```java
 @Configuration
@@ -292,7 +292,7 @@ public class SchedulingConfig {
 }
 ```
 
-### Использование **TaskExecutor**
+### Использование TaskExecutor
 
 ```java
 @Service
@@ -313,7 +313,7 @@ public class TaskService {
 
 ## Async Execution
 
-### @**Async**
+### @Async
 
 ```java
 @Configuration
@@ -353,7 +353,7 @@ public class AsyncService {
 }
 ```
 
-### Комбинирование @**Scheduled** и @**Async**
+### Комбинирование @Scheduled и @Async
 
 ```java
 @Component
@@ -439,7 +439,7 @@ public class DynamicScheduler {
 
 ## Quartz Integration
 
-### Настройка **Quartz**
+### Настройка Quartz
 
 ```xml
 <dependency>
@@ -495,7 +495,7 @@ public class SampleJob extends QuartzJobBean {
 @Scheduled(cron = "0 0 * * * ?")
 ```
 
-### 2. Настраивайте **Thread Pool**
+### 2. Настраивайте Thread Pool
 
 ```java
 // ✅ Хорошо
@@ -507,7 +507,7 @@ public TaskScheduler taskScheduler() {
 }
 ```
 
-### 3. Используйте @**Async** для долгих задач
+### 3. Используйте @Async для долгих задач
 
 ```java
 // ✅ Хорошо
@@ -542,7 +542,7 @@ public void scheduledTask() {
 
 ## Расширенная конфигурация
 
-### **Multiple Task Schedulers**
+### Multiple Task Schedulers
 
 ```java
 @Configuration
@@ -585,7 +585,7 @@ public class PriorityScheduledTasks {
 }
 ```
 
-### **Conditional Scheduling**
+### Conditional Scheduling
 
 ```java
 @Component
@@ -601,7 +601,7 @@ public class ConditionalScheduledTasks {
 
 ## Обработка ошибок
 
-### **Global Exception Handler**
+### Global Exception Handler
 
 ```java
 @Configuration
@@ -629,7 +629,7 @@ public class SchedulingErrorHandlingConfig {
 }
 ```
 
-### **Task-specific Error Handling**
+### Task-specific Error Handling
 
 ```java
 @Component
@@ -655,7 +655,7 @@ public class ErrorHandlingScheduledTasks {
 
 ## Мониторинг и метрики
 
-### **Task Metrics**
+### Task Metrics
 
 ```java
 @Component
@@ -698,7 +698,7 @@ public class ScheduledTaskMetrics {
 }
 ```
 
-### **Task Health Indicator**
+### Task Health Indicator
 
 ```java
 @Component
@@ -750,7 +750,7 @@ public class ScheduledTaskHealthIndicator implements HealthIndicator {
 
 ## Кластеризация и распределенные задачи
 
-### **Distributed Lock**
+### Distributed Lock
 
 ```java
 @Component
@@ -790,7 +790,7 @@ public class DistributedScheduledTask {
 }
 ```
 
-### **ShedLock Integration**
+### ShedLock Integration
 
 ```xml
 <dependency>
@@ -832,7 +832,7 @@ public class ShedLockScheduledTask {
 
 ## Продвинутые паттерны
 
-### **Task Chaining**
+### Task Chaining
 
 ```java
 @Component
@@ -867,7 +867,7 @@ public class ChainedScheduledTasks {
 }
 ```
 
-### **Task Dependencies**
+### Task Dependencies
 
 ```java
 @Component
@@ -895,7 +895,7 @@ public class DependentScheduledTasks {
 }
 ```
 
-### **Conditional Task Execution**
+### Conditional Task Execution
 
 ```java
 @Component
@@ -921,7 +921,7 @@ public class ConditionalScheduledTasks {
 
 ## Quartz Integration (расширенная)
 
-### **Persistent Jobs**
+### Persistent Jobs
 
 ```java
 @Configuration
@@ -955,7 +955,7 @@ public class QuartzPersistenceConfig {
 }
 ```
 
-### **Job Parameters**
+### Job Parameters
 
 ```java
 public class ParameterizedJob extends QuartzJobBean {
@@ -987,7 +987,7 @@ public class ParameterizedJobConfig {
 }
 ```
 
-### **Job Listeners**
+### Job Listeners
 
 ```java
 @Component
@@ -1032,7 +1032,7 @@ public class JobListenerConfig {
 
 ## Тестирование
 
-### **Mocking Scheduled Tasks**
+### Mocking Scheduled Tasks
 
 ```java
 @SpringBootTest
@@ -1053,7 +1053,7 @@ class ScheduledTaskTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
 ```java
 @SpringBootTest
@@ -1074,7 +1074,7 @@ class ScheduledTaskIntegrationTest {
 
 ## Оптимизация производительности
 
-### **Task Pooling**
+### Task Pooling
 
 ```java
 @Configuration
@@ -1095,7 +1095,7 @@ public class OptimizedSchedulerConfig {
 }
 ```
 
-### **Task Prioritization**
+### Task Prioritization
 
 ```java
 @Component

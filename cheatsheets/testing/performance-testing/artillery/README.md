@@ -19,14 +19,14 @@ Artillery — инструмент нагрузочного тестирован
 ## Полезные ссылки
 
 ### Основные документы
-- [Artillery](artillery.md) — YAML-сценарии, фазы, processor, CI/CD
+- [[artillery]] — YAML-сценарии, фазы, processor, CI/CD
 
 ### Соседние разделы
-- [Performance Testing](../README.md)
-- [JMeter](../jmeter/README.md)
-- [Gatling](../gatling/README.md)
-- [k6](../k6/README.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [[README|Performance Testing]]
+- [[README|JMeter]]
+- [[README|Gatling]]
+- [[README|k6]]
+- [[testing-tools-overview|Testing Tools Overview]]
 
 ### Внешние ресурсы
 - [Artillery Docs](https://www.artillery.io/docs)
@@ -44,10 +44,10 @@ Artillery — инструмент нагрузочного тестирован
 
 | Тема | Где читать |
 |------|-----------|
-| YAML-сценарии, phases, scenarios | [artillery.md](artillery.md) |
-| Processor на JavaScript: токены, кастомные данные | [artillery.md](artillery.md) |
-| HTTP / WebSocket | [artillery.md](artillery.md) |
-| Отчёты, Artillery Cloud, CI/CD | [artillery.md](artillery.md) |
+| YAML-сценарии, phases, scenarios | [[artillery]] |
+| Processor на JavaScript: токены, кастомные данные | [[artillery]] |
+| HTTP / WebSocket | [[artillery]] |
+| Отчёты, Artillery Cloud, CI/CD | [[artillery]] |
 
 ## Когда использовать: сравнение perf-инструментов
 
@@ -67,6 +67,6 @@ Artillery — лучший выбор, когда стек уже на Node.js, 
 
 ## Куда идти дальше
 
-- Обзор нагрузочного тестирования — [../README.md](../README.md)
-- Альтернатива на JVM — [../gatling/README.md](../gatling/README.md)
-- Альтернатива на Go/JS — [../k6/README.md](../k6/README.md)
+- Обзор нагрузочного тестирования — [[README]]
+- Альтернатива на JVM — [[README]]
+- Альтернатива на Go/JS — [[README]]

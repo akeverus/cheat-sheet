@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **CircleCI**
+# CircleCI
 
 **CircleCI** — это облачная платформа для **continuous integration** и **continuous delivery**, которая предоставляет высокопроизводительные билды с использованием **Docker** контейнеров. Этот документ охватывает **enterprise-grade** конфигурации, продвинутые **pipeline** паттерны и **best practices** для использования **CircleCI** в **production** средах.
 
@@ -48,10 +48,10 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Основы **CircleCI**
+## Основы CircleCI
 
 ### Структура проекта
-Ниже — структура каталогов **CircleCI**-проекта (**текст**).
+Ниже — структура каталогов **CircleCI**-проекта (текст).
 ```text
 my-project/
 ├── .circleci/
@@ -75,8 +75,8 @@ my-project/
 └── .circleci-ignore          # Исключения для контекста сборки
 ```
 
-### Базовый **config.yml**
-Пример базового **config.yml** (**YAML**).
+### Базовый config.yml
+Пример базового **config.yml** (YAML).
 ```yaml
 # .circleci/config.yml
 version: 2.1
@@ -228,7 +228,7 @@ workflows:
               only: /^v.*/
 ```
 
-## Продвинутые **Pipeline** паттерны
+## Продвинутые Pipeline паттерны
 
 ### Dynamic Configuration
 ```yaml
@@ -377,7 +377,7 @@ workflows:
               test-command: ["npm run test:unit", "npm run test:integration"]
 ```
 
-### Pipeline triggers и **scheduled builds**
+### Pipeline triggers и scheduled builds
 ```yaml
 # .circleci/config.yml - triggers и schedules
 version: 2.1
@@ -458,9 +458,9 @@ jobs:
             echo "Creating release..."
 ```
 
-## Orbs и **reusable components**
+## Orbs и reusable components
 
-### Создание кастомного **orb**
+### Создание кастомного orb
 ```yaml
 # Custom orb definition
 version: 2.1
@@ -577,7 +577,7 @@ workflows:
               only: main
 ```
 
-### Использование **orbs**
+### Использование orbs
 ```yaml
 # .circleci/config.yml - использование orbs
 version: 2.1
@@ -698,7 +698,7 @@ workflows:
               only: main
 ```
 
-## Security и **Compliance**
+## Security и Compliance
 
 ### Secrets management
 ```yaml
@@ -774,7 +774,7 @@ workflows:
             - azure-credentials
 ```
 
-### SAST и **DAST scanning**
+### SAST и DAST scanning
 ```yaml
 # .circleci/config.yml - security scanning
 version: 2.1
@@ -880,7 +880,7 @@ workflows:
             - container_scan
 ```
 
-## Monitoring и **Metrics**
+## Monitoring и Metrics
 
 ### Pipeline metrics collection
 ```yaml
@@ -1176,7 +1176,7 @@ workflows:
 
 ## Enterprise Integration
 
-### SSO и **RBAC**
+### SSO и RBAC
 ```yaml
 # .circleci/config.yml - enterprise features
 version: 2.1
@@ -1253,7 +1253,7 @@ workflows:
             - security-context
 ```
 
-### Audit и **Compliance**
+### Audit и Compliance
 ```yaml
 # .circleci/config.yml - audit и compliance
 version: 2.1

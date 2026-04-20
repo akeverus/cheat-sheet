@@ -19,7 +19,7 @@ updated: "2026-02-11"
 - [REST Assured Documentation](https://rest-assured.io/) — документация
 - [REST Assured GitHub](https://github.com/rest-assured/rest-assured) — исходный код
 - [Given-When-Then](https://martinfowler.com/bliki/GivenWhenThen.html) — BDD-подход
-- См. также: [JUnit Advanced](../unit-testing/junit/junit-advanced.md), [WireMock](wiremock.md), [Spring Testing](../../frameworks/java-frameworks/spring/spring-testing.md)
+- См. также: [[junit-advanced|JUnit Advanced]], [[wiremock]], [[spring-testing|Spring Testing]]
 
 ## Содержание
 

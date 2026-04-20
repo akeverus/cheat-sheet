@@ -89,7 +89,7 @@ related: ["quarkus-core.md", "quarkus-redis.md"]
 
 ## Caffeine Cache
 
-### **Basic Configuration**
+### Basic Configuration
 
 **application.properties:**
 
@@ -99,7 +99,7 @@ quarkus.cache.caffeine.max-size=1000
 quarkus.cache.caffeine.expire-after-write=10m
 ```
 
-### **Cache Annotations**
+### Cache Annotations
 
 **Использование **cache** аннотаций:**
 
@@ -124,7 +124,7 @@ public class UserService {
 }
 ```
 
-### **Cache Configuration**
+### Cache Configuration
 
 **Настройка кеша:**
 
@@ -151,7 +151,7 @@ public class CacheService {
 
 ## Redis Cache
 
-### **Redis Configuration**
+### Redis Configuration
 
 **application.properties:**
 
@@ -161,7 +161,7 @@ quarkus.cache.redis.enabled=true
 quarkus.cache.redis.ttl=1h
 ```
 
-### **Redis Cache Usage**
+### Redis Cache Usage
 
 **Использование **Redis** для кеширования:**
 
@@ -181,7 +181,7 @@ public class RedisCacheService {
 
 ## Advanced Cache Patterns
 
-### **Cache-Aside Pattern**
+### Cache-Aside Pattern
 
 **Реализация **cache-aside** паттерна:**
 
@@ -209,7 +209,7 @@ public class CacheAsideService {
 }
 ```
 
-### **Write-Through Pattern**
+### Write-Through Pattern
 
 **Реализация **write-through** паттерна:**
 
@@ -234,7 +234,7 @@ public class WriteThroughService {
 
 ## Cache Invalidation
 
-### **Manual Invalidation**
+### Manual Invalidation
 
 **Ручная инвалидация кеша:**
 
@@ -257,7 +257,7 @@ public class InvalidationService {
 }
 ```
 
-### **Conditional Invalidation**
+### Conditional Invalidation
 
 **Условная инвалидация:**
 
@@ -285,14 +285,14 @@ public ExpensiveResult computeExpensiveResult(String input) {
 }
 ```
 
-### 2. Настраивайте **TTL** правильно
+### 2. Настраивайте TTL правильно
 
 ```properties
 # ✅ Хорошо
 quarkus.cache.caffeine.expire-after-write=10m
 ```
 
-### 3. Используйте @**CacheKey** для правильной инвалидации
+### 3. Используйте @CacheKey для правильной инвалидации
 
 ```java
 // ✅ Хорошо
@@ -304,7 +304,7 @@ public void updateUser(@CacheKey Long id, User user) {
 
 ## Cache Configuration
 
-### **Multiple Caches**
+### Multiple Caches
 
 **Настройка нескольких кешей:**
 
@@ -321,7 +321,7 @@ quarkus.cache.caffeine.products.max-size=500
 quarkus.cache.caffeine.products.expire-after-write=30m
 ```
 
-### **Cache Statistics**
+### Cache Statistics
 
 **Включение статистики кеша:**
 
@@ -354,7 +354,7 @@ public class CacheStatisticsService {
 
 ## Cache Strategies
 
-### **Write-Behind Pattern**
+### Write-Behind Pattern
 
 **Реализация **write-behind** паттерна:**
 
@@ -384,7 +384,7 @@ public class WriteBehindService {
 }
 ```
 
-### **Read-Through Pattern**
+### Read-Through Pattern
 
 **Реализация **read-through** паттерна:**
 
@@ -409,7 +409,7 @@ public class ReadThroughService {
 
 ## Cache Warming
 
-### **Preloading Cache**
+### Preloading Cache
 
 **Предзагрузка кеша:**
 
@@ -438,7 +438,7 @@ public class CacheWarmingService {
 
 ## Distributed Caching
 
-### **Redis Cluster**
+### Redis Cluster
 
 **Настройка **Redis** кластера:**
 
@@ -449,7 +449,7 @@ quarkus.cache.redis.enabled=true
 quarkus.cache.redis.cluster-mode=true
 ```
 
-### **Cache Synchronization**
+### Cache Synchronization
 
 **Синхронизация кеша между инстансами:**
 
@@ -470,7 +470,7 @@ public class DistributedCacheService {
 
 ## Cache Performance
 
-### **Cache Hit Rate Optimization**
+### Cache Hit Rate Optimization
 
 **Оптимизация **hit rate**:**
 
@@ -491,7 +491,7 @@ public class OptimizedCacheService {
 }
 ```
 
-### **Cache Size Management**
+### Cache Size Management
 
 **Управление размером кеша:**
 
@@ -504,7 +504,7 @@ quarkus.cache.caffeine.expire-after-access=5m
 
 ## Cache Warming Strategies
 
-### **Preloading Cache**
+### Preloading Cache
 
 **Предзагрузка кеша:**
 
@@ -526,7 +526,7 @@ public class CacheWarmingService {
 }
 ```
 
-### **Lazy Loading with Cache**
+### Lazy Loading with Cache
 
 **Ленивая загрузка с кешированием:**
 
@@ -544,7 +544,7 @@ public class LazyCacheService {
 
 ## Cache Performance Optimization
 
-### **Hit Rate Optimization**
+### Hit Rate Optimization
 
 **Оптимизация **hit rate**:**
 
@@ -569,7 +569,7 @@ public class CacheOptimizationService {
 }
 ```
 
-### **Cache Size Management**
+### Cache Size Management
 
 **Управление размером кеша:**
 
@@ -581,7 +581,7 @@ quarkus.cache.caffeine.initial-capacity=1000
 
 ## Advanced Cache Patterns
 
-### **Cache Stampede Prevention**
+### Cache Stampede Prevention
 
 **Предотвращение **cache stampede**:**
 
@@ -609,7 +609,7 @@ public class StampedePreventionService {
 }
 ```
 
-### **Cache Coherence**
+### Cache Coherence
 
 **Обеспечение согласованности кеша:**
 
@@ -627,7 +627,7 @@ public class CacheCoherenceService {
 
 ## Cache Monitoring and Metrics
 
-### **Cache Statistics**
+### Cache Statistics
 
 **Статистика кеша:**
 
@@ -652,7 +652,7 @@ public class CacheStatisticsService {
 }
 ```
 
-### **Cache Metrics Integration**
+### Cache Metrics Integration
 
 **Интеграция с метриками:**
 
@@ -687,7 +687,7 @@ public class CacheMetricsService {
 
 ## Advanced Cache Strategies
 
-### **Cache-Aside Pattern**
+### Cache-Aside Pattern
 
 **Паттерн **Cache-Aside**:**
 
@@ -711,7 +711,7 @@ public class CacheAsideService {
 }
 ```
 
-### **Write-Through Pattern**
+### Write-Through Pattern
 
 **Паттерн **Write-Through**:**
 

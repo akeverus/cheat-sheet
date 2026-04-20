@@ -82,7 +82,7 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 - **Reactive Streams**: Стандартный **Reactive Streams API**
 - **RxJava**: Полная поддержка **RxJava** 2 и 3
-- **Project Reactor**: Интеграция с **Reactor** (**Mono, Flux**)
+- **Project Reactor**: Интеграция с **Reactor** (Mono, Flux)
 - **Non-blocking I/O**: Неблокирующие операции ввода-вывода
 - **Backpressure**: Автоматическая обработка **backpressure**
 - **Reactive HTTP Client**: реактивный **HTTP** клиент
@@ -92,7 +92,7 @@ related: ["micronaut-http.md", "micronaut-data.md"]
 
 ### Основы
 
-**Reactive Streams** — это стандарт для асинхронной обработки потоков данных с необязательной обратной связью (**backpressure**).
+**Reactive Streams** — это стандарт для асинхронной обработки потоков данных с необязательной обратной связью (backpressure).
 
 ```java
 import org.reactivestreams.Publisher;
@@ -140,7 +140,7 @@ dependencies {
 }
 ```
 
-### **Reactive Controllers**
+### Reactive Controllers
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -178,7 +178,7 @@ public class UserController {
 }
 ```
 
-### **Reactive Services**
+### Reactive Services
 
 ```java
 import io.reactivex.rxjava3.core.Single;
@@ -219,7 +219,7 @@ public class UserService {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 
 ```java
 @Singleton
@@ -261,7 +261,7 @@ dependencies {
 }
 ```
 
-### **Reactive Controllers** с **Reactor**
+### Reactive Controllers с Reactor
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -299,7 +299,7 @@ public class UserController {
 }
 ```
 
-### **Reactive Services** с **Reactor**
+### Reactive Services с Reactor
 
 ```java
 import reactor.core.publisher.Mono;
@@ -354,7 +354,7 @@ micronaut:
       connect-timeout: 10s
 ```
 
-### Использование **Reactive HTTP Client**
+### Использование Reactive HTTP Client
 
 ```java
 import io.micronaut.http.annotation.Get;
@@ -415,7 +415,7 @@ r2dbc:
       password: ${DB_PASSWORD}
 ```
 
-### **Reactive Repository**
+### Reactive Repository
 
 ```java
 import io.micronaut.data.annotation.Repository;
@@ -435,7 +435,7 @@ public interface UserRepository
 }
 ```
 
-### Использование **Reactive Repository**
+### Использование Reactive Repository
 
 ```java
 import jakarta.inject.Singleton;
@@ -470,7 +470,7 @@ public class UserService {
 
 ## Backpressure
 
-### Обработка **Backpressure**
+### Обработка Backpressure
 
 ```java
 import reactor.core.publisher.Flux;
@@ -492,7 +492,7 @@ public Flux<String> createBackpressureAwarePublisher() {
 
 ## Лучшие практики
 
-### 1. Используйте правильные **Schedulers**
+### 1. Используйте правильные Schedulers
 
 ```java
 // ✅ Хорошо - для I/O операций
@@ -515,7 +515,7 @@ Mono.fromCallable(() -> riskyOperation())
     });
 ```
 
-### 3. Используйте **timeout**
+### 3. Используйте timeout
 
 ```java
 // ✅ Хорошо
@@ -553,7 +553,7 @@ Mono<Optional<User>> findUser(Long id);
 
 ## Продвинутые паттерны
 
-### **Combining Reactive Streams**
+### Combining Reactive Streams
 
 ```java
 @Singleton
@@ -585,7 +585,7 @@ public class UserService {
 }
 ```
 
-### **Error Recovery**
+### Error Recovery
 
 ```java
 @Singleton
@@ -610,7 +610,7 @@ public class ResilientUserService {
 }
 ```
 
-### **Backpressure Strategies**
+### Backpressure Strategies
 
 ```java
 @Singleton
@@ -643,7 +643,7 @@ public class BackpressureService {
 
 ## Reactive Streams Operators
 
-### **Transformation Operators**
+### Transformation Operators
 
 ```java
 @Singleton
@@ -674,7 +674,7 @@ public class TransformationService {
 }
 ```
 
-### **Combining Operators**
+### Combining Operators
 
 ```java
 @Singleton
@@ -701,7 +701,7 @@ public class CombiningService {
 }
 ```
 
-### **Filtering Operators**
+### Filtering Operators
 
 ```java
 @Singleton
@@ -722,7 +722,7 @@ public class FilteringService {
 }
 ```
 
-### **Error Handling Operators**
+### Error Handling Operators
 
 ```java
 @Singleton
@@ -749,7 +749,7 @@ public class ErrorHandlingService {
 }
 ```
 
-### **Buffering and Windowing**
+### Buffering and Windowing
 
 ```java
 @Singleton
@@ -772,7 +772,7 @@ public class BufferingService {
 
 ## Reactive Testing
 
-### **StepVerifier**
+### StepVerifier
 
 ```java
 @MicronautTest
@@ -805,7 +805,7 @@ public class ReactiveTestingTest {
 
 ## Schedulers
 
-### **Scheduler Configuration**
+### Scheduler Configuration
 
 ```java
 import reactor.core.scheduler.Scheduler;
@@ -838,7 +838,7 @@ public class SchedulerService {
 
 ## Hot vs Cold Publishers
 
-### **Cold Publisher**
+### Cold Publisher
 
 ```java
 @Singleton
@@ -851,7 +851,7 @@ public class ColdPublisherService {
 }
 ```
 
-### **Hot Publisher**
+### Hot Publisher
 
 ```java
 import reactor.core.publisher.Flux;
@@ -873,7 +873,7 @@ public class HotPublisherService {
 
 ## Reactive Testing
 
-### **Testing Reactive Streams**
+### Testing Reactive Streams
 
 ```java
 import reactor.test.StepVerifier;
@@ -905,7 +905,7 @@ public class ReactiveTestService {
 
 ## Reactive Error Handling
 
-### **Error Recovery Strategies**
+### Error Recovery Strategies
 
 ```java
 import reactor.core.publisher.Flux;

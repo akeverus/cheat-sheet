@@ -292,7 +292,7 @@ public class LambdaExpressionsDemo {
 }
 ```
 
-## **Stream API**
+## Stream API
 
 ### Создание потоков
 ```java
@@ -735,9 +735,9 @@ public class TerminalOperationsDemo {
 }
 ```
 
-## **Optional**
+## Optional
 
-### Работа с **Optional**
+### Работа с Optional
 ```java
 public class OptionalDemo {
 

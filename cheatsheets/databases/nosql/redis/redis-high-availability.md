@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 ---
 
-# **Redis**: Высокая доступность
+# Redis: Высокая доступность
 
 ## Полезные ссылки
 
@@ -77,7 +77,7 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 
 ## Введение в высокую доступность
 
-Высокая доступность (**High `Availability`, HA**) в **Redis** обеспечивается через комбинацию репликации, автоматического **failover** и мониторинга. Правильная настройка `HA` критически важна для **production** окружений.
+Высокая доступность (High `Availability`, HA) в **Redis** обеспечивается через комбинацию репликации, автоматического **failover** и мониторинга. Правильная настройка `HA` критически важна для **production** окружений.
 
 ### Компоненты `HA`
 
@@ -89,7 +89,7 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 
 ## Архитектура высокой доступности
 
-### **Master-Slave** с **Sentinel**
+### Master-Slave с Sentinel
 
 ```text
 ┌─────────────┐
@@ -104,7 +104,7 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 └──────┘ └─────┘
 ```
 
-### **Redis Cluster**
+### Redis Cluster
 
 ```text
 ┌──────────┐  ┌──────────┐  ┌──────────┐
@@ -115,7 +115,7 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 ```
 
 
-## Настройка **Sentinel** для `HA`
+## Настройка Sentinel для `HA`
 
 ### Минимальная конфигурация
 
@@ -139,7 +139,7 @@ sentinel failover-timeout mymaster 60000
 sentinel parallel-syncs mymaster 1
 ```
 
-### **Production** конфигурация
+### Production конфигурация
 
 ```conf
 # Production настройки Sentinel
@@ -154,9 +154,9 @@ sentinel client-reconfig-script mymaster /path/to/reconfig.sh
 ```
 
 
-## **Disaster Recovery**
+## Disaster Recovery
 
-### **Backup Strategy**
+### Backup Strategy
 
 ```bash
 #!/bin/bash
@@ -180,7 +180,7 @@ aws s3 cp "$BACKUP_DIR/rdb_$DATE.rdb" s3://backups/redis/
 aws s3 cp "$BACKUP_DIR/aof_$DATE.aof" s3://backups/redis/
 ```
 
-### **Recovery Procedures**
+### Recovery Procedures
 
 ```bash
 #!/bin/bash
@@ -218,9 +218,9 @@ redis-cli PING
 4. **Настройте алерты** на критические события
 5. **Ведите логи** всех операций
 
-## **Advanced** `HA` **Configurations**
+## Advanced `HA` Configurations
 
-### **Multi-Region Setup**
+### Multi-Region Setup
 
 ```yaml
 # Архитектура с несколькими регионами
@@ -233,7 +233,7 @@ sentinel monitor mymaster master-region1.example.com 6379 2
 sentinel down-after-milliseconds mymaster 10000  # Больше для сетевых задержек
 ```
 
-### **Automatic Failover Testing**
+### Automatic Failover Testing
 
 ```bash
 #!/bin/bash
@@ -272,7 +272,7 @@ echo "Restoring old master..."
 ssh $MASTER_HOST "sudo systemctl start redis"
 ```
 
-### **Health Check Endpoints**
+### Health Check Endpoints
 
 ```java
 // Redis Python example replaced with Java Spring

@@ -13,21 +13,21 @@ updated: "2026-02-11"
 
 ## Принципы оформления
 
-Текст во всех документах папки **testing** должен быть **максимально человекочитаемым, легко запоминаемым и хорошо визуально восприниматься** — не сухие факты и не бесконечные списки. Подробнее см. [Обзор инструментов тестирования](testing-tools/testing-tools-overview.md) (блок «Принципы оформления»).
+Текст во всех документах папки **testing** должен быть **максимально человекочитаемым, легко запоминаемым и хорошо визуально восприниматься** — не сухие факты и не бесконечные списки. Подробнее см. [[testing-tools-overview|Обзор инструментов тестирования]] (блок «Принципы оформления»).
 
 ## Полезные ссылки
 
-[Unit Testing](unit-testing/README.md)
-[Integration Testing](integration-testing/README.md)
-[Performance Testing](performance-testing/README.md)
+[[README|Unit Testing]]
+[[README|Integration Testing]]
+[[README|Performance Testing]]
 
 ## Содержание
 
-- [Unit Testing](unit-testing/README.md) — JUnit, TestNG, pytest, Jest, xUnit, Mockito, AssertJ, Hamcrest
-- [Integration Testing](integration-testing/README.md) — REST Assured, Testcontainers, WireMock, контрактное и тестирование БД
-- [Test Management](test-management/README.md) — тест-планы, тест-кейсы, прогоны, TestRail, Jira (Zephyr/Xray)
-- [Testing Tools](testing-tools/README.md) — обзор стека: раннеры, моки, утверждения, отчёты, покрытие
-- [Performance Testing](performance-testing/README.md) — JMeter, k6, Gatling, Artillery
-- [Security Testing](security-testing/README.md) — Burp Suite, OWASP ZAP, sqlmap
-- [UI Testing](ui-testing/README.md) — Selenium, обзор UI-автоматизации
-- [Cucumber](cucumber.md) — BDD-сценарии
+- [[README|Unit Testing]] — JUnit, TestNG, pytest, Jest, xUnit, Mockito, AssertJ, Hamcrest
+- [[README|Integration Testing]] — REST Assured, Testcontainers, WireMock, контрактное и тестирование БД
+- [[README|Test Management]] — тест-планы, тест-кейсы, прогоны, TestRail, Jira (Zephyr/Xray)
+- [[README|Testing Tools]] — обзор стека: раннеры, моки, утверждения, отчёты, покрытие
+- [[README|Performance Testing]] — JMeter, k6, Gatling, Artillery
+- [[README|Security Testing]] — Burp Suite, OWASP ZAP, sqlmap
+- [[README|UI Testing]] — Selenium, обзор UI-автоматизации
+- [[cucumber]] — BDD-сценарии

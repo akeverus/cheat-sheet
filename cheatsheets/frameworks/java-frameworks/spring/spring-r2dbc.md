@@ -89,7 +89,7 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Data R2DBC**
+## Введение в Spring Data R2DBC
 
 **Spring Data R2DBC** предоставляет реактивный **API** для работы с реляционными базами данных. В отличие от традиционного **JDBC**, **R2DBC** использует неблокирующий I/O, что делает его идеальным для реактивных приложений.
 
@@ -101,7 +101,7 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 - **Connection Pooling**: Пул соединений
 - **Multiple Database Support**: поддержка различных БД
 
-### Архитектура **R2DBC**
+### Архитектура R2DBC
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -131,11 +131,11 @@ related: ["spring/spring-boot.md", "spring/spring-webflux.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **R2DBC**
+## Настройка R2DBC
 
 ### Зависимости
 
-**Зависимости **spring-`boot-starter-data`-r2dbc** и **r2dbc-postgresql** (**pom.xml**):**
+**Зависимости **spring-`boot-starter-data`-r2dbc** и **r2dbc-postgresql** (pom.xml):**
 
 ```xml
 <dependency>
@@ -160,7 +160,7 @@ spring.r2dbc.pool.max-size=20
 spring.r2dbc.pool.max-idle-time=30m
 ```
 
-### **Java Configuration**
+### Java Configuration
 
 ```java
 // Включение реактивных репозиториев R2DBC
@@ -191,7 +191,7 @@ public class R2dbcConfig {
 
 ## Reactive Repositories
 
-### **Entity Definition**
+### Entity Definition
 
 ```java
 // Реактивная сущность для таблицы users (R2DBC)
@@ -207,7 +207,7 @@ public class User {
 }
 ```
 
-### **Repository Interface**
+### Repository Interface
 
 ```java
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
@@ -218,7 +218,7 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 }
 ```
 
-### Использование **Repository**
+### Использование Repository
 
 ```java
 @Service
@@ -256,7 +256,7 @@ public class UserService {
 
 ## R2dbcEntityTemplate
 
-### **Basic Operations**
+### Basic Operations
 
 ```java
 @Service
@@ -333,7 +333,7 @@ public class CustomQueryService {
 
 ## Reactive Transactions
 
-### **Transactional Operations**
+### Transactional Operations
 
 ```java
 @Service
@@ -369,7 +369,7 @@ public class TransactionalUserService {
 }
 ```
 
-### **Transaction Configuration**
+### Transaction Configuration
 
 ```java
 @Configuration
@@ -385,7 +385,7 @@ public class TransactionConfig {
 
 ## Connection Pooling
 
-### **Pool Configuration**
+### Pool Configuration
 
 ```java
 @Configuration
@@ -422,7 +422,7 @@ public class PoolConfig {
 
 ## Custom Queries
 
-### @**Query Annotation**
+### @Query Annotation
 
 ```java
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
@@ -441,7 +441,7 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 }
 ```
 
-### **Native Queries**
+### Native Queries
 
 ```java
 @Service
@@ -466,7 +466,7 @@ public class NativeQueryService {
 
 ## Мониторинг и метрики
 
-### **R2DBC Metrics**
+### R2DBC Metrics
 
 ```java
 @Component
@@ -541,7 +541,7 @@ public Mono<Void> transferBalance(Long from, Long to, BigDecimal amount) {
 }
 ```
 
-### 4. Настраивайте **connection pooling**
+### 4. Настраивайте connection pooling
 
 ```java
 // ✅ Хорошо
@@ -570,7 +570,7 @@ public Flux<User> findUser(Long id) {
 
 ## Продвинутые возможности
 
-### **Batch Operations**
+### Batch Operations
 
 ```java
 @Service
@@ -597,7 +597,7 @@ public class BatchOperationService {
 }
 ```
 
-### **Custom Row Mapping**
+### Custom Row Mapping
 
 ```java
 @Service
@@ -620,7 +620,7 @@ public class CustomMappingService {
 }
 ```
 
-### **Stored Procedures**
+### Stored Procedures
 
 ```java
 @Service
@@ -638,9 +638,9 @@ public class StoredProcedureService {
 }
 ```
 
-## Интеграция с **WebFlux**
+## Интеграция с WebFlux
 
-### **Reactive Controller**
+### Reactive Controller
 
 ```java
 @RestController
@@ -687,7 +687,7 @@ public class ReactiveUserController {
 
 ## Обработка ошибок
 
-### **Error Handling**
+### Error Handling
 
 ```java
 @Service
@@ -725,7 +725,7 @@ public class ErrorHandlingService {
 
 ## Тестирование
 
-### **Test Configuration**
+### Test Configuration
 
 ```java
 @SpringBootTest
@@ -762,7 +762,7 @@ class R2dbcTest {
 }
 ```
 
-### **Embedded Database**
+### Embedded Database
 
 ```java
 @SpringBootTest
@@ -821,7 +821,7 @@ public class OptimizedQueryService {
 }
 ```
 
-### **Connection Pool Tuning**
+### Connection Pool Tuning
 
 ```java
 @Configuration
@@ -846,7 +846,7 @@ public class OptimizedPoolConfig {
 
 ## Продвинутые запросы
 
-### **Complex Joins**
+### Complex Joins
 
 ```java
 @Service
@@ -875,7 +875,7 @@ public class JoinQueryService {
 }
 ```
 
-### **Aggregation Queries**
+### Aggregation Queries
 
 ```java
 @Service
@@ -908,7 +908,7 @@ public class AggregationService {
 }
 ```
 
-### **Subqueries**
+### Subqueries
 
 ```java
 @Service
@@ -931,7 +931,7 @@ public class SubqueryService {
 }
 ```
 
-### **Window Functions**
+### Window Functions
 
 ```java
 @Service
@@ -962,7 +962,7 @@ public class WindowFunctionService {
 }
 ```
 
-### **CTE** (`Common Table Expressions`)
+### CTE (`Common Table Expressions`)
 
 ```java
 @Service
@@ -988,9 +988,9 @@ public class CteService {
 }
 ```
 
-## Реактивные транзакции (**расширенные**)
+## Реактивные транзакции (расширенные)
 
-### **Nested Transactions**
+### Nested Transactions
 
 ```java
 @Service
@@ -1021,7 +1021,7 @@ public class NestedTransactionService {
 }
 ```
 
-### **Transaction Propagation**
+### Transaction Propagation
 
 ```java
 @Service
@@ -1048,7 +1048,7 @@ public class TransactionPropagationService {
 
 ## Реактивные миграции
 
-### **Database Migrations**
+### Database Migrations
 
 ```java
 @Service
@@ -1080,7 +1080,7 @@ public class ReactiveMigrationService {
 
 ## Продвинутые паттерны
 
-### **Reactive Repository Customization**
+### Reactive Repository Customization
 
 ```java
 public interface CustomUserRepository extends ReactiveCrudRepository<User, Long> {
@@ -1110,7 +1110,7 @@ public class CustomRepositoryService {
 }
 ```
 
-### **Reactive Caching**
+### Reactive Caching
 
 ```java
 @Service
@@ -1133,7 +1133,7 @@ public class CachedUserService {
 }
 ```
 
-### **Reactive Error Recovery**
+### Reactive Error Recovery
 
 ```java
 @Service
@@ -1163,7 +1163,7 @@ public class ResilientUserService {
 }
 ```
 
-### **Reactive Batch Processing**
+### Reactive Batch Processing
 
 ```java
 @Service
@@ -1191,7 +1191,7 @@ public class BatchProcessingService {
 }
 ```
 
-### **Reactive Transactions with Retry**
+### Reactive Transactions with Retry
 
 ```java
 @Service
@@ -1228,7 +1228,7 @@ public class TransactionalRetryService {
 
 ## Заключение
 
-**Spring Data R2DBC** предоставляет мощные инструменты для работы с реляционными базами данных в реактивном стиле. Правильное использование реактивных репозиториев, **R2dbcEntityTemplate**, транзакций, **connection pooling**, **batch** операций, сложных запросов (**joins, aggregations, subqueries, window functions, CTE**), интеграции с **WebFlux**, обработки ошибок, тестирования, оптимизации производительности, миграций, кеширования, **error recovery**, **batch processing** и других продвинутых возможностей позволяет создавать высокопроизводительные неблокирующие приложения с эффективной работой с базами данных.
+**Spring Data R2DBC** предоставляет мощные инструменты для работы с реляционными базами данных в реактивном стиле. Правильное использование реактивных репозиториев, **R2dbcEntityTemplate**, транзакций, **connection pooling**, **batch** операций, сложных запросов (joins, aggregations, subqueries, window functions, CTE), интеграции с **WebFlux**, обработки ошибок, тестирования, оптимизации производительности, миграций, кеширования, **error recovery**, **batch processing** и других продвинутых возможностей позволяет создавать высокопроизводительные неблокирующие приложения с эффективной работой с базами данных.
 
 ## Дополнительные ресурсы
 

@@ -72,7 +72,7 @@ related: ["micronaut-core.md", "micronaut-http.md"]
 
 ## Введение
 
-**Micronaut** предоставляет полную поддержку **Bean Validation** (**Jakarta Validation**) для валидации данных в приложениях. Это позволяет декларативно определять правила валидации и автоматически проверять данные.
+**Micronaut** предоставляет полную поддержку **Bean Validation** (Jakarta Validation) для валидации данных в приложениях. Это позволяет декларативно определять правила валидации и автоматически проверять данные.
 
 ### Основные возможности
 
@@ -82,7 +82,7 @@ related: ["micronaut-core.md", "micronaut-http.md"]
 - **Method Validation**: Валидация параметров методов
 - **Constraint Validation**: Валидация ограничений
 
-## Настройка **Validation**
+## Настройка Validation
 
 ### Зависимости
 
@@ -233,7 +233,7 @@ public @interface UniqueEmail {
 
 ## Validation Groups
 
-### Определение **Groups**
+### Определение Groups
 
 ```java
 public interface CreateGroup {}
@@ -251,7 +251,7 @@ public class User {
 }
 ```
 
-### Использование **Groups**
+### Использование Groups
 
 ```java
 import jakarta.validation.Validator;
@@ -369,7 +369,7 @@ public class ValidationExceptionHandler {
 private String email;
 ```
 
-### 2. Создавайте **custom validators** для сложной логики
+### 2. Создавайте custom validators для сложной логики
 
 ```java
 // ✅ Хорошо
@@ -377,7 +377,7 @@ private String email;
 private String email;
 ```
 
-### 3. Используйте **validation groups**
+### 3. Используйте validation groups
 
 ```java
 // ✅ Хорошо

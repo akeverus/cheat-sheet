@@ -80,7 +80,7 @@ related: ["micronaut-core.md", "micronaut-reactive.md"]
 - **Async Execution**: Асинхронное выполнение задач
 - **Task Management**: Управление задачами
 
-## Настройка **Scheduling**
+## Настройка Scheduling
 
 ### Зависимости
 
@@ -102,7 +102,7 @@ micronaut:
     name: my-app
 ```
 
-## @**Scheduled Annotation**
+## @Scheduled Annotation
 
 ### Fixed Rate
 
@@ -310,7 +310,7 @@ public void executeTask() {
 }
 ```
 
-### 3. Используйте **async** для долгих задач
+### 3. Используйте async для долгих задач
 
 ```java
 // ✅ Хорошо
@@ -321,7 +321,7 @@ public CompletableFuture<Void> executeLongTask() {
 }
 ```
 
-### 4. Настраивайте **thread pool** правильно
+### 4. Настраивайте thread pool правильно
 
 ```yaml
 # ✅ Хорошо
@@ -331,7 +331,7 @@ micronaut:
       core-pool-size: 5
 ```
 
-### 5. Используйте **conditional scheduling**
+### 5. Используйте conditional scheduling
 
 ```java
 // ✅ Хорошо

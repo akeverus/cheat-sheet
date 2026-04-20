@@ -19,13 +19,13 @@ Windsurf — AI-first IDE от Codeium. В отличие от «редакто�
 ## Полезные ссылки
 
 ### Основные документы
-- [windsurf-basics.md](windsurf-basics.md) — установка, Command, Cascade, web search, терминал, best practices
+- [[windsurf-basics]] — установка, Command, Cascade, web search, терминал, best practices
 
 ### Соседние разделы
-- [tools/ai/](../README.md) — родительский раздел
-- [tools/ai/cursor/](../cursor/README.md) — главный конкурент
-- [tools/ai/copilot/](../copilot/README.md) — плагин-альтернатива
-- [tools/ai/claude/](../claude/README.md) — ассистент в VS Code/JetBrains
+- [[README|tools/ai/]] — родительский раздел
+- [[README|tools/ai/cursor/]] — главный конкурент
+- [[README|tools/ai/copilot/]] — плагин-альтернатива
+- [[README|tools/ai/claude/]] — ассистент в VS Code/JetBrains
 
 ### Внешние ресурсы
 - [Windsurf Documentation](https://docs.codeium.com/windsurf/getting-started)
@@ -54,13 +54,13 @@ Windsurf — AI-first IDE от Codeium. В отличие от «редакто�
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [Windsurf](../windsurf/README.md) | Windsurf (свой IDE) | Да (Cascade) | Нет | Free + Pro + Teams |
-| [Cursor](../cursor/README.md) | Cursor (форк VS Code) | Да (Agent, Background Agent) | Да (BYOK) | Free + Pro |
-| [Claude Code](../claude/README.md) | VS Code, JetBrains, CLI | Да | Нет | Подписка |
-| [GitHub Copilot](../copilot/README.md) | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка |
-| [Cody](../cody/README.md) | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
-| [Aider](../aider/README.md) | Нет (CLI) | Частичный | Да | Open source + API |
-| [OpenClaw](../openclaw/README.md) | Нет (CLI) | Да | Да | Open source |
+| [[README|Windsurf]] | Windsurf (свой IDE) | Да (Cascade) | Нет | Free + Pro + Teams |
+| [[README|Cursor]] | Cursor (форк VS Code) | Да (Agent, Background Agent) | Да (BYOK) | Free + Pro |
+| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да | Нет | Подписка |
+| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка |
+| [[README|Cody]] | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
+| [[README|Aider]] | Нет (CLI) | Частичный | Да | Open source + API |
+| [[README|OpenClaw]] | Нет (CLI) | Да | Да | Open source |
 
 ## Когда использовать
 
@@ -76,7 +76,7 @@ Windsurf — AI-first IDE от Codeium. В отличие от «редакто�
 
 ## Куда идти дальше
 
-- Прямой конкурент — [../cursor/README.md](../cursor/README.md)
-- Если не готовы менять IDE — [../copilot/README.md](../copilot/README.md), [../claude/README.md](../claude/README.md)
-- CLI-варианты — [../aider/README.md](../aider/README.md), [../openclaw/README.md](../openclaw/README.md)
-- Обзор всех AI-инструментов — [../README.md](../README.md)
+- Прямой конкурент — [[README]]
+- Если не готовы менять IDE — [[README]], [[README]]
+- CLI-варианты — [[README]], [[README]]
+- Обзор всех AI-инструментов — [[README]]

@@ -19,14 +19,14 @@ Selenium WebDriver — де-факто стандарт автоматизаци
 ## Полезные ссылки
 
 ### Основные документы
-- [Selenium для Java](selenium.md) — настройка, Page Object, ожидания, параллельный запуск
+- [[selenium|Selenium для Java]] — настройка, Page Object, ожидания, параллельный запуск
 
 ### Соседние разделы
-- [UI Testing](../README.md)
-- [JUnit](../../unit-testing/junit/README.md)
-- [TestNG](../../unit-testing/testng/README.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
-- [REST Assured](../../integration-testing/rest-assured.md)
+- [[README|UI Testing]]
+- [[README|JUnit]]
+- [[README|TestNG]]
+- [[testing-tools-overview|Testing Tools Overview]]
+- [[rest-assured|REST Assured]]
 
 ### Внешние ресурсы
 - [Selenium Documentation](https://www.selenium.dev/documentation/)
@@ -44,11 +44,11 @@ Selenium WebDriver — де-факто стандарт автоматизаци
 
 | Тема | Где читать |
 |------|-----------|
-| Настройка WebDriver и зависимости Maven | [selenium.md](selenium.md) |
-| Взаимодействия: click, type, select, actions | [selenium.md](selenium.md) |
-| Page Object Model | [selenium.md](selenium.md) |
-| Ожидания: implicit/explicit/fluent | [selenium.md](selenium.md) |
-| Data-driven, параллельный запуск, Spring Boot | [selenium.md](selenium.md) |
+| Настройка WebDriver и зависимости Maven | [[selenium]] |
+| Взаимодействия: click, type, select, actions | [[selenium]] |
+| Page Object Model | [[selenium]] |
+| Ожидания: implicit/explicit/fluent | [[selenium]] |
+| Data-driven, параллельный запуск, Spring Boot | [[selenium]] |
 
 ## Когда использовать: Selenium vs Playwright vs Cypress
 
@@ -67,6 +67,6 @@ Selenium — лучший выбор, когда команда уже на JVM/
 
 ## Куда идти дальше
 
-- Обзор UI-тестирования — [../README.md](../README.md)
-- JUnit/TestNG runners — [../../unit-testing/junit/README.md](../../unit-testing/junit/README.md)
-- API-тестирование — [../../integration-testing/rest-assured.md](../../integration-testing/rest-assured.md)
+- Обзор UI-тестирования — [[README]]
+- JUnit/TestNG runners — [[README]]
+- API-тестирование — [[rest-assured]]

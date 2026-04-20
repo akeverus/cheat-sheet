@@ -196,7 +196,7 @@ public interface UserRepository extends CrudRepository<User, Long> {
 }
 ```
 
-### Использование **Repository**
+### Использование Repository
 
 ```java
 import jakarta.inject.Singleton;
@@ -538,7 +538,7 @@ liquibase:
 
 ## Лучшие практики
 
-### 1. Используйте **Repository Pattern**
+### 1. Используйте Repository Pattern
 
 ```java
 // ✅ Хорошо
@@ -556,7 +556,7 @@ public class UserService {
 }
 ```
 
-### 2. Используйте **Transactions** для **Multi-step Operations**
+### 2. Используйте Transactions для Multi-step Operations
 
 ```java
 // ✅ Хорошо
@@ -569,7 +569,7 @@ public User createUserWithOrder(User user, Order order) {
 }
 ```
 
-### 3. Используйте @**Query** для **Complex Queries**
+### 3. Используйте @Query для Complex Queries
 
 ```java
 // ✅ Хорошо
@@ -577,14 +577,14 @@ public User createUserWithOrder(User user, Order order) {
 List<User> findUsers(Integer minAge, String name);
 ```
 
-### 4. Используйте **Migrations** для **Schema Management**
+### 4. Используйте Migrations для Schema Management
 
 ```java
 // ✅ Хорошо - используйте Flyway или Liquibase
 // Не используйте hbm2ddl.auto=create в production
 ```
 
-### 5. Оптимизируйте **Queries**
+### 5. Оптимизируйте Queries
 
 ```java
 // ✅ Хорошо - используйте JOIN FETCH для избежания N+1
@@ -655,7 +655,7 @@ public class BatchUpdateService {
 
 ## Stored Procedures
 
-### Вызов **Stored Procedures**
+### Вызов Stored Procedures
 
 ```java
 @Repository

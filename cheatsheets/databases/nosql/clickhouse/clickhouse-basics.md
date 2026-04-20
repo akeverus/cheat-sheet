@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 ---
 
-# **ClickHouse**: Основы колоночной аналитической базы данных
+# ClickHouse: Основы колоночной аналитической базы данных
 
 Комплексное руководство по основам **ClickHouse**: архитектура, установка, основные концепции и начало работы.
 
@@ -97,7 +97,7 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
     - [**ZooKeeper**](#zookeeper)
 - [Установка и запуск](#установка-и-запуск)
   - [Системные требования](#системные-требования)
-  - [Установка на **Linux** (**Ubuntu/Debian**)](#установка-на-linux-ubuntudebian)
+  - [Установка на **Linux** (Ubuntu/Debian)](#установка-на-linux-ubuntudebian)
 - [Добавление репозитория](#добавление-репозитория)
 - [Добавление ключа](#добавление-ключа)
 - [Установка](#установка)
@@ -125,7 +125,7 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
     - [**ClickHouse GUI Tools**](#clickhouse-gui-tools)
   - [Подключение из приложений](#подключение-из-приложений)
     - [**Java** + **Spring Boot**](#java-spring-boot)
-    - [**Java** (**без Spring**)](#java-без-spring)
+    - [**Java** (без Spring)](#java-без-spring)
     - [**Java** + **Spring**](#java-spring)
 - [Основные концепции](#основные-концепции)
   - [Данные и метаданные](#данные-и-метаданные)
@@ -149,9 +149,9 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
   - [Следующие шаги:](#следующие-шаги)
 - [Решение проблем](#решение-проблем)
 
-## Введение в **ClickHouse**
+## Введение в ClickHouse
 
-**ClickHouse** — это высокопроизводительная колоночная система управления базами данных (**СУБД**), разработанная компанией **Yandex** для решения задач аналитики больших данных. **ClickHouse** оптимизирован для быстрого выполнения аналитических запросов к огромным объемам данных.
+**ClickHouse** — это высокопроизводительная колоночная система управления базами данных (СУБД), разработанная компанией **Yandex** для решения задач аналитики больших данных. **ClickHouse** оптимизирован для быстрого выполнения аналитических запросов к огромным объемам данных.
 
 ### Исторический контекст
 
@@ -162,13 +162,13 @@ related: ["databases/postgres-basics.md", "databases/redis-basics.md"]
 - **Горизонтальной масштабируемости**
 - **Открытому исходному коду** и активному сообществу
 
-### Почему **ClickHouse** уникален?
+### Почему ClickHouse уникален?
 
 **ClickHouse** отличается от традиционных реляционных СУБД несколькими фундаментальными особенностями:**
 
 #### 1. Колоночное хранение данных
 
-Сравнение строкового (**реляционная БД**) и колоночного (**ClickHouse**) хранения.
+Сравнение строкового (реляционная БД) и колоночного (ClickHouse) хранения.
 
 ```text
 # Сравнение: строки в реляционной БД vs колоночное хранение
@@ -193,7 +193,7 @@ amount: [100.50, 200.75, 150.25]
 - **Векторизация**: **SIMD** операции над массивами данных
 
 #### 2. Векторные вычисления
-**ClickHouse** использует **SIMD** (**Single `Instruction`, `Multiple` Data**) инструкции процессора для одновременной обработки множественных значений:**
+**ClickHouse** использует **SIMD** (Single `Instruction`, `Multiple` Data) инструкции процессора для одновременной обработки множественных значений:**
 
 ```cpp
 // Вместо последовательной обработки:
@@ -243,17 +243,17 @@ _mm256_store_si256((__m256i*)&result[i], vec_result);
 
 ### Архитектурные принципы
 
-#### 1. **Shared-Nothing** архитектура
+#### 1. Shared-Nothing архитектура
 - Каждый сервер независим
 - Нет **shared storage**
 - Горизонтальное масштабирование через шардирование
 
-#### 2. **LSM-Tree** подход
+#### 2. LSM-Tree подход
 - **MemTable**: Оперативная память для новых данных
 - **SSTable**: Неизменяемые файлы на диске
 - **Compaction**: Слияние файлов для оптимизации
 
-#### 3. **Push-down** оптимизации
+#### 3. Push-down оптимизации
 ```sql
 -- Оригинальный запрос
 SELECT user_id, sum(amount)
@@ -269,14 +269,14 @@ HAVING sum(amount) > 1000;
 4. Применить HAVING фильтр
 ```
 
-#### 4. **Vectorized query execution**
+#### 4. Vectorized query execution
 - **Column batches**: Обработка данных блоками
 - **Predicate evaluation**: Векторные условия фильтрации
 - **Aggregation kernels**: Специализированные функции агрегации
 
 ### Ограничения и компромиссы
 
-#### **OLTP** операции
+#### OLTP операции
 **ClickHouse** не предназначен для транзакционных нагрузок:**
 - **Медленные одиночные вставки**: Нет оптимизации для **OLTP**
 - **Отсутствие блокировок строк**: Только табличные блокировки
@@ -287,14 +287,14 @@ HAVING sum(amount) > 1000;
 - **Нет `multi-statement` транзакций**: Каждая операция атомарна отдельно
 - **Eventual consistency**: В распределенных кластерах
 
-#### **JOIN** операции
+#### JOIN операции
 - **Неоптимальные JOIN**: Нет индексов для **JOIN**
 - **Memory-intensive**: **JOIN** требуют загрузки данных в память
 - **Limited join types**: Основной **LEFT**/**RIGHT**/**INNER JOIN**
 
 ### Сравнение с другими системами
 
-#### **ClickHouse** vs **Apache Druid**
+#### ClickHouse vs Apache Druid
 | Аспект | **ClickHouse** | **Druid** |
 |--------|------------|-------|
 | **Хранение** | Колоночное | Колоночное |
@@ -304,7 +304,7 @@ HAVING sum(amount) > 1000;
 | **Масштабируемость** | Отличная | Отличная |
 | **Сложность** | Средняя | Высокая |
 
-#### **ClickHouse** vs **Elasticsearch**
+#### ClickHouse vs Elasticsearch
 | Аспект | **ClickHouse** | **Elasticsearch** |
 |--------|-------------|---------------|
 | **Полнотекстовый поиск** | Ограниченный | Отличный |
@@ -343,7 +343,7 @@ WHERE date >= '2024-01-01'
 GROUP BY portfolio_id;
 ```
 
-#### 3. **IoT** и телеметрия
+#### 3. IoT и телеметрия
 ```sql
 -- Анализ показаний датчиков
 SELECT
@@ -360,7 +360,7 @@ GROUP BY sensor_id, hour
 ORDER BY sensor_id, hour;
 ```
 
-#### 4. **Clickstream** аналитика
+#### 4. Clickstream аналитика
 ```sql
 -- Анализ поведения пользователей
 SELECT
@@ -384,7 +384,7 @@ FROM (
 
 ### Оптимизация производительности
 
-#### **Hardware** оптимизации
+#### Hardware оптимизации
 - **CPU**: **Multi-core** с **AVX-512** поддержкой
 - **RAM**: Минимум 128GB, лучше 256GB+
 - **Disk**: **NVMe SSD** с высокой **IOPS**
@@ -408,25 +408,25 @@ FROM (
 </clickhouse>
 ```
 
-#### **Query** оптимизации
+#### Query оптимизации
 - **Использование PREWHERE**: Фильтрация перед чтением
 - **Оптимальные типы данных**: Минимально достаточные типы
 - **Партиционирование**: По времени для временных данных
 - **Индексы**: Для часто используемых фильтров
 
-### Безопасность в **ClickHouse**
+### Безопасность в ClickHouse
 
-#### **Authentication**
+#### Authentication
 - **Password authentication**: **SCRAM-`SHA`-256**
 - **LDAP integration**: Корпоративная аутентификация
 - **Kerberos support**: Для **enterprise** сред
 
-#### **Authorization**
+#### Authorization
 - **Role-based access**: Гибкая система ролей
 - **Row-level security**: Фильтры безопасности
 - **Column-level permissions**: Ограничение доступа к столбцам
 
-#### **Encryption**
+#### Encryption
 - **TLS/SSL**: Шифрование сетевых соединений
 - **Data at rest**: Шифрование данных на диске
 - **Audit logging**: Логирование всех операций
@@ -445,7 +445,7 @@ FROM (
 - **ClickHouse Keeper**: Замена **ZooKeeper**
 - **Altinity Cloud**: **Managed** сервис
 
-### Будущее **ClickHouse**
+### Будущее ClickHouse
 
 #### Развивающиеся возможности
 - **ClickHouse Cloud**: Полностью **managed** сервис
@@ -453,7 +453,7 @@ FROM (
 - **Object storage**: Поддержка **S3**, **GCS**
 - **Kubernetes operator**: Упрощенное развертывание
 
-#### **Performance** улучшения
+#### Performance улучшения
 - **SIMD оптимизации**: Лучшее использование **CPU**
 - **Memory management**: Более эффективная работа с памятью
 - **Query optimization**: Улучшенный планировщик запросов
@@ -475,19 +475,19 @@ FROM (
 
 ### Хранение данных
 - **Колоночное хранение** для эффективного чтения
-- **Множество форматов сжатия** (**LZ4, `ZSTD`, etc.**)
+- **Множество форматов сжатия** (LZ4, `ZSTD`, etc.)
 - **Различные движки таблиц** для разных сценариев использования
 - **Поддержка партиционирования** данных
 
-### **SQL** совместимость
+### SQL совместимость
 - **SQL-подобный синтаксис** с расширениями
-- **Поддержка стандартных `SQL` операций** (**SELECT, `INSERT`, `UPDATE`, DELETE**)
+- **Поддержка стандартных `SQL` операций** (SELECT, `INSERT`, `UPDATE`, DELETE)
 - **Расширенные аналитические функции**
 - **Пользовательские функции** и агрегаты
 
 ### Надежность
 - **Репликация** для отказоустойчивости
-- **ACID транзакции** (**с некоторыми ограничениями**)
+- **ACID транзакции** (с некоторыми ограничениями)
 - **Отказоустойчивость** и самовосстановление
 - **Мониторинг и метрики** производительности
 
@@ -508,7 +508,7 @@ ORDER BY events_count DESC
 LIMIT 100;
 ```
 
-### **Data Warehousing**
+### Data Warehousing
 - **Хранение больших объемов** исторических данных
 - **Быстрые агрегационные запросы** для отчетности
 - **Интеграция с `BI` инструментами**
@@ -528,7 +528,7 @@ GROUP BY date, status_code
 ORDER BY date, status_code;
 ```
 
-### **IoT** и телеметрия
+### IoT и телеметрия
 - **Обработка данных** с миллионов устройств
 - **Агрегация метрик** в реальном времени
 - **Анализ временных рядов**
@@ -551,7 +551,7 @@ ORDER BY month, total_amount DESC;
 
 ## Архитектура и компоненты
 
-### Компоненты **ClickHouse**
+### Компоненты ClickHouse
 
 ```text
 # Кластер ClickHouse: серверы, Query Processor, Storage, ZooKeeper
@@ -579,24 +579,24 @@ ORDER BY month, total_amount DESC;
 
 ### Ключевые компоненты
 
-#### **ClickHouse Server**
+#### ClickHouse Server
 - **Основной процесс** обработки запросов
 - **Хранение данных** на диске
 - **Обработка запросов** и выполнение вычислений
 - **Взаимодействие с клиентами**
 
-#### **MergeTree Storage Engine**
+#### MergeTree Storage Engine
 - **Основной движок** для аналитических данных
 - **Поддержка партиционирования**
 - **Автоматическое слияние** данных
 - **Оптимизация хранения**
 
-#### **Distributed Engine**
+#### Distributed Engine
 - **Распределенные таблицы** поверх кластера
 - **Автоматическая маршрутизация** запросов
 - **Агрегация результатов** с разных узлов
 
-#### **ZooKeeper**
+#### ZooKeeper
 - **Координация** между узлами кластера
 - **Хранение метаданных**
 - **Синхронизация** состояния
@@ -609,7 +609,7 @@ ORDER BY month, total_amount DESC;
 - **CPU:** 2 ядра
 - **RAM:** 4 `GB`
 - **Disk:** 20 `GB` **SSD**
-- **OS: Linux** (**рекомендуется**), **macOS**, **Windows**
+- **OS: Linux** (рекомендуется), **macOS**, **Windows**
 
 **Рекомендуемые для production:**
 - **CPU:** 8+ ядер
@@ -617,7 +617,7 @@ ORDER BY month, total_amount DESC;
 - **Disk: NVMe SSD** с большим объемом
 - **Network:** 10GbE
 
-### Установка на **Linux** (**Ubuntu/Debian**)
+### Установка на Linux (Ubuntu/Debian)
 
 ```bash
 # Добавление репозитория
@@ -635,7 +635,7 @@ sudo apt-get update
 sudo apt-get install -y clickhouse-server clickhouse-client
 ```
 
-### Установка на **macOS**
+### Установка на macOS
 
 ```bash
 # Используя Homebrew
@@ -650,7 +650,7 @@ docker run -d \
   clickhouse/clickhouse-server
 ```
 
-### Установка на **Docker**
+### Установка на Docker
 
 ```bash
 # Запуск контейнера
@@ -666,7 +666,7 @@ docker run -d \
 docker exec -it clickhouse-server clickhouse-client
 ```
 
-### Запуск **ClickHouse**
+### Запуск ClickHouse
 
 ```bash
 # Запуск сервера
@@ -709,9 +709,9 @@ sudo journalctl -u clickhouse-server -f
 </clickhouse>
 ```
 
-## Подключение к **ClickHouse**
+## Подключение к ClickHouse
 
-### Использование **clickhouse-client**
+### Использование clickhouse-client
 
 ```bash
 # Подключение к локальному серверу
@@ -734,7 +734,7 @@ clickhouse-client --queries-file my_queries.sql
 clickhouse-client --query "SELECT 1"
 ```
 
-### Подключение через **HTTP**
+### Подключение через HTTP
 
 ```bash
 # Используя curl
@@ -749,7 +749,7 @@ curl "http://localhost:8123/" \
 
 ### Графические интерфейсы
 
-#### **ClickHouse GUI Tools**
+#### ClickHouse GUI Tools
 
 1. **DBeaver**
    - Универсальный **SQL** клиент
@@ -767,7 +767,7 @@ curl "http://localhost:8123/" \
 
 ### Подключение из приложений
 
-#### **Java** + **Spring Boot**
+#### Java + Spring Boot
 ```java
 // Конфигурация Spring Boot и репозиторий для аналитики событий
 // application.yml
@@ -799,7 +799,7 @@ public class AnalyticsService {
 }
 ```
 
-#### **Java** (**без Spring**)
+#### Java (без Spring)
 ```java
 // Подключение к ClickHouse через JDBC без Spring
 import ru.yandex.clickhouse.ClickHouseDataSource;
@@ -810,7 +810,7 @@ ClickHouseDataSource dataSource = new ClickHouseDataSource(
 Connection connection = dataSource.getConnection();
 ```
 
-#### **Java** + **Spring**
+#### Java + Spring
 ```java
 // Конфигурация DataSource HikariCP и сервис проверки подключения
 @Configuration
@@ -952,7 +952,7 @@ SELECT avg(age), count(*) FROM users WHERE city = 'NYC'
 
 ### Недостатки колоночного хранения
 
-#### **OLTP** операции
+#### OLTP операции
 - **Медленные вставки** одиночных записей
 - **Сложные обновления** требуют перезаписи
 - **Не подходит** для транзакционных систем
@@ -1022,7 +1022,7 @@ SHOW GRANTS FOR analyst;
 
 **ClickHouse** — это мощная платформа для аналитики больших данных, которая сочетает высокую производительность с удобством использования. Его колоночная архитектура делает его идеальным выбором для:**
 
-### Сильные стороны **ClickHouse**:
+### Сильные стороны ClickHouse:
 
 1. **Производительность**: Быстрые аналитические запросы
 2. **Масштабируемость**: Поддержка больших кластеров
@@ -1079,7 +1079,7 @@ SHOW GRANTS FOR analyst;
 
 
 **Следующие темы:**
-- [Таблицы и движки](clickhouse-tables.md)
-- [Запросы и аналитика](clickhouse-queries.md)
-- [Индексы и оптимизация](clickhouse-indexes.md)
+- [[clickhouse-tables|Таблицы и движки]]
+- [[clickhouse-queries|Запросы и аналитика]]
+- [[clickhouse-indexes|Индексы и оптимизация]]
 

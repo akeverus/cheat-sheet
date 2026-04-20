@@ -68,11 +68,11 @@ updated: "2026-02-11"
   - [From Java to Scala](#from-java-to-scala)
 - [См. также](#см-также)
 
-## Основные концепции **Akka**
+## Основные концепции Akka
 
-### **Actor System**
+### Actor System
 
-Создание **Actor System** и завершение работы (**terminate**).
+Создание **Actor System** и завершение работы (terminate).
 
 ```scala
 import akka.actor.{ActorSystem, Props}
@@ -93,7 +93,7 @@ val system = ActorSystem("MyActorSystem")
 system.terminate()
 ```
 
-### Акторы (**Actors**)
+### Акторы (Actors)
 ```scala
 import akka.actor.{Actor, ActorLogging, Props}
 
@@ -315,9 +315,9 @@ supervisor ! "error2" // Restart
 supervisor ! "error3" // Stop
 ```
 
-## Акка **Typed**
+## Акка Typed
 
-### **Typed Actors**
+### Typed Actors
 ```scala
 import akka.actor.typed.{ActorSystem, ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, ActorContext}
@@ -380,7 +380,7 @@ futureItems.foreach(items => println(s"Cart contains: $items"))
 system.terminate()
 ```
 
-### **Behaviors API**
+### Behaviors API
 ```scala
 import akka.actor.typed.scaladsl.Behaviors
 import scala.concurrent.duration._
@@ -479,9 +479,9 @@ object StashExample {
 }
 ```
 
-## Потоки **Akka**
+## Потоки Akka
 
-### Основы **Streams**
+### Основы Streams
 ```scala
 import akka.stream._
 import akka.stream.scaladsl._
@@ -525,7 +525,7 @@ val throttledSource = Source(1 to 100)
   .throttle(10, 1.second) // 10 элементов в секунду
 ```
 
-### **Graph DSL**
+### Graph DSL
 ```scala
 import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.MergePreferred
@@ -556,7 +556,7 @@ val graph = GraphDSL.create() { implicit builder =>
 RunnableGraph.fromGraph(graph).run()
 ```
 
-### **Reactive Streams**
+### Reactive Streams
 ```scala
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import java.util.concurrent.Flow
@@ -591,7 +591,7 @@ class LoggingSubscriber[T] extends Subscriber[T] {
 publisher.subscribe(new LoggingSubscriber[Int])
 ```
 
-### **Backpressure**
+### Backpressure
 ```scala
 // Fast producer, slow consumer
 val fastSource = Source.tick(0.millis, 10.millis, 1).scan(0)(_ + _)
@@ -613,7 +613,7 @@ val controlled = Source(1 to 1000)
   .run()
 ```
 
-### **Error Handling**
+### Error Handling
 ```scala
 import akka.stream.RestartSettings
 import scala.concurrent.duration._
@@ -649,9 +649,9 @@ val restartableSource = RestartSource.withBackoff(restartSettings) { () =>
 }
 ```
 
-## **Akka HTTP**
+## Akka HTTP
 
-### **HTTP Server**
+### HTTP Server
 ```scala
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -685,7 +685,7 @@ val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 // bindingFuture.flatMap(_.unbind())
 ```
 
-### **HTTP Client**
+### HTTP Client
 ```scala
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -725,7 +725,7 @@ val createUserRequest = HttpRequest(
 val postResponse = Http().singleRequest(createUserRequest)
 ```
 
-### **WebSocket**
+### WebSocket
 ```scala
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.stream.scaladsl.Flow
@@ -772,7 +772,7 @@ val actorFlow = Flow.fromSinkAndSource(
 )
 ```
 
-## Кластер **Akka**
+## Кластер Akka
 
 ### Настройка кластера
 ```scala
@@ -797,7 +797,7 @@ akka {
 }
 ```
 
-### **Cluster Actors**
+### Cluster Actors
 ```scala
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
@@ -833,7 +833,7 @@ class ClusterListener extends Actor with ActorLogging {
 val clusterListener = system.actorOf(Props[ClusterListener](), "clusterListener")
 ```
 
-### **Cluster Sharding**
+### Cluster Sharding
 ```scala
 import akka.cluster.sharding.{ClusterSharding, ClusterShardingSettings}
 import akka.cluster.sharding.ShardRegion._
@@ -888,7 +888,7 @@ implicit val timeout = Timeout(5.seconds)
 val futureCount = (counterRegion ? Get(self)).mapTo[Int]
 ```
 
-### **Cluster Singleton**
+### Cluster Singleton
 ```scala
 import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings}
 import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
@@ -925,9 +925,9 @@ val singletonProxy = system.actorOf(
 singletonProxy ! WorkRequest("some work")
 ```
 
-## Персистентность **Akka**
+## Персистентность Akka
 
-### **Persistent Actors**
+### Persistent Actors
 ```scala
 import akka.persistence._
 
@@ -996,7 +996,7 @@ class UserActor(userId: String) extends PersistentActor with ActorLogging {
 }
 ```
 
-### **Snapshots**
+### Snapshots
 ```scala
 class UserActorWithSnapshots(userId: String) extends PersistentActor with ActorLogging {
 
@@ -1043,9 +1043,9 @@ class UserActorWithSnapshots(userId: String) extends PersistentActor with ActorL
 }
 ```
 
-## **TestKit Akka**
+## TestKit Akka
 
-### **Testing Actors**
+### Testing Actors
 ```scala
 import akka.testkit.{TestKit, TestActorRef, TestProbe}
 import org.scalatest.BeforeAndAfterAll
@@ -1084,7 +1084,7 @@ class SimpleActorSpec extends TestKit(ActorSystem("test"))
 }
 ```
 
-### **Testing Streams**
+### Testing Streams
 ```scala
 import akka.stream.testkit.scaladsl.{TestSource, TestSink}
 import scala.concurrent.duration._
@@ -1128,9 +1128,9 @@ class StreamSpec extends AnyWordSpecLike with Matchers {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
-### **Akka** в **Spring** приложении
+### Akka в Spring приложении
 ```scala
 @Configuration
 class AkkaConfig {
@@ -1192,7 +1192,7 @@ class UserController @Autowired()(
 }
 ```
 
-### **Configuration**
+### Configuration
 ```scala
 // application.conf
 akka {
@@ -1227,7 +1227,7 @@ akka {
 
 ## Лучшие практики
 
-### **Actor Design**
+### Actor Design
 ```scala
 // Правильное проектирование акторов
 object ActorDesign {
@@ -1318,7 +1318,7 @@ object ActorDesign {
 }
 ```
 
-### **Performance Optimization**
+### Performance Optimization
 ```scala
 object PerformanceOptimization {
 
@@ -1382,7 +1382,7 @@ object PerformanceOptimization {
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object AkkaTroubleshooting {
 
@@ -1451,7 +1451,7 @@ object AkkaTroubleshooting {
 }
 ```
 
-### **Monitoring and Debugging**
+### Monitoring and Debugging
 ```scala
 // Actor monitoring
 class ActorMonitor extends Actor with ActorLogging {
@@ -1518,7 +1518,7 @@ class JmxMonitor extends Actor {
 
 ## Руководство по миграции
 
-### **From Akka Classic** to **Typed**
+### From Akka Classic to Typed
 ```scala
 // Classic actor
 class ClassicActor extends Actor {
@@ -1556,7 +1556,7 @@ object MigrationHelper {
 }
 ```
 
-### **From Java** to **Scala**
+### From Java to Scala
 ```scala
 // Java-style actors in Scala
 class JavaStyleActor extends Actor {
@@ -1593,5 +1593,5 @@ class ScalaStyleActor extends Actor {
 ## См. также
 - [[scala-zio|ZIO]] — Альтернативная библиотека для функционального программирования
 - [[scala-cats|Cats]] — Функциональная библиотека для **Scala**
-- [Паттерны](../../patterns/README.md) — Функциональные паттерны
+- [[README|Паттерны]] — Функциональные паттерны
 

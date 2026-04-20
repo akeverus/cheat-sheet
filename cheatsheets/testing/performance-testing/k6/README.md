@@ -19,14 +19,14 @@ Grafana k6 — современный инструмент нагрузочно�
 ## Полезные ссылки
 
 ### Основные документы
-- [k6](k6.md) — VUs, stages, thresholds, WebSocket/gRPC, CI/CD
+- [[k6]] — VUs, stages, thresholds, WebSocket/gRPC, CI/CD
 
 ### Соседние разделы
-- [Performance Testing](../README.md)
-- [JMeter](../jmeter/README.md)
-- [Gatling](../gatling/README.md)
-- [Artillery](../artillery/README.md)
-- [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+- [[README|Performance Testing]]
+- [[README|JMeter]]
+- [[README|Gatling]]
+- [[README|Artillery]]
+- [[testing-tools-overview|Testing Tools Overview]]
 
 ### Внешние ресурсы
 - [k6 Docs](https://k6.io/docs/)
@@ -44,10 +44,10 @@ Grafana k6 — современный инструмент нагрузочно�
 
 | Тема | Где читать |
 |------|-----------|
-| Структура теста: VUs, stages, scenarios | [k6.md](k6.md) |
-| HTTP, checks, группы, thresholds | [k6.md](k6.md) |
-| WebSocket, gRPC | [k6.md](k6.md) |
-| Отчёты, Grafana/Prometheus, CI/CD | [k6.md](k6.md) |
+| Структура теста: VUs, stages, scenarios | [[k6]] |
+| HTTP, checks, группы, thresholds | [[k6]] |
+| WebSocket, gRPC | [[k6]] |
+| Отчёты, Grafana/Prometheus, CI/CD | [[k6]] |
 
 ## Когда использовать: сравнение perf-инструментов
 
@@ -67,6 +67,6 @@ k6 — оптимален, когда важны скорость разрабо
 
 ## Куда идти дальше
 
-- Обзор нагрузочного тестирования — [../README.md](../README.md)
-- JVM-альтернатива — [../gatling/README.md](../gatling/README.md)
-- Node.js-альтернатива — [../artillery/README.md](../artillery/README.md)
+- Обзор нагрузочного тестирования — [[README]]
+- JVM-альтернатива — [[README]]
+- Node.js-альтернатива — [[README]]

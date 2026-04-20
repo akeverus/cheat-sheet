@@ -175,7 +175,7 @@ related: ["quarkus-reactive.md", "quarkus-testing.md", "quarkus-security.md"]
   - [Debugging Native Images](#debugging-native-images)
   - [Memory Leak Detection](#memory-leak-detection)
 
-## Введение в **Quarkus**
+## Введение в Quarkus
 
 **Quarkus** — это **Kubernetes-native Java** фреймворк, оптимизированный для создания облачных микросервисов. Основные преимущества:**
 
@@ -186,7 +186,7 @@ related: ["quarkus-reactive.md", "quarkus-testing.md", "quarkus-security.md"]
 - **Reactive**: Встроенная поддержка **reactive programming**
 - **Extensions**: Модульная архитектура с **extensions**
 
-### Архитектура **Quarkus**
+### Архитектура Quarkus
 
 ```text
 # Стек Quarkus: приложение, расширения, нативная сборка GraalVM
@@ -240,7 +240,7 @@ my-app/
 
 ### Основные конфигурационные файлы
 
-#### **pom.xml**
+#### pom.xml
 
 ```xml
 <!-- pom.xml: Quarkus BOM и плагин -->
@@ -344,7 +344,7 @@ my-app/
 </project>
 ```
 
-#### **application.properties**
+#### application.properties
 
 ```properties
 # Server configuration
@@ -376,9 +376,9 @@ quarkus.micrometer.export.prometheus.path=/metrics
 
 ## Extensions System
 
-### Основные категории **extensions**
+### Основные категории extensions
 
-#### **Web Frameworks**
+#### Web Frameworks
 ```xml
 <!-- RESTEasy Reactive (рекомендуется) -->
 <dependency>
@@ -399,7 +399,7 @@ quarkus.micrometer.export.prometheus.path=/metrics
 </dependency>
 ```
 
-#### **Data Access**
+#### Data Access
 ```xml
 <!-- JDBC -->
 <dependency>
@@ -426,7 +426,7 @@ quarkus.micrometer.export.prometheus.path=/metrics
 </dependency>
 ```
 
-#### **Observability**
+#### Observability
 ```xml
 <!-- Health checks -->
 <dependency>
@@ -447,7 +447,7 @@ quarkus.micrometer.export.prometheus.path=/metrics
 </dependency>
 ```
 
-#### **Security**
+#### Security
 ```xml
 <!-- Security -->
 <dependency>
@@ -468,7 +468,7 @@ quarkus.micrometer.export.prometheus.path=/metrics
 </dependency>
 ```
 
-#### **Messaging**
+#### Messaging
 ```xml
 <!-- Kafka -->
 <dependency>
@@ -483,7 +483,7 @@ quarkus.micrometer.export.prometheus.path=/metrics
 </dependency>
 ```
 
-#### **Cloud Native**
+#### Cloud Native
 ```xml
 <!-- Kubernetes -->
 <dependency>
@@ -506,7 +506,7 @@ quarkus.micrometer.export.prometheus.path=/metrics
 
 ## REST API Development
 
-### **RESTEasy Reactive**
+### RESTEasy Reactive
 
 ```java
 // REST-ресурс с инъекцией и эндпоинтами
@@ -595,7 +595,7 @@ public class UserResource {
 }
 ```
 
-### **Data Classes**
+### Data Classes
 
 ```java
 // Сущность User и DTO для создания/обновления с валидацией
@@ -663,7 +663,7 @@ public class UpdateUserRequest {
 }
 ```
 
-### **Exception Handling**
+### Exception Handling
 
 ```java
 // Маппер исключений валидации в HTTP 400 с телом ошибки
@@ -728,7 +728,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
 
 ## Data Access with Panache
 
-### **Entity Definition**
+### Entity Definition
 
 ```java
 // Сущность Panache с именованными запросами
@@ -796,7 +796,7 @@ public class User extends PanacheEntity {
 }
 ```
 
-### **Repository**/**Service Layer**
+### Repository/Service Layer
 
 ```java
 // Сервис с транзакциями и пагинацией через Panache
@@ -895,7 +895,7 @@ public class UserService {
 }
 ```
 
-### **REST Resource with Panache**
+### REST Resource with Panache
 
 ```java
 package org.example;
@@ -1039,7 +1039,7 @@ public class UserStats {
 
 ## Reactive Programming
 
-### **Reactive REST with Mutiny**
+### Reactive REST with Mutiny
 
 ```java
 package org.example;
@@ -1118,7 +1118,7 @@ public class ReactiveUserResource {
 }
 ```
 
-### **Reactive Service**
+### Reactive Service
 
 ```java
 package org.example;
@@ -1197,7 +1197,7 @@ public class ReactiveUserService {
 
 ## Configuration Management
 
-### **Application Properties**
+### Application Properties
 
 ```properties
 # Server configuration
@@ -1276,7 +1276,7 @@ quarkus.container-image.name=my-app
 quarkus.container-image.tag=latest
 ```
 
-### **Configuration Classes**
+### Configuration Classes
 
 ```java
 package org.example.config;
@@ -1340,7 +1340,7 @@ public interface AppConfig {
 }
 ```
 
-### **Using Configuration**
+### Using Configuration
 
 ```java
 package org.example;
@@ -1373,7 +1373,7 @@ public class ConfiguredService {
 
 ## Testing
 
-### **Unit Testing**
+### Unit Testing
 
 ```java
 package org.example;
@@ -1433,7 +1433,7 @@ public class UserResourceTest {
 }
 ```
 
-### **Integration Testing with TestContainers**
+### Integration Testing with TestContainers
 
 ```java
 package org.example;
@@ -1465,7 +1465,7 @@ public class UserResourceIntegrationTest {
 }
 ```
 
-### **Native Testing**
+### Native Testing
 
 ```java
 package org.example;
@@ -1480,7 +1480,7 @@ public class NativeUserResourceIT extends UserResourceTest {
 
 ## Performance Optimization
 
-### **Native Image Compilation**
+### Native Image Compilation
 
 ```bash
 # Build native image
@@ -1508,7 +1508,7 @@ EXPOSE 8080
 CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
 ```
 
-### **JVM Mode Optimization**
+### JVM Mode Optimization
 
 ```properties
 # JVM optimizations
@@ -1526,7 +1526,7 @@ quarkus.native.container-build=true
 
 ## Health Checks and Metrics
 
-### **Health Checks**
+### Health Checks
 
 ```java
 package org.example.health;
@@ -1590,7 +1590,7 @@ public class HealthChecks {
 }
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 ```java
 package org.example.metrics;
@@ -1637,7 +1637,7 @@ public class MetricsService {
 
 ## Security
 
-### **Basic Authentication**
+### Basic Authentication
 
 ```java
 package org.example.security;
@@ -1681,7 +1681,7 @@ public class CustomIdentityProvider implements IdentityProvider<UsernamePassword
 }
 ```
 
-### **JWT Authentication**
+### JWT Authentication
 
 ```java
 package org.example.security;
@@ -1713,7 +1713,7 @@ public class JwtService {
 }
 ```
 
-### **Authorization**
+### Authorization
 
 ```java
 package org.example;
@@ -1775,7 +1775,7 @@ public class UserInfo {
 
 ## Deployment
 
-### **Docker**
+### Docker
 
 ```dockerfile
 FROM registry.access.redhat.com/ubi8/openjdk-17:1.17
@@ -1799,7 +1799,7 @@ USER 1001
 ENTRYPOINT ["java", "-jar", "/deployments/quarkus-run.jar"]
 ```
 
-### **Kubernetes**
+### Kubernetes
 
 ```yaml
 apiVersion: apps/v1
@@ -1884,7 +1884,7 @@ spec:
 
 ## Лучшие практики
 
-### **Application Structure**
+### Application Structure
 
 1. **Use `CDI` for dependency injection**
 2. **Prefer constructor injection over field injection**
@@ -1892,7 +1892,7 @@ spec:
 4. **Implement proper exception handling**
 5. **Use configuration properties wisely**
 
-### **Performance**
+### Performance
 
 1. **Build native images for production**
 2. **Use reactive programming for I/O operations**
@@ -1900,7 +1900,7 @@ spec:
 4. **Monitor application metrics**
 5. **Use health checks for monitoring**
 
-### **Security**
+### Security
 
 1. **Always use `HTTPS` in production**
 2. **Implement proper authentication and authorization**
@@ -1908,7 +1908,7 @@ spec:
 4. **Use secrets management**
 5. **Regularly update dependencies**
 
-### **Development**
+### Development
 
 1. **Use Dev Services for development**
 2. **Write comprehensive tests**
@@ -1918,7 +1918,7 @@ spec:
 
 ## Migration from Spring Boot
 
-### **Key Differences**
+### Key Differences
 
 | **Aspect** | **Spring Boot** | **Quarkus** |
 |--------|-------------|---------|
@@ -1929,7 +1929,7 @@ spec:
 | **CDI** | **Spring** `DI` | **CDI** + **Arc** |
 | **Reactive** | **WebFlux** | **Mutiny** |
 
-### **Migration Steps**
+### Migration Steps
 
 1. **Replace `Spring starters with Quarkus` extensions**
 2. **Convert Spring annotations to CDI/JAX-RS**
@@ -1937,7 +1937,7 @@ spec:
 4. **Adapt testing approach**
 5. **Consider native compilation**
 
-### **Compatibility Layer**
+### Compatibility Layer
 
 ```xml
 <!-- Use Spring compatibility layer if needed -->
@@ -1953,9 +1953,9 @@ spec:
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 
-#### **Slow Startup** in **Dev Mode**
+#### Slow Startup in Dev Mode
 
 ```properties
 # Disable dev services you don't need
@@ -1963,14 +1963,14 @@ quarkus.datasource.devservices.enabled=false
 quarkus.redis.devservices.enabled=false
 ```
 
-#### **Native Image Issues**
+#### Native Image Issues
 
 ```properties
 # Add reflection configuration
 quarkus.native.additional-build-args=-H:ReflectionConfigurationFiles=reflection-config.json
 ```
 
-#### **Memory Issues**
+#### Memory Issues
 
 ```properties
 # Adjust JVM memory settings
@@ -1978,7 +1978,7 @@ quarkus.native.native-image-xmx=4g
 -Xmx512m
 ```
 
-#### **Testing Issues**
+#### Testing Issues
 
 ```java
 // Use @QuarkusTestResource for external dependencies
@@ -1994,17 +1994,17 @@ public class MyTest {
 - [**Quarkus** Guide](https://quarkus.io/guides/)
 - [**Quarkus** Extensions](https://quarkus.io/extensions/)
 
-### **Community Resources**
+### Community Resources
 - [**Quarkus** Insights](https://quarkus.io/blog/)
 - [**Quarkus** Blog](https://quarkus.io/blog/)
 
-### **Learning Resources**
+### Learning Resources
 - [**Quarkus** Workshops](https://quarkus.io/blog/workshops/)
 - [**Quarkus YouTube** Channel](https://www.youtube.com/c/Quarkusio)
 
 ## Advanced Build Configuration
 
-### **Maven Profiles**
+### Maven Profiles
 
 **Использование **Maven** профилей:**
 
@@ -2025,7 +2025,7 @@ public class MyTest {
 </profiles>
 ```
 
-### **Gradle Configuration**
+### Gradle Configuration
 
 **Настройка **Gradle**:**
 
@@ -2046,7 +2046,7 @@ quarkus {
 
 ## Development Tools
 
-### **Dev Services**
+### Dev Services
 
 **Автоматические **dev services**:**
 
@@ -2057,7 +2057,7 @@ quarkus.redis.devservices.enabled=true
 quarkus.kafka.devservices.enabled=true
 ```
 
-### **Hot Reload**
+### Hot Reload
 
 **Горячая перезагрузка:**
 
@@ -2068,7 +2068,7 @@ quarkus.kafka.devservices.enabled=true
 
 ## Performance Tuning
 
-### **JVM Tuning**
+### JVM Tuning
 
 **Настройка **JVM**:**
 
@@ -2077,7 +2077,7 @@ quarkus.kafka.devservices.enabled=true
 quarkus.jvm.args=-Xmx512m,-Xms256m
 ```
 
-### **Native Image Tuning**
+### Native Image Tuning
 
 **Оптимизация **native image**:**
 
@@ -2087,7 +2087,7 @@ quarkus.native.additional-build-args=--gc=G1,-H:+ReportExceptionStackTraces
 
 ## Monitoring и Observability
 
-### **Health Checks**
+### Health Checks
 
 **Настройка **health checks**:**
 
@@ -2096,7 +2096,7 @@ quarkus.smallrye-health.ui.enable=true
 quarkus.smallrye-health.root-path=/health
 ```
 
-### **Metrics**
+### Metrics
 
 **Настройка метрик:**
 
@@ -2105,7 +2105,7 @@ quarkus.micrometer.enabled=true
 quarkus.micrometer.export.prometheus.enabled=true
 ```
 
-### **Distributed Tracing**
+### Distributed Tracing
 
 **Настройка **distributed tracing**:**
 
@@ -2116,7 +2116,7 @@ quarkus.opentelemetry.tracer.exporter.otlp.endpoint=http://jaeger:4317
 
 ## Advanced Development Patterns
 
-### **Command Pattern**
+### Command Pattern
 
 **Использование **command pattern**:**
 
@@ -2134,7 +2134,7 @@ public interface Command<T> {
 }
 ```
 
-### **Strategy Pattern**
+### Strategy Pattern
 
 **Использование **strategy pattern**:**
 
@@ -2155,7 +2155,7 @@ public class PaymentStrategyFactory {
 }
 ```
 
-### **Factory Pattern**
+### Factory Pattern
 
 **Использование **factory pattern**:**
 
@@ -2177,7 +2177,7 @@ public class ServiceFactory {
 
 ## Build Optimization
 
-### **Incremental Builds**
+### Incremental Builds
 
 **Оптимизация инкрементальных сборок:**
 
@@ -2187,7 +2187,7 @@ quarkus.build.include-tests=false
 quarkus.build.skip=false
 ```
 
-### **Build Caching**
+### Build Caching
 
 **Использование кеширования сборок:**
 
@@ -2202,7 +2202,7 @@ quarkus.build.skip=false
 </plugin>
 ```
 
-### **Parallel Builds**
+### Parallel Builds
 
 **Параллельные сборки:**
 
@@ -2214,7 +2214,7 @@ maven.build.threads=4
 
 ## Container Optimization
 
-### **Multi-stage Builds**
+### Multi-stage Builds
 
 **Оптимизация **Docker** образов:**
 
@@ -2234,7 +2234,7 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/work/app.jar"]
 ```
 
-### **Image Size Optimization**
+### Image Size Optimization
 
 **Оптимизация размера образа:**
 
@@ -2252,7 +2252,7 @@ ENTRYPOINT ["./application"]
 
 ## Performance Monitoring
 
-### **Application Metrics**
+### Application Metrics
 
 **Мониторинг метрик приложения:**
 
@@ -2273,7 +2273,7 @@ public class MetricsService {
 }
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 **Создание кастомных метрик:**
 
@@ -2301,7 +2301,7 @@ public class CustomMetrics {
 
 ## Error Handling Strategies
 
-### **Global Exception Handler**
+### Global Exception Handler
 
 **Глобальный обработчик исключений:**
 
@@ -2320,7 +2320,7 @@ public class GlobalExceptionHandler implements ExceptionMapper<Exception> {
 }
 ```
 
-### **Retry Strategy**
+### Retry Strategy
 
 **Стратегия повторных попыток:**
 
@@ -2338,7 +2338,7 @@ public class RetryService {
 
 ## Security Best Practices
 
-### **Input Validation**
+### Input Validation
 
 **Валидация входных данных:**
 
@@ -2354,7 +2354,7 @@ public class UserResource {
 }
 ```
 
-### **Output Sanitization**
+### Output Sanitization
 
 **Санитизация выходных данных:**
 
@@ -2371,7 +2371,7 @@ public class SanitizationService {
 
 ## Advanced Deployment Patterns
 
-### **Container Registry Integration**
+### Container Registry Integration
 
 **Интеграция с **registry** контейнеров:**
 
@@ -2381,7 +2381,7 @@ docker build -t myregistry/my-app:1.0.0 .
 docker push myregistry/my-app:1.0.0
 ```
 
-### **Multi-stage Docker Builds**
+### Multi-stage Docker Builds
 
 **Многоэтапные **Docker** сборки:**
 
@@ -2404,7 +2404,7 @@ ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
 
 ## Production Readiness Checklist
 
-### **Performance**
+### Performance
 
 - [ ] Настроены **health checks**
 - [ ] Настроены метрики
@@ -2412,7 +2412,7 @@ ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
 - [ ] Оптимизирован **connection pooling**
 - [ ] Настроено кеширование
 
-### **Security**
+### Security
 
 - [ ] Используется **HTTPS**
 - [ ] Настроена аутентификация
@@ -2420,7 +2420,7 @@ ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
 - [ ] Валидируются все входные данные
 - [ ] Настроены **security headers**
 
-### **Monitoring**
+### Monitoring
 
 - [ ] Настроены **health endpoints**
 - [ ] Настроены **metrics endpoints**
@@ -2430,7 +2430,7 @@ ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]
 
 ## Application Lifecycle Management
 
-### **Startup Hooks**
+### Startup Hooks
 
 **Хуки запуска приложения:**
 
@@ -2452,7 +2452,7 @@ public class StartupService {
 }
 ```
 
-### **Application Events**
+### Application Events
 
 **События приложения:**
 
@@ -2476,7 +2476,7 @@ public class ApplicationEventListener {
 
 ## Development Workflow
 
-### **Hot Reload Configuration**
+### Hot Reload Configuration
 
 **Настройка **hot reload**:**
 
@@ -2486,7 +2486,7 @@ quarkus.live-reload.password=dev
 quarkus.live-reload.url=http://localhost:8080
 ```
 
-### **Dev** `UI`
+### Dev `UI`
 
 **Использование **Dev** `UI`:**
 
@@ -2495,7 +2495,7 @@ quarkus.dev-ui.enabled=true
 quarkus.dev-ui.path=/q/dev
 ```
 
-### **Continuous Testing**
+### Continuous Testing
 
 **Непрерывное тестирование:**
 
@@ -2506,7 +2506,7 @@ quarkus.dev-ui.path=/q/dev
 
 ## Production Deployment Strategies
 
-### **Rolling Update**
+### Rolling Update
 
 **Rolling update** стратегия:**
 
@@ -2524,7 +2524,7 @@ spec:
   replicas: 3
 ```
 
-### **Health Check Integration**
+### Health Check Integration
 
 **Интеграция **health checks**:**
 
@@ -2546,7 +2546,7 @@ readinessProbe:
 
 ## Performance Optimization Strategies
 
-### **JVM Tuning for Production**
+### JVM Tuning for Production
 
 **Настройка **JVM** для **production**:**
 
@@ -2554,7 +2554,7 @@ readinessProbe:
 quarkus.jvm.args=-Xmx512m,-Xms256m,-XX:+UseG1GC,-XX:MaxGCPauseMillis=200
 ```
 
-### **Native Image Optimization**
+### Native Image Optimization
 
 **Оптимизация **native image**:**
 
@@ -2566,7 +2566,7 @@ quarkus.native.additional-build-args=\
   -H:+InlineBeforeAnalysis
 ```
 
-### **Connection Pool Tuning**
+### Connection Pool Tuning
 
 **Настройка **connection pool**:**
 
@@ -2579,7 +2579,7 @@ quarkus.datasource.jdbc.validation-query-sql=SELECT 1
 
 ## Monitoring and Observability
 
-### **Log Aggregation Setup**
+### Log Aggregation Setup
 
 **Настройка агрегации логов:**
 
@@ -2589,7 +2589,7 @@ quarkus.log.console.json.pretty-print=false
 quarkus.log.category."org.example".level=INFO
 ```
 
-### **Metrics Export**
+### Metrics Export
 
 **Экспорт метрик:**
 
@@ -2599,7 +2599,7 @@ quarkus.micrometer.export.prometheus.enabled=true
 quarkus.micrometer.export.prometheus.path=/metrics
 ```
 
-### **Distributed Tracing Configuration**
+### Distributed Tracing Configuration
 
 **Настройка **distributed tracing**:**
 
@@ -2611,7 +2611,7 @@ quarkus.opentelemetry.service-name=my-app
 
 ## Security Hardening
 
-### **SSL**/**TLS Configuration**
+### SSL/TLS Configuration
 
 **Настройка **SSL**/**TLS**:**
 
@@ -2621,7 +2621,7 @@ quarkus.http.ssl.certificate.file=/path/to/cert.pem
 quarkus.http.ssl.certificate.key-file=/path/to/key.pem
 ```
 
-### **Security Headers**
+### Security Headers
 
 **Настройка **security headers**:**
 
@@ -2643,7 +2643,7 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
 
 ## Решение проблем
 
-### **Common Performance Issues**
+### Common Performance Issues
 
 **Типичные проблемы производительности:**
 
@@ -2651,7 +2651,7 @@ public class SecurityHeadersFilter implements ContainerResponseFilter {
 2. **Высокое потребление памяти**: Оптимизируйте **connection pools** и кеши
 3. **Медленные запросы**: Используйте **reactive** подходы и оптимизируйте запросы к БД
 
-### **Debugging Native Images**
+### Debugging Native Images
 
 **Отладка **native images**:**
 
@@ -2661,7 +2661,7 @@ quarkus.native.debug.build-process=true
 quarkus.native.additional-build-args=-H:+ReportExceptionStackTraces
 ```
 
-### **Memory Leak Detection**
+### Memory Leak Detection
 
 **Обнаружение утечек памяти:**
 

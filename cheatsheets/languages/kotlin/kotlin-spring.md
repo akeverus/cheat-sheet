@@ -109,11 +109,11 @@ updated: "2026-02-11"
   - [Использование **Spring AOP**](#использование-spring-aop)
   - [Использование **Spring Events**](#использование-spring-events)
 
-## Введение в **Kotlin** + **Spring**
+## Введение в Kotlin + Spring
 
 Использование **Kotlin** с **Spring Framework** предоставляет множество преимуществ благодаря синтаксису **Kotlin** и возможностям **Spring**. **Kotlin** отлично интегрируется со **Spring**, предоставляя более лаконичный и безопасный код.
 
-### Преимущества **Kotlin** в **Spring**
+### Преимущества Kotlin в Spring
 
 - **Лаконичность**: меньше **boilerplate** кода по сравнению с **Java**
 - **Null Safety**: система типов **Kotlin** предотвращает **NullPointerException**
@@ -128,7 +128,7 @@ updated: "2026-02-11"
 
 ## Настройка проекта
 
-### **Gradle** конфигурация
+### Gradle конфигурация
 
 **Для **Spring Boot** проекта с **Kotlin** необходимо настроить зависимости:**
 
@@ -150,9 +150,9 @@ dependencies {
 }
 ```
 
-Плагин `**kotlin-spring**` автоматически делает все классы открытыми (**open**), что необходимо для **Spring** прокси. Плагин `**kotlin-jpa**` добавляет поддержку **JPA** аннотаций.
+Плагин `kotlin-spring` автоматически делает все классы открытыми (open), что необходимо для **Spring** прокси. Плагин `kotlin-jpa` добавляет поддержку **JPA** аннотаций.
 
-### **Maven** конфигурация
+### Maven конфигурация
 
 **Для **Maven** проекта:**
 
@@ -173,7 +173,7 @@ dependencies {
 </dependencies>
 ```
 
-## **Spring Boot** с **Kotlin**
+## Spring Boot с Kotlin
 
 ### Основной класс приложения
 
@@ -191,9 +191,9 @@ fun main(args: Array<String>) {
 }
 ```
 
-Аннотация `@**SpringBootApplication**` включает автоконфигурацию, сканирование компонентов и поддержку конфигурационных свойств. Функция `**runApplication**` является удобной оберткой над `**SpringApplication.run**()`.
+Аннотация `@**SpringBootApplication**` включает автоконфигурацию, сканирование компонентов и поддержку конфигурационных свойств. Функция `runApplication` является удобной оберткой над `**SpringApplication.run**()`.
 
-### **REST** контроллеры
+### REST контроллеры
 
 **REST** контроллеры в **Kotlin** выглядят более лаконично:**
 
@@ -225,7 +225,7 @@ class UserController(
 }
 ```
 
-Использование конструктора для инъекции зависимостей делает код чище. **Elvis** оператор (**`?:`**) упрощает обработку **nullable** значений.
+Использование конструктора для инъекции зависимостей делает код чище. **Elvis** оператор (`?:`) упрощает обработку **nullable** значений.
 
 ### Сервисный слой
 
@@ -253,11 +253,11 @@ fun User.isValid(): Boolean {
 
 **Extension** функции позволяют добавлять методы к существующим классам без модификации их исходного кода, что особенно полезно для работы с **JPA entities**.
 
-## Корутины в **Spring**
+## Корутины в Spring
 
 **Spring WebFlux** и **Spring MVC** поддерживают корутины **Kotlin** для асинхронной обработки запросов.
 
-### **WebFlux** с корутинами
+### WebFlux с корутинами
 
 **Для использования корутин в **WebFlux** необходимо добавить зависимость:**
 
@@ -287,11 +287,11 @@ class UserController(
 }
 ```
 
-Ключевое слово `**suspend**` указывает, что функция может быть приостановлена. **Spring** автоматически обрабатывает **suspend** функции через корутины, что позволяет писать асинхронный код в синхронном стиле.
+Ключевое слово `suspend` указывает, что функция может быть приостановлена. **Spring** автоматически обрабатывает **suspend** функции через корутины, что позволяет писать асинхронный код в синхронном стиле.
 
-### **Reactive Repository** с корутинами
+### Reactive Repository с корутинами
 
-**Для работы с корутинами в **Spring Data** можно использовать `**CoroutineCrudRepository**`:**
+**Для работы с корутинами в **Spring Data** можно использовать `CoroutineCrudRepository`:**
 
 ```kotlin
 interface UserRepository : CoroutineCrudRepository<User, Long> {
@@ -300,13 +300,13 @@ interface UserRepository : CoroutineCrudRepository<User, Long> {
 }
 ```
 
-`**CoroutineCrudRepository**` предоставляет **suspend** версии стандартных методов и поддерживает `**Flow**` для потоковой обработки данных.
+`CoroutineCrudRepository` предоставляет **suspend** версии стандартных методов и поддерживает `Flow` для потоковой обработки данных.
 
-## **Null Safety** в **Spring**
+## Null Safety в Spring
 
 **Kotlin** система типов помогает избежать **NullPointerException**, но требует внимательности при работе с **Spring**.
 
-### **Nullable** типы в **Spring**
+### Nullable типы в Spring
 
 **Spring** компоненты могут возвращать **null**, что нужно учитывать:**
 
@@ -325,9 +325,9 @@ class UserService(
 }
 ```
 
-Использование **nullable** типов (**`User?`**) явно указывает, что метод может вернуть **null**, что помогает избежать неожиданных **NPE**.
+Использование **nullable** типов (`User?`) явно указывает, что метод может вернуть **null**, что помогает избежать неожиданных **NPE**.
 
-### **JPA** и **Null Safety**
+### JPA и Null Safety
 
 **При работе с **JPA entities** нужно учитывать **nullable** поля:**
 
@@ -345,13 +345,13 @@ data class User(
 )
 ```
 
-Аннотация `@**Column(**nullable = true**)` указывает, что поле может быть **null** в базе данных, что должно соответствовать **nullable** типу в **Kotlin**.
+Аннотация `@**Column(nullable = true)` указывает, что поле может быть **null** в базе данных, что должно соответствовать **nullable** типу в **Kotlin**.
 
-## **Kotlin DSL** для конфигурации
+## Kotlin DSL для конфигурации
 
 **Spring** поддерживает **Kotlin DSL** для конфигурации вместо **XML** или **Java** конфигурации.
 
-### **Bean** конфигурация через **DSL**
+### Bean конфигурация через DSL
 
 ```kotlin
 @Configuration
@@ -372,9 +372,9 @@ class AppConfig {
 }
 ```
 
-Использование `**apply**` блока делает конфигурацию более читаемой и позволяет инициализировать объект в функциональном стиле.
+Использование `apply` блока делает конфигурацию более читаемой и позволяет инициализировать объект в функциональном стиле.
 
-### **Router Function DSL**
+### Router Function DSL
 
 **Spring WebFlux** поддерживает функциональный роутинг через **DSL**:**
 
@@ -398,11 +398,11 @@ class RouterConfig {
 
 Функциональный роутинг предоставляет более декларативный способ определения маршрутов по сравнению с аннотациями.
 
-## **Data** классы и **JPA**
+## Data классы и JPA
 
 **Data** классы **Kotlin** отлично работают с **JPA**, но требуют некоторых настроек.
 
-### **JPA Entity** как **Data** класс
+### JPA Entity как Data класс
 
 ```kotlin
 @Entity
@@ -423,11 +423,11 @@ data class User(
 )
 ```
 
-**Data** классы автоматически генерируют `**equals**`, `**hashCode**` и `**toString**`, но для **JPA entities** нужно быть осторожным с `**equals**` и `**hashCode**`, так как они должны учитывать только `ID` для корректной работы с **Hibernate**.
+**Data** классы автоматически генерируют `equals`, `hashCode` и `toString`, но для **JPA entities** нужно быть осторожным с `equals` и `hashCode`, так как они должны учитывать только `ID` для корректной работы с **Hibernate**.
 
-### Проблемы с **equals**/**hashCode**
+### Проблемы с equals/hashCode
 
-**По умолчанию **data** классы генерируют `**equals**` и `**hashCode**` на основе всех свойств, что может вызвать проблемы с **Hibernate**:**
+**По умолчанию **data** классы генерируют `equals` и `hashCode` на основе всех свойств, что может вызвать проблемы с **Hibernate**:**
 
 ```kotlin
 @Entity
@@ -450,13 +450,13 @@ data class User(
 }
 ```
 
-Переопределение `**equals**` и `**hashCode**` только на основе `ID` обеспечивает корректную работу с **Hibernate** сессиями и **lazy loading**.
+Переопределение `equals` и `hashCode` только на основе `ID` обеспечивает корректную работу с **Hibernate** сессиями и **lazy loading**.
 
 ## Тестирование
 
 **Spring** предоставляет отличную поддержку тестирования **Kotlin** кода.
 
-### **Unit** тесты
+### Unit тесты
 
 ```kotlin
 @ExtendWith(MockitoExtension::class)
@@ -481,7 +481,7 @@ class UserServiceTest {
 
 Использование **backticks** в именах тестов позволяет писать более читаемые описания тестов на естественном языке.
 
-### **Integration** тесты
+### Integration тесты
 
 ```kotlin
 @SpringBootTest
@@ -503,11 +503,11 @@ class UserControllerTest {
 
 ## Лучшие практики
 
-### Использование **Data** классов
+### Использование Data классов
 
-**Data** классы отлично подходят для **DTO** и **value objects**, но для **JPA entities** нужно аккуратно обрабатывать `**equals**` и `**hashCode**`.
+**Data** классы отлично подходят для **DTO** и **value objects**, но для **JPA entities** нужно аккуратно обрабатывать `equals` и `hashCode`.
 
-### **Null Safety**
+### Null Safety
 
 Всегда используйте **nullable** типы там, где значение может отсутствовать. Это предотвращает **NPE** и делает код более безопасным.
 
@@ -515,11 +515,11 @@ class UserControllerTest {
 
 Используйте корутины для асинхронных операций вместо блокирующих вызовов. Это повышает производительность и масштабируемость приложения.
 
-### **Extension** функции
+### Extension функции
 
 Используйте **extension** функции для добавления функциональности к **Spring** компонентам без модификации их исходного кода.
 
-### **Extension** функции
+### Extension функции
 
 Используйте **extension** функции для добавления функциональности к **Spring** компонентам без модификации их исходного кода. Это позволяет создавать более выразительный и идиоматичный **Kotlin** код.
 
@@ -540,11 +540,11 @@ fun getUser(@PathVariable id: Long): ResponseEntity<User> {
 
 **Extension** функции делают код более читаемым и позволяют создавать **DSL**-подобный синтаксис для **Spring** компонентов.
 
-## Работа с **Spring Data**
+## Работа с Spring Data
 
 **Spring Data** отлично работает с **Kotlin**, особенно с **data** классами и **nullable** типами.
 
-### **JPA Entities**
+### JPA Entities
 
 ```kotlin
 @Entity
@@ -569,9 +569,9 @@ data class User(
 }
 ```
 
-**Data** классы можно использовать с **JPA**, но нужно быть осторожным с `**equals**` и `**hashCode**`. Рекомендуется использовать `@**Entity**` с явным определением этих методов или использовать обычные классы для **entities**.
+**Data** классы можно использовать с **JPA**, но нужно быть осторожным с `equals` и `hashCode`. Рекомендуется использовать `@**Entity**` с явным определением этих методов или использовать обычные классы для **entities**.
 
-### **Spring Data Repositories**
+### Spring Data Repositories
 
 ```kotlin
 interface UserRepository : JpaRepository<User, Long> {
@@ -596,7 +596,7 @@ class UserService(
 
 **Spring Data** автоматически генерирует реализации методов на основе их имен, что делает работу с базой данных очень удобной в **Kotlin**.
 
-### **Reactive Repositories**
+### Reactive Repositories
 
 ```kotlin
 interface UserRepository : ReactiveCrudRepository<User, Long> {
@@ -618,13 +618,13 @@ class UserController(
 }
 ```
 
-**Reactive repositories** работают с `**Mono**` и `**Flux**`, что идеально сочетается с корутинами и **Flow** в **Kotlin**.
+**Reactive repositories** работают с `Mono` и `Flux`, что идеально сочетается с корутинами и **Flow** в **Kotlin**.
 
-## **Spring Security** с **Kotlin**
+## Spring Security с Kotlin
 
 **Spring Security** можно использовать с **Kotlin**, используя **DSL** для конфигурации.
 
-### Конфигурация **Security**
+### Конфигурация Security
 
 ```kotlin
 @Configuration
@@ -648,7 +648,7 @@ class SecurityConfig {
 
 **Kotlin DSL** для **Spring Security** делает конфигурацию более читаемой и типобезопасной.
 
-### **Custom Authentication**
+### Custom Authentication
 
 ```kotlin
 @Component
@@ -677,11 +677,11 @@ class CustomAuthenticationProvider : AuthenticationProvider {
 
 **Custom authentication providers** позволяют реализовать собственную логику аутентификации, интегрируя ее с **Spring Security**.
 
-## **Spring Boot Actuator**
+## Spring Boot Actuator
 
 **Spring Boot Actuator** предоставляет **endpoints** для мониторинга и управления приложением.
 
-### Настройка **Actuator**
+### Настройка Actuator
 
 ```kotlin
 // application.yml
@@ -715,11 +715,11 @@ class DatabaseHealthIndicator : HealthIndicator {
 
 **Actuator endpoints** позволяют мониторить состояние приложения, метрики и здоровье различных компонентов.
 
-## Тестирование **Spring** приложений
+## Тестирование Spring приложений
 
 **Kotlin** предоставляет удобные инструменты для тестирования **Spring** приложений.
 
-### **Unit** тесты
+### Unit тесты
 
 ```kotlin
 @ExtendWith(MockitoExtension::class)
@@ -745,7 +745,7 @@ class UserServiceTest {
 
 **Unit** тесты с моками позволяют тестировать сервисы изолированно от зависимостей.
 
-### **Integration** тесты
+### Integration тесты
 
 ```kotlin
 @SpringBootTest
@@ -784,11 +784,11 @@ class UserControllerIntegrationTest {
 
 **Integration** тесты проверяют работу всего стека приложения, включая базу данных и **HTTP** слой.
 
-## **Spring Cloud** с **Kotlin**
+## Spring Cloud с Kotlin
 
 **Spring Cloud** можно использовать с **Kotlin** для создания микросервисных приложений.
 
-### **Service Discovery**
+### Service Discovery
 
 ```kotlin
 @SpringBootApplication
@@ -809,7 +809,7 @@ class UserController {
 
 **Service Discovery** позволяет автоматически находить и регистрировать сервисы в микросервисной архитектуре.
 
-### **Circuit Breaker**
+### Circuit Breaker
 
 ```kotlin
 @Service
@@ -883,9 +883,9 @@ class AsyncConfig {
 
 Этот файл содержит полное руководство по использованию **Kotlin** с **Spring Framework**, покрывающее все основные аспекты интеграции, включая **Spring Data**, **Spring Security**, **Spring Boot Actuator**, тестирование, **Spring Cloud** и оптимизацию производительности.
 
-## Продвинутые техники **Spring**
+## Продвинутые техники Spring
 
-### **Reactive Spring** с **Kotlin**
+### Reactive Spring с Kotlin
 
 **Использование **Spring WebFlux** с корутинами для создания реактивных приложений:**
 
@@ -914,7 +914,7 @@ class ReactiveUserController(private val userService: ReactiveUserService) {
 
 **Reactive Spring** с корутинами позволяет создавать масштабируемые приложения с неблокирующими операциями.
 
-### **Spring Boot Configuration Properties**
+### Spring Boot Configuration Properties
 
 **Работа с **configuration properties** в **Spring Boot**:**
 
@@ -963,7 +963,7 @@ class MyService(
 
 ## Мониторинг и метрики
 
-### **Custom Actuator Endpoints**
+### Custom Actuator Endpoints
 
 **Создание пользовательских **Actuator endpoints** для мониторинга:**
 
@@ -994,7 +994,7 @@ class CustomEndpoint {
 
 **Custom Actuator endpoints** позволяют добавлять специфичные для приложения метрики и операции.
 
-### Метрики с **Micrometer**
+### Метрики с Micrometer
 
 **Использование **Micrometer** для создания метрик:**
 
@@ -1020,9 +1020,9 @@ class MetricsService(
 
 **Micrometer** позволяет создавать метрики для мониторинга производительности и состояния приложения.
 
-## Продвинутые техники **Spring**
+## Продвинутые техники Spring
 
-### Работа с **Spring AOP**
+### Работа с Spring AOP
 
 **Использование **Aspect-Oriented Programming** в **Spring**:**
 
@@ -1067,7 +1067,7 @@ class UserService {
 
 **AOP** позволяет добавлять **cross-cutting concerns**, такие как логирование, кэширование и транзакции, без изменения основного кода.
 
-### Работа с **Spring Events**
+### Работа с Spring Events
 
 **Использование событий для слабосвязанной коммуникации:**
 
@@ -1108,7 +1108,7 @@ class UserEventListener {
 
 **Spring Events** позволяют создавать слабосвязанные компоненты, которые общаются через события.
 
-### Работа с **Spring Profiles**
+### Работа с Spring Profiles
 
 **Использование профилей для различных окружений:**
 
@@ -1155,7 +1155,7 @@ class ProdUserService : UserService {
 
 Профили позволяют использовать различные конфигурации для разных окружений, что упрощает развертывание.
 
-## Продвинутые техники **Spring Data**
+## Продвинутые техники Spring Data
 
 ### Работа с кастомными запросами
 
@@ -1183,7 +1183,7 @@ val updated = userRepository.updateUserStatus(1, true)
 
 Кастомные запросы позволяют выполнять сложные операции с базой данных, которые сложно выразить через методы репозитория.
 
-### Работа с **Projections**
+### Работа с Projections
 
 **Использование проекций для оптимизации запросов:**
 
@@ -1219,9 +1219,9 @@ val dto = userRepository.findDTOById(1)
 
 Проекции позволяют выбирать только необходимые поля, что улучшает производительность запросов.
 
-## Продвинутые техники **Spring Boot**
+## Продвинутые техники Spring Boot
 
-### Работа с **Spring Cloud**
+### Работа с Spring Cloud
 
 **Интеграция **Spring Boot** с **Spring Cloud** для создания микросервисов:**
 
@@ -1287,7 +1287,7 @@ class ResilientUserService(
 
 **Spring Cloud** позволяет создавать масштабируемые микросервисы с **service discovery**, **circuit breakers** и другими паттернами устойчивости.
 
-### Работа с **Spring Security**
+### Работа с Spring Security
 
 **Интеграция **Spring Security** для защиты приложения:**
 
@@ -1380,9 +1380,9 @@ class JwtTokenProvider(
 
 Этот файл содержит полное руководство по использованию **Kotlin** с **Spring Framework**, покрывающее все основные аспекты интеграции, включая **Spring Data**, **Spring Security**, **Spring Boot Actuator**, тестирование, **Spring Cloud**, оптимизацию производительности, мониторинг, метрики, **AOP**, **Events**, **Profiles** и работу с микросервисами.
 
-## Дополнительные техники **Spring**
+## Дополнительные техники Spring
 
-### Работа с **Spring Cache**
+### Работа с Spring Cache
 
 **Использование кэширования в **Spring**:**
 
@@ -1421,7 +1421,7 @@ class UserService(
 
 Кэширование улучшает производительность приложений, уменьшая количество обращений к базе данных.
 
-### Работа с **Spring Transaction**
+### Работа с Spring Transaction
 
 **Управление транзакциями в **Spring**:**
 
@@ -1452,9 +1452,9 @@ class UserService(
 
 Этот файл содержит полное руководство по использованию **Kotlin** с **Spring Framework**, покрывающее все основные аспекты интеграции, включая **Spring Data**, **Spring Security**, **Spring Boot Actuator**, тестирование, **Spring Cloud**, оптимизацию производительности, мониторинг, метрики, **AOP**, **Events**, **Profiles**, работу с микросервисами, кэшированием и транзакциями.
 
-## Дополнительные техники **Spring**
+## Дополнительные техники Spring
 
-### Работа с **Spring Batch**
+### Работа с Spring Batch
 
 **Использование **Spring Batch** для обработки больших объемов данных:**
 
@@ -1500,7 +1500,7 @@ class DataProcessor : ItemProcessor<String, String> {
 
 **Spring Batch** позволяет эффективно обрабатывать большие объемы данных пакетами.
 
-### Работа с **Spring Integration**
+### Работа с Spring Integration
 
 **Использование **Spring Integration** для интеграции систем:**
 
@@ -1541,9 +1541,9 @@ class IntegrationConfig {
 
 Этот файл содержит полное руководство по использованию **Kotlin** с **Spring Framework**, покрывающее все основные аспекты интеграции, включая **Spring Data**, **Spring Security**, **Spring Boot Actuator**, тестирование, **Spring Cloud**, оптимизацию производительности, мониторинг, метрики, **AOP**, **Events**, **Profiles**, работу с микросервисами, кэшированием, транзакциями, **Spring Batch** и **Spring Integration**.
 
-## Дополнительные техники **Spring**
+## Дополнительные техники Spring
 
-### Работа с **Spring WebFlux**
+### Работа с Spring WebFlux
 
 **Использование **Spring WebFlux** для реактивных приложений:**
 
@@ -1612,7 +1612,7 @@ class ReactiveUserController(private val userService: ReactiveUserService) {
 
 ## Практические примеры использования
 
-### Создание **REST** контроллера
+### Создание REST контроллера
 
 **Пример создания **REST** контроллера с использованием **Spring**:**
 
@@ -1642,7 +1642,7 @@ class UserController(private val userService: UserService) {
 
 **Spring** упрощает создание **REST API** с минимальным **boilerplate** кодом.
 
-### Использование **Spring Data**
+### Использование Spring Data
 
 **Пример использования **Spring Data** для работы с базой данных:**
 
@@ -1669,7 +1669,7 @@ class UserService(private val userRepository: UserRepository) {
 
 **Spring Data** автоматически генерирует реализации репозиториев, упрощая работу с базой данных.
 
-### Использование **Spring AOP**
+### Использование Spring AOP
 
 **Пример использования **AOP** для логирования:**
 
@@ -1700,7 +1700,7 @@ class UserController {
 
 **AOP** позволяет добавлять **cross-cutting concerns** без изменения основного кода.
 
-### Использование **Spring Events**
+### Использование Spring Events
 
 **Пример использования событий для слабой связанности:**
 

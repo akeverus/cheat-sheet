@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cassandra**: Основы — Полное руководство по распределенной **NoSQL** базе данных
+# Cassandra: Основы — Полное руководство по распределенной NoSQL базе данных
 
 Комплексное руководство по **Apache Cassandra**: архитектура, установка, модель данных, **CQL** и интеграция с **Java Spring** приложениями.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [CQL Reference](https://cassandra.apache.org/doc/latest/cql/) — **Cassandra Query Language**
 - [Cassandra Architecture](https://cassandra.apache.org/doc/latest/architecture/)
 
-### **Java** интеграция
+### Java интеграция
 - [DataStax Java Driver](https://docs.datastax.com/en/developer/java-driver/)
 - [Spring Data Cassandra](https://spring.io/projects/spring-data-cassandra)
 - [Cassandra with Spring Boot](https://docs.spring.io/spring-boot/docs/current/reference/html/data.html#data.nosql.cassandra)
@@ -48,15 +48,15 @@ updated: "2026-02-11"
     - [Идеально подходит для:](#идеально-подходит-для)
     - [Не подходит для:](#не-подходит-для)
   - [Версии **Cassandra**](#версии-cassandra)
-    - [**Cassandra** 4.x (**рекомендуемая**)](#cassandra-4x-рекомендуемая)
-    - [**Cassandra** 3.x (**LTS**)](#cassandra-3x-lts)
-    - [**Astra** DB (**Cloud**)](#astra-db-cloud)
+    - [**Cassandra** 4.x (рекомендуемая)](#cassandra-4x-рекомендуемая)
+    - [**Cassandra** 3.x (LTS)](#cassandra-3x-lts)
+    - [**Astra** DB (Cloud)](#astra-db-cloud)
   - [Сравнение с другими базами данных](#сравнение-с-другими-базами-данных)
 - [Архитектура **Cassandra**](#архитектура-cassandra)
   - [Компоненты системы](#компоненты-системы)
-    - [Узлы (**Nodes**)](#узлы-nodes)
-    - [Кластеры (**Clusters**)](#кластеры-clusters)
-    - [Датацентры (**Datacenters**)](#датацентры-datacenters)
+    - [Узлы (Nodes)](#узлы-nodes)
+    - [Кластеры (Clusters)](#кластеры-clusters)
+    - [Датацентры (Datacenters)](#датацентры-datacenters)
   - [**Ring** архитектура](#ring-архитектура)
     - [**Consistent Hashing**](#consistent-hashing)
     - [Преимущества **Ring** архитектуры:](#преимущества-ring-архитектуры)
@@ -104,13 +104,13 @@ updated: "2026-02-11"
     - [**Regular Columns**](#regular-columns)
     - [**Static Columns**](#static-columns)
     - [**Counter Columns**](#counter-columns)
-- [**Cassandra Query Language** (**CQL**)](#cassandra-query-language-cql)
+- [**Cassandra Query Language** (CQL)](#cassandra-query-language-cql)
   - [Основные команды **CQL**](#основные-команды-cql)
     - [**DDL** команды](#ddl-команды)
     - [**DML** команды](#dml-команды)
   - [Расширенные возможности **CQL**](#расширенные-возможности-cql)
     - [**JSON** поддержка](#json-поддержка)
-    - [**Time-to-Live** (**TTL**)](#time-to-live-ttl)
+    - [**Time-to-Live** (TTL)](#time-to-live-ttl)
     - [**Batch** операции](#batch-операции)
 - [Подключение к **Cassandra**](#подключение-к-cassandra)
   - [**DataStax Java Driver**](#datastax-java-driver)
@@ -133,10 +133,10 @@ updated: "2026-02-11"
     - [Числовые типы](#числовые-типы)
     - [Строковые и временные типы](#строковые-и-временные-типы)
   - [Коллекции](#коллекции)
-    - [**Set** (**множество**)](#set-множество)
-    - [**List** (**список**)](#list-список)
-    - [**Map** (**словарь**)](#map-словарь)
-  - [Пользовательские типы (**UDT**)](#пользовательские-типы-udt)
+    - [**Set** (множество)](#set-множество)
+    - [**List** (список)](#list-список)
+    - [**Map** (словарь)](#map-словарь)
+  - [Пользовательские типы (UDT)](#пользовательские-типы-udt)
     - [Создание **UDT**](#создание-udt)
     - [Работа с **UDT**](#работа-с-udt)
 - [Ключи и партиционирование](#ключи-и-партиционирование)
@@ -209,11 +209,11 @@ updated: "2026-02-11"
   - [Когда выбирать **Cassandra**:](#когда-выбирать-cassandra)
   - [Лучшие практики:](#лучшие-практики)
 
-## Введение в **Cassandra**
+## Введение в Cassandra
 
 **Apache Cassandra** — это высокопроизводительная, масштабируемая **NoSQL** база данных, разработанная для обработки больших объемов данных в распределенных системах. **Cassandra** была создана в **Facebook** и передана **Apache Software Foundation** в `2009` году.
 
-### Ключевые особенности **Cassandra**
+### Ключевые особенности Cassandra
 
 #### Высокая доступность и масштабируемость
 - **Линейная масштабируемость** — добавление новых узлов без простоев
@@ -228,12 +228,12 @@ updated: "2026-02-11"
 - **Поддержка сложных типов** — коллекции, **UDT**, кортежи
 
 #### Мощные возможности
-- **CQL (**Cassandra Query Language**)** — **SQL**-подобный язык запросов
+- **CQL (Cassandra Query Language)** — **SQL**-подобный язык запросов
 - **Вторичные индексы** — индексация не только по первичному ключу
 - **Материализованные представления** — автоматическая денормализация
 - **Триггеры и функции** — бизнес-логика на уровне базы данных
 
-### Когда использовать **Cassandra**
+### Когда использовать Cassandra
 
 #### Идеально подходит для:
 - **Big Data** — петабайты данных
@@ -249,21 +249,21 @@ updated: "2026-02-11"
 - **Реляционные запросы** — нереляционная модель
 - **Небольшие объемы данных** — **overhead** для маленьких систем
 
-### Версии **Cassandra**
+### Версии Cassandra
 
-#### **Cassandra** 4.x (**рекомендуемая**)
+#### Cassandra 4.x (рекомендуемая)
 - **Virtual Tables** — системные таблицы в **CQL**
 - **Audit Logging** — аудит всех операций
 - **Transient Replication** — оптимизированная репликация
 - **Zero `Copy` Streaming** — эффективная передача данных
 - **Java 11+** — современная **Java**
 
-#### **Cassandra** 3.x (**LTS**)
+#### Cassandra 3.x (LTS)
 - Стабильная версия для **production**
 - Полная поддержка **enterprise features**
 - Обширная экосистема инструментов
 
-#### **Astra** `DB` (**Cloud**)
+#### Astra `DB` (Cloud)
 - **Управляемая Cassandra** в облаке
 - **Автоматическое масштабирование**
 - **Встроенный мониторинг**
@@ -280,31 +280,31 @@ updated: "2026-02-11"
 | **Сложность** | Высокая | Средняя | Средняя | Низкая |
 | **Use cases** | **Big Data**, **IoT** | **Apps**, **Content** | **OLTP**, **Analytics** | **Web apps** |
 
-## Архитектура **Cassandra**
+## Архитектура Cassandra
 
 ### Компоненты системы
 
-#### Узлы (**Nodes**)
+#### Узлы (Nodes)
 - **Отдельные серверы** с **Cassandra**
 - **Хранение данных** и обработка запросов
 - **Peer-`to-peer` архитектура** — все узлы равны
 - **Автоматическое распределение** нагрузки
 
-#### Кластеры (**Clusters**)
+#### Кластеры (Clusters)
 - **Группа узлов** работающих вместе
 - **Общий keyspace** — логическое разделение данных
 - **Репликация** между узлами
 - **Отказоустойчивость** кластера
 
-#### Датацентры (**Datacenters**)
+#### Датацентры (Datacenters)
 - **Физическое разделение** по локациям
 - **Изоляция сетевых сбоев**
 - **Оптимизация latency** для пользователей
 - **Разные уровни консистентности**
 
-### **Ring** архитектура
+### Ring архитектура
 
-#### **Consistent Hashing**
+#### Consistent Hashing
 
 Схема кольца **consistent hashing**: диапазон токенов от 0 до 2^128−1 для распределения данных по узлам.
 
@@ -317,7 +317,7 @@ Ring: 0 → 2^128 - 1
 └── Node D: Token range 76-100
 ```
 
-#### Преимущества **Ring** архитектуры:
+#### Преимущества Ring архитектуры:
 - **Равномерное распределение** данных
 - **Легкое добавление узлов** без перебалансировки
 - **Предсказуемость** расположения данных
@@ -325,19 +325,19 @@ Ring: 0 → 2^128 - 1
 
 ### Компоненты узла
 
-#### **Storage Engine**
-- **Commit Log** — журнал всех изменений (**WAL**)
+#### Storage Engine
+- **Commit Log** — журнал всех изменений (WAL)
 - **MemTable** — **in-memory** структура для новых данных
 - **SSTable** — неизменяемые файлы на диске
 - **Bloom Filter** — вероятностный фильтр для быстрого поиска
 
-#### **Gossip Protocol**
+#### Gossip Protocol
 - **Распространение информации** между узлами
 - **Обнаружение отказов** узлов
 - **Метаданные кластера** — состояние, нагрузка, версия
 - **Децентрализованное** управление
 
-#### **Snitch**
+#### Snitch
 - **Определение топологии** сети
 - **Стратегии репликации** по датацентрам
 - **Оптимизация маршрутизации** запросов
@@ -347,7 +347,7 @@ Ring: 0 → 2^128 - 1
 
 ### Установка на разных ОС
 
-#### **Ubuntu**/**Debian**
+#### Ubuntu/Debian
 ```bash
 # Добавление репозитория
 echo "deb [signed-by=/usr/share/keyrings/apache-cassandra.gpg] https://debian.cassandra.apache.org 41x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
@@ -367,7 +367,7 @@ sudo systemctl enable cassandra
 cqlsh -e "SELECT cluster_name, listen_address FROM system.local;"
 ```
 
-#### **CentOS**/**RHEL**
+#### CentOS/RHEL
 ```bash
 # Добавление репозитория
 sudo tee /etc/yum.repos.d/cassandra.repo > /dev/null <<EOF
@@ -387,7 +387,7 @@ sudo systemctl start cassandra
 sudo systemctl enable cassandra
 ```
 
-#### **Docker**
+#### Docker
 ```bash
 # Запуск Cassandra в Docker
 docker run --name cassandra-node \
@@ -433,7 +433,7 @@ volumes:
   cassandra_data:
 ```
 
-### Конфигурация **Cassandra**
+### Конфигурация Cassandra
 
 #### Основной конфигурационный файл
 ```yaml
@@ -470,7 +470,7 @@ commitlog_sync: periodic
 commitlog_sync_period_in_ms: 10000
 ```
 
-#### **JVM** настройки
+#### JVM настройки
 ```properties
 # jvm.options
 -Xms4G
@@ -516,11 +516,11 @@ cqlsh -e "
 "
 ```
 
-## Модель данных **Cassandra**
+## Модель данных Cassandra
 
 ### Иерархия данных
 
-#### **Keyspace**
+#### Keyspace
 - **Логический контейнер** для таблиц
 - **Настройки репликации** для всех таблиц
 - **Durable writes** — запись в **commit log**
@@ -537,7 +537,7 @@ WITH replication = {
 AND durable_writes = true;
 ```
 
-#### **Table**
+#### Table
 - **Основная единица хранения** данных
 - **Первичный ключ** — **partition key** + **clustering columns**
 - **Колонки** — гибкая схема, динамическое добавление
@@ -558,7 +558,7 @@ CREATE TABLE users (
 ) WITH CLUSTERING ORDER BY (email ASC);
 ```
 
-#### **Row** и **Column**
+#### Row и Column
 - **Row** — строка данных с общим **partition key**
 - **Column** — имя + значение + **timestamp**
 - **Wide rows** — множество колонок в одной строке
@@ -566,7 +566,7 @@ CREATE TABLE users (
 
 ### Типы колонок
 
-#### **Regular Columns**
+#### Regular Columns
 ```cql
 -- Таблица товаров с обычными и коллекционными типами колонок
 CREATE TABLE products (
@@ -582,7 +582,7 @@ CREATE TABLE products (
 );
 ```
 
-#### **Static Columns**
+#### Static Columns
 ```cql
 -- Посты пользователя со статическими колонками имени и аватара
 CREATE TABLE user_posts (
@@ -597,7 +597,7 @@ CREATE TABLE user_posts (
 ) WITH CLUSTERING ORDER BY (post_id DESC);
 ```
 
-#### **Counter Columns**
+#### Counter Columns
 ```cql
 -- Таблица просмотров страниц с счётчиками (COUNTER)
 CREATE TABLE page_views (
@@ -613,11 +613,11 @@ UPDATE page_views SET views = views + 1, unique_visitors = unique_visitors + 1
 WHERE page_id = ? AND date = ?;
 ```
 
-## **Cassandra Query Language** (**CQL**)
+## Cassandra Query Language (CQL)
 
-### Основные команды **CQL**
+### Основные команды CQL
 
-#### **DDL** команды
+#### DDL команды
 ```cql
 -- Создание keyspace
 CREATE KEYSPACE ecommerce
@@ -647,7 +647,7 @@ DROP TABLE products;
 DROP KEYSPACE ecommerce;
 ```
 
-#### **DML** команды
+#### DML команды
 ```cql
 -- Вставка данных
 INSERT INTO products (id, name, price, category, created_at)
@@ -665,9 +665,9 @@ DELETE FROM products WHERE id = 123e4567-e89b-12d3-a456-426614174000;
 DELETE price FROM products WHERE id = 123e4567-e89b-12d3-a456-426614174000;
 ```
 
-### Расширенные возможности **CQL**
+### Расширенные возможности CQL
 
-#### **JSON** поддержка
+#### JSON поддержка
 ```cql
 -- Вставка JSON
 INSERT INTO products JSON '{
@@ -685,7 +685,7 @@ UPDATE products SET specs = specs + '{"color": "black"}'
 WHERE id = 123e4567-e89b-12d3-a456-426614174000;
 ```
 
-#### **Time-to-Live** (**TTL**)
+#### Time-to-Live (TTL)
 ```cql
 -- Вставка с TTL
 INSERT INTO sessions (session_id, user_id, data)
@@ -700,7 +700,7 @@ WHERE session_id = ?;
 SELECT session_id, ttl(data) as time_to_live FROM sessions;
 ```
 
-#### **Batch** операции
+#### Batch операции
 ```cql
 -- Атомарная batch операция
 BEGIN BATCH
@@ -714,9 +714,9 @@ BEGIN BATCH
 APPLY BATCH;
 ```
 
-## Подключение к **Cassandra**
+## Подключение к Cassandra
 
-### **DataStax Java Driver**
+### DataStax Java Driver
 
 #### Базовое подключение
 ```java
@@ -804,9 +804,9 @@ public class AdvancedCassandraConfig {
 }
 ```
 
-### **Spring Data Cassandra**
+### Spring Data Cassandra
 
-#### Конфигурация **Spring**
+#### Конфигурация Spring
 ```java
 // Конфигурация Spring Data Cassandra: keyspace, контактные точки, репозитории
 @Configuration
@@ -853,7 +853,7 @@ public class SpringCassandraConfig extends AbstractCassandraConfiguration {
 }
 ```
 
-#### Репозитории **Spring Data**
+#### Репозитории Spring Data
 ```java
 // Репозиторий пользователей и сервис с CRUD через Spring Data
 @Repository
@@ -911,7 +911,7 @@ public class UserService {
 }
 ```
 
-## Основные операции **CRUD**
+## Основные операции CRUD
 
 ### Создание данных
 
@@ -1047,7 +1047,7 @@ public class UserQueryService {
 
 ### Обновление данных
 
-#### **Update** операции
+#### Update операции
 ```java
 // Обновление пользователя и частичное обновление полей
 @Service
@@ -1111,7 +1111,7 @@ public class UserUpdateService {
 
 ### Удаление данных
 
-#### **Delete** операции
+#### Delete операции
 ```java
 // Удаление пользователя по id и условное удаление
 @Service
@@ -1220,7 +1220,7 @@ VALUES (
 
 ### Коллекции
 
-#### **Set** (**множество**)
+#### Set (множество)
 ```cql
 CREATE TABLE articles (
     article_id UUID PRIMARY KEY,
@@ -1245,7 +1245,7 @@ UPDATE articles SET tags = tags + {'java'} WHERE article_id = ?;
 UPDATE articles SET tags = tags - {'database'} WHERE article_id = ?;
 ```
 
-#### **List** (**список**)
+#### List (список)
 ```cql
 CREATE TABLE user_activity (
     user_id UUID,
@@ -1271,7 +1271,7 @@ UPDATE user_activity SET actions = ['new_action'] + actions WHERE user_id = ? AN
 UPDATE user_activity SET actions = actions + ['logout'] WHERE user_id = ? AND activity_date = ?;
 ```
 
-#### **Map** (**словарь**)
+#### Map (словарь)
 ```cql
 CREATE TABLE products (
     product_id UUID PRIMARY KEY,
@@ -1297,9 +1297,9 @@ UPDATE products SET attributes = attributes + {'condition': 'new'} WHERE product
 UPDATE products SET attributes['color'] = 'silver' WHERE product_id = ?;
 ```
 
-### Пользовательские типы (**UDT**)
+### Пользовательские типы (UDT)
 
-#### Создание **UDT**
+#### Создание UDT
 ```cql
 -- Создание пользовательского типа для адреса
 CREATE TYPE address (
@@ -1328,7 +1328,7 @@ CREATE TABLE companies (
 );
 ```
 
-#### Работа с **UDT**
+#### Работа с UDT
 ```java
 // Вставка компании с UDT (адрес, контакты, офисы)
 @Service
@@ -1395,7 +1395,7 @@ public class CompanyService {
 
 ### Структура первичного ключа
 
-#### **Partition Key**
+#### Partition Key
 ```cql
 -- Простой partition key
 CREATE TABLE users (
@@ -1415,7 +1415,7 @@ CREATE TABLE user_posts (
 );
 ```
 
-#### **Clustering Columns**
+#### Clustering Columns
 ```cql
 -- Partition key + clustering columns
 CREATE TABLE user_events (
@@ -1434,7 +1434,7 @@ SELECT * FROM user_events WHERE user_id = ? AND event_type = ? AND event_id > ?;
 
 ### Стратегии партиционирования
 
-#### **Partition Key** выбор
+#### Partition Key выбор
 ```java
 // Примеры выбора ключа партиции для разных сценариев
 @Service
@@ -1482,7 +1482,7 @@ public class PartitioningStrategyService {
 
 ### Уровни консистентности
 
-#### **Write Consistency**
+#### Write Consistency
 ```java
 // Демонстрация уровней консистентности записи: ANY, ONE, QUORUM, ALL
 @Service
@@ -1519,7 +1519,7 @@ public class ConsistencyService {
 }
 ```
 
-#### **Read Consistency**
+#### Read Consistency
 ```java
 // Уровни консистентности чтения: ONE, QUORUM, LOCAL_QUORUM
 @Service
@@ -1551,7 +1551,7 @@ public class ReadConsistencyService {
 
 ### Репликация между датацентрами
 
-#### **NetworkTopologyStrategy**
+#### NetworkTopologyStrategy
 ```cql
 -- Репликация между датацентрами
 CREATE KEYSPACE ecommerce
@@ -1612,11 +1612,11 @@ public class MultiDcService {
 }
 ```
 
-## **Spring Data Cassandra**
+## Spring Data Cassandra
 
-### **Entity** маппинг
+### Entity маппинг
 
-#### Базовые **entity**
+#### Базовые entity
 ```java
 // Сущность пользователя и составной ключ для постов
 @Table("users")
@@ -1745,7 +1745,7 @@ public interface UserPostRepository extends CassandraRepository<UserPost, UserPo
 
 ### Сервисы
 
-#### **CRUD** операции
+#### CRUD операции
 ```java
 // CRUD для пользователей и постов через репозиторий и шаблон
 @Service
@@ -1816,7 +1816,7 @@ public class UserService {
 
 ## Мониторинг и диагностика
 
-### **Nodetool** команды
+### Nodetool команды
 
 #### Проверка состояния кластера
 ```bash
@@ -1852,7 +1852,7 @@ nodetool listsnapshots
 nodetool clearsnapshot
 ```
 
-### **CQLSH** диагностика
+### CQLSH диагностика
 
 #### Системные таблицы
 ```cql
@@ -1884,7 +1884,7 @@ FROM system_schema.table_stats;
 SELECT * FROM system_schema.keyspaces WHERE keyspace_name = 'myapp';
 ```
 
-### **Java** диагностика
+### Java диагностика
 
 ```java
 // Проверка состояния кластера и статистики таблиц
@@ -2007,7 +2007,7 @@ class QueryLatencyInfo {
 
 ### Проектирование схемы
 
-#### 1. Правильный выбор **partition key**
+#### 1. Правильный выбор partition key
 ```cql
 -- Хорошо: Высокая кардинальность, равномерное распределение
 CREATE TABLE user_events (
@@ -2041,7 +2041,7 @@ BEGIN BATCH
 APPLY BATCH;
 ```
 
-#### 3. Избегать **hot partitions**
+#### 3. Избегать hot partitions
 ```cql
 -- Плохо: Все заказы за сегодня в одной партиции
 CREATE TABLE daily_orders (
@@ -2063,7 +2063,7 @@ CREATE TABLE user_orders (
 
 ### Управление данными
 
-#### 1. Использование **TTL** для временных данных
+#### 1. Использование TTL для временных данных
 ```cql
 -- Автоматическое удаление сессий через 24 часа
 INSERT INTO user_sessions (session_id, user_id, data)
@@ -2223,7 +2223,7 @@ nodetool describecluster
 
 **Apache Cassandra** — мощная распределенная **NoSQL** база данных, идеально подходящая для высоконагруженных систем, требующих высокой доступности и масштабируемости. Ключевые особенности:**
 
-### Преимущества **Cassandra**:
+### Преимущества Cassandra:
 
 1. **Высокая производительность** — обработка миллионов операций в секунду
 2. **Линейная масштабируемость** — добавление узлов без простоев
@@ -2239,14 +2239,14 @@ nodetool describecluster
 - **CQL** — знакомый **SQL**-подобный язык запросов
 - **Мощные возможности индексации** — вторичные индексы, материализованные представления
 
-### **Java** интеграция:
+### Java интеграция:
 
 - **DataStax `Java` Driver** — низкоуровневый драйвер
 - **Spring `Data` Cassandra** — высокоуровневая абстракция
 - **Reactive drivers** — асинхронная обработка
 - **Object mapping** — автоматическое преобразование объектов
 
-### Когда выбирать **Cassandra**:
+### Когда выбирать Cassandra:
 
 - **Big `Data` приложения** с петабайтами данных
 - **Глобальные системы** с пользователями по всему миру
@@ -2265,11 +2265,11 @@ nodetool describecluster
 **Cassandra** — это зрелая, проверенная временем технология, используемая крупнейшими компаниями мира для решения самых сложных задач хранения и обработки данных.
 
 **Следующие темы:**
-- [cassandra-data-modeling.md](cassandra-data-modeling.md) — моделирование данных в **Cassandra**
-- [cassandra-queries.md](cassandra-queries.md) — **CQL** запросы и оптимизация
-- [cassandra-clustering.md](cassandra-clustering.md) — кластеризация и масштабирование
-- [cassandra-performance.md](cassandra-performance.md) — производительность и тюнинг
-- [cassandra-admin.md](cassandra-admin.md) — администрирование **Cassandra**
+- [[cassandra-data-modeling]] — моделирование данных в **Cassandra**
+- [[cassandra-queries]] — **CQL** запросы и оптимизация
+- [[cassandra-clustering]] — кластеризация и масштабирование
+- [[cassandra-performance]] — производительность и тюнинг
+- [[cassandra-admin]] — администрирование **Cassandra**
 
 Правильное использование **Cassandra** требует глубокого понимания распределенных систем и особенностей модели данных! 🚀
 

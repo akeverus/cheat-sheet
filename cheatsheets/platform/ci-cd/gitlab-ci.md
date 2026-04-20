@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **GitLab** CI/CD
+# GitLab CI/CD
 
 **GitLab** CI/CD — встроенная система **continuous integration** и **continuous delivery** в **GitLab**. Она позволяет автоматизировать процесс сборки, тестирования и развертывания приложений с помощью **YAML** конфигурации. Этот документ охватывает **enterprise-grade** паттерны, продвинутые **pipeline** конфигурации и **best practices** для использования **GitLab** CI/CD в **production** средах.
 
@@ -54,10 +54,10 @@ updated: "2026-02-11"
   - [Performance debugging](#performance-debugging)
 - [См. также](#см-также)
 
-## Основы **GitLab** CI/CD
+## Основы GitLab CI/CD
 
 ### Структура проекта
-Ниже — структура проекта с **GitLab** CI/CD (**текст**).
+Ниже — структура проекта с **GitLab** CI/CD (текст).
 ```text
 my-project/
 ├── .gitlab-ci.yml          # Основной CI/CD конфигурационный файл
@@ -82,7 +82,7 @@ my-project/
 └── terraform/             # Infrastructure as Code
 ```
 
-### Базовый .**gitlab-ci.yml**
+### Базовый .gitlab-ci.yml
 ```yaml
 # .gitlab-ci.yml - базовая конфигурация
 stages:
@@ -204,7 +204,7 @@ cleanup:
   when: always
 ```
 
-## Продвинутые **Pipeline** паттерны
+## Продвинутые Pipeline паттерны
 
 ### Multi-environment deployment
 ```yaml
@@ -312,7 +312,7 @@ rollback_production:
     - tags
 ```
 
-### Parallel execution и **matrix builds**
+### Parallel execution и matrix builds
 ```yaml
 # .gitlab-ci.yml - parallel execution
 stages:
@@ -412,7 +412,7 @@ test_matrix:
     expire_in: 1 week
 ```
 
-### Child pipelines и **parent-child relationships**
+### Child pipelines и parent-child relationships
 ```yaml
 # Parent pipeline - .gitlab-ci.yml
 stages:
@@ -623,7 +623,7 @@ check_interval = 0
     BucketName = "runner-cache"
 ```
 
-## Security и **Compliance**
+## Security и Compliance
 
 ### Secret management
 ```yaml
@@ -664,7 +664,7 @@ deploy:
   when: manual
 ```
 
-### SAST и **DAST integration**
+### SAST и DAST integration
 ```yaml
 # .gitlab-ci.yml - security scanning
 stages:
@@ -774,7 +774,7 @@ audit_trail:
   when: always
 ```
 
-## Monitoring и **Metrics**
+## Monitoring и Metrics
 
 ### Pipeline metrics
 ```yaml
@@ -1059,7 +1059,7 @@ deploy:
   when: manual
 ```
 
-## GitOps и **Infrastructure as Code**
+## GitOps и Infrastructure as Code
 
 ### GitOps pipeline
 ```yaml

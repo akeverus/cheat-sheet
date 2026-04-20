@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **GCP Services**
+# GCP Services
 
-**Google Cloud Platform** предоставляет более `150` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **GCP**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [GCP Basics](gcp-basics.md) более глубоким погружением в конкретные сервисы.
+**Google Cloud Platform** предоставляет более `150` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **GCP**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [[gcp-basics|GCP Basics]] более глубоким погружением в конкретные сервисы.
 
 ## Полезные ссылки
 - [Google Cloud Documentation](https://cloud.google.com/docs)
@@ -69,7 +69,7 @@ updated: "2026-02-11"
 
 **Machine `Types` и их назначение:**
 
-Пример типов машин **GCP** и назначения (**YAML**).
+Пример типов машин **GCP** и назначения (YAML).
 ```yaml
 # Типы машин GCP и назначение — general-purpose, compute-optimized, memory-optimized и др.
 machine-types:
@@ -177,7 +177,7 @@ spot-vm:
       accelerator_count: 1
 ```
 
-### Google Kubernetes Engine (**GKE**)
+### Google Kubernetes Engine (GKE)
 
 **Что это:** Управляемый **Kubernetes** сервис.
 
@@ -916,7 +916,7 @@ FROM ML.PREDICT(
 ORDER BY churn_probability DESC;
 ```
 
-## Networking & **Content Delivery**
+## Networking & Content Delivery
 
 ### Cloud Load Balancing
 
@@ -1062,7 +1062,7 @@ backend-service-cdn:
 
 ## Security Services
 
-### Cloud Identity-Aware Proxy (**IAP**)
+### Cloud Identity-Aware Proxy (IAP)
 
 **Что это:** Контроль доступа к веб-приложениям.
 
@@ -1110,7 +1110,7 @@ iap-access-policy:
 
 ### Cloud Armor
 
-**Что это: Web Application Firewall** (**WAF**) для **GCP**.
+**Что это: Web Application Firewall** (WAF) для **GCP**.
 
 **Cloud Armor Security Policy:**
 ```yaml
@@ -1222,7 +1222,7 @@ attestor:
           signature_algorithm: "RSA_PSS_4K"
 ```
 
-## Analytics & **Big Data**
+## Analytics & Big Data
 
 ### BigQuery
 
@@ -1344,7 +1344,7 @@ if __name__ == '__main__':
     run_pipeline()
 ```
 
-### Pub/**Sub**
+### Pub/Sub
 
 **Что это: Messaging service** для **event-driven** архитектур.
 
@@ -1483,7 +1483,7 @@ def run_custom_training():
     return model
 ```
 
-### `AI` **Platform Prediction**
+### `AI` Platform Prediction
 
 **Что это: Serverless model serving**.
 
@@ -1684,7 +1684,7 @@ repository-config:
         - "serviceAccount:build-service@my-project.iam.gserviceaccount.com"
 ```
 
-## Management & **Governance**
+## Management & Governance
 
 ### Cloud Asset Inventory
 
@@ -1821,9 +1821,9 @@ scheduler-pubsub-job:
 
 - **Выбор сервисов:** используйте **managed**-сервисы (**Cloud SQL**, **Firestore**, **GKE**, **Cloud Run**) для снижения операционной нагрузки; **Compute Engine** — при необходимости полного контроля или специфичного ПО.
 - **Безопасность:** минимальные права **IAM** по ролям и проектам; **Service Accounts** вместо ключей; шифрование по умолчанию; **Secret Manager** для секретов.
-- **Стоимость:** коммитированные скидки (**Committed Use Discounts**) для стабильных нагрузок; **Preemptible**/**Spot** для **fault-tolerant**; теги и бюджеты для контроля затрат.
+- **Стоимость:** коммитированные скидки (Committed Use Discounts) для стабильных нагрузок; **Preemptible**/**Spot** для **fault-tolerant**; теги и бюджеты для контроля затрат.
 - **Надёжность:** мультизонное размещение для критичных БД и приложений; автоскейлинг и **health checks**; регулярные снимки и тесты восстановления.
-- **Мониторинг: Cloud Monitoring** (**метрики, алерты, Uptime Checks**); **Cloud Trace** и **Profiler**; централизованные логи в **Logging** и интеграция с **BigQuery**.
+- **Мониторинг: Cloud Monitoring** (метрики, алерты, Uptime Checks); **Cloud Trace** и **Profiler**; централизованные логи в **Logging** и интеграция с **BigQuery**.
 
 
 ## Решение проблем

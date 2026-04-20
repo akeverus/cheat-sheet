@@ -66,7 +66,7 @@ updated: "2026-02-11"
 
 **Когда применять:** очереди задач, пайплайны обработки, асинхронная доставка сообщений.
 
-## Что такое **Producer-Consumer**?
+## Что такое Producer-Consumer?
 
 **Producer-Consumer** — это паттерн конкурентного программирования, где одни потоки(производители) генерируют данные или задачи, а другие потоки (потребители) обрабатывают их. Обмен происходит через разделяемую очередь.
 
@@ -77,7 +77,7 @@ updated: "2026-02-11"
 3. **Асинхронность**: Производители и потребители работают независимо
 4. **Thread Safety**: Безопасная работа в многопоточной среде
 
-## Когда использовать **Producer-Consumer**?
+## Когда использовать Producer-Consumer?
 
 ### Подходящие сценарии
 
@@ -159,7 +159,7 @@ flowchart LR
 
 ## Реализация на Java
 
-### Базовая реализация с **BlockingQueue**
+### Базовая реализация с BlockingQueue
 
 ```java
 import java.util.concurrent.*;
@@ -315,7 +315,7 @@ public class ProducerConsumerExample {
 }
 ```
 
-### Реализация с **ExecutorService**
+### Реализация с ExecutorService
 
 ```java
 import java.util.concurrent.*;
@@ -519,7 +519,7 @@ public class PriorityOrderProcessor {
 }
 ```
 
-### 2. С **Circuit Breaker**
+### 2. С Circuit Breaker
 
 ```java
 // Producer-Consumer с Circuit Breaker для отказоустойчивости
@@ -630,7 +630,7 @@ public class ResilientProducerConsumer<T> {
 }
 ```
 
-### 3. С **Batch Processing**
+### 3. С Batch Processing
 
 ```java
 // Producer-Consumer с пакетной обработкой
@@ -766,7 +766,7 @@ public class BatchDatabaseWriter {
 
 ## Примеры использования
 
-### 1. **Web Server Request Processing**
+### 1. Web Server Request Processing
 
 ```java
 @RestController
@@ -819,7 +819,7 @@ public class RequestController {
 }
 ```
 
-### 2. **Log Processing Pipeline**
+### 2. Log Processing Pipeline
 
 ```java
 @Service
@@ -883,7 +883,7 @@ public class LogProcessingPipeline {
 }
 ```
 
-### 3. **Image Processing Queue**
+### 3. Image Processing Queue
 
 ```java
 @Service
@@ -1032,7 +1032,7 @@ public class ErrorHandlingBestPractices {
 }
 ```
 
-### 3. **Monitoring** и **Metrics**
+### 3. Monitoring и Metrics
 
 ```java
 @Service
@@ -1105,7 +1105,7 @@ public class MonitoredProducerConsumer<T> extends SimpleProducerConsumer<T> {
 }
 ```
 
-### 4. **Testing**
+### 4. Testing
 
 ```java
 @ExtendWith(MockitoExtension.class)

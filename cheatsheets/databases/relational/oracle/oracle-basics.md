@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Oracle Database**: Основы
+# Oracle Database: Основы
 
 **Комплексное руководство по использованию `Oracle Database` — мощной реляционной системы управления базами данных от `Oracle Corporation`.**
 
@@ -60,11 +60,11 @@ updated: "2026-02-11"
   - [Основные паттерны использования](#основные-паттерны-использования)
 - [Решение проблем](#решение-проблем)
 
-## Введение в **Oracle Database**
+## Введение в Oracle Database
 
 **Oracle Database** — это коммерческая реляционная СУБД, разработанная **Oracle Corporation**. Одна из самых мощных и функциональных баз данных, широко используемая в **enterprise** приложениях.
 
-### Почему **Oracle**?
+### Почему Oracle?
 
 **Oracle Database** предлагает множество преимуществ:**
 
@@ -77,14 +77,14 @@ updated: "2026-02-11"
 7. **Широкая поддержка** — Используется в крупных корпорациях
 8. **Активное развитие** — Регулярные обновления и новые функции
 
-### Архитектура **Oracle**
+### Архитектура Oracle
 
 **Oracle** использует архитектуру с разделением памяти и процессов:**
 
-- **SGA (**System Global Area**)** — Общая память для всех процессов
-- **PGA (**Program Global Area**)** — Память для каждого процесса
+- **SGA (System Global Area)** — Общая память для всех процессов
+- **PGA (Program Global Area)** — Память для каждого процесса
 - **Background Processes** — Фоновые процессы для управления БД
-- **Instance** — Экземпляр **Oracle** (**память + процессы**)
+- **Instance** — Экземпляр **Oracle** (память + процессы)
 - **Database** — Физические файлы данных
 
 ### Основные компоненты
@@ -141,7 +141,7 @@ public class OracleComponents {
 
 ## Установка и настройка
 
-### **Docker** установка
+### Docker установка
 
 ```bash
 # Запуск Oracle Database в Docker
@@ -173,7 +173,7 @@ DATAFILE '/u01/app/oracle/oradata/mytablespace.dbf' SIZE 100M
 AUTOEXTEND ON NEXT 10M MAXSIZE 1G;
 ```
 
-## Основы **SQL** в **Oracle**
+## Основы SQL в Oracle
 
 ### Создание таблиц
 
@@ -222,7 +222,7 @@ CREATE INDEX idx_user_email ON users(email);
 CREATE INDEX idx_order_user_date ON orders(user_id, order_date);
 ```
 
-### Типы данных **Oracle**
+### Типы данных Oracle
 
 ```sql
 /*
@@ -276,7 +276,7 @@ CREATE TABLE binary_types (
 );
 ```
 
-### **CRUD** операции
+### CRUD операции
 
 ```sql
 /*
@@ -334,9 +334,9 @@ WHERE u.is_active = 1
 ORDER BY o.order_date DESC;
 ```
 
-## `PL`/**SQL** программирование
+## `PL`/SQL программирование
 
-### Блоки `PL`/**SQL**
+### Блоки `PL`/SQL
 
 ```sql
 /*
@@ -534,7 +534,7 @@ END;
 
 ## Управление транзакциями
 
-### **ACID** свойства
+### ACID свойства
 
 ```sql
 /
@@ -682,9 +682,9 @@ FROM users
 WHERE email = 'john@example.com';
 ```
 
-## Интеграция с **Java**
+## Интеграция с Java
 
-### **JDBC** подключение
+### JDBC подключение
 
 ```java
 /
@@ -878,7 +878,7 @@ public class OracleJDBCConnection {
 }
 ```
 
-### **Spring Boot** интеграция
+### Spring Boot интеграция
 
 ```java
 /
@@ -1058,7 +1058,7 @@ ALTER TABLE users MODIFY (email ENCRYPT USING 'AES256');
 
 **Oracle Database** — это мощная **enterprise-grade** СУБД с богатым функционалом. Она предоставляет высокую производительность, надежность и безопасность для критически важных приложений.
 
-### Преимущества **Oracle Database**
+### Преимущества Oracle Database
 
 1. **Высокая производительность** — Оптимизированный движок для больших нагрузок
 2. **Масштабируемость** — Поддержка кластеров и распределенных систем

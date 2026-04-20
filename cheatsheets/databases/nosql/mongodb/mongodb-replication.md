@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: Репликация — **Replica Sets** для высокой доступности и отказоустойчивости
+# MongoDB: Репликация — Replica Sets для высокой доступности и отказоустойчивости
 
 Полное руководство по репликации в **MongoDB**: **Replica Sets**, настройка, управление, **Read Preferences** и **Write Concerns**.
 
@@ -71,7 +71,7 @@ updated: "2026-02-11"
     - [Режим обслуживания](#режим-обслуживания)
 - [**Read Preferences**](#read-preferences)
   - [Типы **Read Preferences**](#типы-read-preferences)
-    - [**primary** (**по умолчанию**)](#primary-по-умолчанию)
+    - [**primary** (по умолчанию)](#primary-по-умолчанию)
     - [**primaryPreferred**](#primarypreferred)
     - [**secondary**](#secondary)
     - [**secondaryPreferred**](#secondarypreferred)
@@ -82,15 +82,15 @@ updated: "2026-02-11"
     - [Настройка тегов](#настройка-тегов)
 - [**Write Concerns**](#write-concerns)
   - [Уровни **Write Concern**](#уровни-write-concern)
-    - [w: 0 (**Unacknowledged**)](#w-0-unacknowledged)
-    - [w: 1 (**Acknowledged**)](#w-1-acknowledged)
+    - [w: 0 (Unacknowledged)](#w-0-unacknowledged)
+    - [w: 1 (Acknowledged)](#w-1-acknowledged)
     - [w: "**majority**"](#w-majority)
-    - [w: N (**Custom**)](#w-n-custom)
+    - [w: N (Custom)](#w-n-custom)
   - [Дополнительные параметры](#дополнительные-параметры)
     - [**wtimeout**](#wtimeout)
-    - [j: **true** (**Journal**)](#j-true-journal)
+    - [j: **true** (Journal)](#j-true-journal)
   - [**Java Write Concerns**](#java-write-concerns)
-- [**Oplog** (**Operation Log**)](#oplog-operation-log)
+- [**Oplog** (Operation Log)](#oplog-operation-log)
   - [Структура **Oplog**](#структура-oplog)
   - [Типы операций в **Oplog**](#типы-операций-в-oplog)
     - [**Insert** (i)](#insert-i)
@@ -117,8 +117,8 @@ updated: "2026-02-11"
   - [Авторизация](#авторизация)
     - [Роли и права](#роли-и-права)
 - [Решение проблем](#решение-проблем)
-  - [1. **Replica lag** (**отставание реплики**)](#1-replica-lag-отставание-реплики)
-  - [2. **Split brain** (**разделение кластера**)](#2-split-brain-разделение-кластера)
+  - [1. **Replica lag** (отставание реплики)](#1-replica-lag-отставание-реплики)
+  - [2. **Split brain** (разделение кластера)](#2-split-brain-разделение-кластера)
   - [3. Неожиданное переключение **primary**](#3-неожиданное-переключение-primary)
   - [4. **Oplog overflow**](#4-oplog-overflow)
   - [5. **Read preference** не работает](#5-read-preference-не-работает)
@@ -141,7 +141,7 @@ updated: "2026-02-11"
     - [Выбор конфигурации:](#выбор-конфигурации)
   - [Распространенные ошибки:](#распространенные-ошибки)
 
-## Введение в репликацию **MongoDB**
+## Введение в репликацию MongoDB
 
 **Репликация** в **MongoDB** обеспечивает высокую доступность, отказоустойчивость и масштабируемость чтения данных. Основной механизм репликации — **Replica Set** — это группа **MongoDB** серверов, которые поддерживают одинаковый набор данных.
 
@@ -168,24 +168,24 @@ updated: "2026-02-11"
 4. **Резервное копирование**: Горячее резервное копирование
 5. **Обслуживание**: Обновления без простоя
 
-### Типы членов **Replica Set**
+### Типы членов Replica Set
 
-#### **Primary Node**
-- **Роль**: Принимает все операции записи и чтения (**по умолчанию**)
+#### Primary Node
+- **Роль**: Принимает все операции записи и чтения (по умолчанию)
 - **Количество**: Только один в кластере
 - **Функции**: Запись операций в **oplog**, координация репликации
 
-#### **Secondary Nodes**
+#### Secondary Nodes
 - **Роль**: Реплицируют данные от **primary**, могут обслуживать чтение
 - **Количество**: 1-50 в кластере
 - **Функции**: Применение операций из **oplog**, участие в выборах
 
-#### **Arbiter Nodes**
+#### Arbiter Nodes
 - **Роль**: Участвуют только в выборах, не хранят данные
 - **Количество**: Опционально, до 50% от общего числа голосов
 - **Функции**: Обеспечение нечетного числа голосов для кворума
 
-## Архитектура **Replica Set**
+## Архитектура Replica Set
 
 ### Базовая архитектура
 
@@ -211,7 +211,7 @@ Production Environment:
 - Быстрое восстановление
 ```
 
-#### Для **production**
+#### Для production
 ```text
 Разные дата-центры:
 DC1: Primary + Secondary
@@ -229,7 +229,7 @@ Primary + Secondary (не рекомендуется для production)
 - Недостаточная отказоустойчивость
 ```
 
-## Настройка **Replica Set**
+## Настройка Replica Set
 
 ### 1. Подготовка серверов
 
@@ -243,9 +243,9 @@ mongod --replSet rs0 --port 27018 --dbpath /data/db/rs0-2 --logpath /data/db/rs0
 mongod --replSet rs0 --port 27019 --dbpath /data/db/rs0-3 --logpath /data/db/rs0-3.log --fork
 ```
 
-### 2. Инициализация **Replica Set**
+### 2. Инициализация Replica Set
 
-#### **MongoDB Shell**
+#### MongoDB Shell
 ```javascript
 // Подключение к одному из инстансов
 mongo --port 27017
@@ -278,9 +278,9 @@ rs.initiate({
 })
 ```
 
-### 3. **Java** + **Spring** настройка
+### 3. Java + Spring настройка
 
-#### Зависимости **Maven**
+#### Зависимости Maven
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
@@ -294,7 +294,7 @@ rs.initiate({
 </dependency>
 ```
 
-#### Подключение к **Replica Set**
+#### Подключение к Replica Set
 ```java
 @Configuration
 public class MongoConfig {
@@ -315,7 +315,7 @@ public class MongoConfig {
 }
 ```
 
-#### **Spring Boot application.yml**
+#### Spring Boot application.yml
 ```yaml
 spring:
   data:
@@ -326,9 +326,9 @@ spring:
       write-concern: w2
 ```
 
-### 4. **Docker Compose** настройка
+### 4. Docker Compose настройка
 
-#### **docker-compose.yml**
+#### docker-compose.yml
 ```yaml
 version: '3.8'
 services:
@@ -383,11 +383,11 @@ rs.initiate({
 })
 ```
 
-## Управление **Replica Set**
+## Управление Replica Set
 
 ### Добавление членов
 
-#### Добавление **Secondary**
+#### Добавление Secondary
 ```javascript
 // Добавить новый secondary
 rs.add("hostname:27017")
@@ -400,7 +400,7 @@ rs.add({
 })
 ```
 
-#### Добавление **Arbiter**
+#### Добавление Arbiter
 ```javascript
 // Добавить arbiter (только для голосования)
 rs.addArb("hostname:27017")
@@ -434,7 +434,7 @@ rs.reconfig(config)
 
 ### Управление состоянием
 
-#### Переключение **Primary**
+#### Переключение Primary
 ```javascript
 // Принудительное переключение (step down)
 rs.stepDown()
@@ -452,41 +452,41 @@ db.adminCommand({ replSetMaintenance: true })
 db.adminCommand({ replSetMaintenance: false })
 ```
 
-## **Read Preferences**
+## Read Preferences
 
-### Типы **Read Preferences**
+### Типы Read Preferences
 
-#### **primary** (**по умолчанию**)
+#### primary (по умолчанию)
 ```javascript
 // Чтение только с primary
 db.collection.find().readPref("primary")
 ```
 
-#### **primaryPreferred**
+#### primaryPreferred
 ```javascript
 // Предпочтительно primary, но можно secondary
 db.collection.find().readPref("primaryPreferred")
 ```
 
-#### **secondary**
+#### secondary
 ```javascript
 // Только secondary
 db.collection.find().readPref("secondary")
 ```
 
-#### **secondaryPreferred**
+#### secondaryPreferred
 ```javascript
 // Предпочтительно secondary, но можно primary
 db.collection.find().readPref("secondaryPreferred")
 ```
 
-#### **nearest**
+#### nearest
 ```javascript
 // Ближайший сервер (минимальная latency)
 db.collection.find().readPref("nearest")
 ```
 
-### **Java** реализация **Read Preferences**
+### Java реализация Read Preferences
 
 ```java
 import com.mongodb.ReadPreference;
@@ -508,7 +508,7 @@ collection.withReadPreference(ReadPreference.secondaryPreferred());
 collection.withReadPreference(ReadPreference.nearest());
 ```
 
-### **Spring Data MongoDB**
+### Spring Data MongoDB
 
 ```java
 @Repository
@@ -531,7 +531,7 @@ public class UserRepositoryImpl implements UserRepository {
 }
 ```
 
-### Тэги **Read Preferences**
+### Тэги Read Preferences
 
 #### Настройка тегов
 ```javascript
@@ -550,29 +550,29 @@ db.collection.find().readPref("secondary",
   [{ "dc": "west" }, { "usage": "reporting" }])
 ```
 
-## **Write Concerns**
+## Write Concerns
 
-### Уровни **Write Concern**
+### Уровни Write Concern
 
-#### w: 0 (**Unacknowledged**)
+#### w: 0 (Unacknowledged)
 ```javascript
 // Fire and forget - нет подтверждения
 db.collection.insertOne(doc, { writeConcern: { w: 0 } })
 ```
 
-#### w: 1 (**Acknowledged**)
+#### w: 1 (Acknowledged)
 ```javascript
 // Подтверждение от primary
 db.collection.insertOne(doc, { writeConcern: { w: 1 } })
 ```
 
-#### w: "**majority**"
+#### w: "majority"
 ```javascript
 // Подтверждение от большинства
 db.collection.insertOne(doc, { writeConcern: { w: "majority" } })
 ```
 
-#### w: N (**Custom**)
+#### w: N (Custom)
 ```javascript
 // Подтверждение от N серверов
 db.collection.insertOne(doc, { writeConcern: { w: 3 } })
@@ -580,7 +580,7 @@ db.collection.insertOne(doc, { writeConcern: { w: 3 } })
 
 ### Дополнительные параметры
 
-#### **wtimeout**
+#### wtimeout
 ```javascript
 // Таймаут ожидания подтверждения (мс)
 db.collection.insertOne(doc, {
@@ -591,7 +591,7 @@ db.collection.insertOne(doc, {
 })
 ```
 
-#### j: **true** (**Journal**)
+#### j: true (Journal)
 ```javascript
 // Ждать записи в journal
 db.collection.insertOne(doc, {
@@ -602,7 +602,7 @@ db.collection.insertOne(doc, {
 })
 ```
 
-### **Java Write Concerns**
+### Java Write Concerns
 
 ```java
 import com.mongodb.WriteConcern;
@@ -623,7 +623,7 @@ WriteConcern custom = WriteConcern.w3().withWTimeout(5000, TimeUnit.MILLISECONDS
 collection.withWriteConcern(majority).insertOne(document);
 ```
 
-### **Spring Data MongoDB**
+### Spring Data MongoDB
 
 ```java
 @Configuration
@@ -641,9 +641,9 @@ public class MongoConfig {
 }
 ```
 
-## **Oplog** (**Operation Log**)
+## Oplog (Operation Log)
 
-### Структура **Oplog**
+### Структура Oplog
 
 ```javascript
 // Просмотр oplog
@@ -665,9 +665,9 @@ db.oplog.rs.find().limit(5)
 }
 ```
 
-### Типы операций в **Oplog**
+### Типы операций в Oplog
 
-#### **Insert** (i)
+#### Insert (i)
 ```javascript
 {
   "op": "i",
@@ -680,7 +680,7 @@ db.oplog.rs.find().limit(5)
 }
 ```
 
-#### **Update** (u)
+#### Update (u)
 ```javascript
 {
   "op": "u",
@@ -690,7 +690,7 @@ db.oplog.rs.find().limit(5)
 }
 ```
 
-#### **Delete** (d)
+#### Delete (d)
 ```javascript
 {
   "op": "d",
@@ -699,7 +699,7 @@ db.oplog.rs.find().limit(5)
 }
 ```
 
-#### **Command** (c)
+#### Command (c)
 ```javascript
 {
   "op": "c",
@@ -710,9 +710,9 @@ db.oplog.rs.find().limit(5)
 }
 ```
 
-### Управление **Oplog**
+### Управление Oplog
 
-#### Размер **Oplog**
+#### Размер Oplog
 ```javascript
 // Проверить размер oplog
 use local
@@ -725,7 +725,7 @@ db.adminCommand({
 })
 ```
 
-#### Мониторинг **Oplog**
+#### Мониторинг Oplog
 ```javascript
 // Время хранения операций
 db.getReplicationInfo().timeDiff
@@ -736,7 +736,7 @@ db.printReplicationInfo()
 
 ## Мониторинг и обслуживание
 
-### Метрики **Replica Set**
+### Метрики Replica Set
 
 #### Статус репликации
 ```javascript
@@ -750,7 +750,7 @@ rs.printReplicationInfo()
 rs.printSlaveReplicationInfo()
 ```
 
-#### **MongoDB** метрики
+#### MongoDB метрики
 ```javascript
 // Метрики репликации
 db.serverStatus().repl
@@ -759,7 +759,7 @@ db.serverStatus().repl
 db.getReplicationInfo()
 ```
 
-### **Java** мониторинг
+### Java мониторинг
 
 ```java
 @Service
@@ -805,7 +805,7 @@ rs.syncFrom("hostname:27017")
 rs.stepDown()
 ```
 
-## Безопасность **Replica Set**
+## Безопасность Replica Set
 
 ### Аутентификация
 
@@ -841,7 +841,7 @@ db.createUser({
 
 ### Шифрование
 
-#### **TLS**/**SSL** настройка
+#### TLS/SSL настройка
 ```javascript
 // Конфигурация с TLS
 rs.initiate({
@@ -884,7 +884,7 @@ db.createUser({
 
 ## Решение проблем
 
-### 1. **Replica lag** (**отставание реплики**)
+### 1. Replica lag (отставание реплики)
 
 ```javascript
 // Проверить lag
@@ -897,7 +897,7 @@ rs.printSlaveReplicationInfo()
 // 4. Увеличить аппаратные ресурсы
 ```
 
-### 2. **Split brain** (**разделение кластера**)
+### 2. Split brain (разделение кластера)
 
 ```javascript
 // Симптомы: два primary в разных сетях
@@ -908,7 +908,7 @@ rs.printSlaveReplicationInfo()
 // 3. Настроить election timeouts
 ```
 
-### 3. Неожиданное переключение **primary**
+### 3. Неожиданное переключение primary
 
 ```javascript
 // Проверить причины
@@ -921,7 +921,7 @@ rs.status().myState
 // 4. Настроить write concerns
 ```
 
-### 4. **Oplog overflow**
+### 4. Oplog overflow
 
 ```javascript
 // Проверить размер oplog
@@ -933,7 +933,7 @@ db.getReplicationInfo()
 // 3. Улучшить сеть между дата-центрами
 ```
 
-### 5. **Read preference** не работает
+### 5. Read preference не работает
 
 ```javascript
 // Проверить read preference
@@ -1011,7 +1011,7 @@ groups:
 
 ### Безопасность
 
-#### **Network security**
+#### Network security
 ```javascript
 // Bind to specific interfaces
 net:
@@ -1025,7 +1025,7 @@ net:
     CAFile: /etc/ssl/ca.pem
 ```
 
-#### **Access control**
+#### Access control
 ```javascript
 // Включить авторизацию
 security:
@@ -1050,7 +1050,7 @@ db.createUser({
 // 4. Настроить write concerns в зависимости от требований
 ```
 
-#### **Hardware recommendations**
+#### Hardware recommendations
 ```javascript
 // Primary node: Лучший CPU и storage
 // Secondary nodes: Могут иметь меньше ресурсов
@@ -1070,16 +1070,16 @@ db.createUser({
 ### Архитектурные решения:
 
 #### Выбор конфигурации:
-- **Development**: 3 **nodes** (**P + 2S**)
+- **Development**: 3 **nodes** (P + 2S)
 - **Production**: 5+ **nodes** с распределением по `DC`
 - **Critical systems**: **Multi-DC** с **arbiters**
 
-#### **Read preferences**:
+#### Read preferences:
 - **primary**: Строгая консистентность
 - **secondaryPreferred**: Баланс производительности
 - **nearest**: Минимальная **latency**
 
-#### **Write concerns**:
+#### Write concerns:
 - **w:1**: Быстрые записи
 - **w:majority**: Надежность
 - **wtimeout**: Предотвращение зависаний

@@ -123,9 +123,9 @@ related: ["quarkus-reactive.md", "quarkus-messaging.md"]
 - **Error Handling**: Обработка ошибок и **retry**
 - **Partitioning**: Управление партициями
 
-## Конфигурация **Kafka**
+## Конфигурация Kafka
 
-### **Basic Configuration**
+### Basic Configuration
 
 **application.properties:**
 
@@ -143,7 +143,7 @@ mp.messaging.outgoing.events.connector=smallrye-kafka
 mp.messaging.outgoing.events.topic=events
 ```
 
-### **Advanced Configuration**
+### Advanced Configuration
 
 ```properties
 # Consumer settings
@@ -159,7 +159,7 @@ mp.messaging.outgoing.events.max.in.flight.requests.per.connection=5
 
 ## Message Producer
 
-### **Basic Producer**
+### Basic Producer
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -180,7 +180,7 @@ public class EventProducer {
 }
 ```
 
-### **Producer** с **Payload**
+### Producer с Payload
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -201,7 +201,7 @@ public class UserEventProducer {
 }
 ```
 
-### **Producer** с **Metadata**
+### Producer с Metadata
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -229,7 +229,7 @@ public class MetadataProducer {
 
 ## Message Consumer
 
-### **Basic Consumer**
+### Basic Consumer
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -250,7 +250,7 @@ public class EventConsumer {
 }
 ```
 
-### **Reactive Consumer**
+### Reactive Consumer
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -270,7 +270,7 @@ public class ReactiveEventConsumer {
 }
 ```
 
-### **Consumer** с **Message**
+### Consumer с Message
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -298,7 +298,7 @@ public class MessageConsumer {
 
 ## Serialization
 
-### **JSON Serialization**
+### JSON Serialization
 
 ```properties
 # application.properties
@@ -306,7 +306,7 @@ mp.messaging.incoming.events.value.deserializer=org.apache.kafka.common.serializ
 mp.messaging.outgoing.events.value.serializer=org.apache.kafka.common.serialization.StringSerializer
 ```
 
-### **Custom Serializer**
+### Custom Serializer
 
 ```java
 import org.apache.kafka.common.serialization.Serializer;
@@ -327,7 +327,7 @@ public class UserSerializer implements Serializer<User> {
 }
 ```
 
-### **Custom Deserializer**
+### Custom Deserializer
 
 ```java
 import org.apache.kafka.common.serialization.Deserializer;
@@ -350,7 +350,7 @@ public class UserDeserializer implements Deserializer<User> {
 
 ## Error Handling
 
-### **Dead Letter Queue**
+### Dead Letter Queue
 
 ```properties
 # application.properties
@@ -358,7 +358,7 @@ mp.messaging.incoming.events.failure-strategy=dead-letter-queue
 mp.messaging.incoming.events.dead-letter-queue.topic=events-dlq
 ```
 
-### **Retry Strategy**
+### Retry Strategy
 
 ```properties
 # application.properties
@@ -367,7 +367,7 @@ mp.messaging.incoming.events.retry.attempts=3
 mp.messaging.incoming.events.retry.delay=1s
 ```
 
-### **Custom Error Handler**
+### Custom Error Handler
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Incoming;
@@ -392,14 +392,14 @@ public class ErrorHandlingConsumer {
 
 ## Partitioning
 
-### **Partition Assignment**
+### Partition Assignment
 
 ```properties
 # application.properties
 mp.messaging.incoming.events.partition=0
 ```
 
-### **Key-based Partitioning**
+### Key-based Partitioning
 
 ```java
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
@@ -427,7 +427,7 @@ public class PartitionedProducer {
 
 ## Testing
 
-### **Testing Producers**
+### Testing Producers
 
 ```java
 import io.quarkus.test.junit.QuarkusTest;
@@ -451,7 +451,7 @@ public class ProducerTest {
 }
 ```
 
-### **Testing Consumers**
+### Testing Consumers
 
 ```java
 import io.quarkus.test.junit.QuarkusTest;
@@ -478,7 +478,7 @@ public class ConsumerTest {
 
 ## Лучшие практики
 
-### 1. Используйте **reactive messaging**
+### 1. Используйте reactive messaging
 
 ```java
 // ✅ Хорошо
@@ -495,7 +495,7 @@ public Uni<Void> consumeReactive(String event) {
 mp.messaging.incoming.events.failure-strategy=dead-letter-queue
 ```
 
-### 3. Настраивайте **serialization**
+### 3. Настраивайте serialization
 
 ```properties
 # ✅ Хорошо
@@ -512,7 +512,7 @@ Message.of(event)
         .build())
 ```
 
-### 5. Настраивайте **retry** и **timeout**
+### 5. Настраивайте retry и timeout
 
 ```properties
 # ✅ Хорошо
@@ -522,7 +522,7 @@ mp.messaging.incoming.events.retry.delay=1s
 
 ## Advanced Kafka Patterns
 
-### **Exactly-Once Semantics**
+### Exactly-Once Semantics
 
 **Обеспечение **exactly-once** семантики:**
 
@@ -532,7 +532,7 @@ mp.messaging.outgoing.events.enable.idempotence=true
 mp.messaging.outgoing.events.transactional.id=my-transaction-id
 ```
 
-### **Transactional Producers**
+### Transactional Producers
 
 **Использование транзакционных **producers**:**
 
@@ -557,7 +557,7 @@ public class TransactionalProducer {
 }
 ```
 
-### **Consumer Groups**
+### Consumer Groups
 
 **Настройка **consumer groups**:**
 
@@ -567,7 +567,7 @@ mp.messaging.incoming.events.group.id=my-consumer-group
 mp.messaging.incoming.events.partition=0
 ```
 
-### **Offset Management**
+### Offset Management
 
 **Управление **offset**:**
 
@@ -580,7 +580,7 @@ mp.messaging.incoming.events.commit-strategy=latest
 
 ## Kafka Streams
 
-### **Stream Processing**
+### Stream Processing
 
 **Обработка потоков данных:**
 
@@ -607,7 +607,7 @@ public class StreamProcessor {
 
 ## Schema Registry
 
-### **Avro Serialization**
+### Avro Serialization
 
 **Использование **Avro** с **Schema Registry**:**
 
@@ -617,7 +617,7 @@ mp.messaging.outgoing.events.value.serializer=io.confluent.kafka.serializers.Kaf
 mp.messaging.outgoing.events.schema.registry.url=http://localhost:8081
 ```
 
-### **JSON Schema**
+### JSON Schema
 
 **Использование **JSON Schema**:**
 
@@ -629,7 +629,7 @@ mp.messaging.outgoing.events.schema.registry.url=http://localhost:8081
 
 ## Monitoring и Metrics
 
-### **Kafka Metrics**
+### Kafka Metrics
 
 **Настройка метрик:**
 
@@ -639,7 +639,7 @@ quarkus.micrometer.enabled=true
 quarkus.micrometer.export.prometheus.enabled=true
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 **Создание кастомных метрик:**
 
@@ -662,7 +662,7 @@ public class KafkaMetrics {
 
 ## Error Recovery
 
-### **Retry with Exponential Backoff**
+### Retry with Exponential Backoff
 
 **Retry** с экспоненциальной задержкой:**
 
@@ -675,7 +675,7 @@ mp.messaging.incoming.events.retry.max-delay=30s
 mp.messaging.incoming.events.retry.multiplier=2
 ```
 
-### **Circuit Breaker**
+### Circuit Breaker
 
 **Использование **circuit breaker**:**
 
@@ -701,7 +701,7 @@ public class CircuitBreakerConsumer {
 
 ## Advanced Kafka Patterns
 
-### **Event Sourcing**
+### Event Sourcing
 
 **Реализация **Event Sourcing**:**
 
@@ -721,7 +721,7 @@ public class EventSourcingService {
 }
 ```
 
-### **CQRS Pattern**
+### CQRS Pattern
 
 **Реализация **CQRS**:**
 
@@ -748,7 +748,7 @@ public class QueryHandler {
 }
 ```
 
-### **Saga Pattern**
+### Saga Pattern
 
 **Реализация **Saga pattern**:**
 
@@ -776,7 +776,7 @@ public class SagaOrchestrator {
 
 ## Kafka Performance Tuning
 
-### **Producer Performance**
+### Producer Performance
 
 **Оптимизация производительности **producer**:**
 
@@ -792,7 +792,7 @@ mp.messaging.outgoing.events.compression.type=lz4
 mp.messaging.outgoing.events.buffer.memory=33554432
 ```
 
-### **Consumer Performance**
+### Consumer Performance
 
 **Оптимизация производительности **consumer**:**
 
@@ -808,7 +808,7 @@ mp.messaging.incoming.events.max.poll.records=500
 mp.messaging.incoming.events.session.timeout.ms=30000
 ```
 
-### **Partitioning Strategy**
+### Partitioning Strategy
 
 **Стратегия партиционирования:**
 
@@ -829,7 +829,7 @@ public class PartitioningService {
 
 ## Kafka Monitoring
 
-### **Consumer Lag Monitoring**
+### Consumer Lag Monitoring
 
 **Мониторинг **lag** потребителей:**
 
@@ -850,7 +850,7 @@ public class LagMonitor {
 }
 ```
 
-### **Throughput Monitoring**
+### Throughput Monitoring
 
 **Мониторинг пропускной способности:**
 
@@ -878,7 +878,7 @@ public class ThroughputMonitor {
 
 ## Error Recovery Patterns
 
-### **Circuit Breaker Pattern**
+### Circuit Breaker Pattern
 
 **Реализация **Circuit Breaker**:**
 
@@ -893,7 +893,7 @@ public class CircuitBreakerService {
 }
 ```
 
-### **Dead Letter Queue Pattern**
+### Dead Letter Queue Pattern
 
 **Использование **Dead Letter Queue**:**
 
@@ -903,7 +903,7 @@ mp.messaging.incoming.events.failure-strategy=dead-letter-queue
 mp.messaging.incoming.events.dead-letter-queue.topic=events-dlq
 ```
 
-### **Retry with Exponential Backoff**
+### Retry with Exponential Backoff
 
 **Retry** с экспоненциальной задержкой:**
 
@@ -916,7 +916,7 @@ mp.messaging.incoming.events.retry.multiplier=2
 
 ## Kafka Streams Integration
 
-### **Stream Processing**
+### Stream Processing
 
 **Обработка потоков:**
 
@@ -934,7 +934,7 @@ public class StreamProcessor {
 }
 ```
 
-### **Windowed Aggregations**
+### Windowed Aggregations
 
 **Оконные агрегации:**
 
@@ -959,7 +959,7 @@ public class WindowedAggregation {
 
 ## Kafka Schema Evolution
 
-### **Schema Compatibility**
+### Schema Compatibility
 
 **Совместимость схем:**
 
@@ -968,7 +968,7 @@ quarkus.kafka.schema.registry.url=http://localhost:8081
 quarkus.kafka.schema.compatibility=BACKWARD
 ```
 
-### **Schema Versioning**
+### Schema Versioning
 
 **Версионирование схем:**
 

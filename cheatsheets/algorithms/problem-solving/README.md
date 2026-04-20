@@ -17,5 +17,5 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Обзор решения задач](problem-solving-overview.md)
+- [[problem-solving-overview|Обзор решения задач]]
 

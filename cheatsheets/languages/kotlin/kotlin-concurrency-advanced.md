@@ -32,7 +32,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [**Coroutine Context** и **Dispatchers** (**детально**)](#coroutine-context-и-dispatchers-детально)
+- [**Coroutine Context** и **Dispatchers** (детально)](#coroutine-context-и-dispatchers-детально)
   - [**CoroutineContext** — детальное понимание](#coroutinecontext-детальное-понимание)
   - [Композиция контекста](#композиция-контекста)
   - [Dispatchers — детальное использование](#dispatchers-детальное-использование)
@@ -47,8 +47,8 @@ updated: "2026-02-11"
 - [**Coroutine Scopes**](#coroutine-scopes)
   - [**GlobalScope**](#globalscope)
   - [**CoroutineScope**](#coroutinescope)
-  - [**LifecycleScope** (**Android**)](#lifecyclescope-android)
-  - [**ViewModelScope** (**Android**)](#viewmodelscope-android)
+  - [**LifecycleScope** (Android)](#lifecyclescope-android)
+  - [**ViewModelScope** (Android)](#viewmodelscope-android)
 - [**Job** и **Deferred**](#job-и-deferred)
   - [**Job** — детальное использование](#job-детальное-использование)
   - [**Job** иерархия](#job-иерархия)
@@ -56,14 +56,14 @@ updated: "2026-02-11"
   - [**Deferred** — результат **async**](#deferred-результат-async)
   - [**Deferred** с обработкой ошибок](#deferred-с-обработкой-ошибок)
   - [**awaitAll**](#awaitall)
-- [**Flow** (**продвинутое**)](#flow-продвинутое)
+- [**Flow** (продвинутое)](#flow-продвинутое)
   - [**Cold** vs **Hot Flows**](#cold-vs-hot-flows)
-  - [**Flow Operators** (**продвинутые**)](#flow-operators-продвинутые)
-  - [**Backpressure** (**обратное давление**)](#backpressure-обратное-давление)
+  - [**Flow Operators** (продвинутые)](#flow-operators-продвинутые)
+  - [**Backpressure** (обратное давление)](#backpressure-обратное-давление)
   - [**StateFlow**](#stateflow)
   - [**SharedFlow**](#sharedflow)
   - [**Flow** с контекстом](#flow-с-контекстом)
-- [**Channel** (**продвинутое**)](#channel-продвинутое)
+- [**Channel** (продвинутое)](#channel-продвинутое)
   - [Типы каналов](#типы-каналов)
   - [**Channel** операторы](#channel-операторы)
   - [**BroadcastChannel**](#broadcastchannel)
@@ -72,7 +72,7 @@ updated: "2026-02-11"
 - [**Mutex** и **Semaphore**](#mutex-и-semaphore)
   - [**Mutex**](#mutex)
   - [**Semaphore**](#semaphore)
-  - [**ReadWriteMutex** (**через кастомную реализацию**)](#readwritemutex-через-кастомную-реализацию)
+  - [**ReadWriteMutex** (через кастомную реализацию)](#readwritemutex-через-кастомную-реализацию)
 - [**Atomic Operations**](#atomic-operations)
   - [**Atomic** типы](#atomic-типы)
   - [**CAS** операции](#cas-операции)
@@ -127,11 +127,11 @@ updated: "2026-02-11"
   - [Использование **SupervisorJob** для независимых корутин](#использование-supervisorjob-для-независимых-корутин)
   - [Использование **Mutex** для синхронизации](#использование-mutex-для-синхронизации)
 
-## **Coroutine Context** и **Dispatchers** (**детально**)
+## Coroutine Context и Dispatchers (детально)
 
 **CoroutineContext** является фундаментальной концепцией в **Kotlin Coroutines**. Он определяет окружение, в котором выполняется корутина, включая поток выполнения, имя корутины, обработчик исключений и другие элементы. Понимание **CoroutineContext** критично для правильной работы с корутинами.
 
-### **CoroutineContext** — детальное понимание
+### CoroutineContext — детальное понимание
 
 **CoroutineContext** представляет собой набор элементов, которые определяют поведение корутины. Каждый элемент контекста отвечает за определенный аспект выполнения: **Dispatcher** определяет поток, **CoroutineName** — имя для отладки, **Job** — жизненный цикл корутины, **ExceptionHandler** — обработку ошибок.
 
@@ -287,7 +287,7 @@ suspend fun `structuredExample()` = `coroutineScope` {
 // Все дочерние корутины завершаются до выхода из coroutineScope
 ```
 
-### Отмена в **Structured Concurrency**
+### Отмена в Structured Concurrency
 
 ```kotlin
 suspend fun cancellationExample() = coroutineScope {
@@ -313,7 +313,7 @@ suspend fun cancellationExample() = coroutineScope {
 }
 ```
 
-### **SupervisorScope**
+### SupervisorScope
 
 **SupervisorScope** позволяет дочерним корутинам завершаться независимо.
 
@@ -360,9 +360,9 @@ suspend fun hierarchyExample() = coroutineScope {
 }
 ```
 
-## **Coroutine Scopes**
+## Coroutine Scopes
 
-### **GlobalScope**
+### GlobalScope
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -382,7 +382,7 @@ fun globalScopeExample() {
 // - В основном для логирования, мониторинга
 ```
 
-### **CoroutineScope**
+### CoroutineScope
 
 ```kotlin
 // Создание собственного scope
@@ -401,7 +401,7 @@ class MyComponent {
 }
 ```
 
-### **SupervisorScope**
+### SupervisorScope
 
 ```kotlin
 suspend fun supervisorScopeExample() = supervisorScope {
@@ -426,7 +426,7 @@ suspend fun supervisorScopeExample() = supervisorScope {
 }
 ```
 
-### **LifecycleScope** (**Android**)
+### LifecycleScope (Android)
 
 ```kotlin
 // Пример для Android
@@ -442,7 +442,7 @@ class MyActivity : AppCompatActivity() {
 }
 ```
 
-### **ViewModelScope** (**Android**)
+### ViewModelScope (Android)
 
 ```kotlin
 // Пример для Android ViewModel
@@ -455,9 +455,9 @@ class MyViewModel : ViewModel() {
 }
 ```
 
-## **Job** и **Deferred**
+## Job и Deferred
 
-### **Job** — детальное использование
+### Job — детальное использование
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -483,7 +483,7 @@ job.cancel()
 println(job.isCancelled)   // true
 ```
 
-### **Job** иерархия
+### Job иерархия
 
 ```kotlin
 suspend fun jobHierarchy() = coroutineScope {
@@ -506,7 +506,7 @@ suspend fun jobHierarchy() = coroutineScope {
 }
 ```
 
-### **SupervisorJob**
+### SupervisorJob
 
 ```kotlin
 val supervisor = SupervisorJob()
@@ -523,7 +523,7 @@ scope.launch {
 }
 ```
 
-### **Deferred** — результат **async**
+### Deferred — результат async
 
 ```kotlin
 suspend fun deferredExample() = coroutineScope {
@@ -546,7 +546,7 @@ suspend fun deferredExample() = coroutineScope {
 }
 ```
 
-### **Deferred** с обработкой ошибок
+### Deferred с обработкой ошибок
 
 ```kotlin
 suspend fun deferredErrorHandling() = coroutineScope {
@@ -563,7 +563,7 @@ suspend fun deferredErrorHandling() = coroutineScope {
 }
 ```
 
-### **awaitAll**
+### awaitAll
 
 ```kotlin
 suspend fun awaitAllExample() = coroutineScope {
@@ -578,9 +578,9 @@ suspend fun awaitAllExample() = coroutineScope {
 }
 ```
 
-## **Flow** (**продвинутое**)
+## Flow (продвинутое)
 
-### **Cold** vs **Hot Flows**
+### Cold vs Hot Flows
 
 ```kotlin
 import kotlinx.coroutines.flow.*
@@ -610,7 +610,7 @@ runBlocking {
 }
 ```
 
-### **Flow Operators** (**продвинутые**)
+### Flow Operators (продвинутые)
 
 ```kotlin
 // transform - кастомная трансформация
@@ -653,7 +653,7 @@ fun distinctExample(): Flow<Int> = flowOf(1, 1, 2, 2, 3, 1)
     .distinctUntilChanged()  // 1, 2, 3, 1
 ```
 
-### **Backpressure** (**обратное давление**)
+### Backpressure (обратное давление)
 
 ```kotlin
 // buffer - буферизует значения
@@ -686,7 +686,7 @@ suspend fun collectLatestExample() {
 }
 ```
 
-### **StateFlow**
+### StateFlow
 
 ```kotlin
 import kotlinx.coroutines.flow.*
@@ -710,7 +710,7 @@ println(stateFlow.value)  // Текущее значение
 stateFlow.compareAndSet(1, 2)  // Обновляет только если текущее значение = 1
 ```
 
-### **SharedFlow**
+### SharedFlow
 
 ```kotlin
 // SharedFlow - hot flow без начального значения
@@ -733,7 +733,7 @@ sharedFlow.collect { value ->
 sharedFlow.tryEmit(4)  // true если успешно, false если буфер полон
 ```
 
-### **Flow** с контекстом
+### Flow с контекстом
 
 ```kotlin
 // flowOn - меняет контекст выполнения
@@ -763,7 +763,7 @@ fun retryExample(): Flow<Int> = flow {
 }
 ```
 
-## **Channel** (**продвинутое**)
+## Channel (продвинутое)
 
 ### Типы каналов
 
@@ -783,7 +783,7 @@ val unlimitedChannel = Channel<Int>(Channel.UNLIMITED)
 val conflatedChannel = Channel<Int>(Channel.CONFLATED)
 ```
 
-### **Channel** операторы
+### Channel операторы
 
 ```kotlin
 // produce - создает канал и корутину
@@ -810,7 +810,7 @@ suspend fun consumeExample() {
 }
 ```
 
-### **BroadcastChannel**
+### BroadcastChannel
 
 ```kotlin
 // BroadcastChannel - один отправитель, много получателей
@@ -829,7 +829,7 @@ receiver1.receive()  // 1
 receiver2.receive()  // 1 (оба получают одно значение)
 ```
 
-### **Fan-out** и **Fan-in**
+### Fan-out и Fan-in
 
 ```kotlin
 // Fan-out - один производитель, много потребителей
@@ -868,7 +868,7 @@ suspend fun fanIn() = coroutineScope {
 }
 ```
 
-### **Select expression**
+### Select expression
 
 ```kotlin
 import kotlinx.coroutines.selects.*
@@ -904,9 +904,9 @@ suspend fun selectDeferred() = coroutineScope {
 }
 ```
 
-## **Mutex** и **Semaphore**
+## Mutex и Semaphore
 
-### **Mutex**
+### Mutex
 
 ```kotlin
 import kotlinx.coroutines.sync.*
@@ -948,7 +948,7 @@ suspend fun manualLock() {
 }
 ```
 
-### **Semaphore**
+### Semaphore
 
 ```kotlin
 import kotlinx.coroutines.sync.*
@@ -971,7 +971,7 @@ suspend fun semaphoreExample() = coroutineScope {
 // Только 3 задачи выполняются одновременно
 ```
 
-### **ReadWriteMutex** (**через кастомную реализацию**)
+### ReadWriteMutex (через кастомную реализацию)
 
 ```kotlin
 // Kotlin не имеет встроенного ReadWriteMutex, но можно использовать Semaphore
@@ -1001,9 +1001,9 @@ class ReadWriteLock {
 }
 ```
 
-## **Atomic Operations**
+## Atomic Operations
 
-### **Atomic** типы
+### Atomic типы
 
 ```kotlin
 import java.util.concurrent.atomic.*
@@ -1035,7 +1035,7 @@ fun atomicLongExample() {
 }
 ```
 
-### **CAS** операции
+### CAS операции
 
 ```kotlin
 // Compare-And-Swap
@@ -1057,7 +1057,7 @@ val result = atomicInt.updateAndGet { it + 1 }
 val oldValue = atomicInt.getAndUpdate { it + 1 }
 ```
 
-## **SharedState** и **Concurrency**
+## SharedState и Concurrency
 
 ### Проблемы с общим состоянием
 
@@ -1139,7 +1139,7 @@ suspend fun actorSolution() = coroutineScope {
 }
 ```
 
-### **Thread-safe** коллекции
+### Thread-safe коллекции
 
 ```kotlin
 import java.util.concurrent.*
@@ -1171,9 +1171,9 @@ suspend fun concurrentListExample() = coroutineScope {
 }
 ```
 
-## **Testing Coroutines**
+## Testing Coroutines
 
-### **TestCoroutineDispatcher**
+### TestCoroutineDispatcher
 
 ```kotlin
 import kotlinx.coroutines.test.*
@@ -1205,7 +1205,7 @@ fun testWithRunBlockingTest() = runBlockingTest {
 }
 ```
 
-### **TestCoroutineScope**
+### TestCoroutineScope
 
 ```kotlin
 fun testWithScope() {
@@ -1221,7 +1221,7 @@ fun testWithScope() {
 }
 ```
 
-### Тестирование **Flow**
+### Тестирование Flow
 
 ```kotlin
 import kotlinx.coroutines.flow.*
@@ -1263,7 +1263,7 @@ fun testRepository() = runBlockingTest {
 
 ## Лучшие практики
 
-### Избегайте **GlobalScope**
+### Избегайте GlobalScope
 
 ```kotlin
 // Плохо
@@ -1289,7 +1289,7 @@ class MyComponent {
 }
 ```
 
-### Используйте **Structured Concurrency**
+### Используйте Structured Concurrency
 
 ```kotlin
 // Плохо
@@ -1307,7 +1307,7 @@ suspend fun goodExample() = coroutineScope {
 }
 ```
 
-### Правильный выбор **Dispatcher**
+### Правильный выбор Dispatcher
 
 ```kotlin
 // CPU-интенсивные задачи
@@ -1430,7 +1430,7 @@ val job = launch(CoroutineName("MyCoroutine")) {
 
 ## Работа с внешними библиотеками
 
-### Интеграция с **Retrofit**
+### Интеграция с Retrofit
 
 **Корутины отлично интегрируются с **Retrofit** для работы с **API**:**
 
@@ -1456,7 +1456,7 @@ class UserRepository(private val api: ApiService) {
 
 Интеграция с **Retrofit** позволяет использовать корутины для работы с **REST API**, что делает код более читаемым и эффективным.
 
-### Интеграция с **Room**
+### Интеграция с Room
 
 **Корутины интегрируются с **Room** для работы с базами данных:**
 
@@ -1487,7 +1487,7 @@ class UserRepository(private val dao: UserDao) {
 
 ## Продвинутые паттерны
 
-### **Pipeline Pattern**
+### Pipeline Pattern
 
 **Pipeline Pattern** позволяет обрабатывать данные через цепочку корутин:**
 
@@ -1532,7 +1532,7 @@ suspend fun pipelineExample() = coroutineScope {
 
 **Pipeline Pattern** позволяет создавать эффективные цепочки обработки данных с параллельной обработкой на каждом этапе.
 
-### **Worker Pool Pattern**
+### Worker Pool Pattern
 
 **Worker Pool Pattern** позволяет распределять работу между несколькими воркерами:**
 
@@ -1628,9 +1628,9 @@ suspend fun loggedOperation() {
 
 Этот файл содержит полное руководство по продвинутой конкурентности в **Kotlin**, покрывающее все основные аспекты от оптимизации производительности до интеграции с внешними библиотеками и продвинутых паттернов.
 
-## Продвинутые техники работы с **Flow**
+## Продвинутые техники работы с Flow
 
-### Создание пользовательских операторов **Flow**
+### Создание пользовательских операторов Flow
 
 **Создание пользовательских операторов для **Flow**:**
 
@@ -1694,7 +1694,7 @@ fun <T> Flow<T>.retryWithBackoff(
 
 Создание пользовательских операторов расширяет возможности **Flow** и позволяет адаптировать его под специфичные требования.
 
-### Работа с несколькими **Flow** одновременно
+### Работа с несколькими Flow одновременно
 
 **Координация нескольких **Flow** для обработки данных:**
 
@@ -1820,9 +1820,9 @@ suspend fun optimizeConcurrency(items: List<Item>) = coroutineScope {
 
 Оптимизация производительности корутин критична для создания эффективных приложений, особенно при работе с большими объемами данных.
 
-## Дополнительные техники **Flow**
+## Дополнительные техники Flow
 
-### Работа с **StateFlow** и **SharedFlow**
+### Работа с StateFlow и SharedFlow
 
 **Использование **StateFlow** и **SharedFlow** для управления состоянием:**
 
@@ -1863,7 +1863,7 @@ eventBus.events.collect { event ->
 
 **StateFlow** и **SharedFlow** позволяют эффективно управлять состоянием и событиями в приложении.
 
-### Работа с **Hot** и **Cold Flow**
+### Работа с Hot и Cold Flow
 
 **Понимание различий между **Hot** и **Cold Flow**:**
 
@@ -1903,7 +1903,7 @@ hot.collect { println("Collector 1: $it") }  // Может пропустить 
 
 ## Дополнительные техники конкурентности
 
-### Работа с **SupervisorJob**
+### Работа с SupervisorJob
 
 **Использование **SupervisorJob** для независимых корутин:**
 
@@ -1944,7 +1944,7 @@ fun main() = runBlocking {
 
 **SupervisorJob** позволяет независимым корутинам продолжать выполнение даже при ошибках в других корутинах.
 
-### Работа с **Channel** и **Flow** вместе
+### Работа с Channel и Flow вместе
 
 **Интеграция **Channel** и **Flow** для сложных сценариев:**
 
@@ -1995,7 +1995,7 @@ flow.collect { value ->
 
 ## Дополнительные техники
 
-### Работа с корутинами и **Actor Model**
+### Работа с корутинами и Actor Model
 
 **Реализация **Actor Model** с корутинами:**
 
@@ -2076,7 +2076,7 @@ fun main() = runBlocking {
 
 ## Практические примеры использования
 
-### Создание пользовательских операторов **Flow**
+### Создание пользовательских операторов Flow
 
 **Создание пользовательских операторов для **Flow**:**
 
@@ -2109,7 +2109,7 @@ fun <T> Flow<T>.debounceWithCondition(
 
 Пользовательские операторы позволяют создавать специализированную логику для обработки потоков данных.
 
-### Координация нескольких **Flow**
+### Координация нескольких Flow
 
 **Координация нескольких **Flow** для сложных сценариев:**
 
@@ -2127,7 +2127,7 @@ fun combineUserData(
 
 Координация нескольких **Flow** позволяет комбинировать данные из различных источников.
 
-### Использование **SupervisorJob** для независимых корутин
+### Использование SupervisorJob для независимых корутин
 
 **Пример использования **SupervisorJob** для обработки независимых задач:**
 
@@ -2157,7 +2157,7 @@ class TaskProcessor {
 
 **SupervisorJob** позволяет обрабатывать независимые задачи, где ошибка в одной не влияет на другие.
 
-### Использование **Mutex** для синхронизации
+### Использование Mutex для синхронизации
 
 **Пример использования **Mutex** для защиты критических секций:**
 

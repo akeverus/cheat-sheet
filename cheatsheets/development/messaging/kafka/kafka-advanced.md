@@ -81,7 +81,7 @@ updated: "2026-02-11"
 
 ## Продвинутая архитектура
 
-### **Multi-region deployment**
+### Multi-region deployment
 ```yaml
 # MirrorMaker 2.0 — репликация топиков между кластерами (source/target, offset sync)
 apiVersion: kafka.strimzi.io/v1beta2
@@ -121,7 +121,7 @@ spec:
         topics.exclude: ".*\\.internal\\..*"
 ```
 
-### **Tiered Storage**
+### Tiered Storage
 ```properties
 # server.properties для tiered storage
 # Включение tiered storage (Kafka 3.6+)
@@ -145,7 +145,7 @@ confluent.tiered.storage.deletion.retention.ms=604800000  # 7 days
 
 ## Продвинутые продюсеры
 
-### **Idempotent** и **transactional producers**
+### Idempotent и transactional producers
 ```java
 // Конфигурация producer'а: acks, retries, idempotence, сериализаторы
 @Configuration
@@ -211,7 +211,7 @@ public class OrderService {
 }
 ```
 
-### **Custom partitioning**
+### Custom partitioning
 ```java
 // Кастомный партиционер: распределение по типу заказа
 public class OrderPartitioner implements Partitioner {
@@ -276,7 +276,7 @@ public class KafkaConfig {
 
 ## Продвинутые консьюмеры
 
-### **Consumer Groups** и **rebalancing**
+### Consumer Groups и rebalancing
 ```java
 // Конфигурация consumer'а: группа, offset reset, десериализаторы
 @Configuration
@@ -359,7 +359,7 @@ public class OrderConsumer {
 }
 ```
 
-### **Consumer lag monitoring**
+### Consumer lag monitoring
 ```java
 // Мониторинг отставания consumer group от конца партиций
 @Component
@@ -434,9 +434,9 @@ public class KafkaLagMonitor {
 }
 ```
 
-## **Kafka Streams**
+## Kafka Streams
 
-### **Stream processing application**
+### Stream processing application
 ```java
 @Configuration
 public class KafkaStreamsConfig {
@@ -499,7 +499,7 @@ public class KafkaStreamsConfig {
 }
 ```
 
-### **KTable operations**
+### KTable operations
 ```java
 // KTable: материализованное представление из топика
 @Configuration
@@ -553,9 +553,9 @@ public class InventoryStreamsConfig {
 }
 ```
 
-## **Kafka Connect**
+## Kafka Connect
 
-### **Custom connector**
+### Custom connector
 ```java
 // Кастомный source-коннектор: конфигурация и список задач
 public class CustomSourceConnector extends SourceConnector {
@@ -661,7 +661,7 @@ public class CustomSourceTask extends SourceTask {
 }
 ```
 
-### **Connector configuration**
+### Connector configuration
 ```properties
 # Source connector configuration
 {
@@ -709,9 +709,9 @@ public class CustomSourceTask extends SourceTask {
 }
 ```
 
-## **Schema Registry**
+## Schema Registry
 
-### **Schema evolution**
+### Schema evolution
 ```java
 @Configuration
 public class KafkaSchemaConfig {
@@ -748,7 +748,7 @@ public class KafkaSchemaConfig {
 }
 ```
 
-### **Schema validation**
+### Schema validation
 ```java
 @Service
 public class SchemaValidationService {
@@ -777,9 +777,9 @@ public class SchemaValidationService {
 }
 ```
 
-## **Security**
+## Security
 
-### **SASL**/**SSL authentication**
+### SASL/SSL authentication
 ```properties
 # Producer configuration with SASL/SSL
 bootstrap.servers=kafka1:9093,kafka2:9093,kafka3:9093
@@ -800,7 +800,7 @@ authorizer.class.name=kafka.security.auth.SimpleAclAuthorizer
 allow.everyone.if.no.acl.found=false
 ```
 
-### **ACL management**
+### ACL management
 ```bash
 # Create ACLs
 kafka-acls --bootstrap-server localhost:9092 \
@@ -829,9 +829,9 @@ kafka-acls --bootstrap-server localhost:9092 \
   --topic orders
 ```
 
-## **Monitoring** и **Observability**
+## Monitoring и Observability
 
-### **JMX metrics**
+### JMX metrics
 ```java
 @Configuration
 public class KafkaMetricsConfig {
@@ -873,7 +873,7 @@ public class KafkaMetricsConfig {
 }
 ```
 
-### **Custom monitoring**
+### Custom monitoring
 ```java
 @Component
 public class KafkaHealthIndicator implements HealthIndicator {
@@ -914,7 +914,7 @@ public class KafkaHealthIndicator implements HealthIndicator {
 
 ## Производительность и оптимизация
 
-### **Broker optimization**
+### Broker optimization
 ```properties
 # server.properties optimizations
 ############################# Server Basics #############################
@@ -950,7 +950,7 @@ KAFKA_HEAP_OPTS="-Xmx8G -Xms8G"
 KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35"
 ```
 
-### **Client optimization**
+### Client optimization
 ```java
 @Configuration
 public class OptimizedKafkaConfig {
@@ -1061,7 +1061,7 @@ kafka-configs --bootstrap-server localhost:9092 \
   --describe
 ```
 
-### **Performance debugging**
+### Performance debugging
 ```java
 @Component
 public class KafkaPerformanceMonitor {
@@ -1107,10 +1107,10 @@ public class KafkaPerformanceMonitor {
 
 ## Лучшие практики
 
-- **Партиционирование и ключи:** используйте осмысленные ключи для упорядоченности и сбалансированности партиций; избегайте **hot partitions** (**один ключ доминирует**).
-- **Репликация и durability:** `**acks**=**all**` и `**min.insync.replicas**=2` для критичных данных; достаточный `**replication.factor**` (**≥2 в prod**); мониторинг **under-replicated** партиций.
+- **Партиционирование и ключи:** используйте осмысленные ключи для упорядоченности и сбалансированности партиций; избегайте **hot partitions** (один ключ доминирует).
+- **Репликация и durability:** `**acks**=**all` и `min.insync.replicas**=2` для критичных данных; достаточный `replication.factor` (≥2 в prod); мониторинг **under-replicated** партиций.
 - **Консьюмеры:** используйте **consumer groups** для масштабирования; обрабатывайте сообщения идемпотентно где возможно; настраивайте `**max.`poll.interval`.ms**` и **commit policy** под латентность обработки.
-- **Schema `Registry`:** используйте **Schema Registry** для эволюции схем; совместимость (**backward/forward**) при изменении схем; не храните сырые байты без версии схемы.
+- **Schema `Registry`:** используйте **Schema Registry** для эволюции схем; совместимость (backward/forward) при изменении схем; не храните сырые байты без версии схемы.
 - **Безопасность и мониторинг:** включайте **SSL**/**TLS** и **SASL** в **prod**; мониторьте **lag**, **throughput**, ошибки; настройте алерты на отставание **consumer groups** и сбои брокеров.
 ## См. также
 - [[rabbitmq|RabbitMQ]] — альтернативная система сообщений

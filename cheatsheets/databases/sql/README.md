@@ -17,4 +17,4 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [SQL Basics](sql-basics.md)
+- [[sql-basics|SQL Basics]]

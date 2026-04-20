@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Resilience4j: **Fault Tolerance** для **Java**
+# Resilience4j: Fault Tolerance для Java
 
 **Комплексное руководство по использованию `Resilience4j` — легковесной библиотеки fault tolerance для `Java` приложений с паттернами `Circuit Breaker`, `Rate Limiter`, `Retry` и другими.**
 
@@ -77,11 +77,11 @@ updated: "2026-02-11"
   - [Когда использовать Resilience4j](#когда-использовать-resilience4j)
   - [Сравнение с альтернативами](#сравнение-с-альтернативами)
 
-## Введение в **Resilience4j**
+## Введение в Resilience4j
 
 **Resilience4j** — это легковесная библиотека **fault tolerance** для **Java**, которая предоставляет высокопроизводительные и простые в использовании реализации популярных **resilience** паттернов: **Circuit Breaker**, **Retry**, **Rate Limiter**, **Bulkhead** и других.
 
-### Почему **Resilience4j**?
+### Почему Resilience4j?
 
 **Resilience4j** предлагает множество преимуществ:**
 
@@ -103,7 +103,7 @@ updated: "2026-02-11"
 - **resilience4j-time-limiter** — **Timeout** паттерн
 - **resilience4j-cache** — **Cache** паттерн
 
-### **Resilience** паттерны
+### Resilience паттерны
 
 **Circuit Breaker** — Предотвращает каскадные сбои, быстро отказывая при проблемах
 **Retry** — Автоматически повторяет неудачные операции
@@ -114,9 +114,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимости **Maven** для **Resilience4j** (**Spring `Boot 2` и отдельные модули: circuitbreaker, retry, ratelimiter**).
+Зависимости **Maven** для **Resilience4j** (Spring `Boot 2` и отдельные модули: circuitbreaker, retry, ratelimiter).
 
 ```xml
 <dependency>
@@ -145,7 +145,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -230,9 +230,9 @@ public class Resilience4jConfiguration {
 }
 ```
 
-## **Circuit Breaker**
+## Circuit Breaker
 
-### Основы **Circuit Breaker**
+### Основы Circuit Breaker
 
 **Circuit Breaker** предотвращает каскадные сбои, быстро отказывая при обнаружении проблем с зависимостью. Он имеет три состояния:**
 
@@ -308,7 +308,7 @@ public class BackendService {
 }
 ```
 
-### Конфигурация **Circuit Breaker**
+### Конфигурация Circuit Breaker
 
 ```java
 /
@@ -376,7 +376,7 @@ public class CircuitBreakerConfiguration {
 }
 ```
 
-### Использование **Circuit Breaker** с **fallback**
+### Использование Circuit Breaker с fallback
 
 ```java
 /
@@ -493,9 +493,9 @@ public class ResilientService {
 }
 ```
 
-## **Retry**
+## Retry
 
-### Основы **Retry**
+### Основы Retry
 
 **Retry** автоматически повторяет неудачные операции с настраиваемой стратегией повторов.
 
@@ -563,7 +563,7 @@ public class RetryService {
 }
 ```
 
-### Конфигурация **Retry**
+### Конфигурация Retry
 
 ```java
 @Configuration
@@ -603,7 +603,7 @@ public class RetryConfiguration {
 }
 ```
 
-### Использование **Retry** с **Circuit Breaker**
+### Использование Retry с Circuit Breaker
 
 ```java
 @Service
@@ -661,9 +661,9 @@ public class CombinedResilienceService {
 }
 ```
 
-## **Rate Limiter**
+## Rate Limiter
 
-### Основы **Rate Limiter**
+### Основы Rate Limiter
 
 **Rate Limiter** ограничивает частоту выполнения операций, предотвращая перегрузку зависимостей.
 
@@ -696,7 +696,7 @@ public class RateLimitedService {
 }
 ```
 
-### Конфигурация **Rate Limiter**
+### Конфигурация Rate Limiter
 
 ```java
 @Configuration
@@ -738,7 +738,7 @@ public class RateLimiterConfiguration {
 }
 ```
 
-### Использование **Rate Limiter** для **API**
+### Использование Rate Limiter для API
 
 ```java
 @RestController
@@ -797,9 +797,9 @@ public class ApiController {
 }
 ```
 
-## **Bulkhead**
+## Bulkhead
 
-### Основы **Bulkhead**
+### Основы Bulkhead
 
 **Bulkhead** изолирует компоненты, предотвращая распространение сбоев и перегрузок.
 
@@ -844,7 +844,7 @@ public class BulkheadService {
 }
 ```
 
-### Конфигурация **Bulkhead**
+### Конфигурация Bulkhead
 
 ```java
 @Configuration
@@ -887,7 +887,7 @@ public class BulkheadConfiguration {
 }
 ```
 
-### Использование **Bulkhead** для изоляции
+### Использование Bulkhead для изоляции
 
 ```java
 @Service
@@ -970,9 +970,9 @@ public class IsolatedService {
 }
 ```
 
-## **Timeout**
+## Timeout
 
-### Основы **Timeout**
+### Основы Timeout
 
 **Timeout** устанавливает максимальное время ожидания для операций.
 
@@ -1027,7 +1027,7 @@ public class TimeoutService {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
 ### Автоматическая конфигурация
 
@@ -1176,7 +1176,7 @@ public class CustomResilienceAspect {
 
 ## Мониторинг и метрики
 
-### **Micrometer** интеграция
+### Micrometer интеграция
 
 ```java
 @Configuration
@@ -1217,7 +1217,7 @@ public class MetricsConfiguration {
 }
 ```
 
-### **Health indicators**
+### Health indicators
 
 ```java
 @Component
@@ -1319,9 +1319,9 @@ public class ResilienceMonitoringService {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Правильная конфигурация **Circuit Breaker**
+### 1. Правильная конфигурация Circuit Breaker
 
 ```java
 // ✅ Хорошо - продуманная конфигурация
@@ -1516,7 +1516,7 @@ public class AsyncResilienceService {
 }
 ```
 
-### 4. Тестирование **resilience** механизмов
+### 4. Тестирование resilience механизмов
 
 ```java
 // ✅ Хорошо - тестирование resilience
@@ -1633,7 +1633,7 @@ public class Resilience4jTest {
 }
 ```
 
-### 5. Мониторинг в **production**
+### 5. Мониторинг в production
 
 ```java
 // ✅ Хорошо - production-ready мониторинг
@@ -1745,7 +1745,7 @@ public class ResilienceHealthContributor implements HealthContributor {
 
 **Resilience4j** — это мощная и легковесная библиотека для реализации **resilience** паттернов в **Java** приложениях. Она предоставляет высокопроизводительные реализации **Circuit Breaker**, **Retry**, **Rate Limiter**, **Bulkhead** и других паттернов.
 
-### Преимущества **Resilience4j**
+### Преимущества Resilience4j
 
 1. **Легковесность** — Минимальные зависимости, высокая производительность
 2. **Функциональное программирование** — Использование **functional interfaces**
@@ -1765,7 +1765,7 @@ public class ResilienceHealthContributor implements HealthContributor {
 5. **Timeout паттерн** — Ограничение времени выполнения
 6. **Fallback паттерн** — **Graceful degradation**
 
-### Когда использовать **Resilience4j**
+### Когда использовать Resilience4j
 
 **Рекомендуется:**
 - Микросервисная архитектура

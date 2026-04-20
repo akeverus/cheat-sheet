@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Elasticsearch**: Индексация документов — Управление данными и индексацией
+# Elasticsearch: Индексация документов — Управление данными и индексацией
 
 Комплексное руководство по индексации документов в **Elasticsearch**: **bulk operations**, **update strategies**, **routing**, **versioning** и оптимизация производительности индексации.
 
@@ -205,11 +205,11 @@ updated: "2026-02-11"
   - [Масштабирование:](#масштабирование)
 - [Решение проблем](#решение-проблем)
 
-## **Index API**
+## Index API
 
-### **Single Document Indexing**
+### Single Document Indexing
 
-#### **Basic Indexing**
+#### Basic Indexing
 ```bash
 # Автоматическая генерация ID
 curl -X POST "localhost:9200/products/_doc" \
@@ -249,7 +249,7 @@ curl -X PUT "localhost:9200/products/_doc/1?version=1&version_type=external" \
   -d '{"name":"Headphones"}'
 ```
 
-#### **Response Analysis**
+#### Response Analysis
 ```json
 // Успешный ответ индексации
 {
@@ -279,9 +279,9 @@ curl -X PUT "localhost:9200/products/_doc/1?version=1&version_type=external" \
 }
 ```
 
-### **Index Parameters**
+### Index Parameters
 
-#### **Control Parameters**
+#### Control Parameters
 ```bash
 # Определение типа операции
 curl -X POST "localhost:9200/products/_doc/1?op_type=create" \
@@ -304,7 +304,7 @@ curl -X PUT "localhost:9200/products/_doc/1?wait_for_active_shards=2" \
   -d '{"name":"Product"}'
 ```
 
-#### **Ingest Pipelines**
+#### Ingest Pipelines
 ```json
 // Создание ingest pipeline
 PUT _ingest/pipeline/product_enrichment
@@ -346,11 +346,11 @@ POST products/_doc/1?pipeline=product_enrichment
 }
 ```
 
-## **Bulk Operations**
+## Bulk Operations
 
-### **Bulk API**
+### Bulk API
 
-#### **Basic Bulk Operations**
+#### Basic Bulk Operations
 ```bash
 # Bulk индексация
 curl -X POST "localhost:9200/_bulk" \
@@ -376,7 +376,7 @@ curl -X POST "localhost:9200/_bulk?routing=user123" \
 '
 ```
 
-#### **Bulk Response Analysis**
+#### Bulk Response Analysis
 ```json
 {
   "took": 7,
@@ -418,9 +418,9 @@ curl -X POST "localhost:9200/_bulk?routing=user123" \
 }
 ```
 
-### **Bulk Size Optimization**
+### Bulk Size Optimization
 
-#### **Optimal Bulk Size**
+#### Optimal Bulk Size
 ```bash
 # Маленькие bulk (неэффективно)
 curl -X POST "localhost:9200/_bulk" \
@@ -450,7 +450,7 @@ curl -X POST "localhost:9200/_bulk" \
 '
 ```
 
-#### **Bulk Performance Tuning**
+#### Bulk Performance Tuning
 ```json
 // Настройки индекса для bulk операций
 PUT products/_settings
@@ -479,9 +479,9 @@ PUT products/_settings
 }
 ```
 
-### **Error Handling** in **Bulk**
+### Error Handling in Bulk
 
-#### **Handling Bulk Errors**
+#### Handling Bulk Errors
 ```json
 // Bulk response с ошибками
 {
@@ -525,11 +525,11 @@ POST _bulk
 { "name": "Updated Product" }
 ```
 
-## **Update Operations**
+## Update Operations
 
-### **Update API**
+### Update API
 
-#### **Scripted Updates**
+#### Scripted Updates
 ```bash
 # Простое обновление поля
 curl -X POST "localhost:9200/products/_update/1" \
@@ -569,7 +569,7 @@ curl -X POST "localhost:9200/products/_update/1" \
   }'
 ```
 
-#### **Advanced Update Scripts**
+#### Advanced Update Scripts
 ```bash
 # Обновление массивов
 curl -X POST "localhost:9200/products/_update/1" \
@@ -619,9 +619,9 @@ curl -X POST "localhost:9200/products/_update/1" \
   }'
 ```
 
-### **Update** by **Query**
+### Update by Query
 
-#### **Update Multiple Documents**
+#### Update Multiple Documents
 ```bash
 # Обновление всех документов по условию
 curl -X POST "localhost:9200/products/_update_by_query" \
@@ -676,11 +676,11 @@ curl -X POST "localhost:9200/products/_update_by_query?scroll_size=100" \
   }'
 ```
 
-## **Delete Operations**
+## Delete Operations
 
-### **Delete** by `ID`
+### Delete by `ID`
 
-#### **Single Document Deletion**
+#### Single Document Deletion
 ```bash
 # Удаление по ID
 curl -X DELETE "localhost:9200/products/_doc/1"
@@ -692,7 +692,7 @@ curl -X DELETE "localhost:9200/user_products/_doc/1?routing=user123"
 curl -X DELETE "localhost:9200/products/_doc/1?version=2"
 ```
 
-#### **Delete Response**
+#### Delete Response
 ```json
 {
   "_index": "products",
@@ -709,9 +709,9 @@ curl -X DELETE "localhost:9200/products/_doc/1?version=2"
 }
 ```
 
-### **Delete** by **Query**
+### Delete by Query
 
-#### **Delete Multiple Documents**
+#### Delete Multiple Documents
 ```bash
 # Удаление по условию
 curl -X POST "localhost:9200/products/_delete_by_query" \
@@ -751,9 +751,9 @@ curl -X POST "localhost:9200/logs-*/_delete_by_query?scroll_size=5000" \
   }'
 ```
 
-### **Delete Index**
+### Delete Index
 
-#### **Index Deletion**
+#### Index Deletion
 ```bash
 # Удаление индекса
 curl -X DELETE "localhost:9200/products"
@@ -768,11 +768,11 @@ curl -X DELETE "localhost:9200/_all"
 curl -X DELETE "localhost:9200/temp-*"
 ```
 
-## **Routing** и **Versioning**
+## Routing и Versioning
 
-### **Custom Routing**
+### Custom Routing
 
-#### **Routing Strategies**
+#### Routing Strategies
 ```bash
 # Routing на основе user_id
 curl -X PUT "localhost:9200/user_products/_doc/1?routing=user123" \
@@ -804,7 +804,7 @@ curl -X POST "localhost:9200/user_products/_update/1?routing=user123" \
   }'
 ```
 
-#### **Routing** in **Mapping**
+#### Routing in Mapping
 ```json
 // Настройка routing в mapping
 PUT user_products
@@ -832,9 +832,9 @@ POST user_products/_doc/1?routing=user123
 }
 ```
 
-### **Version Control**
+### Version Control
 
-#### **Internal Versioning**
+#### Internal Versioning
 ```bash
 # Elasticsearch internal versioning
 curl -X PUT "localhost:9200/products/_doc/1" \
@@ -847,7 +847,7 @@ curl -X PUT "localhost:9200/products/_doc/1?version=1&version_type=internal" \
   -d '{"name":"Updated Product","version":2}'
 ```
 
-#### **External Versioning**
+#### External Versioning
 ```bash
 # External version control (application managed)
 curl -X PUT "localhost:9200/products/_doc/1?version=100&version_type=external" \
@@ -860,7 +860,7 @@ curl -X PUT "localhost:9200/products/_doc/1?version=101&version_type=external_gt
   -d '{"name":"Product v101"}'
 ```
 
-#### **Version Conflicts**
+#### Version Conflicts
 ```json
 // Version conflict response
 {
@@ -875,11 +875,11 @@ curl -X PUT "localhost:9200/products/_doc/1?version=101&version_type=external_gt
 }
 ```
 
-## **Refresh** и **Flush**
+## Refresh и Flush
 
-### **Refresh Operations**
+### Refresh Operations
 
-#### **Manual Refresh**
+#### Manual Refresh
 ```bash
 # Refresh конкретного индекса
 curl -X POST "localhost:9200/products/_refresh"
@@ -891,7 +891,7 @@ curl -X POST "localhost:9200/_refresh"
 curl -X POST "localhost:9200/products,orders/_refresh"
 ```
 
-#### **Refresh Settings**
+#### Refresh Settings
 ```json
 // Изменение refresh interval
 PUT products/_settings
@@ -918,9 +918,9 @@ PUT products/_settings
 }
 ```
 
-### **Flush Operations**
+### Flush Operations
 
-#### **Index Flush**
+#### Index Flush
 ```bash
 # Flush конкретного индекса
 curl -X POST "localhost:9200/products/_flush"
@@ -935,7 +935,7 @@ curl -X POST "localhost:9200/products/_flush?wait_if_ongoing=true"
 curl -X POST "localhost:9200/products/_flush?force=true"
 ```
 
-#### **Translog Settings**
+#### Translog Settings
 ```json
 // Настройки translog
 PUT products/_settings
@@ -950,11 +950,11 @@ PUT products/_settings
 }
 ```
 
-## **Index Lifecycle Management**
+## Index Lifecycle Management
 
-### **ILM Policies**
+### ILM Policies
 
-#### **Creating ILM Policy**
+#### Creating ILM Policy
 ```json
 PUT _ilm/policy/logs_policy
 {
@@ -1006,7 +1006,7 @@ PUT _ilm/policy/logs_policy
 }
 ```
 
-#### **Applying ILM Policy**
+#### Applying ILM Policy
 ```json
 PUT logs-000001
 {
@@ -1022,9 +1022,9 @@ PUT logs-000001
 }
 ```
 
-### **Index Templates with ILM**
+### Index Templates with ILM
 
-#### **Template with ILM**
+#### Template with ILM
 ```json
 PUT _template/logs_template
 {
@@ -1059,11 +1059,11 @@ PUT _template/logs_template
 }
 ```
 
-## **Optimistic Concurrency Control**
+## Optimistic Concurrency Control
 
-### **Version-based Updates**
+### Version-based Updates
 
-#### **OCC with Versions**
+#### OCC with Versions
 ```bash
 # Получение текущего документа с version
 curl -X GET "localhost:9200/products/_doc/1"
@@ -1082,7 +1082,7 @@ curl -X PUT "localhost:9200/products/_doc/1?version=100&version_type=external" \
   -d '{"name":"Product v100"}'
 ```
 
-#### **Sequence Numbers and Primary Terms**
+#### Sequence Numbers and Primary Terms
 ```bash
 # Update с seq_no и primary_term
 curl -X PUT "localhost:9200/products/_doc/1?if_seq_no=10&if_primary_term=2" \
@@ -1094,9 +1094,9 @@ curl -X GET "localhost:9200/products/_doc/1"
 # Response includes _seq_no and _primary_term
 ```
 
-### **Retry Logic**
+### Retry Logic
 
-#### **Implementing Retry** on **Conflicts**
+#### Implementing Retry on Conflicts
 ```java
 @Service
 public class OptimisticLockingService {
@@ -1169,11 +1169,11 @@ public class OptimisticLockingService {
 }
 ```
 
-## **Indexing Performance Tuning**
+## Indexing Performance Tuning
 
-### **Index Settings Optimization**
+### Index Settings Optimization
 
-#### **Bulk Indexing Settings**
+#### Bulk Indexing Settings
 ```json
 PUT bulk_index/_settings
 {
@@ -1197,7 +1197,7 @@ PUT bulk_index/_settings
 }
 ```
 
-#### **Thread Pool Settings**
+#### Thread Pool Settings
 ```json
 PUT _cluster/settings
 {
@@ -1216,9 +1216,9 @@ PUT _cluster/settings
 }
 ```
 
-### **Hardware Optimization**
+### Hardware Optimization
 
-#### **Disk** I/O **Tuning**
+#### Disk I/O Tuning
 ```bash
 # Для SSD дисков
 echo "deadline" > /sys/block/sda/queue/scheduler
@@ -1234,7 +1234,7 @@ swapoff -a
 echo "vm.swappiness = 1" >> /etc/sysctl.conf
 ```
 
-#### **Memory Tuning**
+#### Memory Tuning
 ```bash
 # Huge pages
 echo 14336 > /proc/sys/vm/nr_hugepages
@@ -1248,9 +1248,9 @@ echo "vm.dirty_background_ratio = 5" >> /etc/sysctl.conf
 sysctl -p
 ```
 
-### **JVM Tuning for Indexing**
+### JVM Tuning for Indexing
 
-#### `GC` **Tuning**
+#### `GC` Tuning
 ```bash
 # JVM options for indexing performance
 JVM_OPTS="$JVM_OPTS -XX:+UseG1GC"
@@ -1268,11 +1268,11 @@ JVM_OPTS="$JVM_OPTS -XX:+UseLargePages"
 JVM_OPTS="$JVM_OPTS -Xlog:gc*=info:file=/var/log/elasticsearch/gc.log:time:filecount=10,filesize=100m"
 ```
 
-## **Error Handling**
+## Error Handling
 
-### **Common Indexing Errors**
+### Common Indexing Errors
 
-#### **Mapper Parsing Exceptions**
+#### Mapper Parsing Exceptions
 ```json
 // Типичная ошибка mapping
 {
@@ -1312,7 +1312,7 @@ public class DataValidator {
 }
 ```
 
-#### **Circuit Breaker Exceptions**
+#### Circuit Breaker Exceptions
 ```json
 // Circuit breaker tripped
 {
@@ -1368,9 +1368,9 @@ public class ElasticsearchBulkConfig {
 }
 ```
 
-### **Handling Failures**
+### Handling Failures
 
-#### **Retry Logic for Bulk Operations**
+#### Retry Logic for Bulk Operations
 ```java
 @Service
 public class BulkIndexingService {
@@ -1465,11 +1465,11 @@ public class BulkIndexingService {
 }
 ```
 
-## **Java Bulk Processing**
+## Java Bulk Processing
 
-### **BulkProcessor Configuration**
+### BulkProcessor Configuration
 
-#### **Modern Java API Bulk Processing**
+#### Modern Java API Bulk Processing
 ```java
 @Configuration
 public class ElasticsearchBulkConfiguration {
@@ -1561,9 +1561,9 @@ public class BulkIndexingService {
 }
 ```
 
-### **Reactive Bulk Processing**
+### Reactive Bulk Processing
 
-#### **Reactive Streams with Elasticsearch**
+#### Reactive Streams with Elasticsearch
 ```java
 @Service
 public class ReactiveBulkIndexingService {
@@ -1613,9 +1613,9 @@ public class ReactiveBulkIndexingService {
 }
 ```
 
-### **Bulk Processor with Spring**
+### Bulk Processor with Spring
 
-#### **Spring Integration**
+#### Spring Integration
 ```java
 @Configuration
 @EnableScheduling
@@ -1730,81 +1730,81 @@ class BulkProcessorRetryPolicy implements RetryPolicy {
 
 ## Лучшие практики
 
-### **Indexing Strategies**
+### Indexing Strategies
 
-#### 1. **Batch Size Optimization**
+#### 1. Batch Size Optimization
 - **Start small**: 100-500 документов на **bulk**
 - **Monitor performance**: Измеряй **throughput** и **latency**
 - **Scale up gradually**: Увеличивай **batch size** до оптимального
 - **Consider memory**: Не превышай **heap limits**
 
-#### 2. **Index Settings for Bulk**
+#### 2. Index Settings for Bulk
 - **Disable replicas**: Установи 0 реплик на время **bulk**
 - **Increase refresh interval**: 30s-60s вместо 1s
 - **Async translog**: Для лучшей производительности
 - **Monitor JVM**: Следи за **heap usage**
 
-#### 3. **Error Handling**
+#### 3. Error Handling
 - **Validate data**: Перед индексацией
 - **Implement retries**: Для **transient** ошибок
 - **Use dead letter queues**: Для **permanent failures**
 - **Monitor error rates**: **Alert** при высоком проценте ошибок
 
-### **Performance Optimization**
+### Performance Optimization
 
-#### 1. **Hardware Considerations**
+#### 1. Hardware Considerations
 - **SSD storage**: Обязательно для **production**
 - **Network**: 10Gbps минимум для **data nodes**
 - **CPU**: 8+ **cores** для индексации
 - **Memory**: 64GB+ для крупных кластеров
 
-#### 2. **Cluster Sizing**
+#### 2. Cluster Sizing
 - **Data nodes**: Минимум 3 для **redundancy**
 - **Master nodes**: Выдели **dedicated masters** для крупных кластеров
 - **Hot-warm architecture**: Для **time-series** данных
 - **Zone awareness**: Для **multi-zone deployments**
 
-#### 3. **Monitoring and Alerting**
+#### 3. Monitoring and Alerting
 - **Index rate**: Документов в секунду
 - **Query latency**: **P50**, **P95**, **P99**
 - **Disk usage**: Свободное место
 - **JVM metrics**: **Heap usage**, `GC` **pauses**
 
-### **Data Management**
+### Data Management
 
-#### 1. **Index Lifecycle**
+#### 1. Index Lifecycle
 - **Hot phase**: Активная индексация
 - **Warm phase**: **Read-only** с меньшими ресурсами
 - **Cold phase**: Архивные данные
 - **Delete phase**: Автоматическая очистка
 
-#### 2. **Backup Strategy**
+#### 2. Backup Strategy
 - **Snapshot repositories**: **S3**, **NFS**, или **shared storage**
 - **Regular snapshots**: Ежедневно/еженедельно
 - **Test restores**: Регулярная проверка восстановления
 - **Retention policies**: Управление временем хранения
 
-#### 3. **Security**
+#### 3. Security
 - **TLS encryption**: Для всех соединений
 - **Authentication**: **Basic auth** или интеграция с **LDAP**/`AD`
 - **Authorization**: **Role-based access control**
 - **Audit logging**: Мониторинг всех операций
 
-### **Operational Excellence**
+### Operational Excellence
 
-#### 1. **Automation**
+#### 1. Automation
 - **Infrastructure as Code**: **Terraform**/**Ansible** для кластера
 - **Configuration management**: **Ansible** для конфигураций
 - **CI/`CD` pipelines**: Для развертывания приложений
 - **Monitoring as Code**: **Prometheus**/**Grafana** конфигурации
 
-#### 2. **Incident Response**
+#### 2. Incident Response
 - **Runbooks**: Документированные процедуры
 - **Escalation paths**: Кто и когда уведомляется
 - **Post-mortem analysis**: Уроки из инцидентов
 - **Blame-free culture**: Фокус на решении проблем
 
-#### 3. **Capacity Planning**
+#### 3. Capacity Planning
 - **Growth projections**: На 6-12 месяцев вперед
 - **Performance benchmarks**: Регулярные тесты
 - **Cost optimization**: **Balance** между производительностью и затратами
@@ -1833,7 +1833,7 @@ class BulkProcessorRetryPolicy implements RetryPolicy {
 3. **Circuit breakers** — Защита от перегрузок
 4. **Monitoring** — Метрики и **alerting**
 
-### **Best practices**:
+### Best practices:
 
 1. **Data validation** — Перед индексацией
 2. **Bulk processing** — Эффективные **Java** клиенты
@@ -1850,8 +1850,8 @@ class BulkProcessorRetryPolicy implements RetryPolicy {
 Оптимальная стратегия индексации обеспечивает высокую производительность, надежность и масштабируемость **Elasticsearch** кластера. Регулярный мониторинг и тюнинг — ключ к поддержанию эффективной работы системы. 🎯
 
 **Продолжение следует:**
-- ✅ **elasticsearch-basics.md** (**завершен**)
-- ✅ **elasticsearch-indexing.md** (**завершен**)
+- ✅ **elasticsearch-basics.md** (завершен)
+- ✅ **elasticsearch-indexing.md** (завершен)
 - 🔄 **elasticsearch-queries.md**
 - 🔄 **elasticsearch-aggregations.md**
 - 🔄 **elasticsearch-clustering.md**

@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-performance.md", "databases/redis-monitoring.md"]
 ---
 
-# **Redis**: Решение проблем
+# Redis: Решение проблем
 
 ## Полезные ссылки
 
@@ -47,7 +47,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md", "databa
   - [**Comprehensive Health Check**](#comprehensive-health-check)
 - [Лучшие практики](#лучшие-практики)
 
-## Введение в **troubleshooting Redis**
+## Введение в troubleshooting Redis
 
 Решение проблем в **Redis** требует систематического подхода к диагностике. Понимание общих проблем и их решений критически важно для поддержания стабильной работы **Redis**.
 
@@ -102,10 +102,10 @@ SLOWLOG GET 10
 INFO stats | grep instantaneous_ops_per_sec
 ```
 
-### **Issue** 1: **Out** of **Memory**
+### Issue 1: Out of Memory
 
 **Симптомы:**
-- Ошибки **OOM** (**Out of Memory**)
+- Ошибки **OOM** (Out of Memory)
 - Команды возвращают ошибки
 - Высокое использование памяти
 
@@ -124,7 +124,7 @@ CONFIG SET maxmemory-policy allkeys-lru
 FLUSHDB  # Осторожно!
 ```
 
-### **Issue** 2: **Slow Performance**
+### Issue 2: Slow Performance
 
 **Симптомы:**
 - Высокий **latency**
@@ -144,7 +144,7 @@ INFO commandstats
 # Использовать правильные структуры данных
 ```
 
-### **Issue** 3: **Connection Issues**
+### Issue 3: Connection Issues
 
 **Симптомы:**
 - Ошибки подключения
@@ -163,9 +163,9 @@ redis-cli CONFIG GET maxclients
 redis-cli CONFIG SET maxclients 10000
 ```
 
-## **Advanced Troubleshooting**
+## Advanced Troubleshooting
 
-### **Memory Issues**
+### Memory Issues
 
 ```bash
 # Детальный анализ памяти
@@ -180,7 +180,7 @@ redis-cli MEMORY STATS
 redis-cli MEMORY DOCTOR
 ```
 
-### **Performance Issues**
+### Performance Issues
 
 ```bash
 # Анализ медленных команд
@@ -193,7 +193,7 @@ redis-cli INFO commandstats
 redis-cli MONITOR  # Только для отладки!
 ```
 
-### **Network Issues**
+### Network Issues
 
 ```bash
 # Проверка подключений
@@ -207,7 +207,7 @@ redis-cli CONFIG GET timeout
 redis-cli CONFIG GET maxclients
 ```
 
-### **Replication Issues**
+### Replication Issues
 
 ```bash
 # Проверка статуса репликации
@@ -220,9 +220,9 @@ redis-cli INFO replication | grep lag
 redis-cli INFO replication | grep master_link_status
 ```
 
-## **Diagnostic Scripts**
+## Diagnostic Scripts
 
-### **Comprehensive Health Check**
+### Comprehensive Health Check
 
 ```java
 // Redis Python example replaced with Java Spring
@@ -230,9 +230,9 @@ redis-cli INFO replication | grep master_link_status
 
 ## Лучшие практики
 
-- **Диагностика:** используйте **INFO** (**server, memory, replication, stats**), **MONITOR** выборочно; логи и метрики (**latency, hit rate**) для выявления узких мест.
+- **Диагностика:** используйте **INFO** (server, memory, replication, stats), **MONITOR** выборочно; логи и метрики (latency, hit rate) для выявления узких мест.
 - **Память:** следите за **used_memory**, **mem_fragmentation_ratio** и **maxmemory_policy**; при нехватке памяти настройте **eviction** и ограничьте размер ключей/значений.
 - **Репликация:** проверяйте **master_link_status** и **lag**; при разрывах — переподключение реплики, проверка сети и диска; не допускайте длительного отставания реплики.
-- **Кластер:** проверяйте слоты (**CLUSTER SLOTS**), миграции и **failover**; при проблемах — ручная миграция слотов или восстановление из бэкапа.
+- **Кластер:** проверяйте слоты (CLUSTER SLOTS), миграции и **failover**; при проблемах — ручная миграция слотов или восстановление из бэкапа.
 - **Восстановление:** регулярные **RDB**/**AOF** бэкапы; тесты восстановления; при повреждении **AOF** — **redis-check-aof**; при необходимости — перезапуск с пустой БД и загрузка из бэкапа.
 

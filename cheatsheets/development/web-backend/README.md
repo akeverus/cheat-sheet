@@ -17,20 +17,20 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основной документ
-- [Основы backend-разработки](backend-basics.md)
+- [[backend-basics|Основы backend-разработки]]
 
 ### Смежные разделы репозитория
 
 Backend — это мост между множеством доменов:
 
-- [REST API](../api/rest/README.md), [GraphQL](../api/graphql/README.md), [gRPC](../api/grpc/README.md) — протоколы
-- [Spring Boot](../../frameworks/java-frameworks/spring/README.md) — основной стек в репозитории
-- [Базы данных](../../databases/README.md), [SQL](../../databases/sql/README.md), [ORM](../../databases/orm/README.md) — persistence
-- [Messaging](../messaging/README.md) — асинхронная интеграция
-- [Безопасность приложения](../../security/application/README.md), [OAuth2/OIDC](../../security/README.md)
-- [Docker](../../platform/containers/docker/README.md), [Kubernetes](../../platform/containers/kubernetes/README.md), [CI/CD](../../platform/ci-cd/README.md)
-- [Мониторинг](../../monitoring/README.md), [Логирование](../../monitoring/logging/README.md), [Трейсинг](../../monitoring/tracing/README.md)
-- [Тестирование](../../testing/README.md)
+- [[README|REST API]], [[README|GraphQL]], [[README|gRPC]] — протоколы
+- [[README|Spring Boot]] — основной стек в репозитории
+- [[README|Базы данных]], [[README|SQL]], [[README|ORM]] — persistence
+- [[README|Messaging]] — асинхронная интеграция
+- [[README|Безопасность приложения]], [[README|OAuth2/OIDC]]
+- [[README|Docker]], [[README|Kubernetes]], [[README|CI/CD]]
+- [[README|Мониторинг]], [[README|Логирование]], [[README|Трейсинг]]
+- [[README|Тестирование]]
 
 ### Внешние ресурсы
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
@@ -64,17 +64,17 @@ Backend — это мост между множеством доменов:
 
 | Слой / практика | Файл |
 |-----------------|------|
-| Архитектура backend, слои | [backend-basics.md](backend-basics.md#архитектура-типичного-backend) |
-| REST API-контракт, OpenAPI | [development/api/rest/](../api/rest/README.md) |
-| Spring Web, `@RestController` | [frameworks/java-frameworks/spring/](../../frameworks/java-frameworks/spring/README.md) |
-| JDBC / JPA / Hibernate | [databases/orm/](../../databases/orm/README.md) |
-| Аутентификация (JWT, OAuth2) | [security/application/](../../security/application/README.md) |
+| Архитектура backend, слои | [[backend-basics#архитектура-типичного-backend]] |
+| REST API-контракт, OpenAPI | [[README|development/api/rest/]] |
+| Spring Web, `@RestController` | [[README|frameworks/java-frameworks/spring/]] |
+| JDBC / JPA / Hibernate | [[README|databases/orm/]] |
+| Аутентификация (JWT, OAuth2) | [[README|security/application/]] |
 | Кэширование (Caffeine, Redis) | [databases/nosql/redis/](../../databases/nosql/redis/) |
-| Очереди (Kafka, RabbitMQ) | [development/messaging/](../messaging/README.md) |
-| Валидация (Bean Validation) | [backend-basics.md](backend-basics.md) |
-| Логирование и метрики | [monitoring/](../../monitoring/README.md) |
-| Контейнеризация и деплой | [platform/containers/](../../platform/containers/README.md) |
-| Тестирование | [testing/](../../testing/README.md) |
+| Очереди (Kafka, RabbitMQ) | [[README|development/messaging/]] |
+| Валидация (Bean Validation) | [[backend-basics]] |
+| Логирование и метрики | [[README|monitoring/]] |
+| Контейнеризация и деплой | [[README|platform/containers/]] |
+| Тестирование | [[README|testing/]] |
 
 ## Чек-лист production backend
 
@@ -99,7 +99,7 @@ Backend — это мост между множеством доменов:
 
 ## Куда идти дальше
 
-- Проектирование систем — [architecture/system-design/](../../architecture/system-design/README.md)
-- Паттерны интеграции — [patterns/](../../patterns/README.md)
-- Масштабирование и HA — [architecture/](../../architecture/README.md)
-- DevOps-практики — [platform/ci-cd/](../../platform/ci-cd/README.md)
+- Проектирование систем — [[README|architecture/system-design/]]
+- Паттерны интеграции — [[README|patterns/]]
+- Масштабирование и HA — [[README|architecture/]]
+- DevOps-практики — [[README|platform/ci-cd/]]

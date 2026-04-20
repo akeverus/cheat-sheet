@@ -66,9 +66,9 @@ updated: "2026-02-11"
 
 **Type Classes** обеспечивают полиморфизм, который более гибкий чем наследование, так как поведение можно добавлять к типам из любой иерархии.
 
-## Основы **Type Classes**
+## Основы Type Classes
 
-### Определение **Type Class**
+### Определение Type Class
 
 ```scala
 // Определение Type Class
@@ -94,7 +94,7 @@ print(42)     // Int(42)
 print("hello") // String(hello)
 ```
 
-### Синтаксический сахар с **implicit class**
+### Синтаксический сахар с implicit class
 
 ```scala
 trait Show[A] {
@@ -119,9 +119,9 @@ implicit val stringShow: Show[String] = (a: String) => s"String($a)"
 "hello".show // "String(hello)"
 ```
 
-## **Implicit Type Classes**
+## Implicit Type Classes
 
-### Реализация **Type Class** через **implicit**
+### Реализация Type Class через implicit
 
 ```scala
 trait Semigroup[A] {
@@ -150,7 +150,7 @@ combine("a", "b")                // "ab"
 combine(List(1, 2), List(3, 4))  // List(1, 2, 3, 4)
 ```
 
-### Композиция **Type Classes**
+### Композиция Type Classes
 
 ```scala
 trait Monoid[A] extends Semigroup[A] {
@@ -187,7 +187,7 @@ combineAll(List("a", "b", "c"))  // "abc"
 
 ## Практические примеры
 
-### **Type Class** для сравнения
+### Type Class для сравнения
 
 ```scala
 trait Ord[A] {
@@ -223,7 +223,7 @@ max(10, 20)  // 20
 max("a", "b") // "b"
 ```
 
-### **Type Class** для сериализации
+### Type Class для сериализации
 
 ```scala
 trait Serializer[A] {
@@ -252,11 +252,11 @@ serialize(Some("hello"))           // "hello"
 serialize(Option.empty[String])    // "null"
 ```
 
-## **Type Classes** в **Cats**
+## Type Classes в Cats
 
 **Cats** предоставляет множество готовых **Type Classes**.
 
-### **Cats Type Classes**
+### Cats Type Classes
 
 ```scala
 import cats._
@@ -278,7 +278,7 @@ val sum = List(1, 2, 3).combineAll  // 6
 val product = List(1, 2, 3).foldMap(identity)  // 6
 ```
 
-### Практические примеры с **Cats**
+### Практические примеры с Cats
 
 ```scala
 import cats.Monad
@@ -293,7 +293,7 @@ val result = replicateM(3, Option(42))  // Some(List(42, 42, 42))
 
 ## Лучшие практики
 
-### 1. Используйте **companion objects** для инстансов
+### 1. Используйте companion objects для инстансов
 
 ```scala
 trait Show[A] {
@@ -307,7 +307,7 @@ object Show {
 }
 ```
 
-### 2. Используйте **implicit syntax classes** для удобства
+### 2. Используйте implicit syntax classes для удобства
 
 ```scala
 object ShowSyntax {
@@ -321,7 +321,7 @@ import ShowSyntax._
 42.show  // "42"
 ```
 
-### Практические примеры: **Type Class** для **JSON** сериализации
+### Практические примеры: Type Class для JSON сериализации
 
 ```scala
 trait JsonEncoder[A] {
@@ -357,7 +357,7 @@ Some("value").toJson   // "\"value\""
 None.toJson            // "null"
 ```
 
-### Практические примеры: **Type Class** для числовых операций
+### Практические примеры: Type Class для числовых операций
 
 ```scala
 trait NumericOps[A] {
@@ -407,7 +407,7 @@ sum(List(1.0, 2.0, 3.0))        // 6.0
 product(List(2, 3, 4))          // 24
 ```
 
-### Практические примеры: **Type Class** для ввода-вывода
+### Практические примеры: Type Class для ввода-вывода
 
 ```scala
 trait Read[A] {
@@ -441,7 +441,7 @@ val salary = readInput[Double]("Enter your salary")
 val name = readInput[String]("Enter your name")
 ```
 
-### **Type Class** для работы с монадами
+### Type Class для работы с монадами
 
 ```scala
 trait Monad[F[_]] {
@@ -482,7 +482,7 @@ def sequence[F[_]: Monad, A](list: List[F[A]]): F[List[A]] = {
 val result = sequence(List(Some(1), Some(2), Some(3)))  // Some(List(1, 2, 3))
 ```
 
-### **Type Class** для функторов
+### Type Class для функторов
 
 ```scala
 trait Functor[F[_]] {
@@ -512,7 +512,7 @@ def fmap[F[_]: Functor, A, B](fa: F[A])(f: A => B): F[B] = {
 val result = fmap(Some(10))(_ * 2)  // Some(20)
 ```
 
-### **Type Class** для **applicative functors**
+### Type Class для applicative functors
 
 ```scala
 trait Applicative[F[_]] extends Functor[F] {
@@ -546,7 +546,7 @@ def liftA2[F[_]: Applicative, A, B, C](
 val result = liftA2((a: Int, b: Int) => a + b)(Some(10), Some(20))  // Some(30)
 ```
 
-### **Type Class** для **foldable**
+### Type Class для foldable
 
 ```scala
 trait Foldable[F[_]] {
@@ -575,7 +575,7 @@ def sum[F[_]: Foldable, A: Monoid](fa: F[A]): A = {
 val result = sum(List(1, 2, 3))  // 6
 ```
 
-### **Type Class** для **traversable**
+### Type Class для traversable
 
 ```scala
 trait Traverse[F[_]] extends Functor[F] with Foldable[F] {
@@ -608,7 +608,7 @@ val list = List(Some(1), Some(2), Some(3))
 val result = implicitly[Traverse[List]].sequence(list)  // Some(List(1, 2, 3))
 ```
 
-### **Type Class** для контравариантных функторов
+### Type Class для контравариантных функторов
 
 ```scala
 trait Contravariant[F[_]] {
@@ -633,7 +633,7 @@ val result = stringPredicate.run("hello")  // false (length = 5)
 val result2 = stringPredicate.run("hello world")  // true (length = 11)
 ```
 
-### **Type Class** для бифункторов
+### Type Class для бифункторов
 
 ```scala
 trait Bifunctor[F[_, _]] {

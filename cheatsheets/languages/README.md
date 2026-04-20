@@ -15,45 +15,45 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Java](java/README.md)
-[Kotlin](kotlin/README.md)
-[Scala](scala/README.md)
-[Go](go/README.md)
+[[README|Java]]
+[[README|Kotlin]]
+[[README|Scala]]
+[[README|Go]]
 
 ## Go (`go/`)
 
-- [Обзор Go](go/README.md)
-- [Основы](go/go-basics.md) — синтаксис, типы, функции, структуры, интерфейсы, конкурентность
-- [Модули](go/go-modules.md) — управление зависимостями
-- [Конкурентность](go/go-concurrency.md) — горутины, каналы, sync
-- [Тестирование](go/go-testing.md) — тесты, бенчмарки, моки
-- [Стандартная библиотека](go/go-stdlib-http.md) — net/http, encoding/json, io
-- [Лучшие практики](go/go-best-practices.md) — идиоматичный Go
+- [[README|Обзор Go]]
+- [[go-basics|Основы]] — синтаксис, типы, функции, структуры, интерфейсы, конкурентность
+- [[go-modules|Модули]] — управление зависимостями
+- [[go-concurrency|Конкурентность]] — горутины, каналы, sync
+- [[go-testing|Тестирование]] — тесты, бенчмарки, моки
+- [[go-stdlib-http|Стандартная библиотека]] — net/http, encoding/json, io
+- [[go-best-practices|Лучшие практики]] — идиоматичный Go
 
 ## Java (`java/`)
 
-- [Обзор Java](java/README.md)
-- [Основы](java/java-basics.md) — версии 11–17, ООП, коллекции, Stream API, NIO, многопоточность
-- [Коллекции](java/java-collections-list.md) — List, Map, Set, Queue
-- [Конкурентность](java/java-concurrency-basics.md) — потоки, ExecutorService, concurrent collections
-- [Stream API и ФП](java/java-streams-fp.md) — потоки, лямбды, Optional
-- [Исключения](java/java-exceptions.md) — обработка, лучшие практики
-- [Reactive](java/java-reactive-project-reactor.md) — Project Reactor, RxJava
+- [[README|Обзор Java]]
+- [[java-basics|Основы]] — версии 11–17, ООП, коллекции, Stream API, NIO, многопоточность
+- [[java-collections-list|Коллекции]] — List, Map, Set, Queue
+- [[java-concurrency-basics|Конкурентность]] — потоки, ExecutorService, concurrent collections
+- [[java-streams-fp|Stream API и ФП]] — потоки, лямбды, Optional
+- [[java-exceptions|Исключения]] — обработка, лучшие практики
+- [[java-reactive-project-reactor|Reactive]] — Project Reactor, RxJava
 
 ## Kotlin (`kotlin/`)
 
-- [Обзор Kotlin](kotlin/README.md)
-- [Основы](kotlin/kotlin-basics.md) — синтаксис, null-safety, классы, объекты
-- [Коллекции](kotlin/kotlin-collections-list.md) — List, Set, Map, sequences, операции
-- [Корутины](kotlin/kotlin-concurrency-basics.md) — корутины, Flow, каналы
-- [ФП](kotlin/kotlin-fp-basics.md) — функции высшего порядка, неизменяемость
-- [Тестирование](kotlin/kotlin-testing.md) — JUnit, MockK
-- [Spring](kotlin/kotlin-spring.md) — интеграция с Spring
+- [[README|Обзор Kotlin]]
+- [[kotlin-basics|Основы]] — синтаксис, null-safety, классы, объекты
+- [[kotlin-collections-list|Коллекции]] — List, Set, Map, sequences, операции
+- [[kotlin-concurrency-basics|Корутины]] — корутины, Flow, каналы
+- [[kotlin-fp-basics|ФП]] — функции высшего порядка, неизменяемость
+- [[kotlin-testing|Тестирование]] — JUnit, MockK
+- [[kotlin-spring|Spring]] — интеграция с Spring
 
 ## Scala (`scala/`)
 
-- [Обзор Scala](scala/README.md)
-- [Основы](scala/scala-basics.md) — синтаксис, объекты, трейты, case classes
-- [Коллекции](scala/scala-collections.md) — List, Set, Map, Vector, операции
-- [ФП](scala/scala-fp-basics.md) — функции, иммутабельность, for-comprehensions
-- [Конкурентность](scala/scala-concurrency.md) — Futures, Akka
+- [[README|Обзор Scala]]
+- [[scala-basics|Основы]] — синтаксис, объекты, трейты, case classes
+- [[scala-collections|Коллекции]] — List, Set, Map, Vector, операции
+- [[scala-fp-basics|ФП]] — функции, иммутабельность, for-comprehensions
+- [[scala-concurrency|Конкурентность]] — Futures, Akka

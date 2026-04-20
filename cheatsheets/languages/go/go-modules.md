@@ -149,7 +149,7 @@ updated: "2026-02-06"
 - [Использование govulncheck](#использование-govulncheck)
 - [Использование nancy](#использование-nancy)
 - [Использование gosec](#использование-gosec)
-  - [Практические примеры: Работа с **workspace** (**Go 1.18+**)](#практические-примеры-работа-с-workspace-go-118)
+  - [Практические примеры: Работа с **workspace** (Go 1.18+)](#практические-примеры-работа-с-workspace-go-118)
 - [go.work файл](#gowork-файл)
 - [Обновление зависимостей в workspace](#обновление-зависимостей-в-workspace)
 - [Лучшие практики](#лучшие-практики)
@@ -167,7 +167,7 @@ Go **Modules** — это система управления зависимос
 1. **Модуль** — коллекция Go пакетов с версией
 2. **go.mod** — файл описания модуля
 3. **go.sum** — файл с контрольными суммами зависимостей
-4. **Версионирование** — семантическое версионирование (**semver**)
+4. **Версионирование** — семантическое версионирование (semver)
 
 ## Создание модуля
 
@@ -181,7 +181,7 @@ go mod init example.com/myproject
 go mod init example.com/myproject/v2
 ```
 
-### Структура **go.mod**
+### Структура go.mod
 
 ```go
 module example.com/myproject
@@ -243,8 +243,8 @@ go mod edit -droprequire github.com/gin-gonic/gin
 
 ### Семантическое версионирование
 
-**Go использует семантическое версионирование (**semver**):**
-- **MAJOR.`MINOR`.PATCH** (**например, `v1.2`.3**)
+**Go использует семантическое версионирование (semver):**
+- **MAJOR.`MINOR`.PATCH** (например, `v1.2`.3)
 - **MAJOR** — несовместимые изменения **API**
 - **MINOR** — обратно совместимые новые функции
 - **PATCH** — обратно совместимые исправления ошибок
@@ -269,9 +269,9 @@ module example.com/myproject/v3
 require example.com/mymodule v0.0.0-20230101120000-abcdef123456
 ```
 
-## Работа с **go.mod**
+## Работа с go.mod
 
-### Редактирование **go.mod**
+### Редактирование go.mod
 
 ```bash
 # Добавление require
@@ -313,11 +313,11 @@ go mod download
 go mod tidy
 ```
 
-## **Vendoring**
+## Vendoring
 
 **Vendoring** позволяет включить зависимости в репозиторий проекта.
 
-### Создание **vendor** директории
+### Создание vendor директории
 
 ```bash
 # Создание vendor
@@ -330,7 +330,7 @@ go build -mod=vendor
 go test -mod=vendor
 ```
 
-### Структура **vendor**
+### Структура vendor
 
 ```text
 vendor/
@@ -341,7 +341,7 @@ vendor/
 └── modules.txt
 ```
 
-### Детальная работа с **go.mod**
+### Детальная работа с go.mod
 
 ```bash
 # Просмотр текущего go.mod
@@ -437,7 +437,7 @@ import "example.com/monorepo/api"
 import "example.com/monorepo/utils"
 ```
 
-### Практические примеры: **Replace** для локальной разработки
+### Практические примеры: Replace для локальной разработки
 
 ```go
 // go.mod
@@ -555,7 +555,7 @@ go list -m -versions github.com/gin-gonic/gin
 go list -m -json github.com/gin-gonic/gin
 ```
 
-### Практические примеры: Работа с **vendor**
+### Практические примеры: Работа с vendor
 
 ```bash
 # Создание vendor директории
@@ -574,7 +574,7 @@ go test -mod=vendor ./...
 go env -w GOFLAGS=-mod=vendor
 ```
 
-### Практические примеры: Миграция с **GOPATH**
+### Практические примеры: Миграция с GOPATH
 
 ```bash
 # Старый способ (GOPATH)
@@ -588,7 +588,7 @@ cd ~/myproject
 go mod init example.com/myproject
 ```
 
-### Практические примеры: Работа с **workspace mode**
+### Практические примеры: Работа с workspace mode
 
 ```bash
 # Создание workspace
@@ -675,7 +675,7 @@ go mod tidy
 go mod why -m all
 ```
 
-### Практические примеры: Работа с **replace** в команде
+### Практические примеры: Работа с replace в команде
 
 ```go
 // go.mod для разработки
@@ -763,7 +763,7 @@ go list -m -versions github.com/example/package
     go mod tidy
 ```
 
-### Практические примеры: Локальная разработка с **replace**
+### Практические примеры: Локальная разработка с replace
 
 ```go
 // go.mod
@@ -820,7 +820,7 @@ go install github.com/securego/gosec/v2/cmd/gosec@latest
 gosec ./...
 ```
 
-### Практические примеры: Работа с **workspace** (**Go 1.18+**)
+### Практические примеры: Работа с workspace (Go 1.18+)
 
 ```bash
 # Создание workspace

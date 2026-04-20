@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Azure Services**
+# Azure Services
 
-**Azure** предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **Azure**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [Azure Basics](azure-basics.md) более глубоким погружением в конкретные сервисы.
+**Azure** предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **Azure**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [[azure-basics|Azure Basics]] более глубоким погружением в конкретные сервисы.
 
 ## Полезные ссылки
 - [Azure Services Documentation](https://docs.microsoft.com/azure/)
@@ -65,7 +65,7 @@ updated: "2026-02-11"
 
 **VM `Series` и их назначение:**
 
-Пример серий `VM` **Azure** и назначения (**YAML**).
+Пример серий `VM` **Azure** и назначения (YAML).
 ```yaml
 # Обзор серий VM Azure — назначение и соотношение CPU/память (general-purpose, compute-optimized и др.)
 vm-series:
@@ -151,7 +151,7 @@ automanage-assignment:
     configurationProfile: "/providers/Microsoft.Automanage/bestPractices/AzureBestPracticesProduction"
 ```
 
-### Azure Kubernetes Service (**AKS**)
+### Azure Kubernetes Service (AKS)
 
 **Что это:** Управляемый **Kubernetes** сервис.
 
@@ -259,7 +259,7 @@ aks-policy:
       enabled: true
 ```
 
-### Azure Container Instances (**ACI**)
+### Azure Container Instances (ACI)
 
 **Что это: Serverless** контейнеры без управления виртуальными машинами.
 
@@ -823,7 +823,7 @@ module.exports = async function (context, documents) {
 };
 ```
 
-## Networking & **Content Delivery**
+## Networking & Content Delivery
 
 ### Azure Front Door
 
@@ -1258,7 +1258,7 @@ ad-connect-config:
       - include: ["SyncUsers"]
 ```
 
-## Analytics & **Big Data**
+## Analytics & Big Data
 
 ### Azure Synapse Analytics
 
@@ -1657,7 +1657,7 @@ stages:
               package: '$(Pipeline.Workspace)/drop//*.zip'
 ```
 
-## Management & **Governance**
+## Management & Governance
 
 ### Azure Policy
 
@@ -1762,11 +1762,11 @@ vm-security-policy:
 
 ## Лучшие практики
 
-- **Выбор сервисов:** предпочитайте **managed**-сервисы (**Azure `SQL`, `Cosmos DB`, `AKS`, App Service**) для снижения операционной нагрузки; `VM` — при необходимости полного контроля или специфичного ПО.
+- **Выбор сервисов:** предпочитайте **managed**-сервисы (Azure `SQL`, `Cosmos DB`, `AKS`, App Service) для снижения операционной нагрузки; `VM` — при необходимости полного контроля или специфичного ПО.
 - **Безопасность:** минимальные права **RBAC** по ролям и **scope**; управляемые идентичности вместо ключей; шифрование в покое и при передаче; **Azure Key Vault** для секретов.
 - **Стоимость:** резервирования (**Reserved VM Instances**, **Savings Plans**) для стабильных нагрузок; теги и **Cost Management** для учёта по подпискам и ресурсным группам.
 - **Надёжность: Availability Sets** и **Availability Zones** для критичных нагрузок; автоскейлинг и **health probes**; регулярные бэкапы и тесты восстановления.
-- **Мониторинг: Azure Monitor** (**метрики, логи, алерты**); **Application Insights** для приложений; интеграция с **Log Analytics** и **Action Groups**.
+- **Мониторинг: Azure Monitor** (метрики, логи, алерты); **Application Insights** для приложений; интеграция с **Log Analytics** и **Action Groups**.
 
 
 ## Решение проблем

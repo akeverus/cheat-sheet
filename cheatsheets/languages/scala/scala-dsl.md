@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 ---
 
-# **Scala DSL**
+# Scala DSL
 
 Кратко: полное руководство по созданию **DSL** в **Scala**: **type-safe builders**, **implicit conversions**, **operator overloading**, **fluent interfaces**.
 
@@ -53,7 +53,7 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 - [Заключение](#заключение)
   - [**Internal DSL** с использованием макросов](#internal-dsl-с-использованием-макросов)
   - [**External DSL** с парсерами](#external-dsl-с-парсерами)
-  - [**Fluent Interfaces** (**расширенные**)](#fluent-interfaces-расширенные)
+  - [**Fluent Interfaces** (расширенные)](#fluent-interfaces-расширенные)
   - [Практические примеры: **DSL** для **SQL** запросов](#практические-примеры-dsl-для-sql-запросов)
   - [Практические примеры: **DSL** для **HTML**](#практические-примеры-dsl-для-html)
   - [Практические примеры: **DSL** для тестирования](#практические-примеры-dsl-для-тестирования)
@@ -63,9 +63,9 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
   - [Использование с различными техниками для комбинаторных парсеров](#использование-с-различными-техниками-для-комбинаторных-парсеров)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **DSL**
+## Введение в DSL
 
-**DSL** (**Domain-`Specific` Language**) — это специализированный язык для решения задач в определенной области. **Scala** предоставляет мощные инструменты для создания внутренних **DSL**.
+**DSL** (Domain-`Specific` Language) — это специализированный язык для решения задач в определенной области. **Scala** предоставляет мощные инструменты для создания внутренних **DSL**.
 
 ### Основные техники
 
@@ -74,7 +74,7 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 - **Operator Overloading**: перегрузка операторов для выразительности
 - **Fluent Interfaces**: цепочки методов для читаемости
 
-## **Type-Safe Builders**
+## Type-Safe Builders
 
 **Type-safe builders** обеспечивают безопасное построение объектов:**
 
@@ -107,7 +107,7 @@ val query = new QueryBuilder()
 
 **Type-safe builders** обеспечивают проверку корректности построения объектов на этапе компиляции.
 
-## **Implicit Conversions** для **DSL**
+## Implicit Conversions для DSL
 
 **Implicit conversions** позволяют создавать удобный синтаксис:**
 
@@ -125,7 +125,7 @@ val delay = 2.hours
 
 **Implicit conversions** делают **DSL** более выразительным и естественным.
 
-## **Operator Overloading**
+## Operator Overloading
 
 **Перегрузка операторов позволяет использовать знакомые символы:**
 
@@ -148,7 +148,7 @@ val doubled = Money(100, "USD") * 2  // Money(200, "USD")
 
 Перегрузка операторов делает **DSL** более интуитивным.
 
-## **Fluent Interfaces**
+## Fluent Interfaces
 
 **Fluent interfaces** позволяют создавать цепочки методов:**
 
@@ -180,7 +180,7 @@ val query = new FluentBuilder()
 
 **Fluent interfaces** делают код более читаемым и выразительным.
 
-### Практический пример: **SQL DSL**
+### Практический пример: SQL DSL
 
 ```scala
 // Type-safe SQL builder
@@ -219,7 +219,7 @@ val query = QueryBuilder()
 // "SELECT name, age FROM users WHERE age > 18"
 ```
 
-### Практический пример: **HTML DSL**
+### Практический пример: HTML DSL
 
 ```scala
 trait HtmlElement {
@@ -262,7 +262,7 @@ page.render
 // <div class="container"><p>Hello, World!</p><span>Scala DSL</span></div>
 ```
 
-### Практический пример: Тестовый **DSL**
+### Практический пример: Тестовый DSL
 
 ```scala
 class TestScope {
@@ -304,7 +304,7 @@ test { t =>
 }
 ```
 
-### Практический пример: Конфигурационный **DSL**
+### Практический пример: Конфигурационный DSL
 
 ```scala
 class ConfigBuilder {
@@ -383,7 +383,7 @@ val negated = -v1  // Vector2D(-1, -2)
 
 ## Лучшие практики
 
-### Использование **type-safe builders**
+### Использование type-safe builders
 
 ```scala
 // Хорошо - type-safe builder с проверкой на этапе компиляции
@@ -404,7 +404,7 @@ val result = new SafeBuilder().step1().step2().build()
 // Невозможно пропустить шаги
 ```
 
-### Избегание излишних **implicit conversions**
+### Избегание излишних implicit conversions
 
 ```scala
 // Хорошо - явные преобразования там, где это необходимо
@@ -417,7 +417,7 @@ implicit def intToString(x: Int): String = x.toString
 implicit def stringToInt(s: String): Int = s.toInt
 ```
 
-### Документирование **DSL**
+### Документирование DSL
 
 **Всегда документируйте **DSL**, объясняя синтаксис и использование:**
 
@@ -439,7 +439,7 @@ class QueryBuilder[S <: QueryState] private(val query: String) {
 }
 ```
 
-## Продвинутые техники создания **DSL**
+## Продвинутые техники создания DSL
 
 ### Комбинаторные парсеры
 
@@ -462,7 +462,7 @@ val parser = new MyParser()
 val result = parser.parse(parser.expr, "5+3")  // Success(8)
 ```
 
-### **Embedded DSL**
+### Embedded DSL
 
 **Embedded DSL** встроены в язык и используют его синтаксис.
 
@@ -487,7 +487,7 @@ case class Query(columns: List[String], table: String, where: Option[String])
 val query = SQL.select("name", "age").from("users").where("age > 18").build()
 ```
 
-### **External DSL**
+### External DSL
 
 **External DSL** используют собственный синтаксис и требуют парсинга.
 
@@ -532,9 +532,9 @@ class ConfigParser extends RegexParsers {
 
 ## Заключение
 
-## Продвинутые техники создания **DSL**
+## Продвинутые техники создания DSL
 
-### **Internal DSL** с использованием макросов
+### Internal DSL с использованием макросов
 
 Макросы позволяют создавать более выразительные **DSL**.
 
@@ -552,7 +552,7 @@ def sqlImpl(c: Context)(query: c.Expr[String]): c.Expr[Query] = {
 }
 ```
 
-### **External DSL** с парсерами
+### External DSL с парсерами
 
 **External DSL** требуют создания парсеров для собственного синтаксиса.
 
@@ -578,7 +578,7 @@ class ConfigParser extends RegexParsers {
 }
 ```
 
-### **Fluent Interfaces** (**расширенные**)
+### Fluent Interfaces (расширенные)
 
 **Fluent Interfaces** позволяют создавать цепочки вызовов методов.
 
@@ -617,7 +617,7 @@ val query = new QueryBuilder()
   .build()
 ```
 
-### Практические примеры: **DSL** для **SQL** запросов
+### Практические примеры: DSL для SQL запросов
 
 ```scala
 case class QueryBuilder(table: String) {
@@ -650,7 +650,7 @@ val query = QueryBuilder("users")
 // "SELECT id, name, email FROM users WHERE age > 18 AND active = true"
 ```
 
-### Практические примеры: **DSL** для **HTML**
+### Практические примеры: DSL для HTML
 
 ```scala
 trait HtmlElement {
@@ -689,7 +689,7 @@ val html = Div(
 println(html.render)
 ```
 
-### Практические примеры: **DSL** для тестирования
+### Практические примеры: DSL для тестирования
 
 ```scala
 class TestDSL {
@@ -729,7 +729,7 @@ suite.run()
 
 **DSL** в **Scala** позволяют создавать выразительный и типобезопасный код для специфических областей. Понимание **type-safe builders**, **implicit conversions**, **operator overloading**, **fluent interfaces**, комбинаторных парсеров, **embedded DSL**, **external DSL**, **internal DSL** с использованием макросов, **external DSL** с парсерами, расширенных **Fluent Interfaces**, **SQL DSL**, **HTML DSL**, тестового **DSL** и их практических применений позволяет создавать мощные и удобные **DSL**. Правильное использование этих техник, документирование **DSL**, создание **SQL DSL** для запросов, **HTML DSL** для генерации **HTML**, тестового **DSL** для написания тестов критично для создания поддерживаемого, читаемого и выразительного кода. **DSL** особенно полезны для создания специализированных языков для конкретных доменов, которые делают код более читаемым, выразительным, и типобезопасным.
 
-### Практические примеры: **SQL DSL**
+### Практические примеры: SQL DSL
 
 ```scala
 // Type-safe SQL DSL
@@ -754,7 +754,7 @@ val query = QueryBuilder("users")
 // "SELECT * FROM users WHERE age > 18 AND active = true"
 ```
 
-### Практические примеры: **HTML DSL**
+### Практические примеры: HTML DSL
 
 ```scala
 // HTML DSL для генерации HTML
@@ -776,7 +776,7 @@ val html = Html.div(Map("class" -> "container"))(
 )
 ```
 
-### Использование с различными техниками для создания **DSL**
+### Использование с различными техниками для создания DSL
 
 ```scala
 // Fluent Interface для создания DSL

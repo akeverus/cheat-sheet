@@ -69,7 +69,7 @@ updated: "2026-02-11"
 
 **Когда применять:** ленивый singleton, ленивая инициализация тяжёлых ресурсов с минимумом блокировок.
 
-## Что такое **Double-Checked Locking**?
+## Что такое Double-Checked Locking?
 
 **Double-Checked Locking** — это паттерн для **thread-safe lazy initialization**, который проверяет условие блокировки дважды: один раз без синхронизации и один раз с синхронизацией. Это позволяет избежать ненужной синхронизации после инициализации объекта.
 
@@ -116,7 +116,7 @@ public class OptimizedSingleton {
 }
 ```
 
-## Когда использовать **Double-Checked Locking**?
+## Когда использовать Double-Checked Locking?
 
 ### Подходящие сценарии
 
@@ -216,7 +216,7 @@ sequenceDiagram
 
 ## Реализация на Java
 
-### Классический **Double-Checked Locking**
+### Классический Double-Checked Locking
 
 ```java
 public class Singleton {
@@ -297,7 +297,7 @@ public class ConfigurableSingleton {
 }
 ```
 
-### **DCL** с обработкой исключений
+### DCL с обработкой исключений
 
 ```java
 // DCL с корректной обработкой исключений
@@ -365,7 +365,7 @@ public class SafeSingleton {
 }
 ```
 
-### **DCL** для коллекций и кэшей
+### DCL для коллекций и кэшей
 
 ```java
 // Lazy initialization для Map
@@ -476,7 +476,7 @@ public class Comparison {
 }
 ```
 
-### 2. **Enum Singleton**
+### 2. Enum Singleton
 
 ```java
 // Самый простой и надежный singleton
@@ -506,7 +506,7 @@ public enum EnumSingleton {
 }
 ```
 
-### 3. **DCL** с таймаутами
+### 3. DCL с таймаутами
 
 ```java
 // DCL с таймаутами для предотвращения зависаний
@@ -565,7 +565,7 @@ public class TimeoutDCL {
 }
 ```
 
-### 4. **DCL** с мониторингом
+### 4. DCL с мониторингом
 
 ```java
 // DCL с метриками производительности
@@ -641,7 +641,7 @@ public class MonitoredDCL {
 
 ## Примеры использования
 
-### 1. **Database Connection Pool**
+### 1. Database Connection Pool
 
 ```java
 @Service
@@ -726,7 +726,7 @@ public class DatabaseConnectionPool {
 }
 ```
 
-### 2. **Configuration Manager**
+### 2. Configuration Manager
 
 ```java
 @Service
@@ -789,7 +789,7 @@ public class ConfigurationManager {
 }
 ```
 
-### 3. **Service Registry**
+### 3. Service Registry
 
 ```java
 @Service
@@ -851,7 +851,7 @@ public class ServiceRegistry {
 
 ## Лучшие практики
 
-### 1. Когда использовать **DCL**
+### 1. Когда использовать DCL
 
 ```java
 public class DCLGuidelines {
@@ -1001,7 +1001,7 @@ public class DCLPitfalls {
 }
 ```
 
-### 3. Тестирование **DCL**
+### 3. Тестирование DCL
 
 ```java
 @ExtendWith(MockitoExtension.class)

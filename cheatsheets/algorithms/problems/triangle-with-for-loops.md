@@ -21,8 +21,8 @@ updated: "2026-02-11"
 - [`Apache `Commons Lang` StringUtils`](https://commons.apache.org/proper/commons-lang/javadocs/api-release/org/apache/commons/lang3/StringUtils.html)
 
 ### См. также
-- [Задачи и алгоритмы](../README.md)
-- [Алгоритмы со строками](../strings/README.md)
+- [[README|Задачи и алгоритмы]]
+- [[README|Алгоритмы со строками]]
 
 ## Содержание
 
@@ -183,13 +183,13 @@ return result.toString();
 
 ## Complexity Analysis
 
-`If we` **look** at **the first example again**, we **notice the outer and inner loops**, **each having** a **maximum** of N **steps**. **Consequently**, we **have** a **time complexity** of `O(**N²**)`, **where** N is **the number** of **rows** of **the triangle**.
+`If we` **look** at **the first example again**, we **notice the outer and inner loops**, **each having** a **maximum** of N **steps**. **Consequently**, we **have** a **time complexity** of `O(N²)`, **where** N is **the number** of **rows** of **the triangle**.
 
 **The second example** is **similar** — **with the only difference that** we **have two inner loops**, **which are sequential and don**'t **increase the time complexity**.
 
 **However**, in **the third example**, we **use only** a **for loop with** N **steps**. **But** at **each step**, we **call either the** `**StringUtils.repeat**()` **method** or **the** `**substring**()` **method** of **the helper string**, **each** of **which has** `O(N)` **complexity**. **Thus**, **the overall time complexity remains the same**.
 
-**Finally**, if we **talk about auxiliary space**, we **can quickly understand that for all examples**, **the complexity remains** in **the StringBuilder variable**. By **adding the entire triangle** to **the result variable**, we **can**'t **have complexity less than** `O(**N²**)`.
+**Finally**, if we **talk about auxiliary space**, we **can quickly understand that for all examples**, **the complexity remains** in **the StringBuilder variable**. By **adding the entire triangle** to **the result variable**, we **can**'t **have complexity less than** `O(N²)`.
 
 Of **course**, if we **were** to **print the characters directly**, we **would have constant space complexity for the first two examples**. **But** in **the third example**, we **use** a **helper string**, **and the space complexity will** be `O(N)`.
 
@@ -197,10 +197,10 @@ Of **course**, if we **were** to **print the characters directly**, we **would h
 
 | **Approach** | **Time Complexity** | **Space Complexity** | **Code Lines** |
 |----------|----------------|------------------|------------|
-| **Nested loops** (**right-angled**) | `O(**N²**)` | `O(**N²**)` | ~10 |
-| **Nested loops** (**isosceles**) | `O(**N²**)` | `O(**N²**)` | ~15 |
-| **StringUtils.repeat**() | `O(**N²**)` | `O(**N²**)` | ~8 |
-| **Substring method** | `O(**N²**)` | `O(N)` | ~10 |
+| **Nested loops** (right-angled) | `O(N²)` | `O(N²)` | ~10 |
+| **Nested loops** (isosceles) | `O(N²)` | `O(N²)` | ~15 |
+| **StringUtils.repeat**() | `O(N²)` | `O(N²)` | ~8 |
+| **Substring method** | `O(N²)` | `O(N)` | ~10 |
 
 ## Complete Example
 

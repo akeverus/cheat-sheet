@@ -17,14 +17,14 @@ Object-Relational Mapping — прослойка, превращающая ре�
 ## Полезные ссылки
 
 ### Основной документ
-- [Основы ORM](orm-basics.md)
+- [[orm-basics|Основы ORM]]
 
 ### Соседние разделы
-- [SQL](../sql/README.md)
-- [Реляционные СУБД](../relational/README.md)
-- [Spring Data JPA](../../frameworks/java-frameworks/spring/README.md)
-- [Java-библиотеки (jOOQ, MapStruct)](../../libraries/java/README.md)
-- [Тестирование БД](../../testing/integration-testing/database-testing/README.md)
+- [[README|SQL]]
+- [[README|Реляционные СУБД]]
+- [[README|Spring Data JPA]]
+- [[README|Java-библиотеки (jOOQ, MapStruct)]]
+- [[README|Тестирование БД]]
 
 ### Внешние ресурсы
 - [Hibernate ORM User Guide](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html)
@@ -75,13 +75,13 @@ Object-Relational Mapping — прослойка, превращающая ре�
 
 ## Маршруты чтения
 
-- **Junior backend:** [orm-basics.md](orm-basics.md) → [Spring Data JPA](../../frameworks/java-frameworks/spring/README.md).
-- **Миграция с JDBC:** концепции mapping → persistence context → lazy loading → [orm-basics.md](orm-basics.md#лучшие-практики).
+- **Junior backend:** [[orm-basics]] → [[README|Spring Data JPA]].
+- **Миграция с JDBC:** концепции mapping → persistence context → lazy loading → [[orm-basics#лучшие-практики]].
 - **Перф-оптимизация:** N+1 → кэш L2 → batch fetching → native queries.
 
 ## Куда идти дальше
 
-- Оптимизация SQL и индексы — [databases/sql/](../sql/README.md), [databases/relational/postgresql/](../relational/postgresql/README.md)
-- Hibernate-специфика, Session API — [libraries/java/](../../libraries/java/README.md)
-- Тестирование JPA-слоя с Testcontainers — [testing/integration-testing/testcontainers/](../../testing/integration-testing/testcontainers/README.md)
-- Паттерны DAO/Repository — [patterns/](../../patterns/README.md)
+- Оптимизация SQL и индексы — [[README|databases/sql/]], [[README|databases/relational/postgresql/]]
+- Hibernate-специфика, Session API — [[README|libraries/java/]]
+- Тестирование JPA-слоя с Testcontainers — [[README|testing/integration-testing/testcontainers/]]
+- Паттерны DAO/Repository — [[README|patterns/]]

@@ -82,7 +82,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Basic Scheduling
 
-### **Simple Scheduled Task**
+### Simple Scheduled Task
 
 **Простая запланированная задача:**
 
@@ -100,7 +100,7 @@ public class ScheduledTasks {
 }
 ```
 
-### **Cron Expression**
+### Cron Expression
 
 **Использование **cron** выражений:**
 
@@ -122,7 +122,7 @@ public class CronTasks {
 
 ## Advanced Scheduling
 
-### **Conditional Scheduling**
+### Conditional Scheduling
 
 **Условное планирование:**
 
@@ -145,7 +145,7 @@ public class ConditionalScheduling {
 }
 ```
 
-### **Async Scheduling**
+### Async Scheduling
 
 **Асинхронное выполнение задач:**
 
@@ -169,7 +169,7 @@ public class AsyncScheduledTasks {
 
 ## Job Management
 
-### **Job Identity**
+### Job Identity
 
 **Идентификация задач:**
 
@@ -184,7 +184,7 @@ public class IdentifiedTasks {
 }
 ```
 
-### **Programmatic Scheduling**
+### Programmatic Scheduling
 
 **Программное планирование:**
 
@@ -212,7 +212,7 @@ public class ProgrammaticScheduling {
 
 ## Лучшие практики
 
-### 1. Используйте **cron** для сложных расписаний
+### 1. Используйте cron для сложных расписаний
 
 ```java
 // ✅ Хорошо
@@ -236,7 +236,7 @@ void taskWithErrorHandling() {
 }
 ```
 
-### 3. Используйте **async** для долгих задач
+### 3. Используйте async для долгих задач
 
 ```java
 // ✅ Хорошо
@@ -248,7 +248,7 @@ Uni<Void> longRunningTask() {
 
 ## Cron Expressions
 
-### **Cron Syntax**
+### Cron Syntax
 
 **Синтаксис **cron** выражений:**
 
@@ -263,7 +263,7 @@ Uni<Void> longRunningTask() {
 * * * * * *
 ```
 
-### **Common Cron Patterns**
+### Common Cron Patterns
 
 **Часто используемые **cron** паттерны:**
 
@@ -293,7 +293,7 @@ public class CommonCronPatterns {
 
 ## Scheduled Task Lifecycle
 
-### **Task Execution Context**
+### Task Execution Context
 
 **Контекст выполнения задачи:**
 
@@ -312,7 +312,7 @@ public class ContextAwareTasks {
 }
 ```
 
-### **Task Cancellation**
+### Task Cancellation
 
 **Отмена задач:**
 
@@ -343,7 +343,7 @@ public class CancellableTasks {
 
 ## Error Handling
 
-### **Task Error Handling**
+### Task Error Handling
 
 **Обработка ошибок в задачах:**
 
@@ -371,7 +371,7 @@ public class ErrorHandlingTasks {
 }
 ```
 
-### **Retry Logic**
+### Retry Logic
 
 **Логика повторных попыток:**
 
@@ -395,7 +395,7 @@ public class RetryTasks {
 
 ## Task Coordination
 
-### **Distributed Scheduling**
+### Distributed Scheduling
 
 **Распределенное планирование:**
 
@@ -405,7 +405,7 @@ quarkus.scheduler.cluster.enabled=true
 quarkus.scheduler.cluster.start-delay=10s
 ```
 
-### **Task Locking**
+### Task Locking
 
 **Блокировка задач:**
 
@@ -425,7 +425,7 @@ public class LockedTasks {
 
 ## Monitoring и Metrics
 
-### **Task Metrics**
+### Task Metrics
 
 **Метрики задач:**
 
@@ -458,7 +458,7 @@ public class MonitoredTasks {
 
 ## Advanced Scheduling Patterns
 
-### **Job Queue Pattern**
+### Job Queue Pattern
 
 **Реализация очереди задач:**
 
@@ -482,7 +482,7 @@ public class JobQueueService {
 }
 ```
 
-### **Priority Scheduling**
+### Priority Scheduling
 
 **Планирование с приоритетами:**
 
@@ -503,7 +503,7 @@ public class PriorityScheduler {
 }
 ```
 
-### **Distributed Scheduling**
+### Distributed Scheduling
 
 **Распределенное планирование:**
 
@@ -538,7 +538,7 @@ public class DistributedScheduler {
 
 ## Task Monitoring and Metrics
 
-### **Execution Time Tracking**
+### Execution Time Tracking
 
 **Отслеживание времени выполнения:**
 
@@ -562,7 +562,7 @@ public class MonitoredScheduledTask {
 }
 ```
 
-### **Task Success**/**Failure Tracking**
+### Task Success/Failure Tracking
 
 **Отслеживание успешных и неудачных выполнений:**
 
@@ -591,7 +591,7 @@ public class TrackedScheduledTask {
 
 ## Advanced Scheduling Patterns
 
-### **Conditional Task Execution**
+### Conditional Task Execution
 
 **Условное выполнение задач:**
 
@@ -611,7 +611,7 @@ public class ConditionalScheduledTask {
 }
 ```
 
-### **Task Dependencies**
+### Task Dependencies
 
 **Зависимости между задачами:**
 
@@ -638,7 +638,7 @@ public class DependentTasks {
 }
 ```
 
-### **Dynamic Schedule Configuration**
+### Dynamic Schedule Configuration
 
 **Динамическая конфигурация расписания:**
 

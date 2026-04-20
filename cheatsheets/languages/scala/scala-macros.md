@@ -13,7 +13,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
 ---
 
-# **Scala Macros**
+# Scala Macros
 
 Кратко: полное руководство по макросам в **Scala**: **code generation**, **compile-time** вычисления, метапрограммирование.
 
@@ -47,7 +47,7 @@ related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
   - [Документирование макросов](#документирование-макросов)
   - [Тестирование макросов](#тестирование-макросов)
 - [Продвинутые техники работы с макросами](#продвинутые-техники-работы-с-макросами)
-- [Заключение (**расширенное**)](#заключение-расширенное)
+- [Заключение (расширенное)](#заключение-расширенное)
 - [Дополнительные техники работы с макросами](#дополнительные-техники-работы-с-макросами)
   - [Использование **Macro Paradise**](#использование-macro-paradise)
   - [Генерация кода с использованием макросов](#генерация-кода-с-использованием-макросов)
@@ -67,7 +67,7 @@ related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
   - [Использование с различными техниками для оптимизации](#использование-с-различными-техниками-для-оптимизации)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Macros**
+## Введение в Macros
 
 Макросы в **Scala** позволяют выполнять вычисления и генерировать код на этапе компиляции. Макросы предоставляют мощные возможности метапрограммирования.
 
@@ -78,7 +78,7 @@ related: ["scala/scala-basics.md", "scala/scala-metaprogramming.md"]
 - **Оптимизация**: оптимизация кода на этапе компиляции
 - **DSL**: создание **domain-specific languages**
 
-## **Def Macros**
+## Def Macros
 
 **Def macros** позволяют генерировать код на этапе компиляции:**
 
@@ -101,7 +101,7 @@ def assertImpl(c: Context)(condition: c.Expr[Boolean]): c.Expr[Unit] = {
 
 **Def macros** позволяют создавать оптимизированный код на этапе компиляции.
 
-## **Type Macros**
+## Type Macros
 
 **Type macros** позволяют генерировать типы на этапе компиляции:**
 
@@ -164,7 +164,7 @@ def logImpl(c: Context)(message: c.Expr[String]): c.Expr[Unit] = {
 
 Этот макрос полностью удаляет логирование на этапе компиляции, если уровень логирования не **DEBUG**.
 
-## **Macro Annotations**
+## Macro Annotations
 
 **Macro annotations** позволяют добавлять функциональность к классам и методам:**
 
@@ -194,7 +194,7 @@ def expensiveComputation(x: Int): Int = {
 
 **Macro annotations** позволяют добавлять функциональность к коду без изменения исходного кода.
 
-## **Quasiquotes**
+## Quasiquotes
 
 **Quasiquotes** предоставляют удобный синтаксис для работы с **AST**:**
 
@@ -215,7 +215,7 @@ def debugImpl(c: Context)(expr: c.Expr[Any]): c.Expr[Unit] = {
 
 **Quasiquotes** делают работу с **AST** более читаемой и менее подверженной ошибкам.
 
-## **Compile-time** вычисления
+## Compile-time вычисления
 
 **Макросы могут выполнять вычисления на этапе компиляции:**
 
@@ -236,7 +236,7 @@ def powerImpl(c: Context)(base: c.Expr[Int], exp: c.Expr[Int]): c.Expr[Int] = {
 
 Этот макрос вычисляет степень на этапе компиляции, если оба аргумента известны.
 
-## **Type-level** программирование с макросами
+## Type-level программирование с макросами
 
 **Макросы могут использоваться для **type-level** программирования:**
 
@@ -259,7 +259,7 @@ val name = typeName[Int]  // "Int" на этапе компиляции
 
 ## Практические примеры использования макросов
 
-### Генерация **toString**, **equals**, **hashCode**
+### Генерация toString, equals, hashCode
 
 **Макросы могут автоматически генерировать стандартные методы:**
 
@@ -356,7 +356,7 @@ class MacroTest extends AnyFlatSpec {
 
 ## Продвинутые техники работы с макросами
 
-### **Quasiquotes**
+### Quasiquotes
 
 **Quasiquotes** предоставляют удобный способ создания **AST**.
 
@@ -376,7 +376,7 @@ def debugImpl(c: Context)(param: c.Expr[Any]): c.Expr[Unit] = {
 }
 ```
 
-### **Macro Annotations**
+### Macro Annotations
 
 **Macro Annotations** позволяют создавать аннотации, которые генерируют код.
 
@@ -389,7 +389,7 @@ class Builder extends StaticAnnotation {
 }
 ```
 
-### **Type Macros**
+### Type Macros
 
 **Type Macros** позволяют генерировать типы на этапе компиляции.
 
@@ -407,11 +407,11 @@ class MaterializeMacro(val c: Context) {
 }
 ```
 
-## Заключение (**расширенное**)
+## Заключение (расширенное)
 
 ## Дополнительные техники работы с макросами
 
-### Использование **Macro Paradise**
+### Использование Macro Paradise
 
 **Macro Paradise** предоставляет расширенные возможности для работы с макросами.
 
@@ -465,7 +465,7 @@ def inlineOptimizedImpl[T: c.WeakTypeTag](c: Context)(expr: c.Expr[T]): c.Expr[T
 }
 ```
 
-### Практические примеры: Генерация **toString** с макросами
+### Практические примеры: Генерация toString с макросами
 
 ```scala
 import scala.language.experimental.macros
@@ -496,7 +496,7 @@ val person = Person("Alice", 30)
 val str = toStringMacro(person)  // "Person(name=Alice, age=30)"
 ```
 
-### Практические примеры: Генерация **equals** с макросами
+### Практические примеры: Генерация equals с макросами
 
 ```scala
 import scala.language.experimental.macros
@@ -552,7 +552,7 @@ def copyWith[A: c.WeakTypeTag](c: Context)(updates: c.Expr[Map[String, Any]]): c
 }
 ```
 
-### Практические примеры: Генерация **Builder** паттерна
+### Практические примеры: Генерация Builder паттерна
 
 ```scala
 import scala.language.experimental.macros
@@ -710,7 +710,7 @@ def generateTests[A: c.WeakTypeTag](c: Context): c.Expr[Unit] = {
 }
 ```
 
-### Практические примеры: Генерация **mock** объектов
+### Практические примеры: Генерация mock объектов
 
 ```scala
 import scala.language.experimental.macros

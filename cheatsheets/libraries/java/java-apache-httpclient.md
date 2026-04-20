@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Apache HttpClient: Мощный **HTTP** клиент для **Java**
+# Apache HttpClient: Мощный HTTP клиент для Java
 
 **Комплексное руководство по использованию `Apache HttpClient` — мощной и гибкой `HTTP` клиентской библиотеки для `Java`, которая предоставляет полную поддержку `HTTP` протокола и является частью `Apache HttpComponents` проекта.**
 
@@ -26,7 +26,7 @@ updated: "2026-02-11"
 - [Migration Guide](https://hc.apache.org/httpcomponents-client-5.2.x/migration-guide/index.html) — руководство по миграции
 - [HttpClient Tutorial](https://hc.apache.org/httpcomponents-client-5.2.x/quickstart.html) — подробное руководство
 
-### **Maven**/**Gradle**
+### Maven/Gradle
 - [Maven Central](https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5) — **HttpClient** 5.x
 - [Maven Central 4.x](https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient) — **HttpClient** 4.x
 
@@ -81,11 +81,11 @@ updated: "2026-02-11"
 - [Best practices](#best-practices)
 - [См. также](#см-также)
 
-## Введение в **Apache HttpClient**
+## Введение в Apache HttpClient
 
 **Apache HttpClient** — это мощная и гибкая **HTTP** клиентская библиотека для **Java**, разработанная **Apache Software Foundation**. Является частью **Apache HttpComponents** проекта и предоставляет полную поддержку **HTTP** протокола, включая **HTTP**/1.1, **HTTP**/2 и различные механизмы аутентификации.
 
-### Почему **Apache HttpClient**?
+### Почему Apache HttpClient?
 
 **HttpClient** предлагает множество преимуществ для **enterprise** приложений:**
 
@@ -98,7 +98,7 @@ updated: "2026-02-11"
 7. **Backward compatibility** — Поддержка **legacy** систем
 8. **Активная разработка** — Регулярные обновления и поддержка
 
-### Архитектура **HttpClient**
+### Архитектура HttpClient
 
 **HttpClient** построен на модульной архитектуре:**
 
@@ -110,7 +110,7 @@ updated: "2026-02-11"
 - **CookieStore** — Хранение куков
 - **RequestConfig** — Конфигурация запросов
 
-### Версии **HttpClient**
+### Версии HttpClient
 
 - **HttpClient 5.x** — Современная версия с **HTTP**/2 поддержкой
 - **HttpClient 4.x** — **Legacy** версия, широко используется
@@ -129,7 +129,7 @@ HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandle
 
 ## Основные возможности
 
-### Простые **HTTP** запросы
+### Простые HTTP запросы
 ```java
 // Создание клиента
 CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -147,7 +147,7 @@ try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
 }
 ```
 
-### Различные **HTTP** методы
+### Различные HTTP методы
 ```java
 // POST запрос
 HttpPost httpPost = new HttpPost("https://api.example.com/users");
@@ -167,7 +167,7 @@ HttpPatch httpPatch = new HttpPatch("https://api.example.com/users/1");
 httpPatch.setEntity(entity);
 ```
 
-### **Headers** и **Authentication**
+### Headers и Authentication
 ```java
 HttpGet httpGet = new HttpGet("https://api.example.com/secure");
 
@@ -187,7 +187,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 ```
 
-### **Query Parameters**
+### Query Parameters
 ```java
 // Использование URIBuilder
 URIBuilder builder = new URIBuilder("https://api.example.com/search");
@@ -211,7 +211,7 @@ HttpGet httpGet2 = new HttpGet(uri);
 
 ## Продвинутые возможности
 
-### **Connection Management**
+### Connection Management
 ```java
 /
  * Настройка пула соединений для Apache HttpClient
@@ -238,7 +238,7 @@ System.out.println("Leased connections: " + cm.getTotalStats().getLeased());    
 System.out.println("Pending connections: " + cm.getTotalStats().getPending());        // Ожидающие соединения (в очереди)
 ```
 
-### **Connection Reuse**
+### Connection Reuse
 ```java
 // Автоматическое управление соединениями
 CloseableHttpClient httpClient = HttpClients.custom()
@@ -264,7 +264,7 @@ try {
 }
 ```
 
-### **SSL**/**TLS Configuration**
+### SSL/TLS Configuration
 ```java
 /
  * Настройка SSL/TLS для Apache HttpClient
@@ -313,7 +313,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 ```
 
-### **Proxy Configuration**
+### Proxy Configuration
 ```java
 // HTTP Proxy
 HttpHost proxy = new HttpHost("proxy.example.com", 8080);
@@ -336,7 +336,7 @@ CloseableHttpClient httpClientWithProxy = HttpClients.custom()
     .build();
 ```
 
-### **Cookie Management**
+### Cookie Management
 ```java
 // Управление cookies
 CookieStore cookieStore = new BasicCookieStore();
@@ -354,7 +354,7 @@ cookieStore.addCookie(cookie);
 List<Cookie> cookies = cookieStore.getCookies();
 ```
 
-### **Timeout Configuration**
+### Timeout Configuration
 ```java
 /
  * Настройка таймаутов для Apache HttpClient
@@ -386,7 +386,7 @@ RequestConfig specificConfig = RequestConfig.copy(requestConfig)  // Копир�
 httpGet.setConfig(specificConfig);  // Устанавливаем специфичную конфигурацию для этого запроса
 ```
 
-### **Redirect Handling**
+### Redirect Handling
 ```java
 // Автоматические редиректы
 LaxRedirectStrategy redirectStrategy = new LaxRedirectStrategy();
@@ -411,7 +411,7 @@ RedirectStrategy customRedirectStrategy = new DefaultRedirectStrategy() {
 
 ## Асинхронные операции
 
-### **Future-based Async**
+### Future-based Async
 ```java
 CloseableHttpAsyncClient asyncClient = HttpAsyncClients.createDefault();
 asyncClient.start();
@@ -429,7 +429,7 @@ String result = EntityUtils.toString(entity);
 asyncClient.close();
 ```
 
-### **Callback-based Async**
+### Callback-based Async
 ```java
 CloseableHttpAsyncClient asyncClient = HttpAsyncClients.createDefault();
 asyncClient.start();
@@ -459,7 +459,7 @@ asyncClient.execute(httpGet, new FutureCallback<HttpResponse>() {
 });
 ```
 
-### **Reactive Streams**
+### Reactive Streams
 ```java
 // HttpClient 5.0+ поддерживает reactive streams
 HttpClient httpClient = HttpClient.newHttpClient();
@@ -476,9 +476,9 @@ response.thenAccept(res -> {
 });
 ```
 
-## **Multipart Upload**
+## Multipart Upload
 
-### **File Upload**
+### File Upload
 ```java
 HttpPost httpPost = new HttpPost("https://api.example.com/upload");
 
@@ -504,7 +504,7 @@ try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
 }
 ```
 
-### **Streaming Upload**
+### Streaming Upload
 ```java
 HttpPost httpPost = new HttpPost("https://api.example.com/upload");
 
@@ -545,9 +545,9 @@ AbstractHttpEntity streamingEntity = new AbstractHttpEntity() {
 httpPost.setEntity(streamingEntity);
 ```
 
-## **Caching**
+## Caching
 
-### **HttpClient Cache**
+### HttpClient Cache
 ```xml
 <dependency>
     <groupId>org.apache.httpcomponents.client5</groupId>
@@ -574,9 +574,9 @@ HttpGet httpGet = new HttpGet("https://api.example.com/data");
 httpGet.setHeader("Cache-Control", "max-age=3600");
 ```
 
-## **Interceptors**
+## Interceptors
 
-### **Request Interceptor**
+### Request Interceptor
 ```java
 class RequestLoggingInterceptor implements HttpRequestInterceptor {
 
@@ -614,9 +614,9 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration**
+### Configuration
 ```java
 @Configuration
 public class HttpClientConfig {
@@ -647,7 +647,7 @@ public class HttpClientConfig {
 }
 ```
 
-### **RestTemplate Integration**
+### RestTemplate Integration
 ```java
 @Configuration
 public class RestTemplateConfig {
@@ -663,9 +663,9 @@ public class RestTemplateConfig {
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Mock Server Setup**
+### Mock Server Setup
 ```java
 public class HttpClientTest {
 
@@ -716,9 +716,9 @@ public class HttpClientTest {
 }
 ```
 
-## **Performance Tuning**
+## Performance Tuning
 
-### **Connection Keep-Alive**
+### Connection Keep-Alive
 ```java
 // Оптимизация keep-alive
 PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
@@ -740,7 +740,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 ```
 
-### **Compression**
+### Compression
 ```java
 // Автоматическая декомпрессия
 CloseableHttpClient httpClient = HttpClients.custom()
@@ -749,9 +749,9 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From HttpClient** 4.x `to 5`.x
+### From HttpClient 4.x `to 5`.x
 ```java
 // HttpClient 4.x
 CloseableHttpClient client = HttpClientBuilder.create().build();
@@ -767,7 +767,7 @@ HttpResponse<String> response = client.send(request,
     HttpResponse.BodyHandlers.ofString());
 ```
 
-### **From URLConnection**
+### From URLConnection
 ```java
 // URLConnection
 URL url = new URL("https://api.example.com/data");
@@ -786,7 +786,7 @@ InputStream is = client.send(request,
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```java
 // Проблема: Connection pool exhausted
 PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
@@ -804,7 +804,7 @@ SSLContext sslContext = SSLContexts.custom()
     .build();
 ```
 
-### **Monitoring**
+### Monitoring
 ```java
 // Метрики соединений
 PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
@@ -814,9 +814,9 @@ System.out.println("Leased: " + stats.getLeased());
 System.out.println("Pending: " + stats.getPending());
 ```
 
-## **Advanced Features**
+## Advanced Features
 
-### **Custom Protocol**
+### Custom Protocol
 ```java
 // Поддержка SPDY/HTTP2 (через HttpClient 5.x)
 HttpClient client = HttpClient.newBuilder()
@@ -824,7 +824,7 @@ HttpClient client = HttpClient.newBuilder()
     .build();
 ```
 
-### **NTLM Authentication**
+### NTLM Authentication
 ```java
 NTCredentials ntCredentials = new NTCredentials(
     "username", "password", "workstation", "domain");
@@ -837,7 +837,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 ```
 
-## **Best practices**
+## Best practices
 
 - **Переиспользование HttpClient:** создавайте один экземпляр `CloseableHttpClient` (через `HttpClients.custom()`) и переиспользуйте его; закрывайте клиент при остановке приложения.
 - **Connection Manager:** используйте `PoolingHttpClientConnectionManager` для пула соединений; настраивайте **maxTotal** и **maxPerRoute** под нагрузку.

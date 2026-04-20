@@ -44,7 +44,7 @@ UI-тестирование — это автоматизация взаимод
 
 ## Selenium WebDriver
 
-WebDriver даёт API для управления браузером (Chrome, Firefox, Edge): поиск элементов по id, CSS, XPath; действия (click, sendKeys); явные и неявные ожидания. Подробнее в [отдельном руководстве по Selenium](selenium/selenium.md).
+WebDriver даёт API для управления браузером (Chrome, Firefox, Edge): поиск элементов по id, CSS, XPath; действия (click, sendKeys); явные и неявные ожидания. Подробнее в [[selenium|отдельном руководстве по Selenium]].
 
 
 ## Playwright и Cypress
@@ -80,4 +80,4 @@ Playwright (Microsoft) — мультибраузерность, встроен�
 
 ## Заключение
 
-Автоматизацию браузерного сценария можно строить на Selenium, Playwright или Cypress. Подробные примеры и настройка — в [руководстве по Selenium](selenium/selenium.md) и в [общем обзоре тестирования](../).
+Автоматизацию браузерного сценария можно строить на Selenium, Playwright или Cypress. Подробные примеры и настройка — в [[selenium|руководстве по Selenium]] и в [общем обзоре тестирования](../).

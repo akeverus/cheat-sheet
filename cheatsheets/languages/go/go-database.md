@@ -78,7 +78,7 @@ updated: "2026-02-06"
 
 ## Введение в базы данных
 
-Go предоставляет несколько способов работы с базами данных: стандартный пакет `database/sql`, расширенный `**sqlx**` и **ORM** `**GORM**`. Понимание работы с базами данных критично для создания приложений, работающих с данными.
+Go предоставляет несколько способов работы с базами данных: стандартный пакет `database/sql`, расширенный `sqlx` и **ORM** `GORM`. Понимание работы с базами данных критично для создания приложений, работающих с данными.
 
 ### Основные подходы
 
@@ -86,7 +86,7 @@ Go предоставляет несколько способов работы �
 2. **sqlx** — расширение **database**/**sql** с дополнительными возможностями
 3. **GORM** — **ORM** для работы с базами данных
 
-## **database**/**sql**
+## database/sql
 
 Пакет `database/sql` предоставляет общий интерфейс для работы с **SQL** базами данных.
 
@@ -167,9 +167,9 @@ if err != nil {
 }
 ```
 
-## **sqlx**
+## sqlx
 
-Пакет `**sqlx**` расширяет `database/sql` дополнительными возможностями.
+Пакет `sqlx` расширяет `database/sql` дополнительными возможностями.
 
 ### Подключение
 
@@ -219,7 +219,7 @@ var user User
 err := db.Get(&user, db.Rebind(namedQuery), args...)
 ```
 
-## **GORM**
+## GORM
 
 **GORM** — это популярный **ORM** для Go.
 
@@ -251,7 +251,7 @@ type User struct {
 db.AutoMigrate(&User{})
 ```
 
-### **CRUD** операции
+### CRUD операции
 
 ```go
 // Создание
@@ -293,7 +293,7 @@ db.Select("name", "email").Find(&users)
 
 Транзакции обеспечивают атомарность операций.
 
-### **database**/**sql** транзакции
+### database/sql транзакции
 
 ```go
 tx, err := db.Begin()
@@ -320,7 +320,7 @@ if err != nil {
 }
 ```
 
-### **GORM** транзакции
+### GORM транзакции
 
 ```go
 db.Transaction(func(tx *gorm.DB) error {
@@ -340,7 +340,7 @@ db.Transaction(func(tx *gorm.DB) error {
 
 Миграции позволяют управлять схемой базы данных.
 
-### Использование **migrate**
+### Использование migrate
 
 ```go
 import "github.com/golang-migrate/migrate/v4"
@@ -359,7 +359,7 @@ if err := m.Up(); err != nil {
 }
 ```
 
-### **GORM** миграции
+### GORM миграции
 
 ```go
 // Автоматическая миграция
@@ -389,7 +389,7 @@ func configureConnectionPool(db *sql.DB) {
 }
 ```
 
-### **Batch** операции
+### Batch операции
 
 ```go
 // Batch insert с database/sql
@@ -417,7 +417,7 @@ func batchInsert(db *sql.DB, users []User) error {
 }
 ```
 
-### **Batch** операции с **sqlx**
+### Batch операции с sqlx
 
 ```go
 func batchInsertWithSqlx(db *sqlx.DB, users []User) error {
@@ -427,7 +427,7 @@ func batchInsertWithSqlx(db *sqlx.DB, users []User) error {
 }
 ```
 
-### **Batch** операции с **GORM**
+### Batch операции с GORM
 
 ```go
 func batchInsertWithGORM(db *gorm.DB, users []User) error {
@@ -435,7 +435,7 @@ func batchInsertWithGORM(db *gorm.DB, users []User) error {
 }
 ```
 
-### Сложные запросы с **JOIN**
+### Сложные запросы с JOIN
 
 ```go
 // database/sql
@@ -493,7 +493,7 @@ func getUsersWithPosts(db *sql.DB) ([]UserWithPosts, error) {
 }
 ```
 
-### Сложные запросы с **GORM**
+### Сложные запросы с GORM
 
 ```go
 type User struct {
@@ -515,7 +515,7 @@ func getUsersWithPostsGORM(db *gorm.DB) ([]User, error) {
 }
 ```
 
-### Работа с **NULL** значениями
+### Работа с NULL значениями
 
 ```go
 import "database/sql"
@@ -547,7 +547,7 @@ func handleNullValues(db *sql.DB) {
 }
 ```
 
-### Работа с **JSON** в **PostgreSQL**
+### Работа с JSON в PostgreSQL
 
 ```go
 // Сохранение JSON
@@ -576,7 +576,7 @@ func readJSON(db *sql.DB, id int) (*User, error) {
 }
 ```
 
-### Работа с массивами в **PostgreSQL**
+### Работа с массивами в PostgreSQL
 
 ```go
 // Сохранение массива
@@ -658,7 +658,7 @@ func streamLargeResults(db *sql.DB, callback func(User) error) error {
 }
 ```
 
-### **Pagination**
+### Pagination
 
 ```go
 // Offset-based pagination
@@ -709,7 +709,7 @@ func getUsersCursor(db *sql.DB, cursor int, limit int) ([]User, int, error) {
 }
 ```
 
-### **Repository Pattern**
+### Repository Pattern
 
 ```go
 type UserRepository interface {
@@ -749,7 +749,7 @@ func (r *userRepository) Create(user *User) error {
 }
 ```
 
-### **Unit of Work Pattern**
+### Unit of Work Pattern
 
 ```go
 type UnitOfWork struct {
@@ -782,7 +782,7 @@ func (uow *UnitOfWork) Rollback() error {
 }
 ```
 
-### Практические примеры: **Connection Pooling**
+### Практические примеры: Connection Pooling
 
 ```go
 type DBManager struct {
@@ -812,7 +812,7 @@ func (m *DBManager) Stats() sql.DBStats {
 }
 ```
 
-### Практические примеры: **Health Check**
+### Практические примеры: Health Check
 
 ```go
 func (m *DBManager) HealthCheck() error {
@@ -823,7 +823,7 @@ func (m *DBManager) HealthCheck() error {
 }
 ```
 
-### Практические примеры: **Query Builder**
+### Практические примеры: Query Builder
 
 ```go
 type QueryBuilder struct {
@@ -876,7 +876,7 @@ func (qb *QueryBuilder) Build() string {
 }
 ```
 
-### Практические примеры: **Database Migrations**
+### Практические примеры: Database Migrations
 
 ```go
 type Migration struct {
@@ -911,7 +911,7 @@ func (m *Migrator) Up() error {
 }
 ```
 
-### Практические примеры: **Repository** паттерн с **database**/**sql**
+### Практические примеры: Repository паттерн с database/sql
 
 ```go
 type UserRepository struct {
@@ -1003,7 +1003,7 @@ func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]User
 }
 ```
 
-### Практические примеры: **Batch** операции с транзакциями
+### Практические примеры: Batch операции с транзакциями
 
 ```go
 func BatchInsertUsers(ctx context.Context, db *sql.DB, users []User) error {
@@ -1240,7 +1240,7 @@ func (sql *SlowQueryLogger) LogQuery(query string, duration time.Duration) {
 14. **Используйте connection pooling** — правильно настраивайте пулы
 15. **Используйте prepared statements** — для безопасности и производительности
 
-### Практические примеры: Оптимизация запросов через **EXPLAIN**
+### Практические примеры: Оптимизация запросов через EXPLAIN
 
 ```go
 func AnalyzeQuery(db *sql.DB, query string, args ...interface{}) error {

@@ -19,14 +19,14 @@ Oracle Database — корпоративная реляционная СУБД, 
 ## Полезные ссылки
 
 ### Основные документы
-- [Oracle Database: Основы](oracle-basics.md) — архитектура, установка, SQL, PL/SQL, интеграция с Java
+- [[oracle-basics|Oracle Database: Основы]] — архитектура, установка, SQL, PL/SQL, интеграция с Java
 
 ### Соседние разделы
-- [Реляционные БД](../README.md)
+- [[README|Реляционные БД]]
 - [PostgreSQL](../postgresql/)
 - [MySQL](../mysql/)
-- [SQL Server](../sql-server/README.md)
-- [Базы данных](../../README.md)
+- [[README|SQL Server]]
+- [[README|Базы данных]]
 
 ### Внешние ресурсы
 - [Oracle Database Documentation](https://docs.oracle.com/en/database/oracle/oracle-database/)
@@ -44,7 +44,7 @@ Oracle Database — корпоративная реляционная СУБД, 
 
 ## Что внутри раздела
 
-[oracle-basics.md](oracle-basics.md) покрывает:
+[[oracle-basics]] покрывает:
 
 - Архитектуру Oracle: instance vs database, SGA/PGA, процессы, redo/undo, tablespaces
 - Компоненты: listener, CDB/PDB (multitenant)
@@ -85,8 +85,8 @@ Oracle Database — корпоративная реляционная СУБД, 
 
 ## Куда идти дальше
 
-- Реляционные БД в целом — [databases/relational/README.md](../README.md)
+- Реляционные БД в целом — [[README|databases/relational/README.md]]
 - PostgreSQL как open-source альтернатива — [../postgresql/](../postgresql/)
 - SQL для всех — [databases/sql/](../../sql/)
-- Hibernate / JPA — [interview/databases/hibernate-interview.md](../../../interview/databases/hibernate-interview.md)
-- Интервью по БД — [interview/databases/sql-interview.md](../../../interview/databases/sql-interview.md)
+- Hibernate / JPA — [[hibernate-interview|interview/databases/hibernate-interview.md]]
+- Интервью по БД — [[sql-interview|interview/databases/sql-interview.md]]

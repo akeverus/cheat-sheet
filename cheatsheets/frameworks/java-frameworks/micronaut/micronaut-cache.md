@@ -115,7 +115,7 @@ micronaut:
 
 ## Cache Annotations
 
-### @**Cacheable**
+### @Cacheable
 
 ```java
 import io.micronaut.cache.annotation.Cacheable;
@@ -138,7 +138,7 @@ public class UserService {
 }
 ```
 
-### @**CachePut**
+### @CachePut
 
 ```java
 import io.micronaut.cache.annotation.CachePut;
@@ -160,7 +160,7 @@ public class UserService {
 }
 ```
 
-### @**CacheInvalidate**
+### @CacheInvalidate
 
 ```java
 import io.micronaut.cache.annotation.CacheInvalidate;
@@ -183,7 +183,7 @@ public class UserService {
 
 ## Redis Cache
 
-### Настройка **Redis Cache**
+### Настройка Redis Cache
 
 **application.yml:**
 
@@ -201,7 +201,7 @@ micronaut:
           expire-after-write: PT1H
 ```
 
-### Использование **Redis Cache**
+### Использование Redis Cache
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -238,7 +238,7 @@ public class UserService {
 
 ## Caffeine Cache
 
-### Настройка **Caffeine Cache**
+### Настройка Caffeine Cache
 
 **application.yml:**
 
@@ -253,7 +253,7 @@ micronaut:
           expireAfterWrite: PT30M
 ```
 
-### Использование **Caffeine Cache**
+### Использование Caffeine Cache
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -280,7 +280,7 @@ public class UserService {
 
 ## Async Cache
 
-### **Async Cache Operations**
+### Async Cache Operations
 
 ```java
 import io.micronaut.cache.AsyncCache;
@@ -310,7 +310,7 @@ public class AsyncUserService {
 
 ## Cache Statistics
 
-### **Cache Metrics**
+### Cache Metrics
 
 ```java
 import io.micronaut.cache.Cache;
@@ -344,7 +344,7 @@ public User getUser(Long id) {
 }
 ```
 
-### 2. Настраивайте **TTL** правильно
+### 2. Настраивайте TTL правильно
 
 ```yaml
 # ✅ Хорошо
@@ -364,7 +364,7 @@ public void updateUser(User user) {
 }
 ```
 
-### 4. Используйте **async cache** для неблокирующих операций
+### 4. Используйте async cache для неблокирующих операций
 
 ```java
 // ✅ Хорошо
@@ -383,7 +383,7 @@ log.info("Cache hit rate: {}", stats.getHitRate());
 
 ## Cache Configuration
 
-### **Multiple Cache Managers**
+### Multiple Cache Managers
 
 ```java
 import io.micronaut.cache.CacheManager;
@@ -426,7 +426,7 @@ public class MultiCacheService {
 }
 ```
 
-### **Cache Configuration**
+### Cache Configuration
 
 **application.yml:**
 
@@ -451,7 +451,7 @@ micronaut:
 
 ## Cache Patterns
 
-### **Cache-Aside Pattern**
+### Cache-Aside Pattern
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -487,7 +487,7 @@ public class CacheAsideService {
 }
 ```
 
-### **Write-Through Pattern**
+### Write-Through Pattern
 
 ```java
 import io.micronaut.cache.annotation.CachePut;
@@ -504,7 +504,7 @@ public class WriteThroughService {
 }
 ```
 
-### **Write-Behind Pattern**
+### Write-Behind Pattern
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -536,7 +536,7 @@ public class WriteBehindService {
 
 ## Cache Invalidation Strategies
 
-### **Time-based Invalidation**
+### Time-based Invalidation
 
 ```yaml
 micronaut:
@@ -547,7 +547,7 @@ micronaut:
         expire-after-access: PT15M
 ```
 
-### **Event-based Invalidation**
+### Event-based Invalidation
 
 ```java
 import io.micronaut.cache.annotation.CacheInvalidate;
@@ -568,7 +568,7 @@ public class EventBasedCacheService {
 
 ## Cache Warming
 
-### **Cache Preloading**
+### Cache Preloading
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -602,7 +602,7 @@ public class CacheWarmingService {
 
 ## Cache Statistics
 
-### **Cache Hit**/**Miss Ratio**
+### Cache Hit/Miss Ratio
 
 ```java
 import io.micronaut.cache.Cache;
@@ -627,7 +627,7 @@ public class CacheStatisticsService {
 
 ## Cache Synchronization
 
-### **Distributed Cache Sync**
+### Distributed Cache Sync
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -658,7 +658,7 @@ public class DistributedCacheService {
 
 ## Cache Preloading
 
-### **Cache Warmup**
+### Cache Warmup
 
 ```java
 import io.micronaut.cache.SyncCache;
@@ -691,7 +691,7 @@ public class CacheWarmupService {
 
 ## Заключение
 
-**Micronaut Cache** предоставляет мощные инструменты для кэширования данных. Поддержка различных провайдеров (**Redis, `Caffeine`, EhCache**), аннотаций для декларативного кэширования, **async** операций, статистики, множественных менеджеров кэша, паттернов кэширования (**cache-aside, `write-through`, write-behind**), стратегий инвалидации, **cache warming**, **statistics**, **cache synchronization**, **preloading** и других продвинутых возможностей позволяет оптимизировать производительность приложений.
+**Micronaut Cache** предоставляет мощные инструменты для кэширования данных. Поддержка различных провайдеров (Redis, `Caffeine`, EhCache), аннотаций для декларативного кэширования, **async** операций, статистики, множественных менеджеров кэша, паттернов кэширования (cache-aside, `write-through`, write-behind), стратегий инвалидации, **cache warming**, **statistics**, **cache synchronization**, **preloading** и других продвинутых возможностей позволяет оптимизировать производительность приложений.
 
 ## Дополнительные ресурсы
 

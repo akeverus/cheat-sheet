@@ -13,7 +13,7 @@ next: ["spring/spring-rest.md"]
 updated: "2026-02-06"
 ---
 
-# **REST API Design** (**лучшие практики**)
+# REST API Design (лучшие практики)
 
 Кратко: Лучшие практики проектирования **REST API**. **HTTP** методы, статус коды, версионирование, пагинация, **HATEOAS**, документация, безопасность.
 
@@ -34,7 +34,7 @@ updated: "2026-02-06"
 
 ## Содержание
 
-- [**REST API Design** (**лучшие практики**)](#rest-api-design-лучшие-практики)
+- [**REST API Design** (лучшие практики)](#rest-api-design-лучшие-практики)
 - [Принципы **REST**](#принципы-rest)
   - [Основные принципы](#основные-принципы)
   - [**Uniform Interface**](#uniform-interface)
@@ -119,9 +119,9 @@ updated: "2026-02-06"
   - [**Exception** классы](#exception-классы)
   - [**Configuration** классы](#configuration-классы)
 
-## Принципы **REST**
+## Принципы REST
 
-**REST** (**Representational State Transfer**) — архитектурный стиль для проектирования сетевых приложений.
+**REST** (Representational State Transfer) — архитектурный стиль для проектирования сетевых приложений.
 
 ### Основные принципы
 
@@ -130,20 +130,20 @@ updated: "2026-02-06"
 3. **Cacheable**: Ответы могут кэшироваться
 4. **Uniform Interface**: Единообразный интерфейс
 5. **Layered System**: Многоуровневая архитектура
-6. **Code on Demand**: Код может передаваться по запросу (**опционально**)
+6. **Code on Demand**: Код может передаваться по запросу (опционально)
 
-### **Uniform Interface**
+### Uniform Interface
 
 - **Resource Identification**: Ресурсы идентифицируются **URI**
 - **Resource Manipulation through Representations**: ресурсы манипулируются через представления
 - **Self-descriptive Messages**: сообщения самоописательны
 - **Hypermedia as the Engine of Application State**: **HATEOAS**
 
-## **HTTP** методы
+## HTTP методы
 
 ### Основные методы
 
-Пример использования **HTTP** методов для ресурса (**REST**).
+Пример использования **HTTP** методов для ресурса (REST).
 
 ```http
 GET    /users       # Получить список пользователей
@@ -156,7 +156,7 @@ DELETE /users/123   # Удалить пользователя
 
 ### Идемпотентность
 
-- **GET**: Идемпотентен (**повтор безопасен**)
+- **GET**: Идемпотентен (повтор безопасен)
 - **PUT**: Идемпотентен
 - **DELETE**: Идемпотентен
 - **POST**: Не идемпотентен
@@ -164,14 +164,14 @@ DELETE /users/123   # Удалить пользователя
 
 ### Безопасные методы
 
-- **GET**: Безопасен (**не изменяет состояние**)
+- **GET**: Безопасен (не изменяет состояние)
 - **HEAD**: Безопасен
 - **OPTIONS**: Безопасен
 - **POST** / **PUT** / **PATCH** / **DELETE**: не идемпотентны (кроме **PUT** на один и тот же URI)
 
 ## Статус коды
 
-### 1xx **Informational**
+### 1xx Informational
 
 ```http
 # Информационные коды: запрос принят, продолжение или смена протокола
@@ -179,7 +179,7 @@ DELETE /users/123   # Удалить пользователя
 101 Switching Protocols
 ```
 
-### 2xx **Success**
+### 2xx Success
 
 ```http
 200 OK                    # Успешный запрос
@@ -188,7 +188,7 @@ DELETE /users/123   # Удалить пользователя
 204 No Content           # Нет содержимого в ответе
 ```
 
-### 3xx **Redirection**
+### 3xx Redirection
 
 ```http
 301 Moved Permanently    # Ресурс перемещен навсегда
@@ -196,7 +196,7 @@ DELETE /users/123   # Удалить пользователя
 304 Not Modified        # Ресурс не изменялся
 ```
 
-### 4xx **Client Error**
+### 4xx Client Error
 
 ```http
 400 Bad Request         # Неверный запрос
@@ -208,7 +208,7 @@ DELETE /users/123   # Удалить пользователя
 429 Too Many Requests   # Слишком много запросов
 ```
 
-### 5xx **Server Error**
+### 5xx Server Error
 
 ```http
 500 Internal Server Error  # Внутренняя ошибка сервера
@@ -217,7 +217,7 @@ DELETE /users/123   # Удалить пользователя
 504 Gateway Timeout       # Таймаут шлюза
 ```
 
-## **URI** дизайн
+## URI дизайн
 
 ### Правила именования
 
@@ -253,7 +253,7 @@ PUT /updateUser/123
 /products/456/images # Изображения продукта
 ```
 
-### **Query** параметры
+### Query параметры
 
 ```http
 # Фильтрация
@@ -273,7 +273,7 @@ GET /users?q=john
 GET /products?search=laptop
 ```
 
-### **Matrix** параметры
+### Matrix параметры
 
 ```http
 # Для сложных запросов
@@ -285,7 +285,7 @@ GET /cars;make=toyota;model=camry;year=2020
 
 ### Способы версионирования
 
-#### 1. **URI Versioning**
+#### 1. URI Versioning
 
 ```http
 # Версия в пути
@@ -297,7 +297,7 @@ GET /api/v1/users
 GET /api/v2/users
 ```
 
-#### 2. **Query Parameter Versioning**
+#### 2. Query Parameter Versioning
 
 ```http
 # Версия в query-параметре
@@ -305,7 +305,7 @@ GET /users?version=1
 GET /users?version=2
 ```
 
-#### 3. **Header Versioning**
+#### 3. Header Versioning
 
 ```http
 # Версия в заголовке Accept (vendor MIME)
@@ -316,7 +316,7 @@ GET /users
 Accept: application/vnd.company.users.v2+json
 ```
 
-#### 4. **Content Negotiation**
+#### 4. Content Negotiation
 
 ```http
 # Согласование контента через Accept и Content-Type
@@ -327,7 +327,7 @@ POST /users
 Content-Type: application/vnd.company.users.v1+json
 ```
 
-#### 5. **Media Type Versioning**
+#### 5. Media Type Versioning
 
 ```http
 # Версия в параметре media type
@@ -344,11 +344,11 @@ Content-Type: application/vnd.company.users+json; version=1.0
 2. **Не используйте query parameters** для версий
 3. **Поддерживайте** несколько версий одновременно
 4. **Документируйте** изменения между версиями
-5. **Используйте semantic versioning** (**MAJOR.`MINOR`.PATCH**)
+5. **Используйте semantic versioning** (MAJOR.`MINOR`.PATCH)
 
 ## Пагинация
 
-### **Offset-based Pagination**
+### Offset-based Pagination
 
 ```http
 # Offset-пагинация: page и size
@@ -371,7 +371,7 @@ GET /users?page=2&size=20
 }
 ```
 
-### **Cursor-based Pagination**
+### Cursor-based Pagination
 
 ```http
 # Пагинация по курсору (opaque token)
@@ -391,7 +391,7 @@ GET /users?cursor=eyJpZCI6MTQzfQ==&limit=20
 }
 ```
 
-### **Keyset Pagination**
+### Keyset Pagination
 
 ```http
 # Пагинация по ключу (ID) — стабильная при вставках
@@ -445,7 +445,7 @@ GET /users?sort=name,createdAt
 GET /products?sort=price,-rating,name
 ```
 
-### Реализация в **Spring Boot**
+### Реализация в Spring Boot
 
 ```java
 @RestController
@@ -496,9 +496,9 @@ public class UserController {
 }
 ```
 
-## **HATEOAS**
+## HATEOAS
 
-**HATEOAS** (**Hypermedia as the `Engine of Application` State**) — принцип, где **API** предоставляет ссылки для навигации.
+**HATEOAS** (Hypermedia as the `Engine of Application` State) — принцип, где **API** предоставляет ссылки для навигации.
 
 ```json
 {
@@ -524,7 +524,7 @@ public class UserController {
 }
 ```
 
-### **Spring HATEOAS**
+### Spring HATEOAS
 
 ```java
 @RestController
@@ -582,7 +582,7 @@ public class UserController {
 }
 ```
 
-### **RFC** `7807` **Problem Details**
+### RFC `7807` Problem Details
 
 ```json
 {
@@ -600,7 +600,7 @@ public class UserController {
 }
 ```
 
-### **Spring Boot Error Handling**
+### Spring Boot Error Handling
 
 ```java
 @ControllerAdvice
@@ -654,7 +654,7 @@ public class GlobalExceptionHandler {
 
 ## Документация
 
-### **OpenAPI**/**Swagger**
+### OpenAPI/Swagger
 
 ```yaml
 openapi: 3.0.3
@@ -738,7 +738,7 @@ components:
           type: integer
 ```
 
-### **Spring Boot OpenAPI**
+### Spring Boot OpenAPI
 
 ```xml
 <dependency>
@@ -800,7 +800,7 @@ public class UserController {
 
 ## Безопасность
 
-### **Authentication**
+### Authentication
 
 ```http
 # Basic Authentication
@@ -816,7 +816,7 @@ GET /api/users
 X-API-Key: your-api-key
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 ```yaml
 # application.yml
@@ -838,7 +838,7 @@ public class ApiController {
 }
 ```
 
-### **CORS**
+### CORS
 
 ```java
 @Configuration
@@ -856,7 +856,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-### **Input Validation**
+### Input Validation
 
 ```java
 public class CreateUserRequest {
@@ -927,7 +927,7 @@ public class UserController {
 }
 ```
 
-### **HTTP Caching**
+### HTTP Caching
 
 ```java
 @GetMapping("/{id}")
@@ -942,7 +942,7 @@ public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
 }
 ```
 
-### **Compression**
+### Compression
 
 ```yaml
 # application.yml
@@ -955,7 +955,7 @@ server:
 
 ## Тестирование
 
-### **Unit Testing**
+### Unit Testing
 
 ```java
 @SpringBootTest
@@ -988,7 +988,7 @@ public class UserControllerTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -1017,7 +1017,7 @@ public class UserApiIntegrationTest {
 }
 ```
 
-### **API Testing with REST Assured**
+### API Testing with REST Assured
 
 ```java
 public class UserApiTest {
@@ -1074,7 +1074,7 @@ public class UserApiTest {
 
 **Решение:** Выбрать единый стиль (без trailing slash — рекомендуется); настроить редирект `301` с другого варианта; проверять порядок объявления маршрутов; использовать `@GetMapping` с явным `path` вместо `/**`.
 
-### Нестабильное кэширование **ETag**/**Last-Modified**
+### Нестабильное кэширование ETag/Last-Modified
 
 **Проблема:** Клиент не получает `304 Not Modified` при повторных запросах, хотя данные не изменились.
 
@@ -1090,7 +1090,7 @@ public class UserApiTest {
 
 **Решение:** Возвращать структурированные ошибки (**RFC 7807** или формат с `field`, `message`); использовать `@Valid` и `BindingResult`; в `@ControllerAdvice` собирать `fieldErrors` из `ex.getBindingResult().getFieldErrors()`.
 
-### Просадки при **offset-based** пагинации
+### Просадки при offset-based пагинации
 
 **Проблема:** Запросы `?page=100&size=20` выполняются медленно (десятки секунд).
 
@@ -1108,7 +1108,7 @@ public class UserApiTest {
 
 ## Примеры
 
-### Полный **REST API** с **Spring Boot**
+### Полный REST API с Spring Boot
 
 ```java
 @RestController
@@ -1212,7 +1212,7 @@ public class UserController {
 }
 ```
 
-### **DTO** классы
+### DTO классы
 
 ```java
 public class UserDto {
@@ -1251,7 +1251,7 @@ public class UpdateUserRequest {
 }
 ```
 
-### **Service** класс
+### Service класс
 
 ```java
 @Service
@@ -1332,7 +1332,7 @@ public class UserService {
 }
 ```
 
-### **Exception** классы
+### Exception классы
 
 ```java
 public class UserNotFoundException extends RuntimeException {
@@ -1348,7 +1348,7 @@ public class DuplicateEmailException extends RuntimeException {
 }
 ```
 
-### **Configuration** классы
+### Configuration классы
 
 ```java
 @Configuration

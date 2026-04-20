@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 ---
 
-# **Docker**: Полное руководство по контейнеризации
+# Docker: Полное руководство по контейнеризации
 
 ## Полезные ссылки
 
@@ -29,7 +29,7 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 - [Docker Tutorial](https://www.baeldung.com/ops/docker-guide)
 
 
-См. также: [Kubernetes](../kubernetes/kubernetes-basics.md) — [Docker Containers](docker-containers.md).
+См. также: [[kubernetes-basics|Kubernetes]] — [[docker-containers|Docker Containers]].
 
 ## Содержание
 
@@ -113,20 +113,20 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 - [Разница между образами и контейнерами](#разница-между-образами-и-контейнерами)
 - [Удаление образов](#удаление-образов)
 
-## Введение в **Docker**
+## Введение в Docker
 
 **Docker** — это платформа для разработки, доставки и запуска приложений в контейнерах. Контейнеры позволяют упаковывать приложение со всеми его зависимостями в стандартизированную единицу развертывания, которая работает одинаково в любой среде.
 
-### Основные концепции **Docker**
+### Основные концепции Docker
 
-- **Образ (**Image**)**: Неизменяемый шаблон, содержащий приложение и его зависимости
-- **Контейнер (**Container**)**: Запущенный экземпляр образа
+- **Образ (Image)**: Неизменяемый шаблон, содержащий приложение и его зависимости
+- **Контейнер (Container)**: Запущенный экземпляр образа
 - **Dockerfile**: Скрипт для создания образа
-- **Registry**: Хранилище образов (**Docker Hub, `ECR`, `GCR` и т.д.**)
+- **Registry**: Хранилище образов (Docker Hub, `ECR`, `GCR` и т.д.)
 - **Volume**: Механизм персистентного хранения данных
 - **Network**: Виртуальная сеть для коммуникации между контейнерами
 
-### Преимущества **Docker**
+### Преимущества Docker
 
 1. **Изоляция**: Каждый контейнер изолирован от хост-системы и других контейнеров
 2. **Переносимость**: Контейнеры работают одинаково на любой платформе с **Docker**
@@ -135,9 +135,9 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 5. **Версионирование**: Образы можно версионировать и откатывать
 6. **Масштабируемость**: Легко масштабировать приложения горизонтально
 
-### Архитектура **Docker**
+### Архитектура Docker
 
-Схема компонентов **Docker**: хост (**демон, образы, контейнеры, тома, сети**), **runtime**, ядро ОС и цикл сборки образа и запуска контейнера.
+Схема компонентов **Docker**: хост (демон, образы, контейнеры, тома, сети), **runtime**, ядро ОС и цикл сборки образа и запуска контейнера.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -156,9 +156,9 @@ related: ["infrastructure/nginx.md", "devops/git.md", "spring/spring-boot.md"]
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Установка **Docker**
+## Установка Docker
 
-### Установка на **Ubuntu**/**Debian**
+### Установка на Ubuntu/Debian
 
 ```bash
 # Обновление пакетов
@@ -189,7 +189,7 @@ docker --version
 docker run hello-world
 ```
 
-### Установка на **CentOS**/**RHEL**
+### Установка на CentOS/RHEL
 
 ```bash
 # Установка yum-utils
@@ -213,7 +213,7 @@ docker --version
 docker run hello-world
 ```
 
-### Установка на **macOS**
+### Установка на macOS
 
 ```bash
 # Скачивание Docker Desktop
@@ -233,7 +233,7 @@ docker --version
 docker run hello-world
 ```
 
-### Установка на **Windows**
+### Установка на Windows
 
 ```powershell
 # Скачивание Docker Desktop
@@ -250,7 +250,7 @@ docker --version
 docker run hello-world
 ```
 
-## **Docker CLI** команды
+## Docker CLI команды
 
 ### Основные команды
 
@@ -388,9 +388,9 @@ docker build --target runtime -t my-runtime .
 docker buildx build --platform linux/amd64,linux/arm64 -t my-image:v1 .
 ```
 
-## **Dockerfile**: лучшие практики
+## Dockerfile: лучшие практики
 
-### Структура **Dockerfile**
+### Структура Dockerfile
 
 ```dockerfile
 # Использовать официальный базовый образ
@@ -439,7 +439,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 CMD ["python3", "app.py"]
 ```
 
-### Оптимизация **Dockerfile**
+### Оптимизация Dockerfile
 
 ```dockerfile
 # ПЛОХОЙ Dockerfile
@@ -546,9 +546,9 @@ COPY --from=builder /app/app .
 CMD ["./app"]
 ```
 
-## **Docker Compose**
+## Docker Compose
 
-### Основы **Docker Compose**
+### Основы Docker Compose
 
 **Docker Compose** — это инструмент для определения и запуска многоконтейнерных приложений **Docker**. Он использует **YAML**-файл для конфигурации сервисов приложения.
 
@@ -579,7 +579,7 @@ volumes:
   postgres_data:
 ```
 
-### Команды **Docker Compose**
+### Команды Docker Compose
 
 ```bash
 # Запуск сервисов
@@ -616,7 +616,7 @@ docker-compose pull
 docker-compose up -d --no-deps web  # Обновление без зависимостей
 ```
 
-### Расширенная конфигурация **Compose**
+### Расширенная конфигурация Compose
 
 ```yaml
 version: '3.8'
@@ -699,7 +699,7 @@ volumes:
     driver: local
 ```
 
-### **Docker Swarm**
+### Docker Swarm
 
 **Docker Swarm** — это нативный кластерный и оркестрационный инструмент для **Docker**.
 
@@ -734,9 +734,9 @@ echo "my-secret" | docker secret create my-secret -
 docker service create --name my-service --secret my-secret nginx
 ```
 
-## **Docker Registry**
+## Docker Registry
 
-### Работа с **Docker Hub**
+### Работа с Docker Hub
 
 ```bash
 # Логин в Docker Hub
@@ -752,7 +752,7 @@ docker search username
 # Через GitHub integration в Docker Hub
 ```
 
-### Создание приватного **registry**
+### Создание приватного registry
 
 ```bash
 # Запуск registry контейнера
@@ -766,7 +766,7 @@ docker push localhost:5000/my-image:v1
 docker pull localhost:5000/my-image:v1
 ```
 
-### Настройка **registry** с аутентификацией
+### Настройка registry с аутентификацией
 
 ```bash
 # Создание htpasswd файла
@@ -789,7 +789,7 @@ docker run -d \
 }
 ```
 
-## Безопасность **Docker**
+## Безопасность Docker
 
 ### Лучшие практики безопасности
 
@@ -816,7 +816,7 @@ docker run --cap-drop ALL --cap-add NET_BIND_SERVICE nginx
 dockerd --userns-remap=default
 ```
 
-### **Docker Bench Security**
+### Docker Bench Security
 
 ```bash
 # Запуск security audit
@@ -840,7 +840,7 @@ docker run --net host --pid host --userns host --cap-add audit_control \
 
 ## Мониторинг и отладка
 
-### **Docker stats** и **logs**
+### Docker stats и logs
 
 ```bash
 # Статистика использования ресурсов
@@ -856,7 +856,7 @@ docker logs --tail 100 my-container
 docker logs --format json my-container | jq '.log'
 ```
 
-### **Docker events**
+### Docker events
 
 ```bash
 # Просмотр событий в реальном времени
@@ -890,7 +890,7 @@ docker system prune -a --volumes
 
 ## Продвинутые возможности
 
-### **Docker contexts**
+### Docker contexts
 
 ```bash
 # Создание контекста для удаленного Docker
@@ -903,7 +903,7 @@ docker context ls
 docker context inspect remote
 ```
 
-### **Docker plugins**
+### Docker plugins
 
 ```bash
 # Установка volume plugin
@@ -919,7 +919,7 @@ docker volume create --driver vieux/sshfs \
 docker plugin ls
 ```
 
-### **Docker API**
+### Docker API
 
 ```bash
 # Доступ к Docker API через сокет
@@ -939,7 +939,7 @@ print(client.containers.list())
 
 ## Интеграция с CI/CD
 
-### **GitHub Actions**
+### GitHub Actions
 
 ```yaml
 name: Docker CI
@@ -971,7 +971,7 @@ jobs:
         tags: my-image:${{ github.sha }}, my-image:latest
 ```
 
-### **Jenkins Pipeline**
+### Jenkins Pipeline
 
 ```groovy
 pipeline {
@@ -1076,9 +1076,9 @@ docker volume prune --force
 docker network prune --force
 ```
 
-## **Docker** в **production** среде
+## Docker в production среде
 
-### **Production-ready** конфигурации
+### Production-ready конфигурации
 
 ```yaml
 # docker-compose.prod.yml
@@ -1284,7 +1284,7 @@ volumes:
     driver: local
 ```
 
-### Конфигурация **Nginx** для **production**
+### Конфигурация Nginx для production
 
 ```nginx
 # nginx.conf
@@ -1408,7 +1408,7 @@ http {
 }
 ```
 
-### **Dockerfile** для **production**
+### Dockerfile для production
 
 ```dockerfile
 # Multi-stage build for Java Spring Boot application
@@ -1468,7 +1468,7 @@ CMD ["java", \
      "app.jar"]
 ```
 
-### Конфигурация **Prometheus**
+### Конфигурация Prometheus
 
 ```yaml
 # prometheus.yml
@@ -1507,7 +1507,7 @@ scrape_configs:
       - targets: ['node-exporter:9100']
 ```
 
-### Мониторинг с **Grafana**
+### Мониторинг с Grafana
 
 ```yaml
 # grafana/provisioning/datasources/prometheus.yml
@@ -1528,7 +1528,7 @@ datasources:
     editable: true
 ```
 
-### Логирование с **Loki**
+### Логирование с Loki
 
 ```yaml
 # loki-config.yml
@@ -1613,9 +1613,9 @@ scrape_configs:
           format: '2006-01-02 15:04:05'
 ```
 
-## **Docker** в облаке
+## Docker в облаке
 
-### **AWS ECS** (`Elastic Container Service`)
+### AWS ECS (`Elastic Container Service`)
 
 ```json
 {
@@ -1672,7 +1672,7 @@ scrape_configs:
 }
 ```
 
-### **Google Cloud Run**
+### Google Cloud Run
 
 ```yaml
 # cloudbuild.yaml
@@ -1712,7 +1712,7 @@ steps:
       - --allow-unauthenticated
 ```
 
-### **Azure Container Instances**
+### Azure Container Instances
 
 ```json
 {
@@ -1789,9 +1789,9 @@ steps:
 }
 ```
 
-## **Docker** и **Kubernetes** интеграция
+## Docker и Kubernetes интеграция
 
-### **Kubernetes Deployment** с **Docker** образами
+### Kubernetes Deployment с Docker образами
 
 ```yaml
 apiVersion: apps/v1
@@ -1855,7 +1855,7 @@ spec:
       - name: registry-secret
 ```
 
-### **Helm Chart** для приложения
+### Helm Chart для приложения
 
 ```yaml
 # Chart.yaml
@@ -1910,7 +1910,7 @@ autoscaling:
   targetMemoryUtilizationPercentage: 80
 ```
 
-## **Best practices** для **production**
+## Best practices для production
 
 ### 1. Многостадийная сборка
 
@@ -1932,7 +1932,7 @@ EXPOSE 8080
 CMD ["./main"]
 ```
 
-### 2. **Security scanning**
+### 2. Security scanning
 
 ```bash
 # Trivy для сканирования уязвимостей
@@ -1945,7 +1945,7 @@ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
   vaikas/scanclair:latest my-image:latest
 ```
 
-### 3. **Image optimization**
+### 3. Image optimization
 
 ```dockerfile
 # Используйте .dockerignore
@@ -1978,7 +1978,7 @@ EXPOSE 3000
 CMD ["npm", "start"]
 ```
 
-### 4. **Health checks**
+### 4. Health checks
 
 ```dockerfile
 # Для веб-приложений
@@ -1990,7 +1990,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD pg_isready -U postgres || exit 1
 ```
 
-### 5. **Resource management**
+### 5. Resource management
 
 ```yaml
 # docker-compose.yml с лимитами
@@ -2007,7 +2007,7 @@ services:
           memory: 512M
 ```
 
-### 6. **Logging best practices**
+### 6. Logging best practices
 
 ```dockerfile
 # Структурированное логирование
@@ -2034,7 +2034,7 @@ CMD java $JAVA_OPTS -jar app.jar
 </configuration>
 ```
 
-### 7. **Secrets management**
+### 7. Secrets management
 
 ```bash
 # Используйте Docker secrets в Swarm
@@ -2055,7 +2055,7 @@ secrets:
     external: true
 ```
 
-### 8. **Networking best practices**
+### 8. Networking best practices
 
 ```yaml
 # Изоляция сетей
@@ -2077,7 +2077,7 @@ networks:
     internal: true
 ```
 
-### 9. **Backup** и **restore**
+### 9. Backup и restore
 
 ```bash
 # Backup базы данных
@@ -2091,7 +2091,7 @@ docker exec -i my-postgres psql -U postgres mydb < backup.sql
 docker run --rm -v my-volume:/data -v $(pwd):/backup alpine tar xzf /backup/volume-backup.tar.gz -C /data
 ```
 
-### 10. **Monitoring** и **alerting**
+### 10. Monitoring и alerting
 
 ```bash
 # cAdvisor для мониторинга контейнеров
@@ -2120,7 +2120,7 @@ docker run -d \
 Есть много случаев, когда нам нужно ограничить использование ресурсов на хост-компьютере **Docker**.
 
 В этом руководстве мы узнаем, как установить лимит памяти и ЦП для контейнеров **Docker**.
-Мы можем установить лимиты ресурсов напрямую, используя команду `**docker run**`. Это простое решение. Однако ограничение будет применяться только к одному конкретному исполнению образа.
+Мы можем установить лимиты ресурсов напрямую, используя команду `docker run`. Это простое решение. Однако ограничение будет применяться только к одному конкретному исполнению образа.
 
 **Например, давайте ограничим память, которую может использовать контейнер, до `512` мегабайт:**
 
@@ -2150,9 +2150,9 @@ docker run --cpus=2 --cpu-shares=2000 nginx
 
 Как и в случае с резервированием памяти, доли ЦП играют основную роль, когда вычислительной мощности недостаточно и ее необходимо разделить между конкурирующими процессами.
 
-Мы можем добиться аналогичных результатов, используя файлы `**docker-compose**`. Помните, что формат и возможности будут различаться в разных версиях **docker-compose**.
+Мы можем добиться аналогичных результатов, используя файлы `docker-compose`. Помните, что формат и возможности будут различаться в разных версиях **docker-compose**.
 
-**Дадим сервису **Nginx** ограничение в половину ЦП и `512` мегабайт памяти, а также резервирование четверти ЦП и `128` мегабайт памяти. Нам нужно создать сегменты `**deploy**`, а затем `**resources**` в нашей конфигурации службы:**
+**Дадим сервису **Nginx** ограничение в половину ЦП и `512` мегабайт памяти, а также резервирование четверти ЦП и `128` мегабайт памяти. Нам нужно создать сегменты `deploy`, а затем `resources` в нашей конфигурации службы:**
 
 ```yaml
 services:
@@ -2168,7 +2168,7 @@ services:
             memory: 128M
 ```
 
-Чтобы воспользоваться сегментом развертывания в файле **docker-compose**, нам нужно использовать команду `**docker stack**`.
+Чтобы воспользоваться сегментом развертывания в файле **docker-compose**, нам нужно использовать команду `docker stack`.
 
 **Чтобы развернуть стек в рой, запускаем команду **deploy**:**
 
@@ -2209,7 +2209,7 @@ CONTAINER ID   NAME                                      CPU %   MEM USAGE/LIMIT
 
 ## Получение информации о сети
 
-Когда мы запускаем контейнер **Docker**, мы можем определить, какие порты мы хотим открыть для внешнего мира. Это означает, что мы используем (**или создаем**) изолированную сеть и помещаем внутрь наш контейнер. Мы можем решить, как мы будем общаться как с этой сетью, так и внутри нее.
+Когда мы запускаем контейнер **Docker**, мы можем определить, какие порты мы хотим открыть для внешнего мира. Это означает, что мы используем (или создаем) изолированную сеть и помещаем внутрь наш контейнер. Мы можем решить, как мы будем общаться как с этой сетью, так и внутри нее.
 
 Давайте создадим несколько контейнеров и настроим сеть между ними. Все они будут внутренне работать на порту `8080` и будут размещены в двух сетях.
 
@@ -2286,7 +2286,7 @@ e943f7124776   network1   bridge    local
 docker inspect network1 network2
 ```
 
-**Вывод длинный; чтобы извлечь подсеть `**network1**`, используем форматирование Go **templates**:**
+**Вывод длинный; чтобы извлечь подсеть `network1`, используем форматирование Go **templates**:**
 
 ```bash
 docker inspect -f '{{range .IPAM.Config}}{{.Subnet}}{{end}}' network1
@@ -2321,11 +2321,11 @@ docker network connect --alias test3 network1 f229dde68f3b
 curl test3:8080
 ```
 
-## Руководство по **Docker Compose**
+## Руководство по Docker Compose
 
 При интенсивном использовании **Docker** управление несколькими контейнерами быстро становится громоздким. **Docker Compose** помогает обрабатывать несколько контейнеров одновременно.
 
-**Compose** работает, применяя правила в одном `**docker-compose.yml**`.
+**Compose** работает, применяя правила в одном `docker-compose.yml`.
 **Почти каждое правило заменяет определенную команду **Docker**, так что в итоге нужно запустить:**
 
 ```bash
@@ -2374,7 +2374,7 @@ services:
     build: /path/to/dockerfile/
 ```
 
-**Можно задать `**image**` вместе с `**build**`, чтобы именовать созданный образ:**
+**Можно задать `image` вместе с `build`, чтобы именовать созданный образ:**
 
 ```yaml
 services:
@@ -2424,7 +2424,7 @@ volumes:
   my-named-global-volume:
 ```
 
-**Порядок запуска через `**depends_on**`:**
+**Порядок запуска через `depends_on`:**
 
 ```yaml
 services:
@@ -2464,10 +2464,10 @@ services:
 - `docker-compose up` / `start`
 - `**docker-compose** -f **custom.yml start**`
 - `**docker-compose** up -d`
-- `**docker-compose stop**`
-- `**docker-compose down**`
+- `docker-compose stop`
+- `docker-compose down`
 
-## Разница между **COPY** и **ADD**
+## Разница между COPY и ADD
 
 **При создании **Dockerfile** нужно переносить файлы из хоста в образ. Директивы **COPY** и **ADD** имеют одинаковый синтаксис:**
 
@@ -2476,13 +2476,13 @@ COPY <source> <destination>
 ADD <source> <destination>
 ```
 
-**ADD** более функциональна: поддерживает удалённые **URL** и авто-распаковку **tar** (**локальных**). Рекомендации: всегда предпочитать **COPY**, если не нужны возможности **ADD**. **ADD** для удалённых файлов увеличивает образ; лучше использовать `curl` / `wget` и удалять файлы. Авто-распаковка **tar** может внести неожиданные файлы.
+**ADD** более функциональна: поддерживает удалённые **URL** и авто-распаковку **tar** (локальных). Рекомендации: всегда предпочитать **COPY**, если не нужны возможности **ADD**. **ADD** для удалённых файлов увеличивает образ; лучше использовать `curl` / `wget` и удалять файлы. Авто-распаковка **tar** может внести неожиданные файлы.
 
 ## Руководство по томам
 
 Контейнеры по умолчанию теряют изменения при остановке. Чтобы сохранять данные, используются тома и **bind-mount**.
 
-Изображения состоят из слоёв (**Union FS**). При запуске добавляется слой `RW`; при остановке теряется.
+Изображения состоят из слоёв (Union FS). При запуске добавляется слой `RW`; при остановке теряется.
 
 **Пример потери файла:**
 
@@ -2533,7 +2533,7 @@ docker run --mount 'type=volume,src=data-volume,dst=/var/opt/project,volume-driv
 docker run --volumes-from 4920 bash:latest bash -c "ls /var/opt/project"
 ```
 
-## Разница между **run**, **cmd** и **entrypoint** в **Dockerfile**
+## Разница между run, cmd и entrypoint в Dockerfile
 
 **Создаём скрипт:**
 
@@ -2570,11 +2570,11 @@ RUN ["/log-event.sh", "image created"]
 CMD ["/log-event.sh", "container started"]
 ```
 
-Переопределяется аргументами `**docker run**`.
+Переопределяется аргументами `docker run`.
 
 Если несколько **CMD** — срабатывает последняя.
 
-**ENTRYPOINT** — фиксирует команду, позволяет добавлять аргументы из `**docker run**`. Комбинация:**
+**ENTRYPOINT** — фиксирует команду, позволяет добавлять аргументы из `docker run`. Комбинация:**
 
 ```dockerfile
 RUN ["/log-event.sh", "image created"]
@@ -2586,12 +2586,12 @@ CMD ["container started"]
 
 ## Советы по созданию эффективных образов
 
-- Используйте официальные образы (**пример `nginx:1.19.2`, `CMD ["nginx","-g","daemon off;"]` уже настроен**).
+- Используйте официальные образы (пример `nginx:1.19.2`, `CMD ["nginx","-g","daemon off;"]` уже настроен).
 - Используйте образы, поддерживаемые авторами ПО (например, с переменными окружения).
-- Если нет официального — ищите референс (**пример `H2` от третьих лиц**).
+- Если нет официального — ищите референс (пример `H2` от третьих лиц).
 - Не всегда нужен свой образ: можно монтировать конфиг в готовый образ (например, `haproxy:2.2.2` + volume).
-- Оркестраторы (**Swarm `Configs`, `K8s` ConfigMaps**) позволяют держать конфиг вне образа.
-- Размер образа важен: быстрее скачивание, меньше поверхность атаки. Используйте **slim**/**Alpine** (**пример `python:3.7.9-slim`, `haproxy:2.2.2-alpine`**).
+- Оркестраторы (Swarm `Configs`, `K8s` ConfigMaps) позволяют держать конфиг вне образа.
+- Размер образа важен: быстрее скачивание, меньше поверхность атаки. Используйте **slim**/**Alpine** (пример `python:3.7.9-slim`, `haproxy:2.2.2-alpine`).
 - **Многоэтапные сборки уменьшают итоговый образ:**
 
 ```dockerfile
@@ -2609,9 +2609,9 @@ COPY --from=downloadapi /usr/local/bin/dataplaneapi /usr/local/bin/dataplaneapi
 
 **Docker** упаковывает приложение с зависимостями. Нужно уяснить две концепции — образы и контейнеры.
 
-- Образ — файл, представляющий упакованное приложение со всеми зависимостями (**как класс в Java**). Строится из слоёв.
+- Образ — файл, представляющий упакованное приложение со всеми зависимостями (как класс в Java). Строится из слоёв.
 - Пример: образ с ОС, **JVM** и приложением **Hello World**.
-- Пример использования: берём `**postgres**` из **Docker Hub**, выбираем версию и запускаем.
+- Пример использования: берём `postgres` из **Docker Hub**, выбираем версию и запускаем.
 
 **Список образов:**
 
@@ -2631,8 +2631,8 @@ docker run -d postgres:11.6
 docker ps
 ```
 
-- Контейнер — экземпляр образа (**как объект класса**). Имеет состояния: создано, перезапущено, запущено, удалено, приостановлено, завершено, мертво.
-- Команда `**docker run**` создаёт и запускает контейнер.
+- Контейнер — экземпляр образа (как объект класса). Имеет состояния: создано, перезапущено, запущено, удалено, приостановлено, завершено, мертво.
+- Команда `docker run` создаёт и запускает контейнер.
 - Можно запускать несколько контейнеров одного образа для масштабирования.
 
 **Жизненный цикл:**
@@ -2648,11 +2648,11 @@ docker start <container_id>
 docker container rm <container_id>
 ```
 
-Приостановленный контейнер показывает статус `(**Paused**)` в `**docker** ps`.
+Приостановленный контейнер показывает статус `(Paused)` в `**docker** ps`.
 
 ## Удаление образов
 
-**Docker Engine** хранит образы и запускает контейнеры, резервируя дисковое пространство (**«пул хранения»**). Когда пул заполнен, **Docker** перестаёт работать: нельзя создавать/тянуть образы, контейнеры останавливаются.
+**Docker Engine** хранит образы и запускает контейнеры, резервируя дисковое пространство («пул хранения»). Когда пул заполнен, **Docker** перестаёт работать: нельзя создавать/тянуть образы, контейнеры останавливаются.
 
 Образы занимают большую часть пула, поэтому их удаляют для освобождения места и порядка. Будьте осторожны с собственными образами — удалив без сохранения, потеряете их. Сохранять можно пушем в реестр или экспортом в **TAR**.
 

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Terraform Advanced**
+# Terraform Advanced
 
 **Terraform** — это инструмент **Infrastructure as Code** для создания, изменения и управления инфраструктурой безопасным и эффективным способом. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** инфраструктуры.
 
@@ -52,12 +52,12 @@ updated: "2026-02-11"
   - [Security best practices](#security-best-practices)
 - [См. также](#см-также)
 
-## Продвинутая архитектура **Terraform**
+## Продвинутая архитектура Terraform
 
 ### Модульная архитектура
 
-#### Структура **enterprise** проекта
-Ниже — структура каталогов **enterprise Terraform**-проекта (**текст**).
+#### Структура enterprise проекта
+Ниже — структура каталогов **enterprise Terraform**-проекта (текст).
 ```text
 terraform-enterprise/
 ├── environments/
@@ -449,9 +449,9 @@ output "private_route_table_ids" {
 }
 ```
 
-## Продвинутые паттерны **Terraform**
+## Продвинутые паттерны Terraform
 
-### Dynamic blocks и **for_each**
+### Dynamic blocks и for_each
 ```hcl
 # Dynamic security groups
 resource "aws_security_group" "dynamic" {
@@ -651,7 +651,7 @@ locals {
 
 ## State management
 
-### Remote state с **locking**
+### Remote state с locking
 ```hcl
 # backend.tf
 terraform {
@@ -729,7 +729,7 @@ terraform state push state.json
 terraform state replace-provider registry.terraform.io/-/aws registry.terraform.io/hashicorp/aws
 ```
 
-## Workspaces и **environments**
+## Workspaces и environments
 
 ### Workspace management
 ```bash
@@ -805,7 +805,7 @@ resource "aws_db_instance" "main" {
 }
 ```
 
-## Testing и **validation**
+## Testing и validation
 
 ### Terratest integration
 ```go
@@ -1069,7 +1069,7 @@ jobs:
 
 ## Производительность и оптимизация
 
-### Parallel execution и **caching**
+### Parallel execution и caching
 ```hcl
 # Provider configuration for performance
 terraform {

@@ -70,7 +70,7 @@ related: ["micronaut-core.md", "micronaut-actuator.md"]
 - **MDC**: **Mapped Diagnostic Context**
 - **Custom Appenders**: Пользовательские **appenders**
 
-## Настройка **Logging**
+## Настройка Logging
 
 ### Зависимости
 
@@ -242,7 +242,7 @@ log.warn("Warning condition");
 log.error("Error condition", exception);
 ```
 
-### 2. Используйте **MDC** для контекста
+### 2. Используйте MDC для контекста
 
 ```java
 // ✅ Хорошо

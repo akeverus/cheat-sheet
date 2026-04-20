@@ -18,25 +18,25 @@ Quarkus — Kubernetes-native Java фреймворк от Red Hat, ориент
 ## Полезные ссылки
 
 ### Основные документы
-- [Quarkus: основы](quarkus-basics.md) — точка входа, архитектура, первый проект
-- [Quarkus Core](quarkus-core.md) — DI, конфигурация, расширения
-- [Quarkus REST](quarkus-rest.md) — RESTEasy Reactive, JSON-сериализация
-- [Quarkus Reactive](quarkus-reactive.md) — Mutiny, reactive endpoints
-- [Quarkus Data](quarkus-data.md) — Hibernate ORM with Panache
-- [Quarkus GraalVM](quarkus-graalvm.md) — native image, reflection, resources
-- [Quarkus Security](quarkus-security.md) — JWT, OIDC, RBAC
-- [Quarkus Kafka](quarkus-kafka.md), [Quarkus Redis](quarkus-redis.md), [Quarkus MongoDB](quarkus-mongodb.md)
-- [Quarkus Testing](quarkus-testing.md) — `@QuarkusTest`, DevServices
-- [Quarkus Dev Services](quarkus-dev-services.md), [Quarkus Cloud](quarkus-cloud.md), [Quarkus Actuator](quarkus-actuator.md)
-- [Quarkus Cache](quarkus-cache.md), [Quarkus Validation](quarkus-validation.md), [Quarkus Logging](quarkus-logging.md)
-- [Quarkus OpenAPI](quarkus-openapi.md), [Quarkus Scheduling](quarkus-scheduling.md), [Quarkus Mail](quarkus-mail.md)
-- [Quarkus gRPC](quarkus-grpc.md), [Quarkus WebSocket](quarkus-websocket.md), [Quarkus Qute](quarkus-qute.md)
+- [[quarkus-basics|Quarkus: основы]] — точка входа, архитектура, первый проект
+- [[quarkus-core|Quarkus Core]] — DI, конфигурация, расширения
+- [[quarkus-rest|Quarkus REST]] — RESTEasy Reactive, JSON-сериализация
+- [[quarkus-reactive|Quarkus Reactive]] — Mutiny, reactive endpoints
+- [[quarkus-data|Quarkus Data]] — Hibernate ORM with Panache
+- [[quarkus-graalvm|Quarkus GraalVM]] — native image, reflection, resources
+- [[quarkus-security|Quarkus Security]] — JWT, OIDC, RBAC
+- [[quarkus-kafka|Quarkus Kafka]], [[quarkus-redis|Quarkus Redis]], [[quarkus-mongodb|Quarkus MongoDB]]
+- [[quarkus-testing|Quarkus Testing]] — `@QuarkusTest`, DevServices
+- [[quarkus-dev-services|Quarkus Dev Services]], [[quarkus-cloud|Quarkus Cloud]], [[quarkus-actuator|Quarkus Actuator]]
+- [[quarkus-cache|Quarkus Cache]], [[quarkus-validation|Quarkus Validation]], [[quarkus-logging|Quarkus Logging]]
+- [[quarkus-openapi|Quarkus OpenAPI]], [[quarkus-scheduling|Quarkus Scheduling]], [[quarkus-mail|Quarkus Mail]]
+- [[quarkus-grpc|Quarkus gRPC]], [[quarkus-websocket|Quarkus WebSocket]], [[quarkus-qute|Quarkus Qute]]
 
 ### Соседние разделы
-- [Java Frameworks](../README.md) — обзор и сравнение JVM-фреймворков
-- [Spring](../spring/README.md) — основной конкурент на JVM
-- [Micronaut](../micronaut/README.md) — альтернатива с compile-time DI
-- [Vert.x](../vertx/README.md) — reactive-toolkit, на котором стоит Quarkus Reactive
+- [[README|Java Frameworks]] — обзор и сравнение JVM-фреймворков
+- [[README|Spring]] — основной конкурент на JVM
+- [[README|Micronaut]] — альтернатива с compile-time DI
+- [[README|Vert.x]] — reactive-toolkit, на котором стоит Quarkus Reactive
 
 ### Внешние ресурсы
 - [Официальные guides](https://quarkus.io/guides/)
@@ -71,26 +71,26 @@ Quarkus — Kubernetes-native Java фреймворк от Red Hat, ориент
 
 | Слой | Документ |
 |------|----------|
-| Архитектура и build-time | [quarkus-basics.md](quarkus-basics.md), [quarkus-core.md](quarkus-core.md) |
-| HTTP/REST | [quarkus-rest.md](quarkus-rest.md), [quarkus-openapi.md](quarkus-openapi.md) |
-| Reactive | [quarkus-reactive.md](quarkus-reactive.md), [quarkus-websocket.md](quarkus-websocket.md), [quarkus-grpc.md](quarkus-grpc.md) |
-| Persistence | [quarkus-data.md](quarkus-data.md), [quarkus-mongodb.md](quarkus-mongodb.md), [quarkus-redis.md](quarkus-redis.md) |
-| Messaging | [quarkus-kafka.md](quarkus-kafka.md) |
-| Security | [quarkus-security.md](quarkus-security.md) |
-| Observability | [quarkus-actuator.md](quarkus-actuator.md), [quarkus-logging.md](quarkus-logging.md) |
-| Native & Cloud | [quarkus-graalvm.md](quarkus-graalvm.md), [quarkus-cloud.md](quarkus-cloud.md) |
-| DX и тесты | [quarkus-dev-services.md](quarkus-dev-services.md), [quarkus-testing.md](quarkus-testing.md) |
+| Архитектура и build-time | [[quarkus-basics]], [[quarkus-core]] |
+| HTTP/REST | [[quarkus-rest]], [[quarkus-openapi]] |
+| Reactive | [[quarkus-reactive]], [[quarkus-websocket]], [[quarkus-grpc]] |
+| Persistence | [[quarkus-data]], [[quarkus-mongodb]], [[quarkus-redis]] |
+| Messaging | [[quarkus-kafka]] |
+| Security | [[quarkus-security]] |
+| Observability | [[quarkus-actuator]], [[quarkus-logging]] |
+| Native & Cloud | [[quarkus-graalvm]], [[quarkus-cloud]] |
+| DX и тесты | [[quarkus-dev-services]], [[quarkus-testing]] |
 
 ## Маршруты чтения
 
 - **Быстрый старт (1 день):** `quarkus-basics.md` → `quarkus-rest.md` → `quarkus-data.md` → `quarkus-testing.md`.
-- **Переход со Spring Boot:** `quarkus-basics.md` → сравнение в [../README.md](../README.md) → `quarkus-core.md` → `quarkus-data.md` → `quarkus-security.md`.
+- **Переход со Spring Boot:** `quarkus-basics.md` → сравнение в [[README]] → `quarkus-core.md` → `quarkus-data.md` → `quarkus-security.md`.
 - **Native image для прода:** `quarkus-graalvm.md` → `quarkus-cloud.md` → `quarkus-actuator.md`.
 - **Reactive-пайплайны:** `quarkus-reactive.md` → `quarkus-kafka.md` → `quarkus-grpc.md`.
 
 ## Куда идти дальше
 
-- Общее сравнение с Spring/Micronaut/Vert.x — [../README.md](../README.md)
-- GraalVM и native image — [quarkus-graalvm.md](quarkus-graalvm.md)
-- Kubernetes-деплой — [../../../platform/containers/kubernetes/README.md](../../../platform/containers/kubernetes/README.md)
-- Наблюдаемость — [../../../monitoring/README.md](../../../monitoring/README.md)
+- Общее сравнение с Spring/Micronaut/Vert.x — [[README]]
+- GraalVM и native image — [[quarkus-graalvm]]
+- Kubernetes-деплой — [[README]]
+- Наблюдаемость — [[README]]

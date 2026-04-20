@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **GCP Basics**
+# GCP Basics
 
-**Google Cloud Platform** (**GCP**) — набор облачных сервисов от **Google**, предоставляющий вычислительные ресурсы, хранение данных, машинное обучение и другие сервисы через глобальную сеть дата-центров. Этот документ охватывает фундаментальные концепции **GCP**, архитектуру платформы, модели развертывания и основные сервисы для начинающих пользователей.
+**Google Cloud Platform** (GCP) — набор облачных сервисов от **Google**, предоставляющий вычислительные ресурсы, хранение данных, машинное обучение и другие сервисы через глобальную сеть дата-центров. Этот документ охватывает фундаментальные концепции **GCP**, архитектуру платформы, модели развертывания и основные сервисы для начинающих пользователей.
 
 ## Полезные ссылки
 - [Google Cloud Documentation](https://cloud.google.com/docs)
@@ -64,11 +64,11 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Основы **GCP**
+## Основы GCP
 
 ### GCP Architecture
 
-Схема глобальной инфраструктуры **Google Cloud Platform** (**регионы, зоны, категории сервисов**).
+Схема глобальной инфраструктуры **Google Cloud Platform** (регионы, зоны, категории сервисов).
 
 ```text
 Google Cloud Platform Global Infrastructure:
@@ -194,7 +194,7 @@ hybrid-cloud:
     - disaster_recovery
 ```
 
-## GCP Regions и **Zones**
+## GCP Regions и Zones
 
 ### GCP Regions
 ```yaml
@@ -243,7 +243,7 @@ region-selection:
     - carbon_neutral_regions
 ```
 
-### Zones и **High Availability**
+### Zones и High Availability
 ```yaml
 # Zone Architecture
 availability-zones:
@@ -323,7 +323,7 @@ sla-calculation:
   composite_sla: "MIN(SLA1, SLA2, SLA3)"
 ```
 
-## Projects и **Organizations**
+## Projects и Organizations
 
 ### GCP Projects
 ```yaml
@@ -414,7 +414,7 @@ organization-policies:
       enforcement: true
 ```
 
-## Identity и **Access Management**
+## Identity и Access Management
 
 ### Google Cloud IAM
 ```yaml
@@ -522,7 +522,7 @@ pool-provider:
 
 ## Networking Basics
 
-### Virtual Private Cloud (**VPC**)
+### Virtual Private Cloud (VPC)
 ```yaml
 # VPC Network
 vpc-network:
@@ -853,7 +853,7 @@ regional-instance-group:
         target_shape: 50
 ```
 
-### Google Kubernetes Engine (**GKE**)
+### Google Kubernetes Engine (GKE)
 ```yaml
 # GKE Cluster
 gke-cluster:
@@ -948,7 +948,7 @@ cloud-function-config:
   ingress_settings: "ALLOW_ALL"
 ```
 
-## Cloud SDK и **CLI**
+## Cloud SDK и CLI
 
 ### gcloud CLI
 ```bash
@@ -1078,7 +1078,7 @@ resource "google_service_account" "vm" {
 }
 ```
 
-## Monitoring и **Logging**
+## Monitoring и Logging
 
 ### Cloud Monitoring
 ```yaml
@@ -1170,7 +1170,7 @@ log-alert:
     - "projects/my-project/notificationChannels/123456789"
 ```
 
-## Billing и **Cost Management**
+## Billing и Cost Management
 
 ### GCP Pricing Models
 ```yaml

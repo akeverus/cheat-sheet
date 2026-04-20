@@ -82,7 +82,7 @@ func getConfig() {
 }
 ```
 
-### **LookupEnv**
+### LookupEnv
 
 ```go
 import "os"
@@ -147,7 +147,7 @@ func loadConfigFromEnv() (*Config, error) {
 
 ## Файлы конфигурации
 
-### **JSON** конфигурация
+### JSON конфигурация
 
 ```go
 import (
@@ -176,7 +176,7 @@ func loadConfigFromJSON(filename string) (*Config, error) {
 }
 ```
 
-### **YAML** конфигурация
+### YAML конфигурация
 
 ```go
 import "gopkg.in/yaml.v3"
@@ -196,7 +196,7 @@ func loadConfigFromYAML(filename string) (*Config, error) {
 }
 ```
 
-## **Viper**
+## Viper
 
 ### Установка
 
@@ -249,7 +249,7 @@ func init() {
 }
 ```
 
-### **Watch** конфигурации
+### Watch конфигурации
 
 ```go
 func watchConfig() {
@@ -447,7 +447,7 @@ func (l *ConfigLoader) loadFromEnv(config *Config) {
 }
 ```
 
-### Практические примеры: **Hot reload** конфигурации
+### Практические примеры: Hot reload конфигурации
 
 ```go
 import "github.com/fsnotify/fsnotify"
@@ -617,7 +617,7 @@ func LoadConfigWithSecrets(configPath string, secretManager SecretManager) (*Con
 }
 ```
 
-### Практические примеры: **Viper** с расширенными возможностями
+### Практические примеры: Viper с расширенными возможностями
 
 ```go
 import "github.com/spf13/viper"
@@ -798,7 +798,7 @@ func (c *TypedConfig) GetInt(key string) (int, error) {
 }
 ```
 
-### Практические примеры: **Hot reload** конфигурации
+### Практические примеры: Hot reload конфигурации
 
 ```go
 type ConfigWatcher struct {

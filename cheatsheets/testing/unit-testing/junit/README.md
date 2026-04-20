@@ -19,19 +19,19 @@ JUnit 5 (Jupiter) — основной фреймворк для тестиро�
 ## Полезные ссылки
 
 ### Основные документы
-- [JUnit 5](junit.md) — аннотации, ассерты, параметризация
-- [JUnit Advanced](junit-advanced.md) — расширения, условия, порядок
-- [AssertJ](assertj.md) — fluent-ассерты
-- [Hamcrest](hamcrest.md) — матчеры
-- [Mockito](mockito.md) — моки и стабы
-- [Mockito Advanced](mockito-advanced.md) — аргументы, spy, verify
+- [[junit|JUnit 5]] — аннотации, ассерты, параметризация
+- [[junit-advanced|JUnit Advanced]] — расширения, условия, порядок
+- [[assertj]] — fluent-ассерты
+- [[hamcrest]] — матчеры
+- [[mockito]] — моки и стабы
+- [[mockito-advanced|Mockito Advanced]] — аргументы, spy, verify
 
 ### Соседние разделы
-- [Unit Testing](../README.md)
-- [TestNG](../testng/README.md)
-- [Jest](../jest/README.md) / [pytest](../pytest/README.md)
-- [Testcontainers](../../integration-testing/testcontainers/README.md)
-- [Spring Testing](../../../frameworks/java-frameworks/spring/spring-testing.md)
+- [[README|Unit Testing]]
+- [[README|TestNG]]
+- [[README|Jest]] / [[README|pytest]]
+- [[README|Testcontainers]]
+- [[spring-testing|Spring Testing]]
 
 ### Внешние ресурсы
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
@@ -49,11 +49,11 @@ JUnit 5 (Jupiter) — основной фреймворк для тестиро�
 
 | Тема | Где читать |
 |------|-----------|
-| Аннотации и жизненный цикл | [junit.md](junit.md) |
-| Assertions, параметризация, dynamic tests | [junit.md](junit.md) |
-| Extensions (Spring, Mockito, Testcontainers) | [junit-advanced.md](junit-advanced.md) |
-| Fluent-ассерты и читаемость | [assertj.md](assertj.md), [hamcrest.md](hamcrest.md) |
-| Мок-фреймворк: `mock`, `when`, `verify`, `@InjectMocks` | [mockito.md](mockito.md), [mockito-advanced.md](mockito-advanced.md) |
+| Аннотации и жизненный цикл | [[junit]] |
+| Assertions, параметризация, dynamic tests | [[junit]] |
+| Extensions (Spring, Mockito, Testcontainers) | [[junit-advanced]] |
+| Fluent-ассерты и читаемость | [[assertj]], [[hamcrest]] |
+| Мок-фреймворк: `mock`, `when`, `verify`, `@InjectMocks` | [[mockito]], [[mockito-advanced]] |
 
 ## Когда использовать: JUnit vs TestNG
 
@@ -76,6 +76,6 @@ JUnit 5 — выбор по умолчанию для большинства Jav
 
 ## Куда идти дальше
 
-- Обзор unit-тестирования — [../README.md](../README.md)
-- Альтернативный JVM-фреймворк — [../testng/README.md](../testng/README.md)
-- Интеграция с инфраструктурой — [../../integration-testing/testcontainers/README.md](../../integration-testing/testcontainers/README.md)
+- Обзор unit-тестирования — [[README]]
+- Альтернативный JVM-фреймворк — [[README]]
+- Интеграция с инфраструктурой — [[README]]

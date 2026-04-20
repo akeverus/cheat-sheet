@@ -97,7 +97,7 @@ batch:
 
 ## Job Definition
 
-### **Simple Job**
+### Simple Job
 
 ```java
 import io.micronaut.batch.core.Job;
@@ -137,7 +137,7 @@ public class UserProcessingJob implements Job {
 
 ## Chunk Processing
 
-### **Chunk-based Job**
+### Chunk-based Job
 
 ```java
 import io.micronaut.batch.core.chunk.ChunkProcessor;
@@ -163,7 +163,7 @@ public class UserChunkProcessor implements ChunkProcessor<User, User> {
 
 ## Job Scheduling
 
-### **Scheduled Job**
+### Scheduled Job
 
 ```java
 import io.micronaut.scheduling.annotation.Scheduled;
@@ -187,7 +187,7 @@ public class ScheduledBatchJob {
 
 ## Error Handling
 
-### **Job Error Handling**
+### Job Error Handling
 
 ```java
 import io.micronaut.batch.core.JobExecutionListener;
@@ -208,7 +208,7 @@ public class JobErrorHandler implements JobExecutionListener {
 
 ## Лучшие практики
 
-### 1. Используйте **chunk processing** для больших объемов
+### 1. Используйте chunk processing для больших объемов
 
 ```java
 // ✅ Хорошо
@@ -229,7 +229,7 @@ try {
 }
 ```
 
-### 3. Мониторьте выполнение **jobs**
+### 3. Мониторьте выполнение jobs
 
 ```java
 // ✅ Хорошо
@@ -239,7 +239,7 @@ log.info("Job status: {}", execution.getStatus());
 
 ## Job Parameters
 
-### **Parameterized Jobs**
+### Parameterized Jobs
 
 ```java
 import io.micronaut.batch.core.JobParameters;
@@ -262,7 +262,7 @@ public class ParameterizedJobService {
 
 ## Job Listeners
 
-### **Step Execution Listener**
+### Step Execution Listener
 
 ```java
 import io.micronaut.batch.core.StepExecutionListener;
@@ -285,7 +285,7 @@ public class CustomStepListener implements StepExecutionListener {
 
 ## Job Execution Context
 
-### **Execution Context**
+### Execution Context
 
 ```java
 import io.micronaut.batch.core.JobExecution;
@@ -309,7 +309,7 @@ public class ExecutionContextService {
 
 ## Job Restart
 
-### **Restart Configuration**
+### Restart Configuration
 
 ```java
 import io.micronaut.batch.core.JobLauncher;
@@ -329,7 +329,7 @@ public class JobRestartService {
 
 ## Job Skip Policy
 
-### **Skip Configuration**
+### Skip Configuration
 
 ```java
 import io.micronaut.batch.core.SkipPolicy;
@@ -348,7 +348,7 @@ public class CustomSkipPolicy implements SkipPolicy {
 
 ## Job Partitioning
 
-### **Partitioned Job**
+### Partitioned Job
 
 ```java
 import io.micronaut.batch.core.Partitioner;

@@ -50,7 +50,7 @@ updated: "2026-02-11"
 
 **Когда применять:** разные способы оплаты, валидации, сортировки, сжатия — одно действие, несколько взаимозаменяемых реализаций.
 
-## Что такое **Strategy**?
+## Что такое Strategy?
 
 **Strategy** — это поведенческий паттерн проектирования, который позволяет определять семейство алгоритмов, помещать каждый из них в отдельный класс и делать их объекты взаимозаменяемыми.
 
@@ -123,7 +123,7 @@ class PayPalStrategy implements PaymentStrategy {
 }
 ```
 
-## Когда использовать **Strategy**?
+## Когда использовать Strategy?
 
 ### Подходящие сценарии
 
@@ -250,7 +250,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Strategy**
+### Классический Strategy
 
 ```java
 // Strategy интерфейс
@@ -398,7 +398,7 @@ public class SortingDemo {
 }
 ```
 
-### **Strategy** с состоянием
+### Strategy с состоянием
 
 ```java
 // Strategy с внутренним состоянием
@@ -543,7 +543,7 @@ public class CompressionDemo {
 }
 ```
 
-### **Java Collections** и **Comparator**
+### Java Collections и Comparator
 
 ```java
 // Strategy с Java Collections
@@ -691,7 +691,7 @@ public class CollectionsStrategyDemo {
 
 ## Продвинутые реализации
 
-### 1. **Strategy** с **Dependency Injection**
+### 1. Strategy с Dependency Injection
 
 ```java
 // Spring-style Strategy с DI
@@ -779,7 +779,7 @@ public class PaymentConfig {
 }
 ```
 
-### 2. **Strategy** с **AOP**
+### 2. Strategy с AOP
 
 ```java
 // Strategy с аспектами для логирования и метрик
@@ -913,7 +913,7 @@ class SmartCacheService {
 }
 ```
 
-### 3. **Functional Strategy**
+### 3. Functional Strategy
 
 ```java
 // Strategy с функциональными интерфейсами
@@ -1780,7 +1780,7 @@ public class PaymentProcessingExample {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -1924,7 +1924,7 @@ public class SolidStrategyExample {
 }
 ```
 
-### 2. **Testing Strategy Pattern**
+### 2. Testing Strategy Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

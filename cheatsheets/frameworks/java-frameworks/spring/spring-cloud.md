@@ -76,7 +76,7 @@ updated: "2026-02-11"
   - [Config Server с аутентификацией](#config-server-с-аутентификацией)
   - [Circuit Breaker с метриками](#circuit-breaker-с-метриками)
 
-## Введение в **Spring Cloud**
+## Введение в Spring Cloud
 
 **Spring Cloud** — это набор инструментов и фреймворков, которые помогают разработчикам создавать облачные приложения, особенно в архитектуре микросервисов. **Spring Cloud** предоставляет решения для распространенных паттернов распределенных систем.
 
@@ -90,7 +90,7 @@ updated: "2026-02-11"
 
 ### Версии и совместимость
 
-**Spring Cloud BOM** для управления версиями зависимостей (**pom.xml**):**
+**Spring Cloud BOM** для управления версиями зависимостей (pom.xml):**
 
 ```xml
 <!-- Spring Cloud BOM -->
@@ -111,7 +111,7 @@ updated: "2026-02-11"
 
 **Eureka** — это **REST-based** сервис для **service discovery**. **Eureka** сервер выступает в роли **registry**, где микросервисы регистрируют себя и находят другие сервисы.
 
-### **Eureka Server**
+### Eureka Server
 
 ```xml
 <!-- pom.xml -->
@@ -149,7 +149,7 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 ```
 
-### **Eureka Client**
+### Eureka Client
 
 ```xml
 <!-- pom.xml -->
@@ -189,7 +189,7 @@ eureka:
     preferIpAddress: true
 ```
 
-### Использование **Service Discovery**
+### Использование Service Discovery
 
 ```java
 // Сервис с RestTemplate и DiscoveryClient (Eureka)
@@ -218,7 +218,7 @@ public class UserService {
 
 **Spring Cloud Config Server** предоставляет централизованное управление конфигурацией для распределенных систем.
 
-### **Config Server**
+### Config Server
 
 ```xml
 <!-- pom.xml -->
@@ -289,7 +289,7 @@ logging:
     com.example: DEBUG
 ```
 
-### **Config Client**
+### Config Client
 
 ```xml
 <!-- pom.xml -->
@@ -314,7 +314,7 @@ spring:
       fail-fast: true
 ```
 
-### **Refresh** конфигурации
+### Refresh конфигурации
 
 ```java
 // Service с @RefreshScope
@@ -338,7 +338,7 @@ curl -X POST http://localhost:8081/actuator/refresh
 
 **API Gateway** — это единая точка входа для всех клиентских запросов к микросервисам.
 
-### **Spring Cloud Gateway**
+### Spring Cloud Gateway
 
 ```xml
 <!-- pom.xml -->
@@ -413,7 +413,7 @@ public class LoggingFilter implements GlobalFilter, Ordered {
 }
 ```
 
-### **Authentication Filter**
+### Authentication Filter
 
 ```java
 @Component
@@ -447,7 +447,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
 **Circuit Breaker** защищает систему от каскадных сбоев.
 
-### **Hystrix** (**deprecated, но все еще используется**)
+### Hystrix (deprecated, но все еще используется)
 
 ```xml
 <!-- pom.xml -->
@@ -488,7 +488,7 @@ public class UserService {
 }
 ```
 
-### **Resilience4j** (**рекомендуется**)
+### Resilience4j (рекомендуется)
 
 ```xml
 <!-- pom.xml -->
@@ -540,7 +540,7 @@ public class UserService {
 
 **Ribbon** предоставляет клиент-**side load balancing** для микросервисов.
 
-### **Ribbon** с **RestTemplate**
+### Ribbon с RestTemplate
 
 ```xml
 <!-- pom.xml -->
@@ -578,7 +578,7 @@ public class UserService {
 }
 ```
 
-### **Ribbon** с **WebClient**
+### Ribbon с WebClient
 
 ```java
 @Configuration
@@ -774,7 +774,7 @@ security:
 </dependencies>
 ```
 
-## Миграция на **Spring Cloud** `2023`
+## Миграция на Spring Cloud `2023`
 
 **Spring Cloud** `2023`.x — это новая версия с обновленными зависимостями.
 
@@ -804,7 +804,7 @@ security:
 </dependency>
 ```
 
-### Замена **Ribbon** на **LoadBalancer**
+### Замена Ribbon на LoadBalancer
 
 ```java
 // Старый подход
@@ -844,7 +844,7 @@ public Mono<String> callService() {
 
 ## Примеры
 
-### Полный микросервис с **Spring Cloud**
+### Полный микросервис с Spring Cloud
 
 ```yaml
 # docker-compose.yml для разработки
@@ -884,7 +884,7 @@ services:
       - config-server
 ```
 
-### **Eureka Server** с аутентификацией
+### Eureka Server с аутентификацией
 
 ```yaml
 # application.yml
@@ -920,7 +920,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 }
 ```
 
-### **Config Server** с аутентификацией
+### Config Server с аутентификацией
 
 ```yaml
 # application.yml
@@ -938,7 +938,7 @@ spring:
       password: config123
 ```
 
-### **Circuit Breaker** с метриками
+### Circuit Breaker с метриками
 
 ```java
 @Configuration

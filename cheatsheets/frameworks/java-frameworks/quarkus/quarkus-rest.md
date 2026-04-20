@@ -99,7 +99,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Введение
 
-**Quarkus** предоставляет два варианта для создания **REST API**: **RESTEasy Reactive** (**рекомендуется**) и **RESTEasy Classic**. **RESTEasy Reactive** построен на **Vert.x** и обеспечивает лучшую производительность.
+**Quarkus** предоставляет два варианта для создания **REST API**: **RESTEasy Reactive** (рекомендуется) и **RESTEasy Classic**. **RESTEasy Reactive** построен на **Vert.x** и обеспечивает лучшую производительность.
 
 ### Основные возможности
 
@@ -111,7 +111,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## RESTEasy Reactive
 
-### **Basic Resource**
+### Basic Resource
 
 ```java
 // Простой REST-ресурс с приветствием
@@ -131,7 +131,7 @@ public class HelloResource {
 }
 ```
 
-### **Reactive Resource**
+### Reactive Resource
 
 ```java
 // Реактивный ресурс с Uni
@@ -152,7 +152,7 @@ public class UserResource {
 
 ## JAX-RS Annotations
 
-### **HTTP Methods**
+### HTTP Methods
 
 ```java
 // Ресурс с CRUD через JAX-RS аннотации
@@ -196,7 +196,7 @@ public class UserResource {
 
 ## Filters и Interceptors
 
-### **Request Filter**
+### Request Filter
 
 ```java
 // Фильтр логирования входящих запросов
@@ -215,7 +215,7 @@ public class LoggingFilter implements ContainerRequestFilter {
 }
 ```
 
-### **Response Filter**
+### Response Filter
 
 ```java
 // Фильтр добавления CORS-заголовков к ответу
@@ -236,7 +236,7 @@ public class CORSFilter implements ContainerResponseFilter {
 
 ## Exception Handling
 
-### **Exception Mapper**
+### Exception Mapper
 
 ```java
 // Маппер перехвата UserNotFoundException → 404
@@ -259,7 +259,7 @@ public class UserNotFoundExceptionMapper
 
 ## Лучшие практики
 
-### 1. Используйте **RESTEasy Reactive**
+### 1. Используйте RESTEasy Reactive
 
 ```java
 // ✅ Хорошо
@@ -282,7 +282,7 @@ public class ExceptionMapper implements ExceptionMapper<Exception> {
 }
 ```
 
-### 3. Используйте **validation**
+### 3. Используйте validation
 
 ```java
 // ✅ Хорошо
@@ -294,7 +294,7 @@ public Response createUser(@Valid User user) {
 
 ## Path Parameters
 
-### **Path Variables**
+### Path Variables
 
 ```java
 // Чтение path-параметров через @PathParam
@@ -321,7 +321,7 @@ public class UserResource {
 }
 ```
 
-### **Path Parameter Validation**
+### Path Parameter Validation
 
 ```java
 // Валидация path-параметра через @Min(1)
@@ -343,7 +343,7 @@ public class UserResource {
 
 ## Query Parameters
 
-### **Query Parameters**
+### Query Parameters
 
 ```java
 // Query-параметры с значениями по умолчанию
@@ -365,7 +365,7 @@ public class UserResource {
 }
 ```
 
-### **Multiple Query Parameters**
+### Multiple Query Parameters
 
 ```java
 // Поиск по нескольким query-параметрам, включая список
@@ -390,7 +390,7 @@ public class UserResource {
 
 ## Request/Response Entities
 
-### **JSON Serialization**
+### JSON Serialization
 
 ```java
 // Приём и отдача JSON через Consumes/Produces
@@ -412,7 +412,7 @@ public class UserResource {
 }
 ```
 
-### **XML Support**
+### XML Support
 
 ```java
 // Content negotiation: JSON или XML по заголовку Accept
@@ -435,7 +435,7 @@ public class UserResource {
 
 ## Async Processing
 
-### **Async Response**
+### Async Response
 
 ```java
 // Асинхронный ответ через @Suspended AsyncResponse
@@ -462,7 +462,7 @@ public class UserResource {
 
 ## Content Negotiation
 
-### **Accept Header**
+### Accept Header
 
 ```java
 // Выбор формата ответа по Accept
@@ -485,9 +485,9 @@ public class UserResource {
 }
 ```
 
-## Server-Sent Events (SSE**)
+## Server-Sent Events (SSE)
 
-### **SSE Endpoint**
+### SSE Endpoint
 
 **Создание **SSE endpoint** для **streaming** данных:**
 
@@ -528,7 +528,7 @@ public class SSEResource {
 
 ## Multipart Support
 
-### **File Upload**
+### File Upload
 
 **Загрузка файлов:**
 
@@ -563,7 +563,7 @@ public class FileUploadResource {
 }
 ```
 
-### **File Download**
+### File Download
 
 **Скачивание файлов:**
 
@@ -606,7 +606,7 @@ public class FileDownloadResource {
 
 ## CORS Configuration
 
-### **CORS Filter**
+### CORS Filter
 
 **Настройка **CORS**:**
 
@@ -633,7 +633,7 @@ public class CORSFilter implements ContainerResponseFilter {
 }
 ```
 
-### **CORS** через конфигурацию
+### CORS через конфигурацию
 
 ```properties
 # application.properties
@@ -645,7 +645,7 @@ quarkus.http.cors.methods=GET,POST,PUT,DELETE,OPTIONS
 
 ## Request/Response Interceptors
 
-### **Method Interceptor**
+### Method Interceptor
 
 **Перехват вызовов методов:**
 
@@ -685,7 +685,7 @@ public class TimingResponseFilter implements ContainerResponseFilter {
 
 ## Validation
 
-### **Bean Validation**
+### Bean Validation
 
 **Использование **Bean Validation**:**
 
@@ -718,7 +718,7 @@ public class ValidatedResource {
 }
 ```
 
-### **Custom Validators**
+### Custom Validators
 
 **Создание кастомных валидаторов:**
 
@@ -748,7 +748,7 @@ public @interface PhoneNumber {
 
 ## OpenAPI Integration
 
-### **OpenAPI Configuration**
+### OpenAPI Configuration
 
 **Настройка **OpenAPI**:**
 
@@ -759,7 +759,7 @@ quarkus.smallrye-openapi.info-version=1.0.0
 quarkus.smallrye-openapi.info-description=My API Description
 ```
 
-### **OpenAPI Annotations**
+### OpenAPI Annotations
 
 **Использование **OpenAPI** аннотаций:**
 
@@ -795,7 +795,7 @@ public class OpenAPIResource {
 
 ## REST Client
 
-### **Declarative REST Client**
+### Declarative REST Client
 
 **Декларативный **REST** клиент:**
 
@@ -844,7 +844,7 @@ public class ProxyResource {
 }
 ```
 
-### **Reactive REST Client**
+### Reactive REST Client
 
 **Реактивный **REST** клиент:**
 
@@ -865,7 +865,7 @@ public interface ReactiveUserServiceClient {
 
 ## Response Caching
 
-### **HTTP Caching**
+### HTTP Caching
 
 **HTTP** кеширование:**
 
@@ -893,7 +893,7 @@ public class CachedResource {
 
 ## Advanced REST Patterns
 
-### **Rate Limiting**
+### Rate Limiting
 
 **Ограничение частоты запросов:**
 
@@ -926,7 +926,7 @@ public class RateLimitFilter implements ContainerRequestFilter {
 }
 ```
 
-### **Request Caching**
+### Request Caching
 
 **Кеширование запросов:**
 
@@ -944,7 +944,7 @@ public class CacheableResource {
 }
 ```
 
-### **Response Compression**
+### Response Compression
 
 **Сжатие ответов:**
 
@@ -955,7 +955,7 @@ quarkus.http.compression.level=6
 
 ## REST Performance Optimization
 
-### **Connection Pooling**
+### Connection Pooling
 
 **Оптимизация пула соединений:**
 
@@ -964,7 +964,7 @@ quarkus.rest-client.connection-pool-size=50
 quarkus.rest-client.keep-alive-time=30s
 ```
 
-### **Async Processing Optimization**
+### Async Processing Optimization
 
 **Оптимизация асинхронной обработки:**
 
@@ -984,7 +984,7 @@ public class OptimizedResource {
 
 ## REST API Versioning
 
-### **URL Versioning**
+### URL Versioning
 
 **Версионирование через **URL**:**
 
@@ -1001,7 +1001,7 @@ public class UserResourceV2 {
 }
 ```
 
-### **Header Versioning**
+### Header Versioning
 
 **Версионирование через заголовки:**
 
@@ -1023,7 +1023,7 @@ public class VersionedUserResource {
 
 ## Advanced Response Handling
 
-### **Conditional Requests**
+### Conditional Requests
 
 **Условные запросы:**
 
@@ -1046,7 +1046,7 @@ public Response getUser(@PathParam("id") Long id,
 }
 ```
 
-### **Partial Content**
+### Partial Content
 
 **Частичный контент:**
 
@@ -1066,7 +1066,7 @@ public Response getUserPartial(@PathParam("id") Long id,
 
 ## REST Client Advanced Features
 
-### **Client Filters**
+### Client Filters
 
 **Фильтры клиента:**
 
@@ -1088,7 +1088,7 @@ public class ClientLoggingFilter implements ClientRequestFilter, ClientResponseF
 }
 ```
 
-### **Async REST Client**
+### Async REST Client
 
 **Асинхронный **REST** клиент:**
 

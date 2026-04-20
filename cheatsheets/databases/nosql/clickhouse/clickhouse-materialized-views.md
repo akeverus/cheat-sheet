@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 ---
 
-# **ClickHouse**: Материализованные представления — Предварительно вычисленные агрегаты и трансформации
+# ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации
 
 Комплексное руководство по материализованным представлениям **ClickHouse**: создание, управление, оптимизация и практические примеры.
 
@@ -77,7 +77,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 
 ## Введение в материализованные представления
 
-Материализованные представления (**Materialized Views**) в **ClickHouse** автоматически поддерживают предварительно вычисленные агрегаты и трансформации данных в реальном времени.
+Материализованные представления (Materialized Views) в **ClickHouse** автоматически поддерживают предварительно вычисленные агрегаты и трансформации данных в реальном времени.
 
 ### Принцип работы
 
@@ -183,7 +183,7 @@ SELECT * FROM daily_user_stats;
 
 ## Типы движков для `MV`
 
-### **SummingMergeTree**
+### SummingMergeTree
 
 Автоматически суммирует значения при слиянии партиций.
 
@@ -207,7 +207,7 @@ GROUP BY hour, metric_name;
 -- - Идеально для счетчиков и метрик
 ```
 
-### **AggregatingMergeTree**
+### AggregatingMergeTree
 
 Хранит состояния агрегатных функций для сложных расчетов.
 
@@ -233,7 +233,7 @@ GROUP BY date, user_id;
 -- - Поддерживает все агрегатные функции ClickHouse
 ```
 
-### **ReplacingMergeTree**
+### ReplacingMergeTree
 
 Заменяет старые записи новыми с тем же ключом.
 
@@ -257,7 +257,7 @@ GROUP BY user_id;
 -- - Эффективен для slowly changing dimensions
 ```
 
-### **MergeTree**
+### MergeTree
 
 Стандартный движок без специальной логики агрегации.
 
@@ -453,7 +453,7 @@ WHERE level = 'ERROR' AND user_id IS NOT NULL
 GROUP BY date, user_id;
 ```
 
-### **IoT** и телеметрия
+### IoT и телеметрия
 
 ```sql
 -- Исходная таблица показаний датчиков
@@ -884,6 +884,6 @@ SYSTEM RESTORE REPLICA mv_name;
 
 
 **Следующие темы:**
-- [Репликация и кластеры](clickhouse-replication.md)
-- [Производительность](clickhouse-performance.md)
+- [[clickhouse-replication|Репликация и кластеры]]
+- [[clickhouse-performance|Производительность]]
 

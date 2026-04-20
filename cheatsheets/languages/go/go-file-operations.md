@@ -219,7 +219,7 @@ func writeFileLines(filename string, lines []string) error {
 
 ## Копирование файлов
 
-### Копирование с **io.Copy**
+### Копирование с io.Copy
 
 ```go
 import (
@@ -474,7 +474,7 @@ func processFileLines(filename string, processor func(string) error) error {
 }
 ```
 
-### Практические примеры: Запись с буферизацией и **flush**
+### Практические примеры: Запись с буферизацией и flush
 
 ```go
 type BufferedFileWriter struct {

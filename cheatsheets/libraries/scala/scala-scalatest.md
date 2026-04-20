@@ -63,11 +63,11 @@ updated: "2026-02-11"
   - [From Specs2 to ScalaTest](#from-specs2-to-scalatest)
 - [См. также](#см-также)
 
-## Основы **ScalaTest**
+## Основы ScalaTest
 
 ### Подключение и базовая структура
 
-Зависимости **ScalaTest** в **build.sbt** (**Scala**).
+Зависимости **ScalaTest** в **build.sbt** (Scala).
 
 ```scala
 // build.sbt
@@ -85,7 +85,7 @@ libraryDependencies ++= Seq(
 
 ### Стили тестирования
 
-#### **FunSuite** — функциональный стиль
+#### FunSuite — функциональный стиль
 ```scala
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -134,7 +134,7 @@ class CalculatorFunSuite extends AnyFunSuite {
 }
 ```
 
-#### **FlatSpec** — спецификационный стиль
+#### FlatSpec — спецификационный стиль
 ```scala
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -166,7 +166,7 @@ class CalculatorFlatSpec extends AnyFlatSpec {
 }
 ```
 
-#### **WordSpec** — **BDD** стиль
+#### WordSpec — BDD стиль
 ```scala
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -210,7 +210,7 @@ class CalculatorWordSpec extends AnyWordSpec {
 }
 ```
 
-#### **FunSpec** — еще один **BDD** стиль
+#### FunSpec — еще один BDD стиль
 ```scala
 import org.scalatest.funspec.AnyFunSpec
 
@@ -245,9 +245,9 @@ class CalculatorFunSpec extends AnyFunSpec {
 }
 ```
 
-## Матчеры (**Matchers**)
+## Матчеры (Matchers)
 
-### **Should** матчеры
+### Should матчеры
 ```scala
 import org.scalatest.matchers.should.Matchers
 
@@ -317,7 +317,7 @@ class MatchersExample extends AnyFunSpec with Matchers {
 }
 ```
 
-### **Must** матчеры
+### Must матчеры
 ```scala
 import org.scalatest.matchers.must.Matchers
 
@@ -402,9 +402,9 @@ class CustomMatchersExample extends AnyFunSpec with Matchers {
 }
 ```
 
-## Хуки **Before**/**After**
+## Хуки Before/After
 
-### **FunSuite** с **lifecycle**
+### FunSuite с lifecycle
 ```scala
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.funsuite.AnyFunSuite
@@ -443,7 +443,7 @@ class LifecycleFunSuite extends AnyFunSuite with BeforeAndAfter with BeforeAndAf
 }
 ```
 
-### **FlatSpec** с **fixture**
+### FlatSpec с fixture
 ```scala
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -492,7 +492,7 @@ class LoanFixtureSpec extends AnyFlatSpec {
 
 ## Мокирование
 
-### **Mockito integration**
+### Mockito integration
 ```scala
 import org.scalatestplus.mockito.MockitoSugar
 import org.mockito.Mockito._
@@ -556,7 +556,7 @@ class MockitoExampleSpec extends AnyFlatSpec with MockitoSugar {
 }
 ```
 
-### **ScalaMock integration**
+### ScalaMock integration
 ```scala
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
@@ -591,9 +591,9 @@ class ScalaMockExampleSpec extends AnyFlatSpec with MockFactory {
 }
 ```
 
-## **Property-based** тестирование
+## Property-based тестирование
 
-### **ScalaCheck integration**
+### ScalaCheck integration
 ```scala
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.flatspec.AnyFlatSpec
@@ -668,9 +668,9 @@ class PropertyBasedSpec extends AnyFlatSpec with ScalaCheckDrivenPropertyChecks 
 }
 ```
 
-## **Async** тестирование
+## Async тестирование
 
-### **ScalaFutures** для **Future**
+### ScalaFutures для Future
 ```scala
 import org.scalatest.flatspec.AsyncFlatSpec
 import scala.concurrent.Future
@@ -720,7 +720,7 @@ class AsyncWithTimeoutSpec extends AsyncFlatSpec {
 }
 ```
 
-### **Cats Effect** `IO` тестирование
+### Cats Effect `IO` тестирование
 ```scala
 import org.scalatest.flatspec.AnyFlatSpec
 import cats.effect.IO
@@ -760,7 +760,7 @@ class IOSpec extends AnyFlatSpec {
 
 ## Тестирование веб-приложений
 
-### **Play Framework integration**
+### Play Framework integration
 ```scala
 import play.api.test._
 import play.api.test.Helpers._
@@ -814,7 +814,7 @@ class PlayControllerSpec extends PlaySpec with GuiceOneAppPerTest {
 
 ## Интеграция с другими инструментами
 
-### **JUnit integration**
+### JUnit integration
 ```scala
 import org.junit.runner.RunWith
 import org.scalatestplus.junit.JUnitRunner
@@ -830,7 +830,7 @@ class JUnitIntegrationSpec extends AnyFlatSpec {
 }
 ```
 
-### **TestNG integration**
+### TestNG integration
 ```scala
 import org.scalatestplus.testng.TestNGSuite
 import org.testng.annotations.Test
@@ -1048,7 +1048,7 @@ class ParallelSpec extends AnyFlatSpec with Matchers with ParallelTestExecution 
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```scala
 object ScalaTestTroubleshooting {
 
@@ -1142,7 +1142,7 @@ object ScalaTestTroubleshooting {
 }
 ```
 
-### **Performance Tips**
+### Performance Tips
 ```scala
 object ScalaTestPerformance {
 
@@ -1185,7 +1185,7 @@ object ScalaTestPerformance {
 
 ## Руководство по миграции
 
-### **From JUnit** to **ScalaTest**
+### From JUnit to ScalaTest
 ```scala
 // JUnit 4
 import org.junit.Test
@@ -1231,7 +1231,7 @@ class CalculatorSpec extends AnyFlatSpec with Matchers {
 }
 ```
 
-### **From Specs2** to **ScalaTest**
+### From Specs2 to ScalaTest
 ```scala
 // Specs2
 import org.specs2.mutable.Specification

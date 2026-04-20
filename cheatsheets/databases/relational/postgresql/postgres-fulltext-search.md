@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 ---
 
-# **PostgreSQL**: Полнотекстовый поиск
+# PostgreSQL: Полнотекстовый поиск
 
 ## Полезные ссылки
 
@@ -118,11 +118,11 @@ related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 4. **Ранжирование**: Сортировка результатов по релевантности
 
 
-## **tsvector**
+## tsvector
 
-`**tsvector**` - это тип данных, представляющий документ в виде отсортированного списка лексем (**слов**).
+`tsvector` - это тип данных, представляющий документ в виде отсортированного списка лексем (слов).
 
-### Создание **tsvector**
+### Создание tsvector
 
 **Примеры создания **tsvector** и использования **to_tsvector**:**
 
@@ -152,7 +152,7 @@ SELECT to_tsvector('english', 'title: ' || title || ' body: ' || body)
 FROM articles;
 ```
 
-### Операции с **tsvector**
+### Операции с tsvector
 
 ```sql
 -- Объединение tsvector
@@ -166,11 +166,11 @@ SELECT to_tsvector('english', 'PostgreSQL') = to_tsvector('english', 'postgresql
 ```
 
 
-## **tsquery**
+## tsquery
 
-`**tsquery**` - это тип данных для представления поисковых запросов.
+`tsquery` - это тип данных для представления поисковых запросов.
 
-### Создание **tsquery**
+### Создание tsquery
 
 ```sql
 -- Простое создание tsquery
@@ -189,13 +189,13 @@ SELECT to_tsquery('english', 'PostgreSQL & !database');
 SELECT to_tsquery('english', 'PostgreSQL <-> database');
 ```
 
-### Операторы **tsquery**
+### Операторы tsquery
 
-- `&` (**AND**): Оба термина должны присутствовать
-- `|` (**OR**): Хотя бы один термин должен присутствовать
-- `!` (**NOT**): Термин не должен присутствовать
-- `<->` (**FOLLOWED BY**): Термины должны следовать друг за другом
-- `<N>` (**FOLLOWED `BY` N**): Термины должны быть на расстоянии N слов
+- `&` (AND): Оба термина должны присутствовать
+- `|` (OR): Хотя бы один термин должен присутствовать
+- `!` (NOT): Термин не должен присутствовать
+- `<->` (FOLLOWED BY): Термины должны следовать друг за другом
+- `<N>` (FOLLOWED `BY` N): Термины должны быть на расстоянии N слов
 
 ### Примеры запросов
 
@@ -263,9 +263,9 @@ WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL');
 
 ## Ранжирование результатов
 
-### **ts_rank**
+### ts_rank
 
-`**ts_rank**` вычисляет релевантность документа на основе частоты терминов.
+`ts_rank` вычисляет релевантность документа на основе частоты терминов.
 
 ```sql
 -- Базовое ранжирование
@@ -278,9 +278,9 @@ WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL')
 ORDER BY rank DESC;
 ```
 
-### **ts_rank_cd**
+### ts_rank_cd
 
-`**ts_rank_cd**` использует алгоритм покрытия плотности для более точного ранжирования.
+`ts_rank_cd` использует алгоритм покрытия плотности для более точного ранжирования.
 
 ```sql
 -- Ранжирование с покрытием плотности
@@ -418,9 +418,9 @@ CREATE TEXT SEARCH DICTIONARY my_stopwords (
 ```
 
 
-## **GIN** индексы для полнотекстового поиска
+## GIN индексы для полнотекстового поиска
 
-### Создание **GIN** индекса
+### Создание GIN индекса
 
 ```sql
 -- Базовый GIN индекс
@@ -435,7 +435,7 @@ USING gin(
 );
 ```
 
-### Оптимизация **GIN** индексов
+### Оптимизация GIN индексов
 
 ```sql
 -- Настройка параметров GIN индекса
@@ -447,7 +447,7 @@ WITH (fastupdate = off);
 REINDEX INDEX idx_articles_body_gin;
 ```
 
-### Мониторинг **GIN** индексов
+### Мониторинг GIN индексов
 
 ```sql
 -- Размер индекса
@@ -550,9 +550,9 @@ WHERE to_tsvector('english', body) @@ to_tsquery('english', 'PostgreSQL');
 -- Использовать правильную конфигурацию языка
 ```
 
-## **Advanced Full-Text Search**
+## Advanced Full-Text Search
 
-### Кэширование **tsvector**
+### Кэширование tsvector
 
 Для больших документов рекомендуется кэшировать **tsvector** в отдельной колонке.
 
@@ -745,7 +745,7 @@ FROM articles
 WHERE body_tsvector @@ expand_query_with_synonyms('PostgreSQL');
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
 ### Оптимизация индексов
 
@@ -814,9 +814,9 @@ WHERE indexname LIKE '%gin%'
 ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
-## **Integration with Other Extensions**
+## Integration with Other Extensions
 
-### Интеграция с **pg_trgm**
+### Интеграция с pg_trgm
 
 ```sql
 -- Комбинировать полнотекстовый поиск с триграммами
@@ -852,7 +852,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-### Интеграция с **PostGIS**
+### Интеграция с PostGIS
 
 ```sql
 -- Поиск с учетом геолокации
@@ -890,7 +890,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Real-World Examples**
+## Real-World Examples
 
 ### Пример 1: Поисковая система для блога
 
@@ -997,7 +997,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
 ### Производительность
 
@@ -1021,7 +1021,7 @@ $$ LANGUAGE plpgsql;
 2. **Используйте prepared statements** для предотвращения **SQL injection**
 3. **Ограничивайте права доступа** к функциям поиска
 
-## **Advanced Techniques**
+## Advanced Techniques
 
 ### Поиск с фасетами
 
@@ -1119,7 +1119,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## **Custom Text Search Configurations**
+## Custom Text Search Configurations
 
 ### Создание конфигурации для технических терминов
 
@@ -1151,7 +1151,7 @@ ALTER MAPPING FOR asciiword, word
 WITH unaccent, english_stem, russian_stem;
 ```
 
-## **Text Search Dictionaries**
+## Text Search Dictionaries
 
 ### Создание собственного словаря
 
@@ -1173,7 +1173,7 @@ CREATE TEXT SEARCH DICTIONARY my_synonyms (
 -- database db
 ```
 
-### Использование **thesaurus**
+### Использование thesaurus
 
 ```sql
 -- Создать thesaurus словарь
@@ -1188,9 +1188,9 @@ CREATE TEXT SEARCH DICTIONARY my_thesaurus (
 -- database : db, datastore
 ```
 
-## **Performance Tuning**
+## Performance Tuning
 
-### Оптимизация **GIN** индексов
+### Оптимизация GIN индексов
 
 ```sql
 -- Настройка параметров GIN
@@ -1240,7 +1240,7 @@ GROUP BY query_text;
 REFRESH MATERIALIZED VIEW CONCURRENTLY popular_searches;
 ```
 
-## **Monitoring and Maintenance**
+## Monitoring and Maintenance
 
 ### Мониторинг производительности
 
@@ -1336,7 +1336,7 @@ USING gin(body_tsvector)
 WHERE status = 'active';
 ```
 
-## **Integration Examples**
+## Integration Examples
 
 ### Интеграция с веб-приложением
 

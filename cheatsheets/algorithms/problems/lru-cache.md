@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [`LinkedHashMap` (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/LinkedHashMap.html)
 
 ### См. также
-- [Задача коммивояжера](traveling-salesman-problem.md) — TSP
+- [[traveling-salesman-problem|Задача коммивояжера]] — TSP
 - [Бинарное дерево](../trees/) — бинарное дерево
 
 ## Содержание

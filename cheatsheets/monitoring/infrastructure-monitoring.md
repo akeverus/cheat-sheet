@@ -163,7 +163,7 @@ docker run -d --name cadvisor \
 
 ## Алертинг
 
-Правила алертинга задаются в **Prometheus** (или в системе мониторинга). Примеры: **InstanceDown** (up == 0), **HighMemoryUsage** (доля использованной памяти > 90%), **DiskSpaceLow** (свободно < 10%), **HighCPU** (load или использование CPU выше порога). Алерты направляются в **Alertmanager** и далее в **Slack**, **PagerDuty** и т.д. См. [Alertmanager](alerting/alertmanager.md).
+Правила алертинга задаются в **Prometheus** (или в системе мониторинга). Примеры: **InstanceDown** (up == 0), **HighMemoryUsage** (доля использованной памяти > 90%), **DiskSpaceLow** (свободно < 10%), **HighCPU** (load или использование CPU выше порога). Алерты направляются в **Alertmanager** и далее в **Slack**, **PagerDuty** и т.д. См. [[alertmanager]].
 
 
 ## Лучшие практики
@@ -196,7 +196,7 @@ docker run -d --name cadvisor \
 **Node Exporter** официально для Linux/Unix. Для **Windows** используют **windows_exporter** (аналог для Windows) или агенты **Datadog**/ **Zabbix**.
 
 **Чем cAdvisor отличается от метрик kubelet?**
-В **Kubernetes** **cAdvisor** встроен в **kubelet**; метрики контейнеров доступны на эндпоинте **kubelet** (**/metrics/cadvisor**). Отдельный **cAdvisor** в **DaemonSet** используют при необходимости другой конфигурации или версии.
+В **Kubernetes** **cAdvisor** встроен в **kubelet**; метрики контейнеров доступны на эндпоинте **kubelet** (/metrics/cadvisor). Отдельный **cAdvisor** в **DaemonSet** используют при необходимости другой конфигурации или версии.
 
 **Как мониторить сеть между сервисами?**
 Трафик между подами/сервисами можно оценивать по метрикам **cAdvisor**/kubelet по интерфейсам; для детального анализа сети в **Kubernetes** используют **Service Mesh** (метрики из **Istio**, **Linkerd**) или eBPF-инструменты.
@@ -229,13 +229,13 @@ docker run -d --name cadvisor \
 
 ### См. также (повтор)
 
-- [Prometheus](metrics/prometheus.md) — сбор и хранение метрик
-- [Alertmanager](alerting/alertmanager.md) — алертинг
+- [[prometheus]] — сбор и хранение метрик
+- [[alertmanager]] — алертинг
 - [Monitoring](./) — раздел мониторинга
 
 
 ## Заключение
 
-**Infrastructure Monitoring** — основа наблюдаемости: метрики хостов и контейнеров через **Node Exporter** и **cAdvisor**, сбор в **Prometheus**, визуализация в **Grafana**, алертинг через **Alertmanager**. Настройте scrape для всех узлов и контейнеров, определите ключевые метрики и пороги алертов, следуйте лучшим практикам по меткам и интервалам. См. [Node Exporter](https://github.com/prometheus/node_exporter), [cAdvisor](https://github.com/google/cadvisor), [Prometheus](metrics/prometheus.md), [Alertmanager](alerting/alertmanager.md).
+**Infrastructure Monitoring** — основа наблюдаемости: метрики хостов и контейнеров через **Node Exporter** и **cAdvisor**, сбор в **Prometheus**, визуализация в **Grafana**, алертинг через **Alertmanager**. Настройте scrape для всех узлов и контейнеров, определите ключевые метрики и пороги алертов, следуйте лучшим практикам по меткам и интервалам. См. [Node Exporter](https://github.com/prometheus/node_exporter), [cAdvisor](https://github.com/google/cadvisor), [[prometheus]], [[alertmanager]].
 
 

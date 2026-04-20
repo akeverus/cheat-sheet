@@ -33,7 +33,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [[spring-boot|Spring Boot]] — **Spring Boot** основы
-- [[spring-mvc|Spring MVC]] — **Spring MVC** (**blocking**)
+- [[spring-mvc|Spring MVC]] — **Spring MVC** (blocking)
 - [Мониторинг](../../../monitoring/) — мониторинг реактивных приложений
 
 ## Содержание
@@ -172,11 +172,11 @@ updated: "2026-02-11"
   - [Production considerations:](#production-considerations)
   - [Best practices summary:](#best-practices-summary)
 
-## Введение в **Spring WebFlux**
+## Введение в Spring WebFlux
 
 **Spring WebFlux** — это реактивный веб-фреймворк, построенный на принципах **reactive programming**. Он позволяет создавать неблокирующие, асинхронные веб-приложения, которые могут эффективно обрабатывать большое количество одновременных подключений с минимальным использованием ресурсов.
 
-### Почему **WebFlux**?
+### Почему WebFlux?
 
 **WebFlux** решает критические проблемы традиционных блокирующих веб-фреймворков:**
 
@@ -189,7 +189,7 @@ updated: "2026-02-11"
 7. **Reactive streams** — стандартизированный подход к **reactive programming**
 8. **Integration** — бесшовная интеграция с **reactive** базами данных и системами
 
-### Когда использовать **WebFlux**?
+### Когда использовать WebFlux?
 
 #### ✅ Идеально подходит для:
 - **High-concurrency applications** — приложения с высокой одновременной нагрузкой
@@ -210,11 +210,11 @@ updated: "2026-02-11"
 
 ### Архитектурные преимущества
 
-#### **Non-blocking** I/O
+#### Non-blocking I/O
 
-Сравнение блокирующего и реактивного (**non-blocking**) подхода в **Spring WebFlux**.
+Сравнение блокирующего и реактивного (non-blocking) подхода в **Spring WebFlux**.
 
-**Блокирующий подход (**Spring MVC**) и реактивный (**WebFlux**):**
+**Блокирующий подход (Spring MVC) и реактивный (WebFlux):**
 
 ```java
 // Традиционный блокирующий подход (Spring MVC)
@@ -233,7 +233,7 @@ public Mono<User> getUser(@PathVariable Long id) {
 }
 ```
 
-#### **Backpressure handling**
+#### Backpressure handling
 ```java
 // Потребитель контролирует поток данных (backpressure)
 Flux<String> data = Flux.just("item1", "item2", "item3", "item4", "item5");
@@ -249,11 +249,11 @@ data.onBackpressureBuffer(2)  // Буферизация только 2 элем�
 
 ## Reactive Programming основы
 
-### **Reactive Streams** спецификация
+### Reactive Streams спецификация
 
 **Reactive Streams** — это стандарт для асинхронной обработки потоков данных с **non-blocking backpressure**. Спецификация определяет четыре основных интерфейса:**
 
-#### **Publisher**
+#### Publisher
 ```java
 // Интерфейс Publisher — источник данных
 public interface Publisher<T> {
@@ -266,7 +266,7 @@ public interface Publisher<T> {
 - **Subscription management** — управление подписками
 - **Demand signaling** — реагирование на запросы данных от **subscriber**'а
 
-#### **Subscriber**
+#### Subscriber
 ```java
 // Интерфейс Subscriber — потребитель данных
 public interface Subscriber<T> {
@@ -283,7 +283,7 @@ public interface Subscriber<T> {
 - **Error** — ошибке в потоке
 - **Completion** — завершении потока
 
-#### **Subscription**
+#### Subscription
 ```java
 // Интерфейс Subscription — управление потоком между Publisher и Subscriber
 public interface Subscription {
@@ -296,7 +296,7 @@ public interface Subscription {
 - **Request data** — запрашивать определенное количество элементов
 - **Cancel subscription** — отменять подписку
 
-#### **Processor**
+#### Processor
 ```java
 // Processor — одновременно Subscriber и Publisher для трансформации данных
 public interface Processor<T, R> extends Subscriber<T>, Publisher<R> {
@@ -305,9 +305,9 @@ public interface Processor<T, R> extends Subscriber<T>, Publisher<R> {
 
 **Processor** — это одновременно и **Subscriber** и **Publisher**, позволяющий трансформировать данные в потоке.
 
-### **Reactive** vs **Imperative**
+### Reactive vs Imperative
 
-#### **Imperative** подход
+#### Imperative подход
 ```java
 // Синхронный блокирующий подход
 public List<User> getUsers() {
@@ -328,7 +328,7 @@ public List<User> getUsers() {
 // - Нет восстановления после ошибок — одна ошибка ломает всё
 ```
 
-#### **Reactive** подход
+#### Reactive подход
 ```java
 // Асинхронный неблокирующий подход
 public Flux<User> getUsers(Flux<Long> userIds) {
@@ -351,9 +351,9 @@ public Flux<User> getUsers(Flux<Long> userIds) {
 
 ## Project Reactor
 
-### **Mono** и **Flux**
+### Mono и Flux
 
-#### **Mono**
+#### Mono
 **Mono** представляет 0 или 1 элемент:**
 
 ```java
@@ -381,14 +381,14 @@ Mono<String> delayedMono = Mono.just("Delayed")
 ```
 
 **Mono use cases:**
-- **Single result** — результат **database query** (**findById**)
+- **Single result** — результат **database query** (findById)
 - **Optional value** — может быть пустым или содержать значение
 - **Asynchronous computation** — результат длительной операции
 - **HTTP response** — тело **HTTP** ответа
 - **Configuration value** — получение конфигурационного параметра
 
-#### **Flux**
-**Flux** представляет 0 или N элементов (**поток**):**
+#### Flux
+**Flux** представляет 0 или N элементов (поток):**
 
 ```java
 // Пустой Flux (0 элементов)
@@ -421,9 +421,9 @@ Flux<String> errorFlux = Flux.error(new RuntimeException("Flux error"));
 - **Pagination** — постраничная загрузка данных
 - **Time series** — временные ряды данных
 
-### **Operators**
+### Operators
 
-#### **Transforming operators**
+#### Transforming operators
 
 **map()** — синхронная трансформация каждого элемента:**
 ```java
@@ -459,7 +459,7 @@ Flux<User> users = userIds.concatMap(id -> userRepository.findById(id));
 // Обрабатывает user 1, затем user 2, затем user 3 (порядок сохраняется)
 ```
 
-#### **Filtering operators**
+#### Filtering operators
 
 **filter()** — фильтрация элементов:**
 ```java
@@ -490,7 +490,7 @@ Flux<Integer> skip10 = Flux.range(1, 100).skip(10);
 // Результат: 11, 12, 13, ...
 ```
 
-#### **Combining operators**
+#### Combining operators
 
 **zip()** — комбинация элементов из нескольких потоков:**
 ```java
@@ -523,7 +523,7 @@ Flux<String> concatenated = Flux.concat(stream1, stream2);
 // Результат: A, B, 1, 2 (сначала stream1, затем stream2)
 ```
 
-#### **Error handling operators**
+#### Error handling operators
 
 **onErrorReturn()** — возвращение **fallback** значения при ошибке:**
 ```java
@@ -565,9 +565,9 @@ Flux<User> users = userIds
     });
 ```
 
-### **Schedulers**
+### Schedulers
 
-#### **publishOn**() — переключение **downstream execution**
+#### publishOn() — переключение downstream execution
 ```java
 // publishOn() — переключает поток выполнения для последующих операций
 Mono<String> result = Mono.fromCallable(() -> {
@@ -587,13 +587,13 @@ Mono<String> result = Mono.fromCallable(() -> {
 ```
 
 **Common schedulers:**
-- **Schedulers.immediate()** — текущий поток (**по умолчанию**)
+- **Schedulers.immediate()** — текущий поток (по умолчанию)
 - **Schedulers.single()** — **single reused thread**
-- **Schedulers.elastic()** — **elastic thread pool** (**для I/O операций**)
-- **Schedulers.parallel()** — **fixed thread pool** (**для `CPU-bound` операций**)
+- **Schedulers.elastic()** — **elastic thread pool** (для I/O операций)
+- **Schedulers.parallel()** — **fixed thread pool** (для `CPU-bound` операций)
 - **Schedulers.`boundedElastic()`** — **bounded elastic thread pool**
 
-#### **subscribeOn**() — переключение **upstream execution**
+#### subscribeOn() — переключение upstream execution
 ```java
 // subscribeOn() — влияет на поток выполнения всей цепочки вверх по потоку
 Flux<String> data = Flux.fromIterable(largeList)
@@ -605,15 +605,15 @@ Flux<String> data = Flux.fromIterable(largeList)
 ```
 
 **subscribeOn vs `publishOn`:**
-- **subscribeOn** — влияет на **upstream operators** (**до publishOn**)
-- **publishOn** — влияет на **downstream operators** (**после publishOn**)
+- **subscribeOn** — влияет на **upstream operators** (до publishOn)
+- **publishOn** — влияет на **downstream operators** (после publishOn)
 - **Можно использовать несколько publishOn** для разных фаз обработки
 
 ## Spring WebFlux архитектура
 
-### **HTTP Server adapters**
+### HTTP Server adapters
 
-#### **Netty** (**по умолчанию**)
+#### Netty (по умолчанию)
 ```java
 // Конфигурация Netty сервера для WebFlux
 @Configuration
@@ -651,7 +651,7 @@ public class NettyConfig {
 - **Scalability** — **handles thousands** of **concurrent connections**
 - **Customization** — **extensive configuration options**
 
-#### **Tomcat**/**Jetty**
+#### Tomcat/Jetty
 ```java
 // Конфигурация Tomcat сервера для WebFlux
 @Configuration
@@ -678,9 +678,9 @@ public class TomcatConfig {
 - **Management** — **standard servlet container management**
 - **Debugging** — **familiar servlet debugging tools**
 
-### **Codec configuration**
+### Codec configuration
 
-#### **Jackson JSON codec**
+#### Jackson JSON codec
 ```java
 // Конфигурация Jackson кодеков для JSON сериализации
 @Configuration
@@ -717,9 +717,9 @@ public class CodecConfig implements WebFluxConfigurer {
 - **Content negotiation** — выбор подходящего **codec** на основе **Content-Type**
 - **Streaming** — поддержка **streaming** для больших **payloads**
 
-### **Exception handling**
+### Exception handling
 
-#### **Global exception handler**
+#### Global exception handler
 ```java
 // Глобальный обработчик исключений для WebFlux
 @ControllerAdvice
@@ -758,11 +758,11 @@ public class GlobalExceptionHandler {
 4. **Error response** — **handler** возвращает **Mono**<**ResponseEntity**>
 5. **Response encoding** — **error response** сериализуется и отправляется клиенту
 
-## Функциональные **endpoints**
+## Функциональные endpoints
 
-### **RouterFunction**
+### RouterFunction
 
-#### **Basic routing**
+#### Basic routing
 ```java
 // Базовая маршрутизация с RouterFunction
 @Configuration
@@ -783,11 +783,11 @@ public class FunctionalRoutes {
 ```
 
 **RouterFunction components:**
-- **Request predicate** — условия для **matching** запроса (**GET, `POST`, path pattern**)
+- **Request predicate** — условия для **matching** запроса (GET, `POST`, path pattern)
 - **Handler function** — функция обработки запроса
 - **ServerResponse** — реактивный **HTTP response**
 
-#### **Advanced routing**
+#### Advanced routing
 ```java
 // Расширенная маршрутизация с условиями и фильтрами
 @Configuration
@@ -833,9 +833,9 @@ public class AdvancedRoutes {
 }
 ```
 
-### **Handler functions**
+### Handler functions
 
-#### **User handler**
+#### User handler
 ```java
 // Обработчик для функциональных эндпоинтов (без аннотаций)
 @Component
@@ -924,9 +924,9 @@ public class UserHandler {
 
 ## Аннотационные контроллеры
 
-### @**RestController**
+### @RestController
 
-#### **Basic controller**
+#### Basic controller
 ```java
 // Базовый REST контроллер с реактивными типами
 @RestController
@@ -982,9 +982,9 @@ public class UserController {
 - **@RequestBody** — десериализация **request body**
 - **@ResponseStatus** — **HTTP status code** для **response**
 
-### **Advanced controller features**
+### Advanced controller features
 
-#### **Request**/**response handling**
+#### Request/response handling
 ```java
 // Продвинутые возможности работы с запросами и ответами
 @RestController
@@ -1050,7 +1050,7 @@ public class AdvancedController {
 }
 ```
 
-#### **Validation** и **error handling**
+#### Validation и error handling
 ```java
 // Контроллер с Bean Validation (JSR-380)
 @RestController
@@ -1090,7 +1090,7 @@ public class ValidatedController {
 }
 ```
 
-#### **Custom response types**
+#### Custom response types
 ```java
 // Контроллер с кастомными типами ответов
 @RestController
@@ -1165,9 +1165,9 @@ public class PageResponse<T> {
 
 ## WebClient
 
-### **Basic WebClient**
+### Basic WebClient
 
-#### **Configuration**
+#### Configuration
 ```java
 // Конфигурация WebClient — реактивного HTTP клиента
 @Configuration
@@ -1220,13 +1220,13 @@ public class WebClientConfig {
 **WebClient configuration parameters:**
 - **Base URL** — базовый **URL** для всех запросов
 - **Default headers** — заголовки, добавляемые ко всем запросам
-- **Client connector** — **HTTP** клиент (**Netty по умолчанию**)
+- **Client connector** — **HTTP** клиент (Netty по умолчанию)
 - **Codecs** — сериализация/десериализация
 - **Filters** — перехватчики запросов/ответов
 
-### **HTTP methods**
+### HTTP methods
 
-#### **GET requests**
+#### GET requests
 ```java
 // Сервис для GET запросов через WebClient
 @Service
@@ -1285,7 +1285,7 @@ public class UserWebClientService {
 }
 ```
 
-#### **POST**/**PUT requests**
+#### POST/PUT requests
 ```java
 // Сервис для мутирующих запросов (POST, PUT, DELETE)
 @Service
@@ -1345,9 +1345,9 @@ public class UserMutationService {
 }
 ```
 
-### **Advanced WebClient features**
+### Advanced WebClient features
 
-#### **Error handling**
+#### Error handling
 ```java
 // Устойчивый к ошибкам сервис с retry, timeout, fallback
 @Service
@@ -1413,7 +1413,7 @@ public class ResilientWebClientService {
 }
 ```
 
-#### **File upload**/**download**
+#### File upload/download
 ```java
 // Сервис для работы с файлами через WebClient
 @Service
@@ -1478,9 +1478,9 @@ public class FileWebClientService {
 
 ## Обработка ошибок
 
-### **Reactive exception handling**
+### Reactive exception handling
 
-#### **Global error handler**
+#### Global error handler
 ```java
 // Глобальный обработчик ошибок через WebExceptionHandler
 @Configuration
@@ -1521,7 +1521,7 @@ public class ErrorHandlingConfig {
 }
 ```
 
-#### **Controller-level error handling**
+#### Controller-level error handling
 ```java
 // Контроллер с различными паттернами обработки ошибок
 @RestController
@@ -1597,9 +1597,9 @@ public class ErrorHandlingController {
 
 ## Backpressure
 
-### **Understanding backpressure**
+### Understanding backpressure
 
-#### **What** is **backpressure**?
+#### What is backpressure?
 **Backpressure** — это механизм контроля скорости производства данных потребителем. В реактивных системах **producer** может генерировать данные быстрее, чем **consumer** может их обработать. **Backpressure** позволяет **consumer**'у сигнализировать **producer**'у о снижении скорости.
 
 ```java
@@ -1615,7 +1615,7 @@ Flux.interval(Duration.ofMillis(1))
     .subscribe(System.out::println);  // Потребитель контролирует поток
 ```
 
-#### **Backpressure strategies**
+#### Backpressure strategies
 
 **Buffer** — буферизация элементов:**
 ```java
@@ -1674,9 +1674,9 @@ Flux<String> error = Flux.interval(Duration.ofMillis(1))
     );
 ```
 
-### **Implementing backpressure**
+### Implementing backpressure
 
-#### **Custom producer with backpressure**
+#### Custom producer with backpressure
 ```java
 // Кастомный producer с поддержкой backpressure
 public class BackpressureAwareProducer {
@@ -1716,7 +1716,7 @@ public class BackpressureAwareProducer {
 }
 ```
 
-#### **Consumer-controlled backpressure**
+#### Consumer-controlled backpressure
 ```java
 // Consumer с ручным контролем backpressure
 public class BackpressureControlledConsumer {
@@ -1773,9 +1773,9 @@ public class BackpressureControlledConsumer {
 
 ## Тестирование
 
-### **Unit testing reactive code**
+### Unit testing reactive code
 
-#### **Testing Mono**/**Flux**
+#### Testing Mono/Flux
 ```java
 // Тестирование реактивного сервиса с использованием StepVerifier
 @SpringBootTest
@@ -1859,7 +1859,7 @@ public class ReactiveServiceTest {
 }
 ```
 
-#### **Testing with virtual time**
+#### Testing with virtual time
 ```java
 // Тестирование time-based операций с виртуальным временем
 @SpringBootTest
@@ -1893,9 +1893,9 @@ public class TimeBasedTest {
 }
 ```
 
-### **Integration testing**
+### Integration testing
 
-#### **Testing WebFlux endpoints**
+#### Testing WebFlux endpoints
 ```java
 // Интеграционные тесты WebFlux с WebTestClient
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -2000,7 +2000,7 @@ public class WebFluxIntegrationTest {
 }
 ```
 
-#### **Testing WebClient**
+#### Testing WebClient
 ```java
 // Тестирование WebClient с моками
 @SpringBootTest
@@ -2068,9 +2068,9 @@ public class WebClientTest {
 
 ## Производительность и оптимизация
 
-### **Reactor optimization**
+### Reactor optimization
 
-#### **Operator fusion**
+#### Operator fusion
 ```java
 // Несовмещённые операторы (каждый создаёт промежуточный объект)
 Flux<Integer> nonFused = Flux.range(1, 100)
@@ -2086,7 +2086,7 @@ Flux<Integer> fused = Flux.range(1, 100)
     .share();  // Включает multicasting для лучшей производительности
 ```
 
-#### **Parallel processing**
+#### Parallel processing
 ```java
 // Параллельная обработка на нескольких потоках
 Flux.range(1, 100)
@@ -2097,7 +2097,7 @@ Flux.range(1, 100)
     .subscribe(result -> processResult(result));
 ```
 
-#### **Batching operations**
+#### Batching operations
 ```java
 // Пакетные операции с базой данных
 Flux<User> users = userRepository.findAll();
@@ -2113,9 +2113,9 @@ users.buffer(50)  // Группировка в пакеты по 50 элемен
         System.out.println("Processed " + totalProcessed + " users"));
 ```
 
-### **Connection pooling**
+### Connection pooling
 
-#### **Reactor Netty configuration**
+#### Reactor Netty configuration
 ```java
 // Оптимизированная конфигурация WebClient с пулом соединений
 @Configuration
@@ -2147,9 +2147,9 @@ public class OptimizedWebClientConfig {
 }
 ```
 
-### **Memory optimization**
+### Memory optimization
 
-#### **Object pooling**
+#### Object pooling
 ```java
 // Оптимизация использования памяти
 @Configuration
@@ -2177,7 +2177,7 @@ public class MemoryOptimizationConfig {
 }
 ```
 
-#### **Streaming responses**
+#### Streaming responses
 ```java
 // Контроллер для стриминга данных без загрузки в память целиком
 @RestController
@@ -2211,9 +2211,9 @@ public class StreamingController {
 
 ## Production deployment
 
-### **Configuration management**
+### Configuration management
 
-#### **Environment-specific configuration**
+#### Environment-specific configuration
 ```yaml
 # application-prod.yaml
 spring:
@@ -2251,7 +2251,7 @@ management:
         enabled: true
 ```
 
-#### **Docker configuration**
+#### Docker configuration
 ```dockerfile
 FROM openjdk:17-jre-slim
 
@@ -2286,7 +2286,7 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 ```
 
-#### **Kubernetes deployment**
+#### Kubernetes deployment
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -2352,9 +2352,9 @@ spec:
   type: LoadBalancer
 ```
 
-### **Monitoring** и **alerting**
+### Monitoring и alerting
 
-#### **Micrometer metrics**
+#### Micrometer metrics
 ```java
 // Конфигурация метрик с Micrometer
 @Configuration
@@ -2390,7 +2390,7 @@ public class MetricsConfig {
 }
 ```
 
-#### **Custom metrics**
+#### Custom metrics
 ```java
 // Сервис с кастомными метриками для мониторинга
 @Service
@@ -2444,9 +2444,9 @@ public class ReactiveMetricsService {
 
 ## Лучшие практики
 
-### **Application design**
+### Application design
 
-#### 1. **Choose appropriate return types**
+#### 1. Choose appropriate return types
 ```java
 // Выбор правильного возвращаемого типа
 @RestController
@@ -2482,7 +2482,7 @@ public class ReturnTypeController {
 }
 ```
 
-#### 2. **Handle blocking operations properly**
+#### 2. Handle blocking operations properly
 ```java
 // Правильная обработка блокирующих операций
 @Service
@@ -2509,7 +2509,7 @@ public class BlockingOperationService {
 }
 ```
 
-#### 3. **Error handling patterns**
+#### 3. Error handling patterns
 ```java
 // Паттерны обработки ошибок в реактивном коде
 @Service
@@ -2550,9 +2550,9 @@ public class ErrorHandlingService {
 }
 ```
 
-### **Performance optimization**
+### Performance optimization
 
-#### 4. **Connection and thread management**
+#### 4. Connection and thread management
 ```java
 // Управление соединениями и потоками для производительности
 @Configuration
@@ -2598,7 +2598,7 @@ public class PerformanceConfig {
 }
 ```
 
-#### 5. **Caching strategies**
+#### 5. Caching strategies
 ```java
 // Конфигурация кэширования
 @Configuration
@@ -2647,9 +2647,9 @@ public class CachedUserService {
 }
 ```
 
-### **Testing strategies**
+### Testing strategies
 
-#### 6. **Test data management**
+#### 6. Test data management
 ```java
 // Управление тестовыми данными в реактивных тестах
 @SpringBootTest
@@ -2702,7 +2702,7 @@ public class TestDataManagementTest {
 }
 ```
 
-#### 7. **Integration test patterns**
+#### 7. Integration test patterns
 ```java
 // Комплексные интеграционные тесты
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -2786,9 +2786,9 @@ public class ComprehensiveIntegrationTest {
 }
 ```
 
-### **Operational practices**
+### Operational practices
 
-#### 8. **Health checks and monitoring**
+#### 8. Health checks and monitoring
 ```java
 // Реактивный health indicator для Spring Actuator
 @Component
@@ -2865,7 +2865,7 @@ public class ReactiveHealthIndicator implements ReactiveHealthIndicator {
 
 ### Распространенные проблемы
 
-#### **Thread blocking issues**
+#### Thread blocking issues
 ```text
 java.lang.IllegalStateException: block()/blockFirst()/blockLast() are blocking
 ```
@@ -2892,7 +2892,7 @@ void testBlockingForTest() {
 }
 ```
 
-#### **Memory leaks**
+#### Memory leaks
 ```text
 OutOfMemoryError: Java heap space
 ```
@@ -2918,7 +2918,7 @@ Flux<User> streamingUsers = userRepository.findAll()
     .flatMap(batch -> processBatch(batch), 2);  // Concurrent batch processing
 ```
 
-#### **Slow performance**
+#### Slow performance
 ```text
 Requests taking 5+ seconds to complete
 ```
@@ -2949,9 +2949,9 @@ public Mono<User> getUserByIdCached(Long id) {
 }
 ```
 
-### **Debug techniques**
+### Debug techniques
 
-#### **Reactor debugging**
+#### Reactor debugging
 ```java
 @Configuration
 public class DebugConfig {
@@ -3003,7 +3003,7 @@ public class DebugOperator {
 }
 ```
 
-#### **Performance monitoring**
+#### Performance monitoring
 ```java
 @Service
 public class PerformanceMonitor {
@@ -3075,19 +3075,19 @@ public class PerformanceMonitor {
 
 ### Архитектурные преимущества:
 
-#### **Performance**:
+#### Performance:
 - **High Concurrency** — тысячи одновременных подключений
 - **Resource Efficiency** — минимальное потребление памяти/**CPU**
 - **Elastic Scaling** — автоматическое масштабирование
 - **Low Latency** — быстрая обработка запросов
 
-#### **Scalability**:
+#### Scalability:
 - **Non-blocking I/O** — эффективное использование потоков
 - **Backpressure** — предотвращение перегрузки
 - **Reactive Streams** — стандартизированная обработка данных
 - **Event-driven** — асинхронная обработка событий
 
-### Когда использовать **WebFlux**:
+### Когда использовать WebFlux:
 
 ✅ **High-throughput applications** — приложения с высокой нагрузкой
 ✅ **Microservices** — асинхронная коммуникация между сервисами
@@ -3107,7 +3107,7 @@ public class PerformanceMonitor {
 ❌ **File uploads** — **Spring MVC** лучше для больших файлов
 ❌ **Synchronous clients** — требуют адаптации
 
-### **Production considerations**:
+### Production considerations:
 
 1. **Thread pool tuning** — правильная конфигурация **schedulers**
 2. **Backpressure configuration** — управление потоками данных
@@ -3117,7 +3117,7 @@ public class PerformanceMonitor {
 6. **Testing** — **unit** и **integration** тесты реактивного кода
 7. **Deployment** — **container** и **orchestration** конфигурации
 
-### **Best practices summary**:
+### Best practices summary:
 
 1. **Choose reactive databases** — используйте **reactive clients**
 2. **Handle blocking operations** — **offload** с **subscribeOn**
@@ -3130,4 +3130,4 @@ public class PerformanceMonitor {
 
 **Spring WebFlux** представляет собой будущее веб-разработки в экосистеме **Spring**. Он позволяет создавать высокопроизводительные, масштабируемые приложения, которые могут эффективно работать под высокой нагрузкой. Правильное использование реактивного программирования открывает новые возможности для создания современных **distributed** систем. 🚀
 
-**Далее: `Spring Integration` (**enterprise integration patterns**)**
+**Далее: `Spring Integration` (enterprise integration patterns)**

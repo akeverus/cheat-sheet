@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MongoDB**: **Aggregation Framework** — Полное руководство по агрегации данных
+# MongoDB: Aggregation Framework — Полное руководство по агрегации данных
 
 Комплексное руководство по **Aggregation Framework** в **MongoDB**: стадии, операторы, оптимизация и практические примеры.
 
@@ -54,7 +54,7 @@ updated: "2026-02-11"
   - [Мониторинг и отладка](#мониторинг-и-отладка)
 - [Решение проблем](#решение-проблем)
 
-## Введение в **Aggregation Framework**
+## Введение в Aggregation Framework
 
 **Aggregation Framework** — это инструмент **MongoDB** для обработки, анализа и трансформации данных. Он позволяет выполнять сложные аналитические запросы, подобные **SQL GROUP** `BY`, **JOIN** и другим операциям реляционных баз данных.
 
@@ -69,7 +69,7 @@ updated: "2026-02-11"
                                                         Data
 ```
 
-### Преимущества **Aggregation Framework**
+### Преимущества Aggregation Framework
 
 1. **Мощная аналитика**: Сложные вычисления и трансформации данных
 2. **Производительность**: Оптимизированные операции на сервере
@@ -77,7 +77,7 @@ updated: "2026-02-11"
 4. **Масштабируемость**: Работает с большими наборами данных
 5. **JSON-подобный синтаксис**: Удобство для разработчиков
 
-### Когда использовать **Aggregation**
+### Когда использовать Aggregation
 
 - **Аналитика и отчетность**: Группировка, суммирование, средние значения
 - **Трансформация данных**: Изменение структуры документов
@@ -85,11 +85,11 @@ updated: "2026-02-11"
 - **Комплексная фильтрация**: Многоуровневая фильтрация с вычислениями
 - **Агрегация временных рядов**: Анализ данных по времени
 
-## Основы **Aggregation Pipeline**
+## Основы Aggregation Pipeline
 
-### Структура **Pipeline**
+### Структура Pipeline
 
-**Aggregation pipeline** состоит из последовательности стадий (**stages**), каждая из которых получает на вход документы, обрабатывает их и передает результат следующей стадии.
+**Aggregation pipeline** состоит из последовательности стадий (stages), каждая из которых получает на вход документы, обрабатывает их и передает результат следующей стадии.
 
 ```java
 @Service
@@ -181,7 +181,7 @@ public class OrderAggregationService {
 
 ## Стадии агрегации
 
-### 1. $**match** — Фильтрация документов
+### 1. $match — Фильтрация документов
 
 Фильтрует документы по условиям. Аналогично **find**(), но работает внутри **pipeline**.
 
@@ -261,7 +261,7 @@ public class AggregationStagesService {
 }
 ```
 
-### 2. $**group** — Группировка документов
+### 2. $group — Группировка документов
 
 Группирует документы по ключу и выполняет агрегатные функции.
 
@@ -347,7 +347,7 @@ public class GroupAggregationService {
 
 ### Остальные стадии агрегации
 
-#### $**project** — Проекция полей
+#### $project — Проекция полей
 
 ```java
 @Service
@@ -384,7 +384,7 @@ public class ProjectAggregationService {
 }
 ```
 
-#### $**addFields** — Добавление полей
+#### $addFields — Добавление полей
 
 ```java
 @Service
@@ -412,7 +412,7 @@ public class AddFieldsAggregationService {
 }
 ```
 
-#### $**unwind** — Разворачивание массивов
+#### $unwind — Разворачивание массивов
 
 ```java
 @Service
@@ -446,7 +446,7 @@ public class UnwindAggregationService {
 }
 ```
 
-#### $**lookup** — **JOIN** операции
+#### $lookup — JOIN операции
 
 ```java
 @Service
@@ -489,7 +489,7 @@ public class LookupAggregationService {
 }
 ```
 
-#### $**facet** — Множественные агрегации
+#### $facet — Множественные агрегации
 
 ```java
 @Service
@@ -613,10 +613,10 @@ public class ArithmeticOperatorsService {
     **public List**<**Document**> **sortByCategoryThenPrice**() {
         **Aggregation aggregation** = **Aggregation.newAggregation**(
             **Aggregation.sort(**Sort.by(`Sort`.`Direction`.`ASC`, "category"**)
-                .**and(**Sort.`Direction`.`DESC`, "price"**))
+                .**and(Sort.`Direction`.`DESC`, "price"))
         );
 
-        **return mongoTemplate.aggregate(**aggregation, "products", `Document`.class**)
+        **return mongoTemplate.aggregate(aggregation, "products", `Document`.class)
                           .**getMappedResults**();
     }
 
@@ -624,8 +624,8 @@ public class ArithmeticOperatorsService {
     **public List**<**Document**> **topSellingProducts**() {
         **Aggregation aggregation** = **Aggregation.newAggregation**(
             // Группировка
-            **Aggregation.group(**"`productId`"**)
-                .**sum(**"quantity"**).as(**"`totalSold`"**),
+            **Aggregation.group("`productId`")
+                .**sum("quantity").as("`totalSold`"),
 
             // Сортировка по продажам
             **Aggregation.sort(**Sort.by(`Sort`.`Direction`.`DESC`, "`totalSold`"**)),
@@ -634,7 +634,7 @@ public class ArithmeticOperatorsService {
             **Aggregation.limit**(10)
         );
 
-        **return mongoTemplate.aggregate(**aggregation, "`order_items`", `Document`.class**)
+        **return mongoTemplate.aggregate(aggregation, "`order_items`", `Document`.class)
                           .**getMappedResults**();
     }
 }

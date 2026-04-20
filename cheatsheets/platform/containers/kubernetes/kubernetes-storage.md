@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Kubernetes Storage**
+# Kubernetes Storage
 
 Хранение данных в **Kubernetes** — это критически важная часть платформы, обеспечивающая **persistence** для **stateful** приложений. **Kubernetes** предоставляет абстракции для различных типов **storage**, от локальных дисков до облачных решений, с возможностью динамического **provisioning** и управления жизненным циклом.
 
@@ -61,11 +61,11 @@ updated: "2026-02-11"
 - [Лучшие практики](#лучшие-практики)
 - [См. также](#см-также)
 
-## **Volumes**
+## Volumes
 
-### **EmptyDir**
+### EmptyDir
 
-Ниже — пример **Pod** с **EmptyDir volume** (**YAML**).
+Ниже — пример **Pod** с **EmptyDir volume** (YAML).
 ```yaml
 # EmptyDir — временное хранилище на узле (жизненный цикл пода)
 apiVersion: v1
@@ -103,7 +103,7 @@ spec:
       sizeLimit: 1Gi  # Ограничение размера
 ```
 
-### **HostPath**
+### HostPath
 ```yaml
 # HostPath - монтирование директории с узла
 apiVersion: v1
@@ -138,9 +138,9 @@ hostPath:
   type: File           # Файл (не директория)
 ```
 
-### **Persistent Volumes** и **Claims**
+### Persistent Volumes и Claims
 
-#### **Static Provisioning**
+#### Static Provisioning
 ```yaml
 # PersistentVolume (PV)
 apiVersion: v1
@@ -199,7 +199,7 @@ spec:
       claimName: static-pvc
 ```
 
-#### **Dynamic Provisioning**
+#### Dynamic Provisioning
 ```yaml
 # StorageClass для dynamic provisioning
 apiVersion: storage.k8s.io/v1
@@ -234,9 +234,9 @@ kubectl get pvc
 kubectl describe pvc dynamic-pvc
 ```
 
-## **Storage Classes**
+## Storage Classes
 
-### **AWS EBS**
+### AWS EBS
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -255,7 +255,7 @@ allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-### **GCP Persistent Disk**
+### GCP Persistent Disk
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -271,7 +271,7 @@ allowVolumeExpansion: true
 volumeBindingMode: Immediate
 ```
 
-### **Azure Disk**
+### Azure Disk
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -287,7 +287,7 @@ allowVolumeExpansion: true
 volumeBindingMode: Immediate
 ```
 
-### **NFS**
+### NFS
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -301,9 +301,9 @@ reclaimPolicy: Delete
 allowVolumeExpansion: false
 ```
 
-## **StatefulSets**
+## StatefulSets
 
-### Базовый **StatefulSet**
+### Базовый StatefulSet
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -340,7 +340,7 @@ spec:
           storage: 10Gi
 ```
 
-### **StatefulSet** с **Headless Service**
+### StatefulSet с Headless Service
 ```yaml
 # Headless Service для StatefulSet
 apiVersion: v1
@@ -406,7 +406,7 @@ spec:
           storage: 1Gi
 ```
 
-### **Rolling Updates** в **StatefulSet**
+### Rolling Updates в StatefulSet
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -435,9 +435,9 @@ spec:
           name: web
 ```
 
-## **Volume Snapshots**
+## Volume Snapshots
 
-### **CSI Volume Snapshots**
+### CSI Volume Snapshots
 ```yaml
 # VolumeSnapshotClass
 apiVersion: snapshot.storage.k8s.io/v1
@@ -478,9 +478,9 @@ spec:
       storage: 100Gi
 ```
 
-## **Storage** для разных **workload** паттернов
+## Storage для разных workload паттернов
 
-### **Database Storage Pattern**
+### Database Storage Pattern
 ```yaml
 # PostgreSQL с persistent storage
 apiVersion: apps/v1
@@ -563,7 +563,7 @@ spec:
           storage: 500Gi
 ```
 
-### **Shared Storage Pattern**
+### Shared Storage Pattern
 ```yaml
 # NFS для shared storage
 apiVersion: v1
@@ -609,7 +609,7 @@ spec:
           claimName: shared-pvc
 ```
 
-### **Local Storage Pattern**
+### Local Storage Pattern
 ```yaml
 # Local volumes для high-performance
 apiVersion: v1
@@ -669,9 +669,9 @@ spec:
           path: /mnt/disks
 ```
 
-## **CSI Drivers**
+## CSI Drivers
 
-### **CSI Architecture**
+### CSI Architecture
 ```yaml
 # CSI Driver deployment
 apiVersion: apps/v1
@@ -722,7 +722,7 @@ spec:
           type: DirectoryOrCreate
 ```
 
-### **Custom CSI Driver**
+### Custom CSI Driver
 ```go
 // Пример CSI driver на Go
 package main
@@ -785,9 +785,9 @@ func main() {
 }
 ```
 
-## **Storage Security**
+## Storage Security
 
-### **Volume Encryption**
+### Volume Encryption
 ```yaml
 # StorageClass с encryption
 apiVersion: storage.k8s.io/v1
@@ -815,7 +815,7 @@ spec:
       storage: 50Gi
 ```
 
-### **RBAC** для **Storage**
+### RBAC для Storage
 ```yaml
 # Role для storage operations
 apiVersion: rbac.authorization.k8s.io/v1
@@ -850,9 +850,9 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-## **Monitoring** и **Troubleshooting**
+## Monitoring и Troubleshooting
 
-### **Storage Metrics**
+### Storage Metrics
 ```yaml
 # Prometheus metrics для storage
 apiVersion: v1
@@ -912,7 +912,7 @@ data:
 }
 ```
 
-### Диагностика проблем **storage**
+### Диагностика проблем storage
 ```bash
 # Проверка состояния PV/PVC
 kubectl get pv,pvc
@@ -944,9 +944,9 @@ kubectl describe pod csi-provisioner-xxxxx
 kubectl logs -n kube-system csi-provisioner-xxxxx --previous
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Storage Performance Tuning**
+### Storage Performance Tuning
 ```yaml
 # StorageClass для high-performance
 apiVersion: storage.k8s.io/v1
@@ -993,7 +993,7 @@ spec:
     effect: NoSchedule
 ```
 
-### **Caching Strategies**
+### Caching Strategies
 ```yaml
 # Redis cache с persistent storage
 apiVersion: apps/v1
@@ -1051,9 +1051,9 @@ spec:
       storage: 50Gi
 ```
 
-## **Backup** и **Disaster Recovery**
+## Backup и Disaster Recovery
 
-### **Backup** стратегии
+### Backup стратегии
 ```yaml
 # Velero для backup Kubernetes resources
 apiVersion: velero.io/v1
@@ -1105,7 +1105,7 @@ spec:
           restartPolicy: OnFailure
 ```
 
-### **Disaster Recovery**
+### Disaster Recovery
 ```yaml
 # Multi-region backup strategy
 apiVersion: velero.io/v1
@@ -1140,10 +1140,10 @@ spec:
 ## Лучшие практики
 
 - **Выбор типа тома: EmptyDir** для кэша и временных данных; **PVC** для постоянных данных; **ConfigMap**/**Secret** для конфигурации; не храните секреты в обычных томах.
-- **StorageClass:** задавайте **default StorageClass**; используйте **reclaim policy** (**Retain для критичных данных**); подбирайте **provisioner** под облако или **on-premise**.
+- **StorageClass:** задавайте **default StorageClass**; используйте **reclaim policy** (Retain для критичных данных); подбирайте **provisioner** под облако или **on-premise**.
 - **StatefulSet:** используйте для БД и **stateful**-приложений; именованные тома и стабильная сетевая идентичность; аккуратно с удалением **PVC** при удалении **StatefulSet**.
 - **Бэкапы:** регулярные снапшоты **Volume Snapshot**; тесты восстановления; для критичных данных — репликация на другой кластер или облако.
-- **Безопасность:** ограничение доступа к **CSI** и томам по **RBAC**; шифрование томов (**at-rest**) где возможно; не монтировать чувствительные тома в **read-only** где не нужно.
+- **Безопасность:** ограничение доступа к **CSI** и томам по **RBAC**; шифрование томов (at-rest) где возможно; не монтировать чувствительные тома в **read-only** где не нужно.
 ## См. также
 - [[kubernetes-advanced|Kubernetes Advanced]] — продвинутые концепции **K8s**
 - [[kubernetes-networking|Kubernetes Networking]] — сетевая подсистема

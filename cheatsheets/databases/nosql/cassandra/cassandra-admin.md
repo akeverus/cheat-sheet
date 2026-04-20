@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cassandra**: Администрирование — Управление кластером и эксплуатация
+# Cassandra: Администрирование — Управление кластером и эксплуатация
 
 Комплексное руководство по администрированию **Apache Cassandra**: управление кластером, обслуживание, мониторинг, резервное копирование и восстановление в **production** средах.
 
@@ -203,7 +203,7 @@ updated: "2026-02-11"
 
 #### Статус кластера
 
-Команды **nodetool** для проверки статуса кластера **Cassandra** (**bash**).
+Команды **nodetool** для проверки статуса кластера **Cassandra** (bash).
 
 ```bash
 # Проверка статуса всех узлов
@@ -481,7 +481,7 @@ nodetool compact
 
 ### Настройка мониторинга
 
-#### **Prometheus** + **Grafana**
+#### Prometheus + Grafana
 ```yaml
 # prometheus.yml
 global:
@@ -500,7 +500,7 @@ scrape_configs:
     scrape_interval: 30s
 ```
 
-#### **Cassandra JMX Exporter**
+#### Cassandra JMX Exporter
 ```yaml
 # JMX Exporter configuration
 startDelaySeconds: 0
@@ -524,7 +524,7 @@ rules:
     type: GAUGE
 ```
 
-#### **Grafana Dashboard**
+#### Grafana Dashboard
 ```json
 {
   "dashboard": {
@@ -672,7 +672,7 @@ public class SystemMetricsMonitor {
 }
 ```
 
-#### **Cassandra**-специфичные метрики
+#### Cassandra-специфичные метрики
 ```java
 @Service
 public class CassandraMetricsMonitor {
@@ -788,7 +788,7 @@ public class CassandraMetricsMonitor {
 
 ### Конфигурационные файлы
 
-#### **cassandra.yaml**
+#### cassandra.yaml
 ```yaml
 # Основные параметры кластера
 cluster_name: 'Production Cluster'
@@ -827,7 +827,7 @@ compaction_throughput_mb_per_sec: 64
 stream_throughput_outbound_megabits_per_sec: 200
 ```
 
-#### **jvm.options**
+#### jvm.options
 ```bash
 # Heap settings
 -Xms8g
@@ -1102,7 +1102,7 @@ sudo systemctl restart cassandra
 nodetool status
 ```
 
-#### **Rolling restart** кластера
+#### Rolling restart кластера
 ```java
 @Service
 public class RollingRestartManager {
@@ -1263,9 +1263,9 @@ enum RestartReason {
 
 ## Обслуживание и ремонт
 
-### **Repair** операции
+### Repair операции
 
-#### Автоматизированный **repair**
+#### Автоматизированный repair
 ```java
 @Service
 public class RepairScheduler {
@@ -1408,9 +1408,9 @@ class RepairHistory {
 }
 ```
 
-### **Compaction** управление
+### Compaction управление
 
-#### Мониторинг **compaction**
+#### Мониторинг compaction
 ```bash
 # Статистика compaction
 nodetool compactionstats
@@ -1425,7 +1425,7 @@ nodetool stop COMPACTION <compaction_id>
 nodetool compact
 ```
 
-#### Оптимизация **compaction**
+#### Оптимизация compaction
 ```java
 @Service
 public class CompactionOptimizer {
@@ -1558,9 +1558,9 @@ class CompactionOptimization {
 
 ## Резервное копирование
 
-### Стратегии **backup**
+### Стратегии backup
 
-#### Полное **backup** с **Medusa**
+#### Полное backup с Medusa
 ```yaml
 # /etc/medusa/medusa.ini
 [cassandra]
@@ -1585,7 +1585,7 @@ grpc_enabled = true
 grpc_port = 50051
 ```
 
-#### Создание **backup**
+#### Создание backup
 ```bash
 # Создание полного backup
 medusa backup --name full_backup_$(date +%Y%m%d)
@@ -1600,7 +1600,7 @@ medusa list-backups
 medusa status
 ```
 
-#### Автоматизированное **backup**
+#### Автоматизированное backup
 ```java
 @Service
 public class AutomatedBackupService {
@@ -1755,7 +1755,7 @@ class BackupInfo {
 }
 ```
 
-### Восстановление из **backup**
+### Восстановление из backup
 
 #### Процесс восстановления
 ```bash
@@ -1882,7 +1882,7 @@ public class BackupRestoreTester {
 
 ## Восстановление после сбоев
 
-### **Node Failure Recovery**
+### Node Failure Recovery
 
 #### Автоматическое восстановление
 ```java
@@ -2065,7 +2065,7 @@ enum RecoveryStrategy {
 }
 ```
 
-### **Data Center Recovery**
+### Data Center Recovery
 
 #### Восстановление датацентра
 ```java
@@ -2406,7 +2406,7 @@ public class RoleManagementService {
 
 ### Шифрование данных
 
-#### Настройка **SSL**/**TLS**
+#### Настройка SSL/TLS
 ```yaml
 # cassandra.yaml - Client encryption
 client_encryption_options:
@@ -2449,7 +2449,7 @@ keytool -import -alias cassandra -file cassandra.crt -keystore cassandra.trustst
 keytool -list -keystore cassandra.keystore -storepass keystore_password
 ```
 
-## Аудит и **compliance**
+## Аудит и compliance
 
 ### Аудит доступа к данным
 
@@ -2466,7 +2466,7 @@ role_management_options:
     mode: internal
 ```
 
-#### Анализ **audit** логов
+#### Анализ audit логов
 ```java
 @Service
 public class AuditLogAnalyzer {
@@ -2879,7 +2879,7 @@ class UpgradePlan {
 
 ### Тестирование после обновления
 
-#### **Post-upgrade validation**
+#### Post-upgrade validation
 ```java
 @Service
 public class PostUpgradeValidator {
@@ -3022,7 +3022,7 @@ class UpgradeValidationResult {
 ### Организационные практики
 
 #### 1. Роли и обязанности
-- **Database `Administrator` (**DBA**)**: Управление кластером, оптимизация, **troubleshooting**
+- **Database `Administrator` (DBA)**: Управление кластером, оптимизация, **troubleshooting**
 - **DevOps Engineer**: Автоматизация, CI/CD, инфраструктура
 - **Application Developer**: Оптимизация запросов, моделирование данных
 - **Security Officer**: Безопасность, **compliance**, аудит
@@ -3039,35 +3039,35 @@ class UpgradeValidationResult {
 - **Configuration Inventory**: Все настройки с обоснованиями
 - **Incident History**: Уроки из прошлых инцидентов
 
-### Технические **best practices**
+### Технические best practices
 
-#### 1. **Capacity Planning**
+#### 1. Capacity Planning
 - **Monitor Growth**: Запросы, данные, пользователи
 - **Plan Ahead**: 6-12 месяцев для **major** изменений
 - **Right-size Resources**: Не **over-provision**, но и не **under-provision**
 - **Cost Optimization**: **Balance** между производительностью и стоимостью
 
-#### 2. **High Availability**
+#### 2. High Availability
 - **Multiple `Data` Centers**: Для **disaster recovery**
 - **Replication Factor**: Минимум 3 для **production**
 - **Network Redundancy**: **Multiple network paths**
 - **Automated Failover**: Быстрое восстановление после сбоев
 
-#### 3. **Security First**
+#### 3. Security First
 - **Defense in Depth**: Многоуровневая защита
 - **Principle of `Least` Privilege**: Минимальные разрешения
 - **Encryption Everywhere**: **Data** at **rest**, in **transit**, in **use**
 - **Regular Audits**: Проверка **compliance** и **security**
 
-#### 4. **Performance Culture**
+#### 4. Performance Culture
 - **Set Benchmarks**: Измеряй до и после изменений
 - **Monitor Trends**: Не только текущие метрики
 - **Proactive Optimization**: Не жди проблем
 - **Share Knowledge**: Документируй и обучай команду
 
-### Мониторинг и **alerting**
+### Мониторинг и alerting
 
-#### 1. **Key Metrics Dashboard**
+#### 1. Key Metrics Dashboard
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Cassandra Dashboard                       │
@@ -3086,13 +3086,13 @@ class UpgradeValidationResult {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-#### 2. **Alert Hierarchy**
+#### 2. Alert Hierarchy
 - **Critical**: **Cluster down**, **data loss**, **security breach**
 - **High**: **Node failure**, **high latency**, **disk full**
 - **Medium**: **Performance degradation**, **configuration drift**
 - **Low**: **Warning conditions**, **maintenance reminders**
 
-#### 3. **Automated Response**
+#### 3. Automated Response
 - **Self-healing**: Автоматическое восстановление **minor issues**
 - **Escalation**: Уведомление нужных людей в зависимости от **severity**
 - **Runbooks**: Автоматизированные процедуры для **common issues**
@@ -3114,14 +3114,14 @@ class UpgradeValidationResult {
 3. **Capacity planning** — прогнозирование и планирование роста
 4. **Change control** — процессы **approval** для изменений
 
-### **Incident management**:
+### Incident management:
 
 1. **Failure detection** — автоматическое обнаружение проблем
 2. **Recovery procedures** — документированные планы восстановления
 3. **Root cause analysis** — анализ причин инцидентов
 4. **Prevention** — меры по предотвращению повторения проблем
 
-### **Best practices**:
+### Best practices:
 
 1. **Automation** — скрипты и инструменты для **routine** задач
 2. **Documentation** — подробная документация всех процедур

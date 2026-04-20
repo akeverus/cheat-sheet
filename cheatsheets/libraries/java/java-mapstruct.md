@@ -513,14 +513,14 @@ public interface UserMapper {
 
 ## Лучшие практики
 
-- **`unmappedTargetPolicy = ERROR`** — обязательно для production. Защищает от забытых полей.
+- `unmappedTargetPolicy = ERROR` — обязательно для production. Защищает от забытых полей.
 - **Компонентная модель Spring** — избавляет от статичных фабрик, упрощает тесты.
 - **Отдельные DTO для create / update / read** — разные формы маппинга без groups.
 - **Избегай `expression` для сложной логики** — вынеси в default method + `qualifiedByName`.
 - **`@MapperConfig` для общих настроек** — не дублируй `componentModel` и policy.
 - **Проверяй сгенерированный код** — `build/generated/sources/annotationProcessor/`. Помогает понять, что именно делает маппер.
 - **Не маппь всё подряд — только DTO ↔ entity / DTO ↔ DTO.** Бизнес-логике маппер не нужен.
-- **`@BeanMapping(ignoreByDefault = true)`** — явный whitelist полей для public DTO, меньше утечек данных.
+- `@BeanMapping(ignoreByDefault = true)` — явный whitelist полей для public DTO, меньше утечек данных.
 - **Тестируй мапперы как обычные классы** — `UserMapperImpl` — обычный Java-класс без мокирования.
 
 ```java

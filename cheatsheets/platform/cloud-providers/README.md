@@ -9,17 +9,17 @@ updated: "2026-02-11"
 ---
 # Cloud providers
 
-**AWS:** [basics](aws-basics.md) · [IAM](aws-iam.md) · [networking](aws-networking.md) · [services](aws-services.md)
+**AWS:** [[aws-basics|basics]] · [[aws-iam|IAM]] · [[aws-networking|networking]] · [[aws-services|services]]
 
-**Azure:** [basics](azure-basics.md) · [networking](azure-networking.md) · [services](azure-services.md)
+**Azure:** [[azure-basics|basics]] · [[azure-networking|networking]] · [[azure-services|services]]
 
-**GCP:** [basics](gcp-basics.md) · [services](gcp-services.md)
+**GCP:** [[gcp-basics|basics]] · [[gcp-services|services]]
 
-**Kubernetes:** [kubernetes-cloud](kubernetes-cloud.md) (EKS, AKS, GKE)
+**Kubernetes:** [[kubernetes-cloud]] (EKS, AKS, GKE)
 
 ## Полезные ссылки
 
-[AWS Basics](aws-basics.md)
-[GCP Basics](gcp-basics.md)
-[Azure Basics](azure-basics.md)
+[[aws-basics|AWS Basics]]
+[[gcp-basics|GCP Basics]]
+[[azure-basics|Azure Basics]]
 

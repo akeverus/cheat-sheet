@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Packer**
+# Packer
 
-**Packer** — это инструмент с открытым исходным кодом от **HashiCorp** для создания идентичных образов машин для различных платформ (**AWS `AMI`, `Docker containers`, VMware VMs, `VirtualBox` и другие**) из единого конфигурационного файла. Этот документ охватывает продвинутые паттерны, автоматизацию и **best practices** для **enterprise** использования **Packer**.
+**Packer** — это инструмент с открытым исходным кодом от **HashiCorp** для создания идентичных образов машин для различных платформ (AWS `AMI`, `Docker containers`, VMware VMs, `VirtualBox` и другие) из единого конфигурационного файла. Этот документ охватывает продвинутые паттерны, автоматизацию и **best practices** для **enterprise** использования **Packer**.
 
 ## Полезные ссылки
 - [Packer Documentation](https://developer.hashicorp.com/packer/docs)
@@ -67,10 +67,10 @@ updated: "2026-02-11"
   - [Security best practices](#security-best-practices)
 - [См. также](#см-также)
 
-## Основы **Packer**
+## Основы Packer
 
 ### Установка и настройка
-Ниже — установка **Packer** на **Linux**/**macOS** (**bash**).
+Ниже — установка **Packer** на **Linux**/**macOS** (bash).
 ```bash
 # Linux/macOS
 curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
@@ -89,7 +89,7 @@ packer -autocomplete-install
 ```
 
 ### Структура проекта
-Ниже — структура каталогов **Packer**-проекта (**текст**).
+Ниже — структура каталогов **Packer**-проекта (текст).
 ```text
 packer-project/
 ├── packer.json           # Основной конфигурационный файл
@@ -169,7 +169,7 @@ packer-project/
 }
 ```
 
-## Продвинутые **builders**
+## Продвинутые builders
 
 ### Multi-cloud builders
 ```json
@@ -354,7 +354,7 @@ packer-project/
 }
 ```
 
-## Variables и **templates**
+## Variables и templates
 
 ### Variable validation
 ```json
@@ -912,7 +912,7 @@ PACKER_LOG=1 packer build packer.json
 packer build -only=amazon-ebs packer.json
 ```
 
-## Monitoring и **logging**
+## Monitoring и logging
 
 ### Build telemetry
 ```json

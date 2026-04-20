@@ -25,7 +25,7 @@ updated: "2026-02-11"
 | Справка по сценариям | [Test Script Reference](https://www.artillery.io/docs/reference/test-script) |
 | CLI | [CLI Reference](https://www.artillery.io/docs/reference/cli/run) |
 
-**См. также:** [JMeter](../jmeter/jmeter.md), [Gatling](../gatling/gatling.md), [k6](../k6/k6.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
+**См. также:** [[jmeter]], [[gatling]], [[k6]], [[testing-tools-overview|Обзор инструментов тестирования]].
 
 
 ## Введение

@@ -65,7 +65,7 @@ updated: "2026-02-11"
   - [**Type Erasure** в **Java**](#type-erasure-в-java)
   - [**Reified Generics**](#reified-generics)
 - [**Sealed** классы и интерфейсы](#sealed-классы-и-интерфейсы)
-- [**Inline** классы (**Value классы**)](#inline-классы-value-классы)
+- [**Inline** классы (Value классы)](#inline-классы-value-классы)
 - [Корутины и **Java**](#корутины-и-java)
   - [Вызов **suspend** функций из **Java**](#вызов-suspend-функций-из-java)
   - [Создание оберток для **Java**](#создание-оберток-для-java)
@@ -113,7 +113,7 @@ updated: "2026-02-11"
   - [Практические примеры: Работа с **Java Reflection**](#практические-примеры-работа-с-java-reflection)
   - [Практические примеры: Совместимость типов](#практические-примеры-совместимость-типов)
 
-## Введение в **Interop**
+## Введение в Interop
 
 **Kotlin** полностью совместим с **Java** на уровне байт-кода, что позволяет использовать **Java** библиотеки в **Kotlin** проектах и наоборот. Однако есть некоторые нюансы, которые нужно учитывать при работе с обоими языками.
 
@@ -124,14 +124,14 @@ updated: "2026-02-11"
 - **Null safety**: требует внимательности при работе с **Java** кодом
 - **Аннотации**: используются для улучшения **interop**
 
-### Преимущества **Interop**
+### Преимущества Interop
 
 - Использование существующих **Java** библиотек в **Kotlin** проектах
 - Постепенная миграция с **Java** на **Kotlin**
 - Использование **Kotlin** библиотек в **Java** проектах
 - Совместная работа команд, использующих разные языки
 
-## Вызов **Java** из **Kotlin**
+## Вызов Java из Kotlin
 
 **Kotlin** может вызывать **Java** код напрямую, но есть особенности, которые нужно учитывать.
 
@@ -150,7 +150,7 @@ val name = javaClass.name  // Свойство вместо getter
 
 **Kotlin** автоматически преобразует **Java getters**/**setters** в свойства. Это делает работу с **Java** классами более идиоматичной в **Kotlin**.
 
-### **Nullability**
+### Nullability
 
 **Java** типы в **Kotlin** являются **platform types** — они могут быть **nullable** или **non-null**, в зависимости от контекста:**
 
@@ -164,7 +164,7 @@ val name2: String = javaClass.name  // Может быть NPE, если null
 
 **Platform types** требуют внимательности. Если **Java** метод может вернуть **null**, лучше явно указать **nullable** тип, чтобы компилятор **Kotlin** мог помочь с проверками.
 
-### **SAM Conversions**
+### SAM Conversions
 
 **Kotlin** поддерживает **SAM** (`Single Abstract Method`) **conversions** для **Java** интерфейсов:**
 
@@ -196,7 +196,7 @@ fun example() {
 
 Это упрощает работу с **Java** кодом, но требует внимательности при обработке исключений.
 
-## Вызов **Kotlin** из **Java**
+## Вызов Kotlin из Java
 
 **Java** может вызывать **Kotlin** код, но некоторые особенности **Kotlin** требуют специальной обработки в **Java**.
 
@@ -215,7 +215,7 @@ class KotlinClass(val name: String) {
 
 **Kotlin** классы компилируются в обычные **Java** классы и могут использоваться напрямую. Свойства становятся полями с **getters**/**setters**.
 
-### **Top-level** функции
+### Top-level функции
 
 **Top-level** функции в **Kotlin** компилируются в статические методы класса с именем файла:**
 
@@ -231,7 +231,7 @@ fun processData(data: String): String {
 
 Имя класса формируется из имени файла с суффиксом "Kt". Это можно изменить через аннотацию `@**JvmName**`.
 
-### **Extension** функции
+### Extension функции
 
 **Extension** функции компилируются как статические методы с первым параметром-приемником:**
 
@@ -246,11 +246,11 @@ fun String.removeSpaces(): String {
 
 В **Java extension** функции вызываются как статические методы, где первый параметр — это объект-приемник.
 
-## **Nullability** аннотации
+## Nullability аннотации
 
 Аннотации помогают **Kotlin** понять **nullability Java** типов.
 
-### @**Nullable** и @**NotNull**
+### @Nullable и @NotNull
 
 ```kotlin
 // Java метод с аннотациями
@@ -265,9 +265,9 @@ val name: String = javaClass.name  // Non-null
 val description: String? = javaClass.description  // Nullable
 ```
 
-Аннотации `@**Nullable**` и `@**NotNull**` (**из различных библиотек**) помогают **Kotlin** компилятору правильно определить **nullability** типов, что улучшает безопасность кода.
+Аннотации `@**Nullable**` и `@**NotNull**` (из различных библиотек) помогают **Kotlin** компилятору правильно определить **nullability** типов, что улучшает безопасность кода.
 
-### @**JvmNullable** и @**JvmNonnull**
+### @JvmNullable и @JvmNonnull
 
 **Kotlin** аннотации для **Java**:**
 
@@ -281,11 +281,11 @@ fun processNullable(value: String?): String? { }
 
 Эти аннотации указывают **Java**, какие параметры и возвращаемые значения могут быть **null**, что помогает **Java** компилятору и инструментам статического анализа.
 
-## **Default** параметры
+## Default параметры
 
 **Kotlin** поддерживает параметры по умолчанию, но в **Java** они недоступны напрямую.
 
-### @**JvmOverloads**
+### @JvmOverloads
 
 **Для создания перегруженных методов в **Java** используется `@**JvmOverloads**`:**
 
@@ -305,11 +305,11 @@ fun createUser(
 
 `@**JvmOverloads**` генерирует перегруженные методы для каждого параметра с **default** значением, что делает **Kotlin** функции удобными для использования из **Java**.
 
-## **Companion Objects**
+## Companion Objects
 
 **Companion objects** в **Kotlin** компилируются как вложенные классы в **Java**.
 
-### Доступ из **Java**
+### Доступ из Java
 
 ```kotlin
 class MyClass {
@@ -324,9 +324,9 @@ class MyClass {
 // MyClass instance = MyClass.Companion.create();
 ```
 
-**Companion object** доступен через `**Companion**` в **Java**. Для более удобного доступа можно использовать `@**JvmStatic**` и `@**JvmField**`.
+**Companion object** доступен через `Companion` в **Java**. Для более удобного доступа можно использовать `@**JvmStatic**` и `@**JvmField**`.
 
-### @**JvmStatic**
+### @JvmStatic
 
 **`@**JvmStatic**` делает методы **companion object** статическими в **Java**:**
 
@@ -344,7 +344,7 @@ class MyClass {
 
 Это делает **API** более естественным для **Java** разработчиков, так как методы можно вызывать напрямую на классе, а не через **Companion**.
 
-### @**JvmField**
+### @JvmField
 
 **`@**JvmField**` делает поля публичными без **getters**/**setters**:**
 
@@ -362,11 +362,11 @@ class MyClass {
 
 `@**JvmField**` полезен для констант и полей, которые должны быть доступны как обычные поля в **Java**, а не через методы.
 
-## **Data** классы
+## Data классы
 
 **Data** классы **Kotlin** компилируются в обычные **Java** классы с дополнительными методами.
 
-### Использование в **Java**
+### Использование в Java
 
 ```kotlin
 data class User(val name: String, val age: Int)
@@ -382,7 +382,7 @@ data class User(val name: String, val age: Int)
 
 **Data** классы генерируют стандартные **Java** методы: конструктор, **getters**, **equals**, **hashCode**, **toString**. Это делает их полностью совместимыми с **Java** кодом.
 
-### **Component** функции
+### Component функции
 
 **Data** классы генерируют **componentN** функции для деструктуризации:**
 
@@ -399,11 +399,11 @@ val (x, y) = point
 
 **Component** функции позволяют деструктурировать **data** классы в **Java**, хотя синтаксис менее удобен, чем в **Kotlin**.
 
-## **Extension** функции
+## Extension функции
 
 **Extension** функции доступны в **Java** как статические методы.
 
-### Использование в **Java**
+### Использование в Java
 
 ```kotlin
 fun String.removeSpaces(): String {
@@ -414,11 +414,11 @@ fun String.removeSpaces(): String {
 // String result = ExtensionFunctionsKt.removeSpaces("hello world");
 ```
 
-Имя класса формируется из имени файла. Для изменения имени используется `@**file**:**JvmName(**"`Utils`"**)` в начале файла.
+Имя класса формируется из имени файла. Для изменения имени используется `@**file**:**JvmName("`Utils`")` в начале файла.
 
 ## Лучшие практики
 
-### Используйте аннотации для **nullability**
+### Используйте аннотации для nullability
 
 **Всегда аннотируйте **Java** код для правильной работы **null safety** в **Kotlin**:**
 
@@ -433,7 +433,7 @@ public String getName() { }
 
 Аннотации помогают **Kotlin** компилятору правильно определить **nullability**, что предотвращает ошибки во время выполнения.
 
-### Используйте @**JvmOverloads** для **default** параметров
+### Используйте @JvmOverloads для default параметров
 
 **Если функция будет использоваться из **Java**, используйте `@**JvmOverloads**`:**
 
@@ -444,7 +444,7 @@ fun process(value: String, option: Int = 0) { }
 
 Это делает **Kotlin** функции более удобными для использования из **Java** кода.
 
-### Используйте @**JvmStatic** для **companion objects**
+### Используйте @JvmStatic для companion objects
 
 **Для методов **companion object**, которые будут вызываться из **Java**:**
 
@@ -457,7 +457,7 @@ companion object {
 
 Это делает **API** более естественным для **Java** разработчиков.
 
-### Используйте @**JvmName** для переименования
+### Используйте @JvmName для переименования
 
 **Для изменения имени класса, в который компилируются **top-level** функции, используйте `@**JvmName**`:**
 
@@ -478,7 +478,7 @@ fun String.removeSpaces(): String {
 
 **Kotlin** не имеет **checked exceptions**, но **Java** имеет. Это создает некоторые нюансы при **interop**.
 
-### Вызов **Java** методов с **checked exceptions**
+### Вызов Java методов с checked exceptions
 
 **Kotlin** не требует обработки **checked exceptions**, но они все равно могут быть выброшены:**
 
@@ -503,7 +503,7 @@ fun write() {
 
 **Kotlin** позволяет не обрабатывать **checked exceptions**, но это не означает, что они не могут быть выброшены. Важно понимать, какие исключения может выбросить **Java** код.
 
-### Выброс исключений из **Kotlin**
+### Выброс исключений из Kotlin
 
 **Kotlin** функции могут выбрасывать исключения, которые нужно обработать в **Java**:**
 
@@ -524,11 +524,11 @@ fun readFile(path: String): String {
 
 Аннотация `@**Throws**` указывает **Java** компилятору, что метод может выбросить исключение, что делает код более безопасным при использовании из **Java**.
 
-## **Generics** и **Type Erasure**
+## Generics и Type Erasure
 
 **Kotlin** и **Java** имеют разные подходы к **generics**, что создает нюансы при **interop**.
 
-### **Type Erasure** в **Java**
+### Type Erasure в Java
 
 **Java** стирает информацию о типах во время выполнения, что влияет на работу с **generics**:**
 
@@ -544,7 +544,7 @@ fun <T> processList(list: List<T>) {
 
 **Type erasure** означает, что информация о **generic** типах теряется во время выполнения. Это важно учитывать при работе с рефлексией или проверкой типов.
 
-### **Reified Generics**
+### Reified Generics
 
 **Kotlin** поддерживает **reified generics** через **inline** функции, но они недоступны из **Java**:**
 
@@ -559,11 +559,11 @@ inline fun <reified T> isInstanceOf(obj: Any?): Boolean {
 
 **Reified generics** доступны только в **Kotlin** коде и требуют **inline** функций. Из **Java** их нельзя использовать напрямую.
 
-## **Sealed** классы и интерфейсы
+## Sealed классы и интерфейсы
 
 **Sealed** классы **Kotlin** компилируются в обычные классы с ограниченным набором подклассов.
 
-### Использование в **Java**
+### Использование в Java
 
 ```kotlin
 sealed class Result<out T> {
@@ -578,11 +578,11 @@ sealed class Result<out T> {
 
 **Sealed** классы доступны в **Java**, но проверка **exhaustiveness** при **when** выражениях работает только в **Kotlin**.
 
-## **Inline** классы (**Value классы**)
+## Inline классы (Value классы)
 
-**Inline** классы (**value classes**) в **Kotlin** позволяют создавать обертки над примитивными типами без накладных расходов.
+**Inline** классы (value classes) в **Kotlin** позволяют создавать обертки над примитивными типами без накладных расходов.
 
-### Использование в **Java**
+### Использование в Java
 
 ```kotlin
 @JvmInline
@@ -596,11 +596,11 @@ fun processUser(id: UserId) { }
 
 **Inline** классы в **Java** используются как их базовые типы, что обеспечивает совместимость без накладных расходов.
 
-## Корутины и **Java**
+## Корутины и Java
 
 Корутины **Kotlin** основаны на **continuation passing style**, что создает особенности при использовании из **Java**.
 
-### Вызов **suspend** функций из **Java**
+### Вызов suspend функций из Java
 
 **Suspend** функции из **Java** вызываются через специальные методы:**
 
@@ -621,7 +621,7 @@ suspend fun fetchData(): String {
 
 Вызов **suspend** функций из **Java** требует использования **Continuation**, что делает код менее удобным. Рекомендуется создавать обертки для **Java** кода.
 
-### Создание оберток для **Java**
+### Создание оберток для Java
 
 **Для удобного использования из **Java** создавайте обертки:**
 
@@ -648,11 +648,11 @@ fun fetchDataAsync(callback: (String) -> Unit) {
 
 Обертки делают корутины более удобными для использования из **Java** кода, скрывая сложность **Continuation**.
 
-## Аннотации для улучшения **Interop**
+## Аннотации для улучшения Interop
 
 **Kotlin** предоставляет множество аннотаций для улучшения взаимодействия с **Java**.
 
-### @**JvmWildcard** и @**JvmSuppressWildcards**
+### @JvmWildcard и @JvmSuppressWildcards
 
 **Для контроля **wildcards** в **generics**:**
 
@@ -666,7 +666,7 @@ fun process2(list: List<@JvmSuppressWildcards String>) { }
 
 Эти аннотации позволяют контролировать, как **Kotlin generics** отображаются в **Java**, что важно для совместимости **API**.
 
-### @**JvmDefault**
+### @JvmDefault
 
 **Для использования **default** методов в интерфейсах:**
 
@@ -681,7 +681,7 @@ interface MyInterface {
 
 `@**JvmDefault**` позволяет использовать **default** методы в интерфейсах, что делает их совместимыми с **Java** 8+.
 
-## Миграция с **Java** на **Kotlin**
+## Миграция с Java на Kotlin
 
 Постепенная миграция с **Java** на **Kotlin** требует понимания особенностей **interop**.
 
@@ -692,7 +692,7 @@ interface MyInterface {
 3. **Мигрируйте по модулям**: мигрируйте модули постепенно
 4. **Тестируйте interop**: убедитесь, что **Java** и **Kotlin** код работают вместе
 
-### Совместимость **API**
+### Совместимость API
 
 **При миграции важно сохранять совместимость **API**:**
 
@@ -732,7 +732,7 @@ val kotlinList: List<Int> = javaList.toList()
 
 **Kotlin** коллекции реализуют **Java** интерфейсы коллекций, что обеспечивает полную совместимость.
 
-### **Mutable** коллекции
+### Mutable коллекции
 
 ```kotlin
 // Kotlin MutableList в Java List
@@ -745,11 +745,11 @@ javaList.add(4)  // mutableList также содержит 4
 
 **Mutable** коллекции **Kotlin** могут быть изменены из **Java** кода, что важно учитывать при работе с общими коллекциями.
 
-## Работа с **nullability**
+## Работа с nullability
 
 **Nullability** — одна из ключевых особенностей **Kotlin**, которая требует внимательности при работе с **Java**.
 
-### **Platform Types**
+### Platform Types
 
 **Java** типы в **Kotlin** являются **platform types** — они могут быть **nullable** или **non-null**:**
 
@@ -764,7 +764,7 @@ val name2: String = javaClass.name  // Может быть NPE
 
 **Platform types** требуют явного указания **nullability**, чтобы избежать **NPE**. Всегда проверяйте **Java** код на возможность возврата **null**.
 
-### Аннотации для **nullability**
+### Аннотации для nullability
 
 **Используйте аннотации в **Java** коде для правильной работы **null safety**:**
 
@@ -783,9 +783,9 @@ val name: String = javaClass.name  // Non-null
 
 Аннотации помогают **Kotlin** компилятору правильно определить **nullability**, что предотвращает ошибки во время выполнения.
 
-## Лучшие практики **Interop**
+## Лучшие практики Interop
 
-### Документирование для **Java**
+### Документирование для Java
 
 **Документируйте **Kotlin** код с учетом использования из **Java**:**
 
@@ -802,7 +802,7 @@ fun createUser(name: String, email: String?): User { }
 
 **Javadoc** комментарии помогают **Java** разработчикам понимать, как использовать **Kotlin** код.
 
-### Использование стандартных **Java** паттернов
+### Использование стандартных Java паттернов
 
 **При создании **API**, который будет использоваться из **Java**, следуйте **Java** конвенциям:**
 
@@ -910,9 +910,9 @@ class Config {
 
 Обеспечение обратной совместимости позволяет постепенно мигрировать код без нарушения работы существующих **Java** компонентов.
 
-## Работа с **Java** библиотеками
+## Работа с Java библиотеками
 
-### Использование **Java** коллекций из **Kotlin**
+### Использование Java коллекций из Kotlin
 
 **Работа с **Java** коллекциями в **Kotlin**:**
 
@@ -946,7 +946,7 @@ val kotlinList: List<Int> = javaStream  // Автоматическое прео
 
 **Kotlin** автоматически преобразует **Java** коллекции в **Kotlin** коллекции, что упрощает работу с **Java** библиотеками.
 
-### Использование **Java Optional**
+### Использование Java Optional
 
 **Работа с **Java Optional** в **Kotlin**:**
 
@@ -986,7 +986,7 @@ optional.map { it.toUpperCase() }
 
 Работа с **Java Optional** позволяет интегрироваться с **Java** библиотеками, которые используют **Optional**.
 
-### Использование **Java** 8+ функциональных интерфейсов
+### Использование Java 8+ функциональных интерфейсов
 
 **Работа с **Java** функциональными интерфейсами:**
 
@@ -1022,7 +1022,7 @@ listOf("hello", "world")
 
 Работа с **Java** функциональными интерфейсами позволяет интегрироваться с **Java** библиотеками, которые используют функциональное программирование.
 
-## Миграция с **Java** на **Kotlin**
+## Миграция с Java на Kotlin
 
 ### Стратегия миграции
 
@@ -1119,9 +1119,9 @@ fun process(value: String, option: Int = 0, flag: Boolean = false) {
 
 Правильная настройка совместимости позволяет использовать **Kotlin** код из **Java** без проблем.
 
-## Дополнительные техники **Interop**
+## Дополнительные техники Interop
 
-### Работа с **Java Streams**
+### Работа с Java Streams
 
 **Интеграция **Kotlin** с **Java Streams API**:**
 
@@ -1156,7 +1156,7 @@ val result = javaStream
 
 Интеграция с **Java Streams** позволяет использовать мощные возможности **Java Streams API** в **Kotlin** коде.
 
-### Работа с **Java Optional**
+### Работа с Java Optional
 
 **Использование **Java Optional** в **Kotlin**:**
 
@@ -1195,9 +1195,9 @@ val flatMapped = optional.flatMap { Optional.of(it.length) }
 
 Этот файл содержит полное руководство по взаимодействию **Kotlin** и **Java**, покрывающее все основные аспекты **interop** между этими языками, включая обработку исключений, **generics**, корутины, миграцию, лучшие практики, работу с **Java** библиотеками, коллекциями, **Optional**, функциональными интерфейсами, **Streams** и обеспечение совместимости.
 
-## Дополнительные техники **Interop**
+## Дополнительные техники Interop
 
-### Работа с **Java Reflection**
+### Работа с Java Reflection
 
 **Использование **Java Reflection** из **Kotlin**:**
 
@@ -1227,7 +1227,7 @@ val instance = constructor.newInstance("test")
 
 **Java Reflection** позволяет работать с **Java** классами динамически из **Kotlin** кода.
 
-### Работа с **Java Annotations**
+### Работа с Java Annotations
 
 **Использование **Java** аннотаций в **Kotlin**:**
 
@@ -1295,7 +1295,7 @@ fun method() {
 
 ## Практические примеры использования
 
-### Миграция **Java** класса в **Kotlin**
+### Миграция Java класса в Kotlin
 
 **Пример миграции **Java** класса в **Kotlin**:**
 
@@ -1333,7 +1333,7 @@ class UserService(private val repository: UserRepository) {
 
 Миграция в **Kotlin** делает код более лаконичным и безопасным.
 
-### Использование **Java** библиотек в **Kotlin**
+### Использование Java библиотек в Kotlin
 
 **Пример использования **Java** библиотек в **Kotlin**:**
 
@@ -1365,7 +1365,7 @@ fun parseJson(json: String): User {
 
 **Kotlin** отлично работает с существующими **Java** библиотеками.
 
-### Использование **Java Streams** в **Kotlin**
+### Использование Java Streams в Kotlin
 
 **Пример использования **Java Streams** из **Kotlin**:**
 
@@ -1391,7 +1391,7 @@ fun processParallel(numbers: List<Int>): List<Int> {
 
 **Java Streams** можно использовать в **Kotlin**, хотя **Kotlin** коллекции обычно предпочтительнее.
 
-### Использование **Java Optional** в **Kotlin**
+### Использование Java Optional в Kotlin
 
 **Пример работы с **Java Optional**:**
 
@@ -1416,7 +1416,7 @@ fun fromJavaOptional(optional: Optional<String>): String? {
 
 Работа с **Java Optional** требует явного преобразования, но **Kotlin null-safety** обычно предпочтительнее.
 
-### Практические примеры: Использование **Java** библиотек в **Kotlin**
+### Практические примеры: Использование Java библиотек в Kotlin
 
 ```kotlin
 import java.util.concurrent.CompletableFuture
@@ -1443,7 +1443,7 @@ val customDispatcher = Executors.newFixedThreadPool(4)
     .asCoroutineDispatcher()
 ```
 
-### Практические примеры: Миграция **Java** кода в **Kotlin**
+### Практические примеры: Миграция Java кода в Kotlin
 
 ```kotlin
 // Java код
@@ -1478,7 +1478,7 @@ class UserService(
 }
 ```
 
-### Практические примеры: Вызов **Kotlin** кода из **Java**
+### Практические примеры: Вызов Kotlin кода из Java
 
 ```kotlin
 // Kotlin класс, предназначенный для использования из Java
@@ -1499,7 +1499,7 @@ object Calculator {
 // Calculator.multiply(3, 4);
 ```
 
-### Практические примеры: Работа с **Java Reflection**
+### Практические примеры: Работа с Java Reflection
 
 ```kotlin
 import java.lang.reflect.Method

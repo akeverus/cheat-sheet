@@ -103,7 +103,7 @@ related: ["quarkus-core.md", "quarkus-security.md"]
 
 ## Введение
 
-**Quarkus** предоставляет несколько подходов к работе с базами данных: **Hibernate ORM**, **Panache** (**упрощенный API**), и прямые **JDBC** запросы. Все оптимизированы для быстрого запуска и низкого потребления памяти.
+**Quarkus** предоставляет несколько подходов к работе с базами данных: **Hibernate ORM**, **Panache** (упрощенный API), и прямые **JDBC** запросы. Все оптимизированы для быстрого запуска и низкого потребления памяти.
 
 ### Основные возможности
 
@@ -115,7 +115,7 @@ related: ["quarkus-core.md", "quarkus-security.md"]
 
 ## Hibernate ORM
 
-### **Entity Definition**
+### Entity Definition
 
 ```java
 import jakarta.persistence.Entity;
@@ -136,7 +136,7 @@ public class User {
 }
 ```
 
-### **EntityManager Usage**
+### EntityManager Usage
 
 ```java
 import jakarta.persistence.EntityManager;
@@ -160,7 +160,7 @@ public class UserService {
 
 ## Panache
 
-### **Panache Entity**
+### Panache Entity
 
 ```java
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
@@ -175,7 +175,7 @@ public class User extends PanacheEntity {
 }
 ```
 
-### **Panache Repository**
+### Panache Repository
 
 ```java
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
@@ -196,7 +196,7 @@ public class UserRepository implements PanacheRepository<User> {
 
 ## Transactions
 
-### **Transactional Methods**
+### Transactional Methods
 
 ```java
 import jakarta.transaction.Transactional;
@@ -222,7 +222,7 @@ public class TransactionalService {
 
 ## Лучшие практики
 
-### 1. Используйте **Panache** для упрощения
+### 1. Используйте Panache для упрощения
 
 ```java
 // ✅ Хорошо
@@ -232,7 +232,7 @@ public class User extends PanacheEntity {
 }
 ```
 
-### 2. Используйте @**Transactional** правильно
+### 2. Используйте @Transactional правильно
 
 ```java
 // ✅ Хорошо
@@ -251,7 +251,7 @@ quarkus.flyway.migrate-at-start=true
 
 ## Panache Query Methods
 
-### **Query Methods**
+### Query Methods
 
 ```java
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
@@ -278,7 +278,7 @@ public class UserRepository implements PanacheRepository<User> {
 }
 ```
 
-### **Custom Queries**
+### Custom Queries
 
 ```java
 @ApplicationScoped
@@ -296,7 +296,7 @@ public class UserRepository implements PanacheRepository<User> {
 
 ## Entity Relationships
 
-### **One-to-Many**
+### One-to-Many
 
 ```java
 import jakarta.persistence.Entity;
@@ -314,7 +314,7 @@ public class User extends PanacheEntity {
 }
 ```
 
-### **Many-to-One**
+### Many-to-One
 
 ```java
 import jakarta.persistence.Entity;
@@ -331,7 +331,7 @@ public class Order extends PanacheEntity {
 
 ## Database Migrations
 
-### **Flyway Configuration**
+### Flyway Configuration
 
 **application.properties:**
 
@@ -340,7 +340,7 @@ quarkus.flyway.migrate-at-start=true
 quarkus.flyway.locations=classpath:db/migration
 ```
 
-### **Liquibase Configuration**
+### Liquibase Configuration
 
 **application.properties:**
 
@@ -351,7 +351,7 @@ quarkus.liquibase.change-log=db/changelog/db.changelog-master.xml
 
 ## Reactive Data Access
 
-### **Reactive Panache**
+### Reactive Panache
 
 ```java
 import io.quarkus.hibernate.reactive.panache.PanacheEntity;
@@ -387,7 +387,7 @@ public class User extends PanacheEntity {
 }
 ```
 
-### **Custom Queries**
+### Custom Queries
 
 **Создание кастомных запросов:**
 
@@ -410,7 +410,7 @@ public class UserRepository implements PanacheRepository<User> {
 }
 ```
 
-### **Native Queries**
+### Native Queries
 
 **Использование нативных **SQL** запросов:**
 
@@ -434,7 +434,7 @@ public class UserRepository implements PanacheRepository<User> {
 
 ## Entity Relationships
 
-### **One-to-Many Bidirectional**
+### One-to-Many Bidirectional
 
 ```java
 @Entity
@@ -455,7 +455,7 @@ public class Order extends PanacheEntity {
 }
 ```
 
-### **Many-to-Many**
+### Many-to-Many
 
 ```java
 @Entity
@@ -480,7 +480,7 @@ public class Role extends PanacheEntity {
 }
 ```
 
-### **Eager** vs **Lazy Loading**
+### Eager vs Lazy Loading
 
 ```java
 @Entity
@@ -497,7 +497,7 @@ public class User extends PanacheEntity {
 
 ## Transaction Management
 
-### **Programmatic Transactions**
+### Programmatic Transactions
 
 **Программное управление транзакциями:**
 
@@ -529,7 +529,7 @@ public class TransactionalService {
 }
 ```
 
-### **Transaction Propagation**
+### Transaction Propagation
 
 **Управление распространением транзакций:**
 
@@ -561,7 +561,7 @@ public class TransactionalService {
 
 ## Database Migrations
 
-### **Flyway Migrations**
+### Flyway Migrations
 
 **Структура миграций **Flyway**:**
 
@@ -592,7 +592,7 @@ quarkus.flyway.locations=classpath:db/migration
 quarkus.flyway.baseline-on-migrate=true
 ```
 
-### **Liquibase Migrations**
+### Liquibase Migrations
 
 **db/changelog/db.`changelog-master`.xml:**
 
@@ -629,7 +629,7 @@ quarkus.liquibase.change-log=db/changelog/db.changelog-master.xml
 
 ## Performance Optimization
 
-### **Query Optimization**
+### Query Optimization
 
 **Оптимизация запросов:**
 
@@ -651,7 +651,7 @@ public class OptimizedRepository implements PanacheRepository<User> {
 }
 ```
 
-### **Batch Operations**
+### Batch Operations
 
 **Пакетные операции:**
 
@@ -673,7 +673,7 @@ public class BatchService {
 }
 ```
 
-### **Caching**
+### Caching
 
 **Настройка кеширования:**
 
@@ -694,7 +694,7 @@ public class User extends PanacheEntity {
 
 ## JDBC
 
-### **Direct JDBC Access**
+### Direct JDBC Access
 
 **Прямой доступ к **JDBC**:**
 
@@ -731,7 +731,7 @@ public class JdbcService {
 }
 ```
 
-### **Reactive JDBC**
+### Reactive JDBC
 
 **Реактивный доступ к **JDBC**:**
 
@@ -769,7 +769,7 @@ public class ReactiveJdbcService {
 
 ## Database Connection Pooling
 
-### **HikariCP Configuration**
+### HikariCP Configuration
 
 **Настройка **HikariCP**:**
 
@@ -783,7 +783,7 @@ quarkus.datasource.jdbc.idle-timeout=30m
 quarkus.datasource.jdbc.max-lifetime=60m
 ```
 
-### **Reactive Connection Pooling**
+### Reactive Connection Pooling
 
 **Настройка **reactive connection pool**:**
 
@@ -796,7 +796,7 @@ quarkus.datasource.reactive.max-lifetime=60m
 
 ## Multiple Data Sources
 
-### **Multiple Databases**
+### Multiple Databases
 
 **Работа с несколькими базами данных:**
 
@@ -833,7 +833,7 @@ public class MultiDataSourceService {
 
 ## Advanced Data Access Patterns
 
-### **CQRS Pattern**
+### CQRS Pattern
 
 **Реализация **CQRS**:**
 
@@ -862,7 +862,7 @@ public class QueryService {
 }
 ```
 
-### **Event Sourcing**
+### Event Sourcing
 
 **Реализация **Event Sourcing**:**
 
@@ -891,7 +891,7 @@ public class User extends PanacheEntity {
 
 ## Database Performance Tuning
 
-### **Query Cache**
+### Query Cache
 
 **Использование кеша запросов:**
 
@@ -900,7 +900,7 @@ quarkus.hibernate-orm.cache.use-second-level-cache=true
 quarkus.hibernate-orm.cache.use-query-cache=true
 ```
 
-### **Batch Processing**
+### Batch Processing
 
 **Батчевая обработка:**
 
@@ -924,7 +924,7 @@ public class BatchProcessingService {
 
 ## Advanced Database Patterns
 
-### **Repository Pattern with Specifications**
+### Repository Pattern with Specifications
 
 **Реализация спецификаций:**
 
@@ -946,7 +946,7 @@ public class UserSpecification {
 }
 ```
 
-### **Unit of Work Pattern**
+### Unit of Work Pattern
 
 **Реализация Unit of Work:**
 
@@ -970,7 +970,7 @@ public class UnitOfWorkService {
 }
 ```
 
-### **Database Sharding**
+### Database Sharding
 
 **Шардирование базы данных:**
 
@@ -994,7 +994,7 @@ public class ShardingService {
 
 ## Database Connection Management
 
-### **Connection Pool Monitoring**
+### Connection Pool Monitoring
 
 **Мониторинг пула соединений:**
 
@@ -1020,7 +1020,7 @@ public class ConnectionPoolMonitor {
 }
 ```
 
-### **Connection Leak Detection**
+### Connection Leak Detection
 
 **Обнаружение утечек соединений:**
 
@@ -1030,7 +1030,7 @@ quarkus.datasource.jdbc.leak-detection-interval=60s
 
 ## Advanced Query Optimization
 
-### **Query Plan Analysis**
+### Query Plan Analysis
 
 **Анализ плана запросов:**
 
@@ -1058,7 +1058,7 @@ public class QueryAnalyzer {
 }
 ```
 
-### **Lazy Loading Optimization**
+### Lazy Loading Optimization
 
 **Оптимизация **lazy loading**:**
 
@@ -1074,7 +1074,7 @@ public class User extends PanacheEntity {
 
 ## Transaction Management Patterns
 
-### **Nested Transactions**
+### Nested Transactions
 
 **Вложенные транзакции:**
 
@@ -1095,7 +1095,7 @@ public class NestedTransactionService {
 }
 ```
 
-### **Transaction Timeout**
+### Transaction Timeout
 
 **Таймаут транзакций:**
 

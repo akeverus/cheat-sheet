@@ -75,7 +75,7 @@ related: ["quarkus-rest.md", "quarkus-reactive.md"]
 
 ## Server Endpoints
 
-### **Basic WebSocket Endpoint**
+### Basic WebSocket Endpoint
 
 **Базовый **WebSocket endpoint**:**
 
@@ -108,7 +108,7 @@ public class ChatEndpoint {
 }
 ```
 
-### **Advanced Endpoint**
+### Advanced Endpoint
 
 **Продвинутый **endpoint**:**
 
@@ -144,7 +144,7 @@ public class RoomChatEndpoint {
 
 ## Client Endpoints
 
-### **WebSocket Client**
+### WebSocket Client
 
 **WebSocket** клиент:**
 
@@ -176,7 +176,7 @@ public class WebSocketClient {
 
 ## Message Types
 
-### **Text Messages**
+### Text Messages
 
 **Текстовые сообщения:**
 
@@ -191,7 +191,7 @@ public class TextEndpoint {
 }
 ```
 
-### **Binary Messages**
+### Binary Messages
 
 **Бинарные сообщения:**
 
@@ -209,7 +209,7 @@ public class BinaryEndpoint {
 
 ## Broadcasting
 
-### **Broadcast** to **All**
+### Broadcast to All
 
 **Отправка всем клиентам:**
 
@@ -247,7 +247,7 @@ public class BroadcastEndpoint {
 
 ## Reactive WebSocket
 
-### **Reactive Endpoint**
+### Reactive Endpoint
 
 **Реактивный **endpoint**:**
 
@@ -281,7 +281,7 @@ public void onError(Session session, Throwable error) {
 }
 ```
 
-### 2. Используйте **async** для отправки
+### 2. Используйте async для отправки
 
 ```java
 // ✅ Хорошо
@@ -300,7 +300,7 @@ public void onOpen(Session session) {
 
 ## Security
 
-### **Secured WebSocket**
+### Secured WebSocket
 
 **Защищенный **WebSocket**:**
 
@@ -322,7 +322,7 @@ public class SecuredChatEndpoint {
 
 ## Message Encoding/Decoding
 
-### **Custom Encoders**/**Decoders**
+### Custom Encoders/Decoders
 
 **Кастомные кодировщики:**
 
@@ -380,7 +380,7 @@ public class EncodedChatEndpoint {
 
 ## Connection Management
 
-### **Session Management**
+### Session Management
 
 **Управление сессиями:**
 
@@ -417,7 +417,7 @@ public class ManagedChatEndpoint {
 
 ## WebSocket Performance Optimization
 
-### **Connection Pooling**
+### Connection Pooling
 
 **Оптимизация пула соединений:**
 
@@ -438,7 +438,7 @@ public class ConnectionPoolManager {
 }
 ```
 
-### **Message Batching**
+### Message Batching
 
 **Батчинг сообщений:**
 
@@ -463,7 +463,7 @@ public class BatchedChatEndpoint {
 
 ## Advanced WebSocket Patterns
 
-### **Message Queue Pattern**
+### Message Queue Pattern
 
 **Очередь сообщений:**
 
@@ -490,7 +490,7 @@ public class WebSocketMessageQueue {
 }
 ```
 
-### **Heartbeat Pattern**
+### Heartbeat Pattern
 
 **Heartbeat** для поддержания соединений:**
 
@@ -515,7 +515,7 @@ public class HeartbeatChatEndpoint {
 
 ## WebSocket Connection Pooling
 
-### **Connection Management**
+### Connection Management
 
 **Управление соединениями:**
 
@@ -544,7 +544,7 @@ public class ConnectionPoolManager {
 }
 ```
 
-### **Message Queue for WebSocket**
+### Message Queue for WebSocket
 
 **Очередь сообщений для **WebSocket**:**
 

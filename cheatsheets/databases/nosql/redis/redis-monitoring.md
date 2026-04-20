@@ -16,7 +16,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
-# **Redis**: Мониторинг
+# Redis: Мониторинг
 
 ## Полезные ссылки
 
@@ -58,7 +58,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [**Alerting System**](#alerting-system)
 - [Лучшие практики](#лучшие-практики)
 
-## Введение в мониторинг **Redis**
+## Введение в мониторинг Redis
 
 Мониторинг **Redis** критически важен для обеспечения стабильной работы и быстрого обнаружения проблем. Правильный мониторинг включает отслеживание метрик производительности, использования ресурсов, состояния репликации и здоровья кластера.
 
@@ -73,7 +73,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 
 ## Базовые команды мониторинга
 
-### **INFO** команда
+### INFO команда
 
 ```redis
 # Полная информация
@@ -113,9 +113,9 @@ INFO replication | grep master_repl_offset
 ```
 
 
-## **Prometheus Monitoring**
+## Prometheus Monitoring
 
-### **Redis Exporter**
+### Redis Exporter
 
 ```bash
 # Запуск Redis Exporter
@@ -133,7 +133,7 @@ docker run -d \
   --web.listen-address=:9121
 ```
 
-### **Prometheus Configuration**
+### Prometheus Configuration
 
 ```yaml
 # prometheus.yml
@@ -146,7 +146,7 @@ scrape_configs:
     scrape_timeout: 10s
 ```
 
-### **Key Metrics**
+### Key Metrics
 
 ```promql
 # Operations per second
@@ -168,9 +168,9 @@ rate(redis_keyspace_hits_total[1m]) / (rate(redis_keyspace_hits_total[1m]) + rat
 ```
 
 
-## **Grafana Dashboards**
+## Grafana Dashboards
 
-### **Dashboard Configuration**
+### Dashboard Configuration
 
 ```json
 {
@@ -199,9 +199,9 @@ rate(redis_keyspace_hits_total[1m]) / (rate(redis_keyspace_hits_total[1m]) + rat
 ```
 
 
-## **Health Checks**
+## Health Checks
 
-### **Basic Health Check**
+### Basic Health Check
 
 ```bash
 #!/bin/bash
@@ -228,7 +228,7 @@ echo "OK: Redis is healthy"
 exit 0
 ```
 
-### **Advanced Health Check**
+### Advanced Health Check
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -307,9 +307,9 @@ public class RedisHealthCheck {
 ```
 
 
-## **Alerting**
+## Alerting
 
-### **Alert Rules** для **Prometheus**
+### Alert Rules для Prometheus
 
 ```yaml
 # alerts.yml
@@ -350,9 +350,9 @@ groups:
 ```
 
 
-## **Custom Monitoring Scripts**
+## Custom Monitoring Scripts
 
-### **Comprehensive Monitoring**
+### Comprehensive Monitoring
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -413,9 +413,9 @@ public class RedisMonitor {
 }
 ```
 
-## **Advanced Monitoring Techniques**
+## Advanced Monitoring Techniques
 
-### **Real-Time Monitoring**
+### Real-Time Monitoring
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -494,7 +494,7 @@ public class RealTimeMonitor {
 }
 ```
 
-### **Custom Metrics Collection**
+### Custom Metrics Collection
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -543,9 +543,9 @@ public class CustomMetricsCollector {
 }
 ```
 
-## **Dashboard Examples**
+## Dashboard Examples
 
-### **Grafana Dashboard JSON**
+### Grafana Dashboard JSON
 
 ```json
 {
@@ -605,9 +605,9 @@ public class CustomMetricsCollector {
 }
 ```
 
-## **Advanced Monitoring Setup**
+## Advanced Monitoring Setup
 
-### **Custom Metrics Collection**
+### Custom Metrics Collection
 
 ```java
 // Java пример сбора метрик
@@ -685,7 +685,7 @@ public class AdvancedMetricsCollector {
 }
 ```
 
-### **Alerting System**
+### Alerting System
 
 ```java
 // Java пример системы алертов

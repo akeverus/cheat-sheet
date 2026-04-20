@@ -17,7 +17,7 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [BFS (поиск в ширину)](bfs.md)
-- [Алгоритм Дейкстры](dijkstra.md)
-- [JGraphT](jgrapht.md)
+- [[bfs|BFS (поиск в ширину)]]
+- [[dijkstra|Алгоритм Дейкстры]]
+- [[jgrapht]]
 

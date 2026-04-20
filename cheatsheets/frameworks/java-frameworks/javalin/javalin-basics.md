@@ -158,7 +158,7 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
   - [API Versioning](#api-versioning)
 - [Testing Strategies](#testing-strategies)
 
-## Введение в **Javalin**
+## Введение в Javalin
 
 **Javalin** — это легковесный веб-фреймворк для **Java** и **Kotlin**, который предоставляет простой и интуитивный **API** для создания **RESTful API** и веб-приложений.
 
@@ -174,7 +174,7 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 
 ## Установка и настройка
 
-### **Maven зависимость
+### Maven зависимость
 
 ```xml
 <!-- Зависимость Javalin для Maven -->
@@ -185,7 +185,7 @@ related: ["spark/spark-basics.md", "spring/spring-rest.md"]
 </dependency>
 ```
 
-### **Gradle зависимость
+### Gradle зависимость
 
 ```gradle
 // Зависимость Javalin для Gradle
@@ -251,7 +251,7 @@ app.get("/users/:id", ctx -> {
 });
 ```
 
-### **Query параметры
+### Query параметры
 
 ```java
 // Query-параметр q из URL
@@ -313,7 +313,7 @@ app.get("/old", ctx -> {
 
 ## JSON обработка
 
-### Отправка **JSON**
+### Отправка JSON
 
 ```java
 app.get("/user", ctx -> {
@@ -322,7 +322,7 @@ app.get("/user", ctx -> {
 });
 ```
 
-### Получение **JSON**
+### Получение JSON
 
 ```java
 app.post("/user", ctx -> {
@@ -407,7 +407,7 @@ Javalin app = Javalin.create(config -> {
 
 ## Middleware
 
-### **Before Handlers**
+### Before Handlers
 
 ```java
 // Before handler: выполняется до маршрута
@@ -423,7 +423,7 @@ app.before("/api/*", ctx -> {
 });
 ```
 
-### **After Handlers**
+### After Handlers
 
 ```java
 // After handler: заголовок X-Response-Time
@@ -436,7 +436,7 @@ app.after("/api/*", ctx -> {
 });
 ```
 
-### **Exception Handlers**
+### Exception Handlers
 
 ```java
 app.exception(IllegalArgumentException.class, (e, ctx) -> {
@@ -448,7 +448,7 @@ app.exception(Exception.class, (e, ctx) -> {
 });
 ```
 
-### **Error Handlers**
+### Error Handlers
 
 ```java
 app.error(404, ctx -> {
@@ -492,7 +492,7 @@ app.post("/logout", ctx -> {
 
 ## WebSocket
 
-### **WebSocket Server**
+### WebSocket Server
 
 ```java
 app.ws("/ws", ws -> {
@@ -516,7 +516,7 @@ app.ws("/ws", ws -> {
 });
 ```
 
-### WebSocket с **JSON**
+### WebSocket с JSON
 
 ```java
 app.ws("/ws", ws -> {
@@ -537,7 +537,7 @@ app.ws("/ws", ws -> {
 
 ## База данных
 
-### **JDBC Integration**
+### JDBC Integration
 
 ```java
 import java.sql.Connection;
@@ -572,7 +572,7 @@ public class DatabaseExample {
 }
 ```
 
-### **HikariCP Connection Pool**
+### HikariCP Connection Pool
 
 ```java
 import com.zaxxer.hikari.HikariConfig;
@@ -618,7 +618,7 @@ public class ConnectionPoolExample {
 
 ## Аутентификация
 
-### **Basic Authentication**
+### Basic Authentication
 
 ```java
 import io.javalin.security.BasicAuthCredentials;
@@ -641,7 +641,7 @@ app.before("/api/*", ctx -> {
 });
 ```
 
-### **JWT Authentication**
+### JWT Authentication
 
 ```java
 import com.auth0.jwt.JWT;
@@ -681,7 +681,7 @@ public class JWTExample {
 
 ## CORS
 
-### **CORS Configuration**
+### CORS Configuration
 
 ```java
 app.before(ctx -> {
@@ -698,7 +698,7 @@ app.options("/*", ctx -> {
 
 ## File Upload
 
-### **Multipart Form Data**
+### Multipart Form Data
 
 ```java
 app.post("/upload", ctx -> {
@@ -718,7 +718,7 @@ app.post("/upload", ctx -> {
 
 ## Тестирование
 
-### **Unit Testing**
+### Unit Testing
 
 ```java
 import io.javalin.testtools.JavalinTest;
@@ -735,7 +735,7 @@ public class RouteTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
 ```java
 import io.javalin.testtools.HttpClient;
@@ -757,7 +757,7 @@ public class IntegrationTest {
 
 ## Шаблоны
 
-### **Thymeleaf**
+### Thymeleaf
 
 ```java
 import io.javalin.rendering.template.JavalinThymeleaf;
@@ -769,7 +769,7 @@ app.get("/", ctx -> {
 });
 ```
 
-### **Velocity**
+### Velocity
 
 ```java
 import io.javalin.rendering.template.JavalinVelocity;
@@ -813,7 +813,7 @@ public class CachingExample {
 
 ## Развертывание
 
-### **Fat JAR**
+### Fat JAR
 
 ```xml
 <plugin>
@@ -830,7 +830,7 @@ public class CachingExample {
 </plugin>
 ```
 
-### **Docker**
+### Docker
 
 ```dockerfile
 FROM openjdk:11-jre-slim
@@ -842,7 +842,7 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 ## Dependency Injection
 
-### **Guice Integration**
+### Guice Integration
 
 ```java
 import com.google.inject.Guice;
@@ -868,7 +868,7 @@ public class GuiceExample {
 
 ## Async Processing
 
-### **CompletableFuture**
+### CompletableFuture
 
 ```java
 app.get("/async", ctx -> {
@@ -887,7 +887,7 @@ app.get("/async", ctx -> {
 
 ## Advanced Routing
 
-### **Route Groups**
+### Route Groups
 
 ```java
 app.routes(() -> {
@@ -903,7 +903,7 @@ app.routes(() -> {
 });
 ```
 
-### **Path Matchers**
+### Path Matchers
 
 ```java
 app.get("/users/{userId}/posts/{postId}", ctx -> {
@@ -917,7 +917,7 @@ app.get("/users/{userId}/posts/{postId}", ctx -> {
 
 ## Request/Response Advanced
 
-### **Request Headers**
+### Request Headers
 
 ```java
 app.get("/api", ctx -> {
@@ -930,7 +930,7 @@ app.get("/api", ctx -> {
 });
 ```
 
-### **Response Headers**
+### Response Headers
 
 ```java
 app.get("/api", ctx -> {
@@ -940,7 +940,7 @@ app.get("/api", ctx -> {
 });
 ```
 
-### **Cookies**
+### Cookies
 
 ```java
 app.get("/set-cookie", ctx -> {
@@ -957,7 +957,7 @@ app.get("/get-cookie", ctx -> {
 
 ## Database Integration
 
-### **JDBC with Connection Pool**
+### JDBC with Connection Pool
 
 ```java
 import com.zaxxer.hikari.HikariConfig;
@@ -1005,7 +1005,7 @@ public class DatabaseExample {
 
 ## Testing Advanced
 
-### **Mocking Services**
+### Mocking Services
 
 ```java
 import org.mockito.Mock;
@@ -1035,7 +1035,7 @@ public class RouteTest {
 
 ## Production Deployment
 
-### **JVM Tuning**
+### JVM Tuning
 
 ```bash
 java -Xms256m -Xmx1g \
@@ -1043,7 +1043,7 @@ java -Xms256m -Xmx1g \
      -jar myapp.jar
 ```
 
-### **Graceful Shutdown**
+### Graceful Shutdown
 
 ```java
 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -1054,7 +1054,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 
 1. **Port `Already in` Use**: Изменить порт
 2. **Memory Leaks**: Проверить **connection pools**
@@ -1063,7 +1063,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
 ## Advanced Features
 
-### **Custom Response Mappers**
+### Custom Response Mappers
 
 ```java
 import io.javalin.http.Context;
@@ -1089,7 +1089,7 @@ Javalin app = Javalin.create(config -> {
 }).start(7000);
 ```
 
-### **Route Groups**
+### Route Groups
 
 ```java
 app.routes(() -> {
@@ -1105,7 +1105,7 @@ app.routes(() -> {
 });
 ```
 
-### **Content Negotiation**
+### Content Negotiation
 
 ```java
 app.get("/data", ctx -> {
@@ -1144,7 +1144,7 @@ project/
 └── pom.xml
 ```
 
-### 2. **Error Handling**
+### 2. Error Handling
 
 ```java
 app.exception(IllegalArgumentException.class, (e, ctx) -> {
@@ -1157,7 +1157,7 @@ app.exception(Exception.class, (e, ctx) -> {
 });
 ```
 
-### 3. **Logging**
+### 3. Logging
 
 ```java
 import org.slf4j.Logger;
@@ -1179,7 +1179,7 @@ public class LoggingExample {
 
 ## Performance Optimization
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 import com.zaxxer.hikari.HikariConfig;
@@ -1220,7 +1220,7 @@ public class PerformanceExample {
 }
 ```
 
-### **Caching**
+### Caching
 
 ```java
 import java.util.concurrent.ConcurrentHashMap;
@@ -1247,7 +1247,7 @@ public class CachingExample {
 
 ## Advanced Topics
 
-### **Custom Access Manager**
+### Custom Access Manager
 
 ```java
 import io.javalin.security.AccessManager;
@@ -1273,7 +1273,7 @@ Javalin app = Javalin.create(config -> {
 app.get("/admin", ctx -> ctx.result("Admin area"), Role.ADMIN);
 ```
 
-### **Event Handlers**
+### Event Handlers
 
 ```java
 app.events(event -> {
@@ -1291,7 +1291,7 @@ app.events(event -> {
 });
 ```
 
-### **Plugin System**
+### Plugin System
 
 ```java
 import io.javalin.plugin.Plugin;
@@ -1314,7 +1314,7 @@ Javalin app = Javalin.create(config -> {
 
 ## Production Checklist
 
-### **Performance**
+### Performance
 
 - [ ] Настроены **connection pools**
 - [ ] Оптимизированы запросы
@@ -1322,7 +1322,7 @@ Javalin app = Javalin.create(config -> {
 - [ ] Настроен **thread pool**
 - [ ] Оптимизированы статические файлы
 
-### **Security**
+### Security
 
 - [ ] Настроена аутентификация
 - [ ] Настроена авторизация
@@ -1330,7 +1330,7 @@ Javalin app = Javalin.create(config -> {
 - [ ] Настроены **security headers**
 - [ ] Проведен **security audit**
 
-### **Deployment**
+### Deployment
 
 - [ ] Настроен CI/CD
 - [ ] Настроен **Docker**
@@ -1341,7 +1341,7 @@ Javalin app = Javalin.create(config -> {
 
 ## Real-World Examples
 
-### **Complete REST API**
+### Complete REST API
 
 ```java
 public class UserAPI {
@@ -1403,7 +1403,7 @@ public class UserAPI {
 
 ## Advanced Patterns
 
-### **Service Layer Pattern**
+### Service Layer Pattern
 
 ```java
 public class UserService {
@@ -1446,7 +1446,7 @@ public class UserService {
 }
 ```
 
-### **Repository Pattern**
+### Repository Pattern
 
 ```java
 public interface UserRepository {
@@ -1476,7 +1476,7 @@ public class UserRepositoryImpl implements UserRepository {
 
 ## Common Pitfalls and Solutions
 
-### 1. **Memory Leaks**
+### 1. Memory Leaks
 
 **Проблема**: Утечки памяти
 
@@ -1492,7 +1492,7 @@ app.events(event -> {
 });
 ```
 
-### 2. **Connection Pool Issues**
+### 2. Connection Pool Issues
 
 **Проблема**: Проблемы с пулом соединений
 
@@ -1506,7 +1506,7 @@ config.setIdleTimeout(600000);
 config.setMaxLifetime(1800000);
 ```
 
-### 3. **Error Handling**
+### 3. Error Handling
 
 **Проблема**: Неправильная обработка ошибок
 
@@ -1525,12 +1525,12 @@ app.exception(Exception.class, (e, ctx) -> {
 
 ## Additional Resources
 
-### **Community**
+### Community
 
-- **Stack Overflow**: тег `**javalin**`
+- **Stack Overflow**: тег `javalin`
 - **GitHub Discussions**: обсуждения и вопросы
 
-### **Tools**
+### Tools
 
 - **Javalin Maven Plugin**
 - **Javalin Gradle Plugin**
@@ -1557,7 +1557,7 @@ app.exception(Exception.class, (e, ctx) -> {
 - **WebSocket**: Встроенная поддержка **WebSocket**
 - **Валидация**: Встроенная валидация запросов
 
-### Когда использовать **Javalin**
+### Когда использовать Javalin
 
 - **RESTful API**
 - Веб-приложения
@@ -1567,7 +1567,7 @@ app.exception(Exception.class, (e, ctx) -> {
 
 ## Detailed Examples
 
-### **Complete Application Structure**
+### Complete Application Structure
 
 ```java
 // Main.java
@@ -1616,7 +1616,7 @@ public class Main {
 }
 ```
 
-### **Service Layer Implementation**
+### Service Layer Implementation
 
 ```java
 public class UserService {
@@ -1683,7 +1683,7 @@ public class UserService {
 
 ### Advanced Patterns
 
-#### **Request**/**Response Interceptors**
+#### Request/Response Interceptors
 
 ```java
 public class RequestInterceptor {
@@ -1752,7 +1752,7 @@ public class DatabaseManager {
 }
 ```
 
-#### **Authentication Middleware**
+#### Authentication Middleware
 
 ```java
 public class AuthMiddleware {
@@ -1779,7 +1779,7 @@ public class AuthMiddleware {
 }
 ```
 
-#### **Caching Strategy**
+#### Caching Strategy
 
 ```java
 public class CacheManager {
@@ -1826,7 +1826,7 @@ public class CacheManager {
 }
 ```
 
-#### **Dependency Injection Pattern**
+#### Dependency Injection Pattern
 
 ```java
 public class ServiceRegistry {
@@ -1858,7 +1858,7 @@ public class UserRoutes {
 
 ## Production Deployment
 
-### **Docker Configuration**
+### Docker Configuration
 
 ```dockerfile
 FROM openjdk:11-jre-slim
@@ -1868,7 +1868,7 @@ EXPOSE 7000
 CMD ["java", "-jar", "app.jar"]
 ```
 
-### **Environment Configuration**
+### Environment Configuration
 
 ```java
 public class Config {
@@ -1887,7 +1887,7 @@ public class Config {
 }
 ```
 
-### **Health Check Endpoint**
+### Health Check Endpoint
 
 ```java
 app.get("/health", ctx -> {
@@ -1898,7 +1898,7 @@ app.get("/health", ctx -> {
 });
 ```
 
-### **Metrics Integration**
+### Metrics Integration
 
 ```java
 public class MetricsPlugin implements Plugin {
@@ -1922,7 +1922,7 @@ public class MetricsPlugin implements Plugin {
 
 ## Advanced Features
 
-### **WebSocket Support**
+### WebSocket Support
 
 ```java
 app.ws("/ws", ws -> {
@@ -1945,7 +1945,7 @@ app.ws("/ws", ws -> {
 });
 ```
 
-### **Server-Sent Events** (**SSE**)
+### Server-Sent Events (SSE)
 
 ```java
 app.get("/events", ctx -> {
@@ -1980,7 +1980,7 @@ app.post("/upload", ctx -> {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 
 1. **Port `Already in` Use**: Убедитесь, что порт не занят другим приложением
 2. **Static `Files Not` Found**: Проверьте путь к статическим файлам
@@ -1989,7 +1989,7 @@ app.post("/upload", ctx -> {
 
 ## Migration Guide
 
-### **From Spark Java**
+### From Spark Java
 
 ```java
 // Spark Java
@@ -1999,7 +1999,7 @@ get("/hello", (req, res) -> "Hello World");
 app.get("/hello", ctx -> ctx.result("Hello World"));
 ```
 
-### **From Spring Boot**
+### From Spring Boot
 
 ```java
 // Spring Boot
@@ -2020,7 +2020,7 @@ app.get("/users", ctx -> {
 
 ## Real-World Examples
 
-### **RESTful API with CRUD Operations**
+### RESTful API with CRUD Operations
 
 ```java
 public class UserAPI {
@@ -2072,7 +2072,7 @@ public class UserAPI {
 }
 ```
 
-### **API Versioning**
+### API Versioning
 
 ```java
 app.routes(() -> {
@@ -2096,7 +2096,7 @@ app.routes(() -> {
 
 ## Testing Strategies
 
-### **Unit Testing**
+### Unit Testing
 
 ```java
 @Test
@@ -2123,7 +2123,7 @@ public void testUserCreation() {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
 ```java
 @Test
@@ -2149,7 +2149,7 @@ public void testUserAPI() {
 
 ## Лучшие практики (сводка)
 
-1. **Structure**: Организуйте код по модулям (**routes, services, repositories**)
+1. **Structure**: Организуйте код по модулям (routes, services, repositories)
 2. **Error Handling**: Используйте **exception handlers** для централизованной обработки ошибок
 3. **Validation**: Валидируйте все входные данные
 4. **Security**: Реализуйте аутентификацию и авторизацию

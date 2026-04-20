@@ -74,7 +74,7 @@ related: ["micronaut-reactive.md", "micronaut-kafka.md"]
 - **Topics**: **Pub**/**sub messaging**
 - **Transactions**: Транзакционная обработка сообщений
 
-## Настройка **JMS**
+## Настройка JMS
 
 ### Зависимости
 
@@ -248,7 +248,7 @@ public class TransactionalConsumer {
 
 ## Лучшие практики
 
-### 1. Используйте **connection pooling**
+### 1. Используйте connection pooling
 
 ```yaml
 # ✅ Хорошо
@@ -277,7 +277,7 @@ public class ErrorHandlingConsumer {
 }
 ```
 
-### 3. Используйте **transactions** для критических операций
+### 3. Используйте transactions для критических операций
 
 ```java
 // ✅ Хорошо

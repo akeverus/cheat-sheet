@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
-# **Redis**: Персистентность
+# Redis: Персистентность
 
 ## Полезные ссылки
 
@@ -32,13 +32,13 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Введение в персистентность **Redis**](#введение-в-персистентность-redis)
   - [Типы персистентности](#типы-персистентности)
   - [Выбор стратегии персистентности](#выбор-стратегии-персистентности)
-- [**RDB** (**Redis `Database` Backup**)](#rdb-redis-database-backup)
+- [**RDB** (Redis `Database` Backup)](#rdb-redis-database-backup)
   - [Настройка **RDB**](#настройка-rdb)
   - [Процесс создания **RDB**](#процесс-создания-rdb)
   - [Оптимизация **RDB**](#оптимизация-rdb)
   - [Восстановление из **RDB**](#восстановление-из-rdb)
   - [Преимущества и недостатки **RDB**](#преимущества-и-недостатки-rdb)
-- [**AOF** (**Append `Only` File**)](#aof-append-only-file)
+- [**AOF** (Append `Only` File)](#aof-append-only-file)
   - [Настройка **AOF**](#настройка-aof)
   - [Формат **AOF**](#формат-aof)
   - [Перезапись **AOF**](#перезапись-aof)
@@ -46,7 +46,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [Восстановление из **AOF**](#восстановление-из-aof)
   - [Оптимизация **AOF**](#оптимизация-aof)
   - [Преимущества и недостатки **AOF**](#преимущества-и-недостатки-aof)
-- [Гибридный подход (**RDB + AOF**)](#гибридный-подход-rdb-aof)
+- [Гибридный подход (RDB + AOF)](#гибридный-подход-rdb-aof)
   - [Настройка гибридного подхода](#настройка-гибридного-подхода)
   - [Как это работает](#как-это-работает)
   - [Преимущества гибридного подхода](#преимущества-гибридного-подхода)
@@ -85,8 +85,8 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [**Persistence Health Check Script**](#persistence-health-check-script)
   - [**Prometheus Metrics**](#prometheus-metrics)
 - [**Disaster Recovery Planning**](#disaster-recovery-planning)
-  - [**Recovery Time Objectives** (**RTO**)](#recovery-time-objectives-rto)
-  - [**Recovery Point Objectives** (**RPO**)](#recovery-point-objectives-rpo)
+  - [**Recovery Time Objectives** (RTO)](#recovery-time-objectives-rto)
+  - [**Recovery Point Objectives** (RPO)](#recovery-point-objectives-rpo)
   - [**Recovery Procedures**](#recovery-procedures)
 - [**Performance Benchmarks**](#performance-benchmarks)
   - [**RDB** vs **AOF Performance**](#rdb-vs-aof-performance)
@@ -103,14 +103,14 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
   - [**Incremental Backups**](#incremental-backups-1)
   - [**Point-in-Time Recovery**](#point-in-time-recovery-1)
 
-## Введение в персистентность **Redis**
+## Введение в персистентность Redis
 
 **Redis** — это **in-memory** база данных, но она поддерживает различные механизмы персистентности для сохранения данных на диск. Понимание этих механизмов критически важно для обеспечения надежности и восстановления данных.
 
 ### Типы персистентности
 
-1. **RDB (**Redis Database Backup**)**: Снимки состояния базы данных
-2. **AOF (**Append Only File**)**: Лог всех операций записи
+1. **RDB (Redis Database Backup)**: Снимки состояния базы данных
+2. **AOF (Append Only File)**: Лог всех операций записи
 3. **Гибридный подход**: Комбинация **RDB** и **AOF**
 
 ### Выбор стратегии персистентности
@@ -120,13 +120,13 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - **Гибридный**: Баланс между надежностью и производительностью
 
 
-## **RDB** (**Redis `Database` Backup**)
+## RDB (Redis `Database` Backup)
 
 **RDB** создает снимки состояния базы данных в определенные моменты времени. Это компактный бинарный формат, который позволяет быстро сохранять и восстанавливать данные.
 
-### Настройка **RDB**
+### Настройка RDB
 
-#### Конфигурация в **redis.conf**
+#### Конфигурация в redis.conf
 
 ```conf
 # Сохранение через интервалы
@@ -166,7 +166,7 @@ BGSAVE
 LASTSAVE
 ```
 
-### Процесс создания **RDB**
+### Процесс создания RDB
 
 ```bash
 # Redis создает RDB через fork процесса
@@ -178,7 +178,7 @@ LASTSAVE
 redis-cli INFO persistence
 ```
 
-### Оптимизация **RDB**
+### Оптимизация RDB
 
 ```conf
 # Использование сжатия для экономии места
@@ -191,7 +191,7 @@ stop-writes-on-bgsave-error no  # Продолжать работу при ош�
 # BGSAVE автоматически используется при достижении условий save
 ```
 
-### Восстановление из **RDB**
+### Восстановление из RDB
 
 ```bash
 # Redis автоматически загружает RDB при запуске
@@ -210,7 +210,7 @@ sudo systemctl start redis
 # Redis автоматически загрузит данные из dump.rdb
 ```
 
-### Преимущества и недостатки **RDB**
+### Преимущества и недостатки RDB
 
 **Преимущества:**
 - Компактный формат
@@ -224,13 +224,13 @@ sudo systemctl start redis
 - Не сохраняет точное состояние на момент сбоя
 
 
-## **AOF** (**Append `Only` File**)
+## AOF (Append `Only` File)
 
 **AOF** сохраняет каждую операцию записи в лог-файл. При перезапуске **Redis** воспроизводит эти команды для восстановления состояния.
 
-### Настройка **AOF**
+### Настройка AOF
 
-#### Конфигурация в **redis.conf**
+#### Конфигурация в redis.conf
 
 ```conf
 # Включить AOF
@@ -268,7 +268,7 @@ appendfsync everysec
 appendfsync no
 ```
 
-### Формат **AOF**
+### Формат AOF
 
 ```redis
 # Пример содержимого AOF файла
@@ -291,7 +291,7 @@ $3
 key
 ```
 
-### Перезапись **AOF**
+### Перезапись AOF
 
 **AOF** файл может расти очень большим. **Redis** автоматически перезаписывает его, создавая компактную версию.
 
@@ -304,7 +304,7 @@ auto-aof-rewrite-percentage 100  # Перезаписать если разме�
 auto-aof-rewrite-min-size 64mb   # Минимальный размер для перезаписи
 ```
 
-### Процесс перезаписи **AOF**
+### Процесс перезаписи AOF
 
 ```bash
 # 1. Redis создает новый AOF файл
@@ -313,7 +313,7 @@ auto-aof-rewrite-min-size 64mb   # Минимальный размер для п
 # 4. После завершения заменяет старый файл новым
 ```
 
-### Восстановление из **AOF**
+### Восстановление из AOF
 
 ```bash
 # Redis автоматически загружает AOF при запуске
@@ -326,7 +326,7 @@ redis-check-aof --fix appendonly.aof
 redis-check-aof appendonly.aof
 ```
 
-### Оптимизация **AOF**
+### Оптимизация AOF
 
 ```conf
 # Использование RDB префикса для ускорения загрузки
@@ -339,7 +339,7 @@ no-appendfsync-on-rewrite yes  # Не синхронизировать во вр
 aof-rewrite-incremental-fsync yes
 ```
 
-### Преимущества и недостатки **AOF**
+### Преимущества и недостатки AOF
 
 **Преимущества:**
 - Максимальная надежность
@@ -353,7 +353,7 @@ aof-rewrite-incremental-fsync yes
 - Больше операций записи на диск
 
 
-## Гибридный подход (**RDB + AOF**)
+## Гибридный подход (RDB + AOF)
 
 Комбинация **RDB** и **AOF** обеспечивает баланс между надежностью и производительностью.
 
@@ -462,7 +462,7 @@ fi
 
 ## Резервное копирование
 
-### Автоматическое резервное копирование **RDB**
+### Автоматическое резервное копирование RDB
 
 ```bash
 #!/bin/bash
@@ -495,7 +495,7 @@ find "$BACKUP_DIR" -name "dump_*.rdb.gz" -mtime +7 -delete
 echo "Backup completed: $BACKUP_DIR/dump_$DATE.rdb.gz"
 ```
 
-### Резервное копирование **AOF**
+### Резервное копирование AOF
 
 ```bash
 #!/bin/bash
@@ -547,7 +547,7 @@ echo "Backup uploaded to S3"
 
 ## Восстановление данных
 
-### Восстановление из **RDB**
+### Восстановление из RDB
 
 ```bash
 #!/bin/bash
@@ -580,7 +580,7 @@ sudo systemctl start redis
 echo "Restore completed"
 ```
 
-### Восстановление из **AOF**
+### Восстановление из AOF
 
 ```bash
 #!/bin/bash
@@ -619,7 +619,7 @@ echo "Restore completed"
 
 ## Оптимизация производительности
 
-### Оптимизация **RDB**
+### Оптимизация RDB
 
 ```conf
 # Использование сжатия
@@ -632,7 +632,7 @@ stop-writes-on-bgsave-error no
 rdb-save-incremental-fsync yes
 ```
 
-### Оптимизация **AOF**
+### Оптимизация AOF
 
 ```conf
 # Использование RDB префикса
@@ -658,7 +658,7 @@ auto-aof-rewrite-min-size 64mb
 
 ## Решение проблем
 
-### Проблема: **RDB** не создается
+### Проблема: RDB не создается
 
 ```bash
 # Проверить настройки save
@@ -674,7 +674,7 @@ df -h /var/lib/redis
 tail -f /var/log/redis/redis-server.log
 ```
 
-### Проблема: **AOF** файл поврежден
+### Проблема: AOF файл поврежден
 
 ```bash
 # Проверить целостность
@@ -727,9 +727,9 @@ redis-cli BGREWRITEAOF
 4. **Настройте алерты** на ошибки персистентности
 5. **Регулярно проверяйте** целостность файлов
 
-## **Advanced Persistence Configuration**
+## Advanced Persistence Configuration
 
-### **Tuning RDB Performance**
+### Tuning RDB Performance
 
 ```conf
 # Оптимизация для больших баз данных
@@ -747,7 +747,7 @@ rdbcompression yes              # Использовать сжатие
 rdbchecksum yes                 # Проверка целостности
 ```
 
-### **Tuning AOF Performance**
+### Tuning AOF Performance
 
 ```conf
 # Оптимизация синхронизации
@@ -767,7 +767,7 @@ aof-rewrite-incremental-fsync yes
 aof-use-rdb-preamble yes
 ```
 
-### **Disk** I/O **Optimization**
+### Disk I/O Optimization
 
 ```conf
 # Использование отдельного диска для данных
@@ -782,9 +782,9 @@ dir /mnt/redis-data
 # net.core.somaxconn = 65535
 ```
 
-## **Persistence Strategies** by **Use Case**
+## Persistence Strategies by Use Case
 
-### **High Availability Setup**
+### High Availability Setup
 
 ```conf
 # Максимальная надежность
@@ -796,7 +796,7 @@ save 900 1
 aof-use-rdb-preamble yes
 ```
 
-### **Performance-Optimized Setup**
+### Performance-Optimized Setup
 
 ```conf
 # Максимальная производительность
@@ -809,7 +809,7 @@ aof-use-rdb-preamble yes
 no-appendfsync-on-rewrite yes
 ```
 
-### **Memory-Constrained Setup**
+### Memory-Constrained Setup
 
 ```conf
 # Минимальное использование диска
@@ -819,9 +819,9 @@ save 1800 10
 rdbcompression yes
 ```
 
-## **Monitoring and Alerting**
+## Monitoring and Alerting
 
-### **Persistence Health Check Script**
+### Persistence Health Check Script
 
 ```java
 // Java пример проверки здоровья персистентности
@@ -916,7 +916,7 @@ public class PersistenceHealthChecker {
 }
 ```
 
-### **Prometheus Metrics**
+### Prometheus Metrics
 
 ```yaml
 # prometheus.yml
@@ -935,9 +935,9 @@ docker run -d \
   oliver006/redis_exporter
 ```
 
-## **Disaster Recovery Planning**
+## Disaster Recovery Planning
 
-### **Recovery Time Objectives** (**RTO**)
+### Recovery Time Objectives (RTO)
 
 ```bash
 # RTO зависит от размера данных и типа персистентности
@@ -948,7 +948,7 @@ docker run -d \
 time redis-server --dbfilename test.rdb --dir /tmp
 ```
 
-### **Recovery Point Objectives** (**RPO**)
+### Recovery Point Objectives (RPO)
 
 ```bash
 # RPO зависит от настроек персистентности
@@ -957,7 +957,7 @@ time redis-server --dbfilename test.rdb --dir /tmp
 # AOF with everysec: Потеря до 1 секунды данных
 ```
 
-### **Recovery Procedures**
+### Recovery Procedures
 
 ```bash
 #!/bin/bash
@@ -996,9 +996,9 @@ systemctl start redis
 echo "Disaster recovery completed"
 ```
 
-## **Performance Benchmarks**
+## Performance Benchmarks
 
-### **RDB** vs **AOF Performance**
+### RDB vs AOF Performance
 
 ```bash
 # Бенчмарк записи
@@ -1011,7 +1011,7 @@ redis-benchmark -t set -n 100000 -d 256 --rdb-compression
 redis-benchmark -t set -n 100000 -d 256 --aof
 ```
 
-### **Disk** I/O **Impact**
+### Disk I/O Impact
 
 ```bash
 # Мониторинг дисковых операций
@@ -1021,9 +1021,9 @@ iostat -x 1
 watch -n 1 'iostat -x | grep -A 1 "Device"'
 ```
 
-## **Advanced Backup Strategies**
+## Advanced Backup Strategies
 
-### **Incremental Backups**
+### Incremental Backups
 
 ```bash
 #!/bin/bash
@@ -1053,7 +1053,7 @@ ln -s "$DATE" "$BACKUP_DIR/latest"
 echo "Incremental backup completed"
 ```
 
-### **Point-in-Time Recovery**
+### Point-in-Time Recovery
 
 ```bash
 #!/bin/bash
@@ -1080,25 +1080,25 @@ for aof_file in $AOF_FILES; do
 done
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
-### **Configuration**
+### Configuration
 
-1. **Используйте гибридный подход** (**RDB + AOF**) для **production**
+1. **Используйте гибридный подход** (RDB + AOF) для **production**
 2. **Настройте автоматические снимки** через **save**
-3. **Используйте everysec** для **appendfsync** (**баланс**)
+3. **Используйте everysec** для **appendfsync** (баланс)
 4. **Включите `RDB` префикс** в **AOF** для ускорения
 5. **Настройте автоматическую перезапись AOF**
 
-### **Backup**
+### Backup
 
-1. **Регулярно создавайте бэкапы** (**ежедневно минимум**)
-2. **Храните бэкапы в разных местах** (**локально и в облаке**)
+1. **Регулярно создавайте бэкапы** (ежедневно минимум)
+2. **Храните бэкапы в разных местах** (локально и в облаке)
 3. **Тестируйте восстановление** еженедельно
 4. **Мониторьте размер файлов** персистентности
 5. **Автоматизируйте процесс** резервного копирования
 
-### **Monitoring**
+### Monitoring
 
 1. **Отслеживайте статус** сохранений через **INFO persistence**
 2. **Мониторьте размер файлов RDB** и **AOF**
@@ -1106,7 +1106,7 @@ done
 4. **Настройте алерты** на ошибки персистентности
 5. **Регулярно проверяйте** целостность файлов
 
-### **Recovery**
+### Recovery
 
 1. **Документируйте процедуры** восстановления
 2. **Тестируйте восстановление** регулярно
@@ -1114,9 +1114,9 @@ done
 4. **Проверяйте целостность** перед восстановлением
 5. **Имейте план** на случай сбоя
 
-## **Advanced Persistence Patterns**
+## Advanced Persistence Patterns
 
-### **Incremental Backups**
+### Incremental Backups
 
 ```bash
 #!/bin/bash
@@ -1142,7 +1142,7 @@ rm -f "$BACKUP_DIR/latest"
 ln -s "$DATE" "$BACKUP_DIR/latest"
 ```
 
-### **Point-in-Time Recovery**
+### Point-in-Time Recovery
 
 ```bash
 #!/bin/bash

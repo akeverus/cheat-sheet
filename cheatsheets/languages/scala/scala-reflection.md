@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 ---
 
-# **Scala Reflection**
+# Scala Reflection
 
 Кратко: полное руководство по рефлексии в **Scala**: **runtime reflection**, **type tags**, **class tags**, интроспекция типов.
 
@@ -66,7 +66,7 @@ related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
   - [Использование с различными техниками для работы с методами](#использование-с-различными-техниками-для-работы-с-методами)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Reflection**
+## Введение в Reflection
 
 **Reflection** позволяет получать информацию о типах и структурах во время выполнения. **Scala** предоставляет мощные инструменты для рефлексии.
 
@@ -77,7 +77,7 @@ related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 - **Генерация кода**: создание кода на основе метаданных
 - **Сериализация**: автоматическая сериализация на основе типов
 
-## **Type Tags**
+## Type Tags
 
 **Type Tags** сохраняют информацию о типах во время выполнения:**
 
@@ -95,7 +95,7 @@ val stringType = getType("hello")  // Type для String
 
 **Type Tags** позволяют получать полную информацию о типах, включая **generics**.
 
-## **Class Tags**
+## Class Tags
 
 **Class Tags** предоставляют информацию о классах:**
 
@@ -113,7 +113,7 @@ val stringArray = createArray[String](5)
 
 **Class Tags** необходимы для создания массивов и других операций, требующих информации о классе во время выполнения.
 
-## **Runtime Reflection**
+## Runtime Reflection
 
 **Runtime Reflection** позволяет интроспектировать классы и объекты:**
 
@@ -157,7 +157,7 @@ analyzeType[User]
 // Is case class: true
 ```
 
-### Работа с **generic** типами
+### Работа с generic типами
 
 **Type Tags** сохраняют информацию о **generic** типах:**
 
@@ -385,7 +385,7 @@ val errors = validate(user)  // List("name cannot be null")
 
 ## Лучшие практики
 
-### Использование **Type Tags** для **generics**
+### Использование Type Tags для generics
 
 ```scala
 // Хорошо - использование Type Tags для сохранения информации о типах
@@ -400,7 +400,7 @@ def processBad[T](value: T): String = {
 }
 ```
 
-### Кэширование **Reflection** операций
+### Кэширование Reflection операций
 
 **Reflection** операции могут быть дорогими, поэтому их стоит кэшировать:**
 
@@ -420,7 +420,7 @@ object ReflectionCache {
 }
 ```
 
-### Обработка ошибок **Reflection**
+### Обработка ошибок Reflection
 
 **Всегда обрабатывайте возможные ошибки при использовании **Reflection**:**
 
@@ -450,7 +450,7 @@ safeCallMethod(calc, "add", 5, 3) match {
 }
 ```
 
-## Продвинутые возможности **Reflection**
+## Продвинутые возможности Reflection
 
 ### Работа с аннотациями
 
@@ -494,7 +494,7 @@ val tree = toolbox.parse(code)
 val result = toolbox.eval(tree)  // 8
 ```
 
-### Работа с **generic** типами
+### Работа с generic типами
 
 **Reflection** позволяет работать с **generic** типами во время выполнения.
 
@@ -526,9 +526,9 @@ def isSubtype[T: TypeTag, U: TypeTag]: Boolean = {
 
 ## Заключение
 
-## Продвинутые техники работы с **Reflection**
+## Продвинутые техники работы с Reflection
 
-### **Runtime Type Information**
+### Runtime Type Information
 
 **Runtime Type Information** позволяет получать информацию о типах во время выполнения.
 
@@ -551,7 +551,7 @@ val info = getTypeInfo[User]
 // TypeInfo("User", List(), true)
 ```
 
-### **Dynamic Method Invocation**
+### Dynamic Method Invocation
 
 **Dynamic Method Invocation** позволяет вызывать методы динамически.
 
@@ -576,7 +576,7 @@ val calc = Calculator()
 val result = invokeMethod(calc, "add", 5, 3)  // 8
 ```
 
-### **Type-safe Reflection**
+### Type-safe Reflection
 
 **Type-safe Reflection** позволяет работать с типами безопасно.
 

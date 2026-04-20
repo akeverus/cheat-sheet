@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 ---
 
-# **ClickHouse**: Таблицы и движки — Полное руководство по созданию и управлению таблицами
+# ClickHouse: Таблицы и движки — Полное руководство по созданию и управлению таблицами
 
 Комплексное руководство по таблицам **ClickHouse**: движки таблиц, типы данных, создание и оптимизация таблиц.
 
@@ -40,7 +40,7 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
   - [Продвинутая структура](#продвинутая-структура)
 - [Движки таблиц](#движки-таблиц)
   - [**MergeTree Family**](#mergetree-family)
-    - [**MergeTree** (**основной движок**)](#mergetree-основной-движок)
+    - [**MergeTree** (основной движок)](#mergetree-основной-движок)
     - [**ReplacingMergeTree**](#replacingmergetree)
     - [**SummingMergeTree**](#summingmergetree)
     - [**AggregatingMergeTree**](#aggregatingmergetree)
@@ -54,12 +54,12 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
   - [Числовые типы](#числовые-типы)
     - [Целые числа](#целые-числа)
     - [Числа с плавающей точкой](#числа-с-плавающей-точкой)
-    - [**Decimal** (**фиксированная точность**)](#decimal-фиксированная-точность)
+    - [**Decimal** (фиксированная точность)](#decimal-фиксированная-точность)
   - [Строковые типы](#строковые-типы)
   - [Дата и время](#дата-и-время)
   - [Сложные типы данных](#сложные-типы-данных)
     - [Массивы](#массивы)
-    - [Кортежи (**Tuples**)](#кортежи-tuples)
+    - [Кортежи (Tuples)](#кортежи-tuples)
     - [**Nullable** типы](#nullable-типы)
     - [**Enum** типы](#enum-типы)
     - [**Map** типы](#map-типы)
@@ -83,7 +83,7 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 
 ## Создание таблиц
 
-### Синтаксис **CREATE TABLE**
+### Синтаксис CREATE TABLE
 
 ```sql
 CREATE TABLE [IF NOT EXISTS] table_name
@@ -163,9 +163,9 @@ SETTINGS index_granularity = 8192;
 
 ## Движки таблиц
 
-### **MergeTree Family**
+### MergeTree Family
 
-#### **MergeTree** (**основной движок**)
+#### MergeTree (основной движок)
 
 Основной движок для аналитических данных с поддержкой партиционирования и индексов.
 
@@ -187,11 +187,11 @@ SETTINGS index_granularity = 8192;  -- Размер гранулы индекс�
 **Особенности `MergeTree`:**
 - Поддержка партиционирования
 - Первичный ключ для сортировки
-- Вторичные индексы (**skip indexes**)
+- Вторичные индексы (skip indexes)
 - **TTL** для автоматической очистки
 - Оптимизация с помощью слияния
 
-#### **ReplacingMergeTree**
+#### ReplacingMergeTree
 
 Автоматически удаляет дубликаты при слиянии партиций.
 
@@ -214,7 +214,7 @@ PARTITION BY user_id % 100;  -- Распределение по партиция
 - Необходимость дедупликации
 - Потоковая обработка данных
 
-#### **SummingMergeTree**
+#### SummingMergeTree
 
 Автоматически суммирует значения при слиянии партиций.
 
@@ -239,11 +239,11 @@ INSERT INTO metrics.hourly_stats VALUES
 ```
 
 **Когда использовать:**
-- Агрегационные данные (**статистики, метрики**)
+- Агрегационные данные (статистики, метрики)
 - Частые вставки с одинаковыми ключами
 - Необходимость автоматического суммирования
 
-#### **AggregatingMergeTree**
+#### AggregatingMergeTree
 
 Хранит состояния агрегатных функций для последующей агрегации.
 
@@ -277,7 +277,7 @@ GROUP BY date, user_id;
 - Инкрементальная агрегация
 - Сложные аналитические расчеты
 
-#### **CollapsingMergeTree**
+#### CollapsingMergeTree
 
 Обрабатывает состояния "**collapsed**" записей.
 
@@ -306,7 +306,7 @@ INSERT INTO inventory VALUES
 - Финансовые транзакции
 - Инвентаризационные системы
 
-#### **VersionedCollapsingMergeTree**
+#### VersionedCollapsingMergeTree
 
 Расширенная версия **CollapsingMergeTree** с поддержкой версий.
 
@@ -325,7 +325,7 @@ ORDER BY (order_id, item_id);
 
 ### Специализированные движки
 
-#### **Memory**
+#### Memory
 
 Хранит данные в оперативной памяти. Быстрый, но данные теряются при перезапуске.
 
@@ -344,7 +344,7 @@ ENGINE = Memory();
 - Временные результаты
 - Тестирование и разработка
 
-#### **Distributed**
+#### Distributed
 
 Распределенная таблица, объединяющая данные с нескольких серверов.
 
@@ -364,7 +364,7 @@ ENGINE = Distributed('cluster_name', 'database_name', 'local_table_name', rand()
 - Объединение данных с разных шардов
 - Горизонтальное масштабирование
 
-#### **MaterializedView**
+#### MaterializedView
 
 Материализованное представление, автоматически обновляемое при вставке данных.
 
@@ -444,7 +444,7 @@ CREATE TABLE coordinates
 );
 ```
 
-#### **Decimal** (**фиксированная точность**)
+#### Decimal (фиксированная точность)
 
 ```sql
 -- Decimal32(S) - 4 байта, S - знаки после запятой (макс 9)
@@ -534,7 +534,7 @@ SELECT arrayCount(x -> x > 1000, prices) as expensive_count  -- Количест
 FROM products;
 ```
 
-#### Кортежи (**Tuples**)
+#### Кортежи (Tuples)
 
 ```sql
 Tuple(T1, T2, ...)  -- Фиксированный набор разнотипных значений
@@ -556,7 +556,7 @@ SELECT
 FROM coordinates;
 ```
 
-#### **Nullable** типы
+#### Nullable типы
 
 ```sql
 Nullable(T)  -- Значение типа T или NULL
@@ -583,7 +583,7 @@ SELECT
 FROM user_profiles;
 ```
 
-#### **Enum** типы
+#### Enum типы
 
 ```sql
 Enum8('value1' = 1, 'value2' = 2, ...)   -- 1 байт, до 256 значений
@@ -614,7 +614,7 @@ INSERT INTO orders VALUES
 (2, 'pending', 'normal');
 ```
 
-#### **Map** типы
+#### Map типы
 
 ```sql
 Map(key_type, value_type)  -- Ассоциативный массив
@@ -644,7 +644,7 @@ FROM analytics
 WHERE has(properties, 'source');  -- Проверка наличия ключа
 ```
 
-#### **Nested** типы
+#### Nested типы
 
 ```sql
 Nested(name String, value Int32)  -- Вложенная структура
@@ -946,6 +946,6 @@ SYSTEM RESTORE REPLICA table_name;
 
 
 **Следующие темы:**
-- [Запросы и аналитика](clickhouse-queries.md)
-- [Индексы и оптимизация](clickhouse-indexes.md)
+- [[clickhouse-queries|Запросы и аналитика]]
+- [[clickhouse-indexes|Индексы и оптимизация]]
 

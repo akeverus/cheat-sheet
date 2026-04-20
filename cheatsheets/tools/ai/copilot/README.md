@@ -19,12 +19,12 @@ GitHub Copilot — один из самых распространённых AI-
 ## Полезные ссылки
 
 ### Основные документы
-- [copilot-basics.md](copilot-basics.md) — установка, inline suggestions, Chat, Spaces, custom instructions
+- [[copilot-basics]] — установка, inline suggestions, Chat, Spaces, custom instructions
 
 ### Соседние разделы
-- [tools/ai/](../README.md) — родительский раздел
-- [tools/ai/claude/](../claude/README.md) — альтернатива с длинным контекстом
-- [tools/ai/cody/](../cody/README.md) — альтернатива с code graph
+- [[README|tools/ai/]] — родительский раздел
+- [[README|tools/ai/claude/]] — альтернатива с длинным контекстом
+- [[README|tools/ai/cody/]] — альтернатива с code graph
 - [devops/git/](../../../devops/git/README.md) — общий раздел по Git
 
 ### Внешние ресурсы
@@ -55,13 +55,13 @@ GitHub Copilot — один из самых распространённых AI-
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [GitHub Copilot](../copilot/README.md) | VS Code, JetBrains, Neovim, Xcode, Visual Studio | Да (Copilot Agent, Spaces) | Нет | Подписка GitHub (Individual/Business/Enterprise) |
-| [Claude Code](../claude/README.md) | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
-| [Cursor](../cursor/README.md) | Cursor | Да | Да (custom API) | Free + Pro |
-| [Cody](../cody/README.md) | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
-| [Windsurf](../windsurf/README.md) | Windsurf | Да | Нет | Free + Pro |
-| [Aider](../aider/README.md) | Нет (CLI) | Частичный | Да | Open source + API |
-| [OpenClaw](../openclaw/README.md) | Нет (CLI) | Да | Да | Open source |
+| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim, Xcode, Visual Studio | Да (Copilot Agent, Spaces) | Нет | Подписка GitHub (Individual/Business/Enterprise) |
+| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
+| [[README|Cursor]] | Cursor | Да | Да (custom API) | Free + Pro |
+| [[README|Cody]] | VS Code, JetBrains | Частичный | Enterprise | Free + Pro/Enterprise |
+| [[README|Windsurf]] | Windsurf | Да | Нет | Free + Pro |
+| [[README|Aider]] | Нет (CLI) | Частичный | Да | Open source + API |
+| [[README|OpenClaw]] | Нет (CLI) | Да | Да | Open source |
 
 ## Когда использовать
 
@@ -78,7 +78,7 @@ GitHub Copilot — один из самых распространённых AI-
 
 ## Куда идти дальше
 
-- Сравнение и выбор — [../README.md](../README.md)
-- Длинный контекст — [../claude/README.md](../claude/README.md)
-- AI-first IDE — [../cursor/README.md](../cursor/README.md)
-- Код-граф и монорепо — [../cody/README.md](../cody/README.md)
+- Сравнение и выбор — [[README]]
+- Длинный контекст — [[README]]
+- AI-first IDE — [[README]]
+- Код-граф и монорепо — [[README]]

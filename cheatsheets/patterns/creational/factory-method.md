@@ -57,7 +57,7 @@ updated: "2026-02-11"
 
 **Когда применять:** тип создаваемого объекта зависит от подкласса или конфигурации.
 
-## Что такое **Factory Method**?
+## Что такое Factory Method?
 
 **Factory Method** — это порождающий паттерн проектирования, который определяет интерфейс для создания объектов, но позволяет подклассам решать, какой класс инстанцировать. Фабричный метод делегирует создание объектов подклассам.
 
@@ -105,7 +105,7 @@ public class DocumentProcessor {
 }
 ```
 
-## Когда использовать **Factory Method**?
+## Когда использовать Factory Method?
 
 ### Подходящие сценарии
 
@@ -337,7 +337,7 @@ public class FactoryMethodDemo {
 }
 ```
 
-### Параметризованный **Factory Method**
+### Параметризованный Factory Method
 
 ```java
 // Параметризованный фабричный метод
@@ -449,7 +449,7 @@ public class ParameterizedFactoryDemo {
 }
 ```
 
-### **Factory Method** с шаблонным методом
+### Factory Method с шаблонным методом
 
 ```java
 // Комбинация с Template Method паттерном
@@ -575,7 +575,7 @@ public class TemplateMethodFactoryDemo {
 
 ## Продвинутые реализации
 
-### 1. **Generic Factory Method**
+### 1. Generic Factory Method
 
 ```java
 // Обобщенный фабричный метод
@@ -683,7 +683,7 @@ public class GenericFactoryDemo {
 }
 ```
 
-### 2. **ServiceLoader Factory**
+### 2. ServiceLoader Factory
 
 ```java
 // Фабрика на основе ServiceLoader (Java SPI)
@@ -795,7 +795,7 @@ public class ServiceLoaderFactoryDemo {
 }
 ```
 
-### 3. **Builder** + **Factory Method**
+### 3. Builder + Factory Method
 
 ```java
 // Комбинация Builder и Factory Method паттернов
@@ -976,7 +976,7 @@ public class BuilderFactoryDemo {
 
 ## Примеры использования
 
-### 1. **Spring Bean Factory**
+### 1. Spring Bean Factory
 
 ```java
 @Configuration
@@ -1034,7 +1034,7 @@ public class SpringFactoryConfig {
 }
 ```
 
-### 2. **HTTP Client Factory**
+### 2. HTTP Client Factory
 
 ```java
 @Service
@@ -1144,7 +1144,7 @@ public class HttpClientConfig {
 }
 ```
 
-### 3. **Message Factory**
+### 3. Message Factory
 
 ```java
 @Service
@@ -1269,7 +1269,7 @@ public class MessageFactory {
 
 ## Лучшие практики
 
-### 1. Выбор между **Factory Method** и **Abstract Factory**
+### 1. Выбор между Factory Method и Abstract Factory
 
 ```java
 public class FactoryPatternComparison {

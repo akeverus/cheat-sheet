@@ -100,7 +100,7 @@ flyway:
 
 ## Migration Files
 
-### **SQL Migrations**
+### SQL Migrations
 
 **db/migration/V1__create_users.sql:**
 
@@ -121,7 +121,7 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_age ON users(age);
 ```
 
-### **Java Migrations**
+### Java Migrations
 
 ```java
 import org.flywaydb.core.api.migration.BaseJavaMigration;
@@ -141,16 +141,16 @@ public class V3__add_columns extends BaseJavaMigration {
 
 ## Migration Naming
 
-### **Naming Convention**
+### Naming Convention
 
 ```text
 V{version}__{description}.sql
 ```
 
 **Примеры:**
-- `**V1__create_users.sql**`
-- `**V2__add_indexes.sql**`
-- `**V3__add_phone_column.sql**`
+- `V1__create_users.sql`
+- `V2__add_indexes.sql`
+- `V3__add_phone_column.sql`
 
 ## Лучшие практики
 
@@ -178,7 +178,7 @@ V2__add_indexes.sql
 
 ## Flyway Callbacks
 
-### **Callback Hooks**
+### Callback Hooks
 
 ```java
 import org.flywaydb.core.api.callback.Callback;
@@ -205,7 +205,7 @@ public class FlywayCallback implements Callback {
 
 ## Multiple Databases
 
-### **Multiple DataSource Configuration**
+### Multiple DataSource Configuration
 
 **application.yml:**
 
@@ -228,7 +228,7 @@ flyway:
 
 ## Flyway Baseline
 
-### **Baseline Configuration**
+### Baseline Configuration
 
 **application.yml:**
 
@@ -239,7 +239,7 @@ flyway:
   baseline-description: "Initial baseline"
 ```
 
-### **Baseline Migration**
+### Baseline Migration
 
 ```bash
 # Создание baseline для существующей БД
@@ -248,7 +248,7 @@ flyway:
 
 ## Flyway Clean
 
-### **Clean Operation**
+### Clean Operation
 
 ```bash
 # Очистка схемы БД (осторожно!)
@@ -264,14 +264,14 @@ flyway:
 
 ## Flyway Validate
 
-### **Validation**
+### Validation
 
 ```bash
 # Проверка миграций
 ./gradlew flywayValidate
 ```
 
-### **Validation Configuration**
+### Validation Configuration
 
 **application.yml:**
 
@@ -283,14 +283,14 @@ flyway:
 
 ## Flyway Info
 
-### **Migration Info**
+### Migration Info
 
 ```bash
 # Информация о миграциях
 ./gradlew flywayInfo
 ```
 
-### **Info Service**
+### Info Service
 
 ```java
 import org.flywaydb.core.Flyway;

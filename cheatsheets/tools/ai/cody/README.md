@@ -19,12 +19,12 @@ Cody — AI-ассистент от Sourcegraph, чья ключевая осо�
 ## Полезные ссылки
 
 ### Основные документы
-- [cody-basics.md](cody-basics.md) — установка, чат, команды, управление контекстом, Prompt Library
+- [[cody-basics]] — установка, чат, команды, управление контекстом, Prompt Library
 
 ### Соседние разделы
-- [tools/ai/](../README.md) — родительский раздел
-- [tools/ai/copilot/](../copilot/README.md) — альтернатива с меньшим акцентом на код-граф
-- [tools/ai/claude/](../claude/README.md) — длинный контекст через окно модели
+- [[README|tools/ai/]] — родительский раздел
+- [[README|tools/ai/copilot/]] — альтернатива с меньшим акцентом на код-граф
+- [[README|tools/ai/claude/]] — длинный контекст через окно модели
 
 ### Внешние ресурсы
 - [Cody Documentation](https://sourcegraph.com/docs/cody)
@@ -52,13 +52,13 @@ Cody — AI-ассистент от Sourcegraph, чья ключевая осо�
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [Cody](../cody/README.md) | VS Code, JetBrains | Частичный (commands) | Да (Enterprise/self-hosted) | Free + Pro + Enterprise |
-| [Claude Code](../claude/README.md) | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
-| [GitHub Copilot](../copilot/README.md) | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка GitHub |
-| [Cursor](../cursor/README.md) | Cursor | Да | Да (custom API) | Free + Pro |
-| [Aider](../aider/README.md) | Нет (CLI) | Частичный | Да | Open source + API |
-| [Windsurf](../windsurf/README.md) | Windsurf | Да | Нет | Free + Pro |
-| [OpenClaw](../openclaw/README.md) | Нет (CLI) | Да | Да | Open source |
+| [[README|Cody]] | VS Code, JetBrains | Частичный (commands) | Да (Enterprise/self-hosted) | Free + Pro + Enterprise |
+| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да | Нет | Подписка Anthropic |
+| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim, Xcode | Да | Нет | Подписка GitHub |
+| [[README|Cursor]] | Cursor | Да | Да (custom API) | Free + Pro |
+| [[README|Aider]] | Нет (CLI) | Частичный | Да | Open source + API |
+| [[README|Windsurf]] | Windsurf | Да | Нет | Free + Pro |
+| [[README|OpenClaw]] | Нет (CLI) | Да | Да | Open source |
 
 ## Когда использовать
 
@@ -75,7 +75,7 @@ Cody — AI-ассистент от Sourcegraph, чья ключевая осо�
 
 ## Куда идти дальше
 
-- Сравнение всех AI-инструментов — [../README.md](../README.md)
-- Ассистент с длинным контекстом — [../claude/README.md](../claude/README.md)
-- Copilot Spaces как аналог контекстных коллекций — [../copilot/README.md](../copilot/README.md)
-- Локальные модели через CLI — [../aider/README.md](../aider/README.md)
+- Сравнение всех AI-инструментов — [[README]]
+- Ассистент с длинным контекстом — [[README]]
+- Copilot Spaces как аналог контекстных коллекций — [[README]]
+- Локальные модели через CLI — [[README]]

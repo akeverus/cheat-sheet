@@ -12,16 +12,16 @@ updated: "2026-02-11"
 ---
 # Основы Ansible (редирект)
 
-Основной документ по теме: **[Ansible](ansible.md)**.
+Основной документ по теме: **[[ansible]]**.
 
 В нём: архитектура, inventory, playbooks, роли, шаблоны Jinja2, Ansible Vault, AWX, тестирование (Molecule), troubleshooting и лучшие практики.
 
-Продвинутые enterprise-паттерны: **[Ansible Advanced](ansible-advanced.md)**.
+Продвинутые enterprise-паттерны: **[[ansible-advanced|Ansible Advanced]]**.
 
 ## Полезные ссылки
 
-[Ansible](ansible.md)
-[Ansible Advanced](ansible-advanced.md)
+[[ansible]]
+[[ansible-advanced|Ansible Advanced]]
 
 ## См. также
 

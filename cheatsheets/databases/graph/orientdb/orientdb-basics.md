@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **OrientDB**: Основы
+# OrientDB: Основы
 
 **Комплексное руководство по использованию `OrientDB` — мультимодельной `NoSQL` базы данных.**
 
@@ -35,7 +35,7 @@ updated: "2026-02-11"
 - [Troubleshooting](#решение-проблем)
 - [FAQ](#частые-вопросы)
 
-## Введение в **OrientDB**
+## Введение в OrientDB
 
 **OrientDB** — мультимодельная **NoSQL** БД, поддерживающая документную, графовую, **key-value** и объектную модели.
 
@@ -66,7 +66,7 @@ CREATE EDGE Follows FROM (SELECT FROM User WHERE name = 'Alice')
 TO (SELECT FROM User WHERE name = 'Bob');
 ```
 
-## Интеграция с **Java**
+## Интеграция с Java
 
 ```java
 // OrientDB Java API

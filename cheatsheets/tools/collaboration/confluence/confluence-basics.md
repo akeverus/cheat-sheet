@@ -172,7 +172,7 @@ public class ConfluenceClientService {
 Формат body в Confluence — Storage (XHTML-подобная разметка). Для простого текста можно обернуть в `<p>...</p>`. API Token создаётся в [Atlassian Account → Security → API tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
 
 
-## Кейсы использования с **n8n**
+## Кейсы использования с n8n
 
 С **n8n** можно автоматизировать уведомления о новых страницах **Confluence**, создание страниц по шаблону и связку **Jira** ↔ **Confluence** ↔ **Slack**.
 
@@ -313,4 +313,4 @@ Space settings → Permissions. View, Edit, Admin по группам/польз
 
 ## Заключение
 
-Для углублённого изучения — [официальная документация Atlassian](https://www.atlassian.com/software/confluence). См. также: [Jira](../jira/jira-basics.md) — [Slack](../slack/slack-basics.md) — [Mattermost](../mattermost/mattermost-basics.md) — [Telegram](../telegram/telegram-basics.md).
+Для углублённого изучения — [официальная документация Atlassian](https://www.atlassian.com/software/confluence). См. также: [[jira-basics|Jira]] — [[slack-basics|Slack]] — [[mattermost-basics|Mattermost]] — [[telegram-basics|Telegram]].

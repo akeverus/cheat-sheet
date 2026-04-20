@@ -19,12 +19,12 @@ InfluxDB — специализированная база данных для �
 ## Полезные ссылки
 
 ### Основные документы
-- [InfluxDB: Основы](influxdb-basics.md) — архитектура, установка, запись/чтение, InfluxQL
+- [[influxdb-basics|InfluxDB: Основы]] — архитектура, установка, запись/чтение, InfluxQL
 
 ### Соседние разделы
-- [Time-series базы](../README.md)
-- [TimescaleDB](../timescaledb/README.md) — time-series поверх PostgreSQL
-- [ClickHouse](../../nosql/clickhouse/README.md) — OLAP для огромных time-series
+- [[README|Time-series базы]]
+- [[README|TimescaleDB]] — time-series поверх PostgreSQL
+- [[README|ClickHouse]] — OLAP для огромных time-series
 - [Мониторинг](../../../monitoring/)
 - [Prometheus / Grafana / мониторинг](../../../monitoring/)
 
@@ -44,7 +44,7 @@ InfluxDB — специализированная база данных для �
 
 ## Что внутри раздела
 
-[influxdb-basics.md](influxdb-basics.md) покрывает:
+[[influxdb-basics]] покрывает:
 
 - Архитектуру InfluxDB: measurements, tags, fields, buckets, retention policies
 - Установку через Docker
@@ -85,7 +85,7 @@ InfluxDB — специализированная база данных для �
 
 ## Куда идти дальше
 
-- Time-series в целом — [databases/time-series/README.md](../README.md)
-- TimescaleDB — [../timescaledb/README.md](../timescaledb/README.md)
-- ClickHouse для OLAP — [../../nosql/clickhouse/README.md](../../nosql/clickhouse/README.md)
-- Мониторинг и метрики — [monitoring/README.md](../../../monitoring/README.md)
+- Time-series в целом — [[README|databases/time-series/README.md]]
+- TimescaleDB — [[README]]
+- ClickHouse для OLAP — [[README]]
+- Мониторинг и метрики — [[README|monitoring/README.md]]

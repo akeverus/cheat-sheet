@@ -22,7 +22,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [[regex-token-replacement|Работа с регулярными выражениями]]
-- [Алгоритмы со строками](../strings/README.md)
+- [[README|Алгоритмы со строками]]
 
 ## Содержание
 
@@ -51,11 +51,11 @@ updated: "2026-02-11"
 
 **This article explains how** to **identify credit card types** by **matching patterns against the card number using regular expressions**, **and how** to **validate card numbers using the Luhn algorithm**.
 
-**The Primary Account Number** (**PAN**) is **another name for the credit card number**. **PANs typically consist** `of 16` **digits**, **though the number** of **digits can vary depending** on **the card issuer**.
+**The Primary Account Number** (PAN) is **another name for the credit card number**. **PANs typically consist** `of 16` **digits**, **though the number** of **digits can vary depending** on **the card issuer**.
 
 ## Primary Account Number (PAN)
 
-**The Primary Account Number** (**PAN**) is **the credit card number**. **Currently**, **the Issuer Identification Number** (**IIN**) is **the first six digits** of **the PAN**. It **consists** of **one leading digit followed** by **five digits**.
+**The Primary Account Number** (PAN) is **the credit card number**. **Currently**, **the Issuer Identification Number** (IIN) is **the first six digits** of **the PAN**. It **consists** of **one leading digit followed** by **five digits**.
 
 **Important: This** is **the current situation**, as it **may change** in **the future**. As **early** `as 2015`, **work began** to **increase the IIN** to **the first eight digits**.
 
@@ -63,7 +63,7 @@ updated: "2026-02-11"
 
 **The Major Industry Identifier** is **the first digit** of **the card number**. We **can look** at **the first digit** of **the card number** to **determine the industry** to **which the card belongs**:**
 
-1. **1, 2** — **Airlines** (**among others**)
+1. **1, 2** — **Airlines** (among others)
 2. **3** — **Travel and entertainment**
 3. **4, 5** — **Banking**
 4. **6** — **Retail and banking**
@@ -118,7 +118,7 @@ We **can use** a **similar pattern** to **identify cards from any card issuer wh
 
 **The full PAN consists** `of 3` **parts**:**
 
-1. **Issuer `Identification Number` (**IIN**)**
+1. **Issuer `Identification Number` (IIN)**
 2. **Individual `Account Identification` Number**
 3. **Check digit**
 
@@ -160,11 +160,11 @@ for (int i = cardNumber.length() - 1; i >= 0; i--) {
 
 ## Example Validation
 
-**Let**'s **see how this works** on a **short example** `of 4` **digits** (**instead of the `usual 16` digits**) — **let**'s **check** if **the number** `8642` **would** be a **valid card number**.
+**Let**'s **see how this works** on a **short example** `of 4` **digits** (instead of the `usual 16` digits) — **let**'s **check** if **the number** `8642` **would** be a **valid card number**.
 
 **Starting from the rightmost digit**, we'll **double every second digit**:**
 
-1. **For** 2 (**first digit from right**) — no **changes**.
+1. **For** 2 (first digit from right) — no **changes**.
 2. **Then** we **double the second digit**, 4, to **get** 8.
 3. **After that**, **the third digit**, 6 — no **changes**.
 4. **Finally**, we **double the fourth digit** 8 to **get** 16.

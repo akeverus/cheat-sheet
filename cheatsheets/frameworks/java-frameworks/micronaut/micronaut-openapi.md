@@ -73,7 +73,7 @@ related: ["micronaut-http.md", "micronaut-testing.md"]
 - **Code Generation**: Генерация клиентского кода
 - **API Documentation**: Автоматическая документация **API**
 
-## Настройка **OpenAPI**
+## Настройка OpenAPI
 
 ### Зависимости
 
@@ -184,7 +184,7 @@ openapi-generator generate -i api-doc.yml -g java -o client
 
 ## Лучшие практики
 
-### 1. Документируйте все **endpoints**
+### 1. Документируйте все endpoints
 
 ```java
 // ✅ Хорошо
@@ -203,7 +203,7 @@ public User getUser(Long id) {
 private String email;
 ```
 
-### 3. Группируйте **endpoints** по тегам
+### 3. Группируйте endpoints по тегам
 
 ```java
 // ✅ Хорошо

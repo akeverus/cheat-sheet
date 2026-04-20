@@ -83,7 +83,7 @@ updated: "2026-02-06"
 
 ## Введение в бенчмаркинг
 
-Бенчмаркинг позволяет измерять производительность кода и выявлять узкие места. Go предоставляет встроенную поддержку бенчмарков через пакет `**testing**`.
+Бенчмаркинг позволяет измерять производительность кода и выявлять узкие места. Go предоставляет встроенную поддержку бенчмарков через пакет `testing`.
 
 ### Основные концепции
 
@@ -92,9 +92,9 @@ updated: "2026-02-06"
 3. **Результаты** — время выполнения и аллокации памяти
 4. **Сравнение** — сравнение производительности различных реализаций
 
-## Написание **benchmarks**
+## Написание benchmarks
 
-### Базовый **benchmark**
+### Базовый benchmark
 
 ```go
 import (
@@ -108,7 +108,7 @@ func BenchmarkAdd(b *testing.B) {
 }
 ```
 
-### **Benchmark** с подготовкой данных
+### Benchmark с подготовкой данных
 
 ```go
 func BenchmarkProcess(b *testing.B) {
@@ -127,7 +127,7 @@ func BenchmarkProcess(b *testing.B) {
 }
 ```
 
-### **Benchmark** с параметрами
+### Benchmark с параметрами
 
 ```go
 func BenchmarkProcess(b *testing.B) {
@@ -149,7 +149,7 @@ func BenchmarkProcess(b *testing.B) {
 }
 ```
 
-### **Benchmark** с памятью
+### Benchmark с памятью
 
 ```go
 func BenchmarkAllocate(b *testing.B) {
@@ -162,7 +162,7 @@ func BenchmarkAllocate(b *testing.B) {
 }
 ```
 
-## Запуск **benchmarks**
+## Запуск benchmarks
 
 ### Базовый запуск
 
@@ -214,7 +214,7 @@ benchcmp old.txt new.txt
 BenchmarkAdd-8         1000000000    0.234 ns/op    0 B/op    0 allocs/op
 ```
 
-- `**BenchmarkAdd-8**` - имя **benchmark** и количество **CPU**
+- `BenchmarkAdd-8` - имя **benchmark** и количество **CPU**
 - `1000000000` - количество итераций
 - **ns/op** — наносекунды на операцию
 - **B/op** — байты на операцию
@@ -238,7 +238,7 @@ func BenchmarkCompare(b *testing.B) {
 }
 ```
 
-## Оптимизация **benchmarks**
+## Оптимизация benchmarks
 
 ### Избежание оптимизаций компилятора
 
@@ -254,7 +254,7 @@ func BenchmarkAdd(b *testing.B) {
 }
 ```
 
-### Использование **b.StopTimer** и **b.StartTimer**
+### Использование b.StopTimer и b.StartTimer
 
 ```go
 func BenchmarkWithSetup(b *testing.B) {
@@ -268,7 +268,7 @@ func BenchmarkWithSetup(b *testing.B) {
 }
 ```
 
-### Параллельные **benchmarks**
+### Параллельные benchmarks
 
 ```go
 func BenchmarkParallel(b *testing.B) {
@@ -305,7 +305,7 @@ func BenchmarkProcessDifferentSizes(b *testing.B) {
 }
 ```
 
-### **Benchmark** с различными алгоритмами
+### Benchmark с различными алгоритмами
 
 ```go
 func BenchmarkAlgorithms(b *testing.B) {
@@ -336,7 +336,7 @@ func BenchmarkAlgorithms(b *testing.B) {
 }
 ```
 
-### **Benchmark** с подготовкой и очисткой
+### Benchmark с подготовкой и очисткой
 
 ```go
 func BenchmarkWithSetupTeardown(b *testing.B) {
@@ -357,7 +357,7 @@ func BenchmarkWithSetupTeardown(b *testing.B) {
 }
 ```
 
-### **Benchmark** с параллельным выполнением
+### Benchmark с параллельным выполнением
 
 ```go
 func BenchmarkParallel(b *testing.B) {
@@ -383,7 +383,7 @@ func BenchmarkParallelWithData(b *testing.B) {
 }
 ```
 
-### **Benchmark** с различными **CPU**
+### Benchmark с различными CPU
 
 ```go
 func BenchmarkWithCPUs(b *testing.B) {
@@ -402,7 +402,7 @@ func BenchmarkWithCPUs(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для строковых операций
+### Практические примеры: Benchmark для строковых операций
 
 ```go
 func BenchmarkStringConcatenation(b *testing.B) {
@@ -440,7 +440,7 @@ func BenchmarkStringConcatenation(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для **map** операций
+### Практические примеры: Benchmark для map операций
 
 ```go
 func BenchmarkMapOperations(b *testing.B) {
@@ -477,7 +477,7 @@ func BenchmarkMapOperations(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для **slice** операций
+### Практические примеры: Benchmark для slice операций
 
 ```go
 func BenchmarkSliceOperations(b *testing.B) {
@@ -516,7 +516,7 @@ func BenchmarkSliceOperations(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для **JSON** операций
+### Практические примеры: Benchmark для JSON операций
 
 ```go
 type User struct {
@@ -551,7 +551,7 @@ func BenchmarkJSONOperations(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для **HTTP** операций
+### Практические примеры: Benchmark для HTTP операций
 
 ```go
 func BenchmarkHTTPOperations(b *testing.B) {
@@ -579,7 +579,7 @@ func BenchmarkHTTPOperations(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для **database** операций
+### Практические примеры: Benchmark для database операций
 
 ```go
 func BenchmarkDatabaseOperations(b *testing.B) {
@@ -627,7 +627,7 @@ echo "Comparing results..."
 benchstat old.txt new.txt
 ```
 
-### Практические примеры: **Benchmark** с профилированием
+### Практические примеры: Benchmark с профилированием
 
 ```go
 func BenchmarkWithProfiling(b *testing.B) {
@@ -650,7 +650,7 @@ func BenchmarkWithProfiling(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для конкурентных операций
+### Практические примеры: Benchmark для конкурентных операций
 
 ```go
 func BenchmarkConcurrentOperations(b *testing.B) {
@@ -680,7 +680,7 @@ func BenchmarkConcurrentOperations(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** с различными входными данными
+### Практические примеры: Benchmark с различными входными данными
 
 ```go
 func BenchmarkWithDifferentInputs(b *testing.B) {
@@ -706,7 +706,7 @@ func BenchmarkWithDifferentInputs(b *testing.B) {
 }
 ```
 
-### Практические примеры: **Benchmark** для кэширования
+### Практические примеры: Benchmark для кэширования
 
 ```go
 func BenchmarkCacheOperations(b *testing.B) {
@@ -782,7 +782,7 @@ func BenchmarkWithSizes(b *testing.B) {
 }
 ```
 
-### Практические примеры: Бенчмарки с **memory profiling**
+### Практические примеры: Бенчмарки с memory profiling
 
 ```go
 func BenchmarkWithMemory(b *testing.B) {

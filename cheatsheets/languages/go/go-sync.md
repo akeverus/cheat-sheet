@@ -27,7 +27,7 @@ updated: "2026-02-06"
   - [Основные примитивы](#основные-примитивы)
 - [**Mutex**](#mutex)
   - [Базовое использование](#базовое-использование)
-  - [**TryLock** (**Go 1.18+**)](#trylock-go-118)
+  - [**TryLock** (Go 1.18+)](#trylock-go-118)
 - [**RWMutex**](#rwmutex)
 - [**WaitGroup**](#waitgroup)
   - [Использование с результатами](#использование-с-результатами)
@@ -60,7 +60,7 @@ updated: "2026-02-06"
 
 ## Введение в синхронизацию
 
-Пакет `**sync**` предоставляет примитивы синхронизации для безопасного доступа к общим ресурсам из множества горутин. Понимание синхронизации критично для создания безопасных конкурентных программ.
+Пакет `sync` предоставляет примитивы синхронизации для безопасного доступа к общим ресурсам из множества горутин. Понимание синхронизации критично для создания безопасных конкурентных программ.
 
 ### Основные примитивы
 
@@ -70,7 +70,7 @@ updated: "2026-02-06"
 4. **Once** — выполнение функции один раз
 5. **Cond** — условные переменные для координации
 
-## **Mutex**
+## Mutex
 
 **Mutex** обеспечивает взаимное исключение для защиты критических секций.
 
@@ -116,7 +116,7 @@ func main() {
 }
 ```
 
-### **TryLock** (**Go 1.18+**)
+### TryLock (Go 1.18+)
 
 ```go
 func (c *Counter) TryIncrement() bool {
@@ -129,7 +129,7 @@ func (c *Counter) TryIncrement() bool {
 }
 ```
 
-## **RWMutex**
+## RWMutex
 
 **RWMutex** позволяет множественным читателям или одному писателю.
 
@@ -163,7 +163,7 @@ func (m *SafeMap) Set(key string, value int) {
 }
 ```
 
-## **WaitGroup**
+## WaitGroup
 
 **WaitGroup** позволяет ожидать завершения группы горутин.
 
@@ -211,7 +211,7 @@ func processItems(items []Item) []Result {
 }
 ```
 
-## **Once**
+## Once
 
 **Once** гарантирует выполнение функции только один раз.
 
@@ -238,7 +238,7 @@ func main() {
 }
 ```
 
-### **Singleton** паттерн
+### Singleton паттерн
 
 ```go
 type Singleton struct {
@@ -258,7 +258,7 @@ func GetInstance() *Singleton {
 }
 ```
 
-## **Cond**
+## Cond
 
 **Cond** предоставляет условные переменные для координации горутин.
 
@@ -297,7 +297,7 @@ func main() {
 }
 ```
 
-### **Broadcast**
+### Broadcast
 
 ```go
 func main() {
@@ -330,7 +330,7 @@ func main() {
 }
 ```
 
-## **Atomic** операции
+## Atomic операции
 
 **Atomic** операции обеспечивают атомарные операции над переменными.
 
@@ -371,7 +371,7 @@ func main() {
 }
 ```
 
-### **CompareAndSwap**
+### CompareAndSwap
 
 ```go
 func (c *AtomicCounter) CompareAndSwap(old, new int64) bool {
@@ -379,7 +379,7 @@ func (c *AtomicCounter) CompareAndSwap(old, new int64) bool {
 }
 ```
 
-### **Store** и **Load**
+### Store и Load
 
 ```go
 func main() {
@@ -394,7 +394,7 @@ func main() {
 }
 ```
 
-### Практические примеры: **Thread-safe map**
+### Практические примеры: Thread-safe map
 
 ```go
 type SafeMap struct {
@@ -445,7 +445,7 @@ func (m *SafeMap) Size() int {
 }
 ```
 
-### Практические примеры: **Thread-safe** слайс
+### Практические примеры: Thread-safe слайс
 
 ```go
 type SafeSlice struct {
@@ -495,7 +495,7 @@ func (s *SafeSlice) Range(fn func(interface{}) bool) {
 }
 ```
 
-### Практические примеры: **Rate limiter** с **Mutex**
+### Практические примеры: Rate limiter с Mutex
 
 ```go
 type RateLimiter struct {
@@ -537,7 +537,7 @@ func (rl *RateLimiter) Allow() bool {
 }
 ```
 
-### Практические примеры: **Pool** с **WaitGroup**
+### Практические примеры: Pool с WaitGroup
 
 ```go
 type WorkerPool struct {
@@ -578,7 +578,7 @@ func (wp *WorkerPool) Wait() {
 }
 ```
 
-### Практические примеры: **Lazy initialization** с **Once**
+### Практические примеры: Lazy initialization с Once
 
 ```go
 type LazyValue struct {
@@ -599,7 +599,7 @@ func (lv *LazyValue) Get() interface{} {
 }
 ```
 
-### Практические примеры: **Barrier** с **WaitGroup**
+### Практические примеры: Barrier с WaitGroup
 
 ```go
 type Barrier struct {
@@ -632,7 +632,7 @@ func (b *Barrier) Wait() {
 }
 ```
 
-### Практические примеры: **Semaphore** с **Cond**
+### Практические примеры: Semaphore с Cond
 
 ```go
 type Semaphore struct {
@@ -666,7 +666,7 @@ func (s *Semaphore) Release() {
 }
 ```
 
-### Практические примеры: **Atomic** операции для счетчиков
+### Практические примеры: Atomic операции для счетчиков
 
 ```go
 type AtomicCounter struct {
@@ -702,7 +702,7 @@ func (c *AtomicCounter) CompareAndSwap(old, new int64) bool {
 }
 ```
 
-### Практические примеры: **Thread-safe** очередь
+### Практические примеры: Thread-safe очередь
 
 ```go
 type SafeQueue struct {
@@ -862,7 +862,7 @@ func (b *Barrier) Wait() {
 }
 ```
 
-### Практические примеры: **Read-Write Lock** для кэша
+### Практические примеры: Read-Write Lock для кэша
 
 ```go
 type Cache struct {

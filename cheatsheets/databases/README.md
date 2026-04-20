@@ -13,17 +13,17 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Relational](relational/README.md)
-[NoSQL](nosql/README.md)
-[SQL](sql/README.md)
-[ORM](orm/README.md)
+[[README|Relational]]
+[[README|NoSQL]]
+[[README|SQL]]
+[[README|ORM]]
 
 ## Содержание
 
-- **Инструменты БД** — [database-tools/README.md](database-tools/README.md)
-- **Графовые БД** — [graph/README.md](graph/README.md)
-- **NoSQL** — [nosql/README.md](nosql/README.md)
-- **ORM** — [orm/README.md](orm/README.md)
-- **Реляционные БД** — [relational/README.md](relational/README.md)
-- **SQL** — [sql/README.md](sql/README.md)
-- **Временные Ряды** — [time-series/README.md](time-series/README.md)
+- **Инструменты БД** — [[README]]
+- **Графовые БД** — [[README]]
+- **NoSQL** — [[README]]
+- **ORM** — [[README]]
+- **Реляционные БД** — [[README]]
+- **SQL** — [[README]]
+- **Временные Ряды** — [[README]]

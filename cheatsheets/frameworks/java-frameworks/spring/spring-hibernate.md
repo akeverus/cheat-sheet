@@ -18,7 +18,7 @@ updated: "2026-02-06"
 
 # Spring Data JPA + Hibernate: ORM и работа с данными
 
-Кратко: Полное руководство по **Hibernate ORM** и **Spring Data JPA**. Включает маппинг сущностей, запросы (**JPQL, `Criteria`, native SQL**), кэширование (**first/second level**), производительность, интеграцию с **Spring Boot**.
+Кратко: Полное руководство по **Hibernate ORM** и **Spring Data JPA**. Включает маппинг сущностей, запросы (JPQL, `Criteria`, native SQL), кэширование (first/second level), производительность, интеграцию с **Spring Boot**.
 
 ## Полезные ссылки
 
@@ -121,11 +121,11 @@ updated: "2026-02-06"
 - [Заключение](#заключение)
 - [См. также](#см-также)
 
-## Введение в **ORM** и **JPA**
+## Введение в ORM и JPA
 
-### Что такое **ORM**?
+### Что такое ORM?
 
-**ORM** (**Object-`Relational` Mapping**) — технология, которая позволяет работать с реляционными базами данных используя объектно-ориентированный подход вместо **SQL**.
+**ORM** (Object-`Relational` Mapping) — технология, которая позволяет работать с реляционными базами данных используя объектно-ориентированный подход вместо **SQL**.
 
 **Преимущества `ORM`:**
 - ✅ **Продуктивность** — меньше **boilerplate** кода
@@ -134,19 +134,19 @@ updated: "2026-02-06"
 - ✅ **Кэширование** — автоматическое кэширование данных
 - ✅ **Отношения** — управление связями между объектами
 
-### **JPA** vs **Hibernate**
+### JPA vs Hibernate
 
 | Характеристика | **JPA** | **Hibernate** |
 |----------------|-----|-----------|
-| **Тип** | Спецификация (**API**) | Реализация **JPA** |
-| **Vendor** | **Jakarta** `EE` | **Red Hat** (**JBoss**) |
+| **Тип** | Спецификация (API) | Реализация **JPA** |
+| **Vendor** | **Jakarta** `EE` | **Red Hat** (JBoss) |
 | **Расширения** | Ограничены стандартом | Собственные возможности |
 | **Использование** | Через **EntityManager** | **Hibernate Session** |
 | **Кэширование** | Не определено | **Second level cache** |
 
 ### Настройка проекта
 
-**Зависимости **Spring Boot Data JPA** и **H2** (**pom.xml**):**
+**Зависимости **Spring Boot Data JPA** и **H2** (pom.xml):**
 
 ```xml
 <!-- Maven -->
@@ -224,9 +224,9 @@ public class User {
 }
 ```
 
-### Аннотации **JPA**
+### Аннотации JPA
 
-#### @**Entity**
+#### @Entity
 ```java
 @Entity(name = "UserEntity")  // Имя сущности для JPQL
 @Table(name = "users",        // Имя таблицы
@@ -267,7 +267,7 @@ public class User {
 private UUID id;
 ```
 
-#### @**Column**
+#### @Column
 
 ```java
 @Column(name = "full_name",           // Имя колонки
@@ -282,7 +282,7 @@ private UUID id;
 private String fullName;
 ```
 
-#### @**Temporal**
+#### @Temporal
 
 ```java
 // DATE - только дата
@@ -308,7 +308,7 @@ private LocalDate birthDate;
 private LocalTime loginTime;
 ```
 
-### **Embeddable** типы
+### Embeddable типы
 
 ```java
 // Встраиваемый объект (Embeddable) для адреса
@@ -351,7 +351,7 @@ public class Company {
 }
 ```
 
-### **Enums**
+### Enums
 
 ```java
 public enum UserStatus {
@@ -367,7 +367,7 @@ private UserStatus status;  // ACTIVE=0, INACTIVE=1, etc.
 private UserStatus status;  // ACTIVE, INACTIVE, etc.
 ```
 
-### **Lifecycle Callbacks**
+### Lifecycle Callbacks
 
 ```java
 @Entity
@@ -408,7 +408,7 @@ public class AuditableEntity {
 
 ## Отношения между сущностями
 
-### @**OneToOne**
+### @OneToOne
 
 ```java
 @Entity
@@ -441,7 +441,7 @@ public class UserProfile {
 }
 ```
 
-### @**OneToMany** / @**ManyToOne**
+### @OneToMany / @ManyToOne
 
 ```java
 @Entity
@@ -495,7 +495,7 @@ public class Comment {
 }
 ```
 
-### @**ManyToMany**
+### @ManyToMany
 
 ```java
 @Entity
@@ -526,7 +526,7 @@ public class Role {
 }
 ```
 
-### **Fetch** стратегии
+### Fetch стратегии
 
 ```java
 // LAZY - загрузка по требованию (рекомендуется по умолчанию)
@@ -640,7 +640,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 }
 ```
 
-### **Specifications** (**динамические запросы**)
+### Specifications (динамические запросы)
 
 ```java
 public class UserSpecifications {
@@ -681,9 +681,9 @@ List<User> admins = userRepository.findAll(
 );
 ```
 
-## Запросы и **JPQL**
+## Запросы и JPQL
 
-### **JPQL** (**Java Persistence Query Language**)
+### JPQL (Java Persistence Query Language)
 
 ```java
 @Repository
@@ -725,7 +725,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 }
 ```
 
-### **Named Queries**
+### Named Queries
 
 ```java
 @Entity
@@ -826,7 +826,7 @@ public List<Product> findAdvancedProducts() {
 
 ## Native SQL запросы
 
-### Простые **native** запросы
+### Простые native запросы
 
 ```java
 @Repository
@@ -851,7 +851,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 }
 ```
 
-### Сложные **native** запросы
+### Сложные native запросы
 
 ```java
 @Repository
@@ -893,7 +893,7 @@ public interface AnalyticsRepository {
 }
 ```
 
-### **EntityManager** для сложных запросов
+### EntityManager для сложных запросов
 
 ```java
 @Service
@@ -928,7 +928,7 @@ public class ComplexQueryService {
 
 ## Кэширование
 
-### **First Level Cache** (**L1**)
+### First Level Cache (L1)
 
 ```java
 @Service
@@ -964,7 +964,7 @@ public class UserService {
 }
 ```
 
-### **Second Level Cache** (**L2**)
+### Second Level Cache (L2)
 
 ```yaml
 # application.yml
@@ -1040,7 +1040,7 @@ public class CacheService {
 }
 ```
 
-### **Query Cache**
+### Query Cache
 
 ```java
 @Repository
@@ -1247,7 +1247,7 @@ System.out.println("Total elements: " + products.getTotalElements());
 System.out.println("Current page: " + products.getNumber());
 ```
 
-### **Batch** операции
+### Batch операции
 
 ```java
 @Service
@@ -1291,7 +1291,7 @@ public class BatchService {
 }
 ```
 
-### Оптимизация **Hibernate**
+### Оптимизация Hibernate
 
 ```yaml
 # application.yml
@@ -1348,7 +1348,7 @@ public class User {
 
 ## Миграции базы данных
 
-### **Flyway**
+### Flyway
 
 ```xml
 <dependency>
@@ -1403,7 +1403,7 @@ CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
 ```
 
-### **Liquibase**
+### Liquibase
 
 ```xml
 <dependency>
@@ -1455,9 +1455,9 @@ spring:
 </databaseChangeLog>
 ```
 
-## Аудит и **versioning**
+## Аудит и versioning
 
-### **Hibernate Envers**
+### Hibernate Envers
 
 ```xml
 <dependency>
@@ -1643,7 +1643,7 @@ public class JpaConfig {
 
 ## Тестирование
 
-### **Unit** тестирование репозиториев
+### Unit тестирование репозиториев
 
 ```java
 @DataJpaTest
@@ -1763,7 +1763,7 @@ class TransactionTest {
 
 ### Распространенные проблемы
 
-#### 1. **LazyInitializationException**
+#### 1. LazyInitializationException
 
 ```text
 Проблема: Доступ к лениво загруженной коллекции вне сессии
@@ -1809,7 +1809,7 @@ public class PostService {
 - Настроить fetch стратегии
 ```
 
-#### 3. **OptimisticLockException**
+#### 3. OptimisticLockException
 
 ```text
 Проблема: Конфликты версий при одновременном обновлении
@@ -1833,7 +1833,7 @@ public class VersionedService {
 }
 ```
 
-#### 4. **Connection pool exhaustion**
+#### 4. Connection pool exhaustion
 
 ```text
 Проблема: Исчерпание пула соединений
@@ -1844,7 +1844,7 @@ public class VersionedService {
 - Настроить timeouts
 ```
 
-#### 5. **Slow queries**
+#### 5. Slow queries
 
 ```text
 Проблема: Медленные запросы
@@ -1858,7 +1858,7 @@ public class VersionedService {
 
 ### Диагностика
 
-#### **Hibernate Statistics**
+#### Hibernate Statistics
 
 ```java
 @Configuration
@@ -1889,7 +1889,7 @@ public class HibernateStatsConfig {
 }
 ```
 
-#### **SQL Logging**
+#### SQL Logging
 
 ```yaml
 logging:
@@ -1899,7 +1899,7 @@ logging:
     org.springframework.orm.jpa: DEBUG
 ```
 
-#### **VisualVM** для профилирования
+#### VisualVM для профилирования
 
 ```bash
 # Запуск приложения с JMX

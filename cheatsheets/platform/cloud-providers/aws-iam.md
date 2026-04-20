@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **AWS IAM** (`Identity and Access Management`)
+# AWS IAM (`Identity and Access Management`)
 
 **AWS IAM** — это сервис для управления доступом к **AWS** ресурсам. **IAM** позволяет создавать и управлять пользователями, группами, ролями и политиками для безопасного контроля доступа к **AWS** сервисам и ресурсам. Этот документ охватывает **best practices**, **advanced** паттерны и **enterprise** сценарии использования **IAM**.
 
@@ -65,7 +65,7 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Основы **IAM**
+## Основы IAM
 
 ### IAM Entities
 ```text
@@ -266,7 +266,7 @@ Examples:
 }
 ```
 
-### Service Control Policies (**SCP**)
+### Service Control Policies (SCP)
 ```json
 // Organization SCP для ограничения регионов
 {
@@ -307,7 +307,7 @@ Examples:
 }
 ```
 
-## IAM Users и **Groups**
+## IAM Users и Groups
 
 ### User Management
 ```bash
@@ -599,7 +599,7 @@ resource-policy:
           aws:principalorgid: "o-1234567890"
 ```
 
-## MFA и **Security**
+## MFA и Security
 
 ### Virtual MFA Devices
 ```bash
@@ -768,7 +768,7 @@ aws accessanalyzer create-access-preview \
 }
 ```
 
-## IAM в **Enterprise**
+## IAM в Enterprise
 
 ### Permission Boundaries
 ```json
@@ -863,7 +863,7 @@ def assume_role_with_session_policy():
     return response['Credentials']
 ```
 
-### ABAC (**Attribute-`Based Access` Control**)
+### ABAC (Attribute-`Based Access` Control)
 ```json
 // ABAC policy для dynamic access
 {
@@ -1059,4 +1059,4 @@ aws cloudwatch put-metric-alarm \
 - [[aws-basics|AWS Basics]] — основы **AWS**
 - [[aws-services|AWS Services]] — сервисы **AWS**
 - [[aws-networking|AWS Networking]] — сеть в **AWS**
-- [Security](../../security/README.md) — управление ключами и доступом
+- [[README|Security]] — управление ключами и доступом

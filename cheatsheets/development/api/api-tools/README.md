@@ -15,15 +15,15 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[OpenAPI / Swagger](swagger/openapi-swagger.md)
+[[openapi-swagger|OpenAPI / Swagger]]
 
 ## Содержание
 
-- [API Testing](api-testing/api-testing-basics.md)
-- [API Documentation Basics](swagger/api-documentation-basics.md)
-- [Swagger/OpenAPI](swagger/openapi-swagger.md)
-- [Postman](postman/postman-basics.md)
-- [Insomnia](insomnia/insomnia-basics.md)
+- [[api-testing-basics|API Testing]]
+- [[api-documentation-basics|API Documentation Basics]]
+- [[openapi-swagger|Swagger/OpenAPI]]
+- [[postman-basics|Postman]]
+- [[insomnia-basics|Insomnia]]
 
 ## Как выбрать инструмент
 

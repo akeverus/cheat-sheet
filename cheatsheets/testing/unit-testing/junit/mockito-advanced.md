@@ -23,7 +23,7 @@ updated: "2026-02-11"
 | Документация | [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html), [Mockito GitHub](https://github.com/mockito/mockito) |
 | Spring Boot | [@MockBean vs @Mock](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing), [Mockito with Spring](https://spring.io/guides/gs/testing-web/) |
 | Практики | [Mockito Best Practices](https://github.com/mockito/mockito/wiki/How-to-write-good-tests), [Testing on the Toilet](https://testing.googleblog.com/) |
-| См. также | [JUnit Advanced](junit-advanced.md), [AssertJ](assertj.md), [Spring Testing](../../../frameworks/java-frameworks/spring/spring-testing.md) |
+| См. также | [[junit-advanced|JUnit Advanced]], [[assertj]], [[spring-testing|Spring Testing]] |
 
 ## Содержание
 

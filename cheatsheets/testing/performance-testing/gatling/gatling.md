@@ -27,7 +27,7 @@ updated: "2026-02-11"
 | Quick Start | [Quick Start](https://gatling.io/docs/gatling/quickstart/) |
 | Cheat Sheet | [Gatling Cheat Sheet](https://gatling.io/docs/gatling/reference/current/cheat-sheet/) |
 
-**См. также:** [JMeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
+**См. также:** [[jmeter]], [[k6]], [[artillery]], [[testing-tools-overview|Обзор инструментов тестирования]].
 
 
 ## Содержание
@@ -65,8 +65,8 @@ updated: "2026-02-11"
 
 | Концепция | Описание |
 |-----------|----------|
-| **Simulation** | Класс сценария нагрузки; в конструкторе вызывается **setUp(...)** с сценариями и профилем нагрузки (**inject**). |
-| **Scenario** | Последовательность действий пользователя (**exec**). Задаётся через **scenario("name")**. |
+| **Simulation** | Класс сценария нагрузки; в конструкторе вызывается **setUp(...)** с сценариями и профилем нагрузки (inject). |
+| **Scenario** | Последовательность действий пользователя (exec). Задаётся через **scenario("name")**. |
 | **exec** | Выполнение одного или нескольких действий (например, **http("request").get(...)**). |
 | **inject** | Профиль нагрузки: **atOnceUsers(n)**, **rampUsers(n).during(d)** и др. |
 | **httpProtocol** | Настройки HTTP по умолчанию: **baseUrl**, заголовки. |
@@ -380,4 +380,4 @@ Gatling — сценарии в коде, меньше ресурсов на п�
 
 ## Заключение
 
-**Gatling** — инструмент нагрузочного тестирования с описанием сценариев в коде (Scala/Java). Низкие накладные расходы и удобные HTML-отчёты делают его удобным выбором для HTTP/API и CI/CD. Используйте **baseUrl**, **check** и **feed** для параметризации; задавайте реалистичный **inject** (ramp-up, think time). Дальше: [Gatling Documentation](https://gatling.io/docs/gatling/), [JMeter](../jmeter/jmeter.md), [k6](../k6/k6.md), [Artillery](../artillery/artillery.md), [Обзор инструментов тестирования](../../testing-tools/testing-tools-overview.md).
+**Gatling** — инструмент нагрузочного тестирования с описанием сценариев в коде (Scala/Java). Низкие накладные расходы и удобные HTML-отчёты делают его удобным выбором для HTTP/API и CI/CD. Используйте **baseUrl**, **check** и **feed** для параметризации; задавайте реалистичный **inject** (ramp-up, think time). Дальше: [Gatling Documentation](https://gatling.io/docs/gatling/), [[jmeter]], [[k6]], [[artillery]], [[testing-tools-overview|Обзор инструментов тестирования]].

@@ -69,7 +69,7 @@ updated: "2026-02-11"
 
 **Когда применять:** долгие I/O, параллельные вычисления, неблокирующий UI.
 
-## Что такое **Future**/**Task Pattern**?
+## Что такое Future/Task Pattern?
 
 **Future**/**Task** — это паттерн асинхронного программирования, где операции выполняются в фоне, а результат можно получить позже через **Future** объект. Это позволяет писать неблокирующий код и эффективно использовать ресурсы.
 
@@ -126,7 +126,7 @@ public class AsynchronousExample {
 }
 ```
 
-## Когда использовать **Future**/**Task**?
+## Когда использовать Future/Task?
 
 ### Подходящие сценарии
 
@@ -233,7 +233,7 @@ sequenceDiagram
 
 ## Реализация на Java
 
-### Базовый **Future** с **ExecutorService**
+### Базовый Future с ExecutorService
 
 ```java
 import java.util.concurrent.*;
@@ -329,7 +329,7 @@ public class BasicFutureExample {
 }
 ```
 
-### **FutureTask** — низкоуровневая реализация
+### FutureTask — низкоуровневая реализация
 
 ```java
 // FutureTask - низкоуровневая реализация
@@ -426,7 +426,7 @@ public class FutureTaskExample {
 }
 ```
 
-### **CompletableFuture** — высокоуровневая реализация
+### CompletableFuture — высокоуровневая реализация
 
 ```java
 // CompletableFuture - современный подход
@@ -552,7 +552,7 @@ public class CompletableFutureExample {
 
 ## Продвинутые реализации
 
-### 1. **Promise Pattern**
+### 1. Promise Pattern
 
 ```java
 // Promise паттерн - аналог CompletableFuture
@@ -683,7 +683,7 @@ public class Promise<T> {
 }
 ```
 
-### 2. **Reactive Extensions** с **Future**
+### 2. Reactive Extensions с Future
 
 ```java
 // Интеграция Future с reactive streams
@@ -785,7 +785,7 @@ public class ReactiveFutureBridge {
 }
 ```
 
-### 3. **Future-based Pipeline**
+### 3. Future-based Pipeline
 
 ```java
 // Pipeline паттерн с Future
@@ -882,7 +882,7 @@ public class FuturePipeline<T, R> {
 
 ## Примеры использования
 
-### 1. **HTTP Client** с **Future**
+### 1. HTTP Client с Future
 
 ```java
 @Service
@@ -950,7 +950,7 @@ public class AsyncHttpClient {
 }
 ```
 
-### 2. **Database Operations**
+### 2. Database Operations
 
 ```java
 @Repository
@@ -1058,7 +1058,7 @@ public class AsyncDatabaseRepository {
 }
 ```
 
-### 3. **Image Processing Service**
+### 3. Image Processing Service
 
 ```java
 @Service
@@ -1176,7 +1176,7 @@ public class AsyncImageProcessor {
 
 ## Лучшие практики
 
-### 1. Выбор между **Future**, **FutureTask** и **CompletableFuture**
+### 1. Выбор между Future, FutureTask и CompletableFuture
 
 ```java
 public class FutureSelectionGuide {

@@ -15,13 +15,13 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Consul](consul.md)
-[Nginx Advanced](nginx-advanced.md)
-[Vagrant](vagrant.md)
+[[consul]]
+[[nginx-advanced|Nginx Advanced]]
+[[vagrant]]
 
 ## Содержание
 
-- [Infrastructure Tools Overview](infrastructure-tools-overview.md)
-- [Nginx Advanced](nginx-advanced.md)
-- [Consul](consul.md)
-- [Vagrant](vagrant.md)
+- [[infrastructure-tools-overview|Infrastructure Tools Overview]]
+- [[nginx-advanced|Nginx Advanced]]
+- [[consul]]
+- [[vagrant]]

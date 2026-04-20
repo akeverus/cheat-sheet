@@ -86,7 +86,7 @@ related: ["spring/spring-boot.md", "micronaut/micronaut-basics.md"]
 - **Production-ready**: встроенные метрики, логирование, health checks
 - **Lightweight**: минимальный набор зависимостей
 - **Jersey**: RESTful веб-сервисы на **JAX-RS**
-- **Metrics**: встроенные метрики (**Metrics library**)
+- **Metrics**: встроенные метрики (Metrics library)
 - **Logging**: структурированное логирование через **Logback** и **SLF4J**
 - **Configuration**: type-safe конфигурация через **YAML**
 

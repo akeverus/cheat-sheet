@@ -104,7 +104,7 @@ related: ["micronaut-reactive.md", "micronaut-testing.md"]
 
 ## Controllers
 
-### Базовый **Controller**
+### Базовый Controller
 
 ```java
 // Контроллер с возвратом HttpResponse (статус и тело)
@@ -150,7 +150,7 @@ public class UserController {
 }
 ```
 
-### **HTTP Methods**
+### HTTP Methods
 
 **Micronaut** поддерживает все стандартные **HTTP** методы:**
 
@@ -203,7 +203,7 @@ public class ProductController {
 
 ## Routing
 
-### **Path Variables**
+### Path Variables
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -227,7 +227,7 @@ public class UserController {
 }
 ```
 
-### **Query Parameters**
+### Query Parameters
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -257,7 +257,7 @@ public class UserController {
 }
 ```
 
-### **Request Headers**
+### Request Headers
 
 ```java
 @Controller("/api")
@@ -281,7 +281,7 @@ public class ApiController {
 }
 ```
 
-### **Request Body**
+### Request Body
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -307,7 +307,7 @@ public class UserController {
 
 ## Request и Response
 
-### **HttpResponse**
+### HttpResponse
 
 ```java
 import io.micronaut.http.HttpResponse;
@@ -353,7 +353,7 @@ public class UserController {
 }
 ```
 
-### **HttpRequest**
+### HttpRequest
 
 ```java
 import io.micronaut.http.HttpRequest;
@@ -383,7 +383,7 @@ public class ApiController {
 
 ## Content Negotiation
 
-### **JSON Serialization**
+### JSON Serialization
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -402,7 +402,7 @@ public class UserController {
 }
 ```
 
-### **XML Support**
+### XML Support
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -422,7 +422,7 @@ public class UserController {
 }
 ```
 
-### **Custom Media Types**
+### Custom Media Types
 
 ```java
 @Controller("/api/data")
@@ -440,7 +440,7 @@ public class DataController {
 
 ## Validation
 
-### **Bean Validation**
+### Bean Validation
 
 ```java
 import jakarta.validation.Valid;
@@ -489,7 +489,7 @@ public class UserCreateRequest {
 
 ## Filters
 
-### **HTTP Server Filters**
+### HTTP Server Filters
 
 ```java
 import io.micronaut.http.HttpRequest;
@@ -527,7 +527,7 @@ public class LoggingFilter implements HttpServerFilter {
 }
 ```
 
-### **Authentication Filter**
+### Authentication Filter
 
 ```java
 @Filter("/api/")
@@ -566,7 +566,7 @@ public class AuthenticationFilter implements HttpServerFilter {
 
 ## Interceptors
 
-### **Method Interceptors**
+### Method Interceptors
 
 ```java
 import io.micronaut.aop.MethodInterceptor;
@@ -596,7 +596,7 @@ public class TimingInterceptor implements MethodInterceptor<Object, Object> {
 
 ## Error Handling
 
-### **Global Exception Handler**
+### Global Exception Handler
 
 ```java
 import io.micronaut.http.annotation.Error;
@@ -633,7 +633,7 @@ public class ErrorHandler {
 }
 ```
 
-### **Controller-level Exception Handling**
+### Controller-level Exception Handling
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -659,7 +659,7 @@ public class UserController {
 
 ## Async Operations
 
-### **Reactive Controllers**
+### Reactive Controllers
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -688,7 +688,7 @@ public class UserController {
 }
 ```
 
-### **CompletableFuture Support**
+### CompletableFuture Support
 
 ```java
 // Контроллер пользователей с маппингом путей
@@ -713,7 +713,7 @@ public class UserController {
 
 ## Лучшие практики
 
-### 1. Используйте **HttpResponse** для явного контроля
+### 1. Используйте HttpResponse для явного контроля
 
 ```java
 // ✅ Хорошо
@@ -743,7 +743,7 @@ public User createUser(@Valid @Body UserCreateRequest request) {
 }
 ```
 
-### 3. Используйте **Filters** для **Cross-cutting Concerns**
+### 3. Используйте Filters для Cross-cutting Concerns
 
 ```java
 // ✅ Хорошо - логирование в фильтре
@@ -763,7 +763,7 @@ public HttpResponse<?> handleException(Exception e) {
 }
 ```
 
-### 5. Используйте правильные **HTTP** статусы
+### 5. Используйте правильные HTTP статусы
 
 ```java
 // ✅ Хорошо
@@ -782,7 +782,7 @@ public HttpResponse<Void> deleteUser(Long id) {
 
 ## Advanced Topics
 
-### **Streaming Responses**
+### Streaming Responses
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -810,7 +810,7 @@ public class FileController {
 }
 ```
 
-### **Multipart File Upload**
+### Multipart File Upload
 
 ```java
 import io.micronaut.http.annotation.Controller;
@@ -846,7 +846,7 @@ public class UploadController {
 }
 ```
 
-### **Custom Media Type Handlers**
+### Custom Media Type Handlers
 
 ```java
 import io.micronaut.http.MediaType;
@@ -877,7 +877,7 @@ public class CustomMediaTypeCodec implements MediaTypeCodec {
 }
 ```
 
-### **Request**/**Response Interceptors**
+### Request/Response Interceptors
 
 ```java
 import io.micronaut.http.annotation.ControllerAdvice;
@@ -910,7 +910,7 @@ public class GlobalResponseInterceptor {
 }
 ```
 
-### **CORS Configuration**
+### CORS Configuration
 
 ```yaml
 micronaut:
@@ -936,7 +936,7 @@ micronaut:
           maxAge: 3600
 ```
 
-### **Rate Limiting**
+### Rate Limiting
 
 ```java
 import io.micronaut.http.annotation.Filter;
@@ -978,7 +978,7 @@ public class RateLimitingFilter implements HttpServerFilter {
 }
 ```
 
-### **WebSocket Support**
+### WebSocket Support
 
 ```java
 import io.micronaut.websocket.WebSocketSession;
@@ -1011,7 +1011,7 @@ public class WebSocketServer {
 
 ## Server-Sent Events (SSE)
 
-### **SSE Endpoint**
+### SSE Endpoint
 
 ```java
 import io.micronaut.http.MediaType;
@@ -1034,7 +1034,7 @@ public class SSEController {
 
 ## HTTP Client
 
-### **Declarative HTTP Client**
+### Declarative HTTP Client
 
 ```java
 import io.micronaut.http.annotation.Get;
@@ -1058,7 +1058,7 @@ public interface ExternalApiClient {
 }
 ```
 
-### **Reactive HTTP Client**
+### Reactive HTTP Client
 
 ```java
 import io.micronaut.http.client.annotation.Client;
@@ -1078,7 +1078,7 @@ public interface ReactiveApiClient {
 
 ## HTTP Client Configuration
 
-### **Client Configuration**
+### Client Configuration
 
 **application.yml:**
 
@@ -1094,7 +1094,7 @@ micronaut:
         max-pending-requests: 50
 ```
 
-### **Custom HTTP Client**
+### Custom HTTP Client
 
 ```java
 import io.micronaut.http.client.HttpClient;
@@ -1116,7 +1116,7 @@ public class CustomHttpClient {
 
 ## Content Negotiation
 
-### **Content Negotiation**
+### Content Negotiation
 
 ```java
 import io.micronaut.http.MediaType;
@@ -1144,7 +1144,7 @@ public class ContentNegotiationController {
 
 ## HTTP/2 Support
 
-### **HTTP**/2 **Configuration**
+### HTTP/2 Configuration
 
 **application.yml:**
 
@@ -1159,7 +1159,7 @@ micronaut:
 
 ## Request/Response Interceptors
 
-### **Custom Interceptors**
+### Custom Interceptors
 
 ```java
 import io.micronaut.http.annotation.Filter;
@@ -1184,7 +1184,7 @@ public class CustomHttpFilter implements HttpServerFilter {
 
 ## HTTP Compression
 
-### **Compression Configuration**
+### Compression Configuration
 
 **application.yml:**
 
@@ -1198,7 +1198,7 @@ micronaut:
 
 ## HTTP Caching
 
-### **Cache Headers**
+### Cache Headers
 
 ```java
 import io.micronaut.http.annotation.Controller;

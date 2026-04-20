@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Kubernetes Security**
+# Kubernetes Security
 
 Безопасность в **Kubernetes** — это многоуровневая дисциплина, охватывающая все аспекты платформы: от сетевой изоляции до управления доступом и защиты **workloads**. **Kubernetes** предоставляет встроенные механизмы безопасности, но их правильная конфигурация критически важна для **production** сред.
 
@@ -62,11 +62,11 @@ updated: "2026-02-11"
   - [Compliance Automation](#compliance-automation)
 - [См. также](#см-также)
 
-## **Authentication** и **Authorization**
+## Authentication и Authorization
 
-### **Service Accounts**
+### Service Accounts
 
-Ниже — пример **Service Account** и **Pod** с ним (**YAML**).
+Ниже — пример **Service Account** и **Pod** с ним (YAML).
 ```yaml
 # Создание Service Account
 apiVersion: v1
@@ -93,7 +93,7 @@ kubectl get secrets -n production
 kubectl describe secret my-service-account-token-xxxxx
 ```
 
-### **RBAC** (**Role-`Based Access` Control**)
+### RBAC (Role-`Based Access` Control)
 ```yaml
 # ClusterRole для cluster-wide доступа
 apiVersion: rbac.authorization.k8s.io/v1
@@ -146,7 +146,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### **Certificate Management**
+### Certificate Management
 ```yaml
 # Certificate Signing Request
 apiVersion: certificates.k8s.io/v1
@@ -166,9 +166,9 @@ kubectl certificate approve my-user
 kubectl get csr my-user -o jsonpath='{.status.certificate}' | base64 -d > user.crt
 ```
 
-## **Pod Security**
+## Pod Security
 
-### **Pod Security Standards**
+### Pod Security Standards
 ```yaml
 # Применение Privileged PSS
 apiVersion: v1
@@ -204,7 +204,7 @@ metadata:
     pod-security.kubernetes.io/enforce-version: v1.24
 ```
 
-### **Security Context**
+### Security Context
 ```yaml
 # Pod-level Security Context
 apiVersion: v1
@@ -246,7 +246,7 @@ spec:
     emptyDir: {}
 ```
 
-### **AppArmor** и **SELinux**
+### AppArmor и SELinux
 ```yaml
 # AppArmor профиль
 apiVersion: v1
@@ -277,9 +277,9 @@ spec:
         level: "s0:c123,c456"
 ```
 
-## **Network Security**
+## Network Security
 
-### **Network Policies**
+### Network Policies
 ```yaml
 # Default deny all traffic
 apiVersion: networking.k8s.io/v1
@@ -346,9 +346,9 @@ spec:
       port: 5432
 ```
 
-## **Image Security**
+## Image Security
 
-### **Image Scanning** и **Policies**
+### Image Scanning и Policies
 ```yaml
 # Kyverno ClusterPolicy для image validation
 apiVersion: kyverno.io/v1
@@ -402,7 +402,7 @@ data:
       defaultAllow: false
 ```
 
-### **Image Pull Secrets**
+### Image Pull Secrets
 ```yaml
 # Создание Docker registry secret
 kubectl create secret docker-registry my-registry-secret \
@@ -433,9 +433,9 @@ spec:
   - name: my-registry-secret
 ```
 
-## **Runtime Security**
+## Runtime Security
 
-### **Falco** для **Runtime Detection**
+### Falco для Runtime Detection
 ```yaml
 # Falco DaemonSet
 apiVersion: apps/v1
@@ -502,7 +502,7 @@ spec:
           name: falco-config
 ```
 
-### **Falco Rules**
+### Falco Rules
 ```yaml
 # Custom Falco rules
 - rule: Unauthorized process
@@ -530,9 +530,9 @@ spec:
   priority: WARNING
 ```
 
-## **Secrets Management**
+## Secrets Management
 
-### **Kubernetes Secrets**
+### Kubernetes Secrets
 ```yaml
 # Opaque secret
 apiVersion: v1
@@ -585,7 +585,7 @@ spec:
       secretName: tls-secret
 ```
 
-### **External Secrets Operator**
+### External Secrets Operator
 ```yaml
 # ExternalSecret для AWS Secrets Manager
 apiVersion: external-secrets.io/v1beta1
@@ -624,9 +624,9 @@ spec:
             name: external-secrets-sa
 ```
 
-## **API Server Security**
+## API Server Security
 
-### **API Server Configuration**
+### API Server Configuration
 ```yaml
 # Secure API Server flags
 apiVersion: v1
@@ -664,7 +664,7 @@ spec:
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
 ```
 
-### **Admission Controllers**
+### Admission Controllers
 ```yaml
 # Custom Admission Controller
 apiVersion: admissionregistration.k8s.io/v1
@@ -709,9 +709,9 @@ webhooks:
   sideEffects: None
 ```
 
-## **Audit Logging**
+## Audit Logging
 
-### **API Server Audit**
+### API Server Audit
 ```yaml
 # Audit policy
 apiVersion: audit.k8s.io/v1
@@ -767,9 +767,9 @@ data:
         client-key: /etc/kubernetes/pki/audit-webhook.key
 ```
 
-## **Compliance** и **Governance**
+## Compliance и Governance
 
-### **OPA Gatekeeper**
+### OPA Gatekeeper
 ```yaml
 # Constraint Template
 apiVersion: templates.gatekeeper.sh/v1beta1
@@ -809,7 +809,7 @@ spec:
     - owner
 ```
 
-### **Kyverno Policies**
+### Kyverno Policies
 ```yaml
 # Kyverno ClusterPolicy
 apiVersion: kyverno.io/v1
@@ -848,9 +848,9 @@ spec:
                 cpu: "?*"
 ```
 
-## **Incident Response**
+## Incident Response
 
-### **Security Monitoring**
+### Security Monitoring
 ```yaml
 # Prometheus rules для security alerts
 groups:
@@ -884,7 +884,7 @@ groups:
       description: "Network traffic exceeds normal threshold"
 ```
 
-### **Forensic Analysis**
+### Forensic Analysis
 ```bash
 # Сбор forensic данных
 kubectl get events --all-namespaces --sort-by=.metadata.creationTimestamp > security-events.log
@@ -906,7 +906,7 @@ kubectl exec suspicious-pod -- ps aux
 
 ## Лучшие практики
 
-### **Defense in Depth**
+### Defense in Depth
 ```yaml
 # Multi-layer security approach
 apiVersion: v1
@@ -972,7 +972,7 @@ spec:
         cpu: 200m
 ```
 
-### **Security Scanning Pipeline**
+### Security Scanning Pipeline
 ```yaml
 # GitHub Actions security pipeline
 name: Security Scan
@@ -1016,7 +1016,7 @@ jobs:
         conftest test k8s/ --policy ./policies
 ```
 
-### **Compliance Automation**
+### Compliance Automation
 ```yaml
 # CIS Kubernetes Benchmark automation
 apiVersion: batch/v1

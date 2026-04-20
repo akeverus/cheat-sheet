@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Containerization** — обзор
+# Containerization — обзор
 
 Кратко: обзор контейнеризации — **Docker**, **Kubernetes**, оркестрация, образы, **runtime**, практики и связь с **devops**.
 
@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
 
 ### См. также
-- [Platform](../README.md) — раздел платформы
+- [[README|Platform]] — раздел платформы
 - [[containerization-overview|Контейнеры]] — **Docker**, **Kubernetes**
 - [[iac-overview|IaC]] — **Infrastructure as Code**
 
@@ -48,27 +48,27 @@ updated: "2026-02-11"
 
 ## Контейнеры и образы
 
-**Образ** — неизменяемый шаблон: файловая система и метаданные. **Контейнер** — запущенный экземпляр образа с изолированным пространством имён и cgroups (на **Linux**). Контейнеры разделяют ядро хоста, в отличие от виртуальных машин. Основной контент по **Docker** и **Kubernetes** — в [контейнеры](containerization-overview.md).
+**Образ** — неизменяемый шаблон: файловая система и метаданные. **Контейнер** — запущенный экземпляр образа с изолированным пространством имён и cgroups (на **Linux**). Контейнеры разделяют ядро хоста, в отличие от виртуальных машин. Основной контент по **Docker** и **Kubernetes** — в [[containerization-overview|контейнеры]].
 
 
 ## Docker
 
-**Docker** — платформа для сборки образов (**Dockerfile**, `docker build`), хранения в **registry** (**Docker Hub**), запуска контейнеров (`docker run`). **Docker Compose** — оркестрация многоконтейнерных приложений на одном хосте. См. [Docker](docker/docker-basics.md), [Docker Advanced](docker/docker-advanced.md), [Docker Compose](docker/docker-compose.md).
+**Docker** — платформа для сборки образов (**Dockerfile**, `docker build`), хранения в **registry** (Docker Hub), запуска контейнеров (`docker run`). **Docker Compose** — оркестрация многоконтейнерных приложений на одном хосте. См. [[docker-basics|Docker]], [[docker-advanced|Docker Advanced]], [[docker-compose|Docker Compose]].
 
 
 ## Kubernetes и оркестрация
 
-**Kubernetes** — оркестратор: **Pods**, **Deployments**, **Services**, **ConfigMaps**, **Secrets**, **Ingress**. Масштабирование, самовосстановление, обновления без даунтайма. **Helm** — пакетный менеджер для **Kubernetes** (charts). См. [Kubernetes](kubernetes/kubernetes-basics.md), [Kubernetes Advanced](kubernetes/kubernetes-advanced.md).
+**Kubernetes** — оркестратор: **Pods**, **Deployments**, **Services**, **ConfigMaps**, **Secrets**, **Ingress**. Масштабирование, самовосстановление, обновления без даунтайма. **Helm** — пакетный менеджер для **Kubernetes** (charts). См. [[kubernetes-basics|Kubernetes]], [[kubernetes-advanced|Kubernetes Advanced]].
 
 
 ## Runtime и стандарты
 
-**OCI** (**Open Container Initiative**) — спецификации образов и runtime. **containerd**, **CRI-O** — runtime, совместимые с **Kubernetes** (**CRI**). **runc** — низкоуровневый runtime по умолчанию для **Docker** и **containerd**.
+**OCI** (Open Container Initiative) — спецификации образов и runtime. **containerd**, **CRI-O** — runtime, совместимые с **Kubernetes** (CRI). **runc** — низкоуровневый runtime по умолчанию для **Docker** и **containerd**.
 
 
 ## Безопасность
 
-Принцип наименьших привилегий: образы без root, read-only файловая система где возможно, сканирование образов на уязвимости (**Trivy**, **Snyk**). Секреты — через **Kubernetes Secrets** или внешние хранилища (**Vault**), не в образах.
+Принцип наименьших привилегий: образы без root, read-only файловая система где возможно, сканирование образов на уязвимости (**Trivy**, **Snyk**). Секреты — через **Kubernetes Secrets** или внешние хранилища (Vault), не в образах.
 
 
 ## Лучшие практики
@@ -111,7 +111,7 @@ updated: "2026-02-11"
 
 ## Заключение
 
-Контейнеризация обеспечивает переносимость и единообразие окружения; **Docker** и **Kubernetes** — основа современного **devops**. Используйте минимальные образы, лимиты ресурсов и сканирование безопасности. См. [Контейнеры](containerization-overview.md) и [IaC](../iac/iac-overview.md).
+Контейнеризация обеспечивает переносимость и единообразие окружения; **Docker** и **Kubernetes** — основа современного **devops**. Используйте минимальные образы, лимиты ресурсов и сканирование безопасности. См. [[containerization-overview|Контейнеры]] и [[iac-overview|IaC]].
 
 **Дата:** 2026-02-03
 

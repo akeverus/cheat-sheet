@@ -14,7 +14,7 @@ updated: "2026-02-06"
 related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.md"]
 ---
 
-# **ClickHouse**: Индексы и оптимизация — Полное руководство по индексации и партиционированию
+# ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию
 
 Комплексное руководство по индексам **ClickHouse**: первичные ключи, вторичные индексы, партиционирование и оптимизация запросов.
 
@@ -43,7 +43,7 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
   - [Выбор первичного ключа](#выбор-первичного-ключа)
     - [Правила выбора:](#правила-выбора)
     - [Примеры выбора ключа:](#примеры-выбора-ключа)
-  - [**Granularity** (**Гранулярность**)](#granularity-гранулярность)
+  - [**Granularity** (Гранулярность)](#granularity-гранулярность)
 - [Вторичные индексы](#вторичные-индексы)
   - [Типы вторичных индексов](#типы-вторичных-индексов)
     - [**minmax** индекс](#minmax-индекс)
@@ -56,7 +56,7 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
   - [Создание партиционированных таблиц](#создание-партиционированных-таблиц)
   - [Продвинутые схемы партиционирования](#продвинутые-схемы-партиционирования)
   - [Управление партициями](#управление-партициями)
-  - [**TTL** (**Time To Live**)](#ttl-time-to-live)
+  - [**TTL** (Time To Live)](#ttl-time-to-live)
 - [Оптимизация запросов](#оптимизация-запросов)
   - [**PREWHERE** для эффективной фильтрации](#prewhere-для-эффективной-фильтрации)
   - [Оптимизация **JOIN**](#оптимизация-join)
@@ -83,10 +83,10 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 
 Индексы в **ClickHouse** значительно отличаются от традиционных реляционных СУБД. Вместо B-деревьев **ClickHouse** использует разреженные индексы и партиционирование для оптимизации запросов.
 
-### Типы индексов в **ClickHouse**
+### Типы индексов в ClickHouse
 
 1. **Первичный ключ** — определяет порядок хранения данных
-2. **Вторичные индексы** — для пропуска нерелевантных данных (**data skipping indexes**)
+2. **Вторичные индексы** — для пропуска нерелевантных данных (data skipping indexes)
 3. **Партиционирование** — логическое разделение данных
 
 ### Принцип работы
@@ -191,7 +191,7 @@ ORDER BY (country, city, timestamp)  -- География для фильтра
 ORDER BY (account_id, transaction_date, transaction_id)  -- Аккаунт и дата для фильтрации
 ```
 
-### **Granularity** (**Гранулярность**)
+### Granularity (Гранулярность)
 
 ```sql
 -- Гранулярность определяет размер индексных блоков
@@ -223,11 +223,11 @@ SETTINGS index_granularity = 16384;
 
 ## Вторичные индексы
 
-Вторичные индексы (**data skipping indexes**) позволяют пропускать нерелевантные блоки данных при чтении.
+Вторичные индексы (data skipping indexes) позволяют пропускать нерелевантные блоки данных при чтении.
 
 ### Типы вторичных индексов
 
-#### **minmax** индекс
+#### minmax индекс
 
 Хранит минимальное и максимальное значения в блоке.
 
@@ -251,7 +251,7 @@ SELECT * FROM products WHERE price > 100;    -- Использует индек�
 SELECT * FROM products WHERE price BETWEEN 50 AND 200;  -- Использует индекс
 ```
 
-#### **bloom_filter** индекс
+#### bloom_filter индекс
 
 Использует **bloom filter** для проверки наличия значений.
 
@@ -267,7 +267,7 @@ SELECT * FROM products WHERE category = 'electronics';  -- Быстрое нах
 SELECT * FROM articles WHERE has(tags, 'technology');   -- Проверка массивов
 ```
 
-#### **ngrambf_v1** индекс
+#### ngrambf_v1 индекс
 
 Для полнотекстового поиска с n-граммами.
 
@@ -282,7 +282,7 @@ ALTER TABLE articles ADD INDEX idx_content content TYPE ngrambf_v1(3, 256, 2, 0)
 SELECT * FROM articles WHERE content LIKE '%database%';  -- Использует индекс
 ```
 
-#### **tokenbf_v1** индекс
+#### tokenbf_v1 индекс
 
 Для полнотекстового поиска с токенизацией.
 
@@ -448,7 +448,7 @@ OPTIMIZE TABLE monthly_sales;
 ALTER TABLE monthly_sales FREEZE PARTITION 202312;
 ```
 
-### **TTL** (**Time To Live**)
+### TTL (Time To Live)
 
 ```sql
 -- Автоматическое удаление данных
@@ -484,7 +484,7 @@ TTL
 
 ## Оптимизация запросов
 
-### **PREWHERE** для эффективной фильтрации
+### PREWHERE для эффективной фильтрации
 
 ```sql
 -- PREWHERE читает только нужные столбцы перед фильтрацией
@@ -501,7 +501,7 @@ WHERE other_column > 100;
 -- Читает только необходимые столбцы и блоки
 ```
 
-### Оптимизация **JOIN**
+### Оптимизация JOIN
 
 ```sql
 -- Создание таблиц для примера
@@ -534,7 +534,7 @@ GROUP BY u.user_id, u.name, u.city
 ORDER BY total_amount DESC;
 ```
 
-### Использование **SAMPLE**
+### Использование SAMPLE
 
 ```sql
 -- Приближенные расчеты на выборке
@@ -1070,6 +1070,6 @@ ORDER BY event_time DESC;
 
 
 **Следующие темы:**
-- [Материализованные представления](clickhouse-materialized-views.md)
-- [Репликация и кластеры](clickhouse-replication.md)
+- [[clickhouse-materialized-views|Материализованные представления]]
+- [[clickhouse-replication|Репликация и кластеры]]
 

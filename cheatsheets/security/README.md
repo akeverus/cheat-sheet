@@ -17,37 +17,37 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[Data Security](data/data-security.md)
-[Secrets Management](data/secrets-management.md)
+[[data-security|Data Security]]
+[[secrets-management|Secrets Management]]
 
 ## Содержание
 
 ### Обзорные документы
 
-- [Security Practices](security-practices.md) — общие практики и процессы (Secure SDLC, код-ревью, инциденты)
+- [[security-practices|Security Practices]] — общие практики и процессы (Secure SDLC, код-ревью, инциденты)
 
 ### Уровень приложения (`application/`)
 
-- [Application Security](application/application-security.md) — OWASP Top 10, аутентификация, авторизация, токены
-- [Web Security](application/web-security.md) — XSS, CSRF, CSP, CORS, cookie-безопасность
-- [API Security](application/api-security.md) — аутентификация, авторизация, rate limiting, валидация
-- [OWASP Top 10 (2021)](application/owasp-top-10.md) — разбор всех 10 категорий с кодом
-- [JWT и OAuth2 / OIDC](application/jwt-oauth2.md) — токены, grants, Spring Security
+- [[application-security|Application Security]] — OWASP Top 10, аутентификация, авторизация, токены
+- [[web-security|Web Security]] — XSS, CSRF, CSP, CORS, cookie-безопасность
+- [[api-security|API Security]] — аутентификация, авторизация, rate limiting, валидация
+- [[owasp-top-10|OWASP Top 10 (2021)]] — разбор всех 10 категорий с кодом
+- [[jwt-oauth2|JWT и OAuth2 / OIDC]] — токены, grants, Spring Security
 
 ### Данные и секреты (`data/`)
 
-- [Data Security](data/data-security.md) — шифрование, хеширование, защита данных
-- [Secrets Management](data/secrets-management.md) — Vault, KMS, управление ключами и секретами
+- [[data-security|Data Security]] — шифрование, хеширование, защита данных
+- [[secrets-management|Secrets Management]] — Vault, KMS, управление ключами и секретами
 
 ### Инфраструктура (`infrastructure/`)
 
-- [Infrastructure Security](infrastructure/infrastructure-security.md) — Docker, Kubernetes, облачная безопасность
-- [TLS / SSL](infrastructure/tls-ssl.md) — handshake, сертификаты, mTLS, Nginx / Spring Boot / JVM
+- [[infrastructure-security|Infrastructure Security]] — Docker, Kubernetes, облачная безопасность
+- [[tls-ssl|TLS / SSL]] — handshake, сертификаты, mTLS, Nginx / Spring Boot / JVM
 
 ### Тестирование (`testing/`)
 
-- [Security Testing](testing/security-testing.md) — SAST, DAST, пентест, аудит
+- [[security-testing|Security Testing]] — SAST, DAST, пентест, аудит
 
 ### Инструменты (`tools/`)
 
-- [Security Tools](tools/security-tools.md) — обзор инструментов безопасности
+- [[security-tools|Security Tools]] — обзор инструментов безопасности

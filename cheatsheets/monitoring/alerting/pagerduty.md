@@ -127,7 +127,7 @@ receivers:
 
 В route направить критичные алерты (по метке severity: critical) в этот receiver. Alertmanager при срабатывании отправит trigger; при переходе алерта в resolved (если send_resolved: true) отправит resolve. Dedup_key формируется из меток алерта, поэтому один алерт не создаёт множество инцидентов.
 
-Подробнее: [Alertmanager](alertmanager.md).
+Подробнее: [[alertmanager]].
 
 ## Лучшие практики
 

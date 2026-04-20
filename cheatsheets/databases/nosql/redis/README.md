@@ -19,26 +19,26 @@ Redis — in-memory хранилище данных с поддержкой бо
 ## Полезные ссылки
 
 ### Основные документы
-- [Redis: Основы](redis-basics.md) — установка, команды, подключение
-- [Redis обзорно](redis.md) — быстрый overview
-- [Структуры данных](redis-data-structures.md) — strings, hashes, lists, sets, sorted sets
-- [Persistence](redis-persistence.md) — RDB, AOF, гибрид
-- [Репликация](redis-replication.md) — master/replica
-- [High Availability](redis-high-availability.md) — Sentinel
-- [Clustering](redis-clustering.md) — Redis Cluster, sharding, slots
-- [Streams](redis-streams.md) — XADD, XREAD, consumer groups
-- [Pub/Sub](redis-pubsub.md) — publish/subscribe
-- [Transactions](redis-transactions.md) — MULTI/EXEC, WATCH
-- [Lua scripting](redis-lua-scripting.md) — EVAL, атомарные скрипты
-- [Geospatial](redis-geospatial.md) — GEO команды
-- [Performance](redis-performance.md) — настройка, бенчмарки
-- [Monitoring](redis-monitoring.md) — INFO, latency, slowlog
-- [Security](redis-security.md) — AUTH, ACL, TLS
-- [Troubleshooting](redis-troubleshooting.md) — диагностика
+- [[redis-basics|Redis: Основы]] — установка, команды, подключение
+- [[redis|Redis обзорно]] — быстрый overview
+- [[redis-data-structures|Структуры данных]] — strings, hashes, lists, sets, sorted sets
+- [[redis-persistence|Persistence]] — RDB, AOF, гибрид
+- [[redis-replication|Репликация]] — master/replica
+- [[redis-high-availability|High Availability]] — Sentinel
+- [[redis-clustering|Clustering]] — Redis Cluster, sharding, slots
+- [[redis-streams|Streams]] — XADD, XREAD, consumer groups
+- [[redis-pubsub|Pub/Sub]] — publish/subscribe
+- [[redis-transactions|Transactions]] — MULTI/EXEC, WATCH
+- [[redis-lua-scripting|Lua scripting]] — EVAL, атомарные скрипты
+- [[redis-geospatial|Geospatial]] — GEO команды
+- [[redis-performance|Performance]] — настройка, бенчмарки
+- [[redis-monitoring|Monitoring]] — INFO, latency, slowlog
+- [[redis-security|Security]] — AUTH, ACL, TLS
+- [[redis-troubleshooting|Troubleshooting]] — диагностика
 
 ### Соседние разделы
-- [NoSQL базы данных](../README.md)
-- [Couchbase](../couchbase/README.md) — альтернатива для KV + Document
+- [[README|NoSQL базы данных]]
+- [[README|Couchbase]] — альтернатива для KV + Document
 - [MongoDB](../mongodb/)
 - [Messaging / Streaming](../../../development/messaging/)
 - [Spring Data Redis](../../../frameworks/java-frameworks/spring/)
@@ -62,21 +62,21 @@ Redis — in-memory хранилище данных с поддержкой бо
 
 | Тема | Файл |
 |------|------|
-| Первые шаги и CLI | [redis-basics.md](redis-basics.md) |
-| Все структуры данных | [redis-data-structures.md](redis-data-structures.md) |
-| Сохранение на диск (RDB/AOF) | [redis-persistence.md](redis-persistence.md) |
-| Репликация master/replica | [redis-replication.md](redis-replication.md) |
-| HA через Sentinel | [redis-high-availability.md](redis-high-availability.md) |
-| Redis Cluster | [redis-clustering.md](redis-clustering.md) |
-| Streams (событийная шина) | [redis-streams.md](redis-streams.md) |
-| Pub/Sub | [redis-pubsub.md](redis-pubsub.md) |
-| Транзакции | [redis-transactions.md](redis-transactions.md) |
-| Lua-скрипты | [redis-lua-scripting.md](redis-lua-scripting.md) |
-| Геоиндексы | [redis-geospatial.md](redis-geospatial.md) |
-| Производительность | [redis-performance.md](redis-performance.md) |
-| Мониторинг | [redis-monitoring.md](redis-monitoring.md) |
-| Безопасность | [redis-security.md](redis-security.md) |
-| Диагностика | [redis-troubleshooting.md](redis-troubleshooting.md) |
+| Первые шаги и CLI | [[redis-basics]] |
+| Все структуры данных | [[redis-data-structures]] |
+| Сохранение на диск (RDB/AOF) | [[redis-persistence]] |
+| Репликация master/replica | [[redis-replication]] |
+| HA через Sentinel | [[redis-high-availability]] |
+| Redis Cluster | [[redis-clustering]] |
+| Streams (событийная шина) | [[redis-streams]] |
+| Pub/Sub | [[redis-pubsub]] |
+| Транзакции | [[redis-transactions]] |
+| Lua-скрипты | [[redis-lua-scripting]] |
+| Геоиндексы | [[redis-geospatial]] |
+| Производительность | [[redis-performance]] |
+| Мониторинг | [[redis-monitoring]] |
+| Безопасность | [[redis-security]] |
+| Диагностика | [[redis-troubleshooting]] |
 
 ## Когда брать Redis
 
@@ -116,8 +116,8 @@ Redis — in-memory хранилище данных с поддержкой бо
 
 ## Куда идти дальше
 
-- Обзор NoSQL — [databases/nosql/README.md](../README.md)
+- Обзор NoSQL — [[README|databases/nosql/README.md]]
 - Kafka и брокеры — [development/messaging/](../../../development/messaging/)
 - Кэширование в backend — [development/web-backend/](../../../development/web-backend/)
-- Паттерны интеграции и кэширования — [architecture/caching-strategies-interview.md](../../../interview/architecture/caching-strategies-interview.md)
-- Интервью по Redis — [interview/databases/redis-interview.md](../../../interview/databases/redis-interview.md)
+- Паттерны интеграции и кэширования — [[caching-strategies-interview|architecture/caching-strategies-interview.md]]
+- Интервью по Redis — [[redis-interview|interview/databases/redis-interview.md]]

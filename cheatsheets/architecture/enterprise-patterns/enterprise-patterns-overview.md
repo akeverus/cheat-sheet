@@ -41,7 +41,7 @@ updated: "2026-02-11"
 - [Когда использовать **Enterprise Patterns**](#когда-использовать-enterprise-patterns)
 - [См. также](#см-также)
 
-## Что такое **Enterprise Patterns**
+## Что такое Enterprise Patterns
 
 **Enterprise Patterns** — это архитектурные паттерны, предназначенные для решения типичных задач в крупных корпоративных приложениях: распределённые системы, интеграция, управление транзакциями, безопасность.
 
@@ -49,10 +49,10 @@ updated: "2026-02-11"
 
 ### Паттерны представления данных
 
-#### **Repository Pattern**
+#### Repository Pattern
 **Цель:** Абстракция доступа к данным
 
-Ниже — пример **Repository** (**Java**).
+Ниже — пример **Repository** (Java).
 ```java
 interface UserRepository {
     User findById(Long id);
@@ -75,7 +75,7 @@ class JpaUserRepository implements UserRepository {
 }
 ```
 
-#### **Unit** of **Work Pattern**
+#### Unit of Work Pattern
 **Цель:** Управление транзакциями
 
 ```java
@@ -101,7 +101,7 @@ class UnitOfWork {
 
 ### Паттерны бизнес-логики
 
-#### **Service Layer Pattern**
+#### Service Layer Pattern
 **Цель:** Инкапсуляция бизнес-логики
 
 ```java
@@ -124,7 +124,7 @@ class OrderService {
 }
 ```
 
-#### **Domain Model Pattern**
+#### Domain Model Pattern
 **Цель:** Богатая модель предметной области
 
 ```java
@@ -149,7 +149,7 @@ class Order {
 
 ### Паттерны интеграции
 
-#### **Gateway Pattern**
+#### Gateway Pattern
 **Цель:** Интеграция с внешними системами
 
 ```java
@@ -170,7 +170,7 @@ class PayPalPaymentGateway implements PaymentGateway {
 }
 ```
 
-#### **Message Channel Pattern**
+#### Message Channel Pattern
 **Цель:** Асинхронная коммуникация
 
 ```java
@@ -188,7 +188,7 @@ class OrderEventPublisher {
 
 ### Паттерны распределённых систем
 
-#### **Circuit Breaker Pattern**
+#### Circuit Breaker Pattern
 **Цель:** Защита от каскадных сбоев
 
 ```java
@@ -219,7 +219,7 @@ class CircuitBreaker {
 }
 ```
 
-#### **Saga Pattern**
+#### Saga Pattern
 **Цель:** Управление распределёнными транзакциями
 
 ```java
@@ -242,7 +242,7 @@ class OrderSaga {
 }
 ```
 
-## Когда использовать **Enterprise Patterns**
+## Когда использовать Enterprise Patterns
 
 Паттерны из этой категории стоит применять в следующих случаях:
 

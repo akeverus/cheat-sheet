@@ -88,7 +88,7 @@ related: ["micronaut-reactive.md", "micronaut-messaging.md"]
 - **Error Handling**: Обработка ошибок
 - **Serialization**: Сериализация/десериализация сообщений
 
-## Настройка **Kafka**
+## Настройка Kafka
 
 ### Зависимости
 
@@ -162,7 +162,7 @@ public interface UserProducer {
 }
 ```
 
-### Использование **Producer**
+### Использование Producer
 
 ```java
 import jakarta.inject.Singleton;
@@ -411,7 +411,7 @@ kafka:
     value-serializer: org.apache.kafka.common.serialization.StringSerializer
 ```
 
-### 2. Настраивайте **consumer groups** правильно
+### 2. Настраивайте consumer groups правильно
 
 ```yaml
 # ✅ Хорошо
@@ -430,7 +430,7 @@ public class Consumer {
 }
 ```
 
-### 4. Используйте **batch processing** для больших объемов
+### 4. Используйте batch processing для больших объемов
 
 ```java
 // ✅ Хорошо
@@ -440,7 +440,7 @@ public void receiveUsers(List<User> users) {
 }
 ```
 
-### 5. Настраивайте **transactions** для критических операций
+### 5. Настраивайте transactions для критических операций
 
 ```java
 // ✅ Хорошо

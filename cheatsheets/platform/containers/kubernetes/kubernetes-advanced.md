@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Kubernetes Advanced**
+# Kubernetes Advanced
 
-**Kubernetes** (**K8s**) — это платформа для оркестрации контейнеров с открытым исходным кодом, которая автоматизирует развертывание, масштабирование и управление контейнеризованными приложениями. Этот документ охватывает продвинутые концепции и **best practices** для работы с **Kubernetes**.
+**Kubernetes** (K8s) — это платформа для оркестрации контейнеров с открытым исходным кодом, которая автоматизирует развертывание, масштабирование и управление контейнеризованными приложениями. Этот документ охватывает продвинутые концепции и **best practices** для работы с **Kubernetes**.
 
 ## Полезные ссылки
 - [Kubernetes Documentation](https://kubernetes.io/docs/)
@@ -62,9 +62,9 @@ updated: "2026-02-11"
 
 ## Архитектура кластера
 
-### **Control Plane** компоненты
+### Control Plane компоненты
 
-Ниже — пример манифеста **Pod** для **API Server** (**YAML**).
+Ниже — пример манифеста **Pod** для **API Server** (YAML).
 ```yaml
 # API Server (kube-apiserver)
 # - Единственная точка входа для всех операций
@@ -119,7 +119,7 @@ spec:
     - --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
 ```
 
-### **Scheduler** (**kube-scheduler**)
+### Scheduler (kube-scheduler)
 ```yaml
 # Планировщик подов
 # - Выбирает подходящий узел для пода
@@ -157,9 +157,9 @@ data:
             weight: 1
 ```
 
-## Продвинутые **workload** паттерны
+## Продвинутые workload паттерны
 
-### **StatefulSets** с продвинутой конфигурацией
+### StatefulSets с продвинутой конфигурацией
 ```yaml
 apiVersion: apps/v1
 kind: StatefulSet
@@ -259,7 +259,7 @@ spec:
           storage: 1Gi
 ```
 
-### **DaemonSets** для **node-level** сервисов
+### DaemonSets для node-level сервисов
 ```yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -333,9 +333,9 @@ spec:
           path: /sys
 ```
 
-## **Service Mesh** (**Istio**)
+## Service Mesh (Istio)
 
-### Установка **Istio**
+### Установка Istio
 ```bash
 # Скачивание Istio
 curl -L https://istio.io/downloadIstio | sh -
@@ -351,7 +351,7 @@ istioctl install --set profile=demo -y
 kubectl label namespace default istio-injection=enabled
 ```
 
-### **Virtual Services** и **Gateway**
+### Virtual Services и Gateway
 ```yaml
 # Gateway для внешнего трафика
 apiVersion: networking.istio.io/v1beta1
@@ -421,7 +421,7 @@ spec:
     timeout: 30s
 ```
 
-### **Destination Rules**
+### Destination Rules
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -461,7 +461,7 @@ spec:
         simple: LEAST_REQUEST
 ```
 
-### **Circuit Breaker**
+### Circuit Breaker
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -485,9 +485,9 @@ spec:
       maxEjectionPercent: 50
 ```
 
-## **Network Policies**
+## Network Policies
 
-### Продвинутые **Network Policies**
+### Продвинутые Network Policies
 ```yaml
 # Ограничение трафика между namespaces
 apiVersion: networking.k8s.io/v1
@@ -569,9 +569,9 @@ spec:
       port: 5432
 ```
 
-## **Security**
+## Security
 
-### **Pod Security Standards**
+### Pod Security Standards
 ```yaml
 # Применение restricted PSS
 apiVersion: v1
@@ -625,7 +625,7 @@ spec:
     emptyDir: {}
 ```
 
-### **Service Accounts** и **RBAC**
+### Service Accounts и RBAC
 ```yaml
 # Service Account для приложения
 apiVersion: v1
@@ -684,9 +684,9 @@ rules:
   verbs: ["get", "list"]
 ```
 
-## **Storage**
+## Storage
 
-### **Advanced Persistent Volumes**
+### Advanced Persistent Volumes
 ```yaml
 # StorageClass с продвинутыми опциями
 apiVersion: storage.k8s.io/v1
@@ -738,9 +738,9 @@ spec:
     persistentVolumeClaimName: myapp-data
 ```
 
-## **Operators**
+## Operators
 
-### Создание **Custom Resource**
+### Создание Custom Resource
 ```yaml
 # Custom Resource Definition
 apiVersion: apiextensions.k8s.io/v1
@@ -782,7 +782,7 @@ spec:
     - ma
 ```
 
-### **Custom Controller** (**Go**)
+### Custom Controller (Go)
 ```go
 package main
 
@@ -858,9 +858,9 @@ func (r *MyAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 }
 ```
 
-## **GitOps** (**ArgoCD**)
+## GitOps (ArgoCD)
 
-### Установка **ArgoCD**
+### Установка ArgoCD
 ```bash
 # Создание namespace
 kubectl create namespace argocd
@@ -875,7 +875,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
-### **Application Manifest**
+### Application Manifest
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -911,9 +911,9 @@ spec:
   revisionHistoryLimit: 10
 ```
 
-## **Monitoring** и **Observability**
+## Monitoring и Observability
 
-### **Metrics Server**
+### Metrics Server
 ```yaml
 # Установка Metrics Server
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -945,7 +945,7 @@ spec:
         - --kubelet-insecure-tls
 ```
 
-### **Prometheus Operator**
+### Prometheus Operator
 ```yaml
 # Установка Prometheus Operator
 kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.63.0/bundle.yaml
@@ -977,7 +977,7 @@ spec:
     runAsUser: 1000
 ```
 
-### **Service Monitors**
+### Service Monitors
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -1008,7 +1008,7 @@ spec:
 
 ## Лучшие практики
 
-### **Multi-tenancy**
+### Multi-tenancy
 ```yaml
 # Resource Quota для namespaces
 apiVersion: v1
@@ -1069,7 +1069,7 @@ metadata:
     pod-security.kubernetes.io/enforce-version: v1.24
 ```
 
-### **High Availability**
+### High Availability
 ```yaml
 # Multi-zone кластер
 apiVersion: v1
@@ -1152,7 +1152,7 @@ kubectl describe pod <pod-name>
 kubectl get nodes --show-labels
 ```
 
-### **Performance Tuning**
+### Performance Tuning
 ```yaml
 # Оптимизация API Server
 apiVersion: v1
@@ -1200,7 +1200,7 @@ data:
     registryBurst: 20
 ```
 
-### **Backup** и **Recovery**
+### Backup и Recovery
 ```bash
 # etcd backup
 ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \

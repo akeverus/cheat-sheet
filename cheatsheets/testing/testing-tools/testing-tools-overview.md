@@ -27,10 +27,10 @@ updated: "2026-02-11"
 
 ## См. также
 
-- [Unit Testing](../unit-testing/README.md)
-- [Integration Testing](../integration-testing/README.md)
-- [CI/CD](../../platform/ci-cd/README.md)
-- [Testing Strategies](../README.md)
+- [[README|Unit Testing]]
+- [[README|Integration Testing]]
+- [[README|CI/CD]]
+- [[README|Testing Strategies]]
 - [Productivity Tools](../../tools/)
 
 ## Содержание

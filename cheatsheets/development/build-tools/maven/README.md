@@ -18,15 +18,15 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [maven.md](maven.md) — основы: структура, lifecycle, команды, wrapper
-- [maven-advanced.md](maven-advanced.md) — многомодульность, плагины, профили, dependency locking, mutation testing, CI/CD
+- [[maven]] — основы: структура, lifecycle, команды, wrapper
+- [[maven-advanced]] — многомодульность, плагины, профили, dependency locking, mutation testing, CI/CD
 
 ### Соседние разделы
-- [Родительский раздел: Build Tools](../README.md)
-- [Gradle](../gradle/README.md) — основной конкурент
+- [[README|Родительский раздел: Build Tools]]
+- [[README|Gradle]] — основной конкурент
 - [Spring Boot](../../../frameworks/java-frameworks/spring/) — `spring-boot-maven-plugin`
-- [CI/CD](../../../platform/ci-cd/README.md)
-- [Testing](../../../testing/README.md)
+- [[README|CI/CD]]
+- [[README|Testing]]
 
 ### Внешние ресурсы
 - [Maven Documentation](https://maven.apache.org/guides/)
@@ -60,14 +60,14 @@ updated: "2026-04-17"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Установка, wrapper, структура | [maven.md](maven.md#установка) |
-| POM и координаты | [maven.md](maven.md#базовая-структура-проекта) |
-| Lifecycle, фазы, goals | [maven.md](maven.md#жизненный-цикл-и-фазы) |
-| Многомодульные проекты и reactor | [maven-advanced.md](maven-advanced.md#много-модульные-проекты) |
-| Профили (`-P`) и `settings.xml` | [maven-advanced.md](maven-advanced.md#профили-и-конфигурация) |
-| Dependency locking, BOM | [maven-advanced.md](maven-advanced.md#dependency-locking) |
-| Кастомные плагины | [maven-advanced.md](maven-advanced.md#кастомные-плагины) |
-| Mutation testing, quality | [maven-advanced.md](maven-advanced.md#mutation-testing) |
+| Установка, wrapper, структура | [[maven#установка]] |
+| POM и координаты | [[maven#базовая-структура-проекта]] |
+| Lifecycle, фазы, goals | [[maven#жизненный-цикл-и-фазы]] |
+| Многомодульные проекты и reactor | [[maven-advanced#много-модульные-проекты]] |
+| Профили (`-P`) и `settings.xml` | [[maven-advanced#профили-и-конфигурация]] |
+| Dependency locking, BOM | [[maven-advanced#dependency-locking]] |
+| Кастомные плагины | [[maven-advanced#кастомные-плагины]] |
+| Mutation testing, quality | [[maven-advanced#mutation-testing]] |
 
 ## Типичные проблемы Maven и как их лечить
 
@@ -85,7 +85,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Gradle как альтернатива и замена — [../gradle/README.md](../gradle/README.md)
-- CI/CD и артефакт-репозитории (Nexus, Artifactory) — [../../../platform/ci-cd/README.md](../../../platform/ci-cd/README.md)
-- Контейнеризация Java-приложений — [../../../platform/containers/docker/README.md](../../../platform/containers/docker/README.md)
-- Тестирование — [../../../testing/README.md](../../../testing/README.md)
+- Gradle как альтернатива и замена — [[README]]
+- CI/CD и артефакт-репозитории (Nexus, Artifactory) — [[README]]
+- Контейнеризация Java-приложений — [[README]]
+- Тестирование — [[README]]

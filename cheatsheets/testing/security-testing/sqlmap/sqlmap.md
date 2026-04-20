@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **sqlmap**
+# sqlmap
 
 Кратко: **sqlmap** — инструмент автоматического тестирования на **SQL-инъекции**. Обнаружение уязвимостей, извлечение данных, обход **WAF**, **tamper**-скрипты, поддержка **GET/POST/Cookie/Header**, интеграция с **Burp** и **ZAP**, **CI**-сценарии.
 
@@ -373,5 +373,5 @@ python sqlmap.py -u "http://example.com/page?id=1" --proxy=http://127.0.0.1:8080
 
 ## Заключение
 
-**sqlmap** — стандартный инструмент автоматизации тестирования на SQL-инъекции. Используйте **-u** или **-r** (запрос из Burp/ZAP), **--cookie** и **--tamper** для аутентификации и обхода WAF; **--dbs**, **--tables**, **--dump** для извлечения данных. Применяйте только на разрешённых целях. Для углублённого изучения см. [sqlmap Wiki](https://github.com/sqlmapproject/sqlmap/wiki), [Burp Suite](../burp-suite/burp-suite.md), [OWASP ZAP](../owasp-zap/owasp-zap.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md).
+**sqlmap** — стандартный инструмент автоматизации тестирования на SQL-инъекции. Используйте **-u** или **-r** (запрос из Burp/ZAP), **--cookie** и **--tamper** для аутентификации и обхода WAF; **--dbs**, **--tables**, **--dump** для извлечения данных. Применяйте только на разрешённых целях. Для углублённого изучения см. [sqlmap Wiki](https://github.com/sqlmapproject/sqlmap/wiki), [[burp-suite|Burp Suite]], [[owasp-zap|OWASP ZAP]], [[testing-tools-overview|Testing Tools Overview]].
 

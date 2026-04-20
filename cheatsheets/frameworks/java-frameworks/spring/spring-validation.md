@@ -60,13 +60,13 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Validation**
+## Введение в Spring Validation
 
-**Spring Validation** предоставляет мощную систему валидации данных на основе **Bean Validation** (**JSR-303/`JSR`-380**). Это позволяет валидировать данные на разных уровнях приложения: от контроллеров до сервисов и репозиториев.
+**Spring Validation** предоставляет мощную систему валидации данных на основе **Bean Validation** (JSR-303/`JSR`-380). Это позволяет валидировать данные на разных уровнях приложения: от контроллеров до сервисов и репозиториев.
 
 ### Основные возможности
 
-- **Bean Validation**: Стандартные аннотации валидации (**JSR-303/`JSR`-380**)
+- **Bean Validation**: Стандартные аннотации валидации (JSR-303/`JSR`-380)
 - **Custom Validators**: Создание собственных валидаторов
 - **Группировка валидации**: Валидация для разных сценариев
 - **Валидация на разных уровнях**: Контроллеры, сервисы, репозитории
@@ -102,7 +102,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Зависимости
 
-**Зависимость **spring-`boot-starter`-validation** (**pom.xml**):**
+**Зависимость **spring-`boot-starter`-validation** (pom.xml):**
 
 ```xml
 <dependency>
@@ -214,7 +214,7 @@ public class Address {
 
 ## Валидация в контроллерах
 
-### @**Valid** и @**Validated**
+### @Valid и @Validated
 
 ```java
 @RestController
@@ -305,7 +305,7 @@ public class GlobalExceptionHandler {
 
 ## Валидация параметров методов
 
-### @**Validated** на уровне класса
+### @Validated на уровне класса
 
 ```java
 @Service
@@ -346,7 +346,7 @@ public class UserService {
 
 ## Custom Validators
 
-### Создание **custom validator**
+### Создание custom validator
 
 ```java
 import jakarta.validation.Constraint;
@@ -393,7 +393,7 @@ public class PhoneNumberValidator implements ConstraintValidator<PhoneNumber, St
 }
 ```
 
-### Использование **custom validator**
+### Использование custom validator
 
 ```java
 public class User {
@@ -565,7 +565,7 @@ public class UserService {
 
 ## Лучшие практики
 
-### 1. Используйте @**Valid** в контроллерах
+### 1. Используйте @Valid в контроллерах
 
 ```java
 // ✅ Хорошо

@@ -11,19 +11,19 @@ updated: "2026-04-17"
 ---
 # Mattermost
 
-Mattermost — open-source корпоративный мессенджер, self-hosted альтернатива [Slack](../slack/README.md). Выбирают организации с требованиями по data residency, compliance, воздушным зазором или стремящиеся к контролю над инфрой. Функционально — почти паритет со Slack: каналы, треды, реакции, вложения, интеграции, боты.
+Mattermost — open-source корпоративный мессенджер, self-hosted альтернатива [[README|Slack]]. Выбирают организации с требованиями по data residency, compliance, воздушным зазором или стремящиеся к контролю над инфрой. Функционально — почти паритет со Slack: каналы, треды, реакции, вложения, интеграции, боты.
 
 Deploy-вариант: standalone binary, Docker-compose, Kubernetes-оператор, корпоративный Enterprise Edition с HA, кластером PostgreSQL, SSO и guest accounts.
 
 ## Полезные ссылки
 
 ### Основной документ
-- [Основы Mattermost](mattermost-basics.md) — deploy, API, плагины, миграция со Slack
+- [[mattermost-basics|Основы Mattermost]] — deploy, API, плагины, миграция со Slack
 
 ### Соседние разделы
-- [Slack](../slack/README.md)
-- [Alerting](../../../monitoring/alerting/README.md)
-- [Kubernetes](../../../platform/containers/kubernetes/README.md)
+- [[README|Slack]]
+- [[README|Alerting]]
+- [[README|Kubernetes]]
 
 ### Внешние ресурсы
 - [Mattermost docs](https://docs.mattermost.com/)
@@ -118,12 +118,12 @@ curl -X POST -H 'Content-Type: application/json' \
 
 ## Маршруты чтения
 
-- **Инженер:** [mattermost-basics.md](mattermost-basics.md) → webhooks → slash.
+- **Инженер:** [[mattermost-basics]] → webhooks → slash.
 - **DevOps:** deploy в K8s (Operator), HA, backup/restore.
 - **Админ:** SSO, compliance, retention policies, GDPR-экспорт.
 
 ## Куда идти дальше
 
-- [Slack](../slack/README.md) для сравнения
-- [Kubernetes](../../../platform/containers/kubernetes/README.md) для деплоя
-- [Alerting](../../../monitoring/alerting/README.md)
+- [[README|Slack]] для сравнения
+- [[README|Kubernetes]] для деплоя
+- [[README|Alerting]]

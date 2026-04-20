@@ -64,7 +64,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Введение
 
-**Quarkus** предоставляет полную поддержку **Bean Validation** (**Jakarta Validation**) для валидации данных на различных уровнях приложения. Это позволяет обеспечивать корректность данных в **REST endpoints**, методах сервисов и других местах.
+**Quarkus** предоставляет полную поддержку **Bean Validation** (Jakarta Validation) для валидации данных на различных уровнях приложения. Это позволяет обеспечивать корректность данных в **REST endpoints**, методах сервисов и других местах.
 
 ### Основные возможности
 
@@ -76,7 +76,7 @@ related: ["quarkus-core.md", "quarkus-rest.md"]
 
 ## Basic Validation
 
-### **Field Validation**
+### Field Validation
 
 **Валидация полей:**
 
@@ -103,7 +103,7 @@ public class User {
 }
 ```
 
-### **Method Validation**
+### Method Validation
 
 **Валидация методов:**
 
@@ -124,7 +124,7 @@ public class UserService {
 
 ## REST Endpoint Validation
 
-### **Request Validation**
+### Request Validation
 
 **Валидация запросов:**
 
@@ -146,7 +146,7 @@ public class UserResource {
 }
 ```
 
-### **Path Parameter Validation**
+### Path Parameter Validation
 
 **Валидация **path** параметров:**
 
@@ -167,7 +167,7 @@ public class UserResource {
 }
 ```
 
-### **Query Parameter Validation**
+### Query Parameter Validation
 
 **Валидация **query** параметров:**
 
@@ -191,7 +191,7 @@ public class UserResource {
 
 ## Custom Validators
 
-### **Custom Constraint**
+### Custom Constraint
 
 **Создание кастомного ограничения:**
 
@@ -233,7 +233,7 @@ public class Contact {
 
 ## Validation Groups
 
-### **Group Definition**
+### Group Definition
 
 **Определение групп:**
 
@@ -285,7 +285,7 @@ public class UserResource {
 
 ## Constraint Composition
 
-### **Composed Constraints**
+### Composed Constraints
 
 **Композиция ограничений:**
 
@@ -342,7 +342,7 @@ User user;
 
 ## Advanced Validation
 
-### **Cross-Field Validation**
+### Cross-Field Validation
 
 **Валидация между полями:**
 
@@ -383,7 +383,7 @@ public class UserRegistration {
 }
 ```
 
-### **Conditional Validation**
+### Conditional Validation
 
 **Условная валидация:**
 
@@ -406,7 +406,7 @@ public class User {
 
 ## Validation Messages
 
-### **Custom Messages**
+### Custom Messages
 
 **Кастомные сообщения:**
 
@@ -422,7 +422,7 @@ public class User {
 }
 ```
 
-### **Internationalization**
+### Internationalization
 
 **Интернационализация сообщений:**
 
@@ -442,7 +442,7 @@ jakarta.validation.constraints.Email.message=Invalid email address
 
 ## Programmatic Validation
 
-### **Manual Validation**
+### Manual Validation
 
 **Ручная валидация:**
 
@@ -476,7 +476,7 @@ public class ManualValidationService {
 
 ## Validation Performance
 
-### **Lazy Validation**
+### Lazy Validation
 
 **Ленивая валидация:**
 
@@ -497,7 +497,7 @@ public class LazyValidationService {
 }
 ```
 
-### **Validation Caching**
+### Validation Caching
 
 **Кеширование валидации:**
 
@@ -519,7 +519,7 @@ public class ValidationCacheService {
 
 ## Advanced Validation Patterns
 
-### **Async Validation**
+### Async Validation
 
 **Асинхронная валидация:**
 
@@ -541,7 +541,7 @@ public class AsyncValidationService {
 }
 ```
 
-### **Conditional Validation**
+### Conditional Validation
 
 **Условная валидация:**
 

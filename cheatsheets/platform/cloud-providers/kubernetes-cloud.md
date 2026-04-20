@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Kubernetes** в облаке
+# Kubernetes в облаке
 
-**Kubernetes** становится стандартом для оркестрации контейнеров в облачных средах. Этот документ охватывает **managed Kubernetes** сервисы (**EKS, `AKS`, GKE**), **best practices** для **cloud-native deployments**, **multi-cloud** стратегии и интеграцию с облачными сервисами. Документ дополняет [Kubernetes Advanced](../containers/kubernetes/kubernetes-advanced.md) фокусом на облачные аспекты.
+**Kubernetes** становится стандартом для оркестрации контейнеров в облачных средах. Этот документ охватывает **managed Kubernetes** сервисы (EKS, `AKS`, GKE), **best practices** для **cloud-native deployments**, **multi-cloud** стратегии и интеграцию с облачными сервисами. Документ дополняет [[kubernetes-advanced|Kubernetes Advanced]] фокусом на облачные аспекты.
 
 ## Полезные ссылки
 - [AWS EKS Documentation](https://docs.aws.amazon.com/eks/)
@@ -66,7 +66,7 @@ updated: "2026-02-11"
 ## AWS EKS (`Elastic Kubernetes Service`)
 
 ### EKS Cluster Architecture
-Пример конфигурации кластера **EKS** (**YAML**).
+Пример конфигурации кластера **EKS** (YAML).
 ```yaml
 # Конфигурация кластера EKS — VPC, подсети, логирование, шифрование, аддоны (vpc-cni, coredns, kube-proxy)
 eks-cluster:
@@ -222,7 +222,7 @@ alb-controller:
           value: "10"
 ```
 
-### EKS Monitoring и **Logging**
+### EKS Monitoring и Logging
 ```yaml
 # CloudWatch Container Insights
 container-insights:
@@ -529,7 +529,7 @@ backup-config:
 
 ## Multi-Cloud Kubernetes
 
-### Anthos (**Google Cloud**)
+### Anthos (Google Cloud)
 ```yaml
 # Anthos Cluster on AWS
 anthos-aws-cluster:
@@ -571,7 +571,7 @@ config-management:
     exemptable_namespaces: ["kube-system"]
 ```
 
-### Crossplane для **Multi-Cloud**
+### Crossplane для Multi-Cloud
 ```yaml
 # Crossplane Configuration
 crossplane-config:
@@ -829,7 +829,7 @@ crossplane-resources:
 
 ## Service Mesh Integration
 
-### Istio on **Cloud Kubernetes**
+### Istio on Cloud Kubernetes
 ```yaml
 # Istio Installation with Istio Operator
 istio-operator:
@@ -977,7 +977,7 @@ traffic-split:
         weight: "10%"
 ```
 
-## Security в **Cloud Kubernetes**
+## Security в Cloud Kubernetes
 
 ### Pod Security Standards
 ```yaml
@@ -1262,7 +1262,7 @@ karpenter-config:
     ttlSecondsAfterEmpty: 30
 ```
 
-### Spot Instances и **Preemptibles**
+### Spot Instances и Preemptibles
 ```yaml
 # AWS EKS with Spot Instances
 eks-spot-node-group:
@@ -1378,10 +1378,10 @@ azure-cost-tags:
 
 ## Лучшие практики
 
-- **Выбор managed-сервиса: EKS**, **AKS**, **GKE** — оценивайте по интеграции с экосистемой облака, стоимости, **SLA** и поддержке (**например, автоапдейты, `Fargate`/Autopilot**).
+- **Выбор managed-сервиса: EKS**, **AKS**, **GKE** — оценивайте по интеграции с экосистемой облака, стоимости, **SLA** и поддержке (например, автоапдейты, `Fargate`/Autopilot).
 - **Безопасность:** включайте **Pod Security Standards**/**Admission**; **Network Policies** для изоляции; шифрование секретов и **etcd**; **IRSA**/**Workload Identity** для доступа к облачным сервисам без статических ключей.
-- **Надёжность:** мульти-`AZ` нод-группы; **PDB** для критичных подов; автоскейлинг кластера и подов; регулярные бэкапы (**Velero, облачные снимки**).
-- **Стоимость: Spot**/**Preemptible** ноды для **fault-tolerant** нагрузок; права размеров нод и лимиты ресурсов; мониторинг затрат (**Kubecost, облачные теги**).
+- **Надёжность:** мульти-`AZ` нод-группы; **PDB** для критичных подов; автоскейлинг кластера и подов; регулярные бэкапы (Velero, облачные снимки).
+- **Стоимость: Spot**/**Preemptible** ноды для **fault-tolerant** нагрузок; права размеров нод и лимиты ресурсов; мониторинг затрат (Kubecost, облачные теги).
 - **GitOps и `IaC`:** управление манифестами через **Git** (**Flux**, **Argo CD**); инфраструктура кластера через **Terraform**/**Pulumi**; прозрачность изменений и откат.
 
 

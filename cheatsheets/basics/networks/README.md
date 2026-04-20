@@ -17,16 +17,16 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основной документ
-- [Компьютерные сети: основы](networks-basics.md)
+- [[networks-basics|Компьютерные сети: основы]]
 
 ### Соседние разделы
-- [Computer Science](../computer-science/README.md)
-- [Операционные системы](../operating-systems/README.md)
-- [REST API](../../development/api/rest/README.md)
-- [gRPC](../../development/api/grpc/README.md)
-- [Kubernetes](../../platform/containers/kubernetes/README.md)
-- [Безопасность данных](../../security/data/README.md)
-- [Трассировка и APM](../../monitoring/tracing/README.md)
+- [[README|Computer Science]]
+- [[README|Операционные системы]]
+- [[README|REST API]]
+- [[README|gRPC]]
+- [[README|Kubernetes]]
+- [[README|Безопасность данных]]
+- [[README|Трассировка и APM]]
 
 ### Внешние ресурсы
 - [RFC Editor](https://www.rfc-editor.org/) — стандарты интернет-протоколов
@@ -44,16 +44,16 @@ updated: "2026-04-17"
 
 | Слой | Ключевые понятия | Файл |
 |------|-----------------|------|
-| L1-L2 (канальный) | Ethernet, MAC, switch, VLAN | [networks-basics.md](networks-basics.md#модель-osi) |
-| L3 (сетевой) | IPv4/IPv6, CIDR, ARP, ICMP, маршрутизация | [networks-basics.md](networks-basics.md#ip-адресация) |
-| L4 (транспорт) | TCP handshake, состояния, UDP, QUIC | [networks-basics.md](networks-basics.md#протоколы-транспортного-уровня) |
-| L7 (прикладной) | HTTP/1.1-HTTP/3, DNS, TLS, SSH, WebSocket | [networks-basics.md](networks-basics.md#протоколы-прикладного-уровня) |
-| Беспроводные | Wi-Fi, стандарты 802.11 | [networks-basics.md](networks-basics.md#беспроводные-сети) |
-| Безопасность | NAT, Firewall, VPN, TLS | [networks-basics.md](networks-basics.md#сетевая-безопасность) |
+| L1-L2 (канальный) | Ethernet, MAC, switch, VLAN | [[networks-basics#модель-osi]] |
+| L3 (сетевой) | IPv4/IPv6, CIDR, ARP, ICMP, маршрутизация | [[networks-basics#ip-адресация]] |
+| L4 (транспорт) | TCP handshake, состояния, UDP, QUIC | [[networks-basics#протоколы-транспортного-уровня]] |
+| L7 (прикладной) | HTTP/1.1-HTTP/3, DNS, TLS, SSH, WebSocket | [[networks-basics#протоколы-прикладного-уровня]] |
+| Беспроводные | Wi-Fi, стандарты 802.11 | [[networks-basics#беспроводные-сети]] |
+| Безопасность | NAT, Firewall, VPN, TLS | [[networks-basics#сетевая-безопасность]] |
 
 ## Что внутри документа
 
-[networks-basics.md](networks-basics.md) содержит:
+[[networks-basics]] содержит:
 
 - Полная модель OSI с примерами на каждом уровне
 - TCP/IP: three-way handshake, flow/congestion control, keepalive
@@ -72,7 +72,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- HTTP в деталях и REST-практики — [development/api/rest/](../../development/api/rest/README.md)
-- Балансировка нагрузки — [architecture/system-design/](../../architecture/system-design/README.md)
-- Сетевые политики K8s и service mesh — [platform/containers/kubernetes/](../../platform/containers/kubernetes/README.md)
-- TLS, сертификаты, шифрование — [security/data/](../../security/data/README.md)
+- HTTP в деталях и REST-практики — [[README|development/api/rest/]]
+- Балансировка нагрузки — [[README|architecture/system-design/]]
+- Сетевые политики K8s и service mesh — [[README|platform/containers/kubernetes/]]
+- TLS, сертификаты, шифрование — [[README|security/data/]]

@@ -68,9 +68,9 @@ Go предоставляет мощные инструменты для сет�
 3. **HTTP** — веб-протокол
 4. **WebSocket** — двусторонняя связь
 
-## **TCP** соединения
+## TCP соединения
 
-### **TCP** сервер
+### TCP сервер
 
 ```go
 import (
@@ -109,7 +109,7 @@ func handleConnection(conn net.Conn) {
 }
 ```
 
-### **TCP** клиент
+### TCP клиент
 
 ```go
 import "net"
@@ -137,9 +137,9 @@ func tcpClient(message string) error {
 }
 ```
 
-## **UDP** соединения
+## UDP соединения
 
-### **UDP** сервер
+### UDP сервер
 
 ```go
 import "net"
@@ -169,7 +169,7 @@ func udpServer() error {
 }
 ```
 
-### **UDP** клиент
+### UDP клиент
 
 ```go
 import "net"
@@ -202,9 +202,9 @@ func udpClient(message string) error {
 }
 ```
 
-## **HTTP** клиент
+## HTTP клиент
 
-### Базовый **HTTP** клиент
+### Базовый HTTP клиент
 
 ```go
 import (
@@ -229,7 +229,7 @@ func httpGet(url string) error {
 }
 ```
 
-### **HTTP** клиент с настройками
+### HTTP клиент с настройками
 
 ```go
 import (
@@ -249,9 +249,9 @@ func httpClientWithConfig() *http.Client {
 }
 ```
 
-## **WebSocket**
+## WebSocket
 
-### **WebSocket** сервер
+### WebSocket сервер
 
 ```go
 import (
@@ -284,7 +284,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### **WebSocket** клиент
+### WebSocket клиент
 
 ```go
 import "github.com/gorilla/websocket"
@@ -313,7 +313,7 @@ func websocketClient(url string) error {
 }
 ```
 
-### Практические примеры: **TCP** сервер с пулом соединений
+### Практические примеры: TCP сервер с пулом соединений
 
 ```go
 type ConnectionPool struct {
@@ -347,7 +347,7 @@ func (cp *ConnectionPool) Put(conn net.Conn) {
 }
 ```
 
-### Практические примеры: **TCP** сервер с таймаутами
+### Практические примеры: TCP сервер с таймаутами
 
 ```go
 func tcpServerWithTimeout() error {
@@ -394,7 +394,7 @@ func handleConnectionWithTimeout(conn net.Conn) {
 }
 ```
 
-### Практические примеры: **UDP multicast**
+### Практические примеры: UDP multicast
 
 ```go
 func udpMulticastServer(group string, port int) error {
@@ -437,7 +437,7 @@ func udpMulticastClient(group string, port int, message string) error {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **retry**
+### Практические примеры: HTTP клиент с retry
 
 ```go
 type RetryClient struct {
@@ -471,7 +471,7 @@ func (rc *RetryClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **middleware**
+### Практические примеры: HTTP клиент с middleware
 
 ```go
 type Middleware func(http.RoundTripper) http.RoundTripper
@@ -515,7 +515,7 @@ func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **WebSocket** с **heartbeat**
+### Практические примеры: WebSocket с heartbeat
 
 ```go
 func websocketHandlerWithHeartbeat(w http.ResponseWriter, r *http.Request) {
@@ -573,7 +573,7 @@ func websocketHandlerWithHeartbeat(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **connection pooling**
+### Практические примеры: HTTP клиент с connection pooling
 
 ```go
 func httpClientWithPool() *http.Client {
@@ -591,7 +591,7 @@ func httpClientWithPool() *http.Client {
 }
 ```
 
-### Практические примеры: **TCP proxy**
+### Практические примеры: TCP proxy
 
 ```go
 func tcpProxy(listenAddr, targetAddr string) error {
@@ -638,7 +638,7 @@ func tcpProxy(listenAddr, targetAddr string) error {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **circuit breaker**
+### Практические примеры: HTTP клиент с circuit breaker
 
 ```go
 type CircuitBreakerClient struct {
@@ -707,7 +707,7 @@ func (cbc *CircuitBreakerClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **DNS resolver**
+### Практические примеры: DNS resolver
 
 ```go
 func resolveDNS(hostname string) ([]string, error) {
@@ -741,7 +741,7 @@ func resolveDNSWithTimeout(hostname string, timeout time.Duration) ([]string, er
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **rate limiting**
+### Практические примеры: HTTP клиент с rate limiting
 
 ```go
 type RateLimitedClient struct {
@@ -765,7 +765,7 @@ func (rlc *RateLimitedClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **HTTP** клиент с **retry**
+### Практические примеры: HTTP клиент с retry
 
 ```go
 type RetryClient struct {
@@ -805,7 +805,7 @@ func (rc *RetryClient) Do(req *http.Request) (*http.Response, error) {
 }
 ```
 
-### Практические примеры: **Connection pooling**
+### Практические примеры: Connection pooling
 
 ```go
 type ConnectionPool struct {
@@ -842,7 +842,7 @@ func (cp *ConnectionPool) Put(conn net.Conn) {
 }
 ```
 
-### Практические примеры: **WebSocket** сервер
+### Практические примеры: WebSocket сервер
 
 ```go
 import "github.com/gorilla/websocket"

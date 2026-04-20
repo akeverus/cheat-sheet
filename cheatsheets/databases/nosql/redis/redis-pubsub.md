@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 ---
 
-# **Redis**: **Pub**/**Sub**
+# Redis: Pub/Sub
 
 ## Полезные ссылки
 
@@ -39,9 +39,9 @@ related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 - [Performance Optimization](#performance-optimization)
 - [Advanced Pub/Sub Patterns (Java версии)](#advanced-pubsub-patterns-java-версии)
 
-## Введение в **Pub**/**Sub**
+## Введение в Pub/Sub
 
-**Pub**/**Sub** (**Publish-Subscribe**) — это паттерн **messaging**, где отправители (**publishers**) отправляют сообщения, не зная конкретных получателей. Получатели (**subscribers**) подписываются на интересующие их каналы и получают сообщения.
+**Pub**/**Sub** (Publish-Subscribe) — это паттерн **messaging**, где отправители (publishers) отправляют сообщения, не зная конкретных получателей. Получатели (subscribers) подписываются на интересующие их каналы и получают сообщения.
 
 ### Основные концепции
 
@@ -78,7 +78,7 @@ UNSUBSCRIBE news
 UNSUBSCRIBE  # От всех каналов
 ```
 
-### **Pattern Subscription**
+### Pattern Subscription
 
 ```redis
 # Подписка по паттерну
@@ -94,7 +94,7 @@ PUNSUBSCRIBE
 
 ## Программное использование
 
-### **Java Publisher**
+### Java Publisher
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -136,7 +136,7 @@ public class Publisher {
 }
 ```
 
-### **Java Subscriber**
+### Java Subscriber
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -201,7 +201,7 @@ public class Subscriber {
 ```
 
 
-## Мониторинг **Pub**/**Sub**
+## Мониторинг Pub/Sub
 
 ### Команды мониторинга
 
@@ -220,9 +220,9 @@ PUBSUB NUMPAT
 ```
 
 
-## **Use Cases**
+## Use Cases
 
-### **Event Broadcasting**
+### Event Broadcasting
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -254,7 +254,7 @@ public class EventBroadcaster {
 }
 ```
 
-### **Real-Time Notifications**
+### Real-Time Notifications
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -289,9 +289,9 @@ public class NotificationService {
 4. **Мониторьте количество подписчиков**
 5. **Обрабатывайте ошибки** при публикации
 
-## **Advanced Pub**/**Sub Patterns**
+## Advanced Pub/Sub Patterns
 
-### **Message Routing**
+### Message Routing
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -336,7 +336,7 @@ public class MessageRouter {
 }
 ```
 
-### **Fan-Out Pattern**
+### Fan-Out Pattern
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -364,7 +364,7 @@ public class FanOutPublisher {
 }
 ```
 
-### **Request-Response Pattern**
+### Request-Response Pattern
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -422,9 +422,9 @@ public class RequestResponse {
 }
 ```
 
-## **Advanced Pub**/**Sub Patterns**
+## Advanced Pub/Sub Patterns
 
-### **Message Queue Pattern**
+### Message Queue Pattern
 
 ```java
 // Java пример message queue
@@ -464,7 +464,7 @@ public class MessageQueue {
 }
 ```
 
-### **Topic-Based Routing**
+### Topic-Based Routing
 
 ```java
 // Java пример topic router
@@ -514,7 +514,7 @@ public class TopicRouter {
 }
 ```
 
-### **Event Sourcing Pattern**
+### Event Sourcing Pattern
 
 ```java
 // Java пример event store
@@ -590,9 +590,9 @@ public class EventStore {
 }
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Connection Pooling for Pub**/**Sub**
+### Connection Pooling for Pub/Sub
 
 ```java
 // Java пример пула PubSub соединений
@@ -644,11 +644,11 @@ public class PubSubPool {
 }
 ```
 
-## **Advanced Pub**/**Sub Patterns** (**Java версии**)
+## Advanced Pub/Sub Patterns (Java версии)
 
 **Все примеры выше уже представлены в **Java**. Дополнительные паттерны:**
 
-### **Message Queue Pattern** (**Java**)
+### Message Queue Pattern (Java)
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -689,7 +689,7 @@ public class MessageQueue {
 }
 ```
 
-### **Message Batching** (**Java**)
+### Message Batching (Java)
 
 ```java
 import redis.clients.jedis.Jedis;

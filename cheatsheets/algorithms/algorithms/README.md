@@ -17,5 +17,5 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Algorithms Overview](algorithms-overview.md)
+- [[algorithms-overview|Algorithms Overview]]
 

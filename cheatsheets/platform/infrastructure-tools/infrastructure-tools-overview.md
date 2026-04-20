@@ -25,9 +25,9 @@ updated: "2026-02-11"
 
 ## См. также
 
-- [Platform](../README.md) — **Terraform Advanced**, **Ansible Advanced**, **Nginx Advanced**, **Packer**, **Vagrant**, **Consul**
+- [[README|Platform]] — **Terraform Advanced**, **Ansible Advanced**, **Nginx Advanced**, **Packer**, **Vagrant**, **Consul**
 - [[iac-overview|Infrastructure as Code]] — основы **Terraform** и **Ansible**
-- [CI/CD](../ci-cd/README.md)
+- [[README|CI/CD]]
 
 ## Содержание
 
@@ -59,32 +59,32 @@ updated: "2026-02-11"
 
 ## Введение
 
-Инфраструктурные инструменты решают задачи: описание инфраструктуры как код (**IaC**), конфигурация серверов, создание образов, локальные окружения для разработки, **service discovery** и балансировка. Выбор зависит от облака (**AWS, `Azure`, `GCP`, on-premise**) и от роли: разработчик, **DevOps**, **SRE**.
+Инфраструктурные инструменты решают задачи: описание инфраструктуры как код (IaC), конфигурация серверов, создание образов, локальные окружения для разработки, **service discovery** и балансировка. Выбор зависит от облака (AWS, `Azure`, `GCP`, on-premise) и от роли: разработчик, **DevOps**, **SRE**.
 
 | Инструмент | Назначение | Когда использовать |
 |------------|------------|---------------------|
-| **Terraform** | **Provisioning** инфраструктуры (**сети, ВМ, БД**) | Создание и изменение облачных ресурсов декларативно |
+| **Terraform** | **Provisioning** инфраструктуры (сети, ВМ, БД) | Создание и изменение облачных ресурсов декларативно |
 | **Ansible** | **Configuration Management**, развёртывание приложений | Настройка ОС, установка пакетов, конфиги, без агента |
-| **Packer** | Создание образов (**AMI, `Vagrant box`, Docker**) | Единый образ для всех окружений, **immutable infrastructure** |
+| **Packer** | Создание образов (AMI, `Vagrant box`, Docker) | Единый образ для всех окружений, **immutable infrastructure** |
 | **Vagrant** | Локальные виртуальные машины для разработки | Окружение «как в проде» на рабочей станции |
 | **Consul** | **Service Discovery**, конфигурация, **health checks** | Микросервисы, динамическая конфигурация |
 | **Nginx** | Веб-сервер, **reverse proxy**, **load balancer** | Раздача статики, прокси к приложениям, **SSL**, балансировка |
 
 
-## Terraform — **Infrastructure as Code**
+## Terraform — Infrastructure as Code
 
-**Terraform** описывает инфраструктуру в **HCL**-файлах (**.tf**). Провайдеры (**AWS**, **Azure**, **GCP**, **Kubernetes** и др.) создают и обновляют ресурсы. Состояние хранится в **state**-файле (**локально или в удалённом backend — S3, Terraform Cloud**).
+**Terraform** описывает инфраструктуру в **HCL**-файлах (.tf). Провайдеры (**AWS**, **Azure**, **GCP**, **Kubernetes** и др.) создают и обновляют ресурсы. Состояние хранится в **state**-файле (локально или в удалённом backend — S3, Terraform Cloud).
 
 ### Основные концепции
 
-- **Resource** — единица инфраструктуры (**instance, security group, subnet**).
-- **Provider** — плагин для облака или системы (**aws, azurerm, google, kubernetes**).
+- **Resource** — единица инфраструктуры (instance, security group, subnet).
+- **Provider** — плагин для облака или системы (aws, azurerm, google, kubernetes).
 - **State** — текущее состояние ресурсов; используется для планирования изменений.
 - **Plan / Apply** — план изменений и их применение.
 
-### Пример: **AWS EC2** и **security group**
+### Пример: AWS EC2 и security group
 
-Пример **Terraform** (**main.tf**): провайдер **AWS**, **security group** для приложения, правила **ingress**/**egress**.
+Пример **Terraform** (main.tf): провайдер **AWS**, **security group** для приложения, правила **ingress**/**egress**.
 
 ```hcl
 # main.tf
@@ -140,30 +140,30 @@ resource "aws_instance" "app" {
 }
 ```
 
-Команды: `**terraform init**`, `**terraform plan**`, `**terraform apply**`, `**terraform destroy**`. **State** в **production** хранить в удалённом **backend** с блокировкой (**S3 + DynamoDB**, **Terraform Cloud**).
+Команды: `terraform init`, `terraform plan`, `terraform apply`, `terraform destroy`. **State** в **production** хранить в удалённом **backend** с блокировкой (**S3 + DynamoDB**, **Terraform Cloud**).
 
-### Best Practices для **Terraform**
+### Best Practices для Terraform
 
 - Один **state** на логический кусок инфраструктуры; не один гигантский **state** на всё.
-- Использовать модули для повторяемых фрагментов (**сеть, кластер приложений**).
+- Использовать модули для повторяемых фрагментов (сеть, кластер приложений).
 - Переменные и выходы выносить в **variables.tf** и **outputs.tf**; секреты — через переменные окружения или **vault**, не в коде.
-- Регулярно выполнять `**terraform plan**` в `CI` и применять через контролируемый процесс (**MR, pipeline**).
+- Регулярно выполнять `terraform plan` в `CI` и применять через контролируемый процесс (MR, pipeline).
 
-Подробнее: [Terraform Advanced](../iac/terraform/terraform-advanced.md), [Terraform](../iac/terraform/terraform.md).
+Подробнее: [[terraform-advanced|Terraform Advanced]], [[terraform]].
 
 
 ## Ansible — конфигурационное управление
 
-**Ansible** управляет конфигурацией серверов без установки агента: подключение по **SSH**, выполнение модулей (**package, copy, template, service и др.**). Инвентарь (**inventory**) — список хостов и групп; плейбуки (**playbooks**) — сценарии задач.
+**Ansible** управляет конфигурацией серверов без установки агента: подключение по **SSH**, выполнение модулей (package, copy, template, service и др.). Инвентарь (inventory) — список хостов и групп; плейбуки (playbooks) — сценарии задач.
 
 ### Основные концепции
 
-- **Inventory** — хосты и группы (**ini или yaml**).
+- **Inventory** — хосты и группы (ini или yaml).
 - **Playbook** — список **plays**: хосты, роли, задачи.
 - **Role** — переиспользуемый набор задач, шаблонов, файлов.
-- **Module** — атомарное действие (**yum, apt, copy, template, systemd**).
+- **Module** — атомарное действие (yum, apt, copy, template, systemd).
 
-### Пример **playbook**: установка **Java** и приложения
+### Пример playbook: установка Java и приложения
 
 ```yaml
 # playbook.yml
@@ -215,21 +215,21 @@ resource "aws_instance" "app" {
 
 Запуск: `**ansible-playbook** -i **inventory playbook.yml**`. Для секретов использовать **Ansible Vault** или внешний **vault**.
 
-### Best Practices для **Ansible**
+### Best Practices для Ansible
 
 - Структурировать через **roles**; не писать один огромный **playbook**.
-- Идемпотентность: задачи должны безопасно повторяться (**модули это обеспечивают при корректном использовании**).
+- Идемпотентность: задачи должны безопасно повторяться (модули это обеспечивают при корректном использовании).
 - Переменные по приоритету: **defaults** в **role**, затем **group_vars**/**host_vars**, затем командная строка.
 - Теги для выборочного запуска частей **playbook**.
 
-Подробнее: [Ansible Advanced](../iac/ansible/ansible-advanced.md), [Ansible](../iac/ansible/ansible.md).
+Подробнее: [[ansible-advanced|Ansible Advanced]], [[ansible]].
 
 
 ## Packer — создание образов
 
 **Packer** создаёт образы ВМ (**AMI**, **Azure Image**, **GCP image**, **Vagrant box**, **Docker image**) из одного описания. **Builder** определяет тип образа; **provisioners** (**shell**, **Ansible** и др.) настраивают ОС внутри образа.
 
-### Пример: **AMI** с **Java** и приложением
+### Пример: AMI с Java и приложением
 
 ```hcl
 # packer.pkr.hcl
@@ -275,20 +275,20 @@ build {
 
 Команды: `**packer init** .`, `**packer build** .`. Образы можно тегировать и распространять по окружениям.
 
-### Best Practices для **Packer**
+### Best Practices для Packer
 
 - Минимизировать образ: только необходимое ПО; обновления безопасности применять в момент сборки.
 - Использовать **Ansible provisioner** для сложной настройки вместо длинных **shell**-скриптов.
-- Хранить описание в репозитории; сборку запускать из `CI` (**при коммите в main или по расписанию**).
+- Хранить описание в репозитории; сборку запускать из `CI` (при коммите в main или по расписанию).
 
-Подробнее: [Packer](../iac/packer/packer.md).
+Подробнее: [[packer]].
 
 
 ## Vagrant — окружения для разработки
 
-**Vagrant** поднимает виртуальные машины по описанию (**Vagrantfile**). Провайдеры: **VirtualBox**, **VMware**, **Hyper-V**, **libvirt**; **provisioners**: **shell**, **Ansible**, **Chef**. Удобно для локальной разработки «как в проде».
+**Vagrant** поднимает виртуальные машины по описанию (Vagrantfile). Провайдеры: **VirtualBox**, **VMware**, **Hyper-V**, **libvirt**; **provisioners**: **shell**, **Ansible**, **Chef**. Удобно для локальной разработки «как в проде».
 
-### Пример **Vagrantfile**
+### Пример Vagrantfile
 
 ```ruby
 Vagrant.configure("2") do |config|
@@ -305,14 +305,14 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-Команды: `**vagrant** up`, `**vagrant ssh**`, `**vagrant halt**`, `**vagrant destroy**`. **Box** можно собрать через **Packer**.
+Команды: `**vagrant** up`, `vagrant ssh`, `vagrant halt`, `vagrant destroy`. **Box** можно собрать через **Packer**.
 
-Подробнее: [Vagrant](vagrant.md).
+Подробнее: [[vagrant]].
 
 
-## Consul — **Service Discovery** и конфигурация
+## Consul — Service Discovery и конфигурация
 
-**Consul** (**HashiCorp**) даёт: **service discovery** (регистрация сервисов и **DNS** / **HTTP** lookup), **health checks**, `KV` **store** для конфигурации. Режимы: **server** и **client**; клиенты приложений обращаются к локальному **agent**.
+**Consul** (HashiCorp) даёт: **service discovery** (регистрация сервисов и **DNS** / **HTTP** lookup), **health checks**, `KV` **store** для конфигурации. Режимы: **server** и **client**; клиенты приложений обращаются к локальному **agent**.
 
 ### Основные возможности
 
@@ -321,16 +321,16 @@ end
 - **KV store** — ключ-значение для конфигурации; можно подписаться на изменения.
 - **Multi-datacenter** — репликация между ЦОД.
 
-Интеграция с приложением: через **Consul client API** или **sidecar** (**например, Envoy**). **Spring Cloud Consul** предоставляет интеграцию для **Java**.
+Интеграция с приложением: через **Consul client API** или **sidecar** (например, Envoy). **Spring Cloud Consul** предоставляет интеграцию для **Java**.
 
-Подробнее: [Consul](consul.md).
+Подробнее: [[consul]].
 
 
-## Nginx — веб-сервер и **reverse proxy**
+## Nginx — веб-сервер и reverse proxy
 
-**Nginx** используется как: статический файловый сервер, **reverse proxy** к приложениям (**Java, `Node`, Go**), **SSL**-терминация, **load balancer** (**round-robin, `least_connections`, ip_hash**).
+**Nginx** используется как: статический файловый сервер, **reverse proxy** к приложениям (Java, `Node`, Go), **SSL**-терминация, **load balancer** (round-robin, `least_connections`, ip_hash).
 
-### Пример конфигурации: **proxy** к приложению и балансировка
+### Пример конфигурации: proxy к приложению и балансировка
 
 ```nginx
 upstream app_backend {
@@ -371,7 +371,7 @@ server {
 }
 ```
 
-Подробнее: [Nginx Advanced](nginx-advanced.md).
+Подробнее: [[nginx-advanced|Nginx Advanced]].
 
 
 ## Сравнение и комбинирование инструментов
@@ -390,9 +390,9 @@ server {
 
 ## Интеграция с CI/CD
 
-- **Terraform:** в пайплайне — `**terraform init**`, `**terraform plan**` (**артефакт плана**), ручное или автоматическое `**apply**` на нужное окружение; **state** в удалённом **backend** с блокировкой.
-- **Ansible:** запуск **playbook** из пайпа (**ansible-playbook**); инвентарь — динамический (**из `Terraform output` или облачного API**) или статический.
-- **Packer:** сборка образов по коммиту в **main** или по тегу; образы тегируются и используются в **Terraform** (**ami_id, image_id**).
+- **Terraform:** в пайплайне — `terraform init`, `terraform plan` (артефакт плана), ручное или автоматическое `apply` на нужное окружение; **state** в удалённом **backend** с блокировкой.
+- **Ansible:** запуск **playbook** из пайпа (ansible-playbook); инвентарь — динамический (из `Terraform output` или облачного API) или статический.
+- **Packer:** сборка образов по коммиту в **main** или по тегу; образы тегируются и используются в **Terraform** (ami_id, image_id).
 - **Vagrant:** обычно локально; при необходимости образы для **Vagrant** собираются через **Packer** и выкладываются в репозиторий **box**.
 
 
@@ -407,11 +407,11 @@ server {
 ## Лучшие практики
 
 1. **Infrastructure as `Code`:** вся инфраструктура в репозитории; изменения только через код и код-ревью.
-2. **State и секреты: Terraform state** — в удалённом **backend** с блокировкой; секреты не в коде (**vault, переменные окружения, секреты CI**).
+2. **State и секреты: Terraform state** — в удалённом **backend** с блокировкой; секреты не в коде (vault, переменные окружения, секреты CI).
 3. **Идемпотентность: Ansible playbooks** и **Terraform** конфигурации рассчитаны на повторный запуск без ручного вмешательства.
 4. **Модульность: Terraform** модули, **Ansible roles**, переиспользуемые **Packer** шаблоны.
-5. **Версионирование образов:** образы **Packer** с тегами (**дата, коммит**); в **Terraform** использовать конкретные образы, обновление по контролируемому процессу.
-6. **Документация: README** в репозитории инфраструктуры: назначение модулей, как запускать, зависимости (**облако, образы**).
+5. **Версионирование образов:** образы **Packer** с тегами (дата, коммит); в **Terraform** использовать конкретные образы, обновление по контролируемому процессу.
+6. **Документация: README** в репозитории инфраструктуры: назначение модулей, как запускать, зависимости (облако, образы).
 7. **Безопасность:** минимальные привилегии для сервисных учёток **Terraform**/**Ansible**; аудит доступа к **state** и секретам.
 
 ## Шпаргалка команд
@@ -425,4 +425,4 @@ server {
 | **Consul** | `consul agent -dev`, `consul catalog services`, `consul kv get key` |
 | **Nginx** | `nginx -t` (проверка конфига), `nginx -s reload` |
 
-Документ в совокупности с разделами [Platform](../README.md), [IaC](../iac/iac-overview.md), [CI/CD](../ci-cd/README.md) и практик эксплуатации.
+Документ в совокупности с разделами [[README|Platform]], [[iac-overview|IaC]], [[README|CI/CD]] и практик эксплуатации.

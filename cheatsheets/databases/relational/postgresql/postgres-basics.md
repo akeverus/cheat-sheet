@@ -40,11 +40,11 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
   - [Подключение к **PostgreSQL**](#подключение-к-postgresql)
 - [Лучшие практики](#лучшие-практики)
 
-## Введение в **PostgreSQL**
+## Введение в PostgreSQL
 
-**PostgreSQL** — это мощная, открытая объектно-реляционная система управления базами данных (**ОРСУБД**), которая использует и расширяет язык **SQL**. **PostgreSQL** известен своей надежностью, расширяемостью и соответствием стандартам **SQL**.
+**PostgreSQL** — это мощная, открытая объектно-реляционная система управления базами данных (ОРСУБД), которая использует и расширяет язык **SQL**. **PostgreSQL** известен своей надежностью, расширяемостью и соответствием стандартам **SQL**.
 
-### Основные возможности **PostgreSQL**
+### Основные возможности PostgreSQL
 
 - **Полная `ACID` совместимость**: Гарантии атомарности, согласованности, изолированности и долговечности
 - **Расширяемость**: Поддержка пользовательских типов данных, функций, операторов
@@ -56,9 +56,9 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
 - **Наследование таблиц**: Объектно-ориентированные возможности
 - **Асинхронная репликация**: Поддержка различных типов репликации
 
-### Архитектура **PostgreSQL**
+### Архитектура PostgreSQL
 
-Схема компонентов **PostgreSQL**: пул соединений, парсер, оптимизатор, исполнитель, слой хранения (**буферы, `WAL`, блокировки, vacuum**), ОС.
+Схема компонентов **PostgreSQL**: пул соединений, парсер, оптимизатор, исполнитель, слой хранения (буферы, `WAL`, блокировки, vacuum), ОС.
 
 ```text
 # Архитектура: Connection Pool → Parser → Optimizer → Executor → Storage
@@ -77,9 +77,9 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
 
 ## Установка и первоначальная настройка
 
-### Установка **PostgreSQL**
+### Установка PostgreSQL
 
-#### **Linux** (**Ubuntu/Debian**)
+#### Linux (Ubuntu/Debian)
 
 **Установка **PostgreSQL** на **Ubuntu**/**Debian**:**
 
@@ -98,7 +98,7 @@ sudo systemctl start postgresql
 sudo systemctl enable postgresql
 ```
 
-#### **macOS** (**с Homebrew**)
+#### macOS (с Homebrew)
 
 ```bash
 # Установка Homebrew (если не установлен)
@@ -114,7 +114,7 @@ brew services start postgresql
 initdb /usr/local/var/postgres
 ```
 
-#### **Docker**
+#### Docker
 
 ```bash
 # Запуск PostgreSQL в Docker
@@ -148,7 +148,7 @@ GRANT ALL PRIVILEGES ON DATABASE mydb TO myuser;
 \q
 ```
 
-#### Настройка **postgresql.conf**
+#### Настройка postgresql.conf
 
 **Файл postgresql.conf** является основным конфигурационным файлом **PostgreSQL**. Он содержит сотни параметров, которые влияют на производительность, безопасность и функциональность сервера. Параметры логически сгруппированы по областям применения.
 
@@ -178,7 +178,7 @@ tcp_keepalives_interval = 10  # Интервал между keepalive пакет
 tcp_keepalives_count = 3      # Количество неудачных keepalive
 ```
 
-**Настройки памяти (**критично для производительности**):**
+**Настройки памяти (критично для производительности):**
 ```ini
 # Shared buffers - основная кэш-память PostgreSQL
 # Рекомендация: 25% от RAM для систем до 8GB RAM
@@ -242,7 +242,7 @@ log_checkpoints = on
 log_autovacuum_min_duration = 1000
 ```
 
-**Настройки `WAL` (**Write-Ahead Logging**):**
+**Настройки `WAL` (Write-Ahead Logging):**
 ```ini
 # Размер сегмента WAL
 wal_segment_size = 16MB
@@ -263,7 +263,7 @@ max_wal_size = 1GB                  # Максимальный размер WAL
 min_wal_size = 80MB                 # Минимальный размер WAL
 ```
 
-**Настройки автовакуума (**автоматическая очистка**):**
+**Настройки автовакуума (автоматическая очистка):**
 ```ini
 # Включить автовакуум
 autovacuum = on
@@ -319,7 +319,7 @@ row_security = on
 
 **Производительность для разных типов нагрузки:**
 
-**OLTP системы (**транзакционная нагрузка**):**
+**OLTP системы (транзакционная нагрузка):**
 ```ini
 # OLTP: кэш и память для транзакционной нагрузки
 shared_buffers = 1GB
@@ -330,7 +330,7 @@ max_connections = 200
 autovacuum_max_workers = 4
 ```
 
-**OLAP системы (**аналитическая нагрузка**):**
+**OLAP системы (аналитическая нагрузка):**
 ```ini
 shared_buffers = 2GB
 effective_cache_size = 6GB
@@ -365,7 +365,7 @@ FROM pg_settings
 WHERE context = 'postmaster';
 ```
 
-#### Настройка **pg_hba.conf**
+#### Настройка pg_hba.conf
 
 **Файл `pg_hba.conf` управляет аутентификацией:**
 
@@ -384,9 +384,9 @@ host    all             all             192.168.1.0/24          md5
 host    all             all             ::1/128                 md5
 ```
 
-### Подключение к **PostgreSQL**
+### Подключение к PostgreSQL
 
-#### Использование **psql**
+#### Использование psql
 
 ```bash
 # Подключение к базе данных
@@ -407,7 +407,7 @@ psql -U myuser -d mydb
 
 #### Программное подключение
 
-##### **Java** (**JDBC**)
+##### Java (JDBC)
 
 ```java
 // Подключение к PostgreSQL через JDBC (DriverManager.getConnection)
@@ -436,7 +436,7 @@ public class PostgresConnection {
 }
 ```
 
-##### **Python** (**psycopg2**)
+##### Python (psycopg2)
 
 ```java
 // Пример для Python (psycopg2) см. в документации; здесь заглушка для структуры
@@ -446,7 +446,7 @@ public class PostgresConnection {
 
 - **Резервное копирование:** настраивать регулярный **pg_dump** или **pg_basebackup**; хранить копии вне сервера; проверять восстановление.
 - **Мониторинг:** использовать **pg_stat_activity**, **pg_stat_statements**; отслеживать **long-running** запросы, блокировки, использование диска и **WAL**.
-- **Память:** задавать **shared_buffers** (**порядка 25% `RAM` для малых систем**), **effective_cache_size**, **work_mem** в соответствии с нагрузкой; не завышать **max_connections**.
+- **Память:** задавать **shared_buffers** (порядка 25% `RAM` для малых систем), **effective_cache_size**, **work_mem** в соответствии с нагрузкой; не завышать **max_connections**.
 - **Безопасность:** использовать **scram-sha-256** для паролей; ограничивать доступ через **pg_hba.conf**; в **production** включать **SSL**.
 - **Индексы:** создавать индексы под частые **WHERE**/**JOIN**/**ORDER** `BY`; избегать лишних индексов на часто обновляемых таблицах; использовать **EXPLAIN ANALYZE**.
 - **VACUUM и автовакуум:** следить за **bloat**; при необходимости настраивать **autovacuum_vacuum_scale_factor** и пороги; для больших таблиц планировать **VACUUM ANALYZE**.

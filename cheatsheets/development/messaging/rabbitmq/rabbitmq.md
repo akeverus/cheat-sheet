@@ -21,7 +21,7 @@ updated: "2026-02-11"
 - [AMQP 0-9-1 Model](https://www.rabbitmq.com/tutorials/amqp-concepts.html) — спецификация **AMQP**
 - [RabbitMQ Tutorials](https://www.rabbitmq.com/getstarted.html) — туториалы **RabbitMQ**
 
-### **Java** интеграции
+### Java интеграции
 - [Spring AMQP](https://spring.io/projects/spring-amqp) — **Spring Boot** интеграция
 - [RabbitMQ Java Client](https://www.rabbitmq.com/java-client.html) — официальный **Java** клиент
 - [Spring Cloud Stream](https://spring.io/projects/spring-cloud-stream) — стриминг и биндинги
@@ -104,11 +104,11 @@ updated: "2026-02-11"
   - [Типы Exchanges по назначению:](#типы-exchanges-по-назначению)
   - [Сводка лучших практик](#сводка-лучших-практик)
 
-## Введение в **RabbitMQ**
+## Введение в RabbitMQ
 
-**RabbitMQ** — это надежный и зрелый **message broker**, реализующий **AMQP** (**Advanced `Message Queuing` Protocol**). **RabbitMQ** разработан на **Erlang** и известен своей надежностью, гибкостью **routing**'а и богатой экосистемой плагинов.
+**RabbitMQ** — это надежный и зрелый **message broker**, реализующий **AMQP** (Advanced `Message Queuing` Protocol). **RabbitMQ** разработан на **Erlang** и известен своей надежностью, гибкостью **routing**'а и богатой экосистемой плагинов.
 
-### Почему **RabbitMQ**?
+### Почему RabbitMQ?
 
 **RabbitMQ** решает критические проблемы надежной асинхронной коммуникации:**
 
@@ -121,11 +121,11 @@ updated: "2026-02-11"
 7. **Мониторинг** — встроенные инструменты управления
 8. **Плагины** — расширяемая функциональность
 
-### **RabbitMQ** vs другие **brokers**
+### RabbitMQ vs другие brokers
 
-#### **RabbitMQ** vs **Kafka**
+#### RabbitMQ vs Kafka
 
-Ниже — сравнение **RabbitMQ** и **Kafka** (**текст**).
+Ниже — сравнение **RabbitMQ** и **Kafka** (текст).
 ```text
 # Сравнение: RabbitMQ — гарантии доставки, Kafka — пропускная способность
 RabbitMQ:                   Kafka:
@@ -136,9 +136,9 @@ RabbitMQ:                   Kafka:
 - Менее 1M msg/sec          - >1M msg/sec
 ```
 
-#### **RabbitMQ** vs **ActiveMQ**
+#### RabbitMQ vs ActiveMQ
 
-Ниже — сравнение **RabbitMQ** и **ActiveMQ** (**текст**).
+Ниже — сравнение **RabbitMQ** и **ActiveMQ** (текст).
 ```text
 # Сравнение RabbitMQ и ActiveMQ по производительности и настройке
 RabbitMQ:                   ActiveMQ:
@@ -148,7 +148,7 @@ RabbitMQ:                   ActiveMQ:
 - Лучшая кластеризация      - Более зрелая экосистема
 ```
 
-### Когда использовать **RabbitMQ**?
+### Когда использовать RabbitMQ?
 
 #### ✅ Идеально подходит для:
 - **Request-response** — **RPC** через **messaging**
@@ -160,17 +160,17 @@ RabbitMQ:                   ActiveMQ:
 - **Microservices** — асинхронная коммуникация
 
 #### ❌ Не подходит для:
-- **High-throughput** — >100K **msg**/**sec** (**используйте Kafka**)
+- **High-throughput** — >100K **msg**/**sec** (используйте Kafka)
 - **Big data** — **large message payloads**
 - **Real-time analytics** — **stream processing**
 - **Log aggregation** — **append-only** сценарии
 - **Simple pub-sub** — без **complex routing**
 
-## **AMQP** модель
+## AMQP модель
 
-### Основные концепции **AMQP**
+### Основные концепции AMQP
 
-#### **Messages** (**Сообщения**)
+#### Messages (Сообщения)
 ```java
 // Структура AMQP сообщения
 public class AMQPMessage {
@@ -191,7 +191,7 @@ public class AMQPMessage {
 }
 ```
 
-#### **Exchanges** (**Обменники**)
+#### Exchanges (Обменники)
 **Компоненты, которые маршрутизируют сообщения в очереди:**
 
 **Direct Exchange** — точная маршрутизация по **routing key**:**
@@ -228,7 +228,7 @@ Exchange: notification.fanout
 → Queue: push-service
 ```
 
-#### **Queues** (**Очереди**)
+#### Queues (Очереди)
 **Хранилища сообщений для **consumer**'ов:**
 
 ```java
@@ -243,7 +243,7 @@ Queue queue = QueueBuilder.durable("order-processing")
     .build();
 ```
 
-#### **Bindings** (**Связки**)
+#### Bindings (Связки)
 **Правила маршрутизации между **exchanges** и **queues**:**
 
 ```java
@@ -259,9 +259,9 @@ Map<String, Object> headers = Map.of("region", "us", "priority", "high");
 channel.queueBind("us-high-priority", "order.headers", "", headers);
 ```
 
-### **Delivery guarantees**
+### Delivery guarantees
 
-#### At **most once**
+#### At most once
 **Сообщение может быть потеряно, но не дублировано:**
 
 ```java
@@ -272,7 +272,7 @@ channel.basicPublish(exchange, routingKey, null, message.getBytes());
 channel.basicConsume(queue, true, consumer);
 ```
 
-#### At **least once**
+#### At least once
 **Сообщение может быть дублировано, но не потеряно:**
 
 ```java
@@ -286,8 +286,8 @@ channel.basicConsume(queue, false, consumer);
 channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
 ```
 
-#### **Exactly once**
-**Идеальная гарантия (**сложно реализовать**):**
+#### Exactly once
+**Идеальная гарантия (сложно реализовать):**
 
 ```java
 // Использование транзакций
@@ -301,11 +301,11 @@ try {
 }
 ```
 
-## Архитектура **RabbitMQ**
+## Архитектура RabbitMQ
 
 ### Компоненты системы
 
-#### **Broker** (**Брокер**)
+#### Broker (Брокер)
 **Основной сервер **RabbitMQ**:**
 
 ```text
@@ -335,7 +335,7 @@ try {
 └─────────────────────────────────────┘
 ```
 
-#### **Connections** и **Channels**
+#### Connections и Channels
 **Многоплексная коммуникация:**
 
 ```java
@@ -351,7 +351,7 @@ Channel channel = connection.createChannel();
 Channel channel2 = connection.createChannel();
 ```
 
-#### **Erlang** `VM`
+#### Erlang `VM`
 **RabbitMQ** работает на **Erlang** `VM`:**
 
 **Преимущества `Erlang`:**
@@ -384,11 +384,11 @@ Channel channel2 = connection.createChannel();
 
 ## Установка и настройка
 
-### **Docker** установка
+### Docker установка
 
 **Docker** обеспечивает самый быстрый и надежный способ развертывания **RabbitMQ** для разработки и тестирования. Контейнеры **RabbitMQ** полностью изолированы и легко масштабируемы.
 
-#### **Single node** развертывание
+#### Single node развертывание
 
 **Single node setup** подходит для разработки, тестирования и небольших **production** сред. В этой конфигурации запускается один экземпляр **RabbitMQ** с **management plugin**.
 
@@ -480,7 +480,7 @@ docker-compose ps
 5. **Management порт 15672** открывается для веб-интерфейса
 6. **Health check** начинает мониторить готовность сервиса
 
-#### **Cluster** развертывание
+#### Cluster развертывание
 
 **RabbitMQ кластер** обеспечивает высокую доступность и распределение нагрузки. Кластер состоит из нескольких узлов, которые делят очереди и обмениваются метаданными.
 
@@ -637,7 +637,7 @@ docker exec rabbitmq1 rabbitmqctl list_connections
 4. **High availability** обеспечивается репликацией
 5. **Load balancing** происходит автоматически
 
-#### **Kubernetes** развертывание
+#### Kubernetes развертывание
 
 **Kubernetes** предоставляет оркестрацию для **production** развертываний **RabbitMQ**.
 
@@ -722,9 +722,9 @@ spec:
 
 ### Конфигурация
 
-#### Основной конфигурационный файл (**rabbitmq.conf**)
+#### Основной конфигурационный файл (rabbitmq.conf)
 
-**Файл rabbitmq.conf** содержит все настройки **RabbitMQ** в современном формате (**RabbitMQ 3.7+**). Он использует **sysctl-like** синтаксис и заменяет старый формат.
+**Файл rabbitmq.conf** содержит все настройки **RabbitMQ** в современном формате (RabbitMQ 3.7+). Он использует **sysctl-like** синтаксис и заменяет старый формат.
 
 ```ini
 # ===========================================
@@ -852,7 +852,7 @@ tcp_listen_options.sndbuf = 196608
 tcp_listen_options.recbuf = 196608
 ```
 
-#### **Advanced** конфигурация (**advanced.config**)
+#### Advanced конфигурация (advanced.config)
 
 **Файл advanced.config** использует **Erlang** синтаксис для сложных настроек, недоступных в **rabbitmq.conf**.
 
@@ -1019,7 +1019,7 @@ rabbitmqctl list_exchanges
 
 **Web `Management Interface`:**
 - **URL: http**://**localhost**:15672
-- **Login: admin**/**admin123** (**или настроенные credentials**)
+- **Login: admin**/**admin123** (или настроенные credentials)
 - **Возможности:**
   - Просмотр очередей и **exchanges**
   - Мониторинг соединений и каналов
@@ -1029,7 +1029,7 @@ rabbitmqctl list_exchanges
 
 ### Конфигурация
 
-#### **rabbitmq.conf**
+#### rabbitmq.conf
 ```ini
 # Network settings
 listeners.tcp.default = 5672
@@ -1052,7 +1052,7 @@ cluster_partition_handling = pause_minority
 cluster_partition_handling = pause_minority
 ```
 
-#### **advanced.config** (**Erlang**)
+#### advanced.config (Erlang)
 ```erlang
 [
   {rabbit, [
@@ -1094,11 +1094,11 @@ cluster_partition_handling = pause_minority
 ].
 ```
 
-## **RabbitMQ Java Producer**
+## RabbitMQ Java Producer
 
-### **Basic Producer**
+### Basic Producer
 
-#### **Connection setup**
+#### Connection setup
 ```java
 // Конфигурация очередей, обменников и биндингов
 @Configuration
@@ -1159,7 +1159,7 @@ public class RabbitMQConfig {
 }
 ```
 
-#### **Message publishing**
+#### Message publishing
 ```java
 // Отправка сообщений в exchange с routing key
 @Service
@@ -1219,9 +1219,9 @@ public class MessageProducer {
 }
 ```
 
-### **Advanced Producer Features**
+### Advanced Producer Features
 
-#### **Publisher Confirms**
+#### Publisher Confirms
 ```java
 @Configuration
 public class PublisherConfirmConfig {
@@ -1317,7 +1317,7 @@ public class AdvancedProducer {
 }
 ```
 
-#### **Transactions**
+#### Transactions
 ```java
 @Service
 public class TransactionalProducer {
@@ -1344,11 +1344,11 @@ public class TransactionalProducer {
 }
 ```
 
-## **RabbitMQ Java Consumer**
+## RabbitMQ Java Consumer
 
-### **Basic Consumer**
+### Basic Consumer
 
-#### **Message Listener**
+#### Message Listener
 ```java
 @Service
 public class OrderConsumer {
@@ -1390,7 +1390,7 @@ public class OrderConsumer {
 }
 ```
 
-#### **Batch Consumer**
+#### Batch Consumer
 ```java
 @Configuration
 public class BatchConsumerConfig {
@@ -1455,9 +1455,9 @@ public class BatchOrderConsumer {
 }
 ```
 
-### **Advanced Consumer Features**
+### Advanced Consumer Features
 
-#### **Consumer with Retry**
+#### Consumer with Retry
 ```java
 @Configuration
 public class RetryConsumerConfig {
@@ -1502,7 +1502,7 @@ public class RetryOrderConsumer {
 }
 ```
 
-#### **Consumer with Dead Letter Queue**
+#### Consumer with Dead Letter Queue
 ```java
 @Configuration
 public class DeadLetterConfig {
@@ -1565,7 +1565,7 @@ public class DeadLetterConsumer {
 }
 ```
 
-#### **Consumer with Priority**
+#### Consumer with Priority
 ```java
 @Configuration
 public class PriorityConsumerConfig {
@@ -1651,11 +1651,11 @@ public class PriorityProducer {
 }
 ```
 
-## **Spring AMQP** интеграция
+## Spring AMQP интеграция
 
-### **Spring Boot** авто-конфигурация
+### Spring Boot авто-конфигурация
 
-#### **Application Properties**
+#### Application Properties
 ```yaml
 spring:
   rabbitmq:
@@ -1733,9 +1733,9 @@ public class AutoConfiguredConsumer {
 }
 ```
 
-### **Advanced Spring AMQP**
+### Advanced Spring AMQP
 
-#### **Custom MessageConverter**
+#### Custom MessageConverter
 ```java
 @Configuration
 public class CustomConverterConfig {
@@ -1769,7 +1769,7 @@ public class CustomConverterConfig {
 }
 ```
 
-#### @**RabbitListener** аннотации
+#### @RabbitListener аннотации
 ```java
 @Service
 public class AdvancedListeners {
@@ -1813,7 +1813,7 @@ public class AdvancedListeners {
 }
 ```
 
-#### **RabbitMQ Health Checks**
+#### RabbitMQ Health Checks
 ```java
 @Component
 public class RabbitMQHealthIndicator implements HealthIndicator {
@@ -1853,11 +1853,11 @@ public class RabbitMQHealthIndicator implements HealthIndicator {
 }
 ```
 
-## **Routing** и **Exchanges**
+## Routing и Exchanges
 
-### **Exchange Types**
+### Exchange Types
 
-#### **Direct Exchange**
+#### Direct Exchange
 ```java
 @Configuration
 public class DirectExchangeConfig {
@@ -1911,7 +1911,7 @@ public class DirectExchangeProducer {
 }
 ```
 
-#### **Topic Exchange**
+#### Topic Exchange
 ```java
 @Configuration
 public class TopicExchangeConfig {
@@ -1981,7 +1981,7 @@ public class TopicExchangeProducer {
 }
 ```
 
-#### **Headers Exchange**
+#### Headers Exchange
 ```java
 @Configuration
 public class HeadersExchangeConfig {
@@ -2055,7 +2055,7 @@ public class HeadersExchangeProducer {
 }
 ```
 
-#### **Fanout Exchange**
+#### Fanout Exchange
 ```java
 @Configuration
 public class FanoutExchangeConfig {
@@ -2134,9 +2134,9 @@ public class NotificationConsumers {
 
 ## Безопасность
 
-### **SSL**/**TLS**
+### SSL/TLS
 
-#### **SSL** конфигурация
+#### SSL конфигурация
 ```yaml
 spring:
   rabbitmq:
@@ -2153,7 +2153,7 @@ spring:
       verify-hostname: true
 ```
 
-#### **Java SSL setup**
+#### Java SSL setup
 ```java
 @Configuration
 public class SSLRabbitMQConfig {
@@ -2209,9 +2209,9 @@ public class SSLRabbitMQConfig {
 }
 ```
 
-### **Authentication**
+### Authentication
 
-#### **RabbitMQ authentication**
+#### RabbitMQ authentication
 ```ini
 # rabbitmq.conf
 auth_backends.1 = rabbit_auth_backend_internal
@@ -2224,7 +2224,7 @@ auth_ldap.user_dn_pattern = cn=${username},ou=users,dc=example,dc=com
 auth_ldap.use_ssl = false
 ```
 
-#### **Java authentication**
+#### Java authentication
 ```java
 @Configuration
 public class AuthRabbitMQConfig {
@@ -2247,9 +2247,9 @@ public class AuthRabbitMQConfig {
 }
 ```
 
-### **Authorization**
+### Authorization
 
-#### **Permissions**
+#### Permissions
 ```bash
 # Create virtual host
 rabbitmqctl add_vhost /app-vhost
@@ -2264,7 +2264,7 @@ rabbitmqctl set_permissions -p /app-vhost app-user ".*" ".*" ".*"
 rabbitmqctl set_topic_permissions -p /app-vhost app-user "order.*" "order.*" "order.*"
 ```
 
-#### **Policies**
+#### Policies
 ```bash
 # Create policy for high availability
 rabbitmqctl set_policy ha-all ".*" '{"ha-mode":"all","ha-sync-mode":"automatic"}'
@@ -2278,9 +2278,9 @@ rabbitmqctl set_policy max-len-1000 ".*" '{"max-length":1000}'
 
 ## Кластеризация
 
-### **Cluster setup**
+### Cluster setup
 
-#### **Manual cluster setup**
+#### Manual cluster setup
 ```bash
 # On first node (rabbitmq1)
 rabbitmqctl stop_app
@@ -2303,7 +2303,7 @@ rabbitmqctl start_app
 rabbitmqctl cluster_status
 ```
 
-#### **Docker cluster**
+#### Docker cluster
 ```yaml
 version: '3.8'
 services:
@@ -2352,9 +2352,9 @@ services:
       - rabbitmq3_data:/var/lib/rabbitmq
 ```
 
-### **Load balancing**
+### Load balancing
 
-#### **HAProxy configuration**
+#### HAProxy configuration
 ```haproxy
 frontend rabbitmq_front
     bind *:5672
@@ -2367,7 +2367,7 @@ backend rabbitmq_back
     server rabbit3 rabbitmq3:5672 check
 ```
 
-#### **Java client configuration**
+#### Java client configuration
 ```java
 @Configuration
 public class LoadBalancedConfig {
@@ -2392,9 +2392,9 @@ public class LoadBalancedConfig {
 }
 ```
 
-### **Federation**
+### Federation
 
-#### **Federation setup**
+#### Federation setup
 ```bash
 # Enable federation plugin
 rabbitmq-plugins enable rabbitmq_federation
@@ -2410,7 +2410,7 @@ rabbitmqctl set_policy federation-policy "federated.*" \
     --apply-to exchanges
 ```
 
-#### **Federation configuration**
+#### Federation configuration
 ```java
 @Configuration
 public class FederationConfig {
@@ -2438,9 +2438,9 @@ public class FederationConfig {
 
 ## Мониторинг и управление
 
-### **Management Plugin**
+### Management Plugin
 
-#### **Web** `UI`
+#### Web `UI`
 ```bash
 # Enable management plugin
 rabbitmq-plugins enable rabbitmq_management
@@ -2449,7 +2449,7 @@ rabbitmq-plugins enable rabbitmq_management
 # Default credentials: guest/guest
 ```
 
-#### **REST API**
+#### REST API
 ```bash
 # Get overview
 curl -u admin:admin123 http://localhost:15672/api/overview
@@ -2464,9 +2464,9 @@ curl -u admin:admin123 http://localhost:15672/api/connections
 curl -u admin:admin123 http://localhost:15672/api/exchanges
 ```
 
-### **Metrics**
+### Metrics
 
-#### **Prometheus metrics**
+#### Prometheus metrics
 ```bash
 # Enable Prometheus plugin
 rabbitmq-plugins enable rabbitmq_prometheus
@@ -2474,7 +2474,7 @@ rabbitmq-plugins enable rabbitmq_prometheus
 # Metrics available at http://localhost:15692/metrics
 ```
 
-#### **Micrometer integration**
+#### Micrometer integration
 ```java
 @Configuration
 public class MetricsConfig {
@@ -2533,9 +2533,9 @@ public class RabbitMQMetricsService {
 }
 ```
 
-### **Health Checks**
+### Health Checks
 
-#### **Spring Boot health check**
+#### Spring Boot health check
 ```java
 @Component
 public class RabbitMQHealthIndicator implements HealthIndicator {
@@ -2580,9 +2580,9 @@ public class RabbitMQHealthIndicator implements HealthIndicator {
 
 ## Производительность и оптимизация
 
-### **Connection pooling**
+### Connection pooling
 
-#### **Connection factory optimization**
+#### Connection factory optimization
 ```java
 @Configuration
 public class OptimizedConnectionConfig {
@@ -2614,9 +2614,9 @@ public class OptimizedConnectionConfig {
 }
 ```
 
-### **Message optimization**
+### Message optimization
 
-#### **Message size optimization**
+#### Message size optimization
 ```java
 @Service
 public class MessageOptimizer {
@@ -2680,9 +2680,9 @@ public class MessageOptimizer {
 }
 ```
 
-### **Consumer optimization**
+### Consumer optimization
 
-#### **Prefetch settings**
+#### Prefetch settings
 ```java
 @Configuration
 public class ConsumerOptimizationConfig {
@@ -2746,9 +2746,9 @@ public class OptimizedConsumer {
 }
 ```
 
-### **Queue optimization**
+### Queue optimization
 
-#### **Queue settings**
+#### Queue settings
 ```java
 @Configuration
 public class QueueOptimizationConfig {
@@ -2798,7 +2798,7 @@ public class QueueOptimizationConfig {
 
 ### Модульное тестирование
 
-#### **Producer testing**
+#### Producer testing
 ```java
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
@@ -2848,7 +2848,7 @@ public class ProducerServiceTest {
 }
 ```
 
-#### **Consumer testing**
+#### Consumer testing
 ```java
 @SpringBootTest
 @ExtendWith(MockitoExtension.class)
@@ -2901,7 +2901,7 @@ public class ConsumerServiceTest {
 
 ### Интеграционное тестирование
 
-#### **Embedded RabbitMQ**
+#### Embedded RabbitMQ
 ```java
 @SpringBootTest
 @Testcontainers
@@ -2958,7 +2958,7 @@ public class RabbitMQIntegrationTest {
 }
 ```
 
-#### **E2E Testing**
+#### E2E Testing
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderE2ETest {
@@ -3007,7 +3007,7 @@ public class OrderE2ETest {
 
 ### Распространенные проблемы
 
-#### **Connection issues**
+#### Connection issues
 
 **Проблема: `Connection refused`**
 ```text
@@ -3060,7 +3060,7 @@ rabbitmqctl set_permissions -p / testuser ".*" ".*" ".*"
 rabbitmqctl list_users
 ```
 
-#### **Message delivery issues**
+#### Message delivery issues
 
 **Проблема: `Messages not being consumed`**
 ```text
@@ -3113,7 +3113,7 @@ public class ConsumerHealthConfig {
 }
 ```
 
-#### **Performance issues**
+#### Performance issues
 
 **Проблема: `High latency`**
 ```text
@@ -3149,7 +3149,7 @@ public class PerformanceOptimizationConfig {
 
 ### Инструменты отладки
 
-#### **RabbitMQ tracing**
+#### RabbitMQ tracing
 ```bash
 # Enable firehose tracer
 rabbitmqctl trace_on
@@ -3161,7 +3161,7 @@ rabbitmqctl set_permissions -p / tracer ".*" ".*" ".*"
 # Messages will be published to amq.rabbitmq.trace
 ```
 
-#### **Java debug logging**
+#### Java debug logging
 ```xml
 <!-- logback.xml -->
 <logger name="com.rabbitmq" level="DEBUG"/>
@@ -3169,7 +3169,7 @@ rabbitmqctl set_permissions -p / tracer ".*" ".*" ".*"
 <logger name="org.springframework.rabbit" level="DEBUG"/>
 ```
 
-#### **Connection monitoring**
+#### Connection monitoring
 ```java
 @Configuration
 public class ConnectionMonitorConfig {
@@ -3207,7 +3207,7 @@ public class ConnectionMonitorConfig {
 
 ### Архитектурные рекомендации
 
-#### 1. **Message Design**
+#### 1. Message Design
 ```java
 // Good message structure
 public class OrderEvent {
@@ -3241,7 +3241,7 @@ public class OrderSummaryEvent {
 }
 ```
 
-#### 2. **Error Handling Strategy**
+#### 2. Error Handling Strategy
 ```java
 @Service
 public class ErrorHandlingConsumer {
@@ -3283,7 +3283,7 @@ public class ErrorHandlingConsumer {
 }
 ```
 
-#### 3. **Idempotency**
+#### 3. Idempotency
 ```java
 @Service
 public class IdempotentConsumer {
@@ -3330,7 +3330,7 @@ public class IdempotentConsumer {
 
 ### Производительность
 
-#### 4. **Connection Management**
+#### 4. Connection Management
 ```java
 @Configuration
 public class ConnectionManagementConfig {
@@ -3362,7 +3362,7 @@ public class ConnectionManagementConfig {
 }
 ```
 
-#### 5. **Message Routing Patterns**
+#### 5. Message Routing Patterns
 ```java
 // Content-based routing
 @Configuration
@@ -3419,7 +3419,7 @@ public class RecipientListRouter {
 
 ### Мониторинг
 
-#### 6. **Comprehensive Monitoring**
+#### 6. Comprehensive Monitoring
 ```java
 @Configuration
 public class MonitoringConfig {
@@ -3498,7 +3498,7 @@ public class ConsumerMetricsService {
 }
 ```
 
-#### 7. **Alerting Rules**
+#### 7. Alerting Rules
 ```yaml
 # Prometheus alerting rules for RabbitMQ
 groups:
@@ -3589,7 +3589,7 @@ public class SecurityConfig {
 
 ### Масштабирование
 
-#### 9. **Horizontal Scaling**
+#### 9. Horizontal Scaling
 ```java
 @Configuration
 public class ScalingConfig {
@@ -3633,7 +3633,7 @@ public class ScalingConfig {
 }
 ```
 
-#### 10. **Cluster Management**
+#### 10. Cluster Management
 ```java
 @Service
 public class ClusterManagementService {
@@ -3688,7 +3688,7 @@ public class ClusterManagementService {
 
 **RabbitMQ** — это мощный и надежный **message broker**, который отлично подходит для построения распределенных систем. Его поддержка **AMQP**, гибкая система **routing**'а и надежность делают его идеальным выбором для **enterprise** приложений.
 
-### Ключевые преимущества **RabbitMQ**:
+### Ключевые преимущества RabbitMQ:
 
 1. **Гарантированная доставка** — различные уровни гарантий доставки
 2. **Гибкий routing** — 4 типа **exchanges** для различных сценариев
@@ -3700,35 +3700,35 @@ public class ClusterManagementService {
 
 ### Архитектурные паттерны:
 
-#### **Work Queues** (**Task Distribution**)
+#### Work Queues (Task Distribution)
 ```text
 Producer → Queue ← Worker 1
                 ← Worker 2
                 ← Worker 3
 ```
 
-#### **Publish-Subscribe**
+#### Publish-Subscribe
 ```text
 Producer → Exchange → Queue 1 → Consumer 1
                 → Queue 2 → Consumer 2
                 → Queue 3 → Consumer 3
 ```
 
-#### **Routing**
+#### Routing
 ```text
 Producer → Exchange → Queue (routing key match)
                 → Queue (routing key match)
                 → Queue (no match - discarded)
 ```
 
-#### **RPC** (**Request-Response**)
+#### RPC (Request-Response)
 ```text
 Client → Callback Queue → Server
    ↑                        ↓
    └──── Response ←─────────┘
 ```
 
-### Когда выбирать **RabbitMQ**:
+### Когда выбирать RabbitMQ:
 
 ✅ **Требуется гарантированная доставка** — **at-least-once** или **exactly-once**
 ✅ **Complex routing logic** — **topic**, **headers exchanges**
@@ -3740,7 +3740,7 @@ Client → Callback Queue → Server
 
 ### Когда НЕ выбирать:
 
-❌ **High-throughput streaming** — используйте **Kafka** (**>100K msg/sec**)
+❌ **High-throughput streaming** — используйте **Kafka** (>100K msg/sec)
 ❌ **Big data processing** — **Kafka** лучше для больших объемов
 ❌ **Simple `fire-and`-forget** — **Kafka** или **Redis pub**/**sub** проще
 ❌ **Real-time analytics** — **Kafka Streams** или **Apache Flink**
@@ -3757,24 +3757,24 @@ Client → Callback Queue → Server
 7. **Тестируйте failover** — симулируйте сбои узлов
 8. **Документируйте топики** — **routing keys** и их назначение
 
-### Типы **Exchanges** по назначению:
+### Типы Exchanges по назначению:
 
-#### **Direct Exchange**:
-- **Точная маршрутизация** — `**user.registration**`, `**order.created**`
-- **Service-specific messages** — `**email-service**`, `**sms-service**`
-- **Command routing** — `**user.create**`, `**order.cancel**`
+#### Direct Exchange:
+- **Точная маршрутизация** — `user.registration`, `order.created`
+- **Service-specific messages** — `email-service`, `sms-service`
+- **Command routing** — `user.create`, `order.cancel`
 
-#### **Topic Exchange**:
-- **Иерархическая маршрутизация** — `**user.us.registration**`, `**order.eu.urgent**`
-- **Multi-level categorization** — `**event.`user.login`.success**`, `**event.`order.payment`.failed**`
-- **Geographic routing** — `**data.`us-east`.insert**`, `**data.`eu-west`.update**`
+#### Topic Exchange:
+- **Иерархическая маршрутизация** — `user.us.registration`, `order.eu.urgent`
+- **Multi-level categorization** — `**event.`user.login`.success`, `event.`order.payment`.failed**`
+- **Geographic routing** — `**data.`us-east`.insert`, `data.`eu-west`.update**`
 
-#### **Headers Exchange**:
+#### Headers Exchange:
 - **Complex conditions** — **region**=us **AND priority**=**high**
 - **Metadata-based routing** — **content-type**=**json**, **version**=2.0
 - **Custom logic** — **application-specific headers**
 
-#### **Fanout Exchange**:
+#### Fanout Exchange:
 - **Broadcast notifications** — все сервисы получают копию
 - **Cache invalidation** — очистка кешей во всех инстансах
 - **System events** — **server restart**, **configuration change**

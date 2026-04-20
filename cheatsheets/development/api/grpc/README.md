@@ -18,13 +18,13 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [grpc.md](grpc.md) — полное руководство: Protocol Buffers, виды сервисов, Spring Boot интеграция
+- [[grpc]] — полное руководство: Protocol Buffers, виды сервисов, Spring Boot интеграция
 
 ### Соседние разделы
-- [Родительский раздел: API](../README.md)
-- [REST API](../rest/README.md) — альтернатива для внешних/публичных API
-- [GraphQL](../graphql/README.md) — альтернатива для разнородных клиентов
-- [Messaging](../../messaging/README.md) — асинхронная альтернатива RPC
+- [[README|Родительский раздел: API]]
+- [[README|REST API]] — альтернатива для внешних/публичных API
+- [[README|GraphQL]] — альтернатива для разнородных клиентов
+- [[README|Messaging]] — асинхронная альтернатива RPC
 - [Spring Boot](../../../frameworks/java-frameworks/spring/)
 
 ### Внешние ресурсы
@@ -74,12 +74,12 @@ updated: "2026-04-17"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Protocol Buffers: сообщения, сервисы, кодогенерация | [grpc.md](grpc.md#protocol-buffers) |
-| 4 вида RPC (unary, server-stream, client-stream, bidi) | [grpc.md](grpc.md#типы-сервисов) |
-| Spring Boot интеграция | [grpc.md](grpc.md) |
-| Interceptors, metadata, deadline, retries | [grpc.md](grpc.md) |
-| TLS, auth, mTLS | [grpc.md](grpc.md) |
-| gRPC-Web для браузера | [grpc.md](grpc.md) |
+| Protocol Buffers: сообщения, сервисы, кодогенерация | [[grpc#protocol-buffers]] |
+| 4 вида RPC (unary, server-stream, client-stream, bidi) | [[grpc#типы-сервисов]] |
+| Spring Boot интеграция | [[grpc]] |
+| Interceptors, metadata, deadline, retries | [[grpc]] |
+| TLS, auth, mTLS | [[grpc]] |
+| gRPC-Web для браузера | [[grpc]] |
 
 ## Подводные камни
 
@@ -96,7 +96,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- REST для внешних API — [../rest/README.md](../rest/README.md)
-- GraphQL для разнородных клиентов — [../graphql/README.md](../graphql/README.md)
-- Асинхронная интеграция через брокеры — [../../messaging/README.md](../../messaging/README.md)
-- Observability и мониторинг — [../../../monitoring/README.md](../../../monitoring/README.md)
+- REST для внешних API — [[README]]
+- GraphQL для разнородных клиентов — [[README]]
+- Асинхронная интеграция через брокеры — [[README]]
+- Observability и мониторинг — [[README]]

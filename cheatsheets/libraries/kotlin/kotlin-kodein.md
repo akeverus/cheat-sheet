@@ -57,14 +57,14 @@ updated: "2026-02-11"
   - [From Koin to Kodein](#from-koin-to-kodein)
   - [From Guice to Kodein](#from-guice-to-kodein)
 - [Экспериментальные возможности](#экспериментальные-возможности)
-  - [Kodein 8.0+ **Features** (**Future**)](#kodein-80-features-future)
+  - [Kodein 8.0+ **Features** (Future)](#kodein-80-features-future)
 - [См. также](#см-также)
 
 ## Основные возможности
 
-### **Basic Dependency Injection**
+### Basic Dependency Injection
 
-Базовый `DI`-контейнер **Kodein**: привязка типов (**bind**) и создание **singleton**/**provider**.
+Базовый `DI`-контейнер **Kodein**: привязка типов (bind) и создание **singleton**/**provider**.
 
 ```kotlin
 import org.kodein.di.*
@@ -103,7 +103,7 @@ val service: Service = kodein.direct.instance()
 // Возвращает новый экземпляр Service с инжектированным Repository
 ```
 
-### **Binding Types**
+### Binding Types
 ```kotlin
 val kodein = DI {
     // Singleton - один экземпляр на весь application
@@ -133,7 +133,7 @@ val kodein = DI {
 }
 ```
 
-### **Module Organization**
+### Module Organization
 ```kotlin
 // Разделение на модули
 val databaseModule = DI.Module("database") {
@@ -162,7 +162,7 @@ val kodein = DI {
 
 ## Продвинутые возможности
 
-### **Scopes**
+### Scopes
 ```kotlin
 import org.kodein.di.bindings.*
 
@@ -192,7 +192,7 @@ val prefs3 = kodein.direct.instance<UserPreferences>()
 assert(prefs1 !== prefs3) // Разные экземпляры для разных сессий
 ```
 
-### **Tagged Bindings**
+### Tagged Bindings
 ```kotlin
 // Теги для множественных реализаций одного интерфейса
 val kodein = DI {
@@ -222,7 +222,7 @@ object Test : DIAware {
 }
 ```
 
-### **Generics Support**
+### Generics Support
 ```kotlin
 // Работа с generic типами
 val kodein = DI {
@@ -246,7 +246,7 @@ val userMapper: Mapper<User, UserDto> = kodein.direct.instance()
 val userValidators: List<Validator<User>> = kodein.direct.instance()
 ```
 
-### **Multiple Bindings**
+### Multiple Bindings
 ```kotlin
 // Множественные реализации
 interface NotificationService {
@@ -267,7 +267,7 @@ val emailService: NotificationService = kodein.direct.instance(arg = 0)
 val smsService: NotificationService = kodein.direct.instance(arg = 1)
 ```
 
-### **Lateinit Bindings**
+### Lateinit Bindings
 ```kotlin
 // Отложенная инициализация
 val kodein = DI {
@@ -281,9 +281,9 @@ val kodein = DI {
 val config: Config = kodein.direct.instance() // Config загружается здесь
 ```
 
-## Интеграция с **Kotlin**
+## Интеграция с Kotlin
 
-### **Inline Functions** и **Reified Generics**
+### Inline Functions и Reified Generics
 ```kotlin
 // Type-safe instance retrieval
 inline fun <reified T : Any> DI.instance(): T = direct.instance()
@@ -298,7 +298,7 @@ val database: Database = kodein.instance(tag = "main")
 val controller: UserController = kodein.instance(arg = 123)
 ```
 
-### **DSL** для сложных конфигураций
+### DSL для сложных конфигураций
 ```kotlin
 // Комплексная конфигурация с DSL
 fun DI.Builder.configureApp() {
@@ -345,7 +345,7 @@ val kodein = DI {
 }
 ```
 
-### **Operator Overloading**
+### Operator Overloading
 ```kotlin
 // Кастомные операторы для DI
 operator fun <T : Any> DI.get(type: KClass<T>): T = direct.instance(type)
@@ -358,9 +358,9 @@ val service: UserService = kodein[UserService::class]
 val database: Database = kodein[Database::class to "main"]
 ```
 
-## Интеграция с **Android**
+## Интеграция с Android
 
-### **Application Level** `DI`
+### Application Level `DI`
 ```kotlin
 class MyApplication : Application(), DIAware {
 
@@ -391,7 +391,7 @@ class LoginActivity : AppCompatActivity(), DIAware {
 }
 ```
 
-### **ViewModel Integration**
+### ViewModel Integration
 ```kotlin
 // Kodein ViewModel
 class UserViewModel(
@@ -433,9 +433,9 @@ val kodein = DI {
 }
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
-### **Configuration Classes**
+### Configuration Classes
 ```kotlin
 @Configuration
 class KodeinConfig {
@@ -486,7 +486,7 @@ class UserRestController(
 }
 ```
 
-### **Aspect-Oriented Programming**
+### Aspect-Oriented Programming
 ```kotlin
 // AOP с Kodein
 class TransactionalAspect {
@@ -530,7 +530,7 @@ class UserServiceImpl(
 
 ## Тестирование
 
-### **Unit Testing** с **Kodein**
+### Unit Testing с Kodein
 ```kotlin
 class UserServiceTest {
 
@@ -591,7 +591,7 @@ class UserServiceTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```kotlin
 @SpringBootTest
 class KodeinIntegrationTest {
@@ -629,7 +629,7 @@ class KodeinIntegrationTest {
 }
 ```
 
-### **Property Testing**
+### Property Testing
 ```kotlin
 class KodeinPropertyTest {
 
@@ -661,7 +661,7 @@ class KodeinPropertyTest {
 
 ## Лучшие практики
 
-### **Module Organization**
+### Module Organization
 ```kotlin
 // Рекомендуемая структура модулей
 object DIModules {
@@ -707,7 +707,7 @@ val kodein = DI {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 ```kotlin
 // Безопасное разрешение зависимостей
 sealed class DIResult<out T> {
@@ -739,7 +739,7 @@ when (result) {
 }
 ```
 
-### **Performance Optimization**
+### Performance Optimization
 ```kotlin
 // Ленивая инициализация для тяжелых зависимостей
 val kodein = DI {
@@ -773,7 +773,7 @@ val kodein = DI {
 
 ## Отладка и устранение неполадок
 
-### **Debugging** `DI` **Issues**
+### Debugging `DI` Issues
 ```kotlin
 // Логирование создания зависимостей
 object DILogger : KontextFactoryBuilder.Listener {
@@ -808,7 +808,7 @@ fun DI.validateBindings() {
 }
 ```
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 object KodeinTroubleshooting {
 
@@ -859,7 +859,7 @@ object KodeinTroubleshooting {
 
 ## Руководство по миграции
 
-### **From Dagger** to **Kodein**
+### From Dagger to Kodein
 ```kotlin
 // Dagger
 @Component
@@ -891,7 +891,7 @@ val kodein = DI {
 // Kodein: kodein.direct.instance<UserService>()
 ```
 
-### **From Koin** to **Kodein**
+### From Koin to Kodein
 ```kotlin
 // Koin
 val appModule = module {
@@ -907,7 +907,7 @@ val kodein = DI {
 }
 ```
 
-### **From Guice** to **Kodein**
+### From Guice to Kodein
 ```kotlin
 // Guice
 class AppModule : AbstractModule() {
@@ -926,7 +926,7 @@ val kodein = DI {
 
 ## Экспериментальные возможности
 
-### **Kodein** 8.0+ **Features** (**Future**)
+### Kodein 8.0+ Features (Future)
 ```kotlin
 // Предполагаемые возможности Kodein 8.0+
 

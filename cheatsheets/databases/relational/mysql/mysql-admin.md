@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MySQL**: Администрирование и обслуживание — Полное руководство по управлению **MySQL**
+# MySQL: Администрирование и обслуживание — Полное руководство по управлению MySQL
 
 Комплексное руководство по администрированию **MySQL**: установка, конфигурация, обслуживание, резервное копирование и восстановление.
 
@@ -59,7 +59,7 @@ updated: "2026-02-11"
 - [Запуск MySQL в Docker](#запуск-mysql-в-docker)
 - [Подключение к контейнеру](#подключение-к-контейнеру)
 - [Docker Compose](#docker-compose)
-    - [**macOS** (**Homebrew**)](#macos-homebrew)
+    - [**macOS** (Homebrew)](#macos-homebrew)
 - [Установка через Homebrew](#установка-через-homebrew)
   - [Первоначальная конфигурация](#первоначальная-конфигурация)
     - [Основной конфигурационный файл](#основной-конфигурационный-файл)
@@ -78,11 +78,11 @@ updated: "2026-02-11"
 - [Проверка логов](#проверка-логов)
 - [Конфигурация сервера](#конфигурация-сервера)
   - [Оптимизация для разных нагрузок](#оптимизация-для-разных-нагрузок)
-    - [**OLTP** (**транзакционные системы**)](#oltp-транзакционные-системы)
+    - [**OLTP** (транзакционные системы)](#oltp-транзакционные-системы)
 - [Высокая производительность транзакций](#высокая-производительность-транзакций)
 - [Подключения](#подключения)
 - [Кэширование](#кэширование)
-    - [**OLAP** (**аналитические системы**)](#olap-аналитические-системы)
+    - [**OLAP** (аналитические системы)](#olap-аналитические-системы)
 - [Оптимизация для чтения](#оптимизация-для-чтения)
 - [Временные таблицы](#временные-таблицы)
 - [Сортировка](#сортировка)
@@ -99,15 +99,15 @@ updated: "2026-02-11"
 - [Управление пользователями и правами](#управление-пользователями-и-правами)
   - [Создание пользователей](#создание-пользователей)
     - [Локальные пользователи](#локальные-пользователи)
-    - [Современная аутентификация (**MySQL 8.0+**)](#современная-аутентификация-mysql-80)
+    - [Современная аутентификация (MySQL 8.0+)](#современная-аутентификация-mysql-80)
   - [Управление правами](#управление-правами)
     - [Гранты и привилегии](#гранты-и-привилегии)
-    - [Ролевая модель (**MySQL 8.0+**)](#ролевая-модель-mysql-80)
+    - [Ролевая модель (MySQL 8.0+)](#ролевая-модель-mysql-80)
   - [Аудит пользователей](#аудит-пользователей)
     - [Мониторинг активности](#мониторинг-активности)
     - [Управление паролями](#управление-паролями)
 - [Резервное копирование](#резервное-копирование)
-  - [Логические бэкапы (**mysqldump**)](#логические-бэкапы-mysqldump)
+  - [Логические бэкапы (mysqldump)](#логические-бэкапы-mysqldump)
     - [Полная резервная копия](#полная-резервная-копия)
 - [Резервная копия всех баз данных](#резервная-копия-всех-баз-данных)
 - [Резервная копия конкретной базы](#резервная-копия-конкретной-базы)
@@ -117,7 +117,7 @@ updated: "2026-02-11"
 - [Бэкап binary logs](#бэкап-binary-logs)
 - [Копирование binary logs](#копирование-binary-logs)
 - [Point-in-time recovery](#point-in-time-recovery)
-  - [Физические бэкапы (**Percona XtraBackup**)](#физические-бэкапы-percona-xtrabackup)
+  - [Физические бэкапы (Percona XtraBackup)](#физические-бэкапы-percona-xtrabackup)
     - [Горячий бэкап](#горячий-бэкап)
 - [Установка XtraBackup](#установка-xtrabackup)
 - [Создание полного бэкапа](#создание-полного-бэкапа)
@@ -202,7 +202,7 @@ updated: "2026-02-11"
     - [**General Query Log**](#general-query-log)
 - [Включение общего лога запросов](#включение-общего-лога-запросов)
 - [Или логирование в таблицу](#или-логирование-в-таблицу)
-    - [**Audit Plugin** (**MySQL Enterprise**)](#audit-plugin-mysql-enterprise)
+    - [**Audit Plugin** (MySQL Enterprise)](#audit-plugin-mysql-enterprise)
   - [Управление уязвимостями](#управление-уязвимостями)
     - [Регулярные обновления](#регулярные-обновления)
 - [Проверка версии](#проверка-версии)
@@ -225,7 +225,7 @@ updated: "2026-02-11"
 - [Настройка правил маршрутизации](#настройка-правил-маршрутизации)
 - [Загрузка конфигурации](#загрузка-конфигурации)
   - [Автоматическое **failover**](#автоматическое-failover)
-    - [**MHA** (**Master High Availability**)](#mha-master-high-availability)
+    - [**MHA** (Master High Availability)](#mha-master-high-availability)
 - [Установка MHA](#установка-mha)
 - [Конфигурация](#конфигурация)
 - [/etc/mha/app.conf](#etcmhaappconf)
@@ -296,7 +296,7 @@ updated: "2026-02-11"
 
 ### Установка на разных ОС
 
-#### **Ubuntu**/**Debian**
+#### Ubuntu/Debian
 
 Команды установки и первоначальной настройки **MySQL** на **Ubuntu**/**Debian**.
 
@@ -320,7 +320,7 @@ sudo mysql_secure_installation
 sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'StrongPassword123!';"
 ```
 
-#### **CentOS**/**RHEL**
+#### CentOS/RHEL
 ```bash
 # Установка из репозитория
 sudo yum install mysql-server
@@ -339,7 +339,7 @@ sudo grep 'temporary password' /var/log/mysqld.log
 sudo mysql_secure_installation
 ```
 
-#### **Docker**
+#### Docker
 ```bash
 # Запуск MySQL в Docker
 docker run --name mysql-container \
@@ -373,7 +373,7 @@ volumes:
   mysql_data:
 ```
 
-#### **macOS** (**Homebrew**)
+#### macOS (Homebrew)
 ```bash
 # Установка через Homebrew
 brew install mysql
@@ -448,7 +448,7 @@ tail -f /var/log/mysql/error.log
 
 ### Оптимизация для разных нагрузок
 
-#### **OLTP** (**транзакционные системы**)
+#### OLTP (транзакционные системы)
 ```ini
 [mysqld]
 # Высокая производительность транзакций
@@ -467,7 +467,7 @@ query_cache_type = ON
 table_open_cache = 4096
 ```
 
-#### **OLAP** (**аналитические системы**)
+#### OLAP (аналитические системы)
 ```ini
 [mysqld]
 # Оптимизация для чтения
@@ -580,7 +580,7 @@ WITH MAX_QUERIES_PER_HOUR 100
      MAX_CONNECTIONS_PER_HOUR 10;
 ```
 
-#### Современная аутентификация (**MySQL 8.0+**)
+#### Современная аутентификация (MySQL 8.0+)
 ```sql
 -- Использование caching_sha2_password (рекомендуется)
 CREATE USER 'modern_user'@'localhost'
@@ -617,7 +617,7 @@ GRANT EXECUTE ON PROCEDURE myapp.calculate_stats TO 'app_user'@'localhost';
 GRANT SELECT ON myapp.user_summary TO 'analyst'@'localhost';
 ```
 
-#### Ролевая модель (**MySQL 8.0+**)
+#### Ролевая модель (MySQL 8.0+)
 ```sql
 -- Создание ролей
 CREATE ROLE 'app_developer';
@@ -702,7 +702,7 @@ ALTER USER 'suspicious_user'@'localhost' ACCOUNT UNLOCK;
 
 ## Резервное копирование
 
-### Логические бэкапы (**mysqldump**)
+### Логические бэкапы (mysqldump)
 
 #### Полная резервная копия
 ```bash
@@ -744,7 +744,7 @@ mysqlbinlog --start-datetime="2024-01-01 00:00:00" \
   mysql-bin.000001 > recovery.sql
 ```
 
-### Физические бэкапы (**Percona XtraBackup**)
+### Физические бэкапы (Percona XtraBackup)
 
 #### Горячий бэкап
 ```bash
@@ -774,7 +774,7 @@ xtrabackup --prepare \
   --incremental-dir=/backup/inc_backup
 ```
 
-#### Восстановление из **XtraBackup**
+#### Восстановление из XtraBackup
 ```bash
 # Остановка MySQL
 sudo systemctl stop mysql
@@ -830,7 +830,7 @@ find $BACKUP_DIR -name "binary_logs_*" -mtime +$RETENTION_DAYS -delete
 echo "Backup completed: $BACKUP_DIR/full_backup_$DATE.sql.gz"
 ```
 
-#### **Cron** задание
+#### Cron задание
 ```bash
 # Ежедневный бэкап в 2:00
 0 2 * * * /path/to/mysql_backup.sh
@@ -841,7 +841,7 @@ echo "Backup completed: $BACKUP_DIR/full_backup_$DATE.sql.gz"
 
 ## Восстановление данных
 
-### Восстановление из **mysqldump**
+### Восстановление из mysqldump
 
 #### Полное восстановление
 ```bash
@@ -859,7 +859,7 @@ mysql -e "SHOW DATABASES;"
 mysql -e "USE myapp; SHOW TABLES;"
 ```
 
-#### **Point-in-Time Recovery**
+#### Point-in-Time Recovery
 ```bash
 # Восстановление полного бэкапа
 mysql < full_backup.sql
@@ -875,7 +875,7 @@ mysqlbinlog --start-position=12345 \
   mysql-bin.000001 | mysql
 ```
 
-### Восстановление из **XtraBackup**
+### Восстановление из XtraBackup
 
 #### Быстрое восстановление
 ```bash
@@ -954,7 +954,7 @@ DROP DATABASE test_restore;
 
 ### Регулярное обслуживание
 
-#### **ANALYZE TABLE**
+#### ANALYZE TABLE
 ```sql
 -- Анализ таблиц для обновления статистики
 ANALYZE TABLE users, orders, products;
@@ -978,7 +978,7 @@ FROM information_schema.tables
 WHERE table_schema = 'myapp';
 ```
 
-#### **OPTIMIZE TABLE**
+#### OPTIMIZE TABLE
 ```sql
 -- Оптимизация таблиц (перестройка и дефрагментация)
 OPTIMIZE TABLE users, orders, products;
@@ -1000,7 +1000,7 @@ WHERE table_schema = 'myapp'
   AND data_free > 1024 * 1024; -- > 1MB фрагментации
 ```
 
-#### **CHECK TABLE**
+#### CHECK TABLE
 ```sql
 -- Проверка целостности таблиц
 CHECK TABLE users, orders, products;
@@ -1017,7 +1017,7 @@ REPAIR TABLE myisam_table;
 
 ### Ротация логов
 
-#### **Binary logs**
+#### Binary logs
 ```sql
 -- Просмотр binary logs
 SHOW BINARY LOGS;
@@ -1120,7 +1120,7 @@ DELIMITER ;
 
 ## Мониторинг и диагностика
 
-### **Performance Schema**
+### Performance Schema
 
 #### Включение мониторинга
 ```sql
@@ -1195,7 +1195,7 @@ JOIN performance_schema.global_status s2 ON s2.VARIABLE_NAME = 'Uptime'
 WHERE s1.VARIABLE_NAME = 'Queries';
 ```
 
-#### **InnoDB** метрики
+#### InnoDB метрики
 ```sql
 -- Статус InnoDB
 SHOW ENGINE INNODB STATUS\G
@@ -1217,7 +1217,7 @@ SELECT
 FROM information_schema.innodb_buffer_pool_stats;
 ```
 
-### Графана + **Prometheus**
+### Графана + Prometheus
 
 #### Настройка экспортера
 ```bash
@@ -1256,7 +1256,7 @@ password=exporter_password
 EOF
 ```
 
-#### **Dashboard** в **Grafana**
+#### Dashboard в Grafana
 ```json
 {
   "title": "MySQL Overview",
@@ -1296,7 +1296,7 @@ EOF
 
 ### Защита сервера
 
-#### **Firewall** настройки
+#### Firewall настройки
 ```bash
 # Разрешить только локальные подключения
 sudo ufw allow from 127.0.0.1 to any port 3306
@@ -1311,7 +1311,7 @@ sudo ufw deny 3306
 sudo ufw status
 ```
 
-#### **SSL**/**TLS** шифрование
+#### SSL/TLS шифрование
 ```ini
 # my.cnf - SSL настройки
 [mysqld]
@@ -1339,7 +1339,7 @@ jdbc:mysql://localhost:3306/myapp?useSSL=true&requireSSL=true&verifyServerCertif
 
 ### Аудит и логирование
 
-#### **General Query Log**
+#### General Query Log
 ```ini
 [mysqld]
 # Включение общего лога запросов
@@ -1351,7 +1351,7 @@ general_log = 1
 general_log_file = mysql.general_log
 ```
 
-#### **Audit Plugin** (**MySQL Enterprise**)
+#### Audit Plugin (MySQL Enterprise)
 ```sql
 -- Установка audit plugin
 INSTALL PLUGIN audit_log SONAME 'audit_log.so';
@@ -1405,9 +1405,9 @@ require_secure_transport = ON
 
 ## Масштабирование и высокая доступность
 
-### **Read**/**Write Splitting**
+### Read/Write Splitting
 
-#### Настройка **ProxySQL**
+#### Настройка ProxySQL
 ```bash
 # Установка ProxySQL
 wget https://github.com/sysown/proxysql/releases/download/v2.4.4/proxysql_2.4.4-ubuntu20_amd64.deb
@@ -1440,9 +1440,9 @@ SAVE MYSQL SERVERS TO DISK;
 SAVE MYSQL QUERY RULES TO DISK;
 ```
 
-### Автоматическое **failover**
+### Автоматическое failover
 
-#### **MHA** (**Master `High` Availability**)
+#### MHA (Master `High` Availability)
 ```bash
 # Установка MHA
 sudo apt install mha4mysql-manager mha4mysql-node
@@ -1471,7 +1471,7 @@ candidate_master = 1
 masterha_manager --conf=/etc/mha/app.conf
 ```
 
-#### **Orchestrator**
+#### Orchestrator
 ```bash
 # Установка Orchestrator
 wget https://github.com/github/orchestrator/releases/download/v3.2.6/orchestrator_3.2.6_amd64.deb
@@ -1486,7 +1486,7 @@ sudo systemctl enable orchestrator
 
 ### Кластеризация
 
-#### **MySQL InnoDB Cluster**
+#### MySQL InnoDB Cluster
 ```bash
 # Установка MySQL Shell
 sudo apt install mysql-shell
@@ -1505,7 +1505,7 @@ cluster.status();
 
 ### Распространенные проблемы
 
-#### **MySQL** не запускается
+#### MySQL не запускается
 ```bash
 # Проверка статуса
 sudo systemctl status mysql
@@ -1591,7 +1591,7 @@ START SLAVE;
 
 ### Диагностические инструменты
 
-#### **Percona Toolkit**
+#### Percona Toolkit
 ```bash
 # Анализ индексов
 pt-duplicate-key-checker --host localhost --user root --password
@@ -1603,7 +1603,7 @@ pt-index-usage --host localhost slow.log
 pt-query-digest slow.log
 ```
 
-#### **MySQL Enterprise Monitor**
+#### MySQL Enterprise Monitor
 ```sql
 -- Автоматическая диагностика
 -- Предупреждения о проблемах
@@ -1679,7 +1679,7 @@ echo "$(date): Connections=$CONNECTIONS, BufferHitRate=$BUFFER_HIT_RATE%, SlowQu
 
 ### Инфраструктура как код
 
-#### **Docker Compose** для разработки
+#### Docker Compose для разработки
 ```yaml
 version: '3.8'
 services:
@@ -1709,7 +1709,7 @@ volumes:
   mysql_data:
 ```
 
-#### **Ansible** для **production**
+#### Ansible для production
 
 ### Проектирование и архитектура
 
@@ -1765,7 +1765,7 @@ volumes:
 - **Управление подключениями** и пулами
 - **Кэширование** для улучшения производительности
 
-#### 3. Безопасность и **compliance**
+#### 3. Безопасность и compliance
 - **Регулярные обновления** и патчи
 - **Аудит доступа** и активности
 - **Шифрование** чувствительных данных
@@ -1785,7 +1785,7 @@ volumes:
 - **Кэширование** на разных уровнях
 - **Архитектурные улучшения**
 
-#### 3. **Disaster Recovery**
+#### 3. Disaster Recovery
 - **Геораспределенные** реплики
 - **Автоматическое failover**
 - **Тестирование** сценариев катастроф
@@ -1813,7 +1813,7 @@ volumes:
 - **Оценка безопасности** и уязвимостей
 - **Проверка резервных копий**
 
-#### 2. Автоматизация и **DevOps**
+#### 2. Автоматизация и DevOps
 - **Infrastructure as Code** для воспроизводимости
 - **CI/CD** для баз данных
 - **Мониторинг as Code**
@@ -1834,8 +1834,8 @@ volumes:
 Администрирование **MySQL** — это комплексная дисциплина, требующая глубокого понимания базы данных, операционной системы, сетевых технологий и принципов высокой доступности. Правильное администрирование обеспечивает надежность, производительность и безопасность критически важных систем. 🛠️
 
 **Следующие темы:**
-- [mysql-performance.md](mysql-performance.md) — мониторинг и тюнинг
-- [mysql-replication.md](mysql-replication.md) — высокая доступность
+- [[mysql-performance]] — мониторинг и тюнинг
+- [[mysql-replication]] — высокая доступность
 - Резервное копирование — см. документацию **MySQL**
 
 Профессиональное администрирование — это сочетание технических навыков, системного мышления и постоянного обучения! 🎯

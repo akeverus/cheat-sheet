@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MySQL**: Основы — Полное руководство по реляционной базе данных
+# MySQL: Основы — Полное руководство по реляционной базе данных
 
 Комплексное руководство по **MySQL**: архитектура, установка, настройка, основные понятия и работа с данными.
 
@@ -38,16 +38,16 @@ updated: "2026-02-11"
     - [Гибкость и расширяемость](#гибкость-и-расширяемость)
     - [Простота использования](#простота-использования)
   - [Версии **MySQL**](#версии-mysql)
-    - [**MySQL** 8.0 (**рекомендуемая версия**)](#mysql-80-рекомендуемая-версия)
-    - [**MySQL** 5.7 (**LTS**)](#mysql-57-lts)
-    - [**MariaDB** (**форк MySQL**)](#mariadb-форк-mysql)
+    - [**MySQL** 8.0 (рекомендуемая версия)](#mysql-80-рекомендуемая-версия)
+    - [**MySQL** 5.7 (LTS)](#mysql-57-lts)
+    - [**MariaDB** (форк MySQL)](#mariadb-форк-mysql)
   - [Сравнение с другими СУБД](#сравнение-с-другими-субд)
 - [Архитектура **MySQL**](#архитектура-mysql)
   - [Компоненты **MySQL**](#компоненты-mysql)
     - [**MySQL Server**](#mysql-server)
     - [Клиентские инструменты](#клиентские-инструменты)
-  - [Движки хранения (**Storage Engines**)](#движки-хранения-storage-engines)
-    - [**InnoDB** (**по умолчанию**)](#innodb-по-умолчанию)
+  - [Движки хранения (Storage Engines)](#движки-хранения-storage-engines)
+    - [**InnoDB** (по умолчанию)](#innodb-по-умолчанию)
     - [**MyISAM**](#myisam)
     - [Другие движки](#другие-движки)
   - [Архитектура подключений](#архитектура-подключений)
@@ -140,10 +140,10 @@ updated: "2026-02-11"
     - [Оптимизация индексов в **Java**](#оптимизация-индексов-в-java)
 - [Транзакции](#транзакции)
   - [**ACID** свойства](#acid-свойства)
-    - [**Atomicity** (**Атомарность**)](#atomicity-атомарность)
-    - [**Consistency** (**Согласованность**)](#consistency-согласованность)
-    - [**Isolation** (**Изоляция**)](#isolation-изоляция)
-    - [**Durability** (**Долговечность**)](#durability-долговечность)
+    - [**Atomicity** (Атомарность)](#atomicity-атомарность)
+    - [**Consistency** (Согласованность)](#consistency-согласованность)
+    - [**Isolation** (Изоляция)](#isolation-изоляция)
+    - [**Durability** (Долговечность)](#durability-долговечность)
   - [Управление транзакциями в **MySQL**](#управление-транзакциями-в-mysql)
     - [Базовые транзакции](#базовые-транзакции)
     - [**SAVEPOINT**](#savepoint)
@@ -171,7 +171,7 @@ updated: "2026-02-11"
   - [Создание представлений](#создание-представлений)
     - [Базовое представление](#базовое-представление)
     - [Представление с **JOIN**](#представление-с-join)
-    - [Материализованное представление (**MySQL 8.0+**)](#материализованное-представление-mysql-80)
+    - [Материализованное представление (MySQL 8.0+)](#материализованное-представление-mysql-80)
   - [Управление представлениями](#управление-представлениями)
   - [Представления в **Java**](#представления-в-java)
   - [Пользователи и привилегии](#пользователи-и-привилегии)
@@ -195,11 +195,11 @@ updated: "2026-02-11"
   - [Рекомендации по использованию:](#рекомендации-по-использованию)
 - [Решение проблем](#решение-проблем)
 
-## Введение в **MySQL**
+## Введение в MySQL
 
-**MySQL** — это самая популярная в мире система управления реляционными базами данных с открытым исходным кодом. Разработанная компанией **MySQL** `AB` (**позже приобретенной Oracle**), **MySQL** является основой для множества веб-приложений, от небольших сайтов до крупных корпоративных систем.
+**MySQL** — это самая популярная в мире система управления реляционными базами данных с открытым исходным кодом. Разработанная компанией **MySQL** `AB` (позже приобретенной Oracle), **MySQL** является основой для множества веб-приложений, от небольших сайтов до крупных корпоративных систем.
 
-### Ключевые особенности **MySQL**
+### Ключевые особенности MySQL
 
 #### Надежность и производительность
 - **ACID транзакции** — гарантия целостности данных
@@ -219,9 +219,9 @@ updated: "2026-02-11"
 - **Отличная документация** — подробные руководства
 - **Большое сообщество** — поддержка и ресурсы
 
-### Версии **MySQL**
+### Версии MySQL
 
-#### **MySQL** `8.0` (**рекомендуемая версия**)
+#### MySQL `8.0` (рекомендуемая версия)
 - **Window Functions** — оконные функции
 - **Common `Table` Expressions** — рекурсивные запросы
 - **JSON** — нативная поддержка **JSON**
@@ -229,11 +229,11 @@ updated: "2026-02-11"
 - **Roles** — ролевая модель безопасности
 - **Performance Schema** — улучшенный мониторинг
 
-#### **MySQL** `5.7` (**LTS**)
+#### MySQL `5.7` (LTS)
 - Стабильная версия для **production**
 - Полная поддержка до `2023` года
 
-#### **MariaDB** (**форк MySQL**)
+#### MariaDB (форк MySQL)
 - Полная совместимость с **MySQL**
 - Дополнительные возможности
 - Более активная разработка
@@ -248,11 +248,11 @@ updated: "2026-02-11"
 | **Простота** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
 | **Сообщество** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
 
-## Архитектура **MySQL**
+## Архитектура MySQL
 
-### Компоненты **MySQL**
+### Компоненты MySQL
 
-#### **MySQL Server**
+#### MySQL Server
 **Основной процесс, включающий:**
 - **SQL Parser** — разбор **SQL** запросов
 - **Query Optimizer** — оптимизация запросов
@@ -266,9 +266,9 @@ updated: "2026-02-11"
 - **phpMyAdmin** — веб-интерфейс
 - **MySQL `Connector`/J** — **JDBC** драйвер
 
-### Движки хранения (**Storage Engines**)
+### Движки хранения (Storage Engines)
 
-#### **InnoDB** (**по умолчанию**)
+#### InnoDB (по умолчанию)
 
 Пример создания таблицы с движком **InnoDB**: первичный ключ с автоинкрементом, поля имени и **email**, временная метка создания.
 
@@ -290,7 +290,7 @@ CREATE TABLE users (
 - **Crash recovery** — восстановление после сбоев
 - **Full-text search** — полнотекстовый поиск
 
-#### **MyISAM**
+#### MyISAM
 ```sql
 -- Создание таблицы с MyISAM
 CREATE TABLE logs (
@@ -315,7 +315,7 @@ CREATE TABLE logs (
 
 ### Архитектура подключений
 
-#### **Connection Pool**
+#### Connection Pool
 ```java
 // Конфигурация источника данных MySQL (HikariCP)
 @Configuration
@@ -340,7 +340,7 @@ public class DataSourceConfig {
 }
 ```
 
-#### **Thread Pool**
+#### Thread Pool
 **MySQL** использует многопоточную архитектуру:**
 - **Main thread** — управление сервером
 - **Connection threads** — обработка клиентских подключений
@@ -351,7 +351,7 @@ public class DataSourceConfig {
 
 ### Установка на разных ОС
 
-#### **Ubuntu**/**Debian**
+#### Ubuntu/Debian
 ```bash
 # Обновление пакетов
 sudo apt update
@@ -367,7 +367,7 @@ sudo systemctl enable mysql
 sudo mysql_secure_installation
 ```
 
-#### **CentOS**/**RHEL**
+#### CentOS/RHEL
 ```bash
 # Установка из репозитория
 sudo yum install mysql-server
@@ -380,7 +380,7 @@ sudo systemctl enable mysqld
 sudo mysql_secure_installation
 ```
 
-#### **Docker**
+#### Docker
 ```bash
 # Запуск MySQL в Docker
 docker run --name mysql-container \
@@ -394,7 +394,7 @@ docker run --name mysql-container \
 docker exec -it mysql-container mysql -u root -p
 ```
 
-### Конфигурация **MySQL**
+### Конфигурация MySQL
 
 #### Основной конфигурационный файл
 ```ini
@@ -429,7 +429,7 @@ skip-name-resolve
 
 #### Оптимизация для разных нагрузок
 
-**Для `OLTP` (**транзакционные системы**):**
+**Для `OLTP` (транзакционные системы):**
 ```ini
 [mysqld]
 # InnoDB оптимизация
@@ -459,9 +459,9 @@ query_cache_size = 256M
 query_cache_type = ON
 ```
 
-## Подключение к **MySQL**
+## Подключение к MySQL
 
-### **JDBC** подключение
+### JDBC подключение
 ```java
 // Подключение к MySQL через JDBC и проверка
 @Service
@@ -501,7 +501,7 @@ public class MySQLConnectionService {
 }
 ```
 
-### **Spring Data JPA**
+### Spring Data JPA
 ```java
 // Включение JPA репозиториев и настройка EntityManager
 @Configuration
@@ -541,7 +541,7 @@ public class JpaConfig {
 }
 ```
 
-### **Spring JDBC Template**
+### Spring JDBC Template
 ```java
 // Репозиторий с JdbcTemplate: запросы и маппинг на объекты
 @Repository
@@ -635,7 +635,7 @@ CREATE TABLE orders (
 
 ### Первичные ключи
 
-#### **AUTO_INCREMENT**
+#### AUTO_INCREMENT
 ```sql
 -- Первичный ключ с автоинкрементом
 CREATE TABLE products (
@@ -653,7 +653,7 @@ INSERT INTO products (name, price) VALUES
 -- Результат: id будут 1, 2, 3
 ```
 
-#### **Composite Primary Key**
+#### Composite Primary Key
 ```sql
 -- Составной первичный ключ
 CREATE TABLE order_items (
@@ -733,7 +733,7 @@ CREATE TABLE numeric_demo (
 );
 ```
 
-#### Работа с числами в **Java**
+#### Работа с числами в Java
 ```java
 // Сервис для работы с числовыми типами MySQL (BigDecimal, целые)
 @Service
@@ -780,7 +780,7 @@ public class NumericDataService {
 
 ### Строковые типы
 
-#### **CHAR** vs **VARCHAR**
+#### CHAR vs VARCHAR
 ```sql
 -- Сравнение строковых типов
 CREATE TABLE string_demo (
@@ -875,7 +875,7 @@ CREATE TABLE temporal_demo (
 );
 ```
 
-#### Работа с датами в **Java**
+#### Работа с датами в Java
 ```java
 @Service
 public class TemporalDataService {
@@ -947,9 +947,9 @@ public class TemporalDataService {
 }
 ```
 
-### **JSON** тип
+### JSON тип
 
-#### Работа с **JSON** в **MySQL** 8.0+
+#### Работа с JSON в MySQL 8.0+
 ```sql
 -- Таблица с JSON полем
 CREATE TABLE user_profiles (
@@ -1005,7 +1005,7 @@ SET profile_data = JSON_SET(
 WHERE user_id = 1;
 ```
 
-#### Работа с **JSON** в **Java**
+#### Работа с JSON в Java
 ```java
 @Service
 public class JsonDataService {
@@ -1116,7 +1116,7 @@ public class JsonConverter implements AttributeConverter<UserProfile, String> {
 }
 ```
 
-## **DDL** операции
+## DDL операции
 
 ### Создание таблиц
 
@@ -1140,7 +1140,7 @@ CREATE TABLE employees (
 );
 ```
 
-#### Создание таблицы в **Java**
+#### Создание таблицы в Java
 ```java
 @Service
 public class TableManagementService {
@@ -1192,7 +1192,7 @@ public class TableManagementService {
 
 ### Изменение таблиц
 
-#### **ALTER TABLE** операции
+#### ALTER TABLE операции
 ```sql
 -- Добавление столбца
 ALTER TABLE employees ADD COLUMN phone VARCHAR(20);
@@ -1221,7 +1221,7 @@ ALTER TABLE employees ADD CONSTRAINT chk_salary_positive
 ALTER TABLE employees ENGINE=MyISAM;
 ```
 
-#### **ALTER** в **Java**
+#### ALTER в Java
 ```java
 @Service
 public class TableAlterationService {
@@ -1267,7 +1267,7 @@ public class TableAlterationService {
 
 ### Удаление таблиц
 
-#### **DROP TABLE** операции
+#### DROP TABLE операции
 ```sql
 -- Удаление таблицы
 DROP TABLE temp_data;
@@ -1282,7 +1282,7 @@ DROP TABLE departments CASCADE;
 TRUNCATE TABLE temp_data;
 ```
 
-#### Управление таблицами в **Java**
+#### Управление таблицами в Java
 ```java
 @Service
 public class TableDropService {
@@ -1329,9 +1329,9 @@ public class TableDropService {
 }
 ```
 
-## **DML** операции
+## DML операции
 
-### **INSERT** операции
+### INSERT операции
 
 #### Базовые вставки
 ```sql
@@ -1352,7 +1352,7 @@ FROM employees
 WHERE hire_date >= '2024-01-01';
 ```
 
-#### Продвинутые **INSERT**
+#### Продвинутые INSERT
 ```sql
 -- INSERT с ON DUPLICATE KEY UPDATE
 INSERT INTO employees (id, first_name, last_name, email, updated_at) VALUES
@@ -1371,7 +1371,7 @@ INSERT INTO employees (first_name, last_name) VALUES ('Anonymous', 'User');
 -- Остальные поля получат значения по умолчанию
 ```
 
-#### **INSERT** в **Java**
+#### INSERT в Java
 ```java
 @Repository
 public class EmployeeRepository {
@@ -1468,7 +1468,7 @@ public class EmployeeRepository {
 }
 ```
 
-### **UPDATE** операции
+### UPDATE операции
 
 #### Базовые обновления
 ```sql
@@ -1494,7 +1494,7 @@ SET e.salary = e.salary * 1.03
 WHERE d.budget > 1000000;
 ```
 
-#### Продвинутые **UPDATE**
+#### Продвинутые UPDATE
 ```sql
 -- UPDATE с LIMIT
 UPDATE employees SET status = 'inactive'
@@ -1523,7 +1523,7 @@ UPDATE user_profiles SET
 WHERE user_id = 123;
 ```
 
-#### **UPDATE** в **Java**
+#### UPDATE в Java
 ```java
 @Service
 public class EmployeeUpdateService {
@@ -1594,7 +1594,7 @@ public class EmployeeUpdateService {
 }
 ```
 
-### **DELETE** операции
+### DELETE операции
 
 #### Базовые удаления
 ```sql
@@ -1615,7 +1615,7 @@ JOIN departments d ON e.department_id = d.id
 WHERE d.name = 'Obsolete Department';
 ```
 
-#### Продвинутые **DELETE**
+#### Продвинутые DELETE
 ```sql
 -- DELETE с LIMIT
 DELETE FROM audit_log
@@ -1637,7 +1637,7 @@ JOIN employees_to_delete etd ON e.id = etd.id;
 DROP TEMPORARY TABLE employees_to_delete;
 ```
 
-#### **DELETE** в **Java**
+#### DELETE в Java
 ```java
 @Service
 public class EmployeeDeleteService {
@@ -1710,7 +1710,7 @@ public class EmployeeDeleteService {
 
 ### Ограничения целостности
 
-#### **PRIMARY KEY**
+#### PRIMARY KEY
 ```sql
 -- Первичный ключ на одном поле
 CREATE TABLE users (
@@ -1727,7 +1727,7 @@ CREATE TABLE order_items (
 );
 ```
 
-#### **FOREIGN KEY**
+#### FOREIGN KEY
 ```sql
 -- Внешний ключ
 CREATE TABLE orders (
@@ -1752,7 +1752,7 @@ CREATE TABLE employee_history (
 );
 ```
 
-#### **UNIQUE** и **CHECK** ограничения
+#### UNIQUE и CHECK ограничения
 ```sql
 -- UNIQUE ограничения
 CREATE TABLE products (
@@ -1773,7 +1773,7 @@ CREATE TABLE user_permissions (
 );
 ```
 
-#### Работа с ограничениями в **Java**
+#### Работа с ограничениями в Java
 ```java
 @Service
 public class ConstraintsService {
@@ -1830,7 +1830,7 @@ public class ConstraintsService {
 }
 ```
 
-### Индексы в **MySQL**
+### Индексы в MySQL
 
 #### Типы индексов
 ```sql
@@ -1877,7 +1877,7 @@ WHERE object_schema = DATABASE()
 ORDER BY count_read DESC;
 ```
 
-#### Оптимизация индексов в **Java**
+#### Оптимизация индексов в Java
 ```java
 @Service
 public class IndexOptimizationService {
@@ -1960,21 +1960,21 @@ public class IndexOptimizationService {
 
 ## Транзакции
 
-### **ACID** свойства
+### ACID свойства
 
-#### **Atomicity** (**Атомарность**)
+#### Atomicity (Атомарность)
 Операция выполняется полностью или не выполняется вообще.
 
-#### **Consistency** (**Согласованность**)
+#### Consistency (Согласованность)
 Транзакция переводит базу данных из одного согласованного состояния в другое.
 
-#### **Isolation** (**Изоляция**)
+#### Isolation (Изоляция)
 Результаты транзакции не видны другим транзакциям до ее завершения.
 
-#### **Durability** (**Долговечность**)
+#### Durability (Долговечность)
 После успешного завершения транзакции изменения сохраняются даже при сбое системы.
 
-### Управление транзакциями в **MySQL**
+### Управление транзакциями в MySQL
 
 #### Базовые транзакции
 ```sql
@@ -1992,7 +1992,7 @@ COMMIT;
 ROLLBACK;
 ```
 
-#### **SAVEPOINT**
+#### SAVEPOINT
 ```sql
 START TRANSACTION;
 
@@ -2022,7 +2022,7 @@ SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED;
 ```
 
-### Транзакции в **Java**
+### Транзакции в Java
 
 #### Программное управление транзакциями
 ```java
@@ -2103,7 +2103,7 @@ public class TransactionService {
 }
 ```
 
-#### **Spring Transaction Management**
+#### Spring Transaction Management
 ```java
 @Service
 public class SpringTransactionService {
@@ -2173,7 +2173,7 @@ public class SpringTransactionService {
 }
 ```
 
-### Обработка **deadlock**'ов
+### Обработка deadlock'ов
 
 ```java
 @Service
@@ -2347,7 +2347,7 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS get_employee_count;
 ```
 
-### Хранимые процедуры в **Java**
+### Хранимые процедуры в Java
 
 ```java
 @Service
@@ -2438,7 +2438,7 @@ public class StoredProcedureService {
 
 ### Создание триггеров
 
-#### **BEFORE INSERT** триггер
+#### BEFORE INSERT триггер
 ```sql
 DELIMITER //
 
@@ -2466,7 +2466,7 @@ END //
 DELIMITER ;
 ```
 
-#### **AFTER UPDATE** триггер
+#### AFTER UPDATE триггер
 ```sql
 DELIMITER //
 
@@ -2493,7 +2493,7 @@ END //
 DELIMITER ;
 ```
 
-#### **BEFORE DELETE** триггер
+#### BEFORE DELETE триггер
 ```sql
 DELIMITER //
 
@@ -2533,7 +2533,7 @@ ALTER TABLE employees DISABLE TRIGGERS;
 ALTER TABLE employees ENABLE TRIGGERS;
 ```
 
-### Триггеры в **Java**
+### Триггеры в Java
 
 ```java
 @Service
@@ -2661,7 +2661,7 @@ FROM employees
 WHERE active = true;
 ```
 
-#### Представление с **JOIN**
+#### Представление с JOIN
 ```sql
 -- Представление с объединением таблиц
 CREATE VIEW employee_details AS
@@ -2679,7 +2679,7 @@ LEFT JOIN departments d ON e.department_id = d.id
 LEFT JOIN employees m ON e.manager_id = m.id;
 ```
 
-#### Материализованное представление (**MySQL 8.0+**)
+#### Материализованное представление (MySQL 8.0+)
 ```sql
 -- Создание таблицы для материализованного представления
 CREATE TABLE monthly_sales_summary (
@@ -2743,7 +2743,7 @@ WHERE TABLE_SCHEMA = DATABASE()
 AND TABLE_NAME = 'employee_summary';
 ```
 
-### Представления в **Java**
+### Представления в Java
 
 ```java
 @Service
@@ -2925,7 +2925,7 @@ REVOKE INSERT, UPDATE ON myapp.employees FROM 'app_user'@'localhost';
 DROP USER IF EXISTS 'temp_user'@'localhost';
 ```
 
-### Безопасность в **Java**
+### Безопасность в Java
 
 ```java
 @Service
@@ -3099,7 +3099,7 @@ DELIMITER ;
 
 ## Мониторинг
 
-### Системные таблицы **MySQL**
+### Системные таблицы MySQL
 
 #### Общая информация о сервере
 ```sql
@@ -3172,7 +3172,7 @@ WHERE object_schema = DATABASE()
 ORDER BY count_read DESC;
 ```
 
-### Мониторинг в **Java**
+### Мониторинг в Java
 
 ```java
 @Service
@@ -3313,7 +3313,7 @@ public class MonitoringService {
 ### Проектирование базы данных
 
 1. **Нормализация данных**
-   - Приводите данные к нормальным формам (**1NF, 2NF, 3NF**)
+   - Приводите данные к нормальным формам (1NF, 2NF, 3NF)
    - Избегайте избыточности данных
    - Обеспечивайте целостность данных
 
@@ -3375,7 +3375,7 @@ public class MonitoringService {
 
 **MySQL** — мощная и надежная система управления реляционными базами данных, которая является отличным выбором для широкого спектра приложений, от небольших веб-сайтов до крупных корпоративных систем.
 
-### Ключевые особенности **MySQL**:
+### Ключевые особенности MySQL:
 
 1. **Надежность**: **ACID** транзакции, репликация, кластеризация
 2. **Производительность**: Оптимизированные запросы, эффективное кэширование
@@ -3383,7 +3383,7 @@ public class MonitoringService {
 4. **Гибкость**: Множество движков хранения, расширяемая архитектура
 5. **Простота использования**: Легкая установка, интуитивный **SQL**
 
-### Преимущества использования **MySQL** в **Java**/**Spring** приложениях:
+### Преимущества использования MySQL в Java/Spring приложениях:
 
 - **Отличная интеграция** с **JDBC** и **Spring Data JPA**
 - **Широкая поддержка** в экосистеме **Java**

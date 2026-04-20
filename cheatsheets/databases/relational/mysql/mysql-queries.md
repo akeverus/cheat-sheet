@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MySQL**: Запросы и оптимизация **SQL** — Полное руководство по **SQL** в **MySQL**
+# MySQL: Запросы и оптимизация SQL — Полное руководство по SQL в MySQL
 
 Комплексное руководство по **SQL** запросам в **MySQL**: базовые и продвинутые конструкции, оптимизация, аналитические функции и **best practices**.
 
@@ -81,7 +81,7 @@ updated: "2026-02-11"
   - [Продвинутые оконные функции](#продвинутые-оконные-функции)
   - [Аналитические функции](#аналитические-функции)
   - [**Window Functions** в **Java**](#window-functions-в-java)
-- [**Common Table Expressions** (**CTE**)](#common-table-expressions-cte)
+- [**Common Table Expressions** (CTE)](#common-table-expressions-cte)
   - [Рекурсивные **CTE**](#рекурсивные-cte)
   - [Не рекурсивные **CTE**](#не-рекурсивные-cte)
   - [**CTE** в **Java**](#cte-в-java)
@@ -131,14 +131,14 @@ updated: "2026-02-11"
     - [1. Используйте **EXISTS** вместо IN для больших наборов](#1-используйте-exists-вместо-in-для-больших-наборов)
     - [2. Преобразуйте подзапросы в **JOIN**](#2-преобразуйте-подзапросы-в-join)
   - [Кэширование и материализованные представления](#кэширование-и-материализованные-представления)
-    - [1. Используйте **Query Cache** (**MySQL 5.7**)](#1-используйте-query-cache-mysql-57)
+    - [1. Используйте **Query Cache** (MySQL 5.7)](#1-используйте-query-cache-mysql-57)
     - [2. Материализованные представления для сложных агрегатов](#2-материализованные-представления-для-сложных-агрегатов)
   - [Мониторинг и обслуживание](#мониторинг-и-обслуживание)
     - [1. Регулярный анализ производительности](#1-регулярный-анализ-производительности)
     - [2. Обслуживание индексов и таблиц](#2-обслуживание-индексов-и-таблиц)
   - [Архитектурные решения](#архитектурные-решения)
     - [1. **Read**/**Write Splitting**](#1-readwrite-splitting)
-    - [2. Шардинг (**партиционирование**)](#2-шардинг-партиционирование)
+    - [2. Шардинг (партиционирование)](#2-шардинг-партиционирование)
     - [3. Кэширование на уровне приложения](#3-кэширование-на-уровне-приложения)
   - [Профилирование и отладка](#профилирование-и-отладка)
     - [1. Используйте **EXPLAIN** для всех сложных запросов](#1-используйте-explain-для-всех-сложных-запросов)
@@ -154,13 +154,13 @@ updated: "2026-02-11"
   - [Мониторинг и поддержка:](#мониторинг-и-поддержка)
 - [Решение проблем](#решение-проблем)
 
-## Базовые **SELECT** запросы
+## Базовые SELECT запросы
 
 ### Простые запросы
 
-#### **SELECT** с условиями
+#### SELECT с условиями
 
-Примеры базовых **SELECT**-запросов с полями и условиями (**SQL**).
+Примеры базовых **SELECT**-запросов с полями и условиями (SQL).
 
 ```sql
 -- Все пользователи
@@ -191,7 +191,7 @@ SELECT
 FROM users;
 ```
 
-#### **DISTINCT** и **LIMIT**
+#### DISTINCT и LIMIT
 ```sql
 -- Уникальные значения
 SELECT DISTINCT department FROM employees;
@@ -208,7 +208,7 @@ LIMIT 20 OFFSET 40; -- Страница 3 (по 20 записей)
 SELECT * FROM products ORDER BY RAND() LIMIT 5;
 ```
 
-### Работа с **NULL** значениями
+### Работа с NULL значениями
 
 ```sql
 -- Поиск NULL значений
@@ -234,7 +234,7 @@ SELECT
 FROM employees;
 ```
 
-### Запросы в **Java**
+### Запросы в Java
 
 ```java
 @Repository
@@ -378,9 +378,9 @@ class UserSearchCriteria {
 }
 ```
 
-## **JOIN** операции
+## JOIN операции
 
-### **INNER JOIN**
+### INNER JOIN
 
 ```sql
 -- Простой INNER JOIN
@@ -406,7 +406,7 @@ INNER JOIN order_items oi ON o.id = oi.order_id
 INNER JOIN products p ON oi.product_id = p.id;
 ```
 
-### **LEFT**/**RIGHT JOIN**
+### LEFT/RIGHT JOIN
 
 ```sql
 -- LEFT JOIN - все пользователи и их заказы (если есть)
@@ -447,7 +447,7 @@ RIGHT JOIN orders o ON u.id = o.user_id
 WHERE u.id IS NULL;
 ```
 
-### **CROSS JOIN** и **SELF JOIN**
+### CROSS JOIN и SELF JOIN
 
 ```sql
 -- CROSS JOIN - декартово произведение
@@ -476,7 +476,7 @@ INNER JOIN employees e2 ON e1.department_id = e2.department_id
     AND e1.id < e2.id; -- Избегание дубликатов
 ```
 
-### Оптимизация **JOIN**
+### Оптимизация JOIN
 
 ```sql
 -- Использование индексов для JOIN
@@ -497,7 +497,7 @@ STRAIGHT_JOIN orders o ON u.id = o.user_id
 WHERE u.active = true;
 ```
 
-### **JOIN** в **Java**
+### JOIN в Java
 
 ```java
 @Repository
@@ -710,7 +710,7 @@ class UserProductRecommendation {
 }
 ```
 
-## **WHERE** условия и операторы
+## WHERE условия и операторы
 
 ### Основные операторы сравнения
 
@@ -784,7 +784,7 @@ WHERE total_amount > SOME (
 );
 ```
 
-### Условия в **Java**
+### Условия в Java
 
 ```java
 @Repository
@@ -943,7 +943,7 @@ class ProductSearchCriteria {
 
 ## Сортировка и группировка
 
-### **ORDER** `BY`
+### ORDER `BY`
 
 ```sql
 -- Базовая сортировка
@@ -974,7 +974,7 @@ ORDER BY
     price DESC;
 ```
 
-### **GROUP** `BY`
+### GROUP `BY`
 
 ```sql
 -- Базовая группировка
@@ -1005,7 +1005,7 @@ GROUP BY YEAR(order_date), MONTH(order_date)
 ORDER BY year DESC, month DESC;
 ```
 
-### **HAVING**
+### HAVING
 
 ```sql
 -- Фильтрация групп
@@ -1023,7 +1023,7 @@ HAVING AVG(price) > (
 );
 ```
 
-### **ROLLUP** и **CUBE**
+### ROLLUP и CUBE
 
 ```sql
 -- ROLLUP - промежуточные итоги
@@ -1047,7 +1047,7 @@ GROUP BY CUBE(category, brand)
 ORDER BY category, brand;
 ```
 
-### Сортировка и группировка в **Java**
+### Сортировка и группировка в Java
 
 ```java
 @Repository
@@ -1275,7 +1275,7 @@ FROM products
 GROUP BY category;
 ```
 
-### **Window Functions**
+### Window Functions
 
 ```sql
 -- ROW_NUMBER
@@ -1324,7 +1324,7 @@ SELECT
 FROM products;
 ```
 
-### Агрегатные функции в **Java**
+### Агрегатные функции в Java
 
 ```java
 @Repository
@@ -1610,7 +1610,7 @@ WHERE NOT EXISTS (
 );
 ```
 
-### Подзапросы в **FROM**
+### Подзапросы в FROM
 
 ```sql
 -- Подзапрос в FROM
@@ -1646,7 +1646,7 @@ FROM (
 JOIN products p ON cs.category = p.category AND cs.max_price = p.price;
 ```
 
-### Подзапросы в **Java**
+### Подзапросы в Java
 
 ```java
 @Repository
@@ -1835,9 +1835,9 @@ class UserPerformance {
 }
 ```
 
-## **UNION** и **EXCEPT**
+## UNION и EXCEPT
 
-### **UNION** и **UNION ALL**
+### UNION и UNION ALL
 
 ```sql
 -- UNION (убирает дубликаты)
@@ -1857,7 +1857,7 @@ SELECT id, name, 'category' AS type FROM categories
 ORDER BY name;
 ```
 
-### **INTERSECT** и **EXCEPT**/**MINUS**
+### INTERSECT и EXCEPT/MINUS
 
 ```sql
 -- INTERSECT (пересечение - MySQL 8.0+)
@@ -1878,7 +1878,7 @@ LEFT JOIN inactive_users i ON a.user_id = i.user_id
 WHERE i.user_id IS NULL;
 ```
 
-### Практические примеры **UNION**
+### Практические примеры UNION
 
 ```sql
 -- Объединение отчетов по продажам
@@ -1905,7 +1905,7 @@ SELECT id, name, 'category' AS entity_type FROM categories WHERE name LIKE ?
 ORDER BY entity_type, name;
 ```
 
-### **UNION** в **Java**
+### UNION в Java
 
 ```java
 @Repository
@@ -2076,7 +2076,7 @@ class MonthlyReport {
 }
 ```
 
-## **Window Functions**
+## Window Functions
 
 ### Основные оконные функции
 
@@ -2143,7 +2143,7 @@ SELECT
 FROM employees;
 ```
 
-### **Window Functions** в **Java**
+### Window Functions в Java
 
 ```java
 @Repository
@@ -2323,9 +2323,9 @@ class ProductCategoryAnalysis {
 }
 ```
 
-## **Common Table Expressions** (**CTE**)
+## Common Table Expressions (CTE)
 
-### Рекурсивные **CTE**
+### Рекурсивные CTE
 
 ```sql
 -- Рекурсивная CTE для иерархии сотрудников
@@ -2355,7 +2355,7 @@ WITH RECURSIVE employee_hierarchy AS (
 SELECT * FROM employee_hierarchy ORDER BY level, path;
 ```
 
-### Не рекурсивные **CTE**
+### Не рекурсивные CTE
 
 ```sql
 -- CTE для сложной агрегации
@@ -2393,7 +2393,7 @@ LEFT JOIN customer_stats cs ON ms.month = cs.month
 ORDER BY ms.month;
 ```
 
-### **CTE** в **Java**
+### CTE в Java
 
 ```java
 @Repository
@@ -2589,7 +2589,7 @@ class FinancialReport {
 
 ## Рекурсивные запросы
 
-### Рекурсивные **CTE** для деревьев
+### Рекурсивные CTE для деревьев
 
 ```sql
 -- Рекурсивный обход дерева категорий
@@ -2644,7 +2644,7 @@ SELECT
 FROM date_series;
 ```
 
-### Рекурсивные запросы в **Java**
+### Рекурсивные запросы в Java
 
 ```java
 @Repository
@@ -2828,9 +2828,9 @@ class MaterializedPathNode {
 }
 ```
 
-## **JSON** функции
+## JSON функции
 
-### Работа с **JSON** в **MySQL** 8.0+
+### Работа с JSON в MySQL 8.0+
 
 ```sql
 -- Создание таблицы с JSON полем
@@ -2870,7 +2870,7 @@ SELECT
 FROM user_profiles;
 ```
 
-### Продвинутые **JSON** операции
+### Продвинутые JSON операции
 
 ```sql
 -- Поиск в JSON массивах
@@ -2907,7 +2907,7 @@ SET profile_data = JSON_ARRAY_APPEND(
 WHERE user_id = 1;
 ```
 
-### **JSON** в запросах и индексах
+### JSON в запросах и индексах
 
 ```sql
 -- Создание индекса на JSON поле
@@ -2932,7 +2932,7 @@ FROM user_profiles
 ORDER BY JSON_EXTRACT(profile_data, '$.age') DESC;
 ```
 
-### **JSON** в **Java**
+### JSON в Java
 
 ```java
 @Repository
@@ -3175,7 +3175,7 @@ FROM (
 GROUP BY relevance_category;
 ```
 
-### Полнотекстовый поиск в **Java**
+### Полнотекстовый поиск в Java
 
 ```java
 @Repository
@@ -3385,7 +3385,7 @@ EXPLAIN FORMAT=JSON SELECT ...;
 EXPLAIN ANALYZE SELECT ...;
 ```
 
-### Оптимизация **JOIN** запросов
+### Оптимизация JOIN запросов
 
 ```sql
 -- Неоптимальный запрос
@@ -3459,7 +3459,7 @@ SET @active = 1;
 EXECUTE stmt USING @active;
 ```
 
-### Оптимизация в **Java**
+### Оптимизация в Java
 
 ```java
 @Repository
@@ -3653,9 +3653,9 @@ class ProductStatistics {
 }
 ```
 
-## **EXPLAIN** и анализ планов
+## EXPLAIN и анализ планов
 
-### Чтение **EXPLAIN** вывода
+### Чтение EXPLAIN вывода
 
 ```sql
 -- Базовый EXPLAIN
@@ -3680,7 +3680,7 @@ GROUP BY u.id, u.name;
 -- Extra: дополнительная информация
 ```
 
-### Типы соединений в **EXPLAIN**
+### Типы соединений в EXPLAIN
 
 ```sql
 -- ALL - полный скан таблицы (плохо)
@@ -3702,7 +3702,7 @@ EXPLAIN SELECT u.* FROM users u INNER JOIN orders o ON u.id = o.user_id; -- type
 EXPLAIN SELECT * FROM users WHERE id = 1; -- type: const
 ```
 
-### Оптимизация на основе **EXPLAIN**
+### Оптимизация на основе EXPLAIN
 
 ```sql
 -- Плохой запрос
@@ -3723,7 +3723,7 @@ WHERE u.email LIKE '%gmail.com%';
 -- Результат: type: range для users (используется индекс)
 ```
 
-### **JSON** формат **EXPLAIN**
+### JSON формат EXPLAIN
 
 ```sql
 -- Детальный анализ в JSON формате
@@ -3746,7 +3746,7 @@ ORDER BY order_count DESC;
 -- materialized_from_subquery: информация о материализации
 ```
 
-### **EXPLAIN** в **Java**
+### EXPLAIN в Java
 
 ```java
 @Service
@@ -3934,7 +3934,7 @@ class SlowQueryInfo {
 }
 ```
 
-## **Query Profiling**
+## Query Profiling
 
 ### Настройка профилирования
 
@@ -3956,7 +3956,7 @@ SHOW PROFILE FOR QUERY 1;
 SHOW PROFILE CPU, BLOCK IO, MEMORY, SWAPS FOR QUERY 1;
 ```
 
-### **Performance Schema**
+### Performance Schema
 
 ```sql
 -- Включение Performance Schema
@@ -4022,7 +4022,7 @@ FROM (
 ) rr;
 ```
 
-### Профилирование в **Java**
+### Профилирование в Java
 
 ```java
 @Service
@@ -4255,7 +4255,7 @@ class SystemMetrics {
 
 ### Написание эффективных запросов
 
-#### 1. Избегайте **SELECT** *
+#### 1. Избегайте SELECT *
 ```sql
 -- Плохо
 SELECT * FROM users WHERE active = true;
@@ -4264,7 +4264,7 @@ SELECT * FROM users WHERE active = true;
 SELECT id, first_name, last_name, email FROM users WHERE active = true;
 ```
 
-#### 2. Используйте **LIMIT** для больших результатов
+#### 2. Используйте LIMIT для больших результатов
 ```sql
 -- Плохо
 SELECT * FROM orders ORDER BY created_at DESC;
@@ -4273,7 +4273,7 @@ SELECT * FROM orders ORDER BY created_at DESC;
 SELECT * FROM orders ORDER BY created_at DESC LIMIT 100;
 ```
 
-#### 3. Оптимизируйте условия **WHERE**
+#### 3. Оптимизируйте условия WHERE
 ```sql
 -- Плохо
 SELECT * FROM users WHERE YEAR(created_at) = 2024;
@@ -4282,7 +4282,7 @@ SELECT * FROM users WHERE YEAR(created_at) = 2024;
 SELECT * FROM users WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01';
 ```
 
-#### 4. Используйте **UNION ALL** вместо **UNION** когда возможно
+#### 4. Используйте UNION ALL вместо UNION когда возможно
 ```sql
 -- UNION ALL быстрее, если нет необходимости в уникальности
 SELECT id, name, 'customer' AS type FROM customers
@@ -4290,9 +4290,9 @@ UNION ALL
 SELECT id, name, 'supplier' AS type FROM suppliers;
 ```
 
-### Оптимизация **JOIN**
+### Оптимизация JOIN
 
-#### 1. Выбирайте правильный тип **JOIN**
+#### 1. Выбирайте правильный тип JOIN
 ```sql
 -- Используйте INNER JOIN вместо LEFT JOIN когда возможно
 SELECT u.name, o.total_amount
@@ -4300,7 +4300,7 @@ FROM users u
 INNER JOIN orders o ON u.id = o.user_id; -- Лучше чем LEFT JOIN
 ```
 
-#### 2. Порядок таблиц в **JOIN**
+#### 2. Порядок таблиц в JOIN
 ```sql
 -- Начинайте с меньшей таблицы
 SELECT *
@@ -4308,7 +4308,7 @@ FROM small_table s
 INNER JOIN large_table l ON s.id = l.small_table_id;
 ```
 
-#### 3. Избегайте **CROSS JOIN**
+#### 3. Избегайте CROSS JOIN
 ```sql
 -- Плохо - декартово произведение
 SELECT u.name, p.name FROM users u CROSS JOIN products p;
@@ -4355,7 +4355,7 @@ ORDER BY count_read DESC;
 
 ### Оптимизация подзапросов
 
-#### 1. Используйте **EXISTS** вместо `IN` для больших наборов
+#### 1. Используйте EXISTS вместо `IN` для больших наборов
 ```sql
 -- Хорошо для больших таблиц
 SELECT * FROM users u
@@ -4365,7 +4365,7 @@ WHERE EXISTS (
 );
 ```
 
-#### 2. Преобразуйте подзапросы в **JOIN**
+#### 2. Преобразуйте подзапросы в JOIN
 ```sql
 -- Подзапрос
 SELECT *
@@ -4383,7 +4383,7 @@ WHERE c.parent_id = 1;
 
 ### Кэширование и материализованные представления
 
-#### 1. Используйте **Query Cache** (**MySQL 5.7**)
+#### 1. Используйте Query Cache (MySQL 5.7)
 ```sql
 -- Включение кэша запросов
 SET GLOBAL query_cache_size = 268435456;
@@ -4459,7 +4459,7 @@ REPAIR TABLE users, orders, products;
 
 ### Архитектурные решения
 
-#### 1. **Read**/**Write Splitting**
+#### 1. Read/Write Splitting
 ```java
 @Configuration
 public class DataSourceConfig {
@@ -4503,7 +4503,7 @@ public class DataSourceConfig {
 }
 ```
 
-#### 2. Шардинг (**партиционирование**)
+#### 2. Шардинг (партиционирование)
 ```sql
 -- Партиционирование по диапазону
 CREATE TABLE orders (
@@ -4563,7 +4563,7 @@ public class CachedUserService {
 
 ### Профилирование и отладка
 
-#### 1. Используйте **EXPLAIN** для всех сложных запросов
+#### 1. Используйте EXPLAIN для всех сложных запросов
 ```sql
 -- Всегда анализируйте план выполнения
 EXPLAIN FORMAT=JSON
@@ -4574,7 +4574,7 @@ WHERE u.created_at >= '2024-01-01'
 GROUP BY u.id, u.name;
 ```
 
-#### 2. Мониторьте **slow queries**
+#### 2. Мониторьте slow queries
 ```sql
 -- Настройка логирования медленных запросов
 SET GLOBAL slow_query_log = 'ON';
@@ -4585,7 +4585,7 @@ SET GLOBAL slow_query_log_file = '/var/log/mysql/mysql-slow.log';
 mysqldumpslow /var/log/mysql/mysql-slow.log
 ```
 
-#### 3. Используйте **Performance Schema**
+#### 3. Используйте Performance Schema
 ```sql
 -- Включение детального мониторинга
 UPDATE performance_schema.setup_instruments
@@ -4604,7 +4604,7 @@ ORDER BY sum_timer_wait DESC;
 
 ### Безопасность запросов
 
-#### 1. Используйте **Prepared Statements**
+#### 1. Используйте Prepared Statements
 ```java
 @Repository
 public class SecureQueryRepository {
@@ -4737,10 +4737,10 @@ public class QueryValidationService {
 Оптимизация **MySQL** — это непрерывный процесс. Важно не только решать текущие проблемы производительности, но и предотвращать их возникновение в будущем через правильное проектирование и архитектурные решения.
 
 **Следующие темы:**
-- [mysql-indexes.md](mysql-indexes.md) — индексы и оптимизация
-- [mysql-performance.md](mysql-performance.md) — производительность и тюнинг
-- [mysql-replication.md](mysql-replication.md) — репликация и высокая доступность
-- [mysql-admin.md](mysql-admin.md) — администрирование и обслуживание
+- [[mysql-indexes]] — индексы и оптимизация
+- [[mysql-performance]] — производительность и тюнинг
+- [[mysql-replication]] — репликация и высокая доступность
+- [[mysql-admin]] — администрирование и обслуживание
 
 Эффективные запросы — это основа производительности любой базы данных! 🚀
 

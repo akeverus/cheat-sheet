@@ -66,7 +66,7 @@ updated: "2026-02-11"
 
 **Когда применять:** обход коллекций без раскрытия структуры, единый API для разных контейнеров, ленивый обход.
 
-## Что такое **Iterator**?
+## Что такое Iterator?
 
 **Iterator** — это поведенческий паттерн проектирования, который предоставляет способ последовательного доступа к элементам составного объекта, не раскрывая его внутренней структуры. **Iterator** инкапсулирует логику обхода коллекции.
 
@@ -150,7 +150,7 @@ public class CollectionProcessor {
 }
 ```
 
-## Когда использовать **Iterator**?
+## Когда использовать Iterator?
 
 ### Подходящие сценарии
 
@@ -314,7 +314,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Iterator**
+### Классический Iterator
 
 ```java
 // Iterator интерфейс
@@ -514,7 +514,7 @@ public class IteratorDemo {
 }
 ```
 
-### **Java Collections Iterator**
+### Java Collections Iterator
 
 ```java
 // Использование Java Collections Iterator
@@ -624,7 +624,7 @@ public class CollectionsIteratorDemo {
 }
 ```
 
-### **Advanced Iterators**
+### Advanced Iterators
 
 ```java
 // Продвинутые итераторы
@@ -857,7 +857,7 @@ public class AdvancedIteratorDemo {
 
 ## Продвинутые реализации
 
-### 1. **Iterator** с **Java** 8 **Streams**
+### 1. Iterator с Java 8 Streams
 
 ```java
 // Iterator с Java 8 Streams и Spliterator
@@ -1035,7 +1035,7 @@ public class StreamIteratorDemo {
 }
 ```
 
-### 2. **Iterator** с **Database ResultSets**
+### 2. Iterator с Database ResultSets
 
 ```java
 // Iterator для работы с JDBC ResultSet
@@ -1286,7 +1286,7 @@ public class DatabaseIteratorDemo {
 
 ## Примеры использования
 
-### 1. **File System Iterator**
+### 1. File System Iterator
 
 ```java
 // Iterator для файловой системы
@@ -1404,7 +1404,7 @@ public class FileSystemIteratorDemo {
 }
 ```
 
-### 2. **Composite Iterator**
+### 2. Composite Iterator
 
 ```java
 // Iterator для композитных структур
@@ -1569,7 +1569,7 @@ public class CompositeIteratorDemo {
 }
 ```
 
-### 3. **Iterator Chain**
+### 3. Iterator Chain
 
 ```java
 // Цепочка итераторов
@@ -1792,7 +1792,7 @@ public class IteratorChainDemo {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -1896,7 +1896,7 @@ class CollectionProcessor {
 }
 ```
 
-### 2. **Testing Iterator Pattern**
+### 2. Testing Iterator Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

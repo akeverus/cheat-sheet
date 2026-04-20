@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Terraform**
+# Terraform
 
 **Terraform** — это инструмент для инфраструктурного программирования с открытым исходным кодом. **Terraform** позволяет определять инфраструктуру как код, управлять ее жизненным циклом и обеспечивать предсказуемые развертывания в различных облачных провайдерах и локальных системах.
 
@@ -55,13 +55,13 @@ updated: "2026-02-11"
   - [Отладка](#отладка)
 - [См. также](#см-также)
 
-## Основы **Terraform**
+## Основы Terraform
 
-### Архитектура **Terraform**
+### Архитектура Terraform
 
-Краткое описание компонентов **Terraform**: конфигурация (**.tf**), **state**, провайдеры, модули, **workspaces**.
+Краткое описание компонентов **Terraform**: конфигурация (.tf), **state**, провайдеры, модули, **workspaces**.
 
-Ниже — комментарии к основным компонентам **Terraform** (**HCL**).
+Ниже — комментарии к основным компонентам **Terraform** (HCL).
 ```hcl
 # Основные компоненты:
 # - Configuration: файлы *.tf с описанием инфраструктуры
@@ -73,7 +73,7 @@ updated: "2026-02-11"
 
 ### Установка и настройка
 
-#### **Linux**/**macOS**
+#### Linux/macOS
 ```bash
 # Скачивание и установка
 wget https://releases.hashicorp.com/terraform/1.5.0/terraform_1.5.0_linux_amd64.zip
@@ -87,7 +87,7 @@ terraform version
 terraform -install-autocomplete
 ```
 
-#### **Windows**
+#### Windows
 ```powershell
 # Через Chocolatey
 choco install terraform
@@ -99,7 +99,7 @@ winget install HashiCorp.Terraform
 terraform version
 ```
 
-#### **Docker**
+#### Docker
 ```bash
 # Запуск Terraform в контейнере
 docker run --rm -it \
@@ -143,7 +143,7 @@ terraform-project/
 
 ### Файлы конфигурации
 
-#### **main.tf**
+#### main.tf
 ```hcl
 # Определение провайдера
 terraform {
@@ -256,7 +256,7 @@ resource "aws_security_group" "web" {
 }
 ```
 
-#### **variables.tf**
+#### variables.tf
 ```hcl
 # Переменные для конфигурации
 variable "aws_region" {
@@ -325,7 +325,7 @@ variable "vpc_cidr" {
 }
 ```
 
-#### **outputs.tf**
+#### outputs.tf
 ```hcl
 # Выходы для использования другими конфигурациями
 output "vpc_id" {
@@ -374,9 +374,9 @@ output "bastion_public_ip" {
 
 ## Работа с состояниями
 
-### **Backend** конфигурации
+### Backend конфигурации
 
-#### **S3 Backend**
+#### S3 Backend
 ```hcl
 terraform {
   backend "s3" {
@@ -421,7 +421,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
 }
 ```
 
-#### **Remote Backend**
+#### Remote Backend
 ```hcl
 terraform {
   backend "remote" {
@@ -471,7 +471,7 @@ modules/vpc/
 └── README.md
 ```
 
-#### **modules**/**vpc**/**main.tf**
+#### modules/vpc/main.tf
 ```hcl
 # VPC Module
 resource "aws_vpc" "this" {
@@ -606,7 +606,7 @@ resource "aws_route_table_association" "private" {
 }
 ```
 
-#### **modules**/**vpc**/**variables.tf**
+#### modules/vpc/variables.tf
 ```hcl
 variable "name" {
   description = "Name to be used on all the resources as identifier"
@@ -769,7 +769,7 @@ terraform apply -target=aws_instance.example
 terraform refresh -target=aws_instance.example
 ```
 
-## **Data Sources**
+## Data Sources
 
 ### Работа с существующими ресурсами
 ```hcl
@@ -832,7 +832,7 @@ resource "aws_instance" "example" {
 
 ## Управление зависимостями
 
-### **Meta-arguments**
+### Meta-arguments
 ```hcl
 # depends_on - явное указание зависимостей
 resource "aws_instance" "web" {
@@ -885,7 +885,7 @@ resource "aws_instance" "example" {
 }
 ```
 
-### **Dynamic blocks**
+### Dynamic blocks
 ```hcl
 # Динамические блоки для повторяющихся конфигураций
 resource "aws_security_group" "example" {

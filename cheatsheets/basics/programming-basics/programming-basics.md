@@ -635,7 +635,7 @@ public class ControlStructures {
 
 ## Функции и модули
 
-### Функции (**методы в Java**)
+### Функции (методы в Java)
 
 ```java
 /**
@@ -1043,7 +1043,7 @@ public class ObjectOrientedProgramming {
 
 ## Обработка ошибок
 
-### Исключения в **Java**
+### Исключения в Java
 
 ```java
 /**

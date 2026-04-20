@@ -61,7 +61,7 @@ updated: "2026-02-11"
 
 ## Введение в исключения
 
-**Исключения (**Exceptions**)** — это механизм в **Java** для обработки ошибочных ситуаций, которые возникают во время выполнения программы. Вместо возврата кодов ошибок, **Java** использует исключения для сигнализации о проблемах.
+**Исключения (Exceptions)** — это механизм в **Java** для обработки ошибочных ситуаций, которые возникают во время выполнения программы. Вместо возврата кодов ошибок, **Java** использует исключения для сигнализации о проблемах.
 
 ### Почему исключения важны?
 
@@ -118,7 +118,7 @@ public class RuntimeException extends Exception {
 }
 ```
 
-### **Checked** vs **Unchecked** исключения
+### Checked vs Unchecked исключения
 
 ```java
 // Checked исключения - должны быть обработаны или объявлены
@@ -141,7 +141,7 @@ public void processData(String data) {
 
 ### Стандартные исключения
 
-#### **RuntimeException** подклассы
+#### RuntimeException подклассы
 
 ```java
 // NullPointerException - доступ к null ссылке
@@ -178,7 +178,7 @@ public class ReadOnlyList<T> extends ArrayList<T> {
 }
 ```
 
-#### **Checked** исключения
+#### Checked исключения
 
 ```java
 // IOException и подклассы
@@ -217,7 +217,7 @@ public User findUserById(Long id) throws SQLException {
 
 ## Обработка исключений
 
-### **Try-`Catch`-Finally** блоки
+### Try-`Catch`-Finally блоки
 
 ```java
 public class ExceptionHandlingExamples {
@@ -291,7 +291,7 @@ public class ExceptionHandlingExamples {
 }
 ```
 
-### **Multi-Catch** и **Union Types**
+### Multi-Catch и Union Types
 
 ```java
 public class AdvancedCatch {
@@ -460,7 +460,7 @@ public class ExceptionRethrowing {
 }
 ```
 
-### **Chain of exceptions**
+### Chain of exceptions
 
 ```java
 public class ExceptionChaining {
@@ -576,7 +576,7 @@ public class UserValidator {
 }
 ```
 
-### **Exception Builder Pattern**
+### Exception Builder Pattern
 
 ```java
 public class ExceptionBuilders {
@@ -681,7 +681,7 @@ public class ExceptionBuilders {
 }
 ```
 
-## **Best practices**
+## Best practices
 
 ### Когда использовать исключения
 
@@ -1219,7 +1219,7 @@ public class ExceptionLogging {
 
 ## Интеграция с фреймворками
 
-### **Spring Framework**
+### Spring Framework
 
 ```java
 @ControllerAdvice
@@ -1328,7 +1328,7 @@ public class UserController {
 }
 ```
 
-### **JUnit Testing**
+### JUnit Testing
 
 ```java
 public class ExceptionTesting {
@@ -1454,7 +1454,7 @@ public class ExceptionTesting {
 6. **Логировать исключения с достаточным контекстом**
 7. **Создавать custom исключения для бизнес логики**
 
-### **Best practices summary**
+### Best practices summary
 
 - **Catch конкретные исключения перед общими**
 - **Использовать finally для cleanup**

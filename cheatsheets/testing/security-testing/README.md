@@ -17,6 +17,6 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Burp Suite](burp-suite/burp-suite.md)
-- [OWASP ZAP](owasp-zap/owasp-zap.md)
-- [sqlmap](sqlmap/sqlmap.md)
+- [[burp-suite|Burp Suite]]
+- [[owasp-zap|OWASP ZAP]]
+- [[sqlmap]]

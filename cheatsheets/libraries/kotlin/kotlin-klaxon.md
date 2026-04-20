@@ -63,7 +63,7 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### **Basic JSON Parsing**
+### Basic JSON Parsing
 
 Парсинг **JSON**-строки в **JsonObject** через **Parser.default**().
 
@@ -99,7 +99,7 @@ println("$name is $age years old and lives in $city")
 // Вывод: John is 30 years old and lives in New York
 ```
 
-### **JSON Serialization**
+### JSON Serialization
 ```kotlin
 // Сериализация объекта в JSON
 data class Person(val name: String, val age: Int, val city: String)
@@ -110,7 +110,7 @@ val jsonString = Klaxon().toJsonString(person)
 println(jsonString) // {"name": "Alice", "age": 25, "city": "London"}
 ```
 
-### **JSON** to **Object Conversion**
+### JSON to Object Conversion
 ```kotlin
 // Преобразование JSON в объекты
 data class User(
@@ -144,7 +144,7 @@ println(user?.profile?.bio) // Software developer
 
 ## Продвинутые возможности
 
-### **Custom Field Names**
+### Custom Field Names
 ```kotlin
 // Кастомные имена полей
 data class ApiResponse(
@@ -176,7 +176,7 @@ println(response?.fullName) // Jane Smith
 println(response?.internalField) // internal (default value)
 ```
 
-### **Polymorphic Types**
+### Polymorphic Types
 ```kotlin
 // Работа с полиморфными типами
 abstract class Shape
@@ -227,7 +227,7 @@ val json = klaxon.toJsonString(drawing)
 val parsedDrawing = klaxon.parse<Drawing>(json)
 ```
 
-### **Path Queries**
+### Path Queries
 ```kotlin
 // Запросы к JSON с использованием путей
 val json = """
@@ -261,7 +261,7 @@ val total = jsonObject.obj("metadata")?.get("total")
 println("Total users: $total")
 ```
 
-### **Streaming Parsing**
+### Streaming Parsing
 ```kotlin
 // Потоковый парсинг больших JSON файлов
 class LargeJsonProcessor {
@@ -312,7 +312,7 @@ processor.processLargeJson(File("large-data.json"))
 
 ## Кастомные конвертеры
 
-### **Date**/**Time Converter**
+### Date/Time Converter
 ```kotlin
 // Кастомный конвертер для дат
 class InstantConverter : Converter {
@@ -369,7 +369,7 @@ val json = klaxon.toJsonString(event)
 val parsedEvent = klaxon.parse<Event>(json)
 ```
 
-### **Enum Converter**
+### Enum Converter
 ```kotlin
 // Кастомный конвертер для enum с кастомными значениями
 enum class Status(val code: String) {
@@ -412,7 +412,7 @@ val parsedUser = klaxon.parse<User>(json)
 println(parsedUser?.status) // ACTIVE
 ```
 
-### **Optional Fields**
+### Optional Fields
 ```kotlin
 // Обработка опциональных полей
 data class Product(
@@ -458,9 +458,9 @@ class ProductConverter : Converter {
 }
 ```
 
-## **JSON Path Queries**
+## JSON Path Queries
 
-### **Advanced Path Operations**
+### Advanced Path Operations
 ```kotlin
 // Продвинутые операции с JSON путями
 class JsonPathProcessor {
@@ -534,9 +534,9 @@ val updatedJson = processor.updateByPath(json, "user.profile.settings.theme", "l
 println("Updated JSON: $updatedJson")
 ```
 
-## Интеграция с **Kotlin**
+## Интеграция с Kotlin
 
-### **Inline Classes**
+### Inline Classes
 ```kotlin
 // Работа с inline classes
 @JvmInline
@@ -576,7 +576,7 @@ class UserConverter : Converter {
 }
 ```
 
-### **Sealed Classes**
+### Sealed Classes
 ```kotlin
 // Работа с sealed classes
 sealed class Result<out T>
@@ -615,7 +615,7 @@ class ResultConverter<T> : Converter {
 }
 ```
 
-### **Operator Overloading**
+### Operator Overloading
 ```kotlin
 // Кастомные операторы для удобства
 operator fun JsonObject.get(path: String): Any? {
@@ -659,9 +659,9 @@ val name = json["user.name"]
 json["user.settings.theme"] = "dark"
 ```
 
-## Интеграция с **Spring Boot**
+## Интеграция с Spring Boot
 
-### **Configuration**
+### Configuration
 ```kotlin
 @Configuration
 class KlaxonConfig {
@@ -676,7 +676,7 @@ class KlaxonConfig {
 }
 ```
 
-### **Service Layer**
+### Service Layer
 ```kotlin
 @Service
 class ApiService(
@@ -729,7 +729,7 @@ sealed class ProcessingResult {
 }
 ```
 
-### **Controller**
+### Controller
 ```kotlin
 @RestController
 @RequestMapping("/api/klaxon")
@@ -808,7 +808,7 @@ class KlaxonController(
 
 ## Тестирование
 
-### **Unit Testing**
+### Unit Testing
 ```kotlin
 class KlaxonTest {
 
@@ -921,7 +921,7 @@ class KlaxonTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```kotlin
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class KlaxonIntegrationTest {
@@ -1014,7 +1014,7 @@ class KlaxonIntegrationTest {
 
 ## Лучшие практики
 
-### **Performance Optimization**
+### Performance Optimization
 ```kotlin
 // Переиспользование Klaxon экземпляров
 object JsonUtils {
@@ -1064,7 +1064,7 @@ class StreamingJsonProcessor {
 }
 ```
 
-### **Error Handling**
+### Error Handling
 ```kotlin
 // Безопасный JSON парсинг
 sealed class JsonParseResult<out T> {
@@ -1118,7 +1118,7 @@ when (val result = parser.parseSafe<User>(jsonString)) {
 }
 ```
 
-### **Validation**
+### Validation
 ```kotlin
 // JSON Schema validation
 class JsonValidator(private val klaxon: Klaxon = Klaxon()) {
@@ -1182,7 +1182,7 @@ sealed class ValidationResult {
 
 ## Устранение неполадок
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 object KlaxonTroubleshooting {
 
@@ -1281,7 +1281,7 @@ object KlaxonTroubleshooting {
 }
 ```
 
-### **Debugging JSON Processing**
+### Debugging JSON Processing
 ```kotlin
 class JsonDebugger(private val klaxon: Klaxon = Klaxon()) {
 
@@ -1404,7 +1404,7 @@ val validationErrors = debugger.validateJsonSchema(jsonString, schema)
 
 ## Руководство по миграции
 
-### **From Gson** to **Klaxon**
+### From Gson to Klaxon
 ```kotlin
 // Gson
 data class User(val name: String, val age: Int)
@@ -1423,7 +1423,7 @@ val json = klaxon.toJsonString(user) // {"name":"John","age":30}
 val fromJson = klaxon.parse<User>(json)
 ```
 
-### **From Jackson** to **Klaxon**
+### From Jackson to Klaxon
 ```kotlin
 // Jackson
 data class User(val name: String, val age: Int)
@@ -1442,7 +1442,7 @@ val json = klaxon.toJsonString(user)
 val fromJson = klaxon.parse<User>(json)
 ```
 
-### **From org.json** to **Klaxon**
+### From org.json to Klaxon
 ```kotlin
 // org.json
 val jsonObject = JSONObject()

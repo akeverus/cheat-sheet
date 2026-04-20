@@ -286,11 +286,11 @@ public class NetworkCharacteristics {
 }
 ```
 
-## Модель **OSI**
+## Модель OSI
 
-Модель **OSI** (**Open Systems Interconnection**) — концептуальная модель, описывающая взаимодействие систем в сети.
+Модель **OSI** (Open Systems Interconnection) — концептуальная модель, описывающая взаимодействие систем в сети.
 
-### Уровни модели **OSI**
+### Уровни модели OSI
 
 ```java
 /**
@@ -469,11 +469,11 @@ public class OSIModel {
 }
 ```
 
-## **TCP**/`IP` стек
+## TCP/`IP` стек
 
 **TCP**/`IP` - это набор протоколов, на которых построен интернет.
 
-### Структура **TCP**/`IP` стека
+### Структура TCP/`IP` стека
 
 ```java
 /**
@@ -724,7 +724,7 @@ public class TCPIPStack {
 
 `IP` адресация — система адресации устройств в сети.
 
-### **IPv4** адресация
+### IPv4 адресация
 
 ```java
 /**
@@ -852,7 +852,7 @@ public class IPv4Addressing {
 }
 ```
 
-### **IPv6** адресация
+### IPv6 адресация
 
 ```java
 /**
@@ -999,7 +999,7 @@ public class IPv6Addressing {
 
 **TCP** и **UDP** — основные протоколы транспортного уровня.
 
-### **TCP** (**Transmission `Control` Protocol**)
+### TCP (Transmission `Control` Protocol)
 
 ```java
 /**
@@ -1228,7 +1228,7 @@ public class TCPProtocol {
 }
 ```
 
-### **UDP** (**User `Datagram` Protocol**)
+### UDP (User `Datagram` Protocol)
 
 ```java
 /**
@@ -1368,7 +1368,7 @@ public class UDPProtocol {
 
 **HTTP**, **DNS**, **SMTP** — популярные протоколы прикладного уровня.
 
-### **HTTP** (**HyperText `Transfer` Protocol**)
+### HTTP (HyperText `Transfer` Protocol)
 
 ```java
 /**
@@ -1572,7 +1572,7 @@ public class HTTPProtocol {
 }
 ```
 
-### **DNS** (**Domain `Name` System**)
+### DNS (Domain `Name` System)
 
 ```java
 /**
@@ -1805,7 +1805,7 @@ public class DNSProtocol {
 
 **Wi-Fi**, **Bluetooth**, мобильные сети.
 
-### **Wi-Fi** сети
+### Wi-Fi сети
 
 ```java
 /**
@@ -2003,7 +2003,7 @@ public class WiFiNetworks {
 
 Основные концепции сетевой безопасности.
 
-### **Firewall** и **NAT**
+### Firewall и NAT
 
 ```java
 /**
@@ -2245,7 +2245,7 @@ public class NetworkSecurity {
 ### Будущие тенденции
 
 - **IPv6 массовое внедрение**: Исчерпание **IPv4** адресов
-- **Software-`Defined Networking` (**SDN**)**: Программно-управляемые сети
+- **Software-`Defined Networking` (SDN)**: Программно-управляемые сети
 - **5G и IoT**: Высокоскоростные беспроводные сети
 - **Квантовая безопасность**: Новые методы шифрования
 - **Edge Computing**: Обработка данных на границе сети

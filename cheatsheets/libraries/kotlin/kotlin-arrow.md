@@ -28,21 +28,21 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
-  - [Either (**для обработки ошибок**)](#either-для-обработки-ошибок)
-  - [Option (**nullable safety**)](#option-nullable-safety)
-  - [Try (**обработка исключений**)](#try-обработка-исключений)
+  - [Either (для обработки ошибок)](#either-для-обработки-ошибок)
+  - [Option (nullable safety)](#option-nullable-safety)
+  - [Try (обработка исключений)](#try-обработка-исключений)
   - [IO (управление side effects)](#io-управление-side-effects)
 - [Продвинутые возможности](#продвинутые-возможности)
-  - [Validated (**накопление ошибок**)](#validated-накопление-ошибок)
-  - [NonEmptyList (**непустые коллекции**)](#nonemptylist-непустые-коллекции)
-  - [Eval (**ленивые вычисления**)](#eval-ленивые-вычисления)
-  - [Continuation (**CPS**)](#continuation-cps)
+  - [Validated (накопление ошибок)](#validated-накопление-ошибок)
+  - [NonEmptyList (непустые коллекции)](#nonemptylist-непустые-коллекции)
+  - [Eval (ленивые вычисления)](#eval-ленивые-вычисления)
+  - [Continuation (CPS)](#continuation-cps)
 - [Работа с коллекциями](#работа-с-коллекциями)
   - [Sequence comprehensions](#sequence-comprehensions)
   - [Extensions для стандартных коллекций](#extensions-для-стандартных-коллекций)
-- [Optics (**линзы**)](#optics-линзы)
-  - [Lens (**для immutable updates**)](#lens-для-immutable-updates)
-  - [Prism (**для работы с sealed classes**)](#prism-для-работы-с-sealed-classes)
+- [Optics (линзы)](#optics-линзы)
+  - [Lens (для immutable updates)](#lens-для-immutable-updates)
+  - [Prism (для работы с sealed classes)](#prism-для-работы-с-sealed-classes)
 - [Integration с Kotlin](#integration-с-kotlin)
   - [KotlinX Coroutines integration](#kotlinx-coroutines-integration)
   - [Kotlin Serialization integration](#kotlin-serialization-integration)
@@ -64,14 +64,14 @@ updated: "2026-02-11"
   - [Common Issues](#common-issues)
   - [Debugging Arrow Code](#debugging-arrow-code)
 - [Experimental Features](#experimental-features)
-  - [Arrow Meta (**compile-time**)](#arrow-meta-compile-time)
+  - [Arrow Meta (compile-time)](#arrow-meta-compile-time)
   - [Arrow Fx Toolkit](#arrow-fx-toolkit)
 
 ## Основные возможности
 
-### **Either** (**для обработки ошибок**)
+### Either (для обработки ошибок)
 
-**Either**: **Left** (**ошибка**) / **Right** (**успех**), **flatMap**, **getOrElse** и **pattern matching**.
+**Either**: **Left** (ошибка) / **Right** (успех), **flatMap**, **getOrElse** и **pattern matching**.
 
 ```kotlin
 import arrow.core.Either
@@ -116,7 +116,7 @@ val finalResult = result.fold(
 // fold объединяет обе ветки Either в одно значение
 ```
 
-### **Option** (**nullable safety**)
+### Option (nullable safety)
 ```kotlin
 import arrow.core.Option
 import arrow.core.none
@@ -168,7 +168,7 @@ val message = when (user) {
 }
 ```
 
-### **Try** (**обработка исключений**)
+### Try (обработка исключений)
 ```kotlin
 import arrow.core.Try
 import arrow.core.Success
@@ -212,7 +212,7 @@ val safeResult = result.getOrElse { "Default value" }
 val safeDefault = result.getOrDefault("Default value")
 ```
 
-### `IO` (**управление side effects**)
+### `IO` (управление side effects)
 ```kotlin
 import arrow.fx.IO
 import arrow.fx.IO.Companion
@@ -263,7 +263,7 @@ val asyncOperation: IO<String> = IO.async { callback ->
 
 ## Продвинутые возможности
 
-### **Validated** (**накопление ошибок**)
+### Validated (накопление ошибок)
 ```kotlin
 import arrow.core.Validated
 import arrow.core.Valid
@@ -307,7 +307,7 @@ val result = when (validation) {
 }
 ```
 
-### **NonEmptyList** (**непустые коллекции**)
+### NonEmptyList (непустые коллекции)
 ```kotlin
 import arrow.core.NonEmptyList
 import arrow.core.nonEmptyListOf
@@ -333,7 +333,7 @@ val list = numbers.toList()
 val array = numbers.toTypedArray()
 ```
 
-### **Eval** (**ленивые вычисления**)
+### Eval (ленивые вычисления)
 ```kotlin
 import arrow.core.Eval
 
@@ -365,7 +365,7 @@ fun factorial(n: Int): Eval<Long> =
 val fact100 = factorial(100).value()
 ```
 
-### **Continuation** (**CPS**)
+### Continuation (CPS)
 ```kotlin
 import arrow.core.continuations.either
 import arrow.core.continuations.option
@@ -397,7 +397,7 @@ suspend fun parallelOperations(): Either<String, Pair<String, String>> = either 
 
 ## Работа с коллекциями
 
-### **Sequence comprehensions**
+### Sequence comprehensions
 ```kotlin
 import arrow.core.sequence
 
@@ -417,7 +417,7 @@ val comprehension = sequence {
 }
 ```
 
-### **Extensions** для стандартных коллекций
+### Extensions для стандартных коллекций
 ```kotlin
 import arrow.core.filterOption
 import arrow.core.flattenOption
@@ -436,9 +436,9 @@ val traversed = numbers.traverseOption { if (it > 0) some(it) else none() }
 // Option<List<Int>> = Some([1, 2, 3, 4, 5])
 ```
 
-## **Optics** (**линзы**)
+## Optics (линзы)
 
-### **Lens** (**для immutable updates**)
+### Lens (для immutable updates)
 ```kotlin
 import arrow.optics.Lens
 import arrow.optics.optics
@@ -476,7 +476,7 @@ val modifiedPerson = personCityLens.modify(person, String::toUpperCase)
 // Person(name=John, address=Address(street=Main St, city=NYC))
 ```
 
-### **Prism** (**для работы с sealed classes**)
+### Prism (для работы с sealed classes)
 ```kotlin
 import arrow.optics.Prism
 import arrow.optics.optics
@@ -509,9 +509,9 @@ val rectRadius = circlePrism.getOrNull(rectangle) // null
 val newCircle = circlePrism.reverseGet(10.0) // Circle(10.0)
 ```
 
-## **Integration** с **Kotlin**
+## Integration с Kotlin
 
-### **KotlinX Coroutines integration**
+### KotlinX Coroutines integration
 ```kotlin
 import arrow.fx.coroutines.*
 import kotlinx.coroutines.*
@@ -539,7 +539,7 @@ val result = managedResource.use { file ->
 }
 ```
 
-### **Kotlin Serialization integration**
+### Kotlin Serialization integration
 ```kotlin
 import arrow.core.serialization.*
 import kotlinx.serialization.*
@@ -559,9 +559,9 @@ val optionSerializer = OptionSerializer(User.serializer())
 val optionJson = Json.encodeToString(optionSerializer, some(user))
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Service Layer** с **Arrow**
+### Service Layer с Arrow
 ```kotlin
 @Service
 class UserService(
@@ -602,7 +602,7 @@ class UserService(
 }
 ```
 
-### **Controller** с **Arrow**
+### Controller с Arrow
 ```kotlin
 @RestController
 @RequestMapping("/api/users")
@@ -636,9 +636,9 @@ class UserController(
 }
 ```
 
-## **Testing** с **Arrow**
+## Testing с Arrow
 
-### **Testing Either**
+### Testing Either
 ```kotlin
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -695,7 +695,7 @@ class UserServiceTest {
 }
 ```
 
-### **Testing Validated**
+### Testing Validated
 ```kotlin
 class ValidationTest {
 
@@ -739,7 +739,7 @@ class ValidationTest {
 
 ## Лучшие практики
 
-### **Error Handling Patterns**
+### Error Handling Patterns
 ```kotlin
 // Railway oriented programming
 suspend fun processOrder(order: Order): Either<String, ProcessedOrder> = either {
@@ -772,7 +772,7 @@ fun safeUserOperations(userId: String?): Option<UserDetails> = option {
 }
 ```
 
-### **Type Safety Improvements**
+### Type Safety Improvements
 ```kotlin
 // Использование Either вместо exceptions
 data class HttpError(val code: Int, val message: String)
@@ -798,7 +798,7 @@ suspend fun businessOperation(): Either<DomainError, Result> = either {
 }
 ```
 
-### **Performance Considerations**
+### Performance Considerations
 ```kotlin
 // Использование Eval для ленивых вычислений
 val expensiveConfig: Eval<Config> = Eval.later {
@@ -816,9 +816,9 @@ fun safeFactorial(n: Long): Eval<BigInteger> =
     else Eval.defer { safeFactorial(n - 1).map { it.multiply(BigInteger.valueOf(n)) } }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From try-catch** to **Either**
+### From try-catch to Either
 ```kotlin
 // Старый подход
 fun divide(a: Int, b: Int): Int {
@@ -845,7 +845,7 @@ result.fold(
 )
 ```
 
-### **From null checks** to **Option**
+### From null checks to Option
 ```kotlin
 // Старый подход
 fun findUser(id: Int): User? = users.find { it.id == id }
@@ -860,7 +860,7 @@ val user = findUser(123)
 val name = user.map { it.name }.getOrElse { "Unknown" }
 ```
 
-### **From CompletableFuture** to `IO`
+### From CompletableFuture to `IO`
 ```kotlin
 // Старый подход
 fun asyncOperation(): CompletableFuture<String> =
@@ -878,7 +878,7 @@ fun asyncOperation(): IO<String> = IO {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 // Проблема: Stack overflow в recursion
 // Решение: Использовать Eval.defer для stack-safe recursion
@@ -899,7 +899,7 @@ val result = either.eager<String, Int> {
 }
 ```
 
-### **Debugging Arrow Code**
+### Debugging Arrow Code
 ```kotlin
 // Логирование для Either
 fun <A, B> Either<A, B>.log(): Either<A, B> = this.also {
@@ -926,9 +926,9 @@ fun <A> Try<A>.trace(): Try<A> = this.also {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Arrow Meta** (**compile-time**)
+### Arrow Meta (compile-time)
 ```kotlin
 // Compile-time code generation (экспериментально)
 // @optics аннотация генерирует линзы автоматически
@@ -948,7 +948,7 @@ data class Employee(val name: String, val salary: Double) {
 // И многое другое...
 ```
 
-### **Arrow** Fx **Toolkit**
+### Arrow Fx Toolkit
 ```kotlin
 // Продвинутые операторы для функционального программирования
 import arrow.fx.*
@@ -983,5 +983,5 @@ val rateLimited = IO { processRequest() }
 ## См. также
 - [[kotlin-kotlinx-coroutines|Kotlin Coroutines]] — Асинхронное программирование в **Kotlin**
 - [[kotlin-fp-basics|Functional Programming]] — Функциональное программирование в **Kotlin**
-- [Паттерны проектирования](../../patterns/README.md) — Паттерны для обработки ошибок
+- [[README|Паттерны проектирования]] — Паттерны для обработки ошибок
 

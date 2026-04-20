@@ -22,8 +22,8 @@ updated: "2026-02-11"
 - [Flask](https://flask.palletsprojects.com/)
 
 ### См. также
-- [Frameworks README](../README.md) — раздел фреймворков
-- [Java Frameworks](../java-frameworks/README.md) — **Spring**, **Quarkus**
+- [[README|Frameworks README]] — раздел фреймворков
+- [[README|Java Frameworks]] — **Spring**, **Quarkus**
 
 ## Содержание
 
@@ -187,6 +187,6 @@ def get_item(id):
 
 ## Заключение
 
-**Python**-экосистема предлагает **Django** для полноценных приложений, **FastAPI** для современного **API**, **Flask** для гибкости. Выбор по требованиям к **ORM**, админке и асинхронности. См. [Frameworks README](../README.md).
+**Python**-экосистема предлагает **Django** для полноценных приложений, **FastAPI** для современного **API**, **Flask** для гибкости. Выбор по требованиям к **ORM**, админке и асинхронности. См. [[README|Frameworks README]].
 
 

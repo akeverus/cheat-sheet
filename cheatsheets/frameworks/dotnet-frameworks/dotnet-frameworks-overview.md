@@ -26,8 +26,8 @@ updated: "2026-02-11"
 - [NuGet](https://www.nuget.org/) — пакеты
 
 ### См. также
-- [Frameworks README](../README.md) — раздел фреймворков
-- [Java Frameworks](../java-frameworks/README.md) — **Spring**, **Quarkus**, **Micronaut**
+- [[README|Frameworks README]] — раздел фреймворков
+- [[README|Java Frameworks]] — **Spring**, **Quarkus**, **Micronaut**
 
 ## Содержание
 
@@ -49,7 +49,7 @@ updated: "2026-02-11"
 
 ## Введение
 
-**.NET** — кроссплатформенная экосистема от **Microsoft**: runtime (**CLR**), языки (**C#**, **F#**, **VB.NET**), библиотеки и фреймворки. **ASP.NET Core** — веб-фреймворк для **API** и **MVC**; **Entity Framework Core** — **ORM**; **Blazor** — **UI** на **C#** (WebAssembly или Server); **MAUI** — кроссплатформенные нативные приложения. Документ даёт обзор основных компонентов, установки, базового использования и лучших практик.
+**.NET** — кроссплатформенная экосистема от **Microsoft**: runtime (CLR), языки (**C#**, **F#**, **VB.NET**), библиотеки и фреймворки. **ASP.NET Core** — веб-фреймворк для **API** и **MVC**; **Entity Framework Core** — **ORM**; **Blazor** — **UI** на **C#** (WebAssembly или Server); **MAUI** — кроссплатформенные нативные приложения. Документ даёт обзор основных компонентов, установки, базового использования и лучших практик.
 
 **Ключевые понятия:** **Middleware**, **Dependency Injection**, **Kestrel**, **DbContext**, **Razor**, **SignalR**, **LINQ**, **NuGet**, **MSBuild**, **dotnet CLI**.
 
@@ -59,8 +59,8 @@ updated: "2026-02-11"
 **.NET** (ранее **.NET Core**) — открытая, кроссплатформенная платформа. Нумерация с **.NET 5** унифицирована (нет **.NET Core 4**). Текущие **LTS**: **.NET 6**, **.NET 8**. **SDK** включает runtime, компиляторы, **CLI**, шаблоны проектов.
 
 **Основные компоненты:**
-- **CLR** (**Common Language Runtime**) — управляемый runtime, **GC**, **JIT**.
-- **BCL** (**Base Class Library**) — коллекции, **IO**, рефлексия, **async/await**.
+- **CLR** (Common Language Runtime) — управляемый runtime, **GC**, **JIT**.
+- **BCL** (Base Class Library) — коллекции, **IO**, рефлексия, **async/await**.
 - **Языки:** **C#**, **F#**, **VB.NET** (в основном **C#** в современных проектах).
 
 **Установка (пример на Ubuntu):**
@@ -241,4 +241,4 @@ dotnet publish -c Release -o ./publish
 
 ## Заключение
 
-Экосистема **.NET** предоставляет **ASP.NET Core**, **EF Core**, **Blazor**, **MAUI** для веб-приложений, данных и кроссплатформенного **UI**. Используйте **DI**, конфигурацию из окружения, миграции в **CI** и единообразное оформление **API**. См. [Frameworks README](../README.md).
+Экосистема **.NET** предоставляет **ASP.NET Core**, **EF Core**, **Blazor**, **MAUI** для веб-приложений, данных и кроссплатформенного **UI**. Используйте **DI**, конфигурацию из окружения, миграции в **CI** и единообразное оформление **API**. См. [[README|Frameworks README]].

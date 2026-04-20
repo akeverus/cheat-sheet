@@ -23,14 +23,14 @@ updated: "2026-02-11"
 
 ### См. также
 - [[java-mockito|Mockito]] — **Mockito** для **Java**
-- [Unit-тестирование с MockK](../../testing/unit-testing/README.md) — **Unit** тестирование с **MockK**
+- [[README|Unit-тестирование с MockK]] — **Unit** тестирование с **MockK**
 
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
   - [Создание Mock объектов](#создание-mock-объектов)
   - [Stubbing методов](#stubbing-методов)
-  - [Verification (**проверка вызовов**)](#verification-проверка-вызовов)
+  - [Verification (проверка вызовов)](#verification-проверка-вызовов)
 - [Продвинутые возможности](#продвинутые-возможности)
   - [Argument Matching](#argument-matching)
   - [Mocking Kotlin-специфичных конструкций](#mocking-kotlin-специфичных-конструкций)
@@ -67,13 +67,13 @@ updated: "2026-02-11"
   - [When to use MockK](#when-to-use-mockk)
   - [Anti-patterns to avoid](#anti-patterns-to-avoid)
 - [Experimental Features](#experimental-features)
-  - [MockK 2.0+ **Features** (**Future**)](#mockk-20-features-future)
+  - [MockK 2.0+ **Features** (Future)](#mockk-20-features-future)
 
 ## Основные возможности
 
-### Создание **Mock** объектов
+### Создание Mock объектов
 
-Пример создания **mock**-объектов в **MockK** (**Kotlin**).
+Пример создания **mock**-объектов в **MockK** (Kotlin).
 
 ```kotlin
 import io.mockk.*
@@ -107,7 +107,7 @@ val namedMock = mockk<Service>(name = "userService")
 // Помогает идентифицировать mock в сложных тестах с множеством mock объектов
 ```
 
-### **Stubbing** методов
+### Stubbing методов
 ```kotlin
 /
  * Stubbing методов в MockK
@@ -156,7 +156,7 @@ every { mockRepository.findByName(any()) } answers {
 // При вызове findByName("john") вернется User(0, "JOHN")
 ```
 
-### **Verification** (**проверка вызовов**)
+### Verification (проверка вызовов)
 ```kotlin
 val mockService = mockk<EmailService>()
 
@@ -183,7 +183,7 @@ verify(timeout = 1000) { mockService.sendEmail(any(), any()) }
 
 ## Продвинутые возможности
 
-### **Argument Matching**
+### Argument Matching
 ```kotlin
 val mockRepository = mockk<UserRepository>()
 
@@ -213,7 +213,7 @@ val slot = slot<String>()
 every { mockRepository.findByEmail(capture(slot)) } returns User(1, slot.captured)
 ```
 
-### **Mocking Kotlin**-специфичных конструкций
+### Mocking Kotlin-специфичных конструкций
 ```kotlin
 // Mocking inline функций
 inline fun <T> measureTime(block: () -> T): Pair<T, Long> {
@@ -266,7 +266,7 @@ fun `should mock operator functions`() {
 }
 ```
 
-### **Coroutines support**
+### Coroutines support
 ```kotlin
 import io.mockk.*
 import kotlinx.coroutines.*
@@ -318,7 +318,7 @@ fun `should handle Flow`() = runTest {
 }
 ```
 
-### **DSL** для сложных сценариев
+### DSL для сложных сценариев
 ```kotlin
 @Test
 fun `should handle complex interaction scenario`() {
@@ -348,9 +348,9 @@ fun `should handle complex interaction scenario`() {
 }
 ```
 
-## **Testing Patterns**
+## Testing Patterns
 
-### **Unit Testing** с **MockK**
+### Unit Testing с MockK
 ```kotlin
 class UserServiceTest {
 
@@ -416,7 +416,7 @@ class UserServiceTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```kotlin
 @SpringBootTest
 class UserControllerIntegrationTest {
@@ -455,7 +455,7 @@ class UserControllerIntegrationTest {
 }
 ```
 
-### **Data Class Testing**
+### Data Class Testing
 ```kotlin
 @Test
 fun `should handle data class operations`() {
@@ -481,9 +481,9 @@ fun `should handle data class operations`() {
 }
 ```
 
-## **Advanced Features**
+## Advanced Features
 
-### **Dynamic Mocking**
+### Dynamic Mocking
 ```kotlin
 @Test
 fun `should handle dynamic mocking scenarios`() {
@@ -507,7 +507,7 @@ fun `should handle dynamic mocking scenarios`() {
 }
 ```
 
-### **Hierarchical Mocking**
+### Hierarchical Mocking
 ```kotlin
 data class Company(val name: String, val departments: List<Department>)
 data class Department(val name: String, val employees: List<Employee>)
@@ -531,7 +531,7 @@ fun `should handle hierarchical data structures`() {
 }
 ```
 
-### **Mocking Static Methods**
+### Mocking Static Methods
 ```kotlin
 object Utils {
     fun formatDate(date: LocalDate): String = date.toString()
@@ -561,7 +561,7 @@ fun `should mock static methods`() {
 }
 ```
 
-### **Constructor Mocking**
+### Constructor Mocking
 ```kotlin
 class DatabaseConnection(url: String) {
     fun connect(): Boolean = true
@@ -589,7 +589,7 @@ fun `should mock constructor calls`() {
 }
 ```
 
-### **Object Mocking**
+### Object Mocking
 ```kotlin
 object Configuration {
     val databaseUrl: String = "jdbc:h2:mem:test"
@@ -610,9 +610,9 @@ fun `should mock object methods and properties`() {
 }
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Testing Service Layer**
+### Testing Service Layer
 ```kotlin
 @Service
 class UserService(
@@ -695,7 +695,7 @@ class UserServiceTest {
 }
 ```
 
-### **Testing Controller Layer**
+### Testing Controller Layer
 ```kotlin
 @WebMvcTest(UserController::class)
 class UserControllerTest {
@@ -750,7 +750,7 @@ class UserControllerTest {
 }
 ```
 
-### **Testing Repository Layer**
+### Testing Repository Layer
 ```kotlin
 @DataJpaTest
 class UserRepositoryTest {
@@ -796,9 +796,9 @@ class UserRepositoryTest {
 }
 ```
 
-## **Testing Best Practices**
+## Testing Best Practices
 
-### **Test Structure** и **Naming**
+### Test Structure и Naming
 ```kotlin
 class UserServiceTest : BehaviorSpec({
 
@@ -845,7 +845,7 @@ class UserServiceTest : BehaviorSpec({
 })
 ```
 
-### **Custom Matchers** и **Assertions**
+### Custom Matchers и Assertions
 ```kotlin
 // Custom matchers
 fun hasValidEmail() = match<User> { it.email.contains("@") }
@@ -872,7 +872,7 @@ fun `should validate user creation`() {
 }
 ```
 
-### **Test Data Builders**
+### Test Data Builders
 ```kotlin
 class UserBuilder {
     private var id: Long = 0
@@ -908,9 +908,9 @@ fun `should create valid user`() {
 }
 ```
 
-## **Performance Testing**
+## Performance Testing
 
-### **Benchmarking Mocks**
+### Benchmarking Mocks
 ```kotlin
 @Test
 fun `performance test with many mock calls`() {
@@ -937,7 +937,7 @@ fun `performance test with many mock calls`() {
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 class MockkTroubleshooting {
 
@@ -1006,7 +1006,7 @@ class MockkTroubleshooting {
 }
 ```
 
-### **Debugging MockK Tests**
+### Debugging MockK Tests
 ```kotlin
 @Test
 fun `debug mock interactions`() {
@@ -1037,9 +1037,9 @@ fun `debug mock interactions`() {
 }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From Mockito** to **MockK**
+### From Mockito to MockK
 ```kotlin
 // Mockito
 `when`(mockService.getUser(1)).thenReturn(user)
@@ -1050,7 +1050,7 @@ every { mockService.getUser(1) } returns user
 verify { mockService.getUser(1) }
 ```
 
-### **From EasyMock** to **MockK**
+### From EasyMock to MockK
 ```kotlin
 // EasyMock
 EasyMock.expect(mockService.getUser(1)).andReturn(user)
@@ -1062,7 +1062,7 @@ every { mockService.getUser(1) } returns user
 verify { mockService.getUser(1) }
 ```
 
-### **From PowerMock** to **MockK**
+### From PowerMock to MockK
 ```kotlin
 // PowerMock
 @RunWith(PowerMockRunner.class)
@@ -1085,7 +1085,7 @@ fun testStatic() {
 
 ## Лучшие практики
 
-### **When** to **use MockK**
+### When to use MockK
 ```kotlin
 // Используйте MockK когда:
 
@@ -1143,7 +1143,7 @@ fun `DSL and operators work perfectly`() {
 }
 ```
 
-### **Anti-patterns** to **avoid**
+### Anti-patterns to avoid
 ```kotlin
 @Test
 fun `avoid over-mocking`() {
@@ -1185,9 +1185,9 @@ fun `prefer relaxed mocks for integration tests`() {
 }
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **MockK** 2.0+ **Features** (**Future**)
+### MockK 2.0+ Features (Future)
 ```kotlin
 // Предполагаемые возможности MockK 2.0+
 

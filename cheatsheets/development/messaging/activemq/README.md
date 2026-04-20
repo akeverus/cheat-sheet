@@ -19,13 +19,13 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [activemq.md](activemq.md) — архитектура, установка, работа с очередями/топиками, Spring JMS, HA
+- [[activemq]] — архитектура, установка, работа с очередями/топиками, Spring JMS, HA
 
 ### Соседние разделы
-- [Родительский раздел: Messaging](../README.md)
-- [Kafka](../kafka/README.md) — альтернатива для высокого throughput и стриминга
+- [[README|Родительский раздел: Messaging]]
+- [[README|Kafka]] — альтернатива для высокого throughput и стриминга
 - [RabbitMQ](../rabbitmq/) — альтернатива с exchange/binding-моделью
-- [NATS](../nats/README.md) — lightweight cloud-native альтернатива
+- [[README|NATS]] — lightweight cloud-native альтернатива
 - [Event-Driven Architecture](../../../architecture/enterprise-patterns/)
 - [Spring Boot](../../../frameworks/java-frameworks/spring/)
 
@@ -76,12 +76,12 @@ updated: "2026-04-17"
 
 | Тема | Где смотреть |
 |------|--------------|
-| Архитектура (broker, connector, store) | [activemq.md](activemq.md#архитектура-и-компоненты) |
-| Установка и конфигурация | [activemq.md](activemq.md#установка-и-конфигурация) |
-| Queue vs Topic, durable subscribers | [activemq.md](activemq.md) |
-| Spring JMS интеграция (`@JmsListener`) | [activemq.md](activemq.md) |
-| HA: Master-Slave, Network of Brokers, Replication (Artemis) | [activemq.md](activemq.md) |
-| Мониторинг (JMX, Web Console) | [activemq.md](activemq.md) |
+| Архитектура (broker, connector, store) | [[activemq#архитектура-и-компоненты]] |
+| Установка и конфигурация | [[activemq#установка-и-конфигурация]] |
+| Queue vs Topic, durable subscribers | [[activemq]] |
+| Spring JMS интеграция (`@JmsListener`) | [[activemq]] |
+| HA: Master-Slave, Network of Brokers, Replication (Artemis) | [[activemq]] |
+| Мониторинг (JMX, Web Console) | [[activemq]] |
 
 ## Production-каталог
 
@@ -102,7 +102,7 @@ updated: "2026-04-17"
 
 ## Куда идти дальше
 
-- Kafka для событийного логирования и стриминга — [../kafka/README.md](../kafka/README.md)
+- Kafka для событийного логирования и стриминга — [[README]]
 - RabbitMQ для гибкого routing — [../rabbitmq/](../rabbitmq/)
-- NATS для cloud-native сценариев — [../nats/README.md](../nats/README.md)
+- NATS для cloud-native сценариев — [[README]]
 - Event-Driven архитектура — [../../../architecture/enterprise-patterns/](../../../architecture/enterprise-patterns/)

@@ -18,36 +18,36 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### HTTP
-- [Ktor](kotlin-ktor.md)
+- [[kotlin-ktor|Ktor]]
 
 ### Persistence
-- [Exposed](kotlin-exposed.md)
+- [[kotlin-exposed|Exposed]]
 
 ### Concurrency и serialization
-- [kotlinx.coroutines](kotlin-kotlinx-coroutines.md)
-- [kotlinx.serialization](kotlin-kotlinx-serialization.md)
-- [kotlinx.datetime](kotlin-kotlinx-datetime.md)
+- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
+- [[kotlin-kotlinx-serialization|kotlinx.serialization]]
+- [[kotlin-kotlinx-datetime|kotlinx.datetime]]
 
 ### Функциональное программирование
-- [Arrow](kotlin-arrow.md) — Either, Option, Resource
+- [[kotlin-arrow|Arrow]] — Either, Option, Resource
 
 ### DI
-- [Koin / Kodein](kotlin-kodein.md)
+- [[kotlin-kodein|Koin / Kodein]]
 
 ### Конфигурация
-- [Konfig](kotlin-konfig.md)
+- [[kotlin-konfig|Konfig]]
 
 ### JSON legacy
-- [Klaxon](kotlin-klaxon.md)
+- [[kotlin-klaxon|Klaxon]]
 
 ### Тестирование
-- [MockK](kotlin-mockk.md)
+- [[kotlin-mockk|MockK]]
 
 ### Соседние разделы
-- [Libraries](../README.md)
-- [Kotlin Frameworks](../../frameworks/kotlin-frameworks/README.md)
-- [Kotlin (язык)](../../languages/kotlin/README.md)
-- [Java-библиотеки](../java/README.md)
+- [[README|Libraries]]
+- [[README|Kotlin Frameworks]]
+- [[README|Kotlin (язык)]]
+- [[README|Java-библиотеки]]
 
 ## Содержание
 
@@ -80,11 +80,11 @@ updated: "2026-04-17"
 ## Маршруты чтения
 
 - **Kotlin backend с нуля:** `kotlin-ktor.md` → `kotlin-exposed.md` → `kotlin-kotlinx-coroutines.md` → `kotlin-mockk.md`.
-- **Kotlin в Spring Boot:** `kotlin-mockk.md` + `kotlin-kotlinx-coroutines.md` + [spring-webflux](../../frameworks/java-frameworks/spring/spring-webflux.md).
+- **Kotlin в Spring Boot:** `kotlin-mockk.md` + `kotlin-kotlinx-coroutines.md` + [[spring-webflux]].
 - **FP-путь:** `kotlin-arrow.md` → `kotlin-kotlinx-coroutines.md` (Flow + Arrow Effect).
 
 ## Куда идти дальше
 
-- Kotlin-фреймворки — [frameworks/kotlin-frameworks](../../frameworks/kotlin-frameworks/README.md)
-- Язык Kotlin — [languages/kotlin](../../languages/kotlin/README.md)
-- Java-библиотеки — [libraries/java](../java/README.md)
+- Kotlin-фреймворки — [[README|frameworks/kotlin-frameworks]]
+- Язык Kotlin — [[README|languages/kotlin]]
+- Java-библиотеки — [[README|libraries/java]]

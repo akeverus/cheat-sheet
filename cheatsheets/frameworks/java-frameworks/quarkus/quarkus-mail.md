@@ -80,7 +80,7 @@ related: ["quarkus-core.md", "quarkus-reactive.md"]
 
 ## Configuration
 
-### **SMTP Configuration**
+### SMTP Configuration
 
 **application.properties:**
 
@@ -94,7 +94,7 @@ quarkus.mailer.ssl=false
 quarkus.mailer.start-tls=true
 ```
 
-### **Advanced Configuration**
+### Advanced Configuration
 
 ```properties
 quarkus.mailer.host=smtp.gmail.com
@@ -107,7 +107,7 @@ quarkus.mailer.max-pool-size=10
 
 ## Basic Email Sending
 
-### **Simple Text Email**
+### Simple Text Email
 
 **Отправка простого текстового письма:**
 
@@ -129,7 +129,7 @@ public class EmailService {
 }
 ```
 
-### **HTML Email**
+### HTML Email
 
 **Отправка **HTML** письма:**
 
@@ -148,7 +148,7 @@ public class HtmlEmailService {
 
 ## Advanced Email Features
 
-### **Email with Attachments**
+### Email with Attachments
 
 **Письмо с вложениями:**
 
@@ -172,7 +172,7 @@ public class AttachmentEmailService {
 }
 ```
 
-### **Multiple Recipients**
+### Multiple Recipients
 
 **Несколько получателей:**
 
@@ -196,7 +196,7 @@ public class MultiRecipientService {
 
 ## Async Email Sending
 
-### **Reactive Email**
+### Reactive Email
 
 **Асинхронная отправка:**
 
@@ -218,7 +218,7 @@ public class AsyncEmailService {
 
 ## Email Templates
 
-### **Qute Templates**
+### Qute Templates
 
 **Использование **Qute** шаблонов:**
 
@@ -256,7 +256,7 @@ public class TemplateEmailService {
 
 ## Лучшие практики
 
-### 1. Используйте **async** для отправки
+### 1. Используйте async для отправки
 
 ```java
 // ✅ Хорошо
@@ -265,7 +265,7 @@ public Uni<Void> sendEmailAsync(String to, String subject, String body) {
 }
 ```
 
-### 2. Используйте шаблоны для **HTML**
+### 2. Используйте шаблоны для HTML
 
 ```java
 // ✅ Хорошо
@@ -284,7 +284,7 @@ mailer.send(mail)
 
 ## Email Headers
 
-### **Custom Headers**
+### Custom Headers
 
 **Добавление кастомных заголовков:**
 
@@ -304,7 +304,7 @@ public class HeaderEmailService {
 }
 ```
 
-### **Reply-To Header**
+### Reply-To Header
 
 **Настройка **Reply-To**:**
 
@@ -325,7 +325,7 @@ public class ReplyToService {
 
 ## Email Validation
 
-### **Email Address Validation**
+### Email Address Validation
 
 **Валидация **email** адресов:**
 
@@ -350,7 +350,7 @@ public class ValidatedEmailService {
 
 ## Batch Email Sending
 
-### **Bulk Email**
+### Bulk Email
 
 **Массовая отправка:**
 
@@ -376,7 +376,7 @@ public class BulkEmailService {
 
 ## Email Queue
 
-### **Queued Email**
+### Queued Email
 
 **Очередь для отправки:**
 
@@ -410,7 +410,7 @@ public class QueuedEmailService {
 
 ## Email Templates with Qute
 
-### **Template-based Emails**
+### Template-based Emails
 
 **Использование **Qute** шаблонов:**
 
@@ -431,7 +431,7 @@ public class TemplateEmailService {
 }
 ```
 
-### **Template Example**
+### Template Example
 
 **Пример шаблона:**
 
@@ -451,7 +451,7 @@ public class TemplateEmailService {
 
 ## Email Queue Management
 
-### **Queue-based Email Sending**
+### Queue-based Email Sending
 
 **Отправка через очередь:**
 
@@ -479,7 +479,7 @@ public class EmailQueueService {
 }
 ```
 
-### **Email Delivery Tracking**
+### Email Delivery Tracking
 
 **Отслеживание доставки:**
 
@@ -505,7 +505,7 @@ public class EmailTrackingService {
 
 ## Email Delivery Optimization
 
-### **Batch Email Sending**
+### Batch Email Sending
 
 **Массовая отправка **email**:**
 
@@ -527,7 +527,7 @@ public class BatchEmailService {
 }
 ```
 
-### **Email Rate Limiting**
+### Email Rate Limiting
 
 **Ограничение частоты отправки:**
 
@@ -544,7 +544,7 @@ public class RateLimitedEmailService {
 }
 ```
 
-### **Email Template Caching**
+### Email Template Caching
 
 **Кеширование шаблонов:**
 

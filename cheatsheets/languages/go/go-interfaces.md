@@ -179,7 +179,7 @@ func main() {
 }
 ```
 
-## **Type Assertions**
+## Type Assertions
 
 **Type Assertions** позволяют проверять и извлекать конкретные типы из интерфейсов.
 
@@ -197,7 +197,7 @@ if ok {
 }
 ```
 
-### **Type Assertion** с интерфейсами
+### Type Assertion с интерфейсами
 
 ```go
 func processShape(s Shape) {
@@ -211,11 +211,11 @@ func processShape(s Shape) {
 }
 ```
 
-## **Type Switches**
+## Type Switches
 
 **Type Switches** позволяют проверять тип значения в интерфейсе.
 
-### Базовый **type switch**
+### Базовый type switch
 
 ```go
 func processValue(v interface{}) {
@@ -232,7 +232,7 @@ func processValue(v interface{}) {
 }
 ```
 
-### **Type switch** с интерфейсами
+### Type switch с интерфейсами
 
 ```go
 func processShape(s Shape) {
@@ -248,11 +248,11 @@ func processShape(s Shape) {
 }
 ```
 
-## **Empty Interface**
+## Empty Interface
 
-**Empty Interface** (**`interface{}`**) может содержать значения любого типа.
+**Empty Interface** (`interface{}`) может содержать значения любого типа.
 
-### Использование **empty interface**
+### Использование empty interface
 
 ```go
 func printValue(v interface{}) {
@@ -266,7 +266,7 @@ func main() {
 }
 ```
 
-### Слайсы с **empty interface**
+### Слайсы с empty interface
 
 ```go
 var values []interface{} = []interface{}{
@@ -430,7 +430,7 @@ func (c *MemoryCache) Clear() error {
 }
 ```
 
-### Практические примеры: Интерфейсы для **HTTP** клиентов
+### Практические примеры: Интерфейсы для HTTP клиентов
 
 ```go
 type HTTPClient interface {
@@ -895,7 +895,7 @@ func (r *PluginRegistry) ExecuteAll(ctx context.Context, input interface{}) erro
 }
 ```
 
-### Практические примеры: Интерфейсы для **middleware**
+### Практические примеры: Интерфейсы для middleware
 
 ```go
 type Middleware interface {

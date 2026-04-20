@@ -28,10 +28,10 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Основные возможности](#основные-возможности)
-  - [Instant (**момент времени**)](#instant-момент-времени)
-  - [LocalDateTime (**локальная дата и время**)](#localdatetime-локальная-дата-и-время)
-  - [LocalDate (**только дата**)](#localdate-только-дата)
-  - [LocalTime (**только время**)](#localtime-только-время)
+  - [Instant (момент времени)](#instant-момент-времени)
+  - [LocalDateTime (локальная дата и время)](#localdatetime-локальная-дата-и-время)
+  - [LocalDate (только дата)](#localdate-только-дата)
+  - [LocalTime (только время)](#localtime-только-время)
 - [Продвинутые возможности](#продвинутые-возможности)
   - [TimeZone и ZonedDateTime](#timezone-и-zoneddatetime)
   - [OffsetDateTime](#offsetdatetime)
@@ -80,11 +80,11 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### **Instant** (**момент времени**)
+### Instant (момент времени)
 
-Пример работы с **Instant** (**момент времени**) в **kotlinx-datetime** (**Kotlin**).
+Пример работы с **Instant** (момент времени) в **kotlinx-datetime** (Kotlin).
 
-Создание **Instant**, парсинг из строки и преобразование в **epoch** (**Kotlin**).
+Создание **Instant**, парсинг из строки и преобразование в **epoch** (Kotlin).
 
 ```kotlin
 import kotlinx.datetime.*
@@ -107,7 +107,7 @@ val isBefore = now < future
 val duration = future - now
 ```
 
-### **LocalDateTime** (**локальная дата и время**)
+### LocalDateTime (локальная дата и время)
 ```kotlin
 // Создание LocalDateTime
 val now = LocalDateTime.now()
@@ -133,7 +133,7 @@ val nextHour = now.plus(1, DateTimeUnit.HOUR)
 val isAfter = now > tomorrow
 ```
 
-### **LocalDate** (**только дата**)
+### LocalDate (только дата)
 ```kotlin
 // Создание LocalDate
 val today = LocalDate.now()
@@ -160,7 +160,7 @@ val dayOfYear = today.dayOfYear
 val isLeapYear = today.isLeapYear()
 ```
 
-### **LocalTime** (**только время**)
+### LocalTime (только время)
 ```kotlin
 // Создание LocalTime
 val now = LocalTime.now()
@@ -183,7 +183,7 @@ val isBeforeLunch = now < lunch
 
 ## Продвинутые возможности
 
-### **TimeZone** и **ZonedDateTime**
+### TimeZone и ZonedDateTime
 ```kotlin
 // Работа с часовыми поясами
 val utc = TimeZone.UTC
@@ -206,7 +206,7 @@ val localDateTime = now.toLocalDateTime()
 val zoned = LocalDateTime(2022, 12, 25, 15, 30).atZone(paris)
 ```
 
-### **OffsetDateTime**
+### OffsetDateTime
 ```kotlin
 // OffsetDateTime с фиксированным смещением
 val utcTime = OffsetDateTime.now()
@@ -222,7 +222,7 @@ val localDateTime = offsetDateTime.toLocalDateTime()
 val offset = offsetDateTime.offset
 ```
 
-### **Duration** и **Period**
+### Duration и Period
 ```kotlin
 // Duration для точных временных интервалов
 val duration1 = Duration.parse("PT1H30M") // 1 час 30 минут
@@ -248,7 +248,7 @@ val dateTime = LocalDateTime.now()
 val futureDateTime = dateTime + period1 + duration1
 ```
 
-### **DateTimePeriod** и **DateTimeArithmetic**
+### DateTimePeriod и DateTimeArithmetic
 ```kotlin
 // DateTimePeriod для комплексных периодов
 val period = DateTimePeriod(
@@ -274,7 +274,7 @@ val newZonedDateTime = zonedDateTime + period
 
 ## Форматирование и парсинг
 
-### **ISO** форматы
+### ISO форматы
 ```kotlin
 // ISO форматы (по умолчанию)
 val instant = Instant.now()
@@ -356,7 +356,7 @@ val usDateFormat = LocalDate.Format {
 
 ## Работа с календарем
 
-### **Calendar operations**
+### Calendar operations
 ```kotlin
 val today = LocalDate.now()
 
@@ -408,7 +408,7 @@ val monthlyDates = (1..12).map { month ->
 
 ## Конвертация между типами
 
-### Конвертация **LocalDateTime** в **Instant** и обратно
+### Конвертация LocalDateTime в Instant и обратно
 ```kotlin
 // LocalDateTime -> Instant
 val localDateTime = LocalDateTime(2022, 12, 25, 15, 30)
@@ -422,7 +422,7 @@ val zonedDateTime = localDateTime.atZone(TimeZone.of("Europe/Paris"))
 val instantFromZoned = zonedDateTime.toInstant()
 ```
 
-### Работа с устаревшими типами **Java**
+### Работа с устаревшими типами Java
 ```kotlin
 import java.util.*
 import java.time.*
@@ -488,9 +488,9 @@ val checkTime = LocalTime(14, 30)
 val isWorkingHours = checkTime in timeRange
 ```
 
-## **Spring Boot Integration**
+## Spring Boot Integration
 
-### **Configuration Properties**
+### Configuration Properties
 ```kotlin
 @ConfigurationProperties("app.scheduling")
 data class SchedulingConfig(
@@ -510,7 +510,7 @@ data class SchedulingConfig(
 }
 ```
 
-### **Service Layer** с **datetime**
+### Service Layer с datetime
 ```kotlin
 @Service
 class EventService(
@@ -562,7 +562,7 @@ class EventService(
 }
 ```
 
-### **REST Controller** с **datetime**
+### REST Controller с datetime
 ```kotlin
 @RestController
 @RequestMapping("/api/events")
@@ -636,9 +636,9 @@ data class EventResponse(
 }
 ```
 
-## **Testing**
+## Testing
 
-### **Unit Testing** с **datetime**
+### Unit Testing с datetime
 ```kotlin
 class EventServiceTest {
 
@@ -719,7 +719,7 @@ class EventServiceTest {
 }
 ```
 
-### **Testing** с фиксированным временем
+### Testing с фиксированным временем
 ```kotlin
 class TimeBasedServiceTest {
 
@@ -761,7 +761,7 @@ class TimeBasedServiceTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 ```kotlin
 @SpringBootTest
 @Testcontainers
@@ -835,7 +835,7 @@ class DateTimeIntegrationTest {
 
 ## Лучшие практики
 
-### **Immutable DateTime Operations**
+### Immutable DateTime Operations
 ```kotlin
 // Предпочитайте immutable операции
 val original = LocalDateTime.now()
@@ -847,7 +847,7 @@ val modified = original.plus(1, DateTimeUnit.DAY)
 val wrong = original.apply { /* mutation */ }
 ```
 
-### **Null Safety** с **datetime**
+### Null Safety с datetime
 ```kotlin
 // Используйте nullable типы аккуратно
 data class Event(
@@ -877,7 +877,7 @@ fun processEvent(event: Event?) {
 }
 ```
 
-### **Time Zone Handling**
+### Time Zone Handling
 ```kotlin
 // Всегда явно указывайте timezone
 object TimeZoneHelper {
@@ -903,7 +903,7 @@ object TimeZoneHelper {
 }
 ```
 
-### **Validation Patterns**
+### Validation Patterns
 ```kotlin
 object DateTimeValidators {
 
@@ -951,9 +951,9 @@ sealed class ValidationResult {
 }
 ```
 
-## **Performance Considerations**
+## Performance Considerations
 
-### **Caching parsed patterns**
+### Caching parsed patterns
 ```kotlin
 object DateTimeFormatters {
 
@@ -980,7 +980,7 @@ val date = LocalDate.now()
 val germanDate = date.formatGerman()
 ```
 
-### **Avoid excessive conversions**
+### Avoid excessive conversions
 ```kotlin
 // Плохо: множественные конвертации
 fun badExample(timestamp: Long): String {
@@ -1006,9 +1006,9 @@ fun bestExample(timestamp: Long): String {
 }
 ```
 
-## **Migration Guide**
+## Migration Guide
 
-### **From Java Time** to **kotlinx.datetime**
+### From Java Time to kotlinx.datetime
 ```kotlin
 // java.time.Instant
 val javaInstant = java.time.Instant.now()
@@ -1031,7 +1031,7 @@ val kotlinInstant = javaZonedDateTime.toInstant().toKotlinInstant()
 val kotlinZonedDateTime = kotlinInstant.toZonedDateTime(TimeZone.currentSystemDefault())
 ```
 
-### **From ThreeTenABP** to **kotlinx.datetime**
+### From ThreeTenABP to kotlinx.datetime
 ```kotlin
 // ThreeTenABP (Android)
 import org.threeten.bp.Instant
@@ -1044,7 +1044,7 @@ val kotlinInstant = Instant.fromEpochMilliseconds(threeTenInstant.toEpochMilli()
 val backToThreeTen = org.threeten.bp.Instant.ofEpochMilli(kotlinInstant.toEpochMilliseconds())
 ```
 
-### **From Joda-Time** to **kotlinx.datetime**
+### From Joda-Time to kotlinx.datetime
 ```kotlin
 // Joda-Time
 import org.joda.time.DateTime
@@ -1059,7 +1059,7 @@ val backToJoda = DateTime(kotlinInstant.toEpochMilliseconds())
 
 ## Решение проблем
 
-### **Common Issues**
+### Common Issues
 ```kotlin
 object DateTimeTroubleshooting {
 
@@ -1126,7 +1126,7 @@ object DateTimeTroubleshooting {
 }
 ```
 
-### **Debugging datetime**
+### Debugging datetime
 ```kotlin
 object DateTimeDebugger {
 
@@ -1174,9 +1174,9 @@ val future = now.plus(1, DateTimeUnit.HOUR)
 DateTimeDebugger.compareInstants(now, future, "Now", "Future")
 ```
 
-## **Experimental Features**
+## Experimental Features
 
-### **Kotlin** 1.6+ **Duration API**
+### Kotlin 1.6+ Duration API
 ```kotlin
 // Улучшенная поддержка Duration
 val duration1 = 1.hours + 30.minutes
@@ -1194,7 +1194,7 @@ val minutes = duration1.inWholeMinutes
 val complexDuration = 2.days + 3.hours + 45.minutes + 30.seconds
 ```
 
-### **Contextual Time Operations**
+### Contextual Time Operations
 ```kotlin
 // Контекстуальные операции (предполагаемый API)
 context(TimeZoneContext)
@@ -1214,7 +1214,7 @@ TimeZone.of("Europe/Paris") {
 }
 ```
 
-### **Advanced Calendar Operations**
+### Advanced Calendar Operations
 ```kotlin
 // Расширенные календарные операции (предполагаемый API)
 val date = LocalDate(2023, 1, 15)

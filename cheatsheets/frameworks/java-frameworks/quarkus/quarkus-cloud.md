@@ -98,7 +98,7 @@ related: ["quarkus-core.md", "quarkus-graalvm.md"]
 
 ## Kubernetes
 
-### **Kubernetes Deployment**
+### Kubernetes Deployment
 
 ```yaml
 apiVersion: apps/v1
@@ -122,7 +122,7 @@ spec:
         - containerPort: 8080
 ```
 
-### **Kubernetes Configuration**
+### Kubernetes Configuration
 
 **application.properties:**
 
@@ -134,7 +134,7 @@ quarkus.kubernetes.image-pull-policy=Always
 
 ## OpenShift
 
-### **OpenShift Configuration**
+### OpenShift Configuration
 
 **application.properties:**
 
@@ -146,7 +146,7 @@ quarkus.openshift.route.host=myapp.example.com
 
 ## Service Mesh
 
-### **Istio Integration**
+### Istio Integration
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -164,7 +164,7 @@ spec:
 
 ## Distributed Tracing
 
-### **OpenTelemetry Configuration**
+### OpenTelemetry Configuration
 
 **application.properties:**
 
@@ -175,21 +175,21 @@ quarkus.opentelemetry.tracer.exporter.otlp.endpoint=http://jaeger:4317
 
 ## Лучшие практики
 
-### 1. Используйте **health checks**
+### 1. Используйте health checks
 
 ```properties
 # ✅ Хорошо
 quarkus.smallrye-health.ui.enable=true
 ```
 
-### 2. Настройте **metrics**
+### 2. Настройте metrics
 
 ```properties
 # ✅ Хорошо
 quarkus.micrometer.export.prometheus.enabled=true
 ```
 
-### 3. Используйте **distributed tracing**
+### 3. Используйте distributed tracing
 
 ```properties
 # ✅ Хорошо
@@ -198,7 +198,7 @@ quarkus.opentelemetry.enabled=true
 
 ## Kubernetes Deployment Strategies
 
-### **Rolling Update**
+### Rolling Update
 
 **Настройка **rolling update** для безопасного обновления:**
 
@@ -233,7 +233,7 @@ spec:
           periodSeconds: 10
 ```
 
-### **Blue-Green Deployment**
+### Blue-Green Deployment
 
 **Реализация **blue-green deployment**:**
 
@@ -265,7 +265,7 @@ spec:
         image: quarkus-app:v1
 ```
 
-### **Canary Deployment**
+### Canary Deployment
 
 **Настройка **canary deployment**:**
 
@@ -300,7 +300,7 @@ spec:
 
 ## Health Checks
 
-### **Liveness** и **Readiness Probes**
+### Liveness и Readiness Probes
 
 **Настройка **health checks**:**
 
@@ -312,7 +312,7 @@ quarkus.smallrye-health.readiness-path=/ready
 quarkus.smallrye-health.startup-path=/started
 ```
 
-### **Custom Health Checks**
+### Custom Health Checks
 
 **Создание кастомных **health checks**:**
 
@@ -365,7 +365,7 @@ public class ReadinessCheck implements HealthCheck {
 
 ## Metrics и Monitoring
 
-### **Micrometer Integration**
+### Micrometer Integration
 
 **Настройка **Micrometer** для метрик:**
 
@@ -376,7 +376,7 @@ quarkus.micrometer.export.prometheus.enabled=true
 quarkus.micrometer.export.prometheus.path=/metrics
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 **Создание кастомных метрик:**
 
@@ -413,7 +413,7 @@ public class MetricsService {
 }
 ```
 
-### **Prometheus ServiceMonitor**
+### Prometheus ServiceMonitor
 
 **Настройка **ServiceMonitor** для **Prometheus**:**
 
@@ -434,7 +434,7 @@ spec:
 
 ## Distributed Tracing
 
-### **OpenTelemetry Configuration**
+### OpenTelemetry Configuration
 
 **Настройка **OpenTelemetry**:**
 
@@ -445,7 +445,7 @@ quarkus.opentelemetry.tracer.exporter.otlp.endpoint=http://jaeger:4317
 quarkus.opentelemetry.tracer.exporter.otlp.protocol=grpc
 ```
 
-### **Custom Spans**
+### Custom Spans
 
 **Создание кастомных **spans**:**
 
@@ -478,7 +478,7 @@ public class UserResource {
 }
 ```
 
-### **Jaeger Configuration**
+### Jaeger Configuration
 
 **Настройка **Jaeger** для **distributed tracing**:**
 
@@ -500,7 +500,7 @@ spec:
 
 ## Service Mesh Integration
 
-### **Istio Configuration**
+### Istio Configuration
 
 **Настройка **Istio** для **service mesh**:**
 
@@ -527,7 +527,7 @@ spec:
       baseEjectionTime: 30s
 ```
 
-### **Circuit Breaker**
+### Circuit Breaker
 
 **Настройка **circuit breaker**:**
 
@@ -552,7 +552,7 @@ spec:
 
 ## ConfigMaps и Secrets
 
-### **ConfigMap**
+### ConfigMap
 
 **Использование **ConfigMap**:**
 
@@ -586,7 +586,7 @@ spec:
           name: quarkus-config
 ```
 
-### **Secrets**
+### Secrets
 
 **Использование **Secrets**:**
 
@@ -621,7 +621,7 @@ spec:
 
 ## Horizontal Pod Autoscaling
 
-### **HPA Configuration**
+### HPA Configuration
 
 **Настройка **HPA**:**
 
@@ -654,7 +654,7 @@ spec:
 
 ## Resource Management
 
-### **Resource Limits**
+### Resource Limits
 
 **Настройка **resource limits**:**
 
@@ -677,7 +677,7 @@ spec:
 
 ## Service Discovery
 
-### **Kubernetes Service Discovery**
+### Kubernetes Service Discovery
 
 **Обнаружение сервисов в **Kubernetes**:**
 
@@ -686,7 +686,7 @@ spec:
 quarkus.kubernetes.service-binding.enabled=true
 ```
 
-### **Consul Service Discovery**
+### Consul Service Discovery
 
 **Интеграция с **Consul**:**
 
@@ -708,7 +708,7 @@ public class ConsulServiceDiscovery {
 
 ## Configuration Management
 
-### **External Configuration**
+### External Configuration
 
 **Внешняя конфигурация:**
 
@@ -718,7 +718,7 @@ quarkus.config.locations=file:/etc/myapp/application.properties
 quarkus.config.optional=true
 ```
 
-### **ConfigMaps** и **Secrets**
+### ConfigMaps и Secrets
 
 **Использование **ConfigMaps** и **Secrets**:**
 
@@ -735,7 +735,7 @@ data:
 
 ## Advanced Cloud Patterns
 
-### **Blue-Green Deployment**
+### Blue-Green Deployment
 
 **Blue-Green** развертывание:**
 
@@ -768,7 +768,7 @@ spec:
         version: blue
 ```
 
-### **Canary Deployment**
+### Canary Deployment
 
 **Canary** развертывание:**
 
@@ -795,7 +795,7 @@ spec:
       version: canary
 ```
 
-### **Service Mesh Integration**
+### Service Mesh Integration
 
 **Интеграция с **service mesh**:**
 
@@ -821,7 +821,7 @@ spec:
 
 ## Kubernetes Resource Management
 
-### **Resource Limits and Requests**
+### Resource Limits and Requests
 
 **Ограничения и запросы ресурсов:**
 
@@ -835,7 +835,7 @@ resources:
     cpu: "500m"
 ```
 
-### **Pod Disruption Budget**
+### Pod Disruption Budget
 
 **Бюджет прерывания подов:**
 
@@ -853,7 +853,7 @@ spec:
 
 ## Service Mesh Integration
 
-### **Circuit Breaker Configuration**
+### Circuit Breaker Configuration
 
 **Настройка **Circuit Breaker**:**
 
@@ -878,7 +878,7 @@ spec:
       baseEjectionTime: 30s
 ```
 
-### **Retry Policy**
+### Retry Policy
 
 **Политика повторных попыток:**
 

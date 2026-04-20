@@ -19,8 +19,8 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Elasticsearch Basics](elasticsearch-basics.md)
-- [Elasticsearch Indexing](elasticsearch-indexing.md)
-- [Elasticsearch Queries](elasticsearch-queries.md)
-- [Elasticsearch Aggregations](elasticsearch-aggregations.md)
-- [Elasticsearch Performance](elasticsearch-performance.md)
+- [[elasticsearch-basics|Elasticsearch Basics]]
+- [[elasticsearch-indexing|Elasticsearch Indexing]]
+- [[elasticsearch-queries|Elasticsearch Queries]]
+- [[elasticsearch-aggregations|Elasticsearch Aggregations]]
+- [[elasticsearch-performance|Elasticsearch Performance]]

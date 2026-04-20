@@ -18,15 +18,15 @@ Testcontainers — библиотека для JVM, которая подним�
 ## Полезные ссылки
 
 ### Основные документы
-- [Testcontainers](testcontainers.md) — модули, JUnit 5, Spring Boot, CI/CD
+- [[testcontainers]] — модули, JUnit 5, Spring Boot, CI/CD
 
 ### Соседние разделы
-- [Integration Testing](../README.md)
-- [Database Testing](../database-testing/README.md)
-- [Contract Testing](../contract-testing/README.md)
-- [WireMock](../wiremock.md)
-- [JUnit](../../unit-testing/junit/README.md)
-- [Docker](../../../platform/containers/docker/README.md)
+- [[README|Integration Testing]]
+- [[README|Database Testing]]
+- [[README|Contract Testing]]
+- [[wiremock]]
+- [[README|JUnit]]
+- [[README|Docker]]
 
 ### Внешние ресурсы
 - [Testcontainers Docs](https://www.testcontainers.org/)
@@ -44,11 +44,11 @@ Testcontainers — библиотека для JVM, которая подним�
 
 | Тема | Где читать |
 |------|-----------|
-| Установка, базовое использование `GenericContainer` | [testcontainers.md](testcontainers.md) |
-| Модули БД: `PostgreSQLContainer`, `MySQLContainer`, `MongoDBContainer` | [testcontainers.md](testcontainers.md) |
-| Очереди: `KafkaContainer`, `RabbitMQContainer` | [testcontainers.md](testcontainers.md) |
-| Docker Compose, сеть, ожидание готовности (wait strategies) | [testcontainers.md](testcontainers.md) |
-| Reuse контейнеров, Spring Boot `@ServiceConnection`, CI/CD | [testcontainers.md](testcontainers.md) |
+| Установка, базовое использование `GenericContainer` | [[testcontainers]] |
+| Модули БД: `PostgreSQLContainer`, `MySQLContainer`, `MongoDBContainer` | [[testcontainers]] |
+| Очереди: `KafkaContainer`, `RabbitMQContainer` | [[testcontainers]] |
+| Docker Compose, сеть, ожидание готовности (wait strategies) | [[testcontainers]] |
+| Reuse контейнеров, Spring Boot `@ServiceConnection`, CI/CD | [[testcontainers]] |
 
 ## Когда использовать
 
@@ -63,6 +63,6 @@ Testcontainers — библиотека для JVM, которая подним�
 
 ## Куда идти дальше
 
-- Тестирование БД — [../database-testing/README.md](../database-testing/README.md)
-- Контракты API — [../contract-testing/README.md](../contract-testing/README.md)
-- Docker — [../../../platform/containers/docker/README.md](../../../platform/containers/docker/README.md)
+- Тестирование БД — [[README]]
+- Контракты API — [[README]]
+- Docker — [[README]]

@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **AWS Networking**
+# AWS Networking
 
 **AWS Networking** предоставляет полный набор сетевых сервисов для создания масштабируемой, безопасной и высокопроизводительной сетевой инфраструктуры. Этот документ охватывает **VPC** (`Virtual Private Cloud`), подсети, **security groups**, **load balancers**, **DNS**, **CDN** и другие сетевые компоненты **AWS** с **best practices** для **enterprise** сред.
 
@@ -98,7 +98,7 @@ vpc-patterns:
       - prod: "10.3.0.0/16"
 ```
 
-### VPC Creation и **Configuration**
+### VPC Creation и Configuration
 ```yaml
 # VPC с IPv4 и IPv6
 vpc-config:
@@ -162,7 +162,7 @@ athena-queries:
     ORDER BY connections DESC
 ```
 
-## Subnets и **Availability Zones**
+## Subnets и Availability Zones
 
 ### Subnet Design
 ```yaml
@@ -214,7 +214,7 @@ subnet-architecture:
       type: private-data
 ```
 
-### Reserved IPs и **Network Planning**
+### Reserved IPs и Network Planning
 ```yaml
 # IP Address Management
 ip-management:
@@ -238,7 +238,7 @@ ip-management:
     available: x.x.x.11-254  # Available for instances
 ```
 
-## Security Groups и **NACLs**
+## Security Groups и NACLs
 
 ### Security Groups
 ```yaml
@@ -401,7 +401,7 @@ private-nacl:
       rule-action: allow
 ```
 
-## Internet Gateway и **NAT Gateway**
+## Internet Gateway и NAT Gateway
 
 ### Internet Gateway
 ```yaml
@@ -476,7 +476,7 @@ nat-gateway-config:
       value: production
 ```
 
-### Gateway Load Balancer (**GWLB**)
+### Gateway Load Balancer (GWLB)
 ```yaml
 # Gateway Load Balancer для Security Appliances
 gateway-load-balancer:
@@ -511,7 +511,7 @@ route-table-with-gwlb:
       target: vpce-12345678  # GWLB endpoint
 ```
 
-## VPC Peering и **Transit Gateway**
+## VPC Peering и Transit Gateway
 
 ### VPC Peering
 ```yaml
@@ -591,7 +591,7 @@ tgw-route-table:
       state: associated
 ```
 
-### AWS Resource Access Manager (**RAM**)
+### AWS Resource Access Manager (RAM)
 ```yaml
 # Resource Share для Transit Gateway
 resource-share:
@@ -617,7 +617,7 @@ subnet-share:
 
 ## Load Balancing
 
-### Application Load Balancer (**ALB**)
+### Application Load Balancer (ALB)
 ```yaml
 # Application Load Balancer
 application-load-balancer:
@@ -688,7 +688,7 @@ listener-rules:
         target-group-arn: arn:aws:elasticloadbalancing:region:account:targetgroup/admin-targets/11223344
 ```
 
-### Network Load Balancer (**NLB**)
+### Network Load Balancer (NLB)
 ```yaml
 # Network Load Balancer
 network-load-balancer:
@@ -778,7 +778,7 @@ target-group-best-practices:
     - stickiness-duration: 86400
 ```
 
-## Route 53 (**DNS**)
+## Route 53 (DNS)
 
 ### Hosted Zones
 ```yaml
@@ -882,7 +882,7 @@ geo-routing:
       hosted-zone-id: Z2FDTNDATAQYW2
 ```
 
-### Health Checks и **Failover**
+### Health Checks и Failover
 ```yaml
 # Route 53 Health Checks
 health-checks:
@@ -930,7 +930,7 @@ failover-routing:
       hosted-zone-id: Z35SXDOTRQ7X7K
 ```
 
-## CloudFront (**CDN**)
+## CloudFront (CDN)
 
 ### Distribution Configuration
 ```yaml
@@ -1008,7 +1008,7 @@ cloudfront-distribution:
     include-cookies: false
 ```
 
-### Lambda@**Edge**
+### Lambda@Edge
 ```javascript
 // Lambda@Edge для URL rewriting
 'use strict';
@@ -1094,7 +1094,7 @@ function handler(event) {
 }
 ```
 
-## Direct Connect и **VPN**
+## Direct Connect и VPN
 
 ### Direct Connect
 ```yaml
@@ -1204,7 +1204,7 @@ authorization-rules:
     description: Allow admins access to office network
 ```
 
-## Network Monitoring и **Security**
+## Network Monitoring и Security
 
 ### VPC Reachability Analyzer
 ```yaml

@@ -19,8 +19,8 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [PostgreSQL Basics](postgres-basics.md)
-- [PostgreSQL Admin](postgres-admin.md)
-- [PostgreSQL Performance Tuning](postgres-performance-tuning.md)
-- [PostgreSQL Replication](postgres-replication.md)
-- [PostgreSQL Security](postgres-security.md)
+- [[postgres-basics|PostgreSQL Basics]]
+- [[postgres-admin|PostgreSQL Admin]]
+- [[postgres-performance-tuning|PostgreSQL Performance Tuning]]
+- [[postgres-replication|PostgreSQL Replication]]
+- [[postgres-security|PostgreSQL Security]]

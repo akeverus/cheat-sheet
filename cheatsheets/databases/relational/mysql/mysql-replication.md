@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **MySQL**: Репликация и высокая доступность — Полное руководство по кластеризации
+# MySQL: Репликация и высокая доступность — Полное руководство по кластеризации
 
 Комплексное руководство по репликации **MySQL**: настройка, мониторинг, **failover** и стратегии высокой доступности.
 
@@ -52,7 +52,7 @@ updated: "2026-02-11"
     - [**Slave** сервер](#slave-сервер)
     - [Процесс репликации](#процесс-репликации)
   - [Типы топологий репликации](#типы-топологий-репликации)
-    - [**Master-Master** (**Active-Active**)](#master-master-active-active)
+    - [**Master-Master** (Active-Active)](#master-master-active-active)
     - [**Master-Slave** с **Cascade**](#master-slave-с-cascade)
     - [**Ring Replication**](#ring-replication)
 - [Настройка асинхронной репликации](#настройка-асинхронной-репликации)
@@ -157,7 +157,7 @@ updated: "2026-02-11"
     - [Переключение **Master-Slave** ролей](#переключение-master-slave-ролей)
 - [**Failover** и восстановление](#failover-и-восстановление)
   - [Автоматический **Failover**](#автоматический-failover)
-    - [Скрипт для **MHA** (**Master High Availability**)](#скрипт-для-mha-master-high-availability)
+    - [Скрипт для **MHA** (Master High Availability)](#скрипт-для-mha-master-high-availability)
 - [Установка MHA](#установка-mha)
 - [Конфигурация MHA](#конфигурация-mha)
 - [/etc/mha/app.conf](#etcmhaappconf)
@@ -248,11 +248,11 @@ updated: "2026-02-11"
   - [Критические факторы успеха:](#критические-факторы-успеха)
   - [Будущие тенденции:](#будущие-тенденции)
 
-## Введение в репликацию **MySQL**
+## Введение в репликацию MySQL
 
-### Что такое репликация **MySQL**
+### Что такое репликация MySQL
 
-**Репликация MySQL** — это процесс копирования данных с одного сервера **MySQL** (**master**) на один или несколько других серверов (**slaves**). Это обеспечивает:**
+**Репликация MySQL** — это процесс копирования данных с одного сервера **MySQL** (master) на один или несколько других серверов (slaves). Это обеспечивает:**
 
 #### Преимущества репликации:
 - **Высокая доступность** — резервные серверы для **failover**
@@ -261,7 +261,7 @@ updated: "2026-02-11"
 - **Аналитика** — отдельные серверы для отчетов
 - **Геораспределенность** — серверы в разных датацентрах
 
-#### Типы репликации **MySQL**:
+#### Типы репликации MySQL:
 - **Асинхронная** — **master** не ждет подтверждения от **slave**
 - **Полусинхронная** — **master** ждет подтверждения от одного **slave**
 - **Group Replication** — синхронная репликация группы серверов
@@ -271,7 +271,7 @@ updated: "2026-02-11"
 
 #### Основные понятия
 
-Термины репликации **MySQL**: **Master** (**Primary**), **Slave** (**Replica**), **Binary Log**, **GTID**.
+Термины репликации **MySQL**: **Master** (Primary), **Slave** (Replica), **Binary Log**, **GTID**.
 
 ```text
 Master (Primary) - основной сервер, источник данных
@@ -294,12 +294,12 @@ Connecting - попытка подключения
 
 ### Компоненты репликации
 
-#### **Master** сервер
+#### Master сервер
 - **Binary Log** — журнал всех изменений данных
 - **Dump Thread** — поток для отправки данных **slave**'ам
 - **Binary Log Coordinates** — позиция для репликации
 
-#### **Slave** сервер
+#### Slave сервер
 - **IO Thread** — получает данные от **master**
 - **SQL Thread** — применяет изменения к данным
 - **Relay Log** — промежуточный журнал изменений
@@ -317,7 +317,7 @@ Connecting - попытка подключения
 
 ### Типы топологий репликации
 
-#### Один **Master** — Множество **Slaves**
+#### Один Master — Множество Slaves
 ```text
 Master
 ├── Slave 1 (Read-only)
@@ -326,13 +326,13 @@ Master
 ```
 **Использование:** Масштабирование чтения, резервное копирование
 
-#### **Master-Master** (**Active-Active**)
+#### Master-Master (Active-Active)
 ```text
 Master A ↔ Master B
 ```
 **Использование:** Высокая доступность, распределенная нагрузка
 
-#### **Master-Slave** с **Cascade**
+#### Master-Slave с Cascade
 ```text
 Master
 └── Slave 1
@@ -341,7 +341,7 @@ Master
 ```
 **Использование:** Снижение нагрузки на **master**, геораспределение
 
-#### **Ring Replication**
+#### Ring Replication
 ```text
 Master A → Master B → Master C → Master A
 ```
@@ -351,7 +351,7 @@ Master A → Master B → Master C → Master A
 
 ### Подготовка серверов
 
-#### Конфигурация **Master**
+#### Конфигурация Master
 ```ini
 # /etc/mysql/mysql.conf.d/mysqld.cnf
 [mysqld]
@@ -385,7 +385,7 @@ sync_binlog = 1
 # slave_skip_errors = 1062,1452
 ```
 
-#### Конфигурация **Slave**
+#### Конфигурация Slave
 ```ini
 # /etc/mysql/mysql.conf.d/mysqld.cnf
 [mysqld]
@@ -405,7 +405,7 @@ master_info_repository = TABLE
 # slave_skip_errors = ddl_exist_errors
 ```
 
-### Настройка **Master**
+### Настройка Master
 
 #### Создание пользователя для репликации
 ```sql
@@ -426,7 +426,7 @@ SHOW MASTER STATUS;
 UNLOCK TABLES;
 ```
 
-#### Создание бэкапа для **Slave**
+#### Создание бэкапа для Slave
 ```bash
 # Создание консистентного бэкапа с mysqldump
 mysqldump --all-databases --master-data --single-transaction > backup.sql
@@ -438,9 +438,9 @@ xtrabackup --backup --target-dir=/tmp/backup
 mysql < backup.sql
 ```
 
-### Настройка **Slave**
+### Настройка Slave
 
-#### Подключение к **Master**
+#### Подключение к Master
 ```sql
 -- На slave сервере
 CHANGE MASTER TO
@@ -464,9 +464,9 @@ START SLAVE;
 SHOW SLAVE STATUS\G
 ```
 
-#### Настройка **GTID**
+#### Настройка GTID
 
-##### Включение **GTID** на **Master**
+##### Включение GTID на Master
 ```ini
 # my.cnf
 [mysqld]
@@ -478,7 +478,7 @@ enforce_gtid_consistency = ON
 binlog_checksum = NONE
 ```
 
-##### Настройка **Slave** с **GTID**
+##### Настройка Slave с GTID
 ```sql
 -- Автоматическое позиционирование
 CHANGE MASTER TO
@@ -537,7 +537,7 @@ START SLAVE;
 
 ### Настройка полусинхронной репликации
 
-#### На **Master**
+#### На Master
 ```sql
 -- Установка плагина
 INSTALL PLUGIN rpl_semi_sync_master SONAME 'semisync_master.so';
@@ -552,7 +552,7 @@ SET GLOBAL rpl_semi_sync_master_enabled = 1;
 SHOW VARIABLES LIKE 'rpl_semi_sync_master%';
 ```
 
-#### На **Slave**
+#### На Slave
 ```sql
 -- Установка плагина
 INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
@@ -570,7 +570,7 @@ SHOW VARIABLES LIKE 'rpl_semi_sync_slave%';
 
 ### Преимущества полусинхронной репликации
 
-#### Гарантии **durability**
+#### Гарантии durability
 - **Master ждет подтверждения** от хотя бы одного **slave**
 - **Данные не теряются** при сбое **master**
 - **Автоматический failover** возможен без потери данных
@@ -582,7 +582,7 @@ SHOW VARIABLES LIKE 'rpl_semi_sync_slave%';
 
 ### Ограничения и компромиссы
 
-#### **Trade-offs**
+#### Trade-offs
 ```sql
 -- Время ожидания (по умолчанию 10 секунд)
 SET GLOBAL rpl_semi_sync_master_timeout = 10000; -- 10 секунд
@@ -592,9 +592,9 @@ SET GLOBAL rpl_semi_sync_master_timeout = 10000; -- 10 секунд
 -- Требует как минимум 2 slave для надежности
 ```
 
-## **Group Replication**
+## Group Replication
 
-### Архитектура **Group Replication**
+### Архитектура Group Replication
 
 #### Принцип работы
 ```text
@@ -606,9 +606,9 @@ SET GLOBAL rpl_semi_sync_master_timeout = 10000; -- 10 секунд
 
 #### Режимы работы
 - **Single-Primary** — один **writable** сервер, остальные **read-only**
-- **Multi-Primary** — все серверы **writable** (**требует осторожности**)
+- **Multi-Primary** — все серверы **writable** (требует осторожности)
 
-### Настройка **Group Replication**
+### Настройка Group Replication
 
 #### Конфигурация всех серверов
 ```ini
@@ -647,7 +647,7 @@ START GROUP_REPLICATION;
 SELECT * FROM performance_schema.replication_group_members;
 ```
 
-### Управление **Group Replication**
+### Управление Group Replication
 
 #### Мониторинг состояния
 ```sql
@@ -669,7 +669,7 @@ FROM performance_schema.replication_group_members
 GROUP BY group_name;
 ```
 
-#### Переключение **Primary**
+#### Переключение Primary
 ```sql
 -- Просмотр текущего primary
 SELECT variable_value AS primary_uuid
@@ -694,11 +694,11 @@ START GROUP_REPLICATION;
 SET GLOBAL group_replication_bootstrap_group = OFF;
 ```
 
-## **InnoDB Cluster**
+## InnoDB Cluster
 
-### Компоненты **InnoDB Cluster**
+### Компоненты InnoDB Cluster
 
-#### **MySQL Shell**
+#### MySQL Shell
 ```bash
 # Установка MySQL Shell
 sudo apt install mysql-shell
@@ -707,7 +707,7 @@ sudo apt install mysql-shell
 mysqlsh --uri root@localhost:3306
 ```
 
-#### **MySQL Router**
+#### MySQL Router
 ```bash
 # Установка MySQL Router
 sudo apt install mysql-router
@@ -716,7 +716,7 @@ sudo apt install mysql-router
 mysqlrouter --bootstrap root@server1:3306 --directory /opt/mysqlrouter
 ```
 
-### Создание **InnoDB Cluster**
+### Создание InnoDB Cluster
 
 #### Подготовка серверов
 ```bash
@@ -728,7 +728,7 @@ mysql -u root -p -e "
 "
 ```
 
-#### Создание кластера через **MySQL Shell**
+#### Создание кластера через MySQL Shell
 ```javascript
 // Подключение к MySQL Shell
 var cluster = dba.createCluster('myCluster');
@@ -741,7 +741,7 @@ cluster.addInstance('clusteradmin@server3:3306');
 cluster.status();
 ```
 
-### Управление **InnoDB Cluster**
+### Управление InnoDB Cluster
 
 #### Операции с кластером
 ```javascript
@@ -774,7 +774,7 @@ cluster.options();
 
 ### Системные таблицы
 
-#### **Replication status**
+#### Replication status
 ```sql
 -- Детальный статус репликации
 SHOW SLAVE STATUS\G
@@ -791,7 +791,7 @@ SHOW SLAVE STATUS\G
 SELECT * FROM performance_schema.replication_group_member_stats;
 ```
 
-#### **Performance Schema**
+#### Performance Schema
 ```sql
 -- Статистика репликации
 SELECT
@@ -818,7 +818,7 @@ WHERE name LIKE '%replica%';
 
 ### Мониторинг задержки репликации
 
-#### **Seconds_Behind_Master**
+#### Seconds_Behind_Master
 ```sql
 -- Текущая задержка
 SHOW SLAVE STATUS\G -- Seconds_Behind_Master
@@ -852,7 +852,7 @@ ON SCHEDULE EVERY 1 MINUTE
 DO CALL monitor_replication_lag();
 ```
 
-#### **Heartbeat** таблица
+#### Heartbeat таблица
 ```sql
 -- Создание heartbeat таблицы на master
 CREATE TABLE heartbeat (
@@ -873,7 +873,7 @@ ORDER BY ts DESC
 LIMIT 1;
 ```
 
-### Мониторинг **Group Replication**
+### Мониторинг Group Replication
 
 #### Статус группы
 ```sql
@@ -908,7 +908,7 @@ ORDER BY sum_timer_wait DESC;
 
 ## Управление и обслуживание
 
-### Ротация **Binary Logs**
+### Ротация Binary Logs
 
 #### Автоматическая ротация
 ```sql
@@ -941,7 +941,7 @@ max_binlog_files = 10
 
 ### Перестройка репликации
 
-#### Полная перестройка **Slave**
+#### Полная перестройка Slave
 ```sql
 -- Остановка репликации
 STOP SLAVE;
@@ -965,7 +965,7 @@ CHANGE MASTER TO
 START SLAVE;
 ```
 
-#### Переключение **Master-Slave** ролей
+#### Переключение Master-Slave ролей
 ```sql
 -- На текущем master: остановить прием записей
 FLUSH TABLES WITH READ LOCK;
@@ -987,11 +987,11 @@ CHANGE MASTER TO MASTER_HOST = 'new-master';
 START SLAVE;
 ```
 
-## **Failover** и восстановление
+## Failover и восстановление
 
-### Автоматический **Failover**
+### Автоматический Failover
 
-#### Скрипт для **MHA** (**Master `High` Availability**)
+#### Скрипт для MHA (Master `High` Availability)
 ```bash
 # Установка MHA
 sudo apt install mha4mysql-manager mha4mysql-node
@@ -1014,7 +1014,7 @@ candidate_master=1
 masterha_manager --conf=/etc/mha/app.conf
 ```
 
-#### **Orchestrator**
+#### Orchestrator
 ```bash
 # Установка Orchestrator
 wget https://github.com/github/orchestrator/releases/download/v3.2.6/orchestrator_3.2.6_amd64.deb
@@ -1032,7 +1032,7 @@ sudo dpkg -i orchestrator_3.2.6_amd64.deb
 sudo systemctl start orchestrator
 ```
 
-### Ручной **Failover**
+### Ручной Failover
 
 #### Процедура переключения
 ```sql
@@ -1061,7 +1061,7 @@ SET GLOBAL read_only = 0;
 
 ### Восстановление после сбоя
 
-#### Восстановление **Master**
+#### Восстановление Master
 ```sql
 -- 1. Запустить MySQL
 sudo systemctl start mysql
@@ -1080,7 +1080,7 @@ CHANGE MASTER TO
 START SLAVE;
 ```
 
-#### **Point-in-Time Recovery**
+#### Point-in-Time Recovery
 ```sql
 -- Восстановление до определенного момента
 mysqlbinlog --start-datetime="2024-01-01 12:00:00" \
@@ -1090,9 +1090,9 @@ mysqlbinlog --start-datetime="2024-01-01 12:00:00" \
 
 ## Распределенная репликация
 
-### **Multi-Source Replication**
+### Multi-Source Replication
 
-#### Настройка нескольких **Master**
+#### Настройка нескольких Master
 ```sql
 -- Добавление второго master
 CHANGE MASTER TO
@@ -1117,7 +1117,7 @@ SHOW SLAVE STATUS FOR CHANNEL 'master2'\G
 
 ### Геораспределенная репликация
 
-#### Настройка через **WAN**
+#### Настройка через WAN
 ```ini
 # Конфигурация для медленных соединений
 [mysqld]
@@ -1135,7 +1135,7 @@ max_allowed_packet = 256M
 slave_transaction_retries = 10
 ```
 
-#### Мониторинг **WAN** репликации
+#### Мониторинг WAN репликации
 ```sql
 -- Задержка сети
 SELECT
@@ -1151,9 +1151,9 @@ SHOW STATUS LIKE 'Binlog_cache_use';
 
 ## Безопасность репликации
 
-### **SSL** для репликации
+### SSL для репликации
 
-#### Настройка **SSL**
+#### Настройка SSL
 ```ini
 # my.cnf
 [mysqld]
@@ -1166,7 +1166,7 @@ ssl_key = /etc/mysql/ssl/server-key.pem
 require_secure_transport = ON
 ```
 
-#### Настройка репликации с **SSL**
+#### Настройка репликации с SSL
 ```sql
 -- Настройка slave с SSL
 CHANGE MASTER TO
@@ -1199,7 +1199,7 @@ GRANT REPLICATION SLAVE ON *.* TO 'temp_repl'@'%';
 
 ### Защита от несанкционированного доступа
 
-#### **Firewall** правила
+#### Firewall правила
 ```bash
 # Разрешить только репликационный порт
 sudo ufw allow from slave-ip to any port 3306
@@ -1230,9 +1230,9 @@ SET GLOBAL log_warnings = 2;
 
 ## Производительность репликации
 
-### Оптимизация **Master**
+### Оптимизация Master
 
-#### Конфигурация **Binary Log**
+#### Конфигурация Binary Log
 ```ini
 # Оптимальные настройки binary log
 [mysqld]
@@ -1253,7 +1253,7 @@ binlog_format = ROW
 binlog_row_image = MINIMAL
 ```
 
-#### Оптимизация **InnoDB** для репликации
+#### Оптимизация InnoDB для репликации
 ```ini
 [mysqld]
 # Буферный пул
@@ -1268,9 +1268,9 @@ innodb_flush_method = O_DIRECT
 innodb_flush_neighbors = 0
 ```
 
-### Оптимизация **Slave**
+### Оптимизация Slave
 
-#### Конфигурация **Slave**
+#### Конфигурация Slave
 ```ini
 [mysqld]
 # Множественные SQL threads
@@ -1576,16 +1576,16 @@ DELIMITER ;
 ### Будущие тенденции:
 
 - **Автоматизация** управления кластерами
-- **Контейнеризация** и оркестрация (**Kubernetes**)
+- **Контейнеризация** и оркестрация (Kubernetes)
 - **Многооблачные** решения
 - **ИИ-ассистированное** управление производительностью
 
 Репликация **MySQL** продолжает развиваться, предлагая все более надежные и простые в управлении решения для высокой доступности баз данных. 🏗️
 
 **Следующие темы:**
-- [Производительность](mysql-performance.md) — тюнинг сервера **MySQL**
-- [Администрирование](mysql-admin.md) — обслуживание **MySQL**
-- [Инфраструктура](mysql-replication.md) — высокая доступность
+- [[mysql-performance|Производительность]] — тюнинг сервера **MySQL**
+- [[mysql-admin|Администрирование]] — обслуживание **MySQL**
+- [[mysql-replication|Инфраструктура]] — высокая доступность
 
 Эффективная репликация — это искусство баланса между надежностью, производительностью и сложностью управления! 🔄
 

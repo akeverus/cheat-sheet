@@ -56,8 +56,8 @@ updated: "2026-02-11"
     - [2. Избегание неоптимальных паттернов](#2-избегание-неоптимальных-паттернов)
       - [Неэффективные запросы](#неэффективные-запросы)
     - [3. **Pagination** оптимизация](#3-pagination-оптимизация)
-      - [**Skip-based pagination** (**плохой**)](#skip-based-pagination-плохой)
-      - [**Cursor-based pagination** (**хороший**)](#cursor-based-pagination-хороший)
+      - [**Skip-based pagination** (плохой)](#skip-based-pagination-плохой)
+      - [**Cursor-based pagination** (хороший)](#cursor-based-pagination-хороший)
   - [**Java** оптимизация запросов](#java-оптимизация-запросов)
 - [Управление памятью и кэшем](#управление-памятью-и-кэшем)
   - [**WiredTiger Storage Engine**](#wiredtiger-storage-engine)
@@ -140,7 +140,7 @@ updated: "2026-02-11"
   - [Мониторинг и **alerting**:](#мониторинг-и-alerting)
   - [Решение проблем производительности](#решение-проблем-производительности)
 
-## Введение в оптимизацию производительности **MongoDB**
+## Введение в оптимизацию производительности MongoDB
 
 **Производительность MongoDB** зависит от множества факторов: аппаратного обеспечения, конфигурации, структуры данных, паттернов запросов и архитектуры приложения. Правильная оптимизация может ускорить операции в десятки и сотни раз.
 
@@ -173,19 +173,19 @@ Performance Pyramid:
 
 ### Факторы влияния на производительность
 
-#### **Application Level**
+#### Application Level
 - **Connection Pooling**: Переиспользование соединений
 - **Query Patterns**: Эффективность запросов
 - **Caching**: Кэширование на уровне приложения
 - **Batch Operations**: Группировка операций
 
-#### **Database Level**
+#### Database Level
 - **Indexing**: Правильные индексы для запросов
 - **Schema Design**: Структура данных и денормализация
 - **Memory Usage**: **Working set** в **RAM**
 - **Storage Engine**: **WiredTiger** настройки
 
-#### **Infrastructure Level**
+#### Infrastructure Level
 - **CPU**: Количество ядер и тактовая частота
 - **Memory**: Объем **RAM** для **working set**
 - **Storage**: **SSD** vs **HDD**, **RAID** конфигурация
@@ -193,7 +193,7 @@ Performance Pyramid:
 
 ## Профилирование и анализ запросов
 
-### **Database Profiler**
+### Database Profiler
 
 #### Включение профилирования
 ```javascript
@@ -240,7 +240,7 @@ db.system.profile.find({ op: "query" })
 }
 ```
 
-### **Explain Plan**
+### Explain Plan
 
 #### Анализ плана выполнения
 ```javascript
@@ -254,7 +254,7 @@ db.users.find({ name: "John" }).explain("executionStats")
 db.users.find({ name: "John" }).explain("allPlansExecution")
 ```
 
-#### Структура **explain** результата
+#### Структура explain результата
 ```javascript
 {
   "queryPlanner": {
@@ -326,7 +326,7 @@ db.users.find({ name: "John" }).explain("allPlansExecution")
 }
 ```
 
-### **Java** анализ запросов
+### Java анализ запросов
 
 ```java
 import com.mongodb.client.MongoCollection;
@@ -353,11 +353,11 @@ System.out.printf("Returned: %d, Time: %dms, Docs examined: %d, Keys examined: %
 
 ## Оптимизация запросов
 
-### **Query Optimization Techniques**
+### Query Optimization Techniques
 
 #### 1. Использование индексов
 
-##### **Single Field Index**
+##### Single Field Index
 ```javascript
 // Создать индекс
 db.users.createIndex({ name: 1 })
@@ -368,7 +368,7 @@ db.users.find({ name: "John" }).explain()
 // Результат: IXSCAN вместо COLLSCAN
 ```
 
-##### **Compound Index**
+##### Compound Index
 ```javascript
 // Compound индекс для фильтрации и сортировки
 db.orders.createIndex({ customerId: 1, orderDate: -1, total: 1 })
@@ -379,7 +379,7 @@ db.orders.find({ customerId: "123" })
     .limit(10)
 ```
 
-##### **Covered Query**
+##### Covered Query
 ```javascript
 // Индекс покрывает запрос полностью
 db.users.createIndex({ name: 1, email: 1, age: 1 })
@@ -423,9 +423,9 @@ db.userTags.createIndex({ tagId: 1 })
 db.userTags.find({ tagId: 100 })
 ```
 
-#### 3. **Pagination** оптимизация
+#### 3. Pagination оптимизация
 
-##### **Skip-based pagination** (**плохой**)
+##### Skip-based pagination (плохой)
 ```javascript
 // ❌ Плохой: skip становится медленным
 db.posts.find()
@@ -434,7 +434,7 @@ db.posts.find()
     .limit(10)
 ```
 
-##### **Cursor-based pagination** (**хороший**)
+##### Cursor-based pagination (хороший)
 ```javascript
 // ✅ Хороший: range query
 db.posts.find({ createdAt: { $lt: lastCreatedAt } })
@@ -442,7 +442,7 @@ db.posts.find({ createdAt: { $lt: lastCreatedAt } })
     .limit(11)  // +1 для проверки следующей страницы
 ```
 
-### **Java** оптимизация запросов
+### Java оптимизация запросов
 
 ```java
 @Service
@@ -510,9 +510,9 @@ public class OptimizedUserService {
 
 ## Управление памятью и кэшем
 
-### **WiredTiger Storage Engine**
+### WiredTiger Storage Engine
 
-#### **Cache** настройки
+#### Cache настройки
 ```javascript
 // Проверить cache size
 db.serverStatus().wiredTiger.cache
@@ -530,7 +530,7 @@ storage:
       prefixCompression: true
 ```
 
-#### **Memory monitoring**
+#### Memory monitoring
 ```javascript
 // Текущая память
 db.serverStatus().mem
@@ -543,9 +543,9 @@ db.serverStatus().mem.resident  // RAM usage
 db.serverStatus().mem.virtual   // Virtual memory
 ```
 
-### **Working Set**
+### Working Set
 
-#### Анализ **working set**
+#### Анализ working set
 ```javascript
 // Проверить что в памяти
 db.users.stats().wiredTiger
@@ -557,7 +557,7 @@ db.users.stats().indexSizes
 db.serverStatus().extra_info.page_faults
 ```
 
-#### Оптимизация **working set**
+#### Оптимизация working set
 ```javascript
 // 1. Добавить необходимые индексы
 db.users.createIndex({ frequentlyQueriedField: 1 })
@@ -576,7 +576,7 @@ storage:
       cacheSizeGB: 8  # Для сервера с 16GB RAM
 ```
 
-### **Java memory management**
+### Java memory management
 
 ```java
 @Configuration
@@ -613,9 +613,9 @@ public class MongoConfig {
 
 ## Оптимизация дискового I/O
 
-### **Storage Engine** настройки
+### Storage Engine настройки
 
-#### **WiredTiger** конфигурация
+#### WiredTiger конфигурация
 ```yaml
 # mongod.conf
 storage:
@@ -637,7 +637,7 @@ storage:
       prefixCompression: true
 ```
 
-#### **Directory per** `DB`
+#### Directory per `DB`
 ```yaml
 # Для лучшей производительности
 storage:
@@ -647,7 +647,7 @@ storage:
       directoryForIndexes: true  # Отдельная директория для индексов
 ```
 
-### **Disk** I/O **monitoring**
+### Disk I/O monitoring
 
 #### I/O статистика
 ```javascript
@@ -662,7 +662,7 @@ db.stats().fsUsedMB
 db.stats().fsTotalMB
 ```
 
-#### **Linux** I/O **monitoring**
+#### Linux I/O monitoring
 ```bash
 # I/O статистика
 iostat -x 1
@@ -676,7 +676,7 @@ iotop -p $(pgrep mongod)
 
 ### Оптимизация I/O
 
-#### **RAID** и **Filesystem**
+#### RAID и Filesystem
 ```bash
 # Рекомендуемая настройка
 # RAID 10 для data и journal
@@ -687,7 +687,7 @@ iotop -p $(pgrep mongod)
 /dev/sdb1  /data  xfs  noatime,nodiratime  0 0
 ```
 
-#### **NUMA** настройки
+#### NUMA настройки
 ```bash
 # Отключить NUMA для MongoDB
 echo 0 > /proc/sys/vm/zone_reclaim_mode
@@ -700,7 +700,7 @@ Environment=MONGO_NUMACTL=disable
 
 ## Репликация и шардирование для производительности
 
-### **Read Preferences** для масштабирования
+### Read Preferences для масштабирования
 
 #### Распределение нагрузки чтения
 ```javascript
@@ -714,7 +714,7 @@ db.analytics.find().readPref("secondaryPreferred")
 db.globalData.find().readPref("nearest")
 ```
 
-#### **Java read preferences**
+#### Java read preferences
 ```java
 @Configuration
 public class MongoConfig {
@@ -737,9 +737,9 @@ public class MongoConfig {
 }
 ```
 
-### **Sharding** для горизонтального масштабирования
+### Sharding для горизонтального масштабирования
 
-#### **Shard key** выбор
+#### Shard key выбор
 ```javascript
 // Хороший shard key: высокая кардинальность, равномерное распределение
 db.users.createIndex({ userId: 1 })
@@ -750,7 +750,7 @@ sh.shardCollection("mydb.users", { userId: 1 })
 // db.events.createIndex({ timestamp: 1 })  // Избегать!
 ```
 
-#### **Chunk balancing**
+#### Chunk balancing
 ```javascript
 // Проверить распределение chunks
 sh.status()
@@ -764,9 +764,9 @@ sh.setBalancerState(true)
 sh.getBalancerState()
 ```
 
-### **Write Concerns** оптимизация
+### Write Concerns оптимизация
 
-#### Выбор **write concern** по важности
+#### Выбор write concern по важности
 ```javascript
 // Критичные данные
 db.accounts.insertOne(doc, { writeConcern: { w: "majority" } })
@@ -780,9 +780,9 @@ db.products.insertOne(doc, { writeConcern: { w: 1 } })
 
 ## Мониторинг производительности
 
-### **MongoDB** метрики
+### MongoDB метрики
 
-#### **Server status**
+#### Server status
 ```javascript
 // Основные метрики
 db.serverStatus()
@@ -813,7 +813,7 @@ db.serverStatus()
 }
 ```
 
-#### **Database metrics**
+#### Database metrics
 ```javascript
 // Статистика базы данных
 db.stats()
@@ -827,7 +827,7 @@ db.users.aggregate([
 ])
 ```
 
-### **Java** мониторинг
+### Java мониторинг
 
 ```java
 @Service
@@ -876,9 +876,9 @@ public class MongoPerformanceMonitor {
 }
 ```
 
-### **Prometheus** + **Grafana**
+### Prometheus + Grafana
 
-#### **MongoDB exporter**
+#### MongoDB exporter
 ```yaml
 # docker-compose.yml
 services:
@@ -890,7 +890,7 @@ services:
       - "9216:9216"
 ```
 
-#### **Prometheus** конфигурация
+#### Prometheus конфигурация
 ```yaml
 # prometheus.yml
 scrape_configs:
@@ -899,7 +899,7 @@ scrape_configs:
       - targets: ['mongodb-exporter:9216']
 ```
 
-#### **Grafana dashboard**
+#### Grafana dashboard
 ```json
 {
   "dashboard": {
@@ -930,26 +930,26 @@ scrape_configs:
 
 ## Лучшие практики по оптимизации
 
-### 1. **Hardware** рекомендации
+### 1. Hardware рекомендации
 
-#### **CPU**
+#### CPU
 - **4-8 ядер** минимум для **production**
 - **Высокая тактовая частота** важнее количества ядер
 - **NUMA-aware** размещение
 
-#### **Memory**
+#### Memory
 - **Working set + 25%** дополнительно
 - **Minimum 8GB** для **development**
 - **32GB+** для **production**
 
-#### **Storage**
+#### Storage
 - **SSD required** для **production**
 - **RAID 10** для **data**, **RAID** 1 для **journal**
 - **Separate disks** для **data**, **journal**, **logs**
 
 ### 2. Конфигурация оптимизация
 
-#### **WiredTiger** настройки
+#### WiredTiger настройки
 ```yaml
 storage:
   wiredTiger:
@@ -962,7 +962,7 @@ storage:
       prefixCompression: true
 ```
 
-#### **Network** настройки
+#### Network настройки
 ```yaml
 net:
   maxIncomingConnections: 1000
@@ -970,9 +970,9 @@ net:
     compressors: zstd,snappy,zlib
 ```
 
-### 3. **Application level** оптимизации
+### 3. Application level оптимизации
 
-#### **Connection pooling**
+#### Connection pooling
 ```java
 @Configuration
 public class OptimizedMongoConfig {
@@ -992,7 +992,7 @@ public class OptimizedMongoConfig {
 }
 ```
 
-#### **Query** оптимизации
+#### Query оптимизации
 ```java
 @Service
 public class OptimizedService {
@@ -1034,7 +1034,7 @@ public class OptimizedService {
 }
 ```
 
-### 4. **Monitoring** и **alerting**
+### 4. Monitoring и alerting
 
 #### Ключевые метрики для мониторинга
 ```yaml
@@ -1063,7 +1063,7 @@ groups:
 
 ## Решение проблем производительности
 
-### Высокая **CPU** загрузка
+### Высокая CPU загрузка
 
 #### Диагностика
 ```javascript
@@ -1177,7 +1177,7 @@ db.collection.createIndex({ field: 1 }, {
 })
 ```
 
-### **Connection pool** проблемы
+### Connection pool проблемы
 
 #### Диагностика
 ```javascript
@@ -1199,7 +1199,7 @@ MongoClientSettings.builder()
     )
 ```
 
-### **Replication lag**
+### Replication lag
 
 #### Диагностика
 ```javascript
@@ -1235,14 +1235,14 @@ db.adminCommand({ replSetResizeOplog: 1, size: 1000 })
 4. **Масштабирование** — репликация и шардирование для нагрузки
 5. **Мониторинг** — постоянный контроль метрик
 
-### **Hardware** и конфигурация:
+### Hardware и конфигурация:
 
 - **RAM**: **Working set** + 25% минимум
 - **SSD**: Обязательно для **production**
 - **CPU**: 4+ ядер с высокой частотой
 - **Network**: Низкая **latency** для кластеров
 
-### **Application** оптимизации:
+### Application оптимизации:
 
 ```java
 // Connection pooling
@@ -1265,7 +1265,7 @@ Aggregation aggregation = Aggregation.newAggregation(
 );
 ```
 
-### Мониторинг и **alerting**:
+### Мониторинг и alerting:
 
 - **Метрики**: **CPU**, память, I/O, соединения, операции
 - **Профилирование**: Медленные запросы и их анализ

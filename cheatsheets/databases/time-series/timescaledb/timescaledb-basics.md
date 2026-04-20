@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **TimescaleDB**: **PostgreSQL** для временных рядов
+# TimescaleDB: PostgreSQL для временных рядов
 
 **Комплексное руководство по использованию `TimescaleDB` — расширения `PostgreSQL` для работы с временными рядами.**
 
@@ -34,7 +34,7 @@ updated: "2026-02-11"
 - [Запросы временных рядов](#запросы-временных-рядов)
 - [Интеграция с **Java**](#интеграция-с-java)
 
-## Введение в **TimescaleDB**
+## Введение в TimescaleDB
 
 **TimescaleDB** — это расширение **PostgreSQL**, оптимизированное для временных рядов. Сохраняет совместимость с **PostgreSQL** и добавляет специализированные функции.
 
@@ -56,7 +56,7 @@ docker run -d --name timescaledb \
   timescale/timescaledb:latest-pg14
 ```
 
-## Создание **hypertable**
+## Создание hypertable
 
 ```sql
 -- Создание обычной таблицы
@@ -84,7 +84,7 @@ GROUP BY hour
 ORDER BY hour;
 ```
 
-## Интеграция с **Java**
+## Интеграция с Java
 
 ```java
 // Использование стандартного PostgreSQL JDBC драйвера

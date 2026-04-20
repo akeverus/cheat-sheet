@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# Google Guava: Утилиты для **Java**
+# Google Guava: Утилиты для Java
 
 **Комплексное руководство по использованию `Google Guava` — мощной библиотеки утилит для `Java`, которая расширяет стандартную библиотеку и упрощает разработку.**
 
@@ -85,11 +85,11 @@ updated: "2026-02-11"
   - [Основные паттерны использования](#основные-паттерны-использования)
   - [Альтернативы](#альтернативы)
 
-## Введение в **Guava**
+## Введение в Guava
 
 **Google Guava** — это набор утилит для **Java**, разработанный **Google**, который значительно расширяет возможности стандартной библиотеки **Java**. **Guava** предоставляет **immutable** коллекции, функциональное программирование, утилиты для строк, кэширование и многое другое.
 
-### Почему **Guava**?
+### Почему Guava?
 
 **Guava** предлагает множество преимуществ:**
 
@@ -102,7 +102,7 @@ updated: "2026-02-11"
 7. **Хорошая документация** — Подробная документация и примеры
 8. **Backward compatibility** — Поддержка старых версий **Java**
 
-### Основные модули **Guava**
+### Основные модули Guava
 
 - **guava** — Основная библиотека с коллекциями и утилитами
 - **guava-testlib** — Утилиты для тестирования
@@ -117,9 +117,9 @@ updated: "2026-02-11"
 
 ## Установка и настройка
 
-### **Maven**
+### Maven
 
-Зависимость **Guava** в **Maven** (**основная библиотека и testlib для тестов**).
+Зависимость **Guava** в **Maven** (основная библиотека и testlib для тестов).
 
 ```xml
 <dependency>
@@ -137,7 +137,7 @@ updated: "2026-02-11"
 </dependency>
 ```
 
-### **Gradle**
+### Gradle
 
 ```kotlin
 dependencies {
@@ -170,7 +170,7 @@ public class GuavaConfiguration {
 
 ## Основные утилиты
 
-### **Objects**
+### Objects
 
 Утилиты для работы с объектами: **equals**, **hashCode**, **toString**.
 
@@ -212,7 +212,7 @@ public class Person {
 }
 ```
 
-### **MoreObjects**
+### MoreObjects
 
 Расширенные утилиты для **toString**.
 
@@ -245,9 +245,9 @@ public class DetailedPerson {
 }
 ```
 
-## **Immutable** коллекции
+## Immutable коллекции
 
-### **ImmutableList**
+### ImmutableList
 
 ```java
 import com.google.common.collect.ImmutableList;
@@ -294,7 +294,7 @@ public class ImmutableCollectionsExample {
 }
 ```
 
-### **ImmutableSet**
+### ImmutableSet
 
 ```java
 import com.google.common.collect.ImmutableSet;
@@ -340,7 +340,7 @@ public class ImmutableSetExample {
 }
 ```
 
-### **ImmutableMap**
+### ImmutableMap
 
 ```java
 import com.google.common.collect.ImmutableMap;
@@ -393,7 +393,7 @@ public class ImmutableMapExample {
 
 ## Новые коллекции
 
-### **Multiset**
+### Multiset
 
 Коллекция, которая может содержать дубликаты и отслеживать их количество.
 
@@ -432,7 +432,7 @@ public class MultisetExample {
 }
 ```
 
-### **Multimap**
+### Multimap
 
 **Map**, которая может содержать несколько значений для одного ключа.
 
@@ -472,7 +472,7 @@ public class MultimapExample {
 }
 ```
 
-### **BiMap**
+### BiMap
 
 Двунаправленная **Map**, где можно получить ключ по значению.
 
@@ -509,7 +509,7 @@ public class BiMapExample {
 }
 ```
 
-### **Table**
+### Table
 
 Двумерная таблица с двумя ключами.
 
@@ -549,7 +549,7 @@ public class TableExample {
 
 ## Функциональное программирование
 
-### **Function**
+### Function
 
 Функциональный интерфейс для преобразования объектов.
 
@@ -580,7 +580,7 @@ public class FunctionExample {
 }
 ```
 
-### **Predicate**
+### Predicate
 
 Функциональный интерфейс для фильтрации.
 
@@ -611,7 +611,7 @@ public class PredicateExample {
 }
 ```
 
-### **Supplier**
+### Supplier
 
 Функциональный интерфейс для создания объектов.
 
@@ -646,7 +646,7 @@ public class SupplierExample {
 
 ## Утилиты для строк
 
-### **Joiner**
+### Joiner
 
 Объединение строк с разделителем.
 
@@ -681,7 +681,7 @@ public class JoinerExample {
 }
 ```
 
-### **Splitter**
+### Splitter
 
 Разделение строк.
 
@@ -718,7 +718,7 @@ public class SplitterExample {
 }
 ```
 
-### **CharMatcher**
+### CharMatcher
 
 Работа с символами в строках.
 
@@ -755,7 +755,7 @@ public class CharMatcherExample {
 
 ## Утилиты для примитивов
 
-### **Primitive wrappers**
+### Primitive wrappers
 
 ```java
 import com.google.common.primitives.Ints;
@@ -791,7 +791,7 @@ public class PrimitivesExample {
 }
 ```
 
-### **Ranges**
+### Ranges
 
 Работа с диапазонами примитивов.
 
@@ -830,7 +830,7 @@ public class RangeExample {
 
 ## Кэширование
 
-### **Cache**
+### Cache
 
 Мощная система кэширования с **eviction policies**.
 
@@ -877,7 +877,7 @@ public class CacheExample {
 }
 ```
 
-### **LoadingCache**
+### LoadingCache
 
 Кэш с автоматической загрузкой.
 
@@ -929,7 +929,7 @@ public class LoadingCacheExample {
 }
 ```
 
-## **EventBus**
+## EventBus
 
 Простая система событий.
 
@@ -1005,7 +1005,7 @@ public class EventBusExample {
 
 ## Утилиты для `IO`
 
-### **Files**
+### Files
 
 Утилиты для работы с файлами.
 
@@ -1049,7 +1049,7 @@ public class FilesExample {
 }
 ```
 
-### **Resources**
+### Resources
 
 Работа с **classpath** ресурсами.
 
@@ -1079,7 +1079,7 @@ public class ResourcesExample {
 
 ## Параллельное программирование
 
-### **Futures**
+### Futures
 
 Утилиты для работы с **Future**.
 
@@ -1131,7 +1131,7 @@ public class FuturesExample {
 }
 ```
 
-### **RateLimiter**
+### RateLimiter
 
 Ограничение скорости выполнения операций.
 
@@ -1171,9 +1171,9 @@ public class RateLimiterExample {
 }
 ```
 
-## Валидация и **Preconditions**
+## Валидация и Preconditions
 
-### **Preconditions**
+### Preconditions
 
 Утилиты для валидации параметров.
 
@@ -1206,9 +1206,9 @@ public class PreconditionsExample {
 }
 ```
 
-## **Best practices**
+## Best practices
 
-### 1. Использование **Immutable** коллекций
+### 1. Использование Immutable коллекций
 
 ```java
 // ✅ Хорошо
@@ -1240,7 +1240,7 @@ public class BadConfiguration {
 }
 ```
 
-### 2. **Null-safe** операции
+### 2. Null-safe операции
 
 ```java
 // ✅ Хорошо - использование Guava утилит
@@ -1305,7 +1305,7 @@ public class UserService {
 }
 ```
 
-### 4. **Event-driven** архитектура
+### 4. Event-driven архитектура
 
 ```java
 // ✅ Хорошо - использование EventBus
@@ -1385,7 +1385,7 @@ public class StringProcessing {
 
 **Guava** — это фундаментальная библиотека для **Java** проектов, которая значительно расширяет возможности стандартной библиотеки. Она предоставляет:**
 
-### Преимущества **Guava**
+### Преимущества Guava
 
 1. **Immutable коллекции** — Безопасность и производительность
 2. **Функциональное программирование** — **Function**, **Predicate**, **Supplier**
@@ -1396,7 +1396,7 @@ public class StringProcessing {
 7. **Null-safety** — Защита от **null pointer exceptions**
 8. **Высокая производительность** — Оптимизированные реализации
 
-### Когда использовать **Guava**
+### Когда использовать Guava
 
 **Рекомендуется:**
 - **Enterprise** приложения

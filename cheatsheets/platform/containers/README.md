@@ -15,29 +15,29 @@ updated: "2026-02-11"
 
 ## Полезные ссылки
 
-[Docker Advanced](docker/docker-advanced.md)
-[Docker Compose](docker/docker-compose.md)
-[Kubernetes Advanced](kubernetes/kubernetes-advanced.md)
+[[docker-advanced|Docker Advanced]]
+[[docker-compose|Docker Compose]]
+[[kubernetes-advanced|Kubernetes Advanced]]
 
 ## Содержание
 
-- [Обзор контейнеризации](containerization-overview.md)
+- [[containerization-overview|Обзор контейнеризации]]
 
 ### Раздел Docker
 
-- [Docker Basics](docker/docker-basics.md)
-- [Docker Containers](docker/docker-containers.md)
-- [Docker Compose](docker/docker-compose.md)
-- [Docker for Spring Boot](docker/docker-spring-boot.md)
-- [Docker Advanced](docker/docker-advanced.md)
+- [[docker-basics|Docker Basics]]
+- [[docker-containers|Docker Containers]]
+- [[docker-compose|Docker Compose]]
+- [[docker-spring-boot|Docker for Spring Boot]]
+- [[docker-advanced|Docker Advanced]]
 
 ### Раздел Kubernetes
 
-- [Kubernetes Basics](kubernetes/kubernetes-basics.md)
-- [Kubernetes Networking](kubernetes/kubernetes-networking.md)
-- [Kubernetes Storage](kubernetes/kubernetes-storage.md)
-- [Kubernetes Security](kubernetes/kubernetes-security.md)
-- [Kubernetes Advanced](kubernetes/kubernetes-advanced.md)
+- [[kubernetes-basics|Kubernetes Basics]]
+- [[kubernetes-networking|Kubernetes Networking]]
+- [[kubernetes-storage|Kubernetes Storage]]
+- [[kubernetes-security|Kubernetes Security]]
+- [[kubernetes-advanced|Kubernetes Advanced]]
 
 ## Быстрый маршрут
 
@@ -55,5 +55,5 @@ updated: "2026-02-11"
 
 ## См. также
 
-- [../ci-cd/README.md](../ci-cd/README.md) — интеграция контейнерной сборки в pipeline.
+- [[README]] — интеграция контейнерной сборки в pipeline.
 - [[backend-basics|../../development/web-backend/backend-basics.md]] — backend-контекст для контейнеризации.

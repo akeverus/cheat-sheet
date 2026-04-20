@@ -17,4 +17,4 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Обзор инструментов для баз данных](database-tools-overview.md)
+- [[database-tools-overview|Обзор инструментов для баз данных]]

@@ -66,7 +66,7 @@ updated: "2026-02-11"
 
 **Когда применять:** интеграция legacy, сторонние API, несовместимые интерфейсы.
 
-## Что такое **Adapter**?
+## Что такое Adapter?
 
 **Adapter** — это структурный паттерн проектирования, который позволяет объектам с несовместимыми интерфейсами работать вместе. Он выступает прослойкой между двумя объектами, преобразующей вызовы методов одного в вызовы методов другого.
 
@@ -115,7 +115,7 @@ public class MediaPlayer {
 // Клиент работает через единый интерфейс
 ```
 
-## Когда использовать **Adapter**?
+## Когда использовать Adapter?
 
 ### Подходящие сценарии
 
@@ -409,7 +409,7 @@ public class ClassAdapterDemo {
 }
 ```
 
-### **Two-Way Adapter**
+### Two-Way Adapter
 
 ```java
 // Двунаправленный адаптер
@@ -497,7 +497,7 @@ public class TwoWayAdapterDemo {
 
 ## Продвинутые реализации
 
-### 1. **Generic Adapter**
+### 1. Generic Adapter
 
 ```java
 // Обобщенный адаптер для коллекций
@@ -653,7 +653,7 @@ public class GenericAdapterDemo {
 }
 ```
 
-### 2. **Adapter** с кэшированием
+### 2. Adapter с кэшированием
 
 ```java
 // Адаптер с кэшированием результатов
@@ -810,7 +810,7 @@ public class AdvancedAdapterDemo {
 }
 ```
 
-### 3. **Adapter** для **legacy** систем
+### 3. Adapter для legacy систем
 
 ```java
 // Адаптер для работы с legacy базами данных
@@ -1020,7 +1020,7 @@ class ConcreteLegacyDatabaseSystem implements LegacyDatabaseSystem {
 
 ## Примеры использования
 
-### 1. **Spring Integration Adapter**
+### 1. Spring Integration Adapter
 
 ```java
 @Configuration
@@ -1214,7 +1214,7 @@ class MessagingException extends RuntimeException {
 }
 ```
 
-### 2. **Collections Adapter**
+### 2. Collections Adapter
 
 ```java
 public class CollectionsAdapter {
@@ -1327,7 +1327,7 @@ public class CollectionsAdapterDemo {
 }
 ```
 
-### 3. **Legacy System Integration**
+### 3. Legacy System Integration
 
 ```java
 @Service

@@ -17,5 +17,5 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [Neo4j Basics](neo4j/neo4j-basics.md)
-- [OrientDB Basics](orientdb/orientdb-basics.md)
+- [[neo4j-basics|Neo4j Basics]]
+- [[orientdb-basics|OrientDB Basics]]

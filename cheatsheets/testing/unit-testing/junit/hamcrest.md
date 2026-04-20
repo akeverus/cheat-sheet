@@ -22,7 +22,7 @@ updated: "2026-02-11"
 |-----|--------|
 | Документация | [Hamcrest Tutorial](http://hamcrest.org/JavaHamcrest/tutorial), [Javadoc](http://hamcrest.org/JavaHamcrest/javadoc/) |
 | GitHub | [hamcrest/JavaHamcrest](https://github.com/hamcrest/JavaHamcrest) |
-| См. также | [JUnit](junit.md), [AssertJ](assertj.md), [Mockito](mockito.md) |
+| См. также | [[junit]], [[assertj]], [[mockito]] |
 
 ## Содержание
 

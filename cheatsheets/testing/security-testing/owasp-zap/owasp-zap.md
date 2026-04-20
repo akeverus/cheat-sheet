@@ -25,7 +25,7 @@ updated: "2026-02-11"
 | API | [ZAP API](https://www.zaproxy.org/docs/api/) |
 | Automation Framework | [Automation Framework](https://www.zaproxy.org/docs/automate/automation-framework/) |
 
-**См. также:** [Burp Suite](../burp-suite/burp-suite.md), [sqlmap](../sqlmap/sqlmap.md), [Testing Tools Overview](../../testing-tools/testing-tools-overview.md)
+**См. также:** [[burp-suite|Burp Suite]], [[sqlmap]], [[testing-tools-overview|Testing Tools Overview]]
 
 ## Содержание
 

@@ -122,7 +122,7 @@ related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Actuator**
+## Введение в Spring Actuator
 
 **Spring Actuator** предоставляет **production-ready** функции для мониторинга и управления **Spring Boot** приложениями. Он включает в себя множество встроенных **endpoints** для проверки здоровья приложения, метрик, информации о приложении и многого другого.
 
@@ -135,7 +135,7 @@ related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 - **Security**: Защита **endpoints**
 - **JMX и HTTP**: Доступ через **JMX** и **HTTP**
 
-### Архитектура **Actuator**
+### Архитектура Actuator
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -156,11 +156,11 @@ related: ["spring/spring-boot.md", "monitoring/prometheus.md"]
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Actuator**
+## Настройка Actuator
 
 ### Зависимости
 
-**Зависимость **spring-`boot-starter`-actuator** (**pom.xml**):**
+**Зависимость **spring-`boot-starter`-actuator** (pom.xml):**
 
 ```xml
 <!-- Стартер Spring Actuator для мониторинга и управления -->
@@ -204,7 +204,7 @@ curl http://localhost:8080/actuator/health
 curl http://localhost:8080/actuator/health
 ```
 
-### Встроенные **Health Indicators**
+### Встроенные Health Indicators
 
 **Spring Boot** предоставляет множество встроенных **health indicators**:**
 
@@ -214,7 +214,7 @@ curl http://localhost:8080/actuator/health
 - **MongoHealthIndicator**: Проверка подключения к **MongoDB**
 - **RabbitHealthIndicator**: Проверка подключения к **RabbitMQ**
 
-### **Custom Health Indicators**
+### Custom Health Indicators
 
 ```java
 // Кастомный HealthIndicator с деталями статуса (up/down)
@@ -250,7 +250,7 @@ public class CustomHealthIndicator implements HealthIndicator {
 }
 ```
 
-### **Composite Health Indicators**
+### Composite Health Indicators
 
 ```java
 // Проверка доступности БД через DataSource
@@ -314,7 +314,7 @@ curl http://localhost:8080/actuator/metrics/jvm.memory.used
 curl http://localhost:8080/actuator/metrics/http.server.requests?tag=uri:/api/users
 ```
 
-### **Custom Metrics**
+### Custom Metrics
 
 ```java
 // Счётчик и таймер создания пользователей через Micrometer
@@ -350,7 +350,7 @@ public class UserService {
 }
 ```
 
-### **Gauge Metrics**
+### Gauge Metrics
 
 ```java
 // Gauge для отображения числа активных пользователей
@@ -377,7 +377,7 @@ public class ActiveUsersGauge {
 
 ## Info Endpoint
 
-### Настройка **Info**
+### Настройка Info
 
 ```properties
 # Включение info endpoint
@@ -391,7 +391,7 @@ info.app.encoding=@project.build.sourceEncoding@
 info.java.version=@java.version@
 ```
 
-### **Custom Info Contributor**
+### Custom Info Contributor
 
 ```java
 // Добавление кастомной информации в /actuator/info
@@ -419,7 +419,7 @@ public class CustomInfoContributor implements InfoContributor {
 
 ## Custom Endpoints
 
-### Создание **Custom Endpoint**
+### Создание Custom Endpoint
 
 ```java
 // Кастомный endpoint с read/write операциями
@@ -449,7 +449,7 @@ public class CustomEndpoint {
 }
 ```
 
-### **Web Endpoint**
+### Web Endpoint
 
 ```java
 // Кастомный HTTP endpoint с read/write/delete операциями
@@ -476,7 +476,7 @@ public class CustomWebEndpoint {
 
 ## Security
 
-### Защита **Endpoints**
+### Защита Endpoints
 
 ```java
 // Ограничение доступа к actuator: health/info — всем, остальное — ACTUATOR
@@ -498,7 +498,7 @@ public class ActuatorSecurityConfig {
 }
 ```
 
-### Конфигурация через **properties**
+### Конфигурация через properties
 
 ```properties
 # Базовый путь для security
@@ -510,7 +510,7 @@ management.security.enabled=true
 
 ## Prometheus Integration
 
-### Настройка **Prometheus**
+### Настройка Prometheus
 
 ```xml
 <dependency>
@@ -534,7 +534,7 @@ curl http://localhost:8080/actuator/prometheus
 
 ## Лучшие практики
 
-### 1. Ограничивайте доступ к **endpoints**
+### 1. Ограничивайте доступ к endpoints
 
 ```properties
 # ✅ Хорошо
@@ -542,7 +542,7 @@ management.endpoints.web.exposure.include=health,info,metrics
 management.endpoint.health.show-details=when-authorized
 ```
 
-### 2. Используйте **security** для **production**
+### 2. Используйте security для production
 
 ```java
 // ✅ Хорошо
@@ -552,7 +552,7 @@ public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) {
 }
 ```
 
-### 3. Создавайте **custom health indicators**
+### 3. Создавайте custom health indicators
 
 ```java
 // ✅ Хорошо
@@ -571,7 +571,7 @@ Counter.builder("users.created")
     .register(meterRegistry);
 ```
 
-### 5. Настраивайте **info endpoint**
+### 5. Настраивайте info endpoint
 
 ```properties
 # ✅ Хорошо
@@ -579,9 +579,9 @@ info.app.name=My Application
 info.app.version=1.0.0
 ```
 
-## Расширенные **Health Indicators**
+## Расширенные Health Indicators
 
-### **Reactive Health Indicators**
+### Reactive Health Indicators
 
 ```java
 // Реактивная проверка БД через R2DBC
@@ -608,7 +608,7 @@ public class ReactiveDatabaseHealthIndicator implements ReactiveHealthIndicator 
 }
 ```
 
-### **Health Groups**
+### Health Groups
 
 ```properties
 # Группировка health indicators
@@ -630,7 +630,7 @@ public class HealthGroupConfig {
 }
 ```
 
-### **Health Status Aggregation**
+### Health Status Aggregation
 
 ```java
 // Агрегация статусов нескольких HealthIndicator
@@ -661,9 +661,9 @@ public class AggregatedHealthIndicator implements HealthIndicator {
 }
 ```
 
-## Расширенные **Metrics**
+## Расширенные Metrics
 
-### **Custom Meter Registry**
+### Custom Meter Registry
 
 ```java
 // Общие теги для всех метрик (application, environment)
@@ -679,7 +679,7 @@ public class CustomMeterRegistryConfig {
 }
 ```
 
-### **Timed Annotations**
+### Timed Annotations
 
 ```java
 // Измерение времени выполнения метода через @Timed
@@ -699,7 +699,7 @@ public class TimedService {
 }
 ```
 
-### **Distribution Statistics**
+### Distribution Statistics
 
 ```java
 // Настройка перцентилей и гистограмм для метрик
@@ -724,7 +724,7 @@ public class MetricsConfig {
 }
 ```
 
-### **Sliding Window Metrics**
+### Sliding Window Metrics
 
 ```java
 // Метрики со скользящим окном: Counter и Timer через Micrometer
@@ -760,7 +760,7 @@ public class SlidingWindowService {
 
 ## Интеграция с различными системами мониторинга
 
-### **InfluxDB**
+### InfluxDB
 
 ```xml
 <dependency>
@@ -777,7 +777,7 @@ management.metrics.export.influx.password=admin
 management.metrics.export.influx.step=10s
 ```
 
-### **Graphite**
+### Graphite
 
 ```xml
 <dependency>
@@ -793,7 +793,7 @@ management.metrics.export.graphite.protocol=plaintext
 management.metrics.export.graphite.step=10s
 ```
 
-### **CloudWatch**
+### CloudWatch
 
 ```xml
 <dependency>
@@ -807,7 +807,7 @@ management.metrics.export.cloudwatch.namespace=MyApp
 management.metrics.export.cloudwatch.step=60s
 ```
 
-### **Datadog**
+### Datadog
 
 ```xml
 <dependency>
@@ -822,9 +822,9 @@ management.metrics.export.datadog.application-key=your-app-key
 management.metrics.export.datadog.step=10s
 ```
 
-## Расширенные **Endpoints**
+## Расширенные Endpoints
 
-### **JMX Endpoint**
+### JMX Endpoint
 
 ```java
 // Кастомный endpoint, доступный через JMX
@@ -844,7 +844,7 @@ public class CustomJmxEndpoint {
 }
 ```
 
-### **Conditional Endpoints**
+### Conditional Endpoints
 
 ```java
 // Endpoint включается только при management.endpoint.custom.enabled=true
@@ -860,7 +860,7 @@ public class ConditionalCustomEndpoint {
 }
 ```
 
-### **Endpoint Filters**
+### Endpoint Filters
 
 ```java
 // Фильтр исключения endpoint'ов (например shutdown) из экспозиции
@@ -875,9 +875,9 @@ public class EndpointFilter implements EndpointFilter<ExposableEndpoint<?>> {
 }
 ```
 
-## Логирование и **Tracing**
+## Логирование и Tracing
 
-### **Loggers Endpoint**
+### Loggers Endpoint
 
 ```properties
 # Включение loggers endpoint
@@ -915,7 +915,7 @@ public class CustomLoggersEndpoint {
 }
 ```
 
-### **HTTP Tracing**
+### HTTP Tracing
 
 ```properties
 # Включение HTTP tracing
@@ -937,7 +937,7 @@ public class TracingConfig {
 
 ## Управление приложением
 
-### **Shutdown Endpoint**
+### Shutdown Endpoint
 
 ```properties
 # Включение shutdown endpoint
@@ -970,7 +970,7 @@ public class GracefulShutdownEndpoint {
 }
 ```
 
-### **Environment Endpoint**
+### Environment Endpoint
 
 ```properties
 # Включение environment endpoint
@@ -1068,9 +1068,9 @@ public class MemoryMetrics {
 }
 ```
 
-## Безопасность **Actuator**
+## Безопасность Actuator
 
-### **Role-based Access Control**
+### Role-based Access Control
 
 ```java
 @Configuration
@@ -1097,7 +1097,7 @@ public class ActuatorSecurityConfig {
 }
 ```
 
-### **IP-based Access Control**
+### IP-based Access Control
 
 ```java
 // Ограничение доступа к /actuator по списку разрешённых IP
@@ -1146,9 +1146,9 @@ public class ActuatorAccessControl implements HandlerInterceptor {
 }
 ```
 
-## Кастомизация **Actuator**
+## Кастомизация Actuator
 
-### **Custom Endpoint Paths**
+### Custom Endpoint Paths
 
 ```properties
 # Кастомные пути для endpoints
@@ -1156,7 +1156,7 @@ management.endpoints.web.path-mapping.health=healthcheck
 management.endpoints.web.path-mapping.metrics=stats
 ```
 
-### **Custom Endpoint Response**
+### Custom Endpoint Response
 
 ```java
 // Endpoint с кастомными заголовками и JSON-ответом
@@ -1178,9 +1178,9 @@ public class CustomResponseEndpoint {
 }
 ```
 
-## Интеграция с **Kubernetes**
+## Интеграция с Kubernetes
 
-### **Kubernetes Probes**
+### Kubernetes Probes
 
 ```properties
 # Настройка для Kubernetes

@@ -83,21 +83,21 @@ related: ["databases/clickhouse-performance.md", "databases/clickhouse-replicati
 
 ### Подходы к интеграции
 
-#### **Native** интеграции
+#### Native интеграции
 - Встроенные в **ClickHouse** возможности
 - Максимальная производительность
 - Минимальная задержка
 
-#### **Third-party** инструменты
+#### Third-party инструменты
 - Внешние коннекторы и драйверы
 - Гибкость в выборе технологий
 - Дополнительная настройка
 
-## Интеграция с **Apache Kafka**
+## Интеграция с Apache Kafka
 
 **Kafka** — основная система для потоковой передачи данных в реальном времени.
 
-### **Kafka Engine** в **ClickHouse**
+### Kafka Engine в ClickHouse
 
 ```sql
 -- Создание Kafka таблицы
@@ -136,7 +136,7 @@ AS SELECT
 FROM kafka_events;
 ```
 
-### Расширенная конфигурация **Kafka**
+### Расширенная конфигурация Kafka
 
 ```sql
 -- Kafka с авторизацией
@@ -172,7 +172,7 @@ SETTINGS
     kafka_thread_per_consumer = 1;
 ```
 
-### Мониторинг **Kafka** интеграции
+### Мониторинг Kafka интеграции
 
 ```sql
 -- Статистика потребителей Kafka
@@ -199,11 +199,11 @@ LIMIT 10;
 SELECT * FROM system.kafka_tables;
 ```
 
-## Интеграция с **Apache Spark**
+## Интеграция с Apache Spark
 
 **Spark** — фреймворк для распределенной обработки больших данных.
 
-### **Spark-ClickHouse Connector**
+### Spark-ClickHouse Connector
 
 ```java
 <!-- Maven dependency -->
@@ -270,7 +270,7 @@ public class SparkClickHouseService {
 }
 ```
 
-### **JDBC Connector** для **Spark**
+### JDBC Connector для Spark
 
 ```xml
 <!-- Maven dependency for ClickHouse JDBC -->
@@ -335,7 +335,7 @@ public class SparkJDBCService {
 }
 ```
 
-### **Spark Structured Streaming**
+### Spark Structured Streaming
 
 ```java
 import org.apache.spark.sql.streaming.Trigger;
@@ -426,11 +426,11 @@ public class SparkStreamingService {
 }
 ```
 
-## Интеграция с **Apache Airflow**
+## Интеграция с Apache Airflow
 
 **Airflow** — платформа для оркестрации и планирования **ETL** задач.
 
-### **ClickHouse Hook** для **Airflow**
+### ClickHouse Hook для Airflow
 
 ```java
 // ClickHouse Python example replaced with Java Spring

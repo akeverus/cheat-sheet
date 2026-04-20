@@ -17,16 +17,16 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основной документ
-- [Операционные системы: основы](operating-systems-basics.md)
-- [Linux и Bash: практический справочник](linux-handbook.md) — рабочий справочник: команды, права, systemd, production-troubleshooting
+- [[operating-systems-basics|Операционные системы: основы]]
+- [[linux-handbook|Linux и Bash: практический справочник]] — рабочий справочник: команды, права, systemd, production-troubleshooting
 
 ### Соседние разделы
-- [Computer Science](../computer-science/README.md)
-- [Компьютерные сети](../networks/README.md)
-- [Паттерны конкурентности](../../patterns/concurrency-patterns/README.md)
-- [Docker](../../platform/containers/docker/README.md)
-- [Kubernetes](../../platform/containers/kubernetes/README.md)
-- [Java: concurrency](../../languages/java/README.md)
+- [[README|Computer Science]]
+- [[README|Компьютерные сети]]
+- [[README|Паттерны конкурентности]]
+- [[README|Docker]]
+- [[README|Kubernetes]]
+- [[README|Java: concurrency]]
 
 ### Внешние ресурсы
 - [Linux Kernel Documentation](https://www.kernel.org/doc/html/latest/)
@@ -55,7 +55,7 @@ updated: "2026-04-17"
 
 ## Что внутри документа
 
-[operating-systems-basics.md](operating-systems-basics.md) содержит:
+[[operating-systems-basics]] содержит:
 
 - Архитектуры ядра: monolithic (Linux), microkernel (MINIX, L4), hybrid (Darwin, NT)
 - Жизненный цикл процесса: создание, планирование, выход, очистка
@@ -70,11 +70,11 @@ updated: "2026-04-17"
 
 - **Fundamentals для backend (1 ч):** `Процессы/потоки → Планирование → Виртуальная память → I/O`.
 - **Диагностика prod-инцидента:** `Решение проблем → Память/OOM → I/O` + утилиты из таблицы.
-- **Подготовка к собеседованию:** вся карта + [patterns/concurrency-patterns/](../../patterns/concurrency-patterns/README.md).
+- **Подготовка к собеседованию:** вся карта + [[README|patterns/concurrency-patterns/]].
 
 ## Куда идти дальше
 
-- Java Memory Model и GC — [languages/java/](../../languages/java/README.md)
-- Контейнеры: namespaces, cgroups — [platform/containers/docker/](../../platform/containers/docker/README.md)
-- Observability процессов — [monitoring/metrics/](../../monitoring/metrics/README.md)
-- Системные вызовы и сетевой стек — [basics/networks/](../networks/README.md)
+- Java Memory Model и GC — [[README|languages/java/]]
+- Контейнеры: namespaces, cgroups — [[README|platform/containers/docker/]]
+- Observability процессов — [[README|monitoring/metrics/]]
+- Системные вызовы и сетевой стек — [[README|basics/networks/]]

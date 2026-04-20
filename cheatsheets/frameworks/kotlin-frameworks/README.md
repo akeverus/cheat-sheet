@@ -17,17 +17,17 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Kotlin Frameworks — обзор](kotlin-frameworks-overview.md) — карта экосистемы
+- [[kotlin-frameworks-overview|Kotlin Frameworks — обзор]] — карта экосистемы
 
 ### Соседние разделы
-- [Frameworks](../README.md)
-- [Java Frameworks](../java-frameworks/README.md) — Spring, Quarkus, Micronaut (работают и с Kotlin)
-- [Kotlin (язык)](../../languages/kotlin/README.md)
-- [Ktor](../../libraries/kotlin/kotlin-ktor.md) — полное руководство
-- [Exposed](../../libraries/kotlin/kotlin-exposed.md)
-- [kotlinx.coroutines](../../libraries/kotlin/kotlin-kotlinx-coroutines.md)
-- [kotlinx.serialization](../../libraries/kotlin/kotlin-kotlinx-serialization.md)
-- [Koin](../../libraries/kotlin/kotlin-kodein.md)
+- [[README|Frameworks]]
+- [[README|Java Frameworks]] — Spring, Quarkus, Micronaut (работают и с Kotlin)
+- [[README|Kotlin (язык)]]
+- [[kotlin-ktor|Ktor]] — полное руководство
+- [[kotlin-exposed|Exposed]]
+- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
+- [[kotlin-kotlinx-serialization|kotlinx.serialization]]
+- [[kotlin-kodein|Koin]]
 
 ### Внешние ресурсы
 - [Kotlin Docs](https://kotlinlang.org/docs/)
@@ -71,12 +71,12 @@ updated: "2026-04-17"
 
 ## Маршруты чтения
 
-- **Kotlin-first backend за день:** `kotlin-frameworks-overview.md` → [Ktor](../../libraries/kotlin/kotlin-ktor.md) → [Exposed](../../libraries/kotlin/kotlin-exposed.md).
-- **Kotlin поверх Spring:** раздел "Spring с Kotlin" в overview + [Spring](../java-frameworks/spring/README.md).
+- **Kotlin-first backend за день:** `kotlin-frameworks-overview.md` → [[kotlin-ktor|Ktor]] → [[kotlin-exposed|Exposed]].
+- **Kotlin поверх Spring:** раздел "Spring с Kotlin" в overview + [[README|Spring]].
 - **Мигрант с Java:** `kotlin-frameworks-overview.md` → сравнение с Java Frameworks.
 
 ## Куда идти дальше
 
-- Язык Kotlin — [languages/kotlin](../../languages/kotlin/README.md)
-- Kotlin-библиотеки — [libraries/kotlin](../../libraries/kotlin/README.md)
-- Общее сравнение JVM-стеков — [java-frameworks](../java-frameworks/README.md)
+- Язык Kotlin — [[README|languages/kotlin]]
+- Kotlin-библиотеки — [[README|libraries/kotlin]]
+- Общее сравнение JVM-стеков — [[README|java-frameworks]]

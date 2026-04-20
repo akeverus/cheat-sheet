@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **AWS Services**
+# AWS Services
 
-**AWS** (**Amazon Web Services**) предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **AWS**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [AWS Basics](aws-basics.md) более глубоким погружением в конкретные сервисы.
+**AWS** (Amazon Web Services) предоставляет более `200` сервисов для различных задач — от вычислений и хранения данных до машинного обучения и **IoT**. Этот документ охватывает основные сервисы **AWS**, их назначение, **use cases** и лучшие практики использования в **production** средах. Документ дополняет [[aws-basics|AWS Basics]] более глубоким погружением в конкретные сервисы.
 
 ## Полезные ссылки
 - [AWS Services Overview](https://aws.amazon.com/products/)
@@ -70,7 +70,7 @@ updated: "2026-02-11"
 
 **Основные возможности:**
 
-Пример типов инстансов **EC2** и сценариев использования (**YAML**).
+Пример типов инстансов **EC2** и сценариев использования (YAML).
 ```yaml
 # EC2 Instance Types — типы инстансов и сценарии использования (general-purpose, compute-optimized и др.)
 instance-types:
@@ -177,7 +177,7 @@ spot-fleet-request:
       weighted-capacity: 2
 ```
 
-### Lambda (**Serverless Functions**)
+### Lambda (Serverless Functions)
 
 **Что это: Serverless** вычислительная служба для запуска кода без управления серверами.
 
@@ -284,7 +284,7 @@ step-function:
         Next: SendErrorNotification
 ```
 
-### ECS/**Fargate** (**Container Services**)
+### ECS/Fargate (Container Services)
 
 **Что это:** Управление контейнеризованными приложениями.
 
@@ -959,7 +959,7 @@ secondary-cluster:
   region: us-west-2
 ```
 
-## Networking & **Content Delivery**
+## Networking & Content Delivery
 
 ### VPC (`Virtual Private Cloud`)
 
@@ -1259,7 +1259,7 @@ api-gateway:
         }
 ```
 
-**HTTP `API` (**новый, более дешевый**):**
+**HTTP `API` (новый, более дешевый):**
 ```yaml
 # API Gateway HTTP API
 http-api:
@@ -1602,7 +1602,7 @@ cloudtrail-alarms:
     comparison-operator: GreaterThanThreshold
 ```
 
-## Analytics & **Big Data**
+## Analytics & Big Data
 
 ### Redshift
 
@@ -1668,7 +1668,7 @@ GROUP BY c.customer_name
 ORDER BY total_sales DESC;
 ```
 
-### EMR (**Elastic MapReduce**)
+### EMR (Elastic MapReduce)
 
 **Что это: Managed Hadoop framework**.
 
@@ -2122,7 +2122,7 @@ codepipeline:
           run-order: 1
 ```
 
-## Management & **Governance**
+## Management & Governance
 
 ### CloudFormation
 
@@ -2237,7 +2237,7 @@ Outputs:
       Name: !Sub '${AWS::StackName}-web-sg-id'
 ```
 
-### Systems Manager (**SSM**)
+### Systems Manager (SSM)
 
 **Что это:** Управление инстансами и конфигурацией.
 
@@ -2357,8 +2357,8 @@ ssm-session-prefs:
 
 ## Лучшие практики
 
-- **Выбор сервисов:** используйте **managed**-сервисы (**RDS, `Lambda`, EKS**) для снижения операционной нагрузки; **EC2** — когда нужен полный контроль.
-- **Безопасность:** минимальные **IAM**-права по ролям; шифрование данных в покое (**S3, `EBS`, RDS**) и при передаче; включите **CloudTrail** и **GuardDuty**.
+- **Выбор сервисов:** используйте **managed**-сервисы (RDS, `Lambda`, EKS) для снижения операционной нагрузки; **EC2** — когда нужен полный контроль.
+- **Безопасность:** минимальные **IAM**-права по ролям; шифрование данных в покое (S3, `EBS`, RDS) и при передаче; включите **CloudTrail** и **GuardDuty**.
 - **Стоимость:** резервирования (**Reserved Instances** / **Savings Plans**) для стабильных нагрузок; **Spot** для **fault-tolerant**; теги и бюджеты для контроля затрат.
 - **Надёжность:** мульти-`AZ` для критичных БД и приложений; автоскейлинг и **health checks**; регулярные бэкапы и тесты восстановления.
 - **Мониторинг: CloudWatch** метрики и алерты; **X-Ray** для трейсинга; централизованные логи в **S3** или **OpenSearch**.

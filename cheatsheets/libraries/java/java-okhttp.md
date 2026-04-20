@@ -70,7 +70,7 @@ updated: "2026-02-11"
 
 ## Основные возможности
 
-### Простые **HTTP** запросы
+### Простые HTTP запросы
 
 Создание **OkHttp**-клиента и выполнение **GET**-запроса; ответ читается из **body**().
 
@@ -92,7 +92,7 @@ try (Response response = client.newCall(request).execute()) {
 }
 ```
 
-### Различные **HTTP** методы
+### Различные HTTP методы
 ```java
 // GET запрос
 Request getRequest = new Request.Builder()
@@ -122,7 +122,7 @@ Request deleteRequest = new Request.Builder()
     .build();
 ```
 
-### **Headers** и **Authentication**
+### Headers и Authentication
 ```java
 // Добавление headers
 Request request = new Request.Builder()
@@ -140,7 +140,7 @@ Request authRequest = new Request.Builder()
     .build();
 ```
 
-### **Query Parameters**
+### Query Parameters
 ```java
 // Построение URL с query параметрами
 HttpUrl url = new HttpUrl.Builder()
@@ -159,7 +159,7 @@ Request request = new Request.Builder()
 
 ## Продвинутые возможности
 
-### **Connection Pooling**
+### Connection Pooling
 ```java
 // Настройка пула соединений
 ConnectionPool connectionPool = new ConnectionPool(10, 5, TimeUnit.MINUTES);
@@ -173,7 +173,7 @@ System.out.println("Connections: " + connectionPool.connectionCount());
 System.out.println("Idle connections: " + connectionPool.idleConnectionCount());
 ```
 
-### **Interceptors**
+### Interceptors
 ```java
 // Application Interceptor (для всех запросов)
 class LoggingInterceptor implements Interceptor {
@@ -212,7 +212,7 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 ```
 
-### **Caching**
+### Caching
 ```java
 /
  * Настройка кеширования для OkHttp

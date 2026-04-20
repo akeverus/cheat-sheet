@@ -12,14 +12,14 @@ updated: "2026-02-11"
 ---
 # Go Frameworks — обзор (редирект)
 
-Подробный документ по веб-фреймворкам Go: **[Go Web Frameworks](../../languages/go/go-web-frameworks.md)**.
+Подробный документ по веб-фреймворкам Go: **[[go-web-frameworks|Go Web Frameworks]]**.
 
 В нём: **Gin**, **Echo**, **Chi**, **Fiber**, **Fasthttp**, стандартная библиотека `net/http`, маршрутизация, middleware, работа с JSON, ORM, тестирование, развёртывание и лучшие практики.
 
 ## Полезные ссылки
 
-[Go Web Frameworks](../../languages/go/go-web-frameworks.md)
+[[go-web-frameworks|Go Web Frameworks]]
 
 ## См. также
-- [Go (язык)](../../languages/go/README.md) — раздел языка Go
-- [Frameworks README](../README.md) — раздел фреймворков
+- [[README|Go (язык)]] — раздел языка Go
+- [[README|Frameworks README]] — раздел фреймворков

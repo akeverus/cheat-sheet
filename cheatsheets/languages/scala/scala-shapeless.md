@@ -24,7 +24,7 @@ updated: "2026-02-11"
 ## Содержание
 
 - [Введение](#введение)
-- [**HList** (**Heterogeneous List**)](#hlist-heterogeneous-list)
+- [**HList** (Heterogeneous List)](#hlist-heterogeneous-list)
   - [Базовое использование **HList**](#базовое-использование-hlist)
   - [Операции над **HList**](#операции-над-hlist)
 - [**Generic**](#generic)
@@ -83,11 +83,11 @@ updated: "2026-02-11"
 
 **Shapeless** особенно полезен для автоматической генерации кода, преобразования между типами, создания **type-safe API** и работы с гетерогенными структурами данных.
 
-## **HList** (**Heterogeneous List**)
+## HList (Heterogeneous List)
 
 **HList** — это список с элементами разных типов, известными на этапе компиляции.
 
-### Базовое использование **HList**
+### Базовое использование HList
 
 ```scala
 import shapeless.{HList, ::, HNil}
@@ -101,7 +101,7 @@ val int = hlist.tail.head  // 42
 val boolean = hlist.tail.tail.head  // true
 ```
 
-### Операции над **HList**
+### Операции над HList
 
 ```scala
 import shapeless.{HList, ::, HNil}
@@ -122,11 +122,11 @@ val tuple1 = ("hello", 42, true)
 val hlist3 = tuple1.productElements
 ```
 
-## **Generic**
+## Generic
 
 **Generic** позволяет преобразовывать **case classes** в **HList** и обратно.
 
-### Преобразование **case class** в **HList**
+### Преобразование case class в HList
 
 ```scala
 import shapeless.Generic
@@ -164,11 +164,11 @@ val person = convert[User, Person](user)
 // Person("Alice", 30, "alice@example.com")
 ```
 
-## **Type-level** вычисления
+## Type-level вычисления
 
 **Shapeless** предоставляет инструменты для **type-level** вычислений.
 
-### **Type-level** операции
+### Type-level операции
 
 ```scala
 import shapeless.{Nat, Succ, _0, _1, _2}
@@ -184,11 +184,11 @@ type TwoTimesThree = Prod[_2, _3]  // _6
 type FiveMinusTwo = Diff[_5, _2]  // _3
 ```
 
-## **Lens**
+## Lens
 
 **Lens** — это функциональные ссылки на поля структуры данных.
 
-### Использование **Lens**
+### Использование Lens
 
 ```scala
 import shapeless.Lens
@@ -319,7 +319,7 @@ val updatedUser = user
 // User("Bob", 31, "alice@example.com", Settings("light", true))
 ```
 
-### Автоматическая деривация **JSON** сериализаторов
+### Автоматическая деривация JSON сериализаторов
 
 ```scala
 import shapeless.{Generic, LabelledGeneric, HList}
@@ -369,7 +369,7 @@ val json = JsonEncoder[User].encode(user)
 // {"name": "Alice", "age": 30, "email": "alice@example.com"}
 ```
 
-### Автоматическая деривация **equals** и **hashCode**
+### Автоматическая деривация equals и hashCode
 
 ```scala
 import shapeless.Generic
@@ -395,7 +395,7 @@ val hashCode1 = autoHashCode(person1)
 val hashCode2 = autoHashCode(person2)
 ```
 
-### Автоматическая деривация **toString**
+### Автоматическая деривация toString
 
 ```scala
 import shapeless.Generic
@@ -413,7 +413,7 @@ val string = autoToString(product)
 // "Product(Product :: Laptop :: 999.99 :: 5 :: HNil)"
 ```
 
-### Работа с **Coproduct**
+### Работа с Coproduct
 
 ```scala
 import shapeless.{:+:, CNil, Coproduct, Inl, Inr}
@@ -437,7 +437,7 @@ val result1 = processIntOrString(intValue)  // "Integer: 42"
 val result2 = processIntOrString(stringValue)  // "String: hello"
 ```
 
-### Работа с **Records**
+### Работа с Records
 
 ```scala
 import shapeless.record._
@@ -460,7 +460,7 @@ val age = user("age")  // 30
 val updatedUser = user.updateWith("age")(_ + 1)  // age становится 31
 ```
 
-### Автоматическая деривация для **ADT**
+### Автоматическая деривация для ADT
 
 ```scala
 import shapeless.Generic
@@ -573,7 +573,7 @@ val errors = Validator[User].validate(user)
 // List("String cannot be empty", "Int must be non-negative")
 ```
 
-### Автоматическая деривация для создания **Builder**
+### Автоматическая деривация для создания Builder
 
 ```scala
 import shapeless.{Generic, HList, HNil, ::}
@@ -628,7 +628,7 @@ val user = builder[User]
 
 **Shapeless** предоставляет мощные инструменты для автоматической генерации кода, включая деривацию **JSON** сериализаторов, **equals**, **hashCode**, **toString**, работу с **Coproduct**, **Records**, **ADT**, конвертацию между типами, работу с опциональными полями, валидацию и создание **Builder**. Понимание этих техник позволяет создавать сложные, типобезопасные библиотеки и фреймворки.
 
-### Работа с **TypeTags** для **runtime** информации о типах
+### Работа с TypeTags для runtime информации о типах
 
 ```scala
 import shapeless.Typeable
@@ -650,7 +650,7 @@ val result1 = process(42)  // "Integer: 42"
 val result2 = process("hello")  // "String: hello"
 ```
 
-### Работа с **Witness** для **type-level** значений
+### Работа с Witness для type-level значений
 
 ```scala
 import shapeless.Witness
@@ -664,7 +664,7 @@ val nameValue = nameWitness.value  // "name"
 val nameSingleton = "name".narrow  // Тип: "name" (не String)
 ```
 
-### Работа с **Sized** для типобезопасных размеров коллекций
+### Работа с Sized для типобезопасных размеров коллекций
 
 ```scala
 import shapeless.Sized
@@ -681,7 +681,7 @@ val sum = sizedList.foldLeft(0)(_ + _)  // 6
 val list = sizedList.unsized  // List(1, 2, 3)
 ```
 
-### Работа с **Poly** для полиморфных функций
+### Работа с Poly для полиморфных функций
 
 ```scala
 import shapeless.Poly1
@@ -698,7 +698,7 @@ val doubled = hlist.map(double)
 // 2 :: "hellohello" :: 6.28 :: HNil
 ```
 
-### Работа с **Typeable** для безопасного приведения типов
+### Работа с Typeable для безопасного приведения типов
 
 ```scala
 import shapeless.Typeable
@@ -715,7 +715,7 @@ val maybeInt = safeCast[Int](42)  // Some(42)
 val maybeString = safeCast[String](42)  // None
 ```
 
-### Работа с **UnaryTCConstraint** для ограничений типов
+### Работа с UnaryTCConstraint для ограничений типов
 
 ```scala
 import shapeless.UnaryTCConstraint
@@ -735,7 +735,7 @@ def showAll[L <: HList](hlist: L)(
 }
 ```
 
-### Работа с **Nat** для **type-level** чисел
+### Работа с Nat для type-level чисел
 
 ```scala
 import shapeless.nat._
@@ -751,7 +751,7 @@ type Eight = Sum[_3, _5]  // _8
 type Fifteen = Prod[_3, _5]  // _15
 ```
 
-### Работа с **Singleton** для **singleton** типов
+### Работа с Singleton для singleton типов
 
 ```scala
 import shapeless.syntax.singleton._
@@ -768,7 +768,7 @@ def processName(name: "name".type): String = {
 val result = processName("name")  // "Processing: name"
 ```
 
-### Работа с **LabelledGeneric** для работы с именами полей
+### Работа с LabelledGeneric для работы с именами полей
 
 ```scala
 import shapeless.LabelledGeneric
@@ -786,7 +786,7 @@ val name = record("name")  // "Alice"
 val age = record("age")  // 30
 ```
 
-### Работа с **ops.hlist** для операций над **HList**
+### Работа с ops.hlist для операций над HList
 
 ```scala
 import shapeless.ops.hlist.{Length, Reverse, Take, Drop}
@@ -806,7 +806,7 @@ val taken = Take[_2](hlist)  // "hello" :: 42 :: HNil
 val dropped = Drop[_1](hlist)  // 42 :: true :: HNil
 ```
 
-### Работа с **ops.tuple** для операций над **tuple**
+### Работа с ops.tuple для операций над tuple
 
 ```scala
 import shapeless.ops.tuple.{Length, Reverse, Take, Drop}
@@ -826,7 +826,7 @@ val taken = Take[_2](tuple)  // ("hello", 42)
 val dropped = Drop[_1](tuple)  // (42, true)
 ```
 
-### Работа с **ops.record** для операций над **Records**
+### Работа с ops.record для операций над Records
 
 ```scala
 import shapeless.record._
@@ -850,7 +850,7 @@ val withoutEmail = user.remove("email")
 val withPhone = user + ("phone" ->> "123-456-7890")
 ```
 
-### Работа с **ops.coproduct** для операций над **Coproduct**
+### Работа с ops.coproduct для операций над Coproduct
 
 ```scala
 import shapeless.{:+:, CNil, Coproduct}
@@ -871,7 +871,7 @@ val maybeInt = extractInt(intValue)  // Some(42)
 val maybeString = extractInt(stringValue)  // None
 ```
 
-### Работа с **ops.nat** для **type-level** арифметики
+### Работа с ops.nat для type-level арифметики
 
 ```scala
 import shapeless.nat._
@@ -890,7 +890,7 @@ type Three = Diff[_5, _2]  // _3
 type IsLess = LT[_3, _5]  // True
 ```
 
-### Работа с **ops.typeable** для безопасного приведения типов
+### Работа с ops.typeable для безопасного приведения типов
 
 ```scala
 import shapeless.Typeable
@@ -905,7 +905,7 @@ val maybeInt = safeCast[Int](42)  // Some(42)
 val maybeString = safeCast[String](42)  // None
 ```
 
-### Работа с **ops.hlist.ToTraversable** для преобразования **HList** в коллекцию
+### Работа с ops.hlist.ToTraversable для преобразования HList в коллекцию
 
 ```scala
 import shapeless.ops.hlist.ToTraversable
@@ -919,7 +919,7 @@ val list = ToTraversable[List].apply(hlist)  // List("hello", 42, true)
 val vector = ToTraversable[Vector].apply(hlist)  // Vector("hello", 42, true)
 ```
 
-### Работа с **ops.hlist.Mapper** для применения функции к каждому элементу
+### Работа с ops.hlist.Mapper для применения функции к каждому элементу
 
 ```scala
 import shapeless.ops.hlist.Mapper
@@ -938,7 +938,7 @@ val mapped = Mapper[double.type].apply(hlist)
 // 2 :: "hellohello" :: 84 :: HNil
 ```
 
-### Работа с **ops.hlist.FlatMapper** для **flatMap** операций
+### Работа с ops.hlist.FlatMapper для flatMap операций
 
 ```scala
 import shapeless.ops.hlist.FlatMapper
@@ -957,7 +957,7 @@ val flatMapped = FlatMapper[expand.type].apply(hlist)
 // 1 :: 2 :: "hello" :: "HELLO" :: HNil
 ```
 
-### Работа с **ops.hlist.Zip** для объединения **HList**
+### Работа с ops.hlist.Zip для объединения HList
 
 ```scala
 import shapeless.ops.hlist.Zip
@@ -970,7 +970,7 @@ val zipped = Zip(hlist1, hlist2)
 // ("hello", "world") :: (42, 100) :: (true, false) :: HNil
 ```
 
-### Работа с **ops.hlist.Unzip** для разделения **HList**
+### Работа с ops.hlist.Unzip для разделения HList
 
 ```scala
 import shapeless.ops.hlist.Unzip
@@ -983,7 +983,7 @@ val (hlist1, hlist2) = Unzip(hlist)
 // hlist2: "world" :: 100 :: false :: HNil
 ```
 
-### Работа с **ops.hlist.Prepend** для добавления элемента
+### Работа с ops.hlist.Prepend для добавления элемента
 
 ```scala
 import shapeless.ops.hlist.Prepend
@@ -995,7 +995,7 @@ val prepended = Prepend("hello" :: HNil, hlist)
 // "hello" :: 42 :: true :: HNil
 ```
 
-### Работа с **ops.hlist.Append** для добавления элемента в конец
+### Работа с ops.hlist.Append для добавления элемента в конец
 
 ```scala
 import shapeless.ops.hlist.Append

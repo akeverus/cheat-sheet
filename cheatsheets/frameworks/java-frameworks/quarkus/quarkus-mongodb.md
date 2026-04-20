@@ -83,7 +83,7 @@ related: ["quarkus-data.md", "quarkus-reactive.md"]
 
 ## Configuration
 
-### **MongoDB Configuration**
+### MongoDB Configuration
 
 **application.properties:**
 
@@ -92,7 +92,7 @@ quarkus.mongodb.connection-string=mongodb://localhost:27017
 quarkus.mongodb.database=myapp
 ```
 
-### **Advanced Configuration**
+### Advanced Configuration
 
 ```properties
 quarkus.mongodb.connection-string=mongodb://user:password@host1:27017,host2:27017/myapp?replicaSet=rs0
@@ -103,7 +103,7 @@ quarkus.mongodb.truststore.password=password
 
 ## Panache MongoDB
 
-### **Entity Definition**
+### Entity Definition
 
 **Определение сущности:**
 
@@ -118,7 +118,7 @@ public class User extends PanacheMongoEntity {
 }
 ```
 
-### **Basic Operations**
+### Basic Operations
 
 **Базовые операции:**
 
@@ -149,7 +149,7 @@ public class UserService {
 
 ## Queries
 
-### **Query Methods**
+### Query Methods
 
 **Методы запросов:**
 
@@ -171,7 +171,7 @@ public class UserRepository {
 }
 ```
 
-### **Native Queries**
+### Native Queries
 
 **Нативные запросы:**
 
@@ -191,7 +191,7 @@ public class NativeQueryRepository {
 
 ## Reactive MongoDB
 
-### **Reactive Entity**
+### Reactive Entity
 
 **Реактивная сущность:**
 
@@ -214,7 +214,7 @@ public class ReactiveUser extends ReactivePanacheMongoEntity {
 }
 ```
 
-### **Reactive Operations**
+### Reactive Operations
 
 **Реактивные операции:**
 
@@ -238,7 +238,7 @@ public class ReactiveUserService {
 
 ## Aggregation
 
-### **Aggregation Pipeline**
+### Aggregation Pipeline
 
 **Агрегационный пайплайн:**
 
@@ -262,7 +262,7 @@ public class AggregationService {
 ```
 
 ## Лучшие практики
-### 1. Используйте **Panache** для упрощения
+### 1. Используйте Panache для упрощения
 
 ```java
 // ✅ Хорошо
@@ -271,7 +271,7 @@ public class User extends PanacheMongoEntity {
 }
 ```
 
-### 2. Используйте **reactive** для неблокирующих операций
+### 2. Используйте reactive для неблокирующих операций
 
 ```java
 // ✅ Хорошо
@@ -290,7 +290,7 @@ public String email;
 
 ## Indexes
 
-### **Creating Indexes**
+### Creating Indexes
 
 **Создание индексов:**
 
@@ -312,7 +312,7 @@ public class IndexService {
 }
 ```
 
-### **Text Indexes**
+### Text Indexes
 
 **Текстовые индексы:**
 
@@ -332,7 +332,7 @@ public class TextIndexService {
 
 ## Transactions
 
-### **Transaction Support**
+### Transaction Support
 
 **Поддержка транзакций:**
 
@@ -356,7 +356,7 @@ public class TransactionalService {
 
 ## Change Streams
 
-### **Watching Changes**
+### Watching Changes
 
 **Отслеживание изменений:**
 
@@ -379,7 +379,7 @@ public class ChangeStreamService {
 
 ## GridFS
 
-### **File Storage**
+### File Storage
 
 **Хранение файлов:**
 
@@ -411,7 +411,7 @@ public class GridFSService {
 
 ## MongoDB Performance Optimization
 
-### **Query Optimization**
+### Query Optimization
 
 **Оптимизация запросов:**
 
@@ -429,7 +429,7 @@ public class OptimizedQueries {
 }
 ```
 
-### **Index Management**
+### Index Management
 
 **Управление индексами:**
 
@@ -447,7 +447,7 @@ public class IndexManagement {
 }
 ```
 
-### **Connection Pooling**
+### Connection Pooling
 
 **Настройка пула соединений:**
 
@@ -459,7 +459,7 @@ quarkus.mongodb.min-pool-size=10
 
 ## Advanced MongoDB Patterns
 
-### **Document Versioning**
+### Document Versioning
 
 **Версионирование документов:**
 
@@ -476,7 +476,7 @@ public class VersionedUser extends PanacheMongoEntity {
 }
 ```
 
-### **Soft Deletes**
+### Soft Deletes
 
 **Мягкое удаление:**
 
@@ -501,7 +501,7 @@ public class SoftDeletableUser extends PanacheMongoEntity {
 
 ## MongoDB Change Streams
 
-### **Real-time Change Monitoring**
+### Real-time Change Monitoring
 
 **Мониторинг изменений в реальном времени:**
 
@@ -519,7 +519,7 @@ public class ChangeStreamService {
 }
 ```
 
-### **Change Stream Filters**
+### Change Stream Filters
 
 **Фильтры для **change streams**:**
 
@@ -541,7 +541,7 @@ public class FilteredChangeStream {
 
 ## MongoDB GridFS
 
-### **File Storage**
+### File Storage
 
 **Хранение файлов:**
 

@@ -86,7 +86,7 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Data Redis**
+## Введение в Spring Data Redis
 
 **Spring Data Redis** предоставляет простую интеграцию с **Redis** для работы с ключ-значение хранилищем, кешированием, **pub**/**sub messaging** и другими возможностями **Redis**.
 
@@ -98,7 +98,7 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
 - **Pub/Sub**: Поддержка **publish**/**subscribe**
 - **Transactions**: Транзакционная поддержка
 
-### Архитектура **Spring Data Redis**
+### Архитектура Spring Data Redis
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -128,11 +128,11 @@ related: ["spring/spring-boot.md", "spring/spring-cache.md", "databases/redis.md
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Настройка **Spring Data Redis**
+## Настройка Spring Data Redis
 
 ### Зависимости
 
-**Зависимость **spring-`boot-starter-data`-redis** (**pom.xml**):**
+**Зависимость **spring-`boot-starter-data`-redis** (pom.xml):**
 
 ```xml
 <dependency>
@@ -156,7 +156,7 @@ spring.redis.lettuce.pool.max-idle=8
 spring.redis.lettuce.pool.min-idle=0
 ```
 
-### **Java Configuration**
+### Java Configuration
 
 ```java
 // Конфигурация RedisTemplate и сериализаторов
@@ -242,7 +242,7 @@ public class UserRedisService {
 }
 ```
 
-### **List Operations**
+### List Operations
 
 ```java
 @Service
@@ -269,7 +269,7 @@ public class ListRedisService {
 }
 ```
 
-### **Set Operations**
+### Set Operations
 
 ```java
 @Service
@@ -296,7 +296,7 @@ public class SetRedisService {
 }
 ```
 
-### **Hash Operations**
+### Hash Operations
 
 ```java
 @Service
@@ -325,7 +325,7 @@ public class HashRedisService {
 
 ## Redis Repositories
 
-### Настройка **Repository**
+### Настройка Repository
 
 ```java
 @Configuration
@@ -339,7 +339,7 @@ public class RedisRepositoryConfig {
 }
 ```
 
-### **Entity**
+### Entity
 
 ```java
 @RedisHash("user")
@@ -360,7 +360,7 @@ public class User {
 }
 ```
 
-### **Repository**
+### Repository
 
 ```java
 public interface UserRepository extends CrudRepository<User, String> {
@@ -375,7 +375,7 @@ public interface UserRepository extends CrudRepository<User, String> {
 
 ## Cache Abstraction
 
-### Настройка **Redis Cache**
+### Настройка Redis Cache
 
 ```java
 @Configuration
@@ -404,7 +404,7 @@ public class RedisCacheConfig {
 }
 ```
 
-### Использование **Cache**
+### Использование Cache
 
 ```java
 @Service
@@ -425,7 +425,7 @@ public class UserService {
 
 ## Pub/Sub
 
-### **Publisher**
+### Publisher
 
 ```java
 @Service
@@ -440,7 +440,7 @@ public class RedisPublisher {
 }
 ```
 
-### **Subscriber**
+### Subscriber
 
 ```java
 @Component
@@ -506,14 +506,14 @@ template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 template.setValueSerializer(new StringRedisSerializer());
 ```
 
-### 2. Настраивайте **TTL** для кеша
+### 2. Настраивайте TTL для кеша
 
 ```java
 // ✅ Хорошо
 config.entryTtl(Duration.ofHours(1));
 ```
 
-### 3. Используйте **connection pooling**
+### 3. Используйте connection pooling
 
 ```properties
 # ✅ Хорошо
@@ -545,7 +545,7 @@ public void transfer(String from, String to, String amount) {
 
 ## Redis Streams
 
-### Отправка сообщений в **Stream**
+### Отправка сообщений в Stream
 
 ```java
 @Service
@@ -565,7 +565,7 @@ public class RedisStreamProducer {
 }
 ```
 
-### Чтение из **Stream**
+### Чтение из Stream
 
 ```java
 @Service
@@ -600,7 +600,7 @@ public class RedisStreamConsumer {
 }
 ```
 
-### **Consumer Groups**
+### Consumer Groups
 
 ```java
 @Configuration
@@ -647,7 +647,7 @@ public class StreamConsumerGroup {
 
 ## Redis Cluster
 
-### Настройка **Cluster**
+### Настройка Cluster
 
 ```properties
 # Redis Cluster Configuration
@@ -679,7 +679,7 @@ public class RedisClusterConfig {
 }
 ```
 
-### Работа с **Cluster**
+### Работа с Cluster
 
 ```java
 @Service
@@ -707,7 +707,7 @@ public class RedisClusterService {
 
 ## Redis Sentinel
 
-### Настройка **Sentinel**
+### Настройка Sentinel
 
 ```properties
 # Redis Sentinel Configuration
@@ -734,7 +734,7 @@ public class RedisSentinelConfig {
 
 ## Продвинутые операции
 
-### **Pipeline Operations**
+### Pipeline Operations
 
 ```java
 @Service
@@ -760,7 +760,7 @@ public class RedisPipelineService {
 }
 ```
 
-### **Lua Scripts**
+### Lua Scripts
 
 ```java
 @Service
@@ -788,7 +788,7 @@ public class RedisScriptService {
 }
 ```
 
-### **Bitmap Operations**
+### Bitmap Operations
 
 ```java
 @Service
@@ -821,7 +821,7 @@ public class RedisBitmapService {
 }
 ```
 
-### **HyperLogLog**
+### HyperLogLog
 
 ```java
 @Service
@@ -844,7 +844,7 @@ public class RedisHyperLogLogService {
 }
 ```
 
-### **Geospatial Operations**
+### Geospatial Operations
 
 ```java
 @Service
@@ -872,7 +872,7 @@ public class RedisGeospatialService {
 
 ## Мониторинг и метрики
 
-### **Redis Metrics**
+### Redis Metrics
 
 ```java
 @Component
@@ -909,7 +909,7 @@ public class RedisMetrics {
 }
 ```
 
-### **Health Check**
+### Health Check
 
 ```java
 @Component
@@ -945,7 +945,7 @@ public class RedisHealthIndicator implements HealthIndicator {
 
 ## Оптимизация производительности
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 @Configuration
@@ -971,7 +971,7 @@ public class OptimizedRedisConfig {
 }
 ```
 
-### **Serialization Optimization**
+### Serialization Optimization
 
 ```java
 @Configuration
@@ -997,7 +997,7 @@ public class OptimizedSerializationConfig {
 
 ## Безопасность
 
-### **Redis Authentication**
+### Redis Authentication
 
 ```properties
 # Redis Authentication
@@ -1020,7 +1020,7 @@ public class SecureRedisConfig {
 }
 ```
 
-### **SSL**/**TLS Configuration**
+### SSL/TLS Configuration
 
 ```java
 @Configuration

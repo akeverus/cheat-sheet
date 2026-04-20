@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Ansible Advanced**
+# Ansible Advanced
 
 **Ansible** — это инструмент автоматизации ИТ-инфраструктуры с открытым исходным кодом, который позволяет автоматизировать конфигурацию, развертывание и управление серверами. Этот документ охватывает продвинутые концепции, паттерны и **best practices** для **enterprise-grade** автоматизации.
 
@@ -54,10 +54,10 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Продвинутая архитектура **Ansible**
+## Продвинутая архитектура Ansible
 
-### Структура **enterprise** проекта
-Ниже — структура каталогов **enterprise Ansible**-проекта (**текст**).
+### Структура enterprise проекта
+Ниже — структура каталогов **enterprise Ansible**-проекта (текст).
 ```text
 ansible-enterprise/
 ├── ansible.cfg                    # Конфигурация Ansible
@@ -145,7 +145,7 @@ ansible-enterprise/
 └── Makefile                       # Make команды
 ```
 
-### Конфигурация **Ansible**
+### Конфигурация Ansible
 ```ini
 # ansible.cfg
 [defaults]
@@ -594,7 +594,7 @@ java_app_redis_port: "{{ redis_port | default(6379) }}"
   tags: [security]
 ```
 
-## Продвинутые **playbooks**
+## Продвинутые playbooks
 
 ### Многофазные развертывания
 ```yaml
@@ -910,7 +910,7 @@ class FilterModule(object):
         }
 ```
 
-## Testing и **validation**
+## Testing и validation
 
 ### Molecule для тестирования ролей
 ```yaml

@@ -16,7 +16,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
 ---
 
-# **Redis**: **Streams**
+# Redis: Streams
 
 ## Полезные ссылки
 
@@ -61,7 +61,7 @@ related: ["databases/redis-basics.md", "databases/redis-pubsub.md"]
   - [**Stream Aggregation**](#stream-aggregation-2)
   - [**Stream Replay**](#stream-replay-1)
 
-## Введение в **Redis Streams**
+## Введение в Redis Streams
 
 **Redis Streams** — это структура данных для хранения логов сообщений, добавленная в **Redis** `5.0`. **Streams** обеспечивают гарантии доставки, **consumer groups** и позволяют обрабатывать сообщения в порядке их поступления.
 
@@ -107,9 +107,9 @@ XREAD BLOCK 5000 STREAMS mystream $
 ```
 
 
-## **Consumer Groups**
+## Consumer Groups
 
-### Создание **Consumer Group**
+### Создание Consumer Group
 
 ```redis
 # Создание группы
@@ -194,7 +194,7 @@ XLEN mystream
 
 ## Программное использование
 
-### **Java Producer**
+### Java Producer
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -234,7 +234,7 @@ public class StreamProducer {
 }
 ```
 
-### **Java Consumer**
+### Java Consumer
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -306,9 +306,9 @@ public class StreamConsumer {
 4. **Обрабатывайте ошибки** при чтении сообщений
 5. **Мониторьте pending messages** для обнаружения проблем
 
-## **Advanced Stream Operations**
+## Advanced Stream Operations
 
-### **Pending Messages**
+### Pending Messages
 
 ```redis
 # Просмотр pending сообщений
@@ -321,7 +321,7 @@ XPENDING mystream mygroup - + 10 consumer1
 XCLAIM mystream mygroup consumer2 3600000 1640995200000-0
 ```
 
-### **Message Processing Patterns**
+### Message Processing Patterns
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -415,7 +415,7 @@ public class ReliableStreamConsumer {
 }
 ```
 
-### **Stream Aggregation**
+### Stream Aggregation
 
 ```lua
 -- Агрегация данных из потока
@@ -439,9 +439,9 @@ end
 return {sum, count, sum / count}
 ```
 
-## **Advanced Stream Patterns**
+## Advanced Stream Patterns
 
-### **Dead Letter Queue**
+### Dead Letter Queue
 
 ```java
 public class StreamProcessorWithDLQ {
@@ -484,7 +484,7 @@ public class StreamProcessorWithDLQ {
         self.redis.xadd(self.dlq_stream, dlq_message, id='*')
 ```
 
-### **Stream Aggregation**
+### Stream Aggregation
 
 ```java
 public class StreamAggregator {
@@ -544,7 +544,7 @@ public class StreamAggregator {
         return {'count': 0}
 ```
 
-### **Stream Replay**
+### Stream Replay
 
 ```java
 public class StreamReplayer {
@@ -568,9 +568,9 @@ public class StreamReplayer {
             self.redis.xadd(target_stream, data, id='*')
 ```
 
-## **Advanced Stream Patterns**
+## Advanced Stream Patterns
 
-### **Dead Letter Queue**
+### Dead Letter Queue
 
 ```java
 public class StreamProcessorWithDLQ {
@@ -613,7 +613,7 @@ public class StreamProcessorWithDLQ {
         self.redis.xadd(self.dlq_stream, dlq_message, id='*')
 ```
 
-### **Stream Aggregation**
+### Stream Aggregation
 
 ```java
 public class StreamAggregator {
@@ -673,7 +673,7 @@ public class StreamAggregator {
         return {'count': 0}
 ```
 
-### **Stream Replay**
+### Stream Replay
 
 ```java
 public class StreamReplayer {

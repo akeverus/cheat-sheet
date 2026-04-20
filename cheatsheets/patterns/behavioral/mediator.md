@@ -66,7 +66,7 @@ updated: "2026-02-11"
 
 **Когда применять:** много объектов общаются по-разному, нужно централизовать протокол взаимодействия.
 
-## Что такое **Mediator**?
+## Что такое Mediator?
 
 **Mediator** — это поведенческий паттерн проектирования, который позволяет уменьшить связанность между компонентами системы, заставляя их взаимодействовать не напрямую, а через центральный посредник. **Mediator** инкапсулирует логику взаимодействия между объектами.
 
@@ -159,7 +159,7 @@ public class User {
 }
 ```
 
-## Когда использовать **Mediator**?
+## Когда использовать Mediator?
 
 ### Подходящие сценарии
 
@@ -328,7 +328,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Mediator**
+### Классический Mediator
 
 ```java
 // Mediator интерфейс
@@ -618,7 +618,7 @@ public class GUIMediatorDemo {
 }
 ```
 
-### **Event-driven Mediator**
+### Event-driven Mediator
 
 ```java
 // Event-driven Mediator
@@ -911,7 +911,7 @@ public class EventDrivenMediatorDemo {
 
 ## Продвинутые реализации
 
-### 1. **Hierarchical Mediator**
+### 1. Hierarchical Mediator
 
 ```java
 // Иерархический Mediator
@@ -1166,7 +1166,7 @@ public class HierarchicalMediatorDemo {
 }
 ```
 
-### 2. **Mediator** с **Command** паттерном
+### 2. Mediator с Command паттерном
 
 ```java
 // Mediator с интеграцией Command паттерна
@@ -1456,7 +1456,7 @@ public class CommandMediatorDemo {
 
 ## Примеры использования
 
-### 1. **Air Traffic Control System**
+### 1. Air Traffic Control System
 
 ```java
 // Air Traffic Control System
@@ -1619,7 +1619,7 @@ public class AirTrafficControlDemo {
 }
 ```
 
-### 2. **E-commerce Order Processing**
+### 2. E-commerce Order Processing
 
 ```java
 // E-commerce Order Processing System
@@ -1898,7 +1898,7 @@ public class EcommerceMediatorDemo {
 }
 ```
 
-### 3. **Workflow Management System**
+### 3. Workflow Management System
 
 ```java
 // Workflow Management System
@@ -2161,7 +2161,7 @@ public class WorkflowMediatorDemo {
 
 ## Лучшие практики
 
-### 1. **SOLID Principles**
+### 1. SOLID Principles
 
 ```java
 // Правильное применение SOLID принципов
@@ -2239,7 +2239,7 @@ class Application {
 }
 ```
 
-### 2. **Testing Mediator Pattern**
+### 2. Testing Mediator Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

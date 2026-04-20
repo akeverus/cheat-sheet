@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **PostgreSQL**: Мониторинг
+# PostgreSQL: Мониторинг
 
 ## Полезные ссылки
 
@@ -103,7 +103,7 @@ updated: "2026-02-11"
 
 **PostgreSQL** предоставляет множество представлений для мониторинга.
 
-### **pg_stat_activity**
+### pg_stat_activity
 
 Отслеживает текущие активные соединения и запросы.
 
@@ -137,7 +137,7 @@ WHERE state != 'idle'
 ORDER BY duration DESC;
 ```
 
-### **pg_stat_database**
+### pg_stat_database
 
 Статистика на уровне базы данных.
 
@@ -172,7 +172,7 @@ WHERE blks_hit + blks_read > 0
 ORDER BY cache_hit_ratio;
 ```
 
-### **pg_stat_user_tables**
+### pg_stat_user_tables
 
 Статистика по пользовательским таблицам.
 
@@ -213,7 +213,7 @@ WHERE seq_scan + idx_scan > 0
 ORDER BY seq_scan_percent DESC;
 ```
 
-### **pg_stat_user_indexes**
+### pg_stat_user_indexes
 
 Статистика по индексам.
 
@@ -241,9 +241,9 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
 
-## **pg_stat_statements**
+## pg_stat_statements
 
-Расширение `**pg_stat_statements**` предоставляет детальную статистику по выполненным запросам.
+Расширение `pg_stat_statements` предоставляет детальную статистику по выполненным запросам.
 
 ### Установка
 
@@ -486,9 +486,9 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 ```
 
 
-## **Prometheus** и **Grafana**
+## Prometheus и Grafana
 
-### **PostgreSQL Exporter**
+### PostgreSQL Exporter
 
 Установка и настройка **PostgreSQL Exporter** для **Prometheus**.
 
@@ -543,7 +543,7 @@ queries:
     timeout: 0.5
 ```
 
-### **Prometheus Configuration**
+### Prometheus Configuration
 
 ```yaml
 # prometheus.yml
@@ -554,7 +554,7 @@ scrape_configs:
         - localhost:9187
 ```
 
-### **Grafana Dashboard**
+### Grafana Dashboard
 
 Импорт готового дашборда для **PostgreSQL** или создание собственного.
 
@@ -587,7 +587,7 @@ scrape_configs:
 
 ## Алерты и уведомления
 
-### **Prometheus Alert Rules**
+### Prometheus Alert Rules
 
 ```yaml
 # alerts.yml
@@ -636,7 +636,7 @@ groups:
           description: "Table {{ $labels.relname }} has {{ $value }} dead tuple ratio"
 ```
 
-### Настройка **Alertmanager**
+### Настройка Alertmanager
 
 ```yaml
 # alertmanager.yml
@@ -719,9 +719,9 @@ SELECT
 FROM pg_stat_replication;
 ```
 
-## **Advanced Monitoring Techniques**
+## Advanced Monitoring Techniques
 
-### **Custom Monitoring Views**
+### Custom Monitoring Views
 
 ```sql
 -- Создать комплексное представление для мониторинга
@@ -767,7 +767,7 @@ WHERE datname = current_database();
 SELECT * FROM database_health_overview;
 ```
 
-### **Query Performance Monitoring**
+### Query Performance Monitoring
 
 ```sql
 -- Создать представление для мониторинга производительности запросов
@@ -790,7 +790,7 @@ ORDER BY total_time DESC;
 SELECT * FROM query_performance_monitoring LIMIT 20;
 ```
 
-### **Real-Time Monitoring Dashboard**
+### Real-Time Monitoring Dashboard
 
 ```sql
 -- Создать функцию для real-time дашборда
@@ -888,9 +888,9 @@ $$ LANGUAGE plpgsql;
 SELECT * FROM monitoring_dashboard();
 ```
 
-## **Historical Monitoring**
+## Historical Monitoring
 
-### **Creating Monitoring Tables**
+### Creating Monitoring Tables
 
 ```sql
 -- Создать таблицу для хранения исторических метрик
@@ -939,7 +939,7 @@ SELECT cron.schedule('record-metrics', '* * * * *',
     'SELECT record_metrics();');
 ```
 
-### **Analyzing Historical Trends**
+### Analyzing Historical Trends
 
 ```sql
 -- Анализ трендов метрик
@@ -961,9 +961,9 @@ GROUP BY metric_name;
 SELECT * FROM metric_trends;
 ```
 
-## **Advanced Alerting**
+## Advanced Alerting
 
-### **Custom Alert Functions**
+### Custom Alert Functions
 
 ```sql
 -- Создать таблицу для алертов
@@ -1054,9 +1054,9 @@ SELECT cron.schedule('check-alerts', '*/5 * * * *',
     'SELECT * FROM check_and_alert();');
 ```
 
-## **Performance Metrics Collection**
+## Performance Metrics Collection
 
-### **Comprehensive Metrics View**
+### Comprehensive Metrics View
 
 ```sql
 -- Создать комплексное представление метрик
@@ -1115,7 +1115,7 @@ SELECT * FROM comprehensive_metrics;
 
 ## Лучшие практики мониторинга
 
-### **Regular Monitoring Tasks**
+### Regular Monitoring Tasks
 
 ```sql
 -- Создать функцию для регулярных проверок
@@ -1171,7 +1171,7 @@ SELECT cron.schedule('daily-monitoring', '0 9 * * *',
     'SELECT * FROM daily_monitoring_check();');
 ```
 
-### **Monitoring Dashboard Queries**
+### Monitoring Dashboard Queries
 
 ```sql
 -- Запросы для дашборда мониторинга
@@ -1228,9 +1228,9 @@ ORDER BY total_exec_time DESC
 LIMIT 10;
 ```
 
-## **Integration with External Tools**
+## Integration with External Tools
 
-### **pgBadger Integration**
+### pgBadger Integration
 
 ```bash
 # Настройка логирования для pgBadger
@@ -1248,7 +1248,7 @@ log_autovacuum_min_duration = 0
 pgbadger /var/log/postgresql/postgresql-*.log -o report.html
 ```
 
-### **Custom Exporter for Prometheus**
+### Custom Exporter for Prometheus
 
 ```java
 // PostgreSQL Python example replaced with Java Spring

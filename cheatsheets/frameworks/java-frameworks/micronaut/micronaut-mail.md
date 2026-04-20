@@ -119,7 +119,7 @@ micronaut:
 
 ## Basic Email Sending
 
-### **Simple Email**
+### Simple Email
 
 ```java
 import io.micronaut.email.Email;
@@ -146,7 +146,7 @@ public class EmailService {
 }
 ```
 
-### **Email with Multiple Recipients**
+### Email with Multiple Recipients
 
 ```java
 import io.micronaut.email.Email;
@@ -178,7 +178,7 @@ public class EmailService {
 
 ## HTML Email
 
-### **HTML Content**
+### HTML Content
 
 ```java
 import io.micronaut.email.Email;
@@ -201,7 +201,7 @@ public class HtmlEmailService {
 }
 ```
 
-### **Email with Plain Text and HTML**
+### Email with Plain Text and HTML
 
 ```java
 import io.micronaut.email.Email;
@@ -231,7 +231,7 @@ public class MultipartEmailService {
 
 ## Email Templates
 
-### **Thymeleaf Template**
+### Thymeleaf Template
 
 **templates/email/`welcome.html`:**
 
@@ -248,7 +248,7 @@ public class MultipartEmailService {
 </html>
 ```
 
-### **Using Templates**
+### Using Templates
 
 ```java
 import io.micronaut.email.Email;
@@ -287,7 +287,7 @@ public class TemplateEmailService {
 
 ## Attachments
 
-### **Email with Attachments**
+### Email with Attachments
 
 ```java
 import io.micronaut.email.Attachment;
@@ -325,7 +325,7 @@ public class AttachmentEmailService {
 
 ## Async Email Sending
 
-### **Async Email Service**
+### Async Email Service
 
 ```java
 import io.micronaut.email.Email;
@@ -357,7 +357,7 @@ public class AsyncEmailService {
 
 ## Лучшие практики
 
-### 1. Используйте шаблоны для **HTML email**
+### 1. Используйте шаблоны для HTML email
 
 ```java
 // ✅ Хорошо
@@ -376,7 +376,7 @@ try {
 }
 ```
 
-### 3. Используйте **async** для больших объемов
+### 3. Используйте async для больших объемов
 
 ```java
 // ✅ Хорошо
@@ -386,7 +386,7 @@ public CompletableFuture<Void> sendEmailAsync(...) {
 }
 ```
 
-### 4. Валидируйте **email** адреса
+### 4. Валидируйте email адреса
 
 ```java
 // ✅ Хорошо
@@ -394,7 +394,7 @@ public CompletableFuture<Void> sendEmailAsync(...) {
 private String email;
 ```
 
-### 5. Используйте конфигурацию из **properties**
+### 5. Используйте конфигурацию из properties
 
 ```yaml
 # ✅ Хорошо
@@ -407,7 +407,7 @@ micronaut:
 
 ## Email Queue
 
-### **Queue-based Email Sending**
+### Queue-based Email Sending
 
 ```java
 import io.micronaut.email.Email;
@@ -450,7 +450,7 @@ public class QueuedEmailService {
 
 ## Email Tracking
 
-### **Email Delivery Tracking**
+### Email Delivery Tracking
 
 ```java
 import io.micronaut.email.Email;
@@ -499,7 +499,7 @@ public class TrackedEmailService {
 
 ## Email Templates with Variables
 
-### **Template Variables**
+### Template Variables
 
 ```java
 import io.micronaut.email.Email;
@@ -536,7 +536,7 @@ public class TemplateEmailService {
 
 ## Email Batching
 
-### **Batch Email Sending**
+### Batch Email Sending
 
 ```java
 import io.micronaut.email.Email;
@@ -564,7 +564,7 @@ public class BatchEmailService {
 
 ## Email Templates with Conditions
 
-### **Conditional Templates**
+### Conditional Templates
 
 ```java
 import io.micronaut.email.Email;
@@ -598,7 +598,7 @@ public class ConditionalTemplateService {
 
 ## Email Delivery Reports
 
-### **Delivery Status**
+### Delivery Status
 
 ```java
 import io.micronaut.email.Email;
@@ -625,7 +625,7 @@ public class DeliveryReportService {
 
 ## Email Rate Limiting
 
-### **Rate Limiting Configuration**
+### Rate Limiting Configuration
 
 **application.yml:**
 
@@ -637,7 +637,7 @@ micronaut:
       max-emails-per-minute: 100
 ```
 
-### **Rate Limited Email Service**
+### Rate Limited Email Service
 
 ```java
 import io.micronaut.email.Email;
@@ -664,7 +664,7 @@ public class RateLimitedEmailService {
 
 ## Email Bounce Handling
 
-### **Bounce Detection**
+### Bounce Detection
 
 ```java
 import io.micronaut.email.Email;

@@ -94,7 +94,7 @@ receivers:
 - **send_resolved** — отправлять уведомление при переходе алерта в resolved.
 - **title**, **text** — Go templates; данные: .Alerts, .CommonLabels, .CommonAnnotations, .Status.
 
-Глобальный webhook можно задать в `global.slack_api_url`. Подробнее: [Alertmanager](alertmanager.md).
+Глобальный webhook можно задать в `global.slack_api_url`. Подробнее: [[alertmanager]].
 
 ## Форматирование и Block Kit
 

@@ -17,7 +17,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 ---
 
-# **Redis**: Безопасность
+# Redis: Безопасность
 
 ## Полезные ссылки
 
@@ -34,9 +34,9 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [Введение в безопасность **Redis**](#введение-в-безопасность-redis)
   - [Основные аспекты безопасности](#основные-аспекты-безопасности)
 - [Аутентификация](#аутентификация)
-  - [Простая аутентификация (**Password**)](#простая-аутентификация-password)
+  - [Простая аутентификация (Password)](#простая-аутентификация-password)
   - [Генерация безопасных паролей](#генерация-безопасных-паролей)
-- [**ACL** (**Access `Control` List**)](#acl-access-control-list)
+- [**ACL** (Access `Control` List)](#acl-access-control-list)
   - [Создание пользователей](#создание-пользователей)
   - [Категории команд](#категории-команд)
   - [Управление пользователями](#управление-пользователями)
@@ -82,7 +82,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [**Encryption** at **Rest**](#encryption-at-rest-1)
   - [**Application-Level Encryption**](#application-level-encryption-1)
 
-## Введение в безопасность **Redis**
+## Введение в безопасность Redis
 
 Безопасность **Redis** критически важна, особенно при развертывании в **production**. По умолчанию **Redis** не имеет встроенной аутентификации, что делает его уязвимым для несанкционированного доступа.
 
@@ -97,7 +97,7 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 
 ## Аутентификация
 
-### Простая аутентификация (**Password**)
+### Простая аутентификация (Password)
 
 ```conf
 # В redis.conf
@@ -125,7 +125,7 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 
-## **ACL** (**Access `Control` List**)
+## ACL (Access `Control` List)
 
 **ACL** позволяет создавать пользователей с различными правами доступа.
 
@@ -205,9 +205,9 @@ ACL SETUSER user1 on >pass ~{user}:* ~{order}:*
 ```
 
 
-## **SSL**/**TLS**
+## SSL/TLS
 
-### Настройка **SSL**/**TLS** на сервере
+### Настройка SSL/TLS на сервере
 
 ```conf
 # В redis.conf
@@ -225,7 +225,7 @@ tls-session-cache-size 20480
 tls-session-cache-timeout 60
 ```
 
-### Подключение с **SSL**/**TLS**
+### Подключение с SSL/TLS
 
 ```bash
 # Через redis-cli
@@ -247,7 +247,7 @@ r = redis.Redis(
 
 ## Ограничение доступа
 
-### **Bind** и **Protected Mode**
+### Bind и Protected Mode
 
 ```conf
 # Привязка к определенным интерфейсам
@@ -257,7 +257,7 @@ bind 127.0.0.1 ::1
 protected-mode yes
 ```
 
-### **Firewall**
+### Firewall
 
 ```bash
 # Ограничение доступа через firewall
@@ -273,7 +273,7 @@ firewall-cmd --reload
 
 ## Отключение опасных команд
 
-### **Rename Commands**
+### Rename Commands
 
 ```conf
 # Отключить опасные команды
@@ -285,7 +285,7 @@ rename-command CONFIG ""
 rename-command CONFIG "CONFIG_9cb4d4c8b5a1be8a5b2f3c4d5e6f7a8b9"
 ```
 
-### Через **ACL**
+### Через ACL
 
 ```redis
 # Запретить команды через ACL
@@ -421,9 +421,9 @@ public class SecurityMonitor {
 3. **Тестируйте обновления** перед применением
 4. **Имейте план отката** на случай проблем
 
-## **Advanced Security Configuration**
+## Advanced Security Configuration
 
-### **ACL Best Practices**
+### ACL Best Practices
 
 ```redis
 # Создание пользователей с минимальными правами
@@ -439,7 +439,7 @@ ACL SETUSER writer on >writepass ~user:* ~order:* +@write +@read +@keyspace
 ACL SETUSER admin on >adminpass ~* +@all -FLUSHDB -FLUSHALL -CONFIG
 ```
 
-### **SSL**/**TLS Configuration**
+### SSL/TLS Configuration
 
 ```conf
 # Полная конфигурация SSL/TLS
@@ -456,7 +456,7 @@ tls-session-cache-size 20480
 tls-session-cache-timeout 60
 ```
 
-### **Network Security**
+### Network Security
 
 ```bash
 # Настройка firewall для Redis
@@ -469,9 +469,9 @@ iptables -A INPUT -p tcp --dport 6379 -j DROP
 bind 10.0.0.10
 ```
 
-## **Security Monitoring**
+## Security Monitoring
 
-### **Audit Logging**
+### Audit Logging
 
 ```java
 // Java пример audit logging
@@ -520,7 +520,7 @@ public class SecurityAuditor {
 }
 ```
 
-### **Intrusion Detection**
+### Intrusion Detection
 
 ```bash
 #!/bin/bash
@@ -533,9 +533,9 @@ tail -f /var/log/redis/redis-server.log | grep -i "auth\|failed\|denied"
 redis-cli MONITOR | grep -E "FLUSH|CONFIG|DEBUG|SHUTDOWN"
 ```
 
-## **Encryption** at **Rest**
+## Encryption at Rest
 
-### **Application-Level Encryption**
+### Application-Level Encryption
 
 ```java
 import redis.clients.jedis.Jedis;
@@ -589,13 +589,13 @@ public class EncryptedRedisStorage {
 }
 ```
 
-## **Security Hardening Checklist**
+## Security Hardening Checklist
 
-### **Configuration Hardening**
+### Configuration Hardening
 
-- [ ] Установлен сильный пароль (**requirepass**)
+- [ ] Установлен сильный пароль (requirepass)
 - [ ] Настроен **ACL** для пользователей
-- [ ] Отключены опасные команды (**FLUSHDB, `FLUSHALL`, CONFIG**)
+- [ ] Отключены опасные команды (FLUSHDB, `FLUSHALL`, CONFIG)
 - [ ] Включен **protected-mode**
 - [ ] Ограничен доступ через **bind**
 - [ ] Настроен **firewall**
@@ -603,7 +603,7 @@ public class EncryptedRedisStorage {
 - [ ] Настроено логирование
 - [ ] Регулярно обновляется **Redis**
 
-### **Network Hardening**
+### Network Hardening
 
 - [ ] **Redis** доступен только из внутренней сети
 - [ ] Используется **VPN** для удаленного доступа
@@ -611,7 +611,7 @@ public class EncryptedRedisStorage {
 - [ ] Используется **reverse proxy** с аутентификацией
 - [ ] Мониторится сетевой трафик
 
-### **Monitoring and Alerting**
+### Monitoring and Alerting
 
 - [ ] Настроен мониторинг неудачных попыток аутентификации
 - [ ] Отслеживается использование опасных команд
@@ -619,9 +619,9 @@ public class EncryptedRedisStorage {
 - [ ] Регулярно проверяются логи
 - [ ] Настроен аудит доступа
 
-## **Advanced Security Configuration**
+## Advanced Security Configuration
 
-### **ACL Best Practices**
+### ACL Best Practices
 
 ```redis
 # Создание пользователей с минимальными правами
@@ -637,7 +637,7 @@ ACL SETUSER writer on >writepass ~user:* ~order:* +@write +@read +@keyspace
 ACL SETUSER admin on >adminpass ~* +@all -FLUSHDB -FLUSHALL -CONFIG
 ```
 
-### **SSL**/**TLS Configuration**
+### SSL/TLS Configuration
 
 ```conf
 # Полная конфигурация SSL/TLS
@@ -654,7 +654,7 @@ tls-session-cache-size 20480
 tls-session-cache-timeout 60
 ```
 
-### **Network Security**
+### Network Security
 
 ```bash
 # Настройка firewall для Redis
@@ -667,9 +667,9 @@ iptables -A INPUT -p tcp --dport 6379 -j DROP
 bind 10.0.0.10
 ```
 
-## **Security Monitoring**
+## Security Monitoring
 
-### **Audit Logging**
+### Audit Logging
 
 ```java
 // Java пример audit logging
@@ -718,7 +718,7 @@ public class SecurityAuditor {
 }
 ```
 
-### **Intrusion Detection**
+### Intrusion Detection
 
 ```bash
 #!/bin/bash
@@ -731,9 +731,9 @@ tail -f /var/log/redis/redis-server.log | grep -i "auth\|failed\|denied"
 redis-cli MONITOR | grep -E "FLUSH|CONFIG|DEBUG|SHUTDOWN"
 ```
 
-## **Encryption** at **Rest**
+## Encryption at Rest
 
-### **Application-Level Encryption**
+### Application-Level Encryption
 
 ```java
 import redis.clients.jedis.Jedis;

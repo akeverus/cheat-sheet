@@ -12,7 +12,7 @@ prerequisites: ["go/go-basics.md", "go/go-interfaces.md"]
 updated: "2026-02-06"
 ---
 
-# Go: **unsafe** операции
+# Go: unsafe операции
 
 ## Полезные ссылки
 
@@ -64,11 +64,11 @@ updated: "2026-02-06"
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **unsafe**
+## Введение в unsafe
 
-Пакет `**unsafe**` предоставляет возможность обхода системы типов Go для низкоуровневых операций. Использование **unsafe** требует особой осторожности.
+Пакет `unsafe` предоставляет возможность обхода системы типов Go для низкоуровневых операций. Использование **unsafe** требует особой осторожности.
 
-### Когда использовать **unsafe**
+### Когда использовать unsafe
 
 **Unsafe** полезен для:**
 - Преобразования между несовместимыми типами
@@ -83,9 +83,9 @@ updated: "2026-02-06"
 3. **Сложность отладки** — ошибки сложнее найти
 4. **Изменения в Go** — код может сломаться при обновлении Go
 
-## **unsafe.Pointer**
+## unsafe.Pointer
 
-`**unsafe.Pointer**` - это специальный тип указателя, который может быть преобразован в любой другой тип указателя.
+`unsafe.Pointer` - это специальный тип указателя, который может быть преобразован в любой другой тип указателя.
 
 ### Базовое использование
 
@@ -102,11 +102,11 @@ func convertPointer() {
 }
 ```
 
-### Правила **unsafe.Pointer**
+### Правила unsafe.Pointer
 
-1. Указатель любого типа может быть преобразован в `**unsafe.Pointer**`
-2. `**unsafe.Pointer**` может быть преобразован в указатель любого типа
-3. `**uintptr**` может быть преобразован в `**unsafe.Pointer**` и обратно
+1. Указатель любого типа может быть преобразован в `unsafe.Pointer`
+2. `unsafe.Pointer` может быть преобразован в указатель любого типа
+3. `uintptr` может быть преобразован в `unsafe.Pointer` и обратно
 
 ## Преобразование типов
 
@@ -154,7 +154,7 @@ func convertSlice() {
 
 ## Арифметика указателей
 
-### **unsafe.Offsetof**
+### unsafe.Offsetof
 
 ```go
 import "unsafe"
@@ -180,7 +180,7 @@ func getFieldOffset() {
 }
 ```
 
-### **unsafe.Sizeof**
+### unsafe.Sizeof
 
 ```go
 func getSize() {
@@ -194,7 +194,7 @@ func getSize() {
 }
 ```
 
-### **unsafe.Alignof**
+### unsafe.Alignof
 
 ```go
 func getAlignment() {
@@ -206,7 +206,7 @@ func getAlignment() {
 
 ## Практические примеры
 
-### Преобразование строки в []**byte** без копирования
+### Преобразование строки в []byte без копирования
 
 ```go
 func stringToBytes(s string) []byte {
@@ -235,7 +235,7 @@ func getFieldFast(s *LargeStruct, fieldIndex int) *int {
 }
 ```
 
-### Преобразование между **float32** и **uint32**
+### Преобразование между float32 и uint32
 
 ```go
 func float32ToUint32(f float32) uint32 {
@@ -247,7 +247,7 @@ func uint32ToFloat32(u uint32) float32 {
 }
 ```
 
-### Детальное использование **unsafe.Sizeof**
+### Детальное использование unsafe.Sizeof
 
 ```go
 import "unsafe"
@@ -274,7 +274,7 @@ func demonstrateSizeof() {
 }
 ```
 
-### Детальное использование **unsafe.Alignof**
+### Детальное использование unsafe.Alignof
 
 ```go
 func demonstrateAlignof() {
@@ -298,7 +298,7 @@ func demonstrateAlignof() {
 }
 ```
 
-### Детальное использование **unsafe.Offsetof**
+### Детальное использование unsafe.Offsetof
 
 ```go
 type ComplexStruct struct {
@@ -348,7 +348,7 @@ func convertIntTypes() {
 }
 ```
 
-### Работа с массивами через **unsafe**
+### Работа с массивами через unsafe
 
 ```go
 func arrayToSlice(arr *[10]int) []int {
@@ -439,7 +439,7 @@ func demonstrateStringBytes() {
 }
 ```
 
-### Работа с **union-like** структурами
+### Работа с union-like структурами
 
 ```go
 // Эмуляция union через unsafe
@@ -509,7 +509,7 @@ func modifySliceLen(slice []int, newLen int) []int {
 }
 ```
 
-### Практические примеры: Преобразование между **float32** и **uint32**
+### Практические примеры: Преобразование между float32 и uint32
 
 ```go
 // Быстрое преобразование float32 <-> uint32
@@ -530,7 +530,7 @@ func manipulateFloatBits(f float32) float32 {
 }
 ```
 
-### Практические примеры: **Zero-copy** преобразования
+### Практические примеры: Zero-copy преобразования
 
 ```go
 // Zero-copy преобразование между совместимыми типами
@@ -600,7 +600,7 @@ func convertFromCPoint(cp *C.Point) *GoPoint {
 }
 ```
 
-### Практические примеры: **Memory-mapped** структуры
+### Практические примеры: Memory-mapped структуры
 
 ```go
 // Работа с memory-mapped структурами

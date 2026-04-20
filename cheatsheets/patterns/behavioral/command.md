@@ -51,7 +51,7 @@ updated: "2026-02-11"
 
 **Когда применять:** кнопки/меню в GUI, Undo/Redo, очереди задач, транзакции с откатом.
 
-## Что такое **Command**?
+## Что такое Command?
 
 **Command** — это поведенческий паттерн проектирования, который превращает запросы в объекты, позволяя передавать их как аргументы при вызове методов, ставить запросы в очередь, логировать их, а также поддерживать отмену операций.
 
@@ -140,7 +140,7 @@ public class SmartRemoteControl {
 }
 ```
 
-## Когда использовать **Command**?
+## Когда использовать Command?
 
 ### Подходящие сценарии
 
@@ -285,7 +285,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Классический **Command**
+### Классический Command
 
 ```java
 // Command интерфейс
@@ -483,7 +483,7 @@ public class RemoteControlDemo {
 }
 ```
 
-### **Command** с историей(Undo/Redo)
+### Command с историей(Undo/Redo)
 
 ```java
 // Command с поддержкой истории
@@ -699,7 +699,7 @@ public class TextEditorDemo {
 }
 ```
 
-### **Java Runnable** и **Callable**
+### Java Runnable и Callable
 
 ```java
 // Command с Java Concurrency
@@ -920,7 +920,7 @@ public class ConcurrentCommandDemo {
 
 ## Продвинутые реализации
 
-### 1. **Command** с **Composite** и **Macro**
+### 1. Command с Composite и Macro
 
 ```java
 // Composite Command (Macro Command)
@@ -1207,7 +1207,7 @@ public class AdvancedCommandDemo {
 
 ## Примеры использования
 
-### 1. **GUI Action Commands**
+### 1. GUI Action Commands
 
 ```java
 // Swing GUI с Command паттерном
@@ -1362,7 +1362,7 @@ public class GUICommandExample extends JFrame {
 }
 ```
 
-### 2. **Database Transaction Commands**
+### 2. Database Transaction Commands
 
 ```java
 // Database Commands с транзакциями
@@ -1629,7 +1629,7 @@ public class DatabaseCommandExample {
 
 ## Лучшие практики
 
-### 1. **Thread Safety**
+### 1. Thread Safety
 
 ```java
 public class ThreadSafeCommandExample {
@@ -1743,7 +1743,7 @@ public class ThreadSafeCommandExample {
 }
 ```
 
-### 2. **Testing Command Pattern**
+### 2. Testing Command Pattern
 
 ```java
 @ExtendWith(MockitoExtension.class)

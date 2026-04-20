@@ -119,9 +119,9 @@ updated: "2026-02-11"
 - **Higher-Order Functions** — функции, принимающие или возвращающие функции
 - **Composition** — комбинирование функций
 
-## **Higher-Order Functions**
+## Higher-Order Functions
 
-**Higher-Order Functions** (**функции высшего порядка**) — это функции, которые принимают другие функции как параметры или возвращают функции. Это одна из фундаментальных концепций функционального программирования, которая позволяет создавать более абстрактный и переиспользуемый код.
+**Higher-Order Functions** (функции высшего порядка) — это функции, которые принимают другие функции как параметры или возвращают функции. Это одна из фундаментальных концепций функционального программирования, которая позволяет создавать более абстрактный и переиспользуемый код.
 
 Идея функций высшего порядка заключается в том, что функции в **Kotlin** являются значениями первого класса — их можно передавать, возвращать и хранить, как и любые другие значения. Это открывает возможности для создания более гибких и композируемых решений.
 
@@ -142,7 +142,7 @@ fun <T> List<T>.filter(predicate: (T) -> Boolean): List<T> {
 }
 ```
 
-В этом примере `**filter**` является функцией высшего порядка, так как принимает функцию `**predicate**` как параметр. Это позволяет использовать `**filter**` с любым условием, не создавая отдельные функции для каждого типа фильтрации. Функция `**predicate**` определяет, какие элементы должны быть включены в результат.
+В этом примере `filter` является функцией высшего порядка, так как принимает функцию `predicate` как параметр. Это позволяет использовать `filter` с любым условием, не создавая отдельные функции для каждого типа фильтрации. Функция `predicate` определяет, какие элементы должны быть включены в результат.
 
 // Использование
 **val numbers** = **listOf**(1, 2, 3, 4, 5)
@@ -234,14 +234,14 @@ listOf(1, 2, 3).forEach { println(it) }
 listOf(1, 2, 3).forEach { item -> println(item) }
 ```
 
-### **Underscore** для неиспользуемых параметров
+### Underscore для неиспользуемых параметров
 
 ```kotlin
 // Если параметр не используется, можно заменить на _
 mapOf("a" to 1, "b" to 2).forEach { _, value -> println(value) }
 ```
 
-### **Lambda** с несколькими выражениями
+### Lambda с несколькими выражениями
 
 ```kotlin
 // Лямбда с несколькими выражениями (последнее — возвращаемое значение)
@@ -254,7 +254,7 @@ val process = { x: Int ->
 println(process(3))  // 36
 ```
 
-## **Function Types**
+## Function Types
 
 **Function Types** определяют тип функции.
 
@@ -274,7 +274,7 @@ val add: (Int, Int) -> Int = { a, b -> a + b }
 val print: (String) -> Unit = { println(it) }
 ```
 
-### **Nullable Function Types**
+### Nullable Function Types
 
 ```kotlin
 // Nullable функция
@@ -287,7 +287,7 @@ callback?.invoke("Hello")
 callback?.let { it("Hello") }
 ```
 
-### **Type Aliases** для **Function Types**
+### Type Aliases для Function Types
 
 ```kotlin
 // Создание псевдонима для типа функции
@@ -300,7 +300,7 @@ val processor: StringProcessor = { it.uppercase() }
 val predicate: IntPredicate = { it > 0 }
 ```
 
-### **Extension Function Types**
+### Extension Function Types
 
 ```kotlin
 // Тип extension функции
@@ -314,7 +314,7 @@ val extension: StringExtension = {
 val result = "hello".extension()  // "HELLO"
 ```
 
-## **Inline Functions**
+## Inline Functions
 
 **Inline** функции устраняют накладные расходы на вызовы функций.
 
@@ -338,7 +338,7 @@ val result = measureTime {
 }
 ```
 
-### **noinline**
+### noinline
 
 ```kotlin
 // noinline - параметр не будет inlined
@@ -352,7 +352,7 @@ inline fun process(
 }
 ```
 
-### **crossinline**
+### crossinline
 
 ```kotlin
 // crossinline - lambda не может использовать return
@@ -362,7 +362,7 @@ inline fun process(crossinline action: () -> Unit) {
 }
 ```
 
-## **Tail Recursion**
+## Tail Recursion
 
 **Tail Recursion** — это рекурсия, где рекурсивный вызов является последней операцией.
 
@@ -376,7 +376,7 @@ fun factorial(n: Int): Long {
 }
 ```
 
-### **Tail Recursion**
+### Tail Recursion
 
 ```kotlin
 // Tail recursion с tailrec
@@ -388,7 +388,7 @@ tailrec fun factorial(n: Int, acc: Long = 1): Long {
 // Компилятор оптимизирует это в цикл
 ```
 
-### Примеры **Tail Recursion**
+### Примеры Tail Recursion
 
 ```kotlin
 // Fibonacci с tail recursion
@@ -414,9 +414,9 @@ tailrec fun isPrime(n: Int, i: Int = 2): Boolean {
 }
 ```
 
-## **Partial Application** и **Currying**
+## Partial Application и Currying
 
-### **Partial Application**
+### Partial Application
 
 **Partial Application** — это применение функции к части аргументов.
 
@@ -432,7 +432,7 @@ println(add10(20, 30))      // 60
 println(add10And20(30))     // 60
 ```
 
-### **Currying**
+### Currying
 
 **Currying** — это преобразование функции с несколькими аргументами в последовательность функций с одним аргументом.
 
@@ -451,7 +451,7 @@ println(add5(3))  // 8
 println(addCurried(5)(3))  // 8
 ```
 
-### Автоматическое **Currying**
+### Автоматическое Currying
 
 ```kotlin
 // Функция для автоматического currying
@@ -466,7 +466,7 @@ val add5 = curriedAdd(5)
 println(add5(3))  // 8
 ```
 
-### **Uncurrying**
+### Uncurrying
 
 ```kotlin
 // Функция для uncurrying
@@ -480,7 +480,7 @@ val uncurriedAdd = curriedAdd.uncurry()
 println(uncurriedAdd(5, 3))  // 8
 ```
 
-## **Function Composition**
+## Function Composition
 
 **Function Composition** — это комбинирование функций для создания новых функций.
 
@@ -500,7 +500,7 @@ val addOneThenMultiply = multiplyByTwo compose addOne
 println(addOneThenMultiply(5))  // (5 + 1) * 2 = 12
 ```
 
-### Оператор **compose**
+### Оператор compose
 
 ```kotlin
 // Использование infix оператора
@@ -522,11 +522,11 @@ val pipeline = square compose multiplyByTwo compose addOne
 println(pipeline(3))  // ((3 + 1) * 2)^2 = 64
 ```
 
-## **Immutability**
+## Immutability
 
 **Immutability** — это использование неизменяемых данных.
 
-### **Immutable Collections**
+### Immutable Collections
 
 ```kotlin
 // Неизменяемые коллекции
@@ -539,7 +539,7 @@ val newList = list + 4      // Новая коллекция
 val filtered = list.filter { it > 1 }  // Новая коллекция
 ```
 
-### **Immutable Data Classes**
+### Immutable Data Classes
 
 ```kotlin
 // Data классы с val свойствами
@@ -549,7 +549,7 @@ val person = Person("Alice", 25)
 val updated = person.copy(age = 26)  // Новый объект, оригинал не изменен
 ```
 
-### **Copy** для обновления
+### Copy для обновления
 
 ```kotlin
 data class Point(val x: Int, val y: Int)
@@ -559,11 +559,11 @@ val moved = point.copy(x = 3)  // Point(3, 2)
 val moved2 = point.copy(y = 4)  // Point(1, 4)
 ```
 
-## **Pure Functions**
+## Pure Functions
 
 **Pure Functions** — это функции без побочных эффектов.
 
-### Характеристики **Pure Functions**
+### Характеристики Pure Functions
 
 ```kotlin
 // Pure функция
@@ -579,7 +579,7 @@ println(add(2, 3))  // 5 (всегда)
 // - Не зависит от внешнего состояния
 ```
 
-### Не **Pure** функции
+### Не Pure функции
 
 ```kotlin
 var counter = 0
@@ -601,7 +601,7 @@ fun getCurrentTime(): Long {
 }
 ```
 
-### Преимущества **Pure Functions**
+### Преимущества Pure Functions
 
 ```kotlin
 // Легко тестировать
@@ -623,7 +623,7 @@ fun cachedAdd(a: Int, b: Int): Int {
 
 ## Лучшие практики
 
-### Предпочитайте **Immutability**
+### Предпочитайте Immutability
 
 ```kotlin
 // Плохо
@@ -635,7 +635,7 @@ val list = listOf(1, 2, 3)
 val newList = list + 4
 ```
 
-### Используйте **Pure Functions**
+### Используйте Pure Functions
 
 ```kotlin
 // Плохо
@@ -659,7 +659,7 @@ val pipeline = square compose multiplyByTwo compose addOne
 val result = pipeline(5)
 ```
 
-### Используйте **Tail Recursion**
+### Используйте Tail Recursion
 
 ```kotlin
 // Плохо (может вызвать StackOverflowError)
@@ -675,7 +675,7 @@ tailrec fun factorial(n: Int, acc: Long = 1): Long {
 }
 ```
 
-### Используйте **Higher-Order Functions**
+### Используйте Higher-Order Functions
 
 ```kotlin
 // Плохо
@@ -806,7 +806,7 @@ val sum = list.fold(0) { acc, value -> acc + value }
 
 Неизменяемые структуры данных обеспечивают безопасность в многопоточных средах и упрощают рассуждения о коде.
 
-### **Persistent** структуры данных
+### Persistent структуры данных
 
 **Persistent** структуры данных позволяют эффективно создавать новые версии:**
 
@@ -841,7 +841,7 @@ val list3 = list2.remove(2)  // Еще одна версия
 
 ## Тестирование функционального кода
 
-### **Property-based testing**
+### Property-based testing
 
 **Property-based testing** проверяет свойства функций вместо конкретных примеров:**
 
@@ -977,7 +977,7 @@ fun getUserEmail(id: Long?): String? {
 
 Функциональный подход к работе с опциональными значениями делает код более безопасным и предсказуемым.
 
-## Функциональные паттерны в **production**
+## Функциональные паттерны в production
 
 ### Обработка ошибок в функциональном стиле
 

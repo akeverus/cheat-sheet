@@ -103,7 +103,7 @@ micronaut:
 
 ## Basic WebSocket
 
-### **WebSocket Server**
+### WebSocket Server
 
 ```java
 import io.micronaut.websocket.WebSocketSession;
@@ -134,7 +134,7 @@ public class ChatWebSocket {
 }
 ```
 
-### **WebSocket Client**
+### WebSocket Client
 
 ```java
 import io.micronaut.websocket.WebSocketSession;
@@ -153,7 +153,7 @@ public interface ChatClient {
 
 ## STOMP
 
-### **STOMP Server**
+### STOMP Server
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -183,7 +183,7 @@ public class StompWebSocket {
 
 ## Broadcasting
 
-### **Message Broadcasting**
+### Message Broadcasting
 
 ```java
 import io.micronaut.websocket.WebSocketSession;
@@ -223,7 +223,7 @@ public void onError(Throwable error, WebSocketSession session) {
 }
 ```
 
-### 2. Используйте **heartbeat** для поддержания соединения
+### 2. Используйте heartbeat для поддержания соединения
 
 ```java
 // ✅ Хорошо
@@ -251,7 +251,7 @@ public void onOpen(WebSocketSession session) {
 
 ## WebSocket with Authentication
 
-### **Secured WebSocket**
+### Secured WebSocket
 
 ```java
 import io.micronaut.security.annotation.Secured;
@@ -280,7 +280,7 @@ public class SecuredChatWebSocket {
 
 ## WebSocket with Reactive Streams
 
-### **Reactive WebSocket**
+### Reactive WebSocket
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -304,7 +304,7 @@ public class ReactiveChatWebSocket {
 
 ## WebSocket Message Types
 
-### **Binary Messages**
+### Binary Messages
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -329,7 +329,7 @@ public class BinaryWebSocket {
 }
 ```
 
-### **JSON Messages**
+### JSON Messages
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -360,7 +360,7 @@ public class JsonWebSocket {
 
 ## WebSocket Rooms
 
-### **Room-based Messaging**
+### Room-based Messaging
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -401,7 +401,7 @@ public class RoomWebSocket {
 
 ## WebSocket Error Handling
 
-### **Error Handling**
+### Error Handling
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -425,7 +425,7 @@ public class ErrorHandlingWebSocket {
 
 ## WebSocket Compression
 
-### **Compression Configuration**
+### Compression Configuration
 
 **application.yml:**
 
@@ -439,7 +439,7 @@ micronaut:
 
 ## WebSocket Subprotocols
 
-### **Custom Subprotocol**
+### Custom Subprotocol
 
 ```java
 import io.micronaut.websocket.annotation.ServerWebSocket;
@@ -457,7 +457,7 @@ public class CustomProtocolWebSocket {
 
 ## WebSocket Session Management
 
-### **Session Tracking**
+### Session Tracking
 
 ```java
 import io.micronaut.websocket.WebSocketSession;
@@ -484,7 +484,7 @@ public class SessionManager {
 
 ## WebSocket Heartbeat
 
-### **Keep-alive Mechanism**
+### Keep-alive Mechanism
 
 ```java
 import io.micronaut.scheduling.annotation.Scheduled;

@@ -93,7 +93,7 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Session**
+## Введение в Spring Session
 
 **Spring Session** предоставляет **API** и реализации для управления сессиями пользователей. Он позволяет хранить сессии вне контейнера приложения, что критично для кластеризованных и облачных приложений.
 
@@ -106,7 +106,7 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 - **Clustering Support**: Поддержка кластеризации
 - **Security Integration**: Интеграция с **Spring Security**
 
-### Архитектура **Spring Session**
+### Архитектура Spring Session
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -138,11 +138,11 @@ related: ["spring/spring-boot.md", "spring/spring-security.md"]
 
 ## Redis Session
 
-### Настройка **Redis Session**
+### Настройка Redis Session
 
 **Зависимости:**
 
-**Зависимости **spring-`session-data`-redis** и **spring-`boot-starter-data`-redis** (**pom.xml**):**
+**Зависимости **spring-`session-data`-redis** и **spring-`boot-starter-data`-redis** (pom.xml):**
 
 ```xml
 <dependency>
@@ -166,7 +166,7 @@ spring.redis.host=localhost
 spring.redis.port=6379
 ```
 
-### Конфигурация через **Java**
+### Конфигурация через Java
 
 ```java
 // Сессия в Redis, TTL 30 минут
@@ -188,7 +188,7 @@ public class RedisSessionConfig {
 }
 ```
 
-### Использование **Session**
+### Использование Session
 
 ```java
 // Контроллер работы с сессией (чтение/запись атрибутов)
@@ -231,7 +231,7 @@ public class SessionController {
 
 ## JDBC Session
 
-### Настройка **JDBC Session**
+### Настройка JDBC Session
 
 **Зависимости:**
 
@@ -286,7 +286,7 @@ CREATE TABLE SPRING_SESSION_ATTRIBUTES (
 );
 ```
 
-### Конфигурация через **Java**
+### Конфигурация через Java
 
 ```java
 @Configuration
@@ -302,7 +302,7 @@ public class JdbcSessionConfig {
 
 ## MongoDB Session
 
-### Настройка **MongoDB Session**
+### Настройка MongoDB Session
 
 **Зависимости:**
 
@@ -327,7 +327,7 @@ spring.session.timeout=1800s
 spring.data.mongodb.uri=mongodb://localhost:27017/mydb
 ```
 
-### Конфигурация через **Java**
+### Конфигурация через Java
 
 ```java
 @Configuration
@@ -341,9 +341,9 @@ public class MongoSessionConfig {
 }
 ```
 
-## Интеграция с **Spring Security**
+## Интеграция с Spring Security
 
-### **Security Session Configuration**
+### Security Session Configuration
 
 ```java
 @Configuration
@@ -374,7 +374,7 @@ public class SecuritySessionConfig {
 }
 ```
 
-### **Concurrent Session Control**
+### Concurrent Session Control
 
 ```java
 @Configuration
@@ -407,7 +407,7 @@ public class ConcurrentSessionConfig {
 
 ## Кластеризация
 
-### **Multi-Node Configuration**
+### Multi-Node Configuration
 
 ```java
 @Configuration
@@ -428,7 +428,7 @@ public class ClusterSessionConfig {
 }
 ```
 
-### **Session Replication**
+### Session Replication
 
 ```java
 @Configuration
@@ -449,7 +449,7 @@ public class ReplicatedSessionConfig {
 
 ## Продвинутые возможности
 
-### **Custom Session Serialization**
+### Custom Session Serialization
 
 ```java
 @Configuration
@@ -463,7 +463,7 @@ public class CustomSerializationConfig {
 }
 ```
 
-### **Session Events**
+### Session Events
 
 ```java
 @Component
@@ -486,7 +486,7 @@ public class SessionEventListener {
 }
 ```
 
-### **Session Timeout Configuration**
+### Session Timeout Configuration
 
 ```java
 @Configuration
@@ -504,7 +504,7 @@ public class SessionTimeoutConfig {
 
 ## Мониторинг и метрики
 
-### **Session Metrics**
+### Session Metrics
 
 ```java
 @Component
@@ -547,21 +547,21 @@ public class SessionMetrics {
 
 ## Лучшие практики
 
-### 1. Используйте **Redis** для кластеризации
+### 1. Используйте Redis для кластеризации
 
 ```java
 // ✅ Хорошо
 @EnableRedisHttpSession
 ```
 
-### 2. Настраивайте **timeout**
+### 2. Настраивайте timeout
 
 ```java
 // ✅ Хорошо
 @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800)
 ```
 
-### 3. Обрабатывайте **session events**
+### 3. Обрабатывайте session events
 
 ```java
 // ✅ Хорошо
@@ -571,7 +571,7 @@ public void handleSessionCreated(SessionCreatedEvent event) {
 }
 ```
 
-### 4. Используйте правильный **store type**
+### 4. Используйте правильный store type
 
 ```properties
 # ✅ Хорошо - для кластеризации
@@ -581,7 +581,7 @@ spring.session.store-type=redis
 spring.session.store-type=jdbc
 ```
 
-### 5. Настраивайте **security**
+### 5. Настраивайте security
 
 ```java
 // ✅ Хорошо
@@ -596,7 +596,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) {
 
 ## WebSocket Session
 
-### **WebSocket Session Management**
+### WebSocket Session Management
 
 ```java
 @Configuration
@@ -631,7 +631,7 @@ public class WebSocketSessionController {
 
 ## Продвинутые возможности
 
-### **Custom Session Repository**
+### Custom Session Repository
 
 ```java
 public class CustomSessionRepository implements SessionRepository<Session> {
@@ -676,7 +676,7 @@ public class CustomSessionRepository implements SessionRepository<Session> {
 }
 ```
 
-### **Session Indexing**
+### Session Indexing
 
 ```java
 @Configuration
@@ -693,7 +693,7 @@ public class IndexedSessionConfig {
 }
 ```
 
-### **Session Flush Mode**
+### Session Flush Mode
 
 ```java
 @Configuration
@@ -711,7 +711,7 @@ public class OnSaveFlushSessionConfig {
 
 ## Оптимизация производительности
 
-### **Session Caching**
+### Session Caching
 
 ```java
 @Configuration
@@ -745,7 +745,7 @@ public class CachedSessionConfig {
 }
 ```
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 @Configuration
@@ -774,7 +774,7 @@ public class PooledSessionConfig {
 
 ## Безопасность
 
-### **Session Fixation Protection**
+### Session Fixation Protection
 
 ```java
 @Configuration
@@ -797,7 +797,7 @@ public class SessionFixationConfig {
 }
 ```
 
-### **Session Cookie Security**
+### Session Cookie Security
 
 ```java
 @Configuration
@@ -820,7 +820,7 @@ public class SecureCookieConfig {
 
 ## Тестирование
 
-### **Mock Session**
+### Mock Session
 
 ```java
 @SpringBootTest
@@ -849,7 +849,7 @@ class SessionTest {
 }
 ```
 
-### **Integration Testing**
+### Integration Testing
 
 ```java
 @SpringBootTest
@@ -883,7 +883,7 @@ class SessionIntegrationTest {
 
 ## Миграция сессий
 
-### **Session Migration**
+### Session Migration
 
 ```java
 @Service
@@ -917,7 +917,7 @@ public class SessionMigrationService {
 
 ## Мониторинг сессий
 
-### **Session Health Check**
+### Session Health Check
 
 ```java
 @Component
@@ -954,7 +954,7 @@ public class SessionHealthIndicator implements HealthIndicator {
 
 ## Продвинутые паттерны
 
-### **Session Clustering** с **Hazelcast**
+### Session Clustering с Hazelcast
 
 ```java
 @Configuration
@@ -971,7 +971,7 @@ public class HazelcastSessionConfig {
 }
 ```
 
-### **Session Replication**
+### Session Replication
 
 ```java
 @Configuration
@@ -990,7 +990,7 @@ public class ReplicatedSessionConfig {
 }
 ```
 
-### **Session Serialization Customization**
+### Session Serialization Customization
 
 ```java
 @Configuration
@@ -1012,7 +1012,7 @@ public class CustomSerializationConfig {
 }
 ```
 
-### **Session Attribute Filtering**
+### Session Attribute Filtering
 
 ```java
 @Component
@@ -1026,7 +1026,7 @@ public class SessionAttributeFilter implements SessionAttributeFilter {
 }
 ```
 
-### **Session Timeout Management**
+### Session Timeout Management
 
 ```java
 @Service
@@ -1049,7 +1049,7 @@ public class SessionTimeoutService {
 }
 ```
 
-### **Session Statistics**
+### Session Statistics
 
 ```java
 @Component
@@ -1086,7 +1086,7 @@ public class SessionStatistics {
 }
 ```
 
-### **Session Cleanup Job**
+### Session Cleanup Job
 
 ```java
 @Component
@@ -1105,7 +1105,7 @@ public class SessionCleanupJob {
 
 ## Продвинутые паттерны
 
-### **Session Replication** между регионами
+### Session Replication между регионами
 
 ```java
 @Configuration
@@ -1136,7 +1136,7 @@ public class MultiRegionSessionConfig {
 }
 ```
 
-### **Session Compression**
+### Session Compression
 
 ```java
 @Configuration
@@ -1173,7 +1173,7 @@ public class CompressedSessionConfig {
 }
 ```
 
-### **Session Analytics**
+### Session Analytics
 
 ```java
 @Component
@@ -1206,7 +1206,7 @@ public class SessionAnalytics {
 }
 ```
 
-### **Session Rate Limiting**
+### Session Rate Limiting
 
 ```java
 @Component

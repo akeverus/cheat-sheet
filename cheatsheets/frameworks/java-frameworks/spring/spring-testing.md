@@ -71,7 +71,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Testing**
+## Введение в Spring Testing
 
 **Spring Testing** предоставляет мощные инструменты для тестирования **Spring** приложений на всех уровнях: от **unit** тестов до **integration** тестов. **Spring Boot** дополнительно упрощает тестирование с помощью автоматической конфигурации тестового контекста.
 
@@ -96,7 +96,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Зависимости
 
-**Зависимость **spring-`boot-starter`-test** (**pom.xml**):**
+**Зависимость **spring-`boot-starter`-test** (pom.xml):**
 
 ```xml
 <dependency>
@@ -108,7 +108,7 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 ### Структура тестов
 
-**Структура каталогов тестов (**для справки**):**
+**Структура каталогов тестов (для справки):**
 
 ```text
 src/test/java/
@@ -123,7 +123,7 @@ src/test/java/
 │       └── UserRepositoryTest.java
 ```
 
-## @**SpringBootTest**
+## @SpringBootTest
 
 @**SpringBootTest** загружает полный контекст приложения для **integration** тестов.
 
@@ -193,7 +193,7 @@ class UserServiceTest {
 }
 ```
 
-## @**WebMvcTest**
+## @WebMvcTest
 
 @**WebMvcTest** загружает только веб-слой для тестирования контроллеров.
 
@@ -262,7 +262,7 @@ class UserControllerValidationTest {
 }
 ```
 
-## @**DataJpaTest**
+## @DataJpaTest
 
 @**DataJpaTest** загружает только **JPA** компоненты для тестирования репозиториев.
 
@@ -312,7 +312,7 @@ class UserRepositoryTest {
 }
 ```
 
-### Использование **SQL** скриптов
+### Использование SQL скриптов
 
 ```java
 @DataJpaTest
@@ -415,7 +415,7 @@ void testGetUserWithCustomHeader() throws Exception {
 
 **Testcontainers** позволяет использовать реальные базы данных в тестах.
 
-### Настройка **Testcontainers**
+### Настройка Testcontainers
 
 ```xml
 <dependency>
@@ -430,7 +430,7 @@ void testGetUserWithCustomHeader() throws Exception {
 </dependency>
 ```
 
-### Использование с **PostgreSQL**
+### Использование с PostgreSQL
 
 ```java
 @SpringBootTest
@@ -465,7 +465,7 @@ class UserRepositoryIntegrationTest {
 }
 ```
 
-### Использование с **Redis**
+### Использование с Redis
 
 ```java
 @SpringBootTest
@@ -496,7 +496,7 @@ class CacheServiceTest {
 
 ## Mocking
 
-### @**MockBean**
+### @MockBean
 
 ```java
 @SpringBootTest
@@ -525,7 +525,7 @@ class UserServiceTest {
 }
 ```
 
-### @**SpyBean**
+### @SpyBean
 
 ```java
 @SpringBootTest
@@ -574,7 +574,7 @@ void testCreateUser() {
 }
 ```
 
-### 3. Используйте **Testcontainers** для реальных БД
+### 3. Используйте Testcontainers для реальных БД
 
 ```java
 // ✅ Хорошо
@@ -586,7 +586,7 @@ class DatabaseTest {
 }
 ```
 
-### 4. **Mock** внешние зависимости
+### 4. Mock внешние зависимости
 
 ```java
 // ✅ Хорошо
@@ -594,7 +594,7 @@ class DatabaseTest {
 private ExternalApiClient externalApiClient;
 ```
 
-### 5. Используйте **AssertJ** для читаемых **assertions**
+### 5. Используйте AssertJ для читаемых assertions
 
 ```java
 // ✅ Хорошо
@@ -610,7 +610,7 @@ assertTrue(user.getEmail().contains("@"));
 
 ## Продвинутое тестирование
 
-### Тестирование с @**MockBean** и @**SpyBean**
+### Тестирование с @MockBean и @SpyBean
 
 ```java
 @SpringBootTest
@@ -636,7 +636,7 @@ class MockBeanTest {
 }
 ```
 
-### Тестирование с @**TestConfiguration**
+### Тестирование с @TestConfiguration
 
 ```java
 @SpringBootTest
@@ -662,7 +662,7 @@ class TestConfigurationTest {
 }
 ```
 
-### Тестирование с @**DynamicPropertySource**
+### Тестирование с @DynamicPropertySource
 
 ```java
 @SpringBootTest
@@ -686,7 +686,7 @@ class DynamicPropertySourceTest {
 }
 ```
 
-### Тестирование **WebFlux**
+### Тестирование WebFlux
 
 ```java
 @SpringBootTest
@@ -721,7 +721,7 @@ class WebFluxTest {
 }
 ```
 
-### Тестирование с @**Sql**
+### Тестирование с @Sql
 
 ```java
 @SpringBootTest
@@ -771,7 +771,7 @@ class TransactionalTest {
 }
 ```
 
-### Тестирование с @**DirtiesContext**
+### Тестирование с @DirtiesContext
 
 ```java
 @SpringBootTest
@@ -790,7 +790,7 @@ class DirtiesContextTest {
 }
 ```
 
-### Тестирование с @**TestPropertySource**
+### Тестирование с @TestPropertySource
 
 ```java
 @SpringBootTest
@@ -810,7 +810,7 @@ class PropertySourceTest {
 }
 ```
 
-### Тестирование с @**ActiveProfiles**
+### Тестирование с @ActiveProfiles
 
 ```java
 @SpringBootTest
@@ -824,7 +824,7 @@ class ProfileTest {
 }
 ```
 
-### Тестирование с @**MockitoSettings**
+### Тестирование с @MockitoSettings
 
 ```java
 @SpringBootTest
@@ -866,7 +866,7 @@ class PerformanceTest {
 }
 ```
 
-### Тестирование с **WireMock**
+### Тестирование с WireMock
 
 ```java
 @SpringBootTest

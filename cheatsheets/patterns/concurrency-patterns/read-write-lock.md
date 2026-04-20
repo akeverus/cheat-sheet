@@ -22,7 +22,7 @@ updated: "2026-02-11"
 
 ### См. также
 - [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
-- [CQRS / DDD](../../architecture/enterprise-patterns/README.md) — **CQRS** и **DDD**
+- [[README|CQRS / DDD]] — **CQRS** и **DDD**
 
 ## Содержание
 
@@ -65,7 +65,7 @@ updated: "2026-02-11"
 
 **Когда применять:** кэш, конфигурация, разделяемые структуры данных с преобладанием чтения.
 
-## Что такое **Read-Write Lock**?
+## Что такое Read-Write Lock?
 
 **Read-Write Lock** — это механизм синхронизации, который позволяет множеству потоков одновременно читать разделяемый ресурс, но обеспечивает эксклюзивный доступ для операций записи.
 
@@ -76,7 +76,7 @@ updated: "2026-02-11"
 3. **Приоритет**: Можно настроить приоритет **writers** над **readers**
 4. **Производительность**: Лучше обычных **locks** для **read-heavy** сценариев
 
-### Сравнение с обычными **locks**
+### Сравнение с обычными locks
 
 Сравнение обычного **synchronized** и **Read-Write Lock** для **read-heavy** сценариев(Java).
 
@@ -110,7 +110,7 @@ public void writeOperation() {
 }
 ```
 
-## Когда использовать **Read-Write Lock**?
+## Когда использовать Read-Write Lock?
 
 ### Подходящие сценарии
 
@@ -347,7 +347,7 @@ public class CacheExample {
 }
 ```
 
-### Конфигурация **ReadWriteLock**
+### Конфигурация ReadWriteLock
 
 ```java
 public class ConfigurableReadWriteLock {
@@ -560,7 +560,7 @@ public class StampedLockCache<K, V> {
 }
 ```
 
-### 2. **Upgradable Read Lock**
+### 2. Upgradable Read Lock
 
 ```java
 // ReadWriteLock с возможностью апгрейда read -> write
@@ -646,7 +646,7 @@ public class UpgradableCache<K, V> {
 }
 ```
 
-### 3. **Hierarchical Read-Write Locks**
+### 3. Hierarchical Read-Write Locks
 
 ```java
 // Иерархические блокировки для древовидных структур
@@ -779,7 +779,7 @@ public class HierarchicalReadWriteLock {
 
 ## Примеры использования
 
-### 1. **In-Memory Database Cache**
+### 1. In-Memory Database Cache
 
 ```java
 @Service
@@ -864,7 +864,7 @@ public class DatabaseCache {
 }
 ```
 
-### 2. **Configuration Manager**
+### 2. Configuration Manager
 
 ```java
 @Service
@@ -993,7 +993,7 @@ public class ConfigurationManager {
 }
 ```
 
-### 3. **Shared Data Structure**
+### 3. Shared Data Structure
 
 ```java
 // Thread-safe список с Read-Write Lock
@@ -1125,7 +1125,7 @@ public class ConcurrentList<T> {
 
 ## Лучшие практики
 
-### 1. Выбор между **ReadWriteLock** и **StampedLock**
+### 1. Выбор между ReadWriteLock и StampedLock
 
 ```java
 public class LockSelector {

@@ -123,16 +123,16 @@ related: ["micronaut-cloud.md", "micronaut-performance.md"]
 
 **Micronaut** изначально разработан для поддержки **GraalVM Native Images** благодаря **compile-time dependency injection** и минимальному использованию **reflection**. Это позволяет создавать быстрые, легковесные приложения с минимальным временем запуска и потреблением памяти.
 
-### Преимущества **Native Images**
+### Преимущества Native Images
 
 - **Быстрый старт**: Время запуска в миллисекундах вместо секунд
 - **Низкое потребление памяти**: Потребление памяти в мегабайтах вместо сотен мегабайт
 - **Меньший размер**: Бинарные файлы меньше, чем **JAR** архивы
-- **Оптимизация**: **AOT** (**Ahead-of-Time**) компиляция для максимальной производительности
+- **Оптимизация**: **AOT** (Ahead-of-Time) компиляция для максимальной производительности
 
 ## Настройка GraalVM
 
-### Установка **GraalVM**
+### Установка GraalVM
 
 ```bash
 # Используя SDKMAN
@@ -142,7 +142,7 @@ sdk install java 22.0.0-graal
 # https://www.graalvm.org/downloads/
 ```
 
-### Установка **Native Image**
+### Установка Native Image
 
 ```bash
 gu install native-image
@@ -211,13 +211,13 @@ graalvmNative {
 
 ## Компиляция Native Image
 
-### Компиляция с **Gradle**
+### Компиляция с Gradle
 
 ```bash
 ./gradlew nativeCompile
 ```
 
-### Компиляция с **Maven**
+### Компиляция с Maven
 
 ```bash
 mvn native:compile
@@ -374,7 +374,7 @@ public class Application {
 
 ## JNI Configuration
 
-### Настройка **JNI**
+### Настройка JNI
 
 **META-INF/native-image/jni-config.json:**
 
@@ -423,33 +423,33 @@ native-image \
 
 ## Решение проблем
 
-### Проблемы с **Reflection**
+### Проблемы с Reflection
 
 **Если получаете ошибки связанные с **reflection**:**
 
-1. Проверьте `**reflect-config.json**`
+1. Проверьте `reflect-config.json`
 2. Используйте `@**TypeHint**` аннотации
 3. Проверьте логи компиляции
 
-### Проблемы с **Resources**
+### Проблемы с Resources
 
 **Если ресурсы не находятся:**
 
-1. Проверьте `**application.yml**` конфигурацию
-2. Убедитесь, что ресурсы включены в `**resources-config.json**`
+1. Проверьте `application.yml` конфигурацию
+2. Убедитесь, что ресурсы включены в `resources-config.json`
 3. Проверьте пути к ресурсам
 
-### Проблемы с **Serialization**
+### Проблемы с Serialization
 
 **Если сериализация не работает:**
 
-1. Проверьте `**serialization-config.json**`
+1. Проверьте `serialization-config.json`
 2. Убедитесь, что классы доступны для **reflection**
 3. Проверьте настройки **Jackson**
 
 ## Лучшие практики
 
-### 1. Используйте **Compile-time** `DI`
+### 1. Используйте Compile-time `DI`
 
 ```java
 // ✅ Хорошо - compile-time DI
@@ -470,7 +470,7 @@ public class UserService {
 }
 ```
 
-### 2. Минимизируйте **Reflection**
+### 2. Минимизируйте Reflection
 
 ```java
 // ✅ Хорошо - используйте @TypeHint
@@ -483,7 +483,7 @@ public class Application {
 Class<?> clazz = Class.forName("com.example.User");
 ```
 
-### 3. Используйте **AOT** оптимизации
+### 3. Используйте AOT оптимизации
 
 ```yaml
 # ✅ Хорошо
@@ -493,7 +493,7 @@ graalvm:
       enabled: true
 ```
 
-### 4. Тестируйте **Native Images**
+### 4. Тестируйте Native Images
 
 ```bash
 # ✅ Хорошо - тестируйте native image
@@ -534,7 +534,7 @@ micronaut {
 }
 ```
 
-### Оптимизация **Service Loading**
+### Оптимизация Service Loading
 
 ```java
 @Configuration
@@ -544,7 +544,7 @@ public class ServiceLoadingOptimization {
 }
 ```
 
-### Оптимизация **Class Loading**
+### Оптимизация Class Loading
 
 ```yaml
 micronaut:
@@ -616,7 +616,7 @@ jobs:
           path: build/native/nativeCompile/my-app
 ```
 
-### GitLab** `CI`
+### GitLab `CI`
 
 ```yaml
 build-native:
@@ -681,7 +681,7 @@ public class Application {
 
 ## Оптимизация размера
 
-### Уменьшение размера **Native Image**
+### Уменьшение размера Native Image
 
 ```bash
 native-image \
@@ -697,7 +697,7 @@ native-image \
     com.example.Application
 ```
 
-### Оптимизация для **Production**
+### Оптимизация для Production
 
 ```bash
 native-image \

@@ -19,13 +19,13 @@ Claude Code — AI-ассистент Anthropic, встраиваемый в VS 
 ## Полезные ссылки
 
 ### Основные документы
-- [claude-basics.md](claude-basics.md) — установка, режимы работы, длинный контекст, CLI, best practices
+- [[claude-basics]] — установка, режимы работы, длинный контекст, CLI, best practices
 
 ### Соседние разделы
-- [tools/ai/](../README.md) — родительский раздел
-- [tools/ai/cursor/](../cursor/README.md) — AI-first IDE-альтернатива
-- [tools/ai/copilot/](../copilot/README.md) — главный конкурент от GitHub
-- [tools/ai/aider/](../aider/README.md) — CLI-вариант
+- [[README|tools/ai/]] — родительский раздел
+- [[README|tools/ai/cursor/]] — AI-first IDE-альтернатива
+- [[README|tools/ai/copilot/]] — главный конкурент от GitHub
+- [[README|tools/ai/aider/]] — CLI-вариант
 
 ### Внешние ресурсы
 - [Claude Code Documentation](https://docs.claude.com/en/docs/claude-code/ide-integrations)
@@ -54,13 +54,13 @@ Claude Code — AI-ассистент Anthropic, встраиваемый в VS 
 
 | Инструмент | Нативная IDE | Агентский режим | Локальные модели | Цена |
 |------------|--------------|-----------------|------------------|------|
-| [Claude Code](../claude/README.md) | VS Code, JetBrains, CLI | Да (agent, terminal-tools) | Нет (Anthropic API) | Подписка Anthropic |
-| [GitHub Copilot](../copilot/README.md) | VS Code, JetBrains, Neovim, Xcode | Да (Copilot Agent, Spaces) | Нет | Подписка GitHub |
-| [Cursor](../cursor/README.md) | Cursor (форк VS Code) | Да (Agent, Background Agent) | Да (custom API) | Free + Pro |
-| [Windsurf](../windsurf/README.md) | Windsurf | Да (Cascade) | Нет | Free + Pro |
-| [Cody](../cody/README.md) | VS Code, JetBrains | Частичный | Enterprise: да | Free + Pro/Enterprise |
-| [Aider](../aider/README.md) | Нет (CLI) | Частичный | Да (Ollama) | Open source + API |
-| [OpenClaw](../openclaw/README.md) | Нет (CLI) | Да (автономные) | Да | Open source |
+| [[README|Claude Code]] | VS Code, JetBrains, CLI | Да (agent, terminal-tools) | Нет (Anthropic API) | Подписка Anthropic |
+| [[README|GitHub Copilot]] | VS Code, JetBrains, Neovim, Xcode | Да (Copilot Agent, Spaces) | Нет | Подписка GitHub |
+| [[README|Cursor]] | Cursor (форк VS Code) | Да (Agent, Background Agent) | Да (custom API) | Free + Pro |
+| [[README|Windsurf]] | Windsurf | Да (Cascade) | Нет | Free + Pro |
+| [[README|Cody]] | VS Code, JetBrains | Частичный | Enterprise: да | Free + Pro/Enterprise |
+| [[README|Aider]] | Нет (CLI) | Частичный | Да (Ollama) | Open source + API |
+| [[README|OpenClaw]] | Нет (CLI) | Да (автономные) | Да | Open source |
 
 ## Когда использовать
 
@@ -77,7 +77,7 @@ Claude Code — AI-ассистент Anthropic, встраиваемый в VS 
 
 ## Куда идти дальше
 
-- Сравнение и выбор инструмента — [../README.md](../README.md)
-- Альтернатива от GitHub — [../copilot/README.md](../copilot/README.md)
-- AI-first IDE — [../cursor/README.md](../cursor/README.md)
-- CLI-вариант — [../aider/README.md](../aider/README.md)
+- Сравнение и выбор инструмента — [[README]]
+- Альтернатива от GitHub — [[README]]
+- AI-first IDE — [[README]]
+- CLI-вариант — [[README]]

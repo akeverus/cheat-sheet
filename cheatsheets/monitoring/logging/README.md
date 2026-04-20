@@ -18,26 +18,26 @@ updated: "2026-04-17"
 ## Полезные ссылки
 
 ### Основные документы
-- [Основы логирования](logging-basics.md) — уровни, фреймворки, JUL vs SLF4J vs Logback
-- [SLF4J](slf4j.md) — фасад, MDC, markers
-- [Logback](logback.md) — конфигурация, appenders, фильтры
-- [Log4j](log4j.md) — Apache Log4j 2, async logger, disruptor
-- [Структурированное логирование](structured-logging.md) — JSON, correlation-id, ECS
-- [Лучшие практики](logging-best-practices.md) — производительность, безопасность, PII
-- [Централизованное логирование](centralized-logging.md) — сбор с множества нод
-- [Агрегация логов](log-aggregation.md) — stream processing логов
-- [ELK Stack](elk-stack.md) — Elasticsearch + Logstash + Kibana
+- [[logging-basics|Основы логирования]] — уровни, фреймворки, JUL vs SLF4J vs Logback
+- [[slf4j]] — фасад, MDC, markers
+- [[logback]] — конфигурация, appenders, фильтры
+- [[log4j]] — Apache Log4j 2, async logger, disruptor
+- [[structured-logging|Структурированное логирование]] — JSON, correlation-id, ECS
+- [[logging-best-practices|Лучшие практики]] — производительность, безопасность, PII
+- [[centralized-logging|Централизованное логирование]] — сбор с множества нод
+- [[log-aggregation|Агрегация логов]] — stream processing логов
+- [[elk-stack|ELK Stack]] — Elasticsearch + Logstash + Kibana
 
 ### Подразделы
-- [Fluentd](fluentd/README.md) — сборщик логов cross-source (CNCF)
-- [Log Aggregation](log-aggregation/README.md) — решения по агрегации и обработке
+- [[README|Fluentd]] — сборщик логов cross-source (CNCF)
+- [[README|Log Aggregation]] — решения по агрегации и обработке
 
 ### Соседние разделы
-- [Monitoring](../README.md)
-- [Metrics](../metrics/README.md)
-- [Tracing](../tracing/README.md) — correlation trace-id <-> логи
-- [Alerting](../alerting/README.md)
-- [APM](../apm/README.md)
+- [[README|Monitoring]]
+- [[README|Metrics]]
+- [[README|Tracing]] — correlation trace-id <-> логи
+- [[README|Alerting]]
+- [[README|APM]]
 
 ### Внешние ресурсы
 - [12 Factor App — Logs](https://12factor.net/logs)
@@ -77,31 +77,31 @@ updated: "2026-04-17"
 
 | Задача | Документ |
 |--------|----------|
-| Старт нового Java-сервиса | [SLF4J](slf4j.md) + [Logback](logback.md) |
-| Высоконагруженное логирование (async) | [Log4j](log4j.md) + disruptor |
-| JSON-логи с correlation-id | [Структурированное логирование](structured-logging.md) |
-| Сбор логов из множества подов | [Fluentd](fluentd/README.md), Filebeat -> ELK |
-| Централизация и поиск | [ELK Stack](elk-stack.md), [Централизованное логирование](centralized-logging.md) |
-| Stream processing логов | [Агрегация](log-aggregation/README.md) |
-| Руководство по безопасности/PII | [Лучшие практики](logging-best-practices.md) |
+| Старт нового Java-сервиса | [[slf4j]] + [[logback]] |
+| Высоконагруженное логирование (async) | [[log4j]] + disruptor |
+| JSON-логи с correlation-id | [[structured-logging|Структурированное логирование]] |
+| Сбор логов из множества подов | [[README|Fluentd]], Filebeat -> ELK |
+| Централизация и поиск | [[elk-stack|ELK Stack]], [[centralized-logging|Централизованное логирование]] |
+| Stream processing логов | [[README|Агрегация]] |
+| Руководство по безопасности/PII | [[logging-best-practices|Лучшие практики]] |
 
 ## Связки стека
 
-- **Prometheus** ([../metrics/prometheus.md](../metrics/prometheus.md)) + **ELK** — метрики и логи в единой картине.
-- **Jaeger/OpenTelemetry** ([../tracing/README.md](../tracing/README.md)) — `trace_id` в логах связывает запрос со span-ом.
-- **Grafana** ([../metrics/grafana.md](../metrics/grafana.md)) — unified dashboards для метрик и Loki-логов.
-- **Alertmanager** ([../alerting/alertmanager.md](../alerting/alertmanager.md)) — алерты по паттернам логов через ElastAlert или Logstash-правила.
+- **Prometheus** ([[prometheus]]) + **ELK** — метрики и логи в единой картине.
+- **Jaeger/OpenTelemetry** ([[README]]) — `trace_id` в логах связывает запрос со span-ом.
+- **Grafana** ([[grafana]]) — unified dashboards для метрик и Loki-логов.
+- **Alertmanager** ([[alertmanager]]) — алерты по паттернам логов через ElastAlert или Logstash-правила.
 - **Kubernetes** — stdout/stderr подов собирает sidecar или node-agent (Fluent Bit, Filebeat).
 
 ## Маршруты чтения
 
 - **Минимум для нового сервиса (1 день):** `logging-basics` -> `slf4j` -> `logback` -> `structured-logging`.
 - **Production-ready pipeline:** + `centralized-logging` -> `elk-stack` -> `fluentd/` -> `logging-best-practices`.
-- **Поиск узких мест в логах:** `log4j` (async) -> `log-aggregation/` -> профайлинг в [../apm/README.md](../apm/README.md).
+- **Поиск узких мест в логах:** `log4j` (async) -> `log-aggregation/` -> профайлинг в [[README]].
 
 ## Куда идти дальше
 
-- Метрики — [../metrics/README.md](../metrics/README.md)
-- Распределённый трейсинг — [../tracing/README.md](../tracing/README.md)
-- Алерты на логи — [../alerting/README.md](../alerting/README.md)
-- Observability в целом — [../observability-guide.md](../observability-guide.md)
+- Метрики — [[README]]
+- Распределённый трейсинг — [[README]]
+- Алерты на логи — [[README]]
+- Observability в целом — [[observability-guide]]

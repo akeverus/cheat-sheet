@@ -17,5 +17,5 @@ updated: "2026-02-11"
 
 ## Содержание
 
-- [InfluxDB Basics](influxdb/influxdb-basics.md)
-- [TimescaleDB Basics](timescaledb/timescaledb-basics.md)
+- [[influxdb-basics|InfluxDB Basics]]
+- [[timescaledb-basics|TimescaleDB Basics]]

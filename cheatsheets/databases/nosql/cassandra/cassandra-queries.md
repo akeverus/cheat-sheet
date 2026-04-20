@@ -10,9 +10,9 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Cassandra**: **CQL** запросы и оптимизация — Полное руководство по языку запросов
+# Cassandra: CQL запросы и оптимизация — Полное руководство по языку запросов
 
-Комплексное руководство по **Cassandra Query Language** (**CQL**): синтаксис, оптимизация запросов, индексы и **best practices** для эффективной работы с данными.
+Комплексное руководство по **Cassandra Query Language** (CQL): синтаксис, оптимизация запросов, индексы и **best practices** для эффективной работы с данными.
 
 ## Полезные ссылки
 
@@ -56,23 +56,23 @@ updated: "2026-02-11"
   - [Встроенные типы данных](#встроенные-типы-данных)
     - [Примитивные типы](#примитивные-типы)
     - [Коллекции](#коллекции)
-    - [Пользовательские типы (**UDT**)](#пользовательские-типы-udt)
+    - [Пользовательские типы (UDT)](#пользовательские-типы-udt)
   - [Литералы и константы](#литералы-и-константы)
     - [Строковые литералы](#строковые-литералы)
     - [Числовые литералы](#числовые-литералы)
     - [Специальные значения](#специальные-значения)
 - [Операции **CRUD**](#операции-crud)
-  - [**Create** (**INSERT**)](#create-insert)
+  - [**Create** (INSERT)](#create-insert)
     - [Базовые вставки](#базовые-вставки)
     - [Вставка коллекций](#вставка-коллекций)
-  - [**Read** (**SELECT**)](#read-select)
+  - [**Read** (SELECT)](#read-select)
     - [Базовые запросы](#базовые-запросы)
     - [Фильтрация по первичному ключу](#фильтрация-по-первичному-ключу)
-  - [**Update** (**UPDATE**)](#update-update)
+  - [**Update** (UPDATE)](#update-update)
     - [Базовые обновления](#базовые-обновления)
     - [Обновление коллекций](#обновление-коллекций)
     - [Условные обновления](#условные-обновления)
-  - [**Delete** (**DELETE**)](#delete-delete)
+  - [**Delete** (DELETE)](#delete-delete)
     - [Базовые удаления](#базовые-удаления)
     - [Условные удаления](#условные-удаления)
 - [Запросы **SELECT**](#запросы-select)
@@ -102,7 +102,7 @@ updated: "2026-02-11"
   - [**LIMIT** оператор](#limit-оператор)
     - [Базовое использование](#базовое-использование)
     - [Практические примеры](#практические-примеры)
-  - [Пейджинг (**Paging**)](#пейджинг-paging)
+  - [Пейджинг (Paging)](#пейджинг-paging)
     - [Автоматический пейджинг](#автоматический-пейджинг)
     - [Ручной пейджинг с состоянием](#ручной-пейджинг-с-состоянием)
 - [Агрегации и функции](#агрегации-и-функции)
@@ -115,13 +115,13 @@ updated: "2026-02-11"
   - [Пользовательские агрегаты](#пользовательские-агрегаты)
     - [Создание кастомных агрегатов](#создание-кастомных-агрегатов)
 - [Работа с коллекциями](#работа-с-коллекциями)
-  - [Операции со списками (**LIST**)](#операции-со-списками-list)
+  - [Операции со списками (LIST)](#операции-со-списками-list)
     - [Создание и вставка](#создание-и-вставка)
     - [Запросы со списками](#запросы-со-списками)
-  - [Операции с множествами (**SET**)](#операции-с-множествами-set)
+  - [Операции с множествами (SET)](#операции-с-множествами-set)
     - [Работа с множествами](#работа-с-множествами)
     - [Запросы с множествами](#запросы-с-множествами)
-  - [Операции со словарями (**MAP**)](#операции-со-словарями-map)
+  - [Операции со словарями (MAP)](#операции-со-словарями-map)
     - [Работа со словарями](#работа-со-словарями)
     - [Запросы со словарями](#запросы-со-словарями)
 - [Пользовательские функции и агрегаты](#пользовательские-функции-и-агрегаты)
@@ -137,7 +137,7 @@ updated: "2026-02-11"
     - [Типы пакетов](#типы-пакетов)
   - [Практическое использование пакетов](#практическое-использование-пакетов)
 - [**TTL** и временные данные](#ttl-и-временные-данные)
-  - [**Time** To **Live** (**TTL**)](#time-to-live-ttl)
+  - [**Time** To **Live** (TTL)](#time-to-live-ttl)
     - [Установка **TTL**](#установка-ttl)
     - [Проверка **TTL**](#проверка-ttl)
     - [Управление **TTL**](#управление-ttl)
@@ -189,9 +189,9 @@ updated: "2026-02-11"
   - [Лучшие практики:](#лучшие-практики)
 - [Решение проблем](#решение-проблем)
 
-## Основы **CQL**
+## Основы CQL
 
-### Структура **CQL** запросов
+### Структура CQL запросов
 
 #### Синтаксис и команды
 
@@ -239,7 +239,7 @@ DROP TABLE users;
 DROP KEYSPACE myapp;
 ```
 
-#### **Case sensitivity**
+#### Case sensitivity
 ```cql
 -- CQL регистронезависимый для ключевых слов
 select * from users;
@@ -258,7 +258,7 @@ SELECT "UserID", "userName" FROM "UserData";
 
 ### Подключение и сессия
 
-#### Через **cqlsh**
+#### Через cqlsh
 ```bash
 # Подключение к локальному кластеру
 cqlsh
@@ -276,7 +276,7 @@ cqlsh -e "SELECT * FROM users LIMIT 5;"
 cqlsh --ssl --cqlshrc ~/.cassandra/cqlshrc
 ```
 
-#### Конфигурация **cqlsh**
+#### Конфигурация cqlsh
 ```bash
 # Создание конфигурационного файла ~/.cassandra/cqlshrc
 [authentication]
@@ -362,7 +362,7 @@ CREATE TABLE collections_example (
 );
 ```
 
-#### Пользовательские типы (**UDT**)
+#### Пользовательские типы (UDT)
 ```cql
 -- Создание пользовательского типа
 CREATE TYPE address (
@@ -450,9 +450,9 @@ INSERT INTO logs (date_only) VALUES (toDate(now()));
 INSERT INTO logs (time_only) VALUES (toTime(now()));
 ```
 
-## Операции **CRUD**
+## Операции CRUD
 
-### **Create** (**INSERT**)
+### Create (INSERT)
 
 #### Базовые вставки
 ```cql
@@ -494,7 +494,7 @@ UPDATE users SET roles = roles + {'moderator'} WHERE id = uuid();
 UPDATE configs SET settings = settings + {'auto_save': 'false'} WHERE id = uuid();
 ```
 
-### **Read** (**SELECT**)
+### Read (SELECT)
 
 #### Базовые запросы
 ```cql
@@ -529,7 +529,7 @@ WHERE sensor_id = uuid()
 AND timestamp >= '2023-01-01' AND timestamp <= '2023-12-31';
 ```
 
-### **Update** (**UPDATE**)
+### Update (UPDATE)
 
 #### Базовые обновления
 ```cql
@@ -580,7 +580,7 @@ WHERE user_id = uuid()
 IF last_login < toTimestamp(now()) - 1d;  -- Только если последний логин был более дня назад
 ```
 
-### **Delete** (**DELETE**)
+### Delete (DELETE)
 
 #### Базовые удаления
 ```cql
@@ -607,9 +607,9 @@ DELETE tags FROM products WHERE id = uuid() IF tags CONTAINS 'deprecated';
 DELETE settings['old_key'] FROM configs WHERE id = uuid();
 ```
 
-## Запросы **SELECT**
+## Запросы SELECT
 
-### Продвинутые **SELECT** запросы
+### Продвинутые SELECT запросы
 
 #### Сортировка и ограничения
 ```cql
@@ -672,9 +672,9 @@ SELECT id,
 FROM logs;
 ```
 
-### Работа с **JSON**
+### Работа с JSON
 
-#### **JSON** вставка и запросы
+#### JSON вставка и запросы
 ```cql
 -- Вставка JSON данных
 INSERT INTO user_profiles JSON '{
@@ -706,7 +706,7 @@ UPDATE user_profiles SET profile = fromJson('{
 }') WHERE user_id = uuid();
 ```
 
-## Фильтрация и условия **WHERE**
+## Фильтрация и условия WHERE
 
 ### Операторы сравнения
 
@@ -747,7 +747,7 @@ SELECT * FROM products WHERE name LIKE 'Laptop%';
 
 ### Логические операторы
 
-#### **AND**/`OR`/**NOT**
+#### AND/`OR`/NOT
 ```cql
 -- AND оператор (неявный в WHERE)
 SELECT * FROM orders
@@ -782,7 +782,7 @@ SELECT * FROM configs WHERE settings CONTAINS KEY 'theme' ALLOW FILTERING;
 SELECT * FROM configs WHERE settings CONTAINS 'dark' ALLOW FILTERING;
 ```
 
-#### Для **UDT**
+#### Для UDT
 ```cql
 -- Доступ к полям UDT
 SELECT * FROM companies
@@ -793,11 +793,11 @@ SELECT * FROM complex_data
 WHERE nested_udt.field.subfield = 'value' ALLOW FILTERING;
 ```
 
-## Сортировка **ORDER** `BY`
+## Сортировка ORDER `BY`
 
 ### Порядок сортировки
 
-#### По **clustering keys**
+#### По clustering keys
 ```cql
 -- Сортировка в порядке, определенном в таблице
 CREATE TABLE user_posts (
@@ -817,7 +817,7 @@ WHERE user_id = uuid()
 ORDER BY post_id DESC, created_at DESC;
 ```
 
-#### Сортировка по не-**clustering** колонкам
+#### Сортировка по не-clustering колонкам
 ```cql
 -- Требует ALLOW FILTERING и может быть неэффективным
 SELECT * FROM products
@@ -860,9 +860,9 @@ ORDER BY activity_count DESC
 LIMIT 20 ALLOW FILTERING;
 ```
 
-## Ограничения **LIMIT** и пейджинг
+## Ограничения LIMIT и пейджинг
 
-### **LIMIT** оператор
+### LIMIT оператор
 
 #### Базовое использование
 ```cql
@@ -897,7 +897,7 @@ LIMIT 20 ALLOW FILTERING;
 SELECT * FROM users LIMIT 100; -- Примерная случайная выборка
 ```
 
-### Пейджинг (**Paging**)
+### Пейджинг (Paging)
 
 #### Автоматический пейджинг
 ```cql
@@ -1144,7 +1144,7 @@ GROUP BY category;
 
 ## Работа с коллекциями
 
-### Операции со списками (**LIST**)
+### Операции со списками (LIST)
 
 #### Создание и вставка
 ```cql
@@ -1182,7 +1182,7 @@ SELECT user_id, size(skills) as skill_count FROM user_skills;
 SELECT user_id, skills[1..3] as middle_skills FROM user_skills;  -- Элементы 1-3
 ```
 
-### Операции с множествами (**SET**)
+### Операции с множествами (SET)
 
 #### Работа с множествами
 ```cql
@@ -1218,7 +1218,7 @@ WHERE permissions CONTAINS 'read'
 AND roles CONTAINS 'admin' ALLOW FILTERING;
 ```
 
-### Операции со словарями (**MAP**)
+### Операции со словарями (MAP)
 
 #### Работа со словарями
 ```cql
@@ -1328,7 +1328,7 @@ FROM products;
 
 ## Пакетные операции
 
-### **BATCH** запросы
+### BATCH запросы
 
 #### Базовые пакеты
 ```cql
@@ -1487,11 +1487,11 @@ public class BatchOperationService {
 }
 ```
 
-## **TTL** и временные данные
+## TTL и временные данные
 
-### **Time** To **Live** (**TTL**)
+### Time To Live (TTL)
 
-#### Установка **TTL**
+#### Установка TTL
 ```cql
 -- TTL при вставке
 INSERT INTO sessions (session_id, user_id, data)
@@ -1509,7 +1509,7 @@ WHERE id = uuid()
 USING TTL 86400;  -- 24 часа
 ```
 
-#### Проверка **TTL**
+#### Проверка TTL
 ```cql
 -- Проверка оставшегося времени жизни
 SELECT id, data, ttl(data) as time_to_live_seconds
@@ -1520,7 +1520,7 @@ SELECT id, data, writetime(data) + ttl(data) * 1000000 as expires_at
 FROM sessions WHERE session_id = uuid();
 ```
 
-#### Управление **TTL**
+#### Управление TTL
 ```cql
 -- Удаление TTL (данные становятся постоянными)
 UPDATE sessions SET data = data WHERE session_id = uuid();
@@ -1538,7 +1538,7 @@ CREATE TABLE notifications (
 ) WITH default_time_to_live = 604800;  -- 7 дней по умолчанию
 ```
 
-### Временные ряды с **TTL**
+### Временные ряды с TTL
 
 #### Автоматическая очистка старых данных
 ```cql
@@ -1565,7 +1565,7 @@ CREATE TABLE user_sessions (
 ) WITH default_time_to_live = 3600;  -- 1 час
 ```
 
-#### Продление **TTL**
+#### Продление TTL
 ```java
 @Service
 public class SessionService {
@@ -1612,7 +1612,7 @@ public class SessionService {
 
 ## Оптимизация запросов
 
-### **EXPLAIN** план запроса
+### EXPLAIN план запроса
 
 #### Анализ плана выполнения
 ```cql
@@ -1637,7 +1637,7 @@ ORDER BY created_at DESC
 LIMIT 20;
 ```
 
-#### Интерпретация результатов **EXPLAIN**
+#### Интерпретация результатов EXPLAIN
 ```cql
 -- Хороший план: использование первичного ключа
 EXPLAIN SELECT * FROM users WHERE id = uuid();
@@ -1669,7 +1669,7 @@ AND created_at >= '2023-01-01';
 SELECT * FROM users WHERE city = 'New York' ALLOW FILTERING;
 ```
 
-#### 2. Избегание **ALLOW FILTERING**
+#### 2. Избегание ALLOW FILTERING
 ```cql
 -- Вместо неэффективного запроса
 SELECT * FROM products WHERE category = 'electronics' ALLOW FILTERING;
@@ -1687,7 +1687,7 @@ CREATE TABLE products_by_category (
 SELECT * FROM products_by_category WHERE category = 'electronics';
 ```
 
-#### 3. Оптимизация **LIMIT** и пейджинга
+#### 3. Оптимизация LIMIT и пейджинга
 ```cql
 -- Хороший пейджинг: использование токенов
 SELECT * FROM large_table
@@ -1751,7 +1751,7 @@ SELECT * FROM users WHERE email = 'user@example.com' ALLOW FILTERING;
 SELECT * FROM orders WHERE status = 'pending' ALLOW FILTERING;
 ```
 
-#### **SASI** индексы для текста
+#### SASI индексы для текста
 ```cql
 -- Префиксный поиск
 CREATE CUSTOM INDEX product_name_prefix
@@ -1939,7 +1939,7 @@ FROM system.peers;
 
 ### Проектирование запросов
 
-#### 1. **Query-First Design**
+#### 1. Query-First Design
 - **Определяйте запросы до схемы**
 - **Создавайте таблицы для конкретных паттернов**
 - **Избегайте сложных `JOIN`-подобных операций**
@@ -1947,7 +1947,7 @@ FROM system.peers;
 
 #### 2. Оптимизация первичных ключей
 - **Выбирайте partition key с высокой кардинальностью**
-- **Ограничьте размер партиций (**100MB — 300MB**)**
+- **Ограничьте размер партиций (100MB — 300MB)**
 - **Используйте composite keys для равномерного распределения**
 - **Определяйте clustering keys для естественной сортировки**
 
@@ -1960,7 +1960,7 @@ FROM system.peers;
 ### Производительность и масштабируемость
 
 #### 1. Размер данных
-- **Ограничьте размер строк (**< 1MB**)**
+- **Ограничьте размер строк (< 1MB)**
 - **Используйте `TTL` для временных данных**
 - **Архивируйте старые данные**
 - **Планируйте рост данных**
@@ -1974,7 +1974,7 @@ FROM system.peers;
 #### 3. Пакетные операции
 - **Группируйте логически связанные операции**
 - **Используйте `UNLOGGED` batches для вставок**
-- **Ограничьте размер batch (**максимум 50KB**)**
+- **Ограничьте размер batch (максимум 50KB)**
 - **Мониторьте latency batch операций**
 
 ### Безопасность и надежность
@@ -2000,8 +2000,8 @@ FROM system.peers;
 ### Мониторинг и поддержка
 
 #### 1. Ключевые метрики
-- **Latency запросов (**< 100ms для большинства**)**
-- **Throughput (**запросов в секунду**)**
+- **Latency запросов (< 100ms для большинства)**
+- **Throughput (запросов в секунду)**
 - **Размер партиций и SSTables**
 - **Использование дискового пространства**
 
@@ -2017,9 +2017,9 @@ FROM system.peers;
 - **Мониторинг system_traces**
 - **Анализ access patterns**
 
-**Cassandra Query Language** (**CQL**) предоставляет мощный и гибкий интерфейс для работы с данными в **Apache Cassandra**, но требует понимания распределенной природы базы данных. Ключевые особенности:**
+**Cassandra Query Language** (CQL) предоставляет мощный и гибкий интерфейс для работы с данными в **Apache Cassandra**, но требует понимания распределенной природы базы данных. Ключевые особенности:**
 
-### Основные принципы **CQL**:
+### Основные принципы CQL:
 
 1. **Декларативный синтаксис** — похож на **SQL**, но адаптирован для распределенных операций
 2. **Query-`First` Design** — проектирование схемы на основе паттернов запросов

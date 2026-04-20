@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Docker Compose**
+# Docker Compose
 
 **Docker Compose** — это инструмент для определения и запуска **multi-container** приложений **Docker**. С помощью **Compose** можно описать всю архитектуру приложения в **YAML** файле и запустить все сервисы одной командой. Это идеальный инструмент для разработки, тестирования и локального развертывания.
 
@@ -65,13 +65,13 @@ updated: "2026-02-11"
   - [Performance optimization](#performance-optimization)
 - [См. также](#см-также)
 
-## Основы **Docker Compose**
+## Основы Docker Compose
 
 ### Установка и базовая настройка
 
 #### Установка
 
-Ниже — команды установки **Docker Compose** (**bash**).
+Ниже — команды установки **Docker Compose** (bash).
 ```bash
 # Linux
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.17.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -100,7 +100,7 @@ version: '3.8'
 # version: '3.8'   - Docker Engine 19.03.0+
 ```
 
-## Структура **compose** файла
+## Структура compose файла
 
 ### Минимальный пример
 ```yaml
@@ -200,7 +200,7 @@ secrets:
 
 ## Конфигурация сервисов
 
-### **Build** контекст
+### Build контекст
 ```yaml
 services:
   web:
@@ -254,7 +254,7 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
 ```
 
-### **Volumes** и **mounts**
+### Volumes и mounts
 ```yaml
 services:
   web:
@@ -290,7 +290,7 @@ services:
         read_only: true
 ```
 
-### **Networking**
+### Networking
 ```yaml
 services:
   web:
@@ -343,7 +343,7 @@ networks:
         - subnet: 172.20.0.0/16
 ```
 
-### **Health checks**
+### Health checks
 ```yaml
 services:
   web:
@@ -403,7 +403,7 @@ services:
       replicas: 3
 ```
 
-## **Secrets** и **configs**
+## Secrets и configs
 
 ### Управление секретами
 ```yaml
@@ -456,9 +456,9 @@ configs:
     name: myapp_config
 ```
 
-## **Deploy** и **scaling**
+## Deploy и scaling
 
-### **Production deployment**
+### Production deployment
 ```yaml
 version: '3.8'
 
@@ -515,7 +515,7 @@ services:
         condition: unless-stopped
 ```
 
-### **Blue-Green deployment**
+### Blue-Green deployment
 ```yaml
 version: '3.8'
 
@@ -553,9 +553,9 @@ configs:
     file: ./nginx-blue.conf  # Сначала blue
 ```
 
-## **Environment management**
+## Environment management
 
-### **Override** файлы
+### Override файлы
 ```yaml
 # docker-compose.yml (base)
 version: '3.8'
@@ -649,7 +649,7 @@ docker-compose --env-file .env.prod up
 
 ## Расширенные возможности
 
-### **Extends**
+### Extends
 ```yaml
 version: '3.8'
 
@@ -681,7 +681,7 @@ services:
       - SERVICE_NAME=api
 ```
 
-### **YAML anchors**
+### YAML anchors
 ```yaml
 version: '3.8'
 
@@ -717,7 +717,7 @@ services:
       replicas: 3
 ```
 
-### **Profiles**
+### Profiles
 ```yaml
 version: '3.8'
 
@@ -767,7 +767,7 @@ docker-compose --profile "*" up
 docker-compose --profile dev up
 ```
 
-## Команды **Docker Compose**
+## Команды Docker Compose
 
 ### Основные команды
 ```bash
@@ -833,7 +833,7 @@ docker-compose events             # Мониторинг событий
 
 ## Интеграция с другими инструментами
 
-### **Makefile** для удобства
+### Makefile для удобства
 ```makefile
 .PHONY: up down build logs clean
 
@@ -879,7 +879,7 @@ clean-volumes:
 	docker volume prune -f
 ```
 
-### **Integration** с CI/CD
+### Integration с CI/CD
 ```yaml
 # GitHub Actions
 name: CI/CD Pipeline
@@ -917,7 +917,7 @@ jobs:
           docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T api npm run migrate
 ```
 
-## **Best practices**
+## Best practices
 
 ### Производственная настройка
 ```yaml
@@ -1094,7 +1094,7 @@ docker system prune -f
 docker-compose up --build
 ```
 
-### **Debug** режим
+### Debug режим
 ```bash
 # Verbose logging
 docker-compose --verbose up
@@ -1120,7 +1120,7 @@ docker-compose exec web nslookup db
 docker-compose exec web cat /etc/hosts
 ```
 
-### **Performance optimization**
+### Performance optimization
 ```yaml
 # Optimized configuration
 version: '3.8'

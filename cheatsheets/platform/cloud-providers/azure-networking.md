@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Azure Networking**
+# Azure Networking
 
 **Azure Networking** предоставляет полный набор сервисов для создания масштабируемой, безопасной и высокопроизводительной сетевой инфраструктуры. Этот документ охватывает **Virtual Networks**, **Load Balancers**, **Application Gateway**, **Front Door**, **VPN**, **ExpressRoute** и другие сетевые сервисы **Azure** с **best practices** для **production** сред.
 
@@ -67,10 +67,10 @@ updated: "2026-02-11"
 - [Частые вопросы](#частые-вопросы)
 - [См. также](#см-также)
 
-## Virtual Networks (**VNets**)
+## Virtual Networks (VNets)
 
 ### VNet Design Patterns
-Пример многоуровневой архитектуры **VNet** (**YAML**).
+Пример многоуровневой архитектуры **VNet** (YAML).
 ```yaml
 # Многоуровневая архитектура VNet — адресное пространство, подсети, DDoS, Bastion, Firewall
 vnet-architecture:
@@ -204,9 +204,9 @@ hub-spoke-architecture:
           next-hop-ip-address: "10.0.1.4"  # Azure Firewall IP
 ```
 
-## Subnets и **Network Security Groups**
+## Subnets и Network Security Groups
 
-### Network Security Groups (**NSGs**)
+### Network Security Groups (NSGs)
 ```yaml
 # NSG Design Patterns
 network-security-groups:
@@ -342,7 +342,7 @@ network-security-groups:
         destination-address-prefix: "*"
 ```
 
-### Application Security Groups (**ASGs**)
+### Application Security Groups (ASGs)
 ```yaml
 # Application Security Groups для microservices
 application-security-groups:
@@ -682,7 +682,7 @@ front-door:
   load-balancing-settings: []
 ```
 
-### Custom Domain и **SSL**
+### Custom Domain и SSL
 ```yaml
 # Custom domain configuration
 custom-domain-config:
@@ -1268,8 +1268,8 @@ private-link-service:
 ## Лучшие практики
 
 - **Проектирование VNet:** выделяйте отдельные подсети под шлюзы, **Bastion**, **Firewall**, приложение и данные; используйте **Service Endpoints** и **Private Link** для доступа к **PaaS** без публичного интернета.
-- **NSG и маршрутизация:** минимальные правила **NSG** по принципу «разрешено только необходимое»; пользовательские маршруты (**UDR**) для трафика через **NVA** или **Firewall**; не блокировать служебные теги **Azure**.
-- **Балансировка и шлюзы:** выбирайте **Load Balancer** (**L4**) или **Application Gateway** (**L7**) по сценарию; для глобальной маршрутизации — **Front Door** или **Traffic Manager**; **ExpressRoute** для стабильной связи с **on-premise**.
+- **NSG и маршрутизация:** минимальные правила **NSG** по принципу «разрешено только необходимое»; пользовательские маршруты (UDR) для трафика через **NVA** или **Firewall**; не блокировать служебные теги **Azure**.
+- **Балансировка и шлюзы:** выбирайте **Load Balancer** (L4) или **Application Gateway** (L7) по сценарию; для глобальной маршрутизации — **Front Door** или **Traffic Manager**; **ExpressRoute** для стабильной связи с **on-premise**.
 - **Безопасность:** включите **DDoS Protection** для критичных ресурсов; используйте **Azure Firewall** или **NVA** для исходящего трафика; **Network Watcher** для диагностики и мониторинга.
 - **Мониторинг: Connection Monitor** и **NSG Flow Logs** для анализа трафика; интеграция с **Log Analytics** и алертами.
 

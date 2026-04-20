@@ -84,7 +84,7 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Spring Messaging**
+## Введение в Spring Messaging
 
 **Spring Messaging** предоставляет абстракцию для работы с различными **messaging** системами: **JMS**, **RabbitMQ**, **ActiveMQ** и другими. Это позволяет легко переключаться между различными провайдерами без изменения бизнес-логики.
 
@@ -96,7 +96,7 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 - **Message Converters**: Преобразование сообщений
 - **Transaction Support**: Транзакционная поддержка
 
-### Архитектура **Spring Messaging**
+### Архитектура Spring Messaging
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -129,11 +129,11 @@ related: ["spring/spring-boot.md", "messaging/rabbitmq.md"]
 
 ## JMS (`Java Message Service`)
 
-### Настройка **JMS**
+### Настройка JMS
 
 **Зависимости:**
 
-**Зависимость **spring-`boot-starter`-activemq** (**pom.xml**):**
+**Зависимость **spring-`boot-starter`-activemq** (pom.xml):**
 
 ```xml
 <dependency>
@@ -206,7 +206,7 @@ public class MessageConsumer {
 }
 ```
 
-### Конфигурация **JMS**
+### Конфигурация JMS
 
 ```java
 @Configuration
@@ -241,7 +241,7 @@ public class JmsConfig {
 
 ## RabbitMQ
 
-### Настройка **RabbitMQ**
+### Настройка RabbitMQ
 
 **Зависимости:**
 
@@ -312,7 +312,7 @@ public class RabbitMQConsumer {
 }
 ```
 
-### Конфигурация **RabbitMQ**
+### Конфигурация RabbitMQ
 
 ```java
 @Configuration
@@ -353,7 +353,7 @@ public class RabbitMQConfig {
 
 ## Message Converters
 
-### **JSON Converter**
+### JSON Converter
 
 ```java
 @Configuration
@@ -373,7 +373,7 @@ public class MessageConverterConfig {
 }
 ```
 
-### **Custom Converter**
+### Custom Converter
 
 ```java
 public class UserMessageConverter implements MessageConverter {
@@ -401,7 +401,7 @@ public class UserMessageConverter implements MessageConverter {
 
 ## Транзакции
 
-### **JMS Transactions**
+### JMS Transactions
 
 ```java
 @Service
@@ -424,7 +424,7 @@ public class TransactionalMessageService {
 }
 ```
 
-### **RabbitMQ Transactions**
+### RabbitMQ Transactions
 
 ```java
 @Configuration
@@ -456,7 +456,7 @@ public class TransactionalRabbitMQService {
 
 ## Лучшие практики
 
-### 1. Используйте правильный тип **messaging**
+### 1. Используйте правильный тип messaging
 
 ```java
 // ✅ Хорошо - для point-to-point
@@ -502,7 +502,7 @@ public MessageConverter jsonMessageConverter() {
 }
 ```
 
-### 5. Используйте **durable queues** для важных сообщений
+### 5. Используйте durable queues для важных сообщений
 
 ```java
 // ✅ Хорошо
@@ -512,9 +512,9 @@ public Queue queue() {
 }
 ```
 
-## Обработка ошибок и **Retry**
+## Обработка ошибок и Retry
 
-### **JMS Error Handling**
+### JMS Error Handling
 
 ```java
 @Configuration
@@ -538,7 +538,7 @@ public class JmsErrorHandlingConfig {
 }
 ```
 
-### **RabbitMQ Error Handling**
+### RabbitMQ Error Handling
 
 ```java
 @Configuration
@@ -558,7 +558,7 @@ public class RabbitMQErrorHandlingConfig {
 }
 ```
 
-### **Retry** механизм
+### Retry механизм
 
 ```java
 @Configuration
@@ -605,7 +605,7 @@ public class RetryableMessageService {
 }
 ```
 
-### **Dead Letter Queue**
+### Dead Letter Queue
 
 ```java
 @Configuration
@@ -641,7 +641,7 @@ public class DeadLetterQueueConfig {
 
 ## Message Patterns
 
-### **Request-Reply Pattern**
+### Request-Reply Pattern
 
 ```java
 @Service
@@ -671,7 +671,7 @@ public class RequestReplyListener {
 }
 ```
 
-### **Publish-Subscribe Pattern**
+### Publish-Subscribe Pattern
 
 ```java
 @Configuration
@@ -719,7 +719,7 @@ public class SubscriberService {
 }
 ```
 
-### **Message Routing Pattern**
+### Message Routing Pattern
 
 ```java
 @Configuration
@@ -773,7 +773,7 @@ public class RoutingService {
 }
 ```
 
-### **Message Aggregator Pattern**
+### Message Aggregator Pattern
 
 ```java
 @Component
@@ -803,7 +803,7 @@ public class MessageAggregator {
 
 ## Message Filtering
 
-### **JMS Selector**
+### JMS Selector
 
 ```java
 @Service
@@ -846,7 +846,7 @@ public class FilteredMessageConsumer {
 }
 ```
 
-### **RabbitMQ Headers Exchange**
+### RabbitMQ Headers Exchange
 
 ```java
 @Configuration
@@ -903,7 +903,7 @@ public class HeadersMessageService {
 
 ## Message Transformation
 
-### **Custom Message Transformer**
+### Custom Message Transformer
 
 ```java
 @Component
@@ -928,7 +928,7 @@ public class TransformerConfig {
 }
 ```
 
-### **Message Enricher**
+### Message Enricher
 
 ```java
 @Component
@@ -953,7 +953,7 @@ public class MessageEnricher {
 
 ## Message Batching
 
-### **Batch Processing**
+### Batch Processing
 
 ```java
 @Component
@@ -981,7 +981,7 @@ public class BatchMessageProcessor {
 }
 ```
 
-### **RabbitMQ Batch Consumer**
+### RabbitMQ Batch Consumer
 
 ```java
 @Configuration
@@ -1013,7 +1013,7 @@ public class BatchRabbitMQConsumer {
 
 ## Мониторинг и метрики
 
-### **JMS Metrics**
+### JMS Metrics
 
 ```java
 @Component
@@ -1055,7 +1055,7 @@ public class JmsMetrics {
 }
 ```
 
-### **RabbitMQ Health Check**
+### RabbitMQ Health Check
 
 ```java
 @Component
@@ -1086,7 +1086,7 @@ public class RabbitMQHealthIndicator implements HealthIndicator {
 
 ## Безопасность
 
-### **JMS Security**
+### JMS Security
 
 ```java
 @Configuration
@@ -1103,7 +1103,7 @@ public class SecureJmsConfig {
 }
 ```
 
-### **RabbitMQ Security**
+### RabbitMQ Security
 
 ```java
 @Configuration
@@ -1124,7 +1124,7 @@ public class SecureRabbitMQConfig {
 
 ## Производительность
 
-### **Connection Pooling**
+### Connection Pooling
 
 ```java
 @Configuration
@@ -1141,7 +1141,7 @@ public class PooledConnectionConfig {
 }
 ```
 
-### **Async Message Processing**
+### Async Message Processing
 
 ```java
 @Configuration
@@ -1170,9 +1170,9 @@ public class AsyncJmsConfig {
 }
 ```
 
-## Интеграция с **Spring Cloud**
+## Интеграция с Spring Cloud
 
-### **Spring Cloud Stream**
+### Spring Cloud Stream
 
 ```java
 @EnableBinding(MessageChannels.class)

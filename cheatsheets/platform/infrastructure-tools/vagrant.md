@@ -10,7 +10,7 @@ prerequisites: []
 next: []
 updated: "2026-02-11"
 ---
-# **Vagrant**
+# Vagrant
 
 **Vagrant** — это инструмент с открытым исходным кодом для создания и управления виртуальными средами разработки. Он позволяет описывать инфраструктуру в коде и автоматически создавать, настраивать и уничтожать виртуальные машины. Этот документ охватывает продвинутые паттерны использования **Vagrant** для **enterprise** разработки и тестирования.
 
@@ -65,10 +65,10 @@ updated: "2026-02-11"
   - [Documentation](#documentation)
 - [См. также](#см-также)
 
-## Основы **Vagrant**
+## Основы Vagrant
 
 ### Установка и настройка
-Ниже — установка **Vagrant** на **Linux**/**macOS** (**bash**).
+Ниже — установка **Vagrant** на **Linux**/**macOS** (bash).
 ```bash
 # Linux/macOS
 # Установка через пакетный менеджер
@@ -116,7 +116,7 @@ vagrant-project/
 └── README.md
 ```
 
-### Основной **Vagrantfile**
+### Основной Vagrantfile
 ```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
@@ -836,7 +836,7 @@ jobs:
       run: vagrant destroy -f
 ```
 
-## Security и **compliance**
+## Security и compliance
 
 ### Security hardening
 ```ruby
@@ -968,7 +968,7 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-### Caching и **optimization**
+### Caching и optimization
 ```ruby
 Vagrant.configure("2") do |config|
   # Vagrant cachier для кэширования пакетов

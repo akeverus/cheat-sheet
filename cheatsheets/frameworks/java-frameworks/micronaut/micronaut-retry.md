@@ -68,7 +68,7 @@ related: ["micronaut-core.md", "micronaut-cloud.md"]
 - **Custom Retry Policies**: пользовательские политики **retry**
 - **Fallback Methods**: Методы **fallback** при ошибках
 
-## Настройка **Retry**
+## Настройка Retry
 
 ### Зависимости
 
@@ -92,7 +92,7 @@ micronaut:
 
 ## Basic Retry
 
-### @**Retryable Annotation**
+### @Retryable Annotation
 
 ```java
 import io.micronaut.retry.annotation.Retryable;
@@ -203,7 +203,7 @@ public class CustomRetryPolicy implements RetryPolicy {
 
 ## Лучшие практики
 
-### 1. Используйте **retry** для **transient errors**
+### 1. Используйте retry для transient errors
 
 ```java
 // ✅ Хорошо
@@ -213,7 +213,7 @@ public void callExternalService() {
 }
 ```
 
-### 2. Используйте **circuit breaker** для защиты
+### 2. Используйте circuit breaker для защиты
 
 ```java
 // ✅ Хорошо
@@ -223,7 +223,7 @@ public void callUnreliableService() {
 }
 ```
 
-### 3. Всегда предоставляйте **fallback**
+### 3. Всегда предоставляйте fallback
 
 ```java
 // ✅ Хорошо

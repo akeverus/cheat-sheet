@@ -53,13 +53,13 @@ updated: "2026-02-11"
   - [Производительность и оптимизация](#производительность-и-оптимизация)
 - [См. также](#см-также)
 
-## Основы **Pulumi**
+## Основы Pulumi
 
 ### Установка и настройка
 
-#### Установка **Pulumi CLI**
+#### Установка Pulumi CLI
 
-Команды установки **Pulumi CLI**: скрипт **get.pulumi.com** (**Linux/macOS**), **PowerShell** (**Windows**), **npm**, проверка версии.
+Команды установки **Pulumi CLI**: скрипт **get.pulumi.com** (Linux/macOS), **PowerShell** (Windows), **npm**, проверка версии.
 
 ```bash
 # Linux/macOS
@@ -107,7 +107,7 @@ my-pulumi-project/
 └── node_modules/       # Установленные пакеты
 ```
 
-#### **Pulumi.yaml**
+#### Pulumi.yaml
 ```yaml
 name: my-infrastructure
 runtime:
@@ -119,7 +119,7 @@ config:
   aws:region: us-east-1
 ```
 
-#### **package.json** для **Node.js** проекта
+#### package.json для Node.js проекта
 ```json
 {
   "name": "my-infrastructure",
@@ -486,7 +486,7 @@ const sg = new aws.ec2.SecurityGroup("app-sg", {
 
 ## Автоматизация и CI/CD
 
-### Простой CI/CD **pipeline**
+### Простой CI/CD pipeline
 ```yaml
 # .github/workflows/pulumi.yml
 name: Pulumi
@@ -579,7 +579,7 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 ```
 
-### Интеграция с **Kubernetes**
+### Интеграция с Kubernetes
 ```typescript
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
@@ -719,7 +719,7 @@ export const ingressHost = ingress.spec.rules[0].host;
 
 ## Тестирование и валидация
 
-### **Unit** тестирование
+### Unit тестирование
 ```typescript
 import * as aws from "@pulumi/aws";
 import { Vpc } from "./components/vpc";
@@ -744,7 +744,7 @@ describe("Vpc Component", () => {
 });
 ```
 
-### **Policy as Code**
+### Policy as Code
 ```typescript
 import * as aws from "@pulumi/aws";
 import * as policy from "@pulumi/policy";
@@ -792,7 +792,7 @@ new policy.PolicyPack("aws-compliance", {
 
 ## Продвинутые паттерны
 
-### **Multi-cloud deployment**
+### Multi-cloud deployment
 ```typescript
 import * as aws from "@pulumi/aws";
 import * as azure from "@pulumi/azure-native";
@@ -893,7 +893,7 @@ export const bucketName = resources.bucket.name || resources.bucket.bucket;
 export const databaseEndpoint = resources.database.endpoint || resources.database.fullyQualifiedDomainName;
 ```
 
-### **Blue-Green deployment**
+### Blue-Green deployment
 ```typescript
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
@@ -1010,7 +1010,7 @@ export const serviceName = service.metadata.name;
 
 ## Мониторинг и отладка
 
-### Стек мониторинга с **Pulumi**
+### Стек мониторинга с Pulumi
 ```typescript
 import * as aws from "@pulumi/aws";
 import * as k8s from "@pulumi/kubernetes";

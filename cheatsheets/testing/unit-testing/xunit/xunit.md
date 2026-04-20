@@ -23,7 +23,7 @@ updated: "2026-02-11"
 | Документация | [xUnit.net — Getting Started](https://xunit.net/docs/getting-started/netcore/cmdline), [Writing Tests](https://xunit.net/docs/writing-tests), [Running Tests](https://xunit.net/docs/running-tests-in-visual-studio) |
 | Сравнение | [xUnit vs NUnit vs MSTest](https://xunit.net/docs/comparisons) |
 | Ассерты | [FluentAssertions](https://fluentassertions.com/) |
-| См. также | [Unit Testing](../), [JUnit](../junit/junit.md), [Testing Tools](../../testing-tools/testing-tools-overview.md) |
+| См. также | [Unit Testing](../), [[junit]], [[testing-tools-overview|Testing Tools]] |
 
 ## Содержание
 
@@ -439,6 +439,6 @@ dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --col
 
 ## Заключение
 
-xUnit.net даёт изоляцию «один экземпляр на тест», параллельный запуск и простую модель фактов и теорий. Используйте `[Theory]` и `[InlineData]` для параметризации, `IClassFixture<T>` для общих ресурсов, `IDisposable` для очистки. Документация: [xUnit.net](https://xunit.net/docs/getting-started/netcore/cmdline), [Unit Testing](../), [JUnit](../junit/junit.md).
+xUnit.net даёт изоляцию «один экземпляр на тест», параллельный запуск и простую модель фактов и теорий. Используйте `[Theory]` и `[InlineData]` для параметризации, `IClassFixture<T>` для общих ресурсов, `IDisposable` для очистки. Документация: [xUnit.net](https://xunit.net/docs/getting-started/netcore/cmdline), [Unit Testing](../), [[junit]].
 
 *Дата: 2026-02-06*

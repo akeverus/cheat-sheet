@@ -15,7 +15,7 @@ updated: "2026-02-06"
 related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 ---
 
-# **Redis**: Кластеризация
+# Redis: Кластеризация
 
 ## Полезные ссылки
 
@@ -70,8 +70,8 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
   - [**Understanding Cluster Topology**](#understanding-cluster-topology)
   - [**Slot Distribution**](#slot-distribution)
 - [**Client Configuration**](#client-configuration)
-  - [**Java** (**Jedis**)](#java-jedis)
-  - [**Java** (**Jedis**)](#java-jedis-1)
+  - [**Java** (Jedis)](#java-jedis)
+  - [**Java** (Jedis)](#java-jedis-1)
 - [**Cluster Health Monitoring**](#cluster-health-monitoring)
   - [**Comprehensive Health Check**](#comprehensive-health-check)
 - [**Production Deployment**](#production-deployment)
@@ -96,11 +96,11 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
   - [**Slot Distribution**](#slot-distribution-1)
   - [**Network Optimization**](#network-optimization-1)
 
-## Введение в **Redis Cluster**
+## Введение в Redis Cluster
 
 **Redis Cluster** — это встроенное решение для горизонтального масштабирования **Redis**. Оно обеспечивает автоматическое шардинг данных, репликацию и высокую доступность без использования внешних инструментов.
 
-### Основные возможности **Redis Cluster**
+### Основные возможности Redis Cluster
 
 - **Автоматический шардинг**: Данные распределяются между узлами автоматически
 - **Высокая доступность**: Автоматический **failover** при сбое узла
@@ -108,7 +108,7 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 - **Нет единой точки отказа**: Распределенная архитектура
 - **Прозрачная маршрутизация**: Клиенты автоматически перенаправляются
 
-### Архитектура **Redis Cluster**
+### Архитектура Redis Cluster
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -123,11 +123,11 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 ```
 
 
-## Настройка **Redis Cluster**
+## Настройка Redis Cluster
 
 ### Минимальная конфигурация
 
-Для работы **Redis Cluster** требуется минимум 3 **master** узла. Для высокой доступности рекомендуется 3 **master** + 3 **replica** (**всего 6 узлов**).
+Для работы **Redis Cluster** требуется минимум 3 **master** узла. Для высокой доступности рекомендуется 3 **master** + 3 **replica** (всего 6 узлов).
 
 ### Создание кластера
 
@@ -211,7 +211,7 @@ LPUSH mylist "item1"
 LRANGE mylist 0 -1
 ```
 
-### **Hash Tags**
+### Hash Tags
 
 **Для обеспечения того, что несколько ключей находятся на одном узле, используйте **hash tags**:**
 
@@ -349,9 +349,9 @@ done
 ```
 
 
-## **Failover** в кластере
+## Failover в кластере
 
-### Автоматический **failover**
+### Автоматический failover
 
 **Redis Cluster** автоматически выполняет **failover** при недоступности **master** узла:**
 
@@ -359,7 +359,7 @@ done
 2. **Выбор нового master**: **Replica** промоутится в **master**
 3. **Обновление конфигурации**: Все узлы обновляют информацию о топологии
 
-### Ручной **failover**
+### Ручной failover
 
 ```redis
 # На replica узле
@@ -427,7 +427,7 @@ SET user:{1000}:name "John"
 SET user:{1000}:email "john@example.com"
 ```
 
-### Проблема: **CROSSSLOT** ошибки
+### Проблема: CROSSSLOT ошибки
 
 ```redis
 # Ошибка возникает при операциях с ключами на разных узлах
@@ -470,9 +470,9 @@ EXEC
 4. **Оптимизируйте сеть** между узлами
 5. **Используйте connection pooling** в клиентах
 
-## **Advanced Cluster Operations**
+## Advanced Cluster Operations
 
-### **Slot Migration**
+### Slot Migration
 
 ```bash
 # Миграция слотов между узлами
@@ -485,7 +485,7 @@ redis-cli --cluster reshard 127.0.0.1:7001
 # 4. Подтвердить миграцию
 ```
 
-### **Cluster Rebalancing**
+### Cluster Rebalancing
 
 ```bash
 # Автоматическая перебалансировка
@@ -502,7 +502,7 @@ redis-cli --cluster rebalance \
   --cluster-threshold 2
 ```
 
-### **Import**/**Export** данных
+### Import/Export данных
 
 ```bash
 # Импорт данных в кластер
@@ -516,9 +516,9 @@ redis-cli --cluster import \
 redis-cli --cluster backup 127.0.0.1:7001 /backup/cluster.rdb
 ```
 
-## **Cluster Topology**
+## Cluster Topology
 
-### **Understanding Cluster Topology**
+### Understanding Cluster Topology
 
 ```redis
 # Получить полную информацию о топологии
@@ -533,7 +533,7 @@ CLUSTER NODES
 # 7c3a1... 127.0.0.1:7003 master - 0 1234567892 1 connected 10923-16383
 ```
 
-### **Slot Distribution**
+### Slot Distribution
 
 ```bash
 # Проверить распределение слотов
@@ -544,9 +544,9 @@ redis-cli --cluster check 127.0.0.1:7001
 # Каждый ключ попадает в слот на основе CRC16(key) % 16384
 ```
 
-## **Client Configuration**
+## Client Configuration
 
-### **Java** (**Jedis**)
+### Java (Jedis)
 
 ```java
 import redis.clients.jedis.JedisCluster;
@@ -577,7 +577,7 @@ public class RedisClusterExample {
 }
 ```
 
-### **Java** (**Jedis**)
+### Java (Jedis)
 
 ```java
 import redis.clients.jedis.HostAndPort;
@@ -599,9 +599,9 @@ String value = jedisCluster.get("key");
 jedisCluster.close();
 ```
 
-## **Cluster Health Monitoring**
+## Cluster Health Monitoring
 
-### **Comprehensive Health Check**
+### Comprehensive Health Check
 
 ```java
 // Java пример проверки здоровья кластера
@@ -679,9 +679,9 @@ public class ClusterHealthChecker {
 }
 ```
 
-## **Production Deployment**
+## Production Deployment
 
-### **Docker Compose** для кластера
+### Docker Compose для кластера
 
 ```yaml
 version: '3.8'
@@ -760,7 +760,7 @@ networks:
     driver: bridge
 ```
 
-### **Kubernetes Deployment**
+### Kubernetes Deployment
 
 ```yaml
 # redis-cluster-statefulset.yaml
@@ -810,9 +810,9 @@ spec:
           storage: 10Gi
 ```
 
-## **Troubleshooting Advanced Issues**
+## Troubleshooting Advanced Issues
 
-### **Split-Brain Prevention**
+### Split-Brain Prevention
 
 ```conf
 # Настройки для предотвращения split-brain
@@ -826,7 +826,7 @@ cluster-allow-reads-when-down no
 # некоторых узлов (только для чтения)
 ```
 
-### **Network Partitions**
+### Network Partitions
 
 ```bash
 # При сетевом разделении кластер может разделиться на части
@@ -840,7 +840,7 @@ redis-cli -p 7001 CLUSTER NODES
 redis-cli --cluster fix 127.0.0.1:7001
 ```
 
-### **Slot Coverage Issues**
+### Slot Coverage Issues
 
 ```bash
 # Проверить покрытие слотов
@@ -853,9 +853,9 @@ redis-cli --cluster fix 127.0.0.1:7001
 redis-cli --cluster reshard 127.0.0.1:7001
 ```
 
-## **Performance Optimization**
+## Performance Optimization
 
-### **Network Optimization**
+### Network Optimization
 
 ```conf
 # Оптимизация сети для кластера
@@ -867,7 +867,7 @@ tcp-keepalive 300
 cluster-node-timeout 3000
 ```
 
-### **Memory Optimization**
+### Memory Optimization
 
 ```conf
 # Оптимизация памяти
@@ -880,25 +880,25 @@ lazyfree-lazy-expire yes
 lazyfree-lazy-server-del yes
 ```
 
-## **Best Practices Summary**
+## Best Practices Summary
 
-### **Configuration**
+### Configuration
 
 1. **Используйте минимум 3 master узла** для отказоустойчивости
-2. **Настройте репликацию** для каждого **master** (**минимум 1 replica**)
+2. **Настройте репликацию** для каждого **master** (минимум 1 replica)
 3. **Используйте hash tags** для группировки связанных ключей
 4. **Мониторьте распределение слотов** регулярно
 5. **Настройте правильный `cluster-node`-timeout**
 
-### **Operations**
+### Operations
 
 1. **Регулярно проверяйте состояние** кластера
-2. **Мониторьте покрытие слотов** (**должно быть 16384**)
+2. **Мониторьте покрытие слотов** (должно быть 16384)
 3. **Перебалансируйте слоты** при добавлении/удалении узлов
 4. **Тестируйте failover** регулярно
 5. **Документируйте топологию** кластера
 
-### **Security**
+### Security
 
 1. **Используйте пароли** для всех узлов
 2. **Ограничьте доступ** через **firewall**
@@ -906,9 +906,9 @@ lazyfree-lazy-server-del yes
 4. **Регулярно обновляйте Redis**
 5. **Мониторьте подозрительную активность**
 
-## **Cluster Management Operations**
+## Cluster Management Operations
 
-### **Adding Nodes** to **Cluster**
+### Adding Nodes to Cluster
 
 ```bash
 # Добавить master узел
@@ -924,7 +924,7 @@ redis-cli --cluster add-node \
   --cluster-master-id <master-node-id>
 ```
 
-### **Removing Nodes from Cluster**
+### Removing Nodes from Cluster
 
 ```bash
 # 1. Переместить слоты с узла
@@ -934,7 +934,7 @@ redis-cli --cluster reshard 127.0.0.1:7001
 redis-cli --cluster del-node 127.0.0.1:7001 <node-id>
 ```
 
-### **Cluster Maintenance**
+### Cluster Maintenance
 
 ```bash
 # Проверка состояния кластера
@@ -950,9 +950,9 @@ redis-cli -p 7001 CLUSTER NODES
 redis-cli -p 7001 CLUSTER SLOTS
 ```
 
-## **Cluster Performance Optimization**
+## Cluster Performance Optimization
 
-### **Slot Distribution**
+### Slot Distribution
 
 ```bash
 # Проверить распределение слотов
@@ -967,7 +967,7 @@ redis-cli --cluster rebalance \
   --cluster-weight node1=1 node2=2 node3=1
 ```
 
-### **Network Optimization**
+### Network Optimization
 
 ```conf
 # Оптимизация сети для кластера

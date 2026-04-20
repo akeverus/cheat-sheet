@@ -67,7 +67,7 @@ updated: "2026-02-11"
 
 **Когда применять:** дорогое создание/инициализация, много похожих объектов с небольшими отличиями.
 
-## Что такое **Prototype**?
+## Что такое Prototype?
 
 **Prototype** — это порождающий паттерн проектирования, который позволяет создавать новые объекты путем копирования существующих экземпляров-прототипов. Вместо создания объектов с нуля, прототип клонируется и модифицируется по необходимости.
 
@@ -119,7 +119,7 @@ for (int i = 0; i < 1000; i++) {
 }
 ```
 
-## Когда использовать **Prototype**?
+## Когда использовать Prototype?
 
 ### Подходящие сценарии
 
@@ -246,7 +246,7 @@ classDiagram
 
 ## Реализация на Java
 
-### Базовая реализация с **Cloneable**
+### Базовая реализация с Cloneable
 
 ```java
 // Абстрактный прототип
@@ -481,7 +481,7 @@ public class DeepCloneDemo {
 }
 ```
 
-### **Prototype** с сериализацией
+### Prototype с сериализацией
 
 ```java
 // Прототип с использованием сериализации для глубокого клонирования
@@ -612,7 +612,7 @@ public class SerializationCloneDemo {
 
 ## Продвинутые реализации
 
-### 1. **Prototype Manager** с кэшированием
+### 1. Prototype Manager с кэшированием
 
 ```java
 // Расширенный менеджер прототипов с кэшированием и метриками
@@ -762,7 +762,7 @@ static class ConfigurableObject implements Cloneable {
 }
 ```
 
-### 2. **Prototype Factory**
+### 2. Prototype Factory
 
 ```java
 // Фабрика прототипов для создания семейств объектов
@@ -928,7 +928,7 @@ public class PrototypeFactoryDemo {
 }
 ```
 
-### 3. **Prototype** с **Command** паттерном
+### 3. Prototype с Command паттерном
 
 ```java
 // Комбинация Prototype и Command для undo/redo операций
@@ -1085,7 +1085,7 @@ public class CommandPrototypeDemo {
 
 ## Примеры использования
 
-### 1. **Database Connection Pool**
+### 1. Database Connection Pool
 
 ```java
 @Service
@@ -1192,7 +1192,7 @@ public class ConnectionPoolPrototype {
 }
 ```
 
-### 2. **Configuration Manager**
+### 2. Configuration Manager
 
 ```java
 @Service
@@ -1337,7 +1337,7 @@ public class ApplicationInitializer {
 }
 ```
 
-### 3. **Game Object Factory**
+### 3. Game Object Factory
 
 ```java
 @Service
@@ -1541,7 +1541,7 @@ public class GameFactoryDemo {
 
 ## Лучшие практики
 
-### 1. Выбор между **Prototype** и другими паттернами
+### 1. Выбор между Prototype и другими паттернами
 
 ```java
 public class PrototypeVsOthers {
@@ -1614,7 +1614,7 @@ public class PatternSelection {
 }
 ```
 
-### 2. Реализация **clone**() метода
+### 2. Реализация clone() метода
 
 ```java
 public class CloneImplementationPatterns {
@@ -1783,7 +1783,7 @@ public class PrototypeErrorHandling {
 }
 ```
 
-### 4. Тестирование **Prototype**
+### 4. Тестирование Prototype
 
 ```java
 @ExtendWith(MockitoExtension.class)

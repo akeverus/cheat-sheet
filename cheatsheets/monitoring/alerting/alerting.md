@@ -259,7 +259,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
 
 `pagerduty_configs`: `routing_key` (Integration Key Events API v2), `send_resolved: true`, при необходимости `description` и `details` из шаблонов.
 
-Подробнее: [Alertmanager](alertmanager.md), [Slack Alerting](slack-alerting.md), [PagerDuty](pagerduty.md).
+Подробнее: [[alertmanager]], [[slack-alerting|Slack Alerting]], [[pagerduty]].
 
 ## Лучшие практики
 

@@ -12,7 +12,7 @@ prerequisites: ["go/go-basics.md", "go/go-concurrency.md"]
 updated: "2026-02-06"
 ---
 
-# Go: **Context**
+# Go: Context
 
 ## Полезные ссылки
 
@@ -57,9 +57,9 @@ updated: "2026-02-06"
 - [Заключение](#заключение)
 - [Дополнительные ресурсы](#дополнительные-ресурсы)
 
-## Введение в **Context**
+## Введение в Context
 
-Пакет `**context**` предоставляет механизм для передачи сигналов отмены, таймаутов и значений через границы **API** и между горутинами.
+Пакет `context` предоставляет механизм для передачи сигналов отмены, таймаутов и значений через границы **API** и между горутинами.
 
 ### Основные случаи использования
 
@@ -68,9 +68,9 @@ updated: "2026-02-06"
 3. **Передача значений** — передача данных через границы **API**
 4. **Управление жизненным циклом** — контроль выполнения операций
 
-## Создание **Context**
+## Создание Context
 
-### **Background Context**
+### Background Context
 
 ```go
 import "context"
@@ -85,7 +85,7 @@ func process(ctx context.Context) error {
 }
 ```
 
-### **TODO Context**
+### TODO Context
 
 ```go
 // Создание TODO context (для временного использования)
@@ -94,7 +94,7 @@ ctx := context.TODO()
 
 ## Отмена операций
 
-### **WithCancel**
+### WithCancel
 
 ```go
 import "context"
@@ -139,7 +139,7 @@ func longOperation(ctx context.Context) error {
 
 ## Таймауты
 
-### **WithTimeout**
+### WithTimeout
 
 ```go
 import (
@@ -162,7 +162,7 @@ func processWithTimeout() {
 }
 ```
 
-### **WithDeadline**
+### WithDeadline
 
 ```go
 func processWithDeadline() {
@@ -178,7 +178,7 @@ func processWithDeadline() {
 
 ## Передача значений
 
-### **WithValue**
+### WithValue
 
 ```go
 import "context"
@@ -219,7 +219,7 @@ func getUserID(ctx context.Context) (int, bool) {
 
 ## Практические примеры
 
-### **HTTP** запрос с таймаутом
+### HTTP запрос с таймаутом
 
 ```go
 import (
@@ -283,7 +283,7 @@ func processItems(ctx context.Context, items []Item) error {
 }
 ```
 
-### **Database** запрос с таймаутом
+### Database запрос с таймаутом
 
 ```go
 func queryDatabase(ctx context.Context, query string) ([]Row, error) {
@@ -321,7 +321,7 @@ func queryDatabase(ctx context.Context, query string) ([]Row, error) {
 }
 ```
 
-### Практические примеры: **Context** с цепочкой операций
+### Практические примеры: Context с цепочкой операций
 
 ```go
 func processChain(ctx context.Context, steps []func(context.Context) error) error {
@@ -341,7 +341,7 @@ func processChain(ctx context.Context, steps []func(context.Context) error) erro
 }
 ```
 
-### Практические примеры: **Context** с приоритетной отменой
+### Практические примеры: Context с приоритетной отменой
 
 ```go
 func processWithPriority(ctx context.Context, highPriority, lowPriority []Task) error {
@@ -368,7 +368,7 @@ func processWithPriority(ctx context.Context, highPriority, lowPriority []Task) 
 }
 ```
 
-### Практические примеры: **Context** с прогрессом
+### Практические примеры: Context с прогрессом
 
 ```go
 type ProgressContext struct {
@@ -413,7 +413,7 @@ func processWithProgress(ctx context.Context, items []Item) error {
 }
 ```
 
-### Практические примеры: **Context** с таймаутом на операцию
+### Практические примеры: Context с таймаутом на операцию
 
 ```go
 func processWithOperationTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context) error) error {
@@ -434,7 +434,7 @@ func processWithOperationTimeout(ctx context.Context, timeout time.Duration, fn 
 }
 ```
 
-### Практические примеры: **Context** с **retry**
+### Практические примеры: Context с retry
 
 ```go
 func retryWithContext(ctx context.Context, maxRetries int, fn func(context.Context) error) error {
@@ -469,7 +469,7 @@ func retryWithContext(ctx context.Context, maxRetries int, fn func(context.Conte
 }
 ```
 
-### Практические примеры: **Context** с **deadline propagation**
+### Практические примеры: Context с deadline propagation
 
 ```go
 func propagateDeadline(ctx context.Context, operations []func(context.Context) error) error {
@@ -497,7 +497,7 @@ func propagateDeadline(ctx context.Context, operations []func(context.Context) e
 }
 ```
 
-### Практические примеры: **Context** с **tracing**
+### Практические примеры: Context с tracing
 
 ```go
 type TraceContext struct {
@@ -532,7 +532,7 @@ func processWithTracing(ctx context.Context, operation string) error {
 }
 ```
 
-### Практические примеры: **Context** для запросов **HTTP**
+### Практические примеры: Context для запросов HTTP
 
 ```go
 func HTTPHandler(w http.ResponseWriter, r *http.Request) {
@@ -569,7 +569,7 @@ func processRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 }
 ```
 
-### Практические примеры: **Context** для базы данных
+### Практические примеры: Context для базы данных
 
 ```go
 func QueryWithContext(ctx context.Context, db *sql.DB, query string, args ...interface{}) (*sql.Rows, error) {
@@ -600,7 +600,7 @@ func TransactionWithContext(ctx context.Context, db *sql.DB, fn func(*sql.Tx) er
 }
 ```
 
-### Практические примеры: **Context** для **gRPC**
+### Практические примеры: Context для gRPC
 
 ```go
 func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User, error) {
@@ -626,7 +626,7 @@ func (s *Server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
 }
 ```
 
-### Практические примеры: **Context** для каскадной отмены
+### Практические примеры: Context для каскадной отмены
 
 ```go
 func ProcessWithCancellation(ctx context.Context, tasks []Task) error {
