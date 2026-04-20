@@ -14,6 +14,32 @@ updated: "2026-04-20"
 
 Spring Events — встроенный механизм pub/sub внутри одного Spring-контекста. Позволяет разделить логику без введения внешнего брокера.
 
+## Полезные ссылки
+
+### Официальная документация
+- [Spring Events (docs.spring.io)](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#context-functionality-events) — официальная документация по событиям Spring
+
+### См. также
+- [[spring-boot|Spring Boot]] — базовый фреймворк
+- [[spring-modulith|Spring Modulith]] — модульный монолит с поддержкой событий
+- [[spring-core|Spring Core]] — ядро Spring Framework
+- [[spring-data-jpa|Spring Data JPA]] — JPA-интеграция, доменные события
+- [[spring-testing|Spring Testing]] — тестирование Spring-приложений
+- [[spring-kafka|Spring Kafka]] — асинхронный обмен сообщениями
+
+## Содержание
+
+- [Базовый пример](#базовый-пример)
+- [@EventListener — опции](#eventlistener-опции)
+- [Асинхронные события](#асинхронные-события)
+- [@TransactionalEventListener](#transactionaleventlistener)
+  - [fallbackExecution](#fallbackexecution)
+- [Generic события](#generic-события)
+- [Доменные события JPA (@DomainEvents)](#доменные-события-jpa-domainevents)
+- [Тестирование событий](#тестирование-событий)
+- [Типичные ошибки](#типичные-ошибки)
+- [Spring Modulith интеграция](#spring-modulith-интеграция)
+
 ## Базовый пример
 
 ```java
@@ -207,11 +233,3 @@ public void onOrderPlaced(OrderPlaced event) {
 
 События хранятся в таблице `event_publication` и повторяются при сбое.
 
-## See also
-
-- [[spring-core|Spring Core]]
-- [[spring-boot|Spring Boot]]
-- [[spring-data-jpa|Spring Data JPA]]
-- [[spring-modulith|Spring Modulith]]
-- [[spring-testing|Spring Testing]]
-- [[spring-kafka|Spring Kafka]]

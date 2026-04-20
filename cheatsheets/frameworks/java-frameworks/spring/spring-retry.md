@@ -14,6 +14,31 @@ updated: "2026-04-20"
 
 Spring Retry автоматически повторяет выполнение метода при определённых исключениях.
 
+## Полезные ссылки
+
+### Официальная документация
+- [Spring Retry (GitHub)](https://github.com/spring-projects/spring-retry) — официальный репозиторий
+
+### См. также
+- [[spring-boot|Spring Boot]] — базовый фреймворк
+- [[spring-cloud|Spring Cloud]] — интеграция с Resilience4j через Spring Cloud Circuit Breaker
+- [[spring-webflux|Spring WebFlux]] — реактивный retry через Reactor
+- [[spring-kafka|Spring Kafka]] — retry при обработке сообщений
+- [[spring-batch|Spring Batch]] — повторные попытки в batch-обработке
+
+## Содержание
+
+- [Зависимость](#зависимость)
+- [@Retryable](#retryable)
+- [Backoff-стратегии](#backoff-стратегии)
+- [Исключение конкретных исключений](#исключение-конкретных-исключений)
+- [RetryTemplate (программный подход)](#retrytemplate-программный-подход)
+- [Stateful Retry](#stateful-retry)
+- [CircuitBreaker через Spring Retry](#circuitbreaker-через-spring-retry)
+- [Retry с WebClient (реактивный стек)](#retry-с-webclient-реактивный-стек)
+- [Метрики и логирование](#метрики-и-логирование)
+- [Типичные ошибки](#типичные-ошибки)
+
 ## Зависимость
 
 ```xml
@@ -153,7 +178,7 @@ public CircuitBreakerRetryPolicy circuitBreakerPolicy() {
 }
 ```
 
-Для production circuit breaker рекомендуется [[java-resilience4j|Resilience4j]].
+Для production circuit breaker рекомендуется Resilience4j.
 
 ## Retry с WebClient (реактивный стек)
 
@@ -202,10 +227,3 @@ public RetryTemplate retryTemplate(MeterRegistry meterRegistry) {
 | Retry на транзакционный метод | Транзакция откатывается до retry | Вынести retry снаружи `@Transactional` или использовать REQUIRES_NEW |
 | Бесконечный retry loop | `maxAttempts` не ограничен | Всегда задавать `maxAttempts` |
 
-## See also
-
-- [[spring-boot|Spring Boot]]
-- [[java-resilience4j|Resilience4j]]
-- [[spring-webflux|Spring WebFlux]]
-- [[spring-kafka|Spring Kafka]]
-- [[spring-batch|Spring Batch]]

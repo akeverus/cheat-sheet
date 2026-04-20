@@ -17,7 +17,16 @@ updated: "2026-04-20"
 
 JPQL — объектно-ориентированный язык запросов JPA. HQL — его расширение от Hibernate. Criteria API — типобезопасная альтернатива для динамических запросов. Шпаргалка охватывает все три подхода с упором на практику.
 
-Базовые концепции ORM: [[orm-basics|ORM Basics]]. Связи между сущностями: [[hibernate-relationships|Hibernate Relationships]]. Spring-обёртки над JPA: [[spring-data-jpa-interview|Spring Data JPA]].
+## Полезные ссылки
+
+### Официальная документация
+- [Hibernate Query Language (hibernate.org)](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#hql) — официальная документация
+
+### См. также
+- [[orm-basics|ORM Basics]] — базовые концепции JPA и EntityManager
+- [[hibernate-relationships|Hibernate Relationships]] — связи, LAZY/EAGER, N+1
+- [[spring-data-jpa-interview|Spring Data JPA]] — `@Query`, Specification, QueryDSL
+- [[hibernate-caching|Hibernate Caching]] — кэширование L1, L2 и Query Cache
 
 ## Содержание
 
@@ -37,7 +46,7 @@ JPQL — объектно-ориентированный язык запросо
 - [UPDATE и DELETE через JPQL](#update-и-delete-через-jpql)
 - [Практические советы](#практические-советы)
 - [Типичные ошибки](#типичные-ошибки)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## JPQL vs HQL vs Criteria API
 
@@ -732,6 +741,7 @@ em.createQuery("SELECT o FROM Order o JOIN o.items i WHERE i.name = :name", Orde
 - [[orm-basics|ORM Basics]] — базовые концепции JPA и EntityManager
 - [[hibernate-relationships|Hibernate Relationships]] — связи, LAZY/EAGER, N+1
 - [[hibernate-interview|Hibernate Interview]] — типовые вопросы на собеседовании
+- [[hibernate-caching|Hibernate Caching]] — кэширование L1, L2 и Query Cache
 - [[spring-data-jpa-interview|Spring Data JPA]] — `@Query`, Specification, QueryDSL
 - [[database-transactions-interview|Database Transactions]] — изоляция, блокировки, deadlock
 - [[java-jdbc|JDBC]] — PreparedStatement и нативные запросы

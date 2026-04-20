@@ -13,6 +13,30 @@ updated: "2026-04-20"
 
 OrientDB — мультимодельная NoSQL БД, поддерживающая документную, графовую, key-value и объектную модели в одном движке.
 
+## Полезные ссылки
+
+### Официальная документация
+- [OrientDB Documentation](https://orientdb.org/docs/3.2.x/) — официальная документация
+
+### См. также
+- [[neo4j-basics|Neo4j]] — графовая БД с языком Cypher
+- [[mongodb-basics|MongoDB]] — документная NoSQL БД
+- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL
+
+## Содержание
+
+- [Когда выбирать OrientDB](#когда-выбирать-orientdb)
+- [Запуск в Docker](#запуск-в-docker)
+- [Модели данных](#модели-данных)
+- [SQL-подобный язык](#sql-подобный-язык)
+- [Индексы](#индексы)
+- [Java API](#java-api)
+- [Транзакции](#транзакции)
+- [Встроенный режим (для тестов)](#встроенный-режим-для-тестов)
+- [Gremlin (TinkerPop 3)](#gremlin-tinkerpop-3)
+- [OrientDB vs Neo4j](#orientdb-vs-neo4j)
+- [Типичные проблемы](#типичные-проблемы)
+
 ## Когда выбирать OrientDB
 
 - Данные одновременно требуют документной гибкости и графовых обходов (социальный граф + профили).
@@ -196,8 +220,3 @@ g.V().has('name', 'Alice').repeat(out('Follows')).times(2).path().by('name')
 | Ребро не удалено с вершиной | Использован `DELETE` вместо `DELETE VERTEX` | `DELETE VERTEX` удаляет рёбра автоматически |
 | Deadlock в транзакции | Конкурентное изменение одних вершин | Retry при `ORecordDuplicatedException` |
 
-## See also
-
-- [[neo4j-basics|Neo4j]] — графовая БД с языком Cypher
-- [[mongodb-basics|MongoDB]] — документная NoSQL БД
-- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL

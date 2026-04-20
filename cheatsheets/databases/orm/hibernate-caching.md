@@ -17,7 +17,16 @@ updated: "2026-04-20"
 
 Кэш в Hibernate — мощный инструмент для снижения нагрузки на БД. Без понимания архитектуры он превращается в источник baggy-данных и трудноуловимых багов. Шпаргалка разбирает все три уровня: Session-кэш, second-level cache и Query Cache.
 
-Базовые концепции ORM: [[orm-basics|ORM Basics]]. Связи между сущностями: [[hibernate-relationships|Hibernate Relationships]]. Типовые вопросы на собеседовании: [[hibernate-interview|Hibernate Interview]].
+## Полезные ссылки
+
+### Официальная документация
+- [Hibernate Caching (hibernate.org)](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#caching) — официальная документация
+
+### См. также
+- [[orm-basics|ORM Basics]] — базовые концепции JPA и Hibernate
+- [[hibernate-relationships|Hibernate Relationships]] — связи между сущностями
+- [[hibernate-interview|Hibernate Interview]] — типовые вопросы на собеседовании
+- [[hibernate-jpql-criteria|Hibernate JPQL/Criteria]] — запросы в Hibernate и JPA
 
 ## Содержание
 
@@ -32,7 +41,7 @@ updated: "2026-04-20"
 - [Вытеснение и инвалидация](#вытеснение-и-инвалидация)
 - [Практические советы](#практические-советы)
 - [Типичные ошибки](#типичные-ошибки)
-- [См. также](#см-также)
+- [См. также](#см-также-1)
 
 ## Обзор архитектуры кэша
 
@@ -522,6 +531,7 @@ Query Cache кэширует только идентификаторы. Сами
 - [[orm-basics|ORM Basics]] — базовые концепции JPA и Hibernate
 - [[hibernate-relationships|Hibernate Relationships]] — связи и стратегии загрузки
 - [[hibernate-interview|Hibernate Interview]] — типовые вопросы на собеседовании
+- [[hibernate-jpql-criteria|Hibernate JPQL/Criteria]] — запросы в Hibernate и JPA
 - [[spring-data-jpa-interview|Spring Data JPA]] — репозитории и транзакции в Spring
 - [[database-transactions-interview|Database Transactions]] — изоляция и уровни транзакций
 - [[java-jdbc|JDBC]] — низкоуровневая работа с БД

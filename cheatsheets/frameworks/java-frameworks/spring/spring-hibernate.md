@@ -39,7 +39,7 @@ updated: "2026-04-20"
 
 
 ### См. также
-- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [[spring-data-jpa|Spring Data JPA]] — Spring Data-абстракция поверх JPA/Hibernate
 ## Содержание
 
 - [Введение в ORM и JPA](#введение-в-orm-и-jpa)
@@ -1954,5 +1954,4 @@ java -Dcom.sun.management.jmxremote \
 
 - [[spring-data-jpa|**Spring Data JPA**]] — **Spring Data JPA** основы
 - [[spring-boot|**Spring Boot**]] — **Spring Boot** интеграция
-- [[postgres-basics|**PostgreSQL**]] — Работа с **PostgreSQL**
-- [[maven-advanced|**Maven**]] — Система сборки **Maven**
+- [[spring-boot|Spring Boot]] — настройка datasource и JPA через Spring Boot

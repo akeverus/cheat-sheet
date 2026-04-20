@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **226**.
+Всего файлов: **229**.
 
 ## Быстрые маршруты подготовки
 
@@ -202,11 +202,15 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring Data JPA`](frameworks/spring/spring-data-jpa-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring REST Clients`](frameworks/spring/spring-rest-client-interview.md) — `13` вопросов
 - [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Scheduling`](frameworks/spring/spring-scheduling-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Testing`](frameworks/spring/spring-testing-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Transactions`](frameworks/spring/spring-transaction-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Validation`](frameworks/spring/spring-validation-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring Retry`](frameworks/spring/spring-retry-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Modulith`](frameworks/spring/spring-modulith-interview.md) — `15` вопросов
 
 ## jvm
 
@@ -266,6 +270,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java` 8](programming-languages/java/java-8-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Java Annotations`](programming-languages/java/java-annotations-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Java Collections`](programming-languages/java/java-collections-interview.md) — `46` вопросов
+- [Вопросы на собеседовании: `Java CompletableFuture`](programming-languages/java/java-completable-future-interview.md) — `13` вопросов
 - [Вопросы на собеседовании: `Java Concurrency`](programming-languages/java/java-concurrency-interview.md) — `56` вопросов
 - [Вопросы на собеседовании: `Java Conditional Statements`](programming-languages/java/java-conditional-statements-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Java Core`](programming-languages/java/java-core-interview.md) — `39` вопросов
@@ -286,6 +291,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java String`](programming-languages/java/java-string-interview.md) — `39` вопросов
 - [Вопросы на собеседовании: `Java 17-21`](programming-languages/java/java-17-21-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Java Types`](programming-languages/java/java-types-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `Java Virtual Threads`](programming-languages/java/java-virtual-threads-interview.md) — `15` вопросов
 
 ## programming-languages/scala
 

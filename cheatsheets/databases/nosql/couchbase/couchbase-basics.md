@@ -12,6 +12,29 @@ updated: "2026-04-20"
 
 Couchbase — распределённая NoSQL БД, совмещающая key-value хранилище, документную модель и SQL-подобный язык N1QL.
 
+## Полезные ссылки
+
+### Официальная документация
+- [Couchbase Documentation](https://docs.couchbase.com/) — официальная документация
+
+### См. также
+- [[mongodb-basics|MongoDB]] — документная NoSQL БД
+- [[redis-basics|Redis]] — key-value хранилище
+- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL
+- [[mongodb-crud|MongoDB CRUD]] — паттерны работы с документами
+
+## Содержание
+
+- [Архитектура](#архитектура)
+- [Запуск в Docker](#запуск-в-docker)
+- [N1QL — SQL для JSON](#n1ql-sql-для-json)
+- [Индексы](#индексы)
+- [Java SDK 3.x](#java-sdk-3x)
+- [Spring Data Couchbase](#spring-data-couchbase)
+- [Репликация и отказоустойчивость](#репликация-и-отказоустойчивость)
+- [Full-Text Search](#full-text-search)
+- [Типичные проблемы](#типичные-проблемы)
+
 ## Архитектура
 
 ```text
@@ -214,10 +237,3 @@ for (SearchRow row : sr.rows()) {
 | Outdated read в N1QL | Eventual consistency | `QueryScanConsistency.REQUEST_PLUS` |
 | Потеря данных при failover | `replicateTo=0` | Установить Durability `Majority` или выше |
 
-## See also
-
-- [[mongodb-basics|MongoDB]] — документная NoSQL БД
-- [[redis-basics|Redis]] — key-value хранилище
-- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL
-- [[cassandra-basics|Apache Cassandra: основы]] — wide-column NoSQL
-- [[mongodb-crud|MongoDB CRUD]] — паттерны работы с документами

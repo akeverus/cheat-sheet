@@ -463,4 +463,4 @@ ObservedAspect observedAspect(ObservationRegistry registry) {
 - [[spring-security|Spring Security]]
 - [[spring-data-jpa|Spring Data JPA]]
 - [[spring-core|Spring Core]]
-- [[java-17-21-interview|Java 17/21]]
+- [[spring-core|Spring Core]]

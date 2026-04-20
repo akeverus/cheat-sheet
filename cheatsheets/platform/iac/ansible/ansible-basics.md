@@ -23,6 +23,10 @@ updated: "2026-04-20"
 [[ansible]]
 [[ansible-advanced|Ansible Advanced]]
 
+## Содержание
+
+- [См. также](#см-также)
+
 ## См. также
 
 - [[ansible-advanced|Ansible Advanced]]

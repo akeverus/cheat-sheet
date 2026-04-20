@@ -1,0 +1,238 @@
+---
+title: "Spring Modulith — Interview"
+description: "Вопросы на собеседовании по Spring Modulith: модульный монолит, изоляция, ApplicationEvents, тестирование модулей."
+tags:
+  - interview
+  - spring
+  - modulith
+  - modular-monolith
+  - architecture
+difficulty: "intermediate"
+updated: "2026-04-20"
+---
+# Spring Modulith — Interview
+
+## Q1. Что такое Spring Modulith и какую проблему он решает?
+
+Spring Modulith — библиотека для построения **модульных монолитов** на Spring Boot. Она решает проблему «большого кома грязи» (Big Ball of Mud): код растёт, границы модулей размываются, циклические зависимости появляются незаметно.
+
+**Модульный монолит** — один деплоируемый артефакт, но с явными границами между модулями, изоляцией и верифицируемыми зависимостями. Переходный шаг между монолитом и микросервисами.
+
+## Q2. Как Spring Modulith определяет модуль?
+
+Каждый **top-level пакет** рядом с классом, аннотированным `@SpringBootApplication`, — это отдельный модуль.
+
+```
+com.example.shop
+├── ShopApplication.java       ← корневой пакет
+├── order/                     ← модуль Order
+│   ├── OrderService.java      ← public API (доступен другим модулям)
+│   └── internal/              ← закрытая реализация
+│       └── OrderRepository.java
+├── inventory/                 ← модуль Inventory
+└── notification/              ← модуль Notification
+```
+
+Классы в `internal/` недоступны другим модулям — это нарушение, которое `verify()` обнаружит.
+
+## Q3. Как проверить соблюдение архитектурных правил?
+
+```java
+@Test
+void modulesAreCompliant() {
+    ApplicationModules.of(ShopApplication.class).verify();
+}
+```
+
+`verify()` проверяет:
+- Нет ссылок на `internal/` из других модулей.
+- Нет циклических зависимостей между модулями.
+
+При нарушении выбрасывает исключение с описанием проблемы. Рекомендуется запускать как часть CI.
+
+## Q4. Как модули должны взаимодействовать между собой?
+
+Модули взаимодействуют **только через публичный API** (интерфейсы и классы не в `internal/`) и через **Spring Application Events** — без прямых вызовов через `internal/`.
+
+```java
+// Модуль Order публикует событие
+@Service
+public class OrderService {
+    private final ApplicationEventPublisher events;
+
+    public void placeOrder(Order order) {
+        orderRepository.save(order);
+        events.publishEvent(new OrderPlaced(order.getId()));
+    }
+}
+
+// Событие — простой record
+public record OrderPlaced(UUID orderId) {}
+
+// Модуль Inventory подписывается
+@ApplicationModuleListener
+public class InventoryListener {
+    public void on(OrderPlaced event) {
+        inventoryService.decreaseStock(event.orderId());
+    }
+}
+```
+
+## Q5. Что такое @ApplicationModuleListener и чем он отличается от @EventListener?
+
+`@ApplicationModuleListener` — составная аннотация:
+- `@TransactionalEventListener(phase = AFTER_COMMIT)` — обработка после успешного коммита транзакции.
+- `@Async` — выполнение в отдельном потоке.
+
+Это предотвращает выполнение побочных эффектов в рамках основной транзакции и повышает изоляцию модулей. Обычный `@EventListener` выполняется синхронно в той же транзакции.
+
+## Q6. Как работает персистентность событий в Spring Modulith?
+
+```xml
+<dependency>
+  <groupId>org.springframework.modulith</groupId>
+  <artifactId>spring-modulith-starter-jpa</artifactId>
+</dependency>
+```
+
+Spring Modulith создаёт таблицу `event_publication` и сохраняет каждое событие до его обработки. При рестарте приложения необработанные события повторяются:
+
+```yaml
+spring:
+  modulith:
+    republish-outstanding-events-on-restart: true
+```
+
+Это даёт **гарантию доставки at-least-once** внутри монолита без внешнего брокера.
+
+## Q7. Как тестировать отдельный модуль в изоляции?
+
+```java
+@ApplicationModuleTest
+class OrderModuleTests {
+
+    @Test
+    void placingOrderPublishesEvent(
+            @Autowired OrderService orderService,
+            ApplicationEvents events) {
+
+        orderService.placeOrder(new Order(...));
+
+        assertThat(events.ofType(OrderPlaced.class)).hasSize(1);
+    }
+}
+```
+
+`@ApplicationModuleTest` загружает только бины текущего модуля. Зависимости от других модулей автоматически мокируются.
+
+## Q8. Какие режимы bootstrap существуют в @ApplicationModuleTest?
+
+| Режим | Что загружается |
+|-------|-----------------|
+| `STANDALONE` | Только текущий модуль (по умолчанию) |
+| `DIRECT_DEPENDENCIES` | Модуль + прямые зависимости |
+| `ALL_DEPENDENCIES` | Весь граф зависимостей |
+
+```java
+@ApplicationModuleTest(mode = BootstrapMode.DIRECT_DEPENDENCIES)
+class OrderIntegrationTests { ... }
+```
+
+## Q9. Что такое Scenarios API и для чего он нужен?
+
+Scenarios API — высокоуровневый DSL для интеграционного тестирования взаимодействия модулей через события:
+
+```java
+@ApplicationModuleTest
+class OrderScenarios {
+
+    @Test
+    void orderPlacedTriggersNotification(Scenario scenario) {
+        scenario
+            .stimulate(() -> orderService.placeOrder(order))
+            .andWaitForEventOfType(NotificationSent.class)
+            .toArrive()
+            .andVerify(event ->
+                assertThat(event.orderId()).isEqualTo(order.getId()));
+    }
+}
+```
+
+Удобен для тестирования асинхронных сценариев с `@ApplicationModuleListener`.
+
+## Q10. Как визуализировать зависимости между модулями?
+
+```java
+// Вывод в консоль
+ApplicationModules modules = ApplicationModules.of(ShopApplication.class);
+modules.forEach(System.out::println);
+
+// Генерация PlantUML-диаграмм (требует spring-modulith-docs)
+new Documenter(modules)
+    .writeModulesAsPlantUml()
+    .writeIndividualModulesAsPlantUml();
+```
+
+```xml
+<dependency>
+  <groupId>org.springframework.modulith</groupId>
+  <artifactId>spring-modulith-docs</artifactId>
+  <optional>true</optional>
+</dependency>
+```
+
+## Q11. Когда использовать Spring Modulith, а когда — микросервисы?
+
+**Spring Modulith подходит, если:**
+- Команда небольшая (2–10 разработчиков) и работает над одним деплоем.
+- Хочется явных границ без накладных расходов микросервисов (сети, независимого деплоя, распределённых транзакций).
+- Планируется постепенный переход к микросервисам — модули станут основой декомпозиции.
+
+**Микросервисы нужны, если:**
+- Независимое масштабирование компонент.
+- Разные команды с независимым циклом деплоя.
+- Изоляция данных на уровне БД (разные схемы или БД).
+
+## Q12. Как Spring Modulith помогает при переходе к микросервисам?
+
+Модуль → микросервис:
+- Публичный API модуля становится REST/gRPC контрактом.
+- `ApplicationEvents` → Kafka/RabbitMQ-сообщения.
+- `internal/` пакет — уже скрыт, его не нужно рефакторить.
+- Зависимости между модулями уже явны и верифицированы.
+
+Spring Modulith облегчает этот переход: границы чёткие с самого начала, нет сюрпризов при декомпозиции.
+
+## Q13. Что такое Named Interface в Spring Modulith?
+
+По умолчанию публичный API модуля — всё в корне пакета. Named Interface позволяет явно объявить несколько точек входа:
+
+```java
+@org.springframework.modulith.NamedInterface("api")
+package com.example.shop.order.api;
+```
+
+Другие модули могут зависеть только от конкретного named interface, а не от всего модуля. Полезно для больших модулей с разными аспектами (API, events, config).
+
+## Q14. Как включить Spring Modulith в существующий проект?
+
+1. Добавить зависимость `spring-modulith-starter-core`.
+2. Запустить `ApplicationModules.of(App.class).verify()` — получить список нарушений.
+3. Исправлять нарушения итеративно: переносить классы в `internal/`, удалять нежелательные зависимости.
+4. Добавить `verify()` как тест в CI.
+
+Не нужно рефакторить всё сразу — добавление проверки уже предотвращает деградацию архитектуры.
+
+## Q15. Как Spring Modulith соотносится с Hexagonal Architecture и DDD?
+
+Spring Modulith реализует концепцию **Bounded Context** из DDD на уровне пакетов Java. Каждый модуль = bounded context с публичным API и изолированной реализацией.
+
+Hexagonal Architecture: `internal/` — адаптеры и реализации; публичный API модуля — порты. Spring Modulith не навязывает конкретную внутреннюю структуру, но хорошо сочетается с Hexagonal.
+
+## See also
+
+- [[spring-modulith|Spring Modulith]] — полный cheatsheet
+- [[spring-events-interview|Spring Events Interview]] — ApplicationEvents
+- [[spring-boot-interview|Spring Boot Interview]] — общие вопросы
+- [[microservices-interview|Microservices Interview]] — переход к микросервисам
+- [[ddd-interview|DDD Interview]] — bounded contexts

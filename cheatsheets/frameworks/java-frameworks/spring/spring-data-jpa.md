@@ -32,8 +32,7 @@ updated: "2026-04-20"
 
 - [[spring-boot|**Spring Boot**]] — основы **Spring Boot**
 - [[spring-hibernate|**Spring Hibernate**]] — интеграция **Hibernate**
-- [[postgres-basics|**PostgreSQL**]] — работа с **PostgreSQL**
-- [[maven-advanced|**Maven**]] — система сборки
+- [[spring-hibernate|Spring Hibernate]] — Hibernate ORM интеграция
 
 - [[spring-data-jdbc|Spring Data JDBC: Полное руководство по работе с базами данных]]
 ## Содержание

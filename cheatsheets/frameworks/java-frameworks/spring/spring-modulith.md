@@ -14,6 +14,30 @@ updated: "2026-04-20"
 
 Spring Modulith помогает строить модульные монолиты на Spring Boot: явные границы модулей, проверка зависимостей, изолированные тесты.
 
+## Полезные ссылки
+
+### Официальная документация
+- [Spring Modulith (docs.spring.io)](https://docs.spring.io/spring-modulith/docs/current/reference/html/) — официальная документация Spring Modulith
+
+### См. также
+- [[spring-boot|Spring Boot]] — базовый фреймворк
+- [[spring-events|Spring Events]] — события Spring, используемые между модулями
+- [[spring-core|Spring Core]] — ядро Spring Framework
+
+## Содержание
+
+- [Зависимость](#зависимость)
+- [Структура пакетов](#структура-пакетов)
+- [Проверка архитектуры](#проверка-архитектуры)
+- [Визуализация зависимостей](#визуализация-зависимостей)
+- [Взаимодействие через ApplicationEvents](#взаимодействие-через-applicationevents)
+- [Персистентность событий (Event Publication)](#персистентность-событий-event-publication)
+- [Изолированное тестирование модуля](#изолированное-тестирование-модуля)
+  - [Режимы bootstrap](#режимы-bootstrap)
+- [Scenarios API](#scenarios-api)
+- [Когда использовать](#когда-использовать)
+- [Переход к микросервисам](#переход-к-микросервисам)
+
 ## Зависимость
 
 ```xml
@@ -203,11 +227,3 @@ class OrderScenarios {
 
 Модуль → микросервис: публичный API модуля становится REST/gRPC контрактом, `ApplicationEvents` — Kafka/RabbitMQ-сообщениями. Spring Modulith облегчает этот шаг, так как границы уже чёткие.
 
-## See also
-
-- [[spring-boot|Spring Boot]]
-- [[spring-core|Spring Core]]
-- [[spring-boot-3-migration|Spring Boot 3 Migration]]
-- [[spring-events|Spring Events]]
-- [[ddd|Domain-Driven Design]]
-- [[microservices|Микросервисы]]

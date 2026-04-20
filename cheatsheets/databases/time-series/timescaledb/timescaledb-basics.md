@@ -13,6 +13,32 @@ updated: "2026-04-20"
 
 TimescaleDB — расширение PostgreSQL для хранения и обработки временных рядов. Сохраняет полную совместимость с PostgreSQL и добавляет автоматическое партиционирование, сжатие и функции агрегации.
 
+## Полезные ссылки
+
+### Официальная документация
+- [TimescaleDB Documentation](https://docs.timescale.com/) — официальная документация
+
+### См. также
+- [[influxdb-basics|InfluxDB]] — time-series БД без SQL
+- [[postgres-basics|PostgreSQL]] — основы PostgreSQL
+- [[postgres-queries|PostgreSQL: запросы]] — оконные функции, CTE
+- [[monitoring-best-practices|Мониторинг]] — использование time-series БД для метрик
+
+## Содержание
+
+- [Запуск в Docker](#запуск-в-docker)
+- [Установка расширения](#установка-расширения)
+- [Hypertable — автоматическое партиционирование](#hypertable-автоматическое-партиционирование)
+- [Вставка данных](#вставка-данных)
+- [Запросы временных рядов](#запросы-временных-рядов)
+- [Continuous Aggregates](#continuous-aggregates)
+- [Сжатие (Compression)](#сжатие-compression)
+- [Retention Policy](#retention-policy)
+- [Индексы](#индексы)
+- [Spring Boot + JPA интеграция](#spring-boot-jpa-интеграция)
+- [TimescaleDB vs InfluxDB](#timescaledb-vs-influxdb)
+- [Типичные проблемы](#типичные-проблемы)
+
 ## Запуск в Docker
 
 ```bash
@@ -266,9 +292,3 @@ public interface SensorDataRepository extends JpaRepository<SensorData, Long> {
 | Медленный `time_bucket` | Нет индекса по time | TimescaleDB создаёт автоматически; проверить `\d sensor_data` |
 | Continuous aggregate не обновляется | Не добавлена политика | `add_continuous_aggregate_policy` или ручной `CALL refresh_continuous_aggregate` |
 
-## See also
-
-- [[influxdb-basics|InfluxDB]] — time-series БД без SQL
-- [[postgres-basics|PostgreSQL]] — основы PostgreSQL
-- [[postgres-queries|PostgreSQL: запросы]] — оконные функции, CTE
-- [[monitoring-best-practices|Мониторинг]] — использование time-series БД для метрик

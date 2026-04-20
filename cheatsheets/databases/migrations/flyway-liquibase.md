@@ -14,6 +14,38 @@ updated: "2026-04-20"
 
 # Flyway и Liquibase — миграции баз данных
 
+## Полезные ссылки
+
+### Официальная документация
+- [Flyway Documentation](https://documentation.red-gate.com/fd) — официальная документация Flyway
+- [Liquibase Documentation](https://docs.liquibase.com/) — официальная документация Liquibase
+
+### См. также
+- [[postgres-basics|PostgreSQL: основы]] — PostgreSQL как целевая БД миграций
+- [[spring-boot|Spring Boot]] — интеграция с автоконфигурацией
+
+## Содержание
+
+- [Flyway](#flyway)
+  - [Концепции](#концепции)
+  - [Именование файлов](#именование-файлов)
+  - [Конфигурация Spring Boot](#конфигурация-spring-boot)
+  - [Команды CLI / Gradle](#команды-cli-gradle)
+  - [Callbacks](#callbacks)
+- [Liquibase](#liquibase)
+  - [Концепции](#концепции-1)
+  - [Форматы changelog](#форматы-changelog)
+  - [Preconditions](#preconditions)
+  - [Contexts и Labels](#contexts-и-labels)
+  - [Команды Liquibase](#команды-liquibase)
+- [Flyway vs Liquibase — сравнение](#flyway-vs-liquibase-сравнение)
+- [Spring Boot — интеграция](#spring-boot-интеграция)
+  - [Порядок инициализации](#порядок-инициализации)
+  - [Тесты с Testcontainers](#тесты-с-testcontainers)
+- [Best practices](#best-practices)
+- [Типичные ошибки](#типичные-ошибки)
+- [См. также](#см-также-1)
+
 ## Flyway
 
 ### Концепции

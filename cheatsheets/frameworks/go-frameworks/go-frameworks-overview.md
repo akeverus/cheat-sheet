@@ -20,6 +20,10 @@ updated: "2026-04-20"
 
 [[go-web-frameworks|Go Web Frameworks]]
 
+## Содержание
+
+- [См. также](#см-также)
+
 ## См. также
 - [[README|Go (язык)]] — раздел языка Go
 - [[README|Frameworks README]] — раздел фреймворков

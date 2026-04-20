@@ -15,6 +15,30 @@ updated: "2026-04-20"
 
 SpringDoc автоматически генерирует OpenAPI 3.x спецификацию из Spring Boot контроллеров.
 
+## Полезные ссылки
+
+### Официальная документация
+- [Springdoc OpenAPI](https://springdoc.org/) — официальный сайт библиотеки springdoc-openapi
+
+### См. также
+- [[spring-boot|Spring Boot]] — базовый фреймворк
+- [[spring-rest|Spring REST]] — Spring MVC REST-контроллеры
+- [[spring-security|Spring Security]] — защита API, интеграция с Swagger UI
+- [[spring-webflux|Spring WebFlux]] — реактивный стек, отдельная зависимость springdoc
+
+## Содержание
+
+- [Зависимость](#зависимость)
+- [Конфигурация (application.yml)](#конфигурация-applicationyml)
+- [Глобальная конфигурация OpenAPI](#глобальная-конфигурация-openapi)
+- [Аннотации контроллера](#аннотации-контроллера)
+- [Аннотации моделей](#аннотации-моделей)
+- [Безопасность (JWT Bearer)](#безопасность-jwt-bearer)
+- [Группировка API](#группировка-api)
+- [Spring Security интеграция](#spring-security-интеграция)
+- [Отключение в production](#отключение-в-production)
+- [Полезные приёмы](#полезные-приёмы)
+
 ## Зависимость
 
 ```xml
@@ -261,10 +285,3 @@ public List<OrderDto> listV1() { ... }
 public OrderDto create(@RequestBody OrderCreateRequest request) { ... }
 ```
 
-## See also
-
-- [[spring-rest|Spring REST]]
-- [[spring-boot|Spring Boot]]
-- [[spring-security|Spring Security]]
-- [[spring-webflux|Spring WebFlux]]
-- [[openapi-swagger-interview|OpenAPI / Swagger Interview]]

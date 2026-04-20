@@ -16,6 +16,17 @@ updated: "2026-04-20"
 
 Project Loom — это переосмысление конкурентности в Java. Виртуальные потоки дают масштаб сопрограмм при сохранении привычной модели `Thread`.
 
+## Полезные ссылки
+
+### Официальная документация
+
+- [JEP 444: Virtual Threads (Java 21)](https://openjdk.org/jeps/444) — официальный JEP с описанием virtual threads
+- [Project Loom (OpenJDK)](https://openjdk.org/projects/loom/) — страница проекта Loom
+
+### Обучающие материалы
+
+- [Virtual Threads in Java 21 (Baeldung)](https://www.baeldung.com/java-virtual-thread-vs-thread) — сравнение virtual и platform threads
+
 ### См. также
 
 - [[java-concurrency-advanced|Java Concurrency Advanced]] — ExecutorService, CompletableFuture, Lock

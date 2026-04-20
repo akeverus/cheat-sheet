@@ -25,8 +25,7 @@ updated: "2026-04-20"
 - [**Spring Cloud** Series](https://www.baeldung.com/spring-cloud-series)
 
 ### См. также
-- [[microservices|Микросервисы]] — микросервисная архитектура
-- [[spring-boot|**Spring Boot**]] — **Spring Boot** основы
+- [[spring-boot|Spring Boot]] — базовый фреймворк для Spring Cloud
 - [Мониторинг](../../../monitoring/) — мониторинг микросервисов
 
 - [[spring-websocket|Spring WebSocket]]

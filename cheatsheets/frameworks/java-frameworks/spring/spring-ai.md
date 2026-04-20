@@ -25,9 +25,7 @@ updated: "2026-04-20"
 - [**Spring AI** Tutorials](https://www.baeldung.com/spring-ai)
 
 ### См. также
-- [[java-basics|**Java** Basics]] — основы **Java**
-- [[spring-boot|**Spring Boot**]] — **Spring Boot**
-- [[jackson|Jackson]] — **JSON** обработка
+- [[spring-boot|Spring Boot]] — базовый фреймворк
 
 - [[spring-websocket|Spring WebSocket]]
 - [[spring-integration|Spring Integration]]
