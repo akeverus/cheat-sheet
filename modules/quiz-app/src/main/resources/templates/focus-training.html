@@ -38,7 +38,29 @@
             </div>
         </div>
 
-        <form method="post" th:action="@{/answer}" id="interview-form">
+        <div th:if="${flashcardMode}" class="flashcard-phase">
+            <div class="flashcard-badge">Флешкарта — вспомни ответ до раскрытия</div>
+            <div th:if="${!flashcardRevealed}">
+                <form method="post" th:action="@{/flashcard-reveal}">
+                    <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
+                </form>
+            </div>
+            <div th:if="${flashcardRevealed}" class="flashcard-answer">
+                <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
+                <div class="flashcard-grade-buttons" role="group" aria-labelledby="flashcard-grade-label">
+                    <span class="flashcard-grade-label" id="flashcard-grade-label">Насколько уверенно ты ответил?</span>
+                    <form method="post" th:action="@{/flashcard-grade}" class="d-contents">
+                        <input type="hidden" name="questionId" th:value="${current.question.id}">
+                        <button type="submit" name="grade" value="1" class="flashcard-grade-btn grade-1" aria-label="Оценка 1: Не помню">Не помню</button>
+                        <button type="submit" name="grade" value="2" class="flashcard-grade-btn grade-2" aria-label="Оценка 2: Плохо">Плохо</button>
+                        <button type="submit" name="grade" value="3" class="flashcard-grade-btn grade-3" aria-label="Оценка 3: Хорошо">Хорошо</button>
+                        <button type="submit" name="grade" value="4" class="flashcard-grade-btn grade-4" aria-label="Оценка 4: Отлично">Отлично</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" th:action="@{/answer}" id="interview-form" th:if="${!flashcardMode}">
             <input type="hidden" name="questionId" th:value="${current.question.id}">
             <input type="hidden" name="topic" th:value="${filter?.topic}">
             <input type="hidden" name="group" th:value="${selectedGroup}">

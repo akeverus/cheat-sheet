@@ -7,6 +7,7 @@ import com.cheatsheet.quiz.domain.InterviewQuestion;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
@@ -46,11 +47,18 @@ class FocusTrainingPageServiceTest {
 
     @BeforeEach
     void setUp() {
+        AppProperties appProperties = new AppProperties() {
+            @Override
+            public boolean isAiEnabled() {
+                return true;
+            }
+        };
         service = new FocusTrainingPageService(
                 facade,
                 questionRepository,
                 questionStatsRepository,
-                topicCatalogService
+                topicCatalogService,
+                appProperties
         );
     }
 

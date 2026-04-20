@@ -7,7 +7,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -29,6 +32,22 @@ class NoAiModeStartupIntegrationTest {
     @Test
     void indexPageOpens_inNoAiMode() throws Exception {
         mockMvc.perform(get("/"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Вопросы временно недоступны"))));
+    }
+
+    @Test
+    void indexPageShowsFlashcardMode_whenQuestionsExist() throws Exception {
+        String body = mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // В no-AI режиме при наличии вопроса должна показываться flashcard-фаза,
+        // а не страница «Вопросы временно недоступны»
+        if (body.contains("class=\"question-text\"") || body.contains("id=\"interview-card\"")) {
+            org.assertj.core.api.Assertions.assertThat(body)
+                    .contains("flashcard-phase")
+                    .doesNotContain("Вопросы временно недоступны");
+        }
     }
 }

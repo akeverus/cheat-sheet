@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.feature.interview.service.page;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
@@ -39,6 +40,7 @@ public class FocusTrainingPageService {
     QuestionRepository questionRepository;
     QuestionStatsRepository questionStatsRepository;
     TopicCatalogService topicCatalogService;
+    AppProperties appProperties;
 
     /**
      * Строит view-model для главной страницы тренировки.
@@ -67,9 +69,13 @@ public class FocusTrainingPageService {
         boolean studyLearnPhase = interviewSession != null
                 && interviewSession.getMode() == InterviewMode.STUDY
                 && interviewSession.getStudyPhase() == StudyPhase.LEARN;
-        boolean flashcardMode = interviewSession != null
+        boolean sessionFlashcardMode = interviewSession != null
                 && interviewSession.getMode() == InterviewMode.FLASHCARD;
-        boolean flashcardRevealed = flashcardMode
+        boolean noAiFlashcard = !appProperties.isAiEnabled()
+                && current.isPresent()
+                && current.get().options().isEmpty();
+        boolean flashcardMode = sessionFlashcardMode || noAiFlashcard;
+        boolean flashcardRevealed = sessionFlashcardMode
                 && interviewSession.getFlashcardPhase() == FlashcardPhase.REVEALED;
 
         String diagram = null;

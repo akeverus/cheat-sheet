@@ -60,7 +60,7 @@ public class AIQuestionService {
             }
 
             if (!appProperties.isAiEnabled()) {
-                throw new AiGenerationException("AI-ключи не настроены — no-AI flashcard-режим");
+                return List.of();
             }
 
             GeneratedOptions generated = aiQuestionClient.generateOptions(question.questionText(), question.codeSnippet())
