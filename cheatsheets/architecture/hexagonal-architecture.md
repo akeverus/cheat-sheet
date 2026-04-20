@@ -15,6 +15,17 @@ Hexagonal Architecture (Алистер Кокбёрн, 2005) — архитек�
 
 Другое название: **Ports & Adapters**. Гексагон — условная форма: у приложения много «сторон», через каждую из которых можно войти или выйти.
 
+## Полезные ссылки
+
+### Официальная документация
+- [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture/) — оригинальная статья автора
+
+### См. также
+- [[clean-architecture|Clean Architecture]] — схожий подход Роберта Мартина
+- [[solid-principles|SOLID]] — принципы, лежащие в основе
+- [[creational-patterns|Паттерны создания]] — паттерны GoF
+- [[microservices|Микросервисная архитектура]] — применение Hexagonal в микросервисах
+
 ## Содержание
 
 - [Концепция](#концепция)
