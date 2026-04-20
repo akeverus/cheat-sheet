@@ -30,21 +30,12 @@ class QuestionPromptBuilderTest {
         assertThat(prompt).contains("\"explanation\"");
         assertThat(prompt).contains("token-efficient");
         assertThat(prompt).contains("all options must answer this exact question context");
-        assertThat(prompt).contains("question-core anchors");
-        assertThat(prompt).contains("every option must include at least one question-core anchor");
-        assertThat(prompt).contains("must appear verbatim in each option");
-        assertThat(prompt).contains("same entity X");
-        assertThat(prompt).contains("forbid meta-interview advice in option text");
-        assertThat(prompt).contains("forbid distractors about unrelated algorithms or data-structures outside X");
-        assertThat(prompt).contains("keep one operation family");
-        assertThat(prompt).contains("forbid generic overview options");
-        assertThat(prompt).contains("must explicitly stay in sorting family");
-        assertThat(prompt).contains("must not exceed 1.15");
-        assertThat(prompt).contains("max sentence count difference");
-        assertThat(prompt).contains("forbid explanation meta-advice");
-        assertThat(prompt).contains("strict ban-list for explanation meta-advice");
-        assertThat(prompt).contains("операционный контекст");
-        assertThat(prompt).contains("под нагрузкой и при сбоях");
+        assertThat(prompt).contains("technical reasoning, not pure memorization");
+        assertThat(prompt).contains("avoid trivial factual recall");
+        assertThat(prompt).contains("avoid yes/no question forms");
+        assertThat(prompt).contains("distractors realistic, unique, and plausible");
+        assertThat(prompt).contains("forbid interview meta-advice");
+        assertThat(prompt).contains("output language: Russian");
     }
 
     @Test

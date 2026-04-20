@@ -29,6 +29,7 @@ updated: "2026-04-20"
 - [[api-testing-basics|API Testing Basics]] — контрактные и интеграционные тесты
 - [[graphql|GraphQL]] — альтернативный подход к API-контракту
 
+- [[grpc|gRPC]]
 ## Содержание
 
 - [Зачем документация API в production](#зачем-документация-api-в-production)

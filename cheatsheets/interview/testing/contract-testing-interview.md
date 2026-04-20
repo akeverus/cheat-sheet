@@ -22,8 +22,6 @@ updated: "2026-04-17"
 
 Контрактное тестирование (`Contract Testing`) проверяет соответствие API-контрактов между сервисами без поднятия полного стенда: consumer фиксирует ожидания, provider верифицирует, что выдаёт именно то, что consumer использует. Этот файл покрывает `Consumer-Driven Contract Testing` (`CDCT`), `Pact JVM`, `Pact Broker`, provider verification и provider states, `Spring Cloud Contract`, `can-i-deploy` и интеграцию в `CI/CD`, а также trade-off'ы по сравнению с интеграционными и `E2E`-тестами.
 
-Дата последнего обновления: 2026-04-17
-
 **Контрактное тестирование** — промежуточный слой между `unit` и `E2E`: оно даёт уверенность, что два сервиса совместимы между собой, но не требует развёртывания их обоих в одном окружении. На собеседовании умение объяснить разницу между CDC и producer-driven подходом, работу `Pact Broker` и `can-i-deploy` — показатель зрелости в микросервисной архитектуре.
 
 ## Полезные ссылки
@@ -211,7 +209,7 @@ graph TB
 - Медленнее `unit`-тестов (всё же поднимается mock-сервер, пишется файл).
 - По количеству: десятки-сотни contract-тестов покрывают большинство интеграций.
 
-**Цель** — резко сократить количество дорогих `E2E`-тестов, перенеся проверку интеграций на contract-уровень. Подробнее про пирамиду — в [стратегиях тестирования](test-strategies-interview.md).
+**Цель** — резко сократить количество дорогих `E2E`-тестов, перенеся проверку интеграций на contract-уровень. Подробнее про пирамиду — в [[test-strategies-interview|стратегиях тестирования]].
 
 ## Q5. Какие инструменты контрактного тестирования существуют?
 
@@ -1155,9 +1153,9 @@ class UserServicePactTest {
 
 ### Подводные камни
 
-- **Security**: если эндпоинты защищены Spring Security, надо либо отключить security в test profile, либо в pact'е отдавать заголовок `Authorization`. Подробнее про тестирование security — в [интеграционном тестировании](integration-testing-interview.md).
+- **Security**: если эндпоинты защищены Spring Security, надо либо отключить security в test profile, либо в pact'е отдавать заголовок `Authorization`. Подробнее про тестирование security — в [[integration-testing-interview|интеграционном тестировании]].
 - **Transactional tests**: `@Transactional` на `@State`-методе откатит данные до HTTP-запроса. Нужно `@Transactional(propagation = NOT_SUPPORTED)` или явный cleanup в `TEARDOWN`.
-- **Реальная БД**: используйте `Testcontainers` ([подробнее](testcontainers-interview.md)), а не H2 — иначе тест будет проверять не тот код, что в проде.
+- **Реальная БД**: используйте `Testcontainers` ([[testcontainers-interview|подробнее]]), а не H2 — иначе тест будет проверять не тот код, что в проде.
 
 ## Q27. Как тестировать асинхронный обмен через Pact (Kafka, RabbitMQ)?
 
@@ -1227,7 +1225,7 @@ class OrderEventProducerPactTest {
 
 - **Проверяется**: формат JSON, типы полей, обязательность.
 - **Не проверяется**: что сообщение реально попало в Kafka, что consumer его реально прочитал, headers топика, retries.
-- Для проверки реальной доставки нужны `Testcontainers` + Kafka ([подробнее](testcontainers-interview.md)).
+- Для проверки реальной доставки нужны `Testcontainers` + Kafka ([[testcontainers-interview|подробнее]]).
 
 ## Q28. (!) Что такое Spring Cloud Contract и чем он отличается от Pact?
 
@@ -1665,7 +1663,7 @@ new PactDslJsonBody()
 
 - Провайдер — legacy или внешний (нельзя повлиять на его CI).
 - Важна скорость onboarding'а новых консьюмеров.
-- Уже есть OpenAPI ([подробнее](../api/openapi-swagger-interview.md)).
+- Уже есть OpenAPI ([[openapi-swagger-interview|подробнее]]).
 
 ## Q36. (!) Когда контрактное тестирование не нужно?
 
@@ -1688,7 +1686,7 @@ new PactDslJsonBody()
 - CI pipelines усложняются.
 - WIP pacts, pending pacts, environments — всё это требует обучения.
 
-**Rule of thumb:** контрактное тестирование окупается, когда есть 3+ независимых команд, деплоящих независимо, и боль от регрессий в интеграциях. Если этого нет — возможно, хватит OpenAPI + интеграционных тестов на `WireMock` ([подробнее](integration-testing-interview.md)).
+**Rule of thumb:** контрактное тестирование окупается, когда есть 3+ независимых команд, деплоящих независимо, и боль от регрессий в интеграциях. Если этого нет — возможно, хватит OpenAPI + интеграционных тестов на `WireMock` ([[integration-testing-interview|подробнее]]).
 
 ## Q37. (!) Чем контрактное тестирование отличается от integration и E2E-тестов?
 
@@ -1714,11 +1712,11 @@ new PactDslJsonBody()
 
 Идеальный стек:
 - **Unit** — покрытие логики (90% кода).
-- **Integration с Testcontainers** — проверка связок с реальной БД/Kafka ([подробнее](testcontainers-interview.md)).
+- **Integration с Testcontainers** — проверка связок с реальной БД/Kafka ([[testcontainers-interview|подробнее]]).
 - **Contract** — безопасность контрактов между сервисами.
 - **E2E** — только критические user journey (login, checkout).
 
-Переизбыток любого слоя — дорого. Подробнее про распределение — в [стратегиях тестирования](test-strategies-interview.md).
+Переизбыток любого слоя — дорого. Подробнее про распределение — в [[test-strategies-interview|стратегиях тестирования]].
 
 ## Q38. Может ли контрактное тестирование заменить OpenAPI/Schema validation?
 
@@ -1737,7 +1735,7 @@ new PactDslJsonBody()
 
 - **OpenAPI как источник истины** для дизайна и документации.
 - **Pact для безопасности интеграций** внутри организации.
-- Оба синхронизируются: контракт Pact должен быть подмножеством OpenAPI ([подробнее про OpenAPI](../api/openapi-swagger-interview.md)).
+- Оба синхронизируются: контракт Pact должен быть подмножеством OpenAPI ([[openapi-swagger-interview|подробнее про OpenAPI]]).
 - PactFlow bi-directional проверяет, что Pact ⊆ OpenAPI автоматически.
 
 ### Типичные антипаттерны
@@ -1904,22 +1902,22 @@ Matcher для заголовка гарантирует, что провайд�
 - Non-breaking (добавили поле) → minor (`1.1.0`).
 - Pact Matrix покажет, какие major-версии консьюмеров всё ещё в prod.
 
-Подробнее о паттернах версионирования API — в [REST-интервью](../api/http-rest-interview.md) и [OpenAPI-интервью](../api/openapi-swagger-interview.md).
+Подробнее о паттернах версионирования API — в [[http-rest-interview|REST-интервью]] и [[openapi-swagger-interview|OpenAPI-интервью]].
 
 ---
 
 ## See also
 
-- [Integration Testing](integration-testing-interview.md) — интеграционные тесты против реальной инфраструктуры, дополняют контрактные
-- [Стратегии тестирования](test-strategies-interview.md) — место Contract Testing в тестовой пирамиде и test trophy
-- [Testcontainers](testcontainers-interview.md) — реальные контейнеры для provider-верификации с настоящей БД
-- [Unit Testing](unit-testing-interview.md) — базовый слой пирамиды, дополняется контрактными тестами
-- [Test Automation](test-automation-interview.md) — CI/CD интеграция контрактных тестов
-- [Mockito](mockito-interview.md) — мокирование на consumer-side внутри тестов бизнес-логики
-- [REST API](../api/http-rest-interview.md) — HTTP-контракты, версионирование API, сжатие breaking changes
-- [OpenAPI / Swagger](../api/openapi-swagger-interview.md) — schema-first подход, альтернатива и дополнение к Pact
-- [Микросервисы](../architecture/microservices-interview.md) — контекст, в котором контрактное тестирование критично
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция `@SpringBootTest` c Pact JVM и Spring Cloud Contract
+- [[integration-testing-interview|Integration Testing]] — интеграционные тесты против реальной инфраструктуры, дополняют контрактные
+- [[test-strategies-interview|Стратегии тестирования]] — место Contract Testing в тестовой пирамиде и test trophy
+- [[testcontainers-interview|Testcontainers]] — реальные контейнеры для provider-верификации с настоящей БД
+- [[unit-testing-interview|Unit Testing]] — базовый слой пирамиды, дополняется контрактными тестами
+- [[test-automation-interview|Test Automation]] — CI/CD интеграция контрактных тестов
+- [[mockito-interview|Mockito]] — мокирование на consumer-side внутри тестов бизнес-логики
+- [[http-rest-interview|REST API]] — HTTP-контракты, версионирование API, сжатие breaking changes
+- [[openapi-swagger-interview|OpenAPI / Swagger]] — schema-first подход, альтернатива и дополнение к Pact
+- [[microservices-interview|Микросервисы]] — контекст, в котором контрактное тестирование критично
+- [[spring-boot-interview|Spring Boot]] — интеграция `@SpringBootTest` c Pact JVM и Spring Cloud Contract
 
 - [[chaos-engineering-interview|Chaos Engineering]]
 - [[integration-testing-interview|Integration Testing]]

@@ -24,6 +24,8 @@ updated: "2026-04-20"
 ### См. также
 - [[java-apache-commons|Apache Commons]] — **Apache Commons** для работы с файлами
 
+- [[java-http-clients|HTTP-клиенты в Java]]
+- [[java-jackson|Jackson: JSON-сериализация в Java]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

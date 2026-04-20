@@ -31,6 +31,9 @@ updated: "2026-04-20"
 - [[security-practices|Security Practices]] — как встроить всё это в процессы
 
 
+- [[spring-boot|Spring Boot — Полное руководство]]
+- [[quarkus-security|Quarkus: Security — Authentication, Authorization и OAuth2]]
+- [[micronaut-security|Micronaut: Security — Authentication и Authorization]]
 ## Содержание
 
 - [Карта категорий](#карта-категорий)

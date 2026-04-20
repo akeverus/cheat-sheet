@@ -27,6 +27,9 @@ related: ["databases/redis-basics.md", "databases/redis-streams.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-streams|redis-streams.md]] — потоки
 
+- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
+- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
 ## Содержание
 
 - [Введение в Pub/Sub](#введение-в-pubsub)

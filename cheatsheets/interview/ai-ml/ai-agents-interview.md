@@ -18,8 +18,6 @@ updated: "2026-04-19"
 
 **AI Agent** — LLM, которая может **planning** + **использовать tools** + **observe results** + **iterate** для решения задач. От простой ReAct loop до сложных multi-agent систем. С 2024-2025 — горячая тема. Стандарты: **MCP** (Model Context Protocol). Frameworks: LangGraph, AutoGen, CrewAI, Anthropic SDK.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -238,7 +236,7 @@ response = client.chat.completions.create(
 # [{"function": {"name": "search_documents", "arguments": '{"query": "vacation policy"}'}}]
 ```
 
-Подробнее — в [Prompt Engineering](prompt-engineering-interview.md).
+Подробнее — в [[prompt-engineering-interview|Prompt Engineering]].
 
 ## Q7. (!) Какие tools предоставляют agentам?
 
@@ -719,13 +717,13 @@ response = client.messages.create(
 
 ## See also
 
-- [LLM Basics](llm-basics-interview.md) — основа agents
-- [Prompt Engineering](prompt-engineering-interview.md) — function calling
-- [RAG](rag-interview.md) — knowledge для agents
-- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production
-- [MLOps](mlops-interview.md) — agent operations
-- [Микросервисы](../architecture/microservices-interview.md) — agents как services
-- [Event-driven](../architecture/event-driven-patterns-interview.md) — agent communication
-- [Application Security](../security/application-security-interview.md) — agent risks
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — multi-step transactions
+- [[llm-basics-interview|LLM Basics]] — основа agents
+- [[prompt-engineering-interview|Prompt Engineering]] — function calling
+- [[rag-interview|RAG]] — knowledge для agents
+- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production
+- [[mlops-interview|MLOps]] — agent operations
+- [[microservices-interview|Микросервисы]] — agents как services
+- [[event-driven-patterns-interview|Event-driven]] — agent communication
+- [[application-security-interview|Application Security]] — agent risks
+- [[saga-pattern-interview|Saga Pattern]] — multi-step transactions
 - [[testing-strategies-interview|Test Strategies]] — нестандартное тестирование

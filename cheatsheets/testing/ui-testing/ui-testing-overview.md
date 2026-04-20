@@ -25,6 +25,10 @@ updated: "2026-04-20"
 - [[selenium|Selenium]] — Selenium WebDriver
 - [Обзор тестирования](../) · [Юнит-тесты](../unit-testing/)
 
+- [[cucumber|Cucumber для Java]]
+- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
+- [[micronaut-testing|Micronaut: Testing — Unit Tests, Integration Tests и Mocking]]
+- [[spring-rest|Spring REST API: Полное руководство по разработке RESTful веб-сервисов]]
 ## Содержание
 
 - [Введение](#введение)

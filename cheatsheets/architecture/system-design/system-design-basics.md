@@ -19,6 +19,9 @@ updated: "2026-04-20"
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
 - [High Scalability](http://highscalability.com/)
 
+
+### См. также
+- [[architecture-patterns|Архитектурные паттерны]]
 ## Содержание
 
 - [Основные принципы](#основные-принципы)

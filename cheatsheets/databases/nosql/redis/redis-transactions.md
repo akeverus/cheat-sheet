@@ -28,6 +28,9 @@ related: ["databases/redis-basics.md", "databases/redis-lua-scripting.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-lua-scripting|redis-lua-scripting.md]] — Lua-скрипты
 
+- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
 ## Содержание
 
 - [Введение в транзакции Redis](#введение-в-транзакции-redis)

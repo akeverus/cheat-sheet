@@ -17,9 +17,7 @@ updated: "2026-04-13"
 
 Полный разбор паттернов проектирования (`GoF`): `Creational`, `Structural`, `Behavioral` — с Java-примерами, диаграммами и практическими рекомендациями.
 
-Дата последнего обновления: 2026-04-13
-
-**Design Patterns** (паттерны проектирования) — фундаментальная тема на собеседованиях по Java. Интервьюер ожидает не только знание названий, но и умение объяснить когда и зачем применять паттерн, привести пример из JDK или `Spring`, а также честно назвать ситуации, когда паттерн применять **не** стоит (overengineering). Тема тесно связана с [ООП](../programming-languages/java/java-oop-interview.md) и [Spring Framework](../frameworks/spring/spring-framework-interview.md), где паттерны используются повсеместно.
+**Design Patterns** (паттерны проектирования) — фундаментальная тема на собеседованиях по Java. Интервьюер ожидает не только знание названий, но и умение объяснить когда и зачем применять паттерн, привести пример из JDK или `Spring`, а также честно назвать ситуации, когда паттерн применять **не** стоит (overengineering). Тема тесно связана с [[java-oop-interview|ООП]] и [[spring-framework-interview|Spring Framework]], где паттерны используются повсеместно.
 
 ## Полезные ссылки
 
@@ -178,7 +176,7 @@ graph TD
 | **Magic Numbers/Strings** | Литералы без имён в коде | Константы и `enum` |
 | **Premature Optimization** | Оптимизация до профилирования | «Make it work, make it right, make it fast» |
 
-Подробнее о рефакторинге и устранении code smells — в [паттернах рефакторинга](../code-quality/refactoring-patterns-interview.md).
+Подробнее о рефакторинге и устранении code smells — в [[refactoring-patterns-interview|паттернах рефакторинга]].
 
 ## Q4. Каковы преимущества и риски использования `Design Patterns`?
 
@@ -192,7 +190,7 @@ graph TD
 1. **Overengineering** — применение паттерна там, где достаточно простого `if`
 2. **Рост числа классов** — `Strategy` с 20 стратегиями по 3 строки кода — это перебор
 3. **Ложное ощущение архитектуры** — паттерны не заменяют продуманный дизайн
-4. **Устаревание** — часть паттернов упростилась с появлением лямбд в [Java 8+](../programming-languages/java/java-8-interview.md)
+4. **Устаревание** — часть паттернов упростилась с появлением лямбд в [[java-8-interview|Java 8+]]
 
 > **На собеседовании:** покажите, что вы умеете **не** применять паттерн, когда он не нужен. Это ценится выше, чем знание всех 23 паттернов.
 
@@ -208,7 +206,7 @@ graph TD
 | **ISP** (Interface Segregation) | `Adapter`, `Facade` |
 | **DIP** (Dependency Inversion) | `Abstract Factory`, `DI`, `Strategy` |
 
-Подробнее о принципах ООП — в [вопросах по ООП](../programming-languages/java/java-oop-interview.md).
+Подробнее о принципах ООП — в [[java-oop-interview|вопросах по ООП]].
 
 ---
 
@@ -324,7 +322,7 @@ public enum Singleton {
 2. **Видимость изменений** — без `volatile` поток может увидеть частично сконструированный объект (instruction reordering)
 3. **Несогласованное состояние** — разные потоки работают с разными экземплярами
 
-Подробнее о проблемах многопоточности — в [вопросах по Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
+Подробнее о проблемах многопоточности — в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q9. В чём недостатки паттерна `Singleton`?
 
@@ -334,7 +332,7 @@ public enum Singleton {
 4. **Скрытые зависимости** — вызов `Singleton.getInstance()` в коде скрывает зависимость от IDE и читателя
 5. **Проблемы с classloader'ами** — в среде с несколькими `ClassLoader` (например, application server) может быть создано несколько экземпляров
 
-> **Вместо `Singleton`** в современной Java используйте DI-контейнер ([Spring IoC](../frameworks/spring/spring-framework-interview.md)) с `@Scope("singleton")` — это даёт все преимущества без недостатков.
+> **Вместо `Singleton`** в современной Java используйте DI-контейнер ([[spring-framework-interview|Spring IoC]]) с `@Scope("singleton")` — это даёт все преимущества без недостатков.
 
 ## Q10. (!) Что такое `Factory Method` и чем он отличается от `Simple Factory`?
 
@@ -563,7 +561,7 @@ public class GameUnit implements Cloneable {
 }
 ```
 
-> **Внимание:** `Object.clone()` делает **shallow copy**. Для коллекций и мутабельных полей нужно явно делать deep copy. Подробнее — в [вопросах по Java Core](../programming-languages/java/java-core-interview.md).
+> **Внимание:** `Object.clone()` делает **shallow copy**. Для коллекций и мутабельных полей нужно явно делать deep copy. Подробнее — в [[java-core-interview|вопросах по Java Core]].
 
 ---
 
@@ -837,7 +835,7 @@ class CachingUserServiceProxy implements UserService {
 - **Remote Proxy** — доступ к удалённому объекту (RMI)
 - **Logging Proxy** — логирование вызовов
 
-**В Spring:** `@Transactional`, `@Cacheable`, `@Async` — всё работает через `CGLIB`/`JDK Dynamic Proxy`. Подробнее в [вопросах по Spring](../frameworks/spring/spring-framework-interview.md).
+**В Spring:** `@Transactional`, `@Cacheable`, `@Async` — всё работает через `CGLIB`/`JDK Dynamic Proxy`. Подробнее в [[spring-framework-interview|вопросах по Spring]].
 
 ## Q21. Что такое `Facade` Pattern?
 
@@ -1024,7 +1022,7 @@ service.setStrategy(amount -> System.out.println("Crypto: " + amount));
 service.checkout(new BigDecimal("99.99"));
 ```
 
-**В JDK:** `Comparator` — самый известный пример `Strategy`. `Collections.sort(list, comparator)`. Подробнее о лямбдах — в [вопросах по Java 8](../programming-languages/java/java-8-interview.md).
+**В JDK:** `Comparator` — самый известный пример `Strategy`. `Collections.sort(list, comparator)`. Подробнее о лямбдах — в [[java-8-interview|вопросах по Java 8]].
 
 ## Q26. Что такое `State` Pattern и чем он отличается от `Strategy`?
 
@@ -1106,7 +1104,7 @@ bus.subscribe("order.created", msg -> System.out.println("Log: " + msg));
 bus.publish("order.created", "Order #123");
 ```
 
-> **Примечание:** `java.util.Observable` / `java.util.Observer` — **deprecated** с Java 9. Используйте `PropertyChangeListener`, `Flow API` (reactive streams) или event bus из Spring (`ApplicationEvent`). Подробнее о событиях в Spring — в [вопросах по Spring](../frameworks/spring/spring-framework-interview.md).
+> **Примечание:** `java.util.Observable` / `java.util.Observer` — **deprecated** с Java 9. Используйте `PropertyChangeListener`, `Flow API` (reactive streams) или event bus из Spring (`ApplicationEvent`). Подробнее о событиях в Spring — в [[spring-framework-interview|вопросах по Spring]].
 
 ## Q28. Что такое `Chain of Responsibility`?
 
@@ -1344,7 +1342,7 @@ for (int n : new NumberRange(1, 5)) {
 }
 ```
 
-Подробнее о коллекциях и итераторах — в [вопросах по Java Collections](../programming-languages/java/java-collections-interview.md).
+Подробнее о коллекциях и итераторах — в [[java-collections-interview|вопросах по Java Collections]].
 
 ## Q33. Что такое `Mediator` Pattern?
 
@@ -1480,7 +1478,7 @@ graph TD
 | **Strategy** | Смена реализации | `HandlerMapping`, `ViewResolver` |
 | **DI** | Весь контейнер | `@Autowired`, constructor injection |
 
-Подробнее — в [вопросах по Spring Framework](../frameworks/spring/spring-framework-interview.md) и [Spring Boot](../frameworks/spring/spring-boot-interview.md).
+Подробнее — в [[spring-framework-interview|вопросах по Spring Framework]] и [[spring-boot-interview|Spring Boot]].
 
 ## Q37. (!) Разница между `Dependency Injection` и `Service Locator`?
 
@@ -1627,7 +1625,7 @@ Map<String, Supplier<Shape>> factories = Map.of(
 Shape shape = factories.get("circle").get();
 ```
 
-Подробнее — в [вопросах по Java 8](../programming-languages/java/java-8-interview.md) и [Java Stream API](../programming-languages/java/java-stream-interview.md).
+Подробнее — в [[java-8-interview|вопросах по Java 8]] и [[java-stream-interview|Java Stream API]].
 
 ## Q42. Что такое `Null Object` Pattern?
 
@@ -1900,13 +1898,13 @@ customerRepository.findAll(spec);
 
 ## See also
 
-- [ООП и Java](../programming-languages/java/java-oop-interview.md) — принципы SOLID, наследование, полиморфизм
-- [Spring Framework](../frameworks/spring/spring-framework-interview.md) — DI, AOP, IoC и паттерны в Spring
-- [Паттерны рефакторинга](../code-quality/refactoring-patterns-interview.md) — рефакторинг и устранение code smells
-- [Java Collections](../programming-languages/java/java-collections-interview.md) — паттерны Iterator, Composite в коллекциях
-- [Микросервисы](../architecture/microservices-interview.md) — архитектурные паттерны
-- [Технический долг](../code-quality/technical-debt-interview.md) — антипаттерны и код-смеллы
-- [System Design](../system-design/system-design-interview.md) — паттерны в контексте проектирования систем
+- [[java-oop-interview|ООП и Java]] — принципы SOLID, наследование, полиморфизм
+- [[spring-framework-interview|Spring Framework]] — DI, AOP, IoC и паттерны в Spring
+- [[refactoring-patterns-interview|Паттерны рефакторинга]] — рефакторинг и устранение code smells
+- [[java-collections-interview|Java Collections]] — паттерны Iterator, Composite в коллекциях
+- [[microservices-interview|Микросервисы]] — архитектурные паттерны
+- [[technical-debt-interview|Технический долг]] — антипаттерны и код-смеллы
+- [[system-design-interview|System Design]] — паттерны в контексте проектирования систем
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

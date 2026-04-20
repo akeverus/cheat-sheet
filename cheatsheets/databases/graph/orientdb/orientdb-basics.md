@@ -1,92 +1,204 @@
 ---
 title: "OrientDB: Основы"
-description: "Комплексное руководство по использованию OrientDB — мультимодельной NoSQL базы данных."
+description: "OrientDB — мультимодельная NoSQL БД: графовая и документная модели, SQL-подобный язык, Java API, Gremlin."
 tags:
   - databases
   - graph
-  - orientdb-basics
+  - nosql
+  - orientdb
 difficulty: "intermediate"
-prerequisites: []
-next: []
 updated: "2026-04-20"
 ---
 # OrientDB: Основы
 
-**Комплексное руководство по использованию `OrientDB` — мультимодельной `NoSQL` базы данных.**
+OrientDB — мультимодельная NoSQL БД, поддерживающая документную, графовую, key-value и объектную модели в одном движке.
 
-## Полезные ссылки
+## Когда выбирать OrientDB
 
-### Официальная документация
-- [OrientDB Documentation](https://orientdb.org/docs/) — официальная документация **OrientDB**
+- Данные одновременно требуют документной гибкости и графовых обходов (социальный граф + профили).
+- Нужна ACID-транзакционность для нескольких моделей в одной БД.
+- Ищете open-source альтернативу Neo4j с документной моделью.
 
-### См. также
-- [[neo4j-basics|Neo4j]] — графовая БД **Neo4j**
-- [NoSQL](../../nosql/) — обзор **NoSQL**
-
-## Содержание
-
-- [Введение в OrientDB](#введение-в-orientdb)
-  - [Основные возможности](#основные-возможности)
-- [Установка](#установка)
-- [Работа с графами](#работа-с-графами)
-- [Интеграция с Java](#интеграция-с-java)
-- [Решение проблем](#решение-проблем)
-- [Частые вопросы](#частые-вопросы)
-
-## Введение в OrientDB
-
-**OrientDB** — мультимодельная **NoSQL** БД, поддерживающая документную, графовую, **key-value** и объектную модели.
-
-### Основные возможности
-
-- Мультимодельность
-- Графовая модель
-- **SQL**-подобный язык запросов
-- **ACID** транзакции
-
-## Установка
+## Запуск в Docker
 
 ```bash
-# Docker установка
 docker run -d --name orientdb \
-  -p 2424:2424 -p 2480:2480 \
-  orientdb:latest
+  -p 2424:2424 \
+  -p 2480:2480 \
+  -e ORIENTDB_ROOT_PASSWORD=rootpwd \
+  orientdb:3.2
+# Веб-консоль: http://localhost:2480
+# Binary protocol: 2424
 ```
 
-## Работа с графами
+## Модели данных
+
+| Модель | Базовый класс | Пример |
+|--------|---------------|--------|
+| Документная | Любой Class | `Person`, `Product` |
+| Вершина графа | `V` | `User extends V` |
+| Ребро графа | `E` | `Follows extends E` |
+| Key-Value | Class с UNIQUE-индексом | поиск по ключу |
+
+## SQL-подобный язык
 
 ```sql
--- Создание вершин
-CREATE VERTEX User SET name = 'Alice';
+-- Создание класса
+CREATE CLASS Person EXTENDS V;
 
--- Создание ребер
-CREATE EDGE Follows FROM (SELECT FROM User WHERE name = 'Alice')
-TO (SELECT FROM User WHERE name = 'Bob');
+-- Создание вершин
+INSERT INTO Person SET name = 'Alice', age = 30;
+CREATE VERTEX Person SET name = 'Bob', age = 25;
+
+-- Создание рёбер
+CREATE EDGE Follows FROM (SELECT FROM Person WHERE name = 'Alice')
+                     TO   (SELECT FROM Person WHERE name = 'Bob');
+
+-- Обход графа: out() — исходящие, in() — входящие, both() — все
+SELECT name FROM (
+  TRAVERSE out('Follows') FROM (SELECT FROM Person WHERE name = 'Alice')
+  MAXDEPTH 2
+);
+
+-- Друзья друзей
+SELECT expand(out('Follows').out('Follows'))
+FROM Person WHERE name = 'Alice';
+
+-- Кратчайший путь
+SELECT shortestPath($from, $to, 'BOTH')
+LET $from = (SELECT FROM Person WHERE name = 'Alice'),
+    $to   = (SELECT FROM Person WHERE name = 'Charlie');
+
+-- UPDATE и DELETE
+UPDATE Person SET age = 31 WHERE name = 'Alice';
+DELETE VERTEX Person WHERE name = 'Alice';   -- удаляет и все рёбра
+DELETE EDGE Follows WHERE out.name = 'Alice' AND in.name = 'Bob';
 ```
 
-## Интеграция с Java
+## Индексы
+
+```sql
+-- UNIQUE для key-value доступа
+CREATE INDEX Person.email ON Person(email) UNIQUE;
+
+-- NOTUNIQUE для поиска без уникальности
+CREATE INDEX Person.city ON Person(city) NOTUNIQUE;
+
+-- Fulltext через Lucene
+CREATE INDEX Person.name ON Person(name) FULLTEXT ENGINE LUCENE;
+
+-- Spatial
+CREATE INDEX Place.coords ON Place(lat, lon) SPATIAL ENGINE LUCENE;
+```
+
+## Java API
+
+```xml
+<dependency>
+  <groupId>com.orientechnologies</groupId>
+  <artifactId>orientdb-client</artifactId>
+  <version>3.2.33</version>
+</dependency>
+```
 
 ```java
-// OrientDB Java API
-ODatabaseSession db = pool.acquire();
-ODocument user = new ODocument("User");
-user.field("name", "Alice");
-user.save();
+// Подключение (remote)
+OrientDB orient = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig());
+ODatabaseSession db = orient.open("mydb", "admin", "admin");
+
+// Документная модель
+ODocument person = new ODocument("Person");
+person.field("name", "Alice").field("age", 30);
+db.save(person);
+
+// Запрос
+try (OResultSet rs = db.query("SELECT FROM Person WHERE name = ?", "Alice")) {
+    while (rs.hasNext()) {
+        OResult row = rs.next();
+        System.out.println(row.getProperty("name"));
+    }
+}
+
+// Графовая модель
+OVertex alice = db.newVertex("Person");
+alice.setProperty("name", "Alice");
+db.save(alice);
+
+OVertex bob = db.newVertex("Person");
+bob.setProperty("name", "Bob");
+db.save(bob);
+
+OEdge edge = db.newEdge(alice, bob, "Follows");
+db.save(edge);
+
+// Обход
+for (OEdge e : alice.getEdges(ODirection.OUT, "Follows")) {
+    System.out.println(e.getTo().getProperty("name"));
+}
+
 db.close();
+orient.close();
 ```
 
-## Решение проблем
+## Транзакции
 
-| Симптом | Возможная причина | Решение |
-|--------|-------------------|---------|
-| Ошибка подключения к БД | Порт занят, неверный URL | Проверить порт 2424 (binary), 2480 (HTTP); корректный URL и учётные данные |
-| Медленные запросы по графу | Нет индексов, тяжёлый обход | Создать индексы на свойства; ограничить глубину обхода в запросах |
-| Исключение при работе с графом | Неверный API или тип | Использовать ODatabaseSession для графовой части; проверять типы вершин/рёбер |
+```java
+db.begin();
+try {
+    OVertex charlie = db.newVertex("Person");
+    charlie.setProperty("name", "Charlie");
+    db.save(charlie);
 
-## Частые вопросы
+    db.newEdge(alice, charlie, "Follows");
+    db.commit();
+} catch (Exception e) {
+    db.rollback();
+    throw e;
+}
+```
 
-**Чем OrientDB отличается от Neo4j?** OrientDB — мультимодельная (документы, граф, key-value); один движок. Neo4j — только граф, зрелая экосистема и Cypher. Выбор зависит от потребности в нескольких моделях в одной БД.
+## Встроенный режим (для тестов)
 
-**Когда использовать графовую модель в OrientDB?** Когда связи между сущностями важны и запросы — обход связей (социальный граф, рекомендации). Для простых документов достаточно документной модели.
+```java
+OrientDB orient = new OrientDB("embedded:/tmp/testdb", OrientDBConfig.defaultConfig());
+if (!orient.exists("testdb")) {
+    orient.create("testdb", ODatabaseType.MEMORY);
+}
+ODatabaseSession db = orient.open("testdb", "admin", "admin");
+```
 
+## Gremlin (TinkerPop 3)
 
+```groovy
+g.V().hasLabel('Person').has('name', 'Alice')
+     .out('Follows').values('name').toList()
+
+// Путь на 2 уровня
+g.V().has('name', 'Alice').repeat(out('Follows')).times(2).path().by('name')
+```
+
+## OrientDB vs Neo4j
+
+| Критерий | OrientDB | Neo4j |
+|----------|----------|-------|
+| Модели | Мульти (граф + документ + K-V) | Только граф |
+| Язык запросов | SQL (расширенный) | Cypher |
+| ACID | Да | Да |
+| Лицензия | Apache 2.0 | GPL / Commercial |
+| Зрелость | Меньше | Больше |
+
+## Типичные проблемы
+
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| Ошибка подключения | Неверный порт / credentials | 2424 (binary), 2480 (HTTP) |
+| Медленный TRAVERSE | Нет индекса, большая глубина | Добавить индекс; ограничить `MAXDEPTH` |
+| Ребро не удалено с вершиной | Использован `DELETE` вместо `DELETE VERTEX` | `DELETE VERTEX` удаляет рёбра автоматически |
+| Deadlock в транзакции | Конкурентное изменение одних вершин | Retry при `ORecordDuplicatedException` |
+
+## See also
+
+- [[neo4j-basics|Neo4j]] — графовая БД с языком Cypher
+- [[nosql-overview|NoSQL — обзор]] — сравнение NoSQL движков
+- [[mongodb-basics|MongoDB]] — документная NoSQL БД
+- [[graph-databases-interview|Graph Databases Interview]] — вопросы по графовым БД

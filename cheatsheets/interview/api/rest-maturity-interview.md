@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Richardson Maturity Model` (Leonard Richardson, 2008) — модель оценки **степени RESTful** API, 4 уровня (0-3). Уровень 3 (HATEOAS) — "truly RESTful" по Roy Fielding. На практике большинство "REST APIs" — Level 2. Модель помогает понимать что значит REST глубже, чем "JSON over HTTP".
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -449,15 +447,15 @@ GOOD: DELETE /users/123
 
 ## See also
 
-- [HTTP & REST](http-rest-interview.md) — основа
-- [GraphQL](graphql-interview.md) — alternative
-- [gRPC](grpc-interview.md) — alternative
-- [API Versioning](api-versioning-interview.md) — versioning concerns
-- [API Design Best Practices](api-design-best-practices-interview.md)
-- [OpenAPI / Swagger](openapi-swagger-interview.md) — documentation
-- [Микросервисы](../architecture/microservices-interview.md) — APIs context
-- [API Gateway](../architecture/api-gateway-interview.md) — context
-- [Caching](../architecture/caching-strategies-interview.md) — HTTP caching
+- [[http-rest-interview|HTTP & REST]] — основа
+- [[graphql-interview|GraphQL]] — alternative
+- [[grpc-interview|gRPC]] — alternative
+- [[api-versioning-interview|API Versioning]] — versioning concerns
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[openapi-swagger-interview|OpenAPI / Swagger]] — documentation
+- [[microservices-interview|Микросервисы]] — APIs context
+- [[api-gateway-interview|API Gateway]] — context
+- [[caching-strategies-interview|Caching]] — HTTP caching
 
 - [[api-design-best-practices-interview|API Design Best Practices]]
 - [[api-versioning-interview|API Versioning]]

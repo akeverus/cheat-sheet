@@ -19,8 +19,6 @@ updated: "2026-04-18"
 
 Сортировка — классика интервью. Знают наизусть `O(n log n)` и `O(n²)` алгоритмы, отличия stable/unstable, in-place, и что Java `Arrays.sort()` использует Dual-Pivot Quicksort для примитивов и TimSort для объектов.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -321,7 +319,7 @@ void siftDown(int[] arr, int size, int i) {
 
 **Используется в Introsort** для гарантий worst-case.
 
-Подробнее — в [Кучи](../data-structures/heaps-interview.md).
+Подробнее — в [[heaps-interview|Кучи]].
 
 ## Q12. (!) TimSort — что используется в Java?
 
@@ -595,7 +593,7 @@ int[] sortKSorted(int[] arr, int k) {
 
 Применяется для зависимостей: build systems, course schedules, Spring beans.
 
-Подробнее — в [Графы](../data-structures/graphs-interview.md).
+Подробнее — в [[graphs-interview|Графы]].
 
 ## Q25. (!) Как сортировать кастомным компаратором?
 
@@ -652,7 +650,7 @@ Collections.sort(users); // natural ordering
 TreeMap<User, Integer> map = new TreeMap<>(); // ключи по natural ordering
 ```
 
-Подробнее — в [Java Core](../../programming-languages/java/java-core-interview.md).
+Подробнее — в [[java-core-interview|Java Core]].
 
 ## Q28. (!) Когда O(n²) сортировка выиграет у O(n log n)?
 
@@ -704,17 +702,17 @@ CPU читает данные блоками (cache lines, ~64 байта). Ал
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Алгоритмы поиска](searching-algorithms-interview.md) — Binary Search требует сортировки
-- [Кучи](../data-structures/heaps-interview.md) — Heap Sort и PriorityQueue
-- [Массивы и строки](../data-structures/arrays-strings-interview.md) — Dutch National Flag
-- [Divide and Conquer](../algorithmic-paradigms/divide-and-conquer-interview.md) — Merge Sort, Quick Sort
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — почему сортировка не быстрее O(n log n)
-- [Two Pointers](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — merge two sorted arrays
-- [Связные списки](../data-structures/linked-lists-interview.md) — Merge Sort на linked list
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — Arrays.sort vs Collections.sort
-- [Java Stream API](../../programming-languages/java/java-stream-interview.md) — sorted() в стримах
-- [Графы](../data-structures/graphs-interview.md) — топологическая сортировка
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[searching-algorithms-interview|Алгоритмы поиска]] — Binary Search требует сортировки
+- [[heaps-interview|Кучи]] — Heap Sort и PriorityQueue
+- [[arrays-strings-interview|Массивы и строки]] — Dutch National Flag
+- [[divide-and-conquer-interview|Divide and Conquer]] — Merge Sort, Quick Sort
+- [[complexity-analysis-interview|Анализ сложности]] — почему сортировка не быстрее O(n log n)
+- [[two-pointers-sliding-window-interview|Two Pointers]] — merge two sorted arrays
+- [[linked-lists-interview|Связные списки]] — Merge Sort на linked list
+- [[java-collections-interview|Java Collections]] — Arrays.sort vs Collections.sort
+- [[java-stream-interview|Java Stream API]] — sorted() в стримах
+- [[graphs-interview|Графы]] — топологическая сортировка
 
 - [[searching-algorithms-interview|Алгоритмы поиска]]
 - [[backtracking-interview|Backtracking]]

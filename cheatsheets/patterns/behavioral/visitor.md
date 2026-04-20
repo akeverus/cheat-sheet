@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[strategy|Strategy]] — **Strategy Pattern**
 - [Алгоритмы и структуры данных](../../algorithms/) — алгоритмы
 
+- [[iterator|Итератор (Iterator)]]
+- [[interpreter|Интерпретатор (Interpreter)]]
+- [[state|Состояние (State)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

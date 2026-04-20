@@ -26,6 +26,11 @@ updated: "2026-04-20"
 - [Lombok Maven Plugin](https://projectlombok.org/setup/maven) — настройка **Maven**
 - [Lombok Gradle Plugin](https://projectlombok.org/setup/gradle) — настройка **Gradle**
 
+
+### См. также
+- [[jackson|Jackson: JSON сериализация в Java]]
+- [[java-gson|Gson]]
+- [[java-junit5|JUnit 5]]
 ## Содержание
 
 - [Введение в Lombok](#введение-в-lombok)

@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Обработка исключений в `Kotlin`: отсутствие `checked exceptions`, `try` как выражение, тип `Nothing`, `runCatching`/`Result`, аннотация `@Throws`, функция `use()`, `require`/`check`/`error`, обработка исключений в корутинах (`CoroutineExceptionHandler`, `SupervisorJob`), `sealed class` иерархии для ошибок, `Arrow Either`/`Raise`.
 
-Дата последнего обновления: 2026-04-13
-
 ## Введение
 
 В **`Kotlin`** все исключения непроверяемые (`unchecked`): компилятор не обязывает объявлять или обрабатывать их. Это осознанное решение дизайнеров языка, основанное на опыте `Java`, где `checked exceptions` часто приводили к пустым блокам `catch` и бессмысленному пробросу. Вместо этого `Kotlin` предлагает богатый набор инструментов для явной обработки ошибок: `try` как выражение, тип `Result`, `sealed class` иерархии, а также функциональные подходы через библиотеку `Arrow`. В корутинах обработка исключений имеет свои особенности, связанные со структурированной конкурентностью.
@@ -134,7 +132,7 @@ fun read() {
 }
 ```
 
-> Подробнее о взаимодействии с Java `checked exceptions` — см. [Kotlin/Java интероп](kotlin-interop-java-interview.md).
+> Подробнее о взаимодействии с Java `checked exceptions` — см. [[kotlin-interop-java-interview|Kotlin/Java интероп]].
 
 ## Q2. (!) Как использовать `try-catch` как выражение?
 
@@ -389,7 +387,7 @@ try {
 
 Можно указать несколько типов: `@Throws(IOException::class, ParseException::class)`.
 
-> Подробнее об интеропе — [Kotlin/Java интероп](kotlin-interop-java-interview.md).
+> Подробнее об интеропе — [[kotlin-interop-java-interview|Kotlin/Java интероп]].
 
 ## Q12. Как из `Kotlin` вызывать Java-код с `checked exceptions`?
 
@@ -507,7 +505,7 @@ scope.launch {
 }
 ```
 
-> Подробнее — [Корутины в Kotlin](kotlin-coroutines-interview.md).
+> Подробнее — [[kotlin-coroutines-interview|Корутины в Kotlin]].
 
 ## Q16. (!) Что такое `CoroutineExceptionHandler` и когда он срабатывает?
 
@@ -1599,14 +1597,14 @@ class AsyncTaskService(
 
 ## See also
 
-- [Основы Kotlin](kotlin-interview.md) — базовые конструкции языка, включая try как выражение
-- [Корутины в Kotlin](kotlin-coroutines-interview.md) — CoroutineExceptionHandler, SupervisorJob, CancellationException
-- [Kotlin/Java интероп](kotlin-interop-java-interview.md) — аннотация @Throws и checked exceptions на границе языков
-- [Коллекции в Kotlin](kotlin-collections-interview.md) — безопасная работа с коллекциями, mapNotNull, filterNotNull
-- [DSL в Kotlin](kotlin-dsl-interview.md) — обработка ошибок в DSL-блоках
-- [Сериализация в Kotlin](kotlin-serialization-interview.md) — обработка ошибок при десериализации
-- [Java Core](../java/java-core-interview.md) — checked vs unchecked exceptions в Java
-- [Java Concurrency](../java/java-concurrency-interview.md) — обработка исключений в потоках
+- [[kotlin-interview|Основы Kotlin]] — базовые конструкции языка, включая try как выражение
+- [[kotlin-coroutines-interview|Корутины в Kotlin]] — CoroutineExceptionHandler, SupervisorJob, CancellationException
+- [[kotlin-interop-java-interview|Kotlin/Java интероп]] — аннотация @Throws и checked exceptions на границе языков
+- [[kotlin-collections-interview|Коллекции в Kotlin]] — безопасная работа с коллекциями, mapNotNull, filterNotNull
+- [[kotlin-dsl-interview|DSL в Kotlin]] — обработка ошибок в DSL-блоках
+- [[kotlin-serialization-interview|Сериализация в Kotlin]] — обработка ошибок при десериализации
+- [[java-core-interview|Java Core]] — checked vs unchecked exceptions в Java
+- [[java-concurrency-interview|Java Concurrency]] — обработка исключений в потоках
 
 - [[kotlin-collections-interview|Kotlin коллекции]]
 - [[kotlin-coroutines-interview|Kotlin Coroutines]]

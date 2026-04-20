@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Шпаргалка охватывает архитектуру `Prometheus`, типы метрик, язык запросов `PromQL`, настройку алертов через `Alertmanager`, интеграцию с `Spring Boot` через `Micrometer`, визуализацию в `Grafana`, а также решения для долгосрочного хранения — `Thanos` и `VictoriaMetrics`.
 
-Дата последнего обновления: 2026-04-13.
-
 **`Prometheus`** — система мониторинга с открытым исходным кодом, основанная на pull-модели сбора метрик и собственной TSDB. **`Grafana`** — платформа визуализации, которая подключается к `Prometheus` как источнику данных и строит дашборды.
 
 ## Полезные ссылки
@@ -1274,13 +1272,13 @@ scrape_configs:
 
 ## See also
 
-- [Observability](observability-interview.md) — три столпа observability: метрики, логи, трейсы; связь с Prometheus и Grafana
-- [Метрики и трейсинг](metrics-tracing-interview.md) — концепции метрик, RED/USE методы, distributed tracing
-- [Стратегии логирования](logging-strategies-interview.md) — структурированные логи, ELK стек, Grafana Loki
-- [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — endpoints, health checks, metrics через Actuator
-- [Kubernetes](../devops/kubernetes-interview.md) — мониторинг кластера, kube-state-metrics, node-exporter в K8s
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — мониторинг распределённых систем, latency, availability
-- [Микросервисная архитектура](../architecture/microservices-interview.md) — мониторинг микросервисов, golden signals, circuit breaker metrics
+- [[observability-interview|Observability]] — три столпа observability: метрики, логи, трейсы; связь с Prometheus и Grafana
+- [[metrics-tracing-interview|Метрики и трейсинг]] — концепции метрик, RED/USE методы, distributed tracing
+- [[logging-strategies-interview|Стратегии логирования]] — структурированные логи, ELK стек, Grafana Loki
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — endpoints, health checks, metrics через Actuator
+- [[kubernetes-interview|Kubernetes]] — мониторинг кластера, kube-state-metrics, node-exporter в K8s
+- [[distributed-systems-interview|Распределённые системы]] — мониторинг распределённых систем, latency, availability
+- [[microservices-interview|Микросервисная архитектура]] — мониторинг микросервисов, golden signals, circuit breaker metrics
 
 - [[elk-stack-interview|ELK Stack]]
 - [[jaeger-zipkin-interview|Jaeger и Zipkin]]

@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Полное покрытие микросервисной архитектуры: разбиение на сервисы, коммуникация, согласованность, `Saga`, `CQRS`, `API Gateway`, `Service Discovery`, `Circuit Breaker`, `Service Mesh`, мониторинг.
 
-Дата последнего обновления: 2026-04-13
-
 **Микросервисная архитектура** -- частый фокус собеседований на Senior: согласованность, `Saga`, `2PC`, `API Gateway`, `Service Discovery`, паттерны отказоустойчивости и операционная сложность. Этот файл охватывает как теоретические основы, так и практические паттерны с примерами на `Spring Boot` / `Spring Cloud`.
 
 ## Полезные ссылки
@@ -122,7 +120,7 @@ graph LR
     NS --> MQ[Message Broker]
 ```
 
-**Практический критерий:** к микросервисам переходят, когда появляется реальная потребность в независимом деплое и масштабировании частей системы, а не «по моде». Подробнее о согласованности данных -- в [вопросах по распределённым системам](distributed-systems-interview.md).
+**Практический критерий:** к микросервисам переходят, когда появляется реальная потребность в независимом деплое и масштабировании частей системы, а не «по моде». Подробнее о согласованности данных -- в [[distributed-systems-interview|вопросах по распределённым системам]].
 
 ## Q2. (!) Монолит vs микросервисы -- когда что выбрать?
 
@@ -197,7 +195,7 @@ graph TB
 | `GraphQL` | Синхронный | Гибкие клиентские запросы, BFF |
 | `WebSocket` | Двусторонний | Реалтайм-уведомления |
 
-Подробнее о событийном взаимодействии -- в [вопросах по Event-driven паттернам](event-driven-patterns-interview.md), о `Kafka` -- в [вопросах по Kafka](../messaging/kafka-interview.md).
+Подробнее о событийном взаимодействии -- в [[event-driven-patterns-interview|вопросах по Event-driven паттернам]], о `Kafka` -- в [[kafka-interview|вопросах по Kafka]].
 
 ## Q6. Синхронное vs асинхронное взаимодействие -- когда что применять?
 
@@ -385,7 +383,7 @@ public class PaymentClient {
 }
 ```
 
-В `Kubernetes` `Service Discovery` встроен через `DNS` -- каждый `Service` доступен по имени (`payment-service.default.svc.cluster.local`), и `kube-proxy` выполняет балансировку. Подробнее -- в [вопросах по Kubernetes](../devops/kubernetes-interview.md).
+В `Kubernetes` `Service Discovery` встроен через `DNS` -- каждый `Service` доступен по имени (`payment-service.default.svc.cluster.local`), и `kube-proxy` выполняет балансировку. Подробнее -- в [[kubernetes-interview|вопросах по Kubernetes]].
 
 ## Q10. (!) Что такое Circuit Breaker и как он предотвращает каскадные сбои?
 
@@ -538,7 +536,7 @@ public class OrderQueryController {
 
 **Плюсы:** полная история изменений, возможность восстановления на любой момент времени, аудит «из коробки». **Минусы:** сложность запросов (нужен `CQRS`), рост хранилища, eventual consistency.
 
-Фреймворки для Java: `Axon Framework`, `Eventuate`. Подробнее о событийных паттернах -- в [Event-driven паттернах](event-driven-patterns-interview.md).
+Фреймворки для Java: `Axon Framework`, `Eventuate`. Подробнее о событийных паттернах -- в [[event-driven-patterns-interview|Event-driven паттернах]].
 
 ## Q14. Что такое паттерн Strangler Fig для миграции с монолита?
 
@@ -581,7 +579,7 @@ graph LR
 | Масштабируемость | Вертикальная | Горизонтальная |
 | Применение | Монолит, одна БД | Микросервисы, NoSQL |
 
-В микросервисной архитектуре `BASE` -- основной подход, так как `ACID`-транзакции между сервисами невозможны. Подробнее -- в [паттернах согласованности](consistency-patterns-interview.md).
+В микросервисной архитектуре `BASE` -- основной подход, так как `ACID`-транзакции между сервисами невозможны. Подробнее -- в [[consistency-patterns-interview|паттернах согласованности]].
 
 ## Q16. (!) Что такое CAP-теорема?
 
@@ -595,7 +593,7 @@ graph LR
 - **CP** (`ZooKeeper`, `etcd`, `HBase`) -- при разделении жертвуем доступностью
 - **AP** (`Cassandra`, `DynamoDB`, `Eureka`) -- при разделении жертвуем строгой согласованностью
 
-Подробнее -- в [вопросах по CAP-теореме](cap-theorem-interview.md).
+Подробнее -- в [[cap-theorem-interview|вопросах по CAP-теореме]].
 
 ## Q17. (!) Как обеспечивается атомарность операций в микросервисах?
 
@@ -772,7 +770,7 @@ sequenceDiagram
 5. **Оптимистическая блокировка** -- версионирование данных для обнаружения конфликтов
 6. **Bounded Context** -- минимизация межсервисных зависимостей
 
-Подробнее -- в [паттернах согласованности](consistency-patterns-interview.md).
+Подробнее -- в [[consistency-patterns-interview|паттернах согласованности]].
 
 ## Q23. (!) Как обрабатываются сбои и отказы в микросервисах?
 
@@ -952,7 +950,7 @@ sequenceDiagram
     GW-->>U: Response
 ```
 
-Внутри `Service Mesh` (`Istio`) включается `PeerAuthentication` с `STRICT` -- весь трафик между подами шифруется `mTLS` без изменений в коде. Подробнее о безопасности -- в [паттернах аутентификации](../security/authentication-authorization-patterns-interview.md) и [Spring Security](../frameworks/spring/spring-security-interview.md).
+Внутри `Service Mesh` (`Istio`) включается `PeerAuthentication` с `STRICT` -- весь трафик между подами шифруется `mTLS` без изменений в коде. Подробнее о безопасности -- в [[authentication-authorization-patterns-interview|паттернах аутентификации]] и [[spring-security-interview|Spring Security]].
 
 ## Q29. Как управлять версионированием API без прерывания работы?
 
@@ -994,7 +992,7 @@ public class OrderController {
 
 **Корреляция логов:** каждый запрос получает `traceId` (через `Micrometer Tracing` / `Spring Cloud Sleuth`); все логи всех сервисов помечаются этим `traceId`. Поиск логов по `traceId` в `ELK` показывает весь путь запроса.
 
-Подробнее -- в [вопросах по наблюдаемости](../monitoring/observability-interview.md) и [метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
+Подробнее -- в [[observability-interview|вопросах по наблюдаемости]] и [[metrics-tracing-interview|метрикам и трейсингу]].
 
 ## Q31. (!) Какие инструменты мониторинга и отладки используются?
 
@@ -1021,7 +1019,7 @@ public class OrderController {
 5. **CQRS** -- разделение read/write для независимого масштабирования
 6. **Auto-scaling** -- `Kubernetes HPA` по CPU/memory/custom metrics
 
-Подробнее -- в [паттернах масштабируемости](scalability-patterns-interview.md) и [стратегиях кэширования](caching-strategies-interview.md).
+Подробнее -- в [[scalability-patterns-interview|паттернах масштабируемости]] и [[caching-strategies-interview|стратегиях кэширования]].
 
 ## Q33. Какие аспекты транзакций необходимо учитывать при проектировании?
 
@@ -1082,7 +1080,7 @@ graph TB
 | Contract | Проверка совместимости API | Pact, Spring Cloud Contract |
 | E2E | Весь flow через все сервисы | Selenium, RestAssured |
 
-**Consumer-Driven Contracts** (`Spring Cloud Contract`, `Pact`) -- потребитель определяет ожидания от API; провайдер проверяет, что контракт выполняется. Это предотвращает ломающие изменения. Подробнее -- в [интеграционном тестировании](../testing/integration-testing-interview.md).
+**Consumer-Driven Contracts** (`Spring Cloud Contract`, `Pact`) -- потребитель определяет ожидания от API; провайдер проверяет, что контракт выполняется. Это предотвращает ломающие изменения. Подробнее -- в [[integration-testing-interview|интеграционном тестировании]].
 
 ## Q37. Как реализовать distributed tracing в микросервисах?
 
@@ -1128,7 +1126,7 @@ graph LR
     end
 ```
 
-В `Kubernetes` `Rolling Update` -- стратегия по умолчанию. Для `Canary` используют `Istio VirtualService` или `Argo Rollouts` -- процент трафика на новую версию увеличивается постепенно. Подробнее -- в [стратегиях деплоя](../cicd/deployment-strategies-interview.md).
+В `Kubernetes` `Rolling Update` -- стратегия по умолчанию. Для `Canary` используют `Istio VirtualService` или `Argo Rollouts` -- процент трафика на новую версию увеличивается постепенно. Подробнее -- в [[deployment-strategies-interview|стратегиях деплоя]].
 
 ## Q39. (!) Что такое закон Конвея (Conway's Law) и как он влияет на микросервисы?
 
@@ -1331,16 +1329,16 @@ public class UserClientService {
 
 ## See also
 
-- [Event-Driven паттерны](event-driven-patterns-interview.md) — EDA, Saga, Outbox и асинхронное взаимодействие в микросервисах
-- [Spring Cloud](../frameworks/spring/spring-cloud-interview.md) — Service Discovery, Config Server, Circuit Breaker в Spring Cloud
-- [Распределённые системы](distributed-systems-interview.md) — CAP, согласованность, репликация и партиционирование
-- [CAP-теорема](cap-theorem-interview.md) — выбор CP/AP для каждого микросервиса
-- [Apache Kafka](../messaging/kafka-interview.md) — брокер сообщений для асинхронной коммуникации
-- [Kubernetes](../devops/kubernetes-interview.md) — оркестрация и деплой микросервисов
-- [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker, Retry, Bulkhead между сервисами
-- [Паттерны масштабируемости](scalability-patterns-interview.md) — горизонтальное масштабирование микросервисов
+- [[event-driven-patterns-interview|Event-Driven паттерны]] — EDA, Saga, Outbox и асинхронное взаимодействие в микросервисах
+- [[spring-cloud-interview|Spring Cloud]] — Service Discovery, Config Server, Circuit Breaker в Spring Cloud
+- [[distributed-systems-interview|Распределённые системы]] — CAP, согласованность, репликация и партиционирование
+- [[cap-theorem-interview|CAP-теорема]] — выбор CP/AP для каждого микросервиса
+- [[kafka-interview|Apache Kafka]] — брокер сообщений для асинхронной коммуникации
+- [[kubernetes-interview|Kubernetes]] — оркестрация и деплой микросервисов
+- [[resilience-patterns-interview|Паттерны отказоустойчивости]] — Circuit Breaker, Retry, Bulkhead между сервисами
+- [[scalability-patterns-interview|Паттерны масштабируемости]] — горизонтальное масштабирование микросервисов
 
-**Рекомендация:** для внутренних синхронных вызовов — `OpenFeign` (простота); для высоконагруженных реактивных сервисов — `WebClient`; для критичного по latency межсервисного взаимодействия — `gRPC` (см. [вопросы по gRPC](../api/grpc-interview.md)).
+**Рекомендация:** для внутренних синхронных вызовов — `OpenFeign` (простота); для высоконагруженных реактивных сервисов — `WebClient`; для критичного по latency межсервисного взаимодействия — `gRPC` (см. [[grpc-interview|вопросы по gRPC]]).
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

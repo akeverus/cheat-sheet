@@ -24,6 +24,10 @@ updated: "2026-04-20"
 - [Бинарное дерево](../trees/) — бинарное дерево
 - [[standard-deviation|Стандартное отклонение]] — стандартное отклонение
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

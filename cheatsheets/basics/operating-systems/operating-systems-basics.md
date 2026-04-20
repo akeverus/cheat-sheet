@@ -26,6 +26,10 @@ updated: "2026-04-20"
 - [[computer-science-basics|Computer Science]]
 - [Компьютерные сети](../networks/)
 
+- [[linux-handbook|Linux и Bash: практический справочник]]
+- [[clean-code|Принципы чистого кода]]
+- [[git-basics|Основы Git]]
+- [[java-basics|Java: основы]]
 ## Содержание
 
 - [Введение в операционные системы](#введение-в-операционные-системы)

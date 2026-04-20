@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [[enterprise-patterns-overview|Enterprise Patterns Overview]]
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[enterprise-patterns-overview|Обзор Enterprise Patterns]]

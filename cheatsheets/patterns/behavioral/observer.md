@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[spring-framework-interview|Spring Core]] — события и ApplicationEvent
 - [Kotlin Delegates](https://kotlinlang.org/docs/delegation.html) — делегаты и observable
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
+- [[interpreter|Интерпретатор (Interpreter)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

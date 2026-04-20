@@ -29,6 +29,9 @@ updated: "2026-04-20"
 - [[postgres-basics|PostgreSQL]] — сравнение с реляционными базами данных
 - [[redis-basics|Redis]] — другая **NoSQL** база данных
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
 ## Содержание
 
 - [Введение в MongoDB](#введение-в-mongodb)

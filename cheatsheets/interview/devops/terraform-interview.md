@@ -17,9 +17,7 @@ updated: "2026-04-13"
 
 Полное покрытие `Terraform` для подготовки к собеседованию: концепции `IaC`, `HCL`-синтаксис, управление `state`, модули, `workspaces`, `CI/CD`-интеграция, `Terraform Cloud`, работа в команде, управление секретами и сравнение с альтернативами.
 
-Дата последнего обновления: 2026-04-13
-
-**`Terraform`** (HashiCorp) — инструмент `Infrastructure as Code` с декларативным подходом: описываешь желаемое состояние инфраструктуры в `HCL`-файлах, а `Terraform` сам вычисляет план изменений и применяет его. Поддерживает сотни `provider`-ов (AWS, GCP, Azure, Kubernetes и др.). Является де-факто стандартом для управления облачной инфраструктурой в среде [Kubernetes](kubernetes-interview.md), [CI/CD-пайплайнов](../cicd/pipeline-design-interview.md) и [микросервисных](../architecture/microservices-interview.md) платформ.
+**`Terraform`** (HashiCorp) — инструмент `Infrastructure as Code` с декларативным подходом: описываешь желаемое состояние инфраструктуры в `HCL`-файлах, а `Terraform` сам вычисляет план изменений и применяет его. Поддерживает сотни `provider`-ов (AWS, GCP, Azure, Kubernetes и др.). Является де-факто стандартом для управления облачной инфраструктурой в среде [[kubernetes-interview|Kubernetes]], [[pipeline-design-interview|CI/CD-пайплайнов]] и [[microservices-interview|микросервисных]] платформ.
 
 ## Полезные ссылки
 
@@ -1745,10 +1743,10 @@ terraform.tfstate.*
 
 ## See also
 
-- [Kubernetes](kubernetes-interview.md)
-- [Docker](docker-interview.md)
-- [CI/CD пайплайны](../cicd/pipeline-design-interview.md)
-- [Стратегии деплоя](../cicd/deployment-strategies-interview.md)
-- [Git](git-interview.md)
-- [Распределённые системы](../architecture/distributed-systems-interview.md)
-- [Application Security](../security/application-security-interview.md)
+- [[kubernetes-interview|Kubernetes]]
+- [[docker-interview|Docker]]
+- [[pipeline-design-interview|CI/CD пайплайны]]
+- [[deployment-strategies-interview|Стратегии деплоя]]
+- [[git-interview|Git]]
+- [[distributed-systems-interview|Распределённые системы]]
+- [[application-security-interview|Application Security]]

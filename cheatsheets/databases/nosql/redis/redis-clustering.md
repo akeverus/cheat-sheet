@@ -28,6 +28,9 @@ related: ["databases/redis-basics.md", "databases/redis-replication.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-replication|redis-replication.md]] — репликация
 
+- [[redis-high-availability|Redis: Высокая доступность]]
+- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
+- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
 ## Содержание
 
 - [Введение в Redis Cluster](#введение-в-redis-cluster)

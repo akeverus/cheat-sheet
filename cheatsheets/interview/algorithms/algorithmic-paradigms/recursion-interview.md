@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 Рекурсия — фундамент DFS, divide-and-conquer, backtracking, DP. На интервью важно различать **base case** и **recursive step**, понимать **call stack** и риски `StackOverflowError`, знать классику: factorial, Fibonacci, Hanoi, fast power, обход деревьев.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -455,7 +453,7 @@ void postorder(TreeNode node) {
 
 `O(n)` время, `O(h)` стек.
 
-Подробнее — в [Деревья](../data-structures/trees-interview.md).
+Подробнее — в [[trees-interview|Деревья]].
 
 ## Q17. (!) Высота дерева?
 
@@ -528,7 +526,7 @@ graph TD
 3. **Дерево рекурсии** — сумма работы по уровням
 4. **Substitution method** — угадать оценку, доказать индукцией
 
-Подробнее — в [Анализ сложности](../complexity/complexity-analysis-interview.md) и [Divide and Conquer](divide-and-conquer-interview.md).
+Подробнее — в [[complexity-analysis-interview|Анализ сложности]] и [[divide-and-conquer-interview|Divide and Conquer]].
 
 ## Q22. (!) Когда рекурсия даёт StackOverflowError?
 
@@ -564,7 +562,7 @@ int fib(int n) {
 
 Превращает экспоненциальную рекурсию (Fibonacci) в полиномиальную. По сути — **DP top-down**.
 
-Применяется когда подзадачи **перекрываются**. См. [DP](dynamic-programming-interview.md).
+Применяется когда подзадачи **перекрываются**. См. [[dynamic-programming-interview|DP]].
 
 ## Q24. Как преобразовать рекурсию в итерацию?
 
@@ -614,7 +612,7 @@ void permute(int[] nums, List<Integer> current, ...) {
 }
 ```
 
-Подробнее — в [Backtracking](backtracking-interview.md).
+Подробнее — в [[backtracking-interview|Backtracking]].
 
 ## Q26. Mutual recursion — что это?
 
@@ -654,18 +652,18 @@ boolean isOdd(int n) {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Divide and Conquer](divide-and-conquer-interview.md) — D&C основан на рекурсии
-- [Backtracking](backtracking-interview.md) — рекурсия с undo
-- [DP](dynamic-programming-interview.md) — рекурсия + memoization
-- [Деревья](../data-structures/trees-interview.md) — обходы рекурсивны
-- [Графы](../data-structures/graphs-interview.md) — DFS рекурсивен
-- [Стеки и очереди](../data-structures/stacks-queues-interview.md) — стек = call stack
-- [Связные списки](../data-structures/linked-lists-interview.md) — рекурсивный реверс
-- [Массивы и строки](../data-structures/arrays-strings-interview.md) — рекурсивный sum, reverse
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — recurrence relations
-- [JVM](../../jvm/jvm-interview.md) — stack frames, Xss, отсутствие TCO
-- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — Project Loom virtual threads
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[divide-and-conquer-interview|Divide and Conquer]] — D&C основан на рекурсии
+- [[backtracking-interview|Backtracking]] — рекурсия с undo
+- [[dynamic-programming-interview|DP]] — рекурсия + memoization
+- [[trees-interview|Деревья]] — обходы рекурсивны
+- [[graphs-interview|Графы]] — DFS рекурсивен
+- [[stacks-queues-interview|Стеки и очереди]] — стек = call stack
+- [[linked-lists-interview|Связные списки]] — рекурсивный реверс
+- [[arrays-strings-interview|Массивы и строки]] — рекурсивный sum, reverse
+- [[complexity-analysis-interview|Анализ сложности]] — recurrence relations
+- [[jvm-interview|JVM]] — stack frames, Xss, отсутствие TCO
+- [[java-concurrency-interview|Java Concurrency]] — Project Loom virtual threads
 
 - [[backtracking-interview|Backtracking]]
 - [[divide-and-conquer-interview|Divide and Conquer]]

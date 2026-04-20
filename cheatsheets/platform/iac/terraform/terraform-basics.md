@@ -1,6 +1,6 @@
 ---
 title: "Основы Terraform (редирект)"
-description: "Основной документ по теме: [Terraform](terraform.md)."
+description: "Основной документ по теме: [[terraform|Terraform]]."
 tags:
   - platform
   - iac

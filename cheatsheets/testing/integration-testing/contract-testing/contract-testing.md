@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[testcontainers|Testcontainers]]
 
 
+- [[database-testing|Тестирование базы данных (Database Testing)]]
+- [[cucumber|Cucumber для Java]]
 ## Содержание
 
 - [Зачем контрактное тестирование](#зачем-контрактное-тестирование)

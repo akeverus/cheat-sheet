@@ -27,6 +27,10 @@ related: ["scala/scala-basics.md"]
 ### См. также
 - [[scala-basics|Основы Scala]]
 
+- [[quarkus-logging|Quarkus: Logging — Логирование]]
+- [[micronaut-logging|Micronaut: Logging — Logback, SLF4J и Structured Logging]]
+- [[slf4j|SLF4J для Java]]
+- [[logback|Logback для Java]]
 ## Содержание
 
 - [Введение в логирование](#введение-в-логирование)

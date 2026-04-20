@@ -32,6 +32,7 @@ updated: "2026-04-20"
 - [[structured-logging|Структурированное логирование]]
 - [[distributed-tracing|Distributed Tracing]]
 
+- [[centralized-logging|Централизованное логирование для Java]]
 ## Содержание
 
 - [Введение в логирование](#введение-в-логирование)

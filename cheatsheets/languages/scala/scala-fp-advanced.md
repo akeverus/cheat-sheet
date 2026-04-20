@@ -31,6 +31,9 @@ related: ["scala/scala-fp-basics.md", "scala/scala-basics.md"]
 - [[scala-fp-basics|Основы функционального программирования]]
 - [[scala-basics|Основы Scala]]
 
+- [[scala-for-comprehensions|Scala For Comprehensions]]
+- [[scala-collections-list|Scala Collections — List]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
 ## Содержание
 
 - [Functors](#functors)

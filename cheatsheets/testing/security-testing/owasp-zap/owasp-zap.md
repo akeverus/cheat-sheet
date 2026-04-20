@@ -27,6 +27,10 @@ updated: "2026-04-20"
 
 **См. также:** [[burp-suite|Burp Suite]], [[sqlmap]], [[testing-tools-overview|Testing Tools Overview]]
 
+
+### См. также
+- [[security-testing|Тестирование безопасности]]
+- [[cucumber|Cucumber для Java]]
 ## Содержание
 
 - [Введение](#введение)

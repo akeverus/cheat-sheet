@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [SQL](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[sql-basics|SQL Basics]]

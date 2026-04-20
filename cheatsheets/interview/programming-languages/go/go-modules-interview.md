@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 С Go 1.11 (2018) появились **modules** — современная система управления зависимостями. Заменили `GOPATH` подход, дают воспроизводимые сборки, semantic versioning, и поддержку private/proxied модулей. С Go 1.18 — workspace mode для multi-module проектов.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -637,14 +635,14 @@ go get github.com/myorg/some-lib@abc1234
 
 ## See also
 
-- [Go (базовый)](go-interview.md) — основы языка
-- [Go Standard Library](go-stdlib-interview.md) — без внешних зависимостей
-- [Go Testing](go-testing-interview.md) — testify, gomock как зависимости
-- [Go Concurrency](go-concurrency-interview.md) — golang.org/x/sync/errgroup
-- [Gradle и Maven](../../devops/gradle-maven-interview.md) — для сравнения dependency management
-- [Git](../../devops/git-interview.md) — модули привязаны к git
-- [Микросервисы](../../architecture/microservices-interview.md) — workspaces для monorepo
-- [Application Security](../../security/application-security-interview.md) — supply chain (GOPROXY, GOSUMDB)
+- [[go-interview|Go (базовый)]] — основы языка
+- [[go-stdlib-interview|Go Standard Library]] — без внешних зависимостей
+- [[go-testing-interview|Go Testing]] — testify, gomock как зависимости
+- [[go-concurrency-interview|Go Concurrency]] — golang.org/x/sync/errgroup
+- [[gradle-maven-interview|Gradle и Maven]] — для сравнения dependency management
+- [[git-interview|Git]] — модули привязаны к git
+- [[microservices-interview|Микросервисы]] — workspaces для monorepo
+- [[application-security-interview|Application Security]] — supply chain (GOPROXY, GOSUMDB)
 
 - [[go-concurrency-interview|Go Concurrency]]
 - [[go-generics-interview|Go Generics]]

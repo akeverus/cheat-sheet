@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `ScyllaDB` — open-source NoSQL wide-column database. **Drop-in replacement Cassandra**, написан на **C++** (vs Cassandra Java) с **shard-per-core** architecture. Обещает **10x lower latency** и higher throughput. Использует **Seastar framework** для async I/O. Создан 2014 ex-Cloudius (KVM).
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -169,7 +167,7 @@ CREATE TABLE users (
 - **Clustering key** — sorting within partition
 - **Columns** — defined в schema
 
-Подробнее — в [Apache Cassandra](cassandra-interview.md).
+Подробнее — в [[cassandra-interview|Apache Cassandra]].
 
 ## Q6. Partition key, clustering key?
 
@@ -517,17 +515,17 @@ IoT = millions of devices sending data continuously.
 
 ## See also
 
-- [Apache Cassandra](cassandra-interview.md) — original same data model
-- [PostgreSQL](postgresql-interview.md) — для сравнения
-- [MongoDB](mongodb-interview.md) — alternative NoSQL
-- [DynamoDB](dynamodb-interview.md) — Alternator API
-- [ClickHouse](clickhouse-interview.md) — для analytics (Scylla — OLTP)
-- [CockroachDB](cockroachdb-interview.md) — distributed SQL (different paradigm)
-- [Redis](redis-interview.md) — caching layer
-- [Database Architecture](database-architecture-interview.md) — NoSQL context
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — gossip, consensus
-- [CAP Theorem](../architecture/cap-theorem-interview.md) — Scylla = AP
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — horizontal scaling
-- [Микросервисы](../architecture/microservices-interview.md) — Scylla per service
-- [Stream Processing](../data-engineering/stream-processing-interview.md) — Kafka → Scylla pattern
+- [[cassandra-interview|Apache Cassandra]] — original same data model
+- [[postgresql-interview|PostgreSQL]] — для сравнения
+- [[mongodb-interview|MongoDB]] — alternative NoSQL
+- [[dynamodb-interview|DynamoDB]] — Alternator API
+- [[clickhouse-interview|ClickHouse]] — для analytics (Scylla — OLTP)
+- [[cockroachdb-interview|CockroachDB]] — distributed SQL (different paradigm)
+- [[redis-interview|Redis]] — caching layer
+- [[database-architecture-interview|Database Architecture]] — NoSQL context
+- [[distributed-systems-interview|Распределённые системы]] — gossip, consensus
+- [[cap-theorem-interview|CAP Theorem]] — Scylla = AP
+- [[scalability-patterns-interview|Scalability Patterns]] — horizontal scaling
+- [[microservices-interview|Микросервисы]] — Scylla per service
+- [[stream-processing-interview|Stream Processing]] — Kafka → Scylla pattern
 - [[apache-kafka-interview|Apache Kafka]] — common ingestion path

@@ -27,6 +27,8 @@ BDD-фреймворк для написания автотестов на ес�
 - [[selenium|Selenium]]
 
 
+- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
+- [[micronaut-testing|Micronaut: Testing — Unit Tests, Integration Tests и Mocking]]
 ## Содержание
 
 - [Зачем Cucumber](#зачем-cucumber)

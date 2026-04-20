@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[hill-climbing|Hill Climbing]]
 - [[multi-swarm|Multi-Swarm Optimization]]
 
+- [[logistic-regression|Логистическая регрессия]]
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
 ## Содержание
 
 - [Введение](#введение)

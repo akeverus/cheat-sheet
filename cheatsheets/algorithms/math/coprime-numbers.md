@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[greatest-common-divisor|Наибольший общий делитель]] — НОД
 - [[least-common-multiple|Наименьшее общее кратное]] — НОК
 
+- [[line-intersection|Пересечение прямых (Line Intersection)]]
+- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
+- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

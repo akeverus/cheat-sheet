@@ -30,6 +30,8 @@ updated: "2026-04-20"
 - [[kotlin-concurrency-basics|Основы корутин]]
 - [[kotlin-reactive|Реактивное программирование]]
 
+- [[kotlin-performance|Kotlin Performance]]
+- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
 ## Содержание
 
 - [Coroutine Context и Dispatchers (детально)](#coroutine-context-и-dispatchers-детально)

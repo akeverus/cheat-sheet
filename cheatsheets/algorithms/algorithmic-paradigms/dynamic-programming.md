@@ -27,6 +27,10 @@ updated: "2026-04-20"
 - [[README|Обзор алгоритмов]] — алгоритмы
 - [[README|Структуры данных]] — структуры данных
 
+- [[greedy-algorithms|Жадные алгоритмы (Greedy Algorithms)]]
+- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
+- [[backtracking|Поиск с возвратом (Backtracking)]]
+- [[divide-and-conquer|Разделяй и властвуй (Divide and Conquer)]]
 ## Содержание
 
 - [Введение в динамическое программирование](#введение-в-динамическое-программирование)

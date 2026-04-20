@@ -32,6 +32,10 @@ updated: "2026-04-20"
 - [gRPC](https://grpc.io/) — **gRPC**
 - [[spring-rest|Spring REST]] — **Spring REST**
 
+- [[micronaut-http|Micronaut: HTTP — Controllers, Routing и Request Handling]]
+- [[java-http-clients|HTTP-клиенты в Java]]
+- [[spring-boot|Spring Boot — Полное руководство]]
+- [[quarkus-openapi|Quarkus: OpenAPI — API Documentation]]
 ## Содержание
 
 - [Принципы REST](#принципы-rest)

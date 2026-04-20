@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 Массивы и строки — самые частые задачи на алгоритмических интервью. Большинство классических задач (`Two Sum`, `Reverse String`, `Maximum Subarray`, `Longest Substring Without Repeating`) — про правильный выбор техник: **two pointers**, **prefix sums**, **sliding window**, **hash maps**.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -663,7 +661,7 @@ String reverse3(String s) {
 
 **Особый случай:** **юникодные surrogate pairs** (эмодзи, китайские иероглифы). Простой `char[]` реверс сломает их. Корректно — через `StringBuilder.reverse()`, который учитывает surrogates.
 
-Подробнее — в [Java String](../../programming-languages/java/java-string-interview.md).
+Подробнее — в [[java-string-interview|Java String]].
 
 ## Q22. (!) Проверка палиндрома?
 
@@ -938,7 +936,7 @@ void swapArith(int[] arr, int i, int j) {
 }
 ```
 
-В реальном коде используют временную переменную — это читабельнее. XOR-трюк показывает понимание побитовых операций. Подробнее — в [Java Types](../../programming-languages/java/java-types-interview.md).
+В реальном коде используют временную переменную — это читабельнее. XOR-трюк показывает понимание побитовых операций. Подробнее — в [[java-types-interview|Java Types]].
 
 ## Q31. Перевод числа в произвольную систему счисления?
 
@@ -998,7 +996,7 @@ c.intern() == a;  // true — intern возвращает ссылку из pool
 
 **Правильно:** всегда использовать `.equals()` или `Objects.equals()` для строк (защита от NPE).
 
-Подробнее — в [Java String](../../programming-languages/java/java-string-interview.md).
+Подробнее — в [[java-string-interview|Java String]].
 
 ## Q34. Когда использовать char[] вместо String для алгоритмов?
 
@@ -1065,17 +1063,17 @@ while (i < n) {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — Big O для типичных операций
-- [Two Pointers и Sliding Window](../algorithmic-paradigms/two-pointers-sliding-window-interview.md) — глубокий разбор паттернов
-- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — Dutch National Flag и 3-way partition
-- [Алгоритмы поиска](../sorting-searching/searching-algorithms-interview.md) — линейный, бинарный
-- [Хеш-таблицы](hash-tables-interview.md) — для Two Sum, Group Anagrams
-- [Динамическое программирование](../algorithmic-paradigms/dynamic-programming-interview.md) — Kadane как пример DP
-- [Связные списки](linked-lists-interview.md) — фаст/слоу указатели для циклов
-- [Java String](../../programming-languages/java/java-string-interview.md) — immutability, intern, surrogate pairs
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — ArrayList vs LinkedList
-- [Java Types](../../programming-languages/java/java-types-interview.md) — XOR, побитовые операции
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[complexity-analysis-interview|Анализ сложности]] — Big O для типичных операций
+- [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]] — глубокий разбор паттернов
+- [[sorting-algorithms-interview|Алгоритмы сортировки]] — Dutch National Flag и 3-way partition
+- [[searching-algorithms-interview|Алгоритмы поиска]] — линейный, бинарный
+- [[hash-tables-interview|Хеш-таблицы]] — для Two Sum, Group Anagrams
+- [[dynamic-programming-interview|Динамическое программирование]] — Kadane как пример DP
+- [[linked-lists-interview|Связные списки]] — фаст/слоу указатели для циклов
+- [[java-string-interview|Java String]] — immutability, intern, surrogate pairs
+- [[java-collections-interview|Java Collections]] — ArrayList vs LinkedList
+- [[java-types-interview|Java Types]] — XOR, побитовые операции
 
 - [[graphs-interview|Графы]]
 - [[hash-tables-interview|Хеш-таблицы]]

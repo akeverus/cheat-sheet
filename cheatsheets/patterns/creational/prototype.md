@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[java-concurrency-basics|Java Concurrency]] — многопоточность и память
 - [[factory-method|Factory Method]] — **Factory Method Pattern**
 
+- [[singleton|Одиночка (Singleton)]]
+- [[builder|Строитель (Builder)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

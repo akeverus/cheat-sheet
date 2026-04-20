@@ -26,6 +26,7 @@ updated: "2026-04-20"
 - [[insomnia-basics|Insomnia]] — основы **Insomnia**
 - [[api-documentation-basics|API Documentation]] — основы документации **API**
 
+- [[grpc|gRPC]]
 ## Содержание
 
 - [Введение в API тестирование](#введение-в-api-тестирование)

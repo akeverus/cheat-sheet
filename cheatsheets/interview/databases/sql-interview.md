@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Краткие ответы по `SQL`: `DDL`/`DML`, ограничения, индексы, `JOIN`, оконные функции, транзакции, нормализация, оптимизация запросов, `JDBC`/`JPA`.
 
-Дата последнего обновления: 2026-04-13
-
 Краткое введение: **SQL** — основа работы с реляционными БД. На собеседовании проверяют знание `DDL`/`DML`, индексов, транзакций, оконных функций, нормализации, оптимизации запросов и отличий диалектов (`PostgreSQL`, `MySQL` и др.). Также часто спрашивают про взаимодействие из Java через `JDBC`, `JPA` и `Spring Data`.
 
 ## Полезные ссылки
@@ -260,7 +258,7 @@ FROM customers;
 | Размер | 8 байт | 4 байта | 8 байт |
 | Часовой пояс | Не учитывает | Автоматически конвертирует | Автоматически конвертирует |
 
-> **Рекомендация**: в `PostgreSQL` используйте `TIMESTAMPTZ` для корректной работы с часовыми поясами. Подробнее о работе с датами в Java — в [вопросах по Hibernate](hibernate-interview.md).
+> **Рекомендация**: в `PostgreSQL` используйте `TIMESTAMPTZ` для корректной работы с часовыми поясами. Подробнее о работе с датами в Java — в [[hibernate-interview|вопросах по Hibernate]].
 
 ## Q7. (!) Что такое нормализация и какие нормальные формы существуют?
 
@@ -395,7 +393,7 @@ CREATE TRIGGER salary_change_trigger
 
 Типы триггеров: `BEFORE` / `AFTER` / `INSTEAD OF` (для `View`); `FOR EACH ROW` / `FOR EACH STATEMENT`.
 
-> **Совет**: избегайте сложной бизнес-логики в триггерах — это усложняет отладку и может вызвать каскадные проблемы. Подробнее о событийном подходе — в [вопросах по архитектуре БД](database-architecture-interview.md).
+> **Совет**: избегайте сложной бизнес-логики в триггерах — это усложняет отладку и может вызвать каскадные проблемы. Подробнее о событийном подходе — в [[database-architecture-interview|вопросах по архитектуре БД]].
 
 ## Q12. Что такое `Temporary` table?
 
@@ -956,7 +954,7 @@ CLUSTER employees USING idx_emp_department;
 -- хранят значение PK → поэтому компактный PK (INT) лучше UUID
 ```
 
-> Подробнее о хранении данных — в [вопросах по архитектуре БД](database-architecture-interview.md).
+> Подробнее о хранении данных — в [[database-architecture-interview|вопросах по архитектуре БД]].
 
 ## Q36. Что такое `Covering Index` и `Partial Index`?
 
@@ -1022,7 +1020,7 @@ BEGIN;
 COMMIT;
 ```
 
-> Подробнее о `ACID` в распределённых системах — в [вопросах по архитектуре БД](database-architecture-interview.md).
+> Подробнее о `ACID` в распределённых системах — в [[database-architecture-interview|вопросах по архитектуре БД]].
 
 ## Q39. (!) Какие уровни изоляции транзакций существуют?
 
@@ -1120,7 +1118,7 @@ public class Product {
 // При конкурентном UPDATE → OptimisticLockException
 ```
 
-Подробнее о блокировках в ORM — в [вопросах по Hibernate](hibernate-interview.md).
+Подробнее о блокировках в ORM — в [[hibernate-interview|вопросах по Hibernate]].
 
 ## Q42. (!) Что такое `EXPLAIN` и как читать план выполнения?
 
@@ -1208,7 +1206,7 @@ List<Order> findAll();
 private Customer customer;
 ```
 
-Подробнее о решении `N+1` — в [вопросах по Hibernate](hibernate-interview.md).
+Подробнее о решении `N+1` — в [[hibernate-interview|вопросах по Hibernate]].
 
 ## Q45. (!) В чём разница между `JDBC` и `JPA`?
 
@@ -1867,12 +1865,12 @@ TRUNCATE orders;     -- быстро, но нельзя откатить час�
 
 ## See also
 
-- [MongoDB](mongodb-interview.md) — вопросы по NoSQL базе MongoDB
-- [Hibernate](hibernate-interview.md) — ORM-фреймворк для работы с SQL из Java
-- [Архитектура БД](database-architecture-interview.md) — вопросы по архитектуре баз данных
-- [Redis](redis-interview.md) — кэширование и in-memory хранилища
-- [Elasticsearch](elasticsearch-interview.md) — полнотекстовый поиск
-- [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки
+- [[mongodb-interview|MongoDB]] — вопросы по NoSQL базе MongoDB
+- [[hibernate-interview|Hibernate]] — ORM-фреймворк для работы с SQL из Java
+- [[database-architecture-interview|Архитектура БД]] — вопросы по архитектуре баз данных
+- [[redis-interview|Redis]] — кэширование и in-memory хранилища
+- [[elasticsearch-interview|Elasticsearch]] — полнотекстовый поиск
+- [[database-transactions-interview|Транзакции и уровни изоляции]] — ACID, MVCC, блокировки
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

@@ -26,6 +26,8 @@ updated: "2026-04-20"
 - [[java-streams-fp|Stream API]] — **Stream API**
 - [[visitor|Visitor]] — **Visitor Pattern**
 
+- [[interpreter|Интерпретатор (Interpreter)]]
+- [[state|Состояние (State)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

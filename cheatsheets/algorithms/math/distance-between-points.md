@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[circle-area-calculation|Вычисление площади круга]] — площадь круга
 - [[line-intersection|Пересечение линий]] — пересечение линий
 
+- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
+- [[factorial-calculation|Вычисление факториала (Factorial Calculation)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

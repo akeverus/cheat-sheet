@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[combinatorial-problems-overview|Комбинаторные задачи]] — комбинаторика
 - [[README|Перестановки строк]] — алгоритмы со строками
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

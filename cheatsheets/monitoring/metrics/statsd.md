@@ -30,6 +30,8 @@ StatsD — лёгкий демон для приёма метрик по UDP (с
 - [[infrastructure-monitoring|Infrastructure monitoring]] — обзор мониторинга
 - [Monitoring](../) — раздел мониторинга
 
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
 ## Содержание
 
 - [Введение](#введение)

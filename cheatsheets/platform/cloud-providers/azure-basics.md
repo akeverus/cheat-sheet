@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Azure Architecture Center](https://docs.microsoft.com/azure/architecture/)
 - [Azure CLI Documentation](https://docs.microsoft.com/cli/azure/)
 
+
+### См. также
+- [[kubernetes-cloud|Kubernetes в облаке]]
 ## Содержание
 
 - [Основы Azure](#основы-azure)

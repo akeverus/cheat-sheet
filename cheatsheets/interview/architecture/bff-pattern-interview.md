@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `BFF (Backend for Frontend)` — pattern: **separate backend per client type** (web, mobile, TV), tailored для specific UX requirements. Aggregates microservices, shapes responses, hides complexity. Popularized SoundCloud/Netflix. Contrasts с generic API Gateway.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 - [Sam Newman — Backends for Frontends](https://samnewman.io/patterns/architectural/bff/)
@@ -557,13 +555,13 @@ Client ←20ms→ Edge BFF (cached) ←150ms→ Services (cold path)
 
 ## See also
 
-- [API Gateway](api-gateway-interview.md) — related but different
-- [Microservices](microservices-interview.md) — BFF connects them
-- [Edge Computing](edge-computing-interview.md) — BFF at edge
-- [GraphQL](../api/graphql-interview.md) — often used as BFF
+- [[api-gateway-interview|API Gateway]] — related but different
+- [[microservices-interview|Microservices]] — BFF connects them
+- [[edge-computing-interview|Edge Computing]] — BFF at edge
+- [[graphql-interview|GraphQL]] — often used as BFF
 - [[rest-api-design-interview|REST API Design]] — BFF vs public API
-- [Caching Strategies](caching-strategies-interview.md) — BFF caching
-- [Resilience Patterns](resilience-patterns-interview.md) — fallbacks, timeouts
-- [Clean Architecture](clean-architecture-interview.md) — boundary design
-- [DDD](ddd-interview.md) — context mapping
-- [Scalability Patterns](scalability-patterns-interview.md) — BFF as layer
+- [[caching-strategies-interview|Caching Strategies]] — BFF caching
+- [[resilience-patterns-interview|Resilience Patterns]] — fallbacks, timeouts
+- [[clean-architecture-interview|Clean Architecture]] — boundary design
+- [[ddd-interview|DDD]] — context mapping
+- [[scalability-patterns-interview|Scalability Patterns]] — BFF as layer

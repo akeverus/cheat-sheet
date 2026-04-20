@@ -22,6 +22,10 @@ updated: "2026-04-20"
 - [Consul GitHub](https://github.com/hashicorp/consul)
 - [Consul Enterprise](https://www.hashicorp.com/products/consul)
 
+
+### См. также
+- [[nginx-advanced|Nginx Advanced]]
+- [[infrastructure-tools-overview|Обзор инфраструктурных инструментов]]
 ## Содержание
 
 - [Основы Consul](#основы-consul)

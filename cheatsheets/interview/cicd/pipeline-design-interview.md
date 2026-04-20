@@ -16,8 +16,6 @@ updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: Дизайн пайплайнов
 
-Дата последнего обновления: 2026-04-13
-
 Комплексное руководство по вопросам собеседования на тему дизайна `CI/CD` пайплайнов для Senior Java Developer. Охватывает `Jenkins`, `GitHub Actions`, `GitLab CI`, `Gradle`, `Docker`, стратегии тестирования, безопасность и оптимизацию.
 
 ## Полезные ссылки
@@ -127,9 +125,9 @@ graph LR
 1. **`Checkout`** — получение кода из репозитория
 2. **`Build`** — компиляция (`Gradle`, `Maven`)
 3. **`Unit Tests`** — быстрые юнит-тесты
-4. **`Integration Tests`** — тесты с БД, внешними сервисами (см. [интеграционное тестирование](../testing/integration-testing-interview.md))
+4. **`Integration Tests`** — тесты с БД, внешними сервисами (см. [[integration-testing-interview|интеграционное тестирование]])
 5. **`Static Analysis`** — линтеры, `SonarQube`, `Checkstyle`
-6. **`Build Image`** — сборка `Docker`-образа (см. [Docker](../devops/docker-interview.md))
+6. **`Build Image`** — сборка `Docker`-образа (см. [[docker-interview|Docker]])
 7. **`Push to Registry`** — публикация образа в `Harbor`, `ECR`, `Nexus`
 8. **`Deploy`** — развёртывание в окружения (dev -> staging -> prod)
 9. **`Smoke/Health Check`** — проверка работоспособности после деплоя
@@ -956,7 +954,7 @@ graph LR
 
 **Подходы:**
 1. **Один pipeline с этапами** — dev автоматически, staging после тестов, prod после approval
-2. **`GitOps`** — `ArgoCD`/`Flux` синхронизирует кластер с `Git`-репозиторием; деплой = коммит в `Git` (подробнее в [Kubernetes](../devops/kubernetes-interview.md))
+2. **`GitOps`** — `ArgoCD`/`Flux` синхронизирует кластер с `Git`-репозиторием; деплой = коммит в `Git` (подробнее в [[kubernetes-interview|Kubernetes]])
 
 **Конфигурация по окружению:**
 - `Kubernetes`: `ConfigMap`/`Secret` per namespace
@@ -1040,7 +1038,7 @@ graph TD
 | Релизы | По каждому merge в main | Через release-ветку |
 | Feature flags | Да, обязательно | Не обязательно |
 
-**`Trunk-based`** упрощает `CI` и частые деплои; подходит для команд с `feature flags` (см. [стратегии деплоя](deployment-strategies-interview.md)). **`GitFlow`** — для проектов со строгим релизным циклом и длинными стабилизационными фазами.
+**`Trunk-based`** упрощает `CI` и частые деплои; подходит для команд с `feature flags` (см. [[deployment-strategies-interview|стратегии деплоя]]). **`GitFlow`** — для проектов со строгим релизным циклом и длинными стабилизационными фазами.
 
 В pipeline условия по ветке определяют набор этапов: `if: github.ref == 'refs/heads/main'` или `rules: if: $CI_COMMIT_BRANCH == "main"` в `GitLab`.
 
@@ -1078,7 +1076,7 @@ jobs:
 
 ## Q23. (!) Как организовать тесты в pipeline (`unit`, `integration`, `e2e`)?
 
-Тесты организуются по пирамиде тестирования (подробнее в [стратегиях тестирования](../testing/test-strategies-interview.md)):
+Тесты организуются по пирамиде тестирования (подробнее в [[test-strategies-interview|стратегиях тестирования]]):
 
 ```mermaid
 graph TD
@@ -1216,7 +1214,7 @@ class OrderRepositoryTest {
 
 **В `Jenkins`** нужен agent с `Docker` или `DinD` (Docker-in-Docker). Альтернатива — запуск agent в `Docker` с примонтированным `/var/run/docker.sock`.
 
-Подробнее о `Testcontainers` — в [интеграционном тестировании](../testing/integration-testing-interview.md).
+Подробнее о `Testcontainers` — в [[integration-testing-interview|интеграционном тестировании]].
 
 ---
 
@@ -1306,7 +1304,7 @@ dependencyCheck {
 
 ## Q28. (!) Как организовать сборку `Docker`-образа в pipeline?
 
-Сборка `Docker`-образа — типичный этап `pipeline` после успешных тестов. Подробнее о `Docker` — в [Docker](../devops/docker-interview.md).
+Сборка `Docker`-образа — типичный этап `pipeline` после успешных тестов. Подробнее о `Docker` — в [[docker-interview|Docker]].
 
 **`Dockerfile` для `Spring Boot` (multi-stage):**
 
@@ -1392,7 +1390,7 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 
 ## Q30. Как реализовать `blue-green` и `canary` деплой в pipeline?
 
-Подробно стратегии деплоя описаны в [стратегиях деплоя](deployment-strategies-interview.md). Здесь — как они реализуются в pipeline.
+Подробно стратегии деплоя описаны в [[deployment-strategies-interview|стратегиях деплоя]]. Здесь — как они реализуются в pipeline.
 
 **`Blue-Green`:**
 
@@ -1557,7 +1555,7 @@ build-order-service:
 
 ## Q35. Что такое pipeline для инфраструктуры (`IaC`, `Terraform`)?
 
-`Pipeline` для `IaC` — применение изменений инфраструктуры через `CI/CD` (подробнее о `Kubernetes` — в [Kubernetes](../devops/kubernetes-interview.md)).
+`Pipeline` для `IaC` — применение изменений инфраструктуры через `CI/CD` (подробнее о `Kubernetes` — в [[kubernetes-interview|Kubernetes]]).
 
 **Этапы:**
 
@@ -1787,13 +1785,13 @@ gh run list \
 
 ## See also
 
-- [Стратегии деплоя](deployment-strategies-interview.md) — `blue-green`, `canary`, `rolling update`
-- [Docker](../devops/docker-interview.md) — контейнеризация, `Dockerfile`, `multi-stage build`
-- [Kubernetes](../devops/kubernetes-interview.md) — оркестрация, `Helm`, `ArgoCD`
-- [Git](../devops/git-interview.md) — ветвление, `trunk-based`, `GitFlow`
-- [Стратегии тестирования](../testing/test-strategies-interview.md) — пирамида тестов, `TDD`
-- [Test Automation](../testing/test-automation-interview.md) — автоматизация тестирования в CI/CD
-- [Практики code review](../leadership/code-review-practices-interview.md) — quality gates и автоматизация проверок
+- [[deployment-strategies-interview|Стратегии деплоя]] — `blue-green`, `canary`, `rolling update`
+- [[docker-interview|Docker]] — контейнеризация, `Dockerfile`, `multi-stage build`
+- [[kubernetes-interview|Kubernetes]] — оркестрация, `Helm`, `ArgoCD`
+- [[git-interview|Git]] — ветвление, `trunk-based`, `GitFlow`
+- [[test-strategies-interview|Стратегии тестирования]] — пирамида тестов, `TDD`
+- [[test-automation-interview|Test Automation]] — автоматизация тестирования в CI/CD
+- [[code-review-practices-interview|Практики code review]] — quality gates и автоматизация проверок
 
 - [[deployment-strategies-interview|Стратегии деплоя]]
 - [[ai-agents-interview|AI Agents]]

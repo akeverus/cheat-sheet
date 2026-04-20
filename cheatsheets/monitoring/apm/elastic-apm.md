@@ -24,6 +24,11 @@ APM на базе стека Elastic: метрики приложений, тр�
 - [Elastic APM Java Agent](https://www.elastic.co/guide/en/apm/agent/java/current/index.html)
 - [APM Server](https://www.elastic.co/guide/en/apm/server/current/index.html)
 
+
+### См. также
+- [[monitoring-best-practices|Лучшие практики мониторинга]]
+- [[observability-guide|Руководство по Observability]]
+- [[infrastructure-monitoring|Infrastructure Monitoring (обзор)]]
 ## Содержание
 
 - [Архитектура](#архитектура)

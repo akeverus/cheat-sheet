@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
 
 
+- [[postgres-indexes|PostgreSQL: типы индексов]]
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-queries|PostgreSQL: запросы и агрегаты]]
 ## Содержание
 
 - [Введение](#введение)

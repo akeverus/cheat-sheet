@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Strangler Fig` — pattern для **gradual migration** монолита → microservices (или legacy → modern). Вместо "big bang rewrite" — new functionality wraps old, progressively replacing. Name от Martin Fowler (2004), inspired by strangler fig trees. Industry standard для risk-managed modernization.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 - [Martin Fowler — Strangler Fig Application](https://martinfowler.com/bliki/StranglerFigApplication.html)
@@ -652,16 +650,16 @@ class StripePaymentProvider implements ... { ... }  // new
 
 ## See also
 
-- [Microservices](microservices-interview.md) — migration destination
-- [API Gateway](api-gateway-interview.md) — often hosts routing
-- [BFF Pattern](bff-pattern-interview.md) — related architecture pattern
-- [Event-Driven Patterns](event-driven-patterns-interview.md) — CDC, events
-- [Saga Pattern](saga-pattern-interview.md) — distributed transactions
-- [DDD](ddd-interview.md) — bounded contexts guide decomposition
-- [Technical Debt](../code-quality/technical-debt-interview.md) — strangler as debt retirement
-- [Refactoring Patterns](../code-quality/refactoring-patterns-interview.md) — branch by abstraction
-- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — canary, feature flags
-- [Consistency Patterns](consistency-patterns-interview.md) — during migration
+- [[microservices-interview|Microservices]] — migration destination
+- [[api-gateway-interview|API Gateway]] — often hosts routing
+- [[bff-pattern-interview|BFF Pattern]] — related architecture pattern
+- [[event-driven-patterns-interview|Event-Driven Patterns]] — CDC, events
+- [[saga-pattern-interview|Saga Pattern]] — distributed transactions
+- [[ddd-interview|DDD]] — bounded contexts guide decomposition
+- [[technical-debt-interview|Technical Debt]] — strangler as debt retirement
+- [[refactoring-patterns-interview|Refactoring Patterns]] — branch by abstraction
+- [[deployment-strategies-interview|Deployment Strategies]] — canary, feature flags
+- [[consistency-patterns-interview|Consistency Patterns]] — during migration
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

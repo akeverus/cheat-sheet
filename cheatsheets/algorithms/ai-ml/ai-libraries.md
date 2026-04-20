@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[deeplearning4j|Deeplearning4j]] — нейронные сети
 - [[opennlp|Apache OpenNLP]] — обработка естественного языка
 
+- [[logistic-regression|Логистическая регрессия]]
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
 ## Содержание
 
 - [Обзор](#обзор)

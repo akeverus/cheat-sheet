@@ -19,6 +19,11 @@ updated: "2026-04-20"
 - [ADR GitHub](https://adr.github.io/)
 - [Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions)
 
+
+### См. также
+- [[architecture-patterns|Архитектурные паттерны]]
+- [[soa|SOA (Service-Oriented Architecture)]]
+- [[ddd|Domain-Driven Design (DDD)]]
 ## Содержание
 
 - [Что такое ADR](#что-такое-adr)

@@ -27,6 +27,9 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-replication|redis-replication.md]] — репликация
 
+- [[redis-troubleshooting|Redis: Решение проблем]]
+- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
 ## Содержание
 
 - [Введение в персистентность Redis](#введение-в-персистентность-redis)

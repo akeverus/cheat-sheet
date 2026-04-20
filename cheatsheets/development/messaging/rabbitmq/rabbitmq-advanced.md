@@ -20,6 +20,9 @@ updated: "2026-04-20"
 - [RabbitMQ Management](https://www.rabbitmq.com/management.html)
 - [Spring AMQP](https://docs.spring.io/spring-amqp/reference/)
 
+
+### См. также
+- [[activemq|Apache ActiveMQ]]
 ## Содержание
 
 - [Кластеризация и высокая доступность](#кластеризация-и-высокая-доступность)

@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [Spring State Machine](https://spring.io/projects/spring-statemachine) — **Spring State Machine**
 - [[strategy|Strategy]] — **Strategy Pattern**
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
+- [[interpreter|Интерпретатор (Interpreter)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

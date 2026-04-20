@@ -33,6 +33,8 @@ updated: "2026-04-20"
 - [[secrets-management|Secrets Management]] — безопасное хранение ключей и токенов
 
 
+- [[jwt-oauth2|JWT и OAuth2 / OIDC]]
+- [[owasp-top-10|OWASP Top 10 (2021) — разбор категорий]]
 ## Содержание
 
 - [Модели аутентификации API](#модели-аутентификации-api)

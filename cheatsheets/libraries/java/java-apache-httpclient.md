@@ -30,6 +30,10 @@ updated: "2026-04-20"
 - [Maven Central](https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5) — **HttpClient** 5.x
 - [Maven Central 4.x](https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient) — **HttpClient** 4.x
 
+
+### См. также
+- [[java-http-clients|HTTP-клиенты в Java]]
+- [[java-jackson|Jackson: JSON-сериализация в Java]]
 ## Содержание
 
 - [Введение в Apache HttpClient](#введение-в-apache-httpclient)

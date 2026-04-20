@@ -26,6 +26,9 @@ related: ["databases/clickhouse-performance.md", "databases/clickhouse-replicati
 - [[clickhouse-performance|clickhouse-performance.md]] — оптимизация и производительность
 - [[clickhouse-replication|clickhouse-replication.md]] — кластеры и репликация
 
+- [[clickhouse-materialized-views|ClickHouse: Материализованные представления — Предварительно вычисленные агрегаты и трансформации]]
+- [[clickhouse|ClickHouse]]
+- [[clickhouse-basics|ClickHouse: Основы колоночной аналитической базы данных]]
 ## Содержание
 
 - [Введение в интеграции](#введение-в-интеграции)

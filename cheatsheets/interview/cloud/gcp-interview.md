@@ -18,8 +18,6 @@ updated: "2026-04-19"
 
 `GCP` — облако Google (~12% доли рынка 2025, 3-е место после AWS, Azure). Сильные стороны: **BigQuery** (DWH), **Kubernetes** (Google создал K8s), **AI/ML** (Vertex AI, Gemini), **networking** (best in class). На интервью знают: BigQuery, GKE, Cloud Run, Cloud Functions, IAM, отличия от AWS.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -160,7 +158,7 @@ Organization
 
 **Считается** **gold standard** managed K8s. **EKS, AKS** — догоняют, но GKE pioneers.
 
-Подробнее — в [Kubernetes](../devops/kubernetes-interview.md).
+Подробнее — в [[kubernetes-interview|Kubernetes]].
 
 ## Q6. (!) Cloud Run — managed containers?
 
@@ -365,7 +363,7 @@ SELECT label, feature1, feature2 FROM `mydataset.training`;
 
 В **2025** — **самый popular** DWH (наряду с Snowflake).
 
-Подробнее — в [Data Warehousing](../data-engineering/data-warehousing-interview.md).
+Подробнее — в [[data-warehousing-interview|Data Warehousing]].
 
 ## Q18. Dataflow (Apache Beam)?
 
@@ -388,7 +386,7 @@ pipeline.apply(PubsubIO.readStrings().fromTopic(topic))
 
 Конкурирует с **Spark Streaming, Flink**. Но **Dataflow managed** — easier ops.
 
-Подробнее — в [Flink](../data-engineering/apache-flink-interview.md) (для сравнения streaming).
+Подробнее — в [[apache-flink-interview|Flink]] (для сравнения streaming).
 
 ## Q19. Pub/Sub vs Kafka?
 
@@ -537,7 +535,7 @@ model = genai.GenerativeModel('gemini-2.5-pro')
 response = model.generate_content("Hello")
 ```
 
-Подробнее — в [LLM Basics](../ai-ml/llm-basics-interview.md).
+Подробнее — в [[llm-basics-interview|LLM Basics]].
 
 ## Q27. (!) GCP vs AWS — strengths/weaknesses?
 
@@ -584,19 +582,19 @@ response = model.generate_content("Hello")
 
 ## See also
 
-- [AWS](aws-interview.md) — главный конкурент
-- [Azure](azure-interview.md) — второй конкурент
-- [Serverless](serverless-interview.md) — Cloud Run, Cloud Functions
-- [Cloud-native Patterns](cloud-native-patterns-interview.md) — paterns
-- [Kubernetes](../devops/kubernetes-interview.md) — GKE
-- [Data Warehousing](../data-engineering/data-warehousing-interview.md) — BigQuery deep dive
-- [Apache Flink](../data-engineering/apache-flink-interview.md) — vs Dataflow
-- [Apache Kafka](../messaging/kafka-interview.md) — vs Pub/Sub
-- [PostgreSQL](../databases/postgresql-interview.md) — Cloud SQL
-- [Микросервисы](../architecture/microservices-interview.md) — где live на GCP
-- [LLM Basics](../ai-ml/llm-basics-interview.md) — Gemini
-- [MLOps](../ai-ml/mlops-interview.md) — Vertex AI
-- [Application Security](../security/application-security-interview.md) — IAM
+- [[aws-interview|AWS]] — главный конкурент
+- [[azure-interview|Azure]] — второй конкурент
+- [[serverless-interview|Serverless]] — Cloud Run, Cloud Functions
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — paterns
+- [[kubernetes-interview|Kubernetes]] — GKE
+- [[data-warehousing-interview|Data Warehousing]] — BigQuery deep dive
+- [[apache-flink-interview|Apache Flink]] — vs Dataflow
+- [[kafka-interview|Apache Kafka]] — vs Pub/Sub
+- [[postgresql-interview|PostgreSQL]] — Cloud SQL
+- [[microservices-interview|Микросервисы]] — где live на GCP
+- [[llm-basics-interview|LLM Basics]] — Gemini
+- [[mlops-interview|MLOps]] — Vertex AI
+- [[application-security-interview|Application Security]] — IAM
 
 - [[aws-interview|AWS]]
 - [[aws-lambda-interview|AWS Lambda]]

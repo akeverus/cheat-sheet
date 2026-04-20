@@ -37,6 +37,9 @@ updated: "2026-04-20"
 - [**JPA Buddy**](https://jpa-buddy.com/)
 - [**Hibernate** Performance](https://vladmihalcea.com/tutorials/hibernate/)
 
+
+### См. также
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
 ## Содержание
 
 - [Введение в ORM и JPA](#введение-в-orm-и-jpa)

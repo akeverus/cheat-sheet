@@ -27,6 +27,9 @@ related: ["scala/scala-basics.md", "scala/scala-type-system.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-type-system|Система типов]]
 
+- [[go-reflection|Go: рефлексия]]
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
 ## Содержание
 
 - [Введение в Reflection](#введение-в-reflection)

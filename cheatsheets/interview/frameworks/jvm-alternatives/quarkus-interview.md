@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 `Quarkus` — Java-фреймворк от Red Hat, ориентированный на **Kubernetes-native приложения**. Главные фичи: **build-time DI**, **GraalVM native image** (запуск за миллисекунды, потребление ~30MB RAM), **MicroProfile** API, реактивный стек на Mutiny, hot-reload в dev-mode.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -622,7 +620,7 @@ public Uni<List<Person>> list() {
 
 Применение: high-throughput системы, где blocking JDBC становится bottleneck. Не для всех — обычный Hibernate проще и достаточен.
 
-Подробнее — в [Hibernate](../../databases/hibernate-interview.md).
+Подробнее — в [[hibernate-interview|Hibernate]].
 
 ## Q24. (!) Что такое dev mode и live reload?
 
@@ -725,7 +723,7 @@ given()
     .body("name", equalTo("Alice"));
 ```
 
-Подробнее — в [Integration Testing](../../testing/integration-testing-interview.md).
+Подробнее — в [[integration-testing-interview|Integration Testing]].
 
 ## Q29. (!) Как Quarkus интегрируется с Kubernetes?
 
@@ -791,20 +789,20 @@ Quarkus — отличный выбор для **новых** cloud-native пр�
 
 ## See also
 
-- [Spring Boot](../spring/spring-boot-interview.md) — главный конкурент
-- [Ktor](ktor-interview.md) — другой lightweight JVM фреймворк
-- [Micronaut](micronaut-interview.md) — ещё один build-time DI фреймворк
-- [Vert.x](vertx-interview.md) — основа реактивного стека Quarkus
-- [Spring WebFlux](../spring/spring-webflux-interview.md) — реактивный аналог
-- [Hibernate](../../databases/hibernate-interview.md) — основа Panache
-- [Spring Data JPA](../spring/spring-data-jpa-interview.md) — аналог Repository в Spring
-- [Микросервисы](../../architecture/microservices-interview.md) — основное применение Quarkus
-- [Kubernetes](../../devops/kubernetes-interview.md) — нативная интеграция
-- [Docker](../../devops/docker-interview.md) — для native image
-- [JVM](../../jvm/jvm-interview.md) — JIT vs AOT компиляция
-- [JVM Performance Tuning](../../performance/jvm-performance-tuning-interview.md) — startup и memory
-- [Memory Management](../../performance/memory-management-interview.md) — почему native жрёт меньше
-- [Integration Testing](../../testing/integration-testing-interview.md) — RestAssured
+- [[spring-boot-interview|Spring Boot]] — главный конкурент
+- [[ktor-interview|Ktor]] — другой lightweight JVM фреймворк
+- [[micronaut-interview|Micronaut]] — ещё один build-time DI фреймворк
+- [[vertx-interview|Vert.x]] — основа реактивного стека Quarkus
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный аналог
+- [[hibernate-interview|Hibernate]] — основа Panache
+- [[spring-data-jpa-interview|Spring Data JPA]] — аналог Repository в Spring
+- [[microservices-interview|Микросервисы]] — основное применение Quarkus
+- [[kubernetes-interview|Kubernetes]] — нативная интеграция
+- [[docker-interview|Docker]] — для native image
+- [[jvm-interview|JVM]] — JIT vs AOT компиляция
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — startup и memory
+- [[memory-management-interview|Memory Management]] — почему native жрёт меньше
+- [[integration-testing-interview|Integration Testing]] — RestAssured
 
 - [[ktor-interview|Ktor]]
 - [[micronaut-interview|Micronaut]]

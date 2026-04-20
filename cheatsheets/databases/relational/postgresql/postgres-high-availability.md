@@ -27,6 +27,9 @@ related: ["databases/postgres-replication.md", "databases/postgres-backup-restor
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-replication|postgres-replication.md]] — репликация
 
+- [[redis-high-availability|Redis: Высокая доступность]]
+- [[redis-replication|Redis: Репликация]]
+- [[postgres-security|PostgreSQL: Безопасность]]
 ## Содержание
 
 - [Введение в высокую доступность](#введение-в-высокую-доступность)

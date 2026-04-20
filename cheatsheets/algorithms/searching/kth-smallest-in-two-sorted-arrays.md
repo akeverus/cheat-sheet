@@ -23,6 +23,8 @@ updated: "2026-04-20"
 - [[merge-two-sorted-arrays|Объединение двух отсортированных массивов]] — merge two sorted
 - [[merge-sorted-sequences|Объединение отсортированных последовательностей]] — merge K sorted
 
+- [[maximum-subarray|Максимальный подмассив (Maximum Subarray Problem)]]
+- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

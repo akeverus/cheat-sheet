@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Подробные ответы по `PostgreSQL`: архитектура, типы данных, индексы, `EXPLAIN`, транзакции, `MVCC`, `VACUUM`, партиционирование, оконные функции, `CTE`, репликация, `full-text search`, `JSONB`, `PgBouncer`, блокировки, производительность, расширения.
 
-Дата последнего обновления: 2026-04-13
-
 Краткое введение: **PostgreSQL** — объектно-реляционная СУБД с открытым кодом, известная надёжностью, расширяемостью и полным соответствием стандарту `SQL`. Отличается богатой системой типов (`JSONB`, массивы, `UUID`, `enum`, пользовательские типы), мощным планировщиком запросов, `MVCC`-изоляцией и развитой инфраструктурой для репликации и горизонтального масштабирования. На собеседованиях проверяют понимание внутреннего устройства (процессы, `WAL`, `shared buffers`), умение читать планы запросов (`EXPLAIN ANALYZE`), знание индексов, уровней изоляции и типичных приёмов оптимизации.
 
 ## Полезные ссылки
@@ -1507,20 +1505,17 @@ WHERE installed_version IS NOT NULL;
 
 ## See also
 
-- [SQL](sql-interview.md)
-- [Database Architecture](database-architecture-interview.md)
-- [Транзакции и уровни изоляции](database-transactions-interview.md)
-- [Hibernate](hibernate-interview.md)
-- [Apache Cassandra](cassandra-interview.md)
-- [Redis](redis-interview.md)
-- [MongoDB](mongodb-interview.md)
-- [Elasticsearch](elasticsearch-interview.md)
-- [Flyway и Liquibase](flyway-liquibase-interview.md)
-- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md)
 
-- [[cassandra-interview|Apache Cassandra]]
-- [[clickhouse-interview|ClickHouse]]
-- [[cockroachdb-interview|CockroachDB]]
+- [[sql-interview|SQL]]
 - [[database-architecture-interview|Database Architecture]]
 - [[database-transactions-interview|Транзакции и уровни изоляции]]
+- [[hibernate-interview|Hibernate]]
+- [[cassandra-interview|Apache Cassandra]]
+- [[redis-interview|Redis]]
+- [[mongodb-interview|MongoDB]]
+- [[elasticsearch-interview|Elasticsearch]]
+- [[flyway-liquibase-interview|Flyway и Liquibase]]
+- [[spring-data-jpa-interview|Spring Data JPA]]
+- [[clickhouse-interview|ClickHouse]]
+- [[cockroachdb-interview|CockroachDB]]
 - [[dynamodb-interview|DynamoDB]]

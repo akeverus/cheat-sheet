@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.mapper.view;
 
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewStats;
@@ -15,10 +16,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class MvcModelAttributeMapperTest {
 
-    private final MvcModelAttributeMapper mapper = new MvcModelAttributeMapper();
+    private final AppProperties appProperties = mock(AppProperties.class);
+    private final MvcModelAttributeMapper mapper = new MvcModelAttributeMapper(appProperties);
 
     @Test
     void appliesFocusPageStateAndReviewFlag() {

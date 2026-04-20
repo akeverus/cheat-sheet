@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `OpenTelemetry (OTel)` — **vendor-neutral** стандарт для observability (от слияния OpenTracing + OpenCensus в 2019). 2-й по активности проект CNCF после Kubernetes. Стандарт de facto для **distributed tracing**, набирает momentum для metrics и logs. Заменяет vendor-specific SDKs (Datadog, NewRelic, etc.).
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -680,19 +678,19 @@ deployment.environment: production
 
 ## See also
 
-- [Jaeger / Zipkin](jaeger-zipkin-interview.md) — backends для traces
-- [ELK Stack](elk-stack-interview.md) — backend для logs
-- [Loki + Grafana](loki-grafana-interview.md) — backend для logs
-- [Prometheus + Grafana](prometheus-grafana-interview.md) — backend для metrics
-- [Observability](observability-interview.md) — общая концепция
-- [Метрики и трейсинг](metrics-tracing-interview.md) — concepts
-- [Logging](../logging/logging-interview.md) — log management
-- [Стратегии логирования](logging-strategies-interview.md) — best practices
-- [Микросервисы](../architecture/microservices-interview.md) — где OTel needed
-- [Kubernetes](../devops/kubernetes-interview.md) — Collector в K8s
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability pillar
-- [Application Profiling](../performance/application-profiling-interview.md) — alternative для perf
-- [Spring Boot Actuator](../frameworks/spring/spring-boot-actuator-interview.md) — Actuator + OTel
+- [[jaeger-zipkin-interview|Jaeger / Zipkin]] — backends для traces
+- [[elk-stack-interview|ELK Stack]] — backend для logs
+- [[loki-grafana-interview|Loki + Grafana]] — backend для logs
+- [[prometheus-grafana-interview|Prometheus + Grafana]] — backend для metrics
+- [[observability-interview|Observability]] — общая концепция
+- [[metrics-tracing-interview|Метрики и трейсинг]] — concepts
+- [[logging-interview|Logging]] — log management
+- [[logging-strategies-interview|Стратегии логирования]] — best practices
+- [[microservices-interview|Микросервисы]] — где OTel needed
+- [[kubernetes-interview|Kubernetes]] — Collector в K8s
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — observability pillar
+- [[application-profiling-interview|Application Profiling]] — alternative для perf
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — Actuator + OTel
 
 - [[elk-stack-interview|ELK Stack]]
 - [[jaeger-zipkin-interview|Jaeger и Zipkin]]

@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Java Concurrency` для `Senior Java Developer`. Включает потоки, синхронизацию, `java.util.concurrent`, `CompletableFuture`, `Virtual Threads` и `Structured Concurrency`.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -317,7 +315,7 @@ System.out.println("t завершён");
 
 Без синхронизации `JVM` **не гарантирует**, что изменение переменной в одном потоке будет видно другому потоку. Это происходит из-за кэширования значений в регистрах и L1/L2 кэшах процессора.
 
-Подробнее о том, как `JMM` связана с устройством `JVM`, см. в [вопросах по JVM](../../jvm/jvm-interview.md).
+Подробнее о том, как `JMM` связана с устройством `JVM`, см. в [[jvm-interview|вопросах по JVM]].
 
 ## Q10. (!) Что такое `volatile`? Что гарантирует `JMM` для `volatile` полей?
 
@@ -363,7 +361,7 @@ public class ImmutableHolder {
 }
 ```
 
-Это фундамент для создания неизменяемых (immutable) объектов, которые автоматически потокобезопасны. Подробнее о неизменяемости и паттернах проектирования — в [вопросах по паттернам](../../design-patterns/design-patterns-interview.md).
+Это фундамент для создания неизменяемых (immutable) объектов, которые автоматически потокобезопасны. Подробнее о неизменяемости и паттернах проектирования — в [[design-patterns-interview|вопросах по паттернам]].
 
 ## Q12. (!) Что такое `happens-before`?
 
@@ -477,7 +475,7 @@ synchronized (sharedObject) {
 
 Способы достижения потокобезопасности:
 
-1. **Иммутабельность** — `final` поля, нет сеттеров (см. [Java Core](java-core-interview.md))
+1. **Иммутабельность** — `final` поля, нет сеттеров (см. [[java-core-interview|Java Core]])
 2. **`synchronized`** — синхронизация критических секций
 3. **`Atomic` классы** — lock-free атомарные операции
 4. **`ThreadLocal`** — изолированные данные для каждого потока
@@ -916,11 +914,11 @@ CompletableFuture.supplyAsync(() -> fetchUserFromDB(userId))    // async
 | Комбинирование | `allOf()`, `anyOf()` |
 | Async-варианты | `thenApplyAsync()`, `thenAcceptAsync()` |
 
-По умолчанию `CompletableFuture` использует `ForkJoinPool.commonPool()`. Можно передать свой `Executor` вторым аргументом. Подробнее об асинхронных API в [вопросах по Java 8](java-8-interview.md).
+По умолчанию `CompletableFuture` использует `ForkJoinPool.commonPool()`. Можно передать свой `Executor` вторым аргументом. Подробнее об асинхронных API в [[java-8-interview|вопросах по Java 8]].
 
 ## Q35. (!) Разница между `thenApply()`, `thenCompose()` и `thenCombine()`
 
-Аналогия с `Stream API` (см. [Java Stream](java-stream-interview.md)):
+Аналогия с `Stream API` (см. [[java-stream-interview|Java Stream]]):
 
 | Метод | Аналог Stream | Что делает |
 |---|---|---|
@@ -1085,7 +1083,7 @@ String received = exchanger.exchange("Данные от потока 2");
 
 ## Q41. (!) Что такое `Concurrent Collection Classes`?
 
-Потокобезопасные коллекции из `java.util.concurrent`, оптимизированные для конкурентного доступа (подробнее в [вопросах по коллекциям](java-collections-interview.md)):
+Потокобезопасные коллекции из `java.util.concurrent`, оптимизированные для конкурентного доступа (подробнее в [[java-collections-interview|вопросах по коллекциям]]):
 
 | Класс | Аналог | Механизм |
 |---|---|---|
@@ -1184,7 +1182,7 @@ ThreadInfo[] infos = bean.dumpAllThreads(true, true);
 long[] deadlocked = bean.findDeadlockedThreads();
 ```
 
-Совет: инструменты [тюнинга JVM](../../performance/jvm-performance-tuning-interview.md) такие как `VisualVM`, `JFR` (`Java Flight Recorder`) позволяют анализировать дампы потоков с графическим интерфейсом.
+Совет: инструменты [[jvm-performance-tuning-interview|тюнинга JVM]] такие как `VisualVM`, `JFR` (`Java Flight Recorder`) позволяют анализировать дампы потоков с графическим интерфейсом.
 
 ## Q46. (!) Что такое `Virtual Threads` и чем они отличаются от platform threads?
 
@@ -1650,17 +1648,17 @@ Response fetchWithTimeout(long userId) throws Exception {
 
 ## See also
 
-- [Java Core](java-core-interview.md) — основы Java, ключевые слова, `Object`, иммутабельность
-- [Java Collections](java-collections-interview.md) — потокобезопасные коллекции (`ConcurrentHashMap`, `BlockingQueue`)
-- [Java 8+](java-8-interview.md) — `CompletableFuture`, лямбды, функциональные интерфейсы
-- [Java Generics](java-generics-interview.md) — параметрический полиморфизм и его влияние на коллекции
-- [OOP & Java](java-oop-interview.md) — инкапсуляция и принципы SOLID в контексте многопоточности
-- [Java 17-21](java-17-21-interview.md) — `Virtual Threads`, `Structured Concurrency`, `ScopedValue`
-- [Java Stream API](java-stream-interview.md) — параллельные стримы и их связь с `ForkJoinPool`
-- [JVM](../../jvm/jvm-interview.md) — управление памятью, `GC` и его влияние на производительность потоков
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — `@Async`, `@Scheduled`, `ThreadPoolTaskExecutor`
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны многопоточного программирования
-- [Профилирование приложений](../../performance/application-profiling-interview.md) — анализ deadlock, thread dump, `JFR`
+- [[java-core-interview|Java Core]] — основы Java, ключевые слова, `Object`, иммутабельность
+- [[java-collections-interview|Java Collections]] — потокобезопасные коллекции (`ConcurrentHashMap`, `BlockingQueue`)
+- [[java-8-interview|Java 8+]] — `CompletableFuture`, лямбды, функциональные интерфейсы
+- [[java-generics-interview|Java Generics]] — параметрический полиморфизм и его влияние на коллекции
+- [[java-oop-interview|OOP & Java]] — инкапсуляция и принципы SOLID в контексте многопоточности
+- [[java-17-21-interview|Java 17-21]] — `Virtual Threads`, `Structured Concurrency`, `ScopedValue`
+- [[java-stream-interview|Java Stream API]] — параллельные стримы и их связь с `ForkJoinPool`
+- [[jvm-interview|JVM]] — управление памятью, `GC` и его влияние на производительность потоков
+- [[spring-boot-interview|Spring Boot]] — `@Async`, `@Scheduled`, `ThreadPoolTaskExecutor`
+- [[design-patterns-interview|Design Patterns]] — паттерны многопоточного программирования
+- [[application-profiling-interview|Профилирование приложений]] — анализ deadlock, thread dump, `JFR`
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

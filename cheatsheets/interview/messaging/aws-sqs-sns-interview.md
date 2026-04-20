@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 **SQS (Simple Queue Service)** — managed message queue (point-to-point). **SNS (Simple Notification Service)** — managed pub/sub (one-to-many). Используются вместе для **event-driven** AWS architectures. **EventBridge** — modern alternative для complex event routing.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -422,7 +420,7 @@ Events:
 
 **Подвох:** SQS visibility timeout должен быть **>> Lambda timeout** (recommend 6x).
 
-Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
+Подробнее — в [[aws-lambda-interview|AWS Lambda]].
 
 ## Q18. (!) EventBridge vs SQS/SNS?
 
@@ -533,18 +531,18 @@ Existing Kafka ecosystem?
 
 ## See also
 
-- [Apache Kafka](kafka-interview.md) — alternative
-- [RabbitMQ](rabbitmq-interview.md) — другой alternative
-- [NATS](nats-interview.md) — lightweight alternative
-- [Apache Pulsar](pulsar-interview.md) — cloud-native alternative
-- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
-- [AWS](../cloud/aws-interview.md) — context
-- [AWS Lambda](../cloud/aws-lambda-interview.md) — common consumer
-- [Serverless](../cloud/serverless-interview.md) — SQS triggers
-- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — concepts
-- [Микросервисы](../architecture/microservices-interview.md) — decoupling
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — SQS for sagas
-- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, DLQ
+- [[kafka-interview|Apache Kafka]] — alternative
+- [[rabbitmq-interview|RabbitMQ]] — другой alternative
+- [[nats-interview|NATS]] — lightweight alternative
+- [[pulsar-interview|Apache Pulsar]] — cloud-native alternative
+- [[message-brokers-comparison-interview|Message Brokers Comparison]] — overview
+- [[aws-interview|AWS]] — context
+- [[aws-lambda-interview|AWS Lambda]] — common consumer
+- [[serverless-interview|Serverless]] — SQS triggers
+- [[event-driven-patterns-interview|Event-driven Patterns]] — concepts
+- [[microservices-interview|Микросервисы]] — decoupling
+- [[saga-pattern-interview|Saga Pattern]] — SQS for sagas
+- [[resilience-patterns-interview|Resilience Patterns]] — retries, DLQ
 
 - [[kafka-interview|Apache Kafka]]
 - [[message-brokers-comparison-interview|Сравнение Message Brokers]]

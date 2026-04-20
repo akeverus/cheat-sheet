@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Zero Trust` — security model: **never trust, always verify**. Каждый request authenticated и authorized независимо от network location. **Не perimeter-based** (firewall + VPN). Pioneered Google **BeyondCorp** (2014). NIST 800-207 — official framework. Mainstream после COVID remote work.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -253,7 +251,7 @@ PEP allows or denies based on PDP response.
 
 **Vault PKI** — issues short-lived certs.
 
-Подробнее — в [mTLS](mtls-interview.md).
+Подробнее — в [[mtls-interview|mTLS]].
 
 ## Q11. Service mesh roles (Istio, Linkerd)?
 
@@ -286,7 +284,7 @@ spec:
 # Then explicit allows
 ```
 
-Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
+Подробнее — [[istio-service-mesh-interview|Istio]], [[linkerd-interview|Linkerd]].
 
 ## Q12. (!) ZTNA vs VPN?
 
@@ -455,19 +453,19 @@ Compromised device → block
 
 ## See also
 
-- [mTLS](mtls-interview.md) — foundation
-- [Secrets Management](secrets-management-interview.md) — context
-- [Supply Chain Security](supply-chain-security-interview.md)
-- [Application Security](application-security-interview.md) — общая
-- [OAuth2](oauth2-interview.md) — auth flows
-- [JWT](jwt-interview.md) — tokens
-- [Istio](../devops/istio-service-mesh-interview.md) — service mesh ZT
-- [Linkerd](../devops/linkerd-interview.md) — service mesh ZT
-- [Vault](../devops/vault-interview.md) — secrets для ZT
-- [Микросервисы](../architecture/microservices-interview.md) — context
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
-- [Kubernetes](../devops/kubernetes-interview.md) — NetworkPolicies
-- [Authentication & Authorization](authentication-authorization-patterns-interview.md)
+- [[mtls-interview|mTLS]] — foundation
+- [[secrets-management-interview|Secrets Management]] — context
+- [[supply-chain-security-interview|Supply Chain Security]]
+- [[application-security-interview|Application Security]] — общая
+- [[oauth2-interview|OAuth2]] — auth flows
+- [[jwt-interview|JWT]] — tokens
+- [[istio-service-mesh-interview|Istio]] — service mesh ZT
+- [[linkerd-interview|Linkerd]] — service mesh ZT
+- [[vault-interview|Vault]] — secrets для ZT
+- [[microservices-interview|Микросервисы]] — context
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
+- [[kubernetes-interview|Kubernetes]] — NetworkPolicies
+- [[authentication-authorization-patterns-interview|Authentication & Authorization]]
 
 - [[application-security-interview|Application Security]]
 - [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]

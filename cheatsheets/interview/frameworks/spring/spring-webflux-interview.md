@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Краткие ответы по `Spring WebFlux`: `Mono / Flux`, реактивная модель, `WebClient`, отличия от `MVC`, `R2DBC`.
 
-Дата последнего обновления: 2026-04-13
-
 Краткое введение: `Spring WebFlux` — реактивный веб-стек на `Project Reactor`. На собеседованиях проверяют понимание реактивной модели, `Mono / Flux` и отличий от `Spring MVC`.
 
 ## Полезные ссылки
@@ -138,7 +136,7 @@ graph LR
     end
 ```
 
-Связь с Java: `Reactive Streams` API включён в JDK 9+ как `java.util.concurrent.Flow` (см. [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md)). `Project Reactor` реализует этот контракт и предоставляет мост через `JdkFlowAdapter`.
+Связь с Java: `Reactive Streams` API включён в JDK 9+ как `java.util.concurrent.Flow` (см. [[java-concurrency-interview|Java Concurrency]]). `Project Reactor` реализует этот контракт и предоставляет мост через `JdkFlowAdapter`.
 
 При обсуждении архитектуры важно дополнить ответ явными trade-offs: что выигрываем, чем платим и как контролируем риски в production. Хорошей практикой считается привязка решения к измеримым SLO/SLI и плану эволюции при росте нагрузки.
 
@@ -168,7 +166,7 @@ graph TB
     end
 ```
 
-Сравнение с [Spring MVC](spring-mvc-interview.md): `MVC` использует `DispatcherServlet` и Servlet API (один поток на запрос), тогда как `WebFlux` построен на `DispatcherHandler` и неблокирующем I/O.
+Сравнение с [[spring-mvc-interview|Spring MVC]]: `MVC` использует `DispatcherServlet` и Servlet API (один поток на запрос), тогда как `WebFlux` построен на `DispatcherHandler` и неблокирующем I/O.
 
 При обсуждении архитектуры важно дополнить ответ явными trade-offs: что выигрываем, чем платим и как контролируем риски в production. Хорошей практикой считается привязка решения к измеримым SLO/SLI и плану эволюции при росте нагрузки.
 
@@ -219,7 +217,7 @@ graph TB
 
 1. **Реактивные типы данных:** `Spring WebFlux` использует `Flux` и `Mono` для представления асинхронных операций. `Flux` — последовательность данных, `Mono` — результат одиночной операции. Эти типы позволяют обрабатывать данные асинхронно, не блокируя поток выполнения.
 2. **Неблокирующие операции:** `Spring WebFlux` использует неблокирующий ввод-вывод для взаимодействия с `HTTP`-серверами и клиентами. Процессор не блокируется, позволяя обрабатывать больше запросов меньшим числом потоков.
-3. **Реактивные аннотации:** `@GetMapping` и другие маппинги работают так же, как в [Spring MVC](spring-mvc-interview.md), но метод возвращает `Mono<T>` или `Flux<T>` вместо синхронного объекта.
+3. **Реактивные аннотации:** `@GetMapping` и другие маппинги работают так же, как в [[spring-mvc-interview|Spring MVC]], но метод возвращает `Mono<T>` или `Flux<T>` вместо синхронного объекта.
 4. **Реактивный сервер `Netty`:** `Spring WebFlux` по умолчанию использует `Netty`, основанный на событийной модели (event loop). Он эффективно управляет большим числом одновременных соединений.
 
 ```mermaid
@@ -241,7 +239,7 @@ graph LR
     end
 ```
 
-**Ключевое отличие:** в модели thread-per-request (см. [Spring MVC](spring-mvc-interview.md)) каждый запрос занимает отдельный поток на всё время обработки, включая ожидание I/O. В event loop модели один поток обрабатывает множество запросов, переключаясь между ними при завершении I/O-событий. Это позволяет обслуживать тысячи соединений малым числом потоков.
+**Ключевое отличие:** в модели thread-per-request (см. [[spring-mvc-interview|Spring MVC]]) каждый запрос занимает отдельный поток на всё время обработки, включая ожидание I/O. В event loop модели один поток обрабатывает множество запросов, переключаясь между ними при завершении I/O-событий. Это позволяет обслуживать тысячи соединений малым числом потоков.
 
 Благодаря этим компонентам асинхронная обработка в `Spring WebFlux` обеспечивает эффективное использование ресурсов, высокую производительность и отзывчивость при обработке запросов, особенно в условиях высоких нагрузок.
 
@@ -284,7 +282,7 @@ graph LR
     end
 ```
 
-Оба типа предоставляют методы `map`, `filter`, `flatMap`, `reduce` и другие. Аналогия со [Java Stream API](../../programming-languages/java/java-stream-interview.md): `Flux` похож на `Stream<T>`, а `Mono` — на `Optional<T>`, но с поддержкой асинхронности и backpressure.
+Оба типа предоставляют методы `map`, `filter`, `flatMap`, `reduce` и другие. Аналогия со [[java-stream-interview|Java Stream API]]: `Flux` похож на `Stream<T>`, а `Mono` — на `Optional<T>`, но с поддержкой асинхронности и backpressure.
 
 ## Q10. Какие методы доступны для работы с реактивными потоками в `Spring WebFlux`?
 
@@ -511,7 +509,7 @@ User u = user.block(Duration.ofSeconds(5));
 
 ## Q17. Что такое `Schedulers` и когда какой использовать?
 
-`Schedulers` задают пул потоков (подробнее о пулах — в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md)) для операторов:
+`Schedulers` задают пул потоков (подробнее о пулах — в [[java-concurrency-interview|Java Concurrency]]) для операторов:
 
 | Scheduler | Потоки | Назначение |
 |-----------|--------|------------|
@@ -615,7 +613,7 @@ Flux<Product> products = Flux.concat(
 
 ## Q21. Как обеспечить безопасность в `WebFlux` (`Spring Security`)?
 
-Подробнее о `Spring Security` — в [Spring Security](spring-security-interview.md). В реактивном стеке используются реактивные аналоги:
+Подробнее о `Spring Security` — в [[spring-security-interview|Spring Security]]. В реактивном стеке используются реактивные аналоги:
 
 - **`ReactiveUserDetailsService`** вместо `UserDetailsService`
 - **`ServerSecurityContextRepository`** вместо `SecurityContextRepository`
@@ -640,7 +638,7 @@ Flux<Product> products = Flux.concat(
 
 ## Q24. Когда выбирать `WebFlux` вместо `Spring MVC`?
 
-| Критерий | WebFlux | [Spring MVC](spring-mvc-interview.md) |
+| Критерий | WebFlux | [[spring-mvc-interview|Spring MVC]] |
 |----------|---------|-----------|
 | Модель I/O | Неблокирующая (event loop) | Блокирующая (thread-per-request) |
 | Кол-во соединений | Тысячи одновременных | Ограничено пулом потоков |
@@ -1595,16 +1593,16 @@ class UserServiceTest {
 
 ## See also
 
-- [Spring Framework](spring-framework-interview.md) — IoC-контейнер, на котором стоит WebFlux
-- [Spring MVC](spring-mvc-interview.md) — классический синхронный стек, альтернатива WebFlux
-- [Spring Boot](spring-boot-interview.md) — автоконфигурация реактивного стека
-- [Spring Security](spring-security-interview.md) — реактивная безопасность (SecurityWebFilterChain)
-- [Spring Data JPA](spring-data-jpa-interview.md) — сравнение с R2DBC в реактивном стеке
-- [Spring Cloud](spring-cloud-interview.md) — Gateway на WebFlux под капотом
-- [Spring Boot Actuator](spring-boot-actuator-interview.md) — мониторинг реактивных приложений
-- [Spring Batch](spring-batch-interview.md) — пакетная обработка vs. реактивные потоки
-- [Микросервисы](../../architecture/microservices-interview.md) — реактивные паттерны в распределённых системах
-- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — потоки и модели конкурентности
+- [[spring-framework-interview|Spring Framework]] — IoC-контейнер, на котором стоит WebFlux
+- [[spring-mvc-interview|Spring MVC]] — классический синхронный стек, альтернатива WebFlux
+- [[spring-boot-interview|Spring Boot]] — автоконфигурация реактивного стека
+- [[spring-security-interview|Spring Security]] — реактивная безопасность (SecurityWebFilterChain)
+- [[spring-data-jpa-interview|Spring Data JPA]] — сравнение с R2DBC в реактивном стеке
+- [[spring-cloud-interview|Spring Cloud]] — Gateway на WebFlux под капотом
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — мониторинг реактивных приложений
+- [[spring-batch-interview|Spring Batch]] — пакетная обработка vs. реактивные потоки
+- [[microservices-interview|Микросервисы]] — реактивные паттерны в распределённых системах
+- [[java-concurrency-interview|Java Concurrency]] — потоки и модели конкурентности
 
 - [[spring-aop-interview|Spring AOP]]
 - [[spring-batch-interview|Spring Batch]]

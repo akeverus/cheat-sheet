@@ -17,6 +17,10 @@ updated: "2026-04-20"
 
 [[openapi-swagger|OpenAPI / Swagger]]
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [Как выбрать инструмент](#как-выбрать-инструмент)

@@ -18,8 +18,6 @@ updated: "2026-04-19"
 
 **MLOps** — DevOps для ML: experiment tracking, model versioning, deployment, monitoring, retraining. Критично для production ML/AI. С 2024 — **LLMOps** как подвид (специфично для LLM apps). Стек: MLflow, Weights & Biases, Feast, Kubeflow, Seldon, BentoML.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -627,18 +625,18 @@ Prompts = код. Version в Git или dedicated tools.
 
 ## See also
 
-- [LLM Basics](llm-basics-interview.md) — основа для LLMOps
-- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production patterns
-- [Model Serving](model-serving-interview.md) — deployment
-- [RAG](rag-interview.md) — operationalization RAG
-- [AI Agents](ai-agents-interview.md) — operations
-- [Airflow](../data-engineering/apache-airflow-interview.md) — orchestration ML pipelines
-- [Spark](../data-engineering/apache-spark-interview.md) — для feature engineering
-- [Data Warehousing](../data-engineering/data-warehousing-interview.md) — feature storage
-- [Observability](../monitoring/observability-interview.md) — monitoring
-- [Pipeline Design](../cicd/pipeline-design-interview.md) — CI/CD
-- [Микросервисы](../architecture/microservices-interview.md) — где models live
-- [Git](../devops/git-interview.md) — version control
+- [[llm-basics-interview|LLM Basics]] — основа для LLMOps
+- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production patterns
+- [[model-serving-interview|Model Serving]] — deployment
+- [[rag-interview|RAG]] — operationalization RAG
+- [[ai-agents-interview|AI Agents]] — operations
+- [[apache-airflow-interview|Airflow]] — orchestration ML pipelines
+- [[apache-spark-interview|Spark]] — для feature engineering
+- [[data-warehousing-interview|Data Warehousing]] — feature storage
+- [[observability-interview|Observability]] — monitoring
+- [[pipeline-design-interview|Pipeline Design]] — CI/CD
+- [[microservices-interview|Микросервисы]] — где models live
+- [[git-interview|Git]] — version control
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

@@ -19,8 +19,6 @@ updated: "2026-04-18"
 
 Trie (префиксное дерево) — основа автодополнения, spell-checkers, IP-routing. Вместе с Trie часто спрашивают **Union-Find** (DSU) — структуру для непересекающихся множеств, применяемую в Kruskal MST, обнаружении циклов и задачах вроде Number of Islands.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -770,23 +768,23 @@ Patricia Trie для 0010, 0011, 1011:
 
 Это паттерн в **LSM-trees (LevelDB, RocksDB, Cassandra)** — Bloom filter перед каждым SSTable.
 
-Подробнее о Bloom filter — в [Hash Tables](hash-tables-interview.md).
+Подробнее о Bloom filter — в [[hash-tables-interview|Hash Tables]].
 
 ---
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Деревья](trees-interview.md) — Trie как специализированное дерево
-- [Хеш-таблицы](hash-tables-interview.md) — Bloom filter, alternative для membership
-- [Графы](graphs-interview.md) — Kruskal использует Union-Find, cycle detection
-- [Массивы и строки](arrays-strings-interview.md) — KMP и Rabin-Karp как альтернативы
-- [Рекурсия](../algorithmic-paradigms/recursion-interview.md) — DFS обход Trie
-- [Backtracking](../algorithmic-paradigms/backtracking-interview.md) — Word Search через Trie
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — амортизированный O(α(n))
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — нет встроенного Trie, но есть TreeMap
-- [Redis](../../databases/redis-interview.md) — radix tree для streams
-- [PostgreSQL](../../databases/postgresql-interview.md) — GIN/SP-GiST индексы используют tree-like structures
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[trees-interview|Деревья]] — Trie как специализированное дерево
+- [[hash-tables-interview|Хеш-таблицы]] — Bloom filter, alternative для membership
+- [[graphs-interview|Графы]] — Kruskal использует Union-Find, cycle detection
+- [[arrays-strings-interview|Массивы и строки]] — KMP и Rabin-Karp как альтернативы
+- [[recursion-interview|Рекурсия]] — DFS обход Trie
+- [[backtracking-interview|Backtracking]] — Word Search через Trie
+- [[complexity-analysis-interview|Анализ сложности]] — амортизированный O(α(n))
+- [[java-collections-interview|Java Collections]] — нет встроенного Trie, но есть TreeMap
+- [[redis-interview|Redis]] — radix tree для streams
+- [[postgresql-interview|PostgreSQL]] — GIN/SP-GiST индексы используют tree-like structures
 
 - [[arrays-strings-interview|Массивы и строки]]
 - [[graphs-interview|Графы]]

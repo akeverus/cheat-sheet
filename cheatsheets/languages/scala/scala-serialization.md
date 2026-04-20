@@ -27,6 +27,9 @@ related: ["scala/scala-basics.md", "scala/scala-json.md"]
 - [[scala-basics|Основы Scala]] — базовый справочник **Scala**
 - [[scala-circe|Circe (JSON)]] — **JSON** в **Scala**
 
+- [[micronaut-serialization|Micronaut: Serialization — JSON, XML и Custom Serializers]]
+- [[go-stdlib-json|Go: стандартная библиотека — JSON]]
+- [[java-jackson|Jackson: JSON-сериализация в Java]]
 ## Содержание
 
 - [Введение в сериализацию](#введение-в-сериализацию)

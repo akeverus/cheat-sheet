@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Интеграционное тестирование проверяет взаимодействие компонентов приложения с реальной инфраструктурой (`DB`, очереди, внешние `API`). Этот файл покрывает `Spring Boot Testing`, `Testcontainers`, `MockMvc`, `WebTestClient`, `WireMock`, контрактное тестирование и организацию тестов в `CI/CD`.
 
-Дата последнего обновления: 2026-04-13
-
 **Интеграционное тестирование** занимает среднюю часть тестовой пирамиды: проверяет реальные связки между модулями и инфраструктурой, но при этом не требует полного развёртывания всей системы.
 
 ## Полезные ссылки
@@ -277,7 +275,7 @@ class FullIntegrationTest {
 - Для тестирования **только** репозитория -- используйте `@DataJpaTest`
 - Для тестирования бизнес-логики без Spring -- обычный `unit`-тест
 
-`@SpringBootTest` поднимает все бины, что медленно. Подробнее о test slices -- в [вопросах по unit-тестированию](unit-testing-interview.md).
+`@SpringBootTest` поднимает все бины, что медленно. Подробнее о test slices -- в [[unit-testing-interview|вопросах по unit-тестированию]].
 
 ## Q4. (!) Что такое `Test Slices` и какие бывают?
 
@@ -492,7 +490,7 @@ class UserApiWebTestClientTest {
 }
 ```
 
-Преимущество `WebTestClient` перед `TestRestTemplate`: fluent API, поддержка реактивных типов (`Mono`, `Flux`), лучшая поддержка streaming. Подробнее о реактивном тестировании -- в [вопросах по Spring WebFlux](../frameworks/spring/spring-webflux-interview.md).
+Преимущество `WebTestClient` перед `TestRestTemplate`: fluent API, поддержка реактивных типов (`Mono`, `Flux`), лучшая поддержка streaming. Подробнее о реактивном тестировании -- в [[spring-webflux-interview|вопросах по Spring WebFlux]].
 
 ## Q8. Как тестировать REST API через `TestRestTemplate`?
 
@@ -915,7 +913,7 @@ class OrderRepositoryTest {
 }
 ```
 
-Подробнее о работе с `JPA` и `Hibernate` -- в [вопросах по Hibernate](../databases/hibernate-interview.md) и [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md).
+Подробнее о работе с `JPA` и `Hibernate` -- в [[hibernate-interview|вопросах по Hibernate]] и [[spring-data-jpa-interview|Spring Data JPA]].
 
 ## Q15. Как тестировать транзакции в интеграционных тестах?
 
@@ -1247,7 +1245,7 @@ graph LR
 1. **Pact** -- language-agnostic, consumer-driven, JSON-based
 2. **Spring Cloud Contract** -- Spring-экосистема, Groovy/YAML DSL, генерация тестов
 
-Подробнее о микросервисной архитектуре -- в [вопросах по микросервисам](../architecture/microservices-interview.md).
+Подробнее о микросервисной архитектуре -- в [[microservices-interview|вопросах по микросервисам]].
 
 ## Q22. Как работает Consumer-Driven Contract Testing с `Pact`?
 
@@ -1364,7 +1362,7 @@ class OrderServiceContractTest {
 }
 ```
 
-Spring Cloud Contract генерирует WireMock-стабы из контрактов и публикует их как Maven-артефакт. Consumer скачивает стабы и тестирует свой клиент. Подробнее о Spring Cloud -- в [вопросах по Spring Cloud](../frameworks/spring/spring-cloud-interview.md).
+Spring Cloud Contract генерирует WireMock-стабы из контрактов и публикует их как Maven-артефакт. Consumer скачивает стабы и тестирует свой клиент. Подробнее о Spring Cloud -- в [[spring-cloud-interview|вопросах по Spring Cloud]].
 
 ## Q24. Как тестировать микросервисы в изоляции?
 
@@ -1483,7 +1481,7 @@ class EmbeddedKafkaTest {
 }
 ```
 
-`EmbeddedKafka` быстрее (не нужен Docker), но менее realistic. `Testcontainers Kafka` ближе к production. Подробнее -- в [вопросах по Kafka](../messaging/kafka-interview.md).
+`EmbeddedKafka` быстрее (не нужен Docker), но менее realistic. `Testcontainers Kafka` ближе к production. Подробнее -- в [[kafka-interview|вопросах по Kafka]].
 
 ## Q26. Как тестировать асинхронные операции?
 
@@ -1906,7 +1904,7 @@ class SmokeTest {
 }
 ```
 
-Smoke-тесты: быстрые (секунды), запускаются в pipeline после каждого деплоя. При падении -- rollback или алерт. Не заменяют полные интеграционные тесты. Подробнее о стратегиях деплоя -- в [вопросах по стратегиям деплоя](../cicd/deployment-strategies-interview.md).
+Smoke-тесты: быстрые (секунды), запускаются в pipeline после каждого деплоя. При падении -- rollback или алерт. Не заменяют полные интеграционные тесты. Подробнее о стратегиях деплоя -- в [[deployment-strategies-interview|вопросах по стратегиям деплоя]].
 
 ## Q35. (!) Какие best practices для интеграционного тестирования?
 
@@ -1964,7 +1962,7 @@ void shouldRejectOrderForBlockedUser() {
 }
 ```
 
-Подробнее о стратегиях тестирования -- в [вопросах по стратегиям тестирования](test-strategies-interview.md).
+Подробнее о стратегиях тестирования -- в [[test-strategies-interview|вопросах по стратегиям тестирования]].
 
 ## Q36. (!) Как использовать `@DataJpaTest` для тестирования репозиториев?
 
@@ -2342,14 +2340,14 @@ class PaymentGatewayClientTest {
 
 ## See also
 
-- [Unit Testing](unit-testing-interview.md) — изолированные тесты без внешних зависимостей
-- [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов, выбор уровня
-- [Test Automation](test-automation-interview.md) — автоматизация и запуск в pipeline
-- [Testcontainers](testcontainers-interview.md) — подробная шпаргалка по Docker-контейнерам для тестов
-- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — тестирование слоя репозиториев с `@DataJpaTest`
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, профили, auto-configuration
-- [Docker](../devops/docker-interview.md) — контейнеризация, на которой построен Testcontainers
-- [Kafka](../messaging/kafka-interview.md) — тестирование event-driven архитектуры
+- [[unit-testing-interview|Unit Testing]] — изолированные тесты без внешних зависимостей
+- [[test-strategies-interview|Стратегии тестирования]] — пирамида тестов, выбор уровня
+- [[test-automation-interview|Test Automation]] — автоматизация и запуск в pipeline
+- [[testcontainers-interview|Testcontainers]] — подробная шпаргалка по Docker-контейнерам для тестов
+- [[spring-data-jpa-interview|Spring Data JPA]] — тестирование слоя репозиториев с `@DataJpaTest`
+- [[spring-boot-interview|Spring Boot]] — конфигурация, профили, auto-configuration
+- [[docker-interview|Docker]] — контейнеризация, на которой построен Testcontainers
+- [[kafka-interview|Kafka]] — тестирование event-driven архитектуры
 
 - [[chaos-engineering-interview|Chaos Engineering]]
 - [[contract-testing-interview|Contract Testing]]

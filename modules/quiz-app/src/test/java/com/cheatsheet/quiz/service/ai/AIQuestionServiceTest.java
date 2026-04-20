@@ -23,6 +23,7 @@ import java.util.concurrent.locks.Lock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -50,6 +51,9 @@ class AIQuestionServiceTest {
                     .accept(null);
             return null;
         }).when(transactionTemplate).executeWithoutResult(any());
+        // Mockito returns empty List (not null) by default for List-returning methods;
+        // explicitly stub cache miss so service proceeds to generate options.
+        lenient().when(optionCache.get(anyLong())).thenReturn(null);
 
         AppProperties appProperties = new AppProperties() {
             @Override

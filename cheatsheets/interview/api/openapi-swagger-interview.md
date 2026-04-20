@@ -17,8 +17,6 @@ updated: "2026-04-17"
 
 Практичные вопросы и ответы по `OpenAPI Specification` и экосистеме `Swagger` для Java-разработчика: структура документа, `springdoc-openapi`, аннотации, `contract-first` vs `code-first`, генерация клиентов, `OAuth2`, контрактное тестирование, обратная совместимость.
 
-Дата последнего обновления: 2026-04-17
-
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
@@ -1261,14 +1259,14 @@ springdoc:
 
 ## See also
 
-- [HTTP и REST](http-rest-interview.md) — семантика HTTP, REST-принципы, CORS, кэширование
-- [gRPC](grpc-interview.md) — бинарный протокол, Protocol Buffers, стриминг, сравнение с REST
-- [GraphQL](graphql-interview.md) — схема, резолверы, N+1 проблема, подписки
-- [WebSocket](websocket-interview.md) — двунаправленная связь, STOMP, масштабирование
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — автоконфигурация, стартеры, Actuator
-- [Spring Security](../frameworks/spring/spring-security-interview.md) — аутентификация, авторизация, OAuth2, JWT
-- [Spring MVC](../frameworks/spring/spring-mvc-interview.md) — контроллеры, фильтры, перехватчики, DispatcherServlet
-- [API Gateway](../architecture/api-gateway-interview.md) — маршрутизация, rate limiting, аутентификация на уровне шлюза
+- [[http-rest-interview|HTTP и REST]] — семантика HTTP, REST-принципы, CORS, кэширование
+- [[grpc-interview|gRPC]] — бинарный протокол, Protocol Buffers, стриминг, сравнение с REST
+- [[graphql-interview|GraphQL]] — схема, резолверы, N+1 проблема, подписки
+- [[websocket-interview|WebSocket]] — двунаправленная связь, STOMP, масштабирование
+- [[spring-boot-interview|Spring Boot]] — автоконфигурация, стартеры, Actuator
+- [[spring-security-interview|Spring Security]] — аутентификация, авторизация, OAuth2, JWT
+- [[spring-mvc-interview|Spring MVC]] — контроллеры, фильтры, перехватчики, DispatcherServlet
+- [[api-gateway-interview|API Gateway]] — маршрутизация, rate limiting, аутентификация на уровне шлюза
 
 - [[api-design-best-practices-interview|API Design Best Practices]]
 - [[api-versioning-interview|API Versioning]]

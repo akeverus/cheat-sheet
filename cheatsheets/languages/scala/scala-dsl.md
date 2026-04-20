@@ -26,6 +26,9 @@ related: ["scala/scala-basics.md", "scala/scala-implicit.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-implicit|Implicit]]
 
+- [[scala-shapeless|Shapeless в Scala]]
+- [[scala-collections|Scala Collections]]
+- [[scala-type-classes|Type Classes в Scala]]
 ## Содержание
 
 - [Введение в DSL](#введение-в-dsl)

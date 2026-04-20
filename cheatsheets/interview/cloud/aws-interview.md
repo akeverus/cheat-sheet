@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `AWS (Amazon Web Services)` — лидер cloud рынка (2025: ~32% доли). Сотни сервисов от compute (EC2) до AI (Bedrock, SageMaker). На интервью бэкендеру важно знать: core services (EC2, S3, RDS, IAM, VPC), managed databases, networking, CDN, мониторинг и **Well-Architected Framework** (5 pillars).
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -225,7 +223,7 @@ def handler(event, context):
 
 **Pricing:** per-invocation + per-ms × memory.
 
-Подробнее — в [AWS Lambda](aws-lambda-interview.md).
+Подробнее — в [[aws-lambda-interview|AWS Lambda]].
 
 ## Q9. (!) S3 — основные понятия?
 
@@ -397,7 +395,7 @@ my-file.json (v3, current)
 **Timestream** — time-series.
 **Keyspaces** — Cassandra-compatible.
 **OpenSearch** — fork Elasticsearch.
-**Redshift** — data warehouse (см. [Data Warehousing](../data-engineering/data-warehousing-interview.md)).
+**Redshift** — data warehouse (см. [[data-warehousing-interview|Data Warehousing]]).
 
 В **2025** — выбор сильно зависит от use case. Для большинства — **Aurora** или **DynamoDB**.
 
@@ -739,20 +737,20 @@ AWS framework для design good architectures.
 
 ## See also
 
-- [AWS Lambda](aws-lambda-interview.md) — serverless deep dive
-- [Serverless](serverless-interview.md) — концепции
-- [GCP](gcp-interview.md) — конкурент
-- [Azure](azure-interview.md) — конкурент
-- [Cloud-native Patterns](cloud-native-patterns-interview.md) — best practices
-- [Kubernetes](../devops/kubernetes-interview.md) — EKS
-- [Микросервисы](../architecture/microservices-interview.md) — где AWS живёт
-- [PostgreSQL](../databases/postgresql-interview.md) — RDS, Aurora
-- [Redis](../databases/redis-interview.md) — ElastiCache
-- [Apache Kafka](../messaging/kafka-interview.md) — MSK
-- [Application Security](../security/application-security-interview.md) — IAM, security
-- [Observability](../monitoring/observability-interview.md) — CloudWatch, X-Ray
-- [Caching](../architecture/caching-strategies-interview.md) — CloudFront, ElastiCache
-- [Scalability](../architecture/scalability-patterns-interview.md) — Auto Scaling, multi-region
+- [[aws-lambda-interview|AWS Lambda]] — serverless deep dive
+- [[serverless-interview|Serverless]] — концепции
+- [[gcp-interview|GCP]] — конкурент
+- [[azure-interview|Azure]] — конкурент
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — best practices
+- [[kubernetes-interview|Kubernetes]] — EKS
+- [[microservices-interview|Микросервисы]] — где AWS живёт
+- [[postgresql-interview|PostgreSQL]] — RDS, Aurora
+- [[redis-interview|Redis]] — ElastiCache
+- [[kafka-interview|Apache Kafka]] — MSK
+- [[application-security-interview|Application Security]] — IAM, security
+- [[observability-interview|Observability]] — CloudWatch, X-Ray
+- [[caching-strategies-interview|Caching]] — CloudFront, ElastiCache
+- [[scalability-patterns-interview|Scalability]] — Auto Scaling, multi-region
 
 - [[aws-lambda-interview|AWS Lambda]]
 - [[azure-interview|Azure]]

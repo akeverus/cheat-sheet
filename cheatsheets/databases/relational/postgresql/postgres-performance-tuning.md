@@ -27,6 +27,9 @@ related: ["databases/postgres-replication.md", "databases/postgres-admin.md"]
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-monitoring|postgres-monitoring.md]] — мониторинг
 
+- [[clickhouse-performance|ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу]]
+- [[postgres-transactions|PostgreSQL: транзакции, MVCC и блокировки]]
+- [[postgres-partitioning|PostgreSQL: партиционирование]]
 ## Содержание
 
 - [Введение в оптимизацию PostgreSQL](#введение-в-оптимизацию-postgresql)

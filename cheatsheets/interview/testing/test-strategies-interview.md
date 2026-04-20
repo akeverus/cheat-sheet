@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Краткие ответы по стратегиям тестирования: как выбрать уровни тестов, распределить усилия команды, контролировать качество через метрики и риски, а также применять современные подходы `TDD`, `BDD`, `Property-Based Testing` и `Mutation Testing`.
 
-Дата последнего обновления: 2026-04-13
-
 **Стратегии тестирования** определяют, какие виды тестов использовать, как распределять усилия и какие метрики отслеживать. Этот файл фокусируется на управленческих и архитектурных решениях, а не на деталях конкретных фреймворков.
 
 ## Полезные ссылки
@@ -176,7 +174,7 @@ stages:
   - deploy
 ```
 
-В контексте [микросервисов](../architecture/microservices-interview.md) пропорции могут отличаться: больше интеграционных тестов, так как сложность часто лежит во взаимодействии сервисов, а не внутри отдельного компонента.
+В контексте [[microservices-interview|микросервисов]] пропорции могут отличаться: больше интеграционных тестов, так как сложность часто лежит во взаимодействии сервисов, а не внутри отдельного компонента.
 
 ## Q3. Какие существуют `Testing Quadrants`?
 
@@ -227,7 +225,7 @@ graph TB
     style INT2 fill:#ffd93d,color:#000
 ```
 
-**Ключевой инсайт**: выбор модели зависит от архитектуры. Для Spring Boot приложения с БД `Test Trophy` часто эффективнее, так как `@SpringBootTest` с `Testcontainers` тестирует реальное взаимодействие (подробнее в [вопросах по интеграционному тестированию](integration-testing-interview.md)).
+**Ключевой инсайт**: выбор модели зависит от архитектуры. Для Spring Boot приложения с БД `Test Trophy` часто эффективнее, так как `@SpringBootTest` с `Testcontainers` тестирует реальное взаимодействие (подробнее в [[integration-testing-interview|вопросах по интеграционному тестированию]]).
 
 ## Q5. Что такое `Test Strategy Document` и что в него входит?
 
@@ -307,7 +305,7 @@ public class PriceCalculator {
 2. Писать ровно столько теста, чтобы он упал (одна `assertion`)
 3. Писать ровно столько кода, чтобы тест прошёл
 
-Подробнее о написании юнит-тестов — в [вопросах по unit-тестированию](unit-testing-interview.md).
+Подробнее о написании юнит-тестов — в [[unit-testing-interview|вопросах по unit-тестированию]].
 
 ## Q7. (!) Что такое `BDD` и как его реализовать с `Cucumber`?
 
@@ -513,7 +511,7 @@ graph LR
 ### Практики `Shift-Left`
 
 1. **Static Analysis** — линтеры, `SonarQube`, `SpotBugs` уже на этапе коммита
-2. **TDD** — тесты до кода (см. [unit-тестирование](unit-testing-interview.md))
+2. **TDD** — тесты до кода (см. [[unit-testing-interview|unit-тестирование]])
 3. **Code Review с чек-листом тестируемости** — DI, SRP, минимум статики
 4. **Pair Programming** — разработчик + тестировщик
 5. **Continuous Testing в CI** — тесты на каждый коммит
@@ -536,7 +534,7 @@ graph LR
 | `Chaos Engineering` | Инъекция сбоев для проверки отказоустойчивости | `Chaos Monkey`, `Litmus` |
 | `Feature Flags` | Контроль доступа к фичам | `Unleash`, `Flagsmith` |
 
-`Shift-Right` не заменяет pre-production тестирование, а **дополняет** его. Связано с [observability](../monitoring/observability-interview.md) — без метрик, логов и трейсов тестирование в production невозможно.
+`Shift-Right` не заменяет pre-production тестирование, а **дополняет** его. Связано с [[observability-interview|observability]] — без метрик, логов и трейсов тестирование в production невозможно.
 
 ## Q13. (!) Как реализовать `Risk-Based Testing`?
 
@@ -600,7 +598,7 @@ public class CanaryHealthCheck {
 }
 ```
 
-Связано с [стратегиями деплоя](../cicd/deployment-strategies-interview.md) — без безопасного деплоя `TiP` опасен.
+Связано с [[deployment-strategies-interview|стратегиями деплоя]] — без безопасного деплоя `TiP` опасен.
 
 ## Q15. (!) Что такое `Mutation Testing` и как работает `PITest`?
 
@@ -706,7 +704,7 @@ void shouldProcessAsyncEvent() {
 
 ## Q18. Какие стратегии тестирования микросервисов?
 
-Тестирование [микросервисов](../architecture/microservices-interview.md) требует дополнительных уровней по сравнению с монолитом.
+Тестирование [[microservices-interview|микросервисов]] требует дополнительных уровней по сравнению с монолитом.
 
 ```mermaid
 graph TB
@@ -802,7 +800,7 @@ public class LegacyOrderProcessor {
 
 ## Q20. Как тестировать `Distributed Systems`?
 
-Тестирование [распределённых систем](../architecture/distributed-systems-interview.md) осложняется асинхронностью, `eventual consistency` и сетевыми сбоями.
+Тестирование [[distributed-systems-interview|распределённых систем]] осложняется асинхронностью, `eventual consistency` и сетевыми сбоями.
 
 ### Стратегия по уровням
 
@@ -825,7 +823,7 @@ public class LegacyOrderProcessor {
 
 ## Q21. Как тестировать `Event-Driven Architecture`?
 
-Тестирование [event-driven архитектуры](../architecture/event-driven-patterns-interview.md) требует проверки всей цепочки: продюсер -> топик -> консьюмер.
+Тестирование [[event-driven-patterns-interview|event-driven архитектуры]] требует проверки всей цепочки: продюсер -> топик -> консьюмер.
 
 ### Уровни тестирования
 
@@ -865,7 +863,7 @@ class KafkaIntegrationTest {
 
 ### Contract Testing для событий
 
-Определять схемы событий (`Avro`, `JSON Schema`) и тестировать совместимость через `Schema Registry`. Подробнее о Kafka — в [вопросах по Kafka](../messaging/kafka-interview.md).
+Определять схемы событий (`Avro`, `JSON Schema`) и тестировать совместимость через `Schema Registry`. Подробнее о Kafka — в [[kafka-interview|вопросах по Kafka]].
 
 ## Q22. Что такое `Consumer-Driven Contract Testing`?
 
@@ -1007,7 +1005,7 @@ graph LR
 4. Exploratory testing — time-boxed сессии каждый спринт
 5. Ретроспектива: обсуждение покрытия, flakiness, дефектов
 
-Подробнее о тестировании в CI/CD — в [вопросах по автоматизации тестирования](test-automation-interview.md).
+Подробнее о тестировании в CI/CD — в [[test-automation-interview|вопросах по автоматизации тестирования]].
 
 ## Q26. Что такое `Three Amigos` и `Definition of Done`?
 
@@ -1077,11 +1075,11 @@ junit.jupiter.execution.parallel.config.fixed.parallelism = 4
 | `SonarQube` | Покрытие, дублирование, code smells |
 | `Datadog CI Visibility` | Тренды CI/CD pipeline |
 
-Связано с [observability](../monitoring/observability-interview.md) — те же принципы (метрики, логи, трейсы) применяются к тестовой инфраструктуре.
+Связано с [[observability-interview|observability]] — те же принципы (метрики, логи, трейсы) применяются к тестовой инфраструктуре.
 
 ## Q29. Как организовать `Test Review`?
 
-Код-ревью тестов так же важен, как ревью production-кода. Подробнее о ревью — в [вопросах по code review](../code-quality/code-review-interview.md).
+Код-ревью тестов так же важен, как ревью production-кода. Подробнее о ревью — в [[code-review-interview|вопросах по code review]].
 
 ### Чек-лист ревью тестов
 
@@ -1135,7 +1133,7 @@ void shouldReturnDiscountedPriceForPremiumCustomer() {
 - **Изоляция**: каждый тест создаёт свои doubles, не переиспользовать между тестами
 - **Prefer fakes for repositories**: `InMemoryRepository` надёжнее, чем цепочка `when().thenReturn()`
 
-Подробнее о моках и стабах — в [вопросах по unit-тестированию](unit-testing-interview.md).
+Подробнее о моках и стабах — в [[unit-testing-interview|вопросах по unit-тестированию]].
 
 ## Q31. (!) Что такое `Test Containerization` и `Testcontainers`?
 
@@ -1181,7 +1179,7 @@ class OrderRepositoryIT {
 - **Изоляция**: каждый тест класс — чистый контейнер
 - **Реальные зависимости**: PostgreSQL вместо H2, Kafka вместо embedded
 
-Подробнее — в [вопросах по интеграционному тестированию](integration-testing-interview.md).
+Подробнее — в [[integration-testing-interview|вопросах по интеграционному тестированию]].
 
 ## Q32. Как организовать `Test Environments Strategy`?
 
@@ -1352,7 +1350,7 @@ Contract.make {
 - **Error Rate** — % ошибок под нагрузкой
 - **Resource Utilization** — CPU, memory, disk I/O
 
-Производительность тестируется в CI/CD pipeline на staging окружении. Результаты сравниваются с baseline для обнаружения деградации. Подробнее — в [вопросах по профилированию](../performance/application-profiling-interview.md).
+Производительность тестируется в CI/CD pipeline на staging окружении. Результаты сравниваются с baseline для обнаружения деградации. Подробнее — в [[application-profiling-interview|вопросах по профилированию]].
 
 ## Q38. Что такое `Security Testing Strategy`?
 
@@ -1382,7 +1380,7 @@ security:
     allow_failure: true  # может быть flaky
 ```
 
-Подробнее — в [вопросах по безопасности приложений](../security/application-security-interview.md) и [OWASP Top 10](../security/owasp-top10-interview.md).
+Подробнее — в [[application-security-interview|вопросах по безопасности приложений]] и [[owasp-top10-interview|OWASP Top 10]].
 
 ## Q39. Как организовать тестирование при `Continuous Deployment`?
 
@@ -1412,7 +1410,7 @@ graph LR
 | Smoke Tests | Критический путь | Да |
 | Canary Metrics | Error rate < 1%, p99 < SLA | Да |
 
-Ключевое: автоматические rollback при нарушении quality gates. Подробнее — в [вопросах по CI/CD pipeline](../cicd/pipeline-design-interview.md).
+Ключевое: автоматические rollback при нарушении quality gates. Подробнее — в [[pipeline-design-interview|вопросах по CI/CD pipeline]].
 
 ## Q40. (!) Best practices для `Test Strategy`
 
@@ -1821,15 +1819,15 @@ Component Tests — ключевой уровень в модели **Test Honey
 
 ## See also
 
-- [Unit Testing](unit-testing-interview.md) — модульное тестирование, JUnit, Mockito
-- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование, Testcontainers
-- [Test Automation](test-automation-interview.md) — автоматизация тестирования, CI/CD pipeline
-- [Testcontainers](testcontainers-interview.md) — реальная инфраструктура в тестах вместо заглушек
-- [Design Patterns](../design-patterns/design-patterns-interview.md) — паттерны, применяемые в тестовом коде (Builder, Factory)
-- [Behavioral](../behavioral/behavioral-interview.md) — как рассказывать о тестовой стратегии на собеседовании
-- [Code Review](../code-quality/code-review-interview.md) — ревью кода и тестов
-- [CI/CD Pipeline](../cicd/pipeline-design-interview.md) — проектирование pipeline с тестами
-- [Микросервисы](../architecture/microservices-interview.md) — тестирование микросервисной архитектуры
+- [[unit-testing-interview|Unit Testing]] — модульное тестирование, JUnit, Mockito
+- [[integration-testing-interview|Integration Testing]] — интеграционное тестирование, Testcontainers
+- [[test-automation-interview|Test Automation]] — автоматизация тестирования, CI/CD pipeline
+- [[testcontainers-interview|Testcontainers]] — реальная инфраструктура в тестах вместо заглушек
+- [[design-patterns-interview|Design Patterns]] — паттерны, применяемые в тестовом коде (Builder, Factory)
+- [[behavioral-interview|Behavioral]] — как рассказывать о тестовой стратегии на собеседовании
+- [[code-review-interview|Code Review]] — ревью кода и тестов
+- [[pipeline-design-interview|CI/CD Pipeline]] — проектирование pipeline с тестами
+- [[microservices-interview|Микросервисы]] — тестирование микросервисной архитектуры
 
 - [[chaos-engineering-interview|Chaos Engineering]]
 - [[contract-testing-interview|Contract Testing]]

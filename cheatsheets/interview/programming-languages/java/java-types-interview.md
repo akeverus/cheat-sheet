@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Система типов `Java` — фундаментальная тема на собеседованиях. Она охватывает примитивные и ссылочные типы, механизмы `autoboxing`/`unboxing`, классы-обёртки, современные конструкции (`record`, `sealed`, `var`) и правила приведения типов. Понимание этих концепций критично для написания корректного и производительного кода.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -157,7 +155,7 @@ int[] arr2 = arr1;  // arr2 ссылается на тот же массив
 arr2[0] = 99;       // arr1[0] тоже стал 99
 ```
 
-Подробнее о хранении объектов в памяти — в [вопросах по JVM](../../jvm/jvm-interview.md).
+Подробнее о хранении объектов в памяти — в [[jvm-interview|вопросах по JVM]].
 
 ## Q3. (!) Какие есть примитивные типы и каковы их характеристики?
 
@@ -247,7 +245,7 @@ graph LR
     style W fill:#adf,stroke:#333
 ```
 
-Подробнее о влиянии обёрток на коллекции — в [вопросах по коллекциям](java-collections-interview.md).
+Подробнее о влиянии обёрток на коллекции — в [[java-collections-interview|вопросах по коллекциям]].
 
 ## Q6. (!) Что такое `Integer Cache` и как он влияет на сравнение?
 
@@ -326,12 +324,12 @@ int result = true ? a : b; // NPE из-за unboxing a
 |---|---|
 | Локальные переменные, счётчики, вычисления | Примитивы (`int`, `long`, `double`) |
 | Коллекции (`List`, `Map`, `Set`) | Обёртки (`Integer`, `Long`) |
-| Nullable-поля в БД (через [Hibernate](../../databases/hibernate-interview.md)) | Обёртки (`null` = отсутствие значения) |
+| Nullable-поля в БД (через [[hibernate-interview|Hibernate]]) | Обёртки (`null` = отсутствие значения) |
 | Поля `record` / `DTO` | Зависит: примитивы для обязательных, обёртки для nullable |
 | `generics` (`Comparable<T>`, `Optional<T>`) | Обёртки (примитивы не параметризуют `generics`) |
 | Горячие участки (hot path) | Примитивы (нет overhead на объект) |
 
-> **Для `Stream API`** используйте специализированные стримы: `IntStream`, `LongStream`, `DoubleStream` — они работают без боксинга. Подробнее в [вопросах по Stream API](java-stream-interview.md).
+> **Для `Stream API`** используйте специализированные стримы: `IntStream`, `LongStream`, `DoubleStream` — они работают без боксинга. Подробнее в [[java-stream-interview|вопросах по Stream API]].
 
 ## Q9. (!) В чём разница между `abstract class` и `interface`?
 
@@ -380,7 +378,7 @@ public class Circle extends Shape implements Drawable, Serializable {
 }
 ```
 
-Подробнее о наследовании — в [вопросах по ООП](java-oop-interview.md).
+Подробнее о наследовании — в [[java-oop-interview|вопросах по ООП]].
 
 ## Q10. Каковы ограничения для членов типа `interface`?
 
@@ -791,7 +789,7 @@ public <T> T[] toArray(List<T> list, Class<T> clazz) {
 }
 ```
 
-Подробнее — в [вопросах по Generics](java-generics-interview.md).
+Подробнее — в [[java-generics-interview|вопросах по Generics]].
 
 ## Q22. Что такое `wildcard` в `generics` и что такое `PECS`?
 
@@ -900,7 +898,7 @@ optional.isPresent();        // ifPresent/orElse — лучше
 
 **Специализированные версии** для примитивов (без боксинга): `OptionalInt`, `OptionalLong`, `OptionalDouble`.
 
-Подробнее — в [вопросах по Java 8+](java-8-interview.md).
+Подробнее — в [[java-8-interview|вопросах по Java 8+]].
 
 ## Q26. Как типы влияют на сериализацию?
 
@@ -925,7 +923,7 @@ public class User implements Serializable {
 - Если родитель не `Serializable` — при десериализации его поля инициализируются конструктором по умолчанию
 - `serialVersionUID` фиксирует версию для совместимости
 
-Подробнее — в [вопросах по сериализации](java-serialization-interview.md).
+Подробнее — в [[java-serialization-interview|вопросах по сериализации]].
 
 ## Q27. Что такое `value-based` классы?
 
@@ -1046,7 +1044,7 @@ public interface Auditable {
 }
 ```
 
-> **Совет на собеседовании**: начинайте с интерфейса. Переходите к абстрактному классу только когда реально нужны общие поля или конструктор. Подробнее — в [вопросах по паттернам проектирования](../../design-patterns/design-patterns-interview.md).
+> **Совет на собеседовании**: начинайте с интерфейса. Переходите к абстрактному классу только когда реально нужны общие поля или конструктор. Подробнее — в [[design-patterns-interview|вопросах по паттернам проектирования]].
 
 ## Q31. (!) Как работает pattern matching в `switch` (Java 21)?
 
@@ -1468,13 +1466,13 @@ class Child extends Base implements A, B {
 
 ## See also
 
-- [Java Generics](java-generics-interview.md) — дженерики, `type erasure`, `wildcard` — обобщённые типы как расширение системы типов Java
-- [OOP & Java](java-oop-interview.md) — наследование, полиморфизм, инкапсуляция — как типы взаимодействуют через объектную модель
-- [Java Collections](java-collections-interview.md) — коллекции и их связь с типами: `List<Integer>` vs `int[]`, boxing overhead
-- [Java Core](java-core-interview.md) — основы языка: `Object` как корень иерархии, `equals`/`hashCode` и boxing
-- [Java 8+](java-8-interview.md) — лямбды, `Stream API`, `Optional` — функциональные типы и `var` в Java 10+
-- [JVM](../../jvm/jvm-interview.md) — представление типов в байт-коде, `checkcast`, `instanceof` на уровне JVM, boxing в памяти
-- [Java 17-21](java-17-21-interview.md) — `record`, `sealed classes`, pattern matching — новые конструкции системы типов
+- [[java-generics-interview|Java Generics]] — дженерики, `type erasure`, `wildcard` — обобщённые типы как расширение системы типов Java
+- [[java-oop-interview|OOP & Java]] — наследование, полиморфизм, инкапсуляция — как типы взаимодействуют через объектную модель
+- [[java-collections-interview|Java Collections]] — коллекции и их связь с типами: `List<Integer>` vs `int[]`, boxing overhead
+- [[java-core-interview|Java Core]] — основы языка: `Object` как корень иерархии, `equals`/`hashCode` и boxing
+- [[java-8-interview|Java 8+]] — лямбды, `Stream API`, `Optional` — функциональные типы и `var` в Java 10+
+- [[jvm-interview|JVM]] — представление типов в байт-коде, `checkcast`, `instanceof` на уровне JVM, boxing в памяти
+- [[java-17-21-interview|Java 17-21]] — `record`, `sealed classes`, pattern matching — новые конструкции системы типов
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Tekton Triggers](https://tekton.dev/docs/triggers/)
 - [Tekton CLI](https://github.com/tektoncd/cli)
 
+
+### См. также
+- [[travis-ci|Travis CI]]
 ## Содержание
 
 - [Основы Tekton](#основы-tekton)

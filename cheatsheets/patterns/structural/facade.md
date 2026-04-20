@@ -27,6 +27,9 @@ updated: "2026-04-20"
 - [[composite|Composite Pattern]]
 - [[flyweight|Flyweight Pattern]]
 
+- [[decorator|Декоратор (Decorator)]]
+- [[adapter|Адаптер (Adapter)]]
+- [[proxy|Заместитель (Proxy)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

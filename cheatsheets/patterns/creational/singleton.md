@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[java-basics|Java Basics]] — Java Basics
 - [[spring-framework-interview|Spring Core]] — IoC и бины
 
+- [[builder|Строитель (Builder)]]
+- [[creational-patterns|Порождающие паттерны проектирования (Creational Patterns)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

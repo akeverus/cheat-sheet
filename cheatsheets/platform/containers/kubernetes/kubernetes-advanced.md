@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator) — оператор **Prometheus**
 - [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/security-checklist/) — чек-лист безопасности
 
+
+### См. также
+- [[containerization-overview|Containerization — обзор]]
 ## Содержание
 
 - [Архитектура кластера](#архитектура-кластера)

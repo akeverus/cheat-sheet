@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [Time Series](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[influxdb-basics|InfluxDB Basics]]

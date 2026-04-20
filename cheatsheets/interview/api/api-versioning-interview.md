@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 API versioning — стратегия evolve APIs без breaking existing clients. Главные подходы: **URI versioning** (`/v1/`), **header versioning**, **query parameter**, **content negotiation**. Также: backwards compatibility, deprecation policies, sunset, semantic versioning. Critical для public APIs и multi-team systems.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -429,13 +427,13 @@ Link: <https://api.example.com/v3/users/123>; rel="successor-version"
 
 ## See also
 
-- [REST Maturity](rest-maturity-interview.md) — context
-- [API Design Best Practices](api-design-best-practices-interview.md)
-- [HTTP & REST](http-rest-interview.md) — основа
-- [GraphQL](graphql-interview.md) — versioning approach differs
-- [gRPC](grpc-interview.md) — versioning differs
-- [OpenAPI / Swagger](openapi-swagger-interview.md) — documentation
-- [Микросервисы](../architecture/microservices-interview.md) — versioning critical
-- [API Gateway](../architecture/api-gateway-interview.md) — version routing
-- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — version rollouts
+- [[rest-maturity-interview|REST Maturity]] — context
+- [[api-design-best-practices-interview|API Design Best Practices]]
+- [[http-rest-interview|HTTP & REST]] — основа
+- [[graphql-interview|GraphQL]] — versioning approach differs
+- [[grpc-interview|gRPC]] — versioning differs
+- [[openapi-swagger-interview|OpenAPI / Swagger]] — documentation
+- [[microservices-interview|Микросервисы]] — versioning critical
+- [[api-gateway-interview|API Gateway]] — version routing
+- [[deployment-strategies-interview|Deployment Strategies]] — version rollouts
 - [[backwards-compatibility-interview|Backwards Compatibility]] — если будем добавлять

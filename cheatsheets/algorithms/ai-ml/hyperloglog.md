@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[collections-big-o|Практические примеры Big O]]
 - [[collections-complexity|Временная сложность коллекций]] — Big O коллекций
 
+- [[logistic-regression|Логистическая регрессия]]
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [[ai-libraries|Обзор ИИ библиотек]]
 ## Содержание
 
 - [Обзор](#обзор)

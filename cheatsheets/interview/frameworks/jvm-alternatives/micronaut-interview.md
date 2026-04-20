@@ -16,8 +16,6 @@ updated: "2026-04-18"
 
 `Micronaut` — JVM-фреймворк (с 2018, от OCI/Object Computing), оптимизированный для **микросервисов и serverless**. Главная фича: **compile-time DI и AOP** без рефлексии — отсюда быстрый старт, низкое потребление памяти, отличная поддержка GraalVM native image.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -679,18 +677,18 @@ public class UserController {
 
 ## See also
 
-- [Spring Boot](../spring/spring-boot-interview.md) — главный конкурент
-- [Quarkus](quarkus-interview.md) — другой Cloud-native JVM фреймворк
-- [Ktor](ktor-interview.md) — Kotlin-first альтернатива
-- [Vert.x](vertx-interview.md) — event-driven JVM
-- [Spring Framework](../spring/spring-framework-interview.md) — runtime DI vs compile-time
-- [Spring Cloud](../spring/spring-cloud-interview.md) — vs встроенный cloud в Micronaut
-- [Spring Data JPA](../spring/spring-data-jpa-interview.md) — vs Micronaut Data
-- [Spring WebFlux](../spring/spring-webflux-interview.md) — reactive аналог
-- [Микросервисы](../../architecture/microservices-interview.md) — основное применение
-- [Kubernetes](../../devops/kubernetes-interview.md) — нативная интеграция
-- [JVM](../../jvm/jvm-interview.md) — JIT vs AOT компиляция
-- [Memory Management](../../performance/memory-management-interview.md) — почему меньше памяти
+- [[spring-boot-interview|Spring Boot]] — главный конкурент
+- [[quarkus-interview|Quarkus]] — другой Cloud-native JVM фреймворк
+- [[ktor-interview|Ktor]] — Kotlin-first альтернатива
+- [[vertx-interview|Vert.x]] — event-driven JVM
+- [[spring-framework-interview|Spring Framework]] — runtime DI vs compile-time
+- [[spring-cloud-interview|Spring Cloud]] — vs встроенный cloud в Micronaut
+- [[spring-data-jpa-interview|Spring Data JPA]] — vs Micronaut Data
+- [[spring-webflux-interview|Spring WebFlux]] — reactive аналог
+- [[microservices-interview|Микросервисы]] — основное применение
+- [[kubernetes-interview|Kubernetes]] — нативная интеграция
+- [[jvm-interview|JVM]] — JIT vs AOT компиляция
+- [[memory-management-interview|Memory Management]] — почему меньше памяти
 
 - [[ktor-interview|Ktor]]
 - [[quarkus-interview|Quarkus]]

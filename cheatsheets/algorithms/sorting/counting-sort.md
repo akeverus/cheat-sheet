@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[radix-sort|Сортировка поразрядная]] — **radix sort**
 - [[bucket-sort|Сортировка блочная]] — **bucket sort**
 
+- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
+- [[selection-sort|Сортировка выбором (Selection Sort)]]
+- [[heap-sort|Сортировка кучей (Heap Sort)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

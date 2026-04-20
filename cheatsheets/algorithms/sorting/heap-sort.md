@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[quick-sort|Быстрая сортировка]] — **quick sort**
 - [[merge-sort|Сортировка слиянием]] — **merge sort**
 
+- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
+- [[selection-sort|Сортировка выбором (Selection Sort)]]
+- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

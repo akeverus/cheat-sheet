@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Вопросы и ответы по `Spring Cloud`: `Config Server`, `Eureka`, `Gateway`, `Circuit Breaker`, `Resilience4j`, `OpenFeign`, `Micrometer Tracing`, `Spring Cloud Stream`.
 
-Дата последнего обновления: 2026-04-13
-
 **Spring Cloud** — набор проектов для построения микросервисных приложений на базе `Spring Boot`. Покрывает все ключевые аспекты распределённых систем: конфигурация, service discovery, маршрутизация, отказоустойчивость, трассировка, обмен сообщениями. На собеседованиях проверяют понимание архитектурных паттернов и практический опыт настройки компонентов.
 
 ## Полезные ссылки
@@ -118,7 +116,7 @@ updated: "2026-04-13"
 
 ## Q1. (!) Что такое `Spring Cloud` и зачем он нужен?
 
-`Spring Cloud` — набор проектов для создания микросервисных приложений на базе [Spring Boot](spring-boot-interview.md). Предоставляет готовые решения для типичных задач [распределённых систем](../../architecture/distributed-systems-interview.md):
+`Spring Cloud` — набор проектов для создания микросервисных приложений на базе [[spring-boot-interview|Spring Boot]]. Предоставляет готовые решения для типичных задач [[distributed-systems-interview|распределённых систем]]:
 
 - **Service Discovery** — регистрация и обнаружение сервисов (`Eureka`, `Consul`)
 - **Централизованная конфигурация** — `Config Server` с поддержкой Git, Vault
@@ -188,7 +186,7 @@ graph TB
 | Зависимость | Самостоятельный фреймворк | Строится поверх `Spring Boot` |
 | Примеры задач | REST API, web app, batch jobs | Config Server, Gateway, Eureka |
 
-`Spring Boot` отвечает за **отдельный микросервис**, `Spring Cloud` — за **взаимодействие** между микросервисами. Подробнее в [вопросах по Spring Boot](spring-boot-interview.md).
+`Spring Boot` отвечает за **отдельный микросервис**, `Spring Cloud` — за **взаимодействие** между микросервисами. Подробнее в [[spring-boot-interview|вопросах по Spring Boot]].
 
 ## Q4. В чём разница между `Spring Cloud` и `Kubernetes`?
 
@@ -202,7 +200,7 @@ graph TB
 | Health Checks | Actuator | Liveness/Readiness probes |
 | Деплой | — | Deployments, Helm |
 
-Можно комбинировать: `Spring Cloud Kubernetes` интегрирует Spring-приложения с нативными механизмами K8s (ConfigMaps вместо Config Server, DNS вместо Eureka). Подробнее в [вопросах по Kubernetes](../../devops/kubernetes-interview.md).
+Можно комбинировать: `Spring Cloud Kubernetes` интегрирует Spring-приложения с нативными механизмами K8s (ConfigMaps вместо Config Server, DNS вместо Eureka). Подробнее в [[kubernetes-interview|вопросах по Kubernetes]].
 
 ## Q5. Какие наиболее популярные аннотации в `Spring Cloud`?
 
@@ -371,7 +369,7 @@ implementation 'org.springframework.cloud:spring-cloud-starter-config'
 
 ## Q9. (!) Что такое `Spring Cloud Bus` и как он обновляет конфигурацию?
 
-`Spring Cloud Bus` связывает узлы распределённой системы через шину сообщений (`RabbitMQ` или [Kafka](../../messaging/kafka-interview.md)). Основное применение — **автоматическое обновление конфигурации** без рестарта сервисов.
+`Spring Cloud Bus` связывает узлы распределённой системы через шину сообщений (`RabbitMQ` или [[kafka-interview|Kafka]]). Основное применение — **автоматическое обновление конфигурации** без рестарта сервисов.
 
 ```mermaid
 sequenceDiagram
@@ -543,7 +541,7 @@ GET    /eureka/apps/{appId}          — инстансы конкретного
 | Spring интеграция | Нативная | Spring Cloud Consul | Spring Cloud Zookeeper |
 
 **Когда выбирать Eureka:**
-- Приоритет availability (AP-система по CAP) — подробнее в [вопросах по CAP-теореме](../../architecture/cap-theorem-interview.md)
+- Приоритет availability (AP-система по CAP) — подробнее в [[cap-theorem-interview|вопросах по CAP-теореме]]
 - Чисто Java/Spring стек — минимум внешних зависимостей
 - Self-preservation защищает от массового удаления при сетевых проблемах
 
@@ -604,7 +602,7 @@ graph LR
     style GW fill:#4a9eff,color:#fff
 ```
 
-Подробнее о реактивном стеке в [вопросах по Spring WebFlux](spring-webflux-interview.md).
+Подробнее о реактивном стеке в [[spring-webflux-interview|вопросах по Spring WebFlux]].
 
 ## Q16. (!) Как настроить маршруты и фильтры в `Spring Cloud Gateway`?
 
@@ -784,7 +782,7 @@ spring:
 
 ## Q20. (!) Что такое паттерн `Circuit Breaker` и зачем он нужен?
 
-`Circuit Breaker` — паттерн отказоустойчивости, предотвращающий каскадные сбои в [микросервисной архитектуре](../../architecture/microservices-interview.md). Работает как электрический предохранитель:
+`Circuit Breaker` — паттерн отказоустойчивости, предотвращающий каскадные сбои в [[microservices-interview|микросервисной архитектуре]]. Работает как электрический предохранитель:
 
 ```mermaid
 stateDiagram-v2
@@ -1015,7 +1013,7 @@ graph LR
 - **Baggage** — пользовательские данные, пробрасываемые через все сервисы
 - **Sampling** — процент запросов, для которых собираются трассировки (100% для debug, 1-10% для production)
 
-**Важно:** начиная с Spring Cloud 2022.0 (Spring Boot 3.x), `Spring Cloud Sleuth` заменён на `Micrometer Tracing`. Подробнее в [вопросах по Observability](../../monitoring/observability-interview.md).
+**Важно:** начиная с Spring Cloud 2022.0 (Spring Boot 3.x), `Spring Cloud Sleuth` заменён на `Micrometer Tracing`. Подробнее в [[observability-interview|вопросах по Observability]].
 
 ## Q26. (!) Как настроить `Micrometer Tracing` (замена `Sleuth`)?
 
@@ -1100,7 +1098,7 @@ graph LR
 - **Binding** — связь между logical destination (topic/queue) и функцией приложения
 - **Функциональная модель** (с Spring Cloud Stream 3.x) — `java.util.function.Function`, `Consumer`, `Supplier` вместо аннотаций `@StreamListener`
 
-Подробнее о Kafka в [вопросах по Apache Kafka](../../messaging/kafka-interview.md).
+Подробнее о Kafka в [[kafka-interview|вопросах по Apache Kafka]].
 
 ## Q28. Как настроить `Spring Cloud Stream` с `Kafka`?
 
@@ -2140,16 +2138,16 @@ spring:
 
 ## See also
 
-- [Spring Framework](spring-framework-interview.md) — основа IoC и DI для всех Cloud-компонентов
-- [Spring Boot](spring-boot-interview.md) — автоконфигурация Cloud-стартеров
-- [Spring MVC](spring-mvc-interview.md) — MVC как основа Spring Cloud Gateway (fallback)
-- [Spring WebFlux](spring-webflux-interview.md) — реактивная основа Spring Cloud Gateway
-- [Spring Security](spring-security-interview.md) — OAuth2 в микросервисах через Spring Cloud
-- [Spring Data JPA](spring-data-jpa-interview.md) — репозитории в Cloud-сервисах
-- [Spring Boot Actuator](spring-boot-actuator-interview.md) — health и metrics в Cloud-сервисах
-- [Spring Batch](spring-batch-interview.md) — Spring Cloud Task для batch-задач в облаке
-- [Микросервисная архитектура](../../architecture/microservices-interview.md) — паттерны, реализованные в Spring Cloud
-- [Распределённые системы](../../architecture/distributed-systems-interview.md) — консистентность и отказоустойчивость
+- [[spring-framework-interview|Spring Framework]] — основа IoC и DI для всех Cloud-компонентов
+- [[spring-boot-interview|Spring Boot]] — автоконфигурация Cloud-стартеров
+- [[spring-mvc-interview|Spring MVC]] — MVC как основа Spring Cloud Gateway (fallback)
+- [[spring-webflux-interview|Spring WebFlux]] — реактивная основа Spring Cloud Gateway
+- [[spring-security-interview|Spring Security]] — OAuth2 в микросервисах через Spring Cloud
+- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории в Cloud-сервисах
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — health и metrics в Cloud-сервисах
+- [[spring-batch-interview|Spring Batch]] — Spring Cloud Task для batch-задач в облаке
+- [[microservices-interview|Микросервисная архитектура]] — паттерны, реализованные в Spring Cloud
+- [[distributed-systems-interview|Распределённые системы]] — консистентность и отказоустойчивость
 
 - [[spring-aop-interview|Spring AOP]]
 - [[spring-batch-interview|Spring Batch]]

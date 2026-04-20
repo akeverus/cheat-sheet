@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[influxdb-basics|InfluxDB]] — **InfluxDB** временные ряды
 - [[postgres-basics|PostgreSQL]] — основы **PostgreSQL**
 
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
+- [[orm-basics|ORM: Object-Relational Mapping]]
 ## Содержание
 
 - [Введение в TimescaleDB](#введение-в-timescaledb)

@@ -23,6 +23,11 @@ updated: "2026-04-20"
 - [Spring Framework Reference](https://docs.spring.io/spring-framework/reference/)
 - [Spring Boot Reference](https://docs.spring.io/spring-boot/reference/)
 
+
+### См. также
+- [[spring-messaging|Spring Messaging: Полное руководство по messaging системам]]
+- [[spring-graphql|Spring GraphQL: Полное руководство]]
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
 ## Содержание
 
 - [IoC-контейнер и DI](#ioc-контейнер-и-di)

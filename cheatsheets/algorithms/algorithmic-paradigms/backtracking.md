@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[dynamic-programming|`dynamic-programming.md`]] — динамическое программирование (`DP`)
 - [[divide-and-conquer|`divide-and-conquer.md`]] — разделяй и властвуй (`divide and conquer`)
 
+- [[greedy-algorithms|Жадные алгоритмы (Greedy Algorithms)]]
+- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
 ## Содержание
 
 - [Введение в Backtracking](#введение-в-backtracking)

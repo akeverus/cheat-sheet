@@ -27,6 +27,12 @@ GitHub Copilot — это AI-ассистент разработки от GitHub
 - [Repository custom instructions](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions)
 - [Copilot настройки в VS Code](https://code.visualstudio.com/docs/copilot/copilot-settings)
 
+
+### См. также
+- [[claude-basics|Claude Code: основы]]
+- [[windsurf-basics|Windsurf: основы]]
+- [[aider-basics|Aider: основы]]
+- [[openclaw-basics|OpenClaw: основы]]
 ## Содержание
 
 - [Введение](#введение)

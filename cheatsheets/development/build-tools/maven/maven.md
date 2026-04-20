@@ -20,6 +20,11 @@ updated: "2026-04-20"
 - [Maven Getting Started](https://maven.apache.org/guides/getting-started/)
 - **См. также:** [[maven-advanced]] — продвинутые концепции, многомодульные проекты, **CI/CD**, **Dependency locking**; [README.md](../) — обзор раздела Build Tools.
 
+
+### См. также
+- [[gradle-advanced|Gradle Advanced]]
+- [[quarkus-dev-services|Quarkus: Dev Services — Автоматические сервисы для разработки]]
+- [[backend-basics|Основы backend-разработки]]
 ## Содержание
 
 - [Введение](#введение)

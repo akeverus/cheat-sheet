@@ -23,6 +23,10 @@ updated: "2026-04-20"
 - [Akka Cluster](https://doc.akka.io/docs/akka/current/cluster-usage.html)
 - [Akka Persistence](https://doc.akka.io/docs/akka/current/persistence.html)
 
+
+### См. также
+- [[scala-slick|Slick]]
+- [[scala-doobie|Doobie]]
 ## Содержание
 
 - [Основные концепции Akka](#основные-концепции-akka)

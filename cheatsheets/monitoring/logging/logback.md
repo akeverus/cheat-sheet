@@ -26,6 +26,8 @@ updated: "2026-04-20"
 - [[slf4j|SLF4J]]
 - [[structured-logging|Структурированное логирование]]
 
+- [[centralized-logging|Централизованное логирование для Java]]
+- [[log-aggregation|Агрегация логов для Java]]
 ## Содержание
 
 - [Введение в Logback](#введение-в-logback)

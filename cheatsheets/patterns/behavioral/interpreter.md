@@ -27,6 +27,9 @@ updated: "2026-04-20"
 - [[visitor|Visitor (Посетитель)]]
 - [[command|Command (Команда)]]
 
+- [[iterator|Итератор (Iterator)]]
+- [[state|Состояние (State)]]
+- [[memento|Хранитель (Memento)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

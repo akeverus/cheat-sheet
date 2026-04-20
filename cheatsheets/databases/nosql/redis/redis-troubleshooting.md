@@ -27,6 +27,9 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md", "databa
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-monitoring|redis-monitoring.md]] — мониторинг
 
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[spring-cache|Spring Cache: Полное руководство по кешированию]]
+- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
 ## Содержание
 
 - [Введение в troubleshooting Redis](#введение-в-troubleshooting-redis)

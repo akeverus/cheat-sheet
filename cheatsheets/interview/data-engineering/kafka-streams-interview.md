@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 `Kafka Streams` — **library** (не отдельный кластер!) для stream processing поверх Apache Kafka. Запускается как обычное Java/Scala приложение, использует Kafka topics как input/output и для **state**. Особенно удобен для **event-driven микросервисов** — без отдельного Spark/Flink кластера.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -602,17 +600,17 @@ SELECT * FROM total_per_user EMIT CHANGES;
 
 ## See also
 
-- [Apache Spark](apache-spark-interview.md) — другой stream processing
-- [Apache Flink](apache-flink-interview.md) — главный конкурент для streaming
-- [Apache Kafka](../messaging/kafka-interview.md) — основа Kafka Streams
-- [Stream Processing](stream-processing-interview.md) — общие концепции
-- [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — где Kafka Streams сильны
-- [Микросервисы](../architecture/microservices-interview.md) — естественная среда Kafka Streams
-- [Scala](../programming-languages/scala/scala-interview.md) — может быть использован для Kafka Streams
-- [Spring Cloud](../frameworks/spring/spring-cloud-interview.md) — Spring Cloud Stream поверх Kafka Streams
-- [Apache Airflow](apache-airflow-interview.md) — orchestration не-streaming
-- [Data Warehousing](data-warehousing-interview.md) — обычно sink Kafka Streams
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — Kafka Streams для choreographed sagas
+- [[apache-spark-interview|Apache Spark]] — другой stream processing
+- [[apache-flink-interview|Apache Flink]] — главный конкурент для streaming
+- [[kafka-interview|Apache Kafka]] — основа Kafka Streams
+- [[stream-processing-interview|Stream Processing]] — общие концепции
+- [[event-driven-patterns-interview|Event-driven паттерны]] — где Kafka Streams сильны
+- [[microservices-interview|Микросервисы]] — естественная среда Kafka Streams
+- [[scala-interview|Scala]] — может быть использован для Kafka Streams
+- [[spring-cloud-interview|Spring Cloud]] — Spring Cloud Stream поверх Kafka Streams
+- [[apache-airflow-interview|Apache Airflow]] — orchestration не-streaming
+- [[data-warehousing-interview|Data Warehousing]] — обычно sink Kafka Streams
+- [[saga-pattern-interview|Saga Pattern]] — Kafka Streams для choreographed sagas
 
 - [[apache-airflow-interview|Apache Airflow]]
 - [[apache-flink-interview|Apache Flink]]

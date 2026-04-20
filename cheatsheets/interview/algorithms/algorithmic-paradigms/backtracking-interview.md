@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 Backtracking — DFS по дереву решений с **отказом** (откатом), когда текущий путь не ведёт к решению. Классические задачи: N-Queens, Sudoku, permutations/combinations/subsets, Word Search. Главное — научиться **prune** (отсекать) бесперспективные ветви.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -439,7 +437,7 @@ boolean dfs(char[][] board, int r, int c, String word, int i) {
 
 `O(R · C · 4^L)`, где `L` — длина слова. Альтернатива — отдельный `boolean[][]` visited, но in-place быстрее по памяти.
 
-Для **множества** слов — Trie + backtracking, см. [Trie](../data-structures/tries-interview.md).
+Для **множества** слов — Trie + backtracking, см. [[tries-interview|Trie]].
 
 ## Q15. Rat in a Maze?
 
@@ -796,13 +794,13 @@ void iterativeBacktrack(State initial) {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Рекурсия](recursion-interview.md) — основа backtracking
-- [Графы](../data-structures/graphs-interview.md) — DFS = тот же подход
-- [DP](dynamic-programming-interview.md) — backtracking + memoization
-- [Divide and Conquer](divide-and-conquer-interview.md) — другая парадигма
-- [Деревья](../data-structures/trees-interview.md) — обходы через DFS
-- [Массивы и строки](../data-structures/arrays-strings-interview.md) — Word Search, Palindrome Partition
-- [Trie](../data-structures/tries-interview.md) — Word Search II через Trie + backtracking
-- [Хеш-таблицы](../data-structures/hash-tables-interview.md) — used set для permutations
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — экспоненциальная vs полиномиальная
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[recursion-interview|Рекурсия]] — основа backtracking
+- [[graphs-interview|Графы]] — DFS = тот же подход
+- [[dynamic-programming-interview|DP]] — backtracking + memoization
+- [[divide-and-conquer-interview|Divide and Conquer]] — другая парадигма
+- [[trees-interview|Деревья]] — обходы через DFS
+- [[arrays-strings-interview|Массивы и строки]] — Word Search, Palindrome Partition
+- [[tries-interview|Trie]] — Word Search II через Trie + backtracking
+- [[hash-tables-interview|Хеш-таблицы]] — used set для permutations
+- [[complexity-analysis-interview|Анализ сложности]] — экспоненциальная vs полиномиальная

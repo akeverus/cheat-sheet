@@ -29,6 +29,9 @@ updated: "2026-04-20"
 - [[spring-boot|**Spring Boot**]] — **Spring Boot** основы
 - [Мониторинг](../../../monitoring/) — мониторинг микросервисов
 
+- [[spring-websocket|Spring WebSocket]]
+- [[spring-integration|Spring Integration]]
+- [[spring-batch|Spring Batch для Java]]
 ## Содержание
 
 - [Введение в Spring Cloud](#введение-в-spring-cloud)

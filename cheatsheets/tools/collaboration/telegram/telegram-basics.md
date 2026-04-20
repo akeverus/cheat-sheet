@@ -25,6 +25,10 @@ Telegram — мессенджер с акцентом на скорость, ш�
 - [Telegram Bots: An introduction](https://core.telegram.org/bots)
 - [Telegram API (MTProto)](https://core.telegram.org/api) — для кастомных клиентов
 
+
+### См. также
+- [[confluence-basics|Confluence: основы]]
+- [[security-tools|Инструменты безопасности (Security Tools)]]
 ## Содержание
 
 - [Каналы и группы](#каналы-и-группы)

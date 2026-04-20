@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[hill-climbing|Hill-Climbing]]
 - [[jenetics|Jenetics]]
 
+- [[logistic-regression|Логистическая регрессия]]
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
 ## Содержание
 
 - [Обзор](#обзор)

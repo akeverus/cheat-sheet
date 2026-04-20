@@ -22,6 +22,13 @@ updated: "2026-04-20"
 - [Go Maps Documentation](https://go.dev/blog/maps)
 - [Effective Go — Arrays and Slices](https://go.dev/doc/effective_go#arrays_slices_maps)
 
+
+### См. также
+- [[go-benchmarking|Go: бенчмаркинг]]
+- [[go-web-frameworks|Go: веб-фреймворки]]
+- [[go-observability|Go: наблюдаемость]]
+- [[go-encoding|Go: кодирование]]
+- [[go-logging|Go: логирование]]
 ## Содержание
 
 - [Введение в коллекции](#введение-в-коллекции)

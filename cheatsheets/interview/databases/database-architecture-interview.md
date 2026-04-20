@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Краткие ответы по архитектуре БД: нормализация, `ACID / BASE`, индексы, `SQL / NoSQL`, `MVCC`, `WAL`, репликация, шардирование, партиционирование.
 
-Дата последнего обновления: 2026-04-13
-
 **Архитектура БД** — репликация, шардирование, `CAP`, внутреннее устройство `PostgreSQL` и выбор хранилищ — часто обсуждается на собеседованиях по бэкенду и системному дизайну. Раздел охватывает как теоретические основы, так и практические аспекты: `EXPLAIN ANALYZE`, настройки конфигурации, стратегии партиционирования.
 
 ## Полезные ссылки
@@ -150,7 +148,7 @@ CREATE TABLE departments (
 );
 ```
 
-На практике чаще всего достаточно 3NF. Денормализация (осознанное нарушение NF) применяется для повышения скорости чтения — например, хранение `total_amount` в таблице заказов вместо пересчёта из позиций. Подробнее про SQL — в [вопросах по SQL](sql-interview.md).
+На практике чаще всего достаточно 3NF. Денормализация (осознанное нарушение NF) применяется для повышения скорости чтения — например, хранение `total_amount` в таблице заказов вместо пересчёта из позиций. Подробнее про SQL — в [[sql-interview|вопросах по SQL]].
 
 ## Q2. (!) Что такое BASE?
 
@@ -173,7 +171,7 @@ graph LR
     style Node3 fill:#FFC107,color:#000
 ```
 
-Основная идея — `NoSQL` базы жертвуют строгой согласованностью ради доступности и производительности. Это ключевой trade-off, описанный в [CAP-теореме](../architecture/cap-theorem-interview.md).
+Основная идея — `NoSQL` базы жертвуют строгой согласованностью ради доступности и производительности. Это ключевой trade-off, описанный в [[cap-theorem-interview|CAP-теореме]].
 
 ## Q3. (!) Что такое ACID?
 
@@ -227,7 +225,7 @@ graph TD
     end
 ```
 
-Выбор зависит от требований: если критична сохранность каждой записи (финансы, бухгалтерия) — `ACID`. Если важнее доступность и масштабирование на миллионы пользователей — `BASE`. Подробнее о паттернах — [Паттерны согласованности](../architecture/consistency-patterns-interview.md).
+Выбор зависит от требований: если критична сохранность каждой записи (финансы, бухгалтерия) — `ACID`. Если важнее доступность и масштабирование на миллионы пользователей — `BASE`. Подробнее о паттернах — [[consistency-patterns-interview|Паттерны согласованности]].
 
 ## Q5. (!) Какие есть типы изоляции транзакций?
 
@@ -569,7 +567,7 @@ CREATE INDEX idx_orders_covering ON orders (customer_id)
 INCLUDE (status, total_amount);
 ```
 
-Подробнее про оптимизацию запросов с индексами — [вопросы по SQL](sql-interview.md).
+Подробнее про оптимизацию запросов с индексами — [[sql-interview|вопросы по SQL]].
 
 ## Q13. Что будет если два одинаковых индекса в БД?
 
@@ -981,7 +979,7 @@ CREATE SUBSCRIPTION my_sub
 - **Hot standby** — реплика готова стать primary при failover
 - **Delayed replica** — реплика с задержкой N часов — защита от человеческих ошибок (`DROP TABLE`)
 
-Подробнее о распределённых системах — [вопросы по распределённым системам](../architecture/distributed-systems-interview.md).
+Подробнее о распределённых системах — [[distributed-systems-interview|вопросы по распределённым системам]].
 
 ## Q23. (!) Что такое шардирование и как выбрать ключ шардирования?
 
@@ -1031,7 +1029,7 @@ graph LR
 - **Resharding** — добавление шарда требует миграции данных
 - **Распределённые транзакции** — 2PC или Saga паттерн
 
-Подробнее — [паттерны масштабирования](../architecture/scalability-patterns-interview.md).
+Подробнее — [[scalability-patterns-interview|паттерны масштабирования]].
 
 ## Q24. (!) Что такое connection pooling и зачем он нужен?
 
@@ -1102,7 +1100,7 @@ spring:
 | Транзакции | `ACID` | Обычно `BASE` (есть исключения) |
 | Масштабирование | Преимущественно вертикальное | Горизонтальное из коробки |
 | `JOIN` | Мощные, оптимизированные | Ограниченные или отсутствуют |
-| Примеры | `PostgreSQL`, `MySQL`, `Oracle` | `MongoDB`, [Redis](redis-interview.md), [Cassandra](cassandra-interview.md) |
+| Примеры | `PostgreSQL`, `MySQL`, `Oracle` | `MongoDB`, [[redis-interview|Redis]], [[cassandra-interview|Cassandra]] |
 
 На собеседовании важно показать, что выбор — не «SQL лучше» или «NoSQL лучше», а зависит от конкретного use case: характера данных, паттернов доступа, требований к согласованности и масштабированию.
 
@@ -1124,11 +1122,11 @@ graph TD
 
 | Тип | Модель данных | Когда использовать | Примеры |
 |-----|--------------|-------------------|---------|
-| **Key-Value** | Пара ключ-значение | Кэш, сессии, очереди | [Redis](redis-interview.md), `DynamoDB`, `Riak` |
-| **Document** | JSON/BSON документы | Каталоги, CMS, гибкие схемы | [MongoDB](mongodb-interview.md), `CouchDB` |
-| **Wide-Column** | Семейства столбцов | Временные ряды, IoT, логи | [Cassandra](cassandra-interview.md), `HBase`, `ScyllaDB` |
+| **Key-Value** | Пара ключ-значение | Кэш, сессии, очереди | [[redis-interview|Redis]], `DynamoDB`, `Riak` |
+| **Document** | JSON/BSON документы | Каталоги, CMS, гибкие схемы | [[mongodb-interview|MongoDB]], `CouchDB` |
+| **Wide-Column** | Семейства столбцов | Временные ряды, IoT, логи | [[cassandra-interview|Cassandra]], `HBase`, `ScyllaDB` |
 | **Graph** | Узлы + рёбра | Социальные графы, рекомендации | `Neo4j`, `Amazon Neptune` |
-| **Search** | Инвертированный индекс | Полнотекстовый поиск, логи | [Elasticsearch](elasticsearch-interview.md), `OpenSearch` |
+| **Search** | Инвертированный индекс | Полнотекстовый поиск, логи | [[elasticsearch-interview|Elasticsearch]], `OpenSearch` |
 
 ## Q27. Можно ли использовать SQL язык запросов с NoSQL?
 
@@ -1157,9 +1155,9 @@ graph TD
 
 На практике часто используют **polyglot persistence** — несколько БД для разных задач:
 - `PostgreSQL` — основные бизнес-данные (заказы, пользователи)
-- [Redis](redis-interview.md) — кэш, сессии
-- [Elasticsearch](elasticsearch-interview.md) — поиск, логи
-- [Cassandra](cassandra-interview.md) — временные ряды, IoT
+- [[redis-interview|Redis]] — кэш, сессии
+- [[elasticsearch-interview|Elasticsearch]] — поиск, логи
+- [[cassandra-interview|Cassandra]] — временные ряды, IoT
 
 ## Q29. (!) Критерии выбора между SQL и NoSQL для проекта?
 
@@ -1220,7 +1218,7 @@ graph TD
 | Стоимость | Растёт экспоненциально | Линейно |
 | Подходит для | `PostgreSQL`, `MySQL` | `Cassandra`, `MongoDB`, `CockroachDB` |
 
-Подробнее — [паттерны масштабирования](../architecture/scalability-patterns-interview.md).
+Подробнее — [[scalability-patterns-interview|паттерны масштабирования]].
 
 ## Q31. Какие виды индексов поддерживаются SQL и NoSQL?
 
@@ -1233,7 +1231,7 @@ graph TD
 | **Elasticsearch** | Инвертированный индекс (`Lucene`) | Все поля индексируются по умолчанию |
 | **Redis** | Нет классических индексов | Sorted Sets, RediSearch module |
 
-Выбор типа индекса определяется моделью данных и паттерном запросов — подробнее в [вопросах по SQL](sql-interview.md).
+Выбор типа индекса определяется моделью данных и паттерном запросов — подробнее в [[sql-interview|вопросах по SQL]].
 
 ## Q32. (!) Обработка транзакций в SQL и NoSQL?
 
@@ -1255,7 +1253,7 @@ graph TD
     end
 ```
 
-Подробнее — [распределённые системы](../architecture/distributed-systems-interview.md) и [паттерны согласованности](../architecture/consistency-patterns-interview.md).
+Подробнее — [[distributed-systems-interview|распределённые системы]] и [[consistency-patterns-interview|паттерны согласованности]].
 
 ## Q33. (!) Разница между PostgreSQL, MongoDB, Elasticsearch, Redis и Cassandra?
 
@@ -1270,7 +1268,7 @@ graph TD
 
 На собеседовании важно не просто перечислить различия, а показать, как выбор подтверждается измерениями: `EXPLAIN ANALYZE`, профиль нагрузки, latency p95/p99.
 
-Подробнее про каждую БД — [Redis](redis-interview.md), [MongoDB](mongodb-interview.md), [Cassandra](cassandra-interview.md), [Elasticsearch](elasticsearch-interview.md).
+Подробнее про каждую БД — [[redis-interview|Redis]], [[mongodb-interview|MongoDB]], [[cassandra-interview|Cassandra]], [[elasticsearch-interview|Elasticsearch]].
 
 ## Q34. (!) Какие ключевые параметры конфигурации PostgreSQL влияют на производительность?
 
@@ -1742,16 +1740,16 @@ public class UserService {
 
 ## See also
 
-- [SQL](sql-interview.md) — язык запросов, DDL/DML, индексы, оптимизация
-- [Hibernate](hibernate-interview.md) — ORM-фреймворк, маппинг, кэширование
-- [Redis](redis-interview.md) — in-memory хранилище, кэширование
-- [MongoDB](mongodb-interview.md) — документоориентированная NoSQL БД
-- [Cassandra](cassandra-interview.md) — распределённая NoSQL БД, AP-система
-- [Elasticsearch](elasticsearch-interview.md) — поиск и аналитика
-- [CAP-теорема](../architecture/cap-theorem-interview.md) — теоретическая основа распределённых БД
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — консистентность, репликация, консенсус
-- [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — eventual consistency, strong consistency
-- [Паттерны масштабирования](../architecture/scalability-patterns-interview.md) — горизонтальное и вертикальное масштабирование
+- [[sql-interview|SQL]] — язык запросов, DDL/DML, индексы, оптимизация
+- [[hibernate-interview|Hibernate]] — ORM-фреймворк, маппинг, кэширование
+- [[redis-interview|Redis]] — in-memory хранилище, кэширование
+- [[mongodb-interview|MongoDB]] — документоориентированная NoSQL БД
+- [[cassandra-interview|Cassandra]] — распределённая NoSQL БД, AP-система
+- [[elasticsearch-interview|Elasticsearch]] — поиск и аналитика
+- [[cap-theorem-interview|CAP-теорема]] — теоретическая основа распределённых БД
+- [[distributed-systems-interview|Распределённые системы]] — консистентность, репликация, консенсус
+- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency, strong consistency
+- [[scalability-patterns-interview|Паттерны масштабирования]] — горизонтальное и вертикальное масштабирование
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

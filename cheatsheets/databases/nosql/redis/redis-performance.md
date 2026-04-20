@@ -27,6 +27,9 @@ related: ["databases/redis-basics.md", "databases/redis-clustering.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-monitoring|redis-monitoring.md]] — мониторинг
 
+- [[go-performance|Go: производительность]]
+- [[scala-performance|Scala Performance]]
+- [[clickhouse-performance|ClickHouse: Производительность — Полное руководство по оптимизации и тюнингу]]
 ## Содержание
 
 - [Введение в оптимизацию производительности Redis](#введение-в-оптимизацию-производительности-redis)

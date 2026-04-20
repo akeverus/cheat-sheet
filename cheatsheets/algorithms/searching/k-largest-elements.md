@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[kth-smallest-in-two-sorted-arrays|Поиск k-го по величине элемента]] — k-th smallest
 - [[top-n-frequent-elements|N самых частых элементов]] — top N frequent
 
+- [[maximum-subarray|Максимальный подмассив (Maximum Subarray Problem)]]
+- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
+- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

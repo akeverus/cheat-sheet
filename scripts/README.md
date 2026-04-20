@@ -11,6 +11,7 @@
 | `cheatsheet-autofix-v2.py` | Второй проход: жирный в заголовках, жирный в скобках, комбинации backtick+bold, конвертация `[text](file.md)` → `[[wikilink]]`. | ✓ |
 | `cheatsheet-autofix-v3.py` | Третий проход: жирный внутри inline-кода, расширенные тире, сложные случаи скобок. | ✓ |
 | `cheatsheet-regenerate-toc.py` | Перегенерация блока `## Содержание` из реальных заголовков с GFM-совместимым slugify. | ✓ |
+| `cheatsheet-add-wikilinks.py` | Дополняет `### См. также` до 5 wikilinks по пересечению тегов frontmatter. | ✓ |
 
 ## Запуск
 
@@ -25,6 +26,9 @@ python3 scripts/cheatsheet-autofix-v3.py cheatsheets
 
 # Пересборка TOC
 python3 scripts/cheatsheet-regenerate-toc.py cheatsheets
+
+# Дополнить wikilinks до 5 в ### См. также
+python3 scripts/cheatsheet-add-wikilinks.py cheatsheets
 
 # Фильтр по подкаталогу (--only substring match)
 python3 scripts/cheatsheet-autofix-v2.py cheatsheets --only postgres

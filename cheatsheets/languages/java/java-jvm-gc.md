@@ -28,6 +28,9 @@ updated: "2026-04-20"
 - [[java-memory-model|Java Memory Model]] — happens-before, volatile, synchronized
 - [[java-concurrency-basics|Java Concurrency]] — потоки, пулы, синхронизация
 
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[spring-cache|Spring Cache: Полное руководство по кешированию]]
+- [[java-basics|Java: основы]]
 ## Содержание
 
 - [Архитектура JVM](#архитектура-jvm)

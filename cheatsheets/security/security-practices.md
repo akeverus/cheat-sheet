@@ -30,6 +30,8 @@ updated: "2026-04-20"
 - [[application-security|Application Security]] — аутентификация/авторизация
 
 
+- [[spring-boot|Spring Boot — Полное руководство]]
+- [[quarkus-security|Quarkus: Security — Authentication, Authorization и OAuth2]]
 ## Содержание
 
 - [Secure SDLC](#secure-sdlc)

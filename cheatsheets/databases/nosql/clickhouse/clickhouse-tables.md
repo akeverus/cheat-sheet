@@ -37,6 +37,8 @@ related: ["databases/clickhouse-basics.md", "databases/clickhouse-queries.md"]
 - [[clickhouse-basics|Основы]] — **ClickHouse**
 - [[clickhouse-queries|Запросы]] — работа с данными
 
+- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
+- [[clickhouse-integration|ClickHouse: Интеграции и экосистема — Подключение внешних систем и инструментов]]
 ## Содержание
 
 - [Создание таблиц](#создание-таблиц)

@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[mockito-advanced|Mockito Advanced]]
 - [[spring-testing|Spring Testing]]
 
+- [[pytest|pytest]]
+- [[junit|JUnit 5]]
 ## Содержание
 
 - [Введение в AssertJ](#введение-в-assertj)

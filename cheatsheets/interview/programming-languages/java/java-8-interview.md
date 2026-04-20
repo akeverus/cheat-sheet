@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Java 8` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры кода, диаграммы и best practices.
 
-Дата последнего обновления: 2026-04-13
-
 **`Java 8`** — одна из самых значимых версий платформы, которая принесла функциональное программирование в мир `Java`. Основные нововведения: лямбда-выражения, `Stream API`, `Optional`, default-методы в интерфейсах, новый `Date/Time API` и `CompletableFuture`. Эти темы — обязательная часть любого Java-собеседования.
 
 ## Полезные ссылки
@@ -199,7 +197,7 @@ graph TD
     FUNC --> BIOP
 ```
 
-Подробнее о коллекциях, использующих функциональные интерфейсы — в [вопросах по Java Collections](java-collections-interview.md).
+Подробнее о коллекциях, использующих функциональные интерфейсы — в [[java-collections-interview|вопросах по Java Collections]].
 
 ## Q4. (!) Какие стандартные функциональные интерфейсы есть в `java.util.function`?
 
@@ -457,7 +455,7 @@ Optional<String> city = findUser(userId)
 
 **Важно**: `Optional` не реализует `Serializable` — не использовать как поле сущности или DTO. Его назначение — возвращаемый тип методов.
 
-Подробнее о работе с `null`-безопасными коллекциями — в [вопросах по Collections](java-collections-interview.md).
+Подробнее о работе с `null`-безопасными коллекциями — в [[java-collections-interview|вопросах по Collections]].
 
 ## Q12. В чём разница между `orElse` и `orElseGet`?
 
@@ -552,7 +550,7 @@ public interface Collection<E> {
 
 **Зачем нужен**: позволяет добавлять новые методы в существующие интерфейсы (`Collection`, `List`, `Map`) без ломки всех реализаций. Именно так были добавлены `forEach()`, `stream()`, `sort()`, `removeIf()` и другие методы в стандартные интерфейсы коллекций.
 
-Подробнее о методах коллекций — в [вопросах по Collections](java-collections-interview.md).
+Подробнее о методах коллекций — в [[java-collections-interview|вопросах по Collections]].
 
 ## Q16. (!) Как разрешаются конфликты при наследовании нескольких `default`-методов?
 
@@ -642,7 +640,7 @@ graph LR
     style INT3 fill:#fff9c4
 ```
 
-Подробнее — в [отдельном файле по Stream API](java-stream-interview.md).
+Подробнее — в [[java-stream-interview|отдельном файле по Stream API]].
 
 ## Q19. (!) В чём разница между промежуточными и терминальными операциями?
 
@@ -924,7 +922,7 @@ List<String> safe = names.parallelStream()
     .collect(Collectors.toList());
 ```
 
-Подробнее о проблемах параллелизма — в [вопросах по Java Concurrency](java-concurrency-interview.md).
+Подробнее о проблемах параллелизма — в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q29. Можно ли повторно использовать `Stream`?
 
@@ -1111,7 +1109,7 @@ CompletableFuture<Void> all = CompletableFuture.allOf(
 all.thenRun(() -> System.out.println("Все задачи завершены"));
 ```
 
-Подробнее об асинхронности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
+Подробнее об асинхронности — в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q35. Как комбинировать несколько `CompletableFuture`?
 
@@ -1279,7 +1277,7 @@ Optional<String> first = List.of("one").stream().findFirst();
 String first = list.get(0);
 ```
 
-Подробнее о типичных ошибках и best practices — в [вопросах по Stream API](java-stream-interview.md).
+Подробнее о типичных ошибках и best practices — в [[java-stream-interview|вопросах по Stream API]].
 
 ## Q39. (!) Как написать собственный `Collector`?
 
@@ -1489,14 +1487,14 @@ names.stream().filter(s -> s.startsWith("A")).map(String::toUpperCase).toList();
 
 ## See also
 
-- [Java Stream API](java-stream-interview.md) — углублённые вопросы по `Stream API`, `Collectors`, параллельные стримы
-- [Java Collections](java-collections-interview.md) — коллекции и их взаимодействие со стримами
-- [Java Concurrency](java-concurrency-interview.md) — многопоточность, `CompletableFuture`, `ForkJoinPool`
-- [Java Core](java-core-interview.md) — базовые вопросы по Java, `Optional`, `Records`
-- [Java Generics](java-generics-interview.md) — обобщения и `type inference` в Java 8+
-- [OOP & Java](java-oop-interview.md) — функциональные интерфейсы как развитие ООП
-- [Java 17-21](java-17-21-interview.md) — продолжение эволюции: `records`, `sealed`, `pattern matching`
-- [Система типов Java](java-types-interview.md) — примитивы vs обёртки в стримах
-- [Java String](java-string-interview.md) — работа со строками в `Stream API`
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны функционального программирования
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — `Spring WebFlux`, реактивное программирование как развитие идей Java 8
+- [[java-stream-interview|Java Stream API]] — углублённые вопросы по `Stream API`, `Collectors`, параллельные стримы
+- [[java-collections-interview|Java Collections]] — коллекции и их взаимодействие со стримами
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность, `CompletableFuture`, `ForkJoinPool`
+- [[java-core-interview|Java Core]] — базовые вопросы по Java, `Optional`, `Records`
+- [[java-generics-interview|Java Generics]] — обобщения и `type inference` в Java 8+
+- [[java-oop-interview|OOP & Java]] — функциональные интерфейсы как развитие ООП
+- [[java-17-21-interview|Java 17-21]] — продолжение эволюции: `records`, `sealed`, `pattern matching`
+- [[java-types-interview|Система типов Java]] — примитивы vs обёртки в стримах
+- [[java-string-interview|Java String]] — работа со строками в `Stream API`
+- [[design-patterns-interview|Design Patterns]] — паттерны функционального программирования
+- [[spring-boot-interview|Spring Boot]] — `Spring WebFlux`, реактивное программирование как развитие идей Java 8

@@ -1,6 +1,6 @@
 ---
 title: "Основы Packer (редирект)"
-description: "Основной документ по теме: [Packer](packer.md)."
+description: "Основной документ по теме: [[packer|Packer]]."
 tags:
   - platform
   - iac
@@ -20,6 +20,12 @@ updated: "2026-04-20"
 
 [[packer]]
 
+
+### См. также
+- [[iac-overview|Infrastructure as Code (IaC) — обзор]]
+- [[terraform-basics|Основы Terraform (редирект)]]
+- [[terraform|Terraform]]
+- [[terraform-advanced|Terraform Advanced]]
 ## См. также
 
 - [[packer|Packer]]

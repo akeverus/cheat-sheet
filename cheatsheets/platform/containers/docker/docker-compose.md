@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Best Practices](https://docs.docker.com/compose/production/)
 - [Production Considerations](https://docs.docker.com/compose/production/)
 
+
+### См. также
+- [[containerization-overview|Containerization — обзор]]
 ## Содержание
 
 - [Основы Docker Compose](#основы-docker-compose)

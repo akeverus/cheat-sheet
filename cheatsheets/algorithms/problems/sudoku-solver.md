@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[knapsack-problem|Задача о рюкзаке]] — **knapsack**
 - [Бинарное дерево](../trees/) — бинарное дерево
 
+- [[optaplanner|OptaPlanner]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

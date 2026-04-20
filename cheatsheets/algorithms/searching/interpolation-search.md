@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[binary-search|`binary-search.md`]] — бинарный поиск (`binary search`)
 - [[maximum-subarray|`maximum-subarray.md`]] — максимальный подмассив (`Kadane`)
 
+- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
+- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
+- [[merge-two-sorted-arrays|Слияние двух отсортированных массивов (Merge Two Sorted Arrays)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[linked-list-reverse|Реверс Linked List]]
 - [[README|Задачи и алгоритмы]] — обзор разделов
 
+- [[collections-complexity|Временная сложность коллекций Java]]
+- [[collections-big-o|Практические примеры нотации Big O]]
+- [[collections-lock-free|Введение в структуры данных без блокировок]]
 ## Содержание
 
 - [Обзор](#обзор)

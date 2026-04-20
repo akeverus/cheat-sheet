@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[pytest|pytest]]
 
 
+- [[cucumber|Cucumber для Java]]
+- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
 ## Содержание
 
 - [Основные концепции](#основные-концепции)

@@ -28,6 +28,9 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 - [[redis-data-structures|redis-data-structures.md]] — структуры данных
 - [[redis-persistence|redis-persistence.md]] — персистентность
 
+- [[redis-basics|Redis: Основы]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
 ## Содержание
 
 - [Введение в Redis](#введение-в-redis)

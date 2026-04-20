@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Grafana Loki` — log aggregation от Grafana Labs (с 2018). **"Like Prometheus, but for logs"** — индексирует только labels, raw logs хранятся compressed. Намного дешевле ELK. **PLG stack** = Promtail + Loki + Grafana. Часто комбинируется с **Tempo** (traces) + **Mimir** (metrics) = full Grafana stack.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -608,17 +606,17 @@ Real-world: enterprise reports save **70-90%** moving к Loki.
 
 ## See also
 
-- [OpenTelemetry](opentelemetry-interview.md) — modern standard
-- [ELK Stack](elk-stack-interview.md) — alternative для logs
-- [Jaeger / Zipkin](jaeger-zipkin-interview.md) — для traces (alternative Tempo)
-- [Prometheus + Grafana](prometheus-grafana-interview.md) — для metrics (alternative Mimir)
-- [Observability](observability-interview.md) — общая концепция
-- [Logging](../logging/logging-interview.md) — application logging
-- [Стратегии логирования](logging-strategies-interview.md) — best practices
-- [Микросервисы](../architecture/microservices-interview.md) — где Loki shines
-- [Kubernetes](../devops/kubernetes-interview.md) — log discovery
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — observability
-- [Caching](../architecture/caching-strategies-interview.md) — для query performance
+- [[opentelemetry-interview|OpenTelemetry]] — modern standard
+- [[elk-stack-interview|ELK Stack]] — alternative для logs
+- [[jaeger-zipkin-interview|Jaeger / Zipkin]] — для traces (alternative Tempo)
+- [[prometheus-grafana-interview|Prometheus + Grafana]] — для metrics (alternative Mimir)
+- [[observability-interview|Observability]] — общая концепция
+- [[logging-interview|Logging]] — application logging
+- [[logging-strategies-interview|Стратегии логирования]] — best practices
+- [[microservices-interview|Микросервисы]] — где Loki shines
+- [[kubernetes-interview|Kubernetes]] — log discovery
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — observability
+- [[caching-strategies-interview|Caching]] — для query performance
 
 - [[elk-stack-interview|ELK Stack]]
 - [[jaeger-zipkin-interview|Jaeger и Zipkin]]

@@ -1,6 +1,6 @@
 ---
 title: "Основы Ansible (редирект)"
-description: "Основной документ по теме: [Ansible](ansible.md)."
+description: "Основной документ по теме: [[ansible|Ansible]]."
 tags:
   - platform
   - iac

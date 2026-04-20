@@ -39,6 +39,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-materialized-v
 - [[clickhouse-tables|Таблицы]] — движки таблиц
 - [[clickhouse-materialized-views|Материализованные представления]] — в кластерах
 
+- [[redis-replication|Redis: Репликация]]
 ## Содержание
 
 - [Введение в репликацию ClickHouse](#введение-в-репликацию-clickhouse)

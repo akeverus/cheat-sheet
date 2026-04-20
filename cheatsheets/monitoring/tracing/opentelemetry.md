@@ -31,6 +31,9 @@ updated: "2026-04-20"
 - [[prometheus|Prometheus]] — метрики
 - [Monitoring README](../) — обзор мониторинга
 
+- [[distributed-tracing|Распределённое трассирование]]
+- [[zipkin|Zipkin]]
+- [[go-observability|Go: наблюдаемость]]
 ## Содержание
 
 - [Введение](#введение)

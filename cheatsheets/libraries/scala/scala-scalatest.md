@@ -22,6 +22,11 @@ updated: "2026-04-20"
 - [Mockito](https://site.mockito.org/)
 - [ScalaMock](https://scalamock.org/)
 
+
+### См. также
+- [[scala-akka|Akka]]
+- [[scala-slick|Slick]]
+- [[scala-doobie|Doobie]]
 ## Содержание
 
 - [Основы ScalaTest](#основы-scalatest)

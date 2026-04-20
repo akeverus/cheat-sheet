@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[counting-sort|counting-sort.md]] — сортировка подсчётом
 - [[radix-sort|radix-sort.md]] — поразрядная сортировка
 
+- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
+- [[selection-sort|Сортировка выбором (Selection Sort)]]
+- [[heap-sort|Сортировка кучей (Heap Sort)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

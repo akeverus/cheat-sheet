@@ -27,6 +27,9 @@ updated: "2026-04-20"
 - [[facade|Facade Pattern]]
 - [[composite|Composite Pattern]]
 
+- [[decorator|Декоратор (Decorator)]]
+- [[adapter|Адаптер (Adapter)]]
+- [[proxy|Заместитель (Proxy)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

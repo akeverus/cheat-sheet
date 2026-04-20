@@ -1,10 +1,12 @@
 package com.cheatsheet.quiz.api.mapper.view;
 
+import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -15,7 +17,10 @@ import org.springframework.ui.Model;
  * и фиксирует единый контракт атрибутов для шаблонов.</p>
  */
 @Component
+@RequiredArgsConstructor
 public class MvcModelAttributeMapper {
+
+    private final AppProperties appProperties;
 
     /**
      * Маппит общий surface-state (фильтры, топики, статистика) в модель.
@@ -129,6 +134,7 @@ public class MvcModelAttributeMapper {
             model.addAttribute("diagram", state.diagram());
         }
         model.addAttribute("relatedQuestions", state.relatedQuestions());
+        model.addAttribute("aiEnabled", appProperties.isAiEnabled());
     }
 
     /**

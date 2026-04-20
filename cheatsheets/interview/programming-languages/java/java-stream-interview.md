@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Java Stream API` — от базовых концепций pipeline и lazy evaluation до продвинутых `Collectors`, `parallel streams`, `Gatherers` (Java 22+) и типичных ловушек.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -1702,10 +1700,10 @@ List<Integer> list = IntStream.range(0, 10).boxed().toList();
 
 ## See also
 
-- [Java 8](java-8-interview.md) — лямбды, `FunctionalInterface`, `Optional` — основа для Stream API
-- [Java Collections](java-collections-interview.md) — коллекции как источники стримов, `Spliterator`, `Iterable`
-- [Java Concurrency](java-concurrency-interview.md) — `parallel streams`, `ForkJoinPool`, потокобезопасность в стримах
-- [Java Core](java-core-interview.md) — базовые концепции: методы-ссылки, `Comparable`, `Comparator`
-- [Java Generics](java-generics-interview.md) — дженерики в `Collector<T,A,R>`, `Function<T,R>`, type inference
-- [Java 17-21](java-17-21-interview.md) — `Gatherers` API (Java 22+), `SequencedCollection` в Java 21
-- [Java IO / NIO](java-io-nio-interview.md) — `Files.lines()`, `Files.walk()` возвращают `Stream<String>`/`Stream<Path>`
+- [[java-8-interview|Java 8]] — лямбды, `FunctionalInterface`, `Optional` — основа для Stream API
+- [[java-collections-interview|Java Collections]] — коллекции как источники стримов, `Spliterator`, `Iterable`
+- [[java-concurrency-interview|Java Concurrency]] — `parallel streams`, `ForkJoinPool`, потокобезопасность в стримах
+- [[java-core-interview|Java Core]] — базовые концепции: методы-ссылки, `Comparable`, `Comparator`
+- [[java-generics-interview|Java Generics]] — дженерики в `Collector<T,A,R>`, `Function<T,R>`, type inference
+- [[java-17-21-interview|Java 17-21]] — `Gatherers` API (Java 22+), `SequencedCollection` в Java 21
+- [[java-io-nio-interview|Java IO / NIO]] — `Files.lines()`, `Files.walk()` возвращают `Stream<String>`/`Stream<Path>`

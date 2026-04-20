@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [Problem Solving](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[problem-solving-overview|Обзор решения задач]]

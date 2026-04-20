@@ -37,6 +37,7 @@ related: ["databases/clickhouse-queries.md", "databases/clickhouse-performance.m
 - [[clickhouse-queries|Запросы]] — оптимизация запросов
 - [[clickhouse-performance|Производительность]] — производительность и мониторинг
 
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
 ## Содержание
 
 - [Введение в индексацию](#введение-в-индексацию)

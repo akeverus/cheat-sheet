@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[traveling-salesman-problem|Задача коммивояжера]] — TSP
 - [[greedy-algorithms|Обзор жадной парадигмы]] — теория и классические задачи
 
+- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
+- [[backtracking|Поиск с возвратом (Backtracking)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -36,6 +36,9 @@ updated: "2026-04-20"
 - [[distributed-tracing|Distributed Tracing]] — общие концепции
 - [Monitoring README](../) — основы **Observability**
 
+- [[zipkin|Zipkin]]
+- [[opentelemetry|OpenTelemetry]]
+- [[go-observability|Go: наблюдаемость]]
 ## Содержание
 
 - [Введение в Jaeger](#введение-в-jaeger)

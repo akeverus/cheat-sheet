@@ -1,6 +1,6 @@
 ---
 title: "Go Frameworks — обзор (редирект)"
-description: "Подробный документ по веб-фреймворкам Go: [Go Web Frameworks](../../languages/go/go-web-frameworks.md)."
+description: "Подробный документ по веб-фреймворкам Go: [[go-web-frameworks|Go Web Frameworks]]."
 tags:
   - frameworks
   - go-frameworks

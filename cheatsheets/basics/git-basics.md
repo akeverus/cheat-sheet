@@ -23,6 +23,11 @@ updated: "2026-04-20"
 - [Git Documentation](https://git-scm.com/doc)
 - [GitHub Guides](https://guides.github.com/)
 
+
+### См. также
+- [[java-basics|Java: основы]]
+- [[redis-basics|Redis: Основы]]
+- [[computer-science-basics|Основы Computer Science]]
 ## Содержание
 
 - [Основные команды](#основные-команды)

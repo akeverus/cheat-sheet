@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[kotlin-dsl|DSL в Kotlin]]
 - [[postgres-basics|Основы PostgreSQL]]
 
+- [[kotlin-konfig|Konfig]]
+- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
 ## Содержание
 
 - [Введение в Exposed](#введение-в-exposed)

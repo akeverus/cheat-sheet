@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 `JWT` (JSON Web Token) — стандарт (RFC 7519) для безопасной передачи данных между сторонами в виде JSON-объекта, подписанного (и опционально зашифрованного). Широко применяется в REST API, микросервисах и OAuth2/OpenID Connect. На интервью тема JWT часто проверяет понимание не только механики токенов, но и security-аспектов, trade-offs и паттернов хранения.
 
-Дата последнего обновления: 2026-04-13.
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -1643,11 +1641,11 @@ public JwtDecoder jwtDecoder() {
 
 ## See also
 
-- [OAuth2](oauth2-interview.md) — протокол авторизации, в котором JWT используется как формат Access Token
-- [Spring Security](../frameworks/spring/spring-security-interview.md) — настройка JWT-аутентификации, Resource Server, фильтры безопасности
-- [Паттерны аутентификации](authentication-authorization-patterns-interview.md) — сравнение JWT с сессиями, SSO, SAML
-- [Application Security](application-security-interview.md) — общие принципы безопасности приложений, XSS, CSRF
-- [OWASP Top 10](owasp-top10-interview.md) — классификация уязвимостей, в т.ч. связанных с аутентификацией
+- [[oauth2-interview|OAuth2]] — протокол авторизации, в котором JWT используется как формат Access Token
+- [[spring-security-interview|Spring Security]] — настройка JWT-аутентификации, Resource Server, фильтры безопасности
+- [[authentication-authorization-patterns-interview|Паттерны аутентификации]] — сравнение JWT с сессиями, SSO, SAML
+- [[application-security-interview|Application Security]] — общие принципы безопасности приложений, XSS, CSRF
+- [[owasp-top10-interview|OWASP Top 10]] — классификация уязвимостей, в т.ч. связанных с аутентификацией
 
 - [[application-security-interview|Application Security]]
 - [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]

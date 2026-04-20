@@ -26,6 +26,12 @@ updated: "2026-04-20"
 - [Guava Gradle](https://docs.gradle.org/current/userguide/dependency_management.html) — **Gradle** настройка
 - [Guava with Spring Boot](https://spring.io/projects/spring-boot) — **Spring Boot** интеграция
 
+
+### См. также
+- [[java-apache-commons|Apache Commons: Обширная коллекция Java утилит]]
+- [[jackson|Jackson: JSON сериализация в Java]]
+- [[java-gson|Gson]]
+- [[java-junit5|JUnit 5]]
 ## Содержание
 
 - [Введение в Guava](#введение-в-guava)

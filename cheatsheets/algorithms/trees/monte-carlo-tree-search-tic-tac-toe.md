@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[binary-tree|`binary-tree.md`]] — бинарное дерево (`binary tree`)
 - [[binary-search-tree-traversal|`binary-search-tree-traversal.md`]] — обходы бинарного дерева поиска (`traversals`)
 
+- [[boruvka-algorithm|Алгоритм Борувки (Borůvka's Algorithm)]]
+- [[prim-algorithm|Алгоритм Прима (Prim's Algorithm)]]
+- [[balanced-binary-tree-check|Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -29,6 +29,7 @@ updated: "2026-04-20"
 - [[testing-tools-overview|Testing Tools Overview]] — обзор инструментов
 
 
+- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
 ## Содержание
 
 - [Введение в Mockito](#введение-в-mockito)

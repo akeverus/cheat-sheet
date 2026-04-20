@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Практичные вопросы и ответы по тюнингу `JVM`: как измерять, диагностировать и улучшать производительность без регрессий в production. Покрыты `GC`-алгоритмы, `JIT`-компиляция, native memory, контейнерные среды и продвинутые техники оптимизации.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -448,7 +446,7 @@ public String processRequest(Request req) {
 
 **Решения:**
 1. Увеличить `-XX:G1HeapRegionSize`
-2. Использовать streaming вместо буферизации (подробнее в [вопросах по Memory Management](memory-management-interview.md))
+2. Использовать streaming вместо буферизации (подробнее в [[memory-management-interview|вопросах по Memory Management]])
 3. Пулить буферы (`ByteBuffer.allocateDirect` + pool)
 
 ## Q15. (!) Из каких областей состоит память JVM-процесса?
@@ -523,7 +521,7 @@ jcmd <pid> VM.native_memory baseline
 jcmd <pid> VM.native_memory summary.diff
 ```
 
-Подробнее о диагностике утечек памяти — в [Memory Management](memory-management-interview.md).
+Подробнее о диагностике утечек памяти — в [[memory-management-interview|Memory Management]].
 
 ## Q17. (!) Как правильно рассчитать размер heap и off-heap?
 
@@ -817,7 +815,7 @@ jcmd <pid> JFR.start duration=60s filename=cpu.jfr settings=profile
 ./profiler.sh -d 30 -f alloc.html -e alloc <pid>
 ```
 
-Частая ошибка: пытаться решить алгоритмическую проблему через тюнинг GC. Подробнее о профилировании — в [Application Profiling](application-profiling-interview.md).
+Частая ошибка: пытаться решить алгоритмическую проблему через тюнинг GC. Подробнее о профилировании — в [[application-profiling-interview|Application Profiling]].
 
 ## Q26. Что такое safepoint bias и почему профили могут врать?
 
@@ -1221,18 +1219,18 @@ numactl --hardware
 - Знание конкретных JVM-механизмов
 - Измеримый результат
 
-> Подробнее об инженерном подходе к диагностике — в [Application Profiling](application-profiling-interview.md) и [JVM Fundamentals](../jvm/jvm-interview.md).
+> Подробнее об инженерном подходе к диагностике — в [[application-profiling-interview|Application Profiling]] и [[jvm-interview|JVM Fundamentals]].
 
 ---
 
 ## See also
 
-- [Memory Management](memory-management-interview.md) — управление памятью, GC roots и диагностика утечек
-- [Application Profiling](application-profiling-interview.md) — JFR, async-profiler, flame graphs
-- [JVM Fundamentals](../jvm/jvm-interview.md) — архитектура JVM, ClassLoader, байткод
-- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — многопоточность, lock contention, memory model
-- [Kubernetes](../devops/kubernetes-interview.md) — container-aware JVM, resource limits и OOM killer
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — warm-up, startup time, Actuator-метрики
+- [[memory-management-interview|Memory Management]] — управление памятью, GC roots и диагностика утечек
+- [[application-profiling-interview|Application Profiling]] — JFR, async-profiler, flame graphs
+- [[jvm-interview|JVM Fundamentals]] — архитектура JVM, ClassLoader, байткод
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность, lock contention, memory model
+- [[kubernetes-interview|Kubernetes]] — container-aware JVM, resource limits и OOM killer
+- [[spring-boot-interview|Spring Boot]] — warm-up, startup time, Actuator-метрики
 
 - [[application-profiling-interview|Application Profiling]]
 - [[caching-performance-interview|Caching Performance]]

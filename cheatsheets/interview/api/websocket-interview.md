@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Практичные вопросы и ответы по `WebSocket`: протокол `RFC 6455`, handshake через `HTTP Upgrade`, full-duplex frames, `STOMP` поверх `WebSocket`, `SockJS` как fallback, интеграция со `Spring Boot`, масштабирование через внешний брокер и безопасность.
 
-Дата последнего обновления: 2026-04-13
-
 **`WebSocket`** — протокол двусторонней связи поверх одного TCP-соединения, стандартизированный в `RFC 6455` (2011). После начального HTTP-handshake соединение переводится в режим full-duplex: обе стороны могут отправлять данные в любой момент без накладных расходов на повторное установление соединения.
 
 ## Полезные ссылки
@@ -1512,16 +1510,14 @@ session.sendMessage(new TextMessage("ping"));
 
 ## See also
 
-- [HTTP & REST](http-rest-interview.md)
-- [gRPC](grpc-interview.md)
-- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)
-- [Apache Kafka](../messaging/kafka-interview.md)
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md)
-- [System Design](../system-design/system-design-interview.md)
 
+- [[http-rest-interview|HTTP & REST]]
+- [[grpc-interview|gRPC]]
+- [[spring-webflux-interview|Spring WebFlux]]
+- [[kafka-interview|Apache Kafka]]
+- [[spring-boot-interview|Spring Boot]]
+- [[system-design-interview|System Design]]
 - [[api-design-best-practices-interview|API Design Best Practices]]
 - [[api-versioning-interview|API Versioning]]
 - [[graphql-interview|GraphQL]]
-- [[grpc-interview|gRPC]]
-- [[http-rest-interview|HTTP и REST]]
 - [[openapi-swagger-interview|OpenAPI / Swagger]]

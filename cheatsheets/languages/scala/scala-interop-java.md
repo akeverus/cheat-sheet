@@ -27,6 +27,9 @@ related: ["scala/scala-basics.md", "../java/java-basics.md"]
 - [[scala-basics|Основы Scala]]
 - [[java-basics|Основы Java]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
+- [[scala-collections|Scala Collections]]
 ## Содержание
 
 - [Введение в Interop](#введение-в-interop)

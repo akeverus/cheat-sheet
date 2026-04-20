@@ -28,6 +28,9 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-performance|redis-performance.md]] — производительность
 
+- [[prometheus|Prometheus]]
+- [[grafana|Grafana]]
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
 ## Содержание
 
 - [Введение в мониторинг Redis](#введение-в-мониторинг-redis)

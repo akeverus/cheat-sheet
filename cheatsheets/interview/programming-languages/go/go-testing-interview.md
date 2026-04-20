@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 Стандартный пакет `testing` — простой, но мощный: table-driven tests, subtests, benchmarks, fuzzing (с Go 1.18). На интервью спрашивают разницу с JUnit/RSpec, моки в Go (interfaces), `httptest` для HTTP, coverage, integration tests.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -696,7 +694,7 @@ func TestRepo(t *testing.T) {
 
 Аналог Java testcontainers — поднимает Docker-контейнер на время теста. Slow, но **реальный** integration test.
 
-Подробнее — в [Testcontainers](../../testing/testcontainers-interview.md).
+Подробнее — в [[testcontainers-interview|Testcontainers]].
 
 ## Q26. (!) Где запускать тесты — рядом с кодом или в отдельной директории?
 
@@ -751,15 +749,15 @@ Race detector замедляет тесты в 5-10 раз. Включай в **
 
 ## See also
 
-- [Go (базовый)](go-interview.md) — основы
-- [Go Concurrency](go-concurrency-interview.md) — race conditions
-- [Go Standard Library](go-stdlib-interview.md) — testing пакет
-- [Go Modules](go-modules-interview.md) — управление зависимостями (testify)
-- [Unit Testing](../../testing/unit-testing-interview.md) — общие принципы
-- [Integration Testing](../../testing/integration-testing-interview.md) — testcontainers
-- [Mockito](../../testing/mockito-interview.md) — для сравнения с Java mocks
-- [Testcontainers](../../testing/testcontainers-interview.md) — Docker в тестах
-- [Performance Testing](../../performance/performance-testing-interview.md) — benchmarks
+- [[go-interview|Go (базовый)]] — основы
+- [[go-concurrency-interview|Go Concurrency]] — race conditions
+- [[go-stdlib-interview|Go Standard Library]] — testing пакет
+- [[go-modules-interview|Go Modules]] — управление зависимостями (testify)
+- [[unit-testing-interview|Unit Testing]] — общие принципы
+- [[integration-testing-interview|Integration Testing]] — testcontainers
+- [[mockito-interview|Mockito]] — для сравнения с Java mocks
+- [[testcontainers-interview|Testcontainers]] — Docker в тестах
+- [[performance-testing-interview|Performance Testing]] — benchmarks
 
 - [[go-concurrency-interview|Go Concurrency]]
 - [[go-generics-interview|Go Generics]]

@@ -26,6 +26,8 @@ updated: "2026-04-20"
 - [[producer-consumer|Producer-Consumer]] — **Producer-Consumer Pattern**
 - [[java-concurrency-advanced|CompletableFuture / асинхронность]] — асинхронное программирование
 
+- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
+- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

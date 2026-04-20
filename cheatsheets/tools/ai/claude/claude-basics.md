@@ -27,6 +27,11 @@ Claude Code — это AI-ассистент от Anthropic, ориентиро�
 - [Claude Code для JetBrains](https://docs.claude.com/en/docs/claude-code/jetbrains)
 - [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference)
 
+
+### См. также
+- [[windsurf-basics|Windsurf: основы]]
+- [[aider-basics|Aider: основы]]
+- [[openclaw-basics|OpenClaw: основы]]
 ## Содержание
 
 - [Введение](#введение)

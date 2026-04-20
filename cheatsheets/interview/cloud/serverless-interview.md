@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 **Serverless** — модель compute, где developer не управляет серверами. Включает **FaaS** (Lambda, Functions), **BaaS** (Firebase, Auth0), **serverless containers** (Cloud Run, Container Apps), **edge computing** (Cloudflare Workers, Vercel Edge). На интервью спрашивают: когда выбрать, cold starts, costs, vendor lock-in.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -322,7 +320,7 @@ graph LR
 
 **Tools:** EventBridge, SNS, SQS, Kinesis, S3 events.
 
-Подробнее — в [Event-driven Patterns](../architecture/event-driven-patterns-interview.md).
+Подробнее — в [[event-driven-patterns-interview|Event-driven Patterns]].
 
 ## Q15. Strangler pattern для legacy migration?
 
@@ -384,7 +382,7 @@ Client → API Gateway → Lambda functions → Database
 
 **Use cases:** orders, approvals, ETL, ML pipelines.
 
-Аналог: **Saga pattern** в serverless. Подробнее — [Saga Pattern](../architecture/saga-pattern-interview.md).
+Аналог: **Saga pattern** в serverless. Подробнее — [[saga-pattern-interview|Saga Pattern]].
 
 ## Q18. (!) Как работать с state?
 
@@ -595,19 +593,19 @@ Daily invocations × duration × memory + per-invocation cost + auxiliary servic
 
 ## See also
 
-- [AWS Lambda](aws-lambda-interview.md) — самый popular FaaS
-- [AWS](aws-interview.md) — primary serverless cloud
-- [GCP](gcp-interview.md) — Cloud Run, Cloud Functions
-- [Azure](azure-interview.md) — Functions, Container Apps
-- [Cloud-native Patterns](cloud-native-patterns-interview.md) — paterns
-- [Микросервисы](../architecture/microservices-interview.md) — serverless = microservices style
-- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — natural fit
-- [API Gateway](../architecture/api-gateway-interview.md) — front для serverless
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — Step Functions
-- [Caching](../architecture/caching-strategies-interview.md) — для serverless
-- [Observability](../monitoring/observability-interview.md) — challenges
-- [Scalability](../architecture/scalability-patterns-interview.md) — auto-scale benefits
-- [Application Security](../security/application-security-interview.md) — IAM, secrets
+- [[aws-lambda-interview|AWS Lambda]] — самый popular FaaS
+- [[aws-interview|AWS]] — primary serverless cloud
+- [[gcp-interview|GCP]] — Cloud Run, Cloud Functions
+- [[azure-interview|Azure]] — Functions, Container Apps
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — paterns
+- [[microservices-interview|Микросервисы]] — serverless = microservices style
+- [[event-driven-patterns-interview|Event-driven Patterns]] — natural fit
+- [[api-gateway-interview|API Gateway]] — front для serverless
+- [[saga-pattern-interview|Saga Pattern]] — Step Functions
+- [[caching-strategies-interview|Caching]] — для serverless
+- [[observability-interview|Observability]] — challenges
+- [[scalability-patterns-interview|Scalability]] — auto-scale benefits
+- [[application-security-interview|Application Security]] — IAM, secrets
 
 - [[aws-interview|AWS]]
 - [[aws-lambda-interview|AWS Lambda]]

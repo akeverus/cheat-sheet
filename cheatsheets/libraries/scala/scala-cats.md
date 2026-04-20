@@ -20,6 +20,12 @@ updated: "2026-04-20"
 - [Cats Type Classes](https://typelevel.org/cats/typeclasses.html)
 - [Cats Effect](https://typelevel.org/cats-effect/)
 
+
+### См. также
+- [[scala-akka|Akka]]
+- [[scala-slick|Slick]]
+- [[scala-doobie|Doobie]]
+- [[scala-zio|ZIO]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

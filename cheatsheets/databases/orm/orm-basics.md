@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[spring-data-jpa|Spring Data JPA]] — интеграция **JPA** в **Spring**
 - [[java-jooq|jOOQ]] — **type-safe SQL** библиотека
 
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
+- [[hibernate-relationships|Hibernate: связи между сущностями]]
 ## Содержание
 
 - [Введение в ORM](#введение-в-orm)

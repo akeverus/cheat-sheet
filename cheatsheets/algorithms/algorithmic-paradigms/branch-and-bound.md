@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[backtracking|Поиск с возвратом]] — backtracking
 - [[dynamic-programming|Динамическое программирование]] — **DP**
 
+- [[greedy-algorithms|Жадные алгоритмы (Greedy Algorithms)]]
+- [[divide-and-conquer|Разделяй и властвуй (Divide and Conquer)]]
 ## Содержание
 
 - [Введение в Branch and Bound](#введение-в-branch-and-bound)

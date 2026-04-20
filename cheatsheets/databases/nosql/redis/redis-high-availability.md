@@ -27,6 +27,9 @@ related: ["databases/redis-replication.md", "databases/redis-clustering.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-replication|redis-replication.md]] — репликация
 
+- [[redis-clustering|Redis: Кластеризация]]
+- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
+- [[postgres-replication|PostgreSQL: Репликация]]
 ## Содержание
 
 - [Введение в высокую доступность](#введение-в-высокую-доступность)

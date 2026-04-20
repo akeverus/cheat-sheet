@@ -27,6 +27,9 @@ updated: "2026-04-20"
 - [[command|Command (Команда)]]
 - [[mediator|Mediator (Посредник)]]
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
+- [[interpreter|Интерпретатор (Interpreter)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

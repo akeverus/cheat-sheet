@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[kotlin-kotlinx-serialization|Kotlinx Serialization]] — **JSON** библиотека для **Kotlin**
 - [[java-protobuf|Protocol Buffers]] — бинарная сериализация
 
+- [[java-jackson|Jackson: JSON-сериализация в Java]]
+- [[java-junit5|JUnit 5]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

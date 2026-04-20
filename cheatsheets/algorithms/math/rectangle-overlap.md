@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[line-intersection|Поиск пересечения двух линий]] — пересечение линий
 - [[distance-between-points|Вычисление расстояния]] — расстояние между точками
 
+- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
+- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
+- [[lat-lon-to-2d-point|Преобразование широты и долготы в 2D-точку (Lat/Lon to 2D Point)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

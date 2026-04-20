@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[kotlin-fp-advanced|Продвинутое функциональное программирование]]
 - [[kotlin-collections-operations|Операции над коллекциями]]
 
+- [[kotlin-performance|Kotlin Performance]]
+- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
 ## Содержание
 
 - [Введение в ФП](#введение-в-фп)

@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[maximum-subarray|Максимальный подмассив]] — алгоритм Kadane (`Kadane`)
 - [[merge-sort|Сортировка слиянием]] — merge sort
 
+- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
+- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

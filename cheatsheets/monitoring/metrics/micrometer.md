@@ -31,6 +31,8 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 - [[infrastructure-monitoring|Infrastructure monitoring]] — обзор мониторинга
 - [Monitoring](../) — раздел мониторинга
 
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
 ## Содержание
 
 - [Введение](#введение)

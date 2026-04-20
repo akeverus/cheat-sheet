@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Java Core` для `Senior Java Developer`. Включает ключевые слова и модификаторы, контракт `Object`, иммутабельность, механизм загрузки классов, `Reflection API`, обработку `null`, и современные возможности `Java 14–21`.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -146,7 +144,7 @@ class ConsoleLogger implements Loggable {
 }
 ```
 
-Если класс реализует два интерфейса с одинаковым `default`-методом, необходимо явно переопределить этот метод и выбрать реализацию через `InterfaceName.super.method()`. Подробнее о `default`-методах и лямбдах — в [вопросах по Java 8](java-8-interview.md).
+Если класс реализует два интерфейса с одинаковым `default`-методом, необходимо явно переопределить этот метод и выбрать реализацию через `InterfaceName.super.method()`. Подробнее о `default`-методах и лямбдах — в [[java-8-interview|вопросах по Java 8]].
 
 ## Q3. Что такое статические члены класса?
 
@@ -257,7 +255,7 @@ class MathUtils {
 | Аннотация | `@Override` | Нет |
 | Возвращаемый тип | Ковариантный (подтип) | Любой |
 
-Подробнее о полиморфизме — в [вопросах по ООП](java-oop-interview.md).
+Подробнее о полиморфизме — в [[java-oop-interview|вопросах по ООП]].
 
 ## Q7. Можно ли переопределить `static` метод?
 
@@ -347,7 +345,7 @@ new Child().execute(); // "Parent" — вызывается Parent.doWork()
 | `finalize()` | **Deprecated** с `Java 9`, удалён в `Java 18` |
 | `wait()` / `notify()` / `notifyAll()` | Механизм ожидания/уведомления потоков |
 
-На собеседовании ожидают знание контракта `equals()`/`hashCode()` (см. Q13) и понимание, почему `finalize()` — антипаттерн (непредсказуемое время вызова, проблемы с производительностью `GC`). Подробнее о потоках и `wait/notify` — в [вопросах по многопоточности](java-concurrency-interview.md).
+На собеседовании ожидают знание контракта `equals()`/`hashCode()` (см. Q13) и понимание, почему `finalize()` — антипаттерн (непредсказуемое время вызова, проблемы с производительностью `GC`). Подробнее о потоках и `wait/notify` — в [[java-concurrency-interview|вопросах по многопоточности]].
 
 ## Q12. (!) В чём разница между `==` и `equals()`?
 
@@ -638,7 +636,7 @@ graph TD
 2. **Linking** — верификация, подготовка (выделение памяти), резолвинг ссылок
 3. **Initialization** — выполнение `static`-блоков и инициализация `static`-полей
 
-Подробнее об архитектуре JVM — в [вопросах по JVM](../../jvm/jvm-interview.md).
+Подробнее об архитектуре JVM — в [[jvm-interview|вопросах по JVM]].
 
 ## Q22. Что такое делегирование загрузки классов?
 
@@ -759,7 +757,7 @@ Class<?> superClass = clazz.getSuperclass();
 Class<?>[] interfaces = clazz.getInterfaces();
 ```
 
-Подробнее об аннотациях — в [вопросах по аннотациям](java-annotations-interview.md).
+Подробнее об аннотациях — в [[java-annotations-interview|вопросах по аннотациям]].
 
 ## Q26. Какие недостатки и ограничения у `Reflection`?
 
@@ -820,7 +818,7 @@ for (long i = 0; i < 1_000_000; i++) {
 }
 ```
 
-Подробнее о типах — в [вопросах по типам данных](java-types-interview.md).
+Подробнее о типах — в [[java-types-interview|вопросах по типам данных]].
 
 ## Q29. Что такое `String Pool`?
 
@@ -838,7 +836,7 @@ String s4 = s3.intern();       // помещает в Pool / возвращае�
 System.out.println(s1 == s4);  // true
 ```
 
-Зачем: экономия памяти (одинаковые строки хранятся один раз) и быстрое сравнение через `==`. Подробнее — в [вопросах по String](java-string-interview.md).
+Зачем: экономия памяти (одинаковые строки хранятся один раз) и быстрое сравнение через `==`. Подробнее — в [[java-string-interview|вопросах по String]].
 
 ## Q30. Что такое `null` и как избежать `NPE`?
 
@@ -902,7 +900,7 @@ User user = findUser(id)
 - Коллекции (возвращайте пустую коллекцию)
 - `Optional.get()` без `isPresent()` — **антипаттерн** (бросит `NoSuchElementException`)
 
-Подробнее об `Optional` и `Stream API` — в [вопросах по Java 8](java-8-interview.md).
+Подробнее об `Optional` и `Stream API` — в [[java-8-interview|вопросах по Java 8]].
 
 ## Q32. Что такое `Records` (`Java 14+`)?
 
@@ -1133,7 +1131,7 @@ String handle(Result result) {
 
 ## Q39. Что такое `SequencedCollection` (`Java 21`)?
 
-`Java 21` ввёл три новых интерфейса в иерархию `Collections Framework` (см. [Java Collections](java-collections-interview.md)):
+`Java 21` ввёл три новых интерфейса в иерархию `Collections Framework` (см. [[java-collections-interview|Java Collections]]):
 
 ```
 SequencedCollection → List, Deque, LinkedHashSet
@@ -1171,26 +1169,26 @@ set.getFirst(); // элемент с наименьшим порядком вс�
 - `reversed()` возвращает `view` (изменения отражаются в оригинале)
 - `SequencedMap` добавляет `firstEntry()`, `lastEntry()`, `pollFirstEntry()`, `pollLastEntry()`, `reversed()`
 
-Комбинация `Sealed classes` + `Records` + `Pattern Matching` формирует мощную альтернативу паттерну Visitor из [ООП](java-oop-interview.md).
+Комбинация `Sealed classes` + `Records` + `Pattern Matching` формирует мощную альтернативу паттерну Visitor из [[java-oop-interview|ООП]].
 
 ---
 
 ## See also
 
-- [ООП в Java](java-oop-interview.md) — наследование, полиморфизм, инкапсуляция, абстракция
-- [Java 8](java-8-interview.md) — лямбды, `Stream API`, `Optional`, функциональные интерфейсы
-- [Java Collections](java-collections-interview.md) — `List`, `Set`, `Map`, `HashMap` internals
-- [Java Concurrency](java-concurrency-interview.md) — многопоточность, `synchronized`, `volatile`
-- [JVM](../../jvm/jvm-interview.md) — устройство JVM, `GC`, память, `JIT`-компиляция
-- [Generics](java-generics-interview.md) — дженерики, `type erasure`, `wildcards`
-- [Java Exceptions](java-exceptions-interview.md) — обработка исключений, `checked` vs `unchecked`
-- [Java String](java-string-interview.md) — строки, `String Pool`, иммутабельность строк
-- [Система типов Java](java-types-interview.md) — примитивы, обёртки, `autoboxing`
-- [Java Annotations](java-annotations-interview.md) — аннотации, `Retention`, `Target`, `APT`
-- [Java 17-21](java-17-21-interview.md) — современные возможности: `sealed`, `records`, `pattern matching`
-- [Java Serialization](java-serialization-interview.md) — `Serializable`, `Externalizable`, `transient`
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны проектирования, применяемые в Java
-- [Профилирование приложений](../../performance/application-profiling-interview.md) — поиск узких мест, `heap dump`, `JFR`
+- [[java-oop-interview|ООП в Java]] — наследование, полиморфизм, инкапсуляция, абстракция
+- [[java-8-interview|Java 8]] — лямбды, `Stream API`, `Optional`, функциональные интерфейсы
+- [[java-collections-interview|Java Collections]] — `List`, `Set`, `Map`, `HashMap` internals
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность, `synchronized`, `volatile`
+- [[jvm-interview|JVM]] — устройство JVM, `GC`, память, `JIT`-компиляция
+- [[java-generics-interview|Generics]] — дженерики, `type erasure`, `wildcards`
+- [[java-exceptions-interview|Java Exceptions]] — обработка исключений, `checked` vs `unchecked`
+- [[java-string-interview|Java String]] — строки, `String Pool`, иммутабельность строк
+- [[java-types-interview|Система типов Java]] — примитивы, обёртки, `autoboxing`
+- [[java-annotations-interview|Java Annotations]] — аннотации, `Retention`, `Target`, `APT`
+- [[java-17-21-interview|Java 17-21]] — современные возможности: `sealed`, `records`, `pattern matching`
+- [[java-serialization-interview|Java Serialization]] — `Serializable`, `Externalizable`, `transient`
+- [[design-patterns-interview|Design Patterns]] — паттерны проектирования, применяемые в Java
+- [[application-profiling-interview|Профилирование приложений]] — поиск узких мест, `heap dump`, `JFR`
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

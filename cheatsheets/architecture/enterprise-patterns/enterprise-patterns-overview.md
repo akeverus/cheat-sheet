@@ -19,6 +19,9 @@ updated: "2026-04-20"
 - [Enterprise Integration Patterns](https://www.enterpriseintegrationpatterns.com/)
 - [Patterns of Enterprise Application Architecture (Martin Fowler)](https://martinfowler.com/books/eaa.html)
 
+
+### См. также
+- [[architecture-patterns|Архитектурные паттерны]]
 ## Содержание
 
 - [Что такое Enterprise Patterns](#что-такое-enterprise-patterns)

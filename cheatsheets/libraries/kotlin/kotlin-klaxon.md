@@ -20,6 +20,10 @@ updated: "2026-04-20"
 - [Getting Started](https://github.com/cbeust/klaxon#usage)
 - [Kotlin JSON Libraries Comparison](https://kotlinlang.org/docs/serialization.html)
 
+
+### См. также
+- [[kotlin-konfig|Konfig]]
+- [[kotlin-exposed|Kotlin Exposed]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

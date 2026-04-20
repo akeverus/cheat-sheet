@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Payment System` (Stripe, PayPal, internal billing) — **один из самых сложных system design**. Требует: **strong consistency, idempotency, durability (money!), PCI-DSS compliance, reconciliation**. Fault tolerance критична — no lost payments ever.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 - [Stripe engineering blog](https://stripe.com/blog/engineering)
@@ -785,16 +783,16 @@ for attempt in range(5):
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — distributed transactions
-- [Distributed Systems](../architecture/distributed-systems-interview.md) — consistency, partition
-- [Consistency Patterns](../architecture/consistency-patterns-interview.md) — strong vs eventual
-- [CAP Theorem](../architecture/cap-theorem-interview.md) — trade-offs
-- [Application Security](../security/application-security-interview.md) — PCI, encryption
-- [Secrets Management](../security/secrets-management-interview.md) — vault, keys
-- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries, circuit breaker
-- [Observability](../monitoring/observability-interview.md) — tracing, logs
-- [Event-Driven Patterns](../architecture/event-driven-patterns-interview.md) — webhooks, sagas
+- [[system-design-interview|System Design]] — общие принципы
+- [[saga-pattern-interview|Saga Pattern]] — distributed transactions
+- [[distributed-systems-interview|Distributed Systems]] — consistency, partition
+- [[consistency-patterns-interview|Consistency Patterns]] — strong vs eventual
+- [[cap-theorem-interview|CAP Theorem]] — trade-offs
+- [[application-security-interview|Application Security]] — PCI, encryption
+- [[secrets-management-interview|Secrets Management]] — vault, keys
+- [[resilience-patterns-interview|Resilience Patterns]] — retries, circuit breaker
+- [[observability-interview|Observability]] — tracing, logs
+- [[event-driven-patterns-interview|Event-Driven Patterns]] — webhooks, sagas
 
 - [[design-chat-system-interview|Design Chat System]]
 - [[design-feed-system-interview|Design Feed System]]

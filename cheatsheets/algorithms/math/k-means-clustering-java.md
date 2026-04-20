@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[gradient-descent|Градиентный спуск]] — градиентный спуск
 - [[distance-between-points|Вычисление расстояния]] — расстояние между точками
 
+- [[line-intersection|Пересечение прямых (Line Intersection)]]
+- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
+- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[collections-lock-free|Структуры данных без блокировок]]
 - [[README|Коллекции Java]]
 
+- [[linked-list-middle|Поиск среднего элемента связного списка (Linked List)]]
+- [[linked-list-reverse|Реверс связанного списка (Linked List)]]
 ## Содержание
 
 - [Обзор](#обзор)

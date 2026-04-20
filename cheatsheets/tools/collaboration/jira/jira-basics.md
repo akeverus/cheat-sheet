@@ -24,6 +24,9 @@ Jira — система учёта задач и проектов. Исполь�
 - [Jira Workflow](https://support.atlassian.com/jira-software-cloud/docs/get-started-with-jira-workflow/)
 - [Jira Query Language (JQL)](https://support.atlassian.com/jira-software-cloud/docs/use-advanced-search-with-jira-query-language-jql/)
 
+
+### См. также
+- [[security-tools|Инструменты безопасности (Security Tools)]]
 ## Содержание
 
 - [Типы задач](#типы-задач)

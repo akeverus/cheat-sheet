@@ -29,6 +29,8 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [[scala-fp-advanced|Продвинутое функциональное программирование]]
 - [[scala-collections|Коллекции Scala]]
 
+- [[scala-collections-list|Scala Collections — List]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
 ## Содержание
 
 - [Введение в ФП](#введение-в-фп)

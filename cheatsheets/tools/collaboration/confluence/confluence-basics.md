@@ -24,6 +24,9 @@ Confluence — платформа для документации и знани�
 - [Confluence Templates](https://support.atlassian.com/confluence-cloud/docs/use-templates/)
 - [Confluence + Jira](https://support.atlassian.com/confluence-cloud/docs/insert-jira-issues-and-fields-into-confluence-pages/)
 
+
+### См. также
+- [[security-tools|Инструменты безопасности (Security Tools)]]
 ## Содержание
 
 - [Пространства и страницы](#пространства-и-страницы)

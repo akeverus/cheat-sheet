@@ -27,6 +27,9 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 - [[scala-collections-list|Списки (List)]]
 - [[scala-collections|Обзор коллекций]]
 
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [[scala-collections-array|Scala Collections — Array]]
+- [[scala-collections-set|Scala Collections — Set]]
 ## Содержание
 
 - [Введение в Vector](#введение-в-vector)

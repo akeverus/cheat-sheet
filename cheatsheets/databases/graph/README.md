@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [Graph Databases](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[neo4j-basics|Neo4j Basics]]

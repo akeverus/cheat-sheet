@@ -26,6 +26,9 @@ related: ["scala/scala-basics.md", "scala/scala-play.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-play|Play Framework]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
+- [[scala-collections|Scala Collections]]
 ## Содержание
 
 - [Введение в конфигурацию](#введение-в-конфигурацию)

@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Полный гайд по `Spring Framework`: `IoC`-контейнер, `DI`, жизненный цикл бинов, `AOP`, прокси, профили, события, `@Conditional`, конфигурация.
 
-Дата последнего обновления: 2026-04-13
-
 **`Spring Framework`** — базовый фреймворк для enterprise-разработки на `Java`. Вопросы по `IoC`, `DI`, бинам, жизненному циклу, `AOP` и модулям `Spring` регулярно встречаются на собеседованиях всех уровней — от junior до senior. Этот файл покрывает ключевые темы с диаграммами, примерами кода и практическими нюансами.
 
 ## Полезные ссылки
@@ -110,9 +108,9 @@ updated: "2026-04-13"
 | Модуль | Назначение |
 |--------|-----------|
 | `Spring Core` | IoC-контейнер, DI, ресурсы |
-| `Spring MVC` | Веб-фреймворк (подробнее в [Spring MVC](spring-mvc-interview.md)) |
-| `Spring Security` | Аутентификация и авторизация (подробнее в [Spring Security](spring-security-interview.md)) |
-| `Spring Data` | Унифицированный доступ к данным (подробнее в [Spring Data JPA](spring-data-jpa-interview.md)) |
+| `Spring MVC` | Веб-фреймворк (подробнее в [[spring-mvc-interview|Spring MVC]]) |
+| `Spring Security` | Аутентификация и авторизация (подробнее в [[spring-security-interview|Spring Security]]) |
+| `Spring Data` | Унифицированный доступ к данным (подробнее в [[spring-data-jpa-interview|Spring Data JPA]]) |
 | `Spring AOP` | Аспектно-ориентированное программирование |
 | `Spring TX` | Управление транзакциями |
 
@@ -149,7 +147,7 @@ graph TB
 3. **Модульность** — подключаются только нужные модули; не нужно тянуть весь фреймворк
 4. **Интеграция** — готовые абстракции для `Hibernate`, `JPA`, `MyBatis`, `Kafka`, `RabbitMQ`, `Redis`
 5. **Тестируемость** — `@MockBean`, `@SpringBootTest`, `TestRestTemplate` делают тесты первоклассными гражданами
-6. **Экосистема** — [Spring Boot](spring-boot-interview.md) для быстрого старта, [Spring Cloud](spring-cloud-interview.md) для микросервисов, `Spring Batch` для пакетной обработки
+6. **Экосистема** — [[spring-boot-interview|Spring Boot]] для быстрого старта, [[spring-cloud-interview|Spring Cloud]] для микросервисов, `Spring Batch` для пакетной обработки
 
 **Что ожидают на собеседовании:** не просто перечисление, а понимание trade-offs. Например, `Spring` добавляет overhead на старт (classpath scanning, proxy creation), что критично для serverless. `Spring Native` / `GraalVM` решают это за счёт AOT-компиляции.
 
@@ -192,7 +190,7 @@ graph LR
 ```
 
 Преимущества:
-- **Слабая связанность** — зависимость от абстракций, а не реализаций (подробнее в [ООП: SOLID](../../programming-languages/java/java-oop-interview.md))
+- **Слабая связанность** — зависимость от абстракций, а не реализаций (подробнее в [[java-oop-interview|ООП: SOLID]])
 - **Тестируемость** — легко подменять зависимости на моки
 - **Гибкость конфигурации** — переключение реализаций без изменения бизнес-кода
 
@@ -226,7 +224,7 @@ public class PaymentService {
 **Почему конструктор лучше:**
 - Поля можно сделать `final` — гарантия неизменяемости
 - Невозможно создать объект в невалидном состоянии (все зависимости обязательны)
-- Видна сигнатура зависимостей — если их слишком много, это сигнал к рефакторингу (подробнее в [паттернах рефакторинга](../../code-quality/refactoring-patterns-interview.md))
+- Видна сигнатура зависимостей — если их слишком много, это сигнал к рефакторингу (подробнее в [[refactoring-patterns-interview|паттернах рефакторинга]])
 
 ## Q5. (!) Типы контейнеров в `Spring Framework`
 
@@ -342,7 +340,7 @@ var ctx = new AnnotationConfigApplicationContext(AppConfig.class);
 ctx.registerShutdownHook(); // close() будет вызван при завершении JVM
 ```
 
-**Важно:** `registerShutdownHook()` — это то, что [Spring Boot](spring-boot-interview.md) делает автоматически. В standalone-приложениях без `Spring Boot` нужно вызывать явно.
+**Важно:** `registerShutdownHook()` — это то, что [[spring-boot-interview|Spring Boot]] делает автоматически. В standalone-приложениях без `Spring Boot` нужно вызывать явно.
 
 ## Q9. Что такое `Bean`?
 
@@ -603,7 +601,7 @@ public class OrderService {
 | Циклические зависимости | Ошибка при старте | Работает | Работает |
 | Читаемость | Видна сигнатура | Разбросано по классу | Скрыто |
 
-**Правило большого пальца:** если конструктор принимает больше 5-7 параметров, это сигнал к декомпозиции класса (нарушение Single Responsibility Principle — подробнее в [SOLID](../../programming-languages/java/java-oop-interview.md)).
+**Правило большого пальца:** если конструктор принимает больше 5-7 параметров, это сигнал к декомпозиции класса (нарушение Single Responsibility Principle — подробнее в [[java-oop-interview|SOLID]]).
 
 **Циклические зависимости:** `Spring Boot 2.6+` по умолчанию запрещает циклические зависимости. Если они есть — это архитектурная проблема, которую нужно решать рефакторингом, а не `@Lazy`.
 
@@ -640,7 +638,7 @@ public class StatelessService {
 }
 ```
 
-**На собеседовании:** покажите понимание связи scope-бинов и потокобезопасности. `Singleton` + mutable state = проблема. Подробнее о потоках в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md).
+**На собеседовании:** покажите понимание связи scope-бинов и потокобезопасности. `Singleton` + mutable state = проблема. Подробнее о потоках в [[java-concurrency-interview|Java Concurrency]].
 
 ## Q17. Как внедрить `Properties` в `Bean`?
 
@@ -685,7 +683,7 @@ public class MailConfig {
 }
 ```
 
-**Рекомендация:** для 1-2 свойств — `@Value`, для группы связанных свойств — `@ConfigurationProperties` с валидацией через `@Validated` + `Jakarta Validation`. Подробнее о конфигурации в [Spring Boot](spring-boot-interview.md).
+**Рекомендация:** для 1-2 свойств — `@Value`, для группы связанных свойств — `@ConfigurationProperties` с валидацией через `@Validated` + `Jakarta Validation`. Подробнее о конфигурации в [[spring-boot-interview|Spring Boot]].
 
 ## Q18. Что такое конфигурация `Spring` на основе `Java`?
 
@@ -765,7 +763,7 @@ config/
 
 ## Q20. (!) Какие `Design Patterns` используются в `Spring Framework`?
 
-`Spring Framework` активно применяет паттерны проектирования (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)):
+`Spring Framework` активно применяет паттерны проектирования (подробнее в [[design-patterns-interview|Design Patterns]]):
 
 | Паттерн | Где используется | Пример |
 |---------|-----------------|--------|
@@ -778,7 +776,7 @@ config/
 | **Adapter** | Интеграция | `HandlerAdapter`, `MessageConverter` |
 | **Decorator** | Обёртки | `BeanPostProcessor` оборачивает бины прокси |
 | **Composite** | Цепочки | `CompositeHealthIndicator` |
-| **Front Controller** | Веб | `DispatcherServlet` в [Spring MVC](spring-mvc-interview.md) |
+| **Front Controller** | Веб | `DispatcherServlet` в [[spring-mvc-interview|Spring MVC]] |
 
 ## Q21. (!) Что такое `AOP`?
 
@@ -945,7 +943,7 @@ public class HealthChecker implements ApplicationRunner {
 | Доступ к флагам | Ручной парсинг | `args.containsOption("key")` |
 | Доступ к значениям | `args[0]`, `args[1]`... | `args.getOptionValues("key")` |
 
-Подробнее о запуске приложений в [Spring Boot](spring-boot-interview.md).
+Подробнее о запуске приложений в [[spring-boot-interview|Spring Boot]].
 
 ## Q26. (!) Какие наиболее популярные аннотации в `Spring`?
 
@@ -981,9 +979,9 @@ public class HealthChecker implements ApplicationRunner {
 **Условия и профили:**
 - `@Profile` — активация по профилю
 - `@Conditional` — условная регистрация
-- `@ConditionalOnProperty` / `@ConditionalOnClass` — условия в [Spring Boot](spring-boot-interview.md)
+- `@ConditionalOnProperty` / `@ConditionalOnClass` — условия в [[spring-boot-interview|Spring Boot]]
 
-Подробнее об аннотациях Java в [Java Annotations](../../programming-languages/java/java-annotations-interview.md).
+Подробнее об аннотациях Java в [[java-annotations-interview|Java Annotations]].
 
 ## Q27. (!) В чём разница между `@Component`, `@Service`, `@Repository` и `@Controller`?
 
@@ -1156,7 +1154,7 @@ public abstract class OrderProcessor {
 
 ## Q31. (!) Что такое `@Conditional` и как `Spring Boot` использует условные бины?
 
-`@Conditional` — аннотация `Spring`, позволяющая регистрировать бин **только при выполнении условия**. Это фундамент **автоконфигурации** в [Spring Boot](spring-boot-interview.md).
+`@Conditional` — аннотация `Spring`, позволяющая регистрировать бин **только при выполнении условия**. Это фундамент **автоконфигурации** в [[spring-boot-interview|Spring Boot]].
 
 **Базовый `@Conditional`:**
 ```java
@@ -1209,7 +1207,7 @@ public class DataSourceAutoConfiguration {
 
 ## Q32. (!) Как работает механизм событий (`ApplicationEvent`) в `Spring`?
 
-Механизм событий в `Spring` реализует паттерн **Observer** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)). Позволяет компонентам обмениваться информацией без прямых зависимостей.
+Механизм событий в `Spring` реализует паттерн **Observer** (подробнее в [[design-patterns-interview|Design Patterns]]). Позволяет компонентам обмениваться информацией без прямых зависимостей.
 
 ```mermaid
 graph LR
@@ -1323,7 +1321,7 @@ graph TB
     style Web2 fill:#e1f5fe
 ```
 
-**Классический пример в Spring MVC (подробнее в [Spring MVC](spring-mvc-interview.md)):**
+**Классический пример в Spring MVC (подробнее в [[spring-mvc-interview|Spring MVC]]):**
 - **Root context** — `ContextLoaderListener` создаёт контекст с бизнес-логикой: `@Service`, `@Repository`, `DataSource`, `TransactionManager`
 - **Web context** — `DispatcherServlet` создаёт контекст с веб-специфичными бинами: `@Controller`, `ViewResolver`, `HandlerMapping`
 
@@ -1349,7 +1347,7 @@ child.refresh();
 **Практическое применение:**
 - Разделение API и Admin-контроллеров в разные `DispatcherServlet` с общим слоем сервисов
 - Мультитенантные приложения с общей инфраструктурой и tenant-специфичной конфигурацией
-- В [Spring Boot](spring-boot-interview.md) иерархия упрощена — обычно один контекст, но в `Spring Cloud` `bootstrap` context — родитель основного контекста
+- В [[spring-boot-interview|Spring Boot]] иерархия упрощена — обычно один контекст, но в `Spring Cloud` `bootstrap` context — родитель основного контекста
 
 ## Q34. (!) В чём разница между `@Bean` и `@Component`?
 
@@ -1811,16 +1809,16 @@ public PaymentGateway stubGateway() {
 
 ## See also
 
-- [Spring Boot](spring-boot-interview.md) — автоконфигурация и Boot-стартеры поверх Framework
-- [Spring MVC](spring-mvc-interview.md) — веб-слой на основе DispatcherServlet
-- [Spring WebFlux](spring-webflux-interview.md) — реактивный стек на Project Reactor
-- [Spring Security](spring-security-interview.md) — аутентификация и авторизация
-- [Spring Data JPA](spring-data-jpa-interview.md) — доступ к данным с репозиториями
-- [Spring Cloud](spring-cloud-interview.md) — распределённые системы и микросервисы
-- [Spring Boot Actuator](spring-boot-actuator-interview.md) — мониторинг и health-эндпоинты
-- [Spring Batch](spring-batch-interview.md) — пакетная обработка данных
-- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — паттерны, реализованные в Spring
-- [ООП в Java](../../programming-languages/java/java-oop-interview.md) — объектно-ориентированные основы
+- [[spring-boot-interview|Spring Boot]] — автоконфигурация и Boot-стартеры поверх Framework
+- [[spring-mvc-interview|Spring MVC]] — веб-слой на основе DispatcherServlet
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек на Project Reactor
+- [[spring-security-interview|Spring Security]] — аутентификация и авторизация
+- [[spring-data-jpa-interview|Spring Data JPA]] — доступ к данным с репозиториями
+- [[spring-cloud-interview|Spring Cloud]] — распределённые системы и микросервисы
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — мониторинг и health-эндпоинты
+- [[spring-batch-interview|Spring Batch]] — пакетная обработка данных
+- [[design-patterns-interview|Паттерны проектирования]] — паттерны, реализованные в Spring
+- [[java-oop-interview|ООП в Java]] — объектно-ориентированные основы
 
 - [[spring-aop-interview|Spring AOP]]
 - [[spring-batch-interview|Spring Batch]]

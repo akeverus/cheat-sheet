@@ -19,8 +19,6 @@ updated: "2026-04-18"
 
 Графы — основа социальных сетей, маршрутизации, зависимостей сборки, рекомендаций. На интервью спрашивают BFS/DFS, Dijkstra, топологическую сортировку, MST, обнаружение циклов и компонент связности. Всё это — `O(V + E)` или `O(E log V)`, и важно понимать когда какой подход применять.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -1017,16 +1015,16 @@ double[] pageRank(int n, List<List<Integer>> adj, int iterations) {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Деревья](trees-interview.md) — частный случай графа
-- [Хеш-таблицы](hash-tables-interview.md) — visited sets, adj as Map
-- [Кучи](heaps-interview.md) — Dijkstra, Prim используют PriorityQueue
-- [Стеки и очереди](stacks-queues-interview.md) — BFS использует очередь, DFS — стек
-- [Рекурсия](../algorithmic-paradigms/recursion-interview.md) — DFS обычно рекурсивный
-- [Динамическое программирование](../algorithmic-paradigms/dynamic-programming-interview.md) — Bellman-Ford = DP
-- [Divide and Conquer](../algorithmic-paradigms/divide-and-conquer-interview.md) — некоторые graph алгоритмы
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — O(V+E) vs O(E log V)
-- [Backtracking](../algorithmic-paradigms/backtracking-interview.md) — DFS с возвратом
-- [System Design](../../system-design/system-design-interview.md) — графы в архитектуре
-- [Распределённые системы](../../architecture/distributed-systems-interview.md) — graph algorithms in distributed
-- [Микросервисы](../../architecture/microservices-interview.md) — service dependency graph
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[trees-interview|Деревья]] — частный случай графа
+- [[hash-tables-interview|Хеш-таблицы]] — visited sets, adj as Map
+- [[heaps-interview|Кучи]] — Dijkstra, Prim используют PriorityQueue
+- [[stacks-queues-interview|Стеки и очереди]] — BFS использует очередь, DFS — стек
+- [[recursion-interview|Рекурсия]] — DFS обычно рекурсивный
+- [[dynamic-programming-interview|Динамическое программирование]] — Bellman-Ford = DP
+- [[divide-and-conquer-interview|Divide and Conquer]] — некоторые graph алгоритмы
+- [[complexity-analysis-interview|Анализ сложности]] — O(V+E) vs O(E log V)
+- [[backtracking-interview|Backtracking]] — DFS с возвратом
+- [[system-design-interview|System Design]] — графы в архитектуре
+- [[distributed-systems-interview|Распределённые системы]] — graph algorithms in distributed
+- [[microservices-interview|Микросервисы]] — service dependency graph

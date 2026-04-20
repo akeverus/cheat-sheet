@@ -24,6 +24,10 @@ updated: "2026-04-20"
 - [[timescaledb-basics|TimescaleDB]] — **TimescaleDB**
 - [NoSQL](../../nosql/) — **NoSQL** базы данных
 
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
+- [[orm-basics|ORM: Object-Relational Mapping]]
+- [[hibernate-relationships|Hibernate: связи между сущностями]]
 ## Содержание
 
 - [Введение в InfluxDB](#введение-в-influxdb)

@@ -27,6 +27,10 @@ updated: "2026-04-20"
 - [Структуры данных](../data-structures/) — структуры данных
 - [Алгоритмические парадигмы](../algorithmic-paradigms/) — парадигмы
 
+- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
+- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
+- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
 ## Содержание
 
 - [Методология решения задач](#методология-решения-задач)

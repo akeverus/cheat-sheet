@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[binary-search|Бинарный поиск]] — binary search
 - [Алгоритмы сортировки](../sorting/) — обзор сортировок
 
+- [[linked-list-middle|Поиск среднего элемента связного списка (Linked List)]]
+- [[linked-list-reverse|Реверс связанного списка (Linked List)]]
+- [[collections-lock-free|Введение в структуры данных без блокировок]]
 ## Содержание
 
 - [Обзор](#обзор)

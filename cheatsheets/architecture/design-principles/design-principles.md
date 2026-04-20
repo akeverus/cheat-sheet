@@ -18,6 +18,11 @@ updated: "2026-04-20"
 - [SOLID Principles](https://www.geeksforgeeks.org/solid-principle-in-programming-understand-with-real-life-examples/)
 - [Clean Code (Robert C. Martin)](https://www.baeldung.com/cs/solid-principles)
 
+
+### См. также
+- [[architecture-patterns|Архитектурные паттерны]]
+- [[soa|SOA (Service-Oriented Architecture)]]
+- [[ddd|Domain-Driven Design (DDD)]]
 ## Содержание
 
 - [SOLID принципы](#solid-принципы)

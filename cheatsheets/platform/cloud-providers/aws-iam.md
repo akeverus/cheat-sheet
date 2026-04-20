@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Access Analyzer](https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html)
 - [IAM Identity Center](https://docs.aws.amazon.com/singlesignon/)
 
+
+### См. также
+- [[azure-services|Azure Services]]
 ## Содержание
 
 - [Основы IAM](#основы-iam)

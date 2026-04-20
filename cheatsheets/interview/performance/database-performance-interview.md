@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Database Performance` — **топ-1 причина медленных приложений**. В 90% случаев slow responses = bad query, missing index, N+1, connection pool. Знание EXPLAIN, pg_stat_statements, execution plan — must-have senior backend.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -1286,16 +1284,16 @@ sysbench --db-driver=pgsql oltp_read_write run --threads=64 --time=60
 
 ## See also
 
-- [JVM Performance Tuning](jvm-performance-tuning-interview.md) — application side
-- [Application Profiling](application-profiling-interview.md) — JFR, async-profiler
-- [Caching Strategies](../architecture/caching-strategies-interview.md) — reduce DB load
-- [PostgreSQL](../databases/postgresql-interview.md) — deeper DB-specific questions
-- [Hibernate](../databases/hibernate-interview.md) — ORM performance patterns (N+1)
-- [Database Architecture](../databases/database-architecture-interview.md) — replication, sharding
-- [Caching Performance](caching-performance-interview.md) — cache tuning
-- [Performance Testing](performance-testing-interview.md) — methodology, tools
-- [Memory Management](memory-management-interview.md) — JVM ↔ DB interplay
-- [Consistency Patterns](../architecture/consistency-patterns-interview.md) — read replicas trade-offs
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — application side
+- [[application-profiling-interview|Application Profiling]] — JFR, async-profiler
+- [[caching-strategies-interview|Caching Strategies]] — reduce DB load
+- [[postgresql-interview|PostgreSQL]] — deeper DB-specific questions
+- [[hibernate-interview|Hibernate]] — ORM performance patterns (N+1)
+- [[database-architecture-interview|Database Architecture]] — replication, sharding
+- [[caching-performance-interview|Caching Performance]] — cache tuning
+- [[performance-testing-interview|Performance Testing]] — methodology, tools
+- [[memory-management-interview|Memory Management]] — JVM ↔ DB interplay
+- [[consistency-patterns-interview|Consistency Patterns]] — read replicas trade-offs
 
 - [[application-profiling-interview|Application Profiling]]
 - [[caching-performance-interview|Caching Performance]]

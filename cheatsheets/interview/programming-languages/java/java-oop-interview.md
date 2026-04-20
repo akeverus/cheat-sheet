@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `OOP` в `Java` для `Senior Java Developer`. Включает детальные объяснения принципов ООП, примеры кода, диаграммы, `SOLID`, паттерны проектирования и практические рекомендации.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -404,7 +402,7 @@ Car myCar = new Car("Tesla Model 3");
 myCar.accelerate(60);
 ```
 
-Начиная с `Java 16` (`JEP 395`) для простых data-классов рекомендуется использовать `record` — см. [Java Core](java-core-interview.md):
+Начиная с `Java 16` (`JEP 395`) для простых data-классов рекомендуется использовать `record` — см. [[java-core-interview|Java Core]]:
 
 ```java
 public record Point(double x, double y) {
@@ -558,7 +556,7 @@ graph LR
     end
 ```
 
-Когда наследование уместно: если отношение is-a **действительно** выполняется и суперкласс спроектирован для наследования (см. `abstract class`). Подробнее — [Design Patterns](../../design-patterns/design-patterns-interview.md) (Strategy, Decorator).
+Когда наследование уместно: если отношение is-a **действительно** выполняется и суперкласс спроектирован для наследования (см. `abstract class`). Подробнее — [[design-patterns-interview|Design Patterns]] (Strategy, Decorator).
 
 ## Q11. Что такое множественное наследование и почему в Java его нет?
 
@@ -658,7 +656,7 @@ public interface Collection<E> {
 - Более специфичный интерфейс побеждает менее специфичный
 - При конфликте — класс обязан явно переопределить метод
 
-Подробнее о `Stream API` — [Java Stream API](java-stream-interview.md), о новых возможностях `Java 8` — [Java 8](java-8-interview.md).
+Подробнее о `Stream API` — [[java-stream-interview|Java Stream API]], о новых возможностях `Java 8` — [[java-8-interview|Java 8]].
 
 ## Q14. Что такое `sealed`-классы?
 
@@ -880,7 +878,7 @@ classDiagram
     OrderService --> DiscountStrategy : uses
 ```
 
-OCP тесно связан с паттерном Strategy — см. [Design Patterns](../../design-patterns/design-patterns-interview.md).
+OCP тесно связан с паттерном Strategy — см. [[design-patterns-interview|Design Patterns]].
 
 ## Q21. (!) Принцип подстановки Лисков (`LSP`)
 
@@ -1076,7 +1074,7 @@ YAGNI, KISS и DRY работают в связке: не дублируй, не
 | `static` | Поля, методы, классы | Принадлежит классу, а не экземпляру |
 | `final` | Переменные, методы, классы | Нельзя изменить / переопределить / наследовать |
 | `abstract` | Классы, методы | Нет реализации, обязателен для реализации в подклассе |
-| `synchronized` | Методы, блоки | Монопольный доступ потока (подробнее — [Java Concurrency](java-concurrency-interview.md)) |
+| `synchronized` | Методы, блоки | Монопольный доступ потока (подробнее — [[java-concurrency-interview|Java Concurrency]]) |
 | `volatile` | Переменные | Видимость между потоками (happens-before) |
 | `transient` | Поля | Исключение из сериализации |
 | `native` | Методы | Реализация на нативном языке (JNI) |
@@ -1160,7 +1158,7 @@ public void modify(List<String> list) {
 - Обратное **не гарантировано** (коллизии хешей допустимы)
 - При переопределении `equals` **всегда** переопределяйте `hashCode`
 
-Подробнее о `equals`/`hashCode` — [Java Core](java-core-interview.md).
+Подробнее о `equals`/`hashCode` — [[java-core-interview|Java Core]].
 
 ## Q32. Почему `String` является `immutable`?
 
@@ -1181,7 +1179,7 @@ StringBuilder sb = new StringBuilder("Hello");
 sb.append(" World"); // Изменяет sb на месте
 ```
 
-Подробнее — [Java String](java-string-interview.md).
+Подробнее — [[java-string-interview|Java String]].
 
 ## Q33. Что такое `Enum` и как его использовать в ООП?
 
@@ -1214,7 +1212,7 @@ public enum OrderStatus implements Displayable {
 - `enum` неявно `final` (нельзя наследоваться) и `extends Enum<E>`
 - Экземпляры создаются один раз (singleton per value) → потокобезопасность
 - Поддерживает `abstract`-методы для strategy per constant
-- Часто используется для реализации State Machine, Strategy — подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)
+- Часто используется для реализации State Machine, Strategy — подробнее в [[design-patterns-interview|Design Patterns]]
 
 ## Q34. Что такое `Reflection`?
 
@@ -1263,7 +1261,7 @@ public class User implements Serializable {
 - Подклассы `Serializable`-класса тоже сериализуемы
 - Для тонкой настройки — `Externalizable` или кастомные `writeObject`/`readObject`
 
-В современных проектах `Java Serialization` часто заменяют на `JSON` (`Jackson`), `Protocol Buffers` или `Avro`. Подробнее — [Java Serialization](java-serialization-interview.md).
+В современных проектах `Java Serialization` часто заменяют на `JSON` (`Jackson`), `Protocol Buffers` или `Avro`. Подробнее — [[java-serialization-interview|Java Serialization]].
 
 ## Q36. Что такое immutable объекты и как их создавать?
 
@@ -1348,7 +1346,7 @@ Comparator<String> comparator = Comparator.comparingInt(String::length);
 | Компиляция | Отдельный `.class`-файл | `invokedynamic` (эффективнее) |
 | Состояние | Может иметь поля | Только effectively final переменные |
 
-Подробнее о лямбдах и `Stream API` — [Java 8](java-8-interview.md) и [Java Stream API](java-stream-interview.md).
+Подробнее о лямбдах и `Stream API` — [[java-8-interview|Java 8]] и [[java-stream-interview|Java Stream API]].
 
 ## Q38. В чём разница между `Comparable` и `Comparator`?
 
@@ -1639,17 +1637,17 @@ class MyValidator implements StringValidator {
 
 ## See also
 
-- [Java Core](java-core-interview.md) — основы Java (`equals`/`hashCode`, `Records`, иммутабельность)
-- [Java Concurrency](java-concurrency-interview.md) — многопоточность, потокобезопасность и SOLID
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — паттерны проектирования как практика ООП
-- [Java Generics](java-generics-interview.md) — обобщённое программирование, ковариантность
-- [Java Collections](java-collections-interview.md) — `Comparable`, `Comparator`, структуры данных
-- [Java Exceptions](java-exceptions-interview.md) — иерархия исключений как пример ООП-дизайна
-- [Java 8+](java-8-interview.md) — лямбды, функциональные интерфейсы, `default`-методы
-- [Java 17-21](java-17-21-interview.md) — `sealed classes`, `records` как эволюция ООП в Java
-- [Java Annotations](java-annotations-interview.md) — аннотации как метаданные ООП-компонентов
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — IoC, DI, как реализация принципа DIP
-- [Java Serialization](java-serialization-interview.md) — `Serializable`, `marker interface` в ООП-контексте
+- [[java-core-interview|Java Core]] — основы Java (`equals`/`hashCode`, `Records`, иммутабельность)
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность, потокобезопасность и SOLID
+- [[design-patterns-interview|Design Patterns]] — паттерны проектирования как практика ООП
+- [[java-generics-interview|Java Generics]] — обобщённое программирование, ковариантность
+- [[java-collections-interview|Java Collections]] — `Comparable`, `Comparator`, структуры данных
+- [[java-exceptions-interview|Java Exceptions]] — иерархия исключений как пример ООП-дизайна
+- [[java-8-interview|Java 8+]] — лямбды, функциональные интерфейсы, `default`-методы
+- [[java-17-21-interview|Java 17-21]] — `sealed classes`, `records` как эволюция ООП в Java
+- [[java-annotations-interview|Java Annotations]] — аннотации как метаданные ООП-компонентов
+- [[spring-boot-interview|Spring Boot]] — IoC, DI, как реализация принципа DIP
+- [[java-serialization-interview|Java Serialization]] — `Serializable`, `marker interface` в ООП-контексте
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

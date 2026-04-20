@@ -32,6 +32,8 @@ Alertmanager — компонент экосистемы Prometheus: маршр�
 - [[pagerduty|PagerDuty]] — инцидент-менеджмент
 - [Monitoring](../) — обзор мониторинга
 
+- [[alerting|Системы алертинга для Java]]
+- [[redis-monitoring|Redis: Мониторинг]]
 ## Содержание
 
 - [Введение](#введение)

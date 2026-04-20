@@ -30,6 +30,8 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [[scala-akka|Akka Actors]]
 - [[scala-fp-basics|Функциональное программирование]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
 ## Содержание
 
 - [Введение в конкурентность](#введение-в-конкурентность)

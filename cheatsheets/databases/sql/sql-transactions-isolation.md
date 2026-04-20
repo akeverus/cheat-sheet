@@ -24,6 +24,11 @@ updated: "2026-04-20"
 
 См. также: [[sql-basics]] — [[postgres-transactions]].
 
+
+### См. также
+- [[spring-data-jpa|Spring Data JPA/Hibernate]]
+- [[spring-data-jdbc|Spring Data JDBC: Полное руководство по работе с базами данных]]
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
 ## Содержание
 
 - [ACID](#acid)

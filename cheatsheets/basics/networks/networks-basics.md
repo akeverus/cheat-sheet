@@ -26,6 +26,10 @@ updated: "2026-04-20"
 - [[computer-science-basics|Computer Science]]
 - [Операционные системы](../operating-systems/)
 
+- [[clean-code|Принципы чистого кода]]
+- [[git-basics|Основы Git]]
+- [[java-basics|Java: основы]]
+- [[redis-basics|Redis: Основы]]
 ## Содержание
 
 - [Введение в компьютерные сети](#введение-в-компьютерные-сети)

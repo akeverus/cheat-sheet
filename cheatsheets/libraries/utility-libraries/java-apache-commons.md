@@ -29,6 +29,12 @@ updated: "2026-04-20"
 - [Commons DBCP](https://commons.apache.org/proper/commons-dbcp/) — **Connection pooling**
 - [Commons Math](https://commons.apache.org/proper/commons-math/) — математические функции
 
+
+### См. также
+- [[jackson|Jackson: JSON сериализация в Java]]
+- [[java-gson|Gson]]
+- [[java-junit5|JUnit 5]]
+- [[java-mockito|Mockito]]
 ## Содержание
 
 - [Введение в Apache Commons](#введение-в-apache-commons)

@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `NATS` — lightweight, high-performance messaging system. CNCF incubating project (2018). Создан Derek Collison (ex-TIBCO, RabbitMQ creator). Известен **скоростью** (миллионы msg/sec на single node), простотой, и low resource usage. **Core NATS** = pub/sub, **JetStream** = persistence (с 2020).
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -497,18 +495,18 @@ accounts: {
 
 ## See also
 
-- [Apache Kafka](kafka-interview.md) — main конкурент
-- [RabbitMQ](rabbitmq-interview.md) — другой конкурент
-- [Message Brokers Comparison](message-brokers-comparison-interview.md) — overview
-- [Apache Pulsar](pulsar-interview.md) — другая alternative
-- [Event-driven Patterns](../architecture/event-driven-patterns-interview.md) — context
-- [Микросервисы](../architecture/microservices-interview.md) — primary use case
-- [Stream Processing](../data-engineering/stream-processing-interview.md) — context
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — RAFT, consensus
-- [CAP Theorem](../architecture/cap-theorem-interview.md) — JetStream tradeoffs
-- [gRPC](../api/grpc-interview.md) — alternative для RPC
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — NATS для sagas
-- [Caching](../architecture/caching-strategies-interview.md) — NATS KV
+- [[kafka-interview|Apache Kafka]] — main конкурент
+- [[rabbitmq-interview|RabbitMQ]] — другой конкурент
+- [[message-brokers-comparison-interview|Message Brokers Comparison]] — overview
+- [[pulsar-interview|Apache Pulsar]] — другая alternative
+- [[event-driven-patterns-interview|Event-driven Patterns]] — context
+- [[microservices-interview|Микросервисы]] — primary use case
+- [[stream-processing-interview|Stream Processing]] — context
+- [[distributed-systems-interview|Распределённые системы]] — RAFT, consensus
+- [[cap-theorem-interview|CAP Theorem]] — JetStream tradeoffs
+- [[grpc-interview|gRPC]] — alternative для RPC
+- [[saga-pattern-interview|Saga Pattern]] — NATS для sagas
+- [[caching-strategies-interview|Caching]] — NATS KV
 
 - [[aws-sqs-sns-interview|AWS SQS и SNS]]
 - [[kafka-interview|Apache Kafka]]

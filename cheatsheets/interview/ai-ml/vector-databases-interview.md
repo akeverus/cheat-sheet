@@ -19,8 +19,6 @@ updated: "2026-04-19"
 
 **Vector databases** — специализированные БД для хранения и быстрого поиска **embeddings** (high-dimensional векторов). Главная операция — **kNN search**: найти k ближайших векторов к query. Используют ANN-алгоритмы (HNSW, IVF). Стек: Pinecone, Weaviate, Qdrant, Milvus, Chroma, pgvector, Elasticsearch.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -134,7 +132,7 @@ Brute force search: ~500 ms на CPU (slow)
 - 1536 dims (`text-embedding-3-small`) — стандарт OpenAI
 - 3072 dims (`text-embedding-3-large`) — лучшее качество
 
-Подробнее — в [Embeddings](embeddings-interview.md).
+Подробнее — в [[embeddings-interview|Embeddings]].
 
 ## Q4. (!) Cosine similarity vs Dot product vs Euclidean?
 
@@ -677,17 +675,17 @@ Local development / prototype?
 
 ## See also
 
-- [Embeddings](embeddings-interview.md) — что хранится в vector DB
-- [RAG](rag-interview.md) — главное применение
-- [LLM Basics](llm-basics-interview.md) — context для AI
-- [PostgreSQL](../databases/postgresql-interview.md) — pgvector
-- [Elasticsearch](../databases/elasticsearch-interview.md) — hybrid search
-- [Redis](../databases/redis-interview.md) — Redis Stack vector search
-- [Caching](../architecture/caching-strategies-interview.md) — embeddings cache
-- [Микросервисы](../architecture/microservices-interview.md) — где vector DB живёт
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — sharding, replication
-- [MLOps](mlops-interview.md) — embedding model versioning
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — для больших scales
+- [[embeddings-interview|Embeddings]] — что хранится в vector DB
+- [[rag-interview|RAG]] — главное применение
+- [[llm-basics-interview|LLM Basics]] — context для AI
+- [[postgresql-interview|PostgreSQL]] — pgvector
+- [[elasticsearch-interview|Elasticsearch]] — hybrid search
+- [[redis-interview|Redis]] — Redis Stack vector search
+- [[caching-strategies-interview|Caching]] — embeddings cache
+- [[microservices-interview|Микросервисы]] — где vector DB живёт
+- [[distributed-systems-interview|Распределённые системы]] — sharding, replication
+- [[mlops-interview|MLOps]] — embedding model versioning
+- [[scalability-patterns-interview|Scalability Patterns]] — для больших scales
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

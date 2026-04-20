@@ -24,6 +24,10 @@ updated: "2026-04-20"
 - [Allure TestNG](https://docs.qameta.io/allure/#_testng)
 - [Unit Testing](../) · [[junit]] · [[java-mockito|Mockito]] · [[selenium]]
 
+
+### См. также
+- [[pytest|pytest]]
+- [[assertj|AssertJ для Java]]
 ## Содержание
 
 - [Введение](#введение)

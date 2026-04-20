@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[collections-complexity|Временная сложность коллекций]] — Big O коллекций **Java**
 - [[java-concurrency-basics|Многопоточность в Java]]
 
+- [[linked-list-middle|Поиск среднего элемента связного списка (Linked List)]]
+- [[collections-big-o|Практические примеры нотации Big O]]
+- [[linked-list-reverse|Реверс связанного списка (Linked List)]]
 ## Содержание
 
 - [Обзор](#обзор)

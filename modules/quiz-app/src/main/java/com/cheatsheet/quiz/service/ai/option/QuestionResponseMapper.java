@@ -13,7 +13,7 @@ import java.util.List;
  */
 @UtilityClass
 public class QuestionResponseMapper {
-    private static final int PERSISTED_PROMPT_METADATA_VERSION = 0;
+    private static final int PERSISTED_PROMPT_METADATA_VERSION = 1;
 
     public static List<AnswerOptionCreate> mapToCreates(
             GeneratedOptions generated,

@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Полное руководство по `Kotlin Coroutines` для подготовки к собеседованию на позицию `Senior Kotlin/Java Developer`. Охватывает `structured concurrency`, `Flow`, `Channel`, диспетчеры, обработку ошибок, тестирование и интеграцию с `Spring`.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -222,7 +220,7 @@ suspend fun loadData() = coroutineScope {
 }
 ```
 
-Не используйте `GlobalScope` в production-коде — это нарушает [structured concurrency](kotlin-coroutines-interview.md) и приводит к утечкам. Подробнее в вопросе Q12.
+Не используйте `GlobalScope` в production-коде — это нарушает [[kotlin-coroutines-interview|structured concurrency]] и приводит к утечкам. Подробнее в вопросе Q12.
 
 ## Q5. (!) В чём разница между `launch` и `async`?
 
@@ -671,7 +669,7 @@ scope.launch {
 }
 ```
 
-Подробнее об обработке исключений — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
+Подробнее об обработке исключений — в [[kotlin-exceptions-interview|вопросах по исключениям Kotlin]].
 
 ## Q20. (!) Что такое `SupervisorJob` и `supervisorScope`?
 
@@ -1098,7 +1096,7 @@ repeat(3) { consumerId ->
 }
 ```
 
-Правило: `Channel` — для коммуникации между корутинами (очередь задач, fan-out). `Flow` — для потока данных от источника к потребителю с операторами трансформации. Подробнее об аналогах в реактивном программировании — в [вопросах по RxJava](../../reactive/rxjava-interview.md).
+Правило: `Channel` — для коммуникации между корутинами (очередь задач, fan-out). `Flow` — для потока данных от источника к потребителю с операторами трансформации. Подробнее об аналогах в реактивном программировании — в [[rxjava-interview|вопросах по RxJava]].
 
 ## Q31. Какие типы `Channel` существуют?
 
@@ -1207,7 +1205,7 @@ fun fetchDataFuture(): CompletableFuture<Data> =
     scope.future { fetchData() }
 ```
 
-Подробнее о взаимодействии с Java-кодом — в [вопросах по Kotlin-Java Interop](kotlin-interop-java-interview.md).
+Подробнее о взаимодействии с Java-кодом — в [[kotlin-interop-java-interview|вопросах по Kotlin-Java Interop]].
 
 ## Q34. (!) Распространённые ошибки при работе с корутинами
 
@@ -1406,7 +1404,7 @@ flow { emit(fetchData()) }
     .collect { data -> showData(data) } // уже на нужном потоке
 ```
 
-`Flow` рекомендуется для новых Kotlin-проектов. `RxJava` по-прежнему актуален в крупных проектах с Java-кодом или богатой операторной базой. Подробнее — в [вопросах по RxJava](../../reactive/rxjava-interview.md).
+`Flow` рекомендуется для новых Kotlin-проектов. `RxJava` по-прежнему актуален в крупных проектах с Java-кодом или богатой операторной базой. Подробнее — в [[rxjava-interview|вопросах по RxJava]].
 
 ## Q38. Как работает `Mutex` в корутинах и когда использовать вместо `synchronized`?
 
@@ -1520,15 +1518,15 @@ ids.flatMapMerge { id ->
 
 ## See also
 
-- [Kotlin](kotlin-interview.md) — основные вопросы по языку Kotlin, suspend-функции
-- [Коллекции в Kotlin](kotlin-collections-interview.md) — Flow как асинхронная альтернатива Sequence
-- [DSL в Kotlin](kotlin-dsl-interview.md) — coroutine builders (launch, async) как пример DSL-стиля
-- [Сериализация в Kotlin](kotlin-serialization-interview.md) — async-сериализация в Ktor с Flow
-- [Kotlin-Java Interop](kotlin-interop-java-interview.md) — вызов suspend-функций из Java
-- [Исключения в Kotlin](kotlin-exceptions-interview.md) — CoroutineExceptionHandler, SupervisorJob
-- [Java Concurrency](../java/java-concurrency-interview.md) — многопоточность в Java для сравнения моделей
-- [RxJava](../../reactive/rxjava-interview.md) — реактивные потоки, сравнение с `Flow`
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция корутин со Spring WebFlux
+- [[kotlin-interview|Kotlin]] — основные вопросы по языку Kotlin, suspend-функции
+- [[kotlin-collections-interview|Коллекции в Kotlin]] — Flow как асинхронная альтернатива Sequence
+- [[kotlin-dsl-interview|DSL в Kotlin]] — coroutine builders (launch, async) как пример DSL-стиля
+- [[kotlin-serialization-interview|Сериализация в Kotlin]] — async-сериализация в Ktor с Flow
+- [[kotlin-interop-java-interview|Kotlin-Java Interop]] — вызов suspend-функций из Java
+- [[kotlin-exceptions-interview|Исключения в Kotlin]] — CoroutineExceptionHandler, SupervisorJob
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность в Java для сравнения моделей
+- [[rxjava-interview|RxJava]] — реактивные потоки, сравнение с `Flow`
+- [[spring-boot-interview|Spring Boot]] — интеграция корутин со Spring WebFlux
 
 - [[kotlin-collections-interview|Kotlin коллекции]]
 - [[kotlin-dsl-interview|DSL в Kotlin]]

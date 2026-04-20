@@ -21,6 +21,10 @@ updated: "2026-04-20"
 - [Azure Well-Architected Framework](https://docs.microsoft.com/azure/architecture/framework/)
 - [Azure CLI Documentation](https://docs.microsoft.com/cli/azure/)
 
+
+### См. также
+- [[kubernetes-cloud|Kubernetes в облаке]]
+- [[aws-iam|AWS IAM (Identity and Access Management)]]
 ## Содержание
 
 - [Compute Services](#compute-services)

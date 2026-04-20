@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[postgres-basics|PostgreSQL]] — основы **PostgreSQL**
 - [[mysql-basics|MySQL]] — основы **MySQL**
 
+- [[postgres-indexes|PostgreSQL: типы индексов]]
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-queries|PostgreSQL: запросы и агрегаты]]
 ## Содержание
 
 - [Введение в Oracle Database](#введение-в-oracle-database)

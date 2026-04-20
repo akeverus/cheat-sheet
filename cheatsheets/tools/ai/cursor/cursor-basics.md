@@ -26,6 +26,11 @@ Cursor — это **AI-first IDE**, форк VS Code с глубокой инт�
 - [Cursor CLI Reference](https://cursor.com/docs/cli/reference/parameters)
 - [Сообщество и релизы](https://cursor.sh/) или через встроенный экран Updates
 
+
+### См. также
+- [[copilot-basics|GitHub Copilot: основы]]
+- [[claude-basics|Claude Code: основы]]
+- [[windsurf-basics|Windsurf: основы]]
 ## Содержание
 
 - [Введение](#введение)

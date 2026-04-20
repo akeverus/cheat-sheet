@@ -25,6 +25,10 @@ Mattermost — открытая платформа для командной к�
 - [Mattermost Integrations](https://mattermost.com/integrations/)
 - [Mattermost GitHub](https://github.com/mattermost/mattermost)
 
+
+### См. также
+- [[telegram-basics|Telegram: основы]]
+- [[security-tools|Инструменты безопасности (Security Tools)]]
 ## Содержание
 
 - [Развёртывание и варианты](#развёртывание-и-варианты)

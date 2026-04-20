@@ -27,6 +27,9 @@ related: ["databases/redis-basics.md", "databases/redis-persistence.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-persistence|redis-persistence.md]] — персистентность
 
+- [[redis-high-availability|Redis: Высокая доступность]]
+- [[postgres-replication|PostgreSQL: Репликация]]
+- [[redis-clustering|Redis: Кластеризация]]
 ## Содержание
 
 - [Введение в репликацию Redis](#введение-в-репликацию-redis)

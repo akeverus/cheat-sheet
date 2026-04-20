@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 Анализ сложности — фундамент алгоритмических интервью. От тебя ждут не просто названия `O(n log n)`, а способности **обосновать** оценку, отличить **худший/средний/амортизированный** случай и понимать, почему `HashMap.get()` может «деградировать» до `O(log n)`.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -360,7 +358,7 @@ T(n) = 2T(n/2) + n
 | `TreeSet` | — | `O(log n)` | `O(log n)` | `O(log n)` | `O(n)` |
 | `PriorityQueue` | — | `O(n)` (contains) | `O(log n)` (offer) | `O(log n)` (poll min) | `O(n)` |
 
-Подробнее — в [Java Collections](../../programming-languages/java/java-collections-interview.md).
+Подробнее — в [[java-collections-interview|Java Collections]].
 
 ## Q14. (!) Почему HashMap.get() в худшем случае O(log n), а не O(n)?
 
@@ -598,7 +596,7 @@ long sum(int[] arr) {
 - `HashMap` (`O(1)`) с плохой хеш-функцией работает медленнее `TreeMap` (`O(log n)`) из-за частых коллизий и rehashing.
 - Простой `ArrayList` обычно в 2-5 раз быстрее `LinkedList` при последовательном доступе.
 
-**Bench, не оценивай.** На JVM используют `JMH` для микробенчмарков — подробнее в [Application Profiling](../../performance/application-profiling-interview.md).
+**Bench, не оценивай.** На JVM используют `JMH` для микробенчмарков — подробнее в [[application-profiling-interview|Application Profiling]].
 
 ## Q30. Как профилировать реальный алгоритм, а не оценивать через Big O?
 
@@ -617,7 +615,7 @@ public int linearSearch(Blackhole bh) {
 }
 ```
 
-Подробнее — в [Application Profiling](../../performance/application-profiling-interview.md) и [Performance Testing](../../performance/performance-testing-interview.md).
+Подробнее — в [[application-profiling-interview|Application Profiling]] и [[performance-testing-interview|Performance Testing]].
 
 ## Q31. (!) Что такое complexity attack?
 
@@ -634,23 +632,23 @@ public int linearSearch(Blackhole bh) {
 - Лимиты на input (max length, timeout regex)
 - Использование `O(n log n)` гарантированных алгоритмов (Heap Sort, Merge Sort)
 
-Подробнее об атаках — в [Application Security](../../security/application-security-interview.md) и [OWASP Top 10](../../security/owasp-top10-interview.md).
+Подробнее об атаках — в [[application-security-interview|Application Security]] и [[owasp-top10-interview|OWASP Top 10]].
 
 ---
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Массивы и строки](../data-structures/arrays-strings-interview.md) — операции с линейными структурами
-- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — анализ сложности сортировок
-- [Алгоритмы поиска](../sorting-searching/searching-algorithms-interview.md) — линейный, бинарный, индексные структуры
-- [Динамическое программирование](../algorithmic-paradigms/dynamic-programming-interview.md) — pseudo-polynomial и optimal substructure
-- [Разделяй и властвуй](../algorithmic-paradigms/divide-and-conquer-interview.md) — где master theorem применим напрямую
-- [Графы](../data-structures/graphs-interview.md) — `O(V+E)` и сложность Dijkstra
-- [Хеш-таблицы](../data-structures/hash-tables-interview.md) — амортизированный анализ и HashDoS
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — реальные сложности коллекций
-- [Application Profiling](../../performance/application-profiling-interview.md) — JMH, профилировщики, реальные замеры
-- [JVM](../../jvm/jvm-interview.md) — как стек, GC и JIT влияют на сложность
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[arrays-strings-interview|Массивы и строки]] — операции с линейными структурами
+- [[sorting-algorithms-interview|Алгоритмы сортировки]] — анализ сложности сортировок
+- [[searching-algorithms-interview|Алгоритмы поиска]] — линейный, бинарный, индексные структуры
+- [[dynamic-programming-interview|Динамическое программирование]] — pseudo-polynomial и optimal substructure
+- [[divide-and-conquer-interview|Разделяй и властвуй]] — где master theorem применим напрямую
+- [[graphs-interview|Графы]] — `O(V+E)` и сложность Dijkstra
+- [[hash-tables-interview|Хеш-таблицы]] — амортизированный анализ и HashDoS
+- [[java-collections-interview|Java Collections]] — реальные сложности коллекций
+- [[application-profiling-interview|Application Profiling]] — JMH, профилировщики, реальные замеры
+- [[jvm-interview|JVM]] — как стек, GC и JIT влияют на сложность
 
 - [[backtracking-interview|Backtracking]]
 - [[divide-and-conquer-interview|Divide and Conquer]]

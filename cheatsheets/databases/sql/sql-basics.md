@@ -28,6 +28,7 @@ updated: "2026-04-20"
 - [[mysql-queries|MySQL Queries]] — практики запросов в MySQL
 - [[postgres-indexes|PostgreSQL Indexes]] — проектирование индексов
 
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
 ## Содержание
 
 - [Что важно понимать до первого SELECT](#что-важно-понимать-до-первого-select)

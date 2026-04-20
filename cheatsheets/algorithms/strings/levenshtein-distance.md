@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[string-permutations|Перестановки строк]] — перестановки
 - [[palindrome-check|Проверка палиндромов]] — палиндромы
 
+- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
+- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
+- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

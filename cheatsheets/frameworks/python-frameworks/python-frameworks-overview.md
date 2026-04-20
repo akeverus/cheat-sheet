@@ -25,6 +25,10 @@ updated: "2026-04-20"
 - [[README|Frameworks README]] — раздел фреймворков
 - [[README|Java Frameworks]] — **Spring**, **Quarkus**
 
+- [[dotnet-frameworks-overview|.NET Frameworks — обзор]]
+- [[kotlin-frameworks-overview|Kotlin Frameworks — обзор]]
+- [[go-frameworks-overview|Go Frameworks — обзор (редирект)]]
+- [[scala-frameworks-overview|Scala Frameworks — обзор]]
 ## Содержание
 
 - [Введение](#введение)

@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[spring-data-jpa-interview|Spring Data JPA]] — транзакции
 - [[strategy|Strategy]] — Strategy
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

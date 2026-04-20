@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `AWS DynamoDB` — serverless NoSQL key-value/document store. Single-digit ms latency at any scale. Used by Amazon (Cart, Prime), Netflix, Lyft. На интервью спрашивают: partition keys, indexes (GSI/LSI), single-table design, capacity modes, hot partitions, DynamoDB Streams, transactions, Global Tables.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -631,7 +629,7 @@ def handler(event, context):
 
 **Подвох:** Lambda processes batch — partial failure handling требует `ReportBatchItemFailures`.
 
-Подробнее — в [AWS Lambda](../cloud/aws-lambda-interview.md).
+Подробнее — в [[aws-lambda-interview|AWS Lambda]].
 
 ## Q27. (!) DAX (DynamoDB Accelerator)?
 
@@ -717,17 +715,17 @@ aws dynamodb update-continuous-backups \
 
 ## See also
 
-- [MongoDB](mongodb-interview.md) — alternative document store
-- [Cassandra](cassandra-interview.md) — wide-column NoSQL
-- [Redis](redis-interview.md) — for caching
-- [AWS](../cloud/aws-interview.md) — context
-- [AWS Lambda](../cloud/aws-lambda-interview.md) — Streams triggers
-- [Serverless](../cloud/serverless-interview.md) — DynamoDB friendly
-- [Database Architecture](database-architecture-interview.md) — NoSQL context
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — DynamoDB scales
-- [Caching Strategies](../architecture/caching-strategies-interview.md) — DAX
-- [Микросервисы](../architecture/microservices-interview.md) — DynamoDB per microservice
-- [Event-driven](../architecture/event-driven-patterns-interview.md) — Streams
+- [[mongodb-interview|MongoDB]] — alternative document store
+- [[cassandra-interview|Cassandra]] — wide-column NoSQL
+- [[redis-interview|Redis]] — for caching
+- [[aws-interview|AWS]] — context
+- [[aws-lambda-interview|AWS Lambda]] — Streams triggers
+- [[serverless-interview|Serverless]] — DynamoDB friendly
+- [[database-architecture-interview|Database Architecture]] — NoSQL context
+- [[scalability-patterns-interview|Scalability Patterns]] — DynamoDB scales
+- [[caching-strategies-interview|Caching Strategies]] — DAX
+- [[microservices-interview|Микросервисы]] — DynamoDB per microservice
+- [[event-driven-patterns-interview|Event-driven]] — Streams
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

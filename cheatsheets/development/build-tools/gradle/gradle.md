@@ -1,6 +1,6 @@
 ---
 title: "Gradle (основы)"
-description: "Gradle — система автоматизации сборки с открытым исходным кодом; использует Groovy или Kotlin DSL для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [gradle-advanced.md](gradle-advanced.md)."
+description: "Gradle — система автоматизации сборки с открытым исходным кодом; использует Groovy или Kotlin DSL для описания сборки. Документ даёт базовые понятия и минимальный старт; продвинутые темы см. в [[gradle-advanced|gradle-advanced.md]]."
 tags:
   - development
   - build-tools

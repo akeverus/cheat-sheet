@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Ответы по созданию **Domain-Specific Language** в `Kotlin` — `type-safe builders`, lambda с receiver, `@DslMarker`, `Gradle Kotlin DSL`, `Exposed`, `Ktor`, `context receivers`, scope-функции и реальные паттерны. На собеседованиях часто спрашивают про механизм lambda с receiver, ограничение scope через `@DslMarker`, конкретные DSL из экосистемы (`Gradle`, `Ktor`, `Exposed`) и отличия от обычного fluent API.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -513,7 +511,7 @@ val connection = DatabaseConfig().run {
 }
 ```
 
-Подробнее о scope-функциях — в [основах Kotlin](kotlin-interview.md).
+Подробнее о scope-функциях — в [[kotlin-interview|основах Kotlin]].
 
 ## Q12. В чём разница между apply и also при конструировании объектов в DSL?
 
@@ -1110,7 +1108,7 @@ class UserServiceSpec : BehaviorSpec({
 })
 ```
 
-Устройство: `shouldBe` — infix extension-функция на `Any?`; `given`/`when`/`then` — функции с lambda с receiver `BehaviorSpecRootScope`; `shouldThrow<T>` — inline reified-функция. Всё это — стандартные приёмы Kotlin DSL, скомбинированные для тестового домена. Подробнее о тестировании в `Kotlin` — в [основах Kotlin](kotlin-interview.md).
+Устройство: `shouldBe` — infix extension-функция на `Any?`; `given`/`when`/`then` — функции с lambda с receiver `BehaviorSpecRootScope`; `shouldThrow<T>` — inline reified-функция. Всё это — стандартные приёмы Kotlin DSL, скомбинированные для тестового домена. Подробнее о тестировании в `Kotlin` — в [[kotlin-interview|основах Kotlin]].
 
 ## Q28. Какие реальные DSL существуют в экосистеме Kotlin?
 
@@ -1963,15 +1961,15 @@ val sql = "SELECT * FROM users WHERE age > '18'"  // Сравнение числ
 
 ## See also
 
-- [Основы Kotlin](kotlin-interview.md) — extension-функции и лямбды как основа DSL
-- [Коллекции в Kotlin](kotlin-collections-interview.md) — buildList/buildMap как пример DSL-паттерна
-- [Корутины в Kotlin](kotlin-coroutines-interview.md) — корутины активно используют DSL-стиль (launch, async)
-- [Kotlin/Java interop](kotlin-interop-java-interview.md) — как DSL выглядит при вызове из Java
-- [Исключения в Kotlin](kotlin-exceptions-interview.md) — обработка ошибок в DSL-блоках
-- [Сериализация в Kotlin](kotlin-serialization-interview.md) — JsonElement DSL как пример внутреннего DSL
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Builder и Fluent API как альтернативы DSL
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — Spring Security DSL и Beans DSL на Kotlin
-- [Java Core](../java/java-core-interview.md) — сравнение с Java Builder-паттерном
+- [[kotlin-interview|Основы Kotlin]] — extension-функции и лямбды как основа DSL
+- [[kotlin-collections-interview|Коллекции в Kotlin]] — buildList/buildMap как пример DSL-паттерна
+- [[kotlin-coroutines-interview|Корутины в Kotlin]] — корутины активно используют DSL-стиль (launch, async)
+- [[kotlin-interop-java-interview|Kotlin/Java interop]] — как DSL выглядит при вызове из Java
+- [[kotlin-exceptions-interview|Исключения в Kotlin]] — обработка ошибок в DSL-блоках
+- [[kotlin-serialization-interview|Сериализация в Kotlin]] — JsonElement DSL как пример внутреннего DSL
+- [[design-patterns-interview|Design Patterns]] — Builder и Fluent API как альтернативы DSL
+- [[spring-boot-interview|Spring Boot]] — Spring Security DSL и Beans DSL на Kotlin
+- [[java-core-interview|Java Core]] — сравнение с Java Builder-паттерном
 
 - [[kotlin-collections-interview|Kotlin коллекции]]
 - [[kotlin-coroutines-interview|Kotlin Coroutines]]

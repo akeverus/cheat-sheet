@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 Go GC — concurrent mark-and-sweep с **низкой латентностью** (под 1ms паузы). Понимание escape analysis (что попадает в stack, что в heap), tuning через `GOGC`/`GOMEMLIMIT` и профилирование памяти — частые темы для middle/senior Go-разработчиков.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -471,7 +469,7 @@ runtime.GC()
 
 Утечка 100K goroutines = **минимум 200 MB**.
 
-Подробнее — в [Go Concurrency](go-concurrency-interview.md).
+Подробнее — в [[go-concurrency-interview|Go Concurrency]].
 
 ## Q21. Что такое finalizer и зачем?
 
@@ -540,7 +538,7 @@ func handle(req string) {
 
 GC **может очистить пул** в любой момент (между циклами). Не используй для долгоживущих объектов.
 
-Подробнее — в [Go Concurrency](go-concurrency-interview.md).
+Подробнее — в [[go-concurrency-interview|Go Concurrency]].
 
 ## Q25. Pre-allocation slices/maps?
 
@@ -607,14 +605,14 @@ go build -gcflags="-m" main.go
 
 ## See also
 
-- [Go (базовый)](go-interview.md) — типы, pointers
-- [Go Concurrency](go-concurrency-interview.md) — goroutine stacks
-- [Go Standard Library](go-stdlib-interview.md) — runtime/pprof
-- [Memory Management](../../performance/memory-management-interview.md) — общие концепции
-- [JVM Performance Tuning](../../performance/jvm-performance-tuning-interview.md) — для сравнения с JVM GC
-- [Application Profiling](../../performance/application-profiling-interview.md) — pprof и аналоги
-- [Performance Testing](../../performance/performance-testing-interview.md) — Go bench
-- [Микросервисы](../../architecture/microservices-interview.md) — где Go экономит память
+- [[go-interview|Go (базовый)]] — типы, pointers
+- [[go-concurrency-interview|Go Concurrency]] — goroutine stacks
+- [[go-stdlib-interview|Go Standard Library]] — runtime/pprof
+- [[memory-management-interview|Memory Management]] — общие концепции
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — для сравнения с JVM GC
+- [[application-profiling-interview|Application Profiling]] — pprof и аналоги
+- [[performance-testing-interview|Performance Testing]] — Go bench
+- [[microservices-interview|Микросервисы]] — где Go экономит память
 
 - [[go-concurrency-interview|Go Concurrency]]
 - [[go-generics-interview|Go Generics]]

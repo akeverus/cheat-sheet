@@ -26,6 +26,7 @@ updated: "2026-04-20"
 - [[event-sourcing|Event Sourcing]] — **Event Sourcing**
 - [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
+- [[soa|SOA (Service-Oriented Architecture)]]
 ## Содержание
 
 - [Введение в Domain-Driven Design](#введение-в-domain-driven-design)

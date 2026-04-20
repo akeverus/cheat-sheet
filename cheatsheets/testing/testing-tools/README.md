@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [Testing Tools](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[testing-tools-overview|Testing Tools Overview]]

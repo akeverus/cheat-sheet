@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Ответы по `Spring Security`: `SecurityFilterChain`, аутентификация, авторизация, `JWT`, `OAuth2`, `CORS`/`CSRF`, method security, тестирование.
 
-Дата последнего обновления: 2026-04-13
-
 **`Spring Security`** — де-факто стандарт безопасности в экосистеме `Spring`. На собеседованиях проверяют понимание архитектуры фильтров, механизмов аутентификации/авторизации, работу с токенами и умение конфигурировать защиту для REST API.
 
 ## Полезные ссылки
@@ -117,7 +115,7 @@ updated: "2026-04-13"
 
 - **Аутентификация** — проверка «кто ты» (форма входа, `Basic`, `JWT`, `OAuth2`, `LDAP`)
 - **Авторизация** — проверка «что тебе можно» (по URL, по методам через `@PreAuthorize`)
-- **Защита от атак** — `CSRF`, `XSS`, clickjacking, session fixation (подробнее в [OWASP Top 10](../../security/owasp-top10-interview.md))
+- **Защита от атак** — `CSRF`, `XSS`, clickjacking, session fixation (подробнее в [[owasp-top10-interview|OWASP Top 10]])
 - **Управление сессиями** — таймауты, ограничение одновременных сессий
 - **Хеширование паролей** — `BCrypt`, `Argon2`, `SCrypt`
 
@@ -187,7 +185,7 @@ sequenceDiagram
     end
 ```
 
-Подробнее о паттернах авторизации — в [вопросах по паттернам аутентификации и авторизации](../../security/authentication-authorization-patterns-interview.md).
+Подробнее о паттернах авторизации — в [[authentication-authorization-patterns-interview|вопросах по паттернам аутентификации и авторизации]].
 
 ## Q4. (!) Как работает `SecurityFilterChain` и как его настроить?
 
@@ -259,7 +257,7 @@ public UserDto currentUser(@AuthenticationPrincipal UserDetails user) {
 - **`MODE_INHERITABLETHREADLOCAL`** — наследуется дочерними потоками
 - **`MODE_GLOBAL`** — один контекст на всё приложение (редко)
 
-Для реактивного стека (`WebFlux`) используется `ReactiveSecurityContextHolder` — контекст в `Reactor Context`, не в `ThreadLocal` (подробнее в [Spring WebFlux](spring-webflux-interview.md)).
+Для реактивного стека (`WebFlux`) используется `ReactiveSecurityContextHolder` — контекст в `Reactor Context`, не в `ThreadLocal` (подробнее в [[spring-webflux-interview|Spring WebFlux]]).
 
 ## Q6. (!) Как работает процесс аутентификации (`AuthenticationManager`, `Provider`)?
 
@@ -594,7 +592,7 @@ public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request)
 }
 ```
 
-Для revocable-токенов лучше хранить refresh-токены в БД или `Redis` и проверять при обновлении. Подробнее об OAuth2-потоках — в [вопросах по OAuth2](../../security/oauth2-interview.md).
+Для revocable-токенов лучше хранить refresh-токены в БД или `Redis` и проверять при обновлении. Подробнее об OAuth2-потоках — в [[oauth2-interview|вопросах по OAuth2]].
 
 ## Q15. (!) Как настроить `OAuth2 Login` (вход через `Google`/`GitHub`)?
 
@@ -731,7 +729,7 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 **Важно**: порядок `requestMatchers` имеет значение — первое совпадение выигрывает. Более специфичные правила ставьте раньше.
 
-В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()` с `AntPathRequestMatcher` под капотом. Поддерживается также `MvcRequestMatcher` для точного соответствия маршрутам [Spring MVC](spring-mvc-interview.md).
+В `Spring Security 6` вместо `antMatchers()` используется `requestMatchers()` с `AntPathRequestMatcher` под капотом. Поддерживается также `MvcRequestMatcher` для точного соответствия маршрутам [[spring-mvc-interview|Spring MVC]].
 
 ## Q18. (!) Как работают `@PreAuthorize`, `@PostAuthorize` и `@Secured`?
 
@@ -877,7 +875,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
 **Важно**: `CORS`-фильтр в `Spring Security` должен обрабатываться **до** аутентификации, иначе preflight `OPTIONS`-запросы (без credentials) получат `401`. При использовании `cors()` в `HttpSecurity` порядок фильтров настраивается автоматически.
 
-На уровне контроллера можно использовать `@CrossOrigin`, но `SecurityFilterChain` конфигурация имеет приоритет. Подробнее о безопасности веб-приложений — в [вопросах по безопасности приложений](../../security/application-security-interview.md).
+На уровне контроллера можно использовать `@CrossOrigin`, но `SecurityFilterChain` конфигурация имеет приоритет. Подробнее о безопасности веб-приложений — в [[application-security-interview|вопросах по безопасности приложений]].
 
 ## Q22. (!) Как работает `CSRF`-защита и когда её отключать?
 
@@ -911,7 +909,7 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 | OAuth2 client (cookie-based) | **Включён** |
 | Public API без аутентификации | **Отключён** |
 
-В `Thymeleaf` CSRF-токен подставляется автоматически при использовании `th:action`. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
+В `Thymeleaf` CSRF-токен подставляется автоматически при использовании `th:action`. Подробнее об атаках — в [[owasp-top10-interview|OWASP Top 10]].
 
 ## Q23. Как управлять сессиями (session management)?
 
@@ -1086,7 +1084,7 @@ public class RestSecurityConfig {
 6. Кастомные `401`/`403` ответы в JSON
 7. Rate limiting на уровне фильтра или gateway
 
-Подробнее о конфигурации [Spring Boot](spring-boot-interview.md) и структуре контроллеров — в [Spring MVC](spring-mvc-interview.md).
+Подробнее о конфигурации [[spring-boot-interview|Spring Boot]] и структуре контроллеров — в [[spring-mvc-interview|Spring MVC]].
 
 ## Q28. Как настроить rate limiting?
 
@@ -2205,16 +2203,16 @@ public class MethodSecurityConfig {}
 
 ## See also
 
-- [Spring Framework](spring-framework-interview.md) — IoC-контейнер и жизненный цикл бинов Security
-- [Spring Boot](spring-boot-interview.md) — автоконфигурация Security-стека
-- [Spring MVC](spring-mvc-interview.md) — защита HTTP-эндпоинтов и CORS
-- [Spring WebFlux](spring-webflux-interview.md) — SecurityWebFilterChain для реактивного стека
-- [Spring Data JPA](spring-data-jpa-interview.md) — интеграция UserDetailsService с базой данных
-- [Spring Cloud](spring-cloud-interview.md) — безопасность в микросервисах (Gateway, Oauth2)
-- [Spring Boot Actuator](spring-boot-actuator-interview.md) — защита management-эндпоинтов
-- [Spring Batch](spring-batch-interview.md) — защита batch-заданий и REST-триггеров
-- [OAuth2 и OpenID Connect](../../security/oauth2-interview.md) — протоколы аутентификации и авторизации
-- [Распределённые системы](../../architecture/distributed-systems-interview.md) — безопасность в микросервисах
+- [[spring-framework-interview|Spring Framework]] — IoC-контейнер и жизненный цикл бинов Security
+- [[spring-boot-interview|Spring Boot]] — автоконфигурация Security-стека
+- [[spring-mvc-interview|Spring MVC]] — защита HTTP-эндпоинтов и CORS
+- [[spring-webflux-interview|Spring WebFlux]] — SecurityWebFilterChain для реактивного стека
+- [[spring-data-jpa-interview|Spring Data JPA]] — интеграция UserDetailsService с базой данных
+- [[spring-cloud-interview|Spring Cloud]] — безопасность в микросервисах (Gateway, Oauth2)
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — защита management-эндпоинтов
+- [[spring-batch-interview|Spring Batch]] — защита batch-заданий и REST-триггеров
+- [[oauth2-interview|OAuth2 и OpenID Connect]] — протоколы аутентификации и авторизации
+- [[distributed-systems-interview|Распределённые системы]] — безопасность в микросервисах
 
 - [[spring-aop-interview|Spring AOP]]
 - [[spring-batch-interview|Spring Batch]]

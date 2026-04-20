@@ -25,6 +25,12 @@ updated: "2026-04-20"
 - [JaCoCo](https://www.jacoco.org/jacoco/trunk/doc/)
 - [TestNG](https://testng.org/doc/documentation-main.html)
 
+
+### См. также
+- [[cucumber|Cucumber для Java]]
+- [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
+- [[micronaut-testing|Micronaut: Testing — Unit Tests, Integration Tests и Mocking]]
+- [[spring-rest|Spring REST API: Полное руководство по разработке RESTful веб-сервисов]]
 ## См. также
 
 - [[README|Unit Testing]]

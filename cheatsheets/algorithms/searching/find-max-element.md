@@ -22,6 +22,8 @@ updated: "2026-04-20"
 - [[k-largest-elements|K наибольших элементов]] — k largest
 - [[quick-sort|Быстрая сортировка]] — quick sort
 
+- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
+- [[merge-two-sorted-arrays|Слияние двух отсортированных массивов (Merge Two Sorted Arrays)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

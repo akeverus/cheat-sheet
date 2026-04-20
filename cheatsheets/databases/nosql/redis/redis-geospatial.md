@@ -27,6 +27,9 @@ related: ["databases/redis-basics.md", "databases/redis-data-structures.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-data-structures|redis-data-structures.md]] — структуры данных
 
+- [[quarkus-redis|Quarkus: Redis — Caching и Data Structures]]
+- [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
+- [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
 ## Содержание
 
 - [Введение в геопространственные данные](#введение-в-геопространственные-данные)

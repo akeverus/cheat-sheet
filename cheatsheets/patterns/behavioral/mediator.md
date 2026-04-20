@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[observer|Observer]] — **Observer Pattern**
 - [[command|Command]] — **Command Pattern**
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

@@ -28,6 +28,9 @@ updated: "2026-04-20"
 - [Kubernetes Tutorial](https://kubernetes.io/docs/tutorials/)
 
 
+
+### См. также
+- [[containerization-overview|Containerization — обзор]]
 ## Содержание
 
 - [Mesos vs Kubernetes](#mesos-vs-kubernetes)

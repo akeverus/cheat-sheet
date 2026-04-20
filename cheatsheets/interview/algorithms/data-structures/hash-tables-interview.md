@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 Хеш-таблица — самая используемая структура в продакшене: `HashMap`, `HashSet`, кэши, индексы. На собеседовании любят спрашивать про коллизии, treeify в Java 8+, отличия `HashMap` и `ConcurrentHashMap`, consistent hashing для распределённых систем.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -694,7 +692,7 @@ False positive rate: `(1 − e^(−kn/m))^k`, где `k` — число хеш-�
 - Лимиты на число параметров
 - Не использовать user-controlled strings как ключи без validation
 
-Подробнее — в [Application Security](../../security/application-security-interview.md).
+Подробнее — в [[application-security-interview|Application Security]].
 
 ## Q32. Когда HashMap деградирует до O(n)?
 
@@ -741,19 +739,19 @@ public class HashSet<E> {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Массивы и строки](arrays-strings-interview.md) — Two Sum, group anagrams через HashMap
-- [Связные списки](linked-lists-interview.md) — chaining в HashMap
-- [Деревья](trees-interview.md) — RB-tree в HashMap (treeify)
-- [Кучи](heaps-interview.md) — top-K через HashMap + heap
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — амортизированный O(1) и HashDoS
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — все Map в Java
-- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — ConcurrentHashMap
-- [Java Core](../../programming-languages/java/java-core-interview.md) — hashCode/equals contract
-- [Стратегии кэширования](../../architecture/caching-strategies-interview.md) — consistent hashing для distributed caches
-- [Распределённые системы](../../architecture/distributed-systems-interview.md) — sharding и hashing
-- [Application Security](../../security/application-security-interview.md) — HashDoS защита
-- [Redis](../../databases/redis-interview.md) — hash table в основе
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[arrays-strings-interview|Массивы и строки]] — Two Sum, group anagrams через HashMap
+- [[linked-lists-interview|Связные списки]] — chaining в HashMap
+- [[trees-interview|Деревья]] — RB-tree в HashMap (treeify)
+- [[heaps-interview|Кучи]] — top-K через HashMap + heap
+- [[complexity-analysis-interview|Анализ сложности]] — амортизированный O(1) и HashDoS
+- [[java-collections-interview|Java Collections]] — все Map в Java
+- [[java-concurrency-interview|Java Concurrency]] — ConcurrentHashMap
+- [[java-core-interview|Java Core]] — hashCode/equals contract
+- [[caching-strategies-interview|Стратегии кэширования]] — consistent hashing для distributed caches
+- [[distributed-systems-interview|Распределённые системы]] — sharding и hashing
+- [[application-security-interview|Application Security]] — HashDoS защита
+- [[redis-interview|Redis]] — hash table в основе
 
 - [[arrays-strings-interview|Массивы и строки]]
 - [[graphs-interview|Графы]]

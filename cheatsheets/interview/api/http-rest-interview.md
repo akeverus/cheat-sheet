@@ -14,8 +14,6 @@ updated: "2026-04-13"
 
 Практичные вопросы и ответы по `HTTP`/`REST`: как проектировать API, выбирать семантику методов, настраивать кэширование и `CORS`, держать безопасность и диагностировать ошибки в production.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -1794,12 +1792,12 @@ public class InsufficientFundsException extends RuntimeException
 
 ## See also
 
-- [OAuth2 и авторизация](../security/oauth2-interview.md) — аутентификация и авторизация в REST API
-- [GraphQL](graphql-interview.md) — альтернатива REST: гибкие запросы и типизация
-- [gRPC](grpc-interview.md) — высокопроизводительный RPC-протокол vs REST
-- [Микросервисы](../architecture/microservices-interview.md) — REST как основа межсервисного взаимодействия
-- [Интеграционное тестирование](../testing/integration-testing-interview.md) — тестирование REST API
-- [Безопасность приложений](../security/application-security-interview.md) — HTTPS, CORS, rate limiting
+- [[oauth2-interview|OAuth2 и авторизация]] — аутентификация и авторизация в REST API
+- [[graphql-interview|GraphQL]] — альтернатива REST: гибкие запросы и типизация
+- [[grpc-interview|gRPC]] — высокопроизводительный RPC-протокол vs REST
+- [[microservices-interview|Микросервисы]] — REST как основа межсервисного взаимодействия
+- [[integration-testing-interview|Интеграционное тестирование]] — тестирование REST API
+- [[application-security-interview|Безопасность приложений]] — HTTPS, CORS, rate limiting
 
 - [[api-design-best-practices-interview|API Design Best Practices]]
 - [[api-versioning-interview|API Versioning]]

@@ -20,6 +20,11 @@ updated: "2026-04-20"
 - [ASM Bytecode Manipulation](https://asm.ow2.io/)
 - [Project Lombok](https://projectlombok.org/)
 
+
+### См. также
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-reactive-project-reactor|Java Reactive: Project Reactor]]
+- [[java-reactive-rxjava|Java Reactive: RxJava]]
 ## Содержание
 
 - [Основы аннотаций](#основы-аннотаций)

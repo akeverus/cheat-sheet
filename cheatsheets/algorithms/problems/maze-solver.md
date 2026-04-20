@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[dijkstra|Алгоритм Дейкстры]] — Dijkstra
 - [[bfs|Поиск в ширину (BFS)]]
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Полное покрытие `Git`: внутреннее устройство, ветвление, `merge`/`rebase`, `cherry-pick`, стратегии ветвления, хуки, workflows, конфликты и продвинутые команды.
 
-Дата последнего обновления: 2026-04-13
-
 Краткое введение: **`Git`** — распределённая система контроля версий, созданная Линусом Торвальдсом в 2005 году. На собеседованиях спрашивают про внутреннее устройство (объекты, `DAG`), ветвление, `merge`/`rebase`, конфликты, стратегии ветвления (`Git Flow`, `Trunk-Based Development`), хуки и продвинутые команды.
 
 ## Полезные ссылки
@@ -622,7 +620,7 @@ git merge feature/login   # fast-forward
 git rebase -i HEAD~5
 ```
 
-Подробнее о стратегиях ветвления — в вопросах [по дизайну CI/CD пайплайнов](../cicd/pipeline-design-interview.md).
+Подробнее о стратегиях ветвления — в вопросах [[pipeline-design-interview|по дизайну CI/CD пайплайнов]].
 
 ## Q20. (!) Что такое конфликт и как его разрешить?
 
@@ -912,7 +910,7 @@ graph LR
 | Squash & merge | Один коммит из всей ветки | Чистая история main |
 | Rebase & merge | Линейная история без merge-коммита | Малые изменения |
 
-Подробнее о code review — в [вопросах по Code Review](../code-quality/code-review-interview.md).
+Подробнее о code review — в [[code-review-interview|вопросах по Code Review]].
 
 ## Q30. Что делает `git push --force` и почему это опасно?
 
@@ -1003,7 +1001,7 @@ gitGraph
 **Плюсы:** быстрый feedback, меньше конфликтов, быстрее CI/CD.
 **Минусы:** требует зрелой инженерной культуры, хорошего CI, feature flags.
 
-По данным DORA, команды уровня «elite» чаще используют `TBD`. Подробнее о feature flags — в [вопросах по стратегиям деплоя](../cicd/deployment-strategies-interview.md).
+По данным DORA, команды уровня «elite» чаще используют `TBD`. Подробнее о feature flags — в [[deployment-strategies-interview|вопросах по стратегиям деплоя]].
 
 ## Q33. Что такое `GitHub Flow` и `GitLab Flow`?
 
@@ -1067,7 +1065,7 @@ gitGraph
 | `update` | При обновлении ветки | Per-branch проверки |
 | `post-receive` | После получения push | Уведомления, CI trigger |
 
-Подробнее об автоматизации — в [вопросах по CI/CD пайплайнам](../cicd/pipeline-design-interview.md).
+Подробнее об автоматизации — в [[pipeline-design-interview|вопросах по CI/CD пайплайнам]].
 
 ## Q36. Как настроить `pre-commit` hook для проверки качества кода?
 
@@ -1233,7 +1231,7 @@ graph LR
     K8S -->|drift detection| ARGO
 ```
 
-`GitOps` тесно связан с [Kubernetes](kubernetes-interview.md) и [стратегиями деплоя](../cicd/deployment-strategies-interview.md).
+`GitOps` тесно связан с [[kubernetes-interview|Kubernetes]] и [[deployment-strategies-interview|стратегиями деплоя]].
 
 ## Q41. Что такое `git worktree` и когда его использовать?
 
@@ -1381,12 +1379,12 @@ npx semantic-release
 
 ## See also
 
-- [Docker](docker-interview.md) — контейнеризация, часто используется вместе с Git в CI/CD пайплайнах
-- [Дизайн CI/CD пайплайнов](../cicd/pipeline-design-interview.md) — Git как основа пайплайнов: triggers, webhooks, branch protection
-- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — ветвление влияет на стратегию деплоя: trunk-based vs feature branches
-- [Kubernetes](kubernetes-interview.md) — GitOps подход к управлению инфраструктурой через ArgoCD и Flux
-- [Code Review](../code-quality/code-review-interview.md) — pull request процесс, code review best practices
-- [Gradle и Maven](gradle-maven-interview.md) — инструменты сборки, интегрируемые с Git через CI/CD
+- [[docker-interview|Docker]] — контейнеризация, часто используется вместе с Git в CI/CD пайплайнах
+- [[pipeline-design-interview|Дизайн CI/CD пайплайнов]] — Git как основа пайплайнов: triggers, webhooks, branch protection
+- [[deployment-strategies-interview|Стратегии деплоя]] — ветвление влияет на стратегию деплоя: trunk-based vs feature branches
+- [[kubernetes-interview|Kubernetes]] — GitOps подход к управлению инфраструктурой через ArgoCD и Flux
+- [[code-review-interview|Code Review]] — pull request процесс, code review best practices
+- [[gradle-maven-interview|Gradle и Maven]] — инструменты сборки, интегрируемые с Git через CI/CD
 
 - [[ansible-interview|Ansible]]
 - [[argocd-interview|ArgoCD и GitOps]]

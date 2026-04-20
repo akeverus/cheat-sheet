@@ -19,8 +19,6 @@ updated: "2026-04-18"
 
 Data warehouse — централизованное хранилище для **аналитики и BI**. Оптимизировано под **OLAP** (агрегации, joins, отчёты), не для transactional нагрузки. Современные DWH: **Snowflake**, **BigQuery**, **Redshift**, **Databricks**. На интервью спрашивают: dimensional modeling (Kimball), columnar storage, MPP, slowly changing dimensions.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -678,7 +676,7 @@ Source → Loader (Fivetran/Airbyte) → Warehouse (Snowflake/BQ)
 
 ## Q30. Data Warehouse vs Data Lake vs Lakehouse?
 
-Подробнее — в [Data Lake / Lakehouse](data-lake-lakehouse-interview.md).
+Подробнее — в [[data-lake-lakehouse-interview|Data Lake / Lakehouse]].
 
 **Краткое:**
 - **DWH** — structured, schema-on-write, expensive storage, fast queries
@@ -691,16 +689,16 @@ Source → Loader (Fivetran/Airbyte) → Warehouse (Snowflake/BQ)
 
 ## See also
 
-- [Data Lake / Lakehouse](data-lake-lakehouse-interview.md) — alternative storage
-- [dbt](dbt-interview.md) — главный transformation tool для DWH
-- [Apache Spark](apache-spark-interview.md) — для ETL и processing
-- [Apache Airflow](apache-airflow-interview.md) — orchestration
-- [PostgreSQL](../databases/postgresql-interview.md) — пример OLTP
-- [SQL](../databases/sql-interview.md) — основа DWH
-- [Database Architecture](../databases/database-architecture-interview.md) — концепции
-- [Stream Processing](stream-processing-interview.md) — vs batch DWH
-- [Микросервисы](../architecture/microservices-interview.md) — operational vs analytical
-- [Caching](../architecture/caching-strategies-interview.md) — для acceleration BI
+- [[data-lake-lakehouse-interview|Data Lake / Lakehouse]] — alternative storage
+- [[dbt-interview|dbt]] — главный transformation tool для DWH
+- [[apache-spark-interview|Apache Spark]] — для ETL и processing
+- [[apache-airflow-interview|Apache Airflow]] — orchestration
+- [[postgresql-interview|PostgreSQL]] — пример OLTP
+- [[sql-interview|SQL]] — основа DWH
+- [[database-architecture-interview|Database Architecture]] — концепции
+- [[stream-processing-interview|Stream Processing]] — vs batch DWH
+- [[microservices-interview|Микросервисы]] — operational vs analytical
+- [[caching-strategies-interview|Caching]] — для acceleration BI
 
 - [[apache-airflow-interview|Apache Airflow]]
 - [[apache-flink-interview|Apache Flink]]

@@ -29,6 +29,7 @@ updated: "2026-04-20"
 - [[spring-boot|Spring Boot]]
 - [[spring-core|Spring Core]]
 
+- [[kotlin-performance|Kotlin Performance]]
 ## Содержание
 
 - [Введение в Kotlin + Spring](#введение-в-kotlin-spring)

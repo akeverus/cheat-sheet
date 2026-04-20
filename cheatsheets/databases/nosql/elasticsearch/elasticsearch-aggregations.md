@@ -38,6 +38,7 @@ updated: "2026-04-20"
 - [[elasticsearch-clustering|Кластеризация]] — кластеризация
 - [[elasticsearch-performance|Производительность]] — производительность
 
+- [[clickhouse|ClickHouse]]
 ## Содержание
 
 - [Основы агрегаций](#основы-агрегаций)

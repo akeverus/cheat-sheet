@@ -37,6 +37,7 @@ updated: "2026-04-20"
 - [[cassandra-clustering|Кластеризация]] — кластеризация и масштабирование
 - [[mongodb-basics|MongoDB Basics]] — сравнение с документными БД
 
+- [[clickhouse|ClickHouse]]
 ## Содержание
 
 - [Принципы моделирования данных в Cassandra](#принципы-моделирования-данных-в-cassandra)

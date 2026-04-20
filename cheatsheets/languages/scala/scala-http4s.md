@@ -30,6 +30,8 @@ related: ["scala/scala-fp-advanced.md", "scala/scala-cats.md", "scala/scala-play
 - [[scala-cats|Cats]]
 - [[scala-play|Play Framework]]
 
+- [[scala-collections-list|Scala Collections — List]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
 ## Содержание
 
 - [Введение в http4s](#введение-в-http4s)

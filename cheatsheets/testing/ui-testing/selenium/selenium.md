@@ -30,6 +30,7 @@ updated: "2026-04-20"
 - [[spring-testing|Spring Testing]] — тестирование Spring
 
 
+- [[ui-testing-overview|UI Testing — обзор]]
 ## Содержание
 
 - [Введение в Selenium](#введение-в-selenium)

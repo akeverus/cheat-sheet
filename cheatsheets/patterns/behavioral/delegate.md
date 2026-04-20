@@ -32,6 +32,9 @@ updated: "2026-04-20"
 - [[decorator|Decorator]]
 - [[proxy|Proxy]]
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
+- [[interpreter|Интерпретатор (Interpreter)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

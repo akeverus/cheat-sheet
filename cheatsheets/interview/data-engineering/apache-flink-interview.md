@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 `Apache Flink` — distributed stream processing framework с **true streaming** архитектурой (не micro-batch как Spark). Создан в Berlin (TU Berlin), Apache top-level с 2014. Главные применения: **low-latency streaming** (миллисекунды), **stateful processing**, exactly-once гарантии, **CEP (complex event processing)**.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -686,18 +684,18 @@ stream.map(...).disableChaining()
 
 ## See also
 
-- [Apache Spark](apache-spark-interview.md) — главный конкурент
-- [Kafka Streams](kafka-streams-interview.md) — другая JVM streaming opция
-- [Stream Processing](stream-processing-interview.md) — концепции
-- [Apache Kafka](../messaging/kafka-interview.md) — главный source/sink Flink
-- [Apache Airflow](apache-airflow-interview.md) — orchestration Flink jobs
-- [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — концепции CEP
-- [Scala](../programming-languages/scala/scala-interview.md) — родной API Flink
-- [Микросервисы](../architecture/microservices-interview.md) — vs реактивный streaming
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — Chandy-Lamport
-- [Performance Testing](../performance/performance-testing-interview.md) — Flink benchmarking
-- [Memory Management](../performance/memory-management-interview.md) — RocksDB, off-heap
-- [JVM](../jvm/jvm-interview.md) — Flink на JVM
+- [[apache-spark-interview|Apache Spark]] — главный конкурент
+- [[kafka-streams-interview|Kafka Streams]] — другая JVM streaming opция
+- [[stream-processing-interview|Stream Processing]] — концепции
+- [[kafka-interview|Apache Kafka]] — главный source/sink Flink
+- [[apache-airflow-interview|Apache Airflow]] — orchestration Flink jobs
+- [[event-driven-patterns-interview|Event-driven паттерны]] — концепции CEP
+- [[scala-interview|Scala]] — родной API Flink
+- [[microservices-interview|Микросервисы]] — vs реактивный streaming
+- [[distributed-systems-interview|Распределённые системы]] — Chandy-Lamport
+- [[performance-testing-interview|Performance Testing]] — Flink benchmarking
+- [[memory-management-interview|Memory Management]] — RocksDB, off-heap
+- [[jvm-interview|JVM]] — Flink на JVM
 
 - [[apache-airflow-interview|Apache Airflow]]
 - [[apache-spark-interview|Apache Spark]]

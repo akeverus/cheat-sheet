@@ -29,6 +29,10 @@ related: ["databases/redis-basics.md", "databases/redis-performance.md"]
 - [[redis-basics|redis-basics.md]] — основы Redis
 - [[redis-basics|redis-basics.md]] — основы и администрирование
 
+- [[micronaut-security|Micronaut: Security — Authentication и Authorization]]
+- [[spring-security|Spring Security]]
+- [[tls-ssl|TLS / SSL: handshake, сертификаты, конфигурация]]
+- [[postgres-security|PostgreSQL: Безопасность]]
 ## Содержание
 
 - [Введение в безопасность Redis](#введение-в-безопасность-redis)

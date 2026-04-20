@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Ответы по сетевым протоколам для backend-разработчиков: модель `OSI`, стек `TCP/IP`, `TCP` vs `UDP`, эволюция `HTTP`, `TLS`, `DNS`, `WebSocket`, `SSE`, балансировка на уровнях L4/L7, `CDN`, `reverse proxy`, `NAT`, `CORS`, основы сокетов в Java.
 
-Дата последнего обновления: 2026-04-13
-
 **Сетевые протоколы** — фундамент любого backend-приложения. На собеседованиях ожидают, что разработчик понимает, как данные передаются от клиента к серверу, какие гарантии предоставляет каждый уровень стека, чем отличаются протоколы транспортного и прикладного уровней, и как инфраструктурные компоненты (`CDN`, `reverse proxy`, `load balancer`) влияют на архитектуру системы.
 
 ## Полезные ссылки
@@ -495,7 +493,7 @@ sequenceDiagram
 | `SRV` | Сервис + порт (используется в service discovery) | `_http._tcp.example.com → 8080 web.example.com` |
 | `PTR` | Обратный DNS (IP → имя) | `34.216.184.93 → example.com` |
 
-> `SRV`-записи особенно важны для backend: `Kubernetes`, `Consul` и другие системы service discovery используют их для автоматического обнаружения сервисов (подробнее в [вопросах по распределённым системам](distributed-systems-interview.md)).
+> `SRV`-записи особенно важны для backend: `Kubernetes`, `Consul` и другие системы service discovery используют их для автоматического обнаружения сервисов (подробнее в [[distributed-systems-interview|вопросах по распределённым системам]]).
 
 ---
 
@@ -562,7 +560,7 @@ Sec-WebSocket-Version: 13
 
 **Когда использовать `SSE`:**
 - Live-ленты, новостные обновления
-- Стриминг ответов от AI/LLM (подробнее в [HTTP & REST](../api/http-rest-interview.md))
+- Стриминг ответов от AI/LLM (подробнее в [[http-rest-interview|HTTP & REST]])
 - Dashboards с обновлениями в реальном времени
 - Уведомления
 
@@ -595,7 +593,7 @@ Sec-WebSocket-Version: 13
 - Маршрутизация по URL (`/api/v1` → Service A, `/api/v2` → Service B)
 - A/B-тестирование (по cookie или header)
 - SSL termination
-- Канареечные деплои (подробнее в [вопросах по балансировке](load-balancing-interview.md))
+- Канареечные деплои (подробнее в [[load-balancing-interview|вопросах по балансировке]])
 
 ---
 
@@ -643,7 +641,7 @@ Sec-WebSocket-Version: 13
 
 **Популярные CDN:** Cloudflare, AWS CloudFront, Akamai, Fastly.
 
-> Для backend-разработчика важно правильно настраивать `Cache-Control` заголовки (подробнее в [стратегиях кэширования](caching-strategies-interview.md)).
+> Для backend-разработчика важно правильно настраивать `Cache-Control` заголовки (подробнее в [[caching-strategies-interview|стратегиях кэширования]]).
 
 ---
 
@@ -701,7 +699,7 @@ public class CorsConfig implements WebMvcConfigurer {
 }
 ```
 
-> Распространённая ошибка: `Access-Control-Allow-Origin: *` с `Access-Control-Allow-Credentials: true` — это запрещено спецификацией. Если нужны credentials, origin должен быть конкретным (подробнее в [Application Security](../security/application-security-interview.md)).
+> Распространённая ошибка: `Access-Control-Allow-Origin: *` с `Access-Control-Allow-Credentials: true` — это запрещено спецификацией. Если нужны credentials, origin должен быть конкретным (подробнее в [[application-security-interview|Application Security]]).
 
 ---
 
@@ -914,7 +912,7 @@ client.sendAsync(postRequest, HttpResponse.BodyHandlers.ofString())
 | OkHttp | `connectionPool(maxIdleConnections, keepAliveDuration)` | 5 / 5 мин |
 | Spring `RestClient` | Зависит от underlying клиента | Зависит |
 
-> Правило: при межсервисной коммуникации в микросервисах connection pool — обязательный компонент. Без него каждый HTTP-запрос тратит 100-300мс на установление соединения (подробнее в [микросервисной архитектуре](microservices-interview.md)).
+> Правило: при межсервисной коммуникации в микросервисах connection pool — обязательный компонент. Без него каждый HTTP-запрос тратит 100-300мс на установление соединения (подробнее в [[microservices-interview|микросервисной архитектуре]]).
 
 ---
 
@@ -1143,7 +1141,7 @@ spec:
 - Команда не готова к операционной сложности Istio
 - Простой вариант: Linkerd (lighter weight) или реализация mTLS вручную в Spring Boot
 
-> Для backend-разработчика ключевые метрики — **TTFB**, **p99 latency** и **throughput**. Мониторинг этих метрик помогает вовремя обнаружить деградацию производительности (подробнее в [паттернах масштабируемости](scalability-patterns-interview.md)).
+> Для backend-разработчика ключевые метрики — **TTFB**, **p99 latency** и **throughput**. Мониторинг этих метрик помогает вовремя обнаружить деградацию производительности (подробнее в [[scalability-patterns-interview|паттернах масштабируемости]]).
 
 ## Q37. DNS в Kubernetes — CoreDNS, service discovery, headless services
 
@@ -1556,14 +1554,14 @@ linkerd inject deployment.yaml | kubectl apply -f -
 
 ## See also
 
-- [HTTP & REST](../api/http-rest-interview.md) — методы, заголовки, коды ответов и REST-принципы поверх HTTP
-- [Балансировка нагрузки](load-balancing-interview.md) — L4 vs L7 балансировка, алгоритмы распределения трафика
-- [Распределённые системы](distributed-systems-interview.md) — сетевые партиции, CAP и latency в распределённых системах
-- [API Gateway](api-gateway-interview.md) — маршрутизация и трансформация на уровне прикладного протокола
-- [Микросервисная архитектура](microservices-interview.md) — service mesh, Istio и межсервисная сеть
-- [Паттерны масштабируемости](scalability-patterns-interview.md) — CDN, шардирование и горизонтальное масштабирование
-- [gRPC](../api/grpc-interview.md) — высокопроизводительный транспорт на базе HTTP/2 и Protocol Buffers
-- [Docker](../devops/docker-interview.md) — сетевые режимы контейнеров: bridge, host, overlay
+- [[http-rest-interview|HTTP & REST]] — методы, заголовки, коды ответов и REST-принципы поверх HTTP
+- [[load-balancing-interview|Балансировка нагрузки]] — L4 vs L7 балансировка, алгоритмы распределения трафика
+- [[distributed-systems-interview|Распределённые системы]] — сетевые партиции, CAP и latency в распределённых системах
+- [[api-gateway-interview|API Gateway]] — маршрутизация и трансформация на уровне прикладного протокола
+- [[microservices-interview|Микросервисная архитектура]] — service mesh, Istio и межсервисная сеть
+- [[scalability-patterns-interview|Паттерны масштабируемости]] — CDN, шардирование и горизонтальное масштабирование
+- [[grpc-interview|gRPC]] — высокопроизводительный транспорт на базе HTTP/2 и Protocol Buffers
+- [[docker-interview|Docker]] — сетевые режимы контейнеров: bridge, host, overlay
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

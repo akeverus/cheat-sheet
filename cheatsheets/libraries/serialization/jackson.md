@@ -26,6 +26,12 @@ updated: "2026-04-20"
 - [Jackson Modules](https://github.com/FasterXML/jackson-core) — список модулей
 - [Jackson Annotations](https://github.com/FasterXML/jackson-annotations/wiki) — аннотации
 
+
+### См. также
+- [[java-jackson|Jackson: JSON-сериализация в Java]]
+- [[micronaut-serialization|Micronaut: Serialization — JSON, XML и Custom Serializers]]
+- [[java-junit5|JUnit 5]]
+- [[java-mockito|Mockito]]
 ## Содержание
 
 - [Введение в Jackson](#введение-в-jackson)

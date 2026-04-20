@@ -15,6 +15,9 @@ updated: "2026-04-20"
 
 [Performance Testing](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
 ## Содержание
 
 - [[jmeter]]

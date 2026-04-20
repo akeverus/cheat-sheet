@@ -22,6 +22,10 @@ updated: "2026-04-20"
 - [FS2](https://fs2.io/)
 - [JSON Pointer RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)
 
+
+### См. также
+- [[scala-akka|Akka]]
+- [[scala-slick|Slick]]
 ## Содержание
 
 - [Основы Circe](#основы-circe)

@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[monte-carlo-tree-search-tic-tac-toe|Monte Carlo Tree Search]]
 - [[README|Задачи и алгоритмы]] — обзор разделов
 
+- [[logistic-regression|Логистическая регрессия]]
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [[ai-libraries|Обзор ИИ библиотек]]
 ## Содержание
 
 - [Обзор](#обзор)

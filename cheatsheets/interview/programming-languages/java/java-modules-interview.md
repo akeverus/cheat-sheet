@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Полное руководство по вопросам собеседования на тему модульной системы `Java` (`JPMS`, `Java 9+`): `module-info.java`, директивы `exports`/`requires`/`opens`/`uses`/`provides`, `automatic` и `unnamed` модули, `split packages`, `multi-release JAR`, `jlink`, `ServiceLoader`, рефлексия в модульном мире, `module layers`, стратегии миграции.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -446,7 +444,7 @@ java.lang.reflect.InaccessibleObjectException:
   accessible: module java.base does not "opens java.lang" to unnamed module
 ```
 
-В модульном приложении вместо глобального `--add-opens` нужно точечно указывать `opens` в `module-info.java`, снижая поверхность атаки. Подробнее об ограничениях рефлексии см. [вопросы по аннотациям Java](java-annotations-interview.md).
+В модульном приложении вместо глобального `--add-opens` нужно точечно указывать `opens` в `module-info.java`, снижая поверхность атаки. Подробнее об ограничениях рефлексии см. [[java-annotations-interview|вопросы по аннотациям Java]].
 
 ## Q13. Какие флаги JVM используются для обхода модульных ограничений?
 
@@ -824,7 +822,7 @@ graph LR
 3. **`ServiceLoader`** (`uses`/`provides`) для слабой связности
 4. **Объединить модули**, если они слишком тесно связаны
 
-Запрет циклов в `JPMS` заставляет проектировать чистую архитектуру с однонаправленными зависимостями — аналогично принципам в [паттернах проектирования](../../design-patterns/design-patterns-interview.md).
+Запрет циклов в `JPMS` заставляет проектировать чистую архитектуру с однонаправленными зависимостями — аналогично принципам в [[design-patterns-interview|паттернах проектирования]].
 
 ## Q25. Как тестировать модульное приложение?
 
@@ -902,7 +900,7 @@ module com.example.webapp {
 }
 ```
 
-**На собеседовании**: важно понимать, что `Spring` полноценно работает с JPMS, но требует значительного количества `opens` директив. Подробнее о Spring — в вопросах по [Java Core](java-core-interview.md).
+**На собеседовании**: важно понимать, что `Spring` полноценно работает с JPMS, но требует значительного количества `opens` директив. Подробнее о Spring — в вопросах по [[java-core-interview|Java Core]].
 
 ## Q27. Как `Hibernate`/`JPA` взаимодействует с модулями?
 
@@ -993,7 +991,7 @@ module com.example.service {
 - Работы с библиотеками и `JDK` internals
 - Понимания ошибок `InaccessibleObjectException`
 - Оптимизации Docker-образов через `jlink`
-- Собеседований по глубоким знаниям [Java Core](java-core-interview.md) и [JVM](../../jvm/jvm-interview.md)
+- Собеседований по глубоким знаниям [[java-core-interview|Java Core]] и [[jvm-interview|JVM]]
 
 ## Q31. Чем отличаются `unnamed module`, `automatic module` и `named module` на практике?
 
@@ -1417,13 +1415,13 @@ jar --describe-module --file=lib/external.jar
 
 ## See also
 
-- [Java Core](java-core-interview.md) — базовые концепции языка, `ClassLoader`, рефлексия и инкапсуляция
-- [Java 17-21](java-17-21-interview.md) — `sealed classes`, `records`, `virtual threads` — фичи, тесно связанные с модульностью
-- [Java Annotations](java-annotations-interview.md) — аннотации и Annotation Processing в модульном контексте
-- [Java IO / NIO](java-io-nio-interview.md) — `ServiceLoader` для плагинов ввода-вывода, модульные провайдеры
-- [JVM](../../jvm/jvm-interview.md) — загрузка классов, `ClassLoader` иерархия, `InaccessibleObjectException` при рефлексии
-- [Паттерны проектирования](../../design-patterns/design-patterns-interview.md) — `Service Locator`, `Plugin Pattern` через `ServiceLoader`
-- [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — Spring и `JPMS`: совместимость, `opens` для рефлексии Spring
+- [[java-core-interview|Java Core]] — базовые концепции языка, `ClassLoader`, рефлексия и инкапсуляция
+- [[java-17-21-interview|Java 17-21]] — `sealed classes`, `records`, `virtual threads` — фичи, тесно связанные с модульностью
+- [[java-annotations-interview|Java Annotations]] — аннотации и Annotation Processing в модульном контексте
+- [[java-io-nio-interview|Java IO / NIO]] — `ServiceLoader` для плагинов ввода-вывода, модульные провайдеры
+- [[jvm-interview|JVM]] — загрузка классов, `ClassLoader` иерархия, `InaccessibleObjectException` при рефлексии
+- [[design-patterns-interview|Паттерны проектирования]] — `Service Locator`, `Plugin Pattern` через `ServiceLoader`
+- [[spring-framework-interview|Spring Framework]] — Spring и `JPMS`: совместимость, `opens` для рефлексии Spring
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

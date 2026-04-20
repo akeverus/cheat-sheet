@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Полный набор вопросов по транзакциям в реляционных БД: свойства `ACID`, уровни изоляции, аномалии параллельного доступа, механизмы блокировок, `MVCC`, `Spring @Transactional`, распределённые транзакции и специфика `PostgreSQL`.
 
-Дата последнего обновления: 2026-04-13
-
 **Транзакции** -- фундаментальный механизм обеспечения целостности данных в СУБД. На собеседовании проверяют понимание свойств `ACID`, умение выбрать правильный уровень изоляции, знание аномалий параллельного доступа (`dirty read`, `phantom read`, `lost update`), а также практические навыки работы с `Spring @Transactional`, программным управлением транзакциями и распределёнными транзакциями в микросервисной архитектуре.
 
 ## Полезные ссылки
@@ -1042,7 +1040,7 @@ graph LR
 | **Сложность** | Протокол простой, инфраструктура сложная | Протокол сложный (компенсации), инфраструктура простая |
 | **Применимость** | Монолит, 2-3 ресурса | Микросервисы, много участников |
 
-Saga применяется, когда строгая консистентность не обязательна или когда участники не поддерживают XA (например, `NoSQL` базы, внешние API). Подробнее в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
+Saga применяется, когда строгая консистентность не обязательна или когда участники не поддерживают XA (например, `NoSQL` базы, внешние API). Подробнее в [[distributed-systems-interview|вопросах по распределённым системам]].
 
 ## Q33. Как connection pool взаимодействует с транзакциями?
 
@@ -1588,12 +1586,12 @@ max_wal_size = 1GB         # максимальный размер WAL пере�
 
 ## See also
 
-- [SQL](sql-interview.md) — основы SQL, DDL/DML, оптимизация запросов
-- [Hibernate](hibernate-interview.md) — ORM, кэширование, маппинг сущностей, JPA-транзакции
-- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — репозитории, query methods, спецификации
-- [Database Architecture](database-architecture-interview.md) — архитектура БД, индексы, репликация, ACID на уровне движка
-- [Flyway и Liquibase](flyway-liquibase-interview.md) — миграции БД и их связь с транзакционным контекстом
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — CAP, консистентность, распределённые алгоритмы
+- [[sql-interview|SQL]] — основы SQL, DDL/DML, оптимизация запросов
+- [[hibernate-interview|Hibernate]] — ORM, кэширование, маппинг сущностей, JPA-транзакции
+- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории, query methods, спецификации
+- [[database-architecture-interview|Database Architecture]] — архитектура БД, индексы, репликация, ACID на уровне движка
+- [[flyway-liquibase-interview|Flyway и Liquibase]] — миграции БД и их связь с транзакционным контекстом
+- [[distributed-systems-interview|Распределённые системы]] — CAP, консистентность, распределённые алгоритмы
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

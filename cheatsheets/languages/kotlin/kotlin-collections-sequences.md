@@ -29,6 +29,7 @@ updated: "2026-04-20"
 - [[kotlin-collections-operations|Операции над коллекциями]]
 - [[java-streams-fp|Java Streams]]
 
+- [[kotlin-performance|Kotlin Performance]]
 ## Содержание
 
 - [Введение в Sequences](#введение-в-sequences)

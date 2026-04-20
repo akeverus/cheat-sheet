@@ -21,6 +21,10 @@ updated: "2026-04-20"
 - [Given-When-Then](https://martinfowler.com/bliki/GivenWhenThen.html) — BDD-подход
 - См. также: [[junit-advanced|JUnit Advanced]], [[wiremock]], [[spring-testing|Spring Testing]]
 
+
+### См. также
+- [[contract-testing|Контрактное тестирование (Contract Testing)]]
+- [[database-testing|Тестирование базы данных (Database Testing)]]
 ## Содержание
 
 - [Введение в REST Assured](#введение-в-rest-assured)

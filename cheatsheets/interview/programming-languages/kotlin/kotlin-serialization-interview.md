@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Подробный разбор `kotlinx.serialization` — `@Serializable`, настройка `Json`, кастомные сериализаторы (`KSerializer`), полиморфная и контекстная сериализация, `sealed class`, бинарные форматы (`Protobuf`, `CBOR`), интеграция с `Ktor`, мультиплатформенная поддержка, сравнение с `Gson`/`Jackson`/`Moshi`.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -1082,7 +1080,7 @@ data class User(val name: String, val age: Int = 25)
 | **Kotlin-совместимость** | Нативная | Не знает о nullable, default values |
 | **Производительность** | Compile-time генерация | Рефлексия + ObjectStream overhead |
 
-Java Serialization используется в legacy-коде (`RMI`, `HttpSession`), но для новых проектов и обмена данными по сети — `kotlinx.serialization` безопаснее и гибче. Подробнее о проблемах Java Serialization — в [вопросах по сериализации Java](../java/java-serialization-interview.md).
+Java Serialization используется в legacy-коде (`RMI`, `HttpSession`), но для новых проектов и обмена данными по сети — `kotlinx.serialization` безопаснее и гибче. Подробнее о проблемах Java Serialization — в [[java-serialization-interview|вопросах по сериализации Java]].
 
 ## Q34. Какие исключения выбрасывает kotlinx.serialization и как их обрабатывать?
 
@@ -1828,14 +1826,14 @@ val protoBuf = ProtoBuf { encodeDefaults = false }
 
 ## See also
 
-- [Основы Kotlin](kotlin-interview.md) — sealed class, data class, value class как основа сериализации
-- [Kotlin и Java interop](kotlin-interop-java-interview.md) — совместимость kotlinx.serialization с Jackson/Gson
-- [Корутины Kotlin](kotlin-coroutines-interview.md) — асинхронная сериализация в Ktor с Flow
-- [Коллекции в Kotlin](kotlin-collections-interview.md) — сериализация List, Set, Map
-- [DSL в Kotlin](kotlin-dsl-interview.md) — JsonElement DSL для программного построения JSON
-- [Исключения в Kotlin](kotlin-exceptions-interview.md) — SerializationException и обработка ошибок
-- [Java Core](../java/java-core-interview.md) — сравнение с Java Serializable и Externalizable
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — интеграция kotlinx.serialization с Spring MVC/WebFlux
+- [[kotlin-interview|Основы Kotlin]] — sealed class, data class, value class как основа сериализации
+- [[kotlin-interop-java-interview|Kotlin и Java interop]] — совместимость kotlinx.serialization с Jackson/Gson
+- [[kotlin-coroutines-interview|Корутины Kotlin]] — асинхронная сериализация в Ktor с Flow
+- [[kotlin-collections-interview|Коллекции в Kotlin]] — сериализация List, Set, Map
+- [[kotlin-dsl-interview|DSL в Kotlin]] — JsonElement DSL для программного построения JSON
+- [[kotlin-exceptions-interview|Исключения в Kotlin]] — SerializationException и обработка ошибок
+- [[java-core-interview|Java Core]] — сравнение с Java Serializable и Externalizable
+- [[spring-boot-interview|Spring Boot]] — интеграция kotlinx.serialization с Spring MVC/WebFlux
 
 - [[kotlin-collections-interview|Kotlin коллекции]]
 - [[kotlin-coroutines-interview|Kotlin Coroutines]]

@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 Этот файл — **обзорная карта** раздела `algorithms/`. Содержит общие принципы, шаблоны ответов на алгоритмические вопросы и **навигацию** к специализированным шпаргалкам по конкретным темам.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -94,15 +92,15 @@ updated: "2026-04-18"
 | Парадигма | Когда применять | См. |
 |-----------|-----------------|------|
 | **Brute force** | Старт для понимания | — |
-| **Two Pointers / Sliding Window** | Подмассивы, пары | [Two Pointers](algorithmic-paradigms/two-pointers-sliding-window-interview.md) |
-| **Binary Search** | Отсортированное или монотонное | [Searching](sorting-searching/searching-algorithms-interview.md) |
-| **DFS / BFS** | Графы, деревья | [Графы](data-structures/graphs-interview.md), [Деревья](data-structures/trees-interview.md) |
-| **Recursion / Backtracking** | Перебор вариантов | [Рекурсия](algorithmic-paradigms/recursion-interview.md), [Backtracking](algorithmic-paradigms/backtracking-interview.md) |
-| **Divide and Conquer** | Разбиение на подзадачи | [D&C](algorithmic-paradigms/divide-and-conquer-interview.md) |
-| **Dynamic Programming** | Перекрывающиеся подзадачи + оптимум | [DP](algorithmic-paradigms/dynamic-programming-interview.md) |
-| **Greedy** | Локально оптимальный выбор | [Greedy](algorithmic-paradigms/greedy-algorithms-interview.md) |
-| **Hashing** | Быстрый lookup | [Хеш-таблицы](data-structures/hash-tables-interview.md) |
-| **Heap / PriorityQueue** | Top-K, scheduling | [Кучи](data-structures/heaps-interview.md) |
+| **Two Pointers / Sliding Window** | Подмассивы, пары | [[two-pointers-sliding-window-interview|Two Pointers]] |
+| **Binary Search** | Отсортированное или монотонное | [[searching-algorithms-interview|Searching]] |
+| **DFS / BFS** | Графы, деревья | [[graphs-interview|Графы]], [[trees-interview|Деревья]] |
+| **Recursion / Backtracking** | Перебор вариантов | [[recursion-interview|Рекурсия]], [[backtracking-interview|Backtracking]] |
+| **Divide and Conquer** | Разбиение на подзадачи | [[divide-and-conquer-interview|D&C]] |
+| **Dynamic Programming** | Перекрывающиеся подзадачи + оптимум | [[dynamic-programming-interview|DP]] |
+| **Greedy** | Локально оптимальный выбор | [[greedy-algorithms-interview|Greedy]] |
+| **Hashing** | Быстрый lookup | [[hash-tables-interview|Хеш-таблицы]] |
+| **Heap / PriorityQueue** | Top-K, scheduling | [[heaps-interview|Кучи]] |
 
 ## Q4. (!) Какие структуры данных используют чаще всего?
 
@@ -125,7 +123,7 @@ graph TD
     Tree --> Trie[Trie]
 ```
 
-В Java из стандартной библиотеки: `ArrayList`, `LinkedList`, `ArrayDeque`, `HashMap`, `TreeMap`, `PriorityQueue`. Подробнее — в [Java Collections](../programming-languages/java/java-collections-interview.md).
+В Java из стандартной библиотеки: `ArrayList`, `LinkedList`, `ArrayDeque`, `HashMap`, `TreeMap`, `PriorityQueue`. Подробнее — в [[java-collections-interview|Java Collections]].
 
 ## Q5. (!) Сложности базовых операций структур данных?
 
@@ -141,7 +139,7 @@ graph TD
 | `Trie` | — | `O(L)` | `O(L)` | `O(L)` | `O(N · L)` |
 | `Union-Find` (DSU) | — | `O(α(n))` | — | — | `O(n)` |
 
-Подробнее — в [Анализ сложности](complexity/complexity-analysis-interview.md).
+Подробнее — в [[complexity-analysis-interview|Анализ сложности]].
 
 ## Q6. (!) Какова шпаргалка выбора Java Collection под задачу?
 
@@ -194,7 +192,7 @@ graph TD
 
 **Правило:** алгоритм должен укладываться в `~10⁸` операций за 1 секунду на современном CPU.
 
-Подробнее — в [Анализ сложности](complexity/complexity-analysis-interview.md).
+Подробнее — в [[complexity-analysis-interview|Анализ сложности]].
 
 ## Q8. (!) Структура раздела `algorithms/`?
 
@@ -230,52 +228,52 @@ algorithms/
 
 **Рекомендуемый порядок:**
 
-1. **[Анализ сложности](complexity/complexity-analysis-interview.md)** — без понимания Big O всё остальное бесполезно
-2. **[Массивы и строки](data-structures/arrays-strings-interview.md)** — основа большинства задач
-3. **[Хеш-таблицы](data-structures/hash-tables-interview.md)** — самый используемый трюк
-4. **[Two Pointers и Sliding Window](algorithmic-paradigms/two-pointers-sliding-window-interview.md)** — снижение `O(n²) → O(n)`
-5. **[Поиск](sorting-searching/searching-algorithms-interview.md)** + **[Сортировка](sorting-searching/sorting-algorithms-interview.md)** — Binary Search
-6. **[Рекурсия](algorithmic-paradigms/recursion-interview.md)** — фундамент DFS, DP, Backtracking
-7. **[Деревья](data-structures/trees-interview.md)** + **[Графы](data-structures/graphs-interview.md)** — обходы
-8. **[Стеки и очереди](data-structures/stacks-queues-interview.md)** + **[Кучи](data-structures/heaps-interview.md)** — поддерживают обходы
-9. **[Divide and Conquer](algorithmic-paradigms/divide-and-conquer-interview.md)** + **[DP](algorithmic-paradigms/dynamic-programming-interview.md)** — оптимизация
-10. **[Greedy](algorithmic-paradigms/greedy-algorithms-interview.md)** + **[Backtracking](algorithmic-paradigms/backtracking-interview.md)** — выбор стратегии
-11. **[Trie и Union-Find](data-structures/tries-interview.md)** — специальные структуры
+1. **[[complexity-analysis-interview|Анализ сложности]]** — без понимания Big O всё остальное бесполезно
+2. **[[arrays-strings-interview|Массивы и строки]]** — основа большинства задач
+3. **[[hash-tables-interview|Хеш-таблицы]]** — самый используемый трюк
+4. **[[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]** — снижение `O(n²) → O(n)`
+5. **[[searching-algorithms-interview|Поиск]]** + **[[sorting-algorithms-interview|Сортировка]]** — Binary Search
+6. **[[recursion-interview|Рекурсия]]** — фундамент DFS, DP, Backtracking
+7. **[[trees-interview|Деревья]]** + **[[graphs-interview|Графы]]** — обходы
+8. **[[stacks-queues-interview|Стеки и очереди]]** + **[[heaps-interview|Кучи]]** — поддерживают обходы
+9. **[[divide-and-conquer-interview|Divide and Conquer]]** + **[[dynamic-programming-interview|DP]]** — оптимизация
+10. **[[greedy-algorithms-interview|Greedy]]** + **[[backtracking-interview|Backtracking]]** — выбор стратегии
+11. **[[tries-interview|Trie и Union-Find]]** — специальные структуры
 
 ## Q10. (!) Какие темы есть в подразделе `complexity/`?
 
-- **[Анализ сложности алгоритмов](complexity/complexity-analysis-interview.md)** — Big O, Omega, Theta, амортизированная и пространственная сложность, master theorem, дерево рекурсии, сложности Java Collections, HashMap.get O(log n) с Java 8+, complexity attacks (HashDoS).
+- **[[complexity-analysis-interview|Анализ сложности алгоритмов]]** — Big O, Omega, Theta, амортизированная и пространственная сложность, master theorem, дерево рекурсии, сложности Java Collections, HashMap.get O(log n) с Java 8+, complexity attacks (HashDoS).
 
 ## Q11. (!) Какие структуры данных в `data-structures/`?
 
 | Файл | Темы |
 |------|------|
-| **[Массивы и строки](data-structures/arrays-strings-interview.md)** | Реверс, сдвиг, Kadane, Two Sum, Three Sum, prefix sum, матрица rotate, Dutch National Flag, Move Zeroes, Next Permutation, KMP, Rabin-Karp, palindrome, anagram, immutable String |
-| **[Связные списки](data-structures/linked-lists-interview.md)** | Singly/doubly, dummy node, реверс (итер./рек.), Floyd cycle detection, middle node, K-group, merge K sorted, LRU Cache, Skip List, ConcurrentLinkedQueue |
-| **[Стеки и очереди](data-structures/stacks-queues-interview.md)** | Stack/Queue/Deque, циклический массив, очередь через 2 стека, MinStack, MaxQueue, monotonic stack/queue, parentheses, RPN, BlockingQueue, ConcurrentLinkedQueue |
-| **[Деревья](data-structures/trees-interview.md)** | Binary tree, BST, AVL, Red-Black, B-Tree/B+Tree, обходы (preorder/inorder/postorder/level-order), Morris traversal, LCA, diameter, validate BST, serialize, segment tree, Fenwick |
-| **[Кучи](data-structures/heaps-interview.md)** | Min/max-heap, siftUp/siftDown, buildHeap O(n), PriorityQueue, top-K, median in stream, merge K lists, heap sort, Fibonacci heap |
-| **[Хеш-таблицы](data-structures/hash-tables-interview.md)** | HashMap внутри, hashCode/equals, load factor, rehashing, treeify, chaining vs open addressing, ConcurrentHashMap, LinkedHashMap, WeakHashMap, consistent hashing, Bloom filter, HashDoS |
-| **[Графы](data-structures/graphs-interview.md)** | Adjacency matrix/list, BFS, DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, Kruskal, Prim, topological sort, SCC, bipartite, Number of Islands, PageRank |
-| **[Префиксные деревья и Union-Find](data-structures/tries-interview.md)** | Trie, Compressed trie (Radix tree), Suffix tree/array, Aho-Corasick, autocomplete, Word Search II, Union-Find (DSU), path compression, union by rank, Number of Islands через UF |
+| **[[arrays-strings-interview|Массивы и строки]]** | Реверс, сдвиг, Kadane, Two Sum, Three Sum, prefix sum, матрица rotate, Dutch National Flag, Move Zeroes, Next Permutation, KMP, Rabin-Karp, palindrome, anagram, immutable String |
+| **[[linked-lists-interview|Связные списки]]** | Singly/doubly, dummy node, реверс (итер./рек.), Floyd cycle detection, middle node, K-group, merge K sorted, LRU Cache, Skip List, ConcurrentLinkedQueue |
+| **[[stacks-queues-interview|Стеки и очереди]]** | Stack/Queue/Deque, циклический массив, очередь через 2 стека, MinStack, MaxQueue, monotonic stack/queue, parentheses, RPN, BlockingQueue, ConcurrentLinkedQueue |
+| **[[trees-interview|Деревья]]** | Binary tree, BST, AVL, Red-Black, B-Tree/B+Tree, обходы (preorder/inorder/postorder/level-order), Morris traversal, LCA, diameter, validate BST, serialize, segment tree, Fenwick |
+| **[[heaps-interview|Кучи]]** | Min/max-heap, siftUp/siftDown, buildHeap O(n), PriorityQueue, top-K, median in stream, merge K lists, heap sort, Fibonacci heap |
+| **[[hash-tables-interview|Хеш-таблицы]]** | HashMap внутри, hashCode/equals, load factor, rehashing, treeify, chaining vs open addressing, ConcurrentHashMap, LinkedHashMap, WeakHashMap, consistent hashing, Bloom filter, HashDoS |
+| **[[graphs-interview|Графы]]** | Adjacency matrix/list, BFS, DFS, Dijkstra, Bellman-Ford, Floyd-Warshall, Kruskal, Prim, topological sort, SCC, bipartite, Number of Islands, PageRank |
+| **[[tries-interview|Префиксные деревья и Union-Find]]** | Trie, Compressed trie (Radix tree), Suffix tree/array, Aho-Corasick, autocomplete, Word Search II, Union-Find (DSU), path compression, union by rank, Number of Islands через UF |
 
 ## Q12. (!) Какие алгоритмы в `sorting-searching/`?
 
 | Файл | Темы |
 |------|------|
-| **[Алгоритмы сортировки](sorting-searching/sorting-algorithms-interview.md)** | Bubble, Insertion, Selection, Merge, Quick, Heap, Tim, Counting, Radix, Bucket, Dual-Pivot Quicksort, Introsort, stability, in-place, Java Arrays.sort внутри, parallel sort, external sort |
-| **[Алгоритмы поиска](sorting-searching/searching-algorithms-interview.md)** | Linear, Binary, Exponential, Interpolation, Jump, Ternary, поиск в отсортированном/повёрнутом массиве, Median of Two Sorted Arrays, Binary Search на ответе (Koko, Capacity), BFS/DFS как поиск, подводные камни overflow |
+| **[[sorting-algorithms-interview|Алгоритмы сортировки]]** | Bubble, Insertion, Selection, Merge, Quick, Heap, Tim, Counting, Radix, Bucket, Dual-Pivot Quicksort, Introsort, stability, in-place, Java Arrays.sort внутри, parallel sort, external sort |
+| **[[searching-algorithms-interview|Алгоритмы поиска]]** | Linear, Binary, Exponential, Interpolation, Jump, Ternary, поиск в отсортированном/повёрнутом массиве, Median of Two Sorted Arrays, Binary Search на ответе (Koko, Capacity), BFS/DFS как поиск, подводные камни overflow |
 
 ## Q13. (!) Какие парадигмы в `algorithmic-paradigms/`?
 
 | Файл | Темы |
 |------|------|
-| **[Рекурсия](algorithmic-paradigms/recursion-interview.md)** | Base case + recursive step, call stack, tail recursion, отсутствие TCO в JVM, factorial, Fibonacci, Hanoi, fast power, обходы деревьев |
-| **[Divide and Conquer](algorithmic-paradigms/divide-and-conquer-interview.md)** | Three-step pattern, master theorem, recursion tree, Merge Sort, Quick Sort, Binary Search, Strassen, Karatsuba, Closest Pair, Inversion count |
-| **[DP](algorithmic-paradigms/dynamic-programming-interview.md)** | Optimal substructure, overlapping subproblems, memoization vs tabulation, 0/1 Knapsack, LCS, LIS, Edit Distance, Coin Change, Stock series, bitmask DP, state compression |
-| **[Greedy](algorithmic-paradigms/greedy-algorithms-interview.md)** | Greedy choice property, exchange argument, Activity Selection, Fractional Knapsack, Huffman, Dijkstra, Kruskal, Job Sequencing, intervals, Jump Game, Gas Station |
-| **[Backtracking](algorithmic-paradigms/backtracking-interview.md)** | DFS с откатом, шаблон, subsets, permutations, combinations, N-Queens, Sudoku, Word Search, Generate Parentheses, Palindrome Partitioning, pruning, Branch and Bound |
-| **[Two Pointers и Sliding Window](algorithmic-paradigms/two-pointers-sliding-window-interview.md)** | Встречные/fast-slow/на двух массивах, Container with Most Water, Trapping Rain Water, Floyd cycle, Longest Substring Without Repeating, Minimum Window Substring, monotonic deque |
+| **[[recursion-interview|Рекурсия]]** | Base case + recursive step, call stack, tail recursion, отсутствие TCO в JVM, factorial, Fibonacci, Hanoi, fast power, обходы деревьев |
+| **[[divide-and-conquer-interview|Divide and Conquer]]** | Three-step pattern, master theorem, recursion tree, Merge Sort, Quick Sort, Binary Search, Strassen, Karatsuba, Closest Pair, Inversion count |
+| **[[dynamic-programming-interview|DP]]** | Optimal substructure, overlapping subproblems, memoization vs tabulation, 0/1 Knapsack, LCS, LIS, Edit Distance, Coin Change, Stock series, bitmask DP, state compression |
+| **[[greedy-algorithms-interview|Greedy]]** | Greedy choice property, exchange argument, Activity Selection, Fractional Knapsack, Huffman, Dijkstra, Kruskal, Job Sequencing, intervals, Jump Game, Gas Station |
+| **[[backtracking-interview|Backtracking]]** | DFS с откатом, шаблон, subsets, permutations, combinations, N-Queens, Sudoku, Word Search, Generate Parentheses, Palindrome Partitioning, pruning, Branch and Bound |
+| **[[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]** | Встречные/fast-slow/на двух массивах, Container with Most Water, Trapping Rain Water, Floyd cycle, Longest Substring Without Repeating, Minimum Window Substring, monotonic deque |
 
 ## Q14. (!) Чем отличаются Greedy, DP, D&C, Backtracking?
 
@@ -316,7 +314,7 @@ algorithms/
 
 **Стратегия:**
 
-1. **Изучи [Анализ сложности](complexity/complexity-analysis-interview.md)** — без него Big O становится магией
+1. **Изучи [[complexity-analysis-interview|Анализ сложности]]** — без него Big O становится магией
 2. **Сделай ~150-200 задач LeetCode** — Top Interview Questions
 3. **Сосредоточься на паттернах**, а не на конкретных задачах:
    - Two Pointers, Sliding Window, Binary Search
@@ -324,11 +322,11 @@ algorithms/
    - DP по 1D, 2D, на строках, на интервалах
    - Backtracking subsets/permutations/combinations
 4. **Решай вслух** (mock interviews) — главное на интервью
-5. **Учи [Java Collections](../programming-languages/java/java-collections-interview.md)** — какую структуру когда брать
+5. **Учи [[java-collections-interview|Java Collections]]** — какую структуру когда брать
 6. **Пиши без IDE** — на собеседовании часто whiteboard или простой редактор
 7. **Тестируй edge cases** — пустой вход, 1 элемент, дубликаты, переполнение
 
-Подробнее — в [Подготовка к собеседованию](../preparation/interview-preparation.md).
+Подробнее — в [[interview-preparation|Подготовка к собеседованию]].
 
 ---
 
@@ -336,36 +334,36 @@ algorithms/
 
 **Подразделы (детальные шпаргалки):**
 
-- [Анализ сложности](complexity/complexity-analysis-interview.md) — Big O, master theorem, амортизация
-- [Массивы и строки](data-structures/arrays-strings-interview.md) — Two Sum, Kadane, KMP
-- [Связные списки](data-structures/linked-lists-interview.md) — Floyd, LRU, K-group
-- [Стеки и очереди](data-structures/stacks-queues-interview.md) — monotonic, BlockingQueue
-- [Деревья](data-structures/trees-interview.md) — BST, AVL, RB, B-Tree, обходы
-- [Кучи](data-structures/heaps-interview.md) — PriorityQueue, top-K, median stream
-- [Хеш-таблицы](data-structures/hash-tables-interview.md) — HashMap внутри, ConcurrentHashMap
-- [Графы](data-structures/graphs-interview.md) — BFS, DFS, Dijkstra, MST, topological
-- [Trie и Union-Find](data-structures/tries-interview.md) — autocomplete, Number of Islands
-- [Алгоритмы сортировки](sorting-searching/sorting-algorithms-interview.md) — TimSort, Dual-Pivot
-- [Алгоритмы поиска](sorting-searching/searching-algorithms-interview.md) — Binary Search, Search Rotated
-- [Рекурсия](algorithmic-paradigms/recursion-interview.md) — call stack, tail recursion, TCO
-- [Divide and Conquer](algorithmic-paradigms/divide-and-conquer-interview.md) — master theorem, Strassen
-- [DP](algorithmic-paradigms/dynamic-programming-interview.md) — Knapsack, LCS, LIS, Edit Distance
-- [Greedy](algorithmic-paradigms/greedy-algorithms-interview.md) — Activity Selection, Huffman, Dijkstra
-- [Backtracking](algorithmic-paradigms/backtracking-interview.md) — N-Queens, Sudoku, Word Search
-- [Two Pointers / Sliding Window](algorithmic-paradigms/two-pointers-sliding-window-interview.md) — все паттерны окон
+- [[complexity-analysis-interview|Анализ сложности]] — Big O, master theorem, амортизация
+- [[arrays-strings-interview|Массивы и строки]] — Two Sum, Kadane, KMP
+- [[linked-lists-interview|Связные списки]] — Floyd, LRU, K-group
+- [[stacks-queues-interview|Стеки и очереди]] — monotonic, BlockingQueue
+- [[trees-interview|Деревья]] — BST, AVL, RB, B-Tree, обходы
+- [[heaps-interview|Кучи]] — PriorityQueue, top-K, median stream
+- [[hash-tables-interview|Хеш-таблицы]] — HashMap внутри, ConcurrentHashMap
+- [[graphs-interview|Графы]] — BFS, DFS, Dijkstra, MST, topological
+- [[tries-interview|Trie и Union-Find]] — autocomplete, Number of Islands
+- [[sorting-algorithms-interview|Алгоритмы сортировки]] — TimSort, Dual-Pivot
+- [[searching-algorithms-interview|Алгоритмы поиска]] — Binary Search, Search Rotated
+- [[recursion-interview|Рекурсия]] — call stack, tail recursion, TCO
+- [[divide-and-conquer-interview|Divide and Conquer]] — master theorem, Strassen
+- [[dynamic-programming-interview|DP]] — Knapsack, LCS, LIS, Edit Distance
+- [[greedy-algorithms-interview|Greedy]] — Activity Selection, Huffman, Dijkstra
+- [[backtracking-interview|Backtracking]] — N-Queens, Sudoku, Word Search
+- [[two-pointers-sliding-window-interview|Two Pointers / Sliding Window]] — все паттерны окон
 
 **Связанные разделы:**
 
-- [Java Collections](../programming-languages/java/java-collections-interview.md) — структуры данных в Java
-- [Java Stream API](../programming-languages/java/java-stream-interview.md) — функциональные операции
-- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — concurrent collections
-- [JVM](../jvm/jvm-interview.md) — стек, GC, JIT
-- [Паттерны проектирования](../design-patterns/design-patterns-interview.md) — связь с алгоритмами
-- [System Design](../system-design/system-design-interview.md) — алгоритмы в проектировании
-- [Подготовка к собеседованию](../preparation/interview-preparation.md) — стратегия
-- [PostgreSQL](../databases/postgresql-interview.md) — B-Tree индексы
-- [Redis](../databases/redis-interview.md) — hash table, skip list
-- [Application Security](../security/application-security-interview.md) — HashDoS, ReDoS
+- [[java-collections-interview|Java Collections]] — структуры данных в Java
+- [[java-stream-interview|Java Stream API]] — функциональные операции
+- [[java-concurrency-interview|Java Concurrency]] — concurrent collections
+- [[jvm-interview|JVM]] — стек, GC, JIT
+- [[design-patterns-interview|Паттерны проектирования]] — связь с алгоритмами
+- [[system-design-interview|System Design]] — алгоритмы в проектировании
+- [[interview-preparation|Подготовка к собеседованию]] — стратегия
+- [[postgresql-interview|PostgreSQL]] — B-Tree индексы
+- [[redis-interview|Redis]] — hash table, skip list
+- [[application-security-interview|Application Security]] — HashDoS, ReDoS
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

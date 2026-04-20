@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Вопросы и ответы по `ArgoCD` и `GitOps`: принципы GitOps, архитектура `ArgoCD`, `Application` CRD, стратегии синхронизации, `ApplicationSet`, `App of Apps` паттерн, `Sync Waves`, хуки, `RBAC`, multi-cluster деплой, управление секретами, `ArgoCD Image Updater`, сравнение с `Flux`.
 
-Дата последнего обновления: 2026-04-13
-
 **`ArgoCD`** — декларативный GitOps-контроллер для `Kubernetes`, реализующий непрерывную доставку на основе `Git` как единственного источника истины. Является частью экосистемы `Argo Project` (наряду с `Argo Workflows`, `Argo Events`, `Argo Rollouts`) и входит в состав CNCF. `ArgoCD` следит за состоянием кластера и автоматически синхронизирует его с желаемым состоянием, описанным в репозитории.
 
 ## Q1. Что такое GitOps? Назовите его ключевые принципы.
@@ -1418,16 +1416,14 @@ metadata:
 
 ## See also
 
-- [Kubernetes](kubernetes-interview.md)
-- [Helm](helm-interview.md)
-- [Terraform](terraform-interview.md)
-- [CI/CD пайплайны](../cicd/pipeline-design-interview.md)
-- [Стратегии деплоя](../cicd/deployment-strategies-interview.md)
-- [Docker](docker-interview.md)
 
+- [[kubernetes-interview|Kubernetes]]
+- [[helm-interview|Helm]]
+- [[terraform-interview|Terraform]]
+- [[pipeline-design-interview|CI/CD пайплайны]]
+- [[deployment-strategies-interview|Стратегии деплоя]]
+- [[docker-interview|Docker]]
 - [[ansible-interview|Ansible]]
 - [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
 - [[git-interview|Git]]
 - [[gradle-maven-interview|Gradle и Maven]]
-- [[helm-interview|Helm]]

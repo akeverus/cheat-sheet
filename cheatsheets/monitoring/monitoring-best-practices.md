@@ -23,6 +23,11 @@ updated: "2026-04-20"
 - [The Four Golden Signals](https://sre.google/sre-book/monitoring-distributed-systems/)
 - [Prometheus Best Practices](https://prometheus.io/docs/practices/)
 
+
+### См. также
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
 ## Содержание
 
 - [Золотые сигналы](#золотые-сигналы)

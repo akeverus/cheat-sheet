@@ -29,6 +29,7 @@ updated: "2026-04-20"
 - [[kotlin-concurrency-advanced|Продвинутые темы корутин]]
 - [[kotlin-reactive-rxkotlin|RxKotlin]]
 
+- [[kotlin-performance|Kotlin Performance]]
 ## Содержание
 
 - [Введение в Flow](#введение-в-flow)

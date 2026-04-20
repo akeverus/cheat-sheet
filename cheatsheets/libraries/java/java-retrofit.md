@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[java-okhttp|OkHttp]] — **OkHttp** для **HTTP** запросов
 - [[java-rest-assured|REST Assured]] — **REST Assured** для тестирования **API**
 
+- [[java-http-clients|HTTP-клиенты в Java]]
+- [[java-jackson|Jackson: JSON-сериализация в Java]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

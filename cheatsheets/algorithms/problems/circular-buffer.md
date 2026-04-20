@@ -25,6 +25,9 @@ A **guide** to **implementing** a **circular buffer** (ring buffer) in **Java fo
 - [[collections-lock-free|Thread-Safe Data Structures]]
 - [Структуры данных](../data-structures/)
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Обзор](#обзор)

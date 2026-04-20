@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[producer-consumer|Producer-Consumer]] — **Producer-Consumer Pattern**
 - [[java-concurrency-basics|Пул потоков и Executors]] — в **Java Concurrency**
 
+- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
+- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
+- [[active-object|Активный объект (Active Object)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

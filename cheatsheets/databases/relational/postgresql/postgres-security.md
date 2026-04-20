@@ -28,6 +28,9 @@ related: ["databases/postgres-admin.md", "databases/postgres-replication.md"]
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-admin|postgres-admin.md]] — администрирование
 
+- [[redis-security|Redis: Безопасность]]
+- [[tls-ssl|TLS / SSL: handshake, сертификаты, конфигурация]]
+- [[data-security|Безопасность данных (Data Security)]]
 ## Содержание
 
 - [Введение в безопасность PostgreSQL](#введение-в-безопасность-postgresql)

@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Java Generics` для `Senior Java Developer`. Охватывает `Type Erasure`, `Wildcards`, `PECS`, `Bounded Types`, `Bridge Methods`, generic-методы, ограничения дженериков и best practices.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -215,7 +213,7 @@ List<String> list = new ArrayList<>(); // вместо new ArrayList<String>()
 List<String> sorted = sort(list, Comparator.comparing(String::length));
 ```
 
-В Java 8 вывод типов был значительно улучшен — компилятор стал учитывать **целевой тип** (target type) в более широком контексте, включая аргументы лямбда-выражений. Подробнее об этом в [вопросах по Java 8](java-8-interview.md).
+В Java 8 вывод типов был значительно улучшен — компилятор стал учитывать **целевой тип** (target type) в более широком контексте, включая аргументы лямбда-выражений. Подробнее об этом в [[java-8-interview|вопросах по Java 8]].
 
 ## Q5. Какие соглашения об именовании параметров типа?
 
@@ -656,7 +654,7 @@ objects.add(42);                   // добавили Integer в List<String>!
 String s = strings.get(0);        // ClassCastException!
 ```
 
-Для гибкости используются **wildcards** (см. [Java Collections](java-collections-interview.md)):
+Для гибкости используются **wildcards** (см. [[java-collections-interview|Java Collections]]):
 
 ```java
 List<String> strings = List.of("a", "b");
@@ -882,7 +880,7 @@ LongStream.of(1L, 2L, 3L).average();
 // IntArrayList, LongHashSet и т.д.
 ```
 
-Подробнее о примитивах и обёртках — в [вопросах по системе типов Java](java-types-interview.md).
+Подробнее о примитивах и обёртках — в [[java-types-interview|вопросах по системе типов Java]].
 
 ## Q28. Можно ли создать массив generic-типа (`new T[]`)?
 
@@ -1394,16 +1392,16 @@ void fill(List<? super Integer> list, int count) {
 
 ## See also
 
-- [Java Collections](java-collections-interview.md) — коллекции активно используют дженерики (`List<T>`, `Map<K,V>`)
-- [OOP & Java](java-oop-interview.md) — полиморфизм и наследование в контексте дженериков, ковариантность
-- [Java Core](java-core-interview.md) — основы Java, система типов, `Reflection API` и дженерики
-- [Java 8+](java-8-interview.md) — улучшения вывода типов в Java 8, `var` в Java 10
-- [Система типов Java](java-types-interview.md) — примитивы, обёртки, приведение типов
-- [Java Concurrency](java-concurrency-interview.md) — `Future<T>`, `CompletableFuture<T>`, generic thread-safe типы
-- [Java Stream API](java-stream-interview.md) — `Stream<T>`, `Collector<T,A,R>` как примеры generic API
-- [Java Serialization](java-serialization-interview.md) — сериализация объектов с generic-полями
-- [Java 17-21](java-17-21-interview.md) — `sealed interface Result<T>`, паттерн-матчинг с дженериками
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Generic Factory, Repository<T>, паттерны с дженериками
+- [[java-collections-interview|Java Collections]] — коллекции активно используют дженерики (`List<T>`, `Map<K,V>`)
+- [[java-oop-interview|OOP & Java]] — полиморфизм и наследование в контексте дженериков, ковариантность
+- [[java-core-interview|Java Core]] — основы Java, система типов, `Reflection API` и дженерики
+- [[java-8-interview|Java 8+]] — улучшения вывода типов в Java 8, `var` в Java 10
+- [[java-types-interview|Система типов Java]] — примитивы, обёртки, приведение типов
+- [[java-concurrency-interview|Java Concurrency]] — `Future<T>`, `CompletableFuture<T>`, generic thread-safe типы
+- [[java-stream-interview|Java Stream API]] — `Stream<T>`, `Collector<T,A,R>` как примеры generic API
+- [[java-serialization-interview|Java Serialization]] — сериализация объектов с generic-полями
+- [[java-17-21-interview|Java 17-21]] — `sealed interface Result<T>`, паттерн-матчинг с дженериками
+- [[design-patterns-interview|Design Patterns]] — Generic Factory, Repository<T>, паттерны с дженериками
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

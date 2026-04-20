@@ -26,6 +26,8 @@ updated: "2026-04-20"
 - [[java-io-nio|Java I/O NIO]] — Java I/O
 - [Kotlin Delegation](https://kotlinlang.org/docs/delegation.html) — делегирование и декораторы
 
+- [[composite|Компоновщик (Composite)]]
+- [[facade|Фасад (Facade)]]
 ## Содержание
 
 - [Что такое Decorator?](#что-такое-decorator)

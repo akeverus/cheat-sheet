@@ -22,6 +22,9 @@ updated: "2026-04-20"
 - [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
 - [Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
 
+
+### См. также
+- [[containerization-overview|Containerization — обзор]]
 ## Содержание
 
 - [Volumes](#volumes)

@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[java-concurrency-basics|Java Concurrency]] — **Java Concurrency**
 - [[README|CQRS / DDD]] — **CQRS** и **DDD**
 
+- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
+- [[active-object|Активный объект (Active Object)]]
+- [[thread-pool|Пул потоков (Thread Pool)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

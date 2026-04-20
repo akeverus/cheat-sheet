@@ -1,6 +1,6 @@
 ---
 title: "AWS Basics"
-description: "Amazon Web Services (AWS) — облачная платформа от Amazon, предоставляющая вычислительные ресурсы, хранение данных и множество сервисов. Краткий обзор; детали — в [AWS Services](aws-services.md)."
+description: "Amazon Web Services (AWS) — облачная платформа от Amazon, предоставляющая вычислительные ресурсы, хранение данных и множество сервисов. Краткий обзор; детали — в [[aws-services|AWS Services]]."
 tags:
   - platform
   - cloud-providers

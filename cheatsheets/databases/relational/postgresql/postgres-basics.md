@@ -29,6 +29,9 @@ related: ["databases/postgres-data-ops.md", "databases/postgres-joins.md", "data
 - [[postgres-design|postgres-design.md]] — проектирование БД
 - [[postgres-queries|postgres-queries.md]] — запросы
 
+- [[postgres-performance-tuning|PostgreSQL: Тюнинг производительности]]
+- [[postgres-transactions|PostgreSQL: транзакции, MVCC и блокировки]]
+- [[postgres-partitioning|PostgreSQL: партиционирование]]
 ## Содержание
 
 - [Введение в PostgreSQL](#введение-в-postgresql)

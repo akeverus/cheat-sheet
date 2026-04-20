@@ -37,6 +37,8 @@ updated: "2026-04-20"
 - [Мониторинг](../../../monitoring/) — мониторинг **batch jobs**
 - [[spring-integration|**Spring Integration**]] — интеграция с другими системами
 
+- [[spring-websocket|Spring WebSocket]]
+- [[spring-ai|Spring AI]]
 ## Содержание
 
 - [Введение в Spring Batch](#введение-в-spring-batch)

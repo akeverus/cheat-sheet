@@ -39,6 +39,8 @@ related: ["databases/clickhouse-replication.md", "databases/clickhouse-indexes.m
 - [[clickhouse-replication|Репликация]] — кластеры и репликация
 - [[clickhouse-indexes|Индексы]] — индексы и партиционирование
 
+- [[redis-performance|Redis: Производительность]]
+- [[postgres-basics|PostgreSQL: Полное руководство по основам и мониторингу]]
 ## Содержание
 
 - [Введение в оптимизацию производительности](#введение-в-оптимизацию-производительности)

@@ -22,6 +22,9 @@ updated: "2026-04-20"
 - [Direct Connect](https://docs.aws.amazon.com/directconnect/)
 - [VPN](https://docs.aws.amazon.com/vpn/)
 
+
+### См. также
+- [[azure-services|Azure Services]]
 ## Содержание
 
 - [VPC (Virtual Private Cloud)](#vpc-virtual-private-cloud)

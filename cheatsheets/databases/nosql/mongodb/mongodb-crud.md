@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[mongodb-basics|Основы]] — **MongoDB**
 - [[mongodb-queries|Запросы]] — продвинутые запросы
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-aggregation|MongoDB: Aggregation Framework — Полное руководство по агрегации данных]]
 ## Содержание
 
 - [Обзор CRUD операций](#обзор-crud-операций)

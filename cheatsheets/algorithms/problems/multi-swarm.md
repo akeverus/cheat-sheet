@@ -25,6 +25,9 @@ updated: "2026-04-20"
 - [[genetic-algorithms|Генетические алгоритмы]] — генетические алгоритмы
 - [Алгоритмы оптимизации](../algorithmic-paradigms/) — парадигмы
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Обзор](#обзор)

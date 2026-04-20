@@ -29,6 +29,8 @@ updated: "2026-04-20"
 - [[spring-boot|**Spring Boot**]] — **Spring Boot**
 - [[jackson|Jackson]] — **JSON** обработка
 
+- [[spring-websocket|Spring WebSocket]]
+- [[spring-integration|Spring Integration]]
 ## Содержание
 
 - [Введение в Spring AI](#введение-в-spring-ai)

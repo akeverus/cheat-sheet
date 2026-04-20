@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `URL Shortener` (TinyURL, bit.ly) — **classic system design interview**. Compact (feasible в 45 min), но covers multiple concepts: **hashing, encoding, caching, scale read-heavy, analytics**. Expected на middle/senior interviews.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
@@ -662,13 +660,13 @@ Retry-After: 60
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
-- [Design Rate Limiter](design-rate-limiter-interview.md) — компонент
-- [Caching Strategies](../architecture/caching-strategies-interview.md) — Redis, CDN
-- [Database Architecture](../databases/database-architecture-interview.md) — SQL vs NoSQL
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — sharding, replication
-- [Load Balancing](../architecture/load-balancing-interview.md) — fronting app servers
-- [CAP Theorem](../architecture/cap-theorem-interview.md) — consistency trade-offs
-- [Redis](../databases/redis-interview.md) — cache layer
-- [DynamoDB](../databases/dynamodb-interview.md) — NoSQL option
-- [Distributed Systems](../architecture/distributed-systems-interview.md) — sharding, consensus
+- [[system-design-interview|System Design]] — общие принципы
+- [[design-rate-limiter-interview|Design Rate Limiter]] — компонент
+- [[caching-strategies-interview|Caching Strategies]] — Redis, CDN
+- [[database-architecture-interview|Database Architecture]] — SQL vs NoSQL
+- [[scalability-patterns-interview|Scalability Patterns]] — sharding, replication
+- [[load-balancing-interview|Load Balancing]] — fronting app servers
+- [[cap-theorem-interview|CAP Theorem]] — consistency trade-offs
+- [[redis-interview|Redis]] — cache layer
+- [[dynamodb-interview|DynamoDB]] — NoSQL option
+- [[distributed-systems-interview|Distributed Systems]] — sharding, consensus

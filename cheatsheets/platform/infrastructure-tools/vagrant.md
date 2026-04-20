@@ -21,6 +21,10 @@ updated: "2026-04-20"
 - [VirtualBox Documentation](https://www.virtualbox.org/wiki/Documentation)
 - [Ansible Documentation](https://docs.ansible.com/)
 
+
+### См. также
+- [[consul|Consul]]
+- [[nginx-advanced|Nginx Advanced]]
 ## Содержание
 
 - [Основы Vagrant](#основы-vagrant)

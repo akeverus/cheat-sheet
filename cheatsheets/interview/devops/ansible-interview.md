@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Ansible` — agentless configuration management и automation tool. Создан Michael DeHaan (2012), acquired Red Hat (2015). Использует **SSH** (не агенты), **YAML playbooks**, **idempotent** modules. Доминирует в config management market. Альтернативы: Puppet, Chef, SaltStack.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -678,18 +676,18 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 
 ## See also
 
-- [HashiCorp Vault](vault-interview.md) — secrets integration
-- [Consul](consul-interview.md) — dynamic inventory source
-- [Terraform](terraform-interview.md) — для infrastructure
-- [Docker](docker-interview.md) — Ansible deploys containers
-- [Kubernetes](kubernetes-interview.md) — Ansible can manage k8s
-- [Git](git-interview.md) — playbooks в git
-- [Микросервисы](../architecture/microservices-interview.md) — deploy with Ansible
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
-- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — Ansible для deploys
-- [Pipeline Design](../cicd/pipeline-design-interview.md) — CI/CD
-- [Secrets Management](../security/secrets-management-interview.md) — Ansible Vault
-- [Application Security](../security/application-security-interview.md) — secure playbooks
+- [[vault-interview|HashiCorp Vault]] — secrets integration
+- [[consul-interview|Consul]] — dynamic inventory source
+- [[terraform-interview|Terraform]] — для infrastructure
+- [[docker-interview|Docker]] — Ansible deploys containers
+- [[kubernetes-interview|Kubernetes]] — Ansible can manage k8s
+- [[git-interview|Git]] — playbooks в git
+- [[microservices-interview|Микросервисы]] — deploy with Ansible
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
+- [[deployment-strategies-interview|Deployment Strategies]] — Ansible для deploys
+- [[pipeline-design-interview|Pipeline Design]] — CI/CD
+- [[secrets-management-interview|Secrets Management]] — Ansible Vault
+- [[application-security-interview|Application Security]] — secure playbooks
 
 - [[argocd-interview|ArgoCD и GitOps]]
 - [[consul-interview|HashiCorp Consul]]

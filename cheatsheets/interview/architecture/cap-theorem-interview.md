@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Краткое введение: ответы по `CAP`-теореме для собеседований — ограничения распределённых систем, выбор между согласованностью и доступностью. **CAP-теорема** описывает ограничения распределённых систем: нельзя одновременно гарантировать согласованность (`Consistency`), доступность (`Availability`) и устойчивость к разделению (`Partition tolerance`). На интервью часто спрашивают про этот компромисс, модели согласованности, алгоритмы консенсуса и примеры `CP`/`AP`-систем.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -1298,12 +1296,12 @@ Spanner — это CP-система. При network partition Spanner блок�
 
 ## See also
 
-- [Распределённые системы](distributed-systems-interview.md) — базовые концепции: репликация, шардирование, консенсус
-- [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency, linearizability, causal
-- [Микросервисы](microservices-interview.md) — выбор CP/AP для каждого сервиса в архитектуре
-- [Стратегии кэширования](caching-strategies-interview.md) — компромиссы согласованности при кэшировании
-- [Архитектура БД](../databases/database-architecture-interview.md) — как Cassandra, DynamoDB, ZooKeeper реализуют CAP
-- [Паттерны масштабирования](scalability-patterns-interview.md) — горизонтальное масштабирование и partition tolerance
+- [[distributed-systems-interview|Распределённые системы]] — базовые концепции: репликация, шардирование, консенсус
+- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency, linearizability, causal
+- [[microservices-interview|Микросервисы]] — выбор CP/AP для каждого сервиса в архитектуре
+- [[caching-strategies-interview|Стратегии кэширования]] — компромиссы согласованности при кэшировании
+- [[database-architecture-interview|Архитектура БД]] — как Cassandra, DynamoDB, ZooKeeper реализуют CAP
+- [[scalability-patterns-interview|Паттерны масштабирования]] — горизонтальное масштабирование и partition tolerance
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

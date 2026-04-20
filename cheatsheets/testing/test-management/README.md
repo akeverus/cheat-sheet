@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [Test Management](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[test-management-overview|Test Management Overview]]

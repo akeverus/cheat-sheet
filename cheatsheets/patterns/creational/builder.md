@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[spring-framework-interview|Spring Core]] — конфигурация и бины
 - [[java-basics|Java Basics]] — основы **Java**
 
+- [[singleton|Одиночка (Singleton)]]
+- [[creational-patterns|Порождающие паттерны проектирования (Creational Patterns)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

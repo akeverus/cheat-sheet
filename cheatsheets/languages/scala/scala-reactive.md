@@ -30,6 +30,9 @@ related: ["scala/scala-concurrency.md", "scala/scala-akka.md", "scala/scala-fp-a
 - [[scala-concurrency|Конкурентность в Scala]]
 - [[scala-akka|Akka Actors]]
 
+- [[micronaut-reactive|Micronaut: Reactive Programming — RxJava, Reactor и Reactive Streams]]
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
 ## Содержание
 
 - [Введение в реактивное программирование](#введение-в-реактивное-программирование)

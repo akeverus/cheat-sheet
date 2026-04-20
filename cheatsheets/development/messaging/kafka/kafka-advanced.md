@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Schema Registry (Confluent)](https://docs.confluent.io/platform/current/schema-registry/index.html)
 - [Kafka Security](https://kafka.apache.org/documentation/#security)
 
+
+### См. также
+- [[activemq|Apache ActiveMQ]]
 ## Содержание
 
 - [Продвинутая архитектура](#продвинутая-архитектура)

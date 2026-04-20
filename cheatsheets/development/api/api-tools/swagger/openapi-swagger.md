@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [Redoc](https://redocly.com/docs/redoc/)
 - [Spectral Linter](https://stoplight.io/open-source/spectral)
 
+
+### См. также
+- [[api-documentation-basics|API Documentation: Основы]]
 ## Содержание
 
 - [Основы OpenAPI](#основы-openapi)

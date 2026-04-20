@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `AWS Lambda` — самый популярный FaaS (Function as a Service). Run code без управления серверами, pay per invocation. На интервью спрашивают: cold start, lifecycle, integrations (API Gateway, S3, SQS, DynamoDB Streams), limits, monitoring, deployment (SAM, CDK), best practices.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -790,19 +788,19 @@ def handler(event, context):
 
 ## See also
 
-- [AWS](aws-interview.md) — общие основы
-- [Serverless](serverless-interview.md) — концепции
-- [GCP](gcp-interview.md) — Cloud Functions сравнение
-- [Azure](azure-interview.md) — Functions сравнение
-- [Cloud-native Patterns](cloud-native-patterns-interview.md) — patterns
-- [Микросервисы](../architecture/microservices-interview.md) — Lambda как microservice
-- [Event-driven](../architecture/event-driven-patterns-interview.md) — Lambda triggers
-- [API Gateway](../architecture/api-gateway-interview.md) — front для Lambda
-- [Saga Pattern](../architecture/saga-pattern-interview.md) — Step Functions
-- [Caching](../architecture/caching-strategies-interview.md) — для Lambda
-- [Observability](../monitoring/observability-interview.md) — Powertools, X-Ray
-- [Application Security](../security/application-security-interview.md) — IAM roles
-- [JVM](../jvm/jvm-interview.md) — для Java на Lambda
+- [[aws-interview|AWS]] — общие основы
+- [[serverless-interview|Serverless]] — концепции
+- [[gcp-interview|GCP]] — Cloud Functions сравнение
+- [[azure-interview|Azure]] — Functions сравнение
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — patterns
+- [[microservices-interview|Микросервисы]] — Lambda как microservice
+- [[event-driven-patterns-interview|Event-driven]] — Lambda triggers
+- [[api-gateway-interview|API Gateway]] — front для Lambda
+- [[saga-pattern-interview|Saga Pattern]] — Step Functions
+- [[caching-strategies-interview|Caching]] — для Lambda
+- [[observability-interview|Observability]] — Powertools, X-Ray
+- [[application-security-interview|Application Security]] — IAM roles
+- [[jvm-interview|JVM]] — для Java на Lambda
 
 - [[aws-interview|AWS]]
 - [[azure-interview|Azure]]

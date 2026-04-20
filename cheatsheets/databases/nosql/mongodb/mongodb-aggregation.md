@@ -28,6 +28,9 @@ updated: "2026-04-20"
 - [[mongodb-queries|Запросы]] — основы запросов
 - [[mongodb-indexes|Производительность]] — оптимизация
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [[mongodb-performance|MongoDB: Производительность и оптимизация — Полное руководство по тюнингу и мониторингу]]
 ## Содержание
 
 - [Введение в Aggregation Framework](#введение-в-aggregation-framework)

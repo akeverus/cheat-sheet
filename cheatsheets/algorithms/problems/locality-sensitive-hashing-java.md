@@ -24,6 +24,10 @@ LSH — хеширование, при котором похожие объек�
 - [[algorithms|Хеширование и хеш-функции]] — хеширование
 - [Алгоритмы поиска](../searching/) — обзор разделов
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
 ## Содержание
 
 - [Обзор](#обзор)

@@ -27,6 +27,7 @@ updated: "2026-04-20"
 - [[nats|NATS]] — **cloud-native** мессенджинг
 - [[event-driven|Event-Driven Architecture]] — **event-driven** паттерны
 
+- [[rabbitmq-advanced|RabbitMQ Advanced]]
 ## Содержание
 
 - [Основы ActiveMQ](#основы-activemq)

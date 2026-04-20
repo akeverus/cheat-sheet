@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[rabbitmq|RabbitMQ]] — **Message Queues**
 - [[kafka|Kafka]] — **Event Streaming**
 
+- [[double-checked-locking|Двойная проверка блокировки (Double-Checked Locking)]]
+- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

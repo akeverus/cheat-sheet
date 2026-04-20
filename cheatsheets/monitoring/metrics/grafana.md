@@ -30,6 +30,7 @@ Grafana — платформа для аналитики и интерактив
 - [[alerting|Alerting]] — система алертинга
 - [[distributed-tracing|Distributed Tracing]] — распределённое трассирование
 
+- [[redis-monitoring|Redis: Мониторинг]]
 ## Содержание
 
 - [Основы Grafana](#основы-grafana)

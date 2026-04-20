@@ -24,6 +24,10 @@ A **guide** to **implementing** a **basic calculator** in **Java that supports a
 - [[README|Математические алгоритмы]] — раздел math
 - [[README|Алгоритмы со строками]] — раздел strings
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
 ## Содержание
 
 - [Обзор](#обзор)

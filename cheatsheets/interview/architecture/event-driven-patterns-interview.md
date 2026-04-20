@@ -15,8 +15,6 @@ updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Event-driven` паттерны
 
-Дата последнего обновления: 2026-04-13
-
 Комплексное руководство по вопросам собеседования на тему event-driven паттернов для Senior Java Developer.
 
 ## Полезные ссылки
@@ -117,7 +115,7 @@ graph LR
 | Связность | Клиент знает адрес сервиса | Producer не знает consumers |
 | Масштабируемость | Нужен load balancer | Consumers масштабируются независимо |
 | Отказоустойчивость | Нужны retry и circuit breaker | Сообщения сохраняются в брокере |
-| Консистентность | Сильная в одной транзакции | Eventual consistency, нужны [паттерны согласованности](consistency-patterns-interview.md) (`Saga`, компенсации) |
+| Консистентность | Сильная в одной транзакции | Eventual consistency, нужны [[consistency-patterns-interview|паттерны согласованности]] (`Saga`, компенсации) |
 | Латентность | Немедленный ответ | Задержка обработки |
 
 ## Q2. Что такое событие (event) в контексте EDA? Какие атрибуты у события?
@@ -130,7 +128,7 @@ graph LR
 - **Временная метка** -- когда произошло (часто в `UTC`)
 - **Агрегат** -- идентификатор сущности (`orderId`, `userId`)
 - **Полезная нагрузка** (payload) -- данные события
-- **Метаданные** -- источник, `correlationId`, `traceId` для [распределённой трассировки](../monitoring/observability-interview.md)
+- **Метаданные** -- источник, `correlationId`, `traceId` для [[observability-interview|распределённой трассировки]]
 
 Пример структуры события на Java:
 
@@ -171,7 +169,7 @@ public record OrderCreatedEvent(
 | Throughput | Очень высокий (миллионы msg/s) | Средний (десятки тысяч msg/s) |
 | Основной сценарий | Event streaming, EDA | Task queue, RPC |
 
-Для `EDA` с большим объёмом событий и возможностью «переиграть» историю чаще выбирают `Kafka` (подробнее в [вопросах по Kafka](../messaging/kafka-interview.md)); для рабочих очередей и гарантированной доставки до одного потребителя -- `RabbitMQ`.
+Для `EDA` с большим объёмом событий и возможностью «переиграть» историю чаще выбирают `Kafka` (подробнее в [[kafka-interview|вопросах по Kafka]]); для рабочих очередей и гарантированной доставки до одного потребителя -- `RabbitMQ`.
 
 ## Q4. Как обеспечить порядок обработки событий в распределённой системе?
 
@@ -337,7 +335,7 @@ public class OrderProjection {
 
 ## Q8. (!) Что такое Saga и когда её используют?
 
-`Saga` -- паттерн для [распределённых](distributed-systems-interview.md) транзакций: длинная бизнес-операция разбита на шаги в разных сервисах; каждый шаг публикует событие для следующего; при сбое выполняются компенсирующие действия.
+`Saga` -- паттерн для [[distributed-systems-interview|распределённых]] транзакций: длинная бизнес-операция разбита на шаги в разных сервисах; каждый шаг публикует событие для следующего; при сбое выполняются компенсирующие действия.
 
 ```mermaid
 sequenceDiagram
@@ -517,7 +515,7 @@ public Queue mainQueue() {
 }
 ```
 
-**Мониторинг DLQ:** размер `DLQ` -- метрика проблемных сообщений; рост указывает на проблемы; алерты при превышении порога. Подробнее -- в [вопросах по наблюдаемости](../monitoring/observability-interview.md).
+**Мониторинг DLQ:** размер `DLQ` -- метрика проблемных сообщений; рост указывает на проблемы; алерты при превышении порога. Подробнее -- в [[observability-interview|вопросах по наблюдаемости]].
 
 ## Q11. Что такое Schema Registry и зачем он в EDA?
 
@@ -675,7 +673,7 @@ graph TD
 
 Ключевые практики:
 - **Метрики**: consumer lag, throughput, latency (publish-to-consume), error rate, DLQ size
-- **Распределённая трассировка**: `traceId` в заголовках сообщений, передача в `MDC` при обработке (см. [Observability](../monitoring/observability-interview.md))
+- **Распределённая трассировка**: `traceId` в заголовках сообщений, передача в `MDC` при обработке (см. [[observability-interview|Observability]])
 - **Логирование**: ключевые события (публикация, обработка, ошибки) без чувствительных данных
 - **Алерты**: рост lag, падение throughput, рост error rate, несовместимость схем
 
@@ -694,7 +692,7 @@ public void consume(ConsumerRecord<String, String> record) {
 }
 ```
 
-Инструменты: `Prometheus` + `Grafana` для метрик; `Jaeger`/`Zipkin` для трассировки; `Kafka Manager`/`AKHQ` для управления [Kafka](../messaging/kafka-interview.md).
+Инструменты: `Prometheus` + `Grafana` для метрик; `Jaeger`/`Zipkin` для трассировки; `Kafka Manager`/`AKHQ` для управления [[kafka-interview|Kafka]].
 
 ## Q20. Какие антипаттерны в event-driven архитектуре стоит избегать?
 
@@ -735,7 +733,7 @@ kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
 - **`CDC`** -- `Debezium` читает transaction log БД
 - **`Kafka` транзакции** -- `read-process-write` с атомарным commit
 
-На практике ключевой момент -- **eventual consistency это норма** для `EDA`; сильная консистентность достигается через синхронные вызовы или [паттерны согласованности](consistency-patterns-interview.md). В интервью стоит показать, как система ведёт себя при ретраях и дублирующей доставке.
+На практике ключевой момент -- **eventual consistency это норма** для `EDA`; сильная консистентность достигается через синхронные вызовы или [[consistency-patterns-interview|паттерны согласованности]]. В интервью стоит показать, как система ведёт себя при ретраях и дублирующей доставке.
 
 ## Q23. Что такое event versioning и как управлять изменениями схемы?
 
@@ -788,7 +786,7 @@ public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerCont
 
 ## Q26. Как обеспечить мониторинг и алертинг в event-driven системе?
 
-Метрики для [мониторинга](../monitoring/observability-interview.md):
+Метрики для [[observability-interview|мониторинга]]:
 
 | Метрика | Описание | Алерт |
 |---------|----------|-------|
@@ -902,7 +900,7 @@ spring:
 
 ## Q31. (!) Как работает механизм событий в Spring Framework?
 
-`Spring` предоставляет встроенный механизм событий через `ApplicationEventPublisher`. Это **внутрипроцессный** pub/sub -- не путать с брокерами вроде `Kafka`. Подробнее о Spring -- в [вопросах по Spring Framework](../frameworks/spring/spring-framework-interview.md).
+`Spring` предоставляет встроенный механизм событий через `ApplicationEventPublisher`. Это **внутрипроцессный** pub/sub -- не путать с брокерами вроде `Kafka`. Подробнее о Spring -- в [[spring-framework-interview|вопросах по Spring Framework]].
 
 Публикация и обработка кастомного события:
 
@@ -1520,13 +1518,13 @@ graph LR
 
 ## See also
 
-- [Apache Kafka](../messaging/kafka-interview.md) — брокер сообщений: партиции, consumer groups, exactly-once
-- [Микросервисы](microservices-interview.md) — EDA как основа межсервисного взаимодействия
-- [Распределённые системы](distributed-systems-interview.md) — идемпотентность, гарантии доставки и консенсус
-- [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency, Saga, Outbox Pattern
-- [Паттерны проектирования](../design-patterns/design-patterns-interview.md) — GoF-паттерны Observer и Mediator в контексте EDA
-- [Spring Framework](../frameworks/spring/spring-framework-interview.md) — ApplicationEvent, @EventListener и Spring Integration
-- [Observability](../monitoring/observability-interview.md) — трассировка событий, метрики и алертинг в EDA-системах
+- [[kafka-interview|Apache Kafka]] — брокер сообщений: партиции, consumer groups, exactly-once
+- [[microservices-interview|Микросервисы]] — EDA как основа межсервисного взаимодействия
+- [[distributed-systems-interview|Распределённые системы]] — идемпотентность, гарантии доставки и консенсус
+- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency, Saga, Outbox Pattern
+- [[design-patterns-interview|Паттерны проектирования]] — GoF-паттерны Observer и Mediator в контексте EDA
+- [[spring-framework-interview|Spring Framework]] — ApplicationEvent, @EventListener и Spring Integration
+- [[observability-interview|Observability]] — трассировка событий, метрики и алертинг в EDA-системах
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

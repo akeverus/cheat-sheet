@@ -21,6 +21,10 @@ updated: "2026-04-20"
 - [Zipkin](https://zipkin.io/pages/documentation.html)
 - [Spring Cloud Sleuth](https://spring.io/projects/spring-cloud-sleuth)
 
+
+### См. также
+- [[jaeger|Jaeger для Java]]
+- [[zipkin|Zipkin]]
 ## Содержание
 
 - [Основные концепции](#основные-концепции)

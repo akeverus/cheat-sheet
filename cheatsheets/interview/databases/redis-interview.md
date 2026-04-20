@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Подробные ответы по `Redis`: типы данных, `TTL`, репликация, `Sentinel`, `Cluster`, кэш-стратегии, `Pub/Sub`, `Streams`, `Lua`, `Spring Data Redis`, `Lettuce`, `Jedis`, best practices.
 
-Дата последнего обновления: 2026-04-13
-
 Краткое введение: **Redis** (`Remote Dictionary Server`) — высокопроизводительное `in-memory` хранилище данных типа `key-value`. Используется для кэширования, хранения сессий, очередей сообщений, rate limiting, pub/sub и аналитики в реальном времени. На собеседованиях спрашивают про типы данных, персистентность (`RDB`/`AOF`), кластеризацию, `Sentinel`, `Streams`, Lua-скрипты и интеграцию с `Spring`.
 
 ## Полезные ссылки
@@ -352,7 +350,7 @@ maxmemory 2gb
 maxmemory-policy allkeys-lru
 ```
 
-**Рекомендации:** для кэша — `allkeys-lru` или `allkeys-lfu`. Для смешанных данных (кэш + постоянные) — `volatile-lru` (вытеснит только ключи с TTL). Подробнее о стратегиях кэширования — в [вопросах по стратегиям кэширования](../architecture/caching-strategies-interview.md).
+**Рекомендации:** для кэша — `allkeys-lru` или `allkeys-lfu`. Для смешанных данных (кэш + постоянные) — `volatile-lru` (вытеснит только ключи с TTL). Подробнее о стратегиях кэширования — в [[caching-strategies-interview|вопросах по стратегиям кэширования]].
 
 ## Q7. Как работают `String` и основные операции?
 
@@ -724,7 +722,7 @@ SET key1 "value1"
 DISCARD
 ```
 
-**Важно:** транзакции `Redis` НЕ поддерживают откат (rollback). Если одна команда в `EXEC` падает с ошибкой — остальные всё равно выполняются. Это отличие от SQL-транзакций, описанных в [вопросах по SQL](sql-interview.md).
+**Важно:** транзакции `Redis` НЕ поддерживают откат (rollback). Если одна команда в `EXEC` падает с ошибкой — остальные всё равно выполняются. Это отличие от SQL-транзакций, описанных в [[sql-interview|вопросах по SQL]].
 
 ```java
 // Spring Data Redis — транзакция через SessionCallback
@@ -864,11 +862,11 @@ public class NotificationPublisher {
 }
 ```
 
-**Ограничения `Pub/Sub`:** fire-and-forget — если подписчик оффлайн, сообщение теряется. Нет персистентности, нет consumer groups. Для надёжной доставки используйте `Redis Streams` или [Kafka](../messaging/kafka-interview.md).
+**Ограничения `Pub/Sub`:** fire-and-forget — если подписчик оффлайн, сообщение теряется. Нет персистентности, нет consumer groups. Для надёжной доставки используйте `Redis Streams` или [[kafka-interview|Kafka]].
 
 ## Q18. (!) Что такое `Redis Streams` и чем они отличаются от `Pub/Sub`?
 
-`Redis Streams` (появились в Redis 5.0) — append-only лог с персистентностью, consumer groups и подтверждением обработки. Аналог по концепции — [Kafka](../messaging/kafka-interview.md) topics.
+`Redis Streams` (появились в Redis 5.0) — append-only лог с персистентностью, consumer groups и подтверждением обработки. Аналог по концепции — [[kafka-interview|Kafka]] topics.
 
 | Характеристика | Pub/Sub | Streams |
 |---------------|---------|---------|
@@ -1114,7 +1112,7 @@ spring:
 
 ## Q22. (!) Какие стратегии кэширования применяются с `Redis`?
 
-Подробнее — в [вопросах по стратегиям кэширования](../architecture/caching-strategies-interview.md).
+Подробнее — в [[caching-strategies-interview|вопросах по стратегиям кэширования]].
 
 ```mermaid
 graph TD
@@ -1311,7 +1309,7 @@ public class CacheInvalidationListener {
 </dependency>
 ```
 
-**Рекомендация:** используйте `Lettuce` — он потокобезопасный, поддерживает реактивный стек ([Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)), эффективнее использует соединения.
+**Рекомендация:** используйте `Lettuce` — он потокобезопасный, поддерживает реактивный стек ([[spring-webflux-interview|Spring WebFlux]]), эффективнее использует соединения.
 
 ## Q26. (!) Как использовать `RedisTemplate` в `Spring`?
 
@@ -1501,11 +1499,11 @@ spring:
 // при наличии spring-boot-starter-data-redis + spring-boot-starter-actuator
 ```
 
-Подробнее о конфигурации Spring Boot — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
+Подробнее о конфигурации Spring Boot — в [[spring-boot-interview|вопросах по Spring Boot]].
 
 ## Q29. (!) Как реализовать распределённую блокировку (`Distributed Lock`)?
 
-Распределённая блокировка нужна для координации доступа к ресурсу между несколькими инстансами приложения. Подробнее о распределённых системах — в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
+Распределённая блокировка нужна для координации доступа к ресурсу между несколькими инстансами приложения. Подробнее о распределённых системах — в [[distributed-systems-interview|вопросах по распределённым системам]].
 
 **Простая реализация через `SET NX EX`:**
 
@@ -1648,7 +1646,7 @@ graph LR
     I3 --> R
 ```
 
-Сессия хранится в `Redis` как `Hash` с ключом `spring:session:sessions:<id>`. Любой инстанс может обслужить любой запрос — sticky sessions не нужны. Подробнее о [Spring Security](../frameworks/spring/spring-security-interview.md).
+Сессия хранится в `Redis` как `Hash` с ключом `spring:session:sessions:<id>`. Любой инстанс может обслужить любой запрос — sticky sessions не нужны. Подробнее о [[spring-security-interview|Spring Security]].
 
 ## Q32. Как реализовать очередь задач на `Redis`?
 
@@ -1684,7 +1682,7 @@ XACK queue:tasks workers <message-id>
 | Streams | At-least-once | Да | Да (XPENDING + XCLAIM) |
 | Pub/Sub | Нет | Нет | Нет |
 
-Для надёжной очереди с гарантией доставки и масштабированием рассмотрите [Kafka](../messaging/kafka-interview.md).
+Для надёжной очереди с гарантией доставки и масштабированием рассмотрите [[kafka-interview|Kafka]].
 
 ## Q33. (!) Как использовать `Pipeline` для увеличения производительности?
 
@@ -1877,7 +1875,7 @@ redis-cli INFO keyspace
 # db0:keys=150000,expires=120000
 ```
 
-Для production-мониторинга: `Redis Exporter` + `Prometheus` + `Grafana`. Подробнее о мониторинге — в [вопросах по Observability](../monitoring/observability-interview.md) и [метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
+Для production-мониторинга: `Redis Exporter` + `Prometheus` + `Grafana`. Подробнее о мониторинге — в [[observability-interview|вопросах по Observability]] и [[metrics-tracing-interview|метрикам и трейсингу]].
 
 ## Q38. (!) В чём разница между `Redis` и `Memcached`?
 
@@ -1894,7 +1892,7 @@ redis-cli INFO keyspace
 | Память на ключ | ~80+ байт overhead | ~48 байт overhead |
 | Max размер значения | 512 MB | 1 MB |
 
-**Когда `Redis`:** сессии, очереди, rate limiting, лидерборды, Pub/Sub, кэш с персистентностью, любые сложные структуры. Интеграция с `Spring` через [Spring Data Redis](../frameworks/spring/spring-boot-interview.md).
+**Когда `Redis`:** сессии, очереди, rate limiting, лидерборды, Pub/Sub, кэш с персистентностью, любые сложные структуры. Интеграция с `Spring` через [[spring-boot-interview|Spring Data Redis]].
 
 **Когда `Memcached`:** простой кэш строк с минимальным overhead на ключ, максимальная утилизация памяти. Multi-threaded из коробки — может быть быстрее на multi-core под чистым key-value кэшем.
 
@@ -2148,14 +2146,14 @@ CLIENT TRACKING on BCAST PREFIX user:
 
 ## See also
 
-- [SQL](sql-interview.md) — реляционные БД, сравнение с in-memory подходами
-- [MongoDB](mongodb-interview.md) — документоориентированная NoSQL БД
-- [Cassandra](cassandra-interview.md) — распределённая NoSQL БД для high-throughput записи
-- [Стратегии кэширования](../architecture/caching-strategies-interview.md) — cache-aside, write-through, write-behind
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — консистентность, репликация, отказоустойчивость
-- [CAP-теорема](../architecture/cap-theorem-interview.md) — Redis как CP/AP-система в зависимости от конфигурации
-- [Apache Kafka](../messaging/kafka-interview.md) — потоковая обработка, сравнение с Redis Streams
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция с Spring Data Redis
+- [[sql-interview|SQL]] — реляционные БД, сравнение с in-memory подходами
+- [[mongodb-interview|MongoDB]] — документоориентированная NoSQL БД
+- [[cassandra-interview|Cassandra]] — распределённая NoSQL БД для high-throughput записи
+- [[caching-strategies-interview|Стратегии кэширования]] — cache-aside, write-through, write-behind
+- [[distributed-systems-interview|Распределённые системы]] — консистентность, репликация, отказоустойчивость
+- [[cap-theorem-interview|CAP-теорема]] — Redis как CP/AP-система в зависимости от конфигурации
+- [[kafka-interview|Apache Kafka]] — потоковая обработка, сравнение с Redis Streams
+- [[spring-boot-interview|Spring Boot]] — интеграция с Spring Data Redis
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

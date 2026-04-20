@@ -1,90 +1,223 @@
 ---
 title: "Couchbase: Основы"
-description: "Комплексное руководство по использованию Couchbase — распределенной NoSQL базы данных."
+description: "Couchbase — распределённая NoSQL БД: архитектура bucket/scope/collection, N1QL запросы, индексы, Java SDK, репликация."
 tags:
   - databases
   - nosql
-  - couchbase-basics
+  - couchbase
 difficulty: "intermediate"
-prerequisites: []
-next: []
 updated: "2026-04-20"
 ---
 # Couchbase: Основы
 
-**Комплексное руководство по использованию `Couchbase` — распределенной `NoSQL` базы данных.**
+Couchbase — распределённая NoSQL БД, совмещающая key-value хранилище, документную модель и SQL-подобный язык N1QL.
 
-## Полезные ссылки
+## Архитектура
 
-### Официальная документация
-- [Couchbase Documentation](https://docs.couchbase.com/) — официальная документация **Couchbase**
+```text
+Cluster
+└── Bucket (логическое пространство, аналог БД)
+    └── Scope (пространство имён, аналог схемы)
+        └── Collection (аналог таблицы, хранит JSON-документы)
+```
 
-### См. также
-- [[mongodb-basics|MongoDB]] — документная **NoSQL** БД
-- [[redis-basics|Redis]] — **key-value** хранилище
+- **Bucket** — top-level контейнер; типы: Couchbase (персистентный), Ephemeral (in-memory), Memcached.
+- **Scope / Collection** — добавлены в Couchbase 7.x; до этого всё хранилось в `_default._default`.
+- **Document** — JSON с уникальным строковым ключом (до 250 байт).
 
-## Содержание
-
-- [Введение в Couchbase](#введение-в-couchbase)
-  - [Основные возможности](#основные-возможности)
-- [Установка](#установка)
-- [N1QL запросы](#n1ql-запросы)
-- [Интеграция с Java](#интеграция-с-java)
-- [Решение проблем](#решение-проблем)
-- [Частые вопросы](#частые-вопросы)
-
-## Введение в Couchbase
-
-**Couchbase** — распределенная **NoSQL** база данных, сочетающая возможности **key-value** хранилища и документной БД.
-
-### Основные возможности
-
-- **Key-Value** и **Document** модели
-- **N1QL** (SQL для JSON)
-- Распределенная архитектура
-- Высокая производительность
-
-## Установка
-
-Запуск **Couchbase** в **Docker**: порты веб-консоли (8091–8096) и протокола (11210–11211).
+## Запуск в Docker
 
 ```bash
-# Docker установка
 docker run -d --name couchbase \
   -p 8091-8096:8091-8096 \
   -p 11210-11211:11210-11211 \
-  couchbase:latest
+  couchbase:enterprise-7.6.0
+# Веб-консоль: http://localhost:8091
 ```
 
-## N1QL запросы
+## N1QL — SQL для JSON
 
 ```sql
--- N1QL запросы (SQL для JSON)
-SELECT username, email
-FROM `users`
-WHERE balance > 1000;
+-- Базовый SELECT
+SELECT name, email, address.city AS city
+FROM `users`._default._default
+WHERE age > 25
+ORDER BY name
+LIMIT 10;
+
+-- INSERT
+INSERT INTO `users`._default._default (KEY, VALUE)
+VALUES ("user:1001", {"name": "Alice", "age": 30, "email": "alice@example.com"});
+
+-- UPSERT (вставка или замена)
+UPSERT INTO `users`._default._default (KEY, VALUE)
+VALUES ("user:1001", {"name": "Alice", "age": 31});
+
+-- UPDATE
+UPDATE `users`._default._default
+SET age = age + 1
+WHERE META().id = "user:1001"
+RETURNING name, age;
+
+-- DELETE
+DELETE FROM `users`._default._default
+WHERE META().id = "user:1001";
+
+-- JOIN двух коллекций
+SELECT o.orderId, c.name AS customer
+FROM `orders`._default._default AS o
+JOIN `users`._default._default AS c ON KEYS o.customerId
+WHERE o.status = 'pending';
+
+-- UNNEST — разворот массива внутри документа
+SELECT t.name, r.day, r.flight
+FROM `travel-sample`.inventory.airline AS t
+UNNEST t.schedule AS r
+WHERE r.day = 0;
+
+-- Агрегация
+SELECT country, COUNT(*) AS cnt
+FROM `travel-sample`.inventory.airline
+GROUP BY country
+HAVING COUNT(*) > 5;
 ```
 
-## Интеграция с Java
+## Индексы
+
+```sql
+-- Primary index (полное сканирование — только для разработки/отладки)
+CREATE PRIMARY INDEX ON `users`;
+
+-- Secondary index на поле
+CREATE INDEX idx_user_email ON `users`._default._default(email);
+
+-- Составной индекс с фильтром
+CREATE INDEX idx_order_status_date
+  ON `orders`._default._default(status, createdAt DESC)
+  WHERE status IN ['pending', 'processing'];
+
+-- EXPLAIN для проверки плана
+EXPLAIN SELECT * FROM `users`._default._default WHERE email = 'a@b.com';
+```
+
+## Java SDK 3.x
+
+```xml
+<dependency>
+  <groupId>com.couchbase.client</groupId>
+  <artifactId>java-client</artifactId>
+  <version>3.6.0</version>
+</dependency>
+```
 
 ```java
-// Couchbase Java SDK
-Cluster cluster = Cluster.connect("localhost", "username", "password");
-Bucket bucket = cluster.bucket("mybucket");
+// Подключение
+Cluster cluster = Cluster.connect("localhost",
+    ClusterOptions.clusterOptions("admin", "password"));
+Bucket bucket = cluster.bucket("users");
+bucket.waitUntilReady(Duration.ofSeconds(10));
 Collection collection = bucket.defaultCollection();
+
+// Get
+GetResult result = collection.get("user:1001");
+JsonObject user = result.contentAsObject();
+
+// Upsert
+JsonObject doc = JsonObject.create()
+    .put("name", "Bob")
+    .put("age", 25);
+collection.upsert("user:1002", doc);
+
+// Sub-document — обновление отдельного поля без загрузки документа
+collection.mutateIn("user:1002", List.of(
+    MutateInSpec.upsert("address.city", "Moscow"),
+    MutateInSpec.increment("loginCount", 1)
+));
+
+// N1QL из Java
+QueryResult queryResult = cluster.query(
+    "SELECT name FROM `users`._default._default WHERE age > $minAge",
+    QueryOptions.queryOptions()
+        .parameters(JsonObject.create().put("minAge", 25))
+        .scanConsistency(QueryScanConsistency.REQUEST_PLUS)
+);
+for (JsonObject row : queryResult.rowsAsObject()) {
+    System.out.println(row.getString("name"));
+}
+
+// TTL — документ живёт 1 час
+collection.upsert("session:abc",
+    JsonObject.create().put("userId", "user:1"),
+    UpsertOptions.upsertOptions().expiry(Duration.ofHours(1)));
 ```
 
-## Решение проблем
+## Spring Data Couchbase
 
-| Симптом | Возможная причина | Решение |
-|--------|-------------------|---------|
-| Подключение к кластеру не удаётся | Неверный host/порт, firewall | Проверить 11210 (KV), 8091 (консоль); с кластером указывать несколько узлов для bootstrap |
-| N1QL запрос медленный | Нет индекса по полям запроса | Создать индекс по полям WHERE/JOIN; использовать EXPLAIN для плана |
-| OutOfMemory при большом результате | Загрузка всего результата в память | Пагинация, LIMIT/OFFSET; стриминг при поддержке SDK |
+```yaml
+spring:
+  couchbase:
+    connection-string: localhost
+    username: admin
+    password: password
+  data:
+    couchbase:
+      bucket-name: users
+      auto-index: true
+```
 
-## Частые вопросы
+```java
+@Document
+public class User {
+    @Id
+    private String id;
+    @Field private String name;
+    @Field private String email;
+    @Field private int age;
+}
 
-**Couchbase vs MongoDB для документов?** Couchbase даёт N1QL (SQL-подобный запрос по JSON), встроенный кэш и мульти-узловой кластер «из коробки». MongoDB — богатый query API и экосистема. Выбор по предпочтениям команды и сценариям (кэш, мобильная синхронизация).
+public interface UserRepository extends CouchbaseRepository<User, String> {
+    List<User> findByAge(int age);
 
-**Нужны ли индексы для N1QL?** Да. Primary index на bucket для доступа по ключу; secondary — для полей в WHERE, JOIN, сортировке. Без подходящего индекса запрос может быть очень медленным.
+    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND email = $1")
+    Optional<User> findByEmail(String email);
+}
+```
 
+## Репликация и отказоустойчивость
+
+- **vBuckets** — 1024 виртуальных сегмента; ключи распределяются по CRC32 хешу.
+- **Replication factor** — 1–3 реплики на bucket.
+- **Failover** — автоматический при потере ноды; данные восстанавливаются из реплик.
+- **XDCR** (Cross Datacenter Replication) — асинхронная репликация между кластерами.
+- **Durability levels**: `None`, `Majority`, `MajorityAndPersistOnMaster`, `PersistToMajority`.
+
+## Full-Text Search
+
+```java
+SearchResult sr = cluster.searchQuery(
+    "user-search-index",
+    SearchQuery.match("Alice").field("name"),
+    SearchOptions.searchOptions().limit(10).highlight()
+);
+for (SearchRow row : sr.rows()) {
+    System.out.println(row.id() + " score=" + row.score());
+}
+```
+
+## Типичные проблемы
+
+| Симптом | Причина | Решение |
+|---------|---------|---------|
+| `DocumentNotFoundException` | Документ не существует | Использовать `getOptional` или `try/catch` |
+| N1QL медленный | Нет secondary index | `EXPLAIN` запрос; создать индекс по полям WHERE |
+| `TempFailException` | Перегрузка, нехватка памяти | Retry с jitter; увеличить `memoryQuota` |
+| Outdated read в N1QL | Eventual consistency | `QueryScanConsistency.REQUEST_PLUS` |
+| Потеря данных при failover | `replicateTo=0` | Установить Durability `Majority` или выше |
+
+## See also
+
+- [[mongodb-basics|MongoDB]] — документная NoSQL БД
+- [[redis-basics|Redis]] — key-value хранилище
+- [[cassandra-basics|Apache Cassandra]] — wide-column NoSQL
+- [[cassandra-basics|Apache Cassandra: основы]] — wide-column NoSQL
+- [[mongodb-crud|MongoDB CRUD]] — паттерны работы с документами

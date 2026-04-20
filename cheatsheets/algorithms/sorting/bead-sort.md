@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[bubble-sort|bubble-sort.md]] — пузырьковая сортировка (`Bubble Sort`)
 - [[counting-sort|counting-sort.md]] — сортировка подсчётом (`Counting Sort`)
 
+- [[selection-sort|Сортировка выбором (Selection Sort)]]
+- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
+- [[heap-sort|Сортировка кучей (Heap Sort)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

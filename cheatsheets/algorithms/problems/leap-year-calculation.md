@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[age-calculation|Вычисление возраста]] — вычисление возраста
 - [[distance-between-points|Расстояние между точками]] — вычисление расстояния
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

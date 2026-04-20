@@ -26,6 +26,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-fp-advanced|Продвинутое ФП]]
 
+- [[scala-collections-list|Scala Collections — List]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [[scala-collections-vector|Scala Collections — Vector]]
 ## Содержание
 
 - [Введение в Implicit](#введение-в-implicit)

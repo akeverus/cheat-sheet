@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Spring Boot Maven Plugin](https://docs.spring.io/spring-boot/docs/current/maven-plugin/reference/html/)
 - [Maven Wrapper](https://maven.apache.org/wrapper/)
 
+
+### См. также
+- [[maven|Maven (основы)]]
 ## Содержание
 
 - [Продвинутая конфигурация проекта](#продвинутая-конфигурация-проекта)

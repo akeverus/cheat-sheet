@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Property-based testing (PBT)` — testing approach, где tests describe **properties** code должен hold, framework **generates inputs automatically**. Originated с **QuickCheck** (Haskell, 2000). Modern tools: **Hypothesis** (Python), **jqwik** (Java), **fast-check** (JS), **PropEr** (Erlang). Дополняет example-based testing.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -514,13 +512,13 @@ class StackMachine(RuleBasedStateMachine):
 
 ## See also
 
-- [Unit Testing](unit-testing-interview.md) — context
-- [Mutation Testing](mutation-testing-interview.md) — также quality-focused
-- [Test Strategies](test-strategies-interview.md)
-- [Load Testing](load-testing-interview.md)
-- [Chaos Engineering](chaos-engineering-interview.md) — similar mindset (find unknowns)
+- [[unit-testing-interview|Unit Testing]] — context
+- [[mutation-testing-interview|Mutation Testing]] — также quality-focused
+- [[test-strategies-interview|Test Strategies]]
+- [[load-testing-interview|Load Testing]]
+- [[chaos-engineering-interview|Chaos Engineering]] — similar mindset (find unknowns)
 - [[code-quality-interview|Code Quality]]
-- [Mockito](mockito-interview.md) — Java mocking
-- [Integration Testing](integration-testing-interview.md)
-- [Scala](../programming-languages/scala/scala-interview.md) — ScalaCheck
+- [[mockito-interview|Mockito]] — Java mocking
+- [[integration-testing-interview|Integration Testing]]
+- [[scala-interview|Scala]] — ScalaCheck
 - [[python-interview|Python]] — Hypothesis

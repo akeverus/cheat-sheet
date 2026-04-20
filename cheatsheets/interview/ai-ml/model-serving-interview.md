@@ -18,8 +18,6 @@ updated: "2026-04-19"
 
 **Model serving** — deployment ML/LLM моделей в production. Когда **API не подходит** (privacy, scale, cost) — нужно **self-host**. Стек: **vLLM**, **TGI**, **Triton**, **TorchServe**, **BentoML**, **Ollama**. Главные оптимизации: **continuous batching**, **quantization**, **KV cache**, **GPU sharing**.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -659,16 +657,16 @@ Custom code, easy deploy?
 
 ## See also
 
-- [LLM Basics](llm-basics-interview.md) — что serve'им
-- [MLOps](mlops-interview.md) — operations контекст
-- [LLM Integration Patterns](llm-integration-patterns-interview.md) — интеграция
-- [AI Agents](ai-agents-interview.md) — где models используются
-- [RAG](rag-interview.md) — application
-- [Embeddings](embeddings-interview.md) — embedding model serving
-- [Микросервисы](../architecture/microservices-interview.md) — model = microservice
-- [Kubernetes](../devops/kubernetes-interview.md) — deployment
-- [Docker](../devops/docker-interview.md) — containers для serving
-- [Performance Testing](../performance/performance-testing-interview.md) — latency/throughput tests
-- [Scalability](../architecture/scalability-patterns-interview.md) — horizontal scaling
-- [Memory Management](../performance/memory-management-interview.md) — KV cache, GPU memory
+- [[llm-basics-interview|LLM Basics]] — что serve'им
+- [[mlops-interview|MLOps]] — operations контекст
+- [[llm-integration-patterns-interview|LLM Integration Patterns]] — интеграция
+- [[ai-agents-interview|AI Agents]] — где models используются
+- [[rag-interview|RAG]] — application
+- [[embeddings-interview|Embeddings]] — embedding model serving
+- [[microservices-interview|Микросервисы]] — model = microservice
+- [[kubernetes-interview|Kubernetes]] — deployment
+- [[docker-interview|Docker]] — containers для serving
+- [[performance-testing-interview|Performance Testing]] — latency/throughput tests
+- [[scalability-patterns-interview|Scalability]] — horizontal scaling
+- [[memory-management-interview|Memory Management]] — KV cache, GPU memory
 - [[gpu-сloud-interview|GPU Cloud]] — где запустить (если будем добавлять)

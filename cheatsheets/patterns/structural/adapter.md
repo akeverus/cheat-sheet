@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[java-collections-list|Java Collections]] — **Java Collections**
 - [[decorator|Decorator]] — **Decorator Pattern**
 
+- [[composite|Компоновщик (Composite)]]
+- [[facade|Фасад (Facade)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

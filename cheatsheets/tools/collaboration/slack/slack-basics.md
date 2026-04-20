@@ -24,6 +24,9 @@ Slack — мессенджер для команд: каналы по темам
 - [Slack API](https://api.slack.com/)
 - [Slack Integrations](https://slack.com/integrations)
 
+
+### См. также
+- [[security-tools|Инструменты безопасности (Security Tools)]]
 ## Содержание
 
 - [Каналы и организация](#каналы-и-организация)

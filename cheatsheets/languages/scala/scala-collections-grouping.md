@@ -27,6 +27,9 @@ related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 - [[scala-collections|Обзор коллекций]]
 - [[scala-collections-operations|Операции над коллекциями]]
 
+- [[scala-collections-list|Scala Collections — List]]
+- [[scala-collections-vector|Scala Collections — Vector]]
+- [[scala-collections-set|Scala Collections — Set]]
 ## Содержание
 
 - [Группировка](#группировка)

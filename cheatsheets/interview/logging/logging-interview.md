@@ -16,8 +16,6 @@ updated: "2026-04-13"
 
 Подробные ответы по логированию: `SLF4J`, `Logback`, `MDC`, структурированные логи, `ELK`, трассировка, безопасность.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -444,7 +442,7 @@ public class AsyncConfig implements AsyncConfigurer {
 }
 ```
 
-Подробнее о трассировке в [вопросах по метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
+Подробнее о трассировке в [[metrics-tracing-interview|вопросах по метрикам и трейсингу]].
 
 ## Q10. (!) Что такое структурированное логирование (`JSON`)?
 
@@ -609,7 +607,7 @@ if (log.isDebugEnabled()) {
 
 ## Q14. (!) Как связать логи с распределённой трассировкой?
 
-В [микросервисной архитектуре](../architecture/microservices-interview.md) каждый запрос проходит через несколько сервисов. Для корреляции логов используют `traceId` и `spanId`.
+В [[microservices-interview|микросервисной архитектуре]] каждый запрос проходит через несколько сервисов. Для корреляции логов используют `traceId` и `spanId`.
 
 ```mermaid
 graph LR
@@ -660,7 +658,7 @@ public RestTemplate restTemplate(RestTemplateBuilder builder) {
 }
 ```
 
-Стандарты заголовков: W3C `traceparent`, B3 (`X-B3-TraceId`, `X-B3-SpanId`). Подробнее в [вопросах по наблюдаемости](../monitoring/observability-interview.md).
+Стандарты заголовков: W3C `traceparent`, B3 (`X-B3-TraceId`, `X-B3-SpanId`). Подробнее в [[observability-interview|вопросах по наблюдаемости]].
 
 ## Q15. Как не логировать чувствительные данные?
 
@@ -770,7 +768,7 @@ logging:
 
 ## Q18. (!) Что такое `correlation id` и как его использовать в микросервисах?
 
-`Correlation id` (или `traceId`) -- уникальный идентификатор, проходящий через все сервисы в рамках одного пользовательского запроса. Позволяет отфильтровать все логи одного запроса в [Elasticsearch](../databases/elasticsearch-interview.md) / `Kibana`.
+`Correlation id` (или `traceId`) -- уникальный идентификатор, проходящий через все сервисы в рамках одного пользовательского запроса. Позволяет отфильтровать все логи одного запроса в [[elasticsearch-interview|Elasticsearch]] / `Kibana`.
 
 ```mermaid
 sequenceDiagram
@@ -899,7 +897,7 @@ output.elasticsearch:
 - `Splunk` -- enterprise решение
 - Cloud-native: AWS CloudWatch, GCP Cloud Logging, Azure Monitor
 
-Подробнее о `Elasticsearch` -- в [вопросах по Elasticsearch](../databases/elasticsearch-interview.md).
+Подробнее о `Elasticsearch` -- в [[elasticsearch-interview|вопросах по Elasticsearch]].
 
 ## Q21. Что такое `Markers` в `SLF4J`/`Logback` и когда их использовать?
 
@@ -1094,7 +1092,7 @@ public class MdcRunnable implements Runnable {
 executor.submit(new MdcRunnable(() -> processOrder(orderId)));
 ```
 
-Для реактивных стеков см. Q30 и [вопросы по WebFlux](../frameworks/spring/spring-webflux-interview.md).
+Для реактивных стеков см. Q30 и [[spring-webflux-interview|вопросы по WebFlux]].
 
 ## Q25. Что такое `Fluent API` в `Log4j2`?
 
@@ -1169,7 +1167,7 @@ log.debug("Response: size={}, status={}", response.length(), response.getStatus(
 
 ## Q27. Как интегрировать логи с метриками (`Micrometer`, `Prometheus`)?
 
-Логи и [метрики](../monitoring/metrics-tracing-interview.md) -- два разных канала наблюдаемости. Но их можно связать:
+Логи и [[metrics-tracing-interview|метрики]] -- два разных канала наблюдаемости. Но их можно связать:
 
 ```java
 @Component
@@ -1209,7 +1207,7 @@ management:
 
 ## Q28. Что такое `log aggregation` и зачем он нужен?
 
-В [распределённых системах](../architecture/distributed-systems-interview.md) логи размазаны по десяткам узлов. `Log aggregation` -- централизованный сбор всех логов в одно хранилище для поиска и анализа.
+В [[distributed-systems-interview|распределённых системах]] логи размазаны по десяткам узлов. `Log aggregation` -- централизованный сбор всех логов в одно хранилище для поиска и анализа.
 
 ```mermaid
 graph TB
@@ -1289,7 +1287,7 @@ public class LoggingAutoConfiguration {
 
 ## Q30. Как логировать в реактивных стеках (`WebFlux`, `Project Reactor`)?
 
-В реактивных цепочках выполнение переключается между потоками; `MDC` (`ThreadLocal`) не передаётся автоматически. Подробнее о реактивном программировании -- в [вопросах по WebFlux](../frameworks/spring/spring-webflux-interview.md).
+В реактивных цепочках выполнение переключается между потоками; `MDC` (`ThreadLocal`) не передаётся автоматически. Подробнее о реактивном программировании -- в [[spring-webflux-interview|вопросах по WebFlux]].
 
 ```java
 // ПРОБЛЕМА: MDC теряется при переключении потока
@@ -2126,13 +2124,13 @@ implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
 ## See also
 
-- [Стратегии логирования](../monitoring/logging-strategies-interview.md) — архитектурные решения: sampling, retention, централизованная агрегация, стоимость хранения логов
-- [Метрики и трейсинг](../monitoring/metrics-tracing-interview.md) — `Prometheus`, `Micrometer`, `OpenTelemetry`: как метрики и трейсы дополняют логи
-- [Observability](../monitoring/observability-interview.md) — три столпа наблюдаемости (логи, метрики, трейсы), `SLI`/`SLO`/`SLA`, `OpenTelemetry Collector`
-- [Микросервисы](../architecture/microservices-interview.md) — паттерны, где structured logging и correlation ID критически важны для диагностики
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — `logback-spring.xml`, `spring.profiles`, `Logstash Logback Encoder`, `Actuator`
-- [Elasticsearch](../databases/elasticsearch-interview.md) — хранение, индексирование и поиск по логам; mapping, ILM политики
-- [Kubernetes](../devops/kubernetes-interview.md) — `stdout`/`stderr` стратегия в pod, Fluentd/Fluent Bit, агрегация логов в кластере
+- [[logging-strategies-interview|Стратегии логирования]] — архитектурные решения: sampling, retention, централизованная агрегация, стоимость хранения логов
+- [[metrics-tracing-interview|Метрики и трейсинг]] — `Prometheus`, `Micrometer`, `OpenTelemetry`: как метрики и трейсы дополняют логи
+- [[observability-interview|Observability]] — три столпа наблюдаемости (логи, метрики, трейсы), `SLI`/`SLO`/`SLA`, `OpenTelemetry Collector`
+- [[microservices-interview|Микросервисы]] — паттерны, где structured logging и correlation ID критически важны для диагностики
+- [[spring-boot-interview|Spring Boot]] — `logback-spring.xml`, `spring.profiles`, `Logstash Logback Encoder`, `Actuator`
+- [[elasticsearch-interview|Elasticsearch]] — хранение, индексирование и поиск по логам; mapping, ILM политики
+- [[kubernetes-interview|Kubernetes]] — `stdout`/`stderr` стратегия в pod, Fluentd/Fluent Bit, агрегация логов в кластере
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

@@ -29,6 +29,7 @@ updated: "2026-04-20"
 - [[testing-tools-overview|Testing Tools Overview]]
 
 
+- [[rest-assured|REST Assured для Java]]
 ## Содержание
 
 - [Зачем тестировать БД](#зачем-тестировать-бд)

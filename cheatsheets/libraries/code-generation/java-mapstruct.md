@@ -26,6 +26,12 @@ updated: "2026-04-20"
 - [MapStruct Examples](https://github.com/mapstruct/mapstruct-examples) — примеры использования
 - [MapStruct Spring Extensions](https://github.com/mapstruct/mapstruct-spring-extensions) — **Spring** интеграция
 
+
+### См. также
+- [[jackson|Jackson: JSON сериализация в Java]]
+- [[java-gson|Gson]]
+- [[java-junit5|JUnit 5]]
+- [[java-mockito|Mockito]]
 ## Содержание
 
 - [Введение в MapStruct](#введение-в-mapstruct)

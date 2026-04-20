@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[word-count|Подсчет слов]] — подсчёт слов
 - [[caesar-cipher|Шифр Цезаря]] — шифрование
 
+- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
+- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

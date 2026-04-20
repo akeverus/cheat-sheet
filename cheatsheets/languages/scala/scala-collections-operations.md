@@ -27,6 +27,8 @@ related: ["scala/scala-collections.md", "scala/scala-collections-list.md"]
 - [[scala-collections-list|Списки]]
 - [[scala-collections-grouping|Группировка]]
 
+- [[scala-collections-vector|Scala Collections — Vector]]
+- [[scala-collections-set|Scala Collections — Set]]
 ## Содержание
 
 - [Трансформации](#трансформации)

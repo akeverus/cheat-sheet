@@ -20,6 +20,10 @@ updated: "2026-04-20"
 - [NATS Java Client (GitHub)](https://github.com/nats-io/nats.java)
 - [NATS by Example](https://docs.nats.io/developing-with-nats/by_example)
 
+
+### См. также
+- [[activemq|Apache ActiveMQ]]
+- [[rabbitmq-advanced|RabbitMQ Advanced]]
 ## Содержание
 
 - [Основы NATS](#основы-nats)

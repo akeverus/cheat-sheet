@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Feed System` (Twitter timeline, Facebook News Feed, Instagram) — classic system design. Fundamental trade-off: **fan-out on write** vs **fan-out on read**. Celebrity problem, ranking, caching. Интересный challenge для middle/senior ролей.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 - [Twitter — Timelines at scale](https://www.infoq.com/presentations/Twitter-Timeline-Scalability/)
@@ -562,13 +560,13 @@ Clients
 
 ## See also
 
-- [System Design](system-design-interview.md) — общие принципы
-- [Design Chat System](design-chat-system-interview.md) — fan-out parallels
-- [Caching](../architecture/caching-strategies-interview.md) — Redis, CDN
-- [Cassandra](../databases/cassandra-interview.md) — post storage
-- [Redis](../databases/redis-interview.md) — timeline sorted set
+- [[system-design-interview|System Design]] — общие принципы
+- [[design-chat-system-interview|Design Chat System]] — fan-out parallels
+- [[caching-strategies-interview|Caching]] — Redis, CDN
+- [[cassandra-interview|Cassandra]] — post storage
+- [[redis-interview|Redis]] — timeline sorted set
 - [[messaging-interview|Messaging]] — Kafka fanout
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — fanout patterns
-- [Distributed Systems](../architecture/distributed-systems-interview.md) — eventual consistency
-- [Design URL Shortener](design-url-shortener-interview.md) — read-heavy similar
-- [Load Balancing](../architecture/load-balancing-interview.md) — traffic distribution
+- [[scalability-patterns-interview|Scalability Patterns]] — fanout patterns
+- [[distributed-systems-interview|Distributed Systems]] — eventual consistency
+- [[design-url-shortener-interview|Design URL Shortener]] — read-heavy similar
+- [[load-balancing-interview|Load Balancing]] — traffic distribution

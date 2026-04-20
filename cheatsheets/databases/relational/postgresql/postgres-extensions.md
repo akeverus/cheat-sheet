@@ -27,6 +27,9 @@ related: ["databases/postgres-performance-tuning.md", "databases/postgres-replic
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-admin|postgres-admin.md]] — администрирование
 
+- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
+- [[postgres-security|PostgreSQL: Безопасность]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
 ## Содержание
 
 - [Введение в расширения PostgreSQL](#введение-в-расширения-postgresql)

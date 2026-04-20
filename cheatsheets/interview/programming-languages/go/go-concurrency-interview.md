@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 Goroutines и channels — главная фича Go, делающая concurrent programming доступным. Goroutine стоит ~2KB памяти (vs ~1MB у OS thread). На интервью спрашивают: устройство scheduler, разницу buffered/unbuffered channels, select, мьютексы, паттерны (worker pool, fan-out/fan-in).
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -940,7 +938,7 @@ mu.Lock() // deadlock — pthread re-entry не поддерживается
 
 С **Java 21 (Project Loom)** появились **virtual threads** — концептуально похожие на goroutines (M:N модель). Java догнала Go в этом аспекте.
 
-Подробнее — в [Java Concurrency](../java/java-concurrency-interview.md).
+Подробнее — в [[java-concurrency-interview|Java Concurrency]].
 
 ## Q35. Go channels vs Java BlockingQueue?
 
@@ -957,15 +955,15 @@ Channels более выразительны (особенно `select`). Blocki
 
 ## See also
 
-- [Go (базовый)](go-interview.md) — основы языка
-- [Go Memory & GC](go-memory-gc-interview.md) — escape analysis, GC pauses
-- [Go Standard Library](go-stdlib-interview.md) — net/http, context
-- [Java Concurrency](../java/java-concurrency-interview.md) — для сравнения
-- [Kotlin Coroutines](../kotlin/kotlin-coroutines-interview.md) — для сравнения
-- [Event-driven паттерны](../../architecture/event-driven-patterns-interview.md) — channels вписываются
-- [Микросервисы](../../architecture/microservices-interview.md) — Go идеален для них
-- [gRPC](../../api/grpc-interview.md) — Go реализация сильна
-- [Performance Testing](../../performance/performance-testing-interview.md) — benchmark goroutines
+- [[go-interview|Go (базовый)]] — основы языка
+- [[go-memory-gc-interview|Go Memory & GC]] — escape analysis, GC pauses
+- [[go-stdlib-interview|Go Standard Library]] — net/http, context
+- [[java-concurrency-interview|Java Concurrency]] — для сравнения
+- [[kotlin-coroutines-interview|Kotlin Coroutines]] — для сравнения
+- [[event-driven-patterns-interview|Event-driven паттерны]] — channels вписываются
+- [[microservices-interview|Микросервисы]] — Go идеален для них
+- [[grpc-interview|gRPC]] — Go реализация сильна
+- [[performance-testing-interview|Performance Testing]] — benchmark goroutines
 
 - [[go-generics-interview|Go Generics]]
 - [[go-interview|Go]]

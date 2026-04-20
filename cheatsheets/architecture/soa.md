@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 - [[event-driven|Event-Driven Architecture]] — **Event-Driven Architecture**
 
+- [[ddd|Domain-Driven Design (DDD)]]
+- [[event-sourcing|Event Sourcing]]
 ## Содержание
 
 - [Введение в SOA](#введение-в-soa)

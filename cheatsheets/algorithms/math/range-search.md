@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[rectangle-overlap|Проверка перекрытия двух прямоугольников]] — перекрытие прямоугольников
 - [Бинарное дерево](../trees/) — бинарное дерево
 
+- [[line-intersection|Пересечение прямых (Line Intersection)]]
+- [[circle-area-calculation|Вычисление площади круга (Circle Area Calculation)]]
+- [[coprime-numbers|Взаимно простые числа (Coprime Numbers)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

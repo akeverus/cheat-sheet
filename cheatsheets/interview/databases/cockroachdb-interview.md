@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `CockroachDB` (Cockroach Labs, с 2015) — distributed SQL database inspired Google Spanner. **PostgreSQL wire protocol compatible**, ACID transactions across multiple nodes, multi-region capable. Open-source (BSL license). Конкуренты: Spanner, Aurora, YugabyteDB, TiDB.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -497,19 +495,19 @@ CREATE INVERTED INDEX ON orders (data);
 
 ## See also
 
-- [PostgreSQL](postgresql-interview.md) — main compatibility target
-- [ScyllaDB](scylladb-interview.md) — distributed wide-column (for сравнения)
-- [Cassandra](cassandra-interview.md) — wide-column NoSQL
-- [MongoDB](mongodb-interview.md) — document
-- [DynamoDB](dynamodb-interview.md) — managed NoSQL
-- [Database Architecture](database-architecture-interview.md) — distributed SQL context
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, consensus
-- [CAP Theorem](../architecture/cap-theorem-interview.md) — consistency vs availability
-- [Микросервисы](../architecture/microservices-interview.md) — где CockroachDB fits
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — horizontal scaling
-- [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — strong consistency
-- [GCP](../cloud/gcp-interview.md) — Spanner alternative
-- [AWS](../cloud/aws-interview.md) — Aurora alternative
+- [[postgresql-interview|PostgreSQL]] — main compatibility target
+- [[scylladb-interview|ScyllaDB]] — distributed wide-column (for сравнения)
+- [[cassandra-interview|Cassandra]] — wide-column NoSQL
+- [[mongodb-interview|MongoDB]] — document
+- [[dynamodb-interview|DynamoDB]] — managed NoSQL
+- [[database-architecture-interview|Database Architecture]] — distributed SQL context
+- [[distributed-systems-interview|Распределённые системы]] — Raft, consensus
+- [[cap-theorem-interview|CAP Theorem]] — consistency vs availability
+- [[microservices-interview|Микросервисы]] — где CockroachDB fits
+- [[scalability-patterns-interview|Scalability Patterns]] — horizontal scaling
+- [[consistency-patterns-interview|Паттерны согласованности]] — strong consistency
+- [[gcp-interview|GCP]] — Spanner alternative
+- [[aws-interview|AWS]] — Aurora alternative
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

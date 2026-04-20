@@ -19,8 +19,6 @@ updated: "2026-04-18"
 
 **Data Lake** — хранилище **сырых** данных любого формата на cheap storage (S3, ADLS, HDFS). **Lakehouse** — комбинация: lake-простота + warehouse-фичи (ACID, schema, indexing). Реализуется через **Delta Lake** (Databricks), **Apache Iceberg** (Netflix → Apache), **Apache Hudi** (Uber → Apache).
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -608,17 +606,17 @@ spark.readStream.format("kafka")...load() \
 
 ## See also
 
-- [Data Warehousing](data-warehousing-interview.md) — alternative storage
-- [Apache Spark](apache-spark-interview.md) — primary engine для Lakehouse
-- [Apache Flink](apache-flink-interview.md) — streaming + Iceberg/Hudi
-- [Apache Kafka](../messaging/kafka-interview.md) — source для streaming
-- [dbt](dbt-interview.md) — может работать в Lakehouse контексте
-- [Apache Airflow](apache-airflow-interview.md) — orchestration
-- [Stream Processing](stream-processing-interview.md) — стрим данные → lake
-- [PostgreSQL](../databases/postgresql-interview.md) — source для CDC
-- [Микросервисы](../architecture/microservices-interview.md) — produce events → lake
-- [Caching](../architecture/caching-strategies-interview.md) — для acceleration
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — concepts
+- [[data-warehousing-interview|Data Warehousing]] — alternative storage
+- [[apache-spark-interview|Apache Spark]] — primary engine для Lakehouse
+- [[apache-flink-interview|Apache Flink]] — streaming + Iceberg/Hudi
+- [[kafka-interview|Apache Kafka]] — source для streaming
+- [[dbt-interview|dbt]] — может работать в Lakehouse контексте
+- [[apache-airflow-interview|Apache Airflow]] — orchestration
+- [[stream-processing-interview|Stream Processing]] — стрим данные → lake
+- [[postgresql-interview|PostgreSQL]] — source для CDC
+- [[microservices-interview|Микросервисы]] — produce events → lake
+- [[caching-strategies-interview|Caching]] — для acceleration
+- [[distributed-systems-interview|Распределённые системы]] — concepts
 
 - [[apache-airflow-interview|Apache Airflow]]
 - [[apache-flink-interview|Apache Flink]]

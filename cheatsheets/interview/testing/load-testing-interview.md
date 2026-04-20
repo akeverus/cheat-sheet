@@ -19,8 +19,6 @@ updated: "2026-04-19"
 
 `Load testing` — testing system под expected/peak load. Отличается от **stress testing** (find breaking point), **spike testing** (sudden jumps), **soak testing** (sustained over hours/days). Главные tools: **JMeter** (legacy, GUI), **k6** (modern, JS-based), **Gatling** (Scala/Java), **Locust** (Python). Critical для capacity planning.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -549,14 +547,14 @@ Required: 15 instances
 
 ## See also
 
-- [Performance Testing](../performance/performance-testing-interview.md) — общая концепция
-- [Unit Testing](unit-testing-interview.md) — context
-- [Mutation Testing](mutation-testing-interview.md)
-- [Property-based Testing](property-based-testing-interview.md)
-- [Chaos Engineering](chaos-engineering-interview.md) — production resilience
-- [Application Profiling](../performance/application-profiling-interview.md) — find bottlenecks
-- [Scalability Patterns](../architecture/scalability-patterns-interview.md) — context
-- [Микросервисы](../architecture/microservices-interview.md) — testing distributed systems
-- [Observability](../monitoring/observability-interview.md) — monitor under load
+- [[performance-testing-interview|Performance Testing]] — общая концепция
+- [[unit-testing-interview|Unit Testing]] — context
+- [[mutation-testing-interview|Mutation Testing]]
+- [[property-based-testing-interview|Property-based Testing]]
+- [[chaos-engineering-interview|Chaos Engineering]] — production resilience
+- [[application-profiling-interview|Application Profiling]] — find bottlenecks
+- [[scalability-patterns-interview|Scalability Patterns]] — context
+- [[microservices-interview|Микросервисы]] — testing distributed systems
+- [[observability-interview|Observability]] — monitor under load
 - [[cicd-interview|CI/CD]] — automation
-- [Caching](../architecture/caching-strategies-interview.md) — для performance
+- [[caching-strategies-interview|Caching]] — для performance

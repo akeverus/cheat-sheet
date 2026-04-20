@@ -22,6 +22,9 @@ updated: "2026-04-20"
 - [Molecule](https://molecule.readthedocs.io/) — тестирование ролей
 - [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html) — шифрование секретов
 
+
+### См. также
+- [[iac-overview|Infrastructure as Code (IaC) — обзор]]
 ## Содержание
 
 - [Основы Ansible](#основы-ansible)

@@ -28,6 +28,8 @@ Apache Spark MLlib — это библиотека машинного обуче
 - [[logistic-regression|Логистическая регрессия]]
 - [[spark-mllib|Spark MLlib]]
 
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [[ai-libraries|Обзор ИИ библиотек]]
 ## Содержание
 
 - [Введение в машинное обучение](#введение-в-машинное-обучение)

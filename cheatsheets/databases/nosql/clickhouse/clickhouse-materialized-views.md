@@ -36,6 +36,7 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-queries.md"]
 - [[clickhouse-tables|Таблицы]] — создание таблиц и движков
 - [[clickhouse-queries|Запросы]] — агрегационные запросы
 
+- [[clickhouse-indexes|ClickHouse: Индексы и оптимизация — Полное руководство по индексации и партиционированию]]
 ## Содержание
 
 - [Введение в материализованные представления](#введение-в-материализованные-представления)

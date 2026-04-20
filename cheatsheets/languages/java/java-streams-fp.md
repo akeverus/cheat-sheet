@@ -20,6 +20,10 @@ updated: "2026-04-20"
 - [Optional Best Practices](https://www.baeldung.com/java-optional)
 - [Java Functional Interfaces](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/package-summary.html)
 
+
+### См. также
+- [[java-collections-converting|Java Collections: конвертирование]]
+- [[java-reactive-project-reactor|Java Reactive: Project Reactor]]
 ## Содержание
 
 - [Основы функционального программирования](#основы-функционального-программирования)

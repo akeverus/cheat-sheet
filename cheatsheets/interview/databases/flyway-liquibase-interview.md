@@ -21,9 +21,7 @@ updated: "2026-04-13"
 
 Полное покрытие инструментов миграции баз данных: `Flyway` (версионные и повторяемые миграции, callbacks, placeholders, baseline, repair, clean) и `Liquibase` (changelog, changeset, rollback, preconditions, contexts, labels, diff). Сравнение подходов, интеграция со `Spring Boot`, стратегии zero-downtime миграций.
 
-Дата последнего обновления: 2026-04-13
-
-Краткое введение: **Миграции баз данных** — это контролируемые, версионируемые изменения схемы и данных БД. Два самых популярных инструмента в Java-экосистеме — `Flyway` и `Liquibase`. На собеседованиях проверяют понимание принципов миграций, умение выбрать подходящий инструмент и знание стратегий безопасного развёртывания. Тема тесно связана с [SQL](sql-interview.md), [архитектурой БД](database-architecture-interview.md) и [Spring Boot](../frameworks/spring/spring-boot-interview.md).
+Краткое введение: **Миграции баз данных** — это контролируемые, версионируемые изменения схемы и данных БД. Два самых популярных инструмента в Java-экосистеме — `Flyway` и `Liquibase`. На собеседованиях проверяют понимание принципов миграций, умение выбрать подходящий инструмент и знание стратегий безопасного развёртывания. Тема тесно связана с [[sql-interview|SQL]], [[database-architecture-interview|архитектурой БД]] и [[spring-boot-interview|Spring Boot]].
 
 ## Полезные ссылки
 
@@ -904,7 +902,7 @@ liquibase diffChangeLog \
 - Важна **простота** и минимальный порог входа
 - Rollback реализуется через **forward-only миграции** (новая миграция вместо отката)
 - Проект **небольшой-средний** с одной БД
-- Используете expand-contract pattern для zero-downtime (см. [стратегии деплоя](../cicd/deployment-strategies-interview.md))
+- Используете expand-contract pattern для zero-downtime (см. [[deployment-strategies-interview|стратегии деплоя]])
 
 ### Выбирайте Liquibase, если:
 
@@ -1118,7 +1116,7 @@ ALTER TABLE users DROP COLUMN name;
 3. **Разделяйте** миграцию схемы и деплой кода во времени
 4. **Тестируйте** обратную совместимость: старый код должен работать с новой схемой
 
-Подробнее о стратегиях деплоя — в [вопросах по стратегиям деплоя](../cicd/deployment-strategies-interview.md).
+Подробнее о стратегиях деплоя — в [[deployment-strategies-interview|вопросах по стратегиям деплоя]].
 
 ## Q26. Какие правила backward-compatible миграций надо соблюдать?
 
@@ -2115,13 +2113,13 @@ pg_repack -t orders -o created_at
 
 ## See also
 
-- [SQL](sql-interview.md) — основы SQL, DDL/DML, оптимизация запросов
-- [Database Architecture](database-architecture-interview.md) — архитектура БД, индексы, репликация, шардирование
-- [Транзакции и уровни изоляции](database-transactions-interview.md) — ACID, MVCC, блокировки, распределённые транзакции
-- [Hibernate](hibernate-interview.md) — ORM, кэширование, маппинг сущностей
-- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — репозитории, query methods, спецификации
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — автоконфигурация миграций, DataSource, профили
-- [Стратегии деплоя](../cicd/deployment-strategies-interview.md) — zero-downtime деплой и его связь с миграциями БД
+- [[sql-interview|SQL]] — основы SQL, DDL/DML, оптимизация запросов
+- [[database-architecture-interview|Database Architecture]] — архитектура БД, индексы, репликация, шардирование
+- [[database-transactions-interview|Транзакции и уровни изоляции]] — ACID, MVCC, блокировки, распределённые транзакции
+- [[hibernate-interview|Hibernate]] — ORM, кэширование, маппинг сущностей
+- [[spring-data-jpa-interview|Spring Data JPA]] — репозитории, query methods, спецификации
+- [[spring-boot-interview|Spring Boot]] — автоконфигурация миграций, DataSource, профили
+- [[deployment-strategies-interview|Стратегии деплоя]] — zero-downtime деплой и его связь с миграциями БД
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[clickhouse-interview|ClickHouse]]

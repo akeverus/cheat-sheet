@@ -30,6 +30,8 @@ updated: "2026-04-20"
 - [[mysql-design|mysql-design.md]] — проектирование баз данных
 - [[mysql-queries|mysql-queries.md]] — **SQL** запросы в **MySQL**
 
+- [[postgres-indexes|PostgreSQL: типы индексов]]
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
 ## Содержание
 
 - [Введение в MySQL](#введение-в-mysql)

@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `ClickHouse` — open-source columnar OLAP database от **Yandex** (open-source с 2016). Известен **очень высокой скоростью** на analytical queries (миллиарды rows за секунды). Используется в observability (logs, metrics, traces), real-time analytics, ad-tech. Компания **ClickHouse Inc.** (с 2021) — managed cloud.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -671,19 +669,19 @@ CREATE TABLE pg_users ENGINE = PostgreSQL('host:5432', 'db', 'users', 'user', 'p
 
 ## See also
 
-- [PostgreSQL](postgresql-interview.md) — OLTP comparison
-- [Data Warehousing](../data-engineering/data-warehousing-interview.md) — context
-- [Apache Spark](../data-engineering/apache-spark-interview.md) — alternative для batch analytics
-- [Apache Flink](../data-engineering/apache-flink-interview.md) — для stream processing → ClickHouse
-- [Apache Kafka](../messaging/kafka-interview.md) — Kafka engine ingestion
-- [Stream Processing](../data-engineering/stream-processing-interview.md) — context
-- [Loki + Grafana](../monitoring/loki-grafana-interview.md) — alternative для logs
-- [ELK Stack](../monitoring/elk-stack-interview.md) — alternative для logs
-- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — observability data → ClickHouse
-- [Микросервисы](../architecture/microservices-interview.md) — analytics backend
-- [Caching](../architecture/caching-strategies-interview.md) — для acceleration
-- [Database Architecture](database-architecture-interview.md) — OLAP context
-- [SQL](sql-interview.md) — общие основы
+- [[postgresql-interview|PostgreSQL]] — OLTP comparison
+- [[data-warehousing-interview|Data Warehousing]] — context
+- [[apache-spark-interview|Apache Spark]] — alternative для batch analytics
+- [[apache-flink-interview|Apache Flink]] — для stream processing → ClickHouse
+- [[kafka-interview|Apache Kafka]] — Kafka engine ingestion
+- [[stream-processing-interview|Stream Processing]] — context
+- [[loki-grafana-interview|Loki + Grafana]] — alternative для logs
+- [[elk-stack-interview|ELK Stack]] — alternative для logs
+- [[opentelemetry-interview|OpenTelemetry]] — observability data → ClickHouse
+- [[microservices-interview|Микросервисы]] — analytics backend
+- [[caching-strategies-interview|Caching]] — для acceleration
+- [[database-architecture-interview|Database Architecture]] — OLAP context
+- [[sql-interview|SQL]] — общие основы
 
 - [[cassandra-interview|Apache Cassandra]]
 - [[cockroachdb-interview|CockroachDB]]

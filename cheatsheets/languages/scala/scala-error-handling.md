@@ -30,6 +30,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-fp-basics|Функциональное программирование]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
+- [[scala-collections|Scala Collections]]
 ## Содержание
 
 - [Введение в обработку ошибок](#введение-в-обработку-ошибок)

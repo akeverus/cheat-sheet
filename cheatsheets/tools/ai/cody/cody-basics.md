@@ -29,6 +29,11 @@ Sourcegraph Cody — AI-ассистент, тесно интегрирован�
 - [Cody Context](https://sourcegraph.com/docs/cody/core-concepts/context)
 - [Cody Prompting Guide](https://sourcegraph.com/docs/cody/prompts-guide)
 
+
+### См. также
+- [[aider-basics|Aider: основы]]
+- [[openclaw-basics|OpenClaw: основы]]
+- [[copilot-basics|GitHub Copilot: основы]]
 ## Содержание
 
 - [Введение](#введение)

@@ -20,8 +20,6 @@ updated: "2026-04-18"
 
 Деревья — фундамент многих структур: индексы БД (B-Tree), HashMap (красно-чёрное дерево при коллизиях), TreeMap, файловые системы, AST в компиляторах. На собеседовании знают наизусть обходы, вставку/удаление в BST, AVL, и хотят слышать про B-Tree в индексах БД.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -103,7 +101,7 @@ updated: "2026-04-18"
 | **AVL** | Сбалансированный BST, разница высот ≤ 1 |
 | **Red-Black** | Сбалансированный BST через цвета |
 | **B-Tree / B+Tree** | Многонаправленное, для дисковых индексов |
-| **Heap** | Полное дерево с heap-property (см. [кучи](heaps-interview.md)) |
+| **Heap** | Полное дерево с heap-property (см. [[heaps-interview|кучи]]) |
 | **Trie** | Префиксное дерево для строк |
 | **Segment Tree** | Для range queries |
 | **Suffix Tree / Trie** | Для поиска подстрок |
@@ -845,7 +843,7 @@ PostgreSQL, MySQL InnoDB, Oracle — индексы на B+Tree.
 4. **Sequential scan.** В B+Tree все данные на листьях, обход листьев = последовательное сканирование.
 5. **Лучшая локальность.** Узлы B+Tree плотно упакованы.
 
-Подробнее об индексах — в [PostgreSQL](../../databases/postgresql-interview.md) и [Database Architecture](../../databases/database-architecture-interview.md).
+Подробнее об индексах — в [[postgresql-interview|PostgreSQL]] и [[database-architecture-interview|Database Architecture]].
 
 ## Q31. (!) TreeMap и TreeSet — что внутри?
 
@@ -879,7 +877,7 @@ map.subMap("a", "c");  // подкарта "apple", "banana"
 3. **`ConcurrentHashMap`** (с Java 8+) — аналогично
 4. **`LinkedHashMap`** — поверх HashMap, тоже использует deree-bin
 
-В **JDK** RB-tree применяют для гарантии `O(log n)` в худшем случае — защита от **HashDoS атак** (см. [Анализ сложности](../complexity/complexity-analysis-interview.md)).
+В **JDK** RB-tree применяют для гарантии `O(log n)` в худшем случае — защита от **HashDoS атак** (см. [[complexity-analysis-interview|Анализ сложности]]).
 
 ## Q33. Что такое segment tree и зачем?
 
@@ -958,19 +956,19 @@ class FenwickTree {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Кучи](heaps-interview.md) — частный случай complete binary tree
-- [Графы](graphs-interview.md) — обобщение деревьев
-- [Хеш-таблицы](hash-tables-interview.md) — RB-tree в HashMap при коллизиях
-- [Префиксные деревья](tries-interview.md) — деревья для строк
-- [Рекурсия](../algorithmic-paradigms/recursion-interview.md) — все обходы деревьев рекурсивны
-- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — Heap Sort
-- [Алгоритмы поиска](../sorting-searching/searching-algorithms-interview.md) — поиск в BST
-- [Стеки и очереди](stacks-queues-interview.md) — для итеративных обходов
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — O(log n) vs O(log²n)
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — TreeMap, TreeSet
-- [PostgreSQL](../../databases/postgresql-interview.md) — B-Tree индексы
-- [Database Architecture](../../databases/database-architecture-interview.md) — индексы и B+Tree
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[heaps-interview|Кучи]] — частный случай complete binary tree
+- [[graphs-interview|Графы]] — обобщение деревьев
+- [[hash-tables-interview|Хеш-таблицы]] — RB-tree в HashMap при коллизиях
+- [[tries-interview|Префиксные деревья]] — деревья для строк
+- [[recursion-interview|Рекурсия]] — все обходы деревьев рекурсивны
+- [[sorting-algorithms-interview|Алгоритмы сортировки]] — Heap Sort
+- [[searching-algorithms-interview|Алгоритмы поиска]] — поиск в BST
+- [[stacks-queues-interview|Стеки и очереди]] — для итеративных обходов
+- [[complexity-analysis-interview|Анализ сложности]] — O(log n) vs O(log²n)
+- [[java-collections-interview|Java Collections]] — TreeMap, TreeSet
+- [[postgresql-interview|PostgreSQL]] — B-Tree индексы
+- [[database-architecture-interview|Database Architecture]] — индексы и B+Tree
 
 - [[arrays-strings-interview|Массивы и строки]]
 - [[graphs-interview|Графы]]

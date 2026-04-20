@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[ai-libraries|Обзор ИИ библиотек]] — **NLP** и библиотеки
 - [[README|Алгоритмы со строками]] — раздел strings
 
+- [[logistic-regression|Логистическая регрессия]]
+- [[cnn-deeplearning4j|Реализация CNN с помощью Deeplearning4j]]
+- [[jenetics|Руководство по Jenetics]]
 ## Содержание
 
 - [Обзор](#обзор)

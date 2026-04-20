@@ -19,9 +19,7 @@ updated: "2026-04-13"
 Комплексное руководство по вопросам собеседования на тему `Application Security` для `Senior Java Developer`. Включает
 детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.
 
-Дата последнего обновления: 2026-04-13
-
-**Безопасность приложений** (`AppSec`) -- одна из ключевых тем на собеседованиях для Senior-разработчиков. Ожидается не только знание терминов, но и умение применять конкретные меры защиты в коде, понимание threat model и способность обосновать выбор решения с точки зрения бизнес-рисков. Тема тесно связана с [Spring Security](../frameworks/spring/spring-security-interview.md), [OWASP Top 10](owasp-top10-interview.md) и [OAuth 2.0](oauth2-interview.md).
+**Безопасность приложений** (`AppSec`) -- одна из ключевых тем на собеседованиях для Senior-разработчиков. Ожидается не только знание терминов, но и умение применять конкретные меры защиты в коде, понимание threat model и способность обосновать выбор решения с точки зрения бизнес-рисков. Тема тесно связана с [[spring-security-interview|Spring Security]], [[owasp-top10-interview|OWASP Top 10]] и [[oauth2-interview|OAuth 2.0]].
 
 ## Полезные ссылки
 
@@ -222,7 +220,7 @@ graph LR
 4. **Приложение** -- валидация ввода, авторизация, безопасная сериализация
 5. **Данные** -- шифрование at rest, маскирование `PII`
 
-На собеседовании покажите, что знаете не только про код, но и про инфраструктурные слои. Подробнее об аутентификации -- в [паттернах аутентификации](authentication-authorization-patterns-interview.md).
+На собеседовании покажите, что знаете не только про код, но и про инфраструктурные слои. Подробнее об аутентификации -- в [[authentication-authorization-patterns-interview|паттернах аутентификации]].
 
 ## Q4. (!) Что такое аутентификация и авторизация?
 
@@ -273,7 +271,7 @@ public class BankingService {
 }
 ```
 
-Подробнее о паттернах -- в [вопросах по аутентификации](authentication-authorization-patterns-interview.md), о Spring Security -- в [Spring Security](../frameworks/spring/spring-security-interview.md), об OAuth -- в [OAuth 2.0](oauth2-interview.md).
+Подробнее о паттернах -- в [[authentication-authorization-patterns-interview|вопросах по аутентификации]], о Spring Security -- в [[spring-security-interview|Spring Security]], об OAuth -- в [[oauth2-interview|OAuth 2.0]].
 
 ## Q5. Какие методы аутентификации существуют?
 
@@ -322,7 +320,7 @@ public class SecurityConfig {
 
 ### 4. `OAuth 2.0` / `OpenID Connect`
 
-Делегированная авторизация. Роли: `Resource Owner`, `Client`, `Authorization Server`, `Resource Server`. Подробнее -- в [OAuth 2.0](oauth2-interview.md).
+Делегированная авторизация. Роли: `Resource Owner`, `Client`, `Authorization Server`, `Resource Server`. Подробнее -- в [[oauth2-interview|OAuth 2.0]].
 
 ### 5. `Multi-Factor Authentication` (`MFA`)
 
@@ -733,7 +731,7 @@ ObjectInputStream ois = new ObjectInputStream(input);
 ois.setObjectInputFilter(filter);
 ```
 
-Подробнее о сериализации -- в [Java Serialization](../programming-languages/java/java-serialization-interview.md).
+Подробнее о сериализации -- в [[java-serialization-interview|Java Serialization]].
 
 ## Q13. Как защититься от `SSRF` (`Server-Side Request Forgery`)?
 
@@ -1242,7 +1240,7 @@ public class ApiSecurityConfig {
 }
 ```
 
-Для `GraphQL`: ограничение глубины и сложности запросов, авторизация на уровне полей, rate limiting по стоимости запроса. Подробнее об API -- в [HTTP/REST](../api/http-rest-interview.md).
+Для `GraphQL`: ограничение глубины и сложности запросов, авторизация на уровне полей, rate limiting по стоимости запроса. Подробнее об API -- в [[http-rest-interview|HTTP/REST]].
 
 ## Q24. Как реализовать `Rate Limiting`?
 
@@ -1299,7 +1297,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 | A09 | `Logging Failures` | Отсутствие аудит-логов |
 | A10 | `SSRF` | Запрос к внутренним сервисам |
 
-Подробный разбор каждой категории -- в [OWASP Top 10](owasp-top10-interview.md).
+Подробный разбор каждой категории -- в [[owasp-top10-interview|OWASP Top 10]].
 
 На собеседовании ожидают, что вы свяжете каждый риск с конкретной мерой защиты и сможете показать код.
 
@@ -1497,7 +1495,7 @@ graph LR
 - **Security Debt** -- накопленные неисправленные уязвимости
 - **False Positive Rate** -- доля ложных срабатываний
 
-Подробнее о CI/CD -- в [Pipeline Design](../cicd/pipeline-design-interview.md).
+Подробнее о CI/CD -- в [[pipeline-design-interview|Pipeline Design]].
 
 ## Q32. Как обеспечить безопасность в контейнерах?
 
@@ -1533,7 +1531,7 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 6. **Ограничение ресурсов** -- `CPU`/memory limits
 7. **Network Policies** -- изоляция в `Kubernetes`
 
-Подробнее -- в [Docker](../devops/docker-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
+Подробнее -- в [[docker-interview|Docker]] и [[kubernetes-interview|Kubernetes]].
 
 ## Q33. Что такое `Security Misconfiguration`?
 
@@ -1684,7 +1682,7 @@ public class SensitiveDataMasker {
 }
 ```
 
-Централизованное хранение (`ELK`, `SIEM`), алерты по аномалиям, ротация и удаление по политике. Подробнее -- в [Логирование](../logging/logging-interview.md) и [Observability](../monitoring/observability-interview.md).
+Централизованное хранение (`ELK`, `SIEM`), алерты по аномалиям, ротация и удаление по политике. Подробнее -- в [[logging-interview|Логирование]] и [[observability-interview|Observability]].
 
 ## Q36. Что такое `Security by Design`?
 
@@ -1783,7 +1781,7 @@ graph TB
 4. **Centralized IAM** -- `Keycloak`, `Auth0` для единого управления идентификацией
 5. **Network Policies** -- сегментация сети в `Kubernetes`
 
-Подробнее -- в [Микросервисы](../architecture/microservices-interview.md) и [Распределённые системы](../architecture/distributed-systems-interview.md).
+Подробнее -- в [[microservices-interview|Микросервисы]] и [[distributed-systems-interview|Распределённые системы]].
 
 ## Q40. Что такое `Zero Trust Architecture`?
 
@@ -2368,15 +2366,15 @@ spec:
 
 ## See also
 
-- [OWASP Top 10](owasp-top10-interview.md) — детальный разбор всех 10 категорий уязвимостей
-- [Паттерны аутентификации и авторизации](authentication-authorization-patterns-interview.md) — RBAC, ABAC, JWT, MFA, Zero Trust
-- [OAuth 2.0](oauth2-interview.md) — авторизационные flows, PKCE, токены
-- [Spring Security](../frameworks/spring/spring-security-interview.md) — конфигурация Security FilterChain, аннотации
-- [Docker](../devops/docker-interview.md) — безопасность контейнеров, non-root user, image scanning
-- [Микросервисы](../architecture/microservices-interview.md) — безопасность в распределённых системах, mTLS
-- [Kubernetes](../devops/kubernetes-interview.md) — Network Policy, Pod Security Admission, Secrets
-- [Архитектура баз данных](../databases/database-architecture-interview.md) — защита данных, шифрование at rest
-- [HTTP и REST](../api/http-rest-interview.md) — TLS, security headers, CORS
+- [[owasp-top10-interview|OWASP Top 10]] — детальный разбор всех 10 категорий уязвимостей
+- [[authentication-authorization-patterns-interview|Паттерны аутентификации и авторизации]] — RBAC, ABAC, JWT, MFA, Zero Trust
+- [[oauth2-interview|OAuth 2.0]] — авторизационные flows, PKCE, токены
+- [[spring-security-interview|Spring Security]] — конфигурация Security FilterChain, аннотации
+- [[docker-interview|Docker]] — безопасность контейнеров, non-root user, image scanning
+- [[microservices-interview|Микросервисы]] — безопасность в распределённых системах, mTLS
+- [[kubernetes-interview|Kubernetes]] — Network Policy, Pod Security Admission, Secrets
+- [[database-architecture-interview|Архитектура баз данных]] — защита данных, шифрование at rest
+- [[http-rest-interview|HTTP и REST]] — TLS, security headers, CORS
 
 - [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]
 - [[jwt-interview|JWT]]

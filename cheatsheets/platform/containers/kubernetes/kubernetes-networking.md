@@ -21,6 +21,9 @@ updated: "2026-04-20"
 - [Service Mesh (Istio)](https://istio.io/latest/docs/) — **Service Mesh**
 - [CNI (Container Network Interface)](https://github.com/containernetworking/cni) — плагины **CNI**
 
+
+### См. также
+- [[containerization-overview|Containerization — обзор]]
 ## Содержание
 
 - [Основные концепции сети](#основные-концепции-сети)

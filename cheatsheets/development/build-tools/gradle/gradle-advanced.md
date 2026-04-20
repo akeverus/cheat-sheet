@@ -22,6 +22,9 @@ updated: "2026-04-20"
 - [Gradle Enterprise](https://gradle.com/enterprise/)
 - [Version Catalogs](https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog)
 
+
+### См. также
+- [[maven|Maven (основы)]]
 ## Содержание
 
 - [Продвинутая конфигурация проекта](#продвинутая-конфигурация-проекта)

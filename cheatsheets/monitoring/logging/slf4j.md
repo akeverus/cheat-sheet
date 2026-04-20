@@ -30,6 +30,8 @@ updated: "2026-04-20"
 - [[logback|Logback]] — реализация SLF4J
 - [[log4j|Log4j]] — реализация Log4j
 
+- [[centralized-logging|Централизованное логирование для Java]]
+- [[log-aggregation|Агрегация логов для Java]]
 ## Содержание
 
 - [Введение в SLF4J](#введение-в-slf4j)

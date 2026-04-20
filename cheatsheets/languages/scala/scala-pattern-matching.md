@@ -26,6 +26,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-fp-basics|Функциональное программирование]]
 
+- [[scala-collections-list|Scala Collections — List]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [[scala-collections-vector|Scala Collections — Vector]]
 ## Содержание
 
 - [Введение в Pattern Matching](#введение-в-pattern-matching)

@@ -19,8 +19,6 @@ updated: "2026-04-13"
 
 Полное покрытие `JVM`: архитектура, модель памяти, `Garbage Collection`, `JIT`-компиляция, `ClassLoader`, диагностика, флаги для production, `GraalVM` и native images.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -274,7 +272,7 @@ private int multiply(int a, int b) {
 // ./mvnw -Pnative native:compile
 ```
 
-Подробнее о применении в Spring Boot — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
+Подробнее о применении в Spring Boot — в [[spring-boot-interview|вопросах по Spring Boot]].
 
 ## Q8. (!) Как работает иерархия `ClassLoader` в `JVM`?
 
@@ -390,7 +388,7 @@ graph TB
 | `PC Register` | Per-thread | Адрес текущей инструкции | — |
 | `Direct Memory` | Off-heap | `ByteBuffer.allocateDirect()` | `-XX:MaxDirectMemorySize` |
 
-Подробнее об анализе потребления памяти — в [вопросах по управлению памятью](../performance/memory-management-interview.md).
+Подробнее об анализе потребления памяти — в [[memory-management-interview|вопросах по управлению памятью]].
 
 ## Q12. (!) Что такое `Stack` и `Heap` и чем они отличаются?
 
@@ -528,7 +526,7 @@ graph LR
 - Использование `ZGC` или `Shenandoah` (паузы `<1 мс`)
 - Настройка `-XX:MaxGCPauseMillis` для `G1`
 - Уменьшение количества живых объектов в `Old Generation`
-- Мониторинг: `GC`-логи (`-Xlog:gc*`), [инструменты наблюдаемости](../monitoring/observability-interview.md)
+- Мониторинг: `GC`-логи (`-Xlog:gc*`), [[observability-interview|инструменты наблюдаемости]]
 
 ## Q18. Когда объект становится пригодным для `GC`?
 
@@ -755,7 +753,7 @@ graph TB
 3. Если паузы неприемлемы — перейти на `ZGC`
 4. Для batch/throughput — попробовать `Parallel GC`
 
-Подробнее о настройке производительности — в [вопросах по JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md).
+Подробнее о настройке производительности — в [[jvm-performance-tuning-interview|вопросах по JVM Performance Tuning]].
 
 ## Q27. (!) Какие флаги `JVM` наиболее важны для production?
 
@@ -864,7 +862,7 @@ graph TB
 // ENTRYPOINT ["java", "$JAVA_OPTS", "-jar", "app.jar"]
 ```
 
-Подробнее о контейнеризации — в [вопросах по Docker](../devops/docker-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
+Подробнее о контейнеризации — в [[docker-interview|вопросах по Docker]] и [[kubernetes-interview|Kubernetes]].
 
 ## Q31. (!) Какие инструменты доступны для диагностики `JVM`?
 
@@ -889,7 +887,7 @@ graph TB
 // jcmd <pid> JFR.start duration=60s filename=recording.jfr
 ```
 
-Подробнее в [вопросах по профилированию приложений](../performance/application-profiling-interview.md).
+Подробнее в [[application-profiling-interview|вопросах по профилированию приложений]].
 
 ## Q32. Что такое `Heap Dump` и `Thread Dump`?
 
@@ -987,7 +985,7 @@ event.durationMs = elapsed;
 event.commit();
 ```
 
-`JFR` — рекомендуемый инструмент для production-мониторинга, поскольку он встроен в `JVM` и не требует агентов. Подробнее — в [вопросах по метрикам и трейсингу](../monitoring/metrics-tracing-interview.md).
+`JFR` — рекомендуемый инструмент для production-мониторинга, поскольку он встроен в `JVM` и не требует агентов. Подробнее — в [[metrics-tracing-interview|вопросах по метрикам и трейсингу]].
 
 ## Q35. Есть ли деструктор в `Java`?
 
@@ -1067,7 +1065,7 @@ public int sumCoordinates() {
 // -XX:+EliminateLocks
 ```
 
-Практическое значение: объекты-обёртки (`Optional`, `Iterator`, маленькие `DTO`) часто элиминируются `JIT`-компилятором, поэтому «много мелких объектов» — не всегда проблема для производительности. Подробнее о концепциях оптимизации — в [вопросах по Java Concurrency](../programming-languages/java/java-concurrency-interview.md).
+Практическое значение: объекты-обёртки (`Optional`, `Iterator`, маленькие `DTO`) часто элиминируются `JIT`-компилятором, поэтому «много мелких объектов» — не всегда проблема для производительности. Подробнее о концепциях оптимизации — в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q38. (!) Как работает GraalVM Native Image и каковы ограничения?
 
@@ -1225,12 +1223,12 @@ Spring AOT + GraalVM Native — это будущее serverless Java, но дл
 
 ## See also
 
-- [Java Core](../programming-languages/java/java-core-interview.md) — основы языка, типы данных, ООП
-- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — многопоточность, модель памяти, happens-before
-- [JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md) — GC-флаги, JIT warm-up, контейнерный тюнинг
-- [Memory Management](../performance/memory-management-interview.md) — heap/stack, GC roots, off-heap, false sharing
-- [Application Profiling](../performance/application-profiling-interview.md) — JFR, async-profiler, flame graphs, heap dumps
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — startup time, AOT, GraalVM native images
+- [[java-core-interview|Java Core]] — основы языка, типы данных, ООП
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность, модель памяти, happens-before
+- [[jvm-performance-tuning-interview|JVM Performance Tuning]] — GC-флаги, JIT warm-up, контейнерный тюнинг
+- [[memory-management-interview|Memory Management]] — heap/stack, GC roots, off-heap, false sharing
+- [[application-profiling-interview|Application Profiling]] — JFR, async-profiler, flame graphs, heap dumps
+- [[spring-boot-interview|Spring Boot]] — startup time, AOT, GraalVM native images
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

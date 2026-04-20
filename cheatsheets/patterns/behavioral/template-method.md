@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[spring-framework-interview|Spring Core]] — **Spring Framework**
 - [[strategy|Strategy]] — **Strategy Pattern**
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

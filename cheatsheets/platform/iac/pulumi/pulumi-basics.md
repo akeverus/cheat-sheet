@@ -1,6 +1,6 @@
 ---
 title: "Основы Pulumi (редирект)"
-description: "Основной документ по теме: [Pulumi](pulumi.md)."
+description: "Основной документ по теме: [[pulumi|Pulumi]]."
 tags:
   - platform
   - iac
@@ -20,6 +20,12 @@ updated: "2026-04-20"
 
 [[pulumi]]
 
+
+### См. также
+- [[iac-overview|Infrastructure as Code (IaC) — обзор]]
+- [[terraform-basics|Основы Terraform (редирект)]]
+- [[terraform|Terraform]]
+- [[terraform-advanced|Terraform Advanced]]
 ## См. также
 
 - [[pulumi|Pulumi]]

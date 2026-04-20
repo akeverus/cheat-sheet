@@ -23,6 +23,11 @@ updated: "2026-04-20"
 - [OpenTelemetry](https://opentelemetry.io/)
 - [The Three Pillars of Observability](https://www.oreilly.com/library/view/distributed-systems-observability/9781492043431/ch04.html)
 
+
+### См. также
+- [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
+- [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[spring-actuator|Spring Actuator: Полное руководство по мониторингу и управлению]]
 ## Содержание
 
 - [Три столпа observability](#три-столпа-observability)

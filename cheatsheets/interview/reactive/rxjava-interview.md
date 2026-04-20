@@ -19,8 +19,6 @@ updated: "2026-04-13"
 Комплексное руководство по вопросам собеседования на тему `RxJava` для `Senior Java Developer`. Включает детальные
 объяснения концепций реактивного программирования, практические примеры кода, marble-диаграммы, best practices и troubleshooting.
 
-Дата последнего обновления: 2026-04-13
-
 **`RxJava`** — реализация `ReactiveX` (Reactive Extensions) для `Java`. Библиотека предоставляет композиционный стиль работы с асинхронными потоками данных через паттерн `Observer`. Широко используется в backend-разработке и Android-приложениях для упрощения работы с конкурентностью, обработкой ошибок и композицией асинхронных операций.
 
 ## Полезные ссылки
@@ -986,7 +984,7 @@ graph LR
     B2 -->|контролируемый поток| C2["Consumer<br/>10 элементов/сек"]
 ```
 
-В `RxJava 2+` backpressure поддерживается только в `Flowable`. `Observable` **не поддерживает** backpressure — это осознанное решение дизайна для упрощения API. Подробнее — в [вопросах по Spring WebFlux](../frameworks/spring/spring-webflux-interview.md), где `Reactor` также реализует backpressure.
+В `RxJava 2+` backpressure поддерживается только в `Flowable`. `Observable` **не поддерживает** backpressure — это осознанное решение дизайна для упрощения API. Подробнее — в [[spring-webflux-interview|вопросах по Spring WebFlux]], где `Reactor` также реализует backpressure.
 
 ## Q32. (!) В чём разница между `Observable` и `Flowable`?
 
@@ -1132,7 +1130,7 @@ apiClient.getUser(id)
     .subscribe(this::showUser);
 ```
 
-Подробнее об обработке ошибок в реактивных системах — в [вопросах по распределённым системам](../architecture/distributed-systems-interview.md).
+Подробнее об обработке ошибок в реактивных системах — в [[distributed-systems-interview|вопросах по распределённым системам]].
 
 ## Q36. Что произойдёт, если в цепочке возникнет несколько ошибок?
 
@@ -1400,7 +1398,7 @@ Observable.just(1, 2, 3)
     .addTo(compositeDisposable) // расширение из RxKotlin
 ```
 
-Однако для новых проектов на `Kotlin` рекомендуется рассмотреть [Kotlin Coroutines](../programming-languages/kotlin/kotlin-coroutines-interview.md) + `Flow`, которые более идиоматичны и лучше интегрируются с `Kotlin`.
+Однако для новых проектов на `Kotlin` рекомендуется рассмотреть [[kotlin-coroutines-interview|Kotlin Coroutines]] + `Flow`, которые более идиоматичны и лучше интегрируются с `Kotlin`.
 
 ## Q43. (!) Какие альтернативы `RxJava` существуют? Сравните их
 
@@ -1419,7 +1417,7 @@ Observable.just(1, 2, 3)
 | Аспект | RxJava | Reactor |
 |--------|--------|---------|
 | `Observable` / `Flowable` | Два класса | `Flux` (= Flowable) + `Mono` (= Single/Maybe) |
-| Интеграция со Spring | Через адаптеры | Нативная ([Spring WebFlux](../frameworks/spring/spring-webflux-interview.md)) |
+| Интеграция со Spring | Через адаптеры | Нативная ([[spring-webflux-interview|Spring WebFlux]]) |
 | Android | Да | Нет |
 | Тестирование | `TestObserver` | `StepVerifier` |
 | Контекст | Нет | `Context` (reactor-specific) |
@@ -1611,13 +1609,13 @@ RxJavaPlugins.setErrorHandler(error -> {
 
 ## See also
 
-- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md) — реактивный веб-фреймворк на базе `Project Reactor`
-- [Kotlin Coroutines](../programming-languages/kotlin/kotlin-coroutines-interview.md) — альтернативная модель асинхронности в `Kotlin`
-- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — многопоточность, Schedulers и thread pools
-- [Java Stream API](../programming-languages/java/java-stream-interview.md) — функциональная обработка коллекций
-- [Паттерны проектирования](../design-patterns/design-patterns-interview.md) — паттерн `Observer` и `Publisher/Subscriber`
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — backpressure и flow control в распределённых системах
-- [Apache Kafka](../messaging/kafka-interview.md) — интеграция RxJava с Kafka consumer/producer
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный веб-фреймворк на базе `Project Reactor`
+- [[kotlin-coroutines-interview|Kotlin Coroutines]] — альтернативная модель асинхронности в `Kotlin`
+- [[java-concurrency-interview|Java Concurrency]] — многопоточность, Schedulers и thread pools
+- [[java-stream-interview|Java Stream API]] — функциональная обработка коллекций
+- [[design-patterns-interview|Паттерны проектирования]] — паттерн `Observer` и `Publisher/Subscriber`
+- [[distributed-systems-interview|Распределённые системы]] — backpressure и flow control в распределённых системах
+- [[kafka-interview|Apache Kafka]] — интеграция RxJava с Kafka consumer/producer
 
 - [[project-reactor-interview|Project Reactor]]
 - [[reactive-patterns-interview|Reactive Patterns]]

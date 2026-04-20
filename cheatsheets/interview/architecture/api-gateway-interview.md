@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Полное покрытие паттерна `API Gateway`: маршрутизация, аутентификация, `rate limiting`, трансформация запросов, агрегация, `Spring Cloud Gateway`, фильтры, предикаты, `BFF`, безопасность, `CORS`, версионирование API.
 
-Дата последнего обновления: 2026-04-13
-
 **API Gateway** -- один из ключевых паттернов микросервисной архитектуры. На собеседованиях ожидают глубокое понимание его роли, ответственностей, различий с `reverse proxy`, а также практический опыт с `Spring Cloud Gateway` или аналогами (`Kong`, `Nginx`, `AWS API Gateway`). Этот файл охватывает теорию паттерна, архитектуру `Spring Cloud Gateway`, фильтры, предикаты, безопасность и продвинутые сценарии.
 
 ## Полезные ссылки
@@ -211,7 +209,7 @@ graph TD
 - **Разные требования к безопасности** -- `OAuth 2.0` для web, `API key` для IoT
 - **Независимые релизные циклы** -- команда мобильной разработки управляет своим BFF
 
-**Подробнее** о реализации BFF с `Spring Cloud Gateway` и `OAuth 2.0` -- в [вопросах по Spring Cloud](../frameworks/spring/spring-cloud-interview.md).
+**Подробнее** о реализации BFF с `Spring Cloud Gateway` и `OAuth 2.0` -- в [[spring-cloud-interview|вопросах по Spring Cloud]].
 
 ---
 
@@ -881,7 +879,7 @@ public class FallbackController {
 }
 ```
 
-Подробнее о паттернах отказоустойчивости -- в [вопросах по Resilience-паттернам](resilience-patterns-interview.md).
+Подробнее о паттернах отказоустойчивости -- в [[resilience-patterns-interview|вопросах по Resilience-паттернам]].
 
 ---
 
@@ -954,7 +952,7 @@ public class LoadBalancerConfig {
 | `RandomLoadBalancer` | Случайный выбор инстанса |
 | Кастомная | Реализация `ReactorServiceInstanceLoadBalancer` |
 
-Подробнее о стратегиях балансировки -- в [вопросах по балансировке нагрузки](load-balancing-interview.md).
+Подробнее о стратегиях балансировки -- в [[load-balancing-interview|вопросах по балансировке нагрузки]].
 
 ---
 
@@ -1125,7 +1123,7 @@ public class DashboardAggregationFilter implements GlobalFilter, Ordered {
 }
 ```
 
-**Предостережение**: агрегация на уровне Gateway увеличивает его сложность. Для сложных сценариев агрегации лучше использовать отдельный BFF-сервис или [CQRS](cqrs-event-sourcing-interview.md) с предвычисленными представлениями.
+**Предостережение**: агрегация на уровне Gateway увеличивает его сложность. Для сложных сценариев агрегации лучше использовать отдельный BFF-сервис или [[cqrs-event-sourcing-interview|CQRS]] с предвычисленными представлениями.
 
 ---
 
@@ -2135,14 +2133,14 @@ spring:
 
 ## See also
 
-- [Микросервисы](microservices-interview.md) — паттерн API Gateway как точка входа в микросервисную систему
-- [Spring Cloud](../frameworks/spring/spring-cloud-interview.md) — экосистема Spring Cloud: Service Discovery, Config Server, Circuit Breaker
-- [Балансировка нагрузки](load-balancing-interview.md) — интеграция Gateway с Ribbon/Spring Cloud LoadBalancer для распределения трафика
-- [Паттерны отказоустойчивости](resilience-patterns-interview.md) — Circuit Breaker, Retry и Bulkhead на уровне Gateway
-- [Распределённые системы](distributed-systems-interview.md) — API Gateway как facade для распределённой системы
-- [Сетевые протоколы](networking-interview.md) — HTTP/2, TLS termination и WebSocket proxying на уровне Gateway
-- [HTTP & REST](../api/http-rest-interview.md) — версионирование API, CORS и трансформация запросов/ответов
-- [Стратегии кэширования](caching-strategies-interview.md) — кэширование ответов на уровне Gateway для снижения нагрузки
+- [[microservices-interview|Микросервисы]] — паттерн API Gateway как точка входа в микросервисную систему
+- [[spring-cloud-interview|Spring Cloud]] — экосистема Spring Cloud: Service Discovery, Config Server, Circuit Breaker
+- [[load-balancing-interview|Балансировка нагрузки]] — интеграция Gateway с Ribbon/Spring Cloud LoadBalancer для распределения трафика
+- [[resilience-patterns-interview|Паттерны отказоустойчивости]] — Circuit Breaker, Retry и Bulkhead на уровне Gateway
+- [[distributed-systems-interview|Распределённые системы]] — API Gateway как facade для распределённой системы
+- [[networking-interview|Сетевые протоколы]] — HTTP/2, TLS termination и WebSocket proxying на уровне Gateway
+- [[http-rest-interview|HTTP & REST]] — версионирование API, CORS и трансформация запросов/ответов
+- [[caching-strategies-interview|Стратегии кэширования]] — кэширование ответов на уровне Gateway для снижения нагрузки
 
 - [[bff-pattern-interview|BFF Pattern]]
 - [[caching-strategies-interview|Стратегии кэширования]]

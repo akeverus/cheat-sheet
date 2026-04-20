@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[a-star-pathfinding|Поиск пути A*]] — **A\*** pathfinding
 - [[dijkstra|Алгоритм Дейкстры]] — **Dijkstra**
 
+- [[optaplanner|OptaPlanner]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

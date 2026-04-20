@@ -30,6 +30,10 @@ Windsurf — это IDE от Codeium, изначально спроектиро�
 - [Web Search в Windsurf](https://docs.codeium.com/windsurf/web-search)
 - [Терминал в Windsurf](https://docs.codeium.com/windsurf/terminal)
 
+
+### См. также
+- [[aider-basics|Aider: основы]]
+- [[openclaw-basics|OpenClaw: основы]]
 ## Содержание
 
 - [Введение](#введение)

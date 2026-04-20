@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[kruskal-algorithm|`kruskal-algorithm.md`]] — алгоритм Крускала (`Kruskal`)
 - [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
 
+- [[binary-search-tree-traversal|Обход бинарного дерева поиска (Binary Search Tree Traversal)]]
+- [[balanced-binary-tree-check|Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)]]
 ## Содержание
 
 - [История алгоритма](#история-алгоритма)

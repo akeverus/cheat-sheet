@@ -42,6 +42,11 @@ Secrets management — системное решение для хранения
 - [Infrastructure Security](../infrastructure/)
 - [Kubernetes](../../platform/containers/kubernetes/)
 
+
+### См. также
+- [[spring-vault|Spring Vault: Полное руководство по управлению секретами]]
+- [[security-practices|Практики безопасности (Security Practices)]]
+- [[spring-boot|Spring Boot — Полное руководство]]
 ## Содержание
 
 - [Типы секретов и жизненный цикл](#типы-секретов-и-жизненный-цикл)

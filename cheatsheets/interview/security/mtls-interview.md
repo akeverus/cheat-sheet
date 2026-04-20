@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `mTLS (Mutual TLS)` — TLS handshake, где **обе стороны** verify identity (vs standard TLS — только server). Foundation для **Zero Trust** networking. Used в microservices (service mesh), B2B APIs, IoT, banking. Requires PKI infrastructure для cert management.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -290,7 +288,7 @@ spec:
 
 **Effect:** zero-config service-to-service auth.
 
-Подробнее — [Istio](../devops/istio-service-mesh-interview.md), [Linkerd](../devops/linkerd-interview.md).
+Подробнее — [[istio-service-mesh-interview|Istio]], [[linkerd-interview|Linkerd]].
 
 ## Q12. cert-manager (K8s)?
 
@@ -350,7 +348,7 @@ vault write pki/issue/my-role \
 - Programmatic issuance
 - Automation-friendly
 
-Подробнее — [Vault](../devops/vault-interview.md).
+Подробнее — [[vault-interview|Vault]].
 
 ## Q14. mTLS в Kafka, Redis, databases?
 
@@ -497,19 +495,19 @@ ssl_ca_file = '/path/ca.crt'
 
 ## See also
 
-- [Zero Trust](zero-trust-interview.md) — mTLS foundation
-- [Secrets Management](secrets-management-interview.md) — cert storage
-- [Supply Chain Security](supply-chain-security-interview.md)
-- [Application Security](application-security-interview.md) — общая
-- [TLS / SSL](tls-ssl-interview.md) — TLS basics
-- [OAuth2](oauth2-interview.md) — alternative for users
-- [JWT](jwt-interview.md) — combined с mTLS
-- [Istio](../devops/istio-service-mesh-interview.md) — auto mTLS
-- [Linkerd](../devops/linkerd-interview.md) — auto mTLS
-- [Vault](../devops/vault-interview.md) — PKI engine
-- [Микросервисы](../architecture/microservices-interview.md) — context
-- [Networking](../architecture/networking-interview.md) — protocol layers
-- [Kubernetes](../devops/kubernetes-interview.md) — cert-manager
+- [[zero-trust-interview|Zero Trust]] — mTLS foundation
+- [[secrets-management-interview|Secrets Management]] — cert storage
+- [[supply-chain-security-interview|Supply Chain Security]]
+- [[application-security-interview|Application Security]] — общая
+- [[tls-ssl-interview|TLS / SSL]] — TLS basics
+- [[oauth2-interview|OAuth2]] — alternative for users
+- [[jwt-interview|JWT]] — combined с mTLS
+- [[istio-service-mesh-interview|Istio]] — auto mTLS
+- [[linkerd-interview|Linkerd]] — auto mTLS
+- [[vault-interview|Vault]] — PKI engine
+- [[microservices-interview|Микросервисы]] — context
+- [[networking-interview|Networking]] — protocol layers
+- [[kubernetes-interview|Kubernetes]] — cert-manager
 
 - [[application-security-interview|Application Security]]
 - [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]

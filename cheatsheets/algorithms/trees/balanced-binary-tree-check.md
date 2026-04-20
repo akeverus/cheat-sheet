@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[avl-tree|`avl-tree.md`]] — самобалансирующееся дерево `AVL`
 - [[binary-search-tree-traversal|`binary-search-tree-traversal.md`]] — обходы бинарного дерева поиска (`traversals`)
 
+- [[boruvka-algorithm|Алгоритм Борувки (Borůvka's Algorithm)]]
+- [[prim-algorithm|Алгоритм Прима (Prim's Algorithm)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

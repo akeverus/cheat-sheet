@@ -28,6 +28,11 @@ updated: "2026-04-20"
 
 См. также: [[postgres-queries]] — [[postgres-design]].
 
+
+### См. также
+- [[postgres-indexes|PostgreSQL: типы индексов]]
+- [[postgres-admin|PostgreSQL: администрирование и обслуживание]]
+- [[postgres-monitoring|PostgreSQL: Мониторинг]]
 ## Содержание
 
 - [Схема данных для примеров](#схема-данных-для-примеров)

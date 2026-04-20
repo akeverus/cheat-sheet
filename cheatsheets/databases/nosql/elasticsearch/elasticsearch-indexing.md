@@ -37,6 +37,8 @@ updated: "2026-04-20"
 - [[elasticsearch-queries|Запросы]] — поиск и запросы
 - [[elasticsearch-performance|Производительность]] — производительность
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
 ## Содержание
 
 - [Index API](#index-api)

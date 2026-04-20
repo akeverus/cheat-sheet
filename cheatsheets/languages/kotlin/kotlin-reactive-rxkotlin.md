@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[kotlin-concurrency-basics|Корутины]]
 - [[kotlin-reactive-flow|Kotlin Flow]]
 
+- [[kotlin-performance|Kotlin Performance]]
+- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
 ## Содержание
 
 - [Введение в RxKotlin](#введение-в-rxkotlin)

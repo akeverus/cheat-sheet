@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[command|Command]] — **Command Pattern**
 - [[state|State]] — **State Pattern**
 
+- [[iterator|Итератор (Iterator)]]
+- [[visitor|Посетитель (Visitor)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

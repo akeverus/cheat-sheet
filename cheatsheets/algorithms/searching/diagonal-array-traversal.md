@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[pairs-with-given-sum|Поиск пар с заданной суммой]] — pairs with sum
 - [[maximum-subarray|Максимальный подмассив]] — **Kadane**
 
+- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
+- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
+- [[find-max-element|Поиск k-го по величине элемента (Find Kth Largest Element)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

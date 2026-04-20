@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 `Testcontainers` — Java-библиотека, которая позволяет поднимать Docker-контейнеры прямо из тестового кода. Это даёт возможность писать интеграционные тесты против реальных баз данных, брокеров сообщений, кэшей и любых других сервисов вместо in-memory заглушек. Этот файл покрывает архитектуру библиотеки, контейнеры для различных технологий, интеграцию со `Spring Boot 3.x`, паттерны управления жизненным циклом и оптимизацию для `CI/CD`.
 
-Дата последнего обновления: 2026-04-13
-
 **`Testcontainers`** стал де-факто стандартом интеграционного тестирования в Java-экосистеме. Библиотека решает ключевую проблему: тесты на in-memory заменителях (вроде `H2`) часто не ловят реальные баги, а настройка полноценной инфраструктуры для тестов — сложна и ненадёжна.
 
 ## Полезные ссылки
@@ -328,7 +326,7 @@ WHERE metadata @> '{"role": "admin"}'::jsonb;
 -- H2 не поддерживает оператор @> для JSONB
 ```
 
-**Рекомендация**: используйте `H2` только для простых CRUD-тестов, где SQL-диалект не важен. Для всего остального — `Testcontainers`. Подробнее о подходах к тестированию в [Integration Testing](integration-testing-interview.md).
+**Рекомендация**: используйте `H2` только для простых CRUD-тестов, где SQL-диалект не важен. Для всего остального — `Testcontainers`. Подробнее о подходах к тестированию в [[integration-testing-interview|Integration Testing]].
 
 ## Q9. Как поднять `Kafka`-контейнер для тестов?
 
@@ -1032,7 +1030,7 @@ test:
 - **`TESTCONTAINERS_RYUK_DISABLED=true`**: отключить Ryuk в CI (контейнеры удалятся с runner'ом)
 - Singleton-паттерн — чтобы не перезапускать контейнеры для каждого тест-класса
 
-Подробнее о CI/CD pipeline в [Test Automation](test-automation-interview.md).
+Подробнее о CI/CD pipeline в [[test-automation-interview|Test Automation]].
 
 ## Q26. Какие есть способы ускорить тесты с `Testcontainers`?
 
@@ -1506,9 +1504,9 @@ class ProductControllerTest extends BaseIntegrationTest {
 
 Благодаря `static` полям с аннотацией `@Container`, контейнеры запускаются один раз и переиспользуются всеми подклассами — это эквивалент Singleton Container паттерна, но организованный через наследование.
 
-Подробнее — в [Q19: Singleton Containers паттерн](testcontainers-interview.md#q19).
+Подробнее — в [[testcontainers-interview|Q19: Singleton Containers паттерн]].
 
-**На собеседовании** стоит показать, что вы понимаете trade-off: `Testcontainers` даёт уверенность в интеграции ценой скорости и инфраструктурных требований. Хороший инженер знает, где провести границу между unit и интеграционными тестами (подробнее в [Стратегии тестирования](test-strategies-interview.md)).
+**На собеседовании** стоит показать, что вы понимаете trade-off: `Testcontainers` даёт уверенность в интеграции ценой скорости и инфраструктурных требований. Хороший инженер знает, где провести границу между unit и интеграционными тестами (подробнее в [[test-strategies-interview|Стратегии тестирования]]).
 
 ---
 
@@ -2042,14 +2040,14 @@ void shouldSendAndReceiveMessage() {
 
 ## See also
 
-- [Integration Testing](integration-testing-interview.md) — интеграционное тестирование в Spring Boot: `@SpringBootTest`, test slices
-- [Unit Testing](unit-testing-interview.md) — модульные тесты и моки: когда Testcontainers не нужен
-- [Стратегии тестирования](test-strategies-interview.md) — пирамида тестов и место Testcontainers в ней
-- [Test Automation](test-automation-interview.md) — автоматизация и запуск тестов с контейнерами в CI/CD
-- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — тестирование репозиториев с `@DataJpaTest` + Testcontainers
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — конфигурация, auto-configuration, профили
-- [Docker](../devops/docker-interview.md) — контейнеризация: образы, сети, volumes, которые использует Testcontainers
-- [Kubernetes](../devops/kubernetes-interview.md) — запуск тестов с Testcontainers в Kubernetes CI runner'ах
+- [[integration-testing-interview|Integration Testing]] — интеграционное тестирование в Spring Boot: `@SpringBootTest`, test slices
+- [[unit-testing-interview|Unit Testing]] — модульные тесты и моки: когда Testcontainers не нужен
+- [[test-strategies-interview|Стратегии тестирования]] — пирамида тестов и место Testcontainers в ней
+- [[test-automation-interview|Test Automation]] — автоматизация и запуск тестов с контейнерами в CI/CD
+- [[spring-data-jpa-interview|Spring Data JPA]] — тестирование репозиториев с `@DataJpaTest` + Testcontainers
+- [[spring-boot-interview|Spring Boot]] — конфигурация, auto-configuration, профили
+- [[docker-interview|Docker]] — контейнеризация: образы, сети, volumes, которые использует Testcontainers
+- [[kubernetes-interview|Kubernetes]] — запуск тестов с Testcontainers в Kubernetes CI runner'ах
 
 - [[chaos-engineering-interview|Chaos Engineering]]
 - [[contract-testing-interview|Contract Testing]]

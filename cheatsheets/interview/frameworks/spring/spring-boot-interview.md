@@ -18,9 +18,7 @@ updated: "2026-04-13"
 
 Глубокие ответы по `Spring Boot`: автоконфигурация, стартеры, `Actuator`, встроенные серверы, профили, externalized config, `Docker`, мониторинг.
 
-Дата последнего обновления: 2026-04-13
-
-**`Spring Boot`** — стандарт де-факто для быстрого создания production-ready `Java`-приложений на базе `Spring`. Вопросы по автоконфигурации, стартерам, `Actuator`, профилям и развёртыванию — обязательная часть собеседований на позиции `Java / Senior Developer`. Файл охватывает как базовые, так и продвинутые темы, включая архитектуру встроенных серверов, иерархию конфигурации и интеграцию с [Docker](../../devops/docker-interview.md) и [Kubernetes](../../devops/kubernetes-interview.md).
+**`Spring Boot`** — стандарт де-факто для быстрого создания production-ready `Java`-приложений на базе `Spring`. Вопросы по автоконфигурации, стартерам, `Actuator`, профилям и развёртыванию — обязательная часть собеседований на позиции `Java / Senior Developer`. Файл охватывает как базовые, так и продвинутые темы, включая архитектуру встроенных серверов, иерархию конфигурации и интеграцию с [[docker-interview|Docker]] и [[kubernetes-interview|Kubernetes]].
 
 ## Полезные ссылки
 
@@ -245,7 +243,7 @@ graph LR
 | `spring-boot-starter-cache` | Абстракция кэширования |
 | `spring-boot-starter-amqp` | `RabbitMQ`, `Spring AMQP` |
 
-Подробнее о реактивном стеке — в [Spring WebFlux](spring-webflux-interview.md), о работе с данными — в [Spring Data JPA](spring-data-jpa-interview.md).
+Подробнее о реактивном стеке — в [[spring-webflux-interview|Spring WebFlux]], о работе с данными — в [[spring-data-jpa-interview|Spring Data JPA]].
 
 ## Q8. (!) Как создать свой `Starter`?
 
@@ -503,7 +501,7 @@ graph TD
 - Profile-specific файлы вне JAR имеют приоритет над файлами внутри JAR
 - Маппинг имён: `spring.datasource.url` → `SPRING_DATASOURCE_URL` (точки → подчёркивания, верхний регистр)
 
-Секреты не хранить в Git — использовать переменные окружения, [Spring Cloud Config](spring-cloud-interview.md), `Vault`. В `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей.
+Секреты не хранить в Git — использовать переменные окружения, [[spring-cloud-interview|Spring Cloud Config]], `Vault`. В `Kubernetes` — `ConfigMap` для несекретных настроек, `Secrets` для паролей.
 
 ## Q16. Что такое `application.properties` и `application.yml`?
 
@@ -663,7 +661,7 @@ graph LR
     C --> I["Kubernetes<br/>probes"]
 ```
 
-**Безопасность:** по умолчанию по HTTP доступны только `/health` и `/info`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [Spring Security](spring-security-interview.md).
+**Безопасность:** по умолчанию по HTTP доступны только `/health` и `/info`. Расширение — через `management.endpoints.web.exposure.include`. В production обязательно защищать эндпоинты через [[spring-security-interview|Spring Security]].
 
 ## Q21. (!) Полный список `Actuator` endpoints и их категории
 
@@ -798,7 +796,7 @@ public class OrderService {
 
 **JVM-метрики** (регистрируются автоматически): `jvm.memory.used`, `jvm.gc.pause`, `jvm.threads.live`, `system.cpu.usage`.
 
-> **Gotcha:** ограничивать кардинальность тегов. Тег `userId` при миллионах пользователей убьёт мониторинг-систему. Подробнее — в [Метрики и трейсинг](../../monitoring/metrics-tracing-interview.md) и [Observability](../../monitoring/observability-interview.md).
+> **Gotcha:** ограничивать кардинальность тегов. Тег `userId` при миллионах пользователей убьёт мониторинг-систему. Подробнее — в [[metrics-tracing-interview|Метрики и трейсинг]] и [[observability-interview|Observability]].
 
 ## Q24. Как настроить health check для `Kubernetes`?
 
@@ -849,7 +847,7 @@ startupProbe:
 | **Liveness** | Живо ли приложение? | Под перезапускается |
 | **Startup** | Завершился ли старт? | Другие probes не запускаются |
 
-> **`startupProbe`** — важно для приложений с долгим стартом (прогрев кэшей, миграции). Без него `livenessProbe` может убить под до завершения инициализации. Подробнее — в [Kubernetes](../../devops/kubernetes-interview.md).
+> **`startupProbe`** — важно для приложений с долгим стартом (прогрев кэшей, миграции). Без него `livenessProbe` может убить под до завершения инициализации. Подробнее — в [[kubernetes-interview|Kubernetes]].
 
 ---
 
@@ -976,7 +974,7 @@ ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
 - JVM-флаги для контейнеров: `-XX:MaxRAMPercentage=75.0`
 - Передавать конфигурацию через env-переменные
 
-Подробнее — в [Docker](../../devops/docker-interview.md).
+Подробнее — в [[docker-interview|Docker]].
 
 ## Q28. Что такое `Spring Boot DevTools`?
 
@@ -1031,7 +1029,7 @@ class MyIntegrationTest { }
 
 **`@MockBean`** — заменяет бин моком в контексте. **`@TestPropertySource`** — переопределяет свойства для теста.
 
-Подробнее о тестировании — в [Интеграционное тестирование](../../testing/integration-testing-interview.md) и [Юнит-тестирование](../../testing/unit-testing-interview.md).
+Подробнее о тестировании — в [[integration-testing-interview|Интеграционное тестирование]] и [[unit-testing-interview|Юнит-тестирование]].
 
 ## Q30. Какие основные аннотации `Spring Boot` предлагает?
 
@@ -1048,7 +1046,7 @@ class MyIntegrationTest { }
 | `@WebMvcTest` | Тестовый срез для MVC |
 | `@DataJpaTest` | Тестовый срез для JPA |
 
-Подробнее об аннотациях `Spring` — в [Spring Framework](spring-framework-interview.md).
+Подробнее об аннотациях `Spring` — в [[spring-framework-interview|Spring Framework]].
 
 ---
 
@@ -1112,7 +1110,7 @@ curl -X POST http://localhost:8080/actuator/loggers/com.example \
   -d '{"configuredLevel": "DEBUG"}'
 ```
 
-В `Kubernetes` — логи в stdout, сбор через `DaemonSet` (`Fluentd`, `Filebeat`). Подробнее — в [Логирование](../../logging/logging-interview.md).
+В `Kubernetes` — логи в stdout, сбор через `DaemonSet` (`Fluentd`, `Filebeat`). Подробнее — в [[logging-interview|Логирование]].
 
 ## Q33. Как мигрировать с `Spring` на `Spring Boot`?
 
@@ -1610,16 +1608,16 @@ management:
 
 ## See also
 
-- [Spring Framework](spring-framework-interview.md) — IoC-контейнер и DI, лежащие в основе Boot
-- [Spring MVC](spring-mvc-interview.md) — веб-слой, автоконфигурируемый Boot-ом
-- [Spring WebFlux](spring-webflux-interview.md) — реактивный стек, поддерживаемый Boot-ом
-- [Spring Security](spring-security-interview.md) — автоконфигурация Security в Spring Boot
-- [Spring Data JPA](spring-data-jpa-interview.md) — автоконфигурация datasource и репозиториев
-- [Spring Cloud](spring-cloud-interview.md) — экосистема микросервисов поверх Spring Boot
-- [Spring Boot Actuator](spring-boot-actuator-interview.md) — production-ready мониторинг и management
-- [Spring Batch](spring-batch-interview.md) — пакетная обработка, интегрированная в Boot
-- [Микросервисы](../../architecture/microservices-interview.md) — Spring Boot как основа для микросервисов
-- [Docker](../../devops/docker-interview.md) — контейнеризация Spring Boot приложений
+- [[spring-framework-interview|Spring Framework]] — IoC-контейнер и DI, лежащие в основе Boot
+- [[spring-mvc-interview|Spring MVC]] — веб-слой, автоконфигурируемый Boot-ом
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный стек, поддерживаемый Boot-ом
+- [[spring-security-interview|Spring Security]] — автоконфигурация Security в Spring Boot
+- [[spring-data-jpa-interview|Spring Data JPA]] — автоконфигурация datasource и репозиториев
+- [[spring-cloud-interview|Spring Cloud]] — экосистема микросервисов поверх Spring Boot
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — production-ready мониторинг и management
+- [[spring-batch-interview|Spring Batch]] — пакетная обработка, интегрированная в Boot
+- [[microservices-interview|Микросервисы]] — Spring Boot как основа для микросервисов
+- [[docker-interview|Docker]] — контейнеризация Spring Boot приложений
 
 - [[spring-aop-interview|Spring AOP]]
 - [[spring-batch-interview|Spring Batch]]

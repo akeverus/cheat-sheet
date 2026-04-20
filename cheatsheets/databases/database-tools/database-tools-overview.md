@@ -22,6 +22,10 @@ updated: "2026-04-20"
 - [DataGrip (JetBrains)](https://www.jetbrains.com/datagrip/)
 - [Базы данных — раздел проекта](../)
 
+
+### См. также
+- [[hibernate-jpql-criteria|Hibernate: JPQL, HQL и Criteria API]]
+- [[hibernate-caching|Hibernate: кэширование (L1, L2, Query Cache)]]
 ## См. также
 
 - [[postgres-basics|PostgreSQL Basics]]

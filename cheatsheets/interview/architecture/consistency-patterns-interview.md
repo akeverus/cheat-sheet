@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Краткое введение: ответы по моделям и паттернам согласованности в распределённых системах — `strong`/`eventual`/`causal` consistency, `2PC`, `3PC`, `TCC`, `Saga`, `Outbox`, `CDC`, `Event Sourcing`, `CQRS`, `CRDTs`. В распределённых системах **согласованность** (consistency) — то, насколько узлы «видят» одни и те же данные; паттерны помогают выбирать компромисс между свежестью данных, доступностью и производительностью. На собеседованиях часто спрашивают про типы согласованности, способы координации распределённых операций и разрешение конфликтов.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -2014,12 +2012,12 @@ String lua = "if redis.call('get', KEYS[1]) == ARGV[1] then " +
 
 ## See also
 
-- [Распределённые системы](distributed-systems-interview.md) — репликация, шардирование, консенсус и сетевые разделы
-- [CAP-теорема](cap-theorem-interview.md) — выбор между согласованностью и доступностью при partition
-- [Микросервисная архитектура](microservices-interview.md) — согласованность данных между микросервисами
-- [CQRS и Event Sourcing](cqrs-event-sourcing-interview.md) — eventual consistency через проекции и Event Sourcing
-- [Event-Driven паттерны](event-driven-patterns-interview.md) — Outbox Pattern, Saga и асинхронная согласованность
-- [Архитектура баз данных](../databases/database-architecture-interview.md) — уровни изоляции транзакций и MVCC
+- [[distributed-systems-interview|Распределённые системы]] — репликация, шардирование, консенсус и сетевые разделы
+- [[cap-theorem-interview|CAP-теорема]] — выбор между согласованностью и доступностью при partition
+- [[microservices-interview|Микросервисная архитектура]] — согласованность данных между микросервисами
+- [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]] — eventual consistency через проекции и Event Sourcing
+- [[event-driven-patterns-interview|Event-Driven паттерны]] — Outbox Pattern, Saga и асинхронная согласованность
+- [[database-architecture-interview|Архитектура баз данных]] — уровни изоляции транзакций и MVCC
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

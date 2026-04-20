@@ -27,6 +27,9 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-collections|Коллекции]]
 
+- [[go-performance|Go: производительность]]
+- [[redis-performance|Redis: Производительность]]
+- [[scala-collections-vector|Scala Collections — Vector]]
 ## Содержание
 
 - [Введение в производительность](#введение-в-производительность)

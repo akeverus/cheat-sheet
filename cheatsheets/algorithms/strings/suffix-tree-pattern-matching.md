@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[large-text-string-search|Поиск строк в больших текстах]] — поиск в больших текстах
 - [[multiple-keywords-check|Проверка нескольких ключевых слов]] — несколько ключевых слов
 
+- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
+- [[balanced-parentheses|Баланс скобок (Balanced Parentheses)]]
+- [[regex-token-replacement|Замена токенов по регулярным выражениям (Regex Token Replacement)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

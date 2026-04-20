@@ -23,6 +23,11 @@ updated: "2026-04-20"
 - [Spring Boot Auto-configuration](https://docs.spring.io/spring-boot/reference/using/auto-configuration.html)
 - [Spring Boot Actuator](https://docs.spring.io/spring-boot/reference/actuator/)
 
+
+### См. также
+- [[quarkus-basics|Quarkus: Основы]]
+- [[javalin-basics|Javalin: Основы]]
+- [[dropwizard-basics|Dropwizard: Основы]]
 ## Содержание
 
 - [Автоконфигурация](#автоконфигурация)

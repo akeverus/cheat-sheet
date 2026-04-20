@@ -29,6 +29,8 @@ updated: "2026-04-20"
 - [[spring-boot|Spring Boot]] — **Spring Boot**
 - [[jackson|Jackson]] — **JSON** обработка
 
+- [[rest-api-best-practices|REST API Best Practices]]
+- [[openapi-swagger|OpenAPI/Swagger]]
 ## Содержание
 
 - [Введение в gRPC](#введение-в-grpc)

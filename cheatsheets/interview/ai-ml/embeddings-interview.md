@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 **Embedding** — преобразование текста (или image, audio) в вектор чисел, где **семантически похожие** items имеют **близкие** векторы. Основа vector search, RAG, recommendations, clustering. На интервью спрашивают: как выбрать модель, dimensions, normalization, multilingual, fine-tuning, cost optimization.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -380,7 +378,7 @@ metric = "dot"  # вместо "cosine" если уже normalized
 4. **Embedding pooling** — mean / max / first chunk
 
 **Best practice (RAG):**
-- Использовать **proper chunking** на стадии preprocessing (см. [RAG](rag-interview.md))
+- Использовать **proper chunking** на стадии preprocessing (см. [[rag-interview|RAG]])
 - Каждый chunk влезает в model limit
 - Embed каждый chunk отдельно
 
@@ -632,16 +630,16 @@ model.save("my-fine-tuned-model")
 
 ## See also
 
-- [Vector Databases](vector-databases-interview.md) — где хранят embeddings
-- [RAG](rag-interview.md) — основное применение
-- [LLM Basics](llm-basics-interview.md) — LLM генерируют embeddings
-- [Prompt Engineering](prompt-engineering-interview.md) — для query embedding
-- [MLOps](mlops-interview.md) — model versioning
-- [Caching](../architecture/caching-strategies-interview.md) — embedding cache
-- [Микросервисы](../architecture/microservices-interview.md) — embedding services
-- [PostgreSQL](../databases/postgresql-interview.md) — pgvector
-- [Elasticsearch](../databases/elasticsearch-interview.md) — vector search в ES
-- [Performance Testing](../performance/performance-testing-interview.md) — embedding latency
+- [[vector-databases-interview|Vector Databases]] — где хранят embeddings
+- [[rag-interview|RAG]] — основное применение
+- [[llm-basics-interview|LLM Basics]] — LLM генерируют embeddings
+- [[prompt-engineering-interview|Prompt Engineering]] — для query embedding
+- [[mlops-interview|MLOps]] — model versioning
+- [[caching-strategies-interview|Caching]] — embedding cache
+- [[microservices-interview|Микросервисы]] — embedding services
+- [[postgresql-interview|PostgreSQL]] — pgvector
+- [[elasticsearch-interview|Elasticsearch]] — vector search в ES
+- [[performance-testing-interview|Performance Testing]] — embedding latency
 
 - [[ai-agents-interview|AI Agents]]
 - [[llm-basics-interview|LLM Basics]]

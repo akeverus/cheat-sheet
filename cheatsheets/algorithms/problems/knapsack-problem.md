@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
 - [[greatest-common-divisor|Наибольший общий делитель]] — НОД
 
+- [[optaplanner|OptaPlanner]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

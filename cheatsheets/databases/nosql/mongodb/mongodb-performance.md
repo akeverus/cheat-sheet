@@ -30,6 +30,9 @@ updated: "2026-04-20"
 - [[mongodb-indexes|Индексы]] — индексы и оптимизация запросов
 - [[mongodb-aggregation|Aggregation]] — **Aggregation Framework**
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
 ## Содержание
 
 - [Введение в оптимизацию производительности MongoDB](#введение-в-оптимизацию-производительности-mongodb)

@@ -33,6 +33,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [[scala-collections-map|Словари (Map)]]
 - [[scala-collections|Обзор коллекций]]
 
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
 ## Содержание
 
 - [Введение в List](#введение-в-list)

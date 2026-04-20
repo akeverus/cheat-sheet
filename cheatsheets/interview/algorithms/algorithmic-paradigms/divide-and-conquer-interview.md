@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 D&C — фундаментальная парадигма: **разделить → решить рекурсивно → объединить**. На ней построены Merge Sort, Quick Sort, Binary Search, FFT, и многие задачи на массивах. Знают master theorem и могут анализировать сложность через дерево рекурсии.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -135,7 +133,7 @@ Result solve(Problem p) {
 
 Если переопределить с мемоизацией — D&C превращается в DP.
 
-Подробнее — в [Динамическое программирование](dynamic-programming-interview.md).
+Подробнее — в [[dynamic-programming-interview|Динамическое программирование]].
 
 ## Q4. Чем D&C отличается от рекурсии в общем?
 
@@ -265,7 +263,7 @@ void quickSort(int[] arr, int left, int right) {
 **Recurrence (среднее):** `T(n) = 2T(n/2) + O(n)` → `O(n log n)`.
 **Худшее:** `T(n) = T(n-1) + O(n)` → `O(n²)`.
 
-Подробнее — в [Sorting](../sorting-searching/sorting-algorithms-interview.md).
+Подробнее — в [[sorting-algorithms-interview|Sorting]].
 
 ## Q10. (!) Binary Search как D&C?
 
@@ -283,7 +281,7 @@ int binarySearch(int[] arr, int target, int lo, int hi) {
 
 **Recurrence:** `T(n) = T(n/2) + O(1)` → `O(log n)`.
 
-Подробнее — в [Searching](../sorting-searching/searching-algorithms-interview.md).
+Подробнее — в [[searching-algorithms-interview|Searching]].
 
 ## Q11. (!) Fast Power — возведение в степень за O(log n)?
 
@@ -516,7 +514,7 @@ class Solution {
 }
 ```
 
-`O(n)`. На каждом узле комбинируем глубины поддеревьев. Подробнее — в [Деревья](../data-structures/trees-interview.md).
+`O(n)`. На каждом узле комбинируем глубины поддеревьев. Подробнее — в [[trees-interview|Деревья]].
 
 ## Q21. Same Tree, Symmetric Tree?
 
@@ -548,7 +546,7 @@ boolean isMirror(TreeNode a, TreeNode b) {
 
 `O(log(min(m, n)))` через бинарный поиск + D&C логика.
 
-Подробнее — в [Searching](../sorting-searching/searching-algorithms-interview.md).
+Подробнее — в [[searching-algorithms-interview|Searching]].
 
 ## Q23. Skyline Problem?
 
@@ -673,23 +671,23 @@ class MergeSortTask extends RecursiveAction {
 - Sequential combine (Skyline merge)
 - Когда подзадачи делят общий ресурс
 
-Подробнее — в [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md).
+Подробнее — в [[java-concurrency-interview|Java Concurrency]].
 
 ---
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Рекурсия](recursion-interview.md) — D&C — частный случай
-- [Динамическое программирование](dynamic-programming-interview.md) — D&C + memoization
-- [Greedy](greedy-algorithms-interview.md) — другая парадигма
-- [Sorting](../sorting-searching/sorting-algorithms-interview.md) — Merge Sort, Quick Sort
-- [Searching](../sorting-searching/searching-algorithms-interview.md) — Binary Search
-- [Деревья](../data-structures/trees-interview.md) — естественный D&C
-- [Массивы и строки](../data-structures/arrays-strings-interview.md) — Inversion count, Maximum subarray
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — Master theorem
-- [Кучи](../data-structures/heaps-interview.md) — Heap Sort, build-heap
-- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — Fork/Join framework
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[recursion-interview|Рекурсия]] — D&C — частный случай
+- [[dynamic-programming-interview|Динамическое программирование]] — D&C + memoization
+- [[greedy-algorithms-interview|Greedy]] — другая парадигма
+- [[sorting-algorithms-interview|Sorting]] — Merge Sort, Quick Sort
+- [[searching-algorithms-interview|Searching]] — Binary Search
+- [[trees-interview|Деревья]] — естественный D&C
+- [[arrays-strings-interview|Массивы и строки]] — Inversion count, Maximum subarray
+- [[complexity-analysis-interview|Анализ сложности]] — Master theorem
+- [[heaps-interview|Кучи]] — Heap Sort, build-heap
+- [[java-concurrency-interview|Java Concurrency]] — Fork/Join framework
 
 - [[backtracking-interview|Backtracking]]
 - [[dynamic-programming-interview|Динамическое программирование]]

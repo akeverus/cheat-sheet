@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[maze-solver|Решение лабиринтов]] — maze solver
 - [[dijkstra|Алгоритм Дейкстры]] — Dijkstra
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

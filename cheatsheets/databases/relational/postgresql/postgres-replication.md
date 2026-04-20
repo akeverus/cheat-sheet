@@ -33,6 +33,9 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-performance-tu
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-high-availability|postgres-high-availability.md]] — высокая доступность
 
+- [[redis-replication|Redis: Репликация]]
+- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
+- [[redis-high-availability|Redis: Высокая доступность]]
 ## Содержание
 
 - [Введение в репликацию PostgreSQL](#введение-в-репликацию-postgresql)

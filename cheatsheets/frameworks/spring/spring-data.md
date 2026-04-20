@@ -25,6 +25,11 @@ updated: "2026-04-20"
 - [Spring Data JDBC Reference](https://docs.spring.io/spring-data/jdbc/reference/)
 - [Hibernate ORM Documentation](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html)
 
+
+### См. также
+- [[spring-data-jdbc|Spring Data JDBC: Полное руководство по работе с базами данных]]
+- [[spring-session|Spring Session: Полное руководство по управлению сессиями]]
+- [[quarkus-data|Quarkus: Data Access — Hibernate ORM, Panache и Repositories]]
 ## Содержание
 
 - [Иерархия репозиториев](#иерархия-репозиториев)

@@ -26,6 +26,9 @@ related: ["scala/scala-collections-list.md", "scala/scala-collections.md"]
 - [[scala-collections-list|Списки (List)]]
 - [[scala-collections|Обзор коллекций]]
 
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [[scala-collections-vector|Scala Collections — Vector]]
+- [[scala-fp-advanced|Scala Functional Programming — Advanced]]
 ## Содержание
 
 - [Введение в Stream](#введение-в-stream)

@@ -30,6 +30,7 @@ related: ["scala/scala-basics.md", "scala/scala-collections.md"]
 - [[scala-collections-set|Множества (Set)]]
 - [[scala-collections|Обзор коллекций]]
 
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
 ## Содержание
 
 - [Введение в Map](#введение-в-map)

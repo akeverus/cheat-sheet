@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Linkerd` — lightweight service mesh для Kubernetes. **Pioneer** service mesh space (Linkerd 1.x в 2016). Linkerd2 (2018) — переписан на **Rust** для performance. Created by **Buoyant**. **CNCF graduated** (2021). Главная альтернатива Istio — **simpler, faster, более opinionated**.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -443,19 +441,19 @@ linkerd viz tap deploy/my-app
 
 ## See also
 
-- [Istio](istio-service-mesh-interview.md) — main конкурент
-- [Consul Connect](consul-interview.md) — multi-platform alternative
-- [Kubernetes](kubernetes-interview.md) — required platform
-- [Микросервисы](../architecture/microservices-interview.md) — main use case
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
-- [Zero Trust](../security/zero-trust-interview.md) — Linkerd enables
-- [mTLS](../security/mtls-interview.md) — automatic
-- [Application Security](../security/application-security-interview.md) — security
-- [OpenTelemetry](../monitoring/opentelemetry-interview.md) — observability
-- [Observability](../monitoring/observability-interview.md) — RED metrics
-- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — TrafficSplit
-- [Resilience Patterns](../architecture/resilience-patterns-interview.md) — retries
-- [Networking](../architecture/networking-interview.md) — L4/L7
+- [[istio-service-mesh-interview|Istio]] — main конкурент
+- [[consul-interview|Consul Connect]] — multi-platform alternative
+- [[kubernetes-interview|Kubernetes]] — required platform
+- [[microservices-interview|Микросервисы]] — main use case
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
+- [[zero-trust-interview|Zero Trust]] — Linkerd enables
+- [[mtls-interview|mTLS]] — automatic
+- [[application-security-interview|Application Security]] — security
+- [[opentelemetry-interview|OpenTelemetry]] — observability
+- [[observability-interview|Observability]] — RED metrics
+- [[deployment-strategies-interview|Deployment Strategies]] — TrafficSplit
+- [[resilience-patterns-interview|Resilience Patterns]] — retries
+- [[networking-interview|Networking]] — L4/L7
 
 - [[ansible-interview|Ansible]]
 - [[argocd-interview|ArgoCD и GitOps]]

@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[dynamic-programming|Динамическое программирование]] — **DP**
 - [[greedy-algorithms|Жадные алгоритмы]] — жадные алгоритмы
 
+- [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
+- [[backtracking|Поиск с возвратом (Backtracking)]]
 ## Содержание
 
 - [Введение в Divide and Conquer](#введение-в-divide-and-conquer)

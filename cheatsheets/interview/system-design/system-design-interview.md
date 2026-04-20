@@ -17,9 +17,7 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `System Design` для `Senior Java Developer`. Включает фреймворк проектирования, классические задачи, распределённые паттерны, `mermaid`-диаграммы архитектур, примеры кода и `trade-offs`.
 
-Дата последнего обновления: 2026-04-13
-
-**`System Design`** -- один из ключевых этапов собеседования на позиции `Senior`/`Staff` уровня. Оценивается не столько знание конкретных технологий, сколько умение структурировать задачу, делать осознанные компромиссы и коммуницировать решение. Тесно связан с [распределёнными системами](../architecture/distributed-systems-interview.md), [паттернами масштабируемости](../architecture/scalability-patterns-interview.md) и [CAP-теоремой](../architecture/cap-theorem-interview.md).
+**`System Design`** -- один из ключевых этапов собеседования на позиции `Senior`/`Staff` уровня. Оценивается не столько знание конкретных технологий, сколько умение структурировать задачу, делать осознанные компромиссы и коммуницировать решение. Тесно связан с [[distributed-systems-interview|распределёнными системами]], [[scalability-patterns-interview|паттернами масштабируемости]] и [[cap-theorem-interview|CAP-теоремой]].
 
 ## Полезные ссылки
 
@@ -160,7 +158,7 @@ FR: создание коротких ссылок, редирект, custom ali
 NFR: latency < 100ms, availability 99.99%, 100M URL/мес, хранение 5 лет
 ```
 
-Именно NFR определяют архитектурные решения: нужно ли `sharding`, сколько реплик, какой тип БД. Подробнее о выборе хранилищ -- в [стратегиях кэширования](../architecture/caching-strategies-interview.md) и вопросе по SQL/NoSQL ниже.
+Именно NFR определяют архитектурные решения: нужно ли `sharding`, сколько реплик, какой тип БД. Подробнее о выборе хранилищ -- в [[caching-strategies-interview|стратегиях кэширования]] и вопросе по SQL/NoSQL ниже.
 
 ## Q3. Как делать `back-of-the-envelope estimation`?
 
@@ -269,12 +267,12 @@ graph TB
 
 **Что нужно показать:**
 1. **Клиент** -- откуда приходят запросы
-2. **`Load Balancer`** -- распределение нагрузки (см. [балансировка нагрузки](../architecture/load-balancing-interview.md))
+2. **`Load Balancer`** -- распределение нагрузки (см. [[load-balancing-interview|балансировка нагрузки]])
 3. **`API Gateway`** -- единая точка входа (auth, rate limiting, routing)
-4. **Сервисы** -- бизнес-логика (monolith vs [микросервисы](../architecture/microservices-interview.md))
-5. **`Cache`** -- ускорение чтения ([стратегии кэширования](../architecture/caching-strategies-interview.md))
+4. **Сервисы** -- бизнес-логика (monolith vs [[microservices-interview|микросервисы]])
+5. **`Cache`** -- ускорение чтения ([[caching-strategies-interview|стратегии кэширования]])
 6. **`Database`** -- хранение данных (SQL/NoSQL)
-7. **`Message Queue`** -- асинхронная обработка ([Kafka](../messaging/kafka-interview.md), `RabbitMQ`)
+7. **`Message Queue`** -- асинхронная обработка ([[kafka-interview|Kafka]], `RabbitMQ`)
 8. **`Object Storage`** -- файлы, медиа (S3)
 9. **`CDN`** -- доставка статики и edge-контента
 
@@ -302,7 +300,7 @@ graph TB
 | High availability | Multi-region, active-active, failover |
 | Data loss prevention | `WAL`, replication, backup |
 
-Подробнее о паттернах согласованности -- в [отдельном файле](../architecture/consistency-patterns-interview.md).
+Подробнее о паттернах согласованности -- в [[consistency-patterns-interview|отдельном файле]].
 
 ---
 
@@ -381,7 +379,7 @@ public class Base62Encoder {
 
 ## Q8. (!) Как спроектировать `Rate Limiter`?
 
-`Rate Limiter` ограничивает количество запросов от клиента за период времени. Защищает систему от `DDoS`, злоупотреблений и обеспечивает fair usage. Тесно связан с [балансировкой нагрузки](../architecture/load-balancing-interview.md) и безопасностью.
+`Rate Limiter` ограничивает количество запросов от клиента за период времени. Защищает систему от `DDoS`, злоупотреблений и обеспечивает fair usage. Тесно связан с [[load-balancing-interview|балансировкой нагрузки]] и безопасностью.
 
 ### Требования
 
@@ -535,7 +533,7 @@ graph TB
 
 ### Схема БД
 
-Для сообщений лучше [Cassandra](../databases/cassandra-interview.md) -- оптимизирована под write-heavy нагрузку, partition по `chatId`:
+Для сообщений лучше [[cassandra-interview|Cassandra]] -- оптимизирована под write-heavy нагрузку, partition по `chatId`:
 
 ```sql
 -- Cassandra-подобная схема
@@ -726,7 +724,7 @@ graph TB
 - **Hotkey problem:** знаменитости -- hot key при fan-out on write. Hybrid решает это
 - **Ranking vs chronological:** хронологический проще, но engagement ниже; ML ranking сложнее, но лучше удержание
 - **Cache invalidation:** при удалении/редактировании поста нужно обновить все timelines (или lazy invalidation)
-- Подробнее об event-driven подходе -- в [event-driven паттернах](../architecture/event-driven-patterns-interview.md)
+- Подробнее об event-driven подходе -- в [[event-driven-patterns-interview|event-driven паттернах]]
 
 ## Q12. Как спроектировать `Search Autocomplete`?
 
@@ -1000,7 +998,7 @@ public class ConsistentHashRing<T> {
 - **CDN** -- определение ближайшего edge-сервера
 - **`Load Balancer`** -- sticky sessions с сохранением при масштабировании
 
-Подробнее о стратегиях кэширования с `consistent hashing` -- в [отдельном файле](../architecture/caching-strategies-interview.md).
+Подробнее о стратегиях кэширования с `consistent hashing` -- в [[caching-strategies-interview|отдельном файле]].
 
 ### `Trade-offs`
 
@@ -1010,7 +1008,7 @@ public class ConsistentHashRing<T> {
 
 ## Q16. (!) Как работает `Database Sharding`?
 
-`Sharding` (горизонтальное секционирование) -- разделение данных между несколькими серверами БД для масштабирования. Каждый shard содержит подмножество данных. Подробнее о масштабируемости в [паттернах масштабируемости](../architecture/scalability-patterns-interview.md).
+`Sharding` (горизонтальное секционирование) -- разделение данных между несколькими серверами БД для масштабирования. Каждый shard содержит подмножество данных. Подробнее о масштабируемости в [[scalability-patterns-interview|паттернах масштабируемости]].
 
 ### Стратегии шардирования
 
@@ -1085,7 +1083,7 @@ SELECT * FROM orders WHERE amount > 1000 ORDER BY created_at LIMIT 10;
 
 ## Q17. (!) Как работает `Leader Election`?
 
-`Leader Election` -- выбор одного узла в кластере как лидера для координации. Нужен для: master DB replication, distributed lock manager, task scheduling, partition assignment ([Kafka](../messaging/kafka-interview.md) controller).
+`Leader Election` -- выбор одного узла в кластере как лидера для координации. Нужен для: master DB replication, distributed lock manager, task scheduling, partition assignment ([[kafka-interview|Kafka]] controller).
 
 ### Алгоритмы
 
@@ -1147,11 +1145,11 @@ selector.start();
 - **Split-brain:** при network partition может быть два лидера. Решение -- fencing tokens, epoch numbers
 - **Leader bottleneck:** лидер = single point of throughput. Решение -- partition leadership (как в Kafka -- разные лидеры для разных партиций)
 
-Подробнее о distributed coordination -- в [распределённых системах](../architecture/distributed-systems-interview.md).
+Подробнее о distributed coordination -- в [[distributed-systems-interview|распределённых системах]].
 
 ## Q18. Как спроектировать `Distributed Cache`?
 
-`Distributed Cache` ускоряет чтение данных, снижает нагрузку на БД и обеспечивает low latency. Подробнее о стратегиях -- в [стратегиях кэширования](../architecture/caching-strategies-interview.md) и [Redis](../databases/redis-interview.md).
+`Distributed Cache` ускоряет чтение данных, снижает нагрузку на БД и обеспечивает low latency. Подробнее о стратегиях -- в [[caching-strategies-interview|стратегиях кэширования]] и [[redis-interview|Redis]].
 
 ### Архитектура
 
@@ -1289,11 +1287,11 @@ graph TB
 3. `Search engine` -- для полнотекстового поиска, не как source of truth
 4. `Redis` -- для кэша, сессий, rate limiting, pub/sub
 
-Подробнее о [Redis](../databases/redis-interview.md), [Cassandra](../databases/cassandra-interview.md), [Elasticsearch](../databases/elasticsearch-interview.md), [MongoDB](../databases/mongodb-interview.md) и [SQL](../databases/sql-interview.md) -- в отдельных файлах.
+Подробнее о [[redis-interview|Redis]], [[cassandra-interview|Cassandra]], [[elasticsearch-interview|Elasticsearch]], [[mongodb-interview|MongoDB]] и [[sql-interview|SQL]] -- в отдельных файлах.
 
 ## Q21. (!) Когда использовать очереди и `event-driven` подход?
 
-Очереди и события уместны, когда нужно развязать компоненты по времени и нагрузке. Подробнее в [event-driven паттернах](../architecture/event-driven-patterns-interview.md) и [Kafka](../messaging/kafka-interview.md).
+Очереди и события уместны, когда нужно развязать компоненты по времени и нагрузке. Подробнее в [[event-driven-patterns-interview|event-driven паттернах]] и [[kafka-interview|Kafka]].
 
 ### Когда добавлять очередь
 
@@ -1327,7 +1325,7 @@ graph TB
 
 ## Q22. Как обсуждать консистентность и `CAP` `trade-offs`?
 
-Нужно явно обозначить, где нужна `strong consistency`, а где допустима `eventual consistency`. Подробнее -- в [CAP-теореме](../architecture/cap-theorem-interview.md) и [паттернах согласованности](../architecture/consistency-patterns-interview.md).
+Нужно явно обозначить, где нужна `strong consistency`, а где допустима `eventual consistency`. Подробнее -- в [[cap-theorem-interview|CAP-теореме]] и [[consistency-patterns-interview|паттернах согласованности]].
 
 ### Уровни консистентности
 
@@ -1355,7 +1353,7 @@ graph TB
 
 ## Q23. Как спроектировать `Observability` для системы?
 
-Observability проектируют с самого начала, а не добавляют потом. Три столпа: metrics, logs, traces. Подробнее в [Observability](../monitoring/observability-interview.md) и [метриках и трейсинге](../monitoring/metrics-tracing-interview.md).
+Observability проектируют с самого начала, а не добавляют потом. Три столпа: metrics, logs, traces. Подробнее в [[observability-interview|Observability]] и [[metrics-tracing-interview|метриках и трейсинге]].
 
 ### Три столпа
 
@@ -1395,11 +1393,11 @@ graph LR
 - **SLO** (Service Level Objective) -- целевое значение (p99 < 200ms, availability 99.9%)
 - **SLA** (Service Level Agreement) -- контракт с клиентом (downtime = штрафы)
 
-Подробнее о стратегиях логирования -- в [отдельном файле](../monitoring/logging-strategies-interview.md).
+Подробнее о стратегиях логирования -- в [[logging-strategies-interview|отдельном файле]].
 
 ## Q24. Какие аспекты безопасности покрывать в дизайне?
 
-Безопасность -- обязательная часть system design, даже если интервьюер не спрашивает. Подробнее в [безопасности приложений](../security/application-security-interview.md) и [паттернах аутентификации](../security/authentication-authorization-patterns-interview.md).
+Безопасность -- обязательная часть system design, даже если интервьюер не спрашивает. Подробнее в [[application-security-interview|безопасности приложений]] и [[authentication-authorization-patterns-interview|паттернах аутентификации]].
 
 **Базовый минимум:**
 - **Authentication:** OAuth 2.0, JWT, MFA
@@ -2040,7 +2038,7 @@ public void handlePaymentResult(PaymentResultEvent event) {
 - Saga не обеспечивает изоляцию (I в ACID) — возможны dirty reads в процессе выполнения
 - Компенсирующие операции сложнее write-операций (что если компенсация тоже не удалась?)
 - Choreography хороша до 3-4 сервисов; при росте — переходить на Orchestration
-- Подробнее в [event-driven паттернах](../architecture/event-driven-patterns-interview.md)
+- Подробнее в [[event-driven-patterns-interview|event-driven паттернах]]
 
 ## Q34. Как спроектировать `Search Engine` на базе `Elasticsearch`?
 
@@ -2213,7 +2211,7 @@ CREATE TABLE event_store (
 - **Eventual consistency**: read-модели обновляются асинхронно → stale reads
 - **Complexity**: event versioning (schema migration), snapshot для длинных агрегатов
 - **Snapshot-оптимизация**: при 1000+ событий на агрегат — периодически снимать снапшот состояния
-- Подробнее в [отдельном файле про CQRS и Event Sourcing](../architecture/cqrs-event-sourcing-interview.md)
+- Подробнее в [[cqrs-event-sourcing-interview|отдельном файле про CQRS и Event Sourcing]]
 
 ## Q36. Что такое `Service Mesh` (`Istio`) и когда он нужен?
 
@@ -2730,16 +2728,16 @@ Downstream медленный → timeouts → Circuit Breaker открывае�
 
 ## See also
 
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — CAP, консенсус, репликация, отказоустойчивость
-- [Паттерны масштабируемости](../architecture/scalability-patterns-interview.md) — шардирование, горизонтальное масштабирование, CQRS
-- [CAP-теорема](../architecture/cap-theorem-interview.md) — trade-offs между consistency, availability и partition tolerance
-- [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — eventual consistency, strong consistency, read-your-writes
-- [Микросервисы](../architecture/microservices-interview.md) — декомпозиция, межсервисное взаимодействие, data ownership
-- [Стратегии кэширования](../architecture/caching-strategies-interview.md) — cache-aside, write-through, CDN, Redis в system design
-- [Apache Kafka](../messaging/kafka-interview.md) — применение Kafka как event backbone при проектировании систем
-- [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — Outbox, Saga, event sourcing в контексте system design
-- [Redis](../databases/redis-interview.md) — кэширование, очереди и rate limiting
-- [Балансировка нагрузки](../architecture/load-balancing-interview.md) — алгоритмы и паттерны
+- [[distributed-systems-interview|Распределённые системы]] — CAP, консенсус, репликация, отказоустойчивость
+- [[scalability-patterns-interview|Паттерны масштабируемости]] — шардирование, горизонтальное масштабирование, CQRS
+- [[cap-theorem-interview|CAP-теорема]] — trade-offs между consistency, availability и partition tolerance
+- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency, strong consistency, read-your-writes
+- [[microservices-interview|Микросервисы]] — декомпозиция, межсервисное взаимодействие, data ownership
+- [[caching-strategies-interview|Стратегии кэширования]] — cache-aside, write-through, CDN, Redis в system design
+- [[kafka-interview|Apache Kafka]] — применение Kafka как event backbone при проектировании систем
+- [[event-driven-patterns-interview|Event-driven паттерны]] — Outbox, Saga, event sourcing в контексте system design
+- [[redis-interview|Redis]] — кэширование, очереди и rate limiting
+- [[load-balancing-interview|Балансировка нагрузки]] — алгоритмы и паттерны
 
 - [[design-chat-system-interview|Design Chat System]]
 - [[design-feed-system-interview|Design Feed System]]

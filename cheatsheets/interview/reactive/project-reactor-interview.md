@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Project Reactor` для `Senior Java Developer`. Охватывает реактивное программирование, `Mono`/`Flux`, операторы трансформации, backpressure, `Schedulers`, `Context`, тестирование с `StepVerifier`, отладку и интеграцию со `Spring WebFlux`.
 
-Дата последнего обновления: 2026-04-13
-
 **`Project Reactor`** — реактивная библиотека для `JVM`, реализующая спецификацию `Reactive Streams`. Является фундаментом `Spring WebFlux` и широко применяется для построения неблокирующих, высоконагруженных приложений. Библиотека предоставляет два основных типа: `Mono` (0 или 1 элемент) и `Flux` (0 или N элементов).
 
 ## Полезные ссылки
@@ -1573,16 +1571,16 @@ Mono<Result> result = Mono.fromCallable(() -> blockingOperation())
 
 ## See also
 
-- [RxJava](rxjava-interview.md) — альтернативная реактивная библиотека, похожая концепция `Observable`/`Flowable`
-- [Spring WebFlux](../frameworks/spring/spring-webflux-interview.md) — реактивный веб-стек на основе `Project Reactor`
-- [Java Concurrency](../programming-languages/java/java-concurrency-interview.md) — основы многопоточности и асинхронного программирования в `Java`
-- [Java Stream API](../programming-languages/java/java-stream-interview.md) — синхронный аналог для работы с коллекциями, схожий API
-- [Apache Kafka](../messaging/kafka-interview.md) — типичный источник данных для реактивных приложений
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — экосистема, в которой используется `Spring WebFlux`
-- [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) — сравнение с реактивными репозиториями `R2DBC`
-- [Java 8](../programming-languages/java/java-8-interview.md) — `CompletableFuture` как альтернативный подход к асинхронности
-- [Kotlin Coroutines](../programming-languages/kotlin/kotlin-coroutines-interview.md) — сравнение с корутинами как альтернативой реактивному программированию
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — реактивное программирование в контексте микросервисов
+- [[rxjava-interview|RxJava]] — альтернативная реактивная библиотека, похожая концепция `Observable`/`Flowable`
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный веб-стек на основе `Project Reactor`
+- [[java-concurrency-interview|Java Concurrency]] — основы многопоточности и асинхронного программирования в `Java`
+- [[java-stream-interview|Java Stream API]] — синхронный аналог для работы с коллекциями, схожий API
+- [[kafka-interview|Apache Kafka]] — типичный источник данных для реактивных приложений
+- [[spring-boot-interview|Spring Boot]] — экосистема, в которой используется `Spring WebFlux`
+- [[spring-data-jpa-interview|Spring Data JPA]] — сравнение с реактивными репозиториями `R2DBC`
+- [[java-8-interview|Java 8]] — `CompletableFuture` как альтернативный подход к асинхронности
+- [[kotlin-coroutines-interview|Kotlin Coroutines]] — сравнение с корутинами как альтернативой реактивному программированию
+- [[distributed-systems-interview|Распределённые системы]] — реактивное программирование в контексте микросервисов
 
 - [[reactive-patterns-interview|Reactive Patterns]]
 - [[reactive-streams-interview|Reactive Streams]]

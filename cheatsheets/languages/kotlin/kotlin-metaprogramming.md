@@ -27,6 +27,9 @@ updated: "2026-04-20"
 - [[kotlin-basics|Основы Kotlin]]
 - [[kotlin-dsl|DSL в Kotlin]]
 
+- [[kotlin-performance|Kotlin Performance]]
+- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
+- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
 ## Содержание
 
 - [Введение в метапрограммирование](#введение-в-метапрограммирование)

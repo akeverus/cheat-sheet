@@ -16,8 +16,6 @@ updated: "2026-04-18"
 
 Generics появились в Go только с **версии 1.18 (март 2022)** — на 13 лет позже релиза языка. Реализация — гибрид monomorphization и dictionary passing. Constraints через interfaces, type sets, comparable. Существенно ограничены по сравнению с Java/C#/Rust.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -661,14 +659,14 @@ constraints.Ordered
 
 ## See also
 
-- [Go (базовый)](go-interview.md) — основы языка
-- [Go Standard Library](go-stdlib-interview.md) — slices, maps пакеты
-- [Go Concurrency](go-concurrency-interview.md) — generic channels (нет, но channel of T)
-- [Java Generics](../java/java-generics-interview.md) — для сравнения erasure
-- [Java Collections](../java/java-collections-interview.md) — Java generic коллекции
-- [Kotlin](../kotlin/kotlin-interview.md) — generics в Kotlin
-- [Scala](../scala/scala-interview.md) — самые мощные generics на JVM
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — где generics упрощают
+- [[go-interview|Go (базовый)]] — основы языка
+- [[go-stdlib-interview|Go Standard Library]] — slices, maps пакеты
+- [[go-concurrency-interview|Go Concurrency]] — generic channels (нет, но channel of T)
+- [[java-generics-interview|Java Generics]] — для сравнения erasure
+- [[java-collections-interview|Java Collections]] — Java generic коллекции
+- [[kotlin-interview|Kotlin]] — generics в Kotlin
+- [[scala-interview|Scala]] — самые мощные generics на JVM
+- [[design-patterns-interview|Design Patterns]] — где generics упрощают
 
 - [[go-concurrency-interview|Go Concurrency]]
 - [[go-interview|Go]]

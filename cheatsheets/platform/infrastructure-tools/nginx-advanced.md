@@ -22,6 +22,9 @@ updated: "2026-04-20"
 - [Nginx Security Controls](https://nginx.org/en/docs/http/ngx_http_ssl_module.html)
 - [Nginx Performance Tuning](https://nginx.org/en/docs/)
 
+
+### См. также
+- [[consul|Consul]]
 ## Содержание
 
 - [Продвинутая архитектура](#продвинутая-архитектура)

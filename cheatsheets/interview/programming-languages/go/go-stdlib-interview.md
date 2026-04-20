@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 Стандартная библиотека Go покрывает 80% потребностей backend-разработки **без third-party**. На интервью спрашивают: устройство `net/http`, нюансы `encoding/json`, новый `log/slog`, `database/sql`, `time` пакет, `embed` (с Go 1.16), `errors` wrapping.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -522,7 +520,7 @@ case result := <-doWork():
 }
 ```
 
-Подробнее — в [Go Concurrency](go-concurrency-interview.md).
+Подробнее — в [[go-concurrency-interview|Go Concurrency]].
 
 ## Q18. (!) errors.New, errors.Is, errors.As?
 
@@ -843,15 +841,15 @@ maps.Clone(m)
 
 ## See also
 
-- [Go (базовый)](go-interview.md) — основы языка
-- [Go Concurrency](go-concurrency-interview.md) — context, sync
-- [Go Memory & GC](go-memory-gc-interview.md) — pprof
-- [Go Generics](go-generics-interview.md) — slices/maps пакеты
-- [Go Testing](go-testing-interview.md) — testing пакет
-- [HTTP & REST](../../api/http-rest-interview.md) — net/http
-- [PostgreSQL](../../databases/postgresql-interview.md) — database/sql + lib/pq
-- [Logging](../../logging/logging-interview.md) — slog vs zap vs zerolog
-- [Микросервисы](../../architecture/microservices-interview.md) — Go использует stdlib для большинства задач
+- [[go-interview|Go (базовый)]] — основы языка
+- [[go-concurrency-interview|Go Concurrency]] — context, sync
+- [[go-memory-gc-interview|Go Memory & GC]] — pprof
+- [[go-generics-interview|Go Generics]] — slices/maps пакеты
+- [[go-testing-interview|Go Testing]] — testing пакет
+- [[http-rest-interview|HTTP & REST]] — net/http
+- [[postgresql-interview|PostgreSQL]] — database/sql + lib/pq
+- [[logging-interview|Logging]] — slog vs zap vs zerolog
+- [[microservices-interview|Микросервисы]] — Go использует stdlib для большинства задач
 
 - [[go-concurrency-interview|Go Concurrency]]
 - [[go-generics-interview|Go Generics]]

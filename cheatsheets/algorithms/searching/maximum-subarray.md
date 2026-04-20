@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[pairs-with-given-sum|`pairs-with-given-sum.md`]] — поиск пар с заданной суммой (`pairs with sum`)
 - [[find-max-element|`find-max-element.md`]] — поиск максимального элемента (`find max`)
 
+- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
+- [[interpolation-search|Интерполяционный поиск (Interpolation Search)]]
+- [[merge-two-sorted-arrays|Слияние двух отсортированных массивов (Merge Two Sorted Arrays)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

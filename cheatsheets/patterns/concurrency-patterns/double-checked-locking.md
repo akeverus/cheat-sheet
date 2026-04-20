@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[singleton|Singleton]] — **Singleton Pattern**
 - [[java-concurrency-advanced|JVM Memory / volatile]] — память и **volatile**
 
+- [[read-write-lock|Блокировка чтения-записи (Read-Write Lock)]]
+- [[active-object|Активный объект (Active Object)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

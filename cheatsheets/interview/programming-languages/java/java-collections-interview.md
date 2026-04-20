@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Комплексное руководство по вопросам собеседования на тему `Java Collections Framework` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java`, `mermaid`-диаграммы, best practices и troubleshooting.
 
-Дата последнего обновления: 2026-04-13
-
 ## Полезные ссылки
 
 ### Официальная документация
@@ -251,7 +249,7 @@ public interface Iterable<T> {
 }
 ```
 
-`Collection` расширяет `Iterable` и добавляет методы работы с группами элементов: `size()`, `add()`, `remove()`, `contains()`, `stream()` и др. Подробнее о стримах — в [вопросах по Java Stream API](java-stream-interview.md).
+`Collection` расширяет `Iterable` и добавляет методы работы с группами элементов: `size()`, `add()`, `remove()`, `contains()`, `stream()` и др. Подробнее о стримах — в [[java-stream-interview|вопросах по Java Stream API]].
 
 ## Q6. (!) В чем разница между `LinkedList` и `ArrayList`?
 
@@ -317,7 +315,7 @@ for (EventListener listener : listeners) {
 }
 ```
 
-**Когда использовать:** редкие записи и частое чтение — списки слушателей, конфигурации, белые списки. **Не использовать:** при частых модификациях или больших коллекциях (каждая запись — `O(n)` копирование). Подробнее о потокобезопасных коллекциях — в [вопросах по Java Concurrency](java-concurrency-interview.md).
+**Когда использовать:** редкие записи и частое чтение — списки слушателей, конфигурации, белые списки. **Не использовать:** при частых модификациях или больших коллекциях (каждая запись — `O(n)` копирование). Подробнее о потокобезопасных коллекциях — в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q9. В чём разница между `List.of()` и `Arrays.asList()`?
 
@@ -368,7 +366,7 @@ treeSet.last();               // "Charlie"
 treeSet.subSet("Alice", "C"); // ["Alice", "Bob"]
 ```
 
-`HashSet` внутри — это `HashMap`, где значение — фиктивный объект `PRESENT`. Поэтому требования к `hashCode()`/`equals()` ключей применимы и к элементам `HashSet` — подробнее в [вопросах по Java Core](java-core-interview.md).
+`HashSet` внутри — это `HashMap`, где значение — фиктивный объект `PRESENT`. Поэтому требования к `hashCode()`/`equals()` ключей применимы и к элементам `HashSet` — подробнее в [[java-core-interview|вопросах по Java Core]].
 
 ## Q11. Что такое `LinkedHashSet` и когда его использовать?
 
@@ -535,7 +533,7 @@ long sum = counters.reduceValuesToLong(1, AtomicInteger::get, 0, Long::sum);
 | Атомарные операции | Нет | `compute`, `merge`, `putIfAbsent` |
 | Блокировка | — | На уровне bucket'а |
 
-Подробнее о многопоточности — в [вопросах по Java Concurrency](java-concurrency-interview.md).
+Подробнее о многопоточности — в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q16. (!) Контракт `equals` и `hashCode` для ключей `Map`
 
@@ -586,7 +584,7 @@ map.firstKey();              // 1
 map.lastKey();               // 5
 map.lowerKey(3);             // 2 (строго меньше)
 map.floorKey(3);             // 3 (меньше или равно)
-map.subMap(2, 5);            // {2=Two, 3=Three} — [2, 5)
+map.subMap(2, 5);            // {2=Two, 3=Three} — [[memory-management-interview|2, 5)
 map.headMap(3);              // {1=One, 2=Two}
 map.tailMap(3);              // {3=Three, 5=Five}
 map.descendingMap();         // {5=Five, 3=Three, 2=Two, 1=One}
@@ -659,7 +657,7 @@ System.gc(); // Подсказка GC (не гарантирует сборку)
 // После GC: metadata может стать пустой
 ```
 
-**Применение:** кэширование метаданных, привязанных к жизненному циклу объектов-ключей. Не потокобезопасна. Подробнее о типах ссылок — в [вопросах по управлению памятью](../../performance/memory-management-interview.md).
+**Применение:** кэширование метаданных, привязанных к жизненному циклу объектов-ключей. Не потокобезопасна. Подробнее о типах ссылок — в [вопросах по управлению памятью]].
 
 ## Q21. Что такое `IdentityHashMap`?
 
@@ -739,7 +737,7 @@ map.replaceAll((k, v) -> v * 2);
 map.forEach((k, v) -> System.out.println(k + "=" + v));
 ```
 
-Эти методы особенно полезны для подсчёта частот, группировок и атомарных обновлений. Подробнее о `Stream API` и `Collectors` — в [вопросах по Stream API](java-stream-interview.md).
+Эти методы особенно полезны для подсчёта частот, группировок и атомарных обновлений. Подробнее о `Stream API` и `Collectors` — в [[java-stream-interview|вопросах по Stream API]].
 
 ## Q24. Что такое `Queue` и какие реализации?
 
@@ -827,7 +825,7 @@ Runnable consumer = () -> {
 | `SynchronousQueue` | **0** | Каждый `put` ждёт `take` |
 | `PriorityBlockingQueue` | Безграничная | Приоритетная очередь |
 
-`ThreadPoolExecutor` использует `BlockingQueue` для очереди задач — подробнее в [вопросах по Java Concurrency](java-concurrency-interview.md).
+`ThreadPoolExecutor` использует `BlockingQueue` для очереди задач — подробнее в [[java-concurrency-interview|вопросах по Java Concurrency]].
 
 ## Q27. В чём разница между `ArrayDeque` и `LinkedList`?
 
@@ -952,7 +950,7 @@ full.characteristics(); // SIZED | ORDERED | SUBSIZED | IMMUTABLE
 full.estimateSize();    // Оценка количества оставшихся элементов
 ```
 
-**Характеристики** (`characteristics`): `SIZED`, `ORDERED`, `SORTED`, `DISTINCT`, `NONNULL`, `IMMUTABLE`, `CONCURRENT`, `SUBSIZED`. Они влияют на оптимизации в `Stream API` — подробнее в [вопросах по Stream API](java-stream-interview.md).
+**Характеристики** (`characteristics`): `SIZED`, `ORDERED`, `SORTED`, `DISTINCT`, `NONNULL`, `IMMUTABLE`, `CONCURRENT`, `SUBSIZED`. Они влияют на оптимизации в `Stream API` — подробнее в [[java-stream-interview|вопросах по Stream API]].
 
 ## Q32. Что такое `ConcurrentModificationException`?
 
@@ -1078,7 +1076,7 @@ list.set(0, "x");   // UnsupportedOperationException
 - `Set.of()` и `Map.of()` не допускают дубликатов — `IllegalArgumentException`
 - Порядок итерации `Set.of()` **не определён** и может меняться между запусками JVM
 
-Более детально о `Java 8+` возможностях — в [вопросах по Java 8+](java-8-interview.md).
+Более детально о `Java 8+` возможностях — в [[java-8-interview|вопросах по Java 8+]].
 
 ## Q37. Какие утилитные методы предоставляет класс `Collections`?
 
@@ -1134,7 +1132,7 @@ System.out.println(map.get(key)); // null! Значение "потеряно"
 System.out.println(map.size());   // 1 — элемент есть, но недоступен
 ```
 
-**Правило:** ключи `HashMap`/`HashSet` должны быть **immutable** или, как минимум, поля, участвующие в `hashCode()`/`equals()`, не должны изменяться после вставки. Идеальные ключи: `String`, `Integer`, `enum`, `record`. Подробнее — в [вопросах по Java Core](java-core-interview.md).
+**Правило:** ключи `HashMap`/`HashSet` должны быть **immutable** или, как минимум, поля, участвующие в `hashCode()`/`equals()`, не должны изменяться после вставки. Идеальные ключи: `String`, `Integer`, `enum`, `record`. Подробнее — в [[java-core-interview|вопросах по Java Core]].
 
 ## Q39. Как выбрать правильную коллекцию для конкретной задачи?
 
@@ -1202,7 +1200,7 @@ long sum = ints.sum(); // Без autoboxing
 
 ## Q41. (!) Что такое `SequencedCollection`, `SequencedSet`, `SequencedMap` (Java 21)?
 
-`Java 21` ввёл три новых интерфейса в иерархию `Collections Framework` (см. [Java 17-21](java-17-21-interview.md)):
+`Java 21` ввёл три новых интерфейса в иерархию `Collections Framework` (см. [[java-17-21-interview|Java 17-21]]):
 
 ```
 java.util.SequencedCollection  → List, Deque, LinkedHashSet
@@ -1458,22 +1456,22 @@ WeakHashMap<ExpensiveKey, Result> memoTable = new WeakHashMap<>();
 - `size()` может изменяться между вызовами из-за GC
 - Не потокобезопасен — для конкурентного кэша использовать `java.lang.ref.WeakReference` с `ConcurrentHashMap` или Caffeine с `weakKeys()`
 
-Более подробно о новых возможностях Java 21 — в [вопросах по Java 17-21](java-17-21-interview.md), а о Stream API — в [вопросах по Stream API](java-stream-interview.md).
+Более подробно о новых возможностях Java 21 — в [[java-17-21-interview|вопросах по Java 17-21]], а о Stream API — в [[java-stream-interview|вопросах по Stream API]].
 
 ---
 
 ## See also
 
-- [Java Stream API](java-stream-interview.md) — вопросы по `Stream API`, тесно связаны с коллекциями
-- [Java Concurrency](java-concurrency-interview.md) — потокобезопасные коллекции и синхронизация
-- [Java Core](java-core-interview.md) — основы языка, контракт `equals`/`hashCode`, иммутабельность
-- [Java Generics](java-generics-interview.md) — параметризация коллекций, `PECS`, wildcards
-- [Java 8+](java-8-interview.md) — новые методы коллекций, `Stream API`, фабричные методы `List.of()`
-- [OOP & Java](java-oop-interview.md) — `Comparable`, `Comparator`, отношение is-a / has-a
-- [Система типов Java](java-types-interview.md) — `autoboxing` в коллекциях, производительность
-- [Java 17-21](java-17-21-interview.md) — `SequencedCollection`, улучшения в `Collections API`
-- [Алгоритмы и структуры данных](../../algorithms/algorithms-interview.md) — сложность операций, выбор структуры данных
-- [Design Patterns](../../design-patterns/design-patterns-interview.md) — Iterator, Composite, Decorator в контексте коллекций
+- [[java-stream-interview|Java Stream API]] — вопросы по `Stream API`, тесно связаны с коллекциями
+- [[java-concurrency-interview|Java Concurrency]] — потокобезопасные коллекции и синхронизация
+- [[java-core-interview|Java Core]] — основы языка, контракт `equals`/`hashCode`, иммутабельность
+- [[java-generics-interview|Java Generics]] — параметризация коллекций, `PECS`, wildcards
+- [[java-8-interview|Java 8+]] — новые методы коллекций, `Stream API`, фабричные методы `List.of()`
+- [[java-oop-interview|OOP & Java]] — `Comparable`, `Comparator`, отношение is-a / has-a
+- [[java-types-interview|Система типов Java]] — `autoboxing` в коллекциях, производительность
+- [[java-17-21-interview|Java 17-21]] — `SequencedCollection`, улучшения в `Collections API`
+- [[algorithms-interview|Алгоритмы и структуры данных]] — сложность операций, выбор структуры данных
+- [[design-patterns-interview|Design Patterns]] — Iterator, Composite, Decorator в контексте коллекций
 
 - [[java-17-21-interview|Java 17-21]]
 - [[java-8-interview|Java 8]]

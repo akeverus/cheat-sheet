@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 `Ktor` — асинхронный фреймворк от JetBrains для построения server- и client-приложений на Kotlin. Построен на корутинах, использует **plugins** (раньше features) для расширения функциональности. Легковесный, явный, тесно интегрирован с экосистемой Kotlin.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -467,7 +465,7 @@ get("/long") {
 
 **Важно:** при отмене запроса (клиент закрыл соединение) — все дочерние корутины **автоматически отменяются**. Это структурная concurrency.
 
-Подробнее — в [Kotlin Coroutines](../../programming-languages/kotlin/kotlin-coroutines-interview.md).
+Подробнее — в [[kotlin-coroutines-interview|Kotlin Coroutines]].
 
 ## Q16. Как обработать структурную concurrency в эндпойнте?
 
@@ -653,7 +651,7 @@ fun generateToken(username: String): String =
        .sign(Algorithm.HMAC256(jwtSecret))
 ```
 
-Подробнее — в [JWT](../../security/jwt-interview.md).
+Подробнее — в [[jwt-interview|JWT]].
 
 ## Q22. CORS, CSRF, Headers — настройка?
 
@@ -864,7 +862,7 @@ Runtime.getRuntime().addShutdownHook(Thread {
 server.start(wait = true)
 ```
 
-В отличие от Spring Boot Actuator, готового набора endpoints нет — собираешь руками. Подробнее — в [Spring Boot Actuator](../spring/spring-boot-actuator-interview.md).
+В отличие от Spring Boot Actuator, готового набора endpoints нет — собираешь руками. Подробнее — в [[spring-boot-actuator-interview|Spring Boot Actuator]].
 
 ## Q31. Производительность Ktor vs Spring WebFlux?
 
@@ -876,7 +874,7 @@ server.start(wait = true)
 
 **Spring MVC (синхронный)** — заметно медленнее обоих под high concurrency.
 
-Подробнее — в [Spring WebFlux](../spring/spring-webflux-interview.md).
+Подробнее — в [[spring-webflux-interview|Spring WebFlux]].
 
 ## Q32. (!) Какие минусы Ktor?
 
@@ -895,20 +893,20 @@ Ktor — для команд, готовых **писать больше код�
 
 ## See also
 
-- [Spring Boot](../spring/spring-boot-interview.md) — основной конкурент
-- [Spring WebFlux](../spring/spring-webflux-interview.md) — реактивный аналог
-- [Spring MVC](../spring/spring-mvc-interview.md) — синхронная альтернатива
-- [Kotlin](../../programming-languages/kotlin/kotlin-interview.md) — основной язык Ktor
-- [Kotlin Coroutines](../../programming-languages/kotlin/kotlin-coroutines-interview.md) — основа async-модели Ktor
-- [DSL в Kotlin](../../programming-languages/kotlin/kotlin-dsl-interview.md) — routing DSL построен на этом
-- [Сериализация в Kotlin](../../programming-languages/kotlin/kotlin-serialization-interview.md) — kotlinx.serialization
-- [Quarkus](quarkus-interview.md) — другой lightweight JVM фреймворк
-- [Micronaut](micronaut-interview.md) — compile-time DI альтернатива
-- [Vert.x](vertx-interview.md) — event-driven JVM фреймворк
-- [JWT](../../security/jwt-interview.md) — реализация в Ktor
-- [OAuth2](../../security/oauth2-interview.md) — auth integration
-- [Микросервисы](../../architecture/microservices-interview.md) — где Ktor хорош
-- [Spring Boot Actuator](../spring/spring-boot-actuator-interview.md) — production observability контраст
+- [[spring-boot-interview|Spring Boot]] — основной конкурент
+- [[spring-webflux-interview|Spring WebFlux]] — реактивный аналог
+- [[spring-mvc-interview|Spring MVC]] — синхронная альтернатива
+- [[kotlin-interview|Kotlin]] — основной язык Ktor
+- [[kotlin-coroutines-interview|Kotlin Coroutines]] — основа async-модели Ktor
+- [[kotlin-dsl-interview|DSL в Kotlin]] — routing DSL построен на этом
+- [[kotlin-serialization-interview|Сериализация в Kotlin]] — kotlinx.serialization
+- [[quarkus-interview|Quarkus]] — другой lightweight JVM фреймворк
+- [[micronaut-interview|Micronaut]] — compile-time DI альтернатива
+- [[vertx-interview|Vert.x]] — event-driven JVM фреймворк
+- [[jwt-interview|JWT]] — реализация в Ktor
+- [[oauth2-interview|OAuth2]] — auth integration
+- [[microservices-interview|Микросервисы]] — где Ktor хорош
+- [[spring-boot-actuator-interview|Spring Boot Actuator]] — production observability контраст
 
 - [[micronaut-interview|Micronaut]]
 - [[quarkus-interview|Quarkus]]

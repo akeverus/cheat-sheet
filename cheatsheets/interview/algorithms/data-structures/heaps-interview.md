@@ -19,8 +19,6 @@ updated: "2026-04-18"
 
 Куча — основа `PriorityQueue` в Java и классических задач: top-K, median in stream, Dijkstra, scheduler. На интервью важно знать heap-property, как работает `heapify`, `siftUp`/`siftDown`, и почему `build-heap` — `O(n)`, а не `O(n log n)`.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -681,16 +679,16 @@ String reorganizeString(String s) {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Деревья](trees-interview.md) — heap как complete binary tree
-- [Стеки и очереди](stacks-queues-interview.md) — PriorityQueue в Java
-- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — Heap Sort
-- [Графы](graphs-interview.md) — Dijkstra использует priority queue
-- [Хеш-таблицы](hash-tables-interview.md) — для top-K frequent (count + heap)
-- [Массивы и строки](arrays-strings-interview.md) — top-K в массивах
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — buildHeap O(n) обоснование
-- [Java Collections](../../programming-languages/java/java-collections-interview.md) — PriorityQueue, PriorityBlockingQueue
-- [Java Concurrency](../../programming-languages/java/java-concurrency-interview.md) — PriorityBlockingQueue, ScheduledThreadPoolExecutor
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[trees-interview|Деревья]] — heap как complete binary tree
+- [[stacks-queues-interview|Стеки и очереди]] — PriorityQueue в Java
+- [[sorting-algorithms-interview|Алгоритмы сортировки]] — Heap Sort
+- [[graphs-interview|Графы]] — Dijkstra использует priority queue
+- [[hash-tables-interview|Хеш-таблицы]] — для top-K frequent (count + heap)
+- [[arrays-strings-interview|Массивы и строки]] — top-K в массивах
+- [[complexity-analysis-interview|Анализ сложности]] — buildHeap O(n) обоснование
+- [[java-collections-interview|Java Collections]] — PriorityQueue, PriorityBlockingQueue
+- [[java-concurrency-interview|Java Concurrency]] — PriorityBlockingQueue, ScheduledThreadPoolExecutor
 
 - [[arrays-strings-interview|Массивы и строки]]
 - [[graphs-interview|Графы]]

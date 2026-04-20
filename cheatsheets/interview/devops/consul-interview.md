@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `HashiCorp Consul` — service mesh + service discovery + KV store + health checking. Создан HashiCorp (2014). Использует **gossip protocol** (Serf) и **Raft consensus**. Часто конкурирует с **etcd, ZooKeeper, Eureka**. С 2023 — license changed (BSL), форк **OpenBao для Vault**, но Consul под BSL.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -532,7 +530,7 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - **K8s + many features** → Istio
 - **K8s + simplicity** → Linkerd
 
-Подробнее — в [Istio](istio-service-mesh-interview.md) и [Linkerd](linkerd-interview.md).
+Подробнее — в [[istio-service-mesh-interview|Istio]] и [[linkerd-interview|Linkerd]].
 
 ## Q23. (!) Когда выбрать Consul?
 
@@ -569,18 +567,18 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 
 ## See also
 
-- [HashiCorp Vault](vault-interview.md) — same vendor, integration
-- [Istio](istio-service-mesh-interview.md) — service mesh alternative
-- [Linkerd](linkerd-interview.md) — service mesh alternative
-- [Ansible](ansible-interview.md) — config management
-- [Kubernetes](kubernetes-interview.md) — built-in discovery
-- [Микросервисы](../architecture/microservices-interview.md) — service discovery context
-- [Cloud-native Patterns](../cloud/cloud-native-patterns-interview.md) — context
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — Raft, gossip
-- [Networking](../architecture/networking-interview.md) — context
-- [Application Security](../security/application-security-interview.md) — mTLS, ACLs
-- [Zero Trust](../security/zero-trust-interview.md) — Connect implements
-- [Load Balancing](../architecture/load-balancing-interview.md) — Consul + LB integration
+- [[vault-interview|HashiCorp Vault]] — same vendor, integration
+- [[istio-service-mesh-interview|Istio]] — service mesh alternative
+- [[linkerd-interview|Linkerd]] — service mesh alternative
+- [[ansible-interview|Ansible]] — config management
+- [[kubernetes-interview|Kubernetes]] — built-in discovery
+- [[microservices-interview|Микросервисы]] — service discovery context
+- [[cloud-native-patterns-interview|Cloud-native Patterns]] — context
+- [[distributed-systems-interview|Распределённые системы]] — Raft, gossip
+- [[networking-interview|Networking]] — context
+- [[application-security-interview|Application Security]] — mTLS, ACLs
+- [[zero-trust-interview|Zero Trust]] — Connect implements
+- [[load-balancing-interview|Load Balancing]] — Consul + LB integration
 
 - [[ansible-interview|Ansible]]
 - [[argocd-interview|ArgoCD и GitOps]]

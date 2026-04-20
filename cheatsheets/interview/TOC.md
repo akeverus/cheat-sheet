@@ -192,16 +192,19 @@ updated: "2026-04-20"
 ## frameworks/spring
 
 - [Вопросы на собеседовании: `Spring AOP`](frameworks/spring/spring-aop-interview.md)
-- [Вопросы на собеседовании: `Spring Events`](frameworks/spring/spring-events-interview.md) — `16` вопросов — `22` вопроса
+- [Вопросы на собеседовании: `Spring Cache`](frameworks/spring/spring-cache-interview.md) — `18` вопросов
+- [Вопросы на собеседовании: `Spring Events`](frameworks/spring/spring-events-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Batch`](frameworks/spring/spring-batch-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot Actuator`](frameworks/spring/spring-boot-actuator-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot`](frameworks/spring/spring-boot-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Spring Cloud`](frameworks/spring/spring-cloud-interview.md) — `43` вопроса
+- [Вопросы на собеседовании: `Spring Data JDBC`](frameworks/spring/spring-data-jdbc-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring Data JPA`](frameworks/spring/spring-data-jpa-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Security`](frameworks/spring/spring-security-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Scheduling`](frameworks/spring/spring-scheduling-interview.md) — `16` вопросов
+- [Вопросы на собеседовании: `Spring Testing`](frameworks/spring/spring-testing-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Validation`](frameworks/spring/spring-validation-interview.md) — `16` вопросов
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
 
@@ -272,8 +275,10 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Java IO / NIO`](programming-languages/java/java-io-nio-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Jackson` (JSON)](programming-languages/java/java-jackson-interview.md) — `31` вопрос
 - [Вопросы на собеседовании: `Lombok`](programming-languages/java/java-lombok-interview.md) — `27` вопросов
-- [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md) — `28` вопросов
+- [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md)
+- [Вопросы на собеседовании: `Java Reflection`](programming-languages/java/java-reflection-interview.md) — `16` вопросов — `28` вопросов
 - [Вопросы на собеседовании: `Java Modules` (JPMS)](programming-languages/java/java-modules-interview.md) — `38` вопросов
+- [Вопросы на собеседовании: `Java Optional`](programming-languages/java/java-optional-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `OOP` & `Java`](programming-languages/java/java-oop-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Java Serialization`](programming-languages/java/java-serialization-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Java Stream API`](programming-languages/java/java-stream-interview.md) — `42` вопроса

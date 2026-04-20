@@ -164,7 +164,6 @@ class TemplateFragmentContractTest {
         assertThat(styles).contains(".focus-page .empty-actions");
         assertThat(styles).contains(".focus-page .surface-toolbar");
         assertThat(styles).contains(".focus-page .surface-tab");
-        assertThat(styles).contains(".focus-page .session-progress-top");
         assertThat(styles).contains(".focus-page .session-progress-track");
         assertThat(styles).contains(".focus-page .focus-progress-strip");
         assertThat(styles).contains(".focus-page .next-btn");

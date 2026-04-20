@@ -27,6 +27,9 @@ related: ["scala/scala-collections-list.md", "scala/scala-interop-java.md"]
 - [[scala-collections-list|Списки (List)]]
 - [[scala-interop-java|Взаимодействие с Java]]
 
+- [[scala-collections-vector|Scala Collections — Vector]]
+- [[scala-collections-grouping|Scala Collections — Grouping and Aggregation]]
+- [[scala-performance|Scala Performance]]
 ## Содержание
 
 - [Введение в Array](#введение-в-array)

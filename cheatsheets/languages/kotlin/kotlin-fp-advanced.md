@@ -29,6 +29,8 @@ updated: "2026-04-20"
 - [[kotlin-fp-basics|Основы функционального программирования]]
 - [[kotlin-collections-operations|Операции над коллекциями]]
 
+- [[kotlin-performance|Kotlin Performance]]
+- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
 ## Содержание
 
 - [Functors](#functors)

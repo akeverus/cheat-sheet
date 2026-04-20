@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 Жадные алгоритмы делают **локально оптимальный выбор** на каждом шаге, надеясь на глобальный оптимум. Когда работают — изящны и быстры (`O(n log n)` обычно). Когда нет — нужен DP. На интервью важно отличать «когда greedy работает» и **доказывать** корректность через **exchange argument**.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -214,7 +212,7 @@ Optimum (DP):
   Берём B + C → 20 + 30 = 50, value = 100 + 120 = 220
 ```
 
-**Greedy choice property не выполняется** — оптимум может НЕ содержать самый «выгодный» предмет. Поэтому нужен **DP** — см. [Динамическое программирование](dynamic-programming-interview.md).
+**Greedy choice property не выполняется** — оптимум может НЕ содержать самый «выгодный» предмет. Поэтому нужен **DP** — см. [[dynamic-programming-interview|Динамическое программирование]].
 
 ## Q8. (!) Coin Change — когда greedy работает?
 
@@ -290,7 +288,7 @@ void dfs(Node node, String code, Map<Character, String> codes) {
 
 **Почему НЕ работает с отрицательными весами:** жадный выбор может «зафиксировать» расстояние, которое позже окажется неоптимальным из-за отрицательного ребра.
 
-Подробнее — в [Графы](../data-structures/graphs-interview.md).
+Подробнее — в [[graphs-interview|Графы]].
 
 ## Q11. (!) Алгоритмы Краскала и Прима для MST?
 
@@ -299,7 +297,7 @@ void dfs(Node node, String code, Map<Character, String> codes) {
 
 Оба greedy, оба дают MST. Доказательство — **cut property**: для любого разреза минимальное ребро через разрез принадлежит MST.
 
-Подробнее — в [Графы](../data-structures/graphs-interview.md).
+Подробнее — в [[graphs-interview|Графы]].
 
 ## Q12. (!) Job Sequencing с deadlines?
 
@@ -360,13 +358,13 @@ int minMeetingRooms(int[][] intervals) {
 
 `n` задач, между одинаковыми — cooldown `n`. Минимальное время.
 
-См. [Кучи](../data-structures/heaps-interview.md) — задача решается жадно через max-heap.
+См. [[heaps-interview|Кучи]] — задача решается жадно через max-heap.
 
 ## Q15. Reorganize String?
 
 Расположить буквы строки так, чтобы не было двух одинаковых подряд.
 
-См. [Кучи](../data-structures/heaps-interview.md) — жадный с max-heap.
+См. [[heaps-interview|Кучи]] — жадный с max-heap.
 
 ## Q16. (!) Merge Intervals?
 
@@ -629,15 +627,15 @@ int maxProfit(int[] prices) {
 
 ## See also
 
-- [Алгоритмы (обзор)](../algorithms-interview.md) — карта алгоритмических тем
-- [Динамическое программирование](dynamic-programming-interview.md) — альтернатива greedy
-- [Divide and Conquer](divide-and-conquer-interview.md) — другая парадигма
-- [Графы](../data-structures/graphs-interview.md) — Dijkstra, Kruskal, Prim — все greedy
-- [Кучи](../data-structures/heaps-interview.md) — основа для жадных задач (Task Scheduler, Reorganize)
-- [Массивы и строки](../data-structures/arrays-strings-interview.md) — Jump Game, Best Time to Buy
-- [Алгоритмы сортировки](../sorting-searching/sorting-algorithms-interview.md) — обычно начало greedy
-- [Two Pointers](two-pointers-sliding-window-interview.md) — родственная техника
-- [Анализ сложности](../complexity/complexity-analysis-interview.md) — почему greedy быстрее DP
+- [[algorithms-interview|Алгоритмы (обзор)]] — карта алгоритмических тем
+- [[dynamic-programming-interview|Динамическое программирование]] — альтернатива greedy
+- [[divide-and-conquer-interview|Divide and Conquer]] — другая парадигма
+- [[graphs-interview|Графы]] — Dijkstra, Kruskal, Prim — все greedy
+- [[heaps-interview|Кучи]] — основа для жадных задач (Task Scheduler, Reorganize)
+- [[arrays-strings-interview|Массивы и строки]] — Jump Game, Best Time to Buy
+- [[sorting-algorithms-interview|Алгоритмы сортировки]] — обычно начало greedy
+- [[two-pointers-sliding-window-interview|Two Pointers]] — родственная техника
+- [[complexity-analysis-interview|Анализ сложности]] — почему greedy быстрее DP
 
 - [[backtracking-interview|Backtracking]]
 - [[divide-and-conquer-interview|Divide and Conquer]]

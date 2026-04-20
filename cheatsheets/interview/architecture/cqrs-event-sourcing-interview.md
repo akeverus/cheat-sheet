@@ -18,8 +18,6 @@ updated: "2026-04-13"
 
 Полное покрытие паттернов `CQRS` (Command Query Responsibility Segregation) и `Event Sourcing`: разделение моделей чтения и записи, хранение событий, проекции, снапшоты, `Axon Framework`, паттерн `Saga`, версионирование событий, реализация в `Spring Boot`.
 
-Дата последнего обновления: 2026-04-13
-
 **CQRS** и **Event Sourcing** -- два комплементарных архитектурных паттерна, которые часто применяются вместе в сложных распределённых системах. `CQRS` разделяет операции чтения и записи на уровне модели, а `Event Sourcing` сохраняет все изменения состояния как последовательность неизменяемых событий. На собеседованиях эти темы обязательны для Senior-позиций, поскольку показывают понимание масштабируемой архитектуры, eventual consistency и моделирования предметной области.
 
 ## Полезные ссылки
@@ -1442,7 +1440,7 @@ class OrderIntegrationTest {
 - Разработчики привыкли к CRUD -- нужно обучение
 - Ревью кода сложнее -- нужно понимать flow "команда -> событие -> проекция"
 
-**Рекомендация:** внедряйте CQRS/ES в одном bounded context, не во всей системе. Подробнее о границах контекстов -- в [вопросах по DDD](ddd-interview.md).
+**Рекомендация:** внедряйте CQRS/ES в одном bounded context, не во всей системе. Подробнее о границах контекстов -- в [[ddd-interview|вопросах по DDD]].
 
 ## Q30. (!) Как обеспечить идемпотентность обработки событий?
 
@@ -1499,7 +1497,7 @@ public void on(ItemAddedEvent event) {
 - Добавить колонку `last_processed_event_seq` к view-таблице
 - Обновлять только если `event.seq > last_processed_event_seq`
 
-Подробнее об идемпотентности в контексте EDA -- в [вопросах по Event-Driven паттернам](event-driven-patterns-interview.md).
+Подробнее об идемпотентности в контексте EDA -- в [[event-driven-patterns-interview|вопросах по Event-Driven паттернам]].
 
 ## Q31. (!) Как управлять несколькими проекциями одного агрегата?
 
@@ -2376,14 +2374,14 @@ meterRegistry.gauge("projection.lag",
 
 ## See also
 
-- [Domain-Driven Design](ddd-interview.md) — агрегаты, Bounded Context и тактические паттерны DDD, без которых CQRS/ES не имеют смысла
-- [Event-Driven паттерны](event-driven-patterns-interview.md) — EDA, брокеры сообщений, Outbox Pattern и идемпотентность
-- [Микросервисы](microservices-interview.md) — CQRS как паттерн масштабирования read/write нагрузки в микросервисах
-- [Распределённые системы](distributed-systems-interview.md) — CAP, согласованность, партиционирование и distributed transactions
-- [Паттерны согласованности](consistency-patterns-interview.md) — eventual consistency, read-your-writes и механизм sync/async проекций
-- [Clean Architecture](clean-architecture-interview.md) — слоёная архитектура как основа разделения Command и Query моделей
-- [Apache Kafka](../messaging/kafka-interview.md) — Kafka как Event Store для Event Sourcing и шина событий для CQRS проекций
-- [Архитектура баз данных](../databases/database-architecture-interview.md) — read replica, материализованные представления и физическое разделение read/write БД
+- [[ddd-interview|Domain-Driven Design]] — агрегаты, Bounded Context и тактические паттерны DDD, без которых CQRS/ES не имеют смысла
+- [[event-driven-patterns-interview|Event-Driven паттерны]] — EDA, брокеры сообщений, Outbox Pattern и идемпотентность
+- [[microservices-interview|Микросервисы]] — CQRS как паттерн масштабирования read/write нагрузки в микросервисах
+- [[distributed-systems-interview|Распределённые системы]] — CAP, согласованность, партиционирование и distributed transactions
+- [[consistency-patterns-interview|Паттерны согласованности]] — eventual consistency, read-your-writes и механизм sync/async проекций
+- [[clean-architecture-interview|Clean Architecture]] — слоёная архитектура как основа разделения Command и Query моделей
+- [[kafka-interview|Apache Kafka]] — Kafka как Event Store для Event Sourcing и шина событий для CQRS проекций
+- [[database-architecture-interview|Архитектура баз данных]] — read replica, материализованные представления и физическое разделение read/write БД
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

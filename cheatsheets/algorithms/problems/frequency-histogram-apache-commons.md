@@ -24,6 +24,10 @@ updated: "2026-04-20"
 - [[README|Математические алгоритмы]] — раздел math
 - [Задачи и алгоритмы](./) — обзор разделов
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
+- [[circular-buffer|Circular Buffer]]
 ## Содержание
 
 - [Обзор](#обзор)

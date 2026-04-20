@@ -35,6 +35,8 @@ updated: "2026-04-20"
 - [[cassandra-admin|cassandra-admin.md]] — администрирование
 - [README.md](./) — обзор **Cassandra**
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
 ## Содержание
 
 - [Архитектура кластера](#архитектура-кластера)

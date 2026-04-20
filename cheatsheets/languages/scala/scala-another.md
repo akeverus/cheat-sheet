@@ -29,6 +29,8 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md", "scala/scala-ty
 - [[scala-fp-advanced|Продвинутое функциональное программирование]]
 - [[scala-type-system|Система типов]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
 ## Содержание
 
 - [Паттерны проектирования](#паттерны-проектирования)

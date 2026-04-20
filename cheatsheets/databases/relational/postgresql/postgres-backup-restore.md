@@ -28,6 +28,8 @@ related: ["databases/postgres-monitoring.md", "databases/postgres-troubleshootin
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-replication|postgres-replication.md]] — репликация
 
+- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
+- [[postgres-security|PostgreSQL: Безопасность]]
 ## Содержание
 
 - [Резервное копирование и восстановление PostgreSQL](#резервное-копирование-и-восстановление-postgresql)

@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 [UI Testing](./)
 
+
+### См. также
+- [[operating-systems-basics|Операционные системы]]
+- [[linux-handbook|Linux и Bash: практический справочник]]
 ## Содержание
 
 - [[ui-testing-overview|UI Testing Overview]]

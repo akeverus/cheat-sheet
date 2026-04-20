@@ -37,6 +37,7 @@ updated: "2026-04-20"
 - [[cassandra-clustering|cassandra-clustering.md]] — кластеризация
 - [[cassandra-admin|cassandra-admin.md]] — администрирование
 
+- [[clickhouse|ClickHouse]]
 ## Содержание
 
 - [Архитектура производительности](#архитектура-производительности)

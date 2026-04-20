@@ -24,6 +24,11 @@ updated: "2026-04-20"
 - [Datadog APM Java](https://docs.datadoghq.com/tracing/setup_overview/setup/java/)
 - [Datadog API](https://docs.datadoghq.com/api/latest/)
 
+
+### См. также
+- [[monitoring-best-practices|Лучшие практики мониторинга]]
+- [[observability-guide|Руководство по Observability]]
+- [[infrastructure-monitoring|Infrastructure Monitoring (обзор)]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

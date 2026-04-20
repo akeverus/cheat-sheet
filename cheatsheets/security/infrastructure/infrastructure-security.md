@@ -34,6 +34,8 @@ updated: "2026-04-20"
 - [[security-practices|Security Practices]] — практики безопасности
 
 
+- [[tls-ssl|TLS / SSL: handshake, сертификаты, конфигурация]]
+- [[spring-boot|Spring Boot — Полное руководство]]
 ## Содержание
 
 - [Сетевая безопасность](#сетевая-безопасность)

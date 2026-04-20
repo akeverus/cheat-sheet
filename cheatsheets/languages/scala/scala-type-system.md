@@ -27,6 +27,9 @@ related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-fp-advanced|Продвинутое ФП]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
+- [[scala-collections|Scala Collections]]
 ## Содержание
 
 - [Введение в систему типов](#введение-в-систему-типов)

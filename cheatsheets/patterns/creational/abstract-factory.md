@@ -25,6 +25,8 @@ updated: "2026-04-20"
 - [[spring-framework-interview|Spring Core]] — **IoC** и бины
 - [[java-basics|Java Basics]] — **Java Basics**
 
+- [[singleton|Одиночка (Singleton)]]
+- [[builder|Строитель (Builder)]]
 ## Содержание
 
 - [Суть и запомнить](#суть-и-запомнить)

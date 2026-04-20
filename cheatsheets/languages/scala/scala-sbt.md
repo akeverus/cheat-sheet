@@ -25,6 +25,10 @@ related: ["scala/scala-basics.md"]
 ### См. также
 - [[scala-basics|Основы Scala]]
 
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
+- [[scala-collections|Scala Collections]]
+- [[scala-type-classes|Type Classes в Scala]]
 ## Содержание
 
 - [Введение в SBT](#введение-в-sbt)

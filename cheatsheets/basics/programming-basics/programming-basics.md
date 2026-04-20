@@ -25,6 +25,10 @@ updated: "2026-04-20"
 - [[computer-science-basics|Computer Science]]
 - [Алгоритмы и структуры данных](../../algorithms/)
 
+- [[clean-code|Принципы чистого кода]]
+- [[git-basics|Основы Git]]
+- [[java-basics|Java: основы]]
+- [[redis-basics|Redis: Основы]]
 ## Содержание
 
 - [Введение в программирование](#введение-в-программирование)

@@ -17,9 +17,7 @@ updated: "2026-04-13"
 
 Полное покрытие `RabbitMQ` для интервью: `AMQP`-протокол, типы `exchange`, очереди и их свойства, подтверждения доставки, `Dead Letter Queue`, `Publisher Confirms`, кластеризация, `quorum queues`, `Spring AMQP`, основные паттерны и мониторинг.
 
-Дата последнего обновления: 2026-04-13
-
-**`RabbitMQ`** — брокер сообщений, реализующий протокол `AMQP 0-9-1`. Широко применяется в [микросервисных](../architecture/microservices-interview.md) и [event-driven](../architecture/event-driven-patterns-interview.md) архитектурах для надёжной асинхронной коммуникации между сервисами.
+**`RabbitMQ`** — брокер сообщений, реализующий протокол `AMQP 0-9-1`. Широко применяется в [[microservices-interview|микросервисных]] и [[event-driven-patterns-interview|event-driven]] архитектурах для надёжной асинхронной коммуникации между сервисами.
 
 ## Полезные ссылки
 
@@ -1052,13 +1050,13 @@ rabbitmqadmin export config.json
 
 ## See also
 
-- [Apache Kafka](kafka-interview.md) — альтернативный брокер для event streaming
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — CAP-теорема, консистентность, отказоустойчивость
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — основы Spring Boot для интеграции
-- [Микросервисная архитектура](../architecture/microservices-interview.md) — паттерны коммуникации между сервисами
-- [Event-driven паттерны](../architecture/event-driven-patterns-interview.md) — паттерны асинхронного взаимодействия
-- [Стратегии кэширования](../architecture/caching-strategies-interview.md) — дополняет паттерны обмена данными
-- [Паттерны согласованности](../architecture/consistency-patterns-interview.md) — гарантии доставки и идемпотентность
+- [[kafka-interview|Apache Kafka]] — альтернативный брокер для event streaming
+- [[distributed-systems-interview|Распределённые системы]] — CAP-теорема, консистентность, отказоустойчивость
+- [[spring-boot-interview|Spring Boot]] — основы Spring Boot для интеграции
+- [[microservices-interview|Микросервисная архитектура]] — паттерны коммуникации между сервисами
+- [[event-driven-patterns-interview|Event-driven паттерны]] — паттерны асинхронного взаимодействия
+- [[caching-strategies-interview|Стратегии кэширования]] — дополняет паттерны обмена данными
+- [[consistency-patterns-interview|Паттерны согласованности]] — гарантии доставки и идемпотентность
 
 - [[aws-sqs-sns-interview|AWS SQS и SNS]]
 - [[kafka-interview|Apache Kafka]]

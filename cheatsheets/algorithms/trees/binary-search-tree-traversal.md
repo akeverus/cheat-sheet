@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[balanced-binary-tree-check|`balanced-binary-tree-check.md`]] — проверка сбалансированности (`balanced check`)
 - [[avl-tree|`avl-tree.md`]] — самобалансирующееся дерево `AVL`
 
+- [[boruvka-algorithm|Алгоритм Борувки (Borůvka's Algorithm)]]
+- [[prim-algorithm|Алгоритм Прима (Prim's Algorithm)]]
 ## Содержание
 
 - [Описание бинарного дерева поиска](#описание-бинарного-дерева-поиска)

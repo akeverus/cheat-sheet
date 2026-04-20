@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[merge-sort|`merge-sort.md`]] — сортировка слиянием
 - [[bubble-sort|`bubble-sort.md`]] — пузырьковая сортировка
 
+- [[bead-sort|Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)]]
+- [[selection-sort|Сортировка выбором (Selection Sort)]]
+- [[radix-sort|Поразрядная сортировка (Radix Sort)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[logistic-regression|Логистическая регрессия]]
 - [[spark-mllib|Spark MLlib]]
 
+- [[ai-libraries|Обзор ИИ библиотек]]
+- [[jenetics|Руководство по Jenetics]]
 ## Содержание
 
 - [Введение в CNN](#введение-в-cnn)

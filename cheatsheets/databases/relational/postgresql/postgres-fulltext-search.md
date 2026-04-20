@@ -27,6 +27,9 @@ related: ["databases/postgres-queries.md", "databases/postgres-indexes.md"]
 - [[postgres-basics|postgres-basics.md]] — основы PostgreSQL
 - [[postgres-queries|postgres-queries.md]] — запросы
 
+- [[postgres-high-availability|PostgreSQL: Высокая доступность]]
+- [[postgres-security|PostgreSQL: Безопасность]]
+- [[postgres-backup-restore|PostgreSQL: Резервное копирование и восстановление]]
 ## Содержание
 
 - [Введение в полнотекстовый поиск](#введение-в-полнотекстовый-поиск)

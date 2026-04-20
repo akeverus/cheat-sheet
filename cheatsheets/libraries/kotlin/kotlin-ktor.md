@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[kotlin-concurrency-basics|Корутины и асинхронность]]
 - [[kotlin-another|Дополнительные темы Kotlin]]
 
+- [[kotlin-konfig|Konfig]]
+- [[kotlin-exposed|Kotlin Exposed]]
 ## Содержание
 
 - [Введение в Ktor](#введение-в-ktor)

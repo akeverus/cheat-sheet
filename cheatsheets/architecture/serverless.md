@@ -26,6 +26,8 @@ updated: "2026-04-20"
 - [[microservices|Микросервисы]] — микросервисная архитектура
 - [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
+- [[soa|SOA (Service-Oriented Architecture)]]
+- [[ddd|Domain-Driven Design (DDD)]]
 ## Содержание
 
 - [Введение в Serverless Architecture](#введение-в-serverless-architecture)

@@ -31,6 +31,8 @@ updated: "2026-04-20"
 - [[centralized-logging|Централизованное логирование]]
 - [[java-spring-cloud-sleuth|Spring Cloud Sleuth]]
 
+- [[slf4j|SLF4J для Java]]
+- [[log-aggregation|Агрегация логов для Java]]
 ## Содержание
 
 - [Введение в структурированное логирование](#введение-в-структурированное-логирование)

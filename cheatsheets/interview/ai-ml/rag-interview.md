@@ -17,8 +17,6 @@ updated: "2026-04-18"
 
 **RAG** — паттерн, при котором LLM **получает релевантные документы** в context перед генерацией ответа. Главный способ дать модели **специфичные знания** (документация компании, knowledge base) без fine-tuning. Стек: chunking → embeddings → vector DB → retrieval → reranking → LLM. Появился в 2020, стал mainstream в 2023.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -277,7 +275,7 @@ vector = response.data[0].embedding  # 3072-dim вектор
 - **Voyage AI** (specialized для RAG)
 - **Open-source:** sentence-transformers (`all-MiniLM-L6-v2`, `bge-large`)
 
-Подробнее — в [Embeddings](embeddings-interview.md).
+Подробнее — в [[embeddings-interview|Embeddings]].
 
 ## Q11. (!) Vector search (similarity search)?
 
@@ -302,7 +300,7 @@ for result in results:
 - **Dot product** — быстрее (если вектора нормализованы — равно cosine)
 - **Euclidean distance** — менее частая
 
-**Под капотом** — ANN (Approximate Nearest Neighbor) algorithms: HNSW, IVF, ScaNN. Подробнее — [Vector Databases](vector-databases-interview.md).
+**Под капотом** — ANN (Approximate Nearest Neighbor) algorithms: HNSW, IVF, ScaNN. Подробнее — [[vector-databases-interview|Vector Databases]].
 
 ## Q12. (!) k (число retrieved docs) — как выбрать?
 
@@ -582,7 +580,7 @@ def agentic_rag(query):
             return llm.answer(query, context)
 ```
 
-Подробнее — в [AI Agents](ai-agents-interview.md).
+Подробнее — в [[ai-agents-interview|AI Agents]].
 
 ## Q26. (!) Как тестировать RAG систему?
 
@@ -672,17 +670,17 @@ result = evaluate(
 
 ## See also
 
-- [LLM Basics](llm-basics-interview.md) — основа
-- [Vector Databases](vector-databases-interview.md) — storage для embeddings
-- [Embeddings](embeddings-interview.md) — основа vector search
-- [Prompt Engineering](prompt-engineering-interview.md) — для RAG prompts
-- [AI Agents](ai-agents-interview.md) — agentic RAG
-- [LLM Integration Patterns](llm-integration-patterns-interview.md) — production
-- [MLOps](mlops-interview.md) — operations для RAG
-- [Model Serving](model-serving-interview.md) — для embedding models
-- [Caching](../architecture/caching-strategies-interview.md) — для embeddings cache
-- [Микросервисы](../architecture/microservices-interview.md) — где RAG живёт
-- [Elasticsearch](../databases/elasticsearch-interview.md) — для hybrid search
+- [[llm-basics-interview|LLM Basics]] — основа
+- [[vector-databases-interview|Vector Databases]] — storage для embeddings
+- [[embeddings-interview|Embeddings]] — основа vector search
+- [[prompt-engineering-interview|Prompt Engineering]] — для RAG prompts
+- [[ai-agents-interview|AI Agents]] — agentic RAG
+- [[llm-integration-patterns-interview|LLM Integration Patterns]] — production
+- [[mlops-interview|MLOps]] — operations для RAG
+- [[model-serving-interview|Model Serving]] — для embedding models
+- [[caching-strategies-interview|Caching]] — для embeddings cache
+- [[microservices-interview|Микросервисы]] — где RAG живёт
+- [[elasticsearch-interview|Elasticsearch]] — для hybrid search
 
 - [[ai-agents-interview|AI Agents]]
 - [[embeddings-interview|Embeddings]]

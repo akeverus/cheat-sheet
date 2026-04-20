@@ -25,6 +25,11 @@ updated: "2026-04-20"
 - [New Relic API (NerdGraph)](https://docs.newrelic.com/docs/apis/nerdgraph/)
 - [NRQL Reference](https://docs.newrelic.com/docs/query-your-data/nrql-new-relic-query-language/)
 
+
+### См. также
+- [[monitoring-best-practices|Лучшие практики мониторинга]]
+- [[observability-guide|Руководство по Observability]]
+- [[infrastructure-monitoring|Infrastructure Monitoring (обзор)]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

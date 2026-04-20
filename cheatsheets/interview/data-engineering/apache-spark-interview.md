@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 `Apache Spark` — самый популярный движок для распределённой обработки больших данных. Написан на Scala, использует JVM. Главные API: **RDD** (низкоуровневый), **DataFrame/Dataset** (high-level через Catalyst optimizer), **Spark Streaming**, **Structured Streaming**. На интервью спрашивают: lazy evaluation, shuffle, partitioning, joins (broadcast vs shuffle), skew handling, caching стратегии.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -684,7 +682,7 @@ Latency **~1 ms** (vs 100ms+ в micro-batch). Но ограничения:
 - Только некоторые sources/sinks
 - At-least-once семантика (а не exactly-once)
 
-В **2024** continuous mode так и остался experimental. Для **низкой latency** — используй **Apache Flink** (см. [Flink](apache-flink-interview.md)).
+В **2024** continuous mode так и остался experimental. Для **низкой latency** — используй **Apache Flink** (см. [[apache-flink-interview|Flink]]).
 
 ## Q32. (!) Spark UI — что смотреть?
 
@@ -751,19 +749,19 @@ spark.sql.adaptive.skewJoin.enabled=true
 
 ## See also
 
-- [Apache Flink](apache-flink-interview.md) — настоящий streaming с low latency
-- [Kafka Streams](kafka-streams-interview.md) — JVM streaming на Kafka
-- [Apache Airflow](apache-airflow-interview.md) — orchestration Spark jobs
-- [Scala](../programming-languages/scala/scala-interview.md) — основной язык Spark
-- [Stream Processing](stream-processing-interview.md) — концепции
-- [Data Warehousing](data-warehousing-interview.md) — где Spark часто ETL
-- [Data Lake / Lakehouse](data-lake-lakehouse-interview.md) — Delta Lake, Iceberg, Hudi
-- [PostgreSQL](../databases/postgresql-interview.md) — частый source/destination
-- [Apache Kafka](../messaging/kafka-interview.md) — Spark читает/пишет
-- [Микросервисы](../architecture/microservices-interview.md) — vs аналитика на Spark
-- [Performance Testing](../performance/performance-testing-interview.md) — Spark UI и benchmarking
-- [JVM](../jvm/jvm-interview.md) — Spark на JVM, GC tuning
-- [Memory Management](../performance/memory-management-interview.md) — Tungsten off-heap
+- [[apache-flink-interview|Apache Flink]] — настоящий streaming с low latency
+- [[kafka-streams-interview|Kafka Streams]] — JVM streaming на Kafka
+- [[apache-airflow-interview|Apache Airflow]] — orchestration Spark jobs
+- [[scala-interview|Scala]] — основной язык Spark
+- [[stream-processing-interview|Stream Processing]] — концепции
+- [[data-warehousing-interview|Data Warehousing]] — где Spark часто ETL
+- [[data-lake-lakehouse-interview|Data Lake / Lakehouse]] — Delta Lake, Iceberg, Hudi
+- [[postgresql-interview|PostgreSQL]] — частый source/destination
+- [[kafka-interview|Apache Kafka]] — Spark читает/пишет
+- [[microservices-interview|Микросервисы]] — vs аналитика на Spark
+- [[performance-testing-interview|Performance Testing]] — Spark UI и benchmarking
+- [[jvm-interview|JVM]] — Spark на JVM, GC tuning
+- [[memory-management-interview|Memory Management]] — Tungsten off-heap
 
 - [[apache-airflow-interview|Apache Airflow]]
 - [[apache-flink-interview|Apache Flink]]

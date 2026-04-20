@@ -17,9 +17,7 @@ updated: "2026-04-13"
 
 Вопросы и ответы по `Helm`: архитектура chart-ов, `Go templates`, управление values, зависимости, хуки, управление релизами, `Helm 3` vs `Helm 2`, секреты, интеграция с `ArgoCD`/`GitOps` и best practices.
 
-Дата последнего обновления: 2026-04-13
-
-**`Helm`** — пакетный менеджер для [Kubernetes](kubernetes-interview.md), де-факто стандарт для упаковки, конфигурирования и деплоя приложений в кластер. `Chart` — это пакет шаблонов Kubernetes-манифестов с параметризацией через `values.yaml`. `Helm` позволяет версионировать деплои, откатываться на предыдущую версию и управлять зависимостями между приложениями.
+**`Helm`** — пакетный менеджер для [[kubernetes-interview|Kubernetes]], де-факто стандарт для упаковки, конфигурирования и деплоя приложений в кластер. `Chart` — это пакет шаблонов Kubernetes-манифестов с параметризацией через `values.yaml`. `Helm` позволяет версионировать деплои, откатываться на предыдущую версию и управлять зависимостями между приложениями.
 
 ## Полезные ссылки
 
@@ -1584,18 +1582,14 @@ cosign verify oci://registry.example.com/charts/my-chart:1.0.0 \
 
 ## See also
 
----
 
-- [Kubernetes](kubernetes-interview.md)
-- [Docker](docker-interview.md)
-- [Terraform](terraform-interview.md)
-- [Стратегии деплоя](../cicd/deployment-strategies-interview.md)
-- [CI/CD пайплайны](../cicd/pipeline-design-interview.md)
-- [Git](git-interview.md)
-
+- [[kubernetes-interview|Kubernetes]]
+- [[docker-interview|Docker]]
+- [[terraform-interview|Terraform]]
+- [[deployment-strategies-interview|Стратегии деплоя]]
+- [[pipeline-design-interview|CI/CD пайплайны]]
+- [[git-interview|Git]]
 - [[ansible-interview|Ansible]]
 - [[argocd-interview|ArgoCD и GitOps]]
 - [[consul-interview|HashiCorp Consul]]
-- [[docker-interview|Docker]]
-- [[git-interview|Git]]
 - [[gradle-maven-interview|Gradle и Maven]]

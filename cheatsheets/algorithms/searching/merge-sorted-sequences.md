@@ -24,6 +24,8 @@ updated: "2026-04-20"
 - [[kth-smallest-in-two-sorted-arrays|K-й элемент в двух отсортированных массивах]] — k-th smallest
 - [[merge-sort|Сортировка слиянием]] — merge sort
 
+- [[maximum-subarray|Максимальный подмассив (Maximum Subarray Problem)]]
+- [[k-largest-elements|k наибольших элементов (K Largest Elements)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

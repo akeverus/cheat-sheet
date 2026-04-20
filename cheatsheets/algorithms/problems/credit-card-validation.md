@@ -24,6 +24,9 @@ updated: "2026-04-20"
 - [[regex-token-replacement|Работа с регулярными выражениями]]
 - [[README|Алгоритмы со строками]]
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[frequency-histogram-apache-commons|Гистограмма частот с Apache Commons (Frequency Histogram Apache Commons)]]
 ## Содержание
 
 - [Обзор](#обзор)

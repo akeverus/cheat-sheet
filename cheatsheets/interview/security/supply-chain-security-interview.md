@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Software Supply Chain Security` — защита кода, dependencies, build-process, artifacts от **tampering и compromise**. После incidents — **SolarWinds (2020)**, **log4shell (2021)**, **xz utils backdoor (2024)** — стало **top priority**. Инструменты: **SBOM** (bill of materials), **SLSA** (framework), **Sigstore/Cosign** (signing), **Dependabot/Trivy** (scanning).
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -1055,16 +1053,16 @@ FROM ubuntu@sha256:abc123...  # pin by digest, not tag
 
 ## See also
 
-- [Zero Trust](zero-trust-interview.md) — комплементарная security модель
-- [mTLS](mtls-interview.md) — service-to-service trust основа
-- [Secrets Management](secrets-management-interview.md) — protection of signing keys и CI creds
-- [OWASP Top 10](owasp-top10-interview.md) — A06 Vulnerable & Outdated Components
-- [Application Security](application-security-interview.md) — общая картина AppSec
-- [CI/CD Pipeline Design](../cicd/pipeline-design-interview.md) — где security controls встраиваются
-- [Deployment Strategies](../cicd/deployment-strategies-interview.md) — admission controllers для signed artifacts
-- [Kubernetes](../devops/kubernetes-interview.md) — admission, pod security, image verification
-- [Docker](../devops/docker-interview.md) — image signing, scanning
-- [Observability](../monitoring/observability-interview.md) — auditing supply chain events
+- [[zero-trust-interview|Zero Trust]] — комплементарная security модель
+- [[mtls-interview|mTLS]] — service-to-service trust основа
+- [[secrets-management-interview|Secrets Management]] — protection of signing keys и CI creds
+- [[owasp-top10-interview|OWASP Top 10]] — A06 Vulnerable & Outdated Components
+- [[application-security-interview|Application Security]] — общая картина AppSec
+- [[pipeline-design-interview|CI/CD Pipeline Design]] — где security controls встраиваются
+- [[deployment-strategies-interview|Deployment Strategies]] — admission controllers для signed artifacts
+- [[kubernetes-interview|Kubernetes]] — admission, pod security, image verification
+- [[docker-interview|Docker]] — image signing, scanning
+- [[observability-interview|Observability]] — auditing supply chain events
 
 - [[application-security-interview|Application Security]]
 - [[authentication-authorization-patterns-interview|Authentication and Authorization Patterns]]

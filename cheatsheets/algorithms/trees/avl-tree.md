@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[balanced-binary-tree-check|`balanced-binary-tree-check.md`]] — проверка сбалансированности (`balanced check`)
 - [[binary-search-tree-traversal|`binary-search-tree-traversal.md`]] — обходы бинарного дерева поиска (`traversals`)
 
+- [[boruvka-algorithm|Алгоритм Борувки (Borůvka's Algorithm)]]
+- [[prim-algorithm|Алгоритм Прима (Prim's Algorithm)]]
 ## Содержание
 
 - [Описание структуры данных](#описание-структуры-данных)

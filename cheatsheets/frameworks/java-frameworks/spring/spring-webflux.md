@@ -36,6 +36,9 @@ updated: "2026-04-20"
 - [[spring-mvc|Spring MVC]] — **Spring MVC** (blocking)
 - [Мониторинг](../../../monitoring/) — мониторинг реактивных приложений
 
+- [[spring-websocket|Spring WebSocket]]
+- [[spring-integration|Spring Integration]]
+- [[spring-batch|Spring Batch для Java]]
 ## Содержание
 
 - [Введение в Spring WebFlux](#введение-в-spring-webflux)

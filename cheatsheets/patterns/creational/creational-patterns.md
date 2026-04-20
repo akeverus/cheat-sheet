@@ -26,6 +26,9 @@ updated: "2026-04-20"
 - [[builder|Builder Pattern]]
 - [[abstract-factory|Abstract Factory Pattern]]
 
+- [[singleton|Одиночка (Singleton)]]
+- [[prototype|Прототип (Prototype)]]
+- [[factory-method|Фабричный метод (Factory Method)]]
 ## Содержание
 
 - [Описание](#описание)

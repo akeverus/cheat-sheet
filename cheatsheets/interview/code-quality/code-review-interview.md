@@ -15,8 +15,6 @@ updated: "2026-04-13"
 ---
 # Вопросы на собеседовании: `Code review`
 
-Дата последнего обновления: 2026-04-13
-
 Краткие ответы по code review: цели, объём PR, приоритеты при проверке, обратная связь, код-примеры хороших и плохих паттернов, интеграция с CI.
 
 ## Полезные ссылки
@@ -416,7 +414,7 @@ void shouldThrowWhenAmountIsZero() {
 }
 ```
 
-**Практика:** в описании PR указывать: «Покрыто unit-тестами для X, Y; граничные случаи Z». Ревьюер проверяет: тесты есть, падают при удалении проверяемой логики. Подробнее о тестировании — в [вопросах по unit-тестированию](../testing/unit-testing-interview.md).
+**Практика:** в описании PR указывать: «Покрыто unit-тестами для X, Y; граничные случаи Z». Ревьюер проверяет: тесты есть, падают при удалении проверяемой логики. Подробнее о тестировании — в [[unit-testing-interview|вопросах по unit-тестированию]].
 
 ## Q12. Как ревьюить тесты?
 
@@ -505,7 +503,7 @@ private String apiKey;
 - [ ] Эндпоинты защищены авторизацией
 - [ ] Зависимости не содержат известных CVE
 
-Подробнее — в [вопросах по безопасности приложений](../security/application-security-interview.md) и [OWASP Top 10](../security/owasp-top10-interview.md).
+Подробнее — в [[application-security-interview|вопросах по безопасности приложений]] и [[owasp-top10-interview|OWASP Top 10]].
 
 ## Q14. Как ускорить процесс ревью без потери качества?
 
@@ -559,7 +557,7 @@ flowchart TB
     Fix --> A1
 ```
 
-**Практика:** в branch protection — «Require status checks to pass» (сборка, тесты, линтеры); ревьюер не одобряет PR с красным CI. Замечания по форматированию отдавать линтеру (настроить правило и исправить в коде). Подробнее — в [вопросах по CI/CD пайплайну](../cicd/pipeline-design-interview.md).
+**Практика:** в branch protection — «Require status checks to pass» (сборка, тесты, линтеры); ревьюер не одобряет PR с красным CI. Замечания по форматированию отдавать линтеру (настроить правило и исправить в коде). Подробнее — в [[pipeline-design-interview|вопросах по CI/CD пайплайну]].
 
 ## Q16. Как ревьюить рефакторинг?
 
@@ -586,7 +584,7 @@ public OrderResult processOrder(OrderRequest request) {
 }
 ```
 
-Ревьюер проверяет: поведение не изменилось (тесты зелёные), разбиение осмысленное, новые методы имеют понятные имена и адекватную ответственность. Подробнее — в [вопросах по паттернам рефакторинга](refactoring-patterns-interview.md).
+Ревьюер проверяет: поведение не изменилось (тесты зелёные), разбиение осмысленное, новые методы имеют понятные имена и адекватную ответственность. Подробнее — в [[refactoring-patterns-interview|вопросах по паттернам рефакторинга]].
 
 **Практика:** в описании PR: «Refactoring: первый коммит — механический (IDE refactor); второй — упрощение логики»; так дифф читаем и регрессии локализуются.
 
@@ -761,7 +759,7 @@ public Page<User> getUsers(@RequestParam(defaultValue = "0") int page,
 }
 ```
 
-**Практика:** не требовать микрооптимизаций без измерений. Замечание в духе `suggestion: при росте N возможна проблема с ...; рекомендую замерить` уместно. Подробнее — в [вопросах по профилированию](../performance/application-profiling-interview.md).
+**Практика:** не требовать микрооптимизаций без измерений. Замечание в духе `suggestion: при росте N возможна проблема с ...; рекомендую замерить` уместно. Подробнее — в [[application-profiling-interview|вопросах по профилированию]].
 
 ## Q24. Code review и доступность (accessibility)?
 
@@ -1397,13 +1395,13 @@ containers:
 
 ## See also
 
-- [Паттерны рефакторинга](refactoring-patterns-interview.md) — техники улучшения кода
-- [Технический долг](technical-debt-interview.md) — управление и погашение техдолга
-- [Практики code review (leadership)](../leadership/code-review-practices-interview.md) — выстраивание процесса ревью
-- [Unit-тестирование](../testing/unit-testing-interview.md) — качество тестов при ревью
-- [Дизайн CI/CD пайплайна](../cicd/pipeline-design-interview.md) — автоматизация ревью и quality gates
-- [Безопасность приложений](../security/application-security-interview.md) — security review
-- [Git](../devops/git-interview.md) — PR-процесс и ветвление
+- [[refactoring-patterns-interview|Паттерны рефакторинга]] — техники улучшения кода
+- [[technical-debt-interview|Технический долг]] — управление и погашение техдолга
+- [[code-review-practices-interview|Практики code review (leadership)]] — выстраивание процесса ревью
+- [[unit-testing-interview|Unit-тестирование]] — качество тестов при ревью
+- [[pipeline-design-interview|Дизайн CI/CD пайплайна]] — автоматизация ревью и quality gates
+- [[application-security-interview|Безопасность приложений]] — security review
+- [[git-interview|Git]] — PR-процесс и ветвление
 
 - [[clean-code-practices-interview|Clean Code Practices]]
 - [[code-coverage-interview|Code Coverage]]

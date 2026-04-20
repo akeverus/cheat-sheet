@@ -23,6 +23,10 @@ updated: "2026-04-20"
 - [Azure VPN Gateway](https://docs.microsoft.com/azure/vpn-gateway/)
 - [Azure ExpressRoute](https://docs.microsoft.com/azure/expressroute/)
 
+
+### См. также
+- [[kubernetes-cloud|Kubernetes в облаке]]
+- [[aws-iam|AWS IAM (Identity and Access Management)]]
 ## Содержание
 
 - [Virtual Networks (VNets)](#virtual-networks-vnets)

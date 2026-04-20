@@ -18,8 +18,6 @@ updated: "2026-04-18"
 
 `Apache Airflow` — самый популярный workflow orchestration в data engineering. Создан **Airbnb** (2014), Apache top-level с 2019. Workflows описываются как **DAG в Python**. Применяется для ETL, ML pipelines, scheduled jobs. Альтернативы: Prefect, Dagster, Argo Workflows, Luigi.
 
-Дата последнего обновления: 2026-04-18
-
 ## Полезные ссылки
 
 ### Официальная документация и авторитетные источники
@@ -629,15 +627,15 @@ helm install airflow apache-airflow/airflow
 
 ## See also
 
-- [Apache Spark](apache-spark-interview.md) — Airflow часто оркестрирует Spark jobs
-- [Apache Flink](apache-flink-interview.md) — vs Airflow (streaming vs batch)
-- [Kafka Streams](kafka-streams-interview.md) — другой стиль (event-driven)
-- [dbt](dbt-interview.md) — часто оркестрируется через Airflow
-- [Stream Processing](stream-processing-interview.md) — Airflow для batch, не streaming
-- [Data Warehousing](data-warehousing-interview.md) — main use case Airflow
-- [Data Lake / Lakehouse](data-lake-lakehouse-interview.md) — pipelines в lake/warehouse
-- [Kubernetes](../devops/kubernetes-interview.md) — KubernetesExecutor
-- [Микросервисы](../architecture/microservices-interview.md) — Airflow vs scheduled jobs
-- [PostgreSQL](../databases/postgresql-interview.md) — metadata DB
-- [Docker](../devops/docker-interview.md) — деплой Airflow
+- [[apache-spark-interview|Apache Spark]] — Airflow часто оркестрирует Spark jobs
+- [[apache-flink-interview|Apache Flink]] — vs Airflow (streaming vs batch)
+- [[kafka-streams-interview|Kafka Streams]] — другой стиль (event-driven)
+- [[dbt-interview|dbt]] — часто оркестрируется через Airflow
+- [[stream-processing-interview|Stream Processing]] — Airflow для batch, не streaming
+- [[data-warehousing-interview|Data Warehousing]] — main use case Airflow
+- [[data-lake-lakehouse-interview|Data Lake / Lakehouse]] — pipelines в lake/warehouse
+- [[kubernetes-interview|Kubernetes]] — KubernetesExecutor
+- [[microservices-interview|Микросервисы]] — Airflow vs scheduled jobs
+- [[postgresql-interview|PostgreSQL]] — metadata DB
+- [[docker-interview|Docker]] — деплой Airflow
 - [[python-interview|Python]] — DAG = Python код (когда добавим)

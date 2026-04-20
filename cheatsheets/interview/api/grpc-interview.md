@@ -17,8 +17,6 @@ updated: "2026-04-13"
 
 Практичные вопросы и ответы по `gRPC`: определение сервисов через `Protocol Buffers`, типы вызовов, streaming, интерсепторы, обработка ошибок, безопасность, интеграция со `Spring Boot` и сравнение с `REST`.
 
-Дата последнего обновления: 2026-04-13
-
 **`gRPC`** (gRPC Remote Procedure Call) — высокопроизводительный фреймворк удалённых вызовов процедур, разработанный Google. Использует `HTTP/2` для транспорта и `Protocol Buffers` для сериализации, что обеспечивает компактность данных и низкую задержку. Широко применяется в микросервисных архитектурах для межсервисного взаимодействия.
 
 ## Полезные ссылки
@@ -765,7 +763,7 @@ String traceId = headers.get(TRACE_ID_KEY);
 2. **Response headers** — заголовки ответа (сервер → клиент, перед первым сообщением)
 3. **Trailing metadata / trailers** — завершающие метаданные (сервер → клиент, после последнего сообщения)
 
-Metadata активно используется для передачи trace-id (distributed tracing), токенов аутентификации, информации о пользователе и других cross-cutting данных. Доступ к metadata осуществляется через `Interceptors`, подробнее в [вопросах по HTTP и REST](http-rest-interview.md).
+Metadata активно используется для передачи trace-id (distributed tracing), токенов аутентификации, информации о пользователе и других cross-cutting данных. Доступ к metadata осуществляется через `Interceptors`, подробнее в [[http-rest-interview|вопросах по HTTP и REST]].
 
 ## Q15. (!) Как устроена обработка ошибок в gRPC?
 
@@ -1034,7 +1032,7 @@ public class ConsulNameResolverProvider extends NameResolverProvider {
 // Использование: consul:///user-service
 ```
 
-В [вопросах по микросервисам](../architecture/microservices-interview.md) рассматривается service discovery более детально.
+В [[microservices-interview|вопросах по микросервисам]] рассматривается service discovery более детально.
 
 ## Q21. (!) Как обеспечить безопасность gRPC-соединений?
 
@@ -1070,7 +1068,7 @@ ManagedChannel channel = NettyChannelBuilder
 **Mutual TLS (mTLS):**
 Обе стороны предъявляют сертификаты. Стандарт в service mesh (Istio автоматически настраивает mTLS между сервисами).
 
-**Важно:** `usePlaintext()` допустим только для локальной разработки. В production всегда используйте TLS. Подробнее о безопасности в [вопросах по безопасности приложений](../security/application-security-interview.md).
+**Важно:** `usePlaintext()` допустим только для локальной разработки. В production всегда используйте TLS. Подробнее о безопасности в [[application-security-interview|вопросах по безопасности приложений]].
 
 ## Q22. Как реализовать аутентификацию в gRPC?
 
@@ -1138,7 +1136,7 @@ public class JwtServerInterceptor implements ServerInterceptor {
 }
 ```
 
-Подробнее про паттерны аутентификации — в [вопросах по аутентификации и авторизации](../security/authentication-authorization-patterns-interview.md) и [OAuth2](../security/oauth2-interview.md).
+Подробнее про паттерны аутентификации — в [[authentication-authorization-patterns-interview|вопросах по аутентификации и авторизации]] и [[oauth2-interview|OAuth2]].
 
 ## Q23. (!) Как интегрировать gRPC со Spring Boot?
 
@@ -1218,7 +1216,7 @@ dependencies {
 - `grpc-spring-boot-starter` (LogNet) — проверен временем, большое сообщество, стабилен
 - Spring gRPC — официальный проект Spring, активно развивается, лучшая интеграция с Spring экосистемой
 
-Подробнее об экосистеме Spring — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
+Подробнее об экосистеме Spring — в [[spring-boot-interview|вопросах по Spring Boot]].
 
 ## Q24. Как тестировать gRPC-сервисы?
 
@@ -1310,7 +1308,7 @@ class UserGrpcServiceIntegrationTest {
 }
 ```
 
-Подробнее о стратегиях тестирования — в [вопросах по интеграционному тестированию](../testing/integration-testing-interview.md) и [модульному тестированию](../testing/unit-testing-interview.md).
+Подробнее о стратегиях тестирования — в [[integration-testing-interview|вопросах по интеграционному тестированию]] и [[unit-testing-interview|модульному тестированию]].
 
 ## Q25. Что такое gRPC Health Checking Protocol?
 
@@ -1373,7 +1371,7 @@ readinessProbe:
   initialDelaySeconds: 5
 ```
 
-Подробнее о health checking и мониторинге — в [вопросах по observability](../monitoring/observability-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
+Подробнее о health checking и мониторинге — в [[observability-interview|вопросах по observability]] и [[kubernetes-interview|Kubernetes]].
 
 ## Q26. Что такое Server Reflection и зачем она нужна?
 
@@ -1435,7 +1433,7 @@ graph LR
 - Типобезопасный клиент в TypeScript/JavaScript
 - Когда нужна производительность protobuf для frontend
 
-**Когда лучше REST:** публичные API, интеграция с третьими сторонами, простые CRUD-операции — здесь REST проще и имеет лучшую поддержку. Подробнее в [вопросах по HTTP и REST](http-rest-interview.md).
+**Когда лучше REST:** публичные API, интеграция с третьими сторонами, простые CRUD-операции — здесь REST проще и имеет лучшую поддержку. Подробнее в [[http-rest-interview|вопросах по HTTP и REST]].
 
 ## Q28. (!) Чем gRPC отличается от REST?
 
@@ -2227,12 +2225,12 @@ REST: HTTP 200 {"id":"123","status":"DELIVERED","total":99.9}
 
 ## See also
 
-- [HTTP и REST](http-rest-interview.md) — сравнение REST и gRPC: когда выбирать каждый подход, JSON vs Protobuf, версионирование контрактов
-- [GraphQL](graphql-interview.md) — ещё одна альтернатива REST: flexible queries vs строгие контракты, разные сценарии применения
-- [Микросервисная архитектура](../architecture/microservices-interview.md) — gRPC как основной протокол межсервисного взаимодействия внутри кластера
-- [Сетевые протоколы](../architecture/networking-interview.md) — gRPC работает поверх HTTP/2: multiplexing, flow control, header compression
-- [Spring Boot](../frameworks/spring/spring-boot-interview.md) — интеграция gRPC со Spring Boot: grpc-spring-boot-starter, ServerInterceptor, аннотации
-- [Распределённые системы](../architecture/distributed-systems-interview.md) — межсервисное взаимодействие, deadline propagation, retry политики
+- [[http-rest-interview|HTTP и REST]] — сравнение REST и gRPC: когда выбирать каждый подход, JSON vs Protobuf, версионирование контрактов
+- [[graphql-interview|GraphQL]] — ещё одна альтернатива REST: flexible queries vs строгие контракты, разные сценарии применения
+- [[microservices-interview|Микросервисная архитектура]] — gRPC как основной протокол межсервисного взаимодействия внутри кластера
+- [[networking-interview|Сетевые протоколы]] — gRPC работает поверх HTTP/2: multiplexing, flow control, header compression
+- [[spring-boot-interview|Spring Boot]] — интеграция gRPC со Spring Boot: grpc-spring-boot-starter, ServerInterceptor, аннотации
+- [[distributed-systems-interview|Распределённые системы]] — межсервисное взаимодействие, deadline propagation, retry политики
 
 - [[api-design-best-practices-interview|API Design Best Practices]]
 - [[api-versioning-interview|API Versioning]]

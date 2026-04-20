@@ -36,6 +36,8 @@ related: ["databases/clickhouse-tables.md", "databases/clickhouse-indexes.md"]
 - [[clickhouse-tables|Таблицы]] — создание таблиц
 - [[clickhouse-indexes|Индексы]] — оптимизация запросов
 
+- [[clickhouse-basics|ClickHouse: Основы колоночной аналитической базы данных]]
+- [[clickhouse-replication|ClickHouse: Репликация и кластеры — Отказоустойчивость и масштабируемость]]
 ## Содержание
 
 - [Вставка данных](#вставка-данных)

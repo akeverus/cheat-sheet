@@ -28,6 +28,9 @@ updated: "2026-04-20"
 - [[mongodb-basics|Основы]] — **MongoDB**
 - [[mongodb-sharding|Шардирование]] — масштабирование
 
+- [[clickhouse|ClickHouse]]
+- [[mongodb-crud|MongoDB: CRUD операции — Создание, чтение, обновление и удаление документов]]
+- [[mongodb-queries|MongoDB: Запросы и операторы — Полное руководство по поиску документов]]
 ## Содержание
 
 - [Введение в репликацию MongoDB](#введение-в-репликацию-mongodb)

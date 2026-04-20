@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[README|Регулярные выражения]] — алгоритмы со строками
 - [[state-machine-with-enums|Конечный автомат с enum]] — state machine с enum
 
+- [[optaplanner|OptaPlanner]]
+- [[knapsack-problem|Задача о рюкзаке (Knapsack Problem)]]
+- [[credit-card-validation|Валидация банковских карт (Credit Card Validation)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

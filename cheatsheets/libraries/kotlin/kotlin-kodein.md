@@ -20,6 +20,12 @@ updated: "2026-04-20"
 - [Kodein Samples](https://github.com/Kodein-Framework/Kodein-DI/tree/master/samples)
 - [DI Principles](https://kodein.org/Kodein-DI/7.20/core/constructor-injection.html)
 
+
+### См. также
+- [[kotlin-konfig|Konfig]]
+- [[kotlin-exposed|Kotlin Exposed]]
+- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
+- [[kotlin-arrow|Arrow]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

@@ -27,6 +27,9 @@ related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 - [[scala-basics|Основы Scala]]
 - [[scala-slick|Работа с базами данных]]
 
+- [[scala-http4s|Scala http4s]]
+- [[scala-dsl|Scala DSL]]
+- [[scala-shapeless|Shapeless в Scala]]
 ## Содержание
 
 - [Введение в Play Framework](#введение-в-play-framework)

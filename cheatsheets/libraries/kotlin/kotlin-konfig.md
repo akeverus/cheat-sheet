@@ -20,6 +20,12 @@ updated: "2026-04-20"
 - [Configuration Management](https://github.com/npryce/konfig#usage)
 - [Typesafe Config](https://github.com/lightbend/config)
 
+
+### См. также
+- [[kotlin-exposed|Kotlin Exposed]]
+- [[kotlin-kotlinx-coroutines|kotlinx.coroutines]]
+- [[kotlin-arrow|Arrow]]
+- [[kotlin-kodein|Kodein]]
 ## Содержание
 
 - [Основные возможности](#основные-возможности)

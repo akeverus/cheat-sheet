@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[deeplearning4j|Deeplearning4j]]
 - [[spark-mllib|Spark MLlib]]
 
+- [[ai-libraries|Обзор ИИ библиотек]]
+- [[jenetics|Руководство по Jenetics]]
 ## Содержание
 
 - [Введение в машинное обучение](#введение-в-машинное-обучение)

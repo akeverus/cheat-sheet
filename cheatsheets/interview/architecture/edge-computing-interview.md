@@ -17,8 +17,6 @@ updated: "2026-04-19"
 
 `Edge Computing` — run logic **близко к users** (CDN edge locations, IoT gateways). Cloudflare Workers, AWS Lambda@Edge, Fastly Compute@Edge: latency 10-50ms (vs origin 100-300ms), global scale, serverless. Growing importance: API gateway, personalization, A/B testing, image optimization, auth at edge.
 
-Дата последнего обновления: 2026-04-19
-
 ## Полезные ссылки
 
 - [Cloudflare Workers docs](https://developers.cloudflare.com/workers/)
@@ -282,7 +280,7 @@ export default {
 **6. API gateway / BFF at edge:**
 - Aggregate multiple backends
 - Transform responses for client
-- See [BFF pattern](bff-pattern-interview.md)
+- See [[bff-pattern-interview|BFF pattern]]
 
 **7. Geo-blocking / compliance:**
 - Block specific countries
@@ -666,16 +664,16 @@ routes: [
 
 ## See also
 
-- [BFF Pattern](bff-pattern-interview.md) — API aggregation at edge
-- [API Gateway](api-gateway-interview.md) — edge gateway
-- [Caching Strategies](caching-strategies-interview.md) — CDN edge cache
-- [Caching Performance](../performance/caching-performance-interview.md) — CDN hit ratio
-- [Network Performance](../performance/network-performance-interview.md) — latency, CDN
-- [Serverless](../cloud/serverless-interview.md) — Lambda, related model
-- [Microservices](microservices-interview.md) — distribution patterns
-- [Scalability Patterns](scalability-patterns-interview.md) — global scaling
-- [Distributed Systems](distributed-systems-interview.md) — edge = distributed
-- [Observability](../monitoring/observability-interview.md) — debug edge workloads
+- [[bff-pattern-interview|BFF Pattern]] — API aggregation at edge
+- [[api-gateway-interview|API Gateway]] — edge gateway
+- [[caching-strategies-interview|Caching Strategies]] — CDN edge cache
+- [[caching-performance-interview|Caching Performance]] — CDN hit ratio
+- [[network-performance-interview|Network Performance]] — latency, CDN
+- [[serverless-interview|Serverless]] — Lambda, related model
+- [[microservices-interview|Microservices]] — distribution patterns
+- [[scalability-patterns-interview|Scalability Patterns]] — global scaling
+- [[distributed-systems-interview|Distributed Systems]] — edge = distributed
+- [[observability-interview|Observability]] — debug edge workloads
 
 - [[api-gateway-interview|API Gateway]]
 - [[bff-pattern-interview|BFF Pattern]]

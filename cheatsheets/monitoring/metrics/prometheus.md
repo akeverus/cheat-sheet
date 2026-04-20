@@ -33,6 +33,7 @@ Prometheus — система мониторинга и алертинга с о
 - [[observability-guide|Observability]] — основы Observability
 - [[distributed-tracing|Distributed Tracing]] — трассировка
 
+- [[redis-monitoring|Redis: Мониторинг]]
 ## Содержание
 
 - [Основы Prometheus](#основы-prometheus)

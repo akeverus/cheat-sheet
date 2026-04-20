@@ -23,6 +23,9 @@ updated: "2026-04-20"
 - [[palindrome-check|Проверка палиндромов]] — палиндромы
 - [[regex-token-replacement|Работа с регулярными выражениями]] — регулярные выражения
 
+- [[roman-arabic-numeral-conversion|Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)]]
+- [[suffix-tree-pattern-matching|Поиск по суффиксному дереву (Suffix Tree Pattern Matching)]]
+- [[large-text-string-search|Поиск строки в большом тексте (Large Text String Search)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)

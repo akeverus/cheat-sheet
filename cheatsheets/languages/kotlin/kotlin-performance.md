@@ -28,6 +28,8 @@ updated: "2026-04-20"
 - [[kotlin-concurrency-basics|Корутины]]
 - [[java-basics|Java: основы]]
 
+- [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
+- [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
 ## Содержание
 
 - [Введение в производительность Kotlin](#введение-в-производительность-kotlin)

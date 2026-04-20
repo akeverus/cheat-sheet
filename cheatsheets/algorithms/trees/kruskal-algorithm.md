@@ -27,6 +27,8 @@ updated: "2026-04-20"
 - [[boruvka-algorithm|`boruvka-algorithm.md`]] — алгоритм Борувки (`Borůvka`)
 - [[dijkstra|`../graphs/dijkstra.md`]] — алгоритм Дейкстры (`Dijkstra`)
 
+- [[binary-search-tree-traversal|Обход бинарного дерева поиска (Binary Search Tree Traversal)]]
+- [[balanced-binary-tree-check|Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)]]
 ## Содержание
 
 - [Описание алгоритма](#описание-алгоритма)
