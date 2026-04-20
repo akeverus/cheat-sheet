@@ -14,6 +14,10 @@ updated: "2026-04-20"
 
 # Go: Generics
 
+
+### См. также
+- [[go-generics-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 - [Go Generics Tutorial](https://go.dev/doc/tutorial/generics)

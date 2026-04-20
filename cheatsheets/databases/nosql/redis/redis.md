@@ -31,6 +31,7 @@ related: ["databases/postgres-basics.md", "spring/spring-data-jpa.md", "infrastr
 - [[redis-basics|Redis: Основы]]
 - [[quarkus-cache|Quarkus: Cache — Кеширование данных]]
 - [[micronaut-redis|Micronaut: Redis Integration — RedisTemplate, Pub/Sub и Cache]]
+- [[redis-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Redis](#введение-в-redis)

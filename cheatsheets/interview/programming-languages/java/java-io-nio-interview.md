@@ -1522,3 +1522,4 @@ HttpResponse<Path> fileResponse = client.send(
 - [[java-collections-interview|Java Collections]]
 - [[java-concurrency-interview|Java Concurrency]]
 - [[java-conditional-statements-interview|Java Conditional Statements]]
+- [[java-io-nio|Шпаргалка: Java IO/NIO: работа с файлами и потоками]] — теория

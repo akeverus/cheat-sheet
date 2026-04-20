@@ -19,6 +19,10 @@ related: ["spring/spring-boot.md", "databases/postgres-basics.md", "java/java-ba
 
 # Spring Data JDBC: Полное руководство по работе с базами данных
 
+
+### См. также
+- [[spring-data-jdbc-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 ### Официальная документация

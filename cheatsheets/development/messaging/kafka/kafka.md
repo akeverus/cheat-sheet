@@ -43,6 +43,7 @@ updated: "2026-04-20"
 - [[README|Spring Frameworks]] — экосистема **Spring**
 - [[postgres-basics|PostgreSQL]] — БД для **Kafka**
 - [[distributed-tracing|Observability]] — мониторинг и трейсинг
+- [[kafka-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

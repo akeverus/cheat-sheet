@@ -617,3 +617,4 @@ public class TestOrderCreatedListener {
 - [[ddd-interview|Domain-Driven Design]] — domain events, aggregates, bounded context
 - [[distributed-systems-interview|Распределённые системы]] — transactional outbox, at-least-once delivery
 - [[unit-testing-interview|Unit Testing]] — @RecordApplicationEvents, ApplicationEvents, тестирование listeners
+- [[spring-events|Шпаргалка: Spring Events — события приложения]] — теория

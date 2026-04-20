@@ -643,3 +643,4 @@ int maxProfit(int[] prices) {
 - [[recursion-interview|Рекурсия]]
 - [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
 - [[algorithms-interview|Алгоритмы (обзор)]]
+- [[greedy-algorithms|Шпаргалка: Жадные алгоритмы (Greedy Algorithms)]] — теория

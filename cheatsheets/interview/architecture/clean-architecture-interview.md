@@ -2327,3 +2327,4 @@ src/main/java/com/example/ordering/
 - [[cap-theorem-interview|CAP-теорема]]
 - [[consistency-patterns-interview|Паттерны согласованности]]
 - [[cqrs-event-sourcing-interview|CQRS и Event Sourcing]]
+- [[clean-architecture|Шпаргалка: Clean Architecture]] — теория

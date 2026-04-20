@@ -708,3 +708,4 @@ public class SearchController {
 - [[http-rest-interview|HTTP & REST]] — возврат `400 Bad Request` с деталями ошибок, RFC 7807 Problem Details
 - [[spring-data-jpa-interview|Spring Data JPA]] — валидация Entity перед persist через `@PrePersist`/Hibernate Validator
 - [[unit-testing-interview|Unit Testing]] — тестирование валидационных ограничений через `ValidatorFactory`
+- [[spring-validation|Шпаргалка: Spring Validation: Полное руководство по]] — теория

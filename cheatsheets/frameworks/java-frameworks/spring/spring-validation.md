@@ -17,6 +17,10 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Validation: Полное руководство по валидации данных
 
+
+### См. также
+- [[spring-validation-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)

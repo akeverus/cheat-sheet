@@ -26,6 +26,7 @@ Spring Events — встроенный механизм pub/sub внутри о�
 - [[spring-data-jpa|Spring Data JPA]] — JPA-интеграция, доменные события
 - [[spring-testing|Spring Testing]] — тестирование Spring-приложений
 - [[spring-kafka|Spring Kafka]] — асинхронный обмен сообщениями
+- [[spring-events-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

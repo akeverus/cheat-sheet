@@ -18,6 +18,10 @@ related: ["spring/spring-boot.md", "messaging/kafka.md"]
 
 # Spring for Apache Kafka: Полное руководство
 
+
+### См. также
+- [[spring-kafka-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)

@@ -6,8 +6,11 @@ tags:
   - java
   - java-jooq
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # jOOQ: Type-Safe SQL в Java

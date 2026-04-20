@@ -6,8 +6,11 @@ tags:
   - java
   - java-vavr
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # Vavr

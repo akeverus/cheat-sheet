@@ -2382,3 +2382,4 @@ spec:
 - [[oauth2-interview|OAuth2]]
 - [[owasp-top10-interview|OWASP Top 10]]
 - [[secrets-management-interview|Secrets Management]]
+- [[application-security|Шпаргалка: Безопасность приложений (Application Sec]] — теория

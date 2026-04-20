@@ -2332,3 +2332,4 @@ public Mono<OrderId> placeOrder(PlaceOrderCommand cmd) {
 - [[cap-theorem-interview|CAP-теорема]]
 - [[clean-architecture-interview|Clean Architecture]]
 - [[consistency-patterns-interview|Паттерны согласованности]]
+- [[hexagonal-architecture|Шпаргалка: Hexagonal Architecture (Ports & Adapters]] — теория

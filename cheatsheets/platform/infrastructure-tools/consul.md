@@ -26,6 +26,7 @@ updated: "2026-04-20"
 ### См. также
 - [[nginx-advanced|Nginx Advanced]]
 - [[infrastructure-tools-overview|Обзор инфраструктурных инструментов]]
+- [[consul-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Основы Consul](#основы-consul)

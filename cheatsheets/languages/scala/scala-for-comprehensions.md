@@ -8,7 +8,11 @@ tags:
   - monads
 difficulty: "intermediate"
 prerequisites: ["scala/scala-fp-basics.md"]
-next: []
+next:
+  - scala-fp-advanced
+  - scala-implicit
+  - scala-http4s
+
 updated: "2026-04-20"
 related: ["scala/scala-fp-basics.md", "scala/scala-collections.md"]
 ---

@@ -31,6 +31,7 @@ updated: "2026-04-20"
 - [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
 - [[backtracking|Поиск с возвратом (Backtracking)]]
 - [[divide-and-conquer|Разделяй и властвуй (Divide and Conquer)]]
+- [[dynamic-programming-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в динамическое программирование](#введение-в-динамическое-программирование)

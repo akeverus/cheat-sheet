@@ -614,3 +614,4 @@ spec:
 - [[mtls-interview|mTLS (Mutual TLS)]]
 - [[oauth2-interview|OAuth2]]
 - [[owasp-top10-interview|OWASP Top 10]]
+- [[secrets-management|Шпаргалка: Управление секретами (Secrets Management]] — теория

@@ -9,6 +9,7 @@ tags:
 difficulty: "advanced"
 prerequisites: ["scala/scala-basics.md"]
 next: []
+
 updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-advanced.md"]
 ---

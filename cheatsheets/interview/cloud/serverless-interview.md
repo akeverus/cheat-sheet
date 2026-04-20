@@ -613,3 +613,4 @@ Daily invocations × duration × memory + per-invocation cost + auxiliary servic
 - [[cloud-native-patterns-interview|Cloud-native Patterns]]
 - [[gcp-interview|GCP (Google Cloud Platform)]]
 - [[ai-agents-interview|AI Agents]]
+- [[serverless|Шпаргалка: Serverless Architecture]] — теория

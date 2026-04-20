@@ -19,6 +19,10 @@ updated: "2026-04-20"
 
 # Spring Boot — Полное руководство
 
+
+### См. также
+- [[spring-boot-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 - [Официальная документация **Spring Boot**](https://spring.io/projects/spring-boot)

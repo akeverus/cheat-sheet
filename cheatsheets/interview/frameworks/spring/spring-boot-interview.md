@@ -1625,3 +1625,4 @@ management:
 - [[spring-cloud-interview|Spring Cloud]]
 - [[spring-data-jpa-interview|Spring Data JPA]]
 - [[spring-framework-interview|Spring Framework]]
+- [[spring-boot|Шпаргалка: Spring Boot — Полное руководство]] — теория

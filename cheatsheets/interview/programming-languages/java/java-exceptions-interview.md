@@ -1589,3 +1589,4 @@ problem.setInstance(URI.create(request.getRequestURI()));
 - [[java-collections-interview|Java Collections]]
 - [[java-concurrency-interview|Java Concurrency]]
 - [[java-conditional-statements-interview|Java Conditional Statements]]
+- [[java-exceptions|Шпаргалка: Java: обработка исключений]] — теория

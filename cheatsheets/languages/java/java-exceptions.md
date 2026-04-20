@@ -7,12 +7,19 @@ tags:
   - java-exceptions
 difficulty: "intermediate"
 prerequisites: []
-next: []
+
+next:
+  - java-memory-model
+
 updated: "2026-04-20"
 ---
 # Java: обработка исключений
 
 Комплексное руководство по обработке исключений в Java: типы исключений, best practices, паттерны и интеграция с современными фреймворками.
+
+
+### См. также
+- [[java-exceptions-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Полезные ссылки
 

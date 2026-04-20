@@ -30,6 +30,7 @@ updated: "2026-04-20"
 
 - [[greedy-algorithms|Жадные алгоритмы (Greedy Algorithms)]]
 - [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
+- [[backtracking-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Backtracking](#введение-в-backtracking)

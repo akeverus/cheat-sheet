@@ -371,3 +371,4 @@ algorithms/
 - [[llm-integration-patterns-interview|LLM Integration Patterns]]
 - [[mlops-interview|MLOps]]
 - [[model-serving-interview|Model Serving]]
+- [[algorithms|Шпаргалка: Хеширование и хеш-функции (Hashing and H]] — теория

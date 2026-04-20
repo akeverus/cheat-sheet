@@ -6,8 +6,11 @@ tags:
   - java
   - java-apache-httpclient
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # Apache HttpClient: Мощный HTTP клиент для Java

@@ -12,6 +12,7 @@ tags:
   - jvm
 difficulty: "beginner"
 prerequisites: []
+
 next: ["java/java-concurrency-basics.md", "java/java-collections-list.md"]
 updated: "2026-04-20"
 ---

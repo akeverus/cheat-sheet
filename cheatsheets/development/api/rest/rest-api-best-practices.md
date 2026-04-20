@@ -6,8 +6,11 @@ tags:
   - api
   - rest-api-best-practices
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - insomnia-basics
+
 next: []
+
 updated: "2026-04-20"
 ---
 # REST API Best Practices

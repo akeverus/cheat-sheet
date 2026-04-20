@@ -25,6 +25,7 @@ updated: "2026-04-20"
 
 ### См. также
 - [[iac-overview|Infrastructure as Code (IaC) — обзор]]
+- [[ansible-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Основы Ansible](#основы-ansible)

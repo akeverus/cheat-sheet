@@ -695,3 +695,4 @@ Terraform creates EC2 → Ansible installs nginx, copies config
 - [[git-interview|Git]]
 - [[gradle-maven-interview|Gradle и Maven]]
 - [[helm-interview|Helm]]
+- [[ansible|Шпаргалка: Ansible]] — теория

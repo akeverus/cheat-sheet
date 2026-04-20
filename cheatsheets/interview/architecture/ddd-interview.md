@@ -1847,3 +1847,4 @@ public class MoneyEmbeddable {
 - [[cap-theorem-interview|CAP-теорема]]
 - [[clean-architecture-interview|Clean Architecture]]
 - [[consistency-patterns-interview|Паттерны согласованности]]
+- [[ddd|Шпаргалка: Domain-Driven Design (DDD)]] — теория

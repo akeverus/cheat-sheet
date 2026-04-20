@@ -11,7 +11,7 @@ updated: "2026-04-20"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **242**.
+Всего файлов: **244**.
 
 ## Быстрые маршруты подготовки
 
@@ -211,6 +211,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Spring WebFlux`](frameworks/spring/spring-webflux-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Retry`](frameworks/spring/spring-retry-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: `Spring Modulith`](frameworks/spring/spring-modulith-interview.md) — `15` вопросов
+- [Вопросы на собеседовании: `Spring Kafka`](frameworks/spring/spring-kafka-interview.md) — `15` вопросов
 
 ## jvm
 
@@ -250,6 +251,7 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: Метрики и трейсинг](monitoring/metrics-tracing-interview.md) — `41` вопрос
 - [Вопросы на собеседовании: `Observability`](monitoring/observability-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: `Prometheus` и `Grafana`](monitoring/prometheus-grafana-interview.md) — `39` вопросов
+- [Вопросы на собеседовании: `Micrometer`](monitoring/micrometer-interview.md) — `20` вопросов
 
 ## performance
 

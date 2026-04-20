@@ -1634,3 +1634,4 @@ keytool -importcert -alias api-example-com \
 - [[mtls-interview|mTLS (Mutual TLS)]]
 - [[oauth2-interview|OAuth2]]
 - [[owasp-top10-interview|OWASP Top 10]]
+- [[tls-ssl|Шпаргалка: TLS / SSL: handshake, сертификаты, конфи]] — теория

@@ -32,6 +32,7 @@ updated: "2026-04-20"
 - [[java-gson|Gson]]
 - [[java-junit5|JUnit 5]]
 - [[java-mockito|Mockito]]
+- [[java-mapstruct-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в MapStruct](#введение-в-mapstruct)

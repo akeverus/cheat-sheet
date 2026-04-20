@@ -30,6 +30,7 @@ updated: "2026-04-20"
 
 
 - [[quarkus-testing|Quarkus: Testing — Unit Tests, Integration Tests и @QuarkusTest]]
+- [[mockito-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Mockito](#введение-в-mockito)

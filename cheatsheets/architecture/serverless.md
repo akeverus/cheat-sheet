@@ -28,6 +28,7 @@ updated: "2026-04-20"
 
 - [[soa|SOA (Service-Oriented Architecture)]]
 - [[ddd|Domain-Driven Design (DDD)]]
+- [[serverless-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Serverless Architecture](#введение-в-serverless-architecture)

@@ -39,6 +39,7 @@ updated: "2026-04-20"
 - [[spring-websocket|Spring WebSocket]]
 - [[spring-integration|Spring Integration]]
 - [[spring-batch|Spring Batch для Java]]
+- [[spring-webflux-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Spring WebFlux](#введение-в-spring-webflux)

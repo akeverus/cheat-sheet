@@ -6,8 +6,11 @@ tags:
   - api
   - api-documentation-basics
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - insomnia-basics
+
 next: []
+
 updated: "2026-04-20"
 ---
 # API Documentation: Основы

@@ -32,6 +32,7 @@ Jackson — де-факто стандартная библиотека сери
 - [[java-mapstruct|java-mapstruct]] — маппинг после десериализации
 - [[java-lombok|java-lombok]] — DTO с Lombok
 - [[spring-mvc|spring-mvc]] — обработка HTTP-запросов
+- [[java-jackson-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

@@ -31,6 +31,7 @@ updated: "2026-04-20"
 - [[kotlin-performance|Kotlin Performance]]
 - [[kotlin-fp-basics|Kotlin Functional Programming: Basics]]
 - [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
+- [[kotlin-interop-java-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Interop](#введение-в-interop)

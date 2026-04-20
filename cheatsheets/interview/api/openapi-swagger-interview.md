@@ -1274,3 +1274,4 @@ springdoc:
 - [[grpc-interview|gRPC]]
 - [[http-rest-interview|HTTP и REST]]
 - [[rest-maturity-interview|Richardson Maturity Model (REST)]]
+- [[openapi-swagger|Шпаргалка: OpenAPI/Swagger]] — теория

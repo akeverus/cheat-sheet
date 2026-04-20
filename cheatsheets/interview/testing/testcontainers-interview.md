@@ -2055,3 +2055,4 @@ void shouldSendAndReceiveMessage() {
 - [[load-testing-interview|Load Testing]]
 - [[mockito-interview|Mockito]]
 - [[mutation-testing-interview|Mutation Testing]]
+- [[testcontainers|Шпаргалка: Testcontainers (Testcontainers)]] — теория

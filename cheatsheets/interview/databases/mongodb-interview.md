@@ -1827,3 +1827,4 @@ db.products.aggregate([
 - [[database-architecture-interview|Database Architecture]]
 - [[database-transactions-interview|Транзакции и уровни изоляции]]
 - [[dynamodb-interview|DynamoDB]]
+- [[mongodb|Шпаргалка: MongoDB: Полное руководство по документо]] — теория

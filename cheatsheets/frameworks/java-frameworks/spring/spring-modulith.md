@@ -23,6 +23,7 @@ Spring Modulith помогает строить модульные моноли�
 - [[spring-boot|Spring Boot]] — базовый фреймворк
 - [[spring-events|Spring Events]] — события Spring, используемые между модулями
 - [[spring-core|Spring Core]] — ядро Spring Framework
+- [[spring-modulith-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

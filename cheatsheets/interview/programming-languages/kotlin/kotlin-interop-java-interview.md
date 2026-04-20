@@ -1737,3 +1737,4 @@ val objects: List<Any> = readOnly // OK — ковариантность раб�
 - [[kotlin-exceptions-interview|исключения в Kotlin]]
 - [[kotlin-interview|Kotlin]]
 - [[kotlin-serialization-interview|сериализация в Kotlin]]
+- [[kotlin-interop-java|Шпаргалка: Kotlin Interop with Java]] — теория

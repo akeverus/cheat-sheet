@@ -7,7 +7,10 @@ tags:
   - java-streams-fp
 difficulty: "intermediate"
 prerequisites: []
-next: []
+
+next:
+  - java-memory-model
+
 updated: "2026-04-20"
 ---
 # Java Streams и функциональное программирование

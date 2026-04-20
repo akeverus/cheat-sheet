@@ -39,6 +39,7 @@ updated: "2026-04-20"
 
 - [[spring-websocket|Spring WebSocket]]
 - [[spring-ai|Spring AI]]
+- [[spring-batch-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Spring Batch](#введение-в-spring-batch)

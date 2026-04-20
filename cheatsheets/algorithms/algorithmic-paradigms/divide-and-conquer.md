@@ -30,6 +30,7 @@ updated: "2026-04-20"
 
 - [[branch-and-bound|Методы ветвей и границ (Branch and Bound)]]
 - [[backtracking|Поиск с возвратом (Backtracking)]]
+- [[divide-and-conquer-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Divide and Conquer](#введение-в-divide-and-conquer)

@@ -1780,3 +1780,4 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 - [[spring-boot-interview|Spring Boot]]
 - [[spring-cloud-interview|Spring Cloud]]
 - [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-mvc|Шпаргалка: Spring MVC: Полное руководство по веб-фр]] — теория

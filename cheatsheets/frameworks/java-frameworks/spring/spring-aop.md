@@ -21,6 +21,10 @@ related: ["spring/spring-core.md", "java/java-basics.md", "patterns/design-behav
 # Spring AOP: Полное руководство по аспектно-ориентированному программированию
 
 
+
+### См. также
+- [[spring-aop-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 ### Официальная документация

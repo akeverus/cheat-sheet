@@ -659,3 +659,4 @@ class LegacyIntegrationTest {
 - [[mockito-interview|Mockito]] — `@Mock`, `@InjectMocks`, verify, stubbing — без Spring
 - [[testcontainers-interview|Testcontainers]] — интеграция с Spring Boot, @ServiceConnection, @DynamicPropertySource
 - [[unit-testing-interview|Unit Testing]] — принципы юнит-тестирования, пирамида тестов, AAA
+- [[spring-testing|Шпаргалка: Spring Testing: Полное руководство по те]] — теория

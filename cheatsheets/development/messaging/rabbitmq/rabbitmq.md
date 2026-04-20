@@ -37,6 +37,7 @@ updated: "2026-04-20"
 - [[kafka|Kafka]] — **Kafka** для **high-throughput**
 - [[spring-messaging|Spring Messaging]] — **Spring Messaging**
 - [[distributed-tracing|Distributed Tracing]] — мониторинг и трейсинг
+- [[rabbitmq-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

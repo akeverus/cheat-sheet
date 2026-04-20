@@ -24,6 +24,10 @@ updated: "2026-04-20"
 > - [[security-testing|Security Testing]] — `SAST`, `DAST`, `SCA`, пентесты
 
 
+
+### См. также
+- [[application-security-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 ### Официальная документация

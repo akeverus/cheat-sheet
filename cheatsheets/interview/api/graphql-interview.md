@@ -2111,3 +2111,4 @@ GraphQL или REST — на внешнем слое (developer experience), gRP
 - [[http-rest-interview|HTTP и REST]]
 - [[openapi-swagger-interview|OpenAPI / Swagger]]
 - [[rest-maturity-interview|Richardson Maturity Model (REST)]]
+- [[graphql|Шпаргалка: GraphQL для Java]] — теория

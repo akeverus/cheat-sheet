@@ -1564,3 +1564,4 @@ groups:
 - [[pulsar-interview|Apache Pulsar]]
 - [[rabbitmq-interview|RabbitMQ]]
 - [[redpanda-interview|Redpanda]]
+- [[kafka|Шпаргалка: Apache Kafka для Java]] — теория

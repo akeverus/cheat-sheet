@@ -674,3 +674,4 @@ constraints.Ordered
 - [[go-modules-interview|Go Modules]]
 - [[go-stdlib-interview|Go Standard Library]]
 - [[go-testing-interview|Go Testing]]
+- [[go-generics|Шпаргалка: Go: Generics]] — теория

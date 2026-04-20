@@ -586,3 +586,4 @@ Consul service change → Terraform run → update load balancer / firewall / DN
 - [[git-interview|Git]]
 - [[gradle-maven-interview|Gradle и Maven]]
 - [[helm-interview|Helm]]
+- [[consul|Шпаргалка: Consul]] — теория

@@ -695,3 +695,4 @@ class MergeSortTask extends RecursiveAction {
 - [[recursion-interview|Рекурсия]]
 - [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
 - [[algorithms-interview|Алгоритмы (обзор)]]
+- [[divide-and-conquer|Шпаргалка: Разделяй и властвуй (Divide and Conquer)]] — теория

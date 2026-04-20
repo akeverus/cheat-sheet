@@ -650,3 +650,4 @@ PUT _index_template/logs-template
 - [[metrics-tracing-interview|Метрики и трейсинг]]
 - [[observability-interview|Observability]]
 - [[opentelemetry-interview|OpenTelemetry]]
+- [[elk-stack|Шпаргалка: ELK Stack]] — теория

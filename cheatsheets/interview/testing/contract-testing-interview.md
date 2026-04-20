@@ -1925,3 +1925,4 @@ Matcher для заголовка гарантирует, что провайд�
 - [[mockito-interview|Mockito]]
 - [[mutation-testing-interview|Mutation Testing]]
 - [[property-based-testing-interview|Property-based Testing]]
+- [[contract-testing|Шпаргалка: Контрактное тестирование (Contract Testi]] — теория

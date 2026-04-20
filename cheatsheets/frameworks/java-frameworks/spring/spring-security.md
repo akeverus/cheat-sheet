@@ -17,6 +17,10 @@ updated: "2026-04-20"
 
 # Spring Security
 
+
+### См. также
+- [[spring-security-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 - [Официальная документация **Spring Security**](https://spring.io/projects/spring-security)

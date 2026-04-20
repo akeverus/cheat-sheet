@@ -765,3 +765,4 @@ Race detector замедляет тесты в 5-10 раз. Включай в **
 - [[go-memory-gc-interview|Go Memory и GC]]
 - [[go-modules-interview|Go Modules]]
 - [[go-stdlib-interview|Go Standard Library]]
+- [[go-testing|Шпаргалка: Go: тестирование]] — теория

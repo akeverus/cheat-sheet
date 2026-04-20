@@ -18,6 +18,10 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Testing: Полное руководство по тестированию
 
+
+### См. также
+- [[spring-testing-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)

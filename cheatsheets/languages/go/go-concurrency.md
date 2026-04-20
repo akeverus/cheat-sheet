@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 # Go: конкурентность
 
+
+### См. также
+- [[go-concurrency-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 - [Go Concurrency Patterns](https://go.dev/blog/pipelines)

@@ -47,6 +47,7 @@ Secrets management — системное решение для хранения
 - [[spring-vault|Spring Vault: Полное руководство по управлению секретами]]
 - [[security-practices|Практики безопасности (Security Practices)]]
 - [[spring-boot|Spring Boot — Полное руководство]]
+- [[secrets-management-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Типы секретов и жизненный цикл](#типы-секретов-и-жизненный-цикл)

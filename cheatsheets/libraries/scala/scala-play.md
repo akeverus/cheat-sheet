@@ -9,7 +9,9 @@ tags:
   - rest-api
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
-next: []
+next:
+  - scala-http4s
+
 updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-slick.md"]
 ---

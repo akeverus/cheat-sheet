@@ -2127,3 +2127,4 @@ pg_repack -t orders -o created_at
 - [[database-architecture-interview|Database Architecture]]
 - [[database-transactions-interview|Транзакции и уровни изоляции]]
 - [[dynamodb-interview|DynamoDB]]
+- [[flyway-liquibase|Шпаргалка: Flyway и Liquibase — миграции баз данных]] — теория

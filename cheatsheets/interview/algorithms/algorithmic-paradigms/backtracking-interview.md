@@ -804,3 +804,4 @@ void iterativeBacktrack(State initial) {
 - [[tries-interview|Trie]] — Word Search II через Trie + backtracking
 - [[hash-tables-interview|Хеш-таблицы]] — used set для permutations
 - [[complexity-analysis-interview|Анализ сложности]] — экспоненциальная vs полиномиальная
+- [[backtracking|Шпаргалка: Поиск с возвратом (Backtracking)]] — теория

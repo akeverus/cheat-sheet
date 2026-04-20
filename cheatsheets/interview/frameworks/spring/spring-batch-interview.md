@@ -2693,3 +2693,4 @@ public class BatchMetricsListener implements JobExecutionListener {
 - [[spring-cloud-interview|Spring Cloud]]
 - [[spring-data-jpa-interview|Spring Data JPA]]
 - [[spring-framework-interview|Spring Framework]]
+- [[spring-batch|Шпаргалка: Spring Batch для Java]] — теория

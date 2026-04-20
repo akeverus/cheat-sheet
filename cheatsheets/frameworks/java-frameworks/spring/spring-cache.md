@@ -18,6 +18,10 @@ related: ["spring/spring-boot.md", "java/java-basics.md"]
 
 # Spring Cache: Полное руководство по кешированию
 
+
+### См. также
+- [[spring-cache-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 [Официальная документация Spring](https://docs.spring.io/)

@@ -751,3 +751,4 @@ Jackson — быстрый и зрелый. Типовые цифры (JMH, пр
 - [[http-rest-interview]] — JSON как формат REST-ответов
 - [[openapi-swagger-interview]] — описание типов в OpenAPI vs Jackson-аннотации
 - [[application-security-interview]] — Jackson-CVE через Default Typing, safe deserialization
+- [[java-jackson|Шпаргалка: Jackson: JSON-сериализация в Java]] — теория

@@ -1610,3 +1610,4 @@ class UserServiceTest {
 - [[spring-boot-interview|Spring Boot]]
 - [[spring-cloud-interview|Spring Cloud]]
 - [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-webflux|Шпаргалка: Spring WebFlux для Java]] — теория

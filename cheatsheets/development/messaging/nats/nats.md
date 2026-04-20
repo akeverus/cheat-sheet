@@ -24,6 +24,7 @@ updated: "2026-04-20"
 ### См. также
 - [[activemq|Apache ActiveMQ]]
 - [[rabbitmq-advanced|RabbitMQ Advanced]]
+- [[nats-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Основы NATS](#основы-nats)

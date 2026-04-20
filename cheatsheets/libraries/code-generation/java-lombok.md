@@ -31,6 +31,7 @@ updated: "2026-04-20"
 - [[jackson|Jackson: JSON сериализация в Java]]
 - [[java-gson|Gson]]
 - [[java-junit5|JUnit 5]]
+- [[java-lombok-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Lombok](#введение-в-lombok)

@@ -808,3 +808,4 @@ UserDto toDto(User user);
 - [[spring-boot-interview|Spring Boot]] — интеграция MapStruct как Spring-компонента, автоконфигурация
 - [[design-patterns-interview|Design Patterns]] — Decorator-паттерн в `@DecoratedWith`, Builder-паттерн
 - [[unit-testing-interview|Unit Testing]] — тестирование маппинг-логики через `Mappers.getMapper()`
+- [[java-mapstruct|Шпаргалка: MapStruct: Маппинг объектов в Java]] — теория

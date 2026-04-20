@@ -6,8 +6,11 @@ tags:
   - api
   - openapi-swagger
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - insomnia-basics
+
 next: []
+
 updated: "2026-04-20"
 ---
 # OpenAPI/Swagger
@@ -26,6 +29,7 @@ updated: "2026-04-20"
 
 ### См. также
 - [[api-documentation-basics|API Documentation: Основы]]
+- [[openapi-swagger-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Основы OpenAPI](#основы-openapi)

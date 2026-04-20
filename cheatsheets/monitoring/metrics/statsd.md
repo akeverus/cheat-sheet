@@ -7,7 +7,10 @@ tags:
   - statsd
 difficulty: "intermediate"
 prerequisites: []
-next: []
+
+next:
+  - go-observability
+
 updated: "2026-04-20"
 ---
 # StatsD

@@ -637,3 +637,4 @@ public class HeavyScheduledJob {
 - [[distributed-systems-interview|Распределённые системы]] — проблема distributed scheduling, distributed lock
 - [[unit-testing-interview|Unit Testing]] — Awaitility, `@SpyBean`, тестирование временных задач
 - [[docker-interview|Docker]] — несколько реплик одного Docker-контейнера и проблема дублирования задач
+- [[spring-scheduling|Шпаргалка: Spring Scheduling: Полное руководство по]] — теория

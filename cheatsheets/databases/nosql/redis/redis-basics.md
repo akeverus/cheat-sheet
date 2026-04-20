@@ -10,6 +10,7 @@ tags:
   - basics
 difficulty: "beginner"
 prerequisites: []
+
 next: ["databases/nosql/redis/redis-data-structures.md", "databases/nosql/redis/redis-persistence.md"]
 updated: "2026-04-20"
 related: ["databases/relational/postgresql/postgres-basics.md", "databases/nosql/redis/redis-data-structures.md"]

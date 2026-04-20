@@ -30,6 +30,7 @@ updated: "2026-04-20"
 
 - [[kotlin-performance|Kotlin Performance]]
 - [[kotlin-sealed-classes|Sealed классы и интерфейсы в Kotlin]]
+- [[kotlin-dsl-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в DSL](#введение-в-dsl)

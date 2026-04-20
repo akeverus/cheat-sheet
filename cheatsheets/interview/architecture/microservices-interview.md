@@ -1346,3 +1346,4 @@ public class UserClientService {
 - [[cap-theorem-interview|CAP-теорема]]
 - [[clean-architecture-interview|Clean Architecture]]
 - [[consistency-patterns-interview|Паттерны согласованности]]
+- [[microservices|Шпаргалка: Микросервисная архитектура]] — теория

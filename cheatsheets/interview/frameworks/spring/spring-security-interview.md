@@ -2220,3 +2220,4 @@ public class MethodSecurityConfig {}
 - [[spring-boot-interview|Spring Boot]]
 - [[spring-cloud-interview|Spring Cloud]]
 - [[spring-data-jpa-interview|Spring Data JPA]]
+- [[spring-security|Шпаргалка: Spring Security]] — теория

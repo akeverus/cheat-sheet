@@ -798,3 +798,4 @@ class Order extends BaseEntity {
 - [[spring-boot-interview|Spring Boot]] — @RequiredArgsConstructor + final fields = рекомендованный Spring DI
 - [[unit-testing-interview|Unit Testing]] — lombok.addLombokGeneratedAnnotation для исключения из JaCoCo
 - [[design-patterns-interview|Design Patterns]] — Builder (Q11-Q14), Delegate (@Delegate), Value Object (@Value)
+- [[java-lombok|Шпаргалка: Lombok: Автоматизация boilerplate кода в]] — теория

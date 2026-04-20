@@ -698,3 +698,4 @@ deployment.environment: production
 - [[loki-grafana-interview|Loki и Grafana]]
 - [[metrics-tracing-interview|Метрики и трейсинг]]
 - [[observability-interview|Observability]]
+- [[opentelemetry|Шпаргалка: OpenTelemetry]] — теория

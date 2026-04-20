@@ -31,6 +31,7 @@ updated: "2026-04-20"
 - [[spring-websocket|Spring WebSocket]]
 - [[spring-integration|Spring Integration]]
 - [[spring-batch|Spring Batch для Java]]
+- [[spring-cloud-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Spring Cloud](#введение-в-spring-cloud)

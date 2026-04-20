@@ -6,8 +6,11 @@ tags:
   - api
   - grpc
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - insomnia-basics
+
 next: []
+
 updated: "2026-04-20"
 ---
 # gRPC
@@ -31,6 +34,7 @@ updated: "2026-04-20"
 
 - [[rest-api-best-practices|REST API Best Practices]]
 - [[openapi-swagger|OpenAPI/Swagger]]
+- [[grpc-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в gRPC](#введение-в-grpc)

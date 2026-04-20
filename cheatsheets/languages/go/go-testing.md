@@ -15,6 +15,10 @@ updated: "2026-04-20"
 
 # Go: тестирование
 
+
+### См. также
+- [[go-testing-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 - [Go Testing Documentation](https://pkg.go.dev/testing)

@@ -1064,3 +1064,4 @@ rabbitmqadmin export config.json
 - [[nats-interview|NATS]]
 - [[pulsar-interview|Apache Pulsar]]
 - [[redpanda-interview|Redpanda]]
+- [[rabbitmq|Шпаргалка: RabbitMQ для Java]] — теория

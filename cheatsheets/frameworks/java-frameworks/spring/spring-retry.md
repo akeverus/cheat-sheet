@@ -25,6 +25,7 @@ Spring Retry автоматически повторяет выполнение 
 - [[spring-webflux|Spring WebFlux]] — реактивный retry через Reactor
 - [[spring-kafka|Spring Kafka]] — retry при обработке сообщений
 - [[spring-batch|Spring Batch]] — повторные попытки в batch-обработке
+- [[spring-retry-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

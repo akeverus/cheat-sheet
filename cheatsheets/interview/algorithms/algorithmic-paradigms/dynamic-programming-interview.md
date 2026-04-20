@@ -869,3 +869,4 @@ D&C — это «решить и забыть», DP — «решить и зап
 - [[recursion-interview|Рекурсия]]
 - [[two-pointers-sliding-window-interview|Two Pointers и Sliding Window]]
 - [[algorithms-interview|Алгоритмы (обзор)]]
+- [[dynamic-programming|Шпаргалка: Динамическое программирование]] — теория

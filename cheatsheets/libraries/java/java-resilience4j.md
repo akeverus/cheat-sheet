@@ -6,8 +6,11 @@ tags:
   - java
   - java-resilience4j
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # Resilience4j: Fault Tolerance для Java

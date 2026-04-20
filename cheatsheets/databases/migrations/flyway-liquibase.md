@@ -23,6 +23,7 @@ updated: "2026-04-20"
 ### См. также
 - [[postgres-basics|PostgreSQL: основы]] — PostgreSQL как целевая БД миграций
 - [[spring-boot|Spring Boot]] — интеграция с автоконфигурацией
+- [[flyway-liquibase-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

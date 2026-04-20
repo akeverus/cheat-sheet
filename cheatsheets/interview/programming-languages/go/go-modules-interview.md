@@ -650,3 +650,4 @@ go get github.com/myorg/some-lib@abc1234
 - [[go-memory-gc-interview|Go Memory и GC]]
 - [[go-stdlib-interview|Go Standard Library]]
 - [[go-testing-interview|Go Testing]]
+- [[go-modules|Шпаргалка: Go: модули]] — теория

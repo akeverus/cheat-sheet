@@ -2238,3 +2238,4 @@ REST: HTTP 200 {"id":"123","status":"DELIVERED","total":99.9}
 - [[http-rest-interview|HTTP и REST]]
 - [[openapi-swagger-interview|OpenAPI / Swagger]]
 - [[rest-maturity-interview|Richardson Maturity Model (REST)]]
+- [[grpc|Шпаргалка: gRPC]] — теория

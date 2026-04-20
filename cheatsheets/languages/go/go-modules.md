@@ -14,6 +14,10 @@ updated: "2026-04-20"
 
 # Go: модули
 
+
+### См. также
+- [[go-modules-interview|Вопросы на собеседовании]] — подготовка к интервью
+
 ## Полезные ссылки
 
 - [Go Modules Documentation](https://go.dev/ref/mod)

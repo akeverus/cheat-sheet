@@ -689,3 +689,4 @@ CREATE TABLE pg_users ENGINE = PostgreSQL('host:5432', 'db', 'users', 'user', 'p
 - [[database-transactions-interview|Транзакции и уровни изоляции]]
 - [[dynamodb-interview|DynamoDB]]
 - [[elasticsearch-interview|Elasticsearch]]
+- [[clickhouse|Шпаргалка: ClickHouse]] — теория

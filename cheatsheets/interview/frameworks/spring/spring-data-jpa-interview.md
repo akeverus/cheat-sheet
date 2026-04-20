@@ -2500,3 +2500,4 @@ int auditAndUpdatePrices(
 - [[spring-boot-interview|Spring Boot]]
 - [[spring-cloud-interview|Spring Cloud]]
 - [[spring-framework-interview|Spring Framework]]
+- [[spring-data-jpa|Шпаргалка: Spring Data JPA/Hibernate]] — теория

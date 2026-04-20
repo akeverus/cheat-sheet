@@ -27,6 +27,7 @@ updated: "2026-04-20"
 - [[architecture-patterns|Архитектурные паттерны]] — архитектурные паттерны
 
 - [[soa|SOA (Service-Oriented Architecture)]]
+- [[ddd-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение в Domain-Driven Design](#введение-в-domain-driven-design)

@@ -25,6 +25,7 @@ ELK Stack (Elasticsearch, Logstash, Kibana) — набор инструмент�
 ### См. также
 - [[slf4j|SLF4J для Java]]
 - [[centralized-logging|Централизованное логирование для Java]]
+- [[elk-stack-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Компоненты ELK Stack](#компоненты-elk-stack)

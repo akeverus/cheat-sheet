@@ -34,6 +34,7 @@ Project Loom — это переосмысление конкурентност�
 - [[java-17-21-interview|Java 17/21 Interview]] — вопросы на собеседовании
 - [[spring-webflux|Spring WebFlux]] — реактивная модель vs virtual threads
 - [[spring-boot|Spring Boot]] — конфигурация `spring.threads.virtual.enabled`
+- [[java-virtual-threads-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

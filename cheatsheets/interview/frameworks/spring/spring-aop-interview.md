@@ -786,3 +786,4 @@ void logMethod_shouldLogCallInfo() throws Throwable {
 - [[java-core-interview|Java Core]] — java.lang.reflect.Proxy, dynamic proxy механизм
 - [[unit-testing-interview|Unit Testing]] — тестирование аспектов через mock ProceedingJoinPoint
 - [[spring-boot-actuator-interview|Spring Boot Actuator]] — @Timed из Micrometer как AOP-based метрика
+- [[spring-aop|Шпаргалка: Spring AOP: Полное руководство по аспект]] — теория

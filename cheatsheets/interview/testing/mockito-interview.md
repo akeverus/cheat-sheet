@@ -1331,3 +1331,4 @@ class MyTest { ... }
 - [[load-testing-interview|Load Testing]]
 - [[mutation-testing-interview|Mutation Testing]]
 - [[property-based-testing-interview|Property-based Testing]]
+- [[mockito|Шпаргалка: Mockito]] — теория

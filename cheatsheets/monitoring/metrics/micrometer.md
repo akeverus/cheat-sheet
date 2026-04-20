@@ -7,7 +7,10 @@ tags:
   - micrometer
 difficulty: "intermediate"
 prerequisites: []
-next: []
+
+next:
+  - go-observability
+
 updated: "2026-04-20"
 ---
 # Micrometer
@@ -33,6 +36,7 @@ Micrometer — фасад (vendor-neutral API) для сбора метрик в
 
 - [[quarkus-actuator|Quarkus: Actuator — Health Checks и Metrics]]
 - [[micronaut-actuator|Micronaut: Actuator — Health Checks, Metrics и Endpoints]]
+- [[micrometer-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение](#введение)

@@ -28,6 +28,7 @@ updated: "2026-04-20"
 - [[calculator-implementation|Calculator Implementation]]
 - [[circular-buffer|Circular Buffer]]
 - [[combinatorial-problems-overview|Обзор комбинаторных задач (Combinatorial Problems Overview)]]
+- [[algorithms-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

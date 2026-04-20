@@ -649,3 +649,4 @@ spring:
 - [[performance-testing-interview|Performance Testing]] — замер эффективности кэша
 - [[caching-performance-interview|Caching Performance]] — стратегии кэширования, eviction policies
 - [[database-performance-interview|Database Performance]] — когда кэш вместо БД
+- [[spring-cache|Шпаргалка: Spring Cache: Полное руководство по кеши]] — теория

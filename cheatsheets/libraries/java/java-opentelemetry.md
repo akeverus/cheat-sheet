@@ -6,8 +6,11 @@ tags:
   - java
   - java-opentelemetry
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # OpenTelemetry: Observability в Java

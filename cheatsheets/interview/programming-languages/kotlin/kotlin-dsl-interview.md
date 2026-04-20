@@ -1977,3 +1977,4 @@ val sql = "SELECT * FROM users WHERE age > '18'"  // Сравнение числ
 - [[kotlin-interop-java-interview|интероп Kotlin и Java]]
 - [[kotlin-interview|Kotlin]]
 - [[kotlin-serialization-interview|сериализация в Kotlin]]
+- [[kotlin-dsl|Шпаргалка: Kotlin DSL]] — теория

@@ -2155,3 +2155,4 @@ spring:
 - [[spring-boot-interview|Spring Boot]]
 - [[spring-data-jpa-interview|Spring Data JPA]]
 - [[spring-framework-interview|Spring Framework]]
+- [[spring-cloud|Шпаргалка: Spring Cloud]] — теория

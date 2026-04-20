@@ -6,8 +6,11 @@ tags:
   - java
   - java-spring-cloud-sleuth
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # Spring Cloud Sleuth: Distributed Tracing для Spring

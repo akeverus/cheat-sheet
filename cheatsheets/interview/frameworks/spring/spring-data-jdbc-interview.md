@@ -499,3 +499,4 @@ public class OrderService {
 - [[sql-interview|SQL]] — plain SQL в @Query Spring Data JDBC
 - [[flyway-liquibase-interview|Flyway / Liquibase]] — миграции схемы (обязательны для Spring Data JDBC)
 - [[ddd-interview|DDD]] — агрегаты, bounded contexts, aggregate root
+- [[spring-data-jdbc|Шпаргалка: Spring Data JDBC: Полное руководство по ]] — теория

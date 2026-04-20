@@ -8,7 +8,11 @@ tags:
   - case-classes
 difficulty: "intermediate"
 prerequisites: ["scala/scala-basics.md"]
-next: []
+next:
+  - scala-implicit
+  - scala-http4s
+  - scala-fp-advanced
+
 updated: "2026-04-20"
 related: ["scala/scala-basics.md", "scala/scala-fp-basics.md"]
 ---

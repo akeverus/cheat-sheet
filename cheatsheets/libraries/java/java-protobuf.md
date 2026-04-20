@@ -6,8 +6,11 @@ tags:
   - java
   - java-protobuf
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - java-lombok
+
 next: []
+
 updated: "2026-04-20"
 ---
 # Protocol Buffers (Protobuf)

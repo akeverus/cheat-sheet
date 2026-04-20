@@ -6,8 +6,11 @@ tags:
   - api
   - graphql
 difficulty: "intermediate"
-prerequisites: []
+prerequisites:
+  - insomnia-basics
+
 next: []
+
 updated: "2026-04-20"
 ---
 # GraphQL для Java
@@ -42,6 +45,7 @@ updated: "2026-04-20"
 - [[spring-graphql|Spring GraphQL]] — интеграция **Spring GraphQL**
 - [[README|PostgreSQL]] — базы данных для **GraphQL**
 - [[README|Мониторинг]] — мониторинг и **observability**
+- [[graphql-interview|Вопросы на собеседовании]] — подготовка к интервью
 
 ## Содержание
 

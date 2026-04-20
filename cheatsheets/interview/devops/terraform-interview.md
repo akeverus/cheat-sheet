@@ -1750,3 +1750,4 @@ terraform.tfstate.*
 - [[git-interview|Git]]
 - [[distributed-systems-interview|Распределённые системы]]
 - [[application-security-interview|Application Security]]
+- [[terraform|Шпаргалка: Terraform]] — теория

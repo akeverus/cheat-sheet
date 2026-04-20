@@ -514,3 +514,4 @@ accounts: {
 - [[pulsar-interview|Apache Pulsar]]
 - [[rabbitmq-interview|RabbitMQ]]
 - [[redpanda-interview|Redpanda]]
+- [[nats|Шпаргалка: NATS]] — теория

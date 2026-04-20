@@ -971,3 +971,4 @@ Channels более выразительны (особенно `select`). Blocki
 - [[go-modules-interview|Go Modules]]
 - [[go-stdlib-interview|Go Standard Library]]
 - [[go-testing-interview|Go Testing]]
+- [[go-concurrency|Шпаргалка: Go: конкурентность]] — теория

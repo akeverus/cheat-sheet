@@ -2161,3 +2161,4 @@ CLIENT TRACKING on BCAST PREFIX user:
 - [[database-architecture-interview|Database Architecture]]
 - [[database-transactions-interview|Транзакции и уровни изоляции]]
 - [[dynamodb-interview|DynamoDB]]
+- [[redis|Шпаргалка: Redis — Полное руководство по in-memory ]] — теория

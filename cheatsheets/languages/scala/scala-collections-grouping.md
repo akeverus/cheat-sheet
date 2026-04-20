@@ -9,7 +9,11 @@ tags:
   - functional-programming
 difficulty: "intermediate"
 prerequisites: ["scala/scala-collections.md"]
-next: []
+next:
+  - scala-implicit
+  - scala-http4s
+  - scala-fp-advanced
+
 updated: "2026-04-20"
 related: ["scala/scala-collections.md", "scala/scala-collections-operations.md"]
 ---

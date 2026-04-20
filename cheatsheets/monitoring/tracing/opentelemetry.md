@@ -7,7 +7,10 @@ tags:
   - opentelemetry
 difficulty: "intermediate"
 prerequisites: []
-next: []
+
+next:
+  - go-observability
+
 updated: "2026-04-20"
 ---
 # OpenTelemetry
@@ -34,6 +37,7 @@ updated: "2026-04-20"
 - [[distributed-tracing|Распределённое трассирование]]
 - [[zipkin|Zipkin]]
 - [[go-observability|Go: наблюдаемость]]
+- [[opentelemetry-interview|Вопросы на собеседовании]] — подготовка к интервью
 ## Содержание
 
 - [Введение](#введение)
