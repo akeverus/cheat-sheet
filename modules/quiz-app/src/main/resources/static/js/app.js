@@ -504,6 +504,7 @@
     initCollapsibleSidebar();
     initDangerousFormGuard();
     initFlashcardShortcuts();
+    initKeyboardHelp();
   });
 
   function apiPost(url, formData) {
@@ -1505,6 +1506,49 @@ function initDangerousFormGuard() {
         e.preventDefault();
       }
     });
+  });
+}
+
+function initKeyboardHelp() {
+  const shortcuts = [
+    { keys: ['1', '2', '…', '9'], desc: 'Выбрать вариант ответа' },
+    { keys: ['↑', '↓'], desc: 'Переключить вариант' },
+    { keys: ['Enter'], desc: 'Отправить ответ' },
+    { keys: ['Space'], desc: 'Раскрыть флешкарту' },
+    { keys: ['1', '2', '3', '4'], desc: 'Оценить флешкарту (не помню → отлично)' },
+    { keys: ['?'], desc: 'Показать / скрыть эту справку' },
+    { keys: ['Esc'], desc: 'Закрыть справку' },
+  ];
+  const overlay = document.createElement('div');
+  overlay.className = 'kbd-help-overlay hidden';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-labelledby', 'kbd-help-title');
+  overlay.innerHTML =
+    '<div class="kbd-help-modal">' +
+    '<h3 id="kbd-help-title">Горячие клавиши</h3>' +
+    '<dl class="kbd-help-list">' +
+    shortcuts.map(s =>
+      '<dt>' + s.keys.map(k => '<kbd>' + k + '</kbd>').join(' ') + '</dt>' +
+      '<dd>' + s.desc + '</dd>'
+    ).join('') +
+    '</dl>' +
+    '<button type="button" class="kbd-help-close" aria-label="Закрыть">×</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  const close = () => overlay.classList.add('hidden');
+  const open = () => overlay.classList.remove('hidden');
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('.kbd-help-close').addEventListener('click', close);
+  document.addEventListener('keydown', (event) => {
+    if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return;
+    if (event.key === '?') {
+      event.preventDefault();
+      overlay.classList.contains('hidden') ? open() : close();
+    } else if (event.key === 'Escape' && !overlay.classList.contains('hidden')) {
+      event.preventDefault();
+      close();
+    }
   });
 }
 
