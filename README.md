@@ -10,6 +10,8 @@
 - **Полнотекстовый поиск:** по вопросам и ответам (SQLite FTS5 / PostgreSQL tsvector).
 - **Экспорт прогресса:** JSON и CSV (эндпоинт `/export`).
 - **Горячие клавиши:** `1–4` — выбор варианта, `Enter` — отправить ответ.
+- **Без AI-ключей:** приложение работает в режиме флешкарт (показ эталонного ответа + самооценка по SM-2). С ключом `OPENAI_API_KEY` или `DEEPSEEK_API_KEY` — включаются AI-варианты, подсказки и диаграммы.
+- **Сброс AI-вариантов** — кнопка на `/settings` («Управление данными» → «Сбросить банк вариантов»).
 
 ## Инженерная документация
 
@@ -55,19 +57,20 @@ export DEEPSEEK_API_KEY=ваш_ключ   # или OPENAI_API_KEY / SPRING_AI_AP
 | Свойство | Описание | По умолчанию |
 |----------|----------|--------------|
 | `app.interviewPath` | Путь к директории с markdown-файлами вопросов (относительно рабочей директории) | — |
-| `app.aiProvider` | Основной AI-провайдер: `spring-ai`, `openai`, `deepseek` | `spring-ai` |
+| `app.aiProvider` | Основной AI-провайдер: `openai`, `deepseek` | `openai` |
 | `app.aiFallbackProvider` | Резервный провайдер при недоступности основного; `none` — отключить | `spring-ai` |
 | `app.interview.optionsCount` | Количество вариантов ответа на вопрос (2–10) | 4 |
 | `app.interview.learnedRepetitions` | Порог повторений для статуса «выучено» | 3 |
 | `app.interview.examPenaltyQuestions` | Доп. вопросов при ошибке в режиме экзамена | 5 |
 | `app.interview.maxSessionCount` | Максимум вопросов в одной сессии | 200 |
-| `app.interview.resetOnStartup` | Удалять ли все варианты при старте (только для dev) | `false` |
 | `app.ai.timeoutSeconds` | Таймаут HTTP-запроса к AI | 30 |
 | `app.ai.maxRetries` | Повторные попытки при 429/5xx | 3 |
 | `app.deepseek.baseUrl`, `apiKey`, `model`, `temperature` | Параметры DeepSeek API | — |
 | `app.openai.baseUrl`, `apiKey`, `model`, `temperature` | Параметры OpenAI API | — |
 | `app.springAi.baseUrl`, `apiKey`, `model`, `temperature` | Параметры Spring AI (Ollama и др.) | — |
-| `app.preload.batchSize`, `corePoolSize`, `maxPoolSize`, `queueCapacity` | Предзагрузка вариантов | — |
+| `app.preload.startupPreload` | Предзагружать варианты при старте приложения | `false` |
+| `app.preload.fullWarmup` | Прогреть все вопросы при старте | `false` |
+| `app.preload.batchSize`, `corePoolSize`, `maxPoolSize`, `queueCapacity` | Параметры пула предзагрузки | — |
 | `app.sqlite.enableWal` | Включить WAL для SQLite | `true` |
 | `app.cache.optionMaxSize` | Размер кэша вариантов ответов | 500 |
 | `app.cache.ttlHours` | Время жизни записей кэша (часы) | 1 |

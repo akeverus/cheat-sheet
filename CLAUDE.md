@@ -67,12 +67,15 @@ com.cheatsheet.quiz
 
 | Property | Default |
 |----------|---------|
-| `app.aiProvider` | `spring-ai` |
+| `app.aiProvider` | `openai` |
 | `app.aiFallbackProvider` | `spring-ai` |
 | `app.interview.optionsCount` | `4` |
 | `app.ai.timeoutSeconds` | `30` |
 | `app.ai.maxRetries` | `3` |
-| `app.interview.resetOnStartup` | `false` (dev-only) |
+| `app.preload.startupPreload` | `false` |
+| `app.preload.fullWarmup` | `false` |
+
+**No-AI mode:** если `OPENAI_API_KEY` и `DEEPSEEK_API_KEY` оба пусты — `AppProperties.isAiEnabled()` вернёт `false`, `AIQuestionService.getOrCreateOptions` вернёт пустой список, MVC-слой форсит `flashcardMode=true`. Без ключей приложение показывает флешкарты, а не «Вопросы недоступны».
 
 Production profile (`prod`): disables Swagger UI. PostgreSQL profile: `postgres`.
 
